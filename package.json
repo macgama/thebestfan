@@ -1,22 +1,20 @@
 {
   "name": "thebestfan",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "start": "node server.js",
+    "start": "node --env-file-if-exists=.env server.js",
     "build": "npm install --omit=dev",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "smoke": "tsc -p tsconfig.test.json && node scripts/duel-smoke.mjs"
+    "auth:smoke": "node scripts/auth-smoke.mjs"
   },
   "dependencies": {
     "express": "^4.21.2",
-    "socket.io": "^4.8.1"
-  },
-  "devDependencies": {
-    "socket.io-client": "^4.8.1",
-    "typescript": "^5.8.2",
-    "@types/node": "^22.13.0"
+    "mysql2": "^3.11.5",
+    "nodemailer": "^6.9.16",
+    "socket.io": "^4.8.3"
   }
 }
