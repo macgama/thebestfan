@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mes équipes — thebestfan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;
+      --banner:"Oswald","Arial Narrow",Impact,sans-serif;
+      --ui:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100dvh}
+body{background:radial-gradient(120% 50% at 50% -8%,rgba(245,195,59,.13),transparent 60%),var(--beton);
+     color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;padding:26px 16px 70px}
+main{width:100%;max-width:440px}
+h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em;margin:0 0 4px;text-align:center}
+.sub{text-align:center;font-size:11px;letter-spacing:.2em;opacity:.45;margin-bottom:24px}
+.search{position:relative;margin-bottom:14px}
+input{width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.16);border-radius:8px;
+  color:var(--craie);padding:13px 14px;font-size:15px;font-family:inherit}
+input:focus{outline:none;border-color:var(--projo)}
+.results{position:absolute;top:100%;left:0;right:0;margin-top:6px;background:#171C23;z-index:5;
+  border:1px solid rgba(242,238,228,.16);border-radius:8px;overflow:hidden;display:none}
+.results.on{display:block}
+.results button{display:flex;align-items:center;gap:11px;width:100%;background:none;border:0;color:inherit;
+  padding:11px 13px;cursor:pointer;font-family:inherit;font-size:14px;text-align:left;
+  border-top:1px solid rgba(242,238,228,.07)}
+.results button:first-child{border-top:0}
+.results button:hover{background:rgba(242,238,228,.06)}
+.results img,.club img{width:22px;height:22px;object-fit:contain;flex:none}
+.results small{opacity:.45;font-size:11.5px}
+.team{border:1px solid rgba(242,238,228,.13);border-radius:10px;background:rgba(0,0,0,.25);
+  margin-bottom:12px;overflow:hidden}
+.club{display:flex;align-items:center;gap:11px;padding:14px;border-bottom:1px solid rgba(242,238,228,.09)}
+.club img{width:28px;height:28px}
+.club b{font-family:var(--banner);font-size:16px;letter-spacing:.03em;flex:1}
+.club .main{font-size:9.5px;letter-spacing:.14em;color:var(--projo);border:1px solid rgba(245,195,59,.4);
+  border-radius:3px;padding:2px 6px}
+.club button{background:none;border:0;color:inherit;opacity:.35;cursor:pointer;font-size:18px;padding:0 2px}
+.match{display:flex;align-items:center;gap:10px;padding:11px 14px;font-size:13.5px;
+  border-top:1px solid rgba(242,238,228,.07)}
+.match .side{flex:1;display:flex;align-items:center;gap:7px;min-width:0}
+.match .side.away{justify-content:flex-end;text-align:right}
+.match .side span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.match img{width:18px;height:18px;object-fit:contain;flex:none}
+.score{font-family:var(--banner);font-size:17px;letter-spacing:.06em;min-width:52px;text-align:center}
+.when{font-size:11px;opacity:.45;min-width:52px;text-align:center;line-height:1.3}
+.live{color:var(--flare);font-weight:600;font-size:11px;letter-spacing:.06em}
+.live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--flare);margin-right:5px;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.section{font-size:10px;letter-spacing:.18em;opacity:.4;padding:10px 14px 2px;text-transform:uppercase}
+.empty{text-align:center;padding:44px 20px;opacity:.5;font-size:13.5px;line-height:1.7}
+.empty a{color:var(--projo)}
+.flash{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;background:#171C23;
+  border:1px solid var(--flare);border-radius:8px;padding:13px 18px;font-size:13.5px;z-index:20;
+  box-shadow:0 12px 30px rgba(0,0,0,.6);max-width:90vw;display:none}
+.flash.on{display:block;animation:rise .35s cubic-bezier(.2,.8,.3,1)}
+@keyframes rise{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
+.flash b{color:var(--projo)}
+.langs{display:flex;gap:6px;justify-content:center;margin-bottom:20px}
+.langs button{background:none;border:1px solid rgba(242,238,228,.16);color:inherit;border-radius:999px;
+  padding:4px 10px;font-size:10.5px;cursor:pointer;opacity:.5;font-family:inherit}
+.langs button.on{background:var(--craie);color:#0B0E13;opacity:1;font-weight:600}
+</style>
+</head>
+<body>
+<main>
+  <h1 data-t="title">MES ÉQUIPES</h1>
+  <div class="sub" data-t="subtitle"></div>
+  <div class="langs" id="langs"></div>
+
+  <div class="search">
+    <input id="q" autocomplete="off" spellcheck="false">
+    <div class="results" id="results"></div>
+  </div>
+
+  <div id="feed"></div>
+</main>
+<div class="flash" id="flash"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const I18N = {
+  fr:{title:'MES ÉQUIPES',subtitle:'résultats, calendrier, direct',search:'Chercher un club…',
+    next:'à venir',last:'derniers résultats',live:'EN DIRECT',today:"aujourd'hui",tomorrow:'demain',
+    empty:'Tu ne suis aucun club. Cherche-le ci-dessus pour voir ses résultats et recevoir ses buts en direct.',
+    login:'Connecte-toi pour suivre tes clubs.',goal:'BUT DE {team} — {player} {minute}\u2032',
+    nothing:'Aucun club trouvé.',main:'PRINCIPAL'},
+  en:{title:'MY TEAMS',subtitle:'results, fixtures, live',search:'Search for a club…',
+    next:'upcoming',last:'latest results',live:'LIVE',today:'today',tomorrow:'tomorrow',
+    empty:'You follow no club yet. Search above to see its results and get its goals live.',
+    login:'Sign in to follow your clubs.',goal:'{team} SCORES — {player} {minute}\u2032',
+    nothing:'No club found.',main:'MAIN'},
+  de:{title:'MEINE TEAMS',subtitle:'Ergebnisse, Spielplan, live',search:'Verein suchen…',
+    next:'kommende Spiele',last:'letzte Ergebnisse',live:'LIVE',today:'heute',tomorrow:'morgen',
+    empty:'Du folgst noch keinem Verein. Suche oben, um Ergebnisse und Tore live zu bekommen.',
+    login:'Melde dich an, um Vereinen zu folgen.',goal:'TOR FÜR {team} — {player} {minute}\u2032',
+    nothing:'Kein Verein gefunden.',main:'HAUPT'},
+  es:{title:'MIS EQUIPOS',subtitle:'resultados, calendario, directo',search:'Buscar un club…',
+    next:'próximos',last:'últimos resultados',live:'EN DIRECTO',today:'hoy',tomorrow:'mañana',
+    empty:'No sigues ningún club. Búscalo arriba para ver resultados y recibir sus goles en directo.',
+    login:'Entra para seguir a tus clubes.',goal:'GOL DE {team} — {player} {minute}\u2032',
+    nothing:'No se encontró ningún club.',main:'PRINCIPAL'},
+};
+const LOCALES = ['fr','en','de','es'];
+let locale = LOCALES.find(l => navigator.language.toLowerCase().startsWith(l)) || 'fr';
+try { const s = localStorage.getItem('tbf_locale'); if (LOCALES.includes(s)) locale = s; } catch {}
+
+const $ = (id) => document.getElementById(id);
+const t = (k, p = {}) => Object.entries(p).reduce((a,[x,v]) => a.replaceAll(`{${x}}`, v),
+  (I18N[locale] ?? I18N.fr)[k] ?? k);
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+
+function applyLocale(){
+  document.documentElement.lang = locale;
+  try { localStorage.setItem('tbf_locale', locale); } catch {}
+  document.querySelectorAll('[data-t]').forEach(el => el.textContent = t(el.dataset.t));
+  $('q').placeholder = t('search');
+  $('langs').innerHTML = LOCALES.map(l =>
+    `<button data-l="${l}" class="${l===locale?'on':''}">${l.toUpperCase()}</button>`).join('');
+}
+$('langs').onclick = e => { const b = e.target.closest('[data-l]');
+  if (b) { locale = b.dataset.l; applyLocale(); render(); } };
+
+const api = async (path, opts = {}) => {
+  const res = await fetch('/api/football' + path, {
+    method: opts.method ?? 'GET', credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
+  });
+  return { status: res.status, json: await res.json().catch(() => ({})) };
+};
+
+/* ------------------------------------------------------------ rendu */
+
+let feed = [];
+let authed = true;
+
+function when(f){
+  if (f.status_short === 'HT') return `<span class="live">${t('live')} · MT</span>`;
+  if (['1H','2H','ET','P','LIVE'].includes(f.status_short))
+    return `<span class="live">${f.elapsed ?? ''}\u2032</span>`;
+  const d = new Date(f.kickoff_at.replace(' ', 'T') + 'Z');
+  const days = Math.round((d - new Date().setHours(0,0,0,0)) / 864e5);
+  const hm = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  if (days === 0) return `${t('today')}<br>${hm}`;
+  if (days === 1) return `${t('tomorrow')}<br>${hm}`;
+  return d.toLocaleDateString(locale, { day: 'numeric', month: 'short' }) + `<br>${hm}`;
+}
+
+function matchRow(f){
+  const played = f.home_goals !== null && f.away_goals !== null;
+  return `<div class="match" data-fixture="${f.id}">
+    <div class="side"><img src="${esc(f.home_logo)}" alt=""><span>${esc(f.home_name)}</span></div>
+    ${played ? `<div class="score">${f.home_goals} – ${f.away_goals}</div>`
+             : `<div class="when">${when(f)}</div>`}
+    <div class="side away"><span>${esc(f.away_name)}</span><img src="${esc(f.away_logo)}" alt=""></div>
+  </div>`;
+}
+
+function render(){
+  applyLocale();
+  if (!authed) {
+    $('feed').innerHTML = `<div class="empty">${t('login')}<br><br><a href="/compte">/compte</a></div>`;
+    return;
+  }
+  if (!feed.length) { $('feed').innerHTML = `<div class="empty">${t('empty')}</div>`; return; }
+
+  $('feed').innerHTML = feed.map(row => `
+    <div class="team" data-team="${row.team.id}">
+      <div class="club">
+        <img src="${esc(row.team.logo)}" alt="">
+        <b>${esc(row.team.name)}</b>
+        ${row.team.is_main ? `<span class="main">${t('main')}</span>` : ''}
+        <button data-unfollow="${row.team.id}" title="✕">✕</button>
+      </div>
+      ${row.live.length ? row.live.map(matchRow).join('') : ''}
+      ${row.next.length ? `<div class="section">${t('next')}</div>` + row.next.map(matchRow).join('') : ''}
+      ${row.last.length ? `<div class="section">${t('last')}</div>` + row.last.map(matchRow).join('') : ''}
+    </div>`).join('');
+}
+
+$('feed').onclick = async e => {
+  const b = e.target.closest('[data-unfollow]');
+  if (!b) return;
+  await api('/follows/' + b.dataset.unfollow, { method: 'DELETE' });
+  await load();
+};
+
+/* --------------------------------------------------------- recherche */
+
+let timer = null;
+$('q').oninput = () => {
+  clearTimeout(timer);
+  const term = $('q').value.trim();
+  if (term.length < 3) { $('results').classList.remove('on'); return; }
+  timer = setTimeout(async () => {
+    const r = await api('/search?q=' + encodeURIComponent(term));
+    const list = r.json.teams ?? [];
+    $('results').innerHTML = list.length
+      ? list.map(x => `<button data-follow="${x.id}"><img src="${esc(x.logo)}" alt="">
+          <span>${esc(x.name)}</span> <small>${esc(x.country ?? '')}</small></button>`).join('')
+      : `<button disabled style="opacity:.5">${t('nothing')}</button>`;
+    $('results').classList.add('on');
+  }, 320);
+};
+
+$('results').onclick = async e => {
+  const b = e.target.closest('[data-follow]');
+  if (!b) return;
+  $('results').classList.remove('on');
+  $('q').value = '';
+  const r = await api('/follows', { method: 'POST', body: { teamId: Number(b.dataset.follow) } });
+  if (r.status === 401) { authed = false; render(); return; }
+  await load();
+};
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search')) $('results').classList.remove('on');
+});
+
+/* ------------------------------------------------------------ direct */
+
+const socket = io({ transports: ['websocket','polling'] });
+let watched = [];
+
+function watch(){
+  const ids = feed.map(r => r.team.id);
+  if (JSON.stringify(ids) === JSON.stringify(watched)) return;
+  if (watched.length) socket.emit('football:unwatch', watched);
+  watched = ids;
+  if (ids.length) socket.emit('football:watch', ids);
+}
+socket.on('connect', watch);
+
+socket.on('football:fixture', () => load());
+
+socket.on('football:goal', g => {
+  const mine = feed.some(r => r.team.id === g.teamId);
+  const team = g.teamId === g.home?.id ? g.home?.name : g.away?.name;
+  const el = $('flash');
+  el.innerHTML = (mine ? '<b>' : '') + t('goal', {
+    team: esc(team ?? ''), player: esc(g.player ?? ''), minute: g.minute ?? '',
+  }) + (mine ? '</b>' : '');
+  el.className = 'flash on';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = 'flash'; }, 6000);
+  load();
+});
+
+/* -------------------------------------------------------- chargement */
+
+async function load(){
+  const r = await api('/feed');
+  if (r.status === 401) { authed = false; render(); return; }
+  authed = true;
+  feed = r.json.feed ?? [];
+  render();
+  watch();
+}
+
+applyLocale();
+load();
+setInterval(load, 60_000);
+</script>
+</body>
+</html>
