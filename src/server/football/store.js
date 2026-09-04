@@ -46,6 +46,20 @@ export function createFootballStore(pool) {
       );
     },
 
+    /**
+     * Un club connu de nom n'est pas un club chargé : la recherche enregistre
+     * la fiche, mais ni les compétitions ni le calendrier. C'est cette
+     * distinction qui décide du premier chargement.
+     */
+    async needsBootstrap(teamId) {
+      const rows = await q(
+        `SELECT (SELECT COUNT(*) FROM team_leagues WHERE team_id = ?) AS leagues,
+                (SELECT COUNT(*) FROM fixtures WHERE home_id = ? OR away_id = ?) AS fixtures`,
+        [teamId, teamId, teamId],
+      );
+      return !rows[0] || rows[0].leagues === 0 || rows[0].fixtures === 0;
+    },
+
     async teamById(id) {
       const rows = await q(`SELECT * FROM teams WHERE id = ?`, [id]);
       return rows[0] ?? null;
