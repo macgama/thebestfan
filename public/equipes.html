@@ -110,6 +110,11 @@ const LOCALES = ['fr','en','de','es'];
 let locale = LOCALES.find(l => navigator.language.toLowerCase().startsWith(l)) || 'fr';
 try { const s = localStorage.getItem('tbf_locale'); if (LOCALES.includes(s)) locale = s; } catch {}
 
+let feed = [];
+let authed = true;
+let watched = [];
+let socket = null;
+
 const $ = (id) => document.getElementById(id);
 const t = (k, p = {}) => Object.entries(p).reduce((a,[x,v]) => a.replaceAll(`{${x}}`, v),
   (I18N[locale] ?? I18N.fr)[k] ?? k);
@@ -136,9 +141,6 @@ const api = async (path, opts = {}) => {
 };
 
 /* ------------------------------------------------------------ rendu */
-
-let feed = [];
-let authed = true;
 
 function when(f){
   if (f.status_short === 'HT') return `<span class="live">${t('live')} · MT</span>`;
@@ -225,21 +227,35 @@ document.addEventListener('click', e => {
 
 /* ------------------------------------------------------------ direct */
 
-const socket = io({ transports: ['websocket','polling'] });
-let watched = [];
-
+// Le direct est un bonus : si socket.io n'est pas joignable, la page doit
+// continuer à afficher calendrier et résultats, en se rafraîchissant seule.
 function watch(){
+  if (!socket?.connected) return;
   const ids = feed.map(r => r.team.id);
   if (JSON.stringify(ids) === JSON.stringify(watched)) return;
   if (watched.length) socket.emit('football:unwatch', watched);
   watched = ids;
   if (ids.length) socket.emit('football:watch', ids);
 }
-socket.on('connect', watch);
 
-socket.on('football:fixture', () => load());
+function connectLive(){
+  if (typeof io === 'undefined') {
+    console.warn('temps réel indisponible : la page se rafraîchira toute seule');
+    return;
+  }
+  try {
+    socket = io({ transports: ['websocket', 'polling'] });
+  } catch (e) {
+    console.warn('temps réel indisponible :', e.message);
+    return;
+  }
+  socket.on('connect', watch);
+  socket.on('connect_error', (e) => console.warn('socket:', e.message));
+  socket.on('football:fixture', () => load());
+  socket.on('football:goal', onGoal);
+}
 
-socket.on('football:goal', g => {
+function onGoal(g){
   const mine = feed.some(r => r.team.id === g.teamId);
   const team = g.teamId === g.home?.id ? g.home?.name : g.away?.name;
   const el = $('flash');
@@ -250,7 +266,7 @@ socket.on('football:goal', g => {
   clearTimeout(el._t);
   el._t = setTimeout(() => { el.className = 'flash'; }, 6000);
   load();
-});
+}
 
 /* -------------------------------------------------------- chargement */
 
@@ -264,8 +280,10 @@ async function load(){
 }
 
 applyLocale();
+connectLive();
 load();
-setInterval(load, 60_000);
+// Filet de sécurité : même sans temps réel, la page reste à jour.
+setInterval(load, 45_000);
 </script>
 </body>
 </html>
