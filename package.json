@@ -1,6 +1,6 @@
 {
   "name": "thebestfan",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -9,12 +9,13 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",
     "build": "npm install --omit=dev",
-    "auth:smoke": "node scripts/auth-smoke.mjs"
+    "auth:smoke": "node scripts/auth-smoke.mjs",
+    "foot:smoke": "node scripts/football-smoke.mjs"
   },
   "dependencies": {
     "express": "^4.21.2",
     "mysql2": "^3.11.5",
-    "nodemailer": "^6.9.16",
+    "nodemailer": "^6.10.1",
     "socket.io": "^4.8.3"
   }
 }
