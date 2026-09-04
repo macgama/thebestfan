@@ -142,11 +142,25 @@ const api = async (path, opts = {}) => {
 
 /* ------------------------------------------------------------ rendu */
 
+/**
+ * La date arrive soit en ISO ("2026-09-13T17:00:00.000Z") quand MySQL a
+ * renvoyé un objet Date, soit en "2026-09-13 17:00:00" en chaîne brute.
+ * Les deux formes doivent être lues comme de l'UTC.
+ */
+function toDate(v){
+  if (v instanceof Date) return v;
+  const s = String(v ?? '');
+  if (!s) return null;
+  const d = s.includes('T') ? new Date(s) : new Date(s.replace(' ', 'T') + 'Z');
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 function when(f){
   if (f.status_short === 'HT') return `<span class="live">${t('live')} · MT</span>`;
   if (['1H','2H','ET','P','LIVE'].includes(f.status_short))
     return `<span class="live">${f.elapsed ?? ''}\u2032</span>`;
-  const d = new Date(f.kickoff_at.replace(' ', 'T') + 'Z');
+  const d = toDate(f.kickoff_at);
+  if (!d) return '—';
   const days = Math.round((d - new Date().setHours(0,0,0,0)) / 864e5);
   const hm = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   if (days === 0) return `${t('today')}<br>${hm}`;
