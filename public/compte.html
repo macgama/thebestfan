@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>thebestfan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;
+      --banner:"Oswald","Arial Narrow",Impact,sans-serif;
+      --ui:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100dvh}
+body{background:radial-gradient(120% 55% at 50% -8%,rgba(245,195,59,.15),transparent 62%),var(--beton);
+     color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;padding:34px 18px 60px}
+main{width:100%;max-width:390px}
+.wordmark{font-family:var(--banner);font-weight:600;font-size:26px;letter-spacing:.2em;text-align:center}
+.wordmark small{display:block;font-size:9.5px;letter-spacing:.34em;opacity:.5;margin-top:6px;font-family:var(--ui)}
+.langs{display:flex;gap:6px;justify-content:center;margin:22px 0 26px}
+.langs button{background:none;border:1px solid rgba(242,238,228,.16);color:inherit;border-radius:999px;
+  padding:5px 11px;font-size:11px;letter-spacing:.08em;cursor:pointer;opacity:.55;font-family:inherit}
+.langs button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1;font-weight:600}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid rgba(242,238,228,.14);
+  border-radius:8px;overflow:hidden;margin-bottom:22px}
+.tabs button{background:none;border:0;color:inherit;padding:13px;font-family:var(--banner);font-size:13.5px;
+  letter-spacing:.14em;cursor:pointer;opacity:.5}
+.tabs button.on{background:rgba(242,238,228,.1);opacity:1;color:var(--projo)}
+label{display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.55;margin:16px 0 7px}
+input{width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.16);border-radius:6px;
+  color:var(--craie);padding:13px 14px;font-size:15px;font-family:inherit}
+input:focus{outline:none;border-color:var(--projo)}
+.hint{font-size:11.5px;opacity:.42;margin-top:6px;line-height:1.5}
+button.go{width:100%;margin-top:24px;background:linear-gradient(180deg,var(--flare),#B32A1D);color:#fff;
+  border:1px solid rgba(255,255,255,.16);border-radius:6px;padding:14px;font-family:var(--banner);
+  font-size:16px;letter-spacing:.09em;cursor:pointer;box-shadow:0 6px 0 #7A1A11;transition:transform .08s,box-shadow .08s}
+button.go:active{transform:translateY(4px);box-shadow:0 2px 0 #7A1A11}
+button.go[disabled]{filter:grayscale(.7);opacity:.55;pointer-events:none}
+.link{background:none;border:0;color:var(--projo);font-size:12.5px;cursor:pointer;padding:0;
+  margin-top:18px;font-family:inherit;text-decoration:underline;text-underline-offset:3px}
+.msg{margin-top:18px;padding:12px 14px;border-radius:6px;font-size:13px;line-height:1.55;display:none}
+.msg.on{display:block}
+.msg.err{background:rgba(224,64,44,.14);border:1px solid rgba(224,64,44,.4)}
+.msg.ok{background:rgba(30,158,106,.14);border:1px solid rgba(30,158,106,.4)}
+.card{border:1px solid rgba(242,238,228,.13);border-radius:10px;padding:22px;background:rgba(0,0,0,.25)}
+.card h2{font-family:var(--banner);font-size:19px;letter-spacing:.06em;margin:0 0 6px}
+.card p{font-size:13.5px;line-height:1.6;opacity:.7;margin:0 0 16px}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:11px 0;
+  border-top:1px solid rgba(242,238,228,.09)}
+.row:first-of-type{border-top:0}
+.row span{opacity:.6}.row b{font-weight:600}
+.hide{display:none}
+</style>
+</head>
+<body>
+<main>
+  <div class="wordmark">THEBESTFAN<small id="tagline">le jeu de cartes des tribunes</small></div>
+  <div class="langs" id="langs"></div>
+
+  <!-- connecté -->
+  <section id="account" class="hide">
+    <div class="card">
+      <h2 id="helloTitle"></h2>
+      <p id="helloText"></p>
+      <div class="row"><span data-t="account.pseudo"></span><b id="acPseudo"></b></div>
+      <div class="row"><span data-t="account.email"></span><b id="acEmail"></b></div>
+      <div class="row"><span data-t="account.status"></span><b id="acStatus"></b></div>
+    </div>
+    <button class="go" id="btnLogout" data-t="account.logout"></button>
+    <button class="link" id="btnResend" data-t="account.resend"></button>
+    <div class="msg" id="acMsg"></div>
+  </section>
+
+  <!-- déconnecté -->
+  <section id="gate">
+    <div class="tabs">
+      <button id="tabLogin" class="on" data-t="tab.login"></button>
+      <button id="tabRegister" data-t="tab.register"></button>
+    </div>
+
+    <form id="formLogin">
+      <label data-t="field.email"></label>
+      <input type="email" id="liEmail" autocomplete="email" required>
+      <label data-t="field.password"></label>
+      <input type="password" id="liPassword" autocomplete="current-password" required>
+      <button class="go" type="submit" data-t="action.login"></button>
+      <button class="link" type="button" id="btnForgot" data-t="action.forgot"></button>
+    </form>
+
+    <form id="formRegister" class="hide">
+      <label data-t="field.pseudo"></label>
+      <input type="text" id="rgPseudo" autocomplete="nickname" minlength="3" maxlength="20" required>
+      <div class="hint" data-t="hint.pseudo"></div>
+      <label data-t="field.email"></label>
+      <input type="email" id="rgEmail" autocomplete="email" required>
+      <label data-t="field.password"></label>
+      <input type="password" id="rgPassword" autocomplete="new-password" minlength="10" required>
+      <div class="hint" data-t="hint.password"></div>
+      <button class="go" type="submit" data-t="action.register"></button>
+    </form>
+
+    <form id="formForgot" class="hide">
+      <div class="hint" style="opacity:.7;margin-bottom:4px" data-t="hint.forgot"></div>
+      <label data-t="field.email"></label>
+      <input type="email" id="fgEmail" autocomplete="email" required>
+      <button class="go" type="submit" data-t="action.send"></button>
+      <button class="link" type="button" id="btnBackLogin" data-t="action.back"></button>
+    </form>
+
+    <form id="formReset" class="hide">
+      <div class="hint" style="opacity:.7;margin-bottom:4px" data-t="hint.reset"></div>
+      <label data-t="field.newPassword"></label>
+      <input type="password" id="rsPassword" autocomplete="new-password" minlength="10" required>
+      <button class="go" type="submit" data-t="action.save"></button>
+    </form>
+
+    <div class="msg" id="gateMsg"></div>
+  </section>
+</main>
+
+<script>
+const I18N = {
+  fr:{ 'tagline':'le jeu de cartes des tribunes','tab.login':'CONNEXION','tab.register':'INSCRIPTION',
+    'field.email':'Adresse e-mail','field.password':'Mot de passe','field.newPassword':'Nouveau mot de passe',
+    'field.pseudo':'Pseudo','action.login':'ENTRER DANS LA TRIBUNE','action.register':'CRÉER MON COMPTE',
+    'action.forgot':'Mot de passe oublié ?','action.send':'ENVOYER LE LIEN','action.back':'Retour à la connexion',
+    'action.save':'ENREGISTRER','hint.pseudo':'De 3 à 20 caractères. Il sera visible par tes adversaires.',
+    'hint.password':'10 caractères minimum. Une phrase courte fait un excellent mot de passe.',
+    'hint.forgot':'Indique ton adresse : si un compte existe, tu recevras un lien.',
+    'hint.reset':'Choisis un nouveau mot de passe. Toutes tes sessions seront fermées.',
+    'account.pseudo':'Pseudo','account.email':'Adresse','account.status':'Adresse vérifiée',
+    'account.logout':'SE DÉCONNECTER','account.resend':'Renvoyer le mail de vérification',
+    'account.hello':'Salut {pseudo}','account.text':'Ton compte est actif. Le kiosque et les duels arrivent bientôt.',
+    'yes':'oui','no':'non','sent.verify':'Mail de vérification renvoyé.','sent.reset':'Si un compte existe, le lien vient de partir.',
+    'ok.verified':'Adresse confirmée. Bienvenue dans la tribune.','ok.reset':'Mot de passe enregistré. Tu peux te connecter.',
+    'auth.error.email_invalid':"Cette adresse e-mail n'est pas valide.",
+    'auth.error.password_short':'Le mot de passe doit faire au moins 10 caractères.',
+    'auth.error.password_long':'Le mot de passe est trop long.',
+    'auth.error.password_obvious':'Ce mot de passe est trop facile à deviner.',
+    'auth.error.pseudo_invalid':'Le pseudo doit faire 3 à 20 caractères, sans symboles.',
+    'auth.error.email_taken':'Un compte existe déjà avec cette adresse.',
+    'auth.error.pseudo_taken':'Ce pseudo est déjà pris.',
+    'auth.error.bad_credentials':'Adresse ou mot de passe incorrect.',
+    'auth.error.too_many_attempts':'Trop de tentatives. Réessaie dans un quart d\u2019heure.',
+    'auth.error.account_locked':'Ce compte est suspendu.',
+    'auth.error.token_invalid':'Ce lien est invalide ou a expiré.',
+    'auth.error.unauthenticated':'Session expirée.','auth.error.bad_origin':'Requête refusée.',
+    'auth.error.server':'Erreur du serveur. Réessaie dans un instant.','auth.error.network':'Connexion impossible.' },
+  en:{ 'tagline':'the terrace card game','tab.login':'SIGN IN','tab.register':'SIGN UP',
+    'field.email':'Email address','field.password':'Password','field.newPassword':'New password',
+    'field.pseudo':'Username','action.login':'ENTER THE STAND','action.register':'CREATE MY ACCOUNT',
+    'action.forgot':'Forgot your password?','action.send':'SEND THE LINK','action.back':'Back to sign in',
+    'action.save':'SAVE','hint.pseudo':'3 to 20 characters. Your opponents will see it.',
+    'hint.password':'10 characters minimum. A short sentence makes an excellent password.',
+    'hint.forgot':'Enter your address: if an account exists, you will get a link.',
+    'hint.reset':'Choose a new password. All your sessions will be closed.',
+    'account.pseudo':'Username','account.email':'Address','account.status':'Address verified',
+    'account.logout':'SIGN OUT','account.resend':'Resend the verification email',
+    'account.hello':'Hi {pseudo}','account.text':'Your account is active. The kiosk and duels are coming soon.',
+    'yes':'yes','no':'no','sent.verify':'Verification email sent again.','sent.reset':'If an account exists, the link is on its way.',
+    'ok.verified':'Address confirmed. Welcome to the stand.','ok.reset':'Password saved. You can sign in.',
+    'auth.error.email_invalid':'That email address is not valid.',
+    'auth.error.password_short':'Password must be at least 10 characters.',
+    'auth.error.password_long':'That password is too long.',
+    'auth.error.password_obvious':'That password is too easy to guess.',
+    'auth.error.pseudo_invalid':'Username must be 3 to 20 characters, no symbols.',
+    'auth.error.email_taken':'An account already exists with this address.',
+    'auth.error.pseudo_taken':'That username is taken.',
+    'auth.error.bad_credentials':'Wrong address or password.',
+    'auth.error.too_many_attempts':'Too many attempts. Try again in about fifteen minutes.',
+    'auth.error.account_locked':'This account is suspended.',
+    'auth.error.token_invalid':'This link is invalid or has expired.',
+    'auth.error.unauthenticated':'Session expired.','auth.error.bad_origin':'Request refused.',
+    'auth.error.server':'Server error. Try again in a moment.','auth.error.network':'Cannot reach the server.' },
+  de:{ 'tagline':'das Kartenspiel der Kurve','tab.login':'ANMELDEN','tab.register':'REGISTRIEREN',
+    'field.email':'E-Mail-Adresse','field.password':'Passwort','field.newPassword':'Neues Passwort',
+    'field.pseudo':'Benutzername','action.login':'IN DEN BLOCK','action.register':'KONTO ERSTELLEN',
+    'action.forgot':'Passwort vergessen?','action.send':'LINK SENDEN','action.back':'Zurück zur Anmeldung',
+    'action.save':'SPEICHERN','hint.pseudo':'3 bis 20 Zeichen. Deine Gegner sehen ihn.',
+    'hint.password':'Mindestens 10 Zeichen. Ein kurzer Satz ist ein ausgezeichnetes Passwort.',
+    'hint.forgot':'Gib deine Adresse ein: Wenn ein Konto existiert, bekommst du einen Link.',
+    'hint.reset':'Wähle ein neues Passwort. Alle Sitzungen werden beendet.',
+    'account.pseudo':'Benutzername','account.email':'Adresse','account.status':'Adresse bestätigt',
+    'account.logout':'ABMELDEN','account.resend':'Bestätigungsmail erneut senden',
+    'account.hello':'Hallo {pseudo}','account.text':'Dein Konto ist aktiv. Kiosk und Duelle kommen bald.',
+    'yes':'ja','no':'nein','sent.verify':'Bestätigungsmail erneut gesendet.','sent.reset':'Wenn ein Konto existiert, ist der Link unterwegs.',
+    'ok.verified':'Adresse bestätigt. Willkommen im Block.','ok.reset':'Passwort gespeichert. Du kannst dich anmelden.',
+    'auth.error.email_invalid':'Diese E-Mail-Adresse ist ungültig.',
+    'auth.error.password_short':'Das Passwort braucht mindestens 10 Zeichen.',
+    'auth.error.password_long':'Das Passwort ist zu lang.',
+    'auth.error.password_obvious':'Dieses Passwort ist zu leicht zu erraten.',
+    'auth.error.pseudo_invalid':'Der Name braucht 3 bis 20 Zeichen, ohne Symbole.',
+    'auth.error.email_taken':'Mit dieser Adresse existiert bereits ein Konto.',
+    'auth.error.pseudo_taken':'Dieser Name ist vergeben.',
+    'auth.error.bad_credentials':'Adresse oder Passwort falsch.',
+    'auth.error.too_many_attempts':'Zu viele Versuche. Probiere es in etwa fünfzehn Minuten erneut.',
+    'auth.error.account_locked':'Dieses Konto ist gesperrt.',
+    'auth.error.token_invalid':'Dieser Link ist ungültig oder abgelaufen.',
+    'auth.error.unauthenticated':'Sitzung abgelaufen.','auth.error.bad_origin':'Anfrage abgelehnt.',
+    'auth.error.server':'Serverfehler. Versuche es gleich noch einmal.','auth.error.network':'Server nicht erreichbar.' },
+  es:{ 'tagline':'el juego de cartas de la grada','tab.login':'ENTRAR','tab.register':'REGISTRARSE',
+    'field.email':'Correo electrónico','field.password':'Contraseña','field.newPassword':'Nueva contraseña',
+    'field.pseudo':'Nombre','action.login':'ENTRAR EN LA GRADA','action.register':'CREAR MI CUENTA',
+    'action.forgot':'¿Olvidaste la contraseña?','action.send':'ENVIAR EL ENLACE','action.back':'Volver a entrar',
+    'action.save':'GUARDAR','hint.pseudo':'De 3 a 20 caracteres. Tus rivales lo verán.',
+    'hint.password':'Mínimo 10 caracteres. Una frase corta es una contraseña excelente.',
+    'hint.forgot':'Escribe tu dirección: si existe una cuenta, recibirás un enlace.',
+    'hint.reset':'Elige una nueva contraseña. Se cerrarán todas tus sesiones.',
+    'account.pseudo':'Nombre','account.email':'Dirección','account.status':'Dirección verificada',
+    'account.logout':'SALIR','account.resend':'Reenviar el correo de verificación',
+    'account.hello':'Hola {pseudo}','account.text':'Tu cuenta está activa. El quiosco y los duelos llegan pronto.',
+    'yes':'sí','no':'no','sent.verify':'Correo de verificación reenviado.','sent.reset':'Si existe una cuenta, el enlace ya va en camino.',
+    'ok.verified':'Dirección confirmada. Bienvenido a la grada.','ok.reset':'Contraseña guardada. Ya puedes entrar.',
+    'auth.error.email_invalid':'Esta dirección no es válida.',
+    'auth.error.password_short':'La contraseña debe tener al menos 10 caracteres.',
+    'auth.error.password_long':'La contraseña es demasiado larga.',
+    'auth.error.password_obvious':'Esta contraseña es demasiado fácil de adivinar.',
+    'auth.error.pseudo_invalid':'El nombre debe tener de 3 a 20 caracteres, sin símbolos.',
+    'auth.error.email_taken':'Ya existe una cuenta con esta dirección.',
+    'auth.error.pseudo_taken':'Ese nombre ya está cogido.',
+    'auth.error.bad_credentials':'Dirección o contraseña incorrecta.',
+    'auth.error.too_many_attempts':'Demasiados intentos. Prueba dentro de un cuarto de hora.',
+    'auth.error.account_locked':'Esta cuenta está suspendida.',
+    'auth.error.token_invalid':'Este enlace no es válido o ha caducado.',
+    'auth.error.unauthenticated':'Sesión caducada.','auth.error.bad_origin':'Petición rechazada.',
+    'auth.error.server':'Error del servidor. Inténtalo en un momento.','auth.error.network':'No se puede conectar.' },
+};
+
+const $ = (id) => document.getElementById(id);
+const LOCALES = ['fr','en','de','es'];
+let locale = LOCALES.find(l => (localStorage?.getItem?.('tbf_locale') ?? '') === l)
+  || LOCALES.find(l => navigator.language.toLowerCase().startsWith(l)) || 'fr';
+
+function t(key, params = {}) {
+  const s = (I18N[locale] ?? I18N.fr)[key] ?? key;
+  return Object.entries(params).reduce((a,[k,v]) => a.replaceAll(`{${k}}`, v), s);
+}
+
+function applyLocale() {
+  document.documentElement.lang = locale;
+  try { localStorage.setItem('tbf_locale', locale); } catch {}
+  $('tagline').textContent = t('tagline');
+  document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
+  $('langs').innerHTML = LOCALES.map(l =>
+    `<button data-l="${l}" class="${l===locale?'on':''}">${l.toUpperCase()}</button>`).join('');
+}
+$('langs').onclick = e => {
+  const b = e.target.closest('[data-l]');
+  if (b) { locale = b.dataset.l; applyLocale(); render(); }
+};
+
+function say(box, key, kind = 'err', params = {}) {
+  const el = $(box);
+  el.textContent = t(key, params);
+  el.className = `msg on ${kind}`;
+}
+const clear = (box) => { $(box).className = 'msg'; };
+
+async function api(path, body, method = 'POST') {
+  try {
+    const res = await fetch('/api/auth' + path, {
+      method,
+      headers: { 'content-type': 'application/json' },
+      credentials: 'same-origin',
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    return { status: res.status, json: await res.json().catch(() => ({})) };
+  } catch {
+    return { status: 0, json: { error: 'auth.error.network' } };
+  }
+}
+
+/* ------------------------------------------------------------- écrans */
+
+let user = null;
+const show = (id, on) => $(id).classList.toggle('hide', !on);
+
+function render() {
+  show('account', Boolean(user));
+  show('gate', !user);
+  if (user) {
+    $('helloTitle').textContent = t('account.hello', { pseudo: user.pseudo });
+    $('helloText').textContent = t('account.text');
+    $('acPseudo').textContent = user.pseudo;
+    $('acEmail').textContent = user.email;
+    $('acStatus').textContent = user.verified ? t('yes') : t('no');
+    show('btnResend', !user.verified);
+  }
+}
+
+function tab(which) {
+  $('tabLogin').classList.toggle('on', which === 'login');
+  $('tabRegister').classList.toggle('on', which === 'register');
+  show('formLogin', which === 'login');
+  show('formRegister', which === 'register');
+  show('formForgot', which === 'forgot');
+  show('formReset', which === 'reset');
+  show('tabLogin', which !== 'reset');
+  clear('gateMsg');
+}
+$('tabLogin').onclick = () => tab('login');
+$('tabRegister').onclick = () => tab('register');
+$('btnForgot').onclick = () => tab('forgot');
+$('btnBackLogin').onclick = () => tab('login');
+
+/* ------------------------------------------------------------ actions */
+
+function busy(form, on) {
+  const b = form.querySelector('button.go');
+  if (b) b.disabled = on;
+}
+
+$('formLogin').onsubmit = async (e) => {
+  e.preventDefault(); clear('gateMsg'); busy(e.target, true);
+  const r = await api('/login', { email: $('liEmail').value, password: $('liPassword').value });
+  busy(e.target, false);
+  if (r.status === 200) { user = r.json.user; locale = user.locale || locale; applyLocale(); render(); }
+  else say('gateMsg', r.json.error ?? 'auth.error.server');
+};
+
+$('formRegister').onsubmit = async (e) => {
+  e.preventDefault(); clear('gateMsg'); busy(e.target, true);
+  const r = await api('/register', {
+    email: $('rgEmail').value, pseudo: $('rgPseudo').value,
+    password: $('rgPassword').value, locale,
+  });
+  busy(e.target, false);
+  if (r.status === 201) { user = r.json.user; render(); }
+  else say('gateMsg', r.json.error ?? 'auth.error.server');
+};
+
+$('formForgot').onsubmit = async (e) => {
+  e.preventDefault(); busy(e.target, true);
+  await api('/forgot', { email: $('fgEmail').value });
+  busy(e.target, false);
+  say('gateMsg', 'sent.reset', 'ok');
+};
+
+$('formReset').onsubmit = async (e) => {
+  e.preventDefault(); clear('gateMsg'); busy(e.target, true);
+  const token = new URLSearchParams(location.search).get('reinitialiser');
+  const r = await api('/reset', { token, password: $('rsPassword').value });
+  busy(e.target, false);
+  if (r.status === 200) { history.replaceState({}, '', '/compte'); tab('login'); say('gateMsg', 'ok.reset', 'ok'); }
+  else say('gateMsg', r.json.error ?? 'auth.error.server');
+};
+
+$('btnLogout').onclick = async () => { await api('/logout'); user = null; tab('login'); render(); };
+$('btnResend').onclick = async () => { await api('/resend-verification'); say('acMsg', 'sent.verify', 'ok'); };
+
+/* -------------------------------------------------------- démarrage */
+
+(async () => {
+  applyLocale();
+  const params = new URLSearchParams(location.search);
+
+  const verifyToken = params.get('verifier');
+  if (verifyToken) {
+    const r = await api('/verify', { token: verifyToken });
+    history.replaceState({}, '', '/compte');
+    setTimeout(() => say(user ? 'acMsg' : 'gateMsg',
+      r.status === 200 ? 'ok.verified' : 'auth.error.token_invalid',
+      r.status === 200 ? 'ok' : 'err'), 50);
+  }
+
+  const me = await api('/me', undefined, 'GET');
+  if (me.status === 200) { user = me.json.user; locale = user.locale || locale; applyLocale(); }
+
+  if (params.get('reinitialiser')) tab('reset'); else tab('login');
+  render();
+})();
+</script>
+</body>
+</html>
