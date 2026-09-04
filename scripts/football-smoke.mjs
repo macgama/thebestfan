@@ -139,11 +139,18 @@ check('recherche suivante trouve un autre club', r.json.teams?.some((t) => t.id 
 
 /* ------------------------------------------------------- abonnement */
 
+// Le club a déjà été enregistré par la recherche : son calendrier doit quand
+// même être chargé au premier abonnement.
+await foot.store.upsertTeam(TEAM);
+check('club connu de nom mais pas chargé', await foot.store.needsBootstrap(85) === true);
+
 r = await call('/api/football/follows', { method: 'POST', body: { teamId: 85, isMain: true } });
 check('abonnement enregistré', r.json.teams?.[0]?.id === 85);
 check('club principal marqué', r.json.teams?.[0]?.is_main === 1);
+check('chargement du calendrier déclenché', r.json.loading === true);
 
-await foot.poller.refreshTeam(85);
+await new Promise((r) => setTimeout(r, 400));
+check('club chargé après le premier suivi', await foot.store.needsBootstrap(85) === false);
 const [teamRows] = await pool.query('SELECT * FROM teams WHERE id = 85');
 check('équipe enregistrée en base', teamRows[0]?.name === 'Paris Sportif');
 const [leagueRows] = await pool.query('SELECT * FROM leagues WHERE id = 61');

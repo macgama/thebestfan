@@ -45,7 +45,13 @@
     "error.invalid_deck": "Ton deck doit contenir {expected} cartes",
     "error.not_in_duel": "Duel introuvable",
     "error.rate_limited": "Trop d'actions d'un coup",
-    "error.unauthenticated": "Session expirée, reconnecte-toi"
+    "error.unauthenticated": "Session expirée, reconnecte-toi",
+    "effect.self_damage": "Ce groupe perd {amount} de ferveur",
+    "effect.heal": "Soigne {amount} de ferveur",
+    "effect.shield": "Absorbe {amount} de pression",
+    "effect.block_retreat": "L’adversaire ne peut pas reculer",
+    "effect.bonus_if_leading": "+{amount} si tu mènes au score",
+    "effect.bonus_late": "+{amount} après la {fromMinute}e minute"
   },
   "en": {
     "duel.queue": "Looking for an opponent…",
@@ -93,7 +99,13 @@
     "error.invalid_deck": "Your deck must hold {expected} cards",
     "error.not_in_duel": "Duel not found",
     "error.rate_limited": "Too many actions at once",
-    "error.unauthenticated": "Session expired, sign in again"
+    "error.unauthenticated": "Session expired, sign in again",
+    "effect.self_damage": "This group loses {amount} fervour",
+    "effect.heal": "Heals {amount} fervour",
+    "effect.shield": "Absorbs {amount} pressure",
+    "effect.block_retreat": "The opponent cannot step back",
+    "effect.bonus_if_leading": "+{amount} if you lead",
+    "effect.bonus_late": "+{amount} after minute {fromMinute}"
   },
   "de": {
     "duel.queue": "Gegner wird gesucht…",
@@ -141,7 +153,13 @@
     "error.invalid_deck": "Dein Deck braucht {expected} Karten",
     "error.not_in_duel": "Duell nicht gefunden",
     "error.rate_limited": "Zu viele Aktionen auf einmal",
-    "error.unauthenticated": "Sitzung abgelaufen, bitte neu anmelden"
+    "error.unauthenticated": "Sitzung abgelaufen, bitte neu anmelden",
+    "effect.self_damage": "Diese Gruppe verliert {amount} Inbrunst",
+    "effect.heal": "Heilt {amount} Inbrunst",
+    "effect.shield": "Absorbiert {amount} Druck",
+    "effect.block_retreat": "Der Gegner kann nicht zurücktreten",
+    "effect.bonus_if_leading": "+{amount} bei Führung",
+    "effect.bonus_late": "+{amount} ab Minute {fromMinute}"
   },
   "es": {
     "duel.queue": "Buscando rival…",
@@ -189,6 +207,12 @@
     "error.invalid_deck": "Tu mazo debe tener {expected} cartas",
     "error.not_in_duel": "Duelo no encontrado",
     "error.rate_limited": "Demasiadas acciones seguidas",
-    "error.unauthenticated": "Sesión caducada, vuelve a entrar"
+    "error.unauthenticated": "Sesión caducada, vuelve a entrar",
+    "effect.self_damage": "Este grupo pierde {amount} de fervor",
+    "effect.heal": "Cura {amount} de fervor",
+    "effect.shield": "Absorbe {amount} de presión",
+    "effect.block_retreat": "El rival no puede retroceder",
+    "effect.bonus_if_leading": "+{amount} si vas ganando",
+    "effect.bonus_late": "+{amount} tras el minuto {fromMinute}"
   }
 }

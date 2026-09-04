@@ -44,36 +44,5 @@ CREATE TABLE IF NOT EXISTS duel_results (
   KEY idx_user_history (user_id, ended_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Matchs réels suivis via API-Football. Un seul worker écrit ici ; les duels
--- lisent. C'est ce qui garantit que les deux joueurs voient le même but.
-CREATE TABLE IF NOT EXISTS fixtures (
-  id           INT          NOT NULL PRIMARY KEY,   -- fixture id API-Football
-  league_id    INT          NOT NULL,
-  home_team_id INT          NOT NULL,
-  away_team_id INT          NOT NULL,
-  status       VARCHAR(8)   NOT NULL,
-  minute       SMALLINT     NULL,
-  home_goals   TINYINT      NULL,
-  away_goals   TINYINT      NULL,
-  kickoff_at   DATETIME     NOT NULL,
-  polled_at    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  KEY idx_live (status, kickoff_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS fixture_events (
-  fixture_id INT         NOT NULL,
-  seq        SMALLINT    NOT NULL,
-  type       VARCHAR(16) NOT NULL,       -- goal, card, subst
-  team_id    INT         NOT NULL,
-  minute     SMALLINT    NOT NULL,
-  payload    JSON        NULL,
-  PRIMARY KEY (fixture_id, seq)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Clubs suivis par un joueur : sert au bonus live pendant les duels.
-CREATE TABLE IF NOT EXISTS user_follows (
-  user_id VARCHAR(64) NOT NULL,
-  team_id INT         NOT NULL,
-  is_main TINYINT(1)  NOT NULL DEFAULT 0,
-  PRIMARY KEY (user_id, team_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Les tables fixtures, fixture_events et user_follows sont désormais
+-- définies par sql/football.sql, qui fait autorité.
