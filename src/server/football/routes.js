@@ -85,14 +85,14 @@ export function createFootball({ pool, client, io, requireAuth, onGoal }) {
     const teamId = Number(req.body?.teamId);
     if (!Number.isInteger(teamId)) return fail(res, 'football.error.team_invalid');
 
-    const known = await store.teamById(teamId);
+    const toLoad = await store.needsBootstrap(teamId);
     await store.follow(req.user.id, teamId, Boolean(req.body?.isMain));
 
-    // Premier suivi de ce club : on charge son calendrier en arrière-plan.
-    if (!known) {
+    // Compétitions et calendrier chargés en arrière-plan au premier suivi.
+    if (toLoad) {
       poller.refreshTeam(teamId).catch((e) => console.error('[foot] refreshTeam', e.message));
     }
-    res.json({ teams: await store.followsOf(req.user.id) });
+    res.json({ teams: await store.followsOf(req.user.id), loading: toLoad });
   });
 
   router.delete('/follows/:teamId', requireAuth, async (req, res) => {
@@ -115,6 +115,19 @@ export function createFootball({ pool, client, io, requireAuth, onGoal }) {
       });
     }
     res.json({ feed });
+  });
+
+  /** Recharge manuelle d'un club : utile quand un chargement a échoué. */
+  router.post('/refresh/:teamId', requireAuth, async (req, res) => {
+    const teamId = Number(req.params.teamId);
+    if (!Number.isInteger(teamId)) return fail(res, 'football.error.team_invalid');
+    try {
+      await poller.refreshTeam(teamId);
+      res.json({ ok: true, ...(await store.fixturesOfTeam(teamId, { past: 1, next: 1 })) });
+    } catch (e) {
+      console.error('[foot] refresh', e.message);
+      fail(res, 'football.error.refresh_failed', 502);
+    }
   });
 
   router.get('/team/:id', async (req, res) => {
