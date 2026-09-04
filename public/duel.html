@@ -195,7 +195,7 @@ const UI = {
     goal:'BUT !',ko:'TRIBUNE VIDÉE',halftime:'MI-TEMPS',fulltime:'COUP DE SIFFLET FINAL',
     offline:'ADVERSAIRE DÉCONNECTÉ',offlineTxt:'Il a une minute pour revenir.',
     chants:'CHANTS',retreat:'RECULER',needLogin:'CONNEXION REQUISE',needLoginTxt:'Crée un compte pour entrer en duel.',
-    login:'ALLER AU COMPTE',kickoff:'COUP D\u2019ENVOI'},
+    login:'ALLER AU COMPTE',kickoff:'COUP D\u2019ENVOI',queueFailed:'MISE EN FILE REFUSÉE',noOpponent:'PERSONNE EN FACE',noOpponentTxt:'Aucun adversaire pour l\u2019instant. Réessaie, ou reviens quand un autre supporter sera en ligne.'},
   en:{queue:'LOOKING FOR AN OPPONENT',queueTxt:'Finding you a stand to face. Stay on this page.',
     find:'FIND A DUEL',ready:'READY TO PLAY',readyTxt:'A match lasts 90 minutes of play. First to three goals wins.',
     endTurn:'END TURN',chant:'CHANT',promote:'TO THE FRONT ROW',promoteTxt:'Pick the group moving up',
@@ -204,7 +204,7 @@ const UI = {
     goal:'GOAL!',ko:'STAND EMPTIED',halftime:'HALF TIME',fulltime:'FULL TIME',
     offline:'OPPONENT DISCONNECTED',offlineTxt:'They have a minute to come back.',
     chants:'CHANTS',retreat:'STEP BACK',needLogin:'SIGN IN REQUIRED',needLoginTxt:'Create an account to enter a duel.',
-    login:'GO TO ACCOUNT',kickoff:'KICK-OFF'},
+    login:'GO TO ACCOUNT',kickoff:'KICK-OFF',queueFailed:'COULD NOT JOIN THE QUEUE',noOpponent:'NOBODY OPPOSITE',noOpponentTxt:'No opponent right now. Try again, or come back when another supporter is online.'},
   de:{queue:'GEGNER WIRD GESUCHT',queueTxt:'Wir suchen dir einen Block gegenüber. Bleib auf dieser Seite.',
     find:'DUELL SUCHEN',ready:'BEREIT',readyTxt:'Ein Spiel dauert 90 Spielminuten. Wer zuerst drei Tore hat, gewinnt.',
     endTurn:'ZUG BEENDEN',chant:'ANSTIMMEN',promote:'IN DIE ERSTE REIHE',promoteTxt:'Wähle die Gruppe',
@@ -213,7 +213,7 @@ const UI = {
     goal:'TOR!',ko:'BLOCK GELEERT',halftime:'HALBZEIT',fulltime:'ABPFIFF',
     offline:'GEGNER GETRENNT',offlineTxt:'Er hat eine Minute, um zurückzukommen.',
     chants:'GESÄNGE',retreat:'ZURÜCKTRETEN',needLogin:'ANMELDUNG NÖTIG',needLoginTxt:'Erstelle ein Konto für Duelle.',
-    login:'ZUM KONTO',kickoff:'ANPFIFF'},
+    login:'ZUM KONTO',kickoff:'ANPFIFF',queueFailed:'WARTESCHLANGE ABGELEHNT',noOpponent:'NIEMAND GEGENÜBER',noOpponentTxt:'Gerade kein Gegner. Versuch es erneut oder komm wieder, wenn jemand online ist.'},
   es:{queue:'BUSCANDO RIVAL',queueTxt:'Te buscamos una grada enfrente. Quédate en esta página.',
     find:'BUSCAR DUELO',ready:'LISTO',readyTxt:'Un partido dura 90 minutos de juego. Gana quien marque tres goles.',
     endTurn:'FIN DE TURNO',chant:'CANTAR',promote:'A PRIMERA FILA',promoteTxt:'Elige el grupo que sube',
@@ -222,7 +222,7 @@ const UI = {
     goal:'¡GOL!',ko:'GRADA VACIADA',halftime:'DESCANSO',fulltime:'FINAL',
     offline:'RIVAL DESCONECTADO',offlineTxt:'Tiene un minuto para volver.',
     chants:'CÁNTICOS',retreat:'RETROCEDER',needLogin:'HAY QUE ENTRAR',needLoginTxt:'Crea una cuenta para jugar duelos.',
-    login:'IR A LA CUENTA',kickoff:'SAQUE INICIAL'},
+    login:'IR A LA CUENTA',kickoff:'SAQUE INICIAL',queueFailed:'NO SE PUDO ENTRAR EN COLA',noOpponent:'NADIE ENFRENTE',noOpponentTxt:'Ningún rival ahora mismo. Inténtalo otra vez o vuelve cuando haya alguien conectado.'},
 };
 
 const LOCALES = ['fr','en','de','es'];
@@ -240,6 +240,7 @@ const { project, cardDef, cardName, chantName, cardArt, AMBIANCE, costColor, RUL
 /* ------------------------------------------------------------ état */
 
 let socket = null, snap = null, seqGap = [];
+let queuedSince = 0;
 let selected = null;      // uid du groupe sélectionné
 let arming = false;       // le souffle attend une cible
 let status = 'idle';
@@ -525,7 +526,11 @@ function connect(){
   socket.on('duel:start', open);
   socket.on('duel:state', open);
 
-  socket.on('duel:queued', () => { status = 'queued'; veil(u('queue'), u('queueTxt')); });
+  socket.on('duel:queued', ({ position }) => {
+    status = 'queued';
+    queuedSince = Date.now();
+    veil(u('queue'), `${u('queueTxt')} (${position})`);
+  });
 
   socket.on('duel:event', ({ seq, event }) => {
     if (!snap || seq <= snap.seq) return;
@@ -550,6 +555,12 @@ function connect(){
       veil(u('needLogin'), u('needLoginTxt'), u('login'), () => { location.href = '/compte'; }, false);
       return;
     }
+    // Pendant l'attente, le voile masquerait le message : on l'affiche dessus.
+    if (status === 'queued') {
+      veil(u('queueFailed'), d(e.code), u('find'), startQueue, false);
+      status = 'idle';
+      return;
+    }
     fail(e.code);
   });
 
@@ -565,10 +576,27 @@ function connect(){
   });
 }
 
-veil(u('ready'), u('readyTxt'), u('find'), () => {
+function startQueue(){
+  if (!socket?.connected) { veil(u('offline'), u('offlineTxt')); return; }
+  status = 'queued';
+  queuedSince = Date.now();
   veil(u('queue'), u('queueTxt'));
   socket.emit('duel:queue', {});
-}, false);
+}
+
+// Au bout de 45 secondes sans adversaire, on le dit plutôt que de tourner
+// indéfiniment : le joueur doit pouvoir renoncer ou réessayer.
+setInterval(() => {
+  if (status !== 'queued' || !queuedSince) return;
+  if (Date.now() - queuedSince > 45_000) {
+    status = 'idle';
+    queuedSince = 0;
+    socket.emit('duel:cancel_queue');
+    veil(u('noOpponent'), u('noOpponentTxt'), u('find'), startQueue, false);
+  }
+}, 2000);
+
+veil(u('ready'), u('readyTxt'), u('find'), startQueue, false);
 connect();
 </script>
 </body>
