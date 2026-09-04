@@ -82,8 +82,10 @@ export class DuelServer {
     const token = (socket.handshake.auth?.token ?? socket.handshake.query?.token) as string | undefined;
     const who = await this.opts.authenticate(token, socket);
     if (!who) {
-      socket.emit('duel:error', { code: 'error.unauthenticated' });
-      socket.disconnect(true);
+      socket.emit('duel:error', { code: 'auth.error.unauthenticated' });
+      // Couper immédiatement ferait perdre le message : le client ne saurait
+      // pas qu'il doit se connecter, il verrait juste une déconnexion.
+      setTimeout(() => socket.disconnect(true), 150).unref?.();
       return;
     }
     this.sessions.set(socket, { ...who, intents: [] });

@@ -8,14 +8,20 @@
   },
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",
-    "build": "npm install --omit=dev",
+    "build": "npm install && node build.mjs",
     "auth:smoke": "node scripts/auth-smoke.mjs",
-    "foot:smoke": "node scripts/football-smoke.mjs"
+    "foot:smoke": "node scripts/football-smoke.mjs",
+    "duel:smoke": "node scripts/duel-play.mjs"
   },
   "dependencies": {
-    "express": "^4.21.2",
-    "mysql2": "^3.11.5",
+    "express": "^4.22.2",
+    "mysql2": "^3.24.3",
     "nodemailer": "^6.10.1",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "typescript": "5.8"
   }
 }

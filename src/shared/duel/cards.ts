@@ -65,6 +65,18 @@ export const CARDS: CardDef[] = [
 
 export const CARD_BY_ID = new Map(CARDS.map((c) => [c.id, c]));
 
+/**
+ * Deck de départ, identique pour tous tant que la collection n'existe pas.
+ * Volontairement resserré sur trois ambiances : un deck qui pioche six
+ * ambiances différentes ne réunit jamais le souffle nécessaire à un chant.
+ */
+export const STARTER_DECK: string[] = [
+  'VN-003', 'VN-003', 'VN-003', 'VN-004', 'VN-004', 'VN-004',
+  'VN-001', 'VN-001', 'VN-006', 'VN-006', 'VN-007', 'VN-007',
+  'VN-008', 'VN-009', 'NE-004', 'NE-004', 'NE-003', 'NE-007',
+  'NE-007', 'VN-010',
+];
+
 export function cardDef(id: string): CardDef {
   const c = CARD_BY_ID.get(id);
   if (!c) throw new Error(`carte inconnue: ${id}`);
