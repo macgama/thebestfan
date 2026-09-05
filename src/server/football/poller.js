@@ -139,9 +139,15 @@ export function createPoller({ client, store, broadcast, onGoal, log = console }
 
     // Seuls les buts nouveaux depuis le dernier passage sont annoncés.
     const fresh = events.slice(known.length).filter((e) => e.type === 'Goal');
+    let rank = events.slice(0, known.length).filter((e) => e.type === 'Goal').length;
     for (const g of fresh) {
       const payload = {
         fixtureId: f.id,
+        // Rang du but dans le match : c'est la clé qui rend la frappe des
+        // cartes-souvenirs rejouable sans doublon.
+        seq: ++rank,
+        leagueId: f.leagueId,
+        kickoffAt: f.kickoffAt,
         teamId: g.teamId,
         minute: g.minute,
         player: g.player,

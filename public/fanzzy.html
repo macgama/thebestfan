@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Fanzzy — collection</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;
+  --bleu:#3C82E8;--violet:#8257DA;--gris:#C2CAD6;
+  --banner:"Oswald","Arial Narrow",Impact,sans-serif;
+  --ui:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;height:100%}
+body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;overflow:hidden}
+#app{position:relative;width:100%;max-width:440px;height:100dvh;overflow:hidden;display:flex;flex-direction:column;
+  background:radial-gradient(120% 55% at 50% -8%,rgba(245,195,59,.15),transparent 60%),
+             linear-gradient(180deg,#141A21,#0B0E12 46%,#0A0D11)}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:13px 16px 6px;flex:none;z-index:4}
+.mark{font-family:var(--banner);font-weight:700;font-size:20px;letter-spacing:.16em;line-height:1}
+.mark small{display:block;font-size:8.5px;letter-spacing:.3em;opacity:.5;font-weight:400;margin-top:3px}
+.purse{display:flex;gap:8px}
+.chip{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.12);
+  border-radius:999px;padding:5px 11px}
+.chip b{font-family:var(--banner);font-size:14px;line-height:1}
+.chip span{font-size:9px;opacity:.55;letter-spacing:.05em}
+
+.screen{flex:1;display:none;flex-direction:column;min-height:0;padding-bottom:66px;z-index:2}
+.screen.on{display:flex}
+
+/* -------------------------------------------------------------- kiosque */
+#bg{position:absolute;inset:-6% -6% -6% -6%;background-size:cover;background-position:center;
+  opacity:0;transition:opacity 1.2s;z-index:0;will-change:transform}
+#bg.on{opacity:.5}
+#bgveil{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(120% 60% at 50% 40%,transparent,rgba(8,10,14,.55) 60%,#080A0E)}
+
+.carousel{position:relative;width:100%;height:320px;perspective:1100px;touch-action:pan-y}
+.slide{position:absolute;left:50%;top:50%;width:186px;aspect-ratio:.62;margin:0;cursor:grab;
+  transform-style:preserve-3d;transition:transform .55s cubic-bezier(.22,.9,.28,1),opacity .45s,filter .45s;
+  border-radius:11px;overflow:hidden;border:1px solid rgba(0,0,0,.6);
+  box-shadow:0 26px 46px rgba(0,0,0,.66),inset 0 1px 0 rgba(255,255,255,.2)}
+.slide img{width:100%;height:100%;object-fit:cover;display:block}
+.slide svg{width:100%;height:100%;display:block}
+.slide .foil{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 34%,rgba(255,255,255,.42) 46%,
+    rgba(180,225,255,.28) 52%,transparent 66%);
+  background-size:260% 260%;background-position:120% 0;mix-blend-mode:screen}
+.slide.center .foil{animation:foil 4.5s ease-in-out infinite}
+@keyframes foil{0%{background-position:130% 0}55%{background-position:-40% 0}100%{background-position:-40% 0}}
+.slide.center{animation:float 5.5s ease-in-out infinite}
+@keyframes float{0%,100%{margin-top:0}50%{margin-top:-9px}}
+.slide.side{filter:brightness(.42) saturate(.65)}
+.slide.hidden{opacity:0;pointer-events:none}
+.shadow{position:absolute;left:50%;bottom:6px;width:150px;height:16px;transform:translateX(-50%);
+  background:radial-gradient(ellipse,rgba(0,0,0,.75),transparent 70%);filter:blur(5px)}
+
+.tearhint{font-size:10.5px;letter-spacing:.2em;opacity:.45;margin-top:6px;text-align:center}
+
+/* --------------------------------------------------- geste d'ouverture */
+.tearzone{position:absolute;inset:0;z-index:24;display:none;flex-direction:column;
+  align-items:center;justify-content:center;background:rgba(5,7,10,.94)}
+.tearzone.on{display:flex}
+.tearpack{width:210px;aspect-ratio:.62;position:relative;border-radius:12px;overflow:hidden;
+  box-shadow:0 30px 60px rgba(0,0,0,.7);touch-action:none}
+.tearpack img,.tearpack svg{width:100%;height:100%;object-fit:cover;display:block}
+.tearpack .rip{position:absolute;left:0;right:0;top:0;height:0;overflow:hidden;
+  border-bottom:2px dashed rgba(245,195,59,.85)}
+.tearpack .rip::after{content:"";position:absolute;inset:0;background:rgba(5,7,10,.9)}
+.tearpack .glow{position:absolute;left:0;right:0;top:0;height:6px;opacity:0;
+  background:linear-gradient(180deg,rgba(255,240,190,.95),transparent);filter:blur(3px)}
+.tearpack.charged{animation:shiver .18s infinite}
+@keyframes shiver{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-2px) rotate(-.5deg)}
+  75%{transform:translateX(2px) rotate(.5deg)}}
+.tearlbl{margin-top:20px;font-family:var(--banner);font-size:14px;letter-spacing:.2em;opacity:.7;
+  text-align:center;line-height:1.6}
+.tearlbl b{color:var(--projo)}
+
+#burst{position:absolute;inset:0;z-index:23;pointer-events:none;object-fit:cover;width:100%;height:100%;
+  mix-blend-mode:screen;opacity:0;transition:opacity .4s}
+#burst.on{opacity:1}
+.flash{position:absolute;inset:0;z-index:25;background:#fff;opacity:0;pointer-events:none}
+.flash.go{animation:flash .5s ease-out}
+#app.quake{animation:quake .6s}
+@keyframes quake{0%,100%{transform:translate(0,0)}
+  15%{transform:translate(-6px,3px)}35%{transform:translate(5px,-4px)}
+  55%{transform:translate(-4px,-2px)}75%{transform:translate(3px,3px)}}
+@keyframes flash{0%{opacity:.85}100%{opacity:0}}
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.setname{font-family:var(--banner);font-size:12px;letter-spacing:.28em;opacity:.7}
+.setline{font-size:10.5px;opacity:.42;margin:4px 0 18px}
+.packwrap{position:relative}
+.packglow{position:absolute;width:230px;height:230px;border-radius:50%;left:50%;top:50%;
+  transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(245,195,59,.26),transparent 65%);
+  filter:blur(14px);animation:breathe 5s ease-in-out infinite;pointer-events:none}
+@keyframes breathe{0%,100%{opacity:.5}50%{opacity:1}}
+.pack{width:178px;aspect-ratio:.62;border-radius:9px;overflow:hidden;position:relative;cursor:pointer;
+  border:1px solid rgba(0,0,0,.6);box-shadow:0 24px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.22);
+  transform:rotate(-2deg);transition:transform .2s;display:block;background:none;padding:0}
+.pack:active{transform:rotate(-2deg) scale(.97)}
+.packnav{display:flex;align-items:center;gap:16px;margin-top:18px}
+.packnav button{width:30px;height:30px;border-radius:50%;border:1px solid rgba(242,238,228,.18);
+  background:rgba(0,0,0,.3);color:inherit;cursor:pointer}
+.dots{display:flex;gap:5px}
+.dots i{width:6px;height:6px;border-radius:50%;background:rgba(242,238,228,.22);display:block}
+.dots i.on{background:var(--projo)}
+.cta{margin:16px auto 6px;display:block;width:min(300px,82%);
+  background:linear-gradient(180deg,var(--flare),#B32A1D);color:#fff;font-family:var(--banner);
+  font-size:16px;letter-spacing:.09em;padding:13px;border-radius:6px;border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 6px 0 #7A1A11;cursor:pointer}
+.cta:active{transform:translateY(4px);box-shadow:0 2px 0 #7A1A11}
+.cta[disabled]{filter:grayscale(.8);opacity:.5;pointer-events:none}
+.regen{text-align:center;font-size:10.5px;opacity:.45;min-height:15px;padding-bottom:4px}
+
+/* ------------------------------------------------------------------ dex */
+.head{padding:6px 16px 0;flex:none}
+.head h2{font-family:var(--banner);font-size:17px;letter-spacing:.12em;margin:0}
+.progress{display:flex;align-items:center;gap:9px;margin:9px 0 10px}
+.progress .bar{flex:1;height:5px;border-radius:3px;background:rgba(242,238,228,.12);overflow:hidden}
+.progress .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--projo),var(--flare));transition:width .5s}
+.progress span{font-family:var(--banner);font-size:12.5px;opacity:.7}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px;flex:none;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.filt{white-space:nowrap;font-size:11px;padding:5px 11px;border-radius:999px;cursor:pointer;
+  border:1px solid rgba(242,238,228,.16);background:rgba(0,0,0,.25);color:inherit;opacity:.65;font-family:inherit}
+.filt.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px 18px;overflow-y:auto;flex:1}
+.slot{position:relative;aspect-ratio:63/88;border-radius:6px}
+.slot.locked{border:1px dashed rgba(242,238,228,.15);background:rgba(0,0,0,.22);display:grid;place-items:center}
+.slot.locked span{font-family:var(--banner);font-size:10px;opacity:.3}
+.dupe{position:absolute;right:3px;bottom:3px;background:rgba(8,10,13,.9);border:1px solid rgba(242,238,228,.28);
+  border-radius:3px;font-family:var(--banner);font-size:9.5px;padding:0 4px;z-index:4}
+.active-tag{position:absolute;left:3px;top:3px;background:var(--projo);color:#0B0E13;border-radius:3px;
+  font-family:var(--banner);font-size:8.5px;padding:1px 5px;z-index:4;letter-spacing:.06em}
+.empty{grid-column:1/-1;text-align:center;padding:44px 22px;opacity:.5;font-size:12.5px;line-height:1.7}
+
+/* ----------------------------------------------------------- la carte */
+.fz{container-type:inline-size;position:relative;width:100%;aspect-ratio:63/88;border-radius:5cqw;
+  overflow:hidden;background:var(--tc);padding:2.4cqw;display:flex;cursor:pointer}
+.fz::before{content:"";position:absolute;inset:0;border-radius:5cqw;z-index:5;pointer-events:none;
+  background:linear-gradient(150deg,rgba(255,255,255,.3),rgba(0,0,0,.3))}
+.fz .body{flex:1;background:#EDE7DA;border-radius:3cqw;display:flex;flex-direction:column;overflow:hidden;
+  position:relative;z-index:2;color:#12161C}
+.fz .top{display:flex;align-items:center;gap:1.5cqw;padding:2cqw 2.4cqw 1cqw}
+.fz .nm{font-family:var(--banner);font-size:5.2cqw;line-height:1;text-transform:uppercase;flex:1}
+.fz .pip{width:5.4cqw;height:5.4cqw;border-radius:50%;background:var(--tc);flex:none;display:grid;place-items:center}
+.fz .pip svg{width:3.4cqw;height:3.4cqw}
+.fz .art{margin:0 2.2cqw;border:.5cqw solid #C9BFA9;border-radius:1.4cqw;overflow:hidden;flex:1;background:#0B1017}
+.fz .art svg{width:100%;height:100%;display:block}
+.fz .mods{padding:1.6cqw 3cqw;font-size:2.7cqw;line-height:1.35;color:#4B463C;flex:none;min-height:12cqw}
+.fz .foot{display:flex;align-items:center;gap:1.5cqw;padding:1.2cqw 3cqw 2.4cqw;font-size:2.4cqw;color:#5E594E}
+.fz .rar{display:flex;gap:.6cqw;align-items:center}
+.fz .rar .d{width:2.2cqw;height:2.2cqw;background:#8C8474;transform:rotate(45deg);border-radius:.3cqw}
+.fz .rar .s{font-size:3cqw;color:#C9A227;line-height:1}
+.fz .sep{flex:1}
+.fz.r-star .body{background:linear-gradient(150deg,#F7F2E5,#DCE7F2 55%,#F3E4E1)}
+.fz.r-crown .body{background:linear-gradient(150deg,#1A1F27,#2C3340 60%,#12161C);color:#F2EEE4}
+.fz.r-crown .nm{color:#F5C33B}
+.fz.r-crown .mods,.fz.r-crown .foot{color:#A9B2C0}
+.fz.holo::after{content:"";position:absolute;inset:0;z-index:6;pointer-events:none;border-radius:5cqw;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.5) 45%,rgba(160,220,255,.38) 52%,transparent 68%);
+  background-size:250% 250%;animation:sheen 3.6s linear infinite;mix-blend-mode:screen;opacity:.7}
+@keyframes sheen{0%{background-position:120% 0}100%{background-position:-40% 0}}
+
+/* ---------------------------------------------------------- ouverture */
+#opener{position:absolute;inset:0;z-index:22;display:none;flex-direction:column;
+  background:radial-gradient(120% 70% at 50% 20%,#1D242D,#05070A 70%)}
+#opener.on{display:flex}
+.ohead{display:flex;justify-content:space-between;align-items:center;padding:15px 18px;font-size:11.5px;opacity:.6}
+.ohead button{background:none;border:0;color:inherit;font-size:12px;cursor:pointer;text-decoration:underline}
+.ostage{flex:1;display:grid;place-items:center;position:relative;padding:0 34px}
+.reveal{width:min(70%,250px);position:absolute;transition:transform .42s cubic-bezier(.2,.8,.25,1),opacity .3s;cursor:pointer}
+.reveal .flip{position:relative;width:100%;aspect-ratio:63/88;transform-style:preserve-3d;
+  transition:transform .55s cubic-bezier(.3,.9,.3,1)}
+.reveal.flipped .flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:4%}
+.face.back{background:linear-gradient(160deg,#20262F,#0D1116);border:2px solid #39414E;display:grid;
+  place-items:center;box-shadow:0 18px 36px rgba(0,0,0,.6)}
+.face.front{transform:rotateY(180deg)}
+.burst{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:30}
+.newtag{position:absolute;top:-24px;left:50%;transform:translateX(-50%);font-family:var(--banner);
+  font-size:11px;letter-spacing:.2em;color:var(--projo)}
+.ofoot{padding:14px 18px 26px;display:flex;flex-direction:column;gap:9px;align-items:center}
+.hint{font-size:11.5px;opacity:.5}
+.ghost{border:1px solid rgba(242,238,228,.28);border-radius:6px;padding:9px 18px;font-size:12.5px;
+  background:none;color:inherit;cursor:pointer;font-family:inherit}
+.summary{display:none;grid-template-columns:repeat(5,1fr);gap:5px;padding:0 12px;width:100%}
+.summary.on{display:grid}
+
+/* ------------------------------------------------------------- détail */
+#detail{position:absolute;inset:0;z-index:26;display:none;flex-direction:column;padding:18px;
+  background:rgba(5,7,10,.95);backdrop-filter:blur(6px);overflow-y:auto}
+#detail.on{display:flex}
+.dtop{display:grid;place-items:center;padding:4px 0 12px}
+.dtop .fz{width:min(66%,235px)}
+.dmeta{text-align:center;font-size:12px;line-height:1.7;opacity:.7}
+.dmeta b{font-family:var(--banner);letter-spacing:.05em;opacity:1}
+.dline{margin:14px 0;border-top:1px solid rgba(242,238,228,.12);padding-top:13px}
+.dline h4{font-family:var(--banner);font-size:11px;letter-spacing:.18em;opacity:.45;margin:0 0 9px;text-align:center}
+.evo{display:flex;align-items:center;gap:7px;justify-content:center}
+.evo .step{width:62px;text-align:center;opacity:.35}
+.evo .step.have{opacity:1}
+.evo .step .fz{width:62px}
+.evo .step b{display:block;font-size:8.5px;margin-top:4px;font-family:var(--banner)}
+.evo .arrow{opacity:.4;font-size:15px}
+.dbtns{display:flex;gap:8px;margin-top:14px}
+.dbtn{flex:1;border:1px solid rgba(242,238,228,.24);background:rgba(0,0,0,.3);border-radius:7px;color:inherit;
+  padding:12px;font-family:var(--banner);font-size:13px;letter-spacing:.07em;cursor:pointer}
+.dbtn.primary{background:linear-gradient(180deg,var(--flare),#B32A1D);border-color:transparent}
+.dbtn:disabled{opacity:.35;pointer-events:none}
+.toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:#171C23;z-index:40;
+  border:1px solid rgba(242,238,228,.2);border-radius:7px;padding:11px 16px;font-size:12.5px;
+  display:none;max-width:88%;text-align:center}
+.toast.on{display:block;animation:rise .3s}
+@keyframes rise{from{opacity:0;transform:translate(-50%,10px)}}
+
+/* ---------------------------------------------------------------- nav */
+.nav{position:absolute;bottom:0;left:0;right:0;height:62px;z-index:12;display:grid;
+  grid-template-columns:repeat(3,1fr);align-items:center;
+  background:linear-gradient(180deg,rgba(10,13,17,.55),#0A0D11 45%);
+  border-top:1px solid rgba(242,238,228,.1);padding-bottom:env(safe-area-inset-bottom)}
+.nav button{background:none;border:0;color:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;
+  font-size:9px;letter-spacing:.11em;font-family:var(--banner);opacity:.42;cursor:pointer}
+.nav button.on{opacity:1;color:var(--projo)}
+.nav svg{width:19px;height:19px}
+</style>
+</head>
+<body>
+<main id="app">
+  <div id="bg"></div><div id="bgveil"></div>
+  <div class="topbar">
+    <div class="mark">FANZZY<small>collection</small></div>
+    <div class="purse">
+      <div class="chip"><b id="scarves">0</b><span>écharpes</span></div>
+      <div class="chip"><b id="packs">0</b><span>boosters</span></div>
+    </div>
+  </div>
+
+  <section class="screen on" id="s-kiosque">
+    <div class="stage">
+      <div class="setname" id="setName"></div>
+      <div class="setline" id="setLine"></div>
+      <div class="carousel" id="carousel"><div class="packglow"></div><div class="shadow"></div></div>
+      <div class="packnav">
+        <button id="prevSet">‹</button><div class="dots" id="setDots"></div><button id="nextSet">›</button>
+      </div>
+      <div class="tearhint" id="tearhint">GLISSE POUR CHANGER · TOUCHE POUR OUVRIR</div>
+    </div>
+    <button class="cta" id="openBtn">OUVRIR LE BOOSTER</button>
+    <div class="regen" id="regenTxt"></div>
+  </section>
+
+  <section class="screen" id="s-dex">
+    <div class="head">
+      <h2>LE CLASSEUR</h2>
+      <div class="progress"><div class="bar"><i id="progBar"></i></div><span id="progTxt">0/0</span></div>
+    </div>
+    <div class="chips" id="filters"></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="screen" id="s-equipe">
+    <div class="head"><h2>TON FANZZY</h2></div>
+    <div id="teamBody" style="padding:8px 18px 22px;overflow-y:auto;flex:1"></div>
+  </section>
+
+  <nav class="nav">
+    <button data-go="kiosque" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>KIOSQUE</button>
+    <button data-go="dex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18M4 8h4M4 13h4"/></svg>CLASSEUR</button>
+    <button data-go="equipe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>DUEL</button>
+  </nav>
+
+  <div class="tearzone" id="tearzone">
+    <div class="tearpack" id="tearpack"><div class="glow" id="tearglow"></div><div class="rip" id="tearrip"></div></div>
+    <div class="tearlbl" id="tearlbl">MAINTIENS POUR CHAUFFER LA TRIBUNE</div>
+  </div>
+
+  <div id="opener">
+    <video id="burst" muted playsinline preload="none"></video>
+    <div class="flash" id="flash"></div>
+    <div class="ohead"><span id="oProg">1 / 5</span><button id="oClose">Fermer</button></div>
+    <div class="ostage" id="ostage"></div>
+    <div class="summary" id="summary"></div>
+    <div class="ofoot"><div class="hint" id="oHint"></div><button class="ghost" id="oAction" style="display:none"></button></div>
+  </div>
+
+  <div id="detail">
+    <div class="dtop" id="dCard"></div>
+    <div class="dmeta" id="dMeta"></div>
+    <div class="dline" id="dEvo"></div>
+    <div class="dbtns">
+      <button class="dbtn" id="dEvolve"></button>
+      <button class="dbtn primary" id="dSelect">CHOISIR POUR LE DUEL</button>
+    </div>
+    <div class="dbtns"><button class="dbtn" id="dClose">FERMER</button></div>
+  </div>
+  <div class="toast" id="toast"></div>
+</main>
+
+<script>
+/* =======================================================================
+   FANZZY — collection, boosters, évolutions
+   Les Fanzzy ne donnent pas de points : ils changent la façon dont tes
+   gestes se jouent en duel. La rareté achète du choix, pas de la force —
+   c'est ce qui évite qu'acheter des boosters revienne à acheter des victoires.
+   ======================================================================= */
+
+/**
+ * Visuels générés avec Artlist (Nano Banana Pro).
+ *
+ * Ils sont ici en lien direct vers le CDN d'Artlist. Avant la mise en ligne,
+ * télécharge-les et sers-les depuis /public/img : un CDN tiers ajoute une
+ * résolution DNS, une poignée de main TLS et une dépendance que tu ne
+ * contrôles pas — trois choses qui coûtent cher au score de performance.
+ * Si une image ne charge pas, la page retombe sur l'illustration dessinée en
+ * SVG : rien ne casse.
+ */
+const ART = {
+  VN: 'img/pack-virage-nord',
+  NE: 'img/pack-nuits-europeennes',
+  fond: 'img/fond-tribune',
+  burst: 'video/gerbe.mp4',
+};
+
+/**
+ * Choisit le meilleur format d'image que le navigateur sait lire.
+ * AVIF quand c'est possible, WebP sinon, JPEG en dernier recours. Les trois
+ * fichiers existent, et l'écart est considérable : le paquet rouge pèse
+ * 7,2 Mo en PNG d'origine, 58 Ko en AVIF. C'est ce genre de détail qui décide
+ * d'un score de performance, pas le nombre d'animations.
+ */
+const IMG_EXT = (() => {
+  const c = document.createElement('canvas');
+  if (c.toDataURL('image/avif').startsWith('data:image/avif')) return '.avif';
+  if (c.toDataURL('image/webp').startsWith('data:image/webp')) return '.webp';
+  return '.jpg';
+})();
+const src = (base) => base + IMG_EXT;
+
+const $ = (id) => document.getElementById(id);
+// Déclarée en fonction, donc utilisable avant sa ligne : le fond parallaxe
+// s'installe tout en haut du script.
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+/**
+ * Vibration. Enveloppée dans un try : tous les navigateurs n'exposent pas
+ * l'API, et Safari iOS l'ignore silencieusement. Une animation ne doit jamais
+ * tomber parce que le retour haptique n'est pas disponible.
+ */
+function buzz(pattern) {
+  try { navigator.vibrate?.(pattern); } catch { /* sans importance */ }
+}
+
+/* ------------------------------------------------------------------ son
+   Aucun fichier audio : tout est synthétisé au moment du geste. Zéro octet
+   téléchargé, et le son colle exactement à l'action. Le contexte n'est créé
+   qu'au premier toucher, comme l'exigent les navigateurs. */
+
+let AC = null;
+const audio = {
+  ready() {
+    if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch {} }
+    if (AC?.state === 'suspended') AC.resume();
+    return AC;
+  },
+  /** Bruit filtré : le papier alu qu'on déchire. */
+  rip(intensity = 1) {
+    const ac = this.ready(); if (!ac) return;
+    const dur = 0.28 * intensity;
+    const buf = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 1.6;
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const f = ac.createBiquadFilter(); f.type = 'bandpass';
+    f.frequency.setValueAtTime(1400, ac.currentTime);
+    f.frequency.exponentialRampToValueAtTime(4200, ac.currentTime + dur);
+    f.Q.value = 0.8;
+    const g = ac.createGain(); g.gain.value = 0.22 * intensity;
+    src.connect(f).connect(g).connect(ac.destination); src.start();
+  },
+  /** Claquement sec : la carte qui se retourne. */
+  flip() {
+    const ac = this.ready(); if (!ac) return;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(620, ac.currentTime);
+    o.frequency.exponentialRampToValueAtTime(180, ac.currentTime + 0.09);
+    g.gain.setValueAtTime(0.14, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.11);
+    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.12);
+  },
+  /** Accord montant : plus la carte est rare, plus l'accord est riche. */
+  chime(rar) {
+    const ac = this.ready(); if (!ac) return;
+    const notes = { d3:[523,659], star:[523,659,784], crown:[523,659,784,1047,1319] }[rar];
+    if (!notes) return;
+    notes.forEach((hz, i) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'sine'; o.frequency.value = hz;
+      const t = ac.currentTime + i * 0.07;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.16, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 1.1);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + 1.2);
+    });
+  },
+  /** Grondement de tribune pour une couronne. */
+  roar() {
+    const ac = this.ready(); if (!ac) return;
+    const dur = 1.8;
+    const buf = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) {
+      const t = i / d.length;
+      d[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * t) * 0.9;
+    }
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 700;
+    const g = ac.createGain(); g.gain.value = 0.3;
+    src.connect(f).connect(g).connect(ac.destination); src.start();
+  },
+};
+
+/* ------------------------------------------------------------ stockage */
+
+/**
+ * Tout l'état vit sur le serveur.
+ *
+ * Boosters, écharpes, collection et Fanzzy équipé étaient dans le navigateur
+ * tant qu'ils ne servaient à rien. Depuis qu'une écharpe achète une vignette,
+ * un solde côté client se modifierait avec la console du navigateur : c'est le
+ * serveur qui tire les boosters et tient les comptes.
+ */
+const api = async (path, body, method) => {
+  const res = await fetch('/api/fanzzy' + path, {
+    method: method ?? (body === undefined ? 'GET' : 'POST'),
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (res.status === 401) { location.href = '/compte'; throw new Error('auth'); }
+  const json = await res.json().catch(() => ({}));
+  if (json.error) throw Object.assign(new Error(json.error), { code: json.error });
+  return json;
+};
+
+/* --------------------------------------------------------------- types */
+
+const TYPES = {
+  voix: { nom:'Voix', c:'#F5C33B', geste:'tempo',
+    ico:'M4 9v6h4l5 4V5L8 9H4zm12.5-1a5 5 0 0 1 0 8' },
+  perc: { nom:'Percussion', c:'#3C82E8', geste:'martelage',
+    ico:'M12 6c5 0 8 1.5 8 3.5S17 13 12 13 4 11.5 4 9.5 7 6 12 6zm-8 4v5c0 2 3.5 3.5 8 3.5s8-1.5 8-3.5v-5' },
+  fide: { nom:'Fidélité', c:'#C2CAD6', geste:'endurance',
+    ico:'M12 21s-7-4.4-7-9.5A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 3.5C19 16.6 12 21 12 21z' },
+  tifo: { nom:'Tifo', c:'#8257DA', geste:'contre',
+    ico:'M4 4h16v12l-8-3-8 3V4z' },
+  pyro: { nom:'Pyro', c:'#E0402C', geste:'risque',
+    ico:'M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-2-1-3-1-4 2 1 4 3 4 6a6 6 0 0 1-12 0c0-5 6-7 6-11z' },
+  depl: { nom:'Déplacement', c:'#1E9E6A', geste:'souffle',
+    ico:'M4 7h16v8H4zM4 15v3h3v-3m10 0v3h3v-3M6 10h12' },
+};
+
+const RAR = { d1:1, d2:2, d3:3, star:4, crown:5 };
+const SCARVES = { d1:1, d2:3, d3:8, star:25, crown:60 };
+/**
+ * Coût d'évolution. Calibré sur la simulation : compléter la collection
+ * rapporte environ 1 150 écharpes, faire évoluer les six lignées en coûte 690.
+ * Il reste de quoi choisir, pas de quoi tout avoir sans y penser.
+ */
+const EVO_COST = { 2:25, 3:90 };
+
+/* ------------------------------------------------------------- catalogue
+   mods : ce que le Fanzzy change dans le duel.
+   tempoWindow >1 = fenêtre plus large · tempoInterval ms = cadence
+   mashTime ms · mashBonus · holdForgive · holdBonus
+   perfectBonus · backfire · refundBonus · parryBonus · breathBonus       */
+
+const DEX = [
+  // --- VOIX
+  { id:'V1', nom:'Choriste', type:'voix', set:'VN', stage:1, rar:'d1', evo:'V2',
+    mods:{ tempoWindow:1.2 }, cri:{ label:'REPRISE', gest:'tempo', power:52 } },
+  { id:'V2', nom:'Meneur de chant', type:'voix', set:'VN', stage:2, rar:'d2', evo:'V3',
+    mods:{ tempoWindow:1.45, tempoInterval:40 }, cri:{ label:'MUR DU SON', gest:'tempo', power:64 } },
+  { id:'V3', nom:'Capo di Curva', type:'voix', set:'VN', stage:3, rar:'star',
+    mods:{ tempoWindow:1.7, tempoInterval:80 }, cri:{ label:'TOUT LE VIRAGE', gest:'tempo', power:78 } },
+  // --- PERCUSSION
+  { id:'P1', nom:'Gamin au tambour', type:'perc', set:'VN', stage:1, rar:'d1', evo:'P2',
+    mods:{ mashBonus:1.06 }, cri:{ label:'ROULEMENT', gest:'mash', power:52 } },
+  { id:'P2', nom:'Tambour Major', type:'perc', set:'VN', stage:2, rar:'d2', evo:'P3',
+    mods:{ mashBonus:1.1, mashTime:-500 }, cri:{ label:'CADENCE', gest:'mash', power:66 } },
+  { id:'P3', nom:'Grosse Caisse Sud', type:'perc', set:'VN', stage:3, rar:'d3',
+    mods:{ mashBonus:1.16, mashTime:-800 }, cri:{ label:'TEMPO INFERNAL', gest:'mash', power:76 } },
+  // --- FIDÉLITÉ
+  { id:'F1', nom:'Abonné', type:'fide', set:'VN', stage:1, rar:'d1', evo:'F2',
+    mods:{ holdBonus:1.07 }, cri:{ label:'PRÉSENTS', gest:'hold', power:50 } },
+  { id:'F2', nom:'Vieille Garde', type:'fide', set:'VN', stage:2, rar:'d2', evo:'F3',
+    mods:{ holdBonus:1.12, holdForgive:1 }, cri:{ label:'ON ÉTAIT LÀ', gest:'hold', power:64 } },
+  { id:'F3', nom:'Doyen du Bloc C', type:'fide', set:'VN', stage:3, rar:'crown',
+    mods:{ holdBonus:1.2, holdForgive:2, breathBonus:1.08 }, cri:{ label:'CINQUANTE ANS', gest:'hold', power:80 } },
+  // --- TIFO
+  { id:'T1', nom:'Colleur d\u2019affiches', type:'tifo', set:'NE', stage:1, rar:'d1', evo:'T2',
+    mods:{ parryBonus:1.2 }, cri:{ label:'CONSIGNES', gest:'tempo', power:48 } },
+  { id:'T2', nom:'Bâcheur Nocturne', type:'tifo', set:'NE', stage:2, rar:'d2', evo:'T3',
+    mods:{ parryBonus:1.5 }, cri:{ label:'BÂCHE SURPRISE', gest:'hold', power:62 } },
+  { id:'T3', nom:'Chef Tifo', type:'tifo', set:'NE', stage:3, rar:'star',
+    mods:{ parryBonus:1.9, holdBonus:1.06 }, cri:{ label:'MOSAÏQUE GÉANTE', gest:'hold', power:74 } },
+  // --- PYRO
+  { id:'Y1', nom:'Porte-torche', type:'pyro', set:'NE', stage:1, rar:'d1', evo:'Y2',
+    mods:{ perfectBonus:1.2 }, cri:{ label:'TORCHE', gest:'mash', power:54 } },
+  { id:'Y2', nom:'Fumigène', type:'pyro', set:'NE', stage:2, rar:'d2', evo:'Y3',
+    mods:{ perfectBonus:1.35, backfire:true }, cri:{ label:'NAPPE DE FUMÉE', gest:'mash', power:70 } },
+  { id:'Y3', nom:'Craqueur', type:'pyro', set:'NE', stage:3, rar:'d3',
+    mods:{ perfectBonus:1.5, backfire:true }, cri:{ label:'EMBRASEMENT', gest:'mash', power:86 } },
+  // --- DÉPLACEMENT
+  { id:'D1', nom:'Auto-stoppeur', type:'depl', set:'NE', stage:1, rar:'d1', evo:'D2',
+    mods:{ breathBonus:1.08 }, cri:{ label:'PREMIER PÉAGE', gest:'tempo', power:50 } },
+  { id:'D2', nom:'Conducteur de car', type:'depl', set:'NE', stage:2, rar:'d2', evo:'D3',
+    mods:{ breathBonus:1.16, refundBonus:1.4 }, cri:{ label:'KLAXONS', gest:'mash', power:64 } },
+  { id:'D3', nom:'Convoi 4h du Mat', type:'depl', set:'NE', stage:3, rar:'d3',
+    mods:{ breathBonus:1.24, refundBonus:1.8 }, cri:{ label:'ON EST VENUS POUR ÇA', gest:'hold', power:76 } },
+  // --- sans évolution
+  { id:'X1', nom:'Le Douzième Homme', type:'voix', set:'VN', stage:1, rar:'d3',
+    mods:{ tempoWindow:1.3, breathBonus:1.1 }, cri:{ label:'OLA', gest:'tempo', power:68 } },
+  { id:'X2', nom:'Écharpes au Vent', type:'fide', set:'VN', stage:1, rar:'d2',
+    mods:{ holdBonus:1.1 }, cri:{ label:'LEVER LES BRAS', gest:'hold', power:56 } },
+  { id:'X3', nom:'Mosaïque Populaire', type:'tifo', set:'NE', stage:1, rar:'d2',
+    mods:{ parryBonus:1.3 }, cri:{ label:'DÉPLOIEMENT', gest:'tempo', power:56 } },
+  { id:'X4', nom:'Parcage 400 places', type:'depl', set:'NE', stage:1, rar:'star',
+    mods:{ breathBonus:1.14, parryBonus:1.4 }, cri:{ label:'ÉCHO DU PARCAGE', gest:'mash', power:72 } },
+  { id:'X5', nom:'La Nuit du 8e', type:'pyro', set:'NE', stage:1, rar:'crown',
+    mods:{ perfectBonus:1.45, tempoWindow:1.2, mashBonus:1.08 }, cri:{ label:'PROLONGATIONS', gest:'mash', power:90 } },
+  { id:'X6', nom:'Section Cendrée', type:'fide', set:'VN', stage:1, rar:'d1',
+    mods:{ holdBonus:1.05, breathBonus:1.04 }, cri:{ label:'FIDÈLES', gest:'hold', power:48 } },
+];
+
+const BY_ID = new Map(DEX.map((f) => [f.id, f]));
+const SETS = [
+  { id:'VN', nom:'VIRAGE NORD', ligne:'béton, pluie, hiver', c1:'#E0402C', c2:'#1A1F27' },
+  { id:'NE', nom:'NUITS EUROPÉENNES', ligne:'jeudi soir, 900 km', c1:'#3C82E8', c2:'#151A22' },
+];
+
+/** Taux de tirage. Les trois premières cartes sont communes, comme dans Pocket. */
+const RATES = {
+  4: [['d2',.80],['d3',.15],['star',.04],['crown',.01]],
+  5: [['d2',.55],['d3',.30],['star',.12],['crown',.03]],
+};
+
+/* ------------------------------------------------------------- état */
+
+const MAXP = 12, REGEN = 10 * 60 * 1000;
+let S = { col:{}, scarves:0, packs:MAXP, last:Date.now(), active:null, set:0, filter:'all' };
+
+/** L'état complet vient du serveur : bourse, collection, Fanzzy équipé. */
+async function load() {
+  const st = await api('/state');
+  S.col = st.collection;
+  S.scarves = st.wallet.scarves;
+  S.packs = st.wallet.packs;
+  S.active = st.wallet.active;
+  S.nextIn = st.wallet.nextPackInMs;
+  S.packPrice = st.packPrice;
+  tickRegen();
+}
+
+// Plus rien à sauvegarder ici : chaque action passe par une route qui écrit
+// en base et renvoie le nouvel état.
+const save = () => {};
+
+function tickRegen() {
+  if (S.nextIn != null) S.nextIn = Math.max(0, S.nextIn - 1000);
+  $('packs').textContent = S.packs;
+  $('scarves').textContent = S.scarves;
+  $('openBtn').disabled = S.packs <= 0;
+  const el = $('regenTxt');
+  if (S.packs >= MAXP || S.nextIn == null) el.textContent = 'Réserve pleine';
+  else if (S.nextIn <= 0) { el.textContent = 'Booster prêt'; load().catch(() => {}); }
+  else {
+    el.textContent = `Booster suivant dans ${Math.floor(S.nextIn / 60000)}:` +
+      `${String(Math.floor(S.nextIn % 60000 / 1000)).padStart(2, '0')}` +
+      (S.scarves >= (S.packPrice ?? 45) ? ` · ou ${S.packPrice ?? 45} écharpes` : '');
+  }
+}
+setInterval(tickRegen, 1000);
+
+/* ----------------------------------------------------- illustrations */
+
+let uid = 0;
+function seeded(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+  return () => { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296; };
+}
+
+const artCache = new Map();
+function art(f) {
+  if (artCache.has(f.id)) return artCache.get(f.id);
+  const r = seeded(f.id), tc = TYPES[f.type].c, u = 'g' + uid++;
+  let s = `<svg viewBox="0 0 128 100" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+   <defs><linearGradient id="s${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16202C"/>
+     <stop offset="1" stop-color="#05080C"/></linearGradient>
+   <radialGradient id="h${u}"><stop offset="0" stop-color="${tc}" stop-opacity=".55"/>
+     <stop offset="1" stop-color="${tc}" stop-opacity="0"/></radialGradient>
+   <filter id="b${u}"><feGaussianBlur stdDeviation="3"/></filter></defs>
+   <rect width="128" height="100" fill="url(#s${u})"/>
+   <polygon points="16,-4 30,-4 58,64 4,64" fill="#F5C33B" opacity=".09"/>
+   <polygon points="98,-4 112,-4 124,64 70,64" fill="#F5C33B" opacity=".09"/>
+   <circle cx="64" cy="84" r="50" fill="url(#h${u})" opacity=".65"/>`;
+
+  // silhouette du supporter, plus imposante selon l'étage d'évolution
+  const scale = 0.85 + f.stage * 0.12;
+  s += `<g transform="translate(64,60) scale(${scale.toFixed(2)}) translate(-64,-60)">
+    <circle cx="64" cy="34" r="11" fill="#0A0E13" stroke="${tc}" stroke-width="1.6"/>
+    <path d="M52 78 v-20 a12 12 0 0 1 24 0 v20z" fill="#0A0E13" stroke="${tc}" stroke-width="1.4"/>`;
+  if (f.type === 'voix') s += `<path d="M74 40 l16-11 4 7 -16 9z" fill="${tc}"/>`;
+  if (f.type === 'perc') s += `<ellipse cx="64" cy="66" rx="15" ry="11" fill="#E9E3D4" stroke="${tc}" stroke-width="2"/>`;
+  if (f.type === 'fide') s += `<path d="M44 56 q20 -12 40 0" stroke="${tc}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+  if (f.type === 'tifo') s += `<rect x="40" y="44" width="48" height="20" fill="#E9E3D4" stroke="${tc}" stroke-width="1.6"/>`;
+  if (f.type === 'pyro') s += `<circle cx="86" cy="48" r="4" fill="#FFF3D0"/><circle cx="86" cy="48" r="11" fill="${tc}" opacity=".5" filter="url(#b${u})"/>`;
+  if (f.type === 'depl') s += `<rect x="34" y="52" width="60" height="18" rx="3" fill="#12202F" stroke="${tc}" stroke-width="1.4"/>`;
+  s += `</g>`;
+
+  let steps = 'M0 100';
+  for (let i = 0; i < 9; i++) steps += `L${i * 14.5} ${100 - i * 4.2}L${(i + 1) * 14.5} ${100 - i * 4.2}`;
+  s += `<path d="${steps}L128 100Z" fill="#080B10" opacity=".9"/>`;
+  for (let row = 0; row < 3; row++) {
+    const y = 93 - row * 8;
+    for (let i = 0; i < 15; i++) {
+      const x = (4 + i * 8.6 + r() * 3).toFixed(1);
+      s += `<circle cx="${x}" cy="${y}" r="2" fill="${r() > .88 ? tc : '#1C2530'}"/>`;
+    }
+  }
+  s += `<rect width="128" height="100" fill="#000" opacity=".07"/></svg>`;
+  artCache.set(f.id, s);
+  return s;
+}
+
+function packArt(set) {
+  const r = seeded(set.id), u = 'p' + uid++;
+  let s = `<svg viewBox="0 0 100 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+   <defs><linearGradient id="pg${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${set.c2}"/>
+     <stop offset=".55" stop-color="${set.c1}" stop-opacity=".5"/><stop offset="1" stop-color="${set.c2}"/></linearGradient>
+   <filter id="pb${u}"><feGaussianBlur stdDeviation="6"/></filter></defs>
+   <rect width="100" height="160" fill="url(#pg${u})"/>
+   <polygon points="10,0 24,0 46,96 -6,96" fill="#F5C33B" opacity=".11"/>
+   <polygon points="76,0 90,0 106,96 54,96" fill="#F5C33B" opacity=".11"/>`;
+  for (let i = 0; i < 5; i++) s += `<ellipse cx="${(14 + r() * 72).toFixed(1)}" cy="${(90 + r() * 50).toFixed(1)}" rx="${(18 + r() * 22).toFixed(1)}" ry="${(14 + r() * 16).toFixed(1)}" fill="${set.c1}" opacity=".28" filter="url(#pb${u})"/>`;
+  let st = 'M0 160'; for (let i = 0; i < 7; i++) st += `L${i * 15} ${160 - i * 7}L${(i + 1) * 15} ${160 - i * 7}`;
+  s += `<path d="${st}L100 160Z" fill="#05080C" opacity=".9"/>
+   <text x="50" y="34" text-anchor="middle" font-family="Oswald,Impact,sans-serif" font-size="13" fill="#F2EEE4" letter-spacing="3">FANZZY</text>
+   <line x1="26" y1="40" x2="74" y2="40" stroke="#F2EEE4" stroke-width=".8" opacity=".5"/>
+   <text x="50" y="55" text-anchor="middle" font-family="Oswald,Impact,sans-serif" font-size="7.5" fill="${set.c1}" letter-spacing="1.4">${set.nom}</text></svg>`;
+  return s;
+}
+
+/* --------------------------------------------------------- rendu carte */
+
+function modsText(f) {
+  const m = f.mods, out = [];
+  if (m.tempoWindow) out.push(`Tempo plus tolérant (×${m.tempoWindow})`);
+  if (m.tempoInterval) out.push(`Cadence ralentie de ${m.tempoInterval} ms`);
+  if (m.mashTime) out.push(`Martelage ${Math.abs(m.mashTime) / 1000} s plus court`);
+  if (m.mashBonus) out.push(`Martelage +${Math.round((m.mashBonus - 1) * 100)} %`);
+  if (m.holdBonus) out.push(`Endurance +${Math.round((m.holdBonus - 1) * 100)} %`);
+  if (m.holdForgive) out.push(`Peut lâcher ${m.holdForgive} fois`);
+  if (m.perfectBonus) out.push(`Geste parfait ×${m.perfectBonus}`);
+  if (m.backfire) out.push('Geste raté : retour de flamme');
+  if (m.parryBonus) out.push(`Contre ×${m.parryBonus}`);
+  if (m.breathBonus) out.push(`Souffle +${Math.round((m.breathBonus - 1) * 100)} %`);
+  if (m.refundBonus) out.push(`Reprise ×${m.refundBonus}`);
+  return out;
+}
+
+function rarMark(rar) {
+  if (rar === 'crown') return `<span class="s">♛</span>`;
+  if (rar === 'star') return `<span class="s">★</span>`;
+  return '<span class="d"></span>'.repeat(RAR[rar]);
+}
+
+function cardHTML(f, opts = {}) {
+  const t = TYPES[f.type];
+  const holo = ['d3','star','crown'].includes(f.rar) ? ' holo' : '';
+  const rc = f.rar === 'star' ? ' r-star' : f.rar === 'crown' ? ' r-crown' : '';
+  return `<div class="fz${rc}${holo}" style="--tc:${t.c}" data-id="${f.id}">
+    <div class="body">
+      <div class="top">
+        <div class="pip"><svg viewBox="0 0 24 24" fill="none" stroke="#0B0E13" stroke-width="2"
+          stroke-linecap="round"><path d="${t.ico}"/></svg></div>
+        <div class="nm">${f.nom}</div>
+      </div>
+      <div class="art">${art(f)}</div>
+      ${opts.mini ? '' : `<div class="mods">${modsText(f).slice(0, 2).join('<br>')}</div>`}
+      <div class="foot"><span class="rar">${rarMark(f.rar)}</span><span class="sep"></span>
+        <span>${t.nom} · ét. ${f.stage}</span></div>
+    </div>
+  </div>`;
+}
+
+/* -------------------------------------------------------------- tirage */
+
+const rnd = (a) => a[Math.floor(Math.random() * a.length)];
+function pickRar(slot) {
+  const r = Math.random(); let acc = 0;
+  for (const [rar, p] of RATES[slot]) { acc += p; if (r < acc) return rar; }
+  return 'd2';
+}
+function drawPack(setId) {
+  const pool = (rar) => DEX.filter((f) => f.set === setId && f.rar === rar);
+  const out = [];
+  for (let i = 1; i <= 5; i++) {
+    const rar = i <= 3 ? 'd1' : pickRar(i);
+    const p = pool(rar);
+    out.push(rnd(p.length ? p : pool('d1')));
+  }
+  return out;
+}
+
+/* ------------------------------------------------------------ kiosque */
+
+/**
+ * Carrousel en perspective.
+ *
+ * Les paquets existent en permanence dans le DOM et ne font que se replacer :
+ * on peut donc les faire glisser au doigt, avec la position qui suit le geste
+ * en temps réel plutôt que de sauter d'une série à l'autre.
+ */
+function buildCarousel() {
+  const c = $('carousel');
+  c.querySelectorAll('.slide').forEach((n) => n.remove());
+  SETS.forEach((set, i) => {
+    const el = document.createElement('div');
+    el.className = 'slide';
+    el.dataset.i = String(i);
+    el.innerHTML = `<img alt="" loading="lazy" decoding="async" src="${src(ART[set.id])}">
+      <div class="foil"></div>`;
+    const img = el.querySelector('img');
+    // Repli sur l'illustration dessinée si le visuel ne charge pas.
+    img.onerror = () => { img.remove(); el.insertAdjacentHTML('afterbegin', packArt(set)); };
+    c.appendChild(el);
+  });
+  placeCarousel(0);
+}
+
+function placeCarousel(drag = 0) {
+  const w = 210;
+  SETS.forEach((_, i) => {
+    const el = $('carousel').querySelector(`.slide[data-i="${i}"]`);
+    if (!el) return;
+    const off = i - S.set - drag;
+    const abs = Math.abs(off);
+    el.style.transform =
+      `translate(-50%,-50%) translateX(${off * w}px) translateZ(${-abs * 190}px) ` +
+      `rotateY(${off * -26}deg) scale(${1 - abs * 0.06})`;
+    el.style.zIndex = String(10 - Math.round(abs * 10));
+    el.classList.toggle('center', abs < 0.5);
+    el.classList.toggle('side', abs >= 0.5);
+    el.classList.toggle('hidden', abs > 1.8);
+  });
+}
+
+function renderKiosque() {
+  const s = SETS[S.set];
+  $('setName').textContent = s.nom;
+  $('setLine').textContent = `${DEX.filter((f) => f.set === s.id).length} Fanzzy · ${s.ligne}`;
+  $('setDots').innerHTML = SETS.map((_, i) => `<i class="${i === S.set ? 'on' : ''}"></i>`).join('');
+  placeCarousel(0);
+}
+
+function goSet(delta) {
+  S.set = (S.set + delta + SETS.length) % SETS.length;
+  audio.flip();
+  renderKiosque();
+}
+$('prevSet').onclick = () => goSet(-1);
+$('nextSet').onclick = () => goSet(1);
+
+/* Glissement au doigt : la position suit le geste, puis s'aimante. */
+(() => {
+  const c = $('carousel');
+  let x0 = null, dragging = false;
+  c.addEventListener('pointerdown', (e) => { x0 = e.clientX; dragging = false; c.setPointerCapture(e.pointerId); });
+  c.addEventListener('pointermove', (e) => {
+    if (x0 === null) return;
+    const d = (e.clientX - x0) / 190;
+    if (Math.abs(d) > 0.04) dragging = true;
+    placeCarousel(-d);
+  });
+  const end = (e) => {
+    if (x0 === null) return;
+    const d = (e.clientX - x0) / 190;
+    x0 = null;
+    if (d < -0.28) goSet(1);
+    else if (d > 0.28) goSet(-1);
+    else { placeCarousel(0); if (!dragging) startTear(); }
+  };
+  c.addEventListener('pointerup', end);
+  c.addEventListener('pointercancel', () => { x0 = null; placeCarousel(0); });
+})();
+
+$('openBtn').onclick = () => startTear();
+
+/* ------------------------------------------------- le geste d'ouverture
+   Deux temps : on maintient le doigt pour « chauffer la tribune », puis on
+   tire vers le bas pour déchirer. Le paquet tremble de plus en plus fort et
+   le son de papier suit le geste — c'est ce moment qui donne envie de
+   revenir, pas la liste des cartes qui suit.                              */
+
+let tear = null;
+
+function startTear() {
+  if (S.packs <= 0) return;
+  const set = SETS[S.set];
+  const pack = $('tearpack');
+  pack.querySelectorAll('img,svg').forEach((n) => n.remove());
+  const img = document.createElement('img');
+  img.src = src(ART[set.id]);
+  img.onerror = () => { img.remove(); pack.insertAdjacentHTML('afterbegin', packArt(set)); };
+  pack.insertBefore(img, pack.firstChild);
+
+  $('tearrip').style.height = '0';
+  $('tearglow').style.opacity = '0';
+  $('tearlbl').innerHTML = 'MAINTIENS POUR <b>CHAUFFER LA TRIBUNE</b>';
+  $('tearzone').classList.add('on');
+  tear = { charge: 0, held: false, y0: null, opened: false };
+  audio.ready();
+  requestAnimationFrame(chargeLoop);
+}
+
+function chargeLoop() {
+  if (!tear || tear.opened) return;
+  if (tear.held) {
+    tear.charge = Math.min(1, tear.charge + 0.02);
+    const p = $('tearpack');
+    p.classList.toggle('charged', tear.charge > 0.35);
+    p.style.filter = `brightness(${1 + tear.charge * 0.5}) saturate(${1 + tear.charge})`;
+    $('tearglow').style.opacity = String(tear.charge);
+    if (tear.charge > 0.99 && !tear.ready) {
+      tear.ready = true;
+      $('tearlbl').innerHTML = 'MAINTENANT <b>TIRE VERS LE BAS</b>';
+      buzz([25, 40, 25]);
+    }
+    if (tear.charge < 1 && Math.random() < tear.charge * 0.25) buzz(6);
+  }
+  requestAnimationFrame(chargeLoop);
+}
+
+(() => {
+  const p = $('tearpack');
+  p.addEventListener('pointerdown', (e) => {
+    if (!tear) return;
+    tear.held = true; tear.y0 = e.clientY;
+    p.setPointerCapture(e.pointerId);
+    audio.ready();
+  });
+  p.addEventListener('pointermove', (e) => {
+    if (!tear || !tear.held || tear.y0 === null) return;
+    const dy = Math.max(0, e.clientY - tear.y0);
+    if (tear.charge < 1) return;                   // pas assez chaud
+    const pct = Math.min(100, (dy / 150) * 100);
+    $('tearrip').style.height = `${pct}%`;
+    if (pct > 6 && !tear.ripping) { tear.ripping = true; audio.rip(0.6); }
+    if (pct >= 92) doOpen();
+  });
+  const release = () => {
+    if (!tear || tear.opened) return;
+    tear.held = false;
+    $('tearpack').classList.remove('charged');
+    if (tear.charge < 1) {
+      tear.charge = 0;
+      $('tearpack').style.filter = '';
+      $('tearglow').style.opacity = '0';
+      $('tearlbl').innerHTML = 'MAINTIENS POUR <b>CHAUFFER LA TRIBUNE</b>';
+    }
+  };
+  p.addEventListener('pointerup', release);
+  p.addEventListener('pointercancel', release);
+})();
+
+function doOpen() {
+  if (!tear || tear.opened) return;
+  tear.opened = true;
+  audio.rip(1.4);
+  buzz([40, 30, 90]);
+  $('flash').classList.add('go');
+  setTimeout(() => $('flash').classList.remove('go'), 520);
+  setTimeout(() => {
+    $('tearzone').classList.remove('on');
+    $('tearpack').style.filter = '';
+    tear = null;
+    openPack();
+  }, 260);
+}
+
+let pull = [], idx = 0, fresh = new Set();
+
+async function openPack() {
+  const setId = SETS[S.set].id;
+  let res;
+  try {
+    // `buy` autorise le serveur à prélever des écharpes s'il ne reste aucun
+    // booster gratuit. Il refuse proprement si le solde ne suffit pas.
+    res = await api('/open', { set: setId, buy: S.packs <= 0 });
+  } catch (e) {
+    toast(e.code === 'fanzzy.error.no_packs' ? 'Plus de booster'
+      : e.code === 'fanzzy.error.not_enough_scarves' ? 'Pas assez d\u2019écharpes'
+      : 'Ouverture impossible');
+    return;
+  }
+
+  pull = res.cards.map((c) => BY_ID.get(c.id));
+  idx = 0; fresh.clear();
+  for (const c of res.cards) {
+    if (c.new) fresh.add(c.id);
+    S.col[c.id] = (S.col[c.id] ?? 0) + 1;
+  }
+  S.scarves = res.wallet.scarves;
+  S.packs = res.wallet.packs;
+  S.nextIn = res.wallet.nextPackInMs;
+  S.lastGain = res.scarvesGained;
+  tickRegen();
+
+  const st = $('ostage'); st.innerHTML = '';
+  pull.forEach((f, i) => {
+    const el = document.createElement('div');
+    el.className = 'reveal'; el.style.zIndex = 20 - i;
+    el.style.transform = `translateY(${i * 7}px) scale(${1 - i * .03})`;
+    el.innerHTML = `<div class="flip">
+      <div class="face back"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#39414E" stroke-width="1.4"><path d="M3 20l9-16 9 16z"/><path d="M7 20l5-9 5 9"/></svg></div>
+      <div class="face front">${cardHTML(f)}</div></div>`;
+    st.appendChild(el);
+  });
+  $('summary').classList.remove('on');
+  $('oAction').style.display = 'none';
+  $('oHint').textContent = 'Touche la carte pour la retourner';
+  $('oProg').textContent = '1 / 5';
+  $('opener').classList.add('on');
+}
+
+$('ostage').onclick = () => {
+  const cards = [...$('ostage').children];
+  const cur = cards[idx];
+  if (!cur) return;
+  if (!cur.classList.contains('flipped')) {
+    cur.classList.add('flipped');
+    const f = pull[idx];
+    if (fresh.has(f.id)) {
+      const tag = document.createElement('div');
+      tag.className = 'newtag'; tag.textContent = 'NOUVEAU';
+      cur.appendChild(tag);
+    }
+    audio.flip();
+    buzz(12);
+    if (['d3','star','crown'].includes(f.rar)) {
+      burst(TYPES[f.type].c, f.rar === 'crown' ? 34 : 22);
+      audio.chime(f.rar);
+      // La vidéo n'est chargée qu'ici, à la première carte rare de la session :
+      // une gerbe d'étincelles ne doit pas peser sur le premier affichage.
+      if (f.rar === 'star' || f.rar === 'crown') playBurstVideo(f.rar === 'crown');
+      if (f.rar === 'crown') { audio.roar(); document.getElementById('app').classList.add('quake'); 
+        setTimeout(() => document.getElementById('app').classList.remove('quake'), 700); }
+    }
+    $('oHint').textContent = idx < 4 ? 'Touche encore pour la suivante' : 'Touche pour le récapitulatif';
+    $('oAction').style.display = idx < 4 ? 'block' : 'none';
+    $('oAction').textContent = 'Tout révéler';
+  } else {
+    cur.style.transform = 'translateX(-130%) rotate(-14deg)';
+    cur.style.opacity = '0';
+    if (++idx >= 5) return finishPack();
+    $('oProg').textContent = `${idx + 1} / 5`;
+    cards.forEach((el, i) => { if (i >= idx) el.style.transform = `translateY(${(i - idx) * 7}px) scale(${1 - (i - idx) * .03})`; });
+    $('oHint').textContent = 'Touche la carte pour la retourner';
+  }
+};
+$('oAction').onclick = () => finishPack();
+$('oClose').onclick = () => { $('opener').classList.remove('on'); renderDex(); };
+
+function finishPack() {
+  $('ostage').innerHTML = '';
+  $('oProg').textContent = '5 / 5';
+  const gained = S.lastGain ?? 0;
+  $('oHint').textContent = gained
+    ? `Rangées dans le classeur · +${gained} écharpes en doublons`
+    : 'Rangées dans le classeur';
+  $('burst').classList.remove('on');
+  const sum = $('summary');
+  sum.innerHTML = pull.map((f, i) => `<div data-i="${i}">${cardHTML(f, { mini:true })}</div>`).join('');
+  sum.classList.add('on');
+  sum.onclick = (e) => { const d = e.target.closest('[data-i]'); if (d) showDetail(pull[+d.dataset.i]); };
+  const a = $('oAction');
+  a.style.display = 'block'; a.textContent = 'Terminer';
+  a.onclick = () => { $('opener').classList.remove('on'); a.onclick = () => finishPack(); renderDex(); renderTeam(); };
+  renderDex(); tickRegen();
+}
+
+/** Superpose la gerbe d'étincelles en mode « screen » : seul ce qui brille apparaît. */
+function playBurstVideo(long) {
+  const v = $('burst');
+  if (!ART.burst) return;
+  if (!v.src) { v.src = ART.burst; v.load(); }
+  v.currentTime = 0;
+  v.classList.add('on');
+  v.play?.().catch(() => {});
+  clearTimeout(v._t);
+  v._t = setTimeout(() => { v.classList.remove('on'); v.pause?.(); }, long ? 3200 : 2000);
+}
+
+function burst(color, n) {
+  const st = $('ostage'), r = st.getBoundingClientRect();
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement('div');
+    p.className = 'burst';
+    p.style.background = i % 3 ? color : '#FFF3D0';
+    p.style.left = r.width / 2 + 'px'; p.style.top = r.height / 2 + 'px';
+    st.appendChild(p);
+    const a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 130;
+    p.animate([{ transform:'translate(-50%,-50%) scale(1)', opacity:1 },
+               { transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) scale(0)`, opacity:0 }],
+      { duration:700 + Math.random() * 500, easing:'cubic-bezier(.15,.7,.3,1)' }).onfinish = () => p.remove();
+  }
+}
+
+/* ------------------------------------------------------------ classeur */
+
+function renderDex() {
+  const chips = [['all','Tout'], ...Object.entries(TYPES).map(([k, t]) => [k, t.nom]), ['miss','Manquants']];
+  $('filters').innerHTML = chips.map(([k, l]) =>
+    `<button class="filt ${S.filter === k ? 'on' : ''}" data-f="${k}">${l}</button>`).join('');
+
+  const list = DEX.filter((f) => S.filter === 'all' ? true
+    : S.filter === 'miss' ? !S.col[f.id] : f.type === S.filter);
+  const owned = DEX.filter((f) => S.col[f.id]).length;
+  $('progBar').style.width = `${(owned / DEX.length) * 100}%`;
+  $('progTxt').textContent = `${owned}/${DEX.length}`;
+
+  $('grid').innerHTML = list.length ? list.map((f) => {
+    const n = S.col[f.id] ?? 0;
+    if (!n) return `<div class="slot locked"><span>${f.id}</span></div>`;
+    return `<div class="slot" data-open="${f.id}">${cardHTML(f, { mini:true })}
+      ${n > 1 ? `<div class="dupe">×${n}</div>` : ''}
+      ${S.active === f.id ? '<div class="active-tag">DUEL</div>' : ''}</div>`;
+  }).join('') : `<div class="empty">${S.filter === 'miss' ? 'Collection complète.' : 'Rien ici pour l\u2019instant.'}</div>`;
+}
+$('filters').onclick = (e) => { const b = e.target.closest('[data-f]'); if (b) { S.filter = b.dataset.f; renderDex(); } };
+$('grid').onclick = (e) => { const s = e.target.closest('[data-open]'); if (s) showDetail(BY_ID.get(s.dataset.open)); };
+
+/* -------------------------------------------------------------- détail */
+
+let current = null;
+
+function lineOf(f) {
+  // remonte à la base puis redescend la chaîne d'évolution
+  let base = f;
+  for (let i = 0; i < 5; i++) {
+    const prev = DEX.find((x) => x.evo === base.id);
+    if (!prev) break;
+    base = prev;
+  }
+  const chain = [base];
+  while (chain.at(-1).evo) chain.push(BY_ID.get(chain.at(-1).evo));
+  return chain;
+}
+
+function showDetail(f) {
+  current = f;
+  $('dCard').innerHTML = cardHTML(f);
+  const owned = S.col[f.id] ?? 0;
+  $('dMeta').innerHTML = `<b>${TYPES[f.type].nom}</b> · ${f.id} · étage ${f.stage}<br>
+    ${modsText(f).join(' · ')}<br>
+    Cri : <b>${f.cri.label}</b> (${f.cri.power})<br>
+    Exemplaires : ${owned}`;
+
+  const chain = lineOf(f);
+  $('dEvo').innerHTML = chain.length > 1
+    ? `<h4>LIGNÉE</h4><div class="evo">${chain.map((x, i) =>
+        `${i ? '<span class="arrow">›</span>' : ''}<div class="step ${S.col[x.id] ? 'have' : ''}">
+          ${cardHTML(x, { mini:true })}<b>${x.nom.split(' ')[0]}</b></div>`).join('')}</div>`
+    : '<h4>SANS ÉVOLUTION</h4>';
+
+  const btn = $('dEvolve');
+  if (f.evo) {
+    const next = BY_ID.get(f.evo);
+    const cost = EVO_COST[next.stage] ?? 40;
+    const can = owned > 0 && S.scarves >= cost;
+    btn.textContent = `ÉVOLUER · ${cost} ÉCHARPES`;
+    btn.disabled = !can;
+    btn.onclick = () => evolve(f, next, cost);
+  } else { btn.textContent = 'AUCUNE ÉVOLUTION'; btn.disabled = true; }
+
+  const sel = $('dSelect');
+  sel.disabled = !owned;
+  sel.textContent = S.active === f.id ? 'FANZZY DU DUEL ✓' : 'CHOISIR POUR LE DUEL';
+  sel.onclick = async () => {
+    try {
+      await api('/active', { id: f.id });
+      S.active = f.id;
+      toast(`${f.nom} entrera en duel`);
+      showDetail(f); renderDex(); renderTeam();
+    } catch { toast('Sélection impossible'); }
+  };
+
+  $('detail').classList.add('on');
+}
+$('dClose').onclick = () => $('detail').classList.remove('on');
+$('detail').addEventListener('click', (e) => {
+  const s = e.target.closest('[data-id]');
+  if (s && s.dataset.id !== current?.id && S.col[s.dataset.id]) showDetail(BY_ID.get(s.dataset.id));
+});
+
+async function evolve(from, to, cost) {
+  try {
+    const r = await api('/evolve', { id: from.id });
+    S.scarves = r.wallet.scarves;
+    await load();
+    toast(`${from.nom} devient ${to.nom}`);
+    renderDex(); renderTeam(); showDetail(to);
+  } catch (e) {
+    toast(e.code === 'fanzzy.error.not_enough_scarves' ? 'Pas assez d\u2019écharpes'
+      : 'Évolution impossible');
+  }
+}
+
+function toast(txt) {
+  const t = $('toast'); t.textContent = txt; t.className = 'toast on';
+  clearTimeout(t._t); t._t = setTimeout(() => { t.className = 'toast'; }, 2400);
+}
+
+/* ---------------------------------------------------------------- duel */
+
+function renderTeam() {
+  const f = S.active ? BY_ID.get(S.active) : null;
+  if (!f || !S.col[f.id]) {
+    $('teamBody').innerHTML = `<div class="empty" style="padding:40px 10px">
+      Aucun Fanzzy choisi. Ouvre un booster, puis sélectionne-le depuis le classeur.</div>`;
+    return;
+  }
+  $('teamBody').innerHTML = `
+    <div style="display:grid;place-items:center;padding:6px 0 14px">
+      <div style="width:min(62%,215px)">${cardHTML(f)}</div></div>
+    <div class="dmeta"><b>${f.nom}</b> · ${TYPES[f.type].nom}<br>
+      Il entrera en duel avec toi et changera tes gestes :</div>
+    <div class="dline"><h4>CE QU\u2019IL CHANGE</h4>
+      <div style="font-size:12.5px;line-height:1.9;opacity:.75;text-align:center">
+        ${modsText(f).join('<br>')}<br>Cri : <b>${f.cri.label}</b> · ${f.cri.power} de poussée</div></div>
+    <div class="dbtns"><button class="dbtn primary" id="goDuel">ENTRER EN DUEL</button></div>
+    <div style="font-size:11px;opacity:.4;text-align:center;margin-top:10px;line-height:1.6">
+      Le duel lit ce choix au démarrage. Ouvre la page du duel après avoir sélectionné ton Fanzzy.</div>`;
+  // Le Fanzzy équipé est déjà connu du serveur : le duel le lira lui-même.
+  $('goDuel').onclick = () => { location.href = '/duel'; };
+}
+
+/* ----------------------------------------------------------------- nav */
+
+document.querySelectorAll('.nav button').forEach((b) => {
+  b.onclick = () => {
+    document.querySelectorAll('.nav button').forEach((x) => x.classList.toggle('on', x === b));
+    document.querySelectorAll('.screen').forEach((s) => s.classList.remove('on'));
+    $('s-' + b.dataset.go).classList.add('on');
+    if (b.dataset.go === 'dex') renderDex();
+    if (b.dataset.go === 'equipe') renderTeam();
+  };
+});
+
+/* ---------------------------------------------------------------- init */
+
+/* Le fond ne se révèle qu'une fois chargé, et suit légèrement l'inclinaison
+   du téléphone : assez pour donner de la profondeur, pas assez pour distraire. */
+(() => {
+  const bg = $('bg');
+  const img = new Image();
+  img.onload = () => { bg.style.backgroundImage = `url("${src(ART.fond)}")`; bg.classList.add('on'); };
+  img.src = src(ART.fond);
+
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    window.addEventListener('deviceorientation', (e) => {
+      const x = clamp((e.gamma ?? 0) / 45, -1, 1), y = clamp((e.beta ?? 0) / 90, -1, 1);
+      bg.style.transform = `translate(${x * 14}px, ${y * 10}px) scale(1.06)`;
+    });
+    window.addEventListener('pointermove', (e) => {
+      const x = (e.clientX / innerWidth - .5) * 2, y = (e.clientY / innerHeight - .5) * 2;
+      bg.style.transform = `translate(${x * 12}px, ${y * 9}px) scale(1.06)`;
+    });
+  }
+})();
+
+(async () => {
+  try {
+    await load();
+  } catch (e) {
+    if (e.message !== 'auth') toast('Serveur injoignable');
+    return;
+  }
+  buildCarousel(); renderKiosque(); renderDex(); renderTeam();
+})();
+</script>
+</body>
+</html>

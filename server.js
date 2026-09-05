@@ -15,6 +15,9 @@ import { createMailer } from './src/server/auth/mailer.js';
 import { createSocketAuthenticator } from './src/server/auth/socket.js';
 import { createClient } from './src/server/football/client.js';
 import { createFootball } from './src/server/football/routes.js';
+import { createSouvenirs } from './src/server/souvenirs/index.js';
+import { createFanzzy } from './src/server/fanzzy/index.js';
+import { createVirage } from './src/server/ferveur/index.js';
 import { attachDuelServer } from './dist/duel-server.mjs';
 import { MysqlStore } from './dist/duel-server.mjs';
 import { STARTER_DECK } from './dist/duel-server.mjs';
@@ -45,6 +48,9 @@ let auth = null;
 let socketAuth = null;
 let football = null;
 let duels = null;
+let souvenirs = null;
+let fanzzy = null;
+let virage = null;
 
 if (process.env.DATABASE_URL) {
   try {
@@ -80,9 +86,30 @@ if (process.env.DATABASE_URL) {
       authenticate: socketAuth,
       // Deck de depart identique pour tous tant que la collection n'existe pas.
       getDeck: async () => [...STARTER_DECK],
+      // Le Fanzzy équipé sera lu ici quand le moteur de tir à la corde
+      // remplacera le tour par tour ; il est déjà exposé côté serveur.
+      // Personne en face au bout de ce delai : on propose un entrainement
+      // plutot que de laisser le joueur tourner devant un ecran d'attente.
+      botAfterMs: Number(process.env.DUEL_BOT_AFTER_MS ?? 20000),
     });
     globalThis.duels = duels;
     console.log('duels temps reel actifs');
+
+    // ---- collection Fanzzy
+    fanzzy = createFanzzy({ pool, requireAuth: auth.requireAuth });
+    app.use('/api/fanzzy', fanzzy.router);
+    globalThis.fanzzy = fanzzy;
+    console.log('collection fanzzy active');
+
+    // ---- cartes-souvenirs
+    souvenirs = createSouvenirs({ pool, requireAuth: auth.requireAuth });
+    app.use('/api/souvenirs', souvenirs.router);
+    console.log('cartes-souvenirs actives');
+
+    // ---- Grand Virage (tir a la corde en direct)
+    virage = createVirage({ pool, io, requireAuth: auth.requireAuth, souvenirs, fanzzy });
+    app.use('/api/virage', virage.router);
+    console.log('grand virage actif');
 
     // ---- suivi des équipes (API-Football)
     if (process.env.API_FOOTBALL_KEY) {
@@ -96,6 +123,24 @@ if (process.env.DATABASE_URL) {
         // Branchement du bonus live des duels : un but du club suivi pendant
         // un duel devient un evenement du duel, estampille par le serveur.
         onGoal: async (g) => {
+          // 0. Secouer la corde du Grand Virage AVANT de frapper les cartes :
+          //    ceux qui chantaient à la seconde du but doivent être comptés
+          //    présents, et la minute double s'ouvre aussitôt.
+          try { virage.realGoal(g); } catch (e) { console.error('[virage]', e.message); }
+
+          // 1. Frapper la carte-souvenir et la distribuer aux présents.
+          //    Le rang du but sert de cle : rejouer un match ne refrappe rien.
+          try {
+            await souvenirs.mintGoal({
+              fixtureId: g.fixtureId, seq: g.seq ?? 0, leagueId: g.leagueId,
+              teamId: g.teamId, homeId: g.home?.id, awayId: g.away?.id,
+              minute: g.minute, player: g.player,
+              scoreHome: g.score?.[0] ?? 0, scoreAway: g.score?.[1] ?? 0,
+              kickoffAt: g.kickoffAt,
+            });
+          } catch (e) { console.error('[souvenir]', e.message); }
+
+          // 2. Souffle offert aux joueurs de ce club actuellement en duel.
           if (!globalThis.duels) return;
           const teamName = g.teamId === g.home?.id ? g.home?.name : g.away?.name;
           for (const userId of await football.store.followersOfTeam(g.teamId)) {
@@ -121,6 +166,9 @@ if (process.env.DATABASE_URL) {
 
 /* ---------------------------------------------------------------- routes */
 
+// Les visuels ne changent jamais : un an de cache. Les pages, une heure.
+app.use('/img', express.static(path.join(__dirname, 'public/img'), { maxAge: '365d', immutable: true }));
+app.use('/video', express.static(path.join(__dirname, 'public/video'), { maxAge: '365d', immutable: true }));
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
 
 app.get('/healthz', (_req, res) => {
@@ -132,6 +180,9 @@ app.get('/healthz', (_req, res) => {
     db: pool ? 'connectée' : process.env.DATABASE_URL ? 'injoignable' : 'absente',
     auth: auth ? 'active' : 'désactivée',
     football: football ? 'actif' : 'désactivé',
+    souvenirs: souvenirs ? 'actives' : 'désactivées',
+    fanzzy: fanzzy ? 'active' : 'désactivée',
+    virage: virage ? virage.rooms.size + ' salle(s)' : 'désactivé',
     duel: duels ? duels.stats : null,
     mail: process.env.SMTP_URL ? 'smtp' : 'console',
     origin: ORIGIN,
@@ -143,6 +194,8 @@ app.get('/compte', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'c
 app.get('/diagnostic', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'diagnostic.html')));
 app.get('/equipes', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'equipes.html')));
 app.get('/duel', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'duel.html')));
+app.get('/fanzzy', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'fanzzy.html')));
+app.get('/virage', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'virage.html')));
 
 /* -------------------------------------------------------------- socket.io */
 
@@ -174,6 +227,7 @@ for (const sig of ['SIGTERM', 'SIGINT']) {
   process.on(sig, () => {
     console.log(`${sig} reçu, arrêt propre`);
     football?.poller.stop();
+    virage?.stop();
     duels?.close();
     io.close();
     http.close(async () => {

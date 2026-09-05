@@ -1,106 +1,174 @@
-# Mise en ligne : GitHub → Infomaniak
+# thebestfan — mise en ligne du prototype
 
-## 1. Poser le module dans le dépôt
+Tout ce qui a été construit, assemblé en une application déployable. Compte une
+heure la première fois, dont l'essentiel en attente de build.
 
-Décompresse `fanzduel-realtime.zip` à côté de ton dépôt, puis :
+## Ce qu'il y a dedans
 
-```bash
-cd FANZDuel
-git checkout -b duel-temps-reel
+| Adresse | Ce que c'est | État |
+|---|---|---|
+| `/compte` | inscription, connexion, mot de passe oublié, 4 langues | branché |
+| `/equipes` | clubs suivis, calendrier, résultats, buts en direct | branché |
+| `/fanzzy` | boosters, classeur, évolutions, Fanzzy équipé | branché |
+| `/duel` | duel temps réel, avec adversaire d'entraînement | branché |
+| `/virage` | Grand Virage : tir à la corde collectif pendant un vrai match | branché |
+| `/diagnostic` | état du serveur et du WebSocket | branché |
 
-cp -r ../fanzduel-realtime/src/shared/duel      src/shared/duel
-cp -r ../fanzduel-realtime/src/shared/i18n      src/shared/i18n
-cp -r ../fanzduel-realtime/src/server/duel      src/server/duel
-cp -r ../fanzduel-realtime/src/client/duel      src/client/duel
-cp -r ../fanzduel-realtime/sql                  sql
-cp ../fanzduel-realtime/scripts/duel-*.mjs      scripts/
-cp ../fanzduel-realtime/server.duel.example.ts  .
-cp ../fanzduel-realtime/README.md               DUEL.md
+Les cartes-souvenirs se frappent toutes seules à chaque but réel et sont
+annoncées dans le Grand Virage au moment où tu les gagnes. Le carnet qui les
+liste reste à faire ; l'API existe : `/api/souvenirs/mine`.
+
+**Ce qui n'est pas dedans.** Le duel un contre un est encore le moteur tour par
+tour ; le tir à la corde n'existe en ligne que dans le Grand Virage. Les
+prototypes Ferveur v1 à v3 restent dans `labo/`, à ouvrir depuis ton disque :
+ils servent à essayer des règles, pas à jouer en ligne.
+
+## Étape 1 — Poser les fichiers
+
+Décompresse l'archive et pousse tout sur GitHub, en gardant l'arborescence.
+Les fichiers existants à remplacer : `server.js`, `package.json`, `build.mjs`.
+
+Ajoute au `.gitignore` :
+
+```
+node_modules/
+dist/
+public/duel.bundle.js
+.env*
 ```
 
-Aucun fichier existant n'est écrasé : tous les chemins sont nouveaux, sauf
-`README.md` que je renomme en `DUEL.md` pour laisser le tien en place.
+## Étape 2 — Le schéma
 
-## 2. Vérifier avant de committer
-
-```bash
-npx tsc --noEmit                    # ton script "lint"
-git status                          # rien d'inattendu ?
-git diff --cached --name-only       # après le git add
-```
-
-Contrôle aussi qu'aucune clé ne part dans le dépôt public : `.env.local`,
-`firebase-applet-config.json`, `GEMINI_API_KEY`, `API_FOOTBALL_KEY`.
-`git log -p -- .env.local` dit si une clé a déjà été poussée par le passé ;
-si oui, il faut la révoquer, pas seulement la supprimer.
-
-## 3. Pousser
+Les cinq fichiers, **dans cet ordre** : chacun s'appuie sur les tables du
+précédent.
 
 ```bash
-git add src/shared/duel src/shared/i18n src/server/duel src/client/duel \
-        sql scripts/duel-smoke.mjs scripts/duel-loadtest.mjs \
-        server.duel.example.ts DUEL.md
-git commit -m "Duel temps réel : moteur autoritaire, serveur Socket.IO, i18n 4 langues"
-git push -u origin duel-temps-reel
+cd ~/sites/thebestfan.online
+for f in auth football duel souvenirs fanzzy; do
+  mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
+done
 ```
 
-Puis ouvre une pull request sur `main`, ou pousse directement sur `main` si tu
-travailles seul.
+Contrôle : `SHOW TABLES;` doit en lister 21.
 
-## 4. Le site Node.js chez Infomaniak
+Si `souvenir_leagues` est déjà remplie par ton inventaire, `football.sql` et
+`souvenirs.sql` ne l'écraseront pas — ils utilisent tous `CREATE TABLE IF NOT
+EXISTS`.
 
-Manager → ton hébergement Web → **Ajouter** → projet avec technologies
-avancées → **Node.js** → domaine `thebestfan.online` → méthode
-**personnalisée** → dépôt Git.
+## Étape 3 — Le fichier `.env`
 
-- Dépôt public : `https://github.com/macgama/FANZDuel.git`, rien d'autre.
-- Dépôt privé : `https://macgama:<TOKEN>@github.com/macgama/FANZDuel.git`.
-  Utilise un jeton GitHub à portée fine, en lecture seule sur ce dépôt
-  (Settings → Developer settings → Fine-grained tokens → Contents: Read-only).
-  Pas ton mot de passe : GitHub ne l'accepte plus, et il finirait stocké chez
-  l'hébergeur.
+```bash
+nano .env
+```
 
-## 5. Réglages Node.js (Gérer les paramètres avancés → onglet Node.js)
+```
+DATABASE_URL=mysql://o42s1v_tbf:MOTDEPASSE@o42s1v.myd.infomaniak.com:3306/o42s1v_thebestfan
+PUBLIC_ORIGIN=https://thebestfan.online
+SESSION_SECRET=<openssl rand -hex 32>
+API_FOOTBALL_KEY=<ta clé>
+API_FOOTBALL_BUDGET=6800
+DUEL_BOT_AFTER_MS=20000
+```
+
+`SMTP_URL` reste optionnel : sans lui, les mails de vérification s'affichent
+dans la console d'exécution du Manager, ce qui suffit pour tester.
+
+## Étape 4 — Le Manager
+
+Onglet Node.js du site :
 
 | Champ | Valeur |
 |---|---|
+| Version de Node.js | 22 |
 | Dossier d'exécution | `./` |
-| Commande de construction | `npm install && npm run build` |
+| Commande de build | `git pull && npm install && node build.mjs` |
 | Commande de lancement | `npm start` |
-| Version de Node.js | une LTS (20 ou 22) |
-| Port d'écoute | celui attribué par le Manager |
+| Port | celui affiché par le Manager |
 
-Ton `package.json` est déjà compatible : `build` enchaîne `vite build` et le
-bundle esbuild de `server.ts` vers `dist/server.cjs`, et `start` lance ce
-fichier. Une seule chose à corriger dans `server.ts` : le port doit venir de
-`process.env.PORT`, et il doit correspondre à celui affiché dans le Manager.
+Le `--omit=dev` doit avoir disparu : esbuild est une dépendance de
+développement et la construction échoue sans lui.
 
-Variables d'environnement à définir dans le Manager, jamais dans le dépôt :
-`DATABASE_URL`, `PUBLIC_ORIGIN=https://thebestfan.online`, `API_FOOTBALL_KEY`,
-et les identifiants Firebase si tu les gardes.
+Lance la construction, puis redémarre.
 
-## 6. Déployer une mise à jour
-
-Il n'y a pas de déploiement automatique au `git push`. La mise à jour passe par
-la commande de construction, lancée depuis le Manager :
-
-```
-git pull && npm install && npm run build
-```
-
-Puis **Redémarrer** l'application depuis le tableau de bord. Cette construction
-tourne dans un environnement dédié, donc elle ne ralentit pas le site en
-production pendant ce temps.
-
-## 7. Vérifier que le temps réel passe vraiment
+## Étape 5 — Vérifier
 
 ```bash
-# depuis ta machine, une fois le site démarré
-curl https://thebestfan.online/healthz
+curl -s https://thebestfan.online/healthz
+```
+
+Tu dois lire `"db":"connectée"`, `"auth":"active"`, `"football":"actif"`,
+`"souvenirs":"actives"`, `"fanzzy":"active"` et un objet `duel`. Si l'un dit
+« désactivé », la console d'exécution te dira pourquoi — chaque module écrit sa
+raison au démarrage.
+
+Puis dans le navigateur, dans cet ordre :
+
+1. `/compte` — crée un compte. Le lien de vérification s'affiche dans la console du Manager.
+2. `/fanzzy` — ouvre un booster. Le tirage vient du serveur, pas du navigateur.
+3. `/equipes` — suis ton club. Le calendrier se charge en une minute.
+4. `/duel` — cherche un duel. Sans personne en face, un entraînement démarre au bout de vingt secondes.
+5. `/virage` — pendant un match de ton club, entre dans le virage et chante. Un but réel secoue la corde et te frappe une carte-souvenir.
+
+## Étape 6 — L'inventaire des compétitions
+
+Une seule fois, et à chaque intersaison :
+
+```bash
+node --env-file=.env scripts/coverage.mjs
+```
+
+Sans cette table, aucune carte-souvenir n'est frappée. C'est volontaire : mieux
+vaut ne rien frapper que de frapper des cartes sans buteur.
+
+## Les tests
+
+Chacun monte un vrai serveur sur une vraie base. À lancer depuis le dossier du
+site, avec `DATABASE_URL` pointant sur une base **de test**, jamais la
+production — ils effacent les tables au démarrage.
+
+```bash
+node scripts/auth-smoke.mjs        # 50 vérifications
+node scripts/football-smoke.mjs    # 39
+node scripts/souvenirs-smoke.mjs   # 27
+node scripts/fanzzy-smoke.mjs      # 27
+node scripts/duel-play.mjs         # deux comptes jouent un match entier
+node scripts/duel-bot.mjs          # un joueur seul contre l'entraînement
+node scripts/virage-smoke.mjs      # 28, dont la frappe des souvenirs
 node scripts/duel-loadtest.mjs 50 https://thebestfan.online
 ```
 
-Si `healthz` répond mais que le test de charge affiche des `connect:` en
-erreur, c'est l'upgrade WebSocket qui ne passe pas : le repli `polling` est
-déjà activé dans la configuration socket.io fournie, le jeu reste jouable, mais
-la latence monte. La console d'exécution du Manager donne alors la raison.
+## Ce qui reste à faire avant d'ouvrir au public
+
+1. **Le SMTP.** Sans lui, personne ne peut vérifier son adresse ni récupérer un
+   mot de passe oublié.
+2. **L'écran des souvenirs.** Les cartes se frappent, rien ne les affiche.
+3. **Le carnet des souvenirs.** Les cartes se frappent et s'annoncent, mais
+   aucun écran ne les liste encore.
+4. **Le test de charge sur l'URL de production**, pour savoir si l'hébergement
+   Web suffit ou s'il faut un Serveur Cloud.
+5. **La question juridique** avant toute vente d'écharpes : de l'argent réel qui
+   donne accès à du contenu aléatoire relève de règles strictes en Belgique et
+   aux Pays-Bas, et la loi suisse mérite un avis d'avocat.
+
+## Le Grand Virage en deux mots
+
+Une salle par match réel, une seule horloge à dix battements par seconde pour
+toutes les salles. Les supporters envoient les **instants de leurs frappes**,
+jamais leur réussite : c'est le serveur qui note le geste, ce qui ferme la porte
+au client modifié. Il rejette les frappes espacées de moins de 40 ms et celles
+d'une régularité mécanique.
+
+La poussée d'une tribune est divisée par son effectif, et le nombre ne compte
+qu'en logarithme : une tribune deux fois plus nombreuse pousse 18 % plus fort,
+pas deux fois. Sans cela, le club le plus populaire gagnerait toujours et
+personne ne jouerait les petits.
+
+Le camp n'est pas choisi : il découle des clubs suivis. Un joueur qui ne suit
+aucune des deux équipes ne peut pas entrer.
+
+## Si quelque chose ne démarre pas
+
+La console d'exécution du Manager dit toujours pourquoi. Les messages sont
+explicites : `base injoignable`, `API_FOOTBALL_KEY absent`, `SESSION_SECRET
+absent`. Le serveur démarre malgré tout et désactive proprement le module
+concerné, plutôt que de tomber — tu peux donc corriger un point à la fois.
