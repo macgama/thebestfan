@@ -3,96 +3,211 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>thebestfan</title>
+<title>thebestfan — le jeu des tribunes</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;
-  --banner:"Oswald","Arial Narrow",Impact,sans-serif;--ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+  --violet:#8257DA;--banner:"Oswald","Arial Narrow",Impact,sans-serif;
+  --ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
-body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
-#app{position:relative;width:100%;max-width:460px;min-height:100dvh;display:flex;flex-direction:column;
-  overflow:hidden;background:linear-gradient(180deg,#141A21,#0A0D11 45%,#0A0D11)}
-#bg{position:absolute;inset:-4%;background-size:cover;background-position:center 30%;opacity:0;
-  transition:opacity 1.4s;z-index:0}
-#bg.on{opacity:.34}
-#veil{position:absolute;inset:0;z-index:0;
-  background:radial-gradient(120% 55% at 50% 18%,transparent,rgba(8,10,14,.7) 62%,#080A0E)}
+body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{position:relative;width:100%;max-width:480px;min-height:100dvh;overflow:hidden;
+  display:flex;flex-direction:column;background:#04060A}
 
-header{position:relative;z-index:2;padding:34px 20px 20px;text-align:center}
-.mark{font-family:var(--banner);font-weight:700;font-size:34px;letter-spacing:.14em;line-height:1}
-.mark small{display:block;font-size:9.5px;letter-spacing:.36em;opacity:.5;margin-top:8px;font-weight:400;font-family:var(--ui)}
-.hello{margin-top:16px;font-size:13px;opacity:.7;min-height:20px}
-.hello b{color:var(--projo);font-family:var(--banner);letter-spacing:.04em}
+/* ---------------------------------------------------------- décor */
+.hero{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center 22%;
+  opacity:0;transition:opacity 1.6s ease;transform:scale(1.05)}
+.hero.on{opacity:1}
+.grad{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(4,6,10,.7) 0%,rgba(4,6,10,.2) 26%,
+    rgba(4,6,10,.7) 60%,#04060A 88%)}
+.spark{position:absolute;width:3px;height:3px;border-radius:50%;z-index:1;pointer-events:none;opacity:0}
 
-.live{position:relative;z-index:2;margin:4px 16px 0;border:1px solid rgba(224,64,44,.45);
-  border-radius:11px;background:linear-gradient(150deg,rgba(224,64,44,.14),rgba(0,0,0,.3));
-  padding:13px 15px;display:none;cursor:pointer}
-.live.on{display:block;animation:appear .5s}
-@keyframes appear{from{opacity:0;transform:translateY(8px)}}
-.live .t{font-family:var(--banner);font-size:9.5px;letter-spacing:.2em;color:var(--flare)}
-.live .t::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
-  background:var(--flare);margin-right:6px;animation:blink 1.4s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+/* ------------------------------------------------------- vitrine */
+.wrap{position:relative;z-index:3;flex:1;display:flex;flex-direction:column}
+.pitch{margin-top:auto;padding:22px 22px 0;text-align:center}
+.logo{font-family:var(--banner);font-weight:700;font-size:40px;letter-spacing:.1em;line-height:.95;
+  text-shadow:0 4px 34px rgba(0,0,0,.95)}
+.logo em{font-style:normal;color:var(--projo)}
+.logo small{display:block;font-family:var(--ui);font-size:10px;letter-spacing:.34em;
+  opacity:.6;margin-top:11px;font-weight:400}
+.claim{font-family:var(--banner);font-size:19px;line-height:1.3;margin:22px 0 0;
+  text-shadow:0 2px 18px rgba(0,0,0,.9)}
+.claim b{color:var(--projo)}
+.sell{font-size:13px;opacity:.68;line-height:1.7;margin:12px auto 0;max-width:330px;
+  text-shadow:0 2px 14px rgba(0,0,0,.9)}
+
+.bullets{display:flex;gap:8px;padding:20px 18px 0}
+.bullet{flex:1;border:1px solid rgba(242,238,228,.13);border-radius:11px;padding:11px 9px;
+  background:rgba(8,11,16,.62);backdrop-filter:blur(5px);text-align:center}
+.bullet b{display:block;font-family:var(--banner);font-size:11.5px;letter-spacing:.05em;color:var(--projo)}
+.bullet span{font-size:10px;opacity:.55;line-height:1.35;display:block;margin-top:4px}
+
+.cta{margin:22px 18px 6px;background:linear-gradient(180deg,var(--flare),#B32A1D);
+  border:1px solid rgba(255,255,255,.2);border-radius:10px;color:#fff;padding:17px;
+  font-family:var(--banner);font-size:18px;letter-spacing:.1em;cursor:pointer;display:block;
+  text-align:center;text-decoration:none;box-shadow:0 7px 0 #7A1A11,0 16px 44px rgba(224,64,44,.34)}
+.cta:active{transform:translateY(5px);box-shadow:0 2px 0 #7A1A11}
+.second{display:block;text-align:center;padding:12px;color:var(--craie);opacity:.6;font-size:13px;
+  text-decoration:none}
+.second b{color:var(--projo)}
+.legal{text-align:center;font-size:10.5px;opacity:.32;padding:4px 24px 22px;line-height:1.7}
+.legal a{color:inherit}
+
+/* ---------------------------------------------------------- hub */
+.hub{position:relative;z-index:3;display:none;flex-direction:column;min-height:100dvh}
+.hub.on{display:flex}
+.bar{display:flex;align-items:center;gap:10px;padding:14px 16px 10px}
+.bar .who{flex:1;min-width:0}
+.bar .who b{font-family:var(--banner);font-size:17px;letter-spacing:.04em;display:block}
+.bar .who small{font-size:10.5px;opacity:.5}
+.coins{display:flex;gap:6px}
+.coin{display:flex;align-items:center;gap:5px;background:rgba(8,11,16,.75);border-radius:999px;
+  border:1px solid rgba(242,238,228,.14);padding:6px 11px}
+.coin b{font-family:var(--banner);font-size:13px;line-height:1}
+.coin i{width:8px;height:8px;border-radius:50%;display:block}
+
+.live{margin:4px 14px 0;border-radius:13px;padding:14px 15px;cursor:pointer;display:none;
+  border:1px solid rgba(224,64,44,.5);position:relative;overflow:hidden;
+  background:linear-gradient(140deg,rgba(224,64,44,.2),rgba(8,11,16,.78))}
+.live.on{display:block;animation:pop .5s cubic-bezier(.2,.9,.3,1)}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.98)}}
+.live::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.12) 50%,transparent 60%);
+  background-size:250% 250%;animation:sheen 3.4s linear infinite}
+@keyframes sheen{0%{background-position:130% 0}100%{background-position:-40% 0}}
+.live .tag{font-family:var(--banner);font-size:9.5px;letter-spacing:.2em;color:var(--flare)}
+.live .tag::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--flare);margin-right:6px;animation:blink 1.3s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 .live .m{display:flex;align-items:center;gap:9px;margin-top:9px}
-.live .m img{width:22px;height:22px;object-fit:contain}
-.live .m .n{flex:1;min-width:0;font-family:var(--banner);font-size:14px;
+.live .m img{width:26px;height:26px;object-fit:contain}
+.live .m .n{flex:1;min-width:0;font-family:var(--banner);font-size:14.5px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.live .m .sc{font-family:var(--banner);font-size:18px}
-.live .go{margin-top:10px;font-size:11.5px;opacity:.7}
+.live .m .sc{font-family:var(--banner);font-size:19px}
+.live .go{margin-top:9px;font-size:11.5px;opacity:.75}
 .live .go b{color:var(--projo)}
 
-nav{position:relative;z-index:2;flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px;
-  padding:16px;align-content:start}
-a.tile{grid-column:span 1;border:1px solid rgba(242,238,228,.13);border-radius:12px;
-  background:rgba(0,0,0,.32);padding:16px 14px;text-decoration:none;color:inherit;
-  display:flex;flex-direction:column;gap:6px;min-height:104px;position:relative;overflow:hidden;
-  transition:transform .12s,border-color .2s}
+.grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;align-content:start}
+a.tile{position:relative;overflow:hidden;border-radius:14px;text-decoration:none;color:inherit;
+  padding:15px 14px 14px;min-height:112px;display:flex;flex-direction:column;gap:5px;
+  border:1px solid rgba(242,238,228,.12);background:rgba(8,11,16,.72);backdrop-filter:blur(4px);
+  transition:transform .12s}
+a.tile::before{content:"";position:absolute;inset:0;opacity:.18;pointer-events:none;
+  background:radial-gradient(90% 70% at 15% 0%,var(--g),transparent 70%)}
 a.tile:active{transform:scale(.975)}
-a.tile.wide{grid-column:span 2;min-height:88px}
-a.tile .ic{width:26px;height:26px;opacity:.85}
-a.tile b{font-family:var(--banner);font-size:15px;letter-spacing:.05em}
+a.tile.wide{grid-column:span 2;min-height:96px}
+a.tile svg{width:25px;height:25px;color:var(--g)}
+a.tile b{font-family:var(--banner);font-size:15.5px;letter-spacing:.05em}
 a.tile span{font-size:11.5px;opacity:.55;line-height:1.45}
 a.tile .badge{position:absolute;top:12px;right:12px;background:var(--projo);color:#0B0E13;
-  border-radius:999px;font-family:var(--banner);font-size:10px;padding:2px 8px}
-a.tile.duel{border-color:rgba(224,64,44,.35)}
-a.tile.virage{border-color:rgba(245,195,59,.32)}
-
-footer{position:relative;z-index:2;padding:6px 18px 26px;text-align:center;font-size:11px;opacity:.35;
-  line-height:1.7}
-footer a{color:inherit}
+  border-radius:999px;font-family:var(--banner);font-size:10px;padding:2px 9px}
+a.tile .badge.rouge{background:var(--flare);color:#fff}
 </style>
 </head>
 <body>
 <main id="app">
-  <div id="bg"></div><div id="veil"></div>
+  <div class="hero" id="hero"></div><div class="grad"></div>
 
-  <header>
-    <div class="mark">THEBESTFAN<small>le jeu de cartes des tribunes</small></div>
-    <div class="hello" id="hello"></div>
-  </header>
+  <div class="wrap" id="vitrine">
+    <div class="pitch">
+      <div class="logo">THE<em>BEST</em>FAN<small>LE JEU DES TRIBUNES</small></div>
+      <p class="claim">Ton club joue. <b>Ta tribune aussi.</b></p>
+      <p class="sell">Collectionne tes supporters, pousse sur la corde pendant les vrais matchs, et repars avec des cartes que personne ne pourra t'acheter.</p>
+    </div>
 
-  <div class="live" id="live"></div>
+    <div class="bullets">
+      <div class="bullet"><b>EN DIRECT</b><span>La ferveur suit le vrai match</span></div>
+      <div class="bullet"><b>FANZZY</b><span>Collectionne et fais évoluer</span></div>
+      <div class="bullet"><b>SOUVENIRS</b><span>Une carte par but vécu</span></div>
+    </div>
 
-  <nav id="nav"></nav>
+    <a class="cta" href="/compte">PRENDRE MA PLACE</a>
+    <a class="second" href="/compte">Déjà une place ? <b>Se connecter</b></a>
+    <p class="legal">Gratuit · Clubs, groupes et illustrations du jeu sont fictifs<br>
+      Résultats fournis par API-Football</p>
+  </div>
 
-  <footer>
-    Clubs, groupes et illustrations du jeu sont fictifs.<br>
-    Résultats fournis par API-Football · <a href="/diagnostic">état du service</a>
-  </footer>
+  <div class="hub" id="hub">
+    <div class="bar">
+      <div class="who"><b id="pseudo">—</b><small id="clubline"></small></div>
+      <div class="coins">
+        <div class="coin"><i style="background:var(--projo)"></i><b id="scarves">0</b></div>
+        <div class="coin"><i style="background:var(--flare)"></i><b id="packs">0</b></div>
+      </div>
+    </div>
+    <div class="live" id="live"></div>
+    <nav class="grid" id="grid"></nav>
+    <p class="legal">Clubs, groupes et illustrations du jeu sont fictifs ·
+      <a href="/diagnostic">état du service</a></p>
+  </div>
 </main>
 
 <script>
 /* =======================================================================
    Accueil.
-   Elle ne fait qu'une chose en plus des liens : mettre en avant le match de
-   ton club quand il se joue maintenant. C'est le seul moment où l'ordre des
-   priorités change.
+   Deux états dans une seule page : la vitrine pour qui n'a pas de compte,
+   le hub pour qui en a un. Le décor reste le même, ce qui rend l'entrée
+   dans le jeu continue au lieu d'être une rupture.
    ======================================================================= */
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
   (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+
+/**
+ * Illustration principale, avec repli en cascade.
+ * L'accueil est la première page que verra un visiteur : elle ne doit jamais
+ * dépendre d'un fichier. Sans image, un dégradé peint prend le relais.
+ */
+(() => {
+  const portrait = window.matchMedia('(max-aspect-ratio: 3/4)').matches;
+  const candidats = portrait
+    ? ['img/hero-portrait.avif', 'img/hero-portrait.webp', 'img/hero.avif', 'img/hero.webp']
+    : ['img/hero.avif', 'img/hero.webp', 'img/hero-portrait.avif'];
+  candidats.push('img/fond-tribune.avif');
+
+  const essaie = (i) => {
+    if (i >= candidats.length) {
+      $('hero').style.background =
+        'radial-gradient(70% 45% at 50% 28%,rgba(245,195,59,.24),transparent 65%),' +
+        'radial-gradient(60% 40% at 22% 62%,rgba(224,64,44,.24),transparent 65%),' +
+        'radial-gradient(60% 40% at 80% 58%,rgba(60,130,232,.18),transparent 65%),#080B10';
+      $('hero').classList.add('on');
+      return;
+    }
+    const img = new Image();
+    img.onload = () => { $('hero').style.backgroundImage = `url("${img.src}")`; $('hero').classList.add('on'); };
+    img.onerror = () => essaie(i + 1);
+    img.src = candidats[i];
+  };
+  essaie(0);
+})();
+
+/* Braises qui montent. Quelques particules, pas une tempête : une page
+   d'accueil doit respirer, pas clignoter. */
+(() => {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const app = $('app');
+  setInterval(() => {
+    if (document.hidden) return;
+    const s = document.createElement('div');
+    s.className = 'spark';
+    s.style.left = (10 + Math.random() * 80) + '%';
+    s.style.bottom = '-6px';
+    s.style.background = Math.random() > 0.35 ? 'var(--projo)' : 'var(--flare)';
+    app.appendChild(s);
+    s.animate([
+      { opacity: 0, transform: 'translateY(0) scale(1)' },
+      { opacity: .8, transform: `translateY(-${120 + Math.random() * 160}px) translateX(${Math.random() * 40 - 20}px) scale(.6)`, offset: .6 },
+      { opacity: 0, transform: `translateY(-${260 + Math.random() * 200}px) translateX(${Math.random() * 70 - 35}px) scale(.2)` },
+    ], { duration: 3600 + Math.random() * 2600, easing: 'cubic-bezier(.3,.6,.5,1)' })
+      .onfinish = () => s.remove();
+  }, 620);
+})();
+
+/* ---------------------------------------------------------------- hub */
 
 const IC = {
   virage:'M3 20l9-16 9 16zM7 20l5-9 5 9',
@@ -101,76 +216,76 @@ const IC = {
   carnet:'M5 3h11l3 3v15H5zM9 8h6M9 12h6M9 16h4',
   equipes:'M12 3l8 4v6c0 4-3.5 7-8 8-4.5-1-8-4-8-8V7z',
   teletext:'M3 5h18v14H3zM3 9h18M8 9v10',
-  compte:'M12 8a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4.4 3.6-7 8-7s8 2.6 8 7',
 };
-const ico = (k) => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-  stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="${IC[k]}"/></svg>`;
-
+const COUL = { virage:'#F5C33B', duel:'#E0402C', fanzzy:'#8257DA',
+               carnet:'#1E9E6A', equipes:'#3C82E8', teletext:'#C2CAD6' };
 const TUILES = [
-  { href:'/virage', k:'virage', cls:'virage wide', t:'LE GRAND VIRAGE',
-    d:'Tirez sur la même corde pendant le vrai match. Un but réel te laisse une carte.' },
-  { href:'/duel', k:'duel', cls:'duel', t:'DUEL', d:'Un contre un, ou entraînement.' },
-  { href:'/fanzzy', k:'fanzzy', t:'FANZZY', d:'Boosters, classeur, évolutions.' },
-  { href:'/carnet', k:'carnet', t:'MON CARNET', d:'Tes souvenirs et les vignettes à récupérer.' },
-  { href:'/equipes', k:'equipes', t:'MES ÉQUIPES', d:'Résultats et calendrier de tes clubs.' },
-  { href:'/teletext', k:'teletext', cls:'wide', t:'TÉLÉTEXTE',
-    d:'Tous les championnats : classements, résultats, buteurs, passeurs, cartons.' },
+  { k:'virage', href:'/virage', wide:1, t:'LE GRAND VIRAGE',
+    d:'Tirez sur la même corde pendant le vrai match. Chaque but vécu te laisse une carte.' },
+  { k:'duel', href:'/duel', t:'DUEL', d:'Un contre un, ou entraînement.' },
+  { k:'fanzzy', href:'/fanzzy', t:'FANZZY', d:'Boosters, classeur, évolutions.' },
+  { k:'carnet', href:'/carnet', t:'MON CARNET', d:'Tes souvenirs et les vignettes.' },
+  { k:'equipes', href:'/equipes', t:'MES ÉQUIPES', d:'Résultats et calendrier.' },
+  { k:'teletext', href:'/teletext', wide:1, t:'TÉLÉTEXTE',
+    d:'Tous les championnats : classements, résultats, buteurs, cartons.' },
 ];
 
 function tuiles(badges = {}) {
-  $('nav').innerHTML = TUILES.map((t) => `
-    <a class="tile ${t.cls ?? ''}" href="${t.href}">
-      ${badges[t.k] ? `<span class="badge">${badges[t.k]}</span>` : ''}
-      ${ico(t.k)}<b>${t.t}</b><span>${t.d}</span>
-    </a>`).join('');
+  $('grid').innerHTML = TUILES.map((t) => `
+    <a class="tile ${t.wide ? 'wide' : ''}" href="${t.href}" style="--g:${COUL[t.k]}">
+      ${badges[t.k] ? `<span class="badge ${badges[t.k].rouge ? 'rouge' : ''}">${badges[t.k].texte}</span>` : ''}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+        stroke-linecap="round" stroke-linejoin="round"><path d="${IC[t.k]}"/></svg>
+      <b>${t.t}</b><span>${t.d}</span></a>`).join('');
 }
 
-/* Fond de tribune, s'il a été déployé avec la page Fanzzy. */
-(() => {
-  const img = new Image();
-  img.onload = () => { $('bg').style.backgroundImage = `url("${img.src}")`; $('bg').classList.add('on'); };
-  img.onerror = () => {};
-  img.src = 'img/fond-tribune.avif';
-})();
-
 (async () => {
-  tuiles();
-
-  // Qui est là ?
   let user = null;
   try {
     const r = await fetch('/api/auth/me', { credentials:'same-origin' });
     if (r.ok) user = (await r.json()).user;
-  } catch { /* hors ligne */ }
-
-  $('hello').innerHTML = user
-    ? `Salut <b>${esc(user.pseudo)}</b>${user.verified ? '' : ' · pense à confirmer ton adresse'}`
-    : `<a href="/compte" style="color:var(--projo)">Crée ton compte</a> pour entrer dans une tribune.`;
+  } catch { /* hors ligne : la vitrine suffit */ }
 
   if (!user) return;
 
-  // Un match de ses clubs en ce moment ? C'est la seule chose qui passe devant.
+  $('vitrine').style.display = 'none';
+  $('hub').classList.add('on');
+  $('pseudo').textContent = user.pseudo;
+  tuiles();
+
+  try {
+    const st = await fetch('/api/me/state', { credentials:'same-origin' }).then((r) => r.json());
+    // Inscrit mais jamais passé par la cérémonie : on l'y emmène.
+    if (st && st.onboarded === false) { location.href = '/bienvenue'; return; }
+    $('scarves').textContent = st.scarves ?? 0;
+    $('packs').textContent = st.packs ?? 0;
+    const principal = st.follows?.find((f) => f.is_main) ?? st.follows?.[0];
+    $('clubline').textContent = principal
+      ? `${principal.name} · ${st.slots.used}/${st.slots.total} clubs suivis`
+      : 'aucun club suivi';
+  } catch { /* module non monté */ }
+
+  // Un match en cours passe devant tout le reste : c'est le seul moment où
+  // l'ordre des priorités change.
   try {
     const { matchs = [] } = await fetch('/api/virage/live', { credentials:'same-origin' })
       .then((r) => r.json());
-    const enCours = matchs.find((m) => m.open);
-    if (!enCours) return;
-
-    const joue = enCours.home_goals !== null && enCours.home_goals !== undefined;
+    const m = matchs.find((x) => x.open);
+    if (!m) return;
+    const joue = m.home_goals !== null && m.home_goals !== undefined;
     $('live').innerHTML = `
-      <div class="t">${enCours.elapsed ? enCours.elapsed + "\u2032" : 'BIENTÔT'} · ${esc(enCours.league_name ?? '')}</div>
+      <div class="tag">${m.elapsed ? m.elapsed + "\u2032" : 'BIENTÔT'} · ${esc(m.league_name ?? '')}</div>
       <div class="m">
-        <img src="${esc(enCours.home_logo)}" alt="">
-        <span class="n">${esc(enCours.home_name)}</span>
-        <span class="sc">${joue ? `${enCours.home_goals} – ${enCours.away_goals}` : 'vs'}</span>
-        <span class="n" style="text-align:right">${esc(enCours.away_name)}</span>
-        <img src="${esc(enCours.away_logo)}" alt="">
+        <img src="${esc(m.home_logo)}" alt=""><span class="n">${esc(m.home_name)}</span>
+        <span class="sc">${joue ? `${m.home_goals} – ${m.away_goals}` : 'vs'}</span>
+        <span class="n" style="text-align:right">${esc(m.away_name)}</span>
+        <img src="${esc(m.away_logo)}" alt="">
       </div>
-      <div class="go"><b>${enCours.crowd[0] + enCours.crowd[1]}</b> supporters dans les tribunes · entre dans le virage ›</div>`;
+      <div class="go"><b>${m.crowd[0] + m.crowd[1]}</b> supporters dans les tribunes · entre dans le virage ›</div>`;
     $('live').classList.add('on');
     $('live').onclick = () => { location.href = '/virage'; };
-    tuiles({ virage: 'EN DIRECT' });
-  } catch { /* le suivi n'est pas actif */ }
+    tuiles({ virage: { texte:'EN DIRECT', rouge:true } });
+  } catch { /* suivi non actif */ }
 })();
 </script>
 </body>
