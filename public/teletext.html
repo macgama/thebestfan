@@ -103,7 +103,27 @@ td.pts{font-family:var(--banner);font-size:15px}
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
   (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
-const api = (p) => fetch('/api/tt' + p).then((r) => r.json());
+/**
+ * Toute requête a une limite de temps et un message d'erreur.
+ * Un écran qui tourne indéfiniment est le pire des retours : l'utilisateur ne
+ * sait pas s'il doit attendre, recharger, ou si c'est cassé.
+ */
+async function api(p) {
+  const r = await fetch('/api/tt' + p, { signal: AbortSignal.timeout(12000) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.error ?? 'erreur'), { code: j.error, detail: j.detail });
+  return j;
+}
+
+function panne(e) {
+  const msg = e.name === 'TimeoutError' ? 'Le serveur met trop de temps à répondre.'
+    : e.code === 'teletext.error.schema'
+      ? 'Base de données incomplète.' : 'Service indisponible.';
+  $('list').innerHTML = `<div class="empty">${msg}<br>
+    ${e.detail ? `<small style="opacity:.6">${esc(e.detail)}</small><br>` : ''}<br>
+    <button class="chip on" id="retry">RÉESSAYER</button></div>`;
+  $('retry').onclick = () => (vue === 'sommaire' ? sommaire() : charger());
+}
 
 let vue = 'sommaire', ligue = null, onglet = 'classement';
 let pays = '', terme = '';
@@ -119,10 +139,13 @@ async function sommaire() {
     <div class="chips" id="pays"></div>`;
   $('list').innerHTML = '<div class="spin"></div>';
 
-  const [{ leagues }, { countries }] = await Promise.all([
-    api(`/leagues?q=${encodeURIComponent(terme)}&country=${encodeURIComponent(pays)}`),
-    api('/countries'),
-  ]);
+  let leagues, countries;
+  try {
+    ([{ leagues }, { countries }] = await Promise.all([
+      api(`/leagues?q=${encodeURIComponent(terme)}&country=${encodeURIComponent(pays)}`),
+      api('/countries'),
+    ]));
+  } catch (e) { return panne(e); }
 
   $('pays').innerHTML = `<button class="chip ${pays ? '' : 'on'}" data-p="">TOUT</button>` +
     countries.slice(0, 24).map((c) =>
@@ -173,9 +196,7 @@ async function charger() {
                   assists:'/assists', cards:'/cards' }[onglet];
   let d;
   try { d = await api(`/league/${ligue}${route}`); }
-  catch { $('list').innerHTML = '<div class="empty">Serveur injoignable.</div>'; return; }
-
-  if (d.error) { $('list').innerHTML = '<div class="empty">Données indisponibles.</div>'; return; }
+  catch (e) { return panne(e); }
 
   $('titre').innerHTML = `${esc(d.league.name)}<small>${esc(d.league.country ?? '')} · saison ${d.league.season}</small>`;
 

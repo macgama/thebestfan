@@ -180,8 +180,28 @@ export function createTeletext({ pool, client }) {
       res.status(503).json({ error: 'teletext.error.unavailable' });
     });
 
+  /**
+   * Enveloppe obligatoire pour toute route asynchrone.
+   *
+   * Sans elle, une requête SQL qui échoue rejette la promesse et Express ne
+   * répond jamais : le navigateur attend indéfiniment, et l'utilisateur voit
+   * une page qui tourne en boucle sans aucun message. C'est exactement ce qui
+   * arrive quand le schéma n'est pas à jour — une colonne manquante suffit.
+   */
+  const safe = (fn) => (req, res) => {
+    Promise.resolve(fn(req, res)).catch((e) => {
+      console.error('[teletext]', req.path, e.message);
+      if (res.headersSent) return;
+      const manque = /Unknown column|doesn't exist/i.test(e.message);
+      res.status(503).json({
+        error: manque ? 'teletext.error.schema' : 'teletext.error.unavailable',
+        detail: manque ? 'Applique sql/teletext.sql puis relance scripts/coverage.mjs' : undefined,
+      });
+    });
+  };
+
   /** Le sommaire : servi depuis la base, jamais un appel à l'API. */
-  router.get('/leagues', async (req, res) => {
+  router.get('/leagues', safe(async (req, res) => {
     const terme = String(req.query.q ?? '').trim();
     const pays = String(req.query.country ?? '').trim();
     const famille = String(req.query.family ?? '').trim();
@@ -200,16 +220,16 @@ export function createTeletext({ pool, client }) {
         ORDER BY tier, country, name
         LIMIT 200`, args);
     res.json({ leagues: rows });
-  });
+  }));
 
   /** Les pays disponibles, pour le sélecteur. */
-  router.get('/countries', async (_req, res) => {
+  router.get('/countries', safe(async (_req, res) => {
     const rows = await q(
       `SELECT country, COUNT(*) AS n FROM souvenir_leagues
         WHERE enabled = 1 AND country IS NOT NULL
         GROUP BY country ORDER BY n DESC`);
     res.json({ countries: rows });
-  });
+  }));
 
   router.get('/league/:id', (req, res) => send(res, standings(Number(req.params.id))));
   router.get('/league/:id/results', (req, res) => send(res, results(Number(req.params.id))));
@@ -218,14 +238,14 @@ export function createTeletext({ pool, client }) {
   router.get('/league/:id/cards', (req, res) => send(res, ranking(Number(req.params.id), 'cards')));
 
   /** État du cache et du quota : utile pour surveiller la consommation. */
-  router.get('/cache', async (_req, res) => {
+  router.get('/cache', safe(async (_req, res) => {
     const [stats] = await pool.query(
       `SELECT COUNT(*) AS entrees,
               SUM(expires_at > NOW(3)) AS fraiches,
               MIN(fetched_at) AS plus_ancienne
          FROM api_cache`);
     res.json({ ...stats[0], quota: client.quota });
-  });
+  }));
 
   /** Purge des entrées périmées depuis longtemps. À lancer une fois par jour. */
   async function cleanup() {
