@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;
+  --banner:"Oswald","Arial Narrow",Impact,sans-serif;--ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{position:relative;width:100%;max-width:460px;min-height:100dvh;display:flex;flex-direction:column;
+  overflow:hidden;background:linear-gradient(180deg,#141A21,#0A0D11 45%,#0A0D11)}
+#bg{position:absolute;inset:-4%;background-size:cover;background-position:center 30%;opacity:0;
+  transition:opacity 1.4s;z-index:0}
+#bg.on{opacity:.34}
+#veil{position:absolute;inset:0;z-index:0;
+  background:radial-gradient(120% 55% at 50% 18%,transparent,rgba(8,10,14,.7) 62%,#080A0E)}
+
+header{position:relative;z-index:2;padding:34px 20px 20px;text-align:center}
+.mark{font-family:var(--banner);font-weight:700;font-size:34px;letter-spacing:.14em;line-height:1}
+.mark small{display:block;font-size:9.5px;letter-spacing:.36em;opacity:.5;margin-top:8px;font-weight:400;font-family:var(--ui)}
+.hello{margin-top:16px;font-size:13px;opacity:.7;min-height:20px}
+.hello b{color:var(--projo);font-family:var(--banner);letter-spacing:.04em}
+
+.live{position:relative;z-index:2;margin:4px 16px 0;border:1px solid rgba(224,64,44,.45);
+  border-radius:11px;background:linear-gradient(150deg,rgba(224,64,44,.14),rgba(0,0,0,.3));
+  padding:13px 15px;display:none;cursor:pointer}
+.live.on{display:block;animation:appear .5s}
+@keyframes appear{from{opacity:0;transform:translateY(8px)}}
+.live .t{font-family:var(--banner);font-size:9.5px;letter-spacing:.2em;color:var(--flare)}
+.live .t::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--flare);margin-right:6px;animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.live .m{display:flex;align-items:center;gap:9px;margin-top:9px}
+.live .m img{width:22px;height:22px;object-fit:contain}
+.live .m .n{flex:1;min-width:0;font-family:var(--banner);font-size:14px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.live .m .sc{font-family:var(--banner);font-size:18px}
+.live .go{margin-top:10px;font-size:11.5px;opacity:.7}
+.live .go b{color:var(--projo)}
+
+nav{position:relative;z-index:2;flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  padding:16px;align-content:start}
+a.tile{grid-column:span 1;border:1px solid rgba(242,238,228,.13);border-radius:12px;
+  background:rgba(0,0,0,.32);padding:16px 14px;text-decoration:none;color:inherit;
+  display:flex;flex-direction:column;gap:6px;min-height:104px;position:relative;overflow:hidden;
+  transition:transform .12s,border-color .2s}
+a.tile:active{transform:scale(.975)}
+a.tile.wide{grid-column:span 2;min-height:88px}
+a.tile .ic{width:26px;height:26px;opacity:.85}
+a.tile b{font-family:var(--banner);font-size:15px;letter-spacing:.05em}
+a.tile span{font-size:11.5px;opacity:.55;line-height:1.45}
+a.tile .badge{position:absolute;top:12px;right:12px;background:var(--projo);color:#0B0E13;
+  border-radius:999px;font-family:var(--banner);font-size:10px;padding:2px 8px}
+a.tile.duel{border-color:rgba(224,64,44,.35)}
+a.tile.virage{border-color:rgba(245,195,59,.32)}
+
+footer{position:relative;z-index:2;padding:6px 18px 26px;text-align:center;font-size:11px;opacity:.35;
+  line-height:1.7}
+footer a{color:inherit}
+</style>
+</head>
+<body>
+<main id="app">
+  <div id="bg"></div><div id="veil"></div>
+
+  <header>
+    <div class="mark">THEBESTFAN<small>le jeu de cartes des tribunes</small></div>
+    <div class="hello" id="hello"></div>
+  </header>
+
+  <div class="live" id="live"></div>
+
+  <nav id="nav"></nav>
+
+  <footer>
+    Clubs, groupes et illustrations du jeu sont fictifs.<br>
+    Résultats fournis par API-Football · <a href="/diagnostic">état du service</a>
+  </footer>
+</main>
+
+<script>
+/* =======================================================================
+   Accueil.
+   Elle ne fait qu'une chose en plus des liens : mettre en avant le match de
+   ton club quand il se joue maintenant. C'est le seul moment où l'ordre des
+   priorités change.
+   ======================================================================= */
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+  (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+
+const IC = {
+  virage:'M3 20l9-16 9 16zM7 20l5-9 5 9',
+  duel:'M4 4l7 7M20 4l-7 7M12 13v7M8 20h8',
+  fanzzy:'M4 4h13l3 3v13H4zM8 8h6M8 12h8M8 16h5',
+  carnet:'M5 3h11l3 3v15H5zM9 8h6M9 12h6M9 16h4',
+  equipes:'M12 3l8 4v6c0 4-3.5 7-8 8-4.5-1-8-4-8-8V7z',
+  teletext:'M3 5h18v14H3zM3 9h18M8 9v10',
+  compte:'M12 8a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4.4 3.6-7 8-7s8 2.6 8 7',
+};
+const ico = (k) => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="${IC[k]}"/></svg>`;
+
+const TUILES = [
+  { href:'/virage', k:'virage', cls:'virage wide', t:'LE GRAND VIRAGE',
+    d:'Tirez sur la même corde pendant le vrai match. Un but réel te laisse une carte.' },
+  { href:'/duel', k:'duel', cls:'duel', t:'DUEL', d:'Un contre un, ou entraînement.' },
+  { href:'/fanzzy', k:'fanzzy', t:'FANZZY', d:'Boosters, classeur, évolutions.' },
+  { href:'/carnet', k:'carnet', t:'MON CARNET', d:'Tes souvenirs et les vignettes à récupérer.' },
+  { href:'/equipes', k:'equipes', t:'MES ÉQUIPES', d:'Résultats et calendrier de tes clubs.' },
+  { href:'/teletext', k:'teletext', cls:'wide', t:'TÉLÉTEXTE',
+    d:'Tous les championnats : classements, résultats, buteurs, passeurs, cartons.' },
+];
+
+function tuiles(badges = {}) {
+  $('nav').innerHTML = TUILES.map((t) => `
+    <a class="tile ${t.cls ?? ''}" href="${t.href}">
+      ${badges[t.k] ? `<span class="badge">${badges[t.k]}</span>` : ''}
+      ${ico(t.k)}<b>${t.t}</b><span>${t.d}</span>
+    </a>`).join('');
+}
+
+/* Fond de tribune, s'il a été déployé avec la page Fanzzy. */
+(() => {
+  const img = new Image();
+  img.onload = () => { $('bg').style.backgroundImage = `url("${img.src}")`; $('bg').classList.add('on'); };
+  img.onerror = () => {};
+  img.src = 'img/fond-tribune.avif';
+})();
+
+(async () => {
+  tuiles();
+
+  // Qui est là ?
+  let user = null;
+  try {
+    const r = await fetch('/api/auth/me', { credentials:'same-origin' });
+    if (r.ok) user = (await r.json()).user;
+  } catch { /* hors ligne */ }
+
+  $('hello').innerHTML = user
+    ? `Salut <b>${esc(user.pseudo)}</b>${user.verified ? '' : ' · pense à confirmer ton adresse'}`
+    : `<a href="/compte" style="color:var(--projo)">Crée ton compte</a> pour entrer dans une tribune.`;
+
+  if (!user) return;
+
+  // Un match de ses clubs en ce moment ? C'est la seule chose qui passe devant.
+  try {
+    const { matchs = [] } = await fetch('/api/virage/live', { credentials:'same-origin' })
+      .then((r) => r.json());
+    const enCours = matchs.find((m) => m.open);
+    if (!enCours) return;
+
+    const joue = enCours.home_goals !== null && enCours.home_goals !== undefined;
+    $('live').innerHTML = `
+      <div class="t">${enCours.elapsed ? enCours.elapsed + "\u2032" : 'BIENTÔT'} · ${esc(enCours.league_name ?? '')}</div>
+      <div class="m">
+        <img src="${esc(enCours.home_logo)}" alt="">
+        <span class="n">${esc(enCours.home_name)}</span>
+        <span class="sc">${joue ? `${enCours.home_goals} – ${enCours.away_goals}` : 'vs'}</span>
+        <span class="n" style="text-align:right">${esc(enCours.away_name)}</span>
+        <img src="${esc(enCours.away_logo)}" alt="">
+      </div>
+      <div class="go"><b>${enCours.crowd[0] + enCours.crowd[1]}</b> supporters dans les tribunes · entre dans le virage ›</div>`;
+    $('live').classList.add('on');
+    $('live').onclick = () => { location.href = '/virage'; };
+    tuiles({ virage: 'EN DIRECT' });
+  } catch { /* le suivi n'est pas actif */ }
+})();
+</script>
+</body>
+</html>

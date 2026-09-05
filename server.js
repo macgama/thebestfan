@@ -18,6 +18,7 @@ import { createFootball } from './src/server/football/routes.js';
 import { createSouvenirs } from './src/server/souvenirs/index.js';
 import { createFanzzy } from './src/server/fanzzy/index.js';
 import { createVirage } from './src/server/ferveur/index.js';
+import { createTeletext } from './src/server/teletext/index.js';
 import { attachDuelServer } from './dist/duel-server.mjs';
 import { MysqlStore } from './dist/duel-server.mjs';
 import { STARTER_DECK } from './dist/duel-server.mjs';
@@ -51,6 +52,7 @@ let duels = null;
 let souvenirs = null;
 let fanzzy = null;
 let virage = null;
+let teletext = null;
 
 if (process.env.DATABASE_URL) {
   try {
@@ -151,6 +153,12 @@ if (process.env.DATABASE_URL) {
       app.use('/api/football', football.router);
       football.poller.start();
       console.log('suivi des equipes actif');
+
+      // ---- teletexte : classements, resultats, buteurs de toutes les ligues
+      teletext = createTeletext({ pool, client });
+      app.use('/api/tt', teletext.router);
+      setInterval(() => teletext.cleanup().catch(() => {}), 24 * 3600 * 1000).unref();
+      console.log('teletexte actif');
     } else {
       console.warn('API_FOOTBALL_KEY absent : suivi des equipes desactive');
     }
@@ -183,13 +191,15 @@ app.get('/healthz', (_req, res) => {
     souvenirs: souvenirs ? 'actives' : 'désactivées',
     fanzzy: fanzzy ? 'active' : 'désactivée',
     virage: virage ? virage.rooms.size + ' salle(s)' : 'désactivé',
+    teletext: teletext ? 'actif' : 'désactivé',
     duel: duels ? duels.stats : null,
     mail: process.env.SMTP_URL ? 'smtp' : 'console',
     origin: ORIGIN,
   });
 });
 
-app.get('/', (_req, res) => res.redirect('/compte'));
+app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/teletext', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'teletext.html')));
 app.get('/compte', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'compte.html')));
 app.get('/diagnostic', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'diagnostic.html')));
 app.get('/equipes', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'equipes.html')));

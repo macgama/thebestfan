@@ -7,6 +7,8 @@ heure la première fois, dont l'essentiel en attente de build.
 
 | Adresse | Ce que c'est | État |
 |---|---|---|
+| `/` | accueil : accès à tout, et le match du jour mis en avant | branché |
+| `/teletext` | tous les championnats : classement, résultats, buteurs, passeurs, cartons | branché |
 | `/compte` | inscription, connexion, mot de passe oublié, 4 langues | branché |
 | `/equipes` | clubs suivis, calendrier, résultats, buts en direct | branché |
 | `/fanzzy` | boosters, classeur, évolutions, Fanzzy équipé | branché |
@@ -46,12 +48,17 @@ précédent.
 
 ```bash
 cd ~/sites/thebestfan.online
-for f in auth football duel souvenirs fanzzy; do
+for f in auth football duel souvenirs fanzzy teletext; do
   mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
 done
 ```
 
-Contrôle : `SHOW TABLES;` doit en lister 21.
+Contrôle : `SHOW TABLES;` doit en lister 22.
+
+`teletext.sql` ajoute aussi des colonnes à `souvenir_leagues` : la couverture
+fine des buteurs, passeurs et cartons, et le palier de notoriété. Relance
+`scripts/coverage.mjs` après cette étape pour les remplir — sans cela, aucune
+compétition n'affichera de buteurs.
 
 Si `souvenir_leagues` est déjà remplie par ton inventaire, `football.sql` et
 `souvenirs.sql` ne l'écraseront pas — ils utilisent tous `CREATE TABLE IF NOT
@@ -158,6 +165,7 @@ node scripts/fanzzy-smoke.mjs      # 27
 node scripts/duel-play.mjs         # deux comptes jouent un match entier
 node scripts/duel-bot.mjs          # un joueur seul contre l'entraînement
 node scripts/virage-smoke.mjs      # 28, dont la frappe des souvenirs
+node scripts/teletext-smoke.mjs   # 20, dont le cache et la panne d'API
 node scripts/duel-loadtest.mjs 50 https://thebestfan.online
 ```
 
@@ -171,6 +179,27 @@ node scripts/duel-loadtest.mjs 50 https://thebestfan.online
 3. **La question juridique** avant toute vente d'écharpes : de l'argent réel qui
    donne accès à du contenu aléatoire relève de règles strictes en Belgique et
    aux Pays-Bas, et la loi suisse mérite un avis d'avocat.
+
+## Le télétexte et le quota
+
+C'est le point sensible : 953 compétitions consultables, sept mille cinq cents
+appels par jour. Tout repose sur un cache en base. Le premier joueur qui ouvre
+la Ligue 1 paie un appel, les mille suivants ne paient rien.
+
+Les durées de vie suivent le rythme réel : six heures pour un classement, douze
+pour les buteurs, une heure pour un calendrier, une minute quand un match de
+cette compétition est en cours. Une compétition dont la couverture n'inclut pas
+les buteurs n'est jamais interrogée — la page le dit et n'appelle rien.
+
+Et quand le budget est atteint ou que l'API ne répond pas, on sert la version
+périmée en la signalant, plutôt qu'une page vide.
+
+La saison affichée n'est pas celle que l'API marque « courante » : ce drapeau
+traîne parfois d'une saison sur l'autre. On compare la date du jour aux dates de
+début et de fin, et hors saison on garde la dernière connue — c'est ce qu'un
+supporter veut voir en juillet.
+
+Surveiller la consommation : `GET /api/tt/cache`.
 
 ## Le Grand Virage en deux mots
 
