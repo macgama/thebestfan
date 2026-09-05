@@ -211,6 +211,7 @@ app.get('/healthz', (_req, res) => {
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/teletext', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'teletext.html')));
 app.get('/bienvenue', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'bienvenue.html')));
+app.get('/profil', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'profil.html')));
 app.get('/compte', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'compte.html')));
 app.get('/diagnostic', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'diagnostic.html')));
 app.get('/equipes', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'equipes.html')));

@@ -58,6 +58,8 @@ function publicUser(row) {
     locale: row.locale,
     verified: Boolean(row.email_verified_at),
     mainTeamId: row.main_team_id ?? null,
+    // Sert à la page profil : « dans la tribune depuis le… »
+    createdAt: row.created_at ?? null,
   };
 }
 
