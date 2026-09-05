@@ -77,9 +77,9 @@ const apiUrl = `http://localhost:${apiServer.address().port}`;
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 // Les tables des souvenirs référencent users : on les enlève d'abord.
-await raw.query(`DROP TABLE IF EXISTS user_fanzzy, user_souvenirs, virage_presence, souvenirs, user_wallet,
-                 souvenir_leagues, duel_results, duel_events, duels, user_follows,
-                 fixture_events, standings, fixtures, team_leagues, teams, leagues,
+await raw.query(`DROP TABLE IF EXISTS user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence, souvenirs,
+                 user_wallet, api_cache, souvenir_leagues, duel_results, duel_events, duels,
+                 user_follows, fixture_events, standings, fixtures, team_leagues, teams, leagues,
                  api_quota, login_attempts, auth_tokens, sessions, users`);
 await raw.query(readFileSync(new URL('../sql/auth.sql', import.meta.url), 'utf8'));
 await raw.query(readFileSync(new URL('../sql/football.sql', import.meta.url), 'utf8'));
