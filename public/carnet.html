@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mon carnet — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;
+  --banner:"Oswald","Arial Narrow",Impact,sans-serif;--ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{position:relative;width:100%;max-width:440px;min-height:100dvh;display:flex;flex-direction:column;
+  background:radial-gradient(120% 45% at 50% -6%,rgba(245,195,59,.13),transparent 60%),
+             linear-gradient(180deg,#141A21,#0A0D11 50%,#0A0D11)}
+
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;flex:none}
+.top h1{font-family:var(--banner);font-size:20px;letter-spacing:.15em;margin:0}
+.top h1 small{display:block;font-size:8.5px;letter-spacing:.3em;opacity:.5;margin-top:3px;font-family:var(--ui)}
+.purse{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.35);border-radius:999px;
+  border:1px solid rgba(242,238,228,.12);padding:6px 12px}
+.purse b{font-family:var(--banner);font-size:14px;line-height:1}
+.purse span{font-size:9px;opacity:.55}
+
+.tabs{display:flex;gap:7px;padding:8px 16px 10px;flex:none}
+.tab{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.14);border-radius:8px;
+  color:inherit;padding:10px;font-family:var(--banner);font-size:12.5px;letter-spacing:.09em;cursor:pointer;opacity:.55}
+.tab.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
+
+.stats{display:flex;gap:9px;padding:0 16px 12px;font-size:11px;opacity:.6}
+.stats div{flex:1;text-align:center;border:1px solid rgba(242,238,228,.1);border-radius:7px;padding:8px 4px}
+.stats b{display:block;font-family:var(--banner);font-size:17px;opacity:1;color:var(--projo)}
+
+.list{flex:1;padding:0 14px 26px;display:flex;flex-direction:column;gap:9px}
+.sv{position:relative;border-radius:11px;overflow:hidden;border:1px solid rgba(242,238,228,.13);
+  background:linear-gradient(150deg,#171D25,#0D1116);padding:13px 14px}
+.sv.presence{border-color:rgba(245,195,59,.5);
+  background:linear-gradient(150deg,#1E2129,#12161C 60%,#1A1512)}
+.sv .lg{font-size:9.5px;letter-spacing:.15em;opacity:.45;text-transform:uppercase}
+.sv .mt{display:flex;align-items:center;gap:9px;margin:8px 0 6px}
+.sv .mt img{width:24px;height:24px;object-fit:contain;flex:none}
+.sv .mt .n{flex:1;min-width:0;font-family:var(--banner);font-size:14px;letter-spacing:.02em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sv .sc{font-family:var(--banner);font-size:20px;letter-spacing:.04em}
+.sv .goal{font-size:12.5px;opacity:.75;line-height:1.5}
+.sv .goal b{color:var(--projo);font-family:var(--banner);font-size:15px}
+.sv .foot{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:10.5px;opacity:.5}
+.sv .foot .sep{flex:1}
+.stamp{position:absolute;top:11px;right:11px;font-family:var(--banner);font-size:9px;letter-spacing:.16em;
+  border:1px solid var(--projo);color:var(--projo);border-radius:4px;padding:3px 7px;transform:rotate(4deg)}
+.stamp.v{border-color:rgba(242,238,228,.3);color:rgba(242,238,228,.55);transform:none}
+.buy{background:linear-gradient(180deg,var(--flare),#B32A1D);border:0;color:#fff;border-radius:6px;
+  padding:9px 15px;font-family:var(--banner);font-size:12.5px;letter-spacing:.07em;cursor:pointer}
+.buy:disabled{filter:grayscale(.8);opacity:.5}
+.left{font-size:10.5px;opacity:.5}
+.left.urgent{color:var(--flare);opacity:1}
+
+.empty{text-align:center;padding:52px 24px;opacity:.5;font-size:13px;line-height:1.8}
+.empty a{color:var(--projo)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#171C23;z-index:20;
+  border:1px solid rgba(242,238,228,.2);border-radius:7px;padding:11px 16px;font-size:12.5px;display:none}
+.toast.on{display:block}
+</style>
+</head>
+<body>
+<main id="app">
+  <div class="top">
+    <h1>MON CARNET<small>ce que tu as vécu</small></h1>
+    <div class="purse"><b id="scarves">0</b><span>écharpes</span></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-tab="mine">MES SOUVENIRS</button>
+    <button class="tab" data-tab="market">À RÉCUPÉRER</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+  <div class="list" id="list"></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =======================================================================
+   Le carnet.
+   Deux objets pour un même but : le souvenir, gagné en étant là, et la
+   vignette, achetée dans les quinze jours. Même image, statut différent —
+   et le carnet le dit franchement, sinon la distinction ne vaut rien.
+   ======================================================================= */
+
+const $ = (id) => document.getElementById(id);
+let onglet = 'mine';
+let scarves = 0;
+
+const api = async (path, body) => {
+  const r = await fetch('/api/souvenirs' + path, {
+    method: body ? 'POST' : 'GET',
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
+  const j = await r.json().catch(() => ({}));
+  if (j.error) throw Object.assign(new Error(j.error), { code: j.error });
+  return j;
+};
+
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+  (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+
+/** Date lisible : « 13 septembre », sans l'année quand c'est cette saison. */
+function jour(v) {
+  const d = new Date(String(v).includes('T') ? v : String(v).replace(' ', 'T') + 'Z');
+  if (Number.isNaN(d.getTime())) return '';
+  const opts = { day: 'numeric', month: 'long' };
+  if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
+  return d.toLocaleDateString('fr', opts);
+}
+
+function restant(expires) {
+  const ms = new Date(String(expires).includes('T') ? expires
+    : String(expires).replace(' ', 'T') + 'Z') - Date.now();
+  if (ms <= 0) return null;
+  const j = Math.floor(ms / 864e5);
+  return j >= 1 ? `${j} jour${j > 1 ? 's' : ''}` : `${Math.max(1, Math.floor(ms / 36e5))} h`;
+}
+
+function carte(s, mode) {
+  const marque = s.kind === 'presence'
+    ? '<div class="stamp">TU Y ÉTAIS</div>'
+    : s.kind === 'vignette' ? '<div class="stamp v">VIGNETTE</div>' : '';
+  const reste = restant(s.expires_at);
+
+  return `<div class="sv ${s.kind === 'presence' ? 'presence' : ''}">
+    ${marque}
+    <div class="lg">${esc(s.league_name ?? '')} · ${jour(s.kickoff_at)}</div>
+    <div class="mt">
+      <img src="${esc(s.home_logo)}" alt="">
+      <span class="n">${esc(s.home_name)}</span>
+      <span class="sc">${s.score_home} – ${s.score_away}</span>
+      <span class="n" style="text-align:right">${esc(s.away_name)}</span>
+      <img src="${esc(s.away_logo)}" alt="">
+    </div>
+    <div class="goal"><b>${s.minute ?? '?'}'</b> ${esc(s.player ?? 'But')}</div>
+    <div class="foot">
+      ${s.fanzzy_id ? `<span>avec ${esc(s.fanzzy_id)}</span>` : ''}
+      ${s.ferveur ? `<span>· ${s.ferveur} de ferveur</span>` : ''}
+      <span class="sep"></span>
+      ${mode === 'market'
+        ? `<span class="left ${reste && reste.includes('h') ? 'urgent' : ''}">${reste ? 'encore ' + reste : 'expirée'}</span>
+           <button class="buy" data-buy="${s.id}" ${scarves < s.price ? 'disabled' : ''}>${s.price} ÉCHARPES</button>`
+        : `<span>${s.kind === 'presence' ? 'acquise sur le terrain' : 'récupérée au marché'}</span>`}
+    </div>
+  </div>`;
+}
+
+function toast(txt) {
+  const t = $('toast'); t.textContent = txt; t.className = 'toast on';
+  clearTimeout(t._t); t._t = setTimeout(() => { t.className = 'toast'; }, 2600);
+}
+
+/* ------------------------------------------------------------ chargement */
+
+async function load() {
+  try {
+    const [mine, market, fz] = await Promise.all([
+      api('/mine'),
+      api('/market'),
+      fetch('/api/fanzzy/state', { credentials: 'same-origin' })
+        .then((r) => r.json()).catch(() => ({ wallet: { scarves: 0 } })),
+    ]);
+    scarves = fz.wallet?.scarves ?? 0;
+    $('scarves').textContent = scarves;
+
+    const vecus = mine.souvenirs.filter((s) => s.kind === 'presence').length;
+    const recup = mine.souvenirs.length - vecus;
+    $('stats').innerHTML = `
+      <div><b>${vecus}</b>vécus</div>
+      <div><b>${recup}</b>récupérés</div>
+      <div><b>${market.souvenirs.length}</b>disponibles</div>`;
+
+    const liste = onglet === 'mine' ? mine.souvenirs : market.souvenirs;
+    if (!liste.length) {
+      $('list').innerHTML = onglet === 'mine'
+        ? `<div class="empty">Ton carnet est vide.<br><br>
+             Entre dans le <a href="/virage">Grand Virage</a> pendant un match de ton club :
+             chaque but marqué pendant que tu chantes te laisse une carte que personne
+             ne pourra t'acheter.</div>`
+        : `<div class="empty">Rien à récupérer pour l'instant.<br><br>
+             Les vignettes des buts récents apparaissent ici pendant quinze jours.</div>`;
+      return;
+    }
+    $('list').innerHTML = liste.map((s) => carte(s, onglet)).join('');
+  } catch (e) {
+    if (e.message !== 'auth') $('list').innerHTML = `<div class="empty">Serveur injoignable.</div>`;
+  }
+}
+
+$('list').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-buy]');
+  if (!b) return;
+  b.disabled = true;
+  try {
+    const r = await api('/buy', { souvenirId: Number(b.dataset.buy) });
+    toast(`Vignette récupérée · −${r.spent} écharpes`);
+    await load();
+  } catch (err) {
+    toast(({
+      'souvenir.error.not_enough_scarves': 'Pas assez d\u2019écharpes',
+      'souvenir.error.expired': 'Cette vignette a expiré',
+      'souvenir.error.already_owned': 'Tu l\u2019as déjà',
+    })[err.code] ?? 'Impossible pour le moment');
+    b.disabled = false;
+  }
+});
+
+document.querySelector('.tabs').addEventListener('click', (e) => {
+  const t = e.target.closest('[data-tab]');
+  if (!t) return;
+  onglet = t.dataset.tab;
+  document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('on', x === t));
+  load();
+});
+
+load();
+</script>
+</body>
+</html>

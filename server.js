@@ -196,6 +196,7 @@ app.get('/equipes', (_req, res) => res.sendFile(path.join(__dirname, 'public', '
 app.get('/duel', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'duel.html')));
 app.get('/fanzzy', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'fanzzy.html')));
 app.get('/virage', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'virage.html')));
+app.get('/carnet', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'carnet.html')));
 
 /* -------------------------------------------------------------- socket.io */
 

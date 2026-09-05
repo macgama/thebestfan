@@ -12,11 +12,13 @@ heure la première fois, dont l'essentiel en attente de build.
 | `/fanzzy` | boosters, classeur, évolutions, Fanzzy équipé | branché |
 | `/duel` | duel temps réel, avec adversaire d'entraînement | branché |
 | `/virage` | Grand Virage : tir à la corde collectif pendant un vrai match | branché |
+| `/carnet` | souvenirs vécus et vignettes à récupérer | branché |
 | `/diagnostic` | état du serveur et du WebSocket | branché |
 
-Les cartes-souvenirs se frappent toutes seules à chaque but réel et sont
-annoncées dans le Grand Virage au moment où tu les gagnes. Le carnet qui les
-liste reste à faire ; l'API existe : `/api/souvenirs/mine`.
+Les cartes-souvenirs se frappent toutes seules à chaque but réel, s'annoncent
+dans le Grand Virage au moment où tu les gagnes, et se retrouvent dans le
+carnet — celles que tu as vécues d'un côté, celles que tu peux récupérer en
+écharpes de l'autre, pendant quinze jours.
 
 **Ce qui n'est pas dedans.** Le duel un contre un est encore le moteur tour par
 tour ; le tir à la corde n'existe en ligne que dans le Grand Virage. Les
@@ -108,6 +110,7 @@ Puis dans le navigateur, dans cet ordre :
 3. `/equipes` — suis ton club. Le calendrier se charge en une minute.
 4. `/duel` — cherche un duel. Sans personne en face, un entraînement démarre au bout de vingt secondes.
 5. `/virage` — pendant un match de ton club, entre dans le virage et chante. Un but réel secoue la corde et te frappe une carte-souvenir.
+6. `/carnet` — la carte doit y être, tamponnée « tu y étais ».
 
 ## Étape 6 — L'inventaire des compétitions
 
@@ -119,6 +122,27 @@ node --env-file=.env scripts/coverage.mjs
 
 Sans cette table, aucune carte-souvenir n'est frappée. C'est volontaire : mieux
 vaut ne rien frapper que de frapper des cartes sans buteur.
+
+## Mesures du Grand Virage
+
+Serveur et clients dans le même process, donc c'est le moteur qui est mesuré,
+pas le réseau :
+
+| supporters | chants/s | chant → corde vue | mémoire |
+|---|---|---|---|
+| 150 | 24 | p50 55 ms · p95 96 ms | +1 Mo |
+| 600 | 93 | p50 54 ms · p95 90 ms | +8 Mo |
+
+La latence ne bouge pas avec la foule, et c'est voulu : le serveur agrège et
+diffuse **une** position dix fois par seconde pour toute la salle. Les 50 ms de
+médiane sont l'attente moyenne du prochain battement d'horloge, pas un coût de
+calcul. Ce qui grandit avec le nombre, c'est le trafic sortant, pas le travail.
+
+À refaire sur l'URL de production avant d'ouvrir :
+
+```bash
+node scripts/virage-loadtest.mjs 300 https://thebestfan.online
+```
 
 ## Les tests
 
@@ -141,12 +165,10 @@ node scripts/duel-loadtest.mjs 50 https://thebestfan.online
 
 1. **Le SMTP.** Sans lui, personne ne peut vérifier son adresse ni récupérer un
    mot de passe oublié.
-2. **L'écran des souvenirs.** Les cartes se frappent, rien ne les affiche.
-3. **Le carnet des souvenirs.** Les cartes se frappent et s'annoncent, mais
-   aucun écran ne les liste encore.
-4. **Le test de charge sur l'URL de production**, pour savoir si l'hébergement
-   Web suffit ou s'il faut un Serveur Cloud.
-5. **La question juridique** avant toute vente d'écharpes : de l'argent réel qui
+2. **Le test de charge sur l'URL de production**, pour savoir si l'hébergement
+   Web suffit ou s'il faut un Serveur Cloud. Le Grand Virage a le sien :
+   `node scripts/virage-loadtest.mjs 300 https://thebestfan.online`.
+3. **La question juridique** avant toute vente d'écharpes : de l'argent réel qui
    donne accès à du contenu aléatoire relève de règles strictes en Belgique et
    aux Pays-Bas, et la loi suisse mérite un avis d'avocat.
 
