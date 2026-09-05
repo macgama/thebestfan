@@ -108,7 +108,7 @@ export function createStore(pool) {
       const rows = await q(
         `SELECT s.token_hash, s.user_id, s.expires_at, s.last_seen_at,
                 u.public_id, u.pseudo, u.email, u.locale, u.status,
-                u.email_verified_at, u.main_team_id
+                u.email_verified_at, u.main_team_id, u.created_at
            FROM sessions s
            JOIN users u ON u.id = s.user_id
           WHERE s.token_hash = ? AND s.expires_at > NOW(3) AND u.status = 'active'

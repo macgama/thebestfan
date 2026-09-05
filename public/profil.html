@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mon profil — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;
+  --violet:#8257DA;--banner:"Oswald","Arial Narrow",Impact,sans-serif;
+  --ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{position:relative;width:100%;max-width:460px;min-height:100dvh;display:flex;flex-direction:column}
+
+.carte{position:relative;margin:14px 14px 0;border-radius:16px;overflow:hidden;
+  border:1px solid rgba(242,238,228,.14);min-height:150px;display:flex;flex-direction:column;
+  justify-content:flex-end;padding:16px;background:#0B0F14}
+.carte .fond{position:absolute;inset:0;background-size:cover;background-position:center 28%;opacity:.55}
+.carte .ombre{position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(4,6,10,.15),rgba(4,6,10,.9))}
+.carte .txt{position:relative;z-index:2}
+.carte h1{font-family:var(--banner);font-size:27px;letter-spacing:.05em;margin:0;line-height:1}
+.carte .club{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:12.5px;opacity:.78}
+.carte .club img{width:22px;height:22px;object-fit:contain}
+.carte .depuis{font-size:10.5px;opacity:.5;margin-top:6px;letter-spacing:.04em}
+.badge{position:absolute;top:14px;right:14px;z-index:2;font-family:var(--banner);font-size:9.5px;
+  letter-spacing:.14em;border-radius:5px;padding:4px 9px;border:1px solid var(--projo);color:var(--projo)}
+.badge.warn{border-color:var(--flare);color:var(--flare)}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:12px 14px 0}
+.stat{border:1px solid rgba(242,238,228,.11);border-radius:10px;padding:10px 5px;text-align:center;
+  background:rgba(8,11,16,.6)}
+.stat b{display:block;font-family:var(--banner);font-size:19px;color:var(--c,var(--projo));line-height:1}
+.stat span{font-size:9px;opacity:.5;letter-spacing:.08em;display:block;margin-top:5px}
+
+h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;margin:22px 16px 9px}
+.bloc{margin:0 14px;border:1px solid rgba(242,238,228,.11);border-radius:12px;overflow:hidden;
+  background:rgba(8,11,16,.6)}
+.ligne{display:flex;align-items:center;gap:11px;padding:13px 14px;
+  border-top:1px solid rgba(242,238,228,.07);font-size:13.5px}
+.ligne:first-child{border-top:0}
+.ligne img{width:24px;height:24px;object-fit:contain}
+.ligne .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ligne .v{opacity:.55;font-size:12.5px}
+.ligne .main{font-family:var(--banner);font-size:9px;letter-spacing:.12em;color:var(--projo);
+  border:1px solid rgba(245,195,59,.45);border-radius:4px;padding:2px 6px}
+.ligne button{background:none;border:0;color:inherit;opacity:.35;cursor:pointer;font-size:17px}
+.vide{padding:18px 14px;font-size:12.5px;opacity:.45;text-align:center;line-height:1.6}
+.vide a{color:var(--projo)}
+
+.stuff{display:flex;gap:8px;padding:12px}
+.slot{flex:1;border:1px dashed rgba(242,238,228,.2);border-radius:10px;padding:11px 8px;text-align:center;
+  min-height:78px;display:flex;flex-direction:column;justify-content:center;gap:4px;cursor:pointer}
+.slot.plein{border-style:solid;border-color:var(--violet);background:rgba(130,87,218,.1)}
+.slot b{font-family:var(--banner);font-size:12px;letter-spacing:.03em}
+.slot span{font-size:9.5px;opacity:.5;line-height:1.35}
+.sac{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 12px}
+.obj{border:1px solid rgba(242,238,228,.14);border-radius:8px;padding:7px 10px;font-size:11px;
+  cursor:pointer;background:rgba(0,0,0,.3)}
+.obj.porte{border-color:var(--violet);color:var(--violet)}
+
+.langues{display:flex;gap:6px;padding:12px}
+.langues button{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.16);border-radius:8px;
+  color:inherit;padding:9px;font-family:var(--banner);font-size:12px;cursor:pointer;opacity:.55}
+.langues button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
+
+.actions{padding:22px 14px 30px;display:flex;flex-direction:column;gap:9px}
+.btn{border-radius:9px;padding:14px;font-family:var(--banner);font-size:14px;letter-spacing:.08em;
+  cursor:pointer;border:1px solid rgba(242,238,228,.2);background:rgba(8,11,16,.7);color:inherit;
+  text-align:center;text-decoration:none;display:block}
+.btn.rouge{border-color:rgba(224,64,44,.5);color:var(--flare)}
+.btn.danger{border:0;background:none;color:rgba(224,64,44,.6);font-size:11.5px;letter-spacing:.04em;
+  font-family:var(--ui);text-decoration:underline;padding:6px}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#171C23;z-index:80;
+  border:1px solid rgba(242,238,228,.2);border-radius:8px;padding:11px 16px;font-size:12.5px;display:none}
+.toast.on{display:block}
+.spin{width:24px;height:24px;border:3px solid rgba(242,238,228,.18);border-top-color:var(--projo);
+  border-radius:50%;animation:sp 1s linear infinite;margin:60px auto}
+@keyframes sp{to{transform:rotate(1turn)}}
+</style>
+</head>
+<body>
+<main id="app"><div class="spin" id="spin"></div><div id="page" style="display:none">
+
+  <div class="carte" id="carte">
+    <div class="fond" id="fond"></div><div class="ombre"></div>
+    <div class="badge" id="badge" style="display:none"></div>
+    <div class="txt">
+      <h1 id="pseudo">—</h1>
+      <div class="club" id="clubline"></div>
+      <div class="depuis" id="depuis"></div>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <h2>MES CLUBS</h2>
+  <div class="bloc" id="clubs"></div>
+
+  <h2>MON FANZZY</h2>
+  <div class="bloc" id="fanzzy"></div>
+
+  <h2>ÉQUIPEMENT</h2>
+  <div class="bloc">
+    <div class="stuff" id="slots"></div>
+    <div class="sac" id="sac"></div>
+  </div>
+
+  <h2>LANGUE</h2>
+  <div class="bloc"><div class="langues" id="langues"></div></div>
+
+  <h2>COMPTE</h2>
+  <div class="bloc">
+    <div class="ligne"><span class="n">Adresse</span><span class="v" id="email"></span></div>
+    <div class="ligne"><span class="n">Adresse vérifiée</span><span class="v" id="verif"></span></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="resend" style="display:none">RENVOYER LE MAIL DE VÉRIFICATION</button>
+    <button class="btn rouge" id="logout">SE DÉCONNECTER</button>
+    <button class="btn danger" id="supprimer">Supprimer définitivement mon compte</button>
+  </div>
+</div></main>
+<div class="toast" id="toast"></div>
+<script src="/nav.js" defer></script>
+
+<script>
+/* =======================================================================
+   Profil.
+   Tout ce qui concerne le joueur au même endroit : son identité, ses clubs,
+   son Fanzzy, son équipement, sa langue — et la sortie.
+   ======================================================================= */
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+  (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+
+async function api(base, path, body, method) {
+  const r = await fetch(base + path, {
+    method: method ?? (body === undefined ? 'GET' : 'POST'),
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
+  const j = await r.json().catch(() => ({}));
+  if (j.error) throw Object.assign(new Error(j.error), { code: j.error });
+  return j;
+}
+const me = (p, b, m) => api('/api/me', p, b, m);
+const auth = (p, b, m) => api('/api/auth', p, b, m);
+
+function toast(t) {
+  const el = $('toast'); el.textContent = t; el.className = 'toast on';
+  clearTimeout(el._t); el._t = setTimeout(() => { el.className = 'toast'; }, 2600);
+}
+
+let user = null, etat = null, catalogue = null, loadout = null, souvenirs = [];
+
+/* ------------------------------------------------------------- rendu */
+
+function rendre() {
+  $('pseudo').textContent = user.pseudo;
+  $('email').textContent = user.email;
+  $('verif').textContent = user.verified ? 'oui' : 'pas encore';
+  $('resend').style.display = user.verified ? 'none' : 'block';
+  if (!user.verified) {
+    $('badge').className = 'badge warn';
+    $('badge').textContent = 'À VÉRIFIER';
+    $('badge').style.display = 'block';
+  }
+
+  const principal = etat.follows?.find((f) => f.is_main) ?? etat.follows?.[0];
+  $('clubline').innerHTML = principal
+    ? `<img src="${esc(principal.logo)}" alt=""><span>${esc(principal.name)}</span>`
+    : '<span style="opacity:.6">aucun club principal</span>';
+
+  const vecus = souvenirs.filter((s) => s.kind === 'presence').length;
+  $('stats').innerHTML = `
+    <div class="stat" style="--c:var(--projo)"><b>${etat.scarves}</b><span>ÉCHARPES</span></div>
+    <div class="stat" style="--c:var(--flare)"><b>${etat.packs}</b><span>BOOSTERS</span></div>
+    <div class="stat" style="--c:var(--vert)"><b>${vecus}</b><span>VÉCUS</span></div>
+    <div class="stat" style="--c:var(--violet)"><b>${souvenirs.length}</b><span>SOUVENIRS</span></div>`;
+
+  // Clubs suivis, avec les emplacements libres montrés en creux.
+  const libres = Math.max(0, etat.slots.total - etat.slots.used);
+  $('clubs').innerHTML =
+    (etat.follows ?? []).map((f) => `
+      <div class="ligne">
+        <img src="${esc(f.logo)}" alt="">
+        <span class="n">${esc(f.name ?? 'club ' + f.team_id)}</span>
+        ${f.is_main ? '<span class="main">PRINCIPAL</span>' : ''}
+        <button data-unfollow="${f.team_id}" title="Ne plus suivre">✕</button>
+      </div>`).join('')
+    + Array.from({ length: libres }, () => `
+      <div class="ligne" style="opacity:.4"><span class="n">emplacement libre</span>
+        <a class="v" href="/equipes" style="color:var(--projo)">choisir un club</a></div>`).join('')
+    + (etat.slots.total < etat.slots.max ? `
+      <div class="ligne"><span class="n">Emplacement supplémentaire</span>
+        <button class="v" id="buyslot" style="color:var(--projo);opacity:1;font-size:12.5px">
+          ${etat.prixSlot ?? '?'} écharpes</button></div>` : '');
+
+  // Fanzzy équipé.
+  $('fanzzy').innerHTML = loadout?.fanzzy
+    ? `<div class="ligne"><span class="n"><b style="font-family:var(--banner)">${esc(loadout.fanzzy.nom)}</b>
+         <br><span style="font-size:11px;opacity:.5">Cri : ${esc(loadout.fanzzy.cri?.label ?? '')}</span></span>
+         <a class="v" href="/fanzzy" style="color:var(--projo)">changer</a></div>`
+    : `<div class="vide">Aucun Fanzzy équipé.<br><a href="/fanzzy">Ouvre un booster</a></div>`;
+
+  // Équipement : deux emplacements, et le sac en dessous.
+  const portes = (etat.stuff ?? []).filter((s) => s.slot).sort((a, b) => a.slot - b.slot);
+  $('slots').innerHTML = [1, 2].map((n) => {
+    const p = portes.find((s) => s.slot === n);
+    const def = p ? catalogue.stuff.find((x) => x.id === p.stuff_id) : null;
+    return `<div class="slot ${p ? 'plein' : ''}" data-slot="${n}">
+      ${def ? `<b>${esc(def.nom)}</b><span>${esc(def.texte)}</span>`
+            : `<b style="opacity:.4">EMPLACEMENT ${n}</b><span>choisis une pièce</span>`}</div>`;
+  }).join('');
+
+  const sac = (etat.stuff ?? []);
+  $('sac').innerHTML = sac.length
+    ? sac.map((s) => {
+        const def = catalogue.stuff.find((x) => x.id === s.stuff_id);
+        return `<button class="obj ${s.slot ? 'porte' : ''}" data-obj="${s.stuff_id}">
+          ${esc(def?.nom ?? s.stuff_id)}${s.copies > 1 ? ` ×${s.copies}` : ''}</button>`;
+      }).join('')
+    : '<span style="font-size:11.5px;opacity:.45;padding:4px">Ton sac est vide.</span>';
+
+  $('langues').innerHTML = ['fr','en','de','es'].map((l) =>
+    `<button data-lang="${l}" class="${user.locale === l ? 'on' : ''}">${l.toUpperCase()}</button>`).join('');
+}
+
+/* ---------------------------------------------------------- actions */
+
+$('clubs').addEventListener('click', async (e) => {
+  const u = e.target.closest('[data-unfollow]');
+  if (u) {
+    try { etat = await me('/follow/' + u.dataset.unfollow, undefined, 'DELETE'); rendre(); }
+    catch { toast('Impossible pour le moment'); }
+    return;
+  }
+  if (e.target.id === 'buyslot') {
+    try {
+      await me('/slot', {});
+      etat = await me('/state');
+      toast('Emplacement débloqué');
+      rendre();
+    } catch (err) {
+      toast(err.code === 'onboarding.error.not_enough_scarves'
+        ? 'Pas assez d\u2019écharpes' : 'Impossible pour le moment');
+    }
+  }
+});
+
+let choixSlot = null;
+$('slots').addEventListener('click', (e) => {
+  const s = e.target.closest('[data-slot]');
+  if (!s) return;
+  choixSlot = Number(s.dataset.slot);
+  toast(`Choisis une pièce pour l\u2019emplacement ${choixSlot}`);
+});
+
+$('sac').addEventListener('click', async (e) => {
+  const o = e.target.closest('[data-obj]');
+  if (!o) return;
+  const id = o.dataset.obj;
+  const deja = (etat.stuff ?? []).find((s) => s.stuff_id === id && s.slot);
+  try {
+    if (deja) await me('/unequip', { stuffId: id });
+    else await me('/equip', { stuffId: id, slot: choixSlot ?? 1 });
+    etat = await me('/state');
+    loadout = await me('/loadout');
+    choixSlot = null;
+    rendre();
+  } catch { toast('Impossible pour le moment'); }
+});
+
+$('langues').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-lang]');
+  if (!b) return;
+  try {
+    const r = await auth('/me', { locale: b.dataset.lang }, 'PATCH');
+    user = r.user;
+    try { localStorage.setItem('tbf_locale', user.locale); } catch {}
+    toast('Langue enregistrée');
+    rendre();
+  } catch { toast('Impossible pour le moment'); }
+});
+
+$('resend').onclick = async () => {
+  try { await auth('/resend-verification', {}); toast('Mail renvoyé'); }
+  catch { toast('Impossible pour le moment'); }
+};
+
+$('logout').onclick = async () => {
+  try { await auth('/logout', {}); } catch {}
+  location.href = '/';
+};
+
+$('supprimer').onclick = async () => {
+  const mdp = prompt('Cette action est définitive : tes cartes, tes souvenirs et tes duels seront perdus.\n\nSaisis ton mot de passe pour confirmer.');
+  if (!mdp) return;
+  try {
+    await auth('/me', { password: mdp }, 'DELETE');
+    location.href = '/';
+  } catch (e) {
+    toast(e.code === 'auth.error.bad_credentials' ? 'Mot de passe incorrect' : 'Suppression impossible');
+  }
+};
+
+/* -------------------------------------------------------- démarrage */
+
+(async () => {
+  // Le portrait sert de fond à la carte de profil.
+  const img = new Image();
+  img.onload = () => { $('fond').style.backgroundImage = `url("${img.src}")`; };
+  img.onerror = () => { $('fond').style.background =
+    'radial-gradient(70% 60% at 50% 25%,rgba(245,195,59,.25),transparent 65%),#0B0F14'; };
+  img.src = 'img/hero-portrait.avif';
+
+  try {
+    const r = await fetch('/api/auth/me', { credentials:'same-origin' });
+    if (!r.ok) { location.href = '/compte'; return; }
+    user = (await r.json()).user;
+
+    [etat, catalogue] = await Promise.all([me('/state'), me('/catalogue')]);
+    if (!etat.onboarded) { location.href = '/bienvenue'; return; }
+
+    // Le reste est facultatif : le profil doit s'afficher même si un module manque.
+    loadout = await me('/loadout').catch(() => null);
+    souvenirs = await api('/api/souvenirs', '/mine').then((d) => d.souvenirs).catch(() => []);
+
+    const prix = [0, 0, 120, 220, 380, 600, 900, 1300];
+    etat.prixSlot = prix[etat.slots.total] ?? 1300;
+
+    const d = new Date(user.createdAt ?? Date.now());
+    $('depuis').textContent = 'dans la tribune depuis le ' +
+      d.toLocaleDateString('fr', { day:'numeric', month:'long', year:'numeric' });
+
+    rendre();
+    $('spin').style.display = 'none';
+    $('page').style.display = 'block';
+  } catch (e) {
+    if (e.message === 'auth') return;
+    $('spin').style.display = 'none';
+    $('page').style.display = 'block';
+    $('clubs').innerHTML = '<div class="vide">Serveur injoignable.</div>';
+  }
+})();
+</script>
+</body>
+</html>
