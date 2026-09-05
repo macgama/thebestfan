@@ -3,6 +3,7 @@ import type { Server, Socket } from 'socket.io';
 import { CARDS } from '../../shared/duel/cards.js';
 import { RULES } from '../../shared/duel/engine.js';
 import type { Intent } from '../../shared/duel/protocol.js';
+import { DuelBot, type BotLevel } from './bot.js';
 import { DuelRoom } from './room.js';
 import { MemoryStore, type DuelStore } from './store.js';
 
@@ -15,6 +16,8 @@ export interface DuelServerOptions {
    * passer pour un autre et reprendre son duel en cours.
    */
   authenticate?: (token: string | undefined, socket: Socket) => Promise<{ userId: string; name: string } | null>;
+  /** Délai avant de basculer sur l'adversaire d'entraînement. 0 pour désactiver. */
+  botAfterMs?: number;
   /** Deck de 20 cartes du joueur. Par défaut : un deck aléatoire (dev). */
   getDeck?: (userId: string, deckId?: string) => Promise<string[]>;
   tickMs?: number;
@@ -28,13 +31,21 @@ interface Session {
 
 const MAX_INTENTS_PER_5S = 25;
 
+/**
+ * Au bout de ce délai sans adversaire humain, on propose un entraînement.
+ * Vingt secondes : assez pour laisser une vraie rencontre se former, assez
+ * peu pour qu'un joueur seul un mardi soir puisse quand même jouer.
+ */
+const BOT_AFTER_MS = 20_000;
+
 export class DuelServer {
   private io: Server;
   private store: DuelStore;
   private opts: Required<Pick<DuelServerOptions, 'authenticate' | 'getDeck' | 'tickMs'>>;
   private rooms = new Map<string, DuelRoom>();
   private roomOfUser = new Map<string, string>();
-  private queue: { userId: string; name: string; deck: string[]; socket: Socket }[] = [];
+  private queue: { userId: string; name: string; deck: string[]; socket: Socket; since: number }[] = [];
+  private botAfterMs: number;
   private sessions = new WeakMap<Socket, Session>();
   private timer: NodeJS.Timeout | null = null;
 
@@ -52,6 +63,7 @@ export class DuelServer {
       getDeck: options.getDeck ?? (async () => randomDeck()),
       tickMs: options.tickMs ?? 1000,
     };
+    this.botAfterMs = options.botAfterMs ?? BOT_AFTER_MS;
   }
 
   listen() {
@@ -98,7 +110,8 @@ export class DuelServer {
       room.attach(who.userId, socket);
     }
 
-    socket.on('duel:queue', (p: { deckId?: string }) => void this.enqueue(socket, p?.deckId));
+    socket.on('duel:queue', (p: { deckId?: string; practice?: boolean }) =>
+      void this.enqueue(socket, p?.deckId, p));
     socket.on('duel:cancel_queue', () => this.dequeue(socket));
     socket.on('duel:intent', (p: { duelId: string; intent: Intent }) => void this.onIntent(socket, p));
     socket.on('duel:resync', (p: { duelId: string; sinceSeq: number }) => void this.onResync(socket, p));
@@ -117,7 +130,7 @@ export class DuelServer {
 
   /* ---------------------------------------------------------- appariement */
 
-  private async enqueue(socket: Socket, deckId?: string) {
+  private async enqueue(socket: Socket, deckId?: string, p?: { practice?: boolean }) {
     const s = this.sessions.get(socket);
     if (!s) return;
     if (this.roomOfUser.has(s.userId)) {
@@ -132,9 +145,15 @@ export class DuelServer {
       return;
     }
 
-    this.queue.push({ userId: s.userId, name: s.name, deck, socket });
-    socket.emit('duel:queued', { position: this.queue.length });
+    this.queue.push({ userId: s.userId, name: s.name, deck, socket, since: Date.now() });
+    socket.emit('duel:queued', {
+      position: this.queue.length,
+      botInMs: this.botAfterMs || null,
+    });
     this.tryMatch();
+
+    // Entraînement demandé explicitement : on ne fait pas attendre.
+    if (deckId === 'practice' || (p as { practice?: boolean })?.practice) this.startBotMatch(s.userId);
   }
 
   private dequeue(socket: Socket) {
@@ -203,8 +222,39 @@ export class DuelServer {
     await this.rooms.get(roomId)?.resync(s.userId, p.sinceSeq ?? 0);
   }
 
+  /**
+   * Bascule un joueur qui attend depuis trop longtemps sur une partie
+   * d'entraînement. Il reste libre de la quitter pour rechercher un humain.
+   */
+  private startBotMatch(userId: string) {
+    const i = this.queue.findIndex((q) => q.userId === userId);
+    if (i === -1) return;
+    const [p] = this.queue.splice(i, 1);
+    if (!p.socket.connected) return;
+
+    const level: BotLevel = 'chaud';
+    const bot = new DuelBot({ userId: `bot:${randomUUID().slice(0, 8)}`, name: 'Entraînement', level });
+    const id = randomUUID();
+    const room = new DuelRoom({
+      io: this.io,
+      store: this.store,
+      id,
+      seed: randomUUID(),
+      players: [p, { userId: bot.userId, name: bot.name, deck: randomDeck(), socket: null, bot }],
+      onEnd: (r) => this.closeRoom(r),
+    });
+    this.rooms.set(id, room);
+    this.roomOfUser.set(p.userId, id);
+  }
+
   private async tickAll() {
     const now = Date.now();
+
+    if (this.botAfterMs > 0) {
+      for (const q of [...this.queue]) {
+        if (now - q.since >= this.botAfterMs) this.startBotMatch(q.userId);
+      }
+    }
     for (const room of this.rooms.values()) {
       try {
         await room.tick(now);

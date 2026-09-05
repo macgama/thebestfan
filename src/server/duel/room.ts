@@ -5,6 +5,7 @@ import {
 } from '../../shared/duel/engine.js';
 import type { DuelEvent, Intent, Side } from '../../shared/duel/protocol.js';
 import { serialize, type DuelStore } from './store.js';
+import type { DuelBot } from './bot.js';
 
 export const RECONNECT_GRACE_MS = 60_000;
 
@@ -12,6 +13,8 @@ interface Seat {
   userId: string;
   socket: Socket | null;
   disconnectedAt: number | null;
+  /** Siège occupé par l'adversaire d'entraînement : pas de socket, pas de forfait. */
+  bot: DuelBot | null;
 }
 
 /**
@@ -26,13 +29,15 @@ export class DuelRoom {
   private io: Server;
   private store: DuelStore;
   private onEnd: (room: DuelRoom) => void;
+  /** Partie d'entraînement : elle ne compte pas au classement. */
+  readonly training: boolean = false;
 
   constructor(opts: {
     io: Server;
     store: DuelStore;
     id: string;
-    players: [{ userId: string; name: string; deck: string[]; socket: Socket },
-              { userId: string; name: string; deck: string[]; socket: Socket }];
+    players: [{ userId: string; name: string; deck: string[]; socket: Socket | null; bot?: DuelBot },
+              { userId: string; name: string; deck: string[]; socket: Socket | null; bot?: DuelBot }];
     seed: string;
     onEnd: (room: DuelRoom) => void;
   }) {
@@ -41,9 +46,12 @@ export class DuelRoom {
     this.id = opts.id;
     this.onEnd = opts.onEnd;
     this.seats = [
-      { userId: opts.players[0].userId, socket: opts.players[0].socket, disconnectedAt: null },
-      { userId: opts.players[1].userId, socket: opts.players[1].socket, disconnectedAt: null },
+      { userId: opts.players[0].userId, socket: opts.players[0].socket,
+        disconnectedAt: null, bot: opts.players[0].bot ?? null },
+      { userId: opts.players[1].userId, socket: opts.players[1].socket,
+        disconnectedAt: null, bot: opts.players[1].bot ?? null },
     ];
+    this.training = this.seats.some((s) => s.bot !== null);
 
     const now = Date.now();
     const { state, events } = createDuel(
@@ -59,8 +67,10 @@ export class DuelRoom {
     // le snapshot d'ouverture les contient deja.
     void this.publish(events, false).then(() => {
       for (const side of [0, 1] as Side[]) {
-        opts.players[side].socket.join(this.room);
-        opts.players[side].socket.emit('duel:start', viewFor(this.state, side));
+        const sock = opts.players[side].socket;
+        if (!sock) continue;
+        sock.join(this.room);
+        sock.emit('duel:start', { ...viewFor(this.state, side), training: this.training });
       }
     });
   }
@@ -126,16 +136,47 @@ export class DuelRoom {
 
   /* -------------------------------------------------------------- horloge */
 
+  /**
+   * Lecture non narrowée de la phase : handleIntent peut terminer la partie
+   * au milieu de la boucle, et TypeScript ne le voit pas sur un accès direct.
+   */
+  private phaseNow(): DuelState['phase'] {
+    return this.state.phase;
+  }
+
   async tick(now: number) {
-    if (this.state.phase === 'over') return;
+    if (this.phaseNow() === 'over') return;
 
     for (const side of [0, 1] as Side[]) {
       const seat = this.seats[side];
+      if (seat.bot) continue;
       if (seat.disconnectedAt && now - seat.disconnectedAt > RECONNECT_GRACE_MS) {
         await this.handleIntent(seat.userId, { t: 'surrender' });
         return;
       }
     }
+
+    // L'adversaire d'entraînement joue avant l'horloge : sinon son tour
+    // expirerait sans qu'il ait rien fait.
+    for (const side of [0, 1] as Side[]) {
+      const seat = this.seats[side];
+      if (!seat.bot) continue;
+      // Plusieurs gestes par tour d'horloge : poser une carte, attacher un
+      // souffle et chanter ne doivent pas prendre trois secondes. Le temps de
+      // réflexion du bot reste respecté, il est simplement plus court pour les
+      // gestes machinaux.
+      for (let step = 0; step < 4; step++) {
+        const at = now + step * 5;
+        const intent = seat.bot.decide(this.state, side, at);
+        if (process.env.DUEL_DEBUG) {
+          console.log('[bot]', side, this.phaseNow(), 'tour', this.state.turn, '->', intent?.t ?? 'attend');
+        }
+        if (!intent) break;
+        await this.handleIntent(seat.userId, intent);
+        if (this.phaseNow() === 'over') return;
+      }
+    }
+
     await this.publish(tick(this.state, now));
   }
 
@@ -143,11 +184,11 @@ export class DuelRoom {
 
   attach(userId: string, socket: Socket) {
     const side = this.sideOf(userId);
-    if (side === null) return;
+    if (side === null || this.seats[side].bot) return;
     this.seats[side].socket = socket;
     this.seats[side].disconnectedAt = null;
     socket.join(this.room);
-    socket.emit('duel:state', viewFor(this.state, side));
+    socket.emit('duel:state', { ...viewFor(this.state, side), training: this.training });
     this.seats[side ^ 1].socket?.emit('duel:opponent', { connected: true });
   }
 
@@ -177,7 +218,7 @@ export class DuelRoom {
       }
       return;
     }
-    seat.socket.emit('duel:state', viewFor(this.state, side));
+    seat.socket.emit('duel:state', { ...viewFor(this.state, side), training: this.training });
   }
 
   get deadline() {

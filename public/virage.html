@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Grand Virage — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;
+  --banner:"Oswald","Arial Narrow",Impact,sans-serif;--ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
+body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{position:relative;width:100%;max-width:440px;height:100dvh;display:flex;flex-direction:column;
+  background:radial-gradient(110% 30% at 50% 0%,rgba(60,130,232,.15),transparent 60%),
+             radial-gradient(110% 30% at 50% 100%,rgba(245,195,59,.15),transparent 60%),
+             linear-gradient(180deg,#141A21,#0A0D11 50%,#141A21);overflow:hidden}
+#app.quake{animation:quake .7s}
+@keyframes quake{0%,100%{transform:translate(0,0)}12%{transform:translate(-7px,4px)}
+  32%{transform:translate(6px,-5px)}56%{transform:translate(-5px,-2px)}80%{transform:translate(4px,3px)}}
+
+.hud{display:flex;align-items:center;gap:9px;padding:10px 13px 4px;flex:none;z-index:5}
+.club{flex:1;min-width:0;display:flex;align-items:center;gap:7px}
+.club.me{flex-direction:row-reverse;text-align:right}
+.club img{width:26px;height:26px;object-fit:contain;flex:none}
+.club b{font-family:var(--banner);font-size:13px;display:block;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.club small{font-size:9.5px;opacity:.5;letter-spacing:.1em}
+.score{font-family:var(--banner);font-size:24px;flex:none;min-width:64px;text-align:center;line-height:1}
+.score small{display:block;font-size:8.5px;letter-spacing:.16em;opacity:.5;font-family:var(--ui);margin-top:3px}
+.score.surge{color:var(--projo);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+.rope{flex:1;position:relative;min-height:0}
+.track{position:absolute;left:50%;top:12px;bottom:12px;width:14px;transform:translateX(-50%);
+  border-radius:8px;background:linear-gradient(180deg,rgba(60,130,232,.5),rgba(20,24,30,.6) 46%,
+  rgba(20,24,30,.6) 54%,rgba(245,195,59,.5));border:1px solid rgba(242,238,228,.12)}
+.knot{position:absolute;left:50%;width:64px;height:64px;transform:translate(-50%,-50%);border-radius:50%;
+  display:grid;place-items:center;background:radial-gradient(circle at 40% 35%,#2B333F,#0C1015);
+  border:2px solid rgba(242,238,228,.28);box-shadow:0 0 30px rgba(0,0,0,.75);
+  transition:top .12s linear;z-index:2;font-family:var(--banner);font-size:16px}
+.mid{position:absolute;left:50%;top:50%;width:56px;height:1px;transform:translate(-50%,-50%);
+  background:rgba(242,238,228,.2)}
+.crowd{position:absolute;left:0;right:0;text-align:center;font-size:9.5px;letter-spacing:.16em;opacity:.5}
+.crowd.top{top:6px}.crowd.bot{bottom:6px}
+.crowd b{opacity:.95}
+.banner{position:absolute;left:0;right:0;top:36%;text-align:center;font-family:var(--banner);
+  font-size:15px;letter-spacing:.18em;opacity:0;transition:opacity .3s;z-index:4;color:var(--projo)}
+.banner.on{opacity:1}
+.float{position:absolute;font-family:var(--banner);font-size:17px;pointer-events:none;z-index:6;
+  animation:drift 1.2s ease-out forwards}
+@keyframes drift{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-42px)}}
+
+.me-bar{flex:none;padding:0 13px 6px}
+.me-bar .l{display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.14em;opacity:.45;margin-bottom:4px}
+.me-bar .b{height:7px;border-radius:4px;background:rgba(242,238,228,.1);overflow:hidden}
+.me-bar .b i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--vert),var(--projo));
+  transition:width .3s}
+.rank{text-align:center;font-size:11px;opacity:.6;padding-bottom:6px}
+.rank b{color:var(--projo);font-family:var(--banner);font-size:14px}
+
+.hand{flex:none;display:flex;gap:6px;padding:4px 11px calc(12px + env(safe-area-inset-bottom));height:104px}
+.card{flex:1;border-radius:9px;padding:8px 7px;background:rgba(0,0,0,.34);position:relative;cursor:pointer;
+  border:1px solid rgba(242,238,228,.14);border-top:3px solid var(--c);display:flex;flex-direction:column;gap:3px}
+.card:active{transform:translateY(3px) scale(.98)}
+.card.dim{opacity:.32}
+.card b{font-family:var(--banner);font-size:11.5px;line-height:1.1}
+.card .g{font-size:8px;letter-spacing:.12em;opacity:.5;text-transform:uppercase}
+.card .p{font-family:var(--banner);font-size:20px;color:var(--c);margin-top:auto;line-height:1}
+.card .c{position:absolute;top:6px;right:7px;font-size:10px;opacity:.55;font-family:var(--banner)}
+
+.mini{position:absolute;inset:0;background:rgba(5,7,10,.94);z-index:20;display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:22px}
+.mini.on{display:flex}
+.mini h3{font-family:var(--banner);font-size:22px;letter-spacing:.1em;margin:0;color:var(--c)}
+.mini p{margin:0;font-size:12px;opacity:.6}
+.pad{width:206px;height:206px;border-radius:50%;display:grid;place-items:center;position:relative;
+  border:2px solid rgba(242,238,228,.2);background:rgba(255,255,255,.03);cursor:pointer}
+.pad.hit{background:rgba(245,195,59,.16)}
+.pad .ring{position:absolute;inset:0;border-radius:50%;border:3px solid var(--c);opacity:0}
+.pad .ring.beat{animation:beat .42s ease-out}
+@keyframes beat{from{opacity:.9;transform:scale(.72)}to{opacity:0;transform:scale(1.12)}}
+.pad .n{font-family:var(--banner);font-size:48px;line-height:1}
+.pad .s{font-size:10.5px;opacity:.5;letter-spacing:.13em;margin-top:3px}
+.countdown{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--banner);
+  font-size:84px;color:var(--c);pointer-events:none;animation:cd .55s ease-out}
+@keyframes cd{from{opacity:0;transform:scale(1.5)}60%{opacity:1}to{opacity:0;transform:scale(.85)}}
+.verdict{font-family:var(--banner);font-size:16px;letter-spacing:.12em;height:20px}
+
+.veil{position:absolute;inset:0;background:rgba(5,7,10,.96);z-index:30;display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;overflow-y:auto}
+.veil.on{display:flex}
+.veil h1{font-family:var(--banner);font-size:24px;letter-spacing:.1em;margin:0}
+.veil p{font-size:12.5px;opacity:.62;line-height:1.6;margin:0;max-width:320px}
+.match{width:100%;max-width:340px;border:1px solid rgba(242,238,228,.16);border-radius:10px;
+  background:rgba(0,0,0,.3);padding:12px;cursor:pointer;display:flex;align-items:center;gap:9px}
+.match.off{opacity:.4;pointer-events:none}
+.match img{width:24px;height:24px;object-fit:contain}
+.match .n{flex:1;min-width:0;text-align:left}
+.match .n b{font-family:var(--banner);font-size:13px;display:block}
+.match .n small{font-size:10px;opacity:.5}
+.match .st{font-family:var(--banner);font-size:11px;color:var(--flare);letter-spacing:.08em}
+.err{position:absolute;left:50%;bottom:130px;transform:translateX(-50%);z-index:18;
+  background:rgba(224,64,44,.92);border-radius:6px;padding:9px 15px;font-size:12.5px;display:none}
+.err.on{display:block}
+.souvenir{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:25;
+  border:2px solid var(--projo);border-radius:12px;background:#12161C;padding:20px 24px;text-align:center;
+  display:none;box-shadow:0 20px 60px rgba(0,0,0,.8)}
+.souvenir.on{display:block;animation:pop .5s cubic-bezier(.2,.9,.3,1)}
+@keyframes pop{from{opacity:0;transform:translate(-50%,-46%) scale(.8)}}
+.souvenir .t{font-family:var(--banner);font-size:11px;letter-spacing:.2em;color:var(--projo)}
+.souvenir .m{font-family:var(--banner);font-size:22px;margin:8px 0 4px}
+.souvenir .d{font-size:11.5px;opacity:.6}
+</style>
+</head>
+<body>
+<main id="app">
+  <div class="hud">
+    <div class="club" id="clubFoe"><img alt=""><div><b>—</b><small>EN FACE</small></div></div>
+    <div class="score"><span id="score">0 – 0</span><small id="phase">GRAND VIRAGE</small></div>
+    <div class="club me" id="clubMe"><img alt=""><div><b>—</b><small>TA TRIBUNE</small></div></div>
+  </div>
+
+  <div class="rope" id="rope">
+    <div class="track"></div><div class="mid"></div>
+    <div class="crowd top" id="crowdFoe"></div>
+    <div class="crowd bot" id="crowdMe"></div>
+    <div class="knot" id="knot">0</div>
+    <div class="banner" id="banner"></div>
+  </div>
+
+  <div class="me-bar">
+    <div class="l"><span>SOUFFLE</span><span id="breathVal">0</span></div>
+    <div class="b"><i id="breathBar"></i></div>
+  </div>
+  <div class="rank" id="rank"></div>
+  <div class="hand" id="hand"></div>
+
+  <div class="mini" id="mini">
+    <h3 id="miniTitle"></h3>
+    <div id="miniZone"></div>
+    <p id="miniHint"></p>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <div class="err" id="err"></div>
+  <div class="souvenir" id="souvenir"></div>
+
+  <div class="veil on" id="veil">
+    <h1 id="veilTitle">LE GRAND VIRAGE</h1>
+    <p id="veilText">Tout le monde pousse sur la même corde pendant le vrai match. Un but réel la secoue et ouvre une minute où tout compte double.</p>
+    <div id="matchs"></div>
+  </div>
+</main>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+/* =======================================================================
+   Grand Virage — client.
+   Il n'évalue rien : il envoie les instants de frappe et affiche ce que le
+   serveur renvoie. La corde arrive dix fois par seconde, agrégée pour toute
+   la tribune.
+   ======================================================================= */
+
+const $ = (id) => document.getElementById(id);
+const buzz = (p) => { try { navigator.vibrate?.(p); } catch {} };
+const COLORS = { tempo:'#F5C33B', mash:'#3C82E8', hold:'#C2CAD6' };
+const LABEL = { tempo:'TEMPO', mash:'MARTELAGE', hold:'ENDURANCE' };
+const HINT = {
+  tempo:'Tape sur chaque pulsation',
+  mash:'Tape le plus vite possible',
+  hold:'Garde le doigt appuyé',
+};
+const GOAL_AT = 400;
+
+let socket = null, S = null, busy = false;
+
+/* ------------------------------------------------------------ affichage */
+
+function renderStatic() {
+  const f = S.fixture, mine = S.you.side;
+  const me = mine === 0 ? { n:f.homeName, l:f.homeLogo } : { n:f.awayName, l:f.awayLogo };
+  const foe = mine === 0 ? { n:f.awayName, l:f.awayLogo } : { n:f.homeName, l:f.homeLogo };
+  $('clubMe').querySelector('b').textContent = me.n;
+  $('clubMe').querySelector('img').src = me.l ?? '';
+  $('clubFoe').querySelector('b').textContent = foe.n;
+  $('clubFoe').querySelector('img').src = foe.l ?? '';
+
+  $('hand').innerHTML = S.cards.map((c) => `
+    <div class="card" data-card="${c.id}" style="--c:${COLORS[c.gest]}">
+      <span class="c">${c.cost}</span><b>${c.id}</b>
+      <span class="g">${LABEL[c.gest]}</span><span class="p">${c.power}</span>
+    </div>`).join('');
+}
+
+function render() {
+  const mine = S.you.side;
+  const h = $('rope').clientHeight;
+  // La corde est stockée « côté extérieur positif » ; on la retourne pour que
+  // pousser vers le haut veuille toujours dire pousser chez l'adversaire.
+  const vers = mine === 0 ? -S.rope : S.rope;
+  const pct = Math.max(-1, Math.min(1, vers / GOAL_AT));
+  $('knot').style.top = `${h / 2 - pct * (h / 2 - 38)}px`;
+  $('knot').textContent = Math.abs(Math.round(vers));
+  $('score').textContent = `${S.goals[mine]} – ${S.goals[mine ^ 1]}`;
+  $('score').className = 'score' + (S.surge ? ' surge' : '');
+  $('phase').textContent = S.surge ? 'TOUT COMPTE DOUBLE' : 'GRAND VIRAGE';
+  $('crowdMe').innerHTML = `<b>${S.crowd[mine]}</b> AVEC TOI`;
+  $('crowdFoe').innerHTML = `<b>${S.crowd[mine ^ 1]}</b> EN FACE`;
+  $('breathBar').style.width = `${S.you.breath}%`;
+  $('breathVal').textContent = S.you.breath;
+  if (S.you.rank) $('rank').innerHTML = `<b>${S.you.rank}<sup>e</sup></b> sur ${S.you.of} · ${S.you.ferveur} de ferveur`;
+  for (const el of $('hand').children) {
+    const c = S.cards.find((x) => x.id === el.dataset.card);
+    el.classList.toggle('dim', S.you.breath < c.cost || busy);
+  }
+}
+
+function banner(t, ms = 1800) {
+  const b = $('banner'); b.textContent = t; b.classList.add('on');
+  clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('on'), ms);
+}
+function float(txt, color) {
+  const el = document.createElement('div');
+  el.className = 'float'; el.textContent = txt; el.style.color = color;
+  el.style.left = '58%'; el.style.top = '46%';
+  $('rope').appendChild(el); setTimeout(() => el.remove(), 1200);
+}
+function fail(code) {
+  const e = $('err');
+  e.textContent = ({
+    'ferveur.error.not_enough_breath':'Pas assez de souffle',
+    'ferveur.error.rate_limited':'Trop de chants d\u2019affilée',
+    'ferveur.error.taps_too_fast':'Frappes trop rapprochées',
+    'ferveur.error.inhuman_regularity':'Frappes trop régulières',
+    'ferveur.error.not_your_match':'Aucun de tes clubs ne joue ce match',
+  })[code] ?? 'Refusé par le serveur';
+  e.className = 'err on';
+  clearTimeout(e._t); e._t = setTimeout(() => { e.className = 'err'; }, 2600);
+}
+
+/* ------------------------------------------------------------ les gestes
+   Le client ne fait qu'enregistrer les instants et les transmettre. */
+
+function openMini(card) {
+  return new Promise((resolve) => {
+    const m = $('mini');
+    m.style.setProperty('--c', COLORS[card.gest]);
+    $('miniTitle').textContent = LABEL[card.gest];
+    $('miniHint').textContent = HINT[card.gest];
+    $('verdict').textContent = '';
+    m.classList.add('on');
+    let k = 3;
+    const tick = () => {
+      if (k === 0) return run(card, resolve);
+      const c = document.createElement('div');
+      c.className = 'countdown'; c.textContent = k--;
+      m.appendChild(c); setTimeout(() => c.remove(), 550); buzz(8);
+      setTimeout(tick, 560);
+    };
+    tick();
+  });
+}
+
+function closeMini(taps) {
+  $('mini').classList.remove('on');
+  $('miniZone').innerHTML = '';
+  return taps;
+}
+
+function run(card, resolve) {
+  const t0 = performance.now();
+  const taps = [];
+  if (card.gest === 'tempo') {
+    $('miniZone').innerHTML = `<div class="pad" id="pad"><div class="ring" id="ring"></div>
+      <div style="text-align:center"><div class="n" id="n">0</div><div class="s">SUR LE RYTHME</div></div></div>`;
+    let i = 0;
+    const iv = setInterval(() => {
+      const r = $('ring');
+      if (r) { r.classList.remove('beat'); void r.offsetWidth; r.classList.add('beat'); }
+      buzz(12);
+      if (++i >= 8) { clearInterval(iv); setTimeout(() => resolve(closeMini(taps)), 420); }
+    }, 560);
+    $('pad').onpointerdown = () => {
+      taps.push(Math.round(performance.now() - t0));
+      $('n').textContent = taps.length;
+      $('pad').classList.add('hit'); setTimeout(() => $('pad')?.classList.remove('hit'), 80);
+      buzz(14);
+    };
+  } else if (card.gest === 'mash') {
+    $('miniZone').innerHTML = `<div class="pad" id="pad"><div style="text-align:center">
+      <div class="n" id="n">0</div><div class="s">FRAPPES</div></div></div>`;
+    $('pad').onpointerdown = () => {
+      taps.push(Math.round(performance.now() - t0));
+      $('n').textContent = taps.length;
+      if (taps.length % 4 === 0) buzz(9);
+    };
+    setTimeout(() => resolve(closeMini(taps)), 3000);
+  } else {
+    $('miniZone').innerHTML = `<div class="pad" id="pad"><div style="text-align:center">
+      <div class="n" id="n">0%</div><div class="s">NE LÂCHE PAS</div></div></div>`;
+    const pad = $('pad');
+    let down = null;
+    const raf = () => {
+      if (down !== null) {
+        const held = performance.now() - t0 - down + taps.filter((_, i) => i % 2 === 1)
+          .reduce((a, v, i) => a + (v - taps[i * 2]), 0);
+        $('n').textContent = `${Math.min(100, Math.round((held / 3200) * 100))}%`;
+      }
+      if ($('mini').classList.contains('on')) requestAnimationFrame(raf);
+    };
+    pad.onpointerdown = () => { if (down === null) { down = performance.now() - t0; taps.push(Math.round(down)); buzz(18); } };
+    pad.onpointerup = pad.onpointercancel = () => {
+      if (down === null) return;
+      taps.push(Math.round(performance.now() - t0)); down = null;
+    };
+    requestAnimationFrame(raf);
+    setTimeout(() => {
+      if (down !== null) taps.push(Math.round(performance.now() - t0));
+      resolve(closeMini(taps));
+    }, 3600);
+  }
+}
+
+$('hand').addEventListener('pointerdown', async (e) => {
+  const el = e.target.closest('[data-card]');
+  if (!el || busy || !S) return;
+  const card = S.cards.find((c) => c.id === el.dataset.card);
+  if (S.you.breath < card.cost) return fail('ferveur.error.not_enough_breath');
+  busy = true; render();
+  const taps = await openMini(card);
+  socket.emit('virage:chant', { cardId: card.id, taps });
+  busy = false;
+});
+
+/* -------------------------------------------------------------- réseau */
+
+function connect() {
+  socket = io({ transports:['websocket','polling'] });
+
+  socket.on('connect', () => { if (S) socket.emit('virage:join', { fixtureId: S.fixture.id }); });
+
+  socket.on('virage:state', (s) => {
+    S = s; $('veil').classList.remove('on');
+    renderStatic(); render();
+    banner('TU ES DANS LE VIRAGE');
+  });
+
+  socket.on('virage:tick', (t) => {
+    if (!S) return;
+    S.rope = t.rope; S.goals = t.goals; S.crowd = t.crowd; S.surge = t.surge;
+    render();
+  });
+
+  socket.on('virage:result', (r) => {
+    if (!S) return;
+    S.you.breath = r.breath; S.you.ferveur = r.ferveur;
+    $('verdict').textContent = r.quality > 0.9 ? 'PARFAIT' : r.quality > 0.7 ? 'BON'
+      : r.quality > 0.4 ? 'MOYEN' : 'RATÉ';
+    float(`+${r.push}`, r.backfire ? 'var(--flare)' : 'var(--projo)');
+    buzz(r.quality > 0.9 ? [20, 30, 40] : 12);
+    render();
+  });
+
+  socket.on('virage:goal', (g) => {
+    banner(g.side === S.you.side ? 'BUT DE LA TRIBUNE !' : 'ILS ONT FAIT CÉDER LA CORDE');
+    $('app').classList.add('quake');
+    setTimeout(() => $('app').classList.remove('quake'), 700);
+    buzz([40, 60, 120]);
+  });
+
+  socket.on('virage:real_goal', (g) => {
+    const mien = g.side === S.you.side;
+    banner(mien ? `BUT RÉEL — ${g.player ?? ''} ${g.minute}'` : `But adverse ${g.minute}'`, 4000);
+    $('app').classList.add('quake');
+    setTimeout(() => $('app').classList.remove('quake'), 700);
+    buzz(mien ? [60, 50, 160] : 200);
+    if (mien) souvenir(g);
+  });
+
+  socket.on('virage:crowd', (c) => { if (S) { S.crowd = c.crowd; render(); } });
+  socket.on('virage:error', (e) => fail(e.code));
+}
+
+/** Annonce de la carte-souvenir. Le serveur l'a déjà frappée. */
+function souvenir(g) {
+  const el = $('souvenir');
+  el.innerHTML = `<div class="t">CARTE-SOUVENIR</div>
+    <div class="m">${g.player ?? 'BUT'} ${g.minute}'</div>
+    <div class="d">Tu y étais. Elle est dans ton carnet.</div>`;
+  el.className = 'souvenir on';
+  setTimeout(() => { el.className = 'souvenir'; }, 4200);
+}
+
+/* ----------------------------------------------------------- choix du match */
+
+(async () => {
+  connect();
+  let matchs = [];
+  try {
+    const r = await fetch('/api/virage/live', { credentials:'same-origin' });
+    if (r.status === 401) { location.href = '/compte'; return; }
+    matchs = (await r.json()).matchs ?? [];
+  } catch { /* serveur injoignable */ }
+
+  $('matchs').innerHTML = matchs.length ? matchs.map((m) => `
+    <div class="match ${m.open ? '' : 'off'}" data-id="${m.id}">
+      <img src="${m.home_logo ?? ''}" alt="">
+      <div class="n"><b>${m.home_name} – ${m.away_name}</b>
+        <small>${m.league_name ?? ''} · ${m.crowd[0] + m.crowd[1]} dans les tribunes</small></div>
+      <img src="${m.away_logo ?? ''}" alt="">
+      <span class="st">${m.open ? (m.elapsed ? m.elapsed + "'" : 'BIENTÔT') : ''}</span>
+    </div>`).join('')
+    : `<p>Aucun match de tes clubs dans les prochaines heures.<br>
+        <a href="/equipes" style="color:var(--projo)">Suis un club</a> pour entrer dans un virage.</p>`;
+
+  $('matchs').onclick = (e) => {
+    const m = e.target.closest('[data-id]');
+    if (m) socket.emit('virage:join', { fixtureId: Number(m.dataset.id) });
+  };
+})();
+</script>
+</body>
+</html>
