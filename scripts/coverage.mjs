@@ -62,6 +62,7 @@ for (const l of rows) {
   if (!saison) continue;
 
   const c = saison.coverage?.fixtures ?? {};
+  const cov = saison.coverage ?? {};
   const entree = {
     id: l.league.id,
     nom: l.league.name,
@@ -71,7 +72,10 @@ for (const l of rows) {
     saison: saison.year,
     events: Boolean(c.events),
     lineups: Boolean(c.lineups),
-    classement: Boolean(saison.coverage?.standings),
+    classement: Boolean(cov.standings),
+    buteurs: Boolean(cov.top_scorers),
+    passeurs: Boolean(cov.top_assists),
+    cartons: Boolean(cov.top_cards),
     debut: saison.start ?? null,
     fin: saison.end ?? null,
   };
@@ -138,6 +142,10 @@ await pool.query(`
     has_events TINYINT(1)   NOT NULL DEFAULT 0,
     has_lineups TINYINT(1)  NOT NULL DEFAULT 0,
     has_standings TINYINT(1) NOT NULL DEFAULT 0,
+    has_top_scorers TINYINT(1) NOT NULL DEFAULT 0,
+    has_top_assists TINYINT(1) NOT NULL DEFAULT 0,
+    has_top_cards TINYINT(1) NOT NULL DEFAULT 0,
+    tier       TINYINT      NOT NULL DEFAULT 3,
     starts_on  DATE         NULL,
     ends_on    DATE         NULL,
     enabled    TINYINT(1)   NOT NULL DEFAULT 1,
@@ -149,9 +157,25 @@ await pool.query(`
 // Les amicaux sont éligibles techniquement mais désactivés : un souvenir de
 // match amical ne vaut rien, et l'API prévient elle-même que leur couverture
 // est irrégulière.
+/** Palier de notoriété : il décide du prix des vignettes et de l'ordre d'affichage. */
+const MAJEURES = new Set(['UEFA Champions League', 'World Cup', 'Euro Championship',
+  'UEFA Europa League', 'Copa America']);
+const GRANDS = new Set(['England', 'Spain', 'Italy', 'Germany', 'France']);
+const SOLIDES = new Set(['Switzerland', 'Netherlands', 'Portugal', 'Belgium',
+  'Brazil', 'Argentina', 'Turkey', 'Scotland', 'Austria', 'Denmark']);
+
+function palier(e) {
+  if (MAJEURES.has(e.nom)) return 1;
+  if (GRANDS.has(e.pays) && e.type === 'League') return 1;
+  if (e.nom.startsWith('UEFA') || SOLIDES.has(e.pays)) return 2;
+  return 3;
+}
+
 const values = eligibles.map((e) => [
   e.id, e.saison, e.nom, e.pays, e.type, e.famille,
-  1, e.lineups ? 1 : 0, e.classement ? 1 : 0, e.debut, e.fin,
+  1, e.lineups ? 1 : 0, e.classement ? 1 : 0,
+  e.buteurs ? 1 : 0, e.passeurs ? 1 : 0, e.cartons ? 1 : 0,
+  palier(e), e.debut, e.fin,
   e.famille === 'amical' ? 0 : 1,
 ]);
 
@@ -159,16 +183,22 @@ for (let i = 0; i < values.length; i += 200) {
   await pool.query(
     `INSERT INTO souvenir_leagues
        (league_id, season, name, country, type, family, has_events, has_lineups,
-        has_standings, starts_on, ends_on, enabled)
+        has_standings, has_top_scorers, has_top_assists, has_top_cards, tier,
+        starts_on, ends_on, enabled)
      VALUES ?
      ON DUPLICATE KEY UPDATE name=VALUES(name), country=VALUES(country), type=VALUES(type),
        family=VALUES(family), has_events=VALUES(has_events), has_lineups=VALUES(has_lineups),
-       has_standings=VALUES(has_standings), starts_on=VALUES(starts_on), ends_on=VALUES(ends_on)`,
+       has_standings=VALUES(has_standings), has_top_scorers=VALUES(has_top_scorers),
+       has_top_assists=VALUES(has_top_assists), has_top_cards=VALUES(has_top_cards),
+       tier=VALUES(tier), starts_on=VALUES(starts_on), ends_on=VALUES(ends_on)`,
     [values.slice(i, i + 200)],
   );
 }
 
 const [[{ n }]] = await pool.query(
   `SELECT COUNT(*) AS n FROM souvenir_leagues WHERE enabled = 1`);
-console.log(`\n${values.length} compétitions écrites · ${n} activées pour les cartes-souvenirs`);
+const [[{ p1 }]] = await pool.query(`SELECT COUNT(*) AS p1 FROM souvenir_leagues WHERE tier = 1`);
+const [[{ p2 }]] = await pool.query(`SELECT COUNT(*) AS p2 FROM souvenir_leagues WHERE tier = 2`);
+console.log(`\n${values.length} compétitions écrites · ${n} activées`);
+console.log(`paliers : ${p1} majeures · ${p2} solides · ${values.length - p1 - p2} autres`);
 await pool.end();

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Télétexte — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;
+  --banner:"Oswald","Arial Narrow",Impact,sans-serif;--ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{width:100%;max-width:520px;min-height:100dvh;display:flex;flex-direction:column;
+  background:linear-gradient(180deg,#141A21,#0A0D11 40%,#0A0D11)}
+
+.top{display:flex;align-items:center;gap:10px;padding:13px 15px 8px;flex:none}
+.back{background:none;border:1px solid rgba(242,238,228,.2);border-radius:6px;color:inherit;
+  width:32px;height:32px;cursor:pointer;font-size:16px;display:none}
+.back.on{display:block}
+.top h1{font-family:var(--banner);font-size:19px;letter-spacing:.14em;margin:0;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top h1 small{display:block;font-size:9px;letter-spacing:.24em;opacity:.5;margin-top:3px;font-family:var(--ui)}
+
+.search{padding:0 15px 10px}
+input{width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.16);border-radius:7px;
+  color:var(--craie);padding:11px 13px;font-size:14.5px;font-family:inherit}
+input:focus{outline:none;border-color:var(--projo)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:0 15px 10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;font-size:11px;padding:6px 11px;border-radius:999px;cursor:pointer;
+  border:1px solid rgba(242,238,228,.16);background:rgba(0,0,0,.25);color:inherit;opacity:.6;font-family:inherit}
+.chip.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1;font-weight:600}
+
+.list{flex:1;padding:0 12px 26px}
+.lg{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;cursor:pointer;
+  border:1px solid rgba(242,238,228,.09);background:rgba(0,0,0,.22);margin-bottom:6px}
+.lg .n{flex:1;min-width:0}
+.lg b{font-family:var(--banner);font-size:13.5px;display:block;letter-spacing:.02em}
+.lg small{font-size:10.5px;opacity:.45}
+.lg .t{font-family:var(--banner);font-size:9px;letter-spacing:.1em;border-radius:3px;padding:2px 6px;
+  border:1px solid rgba(242,238,228,.2);opacity:.55}
+.lg .t.t1{border-color:var(--projo);color:var(--projo);opacity:1}
+
+.tabs{display:flex;gap:5px;padding:0 15px 10px}
+.tabs button{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.13);border-radius:7px;
+  color:inherit;padding:9px 4px;font-family:var(--banner);font-size:11px;letter-spacing:.06em;
+  cursor:pointer;opacity:.55}
+.tabs button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-family:var(--banner);font-size:9.5px;letter-spacing:.13em;opacity:.42;text-align:right;
+  padding:6px 4px;font-weight:500}
+th:nth-child(2){text-align:left}
+td{padding:8px 4px;text-align:right;border-top:1px solid rgba(242,238,228,.07)}
+td:nth-child(2){text-align:left}
+td.club{display:flex;align-items:center;gap:7px;min-width:0}
+td.club img{width:17px;height:17px;object-fit:contain;flex:none}
+td.club span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr.top3 td:first-child{color:var(--vert);font-weight:700}
+tr.bottom td:first-child{color:var(--flare)}
+td.pts{font-family:var(--banner);font-size:15px}
+.form{display:flex;gap:2px;justify-content:flex-end}
+.form i{width:6px;height:6px;border-radius:1px;display:block}
+.form i.W{background:var(--vert)}.form i.D{background:rgba(242,238,228,.35)}.form i.L{background:var(--flare)}
+
+.m{display:flex;align-items:center;gap:9px;padding:9px 6px;border-top:1px solid rgba(242,238,228,.07);
+  font-size:12.5px}
+.m .s{flex:1;display:flex;align-items:center;gap:6px;min-width:0}
+.m .s.a{justify-content:flex-end;text-align:right}
+.m .s span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m img{width:17px;height:17px;object-fit:contain;flex:none}
+.m .sc{font-family:var(--banner);font-size:15px;min-width:46px;text-align:center}
+.m .when{font-size:10.5px;opacity:.45;min-width:46px;text-align:center;line-height:1.3}
+.m .live{color:var(--flare);font-weight:600;font-size:10.5px}
+.round{font-family:var(--banner);font-size:9.5px;letter-spacing:.14em;opacity:.4;padding:14px 6px 2px}
+
+.note{font-size:11px;opacity:.45;text-align:center;padding:14px 20px;line-height:1.6}
+.note.stale{color:var(--projo);opacity:.75}
+.empty{text-align:center;padding:44px 20px;opacity:.5;font-size:13px;line-height:1.7}
+.spin{width:26px;height:26px;border:3px solid rgba(242,238,228,.18);border-top-color:var(--projo);
+  border-radius:50%;animation:sp 1s linear infinite;margin:44px auto}
+@keyframes sp{to{transform:rotate(1turn)}}
+</style>
+</head>
+<body>
+<main id="app">
+  <div class="top">
+    <button class="back" id="back">‹</button>
+    <h1 id="titre">TÉLÉTEXTE<small id="sub">tous les championnats</small></h1>
+  </div>
+  <div id="head"></div>
+  <div class="list" id="list"><div class="spin"></div></div>
+</main>
+
+<script>
+/* =======================================================================
+   Télétexte.
+   Tout vient du serveur, qui met en cache : ouvrir une compétition mille
+   fois ne coûte qu'un appel à l'API.
+   ======================================================================= */
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+  (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+const api = (p) => fetch('/api/tt' + p).then((r) => r.json());
+
+let vue = 'sommaire', ligue = null, onglet = 'classement';
+let pays = '', terme = '';
+
+/* ------------------------------------------------------------ sommaire */
+
+async function sommaire() {
+  vue = 'sommaire';
+  $('back').classList.remove('on');
+  $('titre').innerHTML = 'TÉLÉTEXTE<small>tous les championnats</small>';
+  $('head').innerHTML = `
+    <div class="search"><input id="q" placeholder="Chercher une compétition ou un pays…" value="${esc(terme)}"></div>
+    <div class="chips" id="pays"></div>`;
+  $('list').innerHTML = '<div class="spin"></div>';
+
+  const [{ leagues }, { countries }] = await Promise.all([
+    api(`/leagues?q=${encodeURIComponent(terme)}&country=${encodeURIComponent(pays)}`),
+    api('/countries'),
+  ]);
+
+  $('pays').innerHTML = `<button class="chip ${pays ? '' : 'on'}" data-p="">TOUT</button>` +
+    countries.slice(0, 24).map((c) =>
+      `<button class="chip ${pays === c.country ? 'on' : ''}" data-p="${esc(c.country)}">${esc(c.country)}</button>`).join('');
+
+  $('list').innerHTML = leagues.length ? leagues.map((l) => `
+    <div class="lg" data-l="${l.league_id}">
+      <div class="n"><b>${esc(l.name)}</b><small>${esc(l.country ?? '')} · saison ${l.season}</small></div>
+      <span class="t ${l.tier === 1 ? 't1' : ''}">${l.tier === 1 ? 'MAJEURE' : l.tier === 2 ? 'SOLIDE' : ''}</span>
+    </div>`).join('')
+    : '<div class="empty">Aucune compétition trouvée.</div>';
+
+  $('q').oninput = debounce(() => { terme = $('q').value.trim(); sommaire(); }, 320);
+  $('pays').onclick = (e) => {
+    const b = e.target.closest('[data-p]');
+    if (b) { pays = b.dataset.p; sommaire(); }
+  };
+}
+
+let t = null;
+function debounce(fn, ms) { return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+/* ---------------------------------------------------------- une ligue */
+
+async function ouvrir(id) {
+  vue = 'ligue'; ligue = id; onglet = 'classement';
+  $('back').classList.add('on');
+  $('head').innerHTML = `<div class="tabs" id="tabs">
+    <button data-t="classement" class="on">CLASSEMENT</button>
+    <button data-t="resultats">RÉSULTATS</button>
+    <button data-t="scorers">BUTEURS</button>
+    <button data-t="assists">PASSEURS</button>
+    <button data-t="cards">CARTONS</button>
+  </div>`;
+  $('tabs').onclick = (e) => {
+    const b = e.target.closest('[data-t]');
+    if (!b) return;
+    onglet = b.dataset.t;
+    [...$('tabs').children].forEach((x) => x.classList.toggle('on', x === b));
+    charger();
+  };
+  charger();
+}
+
+async function charger() {
+  $('list').innerHTML = '<div class="spin"></div>';
+  const route = { classement:'', resultats:'/results', scorers:'/scorers',
+                  assists:'/assists', cards:'/cards' }[onglet];
+  let d;
+  try { d = await api(`/league/${ligue}${route}`); }
+  catch { $('list').innerHTML = '<div class="empty">Serveur injoignable.</div>'; return; }
+
+  if (d.error) { $('list').innerHTML = '<div class="empty">Données indisponibles.</div>'; return; }
+
+  $('titre').innerHTML = `${esc(d.league.name)}<small>${esc(d.league.country ?? '')} · saison ${d.league.season}</small>`;
+
+  if (d.unsupported) {
+    $('list').innerHTML = `<div class="empty">Cette donnée n'existe pas pour cette compétition.<br>
+      Toutes les compétitions ne sont pas couvertes de la même façon.</div>`;
+    return;
+  }
+
+  if (onglet === 'classement') rendreClassement(d);
+  else if (onglet === 'resultats') rendreResultats(d);
+  else rendreJoueurs(d);
+
+  if (d.stale) {
+    $('list').insertAdjacentHTML('beforeend',
+      '<div class="note stale">Données un peu anciennes : le service de résultats n\u2019a pas répondu.</div>');
+  }
+}
+
+function rendreClassement(d) {
+  if (!d.groups.length) return $('list').innerHTML = '<div class="empty">Classement indisponible.</div>';
+  $('list').innerHTML = d.groups.map((g) => `
+    ${g[0]?.group && d.groups.length > 1 ? `<div class="round">${esc(g[0].group)}</div>` : ''}
+    <table>
+      <thead><tr><th>#</th><th>ÉQUIPE</th><th>J</th><th>G</th><th>N</th><th>P</th><th>DIFF</th><th>PTS</th></tr></thead>
+      <tbody>${g.map((r, i) => `
+        <tr class="${i < 3 ? 'top3' : i >= g.length - 2 ? 'bottom' : ''}">
+          <td>${r.rank}</td>
+          <td class="club"><img src="${esc(r.logo)}" alt=""><span>${esc(r.name)}</span></td>
+          <td>${r.played}</td><td>${r.win}</td><td>${r.draw}</td><td>${r.lose}</td>
+          <td>${r.gf - r.ga > 0 ? '+' : ''}${r.gf - r.ga}</td>
+          <td class="pts">${r.points}</td>
+        </tr>`).join('')}</tbody>
+    </table>`).join('');
+}
+
+function rendreResultats(d) {
+  if (!d.matchs.length) return $('list').innerHTML = '<div class="empty">Aucun match sur la période.</div>';
+  let round = null;
+  $('list').innerHTML = d.matchs.map((m) => {
+    const titre = m.round !== round ? `<div class="round">${esc(m.round ?? '')}</div>` : '';
+    round = m.round;
+    const live = ['1H','HT','2H','ET','P','LIVE'].includes(m.status);
+    const joue = m.home.goals !== null && m.home.goals !== undefined;
+    const d2 = new Date(m.date);
+    const quand = live ? `<span class="live">${m.status === 'HT' ? 'MT' : (m.elapsed ?? '') + "'"}</span>`
+      : d2.toLocaleDateString('fr', { day:'numeric', month:'short' }) + '<br>' +
+        d2.toLocaleTimeString('fr', { hour:'2-digit', minute:'2-digit' });
+    return `${titre}<div class="m">
+      <div class="s"><img src="${esc(m.home.logo)}" alt=""><span>${esc(m.home.name)}</span></div>
+      ${joue ? `<div class="sc">${m.home.goals} – ${m.away.goals}</div>`
+             : `<div class="when">${quand}</div>`}
+      ${joue && live ? `<div class="when">${quand}</div>` : ''}
+      <div class="s a"><span>${esc(m.away.name)}</span><img src="${esc(m.away.logo)}" alt=""></div>
+    </div>`;
+  }).join('');
+}
+
+function rendreJoueurs(d) {
+  if (!d.players.length) return $('list').innerHTML = '<div class="empty">Classement indisponible.</div>';
+  const col = onglet === 'scorers' ? ['BUTS', (p) => p.goals]
+    : onglet === 'assists' ? ['PASSES', (p) => p.assists]
+    : ['JAUNES', (p) => p.yellow];
+  $('list').innerHTML = `<table>
+    <thead><tr><th>#</th><th>JOUEUR</th><th>MJ</th><th>${col[0]}</th></tr></thead>
+    <tbody>${d.players.map((p, i) => `
+      <tr class="${i < 3 ? 'top3' : ''}">
+        <td>${i + 1}</td>
+        <td class="club"><img src="${esc(p.teamLogo)}" alt="">
+          <span>${esc(p.name)}<br><small style="opacity:.45">${esc(p.team ?? '')}</small></span></td>
+        <td>${p.played}</td>
+        <td class="pts">${col[1](p)}</td>
+      </tr>`).join('')}</tbody></table>`;
+}
+
+/* ------------------------------------------------------------ routage */
+
+$('list').addEventListener('click', (e) => {
+  const l = e.target.closest('[data-l]');
+  if (l) ouvrir(Number(l.dataset.l));
+});
+$('back').onclick = () => sommaire();
+
+sommaire();
+</script>
+</body>
+</html>
