@@ -326,7 +326,11 @@ $('formRegister').onsubmit = async (e) => {
     password: $('rgPassword').value, locale,
   });
   busy(e.target, false);
-  if (r.status === 201) { user = r.json.user; render(); }
+  if (r.status === 201) {
+    // Nouvel inscrit : on l'emmène choisir son club et ouvrir son paquet.
+    location.href = '/bienvenue';
+    return;
+  }
   else say('gateMsg', r.json.error ?? 'auth.error.server');
 };
 

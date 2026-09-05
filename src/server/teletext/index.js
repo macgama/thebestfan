@@ -23,7 +23,7 @@ const TTL = {
   dayLive: 60,
 };
 
-export function createTeletext({ pool, client }) {
+export function createTeletext({ pool, client, footballStore = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -156,6 +156,26 @@ export function createTeletext({ pool, client }) {
       live ? TTL.fixturesLive : TTL.fixtures,
       () => client.call('/fixtures', { league: leagueId, season: s.season, from, to, timezone: 'UTC' }));
 
+    // Ce qu'on vient de lire sert à tout le monde : équipes, calendriers et
+    // matchs terminés sont rangés durablement. Un match fini ne change plus
+    // jamais — le redemander un jour serait un appel perdu.
+    if (footballStore) {
+      for (const r of data ?? []) {
+        try {
+          await footballStore.upsertTeam(r.teams.home);
+          await footballStore.upsertTeam(r.teams.away);
+          await footballStore.upsertFixture({
+            id: r.fixture.id, leagueId: r.league.id, season: r.league.season,
+            round: r.league.round, homeId: r.teams.home.id, awayId: r.teams.away.id,
+            homeGoals: r.goals?.home ?? null, awayGoals: r.goals?.away ?? null,
+            status: r.fixture.status?.short ?? 'NS', elapsed: r.fixture.status?.elapsed ?? null,
+            venue: r.fixture.venue?.name ?? null,
+            kickoffAt: new Date(r.fixture.date).toISOString().slice(0, 19).replace('T', ' '),
+          });
+        } catch { /* le télétexte ne doit pas tomber pour une écriture */ }
+      }
+    }
+
     const matchs = (data ?? []).map((r) => ({
       id: r.fixture.id,
       date: r.fixture.date,
@@ -173,8 +193,17 @@ export function createTeletext({ pool, client }) {
 
   const router = express.Router();
 
-  const send = (res, p) => p.then((v) =>
-    v ? res.json(v) : res.status(404).json({ error: 'teletext.error.unknown_league' }))
+  /**
+   * Durée pendant laquelle le navigateur peut se resservir tout seul.
+   * Un joueur qui fait des allers-retours entre classement et buteurs ne
+   * redemande alors rien au serveur, qui ne redemande rien à l'API.
+   */
+  const BROWSER = { '': 900, '/results': 120, '/scorers': 3600, '/assists': 3600, '/cards': 3600 };
+
+  const send = (res, p, maxAge = 900) => p.then((v) => {
+    if (v) res.set('cache-control', `private, max-age=${maxAge}`);
+    return v ? res.json(v) : res.status(404).json({ error: 'teletext.error.unknown_league' });
+  })
     .catch((e) => {
       console.error('[teletext]', e.message);
       res.status(503).json({ error: 'teletext.error.unavailable' });
@@ -231,11 +260,16 @@ export function createTeletext({ pool, client }) {
     res.json({ countries: rows });
   }));
 
-  router.get('/league/:id', (req, res) => send(res, standings(Number(req.params.id))));
-  router.get('/league/:id/results', (req, res) => send(res, results(Number(req.params.id))));
-  router.get('/league/:id/scorers', (req, res) => send(res, ranking(Number(req.params.id), 'scorers')));
-  router.get('/league/:id/assists', (req, res) => send(res, ranking(Number(req.params.id), 'assists')));
-  router.get('/league/:id/cards', (req, res) => send(res, ranking(Number(req.params.id), 'cards')));
+  router.get('/league/:id', (req, res) =>
+    send(res, standings(Number(req.params.id)), BROWSER['']));
+  router.get('/league/:id/results', (req, res) =>
+    send(res, results(Number(req.params.id)), BROWSER['/results']));
+  router.get('/league/:id/scorers', (req, res) =>
+    send(res, ranking(Number(req.params.id), 'scorers'), BROWSER['/scorers']));
+  router.get('/league/:id/assists', (req, res) =>
+    send(res, ranking(Number(req.params.id), 'assists'), BROWSER['/assists']));
+  router.get('/league/:id/cards', (req, res) =>
+    send(res, ranking(Number(req.params.id), 'cards'), BROWSER['/cards']));
 
   /** État du cache et du quota : utile pour surveiller la consommation. */
   router.get('/cache', safe(async (_req, res) => {

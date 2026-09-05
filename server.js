@@ -19,6 +19,7 @@ import { createSouvenirs } from './src/server/souvenirs/index.js';
 import { createFanzzy } from './src/server/fanzzy/index.js';
 import { createVirage } from './src/server/ferveur/index.js';
 import { createTeletext } from './src/server/teletext/index.js';
+import { createOnboarding } from './src/server/onboarding/index.js';
 import { attachDuelServer } from './dist/duel-server.mjs';
 import { MysqlStore } from './dist/duel-server.mjs';
 import { STARTER_DECK } from './dist/duel-server.mjs';
@@ -53,6 +54,7 @@ let souvenirs = null;
 let fanzzy = null;
 let virage = null;
 let teletext = null;
+let onboarding = null;
 
 if (process.env.DATABASE_URL) {
   try {
@@ -108,6 +110,11 @@ if (process.env.DATABASE_URL) {
     app.use('/api/souvenirs', souvenirs.router);
     console.log('cartes-souvenirs actives');
 
+    // ---- inscription, emplacements de suivi, inventaire
+    onboarding = createOnboarding({ pool, requireAuth: auth.requireAuth, football: null });
+    app.use('/api/me', onboarding.router);
+    console.log('inscription et inventaire actifs');
+
     // ---- Grand Virage (tir a la corde en direct)
     virage = createVirage({ pool, io, requireAuth: auth.requireAuth, souvenirs, fanzzy });
     app.use('/api/virage', virage.router);
@@ -155,7 +162,9 @@ if (process.env.DATABASE_URL) {
       console.log('suivi des equipes actif');
 
       // ---- teletexte : classements, resultats, buteurs de toutes les ligues
-      teletext = createTeletext({ pool, client });
+      // Le télétexte range ce qu'il lit : les équipes et les matchs alimentent
+      // aussi le suivi des clubs et le Grand Virage, sans un appel de plus.
+      teletext = createTeletext({ pool, client, footballStore: football.store });
       app.use('/api/tt', teletext.router);
       setInterval(() => teletext.cleanup().catch(() => {}), 24 * 3600 * 1000).unref();
       console.log('teletexte actif');
@@ -192,6 +201,7 @@ app.get('/healthz', (_req, res) => {
     fanzzy: fanzzy ? 'active' : 'désactivée',
     virage: virage ? virage.rooms.size + ' salle(s)' : 'désactivé',
     teletext: teletext ? 'actif' : 'désactivé',
+    onboarding: onboarding ? 'actif' : 'désactivé',
     duel: duels ? duels.stats : null,
     mail: process.env.SMTP_URL ? 'smtp' : 'console',
     origin: ORIGIN,
@@ -200,6 +210,7 @@ app.get('/healthz', (_req, res) => {
 
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/teletext', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'teletext.html')));
+app.get('/bienvenue', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'bienvenue.html')));
 app.get('/compte', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'compte.html')));
 app.get('/diagnostic', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'diagnostic.html')));
 app.get('/equipes', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'equipes.html')));

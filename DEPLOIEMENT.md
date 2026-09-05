@@ -10,6 +10,7 @@ heure la première fois, dont l'essentiel en attente de build.
 | `/` | accueil : accès à tout, et le match du jour mis en avant | branché |
 | `/teletext` | tous les championnats : classement, résultats, buteurs, passeurs, cartons | branché |
 | `/compte` | inscription, connexion, mot de passe oublié, 4 langues | branché |
+| `/bienvenue` | cérémonie d'arrivée : club, paquet de bienvenue | branché |
 | `/equipes` | clubs suivis, calendrier, résultats, buts en direct | branché |
 | `/fanzzy` | boosters, classeur, évolutions, Fanzzy équipé | branché |
 | `/duel` | duel temps réel, avec adversaire d'entraînement | branché |
@@ -48,12 +49,12 @@ précédent.
 
 ```bash
 cd ~/sites/thebestfan.online
-for f in auth football duel souvenirs fanzzy teletext; do
+for f in auth football duel souvenirs fanzzy teletext inventaire; do
   mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
 done
 ```
 
-Contrôle : `SHOW TABLES;` doit en lister 22.
+Contrôle : `SHOW TABLES;` doit en lister 24.
 
 `teletext.sql` ajoute aussi des colonnes à `souvenir_leagues` : la couverture
 fine des buteurs, passeurs et cartons, et le palier de notoriété. Relance
@@ -166,6 +167,7 @@ node scripts/duel-play.mjs         # deux comptes jouent un match entier
 node scripts/duel-bot.mjs          # un joueur seul contre l'entraînement
 node scripts/virage-smoke.mjs      # 28, dont la frappe des souvenirs
 node scripts/teletext-smoke.mjs   # 20, dont le cache et la panne d'API
+node scripts/onboarding-smoke.mjs # 28, dont les emplacements et l'équipement
 node scripts/duel-loadtest.mjs 50 https://thebestfan.online
 ```
 
@@ -179,6 +181,25 @@ node scripts/duel-loadtest.mjs 50 https://thebestfan.online
 3. **La question juridique** avant toute vente d'écharpes : de l'argent réel qui
    donne accès à du contenu aléatoire relève de règles strictes en Belgique et
    aux Pays-Bas, et la loi suisse mérite un avis d'avocat.
+
+## L'équilibre du jeu, en deux règles
+
+Elles ne sont pas négociables une fois des joueurs en ligne, et le code les
+applique :
+
+**Un skin ne donne aucun bonus.** Il change l'apparence, rien d'autre. Celui qui
+ouvre mille paquets est plus beau, pas plus fort. C'est ce qui se collectionne
+le plus volontiers dans ce genre de jeu, et ça ne déséquilibre rien.
+
+**Chaque pièce d'équipement a un revers, et on n'en porte que deux.** Les
+jumelles élargissent la fenêtre du tempo mais ralentissent la cadence ; le
+thermos accélère le souffle mais renchérit les grosses cartes. Un joueur équipé
+n'est pas plus fort, il joue autrement. Un débutant qui chante juste bat un
+vétéran mal équipé — sans ça, le jeu devient une caisse enregistreuse.
+
+Le paquet de bienvenue est **garanti** : deux Fanzzy dont un peu commun au
+minimum, une pièce d'équipement, une carte d'action et des écharpes. Un joueur
+qui tombe sur cinq communes à sa première ouverture ne revient pas.
 
 ## Le télétexte et le quota
 

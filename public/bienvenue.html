@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Bienvenue — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;
+  --violet:#8257DA;--banner:"Oswald","Arial Narrow",Impact,sans-serif;
+  --ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{position:relative;width:100%;max-width:460px;height:100dvh;overflow:hidden;display:flex;
+  flex-direction:column;background:#04060A}
+#bg{position:absolute;inset:-4%;background-size:cover;background-position:center;opacity:0;
+  transition:opacity 2s ease;z-index:0;transform:scale(1.06)}
+#bg.on{opacity:.5}
+#vig{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(110% 55% at 50% 42%,transparent,rgba(4,6,10,.72) 60%,#04060A)}
+
+/* ------------------------------------------------------------- écrans */
+.scene{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:26px 20px;text-align:center;
+  opacity:0;pointer-events:none;transition:opacity .6s}
+.scene.on{opacity:1;pointer-events:auto}
+
+.title{font-family:var(--banner);font-size:31px;letter-spacing:.09em;line-height:1.15;margin:0}
+.title .em{color:var(--projo)}
+.sub{font-size:13.5px;opacity:.62;line-height:1.7;margin:14px 0 0;max-width:330px}
+.up{animation:up .8s cubic-bezier(.2,.8,.25,1) backwards}
+.up.d1{animation-delay:.15s}.up.d2{animation-delay:.35s}.up.d3{animation-delay:.6s}
+@keyframes up{from{opacity:0;transform:translateY(18px)}}
+
+.go{margin-top:26px;background:linear-gradient(180deg,var(--flare),#B32A1D);border:1px solid rgba(255,255,255,.18);
+  border-radius:8px;color:#fff;padding:15px 40px;font-family:var(--banner);font-size:17px;
+  letter-spacing:.1em;cursor:pointer;box-shadow:0 6px 0 #7A1A11}
+.go:active{transform:translateY(4px);box-shadow:0 2px 0 #7A1A11}
+.go[disabled]{filter:grayscale(.8);opacity:.5;pointer-events:none}
+.ghost{margin-top:14px;background:none;border:0;color:var(--projo);font-size:12.5px;cursor:pointer;
+  text-decoration:underline;text-underline-offset:3px;font-family:inherit}
+
+/* ------------------------------------------------------ choix du club */
+.pick{width:100%;max-width:360px;display:flex;flex-direction:column;height:100%;justify-content:center}
+input{width:100%;background:rgba(0,0,0,.5);border:1px solid rgba(242,238,228,.18);border-radius:9px;
+  color:var(--craie);padding:14px 15px;font-size:15.5px;font-family:inherit;margin-top:20px}
+input:focus{outline:none;border-color:var(--projo)}
+.res{margin-top:10px;max-height:44vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.club{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:9px;cursor:pointer;
+  border:1px solid rgba(242,238,228,.12);background:rgba(0,0,0,.35);text-align:left}
+.club.on{border-color:var(--projo);background:rgba(245,195,59,.1)}
+.club img{width:28px;height:28px;object-fit:contain;flex:none}
+.club .n{flex:1;min-width:0}
+.club b{font-family:var(--banner);font-size:14px;display:block}
+.club small{font-size:10.5px;opacity:.45}
+
+/* ---------------------------------------------------- le paquet */
+.packwrap{position:relative;perspective:1000px;margin-bottom:8px}
+.pack{width:196px;aspect-ratio:.62;border-radius:11px;overflow:hidden;position:relative;cursor:pointer;
+  box-shadow:0 30px 60px rgba(0,0,0,.75);touch-action:none}
+.pack img{width:100%;height:100%;object-fit:cover;display:block}
+.pack .rip{position:absolute;left:0;right:0;top:0;height:0;overflow:hidden;
+  border-bottom:2px dashed rgba(245,195,59,.9)}
+.pack .rip::after{content:"";position:absolute;inset:0;background:rgba(4,6,10,.92)}
+.pack.hot{animation:shiver .16s infinite}
+@keyframes shiver{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-2px) rotate(-.6deg)}
+  75%{transform:translateX(2px) rotate(.6deg)}}
+.glowring{position:absolute;left:50%;top:50%;width:280px;height:280px;transform:translate(-50%,-50%);
+  border-radius:50%;background:radial-gradient(circle,rgba(245,195,59,.26),transparent 65%);
+  filter:blur(16px);pointer-events:none;opacity:.6;animation:breathe 4s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.4}50%{opacity:.95}}
+.hint{margin-top:20px;font-family:var(--banner);font-size:13px;letter-spacing:.18em;opacity:.7}
+.hint b{color:var(--projo)}
+
+/* ------------------------------------------------------ révélation */
+.reveal{position:absolute;width:min(70%,250px);transition:transform .45s cubic-bezier(.2,.8,.25,1),opacity .3s}
+.reveal .flip{position:relative;width:100%;aspect-ratio:63/88;transform-style:preserve-3d;
+  transition:transform .6s cubic-bezier(.3,.9,.3,1)}
+.reveal.flipped .flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;overflow:hidden}
+.face.back{background:linear-gradient(160deg,#20262F,#0D1116);border:2px solid #39414E;
+  display:grid;place-items:center}
+.face.front{transform:rotateY(180deg);border:2px solid var(--c);
+  background:linear-gradient(155deg,#1C222B,#0C1015);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:9px;padding:20px;text-align:center}
+.face.front .k{font-family:var(--banner);font-size:10px;letter-spacing:.22em;color:var(--c)}
+.face.front .t{font-family:var(--banner);font-size:20px;line-height:1.15}
+.face.front .d{font-size:11.5px;opacity:.6;line-height:1.5}
+.face.front .big{font-family:var(--banner);font-size:42px;color:var(--c)}
+.newtag{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-family:var(--banner);
+  font-size:11px;letter-spacing:.2em;color:var(--projo)}
+.burst{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:9}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:8}
+#flash.go{animation:fl .55s ease-out}
+@keyframes fl{0%{opacity:.9}100%{opacity:0}}
+#burstvid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;mix-blend-mode:screen;
+  opacity:0;transition:opacity .4s;pointer-events:none;z-index:7}
+#burstvid.on{opacity:1}
+.prog{position:absolute;top:22px;left:0;right:0;text-align:center;font-size:11px;opacity:.45;
+  letter-spacing:.12em}
+.recap{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%;max-width:360px;margin-top:16px}
+.recap .c{border:1px solid rgba(242,238,228,.16);border-radius:7px;padding:8px 4px;text-align:center;
+  font-size:9px;line-height:1.3;opacity:.85}
+.recap .c b{display:block;font-family:var(--banner);font-size:11px;margin-bottom:2px}
+#app.quake{animation:quake .7s}
+@keyframes quake{0%,100%{transform:translate(0,0)}14%{transform:translate(-7px,4px)}
+  38%{transform:translate(6px,-5px)}62%{transform:translate(-4px,-2px)}86%{transform:translate(3px,3px)}}
+</style>
+</head>
+<body>
+<main id="app">
+  <div id="bg"></div><div id="vig"></div>
+  <video id="burstvid" muted playsinline preload="none"></video>
+  <div id="flash"></div>
+
+  <!-- 1 -->
+  <section class="scene on" id="s1">
+    <h1 class="title up">TU N'AS PAS<br>ENCORE DE <span class="em">PLACE</span></h1>
+    <p class="sub up d1">Une tribune, ce n'est pas un compte. C'est un club, des gens autour, et des soirs qu'on n'oublie pas.</p>
+    <button class="go up d2" id="b1">PRENDRE MA PLACE</button>
+  </section>
+
+  <!-- 2 -->
+  <section class="scene" id="s2">
+    <div class="pick">
+      <h1 class="title" style="font-size:24px">TON CLUB</h1>
+      <p class="sub" style="margin-top:9px">Celui pour qui tu chanteras. Tu pourras en suivre un second tout de suite après.</p>
+      <input id="q" placeholder="Cherche ton club…" autocomplete="off" spellcheck="false">
+      <div class="res" id="res"></div>
+      <button class="go" id="b2" disabled>C'EST MON CLUB</button>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="scene" id="s3">
+    <div class="prog" id="prog"></div>
+    <div class="packwrap" id="packwrap">
+      <div class="glowring"></div>
+      <div class="pack" id="pack"><div class="rip" id="rip"></div></div>
+    </div>
+    <div class="hint" id="hint">MAINTIENS POUR <b>CHAUFFER LA TRIBUNE</b></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="scene" id="s4">
+    <h1 class="title" style="font-size:26px">BIENVENUE<br>DANS LA <span class="em">TRIBUNE</span></h1>
+    <div class="recap" id="recap"></div>
+    <p class="sub" id="final"></p>
+    <button class="go" id="b4">ENTRER</button>
+    <button class="ghost" id="b4b">Suivre un second club</button>
+  </section>
+</main>
+
+<script>
+/* =======================================================================
+   L'inscription.
+   Quatre scènes : on te dit que tu n'as pas de place, tu choisis ton club,
+   tu déchires ton premier paquet, tu entres. Le serveur décide de tout ce
+   qui sort du paquet — la page ne fait que le mettre en scène.
+   ======================================================================= */
+
+const $ = (id) => document.getElementById(id);
+const buzz = (p) => { try { navigator.vibrate?.(p); } catch {} };
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+  (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+const COUL = { fanzzy:'#F5C33B', stuff:'#8257DA', action:'#E0402C', scarves:'#1E9E6A' };
+const NOM = { fanzzy:'FANZZY', stuff:'ÉQUIPEMENT', action:'CARTE D\u2019ACTION', scarves:'ÉCHARPES' };
+
+let club = null, cartes = [], idx = 0, catalogue = null;
+
+function scene(n) {
+  document.querySelectorAll('.scene').forEach((s) => s.classList.remove('on'));
+  $('s' + n).classList.add('on');
+}
+
+/**
+ * Fond de la cérémonie : une place vide dans une tribune de nuit.
+ * S'il manque, on retombe sur le fond de tribune de la page Fanzzy, puis sur
+ * un dégradé. Une inscription ne doit jamais dépendre d'une image.
+ */
+(() => {
+  const candidats = ['img/place-vide.avif', 'img/place-vide.webp',
+                     'img/fond-tribune.avif', 'img/fond-tribune.webp'];
+  const essaie = (i) => {
+    if (i >= candidats.length) {
+      $('bg').style.background =
+        'radial-gradient(90% 55% at 50% 65%,rgba(245,195,59,.16),transparent 60%),' +
+        'radial-gradient(80% 40% at 50% 12%,rgba(224,64,44,.12),transparent 60%),#080B10';
+      $('bg').classList.add('on');
+      return;
+    }
+    const img = new Image();
+    img.onload = () => { $('bg').style.backgroundImage = `url("${img.src}")`; $('bg').classList.add('on'); };
+    img.onerror = () => essaie(i + 1);
+    img.src = candidats[i];
+  };
+  essaie(0);
+})();
+
+$('b1').onclick = () => { scene(2); setTimeout(() => $('q').focus(), 400); buzz(15); };
+
+/* ---------------------------------------------------- choix du club */
+
+let t = null;
+$('q').oninput = () => {
+  clearTimeout(t);
+  const terme = $('q').value.trim();
+  if (terme.length < 3) { $('res').innerHTML = ''; return; }
+  t = setTimeout(async () => {
+    try {
+      const r = await fetch('/api/football/search?q=' + encodeURIComponent(terme),
+        { credentials:'same-origin' });
+      const { teams = [] } = await r.json();
+      $('res').innerHTML = teams.slice(0, 8).map((x) => `
+        <button class="club" data-id="${x.id}" data-nom="${esc(x.name)}">
+          <img src="${esc(x.logo)}" alt="">
+          <span class="n"><b>${esc(x.name)}</b><small>${esc(x.country ?? '')}</small></span>
+        </button>`).join('') || '<p class="sub">Aucun club trouvé.</p>';
+    } catch { $('res').innerHTML = '<p class="sub">Recherche indisponible.</p>'; }
+  }, 320);
+};
+
+$('res').onclick = (e) => {
+  const b = e.target.closest('[data-id]');
+  if (!b) return;
+  club = { id: Number(b.dataset.id), nom: b.dataset.nom };
+  [...$('res').children].forEach((x) => x.classList.toggle('on', x === b));
+  $('b2').disabled = false;
+  buzz(12);
+};
+
+$('b2').onclick = async () => {
+  $('b2').disabled = true;
+  try {
+    const r = await fetch('/api/me/welcome', {
+      method:'POST', credentials:'same-origin',
+      headers:{ 'content-type':'application/json' },
+      body: JSON.stringify({ teamId: club.id }),
+    });
+    const j = await r.json();
+    if (j.error) throw new Error(j.error);
+    cartes = j.cartes;
+    scene(3);
+    preparerPaquet();
+  } catch (e) {
+    $('b2').disabled = false;
+    alert(e.message === 'onboarding.error.already_done'
+      ? 'Ton paquet de bienvenue a déjà été ouvert.' : 'Impossible pour le moment.');
+  }
+};
+
+/* -------------------------------------------------- le paquet */
+
+let tear = null;
+function preparerPaquet() {
+  const p = $('pack');
+  p.querySelectorAll('img').forEach((n) => n.remove());
+  const img = document.createElement('img');
+  img.src = 'img/pack-virage-nord.avif';
+  img.onerror = () => {
+    // Sans visuel, le paquet reste un paquet : le geste compte plus que l'image.
+    img.remove();
+    p.style.background = 'linear-gradient(150deg,#2A1218,#0D1116 55%,#3A1A12)';
+    p.style.border = '1px solid rgba(245,195,59,.35)';
+  };
+  p.insertBefore(img, p.firstChild);
+  tear = { charge: 0, held: false, y0: null, done: false };
+  requestAnimationFrame(chauffe);
+}
+
+function chauffe() {
+  if (!tear || tear.done) return;
+  if (tear.held) {
+    tear.charge = Math.min(1, tear.charge + 0.02);
+    $('pack').classList.toggle('hot', tear.charge > 0.35);
+    $('pack').style.filter = `brightness(${1 + tear.charge * .5}) saturate(${1 + tear.charge})`;
+    if (tear.charge > .99 && !tear.pret) {
+      tear.pret = true;
+      $('hint').innerHTML = 'MAINTENANT <b>TIRE VERS LE BAS</b>';
+      buzz([25, 40, 25]);
+    } else if (Math.random() < tear.charge * .25) buzz(6);
+  }
+  requestAnimationFrame(chauffe);
+}
+
+$('pack').addEventListener('pointerdown', (e) => {
+  if (!tear) return;
+  tear.held = true; tear.y0 = e.clientY;
+  $('pack').setPointerCapture(e.pointerId);
+});
+$('pack').addEventListener('pointermove', (e) => {
+  if (!tear?.held || tear.charge < 1) return;
+  const pct = Math.min(100, (Math.max(0, e.clientY - tear.y0) / 150) * 100);
+  $('rip').style.height = pct + '%';
+  if (pct >= 92) ouvrir();
+});
+const relache = () => {
+  if (!tear || tear.done) return;
+  tear.held = false;
+  $('pack').classList.remove('hot');
+  if (tear.charge < 1) {
+    tear.charge = 0; $('pack').style.filter = '';
+    $('hint').innerHTML = 'MAINTIENS POUR <b>CHAUFFER LA TRIBUNE</b>';
+  }
+};
+$('pack').addEventListener('pointerup', relache);
+$('pack').addEventListener('pointercancel', relache);
+
+function ouvrir() {
+  if (!tear || tear.done) return;
+  tear.done = true;
+  buzz([50, 40, 120]);
+  $('flash').classList.add('go');
+  setTimeout(() => $('flash').classList.remove('go'), 560);
+  setTimeout(() => { $('packwrap').style.display = 'none'; reveler(); }, 280);
+}
+
+/* ----------------------------------------------------- révélation */
+
+function faceCarte(c) {
+  const coul = COUL[c.type];
+  const info = {
+    fanzzy: () => ({ t: c.id, d: 'Un supporter rejoint ta collection.' }),
+    stuff: () => {
+      const s = catalogue?.stuff.find((x) => x.id === c.id);
+      return { t: s?.nom ?? c.id, d: s?.texte ?? '' };
+    },
+    action: () => {
+      const a = catalogue?.actions.find((x) => x.id === c.id);
+      return { t: a?.nom ?? c.id, d: a?.texte ?? '' };
+    },
+    scarves: () => ({ t: '', d: 'De quoi ouvrir ton prochain booster.', big: '+' + c.amount }),
+  }[c.type]();
+
+  return `<div class="face front" style="--c:${coul}">
+    <div class="k">${NOM[c.type]}</div>
+    ${info.big ? `<div class="big">${info.big}</div>` : `<div class="t">${esc(info.t)}</div>`}
+    <div class="d">${esc(info.d)}</div>
+  </div>`;
+}
+
+function reveler() {
+  const s = $('s3');
+  cartes.forEach((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'reveal';
+    el.style.zIndex = 20 - i;
+    el.style.transform = `translateY(${i * 7}px) scale(${1 - i * .03})`;
+    el.innerHTML = `<div class="flip">
+      <div class="face back"><svg width="52" height="52" viewBox="0 0 24 24" fill="none"
+        stroke="#39414E" stroke-width="1.4"><path d="M3 20l9-16 9 16z"/><path d="M7 20l5-9 5 9"/></svg></div>
+      ${faceCarte(c)}</div>`;
+    s.appendChild(el);
+  });
+  $('hint').innerHTML = 'TOUCHE POUR RETOURNER';
+  $('prog').textContent = `1 / ${cartes.length}`;
+  s.addEventListener('click', suivante);
+}
+
+function suivante() {
+  const els = [...$('s3').querySelectorAll('.reveal')];
+  const cur = els[idx];
+  if (!cur) return;
+  if (!cur.classList.contains('flipped')) {
+    cur.classList.add('flipped');
+    const c = cartes[idx];
+    buzz(14);
+    etincelles(COUL[c.type], c.type === 'fanzzy' ? 26 : 16);
+    if (c.type === 'fanzzy') {
+      const tag = document.createElement('div');
+      tag.className = 'newtag'; tag.textContent = 'NOUVEAU';
+      cur.appendChild(tag);
+      video();
+      $('app').classList.add('quake');
+      setTimeout(() => $('app').classList.remove('quake'), 700);
+    }
+    $('hint').textContent = idx < cartes.length - 1 ? 'TOUCHE POUR LA SUIVANTE' : 'TOUCHE POUR ENTRER';
+    return;
+  }
+  cur.style.transform = 'translateX(-130%) rotate(-14deg)';
+  cur.style.opacity = '0';
+  if (++idx >= cartes.length) return final();
+  $('prog').textContent = `${idx + 1} / ${cartes.length}`;
+  els.forEach((el, i) => { if (i >= idx) el.style.transform =
+    `translateY(${(i - idx) * 7}px) scale(${1 - (i - idx) * .03})`; });
+  $('hint').innerHTML = 'TOUCHE POUR RETOURNER';
+}
+
+function etincelles(couleur, n) {
+  const s = $('s3'), r = s.getBoundingClientRect();
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement('div');
+    p.className = 'burst';
+    p.style.background = i % 3 ? couleur : '#FFF3D0';
+    p.style.left = r.width / 2 + 'px'; p.style.top = r.height / 2 + 'px';
+    s.appendChild(p);
+    const a = Math.random() * Math.PI * 2, d = 70 + Math.random() * 140;
+    p.animate([{ transform:'translate(-50%,-50%) scale(1)', opacity:1 },
+               { transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) scale(0)`, opacity:0 }],
+      { duration: 700 + Math.random() * 500, easing:'cubic-bezier(.15,.7,.3,1)' })
+      .onfinish = () => p.remove();
+  }
+}
+
+function video() {
+  const v = $('burstvid');
+  if (!v.src) { v.src = 'video/gerbe.mp4'; v.load(); }
+  v.currentTime = 0; v.classList.add('on');
+  v.play?.().catch(() => {});
+  clearTimeout(v._t);
+  v._t = setTimeout(() => { v.classList.remove('on'); v.pause?.(); }, 2400);
+}
+
+function final() {
+  scene(4);
+  $('recap').innerHTML = cartes.map((c) => `<div class="c" style="color:${COUL[c.type]}">
+    <b>${NOM[c.type].slice(0, 8)}</b>${c.type === 'scarves' ? '+' + c.amount : esc(c.id)}</div>`).join('');
+  $('final').innerHTML = `Ta place est à <b>${esc(club.nom)}</b>.<br>
+    Il te reste un emplacement pour suivre un second club.`;
+  buzz([40, 60, 40, 60, 120]);
+}
+
+$('b4').onclick = () => { location.href = '/'; };
+$('b4b').onclick = () => { location.href = '/equipes'; };
+
+/* ------------------------------------------------------- démarrage */
+
+(async () => {
+  try {
+    catalogue = await fetch('/api/me/catalogue').then((r) => r.json());
+    const st = await fetch('/api/me/state', { credentials:'same-origin' }).then((r) => r.json());
+    // Déjà inscrit : on ne rejoue pas la cérémonie.
+    if (st.onboarded) location.href = '/';
+  } catch { location.href = '/compte'; }
+})();
+</script>
+</body>
+</html>
