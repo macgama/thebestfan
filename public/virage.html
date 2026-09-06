@@ -59,7 +59,12 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .rank{text-align:center;font-size:11px;opacity:.6;padding-bottom:6px}
 .rank b{color:var(--projo);font-family:var(--banner);font-size:14px}
 
-.hand{flex:none;display:flex;gap:6px;padding:4px 11px calc(12px + env(safe-area-inset-bottom));height:104px}
+/* Même règle que sur les autres écrans de jeu : nav.js n'en réserve que 55 %,
+   la page complète les 45 % manquants. En marge et non en marge intérieure,
+   parce que la hauteur des cartes est fixe et qu'une marge intérieure les
+   écraserait au lieu de les remonter. */
+.hand{flex:none;display:flex;gap:6px;padding:4px 11px calc(12px + env(safe-area-inset-bottom));
+  height:104px;margin-bottom:calc(var(--nav-h,62px) * .45)}
 .card{flex:1;border-radius:9px;padding:8px 7px;background:rgba(0,0,0,.34);position:relative;cursor:pointer;
   border:1px solid rgba(242,238,228,.14);border-top:3px solid var(--c);display:flex;flex-direction:column;gap:3px}
 .card:active{transform:translateY(3px) scale(.98)}

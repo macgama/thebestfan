@@ -18,6 +18,14 @@
  *      cul-de-sac sur téléphone : plus aucun moyen d'en sortir sans le bouton
  *      retour du navigateur.
  *
+ *   4. **Un module serveur déposé dans public/.** Tout ce qui traîne dans ce
+ *      dossier est servi tel quel par express.static, donc téléchargeable par
+ *      n'importe qui. Une copie du télétexte y a séjourné et exposait ses
+ *      requêtes SQL sur https://thebestfan.online/index.js. Le contrôle la
+ *      voyait déjà, mais il n'en disait que « ne compile pas : Cannot use
+ *      import statement outside a module » — un message qui décrit le symptôme
+ *      et cache la fuite.
+ *
  * Usage : node scripts/verif-pages.mjs
  * Sortie : 0 si tout va bien, 1 sinon — utilisable tel quel avant un déploiement.
  */
@@ -59,6 +67,20 @@ function accentGraveDansCss(code) {
   return soucis;
 }
 
+/**
+ * Reconnaît un module serveur à ce qu'il importe.
+ *
+ * Un fichier de `public/` est chargé en script classique par le navigateur : il
+ * ne peut rien importer du tout. S'il importe `express`, `mysql2` ou un module
+ * `node:`, ce n'est pas un script de page mal écrit — c'est du code serveur
+ * posé au mauvais endroit, et il part en ligne à la vue de tous.
+ */
+function moduleServeur(code) {
+  const m = /^\s*import\s[^\n]*?from\s*['"](express|mysql2[^'"]*|nodemailer|socket\.io|node:[a-z/]+)['"]/m
+    .exec(code);
+  return m ? m[1] : null;
+}
+
 /** Compile un morceau de code et renvoie le message d'erreur, ou null. */
 function compile(code, nom) {
   try { new Script(code, { filename: nom }); return null; }
@@ -96,6 +118,17 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
   // Le paquet du duel est produit par esbuild : il n'est pas relu ici.
   if (nom.endsWith('.bundle.js')) continue;
   const code = await readFile(path.join(DOSSIER, nom), 'utf8');
+
+  // Contrôlé avant la compilation : sinon c'est l'erreur de compilation qui
+  // parle, et elle parle d'autre chose.
+  const paquet = moduleServeur(code);
+  if (paquet) {
+    ko(nom, `module serveur dans public/ : il importe « ${paquet} ». Tout ce `
+      + 'dossier est servi par express.static, donc ce fichier est '
+      + 'téléchargeable par n’importe qui. À déplacer dans src/server/ ou à supprimer.');
+    continue;
+  }
+
   const erreur = compile(code, nom);
   if (erreur) { ko(nom, `ne compile pas : ${erreur}`); continue; }
   const soucis = accentGraveDansCss(code);

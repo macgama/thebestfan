@@ -264,8 +264,15 @@ $('clubs').addEventListener('click', async (e) => {
       toast('Emplacement débloqué');
       rendre();
     } catch (err) {
-      toast(err.code === 'onboarding.error.not_enough_scarves'
-        ? 'Pas assez d\u2019écharpes' : 'Impossible pour le moment');
+      // « Impossible pour le moment » laissait le joueur deviner. Le plafond
+      // d'emplacements est un état normal, atteint en jouant : il doit se
+      // lire. Et si le serveur renvoie un code qu'on n'a pas prévu, on le
+      // montre plutôt que de le taire.
+      toast(({
+        'onboarding.error.not_enough_scarves': 'Pas assez d\u2019écharpes',
+        'onboarding.error.max_slots': 'Tu as déjà le maximum d\u2019emplacements',
+        'onboarding.error.server': 'Le serveur n\u2019a pas pu répondre',
+      })[err.code] ?? `Emplacement impossible (${err.code ?? 'sans code'})`);
     }
   }
 });

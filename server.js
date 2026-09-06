@@ -225,6 +225,13 @@ if (process.env.DATABASE_URL) {
         },
       });
       app.use('/api/football', football.router);
+
+      // L'inscription est montée plus haut, avant que le suivi existe : elle a
+      // reçu `null`. On la rebranche ici, sinon le club choisi à la cérémonie
+      // d'arrivée n'a jamais son calendrier et le joueur neuf ne trouve aucun
+      // match dans /deck ni dans /duel-nvn.
+      if (onboarding) onboarding.football = football;
+
       football.poller.start();
       console.log('suivi des equipes actif');
 

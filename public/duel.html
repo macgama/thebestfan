@@ -84,8 +84,12 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .hand .g.playable{border-color:rgba(245,195,59,.55)}
 
 /* ------------------------------------------------------- barre d'action */
-.actions{flex:none;padding:0 12px calc(10px + env(safe-area-inset-bottom));display:flex;
-  gap:8px;align-items:center;z-index:4}
+/* Sur un écran de jeu, nav.js ne réserve que 55 % de la hauteur de la barre :
+   elle s'y efface dès qu'on joue. Les 45 % restants sont à la charge de la
+   page, sur le bouton d'action. Sans ça le bouton passe 18 px sous la barre,
+   et le joueur qui vise « JOUER » touche « PROFIL » et quitte le duel. */
+.actions{flex:none;padding:0 12px calc(10px + var(--nav-h,62px) * .45 + env(safe-area-inset-bottom));
+  display:flex;gap:8px;align-items:center;z-index:4}
 .souffle-chip{display:flex;align-items:center;gap:7px;background:rgba(0,0,0,.4);
   border:1px solid rgba(242,238,228,.16);border-radius:999px;padding:7px 13px;font-size:11px;
   letter-spacing:.06em;flex:none;cursor:pointer}
