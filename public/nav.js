@@ -18,7 +18,7 @@
   // revient au moindre arrêt. Sans elle, le Virage était un cul-de-sac ;
   // toujours affichée, elle mangerait la place et provoquerait des sorties
   // accidentelles en plein chant.
-  const ECRANS_DE_JEU = ['/duel', '/virage'];
+  const ECRANS_DE_JEU = ['/duel', '/duel-nvn', '/virage'];
   const chemin = location.pathname.replace(/\/$/, '') || '/';
   if (SANS_BARRE.includes(chemin)) return;
 

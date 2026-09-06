@@ -17,6 +17,8 @@ heure la première fois, dont l'essentiel en attente de build.
 | `/equipes` | clubs suivis, calendrier, résultats, buts en direct | branché |
 | `/fanzzy` | boosters, classeur, évolutions, Fanzzy équipé | branché |
 | `/duel` | duel temps réel, avec adversaire d'entraînement | branché |
+| `/deck` | construction de deck : trois Fanzzy, équipement, dix cartes | branché |
+| `/duel-nvn` | duel N contre N en temps réel, adossé à un vrai match | branché |
 | `/virage` | Grand Virage : tir à la corde collectif pendant un vrai match | branché |
 | `/carnet` | souvenirs vécus et vignettes à récupérer | branché |
 | `/diagnostic` | état du serveur et du WebSocket | branché |
@@ -27,7 +29,9 @@ carnet — celles que tu as vécues d'un côté, celles que tu peux récupérer 
 écharpes de l'autre, pendant quinze jours.
 
 **Ce qui n'est pas dedans.** Le duel un contre un est encore le moteur tour par
-tour ; le tir à la corde n'existe en ligne que dans le Grand Virage. Les
+tour. Le tir à la corde en temps réel existe désormais dans le Grand Virage
+**et** dans le duel N contre N (`/duel-nvn`), qui demande un deck construit au
+préalable sur `/deck`. Les
 prototypes Ferveur v1 à v3 restent dans `labo/`, à ouvrir depuis ton disque :
 ils servent à essayer des règles, pas à jouer en ligne.
 
@@ -57,7 +61,7 @@ for f in auth football duel souvenirs fanzzy teletext inventaire deck admin; do
 done
 ```
 
-Contrôle : `SHOW TABLES;` doit en lister 24.
+Contrôle : `SHOW TABLES;` doit en lister 27. (Le chiffre 24 qui figurait ici était faux : les neuf fichiers SQL créent 27 tables, et une table manquante produit des erreurs déroutantes.)
 
 `teletext.sql` ajoute aussi des colonnes à `souvenir_leagues` : la couverture
 fine des buteurs, passeurs et cartons, et le palier de notoriété. Relance

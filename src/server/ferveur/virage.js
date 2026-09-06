@@ -1,4 +1,4 @@
-import { grade, applyHeroMods, Cheat } from './gestures.js';
+import { grade, applyHeroMods, resoudreGeste, Cheat } from './gestures.js';
 
 /**
  * Le Grand Virage.
@@ -228,6 +228,10 @@ export class VirageRoom {
       you: m ? {
         side: m.side,
         breath: Math.round(m.breath),
+        // Le client doit afficher le geste exactement comme le serveur le
+        // note. Sans ça il dessinait la pulsation de base et le porteur
+        // d'équipement tapait à côté sans jamais comprendre pourquoi.
+        gestes: resoudreGeste(m.mods),
         ...this.rankOf(userId),
       } : null,
       cards: Object.entries(CARDS).map(([id, c]) => ({ id, ...c })),

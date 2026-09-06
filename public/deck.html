@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mon deck — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;
+  --violet:#8257DA;--gris:#C2CAD6;--ambre:#E08A2C;
+  --banner:"Oswald","Arial Narrow",Impact,sans-serif;--ui:ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --barre:66px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{position:relative;width:100%;max-width:460px;min-height:100dvh;display:flex;flex-direction:column;
+  background:radial-gradient(120% 42% at 50% -6%,rgba(130,87,218,.14),transparent 60%),
+             linear-gradient(180deg,#141A21,#0A0D11 50%,#0A0D11)}
+
+/* La barre d'enregistrement est fixe : le contenu doit donc réserver sa place
+   lui-même, en plus de celle que nav.js réserve déjà pour la navigation. */
+.corps{flex:1;padding-bottom:calc(var(--barre) + 12px)}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 6px}
+.top h1{font-family:var(--banner);font-size:20px;letter-spacing:.15em;margin:0}
+.top h1 small{display:block;font-size:8.5px;letter-spacing:.3em;opacity:.5;margin-top:3px;font-family:var(--ui)}
+.etat{font-family:var(--banner);font-size:9.5px;letter-spacing:.14em;border-radius:5px;padding:5px 10px;
+  border:1px solid var(--flare);color:var(--flare);white-space:nowrap}
+.etat.ok{border-color:var(--vert);color:var(--vert)}
+
+.nomdeck{margin:8px 16px 0;display:flex;align-items:center;gap:9px;border:1px solid rgba(242,238,228,.12);
+  border-radius:9px;background:rgba(8,11,16,.6);padding:9px 12px}
+.nomdeck span{font-size:9px;letter-spacing:.16em;opacity:.4;font-family:var(--banner)}
+.nomdeck input{flex:1;min-width:0;background:none;border:0;color:inherit;font-family:var(--banner);
+  font-size:15px;letter-spacing:.04em;outline:none}
+
+.tabs{display:flex;gap:7px;padding:11px 16px 10px}
+.tab{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.14);border-radius:8px;
+  color:inherit;padding:10px;font-family:var(--banner);font-size:12.5px;letter-spacing:.09em;cursor:pointer;opacity:.55}
+.tab.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
+.tab b{color:var(--projo)}
+.tab.on b{color:#8A6A0B}
+
+h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;margin:20px 16px 9px}
+h2 i{font-style:normal;opacity:.7}
+
+/* ------------------------------------------------------------- tribune */
+
+.rang{margin:0 14px 9px;border:1px solid rgba(242,238,228,.12);border-radius:12px;overflow:hidden;
+  background:linear-gradient(150deg,#171D25,#0D1116)}
+.rang.titulaire{border-color:rgba(245,195,59,.42)}
+.rang.vide{border-style:dashed;border-color:rgba(242,238,228,.2);background:rgba(8,11,16,.45)}
+.rang .tete{display:flex;align-items:center;gap:11px;padding:12px 13px;cursor:pointer;position:relative}
+.rang .tete::before{content:"";position:absolute;inset:0;opacity:.16;pointer-events:none;
+  background:radial-gradient(70% 120% at 12% 50%,var(--tc,#8257DA),transparent 62%)}
+.pip{width:44px;height:44px;flex:none;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  background:var(--tc,#8257DA);position:relative}
+.pip svg{width:24px;height:24px}
+.rang .id{flex:1;min-width:0;position:relative}
+.rang .id b{display:block;font-family:var(--banner);font-size:15px;letter-spacing:.03em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rang .id .sous{font-size:10px;opacity:.55;margin-top:3px;letter-spacing:.03em}
+.rang .id .cri{font-size:9.5px;letter-spacing:.12em;color:var(--tc,#8257DA);margin-top:5px;
+  font-family:var(--banner)}
+.rang .marque{position:relative;font-family:var(--banner);font-size:8.5px;letter-spacing:.13em;
+  border:1px solid var(--projo);color:var(--projo);border-radius:4px;padding:3px 6px;white-space:nowrap}
+.rang .chevron{position:relative;opacity:.3;font-size:18px;flex:none}
+
+.rang .pieces{display:flex;gap:7px;padding:0 12px 12px}
+.piece{flex:1;border:1px dashed rgba(242,238,228,.2);border-radius:9px;padding:9px 8px;min-height:62px;
+  display:flex;flex-direction:column;justify-content:center;gap:4px;cursor:pointer;text-align:center;
+  background:none;color:inherit;font-family:inherit}
+.piece.plein{border-style:solid;border-color:rgba(130,87,218,.55);background:rgba(130,87,218,.11)}
+.piece b{font-family:var(--banner);font-size:11.5px;letter-spacing:.03em;display:block}
+.piece span{font-size:9px;opacity:.5;line-height:1.35;display:block}
+.rang .effet{padding:0 13px 12px;font-size:10.5px;opacity:.62;line-height:1.65}
+.rang .effet em{font-style:normal;color:var(--projo)}
+.rang .actions{display:flex;gap:7px;padding:0 12px 12px}
+.mini{flex:1;background:rgba(0,0,0,.32);border:1px solid rgba(242,238,228,.15);border-radius:7px;
+  color:inherit;padding:8px;font-family:var(--banner);font-size:10px;letter-spacing:.1em;cursor:pointer}
+.mini.danger{color:var(--flare);border-color:rgba(224,64,44,.35)}
+
+/* --------------------------------------------------------------- cartes */
+
+.grille{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:0 14px}
+.emp{aspect-ratio:.72;border-radius:8px;border:1px dashed rgba(242,238,228,.18);display:flex;
+  flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:4px 3px;
+  background:rgba(8,11,16,.5);cursor:pointer;position:relative;overflow:hidden}
+.emp.plein{border-style:solid;border-color:var(--fc,#8257DA);
+  background:linear-gradient(170deg,rgba(255,255,255,.07),rgba(0,0,0,.35))}
+.emp .cout{font-family:var(--banner);font-size:12px;color:var(--fc,#8257DA);line-height:1}
+.emp .nm{font-size:7.5px;line-height:1.15;text-align:center;opacity:.8;letter-spacing:.02em;
+  max-width:100%;overflow:hidden}
+.emp .plus{font-size:17px;opacity:.25}
+
+.filtres{display:flex;gap:6px;padding:0 14px 4px}
+.filtre{background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.13);border-radius:999px;color:inherit;
+  padding:6px 12px;font-size:10.5px;letter-spacing:.05em;cursor:pointer;opacity:.55}
+.filtre.on{opacity:1;border-color:var(--craie)}
+
+.fam{margin:14px 16px 7px;font-family:var(--banner);font-size:10px;letter-spacing:.18em;
+  color:var(--fc,#8257DA);display:flex;align-items:center;gap:8px}
+.fam .trait{flex:1;height:1px;background:currentColor;opacity:.25}
+.cat{margin:0 14px}
+.carte{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;
+  border:1px solid rgba(242,238,228,.1);background:rgba(8,11,16,.55);margin-bottom:6px;
+  cursor:pointer;border-left:3px solid var(--fc,#8257DA)}
+.carte.absente{opacity:.4}
+.carte .txt{flex:1;min-width:0}
+.carte .txt b{display:block;font-family:var(--banner);font-size:13.5px;letter-spacing:.03em}
+.carte .txt p{margin:4px 0 0;font-size:10.5px;opacity:.6;line-height:1.5}
+.carte .cout{font-family:var(--banner);font-size:15px;color:var(--fc,#8257DA);text-align:center;flex:none;
+  min-width:34px}
+.carte .cout small{display:block;font-size:8px;opacity:.45;letter-spacing:.08em;color:var(--craie);
+  font-family:var(--ui);margin-top:2px}
+.compte{flex:none;font-family:var(--banner);font-size:11px;border:1px solid rgba(242,238,228,.18);
+  border-radius:6px;padding:5px 8px;min-width:34px;text-align:center;opacity:.45}
+.compte.on{opacity:1;border-color:var(--projo);color:var(--projo)}
+.dots{display:inline-flex;gap:2px;vertical-align:middle;margin-left:6px}
+.dots i{width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.55;display:block}
+.dots .s{font-style:normal;font-size:9px;line-height:1;opacity:.9}
+
+/* --------------------------------------------------------- barre du bas */
+
+.barre{position:fixed;left:0;right:0;z-index:50;display:flex;justify-content:center;
+  bottom:calc(var(--nav-h,62px) + env(safe-area-inset-bottom));pointer-events:none}
+.barre .in{width:100%;max-width:460px;display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:linear-gradient(180deg,rgba(4,6,10,.4),rgba(4,6,10,.94) 45%);pointer-events:auto;
+  border-top:1px solid rgba(242,238,228,.08)}
+.barre .info{flex:1;min-width:0;font-size:10.5px;opacity:.6;line-height:1.45}
+.barre .info b{color:var(--projo)}
+.barre .info.pb{color:var(--flare);opacity:.95}
+.btn{background:linear-gradient(180deg,var(--projo),#D0A020);border:0;color:#161006;border-radius:8px;
+  padding:12px 18px;font-family:var(--banner);font-size:13px;letter-spacing:.1em;cursor:pointer;flex:none}
+.btn:disabled{filter:grayscale(.85);opacity:.45;cursor:default}
+
+/* ------------------------------------------------------------- panneaux */
+
+.voile{position:fixed;inset:0;background:rgba(3,5,8,.72);z-index:70;display:none;
+  align-items:flex-end;justify-content:center}
+.voile.on{display:flex}
+.panneau{width:100%;max-width:460px;max-height:82dvh;overflow:auto;background:#10151C;
+  border-top-left-radius:16px;border-top-right-radius:16px;border:1px solid rgba(242,238,228,.14);
+  border-bottom:0;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+.panneau .ph{position:sticky;top:0;background:#10151C;padding:15px 16px 11px;z-index:2;
+  display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(242,238,228,.08)}
+.panneau .ph h3{flex:1;margin:0;font-family:var(--banner);font-size:15px;letter-spacing:.09em}
+.panneau .ph button{background:none;border:0;color:inherit;opacity:.45;font-size:22px;cursor:pointer;
+  line-height:1;padding:0 4px}
+.panneau .pc{padding:12px 14px 4px}
+.choix{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;
+  border:1px solid rgba(242,238,228,.1);background:rgba(8,11,16,.5);margin-bottom:7px;cursor:pointer}
+.choix.pris{opacity:.35}
+.choix .txt{flex:1;min-width:0}
+.choix .txt b{display:block;font-family:var(--banner);font-size:13.5px;letter-spacing:.03em}
+.choix .txt p{margin:4px 0 0;font-size:10.5px;opacity:.6;line-height:1.5}
+.choix .tag{font-size:9px;letter-spacing:.1em;opacity:.5;font-family:var(--banner);flex:none}
+
+.avert{margin:0 14px 10px;border:1px solid rgba(224,64,44,.4);border-radius:10px;padding:12px 14px;
+  background:rgba(224,64,44,.09);font-size:12px;line-height:1.65}
+.avert b{display:block;font-family:var(--banner);font-size:12.5px;letter-spacing:.06em;margin-bottom:5px;
+  color:var(--flare)}
+.avert a{color:var(--projo)}
+.avert ul{margin:6px 0 0;padding-left:17px}
+.avert li{margin-top:3px}
+.avert.doux{border-color:rgba(245,195,59,.35);background:rgba(245,195,59,.07)}
+.avert.doux b{color:var(--projo)}
+
+.vide{padding:34px 24px;text-align:center;opacity:.5;font-size:12.5px;line-height:1.8}
+.vide a{color:var(--projo)}
+.spin{width:22px;height:22px;border:2px solid rgba(242,238,228,.2);border-top-color:var(--projo);
+  border-radius:50%;margin:60px auto;animation:t .8s linear infinite}
+@keyframes t{to{transform:rotate(360deg)}}
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h,62px) + 84px);transform:translateX(-50%);
+  background:#171C23;z-index:80;border:1px solid rgba(242,238,228,.2);border-radius:7px;
+  padding:11px 16px;font-size:12.5px;display:none;max-width:88vw;text-align:center}
+.toast.on{display:block}
+</style>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/img/logo.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+<main id="app">
+  <div class="top">
+    <h1>MON DECK<small>trois Fanzzy, dix cartes</small></h1>
+    <div class="etat" id="etat">—</div>
+  </div>
+
+  <div class="corps" id="corps"><div class="spin"></div></div>
+</main>
+
+<div class="barre" id="barre" style="display:none">
+  <div class="in">
+    <div class="info" id="info"></div>
+    <button class="btn" id="save" disabled>ENREGISTRER</button>
+  </div>
+</div>
+
+<div class="voile" id="voile"><div class="panneau" id="panneau"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =======================================================================
+   Construction du deck.
+
+   Trois Fanzzy, deux pièces d'équipement au plus pour chacun, dix cartes
+   d'action. Le premier Fanzzy entre au coup d'envoi : c'est le seul rang
+   qui compte vraiment, les deux autres n'arrivent que par « Arbitre —
+   changement ». L'écran le dit au lieu de le laisser deviner.
+
+   **Le serveur reste seul juge.** Les contrôles faits ici n'existent que
+   pour éviter d'envoyer un deck manifestement incomplet et pour griser le
+   bouton ; c'est PUT /api/deck/mien qui valide réellement, et ce sont ses
+   codes d'erreur qui sont affichés, traduits, jamais résumés en
+   « impossible ». Un message vague coûte toujours plus cher qu'il
+   n'économise.
+   ======================================================================= */
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+  (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+
+/** Couleur par famille de carte : elle sert de repère avant la lecture. */
+const FAM = {
+  pousse:    { nom:'POUSSÉE',   c:'#E0402C' },
+  entrave:   { nom:'ENTRAVE',   c:'#8257DA' },
+  souffle:   { nom:'SOUFFLE',   c:'#3C82E8' },
+  geste:     { nom:'GESTE',     c:'#F5C33B' },
+  garde:     { nom:'GARDE',     c:'#C2CAD6' },
+  collectif: { nom:'COLLECTIF', c:'#1E9E6A' },
+  bascule:   { nom:'BASCULE',   c:'#E08A2C' },
+};
+const RANG = { d1:1, d2:2, d3:3, star:4, crown:5 };
+
+/**
+ * Traduction des codes du serveur. Chaque code nomme sa cause : le joueur
+ * doit savoir quoi corriger sans relire les règles.
+ */
+const MESSAGES = {
+  'deck.error.fanzzy_count':      'Il faut exactement trois Fanzzy.',
+  'deck.error.fanzzy_duplicate':  'Le même Fanzzy apparaît deux fois.',
+  'deck.error.fanzzy_not_owned':  'Tu ne possèdes pas ce Fanzzy.',
+  'deck.error.too_much_stuff':    'Au plus deux pièces d\u2019équipement par Fanzzy.',
+  'deck.error.stuff_not_owned':   'Tu ne possèdes pas cette pièce d\u2019équipement.',
+  'deck.error.stuff_shared':      'Une pièce ne peut pas être portée par deux Fanzzy à la fois.',
+  'deck.error.actions_count':     'Il faut exactement dix cartes d\u2019action.',
+  'deck.error.action_unknown':    'Cette carte n\u2019existe pas.',
+  'deck.error.action_not_owned':  'Tu ne possèdes pas cette carte.',
+  'deck.error.too_many_copies':   'Deux exemplaires au maximum d\u2019une même carte.',
+  'deck.error.invalid':           'Le deck a été refusé :',
+  'deck.error.none':              'Aucun deck enregistré pour l\u2019instant.',
+  'deck.error.server':            'Le serveur n\u2019a pas pu enregistrer le deck.',
+  'deck.warn.no_substitution':    'Sans « Arbitre — changement », tu resteras sur ton premier Fanzzy '
+                                + 'toute la partie : les deux autres n\u2019entreront jamais.',
+};
+
+const api = async (path, { method = 'GET', body } = {}) => {
+  const r = await fetch(path, {
+    method,
+    headers: body ? { 'content-type': 'application/json' } : undefined,
+    credentials: 'same-origin',
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
+  const j = await r.json().catch(() => ({}));
+  if (j.error) throw Object.assign(new Error(j.error), { code: j.error, detail: j.detail });
+  return j;
+};
+
+let toastT = null;
+function toast(t) {
+  const el = $('toast');
+  el.textContent = t;
+  el.classList.add('on');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('on'), 3400);
+}
+
+/* ------------------------------------------------------------------ état */
+
+const S = {
+  deck: { nom: 'Mon deck', fanzzy: [], actions: [] },
+  possede: { fanzzy: [], stuff: [], actions: [] },
+  regles: { fanzzy: 3, stuffParFanzzy: 2, actions: 10, copiesMax: 2 },
+  dex: new Map(), types: {}, catalogue: [], stuff: new Map(),
+  onglet: 'tribune', filtre: 'miennes', sale: false,
+};
+
+const aFanzzy = (id) => S.dex.get(id);
+const aStuff = (id) => S.stuff.get(id);
+const aCarte = (id) => S.catalogue.find((a) => a.id === id);
+
+/** Les pièces déjà portées, tous rangs confondus : une pièce est un objet. */
+const piecesPortees = (saufIndex = -1) => new Set(
+  S.deck.fanzzy.flatMap((f, i) => (i === saufIndex ? [] : (f.stuff ?? []))));
+
+/**
+ * Combine les modificateurs pour l'affichage seulement.
+ * Le serveur refait ce calcul avant chaque duel : ce qui est montré ici est
+ * une aide à la décision, pas une source de vérité.
+ */
+function combiner(base = {}, pieces = []) {
+  const out = { ...base };
+  const facteurs = ['tempoWindow','mashBonus','holdBonus','perfectBonus','parryBonus',
+    'parryResist','breathBonus','refundBonus','costPenalty'];
+  const decalages = ['tempoInterval','mashTime','holdForgive'];
+  for (const id of pieces.slice(0, S.regles.stuffParFanzzy)) {
+    const s = aStuff(id);
+    if (!s) continue;
+    for (const [k, v] of Object.entries(s.mods ?? {})) {
+      if (facteurs.includes(k)) out[k] = (out[k] ?? 1) * v;
+      else if (decalages.includes(k)) out[k] = (out[k] ?? 0) + v;
+      else out[k] = v;
+    }
+  }
+  return out;
+}
+
+const pc = (v) => `${v > 1 ? '+' : '−'}${Math.abs(Math.round((v - 1) * 100))} %`;
+
+/** Vocabulaire commun avec la fiche Fanzzy : les mêmes mots partout. */
+function modsTexte(m) {
+  const out = [];
+  if (m.tempoWindow) out.push(`Tempo ${pc(m.tempoWindow)}`);
+  if (m.tempoInterval) out.push(`Cadence ${m.tempoInterval > 0 ? 'ralentie' : 'accélérée'} de ${Math.abs(m.tempoInterval)} ms`);
+  if (m.mashTime) out.push(`Martelage ${Math.abs(m.mashTime) / 1000} s ${m.mashTime < 0 ? 'plus court' : 'plus long'}`);
+  if (m.mashBonus) out.push(`Martelage ${pc(m.mashBonus)}`);
+  if (m.holdBonus) out.push(`Endurance ${pc(m.holdBonus)}`);
+  if (m.holdForgive) out.push(`Peut lâcher ${m.holdForgive} fois`);
+  if (m.perfectBonus) out.push(`Geste parfait ${pc(m.perfectBonus)}`);
+  if (m.backfire) out.push('Geste raté : retour de flamme');
+  if (m.parryBonus) out.push(`Contre ${pc(m.parryBonus)}`);
+  if (m.parryResist) out.push(`Résistance au contre ${pc(m.parryResist)}`);
+  if (m.breathBonus) out.push(`Souffle ${pc(m.breathBonus)}`);
+  if (m.refundBonus) out.push(`Reprise ${pc(m.refundBonus)}`);
+  if (m.costPenalty) out.push(`Coût des cartes ${pc(m.costPenalty)}`);
+  return out;
+}
+
+function rangHTML(rar) {
+  if (rar === 'crown') return '<span class="dots"><i class="s" style="width:auto;height:auto;border-radius:0">♛</i></span>';
+  if (rar === 'star') return '<span class="dots"><i class="s" style="width:auto;height:auto;border-radius:0">★</i></span>';
+  return `<span class="dots">${'<i></i>'.repeat(RANG[rar] ?? 1)}</span>`;
+}
+
+/* --------------------------------------------------------- chargement */
+
+async function charger() {
+  // Trois catalogues immuables et l'état du joueur. Les catalogues portent
+  // un cache d'une heure côté serveur : les redemander ne coûte rien.
+  const [mien, cat, dex, stuff] = await Promise.all([
+    api('/api/deck/mien'),
+    api('/api/deck/catalogue'),
+    api('/api/fanzzy/dex'),
+    api('/api/fanzzy/stuff'),
+  ]);
+
+  S.possede = mien.possede;
+  S.regles = mien.regles ?? cat.regles ?? S.regles;
+  S.catalogue = cat.actions ?? [];
+  S.dex = new Map((dex.dex ?? []).map((f) => [f.id, f]));
+  S.types = dex.types ?? {};
+  S.stuff = new Map((stuff.stuff ?? []).map((s) => [s.id, s]));
+
+  if (mien.deck) {
+    S.deck = {
+      nom: mien.deck.nom ?? 'Mon deck',
+      // On ne garde que ce que le joueur possède encore : un Fanzzy évolué
+      // change d'identifiant, et un deck qui pointe dans le vide est pire
+      // qu'un deck incomplet.
+      fanzzy: (mien.deck.fanzzy ?? []).filter((f) => S.possede.fanzzy.includes(f.id))
+        .map((f) => ({ id: f.id, stuff: (f.stuff ?? []).filter((s) => S.possede.stuff.includes(s)) })),
+      actions: (mien.deck.actions ?? []).filter((a) => S.possede.actions.includes(a)),
+    };
+  }
+  rendre();
+}
+
+/* ------------------------------------------------------------- contrôles */
+
+/**
+ * Les mêmes règles que le serveur, mais dans le seul but d'expliquer ce qui
+ * manque. La liste est ordonnée : on cite d'abord ce qui bloque.
+ */
+function problemes() {
+  const pb = [];
+  const n = S.deck.fanzzy.length;
+  if (n < S.regles.fanzzy) pb.push(`${S.regles.fanzzy - n} Fanzzy à choisir`);
+  const c = S.deck.actions.length;
+  if (c < S.regles.actions) pb.push(`${S.regles.actions - c} carte${S.regles.actions - c > 1 ? 's' : ''} à ajouter`);
+  if (c > S.regles.actions) pb.push(`${c - S.regles.actions} carte de trop`);
+  return pb;
+}
+
+const complet = () => problemes().length === 0;
+
+/* ------------------------------------------------------------- rendu */
+
+function rendre() {
+  const assezDeFanzzy = S.possede.fanzzy.length >= S.regles.fanzzy;
+  const pb = problemes();
+
+  $('etat').textContent = complet() ? 'PRÊT' : 'INCOMPLET';
+  $('etat').classList.toggle('ok', complet());
+
+  const corps = [];
+
+  corps.push(`<div class="nomdeck"><span>NOM</span>
+    <input id="nom" maxlength="32" value="${esc(S.deck.nom)}" autocomplete="off"></div>`);
+
+  corps.push(`<div class="tabs">
+    <button class="tab ${S.onglet === 'tribune' ? 'on' : ''}" data-onglet="tribune">TRIBUNE
+      <b>${S.deck.fanzzy.length}/${S.regles.fanzzy}</b></button>
+    <button class="tab ${S.onglet === 'cartes' ? 'on' : ''}" data-onglet="cartes">CARTES
+      <b>${S.deck.actions.length}/${S.regles.actions}</b></button>
+  </div>`);
+
+  // Le paquet de bienvenue ne donne que deux Fanzzy, alors que le deck en
+  // demande trois : pour un compte neuf ce n'est pas une erreur mais l'état
+  // normal, et il faut dire où aller plutôt que laisser un formulaire
+  // impossible à remplir.
+  if (!assezDeFanzzy) {
+    corps.push(`<div class="avert"><b>IL TE MANQUE DES FANZZY</b>
+      Un deck demande ${S.regles.fanzzy} Fanzzy et tu en as ${S.possede.fanzzy.length}.
+      Les boosters se rechargent tout seuls au <a href="/fanzzy">kiosque</a>.</div>`);
+  }
+
+  corps.push(S.onglet === 'tribune' ? tribuneHTML() : cartesHTML());
+  $('corps').innerHTML = corps.join('');
+
+  $('barre').style.display = '';
+  $('info').className = 'info' + (pb.length ? ' pb' : '');
+  $('info').innerHTML = pb.length
+    ? esc(pb.join(' · '))
+    : (S.sale ? 'Modifications non enregistrées.'
+              : `Deck complet · <b>${esc(S.deck.nom)}</b>`);
+  $('save').disabled = !complet() || !S.sale;
+}
+
+function tribuneHTML() {
+  const out = [`<h2>LA TRIBUNE <i>· le premier entre au coup d\u2019envoi</i></h2>`];
+
+  for (let i = 0; i < S.regles.fanzzy; i++) {
+    const slot = S.deck.fanzzy[i];
+    if (!slot) {
+      out.push(`<div class="rang vide"><div class="tete" data-choisir-fanzzy="${i}">
+        <div class="pip" style="--tc:#2A323C"><span style="opacity:.5;font-size:20px">+</span></div>
+        <div class="id"><b style="opacity:.55">Emplacement libre</b>
+          <div class="sous">${i === 0 ? 'Titulaire : il entre au coup d\u2019envoi' : 'Remplaçant'}</div></div>
+        <div class="chevron">›</div></div></div>`);
+      continue;
+    }
+
+    const f = aFanzzy(slot.id);
+    if (!f) continue;
+    const t = S.types[f.type] ?? { nom: f.type, c: '#8257DA', ico: '' };
+    const mods = modsTexte(combiner(f.mods ?? {}, slot.stuff ?? []));
+
+    const pieces = [];
+    for (let p = 0; p < S.regles.stuffParFanzzy; p++) {
+      const s = aStuff((slot.stuff ?? [])[p]);
+      pieces.push(`<button class="piece ${s ? 'plein' : ''}" data-piece="${i}:${p}">
+        ${s ? `<b>${esc(s.nom)}</b><span>${esc(s.texte)}</span>`
+            : `<b style="opacity:.4">Vide</b><span>Ajouter une pièce</span>`}</button>`);
+    }
+
+    out.push(`<div class="rang ${i === 0 ? 'titulaire' : ''}" style="--tc:${t.c}">
+      <div class="tete" data-choisir-fanzzy="${i}">
+        <div class="pip" style="--tc:${t.c}"><svg viewBox="0 0 24 24" fill="none" stroke="#0B0E13"
+          stroke-width="2" stroke-linecap="round"><path d="${t.ico}"/></svg></div>
+        <div class="id">
+          <b>${esc(f.nom)}${rangHTML(f.rar)}</b>
+          <div class="sous">${esc(t.nom)} · étage ${f.stage}</div>
+          <div class="cri">${esc(f.cri?.label ?? '')}</div>
+        </div>
+        ${i === 0 ? '<div class="marque">TITULAIRE</div>' : ''}
+        <div class="chevron">›</div>
+      </div>
+      <div class="pieces">${pieces.join('')}</div>
+      ${mods.length ? `<div class="effet"><em>Effet</em> · ${esc(mods.join(' · '))}</div>` : ''}
+      <div class="actions">
+        ${i > 0 ? `<button class="mini" data-titulariser="${i}">TITULARISER</button>` : ''}
+        <button class="mini danger" data-retirer-fanzzy="${i}">RETIRER</button>
+      </div>
+    </div>`);
+  }
+
+  // Un deck sans « Arbitre — changement » enferme le joueur sur son premier
+  // Fanzzy. Ce n'est pas interdit, mais c'est presque toujours involontaire.
+  if (S.deck.fanzzy.length === S.regles.fanzzy && !S.deck.actions.includes('a-arbitre')) {
+    out.push(`<div class="avert doux"><b>TES REMPLAÇANTS NE JOUERONT PAS</b>
+      ${MESSAGES['deck.warn.no_substitution']}</div>`);
+  }
+  return out.join('');
+}
+
+function cartesHTML() {
+  const out = [`<h2>LES DIX CARTES <i>· cinq visibles à la fois</i></h2>`];
+
+  const emp = [];
+  for (let i = 0; i < S.regles.actions; i++) {
+    const a = aCarte(S.deck.actions[i]);
+    if (!a) { emp.push(`<div class="emp" data-aller-catalogue="1"><span class="plus">+</span></div>`); continue; }
+    const fam = FAM[a.fam] ?? { c: '#8257DA' };
+    emp.push(`<div class="emp plein" style="--fc:${fam.c}" data-retirer-carte="${i}">
+      <div class="cout">${a.cost}</div><div class="nm">${esc(a.nom)}</div></div>`);
+  }
+  out.push(`<div class="grille">${emp.join('')}</div>`);
+
+  out.push(`<h2 id="catalogue">CATALOGUE</h2>`);
+  out.push(`<div class="filtres">
+    <button class="filtre ${S.filtre === 'miennes' ? 'on' : ''}" data-filtre="miennes">Les miennes</button>
+    <button class="filtre ${S.filtre === 'toutes' ? 'on' : ''}" data-filtre="toutes">Toutes</button>
+  </div>`);
+
+  const compte = {};
+  for (const id of S.deck.actions) compte[id] = (compte[id] ?? 0) + 1;
+
+  for (const [famId, fam] of Object.entries(FAM)) {
+    const cartes = S.catalogue.filter((a) => a.fam === famId)
+      .filter((a) => S.filtre === 'toutes' || S.possede.actions.includes(a.id));
+    if (!cartes.length) continue;
+
+    out.push(`<div class="fam" style="--fc:${fam.c}">${fam.nom}<span class="trait"></span></div>`);
+    out.push('<div class="cat">');
+    for (const a of cartes) {
+      const possede = S.possede.actions.includes(a.id);
+      const n = compte[a.id] ?? 0;
+      out.push(`<div class="carte ${possede ? '' : 'absente'}" style="--fc:${fam.c}"
+        data-detail="${a.id}">
+        <div class="cout">${a.cost}<small>SOUFFLE</small></div>
+        <div class="txt"><b>${esc(a.nom)}${rangHTML(a.rar)}</b><p>${esc(a.texte)}</p></div>
+        <div class="compte ${n ? 'on' : ''}">${possede ? `${n}/${S.regles.copiesMax}` : '—'}</div>
+      </div>`);
+    }
+    out.push('</div>');
+  }
+  return out.join('');
+}
+
+/* ------------------------------------------------------------- panneaux */
+
+function ouvrir(titre, contenu) {
+  $('panneau').innerHTML = `<div class="ph"><h3>${esc(titre)}</h3>
+    <button data-fermer="1">×</button></div><div class="pc">${contenu}</div>`;
+  $('voile').classList.add('on');
+}
+const fermer = () => $('voile').classList.remove('on');
+
+function panneauFanzzy(index) {
+  const dedans = new Set(S.deck.fanzzy.map((f) => f.id));
+  const dispo = S.possede.fanzzy.map(aFanzzy).filter(Boolean)
+    .sort((a, b) => (RANG[b.rar] - RANG[a.rar]) || a.nom.localeCompare(b.nom));
+
+  if (!dispo.length) {
+    return ouvrir('Choisir un Fanzzy',
+      `<div class="vide">Tu n\u2019as encore aucun Fanzzy.<br><a href="/fanzzy">Ouvrir un booster</a></div>`);
+  }
+
+  const lignes = dispo.map((f) => {
+    const t = S.types[f.type] ?? { nom: f.type, c: '#8257DA', ico: '' };
+    const pris = dedans.has(f.id) && S.deck.fanzzy[index]?.id !== f.id;
+    return `<div class="choix ${pris ? 'pris' : ''}" ${pris ? '' : `data-prendre-fanzzy="${index}:${f.id}"`}>
+      <div class="pip" style="--tc:${t.c};width:38px;height:38px;border-radius:9px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#0B0E13" stroke-width="2" stroke-linecap="round"
+          style="width:20px;height:20px"><path d="${t.ico}"/></svg></div>
+      <div class="txt"><b>${esc(f.nom)}${rangHTML(f.rar)}</b>
+        <p>${esc(t.nom)} · ${esc(modsTexte(f.mods ?? {}).join(' · ') || 'aucun modificateur')}</p></div>
+      <div class="tag">${pris ? 'DÉJÀ PRIS' : ''}</div>
+    </div>`;
+  });
+
+  ouvrir(index === 0 ? 'Titulaire' : `Remplaçant ${index}`, lignes.join(''));
+}
+
+function panneauPiece(index, place) {
+  const portees = piecesPortees(index);
+  const surCeFanzzy = S.deck.fanzzy[index]?.stuff ?? [];
+  const dispo = S.possede.stuff.map(aStuff).filter(Boolean)
+    .sort((a, b) => (RANG[b.rar] - RANG[a.rar]) || a.nom.localeCompare(b.nom));
+
+  if (!dispo.length) {
+    return ouvrir('Équipement',
+      `<div class="vide">Tu n\u2019as aucune pièce d\u2019équipement.<br>
+       Elles sortent des boosters, au <a href="/fanzzy">kiosque</a>.</div>`);
+  }
+
+  const lignes = dispo.map((s) => {
+    // Portée par un autre rang : une pièce est un objet, pas une licence.
+    const ailleurs = portees.has(s.id);
+    const ici = surCeFanzzy[place] === s.id;
+    const doublon = !ailleurs && !ici && surCeFanzzy.includes(s.id);
+    const bloque = ailleurs || doublon;
+    return `<div class="choix ${bloque ? 'pris' : ''}"
+      ${bloque ? '' : `data-prendre-piece="${index}:${place}:${s.id}"`}>
+      <div class="txt"><b>${esc(s.nom)}${rangHTML(s.rar)}</b>
+        <p>${esc(s.texte)}<br>${esc(modsTexte(s.mods ?? {}).join(' · '))}</p></div>
+      <div class="tag">${ailleurs ? 'AUTRE RANG' : doublon ? 'DÉJÀ PORTÉE' : ici ? 'PORTÉE' : ''}</div>
+    </div>`;
+  });
+
+  const vider = surCeFanzzy[place]
+    ? `<div class="choix" data-vider-piece="${index}:${place}">
+        <div class="txt"><b style="opacity:.6">Laisser vide</b>
+        <p>Retirer la pièce de cet emplacement.</p></div></div>` : '';
+
+  ouvrir('Équipement', vider + lignes.join(''));
+}
+
+function panneauCarte(id) {
+  const a = aCarte(id);
+  if (!a) return;
+  const fam = FAM[a.fam] ?? { nom: a.fam, c: '#8257DA' };
+  const possede = S.possede.actions.includes(a.id);
+  const n = S.deck.actions.filter((x) => x === a.id).length;
+  const plein = S.deck.actions.length >= S.regles.actions;
+
+  const lignes = [
+    ['Famille', fam.nom],
+    ['Coût', `${a.cost} de souffle`],
+    ['Réutilisation', `${a.cd} s`],
+  ];
+  if (a.revers) lignes.push(['Revers', 'oui — voir le texte']);
+  if (a.condition?.mene) lignes.push(['Condition', `mené d\u2019au moins ${a.condition.mene} but`]);
+  if (a.condition?.minuteReelle) lignes.push(['Condition', `après la ${a.condition.minuteReelle}e minute réelle`]);
+
+  const info = lignes.map(([k, v]) =>
+    `<div class="choix" style="cursor:default"><div class="txt">
+      <b style="font-size:11px;letter-spacing:.12em;opacity:.5">${esc(k.toUpperCase())}</b>
+      <p style="opacity:.85;font-size:12px">${esc(v)}</p></div></div>`).join('');
+
+  let bas;
+  if (!possede) {
+    bas = `<div class="vide" style="padding:18px 10px">Tu ne possèdes pas encore cette carte.<br>
+      Elle sort des boosters, au <a href="/fanzzy">kiosque</a>.</div>`;
+  } else if (n >= S.regles.copiesMax) {
+    bas = `<div class="vide" style="padding:18px 10px">Tu en as déjà
+      ${S.regles.copiesMax} exemplaires : c\u2019est le maximum.</div>`;
+  } else if (plein) {
+    bas = `<div class="vide" style="padding:18px 10px">Tes ${S.regles.actions} emplacements sont pris.<br>
+      Retire une carte pour faire de la place.</div>`;
+  } else {
+    bas = `<div style="padding:6px 0 10px"><button class="btn" style="width:100%"
+      data-ajouter="${a.id}">AJOUTER AU DECK${n ? ` (${n}/${S.regles.copiesMax})` : ''}</button></div>`;
+  }
+
+  ouvrir(a.nom, `<p style="margin:0 2px 12px;font-size:13px;line-height:1.65;opacity:.85">
+    ${esc(a.texte)}</p>${info}${bas}`);
+}
+
+/* ------------------------------------------------------- enregistrement */
+
+async function enregistrer() {
+  const bouton = $('save');
+  bouton.disabled = true;
+  try {
+    const r = await api('/api/deck/mien', { method: 'PUT', body: {
+      nom: S.deck.nom,
+      fanzzy: S.deck.fanzzy.map((f) => ({ id: f.id, stuff: f.stuff ?? [] })),
+      actions: S.deck.actions,
+    } });
+    S.sale = false;
+    rendre();
+    const av = (r.avertissements ?? []).map((a) => MESSAGES[a.code]).filter(Boolean);
+    toast(av.length ? av[0] : 'Deck enregistré.');
+  } catch (e) {
+    if (e.message === 'auth') return;
+    // Le détail vient de validerDeck : chaque problème a son code. On les
+    // affiche tous, nommés — c'est exactement ce qu'un « impossible » cache.
+    const liste = (e.detail ?? []).map((p) => {
+      const base = MESSAGES[p.code] ?? p.code;
+      if (!p.id) return base;
+      const nom = aFanzzy(p.id)?.nom ?? aStuff(p.id)?.nom ?? aCarte(p.id)?.nom ?? p.id;
+      return `${base} (${nom})`;
+    });
+    if (liste.length) {
+      ouvrir('Deck refusé', `<div class="avert"><b>LE SERVEUR A REFUSÉ CE DECK</b>
+        <ul>${liste.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>`);
+    } else {
+      toast(MESSAGES[e.code] ?? `Refusé par le serveur : ${e.code}`);
+    }
+    bouton.disabled = false;
+  }
+}
+
+/* ------------------------------------------------------------- gestes */
+
+$('corps').addEventListener('input', (e) => {
+  if (e.target.id !== 'nom') return;
+  S.deck.nom = e.target.value.slice(0, 32);
+  S.sale = true;
+  $('save').disabled = !complet();
+});
+
+$('corps').addEventListener('click', (e) => {
+  const el = (a) => e.target.closest(`[data-${a}]`);
+  let n;
+
+  if ((n = el('onglet'))) { S.onglet = n.dataset.onglet; return rendre(); }
+  if ((n = el('filtre'))) { S.filtre = n.dataset.filtre; return rendre(); }
+  if ((n = el('aller-catalogue'))) {
+    return document.getElementById('catalogue')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  if ((n = el('choisir-fanzzy'))) return panneauFanzzy(Number(n.dataset.choisirFanzzy));
+  if ((n = el('detail'))) return panneauCarte(n.dataset.detail);
+
+  if ((n = el('piece'))) {
+    const [i, p] = n.dataset.piece.split(':').map(Number);
+    return panneauPiece(i, p);
+  }
+  if ((n = el('titulariser'))) {
+    const i = Number(n.dataset.titulariser);
+    const [f] = S.deck.fanzzy.splice(i, 1);
+    S.deck.fanzzy.unshift(f);
+    S.sale = true;
+    return rendre();
+  }
+  if ((n = el('retirer-fanzzy'))) {
+    S.deck.fanzzy.splice(Number(n.dataset.retirerFanzzy), 1);
+    S.sale = true;
+    return rendre();
+  }
+  if ((n = el('retirer-carte'))) {
+    S.deck.actions.splice(Number(n.dataset.retirerCarte), 1);
+    S.sale = true;
+    return rendre();
+  }
+});
+
+$('voile').addEventListener('click', (e) => {
+  if (e.target === $('voile')) return fermer();
+  const el = (a) => e.target.closest(`[data-${a}]`);
+  let n;
+
+  if (el('fermer')) return fermer();
+
+  if ((n = el('prendre-fanzzy'))) {
+    const [i, id] = n.dataset.prendreFanzzy.split(':');
+    const index = Number(i);
+    const ancien = S.deck.fanzzy[index];
+    // On garde l'équipement en place : changer de Fanzzy ne doit pas faire
+    // perdre le travail d'équipement, sauf si une pièce part ailleurs.
+    S.deck.fanzzy[index] = { id, stuff: ancien?.stuff ?? [] };
+    // Les emplacements sont contigus : un trou au milieu n'a pas de sens.
+    S.deck.fanzzy = S.deck.fanzzy.filter(Boolean);
+    S.sale = true;
+    fermer();
+    return rendre();
+  }
+
+  if ((n = el('prendre-piece'))) {
+    const [i, p, id] = n.dataset.prendrePiece.split(':');
+    const f = S.deck.fanzzy[Number(i)];
+    if (!f) return fermer();
+    f.stuff = f.stuff ?? [];
+    f.stuff[Number(p)] = id;
+    // Un emplacement 2 rempli alors que le 1 est vide donnerait un trou :
+    // on compacte, la validation du serveur compte les pièces, pas les cases.
+    f.stuff = f.stuff.filter(Boolean).slice(0, S.regles.stuffParFanzzy);
+    S.sale = true;
+    fermer();
+    return rendre();
+  }
+
+  if ((n = el('vider-piece'))) {
+    const [i, p] = n.dataset.viderPiece.split(':').map(Number);
+    const f = S.deck.fanzzy[i];
+    if (f) { f.stuff.splice(p, 1); S.sale = true; }
+    fermer();
+    return rendre();
+  }
+
+  if ((n = el('ajouter'))) {
+    if (S.deck.actions.length >= S.regles.actions) return fermer();
+    S.deck.actions.push(n.dataset.ajouter);
+    S.sale = true;
+    fermer();
+    return rendre();
+  }
+});
+
+$('save').addEventListener('click', enregistrer);
+
+// Quitter avec des modifications non enregistrées est presque toujours une
+// erreur : le navigateur demande confirmation, à nous de l'y autoriser.
+addEventListener('beforeunload', (e) => {
+  if (!S.sale) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+
+charger().catch((e) => {
+  if (e.message === 'auth') return;
+  $('corps').innerHTML = `<div class="vide">Impossible de charger ton deck.<br>
+    ${esc(MESSAGES[e.code] ?? e.code ?? 'Serveur injoignable')}</div>`;
+});
+</script>
+<script src="/fx.js" defer></script>
+<script src="/nav.js" defer></script>
+</body>
+</html>

@@ -235,8 +235,17 @@ function rendre() {
         style="position:absolute;right:4%;bottom:0;height:118%;width:auto;object-fit:contain;
         filter:drop-shadow(0 6px 22px rgba(0,0,0,.75))">`;
   };
-  illu.onerror = () => {};
-  illu.src = `/img/fanzzy/${f.id}.avif`;
+  // Trois formats à essayer dans l'ordre, et pas seulement l'avif.
+  // La page ne testait que `.avif` avec un `onerror` vide : sur un navigateur
+  // qui ne le gère pas, l'illustration ne s'affichait pas et rien ne le
+  // disait, alors que le `.webp` et le `.png` étaient juste à côté.
+  const formats = ['.avif', '.webp', '.png'];
+  let rang = 0;
+  illu.onerror = () => {
+    if (++rang < formats.length) illu.src = `/img/fanzzy/${f.id}${formats[rang]}`;
+    // Épuisé : le halo de couleur reste, c'est le repli prévu.
+  };
+  illu.src = `/img/fanzzy/${f.id}${formats[0]}`;
 
   $('page').querySelector('.skins').onclick = async (e) => {
     const s = e.target.closest('[data-skin]');

@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Duel de tribunes — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;
+  --violet:#8257DA;--gris:#C2CAD6;--ambre:#E08A2C;
+  --banner:"Oswald","Arial Narrow",Impact,sans-serif;--ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
+  overscroll-behavior:none}
+#app{position:relative;width:100%;max-width:460px;min-height:100dvh;display:flex;flex-direction:column;
+  background:radial-gradient(120% 40% at 50% -4%,rgba(224,64,44,.14),transparent 60%),
+             linear-gradient(180deg,#141A21,#0A0D11 45%,#0A0D11)}
+
+/* ------------------------------------------------------- préparation */
+
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px}
+.top h1{font-family:var(--banner);font-size:20px;letter-spacing:.15em;margin:0}
+.top h1 small{display:block;font-size:8.5px;letter-spacing:.3em;opacity:.5;margin-top:3px;font-family:var(--ui)}
+h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;margin:20px 16px 9px}
+h2 i{font-style:normal;opacity:.7}
+
+.formats{display:flex;gap:6px;padding:0 14px}
+.fmt{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.14);border-radius:9px;
+  color:inherit;padding:12px 4px;font-family:var(--banner);font-size:13px;letter-spacing:.05em;cursor:pointer;
+  opacity:.5}
+.fmt.on{opacity:1;border-color:var(--projo);background:rgba(245,195,59,.12);color:var(--projo)}
+
+.matchs{padding:0 14px 8px;display:flex;flex-direction:column;gap:7px}
+.mt{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;
+  border:1px solid rgba(242,238,228,.11);background:rgba(8,11,16,.55);cursor:pointer}
+.mt.on{border-color:var(--projo);background:rgba(245,195,59,.09)}
+.mt img{width:22px;height:22px;object-fit:contain;flex:none}
+.mt .n{flex:1;min-width:0;font-family:var(--banner);font-size:13px;letter-spacing:.02em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mt .q{font-size:9px;letter-spacing:.11em;font-family:var(--banner);border-radius:4px;padding:3px 6px;
+  border:1px solid currentColor;flex:none}
+.mt .q.classe{color:var(--projo)}
+.mt .q.entrainement{color:var(--gris);opacity:.7}
+.raison{margin:0 16px 10px;font-size:11px;opacity:.6;line-height:1.6}
+
+.gros{margin:12px 14px;background:linear-gradient(180deg,var(--flare),#B32A1D);border:0;color:#fff;
+  border-radius:10px;padding:15px;font-family:var(--banner);font-size:15px;letter-spacing:.1em;cursor:pointer;
+  width:calc(100% - 28px)}
+.gros:disabled{filter:grayscale(.85);opacity:.45;cursor:default}
+.gros.calme{background:none;border:1px solid rgba(242,238,228,.2);color:inherit}
+.avert{margin:0 14px 10px;border:1px solid rgba(245,195,59,.35);border-radius:10px;padding:12px 14px;
+  background:rgba(245,195,59,.07);font-size:12px;line-height:1.65}
+.avert b{display:block;font-family:var(--banner);font-size:12.5px;letter-spacing:.06em;margin-bottom:5px;
+  color:var(--projo)}
+.avert a{color:var(--projo)}
+
+/* --------------------------------------------------------- le duel */
+
+.jeu{flex:1;display:none;flex-direction:column;min-height:0}
+.jeu.on{display:flex}
+
+.score{display:flex;align-items:center;gap:10px;padding:12px 14px 8px;flex:none}
+.score .camp{flex:1;min-width:0;text-align:center}
+.score .camp .nom{font-size:9px;letter-spacing:.16em;opacity:.5;font-family:var(--banner)}
+.score .camp .b{font-family:var(--banner);font-size:27px;line-height:1.05}
+.score .camp.moi .b{color:var(--projo)}
+.score .horloge{font-family:var(--banner);font-size:16px;letter-spacing:.06em;opacity:.75;flex:none}
+.score .horloge small{display:block;font-size:8px;letter-spacing:.14em;opacity:.5;text-align:center;
+  font-family:var(--ui);margin-top:2px}
+
+/* La corde. Le repère central ne bouge jamais : c'est lui qui rend le
+   déplacement lisible d'un coup d'œil. */
+.corde{position:relative;height:34px;margin:2px 14px 0;border-radius:8px;flex:none;overflow:hidden;
+  background:linear-gradient(90deg,rgba(245,195,59,.16),rgba(0,0,0,.35) 45%,rgba(0,0,0,.35) 55%,rgba(60,130,232,.16))}
+.corde .zero{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(242,238,228,.35)}
+.corde .noeud{position:absolute;top:4px;bottom:4px;width:12px;border-radius:4px;background:var(--craie);
+  left:50%;margin-left:-6px;transition:transform .18s linear;
+  box-shadow:0 0 14px rgba(242,238,228,.5)}
+.corde .grad{position:absolute;top:0;bottom:0;width:1px;background:rgba(242,238,228,.12)}
+.cordeInfo{display:flex;justify-content:space-between;padding:5px 16px 0;font-size:9px;
+  letter-spacing:.12em;opacity:.42;font-family:var(--banner)}
+
+.tribunes{display:flex;gap:8px;padding:10px 14px 0;flex:none}
+.trib{flex:1;min-width:0;border:1px solid rgba(242,238,228,.1);border-radius:10px;padding:8px;
+  background:rgba(8,11,16,.5)}
+.trib.moi{border-color:rgba(245,195,59,.3)}
+.trib .tt{font-family:var(--banner);font-size:8.5px;letter-spacing:.16em;opacity:.45;margin-bottom:6px}
+.jr{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11px}
+.jr .pt{width:6px;height:6px;border-radius:50%;background:var(--vert);flex:none}
+.jr.parti .pt{background:var(--flare)}
+.jr.parti{opacity:.45}
+.jr .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jr .fv{font-family:var(--banner);font-size:11px;opacity:.7}
+.jr .sf{width:26px;height:3px;border-radius:2px;background:rgba(242,238,228,.15);flex:none;overflow:hidden}
+.jr .sf i{display:block;height:100%;background:var(--bleu)}
+
+/* Le fil occupe la place restante, avec un plancher.
+   Essayé en hauteur fixe : le milieu de l'écran devenait un vide mort, et la
+   main comme le bouton de chant étaient déjà en bas de toute façon puisqu'ils
+   sont les derniers éléments de la colonne. */
+.fil{flex:1 1 auto;min-height:76px;overflow:hidden;margin:10px 14px 0;padding:8px 10px;border-radius:9px;
+  background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.07);
+  display:flex;flex-direction:column-reverse;gap:4px;font-size:11px;line-height:1.45}
+.fil div{opacity:.75}
+.fil .fort{color:var(--projo);opacity:1}
+.fil .contre{color:var(--flare)}
+
+.effets{display:flex;gap:5px;flex-wrap:wrap;padding:8px 14px 0;flex:none;min-height:0}
+.eff{font-family:var(--banner);font-size:8.5px;letter-spacing:.1em;border-radius:4px;padding:3px 7px;
+  border:1px solid currentColor}
+
+.moi{padding:8px 14px 0;flex:none}
+.souffle{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.souffle .bar{flex:1;height:9px;border-radius:5px;background:rgba(242,238,228,.12);overflow:hidden}
+.souffle .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--bleu),#7FB4FF);
+  transition:width .2s linear}
+.souffle b{font-family:var(--banner);font-size:12px;min-width:34px;text-align:right}
+.souffle span{font-size:8.5px;letter-spacing:.12em;opacity:.45;font-family:var(--banner)}
+
+.equipe{display:flex;gap:6px;margin-bottom:8px}
+.fz{flex:1;border:1px solid rgba(242,238,228,.13);border-radius:8px;padding:7px 6px;text-align:center;
+  background:rgba(8,11,16,.5);cursor:default;min-width:0}
+.fz.actif{border-color:var(--projo);background:rgba(245,195,59,.1)}
+.fz.dispo{cursor:pointer;border-style:dashed;border-color:var(--vert)}
+.fz b{display:block;font-family:var(--banner);font-size:10px;letter-spacing:.02em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fz span{font-size:8px;opacity:.5}
+
+.main{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:9px}
+.ct{position:relative;aspect-ratio:.66;border-radius:7px;border:1px solid var(--fc,#8257DA);
+  background:linear-gradient(170deg,rgba(255,255,255,.07),rgba(0,0,0,.4));display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;padding:3px 2px;cursor:pointer;overflow:hidden}
+.ct .co{font-family:var(--banner);font-size:11px;color:var(--fc,#8257DA);line-height:1}
+.ct .nm{font-size:7px;line-height:1.1;text-align:center;opacity:.8}
+.ct.hs{opacity:.35;cursor:default}
+.ct .cd{position:absolute;inset:0;background:rgba(4,6,10,.72);display:flex;align-items:center;
+  justify-content:center;font-family:var(--banner);font-size:13px;color:var(--craie)}
+.ct.vide{border-style:dashed;border-color:rgba(242,238,228,.15);cursor:default}
+
+/* La marge basse doit dégager toute la hauteur de la barre commune.
+
+   nav.js ne réserve que 55 % de cette hauteur sur les écrans de jeu, parce
+   qu'il s'y efface dès qu'on joue et qu'une réserve pleine mangerait la place
+   utile. Le calcul tient pour du contenu qu'on lit ; il ne tient pas pour la
+   seule action du jeu. Mesuré : le bouton passait 16 px sous la barre, et un
+   joueur visant « CHANTER » pendant une pause touchait « PROFIL » — il
+   quittait le duel en cours. On complète donc les 45 % manquants ici, sur la
+   page qui en a besoin, plutôt que d'alourdir la réserve du Virage et du
+   duel un contre un. */
+.chanter{width:100%;background:linear-gradient(180deg,var(--projo),#D0A020);border:0;color:#161006;
+  border-radius:10px;padding:15px;font-family:var(--banner);font-size:15px;letter-spacing:.1em;cursor:pointer;
+  margin-bottom:calc(12px + var(--nav-h,62px) * .45 + env(safe-area-inset-bottom))}
+.chanter:disabled{filter:grayscale(.85);opacity:.45;cursor:default}
+.chanter small{display:block;font-size:8.5px;letter-spacing:.14em;opacity:.65;margin-top:3px}
+
+/* ------------------------------------------------------ mini-jeu */
+
+.mini{position:fixed;inset:0;z-index:80;background:rgba(4,6,10,.93);display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.mini.on{display:flex}
+.mini h3{font-family:var(--banner);font-size:19px;letter-spacing:.16em;margin:0;color:var(--c,var(--projo))}
+.mini p{margin:0;font-size:12.5px;opacity:.6}
+.pad{width:min(72vw,270px);aspect-ratio:1;border-radius:50%;border:2px solid var(--c,var(--projo));
+  display:flex;align-items:center;justify-content:center;position:relative;touch-action:none;
+  background:radial-gradient(circle,rgba(245,195,59,.12),transparent 70%);user-select:none}
+.pad.hit{background:radial-gradient(circle,rgba(245,195,59,.35),transparent 70%)}
+.ring{position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--c,var(--projo));opacity:0}
+.ring.beat{animation:pulse .38s ease-out}
+@keyframes pulse{0%{opacity:.9;transform:scale(.86)}100%{opacity:0;transform:scale(1.12)}}
+.pad .n{font-family:var(--banner);font-size:44px;line-height:1}
+.pad .s{font-size:9px;letter-spacing:.16em;opacity:.5;font-family:var(--banner)}
+.compte{position:absolute;font-family:var(--banner);font-size:74px;opacity:.85;
+  animation:fade .55s ease-out forwards}
+@keyframes fade{to{opacity:0;transform:scale(1.5)}}
+
+/* ---------------------------------------------------------- voiles */
+
+.voile{position:fixed;inset:0;z-index:70;background:rgba(4,6,10,.9);display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:28px;text-align:center}
+.voile.on{display:flex}
+.voile h2{font-family:var(--banner);font-size:23px;letter-spacing:.1em;margin:0;opacity:1}
+.voile p{margin:0;font-size:13px;opacity:.65;line-height:1.7;max-width:300px}
+.spin{width:26px;height:26px;border:2px solid rgba(242,238,228,.2);border-top-color:var(--projo);
+  border-radius:50%;animation:t .8s linear infinite}
+@keyframes t{to{transform:rotate(360deg)}}
+.lien{background:none;border:0;color:var(--projo);font-size:13px;cursor:pointer;text-decoration:underline;
+  font-family:inherit}
+/* Le message se pose au-dessus de toute la zone d'action, jamais dessus.
+
+   Il était ancré à 96 px du bas, une valeur qui tombait en plein sur le
+   bouton de chant — mesuré : 45 px de recouvrement. Or un refus s'affiche
+   exactement au moment où le joueur regarde ce bouton. La position se calcule
+   donc depuis les mêmes grandeurs que la marge du bouton, pour qu'elle suive
+   si l'une d'elles change. */
+.toast{position:fixed;left:50%;z-index:90;transform:translateX(-50%);background:#171C23;
+  bottom:calc(124px + var(--nav-h,62px) * .45 + env(safe-area-inset-bottom));
+  border:1px solid rgba(242,238,228,.2);border-radius:7px;padding:11px 16px;font-size:12.5px;display:none;
+  max-width:88vw;text-align:center}
+.toast.on{display:block}
+.vide{padding:30px 20px;text-align:center;opacity:.5;font-size:12.5px;line-height:1.8}
+.vide a{color:var(--projo)}
+</style>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/img/logo.png" type="image/png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+<main id="app">
+
+  <div id="prepa">
+    <div class="top"><h1>DUEL DE TRIBUNES<small>tirez la corde ensemble</small></h1></div>
+    <div id="prepaCorps"><div class="vide">Chargement…</div></div>
+  </div>
+
+  <div class="jeu" id="jeu">
+    <div class="score">
+      <div class="camp moi"><div class="nom" id="nomMoi">TA TRIBUNE</div><div class="b" id="butsMoi">0</div></div>
+      <div class="horloge"><span id="horloge">5:00</span><small id="modeTag">—</small></div>
+      <div class="camp"><div class="nom" id="nomEux">EN FACE</div><div class="b" id="butsEux">0</div></div>
+    </div>
+
+    <div class="corde" id="corde">
+      <div class="grad" style="left:25%"></div><div class="zero"></div><div class="grad" style="left:75%"></div>
+      <div class="noeud" id="noeud"></div>
+    </div>
+    <div class="cordeInfo"><span id="cordeMoi">TOI</span><span id="cordeEux">EUX</span></div>
+
+    <div class="tribunes">
+      <div class="trib moi"><div class="tt">TA TRIBUNE</div><div id="tribMoi"></div></div>
+      <div class="trib"><div class="tt">EN FACE</div><div id="tribEux"></div></div>
+    </div>
+
+    <div class="effets" id="effets"></div>
+    <div class="fil" id="fil"></div>
+
+    <div class="moi">
+      <div class="souffle">
+        <span>SOUFFLE</span>
+        <div class="bar"><i id="souffleBar" style="width:40%"></i></div>
+        <b id="souffleVal">40</b>
+      </div>
+      <div class="equipe" id="equipe"></div>
+      <div class="main" id="mainCartes"></div>
+      <button class="chanter" id="chanter">CHANTER<small id="chanterSous">—</small></button>
+    </div>
+  </div>
+</main>
+
+<div class="mini" id="mini">
+  <h3 id="miniTitre">TEMPO</h3>
+  <p id="miniAide"></p>
+  <div id="miniZone"></div>
+</div>
+
+<div class="voile" id="voile">
+  <div class="spin" id="voileSpin"></div>
+  <h2 id="voileTitre"></h2>
+  <p id="voileTexte"></p>
+  <button class="lien" id="voileBtn" style="display:none"></button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+/* =======================================================================
+   Duel N contre N.
+
+   Deux tribunes tirent sur la même corde pendant un vrai match. On chante —
+   un geste noté par le serveur — et on joue des cartes qui changent les
+   règles quelques secondes.
+
+   Trois principes gouvernent cet écran :
+
+   **Le serveur est la seule source.** `nvn:state` porte la vue complète du
+   joueur après chaque action ; `nvn:events` sert aux animations et au fil,
+   jamais à recalculer un état. Un client qui déduit son propre score finit
+   toujours par diverger.
+
+   **Les durées du geste viennent de `moi.gestes`.** Elles ne sont écrites
+   nulle part ici. Le Grand Virage les avait en dur et affichait une
+   pulsation de 560 ms là où le serveur notait à 630 : le porteur
+   d'équipement tapait juste sur ce qu'il voyait et récoltait un tiers de la
+   note. Le Métronome et le Vent de face changent cette fenêtre en cours de
+   partie, donc on la relit à chaque vue.
+
+   **Une erreur nomme sa cause.** Chaque code du serveur a sa phrase. Un
+   « impossible » coûte toujours plus cher qu'il n'économise.
+   ======================================================================= */
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+  (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+
+const FAM = {
+  pousse:'#E0402C', entrave:'#8257DA', souffle:'#3C82E8', geste:'#F5C33B',
+  garde:'#C2CAD6', collectif:'#1E9E6A', bascule:'#E08A2C',
+};
+
+const LABEL_GESTE = { tempo:'TEMPO', mash:'MARTELAGE', hold:'ENDURANCE' };
+const AIDE_GESTE = {
+  tempo:'Tape sur chaque pulsation',
+  mash:'Tape le plus vite possible',
+  hold:'Garde le doigt appuyé',
+};
+const COULEUR_GESTE = { tempo:'#F5C33B', mash:'#3C82E8', hold:'#C2CAD6' };
+
+/** Chaque code du serveur a sa phrase : le joueur doit savoir quoi corriger. */
+const MESSAGES = {
+  'nvn.error.not_in_duel':        'Tu n\u2019es dans aucun duel.',
+  'nvn.error.rate_limited':       'Trop d\u2019actions d\u2019un coup. Respire.',
+  'nvn.error.slot_lost':          'Ta place a été reprise : le duel a continué sans toi.',
+  'nvn.error.server':             'Le serveur n\u2019a pas pu traiter cette action.',
+  'nvn.error.unknown_format':     'Ce format de duel n\u2019existe pas.',
+  'nvn.error.no_deck':            'Tu n\u2019as pas encore de deck.',
+  'ferveur.error.unauthenticated':'Session expirée. Reconnecte-toi.',
+  'ferveur.error.not_in_duel':    'Tu n\u2019es dans aucun duel.',
+  'ferveur.error.duel_over':      'Le duel est terminé.',
+  'ferveur.error.silenced':       'Silence radio : tu ne peux pas chanter.',
+  'ferveur.error.not_enough_breath':'Pas assez de souffle.',
+  'ferveur.error.card_not_in_hand':'Cette carte n\u2019est plus dans ta main.',
+  'ferveur.error.actions_locked': 'Parcage fermé : plus de cartes pendant quelques secondes.',
+  'ferveur.error.card_on_cooldown':'Cette carte se recharge encore.',
+  'ferveur.error.condition_not_met':'Les conditions de cette carte ne sont pas réunies.',
+  'ferveur.error.no_substitution':'Il te faut « Arbitre — changement » pour changer de Fanzzy.',
+  'ferveur.error.bad_fanzzy':     'Ce Fanzzy ne peut pas entrer maintenant.',
+  'ferveur.error.taps_too_fast':  'Frappes trop rapprochées.',
+  'ferveur.error.too_many_taps':  'Trop de frappes.',
+  'ferveur.error.inhuman_regularity':'Régularité trop mécanique.',
+  'ferveur.error.tap_out_of_window':'Frappe hors de la fenêtre.',
+  'duel.error.fixture_past':      'On ne rejoue pas un match déjà terminé.',
+  'duel.error.fixture_unknown':   'Ce match est introuvable.',
+  'deck.error.none':              'Tu n\u2019as pas encore de deck.',
+};
+
+const api = async (p) => {
+  const r = await fetch(p, { credentials:'same-origin' });
+  if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
+  const j = await r.json().catch(() => ({}));
+  if (j.error) throw Object.assign(new Error(j.error), { code:j.error });
+  return j;
+};
+
+let toastT = null;
+function toast(t) {
+  const el = $('toast');
+  el.textContent = t;
+  el.classList.add('on');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('on'), 3400);
+}
+const dire = (code) => toast(MESSAGES[code] ?? `Refusé par le serveur : ${code}`);
+
+function voile(titre, texte, bouton) {
+  $('voileTitre').textContent = titre;
+  $('voileTexte').innerHTML = texte ?? '';
+  const b = $('voileBtn');
+  if (bouton) { b.style.display = ''; b.textContent = bouton.texte; b.onclick = bouton.action; }
+  else b.style.display = 'none';
+  $('voileSpin').style.display = bouton ? 'none' : '';
+  $('voile').classList.add('on');
+}
+const fermerVoile = () => $('voile').classList.remove('on');
+
+/* ------------------------------------------------------------ état */
+
+const S = {
+  format: '3v3', fixtureId: null, matchs: [], catalogue: [],
+  vue: null, enFile: false, dernierSeq: 0, occupe: false,
+};
+const carteDef = (id) => S.catalogue.find((a) => a.id === id);
+
+/* ---------------------------------------------------- préparation */
+
+async function preparer() {
+  try {
+    const [cat, matchs] = await Promise.all([
+      api('/api/deck/catalogue'),
+      api('/api/deck/matchs'),
+    ]);
+    S.catalogue = cat.actions ?? [];
+    S.matchs = matchs.matchs ?? [];
+
+    // Sans deck, la file refuserait l'entrée après trois minutes d'attente :
+    // autant le dire tout de suite et pointer l'écran de construction.
+    let deck = null;
+    try { deck = await api('/api/deck/loadout'); } catch { deck = null; }
+    const sansDeck = !deck || deck.error === 'deck.error.none' || !deck.fanzzy;
+
+    rendrePrepa(sansDeck, cat.formats ?? ['1v1','2v2','3v3','4v4','5v5']);
+  } catch (e) {
+    if (e.message === 'auth') return;
+    $('prepaCorps').innerHTML = `<div class="vide">Impossible de préparer le duel.<br>
+      ${esc(MESSAGES[e.code] ?? e.code ?? 'Serveur injoignable')}</div>`;
+  }
+}
+
+function rendrePrepa(sansDeck, formats) {
+  const out = [];
+
+  if (sansDeck) {
+    out.push(`<div class="avert"><b>IL TE FAUT UN DECK</b>
+      Trois Fanzzy et dix cartes, à composer une fois pour toutes.
+      <a href="/deck">Construire mon deck</a></div>`);
+  }
+
+  out.push(`<h2>LE FORMAT <i>· la file est par format et par match</i></h2>`);
+  out.push(`<div class="formats">${formats.map((f) =>
+    `<button class="fmt ${f === S.format ? 'on' : ''}" data-fmt="${f}">${f}</button>`).join('')}</div>`);
+
+  out.push(`<h2>LE MATCH SUPPORT</h2>`);
+  if (!S.matchs.length) {
+    out.push(`<div class="vide">Aucun match à venir pour tes clubs.<br>
+      <a href="/equipes">Suivre d\u2019autres clubs</a></div>`);
+  } else {
+    out.push('<div class="matchs">');
+    for (const m of S.matchs) {
+      const on = S.fixtureId === m.id;
+      out.push(`<div class="mt ${on ? 'on' : ''}" data-fixture="${m.id}">
+        ${m.home_logo ? `<img src="${esc(m.home_logo)}" alt="">` : ''}
+        <div class="n">${esc(m.home_name)} – ${esc(m.away_name)}</div>
+        <div class="q ${m.mode}">${m.mode === 'classe' ? 'CLASSÉ' : 'ENTRAÎNEMENT'}</div>
+      </div>`);
+    }
+    out.push('</div>');
+  }
+
+  const choisi = S.matchs.find((m) => m.id === S.fixtureId);
+  if (choisi) {
+    out.push(`<div class="raison">${choisi.mode === 'classe'
+      ? (choisi.enCours ? 'Le match est en cours : ce duel comptera au classement.'
+                        : 'Match du jour : ce duel comptera au classement.')
+      : 'Match à venir : entraînement, sans effet sur le classement.'}</div>`);
+  }
+
+  out.push(`<button class="gros" id="entrer" ${sansDeck || !S.fixtureId ? 'disabled' : ''}>
+    ENTRER EN FILE</button>`);
+  out.push(`<div class="raison">Si personne ne se présente, des bots complètent
+    les places au bout de vingt secondes et le duel devient un entraînement.</div>`);
+
+  $('prepaCorps').innerHTML = out.join('');
+}
+
+$('prepaCorps').addEventListener('click', (e) => {
+  const f = e.target.closest('[data-fmt]');
+  if (f) { S.format = f.dataset.fmt; return preparerRendu(); }
+  const m = e.target.closest('[data-fixture]');
+  if (m) { S.fixtureId = Number(m.dataset.fixture); return preparerRendu(); }
+  if (e.target.closest('#entrer')) entrerEnFile();
+});
+
+// On ne recharge pas les catalogues à chaque clic : seul l'affichage change.
+let sansDeckMemo = false, formatsMemo = ['1v1','2v2','3v3','4v4','5v5'];
+const preparerRendu = () => rendrePrepa(sansDeckMemo, formatsMemo);
+
+/* ---------------------------------------------------------- réseau */
+
+let socket = null;
+
+function connecter() {
+  socket = io({ transports:['websocket','polling'] });
+
+  socket.on('connect', () => {
+    fermerVoile();
+    // Reprise : si un duel nous attendait, le serveur nous y remet.
+    if (S.vue && !S.vue.termine) socket.emit('nvn:resume');
+  });
+
+  socket.on('connect_error', () => {
+    voile('Hors ligne', 'La connexion au serveur a été perdue. On réessaie.');
+  });
+
+  socket.on('disconnect', () => {
+    if (S.vue && !S.vue.termine) {
+      voile('Connexion perdue', 'Ta place t\u2019attend une minute trente. '
+        + 'Tu cesses simplement de pousser, ta tribune ne s\u2019effondre pas.');
+    }
+  });
+
+  socket.on('nvn:file', (p) => {
+    S.enFile = true;
+    voile('Dans la file', `Format ${esc(S.format)} · ${p?.presents ?? 1} en attente.<br>`
+      + 'Des bots complètent après vingt secondes.',
+      { texte:'Quitter la file', action: quitterFile });
+  });
+
+  socket.on('nvn:start', (vue) => {
+    S.enFile = false;
+    S.vue = vue;
+    S.dernierSeq = vue.seq ?? 0;
+    fermerVoile();
+    $('prepa').style.display = 'none';
+    $('jeu').classList.add('on');
+    rendreDuel();
+  });
+
+  socket.on('nvn:state', (vue) => { S.vue = vue; rendreDuel(); });
+
+  socket.on('nvn:events', (evs) => {
+    for (const e of evs ?? []) {
+      if (e.seq && e.seq <= S.dernierSeq) continue;
+      if (e.seq) S.dernierSeq = e.seq;
+      raconter(e);
+    }
+  });
+
+  socket.on('nvn:error', (e) => {
+    S.occupe = false;
+    dire(e?.code ?? 'nvn.error.server');
+    if (e?.code === 'nvn.error.slot_lost') {
+      S.vue = null;
+      $('jeu').classList.remove('on');
+      $('prepa').style.display = '';
+    }
+  });
+}
+
+function entrerEnFile() {
+  if (!S.fixtureId) return toast('Choisis d\u2019abord un match support.');
+  if (!socket?.connected) return toast('Pas de connexion au serveur.');
+  socket.emit('nvn:queue', { format:S.format, fixtureId:S.fixtureId });
+  voile('Dans la file', 'Recherche d\u2019adversaires…',
+    { texte:'Quitter la file', action: quitterFile });
+}
+
+function quitterFile() {
+  socket?.emit('nvn:leave_queue');
+  S.enFile = false;
+  fermerVoile();
+}
+
+/* ------------------------------------------------------- affichage */
+
+function rendreDuel() {
+  const v = S.vue;
+  if (!v) return;
+  const moi = v.moi;
+  const mon = moi?.side ?? 0;
+  const eux = mon ^ 1;
+
+  $('butsMoi').textContent = v.goals?.[mon] ?? 0;
+  $('butsEux').textContent = v.goals?.[eux] ?? 0;
+  const s = Math.max(0, Math.round((v.resteMs ?? 0) / 1000));
+  $('horloge').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  $('modeTag').textContent = v.mode === 'classe' ? 'CLASSÉ' : 'ENTRAÎNEMENT';
+
+  // La corde : le moteur compte positif vers le camp 1. On l'oriente pour que
+  // « vers la droite » veuille toujours dire « ta tribune avance ».
+  const sens = mon === 0 ? -1 : 1;
+  const part = Math.max(-1, Math.min(1, (v.rope ?? 0) / 300)) * sens;
+  $('noeud').style.transform = `translateX(${(part * 46).toFixed(1)}vw)`;
+
+  $('tribMoi').innerHTML = (v.equipes?.[mon] ?? []).map(ligneJoueur).join('');
+  $('tribEux').innerHTML = (v.equipes?.[eux] ?? []).map(ligneJoueur).join('');
+
+  if (!moi) return;
+
+  $('souffleBar').style.width = `${Math.max(0, Math.min(100, moi.breath))}%`;
+  $('souffleVal').textContent = moi.breath;
+
+  // Les effets en cours, nommés : sans ça, un joueur silencié croit à un bug.
+  const NOMS = {
+    silence:['Silence radio','var(--flare)'], blind:['Brouillard','var(--violet)'],
+    lock_actions:['Parcage fermé','var(--flare)'], shield:['Bâche','var(--gris)'],
+    reflect:['Renvoi armé','var(--vert)'], mod_self:['Modificateur','var(--projo)'],
+    mod_foe:['Vent de face','var(--violet)'], breath_mult:['Souffle ralenti','var(--flare)'],
+    floor_quality:['Second souffle','var(--projo)'], peut_changer:['Changement possible','var(--vert)'],
+  };
+  $('effets').innerHTML = (moi.effets ?? []).map((e) => {
+    const [nom, c] = NOMS[e.type] ?? [e.type, 'var(--gris)'];
+    const reste = e.reste ? ` ${Math.ceil(e.reste / 1000)}s` : '';
+    return `<span class="eff" style="color:${c}">${esc(nom)}${reste}</span>`;
+  }).join('');
+
+  const peutChanger = (moi.effets ?? []).some((e) => e.type === 'peut_changer');
+  $('equipe').innerHTML = (moi.fanzzy ?? []).map((f, i) => `
+    <div class="fz ${f.actif ? 'actif' : peutChanger ? 'dispo' : ''}"
+      ${!f.actif && peutChanger ? `data-entrer="${i}"` : ''}>
+      <b>${esc(f.nom ?? f.id)}</b>
+      <span>${f.actif ? 'EN JEU' : peutChanger ? 'faire entrer' : 'banc'}</span>
+    </div>`).join('');
+
+  const cd = moi.cooldowns ?? {};
+  const cases = [];
+  for (let i = 0; i < 5; i++) {
+    const id = (moi.main ?? [])[i];
+    if (!id) {
+      cases.push(`<div class="ct vide"></div>`);
+      continue;
+    }
+    const a = carteDef(id);
+    const fc = FAM[a?.fam] ?? '#8257DA';
+    const reste = cd[id];
+    const injouable = !a || moi.breath < a.cost || reste
+      || (moi.effets ?? []).some((e) => e.type === 'lock_actions');
+    cases.push(`<div class="ct ${injouable ? 'hs' : ''}" style="--fc:${fc}"
+      ${injouable ? '' : `data-jouer="${id}"`}>
+      <div class="co">${a?.cost ?? '?'}</div>
+      <div class="nm">${esc(a?.nom ?? id)}</div>
+      ${reste ? `<div class="cd">${Math.ceil(reste)}</div>` : ''}
+    </div>`);
+  }
+  $('mainCartes').innerHTML = cases.join('');
+
+  if (moi.aveugle) {
+    $('mainCartes').innerHTML = Array.from({ length:5 },
+      () => `<div class="ct vide"><div class="nm" style="opacity:.4">?</div></div>`).join('');
+  }
+
+  const actif = (moi.fanzzy ?? []).find((f) => f.actif);
+  const geste = actif?.cri?.gest ?? 'tempo';
+  $('chanterSous').textContent =
+    `${actif?.cri?.label ?? ''} · ${LABEL_GESTE[geste] ?? geste}`;
+  $('chanter').disabled = S.occupe || v.termine
+    || moi.breath < 18
+    || (moi.effets ?? []).some((e) => e.type === 'silence');
+
+  if (v.termine) finir(v);
+}
+
+function ligneJoueur(j) {
+  return `<div class="jr ${j.connecte ? '' : 'parti'}">
+    <span class="pt"></span>
+    <span class="nm">${esc(j.nom ?? '—')}</span>
+    <span class="sf"><i style="width:${Math.max(0, Math.min(100, j.breath ?? 0))}%"></i></span>
+    <span class="fv">${j.ferveur ?? 0}</span>
+  </div>`;
+}
+
+/* ------------------------------------------------------------- fil */
+
+function ajouterFil(txt, classe) {
+  const d = document.createElement('div');
+  if (classe) d.className = classe;
+  d.textContent = txt;
+  $('fil').prepend(d);
+  while ($('fil').children.length > 24) $('fil').lastChild.remove();
+}
+
+const nomDe = (userId) => {
+  for (const eq of S.vue?.equipes ?? []) {
+    const j = eq.find((x) => x.userId === userId);
+    if (j) return j.nom;
+  }
+  return 'Quelqu\u2019un';
+};
+const mien = (side) => side === S.vue?.moi?.side;
+
+function raconter(e) {
+  const v = S.vue;
+  switch (e.t) {
+    case 'chant': {
+      const q = Math.round((e.quality ?? 0) * 100);
+      if (e.backfire) ajouterFil(`${nomDe(e.userId)} : retour de flamme`, 'contre');
+      else ajouterFil(`${nomDe(e.userId)} chante · ${q} %`, q > 90 ? 'fort' : '');
+      if (e.userId === v?.moi && q > 95) window.FX?.cri?.('CRI', { couleur:'var(--projo)' });
+      break;
+    }
+    case 'push':
+      if (e.valeur >= 20) ajouterFil(`${nomDe(e.userId)} pousse de ${e.valeur}`,
+        mien(e.side) ? 'fort' : 'contre');
+      break;
+    case 'action': {
+      const a = carteDef(e.cardId);
+      ajouterFil(`${nomDe(e.userId)} joue ${a?.nom ?? e.cardId}`, mien(e.side) ? '' : 'contre');
+      break;
+    }
+    case 'reflected':
+      ajouterFil('Renvoi : la carte se retourne contre son camp', 'fort');
+      break;
+    case 'shield':
+      ajouterFil(`Bâche : ${e.absorbe} absorbés`);
+      break;
+    case 'rally':
+      ajouterFil(mien(e.side) ? 'Appel du capo : chante maintenant !' : 'Ils lancent un appel',
+        mien(e.side) ? 'fort' : 'contre');
+      break;
+    case 'sync':
+      ajouterFil(mien(e.side) ? 'Chœur : tous en même temps !' : 'Ils tentent un chœur',
+        mien(e.side) ? 'fort' : 'contre');
+      break;
+    case 'goal': {
+      const pour = mien(e.side);
+      ajouterFil(pour ? 'BUT pour ta tribune' : 'But encaissé', pour ? 'fort' : 'contre');
+      window.FX?.but?.({ pour, score: e.goals });
+      break;
+    }
+    case 'swap':
+      ajouterFil(`${nomDe(e.userId)} fait entrer un autre Fanzzy`);
+      break;
+    case 'disconnected':
+      ajouterFil(`${nomDe(e.userId)} a perdu la connexion, sa place l\u2019attend`);
+      break;
+    case 'back':
+      ajouterFil(`${nomDe(e.userId)} est revenu`);
+      break;
+    case 'over':
+      break;
+    default:
+      break;
+  }
+}
+
+function finir(v) {
+  const gagne = v.vainqueur === v.moi?.side;
+  const nul = v.vainqueur === null || v.vainqueur === undefined;
+  voile(nul ? 'Match nul' : gagne ? 'Victoire' : 'Défaite',
+    `${v.goals?.[v.moi?.side] ?? 0} – ${v.goals?.[(v.moi?.side ?? 0) ^ 1] ?? 0}<br>`
+    + (v.mode === 'classe' ? 'Ce duel compte au classement.'
+                           : 'Entraînement : sans effet sur le classement.'),
+    { texte:'Revenir', action: () => { location.reload(); } });
+}
+
+/* ----------------------------------------------------- les gestes */
+
+/**
+ * Le mini-jeu. Toutes les durées viennent de `moi.gestes`, calculé par le
+ * serveur avec les modificateurs du Fanzzy, de son équipement et des effets
+ * en cours. Rien n'est écrit en dur ici, sinon l'affichage mentirait au
+ * joueur dès qu'il s'équipe.
+ */
+function ouvrirGeste(kind, cfg) {
+  return new Promise((resolve) => {
+    const m = $('mini');
+    m.style.setProperty('--c', COULEUR_GESTE[kind] ?? '#F5C33B');
+    $('miniTitre').textContent = LABEL_GESTE[kind] ?? kind;
+    $('miniAide').textContent = AIDE_GESTE[kind] ?? '';
+    $('miniZone').innerHTML = '';
+    m.classList.add('on');
+
+    let k = 3;
+    const tic = () => {
+      if (k === 0) return lancer(kind, cfg, resolve);
+      const c = document.createElement('div');
+      c.className = 'compte';
+      c.textContent = k--;
+      m.appendChild(c);
+      setTimeout(() => c.remove(), 550);
+      setTimeout(tic, 560);
+    };
+    tic();
+  });
+}
+
+function fermerGeste(taps) {
+  $('mini').classList.remove('on');
+  $('miniZone').innerHTML = '';
+  return taps;
+}
+
+function lancer(kind, cfg, resolve) {
+  const t0 = performance.now();
+  const taps = [];
+
+  if (kind === 'tempo') {
+    const g = cfg.tempo;
+    $('miniZone').innerHTML = `<div class="pad" id="pad"><div class="ring" id="ring"></div>
+      <div style="text-align:center"><div class="n" id="n">0</div>
+      <div class="s">SUR LE RYTHME</div></div></div>`;
+    let i = 0;
+    const iv = setInterval(() => {
+      const r = $('ring');
+      if (r) { r.classList.remove('beat'); void r.offsetWidth; r.classList.add('beat'); }
+      if (++i >= g.beats) { clearInterval(iv); setTimeout(() => resolve(fermerGeste(taps)), 420); }
+    }, g.interval);
+    $('pad').onpointerdown = () => {
+      taps.push(Math.round(performance.now() - t0));
+      $('n').textContent = taps.length;
+      $('pad').classList.add('hit');
+      setTimeout(() => $('pad')?.classList.remove('hit'), 80);
+    };
+
+  } else if (kind === 'mash') {
+    const g = cfg.mash;
+    $('miniZone').innerHTML = `<div class="pad" id="pad"><div style="text-align:center">
+      <div class="n" id="n">0</div><div class="s">SUR ${g.target} FRAPPES</div></div></div>`;
+    $('pad').onpointerdown = () => {
+      taps.push(Math.round(performance.now() - t0));
+      $('n').textContent = taps.length;
+    };
+    setTimeout(() => resolve(fermerGeste(taps)), g.ms);
+
+  } else {
+    const g = cfg.hold;
+    $('miniZone').innerHTML = `<div class="pad" id="pad"><div style="text-align:center">
+      <div class="n" id="n">0%</div><div class="s">NE LÂCHE PAS</div></div></div>`;
+    const pad = $('pad');
+    let debut = null;
+    const boucle = () => {
+      if (debut !== null) {
+        let tenu = performance.now() - t0 - debut;
+        for (let i = 0; i + 1 < taps.length; i += 2) tenu += taps[i + 1] - taps[i];
+        $('n').textContent = `${Math.min(100, Math.round((tenu / g.need) * 100))}%`;
+      }
+      if ($('mini').classList.contains('on')) requestAnimationFrame(boucle);
+    };
+    pad.onpointerdown = () => {
+      if (debut === null) { debut = performance.now() - t0; taps.push(Math.round(debut)); }
+    };
+    pad.onpointerup = pad.onpointercancel = () => {
+      if (debut === null) return;
+      taps.push(Math.round(performance.now() - t0));
+      debut = null;
+    };
+    requestAnimationFrame(boucle);
+    setTimeout(() => {
+      if (debut !== null) taps.push(Math.round(performance.now() - t0));
+      resolve(fermerGeste(taps));
+    }, g.need + 400);
+  }
+}
+
+/* ------------------------------------------------------------ gestes UI */
+
+$('chanter').addEventListener('click', async () => {
+  const moi = S.vue?.moi;
+  if (!moi || S.occupe) return;
+  const actif = (moi.fanzzy ?? []).find((f) => f.actif);
+  const kind = actif?.cri?.gest ?? 'tempo';
+  const cfg = moi.gestes;
+  if (!cfg) return toast('Le serveur n\u2019a pas envoyé le barème du geste.');
+
+  S.occupe = true;
+  $('chanter').disabled = true;
+  const taps = await ouvrirGeste(kind, cfg);
+  socket.emit('nvn:chant', { geste:kind, taps });
+  S.occupe = false;
+});
+
+$('mainCartes').addEventListener('click', (e) => {
+  const c = e.target.closest('[data-jouer]');
+  if (!c || !socket?.connected) return;
+  socket.emit('nvn:play', { cardId: c.dataset.jouer });
+});
+
+$('equipe').addEventListener('click', (e) => {
+  const f = e.target.closest('[data-entrer]');
+  if (!f || !socket?.connected) return;
+  socket.emit('nvn:swap', { index: Number(f.dataset.entrer) });
+});
+
+/* --------------------------------------------------------- démarrage */
+
+(async () => {
+  connecter();
+  try {
+    const [cat, matchs] = await Promise.all([
+      api('/api/deck/catalogue'),
+      api('/api/deck/matchs'),
+    ]);
+    S.catalogue = cat.actions ?? [];
+    S.matchs = matchs.matchs ?? [];
+    formatsMemo = cat.formats ?? formatsMemo;
+
+    let loadout = null;
+    try { loadout = await api('/api/deck/loadout'); } catch { loadout = null; }
+    sansDeckMemo = !loadout?.fanzzy?.length;
+
+    // Un match du jour d'abord : c'est celui qu'on vient jouer.
+    S.fixtureId = S.matchs.find((m) => m.mode === 'classe')?.id ?? S.matchs[0]?.id ?? null;
+    rendrePrepa(sansDeckMemo, formatsMemo);
+
+    // Un duel peut être en cours si on revient sur la page.
+    const etat = await api('/api/nvn/etat').catch(() => null);
+    if (etat?.duelEnCours) socket.emit('nvn:resume');
+  } catch (e) {
+    if (e.message === 'auth') return;
+    $('prepaCorps').innerHTML = `<div class="vide">Impossible de préparer le duel.<br>
+      ${esc(MESSAGES[e.code] ?? e.code ?? 'Serveur injoignable')}</div>`;
+  }
+})();
+</script>
+<script src="/fx.js" defer></script>
+<script src="/nav.js" defer></script>
+</body>
+</html>
