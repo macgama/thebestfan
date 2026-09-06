@@ -238,13 +238,36 @@ export function createFanzzy({ pool, requireAuth }) {
 
   const fail = (code) => Object.assign(new Error(code), { code });
 
+  /**
+   * Traduit une erreur technique en code lisible par le client.
+   *
+   * Sans cela, une table manquante remonte sous le code `ER_NO_SUCH_TABLE`,
+   * que le client ne reconnaît pas et affiche en « impossible ». On perd alors
+   * la seule information utile : le schéma n'est pas à jour.
+   */
+  const traduire = (e) => {
+    if (e.code && String(e.code).startsWith('fanzzy.')) return e;
+    if (/doesn't exist|Unknown column/i.test(e.message ?? '')) {
+      const t = Object.assign(new Error(e.message), { code: 'fanzzy.error.schema' });
+      t.detail = 'Applique sql/inventaire.sql, sql/deck.sql, sql/admin.sql '
+        + 'puis sql/rattrapage.sql';
+      console.error('[fanzzy] schéma incomplet :', e.message);
+      return t;
+    }
+    console.error('[fanzzy]', e.message);
+    return Object.assign(new Error(e.message), { code: 'fanzzy.error.server' });
+  };
+
   /* ------------------------------------------------------------- routes */
 
   const router = express.Router();
   router.use(express.json({ limit: '8kb' }));
 
   const send = (res, p) => p.then((v) => res.json(v))
-    .catch((e) => res.status(400).json({ error: e.code ?? 'fanzzy.error.server' }));
+    .catch((e) => {
+      const t = traduire(e);
+      res.status(400).json({ error: t.code, detail: t.detail });
+    });
 
   /** Le catalogue : envoyé une fois, mis en cache par le navigateur. */
   router.get('/dex', (_req, res) => {
@@ -252,10 +275,10 @@ export function createFanzzy({ pool, requireAuth }) {
     res.json({ dex: DEX, sets: SETS, types: TYPES, scarves: SCARVES, evoCost: EVO_COST });
   });
 
-  router.get('/state', requireAuth, async (req, res) => {
-    const [w, col] = await Promise.all([wallet(req.user.id), collection(req.user.id)]);
-    res.json({ wallet: w, collection: col, maxPacks: MAX_PACKS, packPrice: PACK_PRICE });
-  });
+  router.get('/state', requireAuth, (req, res) =>
+    send(res, Promise.all([wallet(req.user.id), collection(req.user.id)])
+      .then(([w, col]) => ({ wallet: w, collection: col,
+        maxPacks: MAX_PACKS, packPrice: PACK_PRICE }))));
 
   router.post('/open', requireAuth, (req, res) =>
     send(res, openPack(req.user.id, String(req.body?.set ?? 'VN'), { buy: Boolean(req.body?.buy) })
@@ -265,10 +288,15 @@ export function createFanzzy({ pool, requireAuth }) {
     send(res, evolve(req.user.id, String(req.body?.id ?? ''))
       .then(async (r) => ({ ...r, wallet: await wallet(req.user.id) }))));
 
-  router.get('/fiche/:id', requireAuth, async (req, res) => {
-    const d = await fiche(req.user.id, String(req.params.id));
-    if (!d) return res.status(404).json({ error: 'fanzzy.error.unknown' });
-    res.json(d);
+  router.get('/fiche/:id', requireAuth, (req, res) => {
+    // Un identifiant inexistant est une ressource absente, pas une requête
+    // invalide : 404, et non 400.
+    fiche(req.user.id, String(req.params.id))
+      .then((d) => (d ? res.json(d) : res.status(404).json({ error: 'fanzzy.error.unknown' })))
+      .catch((e) => {
+        const t = traduire(e);
+        res.status(400).json({ error: t.code, detail: t.detail });
+      });
   });
 
   /** Le catalogue de l'équipement, pour l'écran de détail. */
@@ -277,15 +305,15 @@ export function createFanzzy({ pool, requireAuth }) {
     res.json({ stuff: STUFF, skins: SKINS });
   });
 
-  router.post('/active', requireAuth, async (req, res) => {
+  router.post('/active', requireAuth, (req, res) => send(res, (async () => {
     const id = String(req.body?.id ?? '');
-    if (!BY_ID.has(id)) return res.status(400).json({ error: 'fanzzy.error.unknown' });
+    if (!BY_ID.has(id)) throw fail('fanzzy.error.unknown');
     const owned = await q(`SELECT 1 FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
       [req.user.id, id]);
-    if (!owned.length) return res.status(400).json({ error: 'fanzzy.error.not_owned' });
+    if (!owned.length) throw fail('fanzzy.error.not_owned');
     await q(`UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?`, [id, req.user.id]);
-    res.json({ active: id });
-  });
+    return { active: id };
+  })()));
 
   /**
    * Fiche complète d'un Fanzzy : ce qu'il est, ce que le joueur en possède,
