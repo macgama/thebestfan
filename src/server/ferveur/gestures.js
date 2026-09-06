@@ -49,6 +49,36 @@ function sanity(taps, cfg, spanMs) {
 }
 
 /**
+ * La configuration du geste, modificateurs déjà appliqués.
+ *
+ * Elle existe parce que le client en a besoin pour **afficher** le geste, et
+ * qu'il ne doit surtout pas la recalculer. Il l'a fait pendant un temps, avec
+ * les constantes recopiées en dur : la pulsation était dessinée à 560 ms alors
+ * que le serveur notait à 560 + tempoInterval. Un joueur portant les Jumelles
+ * tapait donc juste sur ce qu'il voyait et récoltait 0,36 au lieu de 0,99 —
+ * l'équipement censé l'aider le pénalisait, et plus la carte était rare, pire
+ * c'était. Une seule source, ici, et le décalage ne peut plus exister.
+ */
+export function resoudreGeste(mods = {}) {
+  const t = GESTURES.tempo, m = GESTURES.mash, h = GESTURES.hold;
+  const msMash = m.ms + (mods.mashTime ?? 0);
+  return {
+    tempo: {
+      beats: t.beats,
+      interval: t.interval + (mods.tempoInterval ?? 0),
+      window: t.window * (mods.tempoWindow ?? 1),
+    },
+    mash: {
+      ms: msMash,
+      // Même cible relative que la notation : raccourcir la durée ne doit pas
+      // rendre le geste plus facile, seulement plus court.
+      target: Math.round(m.target * (msMash / m.ms)),
+    },
+    hold: { need: h.need, forgive: mods.holdForgive ?? 0 },
+  };
+}
+
+/**
  * Renvoie la qualité du geste, de 0 à ~1,2.
  * `mods` vient du Fanzzy équipé : il élargit une fenêtre ou raccourcit une
  * durée, mais ne fabrique jamais de qualité à partir de rien.

@@ -1,5 +1,5 @@
 import express from 'express';
-import { DEX, BY_ID, SETS, TYPES, RATES, SCARVES, EVO_COST } from '../../shared/fanzzy/dex.js';
+import { DEX, BY_ID, SETS, TYPES, RAR, RATES, SCARVES, EVO_COST } from '../../shared/fanzzy/dex.js';
 import { SKINS, SKIN_BY_ID, STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 
 /**
@@ -269,10 +269,20 @@ export function createFanzzy({ pool, requireAuth }) {
       res.status(400).json({ error: t.code, detail: t.detail });
     });
 
-  /** Le catalogue : envoyé une fois, mis en cache par le navigateur. */
+  /**
+   * Le catalogue : envoyé une fois, mis en cache par le navigateur.
+   *
+   * Il porte **tout** ce dont une page a besoin pour afficher la collection,
+   * y compris les paliers de rareté et les taux de tirage. Ce n'est pas du
+   * zèle : tant qu'il manquait une seule de ces constantes, la page en gardait
+   * une copie, et une copie finit toujours par diverger. C'est exactement ce
+   * qui s'est produit — la lignée du Gamin de Devant manquait au catalogue
+   * recopié dans la page alors que le serveur la tirait des boosters.
+   */
   router.get('/dex', (_req, res) => {
     res.set('cache-control', 'public, max-age=3600');
-    res.json({ dex: DEX, sets: SETS, types: TYPES, scarves: SCARVES, evoCost: EVO_COST });
+    res.json({ dex: DEX, sets: SETS, types: TYPES, scarves: SCARVES,
+               evoCost: EVO_COST, rar: RAR, rates: RATES });
   });
 
   router.get('/state', requireAuth, (req, res) =>

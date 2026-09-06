@@ -42,8 +42,13 @@ export function createNvN({ pool, io, requireAuth, decks }) {
 
   async function entrerEnFile(socket, { format, fixtureId, contreBot }) {
     const u = socket.data?.user;
-    if (!u) throw new Cheat('unauthenticated');
+    // On vérifie l'identifiant, pas seulement la présence de l'objet : une
+    // session à moitié montée donnait un `{ userId: undefined }` bien truthy,
+    // qui passait la garde et allait mourir au bind SQL. Le joueur recevait
+    // alors « erreur serveur » là où la cause était une session invalide.
+    if (!u?.userId) throw new Cheat('unauthenticated');
     if (!FORMATS[format]) throw new Cheat('unknown_format');
+    if (!Number.isFinite(Number(fixtureId))) throw new Cheat('fixture_unknown');
 
     // Le deck et le match sont validés avant toute chose : mieux vaut refuser
     // maintenant que faire attendre trois minutes pour rien.

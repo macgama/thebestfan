@@ -122,6 +122,33 @@ const DEX = [
 
   { id:'X6', nom:'Section Cendrée', type:'fide', set:'VN', stage:1, rar:'d1',
     mods:{ holdBonus:1.05, breathBonus:1.04 }, cri:{ label:'FIDÈLES', gest:'hold', power:48 } },
+
+  /**
+   * LE TRIEUR DE DOUBLES — celui qui n'a jamais jeté une carte.
+   *
+   * Il connaît par cœur ce qui lui manque, et il attend depuis deux ans. Ses
+   * modificateurs disent la même chose que son histoire : il tient dans la
+   * durée et il récupère ce que les autres gaspillent, mais il ne fait
+   * jamais de coup d'éclat.
+   */
+  { id:'X7', nom:'Le Trieur de Doubles', type:'fide', set:'VN', stage:1, rar:'d2',
+    histoire:'Il connaît par cœur les trois qui lui manquent. Il les cherche depuis '
+      + 'deux ans, et il n\u2019a jamais jeté une carte de sa vie.',
+    mods:{ holdBonus:1.12, refundBonus:1.35 },
+    cri:{ label:'ON A TOUT GARDÉ', gest:'hold', power:58 } },
+
+  /**
+   * LA MASCOTTE DU DIMANCHE — sept ans, un costume trop grand, et le seul
+   * rôle qu'on lui laisse au bord du terrain. Elle le prend très au sérieux.
+   *
+   * Elle absorbe et détourne plutôt qu'elle ne pousse : une peluche ne crie
+   * pas fort, mais personne ne sait par où elle va passer.
+   */
+  { id:'X8', nom:'La Mascotte du Dimanche', type:'tifo', set:'VN', stage:1, rar:'d2',
+    histoire:'Sept ans, un costume deux tailles trop grand, et le seul rôle qu\u2019on '
+      + 'lui laisse au bord du terrain. Elle le prend très au sérieux.',
+    mods:{ parryBonus:1.4, holdBonus:1.05 },
+    cri:{ label:'LA PELUCHE DÉBOULE', gest:'tempo', power:56 } },
 ];
 
 const RATES = {

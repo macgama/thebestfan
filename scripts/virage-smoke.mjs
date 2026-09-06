@@ -192,6 +192,48 @@ for (const m of room.members.values()) m.lastPush = Date.now();
 A.socket.disconnect();
 check('un départ vide sa place', await until(() => room.crowd()[0] === 1, 2000));
 
+/* ------------------------------------------- le barème du geste affiché */
+
+/**
+ * Le client doit afficher le geste tel que le serveur le note.
+ *
+ * Il ne le faisait pas : la pulsation était écrite en dur à 560 ms côté page
+ * alors que la notation applique `tempoInterval`. Un joueur portant les
+ * Jumelles tapait juste sur ce qu'il voyait et récoltait 0,36 au lieu de 0,99,
+ * et le Capo di Curva, carte étoile, était puni plus fort qu'un commun.
+ * Ces trois contrôles sont ceux qui l'auraient vu.
+ */
+{
+  const { grade, resoudreGeste, GESTURES } = await import('../src/server/ferveur/gestures.js');
+
+  // A vient de se déconnecter juste au-dessus : on interroge un membre encore présent.
+  const vueA = room.snapshotFor(U[1]);
+  check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.tempo));
+  check('sans équipement, le barème est celui de base',
+    vueA.you.gestes.tempo.interval === GESTURES.tempo.interval);
+
+  // Un joueur qui tape parfaitement sur la pulsation qu'on lui affiche doit
+  // être bien noté, équipé ou non.
+  const parfait = (mods) => {
+    const g = resoudreGeste(mods).tempo;
+    const frappes = Array.from({ length: g.beats },
+      (_, i) => Math.round(i * g.interval + (i % 3) - 1));
+    return grade('tempo', frappes, mods);
+  };
+  check('taper sur la pulsation affichée paie, sans équipement',
+    parfait({}) > 0.9);
+  check('taper sur la pulsation affichée paie aussi avec les Jumelles',
+    parfait({ tempoInterval: 70, tempoWindow: 1.25 }) > 0.9);
+  check('et avec un Fanzzy étoile : la rareté ne pénalise plus',
+    parfait({ tempoInterval: 80, tempoWindow: 1.7 }) > 0.9);
+
+  // Le martelage suit la même règle : la durée annoncée est celle notée.
+  const gm = resoudreGeste({ mashTime: -600 }).mash;
+  check('un martelage raccourci annonce sa vraie durée', gm.ms === GESTURES.mash.ms - 600);
+  check('et sa cible baisse d\u2019autant, sinon le raccourci serait un cadeau',
+    gm.target < GESTURES.mash.target);
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 for (const p of [B, C]) p.socket.disconnect();
 virage.stop(); io.close(); http.close(); await pool.end();

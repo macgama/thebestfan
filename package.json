@@ -11,7 +11,10 @@
     "build": "npm install && node build.mjs",
     "auth:smoke": "node scripts/auth-smoke.mjs",
     "foot:smoke": "node scripts/football-smoke.mjs",
-    "duel:smoke": "node scripts/duel-play.mjs"
+    "duel:smoke": "node scripts/duel-play.mjs",
+    "deck:smoke": "node scripts/deck-smoke.mjs",
+    "deck:ui": "node scripts/deck-ui-smoke.mjs",
+    "pages": "node scripts/verif-pages.mjs"
   },
   "dependencies": {
     "express": "^4.22.2",
@@ -22,6 +25,7 @@
   },
   "devDependencies": {
     "esbuild": "^0.24.0",
+    "jsdom": "^26.0.0",
     "typescript": "5.8"
   }
 }

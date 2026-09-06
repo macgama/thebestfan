@@ -47,13 +47,22 @@ check('trois Fanzzy, un actif', v.moi.fanzzy.length === 3 && v.moi.fanzzy[0].act
 check('corde au centre', v.rope === 0);
 
 d.joueurs.get('0-0').breath = 100;
-let ev = d.chanter('0-0', { geste:'tempo', taps: tempoParfait() }, t);
+const memeGeste = tempoParfait();
+let ev = d.chanter('0-0', { geste:'tempo', taps: memeGeste }, t);
 check('chant noté par le serveur', ev[0].t === 'chant' && ev[0].quality > 0.6);
 check('la corde penche du bon côté', d.rope < 0);
 check('le souffle est débité', d.vue('0-0').moi.breath < 100);
 
 d.joueurs.get('1-0').breath = 100;
-d.chanter('1-0', { geste:'tempo', taps: tempoParfait() }, t);
+// Le même geste, exactement, pour les deux tribunes.
+//
+// Le test rejouait `tempoParfait()` une seconde fois. Or cette fonction
+// décale chaque frappe de ±30 ms au hasard : les deux chants n'obtenaient
+// pas la même note, les deux poussées ne s'annulaient pas, et la corde
+// s'écartait parfois de plus de 1. L'échec tombait environ une fois sur dix
+// et n'avait rien à voir avec ce que le test vérifie — que la tribune adverse
+// pousse bien en sens inverse. À gestes identiques, l'annulation est exacte.
+d.chanter('1-0', { geste:'tempo', taps: memeGeste }, t);
 check('l\u2019adverse pousse dans l\u2019autre sens', Math.abs(d.rope) < 1);
 
 // Souffle rétabli : sinon le refus viendrait du manque de souffle, pas de

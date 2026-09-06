@@ -278,16 +278,25 @@ function closeMini(taps) {
 function run(card, resolve) {
   const t0 = performance.now();
   const taps = [];
+
+  /* Les durées viennent du serveur, jamais d'ici.
+     Elles étaient écrites en dur — pulsation à 560 ms, martelage à 3 s — alors
+     que la notation applique les modificateurs du Fanzzy et de l'équipement.
+     Un porteur de Jumelles voyait donc un rythme et était jugé sur un autre :
+     il tapait juste sur ce qu'on lui montrait et récoltait 0,36 au lieu de
+     0,99. Plus sa carte était rare, plus il était puni. */
+  const g = S?.you?.gestes;
   if (card.gest === 'tempo') {
     $('miniZone').innerHTML = `<div class="pad" id="pad"><div class="ring" id="ring"></div>
       <div style="text-align:center"><div class="n" id="n">0</div><div class="s">SUR LE RYTHME</div></div></div>`;
     let i = 0;
+    const battements = g?.tempo?.beats ?? 8;
     const iv = setInterval(() => {
       const r = $('ring');
       if (r) { r.classList.remove('beat'); void r.offsetWidth; r.classList.add('beat'); }
       buzz(12);
-      if (++i >= 8) { clearInterval(iv); setTimeout(() => resolve(closeMini(taps)), 420); }
-    }, 560);
+      if (++i >= battements) { clearInterval(iv); setTimeout(() => resolve(closeMini(taps)), 420); }
+    }, g?.tempo?.interval ?? 560);
     $('pad').onpointerdown = () => {
       taps.push(Math.round(performance.now() - t0));
       $('n').textContent = taps.length;
@@ -302,7 +311,7 @@ function run(card, resolve) {
       $('n').textContent = taps.length;
       if (taps.length % 4 === 0) buzz(9);
     };
-    setTimeout(() => resolve(closeMini(taps)), 3000);
+    setTimeout(() => resolve(closeMini(taps)), g?.mash?.ms ?? 3000);
   } else {
     $('miniZone').innerHTML = `<div class="pad" id="pad"><div style="text-align:center">
       <div class="n" id="n">0%</div><div class="s">NE LÂCHE PAS</div></div></div>`;
@@ -312,7 +321,7 @@ function run(card, resolve) {
       if (down !== null) {
         const held = performance.now() - t0 - down + taps.filter((_, i) => i % 2 === 1)
           .reduce((a, v, i) => a + (v - taps[i * 2]), 0);
-        $('n').textContent = `${Math.min(100, Math.round((held / 3200) * 100))}%`;
+        $('n').textContent = `${Math.min(100, Math.round((held / (g?.hold?.need ?? 3200)) * 100))}%`;
       }
       if ($('mini').classList.contains('on')) requestAnimationFrame(raf);
     };
@@ -325,7 +334,7 @@ function run(card, resolve) {
     setTimeout(() => {
       if (down !== null) taps.push(Math.round(performance.now() - t0));
       resolve(closeMini(taps));
-    }, 3600);
+    }, (g?.hold?.need ?? 3200) + 400);
   }
 }
 

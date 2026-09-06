@@ -1,4 +1,4 @@
-import { grade, applyHeroMods, Cheat } from '../ferveur/gestures.js';
+import { grade, applyHeroMods, resoudreGeste, Cheat } from '../ferveur/gestures.js';
 import { ACTION_BY_ID, DECK_RULES } from '../../shared/duel/actions.js';
 
 /**
@@ -451,6 +451,10 @@ export class DuelNvN {
         // Aveuglé : le joueur ne voit plus sa propre main, il joue de mémoire.
         main: aveugle ? [] : moi.main,
         aveugle,
+        // Recalculée à chaque vue, et non une fois pour toutes : le Métronome
+        // et le Vent de face changent la fenêtre en cours de partie, et
+        // l'affichage doit suivre le barème sous peine de mentir au joueur.
+        gestes: resoudreGeste(modsDe(moi, t)),
         fanzzy: moi.fanzzy.map((f, i) => ({ ...f, actif: i === moi.actif })),
         cooldowns: Object.fromEntries(Object.entries(moi.cooldowns)
           .filter(([, fin]) => fin > t).map(([k, fin]) => [k, Math.round((fin - t) / 100) / 10])),
