@@ -11,6 +11,9 @@ heure la première fois, dont l'essentiel en attente de build.
 | `/teletext` | tous les championnats : classement, résultats, buteurs, passeurs, cartons | branché |
 | `/compte` | inscription, connexion, mot de passe oublié, 4 langues | branché |
 | `/bienvenue` | cérémonie d'arrivée : club, paquet de bienvenue | branché |
+| `/profil` | identité, clubs, inventaire, langue, déconnexion | branché |
+| `/classement` | supporters, tribunes, duellistes | branché |
+| `/admin` | joueurs, compétitions, réglages, journal | branché |
 | `/equipes` | clubs suivis, calendrier, résultats, buts en direct | branché |
 | `/fanzzy` | boosters, classeur, évolutions, Fanzzy équipé | branché |
 | `/duel` | duel temps réel, avec adversaire d'entraînement | branché |
@@ -49,7 +52,7 @@ précédent.
 
 ```bash
 cd ~/sites/thebestfan.online
-for f in auth football duel souvenirs fanzzy teletext inventaire; do
+for f in auth football duel souvenirs fanzzy teletext inventaire deck admin; do
   mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
 done
 ```
@@ -79,6 +82,18 @@ API_FOOTBALL_KEY=<ta clé>
 API_FOOTBALL_BUDGET=6800
 DUEL_BOT_AFTER_MS=20000
 ```
+
+Pour la connexion Google, ajoute aussi :
+
+```
+GOOGLE_CLIENT_ID=…apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=…
+```
+
+Dans la console Google Cloud : créer un identifiant OAuth de type « application
+web », et déclarer l'URI de redirection **exactement**
+`https://thebestfan.online/api/auth/google/callback`. Sans ces variables, le
+bouton ne s'affiche pas et le reste fonctionne normalement.
 
 `SMTP_URL` reste optionnel : sans lui, les mails de vérification s'affichent
 dans la console d'exécution du Manager, ce qui suffit pour tester.
@@ -168,6 +183,11 @@ node scripts/duel-bot.mjs          # un joueur seul contre l'entraînement
 node scripts/virage-smoke.mjs      # 28, dont la frappe des souvenirs
 node scripts/teletext-smoke.mjs   # 20, dont le cache et la panne d'API
 node scripts/onboarding-smoke.mjs # 28, dont les emplacements et l'équipement
+node scripts/classement-smoke.mjs # 14, dont la moyenne par supporter
+node scripts/deck-smoke.mjs       # 28, dont les neuf refus de deck invalide
+node scripts/nvn-smoke.mjs        # 30, le moteur de duel effet par effet
+node scripts/admin-smoke.mjs      # 30, dont les garde-fous et la traçabilité
+node scripts/nvn-net-smoke.mjs    # 31, appariement, coupure, reprise (~25 s)
 node scripts/duel-loadtest.mjs 50 https://thebestfan.online
 ```
 
@@ -181,6 +201,82 @@ node scripts/duel-loadtest.mjs 50 https://thebestfan.online
 3. **La question juridique** avant toute vente d'écharpes : de l'argent réel qui
    donne accès à du contenu aléatoire relève de règles strictes en Belgique et
    aux Pays-Bas, et la loi suisse mérite un avis d'avocat.
+
+## L'administration
+
+Le premier administrateur ne peut pas être nommé depuis l'interface, puisque
+seul un administrateur peut en nommer un autre. Il se déclare par variable
+d'environnement, et la promotion est journalisée :
+
+```
+ADMIN_EMAILS=toi@exemple.com
+```
+
+Le compte doit exister avant : la promotion s'applique au démarrage suivant. Une
+fois en place, la nomination des suivants se fait depuis `/admin`, et l'entrée
+apparaît d'elle-même dans la barre de navigation des comptes concernés.
+
+Trois règles tenues par le code :
+
+**Tout est tracé.** Chaque écriture passe par `admin_audit` avec l'auteur, la
+cible, le détail et l'adresse IP. La table est en ajout seul : aucune route ne
+la modifie ni ne l'efface.
+
+**Un administrateur ne peut agir ni sur son propre rôle, ni sur son propre
+statut.** C'est le moyen le plus simple de se retrouver avec une application
+que plus personne ne peut administrer.
+
+**Aucun mot de passe n'est lisible ni modifiable.** Un administrateur qui peut
+fixer le mot de passe d'un joueur peut se connecter à sa place.
+
+Bloquer un compte ferme ses sessions immédiatement, sans attendre l'expiration.
+
+## Le moteur NvN
+
+Le moteur vit dans `src/server/nvn/engine.js` et ne connaît ni socket ni base :
+on lui donne des intentions, il renvoie des événements. C'est ce qui permet de
+tester chaque effet un par un, sans monter de serveur.
+
+Quatre décisions le structurent :
+
+**Le geste est noté côté serveur.** Le client envoie les instants de ses
+frappes, jamais sa réussite. Deux contrôles distincts écartent l'automatisation :
+l'écart minimal entre deux frappes, et le plafond de frappes.
+
+**Le nombre n'est pas un avantage.** Une poussée est divisée par l'effectif de
+la tribune : à cinq, chacun pèse un cinquième. Ce qui fait la différence à
+plusieurs, ce sont les cartes collectives — la mosaïque ne compte que les
+coéquipiers ayant chanté dans les dix dernières secondes, et ne vaut rien jouée
+seul.
+
+**Jouer une carte coûte aussi du choix.** La carte quitte la main et n'est
+remplacée que quatre secondes plus tard : cinq cartes visibles sur dix, ce n'est
+pas seulement de l'affichage.
+
+**Le mode vient du match support.** Un duel adossé à un match du jour ou en
+cours est classé ; adossé à un match à venir, c'est un entraînement. L'événement
+de fin porte le drapeau, et c'est lui qui décidera de l'écriture au classement.
+
+## La couche réseau du NvN
+
+**La file est par format et par match support.** Deux joueurs qui veulent un
+3v3 sur Sion–Bâle jouent ensemble ; celui qui veut le même format sur un autre
+match attend ailleurs. C'est plus lent à remplir, mais un duel adossé à un match
+qu'on ne suit pas ne veut rien dire.
+
+**Une déconnexion ne fait pas perdre l'équipe.** Le joueur cesse de pousser, sa
+place l'attend quatre-vingt-dix secondes, et `nvn:resume` le remet exactement où
+il en était — main, souffle, Fanzzy, effets en cours. Au-delà, il est retiré
+sans que son camp soit puni : les tribunes ne s'effondrent pas parce que
+quelqu'un a pris l'ascenseur.
+
+**Un joueur seul peut jouer.** Au bout de vingt secondes sans adversaire, ou
+tout de suite avec `contreBot: true`, les places manquantes sont tenues par des
+bots — et le duel bascule en entraînement, donc il ne compte jamais au
+classement, même adossé à un match du jour.
+
+Seuls les duels classés écrivent dans `duel_results`, et les bots n'y figurent
+pas.
 
 ## L'équilibre du jeu, en deux règles
 

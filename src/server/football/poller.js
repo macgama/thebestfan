@@ -52,7 +52,10 @@ export function mapEvent(e) {
  * regroupe jusqu'à 20 matchs par appel, ce qui rend un samedi après-midi
  * abordable même avec beaucoup d'utilisateurs.
  */
-export function createPoller({ client, store, broadcast, onGoal, log = console }) {
+export function createPoller({ client, store, broadcast, onGoal, onFinished, log = console }) {
+  // Matchs dont la fin a déjà été signalée. Sans ce garde, chaque tour
+  // d'horloge réinvaliderait le cache d'une compétition déjà à jour.
+  const finis = new Set();
   let timers = [];
   let running = false;
 
@@ -138,6 +141,12 @@ export function createPoller({ client, store, broadcast, onGoal, log = console }
     if (!inserted) return;
 
     // Seuls les buts nouveaux depuis le dernier passage sont annoncés.
+    // Match terminé : les classements de sa compétition sont désormais faux.
+    if (['FT', 'AET', 'PEN'].includes(f.status) && !finis.has(f.id)) {
+      finis.add(f.id);
+      try { await onFinished?.(f); } catch (e) { log.error('[poller] fin de match', e.message); }
+    }
+
     const fresh = events.slice(known.length).filter((e) => e.type === 'Goal');
     let rank = events.slice(0, known.length).filter((e) => e.type === 'Goal').length;
     for (const g of fresh) {

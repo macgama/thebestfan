@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Classements — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;--violet:#8257DA;
+  --banner:"Oswald","Arial Narrow",Impact,sans-serif;--ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{width:100%;max-width:460px;min-height:100dvh;display:flex;flex-direction:column}
+h1{font-family:var(--banner);font-size:20px;letter-spacing:.15em;margin:0;padding:16px 16px 4px}
+h1 small{display:block;font-size:9px;letter-spacing:.3em;opacity:.45;margin-top:4px;font-family:var(--ui)}
+.moi{margin:12px 14px 0;border:1px solid rgba(245,195,59,.4);border-radius:12px;padding:13px 15px;
+  background:linear-gradient(140deg,rgba(245,195,59,.13),rgba(8,11,16,.75));display:flex;
+  align-items:center;gap:12px}
+.moi .r{font-family:var(--banner);font-size:30px;color:var(--projo);line-height:1}
+.moi .r sup{font-size:13px}
+.moi .d{flex:1;min-width:0;font-size:12px;opacity:.72;line-height:1.5}
+.moi .d b{color:var(--craie);opacity:1}
+.tabs{display:flex;gap:6px;padding:14px}
+.tabs button{flex:1;background:rgba(8,11,16,.7);border:1px solid rgba(242,238,228,.13);border-radius:8px;
+  color:inherit;padding:10px 4px;font-family:var(--banner);font-size:11.5px;letter-spacing:.07em;
+  cursor:pointer;opacity:.55}
+.tabs button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
+.list{flex:1;padding:0 14px 20px}
+.row{display:flex;align-items:center;gap:11px;padding:11px 4px;font-size:13px;
+  border-top:1px solid rgba(242,238,228,.07)}
+.row .rk{font-family:var(--banner);font-size:15px;min-width:26px;opacity:.5}
+.row.p1 .rk{color:#F5C33B;opacity:1}.row.p2 .rk{color:#D8DCE4;opacity:1}.row.p3 .rk{color:#C08552;opacity:1}
+.row img{width:22px;height:22px;object-fit:contain}
+.row .n{flex:1;min-width:0}
+.row .n b{display:block;font-family:var(--banner);font-size:13.5px;letter-spacing:.02em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .n small{font-size:10.5px;opacity:.45}
+.row .v{font-family:var(--banner);font-size:16px;color:var(--c,var(--projo))}
+.row .v small{display:block;font-size:8.5px;opacity:.45;letter-spacing:.1em;font-family:var(--ui);
+  color:var(--craie);text-align:right}
+.note{font-size:11px;opacity:.42;text-align:center;padding:16px 22px;line-height:1.7}
+.empty{text-align:center;padding:46px 22px;opacity:.5;font-size:13px;line-height:1.7}
+.spin{width:24px;height:24px;border:3px solid rgba(242,238,228,.18);border-top-color:var(--projo);
+  border-radius:50%;animation:sp 1s linear infinite;margin:50px auto}
+@keyframes sp{to{transform:rotate(1turn)}}
+</style>
+</head>
+<body>
+<main id="app">
+  <h1>CLASSEMENTS<small>QUI FAIT LE PLUS DE BRUIT</small></h1>
+  <div class="moi" id="moi" style="display:none"></div>
+  <div class="tabs">
+    <button data-t="supporters" class="on">SUPPORTERS</button>
+    <button data-t="tribunes">TRIBUNES</button>
+    <button data-t="duellistes">DUELS</button>
+  </div>
+  <div class="list" id="list"><div class="spin"></div></div>
+</main>
+<script src="/fx.js" defer></script>
+<script src="/nav.js" defer></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+  (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+let onglet = 'supporters';
+
+const NOTES = {
+  supporters: 'La ferveur se gagne en chantant dans le Grand Virage. Un joueur qui n\u2019a jamais ouvert un booster peut être premier.',
+  tribunes: 'Les clubs sont classés sur la ferveur moyenne par supporter, pas sur le total. Trente fidèles qui chantent juste passent devant mille abonnés qui regardent.',
+  duellistes: 'Duels contre de vrais adversaires uniquement. Les entraînements ne comptent pas.',
+};
+
+async function charger() {
+  $('list').innerHTML = '<div class="spin"></div>';
+  let d;
+  try {
+    d = await fetch('/api/rank/' + onglet, { credentials:'same-origin' }).then((r) => r.json());
+  } catch { $('list').innerHTML = '<div class="empty">Serveur injoignable.</div>'; return; }
+
+  const c = d.classement ?? [];
+  if (!c.length) {
+    $('list').innerHTML = `<div class="empty">Ce classement est encore vide.<br>
+      Sois le premier à y entrer.</div>`;
+    return;
+  }
+
+  const rang = (i) => `<span class="rk">${i + 1}</span>`;
+  const lignes = {
+    supporters: (x, i) => `<div class="row ${i < 3 ? 'p' + (i + 1) : ''}">${rang(i)}
+      <span class="n"><b>${esc(x.pseudo)}</b><small>${esc(x.club ?? '')} · ${x.matchs} matchs · ${x.vecus} vécus</small></span>
+      <span class="v" style="--c:var(--projo)">${Number(x.ferveur).toLocaleString('fr')}<small>FERVEUR</small></span></div>`,
+    tribunes: (x, i) => `<div class="row ${i < 3 ? 'p' + (i + 1) : ''}">${rang(i)}
+      <img src="${esc(x.logo)}" alt="">
+      <span class="n"><b>${esc(x.name)}</b><small>${esc(x.country ?? '')} · ${x.supporters} supporters</small></span>
+      <span class="v" style="--c:var(--bleu)">${Number(x.moyenne).toLocaleString('fr')}<small>PAR TÊTE</small></span></div>`,
+    duellistes: (x, i) => `<div class="row ${i < 3 ? 'p' + (i + 1) : ''}">${rang(i)}
+      <span class="n"><b>${esc(x.pseudo)}</b><small>${x.joues} duels · ${x.taux}% de victoires</small></span>
+      <span class="v" style="--c:var(--flare)">${x.gagnes}<small>GAGNÉS</small></span></div>`,
+  }[onglet];
+
+  $('list').innerHTML = c.map(lignes).join('') + `<div class="note">${NOTES[onglet]}</div>`;
+}
+
+document.querySelector('.tabs').onclick = (e) => {
+  const b = e.target.closest('[data-t]');
+  if (!b) return;
+  onglet = b.dataset.t;
+  document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('on', x === b));
+  charger();
+};
+
+(async () => {
+  charger();
+  try {
+    const m = await fetch('/api/rank/moi', { credentials:'same-origin' }).then((r) => r.json());
+    if (m.error) return;
+    $('moi').innerHTML = m.rang
+      ? `<span class="r">${m.rang}<sup>e</sup></span>
+         <span class="d">sur <b>${m.sur}</b> supporters classés<br>
+           <b>${Number(m.ferveur).toLocaleString('fr')}</b> de ferveur sur ${m.matchs} matchs
+           ${m.duels.joues ? ` · ${m.duels.gagnes}/${m.duels.joues} duels` : ''}</span>`
+      : `<span class="r">—</span><span class="d">Tu n\u2019es pas encore classé.<br>
+           Entre dans le <b>Grand Virage</b> pendant un match de ton club.</span>`;
+    $('moi').style.display = 'flex';
+  } catch { /* pas connecté */ }
+})();
+</script>
+</body>
+</html>

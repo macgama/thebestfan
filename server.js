@@ -20,6 +20,11 @@ import { createFanzzy } from './src/server/fanzzy/index.js';
 import { createVirage } from './src/server/ferveur/index.js';
 import { createTeletext } from './src/server/teletext/index.js';
 import { createOnboarding } from './src/server/onboarding/index.js';
+import { createGoogleAuth } from './src/server/auth/google.js';
+import { createClassements } from './src/server/classements/index.js';
+import { createDecks } from './src/server/deck/index.js';
+import { createAdmin } from './src/server/admin/index.js';
+import { createNvN } from './src/server/nvn/index.js';
 import { attachDuelServer } from './dist/duel-server.mjs';
 import { MysqlStore } from './dist/duel-server.mjs';
 import { STARTER_DECK } from './dist/duel-server.mjs';
@@ -55,15 +60,28 @@ let fanzzy = null;
 let virage = null;
 let teletext = null;
 let onboarding = null;
+let classements = null;
+let decks = null;
+let admin = null;
+let nvn = null;
+let google = null;
 
 if (process.env.DATABASE_URL) {
   try {
     pool = await createPool(process.env.DATABASE_URL);
     const mailer = createMailer({
       smtpUrl: process.env.SMTP_URL,
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
       from: process.env.MAIL_FROM,
       origin: ORIGIN,
     });
+    globalThis.mailer = mailer;
+    // Vérification au démarrage : mieux vaut voir l'erreur maintenant que
+    // découvrir dans trois jours que personne n'a reçu son mail.
+    mailer.test?.call && setTimeout(() => { void mailer.status; }, 0);
     auth = createAuth({
       pool, mailer, origin: ORIGIN,
       sessionSecret: process.env.SESSION_SECRET ?? 'secret-absent-a-corriger',
@@ -74,7 +92,49 @@ if (process.env.DATABASE_URL) {
     });
 
     app.use(auth.attachUser);
+
+    // Connexion Google, montée avant les routes classiques pour que
+    // /api/auth/google/* ne passe pas par la vérification d'origine.
+    google = createGoogleAuth({
+      pool, store: auth.store, origin: ORIGIN,
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    });
+    app.use('/api/auth', google.router);
+    console.log(google.actif ? 'connexion google active'
+      : 'GOOGLE_CLIENT_ID absent : connexion google desactivee');
+
     app.use('/api/auth', auth.router);
+
+    // ---- decks de duel et choix du match support
+    decks = createDecks({ pool, requireAuth: auth.requireAuth });
+    app.use('/api/deck', decks.router);
+    globalThis.decks = decks;
+    console.log('decks actifs');
+
+    // ---- duel N contre N (tir a la corde en equipe)
+    nvn = createNvN({ pool, io, decks, requireAuth: auth.requireAuth });
+    app.use('/api/nvn', nvn.router);
+    console.log('duels NvN actifs');
+
+    // ---- administration
+    admin = createAdmin({ pool, requireAuth: auth.requireAuth,
+      deps: { client: globalThis.footClient ?? null, virage: null } });
+    app.use('/api/admin', admin.router);
+    // Amorçage : sans cela, personne ne peut devenir administrateur, puisque
+    // seul un administrateur peut en nommer un autre.
+    if (process.env.ADMIN_EMAILS) {
+      const n = await admin.amorcer(process.env.ADMIN_EMAILS).catch((e) => {
+        console.error('[admin] amorçage', e.message); return 0;
+      });
+      if (n) console.log(`administration : ${n} compte(s) promu(s)`);
+    }
+    console.log('administration active');
+
+    // ---- classements
+    classements = createClassements({ pool, requireAuth: auth.requireAuth });
+    app.use('/api/rank', classements.router);
+    console.log('classements actifs');
 
     // Entretien quotidien : sessions, jetons et tentatives périmés.
     setInterval(() => auth.store.cleanup().catch((e) => console.error('[auth] purge', e.message)),
@@ -131,6 +191,13 @@ if (process.env.DATABASE_URL) {
         requireAuth: auth.requireAuth,
         // Branchement du bonus live des duels : un but du club suivi pendant
         // un duel devient un evenement du duel, estampille par le serveur.
+        // Fin de match : on efface le classement et les buteurs de cette
+        // compétition. C'est exactement le moment où les gens vont les
+        // regarder, et six heures de cache les rendraient faux.
+        onFinished: async (f) => {
+          try { await teletext?.invalider(f.leagueId); }
+          catch (e) { console.error('[teletext] invalidation', e.message); }
+        },
         onGoal: async (g) => {
           // 0. Secouer la corde du Grand Virage AVANT de frapper les cartes :
           //    ceux qui chantaient à la seconde du but doivent être comptés
@@ -164,6 +231,8 @@ if (process.env.DATABASE_URL) {
       // ---- teletexte : classements, resultats, buteurs de toutes les ligues
       // Le télétexte range ce qu'il lit : les équipes et les matchs alimentent
       // aussi le suivi des clubs et le Grand Virage, sans un appel de plus.
+      globalThis.footClient = client;
+      if (admin) admin.deps = { client, virage };
       teletext = createTeletext({ pool, client, footballStore: football.store });
       app.use('/api/tt', teletext.router);
       setInterval(() => teletext.cleanup().catch(() => {}), 24 * 3600 * 1000).unref();
@@ -202,16 +271,26 @@ app.get('/healthz', (_req, res) => {
     virage: virage ? virage.rooms.size + ' salle(s)' : 'désactivé',
     teletext: teletext ? 'actif' : 'désactivé',
     onboarding: onboarding ? 'actif' : 'désactivé',
+    classements: classements ? 'actifs' : 'désactivés',
+    decks: decks ? 'actifs' : 'désactivés',
+    admin: admin ? 'actif' : 'désactivé',
+    nvn: nvn ? { salles: nvn.salles.size, files: nvn.files.size } : 'désactivé',
+    google: google?.actif ? 'active' : 'désactivée',
     duel: duels ? duels.stats : null,
-    mail: process.env.SMTP_URL ? 'smtp' : 'console',
+    mail: globalThis.mailer?.status ?? { etat: 'console' },
     origin: ORIGIN,
   });
 });
 
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/teletext', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'teletext.html')));
+app.get('/matchs', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'aujourdhui.html')));
 app.get('/bienvenue', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'bienvenue.html')));
 app.get('/profil', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'profil.html')));
+app.get('/classement', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'classement.html')));
+app.get('/admin', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+// Fiche d'un Fanzzy : /fanzzy/V3 comme /fanzzy?id=V3, pour des liens partageables.
+app.get('/fanzzy/:id', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'fanzzy-fiche.html')));
 app.get('/compte', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'compte.html')));
 app.get('/diagnostic', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'diagnostic.html')));
 app.get('/equipes', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'equipes.html')));
@@ -251,6 +330,7 @@ for (const sig of ['SIGTERM', 'SIGINT']) {
     console.log(`${sig} reçu, arrêt propre`);
     football?.poller.stop();
     virage?.stop();
+    nvn?.stop();
     duels?.close();
     io.close();
     http.close(async () => {

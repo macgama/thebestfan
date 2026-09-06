@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Les matchs du jour — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;
+  --banner:"Oswald","Arial Narrow",Impact,sans-serif;--ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{width:100%;max-width:500px;min-height:100dvh;display:flex;flex-direction:column}
+
+.top{padding:14px 16px 4px}
+.top h1{font-family:var(--banner);font-size:20px;letter-spacing:.14em;margin:0}
+.top h1 small{display:block;font-size:9px;letter-spacing:.28em;opacity:.45;margin-top:4px;font-family:var(--ui)}
+.jours{display:flex;gap:6px;overflow-x:auto;padding:12px 16px;scrollbar-width:none}
+.jours::-webkit-scrollbar{display:none}
+.jour{white-space:nowrap;border:1px solid rgba(242,238,228,.15);background:rgba(8,11,16,.7);
+  border-radius:8px;color:inherit;padding:8px 13px;cursor:pointer;font-family:var(--banner);
+  font-size:12px;letter-spacing:.05em;opacity:.55;line-height:1.3;text-align:center}
+.jour small{display:block;font-family:var(--ui);font-size:9px;letter-spacing:.1em;opacity:.6}
+.jour.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
+.filtres{display:flex;gap:6px;padding:0 16px 10px}
+.filtres button{flex:1;background:rgba(8,11,16,.7);border:1px solid rgba(242,238,228,.13);
+  border-radius:7px;color:inherit;padding:8px;font-family:var(--banner);font-size:11px;
+  letter-spacing:.06em;cursor:pointer;opacity:.55}
+.filtres button.on{background:var(--craie);color:#0B0E13;opacity:1}
+.filtres .direct.on{background:var(--flare);color:#fff;border-color:var(--flare)}
+
+.rech{padding:0 16px 10px}
+input{width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.16);border-radius:8px;
+  color:inherit;padding:11px 13px;font-size:14.5px;font-family:inherit}
+input:focus{outline:none;border-color:var(--projo)}
+
+.liste{flex:1;padding:0 12px 24px}
+.ligue{margin-top:14px}
+.ligue .t{display:flex;align-items:center;gap:8px;padding:6px 6px 8px;font-family:var(--banner);
+  font-size:11.5px;letter-spacing:.13em;opacity:.55}
+.ligue .t .pays{opacity:.5;font-size:10px;letter-spacing:.06em;font-family:var(--ui)}
+.ligue .t .sep{flex:1;height:1px;background:rgba(242,238,228,.1)}
+.ligue.mien .t{opacity:1;color:var(--projo)}
+
+.m{display:flex;align-items:center;gap:9px;padding:11px 8px;border-radius:9px;cursor:pointer;
+  border:1px solid transparent}
+.m:active{background:rgba(255,255,255,.04)}
+.m.mien{border-color:rgba(245,195,59,.28);background:rgba(245,195,59,.05)}
+.m .h{width:52px;text-align:center;flex:none}
+.m .h .heure{font-family:var(--banner);font-size:13px;opacity:.6}
+.m .h .live{font-family:var(--banner);font-size:13px;color:var(--flare)}
+.m .h .live::after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:var(--flare);margin-left:4px;vertical-align:middle;animation:bl 1.2s infinite}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.2}}
+.m .h .fin{font-size:10px;opacity:.4;letter-spacing:.1em}
+.m .eq{flex:1;min-width:0}
+.m .r{display:flex;align-items:center;gap:7px;padding:1.5px 0}
+.m .r img{width:18px;height:18px;object-fit:contain;flex:none}
+.m .r span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.m .r b{font-family:var(--banner);font-size:15px;min-width:16px;text-align:right}
+.m .r.perd span,.m .r.perd b{opacity:.45}
+
+.vide{text-align:center;padding:50px 24px;opacity:.5;font-size:13px;line-height:1.8}
+.spin{width:24px;height:24px;border:3px solid rgba(242,238,228,.18);border-top-color:var(--projo);
+  border-radius:50%;animation:sp 1s linear infinite;margin:60px auto}
+@keyframes sp{to{transform:rotate(1turn)}}
+.maj{text-align:center;font-size:10.5px;opacity:.35;padding:14px}
+
+#fiche{position:fixed;inset:0;z-index:80;background:rgba(4,6,10,.96);backdrop-filter:blur(6px);
+  display:none;justify-content:center;overflow-y:auto}
+#fiche.on{display:flex}
+.f{width:100%;max-width:480px;padding:16px}
+.f .fermer{background:none;border:1px solid rgba(242,238,228,.2);border-radius:6px;color:inherit;
+  width:32px;height:32px;cursor:pointer;font-size:16px}
+.f .aff{text-align:center;padding:18px 0 10px}
+.f .aff .lg{font-size:10.5px;letter-spacing:.16em;opacity:.45;font-family:var(--banner)}
+.f .aff .sc{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:14px}
+.f .aff .sc img{width:46px;height:46px;object-fit:contain}
+.f .aff .sc .n{font-family:var(--banner);font-size:38px;letter-spacing:.02em}
+.f .aff .nom{display:flex;justify-content:space-between;margin-top:10px;font-size:12.5px;opacity:.75}
+.f .etat{text-align:center;font-family:var(--banner);font-size:13px;letter-spacing:.1em;
+  margin-top:6px;color:var(--flare)}
+.f .etat.calme{color:inherit;opacity:.5}
+.f .infos{display:flex;gap:8px;margin-top:16px;font-size:11px;opacity:.55;justify-content:center;
+  flex-wrap:wrap}
+.f .infos span{border:1px solid rgba(242,238,228,.12);border-radius:999px;padding:4px 10px}
+.f h4{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.4;margin:22px 0 8px}
+.ev{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid rgba(242,238,228,.07);
+  font-size:12.5px}
+.ev .min{font-family:var(--banner);font-size:13px;width:34px;opacity:.6;flex:none}
+.ev .ic{width:20px;text-align:center;flex:none}
+.ev .txt{flex:1;min-width:0}
+.ev .txt small{display:block;opacity:.45;font-size:10.5px}
+.ev.droite{flex-direction:row-reverse;text-align:right}
+.ev.droite .txt{text-align:right}
+</style>
+</head>
+<body>
+<main id="app">
+  <div class="top"><h1>LES MATCHS<small id="sous">TOUTES COMPÉTITIONS</small></h1></div>
+  <div class="jours" id="jours"></div>
+  <div class="filtres">
+    <button data-f="tous" class="on">TOUS</button>
+    <button data-f="mien">MES CLUBS</button>
+    <button data-f="live" class="direct">EN DIRECT</button>
+  </div>
+  <div class="rech"><input id="q" placeholder="Chercher une équipe ou une compétition…"></div>
+  <div class="liste" id="liste"><div class="spin"></div></div>
+  <div class="maj" id="maj"></div>
+</main>
+
+<div id="fiche"><div class="f" id="fcorps"></div></div>
+<script src="/fx.js" defer></script>
+<script src="/nav.js" defer></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+  (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+
+let date = new Date().toISOString().slice(0, 10);
+let filtre = 'tous', terme = '', data = null, minuterie = null;
+
+const api = (p) => fetch('/api/tt' + p, { credentials:'same-origin' }).then((r) => r.json());
+
+/* Sept jours autour d'aujourd'hui : hier pour les résultats, demain pour
+   préparer sa soirée. Au-delà, personne ne regarde. */
+function joursDispo() {
+  const out = [];
+  for (let d = -2; d <= 4; d++) {
+    const j = new Date();
+    j.setDate(j.getDate() + d);
+    out.push({ iso: j.toISOString().slice(0, 10), d,
+      label: d === 0 ? "AUJOURD'HUI" : d === -1 ? 'HIER' : d === 1 ? 'DEMAIN'
+        : j.toLocaleDateString('fr', { weekday:'short' }).toUpperCase(),
+      sous: j.toLocaleDateString('fr', { day:'numeric', month:'short' }) });
+  }
+  return out;
+}
+
+$('jours').innerHTML = joursDispo().map((j) =>
+  `<button class="jour ${j.iso === date ? 'on' : ''}" data-j="${j.iso}">
+    ${j.label}<small>${j.sous}</small></button>`).join('');
+$('jours').onclick = (e) => {
+  const b = e.target.closest('[data-j]'); if (!b) return;
+  date = b.dataset.j;
+  document.querySelectorAll('.jour').forEach((x) => x.classList.toggle('on', x === b));
+  charger();
+};
+document.querySelector('.filtres').onclick = (e) => {
+  const b = e.target.closest('[data-f]'); if (!b) return;
+  filtre = b.dataset.f;
+  document.querySelectorAll('.filtres button').forEach((x) => x.classList.toggle('on', x === b));
+  rendre();
+};
+let t = null;
+$('q').oninput = () => { clearTimeout(t); t = setTimeout(() => { terme = $('q').value.trim().toLowerCase(); rendre(); }, 250); };
+
+/**
+ * Minute affichée : le serveur donne la minute et l'instant où il l'a lue.
+ * Le chrono défile donc localement, sans redemander quoi que ce soit —
+ * c'est ce qui manquait, et ça ne coûte pas un appel de plus.
+ */
+function minute(m) {
+  if (!m.live || m.elapsed == null) return null;
+  if (m.status === 'HT') return 'MT';
+  const ecoule = Math.floor((Date.now() - m.luA) / 60000);
+  return `${Math.min(m.elapsed + ecoule, m.status === '2H' ? 90 : 45) }'`;
+}
+
+function heure(d) {
+  return new Date(d).toLocaleTimeString('fr', { hour:'2-digit', minute:'2-digit' });
+}
+
+function rendre() {
+  if (!data) return;
+  let groupes = data.groupes;
+  if (filtre === 'mien') groupes = groupes.filter((g) => g.mien)
+    .map((g) => ({ ...g, matchs: g.matchs.filter((m) => m.mien) }));
+  if (filtre === 'live') groupes = groupes.filter((g) => g.live)
+    .map((g) => ({ ...g, matchs: g.matchs.filter((m) => m.live) }));
+  if (terme) {
+    groupes = groupes.map((g) => ({ ...g,
+      matchs: (g.ligue.name.toLowerCase().includes(terme) ? g.matchs
+        : g.matchs.filter((m) => m.home.name.toLowerCase().includes(terme)
+          || m.away.name.toLowerCase().includes(terme))) }))
+      .filter((g) => g.matchs.length);
+  }
+
+  $('sous').textContent = data.enDirect
+    ? `${data.total} MATCHS · ${data.enDirect} EN DIRECT` : `${data.total} MATCHS`;
+
+  $('liste').innerHTML = groupes.length ? groupes.map((g) => `
+    <div class="ligue ${g.mien ? 'mien' : ''}">
+      <div class="t">${esc(g.ligue.name)}<span class="pays">${esc(g.ligue.country ?? '')}</span>
+        <span class="sep"></span></div>
+      ${g.matchs.map((m) => {
+        const min = minute(m);
+        return `<div class="m ${m.mien ? 'mien' : ''}" data-m="${m.id}">
+          <div class="h">${m.live ? `<div class="live">${min ?? '—'}</div>`
+            : m.fini ? `<div class="fin">TERMINÉ</div>`
+            : `<div class="heure">${heure(m.date)}</div>`}</div>
+          <div class="eq">
+            <div class="r ${m.fini && m.away.vainqueur ? 'perd' : ''}">
+              <img src="${esc(m.home.logo)}" alt=""><span>${esc(m.home.name)}</span>
+              <b>${m.home.goals ?? ''}</b></div>
+            <div class="r ${m.fini && m.home.vainqueur ? 'perd' : ''}">
+              <img src="${esc(m.away.logo)}" alt=""><span>${esc(m.away.name)}</span>
+              <b>${m.away.goals ?? ''}</b></div>
+          </div></div>`;
+      }).join('')}
+    </div>`).join('')
+    : `<div class="vide">${filtre === 'mien'
+        ? 'Aucun match de tes clubs ce jour-là.<br><a href="/equipes" style="color:var(--projo)">suivre un club</a>'
+        : filtre === 'live' ? 'Aucun match en cours.' : 'Aucun match ce jour-là.'}</div>`;
+
+  $('maj').textContent = data.stale
+    ? 'Données un peu anciennes : le service n\u2019a pas répondu.'
+    : `Mis à jour à ${new Date().toLocaleTimeString('fr', { hour:'2-digit', minute:'2-digit' })}`;
+}
+
+async function charger() {
+  $('liste').innerHTML = '<div class="spin"></div>';
+  try { data = await api('/jour?date=' + date); rendre(); }
+  catch { $('liste').innerHTML = '<div class="vide">Service indisponible.</div>'; }
+  planifier();
+}
+
+/** Rafraîchissement : souvent s'il y a du direct, sinon presque jamais. */
+function planifier() {
+  clearTimeout(minuterie);
+  const delai = data?.enDirect ? 45_000 : 10 * 60_000;
+  minuterie = setTimeout(async () => {
+    if (document.hidden) return planifier();
+    try { data = await api('/jour?date=' + date); rendre(); } catch {}
+    planifier();
+  }, delai);
+}
+// Le chrono défile toutes les vingt secondes, sans appel réseau.
+setInterval(() => { if (data?.enDirect && !document.hidden) rendre(); }, 20_000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) charger(); });
+
+/* ---------------------------------------------------------- fiche match */
+
+$('liste').addEventListener('click', (e) => {
+  const m = e.target.closest('[data-m]');
+  if (m) ouvrirFiche(Number(m.dataset.m));
+});
+
+const ICONES = { Goal:'⚽', Card:'▮', subst:'⇄', Var:'▣' };
+
+async function ouvrirFiche(id) {
+  $('fiche').classList.add('on');
+  $('fcorps').innerHTML = '<div class="spin"></div>';
+  let d;
+  try { d = await api('/match/' + id); }
+  catch { $('fcorps').innerHTML = '<div class="vide">Match indisponible.</div>'; return; }
+  if (d.error) { $('fcorps').innerHTML = '<div class="vide">Match indisponible.</div>'; return; }
+
+  const f = d.fixture, e = d.equipes;
+  const min = f.live ? minute({ ...f, live:true }) : null;
+
+  $('fcorps').innerHTML = `
+    <button class="fermer" id="ferme">‹</button>
+    <div class="aff">
+      <div class="lg">${esc(d.ligue.nom ?? '')} · ${esc(d.ligue.journee ?? '')}</div>
+      <div class="sc">
+        <img src="${esc(e.home.logo)}" alt="">
+        <span class="n">${f.fini || f.live ? `${e.home.goals ?? 0} – ${e.away.goals ?? 0}`
+          : heure(f.date)}</span>
+        <img src="${esc(e.away.logo)}" alt="">
+      </div>
+      <div class="nom"><span>${esc(e.home.name)}</span><span>${esc(e.away.name)}</span></div>
+      <div class="etat ${f.live ? '' : 'calme'}">${f.live ? (min ?? 'EN COURS')
+        : f.fini ? 'TERMINÉ' : esc(f.statusLong ?? 'À VENIR')}</div>
+    </div>
+    <div class="infos">
+      ${f.venue ? `<span>${esc(f.venue)}${f.ville ? ' · ' + esc(f.ville) : ''}</span>` : ''}
+      ${f.arbitre ? `<span>M. ${esc(f.arbitre)}</span>` : ''}
+      <span>${new Date(f.date).toLocaleDateString('fr',
+        { weekday:'long', day:'numeric', month:'long' })}</span>
+    </div>
+    ${d.evenements.length ? `<h4>LE FIL DU MATCH</h4>
+      ${d.evenements.map((ev) => {
+        const droite = ev.equipe === e.away.id;
+        const ic = ev.type === 'Card'
+          ? `<span style="color:${/Red/i.test(ev.detail) ? 'var(--flare)' : 'var(--projo)'}">▮</span>`
+          : (ICONES[ev.type] ?? '•');
+        return `<div class="ev ${droite ? 'droite' : ''}">
+          <span class="min">${ev.minute ?? ''}${ev.extra ? '+' + ev.extra : ''}'</span>
+          <span class="ic">${ic}</span>
+          <span class="txt">${esc(ev.joueur ?? '')}
+            <small>${esc(ev.detail ?? ev.type)}${ev.passeur ? ' · ' + esc(ev.passeur) : ''}</small>
+          </span></div>`;
+      }).join('')}`
+      : `<h4>LE FIL DU MATCH</h4><div class="vide" style="padding:26px">
+          ${f.fini ? 'Aucun événement enregistré.' : 'Le match n\u2019a pas encore commencé.'}</div>`}
+    ${d.ligue.id ? `<div style="text-align:center;padding:20px 0 30px">
+      <a href="/teletext" style="color:var(--projo);font-size:12.5px">voir le classement de la compétition ›</a>
+    </div>` : ''}`;
+
+  $('ferme').onclick = () => $('fiche').classList.remove('on');
+}
+$('fiche').addEventListener('click', (e) => {
+  if (e.target.id === 'fiche') $('fiche').classList.remove('on');
+});
+
+charger();
+</script>
+</body>
+</html>

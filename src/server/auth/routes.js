@@ -292,6 +292,16 @@ export function createAuth({ pool, mailer, origin, sessionSecret }) {
 
   /* ------------------------------------------------- ticket socket.io */
 
+  /**
+   * Envoi de contrôle vers sa propre adresse.
+   * Renvoie l'erreur SMTP telle quelle : c'est le moyen le plus rapide de
+   * savoir si le problème vient du mot de passe, du port ou du domaine.
+   */
+  router.post('/test-mail', requireAuth, async (req, res) => {
+    const r = await mailer.test(req.user.email);
+    res.json({ ...r, etat: mailer.status });
+  });
+
   router.post('/socket-ticket', requireAuth, (req, res) => {
     res.json({ ticket: issueTicket(sessionSecret, req.user.id, req.user.pseudo) });
   });

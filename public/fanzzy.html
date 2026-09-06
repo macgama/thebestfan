@@ -909,11 +909,15 @@ async function openPack() {
     return;
   }
 
-  pull = res.cards.map((c) => BY_ID.get(c.id));
+  // Le serveur renvoie désormais des cartes typées : un skin n'est pas un
+  // Fanzzy et ne doit pas être compté dans la collection.
+  pull = res.cards.map((c) => (c.type === 'skin'
+    ? { id: c.id, nom: c.id, type: 'tifo', rar: 'd2', stage: 1, skin: true, pour: c.pour }
+    : BY_ID.get(c.id)));
   idx = 0; fresh.clear();
   for (const c of res.cards) {
     if (c.new) fresh.add(c.id);
-    S.col[c.id] = (S.col[c.id] ?? 0) + 1;
+    if (c.type !== 'skin') S.col[c.id] = (S.col[c.id] ?? 0) + 1;
   }
   S.scarves = res.wallet.scarves;
   S.packs = res.wallet.packs;
@@ -953,6 +957,7 @@ $('ostage').onclick = () => {
     audio.flip();
     buzz(12);
     if (['d3','star','crown'].includes(f.rar)) {
+      window.FX?.rare(f.rar, cur);
       burst(TYPES[f.type].c, f.rar === 'crown' ? 34 : 22);
       audio.chime(f.rar);
       // La vidéo n'est chargée qu'ici, à la première carte rare de la session :
@@ -1088,6 +1093,10 @@ function showDetail(f) {
     btn.onclick = () => evolve(f, next, cost);
   } else { btn.textContent = 'AUCUNE ÉVOLUTION'; btn.disabled = true; }
 
+  // Lien vers la fiche complète : la fenêtre de détail reste un aperçu.
+  $('dMeta').insertAdjacentHTML('beforeend',
+    `<br><a href="/fanzzy/${f.id}" style="color:var(--projo);font-size:12.5px">voir la fiche complète ›</a>`);
+
   const sel = $('dSelect');
   sel.disabled = !owned;
   sel.textContent = S.active === f.id ? 'FANZZY DU DUEL ✓' : 'CHOISIR POUR LE DUEL';
@@ -1194,6 +1203,7 @@ document.querySelectorAll('.nav button').forEach((b) => {
   buildCarousel(); renderKiosque(); renderDex(); renderTeam();
 })();
 </script>
+<script src="/fx.js" defer></script>
 <script src="/nav.js" defer></script>
 </body>
 </html>

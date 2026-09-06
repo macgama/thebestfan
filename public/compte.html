@@ -115,6 +115,20 @@ button.go[disabled]{filter:grayscale(.7);opacity:.55;pointer-events:none}
       <button class="go" type="submit" data-t="action.save"></button>
     </form>
 
+    <div id="googleBox" style="display:none;margin-top:20px">
+      <div style="display:flex;align-items:center;gap:10px;opacity:.35;font-size:11px;
+        letter-spacing:.14em;margin-bottom:14px">
+        <span style="flex:1;height:1px;background:currentColor"></span>OU
+        <span style="flex:1;height:1px;background:currentColor"></span>
+      </div>
+      <a href="/api/auth/google/start" style="display:flex;align-items:center;justify-content:center;
+        gap:10px;background:#fff;color:#1F1F1F;border-radius:6px;padding:13px;text-decoration:none;
+        font-size:14px;font-weight:500">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M45 24c0-1.6-.1-2.7-.4-4H24v8h12c-.2 2-1.6 5-4.5 7l7 5.4C42.6 36.7 45 31 45 24z"/><path fill="#34A853" d="M24 46c6 0 11-2 14.6-5.4l-7-5.4c-1.9 1.3-4.4 2.2-7.6 2.2-5.8 0-10.8-3.9-12.5-9.2l-7.3 5.6C7.9 41 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.5 28.2c-.5-1.3-.7-2.7-.7-4.2s.3-2.9.7-4.2l-7.3-5.6C2.8 17 2 20.4 2 24s.8 7 2.2 9.8l7.3-5.6z"/><path fill="#EA4335" d="M24 10.2c3.3 0 6.2 1.1 8.5 3.3l6.3-6.3C35 3.6 30 1.5 24 1.5 15.4 1.5 7.9 6.5 4.2 14.2l7.3 5.6C13.2 14.1 18.2 10.2 24 10.2z"/></svg>
+        Continuer avec Google
+      </a>
+    </div>
+
     <div class="msg" id="gateMsg"></div>
   </section>
 </main>
@@ -357,6 +371,20 @@ $('btnResend').onclick = async () => { await api('/resend-verification'); say('a
 
 (async () => {
   applyLocale();
+
+  // Le bouton Google ne s'affiche que si le serveur est configuré pour.
+  try {
+    const g = await fetch('/api/auth/google/available').then((r) => r.json());
+    if (g.available) $('googleBox').style.display = 'block';
+  } catch { /* module absent */ }
+
+  // Message de retour d'un échec de connexion Google.
+  const erreur = new URLSearchParams(location.search).get('erreur');
+  if (erreur) {
+    say('gateMsg', erreur === 'email'
+      ? 'auth.error.email_invalid' : 'auth.error.server');
+    history.replaceState({}, '', '/compte');
+  }
   const params = new URLSearchParams(location.search);
 
   const verifyToken = params.get('verifier');
@@ -375,5 +403,6 @@ $('btnResend').onclick = async () => { await api('/resend-verification'); say('a
   render();
 })();
 </script>
+<script src="/fx.js" defer></script>
 </body>
 </html>

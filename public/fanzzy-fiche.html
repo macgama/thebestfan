@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fanzzy — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;--violet:#8257DA;
+  --gris:#C2CAD6;--banner:"Oswald","Arial Narrow",Impact,sans-serif;
+  --ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{width:100%;max-width:460px;min-height:100dvh;display:flex;flex-direction:column}
+
+.head{display:flex;align-items:center;gap:11px;padding:14px 16px 6px}
+.head a{background:none;border:1px solid rgba(242,238,228,.2);border-radius:6px;color:inherit;
+  width:32px;height:32px;display:grid;place-items:center;text-decoration:none;font-size:16px}
+.head h1{font-family:var(--banner);font-size:19px;letter-spacing:.06em;margin:0;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.head h1 small{display:block;font-size:9.5px;letter-spacing:.2em;opacity:.5;margin-top:3px;font-family:var(--ui)}
+
+.vitrine{position:relative;margin:8px 14px 0;border-radius:16px;overflow:hidden;
+  border:1px solid var(--c);min-height:230px;display:flex;align-items:flex-end;
+  background:linear-gradient(160deg,#141A21,#0A0D11)}
+.vitrine .art{position:absolute;inset:0}
+.vitrine .art svg{width:100%;height:100%;display:block;object-fit:cover}
+.vitrine .ombre{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,6,10,.1),rgba(4,6,10,.92))}
+.vitrine .txt{position:relative;z-index:2;padding:16px}
+.vitrine h2{font-family:var(--banner);font-size:25px;margin:0;letter-spacing:.03em;line-height:1}
+.vitrine .sous{font-size:11.5px;opacity:.65;margin-top:7px}
+.vitrine .tag{position:absolute;top:13px;right:13px;z-index:2;font-family:var(--banner);font-size:9.5px;
+  letter-spacing:.14em;border-radius:5px;padding:4px 9px;border:1px solid var(--projo);color:var(--projo)}
+.vitrine .rar{position:absolute;top:13px;left:13px;z-index:2;display:flex;gap:3px}
+.vitrine .rar i{width:8px;height:8px;background:var(--craie);transform:rotate(45deg);
+  border-radius:1px;display:block;opacity:.8}
+.vitrine .rar b{color:#C9A227;font-size:13px;line-height:1}
+.pastilles{display:flex;gap:6px;padding:12px 16px 0;flex-wrap:wrap}
+.pastille{border:1px solid rgba(242,238,228,.14);border-radius:999px;padding:5px 11px;font-size:11px;
+  opacity:.75}
+.pastille b{color:var(--c)}
+
+h3{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;margin:22px 16px 9px}
+.bloc{margin:0 14px;border:1px solid rgba(242,238,228,.11);border-radius:12px;overflow:hidden;
+  background:rgba(8,11,16,.6)}
+.ligne{display:flex;align-items:center;gap:11px;padding:12px 14px;font-size:13px;
+  border-top:1px solid rgba(242,238,228,.07)}
+.ligne:first-child{border-top:0}
+.ligne .n{flex:1;min-width:0}
+.ligne .n b{display:block;font-family:var(--banner);font-size:13px;letter-spacing:.02em}
+.ligne .n span{font-size:11px;opacity:.5;line-height:1.4}
+.ligne .v{font-family:var(--banner);font-size:14px;color:var(--c,var(--projo))}
+.ligne button{background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.2);border-radius:6px;
+  color:inherit;font-size:11.5px;padding:6px 11px;cursor:pointer;font-family:var(--banner);letter-spacing:.05em}
+.ligne button.on{background:var(--projo);color:#0B0E13;border-color:var(--projo)}
+.ligne.verrou{opacity:.4}
+
+.skins{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px}
+.skin{border:1px solid rgba(242,238,228,.14);border-radius:10px;padding:10px 7px;text-align:center;
+  cursor:pointer;background:rgba(0,0,0,.3)}
+.skin.porte{border-color:var(--projo);background:rgba(245,195,59,.12)}
+.skin.absent{opacity:.32;cursor:default}
+.skin b{display:block;font-family:var(--banner);font-size:11px;line-height:1.15}
+.skin span{font-size:9px;opacity:.5;letter-spacing:.06em;display:block;margin-top:4px}
+
+.lignee{display:flex;align-items:center;gap:6px;padding:14px 10px;justify-content:center}
+.etape{flex:1;max-width:104px;text-align:center;opacity:.35}
+.etape.ok{opacity:1}
+.etape .b{border:1.5px solid rgba(242,238,228,.2);border-radius:10px;padding:9px 5px;
+  background:rgba(0,0,0,.3)}
+.etape.ici .b{border-color:var(--projo);box-shadow:0 0 0 2px rgba(245,195,59,.2)}
+.etape b{display:block;font-family:var(--banner);font-size:10.5px;line-height:1.15}
+.etape span{font-size:9px;opacity:.55;display:block;margin-top:3px}
+.fleche{opacity:.3;font-size:15px}
+
+.actions{padding:20px 14px 30px;display:flex;flex-direction:column;gap:9px}
+.btn{border-radius:9px;padding:14px;font-family:var(--banner);font-size:14px;letter-spacing:.08em;
+  cursor:pointer;border:1px solid rgba(242,238,228,.2);background:rgba(8,11,16,.7);color:inherit;
+  text-align:center}
+.btn.primary{background:linear-gradient(180deg,var(--flare),#B32A1D);border-color:transparent;color:#fff}
+.btn:disabled{opacity:.35;pointer-events:none}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#171C23;z-index:70;
+  border:1px solid rgba(242,238,228,.2);border-radius:8px;padding:11px 16px;font-size:12.5px;display:none}
+.toast.on{display:block}
+.spin{width:24px;height:24px;border:3px solid rgba(242,238,228,.18);border-top-color:var(--projo);
+  border-radius:50%;animation:sp 1s linear infinite;margin:70px auto}
+@keyframes sp{to{transform:rotate(1turn)}}
+.vide{text-align:center;padding:60px 22px;opacity:.5;font-size:13px;line-height:1.7}
+</style>
+</head>
+<body>
+<main id="app"><div class="spin" id="spin"></div><div id="page" style="display:none"></div></main>
+<div class="toast" id="toast"></div>
+<script src="/fx.js" defer></script>
+<script src="/nav.js" defer></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+  (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+const COUL = { voix:'#F5C33B', perc:'#3C82E8', tifo:'#8257DA',
+               pyro:'#E0402C', depl:'#1E9E6A', fide:'#C2CAD6' };
+const NOMTYPE = { voix:'Voix', perc:'Percussion', tifo:'Tifo',
+                  pyro:'Pyro', depl:'Déplacement', fide:'Fidélité' };
+const RAR = { d1:'Commune', d2:'Peu commune', d3:'Rare', star:'Illustration rare', crown:'Couronne' };
+
+const api = async (p, body, method) => {
+  const r = await fetch('/api/fanzzy' + p, {
+    method: method ?? (body === undefined ? 'GET' : 'POST'),
+    headers: { 'content-type':'application/json' }, credentials:'same-origin',
+    body: body === undefined ? undefined : JSON.stringify(body) });
+  if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
+  const j = await r.json().catch(()=>({}));
+  if (j.error) throw Object.assign(new Error(j.error), { code:j.error });
+  return j;
+};
+function toast(t){ const e=$('toast'); e.textContent=t; e.className='toast on';
+  clearTimeout(e._t); e._t=setTimeout(()=>{e.className='toast';},2600); }
+
+const id = new URLSearchParams(location.search).get('id')
+  ?? location.pathname.split('/').filter(Boolean).pop();
+let d = null;
+
+/** Effet lisible : on traduit les modificateurs plutôt que d'afficher du JSON. */
+function lireMods(m) {
+  const out = [];
+  const pct = (v) => `${v > 1 ? '+' : ''}${Math.round((v - 1) * 100)} %`;
+  if (m.tempoWindow) out.push(['Fenêtre du tempo', pct(m.tempoWindow)]);
+  if (m.tempoInterval) out.push(['Cadence', `${m.tempoInterval > 0 ? '+' : ''}${Math.round(m.tempoInterval)} ms`]);
+  if (m.mashTime) out.push(['Durée du martelage', `${Math.round(m.mashTime / 100) / 10} s`]);
+  if (m.mashBonus) out.push(['Martelage', pct(m.mashBonus)]);
+  if (m.holdBonus) out.push(['Endurance', pct(m.holdBonus)]);
+  if (m.holdForgive) out.push(['Relâchements permis', String(m.holdForgive)]);
+  if (m.perfectBonus) out.push(['Geste parfait', `×${m.perfectBonus.toFixed(2)}`]);
+  if (m.backfire) out.push(['Geste raté', 'se retourne contre toi']);
+  if (m.parryBonus) out.push(['Contre', pct(m.parryBonus)]);
+  if (m.breathBonus) out.push(['Souffle', pct(m.breathBonus)]);
+  if (m.refundBonus) out.push(['Reprise', `×${m.refundBonus.toFixed(2)}`]);
+  return out;
+}
+
+function rar(r) {
+  if (r === 'crown') return '<b>♛</b>';
+  if (r === 'star') return '<b>★</b>';
+  return '<i></i>'.repeat({ d1:1, d2:2, d3:3 }[r] ?? 1);
+}
+
+function rendre() {
+  const f = d.fanzzy;
+  const c = COUL[f.type];
+  const brut = lireMods(f.mods);
+  const reel = lireMods(d.effetReel);
+  const change = JSON.stringify(f.mods) !== JSON.stringify(d.effetReel);
+
+  $('page').innerHTML = `
+    <div class="head"><a href="/fanzzy">‹</a>
+      <h1>${esc(f.nom)}<small>${NOMTYPE[f.type]} · ${RAR[f.rar]}</small></h1></div>
+
+    <div class="vitrine" style="--c:${c}">
+      <div class="art" id="art"></div><div class="ombre"></div>
+      <div class="rar">${rar(f.rar)}</div>
+      ${d.equipe ? '<div class="tag">EN DUEL</div>' : ''}
+      <div class="txt"><h2>${esc(f.nom)}</h2>
+        <div class="sous">${d.possede
+          ? `${d.possede} exemplaire${d.possede > 1 ? 's' : ''} · étage ${f.stage}`
+          : 'pas encore dans ta collection'}</div></div>
+    </div>
+
+    <div class="pastilles">
+      <span class="pastille" style="--c:${c}"><b>${NOMTYPE[f.type]}</b></span>
+      <span class="pastille">Cri : <b style="color:${c}">${esc(f.cri?.label ?? '—')}</b></span>
+      ${f.cri?.power ? `<span class="pastille">Poussée ${f.cri.power}</span>` : ''}
+    </div>
+
+    <h3>CE QU'IL CHANGE${change ? ' — AVEC TON ÉQUIPEMENT' : ''}</h3>
+    <div class="bloc">${(change ? reel : brut).map(([k, v]) => `
+      <div class="ligne"><span class="n"><b>${k}</b></span>
+        <span class="v" style="--c:${c}">${esc(v)}</span></div>`).join('')
+      || '<div class="ligne"><span class="n">Aucun effet particulier.</span></div>'}
+      ${change ? `<div class="ligne" style="opacity:.5">
+        <span class="n"><span>Sans équipement : ${brut.map(([k,v])=>`${k} ${v}`).join(' · ')}</span></span>
+      </div>` : ''}
+    </div>
+
+    ${d.stuffPorte.length ? `<h3>ÉQUIPEMENT PORTÉ</h3><div class="bloc">
+      ${d.stuffPorte.map((s) => `<div class="ligne"><span class="n"><b>${esc(s.nom)}</b>
+        <span>${esc(s.texte)}</span></span></div>`).join('')}
+      <div class="ligne"><span class="n"><span>Une pièce a toujours un revers, et on n'en porte que deux.</span></span>
+        <a href="/profil" style="color:${c};font-size:12px">changer</a></div></div>` : ''}
+
+    <h3>TENUES</h3>
+    <div class="bloc"><div class="skins">${d.skins.map((s) => `
+      <div class="skin ${s.porte ? 'porte' : ''} ${s.possede ? '' : 'absent'}"
+        data-skin="${s.id}"><b>${esc(s.nom)}</b>
+        <span>${s.possede ? (s.porte ? 'PORTÉE' : 'POSSÉDÉE') : 'À TROUVER'}</span></div>`).join('')}
+    </div>
+    <div class="ligne" style="opacity:.5"><span class="n"><span>Les tenues ne changent rien au jeu.
+      Elles se trouvent dans les boosters, et seulement pour un Fanzzy que tu as déjà.</span></span></div>
+    </div>
+
+    ${d.lignee.length > 1 ? `<h3>LIGNÉE</h3><div class="bloc"><div class="lignee">
+      ${d.lignee.map((x, i) => `${i ? '<span class="fleche">›</span>' : ''}
+        <div class="etape ${x.possede ? 'ok' : ''} ${x.id === f.id ? 'ici' : ''}">
+          <div class="b"><b>${esc(x.nom)}</b><span>${x.cout ? x.cout + ' éch.' : 'base'}</span></div>
+        </div>`).join('')}</div></div>` : ''}
+
+    <div class="actions">
+      ${d.possede ? `
+        <button class="btn primary" id="equiper" ${d.equipe ? 'disabled' : ''}>
+          ${d.equipe ? 'DÉJÀ EN DUEL' : 'EMMENER EN DUEL'}</button>
+        ${f.evo ? `<button class="btn" id="evoluer">FAIRE ÉVOLUER · ${
+          d.lignee.find((x) => x.id === f.evo)?.cout ?? 90} ÉCHARPES</button>` : ''}`
+        : '<div class="vide">Ouvre des boosters pour le trouver.</div>'}
+    </div>`;
+
+  // Illustration : reprise du générateur du classeur si disponible.
+  if (window.TBF?.cardArt) {
+    try { $('art').innerHTML = window.TBF.cardArt(window.TBF.cardDef(f.id)); } catch {}
+  } else {
+    $('art').style.background =
+      `radial-gradient(80% 60% at 50% 30%, ${c}44, transparent 70%), #0A0E13`;
+  }
+
+  $('page').querySelector('.skins').onclick = async (e) => {
+    const s = e.target.closest('[data-skin]');
+    if (!s) return;
+    const skin = d.skins.find((x) => x.id === s.dataset.skin);
+    if (!skin?.possede) return toast('Tenue pas encore trouvée');
+    try {
+      await fetch('/api/me/skin', { method:'POST', credentials:'same-origin',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify({ fanzzyId: f.id, skinId: skin.id }) });
+      toast(`${skin.nom} portée`);
+      charger();
+    } catch { toast('Impossible pour le moment'); }
+  };
+
+  const eq = $('equiper');
+  if (eq) eq.onclick = async () => {
+    try { await api('/active', { id: f.id }); toast('Il entrera en duel'); charger(); }
+    catch { toast('Impossible pour le moment'); }
+  };
+  const ev = $('evoluer');
+  if (ev) ev.onclick = async () => {
+    try {
+      const r = await api('/evolve', { id: f.id });
+      toast('Évolution réussie');
+      location.search = '?id=' + r.to;
+    } catch (e) {
+      toast(e.code === 'fanzzy.error.not_enough_scarves' ? 'Pas assez d\u2019écharpes'
+        : 'Évolution impossible');
+    }
+  };
+}
+
+async function charger() {
+  try {
+    d = await api('/fiche/' + encodeURIComponent(id));
+    $('spin').style.display = 'none';
+    $('page').style.display = 'block';
+    rendre();
+  } catch (e) {
+    if (e.message === 'auth') return;
+    $('spin').style.display = 'none';
+    $('page').style.display = 'block';
+    $('page').innerHTML = '<div class="vide">Ce Fanzzy est introuvable.<br><a href="/fanzzy" style="color:var(--projo)">retour au classeur</a></div>';
+  }
+}
+charger();
+</script>
+</body>
+</html>
