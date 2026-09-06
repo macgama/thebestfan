@@ -44,12 +44,17 @@ export function createTeletext({ pool, client, footballStore = null }) {
 
   async function cached(key, ttlSec, fetcher) {
     const hit = (await q(
-      `SELECT payload, expires_at FROM api_cache WHERE k = ?`, [key]))[0];
+      `SELECT payload, expires_at, fetched_at FROM api_cache WHERE k = ?`, [key]))[0];
     if (hit && new Date(hit.expires_at) > new Date()) {
-      return { data: decode(hit.payload), fresh: true };
+      // `luA` : l'instant de la lecture chez l'API, pas celui du service.
+      // Sans cette distinction, le client croit la donnée fraîche à chaque
+      // requête et le chrono d'un match en cours ne bouge jamais.
+      return { data: decode(hit.payload), fresh: true,
+               luA: new Date(hit.fetched_at).getTime() };
     }
 
     try {
+      const luA = Date.now();
       const data = await fetcher();
       await q(
         `INSERT INTO api_cache (k, payload, expires_at)
@@ -57,10 +62,13 @@ export function createTeletext({ pool, client, footballStore = null }) {
          ON DUPLICATE KEY UPDATE payload = VALUES(payload),
            expires_at = VALUES(expires_at), fetched_at = NOW(3)`,
         [key, JSON.stringify(data), ttlSec]);
-      return { data, fresh: true };
+      return { data, fresh: true, luA };
     } catch (e) {
       // Quota épuisé ou API en panne : la version périmée vaut mieux que rien.
-      if (hit) return { data: decode(hit.payload), fresh: false, stale: true };
+      if (hit) {
+        return { data: decode(hit.payload), fresh: false, stale: true,
+                 luA: new Date(hit.fetched_at).getTime() };
+      }
       throw e;
     }
   }
@@ -129,7 +137,7 @@ export function createTeletext({ pool, client, footballStore = null }) {
       ? date : new Date().toISOString().slice(0, 10);
     const aujourdhui = jourISO === new Date().toISOString().slice(0, 10);
 
-    const { data, stale } = await cached(`jour:${jourISO}`,
+    const { data, stale, luA } = await cached(`jour:${jourISO}`,
       aujourdhui ? TTL.jourLive : TTL.jour,
       () => client.call('/fixtures', { date: jourISO, timezone: 'UTC' }));
 
@@ -150,9 +158,9 @@ export function createTeletext({ pool, client, footballStore = null }) {
         date: r.fixture.date,
         status: r.fixture.status?.short,
         elapsed: r.fixture.status?.elapsed ?? null,
-        // Instant où le serveur a lu cette minute : le client peut ainsi
-        // faire défiler le chrono localement sans redemander à chaque seconde.
-        luA: Date.now(),
+        // Instant de la lecture chez l'API : le client fait défiler le chrono
+        // à partir de là, sans redemander quoi que ce soit.
+        luA: luA ?? Date.now(),
         round: r.league?.round,
         home: { id: r.teams.home.id, name: r.teams.home.name, logo: r.teams.home.logo,
                 goals: r.goals?.home, vainqueur: r.teams.home.winner },
@@ -196,7 +204,7 @@ export function createTeletext({ pool, client, footballStore = null }) {
    * Après : le score final et le résumé complet.
    */
   async function match(fixtureId) {
-    const { data, stale } = await cached(`match:${fixtureId}`, TTL.matchLive, async () => {
+    const { data, stale, luA } = await cached(`match:${fixtureId}`, TTL.matchLive, async () => {
       const [f] = await client.call('/fixtures', { id: fixtureId });
       if (!f) throw new Error('match introuvable');
       // Les événements ne sont demandés que s'il y a quelque chose à raconter.
@@ -212,7 +220,7 @@ export function createTeletext({ pool, client, footballStore = null }) {
       fixture: {
         id: f.fixture.id, date: f.fixture.date,
         status: f.fixture.status?.short, statusLong: f.fixture.status?.long,
-        elapsed: f.fixture.status?.elapsed ?? null, luA: Date.now(),
+        elapsed: f.fixture.status?.elapsed ?? null, luA: luA ?? Date.now(),
         venue: f.fixture.venue?.name, ville: f.fixture.venue?.city,
         arbitre: f.fixture.referee,
         live, fini: fini(f.fixture.status?.short),

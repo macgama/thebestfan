@@ -163,7 +163,8 @@ async function sommaire() {
   $('list').innerHTML = leagues.length ? leagues.map((l) => `
     <div class="lg" data-l="${l.league_id}">
       <div class="n"><b>${esc(l.name)}</b><small>${esc(l.country ?? '')} · saison ${l.season}</small></div>
-      <span class="t ${l.tier === 1 ? 't1' : ''}">${l.tier === 1 ? 'MAJEURE' : l.tier === 2 ? 'SOLIDE' : ''}</span>
+      <span class="t ${l.tier === 1 ? 't1' : ''}">${
+        l.tier === 1 ? 'MAJEURE' : l.tier === 2 ? 'SUIVIE' : ''}</span>
     </div>`).join('')
     : '<div class="empty">Aucune compétition trouvée.</div>';
 
@@ -287,9 +288,21 @@ $('list').addEventListener('click', (e) => {
   const l = e.target.closest('[data-l]');
   if (l) ouvrir(Number(l.dataset.l));
 });
-$('back').onclick = () => sommaire();
+$('back').onclick = () => {
+  // On nettoie l'adresse : revenir au sommaire puis rafraîchir ne doit pas
+  // rouvrir la compétition qu'on vient de quitter.
+  if (location.search) history.replaceState({}, '', '/teletext');
+  sommaire();
+};
 
-sommaire();
+/**
+ * Ouverture directe d'une compétition via /teletext?ligue=207.
+ * Sans cela, un lien depuis une fiche de match ramenait au sommaire, et il
+ * fallait retrouver la compétition à la main parmi neuf cent cinquante.
+ */
+const demandee = Number(new URLSearchParams(location.search).get('ligue'));
+if (Number.isInteger(demandee) && demandee > 0) ouvrir(demandee);
+else sommaire();
 </script>
 <script src="/fx.js" defer></script>
 <script src="/nav.js" defer></script>

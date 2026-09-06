@@ -26,7 +26,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .chip b{font-family:var(--banner);font-size:14px;line-height:1}
 .chip span{font-size:9px;opacity:.55;letter-spacing:.05em}
 
-.screen{flex:1;display:none;flex-direction:column;min-height:0;padding-bottom:66px;z-index:2}
+.screen{flex:1;display:none;flex-direction:column;min-height:0;z-index:2}
 .screen.on{display:flex}
 
 /* -------------------------------------------------------------- kiosque */
@@ -223,14 +223,16 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 @keyframes rise{from{opacity:0;transform:translate(-50%,10px)}}
 
 /* ---------------------------------------------------------------- nav */
-.nav{position:absolute;bottom:0;left:0;right:0;height:62px;z-index:12;display:grid;
-  grid-template-columns:repeat(3,1fr);align-items:center;
-  background:linear-gradient(180deg,rgba(10,13,17,.55),#0A0D11 45%);
-  border-top:1px solid rgba(242,238,228,.1);padding-bottom:env(safe-area-inset-bottom)}
-.nav button{background:none;border:0;color:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;
-  font-size:9px;letter-spacing:.11em;font-family:var(--banner);opacity:.42;cursor:pointer}
-.nav button.on{opacity:1;color:var(--projo)}
-.nav svg{width:19px;height:19px}
+/* Onglets en haut plutôt qu'en bas : la barre de navigation commune occupe
+   déjà le bas de l'écran, et deux barres superposées se recouvraient — les
+   onglets devenaient inatteignables. */
+.nav{display:flex;gap:6px;padding:4px 16px 10px;flex:none;z-index:5}
+.nav button{flex:1;background:rgba(8,11,16,.7);border:1px solid rgba(242,238,228,.14);
+  border-radius:8px;color:inherit;display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:9px 4px;font-size:11px;letter-spacing:.08em;font-family:var(--banner);opacity:.55;
+  cursor:pointer}
+.nav button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
+.nav svg{width:15px;height:15px}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -250,6 +252,12 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
       <div class="chip"><b id="packs">0</b><span>boosters</span></div>
     </div>
   </div>
+
+  <nav class="nav">
+    <button data-go="kiosque" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>KIOSQUE</button>
+    <button data-go="dex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18M4 8h4M4 13h4"/></svg>CLASSEUR</button>
+    <button data-go="equipe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>DUEL</button>
+  </nav>
 
   <section class="screen on" id="s-kiosque">
     <div class="stage">
@@ -279,11 +287,6 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
     <div id="teamBody" style="padding:8px 18px 22px;overflow-y:auto;flex:1"></div>
   </section>
 
-  <nav class="nav">
-    <button data-go="kiosque" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>KIOSQUE</button>
-    <button data-go="dex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18M4 8h4M4 13h4"/></svg>CLASSEUR</button>
-    <button data-go="equipe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>DUEL</button>
-  </nav>
 
   <div class="tearzone" id="tearzone">
     <div class="tearpack" id="tearpack"><div class="glow" id="tearglow"></div><div class="rip" id="tearrip"></div></div>

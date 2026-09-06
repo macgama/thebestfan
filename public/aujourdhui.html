@@ -94,6 +94,36 @@ input:focus{outline:none;border-color:var(--projo)}
 .ev .txt small{display:block;opacity:.45;font-size:10.5px}
 .ev.droite{flex-direction:row-reverse;text-align:right}
 .ev.droite .txt{text-align:right}
+
+/* ------------------------------------------------------- statistiques */
+.st{padding:9px 4px}
+.st .l{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.st .l b{font-family:var(--banner);font-size:13.5px}
+.st .l span{opacity:.5;font-size:10.5px;letter-spacing:.1em;align-self:center}
+.st .b{display:flex;height:5px;border-radius:3px;overflow:hidden;background:rgba(242,238,228,.09)}
+.st .b i{display:block;height:100%}
+.st .b i:first-child{background:var(--projo)}
+.st .b i:last-child{background:var(--bleu)}
+
+/* ------------------------------------------------------- compositions */
+.compo{display:flex;gap:10px;padding:6px 0}
+.compo > div{flex:1;min-width:0}
+.compo .eq{font-family:var(--banner);font-size:12px;letter-spacing:.06em;padding-bottom:7px;
+  border-bottom:1px solid rgba(242,238,228,.1);margin-bottom:7px;display:flex;
+  justify-content:space-between;align-items:baseline;gap:6px}
+.compo .eq small{font-size:10px;opacity:.5;font-family:var(--ui);letter-spacing:.04em}
+.compo .j{display:flex;gap:7px;padding:4px 0;font-size:12px;align-items:baseline}
+.compo .j .n{width:19px;text-align:right;opacity:.4;font-family:var(--banner);font-size:11px;flex:none}
+.compo .j .p{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.compo .j .po{font-size:9.5px;opacity:.35;flex:none}
+.compo .banc{margin-top:10px;font-size:10px;letter-spacing:.14em;opacity:.4;
+  font-family:var(--banner)}
+.compo .coach{margin-top:9px;font-size:11px;opacity:.5;font-style:italic}
+.souspage{display:flex;gap:5px;padding:14px 0 4px}
+.souspage button{flex:1;background:rgba(8,11,16,.7);border:1px solid rgba(242,238,228,.13);
+  border-radius:7px;color:inherit;padding:8px 4px;font-family:var(--banner);font-size:10.5px;
+  letter-spacing:.07em;cursor:pointer;opacity:.55}
+.souspage button.on{background:var(--craie);color:#0B0E13;opacity:1}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -161,18 +191,40 @@ document.querySelector('.filtres').onclick = (e) => {
   rendre();
 };
 let t = null;
-$('q').oninput = () => { clearTimeout(t); t = setTimeout(() => { terme = $('q').value.trim().toLowerCase(); rendre(); }, 250); };
+$('q').oninput = () => {
+  clearTimeout(t);
+  // Court délai : filtrer à chaque frappe sur huit cents matchs saccade.
+  t = setTimeout(() => { terme = $('q').value.trim().toLowerCase(); rendre(); }, 200);
+};
 
 /**
  * Minute affichée : le serveur donne la minute et l'instant où il l'a lue.
  * Le chrono défile donc localement, sans redemander quoi que ce soit —
  * c'est ce qui manquait, et ça ne coûte pas un appel de plus.
  */
+/**
+ * Minute affichée.
+ *
+ * Le serveur donne la minute lue chez l'API et l'instant de cette lecture. On
+ * ajoute le temps écoulé depuis, ce qui fait défiler le chrono sans un seul
+ * appel réseau.
+ *
+ * Le plafond dépend de la période : à la mi-temps le chrono s'arrête, en
+ * première période il ne dépasse pas 45, et au-delà on affiche « 45+ » plutôt
+ * qu'un nombre faux — le temps additionnel n'est pas connu.
+ */
 function minute(m) {
   if (!m.live || m.elapsed == null) return null;
   if (m.status === 'HT') return 'MT';
-  const ecoule = Math.floor((Date.now() - m.luA) / 60000);
-  return `${Math.min(m.elapsed + ecoule, m.status === '2H' ? 90 : 45) }'`;
+  if (m.status === 'BT') return 'PROL.';
+
+  const ecoule = Math.max(0, Math.floor((Date.now() - (m.luA ?? Date.now())) / 60000));
+  const brut = m.elapsed + ecoule;
+
+  if (m.status === '1H') return brut > 45 ? '45+' : `${brut}'`;
+  if (m.status === '2H') return brut > 90 ? '90+' : `${brut}'`;
+  if (m.status === 'ET') return brut > 120 ? '120+' : `${brut}'`;
+  return `${brut}'`;
 }
 
 function heure(d) {
@@ -243,8 +295,9 @@ function planifier() {
     planifier();
   }, delai);
 }
-// Le chrono défile toutes les vingt secondes, sans appel réseau.
-setInterval(() => { if (data?.enDirect && !document.hidden) rendre(); }, 20_000);
+// Le chrono défile toutes les dix secondes, sans appel réseau : c'est assez
+// fréquent pour qu'un changement de minute se voie presque tout de suite.
+setInterval(() => { if (data?.enDirect && !document.hidden) rendre(); }, 10_000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) charger(); });
 
 /* ---------------------------------------------------------- fiche match */
@@ -287,9 +340,19 @@ async function ouvrirFiche(id) {
       <span>${new Date(f.date).toLocaleDateString('fr',
         { weekday:'long', day:'numeric', month:'long' })}</span>
     </div>
-    ${d.evenements.length ? `<h4>LE FIL DU MATCH</h4>
+    <div class="souspage" id="souspage">
+      <button data-s="fil" class="on">LE FIL</button>
+      <button data-s="stats">STATISTIQUES</button>
+      <button data-s="compo">COMPOSITIONS</button>
+    </div>
+    <div id="souscontenu"></div>`;
+
+  // Les trois volets sont dessinés à la demande : afficher d'un coup le fil,
+  // les statistiques et vingt-deux joueurs rendrait la fiche illisible.
+  const VOLETS = {
+    fil: () => d.evenements.length ? `
       ${d.evenements.map((ev) => {
-        const droite = ev.equipe === e.away.id;
+        const droite = ev.equipe === d.equipes.away.id;
         const ic = ev.type === 'Card'
           ? `<span style="color:${/Red/i.test(ev.detail) ? 'var(--flare)' : 'var(--projo)'}">▮</span>`
           : (ICONES[ev.type] ?? '•');
@@ -300,11 +363,58 @@ async function ouvrirFiche(id) {
             <small>${esc(ev.detail ?? ev.type)}${ev.passeur ? ' · ' + esc(ev.passeur) : ''}</small>
           </span></div>`;
       }).join('')}`
-      : `<h4>LE FIL DU MATCH</h4><div class="vide" style="padding:26px">
-          ${f.fini ? 'Aucun événement enregistré.' : 'Le match n\u2019a pas encore commencé.'}</div>`}
-    ${d.ligue.id ? `<div style="text-align:center;padding:20px 0 30px">
-      <a href="/teletext" style="color:var(--projo);font-size:12.5px">voir le classement de la compétition ›</a>
-    </div>` : ''}`;
+      : `<div class="vide" style="padding:30px">
+          ${d.fixture.fini ? 'Aucun événement enregistré.'
+            : 'Le match n\u2019a pas encore commencé.'}</div>`,
+
+    stats: () => d.statistiques?.length
+      ? d.statistiques.map((st) => `
+        <div class="st">
+          <div class="l"><b>${esc(String(st.home))}</b><span>${esc(st.nom)}</span>
+            <b>${esc(String(st.away))}</b></div>
+          <div class="b"><i style="width:${st.partHome}%"></i>
+            <i style="width:${100 - st.partHome}%"></i></div>
+        </div>`).join('')
+      : `<div class="vide" style="padding:30px">${d.fixture.live || d.fixture.fini
+          ? 'Statistiques indisponibles pour ce match.'
+          : 'Elles apparaîtront dès le coup d\u2019envoi.'}</div>`,
+
+    compo: () => {
+      const c = d.compositions;
+      if (!c?.home && !c?.away) {
+        return `<div class="vide" style="padding:30px">
+          ${d.fixture.live || d.fixture.fini ? 'Compositions non publiées pour ce match.'
+            : 'Les compositions paraissent environ une heure avant le coup d\u2019envoi.'}</div>`;
+      }
+      const cote = (co, nom) => co ? `
+        <div>
+          <div class="eq">${esc(nom)}<small>${esc(co.dispositif ?? '')}</small></div>
+          ${co.titulaires.map((j) => `<div class="j">
+            <span class="n">${j.numero ?? ''}</span>
+            <span class="p">${esc(j.nom ?? '')}</span>
+            <span class="po">${esc(j.poste ?? '')}</span></div>`).join('')}
+          ${co.remplacants.length ? `<div class="banc">REMPLAÇANTS</div>
+            ${co.remplacants.map((j) => `<div class="j" style="opacity:.6">
+              <span class="n">${j.numero ?? ''}</span>
+              <span class="p">${esc(j.nom ?? '')}</span></div>`).join('')}` : ''}
+          ${co.entraineur ? `<div class="coach">${esc(co.entraineur)}</div>` : ''}
+        </div>` : '<div class="vide" style="padding:20px">Non publiée</div>';
+      return `<div class="compo">
+        ${cote(c.home, d.equipes.home.name)}${cote(c.away, d.equipes.away.name)}</div>`;
+    },
+  };
+
+  let volet = 'fil';
+  const dessiner = () => { $('souscontenu').innerHTML = VOLETS[volet](); };
+  dessiner();
+
+  $('souspage').onclick = (ev) => {
+    const b = ev.target.closest('[data-s]');
+    if (!b) return;
+    volet = b.dataset.s;
+    [...$('souspage').children].forEach((x) => x.classList.toggle('on', x === b));
+    dessiner();
+  };
 
   $('ferme').onclick = () => $('fiche').classList.remove('on');
 }

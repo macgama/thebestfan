@@ -157,17 +157,69 @@ await pool.query(`
 // Les amicaux sont éligibles techniquement mais désactivés : un souvenir de
 // match amical ne vaut rien, et l'API prévient elle-même que leur couverture
 // est irrégulière.
-/** Palier de notoriété : il décide du prix des vignettes et de l'ordre d'affichage. */
-const MAJEURES = new Set(['UEFA Champions League', 'World Cup', 'Euro Championship',
-  'UEFA Europa League', 'Copa America']);
-const GRANDS = new Set(['England', 'Spain', 'Italy', 'Germany', 'France']);
-const SOLIDES = new Set(['Switzerland', 'Netherlands', 'Portugal', 'Belgium',
-  'Brazil', 'Argentina', 'Turkey', 'Scotland', 'Austria', 'Denmark']);
+/**
+ * Palier de notoriété : il décide du prix des vignettes et de l'ordre
+ * d'affichage dans le télétexte.
+ *
+ * La règle doit nommer les compétitions, pas se contenter de leur pays.
+ * « toutes les ligues anglaises » classait la National League South Play-offs
+ * au même rang que la Premier League — c'est absurde, et ça noyait les grandes
+ * compétitions au milieu de leurs divisions inférieures.
+ */
+const MAJEURES = new Set([
+  'UEFA Champions League', 'World Cup', 'Euro Championship',
+  'Copa America', 'Africa Cup of Nations', 'UEFA Nations League',
+]);
+
+/** Première division de chaque grand pays, nommée explicitement. */
+const ELITES = new Map([
+  ['England', 'Premier League'],
+  ['Spain', 'La Liga'],
+  ['Italy', 'Serie A'],
+  ['Germany', 'Bundesliga'],
+  ['France', 'Ligue 1'],
+]);
+
+/** Deuxièmes divisions des grands pays, et élites des pays solides. */
+const SECONDES = new Map([
+  ['England', 'Championship'],
+  ['Spain', 'Segunda División'],
+  ['Italy', 'Serie B'],
+  ['Germany', '2. Bundesliga'],
+  ['France', 'Ligue 2'],
+]);
+
+const SOLIDES = new Map([
+  ['Switzerland', 'Super League'],
+  ['Netherlands', 'Eredivisie'],
+  ['Portugal', 'Primeira Liga'],
+  ['Belgium', 'Jupiler Pro League'],
+  ['Brazil', 'Serie A'],
+  ['Argentina', 'Liga Profesional Argentina'],
+  ['Turkey', 'Süper Lig'],
+  ['Scotland', 'Premiership'],
+  ['Austria', 'Bundesliga'],
+  ['Denmark', 'Superliga'],
+  ['USA', 'Major League Soccer'],
+  ['Mexico', 'Liga MX'],
+]);
+
+const COUPES_MAJEURES = new Set([
+  'UEFA Europa League', 'UEFA Europa Conference League', 'UEFA Conference League',
+  'FA Cup', 'Copa del Rey', 'Coppa Italia', 'DFB Pokal', 'Coupe de France',
+  'Copa Libertadores',
+]);
 
 function palier(e) {
   if (MAJEURES.has(e.nom)) return 1;
-  if (GRANDS.has(e.pays) && e.type === 'League') return 1;
-  if (e.nom.startsWith('UEFA') || SOLIDES.has(e.pays)) return 2;
+  if (ELITES.get(e.pays) === e.nom) return 1;
+  if (COUPES_MAJEURES.has(e.nom)) return 2;
+  if (SECONDES.get(e.pays) === e.nom) return 2;
+  if (SOLIDES.get(e.pays) === e.nom) return 2;
+  // Les compétitions de sélections restent visibles sans être majeures.
+  if (e.famille === 'international' && !/friendl|qualif|u1[7-9]|u2[0-3]|women/i.test(e.nom)) {
+    return 2;
+  }
   return 3;
 }
 
