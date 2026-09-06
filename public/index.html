@@ -27,6 +27,10 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* ------------------------------------------------------- vitrine */
 .wrap{position:relative;z-index:3;flex:1;display:flex;flex-direction:column}
 .pitch{margin-top:auto;padding:22px 22px 0;text-align:center}
+.embleme{width:94px;height:auto;display:block;margin:0 auto 14px;
+  filter:drop-shadow(0 8px 30px rgba(245,195,59,.35));animation:flotte 5s ease-in-out infinite}
+@keyframes flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){.embleme{animation:none}}
 .logo{font-family:var(--banner);font-weight:700;font-size:40px;letter-spacing:.1em;line-height:.95;
   text-shadow:0 4px 34px rgba(0,0,0,.95)}
 .logo em{font-style:normal;color:var(--projo)}
@@ -105,6 +109,13 @@ a.tile .badge{position:absolute;top:12px;right:12px;background:var(--projo);colo
   border-radius:999px;font-family:var(--banner);font-size:10px;padding:2px 9px}
 a.tile .badge.rouge{background:var(--flare);color:#fff}
 </style>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/img/logo.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 <main id="app">
@@ -112,6 +123,8 @@ a.tile .badge.rouge{background:var(--flare);color:#fff}
 
   <div class="wrap" id="vitrine">
     <div class="pitch">
+      <img class="embleme" src="/img/logo.avif" alt=""
+        onerror="this.onerror=null;this.src='/img/logo.png'">
       <div class="logo">THE<em>BEST</em>FAN<small>LE JEU DES TRIBUNES</small></div>
       <p class="claim">Ton club joue. <b>Ta tribune aussi.</b></p>
       <p class="sell">Collectionne tes supporters, pousse sur la corde pendant les vrais matchs, et repars avec des cartes que personne ne pourra t'acheter.</p>
@@ -131,6 +144,8 @@ a.tile .badge.rouge{background:var(--flare);color:#fff}
 
   <div class="hub" id="hub">
     <div class="bar">
+      <img src="/img/logo.avif" alt="" style="width:30px;height:30px;object-fit:contain"
+        onerror="this.onerror=null;this.src='/img/logo.png'">
       <div class="who"><b id="pseudo">—</b><small id="clubline"></small></div>
       <div class="coins">
         <div class="coin"><i style="background:var(--projo)"></i><b id="scarves">0</b></div>
