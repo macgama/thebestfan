@@ -252,10 +252,21 @@ if (process.env.DATABASE_URL) {
 
 /* ---------------------------------------------------------------- routes */
 
+// Express ne connaît pas encore l'AVIF : sans ça, les images partent en
+// « application/octet-stream » et ne tiennent que par la reconnaissance de
+// format du navigateur — ce qui casse le cache de certains proxys.
+const TYPES = { '.avif': 'image/avif', '.webmanifest': 'application/manifest+json' };
+const typer = (res, chemin) => {
+  const t = TYPES[path.extname(chemin).toLowerCase()];
+  if (t) res.setHeader('content-type', t);
+};
+
 // Les visuels ne changent jamais : un an de cache. Les pages, une heure.
-app.use('/img', express.static(path.join(__dirname, 'public/img'), { maxAge: '365d', immutable: true }));
-app.use('/video', express.static(path.join(__dirname, 'public/video'), { maxAge: '365d', immutable: true }));
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
+app.use('/img', express.static(path.join(__dirname, 'public/img'),
+  { maxAge: '365d', immutable: true, setHeaders: typer }));
+app.use('/video', express.static(path.join(__dirname, 'public/video'),
+  { maxAge: '365d', immutable: true }));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h', setHeaders: typer }));
 
 app.get('/healthz', (_req, res) => {
   res.json({

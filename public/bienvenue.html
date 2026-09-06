@@ -107,6 +107,13 @@ input:focus{outline:none;border-color:var(--projo)}
 @keyframes quake{0%,100%{transform:translate(0,0)}14%{transform:translate(-7px,4px)}
   38%{transform:translate(6px,-5px)}62%{transform:translate(-4px,-2px)}86%{transform:translate(3px,3px)}}
 </style>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/img/logo.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 <main id="app">
@@ -116,7 +123,9 @@ input:focus{outline:none;border-color:var(--projo)}
 
   <!-- 1 -->
   <section class="scene on" id="s1">
-    <h1 class="title up">TU N'AS PAS<br>ENCORE DE <span class="em">PLACE</span></h1>
+    <img class="up" src="/img/logo.avif" alt="" style="width:78px;margin-bottom:20px"
+      onerror="this.onerror=null;this.src='/img/logo.png'">
+    <h1 class="title up d1">TU N'AS PAS<br>ENCORE DE <span class="em">PLACE</span></h1>
     <p class="sub up d1">Une tribune, ce n'est pas un compte. C'est un club, des gens autour, et des soirs qu'on n'oublie pas.</p>
     <button class="go up d2" id="b1">PRENDRE MA PLACE</button>
   </section>

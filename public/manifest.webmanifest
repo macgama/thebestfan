@@ -1,0 +1,24 @@
+{
+  "name": "thebestfan — le jeu des tribunes",
+  "short_name": "thebestfan",
+  "description": "Collectionne tes supporters, pousse sur la corde pendant les vrais matchs.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#04060A",
+  "theme_color": "#0A0D11",
+  "lang": "fr",
+  "categories": ["games", "sports"],
+  "icons": [
+    { "src": "/img/icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/img/icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/img/icone-maskable-512.png", "sizes": "512x512", "type": "image/png",
+      "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Le Grand Virage", "url": "/virage" },
+    { "name": "Les matchs du jour", "url": "/matchs" },
+    { "name": "Mes Fanzzy", "url": "/fanzzy" }
+  ]
+}
