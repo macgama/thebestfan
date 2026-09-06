@@ -10,7 +10,15 @@
  * cérémonie d'arrivée, et les deux écrans de jeu où chaque pixel compte.
  */
 (() => {
-  const SANS_BARRE = ['/compte', '/bienvenue', '/duel', '/virage'];
+  // Écrans où la barre n'a pas sa place : la connexion et la cérémonie
+  // d'arrivée, qui sont des parcours dont on ne sort pas au milieu.
+  const SANS_BARRE = ['/compte', '/bienvenue'];
+
+  // Écrans de jeu : la barre est là, mais elle s'efface dès qu'on joue et
+  // revient au moindre arrêt. Sans elle, le Virage était un cul-de-sac ;
+  // toujours affichée, elle mangerait la place et provoquerait des sorties
+  // accidentelles en plein chant.
+  const ECRANS_DE_JEU = ['/duel', '/virage'];
   const chemin = location.pathname.replace(/\/$/, '') || '/';
   if (SANS_BARRE.includes(chemin)) return;
 
@@ -30,6 +38,8 @@
   const css = `
   :root{--nav-h:62px}
   body{padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom)) !important}
+  body.tbf-jeu{padding-bottom:0 !important}
+  body.tbf-jeu #app{padding-bottom:calc(var(--nav-h) * .55 + env(safe-area-inset-bottom))}
   #tbf-amb{position:fixed;inset:0;z-index:-2;background-size:cover;background-position:center 25%;
     opacity:0;transition:opacity 1.8s;pointer-events:none}
   #tbf-amb.on{opacity:.16}
@@ -46,6 +56,9 @@
   #tbf-nav a.on::before{content:"";position:absolute;top:0;left:26%;right:26%;height:2px;
     background:var(--c);border-radius:0 0 3px 3px;box-shadow:0 0 12px var(--c)}
   #tbf-nav svg{width:20px;height:20px}
+  #tbf-nav.tbf-discret{background:linear-gradient(180deg,rgba(8,11,16,.4),rgba(8,11,16,.92) 55%);
+    transition:opacity .45s,transform .45s}
+  #tbf-nav.tbf-cache{opacity:.12;transform:translateY(58%)}
   #tbf-nav .pip{position:absolute;top:9px;right:calc(50% - 17px);width:7px;height:7px;border-radius:50%;
     background:#E0402C;box-shadow:0 0 8px #E0402C;animation:tbfblink 1.3s infinite}
   @keyframes tbfblink{0%,100%{opacity:1}50%{opacity:.25}}
@@ -58,6 +71,8 @@
   const style = document.createElement('style');
   style.textContent = css;
   document.head.appendChild(style);
+
+  if (ECRANS_DE_JEU.includes(chemin)) document.body.classList.add('tbf-jeu');
 
   // Décor : la même illustration que l'accueil, très assombrie.
   const amb = document.createElement('div');
@@ -80,6 +95,22 @@
         stroke-linecap="round" stroke-linejoin="round"><path d="${e.d}"/></svg>${e.t}</a>`;
   }).join('');
   document.body.appendChild(nav);
+
+  if (ECRANS_DE_JEU.includes(chemin)) {
+    nav.classList.add('tbf-discret');
+    let minuterie = null;
+    const reveiller = () => {
+      nav.classList.remove('tbf-cache');
+      clearTimeout(minuterie);
+      minuterie = setTimeout(() => nav.classList.add('tbf-cache'), 4000);
+    };
+    reveiller();
+    // Toute action dans la page repousse la disparition ; l'inaction la
+    // ramène. C'est le comportement d'une barre d'application vidéo.
+    for (const evt of ['pointerdown', 'pointerup', 'scroll']) {
+      document.addEventListener(evt, reveiller, { passive: true });
+    }
+  }
 
   /* Braises discrètes : le décor doit vivre sans distraire de la page. */
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
