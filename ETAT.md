@@ -40,8 +40,14 @@ Le projet suit une méthode constante, à conserver :
   cher qu'il n'économise.
 - **`node scripts/verif-pages.mjs` avant chaque livraison front.** Il compile
   chaque script de page, vérifie qu'aucun accent grave ne traîne dans un bloc
-  CSS écrit en gabarit de chaîne, que chaque page charge la barre commune, et
-  qu'aucun catalogue n'est réécrit en dur.
+  CSS écrit en gabarit de chaîne, que chaque page charge la barre commune,
+  qu'aucun catalogue n'est réécrit en dur, et qu'aucun module serveur n'a
+  atterri dans `public/` — tout ce dossier est téléchargeable.
+- **`node scripts/verif-cablage.mjs` avant chaque livraison serveur.** Il monte
+  les modules sur un faux pool, sans base ni réseau, et vérifie qu'aucune
+  dépendance construite trop tard dans `server.js` n'est restée à `null`. Ce
+  genre de panne ne dit rien : pas d'exception, pas de log, juste une
+  fonctionnalité qui ne s'exécute jamais.
 
 ### Les tests d'interface
 
@@ -181,6 +187,25 @@ Par ordre d'utilité :
 ---
 
 ## 6. Pièges connus
+
+**Pousser sur GitHub ne met rien en ligne.** C'est le piège le plus cher de ce
+projet, parce qu'il ne ressemble pas à une panne : le code est sur GitHub, le
+site répond, `/healthz` est vert — et la production tourne sur une version
+d'avant. Infomaniak ne va chercher le dépôt que lorsqu'on **lance la
+construction à la main** dans l'onglet Node.js du Manager ; c'est là qu'est la
+commande `git pull && npm install && node build.mjs`. La commande de lancement,
+`npm start`, redémarre l'application sans jamais faire de `git pull` : un
+redémarrage seul relance donc l'ancien code.
+
+Le contrôle qui tranche en dix secondes, sans se fier au cache du navigateur :
+
+```bash
+curl -s "https://thebestfan.online/api/fanzzy/dex?v=$(date +%s)" | grep -c '"id"'
+```
+
+Le compte doit correspondre au nombre de Fanzzy du dépôt. S'il est plus bas, la
+construction n'a pas été lancée. Une page nouvelle qui répond 404 alors que son
+fichier existe dans `public/` dit la même chose.
 
 **Le schéma doit être complet.** 27 tables. Une table manquante produit des
 erreurs déroutantes — c'est ce qui a causé « Ouverture impossible ». Contrôle :

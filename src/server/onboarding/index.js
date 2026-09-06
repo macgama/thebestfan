@@ -20,12 +20,23 @@ export const SLOTS_DEPART = 2;
 export const SLOTS_MAX = 8;
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
-export function createOnboarding({ pool, requireAuth, football }) {
+export function createOnboarding({ pool, requireAuth, football = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
   };
   const fail = (code) => Object.assign(new Error(code), { code });
+
+  /**
+   * Le suivi des matchs n'existe que si `API_FOOTBALL_KEY` est présent, et
+   * `server.js` le construit *après* l'inscription. Reçu en simple paramètre,
+   * il restait donc à `null` pour toujours : le club choisi à la cérémonie
+   * d'arrivée n'avait jamais son calendrier chargé, et `/deck`, `/duel-nvn` et
+   * `/virage` n'avaient aucun match à proposer au joueur — sur son tout premier
+   * écran. On garde la référence dans un objet que `server.js` rebranche une
+   * fois le module prêt, comme il le fait déjà pour l'administration.
+   */
+  const module = { football };
 
   /* ------------------------------------------------------------- état */
 
@@ -77,7 +88,10 @@ export function createOnboarding({ pool, requireAuth, football }) {
        ON DUPLICATE KEY UPDATE is_main = VALUES(is_main)`,
       [userId, teamId, main ? 1 : 0]);
     // Premier suivi d'un club inconnu : on charge son calendrier en fond.
-    football?.poller.refreshTeam(teamId).catch(() => {});
+    // Sans lui, `fixtures` reste vide pour ce club jusqu'à la passe
+    // quotidienne, et le joueur n'a aucun match sur lequel s'adosser.
+    module.football?.poller.refreshTeam(teamId).catch((e) =>
+      console.error('[onboarding] calendrier du club', teamId, e.message));
   }
 
   /** Un emplacement supplémentaire s'achète, il ne se donne pas. */
@@ -273,5 +287,8 @@ export function createOnboarding({ pool, requireAuth, football }) {
     res.json({ ok: true });
   }));
 
-  return { router, state, follow, buySlot, openWelcome, equip, wearSkin, loadout };
+  // `module` porte la référence rebranchée par server.js : c'est le même objet
+  // qui est renvoyé, sinon le rebranchement ne toucherait rien.
+  return Object.assign(module,
+    { router, state, follow, buySlot, openWelcome, equip, wearSkin, loadout });
 }
