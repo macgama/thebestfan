@@ -78,8 +78,35 @@
     @keyframes fxdoux{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}
   }`;
 
+  /* ------------------------------------------------- personnages vivants
+     Un Fanzzy figé sur une carte a l'air d'un autocollant. Trois animations
+     décalées et lentes suffisent à le rendre vivant : la respiration, un
+     léger balancement, et une réaction quand on le touche.
+
+     Pourquoi pas une vidéo par personnage ? Vingt-sept Fanzzy, ce serait
+     vingt-sept fichiers de plusieurs centaines de kilo-octets à charger dans
+     une grille. Ici, c'est zéro octet, ça marche sur les vingt-sept d'un coup,
+     et sur ceux qu'on ajoutera. Les jeux mobiles font exactement ça pour leurs
+     personnages en deux dimensions.                                        */
+  const cssVie = `
+  .fz-vivant{transform-origin:50% 100%;will-change:transform;
+    animation:fzsouffle var(--fz-duree,3.4s) ease-in-out infinite,
+              fzbalance calc(var(--fz-duree,3.4s) * 2.3) ease-in-out infinite;
+    animation-delay:var(--fz-retard,0s),calc(var(--fz-retard,0s) * 1.7)}
+  @keyframes fzsouffle{0%,100%{transform:scaleY(1) scaleX(1) translateY(0)}
+    50%{transform:scaleY(1.018) scaleX(.993) translateY(-1.5%)}}
+  @keyframes fzbalance{0%,100%{rotate:-.7deg}50%{rotate:.7deg}}
+  .fz-vivant.fz-reagit{animation:fzsaute .55s cubic-bezier(.25,.9,.3,1)}
+  @keyframes fzsaute{0%{transform:scale(1) translateY(0)}
+    22%{transform:scale(1.06,.94) translateY(0)}
+    52%{transform:scale(.96,1.07) translateY(-9%)}
+    78%{transform:scale(1.02,.98) translateY(0)}
+    100%{transform:scale(1) translateY(0)}}
+  @media (prefers-reduced-motion:reduce){
+    .fz-vivant,.fz-vivant.fz-reagit{animation:none}}`;
+
   const style = document.createElement('style');
-  style.textContent = css;
+  style.textContent = css + cssVie;
   document.head.appendChild(style);
 
   let calque = null;
@@ -182,9 +209,57 @@
 
   /* ------------------------------------------------------- effets de jeu */
 
+  /**
+   * Rend vivant tout personnage déjà présent dans la page.
+   *
+   * Les durées et les retards sont dérivés d'une graine stable — l'identifiant
+   * du Fanzzy — pour que deux cartes voisines ne respirent jamais en même
+   * temps. Une grille synchronisée fait mécanique ; décalée, elle fait foule.
+   */
+  function animer(racineEl = document) {
+    const cibles = racineEl.querySelectorAll?.('.illu, [data-vivant]') ?? [];
+    for (const el of cibles) {
+      if (el.classList.contains('fz-vivant')) continue;
+      const graine = (el.getAttribute('data-vivant') || el.src || '')
+        .split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7);
+      el.style.setProperty('--fz-duree', `${3 + (graine % 17) / 10}s`);
+      el.style.setProperty('--fz-retard', `-${(graine % 31) / 10}s`);
+      el.classList.add('fz-vivant');
+    }
+  }
+
+  /** Réaction au toucher : le personnage sursaute, comme s'il répondait. */
+  function reagir(el) {
+    if (!el || doux()) return;
+    el.classList.remove('fz-reagit');
+    void el.offsetWidth;
+    el.classList.add('fz-reagit');
+    setTimeout(() => el.classList.remove('fz-reagit'), 600);
+    buzz(10);
+  }
+
+  // Les cartes arrivent souvent après le premier rendu — ouverture de booster,
+  // filtre du classeur. On surveille plutôt que de demander à chaque page d'y
+  // penser.
+  if (typeof MutationObserver === 'function') {
+    const veilleur = new MutationObserver(() => animer(document));
+    const lancer = () => {
+      animer(document);
+      veilleur.observe(document.body, { childList: true, subtree: true });
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', lancer);
+    } else lancer();
+
+    document.addEventListener('pointerdown', (e) => {
+      const p = e.target.closest?.('.fz-vivant');
+      if (p) reagir(p);
+    }, { passive: true });
+  }
+
   const FX = {
     couleurs: COULEURS,
-    particules, onde, flash, secousse, titre, nombre,
+    particules, onde, flash, secousse, titre, nombre, animer, reagir,
 
     /** Une carte est jouée : impulsion depuis la carte, onde, éclat. */
     carte(element, { couleur = COULEURS.violet, nom } = {}) {
@@ -274,6 +349,46 @@
         n: rarete === 'crown' ? 70 : 30, taille: 6, duree: 1200 });
       if (rarete === 'crown') { flash(); secousse(1.2); }
       buzz(rarete === 'crown' ? [40, 50, 40, 50, 120] : 20);
+    },
+
+    /**
+     * Le Cri d'un Fanzzy.
+     *
+     * Une vidéo par Cri serait ingérable : vingt-sept Fanzzy, vingt-sept
+     * fichiers à charger au pire moment. Une seule séquence d'ondes est donc
+     * partagée, teintée à la couleur du type et superposée en mode « screen »
+     * pour que seul ce qui brille apparaisse. Elle n'est chargée qu'au premier
+     * Cri de la session.
+     */
+    cri(label, { couleur = COULEURS.or, video = '/video/cri.mp4' } = {}) {
+      const x = innerWidth / 2, y = innerHeight * 0.42;
+      onde({ x, y, couleur, taille: 520 });
+      particules({ x, y, n: 46, distance: 210, taille: 6, duree: 1100,
+        couleurs: [couleur, '#FFF3D0'] });
+      titre(label, null, couleur, 40);
+      secousse(1.1);
+      buzz([30, 40, 30, 40, 90]);
+      if (doux()) return;
+
+      let v = document.getElementById('fx-cri');
+      if (!v) {
+        v = document.createElement('video');
+        v.id = 'fx-cri';
+        v.muted = true; v.playsInline = true; v.preload = 'none';
+        v.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:cover;' +
+          'mix-blend-mode:screen;opacity:0;transition:opacity .35s;pointer-events:none;z-index:92';
+        document.body.appendChild(v);
+      }
+      // Absence du fichier : les particules et le titre suffisent, le Cri
+      // reste lisible. Aucun effet ne doit dépendre d'un téléchargement.
+      v.onerror = () => { v.remove(); };
+      if (!v.src) { v.src = video; v.load(); }
+      v.style.filter = `hue-rotate(0deg) saturate(1.1)`;
+      v.currentTime = 0;
+      v.style.opacity = '1';
+      v.play?.().catch(() => {});
+      clearTimeout(v._t);
+      v._t = setTimeout(() => { v.style.opacity = '0'; v.pause?.(); }, 2600);
     },
 
     /** Fin de duel. */

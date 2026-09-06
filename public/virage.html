@@ -366,6 +366,9 @@ function connect() {
       : r.quality > 0.4 ? 'MOYEN' : 'RATÉ';
     // Le chiffre part de la corde, là où le joueur regarde.
     window.FX?.poussee(r.backfire ? -r.push : r.push, $('knot'), { pour: !r.backfire });
+    // Un geste parfait déclenche le Cri du Fanzzy : c'est la récompense de la
+    // précision, et le seul moment où l'écran entier réagit.
+    if (r.quality > 0.95 && S.you.cri) window.FX?.cri(S.you.cri, { couleur:'var(--projo)' });
     buzz(r.quality > 0.9 ? [20, 30, 40] : 12);
     render();
   });

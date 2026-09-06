@@ -90,6 +90,36 @@ const DEX = [
     mods:{ breathBonus:1.14, parryBonus:1.4 }, cri:{ label:'ÉCHO DU PARCAGE', gest:'mash', power:72 } },
   { id:'X5', nom:'La Nuit du 8e', type:'pyro', set:'NE', stage:1, rar:'crown',
     mods:{ perfectBonus:1.45, tempoWindow:1.2, mashBonus:1.08 }, cri:{ label:'PROLONGATIONS', gest:'mash', power:90 } },
+  /**
+   * LE GAMIN DE DEVANT — le premier Fanzzy à avoir une vraie histoire.
+   *
+   * Onze ans, premier rang, mains crispées sur la barrière, à hurler contre
+   * des types trois fois plus grands que lui. Il ne connaît pas encore tous
+   * les chants, mais il ne s'arrête jamais.
+   *
+   * Ses modificateurs racontent exactement ça : sa colère rend ses gestes
+   * parfaits plus percutants que ceux de n'importe qui, mais il n'a pas le
+   * coffre pour tenir la distance. C'est un Fanzzy de coups d'éclat, pas de
+   * régularité — et sa lignée le fait grandir avec la tribune.
+   */
+  { id:'G1', nom:'Le Gamin de Devant', type:'voix', set:'VN', stage:1, rar:'d2', evo:'G2',
+    histoire:'Onze ans, premier rang, mains sur la barrière. Il ne connaît pas encore '
+      + 'tous les chants, mais il ne s\u2019arrête jamais.',
+    mods:{ perfectBonus:1.35, breathBonus:0.85, tempoWindow:1.1 },
+    cri:{ label:'CRIS DE GOSSE', gest:'tempo', power:58 } },
+
+  { id:'G2', nom:'Le Gamin du Virage', type:'voix', set:'VN', stage:2, rar:'d3', evo:'G3',
+    histoire:'Il a grandi de dix centimètres et appris tous les chants. On lui laisse '
+      + 'le mégaphone quand le capo s\u2019enroue.',
+    mods:{ perfectBonus:1.45, breathBonus:0.92, tempoWindow:1.3 },
+    cri:{ label:'TOUTE LA JOURNÉE', gest:'tempo', power:70 } },
+
+  { id:'G3', nom:'Le Gosse est Capo', type:'voix', set:'VN', stage:3, rar:'star',
+    histoire:'Vingt ans plus tard, il est dos au terrain, face à sa tribune. '
+      + 'Il n\u2019a jamais raté un match depuis.',
+    mods:{ perfectBonus:1.5, tempoWindow:1.6, tempoInterval:60 },
+    cri:{ label:'CELUI QUI N\u2019A JAMAIS LÂCHÉ', gest:'tempo', power:84 } },
+
   { id:'X6', nom:'Section Cendrée', type:'fide', set:'VN', stage:1, rar:'d1',
     mods:{ holdBonus:1.05, breathBonus:1.04 }, cri:{ label:'FIDÈLES', gest:'hold', power:48 } },
 ];

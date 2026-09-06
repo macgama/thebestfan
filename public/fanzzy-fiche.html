@@ -168,14 +168,17 @@ function rendre() {
       <div class="rar">${rar(f.rar)}</div>
       ${d.equipe ? '<div class="tag">EN DUEL</div>' : ''}
       <div class="txt"><h2>${esc(f.nom)}</h2>
-        <div class="sous">${d.possede
+        ${f.histoire ? `<div class="sous" style="max-width:62%;opacity:.85;font-style:italic">
+        ${esc(f.histoire)}</div>` : ''}
+      <div class="sous">${d.possede
           ? `${d.possede} exemplaire${d.possede > 1 ? 's' : ''} · étage ${f.stage}`
           : 'pas encore dans ta collection'}</div></div>
     </div>
 
     <div class="pastilles">
       <span class="pastille" style="--c:${c}"><b>${NOMTYPE[f.type]}</b></span>
-      <span class="pastille">Cri : <b style="color:${c}">${esc(f.cri?.label ?? '—')}</b></span>
+      <button class="pastille" id="essaiCri" style="cursor:pointer;font-family:inherit;color:inherit;
+        background:none">Cri : <b style="color:${c}">${esc(f.cri?.label ?? '—')}</b> ▸</button>
       ${f.cri?.power ? `<span class="pastille">Poussée ${f.cri.power}</span>` : ''}
     </div>
 
@@ -220,13 +223,20 @@ function rendre() {
         : '<div class="vide">Ouvre des boosters pour le trouver.</div>'}
     </div>`;
 
-  // Illustration : reprise du générateur du classeur si disponible.
-  if (window.TBF?.cardArt) {
-    try { $('art').innerHTML = window.TBF.cardArt(window.TBF.cardDef(f.id)); } catch {}
-  } else {
-    $('art').style.background =
-      `radial-gradient(80% 60% at 50% 30%, ${c}44, transparent 70%), #0A0E13`;
-  }
+  // Illustration en pied si elle existe, halo de couleur sinon.
+  $('art').style.background =
+    `radial-gradient(75% 60% at 50% 75%, ${c}3A, transparent 70%), #0A0E13`;
+  const illu = new Image();
+  illu.onload = () => {
+    // `data-vivant` suffit : la couche d'effets repère le personnage et le
+    // fait respirer, sans que cette page ait à s'en occuper.
+    $('art').innerHTML =
+      `<img src="${illu.src}" alt="" data-vivant="${f.id}"
+        style="position:absolute;right:4%;bottom:0;height:118%;width:auto;object-fit:contain;
+        filter:drop-shadow(0 6px 22px rgba(0,0,0,.75))">`;
+  };
+  illu.onerror = () => {};
+  illu.src = `/img/fanzzy/${f.id}.avif`;
 
   $('page').querySelector('.skins').onclick = async (e) => {
     const s = e.target.closest('[data-skin]');
@@ -241,6 +251,10 @@ function rendre() {
       charger();
     } catch { toast('Impossible pour le moment'); }
   };
+
+  // Essayer son Cri sans entrer en duel : c'est ce qui donne envie de le jouer.
+  const essai = $('essaiCri');
+  if (essai) essai.onclick = () => window.FX?.cri(f.cri?.label ?? 'CRI', { couleur: c });
 
   const eq = $('equiper');
   if (eq) eq.onclick = async () => {

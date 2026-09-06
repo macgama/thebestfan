@@ -133,34 +133,63 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished, log
     return live;
   }
 
+  /**
+   * Identité d'un événement.
+   *
+   * On ne peut pas se fier à sa position dans la liste : l'API en insère
+   * parfois un plus tôt — correction VAR, carton ajouté après coup — et tout
+   * ce qui suit se décale. Un but pouvait alors être considéré comme déjà vu
+   * et n'être jamais annoncé. C'est ce qui explique un 3-1 avec seulement
+   * trois cartes-souvenirs.
+   */
+  const identite = (e) => {
+    // Les lignes lues en base nomment la colonne `team_id`, les événements de
+    // l'API `teamId`. Sans cette normalisation, aucune identité ne correspond
+    // et chaque relevé réannonce tous les buts du match.
+    const equipe = e.teamId ?? e.team_id;
+    return `${e.type}|${equipe}|${e.minute ?? '?'}|${e.extra ?? 0}|` +
+           `${e.player ?? ''}|${e.detail ?? ''}`;
+  };
+
   async function pullEvents(f) {
     const known = await store.eventsOf(f.id);
     const rows = await client.eventsOfFixture(f.id);
     const events = rows.map(mapEvent);
-    const inserted = await store.insertEvents(f.id, events);
-    if (!inserted) return;
+    await store.insertEvents(f.id, events);
 
-    // Seuls les buts nouveaux depuis le dernier passage sont annoncés.
     // Match terminé : les classements de sa compétition sont désormais faux.
     if (['FT', 'AET', 'PEN'].includes(f.status) && !finis.has(f.id)) {
       finis.add(f.id);
       try { await onFinished?.(f); } catch (e) { log.error('[poller] fin de match', e.message); }
     }
 
-    const fresh = events.slice(known.length).filter((e) => e.type === 'Goal');
-    let rank = events.slice(0, known.length).filter((e) => e.type === 'Goal').length;
-    for (const g of fresh) {
+    const dejaVus = new Set(known.map(identite));
+    const buts = events.filter((e) => e.type === 'Goal');
+
+    // Le rang d'un but est sa place parmi tous les buts du match, dans
+    // l'ordre chronologique. Il ne dépend plus de ce qui l'entoure, donc il
+    // reste le même d'un relevé à l'autre : la frappe est rejouable.
+    const ordonnes = buts.slice().sort((a, b) =>
+      (a.minute ?? 0) - (b.minute ?? 0) || (a.extra ?? 0) - (b.extra ?? 0));
+
+    for (const [i, g] of ordonnes.entries()) {
+      if (dejaVus.has(identite(g))) continue;
+
+      // Score à cet instant précis, reconstitué en comptant les buts
+      // précédents. L'ancien code prenait le score courant, ce qui datait
+      // faussement toutes les cartes frappées dans le même relevé.
+      const avant = ordonnes.slice(0, i + 1);
+      const marques = (equipe) => avant.filter((x) => x.teamId === equipe).length;
+
       const payload = {
         fixtureId: f.id,
-        // Rang du but dans le match : c'est la clé qui rend la frappe des
-        // cartes-souvenirs rejouable sans doublon.
-        seq: ++rank,
+        seq: i + 1,
         leagueId: f.leagueId,
         kickoffAt: f.kickoffAt,
         teamId: g.teamId,
         minute: g.minute,
         player: g.player,
-        score: [f.homeGoals, f.awayGoals],
+        score: [marques(f.teams.home?.id), marques(f.teams.away?.id)],
         home: f.teams.home,
         away: f.teams.away,
       };
