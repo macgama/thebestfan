@@ -5,7 +5,7 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « appui long et stockage des collections ».
+Dernière mise à jour : session « compositions, statistiques, place de la barre ».
 
 ---
 
@@ -32,7 +32,13 @@ Le projet suit une méthode constante, à conserver :
 - **Le code est commenté en français**, et les commentaires expliquent le
   *pourquoi*, pas le *quoi*.
 - **Les messages d'erreur doivent nommer la cause.** Plusieurs séances ont été
-  perdues sur des « impossible » qui cachaient une table manquante.
+  perdues sur des « impossible » qui cachaient une table manquante. La même
+  faute a été refaite trois fois : ouverture de booster, télétexte,
+  compositions. Un message vague coûte toujours plus cher qu'il n'économise.
+- **`node scripts/verif-pages.mjs` avant chaque livraison front.** Il compile
+  chaque script de page et vérifie qu'aucun accent grave ne traîne dans un bloc
+  CSS écrit en gabarit de chaîne — cette faute a cassé `nav.js` deux fois et
+  reste invisible à la relecture.
 
 ---
 
@@ -138,6 +144,18 @@ identifie par type, équipe, minute et joueur.
 **Le SMTP n'est pas configuré** tant que `/healthz` affiche `"etat":"console"`.
 Les mails de vérification partent alors dans les logs du Manager.
 
+**Ne jamais mettre en cache une réponse vide comme si elle était définitive.**
+Une composition demandée avant sa publication revient vide ; la garder trente
+minutes fait manquer sa parution. Les réponses vides vivent 90 secondes.
+
+**Une page à hauteur fixe ne se décale pas avec une marge sur le corps du
+document** : son contenu est coupé. La barre commune réserve donc sa place sur
+le conteneur `#app`, pas sur `body`.
+
+**L'appui long ouvre le menu natif du navigateur sur mobile** et vole le geste
+de déchirure d'un booster. Neutralisé dans `nav.js` par trois moyens
+complémentaires — un seul ne suffit pas selon les navigateurs.
+
 ---
 
 ## 7. Questions juridiques ouvertes
@@ -153,6 +171,19 @@ Les mails de vérification partent alors dans les logs du Manager.
   chose.
 
 ---
+
+## 7 bis. À faire sur le serveur, en attente
+
+Ces trois points étaient ouverts à la fin de la dernière session :
+
+1. **Relancer l'inventaire des compétitions.** Les paliers en base suivent
+   encore l'ancienne règle, qui classait 117 compétitions comme « majeures ».
+   `node --env-file=.env scripts/coverage.mjs` — attendu : une dizaine.
+2. **Déclarer un administrateur.** Aucun compte n'a le rôle. Ajouter
+   `ADMIN_EMAILS` puis redémarrer.
+3. **Donner leur tenue de base aux Fanzzy anciens** :
+   `mysql … < sql/tenues-de-base.sql`. Le script finit par un contrôle qui doit
+   afficher zéro.
 
 ## 8. Configuration du serveur
 
