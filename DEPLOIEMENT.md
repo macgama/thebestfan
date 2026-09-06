@@ -278,6 +278,18 @@ classement, même adossé à un match du jour.
 Seuls les duels classés écrivent dans `duel_results`, et les bots n'y figurent
 pas.
 
+## Les visuels
+
+Toute image ou vidéo générée suit les règles de `VISUELS.md` : aucun nom ni
+logo de marque, aucun nom ni écusson de club, aucun texte dans l'illustration,
+aucune personne réelle. Les couleurs sont libres — une écharpe bleu et blanc
+n'appartient à personne — et les drapeaux nationaux sont autorisés pour les
+compétitions de sélections.
+
+Ces règles concernent ce que **nous fabriquons**. Les logos affichés dans le
+télétexte et les résultats viennent d'API-Football, dans un contexte
+d'information sportive : c'est un autre sujet, traité en fin de `VISUELS.md`.
+
 ## L'équilibre du jeu, en deux règles
 
 Elles ne sont pas négociables une fois des joueurs en ligne, et le code les

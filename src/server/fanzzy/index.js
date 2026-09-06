@@ -327,6 +327,7 @@ export function createFanzzy({ pool, requireAuth }) {
       fanzzy: {
         id: f.id, nom: f.nom, type: f.type, set: f.set, stage: f.stage, rar: f.rar,
         mods: f.mods, cri: f.cri, evo: f.evo ?? null,
+        histoire: f.histoire ?? null,
       },
       possede: copies[0]?.copies ?? 0,
       depuis: copies[0]?.first_at ?? null,
