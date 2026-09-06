@@ -357,25 +357,25 @@ function connect() {
     S.you.breath = r.breath; S.you.ferveur = r.ferveur;
     $('verdict').textContent = r.quality > 0.9 ? 'PARFAIT' : r.quality > 0.7 ? 'BON'
       : r.quality > 0.4 ? 'MOYEN' : 'RATÉ';
-    float(`+${r.push}`, r.backfire ? 'var(--flare)' : 'var(--projo)');
+    // Le chiffre part de la corde, là où le joueur regarde.
+    window.FX?.poussee(r.backfire ? -r.push : r.push, $('knot'), { pour: !r.backfire });
     buzz(r.quality > 0.9 ? [20, 30, 40] : 12);
     render();
   });
 
   socket.on('virage:goal', (g) => {
-    banner(g.side === S.you.side ? 'BUT DE LA TRIBUNE !' : 'ILS ONT FAIT CÉDER LA CORDE');
-    $('app').classList.add('quake');
-    setTimeout(() => $('app').classList.remove('quake'), 700);
-    buzz([40, 60, 120]);
+    const mien = g.side === S.you.side;
+    // Les effets viennent de la couche commune : une seule définition du
+    // « but » pour tout le jeu, duel compris.
+    window.FX?.but({ pour: mien, score: [S.goals[S.you.side], S.goals[S.you.side ^ 1]] });
+    banner(mien ? 'BUT DE LA TRIBUNE !' : 'ILS ONT FAIT CÉDER LA CORDE');
   });
 
   socket.on('virage:real_goal', (g) => {
     const mien = g.side === S.you.side;
-    banner(mien ? `BUT RÉEL — ${g.player ?? ''} ${g.minute}'` : `But adverse ${g.minute}'`, 4000);
-    $('app').classList.add('quake');
-    setTimeout(() => $('app').classList.remove('quake'), 700);
-    buzz(mien ? [60, 50, 160] : 200);
-    if (mien) souvenir(g);
+    window.FX?.butReel({ pour: mien, buteur: g.player, minute: g.minute });
+    window.FX?.bandeau('MINUTE DOUBLE', mien ? '#F5C33B' : '#E0402C');
+    if (mien) setTimeout(() => souvenir(g), 1400);
   });
 
   socket.on('virage:crowd', (c) => { if (S) { S.crowd = c.crowd; render(); } });
@@ -420,5 +420,6 @@ function souvenir(g) {
   };
 })();
 </script>
+<script src="/fx.js" defer></script>
 </body>
 </html>

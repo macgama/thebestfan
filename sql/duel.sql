@@ -1,4 +1,14 @@
 -- FANZDuel — schéma du duel temps réel (MariaDB / MySQL 8)
+--
+-- L'interclassement est imposé explicitement sur chaque table. Sans lui,
+-- MariaDB retombe sur utf8mb4_general_ci alors que les autres tables sont en
+-- unicode_ci, et toute jointure sur user_id échoue avec « Illegal mix of
+-- collations » — un classement resterait vide sans qu'aucune erreur remonte.
+--
+-- Base déjà déployée ? Rattraper avec :
+--   ALTER TABLE duels        CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+--   ALTER TABLE duel_events  CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+--   ALTER TABLE duel_results CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 -- L'état vit en mémoire pendant la partie ; ces tables servent à la reprise
 -- après redémarrage, à la resynchronisation et au rejeu d'une partie.
 
@@ -16,7 +26,7 @@ CREATE TABLE IF NOT EXISTS duels (
   KEY idx_active_p0 (player0_id, phase),
   KEY idx_active_p1 (player1_id, phase),
   KEY idx_updated (updated_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Journal append-only. Sert à renvoyer uniquement les événements manqués
 -- quand un joueur revient après une coupure réseau.
@@ -27,7 +37,7 @@ CREATE TABLE IF NOT EXISTS duel_events (
   at        DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (duel_id, seq),
   CONSTRAINT fk_events_duel FOREIGN KEY (duel_id) REFERENCES duels(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Résultats consolidés, pour le classement et l'historique du joueur.
 CREATE TABLE IF NOT EXISTS duel_results (
@@ -42,7 +52,7 @@ CREATE TABLE IF NOT EXISTS duel_results (
   ended_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (duel_id, user_id),
   KEY idx_user_history (user_id, ended_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Les tables fixtures, fixture_events et user_follows sont désormais
 -- définies par sql/football.sql, qui fait autorité.

@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import express from 'express';
 import { createFanzzy, MAX_PACKS, PACK_PRICE } from '../src/server/fanzzy/index.js';
 import { DEX, BY_ID } from '../src/shared/fanzzy/dex.js';
+import { SKINS } from '../src/shared/fanzzy/inventaire.js';
 
 const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
 let failures = 0;
@@ -11,11 +12,11 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence, souvenirs,
-                 user_wallet, api_cache, souvenir_leagues, duel_results, duel_events, duels,
-                 user_follows, fixture_events, standings, fixtures, team_leagues, teams, leagues,
-                 api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'souvenirs.sql', 'fanzzy.sql']) {
+await raw.query(`DROP TABLE IF EXISTS user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
+                 souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
+                 duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
+                 leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
+for (const f of ['auth.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 const U = '11111111-2222-3333-4444-555555555555';
@@ -45,21 +46,53 @@ check('collection vide', Object.keys(r.json.collection).length === 0);
 
 r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'VN' } });
 check('cinq cartes tirées', r.json.cards?.length === 5);
-check('toutes du bon set', r.json.cards.every((c) => BY_ID.get(c.id).set === 'VN'));
+check('toutes typées', r.json.cards.every((c) => c.type === 'fanzzy' || c.type === 'skin'));
+check('aucun skin au premier booster',
+  r.json.cards.every((c) => c.type === 'fanzzy'));
+check('toutes du bon set',
+  r.json.cards.filter((c) => c.type === 'fanzzy').every((c) => BY_ID.get(c.id).set === 'VN'));
 check('trois communes garanties',
-  r.json.cards.slice(0, 3).every((c) => BY_ID.get(c.id).rar === 'd1'));
+  r.json.cards.slice(0, 3).every((c) => c.type === 'fanzzy' && BY_ID.get(c.id).rar === 'd1'));
 check('un booster consommé', r.json.wallet.packs === MAX_PACKS - 1);
 check('la recharge est amorcée', typeof r.json.wallet.nextPackInMs === 'number');
 check('un Fanzzy est équipé d\u2019office', Boolean(r.json.wallet.active));
 
 r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'NE' } });
-check('deuxième série disponible', r.json.cards.every((c) => BY_ID.get(c.id).set === 'NE'));
+check('deuxième série disponible',
+  r.json.cards.filter((c) => c.type === 'fanzzy').every((c) => BY_ID.get(c.id).set === 'NE'));
+
+const [[baseSkin]] = await pool.query(
+  `SELECT COUNT(*) AS n FROM user_skins WHERE user_id = ? AND skin_id = 'base'`, [U]);
+check('chaque Fanzzy reçoit son skin de base', baseSkin.n >= 1);
+
+// Sur beaucoup d'ouvertures, des skins doivent finir par tomber.
+await pool.query('UPDATE user_wallet SET packs = 40 WHERE user_id = ?', [U]);
+let skinsTombes = 0;
+let premieresToutesFanzzy = true;
+for (let i = 0; i < 40; i++) {
+  const o = await call('/api/fanzzy/open', { method: 'POST', body: { set: i % 2 ? 'NE' : 'VN' } });
+  const cartes = o.json.cards ?? [];
+  skinsTombes += cartes.filter((c) => c.type === 'skin').length;
+  if (cartes.slice(0, 3).some((c) => c.type !== 'fanzzy')) premieresToutesFanzzy = false;
+}
+check(`des skins tombent dans les boosters (${skinsTombes} sur 200 cartes)`, skinsTombes > 5);
+check('les trois premières cartes restent des supporters', premieresToutesFanzzy);
+
+const [skinsRecus] = await pool.query(
+  `SELECT DISTINCT fanzzy_id FROM user_skins WHERE user_id = ? AND skin_id <> 'base'`, [U]);
+const [possedes] = await pool.query(`SELECT fanzzy_id FROM user_fanzzy WHERE user_id = ?`, [U]);
+const ids = new Set(possedes.map((p) => p.fanzzy_id));
+check('un skin ne tombe que pour un Fanzzy possédé',
+  skinsRecus.every((s) => ids.has(s.fanzzy_id)));
 
 // On vide la réserve pour vérifier le refus puis l'achat.
 await pool.query('UPDATE user_wallet SET packs = 0 WHERE user_id = ?', [U]);
 r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'VN' } });
 check('sans booster : refus', r.json.error === 'fanzzy.error.no_packs');
 
+// Solde remis à zéro explicitement : les doublons des ouvertures précédentes
+// pourraient sinon suffire à payer, et le test ne vérifierait plus rien.
+await pool.query('UPDATE user_wallet SET scarves = 0 WHERE user_id = ?', [U]);
 r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'VN', buy: true } });
 check('sans écharpes non plus', r.json.error === 'fanzzy.error.not_enough_scarves');
 
@@ -121,6 +154,35 @@ const deux = await Promise.all([
 ]);
 const ouverts = deux.filter((d) => d.json.cards).length;
 check('un seul booster pour deux requêtes simultanées', ouverts === 1);
+
+/* ------------------------------------------------------------- fiche */
+
+const unPossede = [...ids][0];
+r = await call('/api/fanzzy/fiche/' + unPossede);
+check('fiche servie', r.json.fanzzy?.id === unPossede);
+check('exemplaires comptés', r.json.possede >= 1);
+check('toutes les tenues listées', r.json.skins.length === SKINS.length);
+check('le skin de base est possédé et porté',
+  r.json.skins.find((s) => s.id === 'base')?.possede === true);
+check('la lignée est complète',
+  r.json.lignee.length >= 1 && r.json.lignee.every((x) => 'possede' in x));
+check('le coût d\u2019évolution est indiqué',
+  r.json.lignee.every((x) => x.stage === 1 ? x.cout === 0 : x.cout > 0));
+check('l\u2019effet réel est calculé', typeof r.json.effetReel === 'object');
+
+// Avec une pièce portée, l'effet réel doit différer des modificateurs bruts.
+await pool.query(`INSERT INTO user_stuff (user_id,stuff_id,copies,slot) VALUES (?,'jumelles',1,1)
+                  ON DUPLICATE KEY UPDATE slot = 1`, [U]);
+r = await call('/api/fanzzy/fiche/' + unPossede);
+check('l\u2019équipement porté modifie l\u2019effet réel',
+  JSON.stringify(r.json.effetReel) !== JSON.stringify(r.json.fanzzy.mods));
+check('la pièce portée est nommée', r.json.stuffPorte?.[0]?.id === 'jumelles');
+
+r = await call('/api/fanzzy/fiche/INEXISTANT');
+check('Fanzzy inconnu : 404', r.status === 404);
+
+r = await call('/api/fanzzy/stuff');
+check('catalogue de l\u2019équipement servi', r.json.stuff.length === 7);
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end(); http.close();

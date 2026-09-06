@@ -13,6 +13,10 @@ import express from 'express';
 
 /** Durées de vie, en secondes. Elles suivent le rythme réel des données. */
 const TTL = {
+  jour: 900,          // les matchs d'une journée, hors direct
+  jourLive: 45,       // dès qu'un match est en cours
+  match: 600,         // fiche d'un match à venir ou terminé
+  matchLive: 25,      // fiche d'un match en cours
   standings: 6 * 3600,
   scorers: 12 * 3600,
   assists: 12 * 3600,
@@ -93,6 +97,141 @@ export function createTeletext({ pool, client, footballStore = null }) {
         WHERE league_id = ? AND status_short IN ('1H','HT','2H','ET','BT','P','LIVE')
         LIMIT 1`, [leagueId]);
     return r.length > 0;
+  }
+
+  /* --------------------------------------------------------- invalidation */
+
+  /**
+   * Un match vient de se terminer : le classement et les buteurs de sa
+   * compétition sont désormais faux. On les efface plutôt que d'attendre six
+   * heures — c'est précisément à ce moment que les gens vont les regarder.
+   */
+  async function invalider(leagueId) {
+    await q(`DELETE FROM api_cache WHERE k LIKE ? OR k LIKE ? OR k LIKE ? OR k LIKE ?`,
+      [`standings:${leagueId}:%`, `scorers:${leagueId}:%`,
+       `assists:${leagueId}:%`, `cards:${leagueId}:%`]);
+  }
+
+  /* ------------------------------------------------------- matchs du jour */
+
+  const enDirect = (s) => ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT'].includes(s);
+  const fini = (s) => ['FT', 'AET', 'PEN'].includes(s);
+
+  /**
+   * Tous les matchs d'une journée, toutes compétitions confondues.
+   *
+   * Un seul appel à l'API couvre le monde entier : c'est bien plus économe que
+   * d'interroger chaque compétition. On ne garde que celles qui sont activées,
+   * et on les regroupe pour que la page n'ait rien à trier.
+   */
+  async function jour(date, { userId = null } = {}) {
+    const jourISO = /^\d{4}-\d{2}-\d{2}$/.test(String(date))
+      ? date : new Date().toISOString().slice(0, 10);
+    const aujourdhui = jourISO === new Date().toISOString().slice(0, 10);
+
+    const { data, stale } = await cached(`jour:${jourISO}`,
+      aujourdhui ? TTL.jourLive : TTL.jour,
+      () => client.call('/fixtures', { date: jourISO, timezone: 'UTC' }));
+
+    const activees = new Map((await q(
+      `SELECT league_id, name, country, tier, family FROM souvenir_leagues WHERE enabled = 1`))
+      .map((l) => [l.league_id, l]));
+
+    const suivis = userId ? new Set((await q(
+      `SELECT team_id FROM user_follows WHERE user_id = ?`, [userId])).map((r) => r.team_id))
+      : new Set();
+
+    const parLigue = new Map();
+    for (const r of data ?? []) {
+      const l = activees.get(r.league?.id);
+      if (!l) continue;
+      const m = {
+        id: r.fixture.id,
+        date: r.fixture.date,
+        status: r.fixture.status?.short,
+        elapsed: r.fixture.status?.elapsed ?? null,
+        // Instant où le serveur a lu cette minute : le client peut ainsi
+        // faire défiler le chrono localement sans redemander à chaque seconde.
+        luA: Date.now(),
+        round: r.league?.round,
+        home: { id: r.teams.home.id, name: r.teams.home.name, logo: r.teams.home.logo,
+                goals: r.goals?.home, vainqueur: r.teams.home.winner },
+        away: { id: r.teams.away.id, name: r.teams.away.name, logo: r.teams.away.logo,
+                goals: r.goals?.away, vainqueur: r.teams.away.winner },
+        live: enDirect(r.fixture.status?.short),
+        fini: fini(r.fixture.status?.short),
+        mien: suivis.has(r.teams.home.id) || suivis.has(r.teams.away.id),
+      };
+      if (!parLigue.has(l.league_id)) {
+        parLigue.set(l.league_id, { ligue: l, matchs: [] });
+      }
+      parLigue.get(l.league_id).matchs.push(m);
+    }
+
+    // Ordre : mes clubs d'abord, puis les matchs en cours, puis le palier.
+    const groupes = [...parLigue.values()].map((g) => ({
+      ...g,
+      matchs: g.matchs.sort((a, b) => new Date(a.date) - new Date(b.date)),
+      mien: g.matchs.some((m) => m.mien),
+      live: g.matchs.some((m) => m.live),
+    })).sort((a, b) =>
+      (b.mien - a.mien) || (b.live - a.live) || (a.ligue.tier - b.ligue.tier)
+      || a.ligue.name.localeCompare(b.ligue.name));
+
+    return {
+      date: jourISO,
+      groupes,
+      total: groupes.reduce((n, g) => n + g.matchs.length, 0),
+      enDirect: groupes.reduce((n, g) => n + g.matchs.filter((m) => m.live).length, 0),
+      stale: Boolean(stale),
+    };
+  }
+
+  /* ------------------------------------------------------- fiche du match */
+
+  /**
+   * Un match, avant, pendant et après.
+   * Avant : la composition n'existe pas encore, on donne l'affiche et l'heure.
+   * Pendant : le score, la minute et le fil des événements.
+   * Après : le score final et le résumé complet.
+   */
+  async function match(fixtureId) {
+    const { data, stale } = await cached(`match:${fixtureId}`, TTL.matchLive, async () => {
+      const [f] = await client.call('/fixtures', { id: fixtureId });
+      if (!f) throw new Error('match introuvable');
+      // Les événements ne sont demandés que s'il y a quelque chose à raconter.
+      const evs = (enDirect(f.fixture.status?.short) || fini(f.fixture.status?.short))
+        ? await client.call('/fixtures/events', { fixture: fixtureId }) : [];
+      return { f, evs };
+    });
+
+    const f = data.f;
+    const live = enDirect(f.fixture.status?.short);
+
+    return {
+      fixture: {
+        id: f.fixture.id, date: f.fixture.date,
+        status: f.fixture.status?.short, statusLong: f.fixture.status?.long,
+        elapsed: f.fixture.status?.elapsed ?? null, luA: Date.now(),
+        venue: f.fixture.venue?.name, ville: f.fixture.venue?.city,
+        arbitre: f.fixture.referee,
+        live, fini: fini(f.fixture.status?.short),
+      },
+      ligue: { id: f.league?.id, nom: f.league?.name, pays: f.league?.country,
+               logo: f.league?.logo, journee: f.league?.round, saison: f.league?.season },
+      equipes: {
+        home: { ...f.teams.home, goals: f.goals?.home },
+        away: { ...f.teams.away, goals: f.goals?.away },
+      },
+      periodes: f.score ?? null,
+      evenements: (data.evs ?? []).map((e) => ({
+        minute: e.time?.elapsed, extra: e.time?.extra,
+        equipe: e.team?.id, equipeNom: e.team?.name,
+        type: e.type, detail: e.detail,
+        joueur: e.player?.name, passeur: e.assist?.name,
+      })).sort((a, b) => (a.minute ?? 0) - (b.minute ?? 0)),
+      stale: Boolean(stale),
+    };
   }
 
   /* ------------------------------------------------------------- lecture */
@@ -272,6 +411,18 @@ export function createTeletext({ pool, client, footballStore = null }) {
     send(res, ranking(Number(req.params.id), 'cards'), BROWSER['/cards']));
 
   /** État du cache et du quota : utile pour surveiller la consommation. */
+  /** Les matchs d'une journée. `mien` marque ceux des clubs suivis. */
+  router.get('/jour', safe(async (req, res) => {
+    const d = await jour(String(req.query.date ?? ''), { userId: req.user?.id ?? null });
+    res.set('cache-control', 'private, max-age=30');
+    res.json(d);
+  }));
+
+  router.get('/match/:id', safe(async (req, res) => {
+    res.set('cache-control', 'private, max-age=20');
+    res.json(await match(Number(req.params.id)));
+  }));
+
   router.get('/cache', safe(async (_req, res) => {
     const [stats] = await pool.query(
       `SELECT COUNT(*) AS entrees,
@@ -286,5 +437,5 @@ export function createTeletext({ pool, client, footballStore = null }) {
     await q(`DELETE FROM api_cache WHERE expires_at < NOW(3) - INTERVAL 7 DAY`);
   }
 
-  return { router, standings, ranking, results, seasonOf, cleanup };
+  return { router, standings, ranking, results, seasonOf, cleanup, jour, match, invalider };
 }

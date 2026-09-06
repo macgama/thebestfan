@@ -470,7 +470,9 @@ function fail(code){
 function announce(ev){
   const mine = ev.side === snap.you;
   switch (ev.t) {
-    case 'goal': toast(u('goal'), 'goal'); break;
+    case 'goal':
+      window.FX?.but({ pour: mine, score: [ev.score[snap.you], ev.score[snap.you ^ 1]] });
+      break;
     case 'ko': say(`${cardName(ev.cardId)} — ${u('ko')}`); break;
     case 'chant': say(d(ev.weak ? 'event.chant_weak' : 'event.chant', {
       name: cardName(ev.cardId), chant: chantName(ev.chantId), damage: ev.damage })); break;
@@ -489,6 +491,10 @@ function announce(ev){
 function showEnd(ev){
   const won = ev.winner === snap.you;
   const draw = ev.winner === 'draw';
+  if (!draw) {
+    window.FX?.fin(won, {
+      score: [snap.players[snap.you].score, snap.players[snap.you ^ 1].score] });
+  }
   veil(draw ? u('draw') : won ? u('win') : u('loss'),
     d('reason.' + ev.reason), u('again'), () => { location.reload(); }, false);
 }
@@ -599,5 +605,6 @@ setInterval(() => {
 veil(u('ready'), u('readyTxt'), u('find'), startQueue, false);
 connect();
 </script>
+<script src="/fx.js" defer></script>
 </body>
 </html>

@@ -216,9 +216,10 @@ const IC = {
   carnet:'M5 3h11l3 3v15H5zM9 8h6M9 12h6M9 16h4',
   equipes:'M12 3l8 4v6c0 4-3.5 7-8 8-4.5-1-8-4-8-8V7z',
   teletext:'M3 5h18v14H3zM3 9h18M8 9v10',
+  classement:'M6 21V9M12 21V4M18 21v-7M3 21h18',
 };
 const COUL = { virage:'#F5C33B', duel:'#E0402C', fanzzy:'#8257DA',
-               carnet:'#1E9E6A', equipes:'#3C82E8', teletext:'#C2CAD6' };
+               carnet:'#1E9E6A', equipes:'#3C82E8', teletext:'#C2CAD6', classement:'#3C82E8' };
 const TUILES = [
   { k:'virage', href:'/virage', wide:1, t:'LE GRAND VIRAGE',
     d:'Tirez sur la même corde pendant le vrai match. Chaque but vécu te laisse une carte.' },
@@ -226,8 +227,8 @@ const TUILES = [
   { k:'fanzzy', href:'/fanzzy', t:'FANZZY', d:'Boosters, classeur, évolutions.' },
   { k:'carnet', href:'/carnet', t:'MON CARNET', d:'Tes souvenirs et les vignettes.' },
   { k:'equipes', href:'/equipes', t:'MES ÉQUIPES', d:'Résultats et calendrier.' },
-  { k:'teletext', href:'/teletext', wide:1, t:'TÉLÉTEXTE',
-    d:'Tous les championnats : classements, résultats, buteurs, cartons.' },
+  { k:'teletext', href:'/matchs', t:'LES MATCHS', d:'Du jour, en direct, avec le fil.' },
+  { k:'classement', href:'/classement', t:'CLASSEMENTS', d:'Supporters, tribunes, duels.' },
 ];
 
 function tuiles(badges = {}) {
@@ -288,6 +289,7 @@ function tuiles(badges = {}) {
   } catch { /* suivi non actif */ }
 })();
 </script>
+<script src="/fx.js" defer></script>
 <script src="/nav.js" defer></script>
 </body>
 </html>

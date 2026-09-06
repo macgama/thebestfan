@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Administration — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;
+  --banner:"Oswald","Arial Narrow",Impact,sans-serif;--ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:#0A0D11;color:var(--craie);font-family:var(--ui);font-size:14px}
+header{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid rgba(242,238,228,.12)}
+header h1{font-family:var(--banner);font-size:17px;letter-spacing:.16em;margin:0;flex:1}
+header .who{font-size:12px;opacity:.5}
+nav{display:flex;gap:6px;padding:12px 18px;flex-wrap:wrap}
+nav button{background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.14);border-radius:7px;
+  color:inherit;padding:8px 14px;font-family:var(--banner);font-size:12px;letter-spacing:.06em;
+  cursor:pointer;opacity:.55}
+nav button.on{background:var(--craie);color:#0B0E13;opacity:1}
+main{padding:0 18px 40px;max-width:1100px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:18px}
+.card{border:1px solid rgba(242,238,228,.12);border-radius:10px;padding:12px;background:rgba(0,0,0,.3)}
+.card b{display:block;font-family:var(--banner);font-size:22px;color:var(--projo)}
+.card span{font-size:10.5px;opacity:.5;letter-spacing:.08em}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;font-family:var(--banner);font-size:10px;letter-spacing:.12em;opacity:.45;
+  padding:8px 6px;font-weight:500;border-bottom:1px solid rgba(242,238,228,.12)}
+td{padding:9px 6px;border-bottom:1px solid rgba(242,238,228,.07);vertical-align:middle}
+td.act{white-space:nowrap}
+button.mini{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.2);border-radius:5px;
+  color:inherit;font-size:11px;padding:4px 8px;cursor:pointer;margin-right:4px}
+button.mini.rouge{border-color:rgba(224,64,44,.5);color:var(--flare)}
+button.mini.vert{border-color:rgba(30,158,106,.5);color:var(--vert)}
+input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);border-radius:6px;
+  color:inherit;padding:8px 10px;font-family:inherit;font-size:13px}
+.bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.pill{font-size:10px;border-radius:4px;padding:2px 7px;border:1px solid currentColor}
+.pill.admin{color:var(--projo)}.pill.locked{color:var(--flare)}.pill.off{color:var(--flare)}
+.log{font-family:ui-monospace,monospace;font-size:11.5px;line-height:1.7;opacity:.75}
+.log b{color:var(--projo);font-family:var(--banner)}
+.vide{opacity:.45;padding:36px;text-align:center}
+</style>
+</head>
+<body>
+<header><h1>ADMINISTRATION</h1><span class="who" id="who"></span>
+  <a href="/" style="color:var(--projo);font-size:12px">retour au jeu</a></header>
+<nav id="nav"></nav>
+<main id="main"><div class="vide">Chargement…</div></main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+  (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+const api = async (p, body, method) => {
+  const r = await fetch('/api/admin' + p, {
+    method: method ?? (body === undefined ? 'GET' : 'POST'),
+    headers: { 'content-type':'application/json' }, credentials:'same-origin',
+    body: body === undefined ? undefined : JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.error ?? 'erreur'), { code:j.error, status:r.status });
+  return j;
+};
+const jour = (d) => new Date(d).toLocaleString('fr', { day:'2-digit', month:'2-digit',
+  hour:'2-digit', minute:'2-digit' });
+
+const ONGLETS = [
+  ['apercu','APERÇU'], ['joueurs','JOUEURS'], ['competitions','COMPÉTITIONS'],
+  ['reglages','RÉGLAGES'], ['journal','JOURNAL'],
+];
+let onglet = 'apercu';
+
+$('nav').innerHTML = ONGLETS.map(([k,t]) =>
+  `<button data-o="${k}" class="${k===onglet?'on':''}">${t}</button>`).join('');
+$('nav').onclick = (e) => {
+  const b = e.target.closest('[data-o]'); if (!b) return;
+  onglet = b.dataset.o;
+  document.querySelectorAll('nav button').forEach((x)=>x.classList.toggle('on',x===b));
+  rendre();
+};
+
+/* ------------------------------------------------------------ vues */
+
+async function rendre() {
+  $('main').innerHTML = '<div class="vide">Chargement…</div>';
+  try { await VUES[onglet](); }
+  catch (e) {
+    $('main').innerHTML = `<div class="vide">${e.status === 403
+      ? 'Accès réservé aux administrateurs.' : 'Erreur : ' + esc(e.code ?? e.message)}</div>`;
+  }
+}
+
+const VUES = {
+  async apercu() {
+    const d = await api('/apercu');
+    const c = (v, l) => `<div class="card"><b>${v ?? 0}</b><span>${l}</span></div>`;
+    $('main').innerHTML = `
+      <div class="cards">
+        ${c(d.joueurs.total,'JOUEURS')}${c(d.joueurs.nouveaux,'CETTE SEMAINE')}
+        ${c(d.joueurs.verifies,'ADRESSES VÉRIFIÉES')}${c(d.joueurs.admins,'ADMINS')}
+        ${c(d.jeu.souvenirs,'SOUVENIRS')}${c(d.jeu.vecus,'DONT VÉCUS')}
+        ${c(d.jeu.supporters,'DANS LE VIRAGE')}${c(d.competitions.activees,'COMPÉTITIONS ACTIVES')}
+      </div>
+      <h3 style="font-family:var(--banner);font-size:12px;letter-spacing:.15em;opacity:.5">EXPLOITATION</h3>
+      <table><tbody>
+        <tr><td>Quota API du jour</td><td>${d.quota
+          ? `${d.quota.usedToday} utilisés · ${d.quota.budgetLeft} restants` : 'suivi inactif'}</td></tr>
+        <tr><td>Messagerie</td><td>${d.mail
+          ? `${esc(d.mail.etat)}${d.mail.erreur ? ' — ' + esc(d.mail.erreur) : ''}` : 'inconnue'}</td></tr>
+        <tr><td>Salles du Grand Virage</td><td>${d.virage.length
+          ? d.virage.map((r)=>`match ${r.fixtureId} · ${r.foule[0]}v${r.foule[1]}`).join('<br>')
+          : 'aucune'}</td></tr>
+        <tr><td>Outils</td><td class="act">
+          <button class="mini" id="purge">Purger le cache</button>
+          <button class="mini" id="mail">Envoi de contrôle</button></td></tr>
+      </tbody></table>`;
+    $('purge').onclick = async () => {
+      const r = await api('/cache/purge', {});
+      alert(`${r.purge} entrées purgées`); rendre();
+    };
+    $('mail').onclick = async () => {
+      const r = await api('/mail-test', {});
+      alert(r.delivered ? 'Mail envoyé.' : 'Non envoyé : ' + (r.erreur ?? 'voir la console'));
+    };
+  },
+
+  async joueurs(terme = '') {
+    const d = await api('/joueurs?q=' + encodeURIComponent(terme));
+    $('main').innerHTML = `
+      <div class="bar"><input id="q" placeholder="pseudo ou adresse" value="${esc(terme)}">
+        <button class="mini" id="go">Chercher</button></div>
+      <table><thead><tr><th>JOUEUR</th><th>ÉTAT</th><th>BOURSE</th><th>JEU</th><th>ACTIONS</th></tr></thead>
+      <tbody>${d.joueurs.map((u) => `
+        <tr><td><b>${esc(u.pseudo)}</b>
+          ${u.role==='admin'?'<span class="pill admin">ADMIN</span>':''}
+          ${u.status==='locked'?'<span class="pill locked">BLOQUÉ</span>':''}
+          <br><span style="opacity:.45;font-size:11px">${esc(u.email)}</span></td>
+        <td>${u.email_verified_at ? 'vérifié' : 'non vérifié'}<br>
+          <span style="opacity:.45;font-size:11px">inscrit le ${jour(u.created_at)}</span></td>
+        <td>${u.scarves ?? 0} éch.<br><span style="opacity:.45;font-size:11px">${u.packs ?? 0} boosters · ${u.follow_slots ?? 2} slots</span></td>
+        <td>${u.fanzzy ?? 0} fanzzy<br><span style="opacity:.45;font-size:11px">${u.ferveur ?? 0} ferveur</span></td>
+        <td class="act" data-id="${u.public_id}">
+          <button class="mini" data-a="scarves">+100 éch.</button>
+          <button class="mini" data-a="packs">+5 pk</button>
+          ${u.email_verified_at ? '' : '<button class="mini vert" data-a="verifier">Vérifier</button>'}
+          <button class="mini ${u.status==='locked'?'vert':'rouge'}" data-a="toggle"
+            data-status="${u.status}">${u.status==='locked'?'Débloquer':'Bloquer'}</button>
+          <button class="mini" data-a="role" data-role="${u.role}">${u.role==='admin'?'Rétrograder':'Promouvoir'}</button>
+        </td></tr>`).join('')}</tbody></table>`;
+
+    $('go').onclick = () => VUES.joueurs($('q').value.trim());
+    $('q').onkeydown = (e) => { if (e.key === 'Enter') VUES.joueurs($('q').value.trim()); };
+    $('main').onclick = async (e) => {
+      const b = e.target.closest('[data-a]'); if (!b) return;
+      const id = b.closest('[data-id]').dataset.id;
+      const corps = {
+        scarves: { scarves: 100 }, packs: { packs: 5 }, verifier: { verifier: true },
+        toggle: { status: b.dataset.status === 'locked' ? 'active' : 'locked' },
+        role: { role: b.dataset.role === 'admin' ? 'joueur' : 'admin' },
+      }[b.dataset.a];
+      try { await api('/joueur/' + id, corps, 'PATCH'); VUES.joueurs($('q')?.value ?? ''); }
+      catch (err) { alert(err.code === 'admin.error.not_yourself'
+        ? 'Impossible sur son propre compte.' : 'Refusé : ' + err.code); }
+    };
+  },
+
+  async competitions(terme = '') {
+    const d = await api('/competitions?q=' + encodeURIComponent(terme));
+    $('main').innerHTML = `
+      <div class="bar"><input id="q" placeholder="nom ou pays" value="${esc(terme)}">
+        <button class="mini" id="go">Chercher</button></div>
+      <table><thead><tr><th>COMPÉTITION</th><th>SAISON</th><th>COUVERTURE</th><th>PALIER</th><th>ÉTAT</th></tr></thead>
+      <tbody>${d.competitions.map((c) => `
+        <tr data-id="${c.league_id}" data-s="${c.season}">
+          <td><b>${esc(c.name)}</b><br><span style="opacity:.45;font-size:11px">${esc(c.country ?? '')} · ${esc(c.family)}</span></td>
+          <td>${c.season}<br><span style="opacity:.45;font-size:11px">${c.starts_on ?? '?'} → ${c.ends_on ?? '?'}</span></td>
+          <td style="font-size:11px;opacity:.6">${[c.has_events&&'buts',c.has_standings&&'classement',
+             c.has_top_scorers&&'buteurs'].filter(Boolean).join(' · ') || 'aucune'}</td>
+          <td><select data-a="tier">${[1,2,3].map((t)=>
+            `<option value="${t}" ${c.tier===t?'selected':''}>palier ${t}</option>`).join('')}</select></td>
+          <td class="act"><button class="mini ${c.enabled?'rouge':'vert'}" data-a="toggle"
+            data-on="${c.enabled}">${c.enabled?'Désactiver':'Activer'}</button></td>
+        </tr>`).join('')}</tbody></table>`;
+    $('go').onclick = () => VUES.competitions($('q').value.trim());
+    const maj = async (tr, corps) => {
+      await api(`/competition/${tr.dataset.id}/${tr.dataset.s}`, corps, 'PATCH');
+      VUES.competitions($('q')?.value ?? '');
+    };
+    $('main').onclick = async (e) => {
+      const b = e.target.closest('button[data-a="toggle"]'); if (!b) return;
+      await maj(b.closest('tr'), { enabled: b.dataset.on !== '1' });
+    };
+    $('main').onchange = async (e) => {
+      const s = e.target.closest('select[data-a="tier"]'); if (!s) return;
+      await maj(s.closest('tr'), { tier: Number(s.value) });
+    };
+  },
+
+  async reglages() {
+    const d = await api('/reglages');
+    $('main').innerHTML = `
+      <p style="opacity:.5;font-size:12px;max-width:600px">Réglages modifiables sans redéploiement.
+      La clé <b>annonce</b> affiche un bandeau pour tous les joueurs.</p>
+      <div class="bar"><input id="cle" placeholder="clé" style="width:180px">
+        <input id="val" placeholder='valeur JSON, ex : {"texte":"…","actif":true}' style="flex:1;min-width:260px">
+        <button class="mini" id="set">Enregistrer</button></div>
+      <table><thead><tr><th>CLÉ</th><th>VALEUR</th></tr></thead><tbody>
+        ${Object.entries(d).map(([k,v])=>`<tr><td><b>${esc(k)}</b></td>
+          <td class="log">${esc(JSON.stringify(v))}</td></tr>`).join('')
+          || '<tr><td colspan="2" class="vide">Aucun réglage.</td></tr>'}
+      </tbody></table>`;
+    $('set').onclick = async () => {
+      let valeur;
+      try { valeur = JSON.parse($('val').value); }
+      catch { return alert('La valeur doit être du JSON valide.'); }
+      try { await api('/reglage/' + encodeURIComponent($('cle').value.trim()), { valeur }, 'PUT');
+        VUES.reglages(); }
+      catch (e) { alert('Refusé : ' + e.code); }
+    };
+  },
+
+  async journal() {
+    const d = await api('/journal?limite=150');
+    $('main').innerHTML = `<table><thead><tr><th>QUAND</th><th>QUI</th><th>ACTION</th><th>CIBLE</th><th>DÉTAIL</th></tr></thead>
+      <tbody>${d.journal.map((l)=>`<tr>
+        <td style="white-space:nowrap">${jour(l.au)}</td>
+        <td>${esc(l.acteur ?? 'système')}</td>
+        <td><b style="font-family:var(--banner)">${esc(l.action)}</b></td>
+        <td style="font-size:11px;opacity:.6">${esc(l.cible ?? '')}</td>
+        <td class="log">${esc(JSON.stringify(l.detail ?? {}))}</td></tr>`).join('')
+        || '<tr><td colspan="5" class="vide">Journal vide.</td></tr>'}</tbody></table>`;
+  },
+};
+
+(async () => {
+  try {
+    const me = await fetch('/api/auth/me', { credentials:'same-origin' }).then((r)=>r.json());
+    $('who').textContent = me.user?.pseudo ?? '';
+    const s = await api('/suis-je');
+    if (!s.admin) {
+      $('main').innerHTML = '<div class="vide">Cette page est réservée aux administrateurs.</div>';
+      $('nav').style.display = 'none';
+      return;
+    }
+    rendre();
+  } catch {
+    location.href = '/compte';
+  }
+})();
+</script>
+<script src="/fx.js" defer></script>
+</body>
+</html>
