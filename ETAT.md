@@ -36,9 +36,9 @@ Le projet suit une méthode constante, à conserver :
   `DROP` puis recrée ce dont elle a besoin : **elles ne se lancent donc jamais
   en parallèle**, elles s'écraseraient l'une l'autre.
 
-  `duel-smoke.mjs` a une étape de plus : il importe du TypeScript compilé dans
-  `dist-test/`. Sans `npm run test:build` au préalable, il échoue sur un
-  `ERR_MODULE_NOT_FOUND` qui ne dit pas qu'il manque une compilation.
+  Il n'y a **aucune étape de compilation** : le projet est en JavaScript
+  simple, servi tel quel. `node build.mjs` existe encore parce que la commande
+  de build du Manager l'appelle, mais il ne fait plus rien.
 - **Les tests ont trouvé des bugs que la relecture avait ratés** — collation de
   base, buts perdus, soldes non débitables, catalogue divergent, barre de
   navigation par-dessus le bouton de jeu. C'est le cœur de la méthode : écrire
@@ -142,14 +142,24 @@ personnages ; recopier cent lignes de SVG aurait refait exactement la faute du
 catalogue. La liste `ILLUSTRES` y vit aussi, et `verif-pages.mjs` échoue s'il
 ne la trouve plus — un garde-fou devenu muet est pire que pas de garde-fou.
 
-**Le duel, c'est le tir à la corde.** La tuile de l'accueil et la barre commune
-mènent à `/duel-nvn` : cartes d'action, trois Fanzzy avec leur équipement, de
-1 contre 1 à 5 contre 5. Le Grand Virage est le même geste à l'échelle d'une
-tribune entière. L'ancien duel tour par tour de `/duel` est toujours servi mais
-n'est plus proposé nulle part — deux jeux différents derrière le même mot, et
-c'est le joueur qui paie la confusion. Sa suppression reste à décider : le
-bonus de souffle quand ton club marque pendant un duel n'existe que là
-(`server.js`, `duels.liveGoal`), le NvN n'a pas encore son équivalent.
+**Il n'y a qu'un seul jeu : le tir à la corde.** Deux tribunes tirent sur la
+même corde, on chante — un geste noté par le serveur — et on joue des cartes
+d'action. Trois Fanzzy par deck, deux pièces d'équipement chacun, de 1 contre 1
+à 5 contre 5 dans `/duel-nvn`. Le Grand Virage est le même geste à l'échelle
+d'une tribune entière, adossé à un vrai match.
+
+L'ancien duel tour par tour a été **supprimé** — page, routes, moteur, tests et
+toute la chaîne TypeScript qui n'existait que pour lui. Deux jeux derrière le
+même mot, c'était le joueur qui payait la confusion. Le seul mécanisme qui lui
+appartenait en propre, le souffle offert quand ton club marque, a été rebâti
+pour le NvN **avant** la suppression : `DuelNvN.butReel()`.
+
+**Un but réel ne pousse pas « du côté du domicile » dans un duel.** Les deux
+tribunes d'un duel ne sont pas les deux clubs du match : les équipes se forment
+par ordre d'arrivée en file. Ce qui compte est qui suit le club buteur, et ces
+gens-là peuvent être des deux côtés. À nombre égal, la corde tressaille sans
+bouger — un derby n'avantage personne. C'est différent du Grand Virage, où le
+camp *est* le club, et c'est voulu.
 
 **On ne rejoue pas un match passé.** Un duel adossé à un match du jour ou en
 cours est classé ; à un match futur, c'est un entraînement ; à un match passé,
@@ -176,7 +186,6 @@ complètes dans `VISUELS.md`.
 | `/carnet` | souvenirs vécus et vignettes à récupérer |
 | `/virage` | Grand Virage : tir à la corde pendant un vrai match |
 | `/duel-nvn` | **le duel** : tir à la corde, 1v1 à 5v5, adossé à un vrai match |
-| `/duel` | ancien duel tour par tour — servi, mais plus mis en avant |
 | `/matchs` | matchs du jour, en direct, avec fiche détaillée |
 | `/teletext` | tous les championnats : classements, buteurs, cartons |
 | `/classement` | supporters, tribunes, duellistes |
