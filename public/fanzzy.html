@@ -138,21 +138,34 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   font-family:var(--banner);font-size:8.5px;padding:1px 5px;z-index:4;letter-spacing:.06em}
 .empty{grid-column:1/-1;text-align:center;padding:44px 22px;opacity:.5;font-size:12.5px;line-height:1.7}
 
-/* ----------------------------------------------------------- la carte */
-.fz{container-type:inline-size;position:relative;width:100%;aspect-ratio:63/88;border-radius:5cqw;
-  overflow:hidden;background:var(--tc);padding:2.4cqw;display:flex;cursor:pointer}
-.fz::before{content:"";position:absolute;inset:0;border-radius:5cqw;z-index:5;pointer-events:none;
-  background:linear-gradient(150deg,rgba(255,255,255,.3),rgba(0,0,0,.3))}
-.fz .body{flex:1;background:#EDE7DA;border-radius:3cqw;display:flex;flex-direction:column;overflow:hidden;
-  position:relative;z-index:2;color:#12161C}
-.fz .top{display:flex;align-items:center;gap:1.5cqw;padding:2cqw 2.4cqw 1cqw}
-.fz .nm{font-family:var(--banner);font-size:5.2cqw;line-height:1;text-transform:uppercase;flex:1}
-.fz .pip{width:5.4cqw;height:5.4cqw;border-radius:50%;background:var(--tc);flex:none;display:grid;place-items:center}
-.fz .pip svg{width:3.4cqw;height:3.4cqw}
-.fz .art{margin:0 2.2cqw;border:.5cqw solid #C9BFA9;border-radius:1.4cqw;overflow:hidden;flex:1;background:#0B1017}
+/* ----------------------------------------------------------- la carte
+
+   L'image d'abord. Le cadre portait la couleur du type sur toute sa
+   surface, avec un corps crème et une fenêtre d’illustration au centre :
+   en vignette on ne voyait plus que la couleur, et le personnage était un
+   timbre-poste.
+
+   L'illustration remplit maintenant la carte. La couleur du type ne reste
+   qu'en filet et dans la pastille, le nom se pose sur un voile en bas, la
+   rareté tient dans un coin. Ce qui était écrit sur la carte se lit déjà
+   dans le panneau de détail : le répéter volait la place de l'image.    */
+.fz{container-type:inline-size;position:relative;width:100%;aspect-ratio:63/88;border-radius:4cqw;
+  overflow:hidden;cursor:pointer;background:#0B1017;
+  box-shadow:inset 0 0 0 .7cqw var(--tc),0 1cqw 3cqw rgba(0,0,0,.45)}
+.fz .body{position:absolute;inset:0;display:block;color:#F2EEE4}
+.fz .art{position:absolute;inset:0;overflow:hidden;background:#0B1017}
 .fz .art svg{width:100%;height:100%;display:block}
-.illuwrap{position:relative;width:100%;height:100%}
-.illuwrap svg{position:absolute;inset:0}
+
+/* Le nom se pose sur l'image au lieu d'occuper une barre qui la rogne. */
+.fz .top{position:absolute;left:0;right:0;bottom:0;z-index:3;display:flex;align-items:flex-end;
+  gap:2cqw;padding:9cqw 2.8cqw 2.6cqw;
+  background:linear-gradient(180deg,transparent,rgba(4,6,10,.5) 45%,rgba(4,6,10,.9))}
+.fz .nm{font-family:var(--banner);font-size:5cqw;line-height:1.05;text-transform:uppercase;flex:1;
+  text-shadow:0 .4cqw 1.6cqw rgba(0,0,0,.9)}
+.fz .pip{width:6cqw;height:6cqw;border-radius:50%;background:var(--tc);flex:none;display:grid;
+  place-items:center;box-shadow:0 .3cqw 1.2cqw rgba(0,0,0,.6)}
+.fz .pip svg{width:3.8cqw;height:3.8cqw}
+
 /* Deux pièges se cumulent ici.
 
    Le centrage ne peut pas passer par `transform` : fx.js pose `fz-vivant` sur
@@ -170,19 +183,29 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    l'animation ni le débordement ne peuvent le déplacer. */
 .illuwrap .illu{position:absolute;left:0;bottom:0;width:100%;height:104%;
   object-fit:cover;object-position:50% 100%;filter:drop-shadow(0 3px 8px rgba(0,0,0,.6))}
-.fz .mods{padding:1.6cqw 3cqw;font-size:2.7cqw;line-height:1.35;color:#4B463C;flex:none;min-height:12cqw}
-.fz .foot{display:flex;align-items:center;gap:1.5cqw;padding:1.2cqw 3cqw 2.4cqw;font-size:2.4cqw;color:#5E594E}
+/* Les modificateurs vivent dans le panneau de détail. Sur la carte ils
+   masquaient l'illustration pour redire la même chose. */
+.fz .mods{display:none}
+
+/* La rareté, en pastille sombre : lisible quelle que soit l’image dessous. */
+.fz .foot{position:absolute;top:2cqw;right:2cqw;z-index:3;display:flex;align-items:center;
+  gap:1cqw;padding:.8cqw 1.8cqw;border-radius:99cqw;background:rgba(4,6,10,.62);
+  font-size:2.6cqw;color:#E4DFD2}
 .fz .rar{display:flex;gap:.6cqw;align-items:center}
-.fz .rar .d{width:2.2cqw;height:2.2cqw;background:#8C8474;transform:rotate(45deg);border-radius:.3cqw}
-.fz .rar .s{font-size:3cqw;color:#C9A227;line-height:1}
-.fz .sep{flex:1}
-.fz.r-star .body{background:linear-gradient(150deg,#F7F2E5,#DCE7F2 55%,#F3E4E1)}
-.fz.r-crown .body{background:linear-gradient(150deg,#1A1F27,#2C3340 60%,#12161C);color:#F2EEE4}
+.fz .rar .d{width:2.2cqw;height:2.2cqw;background:#C2CAD6;transform:rotate(45deg);border-radius:.3cqw}
+.fz .rar .s{font-size:3.2cqw;color:#F5C33B;line-height:1}
+/* Le type est déjà dit par la pastille de couleur : inutile de le réécrire. */
+.fz .sep,.fz .foot span:last-child{display:none}
+
+/* Les raretés hautes se signalent par leur filet, jamais par un fond qui
+   remplacerait l'image. */
+.fz.r-star{box-shadow:inset 0 0 0 .8cqw #DCE7F2,0 1cqw 3cqw rgba(0,0,0,.5)}
+.fz.r-crown{box-shadow:inset 0 0 0 .9cqw #F5C33B,0 0 4cqw rgba(245,195,59,.32),
+  0 1cqw 3cqw rgba(0,0,0,.5)}
 .fz.r-crown .nm{color:#F5C33B}
-.fz.r-crown .mods,.fz.r-crown .foot{color:#A9B2C0}
-.fz.holo::after{content:"";position:absolute;inset:0;z-index:6;pointer-events:none;border-radius:5cqw;
-  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.5) 45%,rgba(160,220,255,.38) 52%,transparent 68%);
-  background-size:250% 250%;animation:sheen 3.6s linear infinite;mix-blend-mode:screen;opacity:.7}
+.fz.holo::after{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:4cqw;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.42) 45%,rgba(160,220,255,.32) 52%,transparent 68%);
+  background-size:250% 250%;animation:sheen 3.6s linear infinite;mix-blend-mode:screen;opacity:.6}
 @keyframes sheen{0%{background-position:120% 0}100%{background-position:-40% 0}}
 
 /* ---------------------------------------------------------- ouverture */
