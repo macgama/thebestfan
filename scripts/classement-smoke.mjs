@@ -77,10 +77,23 @@ r = await get('/api/rank/moi');
 check('le dernier est bien dernier', r.rang === 6);
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
-// `http.close()` est asynchrone : quitter sans l'attendre laisse un handle en
-// cours de fermeture, et libuv s'arrête sur une assertion — sous Windows, le
-// processus mourait sur un code d'erreur alors que tous les contrôles étaient
-// verts. Les autres suites attendent déjà la fermeture ; celle-ci l'oubliait.
+/**
+ * La sortie, et pourquoi elle ne passe pas par `process.exit()`.
+ *
+ * Attendre `http.close()` ne suffisait pas : l'échec revenait environ une fois
+ * sur cinq, et seulement lorsque la suite était lancée à la file derrière une
+ * autre — jamais seule, ce qui l'a rendu long à attraper. libuv s'arrêtait sur
+ * `!(handle->flags & UV_HANDLE_CLOSING)`, c'est-à-dire un handle fermé alors
+ * qu'il était déjà en train de se fermer.
+ *
+ * `process.exit()` coupe la boucle d'événements sans lui laisser finir ses
+ * fermetures. Le pool MySQL rend ses sockets de façon asynchrone, et quitter
+ * pendant ce rendu tombe sur l'assertion. On pose donc un code de sortie et on
+ * laisse Node partir de lui-même quand il n'a plus rien à faire.
+ *
+ * Effet de bord voulu : si un handle traînait vraiment, la suite ne mourrait
+ * plus au hasard, elle resterait ouverte — un symptôme qu'on peut chercher.
+ */
 await pool.end();
 await new Promise((r) => http.close(r));
-process.exit(failures ? 1 : 0);
+process.exitCode = failures ? 1 : 0;

@@ -29,9 +29,21 @@ const SCARVES = { d1:1, d2:3, d3:8, star:25, crown:60 };
  */
 const EVO_COST = { 2:25, 3:90 };
 
+/**
+ * Les séries.
+ *
+ * Les deux premières sont peuplées de supporters ordinaires — l'abonné, la
+ * vieille garde, le colleur d'affiches. La troisième existe parce que le
+ * catalogue s'est mis à accueillir un fantôme, un vampire, une pieuvre et un
+ * extraterrestre : les mêler aux deux autres aurait dilué ce qu'elles
+ * racontent. Séparées, chacune garde son registre, et le joueur sait ce qu'il
+ * ouvre.
+ */
 const SETS = [
   { id:'VN', nom:'VIRAGE NORD', ligne:'béton, pluie, hiver', c1:'#E0402C', c2:'#1A1F27' },
   { id:'NE', nom:'NUITS EUROPÉENNES', ligne:'jeudi soir, 900 km', c1:'#3C82E8', c2:'#151A22' },
+  { id:'IM', nom:'LE VIRAGE IMPOSSIBLE', ligne:'ceux qui ne devraient pas être là',
+    c1:'#8257DA', c2:'#12101C' },
 ];
 
 /** Taux de tirage. Les trois premières cartes sont communes, comme dans Pocket. */
@@ -207,6 +219,238 @@ const DEX = [
       + 'tribune. On ne l’a plus jamais vu arriver avant le coup d’envoi.',
     mods:{ perfectBonus:1.42, backfire:true, mashBonus:1.1 },
     cri:{ label:'PLEINE LUNE', gest:'mash', power:82 } },
+
+  /* ================================================ VIRAGE NORD, la suite
+
+     Des gens du stade, encore : ceux qu'on croise au tourniquet, dans la file,
+     au rang de derrière. Aucun n'est spectaculaire, et c'est le propos. */
+
+  { id:'X17', nom:'Le Gosse à la Coupe', type:'voix', set:'VN', stage:1, rar:'d1',
+    histoire:'Il a gagné la coupe des poussins il y a trois semaines. Il l’apporte '
+      + 'à chaque match, au cas où quelqu’un n’aurait pas vu.',
+    mods:{ tempoWindow:1.15, perfectBonus:1.1 },
+    cri:{ label:'ON A GAGNÉ AUSSI', gest:'tempo', power:48 } },
+
+  { id:'X20', nom:'Premier Match', type:'fide', set:'VN', stage:1, rar:'d1',
+    histoire:'Il ne connaît pas les chants, il ne sait pas quand se lever, et il '
+      + 'regarde son voisin pour savoir quoi faire. Il reviendra.',
+    mods:{ holdBonus:1.06, breathBonus:1.06 },
+    cri:{ label:'COMME LES AUTRES', gest:'hold', power:46 } },
+
+  { id:'X26', nom:'Le Tambour de Guerre', type:'perc', set:'VN', stage:1, rar:'d3',
+    histoire:'Torse nu par moins deux, deux maillets, et une peinture qu’il refait '
+      + 'à l’identique depuis onze ans.',
+    mods:{ mashBonus:1.2, mashTime:-600, breathBonus:0.95 },
+    cri:{ label:'ROULEMENT DE GUERRE', gest:'mash', power:74 } },
+
+  { id:'X27', nom:'Le Mime du Virage', type:'tifo', set:'VN', stage:1, rar:'d2',
+    histoire:'Il hurle sans un bruit depuis le début du match. Personne ne sait '
+      + 'pourquoi il fait ça. Tout le monde le regarde.',
+    mods:{ parryBonus:1.45, holdBonus:1.04 },
+    cri:{ label:'LE CRI SILENCIEUX', gest:'tempo', power:54 } },
+
+  { id:'X34', nom:'Le Ramasseur de Gobelets', type:'fide', set:'VN', stage:1, rar:'d1',
+    histoire:'Il repart toujours le dernier, une tour de gobelets dans les bras. '
+      + 'Il dit que quelqu’un doit bien le faire.',
+    mods:{ refundBonus:1.4, holdBonus:1.05 },
+    cri:{ label:'IL EN RESTE', gest:'hold', power:47 } },
+
+  { id:'X35', nom:'Le Mégaphone', type:'voix', set:'VN', stage:1, rar:'d3',
+    histoire:'Dos au terrain pendant quatre-vingt-dix minutes. Il n’a jamais vu '
+      + 'un but de sa vie et il ne s’en plaint pas.',
+    mods:{ tempoWindow:1.4, tempoInterval:70 },
+    cri:{ label:'TOUT LE MONDE AVEC MOI', gest:'tempo', power:76 } },
+
+  { id:'X39', nom:'La Cagoule Rose', type:'tifo', set:'VN', stage:1, rar:'d2',
+    histoire:'Il a l’air terrible jusqu’à ce qu’il sorte son téléphone. '
+      + 'La coque est un lapin rose. Il assume.',
+    mods:{ parryBonus:1.35, perfectBonus:1.1 },
+    cri:{ label:'PAS SI MÉCHANT', gest:'hold', power:56 } },
+
+  { id:'X41', nom:'L’Homme dans la Mascotte', type:'fide', set:'VN', stage:1, rar:'d2',
+    histoire:'Il a la tête sous le bras et vingt minutes pour souffler. Personne '
+      + 'ne le reconnaît sans le costume, et ça lui va très bien.',
+    mods:{ holdBonus:1.12, holdForgive:1, breathBonus:0.96 },
+    cri:{ label:'CINQ MINUTES', gest:'hold', power:57 } },
+
+  { id:'X42', nom:'La Stadière', type:'tifo', set:'VN', stage:1, rar:'d2',
+    histoire:'Elle confisque les bouchons depuis six ans. Elle en a une boîte '
+      + 'entière chez elle et elle ne sait pas quoi en faire.',
+    mods:{ parryBonus:1.5 },
+    cri:{ label:'PAS DE BOUCHON', gest:'hold', power:55 } },
+
+  { id:'X47', nom:'Le Bob du Dimanche', type:'fide', set:'VN', stage:1, rar:'d1',
+    histoire:'Même bob, même place, même sandwich. Il a arrêté de compter les '
+      + 'saisons quand il a dépassé les vingt.',
+    mods:{ holdBonus:1.08 },
+    cri:{ label:'COMME D’HABITUDE', gest:'hold', power:49 } },
+
+  { id:'X48', nom:'Le Gosse qui Boude', type:'voix', set:'VN', stage:1, rar:'d1',
+    histoire:'Il a la coupe et il fait la tête quand même. Son équipe a perdu '
+      + 'le match d’après, et ça compte plus.',
+    mods:{ perfectBonus:1.18, breathBonus:0.94 },
+    cri:{ label:'C’EST PAS JUSTE', gest:'tempo', power:50 } },
+
+  { id:'X49', nom:'Le Râleur du Rang B', type:'fide', set:'VN', stage:1, rar:'d2',
+    histoire:'Rien ne va, rien n’a jamais été aussi mauvais, et il a repris son '
+      + 'abonnement pour la trente-deuxième année.',
+    mods:{ holdBonus:1.14, holdForgive:1 },
+    cri:{ label:'DE MON TEMPS', gest:'hold', power:58 } },
+
+  /* ============================================ NUITS EUROPÉENNES, la suite
+
+     Le déplacement, la nuit, la caméra. Ceux pour qui le match se vit ailleurs
+     qu’en tribune, ou de très loin. */
+
+  { id:'X22', nom:'Le Craqueur de la Nuit', type:'pyro', set:'NE', stage:1, rar:'d3',
+    histoire:'Blouson noir, écharpe à damier, et un fumigène qu’il tient à bout '
+      + 'de bras comme une torche olympique.',
+    mods:{ perfectBonus:1.4, backfire:true },
+    cri:{ label:'LA NUIT S’ALLUME', gest:'mash', power:78 } },
+
+  { id:'X31', nom:'Le Supporter en Orbite', type:'depl', set:'NE', stage:1, rar:'star',
+    histoire:'Quatre cents kilomètres d’altitude, seize levers de soleil par jour, '
+      + 'et une écharpe qu’il a fait passer dans ses effets personnels.',
+    mods:{ breathBonus:1.3, refundBonus:1.5, tempoWindow:1.1 },
+    cri:{ label:'DEPUIS LÀ-HAUT', gest:'tempo', power:80 } },
+
+  { id:'X36', nom:'Le Vendeur d’Écharpes', type:'depl', set:'NE', stage:1, rar:'d2',
+    histoire:'Il a les écharpes des deux clubs dans le même sac et il ne voit pas '
+      + 'où est le problème.',
+    mods:{ refundBonus:1.55, breathBonus:1.05 },
+    cri:{ label:'DEUX POUR DIX', gest:'hold', power:56 } },
+
+  { id:'X37', nom:'Le Juge de Touche', type:'tifo', set:'NE', stage:1, rar:'d2',
+    histoire:'Il court la ligne depuis vingt ans et il n’a jamais entendu un seul '
+      + 'compliment. Il lève le drapeau quand même.',
+    mods:{ parryBonus:1.6, holdBonus:1.04 },
+    cri:{ label:'HORS-JEU', gest:'tempo', power:58 } },
+
+  { id:'X40', nom:'La Radio Locale', type:'voix', set:'NE', stage:1, rar:'d2',
+    histoire:'Elle commente depuis un banc en plastique, sous la pluie, pour six '
+      + 'cents auditeurs. Elle connaît chaque joueur par son prénom.',
+    mods:{ tempoWindow:1.3, tempoInterval:40 },
+    cri:{ label:'ET IL Y A BUT', gest:'tempo', power:60 } },
+
+  { id:'X43', nom:'La Streameuse', type:'depl', set:'NE', stage:1, rar:'d2',
+    histoire:'Elle filme la tribune plus que le terrain. Ses abonnés savent le '
+      + 'score avec dix secondes d’avance sur la télévision.',
+    mods:{ refundBonus:1.45, tempoWindow:1.15 },
+    cri:{ label:'VOUS ENTENDEZ ÇA', gest:'tempo', power:57 } },
+
+  { id:'X46', nom:'Le Peint des Pieds à la Tête', type:'pyro', set:'NE', stage:1, rar:'d2',
+    histoire:'Deux heures de peinture, moins trois degrés, et il ne remettra pas '
+      + 'son tee-shirt avant le coup de sifflet final.',
+    mods:{ perfectBonus:1.3, breathBonus:0.92 },
+    cri:{ label:'AUX COULEURS', gest:'mash', power:62 } },
+
+  /* ========================================= LE VIRAGE IMPOSSIBLE
+
+     Ce qui vit sous les gradins, ce qui vient de plus loin que le parcage, et
+     ce qui n’aurait jamais dû trouver un billet. Le registre est assumé :
+     ces cartes sont drôles là où les deux autres séries sont tendres. */
+
+  { id:'X16', nom:'La Plante du Grillage', type:'voix', set:'IM', stage:1, rar:'d2',
+    histoire:'Elle a poussé dans une fissure derrière le but. Un jour elle a eu '
+      + 'une bouche, et depuis elle chante plus fort que le rang entier.',
+    mods:{ tempoWindow:1.35, mashBonus:1.06 },
+    cri:{ label:'GUEULE GRANDE OUVERTE', gest:'tempo', power:60 } },
+
+  { id:'X18', nom:'Le Fantôme de la Tribune Sud', type:'fide', set:'IM', stage:1, rar:'star',
+    histoire:'Abonné depuis 1961. Mort en 1994. Il n’a pas manqué un match, et il '
+      + 'trouve que le nouveau stade manque d’âme.',
+    mods:{ holdBonus:1.28, holdForgive:3, breathBonus:1.1 },
+    cri:{ label:'JE N’AI JAMAIS PARTI', gest:'hold', power:82 } },
+
+  { id:'X19', nom:'Le Comte du Parcage', type:'pyro', set:'IM', stage:1, rar:'d3',
+    histoire:'Il ne se déplace qu’aux matchs en nocturne, ce qui limite beaucoup '
+      + 'son calendrier. Il boit quelque chose de rouge et refuse de dire quoi.',
+    mods:{ perfectBonus:1.38, backfire:true, tempoWindow:1.1 },
+    cri:{ label:'APRÈS LE COUCHER DU SOLEIL', gest:'mash', power:76 } },
+
+  { id:'X21', nom:'Le Gladiateur en Mousse', type:'perc', set:'IM', stage:1, rar:'d2',
+    histoire:'Casque authentique, épée en mousse. Il crie « ainsi meurent les '
+      + 'traîtres » à chaque corner adverse depuis six ans.',
+    mods:{ mashBonus:1.15, perfectBonus:1.12 },
+    cri:{ label:'POUR LA GLOIRE', gest:'mash', power:64 } },
+
+  { id:'X23', nom:'Le Caméléon en Smoking', type:'tifo', set:'IM', stage:1, rar:'d3',
+    histoire:'Il prend la couleur du camp qui mène. En prolongations, il vire au '
+      + 'gris et refuse tout commentaire.',
+    mods:{ parryBonus:1.8, holdBonus:1.06 },
+    cri:{ label:'ÇA DÉPEND', gest:'hold', power:70 } },
+
+  { id:'X24', nom:'La Chouette Statisticienne', type:'voix', set:'IM', stage:1, rar:'d2',
+    histoire:'Elle tient les chiffres depuis la charpente. Elle sait combien de '
+      + 'passes ont été ratées et elle en veut à tout le monde.',
+    mods:{ tempoWindow:1.42, tempoInterval:50 },
+    cri:{ label:'STATISTIQUEMENT', gest:'tempo', power:62 } },
+
+  { id:'X25', nom:'Le Héros Fatigué', type:'fide', set:'IM', stage:1, rar:'d3',
+    histoire:'Il a sauvé la ville trois fois. Son club, jamais. C’est ce qui le '
+      + 'ronge le plus.',
+    mods:{ holdBonus:1.2, holdForgive:2, breathBonus:0.94 },
+    cri:{ label:'PAS CETTE FOIS NON PLUS', gest:'hold', power:72 } },
+
+  { id:'X28', nom:'La Faucheuse au Pop-corn', type:'fide', set:'IM', stage:1, rar:'crown',
+    histoire:'Elle vient pour la fin des matchs. Elle reste pour les prolongations, '
+      + 'les tirs au but, et le troisième sac de pop-corn.',
+    mods:{ holdBonus:1.3, holdForgive:4, perfectBonus:1.2, breathBonus:1.15 },
+    cri:{ label:'PERSONNE NE PART AVANT LA FIN', gest:'hold', power:92 } },
+
+  { id:'X29', nom:'Le Poulet en Caoutchouc', type:'voix', set:'IM', stage:1, rar:'d1',
+    histoire:'Il a été lancé sur le terrain en 1998. Il n’est jamais reparti, et '
+      + 'il a désormais son propre chant.',
+    mods:{ tempoWindow:1.12 },
+    cri:{ label:'LE CRI DU POULET', gest:'tempo', power:44 } },
+
+  { id:'X30', nom:'Le Videur', type:'tifo', set:'IM', stage:1, rar:'d2',
+    histoire:'Costume trois pièces, oreillette, deux cents kilos de calme. '
+      + 'Il n’a jamais eu à se lever.',
+    mods:{ parryBonus:1.55, holdBonus:1.08 },
+    cri:{ label:'PAS PAR ICI', gest:'hold', power:60 } },
+
+  { id:'X32', nom:'La Mascotte Casquée', type:'perc', set:'IM', stage:1, rar:'d1',
+    histoire:'Boule de poils jaune, casque de chantier, panneau en bois. Personne '
+      + 'ne sait ce qu’elle annonce et tout le monde applaudit.',
+    mods:{ mashBonus:1.08 },
+    cri:{ label:'ATTENTION TRAVAUX', gest:'mash', power:47 } },
+
+  { id:'X33', nom:'Le Nain de Jardin', type:'fide', set:'IM', stage:1, rar:'d1',
+    histoire:'Volé dans un jardin en 1987, emmené à tous les déplacements depuis. '
+      + 'Il a vu plus de stades que la plupart des abonnés.',
+    mods:{ holdBonus:1.07, refundBonus:1.15 },
+    cri:{ label:'TOUJOURS LÀ', gest:'hold', power:46 } },
+
+  { id:'X38', nom:'Le Capybara Serein', type:'fide', set:'IM', stage:1, rar:'d2',
+    histoire:'Rien ne l’atteint. Ni le penalty refusé, ni le rouge à la '
+      + 'quatre-vingt-douzième. Il est le seul à sortir reposé.',
+    mods:{ holdBonus:1.18, holdForgive:2, breathBonus:1.12 },
+    cri:{ label:'TOUT VA BIEN', gest:'hold', power:58 } },
+
+  { id:'X44', nom:'Le Pigeon à la Frite', type:'depl', set:'IM', stage:1, rar:'d1',
+    histoire:'Il connaît les horaires de tous les matchs de la ville. Il ne vient '
+      + 'pas pour le football.',
+    mods:{ refundBonus:1.3, breathBonus:1.04 },
+    cri:{ label:'C’EST TOMBÉ', gest:'hold', power:45 } },
+
+  { id:'X45', nom:'Le Téléviseur', type:'perc', set:'IM', stage:1, rar:'d3',
+    histoire:'Il diffusait les matchs dans un café qui a fermé. Il s’est levé, il '
+      + 'a mis une écharpe, et il est venu voir en vrai.',
+    mods:{ mashBonus:1.18, mashTime:-500, tempoInterval:30 },
+    cri:{ label:'EN DIRECT DU VIRAGE', gest:'mash', power:72 } },
+
+  { id:'X50', nom:'La Pieuvre à Lunettes', type:'perc', set:'IM', stage:1, rar:'star',
+    histoire:'Huit bras, huit maillets, un seul tempo. Elle a mis trois saisons à '
+      + 'trouver des lunettes à sa taille.',
+    mods:{ mashBonus:1.35, mashTime:-900, breathBonus:1.08 },
+    cri:{ label:'LES HUIT EN MÊME TEMPS', gest:'mash', power:84 } },
+
+  { id:'X51', nom:'Le Touriste d’Ailleurs', type:'depl', set:'IM', stage:1, rar:'star',
+    histoire:'Il a traversé la galaxie pour un match de milieu de tableau. Il a '
+      + 'pris un hot-dog et il trouve que ça valait le voyage.',
+    mods:{ breathBonus:1.25, refundBonus:1.6, parryBonus:1.2 },
+    cri:{ label:'ON N’A PAS ÇA CHEZ NOUS', gest:'tempo', power:80 } },
 ];
 
 const RATES = {

@@ -67,13 +67,13 @@
    * vérifie que les six fichiers existent avant de laisser livrer.
    */
   const ILLUSTRES = new Set([
-    'G1', 'X7', 'X8',
-    // Les gens du stade et les figures du virage, passés par
-    // scripts/fanzzy-images.mjs. X16 à X23 ont leurs six fichiers mais pas
-    // encore de fiche au catalogue : ils n'entrent ici qu'une fois écrits,
-    // sinon verif-pages signalerait une illustration sans carte.
-    'X1', 'X2', 'X3', 'X4', 'X5', 'X6',
-    'X9', 'X10', 'X11', 'X12', 'X13', 'X14', 'X15',
+    'X1', 'X2', 'X3', 'X4', 'X5', 'G1', 'X6', 'X7',
+    'X8', 'X9', 'X10', 'X11', 'X12', 'X13', 'X14', 'X15',
+    'X17', 'X20', 'X26', 'X27', 'X34', 'X35', 'X39', 'X41',
+    'X42', 'X47', 'X48', 'X49', 'X22', 'X31', 'X36', 'X37',
+    'X40', 'X43', 'X46', 'X16', 'X18', 'X19', 'X21', 'X23',
+    'X24', 'X25', 'X28', 'X29', 'X30', 'X32', 'X33', 'X38',
+    'X44', 'X45', 'X50', 'X51',
   ]);
 
   /**

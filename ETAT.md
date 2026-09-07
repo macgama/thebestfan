@@ -97,6 +97,30 @@ vérification qui cherche un message dans le texte de la page le trouve dans son
 propre code source et passe alors que rien n'est affiché. Toujours cloner le
 corps et retirer `script,style` avant de lire.
 
+**`process.exit()` à la fin d'une suite la fait échouer au hasard.** Sous
+Windows, environ une fois sur cinq, et **seulement quand la suite est lancée à
+la file derrière une autre** — jamais seule, ce qui rend la faute très longue à
+attraper. Le symptôme est `Assertion failed: !(handle->flags &
+UV_HANDLE_CLOSING)` : un handle fermé alors qu'il se fermait déjà.
+
+La cause n'est pas le test, c'est la sortie. `process.exit()` coupe la boucle
+d'événements sans lui laisser finir ses fermetures, et le pool MySQL rend ses
+sockets de façon asynchrone. Attendre `http.close()` réduit la fréquence sans
+la supprimer.
+
+Le correctif : poser `process.exitCode` et laisser Node partir de lui-même.
+
+```js
+await pool.end();
+await new Promise((r) => http.close(r));
+process.exitCode = failures ? 1 : 0;
+```
+
+`classement-smoke.mjs` est passé à cette forme. **Les quatorze autres suites
+ont encore `process.exit()`** : elles n'ont pas montré le défaut, mais elles le
+portent. Quand l'une d'elles échoue sans raison, c'est la première chose à
+regarder — et le correctif est ci-dessus.
+
 **Le hasard du jeu ne doit pas fuir dans l'assertion.** Deux tests échouaient
 par intermittence pour cette raison : l'un rejouait un geste au tempo bruité
 et attendait une annulation exacte, l'autre cliquait sur la première carte

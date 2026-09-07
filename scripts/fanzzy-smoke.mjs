@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import express from 'express';
 import { createFanzzy, MAX_PACKS, PACK_PRICE } from '../src/server/fanzzy/index.js';
-import { DEX, BY_ID } from '../src/shared/fanzzy/dex.js';
+import { DEX, BY_ID, SETS } from '../src/shared/fanzzy/dex.js';
 import { SKINS } from '../src/shared/fanzzy/inventaire.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 
@@ -42,7 +42,11 @@ const call = async (p, o = {}) => {
 };
 
 let r = await call('/api/fanzzy/dex');
-check('catalogue servi', r.json.dex?.length === DEX.length && r.json.sets?.length === 2);
+// Le nombre de séries n'est pas figé ici : il en existe trois depuis
+// l'arrivée du VIRAGE IMPOSSIBLE, et il en existera d'autres. Un test qui
+// écrit « 2 » en dur casse à chaque ajout sans rien avoir attrapé d'utile.
+check('catalogue servi', r.json.dex?.length === DEX.length
+  && r.json.sets?.length === SETS.length);
 
 r = await call('/api/fanzzy/state');
 check('réserve pleine au départ', r.json.wallet.packs === MAX_PACKS);
