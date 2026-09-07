@@ -110,8 +110,10 @@
      <polygon points="98,-4 112,-4 124,64 70,64" fill="#F5C33B" opacity=".09"/>
      <circle cx="64" cy="84" r="50" fill="url(#h${u})" opacity=".65"/>`;
 
-    // silhouette du supporter, plus imposante selon l'étage d'évolution
-    const scale = 0.85 + f.stage * 0.12;
+    // Silhouette du supporter, plus imposante selon l'étage d'évolution.
+    // `stage` absent donnerait une échelle NaN et un dessin vide : toutes les
+    // sources ne le transmettent pas, on retombe sur le premier étage.
+    const scale = 0.85 + (Number(f.stage) || 1) * 0.12;
     s += `<g transform="translate(64,60) scale(${scale.toFixed(2)}) translate(-64,-60)">
       <circle cx="64" cy="34" r="11" fill="#0A0E13" stroke="${tc}" stroke-width="1.6"/>
       <path d="M52 78 v-20 a12 12 0 0 1 24 0 v20z" fill="#0A0E13" stroke="${tc}" stroke-width="1.4"/>`;

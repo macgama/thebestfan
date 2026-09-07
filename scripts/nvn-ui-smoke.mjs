@@ -217,6 +217,32 @@ check('les trois Fanzzy du deck sont là', ouvert.fanzzy === 3);
 check('le titulaire est en jeu', /EN JEU/.test(ouvert.actif ?? ''));
 check('le bouton annonce le cri et le geste', /TEMPO|MARTELAGE|ENDURANCE/.test(ouvert.chanter));
 
+/* ------------------------------------------ les Fanzzy ont un visage */
+
+/**
+ * Un nom seul ne dit pas qui est en jeu. Chaque Fanzzy porte donc son
+ * portrait — dessiné pour les trois illustrés, silhouette pour les autres —
+ * et il respire, comme partout ailleurs dans le jeu.
+ */
+{
+  const vignettes = await A.page.evaluate(() => {
+    const tuiles = [...document.querySelectorAll('#equipe .fz')];
+    return tuiles.map((t) => {
+      const el = t.querySelector('.vig .illu, .vig [data-vivant]');
+      if (!el) return null;
+      return {
+        balise: el.tagName.toLowerCase(),
+        vivant: el.classList.contains('fz-vivant'),
+        animation: getComputedStyle(el).animationName,
+      };
+    });
+  });
+  check('chaque Fanzzy du deck a sa vignette',
+    vignettes.length === 3 && vignettes.every(Boolean));
+  check('et elle respire, illustrée ou non',
+    vignettes.every((v) => v?.vivant && /fzsouffle/.test(v.animation)));
+}
+
 /* ------------------------------------ le barème du geste suit l'équipement */
 
 const bareme = await A.page.evaluate(() => S.vue?.moi?.gestes);

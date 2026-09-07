@@ -126,6 +126,16 @@ h2 i{font-style:normal;opacity:.7}
 .fz b{display:block;font-family:var(--banner);font-size:10px;letter-spacing:.02em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fz span{font-size:8px;opacity:.5}
+/* La vignette du Fanzzy. Un nom seul ne dit pas qui est en jeu ; le visage,
+   oui. fx.js la fait respirer toute seule — même en duel, un personnage figé
+   a l'air d'un autocollant. */
+.fz .vig{position:relative;width:100%;aspect-ratio:1;border-radius:6px;overflow:hidden;
+  margin-bottom:5px;background:#0A0E13}
+.fz .vig svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+/* Jamais centrée par `transform` : fz-vivant réécrit transform en entier. */
+.fz .vig .illu{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:top center}
+.fz:not(.actif) .vig{filter:grayscale(.55);opacity:.7}
 
 .main{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:9px}
 .ct{position:relative;aspect-ratio:.66;border-radius:7px;border:1px solid var(--fc,#8257DA);
@@ -265,6 +275,8 @@ h2 i{font-style:normal;opacity:.7}
 <div class="toast" id="toast"></div>
 
 <script src="/socket.io/socket.io.js"></script>
+<!-- Sans « defer » : le script en ligne ci-dessous lit FZART. -->
+<script src="/fanzzy-art.js"></script>
 <script>
 /* =======================================================================
    Duel N contre N.
@@ -335,6 +347,22 @@ const MESSAGES = {
   'duel.error.fixture_unknown':   'Ce match est introuvable.',
   'deck.error.none':              'Tu n\u2019as pas encore de deck.',
 };
+
+/**
+ * Le portrait d'un Fanzzy en jeu.
+ *
+ * Le dessin vient de /fanzzy-art.js, partagé avec le classeur et l'accueil :
+ * un personnage se dessine au même endroit pour tout le jeu. Les trois Fanzzy
+ * illustrés montrent leur portrait, les autres leur silhouette — et fx.js les
+ * fait respirer dans les deux cas, sans qu'on ait rien à déclencher.
+ */
+function vignette(f) {
+  const dessin = FZART.illustration(f, 'buste');
+  if (dessin) return dessin;
+  const svg = FZART.artProcedural(f);
+  // La silhouette n'est pas un `.illu` : sans cet attribut elle resterait figée.
+  return svg.replace('<svg ', `<svg data-vivant="${f.id}" `);
+}
 
 const api = async (p) => {
   const r = await fetch(p, { credentials:'same-origin' });
@@ -579,6 +607,7 @@ function rendreDuel() {
   $('equipe').innerHTML = (moi.fanzzy ?? []).map((f, i) => `
     <div class="fz ${f.actif ? 'actif' : peutChanger ? 'dispo' : ''}"
       ${!f.actif && peutChanger ? `data-entrer="${i}"` : ''}>
+      <div class="vig">${vignette(f)}</div>
       <b>${esc(f.nom ?? f.id)}</b>
       <span>${f.actif ? 'EN JEU' : peutChanger ? 'faire entrer' : 'banc'}</span>
     </div>`).join('');
@@ -854,6 +883,11 @@ $('equipe').addEventListener('click', (e) => {
     S.catalogue = cat.actions ?? [];
     S.matchs = matchs.matchs ?? [];
     formatsMemo = cat.formats ?? formatsMemo;
+
+    // Le catalogue Fanzzy ne sert qu'aux couleurs de type des vignettes. Son
+    // absence ne doit pas empêcher de jouer : le dessin retombe sur la craie.
+    const dex = await api('/api/fanzzy/dex').catch(() => null);
+    FZART.setTypes(dex?.types ?? {});
 
     let loadout = null;
     try { loadout = await api('/api/deck/loadout'); } catch { loadout = null; }
