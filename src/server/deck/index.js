@@ -66,7 +66,10 @@ export function createDecks({ pool, requireAuth }) {
       fanzzy: deck.fanzzy.map((f) => {
         const def = FANZZY_BY_ID.get(f.id);
         return {
-          id: f.id, nom: def?.nom, type: def?.type, cri: def?.cri,
+          // `stage` sert au dessin : la silhouette procédurale grandit avec
+          // l'étage d'évolution. Sans lui, l'écran de duel dessine un Fanzzy
+          // à l'échelle NaN, c'est-à-dire rien du tout.
+          id: f.id, nom: def?.nom, type: def?.type, stage: def?.stage, cri: def?.cri,
           stuff: f.stuff ?? [],
           // Les modificateurs sont calculés une fois pour toutes : le moteur
           // ne doit pas refaire ce calcul à chaque geste.
