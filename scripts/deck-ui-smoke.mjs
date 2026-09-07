@@ -20,6 +20,7 @@
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { JSDOM, VirtualConsole } from 'jsdom';
 import { createDecks } from '../src/server/deck/index.js';
@@ -27,7 +28,10 @@ import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
 
 const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
-const RACINE = new URL('..', import.meta.url).pathname;
+// `.pathname` d'une URL de fichier n'est pas un chemin : sous Windows il vaut
+// « /C:/… », et path.join en fait « C:\C:\… ». La suite ne pouvait donc pas
+// tourner sur une machine de développement Windows.
+const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
 let failures = 0;
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };

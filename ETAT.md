@@ -27,6 +27,18 @@ Le projet suit une méthode constante, à conserver :
 
 - **Chaque module a sa suite de tests**, dans `scripts/*-smoke.mjs`. Ils montent
   un vrai serveur sur une vraie base. On ne livre rien sans les avoir passés.
+
+  La base attendue est **locale**, pas celle d'Infomaniak : les suites visent
+  `mysql://tbf:tbfpass@127.0.0.1:3307/tbf` par défaut, sinon `DATABASE_URL`.
+  Il faut donc un MariaDB local sur le port 3307, une base `tbf` en
+  `utf8mb4_unicode_ci`, et les neuf fichiers de `sql/` appliqués dans l'ordre
+  de `DEPLOIEMENT.md` — 27 tables au bout. Chaque suite fait ensuite son propre
+  `DROP` puis recrée ce dont elle a besoin : **elles ne se lancent donc jamais
+  en parallèle**, elles s'écraseraient l'une l'autre.
+
+  `duel-smoke.mjs` a une étape de plus : il importe du TypeScript compilé dans
+  `dist-test/`. Sans `npm run test:build` au préalable, il échoue sur un
+  `ERR_MODULE_NOT_FOUND` qui ne dit pas qu'il manque une compilation.
 - **Les tests ont trouvé des bugs que la relecture avait ratés** — collation de
   base, buts perdus, soldes non débitables, catalogue divergent, barre de
   navigation par-dessus le bouton de jeu. C'est le cœur de la méthode : écrire
