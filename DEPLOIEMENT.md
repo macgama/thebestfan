@@ -16,9 +16,8 @@ heure la première fois, dont l'essentiel en attente de build.
 | `/admin` | joueurs, compétitions, réglages, journal | branché |
 | `/equipes` | clubs suivis, calendrier, résultats, buts en direct | branché |
 | `/fanzzy` | boosters, classeur, évolutions, Fanzzy équipé | branché |
-| `/duel` | duel temps réel, avec adversaire d'entraînement | branché |
 | `/deck` | construction de deck : trois Fanzzy, équipement, dix cartes | branché |
-| `/duel-nvn` | duel N contre N en temps réel, adossé à un vrai match | branché |
+| `/duel-nvn` | le duel : tir à la corde, 1v1 à 5v5, adossé à un vrai match | branché |
 | `/virage` | Grand Virage : tir à la corde collectif pendant un vrai match | branché |
 | `/carnet` | souvenirs vécus et vignettes à récupérer | branché |
 | `/diagnostic` | état du serveur et du WebSocket | branché |
@@ -28,9 +27,9 @@ dans le Grand Virage au moment où tu les gagnes, et se retrouvent dans le
 carnet — celles que tu as vécues d'un côté, celles que tu peux récupérer en
 écharpes de l'autre, pendant quinze jours.
 
-**Ce qui n'est pas dedans.** Le duel un contre un est encore le moteur tour par
-tour. Le tir à la corde en temps réel existe désormais dans le Grand Virage
-**et** dans le duel N contre N (`/duel-nvn`), qui demande un deck construit au
+**Ce qui n'est pas dedans.** L'ancien duel tour par tour a été supprimé : il
+n'y a plus qu'un seul jeu, le tir à la corde, décliné dans le Grand Virage et
+dans le duel de tribunes (`/duel-nvn`), qui demande un deck construit au
 préalable sur `/deck`. Les
 prototypes Ferveur v1 à v3 restent dans `labo/`, à ouvrir depuis ton disque :
 ils servent à essayer des règles, pas à jouer en ligne.
@@ -44,9 +43,8 @@ Ajoute au `.gitignore` :
 
 ```
 node_modules/
-dist/
-public/duel.bundle.js
 .env*
+*.log
 ```
 
 ## Étape 2 — Le schéma
@@ -84,7 +82,6 @@ PUBLIC_ORIGIN=https://thebestfan.online
 SESSION_SECRET=<openssl rand -hex 32>
 API_FOOTBALL_KEY=<ta clé>
 API_FOOTBALL_BUDGET=6800
-DUEL_BOT_AFTER_MS=20000
 ```
 
 Pour la connexion Google, ajoute aussi :
@@ -110,14 +107,25 @@ Onglet Node.js du site :
 |---|---|
 | Version de Node.js | 22 |
 | Dossier d'exécution | `./` |
-| Commande de build | `git pull && npm install && node build.mjs` |
+| Commande de build | `git pull && npm ci && node build.mjs` |
 | Commande de lancement | `npm start` |
 | Port | celui affiché par le Manager |
 
-Le `--omit=dev` doit avoir disparu : esbuild est une dépendance de
-développement et la construction échoue sans lui.
+**`npm ci` et non `npm install`.** `npm install` réécrit `package-lock.json`
+sur le serveur — versions de npm différentes, paquets à binaire propre à la
+plateforme. Le dépôt devient sale et le `git pull` suivant **refuse de
+fusionner sans le dire** : la construction continue, l'application redémarre,
+et tourne sur l'ancien code. C'est ce qui a bloqué une livraison entière
+pendant plusieurs séances. `npm ci` installe exactement ce que le verrou décrit
+et n'y touche jamais.
 
-Lance la construction, puis redémarre.
+`node build.mjs` ne fabrique plus rien — le projet est en JavaScript simple
+depuis la suppression de l'ancien duel. Le fichier est conservé pour que cette
+commande continue de fonctionner telle quelle.
+
+Lance la construction, **attends qu'elle soit terminée**, puis redémarre.
+Redémarrer pendant la construction relance l'ancien code : `npm start` ne fait
+jamais de `git pull`.
 
 ## Étape 5 — Vérifier
 
@@ -126,7 +134,7 @@ curl -s https://thebestfan.online/healthz
 ```
 
 Tu dois lire `"db":"connectée"`, `"auth":"active"`, `"football":"actif"`,
-`"souvenirs":"actives"`, `"fanzzy":"active"` et un objet `duel`. Si l'un dit
+`"souvenirs":"actives"`, `"fanzzy":"active"` et un objet `nvn`. Si l'un dit
 « désactivé », la console d'exécution te dira pourquoi — chaque module écrit sa
 raison au démarrage.
 
@@ -135,7 +143,7 @@ Puis dans le navigateur, dans cet ordre :
 1. `/compte` — crée un compte. Le lien de vérification s'affiche dans la console du Manager.
 2. `/fanzzy` — ouvre un booster. Le tirage vient du serveur, pas du navigateur.
 3. `/equipes` — suis ton club. Le calendrier se charge en une minute.
-4. `/duel` — cherche un duel. Sans personne en face, un entraînement démarre au bout de vingt secondes.
+4. `/deck` puis `/duel-nvn` — construis un deck, choisis un format et un match, entre en file. Au bout de vingt secondes sans adversaire, des bots complètent et le duel démarre en entraînement.
 5. `/virage` — pendant un match de ton club, entre dans le virage et chante. Un but réel secoue la corde et te frappe une carte-souvenir.
 6. `/carnet` — la carte doit y être, tamponnée « tu y étais ».
 
@@ -182,8 +190,6 @@ node scripts/auth-smoke.mjs        # 50 vérifications
 node scripts/football-smoke.mjs    # 39
 node scripts/souvenirs-smoke.mjs   # 27
 node scripts/fanzzy-smoke.mjs      # 27
-node scripts/duel-play.mjs         # deux comptes jouent un match entier
-node scripts/duel-bot.mjs          # un joueur seul contre l'entraînement
 node scripts/virage-smoke.mjs      # 28, dont la frappe des souvenirs
 node scripts/teletext-smoke.mjs   # 20, dont le cache et la panne d'API
 node scripts/onboarding-smoke.mjs # 28, dont les emplacements et l'équipement
@@ -192,7 +198,7 @@ node scripts/deck-smoke.mjs       # 28, dont les neuf refus de deck invalide
 node scripts/nvn-smoke.mjs        # 30, le moteur de duel effet par effet
 node scripts/admin-smoke.mjs      # 30, dont les garde-fous et la traçabilité
 node scripts/nvn-net-smoke.mjs    # 31, appariement, coupure, reprise (~25 s)
-node scripts/duel-loadtest.mjs 50 https://thebestfan.online
+node scripts/virage-loadtest.mjs 50 https://thebestfan.online
 ```
 
 ## Ce qui reste à faire avant d'ouvrir au public

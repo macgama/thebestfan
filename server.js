@@ -25,9 +25,6 @@ import { createClassements } from './src/server/classements/index.js';
 import { createDecks } from './src/server/deck/index.js';
 import { createAdmin } from './src/server/admin/index.js';
 import { createNvN } from './src/server/nvn/index.js';
-import { attachDuelServer } from './dist/duel-server.mjs';
-import { MysqlStore } from './dist/duel-server.mjs';
-import { STARTER_DECK } from './dist/duel-server.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ORIGIN = process.env.PUBLIC_ORIGIN ?? 'https://thebestfan.online';
@@ -54,7 +51,6 @@ let pool = null;
 let auth = null;
 let socketAuth = null;
 let football = null;
-let duels = null;
 let souvenirs = null;
 let fanzzy = null;
 let virage = null;
@@ -142,23 +138,6 @@ if (process.env.DATABASE_URL) {
 
     console.log('authentification active');
 
-    // ---- duels temps reel
-    duels = attachDuelServer(io, {
-      store: await MysqlStore.create(process.env.DATABASE_URL),
-      // L'identite vient de la session : plus personne ne peut jouer sous un
-      // autre nom ni reprendre le duel d'un autre.
-      authenticate: socketAuth,
-      // Deck de depart identique pour tous tant que la collection n'existe pas.
-      getDeck: async () => [...STARTER_DECK],
-      // Le Fanzzy équipé sera lu ici quand le moteur de tir à la corde
-      // remplacera le tour par tour ; il est déjà exposé côté serveur.
-      // Personne en face au bout de ce delai : on propose un entrainement
-      // plutot que de laisser le joueur tourner devant un ecran d'attente.
-      botAfterMs: Number(process.env.DUEL_BOT_AFTER_MS ?? 20000),
-    });
-    globalThis.duels = duels;
-    console.log('duels temps reel actifs');
-
     // ---- collection Fanzzy
     fanzzy = createFanzzy({ pool, requireAuth: auth.requireAuth });
     app.use('/api/fanzzy', fanzzy.router);
@@ -189,8 +168,6 @@ if (process.env.DATABASE_URL) {
       football = createFootball({
         pool, client, io,
         requireAuth: auth.requireAuth,
-        // Branchement du bonus live des duels : un but du club suivi pendant
-        // un duel devient un evenement du duel, estampille par le serveur.
         // Fin de match : on efface le classement et les buteurs de cette
         // compétition. C'est exactement le moment où les gens vont les
         // regarder, et six heures de cache les rendraient faux.
@@ -219,16 +196,10 @@ if (process.env.DATABASE_URL) {
           // 2. Le but déborde sur les duels adossés à ce match : ceux qui
           //    suivent le club buteur reprennent leur souffle, et la corde
           //    tressaille du côté où ils sont les plus nombreux.
-          const abonnes = new Set(await football.store.followersOfTeam(g.teamId));
-          try { nvn?.butReel(g, abonnes); }
-          catch (e) { console.error('[nvn] but réel', e.message); }
-
-          // 3. L'ancien duel tour par tour, tant qu'il est servi.
-          if (!globalThis.duels) return;
-          const teamName = g.teamId === g.home?.id ? g.home?.name : g.away?.name;
-          for (const userId of abonnes) {
-            await globalThis.duels.liveGoal(userId, g.fixtureId, teamName ?? '', g.minute ?? 0);
-          }
+          try {
+            const abonnes = new Set(await football.store.followersOfTeam(g.teamId));
+            nvn?.butReel(g, abonnes);
+          } catch (e) { console.error('[nvn] but réel', e.message); }
         },
       });
       app.use('/api/football', football.router);
@@ -301,7 +272,6 @@ app.get('/healthz', (_req, res) => {
     admin: admin ? 'actif' : 'désactivé',
     nvn: nvn ? { salles: nvn.salles.size, files: nvn.files.size } : 'désactivé',
     google: google?.actif ? 'active' : 'désactivée',
-    duel: duels ? duels.stats : null,
     mail: globalThis.mailer?.status ?? { etat: 'console' },
     origin: ORIGIN,
   });
@@ -319,7 +289,6 @@ app.get('/fanzzy/:id', (_req, res) => res.sendFile(path.join(__dirname, 'public'
 app.get('/compte', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'compte.html')));
 app.get('/diagnostic', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'diagnostic.html')));
 app.get('/equipes', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'equipes.html')));
-app.get('/duel', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'duel.html')));
 app.get('/deck', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'deck.html')));
 app.get('/duel-nvn', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'duel-nvn.html')));
 app.get('/fanzzy', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'fanzzy.html')));
@@ -358,7 +327,6 @@ for (const sig of ['SIGTERM', 'SIGINT']) {
     football?.poller.stop();
     virage?.stop();
     nvn?.stop();
-    duels?.close();
     io.close();
     http.close(async () => {
       await pool?.end().catch(() => {});

@@ -1,37 +1,15 @@
 /**
- * Construction du projet.
- * Le serveur et les pages restent en JavaScript simple ; seul le duel est en
- * TypeScript, et c'est esbuild qui le transforme en deux fichiers :
- *   dist/duel-server.mjs   importé par server.js
- *   public/duel.bundle.js  chargé par la page de duel
+ * Construction du projet — il n'y a plus rien à construire.
+ *
+ * Le seul TypeScript du dépôt était l'ancien duel tour par tour, remplacé par
+ * le tir à la corde. Tout le reste est du JavaScript servi tel quel, sans
+ * étape intermédiaire : c'est plus simple, plus rapide à déployer, et une
+ * panne de moins entre le code et la page.
+ *
+ * Ce fichier est conservé volontairement. La commande de build du Manager
+ * Infomaniak l'appelle encore (`git pull && npm ci && node build.mjs`), et un
+ * déploiement qui échoue sur un fichier introuvable coûterait bien plus cher
+ * que ces quelques lignes. Le jour où la commande sera simplifiée, il pourra
+ * disparaître.
  */
-import { build } from 'esbuild';
-import { mkdirSync } from 'node:fs';
-
-mkdirSync('dist', { recursive: true });
-
-await build({
-  entryPoints: ['src/server/duel/entry.ts'],
-  outfile: 'dist/duel-server.mjs',
-  bundle: true,
-  platform: 'node',
-  target: 'node20',
-  format: 'esm',
-  external: ['socket.io', 'mysql2', 'mysql2/promise'],
-  logLevel: 'info',
-});
-
-await build({
-  entryPoints: ['src/client/duel/entry.ts'],
-  outfile: 'public/duel.bundle.js',
-  bundle: true,
-  platform: 'browser',
-  target: ['es2022'],
-  format: 'iife',
-  globalName: 'TBF',
-  minify: true,
-  loader: { '.json': 'json' },
-  logLevel: 'info',
-});
-
-console.log('construction terminée');
+console.log('rien à construire : le projet est en JavaScript simple.');
