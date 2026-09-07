@@ -216,10 +216,17 @@ if (process.env.DATABASE_URL) {
             });
           } catch (e) { console.error('[souvenir]', e.message); }
 
-          // 2. Souffle offert aux joueurs de ce club actuellement en duel.
+          // 2. Le but déborde sur les duels adossés à ce match : ceux qui
+          //    suivent le club buteur reprennent leur souffle, et la corde
+          //    tressaille du côté où ils sont les plus nombreux.
+          const abonnes = new Set(await football.store.followersOfTeam(g.teamId));
+          try { nvn?.butReel(g, abonnes); }
+          catch (e) { console.error('[nvn] but réel', e.message); }
+
+          // 3. L'ancien duel tour par tour, tant qu'il est servi.
           if (!globalThis.duels) return;
           const teamName = g.teamId === g.home?.id ? g.home?.name : g.away?.name;
-          for (const userId of await football.store.followersOfTeam(g.teamId)) {
+          for (const userId of abonnes) {
             await globalThis.duels.liveGoal(userId, g.fixtureId, teamName ?? '', g.minute ?? 0);
           }
         },

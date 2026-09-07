@@ -67,6 +67,15 @@ const serveur = await import('node:fs/promises').then((fs) => fs.readFile('serve
 check('server.js rebranche le suivi sur l’inscription',
   /onboarding\.football\s*=\s*football/.test(serveur));
 
+/**
+ * Même famille de panne : un crochet que personne n'appelle. Le but réel du
+ * match support doit atteindre les duels en cours, sinon le terrain cesse de
+ * déborder sur la corde — et rien ne le signale, puisqu'il ne se passe
+ * simplement rien.
+ */
+check('server.js fait suivre le but réel aux duels en cours',
+  /nvn\??\.butReel\s*\(/.test(serveur));
+
 console.log(fautes
   ? `\n${fautes} faute(s) — ne pas livrer en l’état.`
   : '\nLe câblage des modules est correct.');

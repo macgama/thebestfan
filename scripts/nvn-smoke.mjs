@@ -199,5 +199,61 @@ check('au temps écoulé, la partie se termine', ev.some((e) => e.t === 'over' &
 check('un entraînement ne compte pas',
   ev.find((e) => e.t === 'over').classement === false);
 
+/* ------------------------------------------------------------ but réel */
+
+/**
+ * Le vrai match déborde sur la corde. Les deux tribunes d'un duel ne sont pas
+ * les deux clubs du match — les équipes se forment par ordre d'arrivée — donc
+ * ce qui compte est qui suit le club buteur, des deux côtés.
+ */
+{
+  d = duel(2, 'classe', t);
+  for (const j of d.joueurs.values()) j.breath = 30;
+  const ropeAvant = d.rope;
+
+  // Personne ne suit ce club : le but ne regarde pas ce duel.
+  let ev = d.butReel({ teamId: 999 }, new Set(), t);
+  check('un but d’un club que personne ne suit ne fait rien',
+    ev.length === 0 && d.rope === ropeAvant);
+  check('et il ne rend de souffle à personne',
+    [...d.joueurs.values()].every((j) => j.breath <= 31));
+
+  // Toute la tribune 0 suit le buteur : la corde penche de son côté.
+  ev = d.butReel({ teamId: 85, minute: 37, joueur: 'Baltazar' },
+    new Set(['0-0', '0-1']), t);
+  const e = ev.find((x) => x.t === 'but_reel');
+  check('le but est annoncé', Boolean(e));
+  check('il nomme le buteur et la minute', e?.joueur === 'Baltazar' && e?.minute === 37);
+  check('il dit combien de supporters de chaque tribune sont concernés',
+    e?.souffles?.[0] === 2 && e?.souffles?.[1] === 0);
+  check('la corde penche du côté de ceux qui suivent le buteur', d.rope < 0);
+  check('ceux qui suivent le club reprennent du souffle',
+    d.joueurs.get('0-0').breath > 40 && d.joueurs.get('0-1').breath > 40);
+  check('les autres ne reçoivent rien',
+    d.joueurs.get('1-0').breath <= 31 && d.joueurs.get('1-1').breath <= 31);
+
+  // Deux tribunes qui exultent en même temps ne se poussent pas.
+  d = duel(2, 'classe', t);
+  const avant = d.rope;
+  ev = d.butReel({ teamId: 85 }, new Set(['0-0', '0-1', '1-0', '1-1']), t);
+  check('un club suivi des deux côtés fait tressaillir la corde sans la déplacer',
+    d.rope === avant);
+  check('mais tout le monde reprend son souffle',
+    ev.find((x) => x.t === 'but_reel')?.souffles?.every((n) => n === 2));
+
+  // Le souffle est plafonné : un but n'est pas une réserve infinie.
+  d = duel(1, 'classe', t);
+  d.joueurs.get('0-0').breath = RULES.breathMax;
+  d.butReel({ teamId: 85 }, new Set(['0-0']), t);
+  check('le souffle ne dépasse pas son plafond',
+    d.joueurs.get('0-0').breath === RULES.breathMax);
+
+  // Un duel terminé ne bouge plus.
+  d = duel(1, 'classe', t);
+  d.finir(0, 'buts', []);
+  check('un duel terminé ignore les buts réels',
+    d.butReel({ teamId: 85 }, new Set(['0-0']), t).length === 0);
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 process.exit(failures ? 1 : 0);

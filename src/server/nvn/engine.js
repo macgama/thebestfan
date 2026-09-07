@@ -26,6 +26,8 @@ export const RULES = {
   refillMs: 4000,          // délai avant qu'une carte jouée soit remplacée
   chantPower: 30,          // poussée d'un chant parfait, avant modificateurs
   chantCost: 18,
+  butReelSouffle: 25,      // souffle offert à qui suit le club qui vient de marquer
+  butReelSecousse: 55,     // secousse maximale : une tribune entière acquise au buteur
 };
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -169,6 +171,54 @@ export class DuelNvN {
 
     if (Math.abs(this.rope) >= RULES.goalAt) this.but(this.rope > 0 ? 1 : 0, evenements);
     return v;
+  }
+
+  /* ------------------------------------------------------------ but réel */
+
+  /**
+   * Le vrai match a bougé : un club vient de marquer.
+   *
+   * Les deux tribunes d'un duel ne sont pas les deux clubs du match — les
+   * équipes se forment par ordre d'arrivée en file, pas par couleur. Un but
+   * réel ne peut donc pas « pousser du côté du domicile » comme au Grand
+   * Virage. Ce qui compte ici, c'est **qui suit le club qui vient de
+   * marquer**, et ces gens-là peuvent être des deux côtés de la corde.
+   *
+   * Chacun d'eux reçoit un souffle. La corde penche du côté où ils sont les
+   * plus nombreux, en proportion de l'effectif. À nombre égal elle tressaille
+   * sans bouger : deux tribunes qui exultent en même temps ne se poussent pas
+   * l'une l'autre, et un derby ne doit avantager personne.
+   *
+   * @param abonnes Set des userId qui suivent le club buteur.
+   */
+  butReel({ teamId, minute = null, joueur = null }, abonnes, t = now0()) {
+    if (this.termine) return [];
+
+    const concernes = [0, 0];
+    for (const j of this.joueurs.values()) {
+      if (!abonnes?.has(j.userId)) continue;
+      concernes[j.side]++;
+      this.regen(j, t);
+      j.breath = clamp(j.breath + RULES.butReelSouffle, 0, RULES.breathMax);
+    }
+    // Personne ne suit ce club : le but ne regarde pas ce duel.
+    if (!concernes[0] && !concernes[1]) return [];
+
+    const evenements = [];
+    const parCote = Math.max(1, (this.tailles[0] + this.tailles[1]) / 2);
+    const part = clamp((concernes[0] - concernes[1]) / parCote, -1, 1);
+    // La tribune 0 tire vers le négatif : voir `pousser`.
+    const secousse = -part * RULES.butReelSecousse;
+    this.rope = clamp(this.rope + secousse, -RULES.goalAt, RULES.goalAt);
+
+    evenements.push(this.ev('but_reel', {
+      teamId, minute, joueur,
+      souffles: concernes,
+      secousse: Math.round(secousse),
+    }));
+
+    if (Math.abs(this.rope) >= RULES.goalAt) this.but(this.rope > 0 ? 1 : 0, evenements);
+    return evenements;
   }
 
   but(side, evenements) {
