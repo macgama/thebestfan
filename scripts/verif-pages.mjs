@@ -164,8 +164,19 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
   }
 
   // Une illustration promise mais absente laisse un cadre vide sans message.
-  const illu = [...(html.match(/ILLUSTRES = new Set\(\[([^\]]*)\]/)?.[1] ?? '')
-    .matchAll(/'([A-Z0-9]+)'/g)].map((m) => m[1]);
+  //
+  // La liste vit dans fanzzy-art.js depuis que l'accueil dessine les mêmes
+  // personnages. Ce contrôle la cherchait dans fanzzy.html : après le
+  // déplacement il ne trouvait plus rien, annonçait « 0 illustration » et
+  // passait au vert. Un garde-fou devenu muet est pire que pas de garde-fou,
+  // donc on échoue si la liste est introuvable au lieu de la supposer vide.
+  const artjs = await readFile(path.join(DOSSIER, 'fanzzy-art.js'), 'utf8');
+  const brut = artjs.match(/ILLUSTRES = new Set\(\[([^\]]*)\]/)?.[1];
+  if (brut === undefined) {
+    ko('fanzzy-art.js', 'liste ILLUSTRES introuvable : le contrôle des '
+      + 'illustrations ne vérifie plus rien. A-t-elle été déplacée ?');
+  }
+  const illu = [...(brut ?? '').matchAll(/'([A-Z0-9]+)'/g)].map((m) => m[1]);
   const manquants = [];
   for (const id of illu) {
     for (const variante of ['', '-buste']) {
@@ -175,8 +186,8 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
       }
     }
   }
-  if (manquants.length) ko('fanzzy.html', `illustrations annoncées mais absentes : ${manquants.join(', ')}`);
-  else ok('fanzzy.html', `${illu.length} illustration(s) présentes en trois formats`);
+  if (manquants.length) ko('fanzzy-art.js', `illustrations annoncées mais absentes : ${manquants.join(', ')}`);
+  else if (brut !== undefined) ok('fanzzy-art.js', `${illu.length} illustration(s) présentes en trois formats`);
 }
 
 console.log(fautes
