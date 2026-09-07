@@ -15,6 +15,7 @@
     "duel:smoke": "node scripts/duel-play.mjs",
     "deck:smoke": "node scripts/deck-smoke.mjs",
     "deck:ui": "node scripts/deck-ui-smoke.mjs",
+    "accueil:ui": "node scripts/accueil-ui-smoke.mjs",
     "pages": "node scripts/verif-pages.mjs",
     "cablage": "node scripts/verif-cablage.mjs"
   },

@@ -330,6 +330,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <div class="toast" id="toast"></div>
 </main>
 
+<!-- Sans « defer » : le script en ligne ci-dessous lit FZART dès sa première
+     ligne, il doit donc déjà exister. -->
+<script src="/fanzzy-art.js"></script>
 <script>
 /* =======================================================================
    FANZZY — collection, boosters, évolutions
@@ -355,20 +358,10 @@ const ART = {
   burst: 'video/gerbe.mp4',
 };
 
-/**
- * Choisit le meilleur format d'image que le navigateur sait lire.
- * AVIF quand c'est possible, WebP sinon, JPEG en dernier recours. Les trois
- * fichiers existent, et l'écart est considérable : le paquet rouge pèse
- * 7,2 Mo en PNG d'origine, 58 Ko en AVIF. C'est ce genre de détail qui décide
- * d'un score de performance, pas le nombre d'animations.
- */
-const IMG_EXT = (() => {
-  const c = document.createElement('canvas');
-  if (c.toDataURL('image/avif').startsWith('data:image/avif')) return '.avif';
-  if (c.toDataURL('image/webp').startsWith('data:image/webp')) return '.webp';
-  return '.jpg';
-})();
-const src = (base) => base + IMG_EXT;
+// Choix du format d'image et dessin des Fanzzy : voir /fanzzy-art.js. L'accueil
+// dessine les mêmes personnages, et deux copies d'un même dessin divergent
+// toujours — c'est déjà arrivé au catalogue.
+const { IMG_EXT, src } = FZART;
 
 const $ = (id) => document.getElementById(id);
 
@@ -579,96 +572,13 @@ setInterval(tickRegen, 1000);
 
 /* ----------------------------------------------------- illustrations */
 
+// Le dessin des Fanzzy vit dans /fanzzy-art.js, partagé avec l’accueil : une
+// seule définition, comme pour le catalogue.
+//
+// `uid` reste ici parce que packArt, propre à cette page, s’en sert encore.
+// Son préfixe « p » ne peut pas entrer en collision avec le « g » du module.
 let uid = 0;
-function seeded(str) {
-  let h = 1779033703 ^ str.length;
-  for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
-  return () => { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909);
-    return ((h ^= h >>> 16) >>> 0) / 4294967296; };
-}
-
-/**
- * Fanzzy disposant d'une illustration dessinée.
- *
- * Le reste du catalogue garde le rendu procédural : mieux vaut un dessin
- * géométrique cohérent qu'un trou dans la grille en attendant l'illustration.
- * On ajoute simplement les identifiants ici au fur et à mesure.
- */
-const ILLUSTRES = new Set(['G1', 'X7', 'X8']);
-
-const illustration = (f, variante = 'buste') => {
-  if (!ILLUSTRES.has(f.id)) return null;
-  const base = `/img/fanzzy/${f.id}${variante === 'buste' ? '-buste' : ''}`;
-  return `<img class="illu" alt="" loading="lazy" decoding="async" src="${base}${IMG_EXT}"
-    onerror="this.onerror=null;this.src='${base}.png'">`;
-};
-
-const artCache = new Map();
-function art(f) {
-  const dessin = illustration(f);
-  if (dessin) {
-    // Le fond de tribune reste procédural : c'est lui qui porte la couleur du
-    // type. Le personnage se pose dessus.
-    return `<div class="illuwrap">${artFond(f)}${dessin}</div>`;
-  }
-  return artProcedural(f);
-}
-
-/** Fond seul, sans silhouette : sert de décor aux illustrations. */
-function artFond(f) {
-  const tc = TYPES[f.type].c;
-  return `<svg viewBox="0 0 128 100" preserveAspectRatio="xMidYMid slice"
-    xmlns="http://www.w3.org/2000/svg">
-    <defs><radialGradient id="hf${f.id}"><stop offset="0" stop-color="${tc}" stop-opacity=".5"/>
-      <stop offset="1" stop-color="${tc}" stop-opacity="0"/></radialGradient></defs>
-    <rect width="128" height="100" fill="#101821"/>
-    <polygon points="16,-4 30,-4 58,64 4,64" fill="#F5C33B" opacity=".1"/>
-    <polygon points="98,-4 112,-4 124,64 70,64" fill="#F5C33B" opacity=".1"/>
-    <circle cx="64" cy="78" r="52" fill="url(#hf${f.id})"/>
-  </svg>`;
-}
-
-function artProcedural(f) {
-  if (artCache.has(f.id)) return artCache.get(f.id);
-  const r = seeded(f.id), tc = TYPES[f.type].c, u = 'g' + uid++;
-  let s = `<svg viewBox="0 0 128 100" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-   <defs><linearGradient id="s${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16202C"/>
-     <stop offset="1" stop-color="#05080C"/></linearGradient>
-   <radialGradient id="h${u}"><stop offset="0" stop-color="${tc}" stop-opacity=".55"/>
-     <stop offset="1" stop-color="${tc}" stop-opacity="0"/></radialGradient>
-   <filter id="b${u}"><feGaussianBlur stdDeviation="3"/></filter></defs>
-   <rect width="128" height="100" fill="url(#s${u})"/>
-   <polygon points="16,-4 30,-4 58,64 4,64" fill="#F5C33B" opacity=".09"/>
-   <polygon points="98,-4 112,-4 124,64 70,64" fill="#F5C33B" opacity=".09"/>
-   <circle cx="64" cy="84" r="50" fill="url(#h${u})" opacity=".65"/>`;
-
-  // silhouette du supporter, plus imposante selon l'étage d'évolution
-  const scale = 0.85 + f.stage * 0.12;
-  s += `<g transform="translate(64,60) scale(${scale.toFixed(2)}) translate(-64,-60)">
-    <circle cx="64" cy="34" r="11" fill="#0A0E13" stroke="${tc}" stroke-width="1.6"/>
-    <path d="M52 78 v-20 a12 12 0 0 1 24 0 v20z" fill="#0A0E13" stroke="${tc}" stroke-width="1.4"/>`;
-  if (f.type === 'voix') s += `<path d="M74 40 l16-11 4 7 -16 9z" fill="${tc}"/>`;
-  if (f.type === 'perc') s += `<ellipse cx="64" cy="66" rx="15" ry="11" fill="#E9E3D4" stroke="${tc}" stroke-width="2"/>`;
-  if (f.type === 'fide') s += `<path d="M44 56 q20 -12 40 0" stroke="${tc}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
-  if (f.type === 'tifo') s += `<rect x="40" y="44" width="48" height="20" fill="#E9E3D4" stroke="${tc}" stroke-width="1.6"/>`;
-  if (f.type === 'pyro') s += `<circle cx="86" cy="48" r="4" fill="#FFF3D0"/><circle cx="86" cy="48" r="11" fill="${tc}" opacity=".5" filter="url(#b${u})"/>`;
-  if (f.type === 'depl') s += `<rect x="34" y="52" width="60" height="18" rx="3" fill="#12202F" stroke="${tc}" stroke-width="1.4"/>`;
-  s += `</g>`;
-
-  let steps = 'M0 100';
-  for (let i = 0; i < 9; i++) steps += `L${i * 14.5} ${100 - i * 4.2}L${(i + 1) * 14.5} ${100 - i * 4.2}`;
-  s += `<path d="${steps}L128 100Z" fill="#080B10" opacity=".9"/>`;
-  for (let row = 0; row < 3; row++) {
-    const y = 93 - row * 8;
-    for (let i = 0; i < 15; i++) {
-      const x = (4 + i * 8.6 + r() * 3).toFixed(1);
-      s += `<circle cx="${x}" cy="${y}" r="2" fill="${r() > .88 ? tc : '#1C2530'}"/>`;
-    }
-  }
-  s += `<rect width="128" height="100" fill="#000" opacity=".07"/></svg>`;
-  artCache.set(f.id, s);
-  return s;
-}
+const { seeded, ILLUSTRES, illustration, art, artFond, artProcedural } = FZART;
 
 function packArt(set) {
   const r = seeded(set.id), u = 'p' + uid++;

@@ -72,6 +72,12 @@ bouton recouvert de 16 pixels, une image décentrée d'une demi-largeur.
 | `deck-ui-smoke.mjs` | construction de deck | jsdom |
 | `nvn-ui-smoke.mjs` | duel N contre N, deux joueurs | puppeteer |
 | `fanzzy-ui-smoke.mjs` | classeur, kiosque, catalogue | puppeteer |
+| `accueil-ui-smoke.mjs` | scène du Fanzzy sur l'accueil | puppeteer |
+
+`accueil-ui-smoke.mjs` vérifie une chose qui ne se lit pas dans le HTML : que
+le Fanzzy **bouge**. Il mesure le style calculé et exige l'animation
+`fzsouffle`. Un personnage figé ne se distingue d'un personnage vivant que
+là.
 
 `jsdom` est déclaré en `devDependencies`. **`puppeteer` ne l'est pas, et c'est
 volontaire** : il télécharge un Chromium de près de 200 Mo, ce qui alourdirait
@@ -129,6 +135,12 @@ pénalisait, et plus la carte était rare, pire c'était.
 
 **Le catalogue Fanzzy n'existe qu'à un endroit**, `src/shared/fanzzy/dex.js`,
 servi par `/api/fanzzy/dex`. Aucune page ne le recopie. Voir § 6.
+
+**Le dessin d'un Fanzzy n'existe qu'à un endroit non plus**,
+`public/fanzzy-art.js`. Le classeur et l'accueil dessinent les mêmes
+personnages ; recopier cent lignes de SVG aurait refait exactement la faute du
+catalogue. La liste `ILLUSTRES` y vit aussi, et `verif-pages.mjs` échoue s'il
+ne la trouve plus — un garde-fou devenu muet est pire que pas de garde-fou.
 
 **On ne rejoue pas un match passé.** Un duel adossé à un match du jour ou en
 cours est classé ; à un match futur, c'est un entraînement ; à un match passé,

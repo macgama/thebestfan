@@ -93,6 +93,46 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .live .go{margin-top:9px;font-size:11.5px;opacity:.75}
 .live .go b{color:var(--projo)}
 
+/* ---------------------------------------------------- la scène du Fanzzy
+   Le personnage du joueur en grand, comme sur un accueil de jeu mobile :
+   c'est lui qu'on vient voir, les tuiles viennent après. Il respire tout
+   seul — fx.js surveille le document et anime tout `.illu` ou `[data-vivant]`
+   qui apparaît. */
+.scene{position:relative;display:none;text-decoration:none;color:inherit;
+  margin:4px 14px 0;border-radius:16px;overflow:hidden;height:min(46dvh,340px);
+  border:1px solid rgba(242,238,228,.1);background:linear-gradient(180deg,#101821,#080B10)}
+.scene.on{display:block;animation:pop .5s cubic-bezier(.2,.9,.3,1)}
+.scene:active{transform:scale(.985)}
+/* Sans illustration dessinée, la scène est plus basse. La silhouette
+   procédurale est dessinée pour une vignette de classeur : agrandie sur toute
+   la hauteur d'un héros, elle grossit ses traits et se lit comme un
+   placeholder. Plus courte, elle redevient un décor de tribune crédible.
+   Les Fanzzy illustrés gardent la pleine hauteur — et en gagnent une au fur
+   et à mesure qu'on les dessine. */
+.scene.brut{height:min(30dvh,230px)}
+/* Le dessin s'arrête au-dessus du bandeau au lieu de passer dessous : la
+   silhouette est cadrée large, le nom la coupait en deux. Séparés, on lit
+   une scène puis une étiquette. */
+.scene.brut .scene-art{inset:0 0 42px 0}
+.scene-art{position:absolute;inset:0}
+.scene-art svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+/* Le personnage est posé au sol, jamais centré par `transform` : `fz-vivant`
+   réécrit transform en entier et effacerait un translateX(-50%) dès la
+   première image de l'animation. D'où object-fit et object-position. */
+/* Le bas est dégagé de la hauteur du bandeau : sans ça le personnage a les
+   pieds derrière son propre nom. */
+.scene-art .illu{position:absolute;inset:0 0 44px 0;width:100%;height:calc(100% - 44px);
+  object-fit:contain;object-position:bottom center;
+  filter:drop-shadow(0 16px 30px rgba(0,0,0,.7))}
+.scene-tag{position:absolute;top:11px;left:13px;font-family:var(--banner);
+  font-size:9px;letter-spacing:.2em;opacity:.45}
+.scene-nom{position:absolute;left:0;right:0;bottom:0;padding:30px 14px 13px;pointer-events:none;
+  background:linear-gradient(180deg,transparent,rgba(4,6,10,.88) 62%)}
+.scene-nom b{display:block;font-family:var(--banner);font-size:21px;letter-spacing:.05em;
+  text-shadow:0 3px 18px rgba(0,0,0,.9)}
+.scene-nom small{display:block;font-family:var(--banner);font-size:10.5px;letter-spacing:.15em;
+  margin-top:3px;color:var(--projo);opacity:.85}
+
 .grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;align-content:start}
 a.tile{position:relative;overflow:hidden;border-radius:14px;text-decoration:none;color:inherit;
   padding:15px 14px 14px;min-height:112px;display:flex;flex-direction:column;gap:5px;
@@ -153,12 +193,22 @@ a.tile .badge.rouge{background:var(--flare);color:#fff}
       </div>
     </div>
     <div class="live" id="live"></div>
+    <!-- La scène passe après le direct : un match en cours reste la priorité,
+         et comme la carte de direct est masquée le reste du temps, le Fanzzy
+         se retrouve tout en haut dans le cas courant. -->
+    <a class="scene" id="scene" href="/fanzzy">
+      <div class="scene-art" id="sceneArt"></div>
+      <div class="scene-tag">TON FANZZY</div>
+      <div class="scene-nom"><b id="sceneNom"></b><small id="sceneCri"></small></div>
+    </a>
     <nav class="grid" id="grid"></nav>
     <p class="legal">Clubs, groupes et illustrations du jeu sont fictifs ·
       <a href="/diagnostic">état du service</a></p>
   </div>
 </main>
 
+<!-- Sans « defer » : le script en ligne ci-dessous lit FZART, il doit exister. -->
+<script src="/fanzzy-art.js"></script>
 <script>
 /* =======================================================================
    Accueil.
@@ -255,6 +305,48 @@ function tuiles(badges = {}) {
       <b>${t.t}</b><span>${t.d}</span></a>`).join('');
 }
 
+/**
+ * La scène du haut : le Fanzzy équipé, en pied, qui respire.
+ *
+ * Le dessin vient de /fanzzy-art.js, partagé avec le classeur. L'animation
+ * vient de fx.js, qui surveille le document et anime tout `.illu` ou
+ * `[data-vivant]` qui apparaît — rien à déclencher ici.
+ *
+ * Le loadout ne renvoie que l'identité du Fanzzy ; on va chercher son entrée
+ * complète dans le catalogue du serveur, parce que la silhouette procédurale
+ * a besoin de `stage` pour sa taille et que le loadout ne l'envoie pas.
+ */
+function scene(dex, loadout) {
+  const f = loadout?.fanzzy;
+  if (!f) return;                 // aucun Fanzzy équipé : la scène reste cachée
+  FZART.setTypes(dex.types ?? {});
+  const complet = (dex.dex ?? []).find((x) => x.id === f.id) ?? f;
+
+  const dessin = FZART.illustration(complet, 'plein');
+  $('sceneArt').innerHTML = dessin
+    ? FZART.artFond(complet) + dessin
+    : FZART.artProcedural(complet);
+
+  if (!dessin) {
+    const svg = $('sceneArt').firstElementChild;
+    // Le rendu procédural n'est pas un `.illu` : sans cet attribut il resterait
+    // figé, et c'est le cas de vingt-six Fanzzy sur vingt-neuf.
+    svg?.setAttribute('data-vivant', complet.id);
+    // Et il se cadre entier au lieu de remplir. Le dessin est composé pour une
+    // vignette de classeur : agrandi en rognage, il coupe la tête du
+    // personnage. Mieux vaut des bandes sombres sur les côtés.
+    svg?.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  }
+  // Scène plus basse tant que ce Fanzzy n'est pas dessiné : voir la note sur
+  // `.scene.brut` dans la feuille de style.
+  $('scene').classList.toggle('brut', !dessin);
+
+  $('sceneNom').textContent = complet.nom ?? '';
+  $('sceneCri').textContent = complet.cri?.label ? `« ${complet.cri.label} »` : '';
+  $('scene').href = `/fanzzy/${encodeURIComponent(complet.id)}`;
+  $('scene').classList.add('on');
+}
+
 (async () => {
   let user = null;
   try {
@@ -280,6 +372,17 @@ function tuiles(badges = {}) {
       ? `${principal.name} · ${st.slots.used}/${st.slots.total} clubs suivis`
       : 'aucun club suivi';
   } catch { /* module non monté */ }
+
+  // Le Fanzzy équipé, en grand. Après les compteurs, avant le direct : c'est
+  // ce que le joueur vient voir, et ça remplit l'écran pendant que le reste
+  // arrive.
+  try {
+    const [dex, loadout] = await Promise.all([
+      fetch('/api/fanzzy/dex').then((r) => r.json()),
+      fetch('/api/me/loadout', { credentials:'same-origin' }).then((r) => r.json()),
+    ]);
+    scene(dex, loadout);
+  } catch { /* collection non montée : l'accueil reste utilisable sans */ }
 
   // Un match en cours passe devant tout le reste : c'est le seul moment où
   // l'ordre des priorités change.
