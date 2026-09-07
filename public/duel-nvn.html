@@ -711,6 +711,29 @@ function raconter(e) {
       ajouterFil(mien(e.side) ? 'Chœur : tous en même temps !' : 'Ils tentent un chœur',
         mien(e.side) ? 'fort' : 'contre');
       break;
+    /**
+     * Un but du vrai match. C'est le moment que le jeu entier attend : le
+     * terrain déborde sur la corde. On le dit clairement, et on distingue les
+     * trois cas — pour toi, contre toi, ou pour les deux à la fois, ce qui
+     * arrive quand les deux tribunes suivent le même club.
+     */
+    case 'but_reel': {
+      const [pourNous, pourEux] = e.souffles ?? [0, 0];
+      const moi = S.vue?.moi?.side === 0 ? pourNous : pourEux;
+      const eux = S.vue?.moi?.side === 0 ? pourEux : pourNous;
+      const qui = e.joueur ? ` · ${e.joueur}` : '';
+      const minute = e.minute ? `${e.minute}′ ` : '';
+
+      if (moi && !eux) ajouterFil(`${minute}BUT DE TON CLUB${qui} · souffle repris`, 'fort');
+      else if (!moi && eux) ajouterFil(`${minute}But du club d’en face${qui}`, 'contre');
+      else if (moi && eux) ajouterFil(`${minute}But${qui} : les deux tribunes exultent`, 'fort');
+
+      if (moi) {
+        window.FX?.cri?.('BUT !', { couleur:'var(--flare)' });
+        window.FX?.secousse?.();
+      }
+      break;
+    }
     case 'goal': {
       const pour = mien(e.side);
       ajouterFil(pour ? 'BUT pour ta tribune' : 'But encaissé', pour ? 'fort' : 'contre');

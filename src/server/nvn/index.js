@@ -158,6 +158,26 @@ export function createNvN({ pool, io, requireAuth, decks }) {
     return salle;
   }
 
+  /**
+   * Un but réel dans un match support.
+   *
+   * Il ne concerne que les duels adossés à ce match précis. Les autres salles
+   * n'en savent rien : un but à Lens ne doit pas secouer une corde tendue sur
+   * un match de Super League.
+   */
+  function butReel(g, abonnes) {
+    let touchees = 0;
+    for (const salle of salles.values()) {
+      if (Number(salle.duel.fixture?.id) !== Number(g.fixtureId)) continue;
+      const ev = salle.duel.butReel(
+        { teamId: g.teamId, minute: g.minute, joueur: g.player }, abonnes);
+      if (!ev.length) continue;
+      touchees++;
+      diffuser(salle, ev);
+    }
+    return touchees;
+  }
+
   /** Diffusion : les événements partent à tous, les vues restent privées. */
   function diffuser(salle, evenements) {
     if (!evenements?.length) return;
@@ -336,6 +356,6 @@ export function createNvN({ pool, io, requireAuth, decks }) {
     });
   });
 
-  return { router, salles, files, ouvrir, ouvrirAvecBots, tenterAppariement,
+  return { router, salles, files, ouvrir, ouvrirAvecBots, tenterAppariement, butReel,
            stop: () => { clearInterval(veille); for (const s of salles.values()) clearInterval(s.timer); } };
 }
