@@ -66,7 +66,15 @@
    * simplement les identifiants ici au fur et à mesure — `verif-pages.mjs`
    * vérifie que les six fichiers existent avant de laisser livrer.
    */
-  const ILLUSTRES = new Set(['G1', 'X7', 'X8']);
+  const ILLUSTRES = new Set([
+    'G1', 'X7', 'X8',
+    // Les gens du stade et les figures du virage, passés par
+    // scripts/fanzzy-images.mjs. X16 à X23 ont leurs six fichiers mais pas
+    // encore de fiche au catalogue : ils n'entrent ici qu'une fois écrits,
+    // sinon verif-pages signalerait une illustration sans carte.
+    'X1', 'X2', 'X3', 'X4', 'X5', 'X6',
+    'X9', 'X10', 'X11', 'X12', 'X13', 'X14', 'X15',
+  ]);
 
   /**
    * `variante` vaut 'buste' (320×320, pour une carte) ou 'plein' (520×945,

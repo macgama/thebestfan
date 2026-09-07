@@ -1,6 +1,6 @@
 import express from 'express';
 import { ACTIONS, ACTION_BY_ID, DECK_RULES, validerDeck } from '../../shared/duel/actions.js';
-import { BY_ID as FANZZY_BY_ID } from '../../shared/fanzzy/dex.js';
+import { parIdentifiant } from '../fanzzy/catalogue.js';
 import { STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 
 /**
@@ -64,7 +64,7 @@ export function createDecks({ pool, requireAuth }) {
     if (!deck) return null;
     return {
       fanzzy: deck.fanzzy.map((f) => {
-        const def = FANZZY_BY_ID.get(f.id);
+        const def = parIdentifiant(f.id);
         return {
           // `stage` sert au dessin : la silhouette procédurale grandit avec
           // l'étage d'évolution. Sans lui, l'écran de duel dessine un Fanzzy

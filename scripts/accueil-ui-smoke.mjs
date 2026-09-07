@@ -24,6 +24,7 @@ import express from 'express';
 import puppeteer from 'puppeteer';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { createOnboarding } from '../src/server/onboarding/index.js';
+import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 
 const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -56,6 +57,10 @@ for (const id of ['G1', 'V1']) {
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' });
+// Le catalogue vit en base depuis qu il se gère par l administration :
+// on le charge comme le fait server.js, sinon les modules travaillent
+// sur un catalogue vide.
+await chargerCatalogue(pool);
 const equiper = (id) =>
   pool.execute(`UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?`, [id, U]);
 

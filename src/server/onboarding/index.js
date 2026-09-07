@@ -1,5 +1,6 @@
 import express from 'express';
-import { DEX, BY_ID, SCARVES } from '../../shared/fanzzy/dex.js';
+import { SCARVES } from '../../shared/fanzzy/dex.js';
+import { publies, parIdentifiant } from '../fanzzy/catalogue.js';
 import { SKINS, STUFF, ACTIONS, SKIN_BY_ID, STUFF_BY_ID, combine }
   from '../../shared/fanzzy/inventaire.js';
 
@@ -116,8 +117,8 @@ export function createOnboarding({ pool, requireAuth, football = null }) {
    * carte d'action, et des écharpes. Aucun mauvais tirage possible.
    */
   function tirerBienvenue() {
-    const communs = DEX.filter((f) => f.rar === 'd1');
-    const bons = DEX.filter((f) => ['d2', 'd3'].includes(f.rar));
+    const communs = publies().filter((f) => f.rar === 'd1');
+    const bons = publies().filter((f) => ['d2', 'd3'].includes(f.rar));
     const equipement = STUFF.filter((s) => ['d1', 'd2'].includes(s.rar));
 
     return [
@@ -161,7 +162,7 @@ export function createOnboarding({ pool, requireAuth, football = null }) {
         }
       }
 
-      const premier = cartes.find((c) => c.type === 'fanzzy' && BY_ID.get(c.id).rar !== 'd1')
+      const premier = cartes.find((c) => c.type === 'fanzzy' && parIdentifiant(c.id).rar !== 'd1')
         ?? cartes.find((c) => c.type === 'fanzzy');
 
       await conn.query(
@@ -219,7 +220,7 @@ export function createOnboarding({ pool, requireAuth, football = null }) {
    */
   async function loadout(userId) {
     const w = (await q(`SELECT active_fanzzy FROM user_wallet WHERE user_id = ?`, [userId]))[0];
-    const f = w?.active_fanzzy ? BY_ID.get(w.active_fanzzy) : null;
+    const f = w?.active_fanzzy ? parIdentifiant(w.active_fanzzy) : null;
     const portes = await q(
       `SELECT stuff_id FROM user_stuff WHERE user_id = ? AND slot IS NOT NULL ORDER BY slot`,
       [userId]);

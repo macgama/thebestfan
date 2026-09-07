@@ -5,6 +5,7 @@ import express from 'express';
 import { createOnboarding, SLOTS_DEPART } from '../src/server/onboarding/index.js';
 import { BY_ID } from '../src/shared/fanzzy/dex.js';
 import { STUFF_BY_ID, combine } from '../src/shared/fanzzy/inventaire.js';
+import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 
 const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
 let failures = 0;
@@ -26,6 +27,10 @@ await raw.query(`INSERT INTO teams (id,name) VALUES (85,'FC Sion'),(91,'FC Bâle
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' });
+// Le catalogue vit en base depuis qu il se gère par l administration :
+// on le charge comme le fait server.js, sinon les modules travaillent
+// sur un catalogue vide.
+await chargerCatalogue(pool);
 const O = createOnboarding({ pool, requireAuth: (r, _s, n) => { r.user = { id: U }; n(); } });
 const app = express(); app.use('/api/me', O.router);
 const http = createServer(app); await new Promise((r) => http.listen(0, r));

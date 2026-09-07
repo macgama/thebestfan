@@ -20,6 +20,7 @@ import { createDecks } from '../src/server/deck/index.js';
 import { createNvN } from '../src/server/nvn/index.js';
 import { GESTURES, resoudreGeste } from '../src/server/ferveur/gestures.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
+import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 
 const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
 // Voir deck-ui-smoke : `.pathname` donne « /C:/… » sous Windows, ce qui rend
@@ -85,6 +86,10 @@ await raw.end();
 /* ----------------------------------------------------------- le serveur */
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 8, charset: 'utf8mb4' });
+// Le catalogue vit en base depuis qu il se gère par l administration :
+// on le charge comme le fait server.js, sinon les modules travaillent
+// sur un catalogue vide.
+await chargerCatalogue(pool);
 const app = express();
 const http = createServer(app);
 const io = new Server(http, { cors: { origin: true } });

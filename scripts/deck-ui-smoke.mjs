@@ -26,6 +26,7 @@ import { JSDOM, VirtualConsole } from 'jsdom';
 import { createDecks } from '../src/server/deck/index.js';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
+import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 
 const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
 // `.pathname` d'une URL de fichier n'est pas un chemin : sous Windows il vaut
@@ -73,6 +74,10 @@ for (const s of ['jumelles', 'echarpe', 'tambour']) {
 }
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' });
+// Le catalogue vit en base depuis qu il se gère par l administration :
+// on le charge comme le fait server.js, sinon les modules travaillent
+// sur un catalogue vide.
+await chargerCatalogue(pool);
 
 /* ----------------------------------------------------------- le serveur */
 
