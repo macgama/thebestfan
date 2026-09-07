@@ -11,6 +11,7 @@
     "build": "npm install && node build.mjs",
     "auth:smoke": "node scripts/auth-smoke.mjs",
     "foot:smoke": "node scripts/football-smoke.mjs",
+    "test:build": "tsc -p tsconfig.test.json",
     "duel:smoke": "node scripts/duel-play.mjs",
     "deck:smoke": "node scripts/deck-smoke.mjs",
     "deck:ui": "node scripts/deck-ui-smoke.mjs",
@@ -25,8 +26,10 @@
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
+    "@types/react": "^19.2.18",
     "esbuild": "^0.24.0",
     "jsdom": "^26.0.0",
+    "react": "^19.2.8",
     "typescript": "5.8"
   }
 }

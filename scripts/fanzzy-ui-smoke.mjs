@@ -16,13 +16,16 @@
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { DEX } from '../src/shared/fanzzy/dex.js';
 
 const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
-const RACINE = new URL('..', import.meta.url).pathname;
+// Voir deck-ui-smoke : `.pathname` donne « /C:/… » sous Windows, ce qui rend
+// la suite inutilisable là où elle est justement censée tourner avant livraison.
+const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
 let failures = 0;
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };

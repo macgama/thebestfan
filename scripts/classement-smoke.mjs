@@ -77,5 +77,10 @@ r = await get('/api/rank/moi');
 check('le dernier est bien dernier', r.rang === 6);
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
-await pool.end(); http.close();
+// `http.close()` est asynchrone : quitter sans l'attendre laisse un handle en
+// cours de fermeture, et libuv s'arrête sur une assertion — sous Windows, le
+// processus mourait sur un code d'erreur alors que tous les contrôles étaient
+// verts. Les autres suites attendent déjà la fermeture ; celle-ci l'oubliait.
+await pool.end();
+await new Promise((r) => http.close(r));
 process.exit(failures ? 1 : 0);
