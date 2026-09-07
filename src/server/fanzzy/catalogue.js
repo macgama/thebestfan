@@ -57,25 +57,27 @@ const versJeu = (r) => ({
 });
 
 /**
- * Amorçage : la base vide reçoit le contenu de `dex.js`.
+ * Amorçage : les cartes de `dex.js` que la base ne connaît pas encore.
  *
- * On n'écrase jamais une carte existante. Le jour où `dex.js` ne sera plus
- * qu'un fichier d'amorçage historique, une modification faite dans
- * l'administration ne doit pas être annulée au redémarrage suivant.
+ * `INSERT IGNORE` et non `REPLACE` : on ajoute ce qui manque, on n'écrase
+ * jamais ce qui existe. Une carte modifiée depuis l'administration doit
+ * survivre au redémarrage suivant.
+ *
+ * On ne se contente pas d'amorcer une base vide : sinon une carte ajoutée à
+ * `dex.js` n'arriverait jamais en base, et le fichier d'amorçage divergerait
+ * silencieusement du catalogue réel — exactement la faute que ce projet a déjà
+ * payée avec le catalogue recopié dans la page.
  */
 async function amorcer(pool) {
-  const [[{ n }]] = await pool.query('SELECT COUNT(*) AS n FROM fanzzy');
-  if (n > 0) return 0;
-
   let pose = 0;
   for (const [i, f] of AMORCE.entries()) {
-    await pool.execute(
+    const [r] = await pool.execute(
       `INSERT IGNORE INTO fanzzy
          (id, nom, type, set_id, stage, rar, evo, histoire, mods, cri, publie, ordre)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
       [f.id, f.nom, f.type, f.set, f.stage, f.rar, f.evo ?? null,
        f.histoire ?? null, JSON.stringify(f.mods ?? {}), JSON.stringify(f.cri ?? {}), i]);
-    pose++;
+    if (r.affectedRows) pose++;
   }
   return pose;
 }
