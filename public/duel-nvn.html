@@ -13,9 +13,15 @@
 html,body{margin:0;min-height:100%}
 body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
   overscroll-behavior:none}
-#app{position:relative;width:100%;max-width:460px;min-height:100dvh;display:flex;flex-direction:column;
+/* `height` et non `min-height` : un écran de jeu ne se fait pas défiler. Tout
+   doit tenir, et c'est l'arène qui absorbe ce qui reste — sinon le bouton de
+   chant finit sous le pli et le joueur ne le trouve plus. */
+#app{position:relative;width:100%;max-width:460px;height:100dvh;overflow:hidden;
+  display:flex;flex-direction:column;
   background:radial-gradient(120% 40% at 50% -4%,rgba(224,64,44,.14),transparent 60%),
              linear-gradient(180deg,#141A21,#0A0D11 45%,#0A0D11)}
+/* La préparation, elle, peut défiler : la liste des matchs est longue. */
+#prepa{overflow-y:auto;flex:1;min-height:0}
 
 /* ------------------------------------------------------- préparation */
 
@@ -68,43 +74,57 @@ h2 i{font-style:normal;opacity:.7}
 .score .horloge{font-family:var(--banner);font-size:16px;letter-spacing:.06em;opacity:.75;flex:none}
 .score .horloge small{display:block;font-size:8px;letter-spacing:.14em;opacity:.5;text-align:center;
   font-family:var(--ui);margin-top:2px}
+/* Le son se coupe d'un toucher, et le choix survit d'une page à l'autre.
+   Un jeu qui sonne sans qu'on puisse l'arrêter se joue en silence, onglet
+   fermé. */
+.son{position:absolute;top:10px;right:10px;z-index:6;width:30px;height:30px;border-radius:50%;
+  border:1px solid rgba(242,238,228,.16);background:rgba(8,11,16,.6);color:var(--craie);
+  cursor:pointer;opacity:.55;font-size:13px;line-height:1;padding:0}
+.son.coupe{opacity:.3}
 
-/* La corde. Le repère central ne bouge jamais : c'est lui qui rend le
-   déplacement lisible d'un coup d'œil. */
-.corde{position:relative;height:34px;margin:2px 14px 0;border-radius:8px;flex:none;overflow:hidden;
-  background:linear-gradient(90deg,rgba(245,195,59,.16),rgba(0,0,0,.35) 45%,rgba(0,0,0,.35) 55%,rgba(60,130,232,.16))}
-.corde .zero{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(242,238,228,.35)}
-.corde .noeud{position:absolute;top:4px;bottom:4px;width:12px;border-radius:4px;background:var(--craie);
-  left:50%;margin-left:-6px;transition:transform .18s linear;
-  box-shadow:0 0 14px rgba(242,238,228,.5)}
-.corde .grad{position:absolute;top:0;bottom:0;width:1px;background:rgba(242,238,228,.12)}
-.cordeInfo{display:flex;justify-content:space-between;padding:5px 16px 0;font-size:9px;
-  letter-spacing:.12em;opacity:.42;font-family:var(--banner)}
+/* ------------------------------------------------------------- l'arène
 
-.tribunes{display:flex;gap:8px;padding:10px 14px 0;flex:none}
-.trib{flex:1;min-width:0;border:1px solid rgba(242,238,228,.1);border-radius:10px;padding:8px;
-  background:rgba(8,11,16,.5)}
-.trib.moi{border-color:rgba(245,195,59,.3)}
-.trib .tt{font-family:var(--banner);font-size:8.5px;letter-spacing:.16em;opacity:.45;margin-bottom:6px}
-.jr{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11px}
-.jr .pt{width:6px;height:6px;border-radius:50%;background:var(--vert);flex:none}
-.jr.parti .pt{background:var(--flare)}
-.jr.parti{opacity:.45}
-.jr .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.jr .fv{font-family:var(--banner);font-size:11px;opacity:.7}
-.jr .sf{width:26px;height:3px;border-radius:2px;background:rgba(242,238,228,.15);flex:none;overflow:hidden}
-.jr .sf i{display:block;height:100%;background:var(--bleu)}
+   La corde était une barre de trente-quatre pixels tout en haut de l'écran :
+   le cœur du jeu réduit à une jauge de chargement. Elle occupe maintenant la
+   place principale, et la position ne se lit plus à un curseur mais au
+   **territoire** — ta couleur mange la leur, ou l'inverse. C'est lisible d'un
+   coup d'œil, de loin, en jouant.
 
-/* Le fil occupe la place restante, avec un plancher.
-   Essayé en hauteur fixe : le milieu de l'écran devenait un vide mort, et la
-   main comme le bouton de chant étaient déjà en bas de toute façon puisqu'ils
-   sont les derniers éléments de la colonne. */
-.fil{flex:1 1 auto;min-height:76px;overflow:hidden;margin:10px 14px 0;padding:8px 10px;border-radius:9px;
-  background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.07);
-  display:flex;flex-direction:column-reverse;gap:4px;font-size:11px;line-height:1.45}
-.fil div{opacity:.75}
-.fil .fort{color:var(--projo);opacity:1}
-.fil .contre{color:var(--flare)}
+   Tout le reste de l'écran a maigri pour lui laisser la place. */
+.arene{position:relative;flex:1 1 auto;min-height:132px;margin:6px 12px 0;border-radius:14px;
+  overflow:hidden;border:1px solid rgba(242,238,228,.1);background:#070A0E}
+.cote{position:absolute;top:0;bottom:0;width:50%;transition:width .2s cubic-bezier(.3,.9,.4,1)}
+.cote.moi{left:0;background:
+  linear-gradient(90deg,rgba(245,195,59,.42),rgba(245,195,59,.10))}
+.cote.eux{right:0;background:
+  linear-gradient(270deg,rgba(60,130,232,.42),rgba(60,130,232,.10))}
+
+/* La corde elle-même, tendue en travers de l'arène. */
+.fil-corde{position:absolute;left:0;right:0;top:50%;height:3px;margin-top:-1.5px;
+  background:linear-gradient(90deg,rgba(242,238,228,.15),rgba(242,238,228,.5),rgba(242,238,228,.15))}
+.noeud{position:absolute;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;
+  background:var(--craie);box-shadow:0 0 22px 5px rgba(242,238,228,.55);
+  transition:left .2s cubic-bezier(.3,.9,.4,1);z-index:3}
+.noeud::after{content:"";position:absolute;top:-46px;bottom:-46px;left:50%;width:1px;
+  margin-left:-.5px;background:linear-gradient(180deg,transparent,rgba(242,238,228,.35),transparent)}
+
+/* L'écart, en gros chiffres. Un nombre se lit plus vite qu'une position. */
+.ecart{position:absolute;left:0;right:0;top:14px;text-align:center;font-family:var(--banner);
+  font-size:34px;line-height:1;letter-spacing:.02em;pointer-events:none;
+  text-shadow:0 3px 20px rgba(0,0,0,.85);transition:color .25s}
+.ecart small{display:block;font-size:8.5px;letter-spacing:.22em;opacity:.5;margin-top:5px}
+
+/* La foule : un point par joueur, qui s'allume quand il chante. Ça remplace
+   le fil de texte — on voit qui pousse, on ne le lit plus. */
+.foule{position:absolute;bottom:9px;display:flex;gap:5px;align-items:flex-end;z-index:2}
+.foule.moi{left:11px}
+.foule.eux{right:11px;flex-direction:row-reverse}
+.tete{width:9px;height:9px;border-radius:50% 50% 40% 40%;background:rgba(242,238,228,.18);
+  transition:background .25s,transform .25s}
+.foule.moi .tete.on{background:var(--projo)}
+.foule.eux .tete.on{background:var(--bleu)}
+.tete.chante{transform:translateY(-7px) scale(1.35)}
+.foule .tete.parti{opacity:.25}
 
 .effets{display:flex;gap:5px;flex-wrap:wrap;padding:8px 14px 0;flex:none;min-height:0}
 .eff{font-family:var(--banner);font-size:8.5px;letter-spacing:.1em;border-radius:4px;padding:3px 7px;
@@ -118,19 +138,22 @@ h2 i{font-style:normal;opacity:.7}
 .souffle b{font-family:var(--banner);font-size:12px;min-width:34px;text-align:right}
 .souffle span{font-size:8.5px;letter-spacing:.12em;opacity:.45;font-family:var(--banner)}
 
+/* Compact : trois portraits en ligne, le nom dessous. Ils prenaient un quart
+   de l'écran en carré ; c'est l'arène qui a besoin de cette place. */
 .equipe{display:flex;gap:6px;margin-bottom:8px}
-.fz{flex:1;border:1px solid rgba(242,238,228,.13);border-radius:8px;padding:7px 6px;text-align:center;
-  background:rgba(8,11,16,.5);cursor:default;min-width:0}
+.fz{flex:1;border:1px solid rgba(242,238,228,.13);border-radius:8px;padding:5px;text-align:center;
+  background:rgba(8,11,16,.5);cursor:default;min-width:0;display:flex;align-items:center;gap:6px}
 .fz.actif{border-color:var(--projo);background:rgba(245,195,59,.1)}
 .fz.dispo{cursor:pointer;border-style:dashed;border-color:var(--vert)}
-.fz b{display:block;font-family:var(--banner);font-size:10px;letter-spacing:.02em;
+.fz .txt{flex:1;min-width:0;text-align:left}
+.fz b{display:block;font-family:var(--banner);font-size:9.5px;letter-spacing:.02em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fz span{font-size:8px;opacity:.5}
+.fz span{font-size:7.5px;opacity:.5;letter-spacing:.08em}
 /* La vignette du Fanzzy. Un nom seul ne dit pas qui est en jeu ; le visage,
    oui. fx.js la fait respirer toute seule — même en duel, un personnage figé
    a l'air d'un autocollant. */
-.fz .vig{position:relative;width:100%;aspect-ratio:1;border-radius:6px;overflow:hidden;
-  margin-bottom:5px;background:#0A0E13}
+.fz .vig{position:relative;width:34px;height:34px;flex:none;border-radius:6px;overflow:hidden;
+  background:#0A0E13}
 .fz .vig svg{position:absolute;inset:0;width:100%;height:100%;display:block}
 /* Jamais centrée par `transform` : fz-vivant réécrit transform en entier. */
 .fz .vig .illu{position:absolute;inset:0;width:100%;height:100%;
@@ -233,19 +256,19 @@ h2 i{font-style:normal;opacity:.7}
       <div class="camp"><div class="nom" id="nomEux">EN FACE</div><div class="b" id="butsEux">0</div></div>
     </div>
 
-    <div class="corde" id="corde">
-      <div class="grad" style="left:25%"></div><div class="zero"></div><div class="grad" style="left:75%"></div>
-      <div class="noeud" id="noeud"></div>
-    </div>
-    <div class="cordeInfo"><span id="cordeMoi">TOI</span><span id="cordeEux">EUX</span></div>
+    <button class="son" id="son" type="button" aria-label="Couper le son">♪</button>
 
-    <div class="tribunes">
-      <div class="trib moi"><div class="tt">TA TRIBUNE</div><div id="tribMoi"></div></div>
-      <div class="trib"><div class="tt">EN FACE</div><div id="tribEux"></div></div>
+    <div class="arene" id="arene">
+      <div class="cote moi" id="coteMoi"></div>
+      <div class="cote eux" id="coteEux"></div>
+      <div class="fil-corde"></div>
+      <div class="noeud" id="noeud"></div>
+      <div class="ecart" id="ecart">0<small>ÉGALITÉ</small></div>
+      <div class="foule moi" id="fouleMoi"></div>
+      <div class="foule eux" id="fouleEux"></div>
     </div>
 
     <div class="effets" id="effets"></div>
-    <div class="fil" id="fil"></div>
 
     <div class="moi">
       <div class="souffle">
@@ -575,14 +598,28 @@ function rendreDuel() {
   $('horloge').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   $('modeTag').textContent = v.mode === 'classe' ? 'CLASSÉ' : 'ENTRAÎNEMENT';
 
-  // La corde : le moteur compte positif vers le camp 1. On l'oriente pour que
-  // « vers la droite » veuille toujours dire « ta tribune avance ».
+  /* L'arène. Le moteur compte positif vers le camp 1 ; on l'oriente pour que
+     « vers la droite » veuille toujours dire « ta tribune avance ».
+
+     La position ne se lit pas à un curseur mais au territoire : ton camp
+     occupe une part de la largeur, et le nœud est la frontière. */
   const sens = mon === 0 ? -1 : 1;
   const part = Math.max(-1, Math.min(1, (v.rope ?? 0) / 300)) * sens;
-  $('noeud').style.transform = `translateX(${(part * 46).toFixed(1)}vw)`;
+  const pct = 50 + part * 42;                    // 8 % de marge : un camp n'est jamais nul
+  $('coteMoi').style.width = `${pct.toFixed(1)}%`;
+  $('coteEux').style.width = `${(100 - pct).toFixed(1)}%`;
+  $('noeud').style.left = `${pct.toFixed(1)}%`;
 
-  $('tribMoi').innerHTML = (v.equipes?.[mon] ?? []).map(ligneJoueur).join('');
-  $('tribEux').innerHTML = (v.equipes?.[eux] ?? []).map(ligneJoueur).join('');
+  // L'écart en clair. Le chiffre se lit plus vite que la position.
+  const avance = Math.round(Math.abs(v.rope ?? 0));
+  const ec = $('ecart');
+  ec.firstChild.textContent = avance === 0 ? '0' : `${part > 0 ? '+' : '−'}${avance}`;
+  ec.querySelector('small').textContent = avance === 0 ? 'ÉGALITÉ'
+    : part > 0 ? 'TU MÈNES LA CORDE' : 'ILS TIRENT PLUS FORT';
+  ec.style.color = avance === 0 ? 'var(--craie)' : part > 0 ? 'var(--projo)' : 'var(--bleu)';
+
+  dessinerFoule('fouleMoi', v.equipes?.[mon] ?? []);
+  dessinerFoule('fouleEux', v.equipes?.[eux] ?? []);
 
   if (!moi) return;
 
@@ -608,8 +645,10 @@ function rendreDuel() {
     <div class="fz ${f.actif ? 'actif' : peutChanger ? 'dispo' : ''}"
       ${!f.actif && peutChanger ? `data-entrer="${i}"` : ''}>
       <div class="vig">${vignette(f)}</div>
-      <b>${esc(f.nom ?? f.id)}</b>
-      <span>${f.actif ? 'EN JEU' : peutChanger ? 'faire entrer' : 'banc'}</span>
+      <div class="txt">
+        <b>${esc(f.nom ?? f.id)}</b>
+        <span>${f.actif ? 'EN JEU' : peutChanger ? 'ENTRER' : 'BANC'}</span>
+      </div>
     </div>`).join('');
 
   const cd = moi.cooldowns ?? {};
@@ -650,24 +689,48 @@ function rendreDuel() {
   if (v.termine) finir(v);
 }
 
-function ligneJoueur(j) {
-  return `<div class="jr ${j.connecte ? '' : 'parti'}">
-    <span class="pt"></span>
-    <span class="nm">${esc(j.nom ?? '—')}</span>
-    <span class="sf"><i style="width:${Math.max(0, Math.min(100, j.breath ?? 0))}%"></i></span>
-    <span class="fv">${j.ferveur ?? 0}</span>
-  </div>`;
+/**
+ * La foule : un point par joueur, au pied de son camp.
+ *
+ * C'est ce qui remplace le fil de texte. On ne lit plus « michel chante
+ * 74 % » : on voit sa tête sauter. Le nom reste en infobulle pour qui veut
+ * savoir, mais l'information principale — qui pousse, qui est parti — se lit
+ * sans un mot.
+ */
+function dessinerFoule(id, joueurs) {
+  const el = $(id);
+  const voulu = joueurs.map((j) => j.userId ?? j.nom).join('|');
+  // On ne reconstruit que si l'équipe a changé : sinon on effacerait les
+  // têtes en train de sauter à chaque état reçu, dix fois par seconde.
+  if (el.dataset.cle !== voulu) {
+    el.dataset.cle = voulu;
+    el.innerHTML = joueurs.map((j) => `<span class="tete" data-u="${esc(j.userId ?? '')}"
+      title="${esc(j.nom ?? '')}"></span>`).join('');
+  }
+  [...el.children].forEach((t, i) => {
+    const j = joueurs[i];
+    t.classList.toggle('parti', j?.connecte === false);
+    t.classList.toggle('on', Boolean(j?.connecte));
+  });
 }
 
-/* ------------------------------------------------------------- fil */
-
-function ajouterFil(txt, classe) {
-  const d = document.createElement('div');
-  if (classe) d.className = classe;
-  d.textContent = txt;
-  $('fil').prepend(d);
-  while ($('fil').children.length > 24) $('fil').lastChild.remove();
+/** Fait sauter la tête d'un joueur : il vient de chanter. */
+function teteSaute(userId) {
+  const t = document.querySelector(`.tete[data-u="${CSS.escape(String(userId))}"]`);
+  if (!t) return;
+  t.classList.add('chante');
+  setTimeout(() => t.classList.remove('chante'), 320);
 }
+
+/* ------------------------------------------------- ce qui se voit
+
+   Il n'y a plus de fil de texte. Un journal qui défile pendant qu'on joue
+   n'est jamais lu : on regarde la corde, pas la colonne de phrases. Chaque
+   événement devient donc un signal — un chiffre qui monte du nœud, une tête
+   qui saute, une onde, un son.
+
+   Le texte qui reste est transitoire et tient en deux mots : le nom d'une
+   carte jouée, qu'on ne peut pas deviner autrement.                        */
 
 const nomDe = (userId) => {
   for (const eq of S.vue?.equipes ?? []) {
@@ -678,79 +741,122 @@ const nomDe = (userId) => {
 };
 const mien = (side) => side === S.vue?.moi?.side;
 
+/** Le bouton de son. L'état vient de fx.js, qui le retient d'une page à l'autre. */
+function reglerBoutonSon() {
+  const b = $('son');
+  if (!b) return;
+  const coupe = window.FX?.sonEstCoupe?.() ?? true;
+  b.classList.toggle('coupe', coupe);
+  b.textContent = coupe ? '♪̸' : '♪';
+  b.setAttribute('aria-label', coupe ? 'Rétablir le son' : 'Couper le son');
+}
+
+/** Le point d'où partent les chiffres : le nœud de la corde. */
+function pointCorde() {
+  const n = $('noeud')?.getBoundingClientRect();
+  if (!n?.width) return { x: innerWidth / 2, y: innerHeight * 0.3 };
+  return { x: n.left + n.width / 2, y: n.top };
+}
+
+const OR = 'var(--projo)', BLEU = 'var(--bleu)', GRIS = 'var(--gris)';
+
 function raconter(e) {
-  const v = S.vue;
+  const FX = window.FX;
+  const pour = mien(e.side);
+
   switch (e.t) {
     case 'chant': {
       const q = Math.round((e.quality ?? 0) * 100);
-      if (e.backfire) ajouterFil(`${nomDe(e.userId)} : retour de flamme`, 'contre');
-      else ajouterFil(`${nomDe(e.userId)} chante · ${q} %`, q > 90 ? 'fort' : '');
-      if (e.userId === v?.moi && q > 95) window.FX?.cri?.('CRI', { couleur:'var(--projo)' });
-      break;
-    }
-    case 'push':
-      if (e.valeur >= 20) ajouterFil(`${nomDe(e.userId)} pousse de ${e.valeur}`,
-        mien(e.side) ? 'fort' : 'contre');
-      break;
-    case 'action': {
-      const a = carteDef(e.cardId);
-      ajouterFil(`${nomDe(e.userId)} joue ${a?.nom ?? e.cardId}`, mien(e.side) ? '' : 'contre');
-      break;
-    }
-    case 'reflected':
-      ajouterFil('Renvoi : la carte se retourne contre son camp', 'fort');
-      break;
-    case 'shield':
-      ajouterFil(`Bâche : ${e.absorbe} absorbés`);
-      break;
-    case 'rally':
-      ajouterFil(mien(e.side) ? 'Appel du capo : chante maintenant !' : 'Ils lancent un appel',
-        mien(e.side) ? 'fort' : 'contre');
-      break;
-    case 'sync':
-      ajouterFil(mien(e.side) ? 'Chœur : tous en même temps !' : 'Ils tentent un chœur',
-        mien(e.side) ? 'fort' : 'contre');
-      break;
-    /**
-     * Un but du vrai match. C'est le moment que le jeu entier attend : le
-     * terrain déborde sur la corde. On le dit clairement, et on distingue les
-     * trois cas — pour toi, contre toi, ou pour les deux à la fois, ce qui
-     * arrive quand les deux tribunes suivent le même club.
-     */
-    case 'but_reel': {
-      const [pourNous, pourEux] = e.souffles ?? [0, 0];
-      const moi = S.vue?.moi?.side === 0 ? pourNous : pourEux;
-      const eux = S.vue?.moi?.side === 0 ? pourEux : pourNous;
-      const qui = e.joueur ? ` · ${e.joueur}` : '';
-      const minute = e.minute ? `${e.minute}′ ` : '';
-
-      if (moi && !eux) ajouterFil(`${minute}BUT DE TON CLUB${qui} · souffle repris`, 'fort');
-      else if (!moi && eux) ajouterFil(`${minute}But du club d’en face${qui}`, 'contre');
-      else if (moi && eux) ajouterFil(`${minute}But${qui} : les deux tribunes exultent`, 'fort');
-
-      if (moi) {
-        window.FX?.cri?.('BUT !', { couleur:'var(--flare)' });
-        window.FX?.secousse?.();
+      teteSaute(e.userId);
+      if (e.backfire) { FX?.son?.('contre'); break; }
+      FX?.son?.(q > 90 ? 'parfait' : 'chant');
+      // Un geste parfait mérite d'être vu de loin, même chez l'adversaire.
+      if (q > 90) {
+        const p = pointCorde();
+        FX?.onde?.({ ...p, couleur: pour ? OR : BLEU, taille: 220 });
       }
       break;
     }
-    case 'goal': {
-      const pour = mien(e.side);
-      ajouterFil(pour ? 'BUT pour ta tribune' : 'But encaissé', pour ? 'fort' : 'contre');
-      window.FX?.but?.({ pour, score: e.goals });
+
+    case 'push': {
+      // Le chiffre monte du nœud, dans la couleur du camp qui pousse.
+      if ((e.valeur ?? 0) < 6) break;
+      const p = pointCorde();
+      FX?.nombre?.(`+${e.valeur}`, {
+        x: p.x + (pour ? 26 : -26), y: p.y, couleur: pour ? OR : BLEU, signe: false,
+      });
+      FX?.son?.(pour ? 'pousse' : 'contre');
       break;
     }
+
+    case 'action': {
+      const a = carteDef(e.cardId);
+      const p = pointCorde();
+      FX?.onde?.({ ...p, couleur: pour ? OR : BLEU, taille: 200 });
+      FX?.nombre?.(a?.nom ?? e.cardId, { x: p.x, y: p.y - 26,
+        couleur: pour ? OR : BLEU, signe: false });
+      FX?.son?.('carte');
+      break;
+    }
+
+    case 'shield': {
+      const p = pointCorde();
+      FX?.nombre?.(`−${e.absorbe}`, { x: p.x, y: p.y + 18, couleur: GRIS, signe: false });
+      FX?.son?.('bache');
+      break;
+    }
+
+    case 'reflected':
+      FX?.titre?.('RENVOI', null, 'var(--vert)', 30);
+      FX?.son?.('carte');
+      break;
+
+    case 'rally':
+      FX?.titre?.(pour ? 'CHANTE MAINTENANT' : 'APPEL ADVERSE', null,
+        pour ? OR : BLEU, pour ? 30 : 22);
+      FX?.son?.(pour ? 'parfait' : 'tic');
+      break;
+
+    case 'sync':
+      FX?.titre?.(pour ? 'TOUS ENSEMBLE' : 'CHŒUR ADVERSE', null,
+        pour ? OR : BLEU, pour ? 30 : 22);
+      FX?.son?.(pour ? 'parfait' : 'tic');
+      break;
+
+    /**
+     * Le but du vrai match : le moment que tout le jeu attend. Trois cas —
+     * pour toi, contre toi, ou pour les deux, ce qui arrive quand les deux
+     * tribunes suivent le même club.
+     */
+    case 'but_reel': {
+      const mon = S.vue?.moi?.side ?? 0;
+      const [a, b] = e.souffles ?? [0, 0];
+      const nous = mon === 0 ? a : b;
+      const eux = mon === 0 ? b : a;
+      if (!nous && !eux) break;
+      if (nous && eux) {
+        FX?.titre?.('LES DEUX TRIBUNES', e.joueur ?? null, 'var(--craie)', 34);
+        FX?.son?.('but');
+      } else {
+        FX?.butReel?.({ pour: Boolean(nous), buteur: e.joueur, minute: e.minute });
+      }
+      break;
+    }
+
+    case 'goal':
+      FX?.but?.({ pour, score: e.goals });
+      break;
+
     case 'swap':
-      ajouterFil(`${nomDe(e.userId)} fait entrer un autre Fanzzy`);
+      FX?.son?.('tic');
       break;
+
     case 'disconnected':
-      ajouterFil(`${nomDe(e.userId)} a perdu la connexion, sa place l\u2019attend`);
-      break;
     case 'back':
-      ajouterFil(`${nomDe(e.userId)} est revenu`);
+      // La tête du joueur change d'état toute seule au prochain rendu.
+      FX?.son?.('tic');
       break;
-    case 'over':
-      break;
+
     default:
       break;
   }
@@ -895,6 +1001,16 @@ $('equipe').addEventListener('click', (e) => {
 });
 
 /* --------------------------------------------------------- démarrage */
+
+// fx.js est chargé en différé : on attend qu'il soit là pour lire l'état du son.
+addEventListener('load', () => {
+  reglerBoutonSon();
+  $('son')?.addEventListener('click', () => {
+    const coupe = window.FX?.sonCoupe?.(!window.FX.sonEstCoupe());
+    reglerBoutonSon();
+    if (!coupe) window.FX?.son?.('tic');   // on entend tout de suite que c'est revenu
+  });
+});
 
 (async () => {
   connecter();
