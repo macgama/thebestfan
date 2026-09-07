@@ -142,6 +142,15 @@ personnages ; recopier cent lignes de SVG aurait refait exactement la faute du
 catalogue. La liste `ILLUSTRES` y vit aussi, et `verif-pages.mjs` échoue s'il
 ne la trouve plus — un garde-fou devenu muet est pire que pas de garde-fou.
 
+**Le duel, c'est le tir à la corde.** La tuile de l'accueil et la barre commune
+mènent à `/duel-nvn` : cartes d'action, trois Fanzzy avec leur équipement, de
+1 contre 1 à 5 contre 5. Le Grand Virage est le même geste à l'échelle d'une
+tribune entière. L'ancien duel tour par tour de `/duel` est toujours servi mais
+n'est plus proposé nulle part — deux jeux différents derrière le même mot, et
+c'est le joueur qui paie la confusion. Sa suppression reste à décider : le
+bonus de souffle quand ton club marque pendant un duel n'existe que là
+(`server.js`, `duels.liveGoal`), le NvN n'a pas encore son équivalent.
+
 **On ne rejoue pas un match passé.** Un duel adossé à un match du jour ou en
 cours est classé ; à un match futur, c'est un entraînement ; à un match passé,
 c'est refusé.
@@ -166,8 +175,8 @@ complètes dans `VISUELS.md`.
 | `/deck` | construction de deck : trois Fanzzy, équipement, dix cartes |
 | `/carnet` | souvenirs vécus et vignettes à récupérer |
 | `/virage` | Grand Virage : tir à la corde pendant un vrai match |
-| `/duel` | duel tour par tour, avec entraînement contre bot |
-| `/duel-nvn` | duel N contre N en temps réel, adossé à un vrai match |
+| `/duel-nvn` | **le duel** : tir à la corde, 1v1 à 5v5, adossé à un vrai match |
+| `/duel` | ancien duel tour par tour — servi, mais plus mis en avant |
 | `/matchs` | matchs du jour, en direct, avec fiche détaillée |
 | `/teletext` | tous les championnats : classements, buteurs, cartons |
 | `/classement` | supporters, tribunes, duellistes |

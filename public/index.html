@@ -288,7 +288,10 @@ const COUL = { virage:'#F5C33B', duel:'#E0402C', fanzzy:'#8257DA',
 const TUILES = [
   { k:'virage', href:'/virage', wide:1, t:'LE GRAND VIRAGE',
     d:'Tirez sur la même corde pendant le vrai match. Chaque but vécu te laisse une carte.' },
-  { k:'duel', href:'/duel', t:'DUEL', d:'Un contre un, ou entraînement.' },
+  // Le duel, c'est le tir à la corde. L'ancien tour par tour reste servi à son
+  // adresse mais n'est plus mis en avant : deux jeux différents derrière le
+  // même mot, c'est le joueur qui paie la confusion.
+  { k:'duel', href:'/duel-nvn', t:'DUEL', d:'Tir à la corde, de 1 contre 1 à 5 contre 5.' },
   { k:'fanzzy', href:'/fanzzy', t:'FANZZY', d:'Boosters, classeur, évolutions.' },
   { k:'carnet', href:'/carnet', t:'MON CARNET', d:'Tes souvenirs et les vignettes.' },
   { k:'equipes', href:'/equipes', t:'MES ÉQUIPES', d:'Résultats et calendrier.' },

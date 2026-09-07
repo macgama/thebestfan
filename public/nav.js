@@ -25,6 +25,9 @@
   const ENTREES = [
     { href: '/', k: 'accueil', t: 'ACCUEIL', d: 'M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' },
     { href: '/virage', k: 'virage', t: 'VIRAGE', d: 'M3 20l9-16 9 16zM7 20l5-9 5 9' },
+    // Le duel de tribunes. Il pointe sur le tir à la corde, pas sur l'ancien
+    // tour par tour de /duel, qui n'est plus mis en avant.
+    { href: '/duel-nvn', k: 'duel', t: 'DUEL', d: 'M4 4l7 7M20 4l-7 7M12 13v7M8 20h8' },
     { href: '/fanzzy', k: 'fanzzy', t: 'FANZZY', d: 'M4 4h13l3 3v13H4zM8 8h6M8 12h8M8 16h5' },
     // Les matchs du jour passent devant le télétexte : c'est ce qu'on vient
     // chercher neuf fois sur dix. Les classements restent à un toucher.
@@ -65,7 +68,7 @@
   .tbf-spark{position:fixed;width:3px;height:3px;border-radius:50%;z-index:-1;pointer-events:none;opacity:0}
   @media (prefers-reduced-motion:reduce){#tbf-nav a{transition:none}}`;
 
-  const COUL = { accueil:'#F2EEE4', virage:'#F5C33B', fanzzy:'#8257DA',
+  const COUL = { accueil:'#F2EEE4', virage:'#F5C33B', duel:'#E0402C', fanzzy:'#8257DA',
                  teletext:'#C2CAD6', classement:'#3C82E8', profil:'#1E9E6A' };
 
   const style = document.createElement('style');
