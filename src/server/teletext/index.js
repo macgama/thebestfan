@@ -15,8 +15,17 @@ import express from 'express';
 const TTL = {
   jour: 900,          // les matchs d'une journée, hors direct
   jourLive: 45,       // dès qu'un match est en cours
-  match: 600,         // fiche d'un match à venir ou terminé
+  match: 600,         // fiche d'un match à venir
   matchLive: 25,      // fiche d'un match en cours
+  // Un match terminé ne change plus jamais. Le garder vingt-cinq secondes
+  // faisait repayer un appel à chaque visiteur : c'est le genre de détail qui
+  // vide un quota sans qu'on comprenne pourquoi.
+  matchFini: 7 * 24 * 3600,
+  stats: 60,          // statistiques pendant le match
+  compo: 6 * 3600,    // composition publiée : elle ne bouge plus qu'aux changements
+  // Une composition demandée avant sa parution revient vide. La garder
+  // longtemps ferait manquer sa publication — on réessaie vite.
+  compoVide: 90,
   standings: 6 * 3600,
   scorers: 12 * 3600,
   assists: 12 * 3600,
@@ -42,6 +51,15 @@ export function createTeletext({ pool, client, footballStore = null }) {
    */
   const decode = (v) => (typeof v === 'string' ? JSON.parse(v) : v);
 
+  /**
+   * `ttlSec` accepte un nombre, ou une fonction de la réponse obtenue.
+   *
+   * La durée dépend parfois de ce qu'on a reçu, et on ne peut pas le savoir
+   * avant d'appeler : une fiche de match terminé se garde une semaine alors
+   * qu'un match en cours se garde vingt-cinq secondes, et une composition pas
+   * encore publiée revient vide — la garder six heures ferait manquer sa
+   * parution.
+   */
   async function cached(key, ttlSec, fetcher) {
     const hit = (await q(
       `SELECT payload, expires_at, fetched_at FROM api_cache WHERE k = ?`, [key]))[0];
@@ -56,12 +74,13 @@ export function createTeletext({ pool, client, footballStore = null }) {
     try {
       const luA = Date.now();
       const data = await fetcher();
+      const ttl = typeof ttlSec === 'function' ? ttlSec(data) : ttlSec;
       await q(
         `INSERT INTO api_cache (k, payload, expires_at)
          VALUES (?, ?, NOW(3) + INTERVAL ? SECOND)
          ON DUPLICATE KEY UPDATE payload = VALUES(payload),
            expires_at = VALUES(expires_at), fetched_at = NOW(3)`,
-        [key, JSON.stringify(data), ttlSec]);
+        [key, JSON.stringify(data), ttl]);
       return { data, fresh: true, luA };
     } catch (e) {
       // Quota épuisé ou API en panne : la version périmée vaut mieux que rien.
@@ -195,6 +214,97 @@ export function createTeletext({ pool, client, footballStore = null }) {
     };
   }
 
+  /* --------------------------------------------- statistiques et compositions */
+
+  /**
+   * Ce qu'on montre d'un match, dans l'ordre où un supporter le regarde.
+   *
+   * L'API en renvoie une vingtaine, en anglais, dont plusieurs redondantes
+   * (« Shots insidebox » et « Shots outsidebox » disent la même chose que
+   * « Total Shots » découpée autrement). On garde ce qui se commente au café,
+   * et on traduit — un tableau en anglais dans une page en français a l'air
+   * d'une fuite technique.
+   */
+  const STATS = [
+    ['Ball Possession', 'Possession'],
+    ['Total Shots', 'Tirs'],
+    ['Shots on Goal', 'Tirs cadrés'],
+    ['expected_goals', 'Buts attendus'],
+    ['Corner Kicks', 'Corners'],
+    ['Goalkeeper Saves', 'Arrêts du gardien'],
+    ['Fouls', 'Fautes'],
+    ['Offsides', 'Hors-jeu'],
+    ['Yellow Cards', 'Cartons jaunes'],
+    ['Red Cards', 'Cartons rouges'],
+    ['Total passes', 'Passes'],
+    ['Passes %', 'Passes réussies'],
+  ];
+
+  /** « 52% », « 1.4 », 3, null — tout doit devenir un nombre comparable. */
+  const nombre = (v) => {
+    if (typeof v === 'number') return v;
+    if (v === null || v === undefined) return 0;
+    const n = Number.parseFloat(String(v).replace(',', '.'));
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  /**
+   * La barre de chaque ligne est la part de l'équipe à domicile. Deux valeurs
+   * nulles ne donnent pas une barre à zéro mais une barre au milieu : à 0-0,
+   * aucune des deux équipes ne domine.
+   */
+  function mapStats(data, homeId) {
+    const parEquipe = new Map((data ?? []).map((e) => [e.team?.id, e.statistics ?? []]));
+    const home = parEquipe.get(homeId) ?? [];
+    const away = [...parEquipe].find(([id]) => id !== homeId)?.[1] ?? [];
+    const val = (liste, type) =>
+      liste.find((s) => String(s.type).toLowerCase() === type.toLowerCase())?.value;
+
+    const out = [];
+    for (const [type, nom] of STATS) {
+      const h = val(home, type);
+      const a = val(away, type);
+      if (h === undefined && a === undefined) continue;
+      const hn = nombre(h);
+      const an = nombre(a);
+      // Une ligne à zéro des deux côtés n'apprend rien et allonge le tableau.
+      if (hn === 0 && an === 0) continue;
+      const total = hn + an;
+      out.push({
+        nom,
+        home: h ?? 0,
+        away: a ?? 0,
+        partHome: total ? Math.round((hn / total) * 100) : 50,
+      });
+    }
+    return out;
+  }
+
+  /** L'API code les postes en une lettre anglaise ; « F » se dit attaquant. */
+  const POSTE = { G: 'G', D: 'D', M: 'M', F: 'A' };
+
+  function mapCompo(data, homeId, awayId) {
+    const parEquipe = new Map((data ?? []).map((e) => [e.team?.id, e]));
+    const cote = (id) => {
+      const e = parEquipe.get(id);
+      if (!e) return null;
+      const joueur = (x) => ({
+        numero: x.player?.number ?? null,
+        nom: x.player?.name ?? '',
+        poste: POSTE[x.player?.pos] ?? x.player?.pos ?? '',
+      });
+      return {
+        dispositif: e.formation ?? '',
+        titulaires: (e.startXI ?? []).map(joueur),
+        remplacants: (e.substitutes ?? []).map(joueur),
+        entraineur: e.coach?.name ?? '',
+      };
+    };
+    const home = cote(homeId);
+    const away = cote(awayId);
+    return (home || away) ? { home, away } : null;
+  }
+
   /* ------------------------------------------------------- fiche du match */
 
   /**
@@ -204,19 +314,70 @@ export function createTeletext({ pool, client, footballStore = null }) {
    * Après : le score final et le résumé complet.
    */
   async function match(fixtureId) {
-    const { data, stale, luA } = await cached(`match:${fixtureId}`, TTL.matchLive, async () => {
-      const [f] = await client.call('/fixtures', { id: fixtureId });
-      if (!f) throw new Error('match introuvable');
-      // Les événements ne sont demandés que s'il y a quelque chose à raconter.
-      const evs = (enDirect(f.fixture.status?.short) || fini(f.fixture.status?.short))
-        ? await client.call('/fixtures/events', { fixture: fixtureId }) : [];
-      return { f, evs };
-    });
+    const { data, stale, luA } = await cached(
+      `match:${fixtureId}`,
+      // Un match terminé ne bouge plus : une semaine. En cours : vingt-cinq
+      // secondes. À venir : dix minutes.
+      (d) => {
+        const s = d?.f?.fixture?.status?.short;
+        return fini(s) ? TTL.matchFini : enDirect(s) ? TTL.matchLive : TTL.match;
+      },
+      async () => {
+        const [f] = await client.call('/fixtures', { id: fixtureId });
+        if (!f) throw new Error('match introuvable');
+        // Les événements ne sont demandés que s'il y a quelque chose à raconter.
+        const evs = (enDirect(f.fixture.status?.short) || fini(f.fixture.status?.short))
+          ? await client.call('/fixtures/events', { fixture: fixtureId }) : [];
+        return { f, evs };
+      });
 
     const f = data.f;
-    const live = enDirect(f.fixture.status?.short);
+    const statut = f.fixture.status?.short;
+    const live = enDirect(statut);
+    const termine = fini(statut);
+
+    /**
+     * Statistiques et composition sont deux appels de plus par match. On ne
+     * les demande donc que lorsqu'ils ont une chance de répondre : pas de
+     * statistiques avant le coup d'envoi, pas de composition avant qu'elle
+     * soit publiée — une heure avant, en général.
+     *
+     * Chacune a son propre rythme, donc sa propre entrée de cache : pendant un
+     * match, les statistiques changent toutes les minutes alors que la
+     * composition ne bouge plus. Les mêler obligerait à tout redemander au
+     * rythme du plus rapide.
+     */
+    // Un match reporté ou annulé n'aura jamais ni composition ni statistiques.
+    // Sans cette garde, sa fiche redemandait une composition vide toutes les
+    // quatre-vingt-dix secondes, pour chaque curieux, jusqu'à la fin des temps.
+    const annule = ['PST', 'CANC', 'ABD', 'AWD', 'WO', 'TBD'].includes(statut);
+    const versCoupDEnvoi = Date.parse(f.fixture.date) - Date.now();
+    const bientot = !annule
+      && versCoupDEnvoi < 90 * 60 * 1000      // publiée environ une heure avant
+      && versCoupDEnvoi > -6 * 3600 * 1000;   // et pas un match d'hier resté « à venir »
+    const ttlFige = (t) => (termine ? TTL.matchFini : t);
+
+    const [statistiques, compositions] = await Promise.all([
+      (live || termine)
+        ? cached(`stats:${fixtureId}`, ttlFige(TTL.stats),
+          () => client.call('/fixtures/statistics', { fixture: fixtureId }))
+          .then((r) => mapStats(r.data, f.teams.home?.id))
+          .catch(() => [])
+        : [],
+      (live || termine || bientot)
+        ? cached(`compo:${fixtureId}`,
+          // Vide = pas encore publiée : on réessaie dans quatre-vingt-dix
+          // secondes au lieu de figer une absence pour six heures.
+          (d) => (d?.length ? ttlFige(TTL.compo) : TTL.compoVide),
+          () => client.call('/fixtures/lineups', { fixture: fixtureId }))
+          .then((r) => mapCompo(r.data, f.teams.home?.id, f.teams.away?.id))
+          .catch(() => null)
+        : null,
+    ]);
 
     return {
+      statistiques,
+      compositions,
       fixture: {
         id: f.fixture.id, date: f.fixture.date,
         status: f.fixture.status?.short, statusLong: f.fixture.status?.long,
