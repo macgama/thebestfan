@@ -371,8 +371,24 @@ Le jeu attend deux fichiers par Fanzzy, en trois formats chacun : un plein pied
 `ID.{avif,webp,png}` en 520×945 pour la fiche, et un buste `ID-buste.*` en
 320×320 pour le classeur. Fond transparent.
 
+**Ce n'est plus à faire à la main.** `scripts/fanzzy-images.mjs` exécute toute
+la chaîne. Nomme chaque rendu du nom du Fanzzy et lance :
+
+```bash
+npm install --no-save sharp
+node scripts/fanzzy-images.mjs <dossier-des-rendus>
+```
+
+`X9.png` produit les six fichiers de `X9`. `sharp` n'est pas en
+`devDependencies`, pour la même raison que `puppeteer` : il embarque des
+binaires natifs qui alourdiraient l'installation sur le serveur, et il ne sert
+qu'à fabriquer des images, jamais à en servir.
+
+`scripts/fanzzy-images-smoke.mjs` éprouve la chaîne sur un cas fabriqué qui
+reproduit les trois pièges ci-dessous. Il ne demande ni base ni réseau.
+
 Le rendu brut sort d'un générateur en 1536×2752 sur fond uni. Trois choses ont
-demandé plusieurs essais :
+demandé plusieurs essais, et le script les traite :
 
 **Le détourage ne se fait pas au seuil global.** Un personnage peut tenir des
 cartes blanches sur fond blanc, ou porter une fourrure anthracite sur fond
