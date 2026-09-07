@@ -13,6 +13,7 @@ import { io as client } from 'socket.io-client';
 import { createSouvenirs } from '../src/server/souvenirs/index.js';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { createVirage } from '../src/server/ferveur/index.js';
+import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 
 const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
 let failures = 0;
@@ -58,6 +59,10 @@ await raw.query(`INSERT INTO user_follows (user_id,team_id) VALUES (?,85),(?,85)
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 8, charset: 'utf8mb4' });
+// Le catalogue vit en base depuis qu il se gère par l administration :
+// on le charge comme le fait server.js, sinon les modules travaillent
+// sur un catalogue vide.
+await chargerCatalogue(pool);
 
 /* -------------------------------------------------------------- serveur */
 

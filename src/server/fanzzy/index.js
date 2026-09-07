@@ -1,5 +1,9 @@
 import express from 'express';
-import { DEX, BY_ID, SETS, TYPES, RAR, RATES, SCARVES, EVO_COST } from '../../shared/fanzzy/dex.js';
+// Les cartes viennent de la base ; les barèmes — séries, types, raretés, taux,
+// coûts — restent du code, parce qu'ils décrivent les règles du jeu et non son
+// contenu. On ne change pas un taux de tirage depuis un écran d'administration.
+import { SETS, TYPES, RAR, RATES, SCARVES, EVO_COST } from '../../shared/fanzzy/dex.js';
+import { tous, publies, parIdentifiant } from './catalogue.js';
 import { SKINS, SKIN_BY_ID, STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 
 /**
@@ -83,7 +87,7 @@ export function createFanzzy({ pool, requireAuth }) {
   }
 
   function drawPack(setId) {
-    const pool_ = (rar) => DEX.filter((f) => f.set === setId && f.rar === rar);
+    const pool_ = (rar) => publies().filter((f) => f.set === setId && f.rar === rar);
     return Array.from({ length: 5 }, (_, i) => {
       const rar = i < 3 ? 'd1' : pickRarity(i + 1);
       const p = pool_(rar);
@@ -192,9 +196,9 @@ export function createFanzzy({ pool, requireAuth }) {
   /* ----------------------------------------------------------- évolution */
 
   async function evolve(userId, fromId) {
-    const from = BY_ID.get(fromId);
+    const from = parIdentifiant(fromId);
     if (!from?.evo) throw fail('fanzzy.error.no_evolution');
-    const to = BY_ID.get(from.evo);
+    const to = parIdentifiant(from.evo);
     const cost = EVO_COST[to.stage] ?? 90;
 
     const conn = await pool.getConnection();
@@ -281,7 +285,7 @@ export function createFanzzy({ pool, requireAuth }) {
    */
   router.get('/dex', (_req, res) => {
     res.set('cache-control', 'public, max-age=3600');
-    res.json({ dex: DEX, sets: SETS, types: TYPES, scarves: SCARVES,
+    res.json({ dex: publies(), sets: SETS, types: TYPES, scarves: SCARVES,
                evoCost: EVO_COST, rar: RAR, rates: RATES });
   });
 
@@ -317,7 +321,7 @@ export function createFanzzy({ pool, requireAuth }) {
 
   router.post('/active', requireAuth, (req, res) => send(res, (async () => {
     const id = String(req.body?.id ?? '');
-    if (!BY_ID.has(id)) throw fail('fanzzy.error.unknown');
+    if (!parIdentifiant(id)) throw fail('fanzzy.error.unknown');
     const owned = await q(`SELECT 1 FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
       [req.user.id, id]);
     if (!owned.length) throw fail('fanzzy.error.not_owned');
@@ -333,7 +337,7 @@ export function createFanzzy({ pool, requireAuth }) {
    * enchaîner cinq requêtes pour afficher une carte.
    */
   async function fiche(userId, fanzzyId) {
-    const f = BY_ID.get(fanzzyId);
+    const f = parIdentifiant(fanzzyId);
     if (!f) return null;
 
     const [copies, skins, stuff, w] = await Promise.all([
@@ -348,12 +352,12 @@ export function createFanzzy({ pool, requireAuth }) {
     // La lignée : on remonte à la base puis on redescend.
     let base = f;
     for (let i = 0; i < 5; i++) {
-      const avant = DEX.find((x) => x.evo === base.id);
+      const avant = tous().find((x) => x.evo === base.id);
       if (!avant) break;
       base = avant;
     }
     const lignee = [base];
-    while (lignee.at(-1).evo) lignee.push(BY_ID.get(lignee.at(-1).evo));
+    while (lignee.at(-1).evo) lignee.push(parIdentifiant(lignee.at(-1).evo));
 
     const possedes = new Set((await q(
       `SELECT fanzzy_id FROM user_fanzzy WHERE user_id = ?`, [userId])).map((r) => r.fanzzy_id));
@@ -390,7 +394,7 @@ export function createFanzzy({ pool, requireAuth }) {
   /** Le Fanzzy équipé, lu par le duel au démarrage d'une partie. */
   async function activeFanzzy(userId) {
     const w = (await q(`SELECT active_fanzzy FROM user_wallet WHERE user_id = ?`, [userId]))[0];
-    const f = w?.active_fanzzy ? BY_ID.get(w.active_fanzzy) : null;
+    const f = w?.active_fanzzy ? parIdentifiant(w.active_fanzzy) : null;
     return f ?? null;
   }
 

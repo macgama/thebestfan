@@ -21,6 +21,7 @@ import express from 'express';
 import puppeteer from 'puppeteer';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { DEX } from '../src/shared/fanzzy/dex.js';
+import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 
 const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
 // Voir deck-ui-smoke : `.pathname` donne « /C:/… » sous Windows, ce qui rend
@@ -64,6 +65,10 @@ await raw.end();
 /* ----------------------------------------------------------- le serveur */
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' });
+// Le catalogue vit en base depuis qu il se gère par l administration :
+// on le charge comme le fait server.js, sinon les modules travaillent
+// sur un catalogue vide.
+await chargerCatalogue(pool);
 const requireAuth = (q, _s, n) => { q.user = { id: U }; n(); };
 const fanzzy = createFanzzy({ pool, requireAuth });
 

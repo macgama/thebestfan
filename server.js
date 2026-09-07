@@ -17,6 +17,7 @@ import { createClient } from './src/server/football/client.js';
 import { createFootball } from './src/server/football/routes.js';
 import { createSouvenirs } from './src/server/souvenirs/index.js';
 import { createFanzzy } from './src/server/fanzzy/index.js';
+import { charger as chargerCatalogue } from './src/server/fanzzy/catalogue.js';
 import { createVirage } from './src/server/ferveur/index.js';
 import { createTeletext } from './src/server/teletext/index.js';
 import { createOnboarding } from './src/server/onboarding/index.js';
@@ -65,6 +66,13 @@ let google = null;
 if (process.env.DATABASE_URL) {
   try {
     pool = await createPool(process.env.DATABASE_URL);
+
+    // Le catalogue Fanzzy vient de la base et se lit en mémoire. Il doit être
+    // chargé avant tout module qui s'en sert — collection, deck, inscription —
+    // sinon ils travaillent sur un catalogue vide et le disent mal.
+    const cat = await chargerCatalogue(pool);
+    console.log(`catalogue fanzzy : ${cat.total} carte(s)`
+      + (cat.amorces ? ` (${cat.amorces} amorcée(s) depuis dex.js)` : ''));
     const mailer = createMailer({
       smtpUrl: process.env.SMTP_URL,
       host: process.env.SMTP_HOST,

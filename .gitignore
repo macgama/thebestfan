@@ -1,3 +1,10 @@
 node_modules/
 .env*
 *.log
+
+# Les rendus bruts des illustrations : 133 Mo pour vingt et un fichiers, et
+# ils ne servent qu'une fois — scripts/fanzzy-images.mjs en tire les 24 Mo
+# de public/img/fanzzy, qui sont eux versionnés. Garde-les hors du dépôt,
+# mais garde-les : on y revient quand un cadrage doit être repris.
+img_x/
+img_brut/
