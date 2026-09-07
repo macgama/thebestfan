@@ -204,7 +204,31 @@ check('la grille ne se remplit pas avec un catalogue amputé',
 check('et elle explique pourquoi au lieu de rester vide',
   /n\u2019a pas pu charger le catalogue/.test(await texteAffiche(page2)));
 
-if (process.env.CAPTURE) await page.screenshot({ path: '/tmp/classeur.png', fullPage: true });
+if (process.env.CAPTURE) {
+  // Dossier temporaire du système : « /tmp » en dur ne marche pas sous Windows.
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // On bascule sur le classeur : c'est la grille de cartes qu'on veut voir,
+  // pas le kiosque où le test s'arrête.
+  await page.evaluate(() => [...document.querySelectorAll('button,[data-tab],[data-onglet]')]
+    .find((b) => /CLASSEUR/i.test(b.textContent))?.click());
+  await pause(500);
+  await page.screenshot({ path: join(tmpdir(), 'classeur.png'), fullPage: true });
+
+  // Et la fiche de détail, l'écran dont les cadres pesaient le plus.
+  // La grille ouvre par `data-open`, et seulement pour un Fanzzy possédé :
+  // les autres mènent directement à la fiche complète.
+  // La grille est `#grid`, et elle n'ouvre l'aperçu que pour un Fanzzy
+  // possédé : les autres mènent directement à la fiche complète.
+  // Le premier de la grille est un Fanzzy possédé — le classeur les met en
+  // tête —, donc il ouvre l'aperçu plutôt que la fiche complète.
+  await page.evaluate(() => document.querySelector('#grid [data-open]')?.click());
+  await pause(500);
+  await page.screenshot({ path: join(tmpdir(), 'classeur-detail.png') });
+  console.log(`   captures : ${join(tmpdir(), 'classeur.png')}`);
+}
 
 await nav.close();
 await new Promise((r) => http.close(r));
