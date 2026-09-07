@@ -40,6 +40,27 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
 .log{font-family:ui-monospace,monospace;font-size:11.5px;line-height:1.7;opacity:.75}
 .log b{color:var(--projo);font-family:var(--banner)}
 .vide{opacity:.45;padding:36px;text-align:center}
+
+/* ------------------------------------------------------ catalogue Fanzzy
+   Cet écran sert à tenir cent cartes. Il est donc dense exprès : une ligne
+   par Fanzzy, la vignette à gauche pour reconnaître d'un coup d'œil, et
+   l'édition qui s'ouvre sous la ligne sans quitter la liste. */
+.fzrow img{width:34px;height:34px;border-radius:6px;object-fit:cover;background:#0B1017;display:block}
+.fzrow .sil{width:34px;height:34px;border-radius:6px;background:rgba(242,238,228,.07);
+  display:grid;place-items:center;font-size:9px;opacity:.5}
+.fzrow.depublie{opacity:.45}
+.fzedit{background:rgba(0,0,0,.35)}
+.fzedit .grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;
+  padding:12px 6px}
+.fzedit label{display:block;font-size:10px;letter-spacing:.1em;opacity:.5;margin-bottom:4px;
+  font-family:var(--banner)}
+.fzedit input,.fzedit select,.fzedit textarea{width:100%}
+.fzedit textarea{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);border-radius:6px;
+  color:inherit;padding:8px 10px;font-family:inherit;font-size:13px;min-height:66px;resize:vertical}
+.fzedit .large{grid-column:1/-1}
+.fzedit .actions{padding:0 6px 14px;display:flex;gap:8px;align-items:center}
+.fzedit .err{color:var(--flare);font-size:12px}
+.compte{font-size:11.5px;opacity:.5;margin-bottom:10px}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -55,6 +76,9 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
 <nav id="nav"></nav>
 <main id="main"><div class="vide">Chargement…</div></main>
 
+<!-- Sans « defer » : la vue du catalogue lit FZART.ILLUSTRES pour savoir quels
+     Fanzzy sont dessinés, et elle le lit dès sa première exécution. -->
+<script src="/fanzzy-art.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
@@ -71,9 +95,48 @@ const api = async (p, body, method) => {
 const jour = (d) => new Date(d).toLocaleString('fr', { day:'2-digit', month:'2-digit',
   hour:'2-digit', minute:'2-digit' });
 
+/* ------------------------------------------------------ catalogue Fanzzy */
+
+/** Quels Fanzzy sont dessinés. La liste vient de /fanzzy-art.js, source unique. */
+const ILLUSTRES = window.FZART?.ILLUSTRES ?? new Set();
+
+/**
+ * Selon la version du pilote MySQL, une colonne JSON revient décodée ou en
+ * chaîne. Les deux cas doivent marcher, sinon l'écran tombe sur la première
+ * carte au lieu d'afficher la liste.
+ */
+const jsonCol = (v, defaut) => {
+  if (v == null) return defaut;
+  if (typeof v !== 'string') return v;
+  try { return JSON.parse(v); } catch { return defaut; }
+};
+const cri = (x) => jsonCol(x?.cri, {});
+const mods = (x) => jsonCol(x?.mods, {});
+
+/**
+ * Les refus du serveur, en clair. Un code brut affiché tel quel oblige à
+ * ouvrir le source pour comprendre ce qu'on a mal rempli.
+ */
+const MSG_FANZZY = {
+  'admin.error.fanzzy_id': 'Identifiant invalide : une lettre puis des lettres ou chiffres, ex. X52.',
+  'admin.error.fanzzy_existe': 'Cet identifiant est déjà pris.',
+  'admin.error.fanzzy_inconnu': 'Ce Fanzzy n’existe pas.',
+  'admin.error.fanzzy_nom': 'Le nom est trop court.',
+  'admin.error.fanzzy_type': 'Type inconnu.',
+  'admin.error.fanzzy_set': 'Série inconnue.',
+  'admin.error.fanzzy_rarete': 'Rareté inconnue.',
+  'admin.error.fanzzy_stage': 'L’étage vaut 1, 2 ou 3.',
+  'admin.error.fanzzy_geste': 'Le geste vaut tempo, martelage ou endurance.',
+  'admin.error.fanzzy_mods': 'Les effets doivent être un objet JSON.',
+  'admin.error.fanzzy_evo_soi': 'Un Fanzzy ne peut pas évoluer en lui-même.',
+  'admin.error.fanzzy_evo_inconnue': 'L’évolution pointe sur un identifiant qui n’existe pas.',
+  'admin.error.fanzzy_incomplet': 'Nom, type, série, rareté et cri sont obligatoires.',
+  'admin.error.nothing_to_do': 'Rien n’a changé.',
+};
+
 const ONGLETS = [
-  ['apercu','APERÇU'], ['joueurs','JOUEURS'], ['competitions','COMPÉTITIONS'],
-  ['reglages','RÉGLAGES'], ['journal','JOURNAL'],
+  ['apercu','APERÇU'], ['fanzzy','FANZZY'], ['joueurs','JOUEURS'],
+  ['competitions','COMPÉTITIONS'], ['reglages','RÉGLAGES'], ['journal','JOURNAL'],
 ];
 let onglet = 'apercu';
 
@@ -128,6 +191,168 @@ const VUES = {
     $('mail').onclick = async () => {
       const r = await api('/mail-test', {});
       alert(r.delivered ? 'Mail envoyé.' : 'Non envoyé : ' + (r.erreur ?? 'voir la console'));
+    };
+  },
+
+  /**
+   * Le catalogue Fanzzy.
+   *
+   * C'est l'écran qui doit permettre d'atteindre cent cartes sans toucher au
+   * code. Il est dense exprès : une ligne par Fanzzy, la vignette pour
+   * reconnaître d'un coup d'œil, et l'édition qui s'ouvre sous la ligne sans
+   * quitter la liste — sur cent cartes, une page par carte serait pénible.
+   *
+   * Il n'y a **pas de bouton supprimer**, et ce n'est pas un oubli : un
+   * identifiant effacé orphelinerait les collections, les decks et le Fanzzy
+   * équipé de tous ceux qui le possèdent. On dépublie.
+   */
+  async fanzzy(filtre = '') {
+    const d = await api('/fanzzy');
+    const typesOpt = Object.entries(d.types)
+      .map(([k, t]) => `<option value="${k}">${esc(t.nom)}</option>`).join('');
+    const setsOpt = d.sets.map((s) => `<option value="${s.id}">${esc(s.nom)}</option>`).join('');
+    const rarOpt = Object.keys(d.rar).map((r) => `<option value="${r}">${r}</option>`).join('');
+
+    const f = filtre.trim().toLowerCase();
+    const liste = f
+      ? d.fanzzy.filter((x) => `${x.id} ${x.nom} ${x.set_id} ${x.rar} ${x.type}`
+          .toLowerCase().includes(f))
+      : d.fanzzy;
+
+    const publies = d.fanzzy.filter((x) => x.publie).length;
+
+    const ligne = (x) => {
+      const vign = ILLUSTRES.has(x.id)
+        ? `<img src="/img/fanzzy/${x.id}-buste.png" alt="" loading="lazy">`
+        : '<div class="sil">—</div>';
+      return `<tr class="fzrow ${x.publie ? '' : 'depublie'}" data-id="${x.id}">
+        <td>${vign}</td>
+        <td><b>${esc(x.nom)}</b>
+          ${x.publie ? '' : '<span class="pill off">RETIRÉ</span>'}
+          <br><span style="opacity:.45;font-size:11px">${x.id}${x.evo ? ' → ' + x.evo : ''}</span></td>
+        <td>${esc(d.types[x.type]?.nom ?? x.type)}<br>
+          <span style="opacity:.45;font-size:11px">étage ${x.stage}</span></td>
+        <td>${esc(d.sets.find((s) => s.id === x.set_id)?.nom ?? x.set_id)}</td>
+        <td>${x.rar}</td>
+        <td class="act">
+          <button class="mini" data-editer="${x.id}">Modifier</button>
+          <button class="mini ${x.publie ? 'rouge' : 'vert'}" data-publier="${x.id}">
+            ${x.publie ? 'Retirer' : 'Publier'}</button></td></tr>`;
+    };
+
+    $('main').innerHTML = `
+      <div class="bar">
+        <input id="q" placeholder="nom, identifiant, série, rareté" value="${esc(filtre)}" style="flex:1">
+        <button class="mini" id="nouveau">Nouveau Fanzzy</button>
+      </div>
+      <div class="compte">${d.fanzzy.length} cartes · ${publies} publiées ·
+        ${d.fanzzy.length - publies} retirées · ${ILLUSTRES.size} dessinées</div>
+      <table><thead><tr><th></th><th>NOM</th><th>TYPE</th><th>SÉRIE</th><th>RARETÉ</th><th></th></tr></thead>
+      <tbody id="corps">${liste.map(ligne).join('') || '<tr><td colspan="6" class="vide">Rien ne correspond.</td></tr>'}</tbody></table>`;
+
+    $('q').oninput = (e) => { clearTimeout($('q')._t);
+      $('q')._t = setTimeout(() => VUES.fanzzy(e.target.value), 250); };
+
+    /** Le formulaire, ouvert sous la ligne qu'il modifie. */
+    const formulaire = (x) => `
+      <tr class="fzedit"><td colspan="6">
+        <div class="grille">
+          <div><label>IDENTIFIANT</label>
+            <input id="f-id" value="${esc(x?.id ?? '')}" ${x ? 'disabled' : ''}
+              placeholder="X52" maxlength="12"></div>
+          <div><label>NOM</label><input id="f-nom" value="${esc(x?.nom ?? '')}"></div>
+          <div><label>TYPE</label><select id="f-type">${typesOpt}</select></div>
+          <div><label>SÉRIE</label><select id="f-set">${setsOpt}</select></div>
+          <div><label>RARETÉ</label><select id="f-rar">${rarOpt}</select></div>
+          <div><label>ÉTAGE</label><select id="f-stage">
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+          </select></div>
+          <div><label>ÉVOLUE EN</label>
+            <input id="f-evo" value="${esc(x?.evo ?? '')}" placeholder="vide si aucune"></div>
+          <div><label>CRI — LIBELLÉ</label>
+            <input id="f-cri" value="${esc(cri(x).label ?? '')}"></div>
+          <div><label>CRI — GESTE</label><select id="f-gest">
+            <option value="tempo">tempo</option><option value="mash">martelage</option>
+            <option value="hold">endurance</option></select></div>
+          <div><label>CRI — PUISSANCE</label>
+            <input id="f-power" type="number" value="${cri(x).power ?? 55}"></div>
+          <div class="large"><label>HISTOIRE</label>
+            <textarea id="f-histoire">${esc(x?.histoire ?? '')}</textarea></div>
+          <div class="large"><label>EFFETS (JSON)</label>
+            <input id="f-mods" value='${esc(JSON.stringify(mods(x)))}'></div>
+        </div>
+        <div class="actions">
+          <button class="mini vert" id="f-ok">${x ? 'Enregistrer' : 'Créer'}</button>
+          <button class="mini" id="f-non">Annuler</button>
+          <span class="err" id="f-err"></span>
+        </div>
+      </td></tr>`;
+
+    const remplir = (x) => {
+      $('f-type').value = x?.type ?? 'voix';
+      $('f-set').value = x?.set_id ?? d.sets[0].id;
+      $('f-rar').value = x?.rar ?? 'd1';
+      $('f-stage').value = String(x?.stage ?? 1);
+      $('f-gest').value = cri(x).gest ?? 'tempo';
+    };
+
+    const lire = () => ({
+      id: $('f-id').value.trim().toUpperCase(),
+      nom: $('f-nom').value.trim(),
+      type: $('f-type').value, set: $('f-set').value, rar: $('f-rar').value,
+      stage: Number($('f-stage').value),
+      evo: $('f-evo').value.trim().toUpperCase(),
+      histoire: $('f-histoire').value.trim(),
+      cri: { label: $('f-cri').value.trim(), gest: $('f-gest').value,
+             power: Number($('f-power').value) },
+      mods: JSON.parse($('f-mods').value || '{}'),
+    });
+
+    let ouvert = null;
+    const fermer = () => { document.querySelector('.fzedit')?.remove(); ouvert = null; };
+
+    const brancher = (x, apres) => {
+      remplir(x);
+      $('f-non').onclick = fermer;
+      $('f-ok').onclick = async () => {
+        let corps;
+        // Le JSON des effets est saisi à la main : une virgule de trop ne doit
+        // pas partir au serveur pour revenir en « erreur » sans plus de détail.
+        try { corps = lire(); }
+        catch { $('f-err').textContent = 'Les effets ne sont pas un JSON valide.'; return; }
+        $('f-err').textContent = '';
+        try {
+          if (x) await api('/fanzzy/' + encodeURIComponent(x.id), corps, 'PATCH');
+          else await api('/fanzzy', corps);
+          VUES.fanzzy(filtre);
+        } catch (e) { $('f-err').textContent = MSG_FANZZY[e.code] ?? (e.code ?? 'échec'); }
+      };
+      apres?.();
+    };
+
+    $('nouveau').onclick = () => {
+      fermer();
+      $('corps').insertAdjacentHTML('afterbegin', formulaire(null));
+      brancher(null);
+    };
+
+    $('corps').onclick = async (e) => {
+      const mod = e.target.closest('[data-editer]');
+      const pub = e.target.closest('[data-publier]');
+
+      if (pub) {
+        const x = d.fanzzy.find((y) => y.id === pub.dataset.publier);
+        await api('/fanzzy/' + encodeURIComponent(x.id), { publie: !x.publie }, 'PATCH');
+        return VUES.fanzzy(filtre);
+      }
+      if (!mod) return;
+      const id = mod.dataset.editer;
+      if (ouvert === id) return fermer();
+      fermer();
+      const x = d.fanzzy.find((y) => y.id === id);
+      mod.closest('tr').insertAdjacentHTML('afterend', formulaire(x));
+      ouvert = id;
+      brancher(x);
     };
   },
 

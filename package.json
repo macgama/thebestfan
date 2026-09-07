@@ -16,6 +16,7 @@
     "deck:ui": "node scripts/deck-ui-smoke.mjs",
     "accueil:ui": "node scripts/accueil-ui-smoke.mjs",
     "nvn:ui": "node scripts/nvn-ui-smoke.mjs",
+    "admin:ui": "node scripts/admin-ui-smoke.mjs",
     "images": "node scripts/fanzzy-images.mjs",
     "images:test": "node scripts/fanzzy-images-smoke.mjs",
     "economie": "node scripts/economie.mjs",
