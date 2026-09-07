@@ -73,6 +73,7 @@ bouton recouvert de 16 pixels, une image décentrée d'une demi-largeur.
 | `nvn-ui-smoke.mjs` | duel N contre N, deux joueurs | puppeteer |
 | `fanzzy-ui-smoke.mjs` | classeur, kiosque, catalogue | puppeteer |
 | `accueil-ui-smoke.mjs` | scène du Fanzzy sur l'accueil | puppeteer |
+| `admin-ui-smoke.mjs` | catalogue Fanzzy dans l'administration | puppeteer |
 
 `accueil-ui-smoke.mjs` vérifie une chose qui ne se lit pas dans le HTML : que
 le Fanzzy **bouge**. Il mesure le style calculé et exige l'animation
@@ -157,8 +158,27 @@ avec ses propres constantes, un joueur portant les Jumelles tapait juste sur ce
 qu'il voyait et récoltait 0,36 au lieu de 0,99 : l'équipement censé l'aider le
 pénalisait, et plus la carte était rare, pire c'était.
 
-**Le catalogue Fanzzy n'existe qu'à un endroit**, `src/shared/fanzzy/dex.js`,
-servi par `/api/fanzzy/dex`. Aucune page ne le recopie. Voir § 6.
+**Le catalogue Fanzzy vit en base**, table `fanzzy`, servi par
+`/api/fanzzy/dex` et modifiable depuis `/admin`. `src/shared/fanzzy/dex.js`
+n'en est plus que **l'amorçage** : au démarrage, ses cartes absentes de la base
+y sont insérées, et **jamais celles qui existent déjà** — une modification
+faite dans l'administration doit survivre au redémarrage suivant.
+
+Trois règles de cet écran, qui ne se négocient pas :
+
+- **On ne supprime jamais une carte.** Un identifiant effacé orphelinerait les
+  collections, les decks et le Fanzzy équipé de tous ceux qui le possèdent. On
+  dépublie : la carte sort des tirages et du catalogue servi, mais reste
+  lisible par identifiant pour que les collections s'affichent encore.
+- **On ne renomme jamais un identifiant.** C'est la clé de `user_fanzzy`. Le
+  changer reviendrait à supprimer, en pire — sans s'en apercevoir.
+- **Le cache est rechargé après chaque écriture.** Sinon la base et le jeu
+  divergent, et rien ne le signale avant qu'un joueur tire une carte que le
+  serveur croit inexistante.
+
+Les barèmes — séries, types, raretés, taux de tirage, coûts d'évolution —
+restent dans `dex.js`. Ils décrivent les règles du jeu, pas son contenu, et on
+ne change pas un taux de tirage depuis un écran d'administration.
 
 **Le dessin d'un Fanzzy n'existe qu'à un endroit non plus**,
 `public/fanzzy-art.js`. Le classeur et l'accueil dessinent les mêmes
@@ -214,7 +234,7 @@ complètes dans `VISUELS.md`.
 | `/teletext` | tous les championnats : classements, buteurs, cartons |
 | `/classement` | supporters, tribunes, duellistes |
 | `/profil` | identité, clubs, inventaire, langue, déconnexion |
-| `/admin` | joueurs, compétitions, réglages, journal d'audit |
+| `/admin` | **catalogue Fanzzy**, joueurs, compétitions, réglages, journal |
 | `/diagnostic`, `/healthz` | état du service |
 
 **Côté serveur, testé** : authentification, suivi des équipes, cartes-souvenirs,

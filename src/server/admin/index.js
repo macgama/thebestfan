@@ -1,4 +1,6 @@
 import express from 'express';
+import { TYPES, RAR, SETS } from '../../shared/fanzzy/dex.js';
+import { parIdentifiant, recharger } from '../fanzzy/catalogue.js';
 
 /**
  * Administration.
@@ -254,6 +256,128 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     return { cle, valeur };
   }
 
+  /* ------------------------------------------------ catalogue Fanzzy
+
+     C'est la raison d'être de cet écran : ajouter une carte ne doit plus
+     demander un déploiement. Trois garde-fous, qui ne sont pas négociables :
+
+     **On ne supprime pas.** Un identifiant effacé orphelinerait les
+     collections, les decks et le Fanzzy équipé de tous ceux qui le possèdent.
+     On dépublie : la carte sort des tirages, elle reste connue du jeu.
+
+     **On ne renomme pas un identifiant.** C'est la clé que portent les lignes
+     de `user_fanzzy`. Le changer reviendrait à supprimer, en pire — sans même
+     s'en apercevoir.
+
+     **Le cache est rechargé après chaque écriture.** Sans ça la base et le
+     jeu divergent, et rien ne le signale avant qu'un joueur tire une carte
+     que le serveur croit inexistante.                                       */
+
+  const TYPES_VALIDES = new Set(Object.keys(TYPES));
+  const RAR_VALIDES = new Set(Object.keys(RAR));
+  const GESTES = new Set(['tempo', 'mash', 'hold']);
+
+  /** Les champs qu'un formulaire a le droit de poser, et rien d'autre. */
+  function nettoyer(corps, { creation = false } = {}) {
+    const p = {};
+    const texte = (v, max) => String(v ?? '').trim().slice(0, max);
+
+    if (creation) {
+      p.id = texte(corps.id, 12).toUpperCase();
+      if (!/^[A-Z][A-Z0-9]{0,11}$/.test(p.id)) throw fail('admin.error.fanzzy_id');
+    }
+    if (corps.nom !== undefined) {
+      p.nom = texte(corps.nom, 64);
+      if (p.nom.length < 2) throw fail('admin.error.fanzzy_nom');
+    }
+    if (corps.type !== undefined) {
+      p.type = texte(corps.type, 8);
+      if (!TYPES_VALIDES.has(p.type)) throw fail('admin.error.fanzzy_type');
+    }
+    if (corps.set !== undefined) {
+      p.set_id = texte(corps.set, 4);
+      if (!SETS.some((s) => s.id === p.set_id)) throw fail('admin.error.fanzzy_set');
+    }
+    if (corps.rar !== undefined) {
+      p.rar = texte(corps.rar, 8);
+      if (!RAR_VALIDES.has(p.rar)) throw fail('admin.error.fanzzy_rarete');
+    }
+    if (corps.stage !== undefined) {
+      p.stage = Number(corps.stage);
+      if (![1, 2, 3].includes(p.stage)) throw fail('admin.error.fanzzy_stage');
+    }
+    if (corps.evo !== undefined) p.evo = texte(corps.evo, 12).toUpperCase() || null;
+    if (corps.histoire !== undefined) p.histoire = texte(corps.histoire, 2000) || null;
+    if (corps.publie !== undefined) p.publie = corps.publie ? 1 : 0;
+    if (corps.ordre !== undefined) p.ordre = Number(corps.ordre) || 0;
+
+    if (corps.mods !== undefined) {
+      if (typeof corps.mods !== 'object' || Array.isArray(corps.mods)) {
+        throw fail('admin.error.fanzzy_mods');
+      }
+      p.mods = JSON.stringify(corps.mods ?? {});
+    }
+    if (corps.cri !== undefined) {
+      const c = corps.cri ?? {};
+      if (!GESTES.has(c.gest)) throw fail('admin.error.fanzzy_geste');
+      p.cri = JSON.stringify({
+        label: texte(c.label, 48), gest: c.gest, power: Number(c.power) || 50,
+      });
+    }
+    return p;
+  }
+
+  /**
+   * Une évolution doit pointer sur une carte qui existe, sinon la lignée casse
+   * à l'affichage et le coût d'évolution devient inatteignable.
+   */
+  function verifierEvo(id, evo) {
+    if (!evo) return;
+    if (evo === id) throw fail('admin.error.fanzzy_evo_soi');
+    if (!parIdentifiant(evo)) throw fail('admin.error.fanzzy_evo_inconnue');
+  }
+
+  async function listerFanzzy() {
+    // On lit la base et non le cache : l'administration doit voir l'état réel,
+    // y compris si un rechargement a été manqué.
+    return q(`SELECT id, nom, type, set_id, stage, rar, evo, histoire,
+                     mods, cri, publie, ordre, maj_a
+                FROM fanzzy ORDER BY ordre, id`);
+  }
+
+  async function creerFanzzy(acteur, corps, ip_) {
+    const p = nettoyer(corps, { creation: true });
+    if (parIdentifiant(p.id)) throw fail('admin.error.fanzzy_existe');
+    for (const champ of ['nom', 'type', 'set_id', 'rar', 'cri']) {
+      if (p[champ] === undefined) throw fail('admin.error.fanzzy_incomplet');
+    }
+    verifierEvo(p.id, p.evo);
+
+    const colonnes = Object.keys(p);
+    await q(`INSERT INTO fanzzy (${colonnes.join(', ')}) VALUES (${colonnes.map(() => '?').join(', ')})`,
+      colonnes.map((c) => p[c]));
+    await recharger(pool);
+    await journal(acteur, 'fanzzy.cree', p.id, { nom: p.nom, set: p.set_id, rar: p.rar }, ip_);
+    return parIdentifiant(p.id);
+  }
+
+  async function modifierFanzzy(acteur, id, corps, ip_) {
+    const avant = parIdentifiant(id);
+    if (!avant) throw fail('admin.error.fanzzy_inconnu', 404);
+    // L'identifiant est la clé des collections : il ne se change jamais.
+    const p = nettoyer(corps);
+    delete p.id;
+    if (!Object.keys(p).length) throw fail('admin.error.nothing_to_do');
+    verifierEvo(id, p.evo);
+
+    const colonnes = Object.keys(p);
+    await q(`UPDATE fanzzy SET ${colonnes.map((c) => `${c} = ?`).join(', ')} WHERE id = ?`,
+      [...colonnes.map((c) => p[c]), id]);
+    await recharger(pool);
+    await journal(acteur, 'fanzzy.modifie', id, p, ip_);
+    return parIdentifiant(id);
+  }
+
   /* ---------------------------------------------------------- routes */
 
   const router = express.Router();
@@ -316,6 +440,18 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     res.json({ ...r, etat: globalThis.mailer?.status });
   }));
 
+  /* ------------------------------------------------ catalogue Fanzzy */
+
+  router.get('/fanzzy', safe(async (_req, res) =>
+    res.json({ fanzzy: await listerFanzzy(), types: TYPES, sets: SETS, rar: RAR })));
+
+  router.post('/fanzzy', safe(async (req, res) =>
+    res.json(await creerFanzzy(req.user.id, req.body ?? {}, ip(req)))));
+
+  router.patch('/fanzzy/:id', safe(async (req, res) =>
+    res.json(await modifierFanzzy(req.user.id, String(req.params.id), req.body ?? {}, ip(req)))));
+
   return Object.assign(module, { router, requireAdmin, estAdmin, amorcer, apercu, joueurs,
-    modifier, competitions, modifierCompetition, reglages, fixerReglage, journal });
+    modifier, competitions, modifierCompetition, reglages, fixerReglage, journal,
+    listerFanzzy, creerFanzzy, modifierFanzzy });
 }

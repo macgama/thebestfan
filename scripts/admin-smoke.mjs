@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import express from 'express';
 import { createAdmin } from '../src/server/admin/index.js';
+import { charger as chargerCatalogue, parIdentifiant, publies }
+  from '../src/server/fanzzy/catalogue.js';
 
 const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
 let failures = 0;
@@ -35,6 +37,9 @@ await raw.query(`INSERT INTO api_cache (k,payload,expires_at) VALUES
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset:'utf8mb4' });
+// Le catalogue vit en base : l’administration le modifie, il faut donc
+// qu’il soit chargé, exactement comme au démarrage du serveur.
+await chargerCatalogue(pool);
 let moi = B;   // on commence en simple joueur
 const adm = createAdmin({ pool,
   requireAuth: (r,_s,n)=>{ r.user = { id: moi, email: moi===A?'patron@ex.fr':'joueur@ex.fr' }; n(); } });
@@ -160,6 +165,86 @@ moi = A;
 r = await call('/api/admin/journal');
 check('une tentative refusée n\u2019écrit rien', r.json.journal.length === avant);
 
+
+/* ---------------------------------------------- le catalogue Fanzzy
+
+   C'est la raison d'être de cet écran : ajouter une carte sans toucher au
+   code. Les trois garde-fous comptent plus que le cas passant — on ne
+   supprime pas, on ne renomme pas un identifiant, et le cache suit. */
+
+moi = A;
+r = await call('/api/admin/fanzzy');
+check('le catalogue est listé', r.json.fanzzy.length > 0);
+check('avec les barèmes pour peupler les listes déroulantes',
+  Boolean(r.json.types && r.json.sets && r.json.rar));
+
+const combienAvant = r.json.fanzzy.length;
+
+// Création.
+r = await call('/api/admin/fanzzy', { body: { id:'ZZ9', nom:'Le Testeur', type:'voix',
+  set:'VN', rar:'d1', stage:1, cri:{ label:'ESSAI', gest:'tempo', power:50 },
+  mods:{ tempoWindow:1.1 } } });
+check('un Fanzzy se crée', r.status === 200 && r.json.id === 'ZZ9');
+check('et il arrive aussitôt dans le cache du jeu',
+  Boolean(parIdentifiant('ZZ9')));
+check('avec ses effets', parIdentifiant('ZZ9')?.mods?.tempoWindow === 1.1);
+
+// Le même identifiant deux fois.
+r = await call('/api/admin/fanzzy', { body: { id:'ZZ9', nom:'Doublon', type:'voix',
+  set:'VN', rar:'d1', cri:{ label:'X', gest:'tempo', power:50 } } });
+check('un identifiant déjà pris est refusé',
+  r.json.error === 'admin.error.fanzzy_existe');
+
+// Les validations.
+r = await call('/api/admin/fanzzy', { body: { id:'zz-8', nom:'Mauvais', type:'voix',
+  set:'VN', rar:'d1', cri:{ label:'X', gest:'tempo', power:50 } } });
+check('un identifiant mal formé est refusé', r.json.error === 'admin.error.fanzzy_id');
+
+r = await call('/api/admin/fanzzy/ZZ9', { method:'PATCH', body:{ type:'inconnu' } });
+check('un type inconnu est refusé', r.json.error === 'admin.error.fanzzy_type');
+
+r = await call('/api/admin/fanzzy/ZZ9', { method:'PATCH', body:{ evo:'NEXISTEPAS' } });
+check('une évolution vers le vide est refusée',
+  r.json.error === 'admin.error.fanzzy_evo_inconnue');
+
+r = await call('/api/admin/fanzzy/ZZ9', { method:'PATCH', body:{ evo:'ZZ9' } });
+check('un Fanzzy ne peut pas évoluer en lui-même',
+  r.json.error === 'admin.error.fanzzy_evo_soi');
+
+// Modification.
+r = await call('/api/admin/fanzzy/ZZ9', { method:'PATCH', body:{ nom:'Le Testeur Modifié' } });
+check('un Fanzzy se modifie', parIdentifiant('ZZ9')?.nom === 'Le Testeur Modifié');
+
+// L'identifiant est la clé des collections : il ne bouge jamais.
+r = await call('/api/admin/fanzzy/ZZ9', { method:'PATCH', body:{ id:'AUTRE', nom:'Renommé' } });
+check('l’identifiant ne se renomme pas', Boolean(parIdentifiant('ZZ9')) && !parIdentifiant('AUTRE'));
+
+// Dépublication : la carte sort des tirages sans disparaître.
+await call('/api/admin/fanzzy/ZZ9', { method:'PATCH', body:{ publie:false } });
+check('une carte retirée sort des tirages', !publies().some((x) => x.id === 'ZZ9'));
+check('mais reste lisible par identifiant', Boolean(parIdentifiant('ZZ9')));
+check('et le catalogue n’a rien perdu',
+  (await call('/api/admin/fanzzy')).json.fanzzy.length === combienAvant + 1);
+
+// Tout est tracé.
+r = await call('/api/admin/journal');
+check('la création est journalisée',
+  r.json.journal.some((l) => l.action === 'fanzzy.cree' && l.cible === 'ZZ9'));
+check('la modification aussi',
+  r.json.journal.some((l) => l.action === 'fanzzy.modifie' && l.cible === 'ZZ9'));
+
+// Un joueur ordinaire ne touche à rien.
+moi = B;
+r = await call('/api/admin/fanzzy');
+check('un joueur ne voit pas le catalogue d’administration', r.status === 403);
+r = await call('/api/admin/fanzzy/ZZ9', { method:'PATCH', body:{ nom:'Pirate' } });
+check('et ne peut pas le modifier',
+  r.status === 403 && parIdentifiant('ZZ9')?.nom !== 'Pirate');
+moi = A;
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
-await pool.end(); http.close();
-process.exit(failures ? 1 : 0);
+await pool.end();
+await new Promise((r) => http.close(r));
+// Pas de process.exit : il coupe la boucle pendant que le pool rend ses
+// sockets, et libuv s’arrête au hasard sur UV_HANDLE_CLOSING.
+process.exitCode = failures ? 1 : 0;
