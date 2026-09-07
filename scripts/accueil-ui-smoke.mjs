@@ -160,6 +160,46 @@ check('sans Fanzzy équipé, la scène reste masquée et l’accueil tient debou
   await page.$('#scene.on') === null && await page.$('#grid') !== null);
 await page.close();
 
+/* ------------------------------- la barre commune sur un petit téléphone */
+
+/**
+ * La barre porte sept entrées depuis que le duel y figure. Sur un écran de
+ * 320 px — un iPhone SE — chacune dispose de quarante-cinq pixels. On vérifie
+ * que rien ne déborde et qu'aucun libellé n'est rogné : une barre qui déborde
+ * ne se voit pas en développement, seulement sur le téléphone d'un joueur.
+ */
+{
+  await equiper('G1');
+  const page = await nav.newPage();
+  await page.setViewport({ width: 320, height: 700 });
+  await page.goto(base + '/', { waitUntil: 'networkidle0' });
+  await page.waitForSelector('#tbf-nav', { timeout: 5000 }).catch(() => {});
+
+  const barre = await page.evaluate(() => {
+    const n = document.getElementById('tbf-nav');
+    if (!n) return null;
+    const liens = [...n.querySelectorAll('a')];
+    return {
+      entrees: liens.length,
+      debordePage: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      debordeBarre: n.scrollWidth > n.clientWidth,
+      // Un libellé rogné a une largeur de rendu supérieure à sa case.
+      rognes: liens.filter((a) => a.scrollWidth > a.clientWidth + 1).map((a) => a.textContent.trim()),
+    };
+  });
+
+  check('la barre porte bien sept entrées', barre?.entrees === 7);
+  check('elle tient dans 320 px sans déborder',
+    barre?.debordePage === false && barre?.debordeBarre === false);
+  check('aucun libellé n’est rogné', (barre?.rognes ?? []).length === 0);
+  if (barre?.rognes?.length) console.log('   rognés :', barre.rognes);
+
+  if (process.env.CAPTURE) {
+    await page.screenshot({ path: path.join(tmpdir(), 'accueil-320.png'), fullPage: false });
+  }
+  await page.close();
+}
+
 check('aucune erreur de script sur l’accueil', erreurs.length === 0);
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
 
