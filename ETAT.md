@@ -199,8 +199,13 @@ moteur NvN, couche réseau NvN, administration.
 
 **Côté interface, testé** : écran de deck, écran de duel NvN, classeur.
 
-Le catalogue compte **29 Fanzzy**. Trois sont illustrés : `G1` (Le Gamin de
+Le catalogue compte **36 Fanzzy**. Trois sont illustrés : `G1` (Le Gamin de
 Devant), `X7` (Le Trieur de Doubles), `X8` (La Mascotte du Dimanche).
+
+Les sept derniers — `X9` à `X15`, les gens du stade — sont **écrits mais pas
+dessinés** : ils sortent des boosters et se jouent, avec leur silhouette
+procédurale. Ils entreront dans `ILLUSTRES` quand leurs six fichiers existeront,
+et `verif-pages.mjs` refuse de les y voir avant.
 
 ---
 
@@ -221,10 +226,20 @@ Par ordre d'utilité :
 5. **Les illustrations de skins** — changer de tenue ne change que le nom.
 6. **Une mise en page pour écran large.** L'application est en colonne étroite
    centrée, pensée pour le téléphone.
-7. **Rejouer la simulation d'économie.** Les chiffres commentés dans `dex.js`
-   (« compléter la collection rapporte environ 1 150 écharpes ») ont été
-   calibrés à 27 cartes. Il y en a 29, et le pool VIRAGE NORD en rareté d2 est
-   passé de 5 à 7 entrées, ce qui dilue la chance de tirer chaque carte.
+7. **Rejouer la simulation d'économie — c'est devenu le point le plus urgent
+   de cette liste.** Les chiffres commentés dans `dex.js` (« compléter la
+   collection rapporte environ 1 150 écharpes », coût d'évolution 25 et 90)
+   ont été calibrés à **27 cartes**. Il y en a **36**, soit un tiers de plus.
+
+   Les pools ont enflé de façon inégale, et c'est ça qui compte : VIRAGE NORD
+   en `d2` est passé de 5 à 8 entrées, NUITS EUROPÉENNES en `d3` de 2 à 4.
+   Comme un booster tire une rareté puis une carte *dans le pool de cette
+   rareté*, chaque carte d'un pool élargi devient d'autant plus rare. Compléter
+   la collection coûte donc sensiblement plus de boosters qu'à la calibration,
+   sans que le gain en écharpes ait bougé.
+
+   Tant que ce n'est pas rejoué, les coûts d'évolution sont probablement trop
+   bas par rapport au temps qu'il faut pour trouver les cartes.
 
 ---
 

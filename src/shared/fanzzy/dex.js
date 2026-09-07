@@ -149,6 +149,64 @@ const DEX = [
       + 'lui laisse au bord du terrain. Elle le prend très au sérieux.',
     mods:{ parryBonus:1.4, holdBonus:1.05 },
     cri:{ label:'LA PELUCHE DÉBOULE', gest:'tempo', power:56 } },
+
+  /* ------------------------------------------- les gens du stade
+
+     Sept figures qu'on croise sans jamais les voir jouer : celui qui nourrit
+     la file d'attente, celle qui tient le bar, celui qui souffle faux depuis
+     trente ans. Ils ne sont pas dans le virage, ils sont *autour* — et un
+     stade sans eux n'est qu'un terrain avec des gradins.
+
+     Leurs modificateurs racontent leur métier, pas leur puissance : le
+     marchand rend du souffle, la patronne tient la distance, la voyante voit
+     la mesure arriver. */
+
+  { id:'X9', nom:'Le Marchand de Saucisses', type:'fide', set:'VN', stage:1, rar:'d1',
+    histoire:'Il n’a jamais vu un but de sa vie. Il les entend, et il sait au bruit '
+      + 'si c’était pour nous.',
+    mods:{ breathBonus:1.18, holdBonus:1.04 },
+    cri:{ label:'UNE POUR LA ROUTE', gest:'hold', power:50 } },
+
+  { id:'X10', nom:'La Patronne du Bar', type:'fide', set:'VN', stage:1, rar:'d2',
+    histoire:'Elle a vu passer quatre entraîneurs, deux relégations et un titre. '
+      + 'Elle essuie le même comptoir depuis les trois.',
+    mods:{ holdBonus:1.16, holdForgive:1 },
+    cri:{ label:'DERNIÈRE TOURNÉE', gest:'hold', power:58 } },
+
+  { id:'X11', nom:'La Trompette du Dimanche', type:'perc', set:'VN', stage:1, rar:'d1',
+    histoire:'Trois notes, toujours les mêmes, depuis trente ans. Ses voisins ont '
+      + 'renoncé à lui demander d’arrêter.',
+    // Il donne la cadence mais épuise son entourage : le seul Fanzzy dont le
+    // revers tombe sur les autres autant que sur lui.
+    mods:{ mashBonus:1.14, mashTime:-300, breathBonus:0.92 },
+    cri:{ label:'LA MÊME DEPUIS TRENTE ANS', gest:'mash', power:54 } },
+
+  { id:'X12', nom:'La Voyante du Virage', type:'voix', set:'NE', stage:1, rar:'d3',
+    histoire:'Elle annonce le score à la mi-temps, se trompe une fois sur deux, et '
+      + 'personne ne se souvient jamais des fois où elle s’est trompée.',
+    // Voir la mesure arriver : sa fenêtre de tempo est la plus large du jeu.
+    mods:{ tempoWindow:1.55, perfectBonus:1.12 },
+    cri:{ label:'JE L’AVAIS VU VENIR', gest:'tempo', power:66 } },
+
+  { id:'X13', nom:'L’Agent en Tribune d’Honneur', type:'depl', set:'NE', stage:1, rar:'d2',
+    histoire:'Il connaît quelqu’un. Il connaît toujours quelqu’un. Il a une paire de '
+      + 'crampons dans la main et personne ne sait à qui elle appartient.',
+    mods:{ refundBonus:1.65, breathBonus:1.06 },
+    cri:{ label:'J’AI QUELQU’UN POUR ÇA', gest:'hold', power:60 } },
+
+  { id:'X14', nom:'Le Siffleur des Souterrains', type:'tifo', set:'NE', stage:1, rar:'d3',
+    histoire:'On raconte qu’il vit sous la tribune sud depuis la rénovation de 1974. '
+      + 'Personne ne l’a vu. Tout le monde a entendu son sifflet.',
+    // Il détourne au lieu de pousser, et il n'a pas de coffre : une créature
+    // d'embuscade, pas de force.
+    mods:{ parryBonus:1.75, breathBonus:0.9 },
+    cri:{ label:'COUP DE SIFFLET DANS LE NOIR', gest:'tempo', power:64 } },
+
+  { id:'X15', nom:'Le Loup du Virage', type:'pyro', set:'NE', stage:1, rar:'star',
+    histoire:'Un soir de pleine lune, quelqu’un a hurlé plus fort que toute la '
+      + 'tribune. On ne l’a plus jamais vu arriver avant le coup d’envoi.',
+    mods:{ perfectBonus:1.42, backfire:true, mashBonus:1.1 },
+    cri:{ label:'PLEINE LUNE', gest:'mash', power:82 } },
 ];
 
 const RATES = {
