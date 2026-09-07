@@ -41,6 +41,7 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' 
 
 let appels = 0;
 let enPanne = false;
+let compoPubliee = false;
 const client = {
   quota: { usedToday: 0, remaining: 7000, budgetLeft: 6800 },
   async call(path, params) {
@@ -54,6 +55,34 @@ const client = {
     }
     if (path === '/players/topassists') return [];
     if (path === '/players/topyellowcards') return [];
+    if (path === '/fixtures/events') return [];
+    if (path === '/fixtures/statistics') {
+      const ligne = (poss, tirs, cadres, corners, hj) => [
+        { type: 'Ball Possession', value: poss },
+        { type: 'Total Shots', value: tirs },
+        { type: 'Shots on Goal', value: cadres },
+        { type: 'Corner Kicks', value: corners },
+        { type: 'Offsides', value: hj },
+        { type: 'Red Cards', value: null },      // nulle des deux côtés
+        { type: 'Shots insidebox', value: 9 },   // hors de la sélection
+      ];
+      return [
+        { team: { id: 85 }, statistics: ligne('61%', 14, 6, 7, 2) },
+        { team: { id: 91 }, statistics: ligne('39%', 5, 2, 3, 1) },
+      ];
+    }
+    if (path === '/fixtures/lineups') {
+      if (!compoPubliee) return [];              // pas encore parue
+      return [
+        { team: { id: 85 }, formation: '4-3-3', coach: { name: 'Tramezzani' },
+          startXI: [{ player: { id: 1, name: 'Fickentscher', number: 1, pos: 'G' } },
+                    { player: { id: 2, name: 'Baltazar', number: 9, pos: 'F' } }],
+          substitutes: [{ player: { id: 3, name: 'Berdayes', number: 17, pos: 'M' } }] },
+        { team: { id: 91 }, formation: '4-2-3-1', coach: { name: 'Degen' },
+          startXI: [{ player: { id: 4, name: 'Hitz', number: 30, pos: 'G' } }],
+          substitutes: [] },
+      ];
+    }
     if (path === '/fixtures') {
       return [{ fixture: { id: 1, date: '2026-09-13T16:00:00+00:00', status: { short: 'FT' } },
                 league: { round: 'Journée 5' },
@@ -149,6 +178,90 @@ check('la tentative a bien eu lieu', appels > avant);
 enPanne = false;
 r = await get('/api/tt/league/207');
 check('le cache se rafraîchit dès que l\u2019API revient', r.json.stale === false);
+
+/* ------------------------------------------- fiche d'un match : les volets */
+
+/**
+ * La page a toujours eu ses trois onglets, mais le serveur ne renvoyait ni
+ * statistiques ni composition : les deux volets affichaient « indisponibles »
+ * pour tous les matchs, y compris terminés. Ces contrôles ferment la porte.
+ */
+await pool.query(`DELETE FROM api_cache`);
+compoPubliee = true;
+
+r = await get('/api/tt/match/1');
+const st = r.json.statistiques ?? [];
+check('la fiche renvoie des statistiques', st.length > 0);
+
+const poss = st.find((s) => s.nom === 'Possession');
+check('les intitulés sont traduits', Boolean(poss));
+check('la valeur affichée est conservée telle quelle', poss?.home === '61%');
+check('la part de la barre est calculée', poss?.partHome === 61);
+
+const tirs = st.find((s) => s.nom === 'Tirs');
+check('un décompte donne aussi sa part', tirs?.home === 14 && tirs?.partHome === 74);
+check('une ligne nulle des deux côtés est écartée',
+  !st.some((s) => s.nom === 'Cartons rouges'));
+check('les statistiques hors sélection ne passent pas',
+  !st.some((s) => /insidebox/i.test(s.nom)));
+
+const c = r.json.compositions;
+check('la fiche renvoie les compositions', Boolean(c?.home && c?.away));
+check('le dispositif est donné', c?.home?.dispositif === '4-3-3');
+check('les titulaires sont numérotés et nommés',
+  c?.home?.titulaires?.[0]?.numero === 1 && c?.home?.titulaires?.[0]?.nom === 'Fickentscher');
+check('le poste anglais « F » devient « A »', c?.home?.titulaires?.[1]?.poste === 'A');
+check('le banc est séparé', c?.home?.remplacants?.[0]?.nom === 'Berdayes');
+check('l’entraîneur est nommé', c?.home?.entraineur === 'Tramezzani');
+
+/* ------------------------------------------------ le quota, encore lui */
+
+let avantFiche = appels;
+r = await get('/api/tt/match/1');
+check('une deuxième consultation de la fiche ne coûte aucun appel', appels === avantFiche);
+
+const duree = async (cle) => {
+  const [[row]] = await pool.query(
+    `SELECT TIMESTAMPDIFF(SECOND, NOW(3), expires_at) AS s FROM api_cache WHERE k = ?`, [cle]);
+  return row?.s ?? null;
+};
+
+// Un match terminé ne change plus jamais : le garder vingt-cinq secondes
+// faisait repayer un appel à chaque visiteur.
+check('la fiche d’un match terminé est gardée longtemps', (await duree('match:1')) > 3600);
+check('ses statistiques aussi', (await duree('stats:1')) > 3600);
+check('sa composition aussi', (await duree('compo:1')) > 3600);
+
+/* ------------------------- une composition pas encore publiée revient vite */
+
+/**
+ * Une composition demandée avant sa parution revient vide. La garder six
+ * heures ferait manquer sa publication : les réponses vides vivent quatre-
+ * vingt-dix secondes.
+ */
+compoPubliee = false;
+await pool.query(`DELETE FROM api_cache WHERE k IN ('match:2','compo:2','stats:2')`);
+const dansUneHeure = new Date(Date.now() + 3600e3).toISOString();
+const avantVide = appels;
+// Un match à venir : ni statistiques ni fil, mais la composition est tentée.
+client.call = ((base) => async function (path, params) {
+  if (path === '/fixtures') {
+    return [{ fixture: { id: 2, date: dansUneHeure, status: { short: 'NS' } },
+              league: { round: 'Journée 6' },
+              teams: { home: { id: 85, name: 'Sion' }, away: { id: 91, name: 'Bâle' } },
+              goals: { home: null, away: null } }];
+  }
+  return base.call(client, path, params);
+})(client.call);
+
+r = await get('/api/tt/match/2');
+check('avant le coup d’envoi, la composition est tentée', appels > avantVide);
+check('et son absence est annoncée sans planter', r.json.compositions === null);
+check('aucune statistique n’est demandée avant le coup d’envoi',
+  (r.json.statistiques ?? []).length === 0);
+const vide = await duree('compo:2');
+check('une composition vide n’est gardée que quatre-vingt-dix secondes',
+  vide !== null && vide <= 90);
 
 /* --------------------------------------------------------------- état */
 
