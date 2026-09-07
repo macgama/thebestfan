@@ -190,8 +190,8 @@ check('les deux joueurs sont appariés et le duel s\u2019ouvre', apparie);
 const ouvert = await A.page.evaluate(() => ({
   horloge: document.getElementById('horloge').textContent,
   mode: document.getElementById('modeTag').textContent,
-  tribuMoi: document.getElementById('tribMoi').children.length,
-  tribuEux: document.getElementById('tribEux').children.length,
+  fouleMoi: document.getElementById('fouleMoi').children.length,
+  fouleEux: document.getElementById('fouleEux').children.length,
   cartes: document.querySelectorAll('#mainCartes .ct').length,
   fanzzy: document.querySelectorAll('#equipe .fz').length,
   actif: document.querySelector('#equipe .fz.actif')?.textContent.trim(),
@@ -199,14 +199,15 @@ const ouvert = await A.page.evaluate(() => ({
 }));
 check('l\u2019horloge démarre à cinq minutes', /^[45]:/.test(ouvert.horloge));
 check('le duel est marqué classé', ouvert.mode === 'CLASSÉ');
-check('chaque tribune montre son joueur', ouvert.tribuMoi === 1 && ouvert.tribuEux === 1);
+check('chaque tribune a sa foule', ouvert.fouleMoi === 1 && ouvert.fouleEux === 1);
 
-// Le nom, et pas seulement le compte : un écran qui met le bon nombre de
-// pastilles mais intervertit les camps est faux sans que rien ne le montre.
+// Le nom, et pas seulement le compte : un écran qui met le bon nombre de têtes
+// mais intervertit les camps est faux sans que rien ne le montre. Le nom vit
+// dans l'infobulle de la tête depuis que le fil de texte a disparu.
 {
   const camps = await A.page.evaluate(() => ({
-    moi: document.getElementById('tribMoi')?.textContent ?? '',
-    eux: document.getElementById('tribEux')?.textContent ?? '',
+    moi: [...document.querySelectorAll('#fouleMoi .tete')].map((t) => t.title).join(' '),
+    eux: [...document.querySelectorAll('#fouleEux .tete')].map((t) => t.title).join(' '),
   }));
   check('ma tribune porte mon nom', /Sédunois/.test(camps.moi));
   check('et la tribune d\u2019en face porte celui de l\u2019adversaire',
@@ -280,13 +281,31 @@ const chante = await jusqua(async () => {
 }, 12000);
 check('taper sur la pulsation affichée fait monter la ferveur', chante);
 
-const fil = await A.page.evaluate(() =>
-  document.getElementById('fil').textContent.replace(/\s+/g, ' '));
-check('le fil raconte le chant et sa qualité', /chante/.test(fil));
-
 const bouge = await A.page.evaluate(() => S.vue.rope !== 0);
 check('la corde a bougé', bouge);
 
+/**
+ * Ce qui a remplacé le fil de texte : on ne lit plus l'état, on le voit.
+ * Le territoire d'un camp suit la corde, et l'écart s'affiche en chiffres.
+ * Sans ces deux contrôles, la refonte pourrait se figer sans que rien ne le
+ * signale — la corde bougerait dans les données, pas à l'écran.
+ */
+{
+  const arene = await A.page.evaluate(() => ({
+    partMoi: parseFloat(document.getElementById('coteMoi').style.width),
+    partEux: parseFloat(document.getElementById('coteEux').style.width),
+    noeud: parseFloat(document.getElementById('noeud').style.left),
+    ecart: document.getElementById('ecart').firstChild.textContent,
+    mention: document.getElementById('ecart').querySelector('small').textContent,
+  }));
+  check('le territoire du camp suit la corde', arene.partMoi !== 50);
+  check('les deux camps se partagent toute la largeur',
+    Math.abs(arene.partMoi + arene.partEux - 100) < 0.2);
+  check('le nœud est à la frontière des deux camps',
+    Math.abs(arene.noeud - arene.partMoi) < 0.2);
+  check('l\u2019écart est annoncé en chiffres', /^[+\u2212]\d+$/.test(arene.ecart));
+  check('et il dit qui mène', /MÈNES|TIRENT/.test(arene.mention));
+}
 /* ---------------------------------------------------------- jouer une carte */
 
 const jouable = await A.page.evaluate(() => {
@@ -305,9 +324,11 @@ check('une carte de la main est jouable', Boolean(jouable));
 check('la carte quitte la main après avoir été jouée',
   await jusqua(async () => await A.page.evaluate((id) =>
     !(S.vue?.moi?.main ?? []).includes(id), jouable)));
-check('le fil nomme la carte jouée', await jusqua(async () =>
-  await A.page.evaluate(() => /joue /.test(document.getElementById('fil').textContent))));
-
+// La carte jouée s\u2019annonce par une étiquette qui monte depuis la corde
+// puis disparaît. C'est fugace par construction : on la guette au lieu de la
+// lire dans un journal.
+check('la carte jouée s\u2019annonce au-dessus de la corde', await jusqua(async () =>
+  await A.page.evaluate(() => document.querySelectorAll('.fx-nombre').length > 0), 3000));
 /* ------------------------------------------- une erreur nomme sa cause */
 
 // La cadence est limitée sur dix secondes glissantes. Sans cette pause, le
@@ -347,7 +368,21 @@ check('et ce n\u2019est pas un « impossible » générique',
     const rn = n.getBoundingClientRect();
     return Math.max(0, Math.round(rb.bottom - rn.top));
   });
-  check('la barre de navigation ne recouvre pas le bouton de chant',
+  /**
+ * Un écran de jeu ne se fait pas défiler. Le bouton de chant est la seule
+ * action : s'il passe sous le pli, le joueur ne le trouve pas, et rien à
+ * l'écran ne lui dit qu'il faut faire glisser la page.
+ */
+{
+  const defile = await A.page.evaluate(() => ({
+    page: document.documentElement.scrollHeight > document.documentElement.clientHeight + 1,
+    app: (() => { const a = document.getElementById('app');
+      return a.scrollHeight > a.clientHeight + 1; })(),
+  }));
+  check('l\u2019écran de duel ne défile pas', !defile.page && !defile.app);
+}
+
+check('la barre de navigation ne recouvre pas le bouton de chant',
     chevauche === 0);
   if (chevauche) console.log(`    recouvrement : ${chevauche} px`);
 
@@ -376,8 +411,16 @@ if (A.erreurs.length) console.log('   ', A.erreurs.slice(0, 3));
 /* ---------------------------------------------------------------- fin */
 
 if (process.env.CAPTURE) {
-  await A.page.screenshot({ path: '/tmp/nvn-duel.png', fullPage: true });
-  await B.page.screenshot({ path: '/tmp/nvn-duel-b.png', fullPage: true });
+  // Dans le dossier temporaire du système : « /tmp » en dur ne marche pas sous
+  // Windows, et une capture n'a rien à faire dans le dépôt.
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  // Sans `fullPage` : c'est précisément ce qui tient dans l'écran qu'on veut
+  // regarder. Une capture pleine page cacherait le défilement au lieu de le
+  // montrer.
+  await A.page.screenshot({ path: join(tmpdir(), 'nvn-duel.png') });
+  await A.page.screenshot({ path: join(tmpdir(), 'nvn-duel-full.png'), fullPage: true });
+  console.log(`   captures : ${join(tmpdir(), 'nvn-duel.png')}`);
 }
 await nav.close();
 nvn.stop();

@@ -252,14 +252,111 @@
     } else lancer();
 
     document.addEventListener('pointerdown', (e) => {
+      // Le navigateur n'autorise le son qu'après un geste : on ouvre le
+      // contexte au premier toucher, pour que le premier vrai son ne soit pas
+      // avalé.
+      contexte();
       const p = e.target.closest?.('.fz-vivant');
       if (p) reagir(p);
     }, { passive: true });
   }
 
+  /* ----------------------------------------------------------------- son
+     Aucun fichier audio : tout est synthétisé à la volée.
+     Un jeu qui télécharge ses sons les joue en retard la première fois —
+     exactement au moment où ils comptent. Ici le son part avec l'image.
+
+     Le navigateur interdit de produire du son avant un geste de
+     l'utilisateur. Le contexte n'est donc créé qu'au premier toucher, et le
+     joueur peut couper : la préférence survit d'une page à l'autre. */
+
+  let audio = null;
+  let sonCoupe = false;
+  try { sonCoupe = localStorage.getItem('tbf-son') === 'coupe'; } catch { /* pas de stockage */ }
+
+  function contexte() {
+    if (sonCoupe) return null;
+    if (!audio) {
+      const C = window.AudioContext ?? window.webkitAudioContext;
+      if (!C) return null;
+      try { audio = new C(); } catch { return null; }
+    }
+    if (audio.state === 'suspended') audio.resume().catch(() => {});
+    return audio;
+  }
+
+  /** Une note, avec une hauteur qui peut glisser. */
+  function ton({ freq = 220, vers = null, duree = .18, type = 'sine', vol = .16, delai = 0 }) {
+    const c = contexte(); if (!c) return;
+    const t0 = c.currentTime + delai;
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t0);
+    if (vers) o.frequency.exponentialRampToValueAtTime(Math.max(20, vers), t0 + duree);
+    // Attaque courte puis extinction : sans elle, chaque son claque.
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(vol, t0 + .012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
+    o.connect(g).connect(c.destination);
+    o.start(t0); o.stop(t0 + duree + .03);
+  }
+
+  /** Du bruit filtré : tout ce qui est souffle, foule ou frottement. */
+  function bruit({ duree = .3, freq = 800, vol = .1, delai = 0 }) {
+    const c = contexte(); if (!c) return;
+    const t0 = c.currentTime + delai;
+    const n = Math.floor(c.sampleRate * duree);
+    const buf = c.createBuffer(1, n, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    const src = c.createBufferSource(); src.buffer = buf;
+    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 1.2;
+    const g = c.createGain();
+    g.gain.setValueAtTime(vol, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
+    src.connect(f).connect(g).connect(c.destination);
+    src.start(t0); src.stop(t0 + duree);
+  }
+
+  /**
+   * La banque de sons. Chacun tient en une ou deux lignes, et c'est voulu :
+   * un son de jeu doit être court et reconnaissable, pas joli.
+   */
+  const SONS = {
+    pousse:  () => ton({ freq: 190, vers: 62, duree: .15, type: 'triangle', vol: .15 }),
+    contre:  () => ton({ freq: 130, vers: 55, duree: .18, type: 'triangle', vol: .1 }),
+    chant:   () => { bruit({ duree: .26, freq: 750, vol: .09 });
+                     ton({ freq: 300, vers: 520, duree: .2, vol: .09 }); },
+    parfait: () => { bruit({ duree: .3, freq: 1100, vol: .1 });
+                     [523, 659, 784].forEach((f, i) =>
+                       ton({ freq: f, duree: .3, type: 'sine', vol: .09, delai: i * .05 })); },
+    carte:   () => ton({ freq: 880, vers: 400, duree: .08, type: 'square', vol: .06 }),
+    bache:   () => ton({ freq: 115, vers: 70, duree: .22, type: 'sine', vol: .13 }),
+    tic:     () => ton({ freq: 1200, duree: .03, type: 'square', vol: .05 }),
+    // La corne de but : trois notes tenues, comme un klaxon de tribune.
+    but:     () => { [392, 494, 587].forEach((f, i) =>
+                       ton({ freq: f, duree: .55, type: 'sawtooth', vol: .09, delai: i * .12 }));
+                     bruit({ duree: .9, freq: 300, vol: .07, delai: .1 }); },
+    encaisse: () => ton({ freq: 210, vers: 85, duree: .7, type: 'sawtooth', vol: .09 }),
+    butReel: () => { SONS.but(); bruit({ duree: 1.4, freq: 420, vol: .08, delai: .15 }); },
+  };
+
+  const son = (nom) => { try { SONS[nom]?.(); } catch { /* le son ne doit jamais casser le jeu */ } };
+
   const FX = {
     couleurs: COULEURS,
     particules, onde, flash, secousse, titre, nombre, animer, reagir,
+
+    /** Joue un son de la banque. Sans effet si le joueur a coupé. */
+    son,
+    /** Coupe ou rétablit le son, et retient le choix. */
+    sonCoupe(v) {
+      sonCoupe = Boolean(v);
+      try { localStorage.setItem('tbf-son', sonCoupe ? 'coupe' : 'on'); } catch { /* tant pis */ }
+      return sonCoupe;
+    },
+    sonEstCoupe: () => sonCoupe,
 
     /** Une carte est jouée : impulsion depuis la carte, onde, éclat. */
     carte(element, { couleur = COULEURS.violet, nom } = {}) {
@@ -267,6 +364,7 @@
       onde({ x, y, couleur, taille: 260 });
       particules({ x, y, n: 18, couleurs: [couleur, COULEURS.craie], distance: 110, taille: 4 });
       buzz(14);
+      son('carte');
       if (nom) nombre(nom, { x, y: y - 20, couleur, signe: false });
       if (element && !doux()) {
         element.animate([
@@ -288,6 +386,7 @@
       titre(pour ? 'BUT !' : 'BUT ADVERSE', score ? `${score[0]} – ${score[1]}` : null,
         pour ? COULEURS.or : COULEURS.feu, pour ? 56 : 40);
       buzz(pour ? [45, 55, 130] : 220);
+      son(pour ? 'but' : 'encaisse');
     },
 
     /** Un but dans le vrai match : mêmes codes, plus le contexte. */
