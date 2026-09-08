@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon carnet — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
 <style>
-:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;
-  --banner:"Oswald","Arial Narrow",Impact,sans-serif;--ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
 body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
@@ -18,10 +18,6 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;flex:none}
 .top h1{font-family:var(--banner);font-size:20px;letter-spacing:.15em;margin:0}
 .top h1 small{display:block;font-size:8.5px;letter-spacing:.3em;opacity:.5;margin-top:3px;font-family:var(--ui)}
-.purse{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.35);border-radius:999px;
-  border:1px solid rgba(242,238,228,.12);padding:6px 12px}
-.purse b{font-family:var(--banner);font-size:14px;line-height:1}
-.purse span{font-size:9px;opacity:.55}
 
 .tabs{display:flex;gap:7px;padding:8px 16px 10px;flex:none}
 .tab{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.14);border-radius:8px;
@@ -74,7 +70,6 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <main id="app">
   <div class="top">
     <h1>MON CARNET<small>ce que tu as vécu</small></h1>
-    <div class="purse"><b id="scarves">0</b><span>écharpes</span></div>
   </div>
 
   <div class="tabs">
@@ -177,7 +172,7 @@ async function load() {
         .then((r) => r.json()).catch(() => ({ wallet: { scarves: 0 } })),
     ]);
     scarves = fz.wallet?.scarves ?? 0;
-    $('scarves').textContent = scarves;
+    window.TBF_BARRE?.bourse(scarves);
 
     const vecus = mine.souvenirs.filter((s) => s.kind === 'presence').length;
     const recup = mine.souvenirs.length - vecus;

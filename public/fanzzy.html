@@ -5,36 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Fanzzy — collection</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
 <style>
-:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;
-  --bleu:#3C82E8;--violet:#8257DA;--gris:#C2CAD6;
-  --banner:"Oswald","Arial Narrow",Impact,sans-serif;
-  --ui:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
 html,body{margin:0;height:100%}
 body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;overflow:hidden}
+/* Le fond opaque a disparu : il recouvrait le décor de tribune commun, et la
+   page se retrouvait seule sur un aplat noir pendant que toutes les autres
+   étaient posées sur le stade. Il ne reste que la lueur chaude du haut, qui
+   éclaire le kiosque sans rien cacher.
+
+   `padding-bottom` : la page fait exactement une hauteur d'écran et ne défile
+   pas, donc rien ne la décale au-dessus de la barre du bas — le bouton
+   « ouvrir le booster » passait dessous. */
 #app{position:relative;width:100%;max-width:440px;height:100dvh;overflow:hidden;display:flex;flex-direction:column;
-  background:radial-gradient(120% 55% at 50% -8%,rgba(245,195,59,.15),transparent 60%),
-             linear-gradient(180deg,#141A21,#0B0E12 46%,#0A0D11)}
+  padding-bottom:calc(var(--nav-h,62px) + env(safe-area-inset-bottom));
+  background:radial-gradient(120% 55% at 50% -8%,rgba(245,195,59,.15),transparent 62%)}
 
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:13px 16px 6px;flex:none;z-index:4}
 .mark{font-family:var(--banner);font-weight:700;font-size:20px;letter-spacing:.16em;line-height:1}
 .mark small{display:block;font-size:8.5px;letter-spacing:.3em;opacity:.5;font-weight:400;margin-top:3px}
-.purse{display:flex;gap:8px}
-.chip{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.12);
-  border-radius:999px;padding:5px 11px}
-.chip b{font-family:var(--banner);font-size:14px;line-height:1}
-.chip span{font-size:9px;opacity:.55;letter-spacing:.05em}
 
 .screen{flex:1;display:none;flex-direction:column;min-height:0;z-index:2}
 .screen.on{display:flex}
 
 /* -------------------------------------------------------------- kiosque */
-#bg{position:absolute;inset:-6% -6% -6% -6%;background-size:cover;background-position:center;
-  opacity:0;transition:opacity 1.2s;z-index:0;will-change:transform}
-#bg.on{opacity:.5}
-#bgveil{position:absolute;inset:0;z-index:0;pointer-events:none;
-  background:radial-gradient(120% 60% at 50% 40%,transparent,rgba(8,10,14,.55) 60%,#080A0E)}
 
 .carousel{position:relative;width:100%;height:320px;perspective:1100px;touch-action:pan-y}
 .slide{position:absolute;left:50%;top:50%;width:186px;aspect-ratio:.62;margin:0;cursor:grab;
@@ -265,7 +261,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    déjà le bas de l'écran, et deux barres superposées se recouvraient — les
    onglets devenaient inatteignables. */
 .nav{display:flex;gap:6px;padding:4px 16px 10px;flex:none;z-index:5}
-.nav button{flex:1;background:rgba(8,11,16,.7);border:1px solid rgba(242,238,228,.14);
+.nav button{flex:1;background:var(--panneau);backdrop-filter:blur(10px);border:1px solid rgba(242,238,228,.14);
   border-radius:8px;color:inherit;display:flex;align-items:center;justify-content:center;gap:7px;
   padding:9px 4px;font-size:11px;letter-spacing:.08em;font-family:var(--banner);opacity:.55;
   cursor:pointer}
@@ -282,13 +278,8 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 </head>
 <body>
 <main id="app">
-  <div id="bg"></div><div id="bgveil"></div>
   <div class="topbar">
     <div class="mark">FANZZY<small>collection</small></div>
-    <div class="purse">
-      <div class="chip"><b id="scarves">0</b><span>écharpes</span></div>
-      <div class="chip"><b id="packs">0</b><span>boosters</span></div>
-    </div>
   </div>
 
   <nav class="nav">
@@ -377,7 +368,6 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 const ART = {
   VN: 'img/pack-virage-nord',
   NE: 'img/pack-nuits-europeennes',
-  fond: 'img/fond-tribune',
   burst: 'video/gerbe.mp4',
 };
 
@@ -579,8 +569,11 @@ const save = () => {};
 
 function tickRegen() {
   if (S.nextIn != null) S.nextIn = Math.max(0, S.nextIn - 1000);
-  $('packs').textContent = S.packs;
-  $('scarves').textContent = S.scarves;
+  // La bourse vit dans la barre du haut (nav.js) depuis que toutes les pages
+  // partagent le même bandeau. Le kiosque est l'écran qui la fait le plus
+  // bouger : sans cette poussée, un joueur qui vient de dépenser quarante-cinq
+  // écharpes les verrait encore affichées.
+  window.TBF_BARRE?.bourse(S.scarves, S.packs);
   $('openBtn').disabled = S.packs <= 0;
   const el = $('regenTxt');
   if (S.packs >= MAXP || S.nextIn == null) el.textContent = 'Réserve pleine';
@@ -1173,25 +1166,10 @@ document.querySelectorAll('.nav button').forEach((b) => {
 
 /* ---------------------------------------------------------------- init */
 
-/* Le fond ne se révèle qu'une fois chargé, et suit légèrement l'inclinaison
-   du téléphone : assez pour donner de la profondeur, pas assez pour distraire. */
-(() => {
-  const bg = $('bg');
-  const img = new Image();
-  img.onload = () => { bg.style.backgroundImage = `url("${src(ART.fond)}")`; bg.classList.add('on'); };
-  img.src = src(ART.fond);
-
-  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    window.addEventListener('deviceorientation', (e) => {
-      const x = clamp((e.gamma ?? 0) / 45, -1, 1), y = clamp((e.beta ?? 0) / 90, -1, 1);
-      bg.style.transform = `translate(${x * 14}px, ${y * 10}px) scale(1.06)`;
-    });
-    window.addEventListener('pointermove', (e) => {
-      const x = (e.clientX / innerWidth - .5) * 2, y = (e.clientY / innerHeight - .5) * 2;
-      bg.style.transform = `translate(${x * 12}px, ${y * 9}px) scale(1.06)`;
-    });
-  }
-})();
+/* Le décor est posé par nav.js, comme sur toutes les autres pages : même
+   photo, même voile. Le fond propre au kiosque et son suivi de l'inclinaison
+   sont partis avec lui — deux décors superposés se battaient, et celui du
+   dessous ne se voyait pas. */
 
 (async () => {
   try {
