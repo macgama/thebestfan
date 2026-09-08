@@ -105,11 +105,21 @@ check('les Fanzzy dessinés montrent leur vignette', vue.vignettes > 40);
 
 /* ------------------------------------------------------------ le filtre */
 
+// On mesure que le filtre *réduit* et que tout ce qui reste correspond — pas
+// qu'il reste exactement une ligne. La version chiffrée a tenu jusqu'au jour
+// où le catalogue a gagné un deuxième fantôme : le test tombait sur un
+// enrichissement du contenu, ce qu'un test d'interface n'a pas à surveiller.
 await page.type('#q', 'fantôme');
-check('le filtre réduit la liste', await jusqua(async () =>
-  await page.evaluate(() => document.querySelectorAll('#corps .fzrow').length === 1)));
-check('et il trouve la bonne carte',
-  /Fantôme/.test(await page.$eval('#corps .fzrow', (e) => e.textContent)));
+const filtre = await page.evaluate(async () => {
+  const lignes = () => [...document.querySelectorAll('#corps .fzrow')];
+  for (let i = 0; i < 40 && lignes().length > 30; i++) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  return { reste: lignes().length, textes: lignes().map((l) => l.textContent) };
+});
+check('le filtre réduit la liste', filtre.reste > 0 && filtre.reste < 30);
+check('et il ne laisse que des cartes qui correspondent',
+  filtre.textes.length > 0 && filtre.textes.every((t) => /fant[ôo]me/i.test(t)));
 
 await page.evaluate(() => { const q = document.getElementById('q'); q.value = ''; });
 await page.type('#q', ' ');
