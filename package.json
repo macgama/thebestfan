@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",
     "build": "npm install && node build.mjs",
+    "schema:smoke": "node scripts/schema-smoke.mjs",
     "auth:smoke": "node scripts/auth-smoke.mjs",
     "foot:smoke": "node scripts/football-smoke.mjs",
     "deck:smoke": "node scripts/deck-smoke.mjs",

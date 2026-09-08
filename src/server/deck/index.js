@@ -2,6 +2,7 @@ import express from 'express';
 import { ACTIONS, ACTION_BY_ID, DECK_RULES, validerDeck } from '../../shared/duel/actions.js';
 import { parIdentifiant } from '../fanzzy/catalogue.js';
 import { STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
+import { jourISO } from '../../shared/jour.js';
 
 /**
  * Decks et choix du match support.
@@ -125,8 +126,11 @@ export function createDecks({ pool, requireAuth }) {
     if (!rows.length) throw fail('duel.error.fixture_unknown');
     const f = rows[0];
 
-    const jour = String(f.jour).slice(0, 10);
-    const auj = String(f.aujourdhui).slice(0, 10);
+    // jourISO et pas String(...).slice(0, 10) : voir src/shared/jour.js. La
+    // seconde forme comparait des noms de jours de la semaine et refusait un
+    // match à venir comme s'il était passé.
+    const jour = jourISO(f.jour);
+    const auj = jourISO(f.aujourdhui);
     const enCours = LIVE.includes(f.status_short);
     const termine = ['FT', 'AET', 'PEN'].includes(f.status_short);
 

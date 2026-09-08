@@ -50,6 +50,21 @@ Le projet suit une méthode constante, à conserver :
   faute a été refaite quatre fois : ouverture de booster, télétexte,
   compositions, chargement du catalogue. Un message vague coûte toujours plus
   cher qu'il n'économise.
+- **Le déploiement pousse le code, jamais le schéma.** C'est la panne la plus
+  coûteuse du projet : le 8 septembre 2026, la mise en ligne a marché, le site
+  a répondu, et pendant onze heures personne n'a pu se connecter. `sql/fanzzy.sql`
+  n'avait pas été appliqué en production ; le chargement du catalogue levait, le
+  `catch` du démarrage attrapait tout, et **toutes** les routes `/api`
+  disparaissaient — pas seulement celles du catalogue. Le joueur voyait « Erreur
+  du serveur », et `/healthz` répondait `ok: true`.
+
+  Trois choses en découlent, toutes en place : `src/server/auth/schema.js`
+  compare `sql/` à la base au démarrage et **nomme le fichier à appliquer** ;
+  `/healthz` renvoie `ok: false` et un champ `panne` dès qu'une route manque, de
+  sorte qu'une surveillance branchée dessus le voie ; et **toute livraison qui
+  ajoute une table demande d'appliquer le `.sql` avant de reconstruire**. Les
+  neuf fichiers sont idempotents : les rejouer tous, dans l'ordre de
+  `DEPLOIEMENT.md`, est la manœuvre sûre.
 - **`node scripts/verif-pages.mjs` avant chaque livraison front.** Il compile
   chaque script de page, vérifie qu'aucun accent grave ne traîne dans un bloc
   CSS écrit en gabarit de chaîne, que chaque page charge la barre commune,
@@ -97,6 +112,20 @@ en local, avant de livrer.
 vérification qui cherche un message dans le texte de la page le trouve dans son
 propre code source et passe alors que rien n'est affiché. Toujours cloner le
 corps et retirer `script,style` avant de lire.
+
+**`String(date).slice(0, 10)` ne donne pas une date.** Le pilote mysql2 rend
+une colonne `DATE` sous forme d'objet `Date`. `String()` en tire alors
+`"Fri Sep 11 2026 00:00:00 GMT+0200…"`, dont les dix premiers caractères sont
+**le nom du jour de la semaine**. Deux dates ainsi tronquées se comparent selon
+l'ordre alphabétique des jours : `"Fri Sep 11" < "Tue Sep 08"` est vrai, et un
+match dans trois jours est déclaré passé.
+
+La faute a vécu des mois dans `deck/` et `teletext/` parce qu'elle ne se voit
+que certains jours — il faut que le jour visé passe avant celui d'aujourd'hui
+dans l'alphabet. `deck-smoke.mjs` posait un seul match « dans trois jours » ; il
+en pose maintenant un par jour de la semaine à venir, donc la faute ne peut plus
+se cacher derrière la date d'exécution. Passer par `jourISO()` de
+`src/shared/jour.js`, jamais par l'affichage d'un `Date`.
 
 **`process.exit()` à la fin d'une suite la fait échouer au hasard.** Sous
 Windows, environ une fois sur cinq, et **seulement quand la suite est lancée à

@@ -13,6 +13,7 @@ import { createPool } from './src/server/auth/db.js';
 import { createAuth } from './src/server/auth/routes.js';
 import { createMailer } from './src/server/auth/mailer.js';
 import { createSocketAuthenticator } from './src/server/auth/socket.js';
+import { verifierSchema, messageDeManque } from './src/server/auth/schema.js';
 import { createClient } from './src/server/football/client.js';
 import { createFootball } from './src/server/football/routes.js';
 import { createSouvenirs } from './src/server/souvenirs/index.js';
@@ -46,6 +47,16 @@ const io = new Server(http, {
 const started = Date.now();
 let sockets = 0;
 
+/**
+ * Ce qui a empêché le démarrage d'aller au bout, s'il y a lieu.
+ *
+ * Le serveur sait démarrer sans base — c'est voulu, ça permet de travailler le
+ * front sans rien installer. Mais ce mode dégradé était muet : /healthz
+ * répondait `ok: true` alors que plus aucune route /api n'existait. On garde
+ * donc la raison ici pour que le diagnostic tienne en un curl.
+ */
+let panneDemarrage = null;
+
 /* ------------------------------------------------ base et authentification */
 
 let pool = null;
@@ -66,6 +77,16 @@ let google = null;
 if (process.env.DATABASE_URL) {
   try {
     pool = await createPool(process.env.DATABASE_URL);
+
+    // Le déploiement pousse le code, jamais le schéma. Une table absente fait
+    // lever le premier module qui s'en sert, et comme le catch plus bas attrape
+    // tout, c'est l'application entière qui s'éteint — connexion comprise. On
+    // regarde donc avant, et on nomme le fichier à appliquer.
+    const manques = await verifierSchema(pool, path.join(__dirname, 'sql'));
+    if (manques.length) {
+      panneDemarrage = messageDeManque(manques);
+      console.error(panneDemarrage);
+    }
 
     // Le catalogue Fanzzy vient de la base et se lit en mémoire. Il doit être
     // chargé avant tout module qui s'en sert — collection, deck, inscription —
@@ -237,10 +258,16 @@ if (process.env.DATABASE_URL) {
       console.warn('SESSION_SECRET absent : à définir avant toute ouverture au public');
     }
   } catch (e) {
-    console.error('base injoignable, authentification désactivée :', e.message);
+    // Ce message annonçait « base injoignable » quoi qu'il arrive. Le jour où
+    // c'était une table manquante, il envoyait chercher la panne du mauvais
+    // côté pendant que le site restait fermé.
+    panneDemarrage ??= `démarrage interrompu : ${e.message}`;
+    console.error('AUCUNE ROUTE /api MONTÉE — le site est en ligne mais fermé.');
+    console.error(panneDemarrage);
   }
 } else {
-  console.warn('DATABASE_URL absent : authentification désactivée');
+  panneDemarrage = 'DATABASE_URL absent : aucune route /api n’est montée.';
+  console.warn(panneDemarrage);
 }
 
 /* ---------------------------------------------------------------- routes */
@@ -262,8 +289,12 @@ app.use('/video', express.static(path.join(__dirname, 'public/video'),
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h', setHeaders: typer }));
 
 app.get('/healthz', (_req, res) => {
+  // `ok` disait vrai tant que le processus respirait — y compris quand plus
+  // aucune route /api n'existait. Une surveillance branchée dessus n'avait donc
+  // rien vu passer. Il dit maintenant si le site est ouvert, pas s'il est vivant.
   res.json({
-    ok: true,
+    ok: !panneDemarrage,
+    ...(panneDemarrage ? { panne: panneDemarrage } : {}),
     node: process.version,
     uptime_s: Math.round((Date.now() - started) / 1000),
     sockets,

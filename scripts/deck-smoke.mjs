@@ -38,6 +38,14 @@ await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,statu
   (2,207,2026,85,91,'NS', UTC_DATE() + INTERVAL 20 HOUR),
   (3,207,2026,91,85,'NS', UTC_TIMESTAMP() + INTERVAL 3 DAY),
   (4,207,2026,85,91,'1H', UTC_TIMESTAMP() - INTERVAL 20 MINUTE)`);
+// Un match par jour de la semaine à venir. Le test ne tenait qu'à « dans trois
+// jours » : la faute de comparaison de dates ne se voyait que si le nom du jour
+// visé passait avant celui d'aujourd'hui dans l'ordre alphabétique — un mardi
+// contre un vendredi. Six jours couvrent tous les cas, quel que soit le jour où
+// la suite tourne.
+await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,kickoff_at)
+  SELECT 10+n,207,2026,91,85,'NS', UTC_TIMESTAMP() + INTERVAL n DAY FROM
+  (SELECT 1 n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6) j`);
 await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1)`,[U]);
 await raw.end();
 
@@ -131,6 +139,15 @@ check('match en cours : classé', r.json.mode === 'classe' && r.json.enCours ===
 r = await call('/api/deck/match/3');
 check('match dans trois jours : entraînement', r.json.mode === 'entrainement');
 check('la raison est expliquée au joueur', /entra/i.test(r.json.raison));
+
+// Aucun de ces six matchs n'a eu lieu : aucun ne doit être refusé comme passé.
+const refuses = [];
+for (let n = 1; n <= 6; n++) {
+  const x = await call(`/api/deck/match/${10 + n}`);
+  if (x.json.mode !== 'entrainement') refuses.push(`J+${n} → ${x.json.error ?? x.json.mode}`);
+}
+check('un match à venir n’est jamais pris pour un match passé',
+  refuses.length === 0 || (console.log('       ', refuses.join(', ')), false));
 
 r = await call('/api/deck/match/999');
 check('match inconnu refusé', r.json.error === 'duel.error.fixture_unknown');
