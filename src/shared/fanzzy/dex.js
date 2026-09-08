@@ -53,45 +53,81 @@ const SETS = [
 const DEX = [
   // --- VOIX
   { id:'V1', nom:'Choriste', type:'voix', set:'VN', stage:1, rar:'d1', evo:'V2',
+    histoire:'Il chante tout, il ne lance rien. Une voix parmi deux mille, et il '
+      + 'trouve que c’est très bien comme ça.',
     mods:{ tempoWindow:1.2 }, cri:{ label:'REPRISE', gest:'tempo', power:52 } },
   { id:'V2', nom:'Meneur de chant', type:'voix', set:'VN', stage:2, rar:'d2', evo:'V3',
+    histoire:'Six ans plus tard, il a arrêté de regarder le terrain. Il lance le '
+      + 'chant, bras levé, et il attend que la tribune le rattrape.',
     mods:{ tempoWindow:1.45, tempoInterval:40 }, cri:{ label:'MUR DU SON', gest:'tempo', power:64 } },
   { id:'V3', nom:'Capo di Curva', type:'voix', set:'VN', stage:3, rar:'star',
+    histoire:'Le mégaphone pend à son poing, éteint : il n’en a plus besoin. '
+      + 'Deux mille personnes attendent qu’il lève le menton.',
     mods:{ tempoWindow:1.7, tempoInterval:80 }, cri:{ label:'TOUT LE VIRAGE', gest:'tempo', power:78 } },
   // --- PERCUSSION
   { id:'P1', nom:'Gamin au tambour', type:'perc', set:'VN', stage:1, rar:'d1', evo:'P2',
+    histoire:'Onze ans, une caisse claire trop grande pour lui, et l’air de '
+      + 'quelqu’un à qui on a confié une mission d’État.',
     mods:{ mashBonus:1.06 }, cri:{ label:'ROULEMENT', gest:'mash', power:52 } },
   { id:'P2', nom:'Tambour Major', type:'perc', set:'VN', stage:2, rar:'d2', evo:'P3',
+    histoire:'La caisse est sur un harnais maintenant, et elle est à sa taille. '
+      + 'Il ne suit plus le rythme : c’est lui qui le donne.',
     mods:{ mashBonus:1.1, mashTime:-500 }, cri:{ label:'CADENCE', gest:'mash', power:66 } },
   { id:'P3', nom:'Grosse Caisse Sud', type:'perc', set:'VN', stage:3, rar:'d3',
+    histoire:'Vingt ans, une grosse caisse aussi large que lui, et l’écharpe du '
+      + 'gamin nouée en bandeau. Quand il s’arrête, le virage s’arrête.',
     mods:{ mashBonus:1.16, mashTime:-800 }, cri:{ label:'TEMPO INFERNAL', gest:'mash', power:76 } },
   // --- FIDÉLITÉ
   { id:'F1', nom:'Abonné', type:'fide', set:'VN', stage:1, rar:'d1', evo:'F2',
+    histoire:'La personne la plus ordinaire de la tribune, et celle qui est '
+      + 'toujours là. Mains dans les poches, thermos dans l’autre.',
     mods:{ holdBonus:1.07 }, cri:{ label:'PRÉSENTS', gest:'hold', power:50 } },
   { id:'F2', nom:'Vieille Garde', type:'fide', set:'VN', stage:2, rar:'d2', evo:'F3',
+    histoire:'Douze ans de plus, les cheveux gris, la veste couverte de pin’s. '
+      + 'C’est lui qu’on va voir quand on veut savoir ce qui s’est passé en 98.',
     mods:{ holdBonus:1.12, holdForgive:1 }, cri:{ label:'ON ÉTAIT LÀ', gest:'hold', power:64 } },
   { id:'F3', nom:'Doyen du Bloc C', type:'fide', set:'VN', stage:3, rar:'crown',
+    histoire:'Canne, plaid sur l’épaule, écharpe devenue presque incolore. '
+      + 'Cinquante ans de samedis, et il n’en a manqué aucun.',
     mods:{ holdBonus:1.2, holdForgive:2, breathBonus:1.08 }, cri:{ label:'CINQUANTE ANS', gest:'hold', power:80 } },
   // --- TIFO
   { id:'T1', nom:'Colleur d\u2019affiches', type:'tifo', set:'NE', stage:1, rar:'d1', evo:'T2',
+    histoire:'Il pose les avis de déplacement la nuit, capuche relevée, un œil sur '
+      + 'le côté. Les affiches sont vierges : il n’a jamais rien fait de mal.',
     mods:{ parryBonus:1.2 }, cri:{ label:'CONSIGNES', gest:'tempo', power:48 } },
   { id:'T2', nom:'Bâcheur Nocturne', type:'tifo', set:'NE', stage:2, rar:'d2', evo:'T3',
+    histoire:'Il est passé des affiches aux grandes bâches. Corde à l’épaule, '
+      + 'baudrier, frontale au front : il accroche ce que personne n’atteint.',
     mods:{ parryBonus:1.5 }, cri:{ label:'BÂCHE SURPRISE', gest:'hold', power:62 } },
   { id:'T3', nom:'Chef Tifo', type:'tifo', set:'NE', stage:3, rar:'star',
+    histoire:'Il ne grimpe plus, il dirige. Bras croisés, radio sur la poitrine, un '
+      + 'plan roulé sous le bras : tout a déjà été vérifié deux fois.',
     mods:{ parryBonus:1.9, holdBonus:1.06 }, cri:{ label:'MOSAÏQUE GÉANTE', gest:'hold', power:74 } },
   // --- PYRO
   { id:'Y1', nom:'Porte-torche', type:'pyro', set:'NE', stage:1, rar:'d1', evo:'Y2',
+    histoire:'Écharpe remontée sur le nez, torche éteinte au poing, il attend la '
+      + 'minute exacte. Rien n’est encore allumé, et c’est tout le sujet.',
     mods:{ perfectBonus:1.2 }, cri:{ label:'TORCHE', gest:'mash', power:54 } },
   { id:'Y2', nom:'Fumigène', type:'pyro', set:'NE', stage:2, rar:'d2', evo:'Y3',
+    histoire:'Il a cessé de se cacher. Tablier de cuir, masque au cou, gants '
+      + 'épais : il fait ça proprement, ce qui ne veut pas dire sans risque.',
     mods:{ perfectBonus:1.35, backfire:true }, cri:{ label:'NAPPE DE FUMÉE', gest:'mash', power:70 } },
   { id:'Y3', nom:'Craqueur', type:'pyro', set:'NE', stage:3, rar:'d3',
+    histoire:'Trois torches en bandoulière, les mains vides, la barbe grise. C’est '
+      + 'lui que les autres regardent pour savoir quand.',
     mods:{ perfectBonus:1.5, backfire:true }, cri:{ label:'EMBRASEMENT', gest:'mash', power:86 } },
   // --- DÉPLACEMENT
   { id:'D1', nom:'Auto-stoppeur', type:'depl', set:'NE', stage:1, rar:'d1', evo:'D2',
+    histoire:'Pouce levé, carton vierge sous le bras, quatre cents kilomètres à '
+      + 'faire et aucune inquiétude à ce sujet.',
     mods:{ breathBonus:1.08 }, cri:{ label:'PREMIER PÉAGE', gest:'tempo', power:50 } },
   { id:'D2', nom:'Conducteur de car', type:'depl', set:'NE', stage:2, rar:'d2', evo:'D3',
+    histoire:'Il n’a plus besoin qu’on le prenne : il conduit. Casquette, '
+      + 'trousseau à la ceinture, thermos brandi comme une coupe.',
     mods:{ breathBonus:1.16, refundBonus:1.4 }, cri:{ label:'KLAXONS', gest:'mash', power:64 } },
   { id:'D3', nom:'Convoi 4h du Mat', type:'depl', set:'NE', stage:3, rar:'d3',
+    histoire:'Il ne conduit plus un car, il mène le convoi. Quatre heures du matin, '
+      + 'trois jours sans dormir, et un immense sourire : tout le monde est arrivé.',
     mods:{ breathBonus:1.24, refundBonus:1.8 }, cri:{ label:'ON EST VENUS POUR ÇA', gest:'hold', power:76 } },
   // --- sans évolution
   { id:'X1', nom:'Le Douzième Homme', type:'voix', set:'VN', stage:1, rar:'d3',
