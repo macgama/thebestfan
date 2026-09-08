@@ -5,6 +5,8 @@
  * client le reçoit via /api/fanzzy/dex pour l'affichage. Une seule définition,
  * donc aucun risque que les deux divergent.
  */
+import { SETS_2026, DEX_2026 } from './dex-2026.js';
+
 const TYPES = {
   voix: { nom:'Voix', c:'#F5C33B', geste:'tempo',
     ico:'M4 9v6h4l5 4V5L8 9H4zm12.5-1a5 5 0 0 1 0 8' },
@@ -458,5 +460,39 @@ const RATES = {
   5: [['d2',.55],['d3',.30],['star',.12],['crown',.03]],
 };
 
-export const BY_ID = new Map(DEX.map((f) => [f.id, f]));
-export { TYPES, RAR, SCARVES, EVO_COST, SETS, DEX, RATES };
+/* ------------------------------------------------- le lot de septembre 2026
+
+   Cent vingt-six cartes en six séries, dans `dex-2026.js`. Elles sont
+   concaténées ici plutôt qu'écrites à la suite : ces deux fichiers ne servent
+   plus qu'à **amorcer** la base, et garder le lot d'origine séparé du lot
+   suivant dit lequel est lequel. Mélangés, on n'oserait plus toucher ni à
+   l'un ni à l'autre.
+
+   L'amorçage écrit en `INSERT IGNORE` : ajouter une série ici ne réécrit
+   jamais ce que l'administration a modifié depuis.                        */
+
+const TOUT = [...DEX, ...DEX_2026];
+const TOUS_SETS = [...SETS, ...SETS_2026];
+
+// Un identifiant en double ferait taire une carte sans le dire : la seconde
+// écraserait la première dans BY_ID, et elle disparaîtrait des tirages sans
+// que rien ne le signale.
+{
+  const vus = new Set();
+  for (const f of TOUT) {
+    if (vus.has(f.id)) throw new Error(`Catalogue : identifiant en double « ${f.id} ». `
+      + 'Deux cartes ne peuvent pas partager un identifiant — la seconde efface '
+      + 'la première et sort silencieusement des boosters.');
+    vus.add(f.id);
+  }
+  const setsConnus = new Set(TOUS_SETS.map((s) => s.id));
+  for (const f of TOUT) {
+    if (!setsConnus.has(f.set)) throw new Error(`Catalogue : « ${f.id} » appartient à la `
+      + `série « ${f.set} », qui n'existe pas. Le kiosque n'affiche que les séries `
+      + 'déclarées : cette carte serait tirable et invisible.');
+  }
+}
+
+export const BY_ID = new Map(TOUT.map((f) => [f.id, f]));
+export { TYPES, RAR, SCARVES, EVO_COST, RATES };
+export { TOUS_SETS as SETS, TOUT as DEX };

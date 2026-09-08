@@ -97,5 +97,57 @@ check('le buste est centré sur le crâne, pas sur le bras levé',
   Math.abs(centre - bl / 2) < bl * 0.22);
 if (n) console.log(`     centre de masse du buste : x=${Math.round(centre)} sur ${bl}`);
 
+/* ------------------------------- un rendu déjà détouré, le second cas
+
+ * Le lot de septembre 2026 est arrivé avec son canal alpha. La chaîne, elle,
+ * cherchait toujours une couleur de fond à écarter — et sous la transparence,
+ * le noir résiduel du rendu a été pris pour du sujet : chaque carte est sortie
+ * avec un rectangle noir autour du personnage.
+ *
+ * On refabrique exactement ce cas : alpha propre, RGB noir sous le vide. Si la
+ * chaîne se remet à deviner, les coins redeviennent opaques.               */
+
+const brut2 = path.join(tmp, 'brut-alpha');
+const out2 = path.join(tmp, 'out-alpha');
+await mkdir(brut2, { recursive: true });
+{
+  const rgba = Buffer.alloc(L * H * 4, 0);        // noir, entièrement transparent
+  const pose = (x, y) => {
+    if (x < 0 || y < 0 || x >= L || y >= H) return;
+    const i = (y * L + x) * 4;
+    rgba[i] = 200; rgba[i + 1] = 60; rgba[i + 2] = 60; rgba[i + 3] = 255;
+  };
+  // Une tête et un tronc, opaques, au milieu d'un vide noir transparent.
+  for (let y = 120; y < 300; y++) for (let x = 240; x < 360; x++) pose(x, y);
+  for (let y = 300; y < 820; y++) for (let x = 210; x < 390; x++) pose(x, y);
+  await sharp(rgba, { raw: { width: L, height: H, channels: 4 } })
+    .png().toFile(path.join(brut2, 'AA.png'));
+}
+
+const sortie2 = execFileSync('node', [path.join(REPO, 'scripts/fanzzy-images.mjs'),
+  brut2, '--sortie', out2], { encoding: 'utf8' });
+check('la chaîne annonce qu’elle a lu l’alpha du rendu', /alpha du rendu/.test(sortie2));
+
+const dej = await sharp(path.join(out2, 'AA.png')).ensureAlpha()
+  .raw().toBuffer({ resolveWithObject: true });
+const dl = dej.info.width;
+const da = (x, y) => dej.data[(y * dl + x) * 4 + 3];
+check('un rendu déjà détouré garde ses coins transparents',
+  da(2, 2) === 0 && da(dl - 3, 2) === 0 && da(2, dej.info.height - 3) === 0);
+
+// Le vrai symptôme n'était pas un coin isolé : c'était un rectangle noir qui
+// remplissait presque tout le cadre. On mesure donc la part d'opaque. Le sujet
+// fabriqué ici est étroit et haut : après mise au cadre il en couvre environ la
+// moitié. Avec la faute, il couvrait la totalité.
+//
+// On ne peut pas mesurer le pourtour ligne par ligne : le cadrage colle au
+// sujet, donc la première et la dernière ligne sont *censées* être pleines.
+let opaques = 0;
+for (let i = 3; i < dej.data.length; i += 4) if (dej.data[i] > 40) opaques++;
+const part = opaques / (dl * dej.info.height);
+check('et il n’est pas noyé dans un rectangle noir', part < 0.8);
+console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
+
+await rm(tmp, { recursive: true, force: true });
 console.log(ko ? `\n${ko} échec(s)\n` : '\ntout est vert\n');
-process.exit(ko ? 1 : 0);
+process.exitCode = ko ? 1 : 0;

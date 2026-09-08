@@ -57,6 +57,31 @@ const BUSTE = { l: 320, h: 320 };
 
 /* ----------------------------------------------------------- détourage */
 
+/**
+ * Le rendu porte-t-il déjà un fond transparent ?
+ *
+ * Les premiers lots arrivaient aplatis sur un fond uni, d'où tout le
+ * détourage par propagation qui suit. Le lot de cent vingt-six exporté en
+ * septembre 2026 arrivait, lui, avec son canal alpha — et deviner un fond
+ * quand la réponse est déjà dans le fichier donne le pire des deux mondes :
+ * sous la transparence, le noir résiduel a été pris pour du sujet, et chaque
+ * carte est sortie avec un rectangle noir autour du personnage.
+ *
+ * On regarde donc d'abord si l'image répond elle-même à la question. Le seuil
+ * de 2 % n'est pas décoratif : un JPEG converti en RGBA a un canal alpha
+ * entièrement opaque, et quelques pixels à 254 par artefact de compression ne
+ * suffisent pas à conclure qu'il est détouré.
+ */
+function alphaDejaLa(px, l, h, c) {
+  if (c !== 4) return null;
+  let transparents = 0;
+  for (let p = 0; p < l * h; p++) if (px[p * 4 + 3] < 250) transparents++;
+  if (transparents < l * h * 0.02) return null;
+  const a = new Uint8Array(l * h);
+  for (let p = 0; p < l * h; p++) a[p] = px[p * 4 + 3];
+  return a;
+}
+
 /** Distance euclidienne dans l'espace des couleurs, sur 0-255. */
 const distance = (r, g, b, f) =>
   Math.sqrt((r - f[0]) ** 2 + (g - f[1]) ** 2 + (b - f[2]) ** 2);
@@ -190,10 +215,14 @@ async function produire(fichier, id) {
   const { data, info } = await brut.raw().toBuffer({ resolveWithObject: true });
   const { width: l, height: h, channels: c } = info;
 
-  const fond = couleurDeFond(data, l, h, c);
+  // Si le rendu est déjà détouré, son canal alpha fait foi : il est exact là
+  // où toute reconstruction est approximative — mèches, franges d'écharpe,
+  // tentacules. On ne devine un fond que quand il n'y a rien à lire.
+  const dejaLa = alphaDejaLa(data, l, h, c);
+  const fond = dejaLa ? null : couleurDeFond(data, l, h, c);
   // Seuils relatifs : un fond noir et un fond blanc ne tolèrent pas le même
   // écart absolu avant qu'on cesse de le considérer comme du fond.
-  const alpha = detourer(data, l, h, c, fond, 28, 92);
+  const alpha = dejaLa ?? detourer(data, l, h, c, fond, 28, 92);
 
   const b = boite(alpha, l, h);
   if (!b) throw new Error('aucun sujet trouvé après détourage');
@@ -247,7 +276,7 @@ async function produire(fichier, id) {
   await ecrire(plein, id);
   await ecrire(buste, `${id}-buste`);
 
-  return { id, source: `${meta.width}×${meta.height}`, fond,
+  return { id, source: `${meta.width}×${meta.height}`, fond, dejaDetoure: Boolean(dejaLa),
            sujet: `${b.x1 - b.x0 + 1}×${b.y1 - b.y0 + 1}`, tete: Math.round(tete.x) };
 }
 
@@ -269,7 +298,8 @@ for (const f of fichiers) {
   try {
     const r = await produire(path.join(SOURCE, f), id);
     console.log(`  ok   ${id.padEnd(5)} ${r.source} → sujet ${r.sujet}`
-      + ` · fond rgb(${r.fond.join(',')}) · six fichiers écrits`);
+      + (r.dejaDetoure ? ` · alpha du rendu` : ` · fond rgb(${r.fond.join(',')})`)
+      + ` · six fichiers écrits`);
   } catch (e) {
     erreurs++;
     console.log(` FAIL  ${id.padEnd(5)} ${e.message}`);

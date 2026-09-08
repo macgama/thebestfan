@@ -469,6 +469,16 @@ reproduit les trois pièges ci-dessous. Il ne demande ni base ni réseau.
 Le rendu brut sort d'un générateur en 1536×2752 sur fond uni. Trois choses ont
 demandé plusieurs essais, et le script les traite :
 
+**Un rendu déjà détouré ne se redétoure pas.** Les premiers lots arrivaient
+aplatis sur fond uni, d'où toute la propagation décrite plus bas. Le lot de
+cent vingt-six de septembre 2026 est arrivé avec son canal alpha — et deviner
+un fond quand la réponse est déjà dans le fichier donne le pire des deux
+mondes : sous la transparence, le noir résiduel a été pris pour du sujet, et
+les cent vingt-six cartes sont sorties avec un rectangle noir autour du
+personnage. La chaîne lit maintenant l'alpha quand il existe (au-delà de 2 % de
+pixels non opaques) et ne devine que sinon. `fanzzy-images-smoke.mjs` rejoue
+les deux cas.
+
 **Le détourage ne se fait pas au seuil global.** Un personnage peut tenir des
 cartes blanches sur fond blanc, ou porter une fourrure anthracite sur fond
 noir. On isole les zones de fond *connexes au bord*, et rien d'autre. L'alpha
