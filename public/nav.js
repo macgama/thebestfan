@@ -12,7 +12,9 @@
 (() => {
   // Écrans où la barre n'a pas sa place : la connexion et la cérémonie
   // d'arrivée, qui sont des parcours dont on ne sort pas au milieu.
-  const SANS_BARRE = ['/compte', '/bienvenue'];
+  // L'accueil est un écran de jeu plein cadre : ses deux rails portent la
+  // navigation, et la barre du bas passerait sous le bouton d'entrée.
+  const SANS_BARRE = ['/', '/compte', '/bienvenue'];
 
   // Écrans de jeu : la barre est là, mais elle s'efface dès qu'on joue et
   // revient au moindre arrêt. Sans elle, le Virage était un cul-de-sac ;

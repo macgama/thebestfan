@@ -36,7 +36,10 @@ import path from 'node:path';
 const DOSSIER = 'public';
 
 /** Pages où la barre commune n'a délibérément pas sa place. */
-const SANS_BARRE = new Set(['compte.html', 'bienvenue.html', 'admin.html']);
+const SANS_BARRE = new Set(['compte.html', 'bienvenue.html', 'admin.html',
+  // L'accueil porte sa navigation dans ses deux rails : la barre du bas y
+  // ferait doublon et passerait sous le bouton d'entrée.
+  'index.html']);
 
 let fautes = 0;
 const ko = (fichier, message) => { fautes++; console.log(` FAIL  ${fichier} — ${message}`); };
