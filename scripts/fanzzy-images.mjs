@@ -40,7 +40,7 @@ import sharp from 'sharp';
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
 const args = process.argv.slice(2);
-const SOURCE = args.find((a) => !a.startsWith('--'));
+const SOURCE = args.filter((a,i)=>args[i-1]!=='--sortie'&&args[i-1]!=='--seuils').find((a) => !a.startsWith('--'));
 const SORTIE = (() => {
   const i = args.indexOf('--sortie');
   return i >= 0 ? args[i + 1] : path.join(RACINE, 'public', 'img', 'fanzzy');
@@ -54,6 +54,26 @@ if (!SOURCE) {
 /** Formats attendus par le jeu. Le PNG est le repli, il doit toujours exister. */
 const PLEIN = { l: 520, h: 945 };
 const BUSTE = { l: 320, h: 320 };
+
+/**
+ * Seuils de détourage, réglables : `--seuils 12,44`.
+ *
+ * Le premier est la distance en deçà de laquelle un pixel est du fond pur, le
+ * second celle au-delà de laquelle il est du sujet pur ; entre les deux
+ * l'alpha monte progressivement, et c'est ce dégradé qui garde les cheveux.
+ * Ils ne servent que sur un rendu à fond plein — un rendu déjà détouré passe
+ * par son canal alpha et les ignore.
+ */
+const SEUILS = (() => {
+  const i = args.indexOf('--seuils');
+  if (i < 0) return [28, 92];
+  const [a, b] = String(args[i + 1] ?? '').split(',').map(Number);
+  if (!Number.isFinite(a) || !Number.isFinite(b) || a >= b) {
+    console.error('--seuils attend deux nombres croissants, par exemple 12,44');
+    process.exit(1);
+  }
+  return [a, b];
+})();
 
 /* ----------------------------------------------------------- détourage */
 
@@ -222,7 +242,15 @@ async function produire(fichier, id) {
   const fond = dejaLa ? null : couleurDeFond(data, l, h, c);
   // Seuils relatifs : un fond noir et un fond blanc ne tolèrent pas le même
   // écart absolu avant qu'on cesse de le considérer comme du fond.
-  const alpha = dejaLa ?? detourer(data, l, h, c, fond, 28, 92);
+  //
+  // Réglables, parce qu'ils dépendent du fond du lot. Sur blanc ou sur noir,
+  // 28/92 conserve les cheveux sans rien manger. Sur un fond GRIS MOYEN, la
+  // moitié des vêtements en est à moins de quatre-vingt-douze : une veste
+  // olive, un carton, une peau de tambour se sont retrouvés à demi
+  // transparents, et le vert du fond de contrôle traversait le personnage.
+  // C'est le genre de défaut qu'on ne voit pas sur fond noir, donc jamais
+  // dans le jeu — seulement une fois la carte posée sur une photo claire.
+  const alpha = dejaLa ?? detourer(data, l, h, c, fond, SEUILS[0], SEUILS[1]);
 
   const b = boite(alpha, l, h);
   if (!b) throw new Error('aucun sujet trouvé après détourage');
