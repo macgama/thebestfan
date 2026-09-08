@@ -187,6 +187,22 @@ check('la ferveur cumulée est retenue', rangA.ferveur > 0);
 const crowd = room.crowd();
 check('la foule compte les deux tribunes', crowd[0] === 2 && crowd[1] === 1);
 
+/* ------------------------------------------ ce que /live doit renvoyer
+
+ * L'accueil s'en sert pour animer le supporter : il pousse pendant le match,
+ * exulte quand *son* club marque, encaisse quand c'est l'autre. Décider de
+ * quel côté on est demande les identifiants des équipes. Les rapprocher par
+ * le nom marcherait presque, et « presque » veut dire que le personnage se
+ * réjouit parfois d'un but encaissé. */
+{
+  const r = await fetch(`${url}/api/virage/live`).then((x) => x.json());
+  const m = r.matchs?.[0];
+  check('/live nomme les deux équipes par leur identifiant',
+    typeof m?.home_id === 'number' && typeof m?.away_id === 'number');
+  check('et donne le score et la minute',
+    'home_goals' in (m ?? {}) && 'elapsed' in (m ?? {}));
+}
+
 for (const m of room.members.values()) m.lastPush = Date.now() - 120_000;
 check('après 90 s sans chanter, on ne compte plus dans la foule',
   room.crowd()[0] === 0 && room.crowd()[1] === 0);

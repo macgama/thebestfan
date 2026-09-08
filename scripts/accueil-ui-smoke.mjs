@@ -1,21 +1,26 @@
 /**
- * Test de l'accueil : la scène du Fanzzy équipé.
+ * Test de l'accueil : la scène du supporter.
  *
- * Ce qu'on veut vérifier ne se lit pas dans le HTML — c'est du mouvement. Le
- * Fanzzy doit *respirer*, et la respiration vient d'une animation CSS posée par
- * fx.js sur les éléments qu'il reconnaît. On mesure donc le style calculé dans
- * un vrai navigateur : c'est le seul endroit où « ça bouge » est vérifiable.
+ * L'écran d'accueil du joueur connecté est un **écran de jeu** : il tient dans
+ * la fenêtre, ne défile jamais, et met le supporter au centre entre deux rails
+ * de navigation. Trois choses s'y vérifient mal à la lecture du HTML.
  *
- * Deux cas, et le second est le plus fréquent :
- *   — un Fanzzy illustré (trois sur vingt-neuf) : une image en pied ;
- *   — un Fanzzy sans illustration (les vingt-six autres) : une silhouette
- *     procédurale, qui n'est pas un `.illu` et qu'il a donc fallu signaler
- *     explicitement à fx.js. C'est exactement le genre de détail qu'on croit
- *     évident et qu'on oublie.
+ *   1. **Le mouvement.** Le personnage doit respirer. C'est une animation CSS,
+ *      donc seul le style calculé dans un vrai navigateur le dit.
+ *
+ *   2. **Le fondu entre les poses.** Deux calques superposés dont on croise les
+ *      opacités. S'il n'en reste qu'un allumé, ou si les deux le sont, le
+ *      changement de pose clignote — et un clignotement ne se voit pas dans le
+ *      code.
+ *
+ *   3. **Le cadrage commun des quatre poses.** Elles sont produites ensemble
+ *      par `scripts/poses-supporter.mjs`, précisément pour qu'un but ne fasse
+ *      pas remonter les pieds du personnage. Des dessins de tailles
+ *      différentes trahiraient un recadrage individuel.
  *
  * Avant de lancer :  npm install --no-save puppeteer
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
@@ -54,6 +59,8 @@ await raw.query(`INSERT INTO user_wallet (user_id,scarves,packs,onboarded_at)
 for (const id of ['G1', 'V1']) {
   await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)`, [U, id]);
 }
+await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle')`);
+await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1)`, [U]);
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' });
@@ -61,8 +68,33 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' 
 // on le charge comme le fait server.js, sinon les modules travaillent
 // sur un catalogue vide.
 await chargerCatalogue(pool);
-const equiper = (id) =>
-  pool.execute(`UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?`, [id, U]);
+
+/* -------------------------------------------- les dessins, sur le disque */
+
+/**
+ * Les quatre poses doivent exister dans les trois formats.
+ *
+ * Une pose absente ne casse rien — la page l'ignore exprès — mais elle ne se
+ * jouera jamais, et rien à l'écran ne le dira. C'est le genre de manque qui
+ * survit à une mise en ligne.
+ */
+const POSES = ['idle', 'push', 'goal', 'sad'];
+{
+  const manque = [];
+  for (const p of POSES) {
+    for (const ext of ['avif', 'webp', 'png']) {
+      const f = path.join(RACINE, 'public', 'img', 'supporter', `${p}.${ext}`);
+      if (!existsSync(f)) manque.push(`${p}.${ext}`);
+    }
+  }
+  check('les quatre poses existent dans les trois formats', manque.length === 0);
+  if (manque.length) console.log('    manquent :', manque.join(', '));
+
+  const fond = ['avif', 'webp', 'jpg']
+    .filter((e) => !existsSync(path.join(RACINE, 'public', 'img', `accueil.${e}`)));
+  check('le décor de tribune est là, lui aussi', fond.length === 0);
+  if (fond.length) console.log('    manquent : accueil.' + fond.join(', accueil.'));
+}
 
 /* ----------------------------------------------------------- le serveur */
 
@@ -70,6 +102,14 @@ const requireAuth = (r, _s, n) => { r.user = { id: U }; n(); };
 const app = express();
 // L'accueil interroge /api/auth/me pour savoir s'il montre la vitrine ou le hub.
 app.get('/api/auth/me', (_q, s) => s.json({ user: { pseudo: 'Momo' } }));
+
+// Le match en direct est simulé ici. La vraie route est éprouvée par
+// virage-smoke ; ce qu'on veut mesurer sur cette page, c'est ce qu'elle *fait*
+// de la réponse — la carte du bas, le bouton d'entrée, et la pose du
+// personnage. Un talon rend le score pilotable, donc le but rejouable.
+let direct = null;
+app.get('/api/virage/live', (_q, s) => s.json({ matchs: direct ? [direct] : [] }));
+
 app.use('/api/fanzzy', createFanzzy({ pool, requireAuth }).router);
 app.use('/api/me', createOnboarding({ pool, requireAuth }).router);
 app.get('/', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'index.html')));
@@ -84,103 +124,178 @@ const base = `http://localhost:${http.address().port}`;
 const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
 const erreurs = [];
 
-async function ouvrir() {
+async function ouvrir(largeur = 400, hauteur = 880) {
   const page = await nav.newPage();
   page.on('pageerror', (e) => erreurs.push(e.message));
-  await page.setViewport({ width: 400, height: 880 });
+  await page.setViewport({ width: largeur, height: hauteur });
   await page.goto(base + '/', { waitUntil: 'networkidle0' });
   await page.waitForSelector('#hub.on', { timeout: 8000 }).catch(() => {});
-  await page.waitForSelector('#pile img, #pile svg', { timeout: 8000 }).catch(() => {});
+  await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
   return page;
 }
 
-/** Ce que fx.js a réellement posé sur le personnage. */
-const vie = (page) => page.evaluate(() => {
-  const el = document.querySelector('#pile .pose, #pile [data-vivant]');
-  if (!el) return null;
-  const s = getComputedStyle(el);
+/** L'état des deux calques : lequel est visible, et sur quel dessin. */
+const scene = (page) => page.evaluate(() => {
+  const calques = [...document.querySelectorAll('#pile .pose')];
+  const visible = calques.find((c) => c.classList.contains('on'));
+  const pile = document.getElementById('pile');
+  const s = visible ? getComputedStyle(visible) : null;
   return {
-    balise: el.tagName.toLowerCase(),
-    vivant: el.classList.contains('fz-vivant'),
-    animation: s.animationName,
-    duree: s.animationDuration,
-    src: el.getAttribute('src'),
+    calques: calques.length,
+    allumes: calques.filter((c) => c.classList.contains('on')).length,
+    src: visible?.getAttribute('src') ?? null,
+    // La respiration vit sur la pile, pas sur l'image : c'est elle qui porte
+    // l'échelle, et animer les deux calques les désynchroniserait.
+    souffle: getComputedStyle(pile).animationName,
+    fondu: s?.transitionProperty ?? '',
+    // Deux dessins de tailles différentes trahiraient un recadrage individuel.
+    taille: calques.filter((c) => c.getAttribute('src'))
+      .map((c) => `${c.naturalWidth}x${c.naturalHeight}`),
   };
 });
 
-/* ------------------------------------- un Fanzzy illustré : image en pied */
+/* ------------------------------------------------ le supporter, au repos */
 
-await equiper('G1');
 let page = await ouvrir();
 
 check('le hub s’affiche', await page.$('#hub.on') !== null);
-check('elle nomme le Fanzzy équipé',
-  (await page.$eval('#sceneNom', (e) => e.textContent)) === 'Le Gamin de Devant');
-check('et elle annonce son cri',
-  /CRIS DE GOSSE/.test(await page.$eval('#sceneCri', (e) => e.textContent)));
-check('elle mène à la fiche du Fanzzy',
-  (await page.$eval('#scene', (e) => new URL(e.href).pathname)) === '/fanzzy/G1');
 
-let v = await vie(page);
-check('le personnage est une illustration', v?.balise === 'img');
-check('en pied, pas le buste du classeur', Boolean(v?.src && !v.src.includes('-buste')));
-check('il respire', v?.vivant === true && /fzsouffle/.test(v?.animation ?? ''));
-check('et il se balance', /fzbalance/.test(v?.animation ?? ''));
-check('la respiration a une durée propre au Fanzzy', /[\d.]+s/.test(v?.duree ?? ''));
+let v = await scene(page);
+check('la scène porte deux calques pour le fondu', v.calques === 2);
+check('un seul est allumé', v.allumes === 1);
+check('au repos, c’est la pose d’attente', /\/img\/supporter\/idle\./.test(v.src ?? ''));
+check('le personnage respire', /souffle/.test(v.souffle ?? ''));
+check('et le changement de pose se fait en fondu', /opacity/.test(v.fondu));
 
 // Le débordement horizontal est le défaut classique d'un personnage en grand.
 check('la page ne déborde pas en largeur', await page.evaluate(() =>
   document.documentElement.scrollWidth <= document.documentElement.clientWidth));
 
-// La barre commune ne doit pas manger la scène : l'accueil n'est pas un écran
-// de jeu, elle réserve donc sa hauteur entière.
-check('la barre de navigation ne recouvre pas le nom du Fanzzy', await page.evaluate(() => {
-  const n = document.getElementById('tbf-nav');
-  const t = document.getElementById('sceneNom');
-  if (!n || !t) return true;
-  return t.getBoundingClientRect().bottom <= n.getBoundingClientRect().top;
-}));
+/* ------------------------------------------------------ changer de pose */
+
+// `window.TBF` est la poignée que la page expose. On passe par elle plutôt
+// que d'attendre un vrai but, qui mettrait vingt-cinq secondes à venir.
+await page.evaluate(() => TBF.pose('goal'));
+await new Promise((r) => setTimeout(r, 500));
+v = await scene(page);
+check('après un but, le dessin change', /\/img\/supporter\/goal\./.test(v.src ?? ''));
+check('et il n’y a toujours qu’un calque allumé', v.allumes === 1);
+
+const tailles = new Set(v.taille);
+check('les deux poses ont exactement le même cadrage', tailles.size === 1);
+if (tailles.size > 1) console.log('    tailles :', [...tailles].join(' / '));
+
+await page.evaluate(() => TBF.pose('sad'));
+await new Promise((r) => setTimeout(r, 500));
+check('un but encaissé a sa propre pose',
+  /\/img\/supporter\/sad\./.test((await scene(page)).src ?? ''));
+
+// Une pose inconnue ne doit rien faire : mieux vaut un personnage immobile
+// qu'un cadre vide.
+await page.evaluate(() => TBF.pose('pizza'));
+await new Promise((r) => setTimeout(r, 300));
+check('une pose inconnue laisse le personnage tranquille',
+  /\/img\/supporter\/sad\./.test((await scene(page)).src ?? ''));
 
 await page.close();
 
-/* ----------------------- un Fanzzy sans illustration : silhouette dessinée */
+/* ------------------------------------------------------------- le menu */
 
-await equiper('V1');
-page = await ouvrir();
+{
+  const page = await ouvrir();
+  const avant = await page.evaluate(() => ({
+    cache: document.getElementById('tiroir').hidden,
+    deplie: document.getElementById('burger').getAttribute('aria-expanded'),
+  }));
+  check('le menu est replié au chargement', avant.cache === true && avant.deplie === 'false');
 
-check('sans illustration, le hub s’affiche quand même', await page.$('#hub.on') !== null);
-check('elle nomme le bon Fanzzy',
-  (await page.$eval('#sceneNom', (e) => e.textContent)) === 'Choriste');
+  await page.click('#burger');
+  await new Promise((r) => setTimeout(r, 300));
+  const apres = await page.evaluate(() => {
+    const t = document.getElementById('tiroir');
+    return {
+      ouvert: t.classList.contains('on') && !t.hidden,
+      deplie: document.getElementById('burger').getAttribute('aria-expanded'),
+      liens: [...t.querySelectorAll('a')].filter((a) => !a.hidden)
+        .map((a) => a.getAttribute('href')),
+      // Un menu qui sort de l'écran est un menu dont la moitié est perdue.
+      dansLEcran: t.getBoundingClientRect().right <= innerWidth + 1
+        && t.getBoundingClientRect().bottom <= innerHeight + 1,
+    };
+  });
+  check('le bouton l’ouvre', apres.ouvert && apres.deplie === 'true');
+  check('et il tient dans l’écran', apres.dansLEcran);
 
-v = await vie(page);
-check('le personnage est la silhouette procédurale', v?.balise === 'svg');
-check('elle respire elle aussi', v?.vivant === true && /fzsouffle/.test(v?.animation ?? ''));
+  // Un lien de menu vers une page inexistante est un cul-de-sac silencieux :
+  // le joueur atterrit sur une 404 sans comprendre.
+  const routes = ['/deck', '/profil', '/equipes', '/teletext', '/compte', '/admin', '#'];
+  const inconnus = apres.liens.filter((h) => !routes.includes(h));
+  check('tous ses liens mènent à une page qui existe', inconnus.length === 0);
+  if (inconnus.length) console.log('    inconnus :', inconnus.join(', '));
+  check('il donne accès au deck et au compte',
+    apres.liens.includes('/deck') && apres.liens.includes('/compte'));
+  check('l’administration reste cachée à un joueur ordinaire',
+    !apres.liens.includes('/admin'));
 
-await page.close();
+  await page.click('#voile');
+  await new Promise((r) => setTimeout(r, 300));
+  check('cliquer à côté le referme', await page.evaluate(() =>
+    !document.getElementById('tiroir').classList.contains('on')));
+  await page.close();
+}
 
-/* --------------------------------------- aucun Fanzzy équipé : pas de scène */
+/* --------------------------------------------- le match, et ce qu'il fait */
 
-await pool.execute(`UPDATE user_wallet SET active_fanzzy = NULL WHERE user_id = ?`, [U]);
-page = await ouvrir();
-check('sans Fanzzy équipé, l’accueil tient debout',
-  await page.$('#hub.on') !== null && await page.$('#entrer') !== null);
-check('et la scène reste vide plutôt que cassée',
-  await page.$eval('#pile', (e) => e.children.length) === 0);
-await page.close();
+{
+  direct = {
+    id: 1, open: true, elapsed: 37, status_short: '2H',
+    home_id: 85, away_id: 91, home_name: 'Sion', away_name: 'Bâle',
+    home_goals: 1, away_goals: 0, crowd: [12, 9],
+  };
+  const page = await ouvrir();
+  await new Promise((r) => setTimeout(r, 700));
+
+  const bas = await page.evaluate(() => ({
+    tag: document.getElementById('directTag').textContent,
+    nom: document.getElementById('directNom').textContent,
+    entrer: document.getElementById('entrer').getAttribute('href'),
+    libelle: document.getElementById('entrer').textContent,
+  }));
+  check('la carte du bas annonce le match en cours', /37/.test(bas.tag));
+  check('avec le score', /Sion 1 – 0 Bâle/.test(bas.nom));
+  check('et le bouton mène au virage',
+    bas.entrer === '/virage' && /virage/i.test(bas.libelle));
+
+  check('pendant le match, le supporter pousse',
+    /\/img\/supporter\/push\./.test((await scene(page)).src ?? ''));
+
+  // Mon club marque : le personnage exulte. C'est la seule chose que cette
+  // page doit savoir faire toute seule.
+  direct = { ...direct, home_goals: 2 };
+  await page.evaluate(() => TBF.veiller());
+  await new Promise((r) => setTimeout(r, 700));
+  check('mon club marque : il exulte',
+    /\/img\/supporter\/goal\./.test((await scene(page)).src ?? ''));
+
+  // L'adversaire égalise : il prend sa tête dans les mains.
+  direct = { ...direct, away_goals: 1 };
+  await page.evaluate(() => TBF.veiller());
+  await new Promise((r) => setTimeout(r, 700));
+  check('l’adversaire marque : il encaisse',
+    /\/img\/supporter\/sad\./.test((await scene(page)).src ?? ''));
+
+  await page.close();
+  direct = null;
+}
 
 /* ------------------------------- l’écran de jeu sur un petit téléphone
 
- * L’accueil ne porte plus la barre commune : ses deux rails la remplacent.
+ * L’accueil ne porte pas la barre commune : ses deux rails la remplacent.
  * Ce qui doit tenir, c’est donc tout l’écran — compteurs, rails, personnage,
  * jauge et bouton d’entrée — sans un pixel de défilement. Sur 320 px, un
  * iPhone SE, c’est la contrainte réelle. */
 {
-  await equiper('G1');
-  const page = await nav.newPage();
-  page.on('pageerror', (e) => erreurs.push(e.message));
-  await page.setViewport({ width: 320, height: 640 });
-  await page.goto(base + '/', { waitUntil: 'networkidle0' });
-  await page.waitForSelector('#hub.on', { timeout: 8000 }).catch(() => {});
+  const page = await ouvrir(320, 640);
 
   const ecran = await page.evaluate(() => {
     const app = document.getElementById('app');
@@ -193,6 +308,10 @@ await page.close();
       defileApp: app.scrollHeight > app.clientHeight + 1,
       debordeLarge: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       boutonVisible: entrer.getBoundingClientRect().bottom <= innerHeight + 1,
+      burger: (() => {
+        const b = document.getElementById('burger').getBoundingClientRect();
+        return b.width > 0 && b.right <= innerWidth + 1;
+      })(),
       // Un libellé de rail rogné ne se voit qu’à l’usage, sur un vrai
       // téléphone. On mesure le libellé et non la case : la pastille de
       // compteur est en position absolue et déborde exprès.
@@ -207,6 +326,7 @@ await page.close();
   check('l’écran ne défile pas', !ecran.defilePage && !ecran.defileApp);
   check('et ne déborde pas en largeur', !ecran.debordeLarge);
   check('le bouton d’entrée reste visible', ecran.boutonVisible);
+  check('le bouton du menu reste atteignable', ecran.burger);
   check('aucun libellé de rail n’est rogné', ecran.rognes.length === 0);
   if (ecran.rognes.length) console.log('   rognés :', ecran.rognes);
 
@@ -218,11 +338,11 @@ await page.close();
 
 /* ------------------------------------------- ce que le hub doit annoncer */
 {
-  await equiper('G1');
   const page = await ouvrir();
   const hud = await page.evaluate(() => ({
     pseudo: document.getElementById('pseudo').textContent,
     initiale: document.getElementById('initiale').textContent,
+    club: document.getElementById('clubline').textContent,
     ecarpes: document.getElementById('scarves').textContent,
     boosters: document.getElementById('packs').textContent,
     collec: document.getElementById('collecTxt').textContent,
@@ -231,6 +351,7 @@ await page.close();
   }));
   check('le pseudo et son initiale sont posés',
     hud.pseudo === 'Momo' && hud.initiale === 'm');
+  check('le club suivi est nommé', /Sion/.test(hud.club));
   check('la bourse affiche écharpes et boosters',
     hud.ecarpes === '90' && hud.boosters === '12');
   // Le compte de collection vient du serveur : deux Fanzzy sur le catalogue.
@@ -245,17 +366,18 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
 /* ---------------------------------------------------------------- fin */
 
 if (process.env.CAPTURE) {
-  // Le dernier cas testé laisse le joueur sans Fanzzy équipé : sans ce
-  // rééquipement, la capture montrerait un accueil sans scène — c'est-à-dire
-  // exactement ce qu'on ne cherche pas à regarder.
-  // Dans le dossier temporaire du système, pas dans le dépôt : une capture
-  // n'a rien à faire dans un commit, et `/tmp` en dur ne marche pas sous
-  // Windows — c'est déjà ce qui empêchait les autres suites d'y tourner.
-  for (const [id, nom] of [['G1', 'illustre'], ['V1', 'procedural']]) {
-    await equiper(id);
+  // Dans le dossier temporaire du système, pas dans le dépôt : une capture n'a
+  // rien à faire dans un commit, et `/tmp` en dur ne marche pas sous Windows.
+  for (const [nom, etat] of [['repos', null], ['match', {
+    id: 1, open: true, elapsed: 37, status_short: '2H',
+    home_id: 85, away_id: 91, home_name: 'Sion', away_name: 'Bâle',
+    home_goals: 1, away_goals: 0, crowd: [12, 9],
+  }]]) {
+    direct = etat;
     const p = await ouvrir();
+    await new Promise((r) => setTimeout(r, 800));
     const f = path.join(tmpdir(), `accueil-${nom}.png`);
-    await p.screenshot({ path: f, fullPage: true });
+    await p.screenshot({ path: f, fullPage: false });
     console.log(`   capture : ${f}`);
     await p.close();
   }
@@ -265,4 +387,4 @@ http.close();
 await pool.end();
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
-process.exit(failures ? 1 : 0);
+process.exitCode = failures ? 1 : 0;

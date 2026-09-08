@@ -200,7 +200,12 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy }) {
   /** Les matchs de mes clubs où je peux entrer maintenant. */
   router.get('/live', requireAuth, async (req, res) => {
     const rows = await q(
+      // `home_id` et `away_id` : sans eux, l'accueil ne peut pas savoir de quel
+      // côté est le club du joueur, donc pas dire si un but est le sien. Les
+      // rapprocher par le nom marcherait presque, et « presque » veut dire que
+      // le personnage se réjouit parfois d'un but encaissé.
       `SELECT f.id, f.status_short, f.elapsed, f.home_goals, f.away_goals, f.kickoff_at,
+              f.home_id, f.away_id,
               h.name AS home_name, h.logo AS home_logo,
               a.name AS away_name, a.logo AS away_logo, l.name AS league_name
          FROM fixtures f
