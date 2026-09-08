@@ -1,0 +1,237 @@
+/**
+ * thebestfan — la feuille commune.
+ *
+ * Chaque page recopiait sa propre palette : les mêmes huit couleurs, les mêmes
+ * deux polices, déclarées seize fois. Tant qu'elles restaient identiques
+ * personne ne s'en apercevait — mais l'accueil a introduit une matière que les
+ * autres n'avaient pas (un décor photographique, des panneaux dépolis posés
+ * dessus), et il devenait impossible de l'étendre sans le recopier partout.
+ *
+ * Ce fichier porte donc :
+ *   — les jetons de style, en un seul endroit ;
+ *   — la coque commune : décor, dégradé, colonne centrée ;
+ *   — le panneau `.pan`, brique de base de toute l'interface ;
+ *   — la barre du haut et son menu, montées par `nav.js`.
+ *
+ * Il ne porte **pas** ce qui est propre à une page. Une règle qui ne sert
+ * qu'une fois reste dans sa page : la mettre ici ferait grossir la feuille que
+ * tout le monde télécharge pour rendre service à un seul écran.
+ *
+ * Les classes partagées sont préfixées `tbf-`. Sans ce préfixe, `.voile` de
+ * deck.html et `.pastille` de fanzzy-fiche.html seraient réécrits par des
+ * règles qu'ils n'ont pas demandées.
+ */
+
+:root{
+  /* La palette. Les noms disent la matière du stade, pas la couleur : c'est ce
+     qui a permis de la retoucher sans renommer quoi que ce soit. */
+  --beton:#0F1216;
+  --craie:#F2EEE4;
+  --projo:#F5C33B;
+  --flare:#E0402C;
+  --vert:#1E9E6A;
+  --bleu:#3C82E8;
+  --violet:#8257DA;
+  --gris:#C2CAD6;
+
+  --banner:"Oswald","Arial Narrow",Impact,sans-serif;
+  --ui:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+
+  /* Le panneau dépoli posé sur la photo, et le trait qui le cerne. */
+  --panneau:rgba(16,22,31,.72);
+  --trait:rgba(242,238,228,.10);
+  --r:15px;
+
+  /* La largeur de la colonne. Le jeu se joue sur téléphone : au-delà, on
+     centre au lieu d'étirer — une ligne de classement large de mille pixels
+     ne se lit pas mieux. */
+  --colonne:520px;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{
+  background:#04060A;
+  color:var(--craie);
+  font-family:var(--ui);
+  display:flex;
+  justify-content:center;
+  overscroll-behavior:none;
+}
+
+/* ---------------------------------------------------------------- décor
+
+   Le décor est posé par `nav.js` dans deux div frères de #app, pas en fond de
+   body : il doit rester derrière la colonne centrée et ne pas défiler avec
+   elle. `position:fixed` plutôt qu'`absolute` — sur une page longue, un décor
+   absolu se déroule avec le contenu et le stade s'en va par le haut.        */
+
+.tbf-decor{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-size:cover;background-position:center 34%;
+  opacity:0;transition:opacity 1.6s ease;
+}
+.tbf-decor.on{opacity:1}
+
+/* Le voile a deux devoirs contraires : rendre le texte lisible par-dessus une
+   photo, et laisser voir la tribune. On n'assombrit franchement que les bandes
+   qui portent du texte, et on laisse respirer le milieu. */
+.tbf-grad.dense{
+  background:linear-gradient(180deg,rgba(4,6,10,.86) 0%,rgba(4,6,10,.54) 26%,
+    rgba(4,6,10,.60) 62%,rgba(4,6,10,.90) 90%,#04060A 100%);
+}
+.tbf-grad{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(4,6,10,.80) 0%,rgba(4,6,10,.28) 20%,
+    rgba(4,6,10,.30) 54%,rgba(4,6,10,.88) 86%,#04060A 100%),
+    radial-gradient(130% 62% at 50% 52%,transparent 34%,rgba(4,6,10,.42) 88%);
+}
+
+/* La colonne. `position:relative` + `z-index` : sans eux elle passe sous le
+   décor, qui est pourtant déclaré avant — un fond `fixed` crée son propre
+   contexte d'empilement et gagne contre un élément statique. */
+#app{
+  position:relative;z-index:1;
+  width:100%;max-width:var(--colonne);min-height:100dvh;
+  display:flex;flex-direction:column;
+}
+
+/* ------------------------------------------------------------- panneaux */
+
+.pan{
+  background:var(--panneau);
+  border:1px solid var(--trait);
+  border-radius:var(--r);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  color:inherit;font:inherit;
+  transition:transform .12s ease,border-color .12s ease;
+}
+button.pan,a.pan{cursor:pointer}
+button.pan:active,a.pan:active{transform:scale(.96)}
+.pan:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
+
+/* ------------------------------------------------------- titre de page */
+
+.tbf-titre{
+  font-family:var(--banner);font-size:20px;letter-spacing:.15em;
+  margin:0;padding:14px 16px 4px;
+}
+.tbf-titre small{
+  display:block;font-family:var(--ui);font-size:9px;letter-spacing:.3em;
+  opacity:.45;margin-top:4px;
+}
+
+/* ==================================================== la barre du haut
+
+   Qui je suis, ce que je possède, et la porte de sortie. Montée par `nav.js`
+   sur toutes les pages qui ne sont ni l'accueil, ni un écran de jeu, ni la
+   page de connexion.                                                       */
+
+.tbf-haut{
+  display:flex;align-items:center;gap:8px;flex:none;
+  padding:calc(env(safe-area-inset-top) + 10px) 10px 0;
+}
+.tbf-moi{
+  display:flex;align-items:center;gap:9px;padding:6px 14px 6px 6px;
+  min-width:0;text-decoration:none;
+}
+.tbf-pastille{
+  width:38px;height:38px;flex:none;border-radius:11px;
+  display:grid;place-items:center;
+  font-family:var(--banner);font-size:19px;line-height:1;color:#1A0C04;
+  background:linear-gradient(150deg,var(--projo),#B8860B);
+}
+.tbf-moi b{
+  font-size:15px;font-weight:700;display:block;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:32vw;
+}
+.tbf-moi small{
+  display:block;font-size:11px;opacity:.55;margin-top:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:32vw;
+}
+.tbf-bourse{display:flex;gap:6px;margin-left:auto;align-items:center}
+.tbf-jeton{
+  display:flex;align-items:center;gap:6px;padding:8px 11px;
+  font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;cursor:default;
+}
+.tbf-jeton i{width:15px;height:15px;flex:none;font-style:normal}
+/* Ciblés par attribut et non par classe : `.pack` est déjà, dans le
+   kiosque, la vignette d'un booster — et sa règle gagnait contre celle-ci,
+   ce qui étalait le jeton sur trois cents pixels de haut. Un attribut ne
+   risque pas d'être réutilisé par une page pour autre chose. */
+.tbf-jeton[data-jeton=ech] i{
+  border-radius:3px;
+  background:repeating-linear-gradient(45deg,var(--projo) 0 4px,var(--craie) 4px 8px);
+}
+.tbf-jeton[data-jeton=pack] i{
+  border-radius:50%;
+  background:radial-gradient(circle at 32% 30%,#FFB9AC,var(--flare) 55%,#8E1D12);
+}
+
+/* --------------------------------------------------------------- le menu */
+
+.tbf-burger{
+  width:42px;height:42px;flex:none;
+  display:grid;place-items:center;gap:4px;padding:11px 10px;
+}
+.tbf-burger span{display:block;height:2px;width:100%;background:var(--craie);border-radius:2px}
+
+.tbf-voile{
+  position:fixed;inset:0;z-index:48;background:rgba(4,6,10,.72);
+  opacity:0;pointer-events:none;transition:opacity .2s ease;
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+}
+.tbf-voile.on{opacity:1;pointer-events:auto}
+
+/* `fixed` et non `absolute` : la barre du haut défile avec une page longue,
+   et un menu ancré à elle s'en irait par le haut au premier mouvement. */
+.tbf-tiroir{
+  position:fixed;z-index:49;
+  top:calc(env(safe-area-inset-top) + 58px);
+  right:max(10px,calc(50vw - var(--colonne) / 2 + 10px));
+  width:min(230px,72vw);padding:6px;display:grid;gap:2px;
+  background:rgba(12,17,24,.96);border:1px solid var(--trait);border-radius:var(--r);
+  box-shadow:0 24px 60px rgba(0,0,0,.7);
+  transform-origin:100% 0;transform:scale(.9);opacity:0;pointer-events:none;
+  transition:opacity .16s ease,transform .16s ease;
+}
+.tbf-tiroir.on{transform:scale(1);opacity:1;pointer-events:auto}
+.tbf-tiroir a{
+  display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;
+  color:inherit;text-decoration:none;font-size:14px;
+}
+.tbf-tiroir a:hover,.tbf-tiroir a:focus-visible{background:rgba(242,238,228,.08)}
+.tbf-tiroir a svg{
+  width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;opacity:.7;
+}
+.tbf-tiroir hr{border:0;border-top:1px solid var(--trait);margin:4px 8px}
+.tbf-tiroir a.sortie{color:#F0846F}
+
+/* ------------------------------------------------------- petites briques */
+
+/* La jauge d'avancement : collection, saison, remplissage d'un deck. */
+.tbf-jauge{height:7px;border-radius:4px;background:rgba(242,238,228,.12);overflow:hidden}
+.tbf-jauge i{
+  display:block;height:100%;width:0;border-radius:4px;
+  transition:width .6s ease;
+  background:linear-gradient(90deg,var(--flare),var(--projo));
+}
+
+/* L'attente, le vide et la note de bas de liste : trois états qu'on retrouve
+   sur chaque écran de liste, et qui étaient réécrits sur chacun. */
+.tbf-spin{
+  width:24px;height:24px;margin:50px auto;border-radius:50%;
+  border:3px solid rgba(242,238,228,.18);border-top-color:var(--projo);
+  animation:tbf-sp 1s linear infinite;
+}
+@keyframes tbf-sp{to{transform:rotate(1turn)}}
+.tbf-vide{text-align:center;padding:46px 22px;opacity:.5;font-size:13px;line-height:1.7}
+.tbf-note{font-size:11px;opacity:.42;text-align:center;padding:16px 22px;line-height:1.7}
+
+@media (prefers-reduced-motion:reduce){
+  .tbf-decor{transition:none}
+  .tbf-spin{animation-duration:3s}
+  .tbf-jauge i{transition:none}
+}

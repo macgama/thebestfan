@@ -5,10 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Duel de tribunes — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
 <style>
-:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;
-  --violet:#8257DA;--gris:#C2CAD6;--ambre:#E08A2C;
-  --banner:"Oswald","Arial Narrow",Impact,sans-serif;--ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+:root{--ambre:#E08A2C}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
 body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
@@ -39,7 +38,7 @@ h2 i{font-style:normal;opacity:.7}
 
 .matchs{padding:0 14px 8px;display:flex;flex-direction:column;gap:7px}
 .mt{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;
-  border:1px solid rgba(242,238,228,.11);background:rgba(8,11,16,.55);cursor:pointer}
+  border:1px solid rgba(242,238,228,.11);background:var(--panneau);backdrop-filter:blur(10px);cursor:pointer}
 .mt.on{border-color:var(--projo);background:rgba(245,195,59,.09)}
 .mt img{width:22px;height:22px;object-fit:contain;flex:none}
 .mt .n{flex:1;min-width:0;font-family:var(--banner);font-size:13px;letter-spacing:.02em;
@@ -78,7 +77,7 @@ h2 i{font-style:normal;opacity:.7}
    Un jeu qui sonne sans qu'on puisse l'arrêter se joue en silence, onglet
    fermé. */
 .son{position:absolute;top:10px;right:10px;z-index:6;width:30px;height:30px;border-radius:50%;
-  border:1px solid rgba(242,238,228,.16);background:rgba(8,11,16,.6);color:var(--craie);
+  border:1px solid rgba(242,238,228,.16);background:var(--panneau);backdrop-filter:blur(10px);color:var(--craie);
   cursor:pointer;opacity:.55;font-size:13px;line-height:1;padding:0}
 .son.coupe{opacity:.3}
 
@@ -142,7 +141,7 @@ h2 i{font-style:normal;opacity:.7}
    de l'écran en carré ; c'est l'arène qui a besoin de cette place. */
 .equipe{display:flex;gap:6px;margin-bottom:8px}
 .fz{flex:1;border:1px solid rgba(242,238,228,.13);border-radius:8px;padding:5px;text-align:center;
-  background:rgba(8,11,16,.5);cursor:default;min-width:0;display:flex;align-items:center;gap:6px}
+  background:var(--panneau);backdrop-filter:blur(10px);cursor:default;min-width:0;display:flex;align-items:center;gap:6px}
 .fz.actif{border-color:var(--projo);background:rgba(245,195,59,.1)}
 .fz.dispo{cursor:pointer;border-style:dashed;border-color:var(--vert)}
 .fz .txt{flex:1;min-width:0;text-align:left}

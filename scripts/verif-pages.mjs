@@ -107,6 +107,14 @@ for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
     for (const s of accentGraveDansCss(m[2])) { ko(nom, s); propre = false; }
   }
 
+  // La feuille commune porte la palette, la coque et le décor. Une page qui
+  // l'oublie s'affiche quand même — en noir et blanc système, sans stade et
+  // sans barre du haut. C'est un oubli qu'on ne voit pas en relisant un diff.
+  if (!/href\s*=\s*["']\/ui\.css/.test(html)) {
+    ko(nom, 'ui.css n’est pas chargée : la page perd la palette commune');
+    propre = false;
+  }
+
   if (!SANS_BARRE.has(nom) && !/src\s*=\s*["']\/nav\.js/.test(html)) {
     ko(nom, 'la barre commune (nav.js) n\u2019est pas chargée : la page est un cul-de-sac');
     propre = false;

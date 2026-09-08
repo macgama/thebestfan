@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Classements — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
 <style>
-:root{--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;--violet:#8257DA;
-  --banner:"Oswald","Arial Narrow",Impact,sans-serif;--ui:ui-sans-serif,system-ui,-apple-system,sans-serif}
+
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
 body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
@@ -22,7 +22,7 @@ h1 small{display:block;font-size:9px;letter-spacing:.3em;opacity:.45;margin-top:
 .moi .d{flex:1;min-width:0;font-size:12px;opacity:.72;line-height:1.5}
 .moi .d b{color:var(--craie);opacity:1}
 .tabs{display:flex;gap:6px;padding:14px}
-.tabs button{flex:1;background:rgba(8,11,16,.7);border:1px solid rgba(242,238,228,.13);border-radius:8px;
+.tabs button{flex:1;background:var(--panneau);backdrop-filter:blur(10px);border:1px solid rgba(242,238,228,.13);border-radius:8px;
   color:inherit;padding:10px 4px;font-family:var(--banner);font-size:11.5px;letter-spacing:.07em;
   cursor:pointer;opacity:.55}
 .tabs button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}

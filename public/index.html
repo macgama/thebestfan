@@ -5,12 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>thebestfan — le jeu des tribunes</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
 <style>
-:root{--beton:#0F1216;--craie:#F2EEE4;--projo:#F5C33B;--flare:#E0402C;--vert:#1E9E6A;--bleu:#3C82E8;
-  --violet:#8257DA;--banner:"Oswald","Arial Narrow",Impact,sans-serif;
-  --ui:ui-sans-serif,system-ui,-apple-system,sans-serif;
-  --panneau:rgba(16,22,31,.72);--trait:rgba(242,238,228,.10);
-  --rail:clamp(56px,15vw,74px);--r:15px}
+:root{--rail:clamp(56px,15vw,74px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
 body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
@@ -21,21 +18,8 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 #app{position:relative;width:100%;max-width:520px;height:100dvh;overflow:hidden;
   display:flex;flex-direction:column;background:#04060A}
 
-/* ---------------------------------------------------------- décor */
-.hero{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center 34%;
-  /* Pas de scale : agrandir un fond déjà en `cover` ne se voit pas, mais le
-     fait déborder de seize pixels — assez pour qu'un écran de jeu défile. */
-  opacity:0;transition:opacity 1.6s ease}
-.hero.on{opacity:1}
-/* Le voile a deux devoirs contraires : rendre le texte lisible par-dessus une
-   photo, et laisser voir la tribune. Le premier réglage gagnait trop — la
-   foule et ses lumières disparaissaient, il ne restait qu'un fond noir. On
-   n'assombrit donc franchement que les deux bandes qui portent du texte, et on
-   laisse respirer le milieu, là où il n'y a que le personnage. */
-.grad{position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:linear-gradient(180deg,rgba(4,6,10,.80) 0%,rgba(4,6,10,.28) 20%,
-    rgba(4,6,10,.30) 54%,rgba(4,6,10,.88) 86%,#04060A 100%),
-    radial-gradient(130% 62% at 50% 52%,transparent 34%,rgba(4,6,10,.42) 88%)}
+/* Le décor et son voile viennent de ui.css : ce sont les mêmes que sur toutes
+   les autres pages, et c'est ici qu'ils ont été réglés. */
 .spark{position:absolute;width:3px;height:3px;border-radius:50%;z-index:1;pointer-events:none;opacity:0}
 
 /* ------------------------------------------------------- vitrine */
@@ -57,7 +41,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   text-shadow:0 2px 14px rgba(0,0,0,.9)}
 .bullets{display:flex;gap:8px;padding:20px 18px 0}
 .bullet{flex:1;border:1px solid var(--trait);border-radius:11px;padding:11px 9px;
-  background:rgba(8,11,16,.62);backdrop-filter:blur(5px);text-align:center}
+  background:var(--panneau);backdrop-filter:blur(10px);backdrop-filter:blur(5px);text-align:center}
 .bullet b{display:block;font-family:var(--banner);font-size:11.5px;letter-spacing:.05em;color:var(--projo)}
 .bullet span{font-size:10px;opacity:.55;line-height:1.35;display:block;margin-top:4px}
 .cta{margin:22px 18px 6px;background:linear-gradient(180deg,var(--flare),#B32A1D);
@@ -82,10 +66,6 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   gap:9px}
 .hub.on{display:flex}
 
-.pan{background:var(--panneau);border:1px solid var(--trait);border-radius:var(--r);
-  backdrop-filter:blur(10px);color:inherit;font:inherit;cursor:pointer;
-  transition:transform .12s ease,border-color .12s ease}
-.pan:active{transform:scale(.96)}
 
 /* ------------------------------------------------------- bande du haut */
 .haut{display:flex;align-items:center;gap:8px;flex:none}
@@ -248,7 +228,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 </head>
 <body>
 <main id="app">
-  <div class="hero" id="fond"></div><div class="grad"></div>
+  <div class="tbf-decor" id="fond"></div><div class="tbf-grad"></div>
 
   <div class="wrap" id="vitrine">
     <div class="pitch">
