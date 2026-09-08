@@ -49,8 +49,24 @@ node_modules/
 
 ## Étape 2 — Le schéma
 
-Les cinq fichiers, **dans cet ordre** : chacun s'appuie sur les tables du
-précédent.
+Les neuf fichiers, **dans cet ordre** : chacun s'appuie sur les tables du
+précédent. Ils sont tous idempotents — les rejouer sur une base déjà à jour ne
+casse rien.
+
+**À refaire à chaque livraison qui ajoute une table.** La construction du
+Manager pousse le code, jamais le schéma. Une table absente n'éteint pas
+seulement la fonctionnalité qui s'en sert : elle fait lever le démarrage, et
+*toutes* les routes `/api` disparaissent — connexion comprise. Le site répond
+encore, sert ses pages, et refuse tout le monde. Ça s'est produit le 8 septembre
+2026, onze heures durant, parce que `sql/fanzzy.sql` n'avait pas été appliqué.
+
+Depuis, le démarrage compare `sql/` à la base et nomme le fichier manquant dans
+les journaux, et `/healthz` répond `ok: false` avec le même message. En cas de
+doute après une mise en ligne :
+
+```bash
+curl -s https://thebestfan.online/healthz
+```
 
 ```bash
 cd ~/sites/thebestfan.online

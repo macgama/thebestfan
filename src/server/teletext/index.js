@@ -1,4 +1,8 @@
 import express from 'express';
+// Renommé à l'import : la fonction jour() plus bas a déjà une variable
+// locale nommée jourISO, et deux noms identiques dans le même fichier se
+// lisent mal même quand la portée les sépare.
+import { jourISO as jourDeColonne } from '../../shared/jour.js';
 
 /**
  * Le télétexte : tous les championnats, leurs classements, leurs résultats et
@@ -111,9 +115,13 @@ export function createTeletext({ pool, client, footballStore = null }) {
     if (!rows.length) return null;
 
     const today = new Date().toISOString().slice(0, 10);
+    // Même faute que dans deck/ : `starts_on` est une colonne DATE, donc un
+    // objet Date, et String(...).slice(0, 10) en tirait « Mon Aug 04 ». La
+    // saison en cours était alors choisie selon l'ordre alphabétique des jours
+    // de la semaine. Voir src/shared/jour.js.
     const enCours = rows.find((r) => r.starts_on && r.ends_on
-      && String(r.starts_on).slice(0, 10) <= today
-      && today <= String(r.ends_on).slice(0, 10));
+      && jourDeColonne(r.starts_on) <= today
+      && today <= jourDeColonne(r.ends_on));
     return enCours ?? rows[0];
   }
 
