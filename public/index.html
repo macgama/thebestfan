@@ -22,15 +22,20 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   display:flex;flex-direction:column;background:#04060A}
 
 /* ---------------------------------------------------------- décor */
-.hero{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center 22%;
+.hero{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center 34%;
   /* Pas de scale : agrandir un fond déjà en `cover` ne se voit pas, mais le
      fait déborder de seize pixels — assez pour qu'un écran de jeu défile. */
   opacity:0;transition:opacity 1.6s ease}
 .hero.on{opacity:1}
+/* Le voile a deux devoirs contraires : rendre le texte lisible par-dessus une
+   photo, et laisser voir la tribune. Le premier réglage gagnait trop — la
+   foule et ses lumières disparaissaient, il ne restait qu'un fond noir. On
+   n'assombrit donc franchement que les deux bandes qui portent du texte, et on
+   laisse respirer le milieu, là où il n'y a que le personnage. */
 .grad{position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:linear-gradient(180deg,rgba(4,6,10,.86) 0%,rgba(4,6,10,.52) 26%,
-    rgba(4,6,10,.58) 58%,#04060A 96%),
-    radial-gradient(120% 55% at 50% 62%,transparent,rgba(4,6,10,.55) 78%)}
+  background:linear-gradient(180deg,rgba(4,6,10,.80) 0%,rgba(4,6,10,.28) 20%,
+    rgba(4,6,10,.30) 54%,rgba(4,6,10,.88) 86%,#04060A 100%),
+    radial-gradient(130% 62% at 50% 52%,transparent 34%,rgba(4,6,10,.42) 88%)}
 .spark{position:absolute;width:3px;height:3px;border-radius:50%;z-index:1;pointer-events:none;opacity:0}
 
 /* ------------------------------------------------------- vitrine */
@@ -102,6 +107,29 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .jeton.pack i{border-radius:50%;
   background:radial-gradient(circle at 32% 30%,#FFB9AC,var(--flare) 55%,#8E1D12)}
 
+/* Le menu. L'accueil ne charge pas la barre commune : sans lui, tout ce qui
+   n'a pas sa tuile — le deck, le télétexte, le compte — serait injoignable
+   depuis l'écran principal. */
+.burger{width:42px;height:42px;display:grid;place-items:center;gap:4px;padding:11px 10px;flex:none}
+.burger span{display:block;height:2px;width:100%;background:var(--craie);border-radius:2px}
+.voile{position:fixed;inset:0;z-index:8;background:rgba(4,6,10,.72);opacity:0;
+  pointer-events:none;transition:opacity .2s ease;backdrop-filter:blur(3px)}
+.voile.on{opacity:1;pointer-events:auto}
+.tiroir{position:absolute;z-index:9;top:calc(env(safe-area-inset-top) + 58px);right:10px;
+  width:min(230px,72vw);padding:6px;display:grid;gap:2px;
+  background:rgba(12,17,24,.96);border:1px solid var(--trait);border-radius:var(--r);
+  box-shadow:0 24px 60px rgba(0,0,0,.7);
+  transform-origin:100% 0;transform:scale(.9);opacity:0;pointer-events:none;
+  transition:opacity .16s ease,transform .16s ease}
+.tiroir.on{transform:scale(1);opacity:1;pointer-events:auto}
+.tiroir a{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;
+  color:inherit;text-decoration:none;font-size:14px}
+.tiroir a:hover,.tiroir a:focus-visible{background:rgba(242,238,228,.08)}
+.tiroir a svg{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;opacity:.7}
+.tiroir hr{border:0;border-top:1px solid var(--trait);margin:4px 8px}
+.tiroir a.sortie{color:#F0846F}
+
 /* --------------------------------------------------------- bande centrale */
 /* `overflow:hidden` : le halo et l’ombre au sol débordent volontairement du
    personnage. Sans cette clôture ils allongeaient la page de seize pixels
@@ -147,17 +175,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   transition:opacity .24s ease;
   filter:drop-shadow(0 0 22px rgba(245,195,59,.26)) drop-shadow(0 14px 26px rgba(0,0,0,.55))}
 .pose.on{opacity:1}
-.pile svg{position:absolute;inset:0;width:100%;height:100%;opacity:0;
-  transition:opacity .24s ease;border-radius:16px;
-  border:1px solid rgba(242,238,228,.14);
-  box-shadow:0 18px 40px rgba(0,0,0,.6)}
-.pile svg.on{opacity:1}
 .scene.saute .flotte{animation:saut .5s cubic-bezier(.34,1.56,.64,1)}
-.nom{position:absolute;left:0;right:0;bottom:0;text-align:center;pointer-events:none;
-  text-shadow:0 3px 18px rgba(0,0,0,.95)}
-.nom b{display:block;font-family:var(--banner);font-size:17px;letter-spacing:.04em}
-.nom small{display:block;font-family:var(--banner);font-size:9.5px;letter-spacing:.16em;
-  color:var(--projo);opacity:.85;margin-top:2px}
 
 @keyframes bascule{0%{transform:translateY(0) scale(1,1)}
   22%{transform:translateY(7px) scale(1.05,.93)}
@@ -261,8 +279,22 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
       <div class="bourse">
         <div class="pan jeton ech"><i></i><span id="scarves">0</span></div>
         <div class="pan jeton pack"><i></i><span id="packs">0</span></div>
+        <button class="pan burger" id="burger" aria-label="Menu" aria-expanded="false"
+          aria-controls="tiroir"><span></span><span></span><span></span></button>
       </div>
     </header>
+
+    <nav class="tiroir" id="tiroir" aria-label="Le reste du jeu" hidden>
+      <a href="/deck"><svg viewBox="0 0 24 24"><path d="M4 7h10v13H4z"/><path d="M8 4h10v13"/></svg>Mon deck</a>
+      <a href="/profil"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Mon profil</a>
+      <a href="/equipes"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6z"/></svg>Mes clubs</a>
+      <a href="/teletext"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h6"/></svg>Télétexte</a>
+      <hr>
+      <a href="/compte"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>Mon compte</a>
+      <a href="/admin" id="lienAdmin" hidden><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>Administration</a>
+      <a href="#" class="sortie" id="sortir"><svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8l-4 4 4 4M6 12h9"/></svg>Se déconnecter</a>
+    </nav>
+    <div class="voile" id="voile"></div>
 
     <div class="centre">
       <nav class="rail" aria-label="Le jeu">
@@ -274,16 +306,22 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
           <svg viewBox="0 0 24 24"><path d="M12 21s-7-4.6-7-9.6A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 3.4c0 5-7 9.6-7 9.6z"/></svg><span class="lib">CARNET</span></a>
       </nav>
 
-      <a class="scene" id="scene" href="/fanzzy">
+      <div class="scene" id="scene">
         <div class="halo"></div>
         <div class="sol"></div>
         <div class="flotte">
           <div class="bascule">
-            <div class="pile" id="pile"></div>
+            <div class="pile" id="pile">
+              <!-- Deux calques superposés : on croise leurs opacités pour
+                   changer de pose sans que le personnage quitte l'écran. -->
+              <img class="pose on" id="poseA" alt="Ton supporter dans la tribune"
+                width="448" height="900">
+              <img class="pose" id="poseB" alt="" aria-hidden="true"
+                width="448" height="900">
+            </div>
           </div>
         </div>
-        <div class="nom"><b id="sceneNom"></b><small id="sceneCri"></small></div>
-      </a>
+      </div>
 
       <nav class="rail" aria-label="Les autres">
         <a class="pan case" href="/duel-nvn">
@@ -313,8 +351,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   </div>
 </main>
 
-<!-- Sans « defer » : le script en ligne ci-dessous lit FZART dès sa première ligne. -->
-<script src="/fanzzy-art.js"></script>
+<!-- fanzzy-art.js n'est plus chargé ici : l'accueil dessinait le Fanzzy équipé,
+     il montre désormais le supporter et ses quatre poses. La bibliothèque
+     reste utilisée par le classeur et la fiche, qui en ont besoin. -->
 <script>
 /* =======================================================================
    Accueil.
@@ -344,86 +383,70 @@ const EXT = (() => {
   return '.jpg';
 })();
 
+/* Deux jeux d'extensions, pas un. Le décor est une photo : son repli est le
+   JPEG. Le personnage est détouré : son repli doit garder la transparence,
+   donc PNG. Un seul EXT servait les deux et donnait au supporter un fond
+   blanc opaque sur les navigateurs sans AVIF ni WebP. */
+const EXT_ALPHA = EXT === '.jpg' ? '.png' : EXT;
+
 {
   const img = new Image();
   img.onload = () => {
     $('fond').style.backgroundImage = `url("${img.src}")`;
     $('fond').classList.add('on');
   };
-  img.onerror = () => {};
-  img.src = '/img/hero' + EXT;
+  // Le décor d'avant reste en repli : une mise en ligne où l'image manque
+  // laisserait sinon un écran noir, et un écran noir ne dit pas pourquoi.
+  img.onerror = () => { img.onerror = null; img.src = '/img/hero' + EXT; };
+  img.src = '/img/accueil' + EXT;
 }
+
 
 /* --------------------------------------------------- le personnage
 
-   La pile porte deux calques superposés. Changer de pose charge la nouvelle
-   image sur le calque caché, attend qu'elle soit décodée, puis croise les
-   opacités : le personnage n'est jamais absent de l'écran, donc rien ne
-   clignote.
+   Le supporter tient le centre de l'écran et réagit au vrai match : il attend,
+   il pousse, il exulte, il encaisse. Quatre dessins, un par état.
 
-   Les poses — `X9-goal.png` et compagnie — n'existent pas encore. Tant qu'un
-   fichier manque, on reste sur l'image de base : la mécanique est prête, elle
-   s'allumera d'elle-même quand les dessins arriveront.                      */
+   La pile porte deux calques superposés. Changer de pose charge l'image sur le
+   calque caché, attend qu'elle soit décodée, puis croise les opacités : le
+   personnage n'est jamais absent de l'écran, donc rien ne clignote.
+
+   Les quatre dessins partagent un cadrage commun, produit par
+   `scripts/poses-supporter.mjs`. C'est ce qui fait que seuls les bras bougent
+   d'une pose à l'autre : recadrer chaque dessin sur lui-même ferait remonter
+   les pieds du personnage au moment du but.                                  */
 
 const POSES = ['idle', 'push', 'goal', 'sad'];
-let fanzzy = null;          // l'entrée de catalogue du Fanzzy équipé
-let devant = 0;             // index du calque visible
-let calques = [];
-let poseActuelle = 'idle';
+const calques = [$('poseA'), $('poseB')];
+let devant = 0;
+let poseActuelle = null;
 let retour;
 
-const fichierPose = (id, pose) =>
-  pose === 'idle' ? `/img/fanzzy/${id}` : `/img/fanzzy/${id}-${pose}`;
-
-/** Le Fanzzy équipé, posé au centre. Deux calques pour le fondu enchaîné. */
-function poser(complet) {
-  fanzzy = complet;
-  const dessin = FZART.illustration(complet, 'plein');
-  const pile = $('pile');
-
-  if (dessin) {
-    pile.innerHTML = dessin + dessin;
-    calques = [...pile.querySelectorAll('img')];
-    calques.forEach((c, i) => {
-      // On AJOUTE la classe : `illu` doit rester, c'est elle que fx.js
-      // reconnaît pour faire respirer le personnage. L'écraser le fige.
-      c.classList.add('pose');
-      if (i === 0) c.classList.add('on');
-      else c.removeAttribute('src');           // le calque de repli attend sa pose
-    });
-  } else {
-    // Sans illustration, la silhouette procédurale. Elle n'est pas un `.illu` :
-    // sans cet attribut fx.js la laisserait figée, et c'est le cas de vingt
-    // Fanzzy sur soixante-douze.
-    pile.innerHTML = FZART.artProcedural(complet);
-    const svg = pile.firstElementChild;
-    svg?.setAttribute('data-vivant', complet.id);
-    svg?.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    svg?.classList.add('on');
-    calques = [];
-  }
-
-  $('sceneNom').textContent = complet.nom ?? '';
-  $('sceneCri').textContent = complet.cri?.label ? `« ${complet.cri.label} »` : '';
-  $('scene').href = `/fanzzy/${encodeURIComponent(complet.id)}`;
-}
+/** Précharge les quatre poses : pas de temps mort au premier but. */
+POSES.forEach((p) => { new Image().src = `/img/supporter/${p}${EXT_ALPHA}`; });
 
 /**
- * Change la pose, si le dessin existe. Une pose absente ne fait rien du tout —
- * mieux vaut un personnage immobile qu'un cadre vide.
+ * Change la pose. Une pose dont le dessin manque ne fait rien du tout — mieux
+ * vaut un personnage immobile qu'un cadre vide.
+ *
+ * `tenir` en millisecondes : le temps d'une célébration, après quoi on revient
+ * à l'état de fond. Un but garde le personnage bras levés deux secondes, pas
+ * jusqu'au prochain rechargement de la page.
  */
 async function pose(nom, tenir) {
   clearTimeout(retour);
-  if (!fanzzy || !calques.length || nom === poseActuelle) return;
   if (!POSES.includes(nom)) return;
+  if (nom === poseActuelle) {
+    if (tenir) retour = setTimeout(() => pose(fond), tenir);
+    return;
+  }
 
   const derriere = calques[1 - devant];
-  const base = fichierPose(fanzzy.id, nom);
-  derriere.src = base + FZART.IMG_EXT;
+  derriere.src = `/img/supporter/${nom}${EXT_ALPHA}`;
   try { await derriere.decode(); }
   catch {
     // Le format moderne peut manquer là où le PNG existe : on retente une fois.
-    try { derriere.src = base + '.png'; await derriere.decode(); }
+    try { derriere.src = `/img/supporter/${nom}.png`; await derriere.decode(); }
     catch { return; }                        // cette pose n'est pas dessinée
   }
 
@@ -436,8 +459,20 @@ async function pose(nom, tenir) {
   void $('scene').offsetWidth;
   $('scene').classList.add('change');
 
-  if (tenir) retour = setTimeout(() => pose('idle'), tenir);
+  if (tenir) retour = setTimeout(() => pose(fond), tenir);
 }
+
+/**
+ * L'état de fond, celui vers lequel on retombe après une célébration.
+ *
+ * `push` pendant que le club joue, `idle` le reste du temps. Sans cette
+ * variable, un but pendant le match ramenait le personnage au repos alors que
+ * la rencontre continuait.
+ */
+let fond = 'idle';
+const poserFond = (p) => { fond = p; if (!retour) pose(p); };
+
+pose('idle');
 
 /** Le petit saut, indépendant de la pose affichée. */
 function sauter() {
@@ -448,13 +483,36 @@ function sauter() {
 }
 
 $('scene').addEventListener('pointerdown', sauter);
-// Le lien vers la fiche ne doit pas partir sur un simple appui de célébration :
-// on ne suit que si le doigt n'a pas bougé et que l'appui a été bref.
+
+/* -------------------------------------------------------------- le menu */
+
 {
-  let t0 = 0, x0 = 0, y0 = 0;
-  $('scene').addEventListener('pointerdown', (e) => { t0 = Date.now(); x0 = e.clientX; y0 = e.clientY; });
-  $('scene').addEventListener('click', (e) => {
-    if (Date.now() - t0 > 600 || Math.hypot(e.clientX - x0, e.clientY - y0) > 12) e.preventDefault();
+  const tiroir = $('tiroir');
+  const voile = $('voile');
+  const bouton = $('burger');
+
+  const ouvrir = (oui) => {
+    // `hidden` et la classe : la classe anime, l'attribut sort vraiment le
+    // menu de l'ordre de tabulation. Sans lui, la tabulation traverse un
+    // menu invisible.
+    if (oui) tiroir.hidden = false;
+    requestAnimationFrame(() => {
+      tiroir.classList.toggle('on', oui);
+      voile.classList.toggle('on', oui);
+      bouton.setAttribute('aria-expanded', String(oui));
+      if (!oui) setTimeout(() => { if (!tiroir.classList.contains('on')) tiroir.hidden = true; }, 200);
+    });
+  };
+
+  bouton.addEventListener('click', () => ouvrir(!tiroir.classList.contains('on')));
+  voile.addEventListener('click', () => ouvrir(false));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ouvrir(false); });
+
+  $('sortir').addEventListener('click', async (e) => {
+    e.preventDefault();
+    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); }
+    catch { /* hors ligne : on recharge quand même, la session locale ne sert plus */ }
+    location.href = '/';
   });
 }
 
@@ -478,63 +536,131 @@ async function jsonp(url, options) {
   $('hub').classList.add('on');
   $('pseudo').textContent = user.pseudo;
   $('initiale').textContent = (user.pseudo ?? '?').trim().charAt(0).toLowerCase() || '?';
+  if (user.role === 'admin') $('lienAdmin').hidden = false;
 
+  // Les clubs suivis servent deux fois : à écrire la ligne sous le pseudo, et
+  // à savoir de quel côté du score se réjouir.
+  const mesClubs = new Set();
   try {
     const st = await jsonp('/api/me/state', { credentials:'same-origin' });
     // Inscrit mais jamais passé par la cérémonie : on l'y emmène.
     if (st && st.onboarded === false) { location.href = '/bienvenue'; return; }
     $('scarves').textContent = st.scarves ?? 0;
     $('packs').textContent = st.packs ?? 0;
+    for (const f of st.follows ?? []) mesClubs.add(f.team_id ?? f.id);
     const principal = st.follows?.find((f) => f.is_main) ?? st.follows?.[0];
     $('clubline').textContent = principal
       ? `${principal.name} · ${st.slots.used}/${st.slots.total} clubs`
       : 'aucun club suivi';
   } catch { /* module non monté */ }
 
-  // Le Fanzzy équipé et l'avancement de la collection : deux réponses, une
-  // seule attente. C'est ce que le joueur vient voir.
+  // L'avancement de la collection : la jauge du bas et la pastille de la tuile.
   try {
-    const [dex, loadout, coll] = await Promise.all([
+    const [dex, coll] = await Promise.all([
       jsonp('/api/fanzzy/dex'),
-      jsonp('/api/me/loadout', { credentials:'same-origin' }),
       jsonp('/api/fanzzy/state', { credentials:'same-origin' }).catch(() => null),
     ]);
-    FZART.setTypes(dex.types ?? {});
-
-    const f = loadout?.fanzzy;
-    if (f) {
-      // Le catalogue du serveur fait foi : il porte `stage`, dont la silhouette
-      // procédurale a besoin, et que le loadout n'envoie pas toujours.
-      poser((dex.dex ?? []).find((x) => x.id === f.id) ?? f);
-    }
-
     const total = (dex.dex ?? []).length;
     const eus = Object.keys(coll?.collection ?? {}).length;
     if (total) {
       $('collecTxt').textContent = `${eus}/${total}`;
       $('collecBar').style.width = `${Math.round((eus / total) * 100)}%`;
-      $('caseFanzzy').dataset.pastille = Math.max(0, total - eus) || '';
-      if (!(total - eus)) delete $('caseFanzzy').dataset.pastille;
+      const reste = Math.max(0, total - eus);
+      if (reste) $('caseFanzzy').dataset.pastille = reste;
+      else delete $('caseFanzzy').dataset.pastille;
     }
   } catch { /* collection non montée : l'accueil reste utilisable sans */ }
 
-  // Un match en cours passe devant tout le reste : c'est le seul moment où
-  // l'ordre des priorités change, et le bouton d'entrée change avec lui.
-  try {
-    const { matchs = [] } = await jsonp('/api/virage/live', { credentials:'same-origin' });
-    const m = matchs.find((x) => x.open);
-    if (!m) return;
+  /* ------------------------------------------------- le match, en direct
+
+     C'est ce qui anime le personnage. On relit périodiquement l'état des
+     matchs des clubs suivis : tant qu'un match est ouvert le supporter pousse,
+     et chaque but change le score — le sien le fait exulter, celui d'en face
+     lui fait prendre la tête dans les mains.
+
+     La route est une simple requête en base, sans appel à API-Football : la
+     relire toutes les vingt-cinq secondes ne coûte rien au quota. Hors match
+     on espace à trois minutes, et on ne relit pas du tout quand l'onglet est
+     caché — un téléphone en poche n'a rien à surveiller.                    */
+
+  let scoreVu = null;                 // `${idMatch}:${but domicile}-${but ext.}`
+  let minuteur;
+
+  const planifier = (ms) => {
+    clearTimeout(minuteur);
+    minuteur = setTimeout(veiller, ms);
+  };
+
+  async function veiller() {
+    if (document.hidden) { planifier(30_000); return; }
+
+    let m = null;
+    try {
+      const { matchs = [] } = await jsonp('/api/virage/live', { credentials:'same-origin' });
+      m = matchs.find((x) => x.open) ?? null;
+    } catch { planifier(180_000); return; }   // suivi non actif
+
+    if (!m) {
+      $('directTag').textContent = 'AUJOURD’HUI';
+      $('directNom').textContent = 'Aucun match en cours';
+      $('directSous').textContent = 'Tes clubs ne jouent pas maintenant';
+      $('direct').href = '/matchs';
+      $('entrer').href = '/duel-nvn';
+      $('entrer').textContent = 'Prendre ma place';
+      poserFond('idle');
+      scoreVu = null;
+      planifier(180_000);
+      return;
+    }
+
     const joue = m.home_goals !== null && m.home_goals !== undefined;
     $('directTag').textContent = m.elapsed ? `${m.elapsed}′ EN DIRECT` : 'BIENTÔT';
-    $('directNom').textContent = `${m.home_name} ${joue ? `${m.home_goals} – ${m.away_goals}` : 'vs'} ${m.away_name}`;
+    $('directNom').textContent =
+      `${m.home_name} ${joue ? `${m.home_goals} – ${m.away_goals}` : 'vs'} ${m.away_name}`;
     $('directSous').textContent =
       `${(m.crowd?.[0] ?? 0) + (m.crowd?.[1] ?? 0)} supporters dans les tribunes`;
     $('direct').href = '/virage';
     $('entrer').href = '/virage';
     $('entrer').textContent = 'Entrer dans le virage';
-    // Le club marque : le personnage exulte. C'est ce que la scène attend.
-    pose('goal', 2200);
-  } catch { /* suivi non actif */ }
+
+    // Le match est lancé : le supporter pousse. C'est son état de fond tant
+    // que la rencontre dure, pas une célébration passagère.
+    poserFond('push');
+
+    if (joue) {
+      const cle = `${m.id}:${m.home_goals}-${m.away_goals}`;
+      // Au premier passage on enregistre le score sans réagir : sinon ouvrir
+      // la page à la mi-temps d'un 2-1 déclencherait trois célébrations.
+      if (scoreVu && scoreVu !== cle) {
+        const [avantD, avantE] = scoreVu.split(':')[1].split('-').map(Number);
+        const jeSuisDomicile = mesClubs.has(m.home_id);
+        const pourMoi = (jeSuisDomicile ? m.home_goals - avantD : m.away_goals - avantE);
+        const contreMoi = (jeSuisDomicile ? m.away_goals - avantE : m.home_goals - avantD);
+        if (pourMoi > 0) { pose('goal', 2600); sauter(); window.FX?.son?.('butReel'); }
+        else if (contreMoi > 0) { pose('sad', 2600); window.FX?.son?.('encaisse'); }
+      }
+      scoreVu = cle;
+    }
+
+    planifier(25_000);
+  }
+
+  // Un retour sur l'onglet ne doit pas attendre le prochain tour : un but
+  // marqué pendant que le téléphone était en poche se verrait trois minutes
+  // plus tard, ce qui est pire que de ne rien montrer.
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) planifier(0); });
+
+  /**
+   * La poignée de l'écran, comme `window.FX` pour les effets.
+   *
+   * `veiller` vit dans cette fermeture et n'est joignable d'aucune autre
+   * façon. Le test d'interface doit pouvoir rejouer un but sans attendre le
+   * tour de veille de vingt-cinq secondes, et c'est aussi par là qu'on met la
+   * page au point depuis la console.
+   */
+  window.TBF = { pose, veiller, etatDeFond: () => fond };
+
+  veiller();
 })();
 </script>
 <script src="/fx.js" defer></script>

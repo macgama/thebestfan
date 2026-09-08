@@ -87,13 +87,19 @@ bouton recouvert de 16 pixels, une image décentrée d'une demi-largeur.
 | `deck-ui-smoke.mjs` | construction de deck | jsdom |
 | `nvn-ui-smoke.mjs` | duel N contre N, deux joueurs | puppeteer |
 | `fanzzy-ui-smoke.mjs` | classeur, kiosque, catalogue | puppeteer |
-| `accueil-ui-smoke.mjs` | scène du Fanzzy sur l'accueil | puppeteer |
+| `accueil-ui-smoke.mjs` | scène du supporter sur l'accueil | puppeteer |
 | `admin-ui-smoke.mjs` | catalogue Fanzzy dans l'administration | puppeteer |
 
-`accueil-ui-smoke.mjs` vérifie une chose qui ne se lit pas dans le HTML : que
-le Fanzzy **bouge**. Il mesure le style calculé et exige l'animation
-`fzsouffle`. Un personnage figé ne se distingue d'un personnage vivant que
-là.
+`accueil-ui-smoke.mjs` vérifie ce qui ne se lit pas dans le HTML : que le
+supporter **bouge** — il mesure le style calculé et exige l'animation de
+respiration — et que le **fondu entre ses poses** garde exactement un calque
+allumé. Un personnage figé, comme un changement de pose qui clignote, ne se
+distingue de la version correcte que là.
+
+Il vérifie aussi que les quatre poses ont **la même taille naturelle**. C'est
+le garde-fou du cadrage commun décrit plus bas : des dimensions différentes
+signifieraient que chaque dessin a été recadré sur lui-même, et donc que les
+pieds du personnage sautent au moment du but.
 
 `jsdom` est déclaré en `devDependencies`. **`puppeteer` ne l'est pas, et c'est
 volontaire** : il télécharge un Chromium de près de 200 Mo, ce qui alourdirait
@@ -480,6 +486,31 @@ bras et objets tenus sont trop fins et disparaissent, la tête survit.
 générateurs ajoutent spontanément des écussons et des lettres. Vérifier aussi
 qu'un costume ne ressemble pas à un personnage de studio connu : ce n'est pas
 un écusson de club, mais c'est le même genre de risque.
+
+### Les poses du supporter, qui obéissent à la règle inverse
+
+`scripts/poses-supporter.mjs` (`npm run poses`) prépare le personnage de
+l'accueil : quatre dessins — `idle`, `push`, `goal`, `sad` — plus le décor de
+tribune (`bg`), depuis un dossier de rendus.
+
+```bash
+npm run poses -- chemin/vers/les/rendus
+```
+
+Il ne réutilise pas `fanzzy-images.mjs`, et la raison tient en une phrase :
+**les poses ne doivent surtout pas être recadrées chacune sur son sujet.** Une
+carte se regarde seule, donc on l'étale dans son cadre. Les poses, elles, se
+remplacent l'une l'autre au même endroit, en fondu. Recadrer « bras levés » sur
+elle-même rapetisse le personnage et lui remonte les pieds au moment précis du
+but — l'œil ne voit pas une pose changer, il voit un défaut d'affichage.
+
+Le script calcule donc **une seule boîte, l'union des quatre**, et l'applique
+telle quelle à toutes. Il refuse des sources de tailles différentes, pour
+lesquelles une boîte commune en pixels ne voudrait rien dire.
+
+Sorties : `public/img/supporter/<pose>.{avif,webp,png}` en 448×900, fond
+transparent, et `public/img/accueil.{avif,webp,jpg}` pour le décor — en JPEG et
+non en PNG, une photo de foule y pesant dix fois son prix.
 
 ---
 
