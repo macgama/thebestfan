@@ -89,13 +89,14 @@ async function ouvrir() {
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.setViewport({ width: 400, height: 880 });
   await page.goto(base + '/', { waitUntil: 'networkidle0' });
-  await page.waitForSelector('#scene.on', { timeout: 8000 }).catch(() => {});
+  await page.waitForSelector('#hub.on', { timeout: 8000 }).catch(() => {});
+  await page.waitForSelector('#pile img, #pile svg', { timeout: 8000 }).catch(() => {});
   return page;
 }
 
 /** Ce que fx.js a réellement posé sur le personnage. */
 const vie = (page) => page.evaluate(() => {
-  const el = document.querySelector('#sceneArt .illu, #sceneArt [data-vivant]');
+  const el = document.querySelector('#pile .pose, #pile [data-vivant]');
   if (!el) return null;
   const s = getComputedStyle(el);
   return {
@@ -112,7 +113,7 @@ const vie = (page) => page.evaluate(() => {
 await equiper('G1');
 let page = await ouvrir();
 
-check('la scène s’affiche', await page.$('#scene.on') !== null);
+check('le hub s’affiche', await page.$('#hub.on') !== null);
 check('elle nomme le Fanzzy équipé',
   (await page.$eval('#sceneNom', (e) => e.textContent)) === 'Le Gamin de Devant');
 check('et elle annonce son cri',
@@ -147,7 +148,7 @@ await page.close();
 await equiper('V1');
 page = await ouvrir();
 
-check('sans illustration, la scène s’affiche quand même', await page.$('#scene.on') !== null);
+check('sans illustration, le hub s’affiche quand même', await page.$('#hub.on') !== null);
 check('elle nomme le bon Fanzzy',
   (await page.$eval('#sceneNom', (e) => e.textContent)) === 'Choriste');
 
@@ -161,43 +162,53 @@ await page.close();
 
 await pool.execute(`UPDATE user_wallet SET active_fanzzy = NULL WHERE user_id = ?`, [U]);
 page = await ouvrir();
-check('sans Fanzzy équipé, la scène reste masquée et l’accueil tient debout',
-  await page.$('#scene.on') === null && await page.$('#grid') !== null);
+check('sans Fanzzy équipé, l’accueil tient debout',
+  await page.$('#hub.on') !== null && await page.$('#entrer') !== null);
+check('et la scène reste vide plutôt que cassée',
+  await page.$eval('#pile', (e) => e.children.length) === 0);
 await page.close();
 
-/* ------------------------------- la barre commune sur un petit téléphone */
+/* ------------------------------- l’écran de jeu sur un petit téléphone
 
-/**
- * La barre porte sept entrées depuis que le duel y figure. Sur un écran de
- * 320 px — un iPhone SE — chacune dispose de quarante-cinq pixels. On vérifie
- * que rien ne déborde et qu'aucun libellé n'est rogné : une barre qui déborde
- * ne se voit pas en développement, seulement sur le téléphone d'un joueur.
- */
+ * L’accueil ne porte plus la barre commune : ses deux rails la remplacent.
+ * Ce qui doit tenir, c’est donc tout l’écran — compteurs, rails, personnage,
+ * jauge et bouton d’entrée — sans un pixel de défilement. Sur 320 px, un
+ * iPhone SE, c’est la contrainte réelle. */
 {
   await equiper('G1');
   const page = await nav.newPage();
-  await page.setViewport({ width: 320, height: 700 });
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  await page.setViewport({ width: 320, height: 640 });
   await page.goto(base + '/', { waitUntil: 'networkidle0' });
-  await page.waitForSelector('#tbf-nav', { timeout: 5000 }).catch(() => {});
+  await page.waitForSelector('#hub.on', { timeout: 8000 }).catch(() => {});
 
-  const barre = await page.evaluate(() => {
-    const n = document.getElementById('tbf-nav');
-    if (!n) return null;
-    const liens = [...n.querySelectorAll('a')];
+  const ecran = await page.evaluate(() => {
+    const app = document.getElementById('app');
+    const entrer = document.getElementById('entrer');
     return {
-      entrees: liens.length,
-      debordePage: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-      debordeBarre: n.scrollWidth > n.clientWidth,
-      // Un libellé rogné a une largeur de rendu supérieure à sa case.
-      rognes: liens.filter((a) => a.scrollWidth > a.clientWidth + 1).map((a) => a.textContent.trim()),
+      barre: Boolean(document.getElementById('tbf-nav')),
+      rails: document.querySelectorAll('.rail').length,
+      cases: document.querySelectorAll('.rail .case').length,
+      defilePage: document.documentElement.scrollHeight > document.documentElement.clientHeight + 1,
+      defileApp: app.scrollHeight > app.clientHeight + 1,
+      debordeLarge: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      boutonVisible: entrer.getBoundingClientRect().bottom <= innerHeight + 1,
+      // Un libellé de rail rogné ne se voit qu’à l’usage, sur un vrai
+      // téléphone. On mesure le libellé et non la case : la pastille de
+      // compteur est en position absolue et déborde exprès.
+      rognes: [...document.querySelectorAll('.rail .case .lib')]
+        .filter((l) => l.scrollWidth > l.clientWidth + 1).map((l) => l.textContent.trim()),
     };
   });
 
-  check('la barre porte bien sept entrées', barre?.entrees === 7);
-  check('elle tient dans 320 px sans déborder',
-    barre?.debordePage === false && barre?.debordeBarre === false);
-  check('aucun libellé n’est rogné', (barre?.rognes ?? []).length === 0);
-  if (barre?.rognes?.length) console.log('   rognés :', barre.rognes);
+  check('la barre commune ne s’affiche pas sur l’accueil', ecran.barre === false);
+  check('les deux rails portent les six sections',
+    ecran.rails === 2 && ecran.cases === 6);
+  check('l’écran ne défile pas', !ecran.defilePage && !ecran.defileApp);
+  check('et ne déborde pas en largeur', !ecran.debordeLarge);
+  check('le bouton d’entrée reste visible', ecran.boutonVisible);
+  check('aucun libellé de rail n’est rogné', ecran.rognes.length === 0);
+  if (ecran.rognes.length) console.log('   rognés :', ecran.rognes);
 
   if (process.env.CAPTURE) {
     await page.screenshot({ path: path.join(tmpdir(), 'accueil-320.png'), fullPage: false });
@@ -205,6 +216,29 @@ await page.close();
   await page.close();
 }
 
+/* ------------------------------------------- ce que le hub doit annoncer */
+{
+  await equiper('G1');
+  const page = await ouvrir();
+  const hud = await page.evaluate(() => ({
+    pseudo: document.getElementById('pseudo').textContent,
+    initiale: document.getElementById('initiale').textContent,
+    ecarpes: document.getElementById('scarves').textContent,
+    boosters: document.getElementById('packs').textContent,
+    collec: document.getElementById('collecTxt').textContent,
+    jauge: document.getElementById('collecBar').style.width,
+    entrer: document.getElementById('entrer').getAttribute('href'),
+  }));
+  check('le pseudo et son initiale sont posés',
+    hud.pseudo === 'Momo' && hud.initiale === 'm');
+  check('la bourse affiche écharpes et boosters',
+    hud.ecarpes === '90' && hud.boosters === '12');
+  // Le compte de collection vient du serveur : deux Fanzzy sur le catalogue.
+  check('la collection est chiffrée', /^2\/\d+$/.test(hud.collec));
+  check('et sa jauge est remplie d’autant', /^[0-9.]+%$/.test(hud.jauge));
+  check('le bouton d’entrée mène au duel hors match', hud.entrer === '/duel-nvn');
+  await page.close();
+}
 check('aucune erreur de script sur l’accueil', erreurs.length === 0);
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
 

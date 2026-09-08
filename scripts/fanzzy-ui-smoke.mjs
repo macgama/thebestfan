@@ -209,6 +209,40 @@ check('la grille ne se remplit pas avec un catalogue amputé',
 check('et elle explique pourquoi au lieu de rester vide',
   /n\u2019a pas pu charger le catalogue/.test(await texteAffiche(page2)));
 
+/* ------------------------------- la barre commune sur un petit téléphone
+
+ * Ce contrôle vivait dans accueil-ui-smoke. L’accueil est devenu un écran de
+ * jeu plein cadre qui ne porte plus la barre : le contrôle a déménagé ici,
+ * sur une page qui l’affiche encore. Sept entrées sur 320 px — un iPhone SE —
+ * font quarante-cinq pixels chacune. Une barre qui déborde ne se voit pas en
+ * développement, seulement sur le téléphone d’un joueur.
+ */
+{
+  const petit = await nav.newPage();
+  petit.on('pageerror', (e) => erreurs.push(e.message));
+  await petit.setViewport({ width: 320, height: 640 });
+  await petit.goto(base + '/fanzzy', { waitUntil: 'networkidle0' });
+  await petit.waitForSelector('#tbf-nav', { timeout: 6000 }).catch(() => {});
+
+  const barre = await petit.evaluate(() => {
+    const n = document.getElementById('tbf-nav');
+    if (!n) return null;
+    const liens = [...n.querySelectorAll('a')];
+    return {
+      entrees: liens.length,
+      debordePage: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      debordeBarre: n.scrollWidth > n.clientWidth,
+      rognes: liens.filter((a) => a.scrollWidth > a.clientWidth + 1).map((a) => a.textContent.trim()),
+    };
+  });
+
+  check('la barre commune porte ses sept entrées', barre?.entrees === 7);
+  check('elle tient dans 320 px sans déborder',
+    barre?.debordePage === false && barre?.debordeBarre === false);
+  check('aucun libellé de la barre n’est rogné', (barre?.rognes ?? []).length === 0);
+  if (barre?.rognes?.length) console.log('   rognés :', barre.rognes);
+  await petit.close();
+}
 if (process.env.CAPTURE) {
   // Dossier temporaire du système : « /tmp » en dur ne marche pas sous Windows.
   const { tmpdir } = await import('node:os');
