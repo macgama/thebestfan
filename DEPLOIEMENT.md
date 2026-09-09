@@ -71,7 +71,7 @@ curl -s https://thebestfan.online/healthz
 
 ```bash
 cd ~/sites/thebestfan.online
-for f in auth football duel souvenirs fanzzy teletext inventaire deck admin kop \
+for f in auth football duel souvenirs fanzzy teletext inventaire skins deck admin kop \
          niveau raretes stades; do
   mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
 done
@@ -84,6 +84,10 @@ que `raretes` les a rangées.
 
 - `raretes.sql` fait passer l'échelle de cinq crans à quatre et range les sept
   lignées dans les thèmes.
+- `skins.sql` élargit la clé de `user_skins` d’un âge : une tenue appartient
+  désormais à un stade, plus au personnage. Les lignes existantes valent pour
+  le premier âge, ce qui est exact — elles ont toutes été gagnées avant que
+  les âges existent.
 - `niveau.sql` ajoute la colonne d’XP. Les comptes existants partent de zéro :
   ils n’ont rien perdu, et le premier booster ouvert lance la barre.
 - `stades.sql` replie les âges sur le personnage : un joueur possède désormais

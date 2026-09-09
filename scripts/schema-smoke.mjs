@@ -7,6 +7,7 @@
  * nom de fichier.
  */
 import { readFileSync } from 'node:fs';
+import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifierSchema, lireSchemaAttendu, messageDeManque }
@@ -20,12 +21,48 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 const mysql = await import('mysql2/promise');
 
-// Les autres suites déposent la base dans l'état dont elles ont besoin, jamais
-// dans l'état complet : admin-smoke, par exemple, laisse `duels` supprimée. On
-// remonte donc le schéma entier — les neuf fichiers sont idempotents — pour que
-// ce contrôle mesure le schéma du dépôt et non le résidu de la suite d'avant.
+/**
+ * Le schéma entier, remonté avant de mesurer quoi que ce soit.
+ *
+ * Les autres suites déposent la base dans l'état dont elles ont besoin, jamais
+ * dans l'état complet : `admin-smoke`, par exemple, laisse `duels` supprimée.
+ * Sans ce remontage, ce contrôle mesurerait le résidu de la suite précédente au
+ * lieu du schéma du dépôt. Tous les fichiers sont idempotents, les rejouer ne
+ * coûte rien.
+ *
+ * L'ordre est celui de `DEPLOIEMENT.md` : chaque fichier s'appuie
+ * sur les tables du précédent, et une liste alphabétique casserait les clés
+ * étrangères.
+ *
+ * Elle est écrite à la main, et c'est donc une **seconde vérité** à côté du
+ * dossier `sql/`. Elle a déjà dérivé une fois : `kop.sql` ajouté, cinq tables
+ * de plus dans le dépôt, et cette liste ne les montait pas — la suite
+ * annonçait alors un schéma incomplet selon l'ordre où on la lançait, sur un
+ * défaut qui n'existait pas. Un test qui se plaint de ce que ses voisins ont
+ * fait est un test auquel on cesse de croire.
+ *
+ * D'où le contrôle juste en dessous : la liste doit couvrir tout le dossier.
+ */
 const ORDRE = ['auth', 'football', 'duel', 'souvenirs', 'fanzzy', 'teletext',
-  'inventaire', 'deck', 'admin'];
+  'inventaire', 'skins', 'deck', 'admin', 'kop', 'niveau', 'raretes', 'stades'];
+
+{
+  const surLeDisque = (await readdir(SQL)).filter((f) => f.endsWith('.sql'))
+    .map((f) => f.replace(/\.sql$/, ''))
+    // `rattrapage.sql` corrige d'anciennes bases : il suppose un état qu'une
+    // base neuve n'a pas, et il ne déclare aucune table.
+    .filter((f) => f !== 'rattrapage');
+  const oublies = surLeDisque.filter((f) => !ORDRE.includes(f));
+  if (oublies.length) {
+    console.log(` FAIL  sql/${oublies.join('.sql, sql/')}.sql `
+      + 'n’est pas dans l’ordre d’application de schema-smoke.mjs. '
+      + 'Ajoute-le à ORDRE, au bon rang, et à DEPLOIEMENT.md.');
+    failures++;
+  } else {
+    console.log(`  ok   les ${ORDRE.length} fichiers de sql/ sont tous montés`);
+  }
+}
+
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 for (const f of ORDRE) {
   await raw.query(readFileSync(path.join(SQL, `${f}.sql`), 'utf8'));
@@ -47,8 +84,6 @@ check('rattrapage.sql est écarté : il corrige, il ne décrit pas',
 
 /* ------------------------------------------- la base de test est complète */
 
-// Les suites précédentes ont monté le schéma entier. Si ce contrôle voit un
-// manque ici, c'est qu'un fichier de sql/ n'est appliqué nulle part.
 const surBaseSaine = await verifierSchema(pool, SQL);
 check('aucune table ne manque sur une base à jour',
   surBaseSaine.length === 0
