@@ -96,7 +96,12 @@ que `raretes` les a rangées.
   `node scripts/stades-smoke.mjs` la rejoue sur une collection fabriquée avant
   que tu la lances ici.
 
-Contrôle : `SHOW TABLES;` doit en lister **32** — les 27 d’avant, plus les cinq tables des KOP.
+Contrôle : `SHOW TABLES;` doit en lister **33**.
+
+Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
+ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`
+déclare, et échoue en donnant le bon chiffre. Un nombre qu'il faut penser à
+mettre à jour finit toujours par mentir.
 
 `teletext.sql` ajoute aussi des colonnes à `souvenir_leagues` : la couverture
 fine des buteurs, passeurs et cartons, et le palier de notoriété. Relance
