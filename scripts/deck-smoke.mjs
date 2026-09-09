@@ -90,7 +90,8 @@ check('avertissement si aucun arbitre',
   bon.actions.includes('a-arbitre') || r.json.avertissements.some((a)=>a.code==='deck.warn.no_substitution'));
 
 const cas = [
-  ['deux Fanzzy seulement', { ...bon, fanzzy: bon.fanzzy.slice(0,2) }, 'deck.error.fanzzy_count'],
+  ['aucun Fanzzy', { ...bon, fanzzy: [] }, 'deck.error.fanzzy_count'],
+  ['quatre Fanzzy', { ...bon, fanzzy: [...bon.fanzzy, {id:'F1'}] }, 'deck.error.fanzzy_count'],
   ['Fanzzy en double', { ...bon, fanzzy:[{id:'V1'},{id:'V1'},{id:'P1'}] }, 'deck.error.fanzzy_duplicate'],
   ['Fanzzy non possédé', { ...bon, fanzzy:[{id:'V3'},{id:'V2'},{id:'P1'}] }, 'deck.error.fanzzy_not_owned'],
   ['trois pièces sur un Fanzzy',
@@ -103,8 +104,6 @@ const cas = [
     { ...bon, fanzzy:[{id:'V1',stuff:['megaphone']},{id:'V2'},{id:'P1'}] },
     'deck.error.stuff_not_owned'],
   ['neuf cartes', { ...bon, actions: dixCartes.slice(0,9) }, 'deck.error.actions_count'],
-  ['trois exemplaires', { ...bon, actions: [communes[0],communes[0],communes[0],
-    ...dixCartes.slice(0,7)] }, 'deck.error.too_many_copies'],
   ['carte non possédée', { ...bon, actions: ['a-miroir', ...dixCartes.slice(0,9)] },
     'deck.error.action_not_owned'],
 ];
@@ -113,6 +112,30 @@ for (const [nom, deck, attendu] of cas) {
   const codes = (x.json.detail ?? []).map((p)=>p.code);
   check(`refusé : ${nom}`, x.json.error === 'deck.error.invalid' && codes.includes(attendu));
 }
+
+/* ------------------------------------- ce qu'un débutant a le droit d'envoyer
+
+   Un joueur qui vient d'ouvrir son premier booster n'a pas trois Fanzzy, ni
+   dix cartes différentes. Le deck refusait les deux, et lui refusait donc
+   l'entrée du virage par une règle qu'il ne pouvait pas satisfaire. */
+
+r = await call('/api/deck/mien', { method:'PUT', body:
+  { ...bon, fanzzy: bon.fanzzy.slice(0,2) } });
+check('deux Fanzzy suffisent', r.json.deck?.fanzzy?.length === 2);
+
+r = await call('/api/deck/mien', { method:'PUT', body:
+  { ...bon, fanzzy: [{ id:'V1' }] } });
+check('un seul Fanzzy aussi', r.json.deck?.fanzzy?.length === 1);
+
+r = await call('/api/deck/mien', { method:'PUT', body:
+  { ...bon, fanzzy: [{ id:'V1', stuff: [] }, { id:'V2' }, { id:'P1' }] } });
+check('un Fanzzy sans équipement est accepté',
+  r.json.deck?.fanzzy?.[0]?.stuff?.length === 0);
+
+r = await call('/api/deck/mien', { method:'PUT', body:
+  { ...bon, actions: Array(10).fill(communes[0]) } });
+check('dix fois la même carte d’action passent',
+  r.json.deck?.actions?.length === 10);
 
 /* ------------------------------------------------------------ loadout */
 

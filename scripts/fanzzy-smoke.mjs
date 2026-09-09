@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import express from 'express';
-import { createFanzzy, MAX_PACKS, PACK_PRICE } from '../src/server/fanzzy/index.js';
+import { createFanzzy, MAX_PACKS, PACKS_DEPART, PACK_PRICE } from '../src/server/fanzzy/index.js';
 import { DEX, BY_ID, SETS } from '../src/shared/fanzzy/dex.js';
 import { SKINS } from '../src/shared/fanzzy/inventaire.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
@@ -69,7 +69,10 @@ check('catalogue servi', r.json.dex?.length === attendues.length
 }
 
 r = await call('/api/fanzzy/state');
-check('réserve pleine au départ', r.json.wallet.packs === MAX_PACKS);
+// Trois et non douze : un nouveau joueur reçoit de quoi regarder, pas de quoi
+// vider soixante cartes avant d'avoir compris ce qu'est un Fanzzy.
+check('trois boosters au départ', r.json.wallet.packs === PACKS_DEPART);
+check('et la réserve n’est donc pas pleine', PACKS_DEPART < MAX_PACKS);
 check('aucune écharpe au départ', r.json.wallet.scarves === 0);
 check('collection vide', Object.keys(r.json.collection).length === 0);
 
@@ -82,7 +85,7 @@ check('toutes du bon set',
   r.json.cards.filter((c) => c.type === 'fanzzy').every((c) => BY_ID.get(c.id).set === 'VN'));
 check('trois communes garanties',
   r.json.cards.slice(0, 3).every((c) => c.type === 'fanzzy' && BY_ID.get(c.id).rar === 'commune'));
-check('un booster consommé', r.json.wallet.packs === MAX_PACKS - 1);
+check('un booster consommé', r.json.wallet.packs === PACKS_DEPART - 1);
 check('la recharge est amorcée', typeof r.json.wallet.nextPackInMs === 'number');
 check('un Fanzzy est équipé d\u2019office', Boolean(r.json.wallet.active));
 

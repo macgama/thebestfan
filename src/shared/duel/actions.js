@@ -112,13 +112,29 @@ export const ACTIONS = [
 
 export const ACTION_BY_ID = new Map(ACTIONS.map((a) => [a.id, a]));
 
-/** Règles de construction du deck. Elles vivent ici pour être partagées. */
+/**
+ * Règles de construction du deck. Elles vivent ici pour être partagées.
+ *
+ * **Un deck incomplet est un deck valide.** Il fallait exactement trois Fanzzy,
+ * et c'était un mur : un joueur qui vient d'ouvrir son premier booster n'en a
+ * souvent qu'un ou deux, et il se voyait refuser l'entrée du virage par une
+ * règle qu'il ne pouvait pas satisfaire. Il joue maintenant avec ce qu'il a —
+ * simplement, avec un seul Fanzzy, il n'a personne à faire entrer en cours de
+ * duel. La contrainte se paie en jeu au lieu de bloquer à la porte.
+ *
+ * L'équipement suit la même logique : deux pièces au plus, zéro accepté.
+ */
 export const DECK_RULES = {
-  fanzzy: 3,          // exactement trois, dont un entre en jeu au coup d'envoi
+  fanzzy: 3,          // au plus trois, dont un entre en jeu au coup d'envoi
+  fanzzyMin: 1,       // au moins un, sinon il n'y a personne sur la corde
   stuffParFanzzy: 2,  // au plus deux pièces par Fanzzy, liées à lui
   actions: 10,        // exactement dix cartes d'action
   mainVisible: 5,     // cinq visibles à la fois, les autres arrivent en remplacement
-  copiesMax: 2,       // pas plus de deux exemplaires d'une même carte
+  // Plus de plafond par carte : dix exemplaires de la même sont permis. La
+  // limite de deux venait d'un temps où l'on supposait un large choix de
+  // cartes ; en pratique un débutant en possède cinq, et dix emplacements à
+  // remplir avec cinq cartes sans doublon est arithmétiquement impossible.
+  copiesMax: null,
 };
 
 /**
@@ -131,8 +147,9 @@ export function validerDeck(deck, possede) {
   const fanzzy = deck?.fanzzy ?? [];
   const actions = deck?.actions ?? [];
 
-  if (fanzzy.length !== DECK_RULES.fanzzy) {
-    pb.push({ code: 'deck.error.fanzzy_count', attendu: DECK_RULES.fanzzy });
+  if (fanzzy.length < DECK_RULES.fanzzyMin || fanzzy.length > DECK_RULES.fanzzy) {
+    pb.push({ code: 'deck.error.fanzzy_count',
+      min: DECK_RULES.fanzzyMin, max: DECK_RULES.fanzzy });
   }
   if (new Set(fanzzy.map((f) => f.id)).size !== fanzzy.length) {
     pb.push({ code: 'deck.error.fanzzy_duplicate' });
@@ -163,7 +180,12 @@ export function validerDeck(deck, possede) {
     if (!ACTION_BY_ID.has(a)) { pb.push({ code: 'deck.error.action_unknown', id: a }); continue; }
     if (!possede.actions.has(a)) pb.push({ code: 'deck.error.action_not_owned', id: a });
     compte[a] = (compte[a] ?? 0) + 1;
-    if (compte[a] > DECK_RULES.copiesMax) pb.push({ code: 'deck.error.too_many_copies', id: a });
+    // `copiesMax: null` veut dire « aucun plafond ». On garde le test plutôt
+    // que de supprimer la règle : le jour où l'on voudra en remettre un, il
+    // suffira d'écrire un nombre.
+    if (DECK_RULES.copiesMax != null && compte[a] > DECK_RULES.copiesMax) {
+      pb.push({ code: 'deck.error.too_many_copies', id: a });
+    }
   }
 
   // Un deck sans « arbitre » enferme le joueur sur son premier Fanzzy : ce

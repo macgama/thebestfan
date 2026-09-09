@@ -86,7 +86,10 @@ CREATE TABLE IF NOT EXISTS virage_presence (
 CREATE TABLE IF NOT EXISTS user_wallet (
   user_id    CHAR(36)    NOT NULL PRIMARY KEY,
   scarves    INT         NOT NULL DEFAULT 0,
-  packs      SMALLINT    NOT NULL DEFAULT 12,
+  -- Trois à l inscription, pas douze : douze boosters d un coup, c est cinq
+  -- minutes d ouverture puis plus rien pendant deux heures. La réserve se
+  -- remplit ensuite d elle-même jusqu au plafond de douze.
+  packs      SMALLINT    NOT NULL DEFAULT 3,
   packs_at   DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   CONSTRAINT fk_wallet_user FOREIGN KEY (user_id) REFERENCES users(public_id) ON DELETE CASCADE

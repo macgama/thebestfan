@@ -17,6 +17,16 @@ import { SKINS, SKIN_BY_ID, STUFF, STUFF_BY_ID, combine } from '../../shared/fan
  */
 
 export const MAX_PACKS = 12;
+/**
+ * Ce qu'un nouveau joueur trouve dans sa réserve.
+ *
+ * Trois, et non douze. Douze boosters d'un coup, c'est cinq minutes
+ * d'ouverture frénétique puis plus rien à faire pendant deux heures — et
+ * soixante cartes vues avant d'avoir compris ce qu'est un Fanzzy. Trois
+ * laissent le temps de regarder, et la réserve se remplit ensuite d'elle-même
+ * jusqu'à douze.
+ */
+export const PACKS_DEPART = 3;
 export const PACK_REGEN_MS = 10 * 60 * 1000;
 export const PACK_PRICE = 45;          // acheter un booster en écharpes
 
@@ -47,7 +57,7 @@ export function createFanzzy({ pool, requireAuth }) {
   async function wallet(userId) {
     await q(
       `INSERT IGNORE INTO user_wallet (user_id, scarves, packs) VALUES (?, 0, ?)`,
-      [userId, MAX_PACKS],
+      [userId, PACKS_DEPART],
     );
     const w = (await q(
       `SELECT scarves, packs, packs_at, active_fanzzy FROM user_wallet WHERE user_id = ?`,
