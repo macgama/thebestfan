@@ -194,10 +194,17 @@ const ouverture = await page.evaluate(async () => {
     credentials: 'same-origin', body: JSON.stringify({ set: 'VN' }),
   });
   const j = await r.json();
-  // Chaque carte tirée doit être connue de la page, sinon l'ouverture casse.
-  return (j.cards ?? []).filter((c) => c.type !== 'skin' && !BY_ID.has(c.id));
+  /* Chaque **Fanzzy** tiré doit être connu de la page, sinon l'ouverture casse
+     — c'est la faute qui a coûté le plus cher ici, un G1 sorti d'un booster que
+     le catalogue recopié ne connaissait pas.
+
+     Les autres types ne sont pas dans `BY_ID` et n'ont rien à y faire : un skin,
+     une pièce d'équipement et une carte d'action vivent dans d'autres
+     catalogues. Depuis que les places 4 et 5 s'ouvrent à eux, les exiger ici
+     faisait échouer ce contrôle une fois sur trois, au hasard du tirage. */
+  return (j.cards ?? []).filter((c) => c.type === 'fanzzy' && !BY_ID.has(c.id));
 });
-check('toutes les cartes tirées sont connues de la page', ouverture.length === 0);
+check('tous les Fanzzy tirés sont connus de la page', ouverture.length === 0);
 if (ouverture.length) console.log('    inconnues :', ouverture);
 
 /* --------------------------- un catalogue amputé nomme sa cause */

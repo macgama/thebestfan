@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { verifierSchema, lireSchemaAttendu, messageDeManque }
+import { verifierSchema, lireSchemaAttendu, lireColonnesAttendues, messageDeManque }
   from '../src/server/auth/schema.js';
 import { baseDeTest } from './base-de-test.mjs';
 
@@ -130,6 +130,42 @@ check('le message dit que rejouer ne casse rien', msg.includes('ne casse rien'))
 // Le vieux message accusait le réseau alors que la base répondait très bien.
 check('le message n’accuse pas la base d’être injoignable',
   !/injoignable/i.test(msg));
+
+/* ------------------------------- la panne du 9 septembre, rejouee
+
+   `niveau.sql` ne cree aucune table : il ajoute une colonne `xp`. Le controle
+   ne regardait que les tables, il le declarait donc applique — toujours.
+
+   Oublie en production, aucune table ne manquait, /healthz repondait ok:true,
+   le demarrage ne disait rien. Et le jeu refusait tous les boosters hors de la
+   premiere serie, plus tout deck de trois Fanzzy : sans XP lisible, chaque
+   joueur retombait au niveau 1 et se voyait confisquer ses droits.
+
+   Trois fichiers sur quatre parmi les derniers sont dans ce cas. */
+
+{
+  const cols = await lireColonnesAttendues(SQL);
+  check('sql/niveau.sql promet bien une colonne',
+    cols.get('niveau.sql')?.some((c) => c.table === 'user_wallet' && c.colonne === 'xp'));
+  check('et sql/skins.sql aussi',
+    cols.get('skins.sql')?.some((c) => c.table === 'user_skins' && c.colonne === 'stage'));
+
+  // Une base qui a toutes les tables mais pas la colonne : exactement le cas
+  // reel. Le controle doit la voir, et nommer le fichier.
+  const toutesTables = [...attendu.values()].flat().map((t) => ({ t }));
+  const sansXp = {
+    query: async (sql) => (/information_schema.tables/i.test(sql)
+      ? [toutesTables]
+      : [[...cols.values()].flat()
+          .filter((c) => !(c.table === 'user_wallet' && c.colonne === 'xp'))
+          .map((c) => ({ t: c.table, c: c.colonne }))]),
+  };
+  const vus = await verifierSchema(sansXp, SQL);
+  check('une colonne absente est signalee, meme si toutes les tables sont la',
+    vus.some((m) => m.fichier === 'niveau.sql' && m.colonnes?.includes('user_wallet.xp')));
+  check('et le message nomme la colonne, pas seulement le fichier',
+    (messageDeManque(vus) ?? '').includes('colonne(s) absente(s) : user_wallet.xp'));
+}
 
 /* ------------------------------------------------- un seul fichier manquant */
 
