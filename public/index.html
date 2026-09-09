@@ -331,9 +331,13 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   </div>
 </main>
 
-<!-- fanzzy-art.js n'est plus chargé ici : l'accueil dessinait le Fanzzy équipé,
-     il montre désormais le supporter et ses quatre poses. La bibliothèque
-     reste utilisée par le classeur et la fiche, qui en ont besoin. -->
+<!-- fanzzy-art.js n'est pas chargé ici : l'accueil ne dessine aucun Fanzzy en
+     géométrie, il affiche des illustrations. La bibliothèque reste utilisée par
+     le classeur et la fiche, qui en ont besoin.
+
+     fanzzy-etats.js, lui, sait quel dessin montrer pour un Fanzzy donné dans un
+     état donné — et sur quoi retomber quand ce dessin n'existe pas encore. -->
+<script src="/fanzzy-etats.js"></script>
 <script>
 /* =======================================================================
    Accueil.
@@ -354,20 +358,15 @@ const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
 
 /* ------------------------------------------------------------- décor */
 
-const EXT = (() => {
-  try {
-    const c = document.createElement('canvas');
-    if (c.toDataURL('image/avif').startsWith('data:image/avif')) return '.avif';
-    if (c.toDataURL('image/webp').startsWith('data:image/webp')) return '.webp';
-  } catch { /* pas de canvas */ }
-  return '.jpg';
-})();
-
 /* Deux jeux d'extensions, pas un. Le décor est une photo : son repli est le
    JPEG. Le personnage est détouré : son repli doit garder la transparence,
    donc PNG. Un seul EXT servait les deux et donnait au supporter un fond
-   blanc opaque sur les navigateurs sans AVIF ni WebP. */
-const EXT_ALPHA = EXT === '.jpg' ? '.png' : EXT;
+   blanc opaque sur les navigateurs sans AVIF ni WebP.
+
+   Les deux étaient calculés ici et re-calculés dans fanzzy-etats.js. Une
+   détection de format en double, c'est deux réponses possibles à la même
+   question sur la même page : on prend celle du module. */
+const { EXT, EXT_ALPHA } = window.TBF_ETATS;
 
 {
   const img = new Image();
@@ -384,50 +383,86 @@ const EXT_ALPHA = EXT === '.jpg' ? '.png' : EXT;
 
 /* --------------------------------------------------- le personnage
 
-   Le supporter tient le centre de l'écran et réagit au vrai match : il attend,
-   il pousse, il exulte, il encaisse. Quatre dessins, un par état.
+   Le personnage tient le centre de l'écran et réagit au vrai match : il attend,
+   il pousse, il exulte, il encaisse.
+
+   C'est **le Fanzzy équipé** quand le joueur en a un d'illustré, et le
+   supporter générique sinon. Le supporter n'est pas un reliquat : quelqu'un
+   qui vient d'ouvrir son premier booster peut être tombé sur une carte dont
+   les douze états ne sont pas encore dessinés, et l'accueil doit tenir debout
+   ce jour-là comme les autres.
 
    La pile porte deux calques superposés. Changer de pose charge l'image sur le
    calque caché, attend qu'elle soit décodée, puis croise les opacités : le
    personnage n'est jamais absent de l'écran, donc rien ne clignote.
 
-   Les quatre dessins partagent un cadrage commun, produit par
-   `scripts/poses-supporter.mjs`. C'est ce qui fait que seuls les bras bougent
-   d'une pose à l'autre : recadrer chaque dessin sur lui-même ferait remonter
-   les pieds du personnage au moment du but.                                  */
+   Les dessins d'un même personnage partagent un cadrage commun, produit par
+   `scripts/fanzzy-art.mjs` (et par `scripts/poses-supporter.mjs` pour le
+   supporter). C'est ce qui fait que seuls les bras bougent d'une pose à
+   l'autre : recadrer chaque dessin sur lui-même ferait remonter les pieds du
+   personnage au moment du but.                                              */
 
-const POSES = ['idle', 'push', 'goal', 'sad'];
+/* Les quatre moments que l'accueil sait vivre, et le fichier du supporter qui
+   leur correspond. Les noms d'états, eux, sont ceux du catalogue : c'est le
+   vocabulaire de `fanzzy-etats.js`, et l'accueil n'en invente pas un second. */
+const SUPPORTER = { neutre: 'idle', pousse: 'push', but: 'goal', encaisse: 'sad' };
+
 const calques = [$('poseA'), $('poseB')];
 let devant = 0;
 let poseActuelle = null;
 let retour;
 
-/** Précharge les quatre poses : pas de temps mort au premier but. */
-POSES.forEach((p) => { new Image().src = `/img/supporter/${p}${EXT_ALPHA}`; });
+/** Le Fanzzy affiché : `null` tant qu'on n'en a pas, ou s'il n'est pas dessiné. */
+let equipe = null;
 
 /**
- * Change la pose. Une pose dont le dessin manque ne fait rien du tout — mieux
+ * L'image d'un état — celle du Fanzzy équipé, ou celle du supporter.
+ *
+ * `resoudre` gère seul le repli d'un état vers `neutre` et d'un skin vers son
+ * fond : s'il rend quelque chose, c'est affichable. S'il ne rend rien, ce
+ * Fanzzy n'a aucun dessin et on repasse au supporter — pas de cadre vide.
+ */
+function source(etat) {
+  if (equipe) {
+    const r = window.TBF_ETATS.resoudre(equipe.id, { evo: equipe.evo, skin: equipe.skin, etat });
+    if (r) return r.src;
+  }
+  return SUPPORTER[etat] ? `/img/supporter/${SUPPORTER[etat]}${EXT_ALPHA}` : null;
+}
+
+/** Précharge les quatre moments : pas de temps mort au premier but. */
+const precharger = () => Object.keys(SUPPORTER).forEach((e) => {
+  const s = source(e); if (s) new Image().src = s;
+});
+precharger();
+
+/**
+ * Change la pose. Un état dont le dessin manque ne fait rien du tout — mieux
  * vaut un personnage immobile qu'un cadre vide.
  *
  * `tenir` en millisecondes : le temps d'une célébration, après quoi on revient
  * à l'état de fond. Un but garde le personnage bras levés deux secondes, pas
  * jusqu'au prochain rechargement de la page.
  */
-async function pose(nom, tenir) {
+async function pose(nom, tenir, force) {
   clearTimeout(retour);
-  if (!POSES.includes(nom)) return;
-  if (nom === poseActuelle) {
+  const src = source(nom);
+  if (!src) return;
+  // `force` sert quand le personnage change sans que l'état change : le Fanzzy
+  // équipé vient d'arriver et doit remplacer le supporter à l'écran.
+  if (nom === poseActuelle && !force) {
     if (tenir) retour = setTimeout(() => pose(fond), tenir);
     return;
   }
 
   const derriere = calques[1 - devant];
-  derriere.src = `/img/supporter/${nom}${EXT_ALPHA}`;
+  derriere.src = src;
   try { await derriere.decode(); }
   catch {
     // Le format moderne peut manquer là où le PNG existe : on retente une fois.
-    try { derriere.src = `/img/supporter/${nom}.png`; await derriere.decode(); }
-    catch { return; }                        // cette pose n'est pas dessinée
+    // La révision vit dans la requête, on ne remplace que l'extension.
+    try { derriere.src = src.replace(/\.(avif|webp)(\?|$)/, '.png$2'); await derriere.decode(); }
+    catch { return; }                        // cet état n'est pas dessiné
   }
 
   poseActuelle = nom;
@@ -449,10 +484,10 @@ async function pose(nom, tenir) {
  * variable, un but pendant le match ramenait le personnage au repos alors que
  * la rencontre continuait.
  */
-let fond = 'idle';
+let fond = 'neutre';
 const poserFond = (p) => { fond = p; if (!retour) pose(p); };
 
-pose('idle');
+pose('neutre');
 
 /** Le petit saut, indépendant de la pose affichée. */
 function sauter() {
@@ -556,6 +591,38 @@ async function jsonp(url, options) {
     }
   } catch { /* collection non montée : l'accueil reste utilisable sans */ }
 
+  /* --------------------------------------------- le Fanzzy au centre
+
+     Le personnage affiché est le premier Fanzzy du deck. C'est celui que le
+     joueur a choisi de mettre en avant, et le deck est déjà la seule liste où
+     ce choix est écrit — inventer un second réglage « avatar » à côté ferait
+     deux endroits pour la même décision, dont un qui se périme.
+
+     Tout est facultatif ici : pas de deck, pas de manifeste, pas d'illustration
+     pour cette carte — dans les trois cas le supporter reste à l'écran et
+     l'accueil ne s'en aperçoit pas.                                          */
+  try {
+    const [manifeste, deck] = await Promise.all([
+      window.TBF_ETATS.charger(),
+      jsonp('/api/deck/loadout', { credentials: 'same-origin' }).catch(() => null),
+    ]);
+    const premier = deck?.fanzzy?.[0];
+    if (manifeste && premier) {
+      // `skin` n'est pas encore un réglage du joueur : tant qu'il n'y en a
+      // qu'un, le demander explicitement évite d'avoir à revenir ici le jour
+      // où il y en aura deux.
+      const candidat = { id: premier.id, evo: premier.stage ?? 1, skin: 'base' };
+      if (window.TBF_ETATS.resoudre(candidat.id, candidat)) {
+        equipe = candidat;
+        precharger();
+        // `force` : l'état ne change pas, le personnage si. Sans lui, `pose`
+        // verrait le même nom d'état et ne redessinerait rien.
+        await pose(poseActuelle ?? 'neutre', 0, true);
+        calques[devant].alt = `${premier.nom ?? candidat.id} dans la tribune`;
+      }
+    }
+  } catch { /* deck non monté : le supporter tient la place */ }
+
   /* ------------------------------------------------- le match, en direct
 
      C'est ce qui anime le personnage. On relit périodiquement l'état des
@@ -592,7 +659,7 @@ async function jsonp(url, options) {
       $('direct').href = '/matchs';
       $('entrer').href = '/duel-nvn';
       $('entrer').textContent = 'Prendre ma place';
-      poserFond('idle');
+      poserFond('neutre');
       scoreVu = null;
       planifier(180_000);
       return;
@@ -610,7 +677,7 @@ async function jsonp(url, options) {
 
     // Le match est lancé : le supporter pousse. C'est son état de fond tant
     // que la rencontre dure, pas une célébration passagère.
-    poserFond('push');
+    poserFond('pousse');
 
     if (joue) {
       const cle = `${m.id}:${m.home_goals}-${m.away_goals}`;
@@ -621,8 +688,8 @@ async function jsonp(url, options) {
         const jeSuisDomicile = mesClubs.has(m.home_id);
         const pourMoi = (jeSuisDomicile ? m.home_goals - avantD : m.away_goals - avantE);
         const contreMoi = (jeSuisDomicile ? m.away_goals - avantE : m.home_goals - avantD);
-        if (pourMoi > 0) { pose('goal', 2600); sauter(); window.FX?.son?.('butReel'); }
-        else if (contreMoi > 0) { pose('sad', 2600); window.FX?.son?.('encaisse'); }
+        if (pourMoi > 0) { pose('but', 2600); sauter(); window.FX?.son?.('butReel'); }
+        else if (contreMoi > 0) { pose('encaisse', 2600); window.FX?.son?.('encaisse'); }
       }
       scoreVu = cle;
     }

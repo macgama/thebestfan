@@ -1,9 +1,11 @@
 /**
- * Test de l'accueil : la scène du supporter.
+ * Test de l'accueil : la scène du personnage.
  *
  * L'écran d'accueil du joueur connecté est un **écran de jeu** : il tient dans
- * la fenêtre, ne défile jamais, et met le supporter au centre entre deux rails
- * de navigation. Trois choses s'y vérifient mal à la lecture du HTML.
+ * la fenêtre, ne défile jamais, et met au centre, entre deux rails de
+ * navigation, le Fanzzy équipé — ou le supporter générique quand ce Fanzzy
+ * n'est pas encore illustré. Trois choses s'y vérifient mal à la lecture du
+ * HTML.
  *
  *   1. **Le mouvement.** Le personnage doit respirer. C'est une animation CSS,
  *      donc seul le style calculé dans un vrai navigateur le dit.
@@ -110,6 +112,13 @@ app.get('/api/auth/me', (_q, s) => s.json({ user: { pseudo: 'Momo' } }));
 let direct = null;
 app.get('/api/virage/live', (_q, s) => s.json({ matchs: direct ? [direct] : [] }));
 
+// Le deck aussi est simulé, et pour la même raison : `deck-smoke` éprouve la
+// route, on éprouve ici ce que l'accueil en fait. Un talon laisse en plus
+// choisir un Fanzzy illustré puis un Fanzzy qui ne l'est pas, ce qui est
+// précisément la bascule à vérifier.
+let loadout = null;
+app.get('/api/deck/loadout', (_q, s) => s.json(loadout ?? { error: 'deck.error.none' }));
+
 app.use('/api/fanzzy', createFanzzy({ pool, requireAuth }).router);
 app.use('/api/me', createOnboarding({ pool, requireAuth }).router);
 app.get('/', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'index.html')));
@@ -175,7 +184,13 @@ check('la page ne déborde pas en largeur', await page.evaluate(() =>
 
 // `window.TBF` est la poignée que la page expose. On passe par elle plutôt
 // que d'attendre un vrai but, qui mettrait vingt-cinq secondes à venir.
-await page.evaluate(() => TBF.pose('goal'));
+//
+// Les noms sont ceux du catalogue — `but`, `encaisse` — et non les noms de
+// fichiers du supporter. L'accueil parlait sa propre langue tant qu'il n'avait
+// que quatre dessins ; depuis qu'il affiche des Fanzzy, il emploie celle de
+// `fanzzy-etats.js`, et deux vocabulaires pour la même chose finissent
+// toujours par diverger.
+await page.evaluate(() => TBF.pose('but'));
 await new Promise((r) => setTimeout(r, 500));
 v = await scene(page);
 check('après un but, le dessin change', /\/img\/supporter\/goal\./.test(v.src ?? ''));
@@ -185,19 +200,94 @@ const tailles = new Set(v.taille);
 check('les deux poses ont exactement le même cadrage', tailles.size === 1);
 if (tailles.size > 1) console.log('    tailles :', [...tailles].join(' / '));
 
-await page.evaluate(() => TBF.pose('sad'));
+await page.evaluate(() => TBF.pose('encaisse'));
 await new Promise((r) => setTimeout(r, 500));
 check('un but encaissé a sa propre pose',
   /\/img\/supporter\/sad\./.test((await scene(page)).src ?? ''));
 
-// Une pose inconnue ne doit rien faire : mieux vaut un personnage immobile
+// Un état inconnu ne doit rien faire : mieux vaut un personnage immobile
 // qu'un cadre vide.
 await page.evaluate(() => TBF.pose('pizza'));
 await new Promise((r) => setTimeout(r, 300));
-check('une pose inconnue laisse le personnage tranquille',
+check('un état inconnu laisse le personnage tranquille',
   /\/img\/supporter\/sad\./.test((await scene(page)).src ?? ''));
 
 await page.close();
+
+/* ------------------------------------------------- le Fanzzy au centre
+
+   Dès que le joueur a un deck, c'est son premier Fanzzy qui tient l'écran, et
+   il doit y vivre les mêmes moments que le supporter — sinon les états
+   dessinés à grands frais ne servent qu'au classeur.
+
+   Le Fanzzy d'essai est celui dont la chaîne d'images a produit les douze
+   états. S'il n'est pas encore passé par elle, on saute la section plutôt que
+   d'échouer : c'est de l'art en cours de production, pas du code cassé.      */
+
+{
+  const manifeste = path.join(RACINE, 'public', 'img', 'fanzzy', 'index.json');
+  const catalogue = existsSync(manifeste)
+    ? JSON.parse(readFileSync(manifeste, 'utf8')).fanzzy ?? {}
+    : {};
+  // On cherche un Fanzzy qui a vraiment les états qu'on va demander : prendre
+  // le premier venu ferait échouer le test le jour où quelqu'un produit un
+  // stade partiel en premier.
+  const ID = Object.keys(catalogue).find((id) => {
+    const e = catalogue[id].evolutions?.e1?.skins?.base?.etats ?? [];
+    return ['neutre', 'but', 'encaisse'].every((x) => e.includes(x));
+  });
+
+  if (!ID) {
+    console.log('  --   aucun Fanzzy complet dans index.json : section sautée');
+  } else {
+    loadout = { fanzzy: [{ id: ID, nom: 'Le Petit Teigneux', stage: 1, stuff: [] }],
+      actions: [], mainVisible: 5 };
+    page = await ouvrir();
+    await page.waitForFunction((id) =>
+      document.querySelector('#pile .pose.on')?.getAttribute('src')?.includes(`/${id}/`),
+    { timeout: 8000 }, ID).catch(() => {});
+
+    v = await scene(page);
+    check('le Fanzzy équipé remplace le supporter',
+      new RegExp(`/img/fanzzy/${ID}/e1/base/neutre\\.`).test(v.src ?? ''));
+    check('sa révision est dans l’adresse', /\?v=\d+/.test(v.src ?? ''));
+    check('il porte son nom pour qui ne voit pas l’écran',
+      /Teigneux/.test(await page.$eval('#pile .pose.on', (n) => n.alt)));
+
+    await page.evaluate(() => TBF.pose('but'));
+    await new Promise((r) => setTimeout(r, 600));
+    v = await scene(page);
+    check('il exulte avec son propre dessin',
+      new RegExp(`/img/fanzzy/${ID}/e1/base/but\\.`).test(v.src ?? ''));
+
+    // La promesse du cadrage commun de `fanzzy-art.mjs` : l'union des boîtes de
+    // tous les états. Deux tailles différentes ici et les pieds du personnage
+    // remonteraient au moment du but.
+    const t = new Set(v.taille);
+    check('tous ses états partagent un cadrage', t.size === 1);
+    if (t.size > 1) console.log('    tailles :', [...t].join(' / '));
+
+    // Un état que ce stade n'a pas doit retomber sur `neutre`, pas laisser un
+    // trou. `ennui` existe pour TR1 ; on demande donc un stade jamais dessiné.
+    await page.evaluate(() => TBF.pose('neutre'));
+    await new Promise((r) => setTimeout(r, 400));
+    check('et il revient au repos', /neutre\./.test((await scene(page)).src ?? ''));
+    await page.close();
+  }
+
+  /* Un Fanzzy sans illustration ne doit pas laisser l'écran vide : le
+     supporter générique reprend sa place, et le joueur ne voit rien
+     d'anormal. C'est le cas de la grande majorité du catalogue aujourd'hui. */
+  const SANS_ART = Object.keys(catalogue).length
+    ? ['G1', 'V1', 'ZZ9'].find((id) => !catalogue[id]) : 'G1';
+  loadout = { fanzzy: [{ id: SANS_ART, nom: 'Pas encore dessiné', stage: 1, stuff: [] }],
+    actions: [], mainVisible: 5 };
+  page = await ouvrir();
+  check('un Fanzzy sans dessin laisse la place au supporter',
+    /\/img\/supporter\/idle\./.test((await scene(page)).src ?? ''));
+  await page.close();
+  loadout = null;
+}
 
 /* ------------------------------------------------------------- le menu */
 

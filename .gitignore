@@ -8,3 +8,11 @@ node_modules/
 # mais garde-les : on y revient quand un cadrage doit être repris.
 img_x/
 img_brut/
+
+# Les sources d'un Fanzzy vivent dans art/<ID>/_src/ : douze rendus 2K par
+# stade, cinq mégaoctets pièce. Pour cent trente-huit lignées à trois stades,
+# le dépôt gonflerait de plusieurs gigaoctets pour des fichiers dont personne
+# n'a besoin pour faire tourner le jeu — scripts/fanzzy-art.mjs en tire les
+# vignettes de public/img/fanzzy, elles versionnées. On les garde sur disque
+# pour reprendre un cadrage, pas dans l'historique.
+art/**/_src/
