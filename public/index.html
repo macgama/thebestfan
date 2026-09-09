@@ -569,7 +569,8 @@ async function jsonp(url, options) {
       : 'aucun club suivi';
   } catch { /* module non monté */ }
 
-  // L'avancement de la collection : la jauge du bas et la pastille de la tuile.
+  // L'avancement de la collection, et le Fanzzy équipé : une seule lecture
+  // pour les deux, puisque `/api/fanzzy/state` porte déjà les deux réponses.
   try {
     const [dex, coll] = await Promise.all([
       jsonp('/api/fanzzy/dex'),
@@ -589,39 +590,43 @@ async function jsonp(url, options) {
       if (reste) $('caseFanzzy').dataset.pastille = reste;
       else delete $('caseFanzzy').dataset.pastille;
     }
-  } catch { /* collection non montée : l'accueil reste utilisable sans */ }
+    /* ------------------------------------------- le Fanzzy au centre
 
-  /* --------------------------------------------- le Fanzzy au centre
+       C'est **le Fanzzy équipé** — `active_fanzzy`, celui que le joueur choisit
+       depuis le classeur. Pas le premier de son deck.
 
-     Le personnage affiché est le premier Fanzzy du deck. C'est celui que le
-     joueur a choisi de mettre en avant, et le deck est déjà la seule liste où
-     ce choix est écrit — inventer un second réglage « avatar » à côté ferait
-     deux endroits pour la même décision, dont un qui se périme.
+       L'accueil lisait le deck, faute d'avoir vu que le réglage existait déjà.
+       Ça marchait, et c'était faux : quelqu'un qui équipe un personnage dans le
+       classeur voyait l'accueil en afficher un autre, sans explication. Deux
+       endroits pour la même décision, dont un qui ment.
 
-     Tout est facultatif ici : pas de deck, pas de manifeste, pas d'illustration
-     pour cette carte — dans les trois cas le supporter reste à l'écran et
-     l'accueil ne s'en aperçoit pas.                                          */
-  try {
-    const [manifeste, deck] = await Promise.all([
-      window.TBF_ETATS.charger(),
-      jsonp('/api/deck/loadout', { credentials: 'same-origin' }).catch(() => null),
-    ]);
-    const premier = deck?.fanzzy?.[0];
-    if (manifeste && premier) {
+       Il est montré **à son âge atteint** : celui qui a payé quatre-vingt-dix
+       écharpes doit voir son Capo sur l'écran d'accueil. C'est l'inverse du
+       duel, où tout le monde entre au premier âge — et c'est cohérent : le duel
+       est une rencontre, l'accueil est chez soi.
+
+       Tout est facultatif ici : pas de Fanzzy équipé, pas de manifeste, pas
+       d'illustration pour cette carte — dans les trois cas le supporter reste à
+       l'écran et l'accueil ne s'en aperçoit pas.                             */
+    const actif = coll?.wallet?.active;
+    if (actif && await window.TBF_ETATS.charger()) {
       // `skin` n'est pas encore un réglage du joueur : tant qu'il n'y en a
       // qu'un, le demander explicitement évite d'avoir à revenir ici le jour
       // où il y en aura deux.
-      const candidat = { id: premier.id, evo: premier.stage ?? 1, skin: 'base' };
+      const candidat = { id: actif, evo: coll.stades?.[actif] ?? 1, skin: 'base' };
       if (window.TBF_ETATS.resoudre(candidat.id, candidat)) {
         equipe = candidat;
         precharger();
         // `force` : l'état ne change pas, le personnage si. Sans lui, `pose`
         // verrait le même nom d'état et ne redessinerait rien.
         await pose(poseActuelle ?? 'neutre', 0, true);
-        calques[devant].alt = `${premier.nom ?? candidat.id} dans la tribune`;
+        const def = (dex.dex ?? []).find((f) => f.id === actif);
+        const age = (dex.dex ?? []).find((f) => f.racine === actif
+          && f.stade === candidat.evo) ?? def;
+        calques[devant].alt = `${age?.nom ?? actif} dans la tribune`;
       }
     }
-  } catch { /* deck non monté : le supporter tient la place */ }
+  } catch { /* collection non montée : l'accueil reste utilisable sans */ }
 
   /* ------------------------------------------------- le match, en direct
 

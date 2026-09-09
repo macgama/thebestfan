@@ -36,6 +36,14 @@ h2 i{font-style:normal;opacity:.7}
   opacity:.5}
 .fmt.on{opacity:1;border-color:var(--projo);background:rgba(245,195,59,.12);color:var(--projo)}
 
+/* La portée de la liste des matchs. Elle imite les onglets de format juste
+   au-dessus : même geste, même endroit, donc rien de neuf à comprendre. */
+.portee{display:flex;gap:6px;padding:0 14px 8px}
+.pt{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.13);border-radius:999px;
+  color:inherit;padding:8px;font-size:10px;letter-spacing:.1em;cursor:pointer;opacity:.5;
+  font-family:var(--banner)}
+.pt.on{opacity:1;border-color:var(--craie)}
+
 .matchs{padding:0 14px 8px;display:flex;flex-direction:column;gap:7px}
 .mt{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;
   border:1px solid rgba(242,238,228,.11);background:var(--panneau);backdrop-filter:blur(10px);cursor:pointer}
@@ -47,6 +55,9 @@ h2 i{font-style:normal;opacity:.7}
   border:1px solid currentColor;flex:none}
 .mt .q.classe{color:var(--projo)}
 .mt .q.entrainement{color:var(--gris);opacity:.7}
+/* Le doublement pour son club. En vert, la couleur du gain — et non celle du
+   mode de duel, pour qu’on ne confonde pas les deux informations. */
+.mt .q.mien{color:var(--vert)}
 .raison{margin:0 16px 10px;font-size:11px;opacity:.6;line-height:1.6}
 
 .gros{margin:12px 14px;background:linear-gradient(180deg,var(--flare),#B32A1D);border:0;color:#fff;
@@ -425,6 +436,11 @@ const fermerVoile = () => $('voile').classList.remove('on');
 const S = {
   format: '3v3', fixtureId: null, matchs: [], catalogue: [],
   vue: null, enFile: false, dernierSeq: 0, occupe: false,
+  // La portée de la liste des matchs : ses clubs, ou tout le championnat. On
+  // peut jouer pour n’importe quel match — c’est ce qui permet de trouver un
+  // adversaire un mardi de trêve — mais on démarre sur ses clubs, parce que
+  // c’est là que le duel rapporte le double.
+  tousLesMatchs: false,
 };
 const carteDef = (id) => S.catalogue.find((a) => a.id === id);
 
@@ -434,7 +450,7 @@ async function preparer() {
   try {
     const [cat, matchs] = await Promise.all([
       api('/api/deck/catalogue'),
-      api('/api/deck/matchs'),
+      api(`/api/deck/matchs${S.tousLesMatchs ? '?tous=1' : ''}`),
     ]);
     S.catalogue = cat.actions ?? [];
     S.matchs = matchs.matchs ?? [];
@@ -467,9 +483,23 @@ function rendrePrepa(sansDeck, formats) {
     `<button class="fmt ${f === S.format ? 'on' : ''}" data-fmt="${f}">${f}</button>`).join('')}</div>`);
 
   out.push(`<h2>LE MATCH SUPPORT</h2>`);
+  /* La portée de la liste.
+
+     Jouer pour un match qui n'est pas celui de son club est permis — sans quoi
+     il n'y aurait personne en file un mardi de trêve — mais ça rapporte moitié
+     moins. Le badge ×2 le rappelle carte par carte ; ce bouton, lui, existait
+     côté serveur depuis longtemps et aucune page ne l'appelait. */
+  out.push(`<div class="portee">
+    <button class="pt ${S.tousLesMatchs ? '' : 'on'}" data-portee="miens">MES CLUBS</button>
+    <button class="pt ${S.tousLesMatchs ? 'on' : ''}" data-portee="tous">TOUS LES MATCHS</button>
+  </div>`);
+
   if (!S.matchs.length) {
-    out.push(`<div class="vide">Aucun match à venir pour tes clubs.<br>
-      <a href="/equipes">Suivre d\u2019autres clubs</a></div>`);
+    out.push(S.tousLesMatchs
+      ? `<div class="vide">Aucun match dans les huit prochains jours.</div>`
+      : `<div class="vide">Aucun match à venir pour tes clubs.<br>
+         <a href="/equipes">Suivre d’autres clubs</a>, ou passe à
+         <b>tous les matchs</b> ci-dessus.</div>`);
   } else {
     out.push('<div class="matchs">');
     for (const m of S.matchs) {
@@ -477,6 +507,7 @@ function rendrePrepa(sansDeck, formats) {
       out.push(`<div class="mt ${on ? 'on' : ''}" data-fixture="${m.id}">
         ${m.home_logo ? `<img src="${esc(m.home_logo)}" alt="">` : ''}
         <div class="n">${esc(m.home_name)} – ${esc(m.away_name)}</div>
+        ${m.mien ? '<div class="q mien">×2</div>' : ''}
         <div class="q ${m.mode}">${m.mode === 'classe' ? 'CLASSÉ' : 'ENTRAÎNEMENT'}</div>
       </div>`);
     }
@@ -488,7 +519,9 @@ function rendrePrepa(sansDeck, formats) {
     out.push(`<div class="raison">${choisi.mode === 'classe'
       ? (choisi.enCours ? 'Le match est en cours : ce duel comptera au classement.'
                         : 'Match du jour : ce duel comptera au classement.')
-      : 'Match à venir : entraînement, sans effet sur le classement.'}</div>`);
+      : 'Match à venir : entraînement, sans effet sur le classement.'}
+      ${choisi.mien ? '<br><b>Un de tes clubs joue : ce duel rapporte le double d’écharpes.</b>' : ''}
+      </div>`);
   }
 
   out.push(`<button class="gros" id="entrer" ${sansDeck || !S.fixtureId ? 'disabled' : ''}>
@@ -504,8 +537,38 @@ $('prepaCorps').addEventListener('click', (e) => {
   if (f) { S.format = f.dataset.fmt; return preparerRendu(); }
   const m = e.target.closest('[data-fixture]');
   if (m) { S.fixtureId = Number(m.dataset.fixture); return preparerRendu(); }
+  /* Changer de portée relit la liste : elle vient du serveur, qui seul sait
+     quels matchs existent et lesquels mettent un club suivi en jeu. Le match
+     choisi est remis à zéro — il peut très bien ne plus être dans la liste. */
+  const p = e.target.closest('[data-portee]');
+  if (p) {
+    const tous = p.dataset.portee === 'tous';
+    if (tous === S.tousLesMatchs) return undefined;
+    S.tousLesMatchs = tous;
+    S.fixtureId = null;
+    return rechargerMatchs();
+  }
   if (e.target.closest('#entrer')) entrerEnFile();
+  return undefined;
 });
+
+/**
+ * Relit la liste des matchs pour la portée courante.
+ *
+ * Le premier match classé est choisi d'office, comme au chargement : c'est
+ * celui qu'on vient jouer, et laisser la sélection vide obligerait à deux
+ * gestes là où un seul suffit.
+ */
+async function rechargerMatchs() {
+  try {
+    const r = await api(`/api/deck/matchs${S.tousLesMatchs ? '?tous=1' : ''}`);
+    S.matchs = r.matchs ?? [];
+  } catch {
+    S.matchs = [];               // hors ligne : la liste vide dit déjà tout
+  }
+  S.fixtureId = S.matchs.find((m) => m.mode === 'classe')?.id ?? S.matchs[0]?.id ?? null;
+  preparerRendu();
+}
 
 // On ne recharge pas les catalogues à chaque clic : seul l'affichage change.
 let sansDeckMemo = false, formatsMemo = ['1v1','2v2','3v3','4v4','5v5'];
@@ -1041,7 +1104,7 @@ addEventListener('load', () => {
   try {
     const [cat, matchs] = await Promise.all([
       api('/api/deck/catalogue'),
-      api('/api/deck/matchs'),
+      api(`/api/deck/matchs${S.tousLesMatchs ? '?tous=1' : ''}`),
     ]);
     S.catalogue = cat.actions ?? [];
     S.matchs = matchs.matchs ?? [];

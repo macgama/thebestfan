@@ -49,6 +49,10 @@ for (const [i, id] of U.entries()) {
       fanzzy:[{id:'V1',stuff:[]},{id:'P1',stuff:[]},{id:'F1',stuff:[]}], actions: dix })]);
 }
 await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle')`);
+// Le premier duelliste suit Sion, qui joue le match 900 ; le second ne suit
+// personne. Pousser pour son club rapporte le double, et la comparaison des
+// deux bourses à la fin du duel est le seul moyen de le vérifier.
+await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1)`, [U[0]]);
 await raw.query(`INSERT INTO leagues (id,name) VALUES (207,'Super League')`);
 await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,kickoff_at)
   VALUES (900,207,2026,85,91,'1H',UTC_TIMESTAMP()),
@@ -170,6 +174,28 @@ const [res] = await pool.query('SELECT user_id, outcome FROM duel_results WHERE 
 check('le duel classé est enregistré', res.length === 2);
 check('un gagnant et un perdant',
   res.filter((r)=>r.outcome==='win').length === 1 && res.filter((r)=>r.outcome==='loss').length === 1);
+
+/* ------------------------------------------ le double pour son club
+
+   On peut jouer pour n’importe quel match — c’est ce qui permet de trouver un
+   adversaire un mardi de trêve. Mais pousser pour son club doit rester ce qui
+   rapporte le plus, sinon suivre une équipe ne veut plus rien dire.
+
+   Le multiplicateur se calcule par joueur et non par duel : ici les deux ont
+   vécu le même match, l’un pour son club et l’autre non, et leurs bourses
+   doivent le montrer. */
+
+const bourse = async (u) => (await pool.query(
+  'SELECT scarves FROM user_wallet WHERE user_id = ?', [u]))[0][0].scarves;
+const issue = (u) => res.find((r) => r.user_id === u)?.outcome;
+const BAREME = { win: 30, loss: 12 };
+
+const gainA = await bourse(U[0]);
+const gainB = await bourse(U[1]);
+check(`celui qui suit un club du match touche le double (${gainA})`,
+  gainA === BAREME[issue(U[0])] * 2);
+check(`l’autre touche le barème simple (${gainB})`,
+  gainB === BAREME[issue(U[1])]);
 
 /* -------------------------------------------------- entraînement et bots */
 

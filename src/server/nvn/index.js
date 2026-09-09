@@ -240,14 +240,49 @@ export function createNvN({ pool, io, requireAuth, decks }) {
     entrainement: { gagne: 15, perdu: 6 },
   };
 
+  /**
+   * Le double quand on pousse pour son club.
+   *
+   * On peut jouer pour n'importe quel match — c'est ce qui permet de trouver un
+   * adversaire un mardi soir de trêve. Mais pousser pour son club doit rester ce
+   * qui rapporte le plus, sinon le suivi d'équipe ne veut plus rien dire et le
+   * joueur va simplement là où il y a du monde.
+   *
+   * Le multiplicateur se calcule **par joueur**, pas par duel : deux adversaires
+   * peuvent très bien avoir chacun leur club sur le terrain, ou un seul, ou
+   * aucun. C'est justement l'intérêt d'un derby.
+   */
+  const DOUBLE_CLUB = 2;
+
+  /**
+   * Qui, parmi ces joueurs, suit l'une des deux équipes du match.
+   *
+   * Une requête pour tout le monde, et non une par joueur : `fermer()` tourne à
+   * la fin de chaque duel, et un aller-retour par participant sur un 5 contre 5
+   * pour lire une table de deux lignes serait du gaspillage pur.
+   */
+  async function concernes(userIds, fixture) {
+    const equipes = [fixture?.home?.id, fixture?.away?.id].filter(Number.isFinite);
+    if (!userIds.length || !equipes.length) return new Set();
+    const trous = userIds.map(() => '?').join(',');
+    const rows = await q(
+      `SELECT DISTINCT user_id FROM user_follows
+        WHERE user_id IN (${trous}) AND team_id IN (${equipes.map(() => '?').join(',')})`,
+      [...userIds, ...equipes]);
+    return new Set(rows.map((r) => r.user_id));
+  }
+
   async function recompenser(d) {
     const bareme = GAIN[d.mode] ?? GAIN.entrainement;
     try {
-      for (const [userId, j] of d.joueurs) {
-        // Un bot n'a pas de bourse, et lui en créer une inventerait un joueur.
-        if (userId.startsWith('bot:')) continue;
+      // Un bot n'a pas de bourse, et lui en créer une inventerait un joueur.
+      const humains = [...d.joueurs].filter(([userId]) => !userId.startsWith('bot:'));
+      const pourLeurClub = await concernes(humains.map(([u]) => u), d.fixture);
+
+      for (const [userId, j] of humains) {
         const gagne = d.vainqueur !== null && j.side === d.vainqueur;
-        const montant = gagne ? bareme.gagne : bareme.perdu;
+        const base = gagne ? bareme.gagne : bareme.perdu;
+        const montant = base * (pourLeurClub.has(userId) ? DOUBLE_CLUB : 1);
         await q(`INSERT IGNORE INTO user_wallet (user_id) VALUES (?)`, [userId]);
         await q(`UPDATE user_wallet SET scarves = scarves + ? WHERE user_id = ?`,
           [montant, userId]);
