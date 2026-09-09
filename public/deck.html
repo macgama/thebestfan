@@ -240,7 +240,7 @@ const RANG = { commune:1, rare:2, epique:3, legendaire:4 };
  * doit savoir quoi corriger sans relire les règles.
  */
 const MESSAGES = {
-  'deck.error.fanzzy_count':      'Il faut exactement trois Fanzzy.',
+  'deck.error.fanzzy_count':      'Il faut entre un et trois Fanzzy.',
   'deck.error.fanzzy_duplicate':  'Le même Fanzzy apparaît deux fois.',
   'deck.error.fanzzy_not_owned':  'Tu ne possèdes pas ce Fanzzy.',
   'deck.error.too_much_stuff':    'Au plus deux pièces d\u2019équipement par Fanzzy.',
@@ -249,7 +249,7 @@ const MESSAGES = {
   'deck.error.actions_count':     'Il faut exactement dix cartes d\u2019action.',
   'deck.error.action_unknown':    'Cette carte n\u2019existe pas.',
   'deck.error.action_not_owned':  'Tu ne possèdes pas cette carte.',
-  'deck.error.too_many_copies':   'Deux exemplaires au maximum d\u2019une même carte.',
+  'deck.error.too_many_copies':   'Trop d’exemplaires d’une même carte.',
   'deck.error.invalid':           'Le deck a été refusé :',
   'deck.error.none':              'Aucun deck enregistré pour l\u2019instant.',
   'deck.error.server':            'Le serveur n\u2019a pas pu enregistrer le deck.',
@@ -284,7 +284,7 @@ function toast(t) {
 const S = {
   deck: { nom: 'Mon deck', fanzzy: [], actions: [] },
   possede: { fanzzy: [], stuff: [], actions: [] },
-  regles: { fanzzy: 3, stuffParFanzzy: 2, actions: 10, copiesMax: 2 },
+  regles: { fanzzy: 3, fanzzyMin: 1, stuffParFanzzy: 2, actions: 10, copiesMax: null },
   dex: new Map(), types: {}, catalogue: [], stuff: new Map(),
   onglet: 'tribune', filtre: 'miennes', sale: false,
 };
@@ -533,7 +533,7 @@ function cartesHTML() {
         data-detail="${a.id}">
         <div class="cout">${a.cost}<small>SOUFFLE</small></div>
         <div class="txt"><b>${esc(a.nom)}${rangHTML(a.rar)}</b><p>${esc(a.texte)}</p></div>
-        <div class="compte ${n ? 'on' : ''}">${possede ? `${n}/${S.regles.copiesMax}` : '—'}</div>
+        <div class="compte ${n ? 'on' : ''}">${possede ? (S.regles.copiesMax == null ? (n ? `×${n}` : '0') : `${n}/${S.regles.copiesMax}`) : '—'}</div>
       </div>`);
     }
     out.push('</div>');
@@ -636,7 +636,7 @@ function panneauCarte(id) {
   if (!possede) {
     bas = `<div class="vide" style="padding:18px 10px">Tu ne possèdes pas encore cette carte.<br>
       Elle sort des boosters, au <a href="/fanzzy">kiosque</a>.</div>`;
-  } else if (n >= S.regles.copiesMax) {
+  } else if (S.regles.copiesMax != null && n >= S.regles.copiesMax) {
     bas = `<div class="vide" style="padding:18px 10px">Tu en as déjà
       ${S.regles.copiesMax} exemplaires : c\u2019est le maximum.</div>`;
   } else if (plein) {
@@ -644,7 +644,7 @@ function panneauCarte(id) {
       Retire une carte pour faire de la place.</div>`;
   } else {
     bas = `<div style="padding:6px 0 10px"><button class="btn" style="width:100%"
-      data-ajouter="${a.id}">AJOUTER AU DECK${n ? ` (${n}/${S.regles.copiesMax})` : ''}</button></div>`;
+      data-ajouter="${a.id}">AJOUTER AU DECK${n ? ` (${S.regles.copiesMax == null ? `déjà ×${n}` : `${n}/${S.regles.copiesMax}`})` : ''}</button></div>`;
   }
 
   ouvrir(a.nom, `<p style="margin:0 2px 12px;font-size:13px;line-height:1.65;opacity:.85">

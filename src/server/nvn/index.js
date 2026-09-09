@@ -224,11 +224,55 @@ export function createNvN({ pool, io, requireAuth, decks }) {
     }
   }
 
+  /**
+   * Ce qu'un duel rapporte, en écharpes.
+   *
+   * Le classé paie le double de l'entraînement : c'est ce qui fait préférer un
+   * vrai adversaire pendant un vrai match. Le perdant touche quand même — une
+   * défaite qui ne rapporte rien pousse à quitter la salle avant la fin, et un
+   * duel abandonné gâche la soirée des deux camps.
+   *
+   * Les montants sont volontairement modestes au regard d'un booster (45) :
+   * les écharpes viennent surtout des doublons, le duel est un complément.
+   */
+  const GAIN = {
+    classe: { gagne: 30, perdu: 12 },
+    entrainement: { gagne: 15, perdu: 6 },
+  };
+
+  async function recompenser(d) {
+    const bareme = GAIN[d.mode] ?? GAIN.entrainement;
+    try {
+      for (const [userId, j] of d.joueurs) {
+        // Un bot n'a pas de bourse, et lui en créer une inventerait un joueur.
+        if (userId.startsWith('bot:')) continue;
+        const gagne = d.vainqueur !== null && j.side === d.vainqueur;
+        const montant = gagne ? bareme.gagne : bareme.perdu;
+        await q(`INSERT IGNORE INTO user_wallet (user_id) VALUES (?)`, [userId]);
+        await q(`UPDATE user_wallet SET scarves = scarves + ? WHERE user_id = ?`,
+          [montant, userId]);
+      }
+    } catch (e) {
+      // Un duel qui s'est bien joué ne doit pas se terminer en erreur parce
+      // que la bourse n'a pas pu être créditée. On le dit et on continue.
+      console.error('[nvn] écharpes de fin de duel', e.message);
+    }
+  }
+
   async function fermer(salle) {
     clearInterval(salle.timer);
     const d = salle.duel;
     salles.delete(d.id);
     for (const userId of salle.membres.keys()) salleDe.delete(userId);
+
+    // Un duel rapporte toujours quelque chose, classé ou non.
+    //
+    // L'entraînement ne rapportait rien du tout : on pouvait y passer une
+    // heure et repartir les mains vides, ce qui en faisait un didacticiel
+    // plutôt qu'une façon de jouer. Il paie maintenant, moins qu'un duel
+    // classé, et il reste hors du classement — c'est là qu'est la différence,
+    // pas dans la récompense.
+    await recompenser(d);
 
     // Seul un duel classé s'écrit au classement. Les bots n'y figurent pas.
     if (d.mode !== 'classe' || d.vainqueur === null) return;
