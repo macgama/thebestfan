@@ -272,6 +272,33 @@ très bien leurs nouveaux âges, et laisse leur `evo` à NULL : les cartes exist
 personne ne les désigne, aucune lignée n’apparaît. Sans erreur et sans log.
 `raccrocherLignees()` remplit ce trou au démarrage, avec `WHERE evo IS NULL` —
 on comble, on ne corrige jamais un choix. `stades-smoke` le vérifie.
+**On joue pour n’importe quel match, et pousser pour son club rapporte le
+double.** Les deux règles ne se séparent pas : sans la première, la seconde
+s’appliquerait toujours et ne voudrait rien dire ; sans la seconde, suivre une
+équipe n’aurait plus de conséquence en jeu.
+
+Le multiplicateur se calcule **par joueur**, jamais par duel. Deux adversaires
+peuvent avoir chacun leur club sur le terrain, un seul, ou aucun — c’est
+justement ce qui fait un derby. `recompenser()` lit les clubs suivis de tous
+les participants en une requête, et non une par joueur : `fermer()` tourne à la
+fin de chaque duel, et un aller-retour par participant sur un 5 contre 5 pour
+lire deux lignes serait du gaspillage pur.
+
+La règle est **annoncée avant le choix**, pas découverte après coup en lisant
+son solde : `matchsProposables` marque chaque match d’un `mien`, `matchSupport`
+répond `bonus: 2`, et l’écran de duel affiche un badge ×2 par match plus une
+phrase sous la liste. Une règle qu’on ne voit qu’après ne pèse sur aucune
+décision, et c’est pourtant là qu’elle doit peser.
+
+**L’accueil montre le Fanzzy équipé — `active_fanzzy`, pas le premier du
+deck.** Il lisait le deck, faute d’avoir vu que le réglage existait déjà : ça
+marchait, et c’était faux. Quelqu’un qui équipait un personnage depuis son
+classeur en voyait un autre sur son accueil, sans explication.
+
+Il l’affiche **à son âge atteint** — celui qui a payé quatre-vingt-dix écharpes
+voit son Capo chez lui. C’est l’inverse du duel, où tout le monde entre au
+premier âge, et les deux se justifient : le duel est une rencontre, l’accueil
+est chez soi.
 **Un skin ne donne aucun bonus.** Il change l'apparence, rien d'autre. Celui qui
 ouvre mille boosters est plus beau, pas plus fort.
 

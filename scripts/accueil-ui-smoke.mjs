@@ -113,12 +113,16 @@ app.get('/api/auth/me', (_q, s) => s.json({ user: { pseudo: 'Momo' } }));
 let direct = null;
 app.get('/api/virage/live', (_q, s) => s.json({ matchs: direct ? [direct] : [] }));
 
-// Le deck aussi est simulé, et pour la même raison : `deck-smoke` éprouve la
-// route, on éprouve ici ce que l'accueil en fait. Un talon laisse en plus
-// choisir un Fanzzy illustré puis un Fanzzy qui ne l'est pas, ce qui est
-// précisément la bascule à vérifier.
-let loadout = null;
-app.get('/api/deck/loadout', (_q, s) => s.json(loadout ?? { error: 'deck.error.none' }));
+/* Le Fanzzy équipé n'est pas simulé : il vit dans `user_wallet.active_fanzzy`
+   et le vrai module fanzzy le sert. On l’équipe donc en base, comme le ferait
+   le joueur depuis son classeur — c’est précisément le chemin qui était faux,
+   l’accueil lisant le premier Fanzzy du deck au lieu de celui-là. */
+const equiper = async (id, stade = 1) => {
+  await pool.query(
+    `INSERT INTO user_fanzzy (user_id, fanzzy_id, copies, stage) VALUES (?, ?, 1, ?)
+     ON DUPLICATE KEY UPDATE stage = VALUES(stage)`, [U, id, stade]);
+  await pool.query('UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?', [id, U]);
+};
 
 app.use('/api/fanzzy', createFanzzy({ pool, requireAuth }).router);
 app.use('/api/me', createOnboarding({ pool, requireAuth }).router);
@@ -241,8 +245,7 @@ await page.close();
   if (!ID) {
     console.log('  --   aucun Fanzzy complet dans index.json : section sautée');
   } else {
-    loadout = { fanzzy: [{ id: ID, nom: 'Le Petit Teigneux', stage: 1, stuff: [] }],
-      actions: [], mainVisible: 5 };
+    await equiper(ID);
     page = await ouvrir();
     await page.waitForFunction((id) =>
       document.querySelector('#pile .pose.on')?.getAttribute('src')?.includes(`/${id}/`),
@@ -268,12 +271,46 @@ await page.close();
     check('tous ses états partagent un cadrage', t.size === 1);
     if (t.size > 1) console.log('    tailles :', [...t].join(' / '));
 
-    // Un état que ce stade n'a pas doit retomber sur `neutre`, pas laisser un
-    // trou. `ennui` existe pour TR1 ; on demande donc un stade jamais dessiné.
     await page.evaluate(() => TBF.pose('neutre'));
     await new Promise((r) => setTimeout(r, 400));
     check('et il revient au repos', /neutre\./.test((await scene(page)).src ?? ''));
     await page.close();
+
+    /* --------------------------------- l'âge atteint, pas le premier
+
+       Chez soi, le personnage se montre tel que le joueur l'a fait grandir :
+       celui qui a payé quatre-vingt-dix écharpes doit voir son Capo sur son
+       écran d'accueil. C'est l'inverse du duel, où tout le monde entre au
+       premier âge — et c'est cohérent, le duel est une rencontre, l'accueil
+       est chez soi.
+
+       On ne l'éprouve que si le second âge est dessiné : sinon le repli
+       ramènerait au premier, ce qui serait le bon comportement mais ne
+       prouverait rien.                                                      */
+    const e2 = catalogue[ID].evolutions?.e2?.skins?.base?.etats ?? [];
+    if (!e2.length) {
+      console.log('  --   pas de second âge dessiné : section sautée');
+    } else {
+      await equiper(ID, 2);
+      page = await ouvrir();
+      await page.evaluate((etat) => TBF.pose(etat), e2[0]);
+      await new Promise((r) => setTimeout(r, 600));
+      check('au stade 2, c’est le second âge qui s’affiche',
+        new RegExp(`/img/fanzzy/${ID}/e2/base/${e2[0]}\\.`).test((await scene(page)).src ?? ''));
+
+      // Et un état que le second âge n'a pas retombe sur le premier plutôt que
+      // de laisser un trou : le personnage paraît plus jeune une seconde, il
+      // ne disparaît pas.
+      const absent = ['neutre', 'but', 'encaisse'].find((x) => !e2.includes(x));
+      if (absent) {
+        await page.evaluate((etat) => TBF.pose(etat), absent);
+        await new Promise((r) => setTimeout(r, 600));
+        check('un état absent du second âge retombe sur le premier',
+          new RegExp(`/img/fanzzy/${ID}/e1/base/${absent}\\.`).test((await scene(page)).src ?? ''));
+      }
+      await page.close();
+      await equiper(ID, 1);
+    }
   }
 
   /* Un Fanzzy sans illustration ne doit pas laisser l'écran vide : le
@@ -281,13 +318,11 @@ await page.close();
      d'anormal. C'est le cas de la grande majorité du catalogue aujourd'hui. */
   const SANS_ART = Object.keys(catalogue).length
     ? ['G1', 'V1', 'ZZ9'].find((id) => !catalogue[id]) : 'G1';
-  loadout = { fanzzy: [{ id: SANS_ART, nom: 'Pas encore dessiné', stage: 1, stuff: [] }],
-    actions: [], mainVisible: 5 };
+  await equiper(SANS_ART);
   page = await ouvrir();
   check('un Fanzzy sans dessin laisse la place au supporter',
     /\/img\/supporter\/idle\./.test((await scene(page)).src ?? ''));
   await page.close();
-  loadout = null;
 }
 
 /* ------------------------------------------------------------- le menu */
@@ -445,8 +480,15 @@ await page.close();
   check('le club suivi est nommé', /Sion/.test(hud.club));
   check('la bourse affiche écharpes et boosters',
     hud.ecarpes === '90' && hud.boosters === '12');
-  // Le compte de collection vient du serveur : deux Fanzzy sur le catalogue.
-  check('la collection est chiffrée', /^2\/\d+$/.test(hud.collec));
+  /* Le compte vient du serveur, et on le compare à la base plutôt qu'à un
+     chiffre écrit ici. Il valait « 2 » tant que la suite ne posait que deux
+     Fanzzy ; depuis qu'elle en équipe d'autres pour éprouver l'accueil, il en
+     vaut quatre — et un test qui fige un total finit toujours par mesurer sa
+     propre mise en scène plutôt que le comportement. */
+  const [[{ n: possedes }]] = await pool.query(
+    'SELECT COUNT(*) n FROM user_fanzzy WHERE user_id = ?', [U]);
+  check(`la collection est chiffrée (${possedes} possédés)`,
+    new RegExp(`^${possedes}/\\d+$`).test(hud.collec));
   check('et sa jauge est remplie d’autant', /^[0-9.]+%$/.test(hud.jauge));
   check('le bouton d’entrée mène au duel hors match', hud.entrer === '/duel-nvn');
   await page.close();

@@ -162,7 +162,7 @@ export function createDecks({ pool, requireAuth }) {
    * On compare des jours, pas des heures : un match programmé à 20h45
    * aujourd'hui doit pouvoir être choisi dès le matin.
    */
-  async function matchSupport(fixtureId) {
+  async function matchSupport(fixtureId, userId = null) {
     const rows = await q(
       `SELECT f.id, f.status_short, f.kickoff_at, f.elapsed,
               DATE(f.kickoff_at) AS jour, UTC_DATE() AS aujourdhui,
@@ -190,6 +190,10 @@ export function createDecks({ pool, requireAuth }) {
     if (termine || jour < auj) throw fail('duel.error.fixture_past');
 
     const mode = (jour === auj || enCours) ? 'classe' : 'entrainement';
+
+    const mien = userId ? (await q(
+      `SELECT 1 FROM user_follows WHERE user_id = ? AND team_id IN (?, ?) LIMIT 1`,
+      [userId, f.home_id, f.away_id])).length > 0 : false;
     return {
       fixture: {
         id: f.id, jour, status: f.status_short, elapsed: f.elapsed,
@@ -205,6 +209,11 @@ export function createDecks({ pool, requireAuth }) {
         ? (enCours ? 'Le match est en cours : ce duel comptera au classement.'
                    : 'Match du jour : ce duel comptera au classement.')
         : 'Match à venir : entraînement, sans effet sur le classement.',
+      // Ce match met-il en jeu un club suivi ? Le duel rapporte alors le
+      // double. `userId` est facultatif : appelé sans lui — depuis la file du
+      // NvN, qui ne veut que le support du duel — la question ne se pose pas.
+      mien,
+      ...(mien ? { bonus: 2 } : {}),
     };
   }
 
@@ -218,6 +227,7 @@ export function createDecks({ pool, requireAuth }) {
     const rows = await q(
       `SELECT f.id, f.status_short, f.elapsed, f.kickoff_at, f.home_goals, f.away_goals,
               DATE(f.kickoff_at) = UTC_DATE() AS aujourdhui,
+              f.home_id, f.away_id,
               h.name AS home_name, h.logo AS home_logo,
               a.name AS away_name, a.logo AS away_logo, l.name AS league_name
          FROM fixtures f
@@ -231,10 +241,20 @@ export function createDecks({ pool, requireAuth }) {
         ORDER BY aujourdhui DESC, f.kickoff_at
         LIMIT 60`, args);
 
+    // Les clubs suivis, une fois pour toute la liste. Avec `tous=1` elle peut
+    // contenir soixante matchs, et une requête par ligne pour lire une table de
+    // deux entrées serait absurde.
+    const mesClubs = new Set((await q(
+      `SELECT team_id FROM user_follows WHERE user_id = ?`, [userId])).map((r) => r.team_id));
+
     return rows.map((f) => ({
       ...f,
       enCours: LIVE.includes(f.status_short),
       mode: (f.aujourdhui || LIVE.includes(f.status_short)) ? 'classe' : 'entrainement',
+      // Pousser pour son club rapporte le double. Le dire **avant** le choix :
+      // une règle qu'on ne découvre qu'en lisant son solde après coup ne pèse
+      // sur aucune décision, et c'est pourtant là qu'elle doit peser.
+      mien: mesClubs.has(f.home_id) || mesClubs.has(f.away_id),
     }));
   }
 
@@ -281,7 +301,7 @@ export function createDecks({ pool, requireAuth }) {
       { tousLesClubs: req.query.tous === '1' }) })));
 
   router.get('/match/:id', requireAuth, safe(async (req, res) =>
-    res.json(await matchSupport(Number(req.params.id)))));
+    res.json(await matchSupport(Number(req.params.id), req.user.id))));
 
   return { router, deckDe, loadout, enregistrer, matchSupport, matchsProposables, possessions };
 }

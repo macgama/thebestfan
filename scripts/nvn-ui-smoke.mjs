@@ -75,10 +75,14 @@ for (const [i, id] of U.entries()) {
       actions: dix })]);
 }
 
-await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle')`);
+await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle'),(60,'Lugano'),(61,'Coire')`);
 await raw.query(`INSERT INTO leagues (id,name) VALUES (207,'Super League')`);
+// Deux matchs : celui du club suivi, et celui de deux clubs que personne ne
+// suit. Le second n'apparaît que sous « tous les matchs », et sans le badge
+// ×2 — c’est exactement ce qui distingue les deux portées.
 await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,kickoff_at)
-  VALUES (7,207,2026,85,91,'1H', UTC_TIMESTAMP() - INTERVAL 20 MINUTE)`);
+  VALUES (7,207,2026,85,91,'1H', UTC_TIMESTAMP() - INTERVAL 20 MINUTE),
+         (8,207,2026,60,61,'NS', UTC_TIMESTAMP() + INTERVAL 2 DAY)`);
 for (const id of U) {
   await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1)`, [id]);
 }
@@ -171,6 +175,41 @@ check('le duel est annoncé classé pour un match en cours',
 check('avec un deck, l\u2019entrée en file est ouverte', prepa.entrerActif === true);
 check('l\u2019écran prévient que des bots complètent',
   /bots complètent/.test(prepa.texte));
+
+/* -------------------------------- la portée, et le double pour son club
+
+   On peut jouer pour n’importe quel match, et pousser pour son club rapporte
+   le double. Les deux règles vont ensemble : sans la première, la seconde
+   s’appliquerait toujours et ne voudrait rien dire.
+
+   Le serveur savait déjà répondre à `?tous=1` ; aucune page ne le lui
+   demandait, ce qui rendait la fonction invisible, donc inexistante. */
+
+const portee = async (quoi) => {
+  await A.page.evaluate((q) =>
+    document.querySelector(`[data-portee="${q}"]`)?.click(), quoi);
+  await dodo(600);
+  return A.page.evaluate(() => ({
+    matchs: [...document.querySelectorAll('[data-fixture]')].map((m) => m.textContent.trim()),
+    doubles: [...document.querySelectorAll('[data-fixture]')]
+      .filter((m) => m.querySelector('.q.mien')).length,
+    texte: document.getElementById('prepaCorps').textContent.replace(/s+/g, ' '),
+  }));
+};
+
+const miens = await portee('miens');
+check('par défaut, seuls les matchs de ses clubs sont proposés',
+  miens.matchs.length === 1 && /Sion/.test(miens.matchs[0]));
+check('et celui-là porte le badge du double', miens.doubles === 1);
+check('la page explique pourquoi', /rapporte le double/.test(miens.texte));
+
+const tousM = await portee('tous');
+check('« tous les matchs » en propose davantage', tousM.matchs.length === 2);
+check('dont un match sans club suivi', tousM.matchs.some((m) => /Lugano/.test(m)));
+check('et un seul porte le badge du double', tousM.doubles === 1);
+
+// On revient sur ses clubs : la suite du test compte sur ce match-là.
+await portee('miens');
 
 /* ---------------------------------------------------- file et appariement */
 
