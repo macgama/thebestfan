@@ -440,8 +440,8 @@
     /** Une carte rare sort d'un booster. */
     rare(rarete = 'd3', element) {
       const { x, y } = centre(element);
-      const palette = { d3: [COULEURS.bleu, COULEURS.craie],
-        star: [COULEURS.or, '#FFF3D0'], crown: [COULEURS.or, COULEURS.feu, '#FFF3D0'] }[rarete]
+      const palette = { epique: [COULEURS.bleu, COULEURS.craie],
+        legendaire: [COULEURS.or, COULEURS.feu, '#FFF3D0'] }[rarete]
         ?? [COULEURS.craie];
       onde({ x, y, couleur: palette[0], taille: rarete === 'crown' ? 560 : 340 });
       particules({ x, y, couleurs: palette, distance: rarete === 'crown' ? 260 : 170,

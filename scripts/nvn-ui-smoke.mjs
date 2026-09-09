@@ -50,7 +50,7 @@ for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql',
 }
 
 const U = ['11111111-0000-0000-0000-000000000001', '22222222-0000-0000-0000-000000000002'];
-const communes = ACTIONS.filter((a) => a.rar === 'd1').map((a) => a.id);
+const communes = ACTIONS.filter((a) => a.rar === 'commune').map((a) => a.id);
 const dix = [...communes, ...communes].slice(0, 10);
 
 for (const [i, id] of U.entries()) {

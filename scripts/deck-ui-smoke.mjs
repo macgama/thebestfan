@@ -239,7 +239,7 @@ clic(T(dom).querySelector('[data-onglet="cartes"]'));
 await jusqua(() => T(dom).querySelector('.grille'));
 check('dix emplacements de cartes', T(dom).querySelectorAll('.emp').length === 10);
 
-const communes = ACTIONS.filter((a) => a.rar === 'd1').map((a) => a.id);
+const communes = ACTIONS.filter((a) => a.rar === 'commune').map((a) => a.id);
 async function ajouter(id) {
   const carte = T(dom).querySelector(`[data-detail="${id}"]`);
   if (!carte) return false;

@@ -61,7 +61,7 @@ check('aucun skin au premier booster',
 check('toutes du bon set',
   r.json.cards.filter((c) => c.type === 'fanzzy').every((c) => BY_ID.get(c.id).set === 'VN'));
 check('trois communes garanties',
-  r.json.cards.slice(0, 3).every((c) => c.type === 'fanzzy' && BY_ID.get(c.id).rar === 'd1'));
+  r.json.cards.slice(0, 3).every((c) => c.type === 'fanzzy' && BY_ID.get(c.id).rar === 'commune'));
 check('un booster consommé', r.json.wallet.packs === MAX_PACKS - 1);
 check('la recharge est amorcée', typeof r.json.wallet.nextPackInMs === 'number');
 check('un Fanzzy est équipé d\u2019office', Boolean(r.json.wallet.active));

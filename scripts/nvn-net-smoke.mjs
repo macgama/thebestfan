@@ -34,7 +34,7 @@ for (const f of ['auth.sql','football.sql','duel.sql','souvenirs.sql','fanzzy.sq
 }
 const U = ['e1','e2','e3','e4'].map((x, i) =>
   `eeee0000-0000-0000-0000-00000000000${i + 1}`);
-const communes = ACTIONS.filter((a) => a.rar === 'd1').map((a) => a.id);
+const communes = ACTIONS.filter((a) => a.rar === 'commune').map((a) => a.id);
 const dix = [...communes, ...communes].slice(0, 10);
 for (const [i, id] of U.entries()) {
   await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,

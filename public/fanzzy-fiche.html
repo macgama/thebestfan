@@ -108,7 +108,7 @@ const COUL = { voix:'#F5C33B', perc:'#3C82E8', tifo:'#8257DA',
                pyro:'#E0402C', depl:'#1E9E6A', fide:'#C2CAD6' };
 const NOMTYPE = { voix:'Voix', perc:'Percussion', tifo:'Tifo',
                   pyro:'Pyro', depl:'Déplacement', fide:'Fidélité' };
-const RAR = { d1:'Commune', d2:'Peu commune', d3:'Rare', star:'Illustration rare', crown:'Couronne' };
+const RAR = { commune:'Commune', rare:'Rare', epique:'Épique', legendaire:'Légendaire' };
 
 const api = async (p, body, method) => {
   const r = await fetch('/api/fanzzy' + p, {
@@ -146,9 +146,8 @@ function lireMods(m) {
 }
 
 function rar(r) {
-  if (r === 'crown') return '<b>♛</b>';
-  if (r === 'star') return '<b>★</b>';
-  return '<i></i>'.repeat({ d1:1, d2:2, d3:3 }[r] ?? 1);
+  if (r === 'legendaire') return '<b>♛</b>';
+  return '<i></i>'.repeat({ commune:1, rare:2, epique:3 }[r] ?? 1);
 }
 
 function rendre() {

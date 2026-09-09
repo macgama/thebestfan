@@ -17,7 +17,10 @@ CREATE TABLE IF NOT EXISTS fanzzy (
   type      VARCHAR(8)   NOT NULL,
   set_id    VARCHAR(4)   NOT NULL,
   stage     TINYINT      NOT NULL DEFAULT 1,
-  rar       VARCHAR(8)   NOT NULL,
+  -- 16 et non 8 : « legendaire » fait dix caractères. Sous MySQL non strict,
+  -- une colonne trop courte ne lève pas — elle tronque en silence, et la carte
+  -- se retrouve avec une rareté « legendai » que plus rien ne reconnaît.
+  rar       VARCHAR(16)  NOT NULL,
   evo       VARCHAR(12)  NULL,
   histoire  TEXT         NULL,
   mods      JSON         NOT NULL,
