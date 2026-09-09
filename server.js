@@ -93,7 +93,12 @@ if (process.env.DATABASE_URL) {
     // sinon ils travaillent sur un catalogue vide et le disent mal.
     const cat = await chargerCatalogue(pool);
     console.log(`catalogue fanzzy : ${cat.total} carte(s)`
-      + (cat.amorces ? ` (${cat.amorces} amorcée(s) depuis dex.js)` : ''));
+      + (cat.amorces ? ` (${cat.amorces} amorcée(s) depuis dex.js)` : '')
+      // Les séries ouvertes décident de ce qu'un joueur peut obtenir. Le jour
+      // où les boosters ne proposent qu'une série, il faut pouvoir vérifier en
+      // une ligne de journal que c'est voulu et non un réglage perdu.
+      + (cat.series ? ` · séries ouvertes : ${cat.series.join(', ')}`
+                    : ' · toutes les séries ouvertes'));
     const mailer = createMailer({
       smtpUrl: process.env.SMTP_URL,
       host: process.env.SMTP_HOST,

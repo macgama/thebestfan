@@ -516,6 +516,11 @@ let DEX = [];
 let BY_ID = new Map();
 let TYPES = {};
 let SETS = [];
+// Ce qu'un joueur peut encore obtenir : le catalogue publié restreint aux
+// séries ouvertes. Le serveur le calcule et l'envoie — la page le recalculerait
+// mal le jour où la règle se nuance, et c'est le genre de copie que ce projet a
+// déjà payé une fois avec le catalogue recopié.
+let A_COLLECTIONNER = 0;
 let RAR = {};
 let SCARVES = {};
 let EVO_COST = {};
@@ -535,7 +540,11 @@ async function chargerCatalogue() {
   DEX = d.dex;
   BY_ID = new Map(DEX.map((f) => [f.id, f]));
   TYPES = d.types;
-  SETS = d.sets;
+  // Seules les séries ouvertes sont proposées au kiosque. Les autres restent
+  // dans le catalogue — un joueur qui possède déjà une de leurs cartes doit
+  // continuer à la voir — mais on ne peut plus en acheter le booster.
+  SETS = d.sets.filter((x) => x.ouverte !== false);
+  A_COLLECTIONNER = d.aCollectionner ?? d.dex.length;
   RAR = d.rar;
   SCARVES = d.scarves;
   EVO_COST = d.evoCost;
@@ -1005,9 +1014,15 @@ function renderDex() {
 
   const list = DEX.filter((f) => S.filter === 'all' ? true
     : S.filter === 'miss' ? !S.col[f.id] : f.type === S.filter);
+  // La progression se compte sur les séries ouvertes, pas sur tout le
+  // catalogue : afficher « 31/166 » à quelqu'un qui possède déjà tout ce qu'il
+  // peut posséder est le pire message qu'on puisse envoyer à un
+  // collectionneur. Les cartes d'une série refermée qu'il possède déjà comptent
+  // au numérateur — elles sont à lui — d'où le plafond sur le dénominateur.
   const owned = DEX.filter((f) => S.col[f.id]).length;
-  $('progBar').style.width = `${(owned / DEX.length) * 100}%`;
-  $('progTxt').textContent = `${owned}/${DEX.length}`;
+  const total = Math.max(A_COLLECTIONNER, owned);
+  $('progBar').style.width = `${(owned / total) * 100}%`;
+  $('progTxt').textContent = `${owned}/${total}`;
 
   if (!Object.keys(S.col).length && S.filter !== 'miss') {
     $('grid').insertAdjacentHTML('afterbegin', '');

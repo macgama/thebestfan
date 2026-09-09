@@ -3,7 +3,8 @@ import express from 'express';
 // coûts — restent du code, parce qu'ils décrivent les règles du jeu et non son
 // contenu. On ne change pas un taux de tirage depuis un écran d'administration.
 import { SETS, TYPES, RAR, RATES, SCARVES, EVO_COST } from '../../shared/fanzzy/dex.js';
-import { tous, publies, parIdentifiant } from './catalogue.js';
+import { tous, publies, parIdentifiant, obtenables, seriesOuvertes, serieOuverte }
+  from './catalogue.js';
 import { SKINS, SKIN_BY_ID, STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 
 /**
@@ -142,6 +143,10 @@ export function createFanzzy({ pool, requireAuth }) {
    */
   async function openPack(userId, setId, { buy = false } = {}) {
     if (!SETS.some((s) => s.id === setId)) throw fail('fanzzy.error.unknown_set');
+    // Une série fermée ne distribue plus. Le kiosque ne la propose pas, mais un
+    // client modifié — ou un onglet resté ouvert depuis avant la fermeture —
+    // peut encore demander son booster : le refus se décide ici.
+    if (!serieOuverte(setId)) throw fail('fanzzy.error.set_closed');
     await wallet(userId);   // recharge avant de débiter
 
     const conn = await pool.getConnection();
@@ -324,9 +329,26 @@ export function createFanzzy({ pool, requireAuth }) {
    * recopié dans la page alors que le serveur la tirait des boosters.
    */
   router.get('/dex', (_req, res) => {
-    res.set('cache-control', 'public, max-age=3600');
-    res.json({ dex: publies(), sets: SETS, types: TYPES, scarves: SCARVES,
-               evoCost: EVO_COST, rar: RAR, rates: RATES });
+    // Une minute et non une heure : la liste des séries ouvertes se change
+    // depuis l'administration, et un kiosque qui met soixante minutes à
+    // s'apercevoir qu'une série vient d'ouvrir n'est pas administrable.
+    res.set('cache-control', 'public, max-age=60');
+    const ouvertes = seriesOuvertes();
+    res.json({
+      // Tout le catalogue publié, y compris les séries fermées : un joueur qui
+      // possède déjà une carte d'une série refermée doit continuer à la voir
+      // dans son classeur et à la jouer. Fermer, c'est cesser de distribuer.
+      dex: publies(),
+      // `ouverte` porte l'information ; le kiosque n'affiche que celles-là, et
+      // la progression ne se compte que sur elles.
+      sets: SETS.map((s) => ({ ...s, ouverte: serieOuverte(s.id) })),
+      // Ce qu'un joueur peut encore obtenir. La page pourrait le recalculer,
+      // mais elle le recalculerait *mal* le jour où la règle se nuance — et
+      // c'est précisément le genre de copie que ce projet a déjà payé.
+      aCollectionner: obtenables().length,
+      seriesOuvertes: ouvertes,
+      types: TYPES, scarves: SCARVES, evoCost: EVO_COST, rar: RAR, rates: RATES,
+    });
   });
 
   router.get('/state', requireAuth, (req, res) =>

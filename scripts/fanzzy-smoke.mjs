@@ -17,9 +17,16 @@ await raw.query(`DROP TABLE IF EXISTS user_decks, user_stuff, user_skins, user_f
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql']) {
+// admin.sql pour la table `reglages` : c'est elle qui porte les séries
+// ouvertes, et la suite en éprouve la fermeture plus bas.
+for (const f of ['auth.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql', 'admin.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
+// Les réglages ne sont pas dans le DROP ci-dessus : la table est partagée par
+// les suites. Une restriction laissée par un passage précédent — ou par cette
+// suite interrompue en plein milieu — fermerait les séries et ferait échouer
+// tout ce qui ouvre un booster, très loin d'ici et sans rapport apparent.
+await raw.query(`DELETE FROM reglages WHERE cle = 'series_actives'`);
 const U = '11111111-2222-3333-4444-555555555555';
 await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
   [U, 'f@ex.fr', 'Fan']);
@@ -205,6 +212,47 @@ check('Fanzzy inconnu : 404', r.status === 404);
 
 r = await call('/api/fanzzy/stuff');
 check('catalogue de l\u2019équipement servi', r.json.stuff.length === 7);
+
+/* ------------------------------------------------- les séries ouvertes
+
+   Ouvrir le jeu série par série. Ce qui se teste ici est le refus : le kiosque
+   ne propose plus une série fermée, mais un onglet resté ouvert depuis avant la
+   fermeture peut encore en demander le booster. */
+{
+  const { chargerSeries } = await import('../src/server/fanzzy/catalogue.js');
+  const ouverte = 'TR';
+  const fermee = SETS.map((s) => s.id).find((id) => id !== ouverte);
+
+  await pool.execute(
+    `INSERT INTO reglages (cle, valeur) VALUES ('series_actives', ?)
+     ON DUPLICATE KEY UPDATE valeur = VALUES(valeur)`, [JSON.stringify([ouverte])]);
+  await chargerSeries(pool);
+
+  r = await call('/api/fanzzy/dex');
+  check('le catalogue annonce les séries ouvertes',
+    r.json.seriesOuvertes?.length === 1 && r.json.seriesOuvertes[0] === ouverte);
+  check('et marque les autres comme fermées',
+    r.json.sets.find((s) => s.id === fermee)?.ouverte === false);
+  // Le catalogue reste entier : une carte d'une série fermée doit continuer à
+  // s'afficher chez qui la possède déjà.
+  check('mais il ne perd aucune carte', r.json.dex.some((f) => f.set === fermee));
+  check('et il dit combien de cartes restent à collectionner',
+    r.json.aCollectionner > 0
+    && r.json.aCollectionner === r.json.dex.filter((f) => f.set === ouverte).length);
+
+  r = await call('/api/fanzzy/open', { method: 'POST', body: { set: fermee } });
+  check('une série fermée ne distribue plus', r.json.error === 'fanzzy.error.set_closed');
+
+  await pool.query('UPDATE user_wallet SET packs = 5 WHERE user_id = ?', [U]);
+  r = await call('/api/fanzzy/open', { method: 'POST', body: { set: ouverte } });
+  check('la série ouverte, elle, distribue toujours',
+    Array.isArray(r.json.cards) && r.json.cards.length === 5);
+
+  // On rouvre tout : les autres suites partagent cette base, et une restriction
+  // oubliée les ferait échouer ailleurs, très loin d'ici.
+  await pool.execute(`DELETE FROM reglages WHERE cle = 'series_actives'`);
+  await chargerSeries(pool);
+}
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end(); http.close();

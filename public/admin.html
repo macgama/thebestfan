@@ -60,6 +60,19 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
 .fzedit .large{grid-column:1/-1}
 .fzedit .actions{padding:0 6px 14px;display:flex;gap:8px;align-items:center}
 .fzedit .err{color:var(--flare);font-size:12px}
+.series{border:1px solid rgba(242,238,228,.14);border-radius:10px;padding:12px 14px;margin:0 0 12px}
+.series-t{margin:0 0 9px;font-family:var(--banner);font-size:11px;letter-spacing:.18em}
+.series-t span{display:block;font-family:var(--ui);font-size:12px;letter-spacing:0;
+  opacity:.55;margin-top:3px;text-transform:none}
+.series-l{display:flex;flex-wrap:wrap;gap:6px}
+.series button{background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.14);
+  border-radius:8px;color:inherit;font:inherit;padding:7px 11px;cursor:pointer;text-align:left}
+.series button b{display:block;font-family:var(--banner);font-size:11.5px;letter-spacing:.06em}
+.series button span{font-size:10px;opacity:.45}
+.series button.on{border-color:#1E9E6A;background:rgba(30,158,106,.14)}
+.series button.on b{color:#4FB98A}
+.series button:disabled{opacity:.35;cursor:not-allowed}
+.series-n{margin:10px 0 0;font-size:11px;opacity:.42;line-height:1.6}
 .compte{font-size:11.5px;opacity:.5;margin-bottom:10px}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -118,6 +131,9 @@ const mods = (x) => jsonCol(x?.mods, {});
  * ouvrir le source pour comprendre ce qu'on a mal rempli.
  */
 const MSG_FANZZY = {
+  'admin.error.serie_inconnue': 'Cette série n’existe pas.',
+  'admin.error.serie_sans_carte': 'Cette série n’a aucune carte de stade 1 publiée : '
+    + 'elle ne pourrait pas distribuer de booster.',
   'admin.error.fanzzy_id': 'Identifiant invalide : une lettre puis des lettres ou chiffres, ex. X52.',
   'admin.error.fanzzy_existe': 'Cet identifiant est déjà pris.',
   'admin.error.fanzzy_inconnu': 'Ce Fanzzy n’existe pas.',
@@ -240,15 +256,49 @@ const VUES = {
             ${x.publie ? 'Retirer' : 'Publier'}</button></td></tr>`;
     };
 
+    // Le bandeau des séries. C'est l'interrupteur qui décide de ce qu'un
+    // joueur peut obtenir : une série fermée ne se propose plus au kiosque et
+    // ne se tire plus. Ce qu'il possède déjà lui reste — fermer, c'est cesser
+    // de distribuer, pas confisquer.
+    const serie = (x) => `<button class="serie ${x.ouverte ? 'on' : ''}" data-serie="${x.id}"
+        title="${x.tirables} carte(s) tirable(s) sur ${x.publiees} publiée(s)"
+        ${x.tirables ? '' : 'disabled'}>
+        <b>${esc(x.nom)}</b><span>${x.tirables} tirables</span></button>`;
+    const toutesOuvertes = d.series.every((x) => x.ouverte);
+
     $('main').innerHTML = `
+      <div class="series">
+        <p class="series-t">SÉRIES OUVERTES
+          <span>${toutesOuvertes ? 'toutes — les joueurs voient tout le catalogue'
+            : d.series.filter((x) => x.ouverte).map((x) => x.nom).join(' · ') || 'aucune'}</span></p>
+        <div class="series-l">${d.series.map(serie).join('')}</div>
+        <p class="series-n">Une série grisée n'a aucune carte de stade 1 publiée : elle ne
+          pourrait pas distribuer de booster. Tout fermer revient à tout ouvrir.</p>
+      </div>
       <div class="bar">
         <input id="q" placeholder="nom, identifiant, série, rareté" value="${esc(filtre)}" style="flex:1">
         <button class="mini" id="nouveau">Nouveau Fanzzy</button>
-      </div>
+      </div>`.concat(`
       <div class="compte">${d.fanzzy.length} cartes · ${publies} publiées ·
         ${d.fanzzy.length - publies} retirées · ${ILLUSTRES.size} dessinées</div>
       <table><thead><tr><th></th><th>NOM</th><th>TYPE</th><th>SÉRIE</th><th>RARETÉ</th><th></th></tr></thead>
-      <tbody id="corps">${liste.map(ligne).join('') || '<tr><td colspan="6" class="vide">Rien ne correspond.</td></tr>'}</tbody></table>`;
+      <tbody id="corps">${liste.map(ligne).join('') || '<tr><td colspan="6" class="vide">Rien ne correspond.</td></tr>'}</tbody></table>`);
+
+    // Un clic bascule la série. On envoie la liste complète des ouvertes et non
+    // un différentiel : deux onglets d'administration ouverts en même temps
+    // s'écraseraient proprement au lieu de composer un état que personne n'a voulu.
+    for (const b of document.querySelectorAll('[data-serie]')) {
+      b.onclick = async () => {
+        const ouvertes = d.series.filter((x) => x.ouverte).map((x) => x.id);
+        const id = b.dataset.serie;
+        const suite = ouvertes.includes(id)
+          ? ouvertes.filter((x) => x !== id) : [...ouvertes, id];
+        try {
+          await api('/series', { method: 'PUT', body: { series: suite } });
+          VUES.fanzzy(filtre);
+        } catch (e) { alert(MSG_FANZZY[e.code] ?? e.code ?? 'Impossible.'); }
+      };
+    }
 
     $('q').oninput = (e) => { clearTimeout($('q')._t);
       $('q')._t = setTimeout(() => VUES.fanzzy(e.target.value), 250); };
