@@ -71,7 +71,7 @@ curl -s https://thebestfan.online/healthz
 
 ```bash
 cd ~/sites/thebestfan.online
-for f in auth football duel souvenirs fanzzy teletext inventaire skins deck admin kop \
+for f in auth football duel souvenirs fanzzy teletext inventaire skins tenues deck admin kop \
          niveau raretes stades; do
   mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
 done
@@ -88,6 +88,11 @@ que `raretes` les a rangées.
   désormais à un stade, plus au personnage. Les lignes existantes valent pour
   le premier âge, ce qui est exact — elles ont toutes été gagnées avant que
   les âges existent.
+- `tenues.sql` sort les thèmes de tenue du code et les met en base, comme le
+  catalogue des Fanzzy avant lui : l’administration peut en créer un sans
+  livraison. Il dépublie les six anciens (pluie, nocturne, derby, anniv,
+  promo, légende) au lieu de les supprimer — un joueur qui en possède un le
+  garde, il ne tombe simplement plus.
 - `niveau.sql` ajoute la colonne d’XP. Les comptes existants partent de zéro :
   ils n’ont rien perdu, et le premier booster ouvert lance la barre.
 - `stades.sql` replie les âges sur le personnage : un joueur possède désormais
@@ -96,7 +101,7 @@ que `raretes` les a rangées.
   `node scripts/stades-smoke.mjs` la rejoue sur une collection fabriquée avant
   que tu la lances ici.
 
-Contrôle : `SHOW TABLES;` doit en lister **33**.
+Contrôle : `SHOW TABLES;` doit en lister **34**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`

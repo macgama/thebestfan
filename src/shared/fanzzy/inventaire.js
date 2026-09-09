@@ -13,14 +13,35 @@
  *      choisir. Un débutant qui chante juste bat un vétéran mal équipé.
  */
 
+/**
+ * L'amorçage des tenues.
+ *
+ * **Ce n'est plus le catalogue.** Il vit en base, dans la table `tenues`, et se
+ * gère depuis l'administration : ajouter un thème ne doit pas demander un
+ * déploiement. Cette liste sert à peupler une base neuve, et à rien d'autre —
+ * comme `dex.js` pour les Fanzzy.
+ *
+ * Les six thèmes d'origine y restent avec `publie: false`. Ils ne se tirent
+ * plus, mais dix-neuf joueurs en possèdent : les effacer confisquerait des
+ * tenues gagnées, et laisserait la fiche chercher un identifiant disparu.
+ * **Rien ne se supprime, on dépublie** — c'est la règle du catalogue Fanzzy, et
+ * elle vaut ici pour la même raison.
+ */
 export const SKINS = [
-  { id: 'base',      nom: 'Tenue de base',      rar: 'commune', pour: '*' },
-  { id: 'pluie',     nom: 'Sous la pluie',      rar: 'rare', pour: '*' },
-  { id: 'nocturne',  nom: 'Nocturne',           rar: 'rare', pour: '*' },
-  { id: 'derby',     nom: 'Soir de derby',      rar: 'epique', pour: '*' },
-  { id: 'anniv',     nom: 'Cinquantenaire',     rar: 'legendaire', pour: '*' },
-  { id: 'promo',     nom: 'Jour de montée',     rar: 'legendaire', pour: '*' },
-  { id: 'legende',   nom: 'Légende du virage',  rar: 'legendaire', pour: '*' },
+  { id: 'base', nom: 'Tenue de base', rar: 'commune', pour: '*',
+    texte: 'Ce qu’il porte tous les samedis.' },
+  { id: 'prehistorique', nom: 'Préhistorique', rar: 'epique', pour: '*',
+    texte: 'Le virage avant le virage. Peaux de bête et cris d’avant les mots.' },
+  { id: 'apocalyptique', nom: 'Apocalyptique', rar: 'epique', pour: '*',
+    texte: 'Le dernier match, joué sur un terrain que personne ne tond plus.' },
+
+  // Sortis de la circulation en septembre 2026. Conservés pour ceux qui les ont.
+  { id: 'pluie', nom: 'Sous la pluie', rar: 'rare', pour: '*', publie: false },
+  { id: 'nocturne', nom: 'Nocturne', rar: 'rare', pour: '*', publie: false },
+  { id: 'derby', nom: 'Soir de derby', rar: 'epique', pour: '*', publie: false },
+  { id: 'anniv', nom: 'Cinquantenaire', rar: 'legendaire', pour: '*', publie: false },
+  { id: 'promo', nom: 'Jour de montée', rar: 'legendaire', pour: '*', publie: false },
+  { id: 'legende', nom: 'Légende du virage', rar: 'legendaire', pour: '*', publie: false },
 ];
 
 /**

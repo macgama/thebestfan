@@ -6,6 +6,7 @@ import { createAdmin } from '../src/server/admin/index.js';
 import { SETS } from '../src/shared/fanzzy/dex.js';
 import { charger as chargerCatalogue, parIdentifiant, publies }
   from '../src/server/fanzzy/catalogue.js';
+import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -18,7 +19,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
   user_fanzzy, user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache,
   souvenir_leagues, duel_results, duel_events, duels, user_follows, fixture_events, standings,
   fixtures, team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql','football.sql','souvenirs.sql','fanzzy.sql','inventaire.sql', 'skins.sql',
+for (const f of ['auth.sql','football.sql','souvenirs.sql','fanzzy.sql','inventaire.sql', 'skins.sql', 'tenues.sql',
                  'teletext.sql','admin.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
@@ -48,6 +49,7 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset:'utf8mb4' }
 // Le catalogue vit en base : l’administration le modifie, il faut donc
 // qu’il soit chargé, exactement comme au démarrage du serveur.
 await chargerCatalogue(pool);
+await chargerTenues(pool);
 let moi = B;   // on commence en simple joueur
 const adm = createAdmin({ pool,
   requireAuth: (r,_s,n)=>{ r.user = { id: moi, email: moi===A?'patron@ex.fr':'joueur@ex.fr' }; n(); } });
@@ -317,6 +319,59 @@ r = await call('/api/admin/series', { method: 'PUT', body: { series: [uneSerie] 
 check('un joueur ne peut pas ouvrir ou fermer une série', r.status === 403);
 moi = A;
 
+/* ================================================ le catalogue des tenues
+
+   Il a quitté le code pour la base : créer un thème ne doit pas demander un
+   déploiement. C'est le même trajet qu'a pris le catalogue Fanzzy, et ce qui
+   se vérifie ici est la même chose — que l’écriture atteigne le cache, sinon
+   la tenue existe en base et reste invisible jusqu’au prochain redémarrage.
+
+   Et surtout : **aucune route ne supprime**. Une tenue effacée orphelinerait
+   les user_skins de tous ceux qui la possèdent. */
+
+{
+  r = await call('/api/admin/tenues');
+  const avant = r.json.tenues ?? [];
+  check('les tenues se listent', avant.length >= 3);
+  check('les deux nouveaux thèmes sont là',
+    ['prehistorique', 'apocalyptique'].every((id) => avant.some((t) => t.id === id)));
+  check('les six anciens sont dépubliés, pas supprimés',
+    ['pluie', 'nocturne', 'derby', 'anniv', 'promo', 'legende']
+      .every((id) => avant.find((t) => t.id === id)?.publie === false));
+
+  r = await call('/api/admin/tenues', { method: 'POST',
+    body: { id: 'carnaval', nom: 'Carnaval', rar: 'epique', texte: 'Confettis et grosse caisse.' } });
+  check('un thème se crée depuis l’administration', r.json.id === 'carnaval');
+  check('et la réponse dit où déposer ses images',
+    (r.json.dossier ?? '').includes('e1/carnaval'));
+
+  r = await call('/api/admin/tenues');
+  check('le cache est rechargé aussitôt',
+    (r.json.tenues ?? []).some((t) => t.id === 'carnaval'));
+
+  r = await call('/api/admin/tenues', { method: 'POST',
+    body: { id: 'carnaval', nom: 'Encore', rar: 'rare' } });
+  check('un identifiant déjà pris est refusé', r.json.error === 'admin.error.tenue_existe');
+
+  // L’identifiant devient un nom de dossier : le disque ne pardonne pas.
+  r = await call('/api/admin/tenues', { method: 'POST',
+    body: { id: 'Été 2026', nom: 'Été', rar: 'rare' } });
+  check('un identifiant avec accent ou espace est refusé',
+    r.json.error === 'admin.error.tenue_id');
+
+  r = await call('/api/admin/tenues/carnaval', { method: 'PATCH', body: { publie: false } });
+  check('un thème se dépublie', r.json.publie === false);
+  r = await call('/api/admin/tenues');
+  check('et il reste au catalogue, pour ceux qui l’ont',
+    (r.json.tenues ?? []).some((t) => t.id === 'carnaval'));
+
+  r = await call('/api/admin/tenues/inconnue', { method: 'PATCH', body: { nom: 'x' } });
+  check('une tenue inconnue est refusée', r.json.error === 'admin.error.tenue_inconnue');
+
+  // La suite doit pouvoir être rejouée : on efface le thème d’essai en base,
+  // directement — c’est un test, pas un usage.
+  await pool.query(`DELETE FROM tenues WHERE id = 'carnaval'`);
+}
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end();
 await new Promise((r) => http.close(r));

@@ -27,6 +27,7 @@ import { createDecks } from '../src/server/deck/index.js';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -55,7 +56,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql',
-                 'inventaire.sql', 'skins.sql', 'deck.sql']) {
+                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
@@ -79,6 +80,7 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' 
 // on le charge comme le fait server.js, sinon les modules travaillent
 // sur un catalogue vide.
 await chargerCatalogue(pool);
+await chargerTenues(pool);
 
 /* ----------------------------------------------------------- le serveur */
 

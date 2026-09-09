@@ -73,6 +73,8 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
 .series button.on b{color:#4FB98A}
 .series button:disabled{opacity:.35;cursor:not-allowed}
 .series-n{margin:10px 0 0;font-size:11px;opacity:.42;line-height:1.6}
+.depot{background:rgba(30,158,106,.12);border:1px solid rgba(30,158,106,.4);border-radius:8px;padding:11px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.6}
+.depot code{background:rgba(0,0,0,.4);padding:1px 5px;border-radius:4px}
 .compte{font-size:11.5px;opacity:.5;margin-bottom:10px}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -147,11 +149,16 @@ const MSG_FANZZY = {
   'admin.error.fanzzy_evo_soi': 'Un Fanzzy ne peut pas évoluer en lui-même.',
   'admin.error.fanzzy_evo_inconnue': 'L’évolution pointe sur un identifiant qui n’existe pas.',
   'admin.error.fanzzy_incomplet': 'Nom, type, série, rareté et cri sont obligatoires.',
+  'admin.error.tenue_id': 'Identifiant invalide : minuscules sans accent ni espace, ex. carnaval — c’est un nom de dossier.',
+  'admin.error.tenue_nom': 'Le nom est trop court.',
+  'admin.error.tenue_rarete': 'Rareté inconnue.',
+  'admin.error.tenue_existe': 'Cet identifiant de thème est déjà pris.',
+  'admin.error.tenue_inconnue': 'Ce thème n’existe pas.',
   'admin.error.nothing_to_do': 'Rien n’a changé.',
 };
 
 const ONGLETS = [
-  ['apercu','APERÇU'], ['fanzzy','FANZZY'], ['joueurs','JOUEURS'],
+  ['apercu','APERÇU'], ['fanzzy','FANZZY'], ['tenues','TENUES'], ['joueurs','JOUEURS'],
   ['competitions','COMPÉTITIONS'], ['reglages','RÉGLAGES'], ['journal','JOURNAL'],
 ];
 let onglet = 'apercu';
@@ -406,7 +413,137 @@ const VUES = {
     };
   },
 
-  async joueurs(terme = '') {
+   /**
+   * Les thèmes de tenue.
+   *
+   * Un thème est un **nom de dossier** avant d'être une carte : `carnaval`
+   * devient `public/img/fanzzy/TR1/e1/carnaval/`. C'est pour ça que
+   * l'identifiant est bridé aux minuscules sans accent, et pour ça qu'il ne se
+   * renomme jamais — le renommer laisserait les dessins derrière lui.
+   *
+   * **Rien ne se supprime ici non plus.** Un thème effacé orphelinerait les
+   * `user_skins` de tous ceux qui l'ont gagné : leur Fanzzy réapparaîtrait nu,
+   * sans explication. On dépublie — il cesse de tomber, il reste porté.
+   *
+   * Un thème existe en base dès qu'il est créé, bien avant d'être dessiné.
+   * Tant qu'il n'a pas d'image il s'affiche comme la tenue de base, ce qui ne
+   * ressemble pas à une erreur et n'en est pas une : c'est à l'écran de le
+   * dire, pas au joueur de le deviner.
+   */
+  async tenues() {
+    const d = await api('/tenues');
+    const rarOpt = Object.keys(d.rar)
+      .map((r) => `<option value="${r}">${r}</option>`).join('');
+    const publies = d.tenues.filter((x) => x.publie).length;
+
+    const ligne = (x) => `<tr class="fzrow ${x.publie ? '' : 'depublie'}">
+        <td><b>${esc(x.nom)}</b>
+          ${x.publie ? '' : '<span class="pill off">RETIRÉ</span>'}
+          <br><span style="opacity:.45;font-size:11px">${x.id}</span></td>
+        <td>${x.rar}</td>
+        <td style="opacity:.6">${esc(x.texte ?? '')}</td>
+        <td style="opacity:.45;font-size:11px">e1..e3/${x.id}/neutre</td>
+        <td class="act">
+          <button class="mini" data-editer="${x.id}">Modifier</button>
+          <button class="mini ${x.publie ? 'rouge' : 'vert'}" data-publier="${x.id}">
+            ${x.publie ? 'Retirer' : 'Publier'}</button></td></tr>`;
+
+    $('main').innerHTML = `
+      <div class="series">
+        <p class="series-t">DÉPOSER LES DESSINS</p>
+        <p class="series-n">Un thème se dessine en trois images par personnage —
+          un âge chacune — et dans le seul état <b>neutre</b> : un thème habille,
+          il ne rejoue pas les douze réactions. Les fichiers vont dans
+          <code>art/&lt;ID&gt;/_src/</code>, nommés
+          <code>&lt;numéro&gt;-e&lt;1|2|3&gt;-&lt;thème&gt;-neutre.png</code> —
+          par exemple <code>001-e2-carnaval-neutre.png</code>. Un objet porté
+          ajoute un cinquième champ :
+          <code>001-e2-carnaval-neutre-drapeau.png</code>.
+          <code>npm run veille</code> les convertit dès qu'ils sont posés.</p>
+      </div>
+      <div class="bar"><button class="mini" id="nouveau">Nouveau thème</button></div>
+      <div class="compte">${d.tenues.length} thèmes · ${publies} distribués ·
+        ${d.tenues.length - publies} retirés</div>
+      <table><thead><tr><th>NOM</th><th>RARETÉ</th><th>DESCRIPTION</th>
+        <th>DOSSIERS</th><th></th></tr></thead>
+      <tbody id="corps">${d.tenues.map(ligne).join('')}</tbody></table>`;
+
+    const formulaire = (x) => `
+      <tr class="fzedit"><td colspan="5">
+        <div class="grille">
+          <div><label>IDENTIFIANT</label>
+            <input id="t-id" value="${esc(x?.id ?? '')}" ${x ? 'disabled' : ''}
+              placeholder="carnaval" maxlength="24"></div>
+          <div><label>NOM</label><input id="t-nom" value="${esc(x?.nom ?? '')}"
+            placeholder="Carnaval" maxlength="48"></div>
+          <div><label>RARETÉ</label><select id="t-rar">${rarOpt}</select></div>
+          <div class="large"><label>DESCRIPTION</label>
+            <input id="t-texte" value="${esc(x?.texte ?? '')}" maxlength="160"
+              placeholder="Ce que le joueur lit sous la tenue."></div>
+        </div>
+        <div class="actions">
+          <button class="mini vert" id="t-ok">${x ? 'Enregistrer' : 'Créer'}</button>
+          <button class="mini" id="t-non">Annuler</button>
+          <span class="err" id="t-err"></span>
+        </div>
+      </td></tr>`;
+
+    let ouvert = null;
+    const fermer = () => { document.querySelector('.fzedit')?.remove(); ouvert = null; };
+
+    const brancher = (x) => {
+      $('t-rar').value = x?.rar ?? 'rare';
+      $('t-non').onclick = fermer;
+      $('t-ok').onclick = async () => {
+        const corps = { id: $('t-id').value.trim().toLowerCase(),
+          nom: $('t-nom').value.trim(), rar: $('t-rar').value,
+          texte: $('t-texte').value.trim() };
+        $('t-err').textContent = '';
+        try {
+          if (x) await api('/tenues/' + encodeURIComponent(x.id), corps, 'PATCH');
+          else {
+            /* Le serveur répond avec le nom de fichier attendu. On le montre au
+               lieu de refermer en silence : sans dessin, le thème s'affiche
+               comme la tenue de base, et rien à l'écran ne dirait pourquoi. */
+            const fait = await api('/tenues', corps);
+            $('main').insertAdjacentHTML('afterbegin', `<div class="depot">
+              <b>Thème « ${esc(fait.nom)} » créé.</b> Dépose maintenant ses dessins :
+              <code>${esc(fait.source)}</code> — un par âge, <code>-e1-</code>,
+              <code>-e2-</code>, <code>-e3-</code>. Tant qu'ils manquent, il
+              s'affiche comme la tenue de base.</div>`);
+            return;
+          }
+          VUES.tenues();
+        } catch (e) { $('t-err').textContent = MSG_FANZZY[e.code] ?? (e.code ?? 'échec'); }
+      };
+    };
+
+    $('nouveau').onclick = () => {
+      fermer();
+      $('corps').insertAdjacentHTML('afterbegin', formulaire(null));
+      brancher(null);
+    };
+
+    $('corps').onclick = async (e) => {
+      const mod = e.target.closest('[data-editer]');
+      const pub = e.target.closest('[data-publier]');
+      if (pub) {
+        const x = d.tenues.find((y) => y.id === pub.dataset.publier);
+        await api('/tenues/' + encodeURIComponent(x.id), { publie: !x.publie }, 'PATCH');
+        return VUES.tenues();
+      }
+      if (!mod) return;
+      const id = mod.dataset.editer;
+      if (ouvert === id) return fermer();
+      fermer();
+      const x = d.tenues.find((y) => y.id === id);
+      mod.closest('tr').insertAdjacentHTML('afterend', formulaire(x));
+      ouvert = id;
+      brancher(x);
+    };
+  },
+
+ async joueurs(terme = '') {
     const d = await api('/joueurs?q=' + encodeURIComponent(terme));
     $('main').innerHTML = `
       <div class="bar"><input id="q" placeholder="pseudo ou adresse" value="${esc(terme)}">

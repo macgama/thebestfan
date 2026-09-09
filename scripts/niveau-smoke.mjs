@@ -26,6 +26,7 @@ import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { createDecks } from '../src/server/deck/index.js';
 import { createOnboarding } from '../src/server/onboarding/index.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { XP, PALIERS, NIVEAU_MAX, seuil, niveauPour, progression, droits, coutDuPalier,
   ecarpesDuPalier, paliersEntre } from '../src/shared/niveau.js';
 import { baseDeTest } from './base-de-test.mjs';
@@ -110,7 +111,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql',
-                 'inventaire.sql', 'skins.sql', 'deck.sql', 'niveau.sql']) {
+                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'niveau.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
@@ -123,6 +124,7 @@ await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' });
 await chargerCatalogue(pool);
+await chargerTenues(pool);
 
 const requireAuth = (r, _s, n) => { r.user = { id: U }; n(); };
 const niveau = createNiveau({ pool, requireAuth });

@@ -19,6 +19,7 @@ import { createFootball } from './src/server/football/routes.js';
 import { createSouvenirs } from './src/server/souvenirs/index.js';
 import { createFanzzy } from './src/server/fanzzy/index.js';
 import { charger as chargerCatalogue } from './src/server/fanzzy/catalogue.js';
+import { chargerTenues } from './src/server/fanzzy/tenues.js';
 import { createVirage } from './src/server/ferveur/index.js';
 import { createTeletext } from './src/server/teletext/index.js';
 import { createOnboarding } from './src/server/onboarding/index.js';
@@ -96,6 +97,12 @@ if (process.env.DATABASE_URL) {
     // chargé avant tout module qui s'en sert — collection, deck, inscription —
     // sinon ils travaillent sur un catalogue vide et le disent mal.
     const cat = await chargerCatalogue(pool);
+    // Les tenues aussi : elles se gèrent depuis l’administration, donc elles
+    // vivent en base. Chargées avant les modules qui les lisent — collection,
+    // inscription — sinon ils travaillent sur un catalogue vide.
+    const ten = await chargerTenues(pool);
+    console.log(`catalogue des tenues : ${ten.total} tenue(s)`
+      + (ten.amorces ? ` (${ten.amorces} amorcée(s))` : ''));
     console.log(`catalogue fanzzy : ${cat.total} carte(s)`
       + (cat.amorces ? ` (${cat.amorces} amorcée(s) depuis dex.js)` : '')
       // Les séries ouvertes décident de ce qu'un joueur peut obtenir. Le jour

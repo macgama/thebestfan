@@ -18,6 +18,7 @@ import puppeteer from 'puppeteer';
 import { createAdmin } from '../src/server/admin/index.js';
 import { charger as chargerCatalogue, parIdentifiant }
   from '../src/server/fanzzy/catalogue.js';
+import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -42,7 +43,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users,
   admin_audit, reglages`);
 for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql',
-                 'inventaire.sql', 'skins.sql', 'deck.sql', 'admin.sql']) {
+                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'admin.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 // On repart d'un catalogue propre : les essais précédents laissent des ZZ.
@@ -57,6 +58,7 @@ await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' });
 await chargerCatalogue(pool);
+await chargerTenues(pool);
 
 const app = express();
 // La page interroge /api/auth/me à son ouverture, et son `catch` renvoie vers
@@ -192,6 +194,79 @@ check('aucun bouton ne supprime une carte', await page.evaluate(() =>
   ![...document.querySelectorAll('#corps button')]
     .some((b) => /supprim/i.test(b.textContent))));
 
+/* ------------------------------------------------------------ les tenues
+
+   L'onglet qui existe pour une seule raison : qu'un thème de tenue se crée
+   sans livraison. Tant que la liste vivait dans le code, chaque nouveau
+   costume demandait un déploiement — ce qui revenait à ne jamais en sortir.
+
+   Ce qu'on éprouve ici, c'est la boucle complète depuis l'écran : la liste
+   arrive, le formulaire crée, et **l'écran dit où déposer les dessins**. Ce
+   dernier point est le seul qui ne se devine pas : un thème sans image
+   s'affiche exactement comme la tenue de base, donc rien, à l'usage, ne
+   signale qu'il en manque. */
+
+await page.evaluate(() => [...document.querySelectorAll('nav button')]
+  .find((b) => /TENUES/i.test(b.textContent))?.click());
+
+check('la liste des thèmes se peuple', await jusqua(async () =>
+  await page.evaluate(() => document.querySelectorAll('#corps .fzrow').length >= 3)));
+
+const themes = await page.evaluate(() => ({
+  lignes: [...document.querySelectorAll('#corps .fzrow')].map((r) =>
+    r.textContent.replace(/\s+/g, ' ').trim()),
+  aide: document.querySelector('.series-n')?.textContent.replace(/\s+/g, ' ') ?? '',
+}));
+check('les deux nouveaux thèmes sont en tête d’affiche',
+  themes.lignes.some((t) => /pr[ée]historique/i.test(t))
+  && themes.lignes.some((t) => /apocalyptique/i.test(t)));
+// Dépubliés, pas supprimés : celui qui possède une tenue de pluie la garde.
+check('les anciens thèmes restent listés, marqués RETIRÉ',
+  themes.lignes.some((t) => /Pluie/i.test(t) && /RETIRÉ/.test(t)));
+check('l’écran nomme la convention de nommage des sources',
+  /_src/.test(themes.aide) && /neutre/.test(themes.aide));
+
+await page.evaluate(() => document.getElementById('nouveau').click());
+check('le formulaire de thème s’ouvre', await page.$('#t-id') !== null);
+
+await page.evaluate(() => {
+  document.getElementById('t-id').value = 'zztest';
+  document.getElementById('t-nom').value = 'Thème de test';
+  document.getElementById('t-texte').value = 'Pour la suite, pas pour les joueurs.';
+});
+await page.evaluate(() => document.getElementById('t-ok').click());
+
+check('le thème est créé', await jusqua(async () =>
+  Boolean(await page.$('.depot'))));
+const depot = await page.evaluate(() =>
+  document.querySelector('.depot')?.textContent.replace(/\s+/g, ' ') ?? '');
+check('et l’écran dit quel fichier déposer', /_src/.test(depot) && /zztest/.test(depot));
+check('en nommant les trois âges', /-e1-/.test(depot) && /-e3-/.test(depot));
+check('et en disant ce qui se passe s’il n’y en a pas',
+  /tenue de base/i.test(depot));
+
+// L'identifiant devient un nom de dossier : il ne se renomme pas, sans quoi
+// les dessins déjà produits resteraient derrière lui.
+await page.evaluate(() => [...document.querySelectorAll('nav button')]
+  .find((b) => /TENUES/i.test(b.textContent))?.click());
+await jusqua(async () => await page.evaluate(() =>
+  [...document.querySelectorAll('#corps .fzrow')].some((r) => /zztest/.test(r.textContent))));
+await page.evaluate(() => [...document.querySelectorAll('#corps .fzrow')]
+  .find((r) => /zztest/.test(r.textContent))?.querySelector('[data-editer]')?.click());
+check('l’identifiant d’un thème existant ne se renomme pas',
+  await page.$eval('#t-id', (e) => e.disabled) === true);
+
+await page.evaluate(() => document.getElementById('t-non').click());
+await page.evaluate(() => [...document.querySelectorAll('#corps .fzrow')]
+  .find((r) => /zztest/.test(r.textContent))?.querySelector('[data-publier]')?.click());
+check('un thème se retire des tirages depuis la liste', await jusqua(async () =>
+  await page.evaluate(() => [...document.querySelectorAll('#corps .fzrow')]
+    .some((r) => /zztest/.test(r.textContent) && /RETIRÉ/.test(r.textContent)))));
+
+check('aucun bouton ne supprime un thème', await page.evaluate(() =>
+  ![...document.querySelectorAll('#corps button')]
+    .some((b) => /supprim/i.test(b.textContent))));
+
 check('aucune erreur de script pendant toute la session', erreurs.length === 0);
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
 
@@ -203,6 +278,7 @@ if (process.env.CAPTURE) {
 
 await nav.close();
 await pool.execute(`DELETE FROM fanzzy WHERE id LIKE 'ZZ%'`);
+await pool.execute(`DELETE FROM tenues WHERE id LIKE 'zz%'`);
 await pool.end();
 await new Promise((r) => http.close(r));
 

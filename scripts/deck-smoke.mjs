@@ -5,6 +5,7 @@ import express from 'express';
 import { createDecks } from '../src/server/deck/index.js';
 import { ACTIONS, DECK_RULES } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -17,7 +18,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql','football.sql','souvenirs.sql','fanzzy.sql','inventaire.sql', 'skins.sql','deck.sql']) {
+for (const f of ['auth.sql','football.sql','souvenirs.sql','fanzzy.sql','inventaire.sql', 'skins.sql', 'tenues.sql','deck.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 const U = 'dddddddd-0000-0000-0000-000000000001';
@@ -55,6 +56,7 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset:'utf8mb4' }
 // on le charge comme le fait server.js, sinon les modules travaillent
 // sur un catalogue vide.
 await chargerCatalogue(pool);
+await chargerTenues(pool);
 const D = createDecks({ pool, requireAuth: (r,_s,n)=>{ r.user={id:U}; n(); } });
 const app = express(); app.use('/api/deck', D.router);
 const http = createServer(app); await new Promise((r)=>http.listen(0,r));
