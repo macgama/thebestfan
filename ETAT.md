@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « les douze états d'un Fanzzy, leur repli, et
-l'accueil qui montre le Fanzzy équipé ».
+Dernière mise à jour : session « les états d'un Fanzzy et leur repli, puis un
+personnage = une carte à trois stades ».
 
 ---
 
@@ -175,6 +175,36 @@ absent : il apprend à ignorer les rouges.
 
 Elles ont été prises pour de bonnes raisons, parfois après mesure. Les revenir
 casserait l'équilibre du jeu ou la conformité.
+
+**Un personnage, trois âges — et une seule carte.** Le Choriste, le Meneur de
+chant et le Capo di Curva sont trois lignes du catalogue, parce qu'ils portent
+chacun leur nom, leur histoire, leurs bonus et leur dessin. Ils ne sont pas trois
+cartes à posséder : `user_fanzzy` retient le personnage et le **stade** atteint.
+
+Faire évoluer ne remplace donc plus une carte par une autre — le personnage
+grandit sur place, et **son doublon n'est pas consommé**. Les écharpes sont le
+seul coût, et c'est sur elles que l'économie est calibrée. La version d'avant
+retirait un exemplaire ; sur une ligne unique, cela revenait maintenant à
+confisquer la carte qu'on vient de payer.
+
+Trois conséquences à ne pas défaire :
+
+- **La rareté suit le stade** — 1 commune, 2 rare, 3 épique — et n'est donc plus
+  une donnée à tenir à jour. La légendaire est hors échelle : elle se tire, elle
+  n'a pas de lignée.
+- **La collection se compte en personnages.** `obtenables()` ne rend que les
+  racines. Compter les lignes mettait au dénominateur quatorze âges qu'aucun
+  booster ne distribue : la jauge n'aurait jamais pu atteindre le bout.
+- **Un deck entre toujours au premier âge.** `deckDe` et `enregistrer` ramènent
+  chaque Fanzzy à son personnage. Deux tribunes se rencontrent au même niveau ;
+  ce que les écharpes ont acheté, c'est le droit de faire grandir son personnage
+  *pendant* la partie, en y consacrant une carte de ses dix. Corollaire visible
+  au joueur : on ne peut pas aligner le même personnage à deux âges, le deck le
+  refuse comme un doublon.
+
+`sql/stades.sql` reprend les collections existantes et `scripts/stades-smoke.mjs`
+la rejoue — deux fois, parce qu'une migration qu'on ne peut lancer qu'une fois
+est une migration qu'on n'ose pas relancer.
 
 **Un skin ne donne aucun bonus.** Il change l'apparence, rien d'autre. Celui qui
 ouvre mille boosters est plus beau, pas plus fort.

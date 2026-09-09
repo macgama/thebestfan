@@ -80,8 +80,12 @@ check('les communes sont offertes', r.json.possede.actions.length > 4);
 
 /* --------------------------------------------------------- validation */
 
+/* Trois personnages **différents**. `V2` n'est plus un Fanzzy à part : c'est le
+   deuxième âge de `V1`, et un deck qui alignerait les deux alignerait deux fois
+   la même personne. Le deck le refuse maintenant comme un doublon — voir le cas
+   dédié plus bas. */
 const bon = { nom:'Virage Nord',
-  fanzzy:[{id:'V1',stuff:['jumelles']},{id:'V2',stuff:['echarpe','tambour']},{id:'P1',stuff:[]}],
+  fanzzy:[{id:'V1',stuff:['jumelles']},{id:'P1',stuff:['echarpe','tambour']},{id:'F1',stuff:[]}],
   actions: dixCartes };
 
 r = await call('/api/deck/mien', { method:'PUT', body: bon });
@@ -91,17 +95,21 @@ check('avertissement si aucun arbitre',
 
 const cas = [
   ['aucun Fanzzy', { ...bon, fanzzy: [] }, 'deck.error.fanzzy_count'],
-  ['quatre Fanzzy', { ...bon, fanzzy: [...bon.fanzzy, {id:'F1'}] }, 'deck.error.fanzzy_count'],
+  ['quatre Fanzzy', { ...bon, fanzzy: [...bon.fanzzy, {id:'T1'}] }, 'deck.error.fanzzy_count'],
   ['Fanzzy en double', { ...bon, fanzzy:[{id:'V1'},{id:'V1'},{id:'P1'}] }, 'deck.error.fanzzy_duplicate'],
-  ['Fanzzy non possédé', { ...bon, fanzzy:[{id:'V3'},{id:'V2'},{id:'P1'}] }, 'deck.error.fanzzy_not_owned'],
+  // Deux âges du même personnage, c'est la même personne deux fois. Le deck
+  // ramenant tout au premier âge, le doublon est vu au lieu de passer.
+  ['le même personnage à deux âges',
+    { ...bon, fanzzy:[{id:'V1'},{id:'V2'},{id:'P1'}] }, 'deck.error.fanzzy_duplicate'],
+  ['Fanzzy non possédé', { ...bon, fanzzy:[{id:'T1'},{id:'P1'},{id:'F1'}] }, 'deck.error.fanzzy_not_owned'],
   ['trois pièces sur un Fanzzy',
-    { ...bon, fanzzy:[{id:'V1',stuff:['jumelles','echarpe','tambour']},{id:'V2'},{id:'P1'}] },
+    { ...bon, fanzzy:[{id:'V1',stuff:['jumelles','echarpe','tambour']},{id:'P1'},{id:'F1'}] },
     'deck.error.too_much_stuff'],
   ['même pièce sur deux Fanzzy',
-    { ...bon, fanzzy:[{id:'V1',stuff:['jumelles']},{id:'V2',stuff:['jumelles']},{id:'P1'}] },
+    { ...bon, fanzzy:[{id:'V1',stuff:['jumelles']},{id:'P1',stuff:['jumelles']},{id:'F1'}] },
     'deck.error.stuff_shared'],
   ['équipement non possédé',
-    { ...bon, fanzzy:[{id:'V1',stuff:['megaphone']},{id:'V2'},{id:'P1'}] },
+    { ...bon, fanzzy:[{id:'V1',stuff:['megaphone']},{id:'P1'},{id:'F1'}] },
     'deck.error.stuff_not_owned'],
   ['neuf cartes', { ...bon, actions: dixCartes.slice(0,9) }, 'deck.error.actions_count'],
   ['carte non possédée', { ...bon, actions: ['a-miroir', ...dixCartes.slice(0,9)] },
@@ -128,7 +136,7 @@ r = await call('/api/deck/mien', { method:'PUT', body:
 check('un seul Fanzzy aussi', r.json.deck?.fanzzy?.length === 1);
 
 r = await call('/api/deck/mien', { method:'PUT', body:
-  { ...bon, fanzzy: [{ id:'V1', stuff: [] }, { id:'V2' }, { id:'P1' }] } });
+  { ...bon, fanzzy: [{ id:'V1', stuff: [] }, { id:'P1' }, { id:'F1' }] } });
 check('un Fanzzy sans équipement est accepté',
   r.json.deck?.fanzzy?.[0]?.stuff?.length === 0);
 
