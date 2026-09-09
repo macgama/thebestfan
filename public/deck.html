@@ -255,6 +255,9 @@ const MESSAGES = {
   'deck.error.server':            'Le serveur n\u2019a pas pu enregistrer le deck.',
   'deck.warn.no_substitution':    'Sans « Arbitre — changement », tu resteras sur ton premier Fanzzy '
                                 + 'toute la partie : les deux autres n\u2019entreront jamais.',
+  'deck.warn.no_evolution_card':  'Tes Fanzzy entrent toujours à leur premier âge. Sans '
+                                + '« Relève », ce que tu as payé pour les faire grandir '
+                                + 'ne servira pas en duel.',
 };
 
 const api = async (path, { method = 'GET', body } = {}) => {
@@ -359,6 +362,7 @@ async function charger() {
   ]);
 
   S.possede = mien.possede;
+  S.stades = mien.possede.stades ?? {};
   S.regles = mien.regles ?? cat.regles ?? S.regles;
   S.catalogue = cat.actions ?? [];
   S.dex = new Map((dex.dex ?? []).map((f) => [f.id, f]));
@@ -493,6 +497,16 @@ function tribuneHTML() {
   if (S.deck.fanzzy.length === S.regles.fanzzy && !S.deck.actions.includes('a-arbitre')) {
     out.push(`<div class="avert doux"><b>TES REMPLAÇANTS NE JOUERONT PAS</b>
       ${MESSAGES['deck.warn.no_substitution']}</div>`);
+  }
+
+  // Le piège silencieux du modèle à trois âges : on paie pour faire grandir
+  // un Fanzzy, on l’aligne, il entre en gamin, et on en conclut que l’achat
+  // n’a servi à rien. La carte Relève est le seul moyen d’en profiter en
+  // duel — on le dit à celui qui a quelque chose à relever.
+  const relevables = S.deck.fanzzy.filter((f) => (S.stades?.[f.id] ?? 1) > 1);
+  if (relevables.length && !S.deck.actions.includes('a-releve')) {
+    out.push(`<div class="avert doux"><b>TES ÉVOLUTIONS NE SERVIRONT PAS</b>
+      ${MESSAGES['deck.warn.no_evolution_card']}</div>`);
   }
   return out.join('');
 }

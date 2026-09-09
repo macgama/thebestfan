@@ -104,6 +104,34 @@ export const ACTIONS = [
     texte: 'Fait entrer un autre Fanzzy de ton deck. Son équipement le suit.',
     effet: { type: 'swap_fanzzy' } },
 
+  /**
+   * La Relève : le personnage grandit en pleine partie.
+   *
+   * Tout le monde entre au premier âge — c'est la règle du deck. Ce que les
+   * écharpes ont acheté, ce n'est pas un avantage acquis au coup d'envoi, c'est
+   * le **droit de jouer cette carte**. Deux tribunes se rencontrent au même
+   * niveau et l'écart se creuse sur ce qu'on joue.
+   *
+   * **Son vrai coût est ailleurs que dans le souffle.** Un joueur qui veut
+   * faire grandir ses trois Fanzzy doit en embarquer trois exemplaires : trente
+   * pour cent d'un deck en cartes qui ne poussent pas, ne gênent pas et ne
+   * protègent pas. En face, celui qui n'a rien débloqué joue dix cartes d'effet
+   * pur. L'arbitrage s'équilibre seul, sans table de réglage — et c'est ce qui
+   * empêche la carte d'être un simple retard de vingt secondes sur la victoire
+   * du joueur le plus riche.
+   *
+   * Commune, donc offerte : posséder la carte n'est pas une seconde barrière.
+   * La seule barrière est d'avoir fait grandir le personnage.
+   *
+   * Un cran par carte. Atteindre le troisième âge en duel coûte donc deux
+   * emplacements et deux moments de jeu : la montée en puissance se voit, et
+   * elle pèse dans la construction du deck.
+   */
+  { id: 'a-releve', nom: 'Relève', fam: 'bascule', rar: 'commune', cost: 30, cd: 30,
+    texte: 'Ton Fanzzy en tribune passe à son âge suivant, si tu l’as débloqué. '
+      + 'Son équipement le suit.',
+    effet: { type: 'evolve' }, condition: { evolution: true } },
+
   { id: 'a-prolongations', nom: 'Prolongations', fam: 'bascule', rar: 'legendaire', cost: 45, cd: 90,
     texte: 'Après la 75e minute du vrai match seulement. Double ta poussée pendant 15 s.',
     effet: { type: 'mod_self', mods: { pushMult: 2 }, duree: 15000 },
@@ -135,6 +163,19 @@ export const DECK_RULES = {
   // cartes ; en pratique un débutant en possède cinq, et dix emplacements à
   // remplir avec cinq cartes sans doublon est arithmétiquement impossible.
   copiesMax: null,
+  /**
+   * Tout le monde entre au premier âge.
+   *
+   * La règle est déjà vraie par construction — le deck ramène chaque Fanzzy à
+   * son personnage, et le loadout ne met en tribune que son premier âge. Elle
+   * est écrite ici parce que la page du deck l'annonce au joueur : sans ça,
+   * quelqu'un qui a payé quatre-vingt-dix écharpes ne comprendrait pas pourquoi
+   * son Capo entre en gamin, et il le prendrait pour un bug.
+   *
+   * Ce que les écharpes achètent, c'est la carte Relève : le droit de le faire
+   * grandir en cours de partie, en y consacrant un de ses dix emplacements.
+   */
+  stadeEnJeu: 1,
 };
 
 /**
@@ -192,6 +233,17 @@ export function validerDeck(deck, possede) {
   // n'est pas interdit, mais il vaut mieux le lui dire.
   const avertissements = actions.includes('a-arbitre') ? []
     : [{ code: 'deck.warn.no_substitution' }];
+
+  // Le piège le plus silencieux du nouveau modèle : quelqu'un a payé pour faire
+  // grandir un Fanzzy, il l'aligne, et il entre en gamin sans que rien ne le
+  // lui explique. Il en conclura que son achat n'a servi à rien. La carte
+  // Relève est le seul moyen d'en profiter en duel : si elle manque alors qu'il
+  // y a quelque chose à relever, on le dit.
+  const relevables = fanzzy.filter((f) => (possede?.stades?.[f?.id] ?? 1) > 1);
+  if (relevables.length && !actions.includes('a-releve')) {
+    avertissements.push({ code: 'deck.warn.no_evolution_card',
+      ids: relevables.map((f) => f.id) });
+  }
 
   return { valide: pb.length === 0, problemes: pb, avertissements };
 }

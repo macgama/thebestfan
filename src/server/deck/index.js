@@ -1,6 +1,6 @@
 import express from 'express';
 import { ACTIONS, ACTION_BY_ID, DECK_RULES, validerDeck } from '../../shared/duel/actions.js';
-import { parIdentifiant, racineDe } from '../fanzzy/catalogue.js';
+import { parIdentifiant, racineDe, lignee } from '../fanzzy/catalogue.js';
 import { STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 import { jourISO } from '../../shared/jour.js';
 
@@ -34,7 +34,7 @@ export function createDecks({ pool, requireAuth }) {
 
   async function possessions(userId) {
     const [fz, st, w] = await Promise.all([
-      q(`SELECT fanzzy_id FROM user_fanzzy WHERE user_id = ?`, [userId]),
+      q(`SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]),
       q(`SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [userId]),
       q(`SELECT action_cards FROM user_wallet WHERE user_id = ?`, [userId]),
     ]);
@@ -42,6 +42,10 @@ export function createDecks({ pool, requireAuth }) {
     const actions = typeof brut === 'string' ? JSON.parse(brut) : (brut ?? []);
     return {
       fanzzy: new Set(fz.map((f) => f.fanzzy_id)),
+      // Jusqu'où chaque personnage a été fait grandir. Ne sert pas à valider —
+      // un deck n'exprime plus de stade — mais à avertir le joueur qui a payé
+      // une évolution et oublie la carte qui lui donne accès.
+      stades: Object.fromEntries(fz.map((f) => [f.fanzzy_id, Number(f.stage)])),
       stuff: new Set(st.map((s) => s.stuff_id)),
       // Les communes sont offertes à tous : sans elles, un joueur qui débute
       // ne pourrait pas remplir ses dix emplacements.
@@ -82,18 +86,45 @@ export function createDecks({ pool, requireAuth }) {
   async function loadout(userId) {
     const deck = await deckDe(userId);
     if (!deck) return null;
+
+    // Jusqu'où chaque personnage a été fait grandir. Le duel ne s'en sert pas
+    // pour renforcer qui que ce soit au coup d'envoi — tout le monde entre au
+    // premier âge — mais pour savoir **jusqu'où la carte Relève peut aller**.
+    const stades = Object.fromEntries((await q(
+      `SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]))
+      .map((r) => [r.fanzzy_id, Number(r.stage)]));
+
     return {
       fanzzy: deck.fanzzy.map((f) => {
-        const def = parIdentifiant(f.id);
-        return {
+        const stuff = f.stuff ?? [];
+        // L'équipement suit le personnage à travers ses âges : c'est déjà ce que
+        // promet la carte de remplacement, et il serait incompréhensible qu'il
+        // tombe au moment précis où le personnage grandit.
+        //
+        // Les modificateurs sont combinés ici une fois pour toutes, âge par
+        // âge : le moteur ne doit pas refaire ce calcul à chaque geste.
+        const habiller = (def, i) => ({
+          id: f.id, nom: def?.nom, type: def?.type, cri: def?.cri,
           // `stage` sert au dessin : la silhouette procédurale grandit avec
-          // l'étage d'évolution. Sans lui, l'écran de duel dessine un Fanzzy
-          // à l'échelle NaN, c'est-à-dire rien du tout.
-          id: f.id, nom: def?.nom, type: def?.type, stage: def?.stage, cri: def?.cri,
-          stuff: f.stuff ?? [],
-          // Les modificateurs sont calculés une fois pour toutes : le moteur
-          // ne doit pas refaire ce calcul à chaque geste.
-          mods: { id: f.id, ...combine(def?.mods ?? {}, f.stuff ?? []) },
+          // l'âge. Sans lui, l'écran de duel dessine un Fanzzy à l'échelle NaN,
+          // c'est-à-dire rien du tout.
+          stage: i + 1,
+          mods: { id: f.id, ...combine(def?.mods ?? {}, stuff) },
+        });
+
+        const ages = lignee(f.id);
+        const debloque = Math.min(stades[f.id] ?? 1, ages.length);
+        const jouables = ages.slice(0, debloque).map(habiller);
+
+        return {
+          // Le premier âge est celui qui entre en tribune, toujours.
+          ...(jouables[0] ?? habiller(parIdentifiant(f.id), 0)),
+          stuff,
+          // Le stade **en jeu**. Il démarre à 1 et c'est la Relève qui le fait
+          // monter — à ne pas confondre avec `ages.length`, qui dit jusqu'où ce
+          // joueur a le droit d'aller.
+          stade: 1,
+          ages: jouables,
         };
       }),
       actions: deck.actions.map((id) => ACTION_BY_ID.get(id)).filter(Boolean),
@@ -229,6 +260,9 @@ export function createDecks({ pool, requireAuth }) {
       deck,
       possede: {
         fanzzy: [...possede.fanzzy],
+        // Le stade atteint par personnage : la page en a besoin pour avertir
+        // celui qui aligne un Fanzzy évolué sans embarquer de Relève.
+        stades: possede.stades,
         stuff: [...possede.stuff],
         actions: [...possede.actions],
       },
