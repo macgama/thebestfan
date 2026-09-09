@@ -1,1 +1,1 @@
-{"fanzzy":{"TR1":{"rev":1,"evolutions":{"e1":{"skins":{"base":{"etats":["neutre","salut","pousse","but","encaisse","attente","victoire","defaite","occasion","decision","progression","ennui"],"portrait":true}}},"e2":{"skins":{"base":{"etats":["victoire"],"portrait":false}}}}}}}
+{"fanzzy":{"TR1":{"rev":2,"evolutions":{"e1":{"skins":{"base":{"etats":["neutre","salut","pousse","but","encaisse","attente","victoire","defaite","occasion","decision","progression","ennui"],"portrait":true}}},"e2":{"skins":{"base":{"etats":["neutre","victoire"],"portrait":true}}}}}}}

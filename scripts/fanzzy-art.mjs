@@ -341,19 +341,41 @@ let manifeste = { id: ID, rev: 0, evolutions: {} };
 try { manifeste = JSON.parse(await readFile(cheminManifeste, 'utf8')); }
 catch { /* premier passage */ }
 
-const compte = [];
+/* ------------------------------------ tout lire et tout vérifier d'abord
+
+   **Rien n'est écrit tant que le lot entier n'est pas validé.**
+
+   La version d'avant lisait, vérifiait et écrivait âge par âge : un e2 mal
+   formé s'arrêtait *après* que e1 avait été réécrit, et le manifeste, produit
+   à la toute fin, ne l'était pas. Le lot refusé laissait donc des fichiers
+   neufs décrits par un manifeste ancien — un désaccord silencieux entre le
+   disque et ce que le jeu croit trouver.
+
+   Ça ne se voyait pas tant qu'on lançait la chaîne à la main sur un dossier
+   complet. Avec une veille qui se déclenche à chaque fichier déposé, le lot
+   incomplet devient le cas **normal**.                                       */
+
+const ages = [];
+const refus = [];
+
 for (const [evo, entrees] of [...parEvo].sort((a, b) => a[0] - b[0])) {
   // Tout l'âge est lu d'abord : la boîte commune se calcule sur l'ensemble,
   // tenues et objets compris.
   const lus = entrees.map((e) => ({ ...e }));
   for (const e of lus) e.img = await analyser(e.chemin);
 
-  const tailles = new Set(lus.map((e) => `${e.img.l}×${e.img.h}`));
+  const tailles = new Map();
+  for (const e of lus) {
+    const t = `${e.img.l}×${e.img.h}`;
+    (tailles.get(t) ?? tailles.set(t, []).get(t)).push(path.basename(e.chemin));
+  }
   if (tailles.size > 1) {
-    console.error(`e${evo} : les rendus n'ont pas tous la même taille (${[...tailles].join(', ')}). `
-      + 'Le cadrage commun suppose un format unique — c\'est ce qui garde les pieds '
-      + 'du personnage à la même hauteur d\'une tenue et d\'un état à l\'autre.');
-    process.exit(1);
+    // On nomme les fichiers de chaque taille : « deux formats » ne dit pas
+    // lequel corriger, et c'est pourtant la seule chose qu'on veut savoir.
+    refus.push(`e${evo} : les rendus n'ont pas tous la même taille.`
+      + [...tailles].map(([t, noms]) =>
+        `\n    ${t} — ${noms.join(', ')}`).join(''));
+    continue;
   }
 
   const u = lus.map((e) => e.img.boite).reduce((a, b) => ({
@@ -361,7 +383,20 @@ for (const [evo, entrees] of [...parEvo].sort((a, b) => a[0] - b[0])) {
     x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1),
   }));
   const { l, h } = lus[0].img;
-  const cadre = { left: u.x0, top: u.y0, width: u.x1 - u.x0 + 1, height: u.y1 - u.y0 + 1 };
+  ages.push({ evo, lus, l, h,
+    cadre: { left: u.x0, top: u.y0, width: u.x1 - u.x0 + 1, height: u.y1 - u.y0 + 1 } });
+}
+
+if (refus.length) {
+  console.error(refus.join('\n') + '\n\n'
+    + 'Le cadrage commun suppose un format unique par âge : c\'est ce qui garde les\n'
+    + 'pieds du personnage à la même hauteur d\'une tenue et d\'un état à l\'autre.\n'
+    + 'Rien n\'a été écrit — les images en place sont intactes.');
+  process.exit(1);
+}
+
+const compte = [];
+for (const { evo, lus, l, h, cadre } of ages) {
 
   const decouper = async (img, dossier, nom, empreinte) => {
     const decoupe = await sharp(img.rgba, { raw: { width: l, height: h, channels: 4 } })
