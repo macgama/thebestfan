@@ -56,7 +56,7 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
       q(`SELECT f.team_id, f.is_main, t.name, t.logo, t.country
            FROM user_follows f LEFT JOIN teams t ON t.id = f.team_id
           WHERE f.user_id = ? ORDER BY f.is_main DESC`, [userId]),
-      q(`SELECT fanzzy_id, skin_id, equipped FROM user_skins WHERE user_id = ?`, [userId]),
+      q(`SELECT fanzzy_id, stage, skin_id, equipped FROM user_skins WHERE user_id = ?`, [userId]),
       q(`SELECT stuff_id, copies, slot FROM user_stuff WHERE user_id = ?`, [userId]),
     ]);
 
@@ -171,8 +171,8 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
              ON DUPLICATE KEY UPDATE copies = copies + 1`, [userId, c.id]);
           // Le skin de base vient avec le Fanzzy, toujours.
           await conn.query(
-            `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, skin_id, equipped)
-             VALUES (?, ?, 'base', 1)`, [userId, c.id]);
+            `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, stage, skin_id, equipped)
+             VALUES (?, ?, 1, 'base', 1)`, [userId, c.id]);
         } else if (c.type === 'stuff') {
           await conn.query(
             `INSERT INTO user_stuff (user_id, stuff_id, copies, slot) VALUES (?, ?, 1, 1)
@@ -225,15 +225,34 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
       [userId, stuffId]);
   }
 
-  async function wearSkin(userId, fanzzyId, skinId) {
+  /**
+   * Porter une tenue — **à un âge précis**.
+   *
+   * Un skin appartient désormais à un âge et non au personnage. Sans le stade,
+   * l'extinction des autres tenues balaierait les trois âges pour en allumer
+   * une seule : le personnage se retrouverait nu à ses autres stades sans que
+   * personne l'ait demandé, et il faudrait y retourner pour comprendre.
+   *
+   * Le stade par défaut est celui que le joueur a atteint — celui qu'il
+   * regarde, et le seul dont la fiche lui propose les tenues.
+   */
+  async function wearSkin(userId, fanzzyId, skinId, stade = null) {
+    const s = stade ?? Number((await q(
+      `SELECT stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
+      [userId, fanzzyId]))[0]?.stage ?? 1);
+
     const owned = await q(
-      `SELECT 1 FROM user_skins WHERE user_id = ? AND fanzzy_id = ? AND skin_id = ?`,
-      [userId, fanzzyId, skinId]);
+      `SELECT 1 FROM user_skins
+        WHERE user_id = ? AND fanzzy_id = ? AND stage = ? AND skin_id = ?`,
+      [userId, fanzzyId, s, skinId]);
     if (!owned.length) throw fail('onboarding.error.not_owned');
-    await q(`UPDATE user_skins SET equipped = 0 WHERE user_id = ? AND fanzzy_id = ?`,
-      [userId, fanzzyId]);
-    await q(`UPDATE user_skins SET equipped = 1 WHERE user_id = ? AND fanzzy_id = ? AND skin_id = ?`,
-      [userId, fanzzyId, skinId]);
+
+    await q(`UPDATE user_skins SET equipped = 0
+              WHERE user_id = ? AND fanzzy_id = ? AND stage = ?`,
+      [userId, fanzzyId, s]);
+    await q(`UPDATE user_skins SET equipped = 1
+              WHERE user_id = ? AND fanzzy_id = ? AND stage = ? AND skin_id = ?`,
+      [userId, fanzzyId, s, skinId]);
   }
 
   /**

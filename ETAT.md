@@ -372,6 +372,34 @@ copains.
 qui cherche les bonus actifs. Une tâche périodique aurait demandé un
 ordonnanceur, et surtout elle aurait laissé des votes ouverts pour l’éternité au
 premier redémarrage tombé au mauvais moment.
+**Une tenue appartient à un âge, pas au personnage.** Le Capo n’hérite pas de
+la garde-robe du gamin. C’est ce qui donne une raison de continuer à ouvrir des
+boosters après avoir fait grandir quelqu’un, et c’est ce que la chaîne d’images
+savait déjà produire — `e1/hiver/`, `e2/hiver/` — sans qu’aucune donnée puisse
+les atteindre.
+
+Deux conséquences à ne pas défaire :
+
+- **Grandir habille le nouvel âge.** `evolve()` pose la tenue de base du stade
+  atteint. Sans elle, le personnage grandirait tout nu : la fiche n’aurait
+  aucune tenue à montrer, et l’accueil chercherait un dossier `e2/` qu’aucun
+  skin ne désigne.
+- **Porter se fait par âge.** `wearSkin` éteint les autres tenues *du même
+  stade*. Sans le stade dans la clause, allumer une tenue déshabillerait les
+  deux autres âges sans que personne l’ait demandé.
+
+**Les places 4 et 5 du booster s’ouvrent à tout l’inventaire.** Sept pièces
+d’équipement et quinze cartes d’action sur vingt et une n’étaient obtenables
+**nulle part** : le paquet de bienvenue en donnait une de chaque, au hasard, et
+c’était tout. On pouvait ouvrir trois cents boosters sans jamais voir un
+mégaphone.
+
+Les trois premières places restent des supporters, et c’est la garantie qui
+tient l’ouverture : personne ne doit tomber sur cinq objets et zéro personnage.
+Une catégorie vide — tout l’équipement déjà possédé, aucun Fanzzy à habiller —
+se replie sur un supporter plutôt que de rendre une place blanche. Et un
+doublon d’équipement rapporte des écharpes, comme un doublon de carte : il ne
+se perd pas.
 **Un skin ne donne aucun bonus.** Il change l'apparence, rien d'autre. Celui qui
 ouvre mille boosters est plus beau, pas plus fort.
 

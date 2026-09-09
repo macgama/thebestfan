@@ -5,6 +5,7 @@ import express from 'express';
 import { createFanzzy, MAX_PACKS, PACKS_DEPART, PACK_PRICE } from '../src/server/fanzzy/index.js';
 import { DEX, BY_ID, SETS } from '../src/shared/fanzzy/dex.js';
 import { SKINS } from '../src/shared/fanzzy/inventaire.js';
+import { ACTIONS } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { baseDeTest } from './base-de-test.mjs';
 
@@ -20,7 +21,8 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 // admin.sql pour la table `reglages` : c'est elle qui porte les séries
 // ouvertes, et la suite en éprouve la fermeture plus bas.
-for (const f of ['auth.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql', 'admin.sql']) {
+for (const f of ['auth.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql',
+                 'skins.sql', 'admin.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 // Les réglages ne sont pas dans le DROP ci-dessus : la table est partagée par
@@ -79,9 +81,16 @@ check('collection vide', Object.keys(r.json.collection).length === 0);
 
 r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'VN' } });
 check('cinq cartes tirées', r.json.cards?.length === 5);
-check('toutes typées', r.json.cards.every((c) => c.type === 'fanzzy' || c.type === 'skin'));
+check('toutes typées', r.json.cards.every((c) =>
+  ['fanzzy', 'skin', 'stuff', 'action'].includes(c.type)));
+/* Un skin habille un Fanzzy déjà possédé : au tout premier booster, il n'y a
+   rien à habiller, et la catégorie se replie donc sur un supporter. C'est ce
+   qui empêche une première ouverture de donner une tenue pour personne.
+
+   L'équipement et les cartes d'action, eux, peuvent tomber dès le premier
+   paquet — et c'est très bien : ils se comprennent seuls. */
 check('aucun skin au premier booster',
-  r.json.cards.every((c) => c.type === 'fanzzy'));
+  r.json.cards.every((c) => c.type !== 'skin'));
 check('toutes du bon set',
   r.json.cards.filter((c) => c.type === 'fanzzy').every((c) => BY_ID.get(c.id).set === 'VN'));
 check('trois communes garanties',
@@ -118,6 +127,46 @@ const ids = new Set(possedes.map((p) => p.fanzzy_id));
 check('un skin ne tombe que pour un Fanzzy possédé',
   skinsRecus.every((s) => ids.has(s.fanzzy_id)));
 
+/* ------------------------------- ce que les places 4 et 5 apportent
+
+   Sept pièces d’équipement et quinze cartes d’action sur vingt et une
+   n’étaient obtenables nulle part : le paquet de bienvenue en donnait une de
+   chaque, au hasard, et c’était tout. Un joueur pouvait ouvrir trois cents
+   boosters sans jamais voir un mégaphone.
+
+   Deux cents cartes tirées plus haut suffisent largement à en faire tomber :
+   si rien n’arrive, c’est que la catégorie est morte, pas malchanceuse. */
+
+const [stuffRecu] = await pool.query(
+  `SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [U]);
+check(`l'équipement tombe dans les boosters (${stuffRecu.length} pièces)`,
+  stuffRecu.length > 0);
+
+{
+  const w = (await pool.query(
+    'SELECT action_cards FROM user_wallet WHERE user_id = ?', [U]))[0][0].action_cards;
+  const a = typeof w === 'string' ? JSON.parse(w) : (w ?? []);
+  check(`des cartes d'action aussi (${a.length})`, a.length > 0);
+  // Et jamais de commune : elles sont déjà offertes à tout le monde. En
+  // distribuer serait donner une carte que le joueur possède depuis le
+  // premier jour.
+  const communes = new Set(ACTIONS.filter((x) => x.rar === 'commune').map((x) => x.id));
+  check('aucune carte commune distribuée : elles sont déjà offertes',
+    a.every((id) => !communes.has(id)));
+}
+
+// Un skin appartient à un âge. Toutes les lignes doivent donc porter un stade
+// que le joueur a réellement atteint — lui donner la tenue d’hiver d’un Capo
+// qu’il n’a pas encore serait un cadeau qu’il ne peut pas ouvrir.
+{
+  const [lignes] = await pool.query(
+    `SELECT s.fanzzy_id, s.stage, f.stage AS atteint FROM user_skins s
+       JOIN user_fanzzy f ON f.user_id = s.user_id AND f.fanzzy_id = s.fanzzy_id
+      WHERE s.user_id = ?`, [U]);
+  check('chaque skin vise un âge réellement débloqué',
+    lignes.length > 0 && lignes.every((l) => l.stage >= 1 && l.stage <= l.atteint));
+}
+
 // On vide la réserve pour vérifier le refus puis l'achat.
 await pool.query('UPDATE user_wallet SET packs = 0 WHERE user_id = ?', [U]);
 r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'VN' } });
@@ -153,6 +202,11 @@ check('les doublons ont rapporté', r.json.wallet.scarves > 500 - PACK_PRICE);
 const base1 = DEX.find((f) => f.stage === 1 && f.evo);
 await pool.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)
                   ON DUPLICATE KEY UPDATE copies = copies + 1`, [U, base1.id]);
+// Sa tenue de base au premier âge, comme le ferait un booster. Sans elle, le
+// contrôle « l'âge d'avant reste habillé » n'aurait rien à regarder — et il
+// passerait ou échouerait selon ce que les quarante ouvertures ont tiré.
+await pool.query(`INSERT IGNORE INTO user_skins (user_id,fanzzy_id,stage,skin_id,equipped)
+                  VALUES (?,?,1,'base',1)`, [U, base1.id]);
 const mien = async () => (await pool.query(
   'SELECT copies, stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?',
   [U, base1.id]))[0][0];
@@ -179,6 +233,23 @@ check('l’âge supérieur n’est pas une carte à part',
 
 r = await call('/api/fanzzy/state');
 check('le stade atteint est annoncé au client', r.json.stades?.[base1.id] === 2);
+
+/* Grandir habille le nouvel âge.
+
+   Depuis qu’un skin appartient à un âge, monter de stade sans cette ligne
+   laisserait le Capo sans rien à porter : la fiche n’aurait aucune tenue à
+   montrer, et l’accueil chercherait un dossier `e2/` qu’aucun skin ne
+   désigne. Le personnage grandirait tout nu, en silence. */
+{
+  const [lignes] = await pool.query(
+    `SELECT stage, skin_id, equipped FROM user_skins
+      WHERE user_id = ? AND fanzzy_id = ? ORDER BY stage`, [U, base1.id]);
+  check('le nouvel âge reçoit sa tenue de base',
+    lignes.some((l) => Number(l.stage) === 2 && l.skin_id === 'base'));
+  check('et il la porte', lignes.find((l) => Number(l.stage) === 2)?.equipped === 1);
+  check('celle du premier âge est intacte',
+    lignes.some((l) => Number(l.stage) === 1 && l.skin_id === 'base' && l.equipped === 1));
+}
 
 // Deuxième cran, puis le mur : une lignée n'a que trois âges écrits.
 r = await call('/api/fanzzy/evolve', { method: 'POST', body: { id: base1.id } });

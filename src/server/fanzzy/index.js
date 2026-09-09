@@ -6,6 +6,7 @@ import { SETS, TYPES, RAR, RATES, SCARVES, EVO_COST } from '../../shared/fanzzy/
 import { tous, publies, parIdentifiant, obtenables, seriesOuvertes, serieOuverte,
   racineDe, lignee, auStade } from './catalogue.js';
 import { SKINS, SKIN_BY_ID, STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
+import { ACTIONS } from '../../shared/duel/actions.js';
 import { XP } from '../../shared/niveau.js';
 
 /**
@@ -30,15 +31,6 @@ export const MAX_PACKS = 12;
 export const PACKS_DEPART = 3;
 export const PACK_REGEN_MS = 10 * 60 * 1000;
 export const PACK_PRICE = 45;          // acheter un booster en écharpes
-
-/**
- * Chance qu'une carte du booster soit un skin plutôt qu'un Fanzzy.
- *
- * Un skin ne tombe que pour un Fanzzy déjà possédé : sans le supporter, la
- * tenue n'a rien à habiller. Un joueur qui n'a encore rien reçoit donc des
- * Fanzzy, ce qui est exactement ce qu'il lui faut.
- */
-const CHANCE_SKIN = 0.22;
 
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
@@ -171,6 +163,105 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
   }
 
   /**
+   * Ce que peut contenir une place 4 ou 5, en plus d'un supporter.
+   *
+   * Sept pièces d'équipement et quinze cartes d'action sur vingt et une
+   * n'étaient **obtenables nulle part** : le paquet de bienvenue en donnait une
+   * de chaque, au hasard, et c'était tout. Un joueur pouvait ouvrir trois cents
+   * boosters sans jamais voir un mégaphone. Les places 4 et 5 s'ouvrent donc au
+   * reste de l'inventaire.
+   *
+   * Les trois premières restent des supporters, et c'est la garantie qui tient
+   * l'ouverture : personne ne doit pouvoir tomber sur cinq objets et zéro
+   * personnage.
+   *
+   * @returns {{carte, scarves}|null}  `null` = on retombe sur le supporter tiré
+   */
+  const PLACES_4_5 = [
+    ['fanzzy', 0.55],
+    ['skin', 0.15],
+    ['stuff', 0.15],
+    ['action', 0.15],
+  ];
+
+  function tirerCategorie() {
+    const r = Math.random();
+    let acc = 0;
+    for (const [cat, p] of PLACES_4_5) { acc += p; if (r < acc) return cat; }
+    return 'fanzzy';
+  }
+
+  async function tirerAutreChose(ctx) {
+    const { conn, userId, avant, stadeDe, skinsPris, stuffPris, actionsPrises } = ctx;
+    const cat = tirerCategorie();
+    if (cat === 'fanzzy') return null;
+
+    /* Chaque catégorie peut être vide — tout l'équipement déjà possédé, aucun
+       Fanzzy à habiller. On retombe alors sur le supporter plutôt que de rendre
+       une place blanche : une carte vide dans un booster est pire qu'une carte
+       banale. */
+
+    if (cat === 'skin') {
+      // Un skin habille **un âge précis**. On ne propose donc que les âges que
+      // le joueur a débloqués : lui donner la tenue d'hiver d'un Capo qu'il
+      // n'a pas encore serait un cadeau qu'il ne peut pas ouvrir.
+      const places = [];
+      for (const id of avant) {
+        const stade = stadeDe.get(id) ?? 1;
+        for (let s = 1; s <= stade; s++) {
+          for (const sk of SKINS) {
+            if (sk.id === 'base') continue;
+            if (!skinsPris.has(`${id}:${s}:${sk.id}`)) places.push({ id, stade: s, skin: sk.id });
+          }
+        }
+      }
+      if (!places.length) return null;
+      const p = rnd(places);
+      skinsPris.add(`${p.id}:${p.stade}:${p.skin}`);
+      await conn.query(
+        `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, stage, skin_id) VALUES (?, ?, ?, ?)`,
+        [userId, p.id, p.stade, p.skin]);
+      return { carte: { type: 'skin', id: p.skin, pour: p.id, stade: p.stade, new: true },
+        scarves: 0 };
+    }
+
+    if (cat === 'stuff') {
+      const def = STUFF.find((s) => s.rar === pickRarity(5) && !stuffPris.has(s.id))
+        ?? STUFF.find((s) => !stuffPris.has(s.id));
+      // Tout possédé : un doublon d'équipement rapporte des écharpes, comme un
+      // doublon de supporter. Il ne se perd pas.
+      if (!def) {
+        const dedans = rnd(STUFF);
+        await conn.query(
+          `UPDATE user_stuff SET copies = copies + 1 WHERE user_id = ? AND stuff_id = ?`,
+          [userId, dedans.id]);
+        return { carte: { type: 'stuff', id: dedans.id, new: false },
+          scarves: SCARVES[dedans.rar] ?? 1 };
+      }
+      stuffPris.add(def.id);
+      await conn.query(
+        `INSERT INTO user_stuff (user_id, stuff_id, copies) VALUES (?, ?, 1)
+         ON DUPLICATE KEY UPDATE copies = copies + 1`, [userId, def.id]);
+      return { carte: { type: 'stuff', id: def.id, new: true }, scarves: 0 };
+    }
+
+    // Une carte d'action ne se possède qu'une fois : le deck en accepte dix
+    // exemplaires, mais c'est le même droit répété. Un doublon rapporte donc
+    // des écharpes plutôt qu'une ligne de plus.
+    const libres = ACTIONS.filter((a) => a.rar !== 'commune' && !actionsPrises.has(a.id));
+    if (!libres.length) return null;
+    const vise = pickRarity(5);
+    const def = rnd(libres.filter((a) => a.rar === vise).length
+      ? libres.filter((a) => a.rar === vise) : libres);
+    actionsPrises.add(def.id);
+    await conn.query(
+      `UPDATE user_wallet SET action_cards = JSON_ARRAY_APPEND(
+         COALESCE(action_cards, JSON_ARRAY()), '$', ?) WHERE user_id = ?`,
+      [def.id, userId]);
+    return { carte: { type: 'action', id: def.id, new: true }, scarves: 0 };
+  }
+
+  /**
    * Ouvre un booster. Toute l'opération est transactionnelle : sans cela, deux
    * requêtes lancées en même temps consommeraient un seul booster pour deux
    * tirages.
@@ -220,9 +311,26 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
       const [owned] = await conn.query(
         `SELECT fanzzy_id FROM user_fanzzy WHERE user_id = ?`, [userId]);
       const had = new Set(owned.map((o) => o.fanzzy_id));
+      // Les stades atteints : un skin se gagne **pour un âge**, et on ne peut
+      // en gagner un que pour un âge que le joueur a effectivement débloqué.
+      const [stadesOwned] = await conn.query(
+        `SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]);
+      const stadeDe = new Map(stadesOwned.map((s) => [s.fanzzy_id, Number(s.stage)]));
+
       const [skinsOwned] = await conn.query(
-        `SELECT fanzzy_id, skin_id FROM user_skins WHERE user_id = ?`, [userId]);
-      const skinsPris = new Set(skinsOwned.map((s) => `${s.fanzzy_id}:${s.skin_id}`));
+        `SELECT fanzzy_id, stage, skin_id FROM user_skins WHERE user_id = ?`, [userId]);
+      const skinsPris = new Set(
+        skinsOwned.map((s) => `${s.fanzzy_id}:${s.stage}:${s.skin_id}`));
+
+      const [stuffOwned] = await conn.query(
+        `SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [userId]);
+      const stuffPris = new Set(stuffOwned.map((s) => s.stuff_id));
+
+      const [wRow] = await conn.query(
+        `SELECT action_cards FROM user_wallet WHERE user_id = ?`, [userId]);
+      const brutActions = wRow[0]?.action_cards;
+      const actionsPrises = new Set(typeof brutActions === 'string'
+        ? JSON.parse(brutActions) : (brutActions ?? []));
 
       // Photographie de la collection avant ouverture : un skin ne peut pas
       // habiller un supporter reçu dans le même paquet. Le joueur n'a pas
@@ -234,20 +342,16 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
 
       for (const [i, f] of pull.entries()) {
         // Les trois premières places restent des supporters : c'est la
-        // garantie qui empêche une ouverture entièrement décevante.
-        const candidats = i < 3 ? [] : [...avant].filter((id) =>
-          SKINS.some((sk) => sk.id !== 'base' && !skinsPris.has(`${id}:${sk.id}`)));
-
-        if (candidats.length && Math.random() < CHANCE_SKIN) {
-          const pour = rnd(candidats);
-          const libres = SKINS.filter((sk) => sk.id !== 'base' && !skinsPris.has(`${pour}:${sk.id}`));
-          const skin = rnd(libres);
-          skinsPris.add(`${pour}:${skin.id}`);
-          await conn.query(
-            `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, skin_id) VALUES (?, ?, ?)`,
-            [userId, pour, skin.id]);
-          cards.push({ type: 'skin', id: skin.id, pour, new: true });
-          continue;
+        // garantie qui empêche une ouverture entièrement décevante. Les deux
+        // dernières s'ouvrent au reste de l'inventaire.
+        if (i >= 3) {
+          const autre = await tirerAutreChose({
+            conn, userId, avant, stadeDe, skinsPris, stuffPris, actionsPrises });
+          if (autre) {
+            scarves += autre.scarves ?? 0;
+            cards.push(autre.carte);
+            continue;
+          }
         }
 
         const isNew = !had.has(f.id);
@@ -257,11 +361,14 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
           `INSERT INTO user_fanzzy (user_id, fanzzy_id, copies) VALUES (?, ?, 1)
            ON DUPLICATE KEY UPDATE copies = copies + 1`,
           [userId, f.id]);
-        // Le skin de base accompagne toujours le supporter.
+        if (!stadeDe.has(f.id)) stadeDe.set(f.id, 1);
+        // Le skin de base accompagne toujours le supporter, au premier âge —
+        // le seul qu'il ait en sortant d'un booster.
         await conn.query(
-          `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, skin_id, equipped)
-           VALUES (?, ?, 'base', 1)`,
+          `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, stage, skin_id, equipped)
+           VALUES (?, ?, 1, 'base', 1)`,
           [userId, f.id]);
+        skinsPris.add(`${f.id}:1:base`);
       }
       if (scarves) {
         await conn.query(`UPDATE user_wallet SET scarves = scarves + ? WHERE user_id = ?`,
@@ -346,6 +453,17 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
       await conn.query(
         `UPDATE user_fanzzy SET stage = ? WHERE user_id = ? AND fanzzy_id = ? AND stage = ?`,
         [vers, userId, id, have.stage]);
+
+      /* Le nouvel âge a besoin d'une tenue.
+         Depuis qu'un skin appartient à un âge et non au personnage, grandir
+         sans cette ligne laisserait le Capo sans rien à porter : la fiche
+         n'aurait aucun skin à montrer, et l'accueil chercherait un dossier
+         `e2/` qu'aucun skin ne désigne. Le skin de base, donc, comme à
+         l'acquisition. */
+      await conn.query(
+        `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, stage, skin_id, equipped)
+         VALUES (?, ?, ?, 'base', 1)`,
+        [userId, id, vers]);
 
       await conn.commit();
       return { id, stade: vers, nom: age.nom, rar: age.rar, spent: cost,
@@ -493,8 +611,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
     const [mien, skins, stuff, w] = await Promise.all([
       q(`SELECT copies, stage, first_at FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
         [userId, id]),
-      q(`SELECT skin_id, equipped, got_at FROM user_skins WHERE user_id = ? AND fanzzy_id = ?`,
-        [userId, id]),
+      q(`SELECT skin_id, stage, equipped, got_at FROM user_skins
+          WHERE user_id = ? AND fanzzy_id = ?`, [userId, id]),
       q(`SELECT stuff_id, copies, slot FROM user_stuff WHERE user_id = ?`, [userId]),
       q(`SELECT active_fanzzy FROM user_wallet WHERE user_id = ?`, [userId]),
     ]);
@@ -519,11 +637,21 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
       stade,
       depuis: mien[0]?.first_at ?? null,
       equipe: w[0]?.active_fanzzy === id,
+      /* Les tenues de **l’âge atteint**, et rien d’autre.
+
+         Un skin appartient désormais à un âge : le Capo n’hérite pas de la
+         garde-robe du gamin. Montrer toutes les tenues du personnage ferait
+         croire le contraire, et le joueur chercherait longtemps le bouton qui
+         ne viendra pas. */
       skins: SKINS.map((sk) => {
-        const m = skins.find((x) => x.skin_id === sk.id);
+        const m = skins.find((x) => x.skin_id === sk.id && Number(x.stage) === stade);
         return { ...sk, possede: Boolean(m), porte: Boolean(m?.equipped),
                  depuis: m?.got_at ?? null };
       }),
+      // Ce qui est gagné aux autres âges, pour que la fiche puisse le dire
+      // plutôt que de laisser croire à une perte.
+      skinsAutresAges: skins.filter((x) => Number(x.stage) !== stade)
+        .map((x) => ({ id: x.skin_id, stade: Number(x.stage) })),
       // `possede` par âge veut dire « atteint », pas « détenu à part ». Un âge
       // au-delà du stade actuel se lit donc comme un objectif chiffré, ce qui
       // est exactement ce que la page en fait.

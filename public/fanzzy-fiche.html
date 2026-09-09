@@ -203,7 +203,13 @@ function rendre() {
         <span>${s.possede ? (s.porte ? 'PORTÉE' : 'POSSÉDÉE') : 'À TROUVER'}</span></div>`).join('')}
     </div>
     <div class="ligne" style="opacity:.5"><span class="n"><span>Les tenues ne changent rien au jeu.
-      Elles se trouvent dans les boosters, et seulement pour un Fanzzy que tu as déjà.</span></span></div>
+      Elles se trouvent dans les boosters, et seulement pour un Fanzzy que tu as déjà.
+      <b>Chaque âge a les siennes</b> : le Capo n’hérite pas de la garde-robe du gamin.</span></span></div>
+    ${(d.skinsAutresAges ?? []).length ? `<div class="ligne"><span class="n"><span>
+      ${d.skinsAutresAges.length} tenue${d.skinsAutresAges.length > 1 ? 's' : ''}
+      gagnée${d.skinsAutresAges.length > 1 ? 's' : ''} à d’autres âges de ce personnage —
+      ${[...new Set(d.skinsAutresAges.map((s) => `stade ${s.stade}`))].join(', ')}.
+      Elles l’attendent là-bas, elles ne sont pas perdues.</span></span></div>` : ''}
     </div>
 
     ${d.lignee.length > 1 ? `<h3>LIGNÉE</h3><div class="bloc"><div class="lignee">

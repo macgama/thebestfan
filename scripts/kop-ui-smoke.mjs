@@ -47,7 +47,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
   duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
   leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql',
-                 'inventaire.sql', 'kop.sql']) {
+                 'inventaire.sql', 'skins.sql', 'kop.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 

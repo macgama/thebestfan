@@ -30,7 +30,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 for (const f of ['auth.sql','football.sql','duel.sql','souvenirs.sql','fanzzy.sql',
-                 'inventaire.sql','deck.sql']) {
+                 'inventaire.sql', 'skins.sql','deck.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 const U = ['e1','e2','e3','e4'].map((x, i) =>
