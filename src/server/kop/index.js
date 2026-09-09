@@ -407,6 +407,32 @@ export function createKop({ pool, requireAuth, io = null }) {
   router.post('/vote/:voteId', requireAuth, safe(async (req, res) =>
     res.json(await voter(req.user.id, req.params.voteId, Boolean(req.body?.pour)))));
 
+  /* ------------------------------------------------------------- socket
+
+     Le serveur émet vers `kop:<id>` quand un vote s'ouvre ou se dépouille.
+     Encore faut-il que quelqu'un y soit : sans ce salon, les notifications
+     partaient dans le vide et les trois minutes du vote s'écoulaient pendant
+     que les membres regardaient une page immobile.
+
+     On rejoint **tous ses KOP** d'un coup plutôt qu'un par page ouverte : un
+     vote qui s'ouvre sur le KOP de Bâle doit atteindre celui qui regarde la
+     page de son KOP de Sion, sinon il le découvre après la clôture. */
+  if (io) {
+    io.on('connection', (socket) => {
+      socket.on('kop:suivre', async () => {
+        const u = socket.data?.user;
+        if (!u?.userId) return;
+        try {
+          for (const k of await miens(u.userId)) socket.join(`kop:${k.id}`);
+        } catch (e) {
+          // Pas de KOP, pas de table, peu importe : la page marche sans temps
+          // réel, elle relit simplement à son rythme.
+          if (!/doesn't exist/i.test(e.message ?? '')) console.error('[kop] suivre', e.message);
+        }
+      });
+    });
+  }
+
   return { router, miens, mienPour, pourClub, creer, rejoindre, quitter,
     verser, proposer, voter, depouillerEchus, modsDe, etat, PART_POT };
 }

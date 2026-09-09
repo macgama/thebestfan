@@ -89,6 +89,7 @@ bouton recouvert de 16 pixels, une image décentrée d'une demi-largeur.
 | `fanzzy-ui-smoke.mjs` | classeur, kiosque, catalogue | puppeteer |
 | `accueil-ui-smoke.mjs` | scène du personnage sur l'accueil | puppeteer |
 | `admin-ui-smoke.mjs` | catalogue Fanzzy dans l'administration | puppeteer |
+| `kop-ui-smoke.mjs` | la page du KOP : créer, rejoindre, voir le pot, voter | puppeteer |
 
 `accueil-ui-smoke.mjs` vérifie ce qui ne se lit pas dans le HTML : que le
 supporter **bouge** — il mesure le style calculé et exige l'animation de
@@ -105,6 +106,11 @@ Depuis que l'accueil montre le **Fanzzy équipé** plutôt que le supporter
 générique, la suite couvre les deux chemins : un Fanzzy illustré prend le
 centre de l'écran et y vit ses états, un Fanzzy pas encore dessiné laisse la
 place au supporter sans que rien ne le trahisse à l'écran.
+
+`kop-ui-smoke.mjs` vérifie ce que le serveur ne peut pas : que le **compte à
+rebours du vote tourne**. Trois minutes, c’est court — un chrono figé fait voter
+après la clôture, et le clic ne fait rien sans que rien ne l’explique. Il vérifie
+aussi qu’un bonus hors de prix est **désactivé** plutôt que refusé après coup.
 
 `jsdom` est déclaré en `devDependencies`. **`puppeteer` ne l'est pas, et c'est
 volontaire** : il télécharge un Chromium de près de 200 Mo, ce qui alourdirait

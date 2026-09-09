@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mon KOP — thebestfan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100dvh}
+body{background:radial-gradient(120% 50% at 50% -8%,rgba(245,195,59,.13),transparent 60%),var(--beton);
+     color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;padding:26px 16px 80px}
+main{width:100%;max-width:440px}
+h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em;margin:0 0 4px;text-align:center}
+.sub{text-align:center;font-size:11px;letter-spacing:.2em;opacity:.45;margin-bottom:22px}
+h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;margin:24px 2px 9px}
+
+/* ------------------------------------------------------------ le KOP */
+
+.kop{border:1px solid var(--trait);border-radius:var(--r);background:var(--panneau);
+  backdrop-filter:blur(10px);padding:14px;margin-bottom:10px}
+.kop.mien{border-color:rgba(245,195,59,.4)}
+.kop .tete{display:flex;align-items:baseline;gap:9px}
+.kop .tete b{font-family:var(--banner);font-size:16px;letter-spacing:.03em;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kop .tete .club{font-size:10.5px;opacity:.55;white-space:nowrap}
+.kop .chiffres{display:flex;gap:16px;margin-top:11px}
+.kop .ch{min-width:0}
+.kop .ch b{display:block;font-family:var(--banner);font-size:19px;color:var(--projo);line-height:1}
+.kop .ch span{font-size:9.5px;letter-spacing:.13em;opacity:.45;display:block;margin-top:3px}
+
+/* Le pot. Une barre, pas un tableau : ce qui compte est de voir si le
+   prochain bonus est à portée, pas de lire un chiffre exact. */
+.pot{height:4px;border-radius:3px;background:rgba(242,238,228,.12);margin-top:12px;overflow:hidden}
+.pot i{display:block;height:100%;background:linear-gradient(90deg,var(--projo),#B8860B);width:0;
+  transition:width .5s cubic-bezier(.3,.9,.4,1)}
+
+.membres{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px}
+.mb{display:flex;align-items:center;gap:5px;font-size:11px;padding:4px 9px;border-radius:999px;
+  border:1px solid var(--trait);background:rgba(0,0,0,.25)}
+.mb.chef{border-color:var(--projo);color:var(--projo)}
+.mb small{opacity:.5;font-variant-numeric:tabular-nums}
+
+/* ----------------------------------------------------------- le vote */
+
+.vote{border:1px solid rgba(245,195,59,.45);border-radius:var(--r);padding:14px;margin:12px 0 0;
+  background:rgba(245,195,59,.07)}
+.vote .quoi{font-family:var(--banner);font-size:14.5px;letter-spacing:.03em}
+.vote .txt{font-size:11.5px;opacity:.7;line-height:1.6;margin-top:5px}
+/* Le compte à rebours. Trois minutes, c'est court : il doit être le premier
+   chiffre que l'œil trouve, sinon on vote après la clôture. */
+.chrono{font-family:var(--banner);font-size:22px;color:var(--projo);font-variant-numeric:tabular-nums;
+  line-height:1}
+.chrono.urgent{color:var(--flare)}
+.vote .haut{display:flex;align-items:flex-start;gap:12px}
+.vote .haut .quoi{flex:1;min-width:0}
+.balance{display:flex;height:7px;border-radius:4px;overflow:hidden;margin:12px 0 6px;
+  background:rgba(242,238,228,.1)}
+.balance .p{background:var(--vert)}
+.balance .c{background:var(--flare)}
+.decompte{display:flex;justify-content:space-between;font-size:10.5px;opacity:.6}
+.bulletins{display:flex;gap:7px;margin-top:11px}
+.bul{flex:1;border:1px solid var(--trait);border-radius:9px;background:rgba(0,0,0,.28);color:inherit;
+  padding:11px;font-family:var(--banner);font-size:12.5px;letter-spacing:.08em;cursor:pointer}
+.bul.on.pour{border-color:var(--vert);color:var(--vert);background:rgba(30,158,106,.12)}
+.bul.on.contre{border-color:var(--flare);color:var(--flare);background:rgba(224,64,44,.12)}
+
+/* -------------------------------------------------------- le catalogue */
+
+.bonus{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;
+  border:1px solid var(--trait);background:var(--panneau);backdrop-filter:blur(10px);margin-bottom:6px;
+  width:100%;text-align:left;color:inherit;font-family:inherit;cursor:pointer}
+.bonus:disabled{opacity:.42;cursor:default}
+.bonus .n{flex:1;min-width:0}
+.bonus .n b{display:block;font-family:var(--banner);font-size:13.5px;letter-spacing:.02em}
+.bonus .n span{display:block;font-size:10.5px;opacity:.6;line-height:1.5;margin-top:3px}
+.bonus .prix{font-family:var(--banner);font-size:15px;color:var(--projo);flex:none;text-align:center}
+.bonus .prix small{display:block;font-size:8px;letter-spacing:.1em;opacity:.45;color:var(--craie);
+  font-family:var(--ui);margin-top:2px}
+
+.actif{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;padding:4px 9px;border-radius:999px;
+  border:1px solid var(--vert);color:var(--vert);margin:0 5px 5px 0}
+
+/* ------------------------------------------------------------ actions */
+
+.gros{width:100%;background:linear-gradient(180deg,var(--flare),#B32A1D);border:0;color:#fff;
+  border-radius:10px;padding:14px;font-family:var(--banner);font-size:14px;letter-spacing:.1em;
+  cursor:pointer;margin-top:10px}
+.gros:disabled{filter:grayscale(.85);opacity:.45;cursor:default}
+.calme{background:none;border:1px solid var(--trait);color:inherit}
+.champ{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--trait);border-radius:9px;
+  color:inherit;padding:12px;font-family:var(--ui);font-size:14px;margin-top:8px}
+.champ:focus{outline:none;border-color:var(--projo)}
+
+.vide{border:1px dashed var(--trait);border-radius:var(--r);padding:18px;text-align:center;
+  font-size:12.5px;line-height:1.7;opacity:.8}
+.vide a{color:var(--projo)}
+.note{font-size:11px;opacity:.55;line-height:1.65;margin-top:8px}
+.err{border:1px solid rgba(224,64,44,.4);background:rgba(224,64,44,.08);border-radius:9px;
+  padding:10px 12px;font-size:12px;margin-top:10px}
+</style>
+</head>
+<body>
+<main id="app">
+  <h1>MON KOP</h1>
+  <div class="sub">LA CAISSE DU VIRAGE</div>
+  <div id="corps"><div class="vide">Chargement…</div></div>
+</main>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+/* =======================================================================
+   Le KOP.
+
+   Une page, quatre gestes : créer, rejoindre, voir le pot, voter.
+
+   Ce qui gouverne son rythme, c'est le vote : **trois minutes**. Tout le
+   reste peut attendre un rafraîchissement, pas lui. La page écoute donc le
+   socket pour l'ouverture et la clôture, et fait tourner un compte à rebours
+   local entre les deux — sans quoi la moitié des membres voterait après la
+   fermeture sans jamais comprendre pourquoi leur clic n'a rien fait.
+   ======================================================================= */
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
+  (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+const MESSAGES = {
+  'kop.error.nom':            'Ce nom ne va pas : entre 3 et 40 caractères, sans balise.',
+  'kop.error.club':           'Ce club n’existe pas.',
+  'kop.error.pas_ton_club':   'Tu ne suis pas ce club. Suis-le d’abord depuis « Mes clubs ».',
+  'kop.error.deja_membre':    'Tu es déjà dans un KOP de ce club. On n’en a qu’un par club.',
+  'kop.error.inconnu':        'Ce KOP n’existe plus.',
+  'kop.error.pas_membre':     'Tu n’es pas membre de ce KOP.',
+  'kop.error.bonus_inconnu':  'Ce bonus n’existe pas.',
+  'kop.error.vote_en_cours':  'Un vote est déjà ouvert. Un seul à la fois : le pot n’en couvre qu’un.',
+  'kop.error.pot_insuffisant':'Le pot ne suffit pas encore pour ce bonus.',
+  'kop.error.vote_inconnu':   'Ce vote n’existe plus.',
+  'kop.error.vote_clos':      'Le vote est clos. Trois minutes, c’est court.',
+  'kop.error.server':         'Le serveur n’a pas pu traiter la demande.',
+};
+
+const S = {
+  kops: [],            // mes KOP, un par club suivi au plus
+  clubs: [],           // mes clubs, avec les KOP existants pour ceux sans KOP
+  etats: {},           // kopId -> état détaillé
+  catalogue: [],
+  ouvert: null,        // le KOP déplié
+  erreur: null,
+  creation: null,      // teamId pour lequel on saisit un nom
+};
+
+async function api(path, { method = 'GET', body } = {}) {
+  const r = await fetch('/api/kop' + path, {
+    method, credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const json = await r.json().catch(() => ({}));
+  if (json?.error) throw Object.assign(new Error(json.error), { code: json.error });
+  return json;
+}
+
+/* --------------------------------------------------------- chargement */
+
+async function charger() {
+  try {
+    const [mes, clubs] = await Promise.all([
+      api('/miens'),
+      fetch('/api/me/state', { credentials: 'same-origin' })
+        .then((r) => r.json()).catch(() => ({ follows: [] })),
+    ]);
+    S.kops = mes.kops ?? [];
+    S.catalogue = mes.catalogue ?? [];
+
+    // Les clubs suivis qui n'ont pas encore de KPO à moi : c'est là qu'on en
+    // crée ou qu'on en rejoint un.
+    const avecKop = new Set(S.kops.map((k) => Number(k.team_id)));
+    S.clubs = [];
+    for (const f of clubs.follows ?? []) {
+      const id = Number(f.team_id ?? f.id);
+      if (avecKop.has(id)) continue;
+      const dispo = await api(`/club/${id}`).catch(() => ({ kops: [] }));
+      S.clubs.push({ id, nom: f.name ?? `Club ${id}`, kops: dispo.kops ?? [] });
+    }
+
+    // L'état détaillé du KOP déplié : membres, vote, bonus actifs.
+    if (S.ouvert) S.etats[S.ouvert] = await api(`/${S.ouvert}`).catch(() => null);
+  } catch (e) {
+    S.erreur = e.code ?? 'kop.error.server';
+  }
+  rendre();
+}
+
+/* ------------------------------------------------------------ rendu */
+
+const mmss = (ms) => {
+  const t = Math.max(0, Math.round(ms / 1000));
+  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+};
+
+function bonusDef(id) { return S.catalogue.find((b) => b.id === id); }
+
+function voteHTML(e) {
+  const def = bonusDef(e.vote.bonusId);
+  const total = Math.max(1, e.vote.pour + e.vote.contre);
+  const urgent = e.vote.fermeDansMs < 45_000;
+  return `<div class="vote">
+    <div class="haut">
+      <div class="quoi">${esc(def?.nom ?? e.vote.bonusId)}
+        <div class="txt">${esc(def?.texte ?? '')}</div></div>
+      <div class="chrono ${urgent ? 'urgent' : ''}" data-chrono="${e.vote.ferme}"
+        >${mmss(e.vote.fermeDansMs)}</div>
+    </div>
+    <div class="balance">
+      <div class="p" style="width:${(e.vote.pour / total) * 100}%"></div>
+      <div class="c" style="width:${(e.vote.contre / total) * 100}%"></div>
+    </div>
+    <div class="decompte"><span>${e.vote.pour} pour</span><span>${e.vote.contre} contre</span></div>
+    <div class="bulletins">
+      <button class="bul pour ${e.vote.monBulletin === 1 ? 'on' : ''}"
+        data-voter="${e.vote.id}" data-pour="1">POUR</button>
+      <button class="bul contre ${e.vote.monBulletin === 0 ? 'on' : ''}"
+        data-voter="${e.vote.id}" data-pour="0">CONTRE</button>
+    </div>
+    ${e.jeSuisCreateur
+      ? '<div class="note">Tu pèses cinq voix, et tu départages une égalité.</div>'
+      : '<div class="note">Le créateur pèse cinq voix et départage une égalité.</div>'}
+  </div>`;
+}
+
+function kopHTML(k) {
+  const e = S.etats[k.id];
+  const ouvert = S.ouvert === k.id;
+  const out = [`<div class="kop mien">
+    <div class="tete"><b>${esc(k.nom)}</b>
+      <span class="club">${esc(k.team_nom ?? '')}</span></div>
+    <div class="chiffres">
+      <div class="ch"><b>${k.pot}</b><span>DANS LE POT</span></div>
+      <div class="ch"><b>${k.membres}</b><span>MEMBRES</span></div>
+      <div class="ch"><b>${k.verse}</b><span>VERSÉ PAR TOI</span></div>
+    </div>`];
+
+  // La barre vise le bonus le moins cher : c'est le prochain palier réel, et
+  // c'est lui qui donne envie de pousser un match de plus.
+  const prochain = [...S.catalogue].sort((a, b) => a.prix - b.prix)
+    .find((b) => b.prix > k.pot);
+  if (prochain) {
+    out.push(`<div class="pot"><i style="width:${Math.min(100, (k.pot / prochain.prix) * 100)}%"></i></div>
+      <div class="note">${prochain.prix - k.pot} écharpes avant « ${esc(prochain.nom)} ».</div>`);
+  } else {
+    out.push('<div class="pot"><i style="width:100%"></i></div>'
+      + '<div class="note">Le pot couvre tout ce qui est au catalogue.</div>');
+  }
+
+  if (!ouvert) {
+    out.push(`<button class="gros calme" data-ouvrir="${k.id}">VOIR LE KOP</button></div>`);
+    return out.join('');
+  }
+
+  if (!e) { out.push('<div class="note">Chargement…</div></div>'); return out.join(''); }
+
+  out.push(`<div class="membres">${e.membres.map((m) => `<span class="mb ${m.createur ? 'chef' : ''}">
+    ${esc(m.pseudo)}<small>${m.verse}</small></span>`).join('')}</div>`);
+
+  if (e.bonus.length) {
+    out.push('<h2>BONUS ACTIFS</h2><div>' + e.bonus.map((b) => {
+      const def = bonusDef(b.bonusId);
+      const reste = b.portee === 'saison' ? 'toute la saison'
+        : `${b.restant} match${b.restant > 1 ? 's' : ''}`;
+      return `<span class="actif">${esc(def?.nom ?? b.bonusId)} · ${reste}</span>`;
+    }).join('') + '</div>');
+  }
+
+  if (e.vote) {
+    out.push('<h2>VOTE EN COURS</h2>' + voteHTML(e));
+  } else {
+    out.push('<h2>PROPOSER UNE DÉPENSE</h2>');
+    for (const b of S.catalogue) {
+      const trop = b.prix > e.pot;
+      const duree = b.portee === 'match' ? 'un match'
+        : b.portee === 'saison' ? 'la saison' : `${b.charges ?? 3} matchs`;
+      out.push(`<button class="bonus" data-proposer="${b.id}" data-kop="${k.id}"
+        ${trop ? 'disabled' : ''}>
+        <span class="n"><b>${esc(b.nom)}</b><span>${esc(b.texte)} · ${duree}</span></span>
+        <span class="prix">${b.prix}<small>ÉCHARPES</small></span></button>`);
+    }
+    out.push('<div class="note">Trois minutes de vote. Le créateur pèse cinq voix '
+      + 'et départage une égalité.</div>');
+  }
+
+  out.push(`<button class="gros calme" data-quitter="${k.id}">QUITTER CE KOP</button>
+    <div class="note">Ce que tu as versé reste au pot. On ne reprend pas sa part.</div>`);
+  out.push('</div>');
+  return out.join('');
+}
+
+function clubHTML(c) {
+  const out = [`<div class="kop">
+    <div class="tete"><b>${esc(c.nom)}</b><span class="club">sans KOP</span></div>`];
+
+  if (c.kops.length) {
+    out.push('<div class="note">Des KOP existent déjà pour ce club :</div>');
+    for (const k of c.kops) {
+      out.push(`<button class="bonus" data-rejoindre="${k.id}">
+        <span class="n"><b>${esc(k.nom)}</b><span>${k.membres} membre${k.membres > 1 ? 's' : ''}
+          · ${k.verse_total} écharpes versées depuis l’ouverture</span></span>
+        <span class="prix">${k.pot}<small>AU POT</small></span></button>`);
+    }
+  }
+
+  if (S.creation === c.id) {
+    out.push(`<input class="champ" id="nom-${c.id}" maxlength="40" placeholder="Le nom du KOP"
+      autocomplete="off">
+      <button class="gros" data-creer="${c.id}">CRÉER</button>`);
+  } else {
+    out.push(`<button class="gros ${c.kops.length ? 'calme' : ''}"
+      data-nouveau="${c.id}">CRÉER UN KOP</button>`);
+  }
+  out.push('</div>');
+  return out.join('');
+}
+
+function rendre() {
+  const out = [];
+  if (S.erreur) out.push(`<div class="err">${esc(MESSAGES[S.erreur] ?? S.erreur)}</div>`);
+
+  if (S.kops.length) {
+    out.push('<h2>MES KOP</h2>');
+    for (const k of S.kops) out.push(kopHTML(k));
+  }
+
+  if (S.clubs.length) {
+    out.push('<h2>MES CLUBS SANS KOP</h2>');
+    for (const c of S.clubs) out.push(clubHTML(c));
+  }
+
+  if (!S.kops.length && !S.clubs.length) {
+    out.push(`<div class="vide">Tu ne suis aucun club pour l’instant.<br>
+      Un KOP est adossé à un club : commence par en <a href="/equipes">suivre un</a>.</div>`);
+  }
+
+  if (S.kops.length) {
+    out.push(`<div class="note">Pousser pour ton club pendant un duel remplit le pot de ton
+      KOP, en plus de tes propres écharpes. Ce que le KOP achète profite à tous ses membres
+      présents dans le VIRAGE.</div>`);
+  }
+
+  $('corps').innerHTML = out.join('');
+}
+
+/* ---------------------------------------------------------- les gestes */
+
+$('corps').addEventListener('click', async (ev) => {
+  const b = ev.target.closest('button');
+  if (!b) return;
+  const d = b.dataset;
+  S.erreur = null;
+
+  try {
+    if (d.ouvrir) {
+      // Replier en cliquant à nouveau : la page tient sur un écran.
+      S.ouvert = S.ouvert === d.ouvrir ? null : d.ouvrir;
+      return charger();
+    }
+    if (d.nouveau) { S.creation = Number(d.nouveau); rendre();
+      return $(`nom-${d.nouveau}`)?.focus(); }
+    if (d.creer) {
+      const nom = $(`nom-${d.creer}`)?.value ?? '';
+      const k = await api('/', { method: 'POST', body: { teamId: Number(d.creer), nom } });
+      S.creation = null; S.ouvert = k.id;
+      return charger();
+    }
+    if (d.rejoindre) {
+      const k = await api(`/${d.rejoindre}/rejoindre`, { method: 'POST' });
+      S.ouvert = k.id;
+      return charger();
+    }
+    if (d.quitter) {
+      // Un geste irréversible mérite une question. Ce qui est versé est versé,
+      // et on ne le découvre pas après coup.
+      if (!confirm('Quitter ce KOP ? Ce que tu as versé reste au pot.')) return undefined;
+      await api(`/${d.quitter}/quitter`, { method: 'POST' });
+      S.ouvert = null;
+      return charger();
+    }
+    if (d.proposer) {
+      await api(`/${d.kop}/proposer`, { method: 'POST', body: { bonusId: d.proposer } });
+      return charger();
+    }
+    if (d.voter) {
+      await api(`/vote/${d.voter}`, { method: 'POST', body: { pour: d.pour === '1' } });
+      return charger();
+    }
+  } catch (e) {
+    S.erreur = e.code ?? 'kop.error.server';
+    rendre();
+  }
+  return undefined;
+});
+
+/* ------------------------------------------------ le compte à rebours
+
+   Il tourne côté page plutôt que de redemander l'état chaque seconde : trois
+   minutes de vote, c'est cent quatre-vingts requêtes par membre pour afficher
+   un chiffre qui se calcule tout seul.
+
+   À zéro, on relit **une fois** : c'est le serveur qui dépouille, et il ne le
+   fait qu'au premier regard qui suit l'échéance. */
+let recharge = null;
+setInterval(() => {
+  for (const el of document.querySelectorAll('[data-chrono]')) {
+    const reste = new Date(el.dataset.chrono).getTime() - Date.now();
+    el.textContent = mmss(reste);
+    el.classList.toggle('urgent', reste < 45_000);
+    if (reste <= 0 && !recharge) {
+      recharge = setTimeout(() => { recharge = null; charger(); }, 700);
+    }
+  }
+}, 1000);
+
+/* ------------------------------------------------------- le temps réel
+
+   Trois minutes, c'est court. Si l'on attendait que les membres rafraîchissent
+   leur page, la moitié d'entre eux voterait après la clôture — ou pas du tout,
+   faute d'avoir su qu'un vote était ouvert. */
+try {
+  const socket = io({ transports: ['websocket', 'polling'] });
+  socket.on('connect', () => socket.emit('kop:suivre'));
+  socket.on('kop:vote', () => charger());
+  socket.on('kop:votes', () => charger());
+} catch { /* pas de temps réel : la page reste utilisable, elle relit au clic */ }
+
+charger();
+// Filet : même sans socket, le pot et les votes finissent par arriver.
+setInterval(charger, 30_000);
+</script>
+<script src="/fx.js" defer></script>
+<script src="/nav.js" defer></script>
+</body>
+</html>

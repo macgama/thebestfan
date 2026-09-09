@@ -17,6 +17,7 @@ heure la première fois, dont l'essentiel en attente de build.
 | `/equipes` | clubs suivis, calendrier, résultats, buts en direct | branché |
 | `/fanzzy` | boosters, classeur, évolutions, Fanzzy équipé | branché |
 | `/deck` | construction de deck : trois Fanzzy, équipement, dix cartes | branché |
+| `/kop` | le KOP : caisse commune, votes de dépense, bonus de virage | branché |
 | `/duel-nvn` | le duel : tir à la corde, 1v1 à 5v5, adossé à un vrai match | branché |
 | `/virage` | Grand Virage : tir à la corde collectif pendant un vrai match | branché |
 | `/carnet` | souvenirs vécus et vignettes à récupérer | branché |

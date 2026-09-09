@@ -370,6 +370,7 @@ app.get('/fanzzy/:id', (_req, res) => res.sendFile(path.join(__dirname, 'public'
 app.get('/compte', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'compte.html')));
 app.get('/diagnostic', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'diagnostic.html')));
 app.get('/equipes', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'equipes.html')));
+app.get('/kop', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'kop.html')));
 app.get('/deck', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'deck.html')));
 app.get('/duel-nvn', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'duel-nvn.html')));
 app.get('/fanzzy', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'fanzzy.html')));
