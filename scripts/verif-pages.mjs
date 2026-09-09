@@ -147,6 +147,39 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
   if (!soucis.length) ok(nom, 'compile');
 }
 
+/* -------------------------------------------- rien de privé dans public/
+
+   Les rendus d'origine d'un Fanzzy pèsent cinq mégaoctets et voisinent avec
+   les prompts qui les ont produits. Ils vivent dans `art/<ID>/_src/`, à la
+   racine. Le jour où quelqu'un les déposera sous `public/` « juste pour
+   tester », ils seront en ligne : ce dossier est servi tel quel par
+   express.static, et personne ne s'en apercevra — les images s'afficheront
+   très bien.
+
+   C'est la même faute que le module serveur contrôlé plus haut, sur un autre
+   type de fichier. Elle a déjà été commise une fois.                        */
+{
+  const suspects = [];
+  const explorer = async (rel, profondeur = 0) => {
+    if (profondeur > 4) return;
+    for (const e of await readdir(path.join(DOSSIER, rel), { withFileTypes: true })) {
+      if (!e.isDirectory()) continue;
+      if (e.name === '_src' || e.name.toLowerCase() === 'src') {
+        suspects.push(path.posix.join(rel, e.name));
+        continue;
+      }
+      await explorer(path.join(rel, e.name), profondeur + 1);
+    }
+  };
+  await explorer('');
+  if (suspects.length) {
+    ko('public/', `sources d'origine servies en ligne : ${suspects.join(', ')}. `
+      + 'Ce dossier est public — déplace-les dans art/<ID>/_src/, à la racine.');
+  } else {
+    ok('public/', 'aucune source d’origine servie');
+  }
+}
+
 /* ------------------------------------------------ cohérence du catalogue */
 
 /**

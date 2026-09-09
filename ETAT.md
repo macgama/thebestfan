@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « écran de deck, deux Fanzzy illustrés, écran de
-duel NvN, suppression du catalogue recopié ».
+Dernière mise à jour : session « les douze états d'un Fanzzy, leur repli, et
+l'accueil qui montre le Fanzzy équipé ».
 
 ---
 
@@ -87,7 +87,7 @@ bouton recouvert de 16 pixels, une image décentrée d'une demi-largeur.
 | `deck-ui-smoke.mjs` | construction de deck | jsdom |
 | `nvn-ui-smoke.mjs` | duel N contre N, deux joueurs | puppeteer |
 | `fanzzy-ui-smoke.mjs` | classeur, kiosque, catalogue | puppeteer |
-| `accueil-ui-smoke.mjs` | scène du supporter sur l'accueil | puppeteer |
+| `accueil-ui-smoke.mjs` | scène du personnage sur l'accueil | puppeteer |
 | `admin-ui-smoke.mjs` | catalogue Fanzzy dans l'administration | puppeteer |
 
 `accueil-ui-smoke.mjs` vérifie ce qui ne se lit pas dans le HTML : que le
@@ -96,10 +96,15 @@ respiration — et que le **fondu entre ses poses** garde exactement un calque
 allumé. Un personnage figé, comme un changement de pose qui clignote, ne se
 distingue de la version correcte que là.
 
-Il vérifie aussi que les quatre poses ont **la même taille naturelle**. C'est
-le garde-fou du cadrage commun décrit plus bas : des dimensions différentes
+Il vérifie aussi que les poses ont **la même taille naturelle**. C'est le
+garde-fou du cadrage commun décrit plus bas : des dimensions différentes
 signifieraient que chaque dessin a été recadré sur lui-même, et donc que les
 pieds du personnage sautent au moment du but.
+
+Depuis que l'accueil montre le **Fanzzy équipé** plutôt que le supporter
+générique, la suite couvre les deux chemins : un Fanzzy illustré prend le
+centre de l'écran et y vit ses états, un Fanzzy pas encore dessiné laisse la
+place au supporter sans que rien ne le trahisse à l'écran.
 
 `jsdom` est déclaré en `devDependencies`. **`puppeteer` ne l'est pas, et c'est
 volontaire** : il télécharge un Chromium de près de 200 Mo, ce qui alourdirait
@@ -521,6 +526,78 @@ lesquelles une boîte commune en pixels ne voudrait rien dire.
 Sorties : `public/img/supporter/<pose>.{avif,webp,png}` en 448×900, fond
 transparent, et `public/img/accueil.{avif,webp,jpg}` pour le décor — en JPEG et
 non en PNG, une photo de foule y pesant dix fois son prix.
+
+Le supporter n'est plus le personnage principal de l'accueil : c'est le Fanzzy
+équipé qui l'est. Il reste le **repli**, et ce n'est pas un reliquat — la
+grande majorité du catalogue n'a pas encore ses douze états, et l'accueil doit
+tenir debout pour ces joueurs-là.
+
+### Les douze états d'un Fanzzy
+
+`scripts/fanzzy-art.mjs` produit l'arborescence que le jeu sert :
+
+```
+public/img/fanzzy/TR1/
+  manifeste.json
+  e1/base/{neutre,salut,pousse,but,encaisse,attente,victoire,
+           defaite,occasion,decision,progression,ennui}.{avif,webp,png}
+  e1/base/portrait.{avif,webp,png}
+  e1/hiver/…            un skin, états partiels
+  e2/…  e3/…            un stade d'évolution, son propre cadrage
+```
+
+```bash
+node scripts/fanzzy-art.mjs art/TR1/_src [--skin hiver --repli base]
+```
+
+Les sources restent dans **`art/<ID>/_src/`, hors de `public/`** — et hors du
+dépôt, `.gitignore` les écarte : douze rendus 2K par stade, cinq mégaoctets
+pièce, cent trente-huit lignées. `verif-pages.mjs` refuse désormais tout
+dossier `_src` sous `public/`, parce que ce dossier est servi tel quel et que la
+faute a déjà été commise une fois avec une copie du télétexte.
+
+Comme pour les poses du supporter, **tous les états d'un même stade partagent
+un cadrage** : l'union de leurs boîtes, appliquée telle quelle. C'est ce qui
+garde les pieds du personnage à la même hauteur quand il lève les bras.
+
+**Le portrait ne se tire que de `neutre`.** Sur une pose bras levés, l'érosion
+qui cherche le crâne trouve un poignet et cadre le buste sur la poitrine — un
+stade sans `neutre` n'a donc pas de portrait du tout, et le jeu prend celui du
+stade d'en dessous. Mieux vaut aucun portrait qu'un portrait de travers.
+
+### Le manifeste, et pourquoi il y en a deux
+
+Chaque Fanzzy a son `manifeste.json` : c'est la bonne granularité pour
+produire. C'est la mauvaise pour servir — la page du deck ferait cent
+trente-huit requêtes pour s'ouvrir. `scripts/fanzzy-manifeste.mjs`
+(`npm run manifeste`) les recolle en `public/img/fanzzy/index.json`, et
+`fanzzy-art.mjs` l'appelle à la fin de chaque passage : un agrégat qu'il faut
+penser à reconstruire est un agrégat faux.
+
+`index.json` est **le seul fichier de `/img` servi avec un cache court**. Ses
+voisins sont en `immutable, 365 jours` ; lui aussi, et une nouvelle lignée
+dessinée n'atteindrait jamais quelqu'un qui a ouvert l'accueil une fois. Une
+route explicite dans `server.js`, posée avant le static, lui donne une heure.
+
+### Le repli, quand le dessin n'existe pas
+
+Douze états × trois stades × cent trente-huit lignées font près de cinq mille
+dessins : ils n'existeront jamais tous. `public/fanzzy-etats.js`
+(`window.TBF_ETATS`) répond donc à « montre-moi TR1, stade 2, skin hiver, au
+moment du but » par l'image la plus proche qui existe vraiment.
+
+**L'ordre n'est pas arbitraire** : d'abord la bonne pose, quitte à changer de
+skin ; ensuite seulement le repli sur `neutre` ; en dernier recours le stade
+d'en dessous. Un skin partiel déclare son `repli` précisément pour dire
+« emprunte le reste là-bas ». L'inverse — garder le costume et perdre la
+réaction — laisserait le personnage impassible pendant que son club encaisse,
+et c'est la réaction que le joueur regarde.
+
+`scripts/etats-smoke.mjs` (`npm run etats:test`) éprouve cette logique sur un
+manifeste fabriqué, sans base ni navigateur : le repli entre stades, entre
+skins, les deux skins qui se renvoient l'un à l'autre — cas où l'absence de
+garde fige l'onglet sans le moindre message —, et l'accord de forme entre ce
+que `fanzzy-manifeste.mjs` écrit et ce que `fanzzy-etats.js` lit.
 
 ---
 

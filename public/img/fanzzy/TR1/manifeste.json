@@ -1,0 +1,39 @@
+{
+  "id": "TR1",
+  "rev": 1,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "salut",
+            "pousse",
+            "but",
+            "encaisse",
+            "attente",
+            "victoire",
+            "defaite",
+            "occasion",
+            "decision",
+            "progression",
+            "ennui"
+          ],
+          "portrait": true,
+          "sha": "244b21fdbbdb"
+        }
+      }
+    },
+    "e2": {
+      "skins": {
+        "base": {
+          "etats": [
+            "victoire"
+          ],
+          "portrait": false,
+          "sha": "2b3118c9d0f3"
+        }
+      }
+    }
+  }
+}

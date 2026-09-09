@@ -286,6 +286,21 @@ const typer = (res, chemin) => {
   if (t) res.setHeader('content-type', t);
 };
 
+/* Le seul fichier de `/img` qui doit changer.
+ *
+ * `index.json` dit quels dessins existent pour chaque Fanzzy. Il vit avec eux
+ * — c'est ce qui l'empêche de mentir, il est produit du même passage — mais il
+ * ne partage pas leur immuabilité : servi en « immutable, un an » comme ses
+ * voisins, un joueur qui a ouvert l'accueil une fois n'apprendrait jamais
+ * qu'une nouvelle lignée a été dessinée. Le nouveau Fanzzy serait en ligne, sur
+ * le disque, dans la base, et invisible chez lui.
+ *
+ * Une heure, donc, et cette route avant le static qui la couvrirait. */
+app.get('/img/fanzzy/index.json', (_req, res) => {
+  res.set('cache-control', 'public, max-age=3600');
+  res.sendFile(path.join(__dirname, 'public/img/fanzzy/index.json'));
+});
+
 // Les visuels ne changent jamais : un an de cache. Les pages, une heure.
 app.use('/img', express.static(path.join(__dirname, 'public/img'),
   { maxAge: '365d', immutable: true, setHeaders: typer }));
