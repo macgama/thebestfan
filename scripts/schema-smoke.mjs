@@ -82,6 +82,25 @@ check('sql/auth.sql déclare users et sessions',
 check('rattrapage.sql est écarté : il corrige, il ne décrit pas',
   !attendu.has('rattrapage.sql'));
 
+/* --------------------------------- le nombre de tables annoncé au déploiement
+
+   `DEPLOIEMENT.md` dit combien de tables `SHOW TABLES;` doit lister. C'est le
+   seul contrôle dont dispose celui qui applique le schéma à la main, sur une
+   base de production, à minuit — et il a été faux deux fois : écrit de tête,
+   recalculé à chaque ajout, jamais recompté.
+
+   On le compare donc à ce que `sql/` déclare, et on donne le bon chiffre dans
+   le message. Un nombre qu'il faut penser à mettre à jour finit toujours par
+   mentir, et celui-là ment à quelqu'un qui n'a aucun moyen de le vérifier. */
+{
+  const doc = readFileSync(path.join(SQL, '..', 'DEPLOIEMENT.md'), 'utf8');
+  const annonce = Number(doc.match(/`SHOW TABLES;` doit en lister \*\*(\d+)\*\*/)?.[1]);
+  const declarees = new Set([...attendu.values()].flat()).size;
+  check(`DEPLOIEMENT.md annonce le bon nombre de tables (${declarees})`,
+    annonce === declarees
+    || (console.log(`        il annonce ${annonce || '—'}, sql/ en déclare ${declarees}`), false));
+}
+
 /* ------------------------------------------- la base de test est complète */
 
 const surBaseSaine = await verifierSchema(pool, SQL);
