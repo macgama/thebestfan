@@ -363,7 +363,8 @@ await page.close();
 
   // Un lien de menu vers une page inexistante est un cul-de-sac silencieux :
   // le joueur atterrit sur une 404 sans comprendre.
-  const routes = ['/deck', '/profil', '/equipes', '/teletext', '/compte', '/admin', '#'];
+  const routes = ['/deck', '/profil', '/equipes', '/kop', '/teletext',
+    '/compte', '/admin', '#'];
   const inconnus = apres.liens.filter((h) => !routes.includes(h));
   check('tous ses liens mènent à une page qui existe', inconnus.length === 0);
   if (inconnus.length) console.log('    inconnus :', inconnus.join(', '));

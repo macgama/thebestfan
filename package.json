@@ -21,6 +21,7 @@
     "accueil:ui": "node scripts/accueil-ui-smoke.mjs",
     "nvn:ui": "node scripts/nvn-ui-smoke.mjs",
     "admin:ui": "node scripts/admin-ui-smoke.mjs",
+    "kop:ui": "node scripts/kop-ui-smoke.mjs",
     "images": "node scripts/fanzzy-images.mjs",
     "poses": "node scripts/poses-supporter.mjs",
     "manifeste": "node scripts/fanzzy-manifeste.mjs",
