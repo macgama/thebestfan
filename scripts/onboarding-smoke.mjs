@@ -6,6 +6,7 @@ import { createOnboarding, SLOTS_DEPART } from '../src/server/onboarding/index.j
 import { BY_ID } from '../src/shared/fanzzy/dex.js';
 import { STUFF_BY_ID, combine } from '../src/shared/fanzzy/inventaire.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { chargerTenues, toutesTenues, tenuesPubliees } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -18,7 +19,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql']) {
+for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'tenues.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 const U = 'cccccccc-0000-0000-0000-000000000001';
@@ -32,6 +33,7 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' 
 // on le charge comme le fait server.js, sinon les modules travaillent
 // sur un catalogue vide.
 await chargerCatalogue(pool);
+await chargerTenues(pool);
 const O = createOnboarding({ pool, requireAuth: (r, _s, n) => { r.user = { id: U }; n(); } });
 const app = express(); app.use('/api/me', O.router);
 const http = createServer(app); await new Promise((r) => http.listen(0, r));
@@ -44,7 +46,16 @@ const call = async (p, o = {}) => {
 };
 
 let r = await call('/api/me/catalogue');
-check('catalogue servi', r.json.skins.length === 7 && r.json.stuff.length === 7);
+/* Les thèmes de tenue vivent en base depuis que l’administration peut en
+   créer : le nombre n’est plus une constante et ne s’écrit plus en dur ici.
+   Ce qui compte, c’est que la route serve *tout* le catalogue et pas
+   seulement les thèmes publiés — un joueur qui possède un ancien thème doit
+   continuer de le voir nommé et illustré, même s’il ne tombe plus. */
+check('catalogue servi', r.json.skins.length === toutesTenues().length
+  && r.json.stuff.length === 7);
+check('y compris les thèmes dépubliés, pour ceux qui les possèdent',
+  tenuesPubliees().length < toutesTenues().length
+  && r.json.skins.some((t) => t.id === 'pluie'));
 
 r = await call('/api/me/state');
 check('deux emplacements au départ', r.json.slots.total === SLOTS_DEPART);

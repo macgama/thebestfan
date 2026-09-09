@@ -1,8 +1,9 @@
 import express from 'express';
 import { SCARVES } from '../../shared/fanzzy/dex.js';
 import { publies, parIdentifiant } from '../fanzzy/catalogue.js';
-import { SKINS, STUFF, ACTIONS, SKIN_BY_ID, STUFF_BY_ID, combine }
+import { STUFF, ACTIONS, SKIN_BY_ID, STUFF_BY_ID, combine }
   from '../../shared/fanzzy/inventaire.js';
+import { toutesTenues } from '../fanzzy/tenues.js';
 
 /**
  * L'arrivée d'un joueur, et ce qu'il possède.
@@ -287,7 +288,7 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
 
   router.get('/catalogue', (_req, res) => {
     res.set('cache-control', 'public, max-age=3600');
-    res.json({ skins: SKINS, stuff: STUFF, actions: ACTIONS, prixSlots: PRIX_SLOT });
+    res.json({ skins: toutesTenues(), stuff: STUFF, actions: ACTIONS, prixSlots: PRIX_SLOT });
   });
 
   router.get('/state', requireAuth, safe(async (req, res) =>

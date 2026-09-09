@@ -7,6 +7,7 @@ import { DEX, BY_ID, SETS } from '../src/shared/fanzzy/dex.js';
 import { SKINS } from '../src/shared/fanzzy/inventaire.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -22,7 +23,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
 // admin.sql pour la table `reglages` : c'est elle qui porte les séries
 // ouvertes, et la suite en éprouve la fermeture plus bas.
 for (const f of ['auth.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql',
-                 'skins.sql', 'admin.sql']) {
+                 'skins.sql', 'tenues.sql', 'admin.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 // Les réglages ne sont pas dans le DROP ci-dessus : la table est partagée par
@@ -40,6 +41,7 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' 
 // on le charge comme le fait server.js, sinon les modules travaillent
 // sur un catalogue vide.
 await chargerCatalogue(pool);
+await chargerTenues(pool);
 const F = createFanzzy({ pool, requireAuth: (req, _r, next) => { req.user = { id: U }; next(); } });
 const app = express(); app.use('/api/fanzzy', F.router);
 const http = createServer(app); await new Promise((r) => http.listen(0, r));

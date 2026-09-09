@@ -34,6 +34,7 @@ import { createOnboarding } from '../src/server/onboarding/index.js';
 import { createNiveau } from '../src/server/niveau/index.js';
 import { seuil } from '../src/shared/niveau.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -50,7 +51,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql',
+for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'tenues.sql',
                  'niveau.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
@@ -78,6 +79,7 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' 
 // on le charge comme le fait server.js, sinon les modules travaillent
 // sur un catalogue vide.
 await chargerCatalogue(pool);
+await chargerTenues(pool);
 
 /* -------------------------------------------- les dessins, sur le disque */
 
@@ -307,15 +309,27 @@ await page.close();
       check('au stade 2, c’est le second âge qui s’affiche',
         new RegExp(`/img/fanzzy/${ID}/e2/base/${e2[0]}\\.`).test((await scene(page)).src ?? ''));
 
-      // Et un état que le second âge n'a pas retombe sur le premier plutôt que
-      // de laisser un trou : le personnage paraît plus jeune une seconde, il
-      // ne disparaît pas.
-      const absent = ['neutre', 'but', 'encaisse'].find((x) => !e2.includes(x));
+      /* Et un état que le second âge n'a pas ne laisse pas de trou : il retombe
+         sur `neutre` du *même* âge, pas sur la bonne pose d'un âge d'avant.
+
+         L'ordre est celui que `fanzzy-etats.js` écrit noir sur blanc — bonne
+         pose, quitte à changer de skin ; puis `neutre` ; et descendre d’un âge
+         seulement en tout dernier recours. Un skin est un costume : l'échanger
+         garde la silhouette. Un âge est un autre personnage : le voir rajeunir
+         deux secondes et demie pendant le but, puis vieillir d’un coup, se lit
+         comme une panne, pas comme un repli. Le son et la confettis portent le
+         moment ; le dessin, lui, doit rester le sien.
+
+         Cette section a dormi tant que TR1 n’avait qu’un âge dessiné. Elle
+         parle enfin — et c’est bien pour ça qu’on l’avait écrite. */
+      const absent = ['but', 'encaisse', 'salut'].find((x) => !e2.includes(x));
       if (absent) {
         await page.evaluate((etat) => TBF.pose(etat), absent);
         await new Promise((r) => setTimeout(r, 600));
-        check('un état absent du second âge retombe sur le premier',
-          new RegExp(`/img/fanzzy/${ID}/e1/base/${absent}\\.`).test((await scene(page)).src ?? ''));
+        const src = (await scene(page)).src ?? '';
+        check('un état absent du second âge garde l’âge et prend le repos',
+          new RegExp(`/img/fanzzy/${ID}/e2/base/neutre\.`).test(src)
+          || (console.log('        il affiche', src), false));
       }
       await page.close();
       await equiper(ID, 1);

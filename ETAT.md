@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « le KOP, le niveau, les skins par âge
-et deux pannes de schéma rejouées ».
+Dernière mise à jour : session « les thèmes de tenue sortent du code et passent
+en base, et l’administration en crée ».
 
 ---
 
@@ -387,6 +387,40 @@ Deux conséquences à ne pas défaire :
 - **Porter se fait par âge.** `wearSkin` éteint les autres tenues *du même
   stade*. Sans le stade dans la clause, allumer une tenue déshabillerait les
   deux autres âges sans que personne l’ait demandé.
+
+**Les thèmes de tenue vivent en base, comme le catalogue.** `sql/tenues.sql`
+porte la table, `src/server/fanzzy/tenues.js` la charge au démarrage et la garde
+en mémoire, `/admin` en crée. C’est le même patron que les Fanzzy, et pour la
+même raison : tant que la liste vivait dans `inventaire.js`, sortir un costume
+demandait une livraison — ce qui revenait à ne jamais en sortir.
+
+Deux thèmes distribués, **préhistorique** et **apocalyptique**, en plus de la
+tenue de base. Les six anciens — pluie, nocturne, derby, anniv, promo, légende —
+sont **dépubliés, pas supprimés** : ils ne tombent plus, et celui qui en possède
+un le garde, nommé et illustré. Effacer une ligne de `tenues` orphelinerait les
+`user_skins` de tous ceux qui l’ont gagnée ; leur Fanzzy réapparaîtrait nu sans
+explication. Il n’y a donc aucun bouton de suppression, pas plus ici que pour
+les cartes.
+
+**Un thème est un nom de dossier avant d’être une carte.** `carnaval` devient
+`public/img/fanzzy/TR1/e1/carnaval/`, d’où l’identifiant bridé aux minuscules
+sans accent ni espace — et d’où le fait qu’il ne se renomme jamais : le
+renommer laisserait les dessins derrière lui.
+
+**Un thème n’a qu’un état : `neutre`.** Il habille, il ne rejoue pas les douze
+réactions. Trois images par personnage — un âge chacune — et les objets portés
+se déclinent avec lui. La chaîne de repli fait le reste : demander `but` sur un
+thème qui n’a que `neutre` rend le `neutre` du thème, pas la pose du thème de
+base. Cela divise par douze le travail de dessin d’un nouveau costume, et c’est
+ce qui rend l’idée tenable.
+
+**Un thème existe avant d’être dessiné.** Créé en base, il s’affiche comme la
+tenue de base tant qu’aucune image n’est déposée — ce qui ne ressemble pas à une
+erreur et n’en est pas une. C’est donc à l’écran de le dire : l’administration
+répond avec le nom de fichier attendu,
+`art/<ID>/_src/<numéro>-e1-<thème>-neutre.png`, plutôt que de refermer en
+silence.
+
 
 **Les places 4 et 5 du booster s’ouvrent à tout l’inventaire.** Sept pièces
 d’équipement et quinze cartes d’action sur vingt et une n’étaient obtenables

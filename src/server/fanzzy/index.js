@@ -5,7 +5,10 @@ import express from 'express';
 import { SETS, TYPES, RAR, RATES, SCARVES, EVO_COST } from '../../shared/fanzzy/dex.js';
 import { tous, publies, parIdentifiant, obtenables, seriesOuvertes, serieOuverte,
   racineDe, lignee, auStade } from './catalogue.js';
-import { SKINS, SKIN_BY_ID, STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
+import { STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
+// Les tenues viennent de la base : elles se créent depuis l'administration,
+// et une liste figée dans le code redeviendrait une seconde vérité.
+import { toutesTenues, tenuesPubliees } from './tenues.js';
 import { ACTIONS } from '../../shared/duel/actions.js';
 import { XP } from '../../shared/niveau.js';
 
@@ -209,7 +212,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
       for (const id of avant) {
         const stade = stadeDe.get(id) ?? 1;
         for (let s = 1; s <= stade; s++) {
-          for (const sk of SKINS) {
+          for (const sk of tenuesPubliees()) {
             if (sk.id === 'base') continue;
             if (!skinsPris.has(`${id}:${s}:${sk.id}`)) places.push({ id, stade: s, skin: sk.id });
           }
@@ -578,7 +581,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
   /** Le catalogue de l'équipement, pour l'écran de détail. */
   router.get('/stuff', (_req, res) => {
     res.set('cache-control', 'public, max-age=3600');
-    res.json({ stuff: STUFF, skins: SKINS });
+    res.json({ stuff: STUFF, skins: toutesTenues() });
   });
 
   router.post('/active', requireAuth, (req, res) => send(res, (async () => {
@@ -643,7 +646,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
          garde-robe du gamin. Montrer toutes les tenues du personnage ferait
          croire le contraire, et le joueur chercherait longtemps le bouton qui
          ne viendra pas. */
-      skins: SKINS.map((sk) => {
+      skins: toutesTenues().map((sk) => {
         const m = skins.find((x) => x.skin_id === sk.id && Number(x.stage) === stade);
         return { ...sk, possede: Boolean(m), porte: Boolean(m?.equipped),
                  depuis: m?.got_at ?? null };

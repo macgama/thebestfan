@@ -2,6 +2,7 @@ import express from 'express';
 import { TYPES, RAR, SETS } from '../../shared/fanzzy/dex.js';
 import { parIdentifiant, recharger, tous, chargerSeries, seriesOuvertes, serieOuverte }
   from '../fanzzy/catalogue.js';
+import { toutesTenues, tenuePar, rechargerTenues } from '../fanzzy/tenues.js';
 
 /**
  * Administration.
@@ -278,10 +279,12 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   const RAR_VALIDES = new Set(Object.keys(RAR));
   const GESTES = new Set(['tempo', 'mash', 'hold']);
 
+  /** Une chaîne bornée : ce qui arrive d’un formulaire n’a pas de longueur. */
+  const texte = (v, max) => String(v ?? '').trim().slice(0, max);
+
   /** Les champs qu'un formulaire a le droit de poser, et rien d'autre. */
   function nettoyer(corps, { creation = false } = {}) {
     const p = {};
-    const texte = (v, max) => String(v ?? '').trim().slice(0, max);
 
     if (creation) {
       p.id = texte(corps.id, 12).toUpperCase();
@@ -408,6 +411,82 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
                 FROM fanzzy ORDER BY ordre, id`);
   }
 
+  /* ---------------------------------------------------- les tenues */
+
+  /**
+   * L'identifiant d'une tenue devient un **nom de dossier** dans
+   * `public/img/fanzzy/<ID>/e1/<tenue>/`. Il ne peut donc contenir ni accent,
+   * ni espace, ni majuscule : le disque, lui, ne pardonne pas.
+   */
+  const idTenue = (v) => {
+    const id = String(v ?? '').trim().toLowerCase();
+    return /^[a-z][a-z0-9]{1,23}$/.test(id) ? id : null;
+  };
+
+  async function creerTenue(acteur, corps, ip_) {
+    const id = idTenue(corps.id);
+    if (!id) throw fail('admin.error.tenue_id');
+    const nom = texte(corps.nom, 48);
+    if (!nom) throw fail('admin.error.tenue_nom');
+    const rar = texte(corps.rar, 16) || 'rare';
+    if (!RAR_VALIDES.has(rar)) throw fail('admin.error.tenue_rarete');
+    if (tenuePar(id)) throw fail('admin.error.tenue_existe');
+
+    const [r] = await pool.execute(
+      `SELECT COALESCE(MAX(ordre), 0) + 1 AS suivant FROM tenues`);
+    await pool.execute(
+      `INSERT INTO tenues (id, nom, texte, rar, publie, ordre) VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, nom, texte(corps.texte, 160) || null, rar,
+       corps.publie === false ? 0 : 1, r[0].suivant]);
+
+    await rechargerTenues(pool);
+    await journal(acteur, 'tenue.creee', id, { nom, rar }, ip_);
+    /* Le dossier d'images n'existe pas encore, et c'est normal : la chaîne le
+       crée au premier rendu déposé. On le dit quand même, parce qu'une tenue
+       sans dessin s'affiche comme la tenue de base et que personne ne devine
+       pourquoi. */
+    return {
+      ...tenuePar(id),
+      dossier: `<ID>/e1/${id}/`,
+      /* Ce que l’administrateur doit vraiment savoir : le nom du fichier à
+         déposer. Le dossier de sortie, la chaîne le fabrique ; le nom de la
+         source, elle ne le devine pas — et un fichier mal nommé est ignoré
+         en silence. Un thème n’a qu’un état, `neutre` : il habille, il ne
+         rejoue pas les douze réactions. */
+      source: `art/<ID>/_src/<numéro>-e1-${id}-neutre.png`,
+      sansImages: true,
+    };
+  }
+
+  async function modifierTenue(acteur, id, corps, ip_) {
+    if (!tenuePar(id)) throw fail('admin.error.tenue_inconnue');
+    const champs = [];
+    const vals = [];
+
+    if (corps.nom !== undefined) {
+      const nom = texte(corps.nom, 48);
+      if (!nom) throw fail('admin.error.tenue_nom');
+      champs.push('nom = ?'); vals.push(nom);
+    }
+    if (corps.texte !== undefined) {
+      champs.push('texte = ?'); vals.push(texte(corps.texte, 160) || null);
+    }
+    if (corps.rar !== undefined) {
+      const rar = texte(corps.rar, 16);
+      if (!RAR_VALIDES.has(rar)) throw fail('admin.error.tenue_rarete');
+      champs.push('rar = ?'); vals.push(rar);
+    }
+    if (corps.publie !== undefined) {
+      champs.push('publie = ?'); vals.push(corps.publie ? 1 : 0);
+    }
+    if (!champs.length) return tenuePar(id);
+
+    await pool.execute(`UPDATE tenues SET ${champs.join(', ')} WHERE id = ?`, [...vals, id]);
+    await rechargerTenues(pool);
+    await journal(acteur, 'tenue.modifiee', id, corps, ip_);
+    return tenuePar(id);
+  }
+
   async function creerFanzzy(acteur, corps, ip_) {
     const p = nettoyer(corps, { creation: true });
     if (parIdentifiant(p.id)) throw fail('admin.error.fanzzy_existe');
@@ -518,7 +597,31 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   router.patch('/fanzzy/:id', safe(async (req, res) =>
     res.json(await modifierFanzzy(req.user.id, String(req.params.id), req.body ?? {}, ip(req)))));
 
+  /* ------------------------------------------------------- les tenues
+
+     Créer un thème ne doit pas demander un déploiement — c'est la raison
+     d'être de ces trois routes, et c'est le même trajet qu'a pris le catalogue
+     Fanzzy.
+
+     **Aucune ne supprime.** Une tenue effacée orphelinerait les `user_skins`
+     de tous ceux qui la possèdent : elle disparaîtrait de leur collection sans
+     explication, et la fiche chercherait un identifiant qui n'existe plus. On
+     dépublie — `publie: false` la sort des boosters et la laisse à qui l'a
+     gagnée.                                                                 */
+
+  router.get('/tenues', safe(async (_req, res) =>
+    // `rar` avec : l’écran de création a besoin de l’échelle, et une seconde
+    // requête pour quatre mots serait un aller-retour pour rien.
+    res.json({ tenues: toutesTenues(), rar: RAR })));
+
+  router.post('/tenues', safe(async (req, res) =>
+    res.json(await creerTenue(req.user.id, req.body ?? {}, ip(req)))));
+
+  router.patch('/tenues/:id', safe(async (req, res) =>
+    res.json(await modifierTenue(req.user.id, String(req.params.id), req.body ?? {}, ip(req)))));
+
   return Object.assign(module, { router, requireAdmin, estAdmin, amorcer, apercu, joueurs,
     modifier, competitions, modifierCompetition, reglages, fixerReglage, journal,
-    listerFanzzy, creerFanzzy, modifierFanzzy, listerSeries, fixerSeries });
+    listerFanzzy, creerFanzzy, modifierFanzzy, listerSeries, fixerSeries,
+    creerTenue, modifierTenue });
 }

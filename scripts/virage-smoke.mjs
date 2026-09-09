@@ -14,6 +14,7 @@ import { createSouvenirs } from '../src/server/souvenirs/index.js';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { createVirage } from '../src/server/ferveur/index.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -37,7 +38,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql']) {
+for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql', 'tenues.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 const U = ['bbbbbbbb-0000-0000-0000-00000000000' + 1,
@@ -64,6 +65,7 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 8, charset: 'utf8mb4' 
 // on le charge comme le fait server.js, sinon les modules travaillent
 // sur un catalogue vide.
 await chargerCatalogue(pool);
+await chargerTenues(pool);
 
 /* -------------------------------------------------------------- serveur */
 
