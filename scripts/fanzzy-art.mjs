@@ -17,18 +17,34 @@
  * SQL sur `thebestfan.online/index.js`.
  *
  * Usage :
- *   node scripts/fanzzy-art.mjs art/TR1/_src            → e1, skin « base »
- *   node scripts/fanzzy-art.mjs art/TR1/_src --skin hiver --repli base
+ *   node scripts/fanzzy-art.mjs art/TR1/_src
  *
- * Les fichiers d'entrée se nomment `<numéro>[evo2|evo3]-<état>.png`, comme les
- * rendus arrivent — `001-neutre.png`, `001evo2-victoire.png`. Le numéro est
- * traduit en identifiant de catalogue par `src/shared/fanzzy/rendus.js` ; un
- * fichier déjà nommé avec l'identifiant (`TR1-neutre.png`) marche aussi.
+ * Tout le lot passe d'un coup : les trois âges, toutes les tenues, les objets
+ * portés et les objets seuls. Rien à déclarer en ligne de commande — c'est le
+ * **nom du fichier** qui dit ce que contient chaque image :
+ *
+ *   <numéro>-<âge>-<tenue>-<état>[-<objet>].png
+ *   stuff-<objet>.png
+ *
+ *   001-e1-base-neutre.png
+ *   001-e2-prehistorique-neutre.png
+ *   001-e3-base-neutre-drapeau.png
+ *   stuff-drapeau.png
+ *
+ * Quatre champs obligatoires, un cinquième facultatif. Les positions sont
+ * fixes : le découpage ne devine rien. L'ancienne forme — `001-neutre`,
+ * `001evo2-victoire` — collait un âge optionnel au numéro, il fallait deviner
+ * où finissait le nombre, et rien n'y exprimait une tenue.
+ *
+ * Le numéro est traduit en identifiant de catalogue par
+ * `src/shared/fanzzy/rendus.js` ; un fichier nommé avec l'identifiant
+ * (`TR1-e1-base-neutre.png`) marche aussi.
  *
  * ---
  *
- * **Les états d'une même évolution partagent un cadrage.** C'est la seule
- * chose subtile ici, et elle a déjà coûté une reprise sur les quatre poses du
+ * **Tout un âge partage un cadrage** — ses douze états, ses tenues et ses
+ * objets portés. C'est la seule chose subtile ici, et elle a déjà coûté une
+ * reprise sur les quatre poses du
  * supporter : recadrer chaque dessin sur son propre sujet fait rapetisser le
  * personnage dès qu'il lève les bras, et ses pieds remontent de trente pixels
  * au moment du but. L'œil ne voit pas un état changer, il voit un défaut
@@ -49,6 +65,10 @@ const SORTIE_DEFAUT = path.join(RACINE, 'public', 'img', 'fanzzy');
 /** Le cadre de sortie, au rapport des rendus fournis. */
 const CADRE = { l: 560, h: 960 };
 const PORTRAIT = { l: 320, h: 320 };
+/* Un objet d'inventaire se regarde dans une liste, pas en pied : deux cent
+   cinquante pixels de côté suffisent, et il se recadre sur lui-même — il n'a
+   personne avec qui aligner ses pieds. */
+const OBJET = { l: 250, h: 250 };
 
 const args = process.argv.slice(2);
 const drapeau = (nom, defaut = null) => {
@@ -56,13 +76,12 @@ const drapeau = (nom, defaut = null) => {
   return i >= 0 && args[i + 1] && !args[i + 1].startsWith('--') ? args[i + 1] : defaut;
 };
 const SOURCE = args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--'));
-const SKIN = drapeau('skin', 'base');
-const REPLI = drapeau('repli', null);
+
 const SORTIE = drapeau('sortie') ? path.resolve(drapeau('sortie')) : SORTIE_DEFAUT;
 
 if (!SOURCE) {
   console.error('Usage : node scripts/fanzzy-art.mjs <dossier-source> '
-    + '[--skin base] [--repli base] [--sortie public/img/fanzzy]');
+    + '[--sortie public/img/fanzzy]');
   process.exit(1);
 }
 
@@ -197,6 +216,33 @@ function lireNom(f) {
   return { cle: m[1], evo: Number(m[2] ?? 1), etat: m[3] };
 }
 
+/**
+ * Le nom d'un rendu : `<numéro>-<âge>-<tenue>-<état>[-<objet>]`.
+ *
+ *   001-e1-base-neutre.png
+ *   001-e2-prehistorique-neutre.png
+ *   001-e3-base-neutre-drapeau.png
+ *
+ * **Quatre champs obligatoires, un cinquième facultatif.** L'ancienne forme —
+ * `001-neutre`, `001evo2-victoire` — avait un préfixe d'âge optionnel collé au
+ * numéro : il fallait deviner où finissait le nombre, et rien ne permettait
+ * d'exprimer une tenue. Ici les positions sont fixes, le découpage ne devine
+ * rien, et le nom se lit dans l'ordre même des dossiers produits :
+ * `TR1/e1/base/neutre`.
+ *
+ * `stuff-<objet>` désigne l'objet seul, sans personnage : ni âge, ni état.
+ */
+function lireNom2(f) {
+  const base = path.basename(f, path.extname(f)).toLowerCase();
+
+  const objet = /^stuff-([a-z0-9]+)$/.exec(base);
+  if (objet) return { objetSeul: objet[1] };
+
+  const m = /^([a-z0-9]+)-e([123])-([a-z0-9]+)-([a-z]+)(?:-([a-z0-9]+))?$/.exec(base);
+  if (!m) return null;
+  return { cle: m[1], evo: Number(m[2]), tenue: m[3], etat: m[4], objet: m[5] ?? null };
+}
+
 /* -------------------------------------------------------------------- main */
 
 const fichiers = (await readdir(SOURCE)).filter((f) => /\.(png|jpe?g|webp)$/i.test(f));
@@ -205,25 +251,65 @@ if (!fichiers.length) {
   process.exit(1);
 }
 
-// Regroupement par évolution. Un lot peut mélanger e1 et e2 : chaque évolution
-// a son propre cadrage commun, parce que le personnage change de silhouette en
-// grandissant et qu'un cadre partagé entre stades le ferait rétrécir.
-const parEvo = new Map();
+/* Regroupement par âge.
+
+   Un lot peut mélanger e1, e2 et e3, plusieurs tenues et des objets portés.
+   Chaque **âge** a son propre cadrage commun — le personnage change de
+   silhouette en grandissant, et un cadre partagé entre stades le ferait
+   rétrécir. En revanche, à l'intérieur d'un âge, **toutes les tenues et tous
+   les objets partagent le même cadre** : sans ça, changer de tenue ferait
+   sauter les pieds du personnage, exactement comme le faisait un changement
+   d'état avant qu'on impose la boîte commune.                                */
+
+const parEvo = new Map();      // evo -> [{ tenue, etat, objet, chemin }]
+const objetsSeuls = new Map(); // nom -> chemin
 const ignores = [];
 let cle = null;
+
 for (const f of fichiers.sort()) {
-  const n = lireNom(f);
-  if (!n || !ETATS.includes(n.etat)) { ignores.push(f); continue; }
+  const n = lireNom2(f);
+  if (!n) { ignores.push(f); continue; }
+
+  if (n.objetSeul) { objetsSeuls.set(n.objetSeul, path.join(SOURCE, f)); continue; }
+  if (!ETATS.includes(n.etat)) { ignores.push(f); continue; }
+
   cle ??= n.cle;
   if (n.cle !== cle) { ignores.push(f); continue; }
-  if (!parEvo.has(n.evo)) parEvo.set(n.evo, new Map());
-  parEvo.get(n.evo).set(n.etat, path.join(SOURCE, f));
+  if (!parEvo.has(n.evo)) parEvo.set(n.evo, []);
+  parEvo.get(n.evo).push({ ...n, chemin: path.join(SOURCE, f) });
+}
+
+/* ------------------------------------------------------- les objets seuls
+
+   Un objet d'inventaire n'a ni âge ni état : c'est une vignette dans une liste
+   d'équipement. Il sort donc ailleurs que les personnages, et se recadre sur
+   lui-même — il n'a personne avec qui aligner ses pieds.                     */
+
+for (const [nom, chemin] of objetsSeuls) {
+  const a = await analyser(chemin);
+  const dossier = path.join(SORTIE, '..', 'stuff');
+  await mkdir(dossier, { recursive: true });
+  const cadre = { left: a.boite.x0, top: a.boite.y0,
+    width: a.boite.x1 - a.boite.x0 + 1, height: a.boite.y1 - a.boite.y0 + 1 };
+  const decoupe = await sharp(a.rgba, { raw: { width: a.l, height: a.h, channels: 4 } })
+    .extract(cadre).png().toBuffer();
+  await ecrire(sharp(decoupe).resize({
+    width: OBJET.l, height: OBJET.h, fit: 'contain',
+    background: { r: 0, g: 0, b: 0, alpha: 0 },
+  }), dossier, nom, createHash('sha1'));
+  console.log(`objet « ${nom} » → ${path.relative(RACINE, path.join(dossier, nom))}.*`);
 }
 
 if (!parEvo.size) {
-  console.error(`Aucun état reconnu dans ${SOURCE}. Les fichiers doivent s'appeler `
-    + `<numéro>[evo2|evo3]-<état>.png, par exemple 001-neutre.png ou `
-    + `001evo2-victoire.png. États connus : ${ETATS.join(', ')}.`);
+  if (objetsSeuls.size) process.exit(0);        // que des objets : c'est fini
+  console.error(`Aucun état reconnu dans ${SOURCE}.
+
+Les fichiers doivent s'appeler <numéro>-<âge>-<tenue>-<état>[-<objet>].png,
+par exemple 001-e1-base-neutre.png ou 001-e2-prehistorique-neutre-drapeau.png.
+Un objet seul s'appelle stuff-<nom>.png.
+
+  âges  : e1, e2, e3
+  états : ${ETATS.join(', ')}`);
   process.exit(1);
 }
 
@@ -256,34 +342,29 @@ try { manifeste = JSON.parse(await readFile(cheminManifeste, 'utf8')); }
 catch { /* premier passage */ }
 
 const compte = [];
-for (const [evo, etats] of [...parEvo].sort((a, b) => a[0] - b[0])) {
-  const dossier = path.join(dossierId, `e${evo}`, SKIN);
-  await mkdir(dossier, { recursive: true });
+for (const [evo, entrees] of [...parEvo].sort((a, b) => a[0] - b[0])) {
+  // Tout l'âge est lu d'abord : la boîte commune se calcule sur l'ensemble,
+  // tenues et objets compris.
+  const lus = entrees.map((e) => ({ ...e }));
+  for (const e of lus) e.img = await analyser(e.chemin);
 
-  const lus = new Map();
-  for (const [etat, f] of etats) lus.set(etat, await analyser(f));
-
-  const tailles = new Set([...lus.values()].map((a) => `${a.l}×${a.h}`));
+  const tailles = new Set(lus.map((e) => `${e.img.l}×${e.img.h}`));
   if (tailles.size > 1) {
-    console.error(`e${evo} : les états n'ont pas tous la même taille (${[...tailles].join(', ')}). `
-      + 'Le cadrage commun suppose des rendus au même format — c\'est ce qui garde '
-      + 'les pieds du personnage à la même hauteur d\'un état à l\'autre.');
+    console.error(`e${evo} : les rendus n'ont pas tous la même taille (${[...tailles].join(', ')}). `
+      + 'Le cadrage commun suppose un format unique — c\'est ce qui garde les pieds '
+      + 'du personnage à la même hauteur d\'une tenue et d\'un état à l\'autre.');
     process.exit(1);
   }
 
-  // La boîte commune : l'union de tous les états de cette évolution.
-  const u = [...lus.values()].map((a) => a.boite).reduce((a, b) => ({
+  const u = lus.map((e) => e.img.boite).reduce((a, b) => ({
     x0: Math.min(a.x0, b.x0), y0: Math.min(a.y0, b.y0),
     x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1),
   }));
-  const { l, h } = [...lus.values()][0];
+  const { l, h } = lus[0].img;
   const cadre = { left: u.x0, top: u.y0, width: u.x1 - u.x0 + 1, height: u.y1 - u.y0 + 1 };
 
-  const empreinte = createHash('sha1');
-  for (const etat of ETATS) {
-    const a = lus.get(etat);
-    if (!a) continue;
-    const decoupe = await sharp(a.rgba, { raw: { width: l, height: h, channels: 4 } })
+  const decouper = async (img, dossier, nom, empreinte) => {
+    const decoupe = await sharp(img.rgba, { raw: { width: l, height: h, channels: 4 } })
       .extract(cadre)
       // `.png()` avant `.toBuffer()` : un tampon issu de pixels bruts repart en
       // pixels bruts, et sharp ne sait pas les relire sans leurs dimensions.
@@ -291,41 +372,74 @@ for (const [evo, etats] of [...parEvo].sort((a, b) => a[0] - b[0])) {
     await ecrire(sharp(decoupe).resize({
       width: CADRE.l, height: CADRE.h, fit: 'contain',
       background: { r: 0, g: 0, b: 0, alpha: 0 },
-    }), dossier, etat, empreinte);
-  }
-
-  /**
-   * Le portrait ne se tire que de `neutre`, ou pas du tout.
-   *
-   * On peut le calculer depuis n'importe quel état, et c'est une mauvaise
-   * idée : sur « victoire » les bras sont en l'air, l'érosion prend un poignet
-   * pour un crâne, et le buste sort cadré sur la poitrine. Mieux vaut aucun
-   * portrait qu'un portrait de travers — le jeu retombera sur celui du stade
-   * précédent, ou sur le plein-pied.
-   */
-  const source = lus.get('neutre');
-  if (source) {
-    const rayon = Math.max(3, Math.round((source.boite.x1 - source.boite.x0) * 0.035));
-    const tete = centreTete(source.alpha, l, h, source.boite, rayon);
-    const cote = Math.round((source.boite.y1 - source.boite.y0) * 0.42);
-    const gx = Math.max(0, Math.min(l - cote, Math.round(tete.x - cote / 2)));
-    const gy = Math.max(0, Math.min(h - cote, Math.round(tete.y - cote * 0.08)));
-    await ecrire(sharp(source.rgba, { raw: { width: l, height: h, channels: 4 } })
-      .extract({ left: gx, top: gy, width: Math.min(cote, l - gx), height: Math.min(cote, h - gy) })
-      .resize(PORTRAIT.l, PORTRAIT.h, { fit: 'cover' }), dossier, 'portrait', empreinte);
-  }
+    }), dossier, nom, empreinte);
+  };
 
   const eCle = `e${evo}`;
   manifeste.evolutions[eCle] ??= { skins: {} };
-  manifeste.evolutions[eCle].skins[SKIN] = {
-    etats: ETATS.filter((e) => lus.has(e)),
-    portrait: lus.has('neutre'),
-    // Le repli d'un skin partiel. `base` n'en a pas : c'est lui le dernier
-    // recours, et un repli circulaire ferait boucler la résolution.
-    ...(SKIN !== 'base' && REPLI ? { repli: REPLI } : {}),
-    sha: empreinte.digest('hex').slice(0, 12),
-  };
-  compte.push({ evo: eCle, etats: lus.size, cadre: `${cadre.width}×${cadre.height}` });
+
+  const tenues = [...new Set(lus.map((e) => e.tenue))].sort();
+  for (const tenue of tenues) {
+    const dossier = path.join(dossierId, eCle, tenue);
+    await mkdir(dossier, { recursive: true });
+    const empreinte = createHash('sha1');
+
+    // Les états nus, dans l'ordre du catalogue.
+    const nus = new Map(lus.filter((e) => e.tenue === tenue && !e.objet)
+      .map((e) => [e.etat, e.img]));
+    for (const etat of ETATS) {
+      if (nus.has(etat)) await decouper(nus.get(etat), dossier, etat, empreinte);
+    }
+
+    /* Les objets portés : `drapeau-neutre.*` à côté de `neutre.*`.
+
+       Un objet est une **variante d'un état**, pas un état de plus. Le
+       vocabulaire des douze états reste donc fermé, et toute la mécanique de
+       repli du jeu — état manquant vers `neutre`, tenue partielle vers `base` —
+       continue de fonctionner sans rien savoir des objets. */
+    const objets = {};
+    for (const e of lus.filter((x) => x.tenue === tenue && x.objet)) {
+      await decouper(e.img, dossier, `${e.objet}-${e.etat}`, empreinte);
+      (objets[e.objet] ??= []).push(e.etat);
+    }
+
+    /**
+     * Le portrait ne se tire que de `neutre`, ou pas du tout.
+     *
+     * On peut le calculer depuis n'importe quel état, et c'est une mauvaise
+     * idée : sur « victoire » les bras sont en l'air, l'érosion prend un
+     * poignet pour un crâne, et le buste sort cadré sur la poitrine. Mieux vaut
+     * aucun portrait qu'un portrait de travers — le jeu retombera sur celui du
+     * stade précédent, ou sur le plein-pied.
+     */
+    const source = nus.get('neutre');
+    if (source) {
+      const rayon = Math.max(3, Math.round((source.boite.x1 - source.boite.x0) * 0.035));
+      const tete = centreTete(source.alpha, l, h, source.boite, rayon);
+      const cote = Math.round((source.boite.y1 - source.boite.y0) * 0.42);
+      const gx = Math.max(0, Math.min(l - cote, Math.round(tete.x - cote / 2)));
+      const gy = Math.max(0, Math.min(h - cote, Math.round(tete.y - cote * 0.08)));
+      await ecrire(sharp(source.rgba, { raw: { width: l, height: h, channels: 4 } })
+        .extract({ left: gx, top: gy,
+          width: Math.min(cote, l - gx), height: Math.min(cote, h - gy) })
+        .resize(PORTRAIT.l, PORTRAIT.h, { fit: 'cover' }), dossier, 'portrait', empreinte);
+    }
+
+    manifeste.evolutions[eCle].skins[tenue] = {
+      etats: ETATS.filter((e) => nus.has(e)),
+      portrait: nus.has('neutre'),
+      ...(Object.keys(objets).length ? { objets } : {}),
+      /* Une tenue autre que `base` se replie sur elle, par défaut et sans
+         qu'on ait à le déclarer : une tenue partielle — deux poses sur douze —
+         doit emprunter le reste, sinon le personnage se fige dès qu'on
+         l'habille. `base` n'a pas de repli, c'est lui le fond du puits. */
+      ...(tenue !== 'base' ? { repli: 'base' } : {}),
+      sha: empreinte.digest('hex').slice(0, 12),
+    };
+
+    compte.push({ evo: eCle, tenue, etats: nus.size,
+      objets: Object.keys(objets).length, cadre: `${cadre.width}×${cadre.height}` });
+  }
 }
 
 /**
@@ -335,7 +449,6 @@ for (const [evo, etats] of [...parEvo].sort((a, b) => a[0] - b[0])) {
  * l'identique ne force personne à retélécharger.
  */
 const avant = JSON.stringify(manifeste.evolutions);
-manifeste.rev = (manifeste.rev ?? 0);
 try {
   const ancien = JSON.parse(await readFile(cheminManifeste, 'utf8'));
   if (JSON.stringify(ancien.evolutions) !== avant) manifeste.rev = (ancien.rev ?? 0) + 1;
@@ -344,11 +457,11 @@ try {
 
 await writeFile(cheminManifeste, `${JSON.stringify(manifeste, null, 2)}\n`);
 
-console.log(`${ID}  (rendu ${cle})  skin « ${SKIN} »  rev ${manifeste.rev}`);
-for (const c of compte) console.log(`  ${c.evo} : ${c.etats} état(s), cadre commun ${c.cadre}`);
-const absents = ETATS.filter((e) => !manifeste.evolutions.e1?.skins?.[SKIN]?.etats?.includes(e));
-if (absents.length) {
-  console.log(`  absents en e1 : ${absents.join(', ')} — ils retomberont sur « neutre »`);
+console.log(`${ID}  (rendu ${cle})  rev ${manifeste.rev}`);
+for (const c of compte) {
+  console.log(`  ${c.evo}/${c.tenue.padEnd(14)} ${String(c.etats).padStart(2)} état(s)`
+    + (c.objets ? ` · ${c.objets} objet(s)` : '')
+    + ` · cadre ${c.cadre}`);
 }
 for (const f of ignores) console.log(`  ignoré : ${f}`);
 
