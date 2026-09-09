@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « les états d'un Fanzzy et leur repli, puis un
-personnage = une carte à trois stades ».
+Dernière mise à jour : session « le KOP, le niveau, les skins par âge
+et deux pannes de schéma rejouées ».
 
 ---
 
@@ -509,12 +509,13 @@ complètes dans `VISUELS.md`.
 
 | Adresse | Contenu |
 |---|---|
-| `/` | accueil : vitrine avant connexion, hub après |
+| `/` | accueil : vitrine avant connexion, hub après — le Fanzzy équipé au centre |
 | `/compte` | inscription, connexion, mot de passe oublié, Google |
 | `/bienvenue` | cérémonie d'arrivée : club, paquet de bienvenue |
 | `/fanzzy` | kiosque, classeur, Fanzzy équipé |
 | `/fanzzy/:id` | fiche d'un Fanzzy : histoire, effets, tenues, lignée |
-| `/deck` | construction de deck : trois Fanzzy, équipement, dix cartes |
+| `/deck` | construction de deck : jusqu'à trois Fanzzy, équipement, dix cartes |
+| `/kop` | le KOP : caisse commune, votes de dépense, bonus de virage |
 | `/carnet` | souvenirs vécus et vignettes à récupérer |
 | `/virage` | Grand Virage : tir à la corde pendant un vrai match |
 | `/duel-nvn` | **le duel** : tir à la corde, 1v1 à 5v5, adossé à un vrai match |
@@ -522,56 +523,70 @@ complètes dans `VISUELS.md`.
 | `/teletext` | tous les championnats : classements, buteurs, cartons |
 | `/classement` | supporters, tribunes, duellistes |
 | `/profil` | identité, clubs, inventaire, langue, déconnexion |
-| `/admin` | **catalogue Fanzzy**, joueurs, compétitions, réglages, journal |
+| `/admin` | **catalogue Fanzzy**, séries ouvertes, joueurs, compétitions, journal |
 | `/diagnostic`, `/healthz` | état du service |
 
-**Côté serveur, testé** : authentification, suivi des équipes, cartes-souvenirs,
-collection Fanzzy, télétexte, inscription et inventaire, classements, decks,
-moteur NvN, couche réseau NvN, administration.
+**Vingt-quatre suites**, toutes vertes. Côté serveur : schéma, authentification,
+football, souvenirs, collection Fanzzy, deck, moteur NvN, réseau NvN, virage,
+classements, inscription, administration, télétexte, stades, niveau, KOP. Côté
+interface, dans un vrai navigateur : deck, classeur, administration, accueil,
+duel, KOP. Et trois sans base : états, images, câblage.
 
-**Côté interface, testé** : écran de deck, écran de duel NvN, classeur.
+### Le catalogue
 
-Le catalogue compte **36 Fanzzy**. Trois sont illustrés : `G1` (Le Gamin de
-Devant), `X7` (Le Trieur de Doubles), `X8` (La Mascotte du Dimanche).
+**460 cartes, dont 428 publiées** — 152 personnages, chacun avec ses trois âges
+sauf les quatorze légendaires, qui n'en ont qu'un par définition. Cela fait
+**138 lignées**.
 
-Les sept derniers — `X9` à `X15`, les gens du stade — sont **écrits mais pas
-dessinés** : ils sortent des boosters et se jouent, avec leur silhouette
-procédurale. Ils entreront dans `ILLUSTRES` quand leurs six fichiers existeront,
-et `verif-pages.mjs` refuse de les y voir avant.
+Les 32 non publiées sont d'anciennes cartes qui refont un personnage du lot de
+2026 : elles restent lisibles pour qui les possède, elles ne se tirent plus.
+
+### Les illustrations
+
+**198 Fanzzy ont leur plein-pied et leur buste** — c'est ce que liste
+`ILLUSTRES` dans `public/fanzzy-art.js`, et `verif-pages.mjs` refuse d'y voir un
+identifiant dont les six fichiers n'existent pas. Le reste du catalogue garde le
+dessin procédural : mieux vaut une silhouette géométrique cohérente qu'un trou.
+
+**Un seul personnage a ses états** : `TR1`, Le Petit Teigneux — douze états au
+premier âge, un seul au deuxième. C'est le banc d'essai de la chaîne décrite au
+§ 9. Les 276 âges supérieurs du catalogue s'affichent en attendant au premier
+âge, par la mécanique de repli.
 
 ---
 
 ## 5. Ce qui reste à faire
 
-Par ordre d'utilité :
+Par ordre d'utilité.
 
-1. **Le fil du match en direct dans le Grand Virage** — les buts réels
-   secouent la corde, mais aucun fil d'événements n'est affiché.
-2. **Le pronostic de ferveur** — miser des écharpes sur un score avant le coup
+1. **Illustrer les âges.** C'est le seul manque qui se voit à l'écran. Deux cent
+   soixante-seize âges à dessiner, plus les tenues et les objets portés. La
+   chaîne les avale par lots, le repli tient en attendant — mais un catalogue
+   où tout le monde reste au premier âge ne montre pas ce que le jeu promet.
+
+2. **Le fil du match en direct dans le Grand Virage.** Les buts réels secouent
+   la corde, mais aucun fil d'événements n'est affiché : le joueur pousse sans
+   savoir ce qui vient de se passer sur le terrain.
+
+3. **Une mise en page pour écran large.** L'application est en colonne étroite
+   centrée, pensée pour le téléphone. Sur un ordinateur, les deux tiers de
+   l'écran sont vides.
+
+4. **Le derby automatique** — proposer un duel quand deux joueurs en ligne
+   suivent les deux clubs qui s'affrontent réellement. Conçu, pas commencé.
+
+5. **Le pronostic de ferveur** — miser des écharpes sur un score avant le coup
    d'envoi. Conçu, pas commencé.
-3. **Le derby automatique** — proposer un duel quand deux joueurs en ligne
-   suivent les deux clubs qui s'affrontent réellement.
-4. **Les illustrations des 26 autres Fanzzy.** Ajouter un identifiant à
-   `ILLUSTRES` dans `public/fanzzy.html` suffit à basculer, à condition que les
-   six fichiers existent — `verif-pages.mjs` le vérifie. Chaîne de production
-   décrite au § 9.
-5. **Les illustrations de skins** — changer de tenue ne change que le nom.
-6. **Une mise en page pour écran large.** L'application est en colonne étroite
-   centrée, pensée pour le téléphone.
-7. **Rejouer la simulation d'économie — c'est devenu le point le plus urgent
-   de cette liste.** Les chiffres commentés dans `dex.js` (« compléter la
-   collection rapporte environ 1 150 écharpes », coût d'évolution 25 et 90)
-   ont été calibrés à **27 cartes**. Il y en a **36**, soit un tiers de plus.
 
-   Les pools ont enflé de façon inégale, et c'est ça qui compte : VIRAGE NORD
-   en `d2` est passé de 5 à 8 entrées, NUITS EUROPÉENNES en `d3` de 2 à 4.
-   Comme un booster tire une rareté puis une carte *dans le pool de cette
-   rareté*, chaque carte d'un pool élargi devient d'autant plus rare. Compléter
-   la collection coûte donc sensiblement plus de boosters qu'à la calibration,
-   sans que le gain en écharpes ait bougé.
+6. **Les notifications.** Le KOP émet déjà sur le socket quand un vote s'ouvre,
+   mais rien n'atteint un joueur dont l'onglet est fermé. Trois minutes de
+   vote, c'est court : sans notification hors de la page, la moitié d'un KOP ne
+   votera jamais.
 
-   Tant que ce n'est pas rejoué, les coûts d'évolution sont probablement trop
-   bas par rapport au temps qu'il faut pour trouver les cartes.
+**Ce qui n'est plus sur cette liste**, et qui y figurait : la simulation
+d'économie (rejouée, `npm run economie`), les trois évolutions pour tous
+(écrites), la carte Relève, le niveau et l'XP, le KOP et sa page, les skins par
+âge, le contenu des boosters. L'audit A-à-Z du produit est entièrement traité.
 
 ---
 
@@ -666,13 +681,28 @@ dans l'URL du catalogue, pour casser le cache à chaque déploiement.
 ## 7 bis. À faire sur le serveur, en attente
 
 1. **Relancer l'inventaire des compétitions.** Les paliers en base suivent
-   encore l'ancienne règle, qui classait 117 compétitions comme « majeures ».
-   `node --env-file=.env scripts/coverage.mjs` — attendu : une dizaine.
-2. **Déclarer un administrateur.** Aucun compte n'a le rôle. Ajouter
-   `ADMIN_EMAILS` puis redémarrer.
-3. **Donner leur tenue de base aux Fanzzy anciens.** Attention : le fichier
-   `sql/tenues-de-base.sql` mentionné dans les notes précédentes **n'existe
-   pas** dans le dépôt. Il est à réécrire avant de pouvoir exécuter ce point.
+   peut-être encore l'ancienne règle, qui classait 117 compétitions comme
+   « majeures ». `node --env-file=.env scripts/coverage.mjs` — attendu : une
+   dizaine.
+2. **Déclarer un administrateur**, si ce n'est pas fait : ajouter `ADMIN_EMAILS`
+   au `.env` puis redémarrer. Sans lui, personne ne peut ouvrir `/admin`, et
+   seul un administrateur peut en nommer un autre.
+3. **Vérifier les migrations à colonnes après chaque livraison.** `niveau.sql`,
+   `skins.sql` et `stades.sql` ne créent aucune table : `SHOW TABLES` ne les
+   voit pas. Le démarrage les contrôle depuis le 9 septembre 2026, mais la
+   requête reste utile en cas de doute :
+
+   ```sql
+   SELECT
+     (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE()
+       AND table_name = 'user_wallet' AND column_name = 'xp')     AS niveau_ok,
+     (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE()
+       AND table_name = 'user_skins'  AND column_name = 'stage')  AS skins_ok,
+     (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE()
+       AND table_name = 'user_fanzzy' AND column_name = 'stage')  AS stades_ok;
+   ```
+
+   Il faut `1, 1, 1`.
 
 ---
 
