@@ -63,12 +63,26 @@ const TIRAGES = chiffres[1] || 2000;
    et elle se vérifiera d'elle-même en relançant le script quand elles le
    seront.                                                                  */
 
+/**
+ * Ce que la simulation cherche à réunir : **ce qu'un booster peut donner**.
+ *
+ * Elle prenait tout le catalogue, et elle avait raison de le faire tant que
+ * n'importe quelle carte pouvait tomber d'un paquet. Depuis que la rareté suit
+ * le stade, un booster ne donne que du stade 1 : les stades 2 et 3 s'achètent
+ * en écharpes. Viser tout le catalogue rendait la collection inatteignable, et
+ * la simulation tournait jusqu'au plafond sans qu'une seule partie n'aboutisse
+ * — puis divisait par zéro en calculant la médiane.
+ *
+ * Les cartes dépubliées sortent aussi : elles ne se tirent plus.
+ */
+const TIRABLE = DEX.filter((f) => f.publie !== false && f.stage === 1);
+
 function catalogue(taille) {
-  if (!taille || taille <= DEX.length) return DEX.map((f) => ({ id: f.id, set: f.set, rar: f.rar }));
-  const facteur = taille / DEX.length;
+  if (!taille || taille <= TIRABLE.length) return TIRABLE.map((f) => ({ id: f.id, set: f.set, rar: f.rar }));
+  const facteur = taille / TIRABLE.length;
   const out = [];
   const parCle = new Map();
-  for (const f of DEX) {
+  for (const f of TIRABLE) {
     const cle = `${f.set}/${f.rar}`;
     parCle.set(cle, (parCle.get(cle) ?? 0) + 1);
   }
@@ -195,7 +209,20 @@ const gains = abouties.map((p) => p.ecarpes);
 
 // Une lignée coûte 25 puis 90 : il faut donc posséder les trois étages.
 const lignees = new Set(DEX.filter((f) => f.evo).map((f) => f.id[0])).size;
-const coutEvolutions = lignees * (EVO_COST[2] + EVO_COST[3]);
+const PRIX_LIGNEE = EVO_COST[2] + EVO_COST[3];
+const coutEvolutions = lignees * PRIX_LIGNEE;
+
+/**
+ * Ce que coûtera le plan complet : une lignée pour chaque carte de stade 1 qui
+ * n'est pas légendaire.
+ *
+ * C'est le chiffre qui décide si le projet tient. Sept lignées coûtent 805
+ * écharpes, ce qu'une collection rapporte largement ; cent vingt en coûtent
+ * quatorze mille, ce qu'elle ne rapporte pas du tout. La différence ne se voit
+ * qu'en la calculant — d'où cette ligne, et non une conviction.
+ */
+const futuresLignees = TIRABLE.filter((f) => f.rar !== 'legendaire').length;
+const coutFutur = futuresLignees * PRIX_LIGNEE;
 
 /* --------------------------------------------------------------- rapport */
 
@@ -203,7 +230,7 @@ const h = (n) => n.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
 const heures = (p) => (p / (60 / (PACK_REGEN_MS / 60000))).toFixed(0);
 
 console.log(`\nCatalogue simulé : ${CARTES.length} Fanzzy`
-  + (CIBLE && CIBLE > DEX.length ? ` (projection depuis ${DEX.length} réels)` : ' (réels)'));
+  + (CIBLE && CIBLE > TIRABLE.length ? ` (projection depuis ${TIRABLE.length} réels)` : ' de stade 1, publiés'));
 console.log(`Séries : ${SET_IDS.join(', ')} · ${TIRAGES} collections simulées\n`);
 
 console.log('Répartition des pools');
@@ -224,6 +251,21 @@ console.log(`  coût des ${lignees} lignées à faire évoluer        ${h(coutEv
 const reste = moyenne(gains) - coutEvolutions;
 console.log(`  reste après avoir tout fait évoluer     ${h(reste)}`
   + (reste < 0 ? '   ← IMPOSSIBLE sans acheter' : ''));
+
+console.log('\nSi chaque Fanzzy gagne ses trois stades');
+console.log(`  lignées à créer                        ${h(futuresLignees)}`);
+console.log(`  coût pour toutes les faire évoluer      ${h(coutFutur)} écharpes`);
+console.log(`  ce qu'une collection rapporte           ${h(moyenne(gains))} écharpes`);
+{
+  // Une fois la collection complète, chaque booster n'est plus que des
+  // doublons : le revenu ne s'arrête pas, il devient régulier. C'est lui qui
+  // paie les évolutions sur la durée, pas la collecte initiale — et c'est ce
+  // que le rapport ne disait pas, ce qui faisait paraître le plan intenable.
+  const parBooster = moyenne(gains) / moyenne(paquets);
+  const parJour = parBooster * (24 * 60 / (PACK_REGEN_MS / 60000));
+  console.log(`  puis environ                           ${h(parJour)} écharpes par jour de jeu`);
+  console.log(`  soit                                   ${h((coutFutur - moyenne(gains)) / parJour)} jours pour tout faire évoluer`);
+}
 
 console.log('\nEn temps de jeu');
 console.log(`  boosters gratuits : 1 toutes les ${PACK_REGEN_MS / 60000} min, ${MAX_PACKS} en réserve`);
