@@ -28,8 +28,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { charger as chargerCatalogue, racineDe, lignee, auStade, personnages, obtenables, parIdentifiant }
   from '../src/server/fanzzy/catalogue.js';
+import { baseDeTest } from './base-de-test.mjs';
 
-const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
+const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
 let failures = 0;

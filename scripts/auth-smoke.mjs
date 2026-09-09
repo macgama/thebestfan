@@ -12,8 +12,9 @@ import express from 'express';
 import { createAuth } from '../src/server/auth/routes.js';
 import { createSocketAuthenticator } from '../src/server/auth/socket.js';
 import { readTicket } from '../src/server/auth/tokens.js';
+import { baseDeTest } from './base-de-test.mjs';
 
-const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
+const DB = baseDeTest();
 const ORIGIN_LOCAL = 'http://localhost';
 let failures = 0;
 

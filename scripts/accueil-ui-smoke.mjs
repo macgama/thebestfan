@@ -32,8 +32,9 @@ import puppeteer from 'puppeteer';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { createOnboarding } from '../src/server/onboarding/index.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { baseDeTest } from './base-de-test.mjs';
 
-const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
+const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
 let failures = 0;

@@ -6,8 +6,9 @@ import { createFanzzy, MAX_PACKS, PACKS_DEPART, PACK_PRICE } from '../src/server
 import { DEX, BY_ID, SETS } from '../src/shared/fanzzy/dex.js';
 import { SKINS } from '../src/shared/fanzzy/inventaire.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { baseDeTest } from './base-de-test.mjs';
 
-const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
+const DB = baseDeTest();
 let failures = 0;
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
 

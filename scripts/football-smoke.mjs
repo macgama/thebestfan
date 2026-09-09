@@ -9,8 +9,9 @@ import { createServer } from 'node:http';
 import express from 'express';
 import { createClient } from '../src/server/football/client.js';
 import { createFootball } from '../src/server/football/routes.js';
+import { baseDeTest } from './base-de-test.mjs';
 
-const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
+const DB = baseDeTest();
 let failures = 0;
 const check = (label, cond) => {
   console.log(`${cond ? '  ok  ' : ' FAIL '} ${label}`);
