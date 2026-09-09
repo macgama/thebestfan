@@ -119,13 +119,21 @@ export class VirageRoom {
 
     const surge = now < this.surgeUntil ? RULES.surgeFactor : 1;
     const n = this.crowd();
-    const amount = card.power * quality * surge * crowdFactor(Math.max(1, n[m.side]));
+    /* `pushMult` : la corde. Un bonus de KOP passe par cette clé, comme la
+       carte « Prolongations » du duel — même vocabulaire, même endroit. Le
+       moteur ne sait pas d’où vient le modificateur, et c’est ce qui permet
+       à un KOP de peser sur une mécanique sans la connaître. */
+    const amount = card.power * quality * surge * crowdFactor(Math.max(1, n[m.side]))
+      * (m.mods.pushMult ?? 1);
 
     // Divisée par l'effectif : le nombre aide, il ne décide pas.
     const perCapita = amount / Math.max(1, n[m.side]);
     const signed = (backfire ? -1 : 1) * (m.side === 0 ? -perCapita : perCapita);
     this.rope = clamp(this.rope + signed, -RULES.goalAt, RULES.goalAt);
-    m.ferveur += Math.round(Math.max(0, perCapita));
+    // `ferveurBonus` : ce qui compte au classement. Séparé de la corde
+    // exprès — un KOP peut vouloir peser sur le match sans peser sur le
+    // classement, et l’inverse.
+    m.ferveur += Math.round(Math.max(0, perCapita) * (m.mods.ferveurBonus ?? 1));
     this.dirty = true;
 
     // Présence : c'est ce que consulteront les cartes-souvenirs au prochain but.

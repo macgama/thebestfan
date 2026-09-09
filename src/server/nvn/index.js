@@ -27,7 +27,7 @@ const TICK_MS = 500;
 const BOT_APRES_MS = 20_000;
 const GRACE_MS = 90_000;
 
-export function createNvN({ pool, io, requireAuth, decks, niveau = null }) {
+export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = null }) {
   const salles = new Map();          // duelId -> { duel, membres, timer }
   const salleDe = new Map();         // userId -> duelId
   const files = new Map();           // clé -> [candidats]
@@ -262,51 +262,88 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null }) {
    * la fin de chaque duel, et un aller-retour par participant sur un 5 contre 5
    * pour lire une table de deux lignes serait du gaspillage pur.
    */
+  /**
+   * Pour chaque joueur, le club qu'il suit et qui joue ce match — ou rien.
+   *
+   * Une Map et non un ensemble : il ne suffit plus de savoir *si* le joueur
+   * est concerné, il faut savoir **par quel club**, puisque son KOP est celui
+   * de ce club-là.
+   *
+   * Une requête pour tout le monde, et non une par joueur : `fermer()` tourne
+   * à la fin de chaque duel, et un aller-retour par participant sur un 5
+   * contre 5 pour lire une table de deux lignes serait du gaspillage pur.
+   */
   async function concernes(userIds, fixture) {
     const equipes = [fixture?.home?.id, fixture?.away?.id].filter(Number.isFinite);
-    if (!userIds.length || !equipes.length) return new Set();
+    if (!userIds.length || !equipes.length) return new Map();
     const trous = userIds.map(() => '?').join(',');
     const rows = await q(
-      `SELECT DISTINCT user_id FROM user_follows
+      `SELECT user_id, team_id FROM user_follows
         WHERE user_id IN (${trous}) AND team_id IN (${equipes.map(() => '?').join(',')})`,
       [...userIds, ...equipes]);
-    return new Set(rows.map((r) => r.user_id));
+    // Un joueur peut suivre les deux clubs d’un derby : le premier suffit,
+    // c’est le même doublement et le même KOP par club de toute façon.
+    const m = new Map();
+    for (const r of rows) if (!m.has(r.user_id)) m.set(r.user_id, r.team_id);
+    return m;
   }
 
-  async function recompenser(d) {
+  async function recompenser(salle) {
+    const d = salle.duel;
     const bareme = GAIN[d.mode] ?? GAIN.entrainement;
     try {
       // Un bot n'a pas de bourse, et lui en créer une inventerait un joueur.
       const humains = [...d.joueurs].filter(([userId]) => !userId.startsWith('bot:'));
-      const pourLeurClub = await concernes(humains.map(([u]) => u), d.fixture);
+      const clubs = await concernes(humains.map(([u]) => u), d.fixture);
 
       for (const [userId, j] of humains) {
         const gagne = d.vainqueur !== null && j.side === d.vainqueur;
         const base = gagne ? bareme.gagne : bareme.perdu;
-        const montant = base * (pourLeurClub.has(userId) ? DOUBLE_CLUB : 1);
+        const pourSonClub = clubs.has(userId);
+        const montant = base * (pourSonClub ? DOUBLE_CLUB : 1);
         await q(`INSERT IGNORE INTO user_wallet (user_id) VALUES (?)`, [userId]);
         await q(`UPDATE user_wallet SET scarves = scarves + ? WHERE user_id = ?`,
           [montant, userId]);
 
         /* L'XP, elle, **ne double pas** pour son club.
            Les écharpes récompensent la ferveur, et il est juste qu'elles
-           penchent du côté de son équipe. Le niveau, lui, mesure le temps
-           passé à jouer : le doubler ferait d'un joueur qui suit trois gros
-           clubs un joueur qui progresse deux fois plus vite qu'un autre, pour
-           un choix fait à l'inscription. */
+           penchent du côté de son équipe. Le niveau mesure le temps passé à
+           jouer : le doubler ferait d'un joueur qui suit trois gros clubs un
+           joueur qui progresse deux fois plus vite, pour un choix fait à
+           l'inscription. */
         if (niveau) {
           const gain = (XP.duel[d.mode] ?? XP.duel.entrainement)
             + (gagne ? XP.victoire : 0);
           await niveau.gagner(userId, gain);
         }
+
+        /* La part du club, versée au pot du KOP.
+
+           Elle **s’ajoute**, elle ne se prend pas au joueur : le même geste
+           sert les deux, et il n’y a aucune raison de faire choisir entre soi
+           et son groupe.
+
+           Sans KOP, elle est perdue — et on le dit, sur le socket de ce
+           joueur. C’est toute la raison d’en créer un, et une écharpe qui
+           disparaît sans un mot ne donne envie de rien. */
+        if (kop && pourSonClub) {
+          const part = Math.round(base * kop.PART_POT);
+          const r = await kop.verser(userId, clubs.get(userId), part);
+          const m = salle.membres.get(userId);
+          if (r.sansKop) {
+            m?.socket?.emit('nvn:kop', { sansKop: true, teamId: clubs.get(userId),
+              perdu: part });
+          } else if (r.verse) {
+            m?.socket?.emit('nvn:kop', { verse: r.verse, kop: r.nom });
+          }
+        }
       }
     } catch (e) {
       // Un duel qui s'est bien joué ne doit pas se terminer en erreur parce
-      // que la bourse n'a pas pu être créditée. On le dit et on continue.
+      // que la bourse n’a pas pu être créditée. On le dit et on continue.
       console.error('[nvn] écharpes de fin de duel', e.message);
     }
   }
-
   async function fermer(salle) {
     clearInterval(salle.timer);
     const d = salle.duel;
@@ -320,7 +357,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null }) {
     // plutôt qu'une façon de jouer. Il paie maintenant, moins qu'un duel
     // classé, et il reste hors du classement — c'est là qu'est la différence,
     // pas dans la récompense.
-    await recompenser(d);
+    await recompenser(salle);
 
     // Seul un duel classé s'écrit au classement. Les bots n'y figurent pas.
     if (d.mode !== 'classe' || d.vainqueur === null) return;

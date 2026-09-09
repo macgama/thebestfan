@@ -329,6 +329,43 @@ victoire 15 de plus. **L’XP ne double pas pour son club** — les écharpes, s
 Les écharpes récompensent la ferveur et il est juste qu’elles penchent ; le
 niveau mesure le temps passé à jouer, et le doubler ferait progresser deux fois
 plus vite pour un choix fait à l’inscription.
+**Un bonus de KOP est un jeu de modificateurs**, écrit dans le vocabulaire que
+le moteur emploie déjà — `tempoWindow`, `breathBonus`, `pushMult`… C’est ce qui
+permet à un KOP de peser sur la corde, la ferveur, les écharpes, le souffle, le
+tempo ou les contres **sans connaître aucune de ces mécaniques**. Une mécanique
+ajoutée demain sera couverte par une clé de plus, pas par une réécriture.
+
+Dans le VIRAGE, les modificateurs du KOP **multiplient** ceux du Fanzzy au lieu
+de les écraser : le groupe amplifie le personnage, il ne le remplace pas. Une
+simple fusion aurait fait disparaître l’un des deux selon l’ordre, en silence.
+
+Trois règles d’argent, et elles sont tenues par la base plutôt que par le code :
+
+- **Un seul KOP par club**, plusieurs clubs possibles. `UNIQUE (user_id,
+  team_id)` sur `kop_membres`. Vérifiée dans le code, la règle céderait sur deux
+  requêtes simultanées — et un joueur inscrit à deux KOP du même club casserait
+  toute la logique de versement sans que rien ne le signale.
+- **Ce qui est versé est versé.** Quitter ne rend rien, et il n’existe aucune
+  fonction pour le faire. Sans ça, on entrerait la veille du match, on voterait,
+  et on repartirait avec sa part.
+- **La part du club s’ajoute, elle ne se prend pas au joueur.** Pousser pour son
+  club rapporte le double *et* remplit le pot : le même geste sert les deux, et
+  il n’y a pas à choisir entre soi et son groupe. Sans KOP, cette part est
+  perdue — et on le dit sur le socket, parce qu’une écharpe qui disparaît sans
+  un mot ne donne envie de rien.
+
+Le vote dure **trois minutes**, le créateur pèse **cinq voix** et départage à
+égalité. Trois minutes parce qu’un vote qui dure une journée se décide sans ceux
+qui jouent ce soir-là ; cinq voix parce qu’un KOP est un groupe de copains dont
+quelqu’un a pris l’initiative — à partir de onze membres actifs il redevient
+minoritaire, ce qui est exactement le moment où ça cesse d’être un groupe de
+copains.
+
+**Le dépouillement se fait à la lecture, jamais par une minuterie.** Un vote
+échu est dépouillé au premier regard — un membre qui ouvre la page, le VIRAGE
+qui cherche les bonus actifs. Une tâche périodique aurait demandé un
+ordonnanceur, et surtout elle aurait laissé des votes ouverts pour l’éternité au
+premier redémarrage tombé au mauvais moment.
 **Un skin ne donne aucun bonus.** Il change l'apparence, rien d'autre. Celui qui
 ouvre mille boosters est plus beau, pas plus fort.
 

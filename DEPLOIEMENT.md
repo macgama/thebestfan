@@ -70,7 +70,7 @@ curl -s https://thebestfan.online/healthz
 
 ```bash
 cd ~/sites/thebestfan.online
-for f in auth football duel souvenirs fanzzy teletext inventaire deck admin \
+for f in auth football duel souvenirs fanzzy teletext inventaire deck admin kop \
          niveau raretes stades; do
   mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
 done
@@ -91,7 +91,7 @@ que `raretes` les a rangées.
   `node scripts/stades-smoke.mjs` la rejoue sur une collection fabriquée avant
   que tu la lances ici.
 
-Contrôle : `SHOW TABLES;` doit en lister 27. (Le chiffre 24 qui figurait ici était faux : les neuf fichiers SQL créent 27 tables, et une table manquante produit des erreurs déroutantes.)
+Contrôle : `SHOW TABLES;` doit en lister **32** — les 27 d’avant, plus les cinq tables des KOP.
 
 `teletext.sql` ajoute aussi des colonnes à `souvenir_leagues` : la couverture
 fine des buteurs, passeurs et cartons, et le palier de notoriété. Relance

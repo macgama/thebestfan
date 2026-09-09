@@ -26,6 +26,7 @@ import { createGoogleAuth } from './src/server/auth/google.js';
 import { createClassements } from './src/server/classements/index.js';
 import { createDecks } from './src/server/deck/index.js';
 import { createNiveau } from './src/server/niveau/index.js';
+import { createKop } from './src/server/kop/index.js';
 import { createAdmin } from './src/server/admin/index.js';
 import { createNvN } from './src/server/nvn/index.js';
 
@@ -72,6 +73,7 @@ let onboarding = null;
 let classements = null;
 let decks = null;
 let niveau = null;
+let kop = null;
 let admin = null;
 let nvn = null;
 let google = null;
@@ -148,6 +150,14 @@ if (process.env.DATABASE_URL) {
     app.use('/api/niveau', niveau.router);
     console.log('niveau et XP actifs');
 
+    // ---- les KOP : caisse commune, votes, bonus de virage
+    //
+    // Monté avant les duels et le virage, qui le consultent : le premier y
+    // verse la part du club, le second y lit les bonus actifs.
+    kop = createKop({ pool, io, requireAuth: auth.requireAuth });
+    app.use('/api/kop', kop.router);
+    console.log('KOP actifs');
+
     // ---- decks de duel et choix du match support
     decks = createDecks({ pool, requireAuth: auth.requireAuth, niveau });
     app.use('/api/deck', decks.router);
@@ -155,7 +165,7 @@ if (process.env.DATABASE_URL) {
     console.log('decks actifs');
 
     // ---- duel N contre N (tir a la corde en equipe)
-    nvn = createNvN({ pool, io, decks, requireAuth: auth.requireAuth, niveau });
+    nvn = createNvN({ pool, io, decks, requireAuth: auth.requireAuth, niveau, kop });
     app.use('/api/nvn', nvn.router);
     console.log('duels NvN actifs');
 
@@ -201,7 +211,7 @@ if (process.env.DATABASE_URL) {
     console.log('inscription et inventaire actifs');
 
     // ---- Grand Virage (tir a la corde en direct)
-    virage = createVirage({ pool, io, requireAuth: auth.requireAuth, souvenirs, fanzzy });
+    virage = createVirage({ pool, io, requireAuth: auth.requireAuth, souvenirs, fanzzy, kop });
     app.use('/api/virage', virage.router);
     console.log('grand virage actif');
 
