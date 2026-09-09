@@ -48,9 +48,21 @@ const RAR = { commune:1, rare:2, epique:3, legendaire:4 };
  */
 const SCARVES = { commune:1, rare:3, epique:10, legendaire:45 };
 /**
- * Coût d'évolution. Calibré sur la simulation : compléter la collection
- * rapporte environ 1 150 écharpes, faire évoluer les six lignées en coûte 690.
- * Il reste de quoi choisir, pas de quoi tout avoir sans y penser.
+ * Coût d'évolution, en écharpes. Vingt-cinq pour le stade 2, quatre-vingt-dix
+ * pour le stade 3.
+ *
+ * Recalibré sur la simulation après le passage à quatre raretés. Compléter la
+ * collection — cent trente-huit cartes de stade 1, environ deux cent quinze
+ * boosters — rapporte à peu près 1 650 écharpes en doublons, et faire évoluer
+ * les sept lignées existantes en coûte 805.
+ *
+ * Le chiffre qui compte pour la suite : si les cent trente-huit gagnent leurs
+ * trois stades, tout faire évoluer coûtera près de 16 000 écharpes. La collecte
+ * initiale n'y suffit pas — et c'est voulu. Ce qui paie, c'est le jeu
+ * régulier : une fois la collection complète, chaque booster n'est plus que des
+ * doublons, soit environ mille écharpes par jour. Une quinzaine de jours pour
+ * tout faire évoluer, et entre-temps il faut choisir. C'est exactement ce qu'on
+ * cherche : de quoi choisir, pas de quoi tout avoir sans y penser.
  */
 const EVO_COST = { 2:25, 3:90 };
 
