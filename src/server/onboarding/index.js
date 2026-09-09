@@ -21,7 +21,12 @@ export const SLOTS_DEPART = 2;
 export const SLOTS_MAX = 8;
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
-export function createOnboarding({ pool, requireAuth, football = null }) {
+/**
+ * `niveau` est facultatif. Sans lui, le plafond d'emplacements reste celui
+ * d'avant — huit — et rien ne change : une installation dont
+ * `sql/niveau.sql` n'est pas encore appliqué continue de fonctionner.
+ */
+export function createOnboarding({ pool, requireAuth, football = null, niveau = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -98,9 +103,26 @@ export function createOnboarding({ pool, requireAuth, football = null }) {
   /** Un emplacement supplémentaire s'achète, il ne se donne pas. */
   const PRIX_SLOT = [0, 0, 120, 220, 380, 600, 900, 1300];
 
+  /**
+   * **Le niveau lève le plafond, les écharpes achètent en dessous.**
+   *
+   * C'était la question ouverte : remplacer l'achat par un déblocage, ou
+   * faire cohabiter les deux. Les deux, et pour une raison simple — un
+   * joueur qui a déjà payé trois cents écharpes pour un emplacement ne doit
+   * pas le perdre parce qu'on introduit une progression. Le niveau ouvre le
+   * droit d'en avoir un de plus, les écharpes restent ce qu'il en coûte.
+   *
+   * Et le niveau garde ainsi un effet visible sans rien donner : c'est la
+   * règle de `shared/niveau.js`, tenue jusque dans les cas particuliers.
+   */
   async function buySlot(userId) {
     const w = (await q(`SELECT follow_slots, scarves FROM user_wallet WHERE user_id = ?`, [userId]))[0];
-    if (w.follow_slots >= SLOTS_MAX) throw fail('onboarding.error.max_slots');
+    const plafond = niveau ? Math.min(SLOTS_MAX, (await niveau.droitsDe(userId)).slots)
+                           : SLOTS_MAX;
+    if (w.follow_slots >= plafond) {
+      throw fail(w.follow_slots >= SLOTS_MAX ? 'onboarding.error.max_slots'
+                                            : 'onboarding.error.slot_locked');
+    }
     const prix = PRIX_SLOT[w.follow_slots] ?? 1300;
     const [d] = await pool.execute(
       `UPDATE user_wallet SET scarves = scarves - ?, follow_slots = follow_slots + 1
