@@ -355,6 +355,11 @@ catch { /* premier passage */ }
    complet. Avec une veille qui se déclenche à chaque fichier déposé, le lot
    incomplet devient le cas **normal**.                                       */
 
+const EXPLICATION = [
+  'Le cadrage commun suppose un format unique par âge : c’est ce qui garde les',
+  'pieds du personnage à la même hauteur d’une tenue et d’un état à l’autre.',
+].join('\n');
+
 const ages = [];
 const refus = [];
 
@@ -387,11 +392,17 @@ for (const [evo, entrees] of [...parEvo].sort((a, b) => a[0] - b[0])) {
     cadre: { left: u.x0, top: u.y0, width: u.x1 - u.x0 + 1, height: u.y1 - u.y0 + 1 } });
 }
 
-if (refus.length) {
-  console.error(refus.join('\n') + '\n\n'
-    + 'Le cadrage commun suppose un format unique par âge : c\'est ce qui garde les\n'
-    + 'pieds du personnage à la même hauteur d\'une tenue et d\'un état à l\'autre.\n'
-    + 'Rien n\'a été écrit — les images en place sont intactes.');
+/* **Un âge refusé n'en bloque aucun autre.**
+ *
+ * Chaque âge a son dossier et son propre cadre : ils ne se doivent rien. Faire
+ * échouer le lot entier parce qu'un fichier d'e2 est au mauvais format gèlerait
+ * e1 et e3, qui n'y sont pour rien — et avec une veille, un seul rendu de
+ * travers arrêterait la production du personnage jusqu'à ce qu'on le remarque.
+ *
+ * L'âge fautif garde donc ce qu'il avait, les autres avancent, et le message
+ * dit lequel corriger. */
+if (refus.length && !ages.length) {
+  console.error(refus.join('\n') + '\n\n' + EXPLICATION);
   process.exit(1);
 }
 
@@ -500,9 +511,18 @@ for (const c of compte) {
 }
 for (const f of ignores) console.log(`  ignoré : ${f}`);
 
+if (refus.length) {
+  console.error(['', ...refus, '', EXPLICATION,
+    'Les autres âges ont été produits ; celui-là garde ce qu’il avait.'].join('\n'));
+}
+
 // L'agrégat se refait à chaque passage, sans qu'on ait à y penser. C'est la
 // seule façon qu'il reste juste : reconstruit à la main, il finit par décrire
 // un état du disque qui n'existe plus, et le jeu demande des images absentes.
 const agr = await agreger(SORTIE);
 console.log(`\n→ ${path.relative(RACINE, dossierId)}`);
 console.log(`  index.json : ${agr.fanzzy} Fanzzy, ${(agr.octets / 1024).toFixed(1)} Ko`);
+
+// Sortie non nulle si un âge a été refusé : la veille doit pouvoir le dire,
+// même quand le reste est passé.
+if (refus.length) process.exitCode = 1;
