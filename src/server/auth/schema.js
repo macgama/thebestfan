@@ -43,6 +43,40 @@ function tablesDeclarees(sql) {
 }
 
 /**
+ * Les colonnes qu'un fichier promet d'ajouter à une table existante.
+ *
+ * **Un fichier peut ne créer aucune table et rester indispensable.** Quatre
+ * des derniers l'étaient : `niveau.sql` n'ajoute qu'une colonne `xp`,
+ * `skins.sql` un `stage`, `stades.sql` un autre. Le contrôle ne regardait que
+ * les tables — il les déclarait donc tous appliqués, toujours.
+ *
+ * Le 9 septembre 2026, `niveau.sql` a été oublié en production. Aucune table
+ * ne manquait, `/healthz` répondait `ok: true`, le démarrage ne disait rien —
+ * et le jeu refusait tous les boosters hors de la première série ainsi que
+ * tout deck de trois Fanzzy. La même panne que le 8 septembre, sous une autre
+ * forme : le code en ligne attend quelque chose que la base n’a pas.
+ */
+function colonnesDeclarees(sql) {
+  const code = sql
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/--[^\n]*/g, ' ');
+  const out = [];
+  /* `ALTER TABLE <t> ADD COLUMN IF NOT EXISTS <c>` — la seule forme employée
+     ici, et la seule qui décrive une promesse tenable. Un `ADD COLUMN` sans
+     garde ne se rejoue pas : on ne le cherche pas.
+
+     Le `[^;]*?` empêche de traverser un point-virgule : sans lui, un `ALTER
+     TABLE` suivi plus loin, dans une *autre* instruction, d'un `ADD COLUMN IF
+     NOT EXISTS` verrait les deux appariés — et le contrôle réclamerait une
+     colonne sur une table qui ne la reçoit jamais. */
+  const re = /ALTER\s+TABLE\s+`?(\w+)`?[^;]*?ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS\s+`?(\w+)`?/gi;
+  for (const m of code.matchAll(re)) {
+    out.push({ table: m[1].toLowerCase(), colonne: m[2].toLowerCase() });
+  }
+  return out;
+}
+
+/**
  * Lit `sql/` et renvoie `{ fichier -> [tables] }`.
  *
  * `rattrapage.sql` est écarté : c'est un correctif pour bases anciennes, il ne
@@ -54,6 +88,17 @@ export async function lireSchemaAttendu(dossier) {
     if (nom === 'rattrapage.sql') continue;
     const tables = tablesDeclarees(await readFile(path.join(dossier, nom), 'utf8'));
     if (tables.length) attendu.set(nom, tables);
+  }
+  return attendu;
+}
+
+/** Les colonnes promises par `sql/`, `{ fichier -> [{table, colonne}] }`. */
+export async function lireColonnesAttendues(dossier) {
+  const attendu = new Map();
+  for (const nom of (await readdir(dossier)).filter((f) => f.endsWith('.sql')).sort()) {
+    if (nom === 'rattrapage.sql') continue;
+    const cols = colonnesDeclarees(await readFile(path.join(dossier, nom), 'utf8'));
+    if (cols.length) attendu.set(nom, cols);
   }
   return attendu;
 }
@@ -70,12 +115,42 @@ export async function verifierSchema(pool, dossier) {
     'SELECT table_name AS t FROM information_schema.tables WHERE table_schema = DATABASE()');
   const presentes = new Set(lignes.map((l) => String(l.t).toLowerCase()));
 
-  const manques = [];
+  const manques = new Map();
   for (const [fichier, tables] of attendu) {
     const absentes = tables.filter((t) => !presentes.has(t));
-    if (absentes.length) manques.push({ fichier, tables: absentes });
+    if (absentes.length) manques.set(fichier, { fichier, tables: absentes });
   }
-  return manques;
+
+  /* Les colonnes, ensuite.
+   *
+   * On ne les cherche que dans les tables **présentes** : réclamer une colonne
+   * d'une table qui manque déjà noierait le vrai message sous le bruit, et le
+   * fichier qui crée la table est de toute façon déjà nommé.
+   */
+  const colonnes = await lireColonnesAttendues(dossier);
+  if (colonnes.size) {
+    let vues = new Set();
+    try {
+      const [cols] = await pool.query(
+        'SELECT table_name AS t, column_name AS c FROM information_schema.columns '
+        + 'WHERE table_schema = DATABASE()');
+      vues = new Set(cols.map((l) => `${String(l.t).toLowerCase()}.${String(l.c).toLowerCase()}`));
+    } catch {
+      // Un serveur qui refuse `information_schema.columns` ne doit pas empêcher
+      // le démarrage : on renonce au contrôle des colonnes, pas au reste.
+      return [...manques.values()];
+    }
+    for (const [fichier, liste] of colonnes) {
+      const absentes = liste
+        .filter((x) => presentes.has(x.table) && !vues.has(`${x.table}.${x.colonne}`))
+        .map((x) => `${x.table}.${x.colonne}`);
+      if (!absentes.length) continue;
+      const deja = manques.get(fichier) ?? { fichier, tables: [] };
+      manques.set(fichier, { ...deja, colonnes: absentes });
+    }
+  }
+
+  return [...manques.values()];
 }
 
 /**
@@ -88,11 +163,16 @@ export async function verifierSchema(pool, dossier) {
  */
 export function messageDeManque(manques) {
   if (!manques.length) return null;
-  const lignes = manques.map(
-    ({ fichier, tables }) => `    sql/${fichier} — table(s) absente(s) : ${tables.join(', ')}`);
-  return 'SCHÉMA INCOMPLET : la base ne contient pas toutes les tables que le '
-    + 'code attend.\n' + lignes.join('\n')
+  const lignes = manques.map(({ fichier, tables = [], colonnes = [] }) => {
+    const quoi = [
+      tables.length ? `table(s) absente(s) : ${tables.join(', ')}` : null,
+      colonnes.length ? `colonne(s) absente(s) : ${colonnes.join(', ')}` : null,
+    ].filter(Boolean).join(' · ');
+    return `    sql/${fichier} — ${quoi}`;
+  });
+  return 'SCHÉMA INCOMPLET : la base ne contient pas tout ce que le code attend.\n'
+    + lignes.join('\n')
     + '\n  À appliquer dans phpMyAdmin, onglet SQL, dans cet ordre. Ces fichiers '
-    + 'sont écrits en CREATE TABLE IF NOT EXISTS : les rejouer sur une base déjà '
-    + 'à jour ne casse rien.';
+    + 'sont écrits en CREATE TABLE IF NOT EXISTS et ADD COLUMN IF NOT EXISTS : '
+    + 'les rejouer sur une base déjà à jour ne casse rien.';
 }

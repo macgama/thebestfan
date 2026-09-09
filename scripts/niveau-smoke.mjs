@@ -275,6 +275,38 @@ check('deux passent', r.json.deck?.fanzzy?.length === 2);
     !/niveau|\bxp\b/i.test(source));
 }
 
+/* ================================= une progression illisible n'enlève rien
+
+   La panne du 9 septembre. `sql/niveau.sql` n'avait pas été appliqué en
+   production : la colonne `xp` manquait. La version d'alors lisait zéro, en
+   concluait « niveau 1 », et **confisquait** — une seule série au kiosque,
+   deux emplacements de deck, deux clubs. Le jeu se refermait sur tout le monde
+   parce qu'un `ALTER TABLE` n'avait pas été joué, sans erreur et sans message,
+   avec des refus parfaitement polis.
+
+   Un schéma incomplet est une faute d'exploitation : elle doit être bruyante
+   dans les journaux et invisible pour le joueur. Jamais l'inverse.          */
+
+{
+  // Un pool dont la lecture de `xp` échoue, comme si la colonne manquait.
+  const sansColonne = {
+    execute: async (sql, params) => {
+      if (/\bxp\b/.test(sql)) {
+        throw Object.assign(new Error("Unknown column 'xp' in 'SELECT'"),
+          { code: 'ER_BAD_FIELD_ERROR' });
+      }
+      return pool.execute(sql, params);
+    },
+  };
+  const degrade = createNiveau({ pool: sansColonne, requireAuth });
+  const d = await degrade.droitsDe(U);
+
+  check('sans la colonne, le manque est signalé', d.indisponible === true);
+  check('et toutes les séries restent ouvertes', d.series.size === 9);
+  check('et les trois emplacements de deck aussi', d.deckFanzzy === 3);
+  check('et le plafond de clubs n’est pas rabaissé', d.slots === 8);
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 http.close();
 await pool.end();

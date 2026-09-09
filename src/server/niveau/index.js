@@ -78,11 +78,27 @@ export function createNiveau({ pool, requireAuth }) {
   }
 
   /** L'XP d'un joueur, sans lever si la colonne n'existe pas encore. */
+  /**
+   * L'XP d'un joueur, ou `null` si la colonne est **illisible**.
+   *
+   * La nuance compte, et elle a coûté cher : renvoyer zéro dans les deux cas
+   * confondait « nouveau joueur » et « migration pas appliquée ».
+   */
+  let deja = false;
   async function xpDe(userId) {
     try {
       const r = await q(`SELECT xp FROM user_wallet WHERE user_id = ?`, [userId]);
       return Number(r[0]?.xp ?? 0);
-    } catch { return 0; }
+    } catch (e) {
+      // Une fois, pas à chaque requête : ce message doit rester lisible dans
+      // un journal, pas le noyer.
+      if (!deja) {
+        deja = true;
+        console.error('[niveau] colonne xp illisible — applique sql/niveau.sql. '
+          + 'En attendant, tous les déblocages sont ouverts : ' + e.message);
+      }
+      return null;
+    }
   }
 
   /**
@@ -94,6 +110,24 @@ export function createNiveau({ pool, requireAuth }) {
    */
   async function droitsDe(userId) {
     const xp = await xpDe(userId);
+
+    /* **Une progression illisible n'enlève rien.**
+     *
+     * C'est la règle, et elle vient d'une vraie panne. Sans la colonne `xp`,
+     * la version d'avant lisait zéro, en concluait « niveau 1 », et
+     * *confisquait* : plus qu'une série au kiosque, deux emplacements de deck,
+     * deux clubs. Le jeu se refermait sur tout le monde parce qu'un `ALTER
+     * TABLE` n'avait pas été joué — sans erreur, sans message, avec des refus
+     * parfaitement polis.
+     *
+     * Un schéma incomplet est une faute d'exploitation. Elle doit être bruyante
+     * dans les journaux et **invisible pour le joueur**, jamais l'inverse. On
+     * ouvre donc tout, et le journal dit quoi appliquer.
+     */
+    if (xp === null) {
+      return { xp: 0, ...progression(0), ...droits(NIVEAU_MAX), indisponible: true };
+    }
+
     return { xp, ...progression(xp), ...droits(niveauPour(xp)) };
   }
 

@@ -400,6 +400,30 @@ Une catégorie vide — tout l’équipement déjà possédé, aucun Fanzzy à h
 se replie sur un supporter plutôt que de rendre une place blanche. Et un
 doublon d’équipement rapporte des écharpes, comme un doublon de carte : il ne
 se perd pas.
+**Un schéma incomplet n’enlève jamais rien au joueur.** Il doit être bruyant
+dans les journaux et invisible à l’écran ; jamais l’inverse.
+
+Le 9 septembre 2026, `sql/niveau.sql` n’avait pas été appliqué en production.
+Aucune table ne manquait — il n’ajoute qu’une colonne `xp` — donc le contrôle
+du démarrage ne voyait rien, `/healthz` répondait `ok: true`, et rien n’était
+écrit nulle part. Mais `droitsDe()` lisait zéro, en concluait « niveau 1 », et
+**confisquait** : une seule série au kiosque, deux emplacements de deck, deux
+clubs. Le jeu s’est refermé sur tout le monde parce qu’un `ALTER TABLE`
+n’avait pas été joué, avec des refus parfaitement polis.
+
+Deux corrections en découlent, et aucune ne doit être défaite :
+
+- **`xpDe()` distingue « zéro » de « illisible ».** Renvoyer zéro dans les deux
+  cas confondait un nouveau joueur et une migration oubliée. Illisible rend
+  `null`, et `droitsDe()` ouvre alors **tout** — le niveau maximum — en le
+  disant une fois dans le journal.
+- **Le contrôle de schéma lit aussi les colonnes.** Il ne regardait que les
+  tables, si bien que `niveau.sql`, `skins.sql` et `stades.sql` — qui n’en
+  créent aucune — étaient déclarés appliqués, toujours. Trois des quatre
+  dernières migrations étaient invisibles à la garde censée les surveiller.
+
+C’est la panne du 8 septembre sous une autre forme : le code en ligne attend
+quelque chose que la base n’a pas. `schema-smoke` rejoue les deux.
 **Un skin ne donne aucun bonus.** Il change l'apparence, rien d'autre. Celui qui
 ouvre mille boosters est plus beau, pas plus fort.
 
