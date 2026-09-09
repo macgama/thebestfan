@@ -1,6 +1,7 @@
 import express from 'express';
 import { TYPES, RAR, SETS } from '../../shared/fanzzy/dex.js';
-import { parIdentifiant, recharger } from '../fanzzy/catalogue.js';
+import { parIdentifiant, recharger, tous, chargerSeries, seriesOuvertes, serieOuverte }
+  from '../fanzzy/catalogue.js';
 
 /**
  * Administration.
@@ -337,6 +338,68 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     if (!parIdentifiant(evo)) throw fail('admin.error.fanzzy_evo_inconnue');
   }
 
+  /* ------------------------------------------------- séries ouvertes
+
+     Ouvrir le jeu série par série. Cent soixante-six cartes d'un coup, c'est
+     trop pour commencer : un joueur qui lit « 1/166 » à sa première ouverture
+     sait qu'il n'y arrivera jamais. LA TRIBUNE seule se complète, et compléter
+     est ce qui donne envie d'ouvrir la suivante.
+
+     C'est un interrupteur par série et non par carte. La dépublication carte
+     par carte existe déjà — c'est elle qui a retiré les trente-deux doublons —
+     mais ouvrir une série à la main demanderait cent vingt-sept clics, puis
+     autant pour la suivante. Personne ne le ferait deux fois.                */
+
+  /** Chaque série, son état, et de quoi décider : combien elle distribue. */
+  function listerSeries() {
+    const cartes = tous();
+    return SETS.map((s) => {
+      const dedans = cartes.filter((f) => f.set === s.id);
+      const tirables = dedans.filter((f) => f.publie && f.stage === 1);
+      return {
+        ...s,
+        ouverte: serieOuverte(s.id),
+        cartes: dedans.length,
+        publiees: dedans.filter((f) => f.publie).length,
+        // Ce qui compte vraiment pour un booster : seul le stade 1 se tire.
+        // Une série sans stade 1 publié ne peut pas en distribuer, et l'écran
+        // doit le montrer avant qu'on l'ouvre, pas après.
+        tirables: tirables.length,
+      };
+    });
+  }
+
+  /**
+   * Fixe la liste des séries ouvertes.
+   *
+   * `null` ou une liste vide rouvrent tout. C'est délibéré : le jour où
+   * quelqu'un vide le champ par erreur, le jeu s'ouvre au lieu de se fermer à
+   * double tour, et l'erreur se voit tout de suite au lieu de vider les
+   * boutiques en silence.
+   */
+  async function fixerSeries(acteur, ids, ip_) {
+    const connues = new Set(SETS.map((s) => s.id));
+    const liste = Array.isArray(ids) ? [...new Set(ids.map(String))] : [];
+    const inconnues = liste.filter((id) => !connues.has(id));
+    if (inconnues.length) throw fail('admin.error.serie_inconnue');
+
+    // Une série ouverte sans carte de stade 1 publiée ferait lever le tirage au
+    // premier booster. On refuse ici, où l'on peut encore le dire.
+    const cartes = tous();
+    const vides = liste.filter((id) =>
+      !cartes.some((f) => f.set === id && f.publie && f.stage === 1));
+    if (vides.length) throw fail('admin.error.serie_sans_carte');
+
+    await q(
+      `INSERT INTO reglages (cle, valeur, maj_par) VALUES ('series_actives', ?, ?)
+       ON DUPLICATE KEY UPDATE valeur = VALUES(valeur), maj_par = VALUES(maj_par)`,
+      [JSON.stringify(liste), acteur]);
+    await chargerSeries(pool);
+    await journal(acteur, 'series.ouvertes', liste.join(',') || 'toutes',
+      { series: liste }, ip_);
+    return { series: listerSeries(), ouvertes: seriesOuvertes() };
+  }
+
   async function listerFanzzy() {
     // On lit la base et non le cache : l'administration doit voir l'état réel,
     // y compris si un rechargement a été manqué.
@@ -443,7 +506,11 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   /* ------------------------------------------------ catalogue Fanzzy */
 
   router.get('/fanzzy', safe(async (_req, res) =>
-    res.json({ fanzzy: await listerFanzzy(), types: TYPES, sets: SETS, rar: RAR })));
+    res.json({ fanzzy: await listerFanzzy(), types: TYPES, sets: SETS, rar: RAR,
+               series: listerSeries(), ouvertes: seriesOuvertes() })));
+
+  router.put('/series', safe(async (req, res) =>
+    res.json(await fixerSeries(req.user.id, req.body?.series, ip(req)))));
 
   router.post('/fanzzy', safe(async (req, res) =>
     res.json(await creerFanzzy(req.user.id, req.body ?? {}, ip(req)))));
@@ -453,5 +520,5 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
 
   return Object.assign(module, { router, requireAdmin, estAdmin, amorcer, apercu, joueurs,
     modifier, competitions, modifierCompetition, reglages, fixerReglage, journal,
-    listerFanzzy, creerFanzzy, modifierFanzzy });
+    listerFanzzy, creerFanzzy, modifierFanzzy, listerSeries, fixerSeries });
 }

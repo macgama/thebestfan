@@ -102,7 +102,8 @@ export async function recharger(pool) {
 export async function charger(pool) {
   const amorces = await amorcer(pool);
   const n = await recharger(pool);
-  return { total: n, amorces };
+  const series = await chargerSeries(pool);
+  return { total: n, amorces, series };
 }
 
 /* --------------------------------------------------------------- lecture */
@@ -120,6 +121,74 @@ export function publies() { garde(); return liste.filter((f) => f.publie); }
 
 /** Par identifiant, publiée ou non : une carte déjà possédée doit s'afficher. */
 export function parIdentifiant(id) { garde(); return parId.get(id); }
+
+/* ------------------------------------------------- les séries ouvertes
+
+   Le catalogue publié n'est pas ce qu'un joueur peut obtenir *aujourd'hui*.
+   Cent soixante-six cartes d'un coup, c'est trop pour commencer : la
+   simulation demande cinq cents boosters pour tout avoir, et un joueur qui lit
+   « 1/166 » à sa première ouverture sait qu'il n'y arrivera jamais. On ouvre
+   donc les séries une par une, en commençant par LA TRIBUNE — trente-neuf
+   cartes, qui se complètent.
+
+   La liste vit dans la table `reglages`, sous la clé `series_actives`, écrite
+   depuis l'administration. **Absente, tout est ouvert** : une installation
+   neuve se comporte comme avant, et le jour où quelqu'un vide la valeur par
+   erreur, le jeu s'ouvre au lieu de se fermer.
+
+   Ce qui n'est PAS filtré : ce qu'un joueur possède déjà. Fermer une série ne
+   lui retire rien — sa carte reste dans son classeur, dans son deck et sur son
+   accueil. Fermer, c'est cesser de distribuer, pas confisquer.                */
+
+const TOUTES = null;         // `null` : aucune restriction enregistrée
+let ouvertes = TOUTES;
+
+/**
+ * Relit les séries ouvertes. Appelée au démarrage et après chaque écriture de
+ * l'administration, comme `recharger`.
+ */
+export async function chargerSeries(pool) {
+  let rows = [];
+  try {
+    [rows] = await pool.execute(
+      `SELECT valeur FROM reglages WHERE cle = 'series_actives'`);
+  } catch (e) {
+    // `reglages` vient de sql/admin.sql, que rien n'oblige à appliquer. Sans ce
+    // filet, une installation sans administration ferait lever le démarrage —
+    // et le catch de server.js éteindrait *toutes* les routes /api, connexion
+    // comprise. C'est exactement la panne du 8 septembre, reprise sur une autre
+    // table. Pas de réglages, pas de restriction : tout est ouvert.
+    if (e.code !== 'ER_NO_SUCH_TABLE') throw e;
+    console.warn('table reglages absente : toutes les séries restent ouvertes '
+      + '(applique sql/admin.sql pour pouvoir les fermer)');
+    ouvertes = TOUTES;
+    return null;
+  }
+  const brut = rows[0]?.valeur;
+  const v = typeof brut === 'string' ? JSON.parse(brut) : brut;
+  // Une liste vide serait un jeu fermé à double tour, et ce n'est jamais ce
+  // qu'on veut dire — on l'interprète comme « aucune restriction ».
+  ouvertes = Array.isArray(v) && v.length ? new Set(v) : TOUTES;
+  return ouvertes ? [...ouvertes] : null;
+}
+
+/** Les identifiants des séries ouvertes, ou `null` si elles le sont toutes. */
+export function seriesOuvertes() { return ouvertes ? [...ouvertes] : null; }
+
+/** Cette série distribue-t-elle des boosters en ce moment ? */
+export function serieOuverte(setId) { return !ouvertes || ouvertes.has(setId); }
+
+/**
+ * Ce qu'un joueur peut encore obtenir : publié **et** dans une série ouverte.
+ *
+ * C'est sur cet ensemble que se compte la progression. La compter sur tout le
+ * catalogue afficherait « 31/166 » à quelqu'un qui possède déjà tout ce qu'il
+ * peut posséder — le pire message qu'on puisse envoyer à un collectionneur.
+ */
+export function obtenables() {
+  garde();
+  return liste.filter((f) => f.publie && serieOuverte(f.set));
+}
 
 /** Utile aux tests et au diagnostic. */
 export const estCharge = () => charge;

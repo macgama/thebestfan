@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import express from 'express';
 import { createAdmin } from '../src/server/admin/index.js';
+import { SETS } from '../src/shared/fanzzy/dex.js';
 import { charger as chargerCatalogue, parIdentifiant, publies }
   from '../src/server/fanzzy/catalogue.js';
 
@@ -246,6 +247,73 @@ check('un joueur ne voit pas le catalogue d’administration', r.status === 403)
 r = await call('/api/admin/fanzzy/ZZ9', { method:'PATCH', body:{ nom:'Pirate' } });
 check('et ne peut pas le modifier',
   r.status === 403 && parIdentifiant('ZZ9')?.nom !== 'Pirate');
+moi = A;
+
+/* ------------------------------------------------- les séries ouvertes
+
+   Ouvrir le jeu série par série. Ce qui compte ici n'est pas l'interrupteur
+   mais ce qu'il n'emporte pas avec lui : une série fermée cesse de
+   distribuer, elle ne retire rien à personne. */
+
+moi = A;
+
+r = await call('/api/admin/fanzzy');
+check('les séries sont listées avec leur état',
+  Array.isArray(r.json.series) && r.json.series.length === SETS.length
+  && r.json.series.every((s) => 'ouverte' in s && 'tirables' in s));
+check('toutes les séries sont ouvertes au départ',
+  r.json.ouvertes === null && r.json.series.every((s) => s.ouverte));
+
+// La série de la carte d'essai : c'est elle qu'on va garder ouverte.
+const uneSerie = parIdentifiant('ZZ9').set;
+
+r = await call('/api/admin/series', { method: 'PUT', body: { series: [uneSerie] } });
+check('on n’ouvre qu’une série', r.status === 200
+  && r.json.ouvertes?.length === 1 && r.json.ouvertes[0] === uneSerie);
+
+r = await call('/api/admin/fanzzy');
+check('les autres sont fermées',
+  r.json.series.filter((s) => s.ouverte).length === 1);
+
+// Le point qui compte : le catalogue ne perd rien. Une carte d'une série
+// fermée reste connue, sinon la collection de qui la possède se briserait.
+check('le catalogue garde toutes ses cartes',
+  (await call('/api/admin/fanzzy')).json.fanzzy.length === combienAvant + 1);
+{
+  const ailleurs = publies().find((f) => f.set !== uneSerie);
+  check('et une carte d’une série fermée reste lisible par identifiant',
+    Boolean(ailleurs && parIdentifiant(ailleurs.id)));
+}
+
+// Une série sans carte de stade 1 publiée ne peut pas distribuer : on refuse
+// de l'ouvrir plutôt que de laisser le premier booster lever.
+{
+  const vide = SETS.map((s) => s.id).find((id) =>
+    !publies().some((f) => f.set === id && f.stage === 1));
+  if (vide) {
+    r = await call('/api/admin/series', { method: 'PUT', body: { series: [uneSerie, vide] } });
+    check('une série sans carte tirable est refusée',
+      r.json.error === 'admin.error.serie_sans_carte');
+  } else {
+    check('une série sans carte tirable est refusée', true);
+    console.log('       (aucune série vide dans ce jeu de données)');
+  }
+}
+
+r = await call('/api/admin/series', { method: 'PUT', body: { series: ['ZZZ'] } });
+check('une série inconnue est refusée', r.json.error === 'admin.error.serie_inconnue');
+
+r = await call('/api/admin/series', { method: 'PUT', body: { series: [] } });
+check('tout fermer revient à tout ouvrir',
+  (await call('/api/admin/fanzzy')).json.ouvertes === null);
+
+r = await call('/api/admin/journal');
+check('l’ouverture des séries est journalisée',
+  r.json.journal.some((l) => l.action === 'series.ouvertes'));
+
+moi = B;
+r = await call('/api/admin/series', { method: 'PUT', body: { series: [uneSerie] } });
+check('un joueur ne peut pas ouvrir ou fermer une série', r.status === 403);
 moi = A;
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);

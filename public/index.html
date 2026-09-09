@@ -540,8 +540,13 @@ async function jsonp(url, options) {
       jsonp('/api/fanzzy/dex'),
       jsonp('/api/fanzzy/state', { credentials:'same-origin' }).catch(() => null),
     ]);
-    const total = (dex.dex ?? []).length;
+    // `aCollectionner` et non tout le catalogue : il ne compte que les séries
+    // ouvertes. Afficher « 31/166 » à quelqu'un qui possède déjà tout ce qu'il
+    // peut posséder est le pire message qu'on puisse lui envoyer. Le maximum
+    // avec `eus` couvre le cas d'une série refermée après coup : ses cartes
+    // restent à lui, donc au numérateur.
     const eus = Object.keys(coll?.collection ?? {}).length;
+    const total = Math.max(dex.aCollectionner ?? (dex.dex ?? []).length, eus);
     if (total) {
       $('collecTxt').textContent = `${eus}/${total}`;
       $('collecBar').style.width = `${Math.round((eus / total) * 100)}%`;
