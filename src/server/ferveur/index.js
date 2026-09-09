@@ -13,7 +13,7 @@ import { Cheat } from './gestures.js';
 
 const MAX_CHANTS_PER_10S = 12;
 
-export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy }) {
+export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = null }) {
   const rooms = new Map();          // fixtureId -> VirageRoom
   const enCours = new Map();        // créations en vol, pour n'en faire qu'une
   const roomOfUser = new Map();     // userId -> fixtureId
@@ -116,6 +116,25 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy }) {
 
       const hero = await fanzzy.activeFanzzy(u.userId);
       const mods = hero ? { id: hero.id, ...hero.mods } : {};
+
+      /* Le bonus du KOP se mêle à ceux du Fanzzy, dans le même objet.
+
+         Il **multiplie** au lieu d’écraser : le bonus de tempo d’un KOP et
+         celui d’un Fanzzy de la voix se composent, ce qui est exactement ce
+         qu’on veut — le groupe amplifie le personnage, il ne le remplace
+         pas. Une simple fusion aurait fait disparaître l’un des deux selon
+         l’ordre, en silence.
+
+         Le côté décide du club : on ne profite pas du KOP d’une équipe pour
+         laquelle on ne pousse pas. */
+      if (kop) {
+        const club = side ? room.fixture.awayId : room.fixture.homeId;
+        const bonus = await kop.modsDe(u.userId, club, room.fixture.id);
+        for (const [cle, v] of Object.entries(bonus)) {
+          if (typeof v !== 'number') { mods[cle] = v; continue; }
+          mods[cle] = (mods[cle] ?? 1) * v;
+        }
+      }
 
       socket.join(`virage:${room.fixture.id}`);
       roomOfUser.set(u.userId, room.fixture.id);

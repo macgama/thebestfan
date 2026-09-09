@@ -20,9 +20,25 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-/** Les tables qu'un fichier `.sql` promet de créer. */
+/**
+ * Les tables qu'un fichier `.sql` promet de créer.
+ *
+ * **Les commentaires sont retirés avant lecture.** Un fichier de ce projet
+ * commence toujours par expliquer ce qu'il fait, et l'un d'eux disait
+ * « Rejouable : `CREATE TABLE IF NOT EXISTS` partout ». La phrase était lue
+ * comme une déclaration, et il en sortait une table nommée « if » —
+ * introuvable en base par construction. Le démarrage annonçait donc un schéma
+ * incomplet pour l'éternité, `/healthz` répondait `ok: false`, et le message
+ * réclamait d'appliquer un fichier déjà appliqué.
+ *
+ * Une prose qui casse un contrôle : exactement le genre de faute qu'on ne
+ * cherche pas, puisqu'on relit le SQL et pas les commentaires.
+ */
 function tablesDeclarees(sql) {
-  return [...sql.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?(\w+)`?/gi)]
+  const code = sql
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')      // blocs /* … */
+    .replace(/--[^\n]*/g, ' ');             // lignes -- …
+  return [...code.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?(\w+)`?/gi)]
     .map((m) => m[1].toLowerCase());
 }
 
