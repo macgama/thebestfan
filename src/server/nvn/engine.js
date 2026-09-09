@@ -45,7 +45,13 @@ function creerJoueur(p, side) {
   }
   return {
     userId: p.userId, nom: p.nom, side,
-    fanzzy: loadout.fanzzy,
+    // Une copie, pas la référence. Depuis la Relève, le moteur **écrit** dans
+    // ces objets — nom, cri, modificateurs changent quand le personnage
+    // grandit. Travailler sur ceux du loadout ferait sortir la mutation du
+    // duel : un joueur qui en enchaîne deux repartirait avec son Fanzzy déjà
+    // grandi, et la règle « tout le monde entre au premier âge » tomberait
+    // sans que rien ne le signale.
+    fanzzy: loadout.fanzzy.map((f) => ({ ...f })),
     actif: 0,                       // index du Fanzzy en jeu
     breath: 40,
     ferveur: 0,
@@ -77,6 +83,16 @@ function modsDe(j, t) {
 }
 
 const aEffet = (j, type, t) => j.effets.some((e) => e.type === type && (!e.fin || t > 0 && e.fin > t));
+
+/**
+ * L'âge suivant d'un Fanzzy en tribune, ou `undefined`.
+ *
+ * `ages` ne contient que ce que le joueur a **débloqué** : le loadout coupe la
+ * lignée au stade atteint. Un personnage dont le joueur n'a rien payé n'a donc
+ * qu'un seul âge, et la Relève n'a rien à y faire — sans que le moteur ait à
+ * connaître ni les écharpes ni le catalogue.
+ */
+const ageSuivant = (f) => f?.ages?.[f.stade ?? 1];
 
 function poserEffet(j, effet) {
   // Un même effet ne s'empile pas : il se renouvelle.
@@ -298,6 +314,15 @@ export class DuelNvN {
     if (c.minuteReelle && (this.fixture?.elapsed ?? 0) < c.minuteReelle) {
       throw new Cheat('condition_not_met');
     }
+    // La Relève ne se joue que s'il reste un âge à atteindre. Le client le sait
+    // déjà — l'état lui donne `stade` et `ages` — et grise la carte ; ce
+    // contrôle est le filet. Il porte son propre code, parce que ce n'est pas
+    // une tricherie mais une carte inutile dans cette main : le joueur doit
+    // lire « son âge suivant n'est pas débloqué », pas « condition non
+    // remplie ».
+    if (c.evolution && !ageSuivant(j.fanzzy[j.actif])) {
+      throw new Cheat('evolution_locked');
+    }
     if (j.breath < carte.cost) throw new Cheat('not_enough_breath');
 
     // Renvoi : la carte se retourne contre celui qui la joue.
@@ -415,6 +440,35 @@ export class DuelNvN {
         poserEffet(j, { type: 'peut_changer', charges: 1 });
         evenements.push(this.ev('effect', { type: 'swap_ready', userId: j.userId }));
         break;
+
+      /**
+       * La Relève. Contrairement au remplacement, elle ne demande aucun choix :
+       * un personnage n'a qu'un âge suivant. On l'applique donc tout de suite,
+       * pour que le moment tombe avec la carte plutôt qu'un aller-retour plus
+       * tard — c'est le seul instant où le joueur regarde.
+       *
+       * Rien à recalculer ensuite : `modsDe` relit le Fanzzy actif à chaque
+       * geste. Remplacer nom, cri et modificateurs suffit à ce que tout le
+       * reste du moteur suive.
+       */
+      case 'evolve': {
+        const f = j.fanzzy[j.actif];
+        const suivant = ageSuivant(f);
+        if (!suivant) break;          // filtré par la condition ; on ne casse rien
+        f.stade = (f.stade ?? 1) + 1;
+        f.nom = suivant.nom;
+        f.cri = suivant.cri;
+        f.mods = suivant.mods;
+        f.stage = suivant.stage;
+        evenements.push(this.ev('evolve', {
+          userId: j.userId, side: j.side, fanzzy: f.id,
+          nom: f.nom, stade: f.stade,
+          // Le client redessine le personnage : il lui faut de quoi le faire
+          // sans redemander l'état complet au serveur.
+          encore: Boolean(ageSuivant(f)),
+        }));
+        break;
+      }
 
       default:
         break;

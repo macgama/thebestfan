@@ -14,12 +14,28 @@ const jitter = (t, a = 25) => Math.max(0, t + (Math.random() * a * 2 - a));
 const tempoParfait = () => Array.from({ length: 8 }, (_, i) => jitter(i * 560, 30));
 const tempoRate = () => Array.from({ length: 8 }, (_, i) => jitter(i * 560 + 280, 30));
 
-function loadout(ids, cartes, stuff = {}) {
+/** Les âges d'un personnage, comme le catalogue les enchaîne. */
+const ages = (id) => {
+  const ch = [BY_ID.get(id)];
+  while (ch.at(-1)?.evo) ch.push(BY_ID.get(ch.at(-1).evo));
+  return ch;
+};
+
+/**
+ * Le loadout tel que `src/server/deck/index.js` le construit.
+ *
+ * `debloque` dit jusqu'où le joueur a fait grandir chaque personnage — ce que
+ * ses écharpes ont payé. Le duel n'en met jamais que le premier âge en tribune :
+ * cette table ne sert qu'à savoir jusqu'où la Relève pourra aller.
+ */
+function loadout(ids, cartes, stuff = {}, debloque = {}) {
   return {
     fanzzy: ids.map((id) => {
-      const d = BY_ID.get(id);
-      return { id, nom: d.nom, type: d.type, cri: d.cri,
-        stuff: stuff[id] ?? [], mods: { id, ...combine(d.mods, stuff[id] ?? []) } };
+      const lign = ages(id);
+      const habiller = (d, i) => ({ id, nom: d.nom, type: d.type, cri: d.cri, stage: i + 1,
+        mods: { id, ...combine(d.mods, stuff[id] ?? []) } });
+      const jouables = lign.slice(0, Math.min(debloque[id] ?? 1, lign.length)).map(habiller);
+      return { ...jouables[0], stuff: stuff[id] ?? [], stade: 1, ages: jouables };
     }),
     actions: cartes.map((c) => ACTION_BY_ID.get(c)),
   };
@@ -253,6 +269,112 @@ check('un entraînement ne compte pas',
   d.finir(0, 'buts', []);
   check('un duel terminé ignore les buts réels',
     d.butReel({ teamId: 85 }, new Set(['0-0']), t).length === 0);
+}
+
+
+/* ============================================================= la Relève
+
+   Le personnage grandit en pleine partie. C'est la seule carte qui modifie
+   durablement celui qui la joue, et elle touche à la promesse d'équité du
+   duel : tout le monde entre au premier âge, et ce qu'on a payé en écharpes
+   n'achète que le droit de jouer cette carte-là.
+
+   Trois choses doivent tenir, et aucune ne se lit dans le code de la carte :
+   que les modificateurs changent vraiment (le moteur relit le Fanzzy actif à
+   chaque geste, mais encore faut-il qu'on ait remplacé le bon objet), qu'on ne
+   dépasse pas ce qu'on a débloqué, et que rien ne fuie hors du duel.          */
+{
+  const CARTES_R = ['a-releve','a-releve','a-fumigene','a-torche','a-bache',
+                    'a-thermos','a-arbitre','a-silence','a-vol','a-craquage'];
+  // V1 → V2 → V3 : le Choriste, le Meneur de chant, le Capo di Curva.
+  const chaine = ages('V1');
+
+  const duelR = (debloque) => {
+    const eq = (side) => [{ userId: `${side}-0`, nom: `J${side}`,
+      loadout: loadout(['V1','P1','F1'], CARTES_R, {}, debloque) }];
+    return new DuelNvN({ id:'dR', equipes:[eq(0), eq(1)], mode:'entrainement',
+      now: t, fixture: { id: 7001, elapsed: 20 } });
+  };
+
+  let dR = duelR({ V1: 3 });
+  let j = dR.joueurs.get('0-0');
+  j.main.push('a-releve');
+  j.breath = 100;
+
+  check('en tribune, le personnage entre à son premier âge',
+    j.fanzzy[0].nom === chaine[0].nom && j.fanzzy[0].stade === 1);
+  const tempoAvant = j.fanzzy[0].mods.tempoWindow;
+
+  let evR = dR.jouer('0-0', 'a-releve', t);
+  check('la Relève annonce le nouvel âge',
+    evR.some((x) => x.t === 'evolve' && x.nom === chaine[1].nom && x.stade === 2));
+  check('et le Fanzzy en tribune a changé de nom', j.fanzzy[0].nom === chaine[1].nom);
+  check('ses modificateurs suivent, sinon la carte ne fait rien de visible',
+    j.fanzzy[0].mods.tempoWindow === chaine[1].mods.tempoWindow
+    && j.fanzzy[0].mods.tempoWindow !== tempoAvant);
+  check('le souffle a été payé', j.breath === 100 - ACTION_BY_ID.get('a-releve').cost);
+
+  // Un cran par carte : le troisième âge demande une seconde Relève, donc un
+  // second emplacement dans le deck. C'est là qu'est le vrai coût.
+  j.main.push('a-releve');
+  j.breath = 100;
+  j.cooldowns['a-releve'] = 0;
+  evR = dR.jouer('0-0', 'a-releve', t + 40_000);
+  check('un second exemplaire mène au troisième âge',
+    j.fanzzy[0].stade === 3 && j.fanzzy[0].nom === chaine[2].nom);
+  check('et le moteur dit qu’il n’y a plus rien après',
+    evR.find((x) => x.t === 'evolve')?.encore === false);
+
+  j.main.push('a-releve');
+  j.breath = 100;
+  j.cooldowns['a-releve'] = 0;
+  try {
+    dR.jouer('0-0', 'a-releve', t + 80_000);
+    check('au bout de la lignée, la Relève est refusée', false);
+  } catch (e) { check('au bout de la lignée, la Relève est refusée',
+    e.code.includes('evolution_locked')); }
+
+  /* Celui qui n'a rien payé ne peut pas la jouer — c'est toute la barrière, et
+     elle doit porter son propre code : ce n'est pas une tricherie, c'est une
+     carte inutile dans cette main, et le joueur doit pouvoir lire pourquoi. */
+  const dPauvre = duelR({});
+  const p = dPauvre.joueurs.get('0-0');
+  p.main.push('a-releve');
+  p.breath = 100;
+  try {
+    dPauvre.jouer('0-0', 'a-releve', t);
+    check('sans âge débloqué, la Relève est refusée', false);
+  } catch (e) {
+    check('sans âge débloqué, la Relève est refusée', e.code.includes('evolution_locked'));
+  }
+  check('et le souffle n’a pas été prélevé pour rien', p.breath === 100);
+
+  /* La fuite qui ne se verrait qu'au deuxième duel. Le moteur écrit dans les
+     objets Fanzzy ; s'il travaillait sur ceux du loadout, un joueur qui
+     enchaîne deux parties repartirait avec son personnage déjà grandi, et la
+     règle « tout le monde entre au premier âge » tomberait en silence. */
+  const partage = loadout(['V1','P1','F1'], CARTES_R, {}, { V1: 3 });
+  const eqP = (side) => [{ userId: `${side}-0`, nom: `J${side}`, loadout: partage }];
+  const d1 = new DuelNvN({ id:'p1', equipes:[eqP(0), eqP(1)], mode:'entrainement',
+    now: t, fixture: { id: 7001, elapsed: 20 } });
+  const j1 = d1.joueurs.get('0-0');
+  j1.main.push('a-releve'); j1.breath = 100;
+  d1.jouer('0-0', 'a-releve', t);
+  check('faire grandir un Fanzzy ne sort pas du duel',
+    partage.fanzzy[0].nom === chaine[0].nom && partage.fanzzy[0].stade === 1);
+
+  const d2 = new DuelNvN({ id:'p2', equipes:[eqP(0), eqP(1)], mode:'entrainement',
+    now: t, fixture: { id: 7001, elapsed: 20 } });
+  check('le duel suivant repart bien du premier âge',
+    d2.joueurs.get('0-0').fanzzy[0].nom === chaine[0].nom);
+
+  // Ce que voit le joueur : de quoi griser la carte avant de la jouer, plutôt
+  // que de la lui laisser jouer pour rien.
+  const vue = d2.vue('0-0');
+  check('l’état dit le stade en jeu et les âges disponibles',
+    vue.moi.fanzzy[0].stade === 1 && vue.moi.fanzzy[0].ages?.length === 3);
+  check('et un personnage sans évolution n’en annonce qu’un',
+    vue.moi.fanzzy[1].ages?.length === 1);
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);

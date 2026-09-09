@@ -359,6 +359,11 @@ const MESSAGES = {
   'ferveur.error.actions_locked': 'Parcage fermé : plus de cartes pendant quelques secondes.',
   'ferveur.error.card_on_cooldown':'Cette carte se recharge encore.',
   'ferveur.error.condition_not_met':'Les conditions de cette carte ne sont pas réunies.',
+  // Distinct de « conditions non réunies » exprès : ici la condition ne se
+  // remplira pas d'elle-même au cours du duel, il faut faire évoluer le Fanzzy
+  // depuis le classeur. Le joueur doit savoir quoi faire, pas seulement que
+  // c'est refusé.
+  'ferveur.error.evolution_locked':'Tu n’as pas encore débloqué l’âge suivant de ce Fanzzy.',
   'ferveur.error.no_substitution':'Il te faut « Arbitre — changement » pour changer de Fanzzy.',
   'ferveur.error.bad_fanzzy':     'Ce Fanzzy ne peut pas entrer maintenant.',
   'ferveur.error.taps_too_fast':  'Frappes trop rapprochées.',
@@ -661,7 +666,13 @@ function rendreDuel() {
     const a = carteDef(id);
     const fc = FAM[a?.fam] ?? '#8257DA';
     const reste = cd[id];
-    const injouable = !a || moi.breath < a.cost || reste
+    // La Relève ne sert à rien si le Fanzzy en tribune est déjà à son dernier
+    // âge débloqué. On la grise plutôt que de la laisser jouer pour rien : le
+    // serveur la refuserait, mais après le geste — donc après l'espoir.
+    const enJeu = (moi.fanzzy ?? []).find((f) => f.actif);
+    const sansRelève = a?.condition?.evolution
+      && !(enJeu?.ages ?? [])[enJeu?.stade ?? 1];
+    const injouable = !a || moi.breath < a.cost || reste || sansRelève
       || (moi.effets ?? []).some((e) => e.type === 'lock_actions');
     cases.push(`<div class="ct ${injouable ? 'hs' : ''}" style="--fc:${fc}"
       ${injouable ? '' : `data-jouer="${id}"`}>
@@ -802,6 +813,20 @@ function raconter(e) {
       const p = pointCorde();
       FX?.nombre?.(`−${e.absorbe}`, { x: p.x, y: p.y + 18, couleur: GRIS, signe: false });
       FX?.son?.('bache');
+      break;
+    }
+
+    /* La Relève. C'est le seul moment du duel où un personnage change
+       durablement, et il a coûté des écharpes puis un emplacement de deck :
+       il mérite d'être vu. On annonce le nouveau nom, parce que c'est ce qui
+       rend le changement lisible — les modificateurs, eux, ne se voient qu'au
+       geste suivant. */
+    case 'evolve': {
+      const p = pointCorde();
+      FX?.titre?.(pour ? e.nom.toUpperCase() : 'RELÈVE ADVERSE', null,
+        pour ? OR : BLEU, pour ? 30 : 22);
+      FX?.onde?.({ ...p, couleur: pour ? OR : BLEU, taille: 260 });
+      FX?.son?.(pour ? 'parfait' : 'carte');
       break;
     }
 

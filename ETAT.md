@@ -202,6 +202,30 @@ Trois conséquences à ne pas défaire :
   au joueur : on ne peut pas aligner le même personnage à deux âges, le deck le
   refuse comme un doublon.
 
+**La Relève.** C'est la carte qui rend le paragraphe précédent jouable : elle
+fait passer le Fanzzy en tribune à son âge suivant, si le joueur l'a débloqué.
+Un cran par carte.
+
+Son vrai coût n'est pas le souffle, c'est **l'emplacement de deck**. Faire
+grandir trois Fanzzy demande trois exemplaires : trente pour cent du deck en
+cartes qui ne poussent pas, ne gênent pas, ne protègent pas. En face, celui qui
+n'a rien débloqué joue dix cartes d'effet pur. L'arbitrage s'équilibre seul,
+sans table de réglage — et c'est ce qui empêche la carte d'être un simple
+retard de vingt secondes sur la victoire du joueur le plus riche.
+
+Elle est **commune**, donc offerte : posséder la carte n'est pas une seconde
+barrière. La seule barrière est d'avoir payé l'évolution.
+
+Deux détails qui ont demandé du soin :
+
+- `loadout` ne donne au moteur que les âges **débloqués**. Le moteur n'a donc
+  besoin de connaître ni les écharpes ni le catalogue : si `ages` n'a qu'une
+  entrée, la Relève ne peut rien faire, et c'est tout.
+- `creerJoueur` **copie** les Fanzzy du loadout. Depuis cette carte, le moteur
+  écrit dedans ; sur la référence partagée, un joueur qui enchaîne deux duels
+  repartirait avec son personnage déjà grandi, et la règle du premier âge
+  tomberait sans un mot. `nvn-smoke` le vérifie.
+
 `sql/stades.sql` reprend les collections existantes et `scripts/stades-smoke.mjs`
 la rejoue — deux fois, parce qu'une migration qu'on ne peut lancer qu'une fois
 est une migration qu'on n'ose pas relancer.
