@@ -109,11 +109,19 @@ async function ouvrir({ sansCache = false } = {}) {
   return page;
 }
 
-/* ------------------------------------------ le catalogue vient du réseau */
+/* ------------------------------------------ le catalogue vient du réseau
+
+   `PUBLIE` et non `DEX` : trente-deux anciennes cartes sont dépubliées parce
+   qu'elles refont un personnage du lot de 2026. Le classeur ne doit montrer que
+   ce qui se joue — une carte retirée qui resterait dans la grille laisserait
+   une case impossible à remplir, et la progression n'atteindrait jamais 100 %. */
+
+const PUBLIE = DEX.filter((f) => f.publie !== false);
+
 
 {
   const reponse = await (await fetch(base + '/api/fanzzy/dex')).json();
-  check('la route sert le catalogue complet', reponse.dex?.length === DEX.length);
+  check('la route sert le catalogue publié', reponse.dex?.length === PUBLIE.length);
   check('et tout ce que la page utilisait en dur',
     Boolean(reponse.types && reponse.sets && reponse.rar
             && reponse.scarves && reponse.evoCost && reponse.rates));
@@ -127,9 +135,9 @@ check('la page se charge sans erreur de script', erreurs.length === 0);
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
 
 check('le catalogue est arrivé du serveur',
-  await page.evaluate(() => DEX.length) === DEX.length);
+  await page.evaluate(() => DEX.length) === PUBLIE.length);
 check('la table des identifiants est reconstruite',
-  await page.evaluate(() => BY_ID.size) === DEX.length);
+  await page.evaluate(() => BY_ID.size) === PUBLIE.length);
 check('les types sont là, sinon aucune carte n\u2019a de couleur',
   await page.evaluate(() => Object.keys(TYPES).length) === 6);
 
@@ -145,10 +153,10 @@ const grille = await page.evaluate(() => ({
   possedees: document.querySelectorAll('#grid .slot:not(.locked)').length,
   progression: document.getElementById('progTxt')?.textContent ?? '',
 }));
-check('la grille affiche tout le catalogue', grille.cases === DEX.length);
+check('la grille affiche tout le catalogue publié', grille.cases === PUBLIE.length);
 check('les cartes possédées sont distinguées', grille.possedees === 5);
 check('la progression compte sur le catalogue du serveur',
-  grille.progression === `5/${DEX.length}`);
+  grille.progression === `5/${PUBLIE.length}`);
 
 // La grille se peuplait déjà mal quand une seule chose manquait : ce contrôle
 // vaut pour toutes les cartes non possédées, celles qui passent par `esc`.

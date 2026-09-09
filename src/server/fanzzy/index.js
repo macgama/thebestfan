@@ -103,14 +103,22 @@ export function createFanzzy({ pool, requireAuth }) {
    * provoquer.
    */
   function drawPack(setId) {
-    const pool_ = (rar) => publies().filter((f) => f.set === setId && f.rar === rar);
-    // Toutes les cartes publiées de la série, quel que soit leur cran : c'est
-    // le dernier filet, et il ne doit jamais être vide.
-    const toutes = publies().filter((f) => f.set === setId);
+    // **Un booster ne donne que des cartes de stade 1.**
+    //
+    // Depuis que la rareté suit le stade, une rare est un stade 2 et une épique
+    // un stade 3 : les tirer directement contournerait les 115 écharpes qu'ils
+    // coûtent, et l'évolution ne servirait plus à rien. Le booster donne les
+    // personnages, les doublons donnent les écharpes, les écharpes font
+    // grandir les personnages. C'est la boucle entière du jeu.
+    const base = publies().filter((f) => f.set === setId && f.stage === 1);
+    const pool_ = (rar) => base.filter((f) => f.rar === rar);
+    // Le dernier filet, qui ne doit jamais être vide.
+    const toutes = base;
     if (!toutes.length) {
-      throw new Error(`La série « ${setId} » n'a aucune carte publiée : impossible `
-        + 'd’en tirer un booster. Publie au moins une carte de cette série dans '
-        + 'l’administration, ou retire la série des boosters proposés.');
+      throw new Error(`La série « ${setId} » n'a aucune carte de stade 1 publiée : `
+        + 'impossible d’en tirer un booster. Les évolutions ne se tirent pas, elles '
+        + 's’achètent — il faut donc au moins un personnage de stade 1 publié dans '
+        + 'cette série, ou la retirer des boosters proposés.');
     }
 
     const ECHELLE = ['legendaire', 'epique', 'rare', 'commune'];
