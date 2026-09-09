@@ -21,8 +21,9 @@ import { createNvN } from '../src/server/nvn/index.js';
 import { GESTURES, resoudreGeste } from '../src/server/ferveur/gestures.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { baseDeTest } from './base-de-test.mjs';
 
-const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
+const DB = baseDeTest();
 // Voir deck-ui-smoke : `.pathname` donne « /C:/… » sous Windows, ce qui rend
 // la suite inutilisable là où elle est justement censée tourner avant livraison.
 const RACINE = fileURLToPath(new URL('..', import.meta.url));

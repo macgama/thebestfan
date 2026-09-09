@@ -27,8 +27,9 @@ import { createDecks } from '../src/server/deck/index.js';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { baseDeTest } from './base-de-test.mjs';
 
-const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
+const DB = baseDeTest();
 // `.pathname` d'une URL de fichier n'est pas un chemin : sous Windows il vaut
 // « /C:/… », et path.join en fait « C:\C:\… ». La suite ne pouvait donc pas
 // tourner sur une machine de développement Windows.

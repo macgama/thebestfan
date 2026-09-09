@@ -22,8 +22,9 @@ import puppeteer from 'puppeteer';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { DEX } from '../src/shared/fanzzy/dex.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { baseDeTest } from './base-de-test.mjs';
 
-const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
+const DB = baseDeTest();
 // Voir deck-ui-smoke : `.pathname` donne « /C:/… » sous Windows, ce qui rend
 // la suite inutilisable là où elle est justement censée tourner avant livraison.
 const RACINE = fileURLToPath(new URL('..', import.meta.url));

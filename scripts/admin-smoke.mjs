@@ -6,8 +6,9 @@ import { createAdmin } from '../src/server/admin/index.js';
 import { SETS } from '../src/shared/fanzzy/dex.js';
 import { charger as chargerCatalogue, parIdentifiant, publies }
   from '../src/server/fanzzy/catalogue.js';
+import { baseDeTest } from './base-de-test.mjs';
 
-const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
+const DB = baseDeTest();
 let failures = 0;
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
 
