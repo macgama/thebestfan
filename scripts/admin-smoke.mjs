@@ -20,6 +20,12 @@ for (const f of ['auth.sql','football.sql','souvenirs.sql','fanzzy.sql','inventa
                  'teletext.sql','admin.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
+// La table `fanzzy` n'est pas dans le DROP ci-dessus, et c'est voulu : elle
+// porte le catalogue, que toutes les suites partagent. Mais cette suite y crée
+// une carte d'essai — et sans ce ménage, elle réussit une fois puis échoue à
+// chaque lancement suivant sur « identifiant déjà pris ». Un test qui ne passe
+// qu'au premier essai finit par être cru sur parole.
+await raw.query(`DELETE FROM fanzzy WHERE id LIKE 'ZZ%'`);
 const A = 'aaaa0000-0000-0000-0000-000000000001';   // futur admin
 const B = 'bbbb0000-0000-0000-0000-000000000002';   // joueur
 const C = 'cccc0000-0000-0000-0000-000000000003';   // second admin
@@ -182,7 +188,7 @@ const combienAvant = r.json.fanzzy.length;
 
 // Création.
 r = await call('/api/admin/fanzzy', { body: { id:'ZZ9', nom:'Le Testeur', type:'voix',
-  set:'VN', rar:'d1', stage:1, cri:{ label:'ESSAI', gest:'tempo', power:50 },
+  set:'VN', rar:'commune', stage:1, cri:{ label:'ESSAI', gest:'tempo', power:50 },
   mods:{ tempoWindow:1.1 } } });
 check('un Fanzzy se crée', r.status === 200 && r.json.id === 'ZZ9');
 check('et il arrive aussitôt dans le cache du jeu',
@@ -191,13 +197,13 @@ check('avec ses effets', parIdentifiant('ZZ9')?.mods?.tempoWindow === 1.1);
 
 // Le même identifiant deux fois.
 r = await call('/api/admin/fanzzy', { body: { id:'ZZ9', nom:'Doublon', type:'voix',
-  set:'VN', rar:'d1', cri:{ label:'X', gest:'tempo', power:50 } } });
+  set:'VN', rar:'commune', cri:{ label:'X', gest:'tempo', power:50 } } });
 check('un identifiant déjà pris est refusé',
   r.json.error === 'admin.error.fanzzy_existe');
 
 // Les validations.
 r = await call('/api/admin/fanzzy', { body: { id:'zz-8', nom:'Mauvais', type:'voix',
-  set:'VN', rar:'d1', cri:{ label:'X', gest:'tempo', power:50 } } });
+  set:'VN', rar:'commune', cri:{ label:'X', gest:'tempo', power:50 } } });
 check('un identifiant mal formé est refusé', r.json.error === 'admin.error.fanzzy_id');
 
 r = await call('/api/admin/fanzzy/ZZ9', { method:'PATCH', body:{ type:'inconnu' } });

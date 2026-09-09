@@ -65,7 +65,7 @@ const call = async (p,o={}) => {
   return { status:r.status, json: await r.json().catch(()=>({})) };
 };
 
-const communes = ACTIONS.filter((a)=>a.rar==='d1').map((a)=>a.id);
+const communes = ACTIONS.filter((a)=>a.rar==='commune').map((a)=>a.id);
 const dixCartes = [...communes, ...communes].slice(0,10);
 
 let r = await call('/api/deck/catalogue');

@@ -83,15 +83,47 @@ export function createFanzzy({ pool, requireAuth }) {
     const r = Math.random();
     let acc = 0;
     for (const [rar, p] of RATES[slot]) { acc += p; if (r < acc) return rar; }
-    return 'd2';
+    return 'rare';
   }
 
+  /**
+   * Cinq cartes d'une série. Les trois premières sont communes.
+   *
+   * **Le repli descend l'échelle au lieu de sauter directement aux communes.**
+   * L'ancienne version tentait la rareté tirée puis, si elle était vide,
+   * `pool_('commune')` — et si la série n'avait aucune commune, elle renvoyait
+   * `undefined`. Cinq `undefined` dans un booster ne lèvent pas : ils
+   * traversent la transaction, se rangent en base, et ressortent trois écrans
+   * plus loin en « Cannot read properties of undefined ».
+   *
+   * C'est arrivé le jour où les sept lignées ont quitté NUITS EUROPÉENNES : la
+   * série a perdu d'un coup toutes ses cartes de stade 1, donc toutes ses
+   * communes. Le défaut existait avant, il attendait juste qu'une série se
+   * retrouve sans commune — ce qu'un seul clic dans l'administration suffit à
+   * provoquer.
+   */
   function drawPack(setId) {
     const pool_ = (rar) => publies().filter((f) => f.set === setId && f.rar === rar);
+    // Toutes les cartes publiées de la série, quel que soit leur cran : c'est
+    // le dernier filet, et il ne doit jamais être vide.
+    const toutes = publies().filter((f) => f.set === setId);
+    if (!toutes.length) {
+      throw new Error(`La série « ${setId} » n'a aucune carte publiée : impossible `
+        + 'd’en tirer un booster. Publie au moins une carte de cette série dans '
+        + 'l’administration, ou retire la série des boosters proposés.');
+    }
+
+    const ECHELLE = ['legendaire', 'epique', 'rare', 'commune'];
     return Array.from({ length: 5 }, (_, i) => {
-      const rar = i < 3 ? 'd1' : pickRarity(i + 1);
-      const p = pool_(rar);
-      return rnd(p.length ? p : pool_('d1'));
+      const vise = i < 3 ? 'commune' : pickRarity(i + 1);
+      // On redescend depuis le cran visé : une série sans épique donne une rare
+      // plutôt qu'une commune, ce qui reste plus proche de ce qu'on promettait.
+      const depart = Math.max(0, ECHELLE.indexOf(vise));
+      for (const rar of ECHELLE.slice(depart)) {
+        const p = pool_(rar);
+        if (p.length) return rnd(p);
+      }
+      return rnd(toutes);
     });
   }
 

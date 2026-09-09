@@ -30,14 +30,14 @@ import { DEX, RATES, SCARVES, EVO_COST } from '../src/shared/fanzzy/dex.js';
 import { MAX_PACKS, PACK_REGEN_MS, PACK_PRICE } from '../src/server/fanzzy/index.js';
 
 const TAILLE_PAQUET = 5;
-const PLACES_GARANTIES = 3;      // les trois premières sont toujours des d1
+const PLACES_GARANTIES = 3;      // les trois premières sont toujours communes
 const CHANCE_SKIN = 0.22;        // sur les places 4 et 5, si un skin est libre
 
 {
   const src = readFileSync(new URL('../src/server/fanzzy/index.js', import.meta.url), 'utf8');
   const attendu = [
     [`CHANCE_SKIN = ${CHANCE_SKIN}`, 'la chance de tirer un skin'],
-    [`i < ${PLACES_GARANTIES} ? 'd1'`, 'le nombre de places garanties en commune'],
+    [`i < ${PLACES_GARANTIES} ? 'commune'`, 'le nombre de places garanties en commune'],
     [`length: ${TAILLE_PAQUET} }`, 'la taille du paquet'],
   ];
   const perdus = attendu.filter(([motif]) => !src.includes(motif));
@@ -87,13 +87,13 @@ const SET_IDS = [...new Set(CARTES.map((c) => c.set))];
 /** Les pools du serveur : une carte se tire dans sa série et sa rareté. */
 const POOLS = new Map();
 for (const s of SET_IDS) {
-  for (const r of ['d1', 'd2', 'd3', 'star', 'crown']) {
+  for (const r of ['commune', 'rare', 'epique', 'legendaire']) {
     POOLS.set(`${s}/${r}`, CARTES.filter((c) => c.set === s && c.rar === r));
   }
 }
 const pool = (set, rar) => {
   const p = POOLS.get(`${set}/${rar}`);
-  return p?.length ? p : POOLS.get(`${set}/d1`);
+  return p?.length ? p : POOLS.get(`${set}/commune`);
 };
 
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
@@ -103,7 +103,7 @@ function tirerRarete(place) {
   const r = Math.random();
   let acc = 0;
   for (const [rar, p] of table) { acc += p; if (r < acc) return rar; }
-  return 'd2';
+  return 'rare';
 }
 
 /**
@@ -128,7 +128,7 @@ function ouvrir(setId, possedeQuelqueChose, manqueCommune) {
       continue;
     }
     const garantie = i < PLACES_GARANTIES && (!PLANCHER || manqueCommune);
-    const rar = garantie ? 'd1' : tirerRarete(Math.max(4, i + 1));
+    const rar = garantie ? 'commune' : tirerRarete(Math.max(4, i + 1));
     tirees.push(rnd(pool(setId, rar)));
   }
   return tirees;
@@ -153,7 +153,7 @@ function unePartie() {
   const paliers = [];
   const total = CARTES.length;
 
-  // Garde-fou : une série sans carte d'une rareté donnée retombe sur les d1,
+  // Garde-fou : une série sans carte d'une rareté donnée retombe sur les communes,
   // donc la collection reste atteignable. Mais si un pool est vide des deux
   // côtés, on s'arrêterait jamais.
   const PLAFOND = 200_000;
@@ -161,7 +161,7 @@ function unePartie() {
   while (eus.size < total && paquets < PLAFOND) {
     const set = SET_IDS.slice().sort((a, b) => manquePar(b) - manquePar(a))[0];
     if (manquePar(set) === 0) break;
-    const manqueCommune = POOLS.get(`${set}/d1`).some((c) => !eus.has(c.id));
+    const manqueCommune = POOLS.get(`${set}/commune`).some((c) => !eus.has(c.id));
     for (const c of ouvrir(set, eus.size > 0, manqueCommune)) {
       if (!c) continue;
       if (eus.has(c.id)) { ecarpes += SCARVES[c.rar]; doublons++; }
@@ -208,7 +208,7 @@ console.log(`Séries : ${SET_IDS.join(', ')} · ${TIRAGES} collections simulées
 
 console.log('Répartition des pools');
 for (const s of SET_IDS) {
-  const parts = ['d1', 'd2', 'd3', 'star', 'crown']
+  const parts = ['commune', 'rare', 'epique', 'legendaire']
     .map((r) => `${r} ${POOLS.get(`${s}/${r}`).length}`).join(' · ');
   console.log(`  ${s} : ${parts}`);
 }

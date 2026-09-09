@@ -117,9 +117,9 @@ export function createOnboarding({ pool, requireAuth, football = null }) {
    * carte d'action, et des écharpes. Aucun mauvais tirage possible.
    */
   function tirerBienvenue() {
-    const communs = publies().filter((f) => f.rar === 'd1');
-    const bons = publies().filter((f) => ['d2', 'd3'].includes(f.rar));
-    const equipement = STUFF.filter((s) => ['d1', 'd2'].includes(s.rar));
+    const communs = publies().filter((f) => f.rar === 'commune');
+    const bons = publies().filter((f) => ['rare', 'epique'].includes(f.rar));
+    const equipement = STUFF.filter((s) => ['commune', 'rare'].includes(s.rar));
 
     return [
       { type: 'fanzzy', id: rnd(communs).id },
@@ -162,7 +162,7 @@ export function createOnboarding({ pool, requireAuth, football = null }) {
         }
       }
 
-      const premier = cartes.find((c) => c.type === 'fanzzy' && parIdentifiant(c.id).rar !== 'd1')
+      const premier = cartes.find((c) => c.type === 'fanzzy' && parIdentifiant(c.id).rar !== 'commune')
         ?? cartes.find((c) => c.type === 'fanzzy');
 
       await conn.query(

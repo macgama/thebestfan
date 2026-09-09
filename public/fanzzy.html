@@ -438,7 +438,7 @@ const audio = {
   /** Accord montant : plus la carte est rare, plus l'accord est riche. */
   chime(rar) {
     const ac = this.ready(); if (!ac) return;
-    const notes = { d3:[523,659], star:[523,659,784], crown:[523,659,784,1047,1319] }[rar];
+    const notes = { epique:[523,659], legendaire:[523,659,784,1047,1319] }[rar];
     if (!notes) return;
     notes.forEach((hz, i) => {
       const o = ac.createOscillator(), g = ac.createGain();
@@ -519,7 +519,6 @@ let SETS = [];
 let RAR = {};
 let SCARVES = {};
 let EVO_COST = {};
-let RATES = {};
 
 async function chargerCatalogue() {
   const d = await api('/dex');
@@ -540,7 +539,6 @@ async function chargerCatalogue() {
   RAR = d.rar;
   SCARVES = d.scarves;
   EVO_COST = d.evoCost;
-  RATES = d.rates;
 }
 
 /* ------------------------------------------------------------- état */
@@ -633,15 +631,15 @@ function modsText(f) {
 }
 
 function rarMark(rar) {
-  if (rar === 'crown') return `<span class="s">♛</span>`;
-  if (rar === 'star') return `<span class="s">★</span>`;
+  if (rar === 'legendaire') return `<span class="s">♛</span>`;
+  if (rar === 'legendaire') return `<span class="s">★</span>`;
   return '<span class="d"></span>'.repeat(RAR[rar]);
 }
 
 function cardHTML(f, opts = {}) {
   const t = TYPES[f.type];
-  const holo = ['d3','star','crown'].includes(f.rar) ? ' holo' : '';
-  const rc = f.rar === 'star' ? ' r-star' : f.rar === 'crown' ? ' r-crown' : '';
+  const holo = ['epique','legendaire'].includes(f.rar) ? ' holo' : '';
+  const rc = f.rar === 'legendaire' ? ' r-crown' : f.rar === 'epique' ? ' r-star' : '';
   return `<div class="fz${rc}${holo}" style="--tc:${t.c}" data-id="${f.id}">
     <div class="body">
       <div class="top">
@@ -657,24 +655,17 @@ function cardHTML(f, opts = {}) {
   </div>`;
 }
 
-/* -------------------------------------------------------------- tirage */
+/* -------------------------------------------------------------- tirage
 
-const rnd = (a) => a[Math.floor(Math.random() * a.length)];
-function pickRar(slot) {
-  const r = Math.random(); let acc = 0;
-  for (const [rar, p] of RATES[slot]) { acc += p; if (r < acc) return rar; }
-  return 'd2';
-}
-function drawPack(setId) {
-  const pool = (rar) => DEX.filter((f) => f.set === setId && f.rar === rar);
-  const out = [];
-  for (let i = 1; i <= 5; i++) {
-    const rar = i <= 3 ? 'd1' : pickRar(i);
-    const p = pool(rar);
-    out.push(rnd(p.length ? p : pool('d1')));
-  }
-  return out;
-}
+   Il n'est pas ici. Le serveur tire, débite le booster et écrit la collection
+   dans une seule transaction ; la page reçoit les cinq cartes déjà décidées.
+
+   Une copie du tirage a vécu à cet endroit, avec ses propres taux et son
+   propre repli. Elle n'était appelée nulle part — et c'est le pire des cas :
+   personne ne la corrigeait quand le serveur changeait, et personne ne la
+   voyait diverger. Le jour où le serveur a appris à ne plus tirer de carte
+   « undefined » sur une série sans commune, cette copie-là ne l'a pas appris.
+   Elle est partie. */
 
 /* ------------------------------------------------------------ kiosque */
 
@@ -877,7 +868,7 @@ async function openPack() {
   // Le serveur renvoie désormais des cartes typées : un skin n'est pas un
   // Fanzzy et ne doit pas être compté dans la collection.
   pull = res.cards.map((c) => (c.type === 'skin'
-    ? { id: c.id, nom: c.id, type: 'tifo', rar: 'd2', stage: 1, skin: true, pour: c.pour }
+    ? { id: c.id, nom: c.id, type: 'tifo', rar: 'rare', stage: 1, skin: true, pour: c.pour }
     : BY_ID.get(c.id)));
 
   // Une carte que le serveur tire mais que cette page ne connaît pas arrivait
@@ -935,14 +926,14 @@ $('ostage').onclick = () => {
     }
     audio.flip();
     buzz(12);
-    if (['d3','star','crown'].includes(f.rar)) {
+    if (['epique','legendaire'].includes(f.rar)) {
       window.FX?.rare(f.rar, cur);
-      burst(TYPES[f.type].c, f.rar === 'crown' ? 34 : 22);
+      burst(TYPES[f.type].c, f.rar === 'legendaire' ? 34 : 22);
       audio.chime(f.rar);
       // La vidéo n'est chargée qu'ici, à la première carte rare de la session :
       // une gerbe d'étincelles ne doit pas peser sur le premier affichage.
-      if (f.rar === 'star' || f.rar === 'crown') playBurstVideo(f.rar === 'crown');
-      if (f.rar === 'crown') { audio.roar(); document.getElementById('app').classList.add('quake'); 
+      if (f.rar === 'legendaire') playBurstVideo(true);
+      if (f.rar === 'legendaire') { audio.roar(); document.getElementById('app').classList.add('quake'); 
         setTimeout(() => document.getElementById('app').classList.remove('quake'), 700); }
     }
     $('oHint').textContent = idx < 4 ? 'Touche encore pour la suivante' : 'Touche pour le récapitulatif';

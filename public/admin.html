@@ -291,7 +291,7 @@ const VUES = {
     const remplir = (x) => {
       $('f-type').value = x?.type ?? 'voix';
       $('f-set').value = x?.set_id ?? d.sets[0].id;
-      $('f-rar').value = x?.rar ?? 'd1';
+      $('f-rar').value = x?.rar ?? 'commune';
       $('f-stage').value = String(x?.stage ?? 1);
       $('f-gest').value = cri(x).gest ?? 'tempo';
     };

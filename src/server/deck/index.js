@@ -45,7 +45,7 @@ export function createDecks({ pool, requireAuth }) {
       stuff: new Set(st.map((s) => s.stuff_id)),
       // Les communes sont offertes à tous : sans elles, un joueur qui débute
       // ne pourrait pas remplir ses dix emplacements.
-      actions: new Set([...actions, ...ACTIONS.filter((a) => a.rar === 'd1').map((a) => a.id)]),
+      actions: new Set([...actions, ...ACTIONS.filter((a) => a.rar === 'commune').map((a) => a.id)]),
     };
   }
 

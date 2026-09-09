@@ -233,7 +233,7 @@ const FAM = {
   collectif: { nom:'COLLECTIF', c:'#1E9E6A' },
   bascule:   { nom:'BASCULE',   c:'#E08A2C' },
 };
-const RANG = { d1:1, d2:2, d3:3, star:4, crown:5 };
+const RANG = { commune:1, rare:2, epique:3, legendaire:4 };
 
 /**
  * Traduction des codes du serveur. Chaque code nomme sa cause : le joueur
@@ -341,8 +341,8 @@ function modsTexte(m) {
 }
 
 function rangHTML(rar) {
-  if (rar === 'crown') return '<span class="dots"><i class="s" style="width:auto;height:auto;border-radius:0">♛</i></span>';
-  if (rar === 'star') return '<span class="dots"><i class="s" style="width:auto;height:auto;border-radius:0">★</i></span>';
+  if (rar === 'legendaire') return '<span class="dots"><i class="s" style="width:auto;height:auto;border-radius:0">♛</i></span>';
+  if (rar === 'legendaire') return '<span class="dots"><i class="s" style="width:auto;height:auto;border-radius:0">★</i></span>';
   return `<span class="dots">${'<i></i>'.repeat(RANG[rar] ?? 1)}</span>`;
 }
 

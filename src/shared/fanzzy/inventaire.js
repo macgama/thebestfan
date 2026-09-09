@@ -14,13 +14,13 @@
  */
 
 export const SKINS = [
-  { id: 'base',      nom: 'Tenue de base',      rar: 'd1', pour: '*' },
-  { id: 'pluie',     nom: 'Sous la pluie',      rar: 'd2', pour: '*' },
-  { id: 'nocturne',  nom: 'Nocturne',           rar: 'd2', pour: '*' },
-  { id: 'derby',     nom: 'Soir de derby',      rar: 'd3', pour: '*' },
-  { id: 'anniv',     nom: 'Cinquantenaire',     rar: 'star', pour: '*' },
-  { id: 'promo',     nom: 'Jour de montée',     rar: 'star', pour: '*' },
-  { id: 'legende',   nom: 'Légende du virage',  rar: 'crown', pour: '*' },
+  { id: 'base',      nom: 'Tenue de base',      rar: 'commune', pour: '*' },
+  { id: 'pluie',     nom: 'Sous la pluie',      rar: 'rare', pour: '*' },
+  { id: 'nocturne',  nom: 'Nocturne',           rar: 'rare', pour: '*' },
+  { id: 'derby',     nom: 'Soir de derby',      rar: 'epique', pour: '*' },
+  { id: 'anniv',     nom: 'Cinquantenaire',     rar: 'legendaire', pour: '*' },
+  { id: 'promo',     nom: 'Jour de montée',     rar: 'legendaire', pour: '*' },
+  { id: 'legende',   nom: 'Légende du virage',  rar: 'legendaire', pour: '*' },
 ];
 
 /**
@@ -28,25 +28,25 @@ export const SKINS = [
  * Fanzzy — fenêtre de tempo, durée de martelage, souffle, contre.
  */
 export const STUFF = [
-  { id: 'jumelles', nom: 'Jumelles', rar: 'd1',
+  { id: 'jumelles', nom: 'Jumelles', rar: 'commune',
     texte: 'Tu vois venir le rythme, mais tu chantes plus lentement.',
     mods: { tempoWindow: 1.25, tempoInterval: 70 } },
-  { id: 'echarpe', nom: 'Écharpe du club', rar: 'd1',
+  { id: 'echarpe', nom: 'Écharpe du club', rar: 'commune',
     texte: 'Tiens plus longtemps, respire moins bien.',
     mods: { holdBonus: 1.15, breathBonus: 0.9 } },
-  { id: 'tambour', nom: 'Tambour de poche', rar: 'd2',
+  { id: 'tambour', nom: 'Tambour de poche', rar: 'rare',
     texte: 'Martelage plus court à réussir, mais moins récompensé.',
     mods: { mashTime: -600, mashBonus: 0.94 } },
-  { id: 'capuche', nom: 'Capuche', rar: 'd2',
+  { id: 'capuche', nom: 'Capuche', rar: 'rare',
     texte: 'On te contre moins bien, tu contres moins bien aussi.',
     mods: { parryBonus: 0.8, parryResist: 1.3 } },
-  { id: 'megaphone', nom: 'Mégaphone', rar: 'd3',
+  { id: 'megaphone', nom: 'Mégaphone', rar: 'epique',
     texte: 'Tes gestes parfaits comptent double, tes ratés se retournent.',
     mods: { perfectBonus: 1.4, backfire: true } },
-  { id: 'thermos', nom: 'Thermos', rar: 'd3',
+  { id: 'thermos', nom: 'Thermos', rar: 'epique',
     texte: 'Le souffle revient plus vite, les grosses cartes coûtent plus cher.',
     mods: { breathBonus: 1.2, costPenalty: 1.15 } },
-  { id: 'bache', nom: 'Bout de bâche', rar: 'star',
+  { id: 'bache', nom: 'Bout de bâche', rar: 'legendaire',
     texte: 'Le contre devient redoutable, le chant s\u2019affaiblit.',
     mods: { parryBonus: 1.6, tempoWindow: 0.85 } },
 ];

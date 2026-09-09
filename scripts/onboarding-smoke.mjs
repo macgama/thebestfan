@@ -56,7 +56,7 @@ const cartes = r.json.cartes;
 check('cinq cartes', cartes.length === 5);
 check('deux Fanzzy', cartes.filter((c) => c.type === 'fanzzy').length === 2);
 check('au moins un Fanzzy peu commun ou mieux',
-  cartes.some((c) => c.type === 'fanzzy' && BY_ID.get(c.id).rar !== 'd1'));
+  cartes.some((c) => c.type === 'fanzzy' && BY_ID.get(c.id).rar !== 'commune'));
 check('une pièce d\u2019équipement', cartes.filter((c) => c.type === 'stuff').length === 1);
 check('une carte d\u2019action', cartes.filter((c) => c.type === 'action').length === 1);
 check('des écharpes', r.json.scarves >= 80);
