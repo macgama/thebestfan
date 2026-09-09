@@ -26,7 +26,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { charger as chargerCatalogue, racineDe, lignee, auStade, personnages, obtenables, parIdentifiant }
+import { charger as chargerCatalogue, racineDe, lignee, auStade, personnages, obtenables, parIdentifiant, tous }
   from '../src/server/fanzzy/catalogue.js';
 import { baseDeTest } from './base-de-test.mjs';
 
@@ -63,14 +63,30 @@ check('la lignée se lit depuis n’importe lequel de ses âges',
   ch.length === 3 && ch.map((f) => f.id).join(',') === 'V1,V2,V3');
 check('le deuxième âge porte son propre nom',
   auStade('V1', 2)?.nom === 'Meneur de chant');
-check('un personnage sans suite n’a qu’un âge', lignee('TR1').length === 1);
-check('et son deuxième âge n’existe pas encore', auStade('TR1', 2) === undefined);
+// Une légendaire n'a pas de lignée : c'est sa définition. Elle sert donc de
+// témoin pour le cas « personnage à un seul âge », que TR1 incarnait avant
+// d'avoir la sienne.
+check('une légendaire n’a qu’un âge', lignee('TR12').length === 1);
+check('et pas de deuxième', auStade('TR12', 2) === undefined);
 
-// Sept lignées de trois : le catalogue compte quatorze lignes de plus que de
-// personnages. C'est le chiffre exact du repliage.
+/* Le catalogue compte exactement deux lignes de plus que de personnages par
+   lignée. Le chiffre se déduit du dex plutôt que de s'écrire en dur : il valait
+   14 quand il y avait sept lignées, il en vaut 276, et il changera encore. Un
+   test qui fige un total casse à chaque carte ajoutée sans avoir rien attrapé. */
 const lignes = (await pool.query('SELECT COUNT(*) n FROM fanzzy'))[0][0].n;
+const attenduSuites = tous().filter((f) => f.stage > 1).length;
 check(`${lignes} lignes au catalogue pour ${personnages().length} personnages`,
-  lignes - personnages().length === 14);
+  lignes - personnages().length === attenduSuites);
+
+/* Le vrai piège de ce lot, et il n'aurait rien dit : l'amorçage n'écrase
+   jamais une ligne existante. Donner une lignée à des personnages **déjà en
+   base** insère bien leurs nouveaux âges, mais laisse leur `evo` à NULL — les
+   cartes existent et personne ne les désigne. */
+const debranches = tous().filter((f) => f.stage === 1 && f.rar !== 'legendaire'
+  && f.publie && lignee(f.id).length === 1);
+check('aucun personnage n’a ses âges débranchés',
+  debranches.length === 0 || (console.log('       ', debranches.slice(0, 8)
+    .map((f) => f.id).join(' ')), false));
 check('aucun âge supérieur ne compte dans la collection à faire',
   obtenables().every((f) => racineDe(f.id) === f.id));
 

@@ -112,7 +112,17 @@ check('la corde a bougé', await until(()=>A.state.rope !== 0));
 const salleA = [...N.salles.values()][0];
 salleA.duel.joueurs.get(U[0]).breath = 100;
 
-const carte = A.state.moi.main[0];
+/* La première carte de la main, mais **jouable sans condition**.
+
+   La main est mélangée, et depuis que « Relève » existe le deck en contient :
+   c'est une commune, donc offerte à tout le monde, et elle ne se joue que si le
+   Fanzzy en tribune a un âge débloqué — ce qui n'est pas le cas ici. Une fois
+   sur cinq environ, elle sortait en tête et le test échouait sur un refus
+   parfaitement légitime.
+
+   Le test voulait dire « joue une carte », pas « joue celle-là ». */
+const carte = A.state.moi.main.find((id) =>
+  !ACTIONS.find((a) => a.id === id)?.condition) ?? A.state.moi.main[0];
 A.socket.emit('nvn:play', { cardId: carte });
 check('la carte est jouée', await until(()=>A.events.some((e)=>e.t==='action')));
 check('elle quitte la main', await until(()=>!A.state.moi.main.includes(carte)));

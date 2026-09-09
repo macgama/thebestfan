@@ -57,6 +57,36 @@ const versJeu = (r) => ({
 });
 
 /**
+ * Raccroche les âges supérieurs à leur personnage, sur une base déjà peuplée.
+ *
+ * `amorcer` n'écrase jamais une ligne existante — c'est ce qui protège les
+ * cartes modifiées depuis l'administration, et il faut que ça le reste. Mais
+ * cette prudence a un angle mort : le jour où l'on donne une lignée à cent
+ * trente-huit personnages déjà en base, leurs nouveaux âges s'insèrent très
+ * bien et **le lien `evo` du premier âge, lui, n'est jamais posé**. Les
+ * `TR1B` et `TR1C` existent, personne ne les désigne, et les lignées
+ * n'apparaissent nulle part.
+ *
+ * Rien ne l'aurait signalé : pas d'erreur, pas de log, juste des cartes
+ * inaccessibles. C'est le défaut exact que ce projet a déjà payé plusieurs
+ * fois.
+ *
+ * D'où cette reprise, et sa clause : `WHERE evo IS NULL`. On **remplit un
+ * trou**, on ne corrige jamais un choix. Une lignée débranchée depuis
+ * l'administration le reste.
+ */
+async function raccrocherLignees(pool) {
+  let liens = 0;
+  for (const f of AMORCE) {
+    if (!f.evo) continue;
+    const [r] = await pool.execute(
+      `UPDATE fanzzy SET evo = ? WHERE id = ? AND evo IS NULL`, [f.evo, f.id]);
+    liens += r.affectedRows;
+  }
+  return liens;
+}
+
+/**
  * Amorçage : les cartes de `dex.js` que la base ne connaît pas encore.
  *
  * `INSERT IGNORE` et non `REPLACE` : on ajoute ce qui manque, on n'écrase
@@ -102,9 +132,10 @@ export async function recharger(pool) {
 /** À appeler une fois au démarrage, avant de monter les modules du jeu. */
 export async function charger(pool) {
   const amorces = await amorcer(pool);
+  const liens = await raccrocherLignees(pool);
   const n = await recharger(pool);
   const series = await chargerSeries(pool);
-  return { total: n, amorces, series };
+  return { total: n, amorces, liens, series };
 }
 
 /* --------------------------------------------------------------- lecture */

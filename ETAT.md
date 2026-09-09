@@ -230,6 +230,48 @@ Deux détails qui ont demandé du soin :
 la rejoue — deux fois, parce qu'une migration qu'on ne peut lancer qu'une fois
 est une migration qu'on n'ose pas relancer.
 
+**Tous les personnages ont leurs trois âges.** Cent trente-huit lignées, écrites
+en septembre 2026. Seules les légendaires n’en ont pas — et elles n’en auront
+jamais : c’est leur définition, elles se tirent au lieu de se fabriquer.
+
+La moitié seulement est écrite à la main. `dex-ages.js` ne contient que le
+**nom, l’histoire et le cri** de chaque âge ; les modificateurs, la puissance,
+la rareté et le chaînage se déduisent du premier âge par `ages.js`. C’est
+délibéré : quatre cent soixante cartes réglées une par une, ce sont quatre cent
+soixante occasions de se tromper et aucun moyen de rattraper l’ensemble le jour
+où l’échelle bouge. Ici, changer la progression est une ligne.
+
+Les règles viennent des sept lignées équilibrées à la main :
+
+- **un bonus double au stade 2, triple au stade 3** — c’est l’écart à 1 qui
+  progresse, pas la valeur ;
+- **un malus s’efface** : moitié au stade 2, disparu au stade 3. Le personnage
+  ne devient pas seulement plus fort, il perd ce qui le gênait ;
+- **chaque geste gagne sa marque au stade 2** — intervalle de tempo, temps de
+  martelage, tolérance de tenue. Un stade 2 ne se joue pas comme un stade 1 en
+  plus gros ;
+- **la puissance monte de +13 par âge, en linéaire.** En pourcentage, une carte
+  à 90 serait montée à 135 quand une carte à 44 plafonnerait à 66 : l’évolution
+  aurait creusé l’écart au lieu de le combler.
+
+La règle d’écriture, elle, tient en une phrase : **le troisième âge doit rendre
+le premier plus touchant, pas le renier.** Le Petit Teigneux ne devient pas un
+héros — il devient l’homme qui engueule le prochain petit teigneux, et qui ne
+dira jamais que c’est son plus beau souvenir de la saison.
+
+Ce que ça coûte, mesuré par `npm run economie` : **15 870 écharpes** pour tout
+faire grandir, contre 1 647 que rapporte une collection complète. C’est voulu.
+Ce qui paie, c’est le jeu régulier — environ 1 070 écharpes par jour, donc trois
+heures pour un premier stade 3 et treize jours pour tout. Entre les deux, il
+faut choisir, et c’est exactement ce qu’on cherche.
+
+**Le piège qui n’aurait rien dit.** `amorcer()` n’écrase jamais une ligne
+existante — c’est ce qui protège les cartes modifiées depuis l’administration.
+Donner une lignée à cent trente-huit personnages **déjà en base** insère donc
+très bien leurs nouveaux âges, et laisse leur `evo` à NULL : les cartes existent,
+personne ne les désigne, aucune lignée n’apparaît. Sans erreur et sans log.
+`raccrocherLignees()` remplit ce trou au démarrage, avec `WHERE evo IS NULL` —
+on comble, on ne corrige jamais un choix. `stades-smoke` le vérifie.
 **Un skin ne donne aucun bonus.** Il change l'apparence, rien d'autre. Celui qui
 ouvre mille boosters est plus beau, pas plus fort.
 
