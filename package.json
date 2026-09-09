@@ -25,6 +25,7 @@
     "images": "node scripts/fanzzy-images.mjs",
     "poses": "node scripts/poses-supporter.mjs",
     "manifeste": "node scripts/fanzzy-manifeste.mjs",
+    "veille": "node scripts/fanzzy-veille.mjs",
     "images:test": "node scripts/fanzzy-images-smoke.mjs",
     "etats:test": "node scripts/etats-smoke.mjs",
     "economie": "node scripts/economie.mjs",

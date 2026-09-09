@@ -843,6 +843,38 @@ qui cherche le crâne trouve un poignet et cadre le buste sur la poitrine — un
 stade sans `neutre` n'a donc pas de portrait du tout, et le jeu prend celui du
 stade d'en dessous. Mieux vaut aucun portrait qu'un portrait de travers.
 
+### La veille
+
+```bash
+npm run veille
+```
+
+Elle surveille `art/**/_src/` et relance la chaîne sur le dossier concerné dès
+qu'un rendu y arrive. Elle ne découpe rien elle-même : elle appelle
+`fanzzy-art.mjs`, qui reste la seule vérité sur la façon de produire une image.
+Une veille qui redécouperait de son côté finirait par découper autrement, un
+jour, sans qu'on s'en aperçoive.
+
+Trois précautions, chacune contre une façon précise de se tromper :
+
+- **elle attend que le fichier soit fini d'écrire.** Copier cinq mégaoctets n'est
+  pas instantané, et le système signale le fichier dès sa création : le lire à cet
+  instant donne un PNG tronqué. On attend que sa taille cesse de bouger ;
+- **elle regroupe.** Douze états déposés d’un coup, ce sont douze signaux — donc
+  onze passes pour rien. Un délai de grâce les rassemble ;
+- **elle ne lance jamais deux passes en même temps** sur un dossier : elles
+  écriraient les mêmes fichiers, et le manifeste garderait le résultat de celle
+  qui finit la dernière, pas celle qui a lu les bonnes sources.
+
+Une passe a lieu au démarrage : les rendus déposés pendant que la veille était
+éteinte sont pris en compte sans qu'on ait à les retoucher.
+
+**Rien n’est écrit tant que le lot entier n’est pas validé.** La chaîne lisait,
+vérifiait et écrivait âge par âge : un e2 mal formé s’arrêtait *après* que e1
+avait été réécrit, et le manifeste — produit à la fin — ne l’était pas. Le lot
+refusé laissait des fichiers neufs décrits par un manifeste ancien. Invisible
+tant qu’on lançait la chaîne à la main sur un dossier complet ; avec une veille,
+le lot incomplet devient le cas normal.
 ### Le manifeste, et pourquoi il y en a deux
 
 Chaque Fanzzy a son `manifeste.json` : c'est la bonne granularité pour
