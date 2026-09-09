@@ -6,6 +6,8 @@
  * donc aucun risque que les deux divergent.
  */
 import { SETS_2026, DEX_2026 } from './dex-2026.js';
+import { AGES } from './dex-ages.js';
+import { agesDe, idDuStade } from './ages.js';
 
 const TYPES = {
   voix: { nom:'Voix', c:'#F5C33B', geste:'tempo',
@@ -555,7 +557,54 @@ const RATES = {
    L'amorçage écrit en `INSERT IGNORE` : ajouter une série ici ne réécrit
    jamais ce que l'administration a modifié depuis.                        */
 
-const TOUT = [...DEX, ...DEX_2026];
+/* ------------------------------------------------- les deuxième et troisième âges
+
+   Ils ne sont pas écrits en entier : seuls leur nom, leur histoire et leur cri
+   le sont, dans `dex-ages.js`. Le reste — modificateurs, puissance, rareté,
+   chaînage — se déduit du premier âge par les règles de `ages.js`.
+
+   C'est délibéré. Quatre cent trente-cinq cartes réglées une par une, ce sont
+   quatre cent trente-cinq occasions de se tromper et aucun moyen de rattraper
+   l'ensemble le jour où l'échelle bouge. Ici, changer la progression est une
+   ligne, et elle s'applique partout d'un coup.
+
+   Le premier âge, lui, reste écrit à la main : c'est lui qui porte l'idée du
+   personnage, et une idée ne se déduit de rien.                            */
+
+const PREMIERS = [...DEX, ...DEX_2026];
+const PREMIER_PAR_ID = new Map(PREMIERS.map((f) => [f.id, f]));
+
+const SUITES = [];
+for (const [id, ecrits] of Object.entries(AGES)) {
+  const base = PREMIER_PAR_ID.get(id);
+  // Un âge écrit pour une carte qui n'existe pas est une faute de frappe, et
+  // elle serait invisible : la lignée manquerait sans que rien ne le dise.
+  if (!base) {
+    throw new Error(`dex-ages.js décrit les âges de « ${id} », qui n'est pas au `
+      + 'catalogue. Vérifie l’identifiant, ou retire l’entrée.');
+  }
+  if (base.evo) {
+    throw new Error(`« ${id} » a déjà une suite écrite à la main (${base.evo}) et une `
+      + 'entrée dans dex-ages.js. Les deux se contrediraient : garde-en une.');
+  }
+  /* Une légendaire n'a pas de lignée — c'est sa définition même, et c'est ce
+     qui la rend désirable : elle ne se fabrique pas à l'écharpe, elle se tire.
+     Lui écrire des âges la ferait redescendre en « rare » puis « épique » au
+     premier passage, et le joueur qui l'a sortie d'un booster verrait sa carte
+     la plus précieuse se déclasser toute seule.
+
+     Ce contrôle a servi dès le premier jour : « La Fanfare à Elle Seule » avait
+     reçu deux âges par mégarde. */
+  if (base.rar === 'legendaire') {
+    throw new Error(`« ${id} » (${base.nom}) est légendaire : elle n'a pas de lignée. `
+      + 'Une légendaire se tire, elle ne se fait pas évoluer — lui donner des âges '
+      + 'la déclasserait en rare. Retire son entrée de dex-ages.js.');
+  }
+  base.evo = idDuStade(id, 2);
+  SUITES.push(...agesDe(base, ecrits));
+}
+
+const TOUT = [...PREMIERS, ...SUITES];
 const TOUS_SETS = [...SETS, ...SETS_2026];
 
 // Un identifiant en double ferait taire une carte sans le dire : la seconde

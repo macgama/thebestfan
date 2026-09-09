@@ -207,22 +207,33 @@ const gains = abouties.map((p) => p.ecarpes);
 
 /* ------------------------------------------------------- le coût d'évolution */
 
-// Une lignée coûte 25 puis 90 : il faut donc posséder les trois étages.
-const lignees = new Set(DEX.filter((f) => f.evo).map((f) => f.id[0])).size;
-const PRIX_LIGNEE = EVO_COST[2] + EVO_COST[3];
+/**
+ * Combien de lignées, et ce qu'elles coûtent.
+ *
+ * Le compte se faisait sur la **première lettre** de l'identifiant — `V1` et
+ * `V2` donnaient « V », et sept lettres donnaient sept lignées. C'était juste
+ * tant que les lignées s'appelaient V, P, F, T, Y, D et G. Depuis que chaque
+ * personnage a la sienne, `TR1` et `MS3` donnent « T » et « M » : le rapport
+ * annonçait treize lignées pour cent trente-huit, et le coût qui va avec.
+ *
+ * Une faute silencieuse et confortable : elle sous-estimait la dépense d'un
+ * facteur dix, dans le sens qui rassure.
+ */
+const lignees = DEX.filter((f) => f.stage === 1 && f.evo && f.rar !== 'legendaire'
+  && f.publie !== false).length;
+const PRIX_LIGNEE = EVO_COST[2] + EVO_COST[3];   // 25 puis 90 : il faut les deux
 const coutEvolutions = lignees * PRIX_LIGNEE;
 
 /**
- * Ce que coûtera le plan complet : une lignée pour chaque carte de stade 1 qui
- * n'est pas légendaire.
+ * Ce qui reste à écrire : les personnages publiés, non légendaires, qui n'ont
+ * pas encore de deuxième âge.
  *
- * C'est le chiffre qui décide si le projet tient. Sept lignées coûtent 805
- * écharpes, ce qu'une collection rapporte largement ; cent vingt en coûtent
- * quatorze mille, ce qu'elle ne rapporte pas du tout. La différence ne se voit
- * qu'en la calculant — d'où cette ligne, et non une conviction.
+ * Le rapport projetait ce chiffre quand il valait cent trente-huit. Il vaut
+ * désormais zéro, et la projection est devenue la dépense réelle — c'est cette
+ * ligne qui le dit, plutôt qu'un commentaire qu'il aurait fallu penser à
+ * corriger.
  */
-const futuresLignees = TIRABLE.filter((f) => f.rar !== 'legendaire').length;
-const coutFutur = futuresLignees * PRIX_LIGNEE;
+const sansLignee = TIRABLE.filter((f) => f.rar !== 'legendaire' && !f.evo).length;
 
 /* --------------------------------------------------------------- rapport */
 
@@ -245,26 +256,26 @@ console.log(`  boosters     médiane ${h(mediane(paquets))} · moyenne ${h(moyen
 console.log(`  cartes vues  ${h(moyenne(paquets) * TAILLE_PAQUET)}`);
 console.log(`  écharpes gagnées en doublons  ${h(moyenne(gains))}`);
 
-console.log('\nCe que ça coûte et ce que ça rapporte');
-console.log(`  écharpes rapportées par la collection   ${h(moyenne(gains))}`);
-console.log(`  coût des ${lignees} lignées à faire évoluer        ${h(coutEvolutions)}`);
-const reste = moyenne(gains) - coutEvolutions;
-console.log(`  reste après avoir tout fait évoluer     ${h(reste)}`
-  + (reste < 0 ? '   ← IMPOSSIBLE sans acheter' : ''));
-
-console.log('\nSi chaque Fanzzy gagne ses trois stades');
-console.log(`  lignées à créer                        ${h(futuresLignees)}`);
-console.log(`  coût pour toutes les faire évoluer      ${h(coutFutur)} écharpes`);
+console.log('\nFaire grandir tout le monde');
+console.log(`  lignées écrites                         ${h(lignees)}`);
+if (sansLignee) console.log(`  personnages sans deuxième âge           ${h(sansLignee)}`);
+console.log(`  coût des ${lignees} lignées                  ${h(coutEvolutions)} écharpes`);
 console.log(`  ce qu'une collection rapporte           ${h(moyenne(gains))} écharpes`);
 {
-  // Une fois la collection complète, chaque booster n'est plus que des
-  // doublons : le revenu ne s'arrête pas, il devient régulier. C'est lui qui
-  // paie les évolutions sur la durée, pas la collecte initiale — et c'est ce
-  // que le rapport ne disait pas, ce qui faisait paraître le plan intenable.
+  /* La collecte initiale ne paie pas les évolutions, et c'est voulu : elle en
+     couvre un dixième. Ce qui paie, c'est le **jeu régulier**. Une fois la
+     collection complète, chaque booster n'est plus que des doublons, donc du
+     revenu — et il ne s'arrête jamais.
+
+     Sans cette ligne, le rapport comparait un coût total à une recette unique
+     et concluait « impossible ». Il comparait deux choses qui ne se comparent
+     pas : une dépense qu'on étale et une recette qu'on encaisse une fois. */
   const parBooster = moyenne(gains) / moyenne(paquets);
   const parJour = parBooster * (24 * 60 / (PACK_REGEN_MS / 60000));
+  const jours = (coutEvolutions - moyenne(gains)) / parJour;
   console.log(`  puis environ                           ${h(parJour)} écharpes par jour de jeu`);
-  console.log(`  soit                                   ${h((coutFutur - moyenne(gains)) / parJour)} jours pour tout faire évoluer`);
+  console.log(`  soit                                   ${h(jours)} jours pour tout faire grandir`);
+  console.log(`  et le premier stade 3                  ${h(PRIX_LIGNEE / parJour * 24)} heures de jeu`);
 }
 
 console.log('\nEn temps de jeu');

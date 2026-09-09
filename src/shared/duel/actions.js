@@ -245,5 +245,15 @@ export function validerDeck(deck, possede) {
       ids: relevables.map((f) => f.id) });
   }
 
+  /* Et le cas inverse, qui est le plus fréquent au début. « Relève » est une
+     commune : elle est offerte à tout le monde, y compris à qui n'a jamais fait
+     évoluer un Fanzzy. Elle occupe alors un emplacement sur dix pour ne rien
+     faire — une carte morte que rien ne signale, dans le deck de quelqu'un qui
+     découvre le jeu et qui conclura que le duel est mal réglé. */
+  const releves = actions.filter((a) => a === 'a-releve').length;
+  if (releves && !relevables.length) {
+    avertissements.push({ code: 'deck.warn.useless_evolution_card', n: releves });
+  }
+
   return { valide: pb.length === 0, problemes: pb, avertissements };
 }

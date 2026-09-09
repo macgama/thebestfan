@@ -258,6 +258,8 @@ const MESSAGES = {
   'deck.warn.no_evolution_card':  'Tes Fanzzy entrent toujours à leur premier âge. Sans '
                                 + '« Relève », ce que tu as payé pour les faire grandir '
                                 + 'ne servira pas en duel.',
+  'deck.warn.useless_evolution_card': '« Relève » ne sert à rien tant qu’aucun de tes '
+                                + 'Fanzzy n’a d’âge débloqué. Elle occupe un emplacement pour rien.',
 };
 
 const api = async (path, { method = 'GET', body } = {}) => {
@@ -507,6 +509,13 @@ function tribuneHTML() {
   if (relevables.length && !S.deck.actions.includes('a-releve')) {
     out.push(`<div class="avert doux"><b>TES ÉVOLUTIONS NE SERVIRONT PAS</b>
       ${MESSAGES['deck.warn.no_evolution_card']}</div>`);
+  }
+
+  // Et l'inverse, plus fréquent : « Relève » est offerte à tout le monde, et
+  // elle est morte dans la main de qui n'a rien fait grandir.
+  if (S.deck.actions.includes('a-releve') && !relevables.length) {
+    out.push(`<div class="avert doux"><b>UNE CARTE POUR RIEN</b>
+      ${MESSAGES['deck.warn.useless_evolution_card']}</div>`);
   }
   return out.join('');
 }
