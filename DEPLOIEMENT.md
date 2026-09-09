@@ -71,18 +71,20 @@ curl -s https://thebestfan.online/healthz
 ```bash
 cd ~/sites/thebestfan.online
 for f in auth football duel souvenirs fanzzy teletext inventaire deck admin \
-         raretes stades; do
+         niveau raretes stades; do
   mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
 done
 ```
 
-Les deux derniers sont des **reprises**, pas des créations de tables : ils
-n'apparaissent donc pas dans le compte ci-dessous, et une base neuve tourne sans
-eux. Ils sont rejouables, et l'ordre compte — `stades` lit les lignées telles que
-`raretes` les a rangées.
+Les trois derniers ne créent **aucune table** : ils ajoutent des colonnes et
+reprennent des données. Ils n'entrent donc pas dans le compte ci-dessous, ils
+sont rejouables, et l'ordre compte entre eux — `stades` lit les lignées telles
+que `raretes` les a rangées.
 
 - `raretes.sql` fait passer l'échelle de cinq crans à quatre et range les sept
   lignées dans les thèmes.
+- `niveau.sql` ajoute la colonne d’XP. Les comptes existants partent de zéro :
+  ils n’ont rien perdu, et le premier booster ouvert lance la barre.
 - `stades.sql` replie les âges sur le personnage : un joueur possède désormais
   *le Choriste au stade 2*, et non *le Meneur de chant*. **Il déplace des
   collections existantes** — c'est la seule migration du projet dans ce cas.

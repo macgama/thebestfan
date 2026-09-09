@@ -23,7 +23,7 @@ import { jourISO } from '../../shared/jour.js';
 export const FORMATS = { '1v1': 1, '2v2': 2, '3v3': 3, '4v4': 4, '5v5': 5 };
 const LIVE = ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT'];
 
-export function createDecks({ pool, requireAuth }) {
+export function createDecks({ pool, requireAuth, niveau = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -33,6 +33,9 @@ export function createDecks({ pool, requireAuth }) {
   /* ------------------------------------------------- ce que possède le joueur */
 
   async function possessions(userId) {
+    // Le plafond d’emplacements Fanzzy vient du niveau. Sans module de
+    // progression, il vaut la règle — le comportement d’avant, exactement.
+    const fanzzyMax = niveau ? (await niveau.droitsDe(userId)).deckFanzzy : DECK_RULES.fanzzy;
     const [fz, st, w] = await Promise.all([
       q(`SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]),
       q(`SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [userId]),
@@ -42,6 +45,7 @@ export function createDecks({ pool, requireAuth }) {
     const actions = typeof brut === 'string' ? JSON.parse(brut) : (brut ?? []);
     return {
       fanzzy: new Set(fz.map((f) => f.fanzzy_id)),
+      fanzzyMax,
       // Jusqu'où chaque personnage a été fait grandir. Ne sert pas à valider —
       // un deck n'exprime plus de stade — mais à avertir le joueur qui a payé
       // une évolution et oublie la carte qui lui donne accès.
@@ -280,6 +284,10 @@ export function createDecks({ pool, requireAuth }) {
       deck,
       possede: {
         fanzzy: [...possede.fanzzy],
+        // Le plafond du moment : la page affiche autant de rangs, ni plus
+        // ni moins. Le lui faire déduire du niveau serait une seconde règle
+        // à tenir à jour, et elle divergerait.
+        fanzzyMax: possede.fanzzyMax,
         // Le stade atteint par personnage : la page en a besoin pour avertir
         // celui qui aligne un Fanzzy évolué sans embarquer de Relève.
         stades: possede.stades,

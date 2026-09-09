@@ -25,6 +25,7 @@ import { createOnboarding } from './src/server/onboarding/index.js';
 import { createGoogleAuth } from './src/server/auth/google.js';
 import { createClassements } from './src/server/classements/index.js';
 import { createDecks } from './src/server/deck/index.js';
+import { createNiveau } from './src/server/niveau/index.js';
 import { createAdmin } from './src/server/admin/index.js';
 import { createNvN } from './src/server/nvn/index.js';
 
@@ -70,6 +71,7 @@ let teletext = null;
 let onboarding = null;
 let classements = null;
 let decks = null;
+let niveau = null;
 let admin = null;
 let nvn = null;
 let google = null;
@@ -136,14 +138,24 @@ if (process.env.DATABASE_URL) {
 
     app.use('/api/auth', auth.router);
 
+    // ---- niveau et XP
+    //
+    // Monté avant tout ce qui le consulte : decks, duels, collection et
+    // inscription lui demandent les droits du joueur. Construit après eux, il
+    // resterait à `null` dans leurs fermetures — une panne qui ne dit rien,
+    // celle que verif-cablage.mjs existe pour attraper.
+    niveau = createNiveau({ pool, requireAuth: auth.requireAuth });
+    app.use('/api/niveau', niveau.router);
+    console.log('niveau et XP actifs');
+
     // ---- decks de duel et choix du match support
-    decks = createDecks({ pool, requireAuth: auth.requireAuth });
+    decks = createDecks({ pool, requireAuth: auth.requireAuth, niveau });
     app.use('/api/deck', decks.router);
     globalThis.decks = decks;
     console.log('decks actifs');
 
     // ---- duel N contre N (tir a la corde en equipe)
-    nvn = createNvN({ pool, io, decks, requireAuth: auth.requireAuth });
+    nvn = createNvN({ pool, io, decks, requireAuth: auth.requireAuth, niveau });
     app.use('/api/nvn', nvn.router);
     console.log('duels NvN actifs');
 
@@ -173,7 +185,7 @@ if (process.env.DATABASE_URL) {
     console.log('authentification active');
 
     // ---- collection Fanzzy
-    fanzzy = createFanzzy({ pool, requireAuth: auth.requireAuth });
+    fanzzy = createFanzzy({ pool, requireAuth: auth.requireAuth, niveau });
     app.use('/api/fanzzy', fanzzy.router);
     globalThis.fanzzy = fanzzy;
     console.log('collection fanzzy active');
@@ -184,7 +196,7 @@ if (process.env.DATABASE_URL) {
     console.log('cartes-souvenirs actives');
 
     // ---- inscription, emplacements de suivi, inventaire
-    onboarding = createOnboarding({ pool, requireAuth: auth.requireAuth, football: null });
+    onboarding = createOnboarding({ pool, requireAuth: auth.requireAuth, football: null, niveau });
     app.use('/api/me', onboarding.router);
     console.log('inscription et inventaire actifs');
 

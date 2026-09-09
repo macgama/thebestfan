@@ -299,6 +299,36 @@ Il l’affiche **à son âge atteint** — celui qui a payé quatre-vingt-dix é
 voit son Capo chez lui. C’est l’inverse du duel, où tout le monde entre au
 premier âge, et les deux se justifient : le duel est une rencontre, l’accueil
 est chez soi.
+**Le niveau ouvre, il ne donne pas.** C’est la règle qui tient tout le système
+de progression : il élargit ce qu’on a le droit de faire — une série de plus,
+un emplacement de plus — sans jamais rendre plus fort en duel. Un joueur de
+niveau 30 n’a aucun avantage sur la corde face à un niveau 2 ; il a simplement
+eu plus de choix avant d’y monter.
+
+Sans elle, l’ancienneté deviendrait de la puissance et le nouveau venu n’aurait
+plus de raison de rester. `niveau-smoke` la vérifie littéralement : il lit
+`src/server/nvn/engine.js` et échoue si le mot « niveau » y apparaît.
+
+Trois conséquences :
+
+- **Le niveau et l’administration se combinent.** Une série est proposée si elle
+  est ouverte *et* atteinte : l’administration décide de ce qui existe pour tout
+  le monde, le niveau de ce qui existe pour ce joueur-là. Deux codes d’erreur
+  distincts, parce que dans un cas il faut attendre et dans l’autre il faut jouer.
+- **Le niveau lève le plafond des clubs suivis, les écharpes achètent en
+  dessous.** C’était la question ouverte — remplacer l’achat, ou le garder. Les
+  deux : personne ne doit perdre un emplacement déjà payé parce qu’on introduit
+  une progression.
+- **Le niveau n’est pas stocké.** Seule l’XP l’est ; le niveau s’en déduit. Le
+  ranger à côté, ce seraient deux chiffres disant la même chose, et une migration
+  à écrire à chaque ajustement de la courbe.
+
+La courbe : 60 XP pour le premier palier, +40 par palier ensuite, jusqu’au
+niveau 30. Un booster vaut 5 XP, un entraînement 12, un duel classé 20, une
+victoire 15 de plus. **L’XP ne double pas pour son club** — les écharpes, si.
+Les écharpes récompensent la ferveur et il est juste qu’elles penchent ; le
+niveau mesure le temps passé à jouer, et le doubler ferait progresser deux fois
+plus vite pour un choix fait à l’inscription.
 **Un skin ne donne aucun bonus.** Il change l'apparence, rien d'autre. Celui qui
 ouvre mille boosters est plus beau, pas plus fort.
 

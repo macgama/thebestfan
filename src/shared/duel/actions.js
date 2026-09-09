@@ -188,9 +188,17 @@ export function validerDeck(deck, possede) {
   const fanzzy = deck?.fanzzy ?? [];
   const actions = deck?.actions ?? [];
 
-  if (fanzzy.length < DECK_RULES.fanzzyMin || fanzzy.length > DECK_RULES.fanzzy) {
+  /* Le nombre d'emplacements dépend du niveau : deux au départ, trois à partir
+     du cinquième. `possede.fanzzyMax` porte ce plafond, et vaut le maximum de
+     la règle quand l'appelant ne le renseigne pas — un test qui monte le deck
+     seul, ou une installation sans progression, se comportent comme avant.
+
+     Le plafond est aussi **borné par la règle** : un niveau ne pourra jamais
+     ouvrir un quatrième emplacement sans qu'on l'ait décidé ici. */
+  const maxFanzzy = Math.min(DECK_RULES.fanzzy, possede?.fanzzyMax ?? DECK_RULES.fanzzy);
+  if (fanzzy.length < DECK_RULES.fanzzyMin || fanzzy.length > maxFanzzy) {
     pb.push({ code: 'deck.error.fanzzy_count',
-      min: DECK_RULES.fanzzyMin, max: DECK_RULES.fanzzy });
+      min: DECK_RULES.fanzzyMin, max: maxFanzzy });
   }
   if (new Set(fanzzy.map((f) => f.id)).size !== fanzzy.length) {
     pb.push({ code: 'deck.error.fanzzy_duplicate' });

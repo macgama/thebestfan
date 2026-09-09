@@ -14,6 +14,7 @@
     "foot:smoke": "node scripts/football-smoke.mjs",
     "deck:smoke": "node scripts/deck-smoke.mjs",
     "stades:smoke": "node scripts/stades-smoke.mjs",
+    "niveau:smoke": "node scripts/niveau-smoke.mjs",
     "nvn:smoke": "node scripts/nvn-smoke.mjs",
     "deck:ui": "node scripts/deck-ui-smoke.mjs",
     "accueil:ui": "node scripts/accueil-ui-smoke.mjs",

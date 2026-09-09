@@ -6,6 +6,7 @@ import { SETS, TYPES, RAR, RATES, SCARVES, EVO_COST } from '../../shared/fanzzy/
 import { tous, publies, parIdentifiant, obtenables, seriesOuvertes, serieOuverte,
   racineDe, lignee, auStade } from './catalogue.js';
 import { SKINS, SKIN_BY_ID, STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
+import { XP } from '../../shared/niveau.js';
 
 /**
  * Collection Fanzzy, tenue par le serveur.
@@ -41,7 +42,13 @@ const CHANCE_SKIN = 0.22;
 
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
-export function createFanzzy({ pool, requireAuth }) {
+/**
+ * `niveau` est facultatif : sans lui le module tourne exactement comme avant,
+ * boosters compris. C'est ce qui permet aux suites qui n'éprouvent pas la
+ * progression de monter le module seul, et à une installation dont
+ * `sql/niveau.sql` n'est pas encore appliqué de continuer à distribuer.
+ */
+export function createFanzzy({ pool, requireAuth, niveau = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -174,6 +181,18 @@ export function createFanzzy({ pool, requireAuth }) {
     // client modifié — ou un onglet resté ouvert depuis avant la fermeture —
     // peut encore demander son booster : le refus se décide ici.
     if (!serieOuverte(setId)) throw fail('fanzzy.error.set_closed');
+
+    /* Le niveau et l'administration se combinent, ils ne se remplacent pas :
+       l'administration décide de ce qui existe pour tout le monde, le niveau de
+       ce qui existe pour ce joueur-là. Une série peut donc être ouverte et
+       hors de portée, et le code d'erreur le dit — « fermée » aurait laissé
+       croire à une décision de l'administration, et le joueur aurait attendu
+       au lieu de jouer. */
+    if (niveau) {
+      const d = await niveau.droitsDe(userId);
+      if (!d.series.has(setId)) throw fail('fanzzy.error.set_locked');
+    }
+
     await wallet(userId);   // recharge avant de débiter
 
     const conn = await pool.getConnection();
@@ -256,7 +275,16 @@ export function createFanzzy({ pool, requireAuth }) {
         [premierFanzzy, userId]);
 
       await conn.commit();
-      return { cards, scarvesGained: scarves };
+
+      /* L'XP **après** la validation, et hors de la transaction.
+         Le booster est ouvert : les cartes sont dans la collection et le
+         joueur les a vues. Faire échouer tout ça parce qu'une barre de
+         progression n'a pas pu monter serait absurde — `gagner()` avale déjà
+         ses propres incidents et rend une progression nulle. */
+      const monte = niveau ? await niveau.gagner(userId, XP.pack) : null;
+
+      return { cards, scarvesGained: scarves,
+        ...(monte?.xp ? { niveau: monte } : {}) };
     } catch (e) {
       await conn.rollback();
       throw e;

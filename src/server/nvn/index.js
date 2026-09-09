@@ -3,6 +3,7 @@ import express from 'express';
 import { DuelNvN, RULES } from './engine.js';
 import { Cheat } from '../ferveur/gestures.js';
 import { FORMATS } from '../deck/index.js';
+import { XP } from '../../shared/niveau.js';
 
 /**
  * Couche réseau du duel N contre N.
@@ -26,7 +27,7 @@ const TICK_MS = 500;
 const BOT_APRES_MS = 20_000;
 const GRACE_MS = 90_000;
 
-export function createNvN({ pool, io, requireAuth, decks }) {
+export function createNvN({ pool, io, requireAuth, decks, niveau = null }) {
   const salles = new Map();          // duelId -> { duel, membres, timer }
   const salleDe = new Map();         // userId -> duelId
   const files = new Map();           // clé -> [candidats]
@@ -286,6 +287,18 @@ export function createNvN({ pool, io, requireAuth, decks }) {
         await q(`INSERT IGNORE INTO user_wallet (user_id) VALUES (?)`, [userId]);
         await q(`UPDATE user_wallet SET scarves = scarves + ? WHERE user_id = ?`,
           [montant, userId]);
+
+        /* L'XP, elle, **ne double pas** pour son club.
+           Les écharpes récompensent la ferveur, et il est juste qu'elles
+           penchent du côté de son équipe. Le niveau, lui, mesure le temps
+           passé à jouer : le doubler ferait d'un joueur qui suit trois gros
+           clubs un joueur qui progresse deux fois plus vite qu'un autre, pour
+           un choix fait à l'inscription. */
+        if (niveau) {
+          const gain = (XP.duel[d.mode] ?? XP.duel.entrainement)
+            + (gagne ? XP.victoire : 0);
+          await niveau.gagner(userId, gain);
+        }
       }
     } catch (e) {
       // Un duel qui s'est bien joué ne doit pas se terminer en erreur parce

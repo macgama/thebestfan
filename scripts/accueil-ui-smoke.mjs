@@ -31,6 +31,8 @@ import express from 'express';
 import puppeteer from 'puppeteer';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { createOnboarding } from '../src/server/onboarding/index.js';
+import { createNiveau } from '../src/server/niveau/index.js';
+import { seuil } from '../src/shared/niveau.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { baseDeTest } from './base-de-test.mjs';
 
@@ -48,7 +50,8 @@ await raw.query(`DROP TABLE IF EXISTS user_decks, user_stuff, user_skins, user_f
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql']) {
+for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql',
+                 'niveau.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
@@ -57,8 +60,12 @@ await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
                  VALUES (?,?,?,'x')`, [U, 'accueil@ex.fr', 'Momo']);
 // `onboarded_at` renseigné : sans lui l'accueil renvoie vers /bienvenue et la
 // scène n'est jamais rendue.
-await raw.query(`INSERT INTO user_wallet (user_id,scarves,packs,onboarded_at)
-                 VALUES (?,90,12,NOW(3))`, [U]);
+// Niveau 4, à mi-palier : de quoi éprouver la pastille et la jauge à la fois.
+// Un joueur à zéro XP donnerait une jauge vide, qui ne prouve rien — une
+// jauge cassée est vide elle aussi.
+await raw.query(`INSERT INTO user_wallet (user_id,scarves,packs,xp,onboarded_at)
+                 VALUES (?,90,12,?,NOW(3))`,
+  [U, seuil(4) + Math.round((seuil(5) - seuil(4)) / 2)]);
 for (const id of ['G1', 'V1']) {
   await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)`, [U, id]);
 }
@@ -124,7 +131,9 @@ const equiper = async (id, stade = 1) => {
   await pool.query('UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?', [id, U]);
 };
 
-app.use('/api/fanzzy', createFanzzy({ pool, requireAuth }).router);
+const niveau = createNiveau({ pool, requireAuth });
+app.use('/api/niveau', niveau.router);
+app.use('/api/fanzzy', createFanzzy({ pool, requireAuth, niveau }).router);
 app.use('/api/me', createOnboarding({ pool, requireAuth }).router);
 app.get('/', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'index.html')));
 app.use(express.static(path.join(RACINE, 'public')));
@@ -478,6 +487,19 @@ await page.close();
   check('le pseudo et son initiale sont posés',
     hud.pseudo === 'Momo' && hud.initiale === 'm');
   check('le club suivi est nommé', /Sion/.test(hud.club));
+  /* Le niveau : un chiffre sur l’avatar, une jauge sous le pseudo. Rien ne
+     doit s'afficher tant que le module n'a pas répondu — une pastille « 1 »
+     posée par défaut mentirait pendant la seconde du chargement, et c’est
+     précisément le moment où on la regarde. */
+  const niv = await page.evaluate(() => ({
+    pastille: document.getElementById('nivPastille')?.textContent ?? '',
+    visible: document.getElementById('nivPastille')?.hidden === false,
+    jauge: document.getElementById('nivBar')?.firstElementChild?.style.width ?? '',
+  }));
+  check('le niveau est affiché sur l’avatar', niv.visible && niv.pastille === '4');
+  check('et la jauge du palier est remplie à moitié',
+    /^4[5-9]%$|^5[0-5]%$/.test(niv.jauge));
+
   check('la bourse affiche écharpes et boosters',
     hud.ecarpes === '90' && hud.boosters === '12');
   /* Le compte vient du serveur, et on le compare à la base plutôt qu'à un

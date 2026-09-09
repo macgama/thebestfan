@@ -71,9 +71,28 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .haut{display:flex;align-items:center;gap:8px;flex:none}
 .moi{display:flex;align-items:center;gap:9px;padding:6px 14px 6px 6px;min-width:0;
   text-decoration:none}
+/* Le niveau se pose sur l’avatar plutôt que de prendre une ligne : la barre
+   du haut est déjà pleine, et un chiffre de plus en largeur écraserait le
+   pseudo sur les petits écrans. */
+.pastille{position:relative}
+.pastille .niv{position:absolute;right:-4px;bottom:-4px;min-width:17px;height:17px;
+  border-radius:9px;background:#0B0E13;border:1px solid var(--projo);color:var(--projo);
+  font-style:normal;font-family:var(--banner);font-size:10px;line-height:15px;
+  text-align:center;padding:0 3px}
+.qui{min-width:0}
+/* La jauge du palier : deux pixels. Elle n’a pas à se lire, elle a à se
+   remplir — c’est en la voyant bouger qu’on comprend qu’ouvrir un booster
+   fait progresser. */
+.nivBar{display:block;height:2px;border-radius:2px;background:rgba(242,238,228,.14);
+  margin-top:4px;max-width:32vw;overflow:hidden}
+.nivBar i{display:block;height:100%;width:0;background:var(--projo);
+  transition:width .5s cubic-bezier(.3,.9,.4,1)}
 .pastille{width:38px;height:38px;flex:none;border-radius:11px;display:grid;place-items:center;
   font-family:var(--banner);font-size:19px;line-height:1;color:#1A0C04;
   background:linear-gradient(150deg,var(--projo),#B8860B)}
+/* L’initiale occupe toute la pastille : c’est elle que la page réécrit, et
+   le badge du niveau doit rester en dehors de ce qu’elle efface. */
+.pastille>#initiale{grid-area:1/1;display:grid;place-items:center;width:100%;height:100%}
 .moi b{font-size:15px;font-weight:700;display:block;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;max-width:32vw}
 .moi small{display:block;font-size:11px;opacity:.55;margin-top:1px;overflow:hidden;
@@ -253,8 +272,10 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
     <header class="haut">
       <a class="pan moi" href="/profil">
-        <span class="pastille" id="initiale">—</span>
-        <span><b id="pseudo">—</b><small id="clubline"></small></span>
+        <span class="pastille"><span id="initiale">—</span>
+          <i class="niv" id="nivPastille" hidden></i></span>
+        <span class="qui"><b id="pseudo">—</b><small id="clubline"></small>
+          <span class="nivBar" id="nivBar" hidden><i></i></span></span>
       </a>
       <div class="bourse">
         <div class="pan jeton ech"><i></i><span id="scarves">0</span></div>
@@ -568,6 +589,30 @@ async function jsonp(url, options) {
       ? `${principal.name} · ${st.slots.used}/${st.slots.total} clubs`
       : 'aucun club suivi';
   } catch { /* module non monté */ }
+
+  /* ------------------------------------------------------- le niveau
+
+     Un chiffre sur l'avatar et une jauge de deux pixels sous le pseudo. Elle
+     n'a pas à se lire : elle a à se remplir. C'est en la voyant bouger après un
+     booster qu'on comprend qu'ouvrir fait progresser — un texte « 47/220 XP »
+     dirait la même chose et ne se regarderait jamais.
+
+     Rien ne s'affiche tant que le module n'a pas répondu : une pastille « 1 »
+     posée par défaut mentirait pendant la seconde du chargement, et c'est
+     précisément le moment où on la regarde. */
+  try {
+    const niv = await jsonp('/api/niveau', { credentials: 'same-origin' });
+    if (niv?.niveau) {
+      $('nivPastille').textContent = niv.niveau;
+      $('nivPastille').hidden = false;
+      $('nivBar').hidden = false;
+      $('nivBar').firstElementChild.style.width =
+        `${Math.round((niv.max ? 1 : niv.part) * 100)}%`;
+      $('nivBar').title = niv.max
+        ? `Niveau ${niv.niveau}, le dernier`
+        : `Niveau ${niv.niveau} · ${niv.dans}/${niv.pour} XP`;
+    }
+  } catch { /* progression non montée : l’accueil s’en passe */ }
 
   // L'avancement de la collection, et le Fanzzy équipé : une seule lecture
   // pour les deux, puisque `/api/fanzzy/state` porte déjà les deux réponses.
