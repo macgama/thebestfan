@@ -130,6 +130,11 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .slot.locked:active{background:rgba(255,255,255,.05)}
 .dupe{position:absolute;right:3px;bottom:3px;background:rgba(8,10,13,.9);border:1px solid rgba(242,238,228,.28);
   border-radius:3px;font-family:var(--banner);font-size:9.5px;padding:0 4px;z-index:4}
+/* Le stade atteint : une étoile pour rare, deux pour épique. En haut à droite,
+   là où rien d'autre ne s'affiche — le compteur de doublons tient le bas et le
+   marqueur de duel le coin gauche. */
+.stade{position:absolute;right:3px;top:3px;color:var(--projo);font-size:10px;line-height:1;
+  letter-spacing:-1px;text-shadow:0 1px 3px rgba(0,0,0,.9);z-index:4}
 .active-tag{position:absolute;left:3px;top:3px;background:var(--projo);color:#0B0E13;border-radius:3px;
   font-family:var(--banner);font-size:8.5px;padding:1px 5px;z-index:4;letter-spacing:.06em}
 .empty{grid-column:1/-1;text-align:center;padding:44px 22px;opacity:.5;font-size:12.5px;line-height:1.7}
@@ -514,6 +519,8 @@ const api = async (path, body, method) => {   // eslint-disable-line no-unused-v
  */
 let DEX = [];
 let BY_ID = new Map();
+/** Les personnages : une entrée par lignée, jamais ses âges supérieurs. */
+let PERSOS = [];
 let TYPES = {};
 let SETS = [];
 // Ce qu'un joueur peut encore obtenir : le catalogue publié restreint aux
@@ -539,6 +546,16 @@ async function chargerCatalogue() {
 
   DEX = d.dex;
   BY_ID = new Map(DEX.map((f) => [f.id, f]));
+  // Le classeur range des **personnages**, pas des âges. Le Choriste, le Meneur
+  // de chant et le Capo di Curva sont trois entrées du catalogue et une seule
+  // case : c'est le même individu, et le joueur n'en possède qu'un exemplaire,
+  // arrivé à un certain stade.
+  //
+  // `racine` vient du serveur, on ne le devine pas ici. Une page qui déduit
+  // elle-même qu'une carte est le deuxième âge d'une autre finit par le déduire
+  // de travers, et sans rien dire — c'est la faute du catalogue recopié sous
+  // une autre forme.
+  PERSOS = DEX.filter((f) => (f.racine ?? f.id) === f.id);
   TYPES = d.types;
   // Seules les séries ouvertes sont proposées au kiosque. Les autres restent
   // dans le catalogue — un joueur qui possède déjà une de leurs cartes doit
@@ -562,6 +579,7 @@ async function load() {
   if (!DEX.length) await chargerCatalogue();
   const st = await api('/state');
   S.col = st.collection;
+  S.stades = st.stades ?? {};
   S.scarves = st.wallet.scarves;
   S.packs = st.wallet.packs;
   S.active = st.wallet.active;
@@ -1012,14 +1030,14 @@ function renderDex() {
   $('filters').innerHTML = chips.map(([k, l]) =>
     `<button class="filt ${S.filter === k ? 'on' : ''}" data-f="${k}">${l}</button>`).join('');
 
-  const list = DEX.filter((f) => S.filter === 'all' ? true
+  const list = PERSOS.filter((f) => S.filter === 'all' ? true
     : S.filter === 'miss' ? !S.col[f.id] : f.type === S.filter);
   // La progression se compte sur les séries ouvertes, pas sur tout le
   // catalogue : afficher « 31/166 » à quelqu'un qui possède déjà tout ce qu'il
   // peut posséder est le pire message qu'on puisse envoyer à un
   // collectionneur. Les cartes d'une série refermée qu'il possède déjà comptent
   // au numérateur — elles sont à lui — d'où le plafond sur le dénominateur.
-  const owned = DEX.filter((f) => S.col[f.id]).length;
+  const owned = PERSOS.filter((f) => S.col[f.id]).length;
   const total = Math.max(A_COLLECTIONNER, owned);
   $('progBar').style.width = `${(owned / total) * 100}%`;
   $('progTxt').textContent = `${owned}/${total}`;
@@ -1033,8 +1051,15 @@ function renderDex() {
       return `<div class="slot locked" data-open="${f.id}">
         <span>${esc(f.nom)}</span></div>`;
     }
-    return `<div class="slot" data-open="${f.id}">${cardHTML(f, { mini:true })}
+    // La case montre le personnage **tel qu'il est aujourd'hui** : celui qui a
+    // payé quatre-vingt-dix écharpes doit voir son Capo, pas le gamin de
+    // départ. Le stade se lit alors d'un coup d'œil sur la grille — le seul
+    // endroit où le joueur compare ses cartes entre elles.
+    const age = ageDe(f);
+    const stade = S.stades?.[f.id] ?? 1;
+    return `<div class="slot" data-open="${f.id}">${cardHTML(age, { mini:true })}
       ${n > 1 ? `<div class="dupe">×${n}</div>` : ''}
+      ${stade > 1 ? `<div class="stade">${'★'.repeat(stade - 1)}</div>` : ''}
       ${S.active === f.id ? '<div class="active-tag">DUEL</div>' : ''}</div>`;
   }).join('') : `<div class="empty">${S.filter === 'miss' ? 'Collection complète.' : 'Rien ici pour l\u2019instant.'}</div>`;
 }
@@ -1053,44 +1078,68 @@ $('grid').onclick = (e) => {
 
 let current = null;
 
+/**
+ * Le personnage à l'âge que le joueur a atteint.
+ *
+ * Sans stade enregistré, c'est le premier — ce qui est le cas de la très
+ * grande majorité de la collection, et le repli naturel pour tout ce que le
+ * serveur n'a pas eu le temps de dire.
+ */
+function ageDe(f) {
+  const n = S.stades?.[f.racine ?? f.id] ?? 1;
+  return n > 1 ? (lineOf(f)[n - 1] ?? f) : f;
+}
 function lineOf(f) {
-  // remonte à la base puis redescend la chaîne d'évolution
-  let base = f;
-  for (let i = 0; i < 5; i++) {
-    const prev = DEX.find((x) => x.evo === base.id);
-    if (!prev) break;
-    base = prev;
-  }
-  const chain = [base];
-  while (chain.at(-1).evo) chain.push(BY_ID.get(chain.at(-1).evo));
-  return chain;
+  // Les âges d'un personnage, du premier au dernier, dans l'ordre annoncé par
+  // le serveur. On ne remonte plus la chaîne à la main : `racine` et `stade`
+  // arrivent avec le catalogue, et deux façons de calculer la même lignée
+  // finissent par ne plus donner la même.
+  const racine = f.racine ?? f.id;
+  return DEX.filter((x) => (x.racine ?? x.id) === racine)
+    .sort((a, b) => (a.stade ?? 1) - (b.stade ?? 1));
 }
 
-function showDetail(f) {
+function showDetail(recu) {
+  // On peut arriver ici depuis un âge quelconque — un lien, la lignée affichée
+  // juste en dessous. C'est toujours la fiche du personnage qui s'ouvre : le
+  // joueur n'en possède qu'un.
+  const f = BY_ID.get(recu.racine ?? recu.id) ?? recu;
   current = f;
-  $('dCard').innerHTML = cardHTML(f);
+  const stade = S.stades?.[f.id] ?? 1;
+  const chain = lineOf(f);
+  const age = chain[stade - 1] ?? f;
+
+  $('dCard').innerHTML = cardHTML(age);
   const owned = S.col[f.id] ?? 0;
-  $('dMeta').innerHTML = `<b>${TYPES[f.type].nom}</b> · ${f.id} · étage ${f.stage}<br>
-    ${modsText(f).join(' · ')}<br>
-    Cri : <b>${f.cri.label}</b> (${f.cri.power})<br>
+  $('dMeta').innerHTML = `<b>${TYPES[age.type].nom}</b> · ${f.id} · stade ${stade}<br>
+    ${modsText(age).join(' · ')}<br>
+    Cri : <b>${age.cri.label}</b> (${age.cri.power})<br>
     Exemplaires : ${owned}`;
 
-  const chain = lineOf(f);
+  // `have` marque les âges **atteints**, pas des cartes détenues séparément :
+  // un personnage au stade 2 a bien vécu son stade 1.
   $('dEvo').innerHTML = chain.length > 1
     ? `<h4>LIGNÉE</h4><div class="evo">${chain.map((x, i) =>
-        `${i ? '<span class="arrow">›</span>' : ''}<div class="step ${S.col[x.id] ? 'have' : ''}">
+        `${i ? '<span class="arrow">›</span>' : ''}<div class="step ${owned && stade > i ? 'have' : ''}">
           ${cardHTML(x, { mini:true })}<b>${x.nom.split(' ')[0]}</b></div>`).join('')}</div>`
     : '<h4>SANS ÉVOLUTION</h4>';
 
   const btn = $('dEvolve');
-  if (f.evo) {
-    const next = BY_ID.get(f.evo);
-    const cost = EVO_COST[next.stage] ?? 40;
+  const next = chain[stade];
+  if (next) {
+    const cost = EVO_COST[stade + 1] ?? 40;
     const can = owned > 0 && S.scarves >= cost;
     btn.textContent = `ÉVOLUER · ${cost} ÉCHARPES`;
     btn.disabled = !can;
     btn.onclick = () => evolve(f, next, cost);
-  } else { btn.textContent = 'AUCUNE ÉVOLUTION'; btn.disabled = true; }
+  } else {
+    // Deux raisons de ne pas pouvoir évoluer, et elles ne se disent pas pareil :
+    // le personnage est au bout de sa lignée, ou ses âges suivants ne sont pas
+    // encore dessinés. « Aucune évolution » pour les deux laisserait croire que
+    // les cent cinquante-deux autres n'en auront jamais.
+    btn.textContent = chain.length > 1 ? 'AU BOUT DE SA LIGNÉE' : 'ÉVOLUTION À VENIR';
+    btn.disabled = true;
+  }
 
   // Lien vers la fiche complète : la fenêtre de détail reste un aperçu.
   $('dMeta').insertAdjacentHTML('beforeend',
@@ -1116,13 +1165,17 @@ $('detail').addEventListener('click', (e) => {
   if (s && s.dataset.id !== current?.id && S.col[s.dataset.id]) showDetail(BY_ID.get(s.dataset.id));
 });
 
-async function evolve(from, to, cost) {
+async function evolve(perso, to, cost) {
   try {
-    const r = await api('/evolve', { id: from.id });
+    const avant = ageDe(perso);
+    const r = await api('/evolve', { id: perso.id });
     S.scarves = r.wallet.scarves;
     await load();
-    toast(`${from.nom} devient ${to.nom}`);
-    renderDex(); renderTeam(); showDetail(to);
+    toast(`${avant.nom} devient ${to.nom}`);
+    // `perso` et non `to` : c'est la fiche du personnage qu'on rouvre, et
+    // elle montrera d'elle-même le nouvel âge — `load()` vient de rapporter
+    // le stade atteint.
+    renderDex(); renderTeam(); showDetail(perso);
   } catch (e) {
     toast(e.code === 'fanzzy.error.not_enough_scarves' ? 'Pas assez d\u2019écharpes'
       : 'Évolution impossible');

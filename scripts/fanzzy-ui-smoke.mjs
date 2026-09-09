@@ -153,10 +153,20 @@ const grille = await page.evaluate(() => ({
   possedees: document.querySelectorAll('#grid .slot:not(.locked)').length,
   progression: document.getElementById('progTxt')?.textContent ?? '',
 }));
-check('la grille affiche tout le catalogue publié', grille.cases === PUBLIE.length);
+/* Une case par personnage, pas une par âge. Le classeur montrait vingt et une
+   cases pour les sept lignées alors que la jauge n'en comptait que sept : le
+   joueur voyait « 5/159 » sous cent soixante-six vignettes. */
+const PERSOS = PUBLIE.filter((f) => !PUBLIE.some((x) => x.evo === f.id));
+check('la grille affiche un personnage par case', grille.cases === PERSOS.length);
 check('les cartes possédées sont distinguées', grille.possedees === 5);
-check('la progression compte sur le catalogue du serveur',
-  grille.progression === `5/${PUBLIE.length}`);
+/* Le dénominateur compte des **personnages**, pas des lignes de catalogue.
+   Les quatorze âges supérieurs des sept lignées ne s'obtiennent pas en booster,
+   ils s'achètent en écharpes : les mettre au dénominateur promettait au joueur
+   quatorze cartes qu'aucune ouverture ne pouvait lui donner, et la jauge
+   n'aurait jamais atteint le bout. */
+
+check('la progression compte les personnages, pas leurs âges',
+  grille.progression === `5/${PERSOS.length}`);
 
 // La grille se peuplait déjà mal quand une seule chose manquait : ce contrôle
 // vaut pour toutes les cartes non possédées, celles qui passent par `esc`.

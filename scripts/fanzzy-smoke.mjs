@@ -143,35 +143,66 @@ check('les doublons ont rapporté', r.json.wallet.scarves > 500 - PACK_PRICE);
 
 /* --------------------------------------------------------- évolution */
 
+/* Faire évoluer ne remplace plus une carte par une autre : le personnage
+   grandit sur place. Ce qui doit rester vrai après l'opération, c'est qu'il est
+   toujours là — et avec autant d'exemplaires qu'avant. L'ancienne version en
+   consommait un, ce qui, sur une ligne unique, revenait maintenant à
+   confisquer la carte qu'on vient de payer. */
+
 const base1 = DEX.find((f) => f.stage === 1 && f.evo);
 await pool.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)
                   ON DUPLICATE KEY UPDATE copies = copies + 1`, [U, base1.id]);
+const mien = async () => (await pool.query(
+  'SELECT copies, stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?',
+  [U, base1.id]))[0][0];
+
+const avant = await mien();
 await pool.query('UPDATE user_wallet SET scarves = 5 WHERE user_id = ?', [U]);
 r = await call('/api/fanzzy/evolve', { method: 'POST', body: { id: base1.id } });
 check('évolution refusée sans écharpes', r.json.error === 'fanzzy.error.not_enough_scarves');
+check('et rien n’a bougé', (await mien()).stage === 1);
 
 await pool.query('UPDATE user_wallet SET scarves = 300 WHERE user_id = ?', [U]);
 r = await call('/api/fanzzy/evolve', { method: 'POST', body: { id: base1.id } });
-check('évolution acceptée', r.json.to === base1.evo);
+check('évolution acceptée', r.json.stade === 2 && r.json.to === base1.evo);
 check('écharpes débitées', r.json.wallet.scarves === 300 - r.json.spent);
+check('elle porte le nom du nouvel âge', r.json.nom === DEX.find((f) => f.id === base1.evo).nom);
 
-const [[after]] = await pool.query(
-  'SELECT copies FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?', [U, base1.evo]);
-check('la forme évoluée est en collection', after.copies >= 1);
+const apres = await mien();
+check('le personnage reste en collection, au stade 2',
+  apres !== undefined && apres.stage === 2);
+check('et son doublon n’a pas été consommé', apres.copies === avant.copies);
+check('l’âge supérieur n’est pas une carte à part',
+  (await pool.query('SELECT 1 FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?',
+    [U, base1.evo]))[0].length === 0);
 
-const last = DEX.find((f) => !f.evo);
+r = await call('/api/fanzzy/state');
+check('le stade atteint est annoncé au client', r.json.stades?.[base1.id] === 2);
+
+// Deuxième cran, puis le mur : une lignée n'a que trois âges écrits.
+r = await call('/api/fanzzy/evolve', { method: 'POST', body: { id: base1.id } });
+check('deuxième évolution acceptée', r.json.stade === 3);
+r = await call('/api/fanzzy/evolve', { method: 'POST', body: { id: base1.id } });
+check('au bout de la lignée, refus', r.json.error === 'fanzzy.error.no_evolution');
+
+const last = DEX.find((f) => f.stage === 1 && !f.evo);
+await pool.query(`INSERT IGNORE INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)`,
+  [U, last.id]);
 r = await call('/api/fanzzy/evolve', { method: 'POST', body: { id: last.id } });
-check('un Fanzzy sans évolution est refusé', r.json.error === 'fanzzy.error.no_evolution');
+check('un personnage dont le deuxième âge n’est pas écrit est refusé',
+  r.json.error === 'fanzzy.error.no_evolution');
 
 r = await call('/api/fanzzy/evolve', { method: 'POST', body: { id: 'X-INEXISTANT' } });
-check('identifiant inconnu refusé', r.json.error === 'fanzzy.error.no_evolution');
+check('identifiant inconnu refusé', r.json.error === 'fanzzy.error.unknown');
 
 /* -------------------------------------------------------- équipement */
 
+// On demande l'âge supérieur exprès : un lien ou un deck d'avant le repliage
+// le désigne encore, et il doit se traduire au lieu d'échouer.
 r = await call('/api/fanzzy/active', { method: 'POST', body: { id: base1.evo } });
-check('Fanzzy équipé', r.json.active === base1.evo);
+check('équiper un âge équipe son personnage', r.json.active === base1.id);
 const eq = await F.activeFanzzy(U);
-check('le duel peut le lire', eq?.id === base1.evo && Boolean(eq.mods));
+check('le duel le lit à son premier âge', eq?.id === base1.id && Boolean(eq.mods));
 
 const jamais = DEX.find((f) => !Object.keys(col).includes(f.id) && f.id !== base1.evo);
 r = await call('/api/fanzzy/active', { method: 'POST', body: { id: 'Z9' } });
@@ -239,9 +270,15 @@ check('catalogue de l\u2019équipement servi', r.json.stuff.length === 7);
   // Le catalogue reste entier : une carte d'une série fermée doit continuer à
   // s'afficher chez qui la possède déjà.
   check('mais il ne perd aucune carte', r.json.dex.some((f) => f.set === fermee));
-  check('et il dit combien de cartes restent à collectionner',
+  // Ce chiffre compte des **personnages**, pas des lignes de catalogue. Le
+  // compter sur les lignes y ajouterait les âges supérieurs des lignées, qu'un
+  // booster ne distribue jamais : la jauge n'aurait pas pu arriver au bout.
+  check('et il dit combien de personnages restent à collectionner',
     r.json.aCollectionner > 0
-    && r.json.aCollectionner === r.json.dex.filter((f) => f.set === ouverte).length);
+    && r.json.aCollectionner === r.json.dex
+      .filter((f) => f.set === ouverte && f.racine === f.id).length);
+  check('chaque entrée dit de quel personnage elle est un âge',
+    r.json.dex.every((f) => f.racine && f.stade >= 1));
 
   r = await call('/api/fanzzy/open', { method: 'POST', body: { set: fermee } });
   check('une série fermée ne distribue plus', r.json.error === 'fanzzy.error.set_closed');

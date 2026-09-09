@@ -70,10 +70,24 @@ curl -s https://thebestfan.online/healthz
 
 ```bash
 cd ~/sites/thebestfan.online
-for f in auth football duel souvenirs fanzzy teletext inventaire deck admin; do
+for f in auth football duel souvenirs fanzzy teletext inventaire deck admin \
+         raretes stades; do
   mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
 done
 ```
+
+Les deux derniers sont des **reprises**, pas des créations de tables : ils
+n'apparaissent donc pas dans le compte ci-dessous, et une base neuve tourne sans
+eux. Ils sont rejouables, et l'ordre compte — `stades` lit les lignées telles que
+`raretes` les a rangées.
+
+- `raretes.sql` fait passer l'échelle de cinq crans à quatre et range les sept
+  lignées dans les thèmes.
+- `stades.sql` replie les âges sur le personnage : un joueur possède désormais
+  *le Choriste au stade 2*, et non *le Meneur de chant*. **Il déplace des
+  collections existantes** — c'est la seule migration du projet dans ce cas.
+  `node scripts/stades-smoke.mjs` la rejoue sur une collection fabriquée avant
+  que tu la lances ici.
 
 Contrôle : `SHOW TABLES;` doit en lister 27. (Le chiffre 24 qui figurait ici était faux : les neuf fichiers SQL créent 27 tables, et une table manquante produit des erreurs déroutantes.)
 

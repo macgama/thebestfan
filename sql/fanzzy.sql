@@ -34,10 +34,22 @@ CREATE TABLE IF NOT EXISTS fanzzy (
   KEY k_fanzzy_tirage (publie, set_id, rar)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Ce que le joueur possède : **un personnage**, pas un âge.
+--
+-- `fanzzy_id` désigne le premier âge de la lignée — celui que les boosters
+-- distribuent — et `stage` dit jusqu'où le joueur l'a fait grandir. Les âges
+-- supérieurs restent des lignes du catalogue, parce qu'ils portent chacun leur
+-- nom, leur histoire et leurs bonus ; ils ne sont simplement pas des cartes
+-- séparées à posséder.
+--
+-- Avant, ils l'étaient : faire évoluer un Choriste le retirait de la collection
+-- pour y poser un Meneur de chant, et sept personnages occupaient vingt et une
+-- entrées. Voir sql/stades.sql pour la reprise des collections existantes.
 CREATE TABLE IF NOT EXISTS user_fanzzy (
   user_id    CHAR(36)    NOT NULL,
   fanzzy_id  VARCHAR(12) NOT NULL,
   copies     SMALLINT    NOT NULL DEFAULT 1,
+  stage      TINYINT     NOT NULL DEFAULT 1,
   first_at   DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (user_id, fanzzy_id),
   CONSTRAINT fk_uf_user FOREIGN KEY (user_id) REFERENCES users(public_id) ON DELETE CASCADE

@@ -3,8 +3,8 @@ import express from 'express';
 // coûts — restent du code, parce qu'ils décrivent les règles du jeu et non son
 // contenu. On ne change pas un taux de tirage depuis un écran d'administration.
 import { SETS, TYPES, RAR, RATES, SCARVES, EVO_COST } from '../../shared/fanzzy/dex.js';
-import { tous, publies, parIdentifiant, obtenables, seriesOuvertes, serieOuverte }
-  from './catalogue.js';
+import { tous, publies, parIdentifiant, obtenables, seriesOuvertes, serieOuverte,
+  racineDe, lignee, auStade } from './catalogue.js';
 import { SKINS, SKIN_BY_ID, STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 
 /**
@@ -86,6 +86,23 @@ export function createFanzzy({ pool, requireAuth }) {
   async function collection(userId) {
     const rows = await q(`SELECT fanzzy_id, copies FROM user_fanzzy WHERE user_id = ?`, [userId]);
     return Object.fromEntries(rows.map((r) => [r.fanzzy_id, r.copies]));
+  }
+
+  /**
+   * Jusqu'où chaque personnage a été fait grandir.
+   *
+   * Volontairement à part de `collection`, qui rend un nombre d'exemplaires par
+   * identifiant : y glisser un objet aurait cassé en silence tout ce qui lit
+   * cette valeur comme un compteur — le classeur en fait un total, l'accueil en
+   * fait une jauge. Deux cartes, deux significations, deux champs.
+   *
+   * Seuls les stades supérieurs à 1 y figurent : le premier âge est le défaut,
+   * et une entrée par personnage possédé n'apprendrait rien.
+   */
+  async function stades(userId) {
+    const rows = await q(
+      `SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ? AND stage > 1`, [userId]);
+    return Object.fromEntries(rows.map((r) => [r.fanzzy_id, Number(r.stage)]));
   }
 
   /* -------------------------------------------------------------- tirage */
@@ -248,45 +265,65 @@ export function createFanzzy({ pool, requireAuth }) {
     }
   }
 
-  /* ----------------------------------------------------------- évolution */
+  /* ----------------------------------------------------------- évolution
 
-  async function evolve(userId, fromId) {
-    const from = parIdentifiant(fromId);
-    if (!from?.evo) throw fail('fanzzy.error.no_evolution');
-    const to = parIdentifiant(from.evo);
-    const cost = EVO_COST[to.stage] ?? 90;
+     Faire évoluer ne remplace plus une carte par une autre : **le personnage
+     grandit**. Sa ligne dans la collection reste la même, son compteur d'âge
+     avance d'un cran.
+
+     Deux conséquences voulues.
+
+     Les **doublons ne se consomment plus**. L'ancienne version retirait un
+     exemplaire du premier âge pour en poser un du second ; quand le joueur n'en
+     avait qu'un, elle supprimait sa ligne et en créait une autre. C'était
+     invisible tant que les deux âges étaient deux cartes. Ce ne l'est plus :
+     décrémenter jusqu'à zéro reviendrait à lui reprendre le personnage qu'il
+     vient de payer. Les écharpes sont le seul coût, et c'est sur elles que
+     l'économie est calibrée.
+
+     Et le **stade est plafonné par ce qui est écrit**. Cent cinquante-deux
+     personnages n'ont encore qu'un âge : leur évolution se refuse avec un code
+     que le client sait nommer, au lieu de laisser passer un stade 2 qui ne
+     correspond à aucune fiche et dont plus rien ne saurait tirer un nom.      */
+
+  async function evolve(userId, idDemande) {
+    // On accepte l'identifiant de n'importe quel âge : un deck ou un lien
+    // enregistré avant le repliage désigne encore « V2 ».
+    const id = racineDe(String(idDemande));
+    const perso = parIdentifiant(id);
+    if (!perso) throw fail('fanzzy.error.unknown');
 
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
       const [[have]] = await conn.query(
-        `SELECT copies FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ? FOR UPDATE`,
-        [userId, fromId]);
+        `SELECT copies, stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ? FOR UPDATE`,
+        [userId, id]);
       if (!have || have.copies < 1) throw fail('fanzzy.error.not_owned');
+
+      const vers = Number(have.stage) + 1;
+      const age = auStade(id, vers);
+      if (!age) throw fail('fanzzy.error.no_evolution');
+      const cost = EVO_COST[vers] ?? 90;
 
       const [d] = await conn.query(
         `UPDATE user_wallet SET scarves = scarves - ? WHERE user_id = ? AND scarves >= ?`,
         [cost, userId, cost]);
       if (!d.affectedRows) throw fail('fanzzy.error.not_enough_scarves');
 
-      if (have.copies > 1) {
-        await conn.query(
-          `UPDATE user_fanzzy SET copies = copies - 1 WHERE user_id = ? AND fanzzy_id = ?`,
-          [userId, fromId]);
-      } else {
-        await conn.query(`DELETE FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
-          [userId, fromId]);
-      }
+      // `AND stage = ?` : la ligne est déjà verrouillée, mais cette condition
+      // rend l'écriture juste même si elle ne l'était pas. Deux évolutions
+      // lancées en même temps ne peuvent pas faire sauter deux stades pour le
+      // prix d'un.
       await conn.query(
-        `INSERT INTO user_fanzzy (user_id, fanzzy_id, copies) VALUES (?, ?, 1)
-         ON DUPLICATE KEY UPDATE copies = copies + 1`, [userId, to.id]);
-      // Le Fanzzy équipé suit son évolution.
-      await conn.query(
-        `UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ? AND active_fanzzy = ?`,
-        [to.id, userId, fromId]);
+        `UPDATE user_fanzzy SET stage = ? WHERE user_id = ? AND fanzzy_id = ? AND stage = ?`,
+        [vers, userId, id, have.stage]);
 
       await conn.commit();
-      return { from: fromId, to: to.id, spent: cost };
+      return { id, stade: vers, nom: age.nom, rar: age.rar, spent: cost,
+        // `from`/`to` restent pour les pages qui les lisent encore. Ils
+        // désignent maintenant deux âges du même personnage, pas deux cartes.
+        from: id, to: age.id };
     } catch (e) {
       await conn.rollback();
       throw e;
@@ -348,7 +385,14 @@ export function createFanzzy({ pool, requireAuth }) {
       // Tout le catalogue publié, y compris les séries fermées : un joueur qui
       // possède déjà une carte d'une série refermée doit continuer à la voir
       // dans son classeur et à la jouer. Fermer, c'est cesser de distribuer.
-      dex: publies(),
+      //
+      // `racine` et `stade` sont ajoutés ici plutôt que laissés à déduire. Une
+      // page qui doit deviner qu'une entrée est le deuxième âge d'une autre le
+      // devinera de travers le jour où la règle bouge, et elle le fera en
+      // silence — c'est exactement la faute du catalogue recopié, sous une
+      // autre forme.
+      dex: publies().map((f) => ({ ...f, racine: racineDe(f.id),
+        stade: lignee(f.id).findIndex((x) => x.id === f.id) + 1 })),
       // `ouverte` porte l'information ; le kiosque n'affiche que celles-là, et
       // la progression ne se compte que sur elles.
       sets: SETS.map((s) => ({ ...s, ouverte: serieOuverte(s.id) })),
@@ -362,8 +406,8 @@ export function createFanzzy({ pool, requireAuth }) {
   });
 
   router.get('/state', requireAuth, (req, res) =>
-    send(res, Promise.all([wallet(req.user.id), collection(req.user.id)])
-      .then(([w, col]) => ({ wallet: w, collection: col,
+    send(res, Promise.all([wallet(req.user.id), collection(req.user.id), stades(req.user.id)])
+      .then(([w, col, st]) => ({ wallet: w, collection: col, stades: st,
         maxPacks: MAX_PACKS, packPrice: PACK_PRICE }))));
 
   router.post('/open', requireAuth, (req, res) =>
@@ -392,7 +436,10 @@ export function createFanzzy({ pool, requireAuth }) {
   });
 
   router.post('/active', requireAuth, (req, res) => send(res, (async () => {
-    const id = String(req.body?.id ?? '');
+    // On équipe un personnage, jamais un âge : c'est le même individu, et la
+    // collection ne connaît que lui. Accepter « V2 » tel quel poserait dans la
+    // bourse un identifiant introuvable au moment de le dessiner.
+    const id = racineDe(String(req.body?.id ?? ''));
     if (!parIdentifiant(id)) throw fail('fanzzy.error.unknown');
     const owned = await q(`SELECT 1 FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
       [req.user.id, id]);
@@ -409,52 +456,53 @@ export function createFanzzy({ pool, requireAuth }) {
    * enchaîner cinq requêtes pour afficher une carte.
    */
   async function fiche(userId, fanzzyId) {
-    const f = parIdentifiant(fanzzyId);
-    if (!f) return null;
+    // La fiche d'un âge supérieur est la fiche de son personnage : c'est le
+    // même individu, et le joueur n'en possède qu'un.
+    const id = racineDe(String(fanzzyId));
+    const perso = parIdentifiant(id);
+    if (!perso) return null;
 
-    const [copies, skins, stuff, w] = await Promise.all([
-      q(`SELECT copies, first_at FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
-        [userId, fanzzyId]),
+    const [mien, skins, stuff, w] = await Promise.all([
+      q(`SELECT copies, stage, first_at FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
+        [userId, id]),
       q(`SELECT skin_id, equipped, got_at FROM user_skins WHERE user_id = ? AND fanzzy_id = ?`,
-        [userId, fanzzyId]),
+        [userId, id]),
       q(`SELECT stuff_id, copies, slot FROM user_stuff WHERE user_id = ?`, [userId]),
       q(`SELECT active_fanzzy FROM user_wallet WHERE user_id = ?`, [userId]),
     ]);
 
-    // La lignée : on remonte à la base puis on redescend.
-    let base = f;
-    for (let i = 0; i < 5; i++) {
-      const avant = tous().find((x) => x.evo === base.id);
-      if (!avant) break;
-      base = avant;
-    }
-    const lignee = [base];
-    while (lignee.at(-1).evo) lignee.push(parIdentifiant(lignee.at(-1).evo));
-
-    const possedes = new Set((await q(
-      `SELECT fanzzy_id FROM user_fanzzy WHERE user_id = ?`, [userId])).map((r) => r.fanzzy_id));
+    const ages = lignee(id);
+    const stade = Number(mien[0]?.stage ?? 1);
+    // Ce qu'il est **aujourd'hui** : nom, histoire, bonus et cri de l'âge
+    // atteint. Afficher toujours le premier âge donnerait à quelqu'un qui a
+    // payé quatre-vingt-dix écharpes une fiche identique à celle d'avant.
+    const f = ages[stade - 1] ?? perso;
 
     const portes = stuff.filter((s) => s.slot).sort((a, b) => a.slot - b.slot)
       .map((s) => s.stuff_id);
 
     return {
       fanzzy: {
-        id: f.id, nom: f.nom, type: f.type, set: f.set, stage: f.stage, rar: f.rar,
+        id, nom: f.nom, type: f.type, set: f.set, stage: stade, rar: f.rar,
         mods: f.mods, cri: f.cri, evo: f.evo ?? null,
         histoire: f.histoire ?? null,
       },
-      possede: copies[0]?.copies ?? 0,
-      depuis: copies[0]?.first_at ?? null,
-      equipe: w[0]?.active_fanzzy === f.id,
+      possede: mien[0]?.copies ?? 0,
+      stade,
+      depuis: mien[0]?.first_at ?? null,
+      equipe: w[0]?.active_fanzzy === id,
       skins: SKINS.map((sk) => {
-        const mien = skins.find((x) => x.skin_id === sk.id);
-        return { ...sk, possede: Boolean(mien), porte: Boolean(mien?.equipped),
-                 depuis: mien?.got_at ?? null };
+        const m = skins.find((x) => x.skin_id === sk.id);
+        return { ...sk, possede: Boolean(m), porte: Boolean(m?.equipped),
+                 depuis: m?.got_at ?? null };
       }),
-      lignee: lignee.map((x) => ({
-        id: x.id, nom: x.nom, stage: x.stage, rar: x.rar,
-        possede: possedes.has(x.id),
-        cout: x.stage > 1 ? (EVO_COST[x.stage] ?? 90) : 0,
+      // `possede` par âge veut dire « atteint », pas « détenu à part ». Un âge
+      // au-delà du stade actuel se lit donc comme un objectif chiffré, ce qui
+      // est exactement ce que la page en fait.
+      lignee: ages.map((x, i) => ({
+        id: x.id, nom: x.nom, stage: i + 1, rar: x.rar,
+        possede: mien.length > 0 && stade >= i + 1,
+        cout: i ? (EVO_COST[i + 1] ?? 90) : 0,
       })),
       // L'effet réel : les modificateurs du Fanzzy combinés à l'équipement
       // actuellement porté. C'est ce que le duel utilisera vraiment.
@@ -464,11 +512,19 @@ export function createFanzzy({ pool, requireAuth }) {
   }
 
   /** Le Fanzzy équipé, lu par le duel au démarrage d'une partie. */
+  /**
+   * Le Fanzzy équipé, lu par le duel au démarrage d'une partie.
+   *
+   * Il rend **le premier âge**, toujours, quel que soit le stade atteint. Ce
+   * n'est pas un oubli : un duel se joue depuis le début, et le personnage y
+   * grandit en jeu, par une carte. Ce que les écharpes ont acheté, c'est le
+   * droit de jouer cette carte — pas un avantage acquis au coup d'envoi.
+   */
   async function activeFanzzy(userId) {
     const w = (await q(`SELECT active_fanzzy FROM user_wallet WHERE user_id = ?`, [userId]))[0];
-    const f = w?.active_fanzzy ? parIdentifiant(w.active_fanzzy) : null;
+    const f = w?.active_fanzzy ? parIdentifiant(racineDe(w.active_fanzzy)) : null;
     return f ?? null;
   }
 
-  return { router, wallet, collection, openPack, evolve, activeFanzzy, fiche };
+  return { router, wallet, collection, stades, openPack, evolve, activeFanzzy, fiche };
 }

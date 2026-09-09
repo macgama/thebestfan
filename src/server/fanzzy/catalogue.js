@@ -94,6 +94,7 @@ export async function recharger(pool) {
     'SELECT * FROM fanzzy ORDER BY ordre, id');
   liste = rows.map(versJeu);
   parId = new Map(liste.map((f) => [f.id, f]));
+  indexerLignees();
   charge = true;
   return liste.length;
 }
@@ -121,6 +122,96 @@ export function publies() { garde(); return liste.filter((f) => f.publie); }
 
 /** Par identifiant, publiée ou non : une carte déjà possédée doit s'afficher. */
 export function parIdentifiant(id) { garde(); return parId.get(id); }
+
+/* ------------------------------------------- personnages et stades
+
+   Le catalogue garde **une ligne par âge** : le Choriste, le Meneur de chant et
+   le Capo di Curva sont trois lignes, reliées par `evo`. C'est ce qui permet de
+   leur donner chacun son nom, son histoire, ses bonus et son dessin.
+
+   Mais ce sont trois âges d'**un seul personnage**, et c'est le personnage que
+   le joueur collectionne. Il en possède un exemplaire, arrivé à un certain
+   stade ; il n'en possède pas trois. Tout ce qui compte — la jauge, le
+   classeur, le deck, l'avatar — raisonne donc en personnages, et ne descend au
+   niveau des âges que pour lire un nom ou des modificateurs.
+
+   Ces deux index existent pour que cette traduction se fasse en une lecture,
+   partout, au lieu d'être refaite à la main dans chaque module — c'est ainsi
+   que deux modules finissent par ne plus compter pareil.                     */
+
+/** id de n'importe quel âge → id du personnage (son premier âge). */
+let racines = new Map();
+/** id du personnage → ses âges, du premier au dernier. */
+let chaines = new Map();
+
+function indexerLignees() {
+  racines = new Map();
+  chaines = new Map();
+  // Un âge est une racine s'il n'est la suite de personne. On part de là plutôt
+  // que de `stage === 1` : le stade est une donnée d'affichage, modifiable
+  // depuis l'administration, et une lignée mal numérotée doit rester lisible.
+  const suivi = new Set(liste.map((f) => f.evo).filter(Boolean));
+  for (const depart of liste.filter((f) => !suivi.has(f.id))) {
+    const chaine = [depart];
+    const vus = new Set([depart.id]);
+    let c = depart;
+    // `vus` n'est pas de la prudence gratuite : `evo` s'écrit depuis
+    // l'administration, et deux cartes qui se désignent l'une l'autre feraient
+    // tourner cette boucle sans fin — au démarrage, donc sans que rien ne
+    // démarre. Le contrôle de saisie refuse déjà le cas ; celui-ci reste parce
+    // qu'une base peut avoir été modifiée à la main.
+    while (c.evo && parId.has(c.evo) && !vus.has(c.evo)) {
+      c = parId.get(c.evo);
+      vus.add(c.id);
+      chaine.push(c);
+    }
+    chaines.set(depart.id, chaine);
+    for (const f of chaine) racines.set(f.id, depart.id);
+  }
+  // Une carte prise dans un cycle n'a aucune racine : elle serait invisible
+  // partout, y compris pour qui la possède. On la traite comme sa propre
+  // lignée, seule.
+  for (const f of liste) {
+    if (racines.has(f.id)) continue;
+    racines.set(f.id, f.id);
+    chaines.set(f.id, [f]);
+  }
+}
+
+/** Le personnage auquel appartient un âge. Rend l'identifiant tel quel s'il est inconnu. */
+export function racineDe(id) { garde(); return racines.get(id) ?? id; }
+
+/** Les âges d'un personnage, du premier au dernier. Toujours au moins un. */
+export function lignee(id) {
+  garde();
+  return chaines.get(racineDe(id)) ?? [];
+}
+
+/**
+ * L'âge `n` d'un personnage — 1, 2 ou 3 — ou `undefined` s'il n'est pas écrit.
+ *
+ * Cent cinquante-deux personnages n'ont encore que leur premier âge. Ce n'est
+ * pas une anomalie à corriger dans le code : c'est du contenu à écrire, et
+ * jusque-là leur évolution se refuse proprement.
+ */
+export function auStade(id, n) { return lignee(id)[n - 1]; }
+
+/** Combien d'âges ce personnage a-t-il d'écrits ? */
+export const stadesEcrits = (id) => lignee(id).length;
+
+/**
+ * Les personnages, pas les âges.
+ *
+ * C'est sur cet ensemble que se compte une collection. Le compter sur les
+ * lignes du catalogue donnait vingt et une entrées pour sept personnages —
+ * dont quatorze qu'aucun booster ne peut sortir, puisqu'ils ne s'obtiennent
+ * qu'en faisant évoluer. La jauge promettait donc au joueur des cartes qui
+ * n'existaient nulle part.
+ */
+export function personnages() {
+  garde();
+  return [...chaines.values()].map((c) => c[0]);
+}
 
 /* ------------------------------------------------- les séries ouvertes
 
@@ -179,19 +270,26 @@ export function seriesOuvertes() { return ouvertes ? [...ouvertes] : null; }
 export function serieOuverte(setId) { return !ouvertes || ouvertes.has(setId); }
 
 /**
- * Ce qu'un joueur peut encore obtenir : publié **et** dans une série ouverte.
+ * Ce qu'un joueur peut encore obtenir : un **personnage** publié, dans une
+ * série ouverte.
  *
  * C'est sur cet ensemble que se compte la progression. La compter sur tout le
  * catalogue afficherait « 31/166 » à quelqu'un qui possède déjà tout ce qu'il
- * peut posséder — le pire message qu'on puisse envoyer à un collectionneur.
+ * peut posséder — le pire message qu'on puisse envoyer à un collectionneur. Et
+ * la compter sur les lignes du catalogue y ajouterait les quatorze âges
+ * supérieurs des sept lignées, qu'aucun booster ne distribue : la jauge
+ * n'aurait jamais pu arriver au bout.
  */
 export function obtenables() {
   garde();
-  return liste.filter((f) => f.publie && serieOuverte(f.set));
+  return personnages().filter((f) => f.publie && serieOuverte(f.set));
 }
 
 /** Utile aux tests et au diagnostic. */
 export const estCharge = () => charge;
 
 /** Uniquement pour les tests : repart d'un catalogue non chargé. */
-export function oublier() { charge = false; liste = []; parId = new Map(); }
+export function oublier() {
+  charge = false; liste = []; parId = new Map();
+  racines = new Map(); chaines = new Map();
+}

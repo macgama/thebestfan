@@ -1,6 +1,6 @@
 import express from 'express';
 import { ACTIONS, ACTION_BY_ID, DECK_RULES, validerDeck } from '../../shared/duel/actions.js';
-import { parIdentifiant } from '../fanzzy/catalogue.js';
+import { parIdentifiant, racineDe } from '../fanzzy/catalogue.js';
 import { STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 import { jourISO } from '../../shared/jour.js';
 
@@ -51,12 +51,31 @@ export function createDecks({ pool, requireAuth }) {
 
   /* ------------------------------------------------------------- lecture */
 
+  /**
+   * Un deck entre toujours **au premier âge**.
+   *
+   * C'est la règle du duel : personne n'arrive avec un personnage déjà grandi.
+   * Ce qu'un joueur a débloqué en écharpes lui donne le droit de le faire
+   * grandir *pendant* la partie, en y consacrant une carte de ses dix. Deux
+   * tribunes se rencontrent donc au même niveau, et l'écart se creuse par ce
+   * qu'on joue, pas par ce qu'on a payé.
+   *
+   * D'où la traduction faite ici : un deck enregistré avant le repliage des
+   * âges désigne encore « V2 ». On le ramène à son personnage à la lecture
+   * comme à l'écriture — c'est ce qui répare tout seul les decks existants, et
+   * ce qui évite d'aller réécrire du JSON en SQL dans la migration.
+   */
+  const auPremierAge = (deck) => (!deck ? deck : {
+    ...deck,
+    fanzzy: (deck.fanzzy ?? []).map((f) => ({ ...f, id: racineDe(f.id) })),
+  });
+
   async function deckDe(userId) {
     const rows = await q(
       `SELECT contenu FROM user_decks WHERE user_id = ? AND actif = 1 LIMIT 1`, [userId]);
     if (!rows.length) return null;
     const c = rows[0].contenu;
-    return typeof c === 'string' ? JSON.parse(c) : c;
+    return auPremierAge(typeof c === 'string' ? JSON.parse(c) : c);
   }
 
   /** Le deck déplié : tout ce dont le moteur a besoin, sans relire la base. */
@@ -82,7 +101,8 @@ export function createDecks({ pool, requireAuth }) {
     };
   }
 
-  async function enregistrer(userId, deck) {
+  async function enregistrer(userId, deckBrut) {
+    const deck = auPremierAge(deckBrut) ?? deckBrut;
     const possede = await possessions(userId);
     const v = validerDeck(deck, possede);
     if (!v.valide) throw fail('deck.error.invalid', v.problemes);
