@@ -45,8 +45,21 @@ let r = await call('/api/fanzzy/dex');
 // Le nombre de séries n'est pas figé ici : il en existe trois depuis
 // l'arrivée du VIRAGE IMPOSSIBLE, et il en existera d'autres. Un test qui
 // écrit « 2 » en dur casse à chaque ajout sans rien avoir attrapé d'utile.
-check('catalogue servi', r.json.dex?.length === DEX.length
+// `publies()` et non tout le catalogue : trente-deux anciennes cartes sont
+// dépubliées parce qu'elles refont un personnage du lot de 2026. Comparer au
+// total ferait échouer ce test à chaque carte retirée, alors que retirer une
+// carte est une opération normale de l'administration.
+const attendues = DEX.filter((f) => f.publie !== false);
+check('catalogue servi', r.json.dex?.length === attendues.length
   && r.json.sets?.length === SETS.length);
+// Et l'inverse compte autant : une carte retirée qui reste servie continuerait
+// d'apparaître au classeur et de se tirer, sans que rien ne le signale.
+{
+  const servis = new Set((r.json.dex ?? []).map((f) => f.id));
+  const fuites = DEX.filter((f) => f.publie === false && servis.has(f.id));
+  check('aucune carte retirée n’est servie', fuites.length === 0);
+  if (fuites.length) console.log('      ', fuites.map((f) => f.id).join(', '));
+}
 
 r = await call('/api/fanzzy/state');
 check('réserve pleine au départ', r.json.wallet.packs === MAX_PACKS);

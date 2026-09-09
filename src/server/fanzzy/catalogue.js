@@ -71,12 +71,18 @@ const versJeu = (r) => ({
 async function amorcer(pool) {
   let pose = 0;
   for (const [i, f] of AMORCE.entries()) {
+    // `publie` vient de la fiche et non d'un 1 en dur : trente-deux anciennes
+    // cartes refont un personnage du lot de 2026 et ne doivent plus être
+    // proposées. Écrire 1 quoi qu'il arrive les remettrait dans les tirages à
+    // chaque base neuve, et il faudrait les retirer à la main après chaque
+    // installation — ce que personne ne pense à faire.
     const [r] = await pool.execute(
       `INSERT IGNORE INTO fanzzy
          (id, nom, type, set_id, stage, rar, evo, histoire, mods, cri, publie, ordre)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [f.id, f.nom, f.type, f.set, f.stage, f.rar, f.evo ?? null,
-       f.histoire ?? null, JSON.stringify(f.mods ?? {}), JSON.stringify(f.cri ?? {}), i]);
+       f.histoire ?? null, JSON.stringify(f.mods ?? {}), JSON.stringify(f.cri ?? {}),
+       f.publie === false ? 0 : 1, i]);
     if (r.affectedRows) pose++;
   }
   return pose;
