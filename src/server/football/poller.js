@@ -33,6 +33,11 @@ export function mapFixture(r) {
     awayGoals: r.goals?.away ?? null,
     status: r.fixture.status?.short ?? 'NS',
     elapsed: r.fixture.status?.elapsed ?? null,
+    /* `extra` : le temps additionnel, servi à part par l'API. 90+3 n'est pas
+       93, et la différence compte pour qui regarde le match — c'est aussi la
+       seule façon de savoir qu'on a dépassé le terme réglementaire, donc de
+       cesser d'annoncer « 90' » une fois le coup de sifflet donné. */
+    elapsedExtra: r.fixture.status?.extra ?? null,
     venue: r.fixture.venue?.name ?? null,
     kickoffAt: toSqlDate(r.fixture.date),
     teams: r.teams,
@@ -119,14 +124,27 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished,
    * permet à la boucle d'accélérer ou de se mettre en veille.
    */
   async function pollLive() {
-    const ids = [...new Set([...(await store.liveFixtureIds()), ...(await store.dueToStartIds())])];
-    if (!ids.length) return 0;
-
-    // Les matchs dont une salle de virage est occupée : eux seuls justifient
-    // un relevé d'événements en dehors d'un changement de score.
+    /* Les matchs dont une salle de virage est occupée.
+     *
+     * Ils servent deux fois. D'abord ici : **ils entrent dans le relevé même
+     * si personne ne suit leurs clubs.** Depuis que le virage s'ouvre à tous
+     * les matchs en direct, on peut pousser sur une rencontre qu'aucun joueur
+     * ne suit — et le relevé, lui, ne regardait que les clubs suivis. Ces
+     * matchs-là n'étaient donc jamais rafraîchis : ils restaient figés sur
+     * « 90' EN DIRECT » longtemps après le coup de sifflet, score compris.
+     *
+     * Ensuite plus bas, pour décider s'ils méritent un relevé d'événements.
+     */
     let auFil = new Set();
     try { auFil = new Set(fixturesAuFil() ?? []); }
     catch (e) { log.error('[foot] salles au fil', e.message); }
+
+    const ids = [...new Set([
+      ...(await store.liveFixtureIds()),
+      ...(await store.dueToStartIds()),
+      ...auFil,
+    ])];
+    if (!ids.length) return 0;
 
     let live = 0;
     for (let i = 0; i < ids.length; i += 20) {
@@ -152,6 +170,7 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished,
            et le coup de sifflet final même les jours où le quota est serré. */
         try {
           onStatus?.(f.id, { status: f.status, elapsed: f.elapsed,
+            elapsedExtra: f.elapsedExtra,
             homeGoals: f.homeGoals, awayGoals: f.awayGoals });
         } catch (e) { log.error('[foot] onStatus', e.message); }
 

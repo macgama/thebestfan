@@ -185,6 +185,8 @@ export function createTeletext({ pool, client, footballStore = null }) {
         date: r.fixture.date,
         status: r.fixture.status?.short,
         elapsed: r.fixture.status?.elapsed ?? null,
+        // Le temps additionnel : sans lui, la page ne peut afficher que « 90+ ».
+        extra: r.fixture.status?.extra ?? null,
         // Instant de la lecture chez l'API : le client fait défiler le chrono
         // à partir de là, sans redemander quoi que ce soit.
         luA: luA ?? Date.now(),
@@ -485,6 +487,7 @@ export function createTeletext({ pool, client, footballStore = null }) {
             round: r.league.round, homeId: r.teams.home.id, awayId: r.teams.away.id,
             homeGoals: r.goals?.home ?? null, awayGoals: r.goals?.away ?? null,
             status: r.fixture.status?.short ?? 'NS', elapsed: r.fixture.status?.elapsed ?? null,
+            elapsedExtra: r.fixture.status?.extra ?? null,
             venue: r.fixture.venue?.name ?? null,
             kickoffAt: new Date(r.fixture.date).toISOString().slice(0, 19).replace('T', ' '),
           });
@@ -497,6 +500,7 @@ export function createTeletext({ pool, client, footballStore = null }) {
       date: r.fixture.date,
       status: r.fixture.status?.short,
       elapsed: r.fixture.status?.elapsed,
+      extra: r.fixture.status?.extra ?? null,
       round: r.league?.round,
       home: { id: r.teams.home.id, name: r.teams.home.name, logo: r.teams.home.logo, goals: r.goals?.home },
       away: { id: r.teams.away.id, name: r.teams.away.name, logo: r.teams.away.logo, goals: r.goals?.away },

@@ -51,7 +51,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'tenues.sql',
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'tenues.sql',
                  'niveau.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
@@ -121,6 +121,12 @@ app.get('/api/auth/me', (_q, s) => s.json({ user: { pseudo: 'Momo' } }));
 // personnage. Un talon rend le score pilotable, donc le but rejouable.
 let direct = null;
 app.get('/api/virage/live', (_q, s) => s.json({ matchs: direct ? [direct] : [] }));
+
+/* Le relevé d'événements, tel que la base le porte. L'accueil y lit le nom du
+   buteur et sa minute — sans appel à l'API, le relevé du direct les a déjà
+   écrits. Un talon rend le buteur pilotable, donc le but rejouable. */
+let evenements = [];
+app.get('/api/football/fixture/:id/events', (_q, s) => s.json({ events: evenements }));
 
 /* Le Fanzzy équipé n'est pas simulé : il vit dans `user_wallet.active_fanzzy`
    et le vrai module fanzzy le sert. On l’équipe donc en base, comme le ferait
@@ -625,6 +631,65 @@ await page.close();
       return { texte: b.textContent.trim(), visible: b.classList.contains('on') };
     });
     check('un but affiche son bandeau', m.visible && /goal/i.test(m.texte));
+
+    /* Le buteur et la minute.
+       Ils arrivent **après** le score : le relevé du direct écrit l'événement
+       un instant plus tard. Le bandeau annonce donc le but tout de suite et se
+       complète ensuite — attendre un nom qui ne viendra peut-être jamais
+       ferait manquer l'annonce elle-même. */
+    evenements = [
+      { seq: 0, type: 'Card', detail: 'Yellow Card', team_id: 91, player: 'Keller', minute: 12 },
+      { seq: 1, type: 'Goal', detail: 'Normal Goal', team_id: 85, player: 'Diallo', minute: 63 },
+    ];
+    direct = { ...direct, home_goals: 4 };
+    await page.evaluate(() => TBF.veiller());
+    await new Promise((r) => setTimeout(r, 900));
+    const sous = await page.$eval('#momentSous', (n) => n.textContent.trim());
+    check('le bandeau nomme le buteur et sa minute',
+      /Diallo/.test(sous) && /63/.test(sous)
+      || (console.log('        il dit :', JSON.stringify(sous)), false));
+
+    /* Sans événement en base — le cas ordinaire des premières secondes — le
+       bandeau reste sur « Goal ! », ce qui est vrai. Il ne doit pas afficher
+       le buteur du but précédent. */
+    evenements = [];
+    direct = { ...direct, home_goals: 5 };
+    await page.evaluate(() => TBF.veiller());
+    await new Promise((r) => setTimeout(r, 900));
+    check('sans buteur connu, il n’invente rien',
+      (await page.$eval('#momentSous', (n) => n.textContent.trim())) === '');
+
+    /* ------------------------------- le but refusé par l'arbitrage vidéo
+
+     * Le score **recule**. C'est le seul signal fiable : le libellé de
+     * l'événement varie d'une compétition à l'autre, le score non. L'accueil
+     * ignorait purement et simplement les écarts négatifs — un but annulé ne
+     * produisait donc rien du tout, et le joueur restait sur une célébration
+     * pour un but qui n'existait plus. */
+    direct = { ...direct, home_goals: 4 };
+    await page.evaluate(() => TBF.veiller());
+    await new Promise((r) => setTimeout(r, 800));
+    const refus = await page.evaluate(() => ({
+      titre: document.getElementById('momentTitre').textContent.trim(),
+      sous: document.getElementById('momentSous').textContent.trim(),
+      pose: document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '',
+    }));
+    check('un but annulé est annoncé comme refusé',
+      /refus/i.test(refus.titre)
+      || (console.log('        il dit :', JSON.stringify(refus.titre)), false));
+    check('et la vidéo est nommée comme cause', /vidéo/i.test(refus.sous));
+    /* `decision` est l'état prévu pour ça — « carton ou but refusé contre ton
+       club ». Le supporter générique ne l'a pas dessiné : il retombe alors sur
+       son repos, et c'est le bon comportement. Ce qui compte, c'est qu'il ne
+       reste **pas** en train d'exulter pour un but annulé. */
+    check('et le personnage cesse d’exulter',
+      !/\/img\/supporter\/goal\./.test(refus.pose)
+      || (console.log('        il affiche', refus.pose), false));
+
+    // On remet un but pour la suite : les contrôles de durée en ont besoin.
+    direct = { ...direct, home_goals: 5 };
+    await page.evaluate(() => TBF.veiller());
+    await new Promise((r) => setTimeout(r, 600));
 
     /* Trois secondes plus tard, tout est encore là. C'est la panne exacte :
        à deux secondes et demie, il ne restait plus rien à voir. */

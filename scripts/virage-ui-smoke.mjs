@@ -50,7 +50,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
   souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
   duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
   leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql', 'tenues.sql']) {
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'souvenirs.sql', 'fanzzy.sql', 'tenues.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
@@ -150,6 +150,66 @@ const bande = () => page.evaluate(() => ({
     const s = document.querySelector('#fil .sc small').getBoundingClientRect();
     return s.top >= f.top && s.bottom <= f.bottom && s.height > 0;
   }));
+}
+
+/* ------------------------------------------------- l'horloge du match
+
+ * Trois fautes tenaient ensemble et donnaient le même symptôme : un match
+ * resté « 90' EN DIRECT » dix minutes après le coup de sifflet.
+ *
+ *   — le temps additionnel n'existait nulle part : l'API le sert à part, on ne
+ *     le stockait pas, et l'horloge s'arrêtait à « 90+ » sans dire combien ;
+ *   — le compte partait de l'instant où la **page** avait reçu la donnée, si
+ *     bien qu'une donnée vieille d'un quart d'heure repartait de zéro ;
+ *   — rien ne faisait taire l'horloge, ni la fin du match, ni le silence du
+ *     serveur.
+ *
+ * On éprouve la fonction elle-même, en lui posant des états : c'est du calcul
+ * pur, et le faire par le vrai relevé demanderait d'attendre des minutes.
+ */
+{
+  const dit = (etat) => page.evaluate((e) => {
+    const avant = { minute: S.minute, minuteExtra: S.minuteExtra, statut: S.statut, vuA: S.vuA };
+    Object.assign(S, e);
+    const t = minuteTexte();
+    Object.assign(S, avant);
+    return t;
+  }, etat);
+
+  const maintenant = Date.now();
+  check('en cours, elle donne la minute',
+    (await dit({ minute: 63, minuteExtra: null, statut: '2H', vuA: maintenant })) === '63′');
+  check('au-delà du terme, elle donne le temps additionnel',
+    (await dit({ minute: 90, minuteExtra: 3, statut: '2H', vuA: maintenant })) === '90+3′');
+  check('et « 90+ » seulement quand le relevé ne le connaît pas',
+    (await dit({ minute: 92, minuteExtra: null, statut: '2H', vuA: maintenant })) === '90+′');
+  check('les prolongations ont leur propre terme',
+    (await dit({ minute: 120, minuteExtra: 2, statut: 'ET', vuA: maintenant })) === '120+2′');
+
+  /* Le match fini n'a plus de minute. C'est le cœur de la panne : « 90' EN
+     DIRECT » sur une rencontre terminée. */
+  for (const statut of ['FT', 'AET', 'PEN']) {
+    check(`un match ${statut} n’affiche plus de minute`,
+      (await dit({ minute: 90, minuteExtra: null, statut, vuA: maintenant })) === '');
+  }
+
+  check('la mi-temps s’affiche, mais sans courir',
+    (await dit({ minute: 45, minuteExtra: null, statut: 'HT', vuA: maintenant })) === '45′');
+  check('et elle est marquée comme arrêtée',
+    (await page.evaluate((v) => {
+      const avant = { statut: S.statut, vuA: S.vuA };
+      Object.assign(S, { statut: 'HT', vuA: v });
+      const a = minuteCourante()?.arret === true;
+      Object.assign(S, avant);
+      return a;
+    }, maintenant)));
+
+  /* Le silence du serveur. Un match dont on n'a plus de nouvelles depuis un
+     quart d'heure n'est pas un match à la centième minute : c'est un match
+     dont on ne sait plus rien, et il vaut mieux ne rien dire que mentir. */
+  check('après un long silence du serveur, elle se tait',
+    (await dit({ minute: 63, minuteExtra: null, statut: '2H',
+      vuA: maintenant - 20 * 60_000 })) === '');
 }
 
 /* --------------------------------------------------------- la feuille */

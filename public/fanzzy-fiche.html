@@ -8,39 +8,90 @@
 <link rel="stylesheet" href="/ui.css">
 <style>
 
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;min-height:100%}
-body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
-#app{width:100%;max-width:460px;min-height:100dvh;display:flex;flex-direction:column}
+/* ==================================================== la fiche, en un écran
 
-.head{display:flex;align-items:center;gap:11px;padding:14px 16px 6px}
-.head a{background:none;border:1px solid rgba(242,238,228,.2);border-radius:6px;color:inherit;
-  width:32px;height:32px;display:grid;place-items:center;text-decoration:none;font-size:16px}
+   Elle défilait sur mille deux cents pixels : la vitrine, les pastilles, les
+   effets, l'équipement, six tenues, la lignée, les boutons. Tout y était, et
+   il fallait faire défiler trois fois pour en faire le tour — sur l'écran qui
+   sert justement à décider si on équipe ce personnage.
+
+   Une seule règle a suffi à trancher : **le personnage occupe l'écran, le
+   reste passe en onglets.** C'est lui qu'on vient voir, il est dessiné à
+   grands frais, et il ne se regardait qu'en vignette. Les effets, les tenues
+   et la lignée ne se consultent jamais en même temps — ils se remplacent
+   donc dans un volet de hauteur fixe, sous lui. */
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{width:100%;max-width:460px;height:100dvh;display:flex;flex-direction:column;overflow:hidden;
+  padding-bottom:calc(var(--nav-h,62px) + env(safe-area-inset-bottom))}
+#page{flex:1;min-height:0;display:flex;flex-direction:column}
+.fiche{flex:1;min-height:0;display:flex;flex-direction:column}
+
+.head{display:flex;align-items:center;gap:11px;padding:12px 16px 4px;flex:none}
+.head a{background:none;border:1px solid rgba(242,238,228,.2);border-radius:8px;color:inherit;
+  width:32px;height:32px;display:grid;place-items:center;text-decoration:none;font-size:16px;flex:none}
 .head h1{font-family:var(--banner);font-size:19px;letter-spacing:.06em;margin:0;flex:1;min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .head h1 small{display:block;font-size:9.5px;letter-spacing:.2em;opacity:.5;margin-top:3px;font-family:var(--ui)}
 
-.vitrine{position:relative;margin:8px 14px 0;border-radius:16px;overflow:hidden;
-  border:1px solid var(--c);min-height:230px;display:flex;align-items:flex-end;
-  background:linear-gradient(160deg,#141A21,#0A0D11)}
+/* La scène. Le personnage en pied, dans le cadre de sa rareté — la même
+   couleur que dans le classeur, apprise une fois pour tout le jeu. */
+.vitrine{position:relative;margin:6px 14px 0;border-radius:16px;overflow:hidden;
+  flex:1;min-height:0;display:flex;align-items:flex-end;
+  background:linear-gradient(160deg,#141A21,#0A0D11);
+  box-shadow:inset 0 0 0 2px var(--rc,#C2CAD6),0 5px 0 var(--rc2,#4E5865),
+             0 10px 24px rgba(0,0,0,.55)}
+.vitrine.r-legendaire{box-shadow:inset 0 0 0 2.5px var(--rc),0 5px 0 var(--rc2),
+  0 0 34px rgba(245,195,59,.3),0 10px 24px rgba(0,0,0,.55)}
 .vitrine .art{position:absolute;inset:0}
 .vitrine .art svg{width:100%;height:100%;display:block;object-fit:cover}
-.vitrine .ombre{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,6,10,.1),rgba(4,6,10,.92))}
-.vitrine .txt{position:relative;z-index:2;padding:16px}
-.vitrine h2{font-family:var(--banner);font-size:25px;margin:0;letter-spacing:.03em;line-height:1}
-.vitrine .sous{font-size:11.5px;opacity:.65;margin-top:7px}
-.vitrine .tag{position:absolute;top:13px;right:13px;z-index:2;font-family:var(--banner);font-size:9.5px;
-  letter-spacing:.14em;border-radius:5px;padding:4px 9px;border:1px solid var(--projo);color:var(--projo)}
-.vitrine .rar{position:absolute;top:13px;left:13px;z-index:2;display:flex;gap:3px}
-.vitrine .rar i{width:8px;height:8px;background:var(--craie);transform:rotate(45deg);
-  border-radius:1px;display:block;opacity:.8}
-.vitrine .rar b{color:#C9A227;font-size:13px;line-height:1}
-.pastilles{display:flex;gap:6px;padding:12px 16px 0;flex-wrap:wrap}
-.pastille{border:1px solid rgba(242,238,228,.14);border-radius:999px;padding:5px 11px;font-size:11px;
-  opacity:.75}
+.vitrine .ombre{position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(4,6,10,.05) 40%,rgba(4,6,10,.9))}
+.vitrine .txt{position:relative;z-index:2;padding:14px 16px}
+.vitrine h2{font-family:var(--banner);font-size:clamp(22px,6.5vw,29px);margin:0;
+  letter-spacing:.03em;line-height:1;text-shadow:0 3px 16px rgba(0,0,0,.9)}
+.vitrine .sous{font-size:11.5px;opacity:.7;margin-top:6px}
+.vitrine .tag{position:absolute;top:12px;right:12px;z-index:2;font-family:var(--banner);font-size:9.5px;
+  letter-spacing:.14em;border-radius:6px;padding:4px 9px;background:var(--projo);color:#0B0E13}
+.vitrine .rar{position:absolute;top:12px;left:12px;z-index:2;display:flex;gap:4px;align-items:center;
+  background:rgba(4,6,10,.65);border-radius:99px;padding:5px 9px;
+  box-shadow:inset 0 0 0 1.5px var(--rc,#C2CAD6)}
+.vitrine .rar i{width:8px;height:8px;background:var(--rc,#C2CAD6);transform:rotate(45deg);
+  border-radius:1px;display:block}
+.vitrine .rar b{color:var(--rc,#F5C33B);font-size:13px;line-height:1}
+
+/* Les pastilles se posent sur la scène, **au-dessus du nom** et non par-dessus.
+   En absolu dans le coin, elles recouvraient « 3 exemplaires · étage 2 » : deux
+   informations superposées, dont aucune ne se lisait. */
+.pastilles{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
+.pastille{border:0;border-radius:999px;padding:6px 11px;font-size:11px;
+  background:rgba(4,6,10,.7);box-shadow:inset 0 0 0 1px rgba(242,238,228,.16)}
 .pastille b{color:var(--c)}
 
 h3{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;margin:22px 16px 9px}
+
+/* ------------------------------------------------------------ le volet
+
+   Trois contenus qui ne se consultent jamais ensemble, donc un seul à la
+   fois. Sa hauteur est **fixe** : sans elle, passer des effets aux tenues
+   ferait sauter le personnage d'une centaine de pixels à chaque onglet. */
+.onglets{display:flex;gap:7px;padding:11px 14px 9px;flex:none}
+.onglet{flex:1;border:0;border-radius:10px;color:inherit;cursor:pointer;opacity:.6;
+  padding:9px 6px 8px;font-family:var(--banner);font-size:11.5px;letter-spacing:.08em;
+  background:rgba(16,22,31,.92);
+  box-shadow:0 3px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(242,238,228,.1);
+  transition:transform .1s,box-shadow .1s,opacity .1s}
+.onglet:active{transform:translateY(3px);box-shadow:none}
+.onglet.on{opacity:1;background:var(--craie);color:#0B0E13;
+  box-shadow:0 3px 0 #6E6A61,inset 0 1px 0 rgba(255,255,255,.45)}
+.volet{flex:none;height:150px;margin:0 14px;overflow-y:auto;overscroll-behavior:contain;
+  border-radius:12px;background:var(--panneau);backdrop-filter:blur(10px);
+  box-shadow:inset 0 0 0 1px rgba(242,238,228,.11)}
+.volet .bloc{margin:0;border:0;border-radius:0;background:none;backdrop-filter:none}
+.volet h3{margin:12px 14px 6px;font-size:10px}
+.volet h3:first-child{margin-top:10px}
 .bloc{margin:0 14px;border:1px solid rgba(242,238,228,.11);border-radius:12px;overflow:hidden;
   background:var(--panneau);backdrop-filter:blur(10px)}
 .ligne{display:flex;align-items:center;gap:11px;padding:12px 14px;font-size:13px;
@@ -73,12 +124,18 @@ h3{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
 .etape span{font-size:9px;opacity:.55;display:block;margin-top:3px}
 .fleche{opacity:.3;font-size:15px}
 
-.actions{padding:20px 14px 30px;display:flex;flex-direction:column;gap:9px}
-.btn{border-radius:9px;padding:14px;font-family:var(--banner);font-size:14px;letter-spacing:.08em;
-  cursor:pointer;border:1px solid rgba(242,238,228,.2);background:var(--panneau);backdrop-filter:blur(10px);color:inherit;
-  text-align:center}
-.btn.primary{background:linear-gradient(180deg,var(--flare),#B32A1D);border-color:transparent;color:#fff}
-.btn:disabled{opacity:.35;pointer-events:none}
+/* Une seule rangée d'actions, en bas, toujours visible. Elle était au bout de
+   mille deux cents pixels : il fallait faire défiler pour équiper. */
+.actions{padding:11px 14px 8px;display:flex;gap:9px;flex:none}
+.btn{flex:1;border-radius:11px;padding:14px 10px 13px;font-family:var(--banner);font-size:13.5px;
+  letter-spacing:.08em;cursor:pointer;border:0;color:inherit;background:rgba(16,22,31,.95);
+  text-align:center;box-shadow:0 4px 0 rgba(0,0,0,.62),inset 0 1px 0 rgba(242,238,228,.12);
+  transition:transform .1s,box-shadow .1s}
+.btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 rgba(0,0,0,.62)}
+.btn.primary{color:#fff;background:linear-gradient(180deg,#F0704F,var(--flare) 55%,#B32A1D);
+  box-shadow:0 4px 0 #7A1A11,inset 0 1px 0 rgba(255,255,255,.3)}
+.btn.primary:active:not(:disabled){box-shadow:0 0 0 #7A1A11}
+.btn:disabled{opacity:.35;pointer-events:none;transform:none}
 .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#171C23;z-index:70;
   border:1px solid rgba(242,238,228,.2);border-radius:8px;padding:11px 16px;font-size:12.5px;display:none}
 .toast.on{display:block}
@@ -157,75 +214,107 @@ function rendre() {
   const reel = lireMods(d.effetReel);
   const change = JSON.stringify(f.mods) !== JSON.stringify(d.effetReel);
 
+  const RC = { commune:['#C2CAD6','#4E5865'], rare:['#3C82E8','#1B3E75'],
+               epique:['#8257DA','#3E2870'], legendaire:['#F5C33B','#7A5A0E'] };
+  const [rc, rc2] = RC[f.rar] ?? RC.commune;
+
+  /* Trois volets, un seul à l'écran. Ils ne se consultent jamais ensemble :
+     on regarde les effets pour décider d'équiper, les tenues pour changer de
+     costume, la lignée pour savoir ce qu'on peut encore acheter. Les empiler
+     faisait mille deux cents pixels de défilement sur l'écran qui sert à
+     décider. */
+  const VOLETS = {
+    effets: () => `
+      <h3>CE QU'IL CHANGE${change ? ' — AVEC TON ÉQUIPEMENT' : ''}</h3>
+      <div class="bloc">${(change ? reel : brut).map(([k, v]) => `
+        <div class="ligne"><span class="n"><b>${k}</b></span>
+          <span class="v" style="--c:${c}">${esc(v)}</span></div>`).join('')
+        || '<div class="ligne"><span class="n">Aucun effet particulier.</span></div>'}
+        ${change ? `<div class="ligne" style="opacity:.5">
+          <span class="n"><span>Sans équipement : ${brut.map(([k,v])=>`${k} ${v}`).join(' · ')}</span></span>
+        </div>` : ''}
+      </div>
+      ${d.stuffPorte.length ? `<h3>ÉQUIPEMENT PORTÉ</h3><div class="bloc">
+        ${d.stuffPorte.map((s) => `<div class="ligne"><span class="n"><b>${esc(s.nom)}</b>
+          <span>${esc(s.texte)}</span></span></div>`).join('')}
+        <div class="ligne"><span class="n"><span>Une pièce a toujours un revers, et on n'en porte que deux.</span></span>
+          <a href="/profil" style="color:${c};font-size:12px">changer</a></div></div>` : ''}`,
+
+    tenues: () => `
+      <div class="bloc"><div class="skins">${d.skins.map((s) => `
+        <div class="skin ${s.porte ? 'porte' : ''} ${s.possede ? '' : 'absent'}"
+          data-skin="${s.id}"><b>${esc(s.nom)}</b>
+          <span>${s.possede ? (s.porte ? 'PORTÉE' : 'POSSÉDÉE') : 'À TROUVER'}</span></div>`).join('')}
+      </div>
+      <div class="ligne" style="opacity:.5"><span class="n"><span>Les tenues ne changent rien au jeu.
+        Elles se trouvent dans les boosters, et seulement pour un Fanzzy que tu as déjà.
+        <b>Chaque âge a les siennes</b> : le Capo n’hérite pas de la garde-robe du gamin.</span></span></div>
+      ${(d.skinsAutresAges ?? []).length ? `<div class="ligne"><span class="n"><span>
+        ${d.skinsAutresAges.length} tenue${d.skinsAutresAges.length > 1 ? 's' : ''}
+        gagnée${d.skinsAutresAges.length > 1 ? 's' : ''} à d’autres âges de ce personnage —
+        ${[...new Set(d.skinsAutresAges.map((s) => `stade ${s.stade}`))].join(', ')}.
+        Elles l’attendent là-bas, elles ne sont pas perdues.</span></span></div>` : ''}
+      </div>`,
+
+    lignee: () => d.lignee.length > 1
+      ? `<div class="bloc"><div class="lignee">
+          ${d.lignee.map((x, i) => `${i ? '<span class="fleche">›</span>' : ''}
+            <div class="etape ${x.possede ? 'ok' : ''} ${x.id === f.id ? 'ici' : ''}">
+              <div class="b"><b>${esc(x.nom)}</b><span>${x.cout ? x.cout + ' éch.' : 'base'}</span></div>
+            </div>`).join('')}</div></div>`
+      : `<div class="ligne" style="opacity:.55;padding:22px 16px"><span class="n"><span>
+          Ce Fanzzy n’a pas de lignée : il ne grandit pas, il se tire.</span></span></div>`,
+  };
+
   $('page').innerHTML = `
+    <div class="fiche">
     <div class="head"><a href="/fanzzy">‹</a>
       <h1>${esc(f.nom)}<small>${NOMTYPE[f.type]} · ${RAR[f.rar]}</small></h1></div>
 
-    <div class="vitrine" style="--c:${c}">
+    <div class="vitrine r-${f.rar}" style="--c:${c};--rc:${rc};--rc2:${rc2}">
       <div class="art" id="art"></div><div class="ombre"></div>
       <div class="rar">${rar(f.rar)}</div>
       ${d.equipe ? '<div class="tag">EN DUEL</div>' : ''}
-      <div class="txt"><h2>${esc(f.nom)}</h2>
-        ${f.histoire ? `<div class="sous" style="max-width:62%;opacity:.85;font-style:italic">
-        ${esc(f.histoire)}</div>` : ''}
+      <div class="txt">
+        <div class="pastilles">
+          <span class="pastille" style="--c:${c}"><b>${NOMTYPE[f.type]}</b></span>
+          <button class="pastille" id="essaiCri" style="cursor:pointer;font-family:inherit;color:inherit">
+            Cri : <b style="color:${c}">${esc(f.cri?.label ?? '—')}</b> ▸</button>
+        </div>
+        <h2>${esc(f.nom)}</h2>
       <div class="sous">${d.possede
-          ? `${d.possede} exemplaire${d.possede > 1 ? 's' : ''} · étage ${f.stage}`
+          ? `${d.possede} exemplaire${d.possede > 1 ? 's' : ''} · étage ${f.stage}${
+            f.cri?.power ? ` · poussée ${f.cri.power}` : ''}`
           : 'pas encore dans ta collection'}</div></div>
     </div>
 
-    <div class="pastilles">
-      <span class="pastille" style="--c:${c}"><b>${NOMTYPE[f.type]}</b></span>
-      <button class="pastille" id="essaiCri" style="cursor:pointer;font-family:inherit;color:inherit;
-        background:none">Cri : <b style="color:${c}">${esc(f.cri?.label ?? '—')}</b> ▸</button>
-      ${f.cri?.power ? `<span class="pastille">Poussée ${f.cri.power}</span>` : ''}
+    <div class="onglets" id="onglets">
+      <button class="onglet on" data-volet="effets">EFFETS</button>
+      <button class="onglet" data-volet="tenues">TENUES</button>
+      <button class="onglet" data-volet="lignee">LIGNÉE</button>
     </div>
-
-    <h3>CE QU'IL CHANGE${change ? ' — AVEC TON ÉQUIPEMENT' : ''}</h3>
-    <div class="bloc">${(change ? reel : brut).map(([k, v]) => `
-      <div class="ligne"><span class="n"><b>${k}</b></span>
-        <span class="v" style="--c:${c}">${esc(v)}</span></div>`).join('')
-      || '<div class="ligne"><span class="n">Aucun effet particulier.</span></div>'}
-      ${change ? `<div class="ligne" style="opacity:.5">
-        <span class="n"><span>Sans équipement : ${brut.map(([k,v])=>`${k} ${v}`).join(' · ')}</span></span>
-      </div>` : ''}
-    </div>
-
-    ${d.stuffPorte.length ? `<h3>ÉQUIPEMENT PORTÉ</h3><div class="bloc">
-      ${d.stuffPorte.map((s) => `<div class="ligne"><span class="n"><b>${esc(s.nom)}</b>
-        <span>${esc(s.texte)}</span></span></div>`).join('')}
-      <div class="ligne"><span class="n"><span>Une pièce a toujours un revers, et on n'en porte que deux.</span></span>
-        <a href="/profil" style="color:${c};font-size:12px">changer</a></div></div>` : ''}
-
-    <h3>TENUES</h3>
-    <div class="bloc"><div class="skins">${d.skins.map((s) => `
-      <div class="skin ${s.porte ? 'porte' : ''} ${s.possede ? '' : 'absent'}"
-        data-skin="${s.id}"><b>${esc(s.nom)}</b>
-        <span>${s.possede ? (s.porte ? 'PORTÉE' : 'POSSÉDÉE') : 'À TROUVER'}</span></div>`).join('')}
-    </div>
-    <div class="ligne" style="opacity:.5"><span class="n"><span>Les tenues ne changent rien au jeu.
-      Elles se trouvent dans les boosters, et seulement pour un Fanzzy que tu as déjà.
-      <b>Chaque âge a les siennes</b> : le Capo n’hérite pas de la garde-robe du gamin.</span></span></div>
-    ${(d.skinsAutresAges ?? []).length ? `<div class="ligne"><span class="n"><span>
-      ${d.skinsAutresAges.length} tenue${d.skinsAutresAges.length > 1 ? 's' : ''}
-      gagnée${d.skinsAutresAges.length > 1 ? 's' : ''} à d’autres âges de ce personnage —
-      ${[...new Set(d.skinsAutresAges.map((s) => `stade ${s.stade}`))].join(', ')}.
-      Elles l’attendent là-bas, elles ne sont pas perdues.</span></span></div>` : ''}
-    </div>
-
-    ${d.lignee.length > 1 ? `<h3>LIGNÉE</h3><div class="bloc"><div class="lignee">
-      ${d.lignee.map((x, i) => `${i ? '<span class="fleche">›</span>' : ''}
-        <div class="etape ${x.possede ? 'ok' : ''} ${x.id === f.id ? 'ici' : ''}">
-          <div class="b"><b>${esc(x.nom)}</b><span>${x.cout ? x.cout + ' éch.' : 'base'}</span></div>
-        </div>`).join('')}</div></div>` : ''}
+    <div class="volet" id="volet">${VOLETS.effets()}</div>
 
     <div class="actions">
       ${d.possede ? `
         <button class="btn primary" id="equiper" ${d.equipe ? 'disabled' : ''}>
           ${d.equipe ? 'DÉJÀ EN DUEL' : 'EMMENER EN DUEL'}</button>
-        ${f.evo ? `<button class="btn" id="evoluer">FAIRE ÉVOLUER · ${
-          d.lignee.find((x) => x.id === f.evo)?.cout ?? 90} ÉCHARPES</button>` : ''}`
-        : '<div class="vide">Ouvre des boosters pour le trouver.</div>'}
+        ${f.evo ? `<button class="btn" id="evoluer">ÉVOLUER · ${
+          d.lignee.find((x) => x.id === f.evo)?.cout ?? 90} ÉCH.</button>` : ''}`
+        : '<div class="vide" style="padding:14px">Ouvre des boosters pour le trouver.</div>'}
+    </div>
     </div>`;
+
+  /* Changer de volet ne rend que le volet : refaire toute la page
+     rechargerait l'illustration et la ferait clignoter à chaque onglet. */
+  $('onglets').onclick = (e) => {
+    const b = e.target.closest('[data-volet]');
+    if (!b) return;
+    $('onglets').querySelectorAll('.onglet').forEach((x) => x.classList.toggle('on', x === b));
+    $('volet').innerHTML = VOLETS[b.dataset.volet]();
+    $('volet').scrollTop = 0;
+    brancherTenues();
+  };
 
   // Illustration en pied si elle existe, halo de couleur sinon.
   $('art').style.background =
@@ -234,10 +323,15 @@ function rendre() {
   illu.onload = () => {
     // `data-vivant` suffit : la couche d'effets repère le personnage et le
     // fait respirer, sans que cette page ait à s'en occuper.
+    /* `contain` et non un débordement en hauteur.
+       La vitrine occupait 230 px de haut : déborder de 18 % vers le haut y
+       cadrait joliment le buste. Depuis qu'elle prend tout l'écran, ces mêmes
+       18 % coupent la tête du personnage — et une tête coupée se lit comme une
+       image cassée. On l'inscrit donc entière, posée sur la base du cadre. */
     $('art').innerHTML =
       `<img src="${illu.src}" alt="" data-vivant="${f.id}"
-        style="position:absolute;right:4%;bottom:0;height:118%;width:auto;object-fit:contain;
-        filter:drop-shadow(0 6px 22px rgba(0,0,0,.75))">`;
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+        object-position:50% 100%;filter:drop-shadow(0 6px 22px rgba(0,0,0,.75))">`;
   };
   // Trois formats à essayer dans l'ordre, et pas seulement l'avif.
   // La page ne testait que `.avif` avec un `onerror` vide : sur un navigateur
@@ -251,19 +345,28 @@ function rendre() {
   };
   illu.src = `/img/fanzzy/${f.id}${formats[0]}`;
 
-  $('page').querySelector('.skins').onclick = async (e) => {
-    const s = e.target.closest('[data-skin]');
-    if (!s) return;
-    const skin = d.skins.find((x) => x.id === s.dataset.skin);
-    if (!skin?.possede) return toast('Tenue pas encore trouvée');
-    try {
-      await fetch('/api/me/skin', { method:'POST', credentials:'same-origin',
-        headers:{'content-type':'application/json'},
-        body: JSON.stringify({ fanzzyId: f.id, skinId: skin.id }) });
-      toast(`${skin.nom} portée`);
-      charger();
-    } catch { toast('Impossible pour le moment'); }
-  };
+  /* Les tenues ne sont dans le DOM que lorsque leur volet est affiché : le
+     branchement se refait donc à chaque changement d'onglet. La version d'avant
+     cherchait `.skins` une fois pour toutes et levait — la page entière
+     s'arrêtait — dès que la grille n'était pas là. */
+  function brancherTenues() {
+    const grille = $('volet').querySelector('.skins');
+    if (!grille) return;
+    grille.onclick = async (e) => {
+      const s = e.target.closest('[data-skin]');
+      if (!s) return;
+      const skin = d.skins.find((x) => x.id === s.dataset.skin);
+      if (!skin?.possede) return toast('Tenue pas encore trouvée');
+      try {
+        await fetch('/api/me/skin', { method:'POST', credentials:'same-origin',
+          headers:{'content-type':'application/json'},
+          body: JSON.stringify({ fanzzyId: f.id, skinId: skin.id }) });
+        toast(`${skin.nom} portée`);
+        charger();
+      } catch { toast('Impossible pour le moment'); }
+    };
+  }
+  brancherTenues();
 
   // Essayer son Cri sans entrer en duel : c'est ce qui donne envie de le jouer.
   const essai = $('essaiCri');
@@ -291,7 +394,10 @@ async function charger() {
   try {
     d = await api('/fiche/' + encodeURIComponent(id));
     $('spin').style.display = 'none';
-    $('page').style.display = 'block';
+    // `flex` et non `block` : la fiche tient dans l'écran par une colonne
+    // flex, et un `display:block` posé ici la faisait retomber sur la hauteur
+    // de son contenu — le personnage se réduisait à une vignette dans un coin.
+    $('page').style.display = 'flex';
     rendre();
   } catch (e) {
     if (e.message === 'auth') return;

@@ -57,6 +57,22 @@ export const RULES = {
   broadcastEveryTicks: 1,
   idleMs: 90_000,          // sans geste, on ne compte plus dans la foule
   realGoalJolt: 90,
+
+  /**
+   * Ce que rapporte un chant quand on soutient un club qu'on ne suit pas.
+   *
+   * Le virage est ouvert à tous les matchs en direct : on choisit son camp,
+   * même sans être de la maison. Mais la ferveur — ce qui compte au classement
+   * — ne vaut alors que la moitié. C'est le même principe que le duel, où le
+   * souffle offert par un but réel ne va qu'à ceux qui suivent le club
+   * buteur : on peut venir pousser partout, on ne se bâtit une réputation que
+   * chez soi.
+   *
+   * **La poussée, elle, n'est pas réduite.** Ce qu'on réduit, c'est ce que le
+   * supporter gagne, pas ce qu'il apporte : une tribune qui pousse à moitié
+   * serait une tribune qu'on décourage de venir, et le but est l'inverse.
+   */
+  ferveurNeutre: 0.5,
 };
 
 const CARDS = {
@@ -103,6 +119,13 @@ export class VirageRoom {
     this.scoreReel = [fixture.homeGoals ?? 0, fixture.awayGoals ?? 0];
     this.statut = fixture.status ?? null;
     this.minute = fixture.elapsed ?? null;
+    /* Le temps additionnel, et l'instant où le serveur a vu tout ça.
+       Sans `vuA`, la page fait courir son horloge à partir du moment où *elle*
+       a reçu la donnée — et une donnée vieille d'un quart d'heure repart alors
+       de zéro, ce qui est exactement ce qui laissait des matchs finis à
+       « 90' EN DIRECT ». */
+    this.minuteExtra = fixture.elapsedExtra ?? null;
+    this.vuA = fixture.vuA ?? Date.now();
   }
 
   /* ---------------------------------------------------------------- le fil */
@@ -189,14 +212,16 @@ export class VirageRoom {
 
   /* ------------------------------------------------------------ membres */
 
-  join(userId, { side, name, mods = {} }) {
+  join(userId, { side, name, mods = {}, neutre = false }) {
     const m = this.members.get(userId) ?? {
-      side: side ? 1 : 0, name, mods,
+      side: side ? 1 : 0, name, mods, neutre,
       breath: 40, ferveur: 0, lastPush: 0, fatigueUntil: 0, joined: Date.now(),
     };
     m.side = side ? 1 : 0;
     m.name = name;
     m.mods = mods;
+    // `neutre` : il soutient un club qu'il ne suit pas. Sa ferveur vaut moitié.
+    m.neutre = neutre;
     this.members.set(userId, m);
     this.dirty = true;
     return this.snapshotFor(userId);
@@ -258,7 +283,8 @@ export class VirageRoom {
     // `ferveurBonus` : ce qui compte au classement. Séparé de la corde
     // exprès — un KOP peut vouloir peser sur le match sans peser sur le
     // classement, et l’inverse.
-    m.ferveur += Math.round(Math.max(0, perCapita) * (m.mods.ferveurBonus ?? 1));
+    m.ferveur += Math.round(Math.max(0, perCapita) * (m.mods.ferveurBonus ?? 1)
+      * (m.neutre ? RULES.ferveurNeutre : 1));
     this.dirty = true;
 
     // Présence : c'est ce que consulteront les cartes-souvenirs au prochain but.
@@ -349,11 +375,36 @@ export class VirageRoom {
    * changement de période écrit au fil ; le score et la minute ne font que se
    * mettre à jour, sinon chaque tour d'horloge produirait une entrée.
    */
-  matchStatus({ status = null, elapsed = null, homeGoals = null, awayGoals = null } = {}) {
+  matchStatus({ status = null, elapsed = null, elapsedExtra = null,
+                homeGoals = null, awayGoals = null } = {}) {
+    /* Le score et la minute se diffusent **dès qu'ils bougent**, et pas
+       seulement quand la période change.
+
+       Ils ne partaient qu'avec une entrée de fil : un but réel en produit une,
+       un changement de période aussi — mais entre les deux, la minute
+       n'avançait jamais et le score restait figé sur ce qu'il valait à
+       l'entrée. Un supporter voyait donc « 2 – 0 · 65′ » pendant une
+       demi-heure. Le relevé du direct lit ces deux valeurs toutes les vingt
+       secondes ; il ne manquait qu'un message pour les faire descendre. */
+    const bouge = (elapsed != null && elapsed !== this.minute)
+      || (homeGoals != null && awayGoals != null
+          && (homeGoals !== this.scoreReel[0] || awayGoals !== this.scoreReel[1]));
+
     if (elapsed != null) this.minute = elapsed;
+    this.minuteExtra = elapsedExtra;
+    // Le relevé vient de voir le match : l'horloge de la page repart de là, et
+    // non de l'instant où elle a reçu le message.
+    this.vuA = Date.now();
     if (homeGoals != null && awayGoals != null) this.scoreReel = [homeGoals, awayGoals];
     const change = status && status !== this.statut;
     if (status) this.statut = status;
+
+    if (bouge || change) {
+      this.push('virage:match', {
+        scoreReel: this.scoreReel, minute: this.minute,
+        minuteExtra: this.minuteExtra, statut: this.statut, vuA: this.vuA,
+      });
+    }
     if (!change) return [];
     return this.ajouterAuFil([this.entreePeriode(status)]);
   }
@@ -415,9 +466,25 @@ export class VirageRoom {
       scoreReel: this.scoreReel,
       statut: this.statut,
       minute: this.minute,
+      minuteExtra: this.minuteExtra,
+      vuA: this.vuA,
       you: m ? {
         side: m.side,
+        // La page le dit au joueur : venir pousser ailleurs est permis, mais
+        // il doit savoir que sa ferveur y compte moitié moins. Une règle qu'on
+        // découvre au classement est une règle qu'on prend pour un bug.
+        neutre: Boolean(m.neutre),
+        ferveurNeutre: RULES.ferveurNeutre,
         breath: Math.round(m.breath),
+        /* Le souffle regagné par seconde, **pour ce supporter-ci**.
+           Il remonte dix fois par seconde côté serveur, mais la diffusion de
+           la corde part à toute la salle : elle ne peut pas porter une valeur
+           propre à chacun. La jauge ne bougeait donc qu'au chant suivant — le
+           joueur croyait son souffle bloqué et attendait pour rien. Avec ce
+           taux, la page l'anime elle-même entre deux vérités du serveur, et
+           chaque `virage:result` la remet d'aplomb. */
+        regen: RULES.breathPerSec * (m.mods.breathBonus ?? 1),
+        breathMax: RULES.breathMax,
         // Le client doit afficher le geste exactement comme le serveur le
         // note. Sans ça il dessinait la pulsation de base et le porteur
         // d'équipement tapait à côté sans jamais comprendre pourquoi.

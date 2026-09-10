@@ -52,6 +52,21 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    suivent à l'écran sans qu'on sache lequel est le match. À 8 px et 45 %
    d'opacité il ne se lisait pas — autant l'enlever. */
 .fil .sc small{display:block;font-size:8.5px;letter-spacing:.12em;opacity:.55;margin-top:2px}
+/* La minute du match. Elle défile localement entre deux relevés — sans quoi
+   elle restait figée sur celle de l'entrée, parfois une demi-heure durant, et
+   le joueur poussait en croyant le match arrêté. Le point rouge dit que ça
+   tourne ; il s'éteint à la mi-temps. */
+.fil .min{flex:none;font-family:var(--banner);font-size:12.5px;color:var(--flare);
+  letter-spacing:.04em;display:flex;align-items:center;gap:5px;padding-right:9px;
+  border-right:1px solid rgba(242,238,228,.14);font-variant-numeric:tabular-nums}
+.fil .min::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;
+  animation:ping 1.8s ease-out infinite}
+.fil .min:empty{display:none}
+.fil .min.arret{color:var(--gris)}
+.fil .min.arret::before{animation:none;opacity:.5}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(224,64,44,.6)}
+  70%{box-shadow:0 0 0 7px rgba(224,64,44,0)}100%{box-shadow:0 0 0 0 rgba(224,64,44,0)}}
+
 .fil .der{flex:1;min-width:0;display:flex;align-items:baseline;gap:6px;
   overflow:hidden;white-space:nowrap}
 .fil .der .m{font-family:var(--banner);font-size:11px;opacity:.55;flex:none}
@@ -165,12 +180,32 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .veil h1{font-family:var(--banner);font-size:24px;letter-spacing:.1em;margin:0}
 .veil p{font-size:12.5px;opacity:.62;line-height:1.6;margin:0;max-width:320px}
 .match{width:100%;max-width:340px;border:1px solid rgba(242,238,228,.16);border-radius:10px;
-  background:rgba(0,0,0,.3);padding:12px;cursor:pointer;display:flex;align-items:center;gap:9px}
+  background:rgba(0,0,0,.3);padding:12px;cursor:pointer;display:flex;align-items:center;
+  gap:9px;flex-wrap:wrap}
 .match.off{opacity:.4;pointer-events:none}
 .match img{width:24px;height:24px;object-fit:contain}
 .match .n{flex:1;min-width:0;text-align:left}
 .match .n b{font-family:var(--banner);font-size:13px;display:block}
 .match .n small{font-size:10px;opacity:.5}
+/* Deux sections dans l'écran de choix : chez soi, puis ailleurs. La seconde
+   dit tout de suite ce qu'elle coûte — une règle qu'on découvre au classement
+   est une règle qu'on prend pour un bug. */
+.rubrique{width:100%;max-width:340px;text-align:left;font-family:var(--banner);
+  font-size:10px;letter-spacing:.2em;opacity:.45;margin:14px 0 2px}
+.rubrique small{display:block;font-family:var(--ui);font-size:9.5px;letter-spacing:.06em;
+  opacity:.8;margin-top:3px;text-transform:none}
+.match.ailleurs{border-style:dashed}
+/* Le choix du camp, déplié sous la carte. Demander après coup, une fois
+   dedans, serait pire : on aurait déjà poussé du mauvais côté. */
+.camps{flex-basis:100%;display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  padding-top:10px;margin-top:2px;border-top:1px solid rgba(242,238,228,.12)}
+.camps span{font-size:10.5px;opacity:.55;flex:none}
+.camps button{flex:1;min-width:96px;border:0;border-radius:9px;color:inherit;cursor:pointer;
+  padding:9px 8px 8px;font-family:var(--banner);font-size:11.5px;letter-spacing:.06em;
+  background:rgba(16,22,31,.95);
+  box-shadow:0 3px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(242,238,228,.11)}
+.camps button:active{transform:translateY(3px);box-shadow:none}
+
 .match .st{font-family:var(--banner);flex:none;display:flex;flex-direction:column;
   align-items:flex-end;gap:2px;letter-spacing:.08em}
 /* Le score domine la minute : c'est lui qu'on cherche avant d'entrer. */
@@ -208,6 +243,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
   <button class="fil" id="fil" hidden aria-haspopup="dialog">
     <span class="sc"><b id="filScore">0 – 0</b><small>TERRAIN</small></span>
+    <span class="min" id="filMinute"></span>
     <span class="der" id="filDer"></span>
     <span class="plus">›</span>
   </button>
@@ -286,6 +322,9 @@ const HINT = {
 const GOAL_AT = 400;
 
 let socket = null, S = null, busy = false;
+// La part de ferveur d'un neutre. Le serveur la donne avec la liste des
+// matchs ; cette valeur n'est qu'un repli pour le premier rendu.
+let FERVEUR_NEUTRE = 0.5;
 
 /* ------------------------------------------------------------ affichage */
 
@@ -319,12 +358,15 @@ function render() {
   $('phase').textContent = S.surge ? 'TOUT COMPTE DOUBLE' : 'GRAND VIRAGE';
   $('crowdMe').innerHTML = `<b>${S.crowd[mine]}</b> AVEC TOI`;
   $('crowdFoe').innerHTML = `<b>${S.crowd[mine ^ 1]}</b> EN FACE`;
-  $('breathBar').style.width = `${S.you.breath}%`;
-  $('breathVal').textContent = S.you.breath;
+  // Le souffle affiché est celui du serveur **plus le regain écoulé depuis** :
+  // la jauge monte donc en continu au lieu de sauter d'un chant à l'autre.
+  const souffle = Math.round(souffleCourant());
+  $('breathBar').style.width = `${souffle}%`;
+  $('breathVal').textContent = souffle;
   if (S.you.rank) $('rank').innerHTML = `<b>${S.you.rank}<sup>e</sup></b> sur ${S.you.of} · ${S.you.ferveur} de ferveur`;
   for (const el of $('hand').children) {
     const c = S.cards.find((x) => x.id === el.dataset.card);
-    el.classList.toggle('dim', S.you.breath < c.cost || busy);
+    el.classList.toggle('dim', souffle < c.cost || busy);
   }
 }
 
@@ -392,10 +434,84 @@ function scoreTerrain() {
   return `${S.scoreReel[mine]} – ${S.scoreReel[mine ^ 1]}`;
 }
 
+/* ------------------------------------------------------ l'horloge du match
+
+   Le serveur ne parle qu'au rythme du relevé — vingt secondes au mieux, et
+   seulement quand quelque chose bouge. La minute restait donc figée sur celle
+   de l'entrée, parfois pendant une demi-heure : le joueur poussait sur une
+   corde en croyant le match arrêté.
+
+   Elle défile donc **localement**, à partir de la dernière minute connue et du
+   temps écoulé depuis. C'est exactement ce que fait la page des matchs, et
+   c'est la seule façon d'avoir un chrono qui avance sans payer un appel par
+   seconde. Chaque `virage:match` la remet à l'heure. */
+const PERIODES_ARRETEES = new Set(['HT', 'BT', 'PST', 'SUSP', 'INT']);
+const PERIODES_FINIES = new Set(['FT', 'AET', 'PEN', 'CANC', 'ABD', 'AWD', 'WO']);
+/* Le terme réglementaire de chaque période. Au-delà, on est en temps
+   additionnel : l'horloge locale s'y arrête et affiche « 45+ », « 90+ », parce
+   qu'elle ne sait pas combien il en reste — seul le relevé le sait, et il le
+   dit dans `minuteExtra`. */
+const TERME = { '1H': 45, '2H': 90, ET: 120, P: 120 };
+/* Au-delà de ce silence, on cesse de faire courir l'horloge. Un match dont le
+   serveur n'a plus de nouvelles depuis un quart d'heure n'est pas un match à
+   la centième minute : c'est un match dont on ne sait plus rien. Afficher
+   « 90' EN DIRECT » sur un match fini depuis dix minutes est un mensonge que
+   le joueur repère avant nous. */
+const SILENCE_MAX_MS = 12 * 60_000;
+
+/**
+ * La minute du match, telle qu'on peut honnêtement l'affirmer.
+ *
+ * `null` quand on ne sait pas. Le compte part de `vuA` — l'instant où le
+ * **serveur** a vu le match — et non de l'instant où la page a reçu la
+ * donnée : une donnée vieille d'un quart d'heure repartait sinon de zéro.
+ */
+function minuteCourante() {
+  if (!S || S.minute == null) return null;
+  if (PERIODES_FINIES.has(S.statut)) return null;
+  if (PERIODES_ARRETEES.has(S.statut)) return { n: S.minute, arret: true };
+
+  const vuA = S.vuA ?? Date.now();
+  if (Date.now() - vuA > SILENCE_MAX_MS) return null;
+
+  const ecoule = Math.floor((Date.now() - vuA) / 60000);
+  const brut = S.minute + Math.max(0, ecoule);
+  const terme = TERME[S.statut];
+  if (terme && brut >= terme) {
+    // Le relevé connaît peut-être le temps additionnel : on le dit alors.
+    return { n: terme, plus: S.minuteExtra ?? null, arret: false };
+  }
+  return { n: brut, arret: false };
+}
+
+/** « 71′ », « 45+3′ », « 90+′ » — ou rien quand on ne sait pas. */
+function minuteTexte() {
+  const m = minuteCourante();
+  if (!m) return '';
+  if (m.plus != null) return `${m.n}+${m.plus}′`;
+  if (m.plus === null && m.n === TERME[S.statut]) return `${m.n}+′`;
+  return `${m.n}′`;
+}
+
+/** Le souffle, animé entre deux vérités du serveur. */
+let souffleVuA = Date.now();
+
+function souffleCourant() {
+  const you = S?.you;
+  if (!you) return 0;
+  if (!you.regen) return you.breath;
+  const gagne = you.regen * ((Date.now() - souffleVuA) / 1000);
+  return Math.min(you.breathMax ?? 100, you.breath + gagne);
+}
+
 function renderFil({ neuf = false } = {}) {
   if (!S) return;
   $('fil').hidden = false;
   $('filScore').textContent = scoreTerrain();
+
+  const min = minuteCourante();
+  $('filMinute').textContent = minuteTexte();
+  $('filMinute').classList.toggle('arret', Boolean(min?.arret));
 
   const der = S.fil?.[S.fil.length - 1];
   $('filDer').innerHTML = der
@@ -411,7 +527,9 @@ function renderFil({ neuf = false } = {}) {
 }
 
 function renderFeuille() {
-  $('feuilleScore').textContent = S?.minute != null ? `${scoreTerrain()} · ${S.minute}′` : scoreTerrain();
+  const minF = minuteTexte();
+  $('feuilleScore').textContent = minF
+    ? `${scoreTerrain()} · ${minF}` : scoreTerrain();
   const fil = S?.fil ?? [];
   // Le plus récent en tête : on ouvre le fil pour savoir ce qu'on vient de
   // manquer, pas pour relire le coup d'envoi.
@@ -559,7 +677,7 @@ $('hand').addEventListener('pointerdown', async (e) => {
   const el = e.target.closest('[data-card]');
   if (!el || busy || !S) return;
   const card = S.cards.find((c) => c.id === el.dataset.card);
-  if (S.you.breath < card.cost) return fail('ferveur.error.not_enough_breath');
+  if (souffleCourant() < card.cost) return fail('ferveur.error.not_enough_breath');
   busy = true; render();
   const taps = await openMini(card);
   socket.emit('virage:chant', { cardId: card.id, taps });
@@ -602,9 +720,22 @@ function connect() {
     render();
   });
 
+  /* Deux horloges locales, parce que le serveur ne parle pas assez souvent
+     pour elles.
+
+     La corde arrive dix fois par seconde, mais **seulement quand elle bouge** :
+     une salle où personne ne chante ne diffuse rien du tout. Le souffle et la
+     minute, eux, avancent quand même — et sans ces deux battements, la jauge
+     restait bloquée jusqu'au chant suivant et la minute jusqu'au prochain
+     relevé. Le joueur en concluait, à raison, que rien ne se passait. */
+  setInterval(() => { if (S && !document.hidden) render(); }, 1000);
+  setInterval(() => { if (S && !document.hidden) renderFil(); }, 15000);
+
   socket.on('virage:result', (r) => {
     if (!S) return;
-    S.you.breath = r.breath; S.you.ferveur = r.ferveur;
+    // Le serveur fait foi : on repart de sa valeur, et le regain local
+    // recommence à compter à partir de cet instant.
+    S.you.breath = r.breath; souffleVuA = Date.now(); S.you.ferveur = r.ferveur;
     $('verdict').textContent = r.quality > 0.9 ? 'PARFAIT' : r.quality > 0.7 ? 'BON'
       : r.quality > 0.4 ? 'MOYEN' : 'RATÉ';
     // Le chiffre part de la corde, là où le joueur regarde.
@@ -634,6 +765,18 @@ function connect() {
     if (mien) setTimeout(() => souvenir(g), 1400);
   });
 
+  /* Le vrai match : score, minute, période. Il descend dès que le relevé du
+     direct les voit bouger, sans attendre qu'une entrée de fil se produise. */
+  socket.on('virage:match', (v) => {
+    if (!S) return;
+    if (v.scoreReel) S.scoreReel = v.scoreReel;
+    if (v.minute != null) S.minute = v.minute;
+    S.minuteExtra = v.minuteExtra ?? null;
+    if (v.vuA) S.vuA = v.vuA;
+    if (v.statut) S.statut = v.statut;
+    renderFil();
+  });
+
   socket.on('virage:crowd', (c) => { if (S) { S.crowd = c.crowd; render(); } });
   socket.on('virage:error', (e) => fail(e.code));
 }
@@ -656,7 +799,11 @@ function souvenir(g) {
   try {
     const r = await fetch('/api/virage/live', { credentials:'same-origin' });
     if (r.status === 401) { location.href = '/compte'; return; }
-    matchs = (await r.json()).matchs ?? [];
+    const rep = await r.json();
+    matchs = rep.matchs ?? [];
+    // La part de ferveur d'un neutre vient du serveur : la recopier ici ferait
+    // une seconde vérité, qui finirait par annoncer 50 % là où il en donne 40.
+    FERVEUR_NEUTRE = rep.ferveurNeutre ?? FERVEUR_NEUTRE;
   } catch { /* serveur injoignable */ }
 
   /* Le score du match, avant d'entrer.
@@ -665,9 +812,17 @@ function souvenir(g) {
      sans savoir si son club menait ou encaissait, ce qui est exactement ce
      qu'on veut savoir avant de pousser. Il est dans la réponse depuis
      toujours, il n'était simplement pas affiché. */
-  $('matchs').innerHTML = matchs.length ? matchs.map((m) => {
+  /* Deux sections, et la distinction porte tout le sens.
+
+     **Chez soi**, le camp ne se choisit pas : il découle du club suivi, et la
+     ferveur compte plein. **Ailleurs**, on choisit son camp et elle compte
+     moitié. Le virage n'affichait que les matchs de ses clubs : un soir de
+     Coupe d'Europe avec huit rencontres en direct, il en montrait une, et le
+     joueur en concluait qu'il n'y avait rien à faire. */
+  const carte = (m) => {
     const joue = m.home_goals != null && m.away_goals != null;
-    return `<div class="match ${m.open ? '' : 'off'}" data-id="${m.id}">
+    return `<div class="match ${m.open ? '' : 'off'} ${m.mien ? '' : 'ailleurs'}"
+      data-id="${m.id}" data-mien="${m.mien ? 1 : 0}">
       <img src="${esc(m.home_logo ?? '')}" alt="">
       <div class="n"><b>${esc(m.home_name)} – ${esc(m.away_name)}</b>
         <small>${esc(m.league_name ?? '')} · ${m.crowd[0] + m.crowd[1]} dans les tribunes</small></div>
@@ -677,13 +832,50 @@ function souvenir(g) {
         ${m.open ? `<i>${m.elapsed ? m.elapsed + "'" : 'BIENTÔT'}</i>` : ''}
       </span>
     </div>`;
-  }).join('')
-    : `<p>Aucun match de tes clubs dans les prochaines heures.<br>
-        <a href="/equipes" style="color:var(--projo)">Suis un club</a> pour entrer dans un virage.</p>`;
+  };
 
+  const miens = matchs.filter((m) => m.mien);
+  const autres = matchs.filter((m) => !m.mien && m.open);
+  const part = Math.round((FERVEUR_NEUTRE ?? 0.5) * 100);
+
+  $('matchs').innerHTML = (matchs.length ? [
+    miens.length ? `<div class="rubrique">TES CLUBS</div>${miens.map(carte).join('')}` : '',
+    autres.length ? `<div class="rubrique">AILLEURS EN DIRECT
+      <small>tu choisis ton camp · ferveur à ${part} %</small></div>${autres.map(carte).join('')}` : '',
+  ].join('') : '')
+    || `<p>Aucun match en direct pour l’instant.<br>
+        <a href="/equipes" style="color:var(--projo)">Suis un club</a>
+        pour être prévenu quand le tien joue.</p>`;
+
+  /* Entrer.
+     Chez soi, on entre directement — le camp est déjà décidé par le club
+     qu'on suit. Ailleurs, il faut choisir : la carte se déplie et propose les
+     deux clubs, en disant ce que ça coûte. Demander après coup, une fois
+     dedans, serait pire : on aurait déjà poussé du mauvais côté. */
   $('matchs').onclick = (e) => {
+    const camp = e.target.closest('[data-camp]');
+    if (camp) {
+      const carteM = camp.closest('[data-id]');
+      socket.emit('virage:join', {
+        fixtureId: Number(carteM.dataset.id), camp: camp.dataset.camp,
+      });
+      return;
+    }
+
     const m = e.target.closest('[data-id]');
-    if (m) socket.emit('virage:join', { fixtureId: Number(m.dataset.id) });
+    if (!m || m.classList.contains('off')) return;
+    if (m.dataset.mien === '1') {
+      socket.emit('virage:join', { fixtureId: Number(m.dataset.id) });
+      return;
+    }
+    if (m.querySelector('.camps')) { m.querySelector('.camps').remove(); return; }
+    const info = matchs.find((x) => String(x.id) === m.dataset.id) ?? {};
+    document.querySelectorAll('#matchs .camps').forEach((n) => n.remove());
+    m.insertAdjacentHTML('beforeend', `<div class="camps">
+      <span>Tu pousses pour&nbsp;:</span>
+      <button data-camp="domicile">${esc(info.home_name ?? 'Domicile')}</button>
+      <button data-camp="exterieur">${esc(info.away_name ?? 'Extérieur')}</button>
+    </div>`);
   };
 })();
 </script>
