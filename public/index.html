@@ -166,7 +166,16 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    flottement du parent ni avec la respiration de la pile. */
 .bascule{transform-origin:50% 100%}
 .scene.change .bascule{animation:bascule .42s cubic-bezier(.33,1,.68,1)}
-.pile{position:relative;height:min(52dvh,470px);aspect-ratio:448/900;transform-origin:50% 100%;
+/* La taille du personnage. Il tient le centre de l'écran, donc il a le droit
+   d'être grand : c'est lui qu'on vient voir.
+
+   `max-height` en plus de la hauteur, et c'est ce qui permet de le grandir
+   sans risque : la bande centrale est close par `overflow:hidden`, donc un
+   personnage trop haut pour elle n'était pas réduit, il était décapité. Une
+   tête coupée se lit comme une image cassée, jamais comme un cadrage serré.
+   Avec cette borne, l'écran trop court le rétrécit au lieu de le rogner. */
+.pile{position:relative;height:min(58dvh,520px);max-height:100%;aspect-ratio:448/900;
+  transform-origin:50% 100%;
   animation:souffle 3.6s ease-in-out infinite;will-change:transform}
 /* Deux calques superposés : on croise les opacités, le personnage n'est jamais
    absent de l'écran et rien ne clignote. */
@@ -176,6 +185,25 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .pose.on{opacity:1}
 .scene.saute .flotte{animation:saut .5s cubic-bezier(.34,1.56,.64,1)}
 
+/* L'entrée : le personnage monte dans le cadre au lieu d'y être déjà. C'est
+   ce qui fait de l'accueil une arrivée et non un écran qui s'affiche. */
+.scene.arrive .flotte{animation:arrivee .66s cubic-bezier(.34,1.4,.64,1)}
+/* Le coucou : deux temps, depuis les pieds. Il a son propre calque, parce que
+   la respiration occupe déjà la pile et le rebond de pose déjà la bascule —
+   deux animations sur le même élément et l'une efface l'autre, ici la
+   respiration, définitivement.
+
+   Il est joué même quand la pose de salut n'est pas dessinée : le supporter
+   générique n'en a pas, la plupart des Fanzzy non plus, et un accueil qui ne
+   salue que les personnages illustrés ne salue presque personne. */
+.salut{transform-origin:50% 100%}
+.scene.coucou .salut{animation:coucou 1.5s ease-in-out}
+
+@keyframes arrivee{0%{opacity:0;transform:translateY(52px) scale(.93)}
+  55%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes coucou{0%,100%{transform:rotate(0deg)}
+  16%{transform:rotate(-3.4deg)}40%{transform:rotate(2.8deg)}
+  64%{transform:rotate(-2.2deg)}84%{transform:rotate(1.1deg)}}
 @keyframes bascule{0%{transform:translateY(0) scale(1,1)}
   22%{transform:translateY(7px) scale(1.05,.93)}
   58%{transform:translateY(-11px) scale(.96,1.07)}
@@ -222,18 +250,18 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Écran court : le personnage rétrécit plutôt que de pousser le bouton
    d'entrée sous le pli. C'est la seule bande qui peut céder. */
 @media (max-height:700px){
-  .pile{height:min(40dvh,340px)}
+  .pile{height:min(45dvh,380px)}
   .hub{gap:7px}
   .entrer{padding:13px 18px;font-size:19px}
   .jeton{padding:7px 10px;font-size:13px}
   .pastille{width:34px;height:34px;font-size:17px}
 }
 @media (min-aspect-ratio:1/1){
-  .pile{height:min(62dvh,540px)}
+  .pile{height:min(68dvh,600px)}
   .duo{grid-template-columns:1fr 1fr}
 }
 @media (prefers-reduced-motion:reduce){
-  .flotte,.pile,.bascule,.sol,.halo,.pt{animation:none !important}
+  .flotte,.pile,.bascule,.salut,.sol,.halo,.pt{animation:none !important}
   .pose{transition:none}
 }
 </style>
@@ -313,13 +341,18 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
         <div class="sol"></div>
         <div class="flotte">
           <div class="bascule">
-            <div class="pile" id="pile">
-              <!-- Deux calques superposés : on croise leurs opacités pour
-                   changer de pose sans que le personnage quitte l'écran. -->
-              <img class="pose on" id="poseA" alt="Ton supporter dans la tribune"
-                width="448" height="900">
-              <img class="pose" id="poseB" alt="" aria-hidden="true"
-                width="448" height="900">
+            <!-- Un calque par geste : le flottement, le rebond de pose, le
+                 coucou, la respiration. Deux animations sur un même élément et
+                 l'une efface l'autre. -->
+            <div class="salut">
+              <div class="pile" id="pile">
+                <!-- Deux calques superposés : on croise leurs opacités pour
+                     changer de pose sans que le personnage quitte l'écran. -->
+                <img class="pose on" id="poseA" alt="Ton supporter dans la tribune"
+                  width="448" height="900">
+                <img class="pose" id="poseB" alt="" aria-hidden="true"
+                  width="448" height="900">
+              </div>
             </div>
           </div>
         </div>
@@ -452,11 +485,49 @@ function source(etat) {
   return SUPPORTER[etat] ? `/img/supporter/${SUPPORTER[etat]}${EXT_ALPHA}` : null;
 }
 
-/** Précharge les quatre moments : pas de temps mort au premier but. */
-const precharger = () => Object.keys(SUPPORTER).forEach((e) => {
+/* Les moments que l'accueil sait vivre.
+   `salut` n'a volontairement pas de fichier de supporter en face : le
+   générique n'a pas cette pose. `source` rend donc `null`, rien n'est demandé
+   au réseau, et `pose` ne fait rien — c'est le repli déjà écrit, pas un oubli.
+   Le geste, lui, est joué quand même : voir `saluer` plus bas. */
+const MOMENTS = ['neutre', 'salut', 'pousse', 'but', 'encaisse'];
+
+/** Précharge les moments dessinés : pas de temps mort au premier but. */
+const precharger = () => MOMENTS.forEach((e) => {
   const s = source(e); if (s) new Image().src = s;
 });
 precharger();
+
+/* Les gestes de la scène : la classe qui les porte, et l'animation qu'elle
+   déclenche. Les deux noms sont nécessaires — la classe vit sur la scène,
+   l'animation sur un calque intérieur. */
+const ANIM = { arrive: 'arrivee', coucou: 'coucou', saute: 'saut', change: 'bascule' };
+
+/**
+ * Joue un geste de la scène, du début, et **retire la classe quand il est
+ * fini**.
+ *
+ * La retirer n'est pas une politesse. Ces gestes remplacent des animations qui
+ * tournent en boucle — le flottement pour le saut, la respiration pour le
+ * coucou. Une classe laissée en place fige donc le personnage sur la dernière
+ * image d'un geste terminé : il cesse de respirer, définitivement. Le petit
+ * saut le faisait déjà, et personne ne l'avait vu parce que rien ne s'arrête
+ * visiblement — le mouvement manque, il ne casse pas.
+ */
+function rejouer(classe) {
+  const s = $('scene');
+  s.classList.remove(classe);
+  void s.offsetWidth;                       // relance l'animation depuis zéro
+  s.classList.add(classe);
+  // Filtré par nom : les gestes se superposent, et la fin de l'un ne doit pas
+  // interrompre l'autre.
+  const fini = (e) => {
+    if (e.animationName !== ANIM[classe]) return;
+    s.classList.remove(classe);
+    s.removeEventListener('animationend', fini);
+  };
+  s.addEventListener('animationend', fini);
+}
 
 /**
  * Change la pose. Un état dont le dessin manque ne fait rien du tout — mieux
@@ -468,12 +539,13 @@ precharger();
  */
 async function pose(nom, tenir, force) {
   clearTimeout(retour);
+  retour = null;
   const src = source(nom);
   if (!src) return;
   // `force` sert quand le personnage change sans que l'état change : le Fanzzy
   // équipé vient d'arriver et doit remplacer le supporter à l'écran.
   if (nom === poseActuelle && !force) {
-    if (tenir) retour = setTimeout(() => pose(fond), tenir);
+    rendreLaMain(tenir);
     return;
   }
 
@@ -492,11 +564,25 @@ async function pose(nom, tenir, force) {
   calques[devant].classList.remove('on');
   devant = 1 - devant;
 
-  $('scene').classList.remove('change');
-  void $('scene').offsetWidth;
-  $('scene').classList.add('change');
+  rejouer('change');
 
-  if (tenir) retour = setTimeout(() => pose(fond), tenir);
+  rendreLaMain(tenir);
+}
+
+/**
+ * Rendre la main à l'état de fond après une célébration.
+ *
+ * `retour` doit **redevenir vide** quand la minuterie a fini son travail.
+ * `clearTimeout` annule le rappel mais laisse l'identifiant en place : la
+ * variable restait donc vraie pour toujours après la première pose tenue, et
+ * `poserFond` — qui ne pose que si aucune célébration n'est en cours — cessait
+ * définitivement d'agir. Le personnage continuait de pousser après le coup de
+ * sifflet final, et rien ne le disait. Le salut d'arrivée fait maintenant de
+ * cette première pose tenue le cas de tout le monde, à chaque session.
+ */
+function rendreLaMain(tenir) {
+  if (!tenir) return;
+  retour = setTimeout(() => { retour = null; pose(fond); }, tenir);
 }
 
 /**
@@ -513,13 +599,50 @@ pose('neutre');
 
 /** Le petit saut, indépendant de la pose affichée. */
 function sauter() {
-  $('scene').classList.remove('saute');
-  void $('scene').offsetWidth;
-  $('scene').classList.add('saute');
+  rejouer('saute');
   window.FX?.son?.('tic');
 }
 
 $('scene').addEventListener('pointerdown', sauter);
+
+/* ------------------------------------------------------------ l'arrivée
+
+   `rendus.js` l'écrit depuis le premier jour : `salut` se joue « à l'arrivée
+   sur l'accueil, une fois par session ». Une fois, parce qu'un personnage qui
+   refait coucou à chaque retour depuis le classeur a cessé d'être accueillant
+   au troisième aller-retour.
+
+   Deux gestes distincts, et la séparation est délibérée :
+
+   — **l'entrée** se joue à chaque chargement. Elle ne dépend d'aucun dessin :
+     le personnage monte dans le cadre, et l'accueil devient une arrivée.
+   — **le salut** se joue une fois par session. Le mouvement part même quand la
+     pose n'est pas dessinée — le supporter générique n'a pas de salut, la
+     plupart des Fanzzy non plus — parce qu'une animation réservée aux
+     personnages illustrés serait une animation que presque personne ne verrait.
+
+   Aucun bouton ne les déclenche : ce sont des moments du jeu, pas des réglages.
+   Le seul geste offert au joueur reste le petit saut, sur le personnage. */
+
+const entrer = () => rejouer('arrive');
+
+/**
+ * Le salut, une fois par session.
+ *
+ * Il attend que le personnage soit connu. Sans cette attente, le supporter
+ * générique saluait puis se faisait remplacer par le Fanzzy équipé : deux
+ * personnages pour une seule arrivée.
+ */
+function saluer() {
+  let deja = false;
+  try {
+    deja = sessionStorage.getItem('tbf.salut') === '1';
+    sessionStorage.setItem('tbf.salut', '1');
+  } catch { /* stockage refusé : on salue à chaque fois, c'est le moindre mal */ }
+  if (deja) return;
+  rejouer('coucou');
+  pose('salut', 2400);
+}
 
 /* -------------------------------------------------------------- le menu */
 
@@ -571,6 +694,9 @@ async function jsonp(url, options) {
 
   $('vitrine').style.display = 'none';
   $('hub').classList.add('on');
+  // Une image de délai avant l'entrée : le hub vient de passer de `display:none`
+  // à visible, et une animation lancée dans la même image ne se joue pas.
+  requestAnimationFrame(entrer);
   $('pseudo').textContent = user.pseudo;
   $('initiale').textContent = (user.pseudo ?? '?').trim().charAt(0).toLowerCase() || '?';
   if (user.role === 'admin') $('lienAdmin').hidden = false;
@@ -674,6 +800,11 @@ async function jsonp(url, options) {
     }
   } catch { /* collection non montée : l'accueil reste utilisable sans */ }
 
+  // Le personnage est là — celui du joueur s'il en a un, le supporter sinon.
+  // C'est maintenant qu'il salue, et pas avant : saluer plus tôt ferait entrer
+  // deux personnages pour une seule arrivée.
+  saluer();
+
   /* ------------------------------------------------- le match, en direct
 
      C'est ce qui anime le personnage. On relit périodiquement l'état des
@@ -761,7 +892,7 @@ async function jsonp(url, options) {
    * tour de veille de vingt-cinq secondes, et c'est aussi par là qu'on met la
    * page au point depuis la console.
    */
-  window.TBF = { pose, veiller, etatDeFond: () => fond };
+  window.TBF = { pose, veiller, saluer, etatDeFond: () => fond };
 
   veiller();
 })();

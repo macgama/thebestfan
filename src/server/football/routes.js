@@ -9,7 +9,8 @@ import { createPoller, isLive } from './poller.js';
  * consultée mille fois ne coûte aucun appel. Seule la recherche d'un club
  * inconnu déclenche un appel, et seulement si la base ne sait pas répondre.
  */
-export function createFootball({ pool, client, io, requireAuth, onGoal }) {
+export function createFootball({ pool, client, io, requireAuth, onGoal, onFinished,
+                                 onEvents, onStatus, fixturesAuFil }) {
   const store = createFootballStore(pool);
   client.attachStore?.(store);
 
@@ -27,7 +28,8 @@ export function createFootball({ pool, client, io, requireAuth, onGoal }) {
     }
   };
 
-  const poller = createPoller({ client, store, broadcast, onGoal });
+  const poller = createPoller({ client, store, broadcast, onGoal, onFinished,
+                                onEvents, onStatus, fixturesAuFil });
 
   /* -------------------------------------------------------------- socket */
 

@@ -238,6 +238,18 @@ if (process.env.DATABASE_URL) {
           try { await teletext?.invalider(f.leagueId); }
           catch (e) { console.error('[teletext] invalidation', e.message); }
         },
+
+        /* ---------------------------------------------- le fil du match
+           Trois branchements, et deux d'entre eux ne coûtent aucun appel.
+
+           `onStatus` part à chaque tour du relevé du direct : le score, la
+           minute et la période sont déjà dans la réponse. `onEvents` porte
+           les cartons et les remplacements, qui eux se paient — d'où
+           `fixturesAuFil`, qui répond « seulement pour les matchs dont une
+           salle est occupée ». */
+        onStatus: (fixtureId, etat) => virage.matchStatus(fixtureId, etat),
+        onEvents: (fixtureId, events) => virage.matchEvents(fixtureId, events),
+        fixturesAuFil: () => virage.sallesOccupees(),
         onGoal: async (g) => {
           // 0. Secouer la corde du Grand Virage AVANT de frapper les cartes :
           //    ceux qui chantaient à la seconde du but doivent être comptés

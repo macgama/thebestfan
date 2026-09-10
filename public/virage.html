@@ -31,6 +31,73 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .score.surge{color:var(--projo);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
 
+/* ------------------------------------------------------------- le fil
+
+   Une bande, pas un panneau. L'écran du virage est déjà plein — la corde, le
+   souffle, cinq cartes — et le fil ne doit pas prendre la place du jeu : il
+   donne le score réel, la minute et la dernière chose arrivée sur le terrain.
+   Le reste attend qu'on le demande.
+
+   Le score affiché ici est celui du **vrai match**, pas celui de la tribune
+   qui est en haut. Les confondre serait pire que de ne rien montrer : le
+   joueur pousse sur une corde dont le score n'a rien à voir avec la rencontre,
+   et c'est précisément ce que le fil est là pour démêler — d'où le mot
+   « TERRAIN » sous les chiffres. */
+.fil{flex:none;display:flex;align-items:center;gap:9px;margin:0 13px 5px;padding:6px 10px;
+  border-radius:9px;background:rgba(0,0,0,.34);border:1px solid rgba(242,238,228,.12);
+  cursor:pointer;min-height:40px;text-align:left}
+.fil .sc{flex:none;padding-right:9px;border-right:1px solid rgba(242,238,228,.14);line-height:1}
+.fil .sc b{font-family:var(--banner);font-size:13px;letter-spacing:.03em;display:block}
+/* Ce libellé porte tout le sens de la bande : sans lui, deux scores se
+   suivent à l'écran sans qu'on sache lequel est le match. À 8 px et 45 %
+   d'opacité il ne se lisait pas — autant l'enlever. */
+.fil .sc small{display:block;font-size:8.5px;letter-spacing:.12em;opacity:.55;margin-top:2px}
+.fil .der{flex:1;min-width:0;display:flex;align-items:baseline;gap:6px;
+  overflow:hidden;white-space:nowrap}
+.fil .der .m{font-family:var(--banner);font-size:11px;opacity:.55;flex:none}
+.fil .der .t{overflow:hidden;text-overflow:ellipsis;font-size:11.5px}
+.fil .der .t small{opacity:.5}
+.fil .plus{flex:none;opacity:.4;font-size:14px;font-family:var(--banner)}
+/* Une entrée neuve se signale une seconde et demie, puis se tait. Un fil qui
+   clignote en permanence cesse d'être lu au bout de deux minutes. */
+.fil.neuf{animation:filneuf 1.5s ease-out}
+@keyframes filneuf{0%{border-color:var(--projo);background:rgba(245,195,59,.2)}
+  100%{border-color:rgba(242,238,228,.12);background:rgba(0,0,0,.34)}}
+
+/* Au-dessus des effets, et c'est délibéré.
+   `fx.js` occupe les calques 89 à 93 avec des bandeaux en plein écran. Le
+   « MINUTE DOUBLE » d'un but recouvrait la tête de la feuille, donc le bouton
+   de fermeture, pendant deux secondes. Un plein écran dont on ne s'échappe
+   qu'en attendant la fin d'une animation est la même faute que le booster
+   dont la seule issue était de recharger la page. Et le choix est cohérent :
+   qui a ouvert le fil regarde le fil, qui lui annonce déjà le but. */
+.feuille{position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:440px;z-index:95;display:none;flex-direction:column;
+  background:rgba(5,7,10,.96)}
+.feuille.on{display:flex}
+.feuille .tete{flex:none;display:flex;align-items:center;gap:10px;padding:14px 15px 10px}
+.feuille .tete b{font-family:var(--banner);font-size:15px;letter-spacing:.1em;flex:1}
+.feuille .tete #feuilleScore{opacity:.6;font-size:12px;font-variant-numeric:tabular-nums}
+.feuille .tete .x{width:34px;height:34px;border-radius:9px;border:1px solid rgba(242,238,228,.16);
+  background:rgba(0,0,0,.3);color:inherit;font-size:17px;cursor:pointer;flex:none}
+.feuille .corps{flex:1;min-height:0;overflow-y:auto;padding:0 15px 18px}
+.ev{display:flex;align-items:center;gap:10px;padding:9px 4px;
+  border-top:1px solid rgba(242,238,228,.07)}
+.ev .min{font-family:var(--banner);font-size:13px;width:38px;opacity:.6;flex:none}
+.ev .ic{width:20px;text-align:center;flex:none}
+.ev .txt{flex:1;min-width:0}
+.ev .txt small{display:block;opacity:.45;font-size:10.5px}
+.ev.droite{flex-direction:row-reverse;text-align:right}
+.ev.droite .txt{text-align:right}
+/* Le virage a sa propre voix dans le fil : ce qu'a fait la tribune est en
+   couleur, le terrain reste en craie. Sans cette distinction, « BUT » se lit
+   comme un but du match et le joueur croit que son club vient de marquer. */
+.ev.tribune{color:var(--projo)}
+.ev.periode{opacity:.55;justify-content:center;font-family:var(--banner);
+  font-size:11px;letter-spacing:.16em}
+.ev.periode .min,.ev.periode .ic{display:none}
+.feuille .vide{text-align:center;opacity:.45;font-size:12px;padding:40px 20px;line-height:1.7}
+
 .rope{flex:1;position:relative;min-height:0}
 .track{position:absolute;left:50%;top:12px;bottom:12px;width:14px;transform:translateX(-50%);
   border-radius:8px;background:linear-gradient(180deg,rgba(60,130,232,.5),rgba(20,24,30,.6) 46%,
@@ -108,7 +175,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .err{position:absolute;left:50%;bottom:130px;transform:translateX(-50%);z-index:18;
   background:rgba(224,64,44,.92);border-radius:6px;padding:9px 15px;font-size:12.5px;display:none}
 .err.on{display:block}
-.souvenir{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:25;
+/* La carte-souvenir passe même par-dessus le fil : c'est ce que le joueur est
+   venu chercher, elle dure quatre secondes, et elle annonce un gain. */
+.souvenir{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:96;
   border:2px solid var(--projo);border-radius:12px;background:#12161C;padding:20px 24px;text-align:center;
   display:none;box-shadow:0 20px 60px rgba(0,0,0,.8)}
 .souvenir.on{display:block;animation:pop .5s cubic-bezier(.2,.9,.3,1)}
@@ -132,6 +201,12 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
     <div class="score"><span id="score">0 – 0</span><small id="phase">GRAND VIRAGE</small></div>
     <div class="club me" id="clubMe"><img alt=""><div><b>—</b><small>TA TRIBUNE</small></div></div>
   </div>
+
+  <button class="fil" id="fil" hidden aria-haspopup="dialog">
+    <span class="sc"><b id="filScore">0 – 0</b><small>TERRAIN</small></span>
+    <span class="der" id="filDer"></span>
+    <span class="plus">›</span>
+  </button>
 
   <div class="rope" id="rope">
     <div class="track"></div><div class="mid"></div>
@@ -165,6 +240,23 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   </div>
 </main>
 
+<!-- La feuille du fil vit **hors de la colonne**, et c'est nécessaire :
+     `ui.css` donne à `#app` un `z-index: 1` pour le poser au-dessus du décor,
+     ce qui en fait un contexte d'empilement. Tout ce qui est dedans y est
+     enfermé, quel que soit son propre `z-index` — et les effets de `fx.js`,
+     posés sur `body` aux calques 89 à 93, recouvraient donc la tête de la
+     feuille, bouton de fermeture compris, pendant les trois secondes d'un
+     bandeau « MINUTE DOUBLE ». Un panneau qu'on ouvre doit rester lisible et
+     refermable pendant qu'il est ouvert. -->
+<div class="feuille" id="feuille" role="dialog" aria-modal="true" aria-label="Le fil du match">
+  <div class="tete">
+    <b>LE FIL</b>
+    <span id="feuilleScore"></span>
+    <button class="x" id="feuilleX" aria-label="Fermer">×</button>
+  </div>
+  <div class="corps" id="feuilleCorps"></div>
+</div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script>
 /* =======================================================================
@@ -175,6 +267,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    ======================================================================= */
 
 const $ = (id) => document.getElementById(id);
+/* Le fil porte des noms de joueurs venus de l'API : ils passent par `esc`
+   avant d'entrer dans la page. Même forme que sur les autres écrans. */
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
+  (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 const buzz = (p) => { try { navigator.vibrate?.(p); } catch {} };
 const COLORS = { tempo:'#F5C33B', mash:'#3C82E8', hold:'#C2CAD6' };
 const LABEL = { tempo:'TEMPO', mash:'MARTELAGE', hold:'ENDURANCE' };
@@ -227,6 +323,118 @@ function render() {
     el.classList.toggle('dim', S.you.breath < c.cost || busy);
   }
 }
+
+/* ------------------------------------------------------------- le fil
+
+   Le serveur envoie des entrées **structurées** — un genre, un code, une
+   minute — et jamais de phrase toute faite. Le français vit ici, dans la page,
+   qui sait déjà dans quelle langue elle est. C'est la même règle que pour les
+   codes d'erreur.
+
+   Le vocabulaire des icônes est celui de la fiche de match dans /matchs : un
+   même événement doit se lire pareil aux deux endroits. */
+
+const ICONES = { Goal:'⚽', Card:'▮', subst:'⇄', Var:'▣', tribune:'✊' };
+const PERIODES = {
+  '1H':'COUP D’ENVOI', HT:'MI-TEMPS', '2H':'REPRISE', BT:'FIN DU TEMPS RÉGLEMENTAIRE',
+  ET:'PROLONGATIONS', P:'TIRS AU BUT', FT:'COUP DE SIFFLET FINAL',
+  AET:'FIN APRÈS PROLONGATIONS', PEN:'FIN AUX TIRS AU BUT',
+};
+
+/* Le détail vient de l'API, donc en anglais. Il était affiché tel quel :
+   le fil annonçait « Goal » et « Red Card » au milieu d'une page en français.
+   Ce qui n'est pas traduit passe quand même — un détail rare vaut mieux en
+   anglais qu'effacé, parce qu'il dit encore quelque chose. */
+const DETAILS = {
+  'Normal Goal':'But', 'Own Goal':'Contre son camp', Penalty:'Sur penalty',
+  'Missed Penalty':'Penalty manqué',
+  'Yellow Card':'Carton jaune', 'Red Card':'Carton rouge',
+  'Second Yellow card':'Deuxième jaune',
+  'Goal cancelled':'But refusé', 'Penalty confirmed':'Penalty accordé',
+  Goal:'But', Card:'Carton', subst:'Remplacement', Var:'Arbitrage vidéo',
+};
+/* « Substitution 1 », « Substitution 2 »… : le numéro ne dit rien au
+   supporter, seul le geste compte. */
+const ditDetail = (d) => DETAILS[d] ?? (/^Substitution/.test(d ?? '') ? 'Remplacement' : d);
+
+/** Le libellé d'une entrée : ce qu'on lit, et le détail sous la ligne. */
+function ditLeFil(e) {
+  if (e.genre === 'periode') return { titre: PERIODES[e.type] ?? e.type, detail: '' };
+  if (e.genre === 'tribune') {
+    const mien = e.side === S?.you?.side;
+    return { titre: mien ? 'BUT DE TA TRIBUNE' : 'LA CORDE A CÉDÉ',
+             detail: `${e.goals?.[0] ?? 0} – ${e.goals?.[1] ?? 0} à la corde` };
+  }
+  return { titre: e.joueur ?? ditDetail(e.detail ?? e.type),
+           detail: [ditDetail(e.detail ?? e.type), e.passeur].filter(Boolean).join(' · ') };
+}
+
+/** L'icône, avec la couleur du carton — rouge et jaune ne se valent pas. */
+function iconeDuFil(e) {
+  if (e.genre === 'tribune') return `<span style="color:var(--projo)">✊</span>`;
+  if (e.type === 'Card') {
+    return `<span style="color:${/red/i.test(e.detail ?? '') ? 'var(--flare)' : 'var(--projo)'}">▮</span>`;
+  }
+  return ICONES[e.type] ?? '•';
+}
+
+const minuteDuFil = (e) =>
+  e.minute == null ? '' : `${e.minute}${e.extra ? '+' + e.extra : ''}'`;
+
+/** Le score du vrai match, du point de vue du joueur — comme partout ailleurs. */
+function scoreTerrain() {
+  if (!S?.scoreReel) return '—';
+  const mine = S.you.side;
+  return `${S.scoreReel[mine]} – ${S.scoreReel[mine ^ 1]}`;
+}
+
+function renderFil({ neuf = false } = {}) {
+  if (!S) return;
+  $('fil').hidden = false;
+  $('filScore').textContent = scoreTerrain();
+
+  const der = S.fil?.[S.fil.length - 1];
+  $('filDer').innerHTML = der
+    ? `<span class="m">${minuteDuFil(der)}</span><span class="t">${iconeDuFil(der)}
+       ${esc(ditLeFil(der).titre)}</span>`
+    : `<span class="t"><small>Rien à signaler pour l’instant</small></span>`;
+
+  if (neuf) {
+    const b = $('fil');
+    b.classList.remove('neuf'); void b.offsetWidth; b.classList.add('neuf');
+  }
+  if ($('feuille').classList.contains('on')) renderFeuille();
+}
+
+function renderFeuille() {
+  $('feuilleScore').textContent = S?.minute != null ? `${scoreTerrain()} · ${S.minute}′` : scoreTerrain();
+  const fil = S?.fil ?? [];
+  // Le plus récent en tête : on ouvre le fil pour savoir ce qu'on vient de
+  // manquer, pas pour relire le coup d'envoi.
+  $('feuilleCorps').innerHTML = fil.length
+    ? fil.slice().reverse().map((e) => {
+      const { titre, detail } = ditLeFil(e);
+      if (e.genre === 'periode') return `<div class="ev periode">${esc(titre)}</div>`;
+      const droite = e.side === (S.you.side ^ 1);
+      return `<div class="ev ${droite ? 'droite' : ''} ${e.genre === 'tribune' ? 'tribune' : ''}">
+        <span class="min">${minuteDuFil(e)}</span>
+        <span class="ic">${iconeDuFil(e)}</span>
+        <span class="txt">${esc(titre)}${detail ? `<small>${esc(detail)}</small>` : ''}</span>
+      </div>`;
+    }).join('')
+    : `<div class="vide">Rien n’est encore arrivé sur le terrain.<br>
+        Les cartons et les remplacements arrivent pendant que tu es dans le virage.</div>`;
+}
+
+const ouvrirFeuille = (oui) => {
+  $('feuille').classList.toggle('on', oui);
+  if (oui) renderFeuille();
+};
+
+$('fil').addEventListener('click', () => ouvrirFeuille(true));
+$('feuilleX').addEventListener('click', () => ouvrirFeuille(false));
+// On peut toujours sortir : c'est la règle de tout plein écran de ce jeu.
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ouvrirFeuille(false); });
 
 function banner(t, ms = 1800) {
   const b = $('banner'); b.textContent = t; b.classList.add('on');
@@ -364,7 +572,24 @@ function connect() {
   socket.on('virage:state', (s) => {
     S = s; $('veil').classList.remove('on');
     renderStatic(); render();
+    // Le fil arrive avec l'état : entrer à la soixantième minute donne ce qui
+    // s'est passé avant, pas un écran vide.
+    renderFil();
     banner('TU ES DANS LE VIRAGE');
+  });
+
+  /* Le fil du match. Le serveur n'envoie que le neuf ; la page tient la liste,
+     puisqu'elle l'a reçue entière à l'entrée. Renvoyer le fil complet à chaque
+     carton coûterait, sur un samedi chargé, soixante entrées fois mille
+     supporters à chaque événement. */
+  socket.on('virage:fil', (f) => {
+    if (!S) return;
+    S.fil = [...(S.fil ?? []), ...(f.entrees ?? [])]
+      .sort((a, b) => (a.minute ?? 0) - (b.minute ?? 0)
+        || (a.extra ?? 0) - (b.extra ?? 0) || a.rang - b.rang);
+    if (f.scoreReel) S.scoreReel = f.scoreReel;
+    if (f.minute != null) S.minute = f.minute;
+    renderFil({ neuf: true });
   });
 
   socket.on('virage:tick', (t) => {
@@ -397,6 +622,9 @@ function connect() {
 
   socket.on('virage:real_goal', (g) => {
     const mien = g.side === S.you.side;
+    // Le score du terrain suit le but sans attendre le prochain tour du
+    // relevé : c'est la seconde où le joueur le regarde.
+    if (g.scoreReel) { S.scoreReel = g.scoreReel; renderFil(); }
     window.FX?.butReel({ pour: mien, buteur: g.player, minute: g.minute });
     window.FX?.bandeau('MINUTE DOUBLE', mien ? '#F5C33B' : '#E0402C');
     if (mien) setTimeout(() => souvenir(g), 1400);

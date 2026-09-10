@@ -53,8 +53,17 @@ await raw.query(`INSERT INTO teams (id,name) VALUES (85,'FC Sion'),(91,'FC Bâle
 await raw.query(`INSERT INTO leagues (id,name) VALUES (207,'Super League')`);
 await raw.query(`INSERT INTO souvenir_leagues (league_id,season,name,family,has_events,enabled)
                  VALUES (207,2026,'Super League','championnat',1,1)`);
-await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,kickoff_at)
-                 VALUES (7001,207,2026,85,91,'1H',UTC_TIMESTAMP())`);
+await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,
+                                       home_goals,away_goals,elapsed,kickoff_at)
+                 VALUES (7001,207,2026,85,91,'1H',1,0,34,UTC_TIMESTAMP())`);
+/* Ce que le relevé du direct a déjà mis en base avant que quiconque entre.
+   C'est ce qui doit semer le fil : un supporter qui arrive à la trente-
+   quatrième minute doit trouver ce qui s'est passé avant lui, sans qu'on
+   paie un appel à l'API pour le lui dire. */
+await raw.query(`INSERT INTO fixture_events (fixture_id,seq,type,detail,team_id,player,assist,minute)
+                 VALUES (7001,0,'Card','Yellow Card',91,'Zambrano',NULL,12),
+                        (7001,1,'Goal','Normal Goal',85,'Diallo','Morel',23),
+                        (7001,2,'subst',NULL,91,'Roth','Keller',30)`);
 // Deux supporters de Sion, un de Bâle.
 await raw.query(`INSERT INTO user_follows (user_id,team_id) VALUES (?,85),(?,85),(?,91)`,
   [U[0], U[1], U[2]]);
@@ -87,13 +96,15 @@ const url = `http://localhost:${http.address().port}`;
 
 function connect(userId) {
   const socket = client(url, { transports: ['websocket'], auth: { token: userId } });
-  const p = { socket, state: null, ticks: [], results: [], errors: [], realGoals: [], goals: [] };
+  const p = { socket, state: null, ticks: [], results: [], errors: [],
+              realGoals: [], goals: [], fils: [] };
   socket.on('virage:state', (s) => { p.state = s; });
   socket.on('virage:tick', (t) => p.ticks.push(t));
   socket.on('virage:result', (r) => p.results.push(r));
   socket.on('virage:error', (e) => p.errors.push(e.code));
   socket.on('virage:real_goal', (g) => p.realGoals.push(g));
   socket.on('virage:goal', (g) => p.goals.push(g));
+  socket.on('virage:fil', (f) => p.fils.push(f));
   return p;
 }
 
@@ -106,6 +117,45 @@ check('camps déduits des clubs suivis',
   A.state.you.side === 0 && B.state.you.side === 0 && C.state.you.side === 1);
 check('le match est identifié', A.state.fixture.homeName === 'FC Sion');
 check('les cartes sont annoncées par le serveur', A.state.cards.length >= 4);
+
+/* ------------------------------------------------------------- le fil
+
+ * Le joueur pousse sur une corde pendant un vrai match. Sans fil, la corde
+ * tressaille et il ne sait pas pourquoi : c'est le manque que ce bloc éprouve.
+ *
+ * Le fil part **avec l'état**, semé depuis `fixture_events`. Entrer à la
+ * trente-quatrième minute doit donner ce qui s'est passé avant, et ne doit
+ * coûter aucun appel à l'API — la base sait déjà tout ça. */
+{
+  const fil = A.state.fil ?? [];
+  check('le fil arrive avec l’état, semé depuis la base', fil.length >= 3);
+  check('il porte le carton et le remplacement',
+    fil.some((e) => e.type === 'Card' && e.joueur === 'Zambrano')
+    && fil.some((e) => e.type === 'subst'));
+  check('il dit de quel côté chaque entrée se range',
+    fil.find((e) => e.joueur === 'Zambrano')?.side === 1);
+
+  /* Les buts d'avant l'arrivée ne sont pas rejoués comme frais. Ils entrent
+     par `realGoal`, qui secoue la corde et ouvre la minute double : les
+     laisser aussi passer par le relevé les raconterait deux fois, et un but
+     de la vingt-troisième minute sonnerait comme un but de maintenant au
+     moment où quelqu'un entre. Le score les porte, lui. */
+  check('mais pas les buts, qui ont leur propre chemin',
+    !fil.some((e) => e.type === 'Goal'));
+  check('le score du vrai match est là dès l’entrée',
+    A.state.scoreReel?.[0] === 1 && A.state.scoreReel?.[1] === 0);
+  /* La période ouvre le fil, et à sa vraie place.
+     Elle était datée de l'horloge du moment plutôt que de la frontière de
+     période : une salle ouverte à la trente-quatrième minute rangeait son
+     « coup d'envoi » entre le carton de la douzième et le remplacement de la
+     trentième, c'est-à-dire au milieu du match qu'il est censé ouvrir. */
+  const coupDEnvoi = fil.find((e) => e.genre === 'periode' && e.type === '1H');
+  check('la période ouvre le fil, et elle ne coûte rien', Boolean(coupDEnvoi));
+  check('le coup d’envoi est daté du coup d’envoi', coupDEnvoi?.minute === 0);
+  check('et il ouvre bien le fil', fil[0]?.type === '1H');
+  check('le fil est le même pour toute la salle',
+    (C.state.fil ?? []).length === fil.length);
+}
 
 /* ------------------------------------------------------------- un match sans club suivi */
 
@@ -162,6 +212,91 @@ check('but réel diffusé à toute la salle',
   await until(() => A.realGoals.length === 1 && C.realGoals.length === 1));
 check('le but secoue la corde du bon côté', A.realGoals[0].side === 0);
 check('la minute double s\u2019ouvre', A.realGoals[0].surgeUntil > Date.now());
+
+/* --------------------------------------------------- le fil, en direct */
+{
+  const salle = virage.rooms.get(7001);
+
+  check('le but r\u00e9el s\u2019\u00e9crit au fil',
+    salle.fil.some((e) => e.type === 'Goal' && e.joueur === 'Diallo' && e.minute === 23));
+  check('et il est diffus\u00e9 \u00e0 la salle',
+    await until(() => A.fils.some((f) =>
+      f.entrees?.some((e) => e.type === 'Goal' && e.joueur === 'Diallo'))));
+
+  /* Le terrain hors les buts : ce sont ces \u00e9v\u00e9nements-l\u00e0 qui se paient un
+     appel, et qui n'arrivaient jamais avant le fil. */
+  A.fils.length = 0;
+  const pris = virage.matchEvents(7001, [{
+    type: 'Card', detail: 'Red Card', teamId: 91, player: 'Keller', minute: 66,
+  }]);
+  check('un carton rouge entre au fil', pris === 1);
+  check('la salle le re\u00e7oit',
+    await until(() => A.fils.at(-1)?.entrees?.[0]?.detail === 'Red Card'));
+  /* On cherche l'entr\u00e9e, on ne suppose pas sa place : le fil est rang\u00e9 par
+     minute et non par ordre d'arriv\u00e9e, sinon un carton relev\u00e9 apr\u00e8s coup
+     s'afficherait apr\u00e8s la mi-temps qu'il pr\u00e9c\u00e8de. */
+  check('le d\u00e9tail du carton est conserv\u00e9, rouge et jaune ne se valent pas',
+    salle.fil.find((e) => e.joueur === 'Keller' && e.type === 'Card')?.detail === 'Red Card');
+
+  /* Le relev\u00e9 rejoue toute la liste du match \u00e0 chaque passage : sans
+     d\u00e9duplication, chaque tour r\u00e9annoncerait le match entier. */
+  A.fils.length = 0;
+  const encore = virage.matchEvents(7001, [{
+    type: 'Card', detail: 'Red Card', teamId: 91, player: 'Keller', minute: 66,
+  }]);
+  check('un relev\u00e9 qui se r\u00e9p\u00e8te n\u2019ajoute rien', encore === 0);
+  await wait(120);
+  check('et ne diffuse rien non plus', A.fils.length === 0);
+
+  /* Un but venu du relev\u00e9 est le m\u00eame but que celui du jeu : il est \u00e9cart\u00e9,
+     sinon le fil raconte deux fois le m\u00eame. */
+  const butRejoue = virage.matchEvents(7001, [{
+    type: 'Goal', detail: 'Normal Goal', teamId: 85, player: 'Bonvin', minute: 71,
+  }]);
+  check('un but venu du relev\u00e9 n\u2019entre pas au fil', butRejoue === 0);
+
+  /* La p\u00e9riode et le score ne co\u00fbtent aucun appel : ils sont d\u00e9j\u00e0 dans la
+     r\u00e9ponse que le relev\u00e9 du direct vient de lire. */
+  A.fils.length = 0;
+  virage.matchStatus(7001, { status: 'HT', elapsed: 45, homeGoals: 2, awayGoals: 1 });
+  check('la mi-temps s\u2019\u00e9crit au fil',
+    salle.fil.some((e) => e.genre === 'periode' && e.type === 'HT'));
+  check('et le score du terrain se met \u00e0 jour',
+    salle.scoreReel[0] === 2 && salle.scoreReel[1] === 1);
+  virage.matchStatus(7001, { status: 'HT', elapsed: 45, homeGoals: 2, awayGoals: 1 });
+  check('un statut inchang\u00e9 n\u2019\u00e9crit pas une seconde mi-temps',
+    salle.fil.filter((e) => e.genre === 'periode' && e.type === 'HT').length === 1);
+
+  /* La tribune a sa voix dans le fil. C'est elle qui explique la corde : sans
+     cette entr\u00e9e, le n\u0153ud repart du milieu sans qu'on sache qui a c\u00e9d\u00e9. */
+  A.fils.length = 0;
+  salle.scoreGoal(0);
+  const tribune = salle.fil.find((e) => e.genre === 'tribune');
+  check('le but de tribune s\u2019\u00e9crit au fil, marqu\u00e9 comme tel', tribune?.side === 0);
+  check('et il porte le score de la corde', Array.isArray(tribune?.goals));
+  check('la salle l\u2019apprend en m\u00eame temps que le but',
+    await until(() => A.fils.some((f) =>
+      f.entrees?.some((e) => e.genre === 'tribune'))));
+
+  /* Le fil est born\u00e9. Un match \u00e0 prolongations avec vingt remplacements ne
+     doit pas gonfler sans fin dans la m\u00e9moire du serveur. */
+  const avant = salle.fil.length;
+  virage.matchEvents(7001, Array.from({ length: 80 }, (_, i) => ({
+    type: 'Card', detail: 'Yellow Card', teamId: 85, player: `Joueur${i}`, minute: 80,
+  })));
+  check('le fil est born\u00e9', salle.fil.length <= 60 && salle.fil.length < avant + 80);
+  check('et c\u2019est la fin du match qu\u2019il garde',
+    salle.fil.at(-1)?.joueur === 'Joueur79');
+
+  check('un match sans salle ne tient pas de fil',
+    virage.matchEvents(9999, [{ type: 'Card', teamId: 85, minute: 5 }]) === 0
+    && virage.matchStatus(9999, { status: 'FT' }) === 0);
+
+  /* La r\u00e8gle d'\u00e9conomie, vue du virage : c'est cette liste que le relev\u00e9
+     interroge avant de payer un appel d'\u00e9v\u00e9nements. */
+  check('la salle occup\u00e9e se d\u00e9clare au relev\u00e9',
+    virage.sallesOccupees().includes(7001));
+}
 
 const r = await souvenirs.mintGoal({
   fixtureId: 7001, seq: 1, leagueId: 207, teamId: 85, homeId: 85, awayId: 91,

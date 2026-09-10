@@ -28,7 +28,12 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
 
   async function fixtureInfo(fixtureId) {
     const rows = await q(
+      // `home_goals`, `away_goals` et `elapsed` : le fil affiche le score du
+      // *vrai* match, distinct de celui de la tribune. Sans eux, un supporter
+      // qui entre à la trente-quatrième minute d'un 1–0 lisait 0–0 jusqu'au
+      // but suivant, ce qui est pire que de ne rien afficher.
       `SELECT f.id, f.league_id, f.home_id, f.away_id, f.kickoff_at, f.status_short,
+              f.home_goals, f.away_goals, f.elapsed,
               h.name AS home_name, h.logo AS home_logo,
               a.name AS away_name, a.logo AS away_logo,
               l.name AS league_name
@@ -56,6 +61,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
       const f = await fixtureInfo(fixtureId);
       if (!f) return null;
       const room = buildRoom(f, fixtureId);
+      await semerLeFil(room, fixtureId);
       rooms.set(fixtureId, room);
       return room;
     })().finally(() => enCours.delete(fixtureId));
@@ -72,10 +78,48 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
         homeName: f.home_name, homeLogo: f.home_logo,
         awayName: f.away_name, awayLogo: f.away_logo,
         league: f.league_name, kickoffAt: f.kickoff_at,
+        // Le vrai match, tel que la base le connaît à cet instant : le fil
+        // doit pouvoir afficher 1–0 à la trente-quatrième minute sans avoir
+        // vu tomber le but.
+        status: f.status_short, elapsed: f.elapsed,
+        homeGoals: f.home_goals, awayGoals: f.away_goals,
       },
       emit: (event, payload) => io.to(`virage:${fixtureId}`).emit(event, payload),
       onPush: (p) => souvenirs.recordPush(p),
     });
+  }
+
+  /**
+   * Sème le fil avec ce que la base sait déjà du match.
+   *
+   * `fixture_events` est rempli par le relevé du direct. Entrer dans un virage
+   * ne coûte donc pas un appel à l'API : ce qui s'est passé avant l'arrivée du
+   * joueur est déjà là. Sans cette lecture, un supporter qui entre à la
+   * soixantième minute voit un fil vide et croit qu'il ne s'est rien passé.
+   *
+   * Les buts sont écartés comme partout ailleurs : ils entrent par
+   * `matchEvents`, qui les retire, pour ne pas être racontés deux fois. Ceux
+   * d'avant l'arrivée sont donc absents du fil — c'est assumé, le score les
+   * porte, et les réintroduire ici les ferait sonner comme des buts frais au
+   * moment de l'entrée.
+   */
+  async function semerLeFil(room, fixtureId) {
+    try {
+      const evs = await q(
+        `SELECT type, detail, team_id, player, assist, minute, extra
+           FROM fixture_events WHERE fixture_id = ? ORDER BY seq`, [fixtureId]);
+      room.matchEvents(evs.map((e) => ({
+        type: e.type, detail: e.detail, teamId: e.team_id,
+        player: e.player, assist: e.assist, minute: e.minute, extra: e.extra,
+      })));
+      // La période en cours ouvre le fil : « mi-temps » explique à lui seul
+      // pourquoi la corde ne bouge plus.
+      room.ajouterAuFil([room.entreePeriode(room.statut)]);
+    } catch (e) {
+      // Un fil vide est un défaut d'agrément ; une salle qui n'ouvre pas est
+      // une panne. On nomme la cause et on laisse entrer.
+      console.error(`[virage ${fixtureId}] fil non semé :`, e.message);
+    }
   }
 
   /** Une seule horloge pour toutes les salles : dix battements par seconde. */
@@ -207,8 +251,46 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
   function realGoal(goal) {
     const room = rooms.get(goal.fixtureId);
     if (!room) return false;
-    room.realGoal({ teamId: goal.teamId, minute: goal.minute, player: goal.player });
+    room.realGoal({
+      teamId: goal.teamId, minute: goal.minute, player: goal.player,
+      // Le relevé porte le score à l'instant du but. Le recompter à partir des
+      // buts vus depuis l'ouverture de la salle afficherait 1–0 à qui est
+      // entré à la soixantième minute d'un 3–2.
+      score: goal.score ?? null,
+    });
     return true;
+  }
+
+  /* ------------------------------------------------- le fil, venu du worker */
+
+  /**
+   * Le relevé d'événements d'un match : cartons, remplacements, vidéo.
+   * Rendu muet quand la salle n'existe pas — un match que personne ne regarde
+   * n'a pas de fil à tenir.
+   */
+  function matchEvents(fixtureId, events = []) {
+    const room = rooms.get(fixtureId);
+    if (!room) return 0;
+    return room.matchEvents(events).length;
+  }
+
+  /** Le score, la minute et la période, à chaque tour du relevé du direct. */
+  function matchStatus(fixtureId, etat) {
+    const room = rooms.get(fixtureId);
+    if (!room) return 0;
+    return room.matchStatus(etat).length;
+  }
+
+  /**
+   * Les matchs dont la salle est occupée.
+   *
+   * C'est ce qui borne la dépense du fil : le relevé ne demande les
+   * événements — un appel par match — que pour ceux-là. Une salle vide ne
+   * coûte donc pas un appel de plus qu'avant le fil, et un samedi où personne
+   * ne joue ne coûte rien du tout.
+   */
+  function sallesOccupees() {
+    return [...rooms.values()].filter((r) => r.size > 0).map((r) => r.fixture.id);
   }
 
   /* -------------------------------------------------------------- routes */
@@ -256,5 +338,6 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
     });
   });
 
-  return { router, realGoal, rooms, roomFor, stop: () => clearInterval(timer) };
+  return { router, realGoal, matchEvents, matchStatus, sallesOccupees,
+           rooms, roomFor, stop: () => clearInterval(timer) };
 }

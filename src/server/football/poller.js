@@ -8,6 +8,16 @@ const DONE = new Set(['FT', 'AET', 'PEN']);
 export const isLive = (s) => LIVE.has(s);
 export const isDone = (s) => DONE.has(s);
 
+/**
+ * Intervalle minimal entre deux relevés d'événements d'un même match.
+ *
+ * Le direct tourne toutes les vingt secondes ; y accrocher un appel
+ * d'événements ferait trois appels par minute et par match suivi, soit près de
+ * quatre cents pour un match de deux heures. À la minute, c'est cent vingt —
+ * et seulement pour les matchs dont une salle de virage est occupée.
+ */
+export const EVENTS_MIN_MS = 60_000;
+
 /** Convertit une date ISO renvoyée par l'API en DATETIME MySQL, en UTC. */
 const toSqlDate = (iso) => new Date(iso).toISOString().slice(0, 19).replace('T', ' ');
 
@@ -52,10 +62,15 @@ export function mapEvent(e) {
  * regroupe jusqu'à 20 matchs par appel, ce qui rend un samedi après-midi
  * abordable même avec beaucoup d'utilisateurs.
  */
-export function createPoller({ client, store, broadcast, onGoal, onFinished, log = console }) {
+export function createPoller({ client, store, broadcast, onGoal, onFinished,
+                               onEvents, onStatus, fixturesAuFil = () => [],
+                               log = console }) {
   // Matchs dont la fin a déjà été signalée. Sans ce garde, chaque tour
   // d'horloge réinvaliderait le cache d'une compétition déjà à jour.
   const finis = new Set();
+  // Dernier relevé d'événements par match, pour ne pas en demander deux dans
+  // la même minute.
+  const releves = new Map();
   let timers = [];
   let running = false;
 
@@ -107,6 +122,12 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished, log
     const ids = [...new Set([...(await store.liveFixtureIds()), ...(await store.dueToStartIds())])];
     if (!ids.length) return 0;
 
+    // Les matchs dont une salle de virage est occupée : eux seuls justifient
+    // un relevé d'événements en dehors d'un changement de score.
+    let auFil = new Set();
+    try { auFil = new Set(fixturesAuFil() ?? []); }
+    catch (e) { log.error('[foot] salles au fil', e.message); }
+
     let live = 0;
     for (let i = 0; i < ids.length; i += 20) {
       const batch = ids.slice(i, i + 20);
@@ -125,9 +146,42 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished, log
           broadcast?.('football:fixture', publicFixture(f));
         }
 
-        // Les événements ne sont demandés que lorsque le score a bougé :
-        // c'est ce qui évite de payer un appel par match et par minute.
-        if (scoreChanged) await pullEvents(f);
+        /* Le score, la minute et la période partent à chaque tour, sans un
+           appel de plus : ils sont déjà dans la réponse qu'on vient de lire.
+           C'est ce qui permet au fil du Grand Virage d'annoncer la mi-temps
+           et le coup de sifflet final même les jours où le quota est serré. */
+        try {
+          onStatus?.(f.id, { status: f.status, elapsed: f.elapsed,
+            homeGoals: f.homeGoals, awayGoals: f.awayGoals });
+        } catch (e) { log.error('[foot] onStatus', e.message); }
+
+        /* Match terminé : les classements de sa compétition sont désormais
+           faux, et c'est exactement le moment où on va les regarder.
+
+           L'annonce vivait dans `pullEvents`, qui ne s'exécutait que sur un
+           changement de score : un match sans but ne l'a jamais déclenchée, et
+           un match à but l'a déclenchée au dernier but plutôt qu'au coup de
+           sifflet. Ici elle est adossée au statut, qu'on lit de toute façon —
+           et elle ne coûte toujours rien. */
+        if (isDone(f.status) && !finis.has(f.id)) {
+          finis.add(f.id);
+          try { await onFinished?.(f); }
+          catch (e) { log.error('[poller] fin de match', e.message); }
+        }
+
+        /* Les événements, eux, coûtent un appel par match. Deux raisons
+           seulement de les demander :
+
+             — le score a bougé : il faut le buteur pour la carte-souvenir ;
+             — quelqu'un est dans le virage de ce match et attend son fil.
+
+           Le second cas est borné à un relevé par minute. Un match que
+           personne ne regarde ne coûte donc pas un appel de plus qu'avant le
+           fil, et le fil ne peut pas coûter plus d'un appel par minute et par
+           salle occupée. */
+        const attendu = auFil.has(f.id)
+          && Date.now() - (releves.get(f.id) ?? 0) >= EVENTS_MIN_MS;
+        if (scoreChanged || attendu) await pullEvents(f);
       }
     }
     return live;
@@ -155,15 +209,22 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished, log
     const known = await store.eventsOf(f.id);
     const rows = await client.eventsOfFixture(f.id);
     const events = rows.map(mapEvent);
+    releves.set(f.id, Date.now());
     await store.insertEvents(f.id, events);
 
-    // Match terminé : les classements de sa compétition sont désormais faux.
-    if (['FT', 'AET', 'PEN'].includes(f.status) && !finis.has(f.id)) {
-      finis.add(f.id);
-      try { await onFinished?.(f); } catch (e) { log.error('[poller] fin de match', e.message); }
+    const dejaVus = new Set(known.map(identite));
+
+    /* Tout ce qui n'avait pas encore été vu part au fil du Grand Virage :
+       cartons, remplacements, arbitrage vidéo. Les buts sont du lot, mais la
+       salle les écarte — ils ont déjà leur chemin, celui qui secoue la corde
+       et ouvre la minute double, et le fil ne doit pas les raconter deux
+       fois. */
+    const nouveaux = events.filter((e) => !dejaVus.has(identite(e)));
+    if (nouveaux.length) {
+      try { onEvents?.(f.id, nouveaux); }
+      catch (e) { log.error('[foot] onEvents', e.message); }
     }
 
-    const dejaVus = new Set(known.map(identite));
     const buts = events.filter((e) => e.type === 'Goal');
 
     // Le rang d'un but est sa place parmi tous les buts du match, dans

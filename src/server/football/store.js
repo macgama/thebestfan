@@ -129,19 +129,46 @@ export function createFootballStore(pool) {
       return before;
     },
 
+    /**
+     * Enregistre le relevé d'événements d'un match, tel qu'il est à cet instant.
+     *
+     * `seq` est la place dans la liste de l'API, et **cette place bouge** : une
+     * correction d'arbitrage vidéo, un carton ajouté après coup, et tout ce qui
+     * suit se décale d'un cran.
+     *
+     * Le relevé était écrit en `INSERT IGNORE`. Les lignes déjà présentes
+     * gardaient donc leur ancien contenu, et seules les positions de queue —
+     * celles qui n'existaient pas encore — étaient écrites, avec un contenu
+     * décalé d'un rang. La base finissait par porter un événement en double et
+     * en perdre un autre, sans que rien ne le signale : la déduplication des
+     * buts passe par leur identité, pas par leur rang, donc les
+     * cartes-souvenirs restaient justes et personne ne voyait la dérive.
+     * Le fil du match, lui, la montre.
+     *
+     * On réécrit donc tout le relevé à chaque passage, et on coupe la queue
+     * quand l'API raccourcit sa liste — ce qui arrive quand un but est
+     * finalement refusé. `created_at` n'est pas touché : c'est l'instant où
+     * l'événement a été vu pour la première fois.
+     */
     async insertEvents(fixtureId, events) {
       if (!events.length) return 0;
       const values = events.map((e, i) => [
         fixtureId, i, e.type, e.detail ?? null, e.teamId,
         e.player ?? null, e.assist ?? null, e.minute ?? null, e.extra ?? null,
       ]);
-      const [res] = await pool.query(
-        `INSERT IGNORE INTO fixture_events
+      await pool.query(
+        `INSERT INTO fixture_events
            (fixture_id, seq, type, detail, team_id, player, assist, minute, extra)
-         VALUES ?`,
+         VALUES ?
+         ON DUPLICATE KEY UPDATE
+           type = VALUES(type), detail = VALUES(detail), team_id = VALUES(team_id),
+           player = VALUES(player), assist = VALUES(assist),
+           minute = VALUES(minute), extra = VALUES(extra)`,
         [values],
       );
-      return res.affectedRows ?? 0;
+      await q(`DELETE FROM fixture_events WHERE fixture_id = ? AND seq >= ?`,
+        [fixtureId, events.length]);
+      return events.length;
     },
 
     async eventsOf(fixtureId) {
