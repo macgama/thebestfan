@@ -160,24 +160,78 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .regen{text-align:center;font-size:10.5px;opacity:.45;min-height:15px;padding-bottom:4px}
 
 /* ------------------------------------------------------------------ dex */
-.head{padding:6px 16px 0;flex:none}
-.head h2{font-family:var(--banner);font-size:17px;letter-spacing:.12em;margin:0}
-.progress{display:flex;align-items:center;gap:9px;margin:9px 0 10px}
-.progress .bar{flex:1;height:5px;border-radius:3px;background:rgba(242,238,228,.12);overflow:hidden}
-.progress .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--projo),var(--flare));transition:width .5s}
-.progress span{font-family:var(--banner);font-size:12.5px;opacity:.7}
-.chips{display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px;flex:none;scrollbar-width:none}
+/* ------------------------------------------------------- l'en-tête
+
+   Une jauge de cinq pixels et « 14/152 » en gris : c'était exact et ça ne
+   disait rien. Dans ce genre de jeu, la progression est la récompense — elle
+   se met en gros, elle a de la matière, et elle annonce ce qui reste plutôt
+   que ce qui est fait. « 138 à trouver » se lit comme un programme ; « 9 % »
+   se lit comme une note. */
+.head{padding:4px 16px 0;flex:none}
+.head .l{display:flex;align-items:flex-end;gap:10px;margin-bottom:8px}
+.head h2{font-family:var(--banner);font-size:19px;letter-spacing:.12em;margin:0;flex:1}
+.head .n{font-family:var(--banner);font-size:25px;line-height:.9;color:var(--projo);
+  font-variant-numeric:tabular-nums}
+.head .reste{font-size:10.5px;letter-spacing:.1em;opacity:.5;text-align:right;
+  line-height:1.1;margin:6px 0 10px}
+.progress{margin:0}
+.progress .bar{position:relative;height:13px;border-radius:8px;overflow:hidden;
+  background:#0A0E14;box-shadow:inset 0 2px 4px rgba(0,0,0,.8),0 1px 0 rgba(242,238,228,.08)}
+.progress .bar i{display:block;height:100%;width:0;border-radius:8px;
+  background:linear-gradient(180deg,#FFDC7A,var(--projo) 45%,#D9932A);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 0 12px rgba(245,195,59,.45);
+  transition:width .7s cubic-bezier(.2,.9,.3,1)}
+/* L'éclat qui balaie la barre : c'est ce qui la fait vivre entre deux
+   ouvertures de booster, quand rien ne bouge. */
+.progress .bar::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.4) 50%,transparent 58%);
+  background-size:260% 100%;animation:jauge 3.4s ease-in-out infinite}
+@keyframes jauge{0%{background-position:150% 0}60%,100%{background-position:-60% 0}}
+
+.chips{display:flex;gap:7px;overflow-x:auto;padding:0 16px 12px;flex:none;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.filt{white-space:nowrap;font-size:11px;padding:5px 11px;border-radius:999px;cursor:pointer;
-  border:1px solid rgba(242,238,228,.16);background:rgba(0,0,0,.25);color:inherit;opacity:.65;font-family:inherit}
-.filt.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1;font-weight:600}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px 18px;overflow-y:auto;flex:1}
-.slot{position:relative;aspect-ratio:63/88;border-radius:6px}
-.slot.locked{border:1px dashed rgba(242,238,228,.15);background:rgba(0,0,0,.22);display:grid;place-items:center}
-.slot.locked span{font-family:var(--banner);font-size:9.5px;opacity:.42;text-align:center;
-  padding:0 6px;line-height:1.25;letter-spacing:.02em}
-.slot.locked{cursor:pointer}
-.slot.locked:active{background:rgba(255,255,255,.05)}
+/* Des onglets qu'on enfonce, pas des étiquettes. Le biseau du bas disparaît à
+   l'appui et le bouton descend : c'est le seul retour tactile dont dispose
+   une page web, et c'est celui que ces jeux emploient partout. */
+.filt{white-space:nowrap;font-family:var(--banner);font-size:11.5px;letter-spacing:.08em;
+  padding:8px 13px 7px;border-radius:10px;cursor:pointer;border:0;color:inherit;
+  background:rgba(16,22,31,.9);box-shadow:0 3px 0 rgba(0,0,0,.55),inset 0 1px 0 rgba(242,238,228,.09);
+  opacity:.62;transition:transform .1s,box-shadow .1s,opacity .1s}
+.filt:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,.55)}
+.filt.on{opacity:1;color:#0B0E13;background:var(--fc,var(--craie));
+  box-shadow:0 3px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.45)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px 9px;padding:2px 14px 22px;
+  overflow-y:auto;flex:1}
+/* Le socle dur déborde sous la carte : la case lui garde sa place, sinon la
+   rangée suivante mange le biseau et les cartes paraissent rognées. */
+.slot{position:relative;aspect-ratio:63/88;border-radius:6px;cursor:pointer;
+  transition:transform .11s cubic-bezier(.3,1.5,.5,1)}
+.slot:active{transform:translateY(3px) scale(.975)}
+
+/* Les cases vides.
+
+   Elles étaient des rectangles pointillés avec un nom en gris. Neuf cases sur
+   douze à l'écran, et la grille ressemblait à un formulaire à remplir plutôt
+   qu'à une collection. Surtout, elles ne donnaient **aucune envie** : on ne
+   désire pas un rectangle.
+
+   Le personnage est donc là, en ombre, dans son cadre éteint. On voit ce qu'on
+   n'a pas — c'est tout le ressort du genre, et ça ne coûte rien de plus : le
+   dessin existe déjà, `loading="lazy"` ne charge que ce qui est à l'écran. */
+.slot.locked .fz{cursor:pointer;
+  box-shadow:inset 0 0 0 1.1cqw rgba(242,238,228,.13),
+             inset 0 0 7cqw rgba(0,0,0,.5),
+             0 1.2cqw 0 rgba(242,238,228,.07),
+             0 2cqw 3cqw rgba(0,0,0,.45)}
+/* Assez sombre pour dire « pas à toi », assez clair pour qu'on reconnaisse le
+   personnage. À trois dixièmes de luminosité le visage disparaissait, et une
+   silhouette qu'on ne distingue pas ne vaut pas mieux qu'une case vide. */
+.slot.locked .art{filter:grayscale(1) brightness(.46) contrast(1.15)}
+.slot.locked .top::before,.slot.locked .foot,.slot.locked .pip{display:none}
+.slot.locked .nm{opacity:.72}
+.slot.locked .cadenas{position:absolute;left:50%;top:40%;z-index:4;width:13cqw;height:13cqw;
+  transform:translate(-50%,-50%);opacity:.75;stroke:#F2EEE4;fill:none;stroke-width:2;
+  filter:drop-shadow(0 .5cqw 1.5cqw rgba(0,0,0,.9))}
 .dupe{position:absolute;right:3px;bottom:3px;background:rgba(8,10,13,.9);border:1px solid rgba(242,238,228,.28);
   border-radius:3px;font-family:var(--banner);font-size:9.5px;padding:0 4px;z-index:4}
 /* Le stade atteint : une étoile pour rare, deux pour épique. En haut à droite,
@@ -200,19 +254,52 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    qu'en filet et dans la pastille, le nom se pose sur un voile en bas, la
    rareté tient dans un coin. Ce qui était écrit sur la carte se lit déjà
    dans le panneau de détail : le répéter volait la place de l'image.    */
+/* ------------------------------------------------------------ la rareté
+
+   Dans un jeu de collection, la rareté est ce qu'on montre aux autres. Elle
+   doit se lire à un mètre, sur une vignette de cent pixels de haut.
+
+   Elle portait ici un filet de sept millièmes de largeur, **de la couleur du
+   type** — c'est-à-dire la même information que la pastille juste à côté, et
+   rien du tout sur la rareté. Deux cartes que tout sépare, une commune et une
+   légendaire, se ressemblaient trait pour trait dans la grille.
+
+   Le cadre dit maintenant la rareté, la pastille garde le type. C'est la
+   répartition de tous les jeux du genre, et elle tient parce que les deux
+   informations n'ont pas le même usage : le type se consulte quand on
+   construit un deck, la rareté se voit sans qu'on la cherche.
+
+   `--rc2` est la couleur du socle — le biseau dur sous la carte. C'est lui
+   qui donne la matière : une carte qu'on peut appuyer, pas une image collée
+   sur un fond. */
+.fz{--rc:#C2CAD6;--rc2:#4E5865}
+.fz.r-commune{--rc:#C2CAD6;--rc2:#4E5865}
+.fz.r-rare{--rc:#3C82E8;--rc2:#1B3E75}
+.fz.r-epique{--rc:#8257DA;--rc2:#3E2870}
+.fz.r-legendaire{--rc:#F5C33B;--rc2:#7A5A0E}
+
 .fz{container-type:inline-size;position:relative;width:100%;aspect-ratio:63/88;border-radius:4cqw;
   overflow:hidden;cursor:pointer;background:#0B1017;
-  box-shadow:inset 0 0 0 .7cqw var(--tc),0 1cqw 3cqw rgba(0,0,0,.45)}
+  box-shadow:inset 0 0 0 1.3cqw var(--rc),
+             inset 0 0 7cqw rgba(0,0,0,.45),
+             0 1.4cqw 0 var(--rc2),
+             0 2.4cqw 3.4cqw rgba(0,0,0,.5)}
 .fz .body{position:absolute;inset:0;display:block;color:#F2EEE4}
 .fz .art{position:absolute;inset:0;overflow:hidden;background:#0B1017}
 .fz .art svg{width:100%;height:100%;display:block}
 
 /* Le nom se pose sur l'image au lieu d'occuper une barre qui la rogne. */
 .fz .top{position:absolute;left:0;right:0;bottom:0;z-index:3;display:flex;align-items:flex-end;
-  gap:2cqw;padding:9cqw 2.8cqw 2.6cqw;
-  background:linear-gradient(180deg,transparent,rgba(4,6,10,.5) 45%,rgba(4,6,10,.9))}
-.fz .nm{font-family:var(--banner);font-size:5cqw;line-height:1.05;text-transform:uppercase;flex:1;
-  text-shadow:0 .4cqw 1.6cqw rgba(0,0,0,.9)}
+  gap:2cqw;padding:11cqw 3cqw 3cqw;
+  background:linear-gradient(180deg,transparent,rgba(4,6,10,.55) 42%,rgba(4,6,10,.93))}
+/* Le socle prend la teinte de la rareté. C'est ce qui la fait lire même quand
+   le cadre est mangé par une illustration claire — et c'est la même couleur
+   partout, donc elle s'apprend en une carte. */
+.fz .top::before{content:"";position:absolute;left:0;right:0;bottom:0;height:62%;
+  background:linear-gradient(180deg,transparent,var(--rc));opacity:.2;pointer-events:none}
+.fz .nm{position:relative;font-family:var(--banner);font-size:6cqw;line-height:1.05;
+  text-transform:uppercase;flex:1;letter-spacing:.01em;
+  text-shadow:0 .4cqw 1.6cqw rgba(0,0,0,.95)}
 .fz .pip{width:6cqw;height:6cqw;border-radius:50%;background:var(--tc);flex:none;display:grid;
   place-items:center;box-shadow:0 .3cqw 1.2cqw rgba(0,0,0,.6)}
 .fz .pip svg{width:3.8cqw;height:3.8cqw}
@@ -239,25 +326,51 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .fz .mods{display:none}
 
 /* La rareté, en pastille sombre : lisible quelle que soit l’image dessous. */
-.fz .foot{position:absolute;top:2cqw;right:2cqw;z-index:3;display:flex;align-items:center;
-  gap:1cqw;padding:.8cqw 1.8cqw;border-radius:99cqw;background:rgba(4,6,10,.62);
-  font-size:2.6cqw;color:#E4DFD2}
-.fz .rar{display:flex;gap:.6cqw;align-items:center}
-.fz .rar .d{width:2.2cqw;height:2.2cqw;background:#C2CAD6;transform:rotate(45deg);border-radius:.3cqw}
-.fz .rar .s{font-size:3.2cqw;color:#F5C33B;line-height:1}
+/* La rareté chiffrée, dans le coin : un à trois losanges, une couronne pour
+   la légendaire. Elle redit ce que le cadre annonce — et c'est voulu, un
+   collectionneur veut pouvoir compter. */
+.fz .foot{position:absolute;top:2.6cqw;right:2.6cqw;z-index:3;display:flex;align-items:center;
+  gap:1cqw;padding:1.1cqw 2.2cqw;border-radius:99cqw;background:rgba(4,6,10,.7);
+  box-shadow:inset 0 0 0 .4cqw var(--rc);font-size:2.6cqw;color:#E4DFD2}
+.fz .rar{display:flex;gap:.7cqw;align-items:center}
+.fz .rar .d{width:2.4cqw;height:2.4cqw;background:var(--rc);transform:rotate(45deg);
+  border-radius:.3cqw;box-shadow:0 0 1.4cqw var(--rc)}
+.fz .rar .s{font-size:3.6cqw;color:var(--rc);line-height:1;
+  text-shadow:0 0 1.6cqw var(--rc)}
 /* Le type est déjà dit par la pastille de couleur : inutile de le réécrire. */
 .fz .sep,.fz .foot span:last-child{display:none}
+/* En dessous d'une certaine largeur, la pastille de rareté n'est plus lisible :
+   elle devient une tache claire dans le coin, qu'on lit comme un défaut
+   d'affichage. La carte la retire donc d'elle-même — c'est à ça que sert le
+   `container-type` posé plus haut, et ça marche partout où la carte s'affiche
+   sans que l'appelant ait à le savoir. Le cadre porte la rareté à lui seul
+   dans la grille. */
+@container (max-width: 150px){ .fz .foot{display:none} }
 
-/* Les raretés hautes se signalent par leur filet, jamais par un fond qui
-   remplacerait l'image. */
-.fz.r-star{box-shadow:inset 0 0 0 .8cqw #DCE7F2,0 1cqw 3cqw rgba(0,0,0,.5)}
-.fz.r-crown{box-shadow:inset 0 0 0 .9cqw #F5C33B,0 0 4cqw rgba(245,195,59,.32),
-  0 1cqw 3cqw rgba(0,0,0,.5)}
-.fz.r-crown .nm{color:#F5C33B}
+/* La légendaire est la seule à rayonner hors de son cadre. Si toutes les
+   raretés brillaient, aucune ne brillerait. */
+.fz.r-legendaire{box-shadow:inset 0 0 0 1.5cqw var(--rc),
+  inset 0 0 7cqw rgba(0,0,0,.4),
+  0 1.4cqw 0 var(--rc2),
+  0 0 5cqw rgba(245,195,59,.4),
+  0 2.4cqw 3.4cqw rgba(0,0,0,.5)}
+.fz.r-legendaire .nm{color:#FFE08A}
 .fz.holo::after{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:4cqw;
   background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.42) 45%,rgba(160,220,255,.32) 52%,transparent 68%);
   background-size:250% 250%;animation:sheen 3.6s linear infinite;mix-blend-mode:screen;opacity:.6}
 @keyframes sheen{0%{background-position:120% 0}100%{background-position:-40% 0}}
+
+/* L'entrée en cascade. La grille apparaissait d'un bloc ; elle se dépose
+   maintenant carte par carte. Le retard est plafonné à douze rangs : au-delà,
+   quelqu'un qui arrive en bas de la grille attendrait quatre secondes pour
+   voir sa collection. */
+.grid .slot{animation:poser .34s cubic-bezier(.2,1.5,.4,1) backwards}
+@keyframes poser{from{opacity:0;transform:translateY(12px) scale(.88)}}
+@media (prefers-reduced-motion:reduce){
+  .grid .slot{animation:none}
+  .progress .bar::after{animation:none}
+  .fz.holo::after{animation:none}
+}
 
 /* ---------------------------------------------------------- ouverture */
 #opener{position:absolute;inset:0;z-index:22;display:none;flex-direction:column;
@@ -300,11 +413,20 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .evo .step .fz{width:62px}
 .evo .step b{display:block;font-size:8.5px;margin-top:4px;font-family:var(--banner)}
 .evo .arrow{opacity:.4;font-size:15px}
-.dbtns{display:flex;gap:8px;margin-top:14px}
-.dbtn{flex:1;border:1px solid rgba(242,238,228,.24);background:rgba(0,0,0,.3);border-radius:7px;color:inherit;
-  padding:12px;font-family:var(--banner);font-size:13px;letter-spacing:.07em;cursor:pointer}
-.dbtn.primary{background:linear-gradient(180deg,var(--flare),#B32A1D);border-color:transparent}
-.dbtn:disabled{opacity:.35;pointer-events:none}
+.dbtns{display:flex;gap:9px;margin-top:16px}
+/* Le même bouton que « ouvrir le booster » du kiosque : un socle dur, qui
+   s'enfonce à l'appui. Ils étaient plats ici — la fiche paraissait venir
+   d'une autre application que la grille qui l'ouvre. */
+.dbtn{flex:1;border:0;border-radius:10px;color:inherit;
+  padding:13px 10px 12px;font-family:var(--banner);font-size:13px;letter-spacing:.07em;
+  cursor:pointer;background:rgba(16,22,31,.95);
+  box-shadow:0 4px 0 rgba(0,0,0,.62),inset 0 1px 0 rgba(242,238,228,.13);
+  transition:transform .1s,box-shadow .1s}
+.dbtn:active{transform:translateY(4px);box-shadow:0 0 0 rgba(0,0,0,.62)}
+.dbtn.primary{color:#fff;background:linear-gradient(180deg,#F0704F,var(--flare) 55%,#B32A1D);
+  box-shadow:0 4px 0 #7A1A11,inset 0 1px 0 rgba(255,255,255,.3)}
+.dbtn.primary:active{box-shadow:0 0 0 #7A1A11}
+.dbtn:disabled{opacity:.35;pointer-events:none;transform:none}
 .toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:#171C23;z-index:40;
   border:1px solid rgba(242,238,228,.2);border-radius:7px;padding:11px 16px;font-size:12.5px;
   display:none;max-width:88%;text-align:center}
@@ -359,8 +481,12 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
   <section class="screen" id="s-dex">
     <div class="head">
-      <h2>LE CLASSEUR</h2>
-      <div class="progress"><div class="bar"><i id="progBar"></i></div><span id="progTxt">0/0</span></div>
+      <div class="l">
+        <h2>LE CLASSEUR</h2>
+        <div class="n"><span id="progTxt">0/0</span></div>
+      </div>
+      <div class="progress"><div class="bar"><i id="progBar"></i></div></div>
+      <div class="reste" id="progReste"></div>
     </div>
     <div class="chips" id="filters"></div>
     <div class="grid" id="grid"></div>
@@ -730,16 +856,35 @@ function modsText(f) {
   return out;
 }
 
+/**
+ * La rareté chiffrée : un à trois losanges, une couronne pour la légendaire.
+ *
+ * La seconde ligne testait `legendaire` une deuxième fois — elle était donc
+ * morte, et l'épique retombait sur les losanges. Une faute muette : trois
+ * losanges restent une réponse plausible, personne ne cherche l'étoile qui
+ * manque.
+ */
 function rarMark(rar) {
   if (rar === 'legendaire') return `<span class="s">♛</span>`;
-  if (rar === 'legendaire') return `<span class="s">★</span>`;
-  return '<span class="d"></span>'.repeat(RAR[rar]);
+  if (rar === 'epique') return `<span class="s">★</span>`;
+  return '<span class="d"></span>'.repeat(RAR[rar] ?? 1);
 }
 
+/**
+ * Une carte.
+ *
+ * `--tc` porte le type, `r-<rareté>` porte la rareté. Les deux étaient
+ * confondus : le cadre prenait la couleur du type, si bien qu'une commune et
+ * une légendaire du même type se ressemblaient trait pour trait dans la
+ * grille. La rareté est pourtant la seule chose qu'on montre aux autres.
+ *
+ * `opts.verrou` : le personnage qu'on n'a pas encore. Il s'affiche quand
+ * même, en ombre — voir la grille.
+ */
 function cardHTML(f, opts = {}) {
   const t = TYPES[f.type];
-  const holo = ['epique','legendaire'].includes(f.rar) ? ' holo' : '';
-  const rc = f.rar === 'legendaire' ? ' r-crown' : f.rar === 'epique' ? ' r-star' : '';
+  const holo = !opts.verrou && ['epique','legendaire'].includes(f.rar) ? ' holo' : '';
+  const rc = ` r-${f.rar ?? 'commune'}`;
   return `<div class="fz${rc}${holo}" style="--tc:${t.c}" data-id="${f.id}">
     <div class="body">
       <div class="top">
@@ -748,6 +893,9 @@ function cardHTML(f, opts = {}) {
         <div class="nm">${f.nom}</div>
       </div>
       <div class="art">${art(f)}</div>
+      ${opts.verrou ? `<svg class="cadenas" viewBox="0 0 24 24" stroke-linecap="round">
+        <rect x="4" y="10" width="16" height="11" rx="2.5"/>
+        <path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>` : ''}
       ${opts.mini ? '' : `<div class="mods">${modsText(f).slice(0, 2).join('<br>')}</div>`}
       <div class="foot"><span class="rar">${rarMark(f.rar)}</span><span class="sep"></span>
         <span>${t.nom} · ét. ${f.stage}</span></div>
@@ -1203,9 +1351,14 @@ function burst(color, n) {
 /* ------------------------------------------------------------ classeur */
 
 function renderDex() {
-  const chips = [['all','Tout'], ...Object.entries(TYPES).map(([k, t]) => [k, t.nom]), ['miss','Manquants']];
-  $('filters').innerHTML = chips.map(([k, l]) =>
-    `<button class="filt ${S.filter === k ? 'on' : ''}" data-f="${k}">${l}</button>`).join('');
+  // L'onglet actif prend la couleur de son type : c'est la même couleur que la
+  // pastille des cartes qu'il montre, donc le lien se fait sans légende.
+  const chips = [['all','Tout', null],
+    ...Object.entries(TYPES).map(([k, t]) => [k, t.nom, t.c]),
+    ['miss','Manquants', null]];
+  $('filters').innerHTML = chips.map(([k, l, c]) =>
+    `<button class="filt ${S.filter === k ? 'on' : ''}" data-f="${k}"
+      ${c ? `style="--fc:${c}"` : ''}>${l}</button>`).join('');
 
   const list = PERSOS.filter((f) => S.filter === 'all' ? true
     : S.filter === 'miss' ? !S.col[f.id] : f.type === S.filter);
@@ -1218,15 +1371,26 @@ function renderDex() {
   const total = Math.max(A_COLLECTIONNER, owned);
   $('progBar').style.width = `${(owned / total) * 100}%`;
   $('progTxt').textContent = `${owned}/${total}`;
+  // Ce qui reste, plutôt que le pourcentage fait. « 138 à trouver » se lit
+  // comme un programme ; « 9 % » se lit comme une note.
+  const reste = Math.max(0, total - owned);
+  $('progReste').textContent = reste
+    ? `${reste} à trouver` : 'collection complète';
 
   if (!Object.keys(S.col).length && S.filter !== 'miss') {
     $('grid').insertAdjacentHTML('afterbegin', '');
   }
-  $('grid').innerHTML = list.length ? list.map((f) => {
+  $('grid').innerHTML = list.length ? list.map((f, i) => {
     const n = S.col[f.id] ?? 0;
+    // Le retard d'entrée est plafonné : sans ce plafond, la cent-cinquantième
+    // carte se poserait quatre secondes après la première.
+    const retard = ` style="animation-delay:${Math.min(i, 11) * 28}ms"`;
     if (!n) {
-      return `<div class="slot locked" data-open="${f.id}">
-        <span>${esc(f.nom)}</span></div>`;
+      /* Le personnage qu'on n'a pas est là quand même, en ombre. Voir la
+         grille : une case vide ne donne envie de rien, une silhouette si. Le
+         nom reste dans le texte de la case — c'est ce que le test lit. */
+      return `<div class="slot locked" data-open="${f.id}"${retard}>${
+        cardHTML(f, { mini: true, verrou: true })}</div>`;
     }
     // La case montre le personnage **tel qu'il est aujourd'hui** : celui qui a
     // payé quatre-vingt-dix écharpes doit voir son Capo, pas le gamin de
@@ -1234,7 +1398,7 @@ function renderDex() {
     // endroit où le joueur compare ses cartes entre elles.
     const age = ageDe(f);
     const stade = S.stades?.[f.id] ?? 1;
-    return `<div class="slot" data-open="${f.id}">${cardHTML(age, { mini:true })}
+    return `<div class="slot" data-open="${f.id}"${retard}>${cardHTML(age, { mini:true })}
       ${n > 1 ? `<div class="dupe">×${n}</div>` : ''}
       ${stade > 1 ? `<div class="stade">${'★'.repeat(stade - 1)}</div>` : ''}
       ${S.active === f.id ? '<div class="active-tag">DUEL</div>' : ''}</div>`;

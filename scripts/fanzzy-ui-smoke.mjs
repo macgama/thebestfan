@@ -47,8 +47,11 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
+// `stades.sql` ajoute la colonne `stage` à `user_fanzzy`. Sans elle, toute la
+// collection reste au premier âge, donc entièrement commune — et la grille
+// n'aurait aucune rareté à montrer.
 for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql',
-                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql']) {
+                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'stades.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
@@ -59,8 +62,12 @@ await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
 await raw.query(`INSERT INTO user_wallet (user_id,scarves,packs,active_fanzzy)
                  VALUES (?,900,9,'G1')`, [U]);
 // G1 est possédé : c'est le Fanzzy illustré, et c'est lui qui cassait la page.
+// V1 est monté au second âge : la rareté suit le stade, donc c'est la seule
+// façon d'avoir autre chose que du commun dans la grille — et c'est ce qui
+// permet de vérifier que la rareté se voit.
 for (const f of ['G1', 'X7', 'X8', 'V1', 'P1']) {
-  await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)`, [U, f]);
+  await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies,stage) VALUES (?,?,1,?)`,
+    [U, f, f === 'V1' ? 2 : 1]);
 }
 await raw.end();
 
@@ -178,6 +185,63 @@ check('les Fanzzy non possédés portent leur nom',
     const v = document.querySelector('#grid .slot.locked');
     return Boolean(v && v.textContent.trim().length > 2);
   }));
+
+/* --------------------------------------------- ce que la grille montre
+
+ * Une grille de collection doit répondre à deux questions sans qu'on lise
+ * quoi que ce soit : **qu'est-ce que je n'ai pas**, et **qu'est-ce qui est
+ * rare**. Elle ne répondait ni à l'une ni à l'autre.
+ *
+ * Les cases non possédées étaient des rectangles pointillés avec un nom en
+ * gris — neuf sur douze à l'écran, et la grille ressemblait à un formulaire.
+ * Et le cadre des cartes portait la couleur du **type**, si bien qu'une
+ * commune et une légendaire du même type se ressemblaient trait pour trait.
+ */
+{
+  const vide = await page.evaluate(() => {
+    const v = document.querySelector('#grid .slot.locked');
+    const dessin = v?.querySelector('.art') ?? null;
+    return {
+      dessin: Boolean(dessin),
+      cadenas: Boolean(v?.querySelector('.cadenas')),
+      // Assombri, mais pas éteint : une silhouette qu'on ne distingue pas ne
+      // vaut pas mieux qu'une case vide.
+      // Lu sous garde : quand le dessin disparaît, ce contrôle doit rougir,
+      // pas faire tomber la suite entière sur un `null`. Un test qui plante
+      // n'annonce pas ce qu'il a trouvé.
+      filtre: dessin ? getComputedStyle(dessin).filter : '',
+    };
+  });
+  check('un Fanzzy qu’on n’a pas montre quand même son personnage', vide.dessin);
+  check('en ombre, avec un cadenas', vide.cadenas && /grayscale|brightness/.test(vide.filtre));
+
+  /* La rareté est la seule chose qu'on montre aux autres : elle doit se lire
+     sur la vignette. On compare la couleur de cadre d'une commune et d'une
+     rare — si les deux se valent, le code de rareté ne dit rien. */
+  const teintes = await page.evaluate(() => {
+    const lu = (r) => {
+      const n = document.querySelector(`#grid .fz.r-${r}`);
+      return n ? getComputedStyle(n).getPropertyValue('--rc').trim() : null;
+    };
+    return { commune: lu('commune'), rare: lu('rare'), legendaire: lu('legendaire') };
+  });
+  check('chaque rareté a sa couleur de cadre',
+    Boolean(teintes.commune) && Boolean(teintes.rare)
+    && teintes.commune !== teintes.rare);
+  check('et la légendaire ne se confond avec aucune',
+    !teintes.legendaire || (teintes.legendaire !== teintes.commune
+      && teintes.legendaire !== teintes.rare));
+
+  /* `\s` et non un espace littéral : un espace insécable s'était glissé dans
+     le gabarit, invisible dans l'éditeur comme dans le message d'échec, et le
+     contrôle échouait sur un texte qui paraissait exactement juste. Un test
+     qui ne peut pas montrer ce qu'il reproche coûte une demi-heure. */
+  const reste = await page.$eval('#progReste', (n) => n.textContent);
+  check('l’en-tête annonce ce qui reste à trouver',
+    /\d+\s+à\s+trouver|complète/.test(reste)
+    || (console.log('        il dit :',
+      [...reste].map((c) => c.codePointAt(0).toString(16)).join(' ')), false));
+}
 
 /* ----------------------------------------------------------- le kiosque */
 
@@ -365,7 +429,14 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
   const bilan = await pageG.evaluate(async () => {
     const vus = { fanzzy: 0, skin: 0, stuff: 0, action: 0 };
     const fautes = [];
-    for (let i = 0; i < 14; i++) {
+    /* On ouvre **jusqu'à** avoir vu les quatre sortes, pas un nombre fixe de
+       fois. À quatorze boosters, la sorte la plus rare manquait environ une
+       fois sur cinq et la suite rougissait sans que rien ne soit cassé — le
+       hasard du jeu fuyait dans l'assertion, ce qui est le meilleur moyen
+       d'apprendre à ignorer les rouges. Le plafond reste : si une sorte ne
+       tombe jamais en soixante boosters, ce n'est plus de la malchance. */
+    const complet = () => Object.values(vus).every((n) => n > 0);
+    for (let i = 0; i < 60 && !complet(); i++) {
       //  : une carte qui fait lever le rendu doit se lire comme un échec
       // nommé, pas faire exploser la suite. C'est exactement ce qui arrivait,
       // et un joueur, lui, ne voyait rien du tout.

@@ -103,6 +103,14 @@ const io = {
 const goals = [];
 const client = createClient({ apiKey: 'clef-de-test', baseUrl: apiUrl, minIntervalMs: 0 });
 
+/* Ce que le fil du Grand Virage reçoit du relevé, et ce qu'il lui demande.
+   `auFil` est la liste des matchs dont une salle est occupée : c'est elle qui
+   décide si le relevé paie un appel d'événements en dehors d'un but. */
+const statuts = [];
+const evenements = [];
+const finis = [];
+let auFil = [];
+
 const foot = createFootball({
   pool, client, io,
   requireAuth: (req, _res, next) => { req.user = { id: USER }; next(); },
@@ -110,6 +118,10 @@ const foot = createFootball({
     const followers = await foot.store.followersOfTeam(g.teamId);
     goals.push({ ...g, followers });
   },
+  onFinished: (f) => { finis.push(f.id); },
+  onStatus: (id, etat) => { statuts.push({ id, ...etat }); },
+  onEvents: (id, evs) => { evenements.push({ id, evs }); },
+  fixturesAuFil: () => auFil,
 });
 
 const app = express();
@@ -171,21 +183,63 @@ check('aucun match joué pour l\u2019instant', r.json.feed?.[0]?.last?.length ==
 
 /* ------------------------------------------------------------ direct */
 
-// Le match démarre.
+// Le match démarre, et un carton tombe tout de suite. Le carton sert au fil
+// du Grand Virage : c'est l'événement qui n'accompagne aucun but, donc celui
+// qui n'arrivait jamais avant.
 state.status = '1H'; state.elapsed = 3;
 state.kickoff = new Date(Date.now() - 3 * 60_000).toISOString();
+state.events = [{
+  time: { elapsed: 3, extra: null }, team: OPPO,
+  player: { name: 'Keller' }, type: 'Card', detail: 'Yellow Card',
+}];
 emitted.length = 0;
+let appelsAvant = apiCalls;
 let live = await foot.poller.pollLive();
 check('match détecté en cours', live === 1);
 check('changement de statut diffusé', emitted.some((e) => e.event === 'football:fixture'));
 
-// But du club suivi.
+/* ------------------------------------------- le fil, et ce qu'il coûte
+
+ * Le fil du Grand Virage a besoin de ce qui n'est pas un but : cartons,
+ * remplacements, arbitrage vidéo. Ça se paie — un appel par match et par
+ * relevé — alors que le score, la minute et la période sont déjà dans la
+ * réponse qu'on vient de lire.
+ *
+ * D'où la règle, et c'est elle qu'on éprouve ici : gratuit pour tout le
+ * monde, payant seulement pour les matchs dont une salle de virage est
+ * occupée, et jamais plus d'un relevé par minute. Une règle d'économie qu'on
+ * n'éprouve pas est une règle qu'on découvre en lisant sa facture. */
+
+check('le score et la période partent à chaque tour, sans un appel de plus',
+  statuts.at(-1)?.status === '1H' && statuts.at(-1)?.elapsed === 3
+  && statuts.at(-1)?.homeGoals === 0);
+check('un match que personne ne regarde ne paie pas son fil',
+  apiCalls - appelsAvant === 1 && evenements.length === 0);
+
+// Quelqu'un entre dans le virage de ce match.
+auFil = [5001];
+appelsAvant = apiCalls;
+await foot.poller.pollLive();
+check('une salle occupée fait relever les événements', apiCalls - appelsAvant === 2);
+check('et le carton atteint le fil',
+  evenements.at(-1)?.evs?.some((e) => e.type === 'Card' && e.player === 'Keller'));
+
+// Deuxième tour dans la foulée : le relevé du direct tourne toutes les vingt
+// secondes, le fil ne doit pas le suivre à ce rythme.
+appelsAvant = apiCalls;
+const dejaVus = evenements.length;
+await foot.poller.pollLive();
+check('mais pas plus d’un relevé par minute', apiCalls - appelsAvant === 1);
+check('et rien n’est réannoncé au fil', evenements.length === dejaVus);
+
+// But du club suivi. Il s'ajoute au carton : l'API sert la liste entière du
+// match à chaque relevé, elle ne la remplace pas.
 state.home = 1; state.elapsed = 23;
-state.events = [{
+state.events.push({
   time: { elapsed: 23, extra: null }, team: TEAM,
   player: { name: 'Diallo' }, assist: { name: 'Morel' },
   type: 'Goal', detail: 'Normal Goal',
-}];
+});
 emitted.length = 0;
 await foot.poller.pollLive();
 
@@ -202,7 +256,8 @@ check('abonné du club identifié pour le bonus', goals[0]?.followers?.includes(
 emitted.length = 0; goals.length = 0;
 await foot.poller.pollLive();
 check('aucun doublon de but au tour suivant', goals.length === 0);
-const [evRows] = await pool.query('SELECT * FROM fixture_events WHERE fixture_id = 5001');
+const [evRows] = await pool.query(
+  `SELECT * FROM fixture_events WHERE fixture_id = 5001 AND type = 'Goal'`);
 check('un seul but en base', evRows.length === 1);
 
 // Deuxième but, cette fois pour l'adversaire.
@@ -216,11 +271,67 @@ await foot.poller.pollLive();
 check('deuxième but détecté', goals.length === 1 && goals[0].teamId === 91);
 check('but adverse attribué au bon club', goals[0].followers.length === 0);
 
+/* ------------------------------------- le relevé qui se décale en cours de route
+
+ * L'API insère parfois un événement **plus tôt** dans la liste : une décision
+ * d'arbitrage vidéo, un carton ajouté après coup. Tout ce qui suit se décale
+ * alors d'un rang — et `seq`, en base, est justement ce rang.
+ *
+ * Le relevé était écrit en `INSERT IGNORE` : les lignes déjà là gardaient leur
+ * ancien contenu, et seules les positions de queue étaient insérées, avec un
+ * contenu décalé. La base finissait par porter un événement en double et en
+ * perdre un autre. Personne ne le voyait : les cartes-souvenirs se
+ * dédoublonnent par identité, pas par rang. Le fil du match, lui, le montre —
+ * c'est un vrai fil qui affiche deux fois le même carton.
+ *
+ * On rejoue donc exactement ça : une décision insérée en tête. */
+state.events.unshift({
+  time: { elapsed: 2, extra: null }, team: TEAM,
+  player: { name: 'Morel' }, type: 'Var', detail: 'Goal cancelled',
+});
+// Le match repart dans le même temps : c'est le changement de score qui
+// déclenche le relevé, et c'est bien ainsi que la chose arrive en vrai.
+state.away = 2; state.elapsed = 78;
+state.events.push({
+  time: { elapsed: 78, extra: null }, team: OPPO,
+  player: { name: 'Roth' }, type: 'Goal', detail: 'Normal Goal',
+});
+await foot.poller.pollLive();
+{
+  const [rows] = await pool.query(
+    `SELECT seq, type, player FROM fixture_events WHERE fixture_id = 5001 ORDER BY seq`);
+  const attendu = state.events.map((e) => `${e.type}|${e.player?.name ?? ''}`);
+  const obtenu = rows.map((r) => `${r.type}|${r.player ?? ''}`);
+  check('un événement inséré en tête ne décale pas la base',
+    JSON.stringify(obtenu) === JSON.stringify(attendu)
+    || (console.log('        base :', obtenu.join(' / ')),
+        console.log('        API  :', attendu.join(' / ')), false));
+  check('et aucun événement n’est perdu ni doublé',
+    new Set(obtenu).size === obtenu.length && obtenu.length === state.events.length);
+}
+
+/* Le but est finalement refusé : l'API retire l'entrée de sa liste et le score
+   revient en arrière. La base doit raccourcir avec elle, sinon le fil garde un
+   but que le match n'a plus — et c'est le genre de fantôme qu'on ne remarque
+   qu'en le voyant à l'écran. */
+{
+  state.events.pop();
+  state.away = 1;
+  await foot.poller.pollLive();
+  const [rows] = await pool.query(
+    `SELECT COUNT(*) AS n FROM fixture_events WHERE fixture_id = 5001`);
+  check('une liste raccourcie ne laisse pas de queue en base',
+    rows[0].n === state.events.length
+    || (console.log(`        ${rows[0].n} en base pour ${state.events.length} annoncés`), false));
+}
+
 // Fin du match.
 state.status = 'FT'; state.elapsed = 90;
 await foot.poller.pollLive();
 live = await foot.poller.pollLive();
 check('match terminé : plus de direct', live === 0);
+check('la fin du match est annoncée une fois et une seule',
+  finis.filter((id) => id === 5001).length === 1);
 
 r = await call('/api/football/feed');
 check('le match passe dans les résultats', r.json.feed?.[0]?.last?.[0]?.id === 5001);

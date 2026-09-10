@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « les thèmes de tenue passent en base, et les
-boosters se rouvrent — on déchire la bande du haut ».
+Dernière mise à jour : session « le personnage salue en arrivant, et le Grand
+Virage raconte enfin le match ».
 
 ---
 
@@ -41,8 +41,11 @@ Le projet suit une méthode constante, à conserver :
   de build du Manager l'appelle, mais il ne fait plus rien.
 - **Les tests ont trouvé des bugs que la relecture avait ratés** — collation de
   base, buts perdus, soldes non débitables, catalogue divergent, barre de
-  navigation par-dessus le bouton de jeu. C'est le cœur de la méthode : écrire
-  le test qui aurait attrapé le bug, pas seulement le correctif.
+  navigation par-dessus le bouton de jeu, un crochet passé et jamais transmis,
+  un relevé d'événements qui se décalait en base. C'est le cœur de la méthode :
+  écrire le test qui aurait attrapé le bug, pas seulement le correctif — puis
+  **casser exprès le correctif pour voir le test rougir**, sans quoi on ne sait
+  pas ce qu'on a écrit.
 - **Le code est commenté en français**, et les commentaires expliquent le
   *pourquoi*, pas le *quoi*.
 - **Les messages d'erreur doivent nommer la cause.** Plusieurs séances ont été
@@ -78,9 +81,10 @@ Le projet suit une méthode constante, à conserver :
 
 ### Les tests d'interface
 
-Trois suites font tourner une vraie page dans un vrai navigateur, contre un
+Sept suites font tourner une vraie page dans un vrai navigateur, contre un
 vrai serveur. Elles ont trouvé des choses qu'aucune relecture ne voit — un
-bouton recouvert de 16 pixels, une image décentrée d'une demi-largeur.
+bouton recouvert de 16 pixels, une image décentrée d'une demi-largeur, un
+panneau peint sous un bandeau plein écran.
 
 | Suite | Ce qu'elle couvre | Outil |
 |---|---|---|
@@ -90,6 +94,7 @@ bouton recouvert de 16 pixels, une image décentrée d'une demi-largeur.
 | `accueil-ui-smoke.mjs` | scène du personnage sur l'accueil | puppeteer |
 | `admin-ui-smoke.mjs` | catalogue Fanzzy dans l'administration | puppeteer |
 | `kop-ui-smoke.mjs` | la page du KOP : créer, rejoindre, voir le pot, voter | puppeteer |
+| `virage-ui-smoke.mjs` | le fil du match dans le Grand Virage | puppeteer |
 
 `accueil-ui-smoke.mjs` vérifie ce qui ne se lit pas dans le HTML : que le
 supporter **bouge** — il mesure le style calculé et exige l'animation de
@@ -112,6 +117,15 @@ rebours du vote tourne**. Trois minutes, c’est court — un chrono figé fait 
 après la clôture, et le clic ne fait rien sans que rien ne l’explique. Il vérifie
 aussi qu’un bonus hors de prix est **désactivé** plutôt que refusé après coup.
 
+`virage-ui-smoke.mjs` vérifie trois choses qu'aucune lecture ne tranche : que
+le fil **arrive garni** quand on entre au milieu du match, que le vocabulaire
+est **français** — l'API dit `Red Card`, `Normal Goal`, `Substitution 1`, et
+ces mots-là traversaient la page tels quels — et que la feuille reste
+**lisible et refermable** pendant qu'un bandeau d'effet occupe l'écran. Ce
+dernier point se mesure en comptant les pixels de la couleur du bandeau sur la
+tête du panneau : voir le piège ci-dessous, les deux premières versions de ce
+contrôle ne pouvaient pas échouer.
+
 `jsdom` est déclaré en `devDependencies`. **`puppeteer` ne l'est pas, et c'est
 volontaire** : il télécharge un Chromium de près de 200 Mo, ce qui alourdirait
 `npm install` sur le serveur. Avant de lancer les suites qui en ont besoin :
@@ -120,10 +134,10 @@ volontaire** : il télécharge un Chromium de près de 200 Mo, ce qui alourdirai
 npm install --no-save puppeteer
 ```
 
-Ces trois suites ne tournent pas sur le serveur de production. Elles se lancent
-en local, avant de livrer.
+Ces suites ne tournent pas sur le serveur de production. Elles se lancent en
+local, avant de livrer.
 
-### Deux pièges de test rencontrés deux fois chacun
+### Les pièges de test, rencontrés au moins deux fois chacun
 
 **`body.textContent` inclut le contenu des balises `<script>`.** Une
 vérification qui cherche un message dans le texte de la page le trouve dans son
@@ -167,6 +181,26 @@ process.exitCode = failures ? 1 : 0;
 ont encore `process.exit()`** : elles n'ont pas montré le défaut, mais elles le
 portent. Quand l'une d'elles échoue sans raison, c'est la première chose à
 regarder — et le correctif est ci-dessus.
+
+**Un contrôle vert n'est pas forcément un contrôle qui marche.** Trois écrits
+dans la même heure sont passés au vert alors qu'ils ne mesuraient rien :
+
+- `document.elementsFromPoint` **ignore tout ce qui porte
+  `pointer-events: none`**. C'est le cas de tous les calques de `fx.js`. Le
+  contrôle « la feuille est au-dessus des effets » répondait donc oui alors
+  qu'elle était peinte dessous : le survol et la peinture sont deux ordres
+  différents, et seul le second se voit.
+- La version suivante lisait les pixels, mais comptait les pixels **clairs**.
+  Le titre du panneau est écrit en craie, presque blanc : la sonde comptait sa
+  propre cible. Elle échouait que la feuille soit dessus ou dessous.
+- Deux correctifs redondants au même endroit rendent chacun **inéprouvable
+  seul** : retirer l'un laissait le test vert. Il fallait retirer les deux pour
+  voir la panne, donc le contrôle ne protégeait aucun des deux.
+
+Le remède est le même dans les trois cas, et il vaut pour tout ce fichier :
+**après avoir écrit le contrôle, casser exprès ce qu'il surveille et vérifier
+qu'il rougit.** Trois lignes de `sed`, une minute. Tous les contrôles ajoutés
+en septembre 2026 sont passés par là ; ceux d'avant, non.
 
 **Le hasard du jeu ne doit pas fuir dans l'assertion.** Deux tests échouaient
 par intermittence pour cette raison : l'un rejouait un geste au tempo bruité
@@ -537,6 +571,46 @@ agréable ; « tu vas perdre ta série » est une laisse.
 **Les visuels générés ne portent ni marque, ni nom de club, ni texte.** Règles
 complètes dans `VISUELS.md`.
 
+**Le fil du match est gratuit d'abord, payant ensuite.** Le Grand Virage
+raconte ce qui se passe sur le terrain, et cette promesse pouvait coûter très
+cher : un appel d'événements accroché au relevé du direct, qui tourne toutes
+les vingt secondes, ferait près de quatre cents appels pour un match de deux
+heures. La règle qui l'en empêche tient en trois lignes, et elle est éprouvée
+par `football-smoke` :
+
+- **La période et le score ne coûtent rien.** Coup d'envoi, mi-temps, reprise,
+  coup de sifflet final, minute, score : tout cela est déjà dans la réponse que
+  le relevé vient de lire, vingt matchs par appel. Un fil qui n'aurait que ça
+  reste utile — « mi-temps » explique à lui seul pourquoi la corde ne bouge
+  plus.
+- **Le but réel ne coûte rien non plus** : il emprunte le chemin qui existait
+  déjà, celui qui secoue la corde et frappe les cartes-souvenirs. Il est donc
+  **retiré** du relevé côté salle, sinon le fil raconte deux fois le même but.
+- **Le reste du terrain se paie** — cartons, remplacements, arbitrage vidéo —
+  et n'est demandé que pour un match **dont une salle de virage est occupée**,
+  au plus une fois par minute. Un match que personne ne regarde ne coûte pas un
+  appel de plus qu'avant le fil. C'est `virage.sallesOccupees()` qui répond, et
+  `fixturesAuFil` qui le demande.
+
+Le fil est **semé depuis `fixture_events`** à l'ouverture de la salle : entrer
+à la soixante-dixième minute donne l'écran garni sans un appel. Et les entrées
+sortent **structurées, jamais rédigées** — un genre et un code, `periode`/`HT`,
+`terrain`/`Card` — la page écrit « Mi-temps ». C'est la règle des codes
+d'erreur étendue au reste : le français vit dans la page, qui sait déjà dans
+quelle langue elle est.
+
+**Le personnage salue en arrivant, une fois par session.** `rendus.js` le
+promettait depuis le premier jour et personne ne l'avait branché. Deux gestes
+distincts, et la séparation compte : **l'entrée** se joue à chaque chargement
+et ne dépend d'aucun dessin ; **le salut** se joue une fois par session, et son
+mouvement part même quand la pose n'est pas dessinée. Le supporter générique
+n'a pas de salut, la plupart des Fanzzy non plus — une animation réservée aux
+personnages illustrés serait une animation que presque personne ne verrait.
+
+Une fois, et pas davantage : quelqu'un qui fait dix allers-retours vers son
+classeur ne veut pas dix coucous. C'est ce que retient `sessionStorage`, et
+c'est ce qui sépare un personnage accueillant d'un personnage insistant.
+
 ---
 
 ## Ouvrir un booster
@@ -615,7 +689,7 @@ simulateur.
 | `/deck` | construction de deck : jusqu'à trois Fanzzy, équipement, dix cartes |
 | `/kop` | le KOP : caisse commune, votes de dépense, bonus de virage |
 | `/carnet` | souvenirs vécus et vignettes à récupérer |
-| `/virage` | Grand Virage : tir à la corde pendant un vrai match |
+| `/virage` | Grand Virage : tir à la corde pendant un vrai match, avec le fil du terrain |
 | `/duel-nvn` | **le duel** : tir à la corde, 1v1 à 5v5, adossé à un vrai match |
 | `/matchs` | matchs du jour, en direct, avec fiche détaillée |
 | `/teletext` | tous les championnats : classements, buteurs, cartons |
@@ -624,11 +698,11 @@ simulateur.
 | `/admin` | **catalogue Fanzzy**, séries ouvertes, joueurs, compétitions, journal |
 | `/diagnostic`, `/healthz` | état du service |
 
-**Vingt-quatre suites**, toutes vertes. Côté serveur : schéma, authentification,
+**Vingt-cinq suites**, toutes vertes. Côté serveur : schéma, authentification,
 football, souvenirs, collection Fanzzy, deck, moteur NvN, réseau NvN, virage,
 classements, inscription, administration, télétexte, stades, niveau, KOP. Côté
 interface, dans un vrai navigateur : deck, classeur, administration, accueil,
-duel, KOP. Et trois sans base : états, images, câblage.
+duel, KOP, virage. Et trois sans base : états, images, câblage.
 
 ### Le catalogue
 
@@ -651,6 +725,13 @@ premier âge, un seul au deuxième. C'est le banc d'essai de la chaîne décrite
 § 9. Les 276 âges supérieurs du catalogue s'affichent en attendant au premier
 âge, par la mécanique de repli.
 
+L'accueil en joue **cinq** — `neutre`, `salut`, `pousse`, `but`, `encaisse` —
+et c'est le seul écran qui déclenche des états tout seul. Les sept autres
+attendent le jeu qui les appellera ; `ETAT_QUAND`, dans
+`src/shared/fanzzy/rendus.js`, dit pour chacun à quel moment il est prévu.
+Cette table est la spécification : `salut` y était décrit depuis le premier
+jour et n'a été branché qu'en septembre 2026.
+
 ---
 
 ## 5. Ce qui reste à faire
@@ -662,21 +743,17 @@ Par ordre d'utilité.
    chaîne les avale par lots, le repli tient en attendant — mais un catalogue
    où tout le monde reste au premier âge ne montre pas ce que le jeu promet.
 
-2. **Le fil du match en direct dans le Grand Virage.** Les buts réels secouent
-   la corde, mais aucun fil d'événements n'est affiché : le joueur pousse sans
-   savoir ce qui vient de se passer sur le terrain.
-
-3. **Une mise en page pour écran large.** L'application est en colonne étroite
+2. **Une mise en page pour écran large.** L'application est en colonne étroite
    centrée, pensée pour le téléphone. Sur un ordinateur, les deux tiers de
    l'écran sont vides.
 
-4. **Le derby automatique** — proposer un duel quand deux joueurs en ligne
+3. **Le derby automatique** — proposer un duel quand deux joueurs en ligne
    suivent les deux clubs qui s'affrontent réellement. Conçu, pas commencé.
 
-5. **Le pronostic de ferveur** — miser des écharpes sur un score avant le coup
+4. **Le pronostic de ferveur** — miser des écharpes sur un score avant le coup
    d'envoi. Conçu, pas commencé.
 
-6. **Les notifications.** Le KOP émet déjà sur le socket quand un vote s'ouvre,
+5. **Les notifications.** Le KOP émet déjà sur le socket quand un vote s'ouvre,
    mais rien n'atteint un joueur dont l'onglet est fermé. Trois minutes de
    vote, c'est court : sans notification hors de la page, la moitié d'un KOP ne
    votera jamais.
@@ -684,7 +761,16 @@ Par ordre d'utilité.
 **Ce qui n'est plus sur cette liste**, et qui y figurait : la simulation
 d'économie (rejouée, `npm run economie`), les trois évolutions pour tous
 (écrites), la carte Relève, le niveau et l'XP, le KOP et sa page, les skins par
-âge, le contenu des boosters. L'audit A-à-Z du produit est entièrement traité.
+âge, le contenu des boosters, **le fil du match dans le Grand Virage**. L'audit
+A-à-Z du produit est entièrement traité.
+
+Deux manques connus du fil, assumés et non urgents. Les **buts d'avant
+l'arrivée** ne figurent pas au fil d'un joueur qui entre en cours de match :
+ils ont leur propre chemin, le score les porte, et les réintroduire les ferait
+sonner comme des buts frais au moment de l'entrée. Et le fil ne connaît que la
+**période en cours**, pas celles déjà passées : entrer en seconde période
+affiche « reprise », pas « coup d'envoi » puis « mi-temps ». On pourrait les
+déduire ; ce serait la première chose que le fil affirme sans l'avoir vue.
 
 ---
 
@@ -725,6 +811,45 @@ nombre de compétitions *différentes*, pas le nombre de joueurs.
 **Ne jamais identifier un événement par sa position** dans la liste de l'API :
 elle en insère parfois un plus tôt, tout se décale, et un but disparaît. On les
 identifie par type, équipe, minute et joueur.
+
+Cette règle était écrite ici et **n'était appliquée qu'à moitié**. La
+déduplication des buts passait bien par l'identité — donc les cartes-souvenirs
+restaient justes, donc personne ne voyait rien. Mais `fixture_events` stockait
+chaque événement à son rang dans la liste, en `INSERT IGNORE` : au premier
+décalage, les lignes déjà là gardaient leur ancien contenu et seule la queue
+était écrite, avec un contenu décalé d'un cran. La base finissait par porter un
+événement en double et en perdre un autre. Le fil du match, lui, le montre —
+et c'est pour ça qu'il l'a trouvé. Le relevé est désormais **réécrit en
+entier** à chaque passage, queue coupée comprise quand l'API raccourcit sa
+liste. Une règle qu'on écrit sans l'appliquer partout est une règle qu'on croit
+tenue.
+
+**Un crochet passé n'est pas un crochet branché.** `server.js` confiait
+`onFinished` à `createFootball`, qui ne le nommait pas dans sa signature et ne
+le transmettait donc à personne. Aucune erreur, aucun log : le classement d'une
+compétition n'était simplement jamais rafraîchi à la fin d'un match — six
+heures de cache sur les chiffres qu'on va justement regarder à ce moment-là.
+C'est la même famille que la dépendance restée à `null`, et c'est maintenant
+`verif-cablage.mjs` qui la surveille : il déroule un vrai tour de relevé sur un
+faux pool et regarde **qui a été appelé**, plutôt que de lire la signature — un
+nom présent dans une signature peut n'être transmis à personne.
+
+**`#app` est un contexte d'empilement, donc une prison.** `ui.css` lui donne
+`position: relative; z-index: 1` pour poser la colonne au-dessus du décor. Tout
+ce qui vit dedans y est enfermé : son `z-index`, si haut soit-il, ne se compare
+qu'à ses frères. Or `fx.js` pose ses bandeaux et ses titres sur `body`, aux
+calques 89 à 93. Un panneau plein écran placé dans `#app` passe donc **sous**
+eux — et la feuille du fil s'est retrouvée avec sa tête et son bouton de
+fermeture cachés sous un « MINUTE DOUBLE » pendant trois secondes. Un panneau
+qu'on ouvre se place hors de la colonne, en `position: fixed`, centré à la même
+largeur.
+
+**Une classe d'animation qu'on ne retire pas fige ce qu'elle remplace.** Sur
+l'accueil, le petit saut posait `.saute` et ne l'enlevait jamais : l'animation
+d'un demi-tiers de seconde remplaçait définitivement le flottement en boucle du
+personnage. Rien ne casse, rien ne se voit — le mouvement manque, c'est tout,
+et personne ne remarque une absence. Ces classes se retirent à `animationend`,
+filtrées par nom d'animation puisqu'elles se superposent.
 
 **Le SMTP n'est pas configuré** tant que `/healthz` affiche `"etat":"console"`.
 Les mails de vérification partent alors dans les logs du Manager.

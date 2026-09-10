@@ -76,6 +76,81 @@ check('server.js rebranche le suivi sur l’inscription',
 check('server.js fait suivre le but réel aux duels en cours',
   /nvn\??\.butReel\s*\(/.test(serveur));
 
+check('server.js branche le fil du match sur le virage',
+  /onStatus:\s*\(/.test(serveur) && /onEvents:\s*\(/.test(serveur)
+  && /fixturesAuFil:\s*\(/.test(serveur));
+
+/* ------------------------- les crochets du suivi atteignent-ils le relevé ? */
+
+/**
+ * `server.js` confie cinq crochets à `createFootball` : `onGoal`,
+ * `onFinished`, `onStatus`, `onEvents` et `fixturesAuFil`. Aucun ne sert à
+ * quoi que ce soit tant que `createFootball` ne les fait pas suivre à
+ * `createPoller` — et il n'y a pas d'erreur à la clé, seulement un objet
+ * qu'on lit et dont on ignore la moitié des clés.
+ *
+ * **`onFinished` a vécu ainsi.** `server.js` le passait, `createFootball` ne
+ * le nommait pas dans sa signature, et le classement d'une compétition n'était
+ * donc jamais rafraîchi à la fin d'un match : six heures de cache sur les
+ * chiffres qu'on va justement regarder à ce moment-là. Ni exception, ni log.
+ * Le crochet tombait dans le vide entre deux modules, ce qui est exactement ce
+ * que ce fichier surveille.
+ *
+ * On ne le vérifie pas par lecture : un nom présent dans la signature peut
+ * n'être transmis à personne. On déroule donc un vrai tour de relevé sur un
+ * faux pool et un faux client, et on regarde qui a été appelé.
+ */
+{
+  const { createFootball } = await import('../src/server/football/routes.js');
+
+  const poolFoot = {
+    execute: async (sql) => {
+      if (/status_short IN \('NS','TBD'\)/.test(sql)) return [[]];
+      if (/FROM fixtures f/.test(sql)) return [[{ id: 5001 }]];
+      if (/FROM fixtures WHERE id/.test(sql)) {
+        // Le match était en cours et sans but : le statut change, le score non.
+        return [[{ home_goals: 0, away_goals: 0, status_short: '2H', elapsed: 88 }]];
+      }
+      if (/FROM fixture_events/.test(sql)) return [[]];
+      return [{ affectedRows: 1 }];
+    },
+    query: async () => [{ affectedRows: 1 }],
+  };
+
+  const appels = [];
+  const clientFoot = {
+    attachStore() {},
+    fixturesByIds: async () => [{
+      fixture: { id: 5001, date: new Date().toISOString(), status: { short: 'FT', elapsed: 90 } },
+      league: { id: 61, name: 'Ligue 1', season: 2026, round: 'J5' },
+      teams: { home: { id: 85, name: 'Sion' }, away: { id: 91, name: 'Bâle' } },
+      goals: { home: 0, away: 0 },
+    }],
+    eventsOfFixture: async () => [{
+      type: 'Card', detail: 'Yellow Card', team: { id: 85 },
+      player: { name: 'Diallo' }, time: { elapsed: 72 },
+    }],
+  };
+
+  const foot = createFootball({
+    pool: poolFoot, client: clientFoot, io: null, requireAuth: (_r, _s, n) => n(),
+    onGoal: () => appels.push('onGoal'),
+    onFinished: () => appels.push('onFinished'),
+    onStatus: () => appels.push('onStatus'),
+    onEvents: () => appels.push('onEvents'),
+    fixturesAuFil: () => { appels.push('fixturesAuFil'); return [5001]; },
+  });
+
+  await foot.poller.pollLive();
+
+  check('le relevé demande quelles salles attendent leur fil',
+    appels.includes('fixturesAuFil'));
+  check('il annonce le score et la période à chaque tour', appels.includes('onStatus'));
+  check('il fait suivre les événements du terrain', appels.includes('onEvents'));
+  check('et il annonce la fin du match, même sans un seul but',
+    appels.includes('onFinished') || (console.log('        appels :', appels.join(', ')), false));
+}
+
 console.log(fautes
   ? `\n${fautes} faute(s) — ne pas livrer en l’état.`
   : '\nLe câblage des modules est correct.');

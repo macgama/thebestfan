@@ -153,6 +153,15 @@ async function ouvrir(largeur = 400, hauteur = 880) {
   const page = await nav.newPage();
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.setViewport({ width: largeur, height: hauteur });
+  /* On note les gestes joués plutôt que les classes qui les portent.
+     Une classe de geste est retirée dès l'animation finie — il le faut, sinon
+     elle remplacerait pour toujours la respiration qui tourne en boucle — donc
+     la lire après coup ne prouve rien. Le journal, lui, garde la trace, et il
+     survit à un rechargement puisqu'il est réinstallé à chaque document. */
+  await page.evaluateOnNewDocument(() => {
+    window.__gestes = [];
+    addEventListener('animationstart', (e) => window.__gestes.push(e.animationName), true);
+  });
   await page.goto(base + '/', { waitUntil: 'networkidle0' });
   await page.waitForSelector('#hub.on', { timeout: 8000 }).catch(() => {});
   await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
@@ -195,6 +204,76 @@ check('et le changement de pose se fait en fondu', /opacity/.test(v.fondu));
 // Le débordement horizontal est le défaut classique d'un personnage en grand.
 check('la page ne déborde pas en largeur', await page.evaluate(() =>
   document.documentElement.scrollWidth <= document.documentElement.clientWidth));
+
+/* ------------------------------------------------------------- l'arrivée
+
+ * `salut` est le seul des douze états que l'accueil déclenche de lui-même :
+ * « à l'arrivée sur l'accueil, une fois par session », dit `rendus.js`.
+ *
+ * Le supporter générique n'a pas ce dessin, et c'est précisément le cas qu'il
+ * faut éprouver ici : le geste doit se voir quand même. Sinon l'accueil ne
+ * salue que les personnages illustrés — deux cents sur quatre cent soixante —
+ * et l'animation ne serait presque jamais jouée. Le dessin, lui, est éprouvé
+ * plus bas avec le Fanzzy qui l'a.
+ *
+ * Ce sont des classes sur la scène et non des boutons : rien ne déclenche un
+ * état à la main sur cet écran, c'est le jeu qui les donne. */
+{
+  await page.waitForFunction(
+    () => window.__gestes.includes('coucou'), { timeout: 4000 }).catch(() => {});
+  const gestes = await page.evaluate(() => window.__gestes);
+  check('le personnage entre dans le cadre à l’arrivée', gestes.includes('arrivee'));
+  check('et fait le geste du salut, même sans ce dessin', gestes.includes('coucou'));
+  check('sans dessin de salut, il reste sur le sien',
+    /\/img\/supporter\/idle\./.test((await scene(page)).src ?? ''));
+  check('aucun bouton d’état sur l’écran',
+    await page.evaluate(() => document.querySelectorAll('[data-etat]').length) === 0);
+
+  /* Un geste fini rend la main à ce qui tournait en boucle.
+     La classe qui le porte remplace la respiration ou le flottement : laissée
+     en place, elle fige le personnage sur la dernière image d'un geste
+     terminé. Rien ne casse, rien ne se voit — le mouvement manque, c'est
+     tout. Le petit saut avait ce défaut depuis toujours. */
+  await page.evaluate(() => TBF.pose('but'));
+  await page.evaluate(() => document.getElementById('scene').dispatchEvent(
+    new PointerEvent('pointerdown', { bubbles: true })));
+  await new Promise((r) => setTimeout(r, 1800));
+  const boucles = await page.evaluate(() => ({
+    pile: getComputedStyle(document.getElementById('pile')).animationName,
+    flotte: getComputedStyle(document.querySelector('.flotte')).animationName,
+    classes: [...document.getElementById('scene').classList],
+  }));
+  check('après un saut et un coucou, il respire encore', /souffle/.test(boucles.pile));
+  check('et il flotte encore', /flotteur/.test(boucles.flotte));
+  check('aucune classe de geste ne reste accrochée',
+    !boucles.classes.some((c) => ['arrive', 'coucou', 'saute', 'change'].includes(c))
+    || (console.log('        il reste', boucles.classes.join(' ')), false));
+  await page.evaluate(() => TBF.pose('neutre'));
+  await new Promise((r) => setTimeout(r, 400));
+}
+
+/* ------------------------------------------------- la place du personnage
+
+ * Il tient le centre de l'écran : c'est lui qu'on vient voir. Les deux
+ * moitiés de la même exigence se contrôlent ensemble — assez grand pour être
+ * le sujet, jamais plus grand que sa bande.
+ *
+ * La bande centrale est close par `overflow:hidden` : un personnage trop haut
+ * pour elle n'y est pas réduit, il y est décapité. Une tête coupée se lit
+ * comme une image cassée, pas comme un cadrage serré, et c'est le seul défaut
+ * que grandir le personnage pouvait introduire. */
+{
+  const m = await page.evaluate(() => {
+    const p = document.getElementById('pile').getBoundingClientRect();
+    const c = document.querySelector('.centre').getBoundingClientRect();
+    return { haut: p.top, bas: p.bottom, hauteur: p.height,
+             bandeHaut: c.top, bandeBas: c.bottom, ecran: innerHeight };
+  });
+  check('le personnage occupe plus de la moitié de la hauteur',
+    m.hauteur > m.ecran * 0.55 || (console.log(`        ${Math.round(m.hauteur)} px sur ${m.ecran}`), false));
+  check('sans dépasser de sa bande',
+    m.haut >= m.bandeHaut - 1 && m.bas <= m.bandeBas + 1);
+}
 
 /* ------------------------------------------------------ changer de pose */
 
@@ -262,6 +341,18 @@ await page.close();
       document.querySelector('#pile .pose.on')?.getAttribute('src')?.includes(`/${id}/`),
     { timeout: 8000 }, ID).catch(() => {});
 
+    /* Le salut, avec son dessin.
+       C'est le premier de lui qu'on voit : il salue, puis il rend la main. Le
+       salut est un moment, pas un état — un personnage qui reste bras levés
+       n'accueille plus, il attend. */
+    const attendre = (motif) => page.waitForFunction((id, m) =>
+      (document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '')
+        .includes(`/${id}/e1/base/${m}.`), { timeout: 6000 }, ID, motif)
+      .then(() => true).catch(() => false);
+
+    check('le Fanzzy équipé salue en arrivant', await attendre('salut'));
+    check('puis il rend la main au repos', await attendre('neutre'));
+
     v = await scene(page);
     check('le Fanzzy équipé remplace le supporter',
       new RegExp(`/img/fanzzy/${ID}/e1/base/neutre\\.`).test(v.src ?? ''));
@@ -285,6 +376,21 @@ await page.close();
     await page.evaluate(() => TBF.pose('neutre'));
     await new Promise((r) => setTimeout(r, 400));
     check('et il revient au repos', /neutre\./.test((await scene(page)).src ?? ''));
+
+    /* Une fois par session, et pas une de plus.
+       Un rechargement dans le même onglet ne rejoue rien : c'est ce que
+       retient `sessionStorage`, et c'est ce qui sépare un personnage
+       accueillant d'un personnage insistant. Quelqu'un qui fait dix
+       allers-retours vers son classeur ne veut pas dix coucous. */
+    await page.reload({ waitUntil: 'networkidle0' });
+    await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+    await page.waitForFunction(
+      () => window.__gestes.includes('arrivee'), { timeout: 6000 }).catch(() => {});
+    await new Promise((r) => setTimeout(r, 1200));
+    const apres = await page.evaluate(() => window.__gestes);
+    check('il ne resalue pas au rechargement suivant', !apres.includes('coucou'));
+    check('mais il entre quand même dans le cadre', apres.includes('arrivee'));
+
     await page.close();
 
     /* --------------------------------- l'âge atteint, pas le premier
@@ -434,8 +540,30 @@ await page.close();
   check('l’adversaire marque : il encaisse',
     /\/img\/supporter\/sad\./.test((await scene(page)).src ?? ''));
 
-  await page.close();
+  /* Le coup de sifflet final, après une célébration.
+   *
+   * C'est là qu'était le piège, et il ne se voyait pas : `clearTimeout`
+   * annule le rappel mais laisse l'identifiant en place. `retour` restait donc
+   * vrai pour toujours dès la première pose tenue, et `poserFond` — qui ne
+   * pose que si aucune célébration n'est en cours — cessait définitivement
+   * d'agir. Le personnage continuait de pousser une heure après la fin du
+   * match, sans qu'aucune erreur ne soit levée.
+   *
+   * Le salut d'arrivée fait de cette première pose tenue le cas de tout le
+   * monde, à chaque session : ce qui était un défaut rare devient la règle.
+   * On laisse donc la célébration s'éteindre avant de couper le match — c'est
+   * après elle, et seulement après, que la faute apparaissait. */
+  await new Promise((r) => setTimeout(r, 2400));
+  check('la célébration passée, il repousse',
+    /\/img\/supporter\/push\./.test((await scene(page)).src ?? ''));
+
   direct = null;
+  await page.evaluate(() => TBF.veiller());
+  await new Promise((r) => setTimeout(r, 700));
+  check('le match fini, il revient au repos',
+    /\/img\/supporter\/idle\./.test((await scene(page)).src ?? ''));
+
+  await page.close();
 }
 
 /* ------------------------------- l’écran de jeu sur un petit téléphone
