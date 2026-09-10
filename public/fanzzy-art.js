@@ -100,10 +100,24 @@
    * annoncent l'AVIF sans savoir le décoder — ça existe.
    */
   const illustration = (f, variante = 'buste') => {
-    if (!ILLUSTRES.has(f.id)) return null;
-    const base = `/img/fanzzy/${f.id}${variante === 'buste' ? '-buste' : ''}`;
-    return `<img class="illu" alt="" loading="lazy" decoding="async" src="${base}${IMG_EXT}"
+    const src = adresse(f?.id, variante);
+    if (!src) return null;
+    const base = src.slice(0, -IMG_EXT.length);
+    return `<img class="illu" alt="" loading="lazy" decoding="async" src="${src}"
       onerror="this.onerror=null;this.src='${base}.png'">`;
+  };
+
+  /**
+   * L'adresse du dessin, sans la balise autour.
+   *
+   * `illustration` rend du HTML tout fait, ce qui convient à une carte mais
+   * pas à une page qui pose l'image elle-même — l'accueil croise deux calques
+   * et a besoin de l'adresse seule. Elle la construisait sinon de son côté, et
+   * une seconde façon d'écrire le même chemin finit toujours par diverger.
+   */
+  const adresse = (id, variante = 'buste') => {
+    if (!id || !ILLUSTRES.has(id)) return null;
+    return `/img/fanzzy/${id}${variante === 'buste' ? '-buste' : ''}${IMG_EXT}`;
   };
 
   /** Fond seul, sans silhouette : sert de décor aux illustrations. */
@@ -183,6 +197,7 @@
     seeded,
     ILLUSTRES,
     illustration,
+    adresse,
     art,
     artFond,
     artProcedural,

@@ -106,6 +106,14 @@ const base = `http://localhost:${http.address().port}`;
 async function ouvrirPage() {
   const vc = new VirtualConsole();
   vc.on('jsdomError', (e) => {
+    /* « Not implemented » n'est pas une faute de la page : c'est jsdom qui
+       annonce ce qu'il ne sait pas faire — ici `canvas.toDataURL`, que
+       `fanzzy-art.js` appelle pour choisir entre AVIF et WebP. Le module
+       l'entoure déjà d'un `try` et retombe sur le format universel ; jsdom
+       émet quand même l'avis. Le compter comme une erreur de script ferait
+       rougir la suite pour une limite de l'outil de test, ce qui est le
+       meilleur moyen d'apprendre à ignorer les rouges. */
+    if (/Not implemented/i.test(e.message)) return;
     // Une erreur de script dans la page est une faute, pas un détail.
     console.log(` FAIL  erreur de script dans la page : ${e.message}`);
     failures++;
@@ -123,6 +131,17 @@ async function ouvrirPage() {
     virtualConsole: vc,
     beforeParse(window) {
       window.fetch = (u, o) => fetch(new URL(u, base), o);
+      /* `resources: 'usable'` n'est pas activé : jsdom ne va pas chercher les
+         `<script src>` de la page. Le deck en charge un depuis qu'il pose le
+         visage des Fanzzy — `fanzzy-art.js`, le module que le classeur emploie
+         déjà. Sans cette injection, `window.FZART` reste absent, la page
+         retombe sagement sur son ancienne pastille de type, et la suite
+         resterait verte en n'éprouvant jamais le portrait.
+
+         On injecte le **vrai** fichier, pas un mannequin : c'est lui qui
+         décide s'il existe une illustration pour ce Fanzzy, et c'est
+         exactement ce qu'on veut vérifier. */
+      window.eval(readFileSync(path.join(RACINE, 'public', 'fanzzy-art.js'), 'utf8'));
     },
   });
 }
@@ -266,6 +285,67 @@ const troisieme = await ajouter(communes[0]);
 check('un troisième exemplaire est refusé par l\u2019écran', troisieme === false);
 check('le refus est expliqué', /c\u2019est le maximum|emplacements sont pris/.test(texte(dom)));
 clic(T(dom).querySelector('[data-fermer]'));
+
+/* ------------------------------------------- ce que l'écran donne à voir
+
+ * Un écran de deck sert à deux choses : reconnaître ses personnages, et juger
+ * sa main d'un coup d'œil. Il ne faisait ni l'un ni l'autre.
+ *
+ * La tribune montrait un carré de couleur avec le pictogramme du type, alors
+ * que le classeur — l'écran d'à côté, celui d'où l'on vient — affiche les
+ * personnages dessinés. Le même joueur choisissait des noms ici et des
+ * visages là.
+ */
+{
+  /* La main : dix cases avec un chiffre et un nom en sept pixels et demi.
+     C'est pourtant ce que le joueur regarde le plus longtemps sur cet écran.
+     On est ici sur l'onglet des cartes, celui que les contrôles précédents
+     viennent de remplir. */
+  const carte = T(dom).querySelector('.emp.plein');
+  check('chaque carte posée porte son coût', Boolean(carte?.querySelector('.cout')));
+  check('et le sceau de sa famille', Boolean(carte?.querySelector('.sceau')));
+
+  /* Le souffle moyen. C'est la mesure que tout jeu de deck met en avant, et
+     pour une bonne raison : elle répond seule à « pourquoi je n'arrive jamais
+     à jouer ». Elle ne se calculait nulle part, et personne n'allait
+     additionner dix nombres à la main. */
+  check('la main annonce son souffle moyen',
+    /souffle moyen\s+\d+([.,]\d+)?/.test(texte(dom))
+    || (console.log('        titre :', T(dom).querySelector('h2')?.textContent), false));
+
+  // Le portrait vit sur l'autre onglet : il faut y retourner pour le voir.
+  clic(T(dom).querySelector('[data-onglet="tribune"]'));
+  await jusqua(() => T(dom).querySelector('.rang .tete'));
+
+  /* On demande au module lui-même **qui** est illustré, puis on compte les
+     visages. Sans ce comptage le contrôle était conditionnel — « s'il y a un
+     portrait, alors il doit être juste » — et supprimer le portrait le faisait
+     simplement se taire. Un contrôle qu'on peut désarmer en retirant ce qu'il
+     surveille ne surveille rien. */
+  const ids = Array.from(dom.window.eval('S.deck.fanzzy.map((f) => f.id)'));
+  const illustres = ids.filter((id) => dom.window.FZART?.ILLUSTRES?.has(id));
+  const faces = T(dom).querySelectorAll('.rang .tete .face');
+  const pips = T(dom).querySelectorAll('.rang .tete .pip');
+
+  check('le deck de test contient au moins un Fanzzy illustré',
+    illustres.length > 0
+    || (console.log('        aucun de', ids.join(', '), 'n’est dessiné'), false));
+  check('tous les Fanzzy illustrés portent leur visage',
+    faces.length === illustres.length
+    || (console.log(`        ${faces.length} visage(s) pour ${illustres.length} dessiné(s)`), false));
+  /* L'un **ou** l'autre, jamais rien : les Fanzzy pas encore dessinés gardent
+     la pastille de type. C'est le repli de tout le jeu. */
+  check('et les autres gardent leur pastille',
+    faces.length + pips.length === ids.length);
+
+  const face = faces[0];
+  check('le visage est le dessin du module, pas un cadre vide',
+    Boolean(face?.querySelector('img.illu')));
+  check('il est monté dans le cadre de sa rareté',
+    /\br-(commune|rare|epique|legendaire)\b/.test(face?.className ?? ''));
+  check('et son type reste lisible dans le coin',
+    Boolean(face?.querySelector('.type svg')));
+}
 
 check('le deck est annoncé prêt', T(dom).getElementById('etat').textContent === 'PRÊT');
 check('l\u2019enregistrement est ouvert', T(dom).getElementById('save').disabled === false);

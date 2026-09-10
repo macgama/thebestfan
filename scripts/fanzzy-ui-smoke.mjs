@@ -50,17 +50,27 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
 // `stades.sql` ajoute la colonne `stage` à `user_fanzzy`. Sans elle, toute la
 // collection reste au premier âge, donc entièrement commune — et la grille
 // n'aurait aucune rareté à montrer.
+// `niveau.sql` en plus : sans la colonne `xp`, le module de progression ouvre
+// *toutes* les séries — c'est sa règle, un schéma incomplet ne confisque rien —
+// et le kiosque n'aurait alors rien à verrouiller. La suite passerait au vert
+// sans jamais éprouver le cas qui a produit la panne.
 for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql',
-                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'stades.sql']) {
+                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'stades.sql',
+                 'niveau.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
 const U = 'bbbbbbbb-0000-0000-0000-000000000001';
 await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
                  VALUES (?,?,?,'x')`, [U, 'classeur@ex.fr', 'Classeuse']);
-// Assez d'écharpes et de boosters pour ouvrir sans attendre la régénération.
-await raw.query(`INSERT INTO user_wallet (user_id,scarves,packs,active_fanzzy)
-                 VALUES (?,900,9,'G1')`, [U]);
+/* Assez d'écharpes et de boosters pour ouvrir sans attendre la régénération,
+   et **niveau 9** : c'est le palier qui débloque « NUITS EUROPÉENNES », la
+   série que les contrôles d'ouverture emploient. Un compte au niveau 1 les
+   verrait tous refusés. Le niveau 9 laisse verrouillées les séries des paliers
+   suivants, ce qui est exactement ce qu'il faut pour éprouver le kiosque. */
+const { seuil } = await import('../src/shared/niveau.js');
+await raw.query(`INSERT INTO user_wallet (user_id,scarves,packs,xp,active_fanzzy)
+                 VALUES (?,900,9,?,'G1')`, [U, seuil(9)]);
 // G1 est possédé : c'est le Fanzzy illustré, et c'est lui qui cassait la page.
 // V1 est monté au second âge : la rareté suit le stade, donc c'est la seule
 // façon d'avoir autre chose que du commun dans la grille — et c'est ce qui
@@ -80,7 +90,14 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' 
 await chargerCatalogue(pool);
 await chargerTenues(pool);
 const requireAuth = (q, _s, n) => { q.user = { id: U }; n(); };
-const fanzzy = createFanzzy({ pool, requireAuth });
+/* La progression est montée ici, et c'est nécessaire : sans elle, `createFanzzy`
+   ouvre toutes les séries et le kiosque ne peut rien verrouiller. C'est
+   justement la configuration où la panne se cachait — le kiosque proposait les
+   neuf séries, le joueur en choisissait une hors de portée, et découvrait le
+   refus après avoir appuyé, sous la forme d'un code brut. */
+const { createNiveau } = await import('../src/server/niveau/index.js');
+const niveau = createNiveau({ pool, requireAuth });
+const fanzzy = createFanzzy({ pool, requireAuth, niveau });
 
 /**
  * Un interrupteur pour amputer la réponse du catalogue.
@@ -252,6 +269,66 @@ check('le kiosque annonce le bon nombre de Fanzzy par set',
   await page.evaluate(() => /\d+ Fanzzy/.test(
     document.getElementById('setLine')?.textContent ?? '')));
 
+/* ------------------------------------------- une série hors de portée
+
+ * Les séries se débloquent au niveau. Le kiosque les proposait **toutes** :
+ * le joueur en choisissait une hors de portée, appuyait sur « ouvrir le
+ * booster », et découvrait le refus après coup — sous la forme d'un code brut,
+ * « Ouverture impossible (fanzzy.error.set_locked) ». Deux fautes en une : le
+ * kiosque promettait ce qu'il ne pouvait pas tenir, et le message ne nommait
+ * pas sa cause.
+ *
+ * Un jeu ne cache pas ce qui vient : il le montre verrouillé, avec ce qu'il
+ * demande. Le compte de test est au niveau 1 — il n'a donc que la première
+ * série, et toutes les autres doivent s'annoncer comme telles.
+ */
+{
+  const etat = await page.evaluate(async () => {
+    const debut = SETS.findIndex((s) => !S.series || !S.series.has(s.id));
+    if (debut < 0) return null;
+    S.set = debut;
+    renderKiosque();
+    return {
+      id: SETS[debut].id,
+      ligne: document.getElementById('setLine').textContent,
+      bouton: document.getElementById('openBtn').textContent,
+      ferme: document.getElementById('openBtn').disabled,
+      verrou: document.getElementById('carousel').classList.contains('verrou'),
+    };
+  });
+
+  if (!etat) {
+    console.log('  --   toutes les séries sont débloquées : section sautée');
+  } else {
+    check('une série hors de portée annonce le niveau qu’elle demande',
+      /niveau \d+/i.test(etat.ligne)
+      || (console.log('        elle dit :', etat.ligne), false));
+    check('le bouton le répète au lieu de promettre un booster',
+      /niveau \d+/i.test(etat.bouton));
+    check('et il est fermé', etat.ferme === true);
+    check('le paquet se voit, éteint : c’est ce qui donne envie', etat.verrou);
+  }
+
+  /* Le filet de sécurité. Le kiosque ne propose plus une série verrouillée,
+     mais un onglet resté ouvert peut encore en demander le booster. Le refus
+     doit alors nommer sa cause — c'est ce code brut, affiché tel quel, qui a
+     fait remonter la panne. */
+  const dit = await page.evaluate(async () => {
+    const r = await fetch('/api/fanzzy/open', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      credentials: 'same-origin', body: JSON.stringify({ set: 'IM' }),
+    });
+    return (await r.json()).error ?? null;
+  });
+  check('le serveur refuse bien une série hors de portée',
+    dit === 'fanzzy.error.set_locked');
+  check('et la page sait le dire en français',
+    await page.evaluate(() => {
+      const src = document.documentElement.innerHTML;
+      return /fanzzy\.error\.set_locked'\s*:\s*'[^']+/.test(src);
+    }));
+}
+
 /* ---------------------------------------- ouvrir un booster ne casse rien */
 
 const ouverture = await page.evaluate(async () => {
@@ -335,7 +412,23 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
       env('pointermove', d + (f - d) * (k / n));
       await new Promise((res) => requestAnimationFrame(res));
     }
-    return Number(getComputedStyle(el).getPropertyValue('--p'));
+    /* On attend que l'avancée cesse de bouger avant de la lire.
+       Une fois le seuil franchi, `doOpen` pose `--p` à 1 et retire `tire` :
+       la transition CSS de 320 ms reprend et amène la valeur à destination.
+       Lire dans la foulée échantillonne donc cette animation au hasard —
+       0,95 sur une machine, 1 sur une autre, et le contrôle rougissait sans
+       que le geste ait changé. C'est le même piège que le hasard du tirage :
+       ce qui varie n'est pas ce qu'on mesure.
+       Quand rien n'est en transition — une déchirure partielle, où `tire`
+       garde `transition:none` — deux lectures suffisent et la boucle sort. */
+    const lire = () => Number(getComputedStyle(el).getPropertyValue('--p'));
+    let avant = -1, apres = lire();
+    for (let k = 0; k < 40 && avant !== apres; k++) {
+      avant = apres;
+      await new Promise((res) => setTimeout(res, 25));
+      apres = lire();
+    }
+    return apres;
   }, de, a, pas);
 
   const lacher = () => pageG.evaluate(() => document.getElementById('tearpack')
@@ -351,7 +444,8 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
 
   /* 1 — le geste complet, d'un seul trait, sans rien maintenir. */
   const plein = await tirer(0.94, 0.06);
-  check('tirer en travers déchire la bande d’un bout à l’autre', plein > 0.99);
+  check('tirer en travers déchire la bande d’un bout à l’autre', plein > 0.99
+    || (console.log('        avancée :', plein), false));
   check('le booster s’ouvre', await jusqua(async () => await ouvert()));
   check('et cinq cartes sortent',
     await pageG.evaluate(() => document.querySelectorAll('#ostage > *').length) === 5);

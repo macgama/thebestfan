@@ -78,6 +78,51 @@ function accentGraveDansCss(code) {
  * `node:`, ce n'est pas un script de page mal écrit — c'est du code serveur
  * posé au mauvais endroit, et il part en ligne à la vue de tous.
  */
+/**
+ * Cherche une unité de conteneur — `cqw`, `cqi`, `cqh`, `cqb` — employée en
+ * dehors d'un bloc `@container`.
+ *
+ * **C'est un piège qui ne se voit pas sur la machine qui l'écrit.** Quand
+ * `container-type` ne prend pas — un navigateur d'avant 2023, un moteur qui
+ * connaît l'unité sans connaître le confinement — `cqw` ne disparaît pas : elle
+ * se rabat silencieusement sur la **fenêtre**. Une vignette de 130 px voit
+ * alors ses mesures multipliées par plus de trois : le classeur affichait des
+ * cartes en forme de galet, avec des noms coupés des deux côtés par l'arrondi.
+ *
+ * La parade est de déclarer un repli en pixels, puis de ne poser l'unité de
+ * conteneur qu'à l'intérieur d'un `@container` — qui, lui, ne s'applique que
+ * là où le confinement fonctionne vraiment. Ce contrôle vérifie qu'on l'a
+ * fait : il retire les blocs `@container` et cherche ce qui reste.
+ */
+function uniteDeConteneurSansGarde(css) {
+  /* Les commentaires d'abord. Le paragraphe qui explique ce piège cite les
+     unités qu'il dénonce — sans cette coupe, le contrôle se déclenchait sur
+     sa propre documentation, ce qui apprend surtout à ne plus l'écrire. */
+  css = css.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  // On retire les blocs `@container { … }`, accolades imbriquées comprises.
+  let net = '';
+  for (let i = 0; i < css.length; i++) {
+    if (!css.startsWith('@container', i)) { net += css[i]; continue; }
+    const debut = css.indexOf('{', i);
+    if (debut < 0) break;
+    let profondeur = 0, j = debut;
+    for (; j < css.length; j++) {
+      if (css[j] === '{') profondeur++;
+      else if (css[j] === '}' && --profondeur === 0) break;
+    }
+    i = j;
+  }
+  const soucis = [];
+  for (const m of net.matchAll(/[\d.]+cq[whib]\b/g)) {
+    const ligne = net.slice(0, m.index).split('\n').length;
+    soucis.push(`« ${m[0]} » hors d’un bloc @container, ligne ${ligne} `
+      + '— sans confinement, cette mesure se rabat sur la fenêtre');
+  }
+  // Un seul message par page : trente occurrences de la même faute noieraient
+  // le rapport sans rien apprendre de plus.
+  return soucis.slice(0, 1);
+}
+
 function moduleServeur(code) {
   const m = /^\s*import\s[^\n]*?from\s*['"](express|mysql2[^'"]*|nodemailer|socket\.io|node:[a-z/]+)['"]/m
     .exec(code);
@@ -113,6 +158,10 @@ for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
   if (!/href\s*=\s*["']\/ui\.css/.test(html)) {
     ko(nom, 'ui.css n’est pas chargée : la page perd la palette commune');
     propre = false;
+  }
+
+  for (const m of html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)) {
+    for (const s of uniteDeConteneurSansGarde(m[1])) { ko(nom, s); propre = false; }
   }
 
   if (!SANS_BARRE.has(nom) && !/src\s*=\s*["']\/nav\.js/.test(html)) {

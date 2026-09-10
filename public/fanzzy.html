@@ -54,6 +54,18 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 .tearhint{font-size:10.5px;letter-spacing:.2em;opacity:.45;margin-top:6px;text-align:center}
 
+/* Une série verrouillée se regarde sans se toucher : le paquet s'éteint, mais
+   il reste visible. C'est ce qui donne envie d'y arriver. */
+.carousel.verrou .slide.center{filter:grayscale(.85) brightness(.5)}
+.carousel.verrou .slide.center .foil{display:none}
+/* Le cadenas est dans la ligne, pas sur le paquet : `.carousel` porte une
+   `perspective`, donc ses enfants se rangent par leur profondeur en 3D et non
+   par `z-index`. Un cadenas posé là passait derrière les paquets — avec la
+   bonne taille, le bon calque et la bonne image, mais invisible. */
+.setline .verrou{display:inline-flex;align-items:center;gap:5px}
+.setline .verrou svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;flex:none}
+
 /* --------------------------------------------------- geste d'ouverture
 
    On déchire la bande du haut, comme un vrai sachet : on saisit la languette
@@ -219,19 +231,19 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    n'a pas — c'est tout le ressort du genre, et ça ne coûte rien de plus : le
    dessin existe déjà, `loading="lazy"` ne charge que ce qui est à l'écran. */
 .slot.locked .fz{cursor:pointer;
-  box-shadow:inset 0 0 0 1.1cqw rgba(242,238,228,.13),
-             inset 0 0 7cqw rgba(0,0,0,.5),
-             0 1.2cqw 0 rgba(242,238,228,.07),
-             0 2cqw 3cqw rgba(0,0,0,.45)}
+  box-shadow:inset 0 0 0 calc(1.1 * var(--u)) rgba(242,238,228,.13),
+             inset 0 0 calc(7 * var(--u)) rgba(0,0,0,.5),
+             0 calc(1.2 * var(--u)) 0 rgba(242,238,228,.07),
+             0 calc(2 * var(--u)) calc(3 * var(--u)) rgba(0,0,0,.45)}
 /* Assez sombre pour dire « pas à toi », assez clair pour qu'on reconnaisse le
    personnage. À trois dixièmes de luminosité le visage disparaissait, et une
    silhouette qu'on ne distingue pas ne vaut pas mieux qu'une case vide. */
 .slot.locked .art{filter:grayscale(1) brightness(.46) contrast(1.15)}
 .slot.locked .top::before,.slot.locked .foot,.slot.locked .pip{display:none}
 .slot.locked .nm{opacity:.72}
-.slot.locked .cadenas{position:absolute;left:50%;top:40%;z-index:4;width:13cqw;height:13cqw;
+.slot.locked .cadenas{position:absolute;left:50%;top:40%;z-index:4;width:calc(13 * var(--u));height:calc(13 * var(--u));
   transform:translate(-50%,-50%);opacity:.75;stroke:#F2EEE4;fill:none;stroke-width:2;
-  filter:drop-shadow(0 .5cqw 1.5cqw rgba(0,0,0,.9))}
+  filter:drop-shadow(0 .calc(5 * var(--u)) calc(1.5 * var(--u)) rgba(0,0,0,.9))}
 .dupe{position:absolute;right:3px;bottom:3px;background:rgba(8,10,13,.9);border:1px solid rgba(242,238,228,.28);
   border-radius:3px;font-family:var(--banner);font-size:9.5px;padding:0 4px;z-index:4}
 /* Le stade atteint : une étoile pour rare, deux pour épique. En haut à droite,
@@ -272,37 +284,67 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    `--rc2` est la couleur du socle — le biseau dur sous la carte. C'est lui
    qui donne la matière : une carte qu'on peut appuyer, pas une image collée
    sur un fond. */
-.fz{--rc:#C2CAD6;--rc2:#4E5865}
+/* ------------------------------------------------- l'unité de la carte
+
+   Tout ce que dessine une carte — son rayon, son cadre, son nom, ses marges —
+   se mesure en centièmes de sa propre largeur, pour qu'elle soit juste en
+   vignette comme en grand. C'est ce que font les unités de conteneur, `cqw`.
+
+   Elles étaient employées directement, et **c'était une bombe à retardement** :
+   quand `container-type` ne prend pas — un navigateur d'avant 2023, un moteur
+   qui connaît l'unité sans connaître le confinement — `cqw` ne disparaît pas,
+   elle se rabat sur la **fenêtre**. Sur un écran de 470 px, `4cqw` passe de
+   5 px à 19 px de rayon, le nom de 8 px à 28 px, la marge de 14 px à 52 px :
+   la carte devient un galet, et le nom, coupé des deux côtés par l'arrondi,
+   n'est plus lisible. Rien ne le signale, et ça ne se voit pas sur la machine
+   qui l'a écrit.
+
+   `--u` vaut donc un centième de la largeur attendue, en pixels, et la règle
+   `@container` ne la remplace par `1cqw` que là où le confinement fonctionne
+   vraiment. Un moteur qui n'en veut pas garde le repli et affiche une carte
+   juste ; les autres gagnent la mise à l'échelle exacte. Chaque endroit qui
+   pose une carte d'une autre taille redéclare `--u`, juste en dessous. */
+.fz{--u:1.3px;--rc:#C2CAD6;--rc2:#4E5865}
+.dtop .fz{--u:2.35px}
+.summary .fz{--u:.7px}
+.evo .step .fz{--u:.62px}
+/* Les sélecteurs sont repris un à un : sans eux, `.dtop .fz` — plus
+   spécifique — garderait son repli en pixels et la grande carte cesserait de
+   suivre sa largeur. Une règle de repli qui bat le raffinement, c'est le
+   raffinement qui n'existe pas. */
+@container (min-width: 0px){
+  .fz,.dtop .fz,.summary .fz,.evo .step .fz{--u:1cqw}
+}
 .fz.r-commune{--rc:#C2CAD6;--rc2:#4E5865}
 .fz.r-rare{--rc:#3C82E8;--rc2:#1B3E75}
 .fz.r-epique{--rc:#8257DA;--rc2:#3E2870}
 .fz.r-legendaire{--rc:#F5C33B;--rc2:#7A5A0E}
 
-.fz{container-type:inline-size;position:relative;width:100%;aspect-ratio:63/88;border-radius:4cqw;
+.fz{container-type:inline-size;position:relative;width:100%;aspect-ratio:63/88;border-radius:calc(4 * var(--u));
   overflow:hidden;cursor:pointer;background:#0B1017;
-  box-shadow:inset 0 0 0 1.3cqw var(--rc),
-             inset 0 0 7cqw rgba(0,0,0,.45),
-             0 1.4cqw 0 var(--rc2),
-             0 2.4cqw 3.4cqw rgba(0,0,0,.5)}
+  box-shadow:inset 0 0 0 calc(1.3 * var(--u)) var(--rc),
+             inset 0 0 calc(7 * var(--u)) rgba(0,0,0,.45),
+             0 calc(1.4 * var(--u)) 0 var(--rc2),
+             0 calc(2.4 * var(--u)) calc(3.4 * var(--u)) rgba(0,0,0,.5)}
 .fz .body{position:absolute;inset:0;display:block;color:#F2EEE4}
 .fz .art{position:absolute;inset:0;overflow:hidden;background:#0B1017}
 .fz .art svg{width:100%;height:100%;display:block}
 
 /* Le nom se pose sur l'image au lieu d'occuper une barre qui la rogne. */
 .fz .top{position:absolute;left:0;right:0;bottom:0;z-index:3;display:flex;align-items:flex-end;
-  gap:2cqw;padding:11cqw 3cqw 3cqw;
+  gap:calc(2 * var(--u));padding:calc(11 * var(--u)) calc(3 * var(--u)) calc(3 * var(--u));
   background:linear-gradient(180deg,transparent,rgba(4,6,10,.55) 42%,rgba(4,6,10,.93))}
 /* Le socle prend la teinte de la rareté. C'est ce qui la fait lire même quand
    le cadre est mangé par une illustration claire — et c'est la même couleur
    partout, donc elle s'apprend en une carte. */
 .fz .top::before{content:"";position:absolute;left:0;right:0;bottom:0;height:62%;
   background:linear-gradient(180deg,transparent,var(--rc));opacity:.2;pointer-events:none}
-.fz .nm{position:relative;font-family:var(--banner);font-size:6cqw;line-height:1.05;
+.fz .nm{position:relative;font-family:var(--banner);font-size:calc(6 * var(--u));line-height:1.05;
   text-transform:uppercase;flex:1;letter-spacing:.01em;
-  text-shadow:0 .4cqw 1.6cqw rgba(0,0,0,.95)}
-.fz .pip{width:6cqw;height:6cqw;border-radius:50%;background:var(--tc);flex:none;display:grid;
-  place-items:center;box-shadow:0 .3cqw 1.2cqw rgba(0,0,0,.6)}
-.fz .pip svg{width:3.8cqw;height:3.8cqw}
+  text-shadow:0 .calc(4 * var(--u)) calc(1.6 * var(--u)) rgba(0,0,0,.95)}
+.fz .pip{width:calc(6 * var(--u));height:calc(6 * var(--u));border-radius:50%;background:var(--tc);flex:none;display:grid;
+  place-items:center;box-shadow:0 .calc(3 * var(--u)) calc(1.2 * var(--u)) rgba(0,0,0,.6)}
+.fz .pip svg{width:calc(3.8 * var(--u));height:calc(3.8 * var(--u))}
 
 /* Deux pièges se cumulent ici.
 
@@ -329,14 +371,14 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* La rareté chiffrée, dans le coin : un à trois losanges, une couronne pour
    la légendaire. Elle redit ce que le cadre annonce — et c'est voulu, un
    collectionneur veut pouvoir compter. */
-.fz .foot{position:absolute;top:2.6cqw;right:2.6cqw;z-index:3;display:flex;align-items:center;
-  gap:1cqw;padding:1.1cqw 2.2cqw;border-radius:99cqw;background:rgba(4,6,10,.7);
-  box-shadow:inset 0 0 0 .4cqw var(--rc);font-size:2.6cqw;color:#E4DFD2}
-.fz .rar{display:flex;gap:.7cqw;align-items:center}
-.fz .rar .d{width:2.4cqw;height:2.4cqw;background:var(--rc);transform:rotate(45deg);
-  border-radius:.3cqw;box-shadow:0 0 1.4cqw var(--rc)}
-.fz .rar .s{font-size:3.6cqw;color:var(--rc);line-height:1;
-  text-shadow:0 0 1.6cqw var(--rc)}
+.fz .foot{position:absolute;top:calc(2.6 * var(--u));right:calc(2.6 * var(--u));z-index:3;display:flex;align-items:center;
+  gap:calc(1 * var(--u));padding:calc(1.1 * var(--u)) calc(2.2 * var(--u));border-radius:calc(99 * var(--u));background:rgba(4,6,10,.7);
+  box-shadow:inset 0 0 0 .calc(4 * var(--u)) var(--rc);font-size:calc(2.6 * var(--u));color:#E4DFD2}
+.fz .rar{display:flex;gap:.calc(7 * var(--u));align-items:center}
+.fz .rar .d{width:calc(2.4 * var(--u));height:calc(2.4 * var(--u));background:var(--rc);transform:rotate(45deg);
+  border-radius:.calc(3 * var(--u));box-shadow:0 0 calc(1.4 * var(--u)) var(--rc)}
+.fz .rar .s{font-size:calc(3.6 * var(--u));color:var(--rc);line-height:1;
+  text-shadow:0 0 calc(1.6 * var(--u)) var(--rc)}
 /* Le type est déjà dit par la pastille de couleur : inutile de le réécrire. */
 .fz .sep,.fz .foot span:last-child{display:none}
 /* En dessous d'une certaine largeur, la pastille de rareté n'est plus lisible :
@@ -349,13 +391,13 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 /* La légendaire est la seule à rayonner hors de son cadre. Si toutes les
    raretés brillaient, aucune ne brillerait. */
-.fz.r-legendaire{box-shadow:inset 0 0 0 1.5cqw var(--rc),
-  inset 0 0 7cqw rgba(0,0,0,.4),
-  0 1.4cqw 0 var(--rc2),
-  0 0 5cqw rgba(245,195,59,.4),
-  0 2.4cqw 3.4cqw rgba(0,0,0,.5)}
+.fz.r-legendaire{box-shadow:inset 0 0 0 calc(1.5 * var(--u)) var(--rc),
+  inset 0 0 calc(7 * var(--u)) rgba(0,0,0,.4),
+  0 calc(1.4 * var(--u)) 0 var(--rc2),
+  0 0 calc(5 * var(--u)) rgba(245,195,59,.4),
+  0 calc(2.4 * var(--u)) calc(3.4 * var(--u)) rgba(0,0,0,.5)}
 .fz.r-legendaire .nm{color:#FFE08A}
-.fz.holo::after{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:4cqw;
+.fz.holo::after{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:calc(4 * var(--u));
   background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.42) 45%,rgba(160,220,255,.32) 52%,transparent 68%);
   background-size:250% 250%;animation:sheen 3.6s linear infinite;mix-blend-mode:screen;opacity:.6}
 @keyframes sheen{0%{background-position:120% 0}100%{background-position:-40% 0}}
@@ -460,12 +502,17 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   </div>
 
   <nav class="nav">
-    <button data-go="kiosque" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>KIOSQUE</button>
+    <!-- L'ordre dit le chemin : mon personnage, puis ma collection, puis le
+         kiosque où l'agrandir. Le kiosque venait en premier et « DUEL » en
+         dernier — l'écran d'accueil de la section était donc la boutique, et
+         le personnage qu'on a choisi, le dernier onglet. On entre chez soi
+         avant d'entrer au magasin. -->
+    <button data-go="equipe" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>MON FANZZY</button>
     <button data-go="dex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18M4 8h4M4 13h4"/></svg>CLASSEUR</button>
-    <button data-go="equipe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>DUEL</button>
+    <button data-go="kiosque"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>KIOSQUE</button>
   </nav>
 
-  <section class="screen on" id="s-kiosque">
+  <section class="screen" id="s-kiosque">
     <div class="stage">
       <div class="setname" id="setName"></div>
       <div class="setline" id="setLine"></div>
@@ -492,8 +539,8 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
     <div class="grid" id="grid"></div>
   </section>
 
-  <section class="screen" id="s-equipe">
-    <div class="head"><h2>TON FANZZY</h2></div>
+  <section class="screen on" id="s-equipe">
+    <div class="head"><h2>MON FANZZY</h2></div>
     <div id="teamBody" style="padding:8px 18px 22px;overflow-y:auto;flex:1"></div>
   </section>
 
@@ -779,6 +826,10 @@ async function load() {
   S.active = st.wallet.active;
   S.nextIn = st.wallet.nextPackInMs;
   S.packPrice = st.packPrice;
+  /* Les séries que ce joueur a débloquées. `null` quand la progression n'est
+     pas montée : tout est alors ouvert, comme avant. */
+  S.series = st.series ? new Set(st.series) : null;
+  renderKiosque();
   tickRegen();
 }
 
@@ -793,7 +844,10 @@ function tickRegen() {
   // bouger : sans cette poussée, un joueur qui vient de dépenser quarante-cinq
   // écharpes les verrait encore affichées.
   window.TBF_BARRE?.bourse(S.scarves, S.packs);
-  $('openBtn').disabled = S.packs <= 0;
+  // Deux raisons de fermer le bouton, et elles ne se disent pas pareil : plus
+  // de booster, ou série pas encore débloquée. Le libellé est posé par
+  // `renderKiosque`, qui seul connaît la série affichée.
+  $('openBtn').disabled = S.packs <= 0 || !serieDebloquee(SETS[S.set] ?? {});
   const el = $('regenTxt');
   if (S.packs >= MAXP || S.nextIn == null) el.textContent = 'Réserve pleine';
   else if (S.nextIn <= 0) { el.textContent = 'Booster prêt'; load().catch(() => {}); }
@@ -958,12 +1012,32 @@ function placeCarousel(drag = 0) {
   });
 }
 
+/** Ce joueur peut-il ouvrir cette série ? `null` = progression non montée. */
+const serieDebloquee = (s) => !S.series || S.series.has(s.id);
+
 function renderKiosque() {
   const s = SETS[S.set];
+  const ouvrable = serieDebloquee(s);
   $('setName').textContent = s.nom;
-  $('setLine').textContent = `${DEX.filter((f) => f.set === s.id).length} Fanzzy · ${s.ligne}`;
+  /* Une série hors de portée annonce **ce qu'elle demande**, et le bouton le
+     répète. Le kiosque proposait les neuf séries sans distinction : le joueur
+     en choisissait une, appuyait, et découvrait le refus après coup — sous la
+     forme d'un code, « Ouverture impossible (fanzzy.error.set_locked) ».
+     Un jeu ne cache pas ce qui vient, il le montre verrouillé. */
+  $('setLine').innerHTML = ouvrable
+    ? esc(`${DEX.filter((f) => f.set === s.id).length} Fanzzy · ${s.ligne}`)
+    : `<span class="verrou"><svg viewBox="0 0 24 24">
+        <rect x="4" y="10" width="16" height="11" rx="2.5"/>
+        <path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Se débloque au niveau ${
+        Number(s.niveau) || '?'}</span>`;
+  $('carousel').classList.toggle('verrou', !ouvrable);
+  $('openBtn').textContent = ouvrable
+    ? 'OUVRIR LE BOOSTER' : `NIVEAU ${s.niveau ?? '?'} REQUIS`;
+  $('tearhint').textContent = ouvrable
+    ? 'GLISSE POUR CHANGER · TOUCHE POUR OUVRIR' : 'GLISSE POUR VOIR LES AUTRES SÉRIES';
   $('setDots').innerHTML = SETS.map((_, i) => `<i class="${i === S.set ? 'on' : ''}"></i>`).join('');
   placeCarousel(0);
+  tickRegen();
 }
 
 function goSet(delta) {
@@ -1178,6 +1252,12 @@ async function openPack() {
       'fanzzy.error.no_packs': 'Plus de booster',
       'fanzzy.error.not_enough_scarves': 'Pas assez d\u2019écharpes',
       'fanzzy.error.unknown_set': 'Série inconnue',
+      // Le filet de sécurité : le kiosque n'est plus censé proposer une série
+      // hors de portée, mais un onglet resté ouvert depuis avant une fermeture
+      // peut encore la demander. Le refus doit alors nommer sa cause — c'est ce
+      // code brut, affiché tel quel, qui a fait remonter la panne.
+      'fanzzy.error.set_locked': 'Cette série n’est pas encore débloquée',
+      'fanzzy.error.set_closed': 'Cette série ne distribue plus de booster',
       'fanzzy.error.schema': 'Base de données incomplète — voir la console',
     })[e.code] ?? `Ouverture impossible (${e.code ?? 'sans code'})`);
     if (e.code === 'fanzzy.error.schema') console.error('[fanzzy]', e.detail ?? e.message);
