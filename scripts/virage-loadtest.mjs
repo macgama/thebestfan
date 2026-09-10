@@ -36,7 +36,7 @@ if (!REMOTE) {
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-  for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql']) {
+  for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'souvenirs.sql', 'fanzzy.sql']) {
     await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
   }
   await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Domicile'),(91,'Visiteur')`);

@@ -71,7 +71,7 @@ curl -s https://thebestfan.online/healthz
 
 ```bash
 cd ~/sites/thebestfan.online
-for f in auth football duel souvenirs fanzzy teletext inventaire skins tenues deck admin kop \
+for f in auth football minutes duel souvenirs fanzzy teletext inventaire skins tenues deck admin kop \
          niveau raretes stades; do
   mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
 done
@@ -82,6 +82,10 @@ reprennent des données. Ils n'entrent donc pas dans le compte ci-dessous, ils
 sont rejouables, et l'ordre compte entre eux — `stades` lit les lignées telles
 que `raretes` les a rangées.
 
+- `minutes.sql` ajoute `elapsed_extra` à `fixtures` : le temps additionnel,
+  que l’API sert à part. Sans lui, une page ne peut ni afficher « 90+3 » ni
+  savoir qu’un match a dépassé son terme — d’où des rencontres restées
+  « 90′ EN DIRECT » dix minutes après le coup de sifflet.
 - `raretes.sql` fait passer l'échelle de cinq crans à quatre et range les sept
   lignées dans les thèmes.
 - `skins.sql` élargit la clé de `user_skins` d’un âge : une tenue appartient

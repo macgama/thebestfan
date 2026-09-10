@@ -114,16 +114,18 @@ export function createFootballStore(pool) {
 
       await q(
         `INSERT INTO fixtures (id, league_id, season, round, home_id, away_id,
-                               home_goals, away_goals, status_short, elapsed, venue,
+                               home_goals, away_goals, status_short, elapsed, elapsed_extra, venue,
                                kickoff_at, polled_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(3))
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(3))
          ON DUPLICATE KEY UPDATE
            home_goals=VALUES(home_goals), away_goals=VALUES(away_goals),
            status_short=VALUES(status_short), elapsed=VALUES(elapsed),
+           elapsed_extra=VALUES(elapsed_extra),
            kickoff_at=VALUES(kickoff_at), round=VALUES(round),
            polled_at=NOW(3)`,
         [f.id, f.leagueId, f.season, f.round ?? null, f.homeId, f.awayId,
          f.homeGoals ?? null, f.awayGoals ?? null, f.status, f.elapsed ?? null,
+         f.elapsedExtra ?? null,
          f.venue ?? null, f.kickoffAt],
       );
       return before;

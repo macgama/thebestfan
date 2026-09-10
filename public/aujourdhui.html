@@ -213,17 +213,32 @@ $('q').oninput = () => {
  * première période il ne dépasse pas 45, et au-delà on affiche « 45+ » plutôt
  * qu'un nombre faux — le temps additionnel n'est pas connu.
  */
+/* Au-delà de ce silence, on cesse de faire courir l'horloge : un match dont on
+   n'a plus de nouvelles depuis un quart d'heure n'est pas un match à la
+   centième minute, c'est un match dont on ne sait plus rien. Afficher
+   « 90' EN DIRECT » sur une rencontre finie depuis dix minutes est un mensonge
+   que le lecteur repère avant nous. */
+const SILENCE_MAX_MS = 12 * 60_000;
+const TERME = { '1H': 45, '2H': 90, ET: 120, P: 120 };
+
 function minute(m) {
   if (!m.live || m.elapsed == null) return null;
   if (m.status === 'HT') return 'MT';
   if (m.status === 'BT') return 'PROL.';
 
-  const ecoule = Math.max(0, Math.floor((Date.now() - (m.luA ?? Date.now())) / 60000));
-  const brut = m.elapsed + ecoule;
+  const vuA = m.luA ?? Date.now();
+  if (Date.now() - vuA > SILENCE_MAX_MS) return null;
 
-  if (m.status === '1H') return brut > 45 ? '45+' : `${brut}'`;
-  if (m.status === '2H') return brut > 90 ? '90+' : `${brut}'`;
-  if (m.status === 'ET') return brut > 120 ? '120+' : `${brut}'`;
+  const ecoule = Math.max(0, Math.floor((Date.now() - vuA) / 60000));
+  const brut = m.elapsed + ecoule;
+  const terme = TERME[m.status];
+
+  /* Le temps additionnel, quand le relevé le connaît. « 90+ » disait qu'on
+     avait dépassé le terme sans jamais dire de combien — or c'est exactement
+     ce qu'on regarde à ce moment-là du match. */
+  if (terme && brut >= terme) {
+    return m.extra != null ? `${terme}+${m.extra}'` : `${terme}+`;
+  }
   return `${brut}'`;
 }
 

@@ -84,6 +84,9 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 await raw.query(readFileSync(new URL('../sql/auth.sql', import.meta.url), 'utf8'));
 await raw.query(readFileSync(new URL('../sql/football.sql', import.meta.url), 'utf8'));
+// `minutes.sql` ajoute `elapsed_extra` à `fixtures` : le relevé l'écrit, donc
+// sans lui la suite échoue sur un `Unknown column` dès le premier match.
+await raw.query(readFileSync(new URL('../sql/minutes.sql', import.meta.url), 'utf8'));
 const USER = '11111111-2222-3333-4444-555555555555';
 await raw.query(
   `INSERT INTO users (public_id, email, pseudo, password_hash, locale)

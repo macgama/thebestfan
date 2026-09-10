@@ -190,12 +190,19 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    « GOAL ! » au-dessus du personnage, et il reste là aussi longtemps que la
    pose. Un but qui passe en deux secondes et demie ne laisse aucune trace :
    le temps de sortir le téléphone de sa poche, tout est fini. */
-.moment{position:absolute;left:0;right:0;top:11%;z-index:6;text-align:center;
-  font-family:var(--banner);font-size:clamp(30px,11vw,52px);line-height:.95;
-  letter-spacing:.04em;text-transform:uppercase;pointer-events:none;
-  color:var(--mc,var(--projo));opacity:0;
+.moment{position:absolute;left:0;right:0;top:9%;z-index:6;text-align:center;
+  pointer-events:none;color:var(--mc,var(--projo));opacity:0}
+.moment b{display:block;font-family:var(--banner);font-size:clamp(30px,11vw,52px);
+  line-height:.95;letter-spacing:.04em;text-transform:uppercase;
   text-shadow:0 0 26px rgba(0,0,0,.95),0 5px 0 rgba(0,0,0,.55);
   -webkit-text-stroke:1.5px rgba(4,6,10,.75)}
+/* Le buteur et la minute. Ils viennent de la base, jamais de l'API : le
+   relevé du direct les y a déjà écrits, et les redemander coûterait un appel
+   par but. */
+.moment small{display:block;font-family:var(--banner);font-size:clamp(12px,3.6vw,16px);
+  letter-spacing:.12em;margin-top:5px;color:var(--craie);opacity:.85;
+  text-shadow:0 2px 12px rgba(0,0,0,.95)}
+.moment small:empty{display:none}
 .moment.on{opacity:1;animation:momentIn .6s cubic-bezier(.2,1.6,.35,1)}
 /* Il respire lentement pendant qu'il tient : immobile quinze secondes, il
    passerait pour un élément d'interface plutôt que pour un événement. */
@@ -369,7 +376,8 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
         <div class="sol"></div>
         <!-- Le bandeau d'un moment fort. Il vit dans la scène, au-dessus du
              personnage : c'est là que le regard est déjà. -->
-        <div class="moment" id="moment" aria-live="polite"></div>
+        <div class="moment" id="moment" aria-live="polite">
+          <b id="momentTitre"></b><small id="momentSous"></small></div>
         <div class="flotte">
           <div class="bascule">
             <!-- Un calque par geste : le flottement, le rebond de pose, le
@@ -685,18 +693,54 @@ const entrer = () => rejouer('arrive');
  * quinze secondes arrivent, et c'est le dernier qui compte : une file
  * d'attente ferait célébrer le premier alors que le second est déjà tombé.
  */
-function moment(etat, texte, couleur = 'var(--projo)') {
+function moment(etat, texte, couleur = 'var(--projo)', sous = '') {
   const ms = window.FX?.MOMENT ?? 15000;
-  pose(etat, ms);
+  if (etat) pose(etat, ms);
   const b = $('moment');
-  b.textContent = texte;
+  $('momentTitre').textContent = texte;
+  $('momentSous').textContent = sous;
   b.style.setProperty('--mc', couleur);
   b.style.setProperty('--mt', `${ms}ms`);
   b.classList.remove('on');
   void b.offsetWidth;
   b.classList.add('on');
+  b.dataset.cle = String(++momentSeq);
   clearTimeout(b._t);
   b._t = setTimeout(() => b.classList.remove('on'), ms);
+  return b.dataset.cle;
+}
+let momentSeq = 0;
+
+/**
+ * Complète un moment déjà affiché — le buteur arrive après le score.
+ *
+ * `cle` protège du décalage : le nom d'un buteur met une seconde à revenir de
+ * la base, et un second but peut tomber entre-temps. Sans elle, le premier
+ * buteur viendrait s'écrire sous le second but.
+ */
+function preciserMoment(cle, sous) {
+  const b = $('moment');
+  if (!sous || b.dataset.cle !== cle || !b.classList.contains('on')) return;
+  $('momentSous').textContent = sous;
+}
+
+/**
+ * Le buteur du dernier but d'une équipe, et sa minute.
+ *
+ * Lu dans `fixture_events`, que le relevé du direct remplit déjà — **aucun
+ * appel à l'API**. Une absence n'est pas une faute : le relevé peut n'avoir
+ * pas encore écrit l'événement quand le score, lui, a bougé. Le bandeau reste
+ * alors sur « Goal ! », ce qui est vrai.
+ */
+async function buteurDe(fixtureId, teamId) {
+  try {
+    const { events = [] } = await jsonp(`/api/football/fixture/${fixtureId}/events`);
+    const buts = events.filter((e) => e.type === 'Goal' && e.team_id === teamId);
+    const dernier = buts[buts.length - 1];
+    if (!dernier?.player) return '';
+    return dernier.minute != null
+      ? `${dernier.player} · ${dernier.minute}′` : dernier.player;
+  } catch { return ''; }
 }
 
 /**
@@ -991,14 +1035,43 @@ async function jsonp(url, options) {
         const jeSuisDomicile = mesClubs.has(m.home_id);
         const pourMoi = (jeSuisDomicile ? m.home_goals - avantD : m.away_goals - avantE);
         const contreMoi = (jeSuisDomicile ? m.away_goals - avantE : m.home_goals - avantD);
+        const monClub = jeSuisDomicile ? m.home_id : m.away_id;
+        const leurClub = jeSuisDomicile ? m.away_id : m.home_id;
+
         if (pourMoi > 0) {
-          moment('but', 'Goal !');
+          /* Le buteur arrive après coup : le score bouge dès le relevé
+             suivant, le nom quelques secondes plus tard. On annonce donc le
+             but tout de suite et on complète — plutôt que d'attendre un nom
+             qui ne viendra peut-être jamais. */
+          const cle = moment('but', 'Goal !');
+          buteurDe(m.id, monClub).then((qui) => preciserMoment(cle, qui));
           sauter();
           window.FX?.son?.('butReel');
           window.FX?.but?.({ pour: true });
         } else if (contreMoi > 0) {
-          moment('encaisse', 'On encaisse', 'var(--flare)');
+          const cle = moment('encaisse', 'On encaisse', 'var(--flare)');
+          buteurDe(m.id, leurClub).then((qui) => preciserMoment(cle, qui));
           window.FX?.son?.('encaisse');
+        } else if (pourMoi < 0) {
+          /* Le score **recule** : l'arbitrage vidéo a refusé le but. C'est le
+             seul signal fiable — le libellé de l'événement varie d'une
+             compétition à l'autre, le score non. `decision` est l'état prévu
+             pour ça : « carton ou but refusé contre ton club ».
+
+             On coupe la célébration **avant** de demander `decision`. Un état
+             qui n'est pas dessiné ne fait rien du tout — c'est la règle, et
+             elle est bonne : mieux vaut un personnage immobile qu'un cadre
+             vide. Mais ici « ne rien faire » laissait le personnage exulter
+             pour un but qui venait d'être annulé, ce qui est pire que tout.
+             Le repos d'abord, la déception ensuite si elle existe. */
+          pose(fond);
+          moment('decision', 'But refusé', 'var(--flare)', 'Décision de l’arbitrage vidéo');
+          window.FX?.son?.('encaisse');
+        } else if (contreMoi < 0) {
+          /* Leur but est refusé. Aucun état ne dit le soulagement — et on ne
+             va pas en détourner un qui veut dire autre chose. Le bandeau
+             suffit, le personnage garde sa pose. */
+          moment(null, 'Leur but est refusé', 'var(--vert)', 'Décision de l’arbitrage vidéo');
         }
       }
       scoreVu = cle;

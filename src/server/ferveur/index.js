@@ -33,7 +33,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
       // qui entre à la trente-quatrième minute d'un 1–0 lisait 0–0 jusqu'au
       // but suivant, ce qui est pire que de ne rien afficher.
       `SELECT f.id, f.league_id, f.home_id, f.away_id, f.kickoff_at, f.status_short,
-              f.home_goals, f.away_goals, f.elapsed,
+              f.home_goals, f.away_goals, f.elapsed, f.elapsed_extra, f.polled_at,
               h.name AS home_name, h.logo AS home_logo,
               a.name AS away_name, a.logo AS away_logo,
               l.name AS league_name
@@ -81,7 +81,10 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
         // Le vrai match, tel que la base le connaît à cet instant : le fil
         // doit pouvoir afficher 1–0 à la trente-quatrième minute sans avoir
         // vu tomber le but.
-        status: f.status_short, elapsed: f.elapsed,
+        status: f.status_short, elapsed: f.elapsed, elapsedExtra: f.elapsed_extra,
+        // Quand le serveur a vu ce match pour la dernière fois. La page en a
+        // besoin pour ne pas faire courir une horloge sur une donnée figée.
+        vuA: f.polled_at ? new Date(f.polled_at).getTime() : null,
         homeGoals: f.home_goals, awayGoals: f.away_goals,
       },
       emit: (event, payload) => io.to(`virage:${fixtureId}`).emit(event, payload),
@@ -142,21 +145,34 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
   io.on('connection', (socket) => {
     const me = () => socket.data?.user ?? null;
 
-    socket.on('virage:join', async ({ fixtureId } = {}) => {
+    socket.on('virage:join', async ({ fixtureId, camp } = {}) => {
       const u = me();
       if (!u) return socket.emit('virage:error', { code: 'auth.error.unauthenticated' });
 
       const room = await roomFor(Number(fixtureId));
       if (!room) return socket.emit('virage:error', { code: 'ferveur.error.no_fixture' });
 
-      // Le camp n'est pas choisi : il découle des clubs que le joueur suit.
+      /* Le camp.
+       *
+       * **Chez soi, il ne se choisit pas** : il découle des clubs qu'on suit,
+       * et c'est ce qui empêche d'aller pousser contre son propre club.
+       *
+       * **Ailleurs, il se choisit.** Le virage est ouvert à tous les matchs en
+       * direct : on entre où l'on veut et on prend un camp. Le refus d'avant
+       * — « aucun de tes clubs ne joue ce match » — fermait les neuf dixièmes
+       * des rencontres d'un soir de Coupe d'Europe à quelqu'un qui voulait
+       * juste pousser quelque part.
+       *
+       * Ce qu'on gagne n'est pas le même : voir `RULES.ferveurNeutre`. La
+       * ferveur d'un neutre compte moitié — on peut venir pousser partout, on
+       * ne se bâtit une réputation que chez soi. */
       const suivis = await q(
         `SELECT team_id FROM user_follows WHERE user_id = ? AND team_id IN (?, ?)`,
         [u.userId, room.fixture.homeId, room.fixture.awayId]);
-      if (!suivis.length) {
-        return socket.emit('virage:error', { code: 'ferveur.error.not_your_match' });
-      }
-      const side = suivis[0].team_id === room.fixture.awayId ? 1 : 0;
+      const neutre = suivis.length === 0;
+      const side = neutre
+        ? (camp === 'exterieur' || camp === 1 ? 1 : 0)
+        : (suivis[0].team_id === room.fixture.awayId ? 1 : 0);
 
       const hero = await fanzzy.activeFanzzy(u.userId);
       const mods = hero ? { id: hero.id, ...hero.mods } : {};
@@ -183,7 +199,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
       socket.join(`virage:${room.fixture.id}`);
       roomOfUser.set(u.userId, room.fixture.id);
       if (process.env.VIRAGE_DEBUG) console.log('[virage] join', u.userId, '->', room.fixture.id);
-      socket.emit('virage:state', room.join(u.userId, { side, name: u.name, mods }));
+      socket.emit('virage:state', room.join(u.userId, { side, name: u.name, mods, neutre }));
       io.to(`virage:${room.fixture.id}`).emit('virage:crowd', { crowd: room.crowd() });
     });
 
@@ -305,7 +321,8 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
       // côté est le club du joueur, donc pas dire si un but est le sien. Les
       // rapprocher par le nom marcherait presque, et « presque » veut dire que
       // le personnage se réjouit parfois d'un but encaissé.
-      `SELECT f.id, f.status_short, f.elapsed, f.home_goals, f.away_goals, f.kickoff_at,
+      `SELECT f.id, f.status_short, f.elapsed, f.elapsed_extra, f.polled_at,
+              f.home_goals, f.away_goals, f.kickoff_at,
               f.home_id, f.away_id,
               h.name AS home_name, h.logo AS home_logo,
               a.name AS away_name, a.logo AS away_logo, l.name AS league_name
@@ -313,20 +330,34 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
          JOIN teams h ON h.id = f.home_id
          JOIN teams a ON a.id = f.away_id
          LEFT JOIN leagues l ON l.id = f.league_id
-        WHERE (f.home_id IN (SELECT team_id FROM user_follows WHERE user_id = ?)
+        WHERE (f.status_short IN ('1H','HT','2H','ET','BT','P','LIVE','INT')
+            OR f.home_id IN (SELECT team_id FROM user_follows WHERE user_id = ?)
             OR f.away_id IN (SELECT team_id FROM user_follows WHERE user_id = ?))
           AND f.kickoff_at BETWEEN (UTC_TIMESTAMP() - INTERVAL 3 HOUR)
                                AND (UTC_TIMESTAMP() + INTERVAL 2 HOUR)
         ORDER BY f.kickoff_at`,
       [req.user.id, req.user.id]);
 
+    /* Les clubs suivis, pour distinguer « chez soi » d'« ailleurs ».
+       La page en a besoin avant l'entrée : chez soi le camp est décidé, et
+       ailleurs il faut le demander. Le lui faire deviner en comparant des
+       noms d'équipes serait la même faute que partout ailleurs. */
+    const suivis = new Set((await q(
+      `SELECT team_id FROM user_follows WHERE user_id = ?`, [req.user.id]))
+      .map((r) => r.team_id));
+
     res.json({
       matchs: rows.map((f) => ({
         ...f,
         crowd: rooms.get(f.id)?.crowd() ?? [0, 0],
+        // `mien` : un de mes clubs joue. Le camp découle alors du club suivi
+        // et la ferveur compte plein ; ailleurs, on choisit son camp et elle
+        // compte moitié.
+        mien: suivis.has(f.home_id) || suivis.has(f.away_id),
         open: ['1H', 'HT', '2H', 'ET', 'P', 'LIVE'].includes(f.status_short)
           || new Date(f.kickoff_at) - Date.now() < 30 * 60_000,
       })),
+      ferveurNeutre: RULES.ferveurNeutre,
     });
   });
 

@@ -38,7 +38,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql', 'tenues.sql']) {
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'souvenirs.sql', 'fanzzy.sql', 'tenues.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 const U = ['bbbbbbbb-0000-0000-0000-00000000000' + 1,
@@ -159,12 +159,28 @@ check('les cartes sont annoncées par le serveur', A.state.cards.length >= 4);
 
 /* ------------------------------------------------------------- un match sans club suivi */
 
+/* Le virage est **ouvert à tous les matchs en direct**. Il ne montrait que
+   ceux de ses clubs et refusait le reste : un soir de Coupe d'Europe avec huit
+   rencontres, il en proposait une, et le joueur en concluait qu'il n'y avait
+   rien à faire. On entre donc partout — mais on choisit son camp, et ce qu'on
+   y gagne n'est pas le même. */
 const D = connect('bbbbbbbb-0000-0000-0000-000000000009');
 await until(() => D.socket.connected);
-D.socket.emit('virage:join', { fixtureId: 7001 });
-check('un match qui ne concerne pas ses clubs est refusé',
-  await until(() => D.errors.includes('ferveur.error.not_your_match')));
-D.socket.disconnect();
+D.socket.emit('virage:join', { fixtureId: 7001, camp: 'exterieur' });
+check('un match qu’on ne suit pas s’ouvre quand même', await until(() => D.state));
+check('et le camp demandé est respecté', D.state?.you?.side === 1);
+check('le supporter sait qu’il est neutre', D.state?.you?.neutre === true);
+check('et de combien sa ferveur est réduite',
+  D.state?.you?.ferveurNeutre > 0 && D.state.you.ferveurNeutre < 1);
+
+/* Chez soi, le camp ne se choisit pas : il découle du club suivi. C'est ce qui
+   empêche d'aller pousser contre son propre club, et un `camp` envoyé par un
+   client modifié ne doit pas y changer quoi que ce soit. */
+A.socket.emit('virage:join', { fixtureId: 7001, camp: 'exterieur' });
+await until(() => A.state?.you);
+check('chez soi, le camp ne se choisit pas', A.state.you.side === 0);
+check('et la ferveur n’y est pas réduite', A.state.you.neutre === false);
+
 
 /* ----------------------------------------------------------------- chants */
 
@@ -183,6 +199,29 @@ check('la corde penche du côté de Sion', ropeApres);
 C.socket.emit('virage:chant', { cardId: 'roulement', taps: martelage() });
 await until(() => C.results.length === 1);
 check('le camp adverse pousse dans l\u2019autre sens', C.results[0].push > 0);
+
+/* La ferveur d'un neutre compte moiti\u00e9. C'est la contrepartie de l'ouverture,
+   et la seule : sa pouss\u00e9e, elle, vaut autant que celle des autres \u2014 on r\u00e9duit
+   ce qu'il gagne, pas ce qu'il apporte. Une tribune qui pousserait \u00e0 moiti\u00e9
+   serait une tribune qu'on d\u00e9courage de venir, et le but est l'inverse.
+
+   Le bloc est ici, apr\u00e8s les contr\u00f4les de corde, et pas au moment de l'entr\u00e9e :
+   un chant de plus d\u00e9place le n\u0153ud, et il faussait \u00ab la corde penche du c\u00f4t\u00e9
+   de Sion \u00bb deux \u00e9crans plus haut. */
+{
+  const salle = virage.rooms.get(7001);
+  const av = salle.members.get('bbbbbbbb-0000-0000-0000-000000000009');
+  D.socket.emit('virage:chant', { cardId: 'roulement', taps: martelage() });
+  const ok = await until(() => D.results.length === 1);
+  check('un neutre peut chanter', ok);
+  if (ok) {
+    check('sa pouss\u00e9e n\u2019est pas rabot\u00e9e', D.results[0].push > 0);
+    check('mais sa ferveur ne vaut que la moiti\u00e9 de sa pouss\u00e9e',
+      Math.abs(av.ferveur - D.results[0].push * 0.5) <= 1
+      || (console.log(`        ferveur ${av.ferveur} pour ${D.results[0].push} de pouss\u00e9e`), false));
+  }
+}
+D.socket.disconnect();
 
 /* ------------------------------------------------------------ triche */
 
@@ -266,6 +305,39 @@ check('la minute double s\u2019ouvre', A.realGoals[0].surgeUntil > Date.now());
   virage.matchStatus(7001, { status: 'HT', elapsed: 45, homeGoals: 2, awayGoals: 1 });
   check('un statut inchang\u00e9 n\u2019\u00e9crit pas une seconde mi-temps',
     salle.fil.filter((e) => e.genre === 'periode' && e.type === 'HT').length === 1);
+
+  /* ------------------------- le score et la minute, entre deux entr\u00e9es
+
+   * Ils ne descendaient qu'**avec une entr\u00e9e de fil** : un but r\u00e9el en produit
+   * une, un changement de p\u00e9riode aussi. Entre les deux, rien. Le supporter
+   * voyait donc \u00ab 2 \u2013 1 \u00b7 45\u2032 \u00bb pendant une demi-heure, et en concluait \u2014 \u00e0
+   * raison \u2014 que la page ne suivait plus le match.
+   *
+   * Le relev\u00e9 du direct lit ces deux valeurs toutes les vingt secondes. Il ne
+   * manquait qu'un message pour les faire descendre. */
+  const matchs = [];
+  A.socket.on('virage:match', (v) => matchs.push(v));
+  matchs.length = 0;
+
+  /* On compte les entr\u00e9es **dans la salle** et non les messages re\u00e7us : le
+     socket est asynchrone, et un `virage:fil` encore en vol depuis le bloc
+     pr\u00e9c\u00e9dent tomberait dans le compteur. La salle, elle, est la v\u00e9rit\u00e9. */
+  const filAvant = salle.fil.length;
+  virage.matchStatus(7001, { status: 'HT', elapsed: 52, homeGoals: 3, awayGoals: 1 });
+  check('un score qui bouge est diffus\u00e9 sans attendre une entr\u00e9e de fil',
+    await until(() => matchs.some((v) => v.scoreReel?.[0] === 3)));
+  check('et il n\u2019\u00e9crit rien au fil, puisque rien ne s\u2019est pass\u00e9 sur le terrain',
+    salle.fil.length === filAvant);
+
+  matchs.length = 0;
+  virage.matchStatus(7001, { status: 'HT', elapsed: 60, homeGoals: 3, awayGoals: 1 });
+  check('une minute qui avance est diffus\u00e9e aussi',
+    await until(() => matchs.some((v) => v.minute === 60)));
+
+  matchs.length = 0;
+  virage.matchStatus(7001, { status: 'HT', elapsed: 60, homeGoals: 3, awayGoals: 1 });
+  await wait(120);
+  check('un relev\u00e9 identique ne diffuse rien', matchs.length === 0);
 
   /* La tribune a sa voix dans le fil. C'est elle qui explique la corde : sans
      cette entr\u00e9e, le n\u0153ud repart du milieu sans qu'on sache qui a c\u00e9d\u00e9. */
@@ -367,7 +439,16 @@ check('un départ vide sa place', await until(() => room.crowd()[0] === 1, 2000)
 
   // A vient de se déconnecter juste au-dessus : on interroge un membre encore présent.
   const vueA = room.snapshotFor(U[1]);
-  check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.tempo));
+    /* Le souffle remonte dix fois par seconde côté serveur, mais la diffusion de
+     la corde part à toute la salle : elle ne peut pas porter une valeur propre
+     à chacun. La jauge ne bougeait donc qu'au chant suivant, et le joueur
+     croyait son souffle bloqué. La vue donne le taux, la page anime. */
+  check('la vue donne le regain de souffle par seconde',
+    typeof vueA.you?.regen === 'number' && vueA.you.regen > 0);
+  check('et le plafond, sans quoi la jauge dépasserait cent',
+    vueA.you?.breathMax === 100);
+
+check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.tempo));
   check('sans équipement, le barème est celui de base',
     vueA.you.gestes.tempo.interval === GESTURES.tempo.interval);
 

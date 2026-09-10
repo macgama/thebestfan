@@ -54,7 +54,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
 // *toutes* les séries — c'est sa règle, un schéma incomplet ne confisque rien —
 // et le kiosque n'aurait alors rien à verrouiller. La suite passerait au vert
 // sans jamais éprouver le cas qui a produit la panne.
-for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql',
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'souvenirs.sql', 'fanzzy.sql',
                  'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'stades.sql',
                  'niveau.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
@@ -114,6 +114,11 @@ app.use('/api/fanzzy', (q, s, n) => {
   n();
 }, fanzzy.router);
 app.get('/fanzzy', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'fanzzy.html')));
+// La fiche d'un Fanzzy, servie comme `server.js` le fait : c'est la page que
+// la grille ouvre quand on touche une carte.
+app.get('/fanzzy/:id', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'fanzzy-fiche.html')));
+app.use('/api/me', (await import('../src/server/onboarding/index.js'))
+  .createOnboarding({ pool, requireAuth }).router);
 app.use(express.static(path.join(RACINE, 'public')));
 
 const http = createServer(app);
@@ -258,6 +263,75 @@ check('les Fanzzy non possédés portent leur nom',
     /\d+\s+à\s+trouver|complète/.test(reste)
     || (console.log('        il dit :',
       [...reste].map((c) => c.codePointAt(0).toString(16)).join(' ')), false));
+}
+
+/* ------------------------------------------- la fiche, en un seul écran
+
+ * Elle défilait sur mille deux cents pixels pour une fenêtre de huit cent
+ * quatre-vingts : vitrine, pastilles, effets, équipement, six tenues, lignée,
+ * boutons. Il fallait défiler trois fois pour faire le tour de l'écran qui
+ * sert justement à décider si on équipe ce personnage — et le bouton
+ * « emmener en duel » était tout en bas.
+ *
+ * Le personnage occupe maintenant l'écran et le reste passe en onglets : trois
+ * contenus qu'on ne consulte jamais ensemble se remplacent dans un volet de
+ * hauteur fixe. Ce contrôle vérifie les deux moitiés — que ça tient, et que
+ * les onglets changent vraiment ce qu'on lit.
+ */
+{
+  const fiche = await nav.newPage();
+  fiche.on('pageerror', (e) => erreurs.push(e.message));
+  await fiche.setViewport({ width: 400, height: 880 });
+  await fiche.goto(`${base}/fanzzy/G1`, { waitUntil: 'networkidle0' });
+  const prete = await fiche.waitForSelector('.vitrine', { timeout: 8000 })
+    .then(() => true).catch(() => false);
+  check('la fiche d’un Fanzzy s’affiche', prete);
+
+  if (prete) {
+    const m = await fiche.evaluate(() => ({
+      defile: document.documentElement.scrollHeight > innerHeight + 1,
+      vitrine: document.querySelector('.vitrine').getBoundingClientRect().height,
+      ecran: innerHeight,
+      bouton: document.querySelector('.actions .btn')?.getBoundingClientRect().bottom ?? 1e9,
+      onglets: document.querySelectorAll('.onglet').length,
+    }));
+    check('elle tient dans l’écran, sans défilement',
+      !m.defile || (console.log(`        ${document ? '' : ''}elle défile`), false));
+    check('le personnage occupe plus du tiers de la hauteur',
+      m.vitrine > m.ecran * 0.34
+      || (console.log(`        ${Math.round(m.vitrine)} px sur ${m.ecran}`), false));
+    check('et le bouton d’action est visible sans chercher', m.bouton <= m.ecran + 1);
+    check('les trois volets ont leur onglet', m.onglets === 3);
+
+    /* Changer d'onglet doit changer ce qu'on lit — et **ne pas** faire sauter
+       le personnage : le volet a une hauteur fixe pour ça. */
+    const avant = await fiche.evaluate(() => ({
+      texte: document.getElementById('volet').textContent.trim().slice(0, 40),
+      haut: document.querySelector('.vitrine').getBoundingClientRect().height,
+    }));
+    await fiche.evaluate(() =>
+      document.querySelector('[data-volet="tenues"]').click());
+    await dodo(250);
+    const apres = await fiche.evaluate(() => ({
+      texte: document.getElementById('volet').textContent.trim().slice(0, 40),
+      haut: document.querySelector('.vitrine').getBoundingClientRect().height,
+      tenues: document.querySelectorAll('#volet .skin').length,
+    }));
+    check('un autre onglet montre un autre contenu', avant.texte !== apres.texte);
+    check('les tenues y sont', apres.tenues > 0);
+    check('et le personnage ne saute pas d’un onglet à l’autre',
+      Math.abs(avant.haut - apres.haut) < 2
+      || (console.log(`        ${Math.round(avant.haut)} puis ${Math.round(apres.haut)}`), false));
+
+    await fiche.evaluate(() => document.querySelector('[data-volet="lignee"]').click());
+    await dodo(250);
+    check('la lignée aussi',
+      await fiche.evaluate(() => document.getElementById('volet').textContent.trim().length > 5));
+    check('la fiche ne défile toujours pas après trois onglets',
+      await fiche.evaluate(() =>
+        document.documentElement.scrollHeight <= innerHeight + 1));
+  }
+  await fiche.close();
 }
 
 /* ----------------------------------------------------------- le kiosque */
