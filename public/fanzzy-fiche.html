@@ -214,9 +214,10 @@ function rendre() {
   const reel = lireMods(d.effetReel);
   const change = JSON.stringify(f.mods) !== JSON.stringify(d.effetReel);
 
-  const RC = { commune:['#C2CAD6','#4E5865'], rare:['#3C82E8','#1B3E75'],
-               epique:['#8257DA','#3E2870'], legendaire:['#F5C33B','#7A5A0E'] };
-  const [rc, rc2] = RC[f.rar] ?? RC.commune;
+  /* La couleur de rareté ne se recopie pas ici : la classe `r-<rareté>` suffit,
+     et sa palette vit dans `ui.css`, une seule fois pour tout le jeu. Une table
+     JavaScript de plus, c'était une troisième écriture de la même chose — et
+     trois occasions qu'un épique devienne bleu quelque part. */
 
   /* Trois volets, un seul à l'écran. Ils ne se consultent jamais ensemble :
      on regarde les effets pour décider d'équiper, les tenues pour changer de
@@ -271,7 +272,7 @@ function rendre() {
     <div class="head"><a href="/fanzzy">‹</a>
       <h1>${esc(f.nom)}<small>${NOMTYPE[f.type]} · ${RAR[f.rar]}</small></h1></div>
 
-    <div class="vitrine r-${f.rar}" style="--c:${c};--rc:${rc};--rc2:${rc2}">
+    <div class="vitrine r-${f.rar}" style="--c:${c}">
       <div class="art" id="art"></div><div class="ombre"></div>
       <div class="rar">${rar(f.rar)}</div>
       ${d.equipe ? '<div class="tag">EN DUEL</div>' : ''}

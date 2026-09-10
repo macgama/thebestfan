@@ -304,7 +304,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    vraiment. Un moteur qui n'en veut pas garde le repli et affiche une carte
    juste ; les autres gagnent la mise à l'échelle exacte. Chaque endroit qui
    pose une carte d'une autre taille redéclare `--u`, juste en dessous. */
-.fz{--u:1.3px;--rc:#C2CAD6;--rc2:#4E5865}
+.fz{--u:1.3px}
 .dtop .fz{--u:2.35px}
 .summary .fz{--u:.7px}
 .evo .step .fz{--u:.62px}
@@ -315,10 +315,6 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 @container (min-width: 0px){
   .fz,.dtop .fz,.summary .fz,.evo .step .fz{--u:1cqw}
 }
-.fz.r-commune{--rc:#C2CAD6;--rc2:#4E5865}
-.fz.r-rare{--rc:#3C82E8;--rc2:#1B3E75}
-.fz.r-epique{--rc:#8257DA;--rc2:#3E2870}
-.fz.r-legendaire{--rc:#F5C33B;--rc2:#7A5A0E}
 
 .fz{container-type:inline-size;position:relative;width:100%;aspect-ratio:63/88;border-radius:calc(4 * var(--u));
   overflow:hidden;cursor:pointer;background:#0B1017;
@@ -475,6 +471,105 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .toast.on{display:block;animation:rise .3s}
 @keyframes rise{from{opacity:0;transform:translate(-50%,10px)}}
 
+/* ======================================================== Mon Fanzzy
+
+   L'écran qui ouvre la section : le personnage qu'on emmène en duel, en pied,
+   dans le cadre de sa rareté. Il montrait sa carte en vignette au milieu d'une
+   colonne de texte — c'est la façon de présenter cent cinquante personnages,
+   pas celle d'en présenter un.
+
+   Il hérite de deux écrans déjà faits, et n'invente rien de troisième : le
+   cadre de rareté vient de la fiche, la respiration et le coucou viennent de
+   l'accueil. Le joueur voit ici le même personnage qu'il verra en arrivant
+   sur le jeu ; s'il s'animait autrement, ce serait deux personnages.        */
+
+#teamBody{flex:1;min-height:0;display:flex;flex-direction:column}
+
+.tscene{position:relative;flex:1;min-height:0;margin:2px 14px 0;border-radius:16px;overflow:hidden;
+  background:linear-gradient(160deg,#141A21,#0A0D11);
+  box-shadow:inset 0 0 0 2px var(--rc,#C2CAD6),0 5px 0 var(--rc2,#4E5865),
+             0 10px 24px rgba(0,0,0,.55)}
+.tscene.r-legendaire{box-shadow:inset 0 0 0 2.5px var(--rc),0 5px 0 var(--rc2),
+  0 0 34px rgba(245,195,59,.3),0 10px 24px rgba(0,0,0,.55)}
+.tscene .fond{position:absolute;inset:0;opacity:.5}
+.tscene .fond svg{width:100%;height:100%;display:block}
+.tscene .halo{position:absolute;inset:0;opacity:.3;
+  background:radial-gradient(70% 54% at 50% 80%,var(--tc,#F5C33B),transparent 70%)}
+.tscene .ombre{position:absolute;inset:0;z-index:2;
+  background:linear-gradient(180deg,rgba(4,6,10,.10) 38%,rgba(4,6,10,.92))}
+
+/* La pile et ses calques. Un geste par calque : la respiration, l'entrée, le
+   coucou. Deux animations sur le même élément et l'une efface l'autre — sur
+   l'accueil, c'est la respiration qui disparaissait, définitivement et sans
+   que rien ne le signale. */
+.tpile{position:absolute;left:6%;right:6%;top:5%;bottom:0;z-index:1}
+.tsalut,.tmonte,.tsouffle{position:absolute;inset:0}
+.tsouffle{transform-origin:50% 100%;animation:tsouffle 3.6s ease-in-out infinite;
+  will-change:transform}
+.tsalut{transform-origin:50% 100%}
+.tscene.entre .tmonte{animation:tmonte .6s cubic-bezier(.34,1.4,.64,1)}
+.tscene.entre .tsalut{animation:tcoucou 1.5s ease-in-out .25s}
+
+/* `contain`, posé sur la base du cadre : le personnage est inscrit entier.
+   Un débordement en hauteur cadre joliment un buste dans une vitrine courte,
+   mais coupe la tête dès que la scène prend tout l'écran — et une tête coupée
+   se lit comme une image cassée, jamais comme un cadrage serré. */
+.tpose{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:contain;object-position:50% 100%;
+  opacity:0;transition:opacity .24s ease;
+  filter:drop-shadow(0 10px 26px rgba(0,0,0,.72))}
+.tpose.on{opacity:1}
+/* Le repli dessiné, pour les personnages qui n'ont ni états ni illustration :
+   il tient la même place, pour que l'écran ne change pas de forme selon le
+   Fanzzy qu'on a choisi. */
+.tdessin{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);
+  width:min(74%,232px);border-radius:12px;overflow:hidden;
+  box-shadow:0 12px 30px rgba(0,0,0,.6)}
+.tdessin svg{width:100%;display:block}
+
+.ttxt{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:12px 14px}
+.ttxt h2{font-family:var(--banner);font-size:clamp(21px,6.4vw,28px);margin:0;
+  letter-spacing:.03em;line-height:1;text-shadow:0 3px 16px rgba(0,0,0,.9)}
+.tpast{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.tpast span{border-radius:999px;padding:5px 10px;font-size:11px;background:rgba(4,6,10,.72);
+  box-shadow:inset 0 0 0 1px rgba(242,238,228,.16)}
+.tpast b{color:var(--tc,var(--projo))}
+.trar{position:absolute;top:11px;left:11px;z-index:3;display:flex;gap:4px;align-items:center;
+  background:rgba(4,6,10,.65);border-radius:99px;padding:6px 10px;line-height:1;
+  color:var(--rc,#C2CAD6);box-shadow:inset 0 0 0 1.5px var(--rc,#C2CAD6)}
+.trar .d{width:8px;height:8px;background:currentColor;border-radius:1px;
+  transform:rotate(45deg);display:block}
+.trar .s{font-size:14px;line-height:1}
+.ttag{position:absolute;top:11px;right:11px;z-index:3;font-family:var(--banner);font-size:9.5px;
+  letter-spacing:.14em;border-radius:6px;padding:5px 9px;background:var(--projo);color:#0B0E13}
+
+/* Ce qu'il change, en une bande de hauteur **fixe**. Sans elle, un Fanzzy à
+   cinq effets pousserait le bouton hors de l'écran — et cette page ne défile
+   pas, il disparaîtrait pour de bon. */
+.teff{flex:none;height:76px;margin:9px 14px 0;padding:9px 10px;
+  overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;
+  border-radius:12px;background:var(--panneau);backdrop-filter:blur(10px);
+  box-shadow:inset 0 0 0 1px rgba(242,238,228,.11)}
+.teff span{font-size:11px;line-height:1.25;padding:6px 9px;border-radius:8px;
+  background:rgba(242,238,228,.07);box-shadow:inset 0 0 0 1px rgba(242,238,228,.09)}
+.teff .rien{opacity:.5;background:none;box-shadow:none}
+
+.tbtns{display:flex;gap:9px;padding:10px 14px 2px;flex:none}
+.tbtns .dbtn{display:grid;place-items:center;text-decoration:none}
+
+@keyframes tsouffle{0%,100%{transform:scale(1,1) rotate(0deg)}
+  50%{transform:scale(1.012,.988) rotate(.5deg)}}
+@keyframes tcoucou{0%,100%{transform:rotate(0deg)}
+  16%{transform:rotate(-3.4deg)}40%{transform:rotate(2.8deg)}
+  64%{transform:rotate(-2.2deg)}84%{transform:rotate(1.1deg)}}
+@keyframes tmonte{0%{opacity:0;transform:translateY(46px) scale(.94)}
+  55%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1)}}
+
+@media (prefers-reduced-motion:reduce){
+  .tsouffle,.tsalut,.tmonte{animation:none !important}
+}
+
 /* ---------------------------------------------------------------- nav */
 /* Onglets en haut plutôt qu'en bas : la barre de navigation commune occupe
    déjà le bas de l'écran, et deux barres superposées se recouvraient — les
@@ -540,8 +635,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   </section>
 
   <section class="screen on" id="s-equipe">
-    <div class="head"><h2>MON FANZZY</h2></div>
-    <div id="teamBody" style="padding:8px 18px 22px;overflow-y:auto;flex:1"></div>
+    <div id="teamBody"></div>
   </section>
 
 
@@ -583,6 +677,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <!-- Sans « defer » : le script en ligne ci-dessous lit FZART dès sa première
      ligne, il doit donc déjà exister. -->
 <script src="/fanzzy-art.js"></script>
+<!-- Les douze états du Fanzzy équipé : c'est ce qui fait saluer le personnage
+     sur l'écran « Mon Fanzzy », exactement comme sur l'accueil. Le module ne
+     lève jamais et ne demande rien tant qu'on ne l'appelle pas. -->
+<script src="/fanzzy-etats.js"></script>
 <script>
 /* =======================================================================
    FANZZY — collection, boosters, évolutions
@@ -1608,28 +1706,133 @@ function toast(txt) {
   clearTimeout(t._t); t._t = setTimeout(() => { t.className = 'toast'; }, 2400);
 }
 
-/* ---------------------------------------------------------------- duel */
+/* ----------------------------------------------------------- Mon Fanzzy */
 
+/**
+ * L'écran d'ouverture : le Fanzzy qu'on emmène en duel.
+ *
+ * Le personnage **en pied** et non sa carte. La carte a sa place dans la
+ * grille, où l'on compare cent cinquante personnages entre eux ; ici on n'en
+ * regarde qu'un, et la vignette ne faisait que le rétrécir au milieu d'une
+ * colonne de texte. On montre donc l'âge atteint, dans le cadre de sa rareté,
+ * et on ne garde autour que ce qu'on veut savoir avant d'entrer : ce qu'il
+ * change, et son cri.
+ *
+ * Il hérite de deux écrans déjà faits — le cadre de la fiche, la respiration
+ * et le salut de l'accueil. C'est le même personnage aux deux endroits :
+ * animé autrement, ce serait deux personnages.
+ */
 function renderTeam() {
   const f = S.active ? BY_ID.get(S.active) : null;
   if (!f || !S.col[f.id]) {
-    $('teamBody').innerHTML = `<div class="empty" style="padding:40px 10px">
-      Aucun Fanzzy choisi. Ouvre un booster, puis sélectionne-le depuis le classeur.</div>`;
+    $('teamBody').innerHTML = `<div class="empty" style="padding:44px 22px">
+      Aucun Fanzzy choisi.<br>Ouvre un booster, puis choisis-le depuis le classeur.</div>`;
     return;
   }
+  // Le personnage **tel qu'il est aujourd'hui** : celui qui a payé ses
+  // écharpes doit voir son Capo, pas le gamin de départ. Comme dans la grille.
+  const age = ageDe(f);
+  const t = TYPES[age.type] ?? { nom: '—', c: 'var(--projo)' };
+  const stade = S.stades?.[f.id] ?? 1;
+  const effets = modsText(age);
+  const possede = S.col[f.id] ?? 1;
+
   $('teamBody').innerHTML = `
-    <div style="display:grid;place-items:center;padding:6px 0 14px">
-      <div style="width:min(62%,215px)">${cardHTML(f)}</div></div>
-    <div class="dmeta"><b>${f.nom}</b> · ${TYPES[f.type].nom}<br>
-      Il entrera en duel avec toi et changera tes gestes :</div>
-    <div class="dline"><h4>CE QU\u2019IL CHANGE</h4>
-      <div style="font-size:12.5px;line-height:1.9;opacity:.75;text-align:center">
-        ${modsText(f).join('<br>')}<br>Cri : <b>${f.cri.label}</b> · ${f.cri.power} de poussée</div></div>
-    <div class="dbtns"><button class="dbtn primary" id="goDuel">ENTRER EN DUEL</button></div>
-    <div style="font-size:11px;opacity:.4;text-align:center;margin-top:10px;line-height:1.6">
-      Le duel lit ce choix au démarrage. Ouvre la page du duel après avoir sélectionné ton Fanzzy.</div>`;
+    <div class="tscene r-${age.rar ?? 'commune'}" id="tscene" style="--tc:${t.c}">
+      <div class="fond">${artFond(age)}</div>
+      <div class="halo"></div>
+      <div class="tpile">
+        <div class="tsalut"><div class="tmonte"><div class="tsouffle" id="tcorps">
+          <img class="tpose" id="tpose" alt="${esc(age.nom)}">
+        </div></div></div>
+      </div>
+      <div class="ombre"></div>
+      <div class="trar">${rarMark(age.rar)}</div>
+      <div class="ttag">EN DUEL</div>
+      <div class="ttxt">
+        <div class="tpast">
+          <span><b>${esc(t.nom)}</b></span>
+          <span>Cri : <b>${esc(age.cri?.label ?? '—')}</b> · ${age.cri?.power ?? 0} de poussée</span>
+          <span>${possede} exemplaire${possede > 1 ? 's' : ''} · étage ${stade}</span>
+        </div>
+        <h2>${esc(age.nom)}</h2>
+      </div>
+    </div>
+
+    <div class="teff">${effets.length
+      ? effets.map((e) => `<span>${esc(e)}</span>`).join('')
+      : '<span class="rien">Aucun effet particulier : il pousse comme les autres.</span>'}</div>
+
+    <div class="tbtns">
+      <button class="dbtn primary" id="goDuel">ENTRER EN DUEL</button>
+      <a class="dbtn" href="/fanzzy/${f.id}">SA FICHE</a>
+    </div>`;
+
   // Le Fanzzy équipé est déjà connu du serveur : le duel le lira lui-même.
   $('goDuel').onclick = () => { location.href = '/duel'; };
+  habiller(age, stade);
+}
+
+/* Le rendu peut repartir pendant qu'une image charge — on choisit un autre
+   Fanzzy, on le fait évoluer. Sans ce jeton, l'image de l'ancien arriverait
+   après celle du nouveau et resterait à l'écran. */
+let teamSeq = 0;
+
+/**
+ * Pose le personnage dans la scène, du mieux dessiné au dernier recours.
+ *
+ *   1. les douze états, quand ils existent : c'est le dessin de l'accueil, et
+ *      on en profite pour le faire saluer ;
+ *   2. le plein-pied, pour les deux cents Fanzzy illustrés sans états ;
+ *   3. le dessin procédural, qui vaut toujours mieux qu'un cadre vide.
+ *
+ * Rien ici ne lève : un manifeste injoignable ou un format que le navigateur
+ * refuse doit faire descendre d'un cran, pas vider l'écran.
+ */
+async function habiller(age, stade) {
+  const cle = ++teamSeq;
+  const scene = $('tscene');
+  const img = $('tpose');
+
+  const montrer = async (src) => {
+    img.src = src;
+    try { await img.decode(); }
+    catch {
+      // Le format moderne peut manquer là où le PNG existe : on retente une
+      // fois. La révision vit dans la requête, on ne change que l'extension.
+      try { img.src = src.replace(/\.(avif|webp)(\?|$)/, '.png$2'); await img.decode(); }
+      catch { return false; }
+    }
+    if (cle !== teamSeq) return false;
+    img.classList.add('on');
+    scene.classList.add('entre');
+    return true;
+  };
+
+  let manifeste = null;
+  try { manifeste = await window.TBF_ETATS?.charger?.(); }
+  catch { /* manifeste injoignable : le plein-pied suffit */ }
+  if (cle !== teamSeq) return;
+
+  // `resoudre` retombe seul du salut vers `neutre` : s'il rend quelque chose,
+  // c'est affichable, et `etat` dit ce qu'on a vraiment obtenu.
+  const r = manifeste ? window.TBF_ETATS.resoudre(age.id, { evo: stade, etat: 'salut' }) : null;
+  if (r && await montrer(r.src)) {
+    if (r.etat !== 'salut') return;
+    // Le salut ne dure que le temps du geste, comme sur l'accueil : ensuite il
+    // reprend sa pose. Figé bras levés, il passerait pour un élément de décor.
+    const repos = window.TBF_ETATS.resoudre(age.id, { evo: stade, etat: 'neutre' });
+    if (repos) setTimeout(() => { if (cle === teamSeq) montrer(repos.src); }, 2400);
+    return;
+  }
+
+  const plein = window.FZART?.adresse?.(age.id, 'plein');
+  if (plein && await montrer(plein)) return;
+  if (cle !== teamSeq) return;
+
+  img.remove();
+  $('tcorps').insertAdjacentHTML('beforeend', `<div class="tdessin">${artProcedural(age)}</div>`);
+  scene.classList.add('entre');
 }
 
 /* ----------------------------------------------------------------- nav */
