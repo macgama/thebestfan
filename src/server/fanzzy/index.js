@@ -10,7 +10,7 @@ import { STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 // et une liste figée dans le code redeviendrait une seconde vérité.
 import { toutesTenues, tenuesPubliees } from './tenues.js';
 import { ACTIONS } from '../../shared/duel/actions.js';
-import { XP } from '../../shared/niveau.js';
+import { XP, PALIERS } from '../../shared/niveau.js';
 
 /**
  * Collection Fanzzy, tenue par le serveur.
@@ -36,6 +36,16 @@ export const PACK_REGEN_MS = 10 * 60 * 1000;
 export const PACK_PRICE = 45;          // acheter un booster en écharpes
 
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
+
+/**
+ * À quel niveau chaque série se débloque.
+ *
+ * Déduit des paliers plutôt que recopié : une table de plus à tenir à jour
+ * finirait par diverger de celle qui décide vraiment, et le kiosque
+ * annoncerait « niveau 12 » sur une série que le serveur ouvre au niveau 9.
+ */
+const NIVEAU_DE_SERIE = Object.fromEntries(
+  PALIERS.flatMap((p) => (p.series ?? []).map((s) => [s, p.niveau])));
 
 /**
  * `niveau` est facultatif : sans lui le module tourne exactement comme avant,
@@ -544,7 +554,12 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
         stade: lignee(f.id).findIndex((x) => x.id === f.id) + 1 })),
       // `ouverte` porte l'information ; le kiosque n'affiche que celles-là, et
       // la progression ne se compte que sur elles.
-      sets: SETS.map((s) => ({ ...s, ouverte: serieOuverte(s.id) })),
+      // `ouverte` est la décision de l'administration ; `niveau` est le palier
+      // auquel la série se débloque. Les deux sont les mêmes pour tout le
+      // monde, donc ils ont leur place dans cette réponse partagée — ce qui
+      // dépend du joueur, c'est `series` dans `/state`.
+      sets: SETS.map((s) => ({ ...s, ouverte: serieOuverte(s.id),
+        niveau: NIVEAU_DE_SERIE[s.id] ?? 1 })),
       // Ce qu'un joueur peut encore obtenir. La page pourrait le recalculer,
       // mais elle le recalculerait *mal* le jour où la règle se nuance — et
       // c'est précisément le genre de copie que ce projet a déjà payé.
@@ -561,10 +576,25 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
     });
   });
 
+  /**
+   * L'état du joueur, dont **les séries qu'il a débloquées**.
+   *
+   * Le kiosque les ignorait. `/dex` dit quelles séries sont ouvertes — c'est
+   * une décision de l'administration, la même pour tout le monde — mais pas
+   * lesquelles ce joueur-ci peut ouvrir, qui dépend de son niveau. Le carrousel
+   * proposait donc les neuf séries, le joueur en choisissait une hors de
+   * portée, et il découvrait le refus **après** avoir appuyé sur « ouvrir le
+   * booster » : « Ouverture impossible (fanzzy.error.set_locked) ».
+   *
+   * Un jeu ne cache pas ce qui vient : il le montre verrouillé, avec le
+   * niveau qu'il demande. C'est cette liste qui le permet.
+   */
   router.get('/state', requireAuth, (req, res) =>
-    send(res, Promise.all([wallet(req.user.id), collection(req.user.id), stades(req.user.id)])
-      .then(([w, col, st]) => ({ wallet: w, collection: col, stades: st,
-        maxPacks: MAX_PACKS, packPrice: PACK_PRICE }))));
+    send(res, Promise.all([
+      wallet(req.user.id), collection(req.user.id), stades(req.user.id),
+      niveau ? niveau.droitsDe(req.user.id).then((d) => [...d.series]) : null,
+    ]).then(([w, col, st, series]) => ({ wallet: w, collection: col, stades: st,
+      series, maxPacks: MAX_PACKS, packPrice: PACK_PRICE }))));
 
   router.post('/open', requireAuth, (req, res) =>
     send(res, openPack(req.user.id, String(req.body?.set ?? 'VN'), { buy: Boolean(req.body?.buy) })

@@ -481,6 +481,17 @@ function source(etat) {
   if (equipe) {
     const r = window.TBF_ETATS.resoudre(equipe.id, { evo: equipe.evo, skin: equipe.skin, etat });
     if (r) return r.src;
+    /* Pas d'états dessinés pour ce personnage — c'est le cas de tout le
+       catalogue sauf un — mais son **plein-pied** existe pour deux cents
+       d'entre eux. Il vaut mieux que le supporter générique, qui n'est pas
+       « le personnage sans animation » : c'est **quelqu'un d'autre**. Le
+       joueur qui a choisi Le Fumigène et voit un inconnu sur son écran
+       d'accueil en conclut, à raison, que son choix n'a pas été pris.
+
+       Immobile, donc : il ne réagit ni au but ni à la poussée. C'est un
+       moindre mal assumé — un bon personnage figé se lit comme un dessin qui
+       manque, un mauvais personnage animé se lit comme un bug. */
+    if (equipe.plein) return equipe.plein;
   }
   return SUPPORTER[etat] ? `/img/supporter/${SUPPORTER[etat]}${EXT_ALPHA}` : null;
 }
@@ -786,7 +797,12 @@ async function jsonp(url, options) {
       // qu'un, le demander explicitement évite d'avoir à revenir ici le jour
       // où il y en aura deux.
       const candidat = { id: actif, evo: coll.stades?.[actif] ?? 1, skin: 'base' };
-      if (window.TBF_ETATS.resoudre(candidat.id, candidat)) {
+      /* Le plein-pied, comme dernier recours. `resoudre` ne connaît que les
+         personnages dont les douze états sont dessinés — il y en a un — alors
+         que deux cents ont leur illustration. Sans ce repli, presque tout le
+         monde voyait le supporter générique à la place de son Fanzzy. */
+      candidat.plein = window.FZART?.adresse?.(actif, 'plein') ?? null;
+      if (window.TBF_ETATS.resoudre(candidat.id, candidat) || candidat.plein) {
         equipe = candidat;
         precharger();
         // `force` : l'état ne change pas, le personnage si. Sans lui, `pose`

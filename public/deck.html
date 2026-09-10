@@ -32,28 +32,77 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .nomdeck input{flex:1;min-width:0;background:none;border:0;color:inherit;font-family:var(--banner);
   font-size:15px;letter-spacing:.04em;outline:none}
 
-.tabs{display:flex;gap:7px;padding:11px 16px 10px}
-.tab{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.14);border-radius:8px;
-  color:inherit;padding:10px;font-family:var(--banner);font-size:12.5px;letter-spacing:.09em;cursor:pointer;opacity:.55}
-.tab.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
+/* Onglets, filtres, boutons : le même matériau que le classeur. Un socle dur
+   qui disparaît à l'appui pendant que le bouton descend. C'est le seul retour
+   tactile dont dispose une page web, et il fait toute la différence entre une
+   liste de réglages et un écran de jeu. */
+.tabs{display:flex;gap:8px;padding:11px 16px 10px}
+.tab{flex:1;background:rgba(16,22,31,.92);border:0;border-radius:11px;
+  color:inherit;padding:12px 8px 11px;font-family:var(--banner);font-size:13px;
+  letter-spacing:.09em;cursor:pointer;opacity:.6;
+  box-shadow:0 4px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(242,238,228,.1);
+  transition:transform .1s,box-shadow .1s,opacity .1s}
+.tab:active{transform:translateY(4px);box-shadow:0 0 0 rgba(0,0,0,.6)}
+.tab.on{background:var(--craie);color:#0B0E13;opacity:1;
+  box-shadow:0 4px 0 #6E6A61,inset 0 1px 0 rgba(255,255,255,.5)}
 .tab b{color:var(--projo)}
 .tab.on b{color:#8A6A0B}
 
-h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;margin:20px 16px 9px}
-h2 i{font-style:normal;opacity:.7}
+h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;margin:20px 16px 9px;
+  display:flex;align-items:baseline;gap:8px}
+h2 i{font-style:normal;opacity:.7;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+/* Le souffle moyen : la seule mesure de la page, donc la seule chose qui a le
+   droit d'être en couleur dans un titre de section. */
+h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo);
+  opacity:1;flex:none;white-space:nowrap}
 
 /* ------------------------------------------------------------- tribune */
 
-.rang{margin:0 14px 9px;border:1px solid rgba(242,238,228,.12);border-radius:12px;overflow:hidden;
-  background:linear-gradient(150deg,#171D25,#0D1116)}
-.rang.titulaire{border-color:rgba(245,195,59,.42)}
-.rang.vide{border-style:dashed;border-color:rgba(242,238,228,.2);background:var(--panneau);backdrop-filter:blur(10px)}
+.rang{margin:0 14px 13px;border:0;border-radius:13px;overflow:hidden;
+  background:linear-gradient(150deg,#171D25,#0D1116);
+  box-shadow:inset 0 0 0 1px rgba(242,238,228,.1),0 4px 0 rgba(0,0,0,.55),
+             0 7px 14px rgba(0,0,0,.4)}
+/* Le titulaire entre au coup d'envoi : c'est la seule décision de cet écran
+   qui change le début du duel, et elle doit se voir sans qu'on lise le
+   petit cartouche. */
+.rang.titulaire{box-shadow:inset 0 0 0 2px rgba(245,195,59,.55),0 4px 0 #6B4E0A,
+  0 0 22px rgba(245,195,59,.14),0 7px 14px rgba(0,0,0,.4)}
+.rang.vide{background:var(--panneau);backdrop-filter:blur(10px);
+  box-shadow:inset 0 0 0 2px rgba(242,238,228,.14),0 4px 0 rgba(0,0,0,.4)}
 .rang .tete{display:flex;align-items:center;gap:11px;padding:12px 13px;cursor:pointer;position:relative}
 .rang .tete::before{content:"";position:absolute;inset:0;opacity:.16;pointer-events:none;
   background:radial-gradient(70% 120% at 12% 50%,var(--tc,#8257DA),transparent 62%)}
 .pip{width:44px;height:44px;flex:none;border-radius:11px;display:flex;align-items:center;justify-content:center;
   background:var(--tc,#8257DA);position:relative}
 .pip svg{width:24px;height:24px}
+
+/* ------------------------------------------------- le Fanzzy, en visage
+
+   La tribune montrait un carré de couleur avec le pictogramme du type. Le
+   classeur, lui, affiche les personnages dessinés — et c'est le même joueur
+   qui passe de l'un à l'autre pour composer son deck. Il choisissait des
+   noms ici et des visages là.
+
+   Le portrait remplace donc la pastille quand le Fanzzy est illustré, avec le
+   cadre de sa rareté, et le type redescend en petite pastille dans le coin.
+   Les 262 Fanzzy pas encore dessinés gardent l'ancienne pastille : le repli
+   est le même que partout ailleurs. */
+.tete .face{width:54px;height:54px;flex:none;border-radius:12px;position:relative;
+  overflow:hidden;background:#0B1017;
+  box-shadow:inset 0 0 0 2px var(--rc,#C2CAD6),0 3px 0 var(--rc2,#4E5865),0 5px 9px rgba(0,0,0,.5)}
+.tete .face img{width:100%;height:100%;object-fit:cover;object-position:50% 6%;display:block}
+.tete .face .type{position:absolute;right:-2px;bottom:-2px;width:19px;height:19px;border-radius:50%;
+  background:var(--tc,#8257DA);display:grid;place-items:center;
+  box-shadow:0 0 0 2px #10151C}
+.tete .face .type svg{width:11px;height:11px}
+/* Le cadre de rareté, repris du classeur au trait près : gris commun, bleu
+   rare, violet épique, or légendaire. Une couleur apprise une fois vaut pour
+   tout le jeu. */
+.r-commune{--rc:#C2CAD6;--rc2:#4E5865}
+.r-rare{--rc:#3C82E8;--rc2:#1B3E75}
+.r-epique{--rc:#8257DA;--rc2:#3E2870}
+.r-legendaire{--rc:#F5C33B;--rc2:#7A5A0E}
 .rang .id{flex:1;min-width:0;position:relative}
 .rang .id b{display:block;font-family:var(--banner);font-size:15px;letter-spacing:.03em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -65,36 +114,81 @@ h2 i{font-style:normal;opacity:.7}
 .rang .chevron{position:relative;opacity:.3;font-size:18px;flex:none}
 
 .rang .pieces{display:flex;gap:7px;padding:0 12px 12px}
-.piece{flex:1;border:1px dashed rgba(242,238,228,.2);border-radius:9px;padding:9px 8px;min-height:62px;
+.piece{flex:1;border:0;border-radius:10px;padding:10px 8px 9px;min-height:64px;
   display:flex;flex-direction:column;justify-content:center;gap:4px;cursor:pointer;text-align:center;
-  background:none;color:inherit;font-family:inherit}
-.piece.plein{border-style:solid;border-color:rgba(130,87,218,.55);background:rgba(130,87,218,.11)}
+  background:rgba(0,0,0,.28);color:inherit;font-family:inherit;
+  box-shadow:inset 0 0 0 1.5px rgba(242,238,228,.16),0 3px 0 rgba(0,0,0,.5);
+  transition:transform .1s,box-shadow .1s}
+.piece:active{transform:translateY(3px);box-shadow:inset 0 0 0 1.5px rgba(242,238,228,.16)}
+.piece.plein{background:rgba(130,87,218,.14);
+  box-shadow:inset 0 0 0 2px rgba(130,87,218,.6),0 3px 0 #2E1D53}
+.piece.plein:active{box-shadow:inset 0 0 0 2px rgba(130,87,218,.6)}
 .piece b{font-family:var(--banner);font-size:11.5px;letter-spacing:.03em;display:block}
 .piece span{font-size:9px;opacity:.5;line-height:1.35;display:block}
 .rang .effet{padding:0 13px 12px;font-size:10.5px;opacity:.62;line-height:1.65}
 .rang .effet em{font-style:normal;color:var(--projo)}
 .rang .actions{display:flex;gap:7px;padding:0 12px 12px}
-.mini{flex:1;background:rgba(0,0,0,.32);border:1px solid rgba(242,238,228,.15);border-radius:7px;
-  color:inherit;padding:8px;font-family:var(--banner);font-size:10px;letter-spacing:.1em;cursor:pointer}
-.mini.danger{color:var(--flare);border-color:rgba(224,64,44,.35)}
+.mini{flex:1;background:rgba(16,22,31,.92);border:0;border-radius:9px;
+  color:inherit;padding:10px 8px 9px;font-family:var(--banner);font-size:10.5px;
+  letter-spacing:.1em;cursor:pointer;
+  box-shadow:0 3px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(242,238,228,.11);
+  transition:transform .1s,box-shadow .1s}
+.mini:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,.6)}
+.mini.danger{color:#F0846F;box-shadow:0 3px 0 rgba(90,20,12,.9),inset 0 1px 0 rgba(242,238,228,.09)}
+.mini.danger:active{box-shadow:0 0 0 rgba(90,20,12,.9)}
 
 /* --------------------------------------------------------------- cartes */
 
-.grille{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:0 14px}
-.emp{aspect-ratio:.72;border-radius:8px;border:1px dashed rgba(242,238,228,.18);display:flex;
-  flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:4px 3px;
-  background:var(--panneau);backdrop-filter:blur(10px);cursor:pointer;position:relative;overflow:hidden}
-.emp.plein{border-style:solid;border-color:var(--fc,#8257DA);
-  background:linear-gradient(170deg,rgba(255,255,255,.07),rgba(0,0,0,.35))}
-.emp .cout{font-family:var(--banner);font-size:12px;color:var(--fc,#8257DA);line-height:1}
-.emp .nm{font-size:7.5px;line-height:1.15;text-align:center;opacity:.8;letter-spacing:.02em;
-  max-width:100%;overflow:hidden}
-.emp .plus{font-size:17px;opacity:.25}
+/* ------------------------------------------------------- les dix cartes
+
+   C'étaient dix cases avec un chiffre et un nom en sept pixels et demi. La
+   main du joueur — ce qu'il regarde le plus longtemps sur cet écran — était
+   la partie la moins lisible de la page.
+
+   Ce sont maintenant des cartes : le coût dans sa goutte en haut, la famille
+   en cadre et en couleur, le nom sur un bandeau en bas, et le glyphe de la
+   famille en grand derrière. Le coût est ce qu'on compare d'un coup d'œil
+   quand on monte une main — il passe donc devant tout le reste. */
+.grille{display:grid;grid-template-columns:repeat(5,1fr);gap:12px 7px;padding:0 14px 4px}
+.emp{aspect-ratio:.72;border-radius:9px;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-end;padding:0;cursor:pointer;position:relative;
+  overflow:hidden;background:#0B1017;border:0;
+  box-shadow:inset 0 0 0 2px rgba(242,238,228,.13),0 4px 0 rgba(242,238,228,.06),
+             0 6px 10px rgba(0,0,0,.5);
+  transition:transform .1s,box-shadow .1s}
+.emp:active{transform:translateY(4px);box-shadow:inset 0 0 0 2px rgba(242,238,228,.13)}
+.emp.plein{background:linear-gradient(180deg,#161D27,#080C11);
+  box-shadow:inset 0 0 0 2px var(--fc,#8257DA),0 4px 0 var(--fc2,#3E2870),
+             0 6px 10px rgba(0,0,0,.55)}
+.emp.plein:active{box-shadow:inset 0 0 0 2px var(--fc,#8257DA)}
+/* Le glyphe de famille, en grand et en fond : il donne une matière à la carte
+   et se reconnaît avant qu'on ait lu le nom. */
+.emp .sceau{position:absolute;left:50%;top:44%;width:78%;height:auto;
+  transform:translate(-50%,-50%);opacity:.22;color:var(--fc,#8257DA);
+  fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+/* La goutte de souffle. Le coût se lit avant le nom : c'est lui qu'on compare
+   quand on monte une main. */
+.emp .cout{position:absolute;left:50%;top:7%;transform:translateX(-50%);z-index:2;
+  min-width:23px;padding:2px 5px 3px;border-radius:11px 11px 10px 10px;
+  background:linear-gradient(180deg,#F4F1E8,#B9B4A6);color:#12161C;
+  font-family:var(--banner);font-size:13px;line-height:1.1;text-align:center;
+  box-shadow:0 2px 0 rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.8)}
+.emp .nm{position:relative;z-index:2;width:100%;padding:4px 3px 5px;
+  font-family:var(--banner);font-size:8.5px;line-height:1.1;text-align:center;
+  letter-spacing:.02em;background:linear-gradient(180deg,transparent,rgba(4,6,10,.95) 45%);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.emp .plus{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-size:22px;opacity:.3;font-family:var(--banner)}
 
 .filtres{display:flex;gap:6px;padding:0 14px 4px}
-.filtre{background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.13);border-radius:999px;color:inherit;
-  padding:6px 12px;font-size:10.5px;letter-spacing:.05em;cursor:pointer;opacity:.55}
-.filtre.on{opacity:1;border-color:var(--craie)}
+.filtre{background:rgba(16,22,31,.92);border:0;border-radius:9px;color:inherit;
+  padding:8px 13px 7px;font-family:var(--banner);font-size:11px;letter-spacing:.08em;
+  cursor:pointer;opacity:.62;
+  box-shadow:0 3px 0 rgba(0,0,0,.55),inset 0 1px 0 rgba(242,238,228,.09);
+  transition:transform .1s,box-shadow .1s,opacity .1s}
+.filtre:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,.55)}
+.filtre.on{opacity:1;background:var(--craie);color:#0B0E13;
+  box-shadow:0 3px 0 #6E6A61,inset 0 1px 0 rgba(255,255,255,.45)}
 
 .fam{margin:14px 16px 7px;font-family:var(--banner);font-size:10px;letter-spacing:.18em;
   color:var(--fc,#8257DA);display:flex;align-items:center;gap:8px}
@@ -128,9 +222,15 @@ h2 i{font-style:normal;opacity:.7}
 .barre .info{flex:1;min-width:0;font-size:10.5px;opacity:.6;line-height:1.45}
 .barre .info b{color:var(--projo)}
 .barre .info.pb{color:var(--flare);opacity:.95}
-.btn{background:linear-gradient(180deg,var(--projo),#D0A020);border:0;color:#161006;border-radius:8px;
-  padding:12px 18px;font-family:var(--banner);font-size:13px;letter-spacing:.1em;cursor:pointer;flex:none}
-.btn:disabled{filter:grayscale(.85);opacity:.45;cursor:default}
+/* Le bouton d'enregistrement est l'action principale de l'écran : c'est le
+   seul qui a droit à la couleur pleine et au socle le plus épais. */
+.btn{background:linear-gradient(180deg,#FFDC7A,var(--projo) 45%,#D0A020);border:0;color:#161006;
+  border-radius:10px;padding:13px 18px 12px;font-family:var(--banner);font-size:13px;
+  letter-spacing:.1em;cursor:pointer;flex:none;
+  box-shadow:0 4px 0 #8A6A0B,inset 0 1px 0 rgba(255,255,255,.55);
+  transition:transform .1s,box-shadow .1s}
+.btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 #8A6A0B}
+.btn:disabled{filter:grayscale(.85);opacity:.45;cursor:default;box-shadow:0 4px 0 rgba(0,0,0,.4)}
 
 /* ------------------------------------------------------------- panneaux */
 
@@ -202,6 +302,12 @@ h2 i{font-style:normal;opacity:.7}
 <div class="voile" id="voile"><div class="panneau" id="panneau"></div></div>
 <div class="toast" id="toast"></div>
 
+<!-- Sans « defer » : le script en ligne ci-dessous lit `FZART` au premier
+     rendu de la tribune, pour y poser le visage des Fanzzy illustrés. C'est le
+     même module que le classeur — une seule définition de « comment on dessine
+     un Fanzzy », et le deck n'a pas sa propre idée du sujet. -->
+<script src="/fanzzy-art.js"></script>
+
 <script>
 /* =======================================================================
    Construction du deck.
@@ -224,14 +330,29 @@ const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
   (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
 
 /** Couleur par famille de carte : elle sert de repère avant la lecture. */
+/**
+ * Les sept familles de cartes d'action.
+ *
+ * `c2` est la couleur du socle — le biseau dur sous la carte, qui lui donne sa
+ * matière. `ico` est le glyphe que la carte porte en grand derrière son coût :
+ * il se reconnaît avant qu'on ait lu le nom, ce qui compte quand dix cartes
+ * tiennent sur deux rangées de cent pixels.
+ */
 const FAM = {
-  pousse:    { nom:'POUSSÉE',   c:'#E0402C' },
-  entrave:   { nom:'ENTRAVE',   c:'#8257DA' },
-  souffle:   { nom:'SOUFFLE',   c:'#3C82E8' },
-  geste:     { nom:'GESTE',     c:'#F5C33B' },
-  garde:     { nom:'GARDE',     c:'#C2CAD6' },
-  collectif: { nom:'COLLECTIF', c:'#1E9E6A' },
-  bascule:   { nom:'BASCULE',   c:'#E08A2C' },
+  pousse:    { nom:'POUSSÉE',   c:'#E0402C', c2:'#7A1A11',
+    ico:'M12 20V5M6 11l6-6 6 6M4 21h16' },
+  entrave:   { nom:'ENTRAVE',   c:'#8257DA', c2:'#3E2870',
+    ico:'M9 8a4 4 0 0 1 0 8M15 8a4 4 0 0 0 0 8M7 12h10' },
+  souffle:   { nom:'SOUFFLE',   c:'#3C82E8', c2:'#1B3E75',
+    ico:'M3 8h11a3 3 0 1 0-3-3M3 13h13a3 3 0 1 1-3 3M3 18h7' },
+  geste:     { nom:'GESTE',     c:'#F5C33B', c2:'#7A5A0E',
+    ico:'M12 3l5 15H7zM4 21h16M9 13l7-5' },
+  garde:     { nom:'GARDE',     c:'#C2CAD6', c2:'#4E5865',
+    ico:'M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6z' },
+  collectif: { nom:'COLLECTIF', c:'#1E9E6A', c2:'#0D4F35',
+    ico:'M7 10a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm10 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM2 20c0-3 2.2-5 5-5s5 2 5 5m0 0c0-3 2.2-5 5-5s5 2 5 5' },
+  bascule:   { nom:'BASCULE',   c:'#E08A2C', c2:'#7A4A0E',
+    ico:'M4 8h14l-4-4M20 16H6l4 4' },
 };
 const RANG = { commune:1, rare:2, epique:3, legendaire:4 };
 
@@ -345,9 +466,17 @@ function modsTexte(m) {
   return out;
 }
 
+/**
+ * La rareté chiffrée.
+ *
+ * La seconde ligne testait `legendaire` une deuxième fois : elle était morte,
+ * et l'épique retombait sur les pastilles. Faute muette — trois pastilles
+ * restent une réponse plausible, personne ne cherche l'étoile qui manque. La
+ * même faute vivait dans `fanzzy.html`, d'où elle a été recopiée.
+ */
 function rangHTML(rar) {
   if (rar === 'legendaire') return '<span class="dots"><i class="s" style="width:auto;height:auto;border-radius:0">♛</i></span>';
-  if (rar === 'legendaire') return '<span class="dots"><i class="s" style="width:auto;height:auto;border-radius:0">★</i></span>';
+  if (rar === 'epique') return '<span class="dots"><i class="s" style="width:auto;height:auto;border-radius:0">★</i></span>';
   return `<span class="dots">${'<i></i>'.repeat(RANG[rar] ?? 1)}</span>`;
 }
 
@@ -473,10 +602,20 @@ function tribuneHTML() {
             : `<b style="opacity:.4">Vide</b><span>Ajouter une pièce</span>`}</button>`);
     }
 
+    /* Le visage plutôt que la pastille, quand le dessin existe. `illustration`
+       rend `null` pour les Fanzzy pas encore illustrés — on retombe alors sur
+       la pastille de type, exactement comme avant. */
+    const buste = window.FZART?.illustration?.(f, 'buste') ?? null;
+    const tete = buste
+      ? `<div class="face r-${f.rar ?? 'commune'}">${buste}
+          <span class="type"><svg viewBox="0 0 24 24" fill="none" stroke="#0B0E13"
+            stroke-width="2.4" stroke-linecap="round"><path d="${t.ico}"/></svg></span></div>`
+      : `<div class="pip" style="--tc:${t.c}"><svg viewBox="0 0 24 24" fill="none" stroke="#0B0E13"
+          stroke-width="2" stroke-linecap="round"><path d="${t.ico}"/></svg></div>`;
+
     out.push(`<div class="rang ${i === 0 ? 'titulaire' : ''}" style="--tc:${t.c}">
       <div class="tete" data-choisir-fanzzy="${i}">
-        <div class="pip" style="--tc:${t.c}"><svg viewBox="0 0 24 24" fill="none" stroke="#0B0E13"
-          stroke-width="2" stroke-linecap="round"><path d="${t.ico}"/></svg></div>
+        ${tete}
         <div class="id">
           <b>${esc(f.nom)}${rangHTML(f.rar)}</b>
           <div class="sous">${esc(t.nom)} · étage ${f.stage}</div>
@@ -521,14 +660,26 @@ function tribuneHTML() {
 }
 
 function cartesHTML() {
-  const out = [`<h2>LES DIX CARTES <i>· cinq visibles à la fois</i></h2>`];
+  /* Le souffle moyen de la main.
+     C'est la statistique que tout jeu de deck met en avant, et pour une bonne
+     raison : elle répond seule à « pourquoi je n'arrive jamais à jouer ». Une
+     main à vingt-huit de moyenne s'étrangle, une main à seize ne fait rien.
+     Elle ne se calculait nulle part, et le joueur n'avait aucun moyen de la
+     connaître sans additionner dix nombres à la main. */
+  const posees = S.deck.actions.map(aCarte).filter(Boolean);
+  const moyen = posees.length
+    ? (posees.reduce((s, a) => s + (a.cost ?? 0), 0) / posees.length) : 0;
+
+  const out = [`<h2>LES DIX CARTES <i>· cinq visibles à la fois</i>${
+    posees.length ? `<u>souffle moyen ${moyen.toFixed(1)}</u>` : ''}</h2>`];
 
   const emp = [];
   for (let i = 0; i < S.regles.actions; i++) {
     const a = aCarte(S.deck.actions[i]);
     if (!a) { emp.push(`<div class="emp" data-aller-catalogue="1"><span class="plus">+</span></div>`); continue; }
-    const fam = FAM[a.fam] ?? { c: '#8257DA' };
-    emp.push(`<div class="emp plein" style="--fc:${fam.c}" data-retirer-carte="${i}">
+    const fam = FAM[a.fam] ?? { c: '#8257DA', c2: '#3E2870', ico: '' };
+    emp.push(`<div class="emp plein" style="--fc:${fam.c};--fc2:${fam.c2}" data-retirer-carte="${i}">
+      <svg class="sceau" viewBox="0 0 24 24"><path d="${fam.ico}"/></svg>
       <div class="cout">${a.cost}</div><div class="nm">${esc(a.nom)}</div></div>`);
   }
   out.push(`<div class="grille">${emp.join('')}</div>`);
