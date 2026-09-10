@@ -56,15 +56,19 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 for (const f of ['auth.sql', 'football.sql', 'souvenirs.sql', 'fanzzy.sql',
-                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql']) {
+                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'niveau.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
 const U = 'eeeeeeee-0000-0000-0000-000000000001';
 await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
                  VALUES (?,?,?,'x')`, [U, 'ui@ex.fr', 'Deckeuse']);
-await raw.query(`INSERT INTO user_wallet (user_id,scarves,action_cards) VALUES (?,300,?)`,
-  [U, JSON.stringify(['a-silence', 'a-vol', 'a-metronome'])]);
+/* Niveau 5 : c'est le palier qui ouvre le troisième emplacement de tribune.
+   En dessous le serveur n'en accorde que deux — c'est le cas que la section
+   « le plafond du niveau » éprouve plus bas, en abaissant l'XP. */
+const { seuil } = await import('../src/shared/niveau.js');
+await raw.query(`INSERT INTO user_wallet (user_id,scarves,action_cards,xp) VALUES (?,300,?,?)`,
+  [U, JSON.stringify(['a-silence', 'a-vol', 'a-metronome']), seuil(5)]);
 
 /** Un compte fraîchement sorti du paquet de bienvenue : deux Fanzzy. */
 const donnerFanzzy = (id) =>
@@ -86,7 +90,14 @@ await chargerTenues(pool);
 
 const requireAuth = (r, _s, n) => { r.user = { id: U }; n(); };
 const app = express();
-app.use('/api/deck', createDecks({ pool, requireAuth }).router);
+/* La progression est montée. Sans elle, `createDecks` accorde à tout le monde
+   les trois emplacements de la règle : le plafond de niveau — c'est-à-dire la
+   panne — ne peut alors pas se produire, et la suite resterait verte en
+   n'éprouvant jamais le cas qui a été remonté. */
+const { createNiveau } = await import('../src/server/niveau/index.js');
+const niveau = createNiveau({ pool, requireAuth });
+app.use('/api/niveau', niveau.router);
+app.use('/api/deck', createDecks({ pool, requireAuth, niveau }).router);
 app.use('/api/fanzzy', createFanzzy({ pool, requireAuth }).router);
 app.get('/deck', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'deck.html')));
 // La page charge fx.js et nav.js en differé : on les sert pour rester au plus
@@ -345,6 +356,48 @@ clic(T(dom).querySelector('[data-fermer]'));
     /\br-(commune|rare|epique|legendaire)\b/.test(face?.className ?? ''));
   check('et son type reste lisible dans le coin',
     Boolean(face?.querySelector('.type svg')));
+}
+
+/* ------------------------------------------- le plafond du niveau
+
+ * Le nombre d'emplacements de tribune dépend du niveau : deux au départ, trois
+ * à partir du cinquième. Le serveur envoie ce plafond dans
+ * `possede.fanzzyMax` précisément pour que la page affiche autant de rangs —
+ * **et la page ne le lisait pas.** Elle ouvrait les trois rangs de la règle
+ * absolue, le joueur en remplissait trois, et le serveur refusait un deck que
+ * l'écran venait de lui laisser composer. Le refus, lui, répétait « il faut
+ * entre un et trois Fanzzy » : il donnait raison au joueur.
+ */
+{
+  const avant = await pool.query('SELECT xp FROM user_wallet WHERE user_id = ?', [U]);
+  await pool.query('UPDATE user_wallet SET xp = 0 WHERE user_id = ?', [U]);
+  const bas = await ouvrirPage();
+  await jusqua(() => T(bas).querySelector('.rang'));
+
+  check('au niveau 1, la tribune n’ouvre que les rangs accordés',
+    T(bas).querySelectorAll('.rang').length === 2
+    || (console.log('        elle en ouvre',
+      T(bas).querySelectorAll('.rang').length), false));
+  check('et l’onglet compte sur le même plafond',
+    /TRIBUNE\s*\d\/2/.test(T(bas).querySelector('[data-onglet="tribune"]')?.textContent ?? ''));
+
+  /* Le message du refus doit dire **la** limite, pas celle de la règle. On le
+     provoque en demandant trois Fanzzy au serveur par-dessus la page. */
+  const dit = await bas.window.eval(`(async () => {
+    const r = await fetch('/api/deck/mien', { method:'PUT',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ nom:'Trop', fanzzy:[{id:'V1'},{id:'V2'},{id:'P1'}], actions:[] }) });
+    const j = await r.json();
+    return (j.detail ?? []).find((p) => p.code === 'deck.error.fanzzy_count') ?? null;
+  })()`);
+  check('le serveur refuse le troisième Fanzzy', Boolean(dit));
+  check('et il joint la vraie limite, pas celle de la règle', dit?.max === 2);
+  check('la page sait alors nommer le niveau plutôt que répéter « trois »',
+    /niveau/i.test(bas.window.eval(`precise(${JSON.stringify(dit)})`) ?? ''));
+
+  bas.window.close();
+  await pool.query('UPDATE user_wallet SET xp = ? WHERE user_id = ?',
+    [avant[0][0].xp, U]);
 }
 
 check('le deck est annoncé prêt', T(dom).getElementById('etat').textContent === 'PRÊT');

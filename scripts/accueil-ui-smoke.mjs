@@ -442,14 +442,76 @@ await page.close();
     }
   }
 
-  /* Un Fanzzy sans illustration ne doit pas laisser l'écran vide : le
-     supporter générique reprend sa place, et le joueur ne voit rien
-     d'anormal. C'est le cas de la grande majorité du catalogue aujourd'hui. */
-  const SANS_ART = Object.keys(catalogue).length
-    ? ['G1', 'V1', 'ZZ9'].find((id) => !catalogue[id]) : 'G1';
-  await equiper(SANS_ART);
+  /* ------------------------- illustré, mais sans ses douze états
+
+     C'est le cas de deux cents Fanzzy sur quatre cent soixante, et c'était le
+     trou : l'accueil n'acceptait le personnage équipé que si ses **douze
+     états** étaient dessinés — un seul les a. Tous les autres laissaient la
+     place au supporter générique.
+
+     Or le supporter générique n'est pas « le personnage sans animation » :
+     c'est **quelqu'un d'autre**. Le joueur qui choisit Le Fumigène et voit un
+     inconnu sur son écran d'accueil en conclut, à raison, que son choix n'a
+     pas été pris. C'est exactement ce qui a été remonté.
+
+     On retombe donc sur son plein-pied. Immobile — il ne change plus de
+     dessin au but — mais c'est bien lui, et la scène bouge quand même. */
+  const SANS_ETATS = Object.keys(catalogue).length
+    ? ['G1', 'V1', 'X7'].find((id) => !catalogue[id]) : null;
+  if (!SANS_ETATS) {
+    console.log('  --   tous les Fanzzy d’essai ont leurs états : section sautée');
+  } else {
+    await equiper(SANS_ETATS);
+    page = await ouvrir();
+    const vu = (await scene(page)).src ?? '';
+    check('un Fanzzy illustré sans états montre quand même son plein-pied',
+      new RegExp(`/img/fanzzy/${SANS_ETATS}\\.`).test(vu)
+      || (console.log('        il affiche', vu), false));
+    check('et surtout pas le supporter générique, qui est un autre personnage',
+      !/\/img\/supporter\//.test(vu));
+
+    /* Le dessin ne change plus au but — il n'y en a qu'un — mais la scène,
+       elle, doit réagir. Sans ça le but ne se voit pas du tout. */
+    await page.evaluate(() => { window.__gestes.length = 0; TBF.pose('but'); });
+    await new Promise((r) => setTimeout(r, 500));
+    check('un but le fait quand même tressaillir',
+      (await page.evaluate(() => window.__gestes)).includes('bascule'));
+    await page.close();
+  }
+
+  /* ------------------------- le manifeste des états manquant
+
+     Il est **facultatif** : il n'apporte que les douze poses. Le plein-pied
+     n'en a aucun besoin. Or tout le bloc en dépendait — `if (actif && await
+     charger())` — si bien qu'un manifeste absent du serveur, ou servi en 404,
+     effaçait le personnage de tout le monde et ramenait le supporter
+     générique. Une pièce facultative ne doit pas emporter ce qui ne s'appuie
+     pas sur elle. */
+  if (SANS_ETATS) {
+    await equiper(SANS_ETATS);
+    const page2 = await nav.newPage();
+    page2.on('pageerror', (e) => erreurs.push(e.message));
+    await page2.setRequestInterception(true);
+    page2.on('request', (r) => {
+      if (/\/img\/fanzzy\/index\.json/.test(r.url())) r.respond({ status: 404, body: '' });
+      else r.continue();
+    });
+    await page2.setViewport({ width: 400, height: 880 });
+    await page2.goto(base + '/', { waitUntil: 'networkidle0' });
+    await page2.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+    await new Promise((r) => setTimeout(r, 600));
+    const vu2 = (await scene(page2)).src ?? '';
+    check('sans manifeste des états, le Fanzzy garde quand même sa place',
+      new RegExp(`/img/fanzzy/${SANS_ETATS}\\.`).test(vu2)
+      || (console.log('        il affiche', vu2), false));
+    await page2.close();
+  }
+
+  /* Sans Fanzzy choisi, le supporter générique reprend sa place — et c'est
+     là, et seulement là, qu'il a le droit d'être à l'écran. */
+  await pool.query('UPDATE user_wallet SET active_fanzzy = NULL WHERE user_id = ?', [U]);
   page = await ouvrir();
-  check('un Fanzzy sans dessin laisse la place au supporter',
+  check('sans Fanzzy choisi, le supporter générique tient l’écran',
     /\/img\/supporter\/idle\./.test((await scene(page)).src ?? ''));
   await page.close();
 }
@@ -540,6 +602,44 @@ await page.close();
   check('l’adversaire marque : il encaisse',
     /\/img\/supporter\/sad\./.test((await scene(page)).src ?? ''));
 
+  /* ------------------------------------------- le moment fort tient
+
+   * Les célébrations duraient deux secondes et demie. Le temps de sortir son
+   * téléphone de sa poche, le personnage était revenu au repos et le but
+   * n'avait laissé aucune trace — or c'est exactement à ce moment-là qu'on
+   * ouvre l'application.
+   *
+   * Quinze secondes, et la durée vit dans `fx.js` : la règle vaut pour tous
+   * les écrans où un Fanzzy réagira. Chaque page qui la recopierait finirait
+   * par en avoir sa propre version. */
+  {
+    const tenue = await page.evaluate(() => window.FX?.MOMENT);
+    check('la durée d’un moment fort est partagée par fx.js', tenue === 15000);
+
+    direct = { ...direct, home_goals: 3 };
+    await page.evaluate(() => TBF.veiller());
+    await new Promise((r) => setTimeout(r, 700));
+
+    const m = await page.evaluate(() => {
+      const b = document.getElementById('moment');
+      return { texte: b.textContent.trim(), visible: b.classList.contains('on') };
+    });
+    check('un but affiche son bandeau', m.visible && /goal/i.test(m.texte));
+
+    /* Trois secondes plus tard, tout est encore là. C'est la panne exacte :
+       à deux secondes et demie, il ne restait plus rien à voir. */
+    await new Promise((r) => setTimeout(r, 3000));
+    const apres = await page.evaluate(() => ({
+      pose: document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '',
+      bandeau: document.getElementById('moment').classList.contains('on'),
+    }));
+    check('trois secondes plus tard, il exulte encore',
+      /\/img\/supporter\/goal\./.test(apres.pose)
+      || (console.log('        il affiche', apres.pose), false));
+    check('et le bandeau tient avec lui', apres.bandeau);
+  }
+
+
   /* Le coup de sifflet final, après une célébration.
    *
    * C'est là qu'était le piège, et il ne se voyait pas : `clearTimeout`
@@ -553,15 +653,62 @@ await page.close();
    * monde, à chaque session : ce qui était un défaut rare devient la règle.
    * On laisse donc la célébration s'éteindre avant de couper le match — c'est
    * après elle, et seulement après, que la faute apparaissait. */
-  await new Promise((r) => setTimeout(r, 2400));
+  /* On provoque une pose tenue **courte** plutôt que d'attendre les quinze
+     secondes d'un vrai moment fort. Ce qui est en cause ici, c'est la reprise
+     de main — pas la durée, qui a son propre contrôle plus haut. Faire
+     dépendre celui-ci de l'autre le rendrait quinze fois plus lent, et il
+     rougirait le jour où la durée change sans que la faute soit revenue. */
+  await page.evaluate(() => TBF.pose('but', 250));
+  await new Promise((r) => setTimeout(r, 800));
   check('la célébration passée, il repousse',
-    /\/img\/supporter\/push\./.test((await scene(page)).src ?? ''));
+    /\/img\/supporter\/push\./.test((await scene(page)).src ?? '')
+    || (console.log('        il affiche', (await scene(page)).src), false));
 
   direct = null;
   await page.evaluate(() => TBF.veiller());
   await new Promise((r) => setTimeout(r, 700));
   check('le match fini, il revient au repos',
     /\/img\/supporter\/idle\./.test((await scene(page)).src ?? ''));
+
+  /* ------------------------------------------- le coup de sifflet final
+
+   * Un match terminé sort de la liste des matchs **ouverts**. L'accueil
+   * passait donc directement de « ton club pousse » à « aucun match en
+   * cours » : la victoire — ce qu'un supporter attend le plus — n'était
+   * annoncée nulle part.
+   *
+   * On rejoue la séquence entière, parce que l'annonce est gardée : elle ne
+   * se déclenche que pour un match qu'on a vu vivre. Sans cette garde, ouvrir
+   * l'accueil le lendemain matin célébrerait la victoire de la veille comme
+   * si elle venait de tomber. */
+  {
+    direct = { id: 9, open: true, elapsed: 88, status_short: '2H',
+      home_id: 85, away_id: 91, home_name: 'Sion', away_name: 'Bâle',
+      home_goals: 3, away_goals: 1, crowd: [4, 2] };
+    await page.evaluate(() => TBF.veiller());
+    await new Promise((r) => setTimeout(r, 500));
+
+    direct = { ...direct, open: false, status_short: 'FT' };
+    await page.evaluate(() => TBF.veiller());
+    await new Promise((r) => setTimeout(r, 700));
+
+    const m = await page.evaluate(() => {
+      const b = document.getElementById('moment');
+      return { texte: b.textContent.trim(), visible: b.classList.contains('on') };
+    });
+    check('le coup de sifflet final annonce la victoire',
+      (m.visible && /victoire/i.test(m.texte))
+      || (console.log('        il dit :', JSON.stringify(m)), false));
+    check('et le personnage la vit', /\/img\/supporter\//.test((await scene(page)).src ?? ''));
+
+    // Deux tours d'horloge de plus : l'annonce ne doit pas se rejouer.
+    await page.evaluate(() => { document.getElementById('moment').classList.remove('on'); });
+    await page.evaluate(() => TBF.veiller());
+    await new Promise((r) => setTimeout(r, 600));
+    check('elle ne se rejoue pas au tour suivant',
+      !(await page.evaluate(() => document.getElementById('moment').classList.contains('on'))));
+    direct = null;
+  }
 
   await page.close();
 }
