@@ -551,6 +551,13 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
       aCollectionner: obtenables().length,
       seriesOuvertes: ouvertes,
       types: TYPES, scarves: SCARVES, evoCost: EVO_COST, rar: RAR, rates: RATES,
+      // Un booster ne tire pas que des supporters : ses places 4 et 5
+      // donnent des tenues, de l’équipement et des cartes d’action. La page
+      // ne recevait que le catalogue Fanzzy, si bien qu’elle traitait les
+      // trois autres comme des cartes inconnues — elle les jetait, prévenait
+      // le joueur que sa version était périmée, et lui montrait trois cartes
+      // en annonçant « 1 / 5 ». Ce qui se tire doit être servi.
+      stuff: STUFF, actions: ACTIONS, tenues: toutesTenues(),
     });
   });
 

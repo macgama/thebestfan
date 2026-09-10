@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « les thèmes de tenue sortent du code et passent
-en base, et l’administration en crée ».
+Dernière mise à jour : session « les thèmes de tenue passent en base, et les
+boosters se rouvrent — on déchire la bande du haut ».
 
 ---
 
@@ -538,6 +538,70 @@ agréable ; « tu vas perdre ta série » est une laisse.
 complètes dans `VISUELS.md`.
 
 ---
+
+## Ouvrir un booster
+
+**On déchire la bande du haut, en travers, comme un vrai sachet.** Un seul
+mouvement, et l'endroit où saisir se voit avant qu'on ait lu la consigne : la
+ligne dentelée est dessinée sur le paquet, la languette est à droite. On tire
+dans les deux sens — la languette est à droite, mais rien ne justifie de
+refuser le geste à un gaucher.
+
+Ce qui précédait ne s'ouvrait pas, pour deux raisons distinctes qui se
+donnaient le même symptôme.
+
+**La première : le geste se comptait en images, pas en secondes.** Il fallait
+maintenir le doigt immobile pour « chauffer la tribune », et la chauffe
+avançait de `0.02` à chaque `requestAnimationFrame`. Cette page rend une
+douzaine d'images par seconde — carrousel, lueurs qui respirent, paquet qui
+tremble : la chauffe réclamait quatre secondes d'immobilité parfaite au lieu
+des huit dixièmes prévus, et le moindre relâchement remettait à zéro un
+compteur que rien n'affichait. Sur la machine du développeur, instantané ; sur
+un téléphone, impossible.
+
+Trois règles en sont sorties, et elles valent au-delà de ce geste :
+
+- **Rien ne se compte en images.** L'avancée ne dépend que de la distance
+  parcourue par le doigt. Une page à cinq images par seconde déchire comme une
+  page à cent vingt.
+- **Rien ne se perd sans se voir.** Lâcher trop tôt ne vide pas un compteur
+  invisible : la bande revient élastiquement à sa place.
+- **On peut toujours sortir.** « Plus tard » et Échap referment, Entrée ouvre
+  sans le geste — c'est l'accès au clavier et, du même coup, la sortie de
+  secours de qui ne peut pas faire le mouvement. Un plein écran dont on ne
+  s'échappe qu'en réussissant un geste est un piège, et c'en était un : la
+  seule issue était de recharger la page.
+
+**La seconde : `modsText` lisait `f.mods` sans garde.** Seuls un supporter et
+une pièce d'équipement portent des effets ; une tenue n'en a jamais eu, une
+carte d'action porte un `effet` et non des `mods`. Depuis que les places 4 et 5
+du booster s'ouvrent à tout l'inventaire, la plupart des paquets en
+contenaient une : `cardHTML` levait, la boucle qui monte les cinq cartes
+s'arrêtait au milieu, et sa dernière ligne — celle qui affiche l'écran — ne
+s'exécutait jamais. Le booster était débité, l'écran de déchirure refermé, et
+il ne se passait rien.
+
+Dans la même famille, corrigé du même coup : la page ne recevait que le
+catalogue Fanzzy et traitait donc l'équipement et les cartes d'action comme des
+cartes inconnues — elle les jetait, prévenait le joueur que sa version était
+périmée, et lui montrait trois cartes en annonçant « 1 / 5 ». **`/api/fanzzy/dex`
+sert désormais ce qui se tire** : `stuff`, `actions` et `tenues` en plus du
+catalogue. Une tenue s'affichait sous son identifiant, « prehistorique » ; elle
+porte maintenant son nom.
+
+**Rien de tout cela n'était couvert.** Les suites appelaient `/api/fanzzy/open`
+directement : elles éprouvaient le serveur et jamais la seule chose que le
+joueur touche. `fanzzy-ui-smoke` déchire désormais pour de bon, vérifie qu'un
+même trajet donne la même déchirure en six ou en vingt-quatre mouvements — la
+faute d'origine, exactement — et ouvre quatorze boosters d'affilée pour voir
+tomber les quatre sortes de cartes.
+
+Les événements y sont dispatchés depuis la page et non par `page.mouse` : le
+pilotage CDP ne délivre à cette page que deux `pointermove` sur douze, la
+fenêtre elle-même n'en voit pas davantage. Un test écrit avec `page.mouse`
+échouerait toujours, quel que soit l'état du code, et ne mesurerait que le
+simulateur.
+
 
 ## 4. Ce qui existe et fonctionne
 
