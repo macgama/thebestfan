@@ -356,11 +356,37 @@ const FAM = {
 };
 const RANG = { commune:1, rare:2, epique:3, legendaire:4 };
 
+const CHIFFRES = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq'];
+
+/**
+ * Le message d'un refus, avec les nombres que le serveur y a joints.
+ *
+ * `validerDeck` accompagne `fanzzy_count` du `min` et du `max` qu'il vient
+ * d'appliquer — un plafond qui dépend du niveau. La page les ignorait et
+ * affichait un texte figé : « Il faut entre un et trois Fanzzy » à quelqu'un
+ * qui n'avait droit qu'à deux. Le refus répétait donc au joueur qu'il était
+ * dans son droit, ce qui est la pire forme de message d'erreur.
+ */
+function precise(p) {
+  const base = MESSAGES[p.code] ?? p.code;
+  if (p.code !== 'deck.error.fanzzy_count' || p.max == null) return base;
+  const mot = (n) => CHIFFRES[n] ?? String(n);
+  return p.max <= (p.min ?? 1)
+    ? `Il faut ${mot(p.max)} Fanzzy — c'est ce que ton niveau permet.`
+    : `Il faut entre ${mot(p.min ?? 1)} et ${mot(p.max)} Fanzzy `
+      + '— au-delà, c’est ton niveau qui décide.';
+}
+
 /**
  * Traduction des codes du serveur. Chaque code nomme sa cause : le joueur
  * doit savoir quoi corriger sans relire les règles.
  */
 const MESSAGES = {
+  // Le libellé ne dit plus « trois » : la limite dépend du niveau, et
+  // `precise()` la remplace par celle que le serveur a réellement appliquée.
+  // Écrite en dur, elle annonçait trois emplacements à qui n'en avait que deux
+  // — le joueur en posait trois, se faisait refuser, et le refus lui répétait
+  // que trois étaient permis.
   'deck.error.fanzzy_count':      'Il faut entre un et trois Fanzzy.',
   'deck.error.fanzzy_duplicate':  'Le même Fanzzy apparaît deux fois.',
   'deck.error.fanzzy_not_owned':  'Tu ne possèdes pas ce Fanzzy.',
@@ -514,6 +540,22 @@ async function charger() {
   rendre();
 }
 
+/**
+ * Le nombre d'emplacements de tribune **de ce joueur-ci**.
+ *
+ * Deux au départ, trois à partir du cinquième niveau. Le serveur envoie ce
+ * plafond dans `possede.fanzzyMax` précisément pour que la page affiche
+ * autant de rangs, ni plus ni moins — et la page ne le lisait pas : elle
+ * ouvrait les trois rangs de la règle absolue. Le joueur en remplissait
+ * trois, appuyait sur enregistrer, et le serveur refusait un deck que
+ * l'écran venait de lui laisser composer.
+ *
+ * Une seule fonction pour les six endroits qui comptaient ces places : c'est
+ * la divergence entre elles qui a produit la panne.
+ */
+const placesFanzzy = () =>
+  Math.min(S.regles.fanzzy, S.possede?.fanzzyMax ?? S.regles.fanzzy);
+
 /* ------------------------------------------------------------- contrôles */
 
 /**
@@ -523,7 +565,7 @@ async function charger() {
 function problemes() {
   const pb = [];
   const n = S.deck.fanzzy.length;
-  if (n < S.regles.fanzzy) pb.push(`${S.regles.fanzzy - n} Fanzzy à choisir`);
+  if (n < placesFanzzy()) pb.push(`${placesFanzzy() - n} Fanzzy à choisir`);
   const c = S.deck.actions.length;
   if (c < S.regles.actions) pb.push(`${S.regles.actions - c} carte${S.regles.actions - c > 1 ? 's' : ''} à ajouter`);
   if (c > S.regles.actions) pb.push(`${c - S.regles.actions} carte de trop`);
@@ -535,7 +577,7 @@ const complet = () => problemes().length === 0;
 /* ------------------------------------------------------------- rendu */
 
 function rendre() {
-  const assezDeFanzzy = S.possede.fanzzy.length >= S.regles.fanzzy;
+  const assezDeFanzzy = S.possede.fanzzy.length >= placesFanzzy();
   const pb = problemes();
 
   $('etat').textContent = complet() ? 'PRÊT' : 'INCOMPLET';
@@ -548,7 +590,7 @@ function rendre() {
 
   corps.push(`<div class="tabs">
     <button class="tab ${S.onglet === 'tribune' ? 'on' : ''}" data-onglet="tribune">TRIBUNE
-      <b>${S.deck.fanzzy.length}/${S.regles.fanzzy}</b></button>
+      <b>${S.deck.fanzzy.length}/${placesFanzzy()}</b></button>
     <button class="tab ${S.onglet === 'cartes' ? 'on' : ''}" data-onglet="cartes">CARTES
       <b>${S.deck.actions.length}/${S.regles.actions}</b></button>
   </div>`);
@@ -559,7 +601,7 @@ function rendre() {
   // impossible à remplir.
   if (!assezDeFanzzy) {
     corps.push(`<div class="avert"><b>IL TE MANQUE DES FANZZY</b>
-      Un deck demande ${S.regles.fanzzy} Fanzzy et tu en as ${S.possede.fanzzy.length}.
+      Un deck demande ${placesFanzzy()} Fanzzy et tu en as ${S.possede.fanzzy.length}.
       Les boosters se rechargent tout seuls au <a href="/fanzzy">kiosque</a>.</div>`);
   }
 
@@ -578,7 +620,7 @@ function rendre() {
 function tribuneHTML() {
   const out = [`<h2>LA TRIBUNE <i>· le premier entre au coup d\u2019envoi</i></h2>`];
 
-  for (let i = 0; i < S.regles.fanzzy; i++) {
+  for (let i = 0; i < placesFanzzy(); i++) {
     const slot = S.deck.fanzzy[i];
     if (!slot) {
       out.push(`<div class="rang vide"><div class="tete" data-choisir-fanzzy="${i}">
@@ -635,7 +677,7 @@ function tribuneHTML() {
 
   // Un deck sans « Arbitre — changement » enferme le joueur sur son premier
   // Fanzzy. Ce n'est pas interdit, mais c'est presque toujours involontaire.
-  if (S.deck.fanzzy.length === S.regles.fanzzy && !S.deck.actions.includes('a-arbitre')) {
+  if (S.deck.fanzzy.length === placesFanzzy() && !S.deck.actions.includes('a-arbitre')) {
     out.push(`<div class="avert doux"><b>TES REMPLAÇANTS NE JOUERONT PAS</b>
       ${MESSAGES['deck.warn.no_substitution']}</div>`);
   }
@@ -845,7 +887,7 @@ async function enregistrer() {
     // Le détail vient de validerDeck : chaque problème a son code. On les
     // affiche tous, nommés — c'est exactement ce qu'un « impossible » cache.
     const liste = (e.detail ?? []).map((p) => {
-      const base = MESSAGES[p.code] ?? p.code;
+      const base = precise(p);
       if (!p.id) return base;
       const nom = aFanzzy(p.id)?.nom ?? aStuff(p.id)?.nom ?? aCarte(p.id)?.nom ?? p.id;
       return `${base} (${nom})`;

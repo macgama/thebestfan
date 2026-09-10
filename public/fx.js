@@ -346,6 +346,23 @@
 
   const FX = {
     couleurs: COULEURS,
+
+    /**
+     * Combien de temps un Fanzzy tient la pose d'un moment fort.
+     *
+     * Quinze secondes, et c'est délibérément long. Les célébrations duraient
+     * deux secondes et demie : le temps de sortir le téléphone de sa poche,
+     * le personnage était déjà revenu au repos et le but n'avait laissé
+     * aucune trace. Un moment fort doit être encore là quand on arrive.
+     *
+     * La constante vit ici parce que la règle vaut pour **tous** les écrans où
+     * un Fanzzy réagit — le but, le but encaissé, le carton, la victoire, la
+     * défaite. Chaque page qui la recopierait finirait par en avoir sa propre
+     * version, et deux écrans du même jeu ne tiendraient plus la pose aussi
+     * longtemps.
+     */
+    MOMENT: 15000,
+
     particules, onde, flash, secousse, titre, nombre, animer, reagir,
 
     /** Joue un son de la banque. Sans effet si le joueur a coupé. */

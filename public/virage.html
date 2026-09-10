@@ -171,7 +171,11 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .match .n{flex:1;min-width:0;text-align:left}
 .match .n b{font-family:var(--banner);font-size:13px;display:block}
 .match .n small{font-size:10px;opacity:.5}
-.match .st{font-family:var(--banner);font-size:11px;color:var(--flare);letter-spacing:.08em}
+.match .st{font-family:var(--banner);flex:none;display:flex;flex-direction:column;
+  align-items:flex-end;gap:2px;letter-spacing:.08em}
+/* Le score domine la minute : c'est lui qu'on cherche avant d'entrer. */
+.match .st .sc{font-size:16px;line-height:1;color:var(--craie)}
+.match .st i{font-style:normal;font-size:10.5px;color:var(--flare)}
 .err{position:absolute;left:50%;bottom:130px;transform:translateX(-50%);z-index:18;
   background:rgba(224,64,44,.92);border-radius:6px;padding:9px 15px;font-size:12.5px;display:none}
 .err.on{display:block}
@@ -655,14 +659,25 @@ function souvenir(g) {
     matchs = (await r.json()).matchs ?? [];
   } catch { /* serveur injoignable */ }
 
-  $('matchs').innerHTML = matchs.length ? matchs.map((m) => `
-    <div class="match ${m.open ? '' : 'off'}" data-id="${m.id}">
-      <img src="${m.home_logo ?? ''}" alt="">
-      <div class="n"><b>${m.home_name} – ${m.away_name}</b>
-        <small>${m.league_name ?? ''} · ${m.crowd[0] + m.crowd[1]} dans les tribunes</small></div>
-      <img src="${m.away_logo ?? ''}" alt="">
-      <span class="st">${m.open ? (m.elapsed ? m.elapsed + "'" : 'BIENTÔT') : ''}</span>
-    </div>`).join('')
+  /* Le score du match, avant d'entrer.
+     L'écran de choix donnait le nom des deux clubs, la compétition et la
+     minute — mais pas le score. On choisissait donc d'entrer dans un virage
+     sans savoir si son club menait ou encaissait, ce qui est exactement ce
+     qu'on veut savoir avant de pousser. Il est dans la réponse depuis
+     toujours, il n'était simplement pas affiché. */
+  $('matchs').innerHTML = matchs.length ? matchs.map((m) => {
+    const joue = m.home_goals != null && m.away_goals != null;
+    return `<div class="match ${m.open ? '' : 'off'}" data-id="${m.id}">
+      <img src="${esc(m.home_logo ?? '')}" alt="">
+      <div class="n"><b>${esc(m.home_name)} – ${esc(m.away_name)}</b>
+        <small>${esc(m.league_name ?? '')} · ${m.crowd[0] + m.crowd[1]} dans les tribunes</small></div>
+      <img src="${esc(m.away_logo ?? '')}" alt="">
+      <span class="st">
+        ${joue ? `<b class="sc">${m.home_goals} – ${m.away_goals}</b>` : ''}
+        ${m.open ? `<i>${m.elapsed ? m.elapsed + "'" : 'BIENTÔT'}</i>` : ''}
+      </span>
+    </div>`;
+  }).join('')
     : `<p>Aucun match de tes clubs dans les prochaines heures.<br>
         <a href="/equipes" style="color:var(--projo)">Suis un club</a> pour entrer dans un virage.</p>`;
 

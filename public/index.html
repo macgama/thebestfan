@@ -185,6 +185,29 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .pose.on{opacity:1}
 .scene.saute .flotte{animation:saut .5s cubic-bezier(.34,1.56,.64,1)}
 
+/* ------------------------------------------------- le moment fort
+
+   « GOAL ! » au-dessus du personnage, et il reste là aussi longtemps que la
+   pose. Un but qui passe en deux secondes et demie ne laisse aucune trace :
+   le temps de sortir le téléphone de sa poche, tout est fini. */
+.moment{position:absolute;left:0;right:0;top:11%;z-index:6;text-align:center;
+  font-family:var(--banner);font-size:clamp(30px,11vw,52px);line-height:.95;
+  letter-spacing:.04em;text-transform:uppercase;pointer-events:none;
+  color:var(--mc,var(--projo));opacity:0;
+  text-shadow:0 0 26px rgba(0,0,0,.95),0 5px 0 rgba(0,0,0,.55);
+  -webkit-text-stroke:1.5px rgba(4,6,10,.75)}
+.moment.on{opacity:1;animation:momentIn .6s cubic-bezier(.2,1.6,.35,1)}
+/* Il respire lentement pendant qu'il tient : immobile quinze secondes, il
+   passerait pour un élément d'interface plutôt que pour un événement. */
+.moment.on::after{content:"";display:block;height:3px;width:44%;margin:9px auto 0;
+  border-radius:2px;background:currentColor;opacity:.8;
+  animation:momentBarre var(--mt,15s) linear forwards}
+@keyframes momentIn{0%{opacity:0;transform:scale(.4) rotate(-7deg)}
+  55%{opacity:1;transform:scale(1.14) rotate(2deg)}
+  100%{opacity:1;transform:scale(1) rotate(0)}}
+/* La barre se vide : elle dit combien de temps le moment tient encore. */
+@keyframes momentBarre{from{width:44%}to{width:0}}
+
 /* L'entrée : le personnage monte dans le cadre au lieu d'y être déjà. C'est
    ce qui fait de l'accueil une arrivée et non un écran qui s'affiche. */
 .scene.arrive .flotte{animation:arrivee .66s cubic-bezier(.34,1.4,.64,1)}
@@ -222,7 +245,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 /* ------------------------------------------------------- bande du bas */
 .bas{display:grid;gap:9px;flex:none}
-.duo{display:grid;grid-template-columns:1fr 1.15fr;gap:9px}
+.duo{display:grid;grid-template-columns:.85fr 1.3fr;gap:9px}
 .collec{padding:10px 13px;text-align:left;display:grid;gap:7px;text-decoration:none}
 .collec .t{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .collec .t b{font-family:var(--banner);font-size:14px;letter-spacing:.04em}
@@ -237,7 +260,12 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .pt{width:7px;height:7px;border-radius:50%;background:var(--flare);animation:ping 1.8s ease-out infinite}
 @keyframes ping{0%{box-shadow:0 0 0 0 rgba(224,64,44,.55)}
   70%{box-shadow:0 0 0 8px rgba(224,64,44,0)}100%{box-shadow:0 0 0 0 rgba(224,64,44,0)}}
-.direct b{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Deux lignes, pas des points de suspension.
+   « Bayern München 0 – 0 Bodø/Gli… » : c'est le nom du club adverse qui
+   disparaissait, c'est-à-dire la moitié de l'information que cette carte
+   existe pour donner. Une affiche coupée ne dit pas qui joue. */
+.direct b{font-size:13px;font-weight:700;line-height:1.28;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .direct small{font-size:11px;opacity:.55;font-variant-numeric:tabular-nums}
 .entrer{border:none;border-radius:17px;padding:16px 20px;font-family:var(--banner);font-size:21px;
   letter-spacing:.05em;text-transform:uppercase;color:#fff;cursor:pointer;display:block;
@@ -339,6 +367,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
       <div class="scene" id="scene">
         <div class="halo"></div>
         <div class="sol"></div>
+        <!-- Le bandeau d'un moment fort. Il vit dans la scène, au-dessus du
+             personnage : c'est là que le regard est déjà. -->
+        <div class="moment" id="moment" aria-live="polite"></div>
         <div class="flotte">
           <div class="bascule">
             <!-- Un calque par geste : le flottement, le rebond de pose, le
@@ -393,6 +424,12 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
      fanzzy-etats.js, lui, sait quel dessin montrer pour un Fanzzy donné dans un
      état donné — et sur quoi retomber quand ce dessin n'existe pas encore. -->
 <script src="/fanzzy-etats.js"></script>
+<!-- `fanzzy-art.js` pour son seul répertoire d'illustrations : c'est lui qui
+     sait quels Fanzzy sont dessinés et où. L'accueil ne dessine toujours rien
+     en géométrie — il s'en sert pour retomber sur le plein-pied du personnage
+     équipé quand ses douze états n'existent pas encore, plutôt que d'afficher
+     le supporter générique, qui est quelqu'un d'autre. -->
+<script src="/fanzzy-art.js"></script>
 <script>
 /* =======================================================================
    Accueil.
@@ -638,6 +675,31 @@ $('scene').addEventListener('pointerdown', sauter);
 const entrer = () => rejouer('arrive');
 
 /**
+ * Un moment fort : le personnage prend la pose et un bandeau l'annonce.
+ *
+ * La durée vient de `fx.js` — quinze secondes — et elle est la même partout
+ * où un Fanzzy réagit. Les célébrations tenaient deux secondes et demie : le
+ * temps de sortir son téléphone, le but n'avait laissé aucune trace.
+ *
+ * Un moment en remplace un autre plutôt que de faire la queue. Deux buts en
+ * quinze secondes arrivent, et c'est le dernier qui compte : une file
+ * d'attente ferait célébrer le premier alors que le second est déjà tombé.
+ */
+function moment(etat, texte, couleur = 'var(--projo)') {
+  const ms = window.FX?.MOMENT ?? 15000;
+  pose(etat, ms);
+  const b = $('moment');
+  b.textContent = texte;
+  b.style.setProperty('--mc', couleur);
+  b.style.setProperty('--mt', `${ms}ms`);
+  b.classList.remove('on');
+  void b.offsetWidth;
+  b.classList.add('on');
+  clearTimeout(b._t);
+  b._t = setTimeout(() => b.classList.remove('on'), ms);
+}
+
+/**
  * Le salut, une fois par session.
  *
  * Il attend que le personnage soit connu. Sans cette attente, le supporter
@@ -792,7 +854,7 @@ async function jsonp(url, options) {
        d'illustration pour cette carte — dans les trois cas le supporter reste à
        l'écran et l'accueil ne s'en aperçoit pas.                             */
     const actif = coll?.wallet?.active;
-    if (actif && await window.TBF_ETATS.charger()) {
+    if (actif) {
       // `skin` n'est pas encore un réglage du joueur : tant qu'il n'y en a
       // qu'un, le demander explicitement évite d'avoir à revenir ici le jour
       // où il y en aura deux.
@@ -802,7 +864,21 @@ async function jsonp(url, options) {
          que deux cents ont leur illustration. Sans ce repli, presque tout le
          monde voyait le supporter générique à la place de son Fanzzy. */
       candidat.plein = window.FZART?.adresse?.(actif, 'plein') ?? null;
-      if (window.TBF_ETATS.resoudre(candidat.id, candidat) || candidat.plein) {
+
+      /* Le manifeste des états est **facultatif**, et le bloc entier en
+         dépendait : `if (actif && await charger())`. Un manifeste absent —
+         jamais généré sur le serveur, ou servi en 404 — effaçait donc le
+         personnage de tout le monde, y compris des deux cents qui ont leur
+         plein-pied, qui n'en a aucun besoin. Une pièce facultative ne doit
+         pas pouvoir emporter ce qui ne s'appuie pas sur elle. */
+      let anime = null;
+      try {
+        if (await window.TBF_ETATS.charger()) {
+          anime = window.TBF_ETATS.resoudre(candidat.id, candidat);
+        }
+      } catch { /* manifeste injoignable : le plein-pied suffit */ }
+
+      if (anime || candidat.plein) {
         equipe = candidat;
         precharger();
         // `force` : l'état ne change pas, le personnage si. Sans lui, `pose`
@@ -834,6 +910,9 @@ async function jsonp(url, options) {
      caché — un téléphone en poche n'a rien à surveiller.                    */
 
   let scoreVu = null;                 // `${idMatch}:${but domicile}-${but ext.}`
+  // Le match dont la fin a déjà été annoncée : sans lui, chaque tour d'horloge
+  // rejouerait la victoire tant que le match reste dans la fenêtre des trois heures.
+  let finVue = null;
   let minuteur;
 
   const planifier = (ms) => {
@@ -844,9 +923,14 @@ async function jsonp(url, options) {
   async function veiller() {
     if (document.hidden) { planifier(30_000); return; }
 
+    // `liste` est déclarée dehors : le coup de sifflet final la relit plus bas
+    // pour y trouver le match qui vient de se terminer, et il ne figure plus
+    // parmi les matchs ouverts.
     let m = null;
+    let liste = [];
     try {
       const { matchs = [] } = await jsonp('/api/virage/live', { credentials:'same-origin' });
+      liste = matchs;
       m = matchs.find((x) => x.open) ?? null;
     } catch { planifier(180_000); return; }   // suivi non actif
 
@@ -857,6 +941,27 @@ async function jsonp(url, options) {
       $('direct').href = '/matchs';
       $('entrer').href = '/duel-nvn';
       $('entrer').textContent = 'Prendre ma place';
+
+      /* Le coup de sifflet final.
+         Un match fini sort de la liste des matchs ouverts : sans ce détour,
+         l'accueil passait directement de « ton club pousse » à « aucun match
+         en cours », et la victoire — le moment le plus fort qu'un supporter
+         attende — n'était annoncée nulle part.
+
+         On n'annonce que ce qu'on a vu vivre : `scoreVu` porte le match qu'on
+         suivait. Sans cette garde, ouvrir l'accueil le lendemain matin
+         célébrerait la victoire de la veille comme si elle venait de tomber. */
+      const fini = liste.find((x) => ['FT', 'AET', 'PEN'].includes(x.status_short));
+      if (fini && scoreVu?.startsWith(`${fini.id}:`) && finVue !== fini.id) {
+        finVue = fini.id;
+        const chezMoi = mesClubs.has(fini.home_id);
+        const mien = chezMoi ? fini.home_goals : fini.away_goals;
+        const eux = chezMoi ? fini.away_goals : fini.home_goals;
+        if (mien > eux) moment('victoire', 'Victoire !', 'var(--vert)');
+        else if (mien < eux) moment('defaite', 'Défaite', 'var(--flare)');
+        else moment('attente', 'Match nul', 'var(--gris)');
+      }
+
       poserFond('neutre');
       scoreVu = null;
       planifier(180_000);
@@ -886,8 +991,15 @@ async function jsonp(url, options) {
         const jeSuisDomicile = mesClubs.has(m.home_id);
         const pourMoi = (jeSuisDomicile ? m.home_goals - avantD : m.away_goals - avantE);
         const contreMoi = (jeSuisDomicile ? m.away_goals - avantE : m.home_goals - avantD);
-        if (pourMoi > 0) { pose('but', 2600); sauter(); window.FX?.son?.('butReel'); }
-        else if (contreMoi > 0) { pose('encaisse', 2600); window.FX?.son?.('encaisse'); }
+        if (pourMoi > 0) {
+          moment('but', 'Goal !');
+          sauter();
+          window.FX?.son?.('butReel');
+          window.FX?.but?.({ pour: true });
+        } else if (contreMoi > 0) {
+          moment('encaisse', 'On encaisse', 'var(--flare)');
+          window.FX?.son?.('encaisse');
+        }
       }
       scoreVu = cle;
     }
