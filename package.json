@@ -19,6 +19,7 @@
     "nvn:smoke": "node scripts/nvn-smoke.mjs",
     "virage:smoke": "node scripts/virage-smoke.mjs",
     "deck:ui": "node scripts/deck-ui-smoke.mjs",
+    "fanzzy:ui": "node scripts/fanzzy-ui-smoke.mjs",
     "accueil:ui": "node scripts/accueil-ui-smoke.mjs",
     "nvn:ui": "node scripts/nvn-ui-smoke.mjs",
     "admin:ui": "node scripts/admin-ui-smoke.mjs",

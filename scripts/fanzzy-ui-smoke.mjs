@@ -69,8 +69,13 @@ await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
    verrait tous refusés. Le niveau 9 laisse verrouillées les séries des paliers
    suivants, ce qui est exactement ce qu'il faut pour éprouver le kiosque. */
 const { seuil } = await import('../src/shared/niveau.js');
+/* Le Fanzzy équipé est **V1 au second âge**, et c'est délibéré : l'écran
+   « Mon Fanzzy » doit montrer le Meneur de chant et non le Choriste, dans un
+   cadre rare et non commun. Équipé d'un G1 resté au premier âge, la page
+   pouvait ignorer le stade et ignorer la rareté sans qu'aucun contrôle ne
+   bouge — tout le catalogue est commun au premier âge. */
 await raw.query(`INSERT INTO user_wallet (user_id,scarves,packs,xp,active_fanzzy)
-                 VALUES (?,900,9,?,'G1')`, [U, seuil(9)]);
+                 VALUES (?,900,9,?,'V1')`, [U, seuil(9)]);
 // G1 est possédé : c'est le Fanzzy illustré, et c'est lui qui cassait la page.
 // V1 est monté au second âge : la rareté suit le stade, donc c'est la seule
 // façon d'avoir autre chose que du commun dans la grille — et c'est ce qui
@@ -332,6 +337,131 @@ check('les Fanzzy non possédés portent leur nom',
         document.documentElement.scrollHeight <= innerHeight + 1));
   }
   await fiche.close();
+}
+
+/* --------------------------------------- « Mon Fanzzy », en un seul écran
+
+ * L'écran qui ouvre la section montrait la carte du Fanzzy équipé en
+ * vignette, à soixante pour cent de la largeur, au milieu d'une colonne de
+ * texte. C'est la façon de présenter cent cinquante personnages, pas celle
+ * d'en présenter un — et c'est pourtant le seul écran du jeu qui ne parle que
+ * de celui-là.
+ *
+ * Il hérite maintenant de la fiche : le personnage en pied dans le cadre de
+ * sa rareté, et un bouton qui ne se cherche pas. Ce contrôle tient les trois
+ * promesses — ça tient dans l'écran, le personnage est vraiment là, et le
+ * cadre suit sa rareté.
+ */
+{
+  const mien = await nav.newPage();
+  mien.on('pageerror', (e) => erreurs.push(e.message));
+  await mien.setViewport({ width: 400, height: 880 });
+  await mien.goto(base + '/fanzzy', { waitUntil: 'networkidle0' });
+  const prete = await mien.waitForSelector('.tscene', { timeout: 8000 })
+    .then(() => true).catch(() => false);
+
+  /* Sans clic : c'est l'écran d'ouverture de la section. Le joueur qui touche
+     le Fanzzy du bas de l'écran doit tomber sur le sien, pas sur la grille. */
+  check('« Mon Fanzzy » est l’écran qui ouvre la section',
+    prete && await mien.evaluate(() =>
+      document.getElementById('s-equipe').classList.contains('on')));
+
+  if (prete) {
+    // L'image met un aller-retour réseau à arriver : on l'attend, sinon le
+    // contrôle mesurerait un cadre encore vide et passerait au vert pour la
+    // mauvaise raison.
+    await jusqua(async () => await mien.evaluate(() =>
+      Boolean(document.querySelector('.tpose.on') || document.querySelector('.tdessin'))));
+
+    const m = await mien.evaluate(() => {
+      const scene = document.querySelector('.tscene');
+      const img = document.getElementById('tpose');
+      const persoRect = (img ?? document.querySelector('.tdessin'))?.getBoundingClientRect();
+      const perso = BY_ID.get(S.active);
+      return {
+        defile: document.documentElement.scrollHeight > innerHeight + 1,
+        ecran: innerHeight,
+        scene: scene.getBoundingClientRect().height,
+        haut: persoRect?.height ?? 0,
+        // Chargée pour de bon : une balise `img` dont la source est fausse a
+        // quand même une hauteur, celle que la mise en page lui donne.
+        chargee: img ? (img.classList.contains('on') && img.naturalWidth > 0)
+                     : Boolean(document.querySelector('.tdessin')),
+        rar: getComputedStyle(scene).getPropertyValue('--rc').trim(),
+        classe: [...scene.classList].find((c) => c.startsWith('r-')) ?? '',
+        attendue: `r-${ageDe(perso).rar}`,
+        nom: document.querySelector('.ttxt h2')?.textContent.trim() ?? '',
+        vraiNom: ageDe(perso).nom,
+        premierNom: perso.nom,
+        texte: document.querySelector('.ttxt')?.textContent ?? '',
+        bande: document.querySelector('.teff')?.getBoundingClientRect().height ?? 0,
+        /* Les deux nombres, pas le DOMRect : il n'a aucune propriété propre
+           énumérable et traverse `evaluate` sous la forme d'un objet vide.
+           Le contrôle rougissait alors sur un bouton parfaitement placé. */
+        boutonBas: document.querySelector('.tbtns .dbtn.primary')
+          ?.getBoundingClientRect().bottom ?? 1e9,
+        boutonHaut: document.querySelector('.tbtns .dbtn.primary')
+          ?.getBoundingClientRect().height ?? 0,
+      };
+    });
+
+    /* `#app` est clos par `overflow:hidden` : un contenu trop haut ne fait
+       pas défiler la page, il sort du cadre sans un mot. Ce contrôle-ci ne
+       suffit donc pas — c'est le bouton, plus bas, qui dit vraiment si l'écran
+       tient. On garde les deux : celui-ci attrape la page qui se met à
+       défiler, l'autre celle qui déborde en silence. */
+    check('il tient dans l’écran, sans défilement',
+      !m.defile || (console.log(`        il défile`), false));
+    check('le personnage occupe plus de la moitié de la hauteur',
+      m.haut > m.ecran * 0.5
+      || (console.log(`        ${Math.round(m.haut)} px sur ${m.ecran}`), false));
+    check('et son dessin est vraiment arrivé', m.chargee);
+    check('le cadre porte la rareté du Fanzzy équipé',
+      m.classe === m.attendue && m.rar.length > 0
+      || (console.log(`        ${m.classe} au lieu de ${m.attendue}`), false));
+    check('c’est bien le Fanzzy équipé qui est nommé', m.nom === m.vraiNom);
+    /* Et à l'âge atteint. Le joueur qui a payé ses écharpes doit voir son
+       Meneur de chant, pas le Choriste qu'il n'est plus. */
+    check('à l’âge qu’il a atteint, pas au premier',
+      m.nom !== m.premierNom
+      || (console.log(`        il montre ${m.nom}, qui est le premier âge`), false));
+    check('son cri est annoncé avec sa poussée', /Cri\s*:/.test(m.texte));
+    check('le bouton du duel se voit sans rien chercher',
+      (m.boutonBas <= m.ecran + 1 && m.boutonHaut > 20)
+      || (console.log(`        bas du bouton ${Math.round(m.boutonBas)} `
+        + `pour un écran de ${m.ecran}, scène ${Math.round(m.scene)}, bande ${
+          Math.round(m.bande)}`), false));
+
+    /* La respiration. C'est le seul mouvement de l'écran, et c'est lui qui
+       fait la différence entre un personnage et une illustration collée. Elle
+       s'était déjà arrêtée sur l'accueil sans que rien ne le signale : une
+       animation qui manque ne casse rien, elle se contente de ne pas être là. */
+    check('le personnage respire',
+      await mien.evaluate(() => {
+        const n = document.querySelector('.tsouffle');
+        return n ? getComputedStyle(n).animationName !== 'none' : false;
+      }));
+
+    /* Le petit écran. Un iPhone SE fait six cent soixante-sept points de haut,
+       et c'est là que le bouton part le premier : la scène doit se réduire,
+       jamais pousser le reste dehors. */
+    await mien.setViewport({ width: 360, height: 640 });
+    await dodo(200);
+    const petit = await mien.evaluate(() => ({
+      ecran: innerHeight,
+      bas: document.querySelector('.tbtns .dbtn.primary')
+        ?.getBoundingClientRect().bottom ?? 1e9,
+      perso: document.querySelector('.tpose, .tdessin')
+        ?.getBoundingClientRect().height ?? 0,
+    }));
+    check('sur un petit écran, le bouton reste visible',
+      petit.bas <= petit.ecran + 1
+      || (console.log(`        ${Math.round(petit.bas)} pour ${petit.ecran}`), false));
+    check('et le personnage tient encore la moitié de l’écran',
+      petit.perso > petit.ecran * 0.5
+      || (console.log(`        ${Math.round(petit.perso)} px sur ${petit.ecran}`), false));
+  }
+  await mien.close();
 }
 
 /* ----------------------------------------------------------- le kiosque */

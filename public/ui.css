@@ -48,6 +48,28 @@
   --colonne:520px;
 }
 
+/* ------------------------------------------------------------- la rareté
+
+   Gris commun, bleu rare, violet épique, or légendaire. `--rc` est la couleur
+   du cadre, `--rc2` celle du socle — le biseau dur qui donne sa matière à une
+   carte.
+
+   Elle vit ici parce qu'elle est **le seul code visuel que le joueur doit
+   apprendre**, et qu'il vaut dans tout le jeu : le classeur, le deck, la
+   fiche, l'écran de son Fanzzy. Elle était recopiée dans trois pages, avec
+   déjà deux façons de l'écrire — une classe dans l'une, une table JavaScript
+   dans l'autre. Trois copies d'une même palette, c'est trois occasions qu'un
+   épique devienne bleu quelque part.
+
+   Ces trois-là ne portent pas le préfixe `tbf-` des autres classes communes,
+   et c'est assumé : ce ne sont pas des briques de mise en page mais un
+   vocabulaire, elles ne se posent que sur ce qui porte une rareté, et elles
+   s'écrivaient déjà ainsi partout. */
+.r-commune{--rc:#C2CAD6;--rc2:#4E5865}
+.r-rare{--rc:#3C82E8;--rc2:#1B3E75}
+.r-epique{--rc:#8257DA;--rc2:#3E2870}
+.r-legendaire{--rc:#F5C33B;--rc2:#7A5A0E}
+
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
 body{
