@@ -928,8 +928,9 @@ rend jamais deux fois la même image. Le `.gitignore` le dit.
 
 ## 4 bis. Ce que la dernière session a ajouté
 
-Rien de tout cela n'est encore en ligne : le travail est sur le disque, pas
-commité. Cette liste existe pour qu'on sache quoi chercher, et où.
+Tout cela est commité — « Maj V0.30 », deux cent une entrées — mais **rien
+n'est encore en ligne** : le déploiement ne part pas tout seul. Cette liste
+existe pour qu'on sache quoi chercher, et où.
 
 **Les amis.** `/amis`, `src/server/amis/index.js`, `sql/amis.sql`. Voir qui suit
 les mêmes clubs, se demander en ami, s'inviter dans un KOP. Une seule ligne par
@@ -1047,11 +1048,15 @@ d'équipement**, et **les cartes d'action dans le Grand Virage**. L'audit
 A-à-Z du produit est entièrement traité.
 
 **Le multilingue reste une promesse à moitié tenue**, et c'est le plus gênant
-de la liste parce qu'il se voit : `/compte` propose quatre langues — français,
-anglais, allemand, espagnol — alors que deux pages sur dix-huit sont
-réellement traduites. Il faut soit retirer le sélecteur, soit faire une vraie
-passe d'internationalisation. Le sélecteur a déjà été retiré de `/equipes`, où
-il n'avait rien à faire.
+de la liste parce qu'il se voit : `/compte` et `/profil` proposent quatre
+langues — français, anglais, allemand, espagnol — alors que la seule traduction
+réelle du projet est `src/shared/i18n/authMessages.js`, employée par les
+messages d'authentification et par `/compte`. Tout le reste est écrit en
+français dans le balisage.
+
+Il faut soit retirer le sélecteur, soit faire une vraie passe
+d'internationalisation. Le sélecteur a déjà été retiré de `/equipes`, où il
+n'avait rien à faire.
 
 Deux manques connus du fil, assumés et non urgents. Les **buts d'avant
 l'arrivée** ne figurent pas au fil d'un joueur qui entre en cours de match :
@@ -1246,7 +1251,11 @@ Déploiement complet : voir `DEPLOIEMENT.md`.
 
 ---
 
-## 9. Fabriquer une illustration de Fanzzy
+## 9. Fabriquer une illustration
+
+Quatre sortes de dessins, quatre chaînes. Celle des Fanzzy d’abord, qui est
+la plus ancienne et la plus exigeante ; les trois autres — cartes d’action,
+équipement, stades — sont décrites à la fin.
 
 Le jeu attend deux fichiers par Fanzzy, en trois formats chacun : un plein pied
 `ID.{avif,webp,png}` en 520×945 pour la fiche, et un buste `ID-buste.*` en
@@ -1427,6 +1436,49 @@ manifeste fabriqué, sans base ni navigateur : le repli entre stades, entre
 skins, les deux skins qui se renvoient l'un à l'autre — cas où l'absence de
 garde fige l'onglet sans le moindre message —, et l'accord de forme entre ce
 que `fanzzy-manifeste.mjs` écrit et ce que `fanzzy-etats.js` lit.
+
+---
+
+### Les trois autres chaînes : cartes, équipement, stades
+
+Elles ne passent pas par `fanzzy-images.mjs`, et chacune a sa raison. Toutes
+trois travaillent pareil : les rendus d'origine se déposent dans `art/<genre>/`,
+nommés de l'identifiant de la carte, et le script en tire ce que le jeu sert.
+Les invites sont **dans le script**, pas dans un carnet — une invite perdue est
+un dessin qu'on ne sait plus refaire dans le même style.
+
+```bash
+npm run actions            # art/action/*.png  ->  public/img/action/
+npm run actions:invites    # imprime les vingt et une invites
+npm run stuff              # art/stuff/*.png   ->  public/img/stuff/
+npm run stuff:invites      # imprime les sept invites
+npm run stades             # art/stade/*.png   ->  public/img/stade/ + plans.json
+```
+
+**Les cartes d'action** sont des scènes : plein cadre, 480 × 640, AVIF / WebP /
+**JPEG**. Pas de PNG — rien à détourer, et le même lot pèse treize fois moins
+en JPEG.
+
+**L'équipement** est détouré, 256 carré, AVIF / WebP / **PNG**. Le fond est
+demandé plat et uniforme à la génération, et le script le découpe par
+propagation depuis les bords. Deux détails s'y sont payés cher et sont
+commentés dans le fichier : `resize()` est sans effet dans la même chaîne qu'un
+`joinChannel()`, et un tampon brut à un canal ressort à trois sans
+`toColourspace('b-w')`.
+
+**Les stades** sont rangés *et mesurés*. Le script repère le terrain à sa
+teinte et en déduit les bandes de tribune, qu'il écrit dans
+`public/img/stade/plans.json` — c'est ce qui permet d'allumer les tribunes sans
+placer cinq rectangles à la main. Le cadrage attendu est toujours le même :
+**vue du dessus, terrain à la verticale, les deux grandes tribunes à gauche et
+à droite, et les tribunes dans l'ombre.** Un stade dessiné autrement casse à la
+fois le plan et l'effet lumineux.
+
+`npm run pages` refuse la livraison si une carte des règles ou une pièce de
+l'inventaire n'a pas ses trois formats. Le contrôle **importe** `ACTIONS` et
+`STUFF` plutôt que de lire les identifiants au motif : une version antérieure
+lisait le source à l'expression régulière et se contentait de vérifier moins de
+pièces quand le motif ne collait plus — en restant verte.
 
 ---
 

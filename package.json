@@ -13,6 +13,7 @@
     "schema:smoke": "node scripts/schema-smoke.mjs",
     "auth:smoke": "node scripts/auth-smoke.mjs",
     "foot:smoke": "node scripts/football-smoke.mjs",
+    "tt:smoke": "node scripts/teletext-smoke.mjs",
     "deck:smoke": "node scripts/deck-smoke.mjs",
     "stades:smoke": "node scripts/stades-smoke.mjs",
     "niveau:smoke": "node scripts/niveau-smoke.mjs",

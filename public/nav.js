@@ -41,73 +41,97 @@
   const chemin = location.pathname.replace(/\/$/, '') || '/';
   if (SANS_BARRE.includes(chemin)) return;
 
-  const ENTREES = [
-    { href: '/', k: 'accueil', t: 'ACCUEIL', d: 'M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' },
-    { href: '/virage', k: 'virage', t: 'VIRAGE', d: 'M3 20l9-16 9 16zM7 20l5-9 5 9' },
-    // Le duel de tribunes. Il pointe sur le tir à la corde, pas sur l'ancien
-    // tour par tour de /duel, qui n'est plus mis en avant.
-    { href: '/duel-nvn', k: 'duel', t: 'DUEL', d: 'M4 4l7 7M20 4l-7 7M12 13v7M8 20h8' },
-    { href: '/fanzzy', k: 'fanzzy', t: 'FANZZY', d: 'M4 4h13l3 3v13H4zM8 8h6M8 12h8M8 16h5' },
-    // Les matchs du jour passent devant le télétexte : c'est ce qu'on vient
-    // chercher neuf fois sur dix. Les classements restent à un toucher.
-    { href: '/matchs', k: 'teletext', t: 'MATCHS', d: 'M3 5h18v14H3zM3 9h18M8 9v10' },
-    { href: '/classement', k: 'classement', t: 'CLASSEMENT',
-      d: 'M6 21V9M12 21V4M18 21v-7M3 21h18' },
-    { href: '/profil', k: 'profil', t: 'PROFIL',
-      d: 'M12 8a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4.4 3.6-7 8-7s8 2.6 8 7' },
+  /**
+   * Le menu, et lui seul.
+   *
+   * ## Ce qu'il remplace
+   *
+   * Il y avait **deux** navigations, et elles ne disaient pas la même chose.
+   * La barre du bas menait à l'accueil, au Virage, au duel, au classeur, aux
+   * matchs, au classement et au profil. Le tiroir menait au deck, au profil,
+   * aux clubs, au KOP, aux amis et au télétexte. Aucune des deux n'était
+   * complète, et le KOP — qui est au centre du jeu — n'était accessible que
+   * par celle qu'on ouvre exprès.
+   *
+   * C'est le même défaut que le jeu a déjà corrigé trois fois ailleurs : une
+   * règle écrite à deux endroits. « Où puis-je aller ? » n'a qu'une bonne
+   * réponse, et elle tient maintenant dans une seule liste.
+   *
+   * ## Pourquoi en rubriques
+   *
+   * Onze destinations à plat, c'est un mur. Rangées par ce qu'on vient y
+   * faire — jouer, collectionner, suivre le football — on retrouve la sienne
+   * sans lire les autres. L'ordre à l'intérieur d'une rubrique est celui de
+   * la fréquence, pas de l'alphabet.
+   */
+  const MENU = [
+    { titre: 'JOUER', liens: [
+      ['/virage', 'virage', 'Le Grand Virage'],
+      ['/duel-nvn', 'duel', 'Duel de tribunes'],
+      // Le KOP est au centre du jeu : il ouvre la rubrique de ce qu'on fait à
+      // plusieurs, et il n'est plus derrière un second menu.
+      ['/kop', 'kop', 'Mon KOP'],
+      ['/deck', 'deck', 'Mon deck'],
+    ] },
+    { titre: 'MA COLLECTION', liens: [
+      ['/fanzzy', 'fanzzy', 'Mes Fanzzy'],
+      ['/carnet', 'carnet', 'Mon carnet'],
+      ['/amis', 'amis', 'Mes amis'],
+    ] },
+    { titre: 'LE FOOTBALL', liens: [
+      ['/matchs', 'teletext', 'Les matchs du jour'],
+      ['/equipes', 'clubs', 'Mes clubs'],
+      ['/teletext', 'teletext', 'Classements et buteurs'],
+      ['/classement', 'classement', 'Classement des supporters'],
+    ] },
   ];
 
-  /* Ce qui reste ici plutôt que dans ui.css : la barre du bas est entièrement
-     construite en JavaScript, ses règles n'ont donc aucun sens sans elle. Le
-     reste de l'habillage — décor, barre du haut, menu — est stylé par la
-     feuille commune, que chaque page charge. */
+
+  /* Ce qui reste ici plutôt que dans ui.css : une seule déclaration, et elle
+     n'a de sens qu'avec ce fichier. Tout l'habillage — décor, barre du haut,
+     menu — est stylé par la feuille commune, que chaque page charge.
+
+     Pas d'accent grave dans ce texte : il vit dans un gabarit de chaîne, et
+     un seul le referme au mauvais endroit. Le fichier a déjà été cassé comme
+     ça une fois. */
   const css = `
-  :root{--nav-h:62px}
-  body{padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom)) !important}
-  body.tbf-jeu{padding-bottom:0 !important}
-  body.tbf-jeu #app{padding-bottom:calc(var(--nav-h) * .55 + env(safe-area-inset-bottom))}
-  /* La barre prend la largeur de **la colonne de la page**, pas celle de
-     l'écran. Sur un téléphone c'est la même chose ; sur un ordinateur, une
-     barre étalée sur seize cents pixels sous une colonne de quatre cent
-     quarante n'appartenait plus à la page qu'elle sert.
-
-     La variable --tbf-colonne est posée plus bas, en lisant la colonne
-     les pages ne font pas toutes la même largeur, et leur demander de la
-     redire ici serait une seconde vérité de plus. */
-  #tbf-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);
-    width:min(100%,var(--tbf-colonne,520px));
-    height:calc(var(--nav-h) + env(safe-area-inset-bottom));
-    padding-bottom:env(safe-area-inset-bottom);z-index:60;display:flex;
-    background:linear-gradient(180deg,rgba(8,11,16,.75),#080B10 55%);
-    border:1px solid rgba(242,238,228,.11);border-bottom:0;
-    border-radius:16px 16px 0 0;backdrop-filter:blur(10px)}
-  #tbf-nav a{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-    text-decoration:none;color:#F2EEE4;opacity:.42;font-family:"Oswald","Arial Narrow",Impact,sans-serif;
-    font-size:8px;letter-spacing:.08em;position:relative;transition:opacity .18s}
-  #tbf-nav a.on{opacity:1;color:var(--c)}
-  #tbf-nav a.on::before{content:"";position:absolute;top:0;left:26%;right:26%;height:2px;
-    background:var(--c);border-radius:0 0 3px 3px;box-shadow:0 0 12px var(--c)}
-  #tbf-nav svg{width:20px;height:20px}
-  #tbf-nav.tbf-discret{background:linear-gradient(180deg,rgba(8,11,16,.4),rgba(8,11,16,.92) 55%);
-    transition:opacity .45s,transform .45s}
-  /* Les deux transformations dans la même déclaration : une transformation ne
-     s'ajoute pas, elle remplace. Écrite seule, la mise en retrait renvoyait
-     la barre au bord gauche de l'écran en même temps qu'elle l'effaçait. */
-  #tbf-nav.tbf-cache{opacity:.12;transform:translate(-50%,58%)}
-  #tbf-nav .pip{position:absolute;top:9px;right:calc(50% - 17px);width:7px;height:7px;border-radius:50%;
-    background:#E0402C;box-shadow:0 0 8px #E0402C;animation:tbfblink 1.3s infinite}
-  @keyframes tbfblink{0%,100%{opacity:1}50%{opacity:.25}}
-  .tbf-spark{position:fixed;width:3px;height:3px;border-radius:50%;z-index:0;pointer-events:none;opacity:0}
-  @media (prefers-reduced-motion:reduce){#tbf-nav a{transition:none}}`;
-
-  const COUL = { accueil:'#F2EEE4', virage:'#F5C33B', duel:'#E0402C', fanzzy:'#8257DA',
-                 teletext:'#C2CAD6', classement:'#3C82E8', profil:'#1E9E6A' };
+  /* La hauteur réservée en bas vaut zéro : la barre du bas n'existe plus.
+     Neuf pages calculent pourtant encore leur bas avec cette variable, en
+     retombant sur 62px quand elle manque. La garder à zéro les fait toutes
+     tomber juste, sans toucher à neuf fichiers ni risquer d'en oublier un. */
+  :root{--nav-h:0px}
+  .tbf-spark{position:fixed;width:3px;height:3px;border-radius:50%;z-index:0;pointer-events:none;opacity:0}`;
 
   const style = document.createElement('style');
   style.textContent = css;
   document.head.appendChild(style);
 
-  if (ECRANS_DE_JEU.includes(chemin)) document.body.classList.add('tbf-jeu');
+  /**
+   * La largeur de la colonne de cette page, donnée au menu.
+   *
+   * Les pages ne font pas toutes la même largeur — quatre cent quarante pour
+   * le classeur, quatre cent soixante pour le profil, huit cent vingt pour le
+   * kiosque, mille cent pour l'administration. Le menu s'ancre au bord droit
+   * de **la colonne**, et sans cette mesure il se calait sur la largeur
+   * commune : sur le kiosque il dépassait de trente pixels et flottait à côté
+   * de la page qu'il sert.
+   *
+   * On la **lit** sur la colonne elle-même plutôt que de demander à dix-huit
+   * pages de la redire : deux endroits qui déclarent la même largeur finissent
+   * par ne plus s'accorder. Une largeur exprimée autrement qu'en pixels —
+   * `none`, un pourcentage — ne se transpose pas : on garde alors la valeur
+   * par défaut de la feuille.
+   *
+   * Cette mesure servait la barre du bas ; elle lui a survécu parce que le
+   * besoin, lui, n'a jamais été celui de la barre.
+   */
+  {
+    const colonne = document.getElementById('app') ?? document.querySelector('main');
+    const large = colonne ? getComputedStyle(colonne).maxWidth : '';
+    if (/^\d+(\.\d+)?px$/.test(large)) {
+      document.documentElement.style.setProperty('--tbf-colonne', large);
+    }
+  }
 
   /* ------------------------------------------------------------- décor */
 
@@ -147,6 +171,13 @@
   /* --------------------------------------------------- la barre du haut */
 
   const ICONES = {
+    // Reprises de l'ancienne barre du bas, qui avait les siennes de son côté.
+    virage: 'M3 20l9-16 9 16zM7 20l5-9 5 9',
+    duel: 'M4 4l7 7M20 4l-7 7M12 13v7M8 20h8',
+    fanzzy: 'M4 4h13l3 3v13H4zM8 8h6M8 12h8M8 16h5',
+    carnet: 'M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2zM5 18h14M9 8h6',
+    classement: 'M6 21V9M12 21V4M18 21v-7M3 21h18',
+    accueil: 'M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
     deck: 'M4 7h10v13H4zM8 4h10v13',
     profil: 'M12 8a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 20a7 7 0 0 1 14 0',
     clubs: 'M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6z',
@@ -174,7 +205,20 @@
     // nu, et la barre n'y apparaissait pas — sans erreur, sans rien. Un repli
     // vaut mieux qu'une page qui perd son bandeau en silence.
     const app = document.getElementById('app') ?? document.querySelector('main');
-    if (!app || ECRANS_DE_JEU.includes(chemin)) return;
+    if (!app) return;
+
+    /* Sur un écran de jeu, la barre du haut se réduit à son seul bouton.
+     *
+     * Le duel et le Virage n'avaient pas de barre du haut — la place y est
+     * comptée, et le pseudo, les écharpes et les boosters n'ont rien à y
+     * faire pendant qu'on joue. Tant que la barre du bas existait, ce n'était
+     * pas grave : elle servait de sortie. Elle est partie, et ces deux écrans
+     * se sont retrouvés sans **aucun** moyen d'en sortir autrement que par le
+     * bouton du navigateur.
+     *
+     * On y garde donc le bouton, et rien d'autre : de quoi partir, pas de
+     * quoi distraire. */
+    const enJeu = ECRANS_DE_JEU.includes(chemin);
 
     let user = null;
     try {
@@ -183,9 +227,14 @@
     } catch { /* hors ligne */ }
     if (!user) return;
 
+    const boutonHTML = `<button class="pan tbf-burger" aria-label="Menu" aria-expanded="false"
+          aria-controls="tbf-tiroir"><span></span><span></span><span></span></button>`;
+
     const haut = document.createElement('header');
-    haut.className = 'tbf-haut';
-    haut.innerHTML = `
+    haut.className = 'tbf-haut' + (enJeu ? ' tbf-haut-jeu' : '');
+    haut.innerHTML = enJeu
+      ? `<div class="tbf-bourse">${boutonHTML}</div>`
+      : `
       <a class="pan tbf-moi" href="/profil">
         <span class="tbf-pastille">${(user.pseudo ?? '?').trim().charAt(0).toLowerCase() || '?'}</span>
         <span><b></b><small></small></span>
@@ -193,12 +242,12 @@
       <div class="tbf-bourse">
         <div class="pan tbf-jeton" data-jeton="ech"><i></i><span data-ech>0</span></div>
         <div class="pan tbf-jeton" data-jeton="pack"><i></i><span data-pack>0</span></div>
-        <button class="pan tbf-burger" aria-label="Menu" aria-expanded="false"
-          aria-controls="tbf-tiroir"><span></span><span></span><span></span></button>
+        ${boutonHTML}
       </div>`;
     // `textContent` et non une interpolation : un pseudo est écrit par le
-    // joueur, il n'a rien à faire dans du HTML assemblé à la main.
-    haut.querySelector('.tbf-moi b').textContent = user.pseudo ?? '';
+    // joueur, il n'a rien à faire dans du HTML assemblé à la main. En jeu, la
+    // barre est réduite au bouton : il n'y a pas de pseudo à écrire.
+    if (!enJeu) haut.querySelector('.tbf-moi b').textContent = user.pseudo ?? '';
     app.prepend(haut);
 
     const tiroir = document.createElement('nav');
@@ -206,13 +255,20 @@
     tiroir.className = 'tbf-tiroir';
     tiroir.setAttribute('aria-label', 'Le reste du jeu');
     tiroir.hidden = true;
-    tiroir.innerHTML = item('/deck', 'deck', 'Mon deck')
-      + item('/profil', 'profil', 'Mon profil')
-      + item('/equipes', 'clubs', 'Mes clubs')
-      + item('/kop', 'kop', 'Mon KOP')
-      + item('/amis', 'amis', 'Mes amis')
-      + item('/teletext', 'teletext', 'Télétexte')
+    /* La page où l'on est se marque, et ne se propose pas.
+       Sans ça le menu offre d'aller là où on est déjà, ce qui est le meilleur
+       moyen de faire douter quelqu'un de l'endroit où il se trouve. */
+    const ici = (href) => chemin === href
+      || (href === '/matchs' && chemin === '/teletext' && false);
+
+    tiroir.innerHTML = `<a class="tbf-tiroir-ici" href="/">${
+      ICONES.accueil ? `<svg viewBox="0 0 24 24"><path d="${ICONES.accueil}"/></svg>` : ''
+    }L\u2019accueil</a>`
+      + MENU.map((r) => `<div class="tbf-rubrique">${r.titre}</div>`
+        + r.liens.map(([href, cle, texte]) =>
+          item(href, cle, texte, ici(href) ? 'on' : '')).join('')).join('')
       + '<hr>'
+      + item('/profil', 'profil', 'Mon profil')
       + item('/compte', 'compte', 'Mon compte')
       + item('#', 'sortie', 'Se déconnecter', 'sortie');
     const rideau = document.createElement('div');
@@ -247,7 +303,9 @@
 
     // La bourse et le club suivi arrivent après : la barre est déjà en place,
     // donc rien ne saute quand ils se remplissent.
-    try {
+    // En jeu il n'y a ni bourse ni club affiché : rien à remplir, et surtout
+    // rien à demander au serveur pendant qu'on joue.
+    if (!enJeu) try {
       const st = await fetch('/api/me/state', { credentials: 'same-origin' })
         .then((r) => r.json());
       haut.querySelector('[data-ech]').textContent = st.scarves ?? 0;
@@ -269,8 +327,12 @@
      */
     window.TBF_BARRE = {
       bourse(scarves, packs) {
-        if (scarves != null) haut.querySelector('[data-ech]').textContent = scarves;
-        if (packs != null) haut.querySelector('[data-pack]').textContent = packs;
+        // Les jetons n'existent pas sur un écran de jeu : on ne les cherche
+        // qu'après s'être assuré qu'ils sont là.
+        const e = haut.querySelector('[data-ech]');
+        const p = haut.querySelector('[data-pack]');
+        if (e && scarves != null) e.textContent = scarves;
+        if (p && packs != null) p.textContent = packs;
       },
     };
 
@@ -279,56 +341,23 @@
 
   const enHaut = barreDuHaut();
 
-  /* --------------------------------------------------- la barre du bas */
+  /* ------------------------------------------- plus de barre du bas
 
-  /**
-   * La largeur de la colonne de cette page, donnée à la barre du bas.
-   *
-   * Les pages ne font pas toutes la même largeur — quatre cent quarante pour
-   * le classeur et le virage, quatre cent soixante pour le profil et la fiche,
-   * mille cent pour l'administration. On la **lit** donc sur la colonne
-   * elle-même plutôt que de demander à dix-huit pages de la redire : deux
-   * endroits qui déclarent la même largeur finissent par ne plus s'accorder,
-   * et la barre se retrouverait plus large que la page qu'elle sert.
-   *
-   * Une largeur exprimée autrement qu'en pixels — `none`, un pourcentage — ne
-   * se transpose pas : on garde alors la valeur par défaut de la feuille, qui
-   * vaut la colonne commune.
-   */
-  {
-    const colonne = document.getElementById('app') ?? document.querySelector('main');
-    const large = colonne ? getComputedStyle(colonne).maxWidth : '';
-    if (/^\d+(\.\d+)?px$/.test(large)) {
-      document.documentElement.style.setProperty('--tbf-colonne', large);
-    }
-  }
+     Il y avait une barre fixe en bas de chaque écran. Elle est partie, et avec
+     elle la seconde navigation qui ne disait pas la même chose que le menu.
 
-  const nav = document.createElement('nav');
-  nav.id = 'tbf-nav';
-  nav.innerHTML = ENTREES.map((e) => {
-    const actif = chemin === e.href || (e.href !== '/' && chemin.startsWith(e.href))
-      || (e.href === '/matchs' && chemin === '/teletext');
-    return `<a href="${e.href}" class="${actif ? 'on' : ''}" style="--c:${COUL[e.k]}" data-k="${e.k}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-        stroke-linecap="round" stroke-linejoin="round"><path d="${e.d}"/></svg>${e.t}</a>`;
-  }).join('');
-  document.body.appendChild(nav);
+     Deux choses s'en vont avec elle. Les **soixante-deux pixels** qu'elle
+     réservait sur toute la hauteur du jeu — sur un téléphone, c'est un dixième
+     de l'écran repris à ce qu'on est venu regarder. Et sa disparition
+     automatique sur les écrans de jeu, qui existait justement parce qu'elle
+     gênait : une barre qu'il faut effacer pour pouvoir jouer est une barre qui
+     n'avait rien à faire là.
 
-  if (ECRANS_DE_JEU.includes(chemin)) {
-    nav.classList.add('tbf-discret');
-    let minuterie = null;
-    const reveiller = () => {
-      nav.classList.remove('tbf-cache');
-      clearTimeout(minuterie);
-      minuterie = setTimeout(() => nav.classList.add('tbf-cache'), 4000);
-    };
-    reveiller();
-    // Toute action dans la page repousse la disparition ; l'inaction la
-    // ramène. C'est le comportement d'une barre d'application vidéo.
-    for (const evt of ['pointerdown', 'pointerup', 'scroll']) {
-      document.addEventListener(evt, reveiller, { passive: true });
-    }
-  }
+     `--nav-h` reste déclarée, à zéro. Neuf pages calculent encore leur bas
+     avec elle — `calc(var(--nav-h,62px) + 18px)` — et les laisser retomber sur
+     la valeur de repli les aurait toutes décollées de soixante-deux pixels. La
+     variable vaut mieux que neuf modifications et neuf occasions d'en oublier
+     une. */
 
   /* Braises discrètes : le décor doit vivre sans distraire de la page. */
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -372,15 +401,21 @@
     } catch { /* module absent */ }
   })();
 
-  /* Pastille rouge sur le virage quand un match des clubs suivis est en cours. */
+  /* Pastille rouge quand un match des clubs suivis est en cours.
+     Elle vivait sur la barre du bas ; elle se pose maintenant sur le bouton du
+     menu et sur la ligne du Virage à l'intérieur — c'est-à-dire là où on la
+     verra de toute façon, et là où elle mène. */
   (async () => {
     try {
       const r = await fetch('/api/virage/live', { credentials: 'same-origin' });
       if (!r.ok) return;
       const { matchs = [] } = await r.json();
       if (!matchs.some((m) => m.open)) return;
-      const a = nav.querySelector('[data-k="virage"]');
-      if (a) a.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
+      const monte = await enHaut;
+      monte?.haut.querySelector('.tbf-burger')
+        ?.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
+      monte?.tiroir.querySelector('a[href="/virage"]')
+        ?.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
     } catch { /* module non monté */ }
   })();
 })();

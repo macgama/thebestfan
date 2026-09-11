@@ -64,15 +64,51 @@ export function createTeletext({ pool, client, footballStore = null }) {
    * encore publiée revient vide — la garder six heures ferait manquer sa
    * parution.
    */
+  /**
+   * ## La fraîcheur se juge en SQL, jamais en JavaScript
+   *
+   * C'est le correctif d'une panne qui a gelé tous les scores en direct
+   * pendant des heures, et qui ne ressemblait pas du tout à un problème de
+   * date.
+   *
+   * `expires_at` et `fetched_at` sont écrits avec `NOW(3)`, donc dans le
+   * fuseau de la session MySQL. Le pilote, lui, est réglé sur `timezone: 'Z'`
+   * — il relit toute colonne `DATETIME` comme de l'UTC. Sur un serveur à
+   * l'heure de Zurich, les deux valeurs revenaient donc **deux heures dans le
+   * futur**, et deux choses cassaient d'un coup :
+   *
+   *   — `expires_at > maintenant` restait vrai deux heures de trop. Le cache
+   *     du jour, réglé à quarante-cinq secondes, servait la même réponse
+   *     pendant près de trois heures : les scores ne bougeaient plus ;
+   *   — `luA` partait dans le futur, donc `Date.now() - luA` était négatif et
+   *     `horloge.js` ramenait l'écoulé à zéro. La minute d'un match en cours
+   *     ne défilait plus chez le client non plus.
+   *
+   * Une seule cause, deux symptômes, et aucune erreur nulle part.
+   *
+   * Le remède ne touche pas aux écritures. On ne fait plus **traverser** la
+   * frontière SQL/JS à une date : la comparaison se fait en SQL, où les deux
+   * côtés viennent de la même horloge, et l'instant de lecture revient en
+   * millisecondes déjà converties par `UNIX_TIMESTAMP`. Cette fonction lit la
+   * colonne dans le fuseau de la session — celui-là même qui l'a écrite —
+   * donc l'aller-retour est juste quel que soit le réglage du serveur, et
+   * **quel que soit celui du pilote**.
+   *
+   * La règle à retenir : une date qui passe de MySQL à JavaScript est une date
+   * dont il faut se méfier. Quand on peut la comparer sans la faire sortir, on
+   * la compare sans la faire sortir.
+   */
   async function cached(key, ttlSec, fetcher) {
     const hit = (await q(
-      `SELECT payload, expires_at, fetched_at FROM api_cache WHERE k = ?`, [key]))[0];
-    if (hit && new Date(hit.expires_at) > new Date()) {
+      `SELECT payload,
+              expires_at > NOW(3)                AS frais,
+              UNIX_TIMESTAMP(fetched_at) * 1000  AS luA
+       FROM api_cache WHERE k = ?`, [key]))[0];
+    if (hit && Number(hit.frais)) {
       // `luA` : l'instant de la lecture chez l'API, pas celui du service.
       // Sans cette distinction, le client croit la donnée fraîche à chaque
       // requête et le chrono d'un match en cours ne bouge jamais.
-      return { data: decode(hit.payload), fresh: true,
-               luA: new Date(hit.fetched_at).getTime() };
+      return { data: decode(hit.payload), fresh: true, luA: Number(hit.luA) };
     }
 
     try {
@@ -90,7 +126,7 @@ export function createTeletext({ pool, client, footballStore = null }) {
       // Quota épuisé ou API en panne : la version périmée vaut mieux que rien.
       if (hit) {
         return { data: decode(hit.payload), fresh: false, stale: true,
-                 luA: new Date(hit.fetched_at).getTime() };
+                 luA: Number(hit.luA) };
       }
       throw e;
     }

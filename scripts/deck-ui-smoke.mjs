@@ -483,6 +483,27 @@ clic(T(dom).querySelector('[data-fermer]'));
   check('et l’onglet compte sur le même plafond',
     /TRIBUNE\s*\d\/2/.test(T(bas).querySelector('[data-onglet="tribune"]')?.textContent ?? ''));
 
+  /* La limite doit se **dire**, pas seulement s'appliquer.
+   *
+   * L'écran ouvrait deux rangs sans jamais expliquer d'où venait ce nombre.
+   * Quelqu'un qui a lu « jusqu'à trois Fanzzy » n'en voit que deux, ne trouve
+   * aucune explication, et en conclut que l'écran est cassé — c'est
+   * exactement la question qui a été posée. On vérifie donc que le palier est
+   * nommé, et qu'il est nommé **juste** : le niveau doit venir du serveur,
+   * pas d'un nombre écrit dans la page. */
+  {
+    const jalon = T(bas).querySelector('.jalon');
+    check('la tribune dit pourquoi elle n’ouvre que deux rangs', Boolean(jalon));
+    const texte = jalon?.textContent.replace(/\s+/g, ' ').trim() ?? '';
+    check('et à quel niveau le troisième s’ouvre', /niveau\s*5/.test(texte));
+    if (!/niveau\s*5/.test(texte)) console.log('        elle dit :', texte);
+  }
+
+  /* Et la règle des âges, qui est l'autre moitié de la même confusion : un
+     personnage évolué n'occupe pas un second rang. */
+  check('elle rappelle qu’un personnage et ses âges sont une seule carte',
+    /une seule carte/i.test(T(bas).body.textContent));
+
   /* Le message du refus doit dire **la** limite, pas celle de la règle. On le
      provoque en demandant trois Fanzzy au serveur par-dessus la page. */
   const dit = await bas.window.eval(`(async () => {

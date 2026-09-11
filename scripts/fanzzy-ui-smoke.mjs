@@ -125,6 +125,11 @@ app.get('/fanzzy', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'fanzzy.htm
 app.get('/fanzzy/:id', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'fanzzy-fiche.html')));
 app.use('/api/me', (await import('../src/server/onboarding/index.js'))
   .createOnboarding({ pool, requireAuth }).router);
+/* `nav.js` demande qui est connecté avant de monter la barre du haut. Sans
+   cette route, pas de barre, donc pas de bouton de menu — et depuis que la
+   barre du bas a disparu, pas de navigation du tout. Le banc doit répondre
+   comme le vrai serveur, sinon il éprouve son propre manque. */
+app.get('/api/auth/me', (_q, s) => s.json({ user: { id: U, pseudo: 'Testeur' } }));
 app.use(express.static(path.join(RACINE, 'public')));
 
 const http = createServer(app);
@@ -826,101 +831,102 @@ check('la grille ne se remplit pas avec un catalogue amputé',
 check('et elle explique pourquoi au lieu de rester vide',
   /n\u2019a pas pu charger le catalogue/.test(await texteAffiche(page2)));
 
-/* ------------------------------- la barre commune sur un petit téléphone
+/* ------------------------------------------- le menu, seule navigation
 
- * Ce contrôle vivait dans accueil-ui-smoke. L’accueil est devenu un écran de
- * jeu plein cadre qui ne porte plus la barre : le contrôle a déménagé ici,
- * sur une page qui l’affiche encore. Sept entrées sur 320 px — un iPhone SE —
- * font quarante-cinq pixels chacune. Une barre qui déborde ne se voit pas en
- * développement, seulement sur le téléphone d’un joueur.
+ * La barre du bas a disparu, et trois contrôles éprouvaient sa largeur, son
+ * centrage et ses sept entrées. Ce qu'ils surveillaient n'existe plus — mais
+ * le risque, lui, a seulement changé de place : le menu est désormais la
+ * **seule** façon d'aller quelque part, et un menu qui déborde, qui rogne un
+ * libellé ou qui oublie une destination laisse le joueur enfermé.
+ *
+ * Trois cent vingt pixels — un iPhone SE — restent le cas dur.
  */
 {
   const petit = await nav.newPage();
   petit.on('pageerror', (e) => erreurs.push(e.message));
   await petit.setViewport({ width: 320, height: 640 });
   await petit.goto(base + '/fanzzy', { waitUntil: 'networkidle0' });
-  await petit.waitForSelector('#tbf-nav', { timeout: 6000 }).catch(() => {});
+  await petit.waitForSelector('.tbf-burger', { timeout: 6000 }).catch(() => {});
 
-  const barre = await petit.evaluate(() => {
-    const n = document.getElementById('tbf-nav');
-    if (!n) return null;
-    const liens = [...n.querySelectorAll('a')];
+  check('la barre du bas a bien disparu',
+    await petit.evaluate(() => !document.getElementById('tbf-nav')));
+  check('et le bouton de menu la remplace',
+    await petit.evaluate(() => Boolean(document.querySelector('.tbf-burger'))));
+
+  await petit.click('.tbf-burger');
+  await petit.evaluate(() => new Promise((r) => setTimeout(r, 300)));
+
+  const menu = await petit.evaluate(() => {
+    const t = document.getElementById('tbf-tiroir');
+    if (!t) return null;
+    const liens = [...t.querySelectorAll('a')];
+    const r = t.getBoundingClientRect();
     return {
-      entrees: liens.length,
+      ouvert: t.classList.contains('on'),
+      href: liens.map((a) => a.getAttribute('href')),
       debordePage: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-      debordeBarre: n.scrollWidth > n.clientWidth,
+      sortDeLEcran: r.left < 0 || r.right > innerWidth + 1,
       rognes: liens.filter((a) => a.scrollWidth > a.clientWidth + 1).map((a) => a.textContent.trim()),
     };
   });
 
-  check('la barre commune porte ses sept entrées', barre?.entrees === 7);
-  check('elle tient dans 320 px sans déborder',
-    barre?.debordePage === false && barre?.debordeBarre === false);
-  check('aucun libellé de la barre n’est rogné', (barre?.rognes ?? []).length === 0);
-  if (barre?.rognes?.length) console.log('   rognés :', barre.rognes);
+  check('le menu s’ouvre', menu?.ouvert === true);
+
+  /* Le KOP est au centre du jeu, et il n'était accessible que par un second
+     menu. C'est la demande explicite : il doit être là. */
+  check('le menu mène au KOP', (menu?.href ?? []).includes('/kop'));
+
+  /* Et à tout le reste : un menu unique qui oublie une destination enferme,
+     puisqu'il n'y a plus de barre pour rattraper. On les nomme une par une —
+     un simple compte laisserait passer un remplacement. */
+  for (const [href, nom] of [['/', 'l’accueil'], ['/virage', 'au Virage'],
+    ['/duel-nvn', 'au duel'], ['/deck', 'au deck'], ['/fanzzy', 'au classeur'],
+    ['/carnet', 'au carnet'], ['/amis', 'aux amis'], ['/matchs', 'aux matchs'],
+    ['/equipes', 'aux clubs'], ['/teletext', 'au télétexte'],
+    ['/classement', 'au classement'], ['/profil', 'au profil']]) {
+    check(`le menu mène ${nom}`, (menu?.href ?? []).includes(href));
+  }
+
+  check('il tient dans 320 px sans déborder',
+    menu?.debordePage === false && menu?.sortDeLEcran === false);
+  check('aucun libellé du menu n’est rogné', (menu?.rognes ?? []).length === 0);
+  if (menu?.rognes?.length) console.log('   rognés :', menu.rognes);
   await petit.close();
 }
-/* ------------------------------- la barre du bas, sur un grand écran
 
- * Elle était posée d'un bord à l'autre de la fenêtre. Sur un téléphone c'est
- * la même chose que la colonne ; sur un ordinateur, une barre étalée sur
- * seize cents pixels sous une colonne de quatre cent quarante n'appartient
- * plus à la page qu'elle sert — elle flotte en dessous.
- *
- * Elle prend donc la largeur de la colonne, lue sur la colonne elle-même.
- * C'est ce qu'il faut éprouver : que les deux largeurs se suivent, et non
- * qu'un nombre écrit à la main dans la feuille tombe juste ce jour-là.
- */
+/* Et sur un grand écran, le menu reste accroché à la colonne plutôt que de
+   partir au bord de la fenêtre : c'est ce que faisait déjà la barre, pour la
+   même raison — un menu à seize cents pixels d'une colonne de quatre cent
+   quarante n'appartient plus à la page qu'il sert. */
 {
   const grand = await nav.newPage();
   grand.on('pageerror', (e) => erreurs.push(e.message));
   await grand.setViewport({ width: 1200, height: 900 });
   await grand.goto(base + '/fanzzy', { waitUntil: 'networkidle0' });
-  await grand.waitForSelector('#tbf-nav', { timeout: 6000 }).catch(() => {});
+  await grand.waitForSelector('.tbf-burger', { timeout: 6000 }).catch(() => {});
+  await grand.click('.tbf-burger');
+  await grand.evaluate(() => new Promise((r) => setTimeout(r, 300)));
 
   const m = await grand.evaluate(() => {
-    const barre = document.getElementById('tbf-nav').getBoundingClientRect();
-    const colonne = document.getElementById('app').getBoundingClientRect();
-    return {
-      barre: barre.width, colonne: colonne.width, ecran: innerWidth,
-      centreBarre: barre.left + barre.width / 2,
-      centreColonne: colonne.left + colonne.width / 2,
-    };
+    const t = document.getElementById('tbf-tiroir').getBoundingClientRect();
+    const c = document.getElementById('app').getBoundingClientRect();
+    return { droiteMenu: t.right, droiteColonne: c.right, ecran: innerWidth,
+             colonne: c.width };
   });
-  check('sur un grand écran, la barre a la largeur de la colonne',
-    Math.abs(m.barre - m.colonne) <= 2
-    || (console.log(`        barre ${Math.round(m.barre)} px, `
-      + `colonne ${Math.round(m.colonne)} px`), false));
-  check('et elle est bien centrée sous elle',
-    Math.abs(m.centreBarre - m.centreColonne) <= 2);
+  check('sur un grand écran, le menu reste contre la colonne',
+    Math.abs(m.droiteMenu - m.droiteColonne) <= 14
+    || (console.log(`        menu à ${Math.round(m.droiteMenu)} px, `
+      + `colonne à ${Math.round(m.droiteColonne)} px`), false));
   /* Le contrôle qui rend le précédent honnête : sur cet écran-là, la colonne
-     est bien plus étroite que la fenêtre. Sans ça, « barre = colonne »
-     resterait vrai d'une barre pleine largeur sur une colonne pleine
-     largeur. */
-  check('et l’écran était bien plus large que les deux',
-    m.ecran > m.colonne + 200);
+     est bien plus étroite que la fenêtre. Sans ça, « menu = colonne »
+     resterait vrai d'un menu collé au bord d'une colonne pleine largeur. */
+  check('et l’écran était bien plus large qu’elle', m.ecran > m.colonne + 200);
   if (process.env.CAPTURE) {
     const { tmpdir } = await import('node:os');
     const { join } = await import('node:path');
     await grand.screenshot({ path: join(tmpdir(), 'fanzzy-large.png') });
   }
   await grand.close();
-}
-
-/* Sur un téléphone, la barre occupe toute la largeur : la colonne y est déjà
-   plus large que l'écran, et une barre en retrait perdrait de la place là où
-   il n'y en a pas. */
-{
-  const petit = await nav.newPage();
-  petit.on('pageerror', (e) => erreurs.push(e.message));
-  await petit.setViewport({ width: 390, height: 844 });
-  await petit.goto(base + '/fanzzy', { waitUntil: 'networkidle0' });
-  await petit.waitForSelector('#tbf-nav', { timeout: 6000 }).catch(() => {});
-  const large = await petit.evaluate(() =>
-    document.getElementById('tbf-nav').getBoundingClientRect().width);
-  check('sur un téléphone, elle occupe toute la largeur',
-    Math.abs(large - 390) <= 1 || (console.log(`        ${Math.round(large)} px`), false));
-  await petit.close();
 }
 
 if (process.env.CAPTURE) {

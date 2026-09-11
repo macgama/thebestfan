@@ -137,6 +137,13 @@ const decks = createDecks({ pool, requireAuth });
 const nvn = createNvN({ pool, io, decks, requireAuth });
 app.use('/api/deck', decks.router);
 app.use('/api/nvn', nvn.router);
+/* `nav.js` demande qui est connecté avant de monter quoi que ce soit : sans
+   cette route, la barre du haut ne se construit pas et le duel se retrouve
+   sans bouton de menu — donc sans aucune sortie depuis que la barre du bas a
+   disparu. Le banc doit répondre comme le vrai serveur, sinon il éprouve son
+   propre manque plutôt que le jeu. */
+app.get('/api/auth/me', requireAuth, (r, s) =>
+  s.json({ user: { id: r.user.id, pseudo: 'Testeur' } }));
 app.get('/duel-nvn', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'duel-nvn.html')));
 app.use(express.static(path.join(RACINE, 'public')));
 await new Promise((r) => http.listen(0, r));
@@ -462,17 +469,22 @@ check('et ce n\u2019est pas un « impossible » générique',
  * arrêt : c'est à ce moment-là qu'il faut qu'elle laisse la place.
  */
 {
+  /* La barre du bas a disparu, et avec elle le recouvrement qu'elle causait.
+     Ce contrôle-ci serait donc vert pour rien : ce qu'il surveillait n'existe
+     plus. On le tourne vers ce qui a pris sa place — le bouton de menu, qui
+     flotte désormais au-dessus de l'écran de jeu et pourrait tout aussi bien
+     se poser sur quelque chose qu'on vise. */
   const chevauche = await A.page.evaluate(() => {
     const b = document.getElementById('chanter');
-    const n = document.getElementById('tbf-nav');
-    if (!b) return 'bouton introuvable';
-    if (!n || getComputedStyle(n).display === 'none') return 0;
-    // On force la barre visible : elle se cache pendant l'action et
-    // reviendrait de toute façon dès la première pause.
-    n.style.transform = 'none';
+    const m = document.querySelector('.tbf-burger');
+    if (!b) return 'bouton de chant introuvable';
+    if (!m) return 'bouton de menu introuvable : plus aucune sortie en jeu';
     const rb = b.getBoundingClientRect();
-    const rn = n.getBoundingClientRect();
-    return Math.max(0, Math.round(rb.bottom - rn.top));
+    const rm = m.getBoundingClientRect();
+    // Deux rectangles se chevauchent s'ils se croisent sur les deux axes.
+    const croise = rb.left < rm.right && rm.left < rb.right
+      && rb.top < rm.bottom && rm.top < rb.bottom;
+    return croise ? Math.round(Math.min(rb.right, rm.right) - Math.max(rb.left, rm.left)) : 0;
   });
   /**
  * Un écran de jeu ne se fait pas défiler. Le bouton de chant est la seule
@@ -488,7 +500,7 @@ check('et ce n\u2019est pas un « impossible » générique',
   check('l\u2019écran de duel ne défile pas', !defile.page && !defile.app);
 }
 
-check('la barre de navigation ne recouvre pas le bouton de chant',
+check('le bouton de menu ne recouvre pas le bouton de chant',
     chevauche === 0);
   if (chevauche) console.log(`    recouvrement : ${chevauche} px`);
 

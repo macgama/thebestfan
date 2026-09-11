@@ -298,7 +298,10 @@ button.pan:active,a.pan:active{transform:scale(.96)}
 .tbf-tiroir{
   position:fixed;z-index:49;
   top:calc(env(safe-area-inset-top) + 58px);
-  right:max(10px,calc(50vw - var(--colonne) / 2 + 10px));
+  /* La colonne de **cette** page, mesurée par nav.js. `--colonne` est la
+     largeur commune : sur une page plus large, le menu se serait ancré à
+     trente pixels du bord qu' il vise. */
+  right:max(10px,calc(50vw - var(--tbf-colonne,var(--colonne)) / 2 + 10px));
   width:min(230px,72vw);padding:6px;display:grid;gap:2px;
   background:rgba(12,17,24,.96);border:1px solid var(--trait);border-radius:var(--r);
   box-shadow:0 24px 60px rgba(0,0,0,.7);
@@ -317,6 +320,49 @@ button.pan:active,a.pan:active{transform:scale(.96)}
 }
 .tbf-tiroir hr{border:0;border-top:1px solid var(--trait);margin:4px 8px}
 .tbf-tiroir a.sortie{color:#F0846F}
+
+/* Le menu est désormais la seule navigation du jeu : il porte onze
+   destinations au lieu de six, et il lui faut donc de la place et des
+   rubriques. Sans elles, onze lignes à plat forment un mur qu'on ne lit pas. */
+.tbf-tiroir{width:min(268px,80vw);max-height:calc(100vh - 92px);overflow:auto}
+.tbf-rubrique{
+  font-family:var(--banner);font-size:8.5px;letter-spacing:.2em;opacity:.42;
+  padding:10px 12px 4px;
+}
+.tbf-rubrique:first-child{padding-top:4px}
+/* La page où l'on est : marquée, et volontairement pas cliquable au regard —
+   proposer d'aller là où on est déjà fait douter de l'endroit où on se trouve. */
+.tbf-tiroir a.on{background:rgba(245,195,59,.12);color:var(--projo)}
+.tbf-tiroir a.on svg{opacity:1}
+/* L'accueil, en tête et sans rubrique : c'est la sortie de secours. */
+.tbf-tiroir-ici{
+  display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;
+  color:inherit;text-decoration:none;font-size:14px;
+}
+.tbf-tiroir-ici svg{
+  width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;opacity:.7;
+}
+.tbf-tiroir-ici:hover,.tbf-tiroir-ici:focus-visible{background:rgba(242,238,228,.08)}
+/* La pastille du direct, reprise de la barre du bas : sur le bouton pour
+   qu'on la voie sans ouvrir, sur la ligne du Virage pour qu'on sache où. */
+.tbf-tiroir .pip,.tbf-burger .pip{
+  width:7px;height:7px;border-radius:50%;background:#E0402C;
+  box-shadow:0 0 8px #E0402C;animation:tbf-clignote 1.3s infinite;
+}
+.tbf-tiroir .pip{margin-left:auto}
+.tbf-burger .pip{position:absolute;top:6px;right:6px}
+@keyframes tbf-clignote{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* En jeu, la barre du haut se réduit à son bouton : il faut pouvoir sortir,
+   pas consulter son solde. Elle flotte au-dessus de l'écran au lieu de
+   pousser le jeu vers le bas. */
+.tbf-haut-jeu{
+  position:absolute;top:calc(env(safe-area-inset-top) + 8px);right:10px;
+  z-index:45;padding:0;margin:0;background:none;border:0;pointer-events:none;
+}
+.tbf-haut-jeu .tbf-bourse{pointer-events:auto}
+.tbf-burger{position:relative}
 
 /* ------------------------------------------------------- petites briques */
 

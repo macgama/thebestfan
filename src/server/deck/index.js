@@ -3,6 +3,25 @@ import { ACTIONS, ACTION_BY_ID, DECK_RULES, validerDeck } from '../../shared/due
 import { parIdentifiant, racineDe, lignee } from '../fanzzy/catalogue.js';
 import { STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 import { jourISO } from '../../shared/jour.js';
+import { PALIERS } from '../../shared/niveau.js';
+
+/**
+ * Le palier qui ouvrira l'emplacement de tribune suivant.
+ *
+ * L'écran affichait deux rangs à un joueur de niveau 1 sans jamais lui dire
+ * pourquoi — ni qu'un troisième existe, ni quand il arrive. Une limite qu'on
+ * subit sans l'expliquer passe pour un bug ; expliquée, elle devient un but.
+ *
+ * Le calcul vit ici et pas dans la page : la table des paliers est déjà la
+ * seule source de cette règle, et la recopier côté client donnerait une
+ * deuxième vérité à tenir à jour.
+ */
+function prochainPalierFanzzy(actuel) {
+  const p = PALIERS
+    .filter((x) => x.deckFanzzy && x.deckFanzzy > actuel)
+    .sort((a, b) => a.niveau - b.niveau)[0];
+  return p ? { niveau: p.niveau, places: p.deckFanzzy } : null;
+}
 
 /**
  * Decks et choix du match support.
@@ -288,6 +307,10 @@ export function createDecks({ pool, requireAuth, niveau = null }) {
         // ni moins. Le lui faire déduire du niveau serait une seconde règle
         // à tenir à jour, et elle divergerait.
         fanzzyMax: possede.fanzzyMax,
+        // Et à quel niveau le suivant s'ouvre, pour que l'écran puisse le dire
+        // au lieu de laisser croire à une limite arbitraire. `null` quand il
+        // n'y a plus rien à ouvrir.
+        fanzzyProchain: prochainPalierFanzzy(possede.fanzzyMax),
         // Le stade atteint par personnage : la page en a besoin pour avertir
         // celui qui aligne un Fanzzy évolué sans embarquer de Relève.
         stades: possede.stades,
