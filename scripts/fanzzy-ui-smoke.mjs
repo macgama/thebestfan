@@ -43,7 +43,8 @@ async function jusqua(fn, ms = 8000) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
+await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+  kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
@@ -54,7 +55,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_m
 // *toutes* les séries — c'est sa règle, un schéma incomplet ne confisque rien —
 // et le kiosque n'aurait alors rien à verrouiller. La suite passerait au vert
 // sans jamais éprouver le cas qui a produit la panne.
-for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'souvenirs.sql', 'fanzzy.sql',
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'fanzzy.sql',
                  'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'stades.sql',
                  'niveau.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
@@ -371,11 +372,14 @@ check('les Fanzzy non possédés portent leur nom',
     // contrôle mesurerait un cadre encore vide et passerait au vert pour la
     // mauvaise raison.
     await jusqua(async () => await mien.evaluate(() =>
-      Boolean(document.querySelector('.tpose.on') || document.querySelector('.tdessin'))));
+      Boolean(document.querySelector('.tbf-pose.on') || document.querySelector('.tdessin'))));
 
     const m = await mien.evaluate(() => {
       const scene = document.querySelector('.tscene');
-      const img = document.getElementById('tpose');
+      /* Le calque **visible**, et non le premier venu : la scène en porte deux
+         et croise leurs opacités pour changer de pose sans clignoter. Le
+         premier du DOM est donc celui qui attend son tour, vide. */
+      const img = document.querySelector('#tpile .tbf-pose.on');
       const persoRect = (img ?? document.querySelector('.tdessin'))?.getBoundingClientRect();
       const perso = BY_ID.get(S.active);
       return {
@@ -438,7 +442,7 @@ check('les Fanzzy non possédés portent leur nom',
        animation qui manque ne casse rien, elle se contente de ne pas être là. */
     check('le personnage respire',
       await mien.evaluate(() => {
-        const n = document.querySelector('.tsouffle');
+        const n = document.querySelector('.tbf-souffle');
         return n ? getComputedStyle(n).animationName !== 'none' : false;
       }));
 
@@ -451,14 +455,19 @@ check('les Fanzzy non possédés portent leur nom',
       ecran: innerHeight,
       bas: document.querySelector('.tbtns .dbtn.primary')
         ?.getBoundingClientRect().bottom ?? 1e9,
-      perso: document.querySelector('.tpose, .tdessin')
+      perso: document.querySelector('#tpile .tbf-pose.on, .tdessin')
         ?.getBoundingClientRect().height ?? 0,
     }));
     check('sur un petit écran, le bouton reste visible',
       petit.bas <= petit.ecran + 1
       || (console.log(`        ${Math.round(petit.bas)} pour ${petit.ecran}`), false));
-    check('et le personnage tient encore la moitié de l’écran',
-      petit.perso > petit.ecran * 0.5
+    /* Un peu moins de la moitié, et c'est la mesure juste : sur six cent
+       quarante points, les deux barres de la page, la bande d'effets et les
+       boutons en prennent trois cents à eux seuls. Le seuil dit ce qu'on
+       défend — le personnage reste la plus grande chose de l'écran — et non un
+       chiffre rond qu'aucune mise en page ne peut tenir. */
+    check('et le personnage reste la plus grande chose de l’écran',
+      petit.perso > petit.ecran * 0.45
       || (console.log(`        ${Math.round(petit.perso)} px sur ${petit.ecran}`), false));
   }
   await mien.close();

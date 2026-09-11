@@ -13,7 +13,11 @@ import { Cheat } from './gestures.js';
 
 const MAX_CHANTS_PER_10S = 12;
 
-export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = null }) {
+/* `couleurs` est facultatif : les suites de test montent le virage sans
+   lui, et un club sans couleur garde celle du jeu. Une teinte manquante ne
+   doit jamais empêcher d'entrer dans une tribune. */
+export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
+                               kop = null, couleurs = null }) {
   const rooms = new Map();          // fixtureId -> VirageRoom
   const enCours = new Map();        // créations en vol, pour n'en faire qu'une
   const roomOfUser = new Map();     // userId -> fixtureId
@@ -35,7 +39,9 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
       `SELECT f.id, f.league_id, f.home_id, f.away_id, f.kickoff_at, f.status_short,
               f.home_goals, f.away_goals, f.elapsed, f.elapsed_extra, f.polled_at,
               h.name AS home_name, h.logo AS home_logo,
+              h.color1 AS home_c1, h.color2 AS home_c2,
               a.name AS away_name, a.logo AS away_logo,
+              a.color1 AS away_c1, a.color2 AS away_c2,
               l.name AS league_name
          FROM fixtures f
          JOIN teams h ON h.id = f.home_id
@@ -60,6 +66,9 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
     const p = (async () => {
       const f = await fixtureInfo(fixtureId);
       if (!f) return null;
+      // Les couleurs des deux clubs, si on ne les a pas encore. La salle
+      // s'ouvre sans les attendre : elles seront là au prochain match.
+      couleurs?.assurerPlusTard([f.home_id, f.away_id]);
       const room = buildRoom(f, fixtureId);
       await semerLeFil(room, fixtureId);
       rooms.set(fixtureId, room);
@@ -77,6 +86,11 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
         homeId: f.home_id, awayId: f.away_id,
         homeName: f.home_name, homeLogo: f.home_logo,
         awayName: f.away_name, awayLogo: f.away_logo,
+        /* Les couleurs du club, tirées de son blason. C'est ce qui permet de
+           teindre « GOAL ! » aux couleurs de l'équipe. Vides tant qu'elles
+           n'ont pas été extraites : la page garde sa couleur par défaut. */
+        homeColors: [f.home_c1, f.home_c2].filter(Boolean),
+        awayColors: [f.away_c1, f.away_c2].filter(Boolean),
         league: f.league_name, kickoffAt: f.kickoff_at,
         // Le vrai match, tel que la base le connaît à cet instant : le fil
         // doit pouvoir afficher 1–0 à la trente-quatrième minute sans avoir
@@ -176,6 +190,11 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
 
       const hero = await fanzzy.activeFanzzy(u.userId);
       const mods = hero ? { id: hero.id, ...hero.mods } : {};
+      /* Le personnage, séparément du barème : c'est lui qu'on voit pousser
+         dans la tribune, et il est montré **à l'âge atteint** — comme partout
+         ailleurs dans le jeu. Une absence n'empêche rien : le virage se joue
+         très bien sans Fanzzy équipé, la scène reste simplement vide. */
+      const perso = await fanzzy.personnageActif?.(u.userId) ?? null;
 
       /* Le bonus du KOP se mêle à ceux du Fanzzy, dans le même objet.
 
@@ -199,7 +218,8 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
       socket.join(`virage:${room.fixture.id}`);
       roomOfUser.set(u.userId, room.fixture.id);
       if (process.env.VIRAGE_DEBUG) console.log('[virage] join', u.userId, '->', room.fixture.id);
-      socket.emit('virage:state', room.join(u.userId, { side, name: u.name, mods, neutre }));
+      socket.emit('virage:state',
+        room.join(u.userId, { side, name: u.name, mods, neutre, perso }));
       io.to(`virage:${room.fixture.id}`).emit('virage:crowd', { crowd: room.crowd() });
     });
 
@@ -325,7 +345,9 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
               f.home_goals, f.away_goals, f.kickoff_at,
               f.home_id, f.away_id,
               h.name AS home_name, h.logo AS home_logo,
-              a.name AS away_name, a.logo AS away_logo, l.name AS league_name
+              h.color1 AS home_c1, h.color2 AS home_c2,
+              a.name AS away_name, a.logo AS away_logo,
+              a.color1 AS away_c1, a.color2 AS away_c2, l.name AS league_name
          FROM fixtures f
          JOIN teams h ON h.id = f.home_id
          JOIN teams a ON a.id = f.away_id
@@ -346,9 +368,20 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy, kop = n
       `SELECT team_id FROM user_follows WHERE user_id = ?`, [req.user.id]))
       .map((r) => r.team_id));
 
+    /* Les couleurs manquantes partent se chercher **à côté** de la réponse.
+       La liste s'affiche avec ce qu'on a ; les blasons lus maintenant
+       teindront l'écran au prochain chargement. Attendre un téléchargement
+       d'image pour montrer les matchs du soir serait payer une panne pour un
+       dégradé. */
+    couleurs?.assurerPlusTard(rows.flatMap((f) => [f.home_id, f.away_id]));
+
     res.json({
       matchs: rows.map((f) => ({
         ...f,
+        // Une à deux couleurs, jamais de tableau vide déguisé en couleur : la
+        // page teste la longueur et retombe sur la sienne.
+        homeColors: [f.home_c1, f.home_c2].filter(Boolean),
+        awayColors: [f.away_c1, f.away_c2].filter(Boolean),
         crowd: rooms.get(f.id)?.crowd() ?? [0, 0],
         // `mien` : un de mes clubs joue. Le camp découle alors du club suivi
         // et la ferveur compte plein ; ailleurs, on choisit son camp et elle

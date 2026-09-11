@@ -138,6 +138,8 @@
     clubs: 'M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6z',
     // Trois silhouettes serrées : un groupe, pas une personne.
     kop: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20a7 7 0 0 1 14 0M17 20a5 5 0 0 0-3-4.6M16 11a3 3 0 0 0 0-6',
+    // Deux silhouettes côte à côte, et un plus : on en ajoute une.
+    amis: 'M9 11a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4M2 20a7 7 0 0 1 14 0M18 8v6M15 11h6',
     teletext: 'M3 4h18v16H3zM7 9h10M7 13h6',
     compte: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6M12 3v3M12 18v3M3 12h3M18 12h3',
     admin: 'M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6zM9 12l2 2 4-4',
@@ -194,6 +196,7 @@
       + item('/profil', 'profil', 'Mon profil')
       + item('/equipes', 'clubs', 'Mes clubs')
       + item('/kop', 'kop', 'Mon KOP')
+      + item('/amis', 'amis', 'Mes amis')
       + item('/teletext', 'teletext', 'Télétexte')
       + '<hr>'
       + item('/compte', 'compte', 'Mon compte')

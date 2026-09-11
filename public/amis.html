@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mes amis — thebestfan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100dvh}
+body{background:radial-gradient(120% 50% at 50% -8%,rgba(60,130,232,.13),transparent 60%),var(--beton);
+     color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
+     padding:0 0 calc(var(--nav-h,62px) + 26px)}
+main{width:100%;max-width:440px;padding:0 15px}
+h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em;margin:18px 0 3px;
+  text-align:center}
+.sub{text-align:center;font-size:11px;letter-spacing:.2em;opacity:.45;margin-bottom:16px}
+
+/* ------------------------------------------------------------ onglets
+
+   Les mêmes que le classeur et le deck : un socle dur qui s'enfonce à
+   l'appui. Ce n'est pas de la coquetterie — c'est le seul retour qu'un doigt
+   reçoit sur un écran, et deux écrans du même jeu qui ne réagissent pas
+   pareil se lisent comme deux applications. */
+.onglets{display:flex;gap:7px;margin-bottom:14px}
+.onglet{flex:1;border:0;border-radius:10px;color:inherit;cursor:pointer;opacity:.6;
+  padding:10px 6px 9px;font-family:var(--banner);font-size:11.5px;letter-spacing:.07em;
+  background:rgba(16,22,31,.92);position:relative;
+  box-shadow:0 3px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(242,238,228,.1);
+  transition:transform .1s,box-shadow .1s,opacity .1s}
+.onglet:active{transform:translateY(3px);box-shadow:none}
+.onglet.on{opacity:1;background:var(--craie);color:#0B0E13;
+  box-shadow:0 3px 0 #6E6A61,inset 0 1px 0 rgba(255,255,255,.45)}
+/* La pastille de ce qui attend une réponse. Sans elle, une demande reçue
+   dormirait derrière un onglet fermé jusqu'à ce qu'on pense à l'ouvrir. */
+.onglet .pastille{position:absolute;top:-6px;right:-4px;min-width:19px;height:19px;padding:0 5px;
+  border-radius:999px;background:var(--flare);color:#fff;font-size:11px;line-height:19px;
+  font-family:var(--ui);font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+
+/* ------------------------------------------------------------- les gens */
+
+.gens{display:grid;gap:8px}
+.gars{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:12px;
+  border:1px solid var(--trait);background:var(--panneau);backdrop-filter:blur(10px)}
+.pastille-nom{width:40px;height:40px;flex:none;border-radius:12px;display:grid;place-items:center;
+  font-family:var(--banner);font-size:19px;line-height:1;color:#1A0C04;
+  background:linear-gradient(150deg,var(--projo),#B8860B)}
+/* Le Fanzzy du joueur remplace l'initiale dès qu'il en a un d'illustré : on
+   se reconnaît à son personnage bien avant de lire un pseudo. */
+.pastille-nom img{width:100%;height:100%;object-fit:cover;border-radius:12px;display:block}
+.gars .qui{flex:1;min-width:0}
+.gars .qui b{display:block;font-family:var(--banner);font-size:14.5px;letter-spacing:.02em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gars .qui .clubs{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.gars .qui .clubs span{font-size:10px;padding:3px 8px;border-radius:999px;
+  background:rgba(242,238,228,.08);box-shadow:inset 0 0 0 1px rgba(242,238,228,.1)}
+.gars .qui small{display:block;font-size:10.5px;opacity:.5;margin-top:4px}
+.gars .quoi{display:flex;gap:6px;flex:none}
+
+.bt{border:0;border-radius:9px;color:inherit;cursor:pointer;padding:9px 11px 8px;
+  font-family:var(--banner);font-size:11.5px;letter-spacing:.06em;background:rgba(16,22,31,.95);
+  box-shadow:0 3px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(242,238,228,.11);
+  transition:transform .1s,box-shadow .1s}
+.bt:active:not(:disabled){transform:translateY(3px);box-shadow:none}
+.bt:disabled{opacity:.4;cursor:default}
+.bt.oui{color:#fff;background:linear-gradient(180deg,#3FBE87,var(--vert) 60%,#137A50);
+  box-shadow:0 3px 0 #0C5537}
+.bt.non{color:#F0846F;background:rgba(224,64,44,.14);box-shadow:0 3px 0 rgba(0,0,0,.5)}
+.bt.plein{width:100%;margin-top:4px}
+
+/* ------------------------------------------------------ l'invitation KOP */
+
+.invit{border:1px solid rgba(245,195,59,.4);background:rgba(245,195,59,.07);border-radius:12px;
+  padding:12px;display:grid;gap:9px}
+.invit .t{font-family:var(--banner);font-size:14px;letter-spacing:.02em}
+.invit .d{font-size:11.5px;opacity:.65;line-height:1.6}
+.invit .quoi{display:flex;gap:7px}
+.invit .quoi .bt{flex:1;text-align:center}
+
+/* Le choix du KOP où emmener quelqu'un, déplié sous sa ligne. */
+.kops{display:grid;gap:6px;padding:10px 12px 12px;border:1px solid var(--trait);border-top:0;
+  border-radius:0 0 12px 12px;background:rgba(0,0,0,.25);margin-top:-9px}
+.kops .bt{width:100%;text-align:left}
+.kops p{margin:0;font-size:11px;opacity:.55;line-height:1.6}
+
+h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;margin:22px 2px 9px}
+.vide{border:1px dashed var(--trait);border-radius:var(--r);padding:20px 16px;text-align:center;
+  font-size:12.5px;line-height:1.8;opacity:.85}
+.vide a{color:var(--projo)}
+.err{border:1px solid rgba(224,64,44,.4);background:rgba(224,64,44,.08);border-radius:9px;
+  padding:10px 12px;font-size:12px;margin:10px 0;line-height:1.6}
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h,62px) + 18px);transform:translateX(-50%);
+  background:#171C23;border:1px solid var(--trait);border-radius:9px;padding:11px 16px;font-size:12.5px;
+  z-index:60;display:none;max-width:86%;text-align:center;line-height:1.5}
+.toast.on{display:block;animation:monte .3s}
+@keyframes monte{from{opacity:0;transform:translate(-50%,10px)}}
+</style>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+</head>
+<body>
+<main id="app">
+  <h1>MES AMIS</h1>
+  <div class="sub">CEUX QUI POUSSENT AVEC TOI</div>
+
+  <div class="onglets" id="onglets">
+    <button class="onglet on" data-vue="amis">AMIS</button>
+    <button class="onglet" data-vue="demandes">DEMANDES</button>
+    <button class="onglet" data-vue="trouver">TROUVER</button>
+  </div>
+
+  <div id="corps"><div class="vide">Chargement…</div></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="/fanzzy-art.js"></script>
+<script>
+/* =======================================================================
+   Les amis.
+
+   Trois vues d'une même liste : ceux qu'on a, ceux qui attendent une
+   réponse, ceux qu'on pourrait avoir. Elles viennent d'un seul appel — ces
+   listes sont courtes, elles s'affichent ensemble, et une page qui les
+   charge séparément montre ses onglets les uns après les autres.
+
+   Rien n'est décidé ici. La page envoie un geste et **réaffiche ce que le
+   serveur répond** : c'est lui qui sait si une amitié existe déjà, si un
+   refus est trop récent, si quelqu'un suit le club du KOP. Une page qui
+   déciderait de son côté finirait par annoncer l'inverse de la base.
+   ======================================================================= */
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
+  (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+/* Un refus doit dire **sa cause**, pas « impossible ». Un joueur qui lit
+   « erreur » ne peut rien faire ; un joueur qui lit « tu es déjà dans un KOP
+   de ce club » sait exactement quoi. */
+const MESSAGES = {
+  'amis.error.soi_meme':      'On ne peut pas se demander soi-même en ami.',
+  'amis.error.inconnu':       'Ce joueur n’existe plus.',
+  'amis.error.deja_amis':     'Vous êtes déjà amis.',
+  'amis.error.deja_demande':  'Ta demande est déjà partie. À lui de répondre.',
+  'amis.error.pas_de_demande':'Cette demande n’existe plus.',
+  'amis.error.pas_a_toi':     'C’est à l’autre de répondre, pas à toi.',
+  'amis.error.pas_de_lien':   'Il n’y a rien à retirer.',
+  'amis.error.pas_ton_kop':   'Tu n’es pas membre de ce KOP.',
+  'amis.error.pas_son_club':  'Il ne suit pas le club de ce KOP : il ne pourrait pas entrer.',
+  'amis.error.deja_membre':   'Il est déjà dans ce KOP.',
+  'amis.error.pas_invite':    'Cette invitation n’existe plus.',
+  'amis.error.kop_indisponible':'Les KOP ne répondent pas pour l’instant.',
+  'kop.error.pas_ton_club':   'Tu ne suis pas ce club. Suis-le d’abord depuis « Mes clubs ».',
+  'kop.error.deja_membre':    'Tu es déjà dans un KOP de ce club. On n’en a qu’un par club.',
+  'kop.error.inconnu':        'Ce KOP n’existe plus.',
+};
+
+/** Le refus « trop récent » porte un nombre de jours : il se compose à part. */
+function dire(e) {
+  if (e?.code === 'amis.error.refus_recent') {
+    const j = e.jours ?? 0;
+    return `Il a décliné. Tu pourras redemander dans ${j} jour${j > 1 ? 's' : ''}.`;
+  }
+  return MESSAGES[e?.code] ?? 'Le serveur a refusé ce geste.';
+}
+
+async function api(chemin, { method = 'GET', body } = {}) {
+  const r = await fetch('/api/amis' + chemin, {
+    method, credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
+  const json = await r.json().catch(() => ({}));
+  if (json?.error) throw Object.assign(new Error(json.error), { code: json.error, ...json });
+  return json;
+}
+
+const S = {
+  vue: 'amis',
+  amis: [], recues: [], envoyees: [], invitations: [],
+  gens: [],            // les suggestions
+  kops: [],            // mes KOP, pour pouvoir y inviter
+  deplie: null,        // l'ami dont on choisit le KOP
+};
+
+function toast(txt) {
+  const t = $('toast'); t.textContent = txt; t.className = 'toast on';
+  clearTimeout(t._t); t._t = setTimeout(() => { t.className = 'toast'; }, 3200);
+}
+
+/* --------------------------------------------------------- chargement */
+
+async function charger() {
+  try {
+    const [tableau, suggestions, mesKops] = await Promise.all([
+      api('/'),
+      api('/suggestions'),
+      // Les KOP ne sont pas indispensables : sans eux, on peut toujours
+      // ajouter des amis. On ne fait donc pas tomber la page avec eux.
+      fetch('/api/kop/miens', { credentials: 'same-origin' })
+        .then((r) => r.json()).catch(() => ({ kops: [] })),
+    ]);
+    Object.assign(S, tableau);
+    S.gens = suggestions.gens ?? [];
+    S.kops = mesKops.kops ?? [];
+    rendre();
+  } catch (e) {
+    if (e.message === 'auth') return;
+    $('corps').innerHTML = `<div class="err">Les amis n’ont pas pu être chargés.<br>
+      <span style="opacity:.7">${esc(e.code ?? e.message)}</span></div>`;
+  }
+}
+
+/* ------------------------------------------------------------- rendu */
+
+/** L'avatar : le Fanzzy équipé si on le connaît, l'initiale sinon. */
+function avatar(g) {
+  const buste = window.FZART?.adresse?.(g.fanzzy, 'buste');
+  return buste
+    ? `<span class="pastille-nom"><img src="${buste}" alt=""
+         onerror="this.closest('.pastille-nom').textContent='${
+           esc((g.pseudo ?? '?').charAt(0).toLowerCase())}'"></span>`
+    : `<span class="pastille-nom">${esc((g.pseudo ?? '?').charAt(0).toLowerCase())}</span>`;
+}
+
+const ligne = (g, boutons, dessous = '') => `
+  <div class="gars" data-id="${esc(g.id)}">
+    ${avatar(g)}
+    <span class="qui"><b>${esc(g.pseudo)}</b>${dessous}</span>
+    <span class="quoi">${boutons}</span>
+  </div>`;
+
+function vueAmis() {
+  if (!S.amis.length) {
+    return `<div class="vide">Tu n’as encore personne.<br>
+      Ouvre <b>TROUVER</b> : les supporters de tes clubs t’y attendent.</div>`;
+  }
+  return `<div class="gens">${S.amis.map((g) => {
+    const choix = S.deplie === g.id ? kopsPour(g) : '';
+    return ligne(g,
+      `${S.kops.length ? `<button class="bt" data-kop="${esc(g.id)}">KOP</button>` : ''}
+       <button class="bt non" data-retirer="${esc(g.id)}">RETIRER</button>`)
+      + choix;
+  }).join('')}</div>`;
+}
+
+/** Le choix du KOP où emmener quelqu'un. */
+function kopsPour(g) {
+  return `<div class="kops">
+    <p>Dans quel KOP ?</p>
+    ${S.kops.map((k) => `<button class="bt" data-inviter="${esc(g.id)}"
+        data-kopid="${esc(k.id)}">${esc(k.nom)} · ${esc(k.team_nom ?? '')}</button>`).join('')}
+  </div>`;
+}
+
+function vueDemandes() {
+  const rien = !S.recues.length && !S.envoyees.length && !S.invitations.length;
+  if (rien) {
+    return `<div class="vide">Rien n’attend de réponse.</div>`;
+  }
+  let html = '';
+  if (S.invitations.length) {
+    html += '<h2>ON T’INVITE DANS UN KOP</h2>' + S.invitations.map((i) => `
+      <div class="invit">
+        <div class="t">${esc(i.nom)}</div>
+        <div class="d">${esc(i.parQui ?? 'Quelqu’un')} t’invite · ${esc(i.club ?? '')}
+          · ${i.membres} membre${i.membres > 1 ? 's' : ''} · ${i.pot} au pot</div>
+        <div class="quoi">
+          <button class="bt oui" data-kopoui="${esc(i.kopId)}">REJOINDRE</button>
+          <button class="bt non" data-kopnon="${esc(i.kopId)}">NON MERCI</button>
+        </div>
+      </div>`).join('');
+  }
+  if (S.recues.length) {
+    html += '<h2>ON TE DEMANDE</h2><div class="gens">' + S.recues.map((g) => ligne(g,
+      `<button class="bt oui" data-oui="${esc(g.id)}">ACCEPTER</button>
+       <button class="bt non" data-non="${esc(g.id)}">NON</button>`)).join('') + '</div>';
+  }
+  if (S.envoyees.length) {
+    html += '<h2>TU AS DEMANDÉ</h2><div class="gens">' + S.envoyees.map((g) => ligne(g,
+      `<button class="bt" data-retirer="${esc(g.id)}">ANNULER</button>`,
+      '<small>en attente de sa réponse</small>')).join('') + '</div>';
+  }
+  return html;
+}
+
+function vueTrouver() {
+  if (!S.gens.length) {
+    return `<div class="vide">Personne de neuf pour l’instant.<br>
+      Suis d’autres clubs depuis <a href="/equipes">Mes clubs</a> :
+      tu croiseras d’autres supporters.</div>`;
+  }
+  return `<div class="gens">${S.gens.map((g) => ligne(g,
+    `<button class="bt oui" data-demander="${esc(g.id)}">AJOUTER</button>`,
+    `<span class="clubs">${(g.clubs ?? []).map((c) => `<span>${esc(c)}</span>`).join('')}</span>`,
+  )).join('')}</div>`;
+}
+
+function rendre() {
+  document.querySelectorAll('.onglet').forEach((b) =>
+    b.classList.toggle('on', b.dataset.vue === S.vue));
+
+  // La pastille compte **ce qui attend une réponse de toi**, pas ce que tu as
+  // envoyé : une demande partie n'appelle aucun geste.
+  const attend = S.recues.length + S.invitations.length;
+  const onglet = document.querySelector('[data-vue="demandes"]');
+  onglet.querySelector('.pastille')?.remove();
+  if (attend) {
+    onglet.insertAdjacentHTML('beforeend', `<span class="pastille">${attend}</span>`);
+  }
+
+  $('corps').innerHTML = S.vue === 'amis' ? vueAmis()
+    : S.vue === 'demandes' ? vueDemandes() : vueTrouver();
+}
+
+/* ------------------------------------------------------------- gestes */
+
+$('onglets').onclick = (e) => {
+  const b = e.target.closest('[data-vue]');
+  if (!b) return;
+  S.vue = b.dataset.vue;
+  S.deplie = null;
+  rendre();
+};
+
+/**
+ * Un seul écouteur pour toute la page.
+ *
+ * Les listes se refont entièrement à chaque geste — c'est ce qui garantit
+ * qu'on affiche l'état du serveur et non celui qu'on espérait. Rebrancher
+ * dix boutons après chaque rendu finirait par en oublier un.
+ */
+$('corps').onclick = async (e) => {
+  const b = e.target.closest('button[data-oui],button[data-non],button[data-demander],'
+    + 'button[data-retirer],button[data-kop],button[data-inviter],'
+    + 'button[data-kopoui],button[data-kopnon]');
+  if (!b) return;
+  const d = b.dataset;
+
+  // Le dépliage du choix de KOP ne touche pas au serveur.
+  if (d.kop) { S.deplie = S.deplie === d.kop ? null : d.kop; rendre(); return; }
+
+  b.disabled = true;
+  try {
+    if (d.demander) { await api('/demande', { method:'POST', body:{ id: d.demander } });
+      toast('Demande envoyée.'); }
+    else if (d.oui) { await api('/reponse', { method:'POST', body:{ id: d.oui, ok:true } });
+      toast('Vous êtes amis.'); }
+    else if (d.non) { await api('/reponse', { method:'POST', body:{ id: d.non, ok:false } }); }
+    else if (d.retirer) { await api(`/${encodeURIComponent(d.retirer)}`, { method:'DELETE' }); }
+    else if (d.inviter) {
+      await api('/kop/inviter', { method:'POST', body:{ id: d.inviter, kopId: d.kopid } });
+      toast('Invitation envoyée.');
+      S.deplie = null;
+    } else if (d.kopoui) {
+      await api('/kop/reponse', { method:'POST', body:{ kopId: d.kopoui, ok:true } });
+      toast('Te voilà dans le KOP.');
+    } else if (d.kopnon) {
+      await api('/kop/reponse', { method:'POST', body:{ kopId: d.kopnon, ok:false } });
+    }
+    await charger();
+  } catch (err) {
+    if (err.message === 'auth') return;
+    b.disabled = false;
+    toast(dire(err));
+    // On recharge quand même : le refus vient souvent de ce que la page
+    // montrait un état périmé, et le garder à l'écran ferait réessayer.
+    await charger();
+  }
+};
+
+charger();
+</script>
+<script src="/fx.js" defer></script>
+<script src="/nav.js" defer></script>
+</body>
+</html>

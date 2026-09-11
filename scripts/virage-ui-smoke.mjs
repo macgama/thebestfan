@@ -45,12 +45,20 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_membres, kops,
+await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+  kop_bulletins, kop_votes, kop_bonus, kop_membres, kops,
   user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
   souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
   duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
   leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'souvenirs.sql', 'fanzzy.sql', 'tenues.sql']) {
+/* `stades.sql` en plus : le virage montre le Fanzzy **à l'âge atteint**, et
+   cet âge est la colonne `stage` de `user_fanzzy`. Sans elle, la requête lève
+   au moment d'entrer dans la tribune — c'est la panne la plus chère du projet,
+   celle d'un code en ligne qui attend de la base quelque chose qu'elle n'a
+   pas. Le garde-fou du démarrage la réclame déjà ; la suite doit monter le
+   même schéma que le serveur, sinon elle éprouve un jeu qui n'existe pas. */
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'fanzzy.sql',
+                 'tenues.sql', 'stades.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
@@ -59,7 +67,17 @@ await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
                  VALUES (?,?,?,'x')`, [U, 'virage-ui@ex.fr', 'Momo']);
 await raw.query(`INSERT INTO user_wallet (user_id, scarves, active_fanzzy)
                  VALUES (?, 100, 'V1')`, [U]);
-await raw.query(`INSERT INTO teams (id,name) VALUES (85,'FC Sion'),(91,'FC Bâle')`);
+/* Le Fanzzy équipé est **monté au second âge**, et c'est délibéré : la tribune
+   doit montrer le Meneur de chant, pas le Choriste. Au premier âge, une page
+   qui ignorerait complètement le stade passerait tous les contrôles. */
+await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies,stage)
+                 VALUES (?, 'V1', 1, 2)`, [U]);
+/* Le club du joueur a ses couleurs, lues une fois dans son blason. Elles sont
+   **volontairement sombres** : un bleu marine de blason, écrit tel quel sur le
+   noir de l'écran, ne se lit pas du tout. C'est le cas qu'on veut éprouver —
+   celui où la couleur juste donne un texte invisible. */
+await raw.query(`INSERT INTO teams (id,name,color1,color2) VALUES
+  (85,'FC Sion','#0B1E5B','#FFFFFF'),(91,'FC Bâle',NULL,NULL)`);
 await raw.query(`INSERT INTO leagues (id,name) VALUES (207,'Super League')`);
 await raw.query(`INSERT INTO user_follows (user_id,team_id) VALUES (?,85)`, [U]);
 
@@ -321,6 +339,188 @@ await page.click('#feuilleX');
 await wait(200);
 check('et le bouton de fermeture aussi',
   !(await page.$eval('#feuille', (n) => n.classList.contains('on'))));
+
+/* ------------------------------------------------------- le personnage
+
+ * Le virage avait le fil et le but réel ; il lui manquait le supporter. La
+ * corde bougeait toute seule au milieu d'un écran vide, et le Fanzzy que le
+ * joueur avait choisi n'apparaissait nulle part — pas plus au but réel qu'au
+ * moment de pousser.
+ *
+ * Ce qui se joue ici et qu'aucune lecture du code ne tranche :
+ *
+ *   1. **C'est le bon personnage, au bon âge.** Le serveur l'envoie résolu ;
+ *      la page n'a rien à recalculer, donc rien à se tromper.
+ *   2. **Il réagit.** Le but réel, la vidéo, le coup de sifflet : trois
+ *      moments qui le font changer d'état. La plupart des Fanzzy n'ont pas
+ *      leurs douze poses dessinées et gardent le même plein-pied — regarder
+ *      l'image ne prouverait donc rien, on lit l'état de la scène.
+ *   3. **Il ne coûte pas un chant.** Il occupe le bas de la tribune, là où le
+ *      doigt passe : un personnage qui intercepte un appui vole un geste.
+ */
+{
+  const monte = await page.waitForSelector('#fzs .tbf-scene', { timeout: 5000 })
+    .then(() => true).catch(() => false);
+  check('le Fanzzy est monté dans la tribune', monte);
+
+  const arrive = await page.evaluate(() => new Promise((r) => {
+    const t0 = Date.now();
+    const voir = () => {
+      const i = document.querySelector('#fzs .tbf-pose.on');
+      if (i?.naturalWidth > 0) return r(true);
+      if (Date.now() - t0 > 12000) return r(false);
+      setTimeout(voir, 80);
+    };
+    voir();
+  }));
+  check('et son dessin est vraiment arrivé', arrive);
+
+  const p = await page.evaluate(() => ({
+    fanzzy: S.you?.fanzzy ?? null,
+    src: document.querySelector('#fzs .tbf-pose.on')?.getAttribute('src') ?? '',
+    souffle: getComputedStyle(document.querySelector('#fzs .tbf-souffle')).animationName,
+    // `elementFromPoint` respecte `pointer-events`, contrairement à
+    // `elementsFromPoint` qui rend tout ce qui se trouve sous le point et
+    // rendrait ce contrôle incapable d'échouer.
+    sous: (() => {
+      const r = document.getElementById('fzs').getBoundingClientRect();
+      const n = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return n?.closest('#fzs') ? 'le personnage' : (n?.className ?? 'rien');
+    })(),
+    dedans: (() => {
+      const f = document.getElementById('fzs').getBoundingClientRect();
+      const c = document.getElementById('rope').getBoundingClientRect();
+      return f.bottom <= c.bottom + 1 && f.left >= c.left - 1 && f.right <= c.right + 1;
+    })(),
+  }));
+
+  check('le serveur donne le personnage, pas seulement ses barèmes',
+    p.fanzzy?.id === 'V1');
+  check('à l’âge atteint',
+    p.fanzzy?.evo === 2 && /Meneur/.test(p.fanzzy?.nom ?? '')
+    || (console.log('        il envoie :', JSON.stringify(p.fanzzy)), false));
+  /* Le cri manquait entièrement : la page appelait `S.you.cri`, cette clé
+     n'était jamais envoyée, et la vidéo du Cri ne s'est donc jamais jouée
+     depuis le virage. Une faute muette — rien ne se casse quand une
+     récompense n'arrive pas. */
+  check('et son cri, qui déclenche la vidéo d’un geste parfait',
+    Boolean(p.fanzzy?.cri));
+  check('le dessin montré est celui du second âge',
+    /V2/.test(p.src) || (console.log('        il montre :', p.src), false));
+  check('il respire', p.souffle !== 'none' && p.souffle !== '');
+  check('il n’intercepte pas les appuis de la tribune',
+    p.sous !== 'le personnage' || (console.log('        sous le doigt :', p.sous), false));
+  check('il tient dans la corde, au-dessus de la main', p.dedans);
+}
+
+/* ------------------------------------------------- ce qui le fait réagir */
+
+/* Nommée `laScene` et non `scene` : dans un `page.evaluate`, le corps est
+   évalué **dans la page**, où `scene` désigne la scène du virage. Deux noms
+   identiques de part et d'autre du navigateur ne se mélangent pas, mais se
+   relisent très mal. */
+const laScene = () => page.evaluate(() => ({
+  // `scene` est la scène de la page : un `const` de premier niveau d'un script
+  // classique est bien visible ici, comme `S` et `minuteTexte` plus haut.
+  etat: scene?.etat?.() ?? null,
+  titre: document.querySelector('.tbf-moment b')?.textContent.trim() ?? '',
+  sous: document.querySelector('.tbf-moment small')?.textContent.trim() ?? '',
+  on: document.querySelector('.tbf-moment')?.classList.contains('on') ?? false,
+  duree: document.querySelector('.tbf-moment')?.style.getPropertyValue('--mt') ?? '',
+}));
+
+{
+  /* Un vrai but de son club. Le buteur et la minute viennent de l'événement
+     lui-même — aucun appel de plus à l'API pour les afficher. */
+  virage.realGoal({ fixtureId: 8001, teamId: 85, minute: 78, player: 'Sarr', score: [4, 1] });
+  await wait(600);
+  const b = await laScene();
+  check('un but réel le fait exulter', b.etat === 'but');
+  check('« GOAL ! » s’affiche', /GOAL/.test(b.titre));
+  check('avec le buteur et la minute',
+    /Sarr/.test(b.sous) && /78/.test(b.sous)
+    || (console.log('        il dit :', b.sous), false));
+  /* Quinze secondes, et c'est délibérément long : le temps de sortir le
+     téléphone de sa poche, une célébration de deux secondes et demie n'a
+     laissé aucune trace. La durée vient de `fx.js`, une seule fois pour tout
+     le jeu. */
+  check('et le moment tient quinze secondes',
+    b.duree.trim() === '15000ms'
+    || (console.log('        il tient', b.duree), false));
+
+  /* ------------------------------------------- aux couleurs du club
+
+   * L'API ne donne pas les couleurs des équipes, elle donne un écusson. On les
+   * en extrait une fois, on n'en garde que deux chaînes de sept caractères, et
+   * « GOAL ! » s'écrit dans la couleur du club qui vient de marquer.
+   *
+   * Le piège est là et pas ailleurs : ces couleurs sont faites pour du papier
+   * blanc. Le bleu marine du blason, écrit sur le noir de l'écran, est un texte
+   * invisible — un but célébré que personne ne voit. `FX.lisible` l'éclaircit
+   * en gardant sa teinte, et c'est ce que ce contrôle mesure.
+   */
+  {
+    const teinte = await page.evaluate(() => {
+      const mc = document.querySelector('.tbf-moment').style.getPropertyValue('--mc').trim();
+      const m = /^#([0-9a-f]{6})$/i.exec(mc);
+      if (!m) return { mc, clarte: null, bleuDominant: null };
+      const n = parseInt(m[1], 16);
+      const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+      return {
+        mc,
+        clarte: (Math.max(r, g, b) + Math.min(r, g, b)) / 510,
+        // La teinte est conservée : c'est encore le bleu du club, pas un
+        // blanc passe-partout. Un éclaircissement qui perd la teinte ne
+        // servirait à rien — autant garder l'or du jeu.
+        bleuDominant: b > r + 20 && b > g + 20,
+      };
+    });
+    check('le but s’écrit dans la couleur du club',
+      /^#[0-9A-F]{6}$/i.test(teinte.mc)
+      || (console.log('        il s’écrit en', teinte.mc), false));
+    check('éclaircie assez pour se lire sur le noir',
+      (teinte.clarte ?? 0) > 0.5
+      || (console.log(`        clarté ${teinte.clarte?.toFixed(2)}`), false));
+    check('sans cesser d’être la couleur du club', teinte.bleuDominant === true);
+
+    /* Et la garde en face : un club dont le blason n'a pas encore été lu n'a
+       pas de couleur du tout. Il ne doit pas écrire en « undefined », il doit
+       garder l'or du jeu. */
+    const defaut = await page.evaluate(() => couleurDuCamp(S.you.side ^ 1));
+    check('un club sans couleur garde celle du jeu', defaut === 'var(--projo)');
+
+    /* `lisible` ne devine pas : ce qui n'est pas une couleur ressort tel quel,
+       et une couleur déjà claire n'est pas retouchée. */
+    const brut = await page.evaluate(() => ({
+      pasUneCouleur: FX.lisible('var(--projo)'),
+      dejaClaire: FX.lisible('#F5C33B'),
+    }));
+    check('ce qui n’est pas une couleur n’est pas deviné',
+      brut.pasUneCouleur === 'var(--projo)');
+    check('et une couleur déjà claire n’est pas retouchée',
+      brut.dejaClaire === '#F5C33B');
+  }
+
+  /* Le but refusé. Sans état de déception ni un mot sur la cause, le score se
+     corrige tout seul à l'écran et le joueur y voit un bug. */
+  virage.matchEvents(8001, [{ type: 'Var', detail: 'Goal cancelled',
+    teamId: 85, minute: 79, player: 'Sarr' }]);
+  await wait(500);
+  const v = await laScene();
+  check('la vidéo lui coupe la célébration', v.etat === 'decision');
+  check('et le bandeau dit que le but est refusé',
+    /REFUS/.test(v.titre) || (console.log('        il dit :', v.titre), false));
+
+  /* Le coup de sifflet final. Le personnage doit **cesser de pousser** : sur
+     l'accueil, il a continué après la fin du match pendant des semaines,
+     parce qu'une minuterie oubliait de se vider. */
+  virage.matchStatus(8001, { status: 'FT', elapsed: 90, homeGoals: 4, awayGoals: 1 });
+  await wait(500);
+  const f = await laScene();
+  check('le coup de sifflet final le fait fêter la victoire',
+    f.etat === 'victoire' && /VICTOIRE/.test(f.titre)
+    || (console.log('        état', f.etat, '·', f.titre), false));
+}
 
 check('aucune erreur de script sur le virage',
   erreurs.length === 0 || (console.log('    ', erreurs.join(' / ')), false));

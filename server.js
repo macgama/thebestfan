@@ -16,6 +16,7 @@ import { createSocketAuthenticator } from './src/server/auth/socket.js';
 import { verifierSchema, messageDeManque } from './src/server/auth/schema.js';
 import { createClient } from './src/server/football/client.js';
 import { createFootball } from './src/server/football/routes.js';
+import { createCouleurs } from './src/server/football/couleurs.js';
 import { createSouvenirs } from './src/server/souvenirs/index.js';
 import { createFanzzy } from './src/server/fanzzy/index.js';
 import { charger as chargerCatalogue } from './src/server/fanzzy/catalogue.js';
@@ -28,6 +29,7 @@ import { createClassements } from './src/server/classements/index.js';
 import { createDecks } from './src/server/deck/index.js';
 import { createNiveau } from './src/server/niveau/index.js';
 import { createKop } from './src/server/kop/index.js';
+import { createAmis } from './src/server/amis/index.js';
 import { createAdmin } from './src/server/admin/index.js';
 import { createNvN } from './src/server/nvn/index.js';
 
@@ -75,6 +77,7 @@ let classements = null;
 let decks = null;
 let niveau = null;
 let kop = null;
+let amis = null;
 let admin = null;
 let nvn = null;
 let google = null;
@@ -165,6 +168,14 @@ if (process.env.DATABASE_URL) {
     app.use('/api/kop', kop.router);
     console.log('KOP actifs');
 
+    /* ---- les amis
+       Monté juste après le KOP, et il en dépend : accepter une invitation
+       passe par `kop.rejoindre`, pour que les règles d’entrée — suivre le
+       club, un seul KOP par club — restent écrites à un seul endroit. */
+    amis = createAmis({ pool, requireAuth: auth.requireAuth, kop });
+    app.use('/api/amis', amis.router);
+    console.log('amis actifs');
+
     // ---- decks de duel et choix du match support
     decks = createDecks({ pool, requireAuth: auth.requireAuth, niveau });
     app.use('/api/deck', decks.router);
@@ -217,8 +228,16 @@ if (process.env.DATABASE_URL) {
     app.use('/api/me', onboarding.router);
     console.log('inscription et inventaire actifs');
 
+    /* ---- les couleurs des clubs
+       Extraites du blason, une fois par club, hors quota — c'est le CDN de
+       l'API, pas l'API. Elles teignent « GOAL ! » aux couleurs de l'équipe.
+       Rien du blason lui-même n'est conservé : deux couleurs, et c'est tout. */
+    const couleurs = createCouleurs({ pool });
+    console.log('couleurs des clubs actives');
+
     // ---- Grand Virage (tir a la corde en direct)
-    virage = createVirage({ pool, io, requireAuth: auth.requireAuth, souvenirs, fanzzy, kop });
+    virage = createVirage({ pool, io, requireAuth: auth.requireAuth,
+      souvenirs, fanzzy, kop, couleurs });
     app.use('/api/virage', virage.router);
     console.log('grand virage actif');
 
@@ -390,6 +409,7 @@ app.get('/compte', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'c
 app.get('/diagnostic', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'diagnostic.html')));
 app.get('/equipes', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'equipes.html')));
 app.get('/kop', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'kop.html')));
+app.get('/amis', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'amis.html')));
 app.get('/deck', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'deck.html')));
 app.get('/duel-nvn', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'duel-nvn.html')));
 app.get('/fanzzy', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'fanzzy.html')));

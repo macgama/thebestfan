@@ -43,8 +43,8 @@ const mysql = await import('mysql2/promise');
  *
  * D'où le contrôle juste en dessous : la liste doit couvrir tout le dossier.
  */
-const ORDRE = ['auth', 'football', 'minutes', 'duel', 'souvenirs', 'fanzzy', 'teletext',
-  'inventaire', 'skins', 'tenues', 'deck', 'admin', 'kop', 'niveau', 'raretes', 'stades'];
+const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', 'fanzzy', 'teletext',
+  'inventaire', 'skins', 'tenues', 'deck', 'admin', 'kop', 'amis', 'niveau', 'raretes', 'stades'];
 
 {
   const surLeDisque = (await readdir(SQL)).filter((f) => f.endsWith('.sql'))

@@ -71,7 +71,7 @@ curl -s https://thebestfan.online/healthz
 
 ```bash
 cd ~/sites/thebestfan.online
-for f in auth football minutes duel souvenirs fanzzy teletext inventaire skins tenues deck admin kop \
+for f in auth football minutes couleurs duel souvenirs fanzzy teletext inventaire skins tenues deck admin kop amis \
          niveau raretes stades; do
   mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
 done
@@ -82,6 +82,12 @@ reprennent des données. Ils n'entrent donc pas dans le compte ci-dessous, ils
 sont rejouables, et l'ordre compte entre eux — `stades` lit les lignées telles
 que `raretes` les a rangées.
 
+- `couleurs.sql` ajoute `color1`, `color2` et `colors_at` à `teams` : les deux
+  couleurs du club, extraites une fois de son blason. Le dessin n'est ni copié
+  ni conservé — seulement deux chaînes de sept caractères, qui teignent
+  « GOAL ! » aux couleurs de l'équipe. Le remplissage se fait tout seul, au fil
+  des matchs affichés ; `node scripts/couleurs-equipes.mjs` le force d'un coup
+  pour tous les clubs connus.
 - `minutes.sql` ajoute `elapsed_extra` à `fixtures` : le temps additionnel,
   que l’API sert à part. Sans lui, une page ne peut ni afficher « 90+3 » ni
   savoir qu’un match a dépassé son terme — d’où des rencontres restées
@@ -105,7 +111,7 @@ que `raretes` les a rangées.
   `node scripts/stades-smoke.mjs` la rejoue sur une collection fabriquée avant
   que tu la lances ici.
 
-Contrôle : `SHOW TABLES;` doit en lister **34**.
+Contrôle : `SHOW TABLES;` doit en lister **36**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`

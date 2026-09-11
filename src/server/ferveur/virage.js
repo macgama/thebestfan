@@ -212,14 +212,22 @@ export class VirageRoom {
 
   /* ------------------------------------------------------------ membres */
 
-  join(userId, { side, name, mods = {}, neutre = false }) {
+  /**
+   * `perso` : le Fanzzy que le joueur emmène — identifiant, nom, âge atteint,
+   * cri. Il n'entre dans aucun calcul, il s'affiche : c'est le personnage qui
+   * pousse à l'écran et qui exulte au but réel. Il est séparé de `mods` parce
+   * que `mods` est un barème et que celui-ci est un dessin — les mêler ferait
+   * prendre un nom de personnage pour un multiplicateur au premier oubli.
+   */
+  join(userId, { side, name, mods = {}, neutre = false, perso = null }) {
     const m = this.members.get(userId) ?? {
-      side: side ? 1 : 0, name, mods, neutre,
+      side: side ? 1 : 0, name, mods, neutre, perso,
       breath: 40, ferveur: 0, lastPush: 0, fatigueUntil: 0, joined: Date.now(),
     };
     m.side = side ? 1 : 0;
     m.name = name;
     m.mods = mods;
+    m.perso = perso;
     // `neutre` : il soutient un club qu'il ne suit pas. Sa ferveur vaut moitié.
     m.neutre = neutre;
     this.members.set(userId, m);
@@ -489,6 +497,12 @@ export class VirageRoom {
         // note. Sans ça il dessinait la pulsation de base et le porteur
         // d'équipement tapait à côté sans jamais comprendre pourquoi.
         gestes: resoudreGeste(m.mods),
+        /* Le Fanzzy à l'écran. Il manquait entièrement : la page appelait
+           `S.you.cri` pour lancer le Cri après un geste parfait, et cette clé
+           n'a jamais été envoyée — la vidéo ne s'est donc jamais jouée depuis
+           le virage. Le cri vit maintenant avec le reste du personnage, sous
+           un seul nom, plutôt qu'en clé isolée qu'on oublie de remplir. */
+        fanzzy: m.perso,
         ...this.rankOf(userId),
       } : null,
       cards: Object.entries(CARDS).map(([id, c]) => ({ id, ...c })),

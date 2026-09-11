@@ -28,6 +28,38 @@
     bleu: '#3C82E8', violet: '#8257DA', craie: '#F2EEE4',
   };
 
+  /**
+   * Une couleur de club, rendue lisible sur le fond sombre du jeu.
+   *
+   * Les couleurs viennent des blasons, et les blasons sont faits pour du
+   * papier blanc : le bleu marine d'un club, écrit sur le noir de l'écran, ne
+   * se lit pas du tout. On l'éclaircit jusqu'à un plancher de clarté, en
+   * gardant sa teinte — c'est encore la couleur du club, simplement portée
+   * par un tissu plus clair.
+   *
+   * Le gris très désaturé, lui, remonte vers la craie plutôt que vers un gris
+   * moyen : un club noir et blanc doit écrire en blanc, pas en gris de pluie.
+   *
+   * @param {string} hex  « #RRGGBB », tel que le serveur l'envoie.
+   * @param {number} [plancher] clarté minimale, de 0 à 1.
+   * @returns {string} la couleur éclaircie, ou l'entrée telle quelle si elle
+   *   n'est pas lisible comme une couleur — on ne devine pas.
+   */
+  function lisible(hex, plancher = 0.56) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex ?? '').trim());
+    if (!m) return hex;
+    const n = parseInt(m[1], 16);
+    let [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const l = (max + min) / 510;
+    if (l >= plancher) return `#${m[1].toUpperCase()}`;
+    // Un mélange vers le blanc plutôt qu'une multiplication : il préserve la
+    // teinte, là où monter chaque canal du même facteur vire au délavé.
+    const part = Math.min(0.86, (plancher - l) / Math.max(0.08, 1 - l));
+    [r, g, b] = [r, g, b].map((v) => Math.round(v + (255 - v) * part));
+    return '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+  }
+
   /* ------------------------------------------------------------- styles */
 
   const css = `
@@ -362,6 +394,9 @@
      * longtemps.
      */
     MOMENT: 15000,
+
+    /** Une couleur de club, éclaircie jusqu'à se lire sur le fond du jeu. */
+    lisible,
 
     particules, onde, flash, secousse, titre, nombre, animer, reagir,
 

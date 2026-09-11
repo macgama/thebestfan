@@ -722,5 +722,39 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
     return f ?? null;
   }
 
-  return { router, wallet, collection, stades, openPack, evolve, activeFanzzy, fiche };
+  /**
+   * Le Fanzzy équipé **tel qu'il est à l'écran** : l'identifiant du
+   * personnage, l'âge atteint, le nom et le cri de cet âge.
+   *
+   * `activeFanzzy`, juste au-dessus, rend la racine et sert aux barèmes.
+   * Celui-ci sert à l'affichage, et les deux ne peuvent pas être une seule
+   * fonction : le barème suit la racine — c'est l'équilibrage d'aujourd'hui —
+   * tandis que le dessin, le nom et le cri suivent l'âge atteint. Les
+   * confondre ferait pousser un Capo avec les chiffres du Choriste, ou
+   * afficher le Choriste à quelqu'un qui a payé quatre-vingt-dix écharpes
+   * pour ne plus le voir.
+   */
+  async function personnageActif(userId) {
+    const w = (await q(`SELECT active_fanzzy FROM user_wallet WHERE user_id = ?`, [userId]))[0];
+    if (!w?.active_fanzzy) return null;
+    const id = racineDe(w.active_fanzzy);
+    const r = (await q(`SELECT stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
+      [userId, id]))[0];
+    const evo = Math.max(1, Number(r?.stage) || 1);
+    // `auStade` peut ne rien rendre : cent cinquante-deux personnages n'ont
+    // qu'un âge écrit, et une base qui annonce un stade 2 inexistant ne doit
+    // pas faire disparaître le personnage de l'écran.
+    const age = auStade(id, evo) ?? parIdentifiant(id);
+    if (!age) return null;
+    /* Deux identifiants, et les confondre donne le mauvais dessin : `id` est
+       la lignée — c'est sous ce nom que sont rangés les douze états — tandis
+       que `age` est la carte du catalogue, sous laquelle est rangée
+       l'illustration en pied. Le Meneur de chant, c'est `V1` avec `evo: 2`
+       pour ses états, et `V2` pour son dessin. */
+    return { id, age: age.id, evo, nom: age.nom,
+      cri: age.cri?.label ?? null, rar: age.rar ?? null };
+  }
+
+  return { router, wallet, collection, stades, openPack, evolve, activeFanzzy,
+    personnageActif, fiche };
 }

@@ -693,6 +693,21 @@ const entrer = () => rejouer('arrive');
  * quinze secondes arrivent, et c'est le dernier qui compte : une file
  * d'attente ferait célébrer le premier alors que le second est déjà tombé.
  */
+/**
+ * La couleur du club, telle qu'on peut l'écrire à l'écran.
+ *
+ * Elle vient du blason, extrait une fois côté serveur — deux couleurs par
+ * club, et rien d'autre du dessin. Deux gardes, chacune pour une faute qu'on
+ * ne voit qu'en direct : un club dont le blason n'a pas encore été lu n'a pas
+ * de couleur, et on garde l'or du jeu ; un bleu marine de blason, écrit sur le
+ * noir de l'écran, ne se lit pas — `FX.lisible` l'éclaircit sans lui changer
+ * de teinte.
+ */
+function couleurDuClub(m, domicile, defaut = 'var(--projo)') {
+  const c = (domicile ? m.homeColors : m.awayColors) ?? [];
+  return c[0] ? (window.FX?.lisible?.(c[0]) ?? c[0]) : defaut;
+}
+
 function moment(etat, texte, couleur = 'var(--projo)', sous = '') {
   const ms = window.FX?.MOMENT ?? 15000;
   if (etat) pose(etat, ms);
@@ -1043,7 +1058,7 @@ async function jsonp(url, options) {
              suivant, le nom quelques secondes plus tard. On annonce donc le
              but tout de suite et on complète — plutôt que d'attendre un nom
              qui ne viendra peut-être jamais. */
-          const cle = moment('but', 'Goal !');
+          const cle = moment('but', 'Goal !', couleurDuClub(m, jeSuisDomicile));
           buteurDe(m.id, monClub).then((qui) => preciserMoment(cle, qui));
           sauter();
           window.FX?.son?.('butReel');
