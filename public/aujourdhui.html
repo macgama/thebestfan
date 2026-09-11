@@ -37,10 +37,16 @@ input:focus{outline:none;border-color:var(--projo)}
 
 .liste{flex:1;padding:0 12px 24px}
 .ligue{margin-top:14px}
+/* L’en-tête est un lien vers la page de la compétition. Il en a l’air : un
+   chevron à droite, et il s’enfonce à l’appui — sans quoi personne ne
+   devine qu’on peut le toucher. */
 .ligue .t{display:flex;align-items:center;gap:8px;padding:6px 6px 8px;font-family:var(--banner);
   font-size:11.5px;letter-spacing:.13em;opacity:.55}
 .ligue .t .pays{opacity:.5;font-size:10px;letter-spacing:.06em;font-family:var(--ui)}
 .ligue .t .sep{flex:1;height:1px;background:rgba(242,238,228,.1)}
+.ligue .t{text-decoration:none;color:inherit;cursor:pointer}
+.ligue .t:active{transform:translateY(1px)}
+.ligue .t .fl{opacity:.55;font-size:13px;flex:none}
 .ligue.mien .t{opacity:1;color:var(--projo)}
 
 .m{display:flex;align-items:center;gap:9px;padding:11px 8px;border-radius:9px;cursor:pointer;
@@ -82,6 +88,32 @@ input:focus{outline:none;border-color:var(--projo)}
 .f .etat{text-align:center;font-family:var(--banner);font-size:13px;letter-spacing:.1em;
   margin-top:6px;color:var(--flare)}
 .f .etat.calme{color:inherit;opacity:.5}
+/* Les deux portes du jeu, depuis un match : la tribune et le duel. Elles
+   manquaient — on regardait un match en direct sans qu’aucun chemin ne mène
+   à l’écran fait pour le vivre. */
+.f .allers{display:flex;gap:9px;margin:16px 0 4px}
+.f .aller{flex:1;border-radius:12px;padding:11px 10px 10px;text-align:center;
+  text-decoration:none;color:inherit;font-family:var(--banner);font-size:13px;
+  letter-spacing:.07em;background:rgba(16,22,31,.95);
+  box-shadow:0 4px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(242,238,228,.12);
+  transition:transform .1s,box-shadow .1s}
+.f .aller:active{transform:translateY(4px);box-shadow:none}
+.f .aller small{display:block;font-family:var(--ui);font-size:9.5px;letter-spacing:.04em;
+  opacity:.6;margin-top:4px}
+/* Éteint plutôt qu’absent : un bouton qui disparaît laisse croire qu’on a mal
+   vu, un bouton éteint qui dit « pendant le match seulement » se comprend. */
+.f .aller.eteint{opacity:.4;pointer-events:none}
+
+/* Le nom de la compétition mène à sa page, ici aussi. */
+.f .aff .lg{text-decoration:none;color:inherit;display:inline-block}
+
+/* Le Fanzzy qui regarde. Dans le coin, au-dessus du contenu mais
+   transparent aux doigts : il ne doit jamais empêcher de faire défiler la
+   liste des événements qu’il commente. */
+#fwatch{position:absolute;left:6px;bottom:calc(var(--nav-h,62px) + 6px);
+  width:96px;height:150px;z-index:3;pointer-events:none}
+#fwatch[hidden]{display:none}
+
 .f .infos{display:flex;gap:8px;margin-top:16px;font-size:11px;opacity:.55;justify-content:center;
   flex-wrap:wrap}
 .f .infos span{border:1px solid rgba(242,238,228,.12);border-radius:999px;padding:4px 10px}
@@ -147,7 +179,20 @@ input:focus{outline:none;border-color:var(--projo)}
   <div class="maj" id="maj"></div>
 </main>
 
-<div id="fiche"><div class="f" id="fcorps"></div></div>
+<div id="fiche">
+  <div class="f" id="fcorps"></div>
+  <!-- Le Fanzzy qui regarde le match. Hors du corps, qui se redessine à
+       chaque relecture : dedans, il rechargerait son dessin toutes les
+       trente secondes. -->
+  <div id="fwatch" hidden></div>
+</div>
+<!-- L’horloge du match, la même que dans le Grand Virage : elle fait courir
+     la minute entre deux relevés, sans un appel de plus. -->
+<script src="/horloge.js"></script>
+<!-- Le Fanzzy qui regarde le match, et les dessins qu’il emploie. -->
+<script src="/fanzzy-art.js"></script>
+<script src="/fanzzy-etats.js"></script>
+<script src="/fanzzy-scene.js"></script>
 <script src="/fx.js" defer></script>
 <script src="/nav.js" defer></script>
 <script>
@@ -213,33 +258,17 @@ $('q').oninput = () => {
  * première période il ne dépasse pas 45, et au-delà on affiche « 45+ » plutôt
  * qu'un nombre faux — le temps additionnel n'est pas connu.
  */
-/* Au-delà de ce silence, on cesse de faire courir l'horloge : un match dont on
-   n'a plus de nouvelles depuis un quart d'heure n'est pas un match à la
-   centième minute, c'est un match dont on ne sait plus rien. Afficher
-   « 90' EN DIRECT » sur une rencontre finie depuis dix minutes est un mensonge
-   que le lecteur repère avant nous. */
-const SILENCE_MAX_MS = 12 * 60_000;
-const TERME = { '1H': 45, '2H': 90, ET: 120, P: 120 };
-
+/**
+ * La minute affichée. Le calcul vit dans `/horloge.js`, partagé avec le
+ * Grand Virage et la fiche du match : il était écrit trois fois, avec déjà
+ * trois listes de périodes différentes. Ce qui reste ici est le vocabulaire
+ * de cette page — « MT », « PROL. » — et lui seul.
+ */
 function minute(m) {
-  if (!m.live || m.elapsed == null) return null;
-  if (m.status === 'HT') return 'MT';
-  if (m.status === 'BT') return 'PROL.';
-
-  const vuA = m.luA ?? Date.now();
-  if (Date.now() - vuA > SILENCE_MAX_MS) return null;
-
-  const ecoule = Math.max(0, Math.floor((Date.now() - vuA) / 60000));
-  const brut = m.elapsed + ecoule;
-  const terme = TERME[m.status];
-
-  /* Le temps additionnel, quand le relevé le connaît. « 90+ » disait qu'on
-     avait dépassé le terme sans jamais dire de combien — or c'est exactement
-     ce qu'on regarde à ce moment-là du match. */
-  if (terme && brut >= terme) {
-    return m.extra != null ? `${terme}+${m.extra}'` : `${terme}+`;
-  }
-  return `${brut}'`;
+  if (!m.live) return null;
+  return window.TBF_HORLOGE.texte(
+    { statut: m.status, minute: m.elapsed, extra: m.extra, vuA: m.luA },
+    { HT: 'MT', BT: 'PROL.' }) || null;
 }
 
 function heure(d) {
@@ -266,8 +295,11 @@ function rendre() {
 
   $('liste').innerHTML = groupes.length ? groupes.map((g) => `
     <div class="ligue ${g.mien ? 'mien' : ''}">
-      <div class="t">${esc(g.ligue.name)}<span class="pays">${esc(g.ligue.country ?? '')}</span>
-        <span class="sep"></span></div>
+      <!-- Le nom de la compétition mène à sa page : classement, buteurs,
+           calendrier. On voyait un match de Liga 1 sans pouvoir savoir qui
+           mène le championnat, alors que la page existe. -->
+      <a class="t" href="/teletext?ligue=${g.ligue.id}">${esc(g.ligue.name)}<span class="pays">${esc(g.ligue.country ?? '')}</span>
+        <span class="sep"></span><span class="fl">›</span></a>
       ${g.matchs.map((m) => {
         const min = minute(m);
         return `<div class="m ${m.mien ? 'mien' : ''}" data-m="${m.id}">
@@ -322,23 +354,245 @@ $('liste').addEventListener('click', (e) => {
   if (m) ouvrirFiche(Number(m.dataset.m));
 });
 
+/* ---------------------------------------------------------- fiche match
+
+ * Elle se chargeait une fois et ne bougeait plus : ouverte sur un match en
+ * cours, elle affichait le score du moment où on l'avait ouverte, pour aussi
+ * longtemps qu'on la regardait. C'est précisément l'écran où l'on reste.
+ *
+ * Elle se relit donc toute seule tant que le match est en cours, et sa minute
+ * court entre deux relectures — la même horloge que partout ailleurs.
+ *
+ * Et le Fanzzy la regarde avec toi. Il vit **hors** du corps de la fiche : le
+ * corps se redessine à chaque relecture, et un personnage qui vivrait dedans
+ * rechargerait son dessin toutes les trente secondes.
+ */
+
 const ICONES = { Goal:'⚽', Card:'▮', subst:'⇄', Var:'▣' };
+
+/** Tout ce que la fiche tient entre deux relectures. */
+const FICHE = {
+  id: null, d: null, minuterie: null, chrono: null,
+  volet: 'fil', scene: null, vus: null, cote: null, finVue: false,
+};
+
+/**
+ * De quel côté on est.
+ *
+ * Lu une fois par visite, pas à chaque fiche : la liste des clubs suivis ne
+ * change pas pendant qu'on regarde un match. Sans elle, le personnage ne
+ * saurait pas s'il doit exulter ou encaisser — il resterait neutre sur le but
+ * de ton club, ce qui est le seul cas où l'on attend quelque chose de lui.
+ */
+let mesClubs = null;
+async function clubsSuivis() {
+  if (mesClubs) return mesClubs;
+  try {
+    const r = await fetch('/api/football/follows', { credentials: 'same-origin' });
+    const j = await r.json();
+    mesClubs = new Set((j.teams ?? []).map((t) => Number(t.id)));
+  } catch { mesClubs = new Set(); }
+  return mesClubs;
+}
+
+/** Le Fanzzy équipé, pour qu'il regarde le match. Une fois par visite. */
+let monPerso = null;
+async function persoEquipe() {
+  if (monPerso !== null) return monPerso;
+  try {
+    const r = await fetch('/api/fanzzy/state', { credentials: 'same-origin' });
+    const j = await r.json();
+    const id = j?.wallet?.active ?? null;
+    monPerso = id ? { id, evo: j.stades?.[id] ?? 1, skin: 'base' } : false;
+  } catch { monPerso = false; }
+  return monPerso;
+}
 
 async function ouvrirFiche(id) {
   $('fiche').classList.add('on');
   $('fcorps').innerHTML = '<div class="spin"></div>';
+  FICHE.id = id;
+  FICHE.d = null;
+  FICHE.volet = 'fil';
+  FICHE.finVue = false;
+  // `null` et non un ensemble vide : à la première lecture on **enregistre**
+  // les événements déjà arrivés sans y réagir. Ouvrir un 3-2 ne doit pas
+  // rejouer cinq buts d'affilée.
+  FICHE.vus = null;
+
+  const [clubs, perso] = await Promise.all([clubsSuivis(), persoEquipe()]);
+  if (FICHE.id !== id) return;
+
+  if (perso && !FICHE.scene) {
+    FICHE.scene = window.TBF_SCENE?.creer?.($('fwatch'), {
+      momentDans: $('fiche'), fond: 'attente',
+    }) ?? null;
+  }
+  if (FICHE.scene && perso) FICHE.scene.definir(perso);
+  $('fwatch').hidden = !FICHE.scene;
+
+  await relire({ premier: true });
+}
+
+function fermerFiche() {
+  $('fiche').classList.remove('on');
+  FICHE.id = null;
+  clearTimeout(FICHE.minuterie);
+  clearInterval(FICHE.chrono);
+  FICHE.minuterie = FICHE.chrono = null;
+  FICHE.scene?.couper?.();
+}
+
+/** Relit le match, et redessine. */
+async function relire({ premier = false } = {}) {
+  const id = FICHE.id;
+  if (!id) return;
   let d;
   try { d = await api('/match/' + id); }
-  catch { $('fcorps').innerHTML = '<div class="vide">Match indisponible.</div>'; return; }
-  if (d.error) { $('fcorps').innerHTML = '<div class="vide">Match indisponible.</div>'; return; }
+  catch {
+    if (premier) $('fcorps').innerHTML = '<div class="vide">Match indisponible.</div>';
+    return planifierFiche();
+  }
+  if (FICHE.id !== id) return;                  // refermée entre-temps
+  if (d.error) {
+    if (premier) $('fcorps').innerHTML = '<div class="vide">Match indisponible.</div>';
+    return;
+  }
+  FICHE.d = d;
+  dessinerFiche();
+  reagir(d);
+  planifierFiche();
+}
 
+/* Tant que le match est en cours, on relit toutes les trente secondes : c'est
+   le rythme du relevé côté serveur, et redemander plus souvent ne donnerait
+   rien de neuf. Match fini ou à venir : rien du tout — il ne bougera pas.
+
+   Le délai est une constante nommée, et pas un nombre au milieu d’un appel :
+   un contrôle peut le lire et dire ce qu’il vaut, là où il ne pourrait que
+   constater qu'une minuterie existe — sans attendre trente secondes pour
+   savoir laquelle. */
+const RELECTURE_MS = 30_000;
+function planifierFiche() {
+  /* On **vide** les deux variables, on ne se contente pas d’annuler.
+
+     `clearTimeout` annule le rappel mais laisse l'identifiant en place : la
+     variable reste vraie pour toujours, et tout ce qui demande « une
+     relecture est-elle prévue ? » répond oui sur un match terminé. La même
+     faute avait déjà fait pousser le supporter de l'accueil après le coup de
+     sifflet final. */
+  clearTimeout(FICHE.minuterie); FICHE.minuterie = null;
+  clearInterval(FICHE.chrono); FICHE.chrono = null;
+  if (!FICHE.d?.fixture?.live) return;
+  FICHE.minuterie = setTimeout(() => {
+    if (document.hidden) return planifierFiche();
+    relire();
+  }, RELECTURE_MS);
+  // La minute, elle, court sans rien demander à personne.
+  FICHE.chrono = setInterval(() => {
+    if (!document.hidden && FICHE.d) majChrono();
+  }, 10_000);
+}
+
+function minuteFiche() {
+  const f = FICHE.d?.fixture;
+  if (!f?.live) return null;
+  return window.TBF_HORLOGE.texte(
+    { statut: f.status, minute: f.elapsed, extra: f.extra, vuA: f.luA },
+    { HT: 'MI-TEMPS', BT: 'PROLONGATIONS' }) || null;
+}
+
+function majChrono() {
+  const n = document.getElementById('fetat');
+  if (n) n.textContent = minuteFiche() ?? 'EN COURS';
+}
+
+/**
+ * Ce que le personnage fait des événements.
+ *
+ * Il ne réagit qu'à ce qui est **neuf**, et seulement à ce qui mérite qu'on
+ * lève la tête : un but, un carton rouge, l'arbitrage vidéo, le coup de
+ * sifflet final. Un personnage qui s'agite à chaque remplacement cesse d'être
+ * regardé au bout de deux minutes.
+ */
+function reagir(d) {
+  const scene = FICHE.scene;
+  const premier = FICHE.vus === null;
+  if (premier) FICHE.vus = new Set();
+
+  const cle = (e) => `${e.type}|${e.detail}|${e.minute}|${e.extra ?? ''}|${e.equipe}|${e.joueur ?? ''}`;
+  const neufs = [];
+  for (const e of d.evenements ?? []) {
+    const k = cle(e);
+    if (FICHE.vus.has(k)) continue;
+    FICHE.vus.add(k);
+    if (!premier) neufs.push(e);
+  }
+  if (!scene) return;
+
+  const mien = (id) => mesClubs?.has(Number(id)) ?? false;
+  /* La couleur du club qui vient de marquer, éclaircie pour se lire sur le
+     noir de l’écran — une couleur de blason est faite pour du papier blanc.
+     Absente tant que le blason n’a pas été lu : on garde l’or du jeu. */
+  const couleurDe = (id) => {
+    const c = id === d.equipes.home.id ? d.equipes.home.couleur : d.equipes.away.couleur;
+    return c ? (window.FX?.lisible?.(c) ?? c) : 'var(--projo)';
+  };
+
+  for (const e of neufs) {
+    const aMoi = mien(e.equipe);
+    const contreMoi = !aMoi && (mien(d.equipes.home.id) || mien(d.equipes.away.id));
+    if (e.type === 'Goal') {
+      const sous = [e.joueur, e.minute != null ? `${e.minute}′` : ''].filter(Boolean).join(' · ');
+      if (contreMoi) scene.moment('encaisse', 'ON ENCAISSE', { couleur: 'var(--flare)', sous });
+      else scene.moment('but', aMoi ? 'GOAL !' : 'BUT',
+        { couleur: aMoi ? couleurDe(e.equipe) : 'var(--craie)', sous });
+    } else if (e.type === 'Var') {
+      scene.moment('decision', 'ARBITRAGE VIDÉO',
+        { couleur: 'var(--flare)', sous: e.detail ?? '' });
+    } else if (e.type === 'Card' && /red/i.test(e.detail ?? '')) {
+      scene.moment(contreMoi ? 'progression' : 'decision', 'CARTON ROUGE',
+        { couleur: 'var(--flare)', sous: e.joueur ?? '' });
+    }
+  }
+
+  /* Le coup de sifflet final, une seule fois. `finVue` existe parce que la
+     fiche peut être relue après la fin — au retour d'un autre onglet, par
+     exemple — et personne ne veut revoir la victoire toutes les trente
+     secondes. */
+  if (d.fixture.fini && !FICHE.finVue) {
+    FICHE.finVue = true;
+    const nous = mien(d.equipes.home.id) ? d.equipes.home.goals
+      : mien(d.equipes.away.id) ? d.equipes.away.goals : null;
+    const eux = mien(d.equipes.home.id) ? d.equipes.away.goals
+      : mien(d.equipes.away.id) ? d.equipes.home.goals : null;
+    if (nous == null) return;
+    const gagne = nous > eux, perdu = nous < eux;
+    scene.moment(gagne ? 'victoire' : perdu ? 'defaite' : 'neutre',
+      gagne ? 'VICTOIRE' : perdu ? 'DÉFAITE' : 'MATCH NUL',
+      { couleur: gagne ? 'var(--vert)' : perdu ? 'var(--flare)' : 'var(--gris)',
+        sous: 'coup de sifflet final' });
+  }
+}
+
+function dessinerFiche() {
+  const d = FICHE.d;
   const f = d.fixture, e = d.equipes;
-  const min = f.live ? minute({ ...f, live:true }) : null;
+  const min = minuteFiche();
+  const quand = new Date(f.date);
+  const defile = $('fcorps').scrollTop;
+
+  /* Le virage ne s'ouvre que sur un match en cours ou sur le point de
+     commencer : proposer d'y entrer pour une rencontre d'hier serait un
+     cul-de-sac, et le bouton doit dire pourquoi il est éteint. */
+  const versCoupDEnvoi = quand.getTime() - Date.now();
+  const virageOuvert = f.live || (versCoupDEnvoi > 0 && versCoupDEnvoi < 30 * 60_000);
 
   $('fcorps').innerHTML = `
     <button class="fermer" id="ferme">‹</button>
     <div class="aff">
-      <div class="lg">${esc(d.ligue.nom ?? '')} · ${esc(d.ligue.journee ?? '')}</div>
+      <a class="lg" href="/teletext?ligue=${d.ligue.id}">${esc(d.ligue.nom ?? '')}
+        ${d.ligue.journee ? '· ' + esc(d.ligue.journee) : ''} ›</a>
       <div class="sc">
         <img src="${esc(e.home.logo)}" alt="">
         <span class="n">${f.fini || f.live ? `${e.home.goals ?? 0} – ${e.away.goals ?? 0}`
@@ -346,24 +600,47 @@ async function ouvrirFiche(id) {
         <img src="${esc(e.away.logo)}" alt="">
       </div>
       <div class="nom"><span>${esc(e.home.name)}</span><span>${esc(e.away.name)}</span></div>
-      <div class="etat ${f.live ? '' : 'calme'}">${f.live ? (min ?? 'EN COURS')
+      <div class="etat ${f.live ? '' : 'calme'}" id="fetat">${f.live ? (min ?? 'EN COURS')
         : f.fini ? 'TERMINÉ' : esc(f.statusLong ?? 'À VENIR')}</div>
     </div>
     <div class="infos">
+      <!-- La date **et l'heure**. L'heure manquait : sur un match à venir elle
+           n'était lisible qu'à la place du score, et elle disparaissait dès le
+           coup d'envoi — or c'est elle qu'on cherche pour savoir si on a raté
+           le début. -->
+      <span>${quand.toLocaleDateString('fr',
+        { weekday:'long', day:'numeric', month:'long' })} · ${heure(f.date)}</span>
       ${f.venue ? `<span>${esc(f.venue)}${f.ville ? ' · ' + esc(f.ville) : ''}</span>` : ''}
       ${f.arbitre ? `<span>M. ${esc(f.arbitre)}</span>` : ''}
-      <span>${new Date(f.date).toLocaleDateString('fr',
-        { weekday:'long', day:'numeric', month:'long' })}</span>
+    </div>
+    <div class="allers">
+      <a class="aller ${virageOuvert ? '' : 'eteint'}"
+         href="${virageOuvert ? `/virage?match=${f.id}` : '#'}">GRAND VIRAGE
+        <small>${virageOuvert ? 'pousser avec la tribune' : 'pendant le match seulement'}</small></a>
+      <a class="aller" href="/duel-nvn">DUEL<small>tribune contre tribune</small></a>
     </div>
     <div class="souspage" id="souspage">
-      <button data-s="fil" class="on">LE FIL</button>
-      <button data-s="stats">STATISTIQUES</button>
-      <button data-s="compo">COMPOSITIONS</button>
+      <button data-s="fil" class="${FICHE.volet === 'fil' ? 'on' : ''}">LE FIL</button>
+      <button data-s="stats" class="${FICHE.volet === 'stats' ? 'on' : ''}">STATISTIQUES</button>
+      <button data-s="compo" class="${FICHE.volet === 'compo' ? 'on' : ''}">COMPOSITIONS</button>
     </div>
     <div id="souscontenu"></div>`;
 
-  // Les trois volets sont dessinés à la demande : afficher d'un coup le fil,
-  // les statistiques et vingt-deux joueurs rendrait la fiche illisible.
+  dessinerVolet();
+  $('fcorps').scrollTop = defile;
+
+  $('souspage').onclick = (ev) => {
+    const b = ev.target.closest('[data-s]');
+    if (!b) return;
+    FICHE.volet = b.dataset.s;
+    [...$('souspage').children].forEach((x) => x.classList.toggle('on', x === b));
+    dessinerVolet();
+  };
+  $('ferme').onclick = fermerFiche;
+}
+
+function dessinerVolet() {
+  const d = FICHE.d;
   const VOLETS = {
     fil: () => d.evenements.length ? `
       ${d.evenements.map((ev) => {
@@ -380,7 +657,7 @@ async function ouvrirFiche(id) {
       }).join('')}`
       : `<div class="vide" style="padding:30px">
           ${d.fixture.fini ? 'Aucun événement enregistré.'
-            : 'Le match n\u2019a pas encore commencé.'}</div>`,
+            : 'Le match n’a pas encore commencé.'}</div>`,
 
     stats: () => d.statistiques?.length
       ? d.statistiques.map((st) => `
@@ -392,14 +669,14 @@ async function ouvrirFiche(id) {
         </div>`).join('')
       : `<div class="vide" style="padding:30px">${d.fixture.live || d.fixture.fini
           ? 'Statistiques indisponibles pour ce match.'
-          : 'Elles apparaîtront dès le coup d\u2019envoi.'}</div>`,
+          : 'Elles apparaîtront dès le coup d’envoi.'}</div>`,
 
     compo: () => {
       const c = d.compositions;
       if (!c?.home && !c?.away) {
         return `<div class="vide" style="padding:30px">
           ${d.fixture.live || d.fixture.fini ? 'Compositions non publiées pour ce match.'
-            : 'Les compositions paraissent environ une heure avant le coup d\u2019envoi.'}</div>`;
+            : 'Les compositions paraissent environ une heure avant le coup d’envoi.'}</div>`;
       }
       const cote = (co, nom) => co ? `
         <div>
@@ -418,26 +695,18 @@ async function ouvrirFiche(id) {
         ${cote(c.home, d.equipes.home.name)}${cote(c.away, d.equipes.away.name)}</div>`;
     },
   };
-
-  let volet = 'fil';
-  const dessiner = () => { $('souscontenu').innerHTML = VOLETS[volet](); };
-  dessiner();
-
-  $('souspage').onclick = (ev) => {
-    const b = ev.target.closest('[data-s]');
-    if (!b) return;
-    volet = b.dataset.s;
-    [...$('souspage').children].forEach((x) => x.classList.toggle('on', x === b));
-    dessiner();
-  };
-
-  $('ferme').onclick = () => $('fiche').classList.remove('on');
+  $('souscontenu').innerHTML = VOLETS[FICHE.volet]();
 }
+
 $('fiche').addEventListener('click', (e) => {
-  if (e.target.id === 'fiche') $('fiche').classList.remove('on');
+  if (e.target.id === 'fiche') fermerFiche();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && $('fiche').classList.contains('on')) fermerFiche();
 });
 
 charger();
+
 </script>
 </body>
 </html>

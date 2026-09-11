@@ -59,6 +59,13 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
 .obj{border:1px solid rgba(242,238,228,.14);border-radius:8px;padding:7px 10px;font-size:11px;
   cursor:pointer;background:rgba(0,0,0,.3)}
 .obj.porte{border-color:var(--violet);color:var(--violet)}
+/* La pastille de l'emplacement, et la vignette du sac. Le sac tient sur une
+   ligne par pièce : la vignette y reste petite, juste de quoi reconnaître la
+   forme avant d'avoir lu le nom. */
+.slot .tbf-piece{width:38px;height:38px;border-radius:10px;margin:0 auto 2px}
+.obj{display:inline-flex;align-items:center;gap:6px}
+.obj .vignette{width:20px;height:20px;object-fit:contain;flex:none;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
 
 .langues{display:flex;gap:6px;padding:12px}
 .langues button{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.16);border-radius:8px;
@@ -138,6 +145,8 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
   </div>
 </div></main>
 <div class="toast" id="toast"></div>
+<!-- Sans « defer » : le script de la page lit TBF_STUFF dès son premier rendu. -->
+<script src="/stuff-art.js"></script>
 <script src="/fx.js" defer></script>
 <script src="/nav.js" defer></script>
 
@@ -230,7 +239,8 @@ function rendre() {
     const p = portes.find((s) => s.slot === n);
     const def = p ? catalogue.stuff.find((x) => x.id === p.stuff_id) : null;
     return `<div class="slot ${p ? 'plein' : ''}" data-slot="${n}">
-      ${def ? `<b>${esc(def.nom)}</b><span>${esc(def.texte)}</span>`
+      ${def ? `${window.TBF_STUFF.pastille(def)}
+               <b>${esc(def.nom)}</b><span>${esc(def.texte)}</span>`
             : `<b style="opacity:.4">EMPLACEMENT ${n}</b><span>choisis une pièce</span>`}</div>`;
   }).join('');
 
@@ -239,6 +249,7 @@ function rendre() {
     ? sac.map((s) => {
         const def = catalogue.stuff.find((x) => x.id === s.stuff_id);
         return `<button class="obj ${s.slot ? 'porte' : ''}" data-obj="${s.stuff_id}">
+          ${def ? window.TBF_STUFF.illustration(def.id, 'vignette') : ''}
           ${esc(def?.nom ?? s.stuff_id)}${s.copies > 1 ? ` ×${s.copies}` : ''}</button>`;
       }).join('')
     : '<span style="font-size:11.5px;opacity:.45;padding:4px">Ton sac est vide.</span>';

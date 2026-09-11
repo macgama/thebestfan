@@ -4,6 +4,7 @@ import { publies, parIdentifiant } from '../fanzzy/catalogue.js';
 import { STUFF, ACTIONS, SKIN_BY_ID, STUFF_BY_ID, combine }
   from '../../shared/fanzzy/inventaire.js';
 import { toutesTenues } from '../fanzzy/tenues.js';
+import { verifierEmplacement, SLOTS_DEPART, SLOTS_MAX } from './slots.js';
 
 /**
  * L'arrivée d'un joueur, et ce qu'il possède.
@@ -18,8 +19,9 @@ import { toutesTenues } from '../fanzzy/tenues.js';
  * d'équipement et des écharpes.
  */
 
-export const SLOTS_DEPART = 2;
-export const SLOTS_MAX = 8;
+/* Réexportés pour ne pas casser ce qui les importe d'ici depuis toujours.
+   Leur définition, elle, a déménagé avec la règle qu'ils servent. */
+export { SLOTS_DEPART, SLOTS_MAX };
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
 /**
@@ -79,16 +81,16 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
   /* ---------------------------------------------- emplacements de suivi */
 
   /**
-   * Suivre un club. C'est ici que les emplacements sont défendus : la route
-   * football ne les connaît pas, et un client modifié pourrait sinon suivre
-   * cinquante équipes.
+   * Suivre un club.
+   *
+   * La défense des emplacements est dans `slots.js`, et elle y est pour une
+   * raison : elle vivait ici, avec un commentaire expliquant que « la route
+   * football ne les connaît pas ». C'était vrai, et c'était le trou — cette
+   * autre route écrivait sans rien vérifier, et la page « Mes clubs » passe
+   * par elle.
    */
   async function follow(userId, teamId, { main = false } = {}) {
-    const w = (await q(`SELECT follow_slots FROM user_wallet WHERE user_id = ?`, [userId]))[0];
-    const deja = await q(`SELECT team_id FROM user_follows WHERE user_id = ?`, [userId]);
-    if (!deja.some((d) => d.team_id === teamId) && deja.length >= (w?.follow_slots ?? SLOTS_DEPART)) {
-      throw fail('onboarding.error.no_slot');
-    }
+    await verifierEmplacement(q, userId, teamId);
     if (main) await q(`UPDATE user_follows SET is_main = 0 WHERE user_id = ?`, [userId]);
     await q(
       `INSERT INTO user_follows (user_id, team_id, is_main) VALUES (?, ?, ?)

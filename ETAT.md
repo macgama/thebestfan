@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « le personnage salue en arrivant, et le Grand
-Virage raconte enfin le match ».
+Dernière mise à jour : session « les cartes d’action ont un visage, et le Grand
+Virage se joue avec sa tribune ».
 
 ---
 
@@ -31,8 +31,8 @@ Le projet suit une méthode constante, à conserver :
   La base attendue est **locale**, pas celle d'Infomaniak : les suites visent
   `mysql://tbf:tbfpass@127.0.0.1:3307/tbf` par défaut, sinon `DATABASE_URL`.
   Il faut donc un MariaDB local sur le port 3307, une base `tbf` en
-  `utf8mb4_unicode_ci`, et les neuf fichiers de `sql/` appliqués dans l'ordre
-  de `DEPLOIEMENT.md` — 27 tables au bout. Chaque suite fait ensuite son propre
+  `utf8mb4_unicode_ci`, et les dix-huit fichiers de `sql/` appliqués dans
+  l'ordre de `DEPLOIEMENT.md` — 36 tables au bout. Chaque suite fait son propre
   `DROP` puis recrée ce dont elle a besoin : **elles ne se lancent donc jamais
   en parallèle**, elles s'écraseraient l'une l'autre.
 
@@ -66,8 +66,11 @@ Le projet suit une méthode constante, à conserver :
   `/healthz` renvoie `ok: false` et un champ `panne` dès qu'une route manque, de
   sorte qu'une surveillance branchée dessus le voie ; et **toute livraison qui
   ajoute une table demande d'appliquer le `.sql` avant de reconstruire**. Les
-  neuf fichiers sont idempotents : les rejouer tous, dans l'ordre de
-  `DEPLOIEMENT.md`, est la manœuvre sûre.
+  dix-huit fichiers sont idempotents : les rejouer tous, dans l'ordre de
+  `DEPLOIEMENT.md`, est la manœuvre sûre. Depuis septembre 2026, il n'y a plus
+  à le faire à la main : `.github/workflows/deploiement.yml` applique le schéma
+  **avant** de redémarrer, et `npm run schema:appliquer` fait la même chose
+  depuis un poste.
 - **`node scripts/verif-pages.mjs` avant chaque livraison front.** Il compile
   chaque script de page, vérifie qu'aucun accent grave ne traîne dans un bloc
   CSS écrit en gabarit de chaîne, que chaque page charge la barre commune,
@@ -201,6 +204,63 @@ Le remède est le même dans les trois cas, et il vaut pour tout ce fichier :
 **après avoir écrit le contrôle, casser exprès ce qu'il surveille et vérifier
 qu'il rougit.** Trois lignes de `sed`, une minute. Tous les contrôles ajoutés
 en septembre 2026 sont passés par là ; ceux d'avant, non.
+
+**Un contrôle peut affirmer l'inverse de ce qu'il croit vérifier.** C'est la
+forme la plus coûteuse du contrôle creux, parce qu'elle survit à la relecture.
+
+Au Virage, une carte doit être **divisée par l'effectif de la tribune**, comme
+un chant : c'est la règle qui empêche une carte de valoir mille fois plus dans
+une salle de mille. Le contrôle écrit pour la protéger comparait deux salles de
+tailles différentes et attendait des poussées « du même ordre ». Or « du même
+ordre » est exactement ce que produit une carte qui **échappe** à la division —
+le contrôle était donc vert des deux côtés, et la mutation ne l'a pas fait
+rougir. Il mesure maintenant le rapport : dix fois plus de monde, dix fois moins
+par tête.
+
+La leçon : quand un contrôle porte sur une **proportion**, écrire la proportion
+attendue, pas un jugement flou. « Environ dix » se mute ; « du même ordre » ne
+se mute pas.
+
+**jsdom n'exécute pas les `<script src>`.** Les suites qui montent une page dans
+jsdom — `deck-ui-smoke.mjs` — injectent les modules à la main dans
+`beforeParse`. Ajouter un `<script src>` à une page sans l'ajouter à cette
+injection donne un `TypeError: Cannot read properties of undefined`, et il
+tombe au premier rendu, donc loin du vrai coupable. La liste est à tenir :
+`fanzzy-art.js`, `action-art.js`, `stuff-art.js`.
+
+**`clearTimeout` laisse un identifiant vrai derrière lui.** Rappelée ici parce
+qu'elle a été refaite une quatrième fois, dans la fenêtre du capo au Virage. La
+minuterie doit être **nulée** en même temps qu'elle est effacée, sinon un test
+« une minuterie court-elle ? » est vrai pour toujours.
+
+**Une animation gelée ne finit jamais.** Le retrait d'un élément animé ne doit
+pas passer par `onfinish` : une animation est accrochée à la frise du document,
+et un onglet caché la gèle. La carte jouée restait plantée au milieu de l'écran
+pour le reste de la partie chez quelqu'un qui avait quitté l'application. Une
+minuterie, elle, court en arrière-plan. Le contrôle « puis elle s'efface » de
+`nvn-ui-smoke.mjs` a trouvé le défaut, pas la relecture.
+
+**sharp : deux silences qui donnent des fichiers faux sans lever.** Les deux ont
+coûté une demi-heure chacun au détourage de l'équipement.
+
+- `resize()` est **sans effet** s'il est posé dans la même chaîne qu'un
+  `joinChannel()`. Le recollage se fait en fin de chaîne, à la taille d'origine.
+  Les fichiers sortaient en 1024 pixels au lieu de 256 — quatre fois trop
+  lourds, sans un mot. Le remède : recoller d'abord, réduire dans une seconde
+  passe.
+- un tampon brut à **un** canal ressort à **trois** si l'on ne dit pas
+  `toColourspace('b-w')`. `joinChannel` le relit alors avec un pas de un,
+  décale chaque ligne d'un tiers, et rend un objet cisaillé. Une image fausse,
+  jamais une erreur. `scripts/stuff-images.mjs` vérifie désormais la longueur du
+  masque et lève si elle change.
+
+**Un garde-fou qui lit le code source au motif rétrécit en silence.** Les
+contrôles de `verif-pages.mjs` qui vérifient qu'une carte ou une pièce a bien
+ses trois formats lisaient les identifiants à l'expression régulière. En mutant
+`id:` en `identifiant:` sur une seule pièce, le contrôle s'est contenté de
+vérifier six pièces au lieu de sept — et **il est resté vert**. Ils importent
+maintenant les modules (`ACTIONS`, `STUFF`) : plus de motif qui puisse dériver,
+et le compte annoncé est le vrai.
 
 **Le hasard du jeu ne doit pas fuir dans l'assertion.** Deux tests échouaient
 par intermittence pour cette raison : l'un rejouait un geste au tempo bruité
@@ -613,6 +673,88 @@ c'est ce qui sépare un personnage accueillant d'un personnage insistant.
 
 ---
 
+**La portée d'un effet décide où sa carte se joue.** Le Grand Virage ne joue
+que les cartes d'action qui agissent sur soi ou sur sa tribune : quatorze des
+vingt et une. Les sept autres — Silence radio, Brouillard, Parcage fermé, Vol
+de souffle, Vent de face, Bâche, Renvoi — restent au duel.
+
+Ce n'est pas une liste de noms, et il ne faut pas en faire une. Chaque **sorte
+d'effet** déclare sa portée dans la table `PORTEE` de
+`src/shared/duel/actions.js` — `soi`, `tribune` ou `adverse` — et
+`dansLeVirage()` en déduit tout. Une carte d'entrave ajoutée demain se rangera
+seule hors du Virage ; une liste d'identifiants, elle, aurait attendu que
+quelqu'un y pense.
+
+La raison de fond : **le Virage n'est pas un duel avec plus de monde.** En face
+il n'y a pas un adversaire, il y a une foule d'inconnus. Une carte qui traverse
+y est soit écrasante — une personne coupe le souffle de trois cents autres —
+soit nulle une fois divisée par l'effectif. Les deux sont mauvais.
+
+L'effet de bord est le meilleur de l'affaire : la famille `collectif`, la plus
+faible en un contre un où « chaque coéquipier » veut dire zéro personne,
+devient la reine du Virage. **Un deck de Virage cesse d'être un deck de duel**,
+et les dix emplacements retrouvent un arbitrage.
+
+Deux cartes y sont sans objet et sont refusées avec leur cause : la Relève et
+l'Arbitre. Le Virage ne met qu'un personnage en tribune et n'a pas de banc.
+
+**Une poussée du Virage est toujours divisée par l'effectif — les cartes
+comprises.** C'est la règle qui tient tout : le nombre aide, il ne décide pas.
+Un Fumigène vaut donc la même chose dans une salle de dix et dans une salle de
+mille, et la Mosaïque mesure la **proportion** de tribune active plutôt qu'un
+nombre de têtes — une tribune de mille dont un dixième pousse vaut moins qu'une
+tribune de dix entièrement debout.
+
+C'est aussi pourquoi `VirageRoom.appliquer` et `DuelNvN.appliquer` **restent
+deux fonctions**. Elles se ressemblent de loin ; les fondre demanderait une
+exception à presque chaque ligne. Ce qui est commun — poser un effet, le
+nettoyer, l'interroger, empiler ses modificateurs — vit dans
+`src/shared/duel/effets.js` et sert aux deux. C'est la mécanique qui est
+partagée, pas ce que l'arène en fait.
+
+**Le stade appartient au match, jamais à un joueur.** Les cinq stades se
+collectionnent, et leur effet s'applique **aux deux camps**.
+
+Un stade qui avantagerait son propriétaire serait la première chose du jeu à
+donner de la puissance sans que l'adversaire l'ait choisie. On équipe son
+Fanzzy en sachant ce qu'on y perd ; on ne choisit pas de jouer chez quelqu'un.
+Ce serait donc casser les deux règles déjà écrites dans `inventaire.js` — un
+skin ne donne aucun bonus, chaque pièce d'équipement a un revers — qui disent
+toutes deux la même chose : « un débutant qui chante juste bat un vétéran mal
+équipé ».
+
+Au Grand Virage le stade vient du vrai match ; en duel, `stadeDeLaRencontre()`
+le tire dans l'**intersection** de ce que les deux joueurs possèdent, jamais
+dans la réunion. Jouer dans un stade que l'adversaire n'a jamais vu serait lui
+imposer une règle qu'il ne connaît pas.
+
+Collectionner n'achète donc pas de la force : ça élargit les lieux où l'on peut
+tomber, et donc les situations qu'un deck doit savoir affronter. L'exemple de
+la Vuvuzela le montre bien — une pièce d'équipement plus forte dans un stade
+donné est une lecture de deck sur une condition **commune**, que les deux camps
+peuvent embarquer.
+
+**Les tribunes des stades sont dessinées dans l'ombre, exprès.** C'est ce qui
+permet de les allumer. Une tribune déjà éclairée ne peut plus s'éclairer ; une
+tribune sombre, si. La nappe de lumière est posée en `mix-blend-mode: screen` —
+le mode qui *ajoute* de la lumière au lieu de repeindre — donc le grain de la
+foule reste visible dessous, et ce qu'on voit n'est pas un rectangle coloré
+mais une tribune qui s'éclaire.
+
+Ne pas redessiner un stade avec ses tribunes éclairées, et ne pas remplacer
+`screen` par un aplat : dans les deux cas on obtient un autocollant.
+
+**Une pièce d'équipement est un objet détouré, pas une scène.** Les cartes
+d'action remplissent leur cadre et sont servies en JPEG ; l'équipement est
+découpé sur transparence et servi en **PNG**, parce qu'un objet finit sur le
+personnage qui le porte — une écharpe autour d'un cou, un mégaphone dans une
+main. Servi avec son fond, il y arriverait avec un carré noir autour.
+
+C'est pourquoi les deux chaînes sont deux scripts, et pourquoi `stuff-art.js`
+et `action-art.js` sont deux fichiers malgré leur ressemblance : leur format de
+repli n'est pas le même, et c'est justement le repli qui fait tout leur
+intérêt.
+
 ## Ouvrir un booster
 
 **On déchire la bande du haut, en travers, comme un vrai sachet.** Un seul
@@ -689,7 +831,8 @@ simulateur.
 | `/deck` | construction de deck : jusqu'à trois Fanzzy, équipement, dix cartes |
 | `/kop` | le KOP : caisse commune, votes de dépense, bonus de virage |
 | `/carnet` | souvenirs vécus et vignettes à récupérer |
-| `/virage` | Grand Virage : tir à la corde pendant un vrai match, avec le fil du terrain |
+| `/virage` | Grand Virage : tir à la corde pendant un vrai match, le fil du terrain, et **les cartes d'action de sa tribune** |
+| `/amis` | amis : qui suit les mêmes clubs, demandes, invitations en KOP |
 | `/duel-nvn` | **le duel** : tir à la corde, 1v1 à 5v5, adossé à un vrai match |
 | `/matchs` | matchs du jour, en direct, avec fiche détaillée |
 | `/teletext` | tous les championnats : classements, buteurs, cartons |
@@ -698,11 +841,17 @@ simulateur.
 | `/admin` | **catalogue Fanzzy**, séries ouvertes, joueurs, compétitions, journal |
 | `/diagnostic`, `/healthz` | état du service |
 
-**Vingt-cinq suites**, toutes vertes. Côté serveur : schéma, authentification,
+**Trente suites**, toutes vertes. Côté serveur : schéma, authentification,
 football, souvenirs, collection Fanzzy, deck, moteur NvN, réseau NvN, virage,
-classements, inscription, administration, télétexte, stades, niveau, KOP. Côté
-interface, dans un vrai navigateur : deck, classeur, administration, accueil,
-duel, KOP, virage. Et trois sans base : états, images, câblage.
+classements, inscription, administration, télétexte, stades, niveau, KOP, amis,
+couleurs de club. Côté interface, dans un vrai navigateur : deck, classeur,
+administration, accueil, duel, KOP, virage, amis, mes équipes, matchs. Et trois
+sans base : états, images, câblage.
+
+Deux contrôles gardent la livraison et se lancent avant tout : `npm run pages`
+(les pages compilent, la barre est là, **et chaque carte d'action, chaque pièce
+d'équipement a bien ses trois formats**) et `npm run cablage` (les modules sont
+branchés entre eux).
 
 ### Le catalogue
 
@@ -732,6 +881,118 @@ attendent le jeu qui les appellera ; `ETAT_QUAND`, dans
 Cette table est la spécification : `salut` y était décrit depuis le premier
 jour et n'a été branché qu'en septembre 2026.
 
+### Les illustrations des cartes d'action, de l'équipement et des stades
+
+Trois jeux d'images nés en septembre 2026, trois chaînes distinctes, et trois
+formats de repli différents — chacun pour une raison.
+
+**Les vingt et une cartes d'action** ont leur dessin : une scène de tribune
+pleine page, servie en AVIF / WebP / **JPEG** à 480 × 640. Pas de PNG : ces
+images remplissent leur cadre et n'ont pas d'alpha à garder — le même lot pesait
+13 Mo en PNG et 1 Mo en JPEG.
+
+Elles s'affichent dans le classeur (les dix cases et le catalogue), dans la main
+du duel, dans celle du Virage, et **en grand quand une carte est jouée**. Le
+dessin se pose toujours **par-dessus** le glyphe de famille, jamais à sa place :
+si le fichier manque, l'image se retire elle-même et le glyphe réapparaît.
+
+**Les sept pièces d'équipement** sont des objets **détourés**, servis en AVIF /
+WebP / **PNG** à 256 × 256 — le PNG parce qu'il y a une transparence à garder.
+Le fond est demandé plat et uniforme à la génération, puis découpé par
+propagation depuis les bords : seul ce qui touche le bord disparaît, donc les
+noirs intérieurs — l'ombre d'un pli, le creux d'un pavillon de mégaphone — sont
+épargnés. Elles apparaissent au deck, au kiosque, à la bienvenue et au profil,
+dans un cadre qui porte la rareté.
+
+**Les cinq stades** sont vus du dessus, terrain vertical, les deux grandes
+tribunes à gauche et à droite — c'est ce cadrage qui permet d'y poser deux
+camps. Servis en AVIF / WebP / JPEG à 720 de large, plus une vignette à 300.
+
+`scripts/stade-images.mjs` fait une chose de plus que ses deux voisins : il
+**mesure** où sont le terrain et les tribunes, et écrit ces plans dans
+`public/img/stade/plans.json`. Le terrain se repère à sa **teinte** — du
+vert-jaune au vert franc, ce qui tient sous des projecteurs blancs comme
+ambrés ; un premier essai jugeait sur « vert plus grand que rouge » et ne
+trouvait pas le stade éclairé en ambre. Les tribunes sont les bandes qui
+bordent le terrain. Un stade redessiné garde donc ses tribunes au bon endroit
+sans que personne n'y pense.
+
+Les invites sont versionnées avec les scripts — `npm run actions:invites`,
+`npm run stuff:invites` — parce qu'une invite perdue est un dessin qu'on ne sait
+plus refaire dans le même style. Les rendus d'origine sont dans `art/action/`,
+`art/stuff/` et `art/stade/`, et ils sont **dans le dépôt** contrairement aux
+sources de Fanzzy : ceux-là se rejouent, ceux-ci sortent d'un générateur qui ne
+rend jamais deux fois la même image. Le `.gitignore` le dit.
+
+---
+
+## 4 bis. Ce que la dernière session a ajouté
+
+Rien de tout cela n'est encore en ligne : le travail est sur le disque, pas
+commité. Cette liste existe pour qu'on sache quoi chercher, et où.
+
+**Les amis.** `/amis`, `src/server/amis/index.js`, `sql/amis.sql`. Voir qui suit
+les mêmes clubs, se demander en ami, s'inviter dans un KOP. Une seule ligne par
+paire ; deux demandes croisées valent une acceptation ; sept jours d'attente
+après un refus.
+
+**Les couleurs des clubs, tirées des blasons.** `src/server/football/blason.js`
+décode le PNG à la main — `zlib.inflateSync`, dé-filtrage Paeth compris — et
+`couleurs.js` en tire deux teintes dominantes. **Ni le logo ni le nom ne sont
+stockés**, seulement deux couleurs : c'est ce qui rend la chose tenable
+juridiquement. Elles teintent le « GOAL ! » et les tribunes des stades.
+
+**Le déploiement depuis GitHub.** `.github/workflows/deploiement.yml`,
+`scripts/deployer.sh`, `scripts/appliquer-schema.mjs`. Déclenchement manuel,
+`verif-pages` et `verif-cablage` en barrage, puis SSH, `git reset --hard`,
+`npm ci`, **le schéma avant le redémarrage**, et une attente sur `/healthz`
+jusqu'à ce qu'il annonce le commit poussé. C'est la réponse à la panne de onze
+heures du 8 septembre 2026.
+
+**Un emplacement de club se garde à un seul endroit.**
+`src/server/onboarding/slots.js`. Le bug : on pouvait suivre six clubs avec
+deux emplacements, parce que `onboarding.follow` et `store.follow` étaient deux
+portes et qu'une seule avait un verrou. C'est le troisième cas de « une règle
+écrite à deux endroits » de cette session, avec l'horloge du match et la fiche
+d'un Fanzzy.
+
+**L'horloge d'un match en direct.** `public/horloge.js`. Elle était écrite
+**quatre fois**, avec trois listes de périodes différentes. Elle fait courir la
+minute depuis l'instant du relevé, et refuse de parler dans trois cas : match
+fini, période arrêtée, et plus de nouvelles depuis un quart d'heure.
+
+**La fiche d'un Fanzzy, une seule fois.** `public/fanzzy-fiche.js` et `.css` :
+le même rendu, monté en panneau par-dessus le classeur ou comme page.
+
+**Les cartes d'action illustrées, et ce qu'on voit quand elles partent.**
+`public/action-art.js` porte les sept familles — une seule table, le classeur
+et le duel la partageaient mal — et la mise en scène d'une carte jouée : elle
+arrive du bas si elle est à soi, du haut si elle est adverse, tient la pose avec
+son dessin, puis se replie vers le nœud de la corde.
+
+**Les sept pièces d'équipement, détourées.** `public/stuff-art.js`,
+`scripts/stuff-images.mjs`. Elles s'affichent au deck, au kiosque, à la
+bienvenue et au profil.
+
+**Les cinq stades, et la lumière de leurs tribunes.** `src/shared/stades.js`,
+`public/stade-art.js`, `scripts/stade-images.mjs`. Le catalogue et les effets
+symétriques sont écrits ; le branchement de la collection reste à faire (§ 5,
+point 6).
+
+**Les cartes d'action dans le Grand Virage.** Quatorze des vingt et une.
+`VirageRoom` a gagné une main, des recharges, des effets et des fenêtres
+collectives ; `src/shared/duel/effets.js` porte la mécanique commune aux deux
+moteurs. Voir § 3 pour la règle de portée, qui est le cœur de l'affaire.
+
+**Sur les écrans**, en vrac : le personnage est plus grand sur l'accueil et ne
+déborde plus de sa bande ; la barre du bas fait la largeur de la colonne ; un
+Fanzzy qui n'était pas le bon n'apparaît plus une fraction de seconde au
+rafraîchissement (`tbf.perso` en mémoire) ; les compétitions sont cliquables
+depuis `/matchs` ; la fiche d'un match donne la date, l'heure, deux boutons
+DUEL et VIRAGE, et **le Fanzzy qui regarde le match** en réagissant aux
+événements ; le sélecteur de langue a quitté `/equipes`, où il n'avait rien à
+faire.
+
 ---
 
 ## 5. Ce qui reste à faire
@@ -758,11 +1019,39 @@ Par ordre d'utilité.
    vote, c'est court : sans notification hors de la page, la moitié d'un KOP ne
    votera jamais.
 
+6. **Brancher la collection de stades.** Le catalogue et les effets sont écrits
+   dans `src/shared/stades.js`, les cinq dessins sont rangés, les tribunes se
+   mesurent et s'allument. Il reste : la table de possession, le tirage dans
+   les boosters, l'application des `mods` dans les deux moteurs, et l'affichage
+   du stade en fond d'écran.
+
+   **Une décision d'orientation attend là.** La corde du Virage est verticale —
+   soi en bas, l'adversaire en haut — alors que les stades ont leurs tribunes à
+   gauche et à droite. Soit on fait pivoter le stade d'un quart de tour et l'on
+   perd du cadrage, soit on garde le terrain au milieu avec les deux tribunes
+   sur les côtés et la corde qui descend le long de la pelouse. La seconde est
+   plus lisible et ne coûte rien.
+
+7. **L'intégration de l'équipement sur les personnages.** Les sept objets sont
+   détourés pour ça — l'écharpe autour d'un cou, le mégaphone dans une main. Il
+   reste à décider des points d'ancrage et de la façon dont ils suivent les
+   poses de `fanzzy-scene.js`.
+
 **Ce qui n'est plus sur cette liste**, et qui y figurait : la simulation
 d'économie (rejouée, `npm run economie`), les trois évolutions pour tous
 (écrites), la carte Relève, le niveau et l'XP, le KOP et sa page, les skins par
-âge, le contenu des boosters, **le fil du match dans le Grand Virage**. L'audit
+âge, le contenu des boosters, **le fil du match dans le Grand Virage**, les
+**amis**, les **couleurs extraites des blasons**, le **déploiement depuis
+GitHub**, les **cartes d'action illustrées** et leur animation, les **cartes
+d'équipement**, et **les cartes d'action dans le Grand Virage**. L'audit
 A-à-Z du produit est entièrement traité.
+
+**Le multilingue reste une promesse à moitié tenue**, et c'est le plus gênant
+de la liste parce qu'il se voit : `/compte` propose quatre langues — français,
+anglais, allemand, espagnol — alors que deux pages sur dix-huit sont
+réellement traduites. Il faut soit retirer le sélecteur, soit faire une vraie
+passe d'internationalisation. Le sélecteur a déjà été retiré de `/equipes`, où
+il n'avait rien à faire.
 
 Deux manques connus du fil, assumés et non urgents. Les **buts d'avant
 l'arrivée** ne figurent pas au fil d'un joueur qui entre en cours de match :
@@ -795,7 +1084,7 @@ Le compte doit correspondre au nombre de Fanzzy du dépôt. S'il est plus bas, l
 construction n'a pas été lancée. Une page nouvelle qui répond 404 alors que son
 fichier existe dans `public/` dit la même chose.
 
-**Le schéma doit être complet.** 27 tables. Une table manquante produit des
+**Le schéma doit être complet.** 36 tables. Une table manquante produit des
 erreurs déroutantes — c'est ce qui a causé « Ouverture impossible ». Contrôle :
 `SHOW TABLES;`. Base ancienne : `sql/rattrapage.sql`.
 
@@ -902,6 +1191,13 @@ dans l'URL du catalogue, pour casser le cache à chaque déploiement.
   chose.
 
 ## 7 bis. À faire sur le serveur, en attente
+
+0. **Trois migrations ne sont pas appliquées en production** : `sql/minutes.sql`,
+   `sql/couleurs.sql` et `sql/amis.sql`. Elles le seront automatiquement au
+   premier déploiement par GitHub, qui applique le schéma **avant** de
+   redémarrer — c'est précisément la panne du 8 septembre 2026 qui a fait
+   écrire cette étape. En cas de doute, `npm run schema:appliquer` fait la même
+   chose depuis un poste, et refuse proprement si `DATABASE_URL` est absent.
 
 1. **Relancer l'inventaire des compétitions.** Les paliers en base suivent
    peut-être encore l'ancienne règle, qui classait 117 compétitions comme

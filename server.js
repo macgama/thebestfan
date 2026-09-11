@@ -6,6 +6,7 @@
  */
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import express from 'express';
 import { Server } from 'socket.io';
@@ -51,6 +52,23 @@ const io = new Server(http, {
 
 const started = Date.now();
 let sockets = 0;
+
+/**
+ * Le code qui tourne réellement, en une ligne.
+ *
+ * `scripts/deployer.sh` écrit ce fichier juste après avoir récupéré le dépôt.
+ * Sans lui, un déploiement ne pouvait pas se vérifier : `/healthz` disait que
+ * le site était ouvert, ce qui restait vrai **quand le redémarrage n'avait pas
+ * eu lieu** — l'ancienne version répondait très bien. Le déploiement se
+ * croyait fini, la correction n'était pas en ligne, et on le découvrait le
+ * lendemain.
+ *
+ * Absent en développement, et c'est normal : on n'y déploie rien.
+ */
+const VERSION = (() => {
+  try { return readFileSync(path.join(__dirname, 'VERSION'), 'utf8').trim() || null; }
+  catch { return null; }
+})();
 
 /**
  * Ce qui a empêché le démarrage d'aller au bout, s'il y a lieu.
@@ -236,8 +254,11 @@ if (process.env.DATABASE_URL) {
     console.log('couleurs des clubs actives');
 
     // ---- Grand Virage (tir a la corde en direct)
+    /* `decks` donne au Virage la main de chaque supporter. Il est créé plus
+       haut, donc disponible : sans lui la salle s'ouvre quand même, et tout le
+       monde y entre avec sa voix pour seule arme. */
     virage = createVirage({ pool, io, requireAuth: auth.requireAuth,
-      souvenirs, fanzzy, kop, couleurs });
+      souvenirs, fanzzy, kop, couleurs, decks });
     app.use('/api/virage', virage.router);
     console.log('grand virage actif');
 
@@ -375,6 +396,9 @@ app.get('/healthz', (_req, res) => {
   res.json({
     ok: !panneDemarrage,
     ...(panneDemarrage ? { panne: panneDemarrage } : {}),
+    // Le commit en ligne : c'est lui que le déploiement attend pour se
+    // déclarer terminé. Voir `VERSION` plus haut.
+    version: VERSION,
     node: process.version,
     uptime_s: Math.round((Date.now() - started) / 1000),
     sockets,

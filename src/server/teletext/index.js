@@ -385,13 +385,26 @@ export function createTeletext({ pool, client, footballStore = null }) {
         : null,
     ]);
 
+    /* Une requête, deux clubs. On ne la fait pas passer par le cache de
+       l'API : ces couleurs vivent en base, elles ne coûtent rien, et les
+       figer avec la fiche les garderait absentes une semaine sur un match
+       terminé dont le blason vient juste d’être lu. */
+    const couleurs = new Map((await q(
+      `SELECT id, color1 FROM teams WHERE id IN (?, ?)`,
+      [f.teams.home?.id ?? 0, f.teams.away?.id ?? 0])).map((t) => [t.id, t.color1]));
+
     return {
       statistiques,
       compositions,
       fixture: {
         id: f.fixture.id, date: f.fixture.date,
         status: f.fixture.status?.short, statusLong: f.fixture.status?.long,
-        elapsed: f.fixture.status?.elapsed ?? null, luA: luA ?? Date.now(),
+        elapsed: f.fixture.status?.elapsed ?? null,
+        // Le temps additionnel, que l'horloge partagée sait afficher. Sans
+        // lui, la fiche disait « 90+ » sans jamais dire de combien — or
+        // c'est exactement ce qu'on regarde à ce moment-là du match.
+        extra: f.fixture.status?.extra ?? null,
+        luA: luA ?? Date.now(),
         venue: f.fixture.venue?.name, ville: f.fixture.venue?.city,
         arbitre: f.fixture.referee,
         live, fini: fini(f.fixture.status?.short),
@@ -399,8 +412,13 @@ export function createTeletext({ pool, client, footballStore = null }) {
       ligue: { id: f.league?.id, nom: f.league?.name, pays: f.league?.country,
                logo: f.league?.logo, journee: f.league?.round, saison: f.league?.season },
       equipes: {
-        home: { ...f.teams.home, goals: f.goals?.home },
-        away: { ...f.teams.away, goals: f.goals?.away },
+        /* La couleur du club, tirée de son blason une fois pour toutes
+           (voir sql/couleurs.sql). Elle sert au personnage qui regarde le
+           match : son « GOAL ! » s'écrit aux couleurs de l'équipe, comme sur
+           l'accueil et dans le virage. Nulle tant qu'elle n'a pas été
+           extraite — la page a sa couleur par défaut. */
+        home: { ...f.teams.home, goals: f.goals?.home, couleur: couleurs.get(f.teams.home?.id) },
+        away: { ...f.teams.away, goals: f.goals?.away, couleur: couleurs.get(f.teams.away?.id) },
       },
       periodes: f.score ?? null,
       evenements: (data.evs ?? []).map((e) => ({

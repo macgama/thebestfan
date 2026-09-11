@@ -16,6 +16,10 @@ import { createVirage } from '../src/server/ferveur/index.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest } from './base-de-test.mjs';
+import { VirageRoom } from '../src/server/ferveur/virage.js';
+import { resoudreGeste } from '../src/server/ferveur/gestures.js';
+import { ACTIONS, ACTIONS_VIRAGE, ACTION_BY_ID, dansLeVirage }
+  from '../src/shared/duel/actions.js';
 
 const DB = baseDeTest();
 let failures = 0;
@@ -473,6 +477,211 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
   check('un martelage raccourci annonce sa vraie durée', gm.ms === GESTURES.mash.ms - 600);
   check('et sa cible baisse d\u2019autant, sinon le raccourci serait un cadeau',
     gm.target < GESTURES.mash.target);
+}
+
+/* ================================= les cartes d'action au Virage =========
+
+   Le Virage joue les cartes qui agissent sur soi ou sur sa tribune. Ce banc
+   travaille sur la salle directement — pas de socket, pas de base : ce qu'on
+   veut savoir ici, c'est si une carte fait ce qu'elle dit, et une salle est
+   déterministe quand on lui donne son horloge.
+   ===================================================================== */
+{
+  const salle = new VirageRoom({
+    fixture: { id: 9001, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B' },
+    emit: () => {}, log: { warn() {}, error() {} },
+  });
+  const toutes = ACTIONS_VIRAGE.map((a) => a.id);
+  salle.join('c1', { side: 0, name: 'Un', actions: toutes });
+  salle.join('c2', { side: 0, name: 'Deux', actions: toutes });
+  const m = salle.members.get('c1');
+
+  /* La main ne contient que des cartes jouables ici. On donne au deck les
+     vingt et une cartes du jeu — y compris celles qui restent au duel — et on
+     vérifie que la salle a fait le tri elle-même. */
+  salle.join('c3', { side: 1, name: 'Trois', actions: ACTIONS.map((a) => a.id) });
+  const m3 = salle.members.get('c3');
+  const duel = new Set(ACTIONS.filter((a) => !dansLeVirage(a)).map((a) => a.id));
+  check('la main du Virage est tirée du deck', m3.main.length === 5);
+  check('et aucune carte de duel n’y entre',
+    ![...m3.main, ...m3.pioche].some((id) => duel.has(id)));
+  check('les cartes qui traversent restent au duel', duel.size === 7);
+
+  /* Une carte de duel forcée dans la main est refusée, et le refus nomme sa
+     cause. C'est le filet contre le client modifié. */
+  m.main = ['a-silence']; m.breath = 100;
+  let refus = null;
+  try { salle.jouer('c1', 'a-silence'); } catch (e) { refus = e.code; }
+  check('une carte de duel forcée dans la main est refusée',
+    refus === 'ferveur.error.card_not_in_virage');
+
+  /* Une poussée bouge la corde, du côté de celui qui l'a jouée. La tribune de
+     `c1` est à domicile : chez elle, pousser rend la corde négative. */
+  const forcer = (id) => { m.main = [id]; m.breath = 100; m.cooldowns = {}; };
+  forcer('a-fumigene');
+  salle.rope = 0;
+  const ev = salle.jouer('c1', 'a-fumigene');
+  check('un Fumigène pousse la corde du bon côté', salle.rope < 0);
+  check('la salle l’annonce comme une action',
+    ev.some((e) => e.t === 'action' && e.cardId === 'a-fumigene'));
+
+  /* La poussée d'une carte est **divisée par l'effectif**, exactement comme un
+     chant. C'est la règle qui tient tout le Virage : le nombre aide, il ne
+     décide pas. Sans elle, un Fumigène dans une salle de mille vaudrait mille
+     fois ce qu'il vaut dans une salle de dix, et il n'y aurait plus aucune
+     raison de chanter.
+     
+     Une première version comparait les deux salles et attendait un résultat
+     « du même ordre » — c'est-à-dire exactement ce que produit une carte qui
+     **échappe** à la division. Le contrôle était vert dans les deux cas. On
+     mesure donc le rapport : dix fois plus de monde, dix fois moins par tête. */
+  {
+    const pousseeDe = (id, n) => {
+      const x = new VirageRoom({
+        fixture: { id, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B' },
+        emit: () => {}, log: { warn() {}, error() {} } });
+      for (let i = 0; i < n; i++) {
+        x.join(`p${i}`, { side: 0, name: `P${i}`, actions: ['a-fumigene'] });
+        // Actif dans la foule : sans ça `crowd()` ne les compte pas.
+        x.members.get(`p${i}`).lastPush = Date.now();
+      }
+      const p0 = x.members.get('p0');
+      p0.main = ['a-fumigene']; p0.breath = 100; p0.cooldowns = {};
+      x.rope = 0;
+      x.jouer('p0', 'a-fumigene');
+      return Math.abs(x.rope);
+    };
+    const petite = pousseeDe(9002, 4);
+    const grande = pousseeDe(9003, 40);
+    const rapport = petite / grande;
+    const divise = grande > 0 && rapport > 8 && rapport < 12;
+    check('une carte est divisée par l’effectif, comme un chant', divise);
+    if (!divise) {
+      console.log(`        4 membres ${petite.toFixed(2)} · 40 membres ${grande.toFixed(2)}`
+        + ` · rapport ${rapport.toFixed(2)} (attendu ≈ 10)`);
+    }
+  }
+
+  /* La recharge, et le fait qu'elle soit plus longue qu'au duel : une salle
+     dure quatre-vingt-dix minutes, un duel cinq. */
+  forcer('a-fumigene');
+  salle.jouer('c1', 'a-fumigene');
+  m.main = ['a-fumigene']; m.breath = 100;
+  refus = null;
+  try { salle.jouer('c1', 'a-fumigene'); } catch (e) { refus = e.code; }
+  check('une carte à peine jouée se recharge', refus === 'ferveur.error.card_on_cooldown');
+  check('et la recharge du Virage est plus longue que celle du duel',
+    m.cooldowns['a-fumigene'] - Date.now() > ACTION_BY_ID.get('a-fumigene').cd * 1000);
+
+  /* Un refus nomme sa cause : « pas assez de souffle » et non « impossible ». */
+  m.main = ['a-craquage']; m.breath = 3; m.cooldowns = {};
+  refus = null;
+  try { salle.jouer('c1', 'a-craquage'); } catch (e) { refus = e.code; }
+  check('sans souffle, la carte est refusée pour cette raison-là',
+    refus === 'ferveur.error.not_enough_breath');
+
+  /* Collecte : le souffle va à toute la tribune, et à elle seule. */
+  {
+    const allie = salle.members.get('c2');
+    const enFace = salle.members.get('c3');
+    m.main = ['a-collecte']; m.breath = 100; m.cooldowns = {};
+    allie.breath = 10; enFace.breath = 10;
+    salle.jouer('c1', 'a-collecte');
+    check('la Collecte remplit le souffle du coéquipier', allie.breath > 10);
+    check('et pas celui d’en face', enFace.breath === 10);
+  }
+
+  /* Appel du capo : une fenêtre pour la tribune. Ce n'est pas la carte qui
+     pousse, c'est le chant des autres pendant la fenêtre — on vérifie donc
+     l'effet là où il se produit, et pas au moment où la carte part. */
+  {
+    m.main = ['a-appel']; m.breath = 100; m.cooldowns = {};
+    salle.rallies = [];
+    const evA = salle.jouer('c1', 'a-appel');
+    check('l’Appel du capo ouvre une fenêtre pour la tribune',
+      salle.rallies.length === 1 && salle.rallies[0].side === 0);
+    check('et la salle en est prévenue', evA.some((e) => e.t === 'rally'));
+
+    const chanterParfait = (qui) => {
+      const x = salle.members.get(qui);
+      x.breath = 100;
+      salle.rope = 0;
+      /* `beats`, et pas `need` : le barème nomme ses pulsations `beats`, et une
+         clé inventée donnait un tableau vide — donc zéro frappe, zéro note,
+         zéro poussée des deux côtés, et un contrôle qui comparait deux zéros. */
+      const g = resoudreGeste(x.mods).tempo;
+      const taps = Array.from({ length: g.beats }, (_, i) => Math.round(i * g.interval));
+      salle.chant(qui, { cardId: 'reprise', taps });
+      return Math.abs(salle.rope);
+    };
+    const dedans = chanterParfait('c2');
+    salle.rallies = [];
+    const dehors = chanterParfait('c2');
+    const plus = dedans > dehors * 1.15;
+    check('un chant dans la fenêtre du capo pousse plus qu’en dehors', plus);
+    if (!plus) console.log(`        dedans ${dedans.toFixed(1)} · dehors ${dehors.toFixed(1)}`);
+  }
+
+  /* Mosaïque : ne vaut rien seul. C'est écrit sur la carte, et c'est ce qui la
+     rend intéressante — on vérifie donc le cas où personne ne suit. */
+  {
+    const seul = new VirageRoom({
+      fixture: { id: 9004, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B' },
+      emit: () => {}, log: { warn() {}, error() {} } });
+    seul.join('s1', { side: 0, name: 'Seul', actions: ['a-mosaique'] });
+    const x = seul.members.get('s1');
+    x.main = ['a-mosaique']; x.breath = 100; x.cooldowns = {};
+    seul.rope = 0;
+    const evM = seul.jouer('s1', 'a-mosaique');
+    check('la Mosaïque ne pousse pas quand personne ne suit', seul.rope === 0);
+    check('et elle dit combien ont suivi',
+      evM.some((e) => e.t === 'effect' && e.type === 'per_mate' && e.mates === 0));
+  }
+
+  /* Le Métronome élargit la fenêtre de tempo, et l'état le dit à la page.
+     Sans ça la carte coûtait du souffle et la page dessinait l'ancienne
+     pulsation : le joueur tapait à côté sans jamais comprendre pourquoi. */
+  {
+    m.main = ['a-metronome']; m.breath = 100; m.cooldowns = {}; m.effets = [];
+    const avant = salle.snapshotFor('c1').you.gestes.tempo.window;
+    salle.jouer('c1', 'a-metronome');
+    const apres = salle.snapshotFor('c1').you.gestes.tempo.window;
+    check('le Métronome élargit la fenêtre de tempo', apres > avant);
+    check('et l’état l’annonce à la page pour qu’elle la dessine',
+      salle.snapshotFor('c1').you.effets.some((e) => e.type === 'mod_self'));
+  }
+
+  /* La main se remplit toute seule, avec un temps de retard : jouer coûte
+     aussi du choix. */
+  {
+    m.main = ['a-fumigene', 'a-thermos']; m.breath = 100; m.cooldowns = {};
+    m.pioche = ['a-torche']; m.remplirA = 0;
+    salle.jouer('c1', 'a-fumigene');
+    salle.entretenirCartes(Date.now());
+    check('la carte suivante n’arrive pas tout de suite', m.main.length === 1);
+    salle.entretenirCartes(Date.now() + 9999);
+    check('mais elle arrive', m.main.length === 2 && m.main.includes('a-torche'));
+  }
+
+  /* Rejoindre à nouveau ne redistribue pas la main : ce serait un moyen gratuit
+     de se débarrasser d'une recharge. */
+  {
+    const avant = [...m.main];
+    const cd = { ...m.cooldowns };
+    salle.join('c1', { side: 0, name: 'Un', actions: toutes });
+    check('revenir dans la salle ne redistribue pas la main',
+      JSON.stringify(salle.members.get('c1').main) === JSON.stringify(avant));
+    check('et n’efface pas les recharges',
+      JSON.stringify(salle.members.get('c1').cooldowns) === JSON.stringify(cd));
+  }
+
+  /* Sans deck, on entre quand même. Le Virage s'est joué au chant seul pendant
+     tout ce temps, et il doit continuer de s'ouvrir à qui n'a rien construit. */
+  {
+    const nu = salle.join('c9', { side: 0, name: 'Nu' });
+    check('sans deck, la salle s’ouvre quand même', nu.you !== null);
+    check('et la main est simplement vide', nu.you.main.length === 0);
+  }
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);

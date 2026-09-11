@@ -26,6 +26,7 @@ import { JSDOM, VirtualConsole } from 'jsdom';
 import { createDecks } from '../src/server/deck/index.js';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
+import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest } from './base-de-test.mjs';
@@ -154,6 +155,12 @@ async function ouvrirPage() {
          décide s'il existe une illustration pour ce Fanzzy, et c'est
          exactement ce qu'on veut vérifier. */
       window.eval(readFileSync(path.join(RACINE, 'public', 'fanzzy-art.js'), 'utf8'));
+      /* Même raison pour `action-art.js` : la table des sept familles et
+         l'adresse des dessins y vivent depuis que le duel avait besoin des
+         mêmes. Sans lui, la page lève au premier rendu — ce qui est déjà
+         arrivé, et ce que ce commentaire évite de redécouvrir. */
+      window.eval(readFileSync(path.join(RACINE, 'public', 'action-art.js'), 'utf8'));
+      window.eval(readFileSync(path.join(RACINE, 'public', 'stuff-art.js'), 'utf8'));
     },
   });
 }
@@ -224,10 +231,50 @@ check('il est marqué titulaire',
 
 clic(rangs[0].querySelector('[data-piece]') ?? T(dom).querySelector('[data-piece]'));
 await jusqua(() => T(dom).getElementById('voile').classList.contains('on'));
+
+/* Le panneau de choix montre les objets.
+ *
+ * On compare le dessin de chaque ligne à l'identifiant qu'elle propose : une
+ * vignette unique répétée sur toutes les lignes passerait un simple comptage,
+ * et c'est pourtant exactement le cas où le joueur ne distingue plus rien. */
+{
+  const lignes = [...T(dom).querySelectorAll('#panneau .choix')]
+    .filter((c) => c.dataset.prendrePiece)
+    .map((c) => ({
+      id: c.dataset.prendrePiece.split(':')[2],
+      src: c.querySelector('.tbf-piece .illu')?.getAttribute('src') ?? null,
+      cadre: c.querySelector('.tbf-piece')?.className ?? '',
+    }));
+  check('le panneau propose des pièces', lignes.length > 0);
+  const propres = lignes.filter((l) => l.src === `/img/stuff/${l.id}.png`);
+  check('chaque pièce proposée porte son propre dessin',
+    lignes.length > 0 && propres.length === lignes.length);
+  if (propres.length !== lignes.length) {
+    console.log('        vu :', lignes.map((l) => `${l.id} → ${l.src}`).join(', '));
+  }
+  /* Le cadre porte la rareté. Sans lui, sept objets détourés sur fond sombre
+     se ressemblent tous : c'est la couleur qui dit ce qui est rare. */
+  check('et le cadre de sa rareté',
+    lignes.length > 0 && lignes.every((l) => /\br-(commune|rare|epique|legendaire)\b/.test(l.cadre)));
+}
+
 clic(T(dom).querySelector('[data-prendre-piece]'));
 await jusqua(() => T(dom).querySelector('.piece.plein'));
 check('l\u2019équipement se pose sur le Fanzzy', T(dom).querySelector('.piece.plein') !== null);
 check('l\u2019effet combiné est affiché', /Effet ·/.test(texte(dom)));
+
+/* Et l'emplacement montre l'objet qu'on vient d'y poser, pas un autre. */
+{
+  const pose = T(dom).querySelector('.piece.plein');
+  const nom = pose?.querySelector('b')?.textContent.trim();
+  const src = pose?.querySelector('.tbf-piece .illu')?.getAttribute('src') ?? null;
+  const attendu = STUFF.find((s) => s.nom === nom)?.id;
+  check('l\u2019emplacement montre l\u2019objet posé',
+    Boolean(attendu) && src === `/img/stuff/${attendu}.png`);
+  if (src !== `/img/stuff/${attendu}.png`) {
+    console.log('        posée :', nom, '→', src, '(attendu', attendu, ')');
+  }
+}
 
 // deuxième rang, puis on tente d'y remettre la même pièce
 clic(T(dom).querySelectorAll('.rang.vide')[0].querySelector('[data-choisir-fanzzy]'));
@@ -273,6 +320,39 @@ clic(T(dom).querySelector('[data-onglet="cartes"]'));
 await jusqua(() => T(dom).querySelector('.grille'));
 check('dix emplacements de cartes', T(dom).querySelectorAll('.emp').length === 10);
 
+/* Le catalogue montre les cartes, pas seulement leurs noms.
+ *
+ * Chaque ligne porte une vignette : le glyphe de sa famille, et le dessin
+ * par-dessus. On vérifie que le dessin est **le sien** — une vignette unique
+ * répétée sur les vingt et une lignes passerait un simple comptage — et que le
+ * glyphe reste dessous, puisque c'est lui qui reprend la main si un fichier
+ * manque un jour. */
+{
+  /* Sur « toutes » et pas sur « les miennes » : le contrôle doit porter sur
+     les vingt et une cartes du jeu, pas sur les quelques-unes que ce joueur
+     de test possède — une carte jamais possédée est justement celle dont on
+     ne verrait jamais que le dessin manque. */
+  clic(T(dom).querySelector('[data-filtre="toutes"]'));
+  await jusqua(() => T(dom).querySelectorAll('.cat .carte').length === ACTIONS.length);
+  const lignes = [...T(dom).querySelectorAll('.cat .carte')].map((c) => ({
+    id: c.dataset.detail,
+    src: c.querySelector('.vig .illu')?.getAttribute('src') ?? null,
+    glyphe: Boolean(c.querySelector('.vig svg path')?.getAttribute('d')),
+  }));
+  check('le catalogue liste les vingt et une cartes', lignes.length === ACTIONS.length);
+  const propres = lignes.filter((l) => l.src?.startsWith(`/img/action/${l.id}.`));
+  check('chaque carte du catalogue porte son propre dessin',
+    lignes.length > 0 && propres.length === lignes.length);
+  if (propres.length !== lignes.length) {
+    console.log('        sans leur dessin :', lignes.filter((l) =>
+      !propres.includes(l)).map((l) => `${l.id} → ${l.src}`).join(', '));
+  }
+  check('et son glyphe de famille dessous',
+    lignes.length > 0 && lignes.every((l) => l.glyphe));
+  clic(T(dom).querySelector('[data-filtre="miennes"]'));
+  await jusqua(() => T(dom).querySelector('[data-filtre="miennes"]').classList.contains('on'));
+}
+
 const communes = ACTIONS.filter((a) => a.rar === 'commune').map((a) => a.id);
 async function ajouter(id) {
   const carte = T(dom).querySelector(`[data-detail="${id}"]`);
@@ -292,6 +372,27 @@ for (const id of communes) {
   for (let k = 0; k < 2 && pose < 10; k++) if (await ajouter(id)) pose++;
 }
 check('dix cartes posées', T(dom).querySelectorAll('.emp.plein').length === 10);
+
+/* Et les dix emplacements montrent chacun le dessin de leur carte.
+ *
+ * On ne peut pas lire `S.deck.actions` : `S` est un `const` de premier niveau
+ * dans un script classique, et ceux-là ne sont pas des propriétés de `window`
+ * — la leçon a déjà coûté quatre faux échecs ailleurs. On croise donc ce que
+ * la carte affiche, son **nom**, avec l'identifiant que porte son image : si
+ * les dix montraient la même vignette, les noms ne suivraient pas. */
+{
+  const parNom = new Map(ACTIONS.map((a) => [a.nom, a.id]));
+  const posees = [...T(dom).querySelectorAll('.emp.plein')].map((c) => ({
+    nom: c.querySelector('.nm')?.textContent.trim(),
+    src: c.querySelector('.illu')?.getAttribute('src') ?? null,
+    glyphe: Boolean(c.querySelector('.sceau path')?.getAttribute('d')),
+  }));
+  const alignees = posees.length === 10 && posees.every((c) =>
+    parNom.has(c.nom) && c.src?.startsWith(`/img/action/${parNom.get(c.nom)}.`));
+  check('chaque carte posée porte son dessin', alignees);
+  if (!alignees) console.log('        vu :', posees.map((c) => `${c.nom} → ${c.src}`).join(', '));
+  check('le glyphe de famille reste dessous', posees.every((c) => c.glyphe));
+}
 
 const troisieme = await ajouter(communes[0]);
 check('un troisième exemplaire est refusé par l\u2019écran', troisieme === false);

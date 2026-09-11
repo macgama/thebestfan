@@ -142,6 +142,18 @@ const equiper = async (id, stade = 1) => {
 
 const niveau = createNiveau({ pool, requireAuth });
 app.use('/api/niveau', niveau.router);
+/* Un retard que le test allume quand il veut.
+
+   Le défaut filmé se joue **dans l'intervalle** entre le chargement de la
+   page et la réponse du serveur : sur une machine locale, cet intervalle dure
+   dix millisecondes et rien ne s'y observe. On l'allonge donc à la demande —
+   c'est la seule façon de regarder ce qu'un joueur voit sur son téléphone,
+   où trois allers-retours prennent une demi-seconde. */
+let retardFanzzy = 0;
+app.use('/api/fanzzy', (q, s2, n) => {
+  if (!retardFanzzy) return n();
+  setTimeout(n, retardFanzzy);
+});
 app.use('/api/fanzzy', createFanzzy({ pool, requireAuth, niveau }).router);
 app.use('/api/me', createOnboarding({ pool, requireAuth }).router);
 app.get('/', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'index.html')));
@@ -156,8 +168,32 @@ const base = `http://localhost:${http.address().port}`;
 const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
 const erreurs = [];
 
+/** Le premier dessin qui s'affiche pour de bon, ou '' si rien ne vient. */
+async function jusquaSrc(page, ms = 1200) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    const src = await page.evaluate(() =>
+      document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '');
+    if (src) return src;
+    await new Promise((r) => setTimeout(r, 40));
+  }
+  return '';
+}
+
+/**
+ * Une visite, dans un navigateur qui ne se souvient de rien.
+ *
+ * Chaque appel ouvre un **contexte isolé** : l'accueil retient désormais, d'une
+ * visite à l'autre, quel personnage il a montré — c'est ce qui évite qu'un
+ * inconnu occupe l'écran pendant que le serveur répond. Ce souvenir est juste,
+ * et il fausserait pourtant tous les contrôles qui décrivent un joueur arrivant
+ * pour la première fois. Une page ouverte ici est donc quelqu'un qui n'est
+ * jamais venu ; un  sur cette page est un rafraîchissement, avec sa
+ * mémoire — et les deux ont chacun leurs contrôles.
+ */
 async function ouvrir(largeur = 400, hauteur = 880) {
-  const page = await nav.newPage();
+  const contexte = await (nav.createBrowserContext?.() ?? nav.createIncognitoBrowserContext());
+  const page = await contexte.newPage();
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.setViewport({ width: largeur, height: hauteur });
   /* On note les gestes joués plutôt que les classes qui les portent.
@@ -279,7 +315,153 @@ check('la page ne déborde pas en largeur', await page.evaluate(() =>
   check('le personnage occupe plus de la moitié de la hauteur',
     m.hauteur > m.ecran * 0.55 || (console.log(`        ${Math.round(m.hauteur)} px sur ${m.ecran}`), false));
   check('sans dépasser de sa bande',
-    m.haut >= m.bandeHaut - 1 && m.bas <= m.bandeBas + 1);
+    m.haut >= m.bandeHaut - 1 && m.bas <= m.bandeBas + 1
+    || (console.log(`        ${Math.round(m.haut)}–${Math.round(m.bas)} dans `
+      + `${Math.round(m.bandeHaut)}–${Math.round(m.bandeBas)}`), false));
+}
+
+
+/* ------------------------------------- le personnage, sur trois écrans
+
+ * Il est le sujet de l'écran : c'est lui qu'on vient voir, et tout le reste
+ * est autour. Sur un téléphone court comme sur une tablette, il doit rester
+ * la plus grande chose de la page — et ne jamais dépasser de sa bande, qui
+ * est close par `overflow:hidden` et le décapiterait.
+ *
+ * Trois tailles, parce que la règle qui le dimensionne change entre elles et
+ * qu'une seule mesure ne dit rien des deux autres : un écran court, un
+ * téléphone ordinaire, une tablette en portrait.
+ */
+for (const [nom, l, h, plancher] of [
+  // Les planchers sont ceux mesurés après l'agrandissement, moins une marge
+  // de deux points : ils défendent l'acquis sans rougir au premier pixel de
+  // différence entre deux versions de Chrome.
+  ['téléphone court', 400, 690, 0.60],
+  ['téléphone', 390, 844, 0.66],
+  ['tablette', 768, 1024, 0.72],
+]) {
+  const p = await ouvrir(l, h);
+  await p.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+  const m = await p.evaluate(() => {
+    const pile = document.getElementById('pile').getBoundingClientRect();
+    const bande = document.querySelector('.centre').getBoundingClientRect();
+    return {
+      hauteur: pile.height, largeur: pile.width, ecran: innerHeight,
+      haut: pile.top, bas: pile.bottom, bandeHaut: bande.top, bandeBas: bande.bottom,
+      bandeH: bande.height,
+    };
+  });
+  const part = m.hauteur / m.ecran;
+  check(`${nom} : le personnage tient la page (${Math.round(part * 100)} %)`,
+    part > plancher
+    || (console.log(`        ${Math.round(m.hauteur)} px sur ${m.ecran}, `
+      + `bande de ${Math.round(m.bandeH)} px`), false));
+  check(`${nom} : et il ne dépasse pas de sa bande`,
+    m.haut >= m.bandeHaut - 1 && m.bas <= m.bandeBas + 1
+    || (console.log(`        ${Math.round(m.haut)}–${Math.round(m.bas)} dans `
+      + `${Math.round(m.bandeHaut)}–${Math.round(m.bandeBas)}`), false));
+  /* La place perdue au-dessus de lui. C'est elle qu'on voyait sur les
+     captures : un personnage petit au milieu d'une bande vide. */
+  console.log(`        ${nom} : ${Math.round(m.largeur)}×${Math.round(m.hauteur)} `
+    + `dans une bande de ${Math.round(m.bandeH)} px`);
+  await p.close();
+}
+
+
+/* --------------------------------- le rafraîchissement, sans intrus
+
+ * **La faute filmée.** À chaque rechargement, le supporter générique occupait
+ * l'écran une demi-seconde avant d'être remplacé par le Fanzzy du joueur :
+ * l'accueil posait un personnage dès sa première ligne, et n'apprenait lequel
+ * qu'après trois allers-retours réseau. Le choix du joueur avait bien été
+ * pris ; il arrivait simplement en second, et ce qu'on voyait d'abord était
+ * quelqu'un d'autre.
+ *
+ * On retient donc d'une visite à l'autre qui était à l'écran. Ce contrôle
+ * reproduit la scène : une première visite pour apprendre, puis un
+ * rechargement pendant lequel **le serveur met une seconde à répondre**. Si
+ * un inconnu doit apparaître, il apparaîtra là.
+ *
+ * Le retard est indispensable au contrôle : sans lui, la réponse arrive trop
+ * vite pour qu'on puisse observer l'intervalle — et le contrôle passerait au
+ * vert sur le code d'avant, qui avait pourtant le défaut.
+ */
+{
+  /* Un Fanzzy équipé, sans quoi il n'y a pas d'intrus possible : le
+     supporter est alors le bon personnage. */
+  await equiper('G1');
+  const page = await ouvrir();
+  await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+  const premiere = await page.evaluate(() =>
+    document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '');
+  check('à la première visite, le Fanzzy équipé finit par s’afficher',
+    /\/img\/fanzzy\//.test(premiere)
+    || (console.log('        elle montre :', premiere), false));
+
+  // Le serveur traîne : c'est l'intervalle qu'on veut regarder.
+  retardFanzzy = 1000;
+  await page.reload({ waitUntil: 'domcontentloaded' });
+
+  /* On relève **tout ce qui s'affiche**, du premier dessin décodé jusqu'à la
+     réponse du serveur. Un seul relevé ne dirait rien : l'intrus durait moins
+     d'une seconde, et c'est précisément ce qu'il faut attraper. */
+  const vus = new Set();
+  let arriveA = null;
+  const t0 = Date.now();
+  while (Date.now() - t0 < 1400) {
+    const src = await page.evaluate(() =>
+      document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '');
+    if (src) {
+      if (arriveA === null) arriveA = Date.now() - t0;
+      vus.add(src.replace(/\?.*$/, ''));
+    }
+    await new Promise((r) => setTimeout(r, 40));
+  }
+  retardFanzzy = 0;
+
+  const intrus = [...vus].filter((s) => s.includes('/img/supporter/'));
+  check('au rechargement, aucun inconnu ne passe devant',
+    intrus.length === 0
+    || (console.log('        vus :', [...vus].join(' puis ')), false));
+  /* **Tout de suite**, et c'est la moitié qui compte. Sans le souvenir, la
+     page attendrait la réponse du serveur — une seconde ici — avant de poser
+     qui que ce soit : l'écran resterait vide. Ce n'est pas un intrus, mais ce
+     n'est pas non plus ce qu'on veut, et le contrôle d'à côté ne le voit pas.
+
+     Six cents millisecondes : largement au-dessus d'un dessin déjà en cache,
+     largement en dessous des mille du serveur. */
+  check('et sans attendre le serveur',
+    arriveA !== null && arriveA < 600
+    || (console.log('        il arrive après', arriveA, 'ms'), false));
+  check('et c’est bien le Fanzzy du joueur qui est là, tout de suite',
+    [...vus].every((s) => /\/img\/fanzzy\//.test(s)) && vus.size > 0
+    || (console.log('        vus :', [...vus].join(' puis ')), false));
+
+  await page.close();
+}
+
+/* ------------------------------------- et quand il n'y a pas de Fanzzy
+
+   Le supporter n'est pas un intrus : sans Fanzzy équipé, c'est **le bon**
+   personnage. Le souvenir retient donc aussi cette réponse-là, pour que la
+   visite suivante l'affiche tout de suite lui aussi. */
+{
+  await pool.query('UPDATE user_wallet SET active_fanzzy = NULL WHERE user_id = ?', [U]);
+  const page = await ouvrir();
+  await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+  check('sans Fanzzy équipé, c’est le supporter qui tient l’écran',
+    /\/img\/supporter\//.test(await page.evaluate(() =>
+      document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '')));
+
+  retardFanzzy = 1000;
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  const arrive = await jusquaSrc(page, 1200);
+  retardFanzzy = 0;
+  check('et au rechargement il est là sans attendre le serveur',
+    /\/img\/supporter\//.test(arrive)
+    || (console.log('        elle montre :', arrive || '(rien)'), false));
+  await page.close();
+  await pool.query('UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?', ['G1', U]);
 }
 
 /* ------------------------------------------------------ changer de pose */

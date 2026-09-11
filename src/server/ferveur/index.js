@@ -12,16 +12,21 @@ import { Cheat } from './gestures.js';
  */
 
 const MAX_CHANTS_PER_10S = 12;
+/* Les cartes ont leur propre cadence. Elles coûtent du souffle et se
+   rechargent : la limite n'est qu'un filet contre le client modifié, et une
+   main de cinq cartes jouées d'affilée est un coup légitime. */
+const MAX_CARTES_PER_10S = 8;
 
 /* `couleurs` est facultatif : les suites de test montent le virage sans
    lui, et un club sans couleur garde celle du jeu. Une teinte manquante ne
    doit jamais empêcher d'entrer dans une tribune. */
 export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
-                               kop = null, couleurs = null }) {
+                               kop = null, couleurs = null, decks = null }) {
   const rooms = new Map();          // fixtureId -> VirageRoom
   const enCours = new Map();        // créations en vol, pour n'en faire qu'une
   const roomOfUser = new Map();     // userId -> fixtureId
   const buckets = new WeakMap();    // socket -> horodatages des chants
+  const seauxCartes = new WeakMap();// socket -> horodatages des cartes jouées
 
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
@@ -218,8 +223,28 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       socket.join(`virage:${room.fixture.id}`);
       roomOfUser.set(u.userId, room.fixture.id);
       if (process.env.VIRAGE_DEBUG) console.log('[virage] join', u.userId, '->', room.fixture.id);
+      /* Les cartes d'action du deck, s'il en a un.
+       *
+       * `decks` est facultatif, et volontairement : le Virage s'est joué sans
+       * cartes jusqu'ici et doit continuer de s'ouvrir pour quelqu'un qui n'a
+       * jamais construit de deck. Une main vide n'est pas une erreur, c'est
+       * simplement un supporter qui n'a que sa voix.
+       *
+       * Le tri — quelles cartes entrent au Virage — n'est pas fait ici : il
+       * appartient à `dansLeVirage`, et la salle l'applique elle-même. Le
+       * faire des deux côtés donnerait deux réponses le jour où la règle
+       * bouge. */
+      let actions = [];
+      try {
+        const l = decks ? await decks.loadout(u.userId) : null;
+        actions = (l?.actions ?? []).map((a) => a.id);
+      } catch (e) {
+        // Un deck illisible ne doit pas fermer la porte du virage.
+        console.warn('[virage] deck illisible pour', u.userId, '·', e.message);
+      }
+
       socket.emit('virage:state',
-        room.join(u.userId, { side, name: u.name, mods, neutre, perso }));
+        room.join(u.userId, { side, name: u.name, mods, neutre, perso, actions }));
       io.to(`virage:${room.fixture.id}`).emit('virage:crowd', { crowd: room.crowd() });
     });
 
@@ -252,6 +277,46 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         if (e instanceof Cheat) socket.emit('virage:error', { code: e.code });
         else {
           console.error('[virage] chant', e);
+          socket.emit('virage:error', { code: 'ferveur.error.server' });
+        }
+      }
+    });
+
+    /**
+     * Une carte d'action, jouée depuis le Virage.
+     *
+     * Deux choses partent, et pas au même endroit. Le **résultat** revient à
+     * celui qui a joué : sa main, son souffle, ses recharges. Les
+     * **événements** vont à toute la salle, parce que c'est là que se joue
+     * l'intérêt de la chose — un Appel du capo qui n'est vu de personne
+     * n'appelle personne.
+     */
+    socket.on('virage:jouer', async ({ cardId } = {}) => {
+      const u = me();
+      if (!u) return;
+      const fixtureId = roomOfUser.get(u.userId);
+      const room = fixtureId ? rooms.get(fixtureId) : null;
+      if (!room) return socket.emit('virage:error', { code: 'ferveur.error.not_in_virage' });
+
+      /* Sa propre cadence, séparée de celle des chants. Une carte coûte du
+         souffle et a sa recharge : la limite n'est qu'un filet contre le
+         client modifié, elle n'a pas à être serrée. */
+      const now = Date.now();
+      const seau = (seauxCartes.get(socket) ?? []).filter((t) => now - t < 10_000);
+      if (seau.length >= MAX_CARTES_PER_10S) {
+        return socket.emit('virage:error', { code: 'ferveur.error.rate_limited' });
+      }
+      seau.push(now);
+      seauxCartes.set(socket, seau);
+
+      try {
+        const evenements = room.jouer(u.userId, cardId);
+        io.to(`virage:${fixtureId}`).emit('virage:events', { evenements });
+        socket.emit('virage:vous', room.snapshotFor(u.userId).you);
+      } catch (e) {
+        if (e instanceof Cheat) socket.emit('virage:error', { code: e.code });
+        else {
+          console.error('[virage] carte', e);
           socket.emit('virage:error', { code: 'ferveur.error.server' });
         }
       }

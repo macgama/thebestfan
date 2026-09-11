@@ -171,15 +171,38 @@ h2 i{font-style:normal;opacity:.7}
 .fz:not(.actif) .vig{filter:grayscale(.55);opacity:.7}
 
 .main{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:9px}
+/* Coût et nom en bas, pas au centre : depuis que la carte porte un dessin, un
+   texte centré se pose en plein milieu du sujet — sur le visage du capo, sur
+   la flamme du fumigène. En bas, il tombe sur la partie déjà sombre. */
 .ct{position:relative;aspect-ratio:.66;border-radius:7px;border:1px solid var(--fc,#8257DA);
   background:linear-gradient(170deg,rgba(255,255,255,.07),rgba(0,0,0,.4));display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:3px;padding:3px 2px;cursor:pointer;overflow:hidden}
-.ct .co{font-family:var(--banner);font-size:11px;color:var(--fc,#8257DA);line-height:1}
-.ct .nm{font-size:7px;line-height:1.1;text-align:center;opacity:.8}
+  align-items:center;justify-content:flex-end;gap:2px;padding:3px 2px 5px;cursor:pointer;overflow:hidden}
+/* L'emplacement vide n'a rien à cadrer : son « ? » reste au milieu. */
+.ct.vide{justify-content:center}
+/* Le glyphe de famille en fond, et le dessin par-dessus. Les deux sont en
+   `position:absolute` sous le coût et le nom, qui restent au-dessus. */
+.ct .sceau{position:absolute;left:50%;top:46%;width:66%;height:auto;
+  transform:translate(-50%,-50%);opacity:.24;color:var(--fc,#8257DA);
+  fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.ct .illu{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center 34%;filter:brightness(.62)}
+/* Le voile qui rend le nom lisible sur le dessin : sept pixels de craie sur
+   une tribune éclairée ne se lisent pas sans lui. */
+.ct::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(4,6,10,.45),transparent 42%,rgba(4,6,10,.9))}
+.ct .co{position:relative;z-index:2;font-family:var(--banner);font-size:11px;
+  color:var(--craie);line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+.ct .nm{position:relative;z-index:2;font-size:7px;line-height:1.1;text-align:center;
+  opacity:.92;text-shadow:0 1px 3px rgba(0,0,0,.9)}
 .ct.hs{opacity:.35;cursor:default}
-.ct .cd{position:absolute;inset:0;background:rgba(4,6,10,.72);display:flex;align-items:center;
+/* Le compte à rebours passe devant le voile : sans `z-index`, le pseudo-élément
+   le peignait par-dessus et le chiffre s'assombrissait en haut de la carte. */
+.ct .cd{position:absolute;inset:0;z-index:3;background:rgba(4,6,10,.72);
+  display:flex;align-items:center;
   justify-content:center;font-family:var(--banner);font-size:13px;color:var(--craie)}
 .ct.vide{border-style:dashed;border-color:rgba(242,238,228,.15);cursor:default}
+/* Rien à assombrir dans un emplacement vide. */
+.ct.vide::after{display:none}
 
 /* La marge basse doit dégager toute la hauteur de la barre commune.
 
@@ -308,8 +331,9 @@ h2 i{font-style:normal;opacity:.7}
 <div class="toast" id="toast"></div>
 
 <script src="/socket.io/socket.io.js"></script>
-<!-- Sans « defer » : le script en ligne ci-dessous lit FZART. -->
+<!-- Sans « defer » : le script en ligne ci-dessous lit FZART et TBF_ACTION. -->
 <script src="/fanzzy-art.js"></script>
+<script src="/action-art.js"></script>
 <script>
 /* =======================================================================
    Duel N contre N.
@@ -340,10 +364,10 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
   (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
 
-const FAM = {
-  pousse:'#E0402C', entrave:'#8257DA', souffle:'#3C82E8', geste:'#F5C33B',
-  garde:'#C2CAD6', collectif:'#1E9E6A', bascule:'#E08A2C',
-};
+/* Les familles viennent de `action-art.js`, avec les dessins. Le duel en
+   gardait sa propre table — la couleur seule — et c'est la façon habituelle
+   dont deux écrans du même jeu finissent par ne plus dire pareil. */
+const famDe = (a) => window.TBF_ACTION.famDe(a);
 
 const LABEL_GESTE = { tempo:'TEMPO', mash:'MARTELAGE', hold:'ENDURANCE' };
 const AIDE_GESTE = {
@@ -727,7 +751,7 @@ function rendreDuel() {
       continue;
     }
     const a = carteDef(id);
-    const fc = FAM[a?.fam] ?? '#8257DA';
+    const fam = famDe(a);
     const reste = cd[id];
     // La Relève ne sert à rien si le Fanzzy en tribune est déjà à son dernier
     // âge débloqué. On la grise plutôt que de la laisser jouer pour rien : le
@@ -737,8 +761,12 @@ function rendreDuel() {
       && !(enJeu?.ages ?? [])[enJeu?.stade ?? 1];
     const injouable = !a || moi.breath < a.cost || reste || sansRelève
       || (moi.effets ?? []).some((e) => e.type === 'lock_actions');
-    cases.push(`<div class="ct ${injouable ? 'hs' : ''}" style="--fc:${fc}"
+    // Glyphe de famille en fond, dessin par-dessus : une carte dont le fichier
+    // manque garde son repère au lieu d'un carré vide.
+    cases.push(`<div class="ct ${injouable ? 'hs' : ''}" style="--fc:${fam.c}"
       ${injouable ? '' : `data-jouer="${id}"`}>
+      <svg class="sceau" viewBox="0 0 24 24"><path d="${fam.ico}"/></svg>
+      ${a ? window.TBF_ACTION.illustration(a.id) : ''}
       <div class="co">${a?.cost ?? '?'}</div>
       <div class="nm">${esc(a?.nom ?? id)}</div>
       ${reste ? `<div class="cd">${Math.ceil(reste)}</div>` : ''}
@@ -862,13 +890,28 @@ function raconter(e) {
       break;
     }
 
+    /**
+     * Une carte part.
+     *
+     * C'était un nom de carte qui montait du nœud, en sept pixels, pendant une
+     * seconde. Deux cartes de la même famille se ressemblaient donc totalement
+     * au moment exact où elles comptent le plus, et l'adversaire — qui n'a pas
+     * la carte en main — n'avait aucun moyen de savoir ce qui lui tombait
+     * dessus sans avoir lu ce mot au vol.
+     *
+     * La carte se montre maintenant en grand, avec son dessin, et se replie
+     * vers la corde où son effet va se lire. L'onde reste au nœud : elle dit
+     * « quelque chose arrive ici », la carte dit « et c'est ça ».
+     */
     case 'action': {
       const a = carteDef(e.cardId);
       const p = pointCorde();
       FX?.onde?.({ ...p, couleur: pour ? OR : BLEU, taille: 200 });
-      FX?.nombre?.(a?.nom ?? e.cardId, { x: p.x, y: p.y - 26,
-        couleur: pour ? OR : BLEU, signe: false });
-      FX?.son?.('carte');
+      // La carte qu'on vient de toucher, quand c'est la nôtre : elle part de
+      // sa place dans la main, ce qui rattache le geste à ce qu'il déclenche.
+      const depuis = pour
+        ? document.querySelector(`#mainCartes [data-jouer="${e.cardId}"]`) : null;
+      window.TBF_ACTION.jouee(a, { pour, vers: p, depuis });
       break;
     }
 

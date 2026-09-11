@@ -32,6 +32,13 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { Script } from 'node:vm';
 import path from 'node:path';
+/* Les listes de référence viennent des modules eux-mêmes, pas d'une lecture au
+   motif du fichier source. Une première version lisait les identifiants à
+   l'expression régulière : le jour où un `id:` changeait de forme, le contrôle
+   se contentait de vérifier moins de pièces et **restait vert** — un garde-fou
+   qui rétrécit en silence ne garde plus rien. */
+import { ACTIONS } from '../src/shared/duel/actions.js';
+import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 
 const DOSSIER = 'public';
 
@@ -281,6 +288,46 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
   }
   if (manquants.length) ko('fanzzy-art.js', `illustrations annoncées mais absentes : ${manquants.join(', ')}`);
   else if (brut !== undefined) ok('fanzzy-art.js', `${illu.length} illustration(s) présentes en trois formats`);
+
+  /* Les dessins des cartes d'action.
+     La liste de référence est le catalogue lui-même : `action-art.js` promet
+     un fichier pour n'importe quelle carte qu'on lui nomme, donc toute carte
+     ajoutée aux règles promet un dessin. Une carte sans fichier se voit — elle
+     retombe sur son glyphe — mais c'est un appauvrissement silencieux, et
+     silencieux veut dire qu'il durera. */
+  const cartes = ACTIONS.map((a) => a.id);
+  const sansDessin = [];
+  for (const id of cartes) {
+    for (const ext of ['.avif', '.webp', '.jpg']) {
+      const f = path.join(DOSSIER, 'img', 'action', id + ext);
+      try { await readFile(f); } catch { sansDessin.push(id + ext); }
+    }
+  }
+  if (sansDessin.length) {
+    ko('action-art.js', `cartes sans dessin : ${sansDessin.join(', ')}`
+      + ' — les invites sont dans scripts/action-images.mjs --invites');
+  } else if (cartes.length) {
+    ok('action-art.js', `${cartes.length} carte(s) d’action dessinées en trois formats`);
+  }
+
+  /* Les dessins de l'équipement, même raison et même forme.
+     Le format de secours est le PNG et non le JPEG : ces objets sont détourés
+     et ont une transparence à garder. Chercher un `.jpg` ici passerait au vert
+     sur des fichiers qui n'existent pas. */
+  const pieces = STUFF.map((s) => s.id);
+  const nues = [];
+  for (const id of pieces) {
+    for (const ext of ['.avif', '.webp', '.png']) {
+      const f = path.join(DOSSIER, 'img', 'stuff', id + ext);
+      try { await readFile(f); } catch { nues.push(id + ext); }
+    }
+  }
+  if (nues.length) {
+    ko('stuff-art.js', `pièces sans dessin : ${nues.join(', ')}`
+      + ' — les invites sont dans scripts/stuff-images.mjs --invites');
+  } else if (pieces.length) {
+    ok('stuff-art.js', `${pieces.length} pièce(s) d’équipement détourées en trois formats`);
+  }
 }
 
 console.log(fautes

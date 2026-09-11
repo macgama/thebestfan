@@ -344,3 +344,133 @@ button.pan:active,a.pan:active{transform:scale(.96)}
   .tbf-spin{animation-duration:3s}
   .tbf-jauge i{transition:none}
 }
+
+/* -------------------------------------------------- la carte qu'on joue
+
+   Le seul moment où une carte d'action se voit en grand. Elle arrive du camp
+   qui la joue, tient la pose, puis se replie vers la corde : la mise en scène
+   est dans `action-art.js`, il n'y a ici que sa matière.
+
+   Le dessin passe par-dessus le glyphe de famille, jamais à sa place : si le
+   fichier manque, l'image se retire et le glyphe redevient visible. */
+.tbf-jouee{
+  position:fixed;left:50%;top:42%;z-index:95;
+  transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  pointer-events:none;width:min(210px,62vw);
+}
+.tbf-jouee-carte{
+  position:relative;width:100%;aspect-ratio:.72;border-radius:14px;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  background:linear-gradient(180deg,#161D27,#080C11);
+  box-shadow:inset 0 0 0 2.5px var(--fc,#8257DA),0 7px 0 var(--fc2,#3E2870),
+             0 18px 40px rgba(0,0,0,.7),0 0 42px -6px var(--fc,#8257DA);
+}
+.tbf-jouee-carte .sceau{
+  position:absolute;left:50%;top:44%;width:72%;height:auto;
+  transform:translate(-50%,-50%);opacity:.24;color:var(--fc,#8257DA);
+  fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;
+}
+.tbf-jouee-carte .illu{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center 38%;
+}
+.tbf-jouee-carte .cout{
+  position:absolute;left:50%;top:6%;transform:translateX(-50%);z-index:2;
+  min-width:34px;padding:4px 9px 5px;border-radius:15px 15px 13px 13px;
+  background:linear-gradient(180deg,#F4F1E8,#B9B4A6);color:#12161C;
+  font-family:var(--banner);font-size:19px;line-height:1.1;text-align:center;
+  box-shadow:0 3px 0 rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.8);
+}
+.tbf-jouee-carte .nm{
+  position:relative;z-index:2;width:100%;padding:9px 6px 10px;
+  font-family:var(--banner);font-size:14px;line-height:1.15;text-align:center;
+  letter-spacing:.04em;color:var(--craie);
+  background:linear-gradient(180deg,transparent,rgba(4,6,10,.96) 48%);
+}
+.tbf-jouee-texte{
+  max-width:min(280px,80vw);text-align:center;font-size:11.5px;line-height:1.55;
+  color:var(--craie);opacity:.82;text-shadow:0 2px 8px rgba(0,0,0,.9);
+}
+
+/* ------------------------------------------------- une pièce d'équipement
+
+   Le même objet dans quatre écrans : le deck, le kiosque, la bienvenue, le
+   profil. Le cadre porte la rareté — les mêmes jetons `--rc` que les Fanzzy et
+   les cartes — et le dessin est détouré, donc il flotte dedans plutôt que de
+   le remplir. Une pièce sans dessin garde son cadre : c'est le repli. */
+.tbf-piece{
+  position:relative;display:inline-block;flex:none;
+  width:46px;height:46px;border-radius:11px;
+  background:radial-gradient(72% 72% at 50% 34%,var(--rc,#C2CAD6) -40%,rgba(4,6,10,0) 72%),
+             linear-gradient(180deg,#161D27,#080C11);
+  box-shadow:inset 0 0 0 1.5px var(--rc,#C2CAD6),0 3px 0 var(--rc2,#4E5865),
+             0 5px 9px rgba(0,0,0,.5);
+}
+.tbf-piece .illu{
+  position:absolute;inset:8%;width:84%;height:84%;
+  object-fit:contain;
+  /* L'objet est détouré : une ombre portée en filtre lui redonne l'assise que
+     le fond lui prenait, sans remettre de rectangle autour. */
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.65));
+}
+
+/* ------------------------------------------------------------- le stade
+
+   Un stade vu du dessus, et la lumière de ses tribunes. Les dessins sont faits
+   de nuit, tribunes dans l'ombre : c'est ce qui permet de les allumer.
+
+   `screen` **ajoute** de la lumière au lieu de repeindre. Le grain de la foule
+   reste visible dessous, et ce qu'on voit n'est pas un rectangle coloré, c'est
+   une tribune qui s'éclaire. Avec `multiply` ou une couleur opaque, on aurait
+   un autocollant. */
+.tbf-stade{position:relative;overflow:hidden;isolation:isolate}
+.tbf-stade-fond{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:50% 50%}
+
+.tbf-tribune{
+  position:absolute;opacity:0;pointer-events:none;
+  /* Un dégradé et non un aplat : une tribune s'éclaire par le milieu, là où
+     l'on est serré, et s'éteint vers les coins. Un rectangle net se verrait
+     comme un rectangle.
+
+     Deux nappes superposées, et c'est ce qui a rendu l'effet visible : la
+     première pose la couleur, la seconde — plus resserrée et en `plus-lighter`
+     — lui donne le cœur brûlant qu'a une tribune allumée. Avec la seule
+     première, sur un stade de nuit, on obtenait un voile qu'il fallait
+     chercher pour le voir. */
+  background:
+    radial-gradient(46% 34% at 50% 50%,var(--c,#F5C33B),transparent 70%),
+    radial-gradient(74% 62% at 50% 50%,var(--c,#F5C33B),transparent 78%);
+  mix-blend-mode:screen;
+  filter:blur(6px) saturate(1.4);
+  transition:opacity .45s ease;
+}
+/* Posée seulement quand son plan est arrivé : mieux vaut une tribune qui
+   s'allume un instant plus tard qu'une nappe de lumière au milieu du terrain. */
+.tbf-tribune.pret{opacity:calc(.26 + var(--i,0) * .74)}
+
+/* Le battement d'un chant ou d'une carte. */
+.tbf-tribune.bat{animation:tbf-tribuneBat .6s ease-out}
+@keyframes tbf-tribuneBat{
+  0%{opacity:calc(.26 + var(--i,0) * .74)}
+  18%{opacity:1;filter:blur(3px) saturate(1.8)}
+  100%{opacity:calc(.26 + var(--i,0) * .74)}
+}
+
+/* Le but. Trois pulsations, et ça retombe. */
+.tbf-tribune.feu{animation:tbf-tribuneFeu 2.3s ease-out}
+@keyframes tbf-tribuneFeu{
+  0%{opacity:.2}
+  8%{opacity:1;filter:blur(3px)}
+  26%{opacity:.55}
+  40%{opacity:1}
+  58%{opacity:.6}
+  72%{opacity:.95}
+  100%{opacity:calc(.26 + var(--i,0) * .74)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .tbf-tribune{transition:none}
+  .tbf-tribune.bat,.tbf-tribune.feu{animation:none}
+}

@@ -1,5 +1,6 @@
 import { grade, applyHeroMods, resoudreGeste, Cheat } from '../ferveur/gestures.js';
 import { ACTION_BY_ID, DECK_RULES } from '../../shared/duel/actions.js';
+import { poserEffet, nettoyerEffets, aEffet, modsAvecEffets } from '../../shared/duel/effets.js';
 
 /**
  * Moteur de duel N contre N.
@@ -65,24 +66,16 @@ function creerJoueur(p, side) {
   };
 }
 
-/* ------------------------------------------------------------- effets */
+/* ------------------------------------------------------------- effets
+
+   La mécanique — poser, nettoyer, interroger, empiler les modificateurs — vit
+   dans `src/shared/duel/effets.js` depuis que le Grand Virage joue lui aussi
+   des cartes d'action. Ce qui reste ici, c'est ce que **cette arène** en fait :
+   `modsDe` sait où trouver le Fanzzy en tribune, et le Virage le sait
+   autrement. */
 
 /** Les modificateurs en vigueur : ceux du Fanzzy, plus les effets temporaires. */
-function modsDe(j, t) {
-  const base = { ...(j.fanzzy[j.actif]?.mods ?? {}) };
-  for (const e of j.effets) {
-    if (e.fin && t > e.fin) continue;
-    if (!e.mods) continue;
-    for (const [k, v] of Object.entries(e.mods)) {
-      base[k] = typeof v === 'number' && k !== 'tempoInterval' && k !== 'mashTime'
-        ? (base[k] ?? 1) * v
-        : (base[k] ?? 0) + v;
-    }
-  }
-  return base;
-}
-
-const aEffet = (j, type, t) => j.effets.some((e) => e.type === type && (!e.fin || t > 0 && e.fin > t));
+const modsDe = (j, t) => modsAvecEffets(j.fanzzy[j.actif]?.mods, j.effets, t);
 
 /**
  * L'âge suivant d'un Fanzzy en tribune, ou `undefined`.
@@ -94,15 +87,6 @@ const aEffet = (j, type, t) => j.effets.some((e) => e.type === type && (!e.fin |
  */
 const ageSuivant = (f) => f?.ages?.[f.stade ?? 1];
 
-function poserEffet(j, effet) {
-  // Un même effet ne s'empile pas : il se renouvelle.
-  j.effets = j.effets.filter((e) => e.type !== effet.type);
-  j.effets.push(effet);
-}
-
-function nettoyerEffets(j, t) {
-  j.effets = j.effets.filter((e) => (!e.fin || e.fin > t) && (e.charges === undefined || e.charges > 0));
-}
 
 /* ------------------------------------------------------------- duel */
 
