@@ -1,5 +1,6 @@
 import { grade, applyHeroMods, resoudreGeste, Cheat } from './gestures.js';
 import { ACTION_BY_ID, ACTIONS_VIRAGE, dansLeVirage } from '../../shared/duel/actions.js';
+import { stadeDeLaRencontre } from '../../shared/stades.js';
 import { poserEffet, nettoyerEffets, modsAvecEffets } from '../../shared/duel/effets.js';
 
 /**
@@ -841,6 +842,20 @@ export class VirageRoom {
         ...this.rankOf(userId),
       } : null,
       cards: Object.entries(CARDS).map(([id, c]) => ({ id, ...c })),
+
+      /* Le stade où se joue la rencontre.
+       *
+       * **Il appartient au match, pas à un joueur** — c'est la règle écrite
+       * dans `stades.js`, et c'est elle qui empêche un stade de devenir un
+       * avantage qu'on achète. Ici il découle donc de l'identifiant du match :
+       * tout le monde dans la salle voit le même, et le même à chaque fois
+       * qu'on y revient.
+       *
+       * L'intersection des possessions n'a pas de sens dans une salle ouverte
+       * à tous — on passe donc un tableau vide, ce qui ouvre les cinq. Le jour
+       * où le stade viendra du vrai lieu du match, c'est cette ligne-là qui
+       * changera, et elle seule. */
+      stade: stadeDeLaRencontre([], this.fixture.id),
       /* Le catalogue des cartes d'action jouables ici. Il part avec l'état
          plutôt que d'être recopié dans la page : le jour où une carte change
          de portée, le Virage suit sans déploiement du client. */

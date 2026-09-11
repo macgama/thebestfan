@@ -19,7 +19,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 @keyframes quake{0%,100%{transform:translate(0,0)}12%{transform:translate(-7px,4px)}
   32%{transform:translate(6px,-5px)}56%{transform:translate(-5px,-2px)}80%{transform:translate(4px,3px)}}
 
-.hud{display:flex;align-items:center;gap:9px;padding:10px 13px 4px;flex:none;z-index:5}
+/* La réserve à droite est celle du bouton de menu, qui flotte au-dessus de
+   l'écran depuis que la barre du bas a disparu. Sans elle, il se pose sur le
+   nom du club de droite — et c'est justement le sien. */
+.hud{display:flex;align-items:center;gap:9px;padding:10px 58px 4px 13px;flex:none;z-index:5}
 .club{flex:1;min-width:0;display:flex;align-items:center;gap:7px}
 .club.me{flex-direction:row-reverse;text-align:right}
 .club img{width:26px;height:26px;object-fit:contain;flex:none}
@@ -114,6 +117,20 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .feuille .vide{text-align:center;opacity:.45;font-size:12px;padding:40px 20px;line-height:1.7}
 
 .rope{flex:1;position:relative;min-height:0}
+/* Le stade en fond de corde.
+
+   `object-fit: cover` recadrerait sur la hauteur dès que la zone est plus
+   étroite que le dessin — et c'est précisément les deux tribunes, sur les
+   côtés, qu'on perdrait. On impose donc la largeur et on laisse la hauteur
+   déborder : le terrain se coupe en haut et en bas, jamais sur les bords. */
+.stade{position:absolute;inset:0;overflow:hidden;border-radius:14px;
+  pointer-events:none;z-index:0}
+/* L'atténuation porte sur **le dessin seul**, pas sur le calque.
+   Posée sur `.stade`, elle éteignait aussi la lumière des tribunes — or c'est
+   précisément ce qu'on veut voir : le décor doit s'effacer derrière le jeu,
+   la tribune qui pousse doit se voir. */
+.stade .tbf-stade-fond{position:absolute;left:0;top:50%;width:100%;height:auto;
+  transform:translateY(-50%);object-fit:unset;opacity:.5}
 .track{position:absolute;left:50%;top:12px;bottom:12px;width:14px;transform:translateX(-50%);
   border-radius:8px;background:linear-gradient(180deg,rgba(60,130,232,.5),rgba(20,24,30,.6) 46%,
   rgba(20,24,30,.6) 54%,rgba(245,195,59,.5));border:1px solid rgba(242,238,228,.12)}
@@ -299,6 +316,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   </button>
 
   <div class="rope" id="rope">
+    <!-- Le stade, sous tout le reste. Terrain au milieu, les deux tribunes sur
+         les côtés, et la corde qui descend le long de la pelouse : c'est la
+         disposition qui garde le cadrage des dessins intact. -->
+    <div class="stade" id="stade"></div>
     <div class="track"></div><div class="mid"></div>
     <div class="crowd top" id="crowdFoe"></div>
     <div class="crowd bot" id="crowdMe"></div>
@@ -365,6 +386,8 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
      même que le classeur et le duel : le Virage n'a pas sa propre idée d'une
      carte d'action. -->
 <script src="/action-art.js"></script>
+<!-- Le stade et la lumière de ses tribunes. -->
+<script src="/stade-art.js"></script>
 <script src="/fanzzy-etats.js"></script>
 <script src="/fanzzy-scene.js"></script>
 <script>
@@ -443,6 +466,8 @@ function render() {
      but qui vient de l'ouvrir. */
   scene?.poserFond(S.surge ? 'pousse' : 'attente');
   renderActes();
+  monterStade();
+  eclairerStade();
 }
 
 /* ------------------------------------------------------------- le fil
@@ -815,6 +840,52 @@ $('hand').addEventListener('pointerdown', async (e) => {
   busy = false;
 });
 
+/* ----------------------------------------------------- le stade
+
+   Le terrain au milieu, les deux tribunes sur les côtés, et la corde qui
+   descend le long de la pelouse. C'est la disposition qui garde le cadrage
+   des dessins : faire pivoter le stade d'un quart de tour pour aligner les
+   tribunes sur le haut et le bas aurait coûté la moitié de l'image.
+
+   La tribune de gauche est celle de **domicile**, la droite celle de
+   l'extérieur — comme le vrai match, et quel que soit le camp qu'on a choisi.
+   Le stade appartient à la rencontre, pas au joueur.
+
+   Les tribunes s'éclairent aux couleurs des clubs, et leur intensité suit la
+   corde : celle qui pousse brille, celle qui cède s'éteint. C'est la même
+   information que le nœud, mais qu'on lit sans lire un chiffre. */
+
+let stade = null;
+
+function monterStade() {
+  if (stade || !S?.stade || !window.TBF_STADE) return;
+  /* `homeColors` et `awayColors` sont extraites des blasons et peuvent
+     manquer — un club dont le blason n'a pas encore été lu. On garde alors
+     les deux couleurs du jeu, qui distinguent au moins les camps. */
+  const lisible = (c, d) => (c ? (window.FX?.lisible?.(c) ?? c) : d);
+  stade = window.TBF_STADE.monter($('stade'), {
+    id: S.stade.id,
+    couleurs: [
+      lisible((S.fixture?.homeColors ?? [])[0], 'var(--projo)'),
+      lisible((S.fixture?.awayColors ?? [])[0], 'var(--bleu)'),
+    ],
+  });
+}
+
+/**
+ * L'intensité de chaque tribune, d'après la corde.
+ *
+ * La corde est stockée « côté extérieur positif ». On la ramène donc en deux
+ * valeurs de zéro à un : celle qui mène brille, l'autre baisse — sans jamais
+ * s'éteindre tout à fait, parce qu'il y a toujours du monde dedans.
+ */
+function eclairerStade() {
+  if (!stade) return;
+  const part = Math.max(-1, Math.min(1, (S?.rope ?? 0) / GOAL_AT));
+  stade.intensite(0, Math.max(0, -part));   // domicile : corde négative
+  stade.intensite(1, Math.max(0, part));    // extérieur : corde positive
+}
+
 /* ------------------------------------------------- les cartes d'action
 
    Le Virage ne joue que les cartes qui agissent sur soi ou sur sa tribune.
@@ -907,6 +978,9 @@ function raconterActe(ev) {
     const pour = e.side === mien;
     switch (e.t) {
       case 'action': {
+        // La tribune de celui qui joue bat : c'est le signal le plus large de
+        // l'écran, et il part même pour une carte qu'on n'a pas jouée soi-même.
+        stade?.pulse(e.side);
         const a = acteDe(e.cardId);
         /* La carte en grand, avec son dessin — la même mise en scène qu'au
            duel. Elle part vers le nœud, où l'effet va se lire. */
@@ -987,6 +1061,8 @@ function connect() {
   setInterval(() => { if (S && !document.hidden) renderFil(); }, 15000);
 
   socket.on('virage:result', (r) => {
+    // Son propre chant fait battre sa tribune : le geste a un écho à l'écran.
+    stade?.pulse(S?.you?.side ?? 0);
     if (!S) return;
     // Le serveur fait foi : on repart de sa valeur, et le regain local
     // recommence à compter à partir de cet instant.
@@ -1008,6 +1084,8 @@ function connect() {
   });
 
   socket.on('virage:goal', (g) => {
+    // La tribune s'embrase. Une fois, et longuement : c'est le moment.
+    stade?.embraser(g.side);
     const mien = g.side === S.you.side;
     // Les effets viennent de la couche commune : une seule définition du
     // « but » pour tout le jeu, duel compris.
@@ -1025,6 +1103,8 @@ function connect() {
   });
 
   socket.on('virage:real_goal', (g) => {
+    // Un but sur le terrain embrase la tribune du club qui vient de marquer.
+    stade?.embraser(g.side);
     const mien = g.side === S.you.side;
     // Le score du terrain suit le but sans attendre le prochain tour du
     // relevé : c'est la seconde où le joueur le regarde.

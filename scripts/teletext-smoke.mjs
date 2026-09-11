@@ -265,6 +265,100 @@ const vide = await duree('compo:2');
 check('une composition vide n’est gardée que quatre-vingt-dix secondes',
   vide !== null && vide <= 90);
 
+/* ============================= le cache et les fuseaux ==================
+
+   La panne : tous les scores en direct gelés pendant des heures, sans une
+   seule erreur nulle part.
+
+   `expires_at` et `fetched_at` sont écrits avec `NOW(3)`, dans le fuseau de la
+   session MySQL. Le pilote de production est réglé sur `timezone: 'Z'` et
+   relisait donc ces colonnes comme de l'UTC : sur un serveur à l'heure de
+   Zurich, elles revenaient **deux heures dans le futur**. Le cache du jour,
+   réglé à quarante-cinq secondes, servait la même réponse pendant trois
+   heures, et `luA` parti dans le futur figeait aussi la minute chez le client.
+
+   Ce banc force un décalage franc — la session en `+05:00`, le pilote en
+   `Z` — et vérifie les deux conséquences séparément. Avec l'ancien code il
+   rougit des deux côtés ; avec le nouveau, la comparaison se fait en SQL et
+   `UNIX_TIMESTAMP` rend l'instant déjà converti, donc le réglage du pilote
+   n'a plus prise.
+   ===================================================================== */
+{
+  const decale = mysql.createPool({
+    uri: DB, connectionLimit: 2, charset: 'utf8mb4',
+    // Comme en production : le pilote relit toute date comme de l'UTC…
+    timezone: 'Z',
+  });
+  // …tandis que la session écrit dans un tout autre fuseau.
+  await decale.query(`SET time_zone = '+05:00'`);
+
+  let vus = 0;
+  /* Un client qui ne sait dire que oui, et qui compte. Ce qui est mesuré
+     ici, ce sont les allers chez l’API, pas ce qu’ils rapportent. */
+  const bavard = {
+    async call(path) {
+      if (path !== '/fixtures') return [];
+      vus++;
+      /* Un match, et un seul, dans une compétition activée : il faut que
+         `jour()` produise une ligne, sinon `luA` n'a nulle part où sortir et
+         le contrôle plus bas ne mesurerait rien. */
+      return [{ fixture: { id: 4242, date: `${new Date().toISOString()}`,
+                           status: { short: '2H', elapsed: 61 } },
+                league: { id: 207, round: 'Journée 5' },
+                teams: { home: { id: 85, name: 'Sion' }, away: { id: 91, name: 'Bâle' } },
+                goals: { home: 1, away: 0 } }];
+    },
+  };
+  const TZ = createTeletext({ pool: decale, client: bavard });
+
+  await decale.query(`DELETE FROM api_cache WHERE k LIKE 'jour:%'`);
+  const jour = new Date().toISOString().slice(0, 10);
+
+  const a = await TZ.jour(jour);
+  const apresPremier = vus;
+  check('le premier appel va chercher la donnée', apresPremier === 1);
+
+  /* La fraîcheur. On ramène l'expiration dans le passé : le prochain appel
+     doit repartir chez l'API. Avec l'ancienne lecture, `expires_at` revenait
+     cinq heures trop tard et la ligne restait « fraîche » tout ce temps. */
+  await decale.query(
+    `UPDATE api_cache SET expires_at = NOW(3) - INTERVAL 5 SECOND WHERE k = ?`,
+    [`jour:${jour}`]);
+  await TZ.jour(jour);
+  check('une entrée expirée est bien redemandée, quel que soit le fuseau',
+    vus === apresPremier + 1);
+  if (vus !== apresPremier + 1) {
+    console.log(`        appels : ${vus} au lieu de ${apresPremier + 1}`);
+  }
+
+  /* Et l'entrée encore valable ne doit pas être redemandée : sans ce
+     contrôle-ci, « toujours redemander » passerait le précédent au vert. */
+  const avantTroisieme = vus;
+  await TZ.jour(jour);
+  check('une entrée encore valable n’est pas redemandée', vus === avantTroisieme);
+
+  /* L'instant de lecture, **tel que la page le reçoit**. C'est lui qui fait
+     défiler la minute : parti dans le futur, `Date.now() - luA` devient
+     négatif et `horloge.js` ramène l'écoulé à zéro — le chrono ne bouge plus.
+
+     On le lit sur le match rendu, et surtout pas en réinterrogeant la base
+     soi-même : une première version le faisait, et elle mesurait alors sa
+     propre requête au lieu du code. Elle restait verte avec l'ancienne
+     lecture. */
+  const rendu = await TZ.jour(jour);
+  const match = (rendu.groupes ?? []).flatMap((g) => g.matchs)[0];
+  check('la journée rendue porte bien un match', Boolean(match));
+  const ecart = match ? Math.abs(Date.now() - Number(match.luA)) : Infinity;
+  check('l’instant de lecture est celui du moment, pas un fuseau plus loin',
+    ecart < 60_000);
+  if (ecart >= 60_000) {
+    console.log(`        écart de ${Math.round(ecart / 60_000)} minute(s) —`
+      + ' une date a traversé de MySQL vers JavaScript.');
+  }
+
+  await decale.end();
+}
+
 /* --------------------------------------------------------------- état */
 
 r = await get('/api/tt/cache');

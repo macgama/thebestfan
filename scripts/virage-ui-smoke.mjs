@@ -111,6 +111,10 @@ const fanzzy = createFanzzy({ pool, requireAuth: auth });
 const virage = createVirage({ pool, io, souvenirs, fanzzy, requireAuth: auth });
 app.use('/api/virage', virage.router);
 app.get('/virage', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'virage.html')));
+/* `nav.js` demande qui est connecté avant de monter la barre du haut. Sans
+   cette route, pas de bouton de menu — et depuis que la barre du bas a
+   disparu, plus aucune sortie du Virage. */
+app.get('/api/auth/me', (_q, s) => s.json({ user: { id: U, pseudo: 'Testeur' } }));
 app.use(express.static(path.join(RACINE, 'public')));
 await new Promise((r) => http.listen(0, r));
 const base = `http://localhost:${http.address().port}`;
@@ -520,6 +524,38 @@ const laScene = () => page.evaluate(() => ({
   check('le coup de sifflet final le fait fêter la victoire',
     f.etat === 'victoire' && /VICTOIRE/.test(f.titre)
     || (console.log('        état', f.etat, '·', f.titre), false));
+}
+
+/* ------------------------------------------- la sortie, et ce qu'elle cache
+
+ * La barre du bas a disparu : le bouton de menu est désormais la **seule**
+ * façon de quitter le Virage. Il flotte au-dessus de l'écran, et un bouton
+ * qui flotte se pose sur ce qui était là — ici, sur le nom du club de droite,
+ * c'est-à-dire le sien. Trouvé à l'œil, éprouvé ici.
+ */
+{
+  await page.waitForSelector('.tbf-burger', { timeout: 6000 }).catch(() => {});
+  const sortie = await page.evaluate(() => {
+    const b = document.querySelector('.tbf-burger');
+    if (!b) return { absent: true };
+    const rb = b.getBoundingClientRect();
+    const genes = [];
+    for (const sel of ['#clubMe b', '#clubFoe b', '#score', '#phase']) {
+      const el = document.querySelector(sel);
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width === 0) continue;
+      if (rb.left < r.right && r.left < rb.right && rb.top < r.bottom && r.top < rb.bottom) {
+        genes.push(sel);
+      }
+    }
+    return { absent: false, genes, dansLEcran: rb.right <= innerWidth + 1 && rb.top >= -1 };
+  });
+  check('le Virage garde une sortie', sortie.absent === false);
+  check('et le bouton de menu ne recouvre rien de l’en-tête',
+    (sortie.genes ?? []).length === 0);
+  if (sortie.genes?.length) console.log('        il recouvre :', sortie.genes.join(', '));
+  check('il est bien dans l’écran', sortie.dansLEcran === true);
 }
 
 check('aucune erreur de script sur le virage',

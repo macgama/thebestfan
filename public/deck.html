@@ -202,6 +202,20 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 .filtre.on{opacity:1;background:var(--craie);color:#0B0E13;
   box-shadow:0 3px 0 #6E6A61,inset 0 1px 0 rgba(255,255,255,.45)}
 
+/* Le jalon : combien d'emplacements, et quand le suivant s'ouvre. En or,
+   parce que c'est une promesse et pas un refus. */
+.jalon{display:flex;align-items:baseline;gap:9px;margin:0 14px 8px;padding:9px 12px 8px;
+  border-radius:10px;background:rgba(245,195,59,.1);
+  box-shadow:inset 0 0 0 1px rgba(245,195,59,.28)}
+.jalon b{font-family:var(--banner);font-size:12.5px;letter-spacing:.06em;color:var(--projo)}
+.jalon span{font-size:10.5px;opacity:.72;line-height:1.45}
+.jalon sup{font-size:7.5px}
+/* La note de règle : discrète, mais toujours là. Elle répond à une question
+   qui revient, et une réponse qu'il faut aller chercher n'est pas une
+   réponse. */
+.note{margin:0 14px 10px;font-size:10.5px;line-height:1.6;opacity:.6}
+.note b{opacity:.95}
+
 .fam{margin:14px 16px 7px;font-family:var(--banner);font-size:10px;letter-spacing:.18em;
   color:var(--fc,#8257DA);display:flex;align-items:center;gap:8px}
 .fam .trait{flex:1;height:1px;background:currentColor;opacity:.25}
@@ -632,6 +646,35 @@ function rendre() {
 
 function tribuneHTML() {
   const out = [`<h2>LA TRIBUNE <i>· le premier entre au coup d\u2019envoi</i></h2>`];
+
+  /* Pourquoi il n'y a que deux rangs.
+   *
+   * L'écran ouvrait le bon nombre d'emplacements sans jamais dire d'où venait
+   * ce nombre. Quelqu'un qui a lu « jusqu'à trois Fanzzy » quelque part n'en
+   * voit que deux, ne trouve aucune explication, et en conclut — à juste
+   * titre — que l'écran est cassé. Une limite qu'on subit sans la comprendre
+   * passe pour un bug ; datée, elle devient un objectif.
+   *
+   * Le palier vient du serveur, qui le tire de la table des niveaux : la page
+   * n'a pas sa propre idée de quand le troisième rang s'ouvre. */
+  const prochain = S.possede?.fanzzyProchain;
+  if (prochain && placesFanzzy() < S.regles.fanzzy) {
+    out.push(`<div class="jalon">
+      <b>${placesFanzzy()} emplacements</b>
+      <span>Le ${CHIFFRES[prochain.places] ?? prochain.places}<sup>e</sup>
+        s\u2019ouvre au niveau ${prochain.niveau}.</span></div>`);
+  }
+
+  /* Et ce qu'un âge n'est pas.
+   *
+   * La question revient : « j'ai un évo 1 et un évo 2, je dois prendre les
+   * deux ? » Non — c'est le même personnage, donc une seule carte et un seul
+   * rang. L'écran ne le disait nulle part, et le panneau de choix n'en montre
+   * qu'une ligne, ce qui ressemble à une carte perdue plutôt qu'à une règle. */
+  out.push(`<p class="note">Un personnage et ses âges sont
+    <b>une seule carte</b> : un évolué n\u2019occupe pas un second rang.
+    Tout le monde entre au premier âge, et c\u2019est la carte
+    <b>Relève</b> qui le fait grandir en cours de partie.</p>`);
 
   for (let i = 0; i < placesFanzzy(); i++) {
     const slot = S.deck.fanzzy[i];

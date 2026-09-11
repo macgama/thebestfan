@@ -24,7 +24,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 /* ------------------------------------------------------- préparation */
 
-.top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px}
+/* Réserve à droite pour le bouton de menu, qui flotte au-dessus de l'écran
+   de jeu : sans elle il se pose sur ce que porte le coin. */
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 58px 6px 16px}
 .top h1{font-family:var(--banner);font-size:20px;letter-spacing:.15em;margin:0}
 .top h1 small{display:block;font-size:8.5px;letter-spacing:.3em;opacity:.5;margin-top:3px;font-family:var(--ui)}
 h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;margin:20px 16px 9px}
