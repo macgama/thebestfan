@@ -119,8 +119,18 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 .piece.plein{background:rgba(130,87,218,.14);
   box-shadow:inset 0 0 0 2px rgba(130,87,218,.6),0 3px 0 #2E1D53}
 .piece.plein:active{box-shadow:inset 0 0 0 2px rgba(130,87,218,.6)}
+/* L'emplacement passe en ligne : l'objet à gauche, le texte à droite. En
+   colonne, la pastille poussait le nom et l'effet hors du bouton. */
+.piece{flex-direction:row;align-items:center;text-align:left;gap:9px}
+.piece .tbf-piece{width:40px;height:40px;border-radius:10px}
+.piece .txt{min-width:0}
 .piece b{font-family:var(--banner);font-size:11.5px;letter-spacing:.03em;display:block}
 .piece span{font-size:9px;opacity:.5;line-height:1.35;display:block}
+/* L'emplacement vide garde le même gabarit que l'emplacement plein : sans ce
+   creux, les deux boutons d'un même Fanzzy n'avaient pas la même hauteur. */
+.piece .creux{width:40px;height:40px;flex:none;border-radius:10px;font-size:19px;
+  display:flex;align-items:center;justify-content:center;opacity:.3;
+  box-shadow:inset 0 0 0 1.5px rgba(242,238,228,.16)}
 .rang .effet{padding:0 13px 12px;font-size:10.5px;opacity:.62;line-height:1.65}
 .rang .effet em{font-style:normal;color:var(--projo)}
 .rang .actions{display:flex;gap:7px;padding:0 12px 12px}
@@ -175,6 +185,12 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .emp .plus{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   font-size:22px;opacity:.3;font-family:var(--banner)}
+/* Le dessin recouvre le glyphe. Cadré un peu haut : ces illustrations ont leur
+   sujet dans le tiers supérieur, et le bas de la carte est mangé par le nom.
+   Assombri, parce que le coût est de la craie claire sur une goutte claire et
+   qu'un ciel de projecteurs le ferait disparaître. */
+.emp .illu{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center 34%;filter:brightness(.84)}
 
 .filtres{display:flex;gap:6px;padding:0 14px 4px}
 .filtre{background:rgba(16,22,31,.92);border:0;border-radius:9px;color:inherit;
@@ -194,6 +210,15 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
   border:1px solid rgba(242,238,228,.1);background:var(--panneau);backdrop-filter:blur(10px);margin-bottom:6px;
   cursor:pointer;border-left:3px solid var(--fc,#8257DA)}
 .carte.absente{opacity:.4}
+/* La vignette du catalogue. Elle porte le glyphe de famille en fond et le
+   dessin par-dessus : une carte sans fichier garde donc son repère. */
+.carte .vig{position:relative;width:38px;height:52px;flex:none;border-radius:7px;
+  overflow:hidden;background:#0A0E13;box-shadow:inset 0 0 0 1px var(--fc,#8257DA)}
+.carte .vig svg{position:absolute;left:50%;top:50%;width:22px;height:22px;
+  transform:translate(-50%,-50%);opacity:.5;color:var(--fc,#8257DA);
+  fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.carte .vig .illu{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center 34%}
 .carte .txt{flex:1;min-width:0}
 .carte .txt b{display:block;font-family:var(--banner);font-size:13.5px;letter-spacing:.03em}
 .carte .txt p{margin:4px 0 0;font-size:10.5px;opacity:.6;line-height:1.5}
@@ -304,6 +329,17 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
      un Fanzzy », et le deck n'a pas sa propre idée du sujet. -->
 <script src="/fanzzy-art.js"></script>
 
+<!-- Les familles de cartes, leurs dessins, et ce qu’on voit quand une carte part :
+     une seule table pour le classeur et pour le duel. Elle vivait ici en entier et
+     là-bas en version réduite — la couleur seule — ce qui est la manière
+     habituelle dont deux écrans finissent par ne plus dire pareil. -->
+<script src="/action-art.js"></script>
+
+<!-- Les dessins de l’équipement, détourés : l’emplacement d’une pièce n’était
+     qu’un rectangle de texte, et on choisissait « Bout de bâche » contre
+     « Thermos » sans avoir jamais vu ni l’un ni l’autre. -->
+<script src="/stuff-art.js"></script>
+
 <script>
 /* =======================================================================
    Construction du deck.
@@ -325,31 +361,12 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
   (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
 
-/** Couleur par famille de carte : elle sert de repère avant la lecture. */
-/**
- * Les sept familles de cartes d'action.
- *
- * `c2` est la couleur du socle — le biseau dur sous la carte, qui lui donne sa
- * matière. `ico` est le glyphe que la carte porte en grand derrière son coût :
- * il se reconnaît avant qu'on ait lu le nom, ce qui compte quand dix cartes
- * tiennent sur deux rangées de cent pixels.
- */
-const FAM = {
-  pousse:    { nom:'POUSSÉE',   c:'#E0402C', c2:'#7A1A11',
-    ico:'M12 20V5M6 11l6-6 6 6M4 21h16' },
-  entrave:   { nom:'ENTRAVE',   c:'#8257DA', c2:'#3E2870',
-    ico:'M9 8a4 4 0 0 1 0 8M15 8a4 4 0 0 0 0 8M7 12h10' },
-  souffle:   { nom:'SOUFFLE',   c:'#3C82E8', c2:'#1B3E75',
-    ico:'M3 8h11a3 3 0 1 0-3-3M3 13h13a3 3 0 1 1-3 3M3 18h7' },
-  geste:     { nom:'GESTE',     c:'#F5C33B', c2:'#7A5A0E',
-    ico:'M12 3l5 15H7zM4 21h16M9 13l7-5' },
-  garde:     { nom:'GARDE',     c:'#C2CAD6', c2:'#4E5865',
-    ico:'M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6z' },
-  collectif: { nom:'COLLECTIF', c:'#1E9E6A', c2:'#0D4F35',
-    ico:'M7 10a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm10 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM2 20c0-3 2.2-5 5-5s5 2 5 5m0 0c0-3 2.2-5 5-5s5 2 5 5' },
-  bascule:   { nom:'BASCULE',   c:'#E08A2C', c2:'#7A4A0E',
-    ico:'M4 8h14l-4-4M20 16H6l4 4' },
-};
+/* Les sept familles de cartes : couleur, socle, glyphe. Elles vivent dans
+   `action-art.js` avec les dessins, parce que le duel a besoin exactement de
+   la même table — il en gardait une version réduite de son côté, et une
+   huitième famille n'aurait été ajoutée qu'ici. */
+const FAM = window.TBF_ACTION.FAM;
+
 const RANG = { commune:1, rare:2, epique:3, legendaire:4 };
 
 const CHIFFRES = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq'];
@@ -635,9 +652,15 @@ function tribuneHTML() {
     const pieces = [];
     for (let p = 0; p < S.regles.stuffParFanzzy; p++) {
       const s = aStuff((slot.stuff ?? [])[p]);
+      // L'objet d'abord, le nom ensuite : une pièce se reconnaît à sa forme
+      // bien avant qu'on ait lu son libellé, et c'est ce qu'on cherche quand
+      // on hésite entre deux.
       pieces.push(`<button class="piece ${s ? 'plein' : ''}" data-piece="${i}:${p}">
-        ${s ? `<b>${esc(s.nom)}</b><span>${esc(s.texte)}</span>`
-            : `<b style="opacity:.4">Vide</b><span>Ajouter une pièce</span>`}</button>`);
+        ${s ? `${window.TBF_STUFF.pastille(s)}
+               <span class="txt"><b>${esc(s.nom)}</b><span>${esc(s.texte)}</span></span>`
+            : `<span class="creux">+</span>
+               <span class="txt"><b style="opacity:.4">Vide</b>
+               <span>Ajouter une pièce</span></span>`}</button>`);
     }
 
     /* Le visage plutôt que la pastille, quand le dessin existe. `illustration`
@@ -716,8 +739,11 @@ function cartesHTML() {
     const a = aCarte(S.deck.actions[i]);
     if (!a) { emp.push(`<div class="emp" data-aller-catalogue="1"><span class="plus">+</span></div>`); continue; }
     const fam = FAM[a.fam] ?? { c: '#8257DA', c2: '#3E2870', ico: '' };
+    // Le dessin se pose après le glyphe, pas à sa place : un fichier manquant
+    // se retire lui-même et la carte retrouve son sceau.
     emp.push(`<div class="emp plein" style="--fc:${fam.c};--fc2:${fam.c2}" data-retirer-carte="${i}">
       <svg class="sceau" viewBox="0 0 24 24"><path d="${fam.ico}"/></svg>
+      ${window.TBF_ACTION.illustration(a.id)}
       <div class="cout">${a.cost}</div><div class="nm">${esc(a.nom)}</div></div>`);
   }
   out.push(`<div class="grille">${emp.join('')}</div>`);
@@ -743,6 +769,8 @@ function cartesHTML() {
       const n = compte[a.id] ?? 0;
       out.push(`<div class="carte ${possede ? '' : 'absente'}" style="--fc:${fam.c}"
         data-detail="${a.id}">
+        <div class="vig"><svg viewBox="0 0 24 24"><path d="${fam.ico}"/></svg>
+          ${window.TBF_ACTION.illustration(a.id)}</div>
         <div class="cout">${a.cost}<small>SOUFFLE</small></div>
         <div class="txt"><b>${esc(a.nom)}${rangHTML(a.rar)}</b><p>${esc(a.texte)}</p></div>
         <div class="compte ${n ? 'on' : ''}">${possede ? (S.regles.copiesMax == null ? (n ? `×${n}` : '0') : `${n}/${S.regles.copiesMax}`) : '—'}</div>
@@ -808,6 +836,7 @@ function panneauPiece(index, place) {
     const bloque = ailleurs || doublon;
     return `<div class="choix ${bloque ? 'pris' : ''}"
       ${bloque ? '' : `data-prendre-piece="${index}:${place}:${s.id}"`}>
+      ${window.TBF_STUFF.pastille(s)}
       <div class="txt"><b>${esc(s.nom)}${rangHTML(s.rar)}</b>
         <p>${esc(s.texte)}<br>${esc(modsTexte(s.mods ?? {}).join(' · '))}</p></div>
       <div class="tag">${ailleurs ? 'AUTRE RANG' : doublon ? 'DÉJÀ PORTÉE' : ici ? 'PORTÉE' : ''}</div>

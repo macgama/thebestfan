@@ -140,6 +140,77 @@ export const ACTIONS = [
 
 export const ACTION_BY_ID = new Map(ACTIONS.map((a) => [a.id, a]));
 
+/* ------------------------------------------------- où une carte se joue */
+
+/**
+ * Ce que chaque sorte d'effet atteint.
+ *
+ * Trois portées, et une seule compte vraiment : `adverse`. Un effet marqué
+ * ainsi va chercher quelqu'un en face — lui couper le souffle, lui cacher sa
+ * main, lui prendre sa réserve.
+ *
+ * La table est ici, et pas une liste d'identifiants ailleurs, pour une raison
+ * précise : une liste d'identifiants ne sait pas ce qu'elle contient. Le jour
+ * où l'on ajoute une carte d'entrave, il faudrait penser à l'inscrire dans la
+ * liste — et personne n'y pense. Déclarer la portée **sur la sorte d'effet**
+ * fait que la carte se range toute seule.
+ */
+const PORTEE = {
+  push: 'soi',
+  refill: 'soi',
+  team_breath: 'tribune',
+  mod_self: 'soi',
+  floor_quality: 'soi',
+  breath_mult: 'soi',
+  rally: 'tribune',
+  per_mate: 'tribune',
+  sync: 'tribune',
+  swap_fanzzy: 'soi',
+  evolve: 'soi',
+
+  silence: 'adverse',
+  blind: 'adverse',
+  lock_actions: 'adverse',
+  steal: 'adverse',
+  mod_foe: 'adverse',
+  /* La bâche et le renvoi n'agressent personne, et pourtant ils sont
+     `adverse` : ils attendent **le geste d'en face** — la prochaine poussée
+     adverse, la prochaine carte adverse. Dans une salle où la corde bouge en
+     continu et où trois cents personnes jouent, « la prochaine poussée
+     adverse » n'est pas un événement : c'est du bruit de fond. La carte
+     n'aurait pas de moment. */
+  shield: 'adverse',
+  reflect: 'adverse',
+};
+
+/**
+ * Une carte se joue-t-elle dans le Grand Virage ?
+ *
+ * **Le Virage n'est pas un duel avec plus de monde.** En face, il n'y a pas un
+ * adversaire : il y a une foule d'inconnus. Une carte qui traverse y est soit
+ * écrasante — une personne coupe le souffle de trois cents autres — soit nulle
+ * une fois divisée par l'effectif. Les deux sont mauvais, et pour la même
+ * raison : le Virage se joue **avec sa tribune**, pas contre l'autre.
+ *
+ * On garde donc ce qui agit sur soi ou sur les siens. L'effet de bord est le
+ * meilleur de l'affaire : la famille `collectif` — la plus faible en un contre
+ * un, où « chaque coéquipier » veut dire zéro personne — devient la reine du
+ * Virage. Un deck de Virage cesse d'être un deck de duel, et c'est ce qui
+ * donne une seconde vie aux dix emplacements.
+ *
+ * Le revers compte autant que l'effet : une carte dont la contrepartie viserait
+ * l'adversaire serait refusée elle aussi.
+ */
+export function dansLeVirage(a) {
+  if (!a?.effet) return false;
+  const portee = (e) => PORTEE[e?.type] ?? 'adverse';
+  return portee(a.effet) !== 'adverse'
+    && (!a.revers || portee(a.revers) !== 'adverse');
+}
+
+/** Les cartes jouables au Virage, dans l'ordre du catalogue. */
+export const ACTIONS_VIRAGE = ACTIONS.filter(dansLeVirage);
+
 /**
  * Règles de construction du deck. Elles vivent ici pour être partagées.
  *

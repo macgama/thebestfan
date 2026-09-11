@@ -66,10 +66,21 @@
   body{padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom)) !important}
   body.tbf-jeu{padding-bottom:0 !important}
   body.tbf-jeu #app{padding-bottom:calc(var(--nav-h) * .55 + env(safe-area-inset-bottom))}
-  #tbf-nav{position:fixed;left:0;right:0;bottom:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  /* La barre prend la largeur de **la colonne de la page**, pas celle de
+     l'écran. Sur un téléphone c'est la même chose ; sur un ordinateur, une
+     barre étalée sur seize cents pixels sous une colonne de quatre cent
+     quarante n'appartenait plus à la page qu'elle sert.
+
+     La variable --tbf-colonne est posée plus bas, en lisant la colonne
+     les pages ne font pas toutes la même largeur, et leur demander de la
+     redire ici serait une seconde vérité de plus. */
+  #tbf-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);
+    width:min(100%,var(--tbf-colonne,520px));
+    height:calc(var(--nav-h) + env(safe-area-inset-bottom));
     padding-bottom:env(safe-area-inset-bottom);z-index:60;display:flex;
     background:linear-gradient(180deg,rgba(8,11,16,.75),#080B10 55%);
-    border-top:1px solid rgba(242,238,228,.11);backdrop-filter:blur(10px)}
+    border:1px solid rgba(242,238,228,.11);border-bottom:0;
+    border-radius:16px 16px 0 0;backdrop-filter:blur(10px)}
   #tbf-nav a{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
     text-decoration:none;color:#F2EEE4;opacity:.42;font-family:"Oswald","Arial Narrow",Impact,sans-serif;
     font-size:8px;letter-spacing:.08em;position:relative;transition:opacity .18s}
@@ -79,7 +90,10 @@
   #tbf-nav svg{width:20px;height:20px}
   #tbf-nav.tbf-discret{background:linear-gradient(180deg,rgba(8,11,16,.4),rgba(8,11,16,.92) 55%);
     transition:opacity .45s,transform .45s}
-  #tbf-nav.tbf-cache{opacity:.12;transform:translateY(58%)}
+  /* Les deux transformations dans la même déclaration : une transformation ne
+     s'ajoute pas, elle remplace. Écrite seule, la mise en retrait renvoyait
+     la barre au bord gauche de l'écran en même temps qu'elle l'effaçait. */
+  #tbf-nav.tbf-cache{opacity:.12;transform:translate(-50%,58%)}
   #tbf-nav .pip{position:absolute;top:9px;right:calc(50% - 17px);width:7px;height:7px;border-radius:50%;
     background:#E0402C;box-shadow:0 0 8px #E0402C;animation:tbfblink 1.3s infinite}
   @keyframes tbfblink{0%,100%{opacity:1}50%{opacity:.25}}
@@ -266,6 +280,28 @@
   const enHaut = barreDuHaut();
 
   /* --------------------------------------------------- la barre du bas */
+
+  /**
+   * La largeur de la colonne de cette page, donnée à la barre du bas.
+   *
+   * Les pages ne font pas toutes la même largeur — quatre cent quarante pour
+   * le classeur et le virage, quatre cent soixante pour le profil et la fiche,
+   * mille cent pour l'administration. On la **lit** donc sur la colonne
+   * elle-même plutôt que de demander à dix-huit pages de la redire : deux
+   * endroits qui déclarent la même largeur finissent par ne plus s'accorder,
+   * et la barre se retrouverait plus large que la page qu'elle sert.
+   *
+   * Une largeur exprimée autrement qu'en pixels — `none`, un pourcentage — ne
+   * se transpose pas : on garde alors la valeur par défaut de la feuille, qui
+   * vaut la colonne commune.
+   */
+  {
+    const colonne = document.getElementById('app') ?? document.querySelector('main');
+    const large = colonne ? getComputedStyle(colonne).maxWidth : '';
+    if (/^\d+(\.\d+)?px$/.test(large)) {
+      document.documentElement.style.setProperty('--tbf-colonne', large);
+    }
+  }
 
   const nav = document.createElement('nav');
   nav.id = 'tbf-nav';

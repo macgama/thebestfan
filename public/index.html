@@ -150,7 +150,17 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   box-shadow:0 0 0 2px #04060A}
 
 /* --------------------------------------------------- le personnage */
-.scene{position:relative;height:100%;display:grid;place-items:end center;padding-bottom:2%;
+/* La réserve du haut n'est pas une marge de confort : c'est **la place des
+   gestes**. Le personnage flotte de neuf pixels, saute de vingt-six, et la
+   bande est close par `overflow:hidden`. Sans ces trente-quatre pixels, un
+   personnage qui remplit sa bande se fait décapiter à chaque saut — et une
+   tête coupée se lit comme une image cassée, jamais comme un cadrage serré.
+
+   En pixels et non en pourcentage : c'est l'amplitude d'une animation, elle
+   ne change pas avec la taille de l'écran. Le `2%` d'avant, lui, se résolvait
+   contre la **largeur** de la bande, ce qui ne voulait rien dire ici. */
+.scene{position:relative;height:100%;display:grid;place-items:end center;
+  padding:34px 0 10px;
   min-height:0;text-decoration:none;color:inherit}
 .halo{position:absolute;left:50%;top:47%;width:min(112%,460px);aspect-ratio:1;
   transform:translate(-50%,-50%);pointer-events:none;
@@ -161,6 +171,11 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   transform:translateX(-50%);border-radius:50%;pointer-events:none;
   background:radial-gradient(ellipse at center,rgba(0,0,0,.6),rgba(0,0,0,0) 70%);
   animation:sol 3.6s ease-in-out infinite}
+/* Les calques de gestes prennent toute la hauteur de la scène. Sans ça, une
+   hauteur en pourcentage sur la pile se résout contre un parent de hauteur
+   automatique — c'est-à-dire contre rien — et retombe silencieusement sur
+   `auto`. La règle ne casse pas : elle ne s'applique simplement pas. */
+.flotte,.bascule,.salut{height:100%;display:grid;place-items:end center}
 .flotte{animation:flotteur 3.6s ease-in-out infinite}
 /* La bascule vit sur son propre calque : elle n'entre pas en conflit avec le
    flottement du parent ni avec la respiration de la pile. */
@@ -174,7 +189,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    personnage trop haut pour elle n'était pas réduit, il était décapité. Une
    tête coupée se lit comme une image cassée, jamais comme un cadrage serré.
    Avec cette borne, l'écran trop court le rétrécit au lieu de le rogner. */
-.pile{position:relative;height:min(58dvh,520px);max-height:100%;aspect-ratio:448/900;
+.pile{position:relative;height:100%;max-width:100%;aspect-ratio:448/900;
   transform-origin:50% 100%;
   animation:souffle 3.6s ease-in-out infinite;will-change:transform}
 /* Deux calques superposés : on croise les opacités, le personnage n'est jamais
@@ -234,9 +249,18 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 @keyframes coucou{0%,100%{transform:rotate(0deg)}
   16%{transform:rotate(-3.4deg)}40%{transform:rotate(2.8deg)}
   64%{transform:rotate(-2.2deg)}84%{transform:rotate(1.1deg)}}
+/* Le rebond d'un changement de pose : il s'écrase, puis il s'étire.
+
+   L'étirement est passé de sept pour cent à trois, et ce n'est pas une
+   question de goût. Il s'applique depuis les pieds : sur un personnage qui
+   remplit désormais sa bande, sept pour cent de six cents pixels font
+   quarante pixels de tête au-dessus du cadre — et la bande est close par
+   `overflow:hidden`. Le personnage se faisait donc décapiter pendant les
+   quatre dixièmes de seconde du rebond, à chaque but, à chaque changement
+   d'état. Trois pour cent se voient encore et tiennent dans la réserve. */
 @keyframes bascule{0%{transform:translateY(0) scale(1,1)}
-  22%{transform:translateY(7px) scale(1.05,.93)}
-  58%{transform:translateY(-11px) scale(.96,1.07)}
+  22%{transform:translateY(5px) scale(1.03,.96)}
+  58%{transform:translateY(-7px) scale(.98,1.03)}
   100%{transform:translateY(0) scale(1,1)}}
 @keyframes flotteur{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 @keyframes souffle{0%,100%{transform:scale(1,1) rotate(0deg)}
@@ -285,14 +309,12 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Écran court : le personnage rétrécit plutôt que de pousser le bouton
    d'entrée sous le pli. C'est la seule bande qui peut céder. */
 @media (max-height:700px){
-  .pile{height:min(45dvh,380px)}
   .hub{gap:7px}
   .entrer{padding:13px 18px;font-size:19px}
   .jeton{padding:7px 10px;font-size:13px}
   .pastille{width:34px;height:34px;font-size:17px}
 }
 @media (min-aspect-ratio:1/1){
-  .pile{height:min(68dvh,600px)}
   .duo{grid-template-columns:1fr 1fr}
 }
 @media (prefers-reduced-motion:reduce){
@@ -651,7 +673,71 @@ function rendreLaMain(tenir) {
 let fond = 'neutre';
 const poserFond = (p) => { fond = p; if (!retour) pose(p); };
 
-pose('neutre');
+/* ------------------------------------------------- qui montrer, tout de suite
+
+   L'accueil posait le supporter générique dès la première ligne, puis le
+   remplaçait par le Fanzzy du joueur une fois la collection revenue du
+   serveur. Entre les deux — trois allers-retours réseau — **un inconnu**
+   occupait l'écran, et c'est ce qu'on voyait à chaque rafraîchissement. Le
+   choix du joueur avait bien été pris ; il arrivait simplement en second.
+
+   On retient donc d'une visite à l'autre **qui** était à l'écran, et on le
+   repose immédiatement. Le serveur reste seul juge : sa réponse corrige le
+   souvenir s'il a changé entre-temps — le joueur peut avoir équipé un autre
+   personnage depuis un autre appareil. Mais on n'affiche plus quelqu'un
+   d'autre en attendant de savoir.
+
+   « Aucun Fanzzy équipé » se retient aussi : c'est une réponse, pas une
+   absence de réponse, et elle vaut pour le supporter — qui est alors le bon
+   personnage, tout de suite lui aussi.
+
+   Le stockage peut être refusé — navigation privée, réglage du navigateur.
+   Tout est donc sous garde, et le pire cas est exactement ce qu'on avait
+   avant : on attend la réponse. */
+
+const MEMOIRE = 'tbf.perso';
+
+/** Ce qu’on a retenu de la dernière visite. `null` si on ne sait rien. */
+function souvenir() {
+  try {
+    const j = JSON.parse(localStorage.getItem(MEMOIRE) ?? "null");
+    if (j?.aucun) return { aucun: true };
+    return j?.id ? { id: j.id, evo: j.evo ?? 1, skin: j.skin ?? "base" } : null;
+  } catch { return null; }
+}
+
+/** Retient — ou oublie — le personnage de cet écran. */
+function retenir(p) {
+  try {
+    localStorage.setItem(MEMOIRE, JSON.stringify(
+      p ? { id: p.id, evo: p.evo, skin: p.skin } : { aucun: true }));
+  } catch { /* stockage refusé : on repartira de zéro, sans plus */ }
+}
+
+/* Le filet, pour la toute première visite : sans souvenir, on attend la
+   réponse plutôt que d'afficher un inconnu — mais pas indéfiniment. Une
+   seconde et demie sans nouvelle, et le supporter prend la place : un écran
+   vide ne vaut pas mieux que le mauvais personnage.
+
+   Il s'annule dès qu'on sait. */
+let filet = null;
+
+{
+  const vu = souvenir();
+  if (vu?.id) {
+    /* L'adresse du plein-pied est **recalculée**, jamais retenue : elle porte
+       l'extension que ce navigateur-ci sait lire, et un souvenir écrit sur un
+       autre appareil — ou avant une mise à jour du format — pointerait vers
+       une image qui n'existe pas. On ne garde que l'identité. */
+    equipe = { ...vu, plein: window.FZART?.adresse?.(vu.id, 'plein') ?? null };
+    precharger();
+    pose('neutre');
+  } else if (vu?.aucun) {
+    pose('neutre');
+  } else {
+    filet = setTimeout(() => { filet = null; pose('neutre'); }, 1500);
+  }
+}
 
 /** Le petit saut, indépendant de la pose affichée. */
 function sauter() {
@@ -938,16 +1024,36 @@ async function jsonp(url, options) {
       } catch { /* manifeste injoignable : le plein-pied suffit */ }
 
       if (anime || candidat.plein) {
+        /* La réponse du serveur fait foi, et elle éteint le filet : on sait
+           maintenant qui montrer, et le supporter n'a plus à prendre la
+           place. */
+        clearTimeout(filet); filet = null;
+        const memeQuAvant = equipe?.id === candidat.id && equipe?.evo === candidat.evo
+          && equipe?.skin === candidat.skin;
         equipe = candidat;
+        retenir(candidat);
         precharger();
-        // `force` : l'état ne change pas, le personnage si. Sans lui, `pose`
-        // verrait le même nom d'état et ne redessinerait rien.
-        await pose(poseActuelle ?? 'neutre', 0, true);
+        /* `force` : l'état ne change pas, le personnage si. Sans lui, `pose`
+           verrait le même nom d'état et ne redessinerait rien.
+
+           Sauf si c'est déjà lui qui est à l'écran — le souvenir avait vu
+           juste. Redessiner ferait alors croiser deux calques portant la même
+           image : invisible, mais c'est un travail pour rien à la seconde où
+           la page a le plus à faire. */
+        if (!memeQuAvant) await pose(poseActuelle ?? 'neutre', 0, true);
         const def = (dex.dex ?? []).find((f) => f.id === actif);
         const age = (dex.dex ?? []).find((f) => f.racine === actif
           && f.stade === candidat.evo) ?? def;
         calques[devant].alt = `${age?.nom ?? actif} dans la tribune`;
       }
+    }
+    /* Pas de Fanzzy équipé, ou aucun dessin pour celui-ci : c'est le
+       supporter, et c'est une **réponse**. On la retient pour que la visite
+       suivante l'affiche tout de suite, elle aussi. */
+    if (!equipe) {
+      clearTimeout(filet); filet = null;
+      retenir(null);
+      await pose('neutre', 0, true);
     }
   } catch { /* collection non montée : l'accueil reste utilisable sans */ }
 

@@ -1,0 +1,166 @@
+# Déploiement de thebestfan.online, depuis GitHub.
+#
+# Ce que fait ce fichier, dans l'ordre :
+#
+#   1. il refuse de partir si les pages ne compilent pas ou si un module est
+#      mal branché — deux contrôles qui ne demandent ni base ni navigateur, et
+#      qui tiennent en quelques secondes ;
+#   2. il ouvre une session SSH sur le serveur et y lance scripts/deployer.sh,
+#      qui récupère le dépôt, installe, **applique le schéma**, puis redémarre ;
+#   3. il attend que https://thebestfan.online/healthz annonce le commit qu'on
+#      vient de pousser. Tant qu'il annonce l'ancien, le redémarrage n'a pas eu
+#      lieu — et le déploiement échoue au lieu de se déclarer fini.
+#
+# Ce troisième point est le seul qui compte vraiment. Sans lui, un déploiement
+# « réussi » pouvait laisser l'ancienne version en ligne : /healthz répondait
+# ok:true, l'ancien processus répondant très bien.
+#
+# ## Ce qu'il faut déposer une fois dans GitHub
+#
+# Dépôt → Settings → Secrets and variables → Actions → New repository secret :
+#
+#   DEPLOY_HOTE          l'hôte SSH                   (ex. o42s1v.ftp.infomaniak.com)
+#   DEPLOY_UTILISATEUR   l'utilisateur SSH            (ex. o42s1v)
+#   DEPLOY_CLE           une clé privée SSH, entière, en-têtes compris
+#   DEPLOY_EMPREINTE     la ligne known_hosts de l'hôte
+#
+# La clé se fabrique sur ta machine, et la publique se dépose sur le serveur :
+#
+#   ssh-keygen -t ed25519 -C "deploiement github" -f deploiement -N ""
+#   ssh-copy-id -i deploiement.pub <utilisateur>@<hote>      # ou coller dans
+#                                                            # ~/.ssh/authorized_keys
+#   ssh-keyscan <hote>                                       # → DEPLOY_EMPREINTE
+#
+# `deploiement` (la privée) va dans DEPLOY_CLE. Elle ne doit jamais entrer dans
+# le dépôt : une clé versionnée est une clé publique qui s'ignore.
+#
+# L'empreinte est **épinglée** plutôt que d'accepter n'importe quel hôte : sans
+# elle, un déploiement se laisserait rediriger vers une autre machine sans rien
+# dire. C'est la seule ligne de ce fichier qui protège d'autre chose que d'une
+# maladresse.
+#
+# ## Variables facultatives (Settings → Variables)
+#
+#   DEPLOY_RACINE        le dossier du site      (défaut ~/sites/thebestfan.online)
+#   DEPLOY_REDEMARRAGE   la commande de relance  (défaut : touch tmp/restart.txt)
+#   DEPLOY_ORIGINE       l'adresse à interroger  (défaut https://thebestfan.online)
+#
+# `DEPLOY_REDEMARRAGE` est celle à regarder en premier si l'étape 3 expire :
+# chaque hébergement relance un service Node à sa façon.
+
+name: Déploiement
+
+on:
+  # Le bouton : Actions → Déploiement → Run workflow. C'est le mode par défaut,
+  # et c'est délibéré — une mise en ligne est une décision, pas une
+  # conséquence d'un `git push`. Pour déployer à chaque poussée sur main,
+  # décommente les deux lignes qui suivent.
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+
+# Jamais deux déploiements en même temps : le second trouverait le dépôt du
+# serveur à moitié aligné sur le premier.
+concurrency:
+  group: deploiement
+  cancel-in-progress: false
+
+jobs:
+  deployer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Les seules dépendances nécessaires aux deux contrôles ci-dessous.
+      - name: Installer
+        run: npm ci --no-audit --no-fund
+
+      # Ces deux-là ne demandent ni base ni navigateur, et attrapent la panne
+      # la plus bête : une page qui ne compile pas, un module construit avec
+      # une dépendance encore absente. Les suites complètes, elles, demandent
+      # MariaDB et Chrome : elles tournent avant de pousser, sur la machine de
+      # développement.
+      - name: Les pages compilent
+        run: node scripts/verif-pages.mjs
+
+      - name: Les modules sont branchés
+        run: node scripts/verif-cablage.mjs
+
+      - name: Préparer la clé SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_CLE }}" > ~/.ssh/id_deploiement
+          chmod 600 ~/.ssh/id_deploiement
+          printf '%s\n' "${{ secrets.DEPLOY_EMPREINTE }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Déployer sur le serveur
+        env:
+          HOTE: ${{ secrets.DEPLOY_HOTE }}
+          UTILISATEUR: ${{ secrets.DEPLOY_UTILISATEUR }}
+          RACINE: ${{ vars.DEPLOY_RACINE }}
+          REDEMARRAGE: ${{ vars.DEPLOY_REDEMARRAGE }}
+          # La branche déployée est **celle depuis laquelle on a lancé le
+          # workflow**, et pas `main` en dur : sinon lancer depuis une branche
+          # d'essai déploierait main tout en attendant le commit de l'essai,
+          # et l'on chercherait pendant trois minutes un redémarrage qui a
+          # parfaitement eu lieu.
+          BRANCHE: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # Le script vit dans le dépôt, et il s'y met à jour tout seul au
+          # `git reset` qu'il fait lui-même. On l'appelle donc par son chemin
+          # plutôt que de le téléverser : une seule version, celle du dépôt.
+          #
+          # `\$HOME` est échappé exprès : il doit être résolu par le serveur,
+          # pas par ce coureur, qui n'a évidemment pas le même compte.
+          CHEMIN="${RACINE:-\$HOME/sites/thebestfan.online}"
+          ssh -i ~/.ssh/id_deploiement -o BatchMode=yes "$UTILISATEUR@$HOTE" \
+            "export TBF_RACINE='${RACINE:-}' TBF_REDEMARRAGE='${REDEMARRAGE:-}' TBF_BRANCHE='$BRANCHE'; bash $CHEMIN/scripts/deployer.sh"
+
+      # La preuve, et non la promesse. On attend que le site annonce le commit
+      # qu'on vient de pousser : c'est la seule chose qui distingue un
+      # redémarrage réussi d'un redémarrage qui n'a pas eu lieu.
+      - name: Vérifier que la nouvelle version est bien en ligne
+        env:
+          ORIGINE: ${{ vars.DEPLOY_ORIGINE }}
+        run: |
+          set -uo pipefail
+          BASE="${ORIGINE:-https://thebestfan.online}"
+          ATTENDU="$(git rev-parse --short=10 HEAD)"
+          echo "commit attendu : $ATTENDU"
+          # Une seule lecture de /healthz par tour, et un seul appel à node
+          # pour en tirer les deux réponses : « quelle version » et « le site
+          # est-il ouvert ». Les découper en deux interrogations donnerait, un
+          # jour sur mille, une version d'avant le redémarrage et un `ok`
+          # d'après — donc un verdict qui ne correspond à aucun instant réel.
+          LIRE='const s=require("fs").readFileSync(0,"utf8");try{const j=JSON.parse(s);console.log((j.version||"")+" "+(j.ok?"oui":"non"))}catch{console.log(" non")}'
+          for essai in $(seq 1 30); do
+            REPONSE="$(curl -fsS --max-time 10 "$BASE/healthz" || true)"
+            LU="$(printf '%s' "$REPONSE" | node -e "$LIRE")"
+            VUE="${LU%% *}"
+            OUVERT="${LU##* }"
+            if [ "$VUE" = "$ATTENDU" ] && [ "$OUVERT" = "oui" ]; then
+              echo "en ligne : $VUE"
+              exit 0
+            fi
+            echo "  essai $essai — version vue : ${VUE:-aucune}, ouvert : ${OUVERT:-?}"
+            sleep 6
+          done
+          echo ""
+          echo "Le site n'annonce toujours pas $ATTENDU après trois minutes."
+          echo "Deux causes, dans cet ordre de probabilité :"
+          echo "  1. la commande de redémarrage ne relance rien — c'est la"
+          echo "     variable DEPLOY_REDEMARRAGE qu'il faut corriger ;"
+          echo "  2. le démarrage échoue. Dans ce cas /healthz répond ok:false"
+          echo "     et nomme le fichier de sql/ qui manque :"
+          curl -fsS --max-time 10 "$BASE/healthz" || true
+          exit 1

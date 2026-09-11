@@ -1,3 +1,5 @@
+import { verifierEmplacement } from '../onboarding/slots.js';
+
 /** Requêtes SQL du suivi des équipes. Aucun appel réseau ici. */
 export function createFootballStore(pool) {
   const q = async (sql, params = []) => {
@@ -67,7 +69,19 @@ export function createFootballStore(pool) {
 
     /* ------------------------------------------------------------ suivis */
 
+    /**
+     * Suivre un club — **avec la règle des emplacements**.
+     *
+     * Elle manquait ici, et c'était la porte de derrière : la page « Mes
+     * clubs » suit par cette route, qui écrivait sans rien demander à
+     * personne. On pouvait donc suivre quatre clubs avec deux emplacements,
+     * sans rien forcer, juste en s'en servant.
+     *
+     * La règle n'est pas recopiée : elle est appelée là où elle vit. Deux
+     * écritures de la même règle finissent par ne plus dire la même chose.
+     */
     async follow(userId, teamId, isMain) {
+      await verifierEmplacement(q, userId, teamId);
       if (isMain) await q(`UPDATE user_follows SET is_main = 0 WHERE user_id = ?`, [userId]);
       await q(
         `INSERT INTO user_follows (user_id, team_id, is_main) VALUES (?, ?, ?)
@@ -207,8 +221,13 @@ export function createFootballStore(pool) {
     },
 
     async fixturesOfTeam(teamId, { past = 5, next = 5 } = {}) {
+      /* `elapsed_extra` et `polled_at` : la page fait courir la minute
+         elle-même à partir de l'instant du relevé. Sans eux, elle ne peut
+         qu'afficher la minute telle qu'elle a été lue — figée jusqu'au
+         prochain passage du relevé, et sans jamais pouvoir dire « 90+3 ». */
       const sel = `f.id, f.league_id, f.season, f.round, f.home_id, f.away_id,
-                   f.home_goals, f.away_goals, f.status_short, f.elapsed, f.kickoff_at,
+                   f.home_goals, f.away_goals, f.status_short, f.elapsed,
+                   f.elapsed_extra, f.polled_at, f.kickoff_at,
                    h.name AS home_name, h.logo AS home_logo,
                    a.name AS away_name, a.logo AS away_logo,
                    l.name AS league_name, l.logo AS league_logo`;

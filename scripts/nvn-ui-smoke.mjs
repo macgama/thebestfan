@@ -262,6 +262,36 @@ check('chaque tribune a sa foule', ouvert.fouleMoi === 1 && ouvert.fouleEux === 
     /Bâloise/.test(camps.eux) && !/Sédunois/.test(camps.eux));
 }
 check('la main montre cinq emplacements', ouvert.cartes === 5);
+
+/* Chaque carte de la main porte son dessin — et le bon.
+ *
+ * Une main où toutes les cartes montreraient la même image passerait le
+ * comptage sans qu'un joueur distingue quoi que ce soit : cinq `.illu` sur
+ * cinq cartes. On compare donc, **dans l'ordre**, l'adresse de chaque image à
+ * la main que le serveur a réellement distribuée — la carte de l'écran n'a
+ * pas toujours son identifiant en attribut, une carte injouable n'en porte
+ * pas, alors que la main, elle, est toujours complète.
+ *
+ * Le fichier doit aussi arriver : `action-art.js` retire toute image qui
+ * échoue, donc une image encore présente est une image servie. */
+{
+  const main = await A.page.evaluate(() => ({
+    servies: (S.vue?.moi?.main ?? []),
+    vues: [...document.querySelectorAll('#mainCartes .ct')].map((c) => ({
+      src: c.querySelector('.illu')?.getAttribute('src') ?? null,
+      sceau: Boolean(c.querySelector('.sceau')),
+    })),
+  }));
+  check('chaque carte de la main porte un dessin',
+    main.vues.length === 5 && main.vues.every((c) => c.src));
+  const alignees = main.servies.length === 5 && main.servies.every((id, i) =>
+    main.vues[i]?.src?.startsWith(`/img/action/${id}.`));
+  check('et chacune porte le sien, dans l\u2019ordre de la main', alignees);
+  if (!alignees) console.log('        distribuée :', main.servies.join(', '),
+    '\n        vue :', main.vues.map((c) => c.src).join(', '));
+  check('le glyphe de famille reste dessous, en cas de dessin manquant',
+    main.vues.every((c) => c.sceau));
+}
 check('les trois Fanzzy du deck sont là', ouvert.fanzzy === 3);
 check('le titulaire est en jeu', /EN JEU/.test(ouvert.actif ?? ''));
 check('le bouton annonce le cri et le geste', /TEMPO|MARTELAGE|ENDURANCE/.test(ouvert.chanter));
@@ -372,11 +402,39 @@ check('une carte de la main est jouable', Boolean(jouable));
 check('la carte quitte la main après avoir été jouée',
   await jusqua(async () => await A.page.evaluate((id) =>
     !(S.vue?.moi?.main ?? []).includes(id), jouable)));
-// La carte jouée s\u2019annonce par une étiquette qui monte depuis la corde
-// puis disparaît. C'est fugace par construction : on la guette au lieu de la
-// lire dans un journal.
-check('la carte jouée s\u2019annonce au-dessus de la corde', await jusqua(async () =>
-  await A.page.evaluate(() => document.querySelectorAll('.fx-nombre').length > 0), 3000));
+
+/* La carte jouée se montre en grand.
+ *
+ * C'était une étiquette de sept pixels qui montait de la corde, et le contrôle
+ * se contentait de compter les `.fx-nombre` présents — c'est-à-dire qu'une
+ * poussée survenue au même instant le faisait passer au vert sans qu'aucune
+ * carte n'ait rien annoncé. On lit donc **le nom de la carte jouée**, celle-là
+ * et pas une autre.
+ *
+ * C'est fugace par construction : la carte se retire toute seule au bout d'une
+ * seconde et quart. On la guette au lieu de la lire dans un journal. */
+const annonce = await jusqua(async () => await A.page.evaluate((id) => {
+  const el = document.querySelector('.tbf-jouee');
+  if (!el) return false;
+  window.__annonce = {
+    nom: el.querySelector('.nm')?.textContent.trim(),
+    attendu: S.catalogue.find((a) => a.id === id)?.nom,
+    illu: el.querySelector('.illu')?.getAttribute('src'),
+  };
+  return true;
+}, jouable), 3000);
+check('la carte jouée se montre en grand', annonce);
+const vue = await A.page.evaluate(() => window.__annonce ?? {});
+check('et c\u2019est bien celle qu\u2019on vient de jouer',
+  Boolean(vue.attendu) && vue.nom === vue.attendu);
+if (vue.nom !== vue.attendu) console.log('    montrée :', vue.nom, '— attendue :', vue.attendu);
+check('elle porte son dessin', vue.illu === `/img/action/${jouable}.avif`
+  || vue.illu === `/img/action/${jouable}.webp` || vue.illu === `/img/action/${jouable}.jpg`);
+
+/* Et elle s'en va. Une carte restée à l'écran couvrirait la corde pendant tout
+   le reste du duel — c'est le genre de panne qu'on ne voit qu'en jouant. */
+check('puis elle s\u2019efface', await jusqua(async () =>
+  await A.page.evaluate(() => !document.querySelector('.tbf-jouee')), 4000));
 /* ------------------------------------------- une erreur nomme sa cause */
 
 // La cadence est limitée sur dix secondes glissantes. Sans cette pause, le

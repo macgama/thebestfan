@@ -88,7 +88,20 @@ export function createFootball({ pool, client, io, requireAuth, onGoal, onFinish
     if (!Number.isInteger(teamId)) return fail(res, 'football.error.team_invalid');
 
     const toLoad = await store.needsBootstrap(teamId);
-    await store.follow(req.user.id, teamId, Boolean(req.body?.isMain));
+    /* Le refus d'emplacement doit **arriver jusqu'à la page**, avec son compte.
+       Sans ce try, la promesse rejetée d'un gestionnaire express laisse la
+       requête en suspens : le joueur voit une roue qui tourne, puis rien — et
+       il recommence, ce qui est exactement ce qu'on ne veut pas lui faire
+       faire un jour où on vient de lui dire non. */
+    try {
+      await store.follow(req.user.id, teamId, Boolean(req.body?.isMain));
+    } catch (e) {
+      if (e.code === 'onboarding.error.no_slot') {
+        return res.status(400).json({ error: e.code, suivis: e.suivis, slots: e.slots });
+      }
+      console.error('[foot] follow', e.message);
+      return fail(res, 'football.error.follow_failed', 500);
+    }
 
     // Compétitions et calendrier chargés en arrière-plan au premier suivi.
     if (toLoad) {

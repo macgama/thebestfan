@@ -88,10 +88,23 @@ await raw.query(readFileSync(new URL('../sql/football.sql', import.meta.url), 'u
 // `minutes.sql` ajoute `elapsed_extra` à `fixtures` : le relevé l'écrit, donc
 // sans lui la suite échoue sur un `Unknown column` dès le premier match.
 await raw.query(readFileSync(new URL('../sql/minutes.sql', import.meta.url), 'utf8'));
+/* `souvenirs.sql` porte `user_wallet`, et suivre un club en a besoin depuis
+   que la règle des emplacements est appliquée **des deux côtés** : la route
+   football écrivait sans rien vérifier, et on pouvait suivre quatre clubs avec
+   deux emplacements. Une suite qui ne monte pas la table que le code lit
+   n'éprouve pas le jeu tel qu'il tourne. */
+await raw.query(readFileSync(new URL('../sql/couleurs.sql', import.meta.url), 'utf8'));
+await raw.query(readFileSync(new URL('../sql/souvenirs.sql', import.meta.url), 'utf8'));
+// `inventaire.sql` ajoute la colonne `follow_slots` : c'est elle, le plafond.
+await raw.query(readFileSync(new URL('../sql/fanzzy.sql', import.meta.url), 'utf8'));
+await raw.query(readFileSync(new URL('../sql/inventaire.sql', import.meta.url), 'utf8'));
 const USER = '11111111-2222-3333-4444-555555555555';
 await raw.query(
   `INSERT INTO users (public_id, email, pseudo, password_hash, locale)
    VALUES (?, 'fan@exemple.fr', 'KopDuLac', 'scrypt$x', 'fr')`, [USER]);
+// Trois emplacements : de quoi suivre les clubs de cette suite, et un de
+// libre. Un compte sans portefeuille tomberait au minimum de deux.
+await raw.query(`INSERT INTO user_wallet (user_id, follow_slots) VALUES (?, 3)`, [USER]);
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 8, charset: 'utf8mb4' });
@@ -180,6 +193,54 @@ check('saison en cours retenue (2026 et non 2025)', tl[0]?.season === 2026);
 const [fx] = await pool.query('SELECT * FROM fixtures WHERE id = 5001');
 check('match enregistré', fx[0]?.home_id === 85 && fx[0]?.status_short === 'NS');
 check('adversaire enregistré au passage', (await pool.query('SELECT 1 FROM teams WHERE id = 91'))[0].length === 1);
+/* ------------------------------------- les emplacements, par cette porte
+
+ * **La faute la plus bête du projet, et la plus visible.** La règle des
+ * emplacements de suivi était défendue dans `onboarding.follow`, avec un
+ * commentaire qui le disait fièrement — et cette route-ci, celle qu'emploie la
+ * page « Mes clubs », écrivait directement en base sans rien vérifier.
+ *
+ * Résultat : on suivait autant de clubs qu'on voulait. Pas en trafiquant le
+ * client, pas en forçant quoi que ce soit — en se servant du jeu normalement.
+ * Un joueur s'est retrouvé avec « 4/2 clubs » affiché dans sa propre barre.
+ *
+ * Le contrôle est donc ici, sur **cette** route, et pas seulement sur celle
+ * qui était déjà gardée. C'est la porte qui n'avait pas de serrure.
+ */
+{
+  // Le compte a trois emplacements et suit déjà le 85. Deux de plus, et c'est
+  // plein ; le troisième doit être refusé.
+  await call('/api/football/follows', { method: 'POST', body: { teamId: 91 } });
+  await foot.store.upsertTeam({ id: 77, name: 'Club de Trop' });
+  await foot.store.upsertTeam({ id: 78, name: 'Club de Bien Trop' });
+  const troisieme = await call('/api/football/follows', { method: 'POST', body: { teamId: 77 } });
+  check('on remplit ses trois emplacements', troisieme.status === 200);
+
+  const refus = await call('/api/football/follows', { method: 'POST', body: { teamId: 78 } });
+  check('le club de trop est refusé par cette route aussi',
+    refus.json?.error === 'onboarding.error.no_slot'
+    || (console.log('        elle répond :', refus.status, JSON.stringify(refus.json)), false));
+  /* Le refus porte le compte et le plafond : la page doit pouvoir écrire
+     « 3 clubs sur 3 », et non « impossible ». */
+  check('et le refus dit combien sur combien',
+    refus.json?.suivis === 3 && refus.json?.slots === 3);
+  const [apres] = await pool.query('SELECT COUNT(*) n FROM user_follows WHERE user_id = ?', [USER]);
+  check('rien n’a été écrit en base', apres[0].n === 3);
+
+  /* Re-suivre un club déjà suivi ne consomme pas d'emplacement : c'est ce qui
+     permet de le passer en club principal sans en libérer un d'abord. */
+  const encore = await call('/api/football/follows',
+    { method: 'POST', body: { teamId: 91, isMain: true } });
+  check('repasser un club déjà suivi en principal reste possible',
+    encore.status === 200
+    && encore.json.teams?.find((t) => t.id === 91)?.is_main === 1);
+
+  // On libère ce qu'on vient de prendre : la suite continue avec 85 seul.
+  await call('/api/football/follows/77', { method: 'DELETE' });
+  await call('/api/football/follows/91', { method: 'DELETE' });
+  await pool.query('UPDATE user_follows SET is_main = 1 WHERE user_id = ? AND team_id = 85', [USER]);
+}
+
 
 r = await call('/api/football/feed');
 check('le fil montre le prochain match', r.json.feed?.[0]?.next?.[0]?.id === 5001);

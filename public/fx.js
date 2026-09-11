@@ -410,21 +410,10 @@
     },
     sonEstCoupe: () => sonCoupe,
 
-    /** Une carte est jouée : impulsion depuis la carte, onde, éclat. */
-    carte(element, { couleur = COULEURS.violet, nom } = {}) {
-      const { x, y } = centre(element);
-      onde({ x, y, couleur, taille: 260 });
-      particules({ x, y, n: 18, couleurs: [couleur, COULEURS.craie], distance: 110, taille: 4 });
-      buzz(14);
-      son('carte');
-      if (nom) nombre(nom, { x, y: y - 20, couleur, signe: false });
-      if (element && !doux()) {
-        element.animate([
-          { transform: 'scale(1)' }, { transform: 'scale(1.12)', offset: .3 },
-          { transform: 'scale(.9)', opacity: .4, offset: .7 }, { transform: 'scale(1)', opacity: 1 },
-        ], { duration: 420, easing: 'ease-out' });
-      }
-    },
+    /* Une carte jouée se voit dans `action-art.js`, avec son dessin et sa
+       famille. Il y avait ici une version pâle — une onde et le nom en
+       craie — que plus personne n'appelait : deux définitions de « à quoi
+       ressemble une carte qu'on joue », dont une morte. */
 
     /** Un but dans le jeu. Le plus gros effet dont on dispose. */
     but({ pour = true, score } = {}) {

@@ -2,6 +2,10 @@ node_modules/
 .env*
 *.log
 
+# Écrit par scripts/deployer.sh sur le serveur, avec le commit déployé.
+# Il décrit une machine, pas le projet : il n'a rien à faire dans l'historique.
+VERSION
+
 # Les rendus bruts des illustrations : 133 Mo pour vingt et un fichiers, et
 # ils ne servent qu'une fois — scripts/fanzzy-images.mjs en tire les 24 Mo
 # de public/img/fanzzy, qui sont eux versionnés. Garde-les hors du dépôt,
@@ -16,3 +20,13 @@ img_brut/
 # vignettes de public/img/fanzzy, elles versionnées. On les garde sur disque
 # pour reprendre un cadrage, pas dans l'historique.
 art/**/_src/
+
+# `art/action/` et `art/stuff/` font exception, et volontairement : ce sont les
+# vingt et un dessins des cartes d'action et les sept de l'équipement, et **on
+# ne sait pas les refaire**. Les sources d'un Fanzzy se rejouent : le rendu est
+# déterministe, les invites sont dans le dépôt. Ceux-là sortent d'un générateur
+# qui ne rend jamais deux fois la même image — les reperdre, c'est perdre pour
+# toujours la possibilité de recadrer une carte, de refaire un détourage ou de
+# la servir plus grande. Ils restent donc dans l'historique. Ne pas les ranger
+# sous `_src/` pour « faire comme les autres » : ce ne sont pas les mêmes
+# fichiers.

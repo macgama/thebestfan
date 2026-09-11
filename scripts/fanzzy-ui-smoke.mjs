@@ -274,22 +274,24 @@ check('les Fanzzy non possédés portent leur nom',
 /* ------------------------------------------- la fiche, en un seul écran
 
  * Elle défilait sur mille deux cents pixels pour une fenêtre de huit cent
- * quatre-vingts : vitrine, pastilles, effets, équipement, six tenues, lignée,
- * boutons. Il fallait défiler trois fois pour faire le tour de l'écran qui
- * sert justement à décider si on équipe ce personnage — et le bouton
- * « emmener en duel » était tout en bas.
+ * quatre-vingts, et le bouton « emmener en duel » était tout en bas de
+ * l'écran qui sert justement à décider si on l'emmène.
  *
- * Le personnage occupe maintenant l'écran et le reste passe en onglets : trois
- * contenus qu'on ne consulte jamais ensemble se remplacent dans un volet de
- * hauteur fixe. Ce contrôle vérifie les deux moitiés — que ça tient, et que
- * les onglets changent vraiment ce qu'on lit.
+ * Elle tient maintenant en un écran, et surtout elle est **la seule** : le
+ * classeur montrait auparavant son propre aperçu, qui ne disait ni les tenues
+ * ni l'équipement. Ce qui se vérifie ici est donc double — que tout tienne, et
+ * que ce soit bien ce rendu-là qu'on obtienne aux deux adresses.
+ *
+ * Les cases sont le cœur de la mise en page : âges, tenues, effets, celles
+ * qu'on n'a pas portant un cadenas et disant ce qu'elles demandent. C'est la
+ * différence entre « il me manque des choses » et « il me manque *ça* ».
  */
 {
   const fiche = await nav.newPage();
   fiche.on('pageerror', (e) => erreurs.push(e.message));
   await fiche.setViewport({ width: 400, height: 880 });
   await fiche.goto(`${base}/fanzzy/G1`, { waitUntil: 'networkidle0' });
-  const prete = await fiche.waitForSelector('.vitrine', { timeout: 8000 })
+  const prete = await fiche.waitForSelector('.fiche .case', { timeout: 8000 })
     .then(() => true).catch(() => false);
   check('la fiche d’un Fanzzy s’affiche', prete);
 
@@ -298,179 +300,202 @@ check('les Fanzzy non possédés portent leur nom',
       defile: document.documentElement.scrollHeight > innerHeight + 1,
       vitrine: document.querySelector('.vitrine').getBoundingClientRect().height,
       ecran: innerHeight,
-      bouton: document.querySelector('.actions .btn')?.getBoundingClientRect().bottom ?? 1e9,
-      onglets: document.querySelectorAll('.onglet').length,
+      bouton: document.querySelector('.actions .bt')?.getBoundingClientRect().bottom ?? 1e9,
+      rangs: [...document.querySelectorAll('.rang h4')].map((n) => n.textContent.trim()),
+      cases: document.querySelectorAll('.case').length,
+      // Une case verrouillée reste **visible** : c'est elle qui donne envie.
+      verrous: document.querySelectorAll('.case.verrou').length,
+      detail: document.getElementById('fiche-detail').textContent.replace(/\s+/g, ' ').trim(),
+      choisies: document.querySelectorAll('.case.choisie').length,
     }));
     check('elle tient dans l’écran, sans défilement',
-      !m.defile || (console.log(`        ${document ? '' : ''}elle défile`), false));
+      !m.defile || (console.log('        elle défile'), false));
     check('le personnage occupe plus du tiers de la hauteur',
       m.vitrine > m.ecran * 0.34
       || (console.log(`        ${Math.round(m.vitrine)} px sur ${m.ecran}`), false));
     check('et le bouton d’action est visible sans chercher', m.bouton <= m.ecran + 1);
-    check('les trois volets ont leur onglet', m.onglets === 3);
+    check('les trois rangées de cases sont là',
+      /* L'ordre compte : la bande défile, et les tenues sont trop nombreuses
+         pour tenir avant les effets. Placées au milieu, elles les repoussaient
+         hors de l'écran. */
+      m.rangs.join('/') === 'ÂGES/EFFETS/TENUES'
+      || (console.log('        rangées :', m.rangs.join(', ')), false));
+    check('et il y a des cases à regarder', m.cases >= 4);
+    check('celles qu’on n’a pas restent visibles, verrouillées', m.verrous > 0);
+    /* Une case est choisie d'entrée, sinon le bloc de détail s'ouvre vide et
+       personne ne devine qu'il faut toucher un losange. */
+    check('une case est regardée dès l’ouverture', m.choisies === 1);
+    check('et son détail est écrit dessous', m.detail.length > 10);
 
-    /* Changer d'onglet doit changer ce qu'on lit — et **ne pas** faire sauter
-       le personnage : le volet a une hauteur fixe pour ça. */
-    const avant = await fiche.evaluate(() => ({
-      texte: document.getElementById('volet').textContent.trim().slice(0, 40),
-      haut: document.querySelector('.vitrine').getBoundingClientRect().height,
-    }));
-    await fiche.evaluate(() =>
-      document.querySelector('[data-volet="tenues"]').click());
-    await dodo(250);
+    /* Toucher une case change ce qu'on lit — et **ne fait pas sauter le
+       personnage** : le bloc de détail a une hauteur fixe pour ça. */
+    const avant = m.detail;
+    const hautAvant = m.vitrine;
+    await fiche.evaluate(() => {
+      const autre = [...document.querySelectorAll('.case')]
+        .find((n) => !n.classList.contains('choisie'));
+      autre.click();
+    });
+    await dodo(200);
     const apres = await fiche.evaluate(() => ({
-      texte: document.getElementById('volet').textContent.trim().slice(0, 40),
+      detail: document.getElementById('fiche-detail').textContent.replace(/\s+/g, ' ').trim(),
       haut: document.querySelector('.vitrine').getBoundingClientRect().height,
-      tenues: document.querySelectorAll('#volet .skin').length,
+      choisies: document.querySelectorAll('.case.choisie').length,
     }));
-    check('un autre onglet montre un autre contenu', avant.texte !== apres.texte);
-    check('les tenues y sont', apres.tenues > 0);
-    check('et le personnage ne saute pas d’un onglet à l’autre',
-      Math.abs(avant.haut - apres.haut) < 2
-      || (console.log(`        ${Math.round(avant.haut)} puis ${Math.round(apres.haut)}`), false));
+    check('toucher une case change le détail', apres.detail !== avant);
+    check('et une seule case reste choisie', apres.choisies === 1);
+    check('le personnage ne saute pas d’une case à l’autre',
+      Math.abs(hautAvant - apres.haut) < 2
+      || (console.log(`        ${Math.round(hautAvant)} puis ${Math.round(apres.haut)}`), false));
 
-    await fiche.evaluate(() => document.querySelector('[data-volet="lignee"]').click());
-    await dodo(250);
-    check('la lignée aussi',
-      await fiche.evaluate(() => document.getElementById('volet').textContent.trim().length > 5));
-    check('la fiche ne défile toujours pas après trois onglets',
+    /* La case qu'on n'a pas dit ce qu'il faut pour l'avoir. Un cadenas sans
+       explication ne donne envie de rien — il faut lire « à trouver dans un
+       booster » ou « 90 écharpes », sinon on cherche un bouton qui n'existe pas. */
+    const verrou = await fiche.evaluate(() => {
+      const v = document.querySelector('.case.verrou');
+      v.click();
+      return document.getElementById('fiche-detail').textContent.replace(/\s+/g, ' ').trim();
+    });
+    check('une case verrouillée dit ce qu’elle demande',
+      /écharpes|booster|niveau/.test(verrou)
+      || (console.log('        elle dit :', verrou), false));
+
+    check('la fiche ne défile toujours pas après trois cases',
       await fiche.evaluate(() =>
         document.documentElement.scrollHeight <= innerHeight + 1));
+
+    /* Le dessin est celui de **l'âge atteint**. La fiche demandait
+       l'illustration sous le nom de la lignée : elle montrait donc le premier
+       âge sous le nom du dernier, ce qui ressemble à un personnage
+       parfaitement valide et ne se voit jamais. */
+    const dessin = await fiche.evaluate(() =>
+      document.querySelector('.fiche .art img')?.getAttribute('src') ?? '');
+    check('le dessin de la vitrine est bien celui du personnage',
+      /G1/.test(dessin) || (console.log('        il montre :', dessin), false));
+
+    /* Le dessin est celui de **l'âge atteint**, et c'est V1 qui le prouve :
+       ce compte l'a monté au second âge. La fiche demandait l'illustration
+       sous le nom de la lignée — elle montrait donc le Choriste sous le nom
+       du Meneur de chant, ce qui ressemble à un personnage parfaitement
+       valide et ne se voit jamais. G1, resté au premier âge, ne pouvait pas
+       faire la différence. */
+    const evolue = await nav.newPage();
+    evolue.on('pageerror', (e) => erreurs.push(e.message));
+    await evolue.setViewport({ width: 400, height: 880 });
+    await evolue.goto(`${base}/fanzzy/V1`, { waitUntil: 'networkidle0' });
+    await evolue.waitForSelector('.fiche .art img', { timeout: 8000 }).catch(() => {});
+    const age = await evolue.evaluate(() => ({
+      dessin: document.querySelector('.fiche .art img')?.getAttribute('src') ?? '',
+      nom: document.querySelector('.fiche h2')?.textContent.trim() ?? '',
+    }));
+    check('la fiche montre le dessin de l’âge atteint, pas celui de la lignée',
+      /V2/.test(age.dessin)
+      || (console.log('        elle montre :', age.dessin), false));
+    check('et son nom va avec', /Meneur/.test(age.nom)
+      || (console.log('        elle nomme :', age.nom), false));
+    await evolue.close();
+  }
+  if (process.env.CAPTURE) {
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    await fiche.screenshot({ path: join(tmpdir(), 'fiche.png') });
   }
   await fiche.close();
 }
 
-/* --------------------------------------- « Mon Fanzzy », en un seul écran
+/* ------------------------------------ la fiche par-dessus le classeur
 
- * L'écran qui ouvre la section montrait la carte du Fanzzy équipé en
- * vignette, à soixante pour cent de la largeur, au milieu d'une colonne de
- * texte. C'est la façon de présenter cent cinquante personnages, pas celle
- * d'en présenter un — et c'est pourtant le seul écran du jeu qui ne parle que
- * de celui-là.
- *
- * Il hérite maintenant de la fiche : le personnage en pied dans le cadre de
- * sa rareté, et un bouton qui ne se cherche pas. Ce contrôle tient les trois
- * promesses — ça tient dans l'écran, le personnage est vraiment là, et le
- * cadre suit sa rareté.
+ * Le même rendu, monté en panneau. Ce qui se joue ici n'est pas l'affichage —
+ * il vient d'être éprouvé — mais **la navigation** : la grille reste derrière,
+ * l'adresse suit, et le bouton retour du téléphone referme le panneau au lieu
+ * de quitter le classeur. C'est tout ce qu'on entend par fluidité, et rien de
+ * cela ne se lit dans le code.
  */
 {
-  const mien = await nav.newPage();
-  mien.on('pageerror', (e) => erreurs.push(e.message));
-  await mien.setViewport({ width: 400, height: 880 });
-  await mien.goto(base + '/fanzzy', { waitUntil: 'networkidle0' });
-  const prete = await mien.waitForSelector('.tscene', { timeout: 8000 })
-    .then(() => true).catch(() => false);
+  const p = await ouvrir();
+  await p.evaluate(() => [...document.querySelectorAll('button')]
+    .find((b) => /CLASSEUR/i.test(b.textContent))?.click());
+  await jusqua(async () => await p.evaluate(() =>
+    document.querySelectorAll('#grid .slot').length > 0));
 
-  /* Sans clic : c'est l'écran d'ouverture de la section. Le joueur qui touche
-     le Fanzzy du bas de l'écran doit tomber sur le sien, pas sur la grille. */
-  check('« Mon Fanzzy » est l’écran qui ouvre la section',
-    prete && await mien.evaluate(() =>
-      document.getElementById('s-equipe').classList.contains('on')));
+  await p.evaluate(() => document.querySelector('#grid .slot').click());
+  const ouverte = await jusqua(async () => await p.evaluate(() =>
+    Boolean(document.querySelector('#detail.on .fiche .case'))));
+  check('toucher une carte ouvre la fiche par-dessus la grille', ouverte);
 
-  if (prete) {
-    // L'image met un aller-retour réseau à arriver : on l'attend, sinon le
-    // contrôle mesurerait un cadre encore vide et passerait au vert pour la
-    // mauvaise raison.
-    await jusqua(async () => await mien.evaluate(() =>
-      Boolean(document.querySelector('.tbf-pose.on') || document.querySelector('.tdessin'))));
+  const etat = await p.evaluate(() => ({
+    adresse: location.pathname,
+    grille: document.querySelectorAll('#grid .slot').length,
+    croix: Boolean(document.querySelector('#detail [data-fermer]')),
+    fleche: Boolean(document.querySelector('#detail .head a[href="/fanzzy"]')),
+  }));
+  /* L'adresse suit : elle se partage, se met en favori, et un rechargement
+     tombe sur la page complète du même Fanzzy. */
+  check('l’adresse devient celle du Fanzzy', /^\/fanzzy\/.+/.test(etat.adresse));
+  check('et la grille est toujours là, derrière', etat.grille > 0);
+  /* Une croix ici, une flèche sur la page : le geste dit où l'on va. Fermer un
+     panneau et revenir en arrière ne sont pas la même chose. */
+  check('le panneau se ferme par une croix, pas par une flèche',
+    etat.croix && !etat.fleche);
 
-    const m = await mien.evaluate(() => {
-      const scene = document.querySelector('.tscene');
-      /* Le calque **visible**, et non le premier venu : la scène en porte deux
-         et croise leurs opacités pour changer de pose sans clignoter. Le
-         premier du DOM est donc celui qui attend son tour, vide. */
-      const img = document.querySelector('#tpile .tbf-pose.on');
-      const persoRect = (img ?? document.querySelector('.tdessin'))?.getBoundingClientRect();
-      const perso = BY_ID.get(S.active);
-      return {
-        defile: document.documentElement.scrollHeight > innerHeight + 1,
-        ecran: innerHeight,
-        scene: scene.getBoundingClientRect().height,
-        haut: persoRect?.height ?? 0,
-        // Chargée pour de bon : une balise `img` dont la source est fausse a
-        // quand même une hauteur, celle que la mise en page lui donne.
-        chargee: img ? (img.classList.contains('on') && img.naturalWidth > 0)
-                     : Boolean(document.querySelector('.tdessin')),
-        rar: getComputedStyle(scene).getPropertyValue('--rc').trim(),
-        classe: [...scene.classList].find((c) => c.startsWith('r-')) ?? '',
-        attendue: `r-${ageDe(perso).rar}`,
-        nom: document.querySelector('.ttxt h2')?.textContent.trim() ?? '',
-        vraiNom: ageDe(perso).nom,
-        premierNom: perso.nom,
-        texte: document.querySelector('.ttxt')?.textContent ?? '',
-        bande: document.querySelector('.teff')?.getBoundingClientRect().height ?? 0,
-        /* Les deux nombres, pas le DOMRect : il n'a aucune propriété propre
-           énumérable et traverse `evaluate` sous la forme d'un objet vide.
-           Le contrôle rougissait alors sur un bouton parfaitement placé. */
-        boutonBas: document.querySelector('.tbtns .dbtn.primary')
-          ?.getBoundingClientRect().bottom ?? 1e9,
-        boutonHaut: document.querySelector('.tbtns .dbtn.primary')
-          ?.getBoundingClientRect().height ?? 0,
-      };
-    });
+  // Le bouton retour du téléphone referme le panneau.
+  await p.goBack();
+  await dodo(300);
+  const apresRetour = await p.evaluate(() => ({
+    ouvert: document.querySelector('#detail')?.classList.contains('on') ?? false,
+    adresse: location.pathname,
+    grille: document.querySelectorAll('#grid .slot').length,
+  }));
+  check('le retour arrière referme le panneau', !apresRetour.ouvert);
+  check('et ramène à l’adresse du classeur', apresRetour.adresse === '/fanzzy');
+  check('sans quitter la grille', apresRetour.grille > 0);
 
-    /* `#app` est clos par `overflow:hidden` : un contenu trop haut ne fait
-       pas défiler la page, il sort du cadre sans un mot. Ce contrôle-ci ne
-       suffit donc pas — c'est le bouton, plus bas, qui dit vraiment si l'écran
-       tient. On garde les deux : celui-ci attrape la page qui se met à
-       défiler, l'autre celle qui déborde en silence. */
-    check('il tient dans l’écran, sans défilement',
-      !m.defile || (console.log(`        il défile`), false));
-    check('le personnage occupe plus de la moitié de la hauteur',
-      m.haut > m.ecran * 0.5
-      || (console.log(`        ${Math.round(m.haut)} px sur ${m.ecran}`), false));
-    check('et son dessin est vraiment arrivé', m.chargee);
-    check('le cadre porte la rareté du Fanzzy équipé',
-      m.classe === m.attendue && m.rar.length > 0
-      || (console.log(`        ${m.classe} au lieu de ${m.attendue}`), false));
-    check('c’est bien le Fanzzy équipé qui est nommé', m.nom === m.vraiNom);
-    /* Et à l'âge atteint. Le joueur qui a payé ses écharpes doit voir son
-       Meneur de chant, pas le Choriste qu'il n'est plus. */
-    check('à l’âge qu’il a atteint, pas au premier',
-      m.nom !== m.premierNom
-      || (console.log(`        il montre ${m.nom}, qui est le premier âge`), false));
-    check('son cri est annoncé avec sa poussée', /Cri\s*:/.test(m.texte));
-    check('le bouton du duel se voit sans rien chercher',
-      (m.boutonBas <= m.ecran + 1 && m.boutonHaut > 20)
-      || (console.log(`        bas du bouton ${Math.round(m.boutonBas)} `
-        + `pour un écran de ${m.ecran}, scène ${Math.round(m.scene)}, bande ${
-          Math.round(m.bande)}`), false));
+  /* Et en avant : la fiche se rouvre.
 
-    /* La respiration. C'est le seul mouvement de l'écran, et c'est lui qui
-       fait la différence entre un personnage et une illustration collée. Elle
-       s'était déjà arrêtée sur l'accueil sans que rien ne le signale : une
-       animation qui manque ne casse rien, elle se contente de ne pas être là. */
-    check('le personnage respire',
-      await mien.evaluate(() => {
-        const n = document.querySelector('.tbf-souffle');
-        return n ? getComputedStyle(n).animationName !== 'none' : false;
-      }));
+     Ce chemin-là ne se voit pas à l'usage courant, et c'est bien pour ça
+     qu'il faut l'éprouver — il porte tout le reste. C'est la même branche
+     qui rouvre le panneau quand on arrive sur le classeur depuis un lien
+     partagé puis un retour arrière. Sans elle, l'adresse affiche un Fanzzy
+     et l'écran montre la grille. */
+  await p.goForward();
+  await dodo(400);
+  const apresAvant = await p.evaluate(() => ({
+    ouvert: document.querySelector('#detail')?.classList.contains('on') ?? false,
+    adresse: location.pathname,
+    fiche: Boolean(document.querySelector('#detail .fiche .case')),
+  }));
+  check('et le bouton suivant la rouvre', apresAvant.ouvert && apresAvant.fiche
+    || (console.log('        ouvert :', apresAvant.ouvert, '· fiche :', apresAvant.fiche), false));
+  check('à la bonne adresse', apresAvant.adresse.startsWith('/fanzzy/'));
+  await p.goBack();
+  await dodo(300);
 
-    /* Le petit écran. Un iPhone SE fait six cent soixante-sept points de haut,
-       et c'est là que le bouton part le premier : la scène doit se réduire,
-       jamais pousser le reste dehors. */
-    await mien.setViewport({ width: 360, height: 640 });
-    await dodo(200);
-    const petit = await mien.evaluate(() => ({
-      ecran: innerHeight,
-      bas: document.querySelector('.tbtns .dbtn.primary')
-        ?.getBoundingClientRect().bottom ?? 1e9,
-      perso: document.querySelector('#tpile .tbf-pose.on, .tdessin')
-        ?.getBoundingClientRect().height ?? 0,
-    }));
-    check('sur un petit écran, le bouton reste visible',
-      petit.bas <= petit.ecran + 1
-      || (console.log(`        ${Math.round(petit.bas)} pour ${petit.ecran}`), false));
-    /* Un peu moins de la moitié, et c'est la mesure juste : sur six cent
-       quarante points, les deux barres de la page, la bande d'effets et les
-       boutons en prennent trois cents à eux seuls. Le seuil dit ce qu'on
-       défend — le personnage reste la plus grande chose de l'écran — et non un
-       chiffre rond qu'aucune mise en page ne peut tenir. */
-    check('et le personnage reste la plus grande chose de l’écran',
-      petit.perso > petit.ecran * 0.45
-      || (console.log(`        ${Math.round(petit.perso)} px sur ${petit.ecran}`), false));
-  }
-  await mien.close();
+  // Et la croix fait la même chose.
+  await p.evaluate(() => document.querySelector('#grid .slot').click());
+  await jusqua(async () => await p.evaluate(() =>
+    Boolean(document.querySelector('#detail.on .fiche'))));
+  await p.evaluate(() => document.querySelector('#detail [data-fermer]').click());
+  await dodo(300);
+  const apresCroix = await p.evaluate(() => ({
+    ouvert: document.querySelector('#detail')?.classList.contains('on') ?? false,
+    adresse: location.pathname,
+  }));
+  check('la croix referme aussi', !apresCroix.ouvert);
+  check('et ne laisse pas l’adresse du Fanzzy derrière elle',
+    apresCroix.adresse === '/fanzzy'
+    || (console.log('        elle laisse :', apresCroix.adresse), false));
+
+  /* Un Fanzzy qu'on ne possède pas ouvre la **même** fiche. Avant, il
+     changeait de page : deux gestes différents pour deux cartes de la même
+     grille, sans que rien ne l'explique. */
+  await p.evaluate(() => document.querySelector('#grid .slot.locked').click());
+  const absent = await jusqua(async () => await p.evaluate(() =>
+    Boolean(document.querySelector('#detail.on .fiche'))));
+  check('une carte qu’on n’a pas ouvre la même fiche', absent);
+  check('et elle dit qu’elle n’est pas encore à nous',
+    await p.evaluate(() =>
+      /pas encore/i.test(document.querySelector('#detail .fiche')?.textContent ?? '')));
+  await p.close();
 }
 
 /* ----------------------------------------------------------- le kiosque */
@@ -835,6 +860,69 @@ check('et elle explique pourquoi au lieu de rester vide',
   if (barre?.rognes?.length) console.log('   rognés :', barre.rognes);
   await petit.close();
 }
+/* ------------------------------- la barre du bas, sur un grand écran
+
+ * Elle était posée d'un bord à l'autre de la fenêtre. Sur un téléphone c'est
+ * la même chose que la colonne ; sur un ordinateur, une barre étalée sur
+ * seize cents pixels sous une colonne de quatre cent quarante n'appartient
+ * plus à la page qu'elle sert — elle flotte en dessous.
+ *
+ * Elle prend donc la largeur de la colonne, lue sur la colonne elle-même.
+ * C'est ce qu'il faut éprouver : que les deux largeurs se suivent, et non
+ * qu'un nombre écrit à la main dans la feuille tombe juste ce jour-là.
+ */
+{
+  const grand = await nav.newPage();
+  grand.on('pageerror', (e) => erreurs.push(e.message));
+  await grand.setViewport({ width: 1200, height: 900 });
+  await grand.goto(base + '/fanzzy', { waitUntil: 'networkidle0' });
+  await grand.waitForSelector('#tbf-nav', { timeout: 6000 }).catch(() => {});
+
+  const m = await grand.evaluate(() => {
+    const barre = document.getElementById('tbf-nav').getBoundingClientRect();
+    const colonne = document.getElementById('app').getBoundingClientRect();
+    return {
+      barre: barre.width, colonne: colonne.width, ecran: innerWidth,
+      centreBarre: barre.left + barre.width / 2,
+      centreColonne: colonne.left + colonne.width / 2,
+    };
+  });
+  check('sur un grand écran, la barre a la largeur de la colonne',
+    Math.abs(m.barre - m.colonne) <= 2
+    || (console.log(`        barre ${Math.round(m.barre)} px, `
+      + `colonne ${Math.round(m.colonne)} px`), false));
+  check('et elle est bien centrée sous elle',
+    Math.abs(m.centreBarre - m.centreColonne) <= 2);
+  /* Le contrôle qui rend le précédent honnête : sur cet écran-là, la colonne
+     est bien plus étroite que la fenêtre. Sans ça, « barre = colonne »
+     resterait vrai d'une barre pleine largeur sur une colonne pleine
+     largeur. */
+  check('et l’écran était bien plus large que les deux',
+    m.ecran > m.colonne + 200);
+  if (process.env.CAPTURE) {
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    await grand.screenshot({ path: join(tmpdir(), 'fanzzy-large.png') });
+  }
+  await grand.close();
+}
+
+/* Sur un téléphone, la barre occupe toute la largeur : la colonne y est déjà
+   plus large que l'écran, et une barre en retrait perdrait de la place là où
+   il n'y en a pas. */
+{
+  const petit = await nav.newPage();
+  petit.on('pageerror', (e) => erreurs.push(e.message));
+  await petit.setViewport({ width: 390, height: 844 });
+  await petit.goto(base + '/fanzzy', { waitUntil: 'networkidle0' });
+  await petit.waitForSelector('#tbf-nav', { timeout: 6000 }).catch(() => {});
+  const large = await petit.evaluate(() =>
+    document.getElementById('tbf-nav').getBoundingClientRect().width);
+  check('sur un téléphone, elle occupe toute la largeur',
+    Math.abs(large - 390) <= 1 || (console.log(`        ${Math.round(large)} px`), false));
+  await petit.close();
+}
+
 if (process.env.CAPTURE) {
   // Dossier temporaire du système : « /tmp » en dur ne marche pas sous Windows.
   const { tmpdir } = await import('node:os');

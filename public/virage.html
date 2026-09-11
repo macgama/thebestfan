@@ -165,6 +165,47 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .card .p{font-family:var(--banner);font-size:20px;color:var(--c);margin-top:auto;line-height:1}
 .card .c{position:absolute;top:6px;right:7px;font-size:10px;opacity:.55;font-family:var(--banner)}
 
+/* ------------------------------------------- les cartes d'action
+
+   Une rangée basse au-dessus des chants. Le dessin porte la carte, le nom
+   n'est qu'un rappel : à cette taille on reconnaît une torche bien avant
+   d'avoir lu « Torche ». */
+.actes{flex:none;display:flex;gap:5px;padding:0 11px 5px}
+.acte{flex:1;position:relative;aspect-ratio:.74;max-height:74px;border-radius:7px;overflow:hidden;
+  border:1px solid var(--fc,#8257DA);cursor:pointer;
+  background:linear-gradient(170deg,rgba(255,255,255,.07),rgba(0,0,0,.4));
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  gap:2px;padding:3px 2px 4px}
+.acte:active{transform:translateY(3px) scale(.98)}
+.acte .sceau{position:absolute;left:50%;top:44%;width:64%;height:auto;
+  transform:translate(-50%,-50%);opacity:.24;color:var(--fc,#8257DA);
+  fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.acte .illu{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center 34%;filter:brightness(.6)}
+.acte::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(4,6,10,.45),transparent 42%,rgba(4,6,10,.92))}
+.acte .co{position:relative;z-index:2;font-family:var(--banner);font-size:10.5px;
+  color:var(--craie);line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+.acte .nm{position:relative;z-index:2;font-size:6.5px;line-height:1.1;text-align:center;
+  opacity:.9;text-shadow:0 1px 3px rgba(0,0,0,.9);padding:0 2px}
+.acte.hs{opacity:.34;cursor:default}
+/* Le compte à rebours passe devant le voile, sinon le chiffre s'assombrit. */
+.acte .cd{position:absolute;inset:0;z-index:3;background:rgba(4,6,10,.72);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--banner);font-size:12px;color:var(--craie)}
+.acte.vide{border-style:dashed;border-color:rgba(242,238,228,.14);cursor:default}
+.acte.vide::after{display:none}
+
+/* La fenêtre collective ouverte par quelqu'un d'autre. Elle appartient à toute
+   la tribune : c'est la seule chose qu'un joueur voit arriver d'une main qui
+   n'est pas la sienne, et elle doit donc se voir de loin. */
+.appel{flex:none;margin:0 11px 5px;border-radius:8px;padding:7px 10px 6px;text-align:center;
+  font-family:var(--banner);font-size:11.5px;letter-spacing:.12em;
+  color:#0B0E13;background:linear-gradient(180deg,#8FE3B8,var(--vert));
+  box-shadow:0 3px 0 #0D4F35;animation:appelBat .8s ease-in-out infinite}
+.appel small{display:block;font-family:var(--ui);font-size:9px;letter-spacing:.04em;opacity:.72}
+@keyframes appelBat{50%{transform:scale(1.025)}}
+
 .mini{position:absolute;inset:0;background:rgba(5,7,10,.94);z-index:20;display:none;
   flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:22px}
 .mini.on{display:flex}
@@ -273,6 +314,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
     <div class="b"><i id="breathBar"></i></div>
   </div>
   <div class="rank" id="rank"></div>
+  <!-- Les cartes d'action, au-dessus des chants. Petites, et c'est voulu : au
+       Virage le verbe principal reste le chant, la carte est ce qu'on ajoute. -->
+  <div class="appel" id="appel" hidden></div>
+  <div class="actes" id="actes" hidden></div>
   <div class="hand" id="hand"></div>
 
   <div class="mini" id="mini">
@@ -313,7 +358,13 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <!-- Le personnage : le dessin, ses douze états, et la scène qui les enchaîne.
      Chargés sans `defer` — la scène se monte dès l'entrée dans le virage, et
      un but peut tomber la seconde d'après. -->
+<!-- L’horloge du match : la même sur les trois écrans qui l’affichent. -->
+<script src="/horloge.js"></script>
 <script src="/fanzzy-art.js"></script>
+<!-- Les familles de cartes, leurs dessins, et la carte qu'on voit partir. La
+     même que le classeur et le duel : le Virage n'a pas sa propre idée d'une
+     carte d'action. -->
+<script src="/action-art.js"></script>
 <script src="/fanzzy-etats.js"></script>
 <script src="/fanzzy-scene.js"></script>
 <script>
@@ -391,6 +442,7 @@ function render() {
      célébration en cours — c'est ce qui empêche la minute double d'effacer le
      but qui vient de l'ouvrir. */
   scene?.poserFond(S.surge ? 'pousse' : 'attente');
+  renderActes();
 }
 
 /* ------------------------------------------------------------- le fil
@@ -468,52 +520,25 @@ function scoreTerrain() {
    temps écoulé depuis. C'est exactement ce que fait la page des matchs, et
    c'est la seule façon d'avoir un chrono qui avance sans payer un appel par
    seconde. Chaque `virage:match` la remet à l'heure. */
-const PERIODES_ARRETEES = new Set(['HT', 'BT', 'PST', 'SUSP', 'INT']);
-const PERIODES_FINIES = new Set(['FT', 'AET', 'PEN', 'CANC', 'ABD', 'AWD', 'WO']);
-/* Le terme réglementaire de chaque période. Au-delà, on est en temps
-   additionnel : l'horloge locale s'y arrête et affiche « 45+ », « 90+ », parce
-   qu'elle ne sait pas combien il en reste — seul le relevé le sait, et il le
-   dit dans `minuteExtra`. */
-const TERME = { '1H': 45, '2H': 90, ET: 120, P: 120 };
-/* Au-delà de ce silence, on cesse de faire courir l'horloge. Un match dont le
-   serveur n'a plus de nouvelles depuis un quart d'heure n'est pas un match à
-   la centième minute : c'est un match dont on ne sait plus rien. Afficher
-   « 90' EN DIRECT » sur un match fini depuis dix minutes est un mensonge que
-   le joueur repère avant nous. */
-const SILENCE_MAX_MS = 12 * 60_000;
+/* L'horloge du match vit dans `/horloge.js`, partagée avec la page des
+   matchs et la fiche d'un match. Elle était écrite trois fois, avec déjà
+   trois listes de périodes différentes — celle-ci connaissait les tirs au
+   but, celle des matchs non. Une horloge qui ne dit pas la même chose d'un
+   écran à l'autre est pire qu'une horloge absente : elle fait douter des deux.
 
-/**
- * La minute du match, telle qu'on peut honnêtement l'affirmer.
- *
- * `null` quand on ne sait pas. Le compte part de `vuA` — l'instant où le
- * **serveur** a vu le match — et non de l'instant où la page a reçu la
- * donnée : une donnée vieille d'un quart d'heure repartait sinon de zéro.
- */
+   Les deux fonctions restent ici, sous leurs noms : c'est par elles que la
+   page — et ses contrôles — demandent l'heure. */
+
+/** L'état de l'horloge : `{ n, extra, arret }`, ou `null` si on ne sait pas. */
 function minuteCourante() {
-  if (!S || S.minute == null) return null;
-  if (PERIODES_FINIES.has(S.statut)) return null;
-  if (PERIODES_ARRETEES.has(S.statut)) return { n: S.minute, arret: true };
-
-  const vuA = S.vuA ?? Date.now();
-  if (Date.now() - vuA > SILENCE_MAX_MS) return null;
-
-  const ecoule = Math.floor((Date.now() - vuA) / 60000);
-  const brut = S.minute + Math.max(0, ecoule);
-  const terme = TERME[S.statut];
-  if (terme && brut >= terme) {
-    // Le relevé connaît peut-être le temps additionnel : on le dit alors.
-    return { n: terme, plus: S.minuteExtra ?? null, arret: false };
-  }
-  return { n: brut, arret: false };
+  return window.TBF_HORLOGE.etat(
+    { statut: S?.statut, minute: S?.minute, extra: S?.minuteExtra, vuA: S?.vuA });
 }
 
 /** « 71′ », « 45+3′ », « 90+′ » — ou rien quand on ne sait pas. */
 function minuteTexte() {
-  const m = minuteCourante();
-  if (!m) return '';
-  if (m.plus != null) return `${m.n}+${m.plus}′`;
-  if (m.plus === null && m.n === TERME[S.statut]) return `${m.n}+′`;
-  return `${m.n}′`;
+  return window.TBF_HORLOGE.texte(
+    { statut: S?.statut, minute: S?.minute, extra: S?.minuteExtra, vuA: S?.vuA });
 }
 
 /** Le souffle, animé entre deux vérités du serveur. */
@@ -645,7 +670,9 @@ function reagirAuFil(e) {
     return;
   }
 
-  if (e.genre === 'periode' && PERIODES_FINIES.has(e.type)) {
+  // Les périodes qui closent un match sont celles de l’horloge partagée :
+  // une seconde liste ici finirait par oublier les tirs au but.
+  if (e.genre === 'periode' && window.TBF_HORLOGE.FINIES.has(e.type)) {
     const nous = S.scoreReel?.[S.you.side] ?? 0;
     const eux = S.scoreReel?.[S.you.side ^ 1] ?? 0;
     const etat = nous > eux ? 'victoire' : nous < eux ? 'defaite' : 'neutre';
@@ -674,6 +701,12 @@ function fail(code) {
     'ferveur.error.taps_too_fast':'Frappes trop rapprochées',
     'ferveur.error.inhuman_regularity':'Frappes trop régulières',
     'ferveur.error.not_your_match':'Aucun de tes clubs ne joue ce match',
+    'ferveur.error.card_not_in_hand':'Cette carte n\u2019est plus dans ta main',
+    'ferveur.error.card_on_cooldown':'Cette carte se recharge encore',
+    'ferveur.error.card_not_in_virage':'Cette carte ne se joue qu\u2019en duel',
+    'ferveur.error.condition_not_met':'Les conditions de cette carte ne sont pas réunies',
+    'ferveur.error.evolution_locked':'L\u2019âge suivant de ton Fanzzy n\u2019est pas débloqué',
+    'ferveur.error.not_in_virage':'Tu n\u2019es plus dans la tribune',
   })[code] ?? 'Refusé par le serveur';
   e.className = 'err on';
   clearTimeout(e._t); e._t = setTimeout(() => { e.className = 'err'; }, 2600);
@@ -781,6 +814,123 @@ $('hand').addEventListener('pointerdown', async (e) => {
   socket.emit('virage:chant', { cardId: card.id, taps });
   busy = false;
 });
+
+/* ------------------------------------------------- les cartes d'action
+
+   Le Virage ne joue que les cartes qui agissent sur soi ou sur sa tribune.
+   Le tri est fait par le serveur, qui envoie son propre catalogue dans
+   `S.actions` — la page n'a pas de liste à tenir, et une carte qui change de
+   portée n'attend pas un déploiement du client pour disparaître d'ici. */
+
+/** La carte du catalogue, par identifiant. */
+const acteDe = (id) => (S?.actions ?? []).find((a) => a.id === id);
+
+function renderActes() {
+  const boite = $('actes');
+  const main = S?.you?.main ?? [];
+  /* Pas de deck, pas de rangée. Quelqu'un qui n'a jamais construit de deck
+     entre au Virage avec sa voix, et une rangée de cases vides ne lui
+     apprendrait rien d'autre que ce qui lui manque. */
+  if (!main.length) { boite.hidden = true; return; }
+  boite.hidden = false;
+
+  const souffle = souffleCourant();
+  const cd = S?.you?.cooldowns ?? {};
+  const cases = [];
+  for (let i = 0; i < (S.you.mainVisible ?? 5); i++) {
+    const id = main[i];
+    if (!id) { cases.push('<div class="acte vide"></div>'); continue; }
+    const a = acteDe(id);
+    const fam = window.TBF_ACTION.famDe(a);
+    const reste = cd[id];
+    const injouable = !a || souffle < a.cost || reste || busy;
+    cases.push(`<div class="acte ${injouable ? 'hs' : ''}" style="--fc:${fam.c}"
+      ${injouable ? '' : `data-acte="${id}"`}>
+      <svg class="sceau" viewBox="0 0 24 24"><path d="${fam.ico}"/></svg>
+      ${window.TBF_ACTION.illustration(id)}
+      <div class="co">${a?.cost ?? '?'}</div>
+      <div class="nm">${esc(a?.nom ?? id)}</div>
+      ${reste ? `<div class="cd">${Math.ceil(reste)}</div>` : ''}
+    </div>`);
+  }
+  boite.innerHTML = cases.join('');
+}
+
+/**
+ * La fenêtre collective, quand elle est ouverte.
+ *
+ * C'est la seule information du Virage qui vienne de la main de quelqu'un
+ * d'autre, et elle ne vaut que si on la voit tout de suite : une fenêtre
+ * d'Appel dure cinq secondes, un Chœur trois. Elle se pose donc au-dessus des
+ * cartes, en vert, et elle bat.
+ */
+function renderAppel() {
+  const mien = S?.you?.side;
+  const f = (S?.rally ?? []).find((r) => r.side === mien && r.reste > 0);
+  const el = $('appel');
+  if (!f) { el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = f.sync
+    ? 'TOUS ENSEMBLE<small>chante maintenant, tout le monde en même temps</small>'
+    : 'CHANTE MAINTENANT<small>le capo a appelé : ta poussée compte plus</small>';
+  /* La minuterie est nulée en même temps qu'elle est armée : `clearTimeout`
+     laisse un identifiant vrai derrière lui, et un test « si une minuterie
+     court » serait alors vrai pour toujours. */
+  clearTimeout(el._t); el._t = null;
+  el._t = setTimeout(() => { el.hidden = true; el._t = null; }, f.reste);
+}
+
+$('actes').addEventListener('pointerdown', (e) => {
+  const el = e.target.closest('[data-acte]');
+  if (!el || busy || !S) return;
+  const a = acteDe(el.dataset.acte);
+  if (!a) return;
+  if (souffleCourant() < a.cost) return fail('ferveur.error.not_enough_breath');
+  /* On envoie et on attend le serveur. L'animation part sur l'événement qu'il
+     renvoie, pas sur le clic : une carte refusée — une recharge qu'on n'avait
+     pas vue, une condition manquante — ne doit pas avoir traversé l'écran
+     avant que le refus arrive. */
+  socket.emit('virage:jouer', { cardId: a.id });
+});
+
+/**
+ * Ce que la salle voit quand une carte part.
+ *
+ * Les événements arrivent à **toute** la tribune, pas seulement à celui qui a
+ * joué : une Collecte qui remplit le souffle de trois cents personnes sans que
+ * personne ne sache d'où ça vient n'est pas une carte collective, c'est un
+ * bug apparent.
+ */
+function raconterActe(ev) {
+  const mien = S?.you?.side;
+  for (const e of ev) {
+    const pour = e.side === mien;
+    switch (e.t) {
+      case 'action': {
+        const a = acteDe(e.cardId);
+        /* La carte en grand, avec son dessin — la même mise en scène qu'au
+           duel. Elle part vers le nœud, où l'effet va se lire. */
+        const n = $('knot').getBoundingClientRect();
+        window.TBF_ACTION.jouee(a, { pour,
+          vers: { x: n.left + n.width / 2, y: n.top + n.height / 2 } });
+        break;
+      }
+      case 'rally':
+      case 'sync':
+        if (pour) {
+          S.rally = [...(S.rally ?? []), { side: e.side, reste: e.duree,
+            sync: e.t === 'sync' }];
+          renderAppel();
+        }
+        FX?.son?.(pour ? 'parfait' : 'tic');
+        break;
+      case 'effect':
+        if (e.type === 'team_breath' && pour) float(`+${e.valeur} à la tribune`, 'var(--vert)');
+        break;
+      default: break;
+    }
+  }
+}
 
 /* -------------------------------------------------------------- réseau */
 
@@ -908,6 +1058,20 @@ function connect() {
   });
 
   socket.on('virage:crowd', (c) => { if (S) { S.crowd = c.crowd; render(); } });
+
+  /* Ce que fait une carte — la sienne comme celle d'un voisin. Diffusé à toute
+     la tribune : c'est là qu'est l'intérêt d'un Appel du capo. */
+  socket.on('virage:events', (m) => { if (S) raconterActe(m.evenements ?? []); });
+
+  /* Et l'état personnel qui en découle : la main, le souffle, les recharges.
+     Séparé des événements parce qu'il n'appartient qu'à une personne — la
+     salle n'a pas à connaître la main de chacun. */
+  socket.on('virage:vous', (you) => {
+    if (!S || !you) return;
+    S.you = { ...S.you, ...you };
+    render();
+  });
+
   socket.on('virage:error', (e) => fail(e.code));
 }
 
@@ -925,6 +1089,18 @@ function souvenir(g) {
 
 (async () => {
   connect();
+
+  /* Entrer directement dans un match, par son adresse.
+
+     La fiche d'un match propose « GRAND VIRAGE » : le bouton doit mener **à
+     ce match-là**, pas à une liste où il faut le retrouver. Le camp n'est pas
+     donné ici — le serveur le déduit des clubs suivis, et propose de le
+     choisir si aucun des deux n'est à nous. */
+  const demande = Number(new URLSearchParams(location.search).get('match'));
+  if (Number.isInteger(demande) && demande > 0) {
+    socket.emit('virage:join', { fixtureId: demande });
+  }
+
   let matchs = [];
   try {
     const r = await fetch('/api/virage/live', { credentials:'same-origin' });

@@ -305,15 +305,13 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    juste ; les autres gagnent la mise à l'échelle exacte. Chaque endroit qui
    pose une carte d'une autre taille redéclare `--u`, juste en dessous. */
 .fz{--u:1.3px}
-.dtop .fz{--u:2.35px}
 .summary .fz{--u:.7px}
-.evo .step .fz{--u:.62px}
-/* Les sélecteurs sont repris un à un : sans eux, `.dtop .fz` — plus
-   spécifique — garderait son repli en pixels et la grande carte cesserait de
+/* Les sélecteurs sont repris un à un : sans eux, `.summary .fz` — plus
+   spécifique — garderait son repli en pixels et la vignette cesserait de
    suivre sa largeur. Une règle de repli qui bat le raffinement, c'est le
    raffinement qui n'existe pas. */
 @container (min-width: 0px){
-  .fz,.dtop .fz,.summary .fz,.evo .step .fz{--u:1cqw}
+  .fz,.summary .fz{--u:1cqw}
 }
 
 .fz{container-type:inline-size;position:relative;width:100%;aspect-ratio:63/88;border-radius:calc(4 * var(--u));
@@ -359,6 +357,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    l'animation ni le débordement ne peuvent le déplacer. */
 .illuwrap .illu{position:absolute;left:0;bottom:0;width:100%;height:104%;
   object-fit:cover;object-position:50% 100%;filter:drop-shadow(0 3px 8px rgba(0,0,0,.6))}
+/* Un objet n'est pas un personnage : il est détouré et n'a ni pieds ni sol.
+   Il flotte au milieu de la tribune au lieu de s'y planter en bas. */
+.illuwrap .illu.objet{inset:10% 8%;left:auto;bottom:auto;width:84%;height:80%;
+  object-fit:contain;object-position:50% 50%}
 /* Les modificateurs vivent dans le panneau de détail. Sur la carte ils
    masquaient l'illustration pour redire la même chose. */
 .fz .mods{display:none}
@@ -436,22 +438,11 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .summary.on{display:grid}
 
 /* ------------------------------------------------------------- détail */
-#detail{position:absolute;inset:0;z-index:26;display:none;flex-direction:column;padding:18px;
-  background:rgba(5,7,10,.95);backdrop-filter:blur(6px);overflow-y:auto}
+/* La boîte de la fiche. Elle ne porte plus de marge intérieure : la fiche
+   arrange la sienne, et elle est la même à l'adresse /fanzzy/<id>. */
+#detail{position:absolute;inset:0;z-index:26;display:none;flex-direction:column;
+  background:rgba(5,7,10,.96);backdrop-filter:blur(6px)}
 #detail.on{display:flex}
-.dtop{display:grid;place-items:center;padding:4px 0 12px}
-.dtop .fz{width:min(66%,235px)}
-.dmeta{text-align:center;font-size:12px;line-height:1.7;opacity:.7}
-.dmeta b{font-family:var(--banner);letter-spacing:.05em;opacity:1}
-.dline{margin:14px 0;border-top:1px solid rgba(242,238,228,.12);padding-top:13px}
-.dline h4{font-family:var(--banner);font-size:11px;letter-spacing:.18em;opacity:.45;margin:0 0 9px;text-align:center}
-.evo{display:flex;align-items:center;gap:7px;justify-content:center}
-.evo .step{width:62px;text-align:center;opacity:.35}
-.evo .step.have{opacity:1}
-.evo .step .fz{width:62px}
-.evo .step b{display:block;font-size:8.5px;margin-top:4px;font-family:var(--banner)}
-.evo .arrow{opacity:.4;font-size:15px}
-.dbtns{display:flex;gap:9px;margin-top:16px}
 /* Le même bouton que « ouvrir le booster » du kiosque : un socle dur, qui
    s'enfonce à l'appui. Ils étaient plats ici — la fiche paraissait venir
    d'une autre application que la grille qui l'ouvre. */
@@ -634,22 +625,17 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
     <div class="ofoot"><div class="hint" id="oHint"></div><button class="ghost" id="oAction" style="display:none"></button></div>
   </div>
 
-  <div id="detail">
-    <div class="dtop" id="dCard"></div>
-    <div class="dmeta" id="dMeta"></div>
-    <div class="dline" id="dEvo"></div>
-    <div class="dbtns">
-      <button class="dbtn" id="dEvolve"></button>
-      <button class="dbtn primary" id="dSelect">CHOISIR POUR LE DUEL</button>
-    </div>
-    <div class="dbtns"><button class="dbtn" id="dClose">FERMER</button></div>
-  </div>
+  <!-- La fiche d'un Fanzzy, montée par fanzzy-fiche.js par-dessus la grille. -->
+  <div id="detail"></div>
   <div class="toast" id="toast"></div>
 </main>
 
 <!-- Sans « defer » : le script en ligne ci-dessous lit FZART dès sa première
      ligne, il doit donc déjà exister. -->
 <script src="/fanzzy-art.js"></script>
+<!-- Les dessins de l’équipement : sans eux, une pièce tirée d’un booster
+     s’affichait en silhouette procédurale, comme un Fanzzy sans visage. -->
+<script src="/stuff-art.js"></script>
 <!-- Les douze états du Fanzzy équipé : c'est ce qui fait saluer le personnage
      sur l'écran « Mon Fanzzy », exactement comme sur l'accueil. Le module ne
      lève jamais et ne demande rien tant qu'on ne l'appelle pas. -->
@@ -657,6 +643,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <!-- La scène : les calques de gestes et le croisement des poses, partagés
      avec le virage. -->
 <script src="/fanzzy-scene.js"></script>
+<link rel="stylesheet" href="/fanzzy-fiche.css">
+<!-- La fiche : le même rendu qu'à l'adresse /fanzzy/<id>, monté ici en
+     panneau par-dessus la grille. -->
+<script src="/fanzzy-fiche.js"></script>
 <script>
 /* =======================================================================
    FANZZY — collection, boosters, évolutions
@@ -1009,6 +999,23 @@ function rarMark(rar) {
  * `opts.verrou` : le personnage qu'on n'a pas encore. Il s'affiche quand
  * même, en ombre — voir la grille.
  */
+/**
+ * Une pièce d'équipement sur une carte de booster.
+ *
+ * `art()` dessine des Fanzzy : pour un identifiant qu'il ne connaît pas — et
+ * `echarpe` n'est pas un Fanzzy — il retombait sur une silhouette procédurale.
+ * On ouvrait donc un booster épique pour y trouver un bonhomme gris nommé
+ * « Thermos ».
+ *
+ * Le fond de tribune reste celui du type, comme pour un personnage : c'est lui
+ * qui porte la couleur. L'objet, lui, est détouré, donc il se pose dedans
+ * plutôt que de le remplir.
+ */
+function objetHTML(f) {
+  return `<div class="illuwrap">${artFond(f)}
+    ${window.TBF_STUFF.illustration(f.id, 'illu objet')}</div>`;
+}
+
 function cardHTML(f, opts = {}) {
   const t = TYPES[f.type];
   const holo = !opts.verrou && ['epique','legendaire'].includes(f.rar) ? ' holo' : '';
@@ -1020,7 +1027,7 @@ function cardHTML(f, opts = {}) {
           stroke-linecap="round"><path d="${t.ico}"/></svg></div>
         <div class="nm">${f.nom}</div>
       </div>
-      <div class="art">${art(f)}</div>
+      <div class="art">${f.stuff ? objetHTML(f) : art(f)}</div>
       ${opts.verrou ? `<svg class="cadenas" viewBox="0 0 24 24" stroke-linecap="round">
         <rect x="4" y="10" width="16" height="11" rx="2.5"/>
         <path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>` : ''}
@@ -1468,7 +1475,15 @@ function finishPack() {
   const sum = $('summary');
   sum.innerHTML = pull.map((f, i) => `<div data-i="${i}">${cardHTML(f, { mini:true })}</div>`).join('');
   sum.classList.add('on');
-  sum.onclick = (e) => { const d = e.target.closest('[data-i]'); if (d) showDetail(pull[+d.dataset.i]); };
+  sum.onclick = (e) => {
+    const d = e.target.closest('[data-i]');
+    // On ferme l'écran d'ouverture d'abord : la fiche se pose par-dessus la
+    // grille, pas par-dessus un booster à moitié déchiré.
+    if (!d) return;
+    $('opener').classList.remove('on');
+    renderDex(); renderTeam();
+    ouvrirFiche(pull[+d.dataset.i].id);
+  };
   const a = $('oAction');
   a.style.display = 'block'; a.textContent = 'Terminer';
   a.onclick = () => { $('opener').classList.remove('on'); a.onclick = () => finishPack(); renderDex(); renderTeam(); };
@@ -1563,15 +1578,14 @@ $('grid').onclick = (e) => {
   const s = e.target.closest('[data-open]');
   if (!s) return;
   const f = BY_ID.get(s.dataset.open);
-  // Possédé : aperçu rapide. Pas encore trouvé : on va droit à la fiche, qui
-  // sait présenter un Fanzzy absent de la collection.
-  if (S.col[f.id]) showDetail(f);
-  else location.href = `/fanzzy/${f.id}`;
+  /* La même fiche pour tous, possédé ou non : elle sait présenter un Fanzzy
+     absent de la collection, et c'est même là qu'elle sert le plus — elle dit
+     ce qu'il faudrait pour l'avoir. Avant, une carte possédée ouvrait un
+     aperçu et une carte manquante changeait de page. */
+  ouvrirFiche(f.id);
 };
 
-/* -------------------------------------------------------------- détail */
-
-let current = null;
+/* -------------------------------------------------------------- lignées */
 
 /**
  * Le personnage à l'âge que le joueur a atteint.
@@ -1594,88 +1608,68 @@ function lineOf(f) {
     .sort((a, b) => (a.stade ?? 1) - (b.stade ?? 1));
 }
 
-function showDetail(recu) {
-  // On peut arriver ici depuis un âge quelconque — un lien, la lignée affichée
-  // juste en dessous. C'est toujours la fiche du personnage qui s'ouvre : le
-  // joueur n'en possède qu'un.
-  const f = BY_ID.get(recu.racine ?? recu.id) ?? recu;
-  current = f;
-  const stade = S.stades?.[f.id] ?? 1;
-  const chain = lineOf(f);
-  const age = chain[stade - 1] ?? f;
+/* ------------------------------------------------------------- la fiche
 
-  $('dCard').innerHTML = cardHTML(age);
-  const owned = S.col[f.id] ?? 0;
-  $('dMeta').innerHTML = `<b>${TYPES[age.type].nom}</b> · ${f.id} · stade ${stade}<br>
-    ${modsText(age).join(' · ')}<br>
-    Cri : <b>${age.cri.label}</b> (${age.cri.power})<br>
-    Exemplaires : ${owned}`;
+ * Une seule fiche, montée ici **par-dessus la grille**.
+ *
+ * Il y en avait deux : cet aperçu, qui ne montrait ni les tenues ni
+ * l'équipement, et la page `/fanzzy/<id>` qui montrait tout. Toucher une carte
+ * ouvrait le premier, un lien au bas du premier menait au second, et le
+ * classeur disparaissait en chemin. Deux rendus de la même carte finissent
+ * toujours par ne plus dire la même chose — ils y étaient déjà.
+ *
+ * La grille reste donc derrière, la croix referme, rien ne recharge. Et
+ * l'adresse suit : `/fanzzy/TR8` s'écrit dans la barre, se partage, se met en
+ * favori, et le bouton retour du téléphone referme le panneau au lieu de
+ * quitter le classeur.
+ */
 
-  // `have` marque les âges **atteints**, pas des cartes détenues séparément :
-  // un personnage au stade 2 a bien vécu son stade 1.
-  $('dEvo').innerHTML = chain.length > 1
-    ? `<h4>LIGNÉE</h4><div class="evo">${chain.map((x, i) =>
-        `${i ? '<span class="arrow">›</span>' : ''}<div class="step ${owned && stade > i ? 'have' : ''}">
-          ${cardHTML(x, { mini:true })}<b>${x.nom.split(' ')[0]}</b></div>`).join('')}</div>`
-    : '<h4>SANS ÉVOLUTION</h4>';
-
-  const btn = $('dEvolve');
-  const next = chain[stade];
-  if (next) {
-    const cost = EVO_COST[stade + 1] ?? 40;
-    const can = owned > 0 && S.scarves >= cost;
-    btn.textContent = `ÉVOLUER · ${cost} ÉCHARPES`;
-    btn.disabled = !can;
-    btn.onclick = () => evolve(f, next, cost);
-  } else {
-    // Deux raisons de ne pas pouvoir évoluer, et elles ne se disent pas pareil :
-    // le personnage est au bout de sa lignée, ou ses âges suivants ne sont pas
-    // encore dessinés. « Aucune évolution » pour les deux laisserait croire que
-    // les cent cinquante-deux autres n'en auront jamais.
-    btn.textContent = chain.length > 1 ? 'AU BOUT DE SA LIGNÉE' : 'ÉVOLUTION À VENIR';
-    btn.disabled = true;
+function ouvrirFiche(id, pousser = true) {
+  const n = $('detail');
+  n.classList.add('on');
+  n.innerHTML = '';
+  /* L'adresse est poussée **avant** le chargement : une fiche qui met une
+     seconde à venir doit déjà être refermable par le bouton retour. */
+  if (pousser && history.state?.fiche !== id) {
+    history.pushState({ fiche: id }, '', '/fanzzy/' + encodeURIComponent(id));
   }
-
-  // Lien vers la fiche complète : la fenêtre de détail reste un aperçu.
-  $('dMeta').insertAdjacentHTML('beforeend',
-    `<br><a href="/fanzzy/${f.id}" style="color:var(--projo);font-size:12.5px">voir la fiche complète ›</a>`);
-
-  const sel = $('dSelect');
-  sel.disabled = !owned;
-  sel.textContent = S.active === f.id ? 'FANZZY DU DUEL ✓' : 'CHOISIR POUR LE DUEL';
-  sel.onclick = async () => {
-    try {
-      await api('/active', { id: f.id });
-      S.active = f.id;
-      toast(`${f.nom} entrera en duel`);
-      showDetail(f); renderDex(); renderTeam();
-    } catch { toast('Sélection impossible'); }
-  };
-
-  $('detail').classList.add('on');
+  return window.TBF_FICHE.ouvrir(n, id, {
+    fermer: fermerFiche,
+    // La collection a pu changer — un Fanzzy équipé, un âge acheté. La grille
+    // et l'écran « Mon Fanzzy » lisent la même chose : on les relit.
+    change: () => { load().catch(() => {}); },
+  });
 }
-$('dClose').onclick = () => $('detail').classList.remove('on');
-$('detail').addEventListener('click', (e) => {
-  const s = e.target.closest('[data-id]');
-  if (s && s.dataset.id !== current?.id && S.col[s.dataset.id]) showDetail(BY_ID.get(s.dataset.id));
+
+/**
+ * Refermer.
+ *
+ * On repasse par l'historique quand c'est nous qui l'avons poussé : sans ça,
+ * la croix laisserait `/fanzzy/TR8` dans la barre d'adresse sur une grille
+ * ouverte, et le bouton retour rouvrirait une fiche qu'on vient de fermer.
+ */
+function fermerFiche() {
+  if (history.state?.fiche) { history.back(); return; }
+  rangerFiche();
+}
+function rangerFiche() {
+  $('detail').classList.remove('on');
+  $('detail').innerHTML = '';
+}
+
+window.addEventListener('popstate', (e) => {
+  if (e.state?.fiche) ouvrirFiche(e.state.fiche, false);
+  else rangerFiche();
 });
 
-async function evolve(perso, to, cost) {
-  try {
-    const avant = ageDe(perso);
-    const r = await api('/evolve', { id: perso.id });
-    S.scarves = r.wallet.scarves;
-    await load();
-    toast(`${avant.nom} devient ${to.nom}`);
-    // `perso` et non `to` : c'est la fiche du personnage qu'on rouvre, et
-    // elle montrera d'elle-même le nouvel âge — `load()` vient de rapporter
-    // le stade atteint.
-    renderDex(); renderTeam(); showDetail(perso);
-  } catch (e) {
-    toast(e.code === 'fanzzy.error.not_enough_scarves' ? 'Pas assez d\u2019écharpes'
-      : 'Évolution impossible');
-  }
-}
+// Échap referme, comme partout ailleurs dans le jeu.
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && $('detail').classList.contains('on')) fermerFiche();
+});
+
+/* On peut arriver sur le classeur par une adresse de fiche — un lien partagé
+   suivi d'un retour arrière, par exemple. L'état de l'historique fait foi. */
+if (history.state?.fiche) ouvrirFiche(history.state.fiche, false);
 
 function toast(txt) {
   const t = $('toast'); t.textContent = txt; t.className = 'toast on';

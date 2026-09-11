@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",
     "build": "npm install && node build.mjs",
+    "schema:appliquer": "node --env-file-if-exists=.env scripts/appliquer-schema.mjs",
     "schema:smoke": "node scripts/schema-smoke.mjs",
     "auth:smoke": "node scripts/auth-smoke.mjs",
     "foot:smoke": "node scripts/football-smoke.mjs",
@@ -18,6 +19,8 @@
     "kop:smoke": "node scripts/kop-smoke.mjs",
     "amis:smoke": "node scripts/amis-smoke.mjs",
     "amis:ui": "node scripts/amis-ui-smoke.mjs",
+    "equipes:ui": "node scripts/equipes-ui-smoke.mjs",
+    "matchs:ui": "node scripts/matchs-ui-smoke.mjs",
     "nvn:smoke": "node scripts/nvn-smoke.mjs",
     "virage:smoke": "node scripts/virage-smoke.mjs",
     "deck:ui": "node scripts/deck-ui-smoke.mjs",
@@ -30,6 +33,10 @@
     "couleurs": "node scripts/couleurs-equipes.mjs",
     "couleurs:test": "node scripts/couleurs-smoke.mjs",
     "images": "node scripts/fanzzy-images.mjs",
+    "actions": "node scripts/action-images.mjs",
+    "actions:invites": "node scripts/action-images.mjs --invites",
+    "stuff": "node scripts/stuff-images.mjs",
+    "stuff:invites": "node scripts/stuff-images.mjs --invites",
     "poses": "node scripts/poses-supporter.mjs",
     "manifeste": "node scripts/fanzzy-manifeste.mjs",
     "veille": "node scripts/fanzzy-veille.mjs",
@@ -37,7 +44,8 @@
     "etats:test": "node scripts/etats-smoke.mjs",
     "economie": "node scripts/economie.mjs",
     "pages": "node scripts/verif-pages.mjs",
-    "cablage": "node scripts/verif-cablage.mjs"
+    "cablage": "node scripts/verif-cablage.mjs",
+    "stades": "node scripts/stade-images.mjs"
   },
   "dependencies": {
     "express": "^4.22.2",

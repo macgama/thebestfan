@@ -48,6 +48,9 @@ input:focus{outline:none;border-color:var(--projo)}
 .score{font-family:var(--banner);font-size:17px;letter-spacing:.06em;min-width:52px;text-align:center}
 .when{font-size:11px;opacity:.45;min-width:52px;text-align:center;line-height:1.3}
 .live{color:var(--flare);font-weight:600;font-size:11px;letter-spacing:.06em}
+/* La minute, sous le score, pour qu’un match en cours ne ressemble pas à un
+   match terminé. */
+.score .live{display:block;font-size:10px;margin-top:3px;font-family:var(--ui)}
 .live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
   background:var(--flare);margin-right:5px;animation:pulse 1.4s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
@@ -60,10 +63,13 @@ input:focus{outline:none;border-color:var(--projo)}
 .flash.on{display:block;animation:rise .35s cubic-bezier(.2,.8,.3,1)}
 @keyframes rise{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
 .flash b{color:var(--projo)}
-.langs{display:flex;gap:6px;justify-content:center;margin-bottom:20px}
-.langs button{background:none;border:1px solid rgba(242,238,228,.16);color:inherit;border-radius:999px;
-  padding:4px 10px;font-size:10.5px;cursor:pointer;opacity:.5;font-family:inherit}
-.langs button.on{background:var(--craie);color:#0B0E13;opacity:1;font-weight:600}
+/* Le mot du serveur : un refus d'emplacement, et ce qu'il faut faire pour en
+   sortir. Dans le flux de la page et non en bandeau flottant — il répond à un
+   geste qu'on vient de faire juste au-dessus, et il doit rester lisible le
+   temps de choisir quel club retirer. */
+.mot{display:none;border:1px solid rgba(245,195,59,.45);background:rgba(245,195,59,.09);
+  border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.6;margin-bottom:14px}
+.mot.on{display:block;animation:rise .3s cubic-bezier(.2,.8,.3,1)}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -77,17 +83,24 @@ input:focus{outline:none;border-color:var(--projo)}
 <main id="app">
   <h1 data-t="title">MES ÉQUIPES</h1>
   <div class="sub" data-t="subtitle"></div>
-  <div class="langs" id="langs"></div>
 
   <div class="search">
     <input id="q" autocomplete="off" spellcheck="false">
     <div class="results" id="results"></div>
   </div>
 
+  <!-- Ce que le serveur a refusé, et pourquoi. Sans cet endroit, un clic sur
+       un club de trop ne produisait rien du tout — ce qui se lit comme une
+       panne et fait recommencer. -->
+  <div class="mot" id="mot"></div>
+
   <div id="feed"></div>
 </main>
 <div class="flash" id="flash"></div>
 
+<!-- L'horloge du match : la même que sur la page des matchs et dans le
+     Grand Virage. -->
+<script src="/horloge.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const I18N = {
@@ -95,28 +108,32 @@ const I18N = {
     next:'à venir',last:'derniers résultats',live:'EN DIRECT',today:"aujourd'hui",tomorrow:'demain',
     empty:'Tu ne suis aucun club. Cherche-le ci-dessus pour voir ses résultats et recevoir ses buts en direct.',
     login:'Connecte-toi pour suivre tes clubs.',goal:'BUT DE {team} — {player} {minute}\u2032',
-    nothing:'Aucun club trouvé.',main:'PRINCIPAL'},
+    nothing:'Aucun club trouvé.',main:'PRINCIPAL',plein:'Tu suis déjà {n} clubs sur {t}. Retire-en un, ou achète un emplacement depuis ton profil.'},
   en:{title:'MY TEAMS',subtitle:'results, fixtures, live',search:'Search for a club…',
     next:'upcoming',last:'latest results',live:'LIVE',today:'today',tomorrow:'tomorrow',
     empty:'You follow no club yet. Search above to see its results and get its goals live.',
     login:'Sign in to follow your clubs.',goal:'{team} SCORES — {player} {minute}\u2032',
-    nothing:'No club found.',main:'MAIN'},
+    nothing:'No club found.',main:'MAIN',plein:'You already follow {n} clubs out of {t}. Remove one, or buy a slot from your profile.'},
   de:{title:'MEINE TEAMS',subtitle:'Ergebnisse, Spielplan, live',search:'Verein suchen…',
     next:'kommende Spiele',last:'letzte Ergebnisse',live:'LIVE',today:'heute',tomorrow:'morgen',
     empty:'Du folgst noch keinem Verein. Suche oben, um Ergebnisse und Tore live zu bekommen.',
     login:'Melde dich an, um Vereinen zu folgen.',goal:'TOR FÜR {team} — {player} {minute}\u2032',
-    nothing:'Kein Verein gefunden.',main:'HAUPT'},
+    nothing:'Kein Verein gefunden.',main:'HAUPT',plein:'Du folgst bereits {n} von {t} Vereinen. Entferne einen oder kaufe einen Platz im Profil.'},
   es:{title:'MIS EQUIPOS',subtitle:'resultados, calendario, directo',search:'Buscar un club…',
     next:'próximos',last:'últimos resultados',live:'EN DIRECTO',today:'hoy',tomorrow:'mañana',
     empty:'No sigues ningún club. Búscalo arriba para ver resultados y recibir sus goles en directo.',
     login:'Entra para seguir a tus clubes.',goal:'GOL DE {team} — {player} {minute}\u2032',
-    nothing:'No se encontró ningún club.',main:'PRINCIPAL'},
+    nothing:'No se encontró ningún club.',main:'PRINCIPAL',plein:'Ya sigues {n} clubes de {t}. Quita uno o compra una plaza desde tu perfil.'},
 };
 const LOCALES = ['fr','en','de','es'];
 let locale = LOCALES.find(l => navigator.language.toLowerCase().startsWith(l)) || 'fr';
 try { const s = localStorage.getItem('tbf_locale'); if (LOCALES.includes(s)) locale = s; } catch {}
 
 let feed = [];
+/* Le nombre d'emplacements. `null` tant qu'on ne l'a pas : on n'empêche alors
+   rien, et c'est le serveur qui tranche — mieux vaut proposer un club de trop
+   que d'en interdire un par excès de prudence. */
+let slots = null;
 let authed = true;
 let watched = [];
 let socket = null;
@@ -131,11 +148,18 @@ function applyLocale(){
   try { localStorage.setItem('tbf_locale', locale); } catch {}
   document.querySelectorAll('[data-t]').forEach(el => el.textContent = t(el.dataset.t));
   $('q').placeholder = t('search');
-  $('langs').innerHTML = LOCALES.map(l =>
-    `<button data-l="${l}" class="${l===locale?'on':''}">${l.toUpperCase()}</button>`).join('');
+    /* Le choix de la langue **ne s’affiche plus ici**.
+
+     Il promettait une application en quatre langues : deux pages sur dix-huit
+     le sont. Un joueur qui choisissait « EN » voyait cette page basculer et
+     tout le reste du jeu rester en français — ce qui se lit comme une
+     traduction cassée, pas comme une traduction absente.
+
+     La langue suit donc celle du navigateur, et les traductions restent
+     dans le fichier : elles ne coûtent rien, et le jour où le jeu parlera
+     vraiment quatre langues, cette page sera déjà prête. */
 }
-$('langs').onclick = e => { const b = e.target.closest('[data-l]');
-  if (b) { locale = b.dataset.l; applyLocale(); render(); } };
+
 
 const api = async (path, opts = {}) => {
   const res = await fetch('/api/football' + path, {
@@ -161,10 +185,33 @@ function toDate(v){
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+/**
+ * Quand se joue ce match — l'heure, la date, ou la minute s'il est en cours.
+ *
+ * La minute passait par `f.elapsed` tel quel : celle du dernier passage du
+ * relevé, figée entre deux. Elle court maintenant depuis l’instant de ce
+ * relevé, comme sur la page des matchs et dans le Grand Virage — même
+ * horloge, même règle, un seul endroit où la corriger.
+ */
+/**
+ * La minute d'un match en cours, ou '' s'il n'y a rien à dire.
+ *
+ * Le calcul vit dans `/horloge.js`, partagé avec la page des matchs et le
+ * Grand Virage : il était écrit quatre fois, et celui d’ici était le seul
+ * faux — il affichait `elapsed` tel quel, c'est-à-dire la minute du dernier
+ * passage du relevé, figée entre deux.
+ */
+function enCours(f){
+  if (!['1H','2H','HT','ET','P','BT','LIVE','INT'].includes(f.status_short)) return '';
+  return window.TBF_HORLOGE.texte({
+    statut: f.status_short, minute: f.elapsed, extra: f.elapsed_extra,
+    vuA: f.polled_at ? new Date(f.polled_at).getTime() : null,
+  }, { HT: `${t('live')} · MT` });
+}
+
 function when(f){
-  if (f.status_short === 'HT') return `<span class="live">${t('live')} · MT</span>`;
-  if (['1H','2H','ET','P','LIVE'].includes(f.status_short))
-    return `<span class="live">${f.elapsed ?? ''}\u2032</span>`;
+  const min = enCours(f);
+  if (min) return `<span class="live">${min}</span>`;
   const d = toDate(f.kickoff_at);
   if (!d) return '—';
   const days = Math.round((d - new Date().setHours(0,0,0,0)) / 864e5);
@@ -174,11 +221,22 @@ function when(f){
   return d.toLocaleDateString(locale, { day: 'numeric', month: 'short' }) + `<br>${hm}`;
 }
 
+/**
+ * Une ligne de match : les deux clubs, et au milieu ce qu'il faut savoir.
+ *
+ * **Le score et la minute ensemble, s'il est en cours.** La ligne montrait
+ * le score dès que les buts étaient connus — donc dès le coup d’envoi, un
+ * 0–0 étant un score. Un match en cours ressemblait alors trait pour trait à
+ * un match terminé : mêmes chiffres, rien pour les distinguer, et aucune
+ * minute nulle part. On regardait « 1 – 0 » sans savoir si c'était fini.
+ */
 function matchRow(f){
   const played = f.home_goals !== null && f.away_goals !== null;
+  const min = enCours(f);
   return `<div class="match" data-fixture="${f.id}">
     <div class="side"><img src="${esc(f.home_logo)}" alt=""><span>${esc(f.home_name)}</span></div>
-    ${played ? `<div class="score">${f.home_goals} – ${f.away_goals}</div>`
+    ${played ? `<div class="score">${f.home_goals} – ${f.away_goals}
+                  ${min ? `<small class="live">${min}</small>` : ''}</div>`
              : `<div class="when">${when(f)}</div>`}
     <div class="side away"><span>${esc(f.away_name)}</span><img src="${esc(f.away_logo)}" alt=""></div>
   </div>`;
@@ -223,8 +281,15 @@ $('q').oninput = () => {
   timer = setTimeout(async () => {
     const r = await api('/search?q=' + encodeURIComponent(term));
     const list = r.json.teams ?? [];
+    // Plus de place : on le dit **avant** le clic, et les résultats restent
+    // visibles — on peut vouloir regarder sans suivre.
+    const plein = slots !== null && feed.length >= slots
+      && !list.some((x) => feed.some((row) => row.team.id === x.id));
+    if (plein) dire(t('plein', { n: feed.length, t: slots }));
     $('results').innerHTML = list.length
-      ? list.map(x => `<button data-follow="${x.id}"><img src="${esc(x.logo)}" alt="">
+      ? list.map(x => `<button data-follow="${x.id}"
+          ${plein && !feed.some((row) => row.team.id === x.id) ? 'disabled' : ''}>
+          <img src="${esc(x.logo)}" alt="">
           <span>${esc(x.name)}</span> <small>${esc(x.country ?? '')}</small></button>`).join('')
       : `<button disabled style="opacity:.5">${t('nothing')}</button>`;
     $('results').classList.add('on');
@@ -238,8 +303,26 @@ $('results').onclick = async e => {
   $('q').value = '';
   const r = await api('/follows', { method: 'POST', body: { teamId: Number(b.dataset.follow) } });
   if (r.status === 401) { authed = false; render(); return; }
+  /* Le refus d'emplacement doit se voir. La page ignorait la réponse : on
+     cliquait, rien ne se passait, et le club n'apparaissait pas — ce qui se
+     lit comme une panne et fait recommencer. Le serveur envoie le compte et
+     le plafond ; on les écrit. */
+  if (r.json?.error === 'onboarding.error.no_slot') {
+    dire(t('plein', { n: r.json.suivis ?? '?', t: r.json.slots ?? '?' }));
+    return;
+  }
+  if (r.json?.error) { dire(r.json.error); return; }
   await load();
 };
+
+/** Un mot au joueur, trois secondes. */
+function dire(texte) {
+  const n = $('mot');
+  n.textContent = texte;
+  n.classList.add('on');
+  clearTimeout(n._t);
+  n._t = setTimeout(() => n.classList.remove('on'), 4500);
+}
 
 document.addEventListener('click', e => {
   if (!e.target.closest('.search')) $('results').classList.remove('on');
@@ -295,6 +378,16 @@ async function load(){
   if (r.status === 401) { authed = false; render(); return; }
   authed = true;
   feed = r.json.feed ?? [];
+  /* Combien de clubs on a le droit de suivre. C'est le **même écran** qui
+     propose d'en ajouter et qui connaît la limite : ne pas la lire ici, c'est
+     laisser le joueur choisir un club puis se faire refuser après coup. Cette
+     faute-là s'est déjà répétée trois fois dans ce jeu — le kiosque, le deck,
+     et ici. En arrière-plan et sans faire échouer la page : un plafond inconnu
+     vaut mieux qu'une liste de clubs qui ne s'affiche pas. */
+  try {
+    const etat = await (await fetch('/api/me/state', { credentials: 'same-origin' })).json();
+    slots = Number(etat?.slots?.total) || null;
+  } catch { /* on s'en passera : le serveur refusera, avec ses mots */ }
   render();
   watch();
 }

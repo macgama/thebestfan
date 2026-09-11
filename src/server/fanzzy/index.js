@@ -669,7 +669,13 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
 
     return {
       fanzzy: {
-        id, nom: f.nom, type: f.type, set: f.set, stage: stade, rar: f.rar,
+        id,
+        /* `ageId` est la carte du catalogue à l'âge atteint — `id`, lui, est la
+           lignée. Le dessin est rangé sous la première, les possessions sous la
+           seconde. La fiche demandait l'illustration sous le nom de la lignée :
+           elle affichait donc le Choriste avec le nom du Meneur de chant. */
+        ageId: f.id,
+        nom: f.nom, type: f.type, set: f.set, stage: stade, rar: f.rar,
         mods: f.mods, cri: f.cri, evo: f.evo ?? null,
         histoire: f.histoire ?? null,
       },
@@ -695,8 +701,13 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
       // `possede` par âge veut dire « atteint », pas « détenu à part ». Un âge
       // au-delà du stade actuel se lit donc comme un objectif chiffré, ce qui
       // est exactement ce que la page en fait.
+      /* `mods` et `cri` voyagent avec chaque âge, et pas seulement avec l'âge
+         atteint : la fiche demande confirmation avant d'évoluer, et une
+         confirmation qui ne montre pas ce qu'on gagne ne demande rien du tout.
+         Quatre-vingt-dix écharpes se dépensent en connaissance de cause. */
       lignee: ages.map((x, i) => ({
         id: x.id, nom: x.nom, stage: i + 1, rar: x.rar,
+        mods: x.mods ?? {}, cri: x.cri ?? null,
         possede: mien.length > 0 && stade >= i + 1,
         cout: i ? (EVO_COST[i + 1] ?? 90) : 0,
       })),

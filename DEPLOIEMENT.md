@@ -184,6 +184,82 @@ Lance la construction, **attends qu'elle soit terminée**, puis redémarre.
 Redémarrer pendant la construction relance l'ancien code : `npm start` ne fait
 jamais de `git pull`.
 
+## Étape 4 bis — Déployer depuis GitHub, sans rien retaper
+
+Les étapes 2 à 4 se font aussi d'un bouton. `.github/workflows/deploiement.yml`
+ouvre une session SSH sur le serveur et y lance `scripts/deployer.sh`, qui fait
+exactement ce que tu ferais à la main — et dans le bon ordre, ce qui est le
+seul vrai apport :
+
+1. `git reset --hard origin/main` — **le dépôt fait foi**, on n'essaie pas de
+   fusionner. Une modification faite à la main sur le serveur est perdue ;
+   `.env`, `node_modules` et `VERSION` ne sont pas suivis par git et survivent ;
+2. `npm ci`, puis `node build.mjs` ;
+3. **`npm run schema:appliquer`**, avant le redémarrage. Tous les fichiers de
+   `sql/`, dans l'ordre, à chaque fois. Ils sont idempotents : les rejouer sur
+   une base à jour ne change rien. C'est ce qui met fin à la panne la plus
+   chère du projet — un fichier de schéma oublié, et toutes les routes `/api`
+   qui disparaissent ;
+4. le redémarrage ;
+5. depuis GitHub, l'attente de la **preuve** : `/healthz` doit annoncer le
+   commit qu'on vient de pousser. Tant qu'il annonce l'ancien, le redémarrage
+   n'a pas eu lieu — et le déploiement échoue au lieu de se déclarer fini.
+   Sans ce dernier point, un déploiement « réussi » pouvait laisser l'ancienne
+   version en ligne : `ok: true`, l'ancien processus répondant très bien.
+
+### Ce qu'il faut déposer une fois
+
+Une paire de clés, la publique sur le serveur, la privée dans GitHub :
+
+```bash
+ssh-keygen -t ed25519 -C "deploiement github" -f deploiement -N ""
+ssh-copy-id -i deploiement.pub <utilisateur>@<hote>
+ssh-keyscan <hote>
+```
+
+Puis dans le dépôt, Settings → Secrets and variables → Actions :
+
+| Secret | Ce que c'est |
+|---|---|
+| `DEPLOY_HOTE` | l'hôte SSH |
+| `DEPLOY_UTILISATEUR` | l'utilisateur SSH |
+| `DEPLOY_CLE` | le contenu de `deploiement`, en-têtes compris |
+| `DEPLOY_EMPREINTE` | la ligne rendue par `ssh-keyscan` |
+
+Et, si les valeurs par défaut ne conviennent pas, dans l'onglet Variables :
+`DEPLOY_RACINE` (défaut `~/sites/thebestfan.online`), `DEPLOY_REDEMARRAGE`
+(défaut : toucher `tmp/restart.txt`) et `DEPLOY_ORIGINE`
+(défaut `https://thebestfan.online`).
+
+### La seule chose à régler au premier essai
+
+**La commande de redémarrage.** Chaque hébergement relance un service Node à sa
+façon, et celle par défaut est une convention, pas une certitude. Si l'étape de
+vérification expire au bout de trois minutes en répétant « version vue :
+l'ancienne », c'est elle : mets la bonne dans `DEPLOY_REDEMARRAGE`, sans
+toucher ni au workflow ni au script. Redémarrer depuis le Manager pendant que
+le workflow attend fonctionne aussi — il verra la nouvelle version arriver.
+
+Le déploiement se lance à la main : Actions → Déploiement → Run workflow.
+C'est délibéré — une mise en ligne est une décision, pas une conséquence d'un
+`git push`. Pour qu'il parte à chaque poussée sur `main`, deux lignes sont à
+décommenter en haut du fichier.
+
+### Sans GitHub
+
+Le script ne dépend de rien de tout cela. En SSH, il fait le même travail :
+
+```bash
+cd ~/sites/thebestfan.online && bash scripts/deployer.sh
+```
+
+Et le schéma seul, sans rien déployer :
+
+```bash
+npm run schema:appliquer                      # applique et vérifie
+npm run schema:appliquer -- --verifier-seulement   # dit seulement ce qui manque
+```
+
 ## Étape 5 — Vérifier
 
 ```bash
