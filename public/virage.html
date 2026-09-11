@@ -126,6 +126,15 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .crowd{position:absolute;left:0;right:0;text-align:center;font-size:9.5px;letter-spacing:.16em;opacity:.5}
 .crowd.top{top:6px}.crowd.bot{bottom:6px}
 .crowd b{opacity:.95}
+/* Le Fanzzy, dans le bas de la tribune — du côté du joueur, puisque la corde
+   se pousse vers le haut, chez l'adversaire. À gauche du nœud et non derrière :
+   pendant un geste, le nombre qui bouge est la seule chose qu'on lit, et un
+   personnage posé dessous le rendrait illisible.
+
+   `pointer-events:none` : le virage se joue au doigt sur les cartes et sur le
+   pavé du geste. Un personnage qui intercepterait un appui coûterait un chant. */
+.fzs{position:absolute;left:1%;bottom:0;width:41%;height:56%;z-index:1;pointer-events:none}
+
 .banner{position:absolute;left:0;right:0;top:36%;text-align:center;font-family:var(--banner);
   font-size:15px;letter-spacing:.18em;opacity:0;transition:opacity .3s;z-index:4;color:var(--projo)}
 .banner.on{opacity:1}
@@ -252,6 +261,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
     <div class="track"></div><div class="mid"></div>
     <div class="crowd top" id="crowdFoe"></div>
     <div class="crowd bot" id="crowdMe"></div>
+    <!-- Le Fanzzy équipé. La scène est montée par `fanzzy-scene.js` : la page
+         ne fait que lui prêter cette boîte. -->
+    <div class="fzs" id="fzs"></div>
     <div class="knot" id="knot">0</div>
     <div class="banner" id="banner"></div>
   </div>
@@ -298,6 +310,12 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+<!-- Le personnage : le dessin, ses douze états, et la scène qui les enchaîne.
+     Chargés sans `defer` — la scène se monte dès l'entrée dans le virage, et
+     un but peut tomber la seconde d'après. -->
+<script src="/fanzzy-art.js"></script>
+<script src="/fanzzy-etats.js"></script>
+<script src="/fanzzy-scene.js"></script>
 <script>
 /* =======================================================================
    Grand Virage — client.
@@ -368,6 +386,11 @@ function render() {
     const c = S.cards.find((x) => x.id === el.dataset.card);
     el.classList.toggle('dim', souffle < c.cost || busy);
   }
+  /* L'état de repos du personnage suit la minute double : il pousse tant
+     qu'elle dure, il attend le reste du temps. `poserFond` ne coupe jamais une
+     célébration en cours — c'est ce qui empêche la minute double d'effacer le
+     but qui vient de l'ouvrir. */
+  scene?.poserFond(S.surge ? 'pousse' : 'attente');
 }
 
 /* ------------------------------------------------------------- le fil
@@ -558,6 +581,81 @@ $('feuilleX').addEventListener('click', () => ouvrirFeuille(false));
 // On peut toujours sortir : c'est la règle de tout plein écran de ce jeu.
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ouvrirFeuille(false); });
 
+/* ---------------------------------------------------------- le personnage
+
+   Le Fanzzy équipé pousse avec le joueur, dans le bas de la tribune. Ce n'est
+   pas un décor : il change de pose quand on chante, il exulte au but réel, il
+   encaisse, il encaisse aussi la décision de l'arbitrage vidéo.
+
+   C'est le même personnage que sur l'accueil, monté par le même module — un
+   supporter qui réagirait autrement d'un écran à l'autre serait un autre
+   supporter. Le bandeau du moment fort, lui, est posé dans la corde et non
+   dans la boîte du personnage : « GOAL ! » doit tenir toute la largeur, et
+   cette boîte n'occupe qu'un coin.                                          */
+
+const scene = window.TBF_SCENE?.creer?.($('fzs'), {
+  momentDans: $('rope'), fond: 'attente',
+}) ?? null;
+
+/**
+ * La couleur d'un camp, telle qu'on peut l'écrire à l'écran.
+ *
+ * Elle vient du blason du club, extrait une fois côté serveur. Deux gardes,
+ * et chacune répare une faute qu'on ne voit qu'en direct : un club dont le
+ * blason n'a pas encore été lu n'a pas de couleur du tout — on garde alors
+ * l'or du jeu — et un bleu marine de blason, écrit sur le noir de l'écran,
+ * ne se lit pas : `FX.lisible` l'éclaircit sans lui changer de teinte.
+ */
+function couleurDuCamp(cote, defaut = 'var(--projo)') {
+  const c = cote === S?.you?.side
+    ? (S?.fixture?.[S.you.side ? 'awayColors' : 'homeColors'] ?? [])
+    : (S?.fixture?.[S.you.side ? 'homeColors' : 'awayColors'] ?? []);
+  return c[0] ? (window.FX?.lisible?.(c[0]) ?? c[0]) : defaut;
+}
+
+/**
+ * Ce que le personnage fait d'une entrée du fil.
+ *
+ * Trois choses seulement l'arrêtent : l'arbitrage vidéo, un carton rouge et
+ * le coup de sifflet final. Le reste passe dans la bande du fil — un
+ * personnage qui réagit à tout ne réagit plus à rien, et le joueur cesse de
+ * le regarder au bout de deux remplacements.
+ */
+function reagirAuFil(e) {
+  if (!scene || !S?.you) return;
+  const mien = e.side === S.you.side;
+
+  if (e.type === 'Var') {
+    /* Un but refusé après la célébration. Sans état de déception et sans un
+       mot sur la cause, le score se corrige tout seul à l'écran et le joueur
+       y voit un bug — c'est le retour qu'on a eu. */
+    scene.moment('decision', mien ? 'BUT REFUSÉ' : 'LEUR BUT EST REFUSÉ', {
+      couleur: mien ? 'var(--flare)' : 'var(--vert)',
+      sous: ditDetail(e.detail ?? '') || 'Décision de l’arbitrage vidéo',
+    });
+    return;
+  }
+
+  if (e.type === 'Card' && /red/i.test(e.detail ?? '')) {
+    scene.moment(mien ? 'decision' : 'progression',
+      mien ? 'CARTON ROUGE' : 'ROUGE POUR EUX', {
+        couleur: mien ? 'var(--flare)' : 'var(--vert)',
+        sous: e.joueur ?? '',
+      });
+    return;
+  }
+
+  if (e.genre === 'periode' && PERIODES_FINIES.has(e.type)) {
+    const nous = S.scoreReel?.[S.you.side] ?? 0;
+    const eux = S.scoreReel?.[S.you.side ^ 1] ?? 0;
+    const etat = nous > eux ? 'victoire' : nous < eux ? 'defaite' : 'neutre';
+    scene.moment(etat, nous > eux ? 'VICTOIRE' : nous < eux ? 'DÉFAITE' : 'MATCH NUL', {
+      couleur: nous > eux ? 'var(--vert)' : nous < eux ? 'var(--flare)' : 'var(--gris)',
+      sous: PERIODES[e.type] ?? '',
+    });
+  }
+}
+
 function banner(t, ms = 1800) {
   const b = $('banner'); b.textContent = t; b.classList.add('on');
   clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('on'), ms);
@@ -694,6 +792,10 @@ function connect() {
   socket.on('virage:state', (s) => {
     S = s; $('veil').classList.remove('on');
     renderStatic(); render();
+    /* Le personnage entre avec la tribune. Le serveur le donne à l'âge
+       atteint : c'est le Fanzzy que le joueur a choisi, pas sa racine — la
+       page n'a rien à recalculer, et ne peut donc pas se tromper d'âge. */
+    if (S.you?.fanzzy) scene?.definir(S.you.fanzzy);
     // Le fil arrive avec l'état : entrer à la soixantième minute donne ce qui
     // s'est passé avant, pas un écran vide.
     renderFil();
@@ -712,6 +814,9 @@ function connect() {
     if (f.scoreReel) S.scoreReel = f.scoreReel;
     if (f.minute != null) S.minute = f.minute;
     renderFil({ neuf: true });
+    // Le personnage réagit aux entrées **neuves** seulement. Les rejouer
+    // toutes à chaque arrivée ferait célébrer un carton de la douzième minute.
+    for (const e of f.entrees ?? []) reagirAuFil(e);
   });
 
   socket.on('virage:tick', (t) => {
@@ -742,7 +847,12 @@ function connect() {
     window.FX?.poussee(r.backfire ? -r.push : r.push, $('knot'), { pour: !r.backfire });
     // Un geste parfait déclenche le Cri du Fanzzy : c'est la récompense de la
     // précision, et le seul moment où l'écran entier réagit.
-    if (r.quality > 0.95 && S.you.cri) window.FX?.cri(S.you.cri, { couleur:'var(--projo)' });
+    if (r.quality > 0.95 && S.you.fanzzy?.cri) {
+      window.FX?.cri(S.you.fanzzy.cri, { couleur:'var(--projo)' });
+    }
+    // Il pousse le temps du chant, puis revient à son attente. Un geste raté
+    // le fait pousser aussi : c'est l'effort qui se voit, pas le résultat.
+    scene?.pose('pousse', 2600);
     buzz(r.quality > 0.9 ? [20, 30, 40] : 12);
     render();
   });
@@ -752,7 +862,16 @@ function connect() {
     // Les effets viennent de la couche commune : une seule définition du
     // « but » pour tout le jeu, duel compris.
     window.FX?.but({ pour: mien, score: [S.goals[S.you.side], S.goals[S.you.side ^ 1]] });
-    banner(mien ? 'BUT DE LA TRIBUNE !' : 'ILS ONT FAIT CÉDER LA CORDE');
+    /* Le personnage porte l'annonce, quinze secondes. La bande du milieu ne
+       sert plus que de repli : deux fois la même phrase à deux endroits de
+       l'écran, ce serait du bruit. */
+    if (scene) {
+      scene.moment(mien ? 'but' : 'encaisse',
+        mien ? 'LA CORDE CÈDE !' : 'ILS ONT FAIT CÉDER LA CORDE',
+        { couleur: mien ? couleurDuCamp(g.side) : 'var(--flare)' });
+    } else {
+      banner(mien ? 'BUT DE LA TRIBUNE !' : 'ILS ONT FAIT CÉDER LA CORDE');
+    }
   });
 
   socket.on('virage:real_goal', (g) => {
@@ -761,6 +880,17 @@ function connect() {
     // relevé : c'est la seconde où le joueur le regarde.
     if (g.scoreReel) { S.scoreReel = g.scoreReel; renderFil(); }
     window.FX?.butReel({ pour: mien, buteur: g.player, minute: g.minute });
+    /* « GOAL ! » sur le personnage, avec le buteur et la minute — ils arrivent
+       déjà dans l'événement, aucun appel de plus. Quinze secondes : le temps
+       de sortir le téléphone de sa poche, un but de deux secondes et demie
+       n'a laissé aucune trace. */
+    scene?.moment(mien ? 'but' : 'encaisse', mien ? 'GOAL !' : 'ON ENCAISSE', {
+      // Le but est écrit aux couleurs de l'équipe qui l'a marqué : le sien
+      // dans les couleurs du club, celui d'en face en rouge d'alerte — on ne
+      // célèbre pas un but encaissé, fût-ce joliment.
+      couleur: mien ? couleurDuCamp(g.side) : 'var(--flare)',
+      sous: [g.player, g.minute != null ? `${g.minute}′` : ''].filter(Boolean).join(' · '),
+    });
     window.FX?.bandeau('MINUTE DOUBLE', mien ? '#F5C33B' : '#E0402C');
     if (mien) setTimeout(() => souvenir(g), 1400);
   });

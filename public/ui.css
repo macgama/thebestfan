@@ -70,6 +70,93 @@
 .r-epique{--rc:#8257DA;--rc2:#3E2870}
 .r-legendaire{--rc:#F5C33B;--rc2:#7A5A0E}
 
+/* =================================================== la scène d'un Fanzzy
+
+   Le personnage, ses calques de gestes et son moment fort. Montée par
+   `fanzzy-scene.js` dans une boîte que la page lui donne — le virage lui
+   réserve un coin de la tribune, « Mon Fanzzy » lui donne tout l'écran.
+
+   Ces règles sont ici et non dans une page parce que la mécanique est la
+   même partout : le jour où la respiration change de rythme, elle doit
+   changer pour tout le monde. Deux personnages qui ne réagissent pas pareil
+   selon l'écran, c'est deux personnages.                                  */
+
+.tbf-scene{position:relative;width:100%;height:100%}
+.tbf-salut,.tbf-monte,.tbf-saut,.tbf-souffle{position:absolute;inset:0}
+/* Un calque par geste, et ce n'est pas de la coquetterie : deux animations
+   sur le même élément et l'une efface l'autre. Sur l'accueil, c'est la
+   respiration qui disparaissait au premier petit saut — définitivement, et
+   sans que rien ne le signale. Une animation qui manque ne casse rien, elle
+   se contente de ne pas être là. */
+.tbf-souffle{transform-origin:50% 100%;will-change:transform;
+  animation:tbf-souffle 3.6s ease-in-out infinite}
+.tbf-salut{transform-origin:50% 100%}
+.tbf-scene.entre .tbf-monte{animation:tbf-monte .6s cubic-bezier(.34,1.4,.64,1)}
+.tbf-scene.coucou .tbf-salut{animation:tbf-coucou 1.5s ease-in-out .2s}
+.tbf-scene.saute .tbf-saut{animation:tbf-saut .5s cubic-bezier(.34,1.56,.64,1)}
+.tbf-scene.change .tbf-saut{animation:tbf-bascule .42s cubic-bezier(.33,1,.68,1)}
+
+/* Deux calques superposés : on croise les opacités au changement de pose, le
+   personnage n'est jamais absent de l'écran et rien ne clignote.
+
+   `contain`, posé sur la base du cadre : le personnage est inscrit entier. Un
+   débordement en hauteur cadre joliment un buste dans une boîte courte, mais
+   coupe la tête dès que la scène grandit — et une tête coupée se lit comme
+   une image cassée, jamais comme un cadrage serré. */
+.tbf-pose{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:contain;object-position:50% 100%;
+  opacity:0;transition:opacity .24s ease;
+  filter:drop-shadow(0 10px 26px rgba(0,0,0,.7))}
+.tbf-pose.on{opacity:1}
+
+/* Le moment fort. « GOAL ! » au-dessus du personnage, et il reste là aussi
+   longtemps que la pose. Un but qui passe en deux secondes et demie ne laisse
+   aucune trace : le temps de sortir le téléphone de sa poche, tout est fini. */
+.tbf-moment{position:absolute;left:0;right:0;top:8%;z-index:6;text-align:center;
+  pointer-events:none;color:var(--mc,var(--projo));opacity:0}
+.tbf-moment b{display:block;font-family:var(--banner);font-size:clamp(26px,10vw,48px);
+  line-height:.95;letter-spacing:.04em;text-transform:uppercase;
+  text-shadow:0 0 26px rgba(0,0,0,.95),0 5px 0 rgba(0,0,0,.55);
+  -webkit-text-stroke:1.5px rgba(4,6,10,.75)}
+/* Le buteur et la minute. Ils viennent de la base, jamais de l'API : le
+   relevé du direct les y a déjà écrits. */
+.tbf-moment small{display:block;font-family:var(--banner);font-size:clamp(11px,3.4vw,15px);
+  letter-spacing:.12em;margin-top:5px;color:var(--craie);opacity:.85;
+  text-shadow:0 2px 12px rgba(0,0,0,.95)}
+.tbf-moment small:empty{display:none}
+.tbf-moment.on{opacity:1;animation:tbf-momentIn .6s cubic-bezier(.2,1.6,.35,1)}
+/* La barre se vide : elle dit combien de temps le moment tient encore. Sans
+   elle, quinze secondes d'immobilité passeraient pour un élément d'interface
+   plutôt que pour un événement. */
+.tbf-moment.on::after{content:"";display:block;height:3px;width:44%;margin:9px auto 0;
+  border-radius:2px;background:currentColor;opacity:.8;
+  animation:tbf-momentBarre var(--mt,15s) linear forwards}
+
+@keyframes tbf-souffle{0%,100%{transform:scale(1,1) rotate(0deg)}
+  50%{transform:scale(1.012,.988) rotate(.5deg)}}
+@keyframes tbf-coucou{0%,100%{transform:rotate(0deg)}
+  16%{transform:rotate(-3.4deg)}40%{transform:rotate(2.8deg)}
+  64%{transform:rotate(-2.2deg)}84%{transform:rotate(1.1deg)}}
+@keyframes tbf-monte{0%{opacity:0;transform:translateY(46px) scale(.94)}
+  55%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes tbf-saut{0%{transform:translateY(0) scale(1,1)}
+  35%{transform:translateY(-26px) scale(.94,1.08)}
+  70%{transform:translateY(0) scale(1.06,.94)}
+  100%{transform:translateY(0) scale(1,1)}}
+@keyframes tbf-bascule{0%{transform:translateY(0) scale(1,1)}
+  22%{transform:translateY(6px) scale(1.04,.94)}
+  58%{transform:translateY(-9px) scale(.97,1.06)}
+  100%{transform:translateY(0) scale(1,1)}}
+@keyframes tbf-momentIn{0%{opacity:0;transform:scale(.4) rotate(-7deg)}
+  55%{opacity:1;transform:scale(1.14) rotate(2deg)}
+  100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes tbf-momentBarre{from{width:44%}to{width:0}}
+
+@media (prefers-reduced-motion:reduce){
+  .tbf-souffle,.tbf-salut,.tbf-monte,.tbf-saut{animation:none !important}
+  .tbf-moment.on{animation:none}
+}
+
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
 body{

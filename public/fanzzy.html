@@ -498,27 +498,12 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .tscene .ombre{position:absolute;inset:0;z-index:2;
   background:linear-gradient(180deg,rgba(4,6,10,.10) 38%,rgba(4,6,10,.92))}
 
-/* La pile et ses calques. Un geste par calque : la respiration, l'entrée, le
-   coucou. Deux animations sur le même élément et l'une efface l'autre — sur
-   l'accueil, c'est la respiration qui disparaissait, définitivement et sans
-   que rien ne le signale. */
+/* La boîte du personnage. Ce qui vit dedans — les calques de gestes, la
+   respiration, le croisement des poses — est monté par `fanzzy-scene.js` et
+   habillé par `ui.css` : c'est la même mécanique que dans le virage, et le
+   jour où elle change, elle change pour les deux. La page ne décide ici que
+   de la place. */
 .tpile{position:absolute;left:6%;right:6%;top:5%;bottom:0;z-index:1}
-.tsalut,.tmonte,.tsouffle{position:absolute;inset:0}
-.tsouffle{transform-origin:50% 100%;animation:tsouffle 3.6s ease-in-out infinite;
-  will-change:transform}
-.tsalut{transform-origin:50% 100%}
-.tscene.entre .tmonte{animation:tmonte .6s cubic-bezier(.34,1.4,.64,1)}
-.tscene.entre .tsalut{animation:tcoucou 1.5s ease-in-out .25s}
-
-/* `contain`, posé sur la base du cadre : le personnage est inscrit entier.
-   Un débordement en hauteur cadre joliment un buste dans une vitrine courte,
-   mais coupe la tête dès que la scène prend tout l'écran — et une tête coupée
-   se lit comme une image cassée, jamais comme un cadrage serré. */
-.tpose{position:absolute;inset:0;width:100%;height:100%;
-  object-fit:contain;object-position:50% 100%;
-  opacity:0;transition:opacity .24s ease;
-  filter:drop-shadow(0 10px 26px rgba(0,0,0,.72))}
-.tpose.on{opacity:1}
 /* Le repli dessiné, pour les personnages qui n'ont ni états ni illustration :
    il tient la même place, pour que l'écran ne change pas de forme selon le
    Fanzzy qu'on a choisi. */
@@ -557,18 +542,6 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 .tbtns{display:flex;gap:9px;padding:10px 14px 2px;flex:none}
 .tbtns .dbtn{display:grid;place-items:center;text-decoration:none}
-
-@keyframes tsouffle{0%,100%{transform:scale(1,1) rotate(0deg)}
-  50%{transform:scale(1.012,.988) rotate(.5deg)}}
-@keyframes tcoucou{0%,100%{transform:rotate(0deg)}
-  16%{transform:rotate(-3.4deg)}40%{transform:rotate(2.8deg)}
-  64%{transform:rotate(-2.2deg)}84%{transform:rotate(1.1deg)}}
-@keyframes tmonte{0%{opacity:0;transform:translateY(46px) scale(.94)}
-  55%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1)}}
-
-@media (prefers-reduced-motion:reduce){
-  .tsouffle,.tsalut,.tmonte{animation:none !important}
-}
 
 /* ---------------------------------------------------------------- nav */
 /* Onglets en haut plutôt qu'en bas : la barre de navigation commune occupe
@@ -681,6 +654,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
      sur l'écran « Mon Fanzzy », exactement comme sur l'accueil. Le module ne
      lève jamais et ne demande rien tant qu'on ne l'appelle pas. -->
 <script src="/fanzzy-etats.js"></script>
+<!-- La scène : les calques de gestes et le croisement des poses, partagés
+     avec le virage. -->
+<script src="/fanzzy-scene.js"></script>
 <script>
 /* =======================================================================
    FANZZY — collection, boosters, évolutions
@@ -1741,11 +1717,9 @@ function renderTeam() {
     <div class="tscene r-${age.rar ?? 'commune'}" id="tscene" style="--tc:${t.c}">
       <div class="fond">${artFond(age)}</div>
       <div class="halo"></div>
-      <div class="tpile">
-        <div class="tsalut"><div class="tmonte"><div class="tsouffle" id="tcorps">
-          <img class="tpose" id="tpose" alt="${esc(age.nom)}">
-        </div></div></div>
-      </div>
+      <!-- La scène du personnage est montée par fanzzy-scene.js :
+           mêmes calques, même respiration que dans le virage. -->
+      <div class="tpile" id="tpile"></div>
       <div class="ombre"></div>
       <div class="trar">${rarMark(age.rar)}</div>
       <div class="ttag">EN DUEL</div>
@@ -1770,71 +1744,37 @@ function renderTeam() {
 
   // Le Fanzzy équipé est déjà connu du serveur : le duel le lira lui-même.
   $('goDuel').onclick = () => { location.href = '/duel'; };
-  habiller(age, stade);
+  habiller(f, age, stade);
 }
 
 /* Le rendu peut repartir pendant qu'une image charge — on choisit un autre
-   Fanzzy, on le fait évoluer. Sans ce jeton, l'image de l'ancien arriverait
-   après celle du nouveau et resterait à l'écran. */
-let teamSeq = 0;
+   Fanzzy, on le fait évoluer. La scène est refaite avec le reste de l'écran :
+   c'est elle, et non un jeton, qui garantit qu'une image en retard n'atterrit
+   pas dans un écran qui ne l'attend plus. */
+let sceneEquipe = null;
 
 /**
- * Pose le personnage dans la scène, du mieux dessiné au dernier recours.
+ * Pose le personnage dans sa boîte.
  *
- *   1. les douze états, quand ils existent : c'est le dessin de l'accueil, et
- *      on en profite pour le faire saluer ;
- *   2. le plein-pied, pour les deux cents Fanzzy illustrés sans états ;
- *   3. le dessin procédural, qui vaut toujours mieux qu'un cadre vide.
+ * Le repli descend d'un cran à la fois : les douze états, puis le plein-pied,
+ * puis le dessin procédural — qui vaut toujours mieux qu'un cadre vide. Les
+ * deux premiers viennent de `fanzzy-scene.js`, partagé avec le virage ; le
+ * troisième reste ici, parce que le dessin procédural a besoin de la fiche
+ * complète du catalogue et que le virage, lui, ne l'a pas.
  *
- * Rien ici ne lève : un manifeste injoignable ou un format que le navigateur
- * refuse doit faire descendre d'un cran, pas vider l'écran.
+ * `perso` est **la lignée**, `age` la carte du catalogue à l'âge atteint. Les
+ * états sont rangés sous la première, l'illustration en pied sous la seconde :
+ * confondre les deux montre le Choriste à qui a payé pour le Meneur de chant.
  */
-async function habiller(age, stade) {
-  const cle = ++teamSeq;
-  const scene = $('tscene');
-  const img = $('tpose');
+async function habiller(perso, age, stade) {
+  sceneEquipe = window.TBF_SCENE?.creer?.($('tpile'), { fond: 'neutre' }) ?? null;
+  const vu = await sceneEquipe?.definir({ id: perso.id, age: age.id, evo: stade });
+  if (vu) { $('tscene')?.classList.add('entre'); return; }
 
-  const montrer = async (src) => {
-    img.src = src;
-    try { await img.decode(); }
-    catch {
-      // Le format moderne peut manquer là où le PNG existe : on retente une
-      // fois. La révision vit dans la requête, on ne change que l'extension.
-      try { img.src = src.replace(/\.(avif|webp)(\?|$)/, '.png$2'); await img.decode(); }
-      catch { return false; }
-    }
-    if (cle !== teamSeq) return false;
-    img.classList.add('on');
-    scene.classList.add('entre');
-    return true;
-  };
-
-  let manifeste = null;
-  try { manifeste = await window.TBF_ETATS?.charger?.(); }
-  catch { /* manifeste injoignable : le plein-pied suffit */ }
-  if (cle !== teamSeq) return;
-
-  // `resoudre` retombe seul du salut vers `neutre` : s'il rend quelque chose,
-  // c'est affichable, et `etat` dit ce qu'on a vraiment obtenu.
-  const r = manifeste ? window.TBF_ETATS.resoudre(age.id, { evo: stade, etat: 'salut' }) : null;
-  if (r && await montrer(r.src)) {
-    if (r.etat !== 'salut') return;
-    // Le salut ne dure que le temps du geste, comme sur l'accueil : ensuite il
-    // reprend sa pose. Figé bras levés, il passerait pour un élément de décor.
-    const repos = window.TBF_ETATS.resoudre(age.id, { evo: stade, etat: 'neutre' });
-    if (repos) setTimeout(() => { if (cle === teamSeq) montrer(repos.src); }, 2400);
-    return;
-  }
-
-  const plein = window.FZART?.adresse?.(age.id, 'plein');
-  if (plein && await montrer(plein)) return;
-  if (cle !== teamSeq) return;
-
-  img.remove();
-  $('tcorps').insertAdjacentHTML('beforeend', `<div class="tdessin">${artProcedural(age)}</div>`);
-  scene.classList.add('entre');
+  // Ni états ni illustration : le dessin géométrique, comme dans la grille.
+  $('tpile').innerHTML = `<div class="tdessin">${artProcedural(age)}</div>`;
+  $('tscene')?.classList.add('entre');
 }
-
 /* ----------------------------------------------------------------- nav */
 
 document.querySelectorAll('.nav button').forEach((b) => {

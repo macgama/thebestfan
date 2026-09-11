@@ -32,11 +32,12 @@ if (!REMOTE) {
 
   const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
   const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-  await raw.query(`DROP TABLE IF EXISTS user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
+  await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+  user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-  for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'souvenirs.sql', 'fanzzy.sql']) {
+  for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'fanzzy.sql']) {
     await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
   }
   await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Domicile'),(91,'Visiteur')`);

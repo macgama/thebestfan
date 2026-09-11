@@ -47,11 +47,12 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
+await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+  kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'tenues.sql',
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'tenues.sql',
                  'niveau.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
@@ -575,6 +576,12 @@ await page.close();
     id: 1, open: true, elapsed: 37, status_short: '2H',
     home_id: 85, away_id: 91, home_name: 'Sion', away_name: 'Bâle',
     home_goals: 1, away_goals: 0, crowd: [12, 9],
+    /* Les couleurs du club, extraites une fois de son blason côté serveur.
+       Volontairement sombres : c'est le cas qui compte. Une couleur de blason
+       est faite pour du papier blanc, et écrite telle quelle sur le noir de
+       l'écran, elle donne un « GOAL ! » invisible — un but célébré que
+       personne ne voit. */
+    homeColors: ['#0B1E5B', '#FFFFFF'], awayColors: [],
   };
   const page = await ouvrir();
   await new Promise((r) => setTimeout(r, 700));
@@ -631,6 +638,24 @@ await page.close();
       return { texte: b.textContent.trim(), visible: b.classList.contains('on') };
     });
     check('un but affiche son bandeau', m.visible && /goal/i.test(m.texte));
+
+    /* Et il est écrit **aux couleurs du club**. Deux choses à la fois : la
+       couleur vient bien du serveur (pas l'or par défaut), et elle a été
+       éclaircie assez pour se lire sur le noir sans cesser d'être bleue. */
+    const teinte = await page.evaluate(() => {
+      const mc = document.getElementById('moment').style.getPropertyValue('--mc').trim();
+      const hex = /^#([0-9a-f]{6})$/i.exec(mc);
+      if (!hex) return { mc, clarte: null, bleu: null };
+      const n = parseInt(hex[1], 16);
+      const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+      return { mc, clarte: (Math.max(r, g, b) + Math.min(r, g, b)) / 510, bleu: b > r + 20 };
+    });
+    check('le but s’écrit dans la couleur du club',
+      /^#[0-9A-F]{6}$/i.test(teinte.mc)
+      || (console.log('        il s’écrit en', teinte.mc), false));
+    check('éclaircie assez pour se lire, sans cesser d’être la sienne',
+      (teinte.clarte ?? 0) > 0.5 && teinte.bleu === true
+      || (console.log(`        clarté ${teinte.clarte?.toFixed(2)}, bleu ${teinte.bleu}`), false));
 
     /* Le buteur et la minute.
        Ils arrivent **après** le score : le relevé du direct écrit l'événement
