@@ -21,6 +21,8 @@ import { createCouleurs } from './src/server/football/couleurs.js';
 import { createSouvenirs } from './src/server/souvenirs/index.js';
 import { createFanzzy } from './src/server/fanzzy/index.js';
 import { charger as chargerCatalogue } from './src/server/fanzzy/catalogue.js';
+import { chargerReglages, reglagesPublics } from './src/server/reglages/index.js';
+import { reglage } from './src/shared/reglages.js';
 import { chargerTenues } from './src/server/fanzzy/tenues.js';
 import { createVirage } from './src/server/ferveur/index.js';
 import { createTeletext } from './src/server/teletext/index.js';
@@ -115,6 +117,13 @@ if (process.env.DATABASE_URL) {
       panneDemarrage = messageDeManque(manques);
       console.error(panneDemarrage);
     }
+
+    /* Les réglages d'abord : le catalogue, l'inscription et les moteurs de
+       jeu lisent des valeurs qui viennent d'ici. Chargés après eux, les
+       premiers appels travailleraient sur les valeurs du registre pendant que
+       l'administration en affiche d'autres — et rien ne le dirait. */
+    const reg = await chargerReglages(pool);
+    console.log(`réglages : ${Object.keys(reg).length} clés effectives`);
 
     // Le catalogue Fanzzy vient de la base et se lit en mémoire. Il doit être
     // chargé avant tout module qui s'en sert — collection, deck, inscription —
@@ -211,6 +220,38 @@ if (process.env.DATABASE_URL) {
     admin = createAdmin({ pool, requireAuth: auth.requireAuth,
       deps: { client: globalThis.footClient ?? null, virage: null } });
     app.use('/api/admin', admin.router);
+
+    /* ------------------------------------------------- la fermeture du jeu
+
+       Un réglage, et il est le plus dangereux de l'écran : mal posé, il
+       enferme dehors celui qui vient de le poser.
+
+       — Le premier test est le réglage lui-même, lu en mémoire : levé, ce
+         verrou ne coûte rien. Fermé, et seulement fermé, on interroge la base
+         pour le rôle — une requête par appel, acceptable le temps d'une
+         fermeture, jamais le reste de l'année.
+       — L'authentification et l'administration restent ouvertes. Sans ça il
+         n'existe plus aucun chemin pour rouvrir autrement que dans la base :
+         le réglage qui ferme doit toujours laisser passer celui qui rouvre.
+       — Le refus se nomme. Un joueur qui lit « le jeu est fermé quelques
+         minutes » attend ; devant une page qui s'écroule, il croit que c'est
+         cassé et il s'en va. */
+    const OUVERT_MALGRE_TOUT = /^\/(auth|admin|public)(\/|$)/;
+    app.use('/api', async (req, res, next) => {
+      if (!reglage('maintenance.actif')) return next();
+      if (OUVERT_MALGRE_TOUT.test(req.path)) return next();
+      try {
+        if (req.user && await admin.estAdmin(req.user.id)) return next();
+      } catch (e) {
+        // Base injoignable pendant une fermeture : on refuse, mais en le
+        // disant. Laisser passer par défaut ferait du verrou une décoration.
+        console.error('[maintenance] rôle illisible', e.message);
+      }
+      return res.status(503).json({
+        error: 'app.error.maintenance',
+        message: reglage('maintenance.texte'),
+      });
+    });
     // Amorçage : sans cela, personne ne peut devenir administrateur, puisque
     // seul un administrateur peut en nommer un autre.
     if (process.env.ADMIN_EMAILS) {
@@ -404,6 +445,19 @@ app.use('/img', express.static(path.join(__dirname, 'public/img'),
 app.use('/video', express.static(path.join(__dirname, 'public/video'),
   { maxAge: '365d', immutable: true }));
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h', setHeaders: typer }));
+
+/**
+ * Ce que les réglages disent aux joueurs.
+ *
+ * Le filtrage vit dans `reglagesPublics()`, pas ici : la suite éprouve la
+ * même fonction que la route. Une suite qui recopierait le filtre ne
+ * contrôlerait qu'elle-même, et l'on pourrait le retirer du serveur sans
+ * qu'un seul contrôle rougisse.
+ */
+app.get('/api/public/reglages', (_req, res) => {
+  res.set('cache-control', 'no-store');
+  res.json(reglagesPublics());
+});
 
 app.get('/healthz', (_req, res) => {
   // `ok` disait vrai tant que le processus respirait — y compris quand plus

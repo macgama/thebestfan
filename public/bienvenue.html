@@ -74,12 +74,34 @@ input:focus{outline:none;border-color:var(--projo)}
 .pack{width:196px;aspect-ratio:.62;border-radius:11px;overflow:hidden;position:relative;cursor:pointer;
   box-shadow:0 30px 60px rgba(0,0,0,.75);touch-action:none}
 .pack img{width:100%;height:100%;object-fit:cover;display:block}
-.pack .rip{position:absolute;left:0;right:0;top:0;height:0;overflow:hidden;
-  border-bottom:2px dashed rgba(245,195,59,.9)}
-.pack .rip::after{content:"";position:absolute;inset:0;background:rgba(4,6,10,.92)}
-.pack.hot{animation:shiver .16s infinite}
-@keyframes shiver{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-2px) rotate(-.6deg)}
-  75%{transform:translateX(2px) rotate(.6deg)}}
+/* La bande qu'on arrache, comme au kiosque. `--p` est l'avancée, de 0 à 1, et
+   c'est la **seule** variable du geste : elle ne dépend que de la distance
+   parcourue par le doigt, jamais du nombre d'images rendues. */
+.pack{--p:0;--bande:15%}
+.pack.tire .lip,.pack.tire{transition:none}
+.pack:not(.tire) .lip{transition:clip-path .32s cubic-bezier(.2,1.4,.5,1),
+  transform .32s cubic-bezier(.2,1.4,.5,1)}
+
+.pack .lip{position:absolute;left:0;right:0;top:0;height:var(--bande);overflow:hidden;
+  clip-path:inset(0 0 0 calc(var(--p) * 100%));
+  transform:rotate(calc(var(--p) * 5deg)) translateY(calc(var(--p) * -6px));
+  transform-origin:100% 100%;z-index:3}
+.pack .lip > *{position:absolute;top:0;left:0;width:100%;height:666.7%;object-fit:cover}
+
+/* La ligne dentelée : elle dit où saisir avant qu'on ait lu la consigne, et
+   elle s'efface à mesure que la déchirure la mange. */
+.pack .seam{position:absolute;left:0;right:0;top:var(--bande);height:2px;z-index:4;
+  background:repeating-linear-gradient(90deg,rgba(245,195,59,.9) 0 5px,transparent 5px 10px);
+  opacity:calc(1 - var(--p));filter:drop-shadow(0 0 3px rgba(245,195,59,.5))}
+
+/* La languette, à droite de la ligne : c'est là que part le geste. */
+.pack .grip{position:absolute;right:6px;top:calc(var(--bande) - 15px);width:26px;height:26px;
+  z-index:5;border-radius:50%;background:rgba(245,195,59,.92);
+  box-shadow:0 2px 10px rgba(0,0,0,.6);opacity:calc(1 - var(--p));
+  animation:tirette 1.9s ease-in-out infinite;pointer-events:none}
+.pack .grip::after{content:"";position:absolute;inset:7px;border-left:2px solid #05070A;
+  border-bottom:2px solid #05070A;transform:rotate(45deg) translate(1px,-1px)}
+@keyframes tirette{0%,100%{transform:translateX(0)}50%{transform:translateX(-7px)}}
 .glowring{position:absolute;left:50%;top:50%;width:280px;height:280px;transform:translate(-50%,-50%);
   border-radius:50%;background:radial-gradient(circle,rgba(245,195,59,.26),transparent 65%);
   filter:blur(16px);pointer-events:none;opacity:.6;animation:breathe 4s ease-in-out infinite}
@@ -164,9 +186,16 @@ input:focus{outline:none;border-color:var(--projo)}
     <div class="prog" id="prog"></div>
     <div class="packwrap" id="packwrap">
       <div class="glowring"></div>
-      <div class="pack" id="pack"><div class="rip" id="rip"></div></div>
+      <!-- Un vrai bouton : Entrée et Espace l'ouvrent. C'est l'accès au
+           clavier, et du même coup la sortie de secours de qui ne peut pas
+           faire le geste — une seule mécanique, deux services. -->
+      <button class="pack" id="pack" type="button" aria-label="Déchirer le paquet">
+        <div class="lip" id="packlip"></div>
+        <div class="seam"></div>
+        <div class="grip"></div>
+      </button>
     </div>
-    <div class="hint" id="hint">MAINTIENS POUR <b>CHAUFFER LA TRIBUNE</b></div>
+    <div class="hint" id="hint">TIRE LA BANDE <b>EN TRAVERS DU HAUT</b></div>
   </section>
 
   <!-- 4 -->
@@ -283,64 +312,128 @@ $('b2').onclick = async () => {
 
 /* -------------------------------------------------- le paquet */
 
+/* ------------------------------------------------- le geste d'ouverture
+
+   Le même qu'au kiosque : on saisit la languette et on tire en travers du
+   haut, comme un vrai sachet. Un seul mouvement.
+
+   **Ce qui précédait ici ne s'ouvrait pas.** Il fallait maintenir le doigt
+   immobile pour « chauffer », puis tirer vers le bas sans avoir lâché — et la
+   chauffe se comptait en *images*, pas en secondes : `charge += 0.02` à chaque
+   `requestAnimationFrame`. Entre le halo qui respire, le paquet qui tremble et
+   le dégradé plein écran, une machine lente rend une douzaine d'images par
+   seconde : la chauffe demandait quatre secondes d'immobilité parfaite au lieu
+   des huit dixièmes prévus, et le moindre relâchement remettait tout à zéro.
+   Sur une machine rapide c'était instantané, sur une machine lente
+   c'était impossible — et rien ne le disait.
+
+   C'est la première minute de jeu de quelqu'un qui vient de s'inscrire. Le
+   geste avait été refait au kiosque ; cette page avait gardé l'ancien.
+
+   Trois règles, les mêmes qu'au kiosque :
+   - **Rien ne se compte en images.** Seule la distance parcourue par le doigt
+     fait avancer. Une page à cinq images par seconde déchire comme une page à
+     cent vingt.
+   - **Rien ne se perd sans se voir.** Lâcher trop tôt ne remet pas un compteur
+     invisible à zéro : la bande revient élastiquement, et on voit ce qu'on a
+     perdu.
+   - **On peut toujours ouvrir.** Entrée et Espace ouvrent sans le geste. */
+
+const SEUIL_DECHIRURE = 0.72;   // au-delà, le sachet est ouvert, on ne revient pas
 let tear = null;
+
 function preparerPaquet() {
   const p = $('pack');
   p.querySelectorAll('img').forEach((n) => n.remove());
+
   const img = document.createElement('img');
   img.src = 'img/pack-virage-nord.avif';
+  img.alt = '';
   img.onerror = () => {
     // Sans visuel, le paquet reste un paquet : le geste compte plus que l'image.
     img.remove();
     p.style.background = 'linear-gradient(150deg,#2A1218,#0D1116 55%,#3A1A12)';
     p.style.border = '1px solid rgba(245,195,59,.35)';
   };
+  // La bande montre le haut du même dessin. `cloneNode` plutôt qu'un second
+  // chargement : une image déjà décodée ne clignote pas.
+  img.onload = () => $('packlip').replaceChildren(img.cloneNode(true));
   p.insertBefore(img, p.firstChild);
-  tear = { charge: 0, held: false, y0: null, done: false };
-  requestAnimationFrame(chauffe);
+
+  p.style.setProperty('--p', '0');
+  p.classList.remove('tire');
+  $('hint').innerHTML = 'TIRE LA BANDE <b>EN TRAVERS DU HAUT</b>';
+  tear = { p: 0, base: 0, x0: 0, pointeur: null, tic: -1, ratees: 0, done: false };
 }
 
-function chauffe() {
-  if (!tear || tear.done) return;
-  if (tear.held) {
-    tear.charge = Math.min(1, tear.charge + 0.02);
-    $('pack').classList.toggle('hot', tear.charge > 0.35);
-    $('pack').style.filter = `brightness(${1 + tear.charge * .5}) saturate(${1 + tear.charge})`;
-    if (tear.charge > .99 && !tear.pret) {
-      tear.pret = true;
-      $('hint').innerHTML = 'MAINTENANT <b>TIRE VERS LE BAS</b>';
-      buzz([25, 40, 25]);
-    } else if (Math.random() < tear.charge * .25) buzz(6);
+/** Pose l'avancée, et fait la vibration qui va avec. */
+function poser(v) {
+  tear.p = v;
+  $('pack').style.setProperty('--p', String(v));
+  // Un cran tous les neuf pour cent : la sensation suit la main plutôt que
+  // l'horloge, donc déchirer lentement fait une longue série de crans.
+  const tic = Math.floor(v / 0.09);
+  if (tic > tear.tic) { tear.tic = tic; buzz(7); }
+  if (v > 0.12 && !tear.encourage) {
+    tear.encourage = true;
+    $('hint').innerHTML = 'ENCORE — <b>NE LÂCHE PAS</b>';
   }
-  requestAnimationFrame(chauffe);
 }
 
 $('pack').addEventListener('pointerdown', (e) => {
-  if (!tear) return;
-  tear.held = true; tear.y0 = e.clientY;
-  $('pack').setPointerCapture(e.pointerId);
-});
-$('pack').addEventListener('pointermove', (e) => {
-  if (!tear?.held || tear.charge < 1) return;
-  const pct = Math.min(100, (Math.max(0, e.clientY - tear.y0) / 150) * 100);
-  $('rip').style.height = pct + '%';
-  if (pct >= 92) ouvrir();
-});
-const relache = () => {
   if (!tear || tear.done) return;
-  tear.held = false;
-  $('pack').classList.remove('hot');
-  if (tear.charge < 1) {
-    tear.charge = 0; $('pack').style.filter = '';
-    $('hint').innerHTML = 'MAINTIENS POUR <b>CHAUFFER LA TRIBUNE</b>';
-  }
+  tear.pointeur = e.pointerId;
+  tear.x0 = e.clientX;
+  tear.base = tear.p;
+  $('pack').classList.add('tire');
+  /* En dernier, et protégé : `setPointerCapture` lève sur un pointeur qui
+     n'est plus actif. Placé en tête, il emportait les lignes qui posent le
+     point de départ, et le glissement entier était perdu. La leçon a déjà été
+     payée dans `geste.js`. */
+  try { $('pack').setPointerCapture(e.pointerId); } catch {}
+});
+
+$('pack').addEventListener('pointermove', (e) => {
+  if (!tear || tear.done || tear.pointeur !== e.pointerId) return;
+  // `abs` : on déchire de droite à gauche comme de gauche à droite. La
+  // languette est à droite, mais un gaucher tire dans l'autre sens et rien ne
+  // justifie de le lui refuser.
+  const large = $('pack').getBoundingClientRect().width || 196;
+  const v = Math.max(0, Math.min(1, tear.base + Math.abs(e.clientX - tear.x0) / (large * 0.8)));
+  poser(v);
+  if (v >= SEUIL_DECHIRURE) ouvrir();
+});
+
+const relache = () => {
+  if (!tear || tear.done || tear.pointeur === null) return;
+  tear.pointeur = null;
+  tear.tic = -1;
+  tear.encourage = false;
+  $('pack').classList.remove('tire');    // rend la transition : la bande revient
+  poser(0);
+  tear.ratees++;
+  // Au deuxième essai manqué, on cesse de laisser deviner. Quelqu'un qui n'y
+  // arrive pas deux fois n'y arrivera pas à la troisième par insistance.
+  $('hint').innerHTML = 'LA BANDE EST REVENUE. <b>REPRENDS PAR LA LANGUETTE</b>'
+    + (tear.ratees >= 2 ? '<small>Ou appuie sur Entrée pour ouvrir.</small>' : '');
 };
 $('pack').addEventListener('pointerup', relache);
 $('pack').addEventListener('pointercancel', relache);
 
+/* `detail === 0` distingue le clic du clavier de celui de la souris : un
+   glissement se termine aussi par un `click`, et sans ce filtre le sachet
+   s'ouvrirait deux fois. */
+$('pack').addEventListener('click', (e) => {
+  if (!tear || tear.done || e.detail !== 0) return;
+  poser(1);
+  ouvrir();
+});
+
 function ouvrir() {
   if (!tear || tear.done) return;
   tear.done = true;
+  $('pack').classList.remove('tire');
+  $('pack').style.setProperty('--p', '1');
   buzz([50, 40, 120]);
   $('flash').classList.add('go');
   setTimeout(() => $('flash').classList.remove('go'), 560);

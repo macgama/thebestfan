@@ -23,7 +23,7 @@ await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 // admin.sql pour la table `reglages` : c'est elle qui porte les séries
 // ouvertes, et la suite en éprouve la fermeture plus bas.
-for (const f of ['auth.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql',
+for (const f of ['auth.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql',
                  'skins.sql', 'tenues.sql', 'admin.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }

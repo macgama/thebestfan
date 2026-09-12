@@ -51,7 +51,8 @@
     "chants:invites": "node scripts/chant-images.mjs --invites",
     "epreuves:ui": "node scripts/epreuves-ui-smoke.mjs",
     "boutique:smoke": "node scripts/boutique-smoke.mjs",
-    "boosters:ui": "node scripts/boosters-ui-smoke.mjs"
+    "boosters:ui": "node scripts/boosters-ui-smoke.mjs",
+    "reglages:smoke": "node scripts/reglages-smoke.mjs"
   },
   "dependencies": {
     "express": "^4.22.2",

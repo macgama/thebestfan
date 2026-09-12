@@ -3,6 +3,8 @@ import { TYPES, RAR, SETS } from '../../shared/fanzzy/dex.js';
 import { parIdentifiant, recharger, tous, chargerSeries, seriesOuvertes, serieOuverte }
   from '../fanzzy/catalogue.js';
 import { toutesTenues, tenuePar, rechargerTenues } from '../fanzzy/tenues.js';
+import { REGLAGES, SECTIONS, DEFAUTS } from '../../shared/reglages.js';
+import { ecrireReglage, rendreAuDefaut, tousLesReglages } from '../reglages/index.js';
 
 /**
  * Administration.
@@ -248,8 +250,29 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       typeof r.valeur === 'string' ? JSON.parse(r.valeur) : r.valeur]));
   }
 
+  /**
+   * Écrit un réglage.
+   *
+   * Deux chemins, et c'est délibéré. Une clé **du registre** passe par
+   * `ecrireReglage` : elle est validée contre sa déclaration — type, bornes,
+   * longueur — et le cache est repoussé, sans quoi le jeu continuerait sur
+   * l'ancienne valeur pendant que l'écran affiche la nouvelle.
+   *
+   * Une clé **hors registre** garde l'ancien chemin, sans validation possible
+   * puisque rien ne déclare ce qu'elle accepte. `series_actives` est dans ce
+   * cas : elle est écrite par l'onglet des Fanzzy, elle porte un tableau
+   * d'identifiants de séries, et elle n'a pas sa place dans un écran de
+   * réglages fins.
+   */
   async function fixerReglage(acteur, cle, valeur, adresseIp) {
     if (!/^[a-z0-9_.]{2,48}$/.test(String(cle))) throw fail('admin.error.bad_key');
+
+    if (cle in DEFAUTS) {
+      const pose = await ecrireReglage(pool, cle, valeur, acteur);
+      await journal(acteur, 'reglage.modifie', cle, { valeur: pose }, adresseIp);
+      return { cle, valeur: pose };
+    }
+
     await q(
       `INSERT INTO reglages (cle, valeur, maj_par) VALUES (?, ?, ?)
        ON DUPLICATE KEY UPDATE valeur = VALUES(valeur), maj_par = VALUES(maj_par)`,
@@ -527,7 +550,15 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   const safe = (fn) => (req, res) => Promise.resolve(fn(req, res)).catch((e) => {
     if (res.headersSent) return;
     console.error('[admin]', e.message);
-    res.status(e.status ?? 400).json({ error: e.code ?? 'admin.error.server' });
+    /* `raison` accompagne le code quand l'erreur en porte une. C'est le cas des
+       refus du registre : « attendu entre 50 et 2000, reçu 5 » se corrige sans
+       rien ouvrir, là où « refusé » oblige à essayer des valeurs au hasard.
+       Elle n'est jointe que si l'erreur l'a prévue — un message d'exception
+       quelconque n'a rien à faire sous les yeux de quelqu'un. */
+    res.status(e.status ?? 400).json({
+      error: e.code ?? 'admin.error.server',
+      ...(e.raison ? { raison: e.raison } : {}),
+    });
   });
 
   /** Le client demande si l'onglet doit exister. Ouvert à tout connecté. */
@@ -556,10 +587,36 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     res.json(await modifierCompetition(req.user.id, Number(req.params.id),
       Number(req.params.season), req.body ?? {}, ip(req)))));
 
+  /* Le registre : ce qui existe, ce que ça accepte, ce que ça vaut par
+     défaut. L'écran s'en sert pour **se dessiner** — un champ par déclaration,
+     avec son type, ses bornes et son unité. L'ancien écran demandait une clé
+     et du JSON tapés de mémoire : pour s'en servir il fallait avoir lu le
+     code, ce qui n'est pas un écran d'administration.
+
+     `valeurs` porte l'effectif, `brutes` ce que la base contient vraiment.
+     La différence dit quelles clés ont été touchées — sans elle, impossible de
+     distinguer un réglage laissé au défaut d'un réglage réglé sur sa valeur
+     par défaut, et donc impossible de savoir ce qu'on a changé. */
+  router.get('/registre', safe(async (_req, res) => res.json({
+    sections: SECTIONS,
+    reglages: REGLAGES,
+    defauts: DEFAUTS,
+    valeurs: tousLesReglages(),
+    brutes: await reglages(),
+  })));
+
+  // Conservée : d'anciennes clés hors registre y vivent encore, dont
+  // `series_actives`, qui est écrite par l'onglet des Fanzzy.
   router.get('/reglages', safe(async (_req, res) => res.json(await reglages())));
 
   router.put('/reglage/:cle', safe(async (req, res) =>
     res.json(await fixerReglage(req.user.id, req.params.cle, req.body?.valeur, ip(req)))));
+
+  router.delete('/reglage/:cle', safe(async (req, res) => {
+    const valeur = await rendreAuDefaut(pool, req.params.cle, req.user.id);
+    await journal(req.user.id, 'reglage.defaut', req.params.cle, { valeur }, ip(req));
+    return res.json({ cle: req.params.cle, valeur, defaut: true });
+  }));
 
   router.get('/journal', safe(async (req, res) => res.json({
     journal: await q(

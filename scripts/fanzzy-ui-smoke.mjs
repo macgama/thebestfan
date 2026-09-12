@@ -55,7 +55,7 @@ await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
 // *toutes* les séries — c'est sa règle, un schéma incomplet ne confisque rien —
 // et le kiosque n'aurait alors rien à verrouiller. La suite passerait au vert
 // sans jamais éprouver le cas qui a produit la panne.
-for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'fanzzy.sql',
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql',
                  'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'stades.sql',
                  'niveau.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
@@ -668,6 +668,140 @@ check('et elle explique pourquoi au lieu de rester vide',
     await grand.screenshot({ path: join(tmpdir(), 'fanzzy-large.png') });
   }
   await grand.close();
+}
+
+/* ------------------------------------------------ trouver la boutique
+
+ * Elle était servie sur /boutique depuis qu'elle a été écrite, et rangée dans
+ * le menu accordéon au milieu de treize entrées : c'est-à-dire nulle part.
+ * Personne n'ouvre un menu pour découvrir qu'une boutique existe — on l'ouvre
+ * quand on sait déjà ce qu'on y cherche.
+ *
+ * Toucher sa monnaie est le geste que tout joueur essaie en premier. Les deux
+ * jetons de la barre commune étaient des div inertes.
+ */
+{
+  const jetons = await page.evaluate(() =>
+    [...document.querySelectorAll('.tbf-jeton')].map((j) => ({
+      balise: j.tagName,
+      ou: j.getAttribute('href'),
+      dit: (j.getAttribute('aria-label') ?? '').includes('boutique'),
+      plus: j.querySelector('.tbf-plus')?.textContent ?? null,
+    })));
+  check('la barre commune porte ses deux jetons de monnaie', jetons.length === 2
+    || (console.log('        vus :', JSON.stringify(jetons)), false));
+  check('ils mènent à la boutique',
+    jetons.length === 2 && jetons.every((j) => j.balise === 'A' && j.ou === '/boutique')
+    || (console.log('        jetons :', JSON.stringify(jetons)), false));
+  check('et ils la nomment, pour qui n’en voit que l’étiquette',
+    jetons.length === 2 && jetons.every((j) => j.dit));
+  check('un « + » dit qu’on peut en obtenir davantage',
+    jetons.length === 2 && jetons.every((j) => j.plus === '+'));
+}
+
+/* ------------------------------------------- le personnage est vivant
+
+ * Il respirait, et c'est tout : une boucle unique de trois secondes six.
+ * L'œil apprend ça en dix secondes, et le personnage redevient une image
+ * fixe avec un défaut de compression.
+ *
+ * Ce qu'on éprouve ici n'est pas « ça bouge » — une capture d'écran ne dira
+ * jamais ça. C'est ce qui décide que ça bouge : la pile de calques, la mise
+ * en sommeil, et la réponse au toucher.
+ */
+{
+  await page.evaluate(() => document.querySelector('[data-go="equipe"]')?.click());
+  await new Promise((r) => setTimeout(r, 400));
+
+  const pile = await page.evaluate(() => {
+    const sc = document.querySelector('.tbf-scene');
+    if (!sc) return null;
+    const vie = sc.querySelector('.tbf-vie');
+    const souffle = sc.querySelector('.tbf-souffle');
+    const nom = (el) => (el ? getComputedStyle(el).animationName : null);
+    return {
+      aVie: Boolean(vie),
+      /* Le calque de vie doit **contenir** celui de la respiration. S'ils
+         étaient frères, ou pire le même élément, le geste de repos effacerait
+         le souffle — définitivement, et sans rien casser d'autre. */
+      enveloppe: Boolean(vie && souffle && vie.contains(souffle) && vie !== souffle),
+      animSouffle: nom(souffle),
+      animVie: nom(vie),
+      poses: sc.querySelectorAll('.tbf-pose').length,
+    };
+  });
+
+  check('la scène porte un calque de vie', pile?.aVie === true);
+  check('il enveloppe la respiration au lieu de la remplacer', pile?.enveloppe === true);
+  check('la respiration tourne toujours sur son propre calque',
+    pile?.animSouffle === 'tbf-souffle'
+    || (console.log('        animation du souffle :', pile?.animSouffle), false));
+  check('et le calque de vie est libre entre deux gestes', pile?.animVie === 'none');
+  check('les deux poses sont toujours là', pile?.poses === 2);
+
+  /* Le repos passe par la même mécanique que les autres gestes : une classe
+     posée sur la scène, retirée à la fin de son animation nommée. On la pose
+     à la main plutôt que d'attendre le tirage — entre cinq et douze secondes,
+     une suite ne peut pas se le permettre, et ce n'est pas le hasard qu'on
+     éprouve ici, c'est que le geste existe et qu'il anime le bon calque. */
+  const gestes = await page.evaluate(async () => {
+    const sc = document.querySelector('.tbf-scene');
+    const vie = sc.querySelector('.tbf-vie');
+    const vus = [];
+    for (const g of ['vie1', 'vie2', 'vie3']) {
+      sc.classList.add(g);
+      await new Promise((r) => setTimeout(r, 30));
+      vus.push(getComputedStyle(vie).animationName);
+      sc.classList.remove(g);
+    }
+    return vus;
+  });
+  check('les trois gestes de repos animent le calque de vie',
+    JSON.stringify(gestes) === JSON.stringify(['tbf-vie1', 'tbf-vie2', 'tbf-vie3'])
+    || (console.log('        vu :', gestes.join(', ')), false));
+
+  /* Le sommeil. C'est là que se gagne la fluidité, bien plus que dans le
+     poids des images : le navigateur ralentit les minuteries d'un onglet
+     caché, il ne ralentit pas une animation composée — elle continue donc de
+     faire tourner le compositeur pour personne. */
+  const sommeil = await page.evaluate(async () => {
+    const sc = document.querySelector('.tbf-scene');
+    const souffle = sc.querySelector('.tbf-souffle');
+    const etat = () => getComputedStyle(souffle).animationPlayState;
+    const avant = etat();
+    sc.classList.add('dort');
+    await new Promise((r) => setTimeout(r, 30));
+    const pendant = etat();
+    sc.classList.remove('dort');
+    await new Promise((r) => setTimeout(r, 30));
+    return { avant, pendant, apres: etat() };
+  });
+  check('éveillée, la scène respire', sommeil?.avant === 'running');
+  check('endormie, la respiration se met en pause',
+    sommeil?.pendant === 'paused'
+    || (console.log('        état pendant le sommeil :', sommeil?.pendant), false));
+  check('et elle repart au réveil', sommeil?.apres === 'running');
+
+  /* La réponse au toucher n'est allumée que sur cet écran : c'est celui du
+     personnage. Dans le Virage la même zone sert à chanter, et un saut non
+     demandé au milieu d'un chant se lit comme un défaut. */
+  const touche = await page.evaluate(async () => {
+    const sc = document.querySelector('.tbf-scene');
+    sc.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 30));
+    const saut = sc.querySelector('.tbf-saut');
+    return { classe: sc.classList.contains('saute'),
+      anim: getComputedStyle(saut).animationName, doigt: getComputedStyle(sc).cursor,
+      bascule: getComputedStyle(sc.querySelector('.tbf-change')).animationName };
+  });
+  check('toucher le personnage le fait réagir', touche?.classe === true);
+  /* La bascule du changement de pose partageait ce calque, et comme sa règle
+     vient plus bas dans la feuille, c'est elle qui gagnait : un saut demandé
+     juste après un changement de pose n'existait pas. */
+  check('et c’est bien le saut qui part, pas la bascule du changement de pose',
+    touche?.anim === 'tbf-saut'
+    || (console.log('        animation vue :', touche?.anim), false));
+  check('l’écran dit qu’on peut le toucher', touche?.doigt === 'pointer');
 }
 
 if (process.env.CAPTURE) {

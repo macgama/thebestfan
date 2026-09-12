@@ -19,6 +19,8 @@
  * Chaque carte a un coût en souffle, un délai de réutilisation, et beaucoup
  * ont un revers. Une carte sans revers finit toujours par être la seule jouée.
  */
+import { reglage } from '../reglages.js';
+
 
 export const ACTIONS = [
   /* ------------------------------------------------------------- pousse */
@@ -253,11 +255,15 @@ export const ACTIONS_VIRAGE = ACTIONS.filter(dansLeVirage);
  * L'équipement suit la même logique : deux pièces au plus, zéro accepté.
  */
 export const DECK_RULES = {
-  fanzzy: 3,          // au plus trois, dont un entre en jeu au coup d'envoi
+  // Au plus trois, dont un entre en jeu au coup d'envoi.
+  get fanzzy() { return reglage('deck.fanzzy'); },
   fanzzyMin: 1,       // au moins un, sinon il n'y a personne sur la corde
-  stuffParFanzzy: 2,  // au plus deux pièces par Fanzzy, liées à lui
-  actions: 10,        // exactement dix cartes d'action
-  mainVisible: 5,     // cinq visibles à la fois, les autres arrivent en remplacement
+  // Au plus deux pièces par Fanzzy, liées à lui.
+  get stuffParFanzzy() { return reglage('deck.stuff_par_fanzzy'); },
+  // Exactement dix cartes d'action.
+  get actions() { return reglage('deck.actions'); },
+  // Visibles à la fois ; les autres arrivent en remplacement.
+  get mainVisible() { return reglage('deck.main_visible'); },
   // Plus de plafond par carte : dix exemplaires de la même sont permis. La
   // limite de deux venait d'un temps où l'on supposait un large choix de
   // cartes ; en pratique un débutant en possède cinq, et dix emplacements à

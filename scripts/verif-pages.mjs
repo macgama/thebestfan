@@ -131,6 +131,38 @@ function uniteDeConteneurSansGarde(css) {
   return soucis.slice(0, 1);
 }
 
+/**
+ * Un geste qui avance au rythme des images.
+ *
+ * `charge += 0.02` à chaque `requestAnimationFrame` : sur un écran à cent
+ * vingt hertz c'est instantané, sur une page chargée qui rend douze images par
+ * seconde c'est quatre secondes d'immobilité parfaite. Le même code, deux
+ * jeux différents, et rien ne le signale — le développeur a une machine
+ * rapide.
+ *
+ * C'est arrivé deux fois : au kiosque, puis à l'inscription, qui avait gardé
+ * l'ancienne mécanique après que le kiosque eut été refait. Un geste se mesure
+ * en distance parcourue ou en millisecondes, jamais en images rendues.
+ */
+function gesteAuRythmeDesImages(code) {
+  const fautes = [];
+  /* On cherche un compteur incrémenté d'une constante à l'intérieur d'une
+     fonction que `requestAnimationFrame` rappelle. Le motif est étroit
+     exprès : une animation qui *dessine* à chaque image est normale, c'est
+     **décider** à chaque image qui ne l'est pas. */
+  /* `[\w.]` et non `\w` : le compteur est presque toujours qualifié —
+     `tear.charge`, `etat.avance`. Un motif qui ne reconnaît que les noms nus
+     laisse passer exactement les cas qu'on a rencontrés. */
+  for (const m of code.matchAll(/([\w.]+)\s*=\s*Math\.min\(\s*1\s*,\s*\1\s*\+\s*0?\.\d+\s*\)/g)) {
+    if (/requestAnimationFrame/.test(code)) {
+      fautes.push(`« ${m[0]} » fait avancer un geste au rythme des images : `
+        + 'instantané sur une machine rapide, impossible sur une machine lente. '
+        + 'Mesure une distance ou des millisecondes.');
+    }
+  }
+  return fautes;
+}
+
 function moduleServeur(code) {
   const m = /^\s*import\s[^\n]*?from\s*['"](express|mysql2[^'"]*|nodemailer|socket\.io|node:[a-z/]+)['"]/m
     .exec(code);
@@ -158,6 +190,7 @@ for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
     const erreur = compile(m[2], `${nom} bloc ${blocs}`);
     if (erreur) { ko(nom, `bloc ${blocs} ne compile pas : ${erreur}`); propre = false; }
     for (const s of accentGraveDansCss(m[2])) { ko(nom, s); propre = false; }
+    for (const s of gesteAuRythmeDesImages(m[2])) { ko(nom, s); propre = false; }
   }
 
   // La feuille commune porte la palette, la coque et le décor. Une page qui

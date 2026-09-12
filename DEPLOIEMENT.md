@@ -72,7 +72,7 @@ curl -s https://thebestfan.online/healthz
 ```bash
 cd ~/sites/thebestfan.online
 for f in auth football minutes couleurs duel souvenirs fanzzy teletext inventaire skins tenues deck admin kop amis \
-         niveau raretes stades boutique; do
+         niveau raretes stades boutique billets; do
   mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
 done
 ```

@@ -1,3 +1,4 @@
+import { reglage } from '../../shared/reglages.js';
 import { grade, applyHeroMods, resoudreGeste, Cheat } from './gestures.js';
 import { ACTION_BY_ID, ACTIONS_VIRAGE, dansLeVirage } from '../../shared/duel/actions.js';
 import { CHANTS, ORDRE } from '../../shared/duel/chants.js';
@@ -50,17 +51,22 @@ const FIL_MAX = 60;
 /** La minute où placer un changement de période, faute que l'API en donne une. */
 const MINUTE_DE_PERIODE = { '1H': 0, HT: 45, '2H': 45, ET: 90, BT: 90, P: 120, FT: 90, AET: 120, PEN: 120 };
 
+/* Des getters, et non des nombres : `RULES.goalAt` s'écrit toujours pareil
+   sur les sites qui le lisent, mais il interroge le registre à chaque lecture.
+   Ces cinq-là sont réglables depuis l'administration ; les autres restent des
+   constantes, parce qu'elles décrivent la mécanique et non son équilibrage. */
 export const RULES = {
-  goalAt: 400,             // corde à ±400 : un but de jeu demande un effort collectif
-  decayPerSec: 3,
-  breathMax: 100,
-  breathPerSec: 13,
+  get goalAt() { return reglage('virage.but_a'); },
+  get decayPerSec() { return reglage('virage.decroissance'); },
+  get breathMax() { return reglage('virage.souffle_max'); },
+  get breathPerSec() { return reglage('virage.souffle_par_sec'); },
   surgeAfterRealGoalMs: 60_000,
   surgeFactor: 2,
   tickMs: 100,             // diffusion 10 fois par seconde
   broadcastEveryTicks: 1,
-  idleMs: 90_000,          // sans geste, on ne compte plus dans la foule
-  realGoalJolt: 90,
+  // Sans geste, on ne compte plus dans la foule.
+  get idleMs() { return reglage('virage.inactif_sec') * 1000; },
+  get realGoalJolt() { return reglage('virage.secousse_but_reel'); },
 
   /* ------------------------------------------------- les cartes d'action
 

@@ -601,7 +601,9 @@ let sceneEquipe = null;
  * confondre les deux montre le Choriste à qui a payé pour le Meneur de chant.
  */
 async function habiller(perso, age, stade) {
-  sceneEquipe = window.TBF_SCENE?.creer?.($('tpile'), { fond: 'neutre' }) ?? null;
+  /* C'est l'écran du personnage : il répond au toucher. Ailleurs la zone
+     sert à autre chose, et un saut non demandé s'y lirait comme un défaut. */
+  sceneEquipe = window.TBF_SCENE?.creer?.($('tpile'), { fond: 'neutre', reagitAuToucher: true }) ?? null;
   const vu = await sceneEquipe?.definir({ id: perso.id, age: age.id, evo: stade });
   if (vu) { $('tscene')?.classList.add('entre'); return; }
 

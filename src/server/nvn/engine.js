@@ -1,3 +1,4 @@
+import { reglage } from '../../shared/reglages.js';
 import { grade, applyHeroMods, resoudreGeste, Cheat, GESTES, MOTIFS }
   from '../ferveur/gestures.js';
 import { ACTION_BY_ID, DECK_RULES } from '../../shared/duel/actions.js';
@@ -18,16 +19,17 @@ import { poserEffet, nettoyerEffets, aEffet, modsAvecEffets } from '../../shared
  */
 
 export const RULES = {
-  goalAt: 300,
-  goalsToWin: 3,
-  breathMax: 100,
-  breathPerSec: 13,
+  get goalAt() { return reglage('duel.but_a'); },
+  get goalsToWin() { return reglage('duel.buts_pour_gagner'); },
+  get breathMax() { return reglage('virage.souffle_max'); },
+  get breathPerSec() { return reglage('virage.souffle_par_sec'); },
   decayPerSec: 2.5,
-  dureeMs: 5 * 60 * 1000,
+  get dureeMs() { return reglage('duel.duree_min') * 60_000; },
   mainVisible: DECK_RULES.mainVisible,
   refillMs: 4000,          // délai avant qu'une carte jouée soit remplacée
-  chantPower: 30,          // poussée d'un chant parfait, avant modificateurs
-  chantCost: 18,
+  // Poussée d'un chant parfait, avant les modificateurs du Fanzzy.
+  get chantPower() { return reglage('duel.chant_puissance'); },
+  get chantCost() { return reglage('duel.chant_cout'); },
   butReelSouffle: 25,      // souffle offert à qui suit le club qui vient de marquer
   butReelSecousse: 55,     // secousse maximale : une tribune entière acquise au buteur
 };

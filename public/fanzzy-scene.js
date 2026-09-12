@@ -39,7 +39,23 @@
     coucou: 'tbf-coucou',
     saute: 'tbf-saut',
     change: 'tbf-bascule',
+    // Les trois gestes de repos. Ils passent par le même mécanisme que les
+    // autres : une classe posée, retirée à la fin de son animation nommée.
+    vie1: 'tbf-vie1',
+    vie2: 'tbf-vie2',
+    vie3: 'tbf-vie3',
   };
+
+  /** Les gestes de repos, et leur chance d'être tirés.
+   *
+   *  Le coup d'épaule est le seul des trois qui se remarque : il sort une fois
+   *  sur six. Un geste qu'on remarque et qui revient toutes les huit secondes
+   *  devient un tic. */
+  const REPOS = ['vie1', 'vie1', 'vie2', 'vie2', 'vie2', 'vie3'];
+
+  /** Le joueur a demandé moins de mouvement : on ne lui en fabrique pas. */
+  const CALME = typeof matchMedia === 'function'
+    && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /** Les états qu'une page peut vouloir sans délai : ils arrivent au pire moment. */
   const CHAUDS = ['neutre', 'pousse', 'but', 'encaisse'];
@@ -67,7 +83,9 @@
        efface l'autre : sur l'accueil, c'est la respiration qui disparaissait
        au premier petit saut, définitivement, sans que rien ne le signale. */
     el.innerHTML = `<div class="tbf-salut"><div class="tbf-monte"><div class="tbf-saut">
-      <div class="tbf-souffle"><img class="tbf-pose" alt=""><img class="tbf-pose" alt=""></div>
+      <div class="tbf-change"><div class="tbf-vie"><div class="tbf-souffle">
+        <img class="tbf-pose" alt=""><img class="tbf-pose" alt="">
+      </div></div></div>
     </div></div></div>`;
     hote.appendChild(el);
 
@@ -220,6 +238,71 @@
         illustrés serait un salut que presque personne ne verrait. */
     function salue() { rejouer('coucou'); }
 
+    /* ---------------------------------------------------------- la vie
+
+       Respirer ne suffit pas. Une seule boucle, toujours identique, et l'œil
+       l'a apprise en dix secondes : le personnage redevient une image fixe
+       avec un défaut. Ce qui le rend vivant n'est pas l'amplitude — elle
+       reste sous le degré — c'est que le prochain geste soit imprévisible. */
+
+    let minuterie = null;
+    let enVue = true;
+    let endormi = false;
+
+    function programmer() {
+      clearTimeout(minuterie);
+      // Entre cinq et douze secondes. Les bornes comptent autant que le
+      // hasard : en dessous de cinq, le personnage s'agite ; au-delà de
+      // douze, on a le temps de le croire figé.
+      minuterie = setTimeout(() => {
+        minuterie = null;
+        if (!endormi) rejouer(REPOS[Math.floor(Math.random() * REPOS.length)]);
+        programmer();
+      }, 5000 + Math.random() * 7000);
+    }
+
+    /**
+     * Endort ou réveille la scène.
+     *
+     * Le sommeil coupe les deux choses qui coûtent : la minuterie des gestes,
+     * et la respiration — mise en pause par la classe, pas retirée, pour que
+     * le personnage reprenne son souffle là où il l'avait laissé au lieu de
+     * repartir d'un coup de poitrine.
+     */
+    function dormir(oui) {
+      if (endormi === oui) return;
+      endormi = oui;
+      el.classList.toggle('dort', oui);
+      if (oui) { clearTimeout(minuterie); minuterie = null; }
+      else programmer();
+    }
+
+    const arbitrer = () => dormir(!enVue || document.hidden);
+
+    if (!CALME) {
+      programmer();
+      document.addEventListener('visibilitychange', arbitrer);
+
+      /* Hors de l'écran, la scène ne sert personne. C'est le vrai gain : sur
+         un écran qui défile, le personnage reste monté tout en bas de la page
+         et continue d'animer le compositeur pour rien. */
+      if (typeof IntersectionObserver === 'function') {
+        new IntersectionObserver((entrees) => {
+          enVue = entrees.some((e) => e.isIntersecting);
+          arbitrer();
+        }, { threshold: 0 }).observe(el);
+      }
+    }
+
+    /* Le toucher, là où la page le demande. Sur « Mon Fanzzy » c'est son
+       écran et il répond ; dans le Virage la zone sert à chanter, et un saut
+       parasite au milieu d'un chant se lit comme un défaut, pas comme une
+       réponse. */
+    if (opts.reagitAuToucher) {
+      el.style.cursor = 'pointer';
+      el.addEventListener('pointerdown', () => { if (!CALME) saute(); });
+    }
+
     /* ------------------------------------------------------- le moment fort */
 
     /**
@@ -322,8 +405,16 @@
        ne dit donc rien de ce que le personnage est censé vivre. Sans ce
        témoin, un test du but resterait vert alors que la scène n'aurait rien
        reçu du tout. */
+    /** Arrête tout. Une page qui démonte sa scène sans ça laisse une
+        minuterie qui tourne sur un élément qui n'est plus dans le document. */
+    function arreter() {
+      clearTimeout(minuterie);
+      minuterie = null;
+      document.removeEventListener('visibilitychange', arbitrer);
+    }
+
     return { el, banniere, definir, pose, poserFond, moment, preciser, couper,
-      saute, salue, etat: () => poseActuelle };
+      saute, salue, arreter, dort: () => endormi, etat: () => poseActuelle };
   }
 
   window.TBF_SCENE = { creer, CHAUDS };

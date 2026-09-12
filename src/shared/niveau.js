@@ -14,6 +14,8 @@
  * deviendrait de la puissance, et le nouveau venu n'aurait plus aucune raison
  * de rester.
  */
+import { reglage } from './reglages.js';
+
 
 /** Le dernier palier. Au-delà, l'XP continue de compter mais n'ouvre plus rien. */
 export const NIVEAU_MAX = 30;
@@ -77,9 +79,11 @@ export function progression(xp) {
  * avant la fin — et un duel abandonné gâche la soirée des deux camps.
  */
 export const XP = {
-  pack: 5,               // un booster ouvert
-  duel: { entrainement: 12, classe: 20 },
-  victoire: 15,          // en plus du duel joué
+  get pack() { return reglage('xp.pack'); },              // un booster ouvert
+  get duel() {
+    return { entrainement: reglage('xp.duel_entrainement'), classe: reglage('xp.duel_classe') };
+  },
+  get victoire() { return reglage('xp.victoire'); },      // en plus du duel joué
 };
 
 /**

@@ -52,7 +52,7 @@ await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'tenues.sql',
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'tenues.sql',
                  'niveau.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
@@ -1175,6 +1175,25 @@ await page.close();
 
   check('la bourse affiche écharpes et boosters',
     hud.ecarpes === '90' && hud.boosters === '12');
+
+  /* La boutique était servie sur /boutique et rangée dans le menu accordéon,
+     au milieu de treize entrées : c'est-à-dire nulle part. Personne n'ouvre un
+     menu pour découvrir qu'une boutique existe. Toucher sa monnaie est le
+     geste que tout joueur essaie en premier, et les deux jetons étaient des
+     div inertes qui affichaient un nombre. */
+  const jetons = await page.evaluate(() =>
+    [...document.querySelectorAll('.jeton')].map((j) => ({
+      ou: j.getAttribute('href'),
+      dit: (j.getAttribute('aria-label') ?? '').includes('boutique'),
+      plus: Boolean(j.querySelector('.plus')),
+    })));
+  check('les deux jetons de monnaie mènent à la boutique',
+    jetons.length === 2 && jetons.every((j) => j.ou === '/boutique')
+    || (console.log('        jetons :', JSON.stringify(jetons)), false));
+  check('et ils disent où ils mènent, même sans voir l’écran',
+    jetons.length > 0 && jetons.every((j) => j.dit));
+  check('un « + » annonce qu’on peut en obtenir davantage',
+    jetons.length > 0 && jetons.every((j) => j.plus));
   /* Le compte vient du serveur, et on le compare à la base plutôt qu'à un
      chiffre écrit ici. Il valait « 2 » tant que la suite ne posait que deux
      Fanzzy ; depuis qu'elle en équipe d'autres pour éprouver l'accueil, il en

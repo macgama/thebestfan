@@ -82,7 +82,7 @@
    selon l'écran, c'est deux personnages.                                  */
 
 .tbf-scene{position:relative;width:100%;height:100%}
-.tbf-salut,.tbf-monte,.tbf-saut,.tbf-souffle{position:absolute;inset:0}
+.tbf-salut,.tbf-monte,.tbf-saut,.tbf-change,.tbf-vie,.tbf-souffle{position:absolute;inset:0}
 /* Un calque par geste, et ce n'est pas de la coquetterie : deux animations
    sur le même élément et l'une efface l'autre. Sur l'accueil, c'est la
    respiration qui disparaissait au premier petit saut — définitivement, et
@@ -94,7 +94,31 @@
 .tbf-scene.entre .tbf-monte{animation:tbf-monte .6s cubic-bezier(.34,1.4,.64,1)}
 .tbf-scene.coucou .tbf-salut{animation:tbf-coucou 1.5s ease-in-out .2s}
 .tbf-scene.saute .tbf-saut{animation:tbf-saut .5s cubic-bezier(.34,1.56,.64,1)}
-.tbf-scene.change .tbf-saut{animation:tbf-bascule .42s cubic-bezier(.33,1,.68,1)}
+/* La bascule a son propre calque. Elle partageait celui du saut, et comme
+   sa règle vient plus bas dans la feuille, c'est elle qui gagnait : toucher le
+   personnage juste après un changement de pose ne produisait rien du tout.
+   Aucune erreur, aucune trace — le geste était simplement absent. */
+.tbf-scene.change .tbf-change{animation:tbf-bascule .42s cubic-bezier(.33,1,.68,1)}
+
+/* ------------------------------------------------------- les gestes de repos
+
+   Trois, parce que deux se reconnaissent. Ils vivent sur leur propre calque
+   pour la raison déjà apprise plus haut : deux animations sur un même élément
+   et l'une efface l'autre — ici, ce serait la respiration qui disparaîtrait au
+   premier appui de jambe.
+
+   L'amplitude est volontairement sous le seuil de ce qu'on remarque : un
+   degré de bascule, un pour cent de déplacement. On ne doit pas voir le
+   personnage bouger, on doit seulement cesser de le voir immobile. */
+.tbf-vie{transform-origin:50% 100%;will-change:transform}
+.tbf-scene.vie1 .tbf-vie{animation:tbf-vie1 2.6s cubic-bezier(.4,0,.35,1)}
+.tbf-scene.vie2 .tbf-vie{animation:tbf-vie2 3.2s cubic-bezier(.45,0,.4,1)}
+.tbf-scene.vie3 .tbf-vie{animation:tbf-vie3 1.5s cubic-bezier(.3,1.3,.5,1)}
+
+/* Endormie : hors de l'écran, ou onglet caché. Une respiration qui tourne
+   derrière un onglet masqué coûte exactement ce qu'elle coûte devant — le
+   navigateur ralentit les minuteries, pas les animations composées. */
+.tbf-scene.dort .tbf-souffle{animation-play-state:paused}
 
 /* Deux calques superposés : on croise les opacités au changement de pose, le
    personnage n'est jamais absent de l'écran et rien ne clignote.
@@ -147,15 +171,85 @@
   22%{transform:translateY(6px) scale(1.04,.94)}
   58%{transform:translateY(-9px) scale(.97,1.06)}
   100%{transform:translateY(0) scale(1,1)}}
+/* L'appui qui change de jambe. Le corps se transporte d'un côté et le poids
+   suit : sans la bascule, le déplacement seul ressemble à un glissement. */
+@keyframes tbf-vie1{0%,100%{transform:translateX(0) rotate(0deg)}
+  45%,62%{transform:translateX(-0.9%) rotate(-0.75deg)}}
+
+/* Le regard qui balaie la tribune. La rotation part du sol, donc la tête
+   parcourt bien plus de chemin que les pieds — c'est ce qui la fait lire
+   comme un mouvement de tête et non comme un basculement du corps. */
+@keyframes tbf-vie2{0%,100%{transform:rotate(0deg) translateY(0)}
+  30%{transform:rotate(1.1deg) translateY(-0.35%)}
+  68%{transform:rotate(-0.6deg) translateY(-0.15%)}}
+
+/* Le petit coup d'épaule. Court, sec, et c'est le seul des trois qui se
+   remarque : il ne doit donc pas sortir souvent. */
+@keyframes tbf-vie3{0%,100%{transform:translateY(0) scale(1,1)}
+  38%{transform:translateY(-1.1%) scale(.995,1.008)}
+  72%{transform:translateY(.2%) scale(1.004,.996)}}
+
 @keyframes tbf-momentIn{0%{opacity:0;transform:scale(.4) rotate(-7deg)}
   55%{opacity:1;transform:scale(1.14) rotate(2deg)}
   100%{opacity:1;transform:scale(1) rotate(0)}}
 @keyframes tbf-momentBarre{from{width:44%}to{width:0}}
 
 @media (prefers-reduced-motion:reduce){
-  .tbf-souffle,.tbf-salut,.tbf-monte,.tbf-saut{animation:none !important}
+  .tbf-souffle,.tbf-salut,.tbf-monte,.tbf-saut,.tbf-change,.tbf-vie{animation:none !important}
   .tbf-moment.on{animation:none}
 }
+
+/* ------------------------------------------------------ le bandeau d'annonce
+
+   Sous la barre, dans le flux : posé par-dessus, il masquerait le haut de
+   chaque page. Il n'apparaît que lorsqu'il y a quelque chose à dire — un
+   bandeau vide occupe de la place et fait douter de ce qu'on a raté. */
+.tbf-annonce{margin:0 0 10px;padding:9px 13px;border-radius:9px;font-size:12.5px;
+  line-height:1.5;border:1px solid currentColor;
+  background:rgba(0,0,0,.35)}
+.tbf-annonce.ton-info{color:var(--bleu)}
+.tbf-annonce.ton-attention{color:var(--projo)}
+.tbf-annonce.ton-fete{color:var(--vert)}
+
+/* ----------------------------------------------------------- l'ascenseur
+
+   Deux moteurs, deux syntaxes, et aucune des deux ne couvre l'autre :
+
+   — `scrollbar-width` / `scrollbar-color` est la norme (Firefox, et Chrome
+     depuis la 121). Elle ne sait faire que mince/fin et deux couleurs.
+   — `::-webkit-scrollbar` est la voie de WebKit (Safari, et Chrome, qui la
+     préfère quand les deux sont là). Elle permet le rail transparent et le
+     curseur arrondi qu'on veut ici.
+
+   On écrit les deux. La seconde l'emporte là où elle existe, la première
+   rattrape Firefox, et aucun navigateur ne reste avec la barre système.
+
+   `:where()` ne pèse rien en spécificité : une page qui a masqué sa barre
+   (`.chips`, `.jours`, `.rangs`) ou qui l'a habillée à sa façon
+   (`.res` de bienvenue.html) garde ce qu'elle a décidé. */
+
+:where(html){
+  scrollbar-width:thin;
+  /* curseur, puis rail. Le rail est pris dans le noir du décor plutôt que
+     transparent : Firefox ne sait pas rendre un rail translucide. */
+  scrollbar-color:rgba(242,238,228,.22) rgba(255,255,255,.04);
+}
+
+:where(*)::-webkit-scrollbar{width:8px;height:8px}
+:where(*)::-webkit-scrollbar-track{background:transparent}
+:where(*)::-webkit-scrollbar-thumb{
+  background:rgba(242,238,228,.2);
+  border-radius:8px;
+  /* La bordure transparente amincit le curseur sans réduire la zone qu'on
+     peut attraper au doigt : le rail garde ses huit pixels de cible. */
+  border:2px solid transparent;
+  background-clip:content-box;
+}
+:where(*)::-webkit-scrollbar-thumb:hover{background:rgba(242,238,228,.38);background-clip:content-box}
+:where(*)::-webkit-scrollbar-thumb:active{background:var(--projo);background-clip:content-box}
+/* Sans ça, WebKit dessine deux petits carrés gris dans l'angle des cadres qui
+   défilent dans les deux sens. */
+:where(*)::-webkit-scrollbar-corner{background:transparent}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
@@ -259,6 +353,15 @@ button.pan:active,a.pan:active{transform:scale(.96)}
   display:block;font-size:11px;opacity:.55;margin-top:1px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:32vw;
 }
+/* Le petit  des jetons : il dit qu'on peut en avoir plus, sans ajouter
+   un bouton de plus dans une barre qui en compte déjà trois. Discret par
+   construction — s'il se lisait comme une action, il ferait concurrence au
+   nombre, qui est l'information principale. */
+.tbf-plus{font-family:var(--banner);font-size:12px;line-height:1;opacity:.45;
+  margin-left:1px;font-weight:400}
+.tbf-jeton{text-decoration:none;color:inherit}
+.tbf-jeton:active .tbf-plus{opacity:1;color:var(--projo)}
+
 .tbf-bourse{display:flex;gap:6px;margin-left:auto;align-items:center}
 .tbf-jeton{
   display:flex;align-items:center;gap:6px;padding:8px 11px;

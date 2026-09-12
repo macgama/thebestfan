@@ -43,7 +43,7 @@ await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users,
   admin_audit, reglages`);
-for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'fanzzy.sql',
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql',
                  'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'admin.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
@@ -267,6 +267,103 @@ check('un thème se retire des tirages depuis la liste', await jusqua(async () =
 check('aucun bouton ne supprime un thème', await page.evaluate(() =>
   ![...document.querySelectorAll('#corps button')]
     .some((b) => /supprim/i.test(b.textContent))));
+
+/* ------------------------------------------------------- les réglages fins
+
+ * L'écran d'avant demandait une clé et une valeur JSON dans deux champs de
+ * texte. Pour s'en servir il fallait connaître de mémoire le nom de la clé,
+ * son type et ce qu'elle accepte — c'est-à-dire avoir lu le code. Et sur
+ * toutes les clés qu'on pouvait y taper, **une seule** était réellement lue
+ * par le jeu.
+ *
+ * Ce qu'on éprouve : que l'écran se dessine à partir du registre, qu'un
+ * réglage modifié se voie, qu'on puisse le rendre à son défaut, et qu'un refus
+ * arrive en français plutôt qu'en code.
+ */
+await page.evaluate(() => [...document.querySelectorAll('nav button')]
+  .find((b) => /RÉGLAGES/i.test(b.textContent))?.click());
+
+check('l’écran des réglages se peuple depuis le registre', await jusqua(async () =>
+  await page.evaluate(() => document.querySelectorAll('#main .rg').length > 15)));
+
+const ecran = await page.evaluate(() => {
+  const rg = [...document.querySelectorAll('#main .rg')];
+  return {
+    nombre: rg.length,
+    sections: document.querySelectorAll('#main .sect').length,
+    // Aucun champ ne doit demander de taper une clé ni du JSON.
+    aChampCle: Boolean(document.getElementById('cle') || document.getElementById('val')),
+    libelles: rg.every((r) => (r.querySelector('.lib b')?.textContent ?? '').length > 3),
+    // L'unité est ce qui évite la faute la plus coûteuse : lire « 600000 » et
+    // croire à des minutes.
+    unites: rg.filter((r) => r.querySelector('input[type=number]'))
+      .every((r) => (r.querySelector('.u')?.textContent ?? '').length > 0),
+    defauts: rg.every((r) => /Par défaut/.test(r.querySelector('.def')?.textContent ?? '')),
+    bornes: rg.filter((r) => r.querySelector('input[type=number]'))
+      .every((r) => {
+        const i = r.querySelector('input[type=number]');
+        return i.getAttribute('min') !== null && i.getAttribute('max') !== null;
+      }),
+    bascules: document.querySelectorAll('#main .bascule').length,
+  };
+});
+
+check('les réglages sont rangés par section', ecran.sections >= 5);
+check('aucun champ ne demande plus de taper une clé ni du JSON', ecran.aChampCle === false);
+check('chaque réglage porte un libellé, pas une clé technique', ecran.libelles);
+check('chaque nombre porte son unité', ecran.unites
+  || (console.log('        un champ chiffré n’a pas d’unité'), false));
+check('chaque réglage annonce sa valeur par défaut', ecran.defauts);
+check('et les bornes sont portées par le champ lui-même', ecran.bornes);
+check('les réglages en oui/non sont des bascules, pas du texte', ecran.bascules >= 2);
+
+/* Modifier, et voir que c'est modifié. Sans cette marque on ne distingue pas
+   un réglage laissé tel quel d'un réglage fixé sur une valeur qui se trouve
+   être la même — et on ne sait plus ce qu'on a touché. */
+const modif = await page.evaluate(async () => {
+  const rg = document.querySelector('#main .rg[data-rg="virage.but_a"]');
+  const i = rg.querySelector('input[type=number]');
+  i.value = '555';
+  i.dispatchEvent(new Event('change', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 300));
+  return { marque: rg.classList.contains('change'),
+    dit: document.getElementById('quoi')?.textContent ?? '' };
+});
+check('modifier un réglage l’enregistre', /enregistré/.test(modif.dit)
+  || (console.log('        dit :', modif.dit), false));
+check('et l’écran marque ce qui a été touché', modif.marque);
+
+const [[enBase]] = await pool.query(
+  'SELECT valeur FROM reglages WHERE cle = ?', ['virage.but_a']);
+check('la base porte la nouvelle valeur', Number(enBase?.valeur) === 555
+  || (console.log('        en base :', JSON.stringify(enBase?.valeur)), false));
+
+/* Le refus. Il doit arriver en français et nommer la borne : « attendu entre
+   50 et 2000, reçu 5 » se corrige sans rien ouvrir ; « refusé » oblige à
+   deviner. */
+const refus = await page.evaluate(async () => {
+  const i = document.querySelector('#main .rg[data-rg="virage.but_a"] input[type=number]');
+  i.value = '5';
+  i.dispatchEvent(new Event('change', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 400));
+  return document.getElementById('quoi')?.textContent ?? '';
+});
+check('une valeur hors bornes est refusée', /Refusé/.test(refus)
+  || (console.log('        dit :', refus), false));
+check('et le refus nomme la borne, pas seulement « refusé »',
+  /entre 50 et 2000/.test(refus) || (console.log('        dit :', refus), false));
+
+/* Le retour au défaut. Il efface la ligne : le contrôle le vérifie en base,
+   parce que c'est là que la différence se voit. */
+await page.evaluate(async () => {
+  document.querySelector('#main .rg[data-rg="virage.but_a"] [data-rendre]')?.click();
+  await new Promise((r) => setTimeout(r, 500));
+});
+const [restant] = await pool.query('SELECT cle FROM reglages WHERE cle = ?', ['virage.but_a']);
+check('rendre au défaut efface la ligne au lieu d’y écrire le défaut',
+  restant.length === 0);
+
+await pool.execute('DELETE FROM reglages');
 
 check('aucune erreur de script pendant toute la session', erreurs.length === 0);
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));

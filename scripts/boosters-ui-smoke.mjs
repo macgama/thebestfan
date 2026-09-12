@@ -55,7 +55,7 @@ await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
 // *toutes* les séries — c'est sa règle, un schéma incomplet ne confisque rien —
 // et le kiosque n'aurait alors rien à verrouiller. La suite passerait au vert
 // sans jamais éprouver le cas qui a produit la panne.
-for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'fanzzy.sql',
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql',
                  'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'stades.sql',
                  'niveau.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
