@@ -1,5 +1,6 @@
 import { grade, applyHeroMods, resoudreGeste, Cheat } from './gestures.js';
 import { ACTION_BY_ID, ACTIONS_VIRAGE, dansLeVirage } from '../../shared/duel/actions.js';
+import { CHANTS, ORDRE } from '../../shared/duel/chants.js';
 import { stadeDeLaRencontre } from '../../shared/stades.js';
 import { poserEffet, nettoyerEffets, modsAvecEffets } from '../../shared/duel/effets.js';
 
@@ -97,15 +98,21 @@ export const RULES = {
    * serait une tribune qu'on décourage de venir, et le but est l'inverse.
    */
   ferveurNeutre: 0.5,
+
+  /* Le répertoire : cinq chants offerts à la fois, qui changent toutes les dix
+     minutes **de match réel**. Dix minutes parce qu'un supporter doit avoir le
+     temps d'apprendre un geste avant qu'on le lui retire, et le match réel
+     parce que le Virage suit la rencontre — toute la tribune change de
+     répertoire au même instant, sans que le serveur ait à le dire. */
+  repertoire: 5,
+  repertoireMin: 10,
 };
 
-const CARDS = {
-  reprise:   { gest: 'tempo', cost: 22, power: 26 },
-  roulement: { gest: 'mash',  cost: 26, power: 30 },
-  onetaitla: { gest: 'hold',  cost: 30, power: 34 },
-  mur:       { gest: 'tempo', cost: 38, power: 46 },
-  craquage:  { gest: 'mash',  cost: 34, power: 52, effect: 'fatigue' },
-};
+/* Les douze chants et leur ordre de rotation vivent dans
+   src/shared/duel/chants.js, à côté des cartes d'action : la chaîne
+   d'illustrations et les contrôles en ont besoin, et aucun des deux ne peut
+   importer un moteur de salle pour lire une table de douze lignes. */
+const CARDS = CHANTS;
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -141,6 +148,8 @@ export class VirageRoom {
     this.surgeUntil = 0;
     this.members = new Map();         // userId -> état du supporter
     this.rallies = [];                // fenêtres collectives ouvertes, par camp
+    this.differes = [];               // poussées armées, qui frapperont plus tard
+    this.rangChangeA = 0;             // quand le répertoire a tourné pour la dernière fois
     this.seq = 0;
     this.last = Date.now();
     this.dirty = false;
@@ -321,6 +330,12 @@ export class VirageRoom {
     if (!card) throw new Cheat('unknown_card');
 
     const now = Date.now();
+    /* Le répertoire est une règle, pas une suggestion de la page. On accepte
+       aussi celui d'avant pendant un court moment, pour la même raison que les
+       motifs : un chant commencé juste avant que l'horloge tourne. */
+    if (!this.motifsAdmis(now).some((r) => this.repertoire(r).includes(cardId))) {
+      throw new Cheat('chant_hors_repertoire');
+    }
     this.regen(m, now);
     nettoyerEffets(m, now);
     if (m.breath < card.cost) throw new Cheat('not_enough_breath');
@@ -331,8 +346,14 @@ export class VirageRoom {
        carte qu'on joue et qui ne fait rien est pire qu'une carte absente. */
     const mods = modsAvecEffets(m.mods, m.effets, now);
 
-    // La note est calculée ici, à partir des instants de frappe.
-    const brut = grade(card.gest, taps, mods);
+    /* La note est calculée ici, à partir des instants de frappe.
+
+       Pour l'écho, le motif compte : on retient le meilleur des motifs encore
+       admis. Hors de la fenêtre de bascule il n'y en a qu'un, donc ce `max` ne
+       rend le geste plus facile à aucun moment — il rattrape seulement les
+       quatre secondes où deux motifs coexistent légitimement. */
+    const brut = Math.max(...this.motifsAdmis(now)
+      .map((motif) => grade(card.gest, taps, mods, { motif })));
     let { quality, backfire } = applyHeroMods(brut, mods);
 
     /* Second souffle : un geste raté compte comme moyen, une fois. La charge
@@ -399,6 +420,47 @@ export class VirageRoom {
      de dix et dans une salle de mille — et que Mosaïque mesure la *proportion*
      de tribune active plutôt qu'un nombre de têtes. Fondre les deux
      résolutions demanderait une exception à presque chaque ligne. */
+
+  /* ------------------------------------------------------ le répertoire */
+
+  /**
+   * Le rang du répertoire courant, d'après la minute du vrai match.
+   *
+   * Avant le coup d'envoi la minute est nulle : on répond zéro, et la tribune
+   * s'échauffe sur les cinq premiers chants. La règle est écrite ici et nulle
+   * part ailleurs — la vue, le contrôle du chant et le motif de l'écho
+   * l'appellent tous les trois.
+   */
+  rangRepertoire(minute = this.minute) {
+    const m = Math.max(0, Math.floor(Number(minute) || 0));
+    return Math.floor(m / RULES.repertoireMin) % ORDRE.length;
+  }
+
+  /** Les cinq chants offerts à ce rang : une fenêtre glissante sur `ORDRE`. */
+  repertoire(rang = this.rangRepertoire()) {
+    const r = ((rang % ORDRE.length) + ORDRE.length) % ORDRE.length;
+    return Array.from({ length: RULES.repertoire },
+      (_, i) => ORDRE[(r + i) % ORDRE.length]);
+  }
+
+  /** Les mêmes, tels que la page les attend : décrits, pas seulement nommés. */
+  chantsOfferts(rang = this.rangRepertoire()) {
+    return this.repertoire(rang).map((id) => ({ id, ...CARDS[id] }));
+  }
+
+  /**
+   * Le motif d'écho que la tribune chante en ce moment, et celui d'avant.
+   *
+   * Les deux, parce qu'un chant dure quatre secondes : celui qui commençait
+   * quand le répertoire a tourné a appris l'ancien motif et le tape jusqu'au
+   * bout. Le lui compter faux serait le punir d'une horloge qui n'est pas la
+   * sienne. Passé le quart de minute, il n'y a plus qu'un motif valable.
+   */
+  motifsAdmis(now = Date.now()) {
+    const r = this.rangRepertoire();
+    if (now - this.rangChangeA > 15_000) return [r];
+    return [r, r - 1];
+  }
 
   /** Les coéquipiers actifs de ce camp, hors lui-même. */
   actifsDuCamp(m, depuis, now) {
@@ -578,6 +640,36 @@ export class VirageRoom {
         evenements.push({ t: 'effect', type: 'sans_objet', userId });
         break;
 
+      /* Changement de chant : la main repart dans la pioche, on en reprend
+         cinq. Ce qu'on défausse revient — la carte ne doit pas vider le deck
+         de celui qui la joue. */
+      case 'refill_hand': {
+        m.pioche.push(...m.main, ...m.defausse);
+        m.defausse = [];
+        m.pioche = melanger(m.pioche);
+        m.main = m.pioche.splice(0, RULES.mainVisible);
+        m.remplirA = 0;
+        evenements.push({ t: 'effect', type: 'refill_hand', userId, cartes: m.main.length });
+        break;
+      }
+
+      /* Nouveau souffle : toutes les recharges tombent. Au Virage elles durent
+         une fois et demie celles du duel, donc la carte y vaut encore plus. */
+      case 'clear_cooldowns': {
+        const combien = Object.values(m.cooldowns ?? {}).filter((fin) => fin > now).length;
+        m.cooldowns = {};
+        evenements.push({ t: 'effect', type: 'clear_cooldowns', userId, liberees: combien });
+        break;
+      }
+
+      /* Le tifo s'arme et frappe plus tard. Il passe par `pousserDepuisCarte`
+         le moment venu, donc il est divisé par l'effectif comme tout le reste. */
+      case 'delayed_push':
+        this.differes.push({ userId, quand: now + e.delai, valeur: e.valeur });
+        evenements.push({ t: 'arme', userId, side: m.side, delai: e.delai,
+          cardId: carte.id, par: m.name });
+        break;
+
       default:
         throw new Cheat('unknown_effect');
     }
@@ -605,6 +697,21 @@ export class VirageRoom {
    */
   entretenirCartes(now = Date.now()) {
     this.rallies = this.rallies.filter((r) => r.fin > now);
+
+    /* Les tifos arrivés à échéance. Ils poussent par le chemin ordinaire —
+       division par l'effectif comprise : un tifo n'échappe pas plus à la règle
+       de la foule qu'un fumigène. */
+    const dus = this.differes.filter((d) => d.quand <= now);
+    if (dus.length) {
+      this.differes = this.differes.filter((d) => d.quand > now);
+      for (const d of dus) {
+        const m = this.members.get(d.userId);
+        if (!m) continue;            // parti : le tifo tombe avec lui
+        const ev = [];
+        this.pousserDepuisCarte(m, d.valeur, now, ev);
+        this.push('virage:events', { evenements: [{ t: 'deplie', side: m.side }, ...ev] });
+      }
+    }
     for (const [, m] of this.members) {
       if (!m.effets) continue;
       nettoyerEffets(m, now);
@@ -716,7 +823,24 @@ export class VirageRoom {
       || (homeGoals != null && awayGoals != null
           && (homeGoals !== this.scoreReel[0] || awayGoals !== this.scoreReel[1]));
 
+    /* Le répertoire tourne avec la minute, et toute la tribune doit l'apprendre
+       au même instant : la page ne reçoit `virage:state` qu'à l'entrée, donc
+       sans ce message les cinq chants offerts restaient ceux du moment où l'on
+       est arrivé — pour les quatre-vingt-dix minutes suivantes. */
+    const rangAvant = this.rangRepertoire();
     if (elapsed != null) this.minute = elapsed;
+    if (this.rangRepertoire() !== rangAvant) {
+      this.rangChangeA = Date.now();
+      this.push('virage:repertoire', {
+        rang: this.rangRepertoire(),
+        cards: this.chantsOfferts(),
+        /* Le motif de l'écho appartient à la tribune : on le chante ensemble.
+           La *fenêtre*, elle, est personnelle — un Métronome ou une écharpe
+           l'élargissent — et reste donc celle que la page tient déjà. */
+        echo: (({ motif, instants }) => ({ motif, instants }))(
+          resoudreGeste({}, { motif: this.rangRepertoire() }).echo),
+      });
+    }
     this.minuteExtra = elapsedExtra;
     // Le relevé vient de voir le match : l'horloge de la page repart de là, et
     // non de l'instant où elle a reçu le message.
@@ -820,7 +944,8 @@ export class VirageRoom {
         // d'équipement tapait à côté sans jamais comprendre pourquoi.
         // Le geste tel qu'il sera **vraiment** noté : effets de cartes compris,
         // sinon le Métronome élargirait la fenêtre sans que la page le dessine.
-        gestes: resoudreGeste(modsAvecEffets(m.mods, m.effets, Date.now())),
+        gestes: resoudreGeste(modsAvecEffets(m.mods, m.effets, Date.now()),
+          { motif: this.rangRepertoire() }),
 
         /* La main, ses recharges et ce qui est posé sur lui. `reste` est en
            secondes plutôt qu'en instant : la page n'a pas à connaître
@@ -841,7 +966,9 @@ export class VirageRoom {
         fanzzy: m.perso,
         ...this.rankOf(userId),
       } : null,
-      cards: Object.entries(CARDS).map(([id, c]) => ({ id, ...c })),
+      // Les cinq chants du moment, pas les douze : voir `repertoire()`.
+      cards: this.chantsOfferts(),
+      rang: this.rangRepertoire(),
 
       /* Le stade où se joue la rencontre.
        *

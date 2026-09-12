@@ -121,7 +121,7 @@ export function createSouvenirs({ pool, requireAuth }) {
     return q(
       `SELECT ${CARD}
          ${JOINS}
-        WHERE s.expires_at > NOW(3)
+        WHERE s.expires_at > UTC_TIMESTAMP(3)
           AND NOT EXISTS (SELECT 1 FROM user_souvenirs us
                            WHERE us.souvenir_id = s.id AND us.user_id = ?)
           ${teamId ? 'AND (s.home_id = ? OR s.away_id = ?)' : ''}

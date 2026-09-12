@@ -35,6 +35,19 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
 
   /* -------------------------------------------------------------- salles */
 
+  /**
+   * Ce que la base sait du vrai match, pour monter la salle.
+   *
+   * **`luA` est calculé en SQL, et ce n'est pas un détail.** `polled_at` est
+   * écrit par `NOW(3)`, donc dans le fuseau de la session MySQL, tandis que le
+   * pilote est réglé sur `timezone: 'Z'`. Le relire comme une date en
+   * JavaScript le plaçait deux heures dans le futur : `Date.now() - vuA`
+   * devenait négatif, l'horloge de la page cessait de compter, et la minute
+   * restait figée jusqu'au rechargement — dans le Virage comme sur l'écran de
+   * choix. C'est mot pour mot la panne des scores en direct, au même endroit
+   * et pour la même raison. La règle vit dans `teletext/index.js` : **l'époque
+   * se calcule en SQL, jamais en JavaScript.**
+   */
   async function fixtureInfo(fixtureId) {
     const rows = await q(
       // `home_goals`, `away_goals` et `elapsed` : le fil affiche le score du
@@ -42,7 +55,8 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       // qui entre à la trente-quatrième minute d'un 1–0 lisait 0–0 jusqu'au
       // but suivant, ce qui est pire que de ne rien afficher.
       `SELECT f.id, f.league_id, f.home_id, f.away_id, f.kickoff_at, f.status_short,
-              f.home_goals, f.away_goals, f.elapsed, f.elapsed_extra, f.polled_at,
+              f.home_goals, f.away_goals, f.elapsed, f.elapsed_extra,
+              UNIX_TIMESTAMP(f.polled_at) * 1000 AS luA,
               h.name AS home_name, h.logo AS home_logo,
               h.color1 AS home_c1, h.color2 AS home_c2,
               a.name AS away_name, a.logo AS away_logo,
@@ -103,7 +117,9 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         status: f.status_short, elapsed: f.elapsed, elapsedExtra: f.elapsed_extra,
         // Quand le serveur a vu ce match pour la dernière fois. La page en a
         // besoin pour ne pas faire courir une horloge sur une donnée figée.
-        vuA: f.polled_at ? new Date(f.polled_at).getTime() : null,
+        // `Number` : mysql2 rend ce calcul en chaîne, et l'horloge ferait
+        // alors sa soustraction sur du texte.
+        vuA: f.luA == null ? null : Number(f.luA),
         homeGoals: f.home_goals, awayGoals: f.away_goals,
       },
       emit: (event, payload) => io.to(`virage:${fixtureId}`).emit(event, payload),
@@ -406,7 +422,10 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       // côté est le club du joueur, donc pas dire si un but est le sien. Les
       // rapprocher par le nom marcherait presque, et « presque » veut dire que
       // le personnage se réjouit parfois d'un but encaissé.
-      `SELECT f.id, f.status_short, f.elapsed, f.elapsed_extra, f.polled_at,
+      // `luA` en SQL, jamais `polled_at` relu comme une date : voir la note
+      // dans `fixtureInfo`, quelques dizaines de lignes plus haut.
+      `SELECT f.id, f.status_short, f.elapsed, f.elapsed_extra,
+              UNIX_TIMESTAMP(f.polled_at) * 1000 AS luA,
               f.home_goals, f.away_goals, f.kickoff_at,
               f.home_id, f.away_id,
               h.name AS home_name, h.logo AS home_logo,
@@ -443,6 +462,10 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
     res.json({
       matchs: rows.map((f) => ({
         ...f,
+        // L'écran de choix fait courir la minute avec, comme la page des
+        // matchs : sans lui, il affichait la minute de son chargement pendant
+        // toute la durée de la rencontre.
+        luA: f.luA == null ? null : Number(f.luA),
         // Une à deux couleurs, jamais de tableau vide déguisé en couleur : la
         // page teste la longueur et retombe sur la sienne.
         homeColors: [f.home_c1, f.home_c2].filter(Boolean),

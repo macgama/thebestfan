@@ -1,4 +1,5 @@
-import { grade, applyHeroMods, resoudreGeste, Cheat } from '../ferveur/gestures.js';
+import { grade, applyHeroMods, resoudreGeste, Cheat, GESTES, MOTIFS }
+  from '../ferveur/gestures.js';
 import { ACTION_BY_ID, DECK_RULES } from '../../shared/duel/actions.js';
 import { poserEffet, nettoyerEffets, aEffet, modsAvecEffets } from '../../shared/duel/effets.js';
 
@@ -34,6 +35,24 @@ export const RULES = {
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const now0 = () => Date.now();
 
+/**
+ * Le geste du prochain chant.
+ *
+ * Une fois sur deux, le sien — celui du cri de son Fanzzy. C'est sa
+ * spécialité : ses modificateurs ne valent que là, et il faut donc qu'il
+ * revienne assez souvent pour que le choix du personnage compte.
+ *
+ * L'autre fois, un des neuf autres, à tour de rôle et non au hasard : un
+ * tirage aléatoire donne des répétitions, et trois « sang-froid » d'affilée
+ * ressemblent à une panne. Le tour de rôle garantit qu'on les voit tous.
+ */
+function prochainGeste(j) {
+  const sien = j.fanzzy[j.actif]?.cri?.gest ?? 'tempo';
+  if (j.chants % 2 === 0) return sien;
+  const autres = GESTES.filter((g) => g !== sien);
+  return autres[Math.floor(j.chants / 2) % autres.length];
+}
+
 /* ------------------------------------------------------------- joueurs */
 
 function creerJoueur(p, side) {
@@ -54,6 +73,21 @@ function creerJoueur(p, side) {
     // sans que rien ne le signale.
     fanzzy: loadout.fanzzy.map((f) => ({ ...f })),
     actif: 0,                       // index du Fanzzy en jeu
+
+    /* Le geste du prochain chant, et le motif de l'écho.
+     *
+     * **Les deux sont décidés par le serveur**, et c'est tout le changement :
+     * un joueur faisait le geste de son Fanzzy, toujours le même, pendant les
+     * cinq minutes du duel. Ce n'est pas le nombre de gestes qui rendait le
+     * jeu répétitif — c'est qu'on n'en découvrait jamais un autre.
+     *
+     * Le sien reste sa spécialité : il revient une fois sur deux, et ses
+     * modificateurs ne paient que sur lui. L'autre moitié fait tourner les
+     * neuf restants. */
+    geste: loadout.fanzzy[0]?.cri?.gest ?? 'tempo',
+    motif: 0,
+    chants: 0,
+
     breath: 40,
     ferveur: 0,
     main: pioche.slice(0, RULES.mainVisible),
@@ -110,6 +144,7 @@ export class DuelNvN {
     this.vainqueur = null;
     this.joueurs = new Map();
     this.rallies = [];               // fenêtres collectives ouvertes
+    this.differes = [];              // poussées armées, qui frapperont plus tard
 
     equipes.forEach((eq, side) => {
       for (const p of eq) this.joueurs.set(p.userId, creerJoueur(p, side));
@@ -240,8 +275,19 @@ export class DuelNvN {
 
   /* --------------------------------------------------------------- chant */
 
-  /** Un chant : le geste est noté ici, jamais annoncé par le client. */
-  chanter(userId, { geste, taps }, t = now0()) {
+  /**
+   * Un chant. Le geste est noté ici, et **choisi ici**.
+   *
+   * Le client l'annonçait — `chanter(userId, { geste, taps })` — alors que le
+   * commentaire au-dessus affirmait le contraire. Tant qu'il y avait trois
+   * gestes et qu'un joueur gardait le sien, ça ne se voyait pas. Dès que le
+   * duel en propose dix à tour de rôle, un client qui choisit son geste
+   * choisit sa facilité : il jouerait toujours celui qu'il réussit.
+   *
+   * Le paramètre reste accepté et **ignoré** : les anciens clients continuent
+   * de l'envoyer, et il ne sert plus à rien.
+   */
+  chanter(userId, { taps }, t = now0()) {
     if (this.termine) throw new Cheat('duel_over');
     const j = this.joueur(userId);
     this.regen(j, t);
@@ -249,7 +295,8 @@ export class DuelNvN {
     if (j.breath < RULES.chantCost) throw new Cheat('not_enough_breath');
 
     const m = modsDe(j, t);
-    let q = grade(geste, taps, m);
+    const geste = j.geste;
+    let q = grade(geste, taps, m, { motif: j.motif });
 
     // « Second souffle » : un raté compte comme moyen, une seule fois.
     const plancher = j.effets.find((e) => e.type === 'floor_quality' && e.charges > 0);
@@ -258,6 +305,12 @@ export class DuelNvN {
     const { quality, backfire } = applyHeroMods(q, m);
     j.breath -= RULES.chantCost;
     j.dernierChant = t;
+
+    /* Le geste suivant est tiré **après** la notation, jamais avant : le
+       joueur doit être jugé sur celui qu'on lui a montré. */
+    j.chants++;
+    j.motif = (j.motif + 1) % MOTIFS.length;
+    j.geste = prochainGeste(j);
 
     const evenements = [this.ev('chant', {
       userId, side: j.side, geste, quality: Number(quality.toFixed(3)), backfire,
@@ -425,6 +478,47 @@ export class DuelNvN {
         evenements.push(this.ev('effect', { type: 'swap_ready', userId: j.userId }));
         break;
 
+      /* Changement de chant : la main repart dans la pioche, on en reprend
+         cinq. Ce qu'on défausse n'est pas perdu — sinon la carte punirait
+         celui qui la joue, en vidant son deck pour le reste du duel. */
+      case 'refill_hand': {
+        j.pioche.push(...j.main);
+        j.main = [];
+        // Un mélange, sinon on retire exactement ce qu'on vient de rendre.
+        for (let i = j.pioche.length - 1; i > 0; i--) {
+          const k = Math.floor(Math.random() * (i + 1));
+          [j.pioche[i], j.pioche[k]] = [j.pioche[k], j.pioche[i]];
+        }
+        j.main = j.pioche.splice(0, RULES.mainVisible);
+        // La main est pleine tout de suite : c'est tout l'intérêt de la carte.
+        j.remplirA = 0;
+        evenements.push(this.ev('effect', { type: 'refill_hand', userId: j.userId,
+          cartes: j.main.length }));
+        break;
+      }
+
+      /* Nouveau souffle : toutes les recharges tombent. C'est la réponse au
+         « pourquoi je ne peux jouer aucune de mes cartes » — une main pleine
+         de cartes encore chaudes est une main vide, et rien ne permettait d'en
+         sortir autrement qu'en attendant. */
+      case 'clear_cooldowns': {
+        const combien = Object.values(j.cooldowns).filter((fin) => fin > t).length;
+        j.cooldowns = {};
+        evenements.push(this.ev('effect', { type: 'clear_cooldowns', userId: j.userId,
+          liberees: combien }));
+        break;
+      }
+
+      /* Le tifo. Il ne pousse pas maintenant : il s'arme, tout le monde le
+         voit, et il frappe plus tard. L'adversaire a le temps de répondre —
+         c'est la première carte du jeu qui laisse ce temps-là. */
+      case 'delayed_push':
+        this.differes.push({ side: j.side, userId: j.userId,
+          quand: t + e.delai, valeur: e.valeur });
+        evenements.push(this.ev('arme', { userId: j.userId, side: j.side,
+          delai: e.delai, cardId: carte.id }));
+        break;
+
       /**
        * La Relève. Contrairement au remplacement, elle ne demande aucun choix :
        * un personnage n'a qu'un âge suivant. On l'applique donc tout de suite,
@@ -504,6 +598,20 @@ export class DuelNvN {
     }
     this.rallies = this.rallies.filter((r) => r.fin > t);
 
+    /* Les poussées armées qui arrivent à échéance. Elles passent par le même
+       `pousser` que tout le reste — bouclier adverse compris : un tifo qu'on
+       a vu venir pendant huit secondes doit pouvoir être bâché. */
+    const dus = this.differes.filter((d) => d.quand <= t);
+    if (dus.length) {
+      this.differes = this.differes.filter((d) => d.quand > t);
+      for (const d of dus) {
+        const j = this.joueurs.get(d.userId);
+        if (!j) continue;            // il a quitté : le tifo tombe avec lui
+        evenements.push(this.ev('deplie', { userId: d.userId, side: d.side }));
+        this.pousser(j, d.valeur, t, evenements);
+      }
+    }
+
     if (t >= this.fin) {
       const [a, b] = this.goals;
       const v = a === b ? (this.rope < 0 ? 0 : this.rope > 0 ? 1 : null) : (a > b ? 0 : 1);
@@ -542,7 +650,12 @@ export class DuelNvN {
         // Recalculée à chaque vue, et non une fois pour toutes : le Métronome
         // et le Vent de face changent la fenêtre en cours de partie, et
         // l'affichage doit suivre le barème sous peine de mentir au joueur.
-        gestes: resoudreGeste(modsDe(moi, t)),
+        gestes: resoudreGeste(modsDe(moi, t), { motif: moi.motif }),
+        /* Le geste du prochain chant. Il vient du serveur et change d'un chant
+           à l'autre : la page l'annonce sur le bouton pour qu'on sache ce qui
+           arrive avant d'appuyer. */
+        geste: moi.geste,
+        sienGeste: moi.fanzzy[moi.actif]?.cri?.gest ?? 'tempo',
         fanzzy: moi.fanzzy.map((f, i) => ({ ...f, actif: i === moi.actif })),
         cooldowns: Object.fromEntries(Object.entries(moi.cooldowns)
           .filter(([, fin]) => fin > t).map(([k, fin]) => [k, Math.round((fin - t) / 100) / 10])),

@@ -219,6 +219,27 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   text-shadow:0 2px 12px rgba(0,0,0,.95)}
 .moment small:empty{display:none}
 .moment.on{opacity:1;animation:momentIn .6s cubic-bezier(.2,1.6,.35,1)}
+
+/* ------------------------------------------- qui est à l'écran
+
+   Le nom du Fanzzy équipé et l'âge qu'il a atteint. Le personnage était au
+   centre de l'accueil sans que rien ne le nomme : son nom n'existait que dans
+   l'attribut `alt` de son image, c'est-à-dire nulle part pour qui regarde. Et
+   l'évolution est ce qu'on paie quatre-vingt-dix écharpes pour obtenir — elle
+   mérite mieux qu'un dessin qu'on doit reconnaître.
+
+   Posé au pied du personnage, dans la scène : c'est là que le regard est déjà,
+   et cela ne prend aucune place aux rails. */
+.qui{flex:none;text-align:center;padding:0 12px 6px;pointer-events:none}
+.qui b{display:block;font-family:var(--banner);font-size:clamp(15px,4.4vw,19px);
+  letter-spacing:.06em;text-shadow:0 2px 14px rgba(0,0,0,.95);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qui small{display:block;font-size:10px;letter-spacing:.16em;margin-top:2px;
+  color:var(--projo);opacity:.9;text-shadow:0 2px 10px rgba(0,0,0,.9)}
+.qui small:empty{display:none}
+/* Vide tant que le serveur n'a pas répondu : un cadre qui se remplit après
+   coup fait sauter la scène, un cadre absent ne fait rien du tout. */
+.qui:not(.on){display:none}
 /* Il respire lentement pendant qu'il tient : immobile quinze secondes, il
    passerait pour un élément d'interface plutôt que pour un événement. */
 .moment.on::after{content:"";display:block;height:3px;width:44%;margin:9px auto 0;
@@ -321,6 +342,111 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   .flotte,.pile,.bascule,.salut,.sol,.halo,.pt{animation:none !important}
   .pose{transition:none}
 }
+
+/* ================================================== l'écran d'ouverture
+
+   Ce qu'on voit en arrivant : la tribune en fusion, une poignée de Fanzzy
+   déployés en éventail, et le nom du jeu.
+
+   ## Pourquoi il est dans la page et non après elle
+
+   Il est **écrit dans le HTML**, visible avant que la moindre ligne de script
+   ne tourne, et c'est tout l'intérêt : un écran d'ouverture qu'il faut charger
+   pour voir arrive après ce qu'il était censé couvrir. Le fond est une image,
+   le reste est du texte ; rien ici n'attend le réseau pour exister.
+
+   ## Et pourquoi il s'en va tout seul
+
+   Deux conditions, la première des deux qui arrive : l'accueil a reçu ce qu'il
+   lui faut, ou le temps est écoulé. La seconde n'est pas un filet de sécurité
+   qu'on ajoute par prudence — c'est la règle principale. Un écran d'ouverture
+   qui attend le serveur devient un écran d'attente le jour où le serveur est
+   lent, et c'est précisément le jour où il ne faut pas retenir les gens
+   dehors. */
+
+.ouverture{
+  position:fixed;inset:0;z-index:120;display:grid;place-items:center;
+  background:#05070A;overflow:hidden;
+  transition:opacity .5s ease,visibility .5s ease;
+}
+.ouverture.partie{opacity:0;visibility:hidden;pointer-events:none}
+
+.ouverture .fond{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:.55;
+  /* Une respiration très lente. Une image fixe derrière un titre a l'air d'une
+     capture d'écran ; trois pour cent de zoom suffisent à la rendre vivante
+     sans qu'on sache pourquoi. */
+  animation:ouvSouffle 9s ease-in-out infinite alternate;
+}
+@keyframes ouvSouffle{from{transform:scale(1.03)}to{transform:scale(1.1)}}
+
+/* Le voile : le fond est chargé, le titre doit rester lisible dessus. */
+.ouverture::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 42%,rgba(5,7,10,.2),rgba(5,7,10,.88) 72%);
+}
+
+.ouverture .dedans{position:relative;z-index:2;text-align:center;padding:0 22px}
+
+/* L'éventail de Fanzzy. Ils se chevauchent exprès : une rangée bien alignée
+   ferait un catalogue, un éventail fait une bande. */
+.ouverture .bande{
+  display:flex;justify-content:center;align-items:flex-end;
+  margin-bottom:18px;min-height:132px;
+}
+.ouverture .bande img{
+  width:84px;height:126px;object-fit:contain;object-position:bottom;
+  margin:0 -17px;filter:drop-shadow(0 8px 18px rgba(0,0,0,.75));
+  opacity:0;transform:translateY(16px);
+  animation:ouvMonte .55s cubic-bezier(.2,1.5,.35,1) forwards;
+}
+/* Chacun arrive après le précédent : c'est une tribune qui se remplit, pas un
+   bloc qui apparaît. Les retards sont écrits ici plutôt que calculés dans le
+   script — cinq valeurs valent mieux qu'une boucle qui touche au style. */
+.ouverture .bande img:nth-child(1){animation-delay:.05s}
+.ouverture .bande img:nth-child(2){animation-delay:.14s}
+.ouverture .bande img:nth-child(3){animation-delay:.23s;width:96px;height:144px;z-index:2}
+.ouverture .bande img:nth-child(4){animation-delay:.32s}
+.ouverture .bande img:nth-child(5){animation-delay:.41s}
+@keyframes ouvMonte{to{opacity:1;transform:translateY(0)}}
+
+.ouverture h1{
+  font-family:var(--banner);margin:0;line-height:.92;
+  font-size:clamp(30px,9.4vw,46px);letter-spacing:.02em;
+  text-shadow:0 0 30px rgba(0,0,0,.9),0 4px 0 rgba(0,0,0,.5);
+}
+/* `.online` en or : le nom se lit en deux temps, et c'est le second qui dit
+   que ça se joue à plusieurs. */
+.ouverture h1 span{color:var(--projo)}
+.ouverture p{
+  margin:10px 0 0;font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;
+  opacity:.5;
+}
+
+/* La barre du bas : elle ne mesure rien — elle occupe. Feindre un pourcentage
+   qu'on ne connaît pas est un mensonge de plus, et il se voit quand la barre
+   saute de trente à cent. */
+.ouverture .jauge{
+  position:absolute;left:50%;bottom:12%;transform:translateX(-50%);
+  width:120px;height:3px;border-radius:2px;overflow:hidden;
+  background:rgba(242,238,228,.14);
+}
+.ouverture .jauge i{
+  display:block;height:100%;width:40%;border-radius:2px;background:var(--projo);
+  animation:ouvGlisse 1.25s ease-in-out infinite;
+}
+@keyframes ouvGlisse{
+  0%{transform:translateX(-110%)}100%{transform:translateX(360%)}
+}
+
+/* Qui a demandé moins d'animation n'en reçoit aucune : l'écran reste, lisible
+   et immobile, et s'en va pareil. */
+@media (prefers-reduced-motion:reduce){
+  .ouverture .fond,.ouverture .jauge i{animation:none}
+  .ouverture .bande img{animation:none;opacity:1;transform:none}
+}
+
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -331,6 +457,29 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
+
+<!-- ================================================ l ouverture
+
+     Écrit dans la page, pas monté par un script : il doit être là avant que
+     quoi que ce soit ne tourne. Le fond est servi en trois formats, comme le
+     reste du jeu ; <picture> choisit, et le JPEG couvre ce qui reste.
+
+     Les Fanzzy de l éventail sont posés par ouverture.js dès qu il se
+     charge — ils sont facultatifs, et l écran tient sans eux. -->
+<div class="ouverture" id="ouverture" role="status" aria-label="Chargement">
+  <picture>
+    <source srcset="/img/ecran/tribune.avif" type="image/avif">
+    <source srcset="/img/ecran/tribune.webp" type="image/webp">
+    <img class="fond" src="/img/ecran/tribune.jpg" alt="" aria-hidden="true">
+  </picture>
+  <div class="dedans">
+    <div class="bande" id="ouvBande" aria-hidden="true"></div>
+    <h1>THEBESTFAN<span>.ONLINE</span></h1>
+    <p>le jeu de cartes des tribunes</p>
+  </div>
+  <div class="jauge" aria-hidden="true"><i></i></div>
+</div>
+
 <main id="app">
   <div class="tbf-decor" id="fond"></div><div class="tbf-grad"></div>
 
@@ -391,6 +540,10 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
           <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg><span class="lib">FANZZY</span></a>
         <a class="pan case" href="/carnet">
           <svg viewBox="0 0 24 24"><path d="M12 21s-7-4.6-7-9.6A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 3.4c0 5-7 9.6-7 9.6z"/></svg><span class="lib">CARNET</span></a>
+        <!-- Le KOP est au centre du jeu et n'était accessible que par le menu :
+             trois silhouettes serrées, un groupe et non une personne. -->
+        <a class="pan case" href="/kop">
+          <svg viewBox="0 0 24 24"><path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20a7 7 0 0 1 14 0M17 20a5 5 0 0 0-3-4.6M16 11a3 3 0 0 0 0-6"/></svg><span class="lib">KOP</span></a>
       </nav>
 
       <div class="scene" id="scene">
@@ -426,8 +579,17 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
           <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 9v10"/></svg><span class="lib">MATCHS</span></a>
         <a class="pan case" href="/classement">
           <svg viewBox="0 0 24 24"><path d="M6 21V9M12 21V4M18 21v-7M3 21h18"/></svg><span class="lib">CLASSEMENT</span></a>
+        <!-- Deux silhouettes et un plus : on en ajoute une. Même dessin que
+             dans le menu, pour que ce soit la même destination à l'œil. -->
+        <a class="pan case" href="/amis">
+          <svg viewBox="0 0 24 24"><path d="M9 11a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4M2 20a7 7 0 0 1 14 0M18 8v6M15 11h6"/></svg><span class="lib">AMIS</span></a>
       </nav>
     </div>
+
+    <!-- Qui est à l'écran : le nom du Fanzzy équipé et l'âge qu'il a atteint.
+         Dans le flux, sous les rails — posée dans la scène, elle passait sous
+         le personnage, qui occupe toute sa hauteur. -->
+    <div class="qui" id="qui"><b id="quiNom"></b><small id="quiEvo"></small></div>
 
     <footer class="bas">
       <div class="duo">
@@ -460,6 +622,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
      équipé quand ses douze états n'existent pas encore, plutôt que d'afficher
      le supporter générique, qui est quelqu'un d'autre. -->
 <script src="/fanzzy-art.js"></script>
+<!-- L ouverture : l éventail de Fanzzy, et le moment où l écran s en va.
+     Après fanzzy-art.js, dont il lit la liste des personnages dessinés. -->
+<script src="/ouverture.js"></script>
 <script>
 /* =======================================================================
    Accueil.
@@ -702,7 +867,8 @@ function souvenir() {
   try {
     const j = JSON.parse(localStorage.getItem(MEMOIRE) ?? "null");
     if (j?.aucun) return { aucun: true };
-    return j?.id ? { id: j.id, evo: j.evo ?? 1, skin: j.skin ?? "base" } : null;
+    return j?.id ? { id: j.id, evo: j.evo ?? 1, skin: j.skin ?? "base",
+                     nom: j.nom ?? '', ages: j.ages ?? 1 } : null;
   } catch { return null; }
 }
 
@@ -710,8 +876,28 @@ function souvenir() {
 function retenir(p) {
   try {
     localStorage.setItem(MEMOIRE, JSON.stringify(
-      p ? { id: p.id, evo: p.evo, skin: p.skin } : { aucun: true }));
+      p ? { id: p.id, evo: p.evo, skin: p.skin, nom: p.nom ?? '', ages: p.ages ?? 1 }
+        : { aucun: true }));
   } catch { /* stockage refusé : on repartira de zéro, sans plus */ }
+}
+
+/**
+ * Écrit la plaque : qui est à l'écran, et à quel âge.
+ *
+ * Le nom voyage dans le **même souvenir** que le visage, et pour la même
+ * raison. Le personnage est reposé dès la première ligne depuis
+ * `localStorage` ; laisser son nom attendre trois allers-retours réseau
+ * donnait un visage sans nom pendant tout ce temps, ce qui est exactement le
+ * défaut qu'on venait de corriger pour le dessin.
+ *
+ * Aucun nom, ou un seul âge dans la lignée : on n'écrit rien plutôt que
+ * d'annoncer « 1 / 1 », qui ne promet rien à personne.
+ */
+function nommer(p) {
+  const nom = p?.nom ?? '';
+  $('quiNom').textContent = nom;
+  $('quiEvo').textContent = (p?.ages ?? 1) > 1 ? `ÉVOLUTION ${p.evo} / ${p.ages}` : '';
+  $('qui').classList.toggle('on', Boolean(nom));
 }
 
 /* Le filet, pour la toute première visite : sans souvenir, on attend la
@@ -732,6 +918,7 @@ let filet = null;
     equipe = { ...vu, plein: window.FZART?.adresse?.(vu.id, 'plein') ?? null };
     precharger();
     pose('neutre');
+    nommer(vu);              // son nom arrive avec son visage, pas après
   } else if (vu?.aucun) {
     pose('neutre');
   } else {
@@ -1045,6 +1232,21 @@ async function jsonp(url, options) {
         const age = (dex.dex ?? []).find((f) => f.racine === actif
           && f.stade === candidat.evo) ?? def;
         calques[devant].alt = `${age?.nom ?? actif} dans la tribune`;
+
+        /* Et on le **nomme à l'écran**. Le nom n'existait que dans l'attribut
+           `alt` de l'image, c'est-à-dire nulle part pour qui regarde : le
+           personnage tenait le centre de l'accueil sans que rien ne dise qui
+           il est ni ce qu'il a coûté.
+
+           Le nombre d'âges se compte dans le catalogue plutôt que de valoir
+           trois : toutes les lignées n'en ont pas autant, et annoncer « 1 / 3 »
+           à un Fanzzy qui n'évolue jamais promet quelque chose qui n'arrivera
+           pas. Quand il n'y a qu'un âge, on ne dit rien du tout. */
+        const ages = (dex.dex ?? []).filter((f) => f.racine === actif);
+        candidat.nom = age?.nom ?? def?.nom ?? '';
+        candidat.ages = ages.reduce((n, f) => Math.max(n, f.stade ?? 1), 1);
+        retenir(candidat);       // le nom rejoint le souvenir du visage
+        nommer(candidat);
       }
     }
     /* Pas de Fanzzy équipé, ou aucun dessin pour celui-ci : c'est le
@@ -1053,6 +1255,7 @@ async function jsonp(url, options) {
     if (!equipe) {
       clearTimeout(filet); filet = null;
       retenir(null);
+      nommer(null);          // le supporter générique n'a pas de nom à donner
       await pose('neutre', 0, true);
     }
   } catch { /* collection non montée : l'accueil reste utilisable sans */ }
@@ -1061,6 +1264,13 @@ async function jsonp(url, options) {
   // C'est maintenant qu'il salue, et pas avant : saluer plus tôt ferait entrer
   // deux personnages pour une seule arrivée.
   saluer();
+
+  /* L écran d ouverture peut partir : le personnage est posé, la collection
+     est lue, il n y a plus rien à couvrir. On ne l efface pas d ici — on dit
+     seulement qu on est prêt, et ouverture.js décide. C est lui qui connaît
+     le plancher et le plafond de durée, et deux endroits qui décideraient de
+     la même chose finiraient par se contredire. */
+  dispatchEvent(new Event("tbf:pret"));
 
   /* ------------------------------------------------- le match, en direct
 

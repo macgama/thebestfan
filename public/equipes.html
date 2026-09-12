@@ -205,7 +205,9 @@ function enCours(f){
   if (!['1H','2H','HT','ET','P','BT','LIVE','INT'].includes(f.status_short)) return '';
   return window.TBF_HORLOGE.texte({
     statut: f.status_short, minute: f.elapsed, extra: f.elapsed_extra,
-    vuA: f.polled_at ? new Date(f.polled_at).getTime() : null,
+    // `luA` vient du serveur en millisecondes, calculé en SQL : voir la note
+    // dans `football/store.js`. Le convertir ici a déjà figé la minute.
+    vuA: f.luA == null ? null : Number(f.luA),
   }, { HT: `${t('live')} · MT` });
 }
 

@@ -176,38 +176,69 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
   }
 
   /**
-   * Ce que peut contenir une place 4 ou 5, en plus d'un supporter.
+   * Ce que peut contenir une place ouverte, c'est-à-dire une place qui n'est
+   * pas réservée à un supporter.
    *
    * Sept pièces d'équipement et quinze cartes d'action sur vingt et une
    * n'étaient **obtenables nulle part** : le paquet de bienvenue en donnait une
    * de chaque, au hasard, et c'était tout. Un joueur pouvait ouvrir trois cents
-   * boosters sans jamais voir un mégaphone. Les places 4 et 5 s'ouvrent donc au
-   * reste de l'inventaire.
+   * boosters sans jamais voir un mégaphone.
    *
-   * Les trois premières restent des supporters, et c'est la garantie qui tient
-   * l'ouverture : personne ne doit pouvoir tomber sur cinq objets et zéro
-   * personnage.
+   * **Il n'y a plus de supporter dans cette table.** Un booster en donnait
+   * quatre sur cinq en moyenne — trois garantis, plus une chance sur deux à
+   * chacune des deux dernières places — et l'ouverture se ressemblait d'une
+   * fois sur l'autre : une pile de têtes, dont la plupart en double. Les places
+   * ouvertes donnent maintenant autre chose, toujours.
    *
-   * @returns {{carte, scarves}|null}  `null` = on retombe sur le supporter tiré
+   * Les écharpes en font partie, et ce n'est pas un lot de consolation : c'est
+   * ce qui paie les évolutions, donc les âges qu'on ne tire jamais. C'est aussi
+   * le seul lot qui ne peut pas être vide, et il sert donc de dernier recours à
+   * un joueur qui possède déjà toutes les tenues, tout l'équipement et toutes
+   * les cartes d'action — à qui l'on rendait un supporter de plus.
+   *
+   * @returns {{carte, scarves}}
    */
-  const PLACES_4_5 = [
-    ['fanzzy', 0.55],
-    ['skin', 0.15],
-    ['stuff', 0.15],
-    ['action', 0.15],
+  const PLACES_OUVERTES = [
+    ['action', 0.30],
+    ['stuff', 0.25],
+    ['skin', 0.20],
+    ['echarpes', 0.25],
   ];
+
+  /* Trois poignées, de la plus probable à la plus rare. Un booster coûte
+     quarante-cinq écharpes ; trois places ouvertes en rendent donc rarement le
+     prix, et c'est voulu — on achète des cartes, pas de la monnaie. */
+  const POIGNEES = [[6, 0.55], [14, 0.33], [30, 0.12]];
 
   function tirerCategorie() {
     const r = Math.random();
     let acc = 0;
-    for (const [cat, p] of PLACES_4_5) { acc += p; if (r < acc) return cat; }
-    return 'fanzzy';
+    for (const [cat, p] of PLACES_OUVERTES) { acc += p; if (r < acc) return cat; }
+    return 'echarpes';
+  }
+
+  function tirerPoignee() {
+    const r = Math.random();
+    let acc = 0;
+    for (const [n, p] of POIGNEES) { acc += p; if (r < acc) return n; }
+    return POIGNEES[0][0];
   }
 
   async function tirerAutreChose(ctx) {
     const { conn, userId, avant, stadeDe, skinsPris, stuffPris, actionsPrises } = ctx;
     const cat = tirerCategorie();
-    if (cat === 'fanzzy') return null;
+
+    /* Les écharpes. Le seul lot qui ne peut pas être vide, et donc le recours
+       de toutes les autres catégories : voir les `return echarpes()` plus bas,
+       qui remplacent les anciens `return null` — lesquels rendaient la main au
+       supporter tiré, c'est-à-dire à la carte qu'on cherche justement à ne plus
+       donner cinq fois. */
+    const echarpes = () => {
+      const n = tirerPoignee();
+      return { carte: { type: 'echarpes', id: 'echarpes', montant: n, new: false },
+               scarves: n };
+    };
+    if (cat === 'echarpes') return echarpes();
 
     /* Chaque catégorie peut être vide — tout l'équipement déjà possédé, aucun
        Fanzzy à habiller. On retombe alors sur le supporter plutôt que de rendre
@@ -228,7 +259,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
           }
         }
       }
-      if (!places.length) return null;
+      if (!places.length) return echarpes();
       const p = rnd(places);
       skinsPris.add(`${p.id}:${p.stade}:${p.skin}`);
       await conn.query(
@@ -258,11 +289,20 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
       return { carte: { type: 'stuff', id: def.id, new: true }, scarves: 0 };
     }
 
+    /* La dernière branche est **nommée**, et ce qui reste tombe en écharpes.
+       Elle ne l'était pas : toute catégorie sans branche à elle finissait ici,
+       en carte d'action, sans que rien ne le dise. Ajouter une ligne à
+       `PLACES_OUVERTES` sans écrire la branche qui va avec donnait donc
+       silencieusement autre chose que ce qu'on avait déclaré — et un contrôle
+       qui remet « fanzzy » dans la table restait vert, puisque le supporter
+       promis sortait en carte d'action. */
+    if (cat !== 'action') return echarpes();
+
     // Une carte d'action ne se possède qu'une fois : le deck en accepte dix
     // exemplaires, mais c'est le même droit répété. Un doublon rapporte donc
     // des écharpes plutôt qu'une ligne de plus.
     const libres = ACTIONS.filter((a) => a.rar !== 'commune' && !actionsPrises.has(a.id));
-    if (!libres.length) return null;
+    if (!libres.length) return echarpes();
     const vise = pickRarity(5);
     const def = rnd(libres.filter((a) => a.rar === vise).length
       ? libres.filter((a) => a.rar === vise) : libres);
@@ -354,10 +394,20 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
       const cards = [];
 
       for (const [i, f] of pull.entries()) {
-        // Les trois premières places restent des supporters : c'est la
-        // garantie qui empêche une ouverture entièrement décevante. Les deux
-        // dernières s'ouvrent au reste de l'inventaire.
-        if (i >= 3) {
+        /* Un ou deux supporters par booster, jamais plus.
+         *
+         * La première place en est un : c'est la garantie, et elle tient toute
+         * l'ouverture — personne ne doit tomber sur cinq objets et zéro
+         * personnage. La deuxième en est un sept fois sur dix, ce qui fait la
+         * différence entre deux boosters ouverts à la suite.
+         *
+         * Les trois dernières n'en sont jamais. Avant, un booster donnait
+         * quatre têtes sur cinq en moyenne, dont la plupart en double : la
+         * collection avançait, mais l'équipement, les tenues et les cartes
+         * d'action n'arrivaient presque jamais, et deux ouvertures se
+         * ressemblaient. */
+        const ouverte = i >= 2 || (i === 1 && Math.random() >= 0.7);
+        if (ouverte) {
           const autre = await tirerAutreChose({
             conn, userId, avant, stadeDe, skinsPris, stuffPris, actionsPrises });
           if (autre) {
@@ -766,6 +816,73 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
       cri: age.cri?.label ?? null, rar: age.rar ?? null };
   }
 
+  /**
+   * Remettre une tenue ou une pièce d'équipement, hors booster.
+   *
+   * C'est la boutique qui appelle, avec **sa** connexion : la remise doit
+   * vivre dans la transaction qui marque la commande livrée, sinon un hoquet
+   * entre les deux perd la marchandise ou la donne deux fois.
+   *
+   * On tire parmi ce qui **manque** au joueur. Tout possédé : des écharpes, au
+   * tarif de la rareté — c'est déjà ce que fait un doublon de booster, et
+   * rendre une commande blanche serait le seul endroit du jeu où l'on paie
+   * pour rien.
+   */
+  async function offrir(conn, userId, type, combien = 1) {
+    const rendu = { skins: [], stuff: [], scarves: 0 };
+
+    for (let k = 0; k < combien; k++) {
+      if (type === 'skin') {
+        const [avant] = await conn.query(
+          `SELECT fanzzy_id, stage FROM user_fanzzy uf
+             JOIN user_skins us ON us.user_id = uf.user_id AND us.fanzzy_id = uf.fanzzy_id
+            WHERE uf.user_id = ? GROUP BY fanzzy_id, stage`, [userId]);
+        const [pris] = await conn.query(
+          `SELECT fanzzy_id, stage, skin_id FROM user_skins WHERE user_id = ?`, [userId]);
+        const dejaLa = new Set(pris.map((p) => `${p.fanzzy_id}:${p.stage}:${p.skin_id}`));
+
+        const places = [];
+        for (const f of avant) {
+          for (const sk of tenuesPubliees()) {
+            if (sk.id === 'base') continue;
+            if (!dejaLa.has(`${f.fanzzy_id}:${f.stage}:${sk.id}`)) {
+              places.push({ id: f.fanzzy_id, stade: f.stage, skin: sk.id });
+            }
+          }
+        }
+        if (!places.length) { rendu.scarves += SCARVES.rare; continue; }
+        const p = places[Math.floor(Math.random() * places.length)];
+        await conn.query(
+          `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, stage, skin_id)
+           VALUES (?, ?, ?, ?)`, [userId, p.id, p.stade, p.skin]);
+        rendu.skins.push(p);
+        continue;
+      }
+
+      if (type === 'stuff') {
+        const [ont] = await conn.query(
+          `SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [userId]);
+        const dejaLa = new Set(ont.map((s) => s.stuff_id));
+        const libres = STUFF.filter((s) => !dejaLa.has(s.id));
+        if (!libres.length) { rendu.scarves += SCARVES.rare; continue; }
+        const def = libres[Math.floor(Math.random() * libres.length)];
+        await conn.query(
+          `INSERT INTO user_stuff (user_id, stuff_id, copies) VALUES (?, ?, 1)
+           ON DUPLICATE KEY UPDATE copies = copies + 1`, [userId, def.id]);
+        rendu.stuff.push(def.id);
+        continue;
+      }
+
+      throw new Error('fanzzy.error.offre_inconnue');
+    }
+
+    if (rendu.scarves) {
+      await conn.query(`UPDATE user_wallet SET scarves = scarves + ? WHERE user_id = ?`,
+        [rendu.scarves, userId]);
+    }
+    return rendu;
+  }
+
   return { router, wallet, collection, stades, openPack, evolve, activeFanzzy,
-    personnageActif, fiche };
+    personnageActif, fiche, offrir };
 }

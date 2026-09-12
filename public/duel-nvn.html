@@ -26,7 +26,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 /* Réserve à droite pour le bouton de menu, qui flotte au-dessus de l'écran
    de jeu : sans elle il se pose sur ce que porte le coin. */
-.top{display:flex;align-items:center;justify-content:space-between;padding:14px 58px 6px 16px}
+/* Le dégagement vient de `nav.js` : voir la note dans `virage.html`. */
+.top{display:flex;align-items:center;justify-content:space-between;
+  padding:14px var(--tbf-haut-d,62px) 6px var(--tbf-haut-g,62px)}
 .top h1{font-family:var(--banner);font-size:20px;letter-spacing:.15em;margin:0}
 .top h1 small{display:block;font-size:8.5px;letter-spacing:.3em;opacity:.5;margin-top:3px;font-family:var(--ui)}
 h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;margin:20px 16px 9px}
@@ -78,7 +80,9 @@ h2 i{font-style:normal;opacity:.7}
 .jeu{flex:1;display:none;flex-direction:column;min-height:0}
 .jeu.on{display:flex}
 
-.score{display:flex;align-items:center;gap:10px;padding:12px 14px 8px;flex:none}
+/* Même dégagement : en duel aussi les deux boutons flottent sur cet en-tête. */
+.score{display:flex;align-items:center;gap:10px;flex:none;
+  padding:12px var(--tbf-haut-d,62px) 8px var(--tbf-haut-g,62px)}
 .score .camp{flex:1;min-width:0;text-align:center}
 .score .camp .nom{font-size:9px;letter-spacing:.16em;opacity:.5;font-family:var(--banner)}
 .score .camp .b{font-family:var(--banner);font-size:27px;line-height:1.05}
@@ -336,6 +340,8 @@ h2 i{font-style:normal;opacity:.7}
 <!-- Sans « defer » : le script en ligne ci-dessous lit FZART et TBF_ACTION. -->
 <script src="/fanzzy-art.js"></script>
 <script src="/action-art.js"></script>
+<!-- Le déroulé des dix gestes, partagé avec le Grand Virage. -->
+<script src="/geste.js"></script>
 <script>
 /* =======================================================================
    Duel N contre N.
@@ -371,13 +377,11 @@ const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
    dont deux écrans du même jeu finissent par ne plus dire pareil. */
 const famDe = (a) => window.TBF_ACTION.famDe(a);
 
-const LABEL_GESTE = { tempo:'TEMPO', mash:'MARTELAGE', hold:'ENDURANCE' };
-const AIDE_GESTE = {
-  tempo:'Tape sur chaque pulsation',
-  mash:'Tape le plus vite possible',
-  hold:'Garde le doigt appuyé',
-};
-const COULEUR_GESTE = { tempo:'#F5C33B', mash:'#3C82E8', hold:'#C2CAD6' };
+/* Les libellés des dix gestes viennent de `/geste.js`, avec leur déroulé :
+   un nom écrit ici et un autre là-bas finiraient par ne plus se ressembler. */
+const LABEL_GESTE = window.TBF_GESTE.LABEL;
+const AIDE_GESTE = window.TBF_GESTE.AIDE;
+const COULEUR_GESTE = window.TBF_GESTE.COULEUR;
 
 /** Chaque code du serveur a sa phrase : le joueur doit savoir quoi corriger. */
 const MESSAGES = {
@@ -782,7 +786,10 @@ function rendreDuel() {
   }
 
   const actif = (moi.fanzzy ?? []).find((f) => f.actif);
-  const geste = actif?.cri?.gest ?? 'tempo';
+  /* Le geste vient du serveur, qui le fait tourner d'un chant à l'autre. Le
+     lire sur le Fanzzy donnait toujours le même pendant cinq minutes — et
+     depuis que le serveur décide, ce serait en plus le mauvais. */
+  const geste = moi.geste ?? actif?.cri?.gest ?? 'tempo';
   $('chanterSous').textContent =
     `${actif?.cri?.label ?? ''} · ${LABEL_GESTE[geste] ?? geste}`;
   $('chanter').disabled = S.occupe || v.termine
@@ -1041,66 +1048,19 @@ function fermerGeste(taps) {
   return taps;
 }
 
+/**
+ * Le déroulé d'un geste vit dans `/geste.js`, partagé avec le Grand Virage.
+ *
+ * Il était écrit ici **et** là-bas : trois gestes, deux implémentations, deux
+ * décomptes, deux façons de fermer la fenêtre. Passer à dix gestes aurait
+ * voulu dire en écrire vingt, et corriger chaque défaut deux fois.
+ *
+ * Ce qui reste à cette page, c'est son balisage : elle dit où poser le titre
+ * et la zone de jeu, le fichier partagé dit ce qui s'y passe.
+ */
 function lancer(kind, cfg, resolve) {
-  const t0 = performance.now();
-  const taps = [];
-
-  if (kind === 'tempo') {
-    const g = cfg.tempo;
-    $('miniZone').innerHTML = `<div class="pad" id="pad"><div class="ring" id="ring"></div>
-      <div style="text-align:center"><div class="n" id="n">0</div>
-      <div class="s">SUR LE RYTHME</div></div></div>`;
-    let i = 0;
-    const iv = setInterval(() => {
-      const r = $('ring');
-      if (r) { r.classList.remove('beat'); void r.offsetWidth; r.classList.add('beat'); }
-      if (++i >= g.beats) { clearInterval(iv); setTimeout(() => resolve(fermerGeste(taps)), 420); }
-    }, g.interval);
-    $('pad').onpointerdown = () => {
-      taps.push(Math.round(performance.now() - t0));
-      $('n').textContent = taps.length;
-      $('pad').classList.add('hit');
-      setTimeout(() => $('pad')?.classList.remove('hit'), 80);
-    };
-
-  } else if (kind === 'mash') {
-    const g = cfg.mash;
-    $('miniZone').innerHTML = `<div class="pad" id="pad"><div style="text-align:center">
-      <div class="n" id="n">0</div><div class="s">SUR ${g.target} FRAPPES</div></div></div>`;
-    $('pad').onpointerdown = () => {
-      taps.push(Math.round(performance.now() - t0));
-      $('n').textContent = taps.length;
-    };
-    setTimeout(() => resolve(fermerGeste(taps)), g.ms);
-
-  } else {
-    const g = cfg.hold;
-    $('miniZone').innerHTML = `<div class="pad" id="pad"><div style="text-align:center">
-      <div class="n" id="n">0%</div><div class="s">NE LÂCHE PAS</div></div></div>`;
-    const pad = $('pad');
-    let debut = null;
-    const boucle = () => {
-      if (debut !== null) {
-        let tenu = performance.now() - t0 - debut;
-        for (let i = 0; i + 1 < taps.length; i += 2) tenu += taps[i + 1] - taps[i];
-        $('n').textContent = `${Math.min(100, Math.round((tenu / g.need) * 100))}%`;
-      }
-      if ($('mini').classList.contains('on')) requestAnimationFrame(boucle);
-    };
-    pad.onpointerdown = () => {
-      if (debut === null) { debut = performance.now() - t0; taps.push(Math.round(debut)); }
-    };
-    pad.onpointerup = pad.onpointercancel = () => {
-      if (debut === null) return;
-      taps.push(Math.round(performance.now() - t0));
-      debut = null;
-    };
-    requestAnimationFrame(boucle);
-    setTimeout(() => {
-      if (debut !== null) taps.push(Math.round(performance.now() - t0));
-      resolve(fermerGeste(taps));
-    }, g.need + 400);
-  }
+  window.TBF_GESTE.jouer(kind, cfg, { zone: $('miniZone') })
+    .then((taps) => resolve(fermerGeste(taps)));
 }
 
 /* ------------------------------------------------------------ gestes UI */
@@ -1109,7 +1069,7 @@ $('chanter').addEventListener('click', async () => {
   const moi = S.vue?.moi;
   if (!moi || S.occupe) return;
   const actif = (moi.fanzzy ?? []).find((f) => f.actif);
-  const kind = actif?.cri?.gest ?? 'tempo';
+  const kind = S.vue?.moi?.geste ?? actif?.cri?.gest ?? 'tempo';
   const cfg = moi.gestes;
   if (!cfg) return toast('Le serveur n\u2019a pas envoyé le barème du geste.');
 

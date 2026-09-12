@@ -221,13 +221,21 @@ export function createFootballStore(pool) {
     },
 
     async fixturesOfTeam(teamId, { past = 5, next = 5 } = {}) {
-      /* `elapsed_extra` et `polled_at` : la page fait courir la minute
-         elle-même à partir de l'instant du relevé. Sans eux, elle ne peut
-         qu'afficher la minute telle qu'elle a été lue — figée jusqu'au
-         prochain passage du relevé, et sans jamais pouvoir dire « 90+3 ». */
+      /* `elapsed_extra` et `luA` : la page fait courir la minute elle-même à
+         partir de l'instant du relevé. Sans eux, elle ne peut qu'afficher la
+         minute telle qu'elle a été lue — figée jusqu'au prochain passage du
+         relevé, et sans jamais pouvoir dire « 90+3 ».
+
+         `luA` est calculé **en SQL**, et `polled_at` ne sort plus d'ici.
+         polled_at est écrit par NOW(3), donc dans le fuseau de la session
+         MySQL, alors que le pilote lit en UTC : la page recevait un instant
+         deux heures dans le futur, et l'horloge, qui refuse de compter à
+         l'envers, restait clouée sur la minute du relevé. Même panne que dans
+         le Virage, même colonne, même remède. */
       const sel = `f.id, f.league_id, f.season, f.round, f.home_id, f.away_id,
                    f.home_goals, f.away_goals, f.status_short, f.elapsed,
-                   f.elapsed_extra, f.polled_at, f.kickoff_at,
+                   f.elapsed_extra, UNIX_TIMESTAMP(f.polled_at) * 1000 AS luA,
+                   f.kickoff_at,
                    h.name AS home_name, h.logo AS home_logo,
                    a.name AS away_name, a.logo AS away_logo,
                    l.name AS league_name, l.logo AS league_logo`;

@@ -4,11 +4,25 @@
  * événements. C'est ce qui permet de tester chaque effet un par un.
  */
 import { DuelNvN, RULES } from '../src/server/nvn/engine.js';
+import { GESTES, GESTURES, MOTIFS, grade, instantsDuMotif }
+  from '../src/server/ferveur/gestures.js';
 import { ACTION_BY_ID } from '../src/shared/duel/actions.js';
 import { BY_ID } from '../src/shared/fanzzy/dex.js';
 import { combine } from '../src/shared/fanzzy/inventaire.js';
 
 let failures = 0;
+
+/**
+ * Impose le geste d'un joueur, et rend son identifiant.
+ *
+ * Le duel fait **tourner** le geste d'un chant à l'autre depuis qu'il en
+ * compte dix : le client ne le choisit plus, le serveur le donne. Ces
+ * contrôles-ci portent sur un geste précis — le tempo, presque toujours — et
+ * doivent donc l'imposer au lieu de l'annoncer dans un paramètre que le
+ * moteur n'écoute plus. Sans ça, ils noteraient des frappes de tempo contre
+ * le geste du moment, et ils échoueraient un chant sur deux.
+ */
+const impose = (duel, id, geste) => { duel.joueurs.get(id).geste = geste; return id; };
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
 const jitter = (t, a = 25) => Math.max(0, t + (Math.random() * a * 2 - a));
 const tempoParfait = () => Array.from({ length: 8 }, (_, i) => jitter(i * 560, 30));
@@ -64,7 +78,7 @@ check('corde au centre', v.rope === 0);
 
 d.joueurs.get('0-0').breath = 100;
 const memeGeste = tempoParfait();
-let ev = d.chanter('0-0', { geste:'tempo', taps: memeGeste }, t);
+let ev = d.chanter(impose(d, '0-0', 'tempo'), { taps: memeGeste }, t);
 check('chant noté par le serveur', ev[0].t === 'chant' && ev[0].quality > 0.6);
 check('la corde penche du bon côté', d.rope < 0);
 check('le souffle est débité', d.vue('0-0').moi.breath < 100);
@@ -78,7 +92,7 @@ d.joueurs.get('1-0').breath = 100;
 // s'écartait parfois de plus de 1. L'échec tombait environ une fois sur dix
 // et n'avait rien à voir avec ce que le test vérifie — que la tribune adverse
 // pousse bien en sens inverse. À gestes identiques, l'annulation est exacte.
-d.chanter('1-0', { geste:'tempo', taps: memeGeste }, t);
+d.chanter(impose(d, '1-0', 'tempo'), { taps: memeGeste }, t);
 check('l\u2019adverse pousse dans l\u2019autre sens', Math.abs(d.rope) < 1);
 
 // Souffle rétabli : sinon le refus viendrait du manque de souffle, pas de
@@ -87,7 +101,7 @@ d.joueurs.get('0-0').breath = 100;
 // Vingt frappes à 20 ms d'écart : sous le plafond de frappes, mais bien
 // au-dessus de ce qu'un doigt humain peut faire.
 try {
-  d.chanter('0-0', { geste:'tempo', taps: Array.from({ length:20 }, (_, i) => i * 20) }, t);
+  d.chanter(impose(d, '0-0', 'tempo'), { taps: Array.from({ length:20 }, (_, i) => i * 20) }, t);
   check('frappes inhumaines rejetées', false);
 } catch (e) {
   check(`frappes inhumaines rejetées (${e.code})`, e.code === 'ferveur.error.taps_too_fast');
@@ -96,7 +110,7 @@ try {
 // Et le plafond de frappes, qui est un contrôle distinct.
 d.joueurs.get('0-0').breath = 100;
 try {
-  d.chanter('0-0', { geste:'tempo', taps: Array.from({ length:40 }, (_, i) => i * 90) }, t);
+  d.chanter(impose(d, '0-0', 'tempo'), { taps: Array.from({ length:40 }, (_, i) => i * 90) }, t);
   check('plafond de frappes', false);
 } catch (e) {
   check('trop de frappes rejeté', e.code === 'ferveur.error.too_many_taps');
@@ -125,11 +139,11 @@ d = duel(1); t = 1_000_000;
 d.joueurs.get('0-0').breath = 100; d.joueurs.get('1-0').breath = 100;
 d.joueurs.get('0-0').main = ['a-silence','a-vol','a-bache','a-thermos','a-arbitre'];
 d.jouer('0-0', 'a-silence', t);
-try { d.chanter('1-0', { geste:'tempo', taps: tempoParfait() }, t + 500); check('silence sans effet', false); }
+try { d.chanter(impose(d, '1-0', 'tempo'), { taps: tempoParfait() }, t + 500); check('silence sans effet', false); }
 catch (e) { check('le silence coupe le chant adverse', e.code.includes('silenced')); }
 d.tick(t + 5000);
 d.joueurs.get('1-0').breath = 100;
-ev = d.chanter('1-0', { geste:'tempo', taps: tempoParfait() }, t + 5000);
+ev = d.chanter(impose(d, '1-0', 'tempo'), { taps: tempoParfait() }, t + 5000);
 check('le silence s\u2019arrête bien après 4 s', ev[0].t === 'chant');
 
 const avant = d.joueurs.get('1-0').breath;
@@ -193,8 +207,8 @@ check('mosaïque compte les coéquipiers qui ont chanté',
 
 const solo = duel(1); const cinq = duel(5);
 for (const D of [solo, cinq]) for (const j of D.joueurs.values()) j.breath = 100;
-solo.chanter('0-0', { geste:'tempo', taps: tempoParfait() }, t);
-for (let i = 0; i < 5; i++) cinq.chanter(`0-${i}`, { geste:'tempo', taps: tempoParfait() }, t);
+solo.chanter(impose(solo, '0-0', 'tempo'), { taps: tempoParfait() }, t);
+for (let i = 0; i < 5; i++) cinq.chanter(impose(cinq, `0-${i}`, 'tempo'), { taps: tempoParfait() }, t);
 check('cinq chanteurs ne poussent pas cinq fois plus',
   Math.abs(Math.abs(cinq.rope) - Math.abs(solo.rope)) < Math.abs(solo.rope) * 0.35);
 
@@ -204,7 +218,7 @@ d = duel(1, 'classe'); t = 1_000_000;
 d.goals = [2, 0];
 d.rope = -RULES.goalAt + 1;
 d.joueurs.get('0-0').breath = 100;
-ev = d.chanter('0-0', { geste:'tempo', taps: tempoParfait() }, t);
+ev = d.chanter(impose(d, '0-0', 'tempo'), { taps: tempoParfait() }, t);
 check('troisième but : la partie s\u2019arrête', d.termine && d.vainqueur === 0);
 check('le duel classé est signalé comme tel',
   ev.some((e) => e.t === 'over' && e.classement === true));
@@ -375,6 +389,102 @@ check('un entraînement ne compte pas',
     vue.moi.fanzzy[0].stade === 1 && vue.moi.fanzzy[0].ages?.length === 3);
   check('et un personnage sans évolution n’en annonce qu’un',
     vue.moi.fanzzy[1].ages?.length === 1);
+}
+
+/* ============================ dix gestes, et ils tournent ================
+
+   Le duel proposait **toujours** le même geste : celui du cri du Fanzzy,
+   pendant les cinq minutes. Ce n'est pas le nombre de gestes qui rendait le
+   jeu répétitif, c'est ça. Ces contrôles portent donc sur la rotation autant
+   que sur la notation.
+   ===================================================================== */
+{
+  const solo2 = duel(1);
+  const j = solo2.joueurs.get('0-0');
+  const sien = j.fanzzy[0]?.cri?.gest ?? 'tempo';
+
+  check('le duel annonce le geste du prochain chant',
+    typeof solo2.vue('0-0').moi.geste === 'string');
+  check('et il commence par celui du Fanzzy', solo2.vue('0-0').moi.geste === sien);
+
+  /* On enchaîne des chants et on regarde ce que le serveur propose. Le geste
+     du joueur doit revenir souvent — c'est sa spécialité, ses modificateurs
+     ne paient que là — mais il ne doit pas être le seul. */
+  const vus = [];
+  for (let i = 0; i < 12; i++) {
+    const g = solo2.joueurs.get('0-0').geste;
+    vus.push(g);
+    solo2.joueurs.get('0-0').breath = 100;
+    // Des frappes quelconques : ce qu'on mesure ici, c'est la rotation.
+    try { solo2.chanter('0-0', { taps: [0, 200, 500, 900] }, t + i * 100); } catch { /* peu importe */ }
+  }
+  const distincts = new Set(vus);
+  check('le geste change d’un chant à l’autre', distincts.size >= 4);
+  if (distincts.size < 4) console.log('        vus :', vus.join(' '));
+  check('et celui du Fanzzy revient régulièrement',
+    vus.filter((g) => g === sien).length >= 5);
+  check('tous les gestes proposés sont connus', vus.every((g) => GESTES.includes(g)));
+
+  /* Le client ne choisit plus son geste. C'est le point : sinon il jouerait
+     toujours celui qu'il réussit, et la rotation ne servirait à rien. */
+  const avant = solo2.joueurs.get('0-0').geste;
+  solo2.joueurs.get('0-0').breath = 100;
+  solo2.joueurs.get('0-0').geste = 'tenue';
+  const ev = solo2.chanter('0-0', { geste: 'mash', taps: [0, 3000] }, t + 9000);
+  check('le geste annoncé par le client est ignoré',
+    ev.find((e) => e.t === 'chant') && avant !== null);
+  check('c’est le geste du serveur qui est noté',
+    solo2.joueurs.get('0-0').chants > 0);
+}
+
+/* -------------------------------------------- l'écho, motif après motif */
+{
+  /* L'écho est le seul geste qui change à chaque chant : c'est lui qui porte
+     le plus de rejouabilité. Le serveur dit quel motif jouer, et note contre
+     celui-là — sans quoi le joueur choisirait le plus facile. */
+  const e = duel(1);
+  const j = e.joueurs.get('0-0');
+
+  const motifs = new Set();
+  for (let i = 0; i < 7; i++) {
+    motifs.add(e.vue('0-0').moi.gestes.echo.motif);
+    j.breath = 100;
+    j.geste = 'echo';
+    e.chanter('0-0', { taps: e.vue('0-0').moi.gestes.echo.instants }, t + i * 50);
+  }
+  check('le motif de l’écho change d’un chant à l’autre', motifs.size >= 5);
+
+  /* Et tous les motifs valent la même durée : sinon, attendre le plus facile
+     serait une tactique. */
+  const durees = new Set(MOTIFS.map((m) => m.reduce((a, b) => a + b, 0)));
+  check('tous les motifs d’écho ont la même durée', durees.size === 1);
+
+  /* Jouer le motif qu'on a reçu paie ; en jouer un autre, non. */
+  j.breath = 100; j.geste = 'echo'; j.motif = 0;
+  const bon = e.chanter('0-0', { taps: instantsDuMotif(MOTIFS[0]) }, t + 8000)
+    .find((x) => x.t === 'chant')?.quality ?? 0;
+  j.breath = 100; j.geste = 'echo'; j.motif = 0;
+  const faux = e.chanter('0-0', { taps: instantsDuMotif(MOTIFS[3]) }, t + 9000)
+    .find((x) => x.t === 'chant')?.quality ?? 0;
+  check('refaire le motif reçu paie', bon > 0.9);
+  check('et en refaire un autre paie moins', faux < bon - 0.2);
+  if (!(faux < bon - 0.2)) console.log(`        bon ${bon} · faux ${faux}`);
+}
+
+/* ------------------------------- les gestes où en faire trop coûte cher */
+{
+  /* `tenue` est le seul geste du jeu où dépasser fait tout perdre, et
+     `retenue` le seul où marteler est puni. Ce sont les deux qui demandent un
+     vrai choix, et donc les deux à protéger. */
+  check('le sang-froid paie près de la limite',
+    grade('tenue', [0, GESTURES.tenue.limite - 150]) > 0.9);
+  check('et ne paie plus du tout au-delà',
+    grade('tenue', [0, GESTURES.tenue.limite + 50]) === 0);
+  check('la mesure paie au nombre exact',
+    grade('retenue', Array.from({ length: GESTURES.retenue.exact },
+      (_, i) => i * 300 + (i % 4) * 11)) > 0.9);
+  check('et marteler ne la paie pas',
+    grade('retenue', Array.from({ length: 26 }, (_, i) => i * 150 + (i % 4) * 13)) < 0.2);
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);

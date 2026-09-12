@@ -22,13 +22,24 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* La réserve à droite est celle du bouton de menu, qui flotte au-dessus de
    l'écran depuis que la barre du bas a disparu. Sans elle, il se pose sur le
    nom du club de droite — et c'est justement le sien. */
-.hud{display:flex;align-items:center;gap:9px;padding:10px 58px 4px 13px;flex:none;z-index:5}
+/* Le dégagement des deux boutons flottants vient de `nav.js` — une seule
+   déclaration pour les deux écrans de jeu. Il était écrit 58px ici et 58px
+   dans le duel, et le blason du club de droite passait quand même à six pixels
+   du bouton de menu : de loin, il avait l'air posé dessous. */
+.hud{display:flex;align-items:center;gap:9px;flex:none;z-index:5;
+  padding:10px var(--tbf-haut-d,62px) 4px var(--tbf-haut-g,62px)}
 .club{flex:1;min-width:0;display:flex;align-items:center;gap:7px}
 .club.me{flex-direction:row-reverse;text-align:right}
 .club img{width:26px;height:26px;object-fit:contain;flex:none}
 .club b{font-family:var(--banner);font-size:13px;display:block;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
-.club small{font-size:9.5px;opacity:.5;letter-spacing:.1em}
+/* `nowrap` : le dégagement des deux boutons a pris seize pixels à l'en-tête, et
+   « TA TRIBUNE » s'est cassé en deux lignes, ce qui décale tout le bandeau.
+   `min-width:0` sur le conteneur du texte, sinon un bloc flex refuse de
+   descendre sous la largeur de son contenu et l'ellipse ne sert à rien. */
+.club>div{min-width:0}
+.club small{font-size:9.5px;opacity:.5;letter-spacing:.1em;display:block;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .score{font-family:var(--banner);font-size:24px;flex:none;min-width:64px;text-align:center;line-height:1}
 .score small{display:block;font-size:8.5px;letter-spacing:.16em;opacity:.5;font-family:var(--ui);margin-top:3px}
 .score.surge{color:var(--projo);animation:pulse 1s infinite}
@@ -173,11 +184,27 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    écraserait au lieu de les remonter. */
 .hand{flex:none;display:flex;gap:6px;padding:4px 11px calc(12px + env(safe-area-inset-bottom));
   height:104px;margin-bottom:calc(var(--nav-h,62px) * .45)}
-.card{flex:1;border-radius:9px;padding:8px 7px;background:rgba(0,0,0,.34);position:relative;cursor:pointer;
+/* Le dessin du chant, en fond. Il dit **le geste** — un supporter qui tape en
+   rythme, un autre qui retient son souffle — parce que c'est ce que le joueur
+   va devoir faire dans les quatre secondes qui suivent. La rangée était douze
+   rectangles de texte : on choisissait « La cadence » plutôt que « Les salves »
+   en lisant deux mots de huit pixels, en plein match, c'est-à-dire jamais.
+
+   Le voile sombre n'est pas décoratif : le nom, le coût et la poussée s'écrivent
+   par-dessus, et sans lui ils deviennent illisibles sur les images claires. */
+.card .fond{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  border-radius:9px 9px 0 0;opacity:.5;z-index:0}
+.card::after{content:'';position:absolute;inset:0;border-radius:9px;z-index:1;
+  background:linear-gradient(175deg,rgba(5,7,10,.82),rgba(5,7,10,.45) 55%,rgba(5,7,10,.86))}
+.card>*{position:relative;z-index:2}
+.card{flex:1;border-radius:9px;padding:8px 7px;background:rgba(0,0,0,.34);position:relative;cursor:pointer;overflow:hidden;
   border:1px solid rgba(242,238,228,.14);border-top:3px solid var(--c);display:flex;flex-direction:column;gap:3px}
 .card:active{transform:translateY(3px) scale(.98)}
 .card.dim{opacity:.32}
-.card b{font-family:var(--banner);font-size:11.5px;line-height:1.1}
+/* `padding-right` : le coût est posé en absolu dans le coin, et le nom courait
+   dessous. Tant que les cartes portaient leur clé — « mur », « reprise » — le
+   texte était trop court pour y arriver ; « À perdre haleine » l'a montré. */
+.card b{font-family:var(--banner);font-size:11.5px;line-height:1.1;padding-right:15px}
 .card .g{font-size:8px;letter-spacing:.12em;opacity:.5;text-transform:uppercase}
 .card .p{font-family:var(--banner);font-size:20px;color:var(--c);margin-top:auto;line-height:1}
 .card .c{position:absolute;top:6px;right:7px;font-size:10px;opacity:.55;font-family:var(--banner)}
@@ -241,7 +268,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 @keyframes cd{from{opacity:0;transform:scale(1.5)}60%{opacity:1}to{opacity:0;transform:scale(.85)}}
 .verdict{font-family:var(--banner);font-size:16px;letter-spacing:.12em;height:20px}
 
-.veil{position:absolute;inset:0;background:rgba(5,7,10,.96);z-index:30;display:none;flex-direction:column;
+/* Opaque, et pas à 96 % : derrière le voile il y a l'en-tête du jeu, avec ses
+   blasons vides et son « 0 – 0 » d'avant l'entrée. Quatre pour cent suffisaient
+   à le laisser transparaître, et l'écran de choix paraissait sale. */
+.veil{position:absolute;inset:0;background:#05070A;z-index:30;display:none;flex-direction:column;
   align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;overflow-y:auto}
 .veil.on{display:flex}
 .veil h1{font-family:var(--banner);font-size:24px;letter-spacing:.1em;margin:0}
@@ -388,6 +418,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <script src="/action-art.js"></script>
 <!-- Le stade et la lumière de ses tribunes. -->
 <script src="/stade-art.js"></script>
+<!-- Le déroulé des dix gestes, partagé avec le duel. -->
+<script src="/geste.js"></script>
+<!-- Le dessin des douze chants, posé derrière leur nom. -->
+<script src="/chant-art.js"></script>
 <script src="/fanzzy-etats.js"></script>
 <script src="/fanzzy-scene.js"></script>
 <script>
@@ -404,13 +438,12 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
   (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 const buzz = (p) => { try { navigator.vibrate?.(p); } catch {} };
-const COLORS = { tempo:'#F5C33B', mash:'#3C82E8', hold:'#C2CAD6' };
-const LABEL = { tempo:'TEMPO', mash:'MARTELAGE', hold:'ENDURANCE' };
-const HINT = {
-  tempo:'Tape sur chaque pulsation',
-  mash:'Tape le plus vite possible',
-  hold:'Garde le doigt appuyé',
-};
+/* Les noms, les aides et les couleurs des dix gestes viennent de `/geste.js`,
+   avec leur déroulé. Ils étaient écrits ici **et** dans le duel : trois gestes,
+   deux tables, et deux occasions de n'en corriger qu'une. */
+const COLORS = window.TBF_GESTE.COULEUR;
+const LABEL = window.TBF_GESTE.LABEL;
+const HINT = window.TBF_GESTE.AIDE;
 const GOAL_AT = 400;
 
 let socket = null, S = null, busy = false;
@@ -429,9 +462,20 @@ function renderStatic() {
   $('clubFoe').querySelector('b').textContent = foe.n;
   $('clubFoe').querySelector('img').src = foe.l ?? '';
 
+  renderChants();
+}
+
+/* La rangée des chants, à part : elle ne se redessine plus seulement à
+   l'entrée. Le répertoire tourne toutes les dix minutes de match, et c'est le
+   serveur qui l'annonce — voir `virage:repertoire`.
+
+   Le nom affiché est `c.nom` et non `c.id` : la carte portait sa clé, et la
+   tribune lisait « onetaitla ». */
+function renderChants() {
   $('hand').innerHTML = S.cards.map((c) => `
     <div class="card" data-card="${c.id}" style="--c:${COLORS[c.gest]}">
-      <span class="c">${c.cost}</span><b>${c.id}</b>
+      ${window.TBF_CHANT ? window.TBF_CHANT.illustration(c.id) : ''}
+      <span class="c">${c.cost}</span><b>${c.nom ?? c.id}</b>
       <span class="g">${LABEL[c.gest]}</span><span class="p">${c.power}</span>
     </div>`).join('');
 }
@@ -732,6 +776,7 @@ function fail(code) {
     'ferveur.error.condition_not_met':'Les conditions de cette carte ne sont pas réunies',
     'ferveur.error.evolution_locked':'L\u2019âge suivant de ton Fanzzy n\u2019est pas débloqué',
     'ferveur.error.not_in_virage':'Tu n\u2019es plus dans la tribune',
+    'ferveur.error.chant_hors_repertoire':'Ce chant n\u2019est plus au r\u00e9pertoire',
   })[code] ?? 'Refusé par le serveur';
   e.className = 'err on';
   clearTimeout(e._t); e._t = setTimeout(() => { e.className = 'err'; }, 2600);
@@ -766,67 +811,19 @@ function closeMini(taps) {
   return taps;
 }
 
+/**
+ * Le déroulé d'un geste vit dans `/geste.js`, partagé avec le duel.
+ *
+ * Il était écrit ici **et** là-bas. Ce qui reste à cette page, c'est son
+ * balisage : elle dit où poser la zone de jeu, le fichier partagé dit ce qui
+ * s'y passe. Et surtout, aucune durée n'est calculée ici — elles viennent
+ * toutes de `S.you.gestes`, que le serveur remplit avec les modificateurs du
+ * porteur. Les avoir écrites en dur a déjà coûté cher : un joueur équipé
+ * tapait juste sur ce qu'on lui montrait et récoltait 0,36 au lieu de 0,99.
+ */
 function run(card, resolve) {
-  const t0 = performance.now();
-  const taps = [];
-
-  /* Les durées viennent du serveur, jamais d'ici.
-     Elles étaient écrites en dur — pulsation à 560 ms, martelage à 3 s — alors
-     que la notation applique les modificateurs du Fanzzy et de l'équipement.
-     Un porteur de Jumelles voyait donc un rythme et était jugé sur un autre :
-     il tapait juste sur ce qu'on lui montrait et récoltait 0,36 au lieu de
-     0,99. Plus sa carte était rare, plus il était puni. */
-  const g = S?.you?.gestes;
-  if (card.gest === 'tempo') {
-    $('miniZone').innerHTML = `<div class="pad" id="pad"><div class="ring" id="ring"></div>
-      <div style="text-align:center"><div class="n" id="n">0</div><div class="s">SUR LE RYTHME</div></div></div>`;
-    let i = 0;
-    const battements = g?.tempo?.beats ?? 8;
-    const iv = setInterval(() => {
-      const r = $('ring');
-      if (r) { r.classList.remove('beat'); void r.offsetWidth; r.classList.add('beat'); }
-      buzz(12);
-      if (++i >= battements) { clearInterval(iv); setTimeout(() => resolve(closeMini(taps)), 420); }
-    }, g?.tempo?.interval ?? 560);
-    $('pad').onpointerdown = () => {
-      taps.push(Math.round(performance.now() - t0));
-      $('n').textContent = taps.length;
-      $('pad').classList.add('hit'); setTimeout(() => $('pad')?.classList.remove('hit'), 80);
-      buzz(14);
-    };
-  } else if (card.gest === 'mash') {
-    $('miniZone').innerHTML = `<div class="pad" id="pad"><div style="text-align:center">
-      <div class="n" id="n">0</div><div class="s">FRAPPES</div></div></div>`;
-    $('pad').onpointerdown = () => {
-      taps.push(Math.round(performance.now() - t0));
-      $('n').textContent = taps.length;
-      if (taps.length % 4 === 0) buzz(9);
-    };
-    setTimeout(() => resolve(closeMini(taps)), g?.mash?.ms ?? 3000);
-  } else {
-    $('miniZone').innerHTML = `<div class="pad" id="pad"><div style="text-align:center">
-      <div class="n" id="n">0%</div><div class="s">NE LÂCHE PAS</div></div></div>`;
-    const pad = $('pad');
-    let down = null;
-    const raf = () => {
-      if (down !== null) {
-        const held = performance.now() - t0 - down + taps.filter((_, i) => i % 2 === 1)
-          .reduce((a, v, i) => a + (v - taps[i * 2]), 0);
-        $('n').textContent = `${Math.min(100, Math.round((held / (g?.hold?.need ?? 3200)) * 100))}%`;
-      }
-      if ($('mini').classList.contains('on')) requestAnimationFrame(raf);
-    };
-    pad.onpointerdown = () => { if (down === null) { down = performance.now() - t0; taps.push(Math.round(down)); buzz(18); } };
-    pad.onpointerup = pad.onpointercancel = () => {
-      if (down === null) return;
-      taps.push(Math.round(performance.now() - t0)); down = null;
-    };
-    requestAnimationFrame(raf);
-    setTimeout(() => {
-      if (down !== null) taps.push(Math.round(performance.now() - t0));
-      resolve(closeMini(taps));
-    }, (g?.hold?.need ?? 3200) + 400);
-  }
+  window.TBF_GESTE.jouer(card.gest, S?.you?.gestes, { zone: $('miniZone') })
+    .then((taps) => resolve(closeMini(taps)));
 }
 
 $('hand').addEventListener('pointerdown', async (e) => {
@@ -1146,6 +1143,21 @@ function connect() {
   /* Et l'état personnel qui en découle : la main, le souffle, les recharges.
      Séparé des événements parce qu'il n'appartient qu'à une personne — la
      salle n'a pas à connaître la main de chacun. */
+  /* Le répertoire a tourné : cinq autres chants, et un autre motif d'écho.
+     La *fenêtre* de l'écho ne vient pas de ce message — elle est personnelle
+     (Métronome, équipement) et la page tient déjà la sienne ; seul le motif
+     appartient à la tribune, qui le chante ensemble. */
+  socket.on('virage:repertoire', ({ cards, echo } = {}) => {
+    if (!S || !cards) return;
+    S.cards = cards;
+    if (echo && S.you?.gestes?.echo) {
+      S.you.gestes.echo = { ...S.you.gestes.echo, motif: echo.motif,
+                            instants: echo.instants };
+    }
+    renderChants();
+    render();
+  });
+
   socket.on('virage:vous', (you) => {
     if (!S || !you) return;
     S.you = { ...S.you, ...you };
@@ -1182,15 +1194,19 @@ function souvenir(g) {
   }
 
   let matchs = [];
-  try {
-    const r = await fetch('/api/virage/live', { credentials:'same-origin' });
-    if (r.status === 401) { location.href = '/compte'; return; }
-    const rep = await r.json();
-    matchs = rep.matchs ?? [];
-    // La part de ferveur d'un neutre vient du serveur : la recopier ici ferait
-    // une seconde vérité, qui finirait par annoncer 50 % là où il en donne 40.
-    FERVEUR_NEUTRE = rep.ferveurNeutre ?? FERVEUR_NEUTRE;
-  } catch { /* serveur injoignable */ }
+  const lire = async () => {
+    try {
+      const r = await fetch('/api/virage/live', { credentials:'same-origin' });
+      if (r.status === 401) { location.href = '/compte'; return false; }
+      const rep = await r.json();
+      matchs = rep.matchs ?? [];
+      // La part de ferveur d'un neutre vient du serveur : la recopier ici ferait
+      // une seconde vérité, qui finirait par annoncer 50 % là où il en donne 40.
+      FERVEUR_NEUTRE = rep.ferveurNeutre ?? FERVEUR_NEUTRE;
+      return true;
+    } catch { return false; }    // serveur injoignable : on garde la liste
+  };
+  await lire();
 
   /* Le score du match, avant d'entrer.
      L'écran de choix donnait le nom des deux clubs, la compétition et la
@@ -1205,6 +1221,14 @@ function souvenir(g) {
      moitié. Le virage n'affichait que les matchs de ses clubs : un soir de
      Coupe d'Europe avec huit rencontres en direct, il en montrait une, et le
      joueur en concluait qu'il n'y avait rien à faire. */
+  /* La minute d'un match de la liste, par la **même** horloge que partout
+     ailleurs. Elle affichait `m.elapsed` tel quel : la minute du moment où le
+     serveur avait interrogé l'API, figée jusqu'au rechargement de la page.
+     Une rencontre y restait à la 71e pendant vingt minutes. */
+  const minuteDe = (m) => window.TBF_HORLOGE.texte(
+    { statut: m.status_short, minute: m.elapsed, extra: m.elapsed_extra, vuA: m.luA },
+    { HT: 'MT', BT: 'PAUSE', INT: 'INTERROMPU' }) || (m.elapsed ? m.elapsed + "'" : 'BIENTÔT');
+
   const carte = (m) => {
     const joue = m.home_goals != null && m.away_goals != null;
     return `<div class="match ${m.open ? '' : 'off'} ${m.mien ? '' : 'ailleurs'}"
@@ -1215,23 +1239,39 @@ function souvenir(g) {
       <img src="${esc(m.away_logo ?? '')}" alt="">
       <span class="st">
         ${joue ? `<b class="sc">${m.home_goals} – ${m.away_goals}</b>` : ''}
-        ${m.open ? `<i>${m.elapsed ? m.elapsed + "'" : 'BIENTÔT'}</i>` : ''}
+        ${m.open ? `<i>${minuteDe(m)}</i>` : ''}
       </span>
     </div>`;
   };
 
-  const miens = matchs.filter((m) => m.mien);
-  const autres = matchs.filter((m) => !m.mien && m.open);
-  const part = Math.round((FERVEUR_NEUTRE ?? 0.5) * 100);
+  const peindre = () => {
+    const miens = matchs.filter((m) => m.mien);
+    const autres = matchs.filter((m) => !m.mien && m.open);
+    const part = Math.round((FERVEUR_NEUTRE ?? 0.5) * 100);
+    $('matchs').innerHTML = (matchs.length ? [
+      miens.length ? `<div class="rubrique">TES CLUBS</div>${miens.map(carte).join('')}` : '',
+      autres.length ? `<div class="rubrique">AILLEURS EN DIRECT
+        <small>tu choisis ton camp · ferveur à ${part} %</small></div>${autres.map(carte).join('')}` : '',
+    ].join('') : '')
+      || `<p>Aucun match en direct pour l’instant.<br>
+          <a href="/equipes" style="color:var(--projo)">Suis un club</a>
+          pour être prévenu quand le tien joue.</p>`;
+  };
+  peindre();
 
-  $('matchs').innerHTML = (matchs.length ? [
-    miens.length ? `<div class="rubrique">TES CLUBS</div>${miens.map(carte).join('')}` : '',
-    autres.length ? `<div class="rubrique">AILLEURS EN DIRECT
-      <small>tu choisis ton camp · ferveur à ${part} %</small></div>${autres.map(carte).join('')}` : '',
-  ].join('') : '')
-    || `<p>Aucun match en direct pour l’instant.<br>
-        <a href="/equipes" style="color:var(--projo)">Suis un club</a>
-        pour être prévenu quand le tien joue.</p>`;
+  /* L'écran de choix vit aussi longtemps qu'un match — on peut l'ouvrir à la
+     vingtième minute et entrer à la soixante-dixième. La liste était lue une
+     fois, au chargement : le score et la minute y restaient ceux de l'arrivée,
+     et l'on choisissait d'entrer dans un virage sur un 0–0 vieux d'une heure.
+
+     On ne repeint pas pendant qu'un camp est proposé : la carte est dépliée
+     sous le doigt du joueur, et la refaire sous lui est pire qu'une minute en
+     retard. */
+  setInterval(async () => {
+    if (S) return;                                       // il est dans la tribune
+    if ($('matchs').querySelector('.camps')) return;     // un choix est ouvert
+    if (await lire()) peindre();
+  }, 30_000);
 
   /* Entrer.
      Chez soi, on entre directement — le camp est déjà décidé par le club

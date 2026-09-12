@@ -132,6 +132,30 @@ export const ACTIONS = [
       + 'Son équipement le suit.',
     effet: { type: 'evolve' }, condition: { evolution: true } },
 
+  /* -------------------------------------------------- la main elle-même
+
+     Aucune carte ne touchait à la pioche. C'était un axe entier absent : le
+     deck n'était pas une ressource qu'on pilote, c'était une file d'attente
+     qu'on subit. Ces deux-là répondent aux deux seules raisons pour
+     lesquelles on reste bloqué — une main qui ne sert à rien, et des cartes
+     qui se rechargent toutes en même temps. */
+
+  { id: 'a-relais', nom: 'Changement de chant', fam: 'souffle', rar: 'rare', cost: 20, cd: 35,
+    texte: 'Défausse ta main et reprends-en cinq. Ce que tu jettes revient dans la pioche.',
+    effet: { type: 'refill_hand' } },
+
+  { id: 'a-souffleneuf', nom: 'Nouveau souffle', fam: 'souffle', rar: 'legendaire', cost: 38, cd: 75,
+    texte: 'Toutes tes cartes redeviennent jouables sur-le-champ : plus aucune recharge.',
+    effet: { type: 'clear_cooldowns' } },
+
+  /* Le différé. Tout le reste du jeu est instantané, donc rien n'est
+     anticipable — et sans anticipation il n'y a pas d'interaction, seulement
+     des nombres qui s'additionnent. Celle-ci s'annonce et frappe plus tard :
+     l'adversaire la voit venir et a le temps de sortir sa Bâche. */
+  { id: 'a-tifo', nom: 'Tifo', fam: 'pousse', rar: 'epique', cost: 26, cd: 40,
+    texte: 'Se déplie pendant 8 s — tout le monde le voit — puis pousse très fort.',
+    effet: { type: 'delayed_push', valeur: 95, delai: 8000 } },
+
   { id: 'a-prolongations', nom: 'Prolongations', fam: 'bascule', rar: 'legendaire', cost: 45, cd: 90,
     texte: 'Après la 75e minute du vrai match seulement. Double ta poussée pendant 15 s.',
     effet: { type: 'mod_self', mods: { pushMult: 2 }, duree: 15000 },
@@ -167,6 +191,11 @@ const PORTEE = {
   sync: 'tribune',
   swap_fanzzy: 'soi',
   evolve: 'soi',
+  refill_hand: 'soi',
+  clear_cooldowns: 'soi',
+  /* Le tifo pousse, comme une carte de poussée : il la retarde, il ne la fait
+     pas traverser. Il entre donc au Virage. */
+  delayed_push: 'soi',
 
   silence: 'adverse',
   blind: 'adverse',

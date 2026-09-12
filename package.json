@@ -46,7 +46,11 @@
     "economie": "node scripts/economie.mjs",
     "pages": "node scripts/verif-pages.mjs",
     "cablage": "node scripts/verif-cablage.mjs",
-    "stades": "node scripts/stade-images.mjs"
+    "stades": "node scripts/stade-images.mjs",
+    "chants": "node scripts/chant-images.mjs",
+    "chants:invites": "node scripts/chant-images.mjs --invites",
+    "epreuves:ui": "node scripts/epreuves-ui-smoke.mjs",
+    "boutique:smoke": "node scripts/boutique-smoke.mjs"
   },
   "dependencies": {
     "express": "^4.22.2",

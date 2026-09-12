@@ -25,7 +25,7 @@ import { createServer } from 'node:http';
 import { deflateSync, crc32 } from 'node:zlib';
 import { decoderPng, couleursDuBlason } from '../src/server/football/blason.js';
 import { createCouleurs } from '../src/server/football/couleurs.js';
-import { baseDeTest } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -263,14 +263,14 @@ function blason({ largeur = 20, hauteur = 20, parts }) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS fixture_events, standings, fixtures,
+await raw.query(`DROP TABLE IF EXISTS achats, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, api_cache`);
 for (const f of ['football.sql', 'minutes.sql', 'couleurs.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 await raw.end();
 
-const pool = mysql.createPool({ uri: DB, connectionLimit: 3, charset: 'utf8mb4' });
+const pool = mysql.createPool({ uri: DB, connectionLimit: 3, ...OPTIONS_BASE });
 
 /* Un vrai serveur : c'est le seul moyen d'éprouver le compte des
    téléchargements, et donc la garde qui empêche de retélécharger sans fin. */

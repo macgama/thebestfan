@@ -123,6 +123,19 @@ export const INVITES = {
   'a-prolongations': ['orange', 'floodlights blazing over a stadium deep into extra '
     + 'time, long shadows stretched across the terrace, a weary but still roaring crowd, '
     + 'orange night sky'],
+
+  /* Les trois cartes du souffle et du temps. Elles ne montrent pas un objet
+     mais un *moment* : on reprend une main, on retrouve son air, on déplie une
+     bâche. Le dessin doit donc raconter le geste collectif, pas l'accessoire. */
+  'a-relais': ['violet', 'a capo turning to face his terrace and starting a different '
+    + 'song, arms wide, the crowd behind him picking it up, fresh energy passing '
+    + 'through the rows, violet night light'],
+  'a-souffleneuf': ['violet', 'a supporter filling his lungs at the front of a terrace, '
+    + 'head tilted back, breath visible in the cold night air, the whole stand lifting '
+    + 'again around him, radiant violet glow'],
+  'a-tifo': ['red', 'a giant painted banner unfurling down the whole height of a terrace, '
+    + 'hundreds of hands passing it over their heads, the crowd disappearing beneath it, '
+    + 'red night stadium'],
 };
 
 export const inviteDe = (id) => {

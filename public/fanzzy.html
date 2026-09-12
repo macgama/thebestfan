@@ -1374,6 +1374,20 @@ async function openPack() {
       return { id: c.id, nom: a?.nom ?? c.id, texte: a?.texte, type: 'pyro',
         rar: a?.rar ?? 'rare', stage: 1, action: true };
     }
+    /* Une poignée d'écharpes. Ce n'est pas un lot de consolation : c'est ce qui
+       paie les évolutions, donc les âges qu'aucun booster ne donne. La rareté
+       suit la taille de la poignée, pour que l'ouverture ait la couleur du
+       gain plutôt qu'une couleur fixe. */
+    if (c.type === 'echarpes') {
+      const n = c.montant ?? 0;
+      // `voix` pour sa couleur : c'est l'or du jeu, celui des écharpes. Il n'y
+      // a pas de type propre à la monnaie, et en inventer un ferait apparaître
+      // une famille de plus dans tous les filtres du classeur.
+      return { id: 'echarpes', nom: `${n} écharpes`, type: 'voix',
+        texte: 'De quoi faire grandir un supporter que tu as déjà.',
+        rar: n >= 30 ? 'epique' : n >= 14 ? 'rare' : 'commune',
+        stage: 1, echarpes: true, montant: n };
+    }
     return BY_ID.get(c.id);
   };
   pull = res.cards.map(carteDe);
@@ -1401,6 +1415,9 @@ async function openPack() {
     // La collection ne compte que des supporters. Une pièce d'équipement rangée
     // ici gonflait la progression du classeur d'une case qui n'existe pas.
     if (c.type === 'fanzzy') S.col[c.id] = (S.col[c.id] ?? 0) + 1;
+    // Une poignée d'écharpes n'est « neuve » pour personne : la marquer
+    // ferait clignoter un NOUVEAU sur de la monnaie.
+    if (c.type === 'echarpes') fresh.delete('echarpes');
   }
   S.scarves = res.wallet.scarves;
   S.packs = res.wallet.packs;

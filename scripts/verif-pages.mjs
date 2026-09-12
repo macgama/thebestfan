@@ -38,6 +38,7 @@ import path from 'node:path';
    se contentait de vérifier moins de pièces et **restait vert** — un garde-fou
    qui rétrécit en silence ne garde plus rien. */
 import { ACTIONS } from '../src/shared/duel/actions.js';
+import { LISTE_CHANTS } from '../src/shared/duel/chants.js';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 
 const DOSSIER = 'public';
@@ -327,6 +328,25 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
       + ' — les invites sont dans scripts/stuff-images.mjs --invites');
   } else if (pieces.length) {
     ok('stuff-art.js', `${pieces.length} pièce(s) d’équipement détourées en trois formats`);
+  }
+
+  /* Les dessins des chants, même raison et même forme que les cartes d'action.
+     La liste de référence est `LISTE_CHANTS` : tout chant ajouté au Virage
+     promet donc un dessin, et un chant sans fichier retombe sur son fond uni
+     — visible à l'œil, mais seulement pour qui regarde cette case-là. */
+  const chants = LISTE_CHANTS.map((c) => c.id);
+  const muets = [];
+  for (const id of chants) {
+    for (const ext of ['.avif', '.webp', '.jpg']) {
+      const f = path.join(DOSSIER, 'img', 'chant', id + ext);
+      try { await readFile(f); } catch { muets.push(id + ext); }
+    }
+  }
+  if (muets.length) {
+    ko('chant-art.js', `chants sans dessin : ${muets.join(', ')}`
+      + ' — les invites sont dans scripts/chant-images.mjs --invites');
+  } else if (chants.length) {
+    ok('chant-art.js', `${chants.length} chant(s) illustrés en trois formats`);
   }
 }
 

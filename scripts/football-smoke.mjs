@@ -9,7 +9,7 @@ import { createServer } from 'node:http';
 import express from 'express';
 import { createClient } from '../src/server/football/client.js';
 import { createFootball } from '../src/server/football/routes.js';
-import { baseDeTest } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
 let failures = 0;
@@ -78,7 +78,7 @@ const apiUrl = `http://localhost:${apiServer.address().port}`;
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 // Les tables des souvenirs référencent users : on les enlève d'abord.
-await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
@@ -107,7 +107,7 @@ await raw.query(
 await raw.query(`INSERT INTO user_wallet (user_id, follow_slots) VALUES (?, 3)`, [USER]);
 await raw.end();
 
-const pool = mysql.createPool({ uri: DB, connectionLimit: 8, charset: 'utf8mb4' });
+const pool = mysql.createPool({ uri: DB, connectionLimit: 8, ...OPTIONS_BASE });
 
 /* ----------------------------------------------------------- module */
 

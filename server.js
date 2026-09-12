@@ -33,6 +33,7 @@ import { createKop } from './src/server/kop/index.js';
 import { createAmis } from './src/server/amis/index.js';
 import { createAdmin } from './src/server/admin/index.js';
 import { createNvN } from './src/server/nvn/index.js';
+import { createBoutique } from './src/server/boutique/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ORIGIN = process.env.PUBLIC_ORIGIN ?? 'https://thebestfan.online';
@@ -97,6 +98,7 @@ let niveau = null;
 let kop = null;
 let amis = null;
 let admin = null;
+let boutique = null;
 let nvn = null;
 let google = null;
 
@@ -235,6 +237,20 @@ if (process.env.DATABASE_URL) {
     app.use('/api/fanzzy', fanzzy.router);
     globalThis.fanzzy = fanzzy;
     console.log('collection fanzzy active');
+
+    /* ---- la boutique
+       Deux montages, et l ordre compte. Le **webhook d abord**, avec son
+       analyseur de corps brut : Stripe signe les octets qu il envoie, et un
+       express.json() monté au-dessus les transformerait en objet avant
+       qu on ait pu vérifier la signature. On accepterait alors n importe
+       quel appel prétendant venir de Stripe, ce qui revient à offrir des
+       boosters à qui connaît l adresse. */
+    boutique = createBoutique({ pool, requireAuth: auth.requireAuth, fanzzy });
+    app.use("/api/boutique", boutique.webhook);
+    app.use("/api/boutique", boutique.router);
+    console.log(boutique.configure()
+      ? "boutique active"
+      : "boutique en vitrine — STRIPE_SECRET_KEY et STRIPE_WEBHOOK_SECRET manquent");
 
     // ---- cartes-souvenirs
     souvenirs = createSouvenirs({ pool, requireAuth: auth.requireAuth });
@@ -426,6 +442,7 @@ app.get('/matchs', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'a
 app.get('/bienvenue', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'bienvenue.html')));
 app.get('/profil', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'profil.html')));
 app.get('/classement', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'classement.html')));
+app.get('/boutique', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'boutique.html')));
 app.get('/admin', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 // Fiche d'un Fanzzy : /fanzzy/V3 comme /fanzzy?id=V3, pour des liens partageables.
 app.get('/fanzzy/:id', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'fanzzy-fiche.html')));

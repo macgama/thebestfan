@@ -72,3 +72,26 @@ export function baseDeTest() {
   ].join('\n'));
   process.exit(1);
 }
+
+/**
+ * Les options du pool, telles que le serveur les emploie.
+ *
+ * **`timezone: 'Z'` n'est pas un détail de confort.** C'est le réglage de
+ * `src/server/auth/db.js`, donc celui de la production, et il décide de la
+ * façon dont mysql2 transforme une colonne DATETIME en objet `Date`. Les
+ * suites construisaient leur pool sans lui : elles lisaient les dates
+ * autrement que le serveur, et vérifiaient donc une application qui n'existe
+ * nulle part.
+ *
+ * Ce que cela a coûté : la minute du vrai match restait figée parce que
+ * `polled_at`, écrit par `NOW(3)` dans le fuseau de la session MySQL et relu
+ * comme de l'UTC, partait deux heures dans le futur. Une suite qui lit avec le
+ * fuseau local ne voit jamais cet écart — elle est verte sur un réglage que
+ * personne ne déploie. Le contrôle qui devait attraper la panne la laissait
+ * passer, deux fois.
+ *
+ * À utiliser partout où une suite ouvre un pool :
+ *
+ *     const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
+ */
+export const OPTIONS_BASE = { charset: 'utf8mb4', timezone: 'Z' };

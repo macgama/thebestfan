@@ -72,6 +72,7 @@
       // plusieurs, et il n'est plus derrière un second menu.
       ['/kop', 'kop', 'Mon KOP'],
       ['/deck', 'deck', 'Mon deck'],
+      ['/boutique', 'boutique', 'La boutique'],
     ] },
     { titre: 'MA COLLECTION', liens: [
       ['/fanzzy', 'fanzzy', 'Mes Fanzzy'],
@@ -100,6 +101,16 @@
      retombant sur 62px quand elle manque. La garder à zéro les fait toutes
      tomber juste, sans toucher à neuf fichiers ni risquer d'en oublier un. */
   :root{--nav-h:0px}
+
+  /* Le dégagement des deux boutons flottants, ecrit une seule fois.
+
+     Sur un ecran de jeu, la barre du haut ne pousse pas le jeu vers le bas :
+     elle flotte dessus. Les deux en-tetes de jeu doivent donc reserver la
+     place a gauche et a droite, et ils le faisaient avec un 58px recopie dans
+     chaque page. Le jour ou le bouton grandit, il en reste un a corriger.
+
+     Quarante-deux pixels de bouton, dix de marge, dix de respiration. */
+  :root{--tbf-haut-g:62px;--tbf-haut-d:62px}
   .tbf-spark{position:fixed;width:3px;height:3px;border-radius:50%;z-index:0;pointer-events:none;opacity:0}`;
 
   const style = document.createElement('style');
@@ -189,6 +200,11 @@
     compte: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6M12 3v3M12 18v3M3 12h3M18 12h3',
     admin: 'M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6zM9 12l2 2 4-4',
     sortie: 'M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 8l-4 4 4 4M6 12h9',
+    // Un panier : deux roues et une anse. Reconnaissable à vingt pixels.
+    boutique: 'M6 6h15l-1.5 9h-12zM6 6L5 3H2M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2',
+    // Une flèche vers la gauche, pour rentrer. Volontairement pas un chevron
+    // seul : à quarante pixels, un chevron se confond avec un bouton de repli.
+    retour: 'M15 5l-7 7 7 7',
   };
   const item = (href, cle, texte, classe = '') =>
     `<a href="${href}" class="${classe}"><svg viewBox="0 0 24 24"><path d="${ICONES[cle]}"/></svg>${texte}</a>`;
@@ -230,11 +246,25 @@
     const boutonHTML = `<button class="pan tbf-burger" aria-label="Menu" aria-expanded="false"
           aria-controls="tbf-tiroir"><span></span><span></span><span></span></button>`;
 
+    /* La flèche de retour, en haut à gauche.
+     *
+     * Le menu est devenu la seule navigation quand la barre du bas est partie,
+     * et revenir à l'accueil demandait deux gestes — ouvrir le tiroir, puis
+     * viser la première ligne. C'est deux de trop pour le mouvement le plus
+     * fréquent du jeu.
+     *
+     * Elle ne paraît pas sur l'accueil : un bouton qui mène là où l'on est
+     * déjà fait douter de l'endroit où l'on se trouve. */
+    const retourHTML = chemin === '/' ? '' :
+      `<a class="pan tbf-retour" href="/" aria-label="Revenir à l’accueil"
+          ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES.retour}"/></svg></a>`;
+
     const haut = document.createElement('header');
     haut.className = 'tbf-haut' + (enJeu ? ' tbf-haut-jeu' : '');
     haut.innerHTML = enJeu
-      ? `<div class="tbf-bourse">${boutonHTML}</div>`
+      ? `${retourHTML}<div class="tbf-bourse">${boutonHTML}</div>`
       : `
+      ${retourHTML}
       <a class="pan tbf-moi" href="/profil">
         <span class="tbf-pastille">${(user.pseudo ?? '?').trim().charAt(0).toLowerCase() || '?'}</span>
         <span><b></b><small></small></span>

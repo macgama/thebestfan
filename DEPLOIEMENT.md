@@ -72,7 +72,7 @@ curl -s https://thebestfan.online/healthz
 ```bash
 cd ~/sites/thebestfan.online
 for f in auth football minutes couleurs duel souvenirs fanzzy teletext inventaire skins tenues deck admin kop amis \
-         niveau raretes stades; do
+         niveau raretes stades boutique; do
   mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
 done
 ```
@@ -111,7 +111,7 @@ que `raretes` les a rangées.
   `node scripts/stades-smoke.mjs` la rejoue sur une collection fabriquée avant
   que tu la lances ici.
 
-Contrôle : `SHOW TABLES;` doit en lister **36**.
+Contrôle : `SHOW TABLES;` doit en lister **37**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`
