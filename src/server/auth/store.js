@@ -10,6 +10,27 @@ const ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 const MAX_FAILS_PER_EMAIL = 5;
 const MAX_FAILS_PER_IP = 20;
 
+/**
+ * Une échéance, en tant qu'objet `Date`.
+ *
+ * **Ce qui part d'ici est écrit en UTC**, parce que le pool est réglé sur
+ * `timezone: 'Z'` : mysql2 sérialise la date en temps universel avant de
+ * l'envoyer. Toute colonne remplie par cette fonction doit donc se comparer à
+ * `UTC_TIMESTAMP(3)`, **jamais à `NOW(3)`** — qui rend l'heure de la session
+ * MySQL, locale sur la plupart des serveurs.
+ *
+ * Ce n'est pas une précaution théorique. Les deux étaient mélangés : un jeton
+ * de réinitialisation vit une heure, l'écart valait deux heures, et il
+ * naissait donc **déjà expiré**. Personne ne pouvait changer son mot de passe
+ * oublié. Le jeton de vérification, lui, vit quarante-huit heures : il
+ * marchait, en mourant deux heures trop tôt — assez pour que la panne passe
+ * pour un caprice plutôt que pour une règle.
+ *
+ * Aucune suite ne l'a vu, et c'est le plus instructif : elles ouvraient leur
+ * pool sans `timezone`, donc mysql2 y écrivait en heure locale et les deux
+ * horloges tombaient d'accord. Elles éprouvaient un réglage que personne ne
+ * déploie. Voir `OPTIONS_BASE` dans `scripts/base-de-test.mjs`.
+ */
 const asDate = (ms) => new Date(Date.now() + ms);
 
 export function createStore(pool) {
@@ -111,7 +132,7 @@ export function createStore(pool) {
                 u.email_verified_at, u.main_team_id, u.created_at
            FROM sessions s
            JOIN users u ON u.id = s.user_id
-          WHERE s.token_hash = ? AND s.expires_at > NOW(3) AND u.status = 'active'
+          WHERE s.token_hash = ? AND s.expires_at > UTC_TIMESTAMP(3) AND u.status = 'active'
           LIMIT 1`,
         [hashToken(token)],
       );
@@ -154,7 +175,7 @@ export function createStore(pool) {
         `SELECT t.user_id, u.email, u.pseudo, u.locale
            FROM auth_tokens t JOIN users u ON u.id = t.user_id
           WHERE t.token_hash = ? AND t.purpose = ?
-            AND t.used_at IS NULL AND t.expires_at > NOW(3)
+            AND t.used_at IS NULL AND t.expires_at > UTC_TIMESTAMP(3)
           LIMIT 1`,
         [hashToken(token), purpose],
       );
@@ -167,7 +188,7 @@ export function createStore(pool) {
         `SELECT t.user_id, u.email, u.pseudo, u.locale
            FROM auth_tokens t JOIN users u ON u.id = t.user_id
           WHERE t.token_hash = ? AND t.purpose = ?
-            AND t.used_at IS NULL AND t.expires_at > NOW(3)
+            AND t.used_at IS NULL AND t.expires_at > UTC_TIMESTAMP(3)
           LIMIT 1`,
         [hash, purpose],
       );
@@ -212,8 +233,8 @@ export function createStore(pool) {
 
     /** À lancer une fois par jour : purge des sessions, jetons et tentatives périmés. */
     async cleanup() {
-      await q(`DELETE FROM sessions WHERE expires_at < NOW(3)`);
-      await q(`DELETE FROM auth_tokens WHERE expires_at < NOW(3)`);
+      await q(`DELETE FROM sessions WHERE expires_at < UTC_TIMESTAMP(3)`);
+      await q(`DELETE FROM auth_tokens WHERE expires_at < UTC_TIMESTAMP(3)`);
       await q(`DELETE FROM login_attempts WHERE at < (NOW(3) - INTERVAL 1 DAY)`);
     },
   };

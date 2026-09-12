@@ -358,11 +358,29 @@ button.pan:active,a.pan:active{transform:scale(.96)}
    pas consulter son solde. Elle flotte au-dessus de l'écran au lieu de
    pousser le jeu vers le bas. */
 .tbf-haut-jeu{
-  position:absolute;top:calc(env(safe-area-inset-top) + 8px);right:10px;
+  position:absolute;top:calc(env(safe-area-inset-top) + 8px);left:10px;right:10px;
   z-index:45;padding:0;margin:0;background:none;border:0;pointer-events:none;
+  display:flex;align-items:center;justify-content:space-between;
 }
-.tbf-haut-jeu .tbf-bourse{pointer-events:auto}
+/* La barre laisse passer les clics, ses deux boutons les prennent : entre eux
+   se trouve l'en-tête du jeu, qui doit rester cliquable. */
+.tbf-haut-jeu .tbf-bourse,.tbf-haut-jeu .tbf-retour{pointer-events:auto}
+/* Sans elle, la flèche absente laisserait le bouton de menu glisser à gauche :
+   `space-between` place son unique enfant au début. */
+.tbf-haut-jeu .tbf-bourse{margin-left:auto}
 .tbf-burger{position:relative}
+
+/* La flèche de retour. Même taille et même matière que le bouton de menu :
+   ce sont les deux seules commandes qui flottent au-dessus d'un écran de jeu,
+   et deux tailles différentes les feraient lire comme deux choses. */
+.tbf-retour{
+  width:42px;height:42px;flex:none;display:grid;place-items:center;
+  text-decoration:none;color:var(--craie);
+}
+.tbf-retour svg{
+  width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;
+}
 
 /* ------------------------------------------------------- petites briques */
 
@@ -520,3 +538,63 @@ button.pan:active,a.pan:active{transform:scale(.96)}
   .tbf-tribune{transition:none}
   .tbf-tribune.bat,.tbf-tribune.feu{animation:none}
 }
+
+/* La jauge des gestes de tenue — relance, sang-froid.
+
+   Elle est posée par `/geste.js`, partagé par le duel et le Virage : les deux
+   pages ont leur propre pavé, mais la jauge est la même pièce. Elle part de la
+   gauche et se remplit ; `transform` plutôt que `width`, parce qu'une largeur
+   qui change à cinquante images par seconde fait recalculer la mise en page. */
+.pad .jauge{
+  position:absolute;left:0;right:0;bottom:0;height:5px;border-radius:0 0 999px 999px;
+  background:var(--projo);transform:scaleX(0);transform-origin:0 50%;
+  transition:transform .05s linear,background .2s;pointer-events:none;
+}
+
+/* ------------------------------------------------- les cinq épreuves
+
+   Le tifo, la mémoire, la mosaïque, l'écharpe et le capo. Leur habillage vit
+   ici et non dans les deux pages de jeu, pour la même raison que leur déroulé
+   vit dans `geste.js` : il est identique des deux côtés, et l'écrire deux fois
+   voudrait dire le corriger deux fois.
+
+   Les pages gardent ce qui leur appartient — la taille de la zone, sa place à
+   l'écran. Ce bloc ne décrit que ce qui se passe dedans. */
+
+/* Le cadre où l'on trace. `touch-action:none` est indispensable et non
+   décoratif : sans lui, le navigateur prend le glissement pour un défilement
+   et le tracé s'arrête au premier mouvement. */
+.pad.trace{position:relative;display:grid;place-items:center;touch-action:none;
+  -webkit-user-select:none;user-select:none}
+.tifoSvg{position:absolute;inset:0;width:100%;height:100%}
+/* Le modèle à suivre, en pointillés : on voit où aller sans croire l'avoir
+   déjà fait. Le trait du doigt, lui, est plein et à la couleur du geste. */
+.tifoSvg .modele{fill:none;stroke:rgba(242,238,228,.34);stroke-width:2.6;
+  stroke-dasharray:4 3;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.tifoSvg .doigt{fill:none;stroke:var(--c,#8257DA);stroke-width:3.4;
+  stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+
+/* L'écharpe : un cercle de repère, qui dit où tourner sans dire comment. */
+.pad.trace .rond{position:absolute;width:62%;aspect-ratio:1;border-radius:50%;
+  border:2px dashed rgba(242,238,228,.22)}
+
+/* La grille, partagée par la mosaïque, les visages et le capo. `aspect-ratio`
+   sur les cases plutôt qu'une hauteur : la zone n'a pas la même taille dans le
+   duel et dans le Virage, et des cases carrées y sont plus lisibles qu'un
+   quadrillage écrasé. */
+.grille{display:grid;gap:5px;width:86%;margin:0 auto;touch-action:manipulation;
+  -webkit-user-select:none;user-select:none}
+.grille i{aspect-ratio:1;border-radius:7px;background:rgba(242,238,228,.08);
+  border:1px solid rgba(242,238,228,.12);display:grid;place-items:center;
+  font-style:normal;font-family:var(--banner);font-size:15px;color:transparent;
+  transition:background .12s ease,border-color .12s ease}
+/* Allumée par le serveur pendant l'aperçu. */
+.grille i.on{background:var(--c,#2FB8A6);border-color:var(--c,#2FB8A6)}
+/* Posée par le joueur : creuse, pour qu'on distingue ce qu'on a mis de ce
+   qu'on a vu — sans quoi on ne sait plus si on recopie ou si on se souvient. */
+.grille i.mise{background:rgba(47,184,166,.3);border-color:var(--c,#2FB8A6)}
+/* Les visages : retournés, puis pris. */
+.grille.memo i.vue{background:rgba(242,238,228,.16);color:var(--craie)}
+.grille.memo i.prise{background:rgba(47,184,166,.26);border-color:var(--c,#2FB8A6);
+  color:var(--c,#2FB8A6)}
+.grille.capo i{aspect-ratio:1.25;border-radius:9px}

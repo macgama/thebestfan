@@ -1,3 +1,4 @@
+import { EPREUVES, consigneDe, noter, Triche } from './epreuves.js';
 /**
  * Évaluation des gestes.
  *
@@ -90,9 +91,14 @@ export const GESTURES = {
   retenue: { ms: 4000, exact: 12, maxTaps: 30 },
 };
 
-/** Les noms des gestes, dans l'ordre où on les fait découvrir. */
+/** Les noms des gestes, dans l'ordre où on les fait découvrir.
+ *
+ * Les cinq dernières ne sont pas des gestes de rythme : ce sont les épreuves
+ * de `epreuves.js` — dessiner, se souvenir, tourner. Elles vivent dans la même
+ * liste parce que les moteurs n'ont pas à savoir laquelle est laquelle : ils
+ * demandent une note, ils reçoivent une note. */
 export const GESTES = ['tempo', 'mash', 'hold', 'contretemps', 'echo',
-  'crescendo', 'relance', 'salves', 'tenue', 'retenue'];
+  'crescendo', 'relance', 'salves', 'tenue', 'retenue', ...EPREUVES];
 
 /** Deux frappes humaines ne sont jamais séparées de moins de 40 ms. */
 const MIN_GAP_MS = 40;
@@ -163,9 +169,19 @@ export function instantsDuCrescendo(cfg = GESTURES.crescendo) {
  */
 function noterContre(taps, attendus, fenetre) {
   let total = 0;
-  for (const t of taps.slice(0, attendus.length)) {
-    const proche = attendus.reduce((b, x) => (Math.abs(x - t) < Math.abs(b - t) ? x : b), attendus[0]);
-    total += Math.max(0, 1 - Math.abs(proche - t) / fenetre);
+  /* **Dans l'ordre**, et non au plus proche.
+   *
+   * La version d'avant accrochait chaque frappe à l'instant attendu le plus
+   * proche, où qu'il soit dans la mesure. C'était bien trop indulgent : un
+   * joueur qui refaisait un *autre* motif d'écho — le bon nombre de frappes,
+   * le mauvais rythme — récoltait 0,8 sur 1, parce que trois de ses coups
+   * tombaient par hasard sur des instants attendus. Le rythme, c'est l'ordre :
+   * la troisième frappe se juge sur le troisième temps, pas sur celui qui
+   * l'arrange. */
+  for (let i = 0; i < attendus.length; i++) {
+    const t = taps[i];
+    if (t === undefined) continue;          // frappe manquante : zéro pour ce temps
+    total += Math.max(0, 1 - Math.abs(attendus[i] - t) / fenetre);
   }
   return total / attendus.length;
 }
@@ -237,6 +253,12 @@ export function resoudreGeste(mods = {}, { motif = 0 } = {}) {
     },
     tenue: { limite: GESTURES.tenue.limite },
     retenue: { ms: GESTURES.retenue.ms, exact: GESTURES.retenue.exact },
+
+    /* Les cinq épreuves. Leur consigne est tirée de la **même graine** que le
+       motif de l'écho, et ce n'est pas une économie : c'est ce qui fait que la
+       page dessine exactement la forme que le serveur notera. Le jour où les
+       deux divergeront, le joueur tracera un cœur et sera noté sur un fanion. */
+    ...Object.fromEntries(EPREUVES.map((e) => [e, consigneDe(e, motif)])),
   };
 }
 
@@ -248,6 +270,23 @@ export function resoudreGeste(mods = {}, { motif = 0 } = {}) {
  * @param motif  pour l'écho seulement : le motif que le serveur avait donné.
  */
 export function grade(kind, taps, mods = {}, { motif = 0 } = {}) {
+  /* Les épreuves partent ailleurs : elles ne reçoivent pas une liste
+     d'instants mais un tracé, une grille ou une suite, et `taps` porte alors
+     cet objet-là. Le nom du paramètre ment un peu ; le renommer partout
+     mentirait davantage, puisque dix gestes sur quinze reçoivent bien des
+     frappes.
+
+     `Triche` redevient `Cheat` en sortant : les deux moteurs attrapent cette
+     classe-ci, et une erreur d'un autre type traverserait la partie. */
+  if (EPREUVES.includes(kind)) {
+    try {
+      return noter(kind, consigneDe(kind, motif), taps, mods);
+    } catch (e) {
+      if (e instanceof Triche) throw new Cheat(e.code);
+      throw e;
+    }
+  }
+
   if (kind === 'tempo') {
     const cfg = GESTURES.tempo;
     const interval = cfg.interval + (mods.tempoInterval ?? 0);

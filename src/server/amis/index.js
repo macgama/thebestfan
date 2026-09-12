@@ -183,9 +183,24 @@ export function createAmis({ pool, requireAuth, kop = null }) {
   /* ------------------------------------------------------------ demander */
 
   /** L'état actuel d'une paire, ou `null` si ces deux-là ne se connaissent pas. */
+  /**
+   * Le lien entre deux joueurs, s'il existe.
+   *
+   * `depuisLe` est l'instant de la réponse **en millisecondes, calculé en
+   * SQL**. `repondu_le` et `demande_le` sont écrits par `NOW(3)`, donc dans le
+   * fuseau de la session MySQL, tandis que le pilote lit avec `timezone: 'Z'` :
+   * relire ces colonnes comme des dates en JavaScript les place deux heures
+   * dans le futur. Le délai après un refus s'en trouvait allongé d'autant, et
+   * le message annonçait huit jours là où la règle en dit sept.
+   *
+   * La règle, la même partout : **l'époque se calcule en SQL.** Voir
+   * `teletext/index.js` et `ferveur/index.js`, où elle a déjà coûté cher.
+   */
   async function lien(x, y) {
     const [a, b] = paire(x, y);
-    return (await q(`SELECT * FROM amities WHERE a = ? AND b = ?`, [a, b]))[0] ?? null;
+    return (await q(
+      `SELECT *, UNIX_TIMESTAMP(COALESCE(repondu_le, demande_le)) * 1000 AS depuisLe
+         FROM amities WHERE a = ? AND b = ?`, [a, b]))[0] ?? null;
   }
 
   async function demander(userId, autreId) {
@@ -203,7 +218,7 @@ export function createAmis({ pool, requireAuth, kop = null }) {
       throw fail('amis.error.deja_demande');
     }
     if (deja?.etat === 'refuse') {
-      const depuis = Date.now() - new Date(deja.repondu_le ?? deja.demande_le).getTime();
+      const depuis = Date.now() - Number(deja.depuisLe ?? 0);
       if (depuis < DELAI_APRES_REFUS_MS) {
         throw fail('amis.error.refus_recent',
           { jours: Math.ceil((DELAI_APRES_REFUS_MS - depuis) / 86_400_000) });

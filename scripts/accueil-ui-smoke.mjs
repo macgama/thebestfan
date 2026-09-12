@@ -35,7 +35,7 @@ import { createNiveau } from '../src/server/niveau/index.js';
 import { seuil } from '../src/shared/niveau.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
-import { baseDeTest } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -47,7 +47,7 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
@@ -75,7 +75,7 @@ await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle')`);
 await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1)`, [U]);
 await raw.end();
 
-const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' });
+const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 // Le catalogue vit en base depuis qu il se gère par l administration :
 // on le charge comme le fait server.js, sinon les modules travaillent
 // sur un catalogue vide.
@@ -208,6 +208,12 @@ async function ouvrir(largeur = 400, hauteur = 880) {
   await page.goto(base + '/', { waitUntil: 'networkidle0' });
   await page.waitForSelector('#hub.on', { timeout: 8000 }).catch(() => {});
   await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+  /* L écran d ouverture couvre la page — c est son travail. Tant qu il est
+     là, un clic sur le bouton du menu tombe sur lui : les contrôles qui
+     suivent éprouveraient donc l ouverture au lieu de l accueil, et le
+     rougissement ne dirait pas ce qui ne va pas. On attend qu il parte. */
+  await page.waitForFunction(() => !document.getElementById('ouverture'),
+    { timeout: 6000 }).catch(() => {});
   return page;
 }
 
@@ -397,6 +403,42 @@ for (const [nom, l, h, plancher] of [
   check('à la première visite, le Fanzzy équipé finit par s’afficher',
     /\/img\/fanzzy\//.test(premiere)
     || (console.log('        elle montre :', premiere), false));
+
+  /* Et il est **nommé**. Son nom n'existait que dans l'attribut `alt` de son
+     image : le personnage tenait le centre de l'accueil sans que rien ne dise
+     qui il est. L'âge atteint est ce qu'on paie quatre-vingt-dix écharpes pour
+     obtenir — il mérite mieux qu'un dessin qu'il faut reconnaître. */
+  const qui = await page.evaluate(() => ({
+    visible: document.getElementById('qui')?.classList.contains('on') ?? false,
+    nom: document.getElementById('quiNom')?.textContent.trim() ?? '',
+    evo: document.getElementById('quiEvo')?.textContent.trim() ?? '',
+    dansLEcran: (() => {
+      const q = document.getElementById('qui')?.getBoundingClientRect();
+      return q ? q.bottom <= innerHeight + 1 && q.left >= -1 : false;
+    })(),
+  }));
+  check('le Fanzzy équipé est nommé à l’écran', qui.visible && qui.nom.length > 2
+    || (console.log('        la plaque dit :', JSON.stringify(qui)), false));
+  check('et c’est bien son nom, pas son identifiant', qui.nom !== 'G1');
+  /* L'évolution ne s'annonce que si la lignée en a plusieurs : promettre
+     « 1 / 3 » à un Fanzzy qui n'évolue jamais est une promesse en l'air. */
+  check('son âge est annoncé, et par rapport au nombre d’âges qu’il a',
+    /^ÉVOLUTION \d+ \/ \d+$/.test(qui.evo)
+    || (console.log('        elle dit :', qui.evo), false));
+  check('la plaque tient dans l’écran', qui.dansLEcran);
+  /* Et **rien ne la recouvre**. Posée dans la scène, elle tombait sous le
+     personnage, qui en occupe toute la hauteur : la mesure disait « dans
+     l'écran », et on ne la voyait nulle part. `elementFromPoint` ne dit rien
+     ici — la plaque est en `pointer-events:none` et ne gagne jamais — donc on
+     compare les rectangles. */
+  const libre = await page.evaluate(() => {
+    const q = document.getElementById('qui').getBoundingClientRect();
+    const img = document.querySelector('#pile .pose.on').getBoundingClientRect();
+    return { chevauche: q.top < img.bottom - 1 && img.top < q.bottom - 1,
+             haute: q.height > 8 };
+  });
+  check('et le personnage ne lui passe pas dessus', libre.chevauche === false);
+  check('elle a bien une hauteur', libre.haute);
 
   // Le serveur traîne : c'est l'intervalle qu'on veut regarder.
   retardFanzzy = 1000;
@@ -992,7 +1034,58 @@ await page.close();
  * jauge et bouton d’entrée — sans un pixel de défilement. Sur 320 px, un
  * iPhone SE, c’est la contrainte réelle. */
 {
+  /* Avec un Fanzzy équipé : c'est le cas le plus chargé, et le seul qui
+     éprouve vraiment la tenue de l'écran. La plaque qui le nomme prend de la
+     hauteur, et c'est justement à trois cent vingt pixels qu'elle peut faire
+     déborder le reste. La mesurer sur un écran où elle est absente ne dirait
+     rien du tout. */
+  await equiper('G1');
   const page = await ouvrir(320, 640);
+  {
+    const p3 = await (nav.createBrowserContext?.() ?? nav.createIncognitoBrowserContext())
+      .then((c) => c.newPage());
+    await p3.setViewport({ width: 400, height: 880 });
+    await p3.goto(base + "/", { waitUntil: "domcontentloaded" });
+    const d = await p3.evaluate(() => {
+      const e = document.getElementById("ouverture");
+      if (!e) return { absent: true };
+      const st = getComputedStyle(e);
+      const r = e.getBoundingClientRect();
+      return { fond: st.backgroundColor, opacite: st.opacity, z: st.zIndex,
+        couvre: r.width >= innerWidth && r.height >= innerHeight,
+        dessus: document.elementFromPoint(innerWidth / 2, 40)?.id
+          || document.elementFromPoint(innerWidth / 2, 40)?.className };
+    });
+    /* L écran d ouverture doit **couvrir**. S il laisse transparaître
+       l accueil, on voit deux écrans à la fois et l arrivée est ratée — et
+       c est le genre de défaut qu une capture ne tranche pas, puisqu elle
+       peut attraper l écran en train de partir. */
+    check("l écran d ouverture paraît à l arrivée", d.absent !== true);
+    check("il est opaque", d.fond === "rgb(5, 7, 10)" && d.opacite === "1");
+    check("il couvre tout l écran", d.couvre === true);
+    check("et rien de l accueil ne passe devant", d.dessus === "ouverture");
+
+    /* Et il s en va. Sans ce contrôle, une ouverture qui reste est une porte
+       close : le jeu est derrière, et personne ne peut y entrer. */
+    const parti = await p3.waitForFunction(() => !document.getElementById("ouverture"),
+      { timeout: 6000 }).then(() => true).catch(() => false);
+    check("puis il s en va tout seul", parti);
+
+    /* Une fois par session, et pas une fois par visite : l accueil est
+       l écran vers lequel tout revient, et rejouer l ouverture à chaque
+       retour avalerait un geste à chaque fois. */
+    await p3.goto(base + "/", { waitUntil: "domcontentloaded" });
+    const encore = await p3.evaluate(() => Boolean(document.getElementById("ouverture")));
+    check("et ne revient pas au retour suivant", encore === false);
+    await p3.close();
+  }
+  if (process.env.SHOT) {
+    const p2 = await ouvrir(400, 880);
+    await new Promise((r) => setTimeout(r, 260));
+    await p2.screenshot({ path: process.env.SHOT + "/ouverture.png" });
+    await p2.close();
+  }
+  await page.waitForSelector('#qui.on', { timeout: 8000 }).catch(() => {});
 
   const ecran = await page.evaluate(() => {
     const app = document.getElementById('app');
@@ -1014,12 +1107,30 @@ await page.close();
       // compteur est en position absolue et déborde exprès.
       rognes: [...document.querySelectorAll('.rail .case .lib')]
         .filter((l) => l.scrollWidth > l.clientWidth + 1).map((l) => l.textContent.trim()),
+      ou: [...document.querySelectorAll('.rail .case')].map((a) => a.getAttribute('href')),
     };
   });
 
+  check('à 320 px aussi, le Fanzzy est nommé sous les rails',
+    await page.evaluate(() => {
+      const q = document.getElementById('qui');
+      return q.classList.contains('on')
+        && q.getBoundingClientRect().bottom <= innerHeight + 1;
+    }));
   check('la barre commune ne s’affiche pas sur l’accueil', ecran.barre === false);
-  check('les deux rails portent les six sections',
-    ecran.rails === 2 && ecran.cases === 6);
+  check('l’accueil garde ses deux rails', ecran.rails === 2);
+  /* Nommées une par une, et non comptées. Un compte laisse passer un
+     remplacement : le jour où une case en pousse une autre dehors, « huit
+     cases » reste vrai et personne ne voit que le CARNET a disparu.
+
+     Le KOP et les AMIS sont là parce qu'ils n'étaient joignables que par le
+     menu, alors que le KOP est au centre du jeu. */
+  for (const [href, nom] of [['/virage', 'le Virage'], ['/fanzzy', 'le classeur'],
+    ['/carnet', 'le carnet'], ['/kop', 'le KOP'], ['/duel-nvn', 'le duel'],
+    ['/matchs', 'les matchs'], ['/classement', 'le classement'],
+    ['/amis', 'les amis']]) {
+    check(`un rail mène à ${nom}`, (ecran.ou ?? []).includes(href));
+  }
   check('l’écran ne défile pas', !ecran.defilePage && !ecran.defileApp);
   check('et ne déborde pas en largeur', !ecran.debordeLarge);
   check('le bouton d’entrée reste visible', ecran.boutonVisible);

@@ -7,7 +7,7 @@ import { SETS } from '../src/shared/fanzzy/dex.js';
 import { charger as chargerCatalogue, parIdentifiant, publies }
   from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
-import { baseDeTest } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
 let failures = 0;
@@ -15,7 +15,7 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, reglages, admin_audit, user_decks, user_stuff, user_skins,
   user_fanzzy, user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache,
   souvenir_leagues, duel_results, duel_events, duels, user_follows, fixture_events, standings,
@@ -46,7 +46,7 @@ await raw.query(`INSERT INTO api_cache (k,payload,expires_at) VALUES
   ('x','{}', NOW(3) + INTERVAL 1 HOUR),('y','{}', NOW(3) + INTERVAL 1 HOUR)`);
 await raw.end();
 
-const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset:'utf8mb4' });
+const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 // Le catalogue vit en base : l’administration le modifie, il faut donc
 // qu’il soit chargé, exactement comme au démarrage du serveur.
 await chargerCatalogue(pool);

@@ -8,7 +8,7 @@ import { SKINS } from '../src/shared/fanzzy/inventaire.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
-import { baseDeTest } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
 let failures = 0;
@@ -16,7 +16,7 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
@@ -37,7 +37,7 @@ await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES
   [U, 'f@ex.fr', 'Fan']);
 await raw.end();
 
-const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' });
+const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 // Le catalogue vit en base depuis qu il se gère par l administration :
 // on le charge comme le fait server.js, sinon les modules travaillent
 // sur un catalogue vide.
@@ -85,7 +85,7 @@ check('collection vide', Object.keys(r.json.collection).length === 0);
 r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'VN' } });
 check('cinq cartes tirées', r.json.cards?.length === 5);
 check('toutes typées', r.json.cards.every((c) =>
-  ['fanzzy', 'skin', 'stuff', 'action'].includes(c.type)));
+  ['fanzzy', 'skin', 'stuff', 'action', 'echarpes'].includes(c.type)));
 /* Un skin habille un Fanzzy déjà possédé : au tout premier booster, il n'y a
    rien à habiller, et la catégorie se replie donc sur un supporter. C'est ce
    qui empêche une première ouverture de donner une tenue pour personne.
@@ -96,8 +96,8 @@ check('aucun skin au premier booster',
   r.json.cards.every((c) => c.type !== 'skin'));
 check('toutes du bon set',
   r.json.cards.filter((c) => c.type === 'fanzzy').every((c) => BY_ID.get(c.id).set === 'VN'));
-check('trois communes garanties',
-  r.json.cards.slice(0, 3).every((c) => c.type === 'fanzzy' && BY_ID.get(c.id).rar === 'commune'));
+check('la première carte est un supporter commun, toujours',
+  r.json.cards[0].type === 'fanzzy' && BY_ID.get(r.json.cards[0].id).rar === 'commune');
 check('un booster consommé', r.json.wallet.packs === PACKS_DEPART - 1);
 check('la recharge est amorcée', typeof r.json.wallet.nextPackInMs === 'number');
 check('un Fanzzy est équipé d\u2019office', Boolean(r.json.wallet.active));
@@ -113,15 +113,51 @@ check('chaque Fanzzy reçoit son skin de base', baseSkin.n >= 1);
 // Sur beaucoup d'ouvertures, des skins doivent finir par tomber.
 await pool.query('UPDATE user_wallet SET packs = 40 WHERE user_id = ?', [U]);
 let skinsTombes = 0;
-let premieresToutesFanzzy = true;
-for (let i = 0; i < 40; i++) {
+/* Les catégories vues **depuis le début**. Les compter sur une série
+   d'ouvertures tardives ne prouverait rien : à ce stade le joueur possède déjà
+   toutes les cartes d'action non communes, et la catégorie se replie donc
+   légitimement sur les écharpes. Une catégorie morte et une catégorie épuisée
+   se ressemblent, et seule la première est un défaut. */
+const vus = new Set(r.json.cards.map((c) => c.type));
+let premiereToujoursFanzzy = true;
+let maxFanzzy = 0;
+let echarpesTombees = 0;
+const ouvertures = 40;
+for (let i = 0; i < ouvertures; i++) {
   const o = await call('/api/fanzzy/open', { method: 'POST', body: { set: i % 2 ? 'NE' : 'VN' } });
   const cartes = o.json.cards ?? [];
   skinsTombes += cartes.filter((c) => c.type === 'skin').length;
-  if (cartes.slice(0, 3).some((c) => c.type !== 'fanzzy')) premieresToutesFanzzy = false;
+  echarpesTombees += cartes.filter((c) => c.type === 'echarpes').length;
+  for (const c of cartes) vus.add(c.type);
+  if (cartes[0]?.type !== 'fanzzy') premiereToujoursFanzzy = false;
+  maxFanzzy = Math.max(maxFanzzy, cartes.filter((c) => c.type === 'fanzzy').length);
 }
 check(`des skins tombent dans les boosters (${skinsTombes} sur 200 cartes)`, skinsTombes > 5);
-check('les trois premières cartes restent des supporters', premieresToutesFanzzy);
+
+/* ------------------------------------ un ou deux supporters, jamais plus
+
+   Un booster en donnait quatre sur cinq en moyenne — trois garantis, plus une
+   chance sur deux à chacune des deux dernières places. La collection avançait,
+   mais l'équipement, les tenues et les cartes d'action n'arrivaient presque
+   jamais, et deux ouvertures se ressemblaient.
+
+   Les deux bornes comptent autant l'une que l'autre : **jamais plus de deux**,
+   pour que le reste de l'inventaire ait de la place ; **jamais zéro**, parce
+   qu'un booster sans un seul personnage est une ouverture pour rien. */
+check('la première carte est toujours un supporter', premiereToujoursFanzzy);
+check(`jamais plus de deux supporters par booster (vu : ${maxFanzzy})`, maxFanzzy <= 2);
+/* Et les écharpes tombent vraiment. Sans ce contrôle, une catégorie morte
+   passerait pour de la malchance : sur deux cents cartes, un quart des trois
+   places ouvertes en donne des dizaines. */
+check(`des écharpes tombent aussi (${echarpesTombees} poignées)`, echarpesTombees > 5);
+/* Les quatre catégories déclarées doivent toutes **tomber pour de vrai**. Sans
+   ce contrôle, une ligne ajoutée à la table sans la branche qui va avec donne
+   silencieusement autre chose — c'est ce qui s'est passé : toute catégorie
+   inconnue sortait en carte d'action, et une table qui promettait des
+   supporters n'en donnait aucun sans que rien ne rougisse. */
+for (const t of ['fanzzy', 'skin', 'stuff', 'action', 'echarpes']) {
+  check(`la catégorie « ${t} » tombe vraiment`, vus.has(t));
+}
 
 const [skinsRecus] = await pool.query(
   `SELECT DISTINCT fanzzy_id FROM user_skins WHERE user_id = ? AND skin_id <> 'base'`, [U]);

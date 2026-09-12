@@ -12,7 +12,7 @@ import express from 'express';
 import { createAuth } from '../src/server/auth/routes.js';
 import { createSocketAuthenticator } from '../src/server/auth/socket.js';
 import { readTicket } from '../src/server/auth/tokens.js';
-import { baseDeTest } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
 const ORIGIN_LOCAL = 'http://localhost';
@@ -27,7 +27,7 @@ const check = (label, cond) => {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
@@ -35,7 +35,7 @@ await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
 await raw.query(readFileSync(new URL('../sql/auth.sql', import.meta.url), 'utf8'));
 await raw.end();
 
-const pool = mysql.createPool({ uri: DB, connectionLimit: 8, charset: 'utf8mb4' });
+const pool = mysql.createPool({ uri: DB, connectionLimit: 8, ...OPTIONS_BASE });
 
 // Faux expéditeur : on capture les jetons au lieu de les envoyer.
 const sent = [];

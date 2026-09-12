@@ -12,7 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifierSchema, lireSchemaAttendu, lireColonnesAttendues, messageDeManque }
   from '../src/server/auth/schema.js';
-import { baseDeTest } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
 const SQL = fileURLToPath(new URL('../sql/', import.meta.url));
@@ -44,7 +44,11 @@ const mysql = await import('mysql2/promise');
  * D'où le contrôle juste en dessous : la liste doit couvrir tout le dossier.
  */
 const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', 'fanzzy', 'teletext',
-  'inventaire', 'skins', 'tenues', 'deck', 'admin', 'kop', 'amis', 'niveau', 'raretes', 'stades'];
+  'inventaire', 'skins', 'tenues', 'deck', 'admin', 'kop', 'amis', 'niveau', 'raretes', 'stades',
+  // La boutique en dernier : sa table d achats s accroche à users, qui vient
+  // du premier fichier, mais elle livre des écharpes et des boosters — donc
+  // elle suppose la bourse, qui vient de souvenirs.sql.
+  'boutique'];
 
 {
   const surLeDisque = (await readdir(SQL)).filter((f) => f.endsWith('.sql'))
@@ -69,7 +73,7 @@ for (const f of ORDRE) {
 }
 await raw.end();
 
-const pool = mysql.createPool({ uri: DB, connectionLimit: 2, charset: 'utf8mb4' });
+const pool = mysql.createPool({ uri: DB, connectionLimit: 2, ...OPTIONS_BASE });
 
 /* ------------------------------------------------------- lecture des .sql */
 

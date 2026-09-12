@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
 import { createFootball } from '../src/server/football/routes.js';
-import { baseDeTest } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -43,7 +43,7 @@ async function jusqua(fn, ms = 6000) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS kop_invites, amities, kop_bulletins, kop_votes,
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities, kop_bulletins, kop_votes,
   kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
@@ -76,7 +76,7 @@ await raw.end();
    vieille de deux heures. Le défaut n'existait **que dans cette suite**, et
    il a coûté une demi-heure à chercher dans la page. Une suite qui ne monte
    pas la configuration de l'application n'éprouve pas l'application. */
-const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4',
+const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE,
   timezone: 'Z' });
 const requireAuth = (r, _s, n) => { r.user = { id: U }; n(); };
 /* Un client d'API muet : la recherche lit la base d'abord, et tous les clubs
@@ -254,10 +254,16 @@ async function chercher(terme) {
   await pool.query(`INSERT INTO leagues (id,name) VALUES (77,'Super League')
                     ON DUPLICATE KEY UPDATE name=VALUES(name)`);
   await pool.query(
-    `INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,
+  /* `polled_at` se sème avec NOW(3), comme le relevé du direct l'écrit — et
+     non avec UTC_TIMESTAMP, qui est la convention de `kickoff_at`. Les deux
+     colonnes de la même table ne suivent pas le même fuseau, et une suite qui
+     sème autrement que la production éprouve une application qui n'existe pas.
+     Celle-ci le faisait : elle était verte sur une donnée que le serveur
+     n'écrit jamais. */
+  `INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,
                            home_goals,away_goals,elapsed,elapsed_extra,polled_at,kickoff_at)
      VALUES (9100,77,2026,85,99,'2H',1,0,19,NULL,
-             UTC_TIMESTAMP() - INTERVAL 2 MINUTE, UTC_TIMESTAMP() - INTERVAL 25 MINUTE)`);
+             NOW(3) - INTERVAL 2 MINUTE, UTC_TIMESTAMP() - INTERVAL 25 MINUTE)`);
 
   const p = await nav.newPage();
   p.on('pageerror', (e) => erreurs.push(e.message));
@@ -273,7 +279,7 @@ async function chercher(terme) {
      avant `minutes.sql`, et que cette page ne demandait pas. */
   await pool.query(
     `UPDATE fixtures SET elapsed = 90, elapsed_extra = 3,
-            polled_at = UTC_TIMESTAMP() WHERE id = 9100`);
+            polled_at = NOW(3) WHERE id = 9100`);
   await p.evaluate(() => load());
   await jusqua(async () => /90\+3/.test(await p.evaluate(() =>
     document.querySelector('.team .live')?.textContent ?? '')));
@@ -286,7 +292,7 @@ async function chercher(terme) {
      minute plutôt que d'en inventer une. */
   await pool.query(
     `UPDATE fixtures SET elapsed = 60, elapsed_extra = NULL,
-            polled_at = UTC_TIMESTAMP() - INTERVAL 30 MINUTE WHERE id = 9100`);
+            polled_at = NOW(3) - INTERVAL 30 MINUTE WHERE id = 9100`);
   await p.evaluate(() => load());
   await dodo(300);
   check('après un long silence, elle se tait plutôt que d’inventer',

@@ -7,7 +7,7 @@ import { BY_ID } from '../src/shared/fanzzy/dex.js';
 import { STUFF_BY_ID, combine } from '../src/shared/fanzzy/inventaire.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues, toutesTenues, tenuesPubliees } from '../src/server/fanzzy/tenues.js';
-import { baseDeTest } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
 let failures = 0;
@@ -15,7 +15,7 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
@@ -29,7 +29,7 @@ await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES
 await raw.query(`INSERT INTO teams (id,name) VALUES (85,'FC Sion'),(91,'FC Bâle'),(61,'PSG'),(7,'OM')`);
 await raw.end();
 
-const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' });
+const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 // Le catalogue vit en base depuis qu il se gère par l administration :
 // on le charge comme le fait server.js, sinon les modules travaillent
 // sur un catalogue vide.

@@ -33,7 +33,7 @@ import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { createVirage } from '../src/server/ferveur/index.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
-import { baseDeTest } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 const DB = baseDeTest();
@@ -45,7 +45,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops,
   user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
   souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
@@ -84,9 +84,13 @@ await raw.query(`INSERT INTO user_follows (user_id,team_id) VALUES (?,85)`, [U])
 /* Le match est en cours depuis un moment, et la base en sait déjà quelque
    chose : c'est le relevé du direct qui l'a remplie. Le joueur arrive au
    milieu — c'est le cas ordinaire, et celui qui montre si le fil est semé. */
+/* `polled_at=NOW(3)` — écrit exactement comme le relevé du direct l'écrit, et
+   c'est tout l'intérêt : NOW(3) date dans le fuseau de la session MySQL alors
+   que le pilote lit en UTC. Un match semé sans cette colonne laissait `luA` à
+   nul, et le contrôle de l'horloge ne pouvait rien éprouver du tout. */
 await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,
-                                       home_goals,away_goals,elapsed,kickoff_at)
-                 VALUES (8001,207,2026,85,91,'2H',2,1,71,UTC_TIMESTAMP())`);
+                                       home_goals,away_goals,elapsed,kickoff_at,polled_at)
+                 VALUES (8001,207,2026,85,91,'2H',2,1,71,UTC_TIMESTAMP(),NOW(3))`);
 await raw.query(`INSERT INTO fixture_events
                    (fixture_id,seq,type,detail,team_id,player,assist,minute)
                  VALUES (8001,0,'Card','Yellow Card',91,'Zambrano',NULL,12),
@@ -95,7 +99,7 @@ await raw.query(`INSERT INTO fixture_events
                         (8001,3,'Card','Red Card',91,'Keller',NULL,66)`);
 await raw.end();
 
-const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' });
+const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 await chargerCatalogue(pool);
 await chargerTenues(pool);
 
@@ -131,10 +135,200 @@ await page.evaluate(() => socket.emit('virage:join', { fixtureId: 8001 }));
 const entre = await page.waitForSelector('#fil:not([hidden])', { timeout: 8000 })
   .then(() => true).catch(() => false);
 check('la bande du fil paraît dès l’entrée dans le virage', entre);
+
+/* Des captures, à la demande : SHOT=<dossier> npm run virage:ui. Elles ne
+   prouvent rien — elles servent à regarder ce que le joueur voit, ce qu'aucune
+   mesure de rectangle ne raconte. */
+if (process.env.SHOT) {
+  await page.setViewport({ width: 1200, height: 900 });
+  await wait(400);
+  await page.screenshot({ path: process.env.SHOT + '/v-jeu-1200.png' });
+  await page.setViewport({ width: 400, height: 880 });
+  await wait(400);
+  await page.screenshot({ path: process.env.SHOT + '/v-jeu-400.png' });
+
+  const attente = await nav.newPage();
+  await attente.setViewport({ width: 1200, height: 900 });
+  await attente.goto(base + '/virage', { waitUntil: 'networkidle0' });
+  await wait(900);
+  await attente.screenshot({ path: process.env.SHOT + '/v-attente-1200.png' });
+  await attente.setViewport({ width: 400, height: 880 });
+  await wait(400);
+  await attente.screenshot({ path: process.env.SHOT + '/v-attente-400.png' });
+  await attente.close();
+}
+
+/* ------------------------------------------- l'horloge du vrai match
+
+   La panne la plus chère du projet, et sa deuxième occurrence : `polled_at`
+   est écrit par `NOW(3)`, donc dans le fuseau de la session MySQL, tandis que
+   le pilote lit avec `timezone: 'Z'`. L'instant de lecture partait deux heures
+   dans le futur ; `Date.now() - vuA` devenait négatif, l'horloge cessait de
+   compter, et la minute restait figée jusqu'au rechargement — dans le Virage
+   comme sur l'écran de choix.
+
+   Aucune lecture de code ne l'attrape : les deux lignes sont justes chacune de
+   son côté. Il faut une vraie base, un vrai fuseau, et comparer à l'horloge du
+   moment. C'est exactement ce que fait ce contrôle. */
+{
+  const live = await page.evaluate(async () => {
+    const r = await fetch('/api/virage/live', { credentials: 'same-origin' });
+    return r.ok ? (await r.json()).matchs : null;
+  });
+  const m = (live ?? []).find((x) => x.luA != null);
+  check('le serveur date la lecture de chaque match en direct', Boolean(m));
+  const avance = m ? Math.round((m.luA - Date.now()) / 60_000) : 0;
+  check('et cette date n’est pas dans le futur',
+    Boolean(m) && m.luA <= Date.now() + 5_000
+    || (console.log(`        luA en avance de ${avance} minutes`), false));
+
+  /* Le même instant, côté salle : c'est lui qui fait courir la minute pendant
+     qu'on pousse. Il vient de la même colonne et se trompait de la même façon. */
+  const vuA = await page.evaluate(() => S?.vuA ?? null);
+  check('la salle aussi date ce qu’elle sait du match', vuA != null);
+  check('et sans partir dans le futur non plus',
+    vuA != null && vuA <= Date.now() + 5_000
+    || (console.log(`        vuA en avance de `
+      + `${Math.round(((vuA ?? 0) - Date.now()) / 60_000)} minutes`), false));
+
+  /* Et la conséquence, qui est ce que le joueur voyait : la minute affichée.
+     Un `vuA` deux heures en avance la laisse exactement sur la valeur lue en
+     base, pour toujours. On avance l'horloge de la page de six minutes et on
+     regarde si elle suit. */
+  const suit = await page.evaluate(() => {
+    const vrai = Date.now;
+    const avant = window.TBF_HORLOGE.texte(
+      { statut: S.statut, minute: S.minute, extra: S.minuteExtra, vuA: S.vuA });
+    Date.now = () => vrai() + 6 * 60_000;
+    const apres = window.TBF_HORLOGE.texte(
+      { statut: S.statut, minute: S.minute, extra: S.minuteExtra, vuA: S.vuA });
+    Date.now = vrai;
+    return { avant, apres };
+  });
+  check('six minutes plus tard, la minute affichée a bougé',
+    suit.avant !== suit.apres
+    || (console.log(`        elle dit « ${suit.avant} » avant comme après`), false));
+}
+
+/* ------------------------------------ ce que le joueur voit par-dessus
+
+   Trois défauts trouvés à l'œil sur une capture, qu'aucune mesure existante
+   n'attrapait — chacun invisible tant que les cartes portaient des noms courts
+   ou que personne ne regardait le coin de l'écran. */
+{
+  const vu = await page.evaluate(() => {
+    const r = (el) => { const b = el.getBoundingClientRect();
+      return [b.left, b.top, b.right, b.bottom]; };
+    const croise = (a, b) => a[0] < b[2] - 0.5 && b[0] < a[2] - 0.5
+      && a[1] < b[3] - 0.5 && b[1] < a[3] - 0.5;
+    const retour = document.querySelector('.tbf-retour');
+    const burger = document.querySelector('.tbf-burger');
+    const genants = [];
+    for (const bouton of [retour, burger].filter(Boolean)) {
+      for (const el of document.querySelectorAll('.hud *')) {
+        const b = el.getBoundingClientRect();
+        if (b.width && b.height && croise(r(bouton), r(el))) {
+          genants.push(`${bouton.className.includes('retour') ? 'retour' : 'menu'}`
+            + ` sur ${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}`);
+        }
+      }
+    }
+    return {
+      retourHref: retour?.getAttribute('href') ?? null,
+      genants,
+      /* La *boîte* du nom va jusqu'au bord de la carte, réservation comprise :
+         ce qu'on mesure, c'est là où le texte s'arrête vraiment. Comparer les
+         rectangles bruts déclarerait une collision même après correction. */
+      cartesCollees: [...document.querySelectorAll('.card')]
+        .filter((el) => {
+          const b = el.querySelector('b'), c = el.querySelector('.c');
+          const droiteDuTexte = b.getBoundingClientRect().right
+            - parseFloat(getComputedStyle(b).paddingRight);
+          return droiteDuTexte > c.getBoundingClientRect().left + 0.5;
+        })
+        .map((el) => el.querySelector('b').textContent.trim()),
+      /* Une hauteur en pixels dépendrait de la police ; le nombre de boîtes de
+         ligne, non. Deux, c'est passé à la ligne. */
+      libellesCasses: [...document.querySelectorAll('.club small, .club b')]
+        .filter((el) => el.getClientRects().length > 1)
+        .map((el) => el.textContent.trim()),
+      voile: getComputedStyle(document.getElementById('veil')).backgroundColor,
+    };
+  });
+
+  /* Le retour : le menu était la seule façon de rentrer, et il fallait deux
+     gestes pour le mouvement le plus fréquent du jeu. */
+  check('un écran de jeu a une flèche de retour', vu.retourHref === '/');
+  check('et ni elle ni le menu ne recouvrent l’en-tête', vu.genants.length === 0);
+  if (vu.genants.length) console.log('        ', vu.genants.join(' · '));
+
+  /* Le coût est posé en absolu dans le coin de la carte ; le nom courait
+     dessous. Tant que les chants portaient leur clé — « mur », « reprise » —
+     le texte n'y arrivait pas. « À perdre haleine » l'a montré. */
+  check('aucun nom de chant ne court sous son coût', vu.cartesCollees.length === 0);
+  if (vu.cartesCollees.length) console.log('        ', vu.cartesCollees.join(' · '));
+
+  /* Le dégagement des deux boutons a pris seize pixels à l'en-tête, et
+     « TA TRIBUNE » s'est cassé en deux lignes. */
+  check('et aucun libellé de club ne passe à la ligne', vu.libellesCasses.length === 0);
+  if (vu.libellesCasses.length) console.log('        ', vu.libellesCasses.join(' · '));
+
+  /* Le voile de l'écran de choix était à 96 % : l'en-tête du jeu, avec ses
+     blasons vides et son « 0 – 0 » d'avant l'entrée, transparaissait dessous. */
+  /* Et la case entière tient dans l'écran. La rangée est en bas : une case plus
+     haute que les autres — un nom sur deux lignes, un geste au libellé long —
+     pousse sa poussée hors du cadre, et c'est le chiffre qui décide du choix. */
+  const rognees = await page.evaluate(() => [...document.querySelectorAll('.card')]
+    .filter((el) => el.getBoundingClientRect().bottom > innerHeight + 1
+      || el.querySelector('.p').getBoundingClientRect().bottom > innerHeight + 1)
+    .map((el) => el.querySelector('b').textContent.trim()));
+  check('et chaque chant montre sa poussée en entier', rognees.length === 0);
+  if (rognees.length) console.log('        rognés :', rognees.join(' · '));
+
+  check('le voile de l’écran de choix est opaque',
+    !/rgba\([^)]*,\s*0?\.\d+\s*\)/.test(vu.voile)
+    || (console.log('        il vaut', vu.voile), false));
+}
+
 if (!entre) {
   console.log('  arrêt : le joueur n’est pas entré dans le virage');
   await nav.close(); http.close(); virage.stop(); io.close(); await pool.end();
   process.exit(1);
+}
+
+/* ------------------------------------------------------ le répertoire
+
+   Cinq chants à la fois, et pas douze : c'est la contrainte de l'écran qui a
+   décidé du mécanisme, donc c'est ici qu'elle se vérifie. La rangée est un
+   `flex` où chaque carte prend sa part — à douze, chacune ferait vingt pixels
+   de large sur un iPhone SE, et le nom disparaîtrait.
+
+   On contrôle aussi que ce nom est bien un *nom*. La page affichait la clé, et
+   la tribune lisait « onetaitla ». */
+{
+  const chants = await page.evaluate(() => [...document.querySelectorAll('.card')]
+    .map((el) => {
+      const b = el.querySelector('b');
+      const r = el.getBoundingClientRect();
+      return { texte: b.textContent.trim(), largeur: r.width,
+               rogne: b.scrollWidth > b.clientWidth + 1,
+               dedans: r.right <= innerWidth + 1 && r.left >= -1 };
+    }));
+
+  check('la tribune ne voit que cinq chants à la fois', chants.length === 5);
+  check('et chacun garde de quoi se lire',
+    chants.every((c) => c.largeur >= 45)
+    || (console.log('        largeurs :',
+      chants.map((c) => Math.round(c.largeur)).join(', ')), false));
+  check('aucun ne sort de l’écran', chants.every((c) => c.dedans));
+  /* Un nom, pas une clé : les identifiants du serveur n'ont ni espace ni
+     accent, et c'est exactement ce qui les trahit à l'écran. */
+  check('ce sont des noms, pas des identifiants',
+    chants.every((c) => /[ ’'À-ÿ]/.test(c.texte))
+    || (console.log('        affiché :', chants.map((c) => c.texte).join(' · ')), false));
+  check('et aucun n’est rogné', chants.every((c) => !c.rogne)
+    || (console.log('        rognés :',
+      chants.filter((c) => c.rogne).map((c) => c.texte).join(', ')), false));
 }
 
 /* ---------------------------------------------------------- la bande */
@@ -551,6 +745,46 @@ const laScene = () => page.evaluate(() => ({
     }
     return { absent: false, genes, dansLEcran: rb.right <= innerWidth + 1 && rb.top >= -1 };
   });
+  /* Et la même chose sur un grand écran. Le contrôle ci-dessus ne vaut qu'à
+     quatre cents pixels, et c'est là que la place manque — mais les deux
+     boutons flottent au bord de la **colonne**, pas de la fenêtre : sur un
+     ordinateur, la colonne est plus étroite que l'écran, et rien ne dit a
+     priori que le dégagement y tombe juste. C'est d'ailleurs sur un écran
+     large que le défaut a été vu. */
+  await page.setViewport({ width: 1200, height: 880 });
+  await wait(300);
+  const large = await page.evaluate(() => {
+    const dedans = (bouton) => {
+      const b = bouton.getBoundingClientRect();
+      const g = [];
+      for (const el of document.querySelectorAll('.hud *')) {
+        const r = el.getBoundingClientRect();
+        if (!r.width || !r.height) continue;
+        if (b.left < r.right - 0.5 && r.left < b.right - 0.5
+            && b.top < r.bottom - 0.5 && r.top < b.bottom - 0.5) {
+          g.push(el.tagName.toLowerCase() + (el.id ? '#' + el.id : ''));
+        }
+      }
+      return g;
+    };
+    const col = document.getElementById('app').getBoundingClientRect();
+    const bur = document.querySelector('.tbf-burger').getBoundingClientRect();
+    return {
+      genants: [...dedans(document.querySelector('.tbf-burger')),
+                ...dedans(document.querySelector('.tbf-retour'))],
+      dansLaColonne: bur.right <= col.right + 1 && bur.left >= col.left - 1,
+      colonnePlusEtroite: col.width < innerWidth - 200,
+    };
+  });
+  check('sur un grand écran non plus, les boutons ne recouvrent rien',
+    large.genants.length === 0
+    || (console.log('        ', large.genants.join(' · ')), false));
+  check('et ils restent accrochés à la colonne', large.dansLaColonne);
+  // Ce qui rend le précédent honnête : la colonne n'est pas la fenêtre.
+  check('or la colonne y est bien plus étroite que l’écran', large.colonnePlusEtroite);
+  await page.setViewport({ width: 400, height: 880 });
+  await wait(300);
+
   check('le Virage garde une sortie', sortie.absent === false);
   check('et le bouton de menu ne recouvre rien de l’en-tête',
     (sortie.genes ?? []).length === 0);

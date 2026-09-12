@@ -335,7 +335,26 @@ $('formLogin').onsubmit = async (e) => {
   e.preventDefault(); clear('gateMsg'); busy(e.target, true);
   const r = await api('/login', { email: $('liEmail').value, password: $('liPassword').value });
   busy(e.target, false);
-  if (r.status === 200) { user = r.json.user; locale = user.locale || locale; applyLocale(); render(); }
+  /* Connecté : on l'emmène **chez lui**, pas sur sa fiche de compte.
+   *
+   * Le formulaire se contentait de redessiner la page, et le joueur se
+   * retrouvait devant son adresse e-mail et son statut de vérification — un
+   * écran d'administration — alors qu'il venait d'entrer dans un jeu. La
+   * connexion Google, elle, faisait déjà le bon geste : voir `auth/google.js`,
+   * qui envoie sur `/bienvenue` ou sur `/`. On dit ici la même chose.
+   *
+   * La cérémonie d'accueil passe avant, et une seule fois : quelqu'un qui n'a
+   * pas encore choisi son club n'a rien à faire sur l'accueil. */
+  if (r.status === 200) {
+    user = r.json.user; locale = user.locale || locale; applyLocale();
+    let fait = true;
+    try {
+      fait = Boolean((await fetch('/api/me/state', { credentials: 'same-origin' })
+        .then((x) => x.json())).onboarded);
+    } catch { /* état injoignable : l'accueil se débrouille sans */ }
+    location.href = fait ? '/' : '/bienvenue';
+    return;
+  }
   else say('gateMsg', r.json.error ?? 'auth.error.server');
 };
 

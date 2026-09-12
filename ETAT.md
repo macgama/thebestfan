@@ -142,6 +142,41 @@ local, avant de livrer.
 
 ### Les pièges de test, rencontrés au moins deux fois chacun
 
+**Une suite doit ouvrir sa base comme le serveur ouvre la sienne.** Charset,
+fuseau, options du pilote : tout ce qui diffère est un endroit où le vert ne
+veut rien dire. Vingt-cinq suites ouvraient leur pool sans `timezone: 'Z'` et
+laissaient donc passer trois pannes en production, dont une qui empêchait
+purement et simplement de réinitialiser son mot de passe. Voir § 4 quater.
+
+**Et elle doit semer comme le serveur écrit.** Même base, même options, et
+malgré tout `equipes-ui-smoke` semait `polled_at` avec `UTC_TIMESTAMP()` quand
+le relevé du direct l'écrit avec `NOW(3)`. Deux colonnes de la même table ne
+suivent pas le même fuseau ; semer autrement, c'est éprouver une donnée qui
+n'existe pas.
+
+**Une mutation doit être fidèle, ou elle ment.** Remettre `new Date(polled_at)`
+sans remettre `polled_at` dans le SELECT a laissé la suite verte : la colonne
+valait `undefined`, le repli prenait la main, et la régression passait pour
+absente. Une mutation qui ne reproduit pas exactement l'ancien code ne prouve
+rien — ni dans un sens ni dans l'autre.
+
+**Mesurer une boîte n'est pas mesurer un texte.** Le nom d'un chant courait sous
+son coût ; la réservation par `padding-right` a corrigé le défaut, mais le
+rectangle du `<b>`, qui inclut le remplissage, se chevauchait toujours. Il faut
+retrancher le `padding-right` calculé pour savoir où le texte s'arrête vraiment.
+
+**`getClientRects().length` dit si un texte est passé à la ligne, pas sa
+hauteur en pixels.** Un seuil en pixels dépend de la police et rougit sur une
+ligne unique un peu haute.
+
+**`sed` avale le `\r`, et ment donc sur les fins de ligne.** Les fichiers du
+dépôt sont mélangés : `virage.js` et `virage.html` sont en CRLF, mais
+`virage-smoke.mjs` est en LF. Tout remplacement scripté doit détecter la fin de
+ligne, sinon il ne trouve rien. Le piège n'est pas là : il est que
+`sed -n '42p' fichier | cat -A` affiche `$` même sur une ligne CRLF, parce que
+`sed` a retiré le `\r` en chemin. **Inspecter avec `grep`, jamais avec `sed`.**
+Payé deux fois dans la même heure.
+
 **`body.textContent` inclut le contenu des balises `<script>`.** Une
 vérification qui cherche un message dans le texte de la page le trouve dans son
 propre code source et passe alors que rien n'est affiché. Toujours cloner le
@@ -996,6 +1031,402 @@ faire.
 
 ---
 
+## 4 ter. Dix gestes, douze chants, un répertoire qui tourne
+
+Le duel n'était pas répétitif parce qu'il n'avait que trois gestes. Il l'était
+parce qu'**un joueur n'en faisait jamais qu'un** : le sien, celui de son
+Fanzzy, cent fois de suite. Le diagnostic compte plus que le remède, parce
+qu'on aurait pu ajouter sept gestes et ne rien changer du tout.
+
+### Les dix gestes — `src/server/ferveur/gestures.js`
+
+Aux trois d'origine — tempo, martelage, endurance — s'en ajoutent sept :
+
+| geste | ce qu'on demande |
+|---|---|
+| `contretemps` | taper **entre** les pulsations, pas dessus |
+| `echo` | répéter un motif de quatre frappes que le serveur vient de donner |
+| `crescendo` | dix frappes de plus en plus rapprochées, de 700 ms à 260 ms |
+| `relance` | attendre près de deux secondes sans rien faire, puis tenir |
+| `salves` | trois rafales de quatre, séparées par un silence exact |
+| `tenue` | tenir le plus longtemps possible **sans dépasser** 4,2 s |
+| `retenue` | exactement douze frappes en quatre secondes, ni onze ni treize |
+
+Les deux derniers sont des gestes de **risque** : trop en faire y coûte plus
+cher que pas assez. C'est ce qui les distingue vraiment des cinq autres, et
+c'est pour cela qu'ils ne partagent pas leur barème.
+
+**Les sept nouveaux n'ont pas leurs propres modificateurs.** `tempoWindow`
+élargit toutes les fenêtres de rythme, `holdForgive` paie toutes les tenues :
+un Fanzzy de la voix aide sur l'écho comme sur le tempo. Dix familles de
+modificateurs pour dix gestes, et plus personne n'aurait su ce que porte son
+personnage.
+
+### Le déroulé est partagé — `public/geste.js`
+
+Il vivait deux fois, dans `virage.html` et dans `nvn-ui.html`, et il n'y avait
+que trois gestes. À dix, la duplication devenait indéfendable. `TBF_GESTE`
+expose `jouer`, `LABEL`, `AIDE`, `COULEUR`, et **ne contient aucun nombre de
+jeu** : toutes les durées viennent de `S.you.gestes`, que le serveur remplit
+avec les modificateurs du porteur. Les identifiants du balisage (`pad`, `ring`,
+`n`, `s`, `jauge`) sont volontairement ceux d'origine, pour que le CSS des deux
+pages et les contrôles existants continuent de valoir.
+
+### Le duel impose le geste, et il tourne
+
+`prochainGeste()` dans `src/server/nvn/engine.js` : un chant sur deux est celui
+du Fanzzy actif, l'autre est pris dans les neuf restants, à tour de rôle. **Le
+geste annoncé par le client est ignoré** — il l'était déjà à moitié, ce qui
+était pire que pas du tout.
+
+Le motif de l'écho suit le même chemin (`j.motif`), et `noterContre` a dû
+passer d'une notation « au plus proche » à une notation **dans l'ordre** : un
+mauvais motif obtenait 0,8 parce que ses quatre frappes trouvaient toujours un
+temps attendu à qui se raccrocher. Dans l'ordre, il obtient 0,4.
+
+### Le Virage : douze chants, cinq offerts — `src/server/ferveur/virage.js`
+
+La rangée des chants est un `flex` : douze cartes y feraient vingt-deux pixels
+de large sur un iPhone SE. C'est **la contrainte d'écran qui a décidé du
+mécanisme**, et c'est assumé — le répertoire n'offre que cinq chants à la fois,
+et il glisse d'un cran toutes les dix minutes du **vrai match**.
+
+- `ORDRE` est écrit à la main et ce n'est pas décoratif : cinq chants
+  consécutifs doivent toujours mêler au moins quatre gestes, sinon dix minutes
+  de match se joueraient entièrement au martelage. Un contrôle le vérifie, et
+  une mutation qui groupe les gestes par famille le fait tomber.
+- D'un répertoire au suivant, **un seul chant change**. Une tribune ne perd pas
+  d'un coup tout ce qu'elle vient d'apprendre.
+- Le changement est **annoncé** (`virage:repertoire`). La page ne reçoit
+  `virage:state` qu'à l'entrée : sans ce message, un supporter garderait
+  jusqu'au coup de sifflet final les cinq chants du moment où il est arrivé.
+- Le message porte le **motif d'écho** mais pas la fenêtre. Le motif appartient
+  à la tribune, qui le chante ensemble ; la fenêtre est personnelle — un
+  Métronome ou une écharpe l'élargissent — et la page tient déjà la sienne.
+- Un chant hors répertoire est refusé, **et pour cette raison-là**
+  (`chant_hors_repertoire`). Un « carte inconnue » aurait envoyé chercher un
+  bogue là où il n'y a qu'une horloge.
+- La bascule tolère l'ancien répertoire **quinze secondes**, motif compris : un
+  chant dure quatre secondes, et celui qui a commencé avant que l'horloge
+  tourne le termine après. Le compter faux serait punir le supporter d'une
+  minute qui n'est pas la sienne.
+
+Les chants portent maintenant un `nom`. La page affichait `c.id`, et la tribune
+lisait « onetaitla ».
+
+### Trois cartes d'action de plus — 24 au total
+
+- **Changement de chant** (`a-relais`, rare, 20 souffle, 35 s) — défausse la
+  main, en reprend cinq. **Ce qu'on jette revient dans la pioche**, y compris la
+  carte elle-même : sans cela, ce serait un moyen lent de vider son propre deck.
+- **Nouveau souffle** (`a-souffleneuf`, légendaire, 38 souffle, 75 s) — toutes
+  les recharges tombent d'un coup. Elle vaut plus cher au Virage, où les
+  recharges durent une fois et demie celles du duel.
+- **Tifo** (`a-tifo`, épique, 26 souffle, 40 s) — s'arme, **se voit** huit
+  secondes, puis pousse de 95. Le seul effet du jeu que l'adversaire voit venir
+  et peut contrer. Il passe par le chemin ordinaire, donc il est divisé par
+  l'effectif comme tout le reste : un tifo n'échappe pas plus à la règle de la
+  foule qu'un fumigène.
+
+Les trois sont de portée `soi`, donc `dansLeVirage` les accepte — et le moteur
+du Virage a dû apprendre à les résoudre, sinon elles y auraient été distribuées
+pour lever `unknown_effect`. C'est la troisième fois que la règle de portée se
+venge : voir § 3.
+
+---
+
+## 4 quater. Le fuseau, et pourquoi aucune suite ne le voyait
+
+**C'est la panne la plus instructive du projet.** Elle a trois visages et une
+seule cause, et elle a survécu à deux corrections parce que les suites
+éprouvaient une application que personne ne déploie.
+
+### La cause
+
+`mysql2` est réglé sur `timezone: 'Z'` dans `src/server/auth/db.js`. Ce réglage
+décide de **deux** conversions, dans les deux sens :
+
+- une colonne DATETIME **lue** devient un objet `Date` interprété comme de
+  l'UTC ;
+- un objet `Date` **écrit** est sérialisé en UTC.
+
+Or la base écrit aussi par elle-même, avec `NOW(3)`, qui rend l'heure de la
+session MySQL — locale sur la plupart des serveurs. Sur la machine de
+développement, l'écart vaut **deux heures**. D'où deux règles, et elles ne se
+mélangent pas :
+
+| la colonne est écrite par | on la relit ainsi |
+|---|---|
+| `NOW(3)` en SQL | `UNIX_TIMESTAMP(col) * 1000` — **jamais** en JavaScript |
+| un objet `Date` depuis JS | on la compare à `UTC_TIMESTAMP(3)` — **jamais** à `NOW(3)` |
+
+### Ce que ça cassait
+
+- **La minute du vrai match restait figée.** `fixtures.polled_at` est écrit par
+  `NOW(3)` et était relu en JavaScript : l'instant de lecture partait deux
+  heures dans le futur, `Date.now() - vuA` devenait négatif, et l'horloge — qui
+  refuse de compter à l'envers — restait clouée sur la minute du chargement.
+  Dans le Virage, sur l'écran de choix, et sur `/equipes`.
+- **La réinitialisation de mot de passe ne marchait pas du tout.**
+  `auth_tokens.expires_at` est écrit depuis JavaScript, donc en UTC, et
+  comparé à `NOW(3)`. Un jeton de réinitialisation vit **une heure** : il
+  naissait déjà expiré. Le jeton de vérification, lui, vit quarante-huit
+  heures — il marchait, en mourant deux heures trop tôt, ce qui faisait passer
+  la panne pour un caprice plutôt que pour une règle.
+- **Le délai après un refus d'ami annonçait huit jours au lieu de sept.**
+  `amities.repondu_le` est écrit par `NOW(3)` et était relu en JavaScript.
+
+### Pourquoi les suites ne le voyaient pas
+
+**Elles ouvraient leur pool sans `timezone`.** Vingt-cinq suites écrivaient
+donc en heure locale, les deux horloges tombaient d'accord, et tout était vert
+sur un réglage que le serveur n'utilise jamais. Le réglage vit maintenant dans
+`OPTIONS_BASE`, exporté par `scripts/base-de-test.mjs`, et toutes les suites
+s'en servent.
+
+Ce n'était pas suffisant : **le semis doit lui aussi ressembler à la
+production.** `equipes-ui-smoke` semait `polled_at` avec `UTC_TIMESTAMP()`
+alors que le relevé du direct l'écrit avec `NOW(3)`. Une suite qui sème
+autrement que le serveur éprouve une donnée qui n'existe pas.
+
+**La leçon, au-delà des dates :** un contrôle ne vaut que si son environnement
+est celui de la production. Charset, fuseau, options du pilote, façon de semer
+— tout ce qui diffère est un endroit où le vert ne veut rien dire.
+
+---
+
+## 4 quinquies. L'écran, dans cette session
+
+**La flèche de retour.** En haut à gauche de toutes les pages sauf l'accueil.
+Le menu était la seule navigation depuis la disparition de la barre du bas, et
+rentrer demandait deux gestes — ouvrir le tiroir, viser la première ligne —
+pour le mouvement le plus fréquent du jeu.
+
+**Le dégagement des deux boutons flottants est écrit une fois**, dans `nav.js`,
+sous `--tbf-haut-g` et `--tbf-haut-d`. Il valait `58px`, recopié dans le duel
+et dans le Virage ; le blason du club de droite passait quand même à six pixels
+du bouton de menu, ce qui, de loin, se lit comme un recouvrement.
+
+**Le voile de l'écran de choix est opaque.** Il était à 96 %, et l'en-tête du
+jeu — blasons vides, « 0 – 0 » d'avant l'entrée — transparaissait dessous.
+
+**L'accueil nomme son Fanzzy.** Le nom n'existait que dans l'attribut `alt` de
+l'image : le personnage tenait le centre de l'écran sans que rien ne dise qui
+il est. Le nom et l'âge atteint voyagent dans le **même souvenir**
+(`localStorage`) que le visage, et pour la même raison — sinon le nom arrivait
+trois allers-retours après la tête. Les rails y gagnent le **KOP** et les
+**AMIS**, qui n'étaient joignables que par le menu.
+
+---
+
+## 4 sexies. Le booster, rééquilibré
+
+Un booster donnait **quatre supporters sur cinq** en moyenne : trois garantis,
+plus une chance sur deux à chacune des deux dernières places. La collection
+avançait, mais l'équipement, les tenues et les cartes d'action n'arrivaient
+presque jamais, et deux ouvertures se ressemblaient.
+
+Désormais : **un ou deux supporters, jamais plus**. La première place en est un
+— c'est la garantie, personne ne doit tomber sur cinq objets et zéro
+personnage. La deuxième en est un sept fois sur dix. Les trois dernières
+n'en sont **jamais** : elles tirent dans `PLACES_OUVERTES` — carte d'action 30 %,
+équipement 25 %, tenue 20 %, écharpes 25 %.
+
+Les **écharpes** entrent au tirage, et ce n'est pas un lot de consolation :
+c'est ce qui paie les évolutions, donc les âges qu'aucun booster ne donne.
+C'est aussi le seul lot qui ne peut pas être vide, et il sert donc de recours
+aux autres catégories — un joueur qui possède déjà toutes les tenues recevait
+un supporter de plus.
+
+**La dernière branche de `tirerAutreChose` est nommée.** Elle ne l'était pas :
+toute catégorie sans branche à elle sortait en carte d'action, en silence. Une
+mutation qui remettait « fanzzy » dans la table restait donc verte — le
+supporter promis sortait en pyro. Un contrôle vérifie maintenant que les cinq
+catégories déclarées tombent **vraiment**.
+
+---
+
+## 4 septies. Les douze chants illustrés
+
+`scripts/chant-images.mjs` et `public/chant-art.js`, sur le modèle des cartes
+d'action. Trois différences, chacune décidée par une contrainte :
+
+- **Du paysage, et petit.** Une case de chant fait 72 pixels de large ; servir
+  du 480×640 comme pour les cartes d'action ferait télécharger seize fois ce
+  qu'on affiche. On sert 320×240.
+- **Le haut du cadre doit être sombre.** Le nom, le coût et la poussée
+  s'écrivent par-dessus le dessin ; l'invite le demande, et un voile en dégradé
+  le garantit quand le modèle n'obéit pas.
+- **Le dessin dit le geste, pas le chant.** Un supporter qui tape en rythme, un
+  autre qui retient son souffle, une tribune qui répond à son capo : c'est ce
+  que le joueur va devoir faire dans les quatre secondes qui suivent. Douze
+  tribunes génériques ne l'auraient aidé en rien.
+
+Les douze chants vivent maintenant dans `src/shared/duel/chants.js`, à côté des
+cartes d'action : la chaîne d'illustrations et les contrôles en ont besoin, et
+aucun des deux ne peut importer un moteur de salle pour lire une table.
+
+---
+
+## 4 octies. Cinq épreuves qui ne sont ni du rythme ni de la force
+
+`src/server/ferveur/epreuves.js`, `public/geste.js`, `npm run epreuves:ui`.
+
+Les dix gestes demandaient tous la même chose — frapper au bon moment, frapper
+vite, tenir — et se notaient tous depuis une liste d'instants. Ces cinq-ci
+demandent autre chose :
+
+| épreuve | ce qu'on demande | ce qui est noté |
+|---|---|---|
+| **tifo** | suivre un trait du doigt (rond, écharpe, fanion, cœur) | précision × couverture × **ordre** |
+| **les visages** | retenir huit visages, puis retrouver les paires | paires trouvées, moins les essais ratés |
+| **mosaïque** | une grille s'allume une seconde, la refaire | cases justes moins fausses |
+| **l'écharpe** | tourner le doigt, trois tours, dans le sens demandé | tours × rondeur |
+| **le capo** | répéter une suite de six zones | le plus long début juste |
+
+### Le contrat, en deux temps
+
+La **consigne** est tirée d'une graine — la même que le motif de l'écho — donc
+reproductible : la page dessine exactement la forme que le serveur notera. La
+**réponse** a la forme que la famille demande : un tracé, une grille, une
+suite. Les deux moteurs n'en savent rien : ils demandent une note, ils
+reçoivent une note entre 0 et 1,2, comme pour les dix autres.
+
+### Trois choses trouvées en éprouvant, et qu'aucune lecture n'aurait données
+
+**Le gribouillis marquait 0,78.** Précision et couverture ne suffisent pas :
+soixante points jetés au hasard sont à moitié sur le trait et approchent toute
+la forme. C'est l'**ordre** qui sépare un tracé d'un gribouillis — un doigt qui
+suit une forme avance le long d'elle, sans se téléporter. Le contrôle qui le
+prouve prend le bon tracé et **mêle ses points** : même précision, même
+couverture, seul l'ordre change, et la note doit tomber.
+
+**Le tirage rendait toujours la même forme.** Un générateur de Lehmer rend une
+valeur proportionnelle à sa graine au premier appel ; pour des graines de un à
+quarante — c'est-à-dire toutes les nôtres — le premier tirage valait toujours
+presque zéro. On ne s'en aperçoit qu'en essayant plusieurs graines : avec une
+seule, tout a l'air parfaitement aléatoire.
+
+**`setPointerCapture` emportait le tracé.** L'appel lève quand le pointeur
+n'est plus actif, il était en tête du gestionnaire d'appui, et il emportait la
+ligne suivante — celle qui pose le point de départ. Le geste mourait pour toute
+sa durée, sans que rien ne le dise. La capture est un confort ; le tracé est le
+geste. On prend donc le point d'abord, et la capture ensuite, sous garde.
+
+### Le filet anti-robot refusait un joueur honnête sur vingt
+
+La consigne part chez le joueur, donc la réponse aussi : la mosaïque et le capo
+*montrent* ce qu'il faut refaire. La défense est la vraisemblance, comme pour
+les dix gestes — mais le seuil était mal réglé.
+
+Il exigeait un écart type d'au moins **14 ms** entre les coups. Sur six coups,
+soit cinq écarts, l'hésitation naturelle d'un humain tombe sous ce seuil
+**5,1 % du temps** — mesuré sur quarante mille tirages, pas supposé. Un joueur
+sur vingt était traité en tricheur.
+
+À **6 ms**, la machine reste attrapée cent fois sur cent, même bruitée de trois
+millisecondes, et l'honnête ne passe plus qu'une fois sur cinq cents. Et la
+régularité ne se juge plus sous quatre écarts, parce qu'une statistique sur
+trois valeurs ne vaut rien.
+
+**La leçon, au-delà du seuil :** un filet qui attrape le joueur qu'il devait
+protéger finit par être désactivé, et alors il n'attrape plus personne. Un
+seuil se mesure ; il ne se choisit pas au jugé.
+
+---
+
+## 4 nonies. L'écran d'ouverture
+
+`public/ouverture.js`, le fond dans `public/img/ecran/`.
+
+La tribune en fusion, cinq Fanzzy en éventail, et le nom du jeu. Le cadre est
+**écrit dans la page** et non monté par un script : un écran d'ouverture qu'il
+faut charger pour voir arrive après ce qu'il était censé couvrir.
+
+Les visages viennent de `FZART.ILLUSTRES` — la seule liste qui sache quels
+personnages sont dessinés. La recopier l'aurait fait mentir au premier dessin
+ajouté.
+
+**Il part à la première de trois conditions** : l'accueil dit qu'il est prêt
+(`tbf:pret`), le temps est écoulé, ou l'on touche l'écran. La minuterie est
+posée en premier, et ce n'est pas une précaution ajoutée après coup : si tout
+le reste échoue — un script cassé plus haut, un réseau mort — c'est elle qui
+empêche l'ouverture de devenir une porte close.
+
+**Une fois par session, pas une fois par visite.** L'accueil est l'écran vers
+lequel tout revient ; rejouer l'ouverture à chaque retour, c'est deux secondes
+de tribune entre deux parties et un premier geste avalé à chaque fois, puisque
+l'écran couvre le bouton qu'on visait.
+
+---
+
+## 4 decies. La boutique, et Stripe
+
+`src/shared/boutique.js`, `src/server/boutique/index.js`, `sql/boutique.sql`,
+`public/boutique.html`, `npm run boutique:smoke`.
+
+### Les quatre règles, dans l'ordre d'importance
+
+**1. Le prix ne vient jamais du client.** La commande ne porte qu'un
+identifiant d'article ; le montant est lu dans le catalogue, côté serveur.
+
+**2. La livraison se fait dans le webhook, pas au retour du joueur.** La page
+de retour dit merci — elle n'est pas fiable. On ferme l'onglet, on perd le
+réseau, on paie depuis un autre appareil. Livrer au retour, c'est ne pas livrer
+à qui a fermé la page et livrer deux fois à qui a rechargé.
+
+**3. Le rejeu ne doit rien changer.** Stripe renvoie le même événement jusqu'à
+ce qu'on réponde 200, et parfois après. La commande se **réclame** par un
+`UPDATE … WHERE etat <> 'livre'` dont on lit le nombre de lignes touchées : une
+seule transaction peut en toucher une, les autres repartent sans rien remettre.
+C'est plus solide qu'une lecture verrouillée — et surtout, c'est **éprouvable**.
+Aucune course fabriquée ne faisait rougir le retrait de `FOR UPDATE` ; retirer
+la condition d'état fait rougir trois contrôles.
+
+**4. La signature a besoin du corps brut.** `express.json()` transforme les
+octets que Stripe a signés et les jette ; il ne reste plus rien à vérifier, et
+l'on accepte alors n'importe quel appel prétendant venir de Stripe — c'est-à-
+dire qu'on offre des boosters à qui connaît l'adresse. Le webhook est monté
+**avant** tout analyseur de corps. La comparaison est en temps constant.
+
+### Ce qu'il reste à faire pour encaisser pour de vrai
+
+```
+STRIPE_SECRET_KEY=sk_test_…      (puis sk_live_… le jour venu)
+STRIPE_WEBHOOK_SECRET=whsec_…
+SITE_URL=https://thebestfan.online
+```
+
+Sans elles, la boutique s'affiche en **vitrine** : le catalogue se lit, les prix
+s'affichent, et la commande est refusée avec un code qui le dit. Un écran qui
+s'écroule parce qu'une variable manque est plus dur à diagnostiquer qu'un refus
+nommé.
+
+Le webhook à déclarer chez Stripe : `POST /api/boutique/webhook`, événements
+`checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+`checkout.session.expired`.
+
+### Deux décisions qui ne sont pas du code
+
+**Un booster payé en argent réel est un objet réglementé.** La Belgique et les
+Pays-Bas interdisent les coffres à contenu aléatoire achetés avec de l'argent ;
+d'autres pays imposent l'affichage des probabilités de tirage. Le jeu est en
+français, il suit des clubs suisses et français, et il est ouvert à des
+mineurs. Trois choses au moins sont à trancher **avant** d'encaisser un euro :
+afficher les taux de tirage (ils sont dans `RATES`), décider si l'on vend des
+boosters là où ils sont interdits, et poser un garde-fou d'âge ou un plafond de
+dépense. Ce n'est pas un détail d'implémentation, et ce n'est pas à ce dépôt de
+le trancher.
+
+**Ce qui est en vente ne décide pas d'un duel.** Les écharpes achètent des âges,
+et un âge donne des modificateurs : la ligne entre « acheter du temps » et
+« acheter une victoire » est mince. Elle tient à une seule chose — le geste
+reste le geste. Un joueur équipé a une fenêtre plus large ; il n'a pas une note
+qu'il n'a pas jouée. Le jour où un article vendra de la poussée directe, cette
+ligne sera franchie.
+
+---
+
 ## 5. Ce qui reste à faire
 
 Par ordre d'utilité.
@@ -1009,18 +1440,26 @@ Par ordre d'utilité.
    centrée, pensée pour le téléphone. Sur un ordinateur, les deux tiers de
    l'écran sont vides.
 
-3. **Le derby automatique** — proposer un duel quand deux joueurs en ligne
+3. **Répartir les dix gestes sur le catalogue.** `cri.gest` ne vaut encore que
+   `tempo`, `mash` ou `hold` dans `dex.js` et `dex-2026.js` — les sept nouveaux
+   gestes n'appartiennent à aucun personnage. Le duel les fait tourner de
+   lui-même, donc le joueur les rencontre quand même ; ce qui manque, c'est que
+   le geste dise quelque chose du Fanzzy qui le porte. **Ce n'est pas une
+   migration mécanique** : attribuer un geste, c'est décrire un caractère, et
+   cela se décide personnage par personnage.
+
+4. **Le derby automatique** — proposer un duel quand deux joueurs en ligne
    suivent les deux clubs qui s'affrontent réellement. Conçu, pas commencé.
 
-4. **Le pronostic de ferveur** — miser des écharpes sur un score avant le coup
+5. **Le pronostic de ferveur** — miser des écharpes sur un score avant le coup
    d'envoi. Conçu, pas commencé.
 
-5. **Les notifications.** Le KOP émet déjà sur le socket quand un vote s'ouvre,
+6. **Les notifications.** Le KOP émet déjà sur le socket quand un vote s'ouvre,
    mais rien n'atteint un joueur dont l'onglet est fermé. Trois minutes de
    vote, c'est court : sans notification hors de la page, la moitié d'un KOP ne
    votera jamais.
 
-6. **Brancher la collection de stades.** Le catalogue et les effets sont écrits
+7. **Brancher la collection de stades.** Le catalogue et les effets sont écrits
    dans `src/shared/stades.js`, les cinq dessins sont rangés, les tribunes se
    mesurent et s'allument. Il reste : la table de possession, le tirage dans
    les boosters, l'application des `mods` dans les deux moteurs, et l'affichage
@@ -1033,7 +1472,7 @@ Par ordre d'utilité.
    sur les côtés et la corde qui descend le long de la pelouse. La seconde est
    plus lisible et ne coûte rien.
 
-7. **L'intégration de l'équipement sur les personnages.** Les sept objets sont
+8. **L'intégration de l'équipement sur les personnages.** Les sept objets sont
    détourés pour ça — l'écharpe autour d'un cou, le mégaphone dans une main. Il
    reste à décider des points d'ancrage et de la façon dont ils suivent les
    poses de `fanzzy-scene.js`.

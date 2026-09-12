@@ -23,7 +23,7 @@ import express from 'express';
 import puppeteer from 'puppeteer';
 import { createKop } from '../src/server/kop/index.js';
 import { BONUS_PAR_ID } from '../src/shared/kop.js';
-import { baseDeTest } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -41,7 +41,7 @@ async function jusqua(fn, ms = 8000) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops,
   user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
   souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
@@ -67,7 +67,7 @@ await raw.end();
 
 /* ----------------------------------------------------------- le serveur */
 
-const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' });
+const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 let moi = U[0];
 const requireAuth = (r, _s, n) => { r.user = { id: moi }; n(); };
 const K = createKop({ pool, requireAuth });

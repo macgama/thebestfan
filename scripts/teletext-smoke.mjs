@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import express from 'express';
 import { createTeletext } from '../src/server/teletext/index.js';
-import { baseDeTest } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
 let failures = 0;
@@ -16,7 +16,7 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
@@ -37,7 +37,7 @@ await raw.query(
   [debut, fin, debut, fin, debut, fin]);
 await raw.end();
 
-const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' });
+const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 
 /* -------------------------------------------------------- faux client API */
 
@@ -285,7 +285,7 @@ check('une composition vide n’est gardée que quatre-vingt-dix secondes',
    ===================================================================== */
 {
   const decale = mysql.createPool({
-    uri: DB, connectionLimit: 2, charset: 'utf8mb4',
+    uri: DB, connectionLimit: 2, ...OPTIONS_BASE,
     // Comme en production : le pilote relit toute date comme de l'UTC…
     timezone: 'Z',
   });

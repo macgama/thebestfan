@@ -15,7 +15,7 @@ import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { createVirage } from '../src/server/ferveur/index.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
-import { baseDeTest } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 import { VirageRoom } from '../src/server/ferveur/virage.js';
 import { resoudreGeste } from '../src/server/ferveur/gestures.js';
 import { ACTIONS, ACTIONS_VIRAGE, ACTION_BY_ID, dansLeVirage }
@@ -38,7 +38,7 @@ const martelage = () => Array.from({ length: 21 }, (_, i) => jitter(i * 140));
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
@@ -74,7 +74,7 @@ await raw.query(`INSERT INTO user_follows (user_id,team_id) VALUES (?,85),(?,85)
   [U[0], U[1], U[2]]);
 await raw.end();
 
-const pool = mysql.createPool({ uri: DB, connectionLimit: 8, charset: 'utf8mb4' });
+const pool = mysql.createPool({ uri: DB, connectionLimit: 8, ...OPTIONS_BASE });
 // Le catalogue vit en base depuis qu il se gère par l administration :
 // on le charge comme le fait server.js, sinon les modules travaillent
 // sur un catalogue vide.
@@ -189,7 +189,137 @@ check('et la ferveur n’y est pas réduite', A.state.you.neutre === false);
 
 /* ----------------------------------------------------------------- chants */
 
-A.socket.emit('virage:chant', { cardId: 'reprise', taps: tempoParfait() });
+/* Le répertoire n'offre que cinq chants sur douze, et il tourne avec la minute
+   du vrai match. Un contrôle qui veut un chant précis règle donc l'horloge sur
+   le moment où ce chant est offert — plutôt que d'aller neutraliser la règle
+   qu'il est justement censé traverser. */
+/* Les douze chants, écrits ici à la main : le contrôle « les douze finissent
+   tous par passer » ne veut rien dire s'il lit sa liste de référence dans le
+   fichier qu'il contrôle. */
+const ORDRE_ATTENDU = ['reprise', 'roulement', 'repons', 'onetaitla', 'salves',
+  'contrechant', 'craquage', 'montee', 'tenir', 'mur', 'relance', 'cadence'];
+
+const offrir = (id) => {
+  const salle = virage.rooms.get(7001);
+  for (let rang = 0; rang < 12; rang++) {
+    if (salle.repertoire(rang).includes(id)) {
+      salle.minute = rang * 10;
+      salle.rangChangeA = 0;      // hors de la bascule : un seul motif admis
+      return id;
+    }
+  }
+  throw new Error(`aucun répertoire n’offre le chant « ${id} »`);
+};
+
+/* --------------------------------------------------- le répertoire tourne
+
+   Douze chants, cinq offerts à la fois, une fenêtre qui glisse toutes les dix
+   minutes de match. C'est ce qui remplace une rangée de douze boutons de vingt
+   pixels — et ce qui fait qu'une tribune apprend les douze gestes au lieu d'en
+   marteler deux. Chacune des propriétés ci-dessous est une raison d'avoir
+   écrit `ORDRE` à la main plutôt que de trier les clés. */
+{
+  const salle = virage.rooms.get(7001);
+  const tous = new Set();
+  const tailles = new Set();
+  let melange = true, glisse = true;
+
+  for (let rang = 0; rang < 12; rang++) {
+    const r = salle.repertoire(rang);
+    r.forEach((id) => tous.add(id));
+    tailles.add(r.length);
+    tailles.add(new Set(r).size);          // cinq chants *distincts*
+    const gestes = new Set(salle.chantsOfferts(rang).map((c) => c.gest));
+    if (gestes.size < 4) melange = false;
+    const suivant = salle.repertoire(rang + 1);
+    if (r.filter((id) => suivant.includes(id)).length !== 4) glisse = false;
+  }
+
+  check('le répertoire n’offre que cinq chants à la fois',
+    [...tailles].every((n) => n === 5));
+  check('mais les douze finissent tous par passer',
+    tous.size === 12 && ORDRE_ATTENDU.every((id) => tous.has(id)));
+  /* Sans cette propriété, dix minutes de match pourraient se jouer entièrement
+     au martelage : c'est elle, et elle seule, qui justifie l'ordre écrit. */
+  check('et cinq chants consécutifs mêlent toujours au moins quatre gestes', melange);
+  /* Un répertoire qui changerait entièrement d'un coup ferait perdre à la
+     tribune tout ce qu'elle vient d'apprendre. Il n'en change qu'un. */
+  check('d’un répertoire au suivant, un seul chant change', glisse);
+
+  const avant = salle.minute;
+  salle.minute = 0;
+  const r0 = salle.repertoire();
+  salle.minute = 10;
+  check('et il tourne bien avec la minute du vrai match',
+    JSON.stringify(salle.repertoire()) !== JSON.stringify(r0));
+  salle.minute = avant;
+}
+
+/* Le changement doit être **annoncé** : la page ne reçoit `virage:state` qu'à
+   l'entrée, donc sans ce message un supporter garderait jusqu'au coup de
+   sifflet final les cinq chants du moment où il est arrivé. */
+{
+  const repertoires = [];
+  A.socket.on('virage:repertoire', (r) => repertoires.push(r));
+  virage.matchStatus(7001, { elapsed: 2 });   // on se place, puis on observe
+  /* Se placer peut déjà faire tourner le répertoire, et le message met un
+     instant à traverser la socket : le vider tout de suite laisserait arriver
+     l'annonce d'*avant* dans la fenêtre qu'on s'apprête à observer. */
+  await wait(150);
+  repertoires.length = 0;
+  virage.matchStatus(7001, { elapsed: 4 });
+  virage.matchStatus(7001, { elapsed: 7 });
+  check('une minute qui ne change pas de répertoire n’annonce rien',
+    await until(() => repertoires.length > 0, 300) === false);
+  virage.matchStatus(7001, { elapsed: 14 });
+  check('mais la bascule est annoncée à toute la tribune',
+    await until(() => repertoires.length === 1));
+  check('avec les cinq chants nommés',
+    (repertoires[0]?.cards ?? []).length === 5
+    && repertoires[0].cards.every((c) => c.nom && c.gest));
+  /* Le motif de l'écho voyage avec : il appartient à la tribune, qui le chante
+     ensemble. La fenêtre, elle, est personnelle et n'a rien à faire ici. */
+  check('et le motif d’écho du moment', Number.isInteger(repertoires[0]?.echo?.motif)
+    && Array.isArray(repertoires[0]?.echo?.instants));
+  check('sans y mêler la fenêtre, qui est propre à chacun',
+    repertoires[0]?.echo?.window === undefined);
+}
+
+/* Un chant hors répertoire est refusé, et il est refusé **pour cette
+   raison-là** : un « carte inconnue » enverrait chercher un bogue là où il n'y
+   a qu'une horloge. */
+{
+  const salle = virage.rooms.get(7001);
+  const rang = salle.rangRepertoire();
+  const avant = salle.repertoire(rang - 1);
+  /* Un chant qu'aucun des deux répertoires voisins n'offre : celui d'avant
+     reste admis un court moment, et le prendre pour cible ferait passer ce
+     contrôle pour une erreur alors que c'est la règle. */
+  const dehors = ORDRE_ATTENDU.find(
+    (id) => !salle.repertoire(rang).includes(id) && !avant.includes(id));
+
+  salle.rangChangeA = 0;            // loin de la bascule : un seul répertoire
+  A.errors.length = 0;
+  A.socket.emit('virage:chant', { cardId: dehors, taps: tempoParfait() });
+  check('un chant qui n’est plus au répertoire est refusé',
+    await until(() => A.errors.length === 1));
+  check('et l’erreur dit que c’est le répertoire',
+    A.errors[0] === 'ferveur.error.chant_hors_repertoire');
+
+  /* La tolérance de la bascule, elle aussi, doit exister : un chant commencé
+     quatre secondes avant que l'horloge tourne se termine après, et le compter
+     faux serait punir le supporter d'une minute qui n'est pas la sienne. */
+  salle.rangChangeA = Date.now();
+  A.errors.length = 0;
+  const sortant = avant.find((id) => !salle.repertoire(rang).includes(id));
+  const compte = A.results.length;
+  A.socket.emit('virage:chant', { cardId: sortant, taps: tempoParfait() });
+  check('mais celui qui vient d’en sortir passe encore, un court instant',
+    await until(() => A.results.length > compte) && A.errors.length === 0);
+  salle.rangChangeA = 0;
+}
+
+A.socket.emit('virage:chant', { cardId: offrir('reprise'), taps: tempoParfait() });
 const ok1 = await until(() => A.results.length === 1);
 if (!ok1) console.log('  DEBUG erreurs A :', JSON.stringify(A.errors));
 check('chant accepté', ok1);
@@ -201,7 +331,7 @@ check('la ferveur personnelle monte', A.results[0].ferveur > 0);
 const ropeApres = await until(() => A.ticks.some((t) => t.rope < 0));
 check('la corde penche du côté de Sion', ropeApres);
 
-C.socket.emit('virage:chant', { cardId: 'roulement', taps: martelage() });
+C.socket.emit('virage:chant', { cardId: offrir('roulement'), taps: martelage() });
 await until(() => C.results.length === 1);
 check('le camp adverse pousse dans l\u2019autre sens', C.results[0].push > 0);
 
@@ -216,7 +346,7 @@ check('le camp adverse pousse dans l\u2019autre sens', C.results[0].push > 0);
 {
   const salle = virage.rooms.get(7001);
   const av = salle.members.get('bbbbbbbb-0000-0000-0000-000000000009');
-  D.socket.emit('virage:chant', { cardId: 'roulement', taps: martelage() });
+  D.socket.emit('virage:chant', { cardId: offrir('roulement'), taps: martelage() });
   const ok = await until(() => D.results.length === 1);
   check('un neutre peut chanter', ok);
   if (ok) {
@@ -230,7 +360,7 @@ D.socket.disconnect();
 
 /* ------------------------------------------------------------ triche */
 
-A.socket.emit('virage:chant', { cardId: 'reprise', taps: Array.from({ length: 30 }, (_, i) => i * 20) });
+A.socket.emit('virage:chant', { cardId: offrir('reprise'), taps: Array.from({ length: 30 }, (_, i) => i * 20) });
 check('frappes inhumaines rejetées',
   await until(() => A.errors.some((e) => e.startsWith('ferveur.error.'))));
 
@@ -238,7 +368,7 @@ A.socket.emit('virage:chant', { cardId: 'inexistante', taps: tempoParfait() });
 check('carte inconnue rejetée', await until(() => A.errors.includes('ferveur.error.unknown_card')));
 
 for (let i = 0; i < 15; i++) {
-  B.socket.emit('virage:chant', { cardId: 'reprise', taps: tempoParfait() });
+  B.socket.emit('virage:chant', { cardId: offrir('reprise'), taps: tempoParfait() });
 }
 check('cadence de chants plafonnée',
   await until(() => B.errors.includes('ferveur.error.rate_limited')));
@@ -611,7 +741,7 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
          zéro poussée des deux côtés, et un contrôle qui comparait deux zéros. */
       const g = resoudreGeste(x.mods).tempo;
       const taps = Array.from({ length: g.beats }, (_, i) => Math.round(i * g.interval));
-      salle.chant(qui, { cardId: 'reprise', taps });
+      salle.chant(qui, { cardId: offrir('reprise'), taps });
       return Math.abs(salle.rope);
     };
     const dedans = chanterParfait('c2');
@@ -673,6 +803,71 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
       JSON.stringify(salle.members.get('c1').main) === JSON.stringify(avant));
     check('et n’efface pas les recharges',
       JSON.stringify(salle.members.get('c1').cooldowns) === JSON.stringify(cd));
+  }
+
+  /* Changement de chant : on jette la main et on en reprend cinq. Ce qu'on
+     jette doit revenir dans la pioche — sinon la carte serait un moyen lent de
+     vider son propre deck, et le dernier quart d'heure se jouerait à mains
+     nues. On contrôle donc les deux moitiés : la main est pleine, ET le compte
+     total de cartes n'a pas bougé. */
+  {
+    m.main = ['a-relais', 'a-fumigene', 'a-thermos'];
+    m.pioche = ['a-torche', 'a-tambour', 'a-bache', 'a-cloche', 'a-drapeau'];
+    m.defausse = ['a-silence'];
+    m.breath = 100; m.cooldowns = {}; m.effets = [];
+    const avantTotal = m.main.length + m.pioche.length + m.defausse.length;
+    const avantMain = [...m.main];
+    salle.jouer('c1', 'a-relais');
+    check('le Changement de chant rend une main pleine',
+      m.main.length === 5);
+    /* Il restait deux cartes en main après avoir posé le Relais : une main de
+       cinq contient donc forcément du neuf. On le dit ainsi plutôt qu'en
+       comptant les cartes communes — un tirage peut légitimement ramener une
+       ancienne, et un contrôle qui dépend du hasard finit par mentir. */
+    check('et il y a forcément du neuf dedans',
+      m.main.some((c) => !avantMain.includes(c)));
+    /* Ce qu'on jette revient : la carte renouvelle la main, elle ne vide pas
+       le deck. La carte posée elle-même est partie en défausse avant l'effet,
+       donc elle rentre dans le compte — le total ne bouge pas d'une carte. */
+    check('sans perdre une seule carte au passage',
+      m.main.length + m.pioche.length + m.defausse.length === avantTotal
+      || (console.log(`        ${avantTotal} avant, `
+        + `${m.main.length + m.pioche.length + m.defausse.length} après`), false));
+    check('et la main n’attend pas un remplissage en plus', m.remplirA === 0);
+  }
+
+  /* Nouveau souffle : toutes les recharges tombent d'un coup. Au Virage elles
+     durent une fois et demie celles du duel, donc la carte y vaut plus cher —
+     raison de plus pour vérifier qu'elle fait bien son travail ici aussi. */
+  {
+    m.main = ['a-fumigene']; m.breath = 100; m.cooldowns = {}; m.effets = [];
+    salle.jouer('c1', 'a-fumigene');
+    const enRecharge = Object.values(m.cooldowns).filter((f) => f > Date.now()).length;
+    m.main = ['a-souffleneuf']; m.breath = 100;
+    salle.jouer('c1', 'a-souffleneuf');
+    check('avant le Nouveau souffle, une carte était bien en recharge',
+      enRecharge > 0);
+    check('et après, plus aucune ne l’est',
+      Object.values(m.cooldowns).filter((f) => f > Date.now()).length === 0);
+  }
+
+  /* Le Tifo s'arme, se voit, puis frappe. Les trois moments comptent : s'il
+     poussait à la pose, il ne serait qu'un fumigène cher ; s'il ne poussait
+     jamais, il ne serait rien. Et il passe par le chemin ordinaire, donc il
+     est divisé par l'effectif comme tout le reste. */
+  {
+    m.main = ['a-tifo']; m.breath = 100; m.cooldowns = {}; m.effets = [];
+    salle.differes = [];
+    const corde0 = salle.rope;
+    const evT = salle.jouer('c1', 'a-tifo');
+    check('le Tifo ne pousse pas quand on le pose', salle.rope === corde0);
+    check('mais il s’annonce à tout le stade',
+      evT.some((e) => e.t === 'arme') && salle.differes.length === 1);
+    salle.entretenirCartes(Date.now() + 4000);
+    check('à mi-parcours il n’a toujours rien fait', salle.rope === corde0);
+    salle.entretenirCartes(Date.now() + 9000);
+    check('puis il se déplie et pousse', salle.rope !== corde0);
+    check('et il ne pousse qu’une fois', salle.differes.length === 0);
   }
 
   /* Sans deck, on entre quand même. Le Virage s'est joué au chant seul pendant

@@ -29,7 +29,7 @@ import { ACTIONS } from '../src/shared/duel/actions.js';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
-import { baseDeTest } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
 // `.pathname` d'une URL de fichier n'est pas un chemin : sous Windows il vaut
@@ -52,7 +52,7 @@ async function jusqua(fn, ms = 5000) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
@@ -81,7 +81,7 @@ for (const s of ['jumelles', 'echarpe', 'tambour']) {
   await raw.query(`INSERT INTO user_stuff (user_id,stuff_id,copies) VALUES (?,?,1)`, [U, s]);
 }
 
-const pool = mysql.createPool({ uri: DB, connectionLimit: 6, charset: 'utf8mb4' });
+const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 // Le catalogue vit en base depuis qu il se gère par l administration :
 // on le charge comme le fait server.js, sinon les modules travaillent
 // sur un catalogue vide.

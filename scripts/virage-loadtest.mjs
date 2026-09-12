@@ -32,7 +32,7 @@ if (!REMOTE) {
 
   const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
   const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-  await raw.query(`DROP TABLE IF EXISTS kop_invites, amities,
+  await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
