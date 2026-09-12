@@ -251,7 +251,14 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
  * l'être.
  */
 {
-  const html = await readFile(path.join(DOSSIER, 'fanzzy.html'), 'utf8');
+  /* La page **et** le fichier d aides : le catalogue a quitté fanzzy.html le
+     jour où le kiosque a eu son écran à lui, et il est parti dans cartes.js
+     avec le reste de ce que les deux écrans partagent. Ne regarder que la
+     page ferait rougir ce contrôle sur une extraction parfaitement saine —
+     et, pire, le laisserait vert le jour où quelqu un recopierait le
+     catalogue dans le fichier d aides. */
+  const html = (await readFile(path.join(DOSSIER, 'fanzzy.html'), 'utf8'))
+    + (await readFile(path.join(DOSSIER, 'cartes.js'), 'utf8'));
 
   // Un catalogue recopié se reconnaît à une suite d'entrées littérales.
   const entrees = [...html.matchAll(/\{\s*id:\s*'[A-Z]\d+'\s*,\s*nom:/g)].length;

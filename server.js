@@ -443,6 +443,7 @@ app.get('/bienvenue', (_req, res) => res.sendFile(path.join(__dirname, 'public',
 app.get('/profil', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'profil.html')));
 app.get('/classement', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'classement.html')));
 app.get('/boutique', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'boutique.html')));
+app.get('/boosters', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'boosters.html')));
 app.get('/admin', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 // Fiche d'un Fanzzy : /fanzzy/V3 comme /fanzzy?id=V3, pour des liens partageables.
 app.get('/fanzzy/:id', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'fanzzy-fiche.html')));

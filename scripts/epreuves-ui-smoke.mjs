@@ -75,14 +75,24 @@ console.log(`   forme du tifo : ${gestes.tifo.forme} · suite du capo : ${gestes
      sépare un tracé d un gribouillis, et rien d autre ne le mesure.
 
      Sans ce contrôle, retirer le facteur d ordre laissait la suite verte. */
-  const melange = [...reponse.trace];
-  for (let i = melange.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [melange[i], melange[j]] = [melange[j], melange[i]];
+  /* La permutation est **tirée avec une graine fixe**, et on en essaie huit.
+     Avec `Math.random()`, ce contrôle échouait une fois sur deux autour de la
+     barre : on aurait fini par le relancer jusqu'au vert, ce qui revient à ne
+     plus l'avoir. On juge la pire des huit — un gribouillis n'a pas droit à la
+     chance. */
+  let graineMelange = 20260912;
+  const dé = () => (graineMelange = (graineMelange * 16807) % 2147483647) / 2147483647;
+  let pire = 0;
+  for (let essai = 0; essai < 8; essai++) {
+    const melange = [...reponse.trace];
+    for (let i = melange.length - 1; i > 0; i--) {
+      const j = Math.floor(dé() * (i + 1));
+      [melange[i], melange[j]] = [melange[j], melange[i]];
+    }
+    pire = Math.max(pire, grade('tifo', { trace: melange }, {}, { motif: GRAINE }));
   }
-  const noteMelange = grade('tifo', { trace: melange }, {}, { motif: GRAINE });
-  check(`et les mêmes points dans le désordre ne valent rien (${noteMelange.toFixed(2)})`,
-    noteMelange < 0.25);
+  check(`et les mêmes points dans le désordre ne valent rien (au pire ${pire.toFixed(2)})`,
+    pire < 0.25);
 }
 
 /* ------------------------------------------------------------ la mosaïque */

@@ -1,0 +1,198 @@
+/* Le dessin d'une carte : son cadre, sa rareté, son reflet, son âge.
+ *
+ * Partagé par le classeur et par les boosters, comme `cardHTML` l'est dans
+ * /cartes.js. La feuille était restée dans la page des Fanzzy pendant que le
+ * balisage devenait commun : les cartes qui sortaient d'un booster
+ * s'affichaient sans cadre et sans rareté, et rien ne le disait.
+ *
+ * Les tailles sont en `--u`, l'unité de la carte : une carte se dessine à
+ * n'importe quelle taille sans qu'aucune valeur ne soit à reprendre. */
+
+/* ----------------------------------------------------------- la carte
+
+   L'image d'abord. Le cadre portait la couleur du type sur toute sa
+   surface, avec un corps crème et une fenêtre d’illustration au centre :
+   en vignette on ne voyait plus que la couleur, et le personnage était un
+   timbre-poste.
+
+   L'illustration remplit maintenant la carte. La couleur du type ne reste
+   qu'en filet et dans la pastille, le nom se pose sur un voile en bas, la
+   rareté tient dans un coin. Ce qui était écrit sur la carte se lit déjà
+   dans le panneau de détail : le répéter volait la place de l'image.    */
+/* ------------------------------------------------------------ la rareté
+
+   Dans un jeu de collection, la rareté est ce qu'on montre aux autres. Elle
+   doit se lire à un mètre, sur une vignette de cent pixels de haut.
+
+   Elle portait ici un filet de sept millièmes de largeur, **de la couleur du
+   type** — c'est-à-dire la même information que la pastille juste à côté, et
+   rien du tout sur la rareté. Deux cartes que tout sépare, une commune et une
+   légendaire, se ressemblaient trait pour trait dans la grille.
+
+   Le cadre dit maintenant la rareté, la pastille garde le type. C'est la
+   répartition de tous les jeux du genre, et elle tient parce que les deux
+   informations n'ont pas le même usage : le type se consulte quand on
+   construit un deck, la rareté se voit sans qu'on la cherche.
+
+   `--rc2` est la couleur du socle — le biseau dur sous la carte. C'est lui
+   qui donne la matière : une carte qu'on peut appuyer, pas une image collée
+   sur un fond. */
+/* ------------------------------------------------- l'unité de la carte
+
+   Tout ce que dessine une carte — son rayon, son cadre, son nom, ses marges —
+   se mesure en centièmes de sa propre largeur, pour qu'elle soit juste en
+   vignette comme en grand. C'est ce que font les unités de conteneur, `cqw`.
+
+   Elles étaient employées directement, et **c'était une bombe à retardement** :
+   quand `container-type` ne prend pas — un navigateur d'avant 2023, un moteur
+   qui connaît l'unité sans connaître le confinement — `cqw` ne disparaît pas,
+   elle se rabat sur la **fenêtre**. Sur un écran de 470 px, `4cqw` passe de
+   5 px à 19 px de rayon, le nom de 8 px à 28 px, la marge de 14 px à 52 px :
+   la carte devient un galet, et le nom, coupé des deux côtés par l'arrondi,
+   n'est plus lisible. Rien ne le signale, et ça ne se voit pas sur la machine
+   qui l'a écrit.
+
+   `--u` vaut donc un centième de la largeur attendue, en pixels, et la règle
+   `@container` ne la remplace par `1cqw` que là où le confinement fonctionne
+   vraiment. Un moteur qui n'en veut pas garde le repli et affiche une carte
+   juste ; les autres gagnent la mise à l'échelle exacte. Chaque endroit qui
+   pose une carte d'une autre taille redéclare `--u`, juste en dessous. */
+.fz{--u:1.3px}
+.summary .fz{--u:.7px}
+/* Les sélecteurs sont repris un à un : sans eux, `.summary .fz` — plus
+   spécifique — garderait son repli en pixels et la vignette cesserait de
+   suivre sa largeur. Une règle de repli qui bat le raffinement, c'est le
+   raffinement qui n'existe pas. */
+@container (min-width: 0px){
+  .fz,.summary .fz{--u:1cqw}
+}
+
+.fz{container-type:inline-size;position:relative;width:100%;aspect-ratio:63/88;border-radius:calc(4 * var(--u));
+  overflow:hidden;cursor:pointer;background:#0B1017;
+  box-shadow:inset 0 0 0 calc(1.3 * var(--u)) var(--rc),
+             inset 0 0 calc(7 * var(--u)) rgba(0,0,0,.45),
+             0 calc(1.4 * var(--u)) 0 var(--rc2),
+             0 calc(2.4 * var(--u)) calc(3.4 * var(--u)) rgba(0,0,0,.5)}
+.fz .body{position:absolute;inset:0;display:block;color:#F2EEE4}
+.fz .art{position:absolute;inset:0;overflow:hidden;background:#0B1017}
+.fz .art svg{width:100%;height:100%;display:block}
+
+/* Le nom se pose sur l'image au lieu d'occuper une barre qui la rogne. */
+.fz .top{position:absolute;left:0;right:0;bottom:0;z-index:3;display:flex;align-items:flex-end;
+  gap:calc(2 * var(--u));padding:calc(11 * var(--u)) calc(3 * var(--u)) calc(3 * var(--u));
+  background:linear-gradient(180deg,transparent,rgba(4,6,10,.55) 42%,rgba(4,6,10,.93))}
+/* Le socle prend la teinte de la rareté. C'est ce qui la fait lire même quand
+   le cadre est mangé par une illustration claire — et c'est la même couleur
+   partout, donc elle s'apprend en une carte. */
+.fz .top::before{content:"";position:absolute;left:0;right:0;bottom:0;height:62%;
+  background:linear-gradient(180deg,transparent,var(--rc));opacity:.2;pointer-events:none}
+.fz .nm{position:relative;font-family:var(--banner);font-size:calc(6 * var(--u));line-height:1.05;
+  text-transform:uppercase;flex:1;letter-spacing:.01em;
+  text-shadow:0 .calc(4 * var(--u)) calc(1.6 * var(--u)) rgba(0,0,0,.95)}
+.fz .pip{width:calc(6 * var(--u));height:calc(6 * var(--u));border-radius:50%;background:var(--tc);flex:none;display:grid;
+  place-items:center;box-shadow:0 .calc(3 * var(--u)) calc(1.2 * var(--u)) rgba(0,0,0,.6)}
+.fz .pip svg{width:calc(3.8 * var(--u));height:calc(3.8 * var(--u))}
+
+/* Deux pièges se cumulent ici.
+
+   Le centrage ne peut pas passer par `transform` : fx.js pose `fz-vivant` sur
+   toute image `.illu` pour la faire respirer, et ses keyframes réécrivent
+   `transform` en entier. Un `translateX(-50%)` y était effacé dès la première
+   image de l'animation, et l'illustration se retrouvait décalée d'une
+   demi-largeur — seul son tiers gauche restait visible dans la carte.
+
+   Il ne peut pas passer non plus par des marges automatiques : quand l'image
+   est plus large que sa fenêtre, la marge gauche est ramenée à zéro et tout
+   le débord part à droite. L'image se retrouve alors collée à gauche.
+
+   On laisse donc la boîte remplir la fenêtre et c'est `object-fit` qui
+   recadre le contenu, centré horizontalement et posé sur la base. Ni
+   l'animation ni le débordement ne peuvent le déplacer. */
+.illuwrap .illu{position:absolute;left:0;bottom:0;width:100%;height:104%;
+  object-fit:cover;object-position:50% 100%;filter:drop-shadow(0 3px 8px rgba(0,0,0,.6))}
+/* Un objet n'est pas un personnage : il est détouré et n'a ni pieds ni sol.
+   Il flotte au milieu de la tribune au lieu de s'y planter en bas. */
+.illuwrap .illu.objet{inset:10% 8%;left:auto;bottom:auto;width:84%;height:80%;
+  object-fit:contain;object-position:50% 50%}
+/* Les modificateurs vivent dans le panneau de détail. Sur la carte ils
+   masquaient l'illustration pour redire la même chose. */
+.fz .mods{display:none}
+
+/* La rareté, en pastille sombre : lisible quelle que soit l’image dessous. */
+/* La rareté chiffrée, dans le coin : un à trois losanges, une couronne pour
+   la légendaire. Elle redit ce que le cadre annonce — et c'est voulu, un
+   collectionneur veut pouvoir compter. */
+/* La rareté descend sous l âge : les deux vivent dans le coin en haut à
+   droite, et l âge passe devant parce qu il se lit, quand la rareté se
+   compte. */
+.fz .foot{position:absolute;top:calc(2.6 * var(--u) + 15px);right:calc(2.6 * var(--u));z-index:3;display:flex;align-items:center;
+  gap:calc(1 * var(--u));padding:calc(1.1 * var(--u)) calc(2.2 * var(--u));border-radius:calc(99 * var(--u));background:rgba(4,6,10,.7);
+  box-shadow:inset 0 0 0 .calc(4 * var(--u)) var(--rc);font-size:calc(2.6 * var(--u));color:#E4DFD2}
+.fz .rar{display:flex;gap:.calc(7 * var(--u));align-items:center}
+.fz .rar .d{width:calc(2.4 * var(--u));height:calc(2.4 * var(--u));background:var(--rc);transform:rotate(45deg);
+  border-radius:.calc(3 * var(--u));box-shadow:0 0 calc(1.4 * var(--u)) var(--rc)}
+.fz .rar .s{font-size:calc(3.6 * var(--u));color:var(--rc);line-height:1;
+  text-shadow:0 0 calc(1.6 * var(--u)) var(--rc)}
+/* Le type est déjà dit par la pastille de couleur : inutile de le réécrire. */
+.fz .sep,.fz .foot span:last-child{display:none}
+/* En dessous d'une certaine largeur, la pastille de rareté n'est plus lisible :
+   elle devient une tache claire dans le coin, qu'on lit comme un défaut
+   d'affichage. La carte la retire donc d'elle-même — c'est à ça que sert le
+   `container-type` posé plus haut, et ça marche partout où la carte s'affiche
+   sans que l'appelant ait à le savoir. Le cadre porte la rareté à lui seul
+   dans la grille. */
+@container (max-width: 150px){ .fz .foot{display:none} }
+
+/* La légendaire est la seule à rayonner hors de son cadre. Si toutes les
+   raretés brillaient, aucune ne brillerait. */
+.fz.r-legendaire{box-shadow:inset 0 0 0 calc(1.5 * var(--u)) var(--rc),
+  inset 0 0 calc(7 * var(--u)) rgba(0,0,0,.4),
+  0 calc(1.4 * var(--u)) 0 var(--rc2),
+  0 0 calc(5 * var(--u)) rgba(245,195,59,.4),
+  0 calc(2.4 * var(--u)) calc(3.4 * var(--u)) rgba(0,0,0,.5)}
+.fz.r-legendaire .nm{color:#FFE08A}
+.fz.holo::after{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:calc(4 * var(--u));
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.42) 45%,rgba(160,220,255,.32) 52%,transparent 68%);
+  background-size:250% 250%;animation:sheen 3.6s linear infinite;mix-blend-mode:screen;opacity:.6}
+@keyframes sheen{0%{background-position:120% 0}100%{background-position:-40% 0}}
+
+/* L'entrée en cascade. La grille apparaissait d'un bloc ; elle se dépose
+   maintenant carte par carte. Le retard est plafonné à douze rangs : au-delà,
+   quelqu'un qui arrive en bas de la grille attendrait quatre secondes pour
+   voir sa collection. */
+.grid .slot{animation:poser .34s cubic-bezier(.2,1.5,.4,1) backwards}
+@keyframes poser{from{opacity:0;transform:translateY(12px) scale(.88)}}
+@media (prefers-reduced-motion:reduce){
+  .grid .slot{animation:none}
+  .progress .bar::after{animation:none}
+  .fz.holo::after{animation:none}
+}
+
+
+/* L'âge, écrit sur la carte.
+ *
+ * Il n'était lisible que dans le pied, en « ét. 2 », à trois pixels de haut et
+ * derrière le nom du type. Or l'âge est ce qu'on paie quatre-vingt-dix
+ * écharpes pour obtenir : il doit se voir d'un coup d'œil sur une grille de
+ * vingt cartes, pas se déchiffrer une par une.
+ *
+ * Trois couleurs, et une quatrième pour les légendaires : craie au premier âge,
+ * argent au deuxième, or au troisième. La progression se lit sans légende,
+ * parce que c'est celle des médailles. */
+/* En pixels, avec un plancher, et **hors du pied** : le pied disparaît sous
+   cent cinquante pixels de large — voir la requête de conteneur en fin de
+   fichier — c est-à-dire exactement sur la grille du classeur, là où l âge
+   sert le plus. Écrit en --u, il faisait cinq pixels de haut : lisible pour
+   personne. Il garde donc sa taille quelle que soit celle de la carte. */
+.fz .age{position:absolute;top:3px;right:3px;z-index:5;padding:1px 5px;border-radius:20px;
+  font-family:var(--banner);font-size:clamp(8px, calc(3.1 * var(--u)), 13px);letter-spacing:.1em;
+  line-height:1;white-space:nowrap;
+  background:rgba(11,14,19,.72);border:1px solid currentColor}
+.fz .age.a1{color:#C2CAD6}
+.fz .age.a2{color:#E8EDF5;border-width:calc(.4 * var(--u))}
+.fz .age.a3{color:#F5C33B;border-width:calc(.4 * var(--u));
+  box-shadow:0 0 calc(4 * var(--u)) rgba(245,195,59,.4)}
+/* La légendaire porte son nom plutôt que son rang : c'est ce qu'on retient
+   d'elle, et elle n'a qu'un seul âge à ce jour. */
+.fz.r-legendaire .age{color:#FFE08A;background:rgba(40,24,4,.82);
+  box-shadow:0 0 calc(5 * var(--u)) rgba(255,224,138,.45)}

@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « les cartes d’action ont un visage, et le Grand
-Virage se joue avec sa tribune ».
+Dernière mise à jour : session « le kiosque a son écran, le Fanzzy porte son
+âge, la carte s’ouvre en grand ».
 
 ---
 
@@ -1424,6 +1424,80 @@ et un âge donne des modificateurs : la ligne entre « acheter du temps » et
 reste le geste. Un joueur équipé a une fenêtre plus large ; il n'a pas une note
 qu'il n'a pas jouée. Le jour où un article vendra de la poussée directe, cette
 ligne sera franchie.
+
+---
+
+## 4 undecies. Trois écrans au lieu d'un, et la carte en grand
+
+Le kiosque à boosters, le classeur et le deck vivaient dans une seule page de
+mille huit cent trente-six lignes. On y ouvrait un booster au milieu des
+informations de collection, et l'écran ne disait pas ce qu'on regardait.
+
+### Ce qui a bougé
+
+| Avant | Après |
+|---|---|
+| `fanzzy.html` — kiosque + classeur + fiche, 1836 lignes | `fanzzy.html` (~800) : **MON FANZZY / CLASSEUR / DECK** |
+| — | `boosters.html` : le kiosque, la déchirure, la révélation |
+| `cardHTML` dans la page | `public/cartes.js` — partagé par les deux écrans |
+| `.fz*` dans la page | `public/cartes.css` — la même peinture des deux côtés |
+
+La connexion mène à **HOME**, et à `/boosters?aouvrir=1` s'il reste des
+boosters : l'écran annonce alors « Tu as X boosters à ouvrir ». Un objet qui
+attend et que rien ne signale est un objet oublié.
+
+### L'âge se lit sur la carte
+
+Chaque carte porte en haut à droite **ÉVO 1**, **ÉVO 2**, **ÉVO 3** ou
+**LÉGENDAIRE**. Le bandeau du bas ne pouvait pas le porter : la requête de
+conteneur `@container (max-width: 150px)` le masque sur les cartes de grille,
+c'est-à-dire précisément là où on regarde sa collection. La pastille est donc
+dans son propre coin, dimensionnée en pixels avec un plancher, et le contrôle
+la mesure **après** l'ouverture de l'onglet — mesurée avant, elle faisait 0×0
+et le contrôle passait sur un élément que personne ne voyait.
+
+### La carte s'ouvre en grand — `panneauCarte`
+
+Le panneau de carte existait : il ouvrait un tableau de trois lignes. Il ouvre
+maintenant la carte elle-même — le dessin au format 63/80, la famille, la
+rareté **en toutes lettres**, le texte entier, puis trois chiffres : souffle,
+**recharge** et exemplaires déjà posés. La recharge n'était écrite nulle part
+ailleurs, et une carte à quatre-vingt-dix secondes ne se joue pas comme une à
+huit.
+
+Les conditions sont rendues en français : `{ mene: 1 }` devient « Ton club doit
+être mené au vrai match. » Les clés inconnues sont **nommées** plutôt que
+tues — une carte qui refuse de se jouer sans dire pourquoi est une carte
+cassée.
+
+### Deux défauts que ce chantier a révélés
+
+**Un second écouteur qui gagnait puis perdait.** J'avais lu que rien
+n'écoutait `data-detail`, et j'ai posé un écouteur sur `#corps` pour ouvrir la
+carte. Il s'enregistrait **avant** le délégué principal, qui existait depuis le
+début : les deux ouvraient un panneau, le second écrasait le premier, et la
+suite restait verte en éprouvant l'ancien. Un écran n'a qu'un panneau de carte.
+Le contrôle « le panneau permet toujours d'ajouter la carte au deck » existe
+pour ça.
+
+**Un contrôle tiré à pile ou face.** Le désordre du tifo mélangeait le tracé
+avec `Math.random()` et le comparait à une barre de 0,25. Il est tombé à 0,26.
+Un contrôle qui échoue une fois sur deux ne dit rien : on le relance jusqu'au
+vert, et le jour où le code casse pour de bon, on le relance aussi. La
+permutation est maintenant **tirée avec une graine fixe**, huit fois, et c'est
+la **pire** des huit qui est jugée — reproductible (0,20 à chaque lancement) et
+plus sévère qu'un tirage unique. Retirer le facteur d'ordre la remonte à 1,20.
+
+### Éprouvé
+
+`deck:ui` a dix-sept contrôles de plus sur la carte en grand, et quinze
+mutations les tuent **chacune sur son propre contrôle** : dessin retiré, cadre
+passé au carré, glyphe retiré, souffle retiré, recharge retirée, texte tronqué,
+rareté en clé, famille vidée, bouton d'ajout retiré, condition supprimée,
+condition en mécanique brute, revers supprimé, encadré toujours affiché, carte
+plus montée en grand. `boosters:ui` est une suite neuve (~300 contrôles
+déplacés depuis `fanzzy:ui`), qui monte son propre serveur comme toutes les
+autres.
 
 ---
 

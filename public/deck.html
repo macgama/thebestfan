@@ -6,6 +6,7 @@
 <title>Mon deck — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
+<link rel="stylesheet" href="/cartes.css">
 <style>
 :root{--ambre:#E08A2C;--barre:66px}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -308,6 +309,75 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
   background:#171C23;z-index:80;border:1px solid rgba(242,238,228,.2);border-radius:7px;
   padding:11px 16px;font-size:12.5px;display:none;max-width:88vw;text-align:center}
 .toast.on{display:block}
+
+/* La barre des trois écrans de cartes. Elle est identique à celle de la page
+   des Fanzzy : c est la même section, et deux barres différentes feraient
+   croire à deux endroits. */
+.nav{display:flex;gap:6px;padding:4px 16px 10px;flex:none;z-index:5}
+/* `button` **et** `a` : le troisième onglet mène à une autre page, donc c'est
+   un lien — et un lien doit l'être, pour qu'on puisse l'ouvrir dans un nouvel
+   onglet ou le copier. Ne styler que les boutons laissait le deck en texte nu
+   au milieu de deux onglets. */
+.nav button,.nav a{flex:1;background:var(--panneau);backdrop-filter:blur(10px);
+  border:1px solid rgba(242,238,228,.14);text-decoration:none;
+  border-radius:8px;color:inherit;display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:9px 4px;font-size:11px;letter-spacing:.08em;font-family:var(--banner);opacity:.55;
+  cursor:pointer}
+.nav button.on,.nav a.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
+.nav svg{width:15px;height:15px}
+
+/* ------------------------------------------------- la carte en grand
+
+   Ce qu'on ne voyait pas dans une rangée de trente-huit pixels : le dessin,
+   la recharge, la rareté écrite, et ce que la carte demande pour être jouable.
+
+   Le dessin passe en premier et prend toute la largeur. C'est le point de
+   l'écran : on vient ici pour regarder la carte, le reste est légende. */
+.grandeCarte{display:flex;flex-direction:column;gap:12px}
+
+.gcArt{position:relative;width:100%;aspect-ratio:63/80;border-radius:12px;overflow:hidden;
+  background:linear-gradient(165deg,rgba(255,255,255,.06),rgba(0,0,0,.45));
+  border:1px solid var(--fc,#8257DA)}
+/* Le glyphe de famille, dessous : il reste si l'illustration ne charge pas —
+   `action-art.js` retire alors son image, et la carte garde un visage. */
+.gcArt>svg{position:absolute;left:50%;top:50%;width:38%;height:38%;
+  transform:translate(-50%,-50%);fill:none;stroke:var(--fc,#8257DA);stroke-width:1.4;
+  opacity:.5}
+.gcArt .gcIllu{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  object-position:50% 34%}
+
+.gcRang{display:flex;align-items:center;gap:8px;font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase}
+.gcFam{color:var(--fc,#8257DA);font-weight:700}
+.gcRar{margin-left:auto;padding:3px 9px;border-radius:20px;border:1px solid currentColor;
+  font-family:var(--banner);letter-spacing:.1em}
+.gcRar.r-commune{color:#C2CAD6}
+.gcRar.r-rare{color:#5FA8FF}
+.gcRar.r-epique{color:#B98CFF}
+.gcRar.r-legendaire{color:#F5C33B;box-shadow:0 0 12px rgba(245,195,59,.3)}
+
+.gcTexte{margin:0;font-size:13.5px;line-height:1.6}
+
+/* Les trois chiffres qui décident d'une carte : ce qu'elle coûte, le temps
+   avant de la rejouer, et si on l'a. Le deuxième n'était écrit nulle part —
+   or une carte à quatre-vingt-dix secondes de recharge ne se joue pas comme
+   une à huit. */
+.gcChiffres{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.gcChiffres div{padding:9px 6px;border-radius:9px;text-align:center;
+  background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.11)}
+.gcChiffres b{display:block;font-family:var(--banner);font-size:17px;color:var(--fc,#8257DA)}
+.gcChiffres small{display:block;margin-top:3px;font-size:8px;letter-spacing:.1em;opacity:.5}
+
+.gcCond{padding:10px 12px;border-radius:9px;font-size:12px;line-height:1.55;
+  background:rgba(245,195,59,.09);border:1px solid rgba(245,195,59,.3)}
+.gcCond b{display:block;font-family:var(--banner);font-size:11px;letter-spacing:.12em;
+  color:var(--projo);margin-bottom:5px;text-transform:uppercase}
+.gcCond p{margin:0}
+.gcCond p + p{margin-top:5px}
+
+/* La rangée dit qu'elle s'ouvre : sans ce signe, personne ne pense à toucher. */
+.carte{cursor:pointer}
+.carte:active{transform:translateY(2px)}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -319,6 +389,11 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 </head>
 <body>
 <main id="app">
+  <nav class="nav">
+    <a href="/fanzzy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>MON FANZZY</a>
+    <a href="/fanzzy?ecran=dex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18M4 8h4M4 13h4"/></svg>CLASSEUR</a>
+    <a class="on" href="/deck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h10v13H4zM8 4h10v13"/></svg>DECK</a>
+  </nav>
   <div class="top">
     <h1>MON DECK<small>trois Fanzzy, dix cartes</small></h1>
     <div class="etat" id="etat">—</div>
@@ -833,6 +908,50 @@ function ouvrir(titre, contenu) {
 }
 const fermer = () => $('voile').classList.remove('on');
 
+/* ------------------------------------------------------ la carte en grand
+
+   Une rangée de deck dit le nom, le coût et deux lignes de texte, sur une
+   vignette de trente-huit pixels. On y choisit donc ses cartes sans jamais
+   avoir vu ce qu'elles sont : le dessin, ce qu'elles coûtent à rejouer, ce
+   qu'elles demandent pour être jouables.
+
+   Le panneau existait — il ouvrait un tableau de trois lignes. Il ouvre
+   maintenant la carte elle-même, au format d'une carte, dessin compris. */
+
+/** Les raretés, en toutes lettres. Le catalogue les écrit en clé. */
+const RARETE = {
+  commune: 'Commune', rare: 'Rare', epique: 'Épique', legendaire: 'Légendaire',
+};
+
+/**
+ * Ce qu'une carte demande pour être jouable.
+ *
+ * Les conditions sont écrites en mécanique — `mene: 1`, `minuteReelle: 75` —
+ * et personne n'a à lire ça. On les rend en français, et on nomme celles qu'on
+ * ne connaît pas plutôt que de les taire : une carte qui a une condition
+ * invisible est une carte qui refuse de se jouer sans dire pourquoi.
+ */
+function conditionTexte(c) {
+  if (!c) return null;
+  const dits = [];
+  if (c.mene) {
+    dits.push(c.mene === 1
+      ? 'Ton club doit être mené au vrai match.'
+      : `Ton club doit être mené d’au moins ${c.mene} buts au vrai match.`);
+  }
+  if (c.minuteReelle) dits.push(`À partir de la ${c.minuteReelle}ᵉ minute du vrai match.`);
+  if (c.evolution) dits.push('Ton Fanzzy doit avoir un âge suivant à atteindre.');
+  for (const k of Object.keys(c)) {
+    if (!['mene', 'minuteReelle', 'evolution'].includes(k)) {
+      dits.push(`Condition « ${k} » : ${JSON.stringify(c[k])}`);
+    }
+  }
+  return dits.length ? dits : null;
+}
+
+
+
+
 function panneauFanzzy(index) {
   const dedans = new Set(S.deck.fanzzy.map((f) => f.id));
   const dispo = S.possede.fanzzy.map(aFanzzy).filter(Boolean)
@@ -902,19 +1021,36 @@ function panneauCarte(id) {
   const n = S.deck.actions.filter((x) => x === a.id).length;
   const plein = S.deck.actions.length >= S.regles.actions;
 
-  const lignes = [
-    ['Famille', fam.nom],
-    ['Coût', `${a.cost} de souffle`],
-    ['Réutilisation', `${a.cd} s`],
-  ];
-  if (a.revers) lignes.push(['Revers', 'oui — voir le texte']);
-  if (a.condition?.mene) lignes.push(['Condition', `mené d\u2019au moins ${a.condition.mene} but`]);
-  if (a.condition?.minuteReelle) lignes.push(['Condition', `après la ${a.condition.minuteReelle}e minute réelle`]);
+  const cond = conditionTexte(a.condition);
 
-  const info = lignes.map(([k, v]) =>
-    `<div class="choix" style="cursor:default"><div class="txt">
-      <b style="font-size:11px;letter-spacing:.12em;opacity:.5">${esc(k.toUpperCase())}</b>
-      <p style="opacity:.85;font-size:12px">${esc(v)}</p></div></div>`).join('');
+  /* Le dessin d'abord, et en grand. Le glyphe de famille reste dessous : une
+     carte dont le fichier manque garde un visage au lieu d'un trou. */
+  const info = `<div class="grandeCarte" style="--fc:${fam.c ?? '#8257DA'}">
+    <div class="gcArt">
+      <svg viewBox="0 0 24 24"><path d="${fam.ico ?? ''}"/></svg>
+      ${window.TBF_ACTION.illustration(a.id, 'gcIllu')}
+    </div>
+
+    <div class="gcRang">
+      <span class="gcFam">${esc(fam.nom ?? a.fam)}</span>
+      <span class="gcRar r-${esc(a.rar)}">${esc(RARETE[a.rar] ?? a.rar)}</span>
+    </div>
+
+    <p class="gcTexte">${esc(a.texte)}</p>
+
+    <div class="gcChiffres">
+      <div><b>${a.cost}</b><small>SOUFFLE</small></div>
+      <div><b>${a.cd}s</b><small>RECHARGE</small></div>
+      <div><b>${possede ? (S.regles.copiesMax == null ? `×${n}` : `${n}/${S.regles.copiesMax}`) : '—'}</b><small>DANS TON DECK</small></div>
+    </div>
+
+    ${cond ? `<div class="gcCond"><b>Pour la jouer</b>${
+      cond.map((t) => `<p>${esc(t)}</p>`).join('')}</div>` : ''}
+
+    ${a.revers ? `<div class="gcCond"><b>Elle se retourne</b><p>Cette carte a un
+      revers : elle rend quelque chose en plus de coûter son souffle. Le texte
+      ci-dessus dit quoi.</p></div>` : ''}
+  </div>`;
 
   let bas;
   if (!possede) {
@@ -931,8 +1067,7 @@ function panneauCarte(id) {
       data-ajouter="${a.id}">AJOUTER AU DECK${n ? ` (${S.regles.copiesMax == null ? `déjà ×${n}` : `${n}/${S.regles.copiesMax}`})` : ''}</button></div>`;
   }
 
-  ouvrir(a.nom, `<p style="margin:0 2px 12px;font-size:13px;line-height:1.65;opacity:.85">
-    ${esc(a.texte)}</p>${info}${bas}`);
+  ouvrir(a.nom, `${info}${bas}`);
 }
 
 /* ------------------------------------------------------- enregistrement */
