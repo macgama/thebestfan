@@ -41,6 +41,43 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
 .log b{color:var(--projo);font-family:var(--banner)}
 .vide{opacity:.45;padding:36px;text-align:center}
 
+/* ------------------------------------------------------------ réglages
+   Une ligne par réglage : ce qu'il gouverne à gauche, sa valeur à droite.
+   Le tableau serait plus compact, mais un tableau ne porte pas d'aide, et
+   c'est l'aide qui fait la différence entre régler et deviner. */
+.sect{margin:0 0 26px}
+.sect > h3{font-family:var(--banner);font-size:12px;letter-spacing:.15em;
+  margin:0 0 3px;color:var(--projo)}
+.sect > p.sh{margin:0 0 12px;font-size:11.5px;opacity:.45;max-width:640px}
+.rg{display:flex;align-items:flex-start;gap:14px;padding:11px 0;
+  border-bottom:1px solid rgba(242,238,228,.07)}
+.rg .lib{flex:1;min-width:0}
+.rg .lib b{display:block;font-size:13px;font-weight:600}
+.rg .lib small{display:block;margin-top:3px;font-size:11px;opacity:.45;line-height:1.55}
+.rg .val{flex:none;display:flex;align-items:center;gap:7px}
+.rg input[type=number]{width:92px;text-align:right}
+.rg input[type=text]{width:min(320px,42vw)}
+.rg .u{font-size:10.5px;opacity:.4;letter-spacing:.06em;min-width:64px}
+/* La marque du modifié. Sans elle, un réglage laissé au défaut et un réglage
+   fixé sur cette même valeur sont indiscernables — et on ne sait plus ce
+   qu'on a touché. */
+.rg.change .lib b::after{content:"modifié";margin-left:8px;font-family:var(--banner);
+  font-size:9px;letter-spacing:.1em;color:var(--projo);border:1px solid currentColor;
+  border-radius:20px;padding:1px 6px;vertical-align:2px}
+.rg .def{font-size:10px;opacity:.4;white-space:nowrap}
+.rg button.rendre{visibility:hidden}
+.rg.change button.rendre{visibility:visible}
+/* La bascule : un bouton, pas une case — on la vise au doigt. */
+.bascule{width:46px;height:26px;border-radius:20px;border:1px solid rgba(242,238,228,.2);
+  background:rgba(0,0,0,.4);position:relative;cursor:pointer;padding:0}
+.bascule i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+  background:rgba(242,238,228,.5);transition:left .16s ease,background .16s ease}
+.bascule[aria-pressed=true]{border-color:var(--vert);background:rgba(30,158,106,.2)}
+.bascule[aria-pressed=true] i{left:23px;background:var(--vert)}
+.enreg{position:sticky;bottom:0;background:linear-gradient(transparent,#0B0E13 28%);
+  padding:18px 0 8px;display:flex;gap:10px;align-items:center}
+.enreg .quoi{font-size:11.5px;opacity:.55}
+
 /* ------------------------------------------------------ catalogue Fanzzy
    Cet écran sert à tenir cent cartes. Il est donc dense exprès : une ligne
    par Fanzzy, la vignette à gauche pour reconnaître d'un coup d'œil, et
@@ -104,7 +141,10 @@ const api = async (p, body, method) => {
     headers: { 'content-type':'application/json' }, credentials:'same-origin',
     body: body === undefined ? undefined : JSON.stringify(body) });
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw Object.assign(new Error(j.error ?? 'erreur'), { code:j.error, status:r.status });
+  // `raison` est le détail en français que le serveur joint aux refus qui en
+  // ont un. Sans ça, l'écran n'a que le code, et le code ne se lit pas.
+  if (!r.ok) throw Object.assign(new Error(j.raison ?? j.error ?? 'erreur'),
+    { code:j.error, raison:j.raison, status:r.status });
   return j;
 };
 const jour = (d) => new Date(d).toLocaleString('fr', { day:'2-digit', month:'2-digit',
@@ -616,25 +656,91 @@ const VUES = {
   },
 
   async reglages() {
-    const d = await api('/reglages');
+    const d = await api('/registre');
+    const parSection = (id) => d.reglages.filter((r) => r.section === id);
+    // Une clé posée en base est une clé modifiée, même si sa valeur égale le
+    // défaut : c'est ce que `brutes` dit et que `valeurs` ne peut pas dire.
+    const touche = (cle) => Object.prototype.hasOwnProperty.call(d.brutes, cle);
+
+    const champ = (r) => {
+      const v = d.valeurs[r.cle];
+      if (r.type === 'booleen') {
+        return `<button class="bascule" data-bascule="${r.cle}" aria-pressed="${v ? 'true' : 'false'}"
+          aria-label="${esc(r.titre)}"><i></i></button>`;
+      }
+      if (r.type === 'choix') {
+        return `<select data-champ="${r.cle}">${r.choix.map(([val, lib]) =>
+          `<option value="${esc(val)}"${val === v ? ' selected' : ''}>${esc(lib)}</option>`).join('')}</select>`;
+      }
+      if (r.type === 'texte') {
+        return `<input type="text" data-champ="${r.cle}" maxlength="${r.max ?? 240}"
+          value="${esc(v)}">`;
+      }
+      return `<input type="number" data-champ="${r.cle}" value="${v}"
+        min="${r.min}" max="${r.max}" step="${r.pas ?? 1}">`;
+    };
+
+    const ligne = (r) => `<div class="rg${touche(r.cle) ? ' change' : ''}" data-rg="${r.cle}">
+      <div class="lib"><b>${esc(r.titre)}</b>
+        ${r.aide ? `<small>${esc(r.aide)}</small>` : ''}
+        <small class="def">Par défaut : ${esc(String(d.defauts[r.cle]))}${
+          r.unite ? ' ' + esc(r.unite) : ''}</small></div>
+      <div class="val">${champ(r)}
+        <span class="u">${esc(r.unite ?? '')}</span>
+        <button class="mini rendre" data-rendre="${r.cle}"
+          title="Revenir à la valeur par défaut">↺</button></div>
+    </div>`;
+
     $('main').innerHTML = `
-      <p style="opacity:.5;font-size:12px;max-width:600px">Réglages modifiables sans redéploiement.
-      La clé <b>annonce</b> affiche un bandeau pour tous les joueurs.</p>
-      <div class="bar"><input id="cle" placeholder="clé" style="width:180px">
-        <input id="val" placeholder='valeur JSON, ex : {"texte":"…","actif":true}' style="flex:1;min-width:260px">
-        <button class="mini" id="set">Enregistrer</button></div>
-      <table><thead><tr><th>CLÉ</th><th>VALEUR</th></tr></thead><tbody>
-        ${Object.entries(d).map(([k,v])=>`<tr><td><b>${esc(k)}</b></td>
-          <td class="log">${esc(JSON.stringify(v))}</td></tr>`).join('')
-          || '<tr><td colspan="2" class="vide">Aucun réglage.</td></tr>'}
-      </tbody></table>`;
-    $('set').onclick = async () => {
-      let valeur;
-      try { valeur = JSON.parse($('val').value); }
-      catch { return alert('La valeur doit être du JSON valide.'); }
-      try { await api('/reglage/' + encodeURIComponent($('cle').value.trim()), { valeur }, 'PUT');
-        VUES.reglages(); }
-      catch (e) { alert('Refusé : ' + e.code); }
+      <p style="opacity:.5;font-size:12px;max-width:660px">Ces réglages agissent
+      <b>immédiatement</b>, sans redéploiement : le serveur relit ses valeurs après chaque
+      enregistrement. Ce qui n'est pas ici ne se règle pas ici — les prix en euros vivent
+      dans le catalogue de la boutique, et les taux de tirage d'un booster payant sont une
+      donnée réglementée qui ne bouge pas depuis un champ de saisie.</p>
+      ${d.sections.map((sec) => `<section class="sect">
+        <h3>${esc(sec.titre)}</h3><p class="sh">${esc(sec.aide)}</p>
+        ${parSection(sec.id).map(ligne).join('')}
+      </section>`).join('')}
+      <div class="enreg"><span class="quoi" id="quoi"></span></div>`;
+
+    /* Chaque champ s'enregistre seul, à la sortie. Un bouton « Enregistrer »
+       unique obligerait à deviner lequel des vingt-six champs a été refusé
+       quand le serveur en refuse un. */
+    const poser = async (cle, valeur, el) => {
+      try {
+        await api('/reglage/' + encodeURIComponent(cle), { valeur }, 'PUT');
+        $('quoi').textContent = `${cle} enregistré.`;
+        el?.closest('.rg')?.classList.add('change');
+      } catch (e) {
+        /* Le redessin **d'abord**, le message ensuite. Dans l'autre ordre, le
+           redessin remplaçait le bandeau qui venait d'annoncer le refus : deux
+           lignes correctes chacune, et ensemble elles ne montraient rien. */
+        await VUES.reglages();
+        $('quoi').textContent = 'Refusé — ' + (e.raison || e.message || e.code);
+      }
+    };
+
+    $('main').onchange = (e) => {
+      const el = e.target.closest('[data-champ]');
+      if (!el) return;
+      const r = d.reglages.find((x) => x.cle === el.dataset.champ);
+      const v = (r.type === 'entier' || r.type === 'decimal') ? Number(el.value) : el.value;
+      poser(r.cle, v, el);
+    };
+
+    $('main').onclick = async (e) => {
+      const b = e.target.closest('[data-bascule]');
+      if (b) {
+        const on = b.getAttribute('aria-pressed') !== 'true';
+        b.setAttribute('aria-pressed', String(on));
+        return poser(b.dataset.bascule, on, b);
+      }
+      const rd = e.target.closest('[data-rendre]');
+      if (rd) {
+        await api('/reglage/' + encodeURIComponent(rd.dataset.rendre), undefined, 'DELETE');
+        $('quoi').textContent = `${rd.dataset.rendre} rendu au défaut.`;
+        return VUES.reglages();
+      }
     };
   },
 

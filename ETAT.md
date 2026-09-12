@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « le kiosque a son écran, le Fanzzy porte son
-âge, la carte s’ouvre en grand ».
+Dernière mise à jour : session « l’argent réel n’achète plus de coffre :
+il achète des billets, et les billets achètent des objets nommés ».
 
 ---
 
@@ -1501,6 +1501,282 @@ autres.
 
 ---
 
+## 4 duodecies. Une administration qui règle vraiment
+
+### Ce que l'administrateur pouvait déjà faire
+
+Sept onglets, et ils marchaient : **APERÇU** (chiffres d'exploitation, purge du
+cache, envoi de contrôle), **FANZZY** (créer, modifier, dépublier une carte,
+ouvrir et fermer les séries — sans déploiement), **TENUES** (les thèmes de
+costume, même chose), **JOUEURS** (chercher, créditer écharpes et boosters,
+vérifier une adresse, bloquer, promouvoir), **COMPÉTITIONS** (activer, changer
+de rang), **JOURNAL** (qui a fait quoi, depuis quelle adresse), et **RÉGLAGES**.
+
+### Le défaut : les réglages ne réglaient rien
+
+Le septième onglet était deux champs de texte — une clé, une valeur JSON. Pour
+s'en servir il fallait connaître de mémoire le nom de la clé, son type et
+l'étendue de ce qu'elle accepte : c'est-à-dire avoir lu le code. Ce n'est pas
+un écran d'administration, c'est une console de base de données avec une mise
+en page.
+
+**Et sur toutes les clés qu'on pouvait y taper, une seule était lue par le
+jeu** — `series_actives`. L'écran proposait même en exemple une clé
+`annonce` « qui affiche un bandeau pour tous les joueurs » : rien, nulle part,
+ne la lisait. On pouvait l'écrire, la relire, la voir listée, et il ne se
+passait rien.
+
+Un réglage qui ne règle rien ne casse rien : il se contente de ne pas être là,
+et on ne s'en aperçoit que le jour où l'on en a besoin.
+
+### Le registre — `src/shared/reglages.js`
+
+Vingt-six réglages déclarés, en six sections. Chacun porte son type, ses
+bornes, son unité, son défaut et son aide. **L'écran se dessine à partir de ces
+déclarations** et le serveur **valide contre elles** : ajouter un réglage, c'est
+ajouter une ligne, et l'écran comme la validation suivent.
+
+Les défauts sont la **seule source de vérité**. `PACK_REGEN_MS` se déduit de
+`pack.regen_min`, et non l'inverse ; deux endroits qui portent la même valeur
+finissent toujours par diverger, et ici le désaccord serait muet.
+
+Le branchement tient en une technique : les constantes deviennent des **getters
+d'objet**. `RULES.goalAt` s'écrit toujours pareil sur les quarante sites qui le
+lisent, et interroge le registre à chaque lecture. Aucun appelant n'a changé.
+Vérifié avant d'écrire : personne ne déstructure ces objets au chargement —
+`const { goalAt } = RULES` figerait la valeur et le réglage redeviendrait
+décoratif.
+
+Ce qui n'est **délibérément pas** réglable : les prix en euros (ils vivent dans
+le catalogue de la boutique) et les taux de tirage d'un booster payant, qui sont
+une donnée réglementée dans plusieurs pays.
+
+### Deux fonctionnalités qui n'existaient pas
+
+**Le bandeau d'annonce** — celui que l'écran promettait. Monté par la barre
+commune, donc présent sur chaque page sans qu'il faille y penser. Posé en
+`textContent` : un champ d'administration reste une entrée, on ne monte pas du
+HTML avec.
+
+**La fermeture du jeu.** Le réglage le plus dangereux de l'écran : mal posé, il
+enferme dehors celui qui vient de le poser. Trois garde-fous — le verrou ne
+coûte rien quand il est levé (premier test en mémoire, le rôle n'est lu en base
+que pendant une fermeture) ; l'authentification et l'administration restent
+ouvertes, sans quoi il n'existerait plus aucun chemin pour rouvrir ; et le refus
+se nomme, `503` avec un message, jamais une page blanche.
+
+### Trois défauts trouvés en éprouvant, et qu'aucune lecture n'aurait donnés
+
+**Le texte était analysé deux fois.** Le pilote analyse lui-même les colonnes
+JSON : un nombre revient en nombre, un texte revient **déjà analysé**. Le type
+seul ne distingue donc pas « du JSON à analyser » d'« une chaîne qu'on vient de
+m'analyser ». Les réglages chiffrés passaient sans rien dire ; le premier
+réglage textuel faisait tomber le chargement. L'ancien code d'administration
+portait la même faute, latente, faute d'avoir jamais eu un réglage textuel.
+
+**La raison du refus n'arrivait pas.** Le serveur refusait correctement, en
+nommant la borne — « attendu entre 50 et 2000, reçu 5 » — et ne renvoyait que le
+code. La raison finissait dans les journaux, c'est-à-dire nulle part pour la
+personne devant l'écran.
+
+**Le message de refus était effacé aussitôt écrit.** L'écran l'affichait, puis
+redessinait la vue pour revenir à la valeur d'avant — ce qui remplaçait le
+bandeau. Deux lignes correctes chacune, et ensemble elles ne montraient rien.
+
+### Éprouvé
+
+`npm run reglages:smoke` (40 contrôles) et 15 mutations, **chacune tuée sur son
+propre contrôle** : cache non rechargé, seuil remis en dur, bornes ignorées,
+refus anonyme, décimale acceptée, clé hors registre acceptée, texte non borné,
+choix non vérifié, valeur illégale non rattrapée, retour au défaut qui écrit au
+lieu d'effacer, écriture avant validation, route publique qui rend tout,
+annonce sans sa bascule, texte analysé deux fois. `admin:ui` a treize contrôles
+de plus sur l'écran.
+
+---
+
+## 4 terdecies. L'ascenseur, le personnage, la boutique
+
+### L'ascenseur était celui du système
+
+Un rail clair en plein milieu d'un écran sombre, sur toutes les pages sauf
+trois qui l'avaient traité pour elles-mêmes. La règle est maintenant dans la
+feuille commune et vaut pour **tout ce qui défile** — page, panneaux, tiroirs,
+listes. Les deux syntaxes sont écrites, parce qu'aucune ne couvre l'autre :
+`scrollbar-width`/`scrollbar-color` pour Firefox, `::-webkit-scrollbar` pour
+WebKit. Le sélecteur est en `:where()`, qui ne pèse rien : les pages qui
+avaient déjà masqué ou habillé leur barre gardent leur décision.
+
+### Le personnage ne faisait que respirer
+
+Une boucle unique de trois secondes six. L'œil l'apprend en dix secondes, et le
+personnage redevient une image fixe avec un défaut de compression.
+
+Il a maintenant **trois gestes de repos**, tirés au hasard, espacés au hasard
+entre cinq et douze secondes : l'appui qui change de jambe, le regard qui
+balaie, le coup d'épaule. Ce qui donne l'impression du vivant n'est pas
+l'amplitude — elle reste sous le degré — c'est **l'irrégularité**. Un geste à
+cadence fixe est un métronome, et c'est pire que l'immobilité.
+
+Sur « Mon Fanzzy », **toucher le personnage le fait sauter**. Pas dans le
+Virage : la même zone y sert à chanter, et un saut non demandé au milieu d'un
+chant se lirait comme un défaut.
+
+**La fluidité se gagne dans le sommeil, pas dans le poids.** Hors de l'écran ou
+onglet caché, la scène s'endort : minuterie coupée, respiration en pause. Le
+navigateur ralentit les minuteries d'un onglet masqué, il ne ralentit pas une
+animation composée — elle continue donc de faire tourner le compositeur pour
+personne. Tout se joue en `transform`, que le compositeur traite sans repasser
+par la mise en page ni par le dessin, et rien de tout cela ne touche la grille
+du classeur et ses cent cinquante-deux vignettes.
+
+**Un défaut trouvé au passage :** `saute` et `change` animaient le **même
+calque**, et comme la règle de `change` vient plus bas dans la feuille, c'est
+elle qui gagnait. Toucher le personnage juste après un changement de pose ne
+produisait rien — aucune erreur, aucune trace, le geste était simplement
+absent. Le module porte pourtant la règle en toutes lettres : un calque par
+geste. Elle avait été appliquée partout sauf là, et rien ne l'éprouvait.
+
+### La boutique était introuvable
+
+Servie sur `/boutique` depuis qu'elle a été écrite, et rangée dans le menu
+accordéon au milieu de treize entrées : c'est-à-dire nulle part. Personne
+n'ouvre un menu pour **découvrir** qu'une boutique existe.
+
+Toucher sa monnaie est le geste que tout joueur essaie en premier. Les deux
+jetons de la barre — écharpes et boosters — étaient des `div` inertes qui
+affichaient un nombre ; ce sont maintenant des liens vers la boutique, avec un
+`+` discret. **Deux barres à traiter** : l'accueil a la sienne, antérieure à
+`nav.js` et jamais remplacée, avec son propre balisage. Les fusionner serait le
+bon geste ; ce n'est pas ce tour-ci.
+
+---
+
+## 4 quaterdecies. Les billets, et la fin des coffres payants
+
+### Ce qui était en vente, et pourquoi c'était un problème
+
+Les quatre rayons de la boutique menaient **tous** à de l'aléatoire :
+
+| En vente | Ce que c'était vraiment |
+|---|---|
+| Boosters, 1,99 € à 18,99 € | un coffre à contenu aléatoire |
+| « Une tenue », 2,49 € | un **tirage** parmi les tenues qui manquent |
+| « Une pièce d'équipement », 2,49 € | un **tirage** parmi les pièces qui manquent |
+| Écharpes, 2,99 € à 17,99 € | une écharpe achète un booster à 45 — un coffre, avec une étape de plus |
+
+Plusieurs pays traitent le coffre payant comme un jeu de hasard : la Belgique et
+les Pays-Bas l'ont interdit, d'autres imposent l'affichage des probabilités. Le
+jeu suit des clubs suisses et français, il est en français, et il est ouvert à
+des mineurs.
+
+### Le nouveau modèle
+
+**L'argent réel achète des billets, et rien d'autre.** Les billets achètent des
+objets **nommés** : cette pièce d'équipement-là, cette tenue-là sur ce Fanzzy-là
+à cet âge-là. On voit ce qu'on prend avant de le prendre.
+
+Les boosters restent : gratuits à la recharge, ou payés en écharpes gagnées en
+poussant. **Les écharpes ne s'achètent plus du tout** — elles seules font
+grandir un Fanzzy, donc la progression du jeu reste entièrement hors de portée
+d'une carte bancaire.
+
+Aucun chemin ne mène d'un euro à un tirage. Ce n'est pas une précaution de
+façade, c'est une propriété du catalogue, et `verifierCatalogue()` la tient.
+
+Le nom : **billets**. « Fanion » a été écarté — c'est déjà un motif de tifo, et
+le joueur lirait « dessine un fanion » et « tu as 200 fanions » sur le même
+écran. Le renommer coûte une ligne : `MONNAIE`, dans `src/shared/boutique.js`.
+
+### Les fichiers
+
+| Fichier | Rôle |
+|---|---|
+| `src/shared/boutique.js` | le catalogue payant, `LIVRAISONS_PAYANTES`, `verifierCatalogue()` |
+| `src/shared/etal.js` | ce que les billets achètent, **déduit** de `STUFF` et de la table des tenues |
+| `sql/billets.sql` | `user_wallet.billets`, en `INT` — un SMALLINT déborde à trois gros paquets |
+| `remettreStuff` / `remettreTenue` | donner un objet **nommé**, à côté d'`offrir` qui tire au sort |
+| `POST /api/boutique/depenser` | débit et remise dans une transaction |
+
+Les prix **en billets** sont au registre (section « L'ÉTAL EN BILLETS ») : c'est
+de l'équilibrage, ça se retouche en regardant ce que les joueurs prennent. Les
+prix **en euros** restent hors de l'écran — un prix qu'on change d'un doigt est
+un prix qui finira changé par erreur.
+
+### La règle est gardée par des contrôles, pas par une intention
+
+Elle se casse en **ajoutant**, pas en retirant : trois lignes au catalogue et la
+chaîne est rouverte, sans qu'un fichier existant ait bougé. Les contrôles
+regardent donc ce que le catalogue **ne contient pas**, et `LIVRAISONS_PAYANTES`
+est le point de décision : si quelqu'un y ajoute `packs`, un contrôle nommé
+rougit — et c'est là qu'il faudra reprendre la question des taux de tirage, des
+territoires et du garde-fou d'âge. Elles sont écartées aujourd'hui parce que la
+chaîne est coupée, pas parce qu'elles ont été résolues.
+
+### Ce que les mutations ont appris
+
+**Trois contrôles ne mordaient pas**, et tous pour la même raison : ils
+regardaient un symptôme que la base produisait de toute façon.
+
+- `verifierCatalogue()` ne lisait que le vrai catalogue, qui est correct : on
+  pouvait lui retirer sa règle principale sans qu'un contrôle bouge. **Un
+  validateur qu'on n'a jamais vu refuser quelque chose n'est pas un
+  validateur.** Il prend maintenant un catalogue en argument, et la suite lui en
+  donne un mauvais.
+- « tenue sur un Fanzzy qu'on ne possède pas » passait parce que les clés
+  étrangères refusaient l'écriture. Retirer **notre** garde ne changeait rien de
+  visible. Le contrôle vérifie désormais le **code** du refus.
+- Un objet hors catalogue était refusé deux fois — par le tarif puis par la
+  remise. Le contrôle ne disait pas lequel des deux remparts tenait.
+
+**Et une note du code était fausse.** J'avais écrit que l'ordre comptait — remettre
+puis débiter. La mutation qui échange les deux blocs ne casse rien : c'est la
+**transaction** qui protège, le `rollback` rendant les billets si la remise
+échoue. L'ordre est gardé pour la lisibilité, mais la note dit maintenant ce qui
+tient réellement.
+
+---
+
+## 4 quindecies. Le premier paquet se déchire enfin
+
+Le geste d'ouverture du kiosque avait été refait ; **`bienvenue.html` avait
+gardé l'ancien**, celui qui ne s'ouvrait pas. Il fallait maintenir le doigt
+immobile pour « chauffer », puis tirer sans avoir lâché — et la chauffe se
+comptait en **images**, pas en secondes : `charge += 0.02` à chaque
+`requestAnimationFrame`. Entre le halo qui respire, le paquet qui tremble et le
+dégradé plein écran, une machine lente rend une douzaine d'images par seconde :
+quatre secondes d'immobilité parfaite au lieu des huit dixièmes prévus, le
+moindre relâchement remettant tout à zéro.
+
+C'est la première minute de jeu de quelqu'un qui vient de s'inscrire.
+
+La page porte maintenant le geste du kiosque : on tire la bande en travers du
+haut, l'avancée ne dépend que de la **distance parcourue**, lâcher trop tôt fait
+revenir la bande élastiquement, et Entrée ouvre sans le geste.
+
+**Un garde a été posé pour que ça ne se reproduise pas.** `npm run pages` refuse
+désormais toute page où un geste avance au rythme des images. Il regarde la
+cause et non l'apparence : le défaut est invisible sur la machine de celui qui
+l'écrit. Éprouvé — réintroduire le motif fait rougir `pages` en nommant la page.
+
+---
+
+## 4 sexdecies. La boutique sur l'accueil
+
+Cinquième tuile du rail de droite. `.centre` est en `overflow:hidden` : le rail
+a donc reçu `max-height:100%` et ses tuiles `min-height:0`, sans quoi la
+cinquième sort de l'écran sur un téléphone court et se fait couper en silence.
+
+**Un piège qui a coûté vingt contrôles :** la requête de bourse lit désormais
+`billets`, et les vingt-sept suites qui montent leur schéma à la main ne
+créaient pas la colonne. Le symptôme n'a rien dit de sa cause — vingt contrôles
+de l'accueil ont rougi sur « le Fanzzy équipé n'est pas nommé », parce que tout
+l'état du joueur tombait avec la requête. `billets.sql` est maintenant monté par
+les vingt-cinq suites concernées, et déclaré dans `schema-smoke` et
+`DEPLOIEMENT.md`.
+
+---
+
 ## 5. Ce qui reste à faire
 
 Par ordre d'utilité.
@@ -1700,18 +1976,32 @@ dans l'URL du catalogue, pour casser le cache à chaque déploiement.
 
 À traiter avec un avocat, pas avec moi :
 
-- **Vendre des écharpes** qui achètent des boosters à contenu aléatoire est
-  juridiquement identique à vendre des coffres surprise. Belgique et Pays-Bas
-  restreignent, la loi suisse mérite un avis. Tant que les écharpes se gagnent
-  en jouant, la question ne se pose pas.
+- ~~**Vendre des écharpes** qui achètent des boosters à contenu aléatoire.~~
+  **Fermée** : l'argent réel n'achète plus que des billets, et les billets
+  n'achètent que des objets nommés. Les écharpes ne sont plus en vente du tout.
+  Aucune chaîne ne mène d'un euro à un tirage, et `verifierCatalogue()` le
+  tient — ce n'est pas une intention, c'est une propriété éprouvée.
+
+  **Elle se rouvre le jour où l'on ajoute `packs` à `LIVRAISONS_PAYANTES`.**
+  Ce jour-là, un contrôle nommé rougit, et ces trois points reviennent : afficher
+  les taux de tirage (ils sont dans `RATES`), décider des territoires où vendre,
+  poser un garde-fou d'âge ou un plafond de dépense.
+
+- **Un achat en argent réel reste un achat.** Droit de rétractation, mentions
+  légales, conditions de vente, TVA selon le pays de l'acheteur : ces
+  obligations-là ne dépendent pas du hasard, elles dépendent du paiement. Elles
+  ne sont pas traitées par ce dépôt.
 - **Une carte-souvenir porte le nom et l'écusson d'un club.** L'afficher dans un
   tableau de résultats est un usage normal ; en vendre un exemplaire est autre
   chose.
 
 ## 7 bis. À faire sur le serveur, en attente
 
-0. **Trois migrations ne sont pas appliquées en production** : `sql/minutes.sql`,
-   `sql/couleurs.sql` et `sql/amis.sql`. Elles le seront automatiquement au
+0. **Cinq migrations ne sont pas appliquées en production** : `sql/minutes.sql`,
+   `sql/couleurs.sql`, `sql/amis.sql`, `sql/boutique.sql` et `sql/billets.sql`.
+   Les deux dernières portent la boutique : sans elles, la table des achats
+   n'existe pas et la bourse n'a pas de colonne `billets` — c'est-à-dire que
+   **toute lecture de bourse échoue**, donc tout l'état du joueur. Elles le seront automatiquement au
    premier déploiement par GitHub, qui applique le schéma **avant** de
    redémarrer — c'est précisément la panne du 8 septembre 2026 qui a fait
    écrire cette étape. En cas de doute, `npm run schema:appliquer` fait la même

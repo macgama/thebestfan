@@ -57,7 +57,7 @@ await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
    celle d'un code en ligne qui attend de la base quelque chose qu'elle n'a
    pas. Le garde-fou du démarrage la réclame déjà ; la suite doit monter le
    même schéma que le serveur, sinon elle éprouve un jeu qui n'existe pas. */
-for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'fanzzy.sql',
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql',
                  'tenues.sql', 'stades.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }

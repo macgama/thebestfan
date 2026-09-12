@@ -48,7 +48,7 @@ const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', '
   // La boutique en dernier : sa table d achats s accroche à users, qui vient
   // du premier fichier, mais elle livre des écharpes et des boosters — donc
   // elle suppose la bourse, qui vient de souvenirs.sql.
-  'boutique'];
+  'boutique', 'billets'];
 
 {
   const surLeDisque = (await readdir(SQL)).filter((f) => f.endsWith('.sql'))

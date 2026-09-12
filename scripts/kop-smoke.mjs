@@ -80,7 +80,7 @@ await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
   duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
   leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'fanzzy.sql',
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql',
                  'inventaire.sql', 'skins.sql', 'kop.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }

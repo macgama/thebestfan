@@ -38,7 +38,11 @@
  */
 import express from 'express';
 import crypto from 'node:crypto';
-import { CATALOGUE, ARTICLE_PAR_ID, RAYONS, enEuros } from '../../shared/boutique.js';
+import { CATALOGUE, ARTICLE_PAR_ID, LIVRAISONS_PAYANTES, MONNAIE, RAYONS, enEuros }
+  from '../../shared/boutique.js';
+import { etalStuff, etalTenues, prixDe } from '../../shared/etal.js';
+import { STUFF_BY_ID } from '../../shared/fanzzy/inventaire.js';
+import { tenuesPubliees } from '../fanzzy/tenues.js';
 
 const API = 'https://api.stripe.com/v1';
 
@@ -116,25 +120,22 @@ export function createBoutique({ pool, requireAuth, fanzzy, site }) {
   async function livrer(conn, userId, article) {
     const l = article.livraison;
 
-    if (l.type === 'packs') {
-      await conn.query(
-        `UPDATE user_wallet SET packs = packs + ? WHERE user_id = ?`, [l.n, userId]);
-      return { packs: l.n };
+    /* Un seul type, et c'est la moitié du sujet. L'argent réel n'achète que
+       des billets : pas de booster, pas d'écharpe — une écharpe achète un
+       booster à quarante-cinq, la vendre reviendrait à vendre un coffre
+       aléatoire avec une étape de plus.
+
+       La condition n'est pas écrite en dur mais lue dans `LIVRAISONS_PAYANTES`,
+       pour qu'il n'existe **qu'un seul endroit** où l'on décide ce que l'argent
+       peut acheter. Une seconde liste finirait par contredire la première. */
+    if (!LIVRAISONS_PAYANTES.has(l.type)) {
+      throw new Error('boutique.error.livraison_interdite');
     }
 
-    if (l.type === 'scarves') {
+    if (l.type === 'billets') {
       await conn.query(
-        `UPDATE user_wallet SET scarves = scarves + ? WHERE user_id = ?`, [l.n, userId]);
-      return { scarves: l.n };
-    }
-
-    /* Une tenue ou une pièce d'équipement se **tire**, et le tirage vit dans
-       le module des Fanzzy — celui qui sait déjà ce que le joueur possède. Le
-       refaire ici en donnerait une seconde version, et les deux finiraient par
-       proposer des choses différentes. */
-    if (l.type === 'skin' || l.type === 'stuff') {
-      if (!fanzzy?.offrir) throw new Error('boutique.error.livraison_indisponible');
-      return fanzzy.offrir(conn, userId, l.type, l.n);
+        `UPDATE user_wallet SET billets = billets + ? WHERE user_id = ?`, [l.n, userId]);
+      return { billets: l.n };
     }
 
     throw new Error('boutique.error.livraison_inconnue');
@@ -271,6 +272,88 @@ export function createBoutique({ pool, requireAuth, fanzzy, site }) {
     });
   });
 
+  /* -------------------------------------------------------------- l'étal
+
+     Ce que les billets achètent. Rien n'y est tiré au sort : on n'achète pas
+     « une pièce d'équipement », on achète le mégaphone. C'est ce qui permet à
+     l'argent réel d'exister ici sans que la question des coffres payants se
+     pose — la chaîne euro → billet → objet nommé ne passe jamais par le
+     hasard. */
+  router.get('/etal', requireAuth, async (req, res) => {
+    const ont = await q('SELECT stuff_id FROM user_stuff WHERE user_id = ?', [req.user.id]);
+    const [bourse] = await q(
+      'SELECT billets FROM user_wallet WHERE user_id = ?', [req.user.id]);
+    res.json({
+      monnaie: MONNAIE,
+      billets: bourse?.billets ?? 0,
+      stuff: etalStuff(new Set(ont.map((o) => o.stuff_id))),
+      tenues: etalTenues(tenuesPubliees()),
+    });
+  });
+
+  /**
+   * Dépenser des billets sur un objet nommé.
+   *
+   * Le corps ne porte **que** ce qu'on veut : le prix est relu ici, dans le
+   * registre, et jamais dans ce que la page a envoyé. C'est la même règle que
+   * pour les euros, pour la même raison.
+   *
+   * Tout tient dans une transaction, et c'est **elle** qui protège : si la
+   * remise échoue après le débit, le `rollback` rend les billets. Une mutation
+   * qui échange les deux blocs ne casse donc rien — ce qui est la preuve que
+   * l'ordre n'est pas ce qui tient la propriété. Retirer le `rollback`, lui,
+   * fait rougir un contrôle.
+   *
+   * On garde quand même l'ordre « remettre puis débiter » : il est plus lisible,
+   * et il resterait juste le jour où ce code sortirait d'une transaction. Mais
+   * ce n'est pas là qu'il faut regarder pour comprendre pourquoi rien ne se
+   * perd.
+   *
+   * Le débit est une **réclamation** : `SET billets = billets - ? WHERE
+   * billets >= ?`, dont on lit le nombre de lignes touchées. Deux requêtes
+   * simultanées ne peuvent pas débiter deux fois le même solde, et c'est
+   * éprouvable — à la différence d'un verrou, qu'aucune course fabriquée ne
+   * fait rougir.
+   */
+  router.post('/depenser', requireAuth, async (req, res) => {
+    const type = String(req.body?.type ?? '');
+    const id = String(req.body?.id ?? '');
+    const prix = prixDe(type, id, tenuesPubliees());
+    if (prix === null) return res.status(400).json({ error: 'boutique.error.objet_inconnu' });
+
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+
+      const rendu = type === 'stuff'
+        ? await fanzzy.remettreStuff(conn, req.user.id, id)
+        : await fanzzy.remettreTenue(conn, req.user.id, {
+          tenue: id, fanzzy: String(req.body?.fanzzy ?? ''), stage: req.body?.stage,
+        });
+
+      const [debit] = await conn.query(
+        'UPDATE user_wallet SET billets = billets - ? WHERE user_id = ? AND billets >= ?',
+        [prix, req.user.id, prix]);
+      if (!debit.affectedRows) {
+        await conn.rollback();
+        return res.status(400).json({ error: 'boutique.error.billets_insuffisants' });
+      }
+
+      await conn.commit();
+      const [bourse] = await q(
+        'SELECT billets FROM user_wallet WHERE user_id = ?', [req.user.id]);
+      return res.json({ ok: true, paye: prix, billets: bourse?.billets ?? 0, rendu });
+    } catch (e) {
+      await conn.rollback().catch(() => {});
+      /* Les refus de `remettre` portent leur code : « tu ne possèdes pas ce
+         Fanzzy » et « tu l'as déjà habillé ainsi » ne se cherchent pas au même
+         endroit. Un « impossible » les confondrait. */
+      return res.status(400).json({ error: e.code ?? 'boutique.error.depense_impossible' });
+    } finally {
+      conn.release();
+    }
+  });
+
   /** Ce que j'ai acheté. Sert à répondre « où est ma commande ». */
   router.get('/mes-achats', requireAuth, async (req, res) => {
     res.json({
@@ -325,5 +408,12 @@ export function createBoutique({ pool, requireAuth, fanzzy, site }) {
     }
   });
 
-  return { router, webhook, encaisser, signatureValide, configure };
+  /*  `livrer` est exporté pour être éprouvé directement.
+
+     La règle « l argent réel n achète que des billets » vit dans une liste, et
+     une liste ne se tient que si quelque chose la lit. Sans cet export, on ne
+     pourrait éprouver la règle qu à travers le catalogue — c est-à-dire
+     vérifier que le catalogue est conforme, jamais que le moteur refuserait
+     un article qui ne le serait pas. */
+  return { router, webhook, encaisser, livrer, signatureValide, configure };
 }

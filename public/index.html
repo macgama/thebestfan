@@ -97,6 +97,13 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   white-space:nowrap;max-width:32vw}
 .moi small{display:block;font-size:11px;opacity:.55;margin-top:1px;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;max-width:32vw}
+/* Le « + » des jetons. Discret par construction : s'il se lisait comme un
+   bouton, il ferait concurrence au nombre, qui est l'information. */
+.jeton{text-decoration:none;color:inherit}
+.jeton .plus{font-family:var(--banner);font-size:12px;line-height:1;opacity:.45;
+  margin-left:1px;font-weight:400}
+.jeton:active .plus{opacity:1;color:var(--projo)}
+
 .bourse{display:flex;gap:6px;margin-left:auto;align-items:center}
 .jeton{display:flex;align-items:center;gap:6px;padding:8px 11px;font-weight:700;font-size:14px;
   font-variant-numeric:tabular-nums;cursor:default}
@@ -135,7 +142,14 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    sur un écran court, pour un décor que personne ne voit dépasser. */
 .centre{display:grid;grid-template-columns:var(--rail) 1fr var(--rail);align-items:center;
   flex:1 1 auto;min-height:0;overflow:hidden}
-.rail{display:flex;flex-direction:column;gap:8px;z-index:3}
+/* Cinq tuiles, et `.centre` est en `overflow:hidden` : sans plafond, la
+   cinquième sort de l'écran sur un téléphone court et se fait couper sans que
+   rien ne le signale. Le rail tient dans la hauteur qu'on lui donne ; les
+   tuiles se serrent, et `aspect-ratio` cède devant `min-height` plutôt que
+   d'imposer une hauteur que la colonne n'a pas. */
+.rail{display:flex;flex-direction:column;gap:8px;z-index:3;
+  max-height:100%;min-height:0}
+.rail .case{min-height:0;flex:0 1 auto}
 .case{aspect-ratio:1;width:100%;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:5px;font-size:clamp(8.5px,2.3vw,10.5px);font-weight:600;
   letter-spacing:.02em;opacity:.72;position:relative;text-decoration:none;color:inherit;
@@ -512,8 +526,16 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
           <span class="nivBar" id="nivBar" hidden><i></i></span></span>
       </a>
       <div class="bourse">
-        <div class="pan jeton ech"><i></i><span id="scarves">0</span></div>
-        <div class="pan jeton pack"><i></i><span id="packs">0</span></div>
+        <!-- Toucher sa monnaie mène à la boutique : c'est le geste que tout
+             joueur essaie en premier, et il ne menait nulle part. La boutique
+             existait pourtant, rangée dans le menu au milieu de treize autres
+             entrées — c'est-à-dire nulle part. -->
+        <a class="pan jeton ech" href="/boutique"
+           aria-label="Mes écharpes — aller à la boutique"
+           ><i></i><span id="scarves">0</span><b class="plus" aria-hidden="true">+</b></a>
+        <a class="pan jeton pack" href="/boutique"
+           aria-label="Mes boosters — aller à la boutique"
+           ><i></i><span id="packs">0</span><b class="plus" aria-hidden="true">+</b></a>
         <button class="pan burger" id="burger" aria-label="Menu" aria-expanded="false"
           aria-controls="tiroir"><span></span><span></span><span></span></button>
       </div>
@@ -583,6 +605,13 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
              dans le menu, pour que ce soit la même destination à l'œil. -->
         <a class="pan case" href="/amis">
           <svg viewBox="0 0 24 24"><path d="M9 11a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4M2 20a7 7 0 0 1 14 0M18 8v6M15 11h6"/></svg><span class="lib">AMIS</span></a>
+        <!-- La boutique n'était atteignable que par les jetons de monnaie et
+             par le menu. Les jetons se touchent quand on sait déjà ce qu'on
+             cherche ; l'accueil est l'endroit où l'on apprend qu'une chose
+             existe. Le même caddie que dans le menu, pour que ce soit la même
+             destination à l'œil. -->
+        <a class="pan case" href="/boutique">
+          <svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12zM6 6L5 3H2M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/></svg><span class="lib">BOUTIQUE</span></a>
       </nav>
     </div>
 

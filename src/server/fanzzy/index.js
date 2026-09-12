@@ -10,6 +10,7 @@ import { STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 // et une liste figée dans le code redeviendrait une seconde vérité.
 import { toutesTenues, tenuesPubliees } from './tenues.js';
 import { ACTIONS } from '../../shared/duel/actions.js';
+import { DEFAUTS, reglage } from '../../shared/reglages.js';
 import { XP, PALIERS } from '../../shared/niveau.js';
 
 /**
@@ -21,7 +22,7 @@ import { XP, PALIERS } from '../../shared/niveau.js';
  * le serveur lui dit.
  */
 
-export const MAX_PACKS = 12;
+export const MAX_PACKS = DEFAUTS['pack.max'];
 /**
  * Ce qu'un nouveau joueur trouve dans sa réserve.
  *
@@ -31,9 +32,20 @@ export const MAX_PACKS = 12;
  * laissent le temps de regarder, et la réserve se remplit ensuite d'elle-même
  * jusqu'à douze.
  */
-export const PACKS_DEPART = 3;
-export const PACK_REGEN_MS = 10 * 60 * 1000;
-export const PACK_PRICE = 45;          // acheter un booster en écharpes
+/* Les valeurs **par défaut**, déduites du registre : elles ne sont plus
+   écrites deux fois. Ce sont elles qu'importent les scripts d'analyse et les
+   suites ; le jeu, lui, lit `reglage(...)` à chaque fois, pour que l'écran
+   d'administration ait un effet réel et immédiat. */
+export const PACKS_DEPART = DEFAUTS['pack.depart'];
+export const PACK_REGEN_MS = DEFAUTS['pack.regen_min'] * 60_000;
+export const PACK_PRICE = DEFAUTS['pack.prix_echarpes'];
+
+/** Les mêmes, mais vivantes. Une fonction et non une constante : une constante
+    relue au chargement du module ne bougerait plus jamais. */
+const maxPacks = () => reglage('pack.max');
+const packsDepart = () => reglage('pack.depart');
+const regenMs = () => reglage('pack.regen_min') * 60_000;
+const prixPack = () => reglage('pack.prix_echarpes');
 
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
@@ -69,18 +81,18 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
   async function wallet(userId) {
     await q(
       `INSERT IGNORE INTO user_wallet (user_id, scarves, packs) VALUES (?, 0, ?)`,
-      [userId, PACKS_DEPART],
+      [userId, packsDepart()],
     );
     const w = (await q(
-      `SELECT scarves, packs, packs_at, active_fanzzy FROM user_wallet WHERE user_id = ?`,
+      `SELECT scarves, billets, packs, packs_at, active_fanzzy FROM user_wallet WHERE user_id = ?`,
       [userId],
     ))[0];
 
-    if (w.packs < MAX_PACKS) {
-      const gained = Math.floor((Date.now() - new Date(w.packs_at).getTime()) / PACK_REGEN_MS);
+    if (w.packs < maxPacks()) {
+      const gained = Math.floor((Date.now() - new Date(w.packs_at).getTime()) / regenMs());
       if (gained > 0) {
-        const packs = Math.min(MAX_PACKS, w.packs + gained);
-        const at = new Date(new Date(w.packs_at).getTime() + gained * PACK_REGEN_MS);
+        const packs = Math.min(maxPacks(), w.packs + gained);
+        const at = new Date(new Date(w.packs_at).getTime() + gained * regenMs());
         await q(`UPDATE user_wallet SET packs = ?, packs_at = ? WHERE user_id = ?`,
           [packs, at, userId]);
         w.packs = packs; w.packs_at = at;
@@ -90,9 +102,10 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
       w.packs_at = new Date();
     }
 
-    const nextIn = w.packs >= MAX_PACKS ? null
-      : Math.max(0, PACK_REGEN_MS - (Date.now() - new Date(w.packs_at).getTime()));
-    return { scarves: w.scarves, packs: w.packs, nextPackInMs: nextIn, active: w.active_fanzzy };
+    const nextIn = w.packs >= maxPacks() ? null
+      : Math.max(0, regenMs() - (Date.now() - new Date(w.packs_at).getTime()));
+    return { scarves: w.scarves, billets: w.billets, packs: w.packs,
+      nextPackInMs: nextIn, active: w.active_fanzzy };
   }
 
   async function collection(userId) {
@@ -349,11 +362,11 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
         await conn.query(
           `UPDATE user_wallet SET packs = packs - 1,
              packs_at = IF(packs = ?, NOW(3), packs_at) WHERE user_id = ?`,
-          [MAX_PACKS, userId]);
+          [maxPacks(), userId]);
       } else if (buy) {
         const [d] = await conn.query(
           `UPDATE user_wallet SET scarves = scarves - ? WHERE user_id = ? AND scarves >= ?`,
-          [PACK_PRICE, userId, PACK_PRICE]);
+          [prixPack(), userId, prixPack()]);
         if (!d.affectedRows) throw fail('fanzzy.error.not_enough_scarves');
       } else {
         throw fail('fanzzy.error.no_packs');
@@ -644,7 +657,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
       wallet(req.user.id), collection(req.user.id), stades(req.user.id),
       niveau ? niveau.droitsDe(req.user.id).then((d) => [...d.series]) : null,
     ]).then(([w, col, st, series]) => ({ wallet: w, collection: col, stades: st,
-      series, maxPacks: MAX_PACKS, packPrice: PACK_PRICE }))));
+      series, maxPacks: maxPacks(), packPrice: prixPack() }))));
 
   router.post('/open', requireAuth, (req, res) =>
     send(res, openPack(req.user.id, String(req.body?.set ?? 'VN'), { buy: Boolean(req.body?.buy) })
@@ -883,6 +896,61 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
     return rendu;
   }
 
+  /* ------------------------------------------------- remettre un objet nommé
+
+     `offrir` tire au sort ; `remettre` donne ce qu'on a demandé. Les deux
+     existent parce qu'un booster et un achat ne posent pas la même question :
+     « donne-lui quelque chose » et « donne-lui ceci ».
+
+     Elle **refuse** au lieu de rattraper. Chaque refus porte son code, et il
+     arrive **avant** le débit : débiter puis découvrir qu'on ne peut pas
+     livrer, c'est prendre de l'argent contre rien, et personne ne saura que
+     c'est arrivé. */
+
+  /**
+   * Remet une pièce d'équipement nommée.
+   *
+   * Un doublon est permis — l'équipement se porte sur plusieurs Fanzzy, et
+   * deux exemplaires de la même pièce ont un usage. La page le dit avant.
+   */
+  async function remettreStuff(conn, userId, stuffId) {
+    if (!STUFF_BY_ID.has(stuffId)) throw fail('boutique.error.objet_inconnu');
+    await conn.query(
+      `INSERT INTO user_stuff (user_id, stuff_id, copies) VALUES (?, ?, 1)
+       ON DUPLICATE KEY UPDATE copies = copies + 1`, [userId, stuffId]);
+    return { stuff: [stuffId] };
+  }
+
+  /**
+   * Remet une tenue, sur un Fanzzy et à un âge précis.
+   *
+   * Trois refus, et ils ne sont pas interchangeables — un joueur à qui l'on dit
+   * « impossible » cherche au mauvais endroit :
+   *   — la tenue n'existe pas, ou n'est plus publiée ;
+   *   — le joueur ne possède pas ce Fanzzy à cet âge ;
+   *   — il l'a déjà habillé ainsi.
+   */
+  async function remettreTenue(conn, userId, { tenue, fanzzy, stage }) {
+    const t = tenuesPubliees().find((x) => x.id === tenue);
+    if (!t || tenue === 'base') throw fail('boutique.error.tenue_inconnue');
+
+    const etage = Number(stage);
+    const [[a]] = [await conn.query(
+      `SELECT 1 FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ? AND stage = ?`,
+      [userId, fanzzy, etage])];
+    if (!a.length) throw fail('boutique.error.fanzzy_non_possede');
+
+    const [pose] = await conn.query(
+      `SELECT 1 FROM user_skins WHERE user_id = ? AND fanzzy_id = ? AND stage = ? AND skin_id = ?`,
+      [userId, fanzzy, etage, tenue]);
+    if (pose.length) throw fail('boutique.error.tenue_deja_posee');
+
+    await conn.query(
+      `INSERT INTO user_skins (user_id, fanzzy_id, stage, skin_id) VALUES (?, ?, ?, ?)`,
+      [userId, fanzzy, etage, tenue]);
+    return { skins: [{ id: fanzzy, stade: etage, skin: tenue }] };
+  }
+
   return { router, wallet, collection, stades, openPack, evolve, activeFanzzy,
-    personnageActif, fiche, offrir };
+    personnageActif, fiche, offrir, remettreStuff, remettreTenue };
 }

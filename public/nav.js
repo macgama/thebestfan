@@ -273,8 +273,15 @@
         <span><b></b><small></small></span>
       </a>
       <div class="tbf-bourse">
-        <div class="pan tbf-jeton" data-jeton="ech"><i></i><span data-ech>0</span></div>
-        <div class="pan tbf-jeton" data-jeton="pack"><i></i><span data-pack>0</span></div>
+        <!-- Toucher sa monnaie mène à la boutique. C'est le geste que tout
+             joueur essaie en premier, et il ne menait nulle part : les deux
+             jetons étaient des div qui affichaient un nombre. -->
+        <a class="pan tbf-jeton" data-jeton="ech" href="/boutique"
+           aria-label="Mes écharpes — aller à la boutique"
+           ><i></i><span data-ech>0</span><b class="tbf-plus" aria-hidden="true">+</b></a>
+        <a class="pan tbf-jeton" data-jeton="pack" href="/boutique"
+           aria-label="Mes boosters — aller à la boutique"
+           ><i></i><span data-pack>0</span><b class="tbf-plus" aria-hidden="true">+</b></a>
         ${boutonHTML}
       </div>`;
     // `textContent` et non une interpolation : un pseudo est écrit par le
@@ -282,6 +289,25 @@
     // barre est réduite au bouton : il n'y a pas de pseudo à écrire.
     if (!enJeu) haut.querySelector('.tbf-moi b').textContent = user.pseudo ?? '';
     app.prepend(haut);
+
+    /* Le bandeau d'annonce. En arrière-plan, et sans `await` : personne
+       n'attend une phrase. S'il n'y a rien à dire, rien n'est ajouté au
+       document — un bandeau vide occupe de la place et fait douter. */
+    fetch('/api/public/reglages', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const a = d?.annonce;
+        if (!a?.texte) return;
+        const b = document.createElement('div');
+        b.className = 'tbf-annonce ton-' + (a.ton ?? 'info');
+        b.setAttribute('role', 'status');
+        /* `textContent` et non une interpolation : ce texte est écrit dans un
+           champ d'administration, et un champ d'administration reste une
+           entrée. On ne monte pas du HTML avec. */
+        b.textContent = a.texte;
+        haut.after(b);
+      })
+      .catch(() => {});
 
     const tiroir = document.createElement('nav');
     tiroir.id = 'tbf-tiroir';
