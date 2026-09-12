@@ -348,11 +348,28 @@ $('formLogin').onsubmit = async (e) => {
   if (r.status === 200) {
     user = r.json.user; locale = user.locale || locale; applyLocale();
     let fait = true;
+    let aOuvrir = 0;
     try {
-      fait = Boolean((await fetch('/api/me/state', { credentials: 'same-origin' })
-        .then((x) => x.json())).onboarded);
+      const st = await fetch('/api/me/state', { credentials: 'same-origin' })
+        .then((x) => x.json());
+      fait = Boolean(st.onboarded);
+      aOuvrir = Number(st.packs ?? 0);
     } catch { /* état injoignable : l'accueil se débrouille sans */ }
-    location.href = fait ? '/' : '/bienvenue';
+
+    /* Où l'on atterrit, dans l'ordre :
+     *
+     *   1. la cérémonie d'accueil, si elle n'a pas été faite — quelqu'un qui
+     *      n'a pas encore choisi son club n'a rien à faire ailleurs ;
+     *   2. les boosters, s'il en reste à ouvrir — c'est la seule chose du jeu
+     *      qui attend, et qui attend **depuis la dernière fois** ;
+     *   3. l'accueil.
+     *
+     * Le deuxième cas est le seul qui ne soit pas évident, et c'est pour ça
+     * que la page des boosters le dit en toutes lettres : sans le `aouvrir`
+     * qui suit, arriver là ressemble à une erreur de navigation.
+     */
+    if (!fait) { location.href = '/bienvenue'; return; }
+    location.href = aOuvrir > 0 ? '/boosters?aouvrir=1' : '/';
     return;
   }
   else say('gateMsg', r.json.error ?? 'auth.error.server');

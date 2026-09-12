@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Les boosters — TheBestFan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/ui.css">
+<link rel="stylesheet" href="/cartes.css">
+<style>
+/* Le kiosque, et la cérémonie d'ouverture.
+
+   Ils vivaient dans la page des Fanzzy, entre le classeur et le personnage
+   équipé. Ce n'était pas la même chose : on va au classeur pour **regarder ce
+   qu'on a**, on vient ici pour **en avoir plus**. Deux intentions, deux
+   écrans. */
+/* -------------------------------------------------------------- kiosque */
+
+.carousel{position:relative;width:100%;height:320px;perspective:1100px;touch-action:pan-y}
+.slide{position:absolute;left:50%;top:50%;width:186px;aspect-ratio:.62;margin:0;cursor:grab;
+  transform-style:preserve-3d;transition:transform .55s cubic-bezier(.22,.9,.28,1),opacity .45s,filter .45s;
+  border-radius:11px;overflow:hidden;border:1px solid rgba(0,0,0,.6);
+  box-shadow:0 26px 46px rgba(0,0,0,.66),inset 0 1px 0 rgba(255,255,255,.2)}
+.slide img{width:100%;height:100%;object-fit:cover;display:block}
+.slide svg{width:100%;height:100%;display:block}
+.slide .foil{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 34%,rgba(255,255,255,.42) 46%,
+    rgba(180,225,255,.28) 52%,transparent 66%);
+  background-size:260% 260%;background-position:120% 0;mix-blend-mode:screen}
+.slide.center .foil{animation:foil 4.5s ease-in-out infinite}
+@keyframes foil{0%{background-position:130% 0}55%{background-position:-40% 0}100%{background-position:-40% 0}}
+.slide.center{animation:float 5.5s ease-in-out infinite}
+@keyframes float{0%,100%{margin-top:0}50%{margin-top:-9px}}
+.slide.side{filter:brightness(.42) saturate(.65)}
+.slide.hidden{opacity:0;pointer-events:none}
+.shadow{position:absolute;left:50%;bottom:6px;width:150px;height:16px;transform:translateX(-50%);
+  background:radial-gradient(ellipse,rgba(0,0,0,.75),transparent 70%);filter:blur(5px)}
+
+.tearhint{font-size:10.5px;letter-spacing:.2em;opacity:.45;margin-top:6px;text-align:center}
+
+/* Une série verrouillée se regarde sans se toucher : le paquet s'éteint, mais
+   il reste visible. C'est ce qui donne envie d'y arriver. */
+.carousel.verrou .slide.center{filter:grayscale(.85) brightness(.5)}
+.carousel.verrou .slide.center .foil{display:none}
+/* Le cadenas est dans la ligne, pas sur le paquet : `.carousel` porte une
+   `perspective`, donc ses enfants se rangent par leur profondeur en 3D et non
+   par `z-index`. Un cadenas posé là passait derrière les paquets — avec la
+   bonne taille, le bon calque et la bonne image, mais invisible. */
+.setline .verrou{display:inline-flex;align-items:center;gap:5px}
+.setline .verrou svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;flex:none}
+
+/* --------------------------------------------------- geste d'ouverture
+
+   On déchire la bande du haut, comme un vrai sachet : on saisit la languette
+   et on tire en travers. Une seule intention, un seul mouvement, et l'endroit
+   où saisir se voit — la ligne dentelée est dessinée sur le paquet avant même
+   qu'on y touche.
+
+   `--p` porte l'avancée de la déchirure, de 0 à 1. Tout en découle : la bande
+   qui s'en va, l'ouverture qui se creuse, la lueur qui monte. Déclarée en
+   `@property` pour qu'elle s'anime — c'est ce qui fait le retour élastique
+   quand on lâche trop tôt. Là où `@property` manque, la bande revient d'un
+   coup au lieu de glisser : moins joli, tout aussi juste. */
+@property --p { syntax: '<number>'; inherits: true; initial-value: 0; }
+
+.tearzone{position:absolute;inset:0;z-index:24;display:none;flex-direction:column;
+  align-items:center;justify-content:center;background:rgba(5,7,10,.94)}
+.tearzone.on{display:flex}
+
+.tearquit{position:absolute;top:14px;right:14px;background:none;border:0;color:inherit;
+  font-size:11.5px;letter-spacing:.14em;opacity:.45;cursor:pointer;padding:8px 10px}
+.tearquit:hover,.tearquit:focus-visible{opacity:.85}
+
+/* `--bande` : où passe la déchirure, en hauteur de vignette. Elle ne vaut pas
+   zéro parce que le dessin d’un booster laisse une marge sombre au-dessus du
+   sachet : réglée trop haut, la bande s’arrachait dans le vide, au-dessus du
+   paquet représenté. */
+.tearpack{--p:0;--bande:20%;width:210px;aspect-ratio:.62;position:relative;border-radius:12px;
+  overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.7);touch-action:none;cursor:grab;
+  border:0;padding:0;background:none;display:block;transition:--p .32s cubic-bezier(.3,1.4,.5,1)}
+.tearpack.tire{transition:none;cursor:grabbing}
+.tearpack:focus-visible{outline:2px solid var(--projo);outline-offset:4px}
+.tearpack .art{position:absolute;inset:0}
+.tearpack img,.tearpack svg{width:100%;height:100%;object-fit:cover;display:block}
+
+/* L'intérieur du sachet : ce qu'on découvre à mesure que la bande s'en va. */
+.tearpack .maw{position:absolute;left:0;right:0;top:0;height:var(--bande);
+  background:radial-gradient(120% 160% at 50% 0,rgba(255,238,190,calc(.55 * var(--p))),
+    rgba(5,7,10,.96) 62%);
+  -webkit-mask:conic-gradient(from -45deg at 50% calc(100% - 7px),#0000 90deg,#000 0) 50%/14px 100%;
+          mask:conic-gradient(from -45deg at 50% calc(100% - 7px),#0000 90deg,#000 0) 50%/14px 100%}
+
+/* La bande elle-même. Une copie du paquet, rognée à sa hauteur : elle montre
+   donc exactement le haut du dessin, quel qu'il soit — photo ou SVG de repli. */
+.tearpack .lip{position:absolute;left:0;right:0;top:0;height:var(--bande);overflow:hidden;
+  clip-path:inset(0 0 0 calc(var(--p) * 100%));
+  transform:rotate(calc(var(--p) * 5deg)) translateY(calc(var(--p) * -6px));
+  transform-origin:100% 100%}
+.tearpack .lip > *{position:absolute;top:0;left:0;width:100%;height:666.7%}
+
+/* La ligne dentelée : l'affordance. Elle dit où saisir avant qu'on ait lu la
+   consigne, et elle s'efface à mesure que la déchirure la mange. */
+.tearpack .seam{position:absolute;left:0;right:0;top:var(--bande);height:2px;
+  background:repeating-linear-gradient(90deg,rgba(245,195,59,.9) 0 5px,transparent 5px 10px);
+  opacity:calc(1 - var(--p));filter:drop-shadow(0 0 3px rgba(245,195,59,.5))}
+
+/* La languette qu'on saisit, à droite de la ligne : c'est là que part le geste. */
+.tearpack .grip{position:absolute;right:6px;top:calc(var(--bande) - 15px);width:26px;height:26px;
+  border-radius:50%;background:rgba(245,195,59,.92);box-shadow:0 2px 10px rgba(0,0,0,.6);
+  opacity:calc(1 - var(--p));animation:tirette 1.9s ease-in-out infinite;pointer-events:none}
+.tearpack .grip::after{content:"";position:absolute;inset:7px;border-left:2px solid #05070A;
+  border-bottom:2px solid #05070A;transform:rotate(45deg) translate(1px,-1px)}
+@keyframes tirette{0%,100%{transform:translateX(0)}50%{transform:translateX(-7px)}}
+
+.tearlbl{margin-top:20px;font-family:var(--banner);font-size:14px;letter-spacing:.2em;opacity:.7;
+  text-align:center;line-height:1.6;max-width:280px}
+.tearlbl b{color:var(--projo)}
+.tearlbl small{display:block;font-family:var(--ui);font-size:11px;letter-spacing:.08em;
+  opacity:.55;margin-top:8px}
+
+#burst{position:absolute;inset:0;z-index:23;pointer-events:none;object-fit:cover;width:100%;height:100%;
+  mix-blend-mode:screen;opacity:0;transition:opacity .4s}
+#burst.on{opacity:1}
+.flash{position:absolute;inset:0;z-index:25;background:#fff;opacity:0;pointer-events:none}
+.flash.go{animation:flash .5s ease-out}
+#app.quake{animation:quake .6s}
+@keyframes quake{0%,100%{transform:translate(0,0)}
+  15%{transform:translate(-6px,3px)}35%{transform:translate(5px,-4px)}
+  55%{transform:translate(-4px,-2px)}75%{transform:translate(3px,3px)}}
+@keyframes flash{0%{opacity:.85}100%{opacity:0}}
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.setname{font-family:var(--banner);font-size:12px;letter-spacing:.28em;opacity:.7}
+.setline{font-size:10.5px;opacity:.42;margin:4px 0 18px}
+.packwrap{position:relative}
+.packglow{position:absolute;width:230px;height:230px;border-radius:50%;left:50%;top:50%;
+  transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(245,195,59,.26),transparent 65%);
+  filter:blur(14px);animation:breathe 5s ease-in-out infinite;pointer-events:none}
+@keyframes breathe{0%,100%{opacity:.5}50%{opacity:1}}
+.pack{width:178px;aspect-ratio:.62;border-radius:9px;overflow:hidden;position:relative;cursor:pointer;
+  border:1px solid rgba(0,0,0,.6);box-shadow:0 24px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.22);
+  transform:rotate(-2deg);transition:transform .2s;display:block;background:none;padding:0}
+.pack:active{transform:rotate(-2deg) scale(.97)}
+.packnav{display:flex;align-items:center;gap:16px;margin-top:18px}
+.packnav button{width:30px;height:30px;border-radius:50%;border:1px solid rgba(242,238,228,.18);
+  background:rgba(0,0,0,.3);color:inherit;cursor:pointer}
+.dots{display:flex;gap:5px}
+.dots i{width:6px;height:6px;border-radius:50%;background:rgba(242,238,228,.22);display:block}
+.dots i.on{background:var(--projo)}
+.cta{margin:16px auto 6px;display:block;width:min(300px,82%);
+  background:linear-gradient(180deg,var(--flare),#B32A1D);color:#fff;font-family:var(--banner);
+  font-size:16px;letter-spacing:.09em;padding:13px;border-radius:6px;border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 6px 0 #7A1A11;cursor:pointer}
+.cta:active{transform:translateY(4px);box-shadow:0 2px 0 #7A1A11}
+.cta[disabled]{filter:grayscale(.8);opacity:.5;pointer-events:none}
+.regen{text-align:center;font-size:10.5px;opacity:.45;min-height:15px;padding-bottom:4px}
+
+
+/* Le mot d accueil, quand on arrive ici parce qu on a des boosters qui
+   attendent. Il est en haut et il est bref : sa seule tâche est de dire
+   pourquoi on est là plutôt que sur l accueil. */
+.annonce{margin:0 16px 10px;padding:11px 14px;border-radius:10px;
+  background:linear-gradient(150deg,rgba(245,195,59,.2),rgba(245,195,59,.07));
+  border:1px solid rgba(245,195,59,.42);color:var(--projo);
+  font-family:var(--banner);font-size:14px;letter-spacing:.05em;text-align:center}
+.titre{font-family:var(--banner);font-size:20px;letter-spacing:.14em;
+  margin:0 0 10px;padding:0 16px}
+</style>
+</head>
+<body>
+<main id="app">
+  <h1 class="titre">LES BOOSTERS</h1>
+  <div class="annonce" id="annonce" hidden></div>
+  <section class="screen" id="s-kiosque">
+    <div class="stage">
+      <div class="setname" id="setName"></div>
+      <div class="setline" id="setLine"></div>
+      <div class="carousel" id="carousel"><div class="packglow"></div><div class="shadow"></div></div>
+      <div class="packnav">
+        <button id="prevSet">‹</button><div class="dots" id="setDots"></div><button id="nextSet">›</button>
+      </div>
+      <div class="tearhint" id="tearhint">GLISSE POUR CHANGER · TOUCHE POUR OUVRIR</div>
+    </div>
+    <button class="cta" id="openBtn">OUVRIR LE BOOSTER</button>
+    <div class="regen" id="regenTxt"></div>
+  </section>
+
+  <div class="tearzone" id="tearzone">
+    <button class="tearquit" id="tearquit">Plus tard</button>
+    <button class="tearpack" id="tearpack" type="button"
+            aria-label="Déchire la bande du haut pour ouvrir le booster">
+      <div class="art" id="tearart"></div>
+      <div class="maw"></div>
+      <div class="lip" id="tearlip"></div>
+      <div class="seam"></div>
+      <div class="grip"></div>
+    </button>
+    <div class="tearlbl" id="tearlbl">TIRE LA BANDE <b>EN TRAVERS DU HAUT</b></div>
+  </div>
+
+  <div id="opener">
+    <video id="burst" muted playsinline preload="none"></video>
+    <div class="flash" id="flash"></div>
+    <div class="ohead"><span id="oProg">1 / 5</span><button id="oClose">Fermer</button></div>
+    <div class="ostage" id="ostage"></div>
+    <div class="summary" id="summary"></div>
+    <div class="ofoot"><div class="hint" id="oHint"></div><button class="ghost" id="oAction" style="display:none"></button></div>
+  </div>
+
+  <!-- La fiche d'un Fanzzy, montée par fanzzy-fiche.js par-dessus la grille. -->
+  <div id="detail"></div>
+  <div class="toast" id="toast"></div>
+</main>
+
+<script src="/fanzzy-art.js"></script>
+<!-- Ce que le classeur et les boosters partagent : l état, le catalogue, le
+     dessin d une carte. **Après** fanzzy-art.js, dont il lit FZART dès sa
+     première ligne — l ordre n est pas un détail de mise en page. -->
+<script src="/cartes.js"></script>
+<!-- Les dessins de l’équipement : sans eux, une pièce tirée d’un booster
+     s’affichait en silhouette procédurale, comme un Fanzzy sans visage. -->
+<script src="/stuff-art.js"></script>
+<!-- Les douze états du Fanzzy équipé : c'est ce qui fait saluer le personnage
+     sur l'écran « Mon Fanzzy », exactement comme sur l'accueil. Le module ne
+     lève jamais et ne demande rien tant qu'on ne l'appelle pas. -->
+<script src="/fanzzy-etats.js"></script>
+<!-- La scène : les calques de gestes et le croisement des poses, partagés
+     avec le virage. -->
+<script src="/fanzzy-scene.js"></script>
+<link rel="stylesheet" href="/fanzzy-fiche.css">
+<!-- La fiche : le même rendu qu'à l'adresse /fanzzy/<id>, monté ici en
+     panneau par-dessus la grille. -->
+<script src="/fanzzy-fiche.js"></script>
+<script>
+/* Les aides communes viennent de /cartes.js — l'état, le catalogue, le dessin
+   d'une carte. On les réalias ici pour que le code du kiosque soit exactement
+   celui qu'il était quand il vivait dans la page des Fanzzy. */
+const { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, chargerCatalogue, clamp, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid } = window.TBF_CARTES;
+
+/* ------------------------------------------------------------ kiosque */
+
+/**
+ * Carrousel en perspective.
+ *
+ * Les paquets existent en permanence dans le DOM et ne font que se replacer :
+ * on peut donc les faire glisser au doigt, avec la position qui suit le geste
+ * en temps réel plutôt que de sauter d'une série à l'autre.
+ */
+function buildCarousel() {
+  const c = $('carousel');
+  c.querySelectorAll('.slide').forEach((n) => n.remove());
+  SETS.forEach((set, i) => {
+    const el = document.createElement('div');
+    el.className = 'slide';
+    el.dataset.i = String(i);
+    el.innerHTML = `<img alt="" loading="lazy" decoding="async" src="${src(ART[set.id])}">
+      <div class="foil"></div>`;
+    const img = el.querySelector('img');
+    // Repli sur l'illustration dessinée si le visuel ne charge pas.
+    img.onerror = () => { img.remove(); el.insertAdjacentHTML('afterbegin', packArt(set)); };
+    c.appendChild(el);
+  });
+  placeCarousel(0);
+}
+
+function placeCarousel(drag = 0) {
+  const w = 210;
+  SETS.forEach((_, i) => {
+    const el = $('carousel').querySelector(`.slide[data-i="${i}"]`);
+    if (!el) return;
+    const off = i - S.set - drag;
+    const abs = Math.abs(off);
+    el.style.transform =
+      `translate(-50%,-50%) translateX(${off * w}px) translateZ(${-abs * 190}px) ` +
+      `rotateY(${off * -26}deg) scale(${1 - abs * 0.06})`;
+    el.style.zIndex = String(10 - Math.round(abs * 10));
+    el.classList.toggle('center', abs < 0.5);
+    el.classList.toggle('side', abs >= 0.5);
+    el.classList.toggle('hidden', abs > 1.8);
+  });
+}
+
+/** Ce joueur peut-il ouvrir cette série ? `null` = progression non montée. */
+const serieDebloquee = (s) => !S.series || S.series.has(s.id);
+
+function tickRegen() {
+  if (S.nextIn != null) S.nextIn = Math.max(0, S.nextIn - 1000);
+  // La bourse vit dans la barre du haut (nav.js) depuis que toutes les pages
+  // partagent le même bandeau. Le kiosque est l'écran qui la fait le plus
+  // bouger : sans cette poussée, un joueur qui vient de dépenser quarante-cinq
+  // écharpes les verrait encore affichées.
+  window.TBF_BARRE?.bourse(S.scarves, S.packs);
+  // Deux raisons de fermer le bouton, et elles ne se disent pas pareil : plus
+  // de booster, ou série pas encore débloquée. Le libellé est posé par
+  // `renderKiosque`, qui seul connaît la série affichée.
+  $('openBtn').disabled = S.packs <= 0 || !serieDebloquee(SETS[S.set] ?? {});
+  const el = $('regenTxt');
+  if (S.packs >= MAXP || S.nextIn == null) el.textContent = 'Réserve pleine';
+  else if (S.nextIn <= 0) { el.textContent = 'Booster prêt'; load().catch(() => {}); }
+  else {
+    el.textContent = `Booster suivant dans ${Math.floor(S.nextIn / 60000)}:` +
+      `${String(Math.floor(S.nextIn % 60000 / 1000)).padStart(2, '0')}` +
+      (S.scarves >= (S.packPrice ?? 45) ? ` · ou ${S.packPrice ?? 45} écharpes` : '');
+  }
+}
+
+function renderKiosque() {
+  const s = SETS[S.set];
+  const ouvrable = serieDebloquee(s);
+  $('setName').textContent = s.nom;
+  /* Une série hors de portée annonce **ce qu'elle demande**, et le bouton le
+     répète. Le kiosque proposait les neuf séries sans distinction : le joueur
+     en choisissait une, appuyait, et découvrait le refus après coup — sous la
+     forme d'un code, « Ouverture impossible (fanzzy.error.set_locked) ».
+     Un jeu ne cache pas ce qui vient, il le montre verrouillé. */
+  $('setLine').innerHTML = ouvrable
+    ? esc(`${DEX.filter((f) => f.set === s.id).length} Fanzzy · ${s.ligne}`)
+    : `<span class="verrou"><svg viewBox="0 0 24 24">
+        <rect x="4" y="10" width="16" height="11" rx="2.5"/>
+        <path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Se débloque au niveau ${
+        Number(s.niveau) || '?'}</span>`;
+  $('carousel').classList.toggle('verrou', !ouvrable);
+  $('openBtn').textContent = ouvrable
+    ? 'OUVRIR LE BOOSTER' : `NIVEAU ${s.niveau ?? '?'} REQUIS`;
+  $('tearhint').textContent = ouvrable
+    ? 'GLISSE POUR CHANGER · TOUCHE POUR OUVRIR' : 'GLISSE POUR VOIR LES AUTRES SÉRIES';
+  $('setDots').innerHTML = SETS.map((_, i) => `<i class="${i === S.set ? 'on' : ''}"></i>`).join('');
+  placeCarousel(0);
+  tickRegen();
+}
+
+function goSet(delta) {
+  S.set = (S.set + delta + SETS.length) % SETS.length;
+  audio.flip();
+  renderKiosque();
+}
+$('prevSet').onclick = () => goSet(-1);
+$('nextSet').onclick = () => goSet(1);
+
+/* Glissement au doigt : la position suit le geste, puis s'aimante. */
+(() => {
+  const c = $('carousel');
+  let x0 = null, dragging = false;
+  c.addEventListener('pointerdown', (e) => { x0 = e.clientX; dragging = false; c.setPointerCapture(e.pointerId); });
+  c.addEventListener('pointermove', (e) => {
+    if (x0 === null) return;
+    const d = (e.clientX - x0) / 190;
+    if (Math.abs(d) > 0.04) dragging = true;
+    placeCarousel(-d);
+  });
+  const end = (e) => {
+    if (x0 === null) return;
+    const d = (e.clientX - x0) / 190;
+    x0 = null;
+    if (d < -0.28) goSet(1);
+    else if (d > 0.28) goSet(-1);
+    else { placeCarousel(0); if (!dragging) startTear(); }
+  };
+  c.addEventListener('pointerup', end);
+  c.addEventListener('pointercancel', () => { x0 = null; placeCarousel(0); });
+})();
+
+$('openBtn').onclick = () => startTear();
+
+/* ------------------------------------------------- le geste d'ouverture
+
+   On déchire la bande du haut, comme un vrai sachet : on saisit la languette
+   et on tire en travers. Un seul mouvement.
+
+   **Ce qui précédait ne s'ouvrait pas.** Il fallait maintenir le doigt
+   immobile pour « chauffer », puis tirer vers le bas sans avoir lâché — et la
+   chauffe se comptait en *images*, pas en secondes : `charge += 0.02` à chaque
+   `requestAnimationFrame`. Sur cette page, entre le carrousel, les lueurs qui
+   respirent et le paquet qui tremble, le navigateur rend une douzaine
+   d'images par seconde : la chauffe demandait quatre secondes de parfaite
+   immobilité au lieu des huit dixièmes prévus, et le moindre relâchement
+   remettait tout à zéro. Sur une machine rapide c'était instantané, sur une
+   machine lente c'était impossible — et rien ne le disait.
+
+   D'où les trois règles d'ici :
+
+   - **Rien ne se compte en images.** L'avancée ne dépend que de la distance
+     parcourue par le doigt. Une page à cinq images par seconde déchire
+     exactement comme une page à cent vingt.
+   - **Rien ne se perd sans se voir.** Lâcher trop tôt ne remet pas un compteur
+     invisible à zéro : la bande revient élastiquement à sa place, et on voit
+     ce qu'on a perdu.
+   - **On peut toujours sortir.** « Plus tard » et Échap referment, Entrée
+     ouvre sans le geste. Un plein écran dont on ne peut s'échapper qu'en
+     réussissant un geste est un piège, et c'en était un : la seule issue était
+     de recharger la page.                                                    */
+
+const SEUIL_DECHIRURE = 0.72;   // au-delà, le sachet est ouvert, on ne revient pas
+let tear = null;
+
+function startTear() {
+  if (S.packs <= 0) return;
+  const set = SETS[S.set];
+  const el = $('tearpack');
+
+  // Le dessin du paquet, et sa copie pour la bande. `cloneNode` plutôt qu'un
+  // second chargement : le repli SVG n'a pas d'URL à recharger, et une image
+  // déjà décodée ne clignote pas.
+  const art = document.createElement('img');
+  art.src = src(ART[set.id]);
+  art.alt = '';
+  // Le repli est dessiné deux fois plutôt que cloné : `packArt` numérote ses
+  // dégradés, et deux copies du même nœud porteraient les mêmes identifiants —
+  // la seconde volerait les couleurs de la première.
+  art.onerror = () => {
+    $('tearart').innerHTML = packArt(set);
+    $('tearlip').innerHTML = packArt(set);
+  };
+  art.onload = () => $('tearlip').replaceChildren(art.cloneNode(true));
+  $('tearart').replaceChildren(art);
+  $('tearlip').replaceChildren();
+
+  el.style.setProperty('--p', '0');
+  el.classList.remove('tire');
+  $('tearlbl').innerHTML = 'TIRE LA BANDE <b>EN TRAVERS DU HAUT</b>';
+  $('tearzone').classList.add('on');
+  el.focus({ preventScroll: true });
+  tear = { p: 0, base: 0, x0: 0, pointeur: null, tic: -1, ratees: 0, fini: false };
+  audio.ready();
+}
+
+function fermerTear() {
+  $('tearzone').classList.remove('on');
+  $('tearpack').classList.remove('tire');
+  tear = null;
+}
+
+/** Pose l'avancée, et fait le bruit et la vibration qui vont avec. */
+function poser(v) {
+  tear.p = v;
+  $('tearpack').style.setProperty('--p', String(v));
+  // Un cran de bruit tous les neuf pour cent : le son suit la main plutôt que
+  // l'horloge, donc déchirer lentement fait un long crissement.
+  const tic = Math.floor(v / 0.09);
+  if (tic > tear.tic) {
+    tear.tic = tic;
+    audio.rip(0.22 + v * 0.5);
+    buzz(7);
+  }
+  if (v > 0.12 && !tear.encourage) {
+    tear.encourage = true;
+    $('tearlbl').innerHTML = 'ENCORE — <b>NE LÂCHE PAS</b>';
+  }
+}
+
+(() => {
+  const el = $('tearpack');
+
+  el.addEventListener('pointerdown', (e) => {
+    if (!tear || tear.fini) return;
+    tear.pointeur = e.pointerId;
+    tear.x0 = e.clientX;
+    tear.base = tear.p;
+    el.classList.add('tire');
+    el.setPointerCapture(e.pointerId);
+    audio.ready();
+  });
+
+  el.addEventListener('pointermove', (e) => {
+    if (!tear || tear.fini || tear.pointeur !== e.pointerId) return;
+    // `abs` : on déchire de droite à gauche comme de gauche à droite. La
+    // languette est à droite, mais un gaucher tire dans l'autre sens et rien
+    // ne justifie de le lui refuser.
+    const large = el.getBoundingClientRect().width || 210;
+    const v = clamp(tear.base + Math.abs(e.clientX - tear.x0) / (large * 0.8), 0, 1);
+    poser(v);
+    if (v >= SEUIL_DECHIRURE) doOpen();
+  });
+
+  const lacher = () => {
+    if (!tear || tear.fini || tear.pointeur === null) return;
+    tear.pointeur = null;
+    tear.tic = -1;
+    tear.encourage = false;
+    el.classList.remove('tire');     // rend la transition : la bande revient
+    poser(0);
+    tear.ratees++;
+    // Au deuxième essai manqué, on cesse de laisser deviner. Quelqu'un qui n'y
+    // arrive pas deux fois n'y arrivera pas à la troisième par insistance : ou
+    // le geste ne passe pas sur son appareil, ou il ne peut pas le faire.
+    $('tearlbl').innerHTML = 'LA BANDE EST REVENUE. <b>REPRENDS PAR LA LANGUETTE</b>'
+      + (tear.ratees >= 2
+        ? '<small>Ou appuie sur Entrée pour ouvrir sans le geste.</small>' : '');
+  };
+  el.addEventListener('pointerup', lacher);
+  el.addEventListener('pointercancel', lacher);
+
+  /* Le paquet est un vrai `<button>` : Entrée et Espace l'ouvrent. C'est
+     l'accès au clavier, et c'est du même coup la sortie de secours de qui ne
+     peut pas faire le geste — une seule mécanique, deux services.
+
+     `detail === 0` distingue le clic du clavier de celui de la souris : un
+     glissement se termine aussi par un `click`, et sans ce filtre le sachet
+     s'ouvrirait deux fois. */
+  el.addEventListener('click', (e) => {
+    if (!tear || tear.fini || e.detail !== 0) return;
+    poser(1);
+    doOpen();
+  });
+})();
+
+$('tearquit').onclick = () => fermerTear();
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && tear && !tear.fini) { e.preventDefault(); fermerTear(); }
+});
+
+function doOpen() {
+  if (!tear || tear.fini) return;
+  tear.fini = true;
+  const el = $('tearpack');
+  el.classList.remove('tire');
+  el.style.setProperty('--p', '1');
+  audio.rip(1.4);
+  buzz([40, 30, 90]);
+  $('flash').classList.add('go');
+  setTimeout(() => $('flash').classList.remove('go'), 520);
+  setTimeout(() => {
+    fermerTear();
+    openPack();
+  }, 320);
+}
+
+let pull = [], idx = 0, fresh = new Set();
+
+async function openPack() {
+  const setId = SETS[S.set].id;
+  let res;
+  try {
+    // `buy` autorise le serveur à prélever des écharpes s'il ne reste aucun
+    // booster gratuit. Il refuse proprement si le solde ne suffit pas.
+    res = await api('/open', { set: setId, buy: S.packs <= 0 });
+  } catch (e) {
+    // Un message vague fait perdre des heures. Quand le serveur sait pourquoi,
+    // on le dit.
+    toast(({
+      'fanzzy.error.no_packs': 'Plus de booster',
+      'fanzzy.error.not_enough_scarves': 'Pas assez d\u2019écharpes',
+      'fanzzy.error.unknown_set': 'Série inconnue',
+      // Le filet de sécurité : le kiosque n'est plus censé proposer une série
+      // hors de portée, mais un onglet resté ouvert depuis avant une fermeture
+      // peut encore la demander. Le refus doit alors nommer sa cause — c'est ce
+      // code brut, affiché tel quel, qui a fait remonter la panne.
+      'fanzzy.error.set_locked': 'Cette série n’est pas encore débloquée',
+      'fanzzy.error.set_closed': 'Cette série ne distribue plus de booster',
+      'fanzzy.error.schema': 'Base de données incomplète — voir la console',
+    })[e.code] ?? `Ouverture impossible (${e.code ?? 'sans code'})`);
+    if (e.code === 'fanzzy.error.schema') console.error('[fanzzy]', e.detail ?? e.message);
+    return;
+  }
+
+  /* Un booster tire quatre sortes de cartes, et chacune a besoin d'un nom.
+
+     La page n'en connaissait qu'une. Les tenues arrivaient sous leur
+     identifiant — « prehistorique » là où il fallait lire « Préhistorique » —
+     et l'équipement comme les cartes d'action n'étaient connus de personne :
+     ils tombaient dans la branche « carte inconnue », se faisaient jeter, et
+     le joueur lisait qu'il devait recharger sa page. Depuis que les places 4
+     et 5 s'ouvrent à tout l'inventaire, c'était le cas de la plupart des
+     boosters.
+
+     `type` sert ici à choisir une couleur et un pictogramme, faute d'en avoir
+     de propres : une tenue prend ceux du tifo, l'équipement ceux du
+     déplacement, une carte d'action ceux de la pyro. */
+  const carteDe = (c) => {
+    if (c.type === 'skin') {
+      const t = TENUES.get(c.id);
+      return { id: c.id, nom: t?.nom ?? c.id, texte: t?.texte, type: 'tifo',
+        rar: t?.rar ?? 'rare', stage: 1, skin: true, pour: c.pour };
+    }
+    if (c.type === 'stuff') {
+      const o = STUFFS.get(c.id);
+      return { id: c.id, nom: o?.nom ?? c.id, texte: o?.texte, type: 'depl',
+        rar: o?.rar ?? 'rare', stage: 1, stuff: true, mods: o?.mods };
+    }
+    if (c.type === 'action') {
+      const a = ACTES.get(c.id);
+      return { id: c.id, nom: a?.nom ?? c.id, texte: a?.texte, type: 'pyro',
+        rar: a?.rar ?? 'rare', stage: 1, action: true };
+    }
+    /* Une poignée d'écharpes. Ce n'est pas un lot de consolation : c'est ce qui
+       paie les évolutions, donc les âges qu'aucun booster ne donne. La rareté
+       suit la taille de la poignée, pour que l'ouverture ait la couleur du
+       gain plutôt qu'une couleur fixe. */
+    if (c.type === 'echarpes') {
+      const n = c.montant ?? 0;
+      // `voix` pour sa couleur : c'est l'or du jeu, celui des écharpes. Il n'y
+      // a pas de type propre à la monnaie, et en inventer un ferait apparaître
+      // une famille de plus dans tous les filtres du classeur.
+      return { id: 'echarpes', nom: `${n} écharpes`, type: 'voix',
+        texte: 'De quoi faire grandir un supporter que tu as déjà.',
+        rar: n >= 30 ? 'epique' : n >= 14 ? 'rare' : 'commune',
+        stage: 1, echarpes: true, montant: n };
+    }
+    return BY_ID.get(c.id);
+  };
+  pull = res.cards.map(carteDe);
+
+  // Une carte que le serveur tire mais que cette page ne connaît pas arrivait
+  // ici comme `undefined`, et cassait l'ouverture sans rien dire — c'est ce
+  // qui s'est produit quand la lignée du Gamin de Devant manquait au
+  // catalogue recopié plus haut. On la retire et on nomme la cause : mieux
+  // vaut un booster amputé et un message clair qu'un écran figé.
+  //
+  // `=== 'fanzzy'` et non `!== 'skin'` : les trois autres types ont désormais
+  // leur catalogue et se replient sur leur identifiant. Les compter comme
+  // inconnues faisait jeter des cartes parfaitement valides.
+  const inconnues = res.cards
+    .filter((c, i) => c.type === 'fanzzy' && !pull[i])
+    .map((c) => c.id);
+  if (inconnues.length) {
+    pull = pull.filter(Boolean);
+    console.error('[fanzzy] catalogue de la page en retard sur le serveur :', inconnues);
+    toast(`Carte inconnue de cette version : ${inconnues.join(', ')}. Recharge la page.`);
+  }
+  idx = 0; fresh.clear();
+  for (const c of res.cards) {
+    if (c.new) fresh.add(c.id);
+    // La collection ne compte que des supporters. Une pièce d'équipement rangée
+    // ici gonflait la progression du classeur d'une case qui n'existe pas.
+    if (c.type === 'fanzzy') S.col[c.id] = (S.col[c.id] ?? 0) + 1;
+    // Une poignée d'écharpes n'est « neuve » pour personne : la marquer
+    // ferait clignoter un NOUVEAU sur de la monnaie.
+    if (c.type === 'echarpes') fresh.delete('echarpes');
+  }
+  S.scarves = res.wallet.scarves;
+  S.packs = res.wallet.packs;
+  S.nextIn = res.wallet.nextPackInMs;
+  S.lastGain = res.scarvesGained;
+  tickRegen();
+
+  const st = $('ostage'); st.innerHTML = '';
+  pull.forEach((f, i) => {
+    const el = document.createElement('div');
+    el.className = 'reveal'; el.style.zIndex = 20 - i;
+    el.style.transform = `translateY(${i * 7}px) scale(${1 - i * .03})`;
+    el.innerHTML = `<div class="flip">
+      <div class="face back"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#39414E" stroke-width="1.4"><path d="M3 20l9-16 9 16z"/><path d="M7 20l5-9 5 9"/></svg></div>
+      <div class="face front">${cardHTML(f)}</div></div>`;
+    st.appendChild(el);
+  });
+  $('summary').classList.remove('on');
+  $('oAction').style.display = 'none';
+  $('oHint').textContent = 'Touche la carte pour la retourner';
+  $('oProg').textContent = `1 / ${pull.length}`;
+  $('opener').classList.add('on');
+}
+
+$('ostage').onclick = () => {
+  const cards = [...$('ostage').children];
+  const cur = cards[idx];
+  if (!cur) return;
+  if (!cur.classList.contains('flipped')) {
+    cur.classList.add('flipped');
+    const f = pull[idx];
+    if (fresh.has(f.id)) {
+      const tag = document.createElement('div');
+      tag.className = 'newtag'; tag.textContent = 'NOUVEAU';
+      cur.appendChild(tag);
+    }
+    audio.flip();
+    buzz(12);
+    if (['epique','legendaire'].includes(f.rar)) {
+      window.FX?.rare(f.rar, cur);
+      burst(TYPES[f.type].c, f.rar === 'legendaire' ? 34 : 22);
+      audio.chime(f.rar);
+      // La vidéo n'est chargée qu'ici, à la première carte rare de la session :
+      // une gerbe d'étincelles ne doit pas peser sur le premier affichage.
+      if (f.rar === 'legendaire') playBurstVideo(true);
+      if (f.rar === 'legendaire') { audio.roar(); document.getElementById('app').classList.add('quake'); 
+        setTimeout(() => document.getElementById('app').classList.remove('quake'), 700); }
+    }
+    $('oHint').textContent = idx < 4 ? 'Touche encore pour la suivante' : 'Touche pour le récapitulatif';
+    $('oAction').style.display = idx < 4 ? 'block' : 'none';
+    $('oAction').textContent = 'Tout révéler';
+  } else {
+    cur.style.transform = 'translateX(-130%) rotate(-14deg)';
+    cur.style.opacity = '0';
+    if (++idx >= 5) return finishPack();
+    $('oProg').textContent = `${idx + 1} / ${pull.length}`;
+    cards.forEach((el, i) => { if (i >= idx) el.style.transform = `translateY(${(i - idx) * 7}px) scale(${1 - (i - idx) * .03})`; });
+    $('oHint').textContent = 'Touche la carte pour la retourner';
+  }
+};
+$('oAction').onclick = () => finishPack();
+$('oClose').onclick = () => { $('opener').classList.remove('on'); renderDex(); };
+
+function finishPack() {
+  $('ostage').innerHTML = '';
+  $('oProg').textContent = `${pull.length} / ${pull.length}`;
+  const gained = S.lastGain ?? 0;
+  $('oHint').textContent = gained
+    ? `Rangées dans le classeur · +${gained} écharpes en doublons`
+    : 'Rangées dans le classeur';
+  $('burst').classList.remove('on');
+  const sum = $('summary');
+  sum.innerHTML = pull.map((f, i) => `<div data-i="${i}">${cardHTML(f, { mini:true })}</div>`).join('');
+  sum.classList.add('on');
+  sum.onclick = (e) => {
+    const d = e.target.closest('[data-i]');
+    // On ferme l'écran d'ouverture d'abord : la fiche se pose par-dessus la
+    // grille, pas par-dessus un booster à moitié déchiré.
+    if (!d) return;
+    $('opener').classList.remove('on');
+    renderDex(); renderTeam();
+    ouvrirFiche(pull[+d.dataset.i].id);
+  };
+  const a = $('oAction');
+  a.style.display = 'block'; a.textContent = 'Terminer';
+  a.onclick = () => { $('opener').classList.remove('on'); a.onclick = () => finishPack(); renderDex(); renderTeam(); };
+  renderDex(); tickRegen();
+}
+
+/** Superpose la gerbe d'étincelles en mode « screen » : seul ce qui brille apparaît. */
+function playBurstVideo(long) {
+  const v = $('burst');
+  if (!ART.burst) return;
+  if (!v.src) { v.src = ART.burst; v.load(); }
+  v.currentTime = 0;
+  v.classList.add('on');
+  v.play?.().catch(() => {});
+  clearTimeout(v._t);
+  v._t = setTimeout(() => { v.classList.remove('on'); v.pause?.(); }, long ? 3200 : 2000);
+}
+
+function burst(color, n) {
+  const st = $('ostage'), r = st.getBoundingClientRect();
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement('div');
+    p.className = 'burst';
+    p.style.background = i % 3 ? color : '#FFF3D0';
+    p.style.left = r.width / 2 + 'px'; p.style.top = r.height / 2 + 'px';
+    st.appendChild(p);
+    const a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 130;
+    p.animate([{ transform:'translate(-50%,-50%) scale(1)', opacity:1 },
+               { transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) scale(0)`, opacity:0 }],
+      { duration:700 + Math.random() * 500, easing:'cubic-bezier(.15,.7,.3,1)' }).onfinish = () => p.remove();
+  }
+}
+
+
+/* ---------------------------------------------------------------- init */
+
+/* Le kiosque se redessine quand la bourse change — c est  qui le dit,
+   sans savoir qui écoute. */
+addEventListener("tbf:bourse", () => { renderKiosque(); tickRegen(); });
+setInterval(tickRegen, 1000);
+
+(async () => {
+  await chargerCatalogue();
+  await load();
+  renderKiosque();
+  buildCarousel();
+  tickRegen();
+
+  /* Le mot d'accueil. Quelqu'un qui arrive ici parce qu'il a des boosters à
+     ouvrir doit lire pourquoi il y est : sans cette phrase, la redirection
+     depuis la connexion a l'air d'une erreur de navigation. */
+  const n = S.packs ?? 0;
+  if (n > 0 && new URLSearchParams(location.search).has('aouvrir')) {
+    const a = document.getElementById('annonce');
+    a.textContent = n === 1
+      ? 'Tu as 1 booster à ouvrir.'
+      : `Tu as ${n} boosters à ouvrir.`;
+    a.hidden = false;
+  }
+})();
+</script>
+<script src="/fx.js" defer></script>
+<script src="/nav.js" defer></script>
+</body>
+</html>

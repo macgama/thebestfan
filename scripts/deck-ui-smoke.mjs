@@ -460,6 +460,113 @@ clic(T(dom).querySelector('[data-fermer]'));
     Boolean(face?.querySelector('.type svg')));
 }
 
+/* ------------------------------------------- la carte en grand
+
+ * On choisit dix cartes sur vingt et une en lisant deux lignes de texte à
+ * dix pixels et demi et une vignette de trente-huit. Le panneau qui s'ouvrait
+ * au toucher n'ajoutait qu'un tableau : famille, coût, réutilisation. Le
+ * dessin — la seule chose qu'on ne peut pas voir ailleurs — n'y était pas.
+ *
+ * Ce bloc éprouve ce que le panneau apporte, pas le fait qu'il s'ouvre :
+ * l'illustration à la taille d'une carte, la recharge chiffrée, la rareté
+ * écrite en toutes lettres, et la condition rendue en français.
+ */
+{
+  /* La feuille de la page, pour éprouver ce qui décide de la taille : jsdom
+     ne met rien en page, on ne peut donc pas mesurer des pixels. */
+  const feuilles = [...T(dom).querySelectorAll('style')].map((f) => f.textContent).join('\n');
+
+  clic(T(dom).querySelector('[data-onglet="cartes"]'));
+  await jusqua(() => T(dom).querySelector('[data-filtre="toutes"]'));
+  /* Le catalogue est resté sur « les miennes » depuis les contrôles d'ajout.
+     On l'ouvre en entier : le panneau sert surtout à regarder une carte qu'on
+     n'a pas encore, et deux des trois cartes éprouvées ici en sont. */
+  clic(T(dom).querySelector('[data-filtre="toutes"]'));
+  await jusqua(() => T(dom).querySelectorAll('[data-detail]').length === ACTIONS.length);
+
+  /* Une carte à condition et une carte à revers : ce sont les deux blocs qui
+     n'apparaissent que parfois, et donc les deux qu'on oublierait. */
+  const aCond = ACTIONS.find((a) => a.condition?.mene);
+  const aRevers = ACTIONS.find((a) => a.revers);
+  const aSimple = ACTIONS.find((a) => !a.condition && !a.revers);
+
+  const ouvrirDetail = async (id) => {
+    if (T(dom).getElementById('voile').classList.contains('on')) {
+      clic(T(dom).querySelector('[data-fermer]'));
+      await attendre(30);
+    }
+    const rangee = T(dom).querySelector(`[data-detail="${id}"]`);
+    if (!rangee) throw new Error(`la carte ${id} n'est pas dans le catalogue affiché`);
+    clic(rangee);
+    await jusqua(() => T(dom).getElementById('voile').classList.contains('on'));
+    return T(dom).querySelector('#voile .grandeCarte');
+  };
+
+  const gc = await ouvrirDetail(aSimple.id);
+  check('toucher une carte du catalogue l\u2019ouvre en grand', Boolean(gc));
+
+  /* Le dessin, et à la taille d'une carte. jsdom ne met pas en page, donc on
+     ne peut pas mesurer des pixels : on éprouve ce qui les décide — l'image
+     est bien celle de cette carte, et elle est montée dans le cadre au format
+     d'une carte, pas dans la vignette de la rangée. */
+  const illu = gc?.querySelector('.gcArt .gcIllu');
+  check('elle montre son dessin, pas celui d\u2019une autre',
+    illu?.getAttribute('src')?.startsWith(`/img/action/${aSimple.id}.`) === true
+    || (console.log('        src :', illu?.getAttribute('src')), false));
+  check('le dessin occupe un cadre au format d\u2019une carte',
+    /aspect-ratio:\s*63\/80/.test(feuilles)
+    && /\.gcArt\b/.test(feuilles));
+  check('et le glyphe de famille reste dessous si le dessin manque',
+    Boolean(gc?.querySelector('.gcArt svg path')?.getAttribute('d')));
+
+  /* Les deux nombres qui décident d'une carte. La recharge n'était écrite
+     nulle part ailleurs que dans ce panneau : une carte à quatre-vingt-dix
+     secondes ne se joue pas comme une à huit. */
+  const chiffres = [...(gc?.querySelectorAll('.gcChiffres div') ?? [])]
+    .map((d) => `${d.querySelector('b')?.textContent} ${d.querySelector('small')?.textContent}`);
+  check('le souffle est chiffré', chiffres.some((t) => t === `${aSimple.cost} SOUFFLE`)
+    || (console.log('        chiffres :', chiffres.join(' | ')), false));
+  check('la recharge aussi', chiffres.some((t) => t === `${aSimple.cd}s RECHARGE`));
+  check('et le nombre d\u2019exemplaires déjà posés', chiffres.some((t) => /DANS TON DECK$/.test(t)));
+
+  check('le texte entier de la carte est là, pas une amorce',
+    gc?.querySelector('.gcTexte')?.textContent.trim() === aSimple.texte);
+  check('la rareté est écrite en toutes lettres, pas en clé',
+    /^(Commune|Rare|Épique|Légendaire)$/.test(
+      gc?.querySelector('.gcRar')?.textContent.trim() ?? ''));
+  check('la famille est nommée', (gc?.querySelector('.gcFam')?.textContent.trim().length ?? 0) > 0);
+
+  /* Le bouton d'ajout reste : le panneau sert toujours à composer son deck.
+     C'est ce que le premier essai avait cassé — un second écouteur ouvrait sa
+     propre carte par-dessus, sans bouton, et la suite n'en disait rien. */
+  check('le panneau permet toujours d\u2019ajouter la carte au deck',
+    Boolean(T(dom).querySelector('#voile [data-ajouter]'))
+    || Boolean(T(dom).querySelector('#voile .vide')));
+
+  /* Une condition écrite « mene: 1 » ne se lit pas. Le panneau la rend en
+     français, et il la rend visible : une carte qui refuse de se jouer sans
+     dire pourquoi est une carte cassée. */
+  const gcCond = await ouvrirDetail(aCond.id);
+  const cond = gcCond?.querySelector('.gcCond')?.textContent ?? '';
+  check('une carte à condition dit ce qu\u2019elle demande',
+    /mené/i.test(cond) || (console.log('        condition :', cond.trim()), false));
+  check('et elle le dit en français, pas en mécanique',
+    !/mene|minuteReelle|\{|\}/.test(cond));
+
+  const gcRev = await ouvrirDetail(aRevers.id);
+  check('une carte à revers prévient qu\u2019elle se retourne',
+    /retourne|revers/i.test(gcRev?.textContent ?? ''));
+
+  /* Et une carte sans ni l'un ni l'autre n'invente pas d'encadré : un panneau
+     qui affiche toujours le même avertissement n'avertit de rien. */
+  const gcNu = await ouvrirDetail(aSimple.id);
+  check('une carte sans condition ni revers n\u2019affiche aucun encadré',
+    gcNu?.querySelector('.gcCond') === null);
+
+  clic(T(dom).querySelector('[data-fermer]'));
+  await attendre(30);
+}
+
 /* ------------------------------------------- le plafond du niveau
 
  * Le nombre d'emplacements de tribune dépend du niveau : deux au départ, trois

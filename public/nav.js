@@ -72,6 +72,7 @@
       // plusieurs, et il n'est plus derrière un second menu.
       ['/kop', 'kop', 'Mon KOP'],
       ['/deck', 'deck', 'Mon deck'],
+      ['/boosters', 'pack', 'Mes boosters'],
       ['/boutique', 'boutique', 'La boutique'],
     ] },
     { titre: 'MA COLLECTION', liens: [
@@ -202,6 +203,8 @@
     sortie: 'M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 8l-4 4 4 4M6 12h9',
     // Un panier : deux roues et une anse. Reconnaissable à vingt pixels.
     boutique: 'M6 6h15l-1.5 9h-12zM6 6L5 3H2M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2',
+    // Un paquet fermé, avec sa bande à déchirer en haut.
+    pack: 'M4 8h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM4 8l1.5-4h13L20 8M9 4v4M15 4v4',
     // Une flèche vers la gauche, pour rentrer. Volontairement pas un chevron
     // seul : à quarante pixels, un chevron se confond avec un bouton de repli.
     retour: 'M15 5l-7 7 7 7',
