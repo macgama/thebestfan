@@ -265,10 +265,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 </head>
 <body>
 <main id="app">
-  <div class="topbar">
-    <div class="mark">FANZZY<small>collection</small></div>
-  </div>
-
+  <!-- Plus de bandeau « FANZZY / collection » : la barre du haut dit
+       maintenant où l'on est, et le répéter trente pixels plus bas ne faisait
+       qu'occuper la place au-dessus des onglets. L'écran commence donc par ses
+       onglets, comme le deck. -->
   <nav class="nav">
     <!-- L'ordre dit le chemin : mon personnage, puis ma collection, puis le
          kiosque où l'agrandir. Le kiosque venait en premier et « DUEL » en
@@ -288,7 +288,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <section class="screen" id="s-dex">
     <div class="head">
       <div class="l">
-        <h2>LE CLASSEUR</h2>
+        <!-- Le même titre que sur le deck : barre d'accent dorée, lettrage du
+             jeu. Deux écrans voisins qui titrent différemment se lisent comme
+             deux applications. -->
+        <h2 class="tbf-titre">LE CLASSEUR</h2>
         <div class="n"><span id="progTxt">0/0</span></div>
       </div>
       <div class="progress"><div class="bar"><i id="progBar"></i></div></div>
@@ -299,6 +302,12 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   </section>
 
   <section class="screen on" id="s-equipe">
+    <!-- Un titre, comme les deux autres écrans. Sans lui, « Mon Fanzzy »
+         commençait directement par une carte : on ne savait pas si l'onglet
+         avait répondu, ou si la page chargeait encore. -->
+    <div class="head">
+      <h2 class="tbf-titre">MON FANZZY<small>celui qui entre au coup d’envoi</small></h2>
+    </div>
     <div id="teamBody"></div>
   </section>
 

@@ -64,6 +64,25 @@
    * sans lire les autres. L'ordre à l'intérieur d'une rubrique est celui de
    * la fréquence, pas de l'alphabet.
    */
+  /**
+   * Le nom de l'écran, tel qu'il s'affiche dans la barre.
+   *
+   * Court, et différent du libellé du menu : « Mes Fanzzy » dit où l'on **va**,
+   * « Fanzzy » dit où l'on **est**. Le second se lit d'un coup d'œil, ce qui
+   * est tout ce qu'on demande à un titre de barre.
+   *
+   * Une route absente de cette table n'affiche pas de titre plutôt qu'un titre
+   * deviné : « /duel-nvn » rendu en « Duel Nvn » est pire que rien.
+   */
+  const TITRES = {
+    '/fanzzy': 'Fanzzy', '/boosters': 'Boosters', '/deck': 'Deck',
+    '/boutique': 'Boutique', '/virage': 'Virage', '/duel-nvn': 'Duel',
+    '/kop': 'KOP', '/amis': 'Amis', '/equipes': 'Clubs', '/matchs': 'Matchs',
+    '/teletext': 'Télétexte', '/classement': 'Classement', '/carnet': 'Carnet',
+    '/profil': 'Profil', '/compte': 'Compte', '/admin': 'Administration',
+    '/diagnostic': 'Diagnostic',
+  };
+
   const MENU = [
     { titre: 'JOUER', liens: [
       ['/virage', 'virage', 'Le Grand Virage'],
@@ -262,32 +281,26 @@
       `<a class="pan tbf-retour" href="/" aria-label="Revenir à l’accueil"
           ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES.retour}"/></svg></a>`;
 
+    /* Une flèche, un titre, un menu.
+
+       Elle portait aussi l'avatar avec le pseudo et le club, et deux jetons de
+       monnaie. Sur trois cent soixante pixels, les cinq se disputaient la place
+       — le pseudo tronqué, le club réduit à « Lausanne … » — et rien de tout ça
+       ne disait **où l'on est**, qui est la seule chose qu'on demande à une
+       barre. Le pseudo et le club vivent sur le profil, qui est fait pour eux ;
+       les soldes s'affichent là où ils décident de quelque chose, c'est-à-dire
+       à la boutique et au kiosque.
+
+       Le titre pousse le menu à droite : il devient le centre de gravité de la
+       barre au lieu d'un élément de plus dans une file. */
     const haut = document.createElement('header');
     haut.className = 'tbf-haut' + (enJeu ? ' tbf-haut-jeu' : '');
-    haut.innerHTML = enJeu
-      ? `${retourHTML}<div class="tbf-bourse">${boutonHTML}</div>`
-      : `
-      ${retourHTML}
-      <a class="pan tbf-moi" href="/profil">
-        <span class="tbf-pastille">${(user.pseudo ?? '?').trim().charAt(0).toLowerCase() || '?'}</span>
-        <span><b></b><small></small></span>
-      </a>
-      <div class="tbf-bourse">
-        <!-- Toucher sa monnaie mène à la boutique. C'est le geste que tout
-             joueur essaie en premier, et il ne menait nulle part : les deux
-             jetons étaient des div qui affichaient un nombre. -->
-        <a class="pan tbf-jeton" data-jeton="ech" href="/boutique"
-           aria-label="Mes écharpes — aller à la boutique"
-           ><i></i><span data-ech>0</span><b class="tbf-plus" aria-hidden="true">+</b></a>
-        <a class="pan tbf-jeton" data-jeton="pack" href="/boutique"
-           aria-label="Mes boosters — aller à la boutique"
-           ><i></i><span data-pack>0</span><b class="tbf-plus" aria-hidden="true">+</b></a>
-        ${boutonHTML}
-      </div>`;
-    // `textContent` et non une interpolation : un pseudo est écrit par le
-    // joueur, il n'a rien à faire dans du HTML assemblé à la main. En jeu, la
-    // barre est réduite au bouton : il n'y a pas de pseudo à écrire.
-    if (!enJeu) haut.querySelector('.tbf-moi b').textContent = user.pseudo ?? '';
+    haut.innerHTML = `${retourHTML}<span class="tbf-ou"></span>${boutonHTML}`;
+    /* `textContent` et non une interpolation : le titre vient d'une table
+       écrite ici, mais la règle vaut pour tout ce qu'on pose dans du HTML
+       assemblé à la main — on ne fait pas d'exception « parce que cette
+       valeur-là est sûre », c'est ainsi qu'on finit par en faire une mauvaise. */
+    haut.querySelector('.tbf-ou').textContent = TITRES[chemin] ?? '';
     app.prepend(haut);
 
     /* ------------------------------------------- recharger pendant une partie
@@ -386,20 +399,16 @@
       location.href = '/';
     });
 
-    // La bourse et le club suivi arrivent après : la barre est déjà en place,
-    // donc rien ne saute quand ils se remplissent.
-    // En jeu il n'y a ni bourse ni club affiché : rien à remplir, et surtout
-    // rien à demander au serveur pendant qu'on joue.
-    if (!enJeu) try {
-      const st = await fetch('/api/me/state', { credentials: 'same-origin' })
-        .then((r) => r.json());
-      haut.querySelector('[data-ech]').textContent = st.scarves ?? 0;
-      haut.querySelector('[data-pack]').textContent = st.packs ?? 0;
-      const principal = st.follows?.find((f) => f.is_main) ?? st.follows?.[0];
-      haut.querySelector('.tbf-moi small').textContent = principal
-        ? `${principal.name} · ${st.slots.used}/${st.slots.total} clubs`
-        : 'aucun club suivi';
-    } catch { /* module non monté : la barre reste à zéro plutôt que d'échouer */ }
+    /* Plus de bourse à remplir ici.
+
+       Cet endroit appelait `/api/me/state` à chaque chargement de page pour
+       écrire dans les jetons et la ligne du club — qui ne sont plus dans la
+       barre. Une requête réseau sur vingt écrans pour ne rien afficher. Elle
+       était protégée par un `try`, donc rien ne cassait : c'est ce qui rend ce
+       genre de reste dangereux, il ne se signale pas.
+
+       Les soldes s'affichent là où ils décident de quelque chose : la boutique,
+       le kiosque et le carnet les montrent dans leur propre page. */
 
     /**
      * De quoi tenir la bourse à jour depuis une page.
@@ -423,14 +432,6 @@
         document.body.classList.toggle('tbf-en-partie', Boolean(oui));
       },
 
-      bourse(scarves, packs) {
-        // Les jetons n'existent pas sur un écran de jeu : on ne les cherche
-        // qu'après s'être assuré qu'ils sont là.
-        const e = haut.querySelector('[data-ech]');
-        const p = haut.querySelector('[data-pack]');
-        if (e && scarves != null) e.textContent = scarves;
-        if (p && packs != null) p.textContent = packs;
-      },
     };
 
     return { tiroir, haut };

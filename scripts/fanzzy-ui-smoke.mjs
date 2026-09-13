@@ -681,22 +681,35 @@ check('et elle explique pourquoi au lieu de rester vide',
  * jetons de la barre commune étaient des div inertes.
  */
 {
-  const jetons = await page.evaluate(() =>
-    [...document.querySelectorAll('.tbf-jeton')].map((j) => ({
-      balise: j.tagName,
-      ou: j.getAttribute('href'),
-      dit: (j.getAttribute('aria-label') ?? '').includes('boutique'),
-      plus: j.querySelector('.tbf-plus')?.textContent ?? null,
-    })));
-  check('la barre commune porte ses deux jetons de monnaie', jetons.length === 2
-    || (console.log('        vus :', JSON.stringify(jetons)), false));
-  check('ils mènent à la boutique',
-    jetons.length === 2 && jetons.every((j) => j.balise === 'A' && j.ou === '/boutique')
-    || (console.log('        jetons :', JSON.stringify(jetons)), false));
-  check('et ils la nomment, pour qui n’en voit que l’étiquette',
-    jetons.length === 2 && jetons.every((j) => j.dit));
-  check('un « + » dit qu’on peut en obtenir davantage',
-    jetons.length === 2 && jetons.every((j) => j.plus === '+'));
+  /* La barre porte trois choses : de quoi sortir, le nom de l'écran, le menu.
+
+     Elle en portait cinq — l'avatar avec le pseudo et le club, deux jetons de
+     monnaie — qui se disputaient trois cent soixante pixels sans jamais dire
+     **où l'on est**, qui est la seule chose qu'on demande à une barre.
+
+     Les contrôles des jetons ne sont pas effacés, ils sont remplacés par ce qui
+     les remplace : ce qu'ils défendaient n'était pas « il y a deux jetons »,
+     c'était « la boutique est atteignable ». Elle l'est par la tuile de
+     l'accueil et par le menu. */
+  const barre = await page.evaluate(() => {
+    const h = document.querySelector('.tbf-haut');
+    if (!h) return null;
+    return {
+      retour: Boolean(h.querySelector('.tbf-retour')),
+      ou: h.querySelector('.tbf-ou')?.textContent.trim() ?? '',
+      menu: Boolean(h.querySelector('.tbf-burger')),
+      // Ce qui n'a plus rien à y faire.
+      restes: ['.tbf-jeton', '.tbf-moi'].filter((sel) => h.querySelector(sel)),
+    };
+  });
+
+  check('la barre dit ou l\u2019on est', barre?.ou === 'Fanzzy'
+    || (console.log('        titre vu :', JSON.stringify(barre?.ou)), false));
+  check('et elle offre de sortir', barre?.retour === true);
+  check('le menu reste atteignable', barre?.menu === true);
+  check('ni pseudo ni jeton n\u2019encombrent plus la barre',
+    (barre?.restes.length ?? 1) === 0
+    || (console.log('        restes :', barre.restes.join(', ')), false));
 }
 
 /* ------------------------------------------- le personnage est vivant

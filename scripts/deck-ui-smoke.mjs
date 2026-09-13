@@ -513,9 +513,26 @@ clic(T(dom).querySelector('[data-fermer]'));
   check('elle montre son dessin, pas celui d\u2019une autre',
     illu?.getAttribute('src')?.startsWith(`/img/action/${aSimple.id}.`) === true
     || (console.log('        src :', illu?.getAttribute('src')), false));
-  check('le dessin occupe un cadre au format d\u2019une carte',
-    /aspect-ratio:\s*63\/80/.test(feuilles)
-    && /\.gcArt\b/.test(feuilles));
+  /* Ce que la feuille **déclare**. jsdom ne met rien en page : il ne peut pas
+     dire si le panneau tient à l'écran, seulement ce qui a été demandé. La
+     mesure réelle est dans le tour, qui tourne dans un vrai navigateur.
+
+     Le contrôle d'avant figeait `aspect-ratio: 63/80` — la proportion d'une
+     carte — c'est-à-dire un détail de mise en page et non l'exigence. Il
+     rougissait quand on la corrigeait, ce qui est la meilleure façon
+     d'apprendre à contourner un contrôle. */
+  check('le panneau est une colonne, pas un bloc qui défile en entier',
+    /\.panneau\{[^}]*flex-direction:column/.test(feuilles.replace(/\s+/g, ''))
+    || (console.log('        .panneau n’est pas déclaré en colonne'), false));
+  /* Il garde la proportion d'une carte — c'est ce qu'on vient regarder — mais
+     **plafonnée** : à 63/80 pleine largeur, il poussait le bouton hors de
+     l'écran. La mesure réelle est dans le tour ; ici on vérifie que le plafond
+     est déclaré, et qu'il l'est en unité d'écran plutôt qu'en pixels. */
+  check('le dessin est plafonné à une fraction de l\u2019écran',
+    /\.gcArt\{[^}]*max-height:\d+dvh/.test(feuilles.replace(/\s+/g, ''))
+    || (console.log('        .gcArt n’a pas de plafond en dvh'), false));
+  check('et l\u2019image ne se déforme jamais',
+    /\.gcIllu\{[^}]*object-fit:contain/.test(feuilles));
   check('et le glyphe de famille reste dessous si le dessin manque',
     Boolean(gc?.querySelector('.gcArt svg path')?.getAttribute('d')));
 
