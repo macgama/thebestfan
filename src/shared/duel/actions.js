@@ -162,6 +162,59 @@ export const ACTIONS = [
     texte: 'Après la 75e minute du vrai match seulement. Double ta poussée pendant 15 s.',
     effet: { type: 'mod_self', mods: { pushMult: 2 }, duree: 15000 },
     condition: { minuteReelle: 75 } },
+
+  /* ================================================= les cinq de septembre 2026
+
+     **Chacune apporte une mécanique que rien d'autre ne faisait.** Les
+     vingt-quatre cartes d'origine se partageaient vingt et un types d'effet :
+     en ajouter cinq qui recombinent les mêmes verbes aurait donné cinq cartes
+     qu'on reconnaît en une partie et qu'on cesse de lire à la deuxième.
+
+     Elles ont donc chacune leur branche dans le moteur, et elles touchent
+     chacune à une chose qui n'était touchée par personne : la décroissance de
+     la corde, le prix des cartes, le pari sur son propre geste, la poussée
+     étalée dans le temps, et l'écart lui-même.                               */
+
+  { id: 'a-ancre', nom: 'L’Ancre', fam: 'garde', rar: 'rare', cost: 28, cd: 35,
+    texte: 'La corde cesse de retomber pendant 8 s, pour les deux tribunes.',
+    /* La seule carte qui touche à la décroissance. Elle ne pousse pas, elle
+       garde : une tribune qui mène et qui tient huit secondes de plus gagne
+       autant qu'avec une grosse poussée, sans avoir eu à réussir un geste.
+       Elle gèle **pour tout le monde**, parce que la corde est commune — et
+       c'est ce qui la rend mauvaise quand on est mené. */
+    effet: { type: 'freeze_decay', duree: 8000 } },
+
+  { id: 'a-mise', nom: 'La Mise', fam: 'geste', rar: 'rare', cost: 16, cd: 22,
+    texte: 'Ton prochain chant compte double. S’il est raté, il te coûte 20 de souffle.',
+    /* Le seul pari du paquet. Toutes les autres cartes sont des gains plus ou
+       moins gros ; un deck sans aucun risque se joue sans réfléchir. Le seuil
+       est à la moitié — un geste moyen suffit, il n'y a pas de piège. */
+    effet: { type: 'double_next', duree: 20_000, gage: 20 } },
+
+  { id: 'a-tournee', nom: 'La Tournée', fam: 'souffle', rar: 'epique', cost: 22, cd: 40,
+    texte: 'Tes deux prochaines cartes ne coûtent rien.',
+    /* Elle ne donne pas de souffle — la Collecte le fait déjà — elle permet de
+       jouer ce qu'on n'a pas les moyens de jouer. Deux cartes chères coup sur
+       coup, ce qu'aucune réserve de souffle ne permet. */
+    effet: { type: 'cost_free', cartes: 2, duree: 20_000 } },
+
+  { id: 'a-longchant', nom: 'Le Long Chant', fam: 'pousse', rar: 'commune', cost: 24, cd: 18,
+    texte: 'Pousse un peu, dix fois de suite, pendant dix secondes.',
+    /* L'inverse exact du Tifo : celui-ci frappe une fois, très fort, plus tard,
+       et se fait bâcher. Celui-là passe sous la Bâche, qui n'absorbe qu'un
+       coup — mais la décroissance mange chacune de ses dix miettes. Deux façons
+       opposées de miser sur le temps. */
+    effet: { type: 'push_over_time', valeur: 70, coups: 10, duree: 10_000 } },
+
+  { id: 'a-retournement', nom: 'Le Retournement', fam: 'bascule', rar: 'legendaire',
+    cost: 42, cd: 80,
+    texte: 'Efface la moitié de l’avance adverse. Ne se joue que si tu es mené.',
+    /* Elle ne renverse pas la corde : une carte qui échangerait les positions
+       ferait perdre une partie gagnée à celui qui a bien joué. Elle efface la
+       moitié du travail adverse, ce qui est déjà la chose la plus violente du
+       paquet — d'où le prix, la recharge de quatre-vingts secondes, et la
+       condition. */
+    effet: { type: 'halve_gap' } },
 ];
 
 export const ACTION_BY_ID = new Map(ACTIONS.map((a) => [a.id, a]));
@@ -212,6 +265,23 @@ const PORTEE = {
      n'aurait pas de moment. */
   shield: 'adverse',
   reflect: 'adverse',
+
+  /* Les cinq de septembre 2026.
+
+     Trois entrent au Virage : l'ancre et le long chant agissent sur la corde
+     commune et sur soi, la mise et la tournée sur soi seul.
+
+     **Le retournement est `adverse`** — et c'est le seul point qui demande
+     réflexion. Il ne touche personne, il divise un écart : mais dans une salle
+     de trois cents, cet écart est le travail de la tribune d'en face, et une
+     personne seule qui en efface la moitié est exactement ce que la note du
+     dessus interdit. Un contre-exemple utile : la portée ne se lit pas à la
+     cible technique de l'effet, elle se lit à **qui le subit**. */
+  freeze_decay: 'soi',
+  double_next: 'soi',
+  cost_free: 'soi',
+  push_over_time: 'soi',
+  halve_gap: 'adverse',
 };
 
 /**

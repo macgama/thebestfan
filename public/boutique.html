@@ -65,10 +65,13 @@
 .obj .txt{flex:1;min-width:0}
 .obj .txt b{display:block;font-family:var(--banner);font-size:14px;letter-spacing:.02em}
 .obj .txt small{display:block;margin-top:3px;font-size:11px;opacity:.55;line-height:1.45}
-.obj .cout{flex:none;font-family:var(--banner);font-size:17px;color:var(--projo);
-  display:flex;align-items:center;gap:5px;white-space:nowrap}
+/* Le prix est une étiquette dorée : une valeur, pas une action. La ligne
+   entière est le bouton — un prix qui aurait l'air de s'enfoncer ferait croire
+   à deux cibles là où il n'y en a qu'une. */
+.obj .cout{flex:none;font-size:16px}
 .obj .cout i{width:14px;height:10px;border-radius:2px;
-  background:linear-gradient(135deg,var(--projo),#C9962A)}
+  background:linear-gradient(135deg,#FFF0BF,#C9962A);
+  box-shadow:0 0 0 1px rgba(42,30,4,.6)}
 /* Trop cher : on le montre quand même, et on le grise. Le retirer ferait un
    étal qui rétrécit quand on est pauvre, ce qui est la dernière chose à
    montrer à quelqu'un qui n'a pas encore compris à quoi sert la monnaie. */
@@ -199,7 +202,7 @@ const ligneObjet = (o, assez) => `<button class="obj" data-type="${esc(o.type)}"
     <small><span class="rar ${esc(o.rar)}">${esc((o.rar ?? '').toUpperCase())}</span>
       ${o.texte ? ' · ' + esc(o.texte) : ''}</small></div>
   ${o.possede ? '<span class="deja">DÉJÀ</span>' : ''}
-  <span class="cout"><i></i>${o.prix}</span>
+  <span class="cout tbf-etiquette" data-ton="or"><i></i>${o.prix}</span>
 </button>`;
 
 async function monterEtal() {

@@ -19,10 +19,6 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .top h1{font-family:var(--banner);font-size:20px;letter-spacing:.15em;margin:0}
 .top h1 small{display:block;font-size:8.5px;letter-spacing:.3em;opacity:.5;margin-top:3px;font-family:var(--ui)}
 
-.tabs{display:flex;gap:7px;padding:8px 16px 10px;flex:none}
-.tab{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.14);border-radius:8px;
-  color:inherit;padding:10px;font-family:var(--banner);font-size:12.5px;letter-spacing:.09em;cursor:pointer;opacity:.55}
-.tab.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
 
 .stats{display:flex;gap:9px;padding:0 16px 12px;font-size:11px;opacity:.6}
 .stats div{flex:1;text-align:center;border:1px solid rgba(242,238,228,.1);border-radius:7px;padding:8px 4px}
@@ -72,9 +68,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
     <h1 class="tbf-titre">MON CARNET<small>ce que tu as vécu</small></h1>
   </div>
 
-  <div class="tabs">
-    <button class="tab on" data-tab="mine">MES SOUVENIRS</button>
-    <button class="tab" data-tab="market">À RÉCUPÉRER</button>
+  <div class="tabs tbf-onglets">
+    <button class="tab tbf-onglet on" data-tab="mine">MES SOUVENIRS</button>
+    <button class="tab tbf-onglet" data-tab="market">À RÉCUPÉRER</button>
   </div>
 
   <div class="stats" id="stats"></div>

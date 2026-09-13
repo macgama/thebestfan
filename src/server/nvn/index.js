@@ -124,7 +124,19 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       userId: `bot:${randomUUID().slice(0, 8)}`,
       nom: ['Momo', 'Sarah', 'Le Gros', 'Nadia', 'Tonio'][i % 5],
       socket: null,
-      bot: { prochain: Date.now() + 1500 + Math.random() * 2500, adresse: 0.55 + Math.random() * 0.3 },
+      /* Un bot d'entraînement **enseigne**, il ne verrouille pas.
+
+         Il chantait toutes les 2,5 à 6 secondes, avec une adresse de 0,55 à
+         0,85. Or un geste de tempo demande quatre secondes et demie à exécuter :
+         **il était plus rapide qu'un humain ne peut physiquement l'être**, et
+         il poussait aussi fort. Les deux camps se neutralisaient, et cinq
+         minutes de duel se terminaient sur un nul.
+
+         Il chante maintenant toutes les 7 à 13 secondes, moins juste. Un joueur
+         appliqué gagne ; un débutant marque une ou deux fois et perd — ce qui
+         est le but d'un entraînement. */
+      bot: { prochain: Date.now() + 2500 + Math.random() * 3000,
+        adresse: 0.30 + Math.random() * 0.25 },
       loadout: modele,
     };
   }
@@ -197,7 +209,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       // Les bots jouent : un entraînement sans adversaire actif n'apprend rien.
       for (const [userId, m] of salle.membres) {
         if (!m.bot || salle.duel.termine || t < m.bot.prochain) continue;
-        m.bot.prochain = t + 2500 + Math.random() * 3500;
+        m.bot.prochain = t + 6000 + Math.random() * 5000;
         try {
           const j = salle.duel.joueur(userId);
           const carte = j.main[Math.floor(Math.random() * j.main.length)];

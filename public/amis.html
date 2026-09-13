@@ -25,14 +25,6 @@ h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em
    l'appui. Ce n'est pas de la coquetterie — c'est le seul retour qu'un doigt
    reçoit sur un écran, et deux écrans du même jeu qui ne réagissent pas
    pareil se lisent comme deux applications. */
-.onglets{display:flex;gap:7px;margin-bottom:14px}
-.onglet{flex:1;border:0;border-radius:10px;color:inherit;cursor:pointer;opacity:.6;
-  padding:10px 6px 9px;font-family:var(--banner);font-size:11.5px;letter-spacing:.07em;
-  background:rgba(16,22,31,.92);position:relative;
-  box-shadow:0 3px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(242,238,228,.1);
-  transition:transform .1s,box-shadow .1s,opacity .1s}
-.onglet:active{transform:translateY(3px);box-shadow:none}
-.onglet.on{opacity:1;background:var(--craie);color:#0B0E13;
   box-shadow:0 3px 0 #6E6A61,inset 0 1px 0 rgba(255,255,255,.45)}
 /* La pastille de ce qui attend une réponse. Sans elle, une demande reçue
    dormirait derrière un onglet fermé jusqu'à ce qu'on pense à l'ouvrir. */
@@ -60,15 +52,10 @@ h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em
 .gars .qui small{display:block;font-size:10.5px;opacity:.5;margin-top:4px}
 .gars .quoi{display:flex;gap:6px;flex:none}
 
-.bt{border:0;border-radius:9px;color:inherit;cursor:pointer;padding:9px 11px 8px;
-  font-family:var(--banner);font-size:11.5px;letter-spacing:.06em;background:rgba(16,22,31,.95);
-  box-shadow:0 3px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(242,238,228,.11);
-  transition:transform .1s,box-shadow .1s}
-.bt:active:not(:disabled){transform:translateY(3px);box-shadow:none}
-.bt:disabled{opacity:.4;cursor:default}
-.bt.oui{color:#fff;background:linear-gradient(180deg,#3FBE87,var(--vert) 60%,#137A50);
-  box-shadow:0 3px 0 #0C5537}
-.bt.non{color:#F0846F;background:rgba(224,64,44,.14);box-shadow:0 3px 0 rgba(0,0,0,.5)}
+/* Les boutons d'une demande d'ami : accepter, refuser. Ce sont des plaques,
+   et il ne leur reste ici que leur format — petit, deux par ligne. */
+.bt{padding:9px 12px;min-height:38px;font-size:11.5px;letter-spacing:.06em;--epaisseur:3px}
+.bt:disabled{filter:grayscale(.85);opacity:.45;cursor:default;pointer-events:none}
 .bt.plein{width:100%;margin-top:4px}
 
 /* ------------------------------------------------------ l'invitation KOP */
@@ -107,10 +94,10 @@ h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;ma
   <h1 class="tbf-titre">MES AMIS</h1>
   <div class="sub">CEUX QUI POUSSENT AVEC TOI</div>
 
-  <div class="onglets" id="onglets">
-    <button class="onglet on" data-vue="amis">AMIS</button>
-    <button class="onglet" data-vue="demandes">DEMANDES</button>
-    <button class="onglet" data-vue="trouver">TROUVER</button>
+  <div class="onglets tbf-onglets" id="onglets">
+    <button class="onglet tbf-onglet on" data-vue="amis">AMIS</button>
+    <button class="onglet tbf-onglet" data-vue="demandes">DEMANDES</button>
+    <button class="onglet tbf-onglet" data-vue="trouver">TROUVER</button>
   </div>
 
   <div id="corps"><div class="vide">Chargement…</div></div>
@@ -242,8 +229,8 @@ function vueAmis() {
   return `<div class="gens">${S.amis.map((g) => {
     const choix = S.deplie === g.id ? kopsPour(g) : '';
     return ligne(g,
-      `${S.kops.length ? `<button class="bt" data-kop="${esc(g.id)}">KOP</button>` : ''}
-       <button class="bt non" data-retirer="${esc(g.id)}">RETIRER</button>`)
+      `${S.kops.length ? `<button class="bt tbf-plaque" data-kop="${esc(g.id)}">KOP</button>` : ''}
+       <button class="bt tbf-plaque" data-ton="flare" data-retirer="${esc(g.id)}">RETIRER</button>`)
       + choix;
   }).join('')}</div>`;
 }
@@ -252,7 +239,7 @@ function vueAmis() {
 function kopsPour(g) {
   return `<div class="kops">
     <p>Dans quel KOP ?</p>
-    ${S.kops.map((k) => `<button class="bt" data-inviter="${esc(g.id)}"
+    ${S.kops.map((k) => `<button class="bt tbf-plaque" data-inviter="${esc(g.id)}"
         data-kopid="${esc(k.id)}">${esc(k.nom)} · ${esc(k.team_nom ?? '')}</button>`).join('')}
   </div>`;
 }
@@ -270,19 +257,19 @@ function vueDemandes() {
         <div class="d">${esc(i.parQui ?? 'Quelqu’un')} t’invite · ${esc(i.club ?? '')}
           · ${i.membres} membre${i.membres > 1 ? 's' : ''} · ${i.pot} au pot</div>
         <div class="quoi">
-          <button class="bt oui" data-kopoui="${esc(i.kopId)}">REJOINDRE</button>
-          <button class="bt non" data-kopnon="${esc(i.kopId)}">NON MERCI</button>
+          <button class="bt tbf-plaque" data-ton="vert" data-kopoui="${esc(i.kopId)}">REJOINDRE</button>
+          <button class="bt tbf-plaque" data-ton="flare" data-kopnon="${esc(i.kopId)}">NON MERCI</button>
         </div>
       </div>`).join('');
   }
   if (S.recues.length) {
     html += '<h2>ON TE DEMANDE</h2><div class="gens">' + S.recues.map((g) => ligne(g,
-      `<button class="bt oui" data-oui="${esc(g.id)}">ACCEPTER</button>
-       <button class="bt non" data-non="${esc(g.id)}">NON</button>`)).join('') + '</div>';
+      `<button class="bt tbf-plaque" data-ton="vert" data-oui="${esc(g.id)}">ACCEPTER</button>
+       <button class="bt tbf-plaque" data-ton="flare" data-non="${esc(g.id)}">NON</button>`)).join('') + '</div>';
   }
   if (S.envoyees.length) {
     html += '<h2>TU AS DEMANDÉ</h2><div class="gens">' + S.envoyees.map((g) => ligne(g,
-      `<button class="bt" data-retirer="${esc(g.id)}">ANNULER</button>`,
+      `<button class="bt tbf-plaque" data-retirer="${esc(g.id)}">ANNULER</button>`,
       '<small>en attente de sa réponse</small>')).join('') + '</div>';
   }
   return html;
@@ -295,7 +282,7 @@ function vueTrouver() {
       tu croiseras d’autres supporters.</div>`;
   }
   return `<div class="gens">${S.gens.map((g) => ligne(g,
-    `<button class="bt oui" data-demander="${esc(g.id)}">AJOUTER</button>`,
+    `<button class="bt tbf-plaque" data-ton="vert" data-demander="${esc(g.id)}">AJOUTER</button>`,
     `<span class="clubs">${(g.clubs ?? []).map((c) => `<span>${esc(c)}</span>`).join('')}</span>`,
   )).join('')}</div>`;
 }

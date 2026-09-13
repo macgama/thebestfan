@@ -32,11 +32,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .up.d1{animation-delay:.15s}.up.d2{animation-delay:.35s}.up.d3{animation-delay:.6s}
 @keyframes up{from{opacity:0;transform:translateY(18px)}}
 
-.go{margin-top:26px;background:linear-gradient(180deg,var(--flare),#B32A1D);border:1px solid rgba(255,255,255,.18);
-  border-radius:8px;color:#fff;padding:15px 40px;font-family:var(--banner);font-size:17px;
-  letter-spacing:.1em;cursor:pointer;box-shadow:0 6px 0 #7A1A11}
-.go:active{transform:translateY(4px);box-shadow:0 2px 0 #7A1A11}
-.go[disabled]{filter:grayscale(.8);opacity:.5;pointer-events:none}
+/* Le bouton qui ouvre le jeu. Une plaque — il ne garde que sa marge et sa
+   largeur, qui sont celles d'un écran d'accueil et non d'un formulaire. */
+.go{margin-top:26px;padding:15px 40px;font-size:17px;letter-spacing:.1em}
 .ghost{margin-top:14px;background:none;border:0;color:var(--projo);font-size:12.5px;cursor:pointer;
   text-decoration:underline;text-underline-offset:3px;font-family:inherit}
 
@@ -177,7 +175,7 @@ input:focus{outline:none;border-color:var(--projo)}
       <p class="sub" style="margin-top:9px">Celui pour qui tu chanteras. Tu pourras en suivre un second tout de suite après.</p>
       <input id="q" placeholder="Cherche ton club…" autocomplete="off" spellcheck="false">
       <div class="res" id="res"></div>
-      <button class="go" id="b2" disabled>C'EST MON CLUB</button>
+      <button class="go tbf-plaque" data-ton="flare" id="b2" disabled>C'EST MON CLUB</button>
     </div>
   </section>
 
@@ -203,7 +201,7 @@ input:focus{outline:none;border-color:var(--projo)}
     <h1 class="title" style="font-size:26px">BIENVENUE<br>DANS LA <span class="em">TRIBUNE</span></h1>
     <div class="recap" id="recap"></div>
     <p class="sub" id="final"></p>
-    <button class="go" id="b4">ENTRER</button>
+    <button class="go tbf-plaque" data-ton="flare" id="b4">ENTRER</button>
     <button class="ghost" id="b4b">Suivre un second club</button>
   </section>
 </main>

@@ -93,6 +93,72 @@ export const STADES = [
     mods: { pushMult: 0.9, ferveurBonus: 1.1 },
     effet: 'La foule est loin : on pousse moins, mais la ferveur se gagne plus vite.',
   },
+
+  /* ------------------------------------------------------- cinq lieux de plus
+
+     Cinq stades pour dix, et c'était peu : en duel comme au Virage, le lieu se
+     tire sur l'identifiant de la rencontre, donc un joueur revoyait le même
+     décor un soir sur cinq. Dix lieux, c'est une saison sans se répéter.
+
+     Chacun change **une** règle, ou deux au plus. Un stade qui toucherait à
+     quatre choses ne s'apprendrait pas : le joueur doit pouvoir lire le nom du
+     lieu et savoir ce qu'il va devoir faire autrement.                      */
+
+  {
+    id: 'tole',
+    nom: 'Le Toit de Tôle',
+    rar: 'rare',
+    texte: 'Une casquette de tôle ondulée au-dessus du virage. Le bruit ne sort pas.',
+    /* Le contraire du Chaudron : ça ne porte pas plus loin, ça revient sur
+       soi. On s'entend pousser et on ne s'entend plus compter — la fenêtre se
+       ferme et la poussée grossit. Le stade des cartes brutales. */
+    mods: { pushMult: 1.14, tempoWindow: 0.86 },
+    effet: 'On s’entend pousser, on ne s’entend plus compter : le rythme devient dur à tenir.',
+  },
+  {
+    id: 'marin',
+    nom: 'Le Bord de Mer',
+    rar: 'rare',
+    texte: 'Le vent de travers entre par la tribune ouverte et emporte la moitié des chants.',
+    /* Le vent défait les gestes propres et lave la fatigue. Un lieu qui
+       récompense le nombre plutôt que la précision : dix chants moyens y
+       valent mieux qu'un geste parfait. */
+    mods: { perfectBonus: 0.82, breathBonus: 1.22 },
+    effet: 'Le vent emporte les beaux gestes et rend le souffle plus vite, pour tous.',
+  },
+  {
+    id: 'huisclos',
+    nom: 'Le Stade Vide',
+    rar: 'epique',
+    texte: 'Huis clos. On entend le ballon, les crampons, et chaque fausse note.',
+    /* Sans foule pour couvrir, tout s'entend : le geste est facile à placer —
+       plus rien ne masque le rythme — mais la ferveur ne monte pas, faute de
+       monde pour la porter. Le lieu où l'on joue juste et où l'on gagne peu. */
+    mods: { tempoWindow: 1.3, ferveurBonus: 0.7 },
+    effet: 'Rien ne couvre le rythme, et rien ne le porte non plus : la ferveur monte à peine.',
+  },
+  {
+    id: 'neige',
+    nom: 'La Neige',
+    rar: 'epique',
+    texte: 'Les lignes ont été repassées en bleu trois fois. On ne les voit déjà plus.',
+    /* Tout est lent. On a le temps de voir venir un contre — donc d'y
+       résister — et on a moins d'occasions de chanter. Le stade des parties
+       longues, où l'écart se creuse par petites touches. */
+    mods: { tempoInterval: 130, parryResist: 1.3 },
+    effet: 'Tout est ralenti : moins d’occasions de chanter, mais les contres portent moins.',
+  },
+  {
+    id: 'annexe',
+    nom: 'Le Terrain Annexe',
+    rar: 'commune',
+    texte: 'Deux cents personnes le long d’une main courante. Tout le monde se connaît.',
+    /* Personne, mais tout le monde compte. La poussée est faible et chaque
+       carte revient vite : un lieu où l'on joue beaucoup de petites choses, et
+       le seul où une main entière peut se jouer deux fois. */
+    mods: { pushMult: 0.86, refundBonus: 1.35 },
+    effet: 'On pousse peu, mais le souffle dépensé revient bien mieux.',
+  },
 ];
 
 export const STADE_BY_ID = new Map(STADES.map((s) => [s.id, s]));

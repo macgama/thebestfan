@@ -5,8 +5,7 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « le butin prend la place, et quatre appels
-morts sont tombés avec ».
+Dernière mise à jour : session « la plaque, et quatre productions ».
 
 ---
 
@@ -2228,9 +2227,398 @@ trois cartes dessinées sur cinq.
 
 ---
 
+## 4 vicies quinquies. Le loading, les mini-jeux, et le duel qui finissait nul
+
+### Dix secondes d'attente, et le bonjour qui se jouait derrière le rideau
+
+L'écran d'ouverture durait le temps d'un chargement. Il dure maintenant dix
+secondes pleines — `DUREE = 10_000` dans `public/ouverture.js` — avec une jauge
+déterminée qui avance à la frame, et un seul chemin de sortie : `setTimeout`.
+Il n'y en avait pas qu'un ; la page pouvait partir plus tôt.
+
+En allongeant le rideau, un défaut plus ancien est devenu visible. L'accueil
+saluait le joueur — animation, nom du Fanzzy, jauge d'évolution — **pendant que
+l'écran d'ouverture le couvrait encore**. À deux secondes cela ne se voyait pas.
+À dix, le joueur arrivait sur une page déjà finie de s'animer.
+
+L'ouverture émet donc `tbf:ouverture-finie` au moment où elle se retire, et
+`index.html` attend cet événement pour saluer :
+
+    if (document.getElementById('ouverture')) {
+      addEventListener('tbf:ouverture-finie', saluer, { once: true });
+    } else { saluer(); }
+
+Le `else` compte autant que le `if` : sans lui, toute page servie sans écran
+d'ouverture — une session déjà ouverte, un test — n'aurait plus jamais salué.
+
+Trois contrôles de l'accueil sont tombés au rouge sur les dix secondes. Ils
+attendaient des durées écrites en dur. Ils dérivent maintenant leurs attentes de
+`DUREE` : changer la durée du rideau ne peut plus les casser.
+
+### Cinq mini-jeux n'arrivaient jamais au Virage
+
+Le jeu compte quinze gestes. Le Virage n'en proposait que dix : son répertoire
+comptait douze chants, et les cinq gestes `tifo`, `mosaique`, `memoire`,
+`echarpe` et `capo` n'étaient portés par aucun d'eux. Les mini-jeux existaient,
+étaient testés, et restaient hors d'atteinte — d'où l'impression qu'il n'y avait
+« que les jeux liés au tempo ».
+
+Cinq chants ont été écrits pour les porter, dans `src/shared/duel/chants.js` :
+
+| chant | geste | coût | puissance |
+|---|---|---|---|
+| La bâche | tifo | 30 | 54 |
+| Le damier | mosaique | 28 | 50 |
+| Au point | memoire | 26 | 47 |
+| Le moulinet | echarpe | 25 | 42 |
+| L'appel du capo | capo | 29 | 49 |
+
+`ORDRE` les intercale au lieu de les ajouter à la queue : un joueur qui débloque
+le répertoire dans l'ordre rencontre un geste neuf régulièrement, et non cinq
+d'un coup à la fin.
+
+`virage-smoke.mjs` vérifie désormais que **les quinze gestes passent tous au
+Virage**. La liste attendue y est écrite à la main, dix-sept chants et quinze
+gestes : la dériver du module rendrait le contrôle d'accord avec lui-même quoi
+qu'il arrive.
+
+Les cinq illustrations ont été produites et rangées en trois formats par
+`node scripts/chant-images.mjs` — dix-sept chants dessinés, et `npm run pages`
+le dit.
+
+### Le duel finissait toujours par un nul
+
+Contre un bot, un duel de cinq minutes ne produisait aucun but. Ce n'était pas
+une impression : un chant de tempo demande quatre secondes et demie et valait
+27 points, la corde retombait de 2,5 par seconde, et le but était à 300. Un
+joueur appliqué poussait donc moins vite que la corde ne retombait.
+
+Les réglages ont bougé, et ils vivent tous dans le registre — donc dans l'écran
+d'administration :
+
+| réglage | avant | après |
+|---|---|---|
+| `duel.but_a` | 300 | 200 |
+| `duel.chant_puissance` | 30 | 44 |
+| `duel.decroissance` | 2,5 (en dur) | 1,2 |
+| `virage.but_a` | 400 | 260 |
+| `virage.decroissance` | 3 | 1,4 |
+
+`duel.decroissance` n'existait pas : la valeur était une constante de module.
+Elle est devenue un accesseur — `get decayPerSec() { return reglage(...) }` —
+ce qui la rend vivante sans toucher un seul appelant. J'ai vérifié d'abord que
+personne ne la déstructurait au chargement, faute de quoi la valeur aurait été
+figée à la première lecture.
+
+Le bot a été affaibli : il chante toutes les six à onze secondes au lieu de deux
+et demie à cinq et demie, avec une adresse de 0,30 à 0,55.
+
+**Le contrôle qui manquait.** Vingt-six contrôles éprouvaient le duel — le
+souffle se débite, un geste raté ne pousse pas, un bouclier absorbe — et aucun
+ne vérifiait qu'**une partie produise un but**. Tous étaient verts pendant que
+le jeu ne se jouait plus.
+
+Ma première version de ce contrôle jouait en solo, et elle ne mordait pas :
+même avec l'ancien équilibrage, un joueur que personne ne contre finit par
+marquer. Le défaut n'existe qu'**avec quelqu'un en face**. Réécrit à deux, il
+donne 3 buts avec le nouvel équilibrage et **0 avec l'ancien**.
+
+### La légendaire qui ne tombait jamais
+
+Trouvé en repassant la batterie, et non dans ce qui était demandé.
+
+`scripts/economie.mjs` a refusé de tourner : son garde-fou a vu que les
+constantes du serveur avaient bougé sous lui, et il a préféré s'arrêter plutôt
+que publier des chiffres périmés. C'est exactement ce pour quoi il avait été
+écrit.
+
+En le remettant au niveau, la règle réelle des places dit ceci :
+
+- `drawPack` tirait cinq cartes : les trois premières communes, **les deux
+  dernières avec un tirage de rareté** — et `RATES` le documente encore, « les
+  deux dernières places sont les seules qui peuvent tomber sur une légendaire ».
+- `openPack` a ensuite fait des **trois dernières places** des places ouvertes,
+  qui rendent un objet, une tenue, une carte d'action ou des écharpes, et jamais
+  un supporter. `tirerAutreChose` ne peut pas échouer : chaque catégorie sans
+  stock retombe sur les écharpes.
+
+Les deux règles sont justes chacune de son côté. Ensemble, elles font que le
+tirage de rareté roule sur des cartes **systématiquement jetées** : les deux
+seules places que le joueur reçoive visaient la commune. **Aucune légendaire ne
+pouvait sortir d'un booster**, et les quatorze légendaires publiées au stade 1
+étaient hors d'atteinte — le paquet de bienvenue mis à part.
+
+Rien ne pouvait le voir : les deux fonctions vivent à cent lignes d'écart, et
+chacune était cohérente. Le simulateur le voit parce qu'il a appris à **mesurer
+ce qu'un booster rend** au lieu de le supposer — cent mille paquets ouverts à
+blanc, et la liste des raretés qui en sortent. Une rareté absente arrête le
+script avant les deux mille collections simulées, au lieu de tourner jusqu'au
+plafond pour diviser par zéro.
+
+Le tirage de rareté va désormais aux deux places que le joueur reçoit
+(`PLACES_QUI_ROULENT = 2` dans `drawPack`). La cadence attendue passe de 0,20
+légendaire par booster — l'intention écrite, jamais atteinte — à 0,155, la
+deuxième place ne rendant un supporter que sept fois sur dix. Les taux eux-mêmes
+n'ont pas été touchés.
+
+Deux mutations pour éprouver le nouveau contrôle : `PLACES_QUI_ROULENT = 0`, et
+une table `RATES` où la légendaire vaut zéro — celle-ci ne passe par aucun
+motif de texte. Les deux mordent.
+
+Le simulateur perd son option `--plancher` : elle explorait un plancher de
+communes que le serveur n'a plus.
+
+### Ce qui reste en écart entre le Virage et le duel
+
+Les deux modes partagent maintenant le même répertoire, les mêmes quinze gestes
+et le même barème. Il reste **une** différence, et elle est de fond :
+
+- **En duel**, le geste est *imposé* : une rotation le choisit, et le joueur
+  l'exécute.
+- **Au Virage**, le joueur *choisit une carte de chant*, et le geste découle de
+  la carte.
+
+Ce n'est pas un oubli de câblage : ce sont deux boucles de jeu différentes, l'une
+d'adresse pure, l'autre de main et de gestion. Les aligner est un choix de
+conception, pas une correction — et il n'a pas été fait ici. Les deux voies
+possibles :
+
+1. **Le Virage prend la rotation du duel.** Les cartes de chant disparaissent,
+   le deck ne sert plus au Virage. Simple pour le joueur, mais le deck perd la
+   moitié de son objet.
+2. **Le duel prend la main du Virage.** On y joue ses cartes de chant au lieu de
+   subir la rotation. Le deck sert partout, la progression a un sens dans les
+   deux modes — mais le duel devient plus lent à comprendre.
+
+La deuxième va dans le sens du reste du jeu. Elle demande une session à elle
+seule.
+
+---
+
+## 4 vicies sexies. La plaque, et quatre productions
+
+### L'interface avait raison et n'avait pas de matière
+
+Tout était juste et tout était plat : un rectangle à filet d'un pixel posé sur
+une photo, la même chose pour un bouton, un panneau, un onglet et une carte.
+Rien n'avait de **matière**, donc rien n'avait de poids — on ne distinguait pas
+d'un coup d'œil ce qui se touche de ce qui s'affiche.
+
+`ui.css` porte maintenant **la plaque**, le vocabulaire d'objet de tout ce qui
+se touche. Quatre traits la fabriquent, et ce sont ceux de Brawl Stars ou de
+Clash Royale :
+
+1. **le cerne** — deux pixels presque noirs tout autour. C'est ce qui fait
+   « jeu » plus que tout le reste : un objet détouré se *pose* sur l'image au
+   lieu d'y être découpé ;
+2. **la tranche** — cinq pixels plus sombres dessous, donc une épaisseur ;
+3. **la lumière** — un filet clair au bord supérieur, dedans ;
+4. **l'ombre portée** — l'objet décolle du fond.
+
+Ce qui appartient à ce jeu-ci et non aux autres :
+
+— **le lettrage de banderole** : `--banner` en capitales espacées, avec une
+  ombre dure, pour que le texte soit peint *sur* la plaque ;
+— **l'écharpe** : des rayures obliques à deux couleurs, le seul motif du jeu.
+  Elle a remplacé la barre d'accent dorée des titres — une règle, et les vingt
+  écrans la portent ;
+— **le coin coupé** : le bas-droit presque carré quand les trois autres sont
+  ronds. Une plaque vissée, pas un galet ;
+— **la couleur par destination** : `data-ton` vaut or, flare, vert, bleu,
+  violet ou craie. Sur l'accueil, **un ton par ligne de tuiles** — rouge pour
+  les deux façons de jouer, bleu pour ce qu'on possède et ce qui se passe, vert
+  pour la mémoire et le rang, violet pour les gens, or pour ce qui s'achète. La
+  couleur devient une catégorie et non une décoration.
+
+Les briques : `.tbf-plaque` (bouton), `.tbf-case` (tuile carrée),
+`.tbf-onglets`/`.tbf-onglet` (barre d'onglets), `.tbf-cadre` (le panneau qui
+compte), `.tbf-etiquette` (une valeur, qui ne se touche pas), `.tbf-echarpe`.
+
+**`.pan` reste ce qu'il est.** Un écran entièrement en relief est un écran sans
+hiérarchie — c'est le défaut exact des interfaces « gaming » ratées. Le relief
+va à ce qui se touche et au panneau principal ; les dizaines de surfaces calmes
+gardent leur filet d'un pixel.
+
+### Sept barres d'onglets, sept réglages
+
+`gap` valait 5, 6, 7 ou 8 ; le corps du texte 11, 11.5, 12.5, 13 ou 13.5 ;
+l'onglet actif était tantôt une plaque claire, tantôt un fond translucide.
+Personne ne pouvait le voir, puisqu'on ne regarde jamais deux écrans à la fois —
+et c'est exactement pour ça que ça dérive.
+
+Les sept sont ramenées sur `.tbf-onglets`. Les anciens noms de classe restent
+dans le balisage, parce que le JavaScript de ces pages les interroge : ce qui
+part, ce sont les règles qui les peignaient.
+
+### Deux défauts qu'aucun contrôle ne pouvait voir, et leurs contrôles
+
+**Une plaque peinte en rien.** Toutes ses couleurs viennent de cinq variables.
+La table des tons commençait par `[data-ton]{…}`, qui ne s'applique qu'aux
+éléments **portant** l'attribut : une plaque sans ton n'avait donc ni face, ni
+cerne, ni encre, ses règles devenaient invalides une par une, et l'objet se
+rendait transparent. Le bouton de menu de l'accueil a disparu comme ça —
+présent, cliquable, mesuré comme visible, et invisible à l'œil.
+
+**Un bouton resté au style du navigateur.** Le pendant exact, par le chemin
+inverse : la règle qui l'habillait s'en va, et le bouton ne devient pas
+invisible, il redevient un bouton système. Gris clair, bordure en relief,
+parfaitement à sa place et étranger au jeu. C'est arrivé aux deux onglets du
+deck, écrits par le JavaScript dans un gabarit de chaîne — mon remplacement de
+balisage ne les a pas vus.
+
+Le tour éprouve maintenant les deux, en lisant ce que le navigateur a **résolu**
+et non ce que la feuille déclare. Le second a trouvé un troisième cas dans la
+minute qui a suivi son écriture : deux onglets de `fanzzy.html` sont des
+`<button>` et non des `<a>`.
+
+`CAPTURE=1 npm run tour:ui` lève désormais le rideau d'ouverture avant de
+photographier — sans quoi la capture de l'accueil montrait l'écran de
+chargement pendant dix secondes.
+
+---
+
+### Cinq légendaires par série, partout
+
+Il y en avait quatorze pour neuf séries : cinq aux REVENANTS, trois aux ÉPOQUES,
+deux ailleurs, et **zéro** à VIRAGE NORD, au VIRAGE IMPOSSIBLE et à CE QUI
+TRAÎNE AU STADE. Un joueur qui collectionnait ces trois-là ouvrait des boosters
+sans sommet.
+
+Trente et une nouvelles dans `src/shared/fanzzy/dex-legendes.js` — un fichier à
+part, parce qu'une légendaire se lit **avec les huit autres** : c'est le point le
+plus haut d'une série, et les neuf points hauts doivent se tenir. Éparpillées
+dans deux mille lignes, personne ne pouvait les comparer, et c'est comme ça
+qu'on se retrouve avec cinq d'un côté et zéro de l'autre.
+
+Toutes ont un défaut, aucune n'a de lignée, leur puissance de cri va de 76 à 84,
+et elles prennent en charge les gestes que presque personne ne portait au
+catalogue : c'est la carte qu'on regarde, donc celle par qui on découvre qu'un
+geste existe.
+
+Conséquence à connaître : la collection complète passe de **373 à 695 boosters**
+médians. Les quarante-cinq légendaires sont la queue de la courbe, et les dix
+derniers pour cent coûtent désormais plus de la moitié du total. `npm run
+economie` le recalcule à la demande.
+
+**Trouvé au passage** : l'administration ne connaissait que **trois gestes sur
+quinze**. La liste était écrite à la main et datait du jour où le jeu n'en avait
+que trois ; douze sont arrivés depuis sans que personne ne repasse par là.
+L'écran refusait donc d'enregistrer une carte dont le cri portait l'un des douze
+autres — la carte était juste, le jeu la jouait, seul cet écran disait non. La
+liste est maintenant importée de `ferveur/gestures.js`.
+
+### Dix-sept pièces d'équipement
+
+Sept pièces pour deux emplacements, c'était vingt et une combinaisons dont la
+moitié sans intérêt ; en pratique tout le monde finissait sur mégaphone +
+thermos, et le sac cessait d'être une décision. Dix de plus en font cent
+trente-six.
+
+Gants coupés, sifflet à roulette, carnet de chants, bonnet de virage, brassard
+de capo, drapeau à deux mains, sac de cartons, cornet de brume, chronomètre de
+poche, fanion de 1904. **Aucune n'a que des bonus** — la règle du module tient,
+et elles ont été écrites en pensant au revers d'abord.
+
+Les dix sont dessinées. La chaîne `stuff-images` **recadre désormais sur l'objet
+détouré avant de réduire** : le générateur a rendu ces dix-là en seize-neuvièmes
+au lieu du carré demandé, et sans ce recadrage elles seraient sorties au quart
+de la vignette, entourées de vide, sans que rien ne le dise.
+
+### Dix stades — et le stade n'existait nulle part
+
+Cinq stades pour dix. Le Toit de Tôle, Le Bord de Mer, Le Stade Vide, La Neige,
+Le Terrain Annexe. Dessinés, mesurés, leurs plans écrits.
+
+Mais surtout : **le duel n'avait aucun stade, et les effets des stades
+n'étaient appliqués nulle part.**
+
+`stades.js` explique en tête que le lieu appartient au match et qu'« en duel, il
+est tiré parmi ceux que les deux joueurs possèdent ». C'était écrit, documenté,
+et `stadeDeLaRencontre` n'était appelée que par le Virage. Le duel se jouait
+sur un fond noir uni pendant que le Virage montrait son lieu.
+
+Et les `mods` de ces lieux — « le souffle revient bien plus lentement », « un
+geste parfait paie double » — n'étaient composés avec rien : le Virage envoyait
+son stade au client pour qu'il le dessine, et c'était tout. Dix lieux décrits,
+zéro lieu qui changeait quoi que ce soit.
+
+Les deux modes partagent maintenant `avecLieu()`, et le duel affiche son stade
+sous la corde avec le nom du lieu et sa phrase d'effet — un stade qui change les
+règles sans le dire donne l'impression que le jeu triche.
+
+Un piège évité en chemin : `stadeDeLaRencontre` attend une graine **numérique**.
+L'identifiant d'un duel est une chaîne, `Number('d-7f3a')` vaut `NaN`, et la
+fonction retombe sur zéro — donc sur le premier stade, pour tous les duels du
+jeu. Le lieu aurait existé sans jamais changer, ce qui est la façon la plus
+discrète de ne pas exister. D'où `hachage()`.
+
+Les invites des stades n'existaient nulle part, contrairement à la règle que le
+projet s'est donnée pour les deux autres chaînes. Les dix sont maintenant dans
+`scripts/stade-images.mjs --invites`.
+
+### Vingt-neuf cartes d'action, et sept mini-jeux
+
+**Cinq cartes, cinq mécaniques neuves.** Les vingt-quatre cartes d'origine se
+partageaient vingt et un types d'effet : en ajouter cinq qui recombinent les
+mêmes verbes aurait donné cinq cartes qu'on reconnaît en une partie et qu'on
+cesse de lire à la deuxième. Chacune a donc sa branche dans le moteur, et
+chacune touche à une chose que rien ne touchait :
+
+| carte | ce qu'elle fait, et que rien d'autre ne faisait |
+|---|---|
+| **L'Ancre** | la corde cesse de retomber, 8 s, pour les deux camps |
+| **La Mise** | le prochain chant compte double ; raté, il coûte 20 de souffle |
+| **La Tournée** | les deux prochaines cartes ne coûtent **rien** — on joue ce qu'on n'a pas les moyens de jouer |
+| **Le Long Chant** | pousse un peu, dix fois, sur dix secondes — passe sous la Bâche, se fait manger par la décroissance |
+| **Le Retournement** | efface la moitié de l'avance adverse, et seulement si l'on est mené |
+
+Le Retournement est marqué `adverse` dans `PORTEE`, donc il ne va pas au
+Virage. Il ne touche pourtant personne — il divise un écart. Mais dans une salle
+de trois cents, cet écart est le travail de la tribune d'en face : **la portée
+ne se lit pas à la cible technique de l'effet, elle se lit à qui le subit.**
+
+**Deux mini-jeux, et ils mesurent autre chose.** Les cinq épreuves existantes
+demandent toutes la même chose sous des habits différents — reproduire ce qu'on
+vient de voir. Une seule qualité de joueur, mesurée cinq fois.
+
+— **Le tri** : vingt-quatre cartons de trois couleurs, on ramasse une couleur,
+  six secondes. Rien n'est caché, rien ne s'éteint. Un mauvais carton **coûte un
+  bon**, sans demi-mesure : c'est la seule note du répertoire où s'arrêter quand
+  on n'est plus sûr est un choix qui se défend. Aucun équipement ne l'aide, et
+  c'est voulu.
+— **Le compte** : le rebours s'affiche trois secondes puis s'éteint, et il faut
+  tomber juste quand même. Le seul endroit du jeu où il n'y a rien à regarder au
+  moment d'agir. La cible change à chaque fois, sinon on l'apprendrait une fois
+  pour toutes.
+
+`epreuves:ui` les joue toutes les sept dans un vrai navigateur. Les deux
+contrôles qui portent : tout ramasser sans regarder vaut **0,00**, et tomber à
+deux tolérances de la cible vaut **0,00** — sans eux, une note constante
+passerait au vert.
+
+### Un contrôle qui épinglait un nombre
+
+`virage-smoke` affirmait `duel.size === 7` : le nombre de cartes qui ne vont pas
+au Virage. Un nombre ne dit rien de ce qu'il compte — il rougit dès qu'on ajoute
+une carte, quelle qu'elle soit, et il se répare en écrivant 8, ce qui ne vérifie
+plus rien. Il nomme maintenant les huit cartes, et ajouter une carte qui vise
+l'adversaire oblige à venir l'écrire là, donc à se demander si elle a sa place au
+Virage. C'est la question que ce contrôle existe pour poser.
+
+---
+
 ## 5. Ce qui reste à faire
 
 Par ordre d'utilité.
+
+0. **Trancher entre la rotation et la main.** C'est la seule différence qui
+   reste entre le Virage et le duel : en duel le geste est imposé par une
+   rotation, au Virage il découle de la carte de chant qu'on joue. Tout le reste
+   — répertoire, quinze gestes, barème — est déjà commun. Les deux voies sont
+   décrites en fin de section 4 vicies quinquies. Faire jouer ses cartes en duel
+   est celle qui va dans le sens du jeu, et elle demande une session à elle
+   seule. **C'est une décision de conception, pas une correction** : rien n'est
+   cassé tant qu'elle n'est pas prise.
 
 1. **Illustrer les âges.** C'est le seul manque qui se voit à l'écran. Deux cent
    soixante-seize âges à dessiner, plus les tenues et les objets portés. La

@@ -70,6 +70,55 @@ export const STUFF = [
   { id: 'bache', nom: 'Bout de bâche', rar: 'legendaire',
     texte: 'Le contre devient redoutable, le chant s\u2019affaiblit.',
     mods: { parryBonus: 1.6, tempoWindow: 0.85 } },
+
+  /* ---------------------------------------------------- le second sac (10)
+
+     Sept pièces pour deux emplacements, c'était **vingt et une combinaisons** —
+     dont la moitié sans intérêt, une pièce commune et une légendaire n'ayant
+     rien à se dire. En pratique tout le monde finissait sur mégaphone +
+     thermos, et le sac cessait d'être une décision.
+
+     Dix de plus en font cent trente-six. Ce n'est pas le nombre qui compte :
+     c'est qu'aucune ne soit universellement meilleure. Chacune de ces dix vise
+     **un geste précis** ou **une façon de jouer**, et coûte quelque chose à
+     ceux qui jouent autrement.
+
+     La règle du module tient : **pas une seule n'a que des bonus.** Elles ont
+     été écrites en pensant au revers d'abord.                                */
+
+  { id: 'gants', nom: 'Gants coupés', rar: 'commune',
+    texte: 'Le martelage part plus vite, la tenue glisse des doigts.',
+    mods: { mashBonus: 1.18, holdForgive: -1 } },
+  { id: 'sifflet', nom: 'Sifflet à roulette', rar: 'commune',
+    texte: 'Le contretemps devient lisible, le tempo se brouille.',
+    mods: { tempoInterval: -55, tempoWindow: 0.92 } },
+  { id: 'carnet', nom: 'Carnet de chants', rar: 'commune',
+    texte: 'Tu te souviens mieux, tu improvises moins.',
+    mods: { perfectBonus: 1.22, mashBonus: 0.9 } },
+
+  { id: 'bonnet', nom: 'Bonnet de virage', rar: 'rare',
+    texte: 'Le souffle revient, la fenêtre se resserre.',
+    mods: { breathBonus: 1.24, tempoWindow: 0.9 } },
+  { id: 'brassard', nom: 'Brassard de capo', rar: 'rare',
+    texte: 'Tu tiens la corde longtemps, tu la reprends mal.',
+    mods: { holdBonus: 1.3, holdForgive: 2, refundBonus: 0.82 } },
+  { id: 'drapeau', nom: 'Drapeau à deux mains', rar: 'rare',
+    texte: 'Les tifos portent loin ; les deux mains prises, le martelage souffre.',
+    mods: { parryBonus: 1.3, mashTime: 500 } },
+
+  { id: 'tifosac', nom: 'Sac de cartons', rar: 'epique',
+    texte: 'La mosaïque se monte vite, le souffle y passe.',
+    mods: { perfectBonus: 1.34, breathBonus: 0.84 } },
+  { id: 'cornet', nom: 'Cornet de brume', rar: 'epique',
+    texte: 'Une poussée qui ne se retourne jamais contre toi, et qui coûte.',
+    mods: { backfire: false, costPenalty: 1.3 } },
+  { id: 'chrono', nom: 'Chronomètre de poche', rar: 'epique',
+    texte: 'Le rythme se lit à la seconde près, le contre ne se lit plus du tout.',
+    mods: { tempoWindow: 1.3, parryResist: 0.78 } },
+
+  { id: 'fanion', nom: 'Fanion de 1904', rar: 'legendaire',
+    texte: 'Tout tient plus longtemps. Rien ne repart vite.',
+    mods: { holdBonus: 1.5, parryResist: 1.35, tempoInterval: 120, mashBonus: 0.8 } },
 ];
 
 export const SKIN_BY_ID = new Map(SKINS.map((s) => [s.id, s]));

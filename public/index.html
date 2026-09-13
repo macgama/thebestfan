@@ -51,11 +51,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   background:var(--panneau);backdrop-filter:blur(10px);backdrop-filter:blur(5px);text-align:center}
 .bullet b{display:block;font-family:var(--banner);font-size:11.5px;letter-spacing:.05em;color:var(--projo)}
 .bullet span{font-size:10px;opacity:.55;line-height:1.35;display:block;margin-top:4px}
-.cta{margin:22px 18px 6px;background:linear-gradient(180deg,var(--flare),#B32A1D);
-  border:1px solid rgba(255,255,255,.2);border-radius:10px;color:#fff;padding:17px;
-  font-family:var(--banner);font-size:18px;letter-spacing:.1em;cursor:pointer;display:block;
-  text-align:center;text-decoration:none;box-shadow:0 7px 0 #7A1A11,0 16px 44px rgba(224,64,44,.34)}
-.cta:active{transform:translateY(5px);box-shadow:0 2px 0 #7A1A11}
+/* La plaque d'entrée de l'écran non connecté. Elle ne garde que sa marge : sa
+   matière est celle de `ui.css`, comme partout ailleurs. */
+.cta{margin:22px 18px 10px}
 .second{display:block;text-align:center;padding:12px;color:var(--craie);opacity:.6;font-size:13px;
   text-decoration:none}
 .second b{color:var(--projo)}
@@ -75,7 +73,12 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 
 /* ------------------------------------------------------- bande du haut */
-.haut{display:flex;align-items:center;gap:8px;flex:none}
+/* La barre du haut est faite des mêmes plaques que le reste. Trois réglages
+   seulement : une tranche plus fine, parce qu'un objet de trente-huit pixels
+   n'a pas la même épaisseur qu'un bouton de cinquante-huit ; et l'alignement
+   par le haut, la tranche occupant les derniers pixels. */
+.haut{display:flex;align-items:flex-start;gap:8px;flex:none}
+.haut .tbf-plaque,.haut .tbf-cadre{--epaisseur:3px}
 .moi{display:flex;align-items:center;gap:9px;padding:6px 14px 6px 6px;min-width:0;
   text-decoration:none}
 /* Le niveau se pose sur l’avatar plutôt que de prendre une ligne : la barre
@@ -111,10 +114,11 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   margin-left:1px;font-weight:400}
 .jeton:active .plus{opacity:1;color:var(--projo)}
 
-.bourse{display:flex;gap:6px;margin-left:auto;align-items:center}
-.jeton{display:flex;align-items:center;gap:6px;padding:8px 11px;font-weight:700;font-size:14px;
-  font-variant-numeric:tabular-nums;cursor:default}
-.jeton i{width:15px;height:15px;flex:none;font-style:normal}
+.bourse{display:flex;gap:6px;margin-left:auto;align-items:flex-start}
+.jeton{gap:6px;padding:9px 10px;min-height:44px;font-size:15px;letter-spacing:.02em;
+  font-variant-numeric:tabular-nums}
+.jeton i{width:15px;height:15px;flex:none;font-style:normal;
+  box-shadow:0 0 0 1.5px var(--cerne)}
 .jeton.ech i{border-radius:3px;
   background:repeating-linear-gradient(45deg,var(--projo) 0 4px,var(--craie) 4px 8px)}
 .jeton.pack i{border-radius:50%;
@@ -123,8 +127,11 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Le menu. L'accueil ne charge pas la barre commune : sans lui, tout ce qui
    n'a pas sa tuile — le deck, le télétexte, le compte — serait injoignable
    depuis l'écran principal. */
-.burger{width:42px;height:42px;display:grid;place-items:center;gap:4px;padding:11px 10px;flex:none}
-.burger span{display:block;height:2px;width:100%;background:var(--craie);border-radius:2px}
+/* Les trois barres s'empilent : la plaque, elle, range ses enfants en ligne. */
+.burger{width:44px;height:44px;min-height:0;flex-direction:column;gap:4px;
+  padding:12px 10px;flex:none}
+.burger span{display:block;height:2.5px;width:100%;background:var(--encre);border-radius:2px;
+  box-shadow:0 1px 0 rgba(0,0,0,.25)}
 .voile{position:fixed;inset:0;z-index:8;background:rgba(4,6,10,.72);opacity:0;
   pointer-events:none;transition:opacity .2s ease;backdrop-filter:blur(3px)}
 .voile.on{opacity:1;pointer-events:auto}
@@ -161,27 +168,20 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    rien ne le signale. Le rail tient dans la hauteur qu'on lui donne ; les
    tuiles se serrent, et `aspect-ratio` cède devant `min-height` plutôt que
    d'imposer une hauteur que la colonne n'a pas. */
-.rail{display:flex;flex-direction:column;gap:8px;z-index:3;
-  max-height:100%;min-height:0}
-.rail .case{min-height:0;flex:0 1 auto}
-/* `CLASSEMENT` fait dix caractères : à 56 px de rail il ne tenait pas, et les
-   points de suspension transformaient une destination en devinette. Trois
-   corrections, aucune spectaculaire — un rail un peu plus large, l'espacement
-   des lettres ramené à zéro sur l'étiquette seule, et la taille qui suit la
-   largeur de l'écran plutôt qu'un palier fixe. */
-.case{aspect-ratio:1;width:100%;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:5px;font-size:clamp(7.6px,2.15vw,10.5px);font-weight:600;
-  letter-spacing:0;opacity:.72;position:relative;text-decoration:none;color:inherit;
-  font-family:var(--banner)}
-.case:hover{opacity:1;border-color:rgba(242,238,228,.24)}
-.case .lib{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.case svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;
-  stroke-linecap:round;stroke-linejoin:round}
-.case[data-pastille]::after{content:attr(data-pastille);position:absolute;top:-5px;right:-5px;
-  min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--flare);color:#fff;
-  font-size:10px;font-weight:700;line-height:19px;text-align:center;
-  box-shadow:0 0 0 2px #04060A}
+/* La tuile elle-même est dans `ui.css` : c'est une plaque, comme tout ce qui se
+   touche dans le jeu. Le rail ne décide plus que de son empilement.
 
+   `gap` à 4 et non 8 : la plaque porte une tranche de quatre pixels sous elle,
+   qui compte dans l'espacement. Sans cet ajustement, les cinq tuiles gagnaient
+   vingt pixels de haut — et `.centre` étant en `overflow:hidden`, la cinquième
+   se serait fait couper en silence sur un téléphone court. */
+.rail{display:flex;flex-direction:column;gap:4px;z-index:3;
+  max-height:100%;min-height:0}
+.rail .tbf-case{min-height:0;flex:0 1 auto;--epaisseur:4px}
+/* `CLASSEMENT` fait dix caractères : à 56 px de rail il ne tenait pas, et les
+   points de suspension transformaient une destination en devinette. La
+   correction tient au rail un peu plus large et à une taille qui suit la
+   largeur de l'écran plutôt qu'un palier fixe — la tuile, elle, est commune. */
 /* --------------------------------------------------- le personnage */
 /* La réserve du haut n'est pas une marge de confort : c'est **la place des
    gestes**. Le personnage flotte de neuf pixels, saute de vingt-six, et la
@@ -352,13 +352,12 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .direct b{font-size:13px;font-weight:700;line-height:1.28;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .direct small{font-size:11px;opacity:.55;font-variant-numeric:tabular-nums}
-.entrer{border:none;border-radius:17px;padding:16px 20px;font-family:var(--banner);font-size:21px;
-  letter-spacing:.05em;text-transform:uppercase;color:#fff;cursor:pointer;display:block;
-  text-align:center;text-decoration:none;
-  background:linear-gradient(180deg,#F0704F,var(--flare) 55%,#B32A1D);
-  box-shadow:0 5px 0 #7A1A11,0 12px 26px rgba(224,64,44,.28);
-  transition:transform .1s ease,box-shadow .1s ease}
-.entrer:active{transform:translateY(4px);box-shadow:0 1px 0 #7A1A11,0 6px 14px rgba(224,64,44,.22)}
+/* Le bouton d'entrée est une plaque, comme tout le reste. Il avait déjà la
+   tranche et l'enfoncement — c'est lui qui a donné l'idée de la plaque — mais
+   il les avait pour lui seul, avec ses propres valeurs. Il ne lui reste ici que
+   ce qui lui est propre : sa taille, qui est celle de l'action principale d'un
+   écran de jeu et non celle d'un bouton de formulaire. */
+.entrer{font-size:21px;letter-spacing:.06em}
 
 /* Écran court : le personnage rétrécit plutôt que de pousser le bouton
    d'entrée sous le pli. C'est la seule bande qui peut céder. */
@@ -462,15 +461,20 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    saute de trente à cent. */
 .ouverture .jauge{
   position:absolute;left:50%;bottom:12%;transform:translateX(-50%);
-  width:120px;height:3px;border-radius:2px;overflow:hidden;
+  width:min(210px,52vw);height:4px;border-radius:3px;overflow:hidden;
   background:rgba(242,238,228,.14);
 }
+/* Elle **avance**, elle ne glisse plus en boucle. Un ruban qui va et vient est
+   ce qu'on met quand on ignore le temps restant ; ici on le sait, et une jauge
+   indéterminée pendant dix secondes se lit comme une panne — on recharge, et
+   l'on repart pour dix secondes.
+
+   La largeur est poussée par `ouverture.js`, à chaque cadre. La transition
+   lisse les à-coups si un cadre saute, sans jamais la faire reculer. */
 .ouverture .jauge i{
-  display:block;height:100%;width:40%;border-radius:2px;background:var(--projo);
-  animation:ouvGlisse 1.25s ease-in-out infinite;
-}
-@keyframes ouvGlisse{
-  0%{transform:translateX(-110%)}100%{transform:translateX(360%)}
+  display:block;height:100%;width:0;border-radius:2px;background:var(--projo);
+  transition:width .18s linear;
+  box-shadow:0 0 8px rgba(245,195,59,.5);
 }
 
 /* Qui a demandé moins d'animation n'en reçoit aucune : l'écran reste, lisible
@@ -529,7 +533,8 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
       <div class="bullet"><b>FANZZY</b><span>Collectionne et fais évoluer</span></div>
       <div class="bullet"><b>SOUVENIRS</b><span>Une carte par but vécu</span></div>
     </div>
-    <a class="cta" href="/compte">PRENDRE MA PLACE</a>
+    <a class="cta tbf-plaque tbf-bloc tbf-grande" data-ton="flare"
+      href="/compte">PRENDRE MA PLACE</a>
     <a class="second" href="/compte">Déjà une place ? <b>Se connecter</b></a>
     <p class="legal">Gratuit · Clubs, groupes et illustrations du jeu sont fictifs<br>
       Résultats fournis par API-Football</p>
@@ -538,7 +543,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <div class="hub" id="hub">
 
     <header class="haut">
-      <a class="pan moi" href="/profil">
+      <a class="tbf-cadre moi" href="/profil">
         <span class="pastille"><span id="initiale">—</span>
           <i class="niv" id="nivPastille" hidden></i></span>
         <span class="qui"><b id="pseudo">—</b><small id="clubline"></small>
@@ -549,13 +554,13 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
              joueur essaie en premier, et il ne menait nulle part. La boutique
              existait pourtant, rangée dans le menu au milieu de treize autres
              entrées — c'est-à-dire nulle part. -->
-        <a class="pan jeton ech" href="/boutique"
+        <a class="tbf-plaque jeton ech" data-ton="or" href="/boutique"
            aria-label="Mes écharpes — aller à la boutique"
            ><i></i><span id="scarves">0</span><b class="plus" aria-hidden="true">+</b></a>
-        <a class="pan jeton pack" href="/boutique"
+        <a class="tbf-plaque jeton pack" data-ton="flare" href="/boutique"
            aria-label="Mes boosters — aller à la boutique"
            ><i></i><span id="packs">0</span><b class="plus" aria-hidden="true">+</b></a>
-        <button class="pan burger" id="burger" aria-label="Menu" aria-expanded="false"
+        <button class="tbf-plaque burger" id="burger" aria-label="Menu" aria-expanded="false"
           aria-controls="tiroir"><span></span><span></span><span></span></button>
       </div>
     </header>
@@ -575,21 +580,21 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
     <div class="centre">
       <nav class="rail" aria-label="Le jeu">
-        <a class="pan case" href="/virage">
+        <a class="tbf-case" data-ton="flare" href="/virage">
           <svg viewBox="0 0 24 24"><path d="M3 20l9-16 9 16zM7 20l5-9 5 9"/></svg><span class="lib">VIRAGE</span></a>
-        <a class="pan case" href="/fanzzy" id="caseFanzzy">
+        <a class="tbf-case" data-ton="bleu" href="/fanzzy" id="caseFanzzy">
           <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg><span class="lib">FANZZY</span></a>
-        <a class="pan case" href="/carnet">
+        <a class="tbf-case" data-ton="vert" href="/carnet">
           <svg viewBox="0 0 24 24"><path d="M12 21s-7-4.6-7-9.6A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 3.4c0 5-7 9.6-7 9.6z"/></svg><span class="lib">CARNET</span></a>
         <!-- Le KOP est au centre du jeu et n'était accessible que par le menu :
              trois silhouettes serrées, un groupe et non une personne. -->
-        <a class="pan case" href="/kop">
+        <a class="tbf-case" data-ton="violet" href="/kop">
           <svg viewBox="0 0 24 24"><path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20a7 7 0 0 1 14 0M17 20a5 5 0 0 0-3-4.6M16 11a3 3 0 0 0 0-6"/></svg><span class="lib">KOP</span></a>
         <!-- Le kiosque. Il avait son onglet sur la page des Fanzzy ; quand
              celle-ci est passée à trois onglets, il n'est resté que le menu
              accordéon — c'est-à-dire nulle part. Un sachet, et sa pastille :
              un booster non ouvert ne se rappelle à personne. -->
-        <a class="pan case" href="/boosters" id="caseBoosters">
+        <a class="tbf-case" data-ton="or" href="/boosters" id="caseBoosters">
           <svg viewBox="0 0 24 24"><path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg><span class="lib">BOOSTERS</span></a>
       </nav>
 
@@ -620,22 +625,22 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
       </div>
 
       <nav class="rail" aria-label="Les autres">
-        <a class="pan case" href="/duel-nvn">
+        <a class="tbf-case" data-ton="flare" href="/duel-nvn">
           <svg viewBox="0 0 24 24"><path d="M4 4l7 7M20 4l-7 7M12 13v7M8 20h8"/></svg><span class="lib">DUEL</span></a>
-        <a class="pan case" href="/matchs">
+        <a class="tbf-case" data-ton="bleu" href="/matchs">
           <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 9v10"/></svg><span class="lib">MATCHS</span></a>
-        <a class="pan case" href="/classement">
+        <a class="tbf-case" data-ton="vert" href="/classement">
           <svg viewBox="0 0 24 24"><path d="M6 21V9M12 21V4M18 21v-7M3 21h18"/></svg><span class="lib">CLASSEMENT</span></a>
         <!-- Deux silhouettes et un plus : on en ajoute une. Même dessin que
              dans le menu, pour que ce soit la même destination à l'œil. -->
-        <a class="pan case" href="/amis">
+        <a class="tbf-case" data-ton="violet" href="/amis">
           <svg viewBox="0 0 24 24"><path d="M9 11a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4M2 20a7 7 0 0 1 14 0M18 8v6M15 11h6"/></svg><span class="lib">AMIS</span></a>
         <!-- La boutique n'était atteignable que par les jetons de monnaie et
              par le menu. Les jetons se touchent quand on sait déjà ce qu'on
              cherche ; l'accueil est l'endroit où l'on apprend qu'une chose
              existe. Le même caddie que dans le menu, pour que ce soit la même
              destination à l'œil. -->
-        <a class="pan case" href="/boutique">
+        <a class="tbf-case" data-ton="or" href="/boutique">
           <svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12zM6 6L5 3H2M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/></svg><span class="lib">BOUTIQUE</span></a>
       </nav>
     </div>
@@ -647,17 +652,18 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
     <footer class="bas">
       <div class="duo">
-        <a class="pan collec" href="/fanzzy">
+        <a class="tbf-cadre collec" href="/fanzzy">
           <span class="t"><b>COLLECTION</b><span id="collecTxt">—</span></span>
           <span class="jauge"><i id="collecBar"></i></span>
         </a>
-        <a class="pan direct" id="direct" href="/matchs">
+        <a class="tbf-cadre direct" id="direct" href="/matchs">
           <span class="tag"><span class="pt"></span><span id="directTag">AUJOURD’HUI</span></span>
           <b id="directNom">Aucun match en cours</b>
           <small id="directSous">Tes clubs ne jouent pas maintenant</small>
         </a>
       </div>
-      <a class="entrer" id="entrer" href="/duel-nvn">Prendre ma place</a>
+      <a class="entrer tbf-plaque tbf-bloc tbf-grande" data-ton="flare"
+        id="entrer" href="/duel-nvn">Prendre ma place</a>
     </footer>
 
   </div>
@@ -1324,10 +1330,20 @@ async function jsonp(url, options) {
     }
   } catch { /* collection non montée : l'accueil reste utilisable sans */ }
 
-  // Le personnage est là — celui du joueur s'il en a un, le supporter sinon.
-  // C'est maintenant qu'il salue, et pas avant : saluer plus tôt ferait entrer
-  // deux personnages pour une seule arrivée.
-  saluer();
+  /* Le personnage est là — celui du joueur s'il en a un, le supporter sinon.
+     Mais il ne salue pas encore : l'écran d'ouverture couvre tout, et un salut
+     joué derrière un rideau est un salut perdu. Il attend que le rideau se
+     lève.
+
+     Le repli compte autant : si l'ouverture n'est pas là — deuxième visite de
+     la session, stockage refusé, script absent — on salue tout de suite.
+     Attendre un événement qui ne viendra jamais ferait un personnage qui
+     n'arrive pas. */
+  if (document.getElementById('ouverture')) {
+    addEventListener('tbf:ouverture-finie', saluer, { once: true });
+  } else {
+    saluer();
+  }
 
   /* L écran d ouverture peut partir : le personnage est posé, la collection
      est lue, il n y a plus rien à couvrir. On ne l efface pas d ici — on dit

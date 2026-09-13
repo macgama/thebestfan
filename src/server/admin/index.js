@@ -4,6 +4,8 @@ import { parIdentifiant, recharger, tous, chargerSeries, seriesOuvertes, serieOu
   from '../fanzzy/catalogue.js';
 import { toutesTenues, tenuePar, rechargerTenues } from '../fanzzy/tenues.js';
 import { REGLAGES, SECTIONS, DEFAUTS } from '../../shared/reglages.js';
+// Les gestes du jeu viennent de leur source unique : voir plus bas.
+import { GESTES as GESTES_DU_JEU } from '../ferveur/gestures.js';
 import { ecrireReglage, rendreAuDefaut, tousLesReglages } from '../reglages/index.js';
 
 /**
@@ -300,7 +302,20 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
 
   const TYPES_VALIDES = new Set(Object.keys(TYPES));
   const RAR_VALIDES = new Set(Object.keys(RAR));
-  const GESTES = new Set(['tempo', 'mash', 'hold']);
+  /* **Les quinze gestes, et non trois.**
+   *
+   * Cette liste était écrite ici à la main, et elle datait du jour où le jeu
+   * n'en avait que trois. Douze gestes sont arrivés depuis — les sept de
+   * rythme, puis les cinq épreuves — sans que personne ne repasse par ici.
+   *
+   * Conséquence : l'administration **refusait** d'enregistrer une carte dont le
+   * cri portait l'un des douze autres, avec le message « geste inconnu ». La
+   * carte était juste, le jeu la jouait, le serveur la validait partout
+   * ailleurs — seul cet écran disait non.
+   *
+   * Elle est donc importée, comme partout. Une liste recopiée finit toujours
+   * par décrire un jeu qui n'existe plus. */
+  const GESTES = new Set(GESTES_DU_JEU);
 
   /** Une chaîne bornée : ce qui arrive d’un formulaire n’a pas de longueur. */
   const texte = (v, max) => String(v ?? '').trim().slice(0, max);

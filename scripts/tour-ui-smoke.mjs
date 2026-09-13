@@ -316,6 +316,66 @@ for (const [route, nom] of tousLesEcrans) {
         .map((el) => ((el.textContent ?? '').trim() || el.getAttribute('aria-label')
           || el.className || el.tagName).slice(0, 22)),
 
+      /* **Une plaque peinte en rien.**
+       *
+       * Toutes les couleurs d'une plaque viennent de cinq variables. Une
+       * plaque qui n'y a pas droit — parce que la table des tons ne
+       * l'atteignait pas — ne tombe pas en erreur : ses règles deviennent
+       * invalides, une par une, et l'objet se rend transparent. Il garde sa
+       * taille, sa place, son étiquette et son lien ; il n'a plus de corps.
+       *
+       * C'est arrivé au bouton de menu de l'accueil : présent, cliquable,
+       * mesuré comme visible par le contrôle du dessus — et invisible à l'œil.
+       * Rien dans la console, rien dans le rendu, rien dans les mesures de
+       * débordement. Seule une couleur sait le dire.
+       *
+       * On lit donc ce que le navigateur a **résolu** : une plaque dont le fond
+       * est transparent et qui n'a aucune ombre n'a pas été peinte. */
+      fantomes: [...document.querySelectorAll('.tbf-plaque,.tbf-case,.tbf-onglet.on')]
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          if (r.width < 4 || r.height < 4) return false;
+          if (el.closest('[hidden],[aria-hidden="true"]')) return false;
+          const st = getComputedStyle(el);
+          if (st.visibility === 'hidden' || st.display === 'none') return false;
+          const fond = st.backgroundImage !== 'none'
+            || !/^rgba\(0, 0, 0, 0\)$|^transparent$/.test(st.backgroundColor);
+          return !(fond && st.boxShadow !== 'none');
+        })
+        .slice(0, 5)
+        .map((el) => ((el.textContent ?? '').trim() || el.getAttribute('aria-label')
+          || el.className).slice(0, 24)),
+
+      /* **Un bouton resté au style du navigateur.**
+       *
+       * Le pendant de la plaque peinte en rien, et il arrive par le chemin
+       * inverse : la règle qui habillait le bouton s'en va — déplacée dans la
+       * feuille commune, renommée — et le bouton ne devient pas invisible, il
+       * redevient un bouton système. Gris clair, bordure en relief, police du
+       * système : parfaitement visible, parfaitement à sa place, et étranger au
+       * jeu.
+       *
+       * C'est arrivé aux deux onglets du deck. Ils sont écrits par le
+       * JavaScript dans un gabarit de chaîne, donc le remplacement de balisage
+       * ne les a pas vus ; ils ont perdu leur règle locale sans gagner la
+       * commune, et sont ressortis en deux pastilles blanches.
+       *
+       * On reconnaît le style système à sa couleur de fond — Chrome rend
+       * `buttonface` en `rgb(239, 239, 239)` — et à sa bordure en relief. */
+      systeme: [...document.querySelectorAll('button,input[type=button],input[type=submit]')]
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          if (r.width < 4 || r.height < 4) return false;
+          if (el.closest('[hidden],[aria-hidden="true"]')) return false;
+          const st = getComputedStyle(el);
+          if (st.visibility === 'hidden') return false;
+          return st.backgroundColor === 'rgb(239, 239, 239)'
+            || st.borderTopStyle === 'outset';
+        })
+        .slice(0, 5)
+        .map((el) => ((el.textContent ?? '').trim() || el.getAttribute('aria-label')
+          || el.className || 'button').slice(0, 24)),
+
       /* Les étiquettes de navigation se lisent **en entier**. Des points de
          suspension conviennent à une phrase ; sur un libellé qui dit où l'on
          va, ils font deviner. On lisait « CLASSEME… » et « BOUTIQ… » sur le
@@ -408,6 +468,16 @@ for (const [route, nom] of tousLesEcrans) {
   check(`  les étiquettes de navigation se lisent en entier`, vu.libelles.length === 0
     || (console.log('        tronquées :', vu.libelles.join(' | ')), false));
 
+  check(`  chaque plaque a bien un corps`, vu.fantomes.length === 0
+    || (console.log('        peintes en rien :', vu.fantomes.join(' | ')),
+      console.log('        — une variable de ton absente rend toutes leurs '
+        + 'règles invalides, en silence'), false));
+
+  check(`  aucun bouton n’est resté au style du navigateur`, vu.systeme.length === 0
+    || (console.log('        gris système :', vu.systeme.join(' | ')),
+      console.log('        — leur règle est partie sans que la commune '
+        + 'les rattrape'), false));
+
   check(`  tout ce qui se touche est visible à l’écran`, vu.invisibles.length === 0
     || (console.log('        hors cadre :', vu.invisibles.join(' | ')), false));
 
@@ -431,6 +501,15 @@ for (const [route, nom] of tousLesEcrans) {
     || (console.log('        impasses :', morts.join(', ')), false));
 
   if (process.env.CAPTURE) {
+    /* Le rideau d'ouverture dure dix secondes et couvre l'accueil : sans cette
+       levée, la capture de l'accueil montrait l'écran de chargement, et non
+       l'écran. On le retire comme il se retire lui-même — en annonçant sa fin,
+       faute de quoi l'accueil n'aurait jamais joué son bonjour. */
+    await page.evaluate(() => {
+      document.getElementById('ouverture')?.remove();
+      dispatchEvent(new Event('tbf:ouverture-finie'));
+    }).catch(() => {});
+    await new Promise((r) => { setTimeout(r, 450); });
     const f = path.join(tmpdir(), 'tour' + route.replace(/\//g, '-') + '.png');
     await page.screenshot({ path: f, fullPage: true });
   }

@@ -6,6 +6,7 @@
  * donc aucun risque que les deux divergent.
  */
 import { SETS_2026, DEX_2026 } from './dex-2026.js';
+import { DEX_LEGENDES } from './dex-legendes.js';
 import { AGES } from './dex-ages.js';
 import { agesDe, idDuStade } from './ages.js';
 
@@ -85,7 +86,9 @@ const SETS = [
     c1:'#8257DA', c2:'#12101C' },
 ];
 
-/** Taux de tirage. Les trois premières cartes sont communes, comme dans Pocket. */
+/* Les personnages. Les taux de tirage sont plus bas, dans `RATES`, avec la
+   règle des places — ce commentaire-ci les annonçait ici, et il annonçait une
+   règle qui a changé deux fois depuis. */
 
 const DEX = [
   // --- VOIX
@@ -529,8 +532,14 @@ const DEX = [
 ];
 
 /**
- * Taux de tirage des deux dernières places d'un booster. Les trois premières
- * sont toujours communes.
+ * Taux de tirage des deux places d'un booster qui rendent un supporter.
+ *
+ * Ces deux places étaient « les deux dernières », et ce commentaire le disait
+ * encore alors que les trois dernières places étaient devenues des places
+ * ouvertes, qui ne rendent jamais de supporter. Les deux tables roulaient donc
+ * sur des cartes toujours jetées, et aucune légendaire ne sortait plus d'un
+ * booster. Elles s'appliquent maintenant aux deux premières places, qui sont
+ * celles que le joueur reçoit — voir `drawPack`.
  *
  * **Un booster ne propose que des communes et des légendaires.** Depuis que la
  * rareté suit le stade, une rare est un stade 2 et une épique un stade 3 : les
@@ -538,8 +547,8 @@ const DEX = [
  * l'évolution ne servirait plus à rien. Le booster donne les personnages, les
  * doublons donnent les écharpes, les écharpes font grandir les personnages.
  *
- * Les deux dernières places ne sont donc pas « meilleures » : elles sont
- * seulement les seules qui peuvent tomber sur une légendaire.
+ * Ces deux places ne sont donc pas « meilleures » : elles sont seulement les
+ * seules qui peuvent tomber sur une légendaire.
  */
 const RATES = {
   4: [['commune',.95],['legendaire',.05]],
@@ -571,7 +580,7 @@ const RATES = {
    Le premier âge, lui, reste écrit à la main : c'est lui qui porte l'idée du
    personnage, et une idée ne se déduit de rien.                            */
 
-const PREMIERS = [...DEX, ...DEX_2026];
+const PREMIERS = [...DEX, ...DEX_2026, ...DEX_LEGENDES];
 const PREMIER_PAR_ID = new Map(PREMIERS.map((f) => [f.id, f]));
 
 const SUITES = [];

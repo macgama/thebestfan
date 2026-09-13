@@ -197,7 +197,91 @@ console.log(`   forme du tifo : ${gestes.tifo.forme} · suite du capo : ${gestes
   check(`les retrouver toutes vaut plein (${note.toFixed(2)})`, note >= 1);
 }
 
-check('aucune erreur de script pendant les cinq épreuves',
+/* ------------------------------------------------------------------ le tri
+
+   Rien n'est caché ici, donc rien à éprouver sur l'aperçu. Ce qui compte est
+   que **le mauvais carton coûte** : c'est la seule épreuve du répertoire où
+   ramasser tout l'écran donne zéro, et c'est toute son idée. */
+{
+  const g = gestes.tri;
+  const bons = g.plateau.map((c, i) => (c === g.cible ? i : -1)).filter((i) => i >= 0);
+  const mauvais = g.plateau.map((c, i) => (c === g.cible ? -1 : i)).filter((i) => i >= 0);
+
+  const propre = await page.evaluate(async (gestes, cases) => {
+    const p = window.TBF_GESTE.jouer('tri', gestes, { zone: document.getElementById('zone') });
+    const pad = document.getElementById('pad');
+    for (const i of cases) {
+      pad.children[i].dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 130 + Math.random() * 110));
+    }
+    return p;
+  }, gestes, bons.slice(0, 6));
+
+  check('le tri rend les cartons ramassés',
+    Array.isArray(propre?.touches) && propre.touches.length === Math.min(6, bons.length));
+  const note = grade('tri', propre, {}, { motif: GRAINE });
+  check(`ramasser la bonne couleur paie (${note.toFixed(2)})`, note > 0.5);
+
+  /* Le contrôle qui porte tout. Sans pénalité, tout balayer donnerait la note
+     pleine, et l'épreuve ne mesurerait plus que la vitesse du doigt. */
+  const brouillon = await page.evaluate(async (gestes, cases) => {
+    const p = window.TBF_GESTE.jouer('tri', gestes, { zone: document.getElementById('zone') });
+    const pad = document.getElementById('pad');
+    for (const i of cases) {
+      pad.children[i].dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 120 + Math.random() * 100));
+    }
+    return p;
+  }, gestes, [...bons, ...mauvais.slice(0, bons.length)]);
+  const noteBrouillon = grade('tri', brouillon, {}, { motif: GRAINE });
+  check(`tout ramasser sans regarder ne vaut rien (${noteBrouillon.toFixed(2)})`,
+    noteBrouillon <= 0.05);
+}
+
+/* --------------------------------------------------------------- le compte
+
+   La seule épreuve où il n'y a rien à regarder au moment d'agir. On éprouve
+   les deux choses qui la font exister : le compte **s'éteint**, et tomber près
+   de la cible paie plus que tomber loin. */
+{
+  const g = gestes.compte;
+  const res = await page.evaluate(async (gestes) => {
+    const p = window.TBF_GESTE.jouer('compte', gestes, { zone: document.getElementById('zone') });
+    const cpt = document.getElementById('cpt');
+    await new Promise((r) => setTimeout(r, 300));
+    const pendant = cpt.textContent.trim();
+    await new Promise((r) => setTimeout(r, gestes.compte.visible + 250));
+    const apres = cpt.classList.contains('noir');
+    /* On vise la cible, à cent millisecondes près : c'est un très bon joueur,
+       pas un calcul — un écart nul serait refusé par le serveur. */
+    const reste = gestes.compte.cible - (gestes.compte.visible + 550);
+    await new Promise((r) => setTimeout(r, Math.max(0, reste)));
+    document.getElementById('pad').dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true }));
+    return { reponse: await p, pendant, apres };
+  }, gestes);
+
+  check('le compte à rebours s’affiche d’abord', res.pendant !== '');
+  /* Sans cette ligne, l'épreuve mesurerait la vue et non l'horloge. */
+  check('puis s’éteint avant l’instant à trouver', res.apres === true);
+  check('et la page rend la durée écoulée',
+    Number.isFinite(res.reponse?.ecoule) && res.reponse.ecoule > 0);
+
+  const note = grade('compte', res.reponse, {}, { motif: GRAINE });
+  const ecart = Math.abs((res.reponse?.ecoule ?? 0) - g.cible);
+  check(`tomber près de la cible paie (${note.toFixed(2)}, à ${Math.round(ecart)} ms)`,
+    note > 0
+    || (console.log('        cible', g.cible, 'ms · rendu',
+      Math.round(res.reponse?.ecoule ?? 0), 'ms'), false));
+
+  /* Et tomber loin ne paie pas. Un contrôle qui ne vérifierait que le haut de
+     l'échelle passerait au vert sur une note constante. */
+  const loin = grade('compte', { ecoule: Math.max(1, g.cible - g.tolerance * 2) },
+    {}, { motif: GRAINE });
+  check(`tomber très loin ne vaut rien (${loin.toFixed(2)})`, loin === 0);
+}
+
+check('aucune erreur de script pendant les sept épreuves',
   erreurs.length === 0 || (console.log('    ', erreurs.join(' / ')), false));
 
 console.log(`\n${rates ? `${rates} échec(s)` : 'tout est vert'}`);

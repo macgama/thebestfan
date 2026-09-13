@@ -3,6 +3,8 @@ import { grade, applyHeroMods, resoudreGeste, Cheat, GESTES, MOTIFS }
   from '../ferveur/gestures.js';
 import { ACTION_BY_ID, DECK_RULES } from '../../shared/duel/actions.js';
 import { poserEffet, nettoyerEffets, aEffet, modsAvecEffets } from '../../shared/duel/effets.js';
+// Le lieu de la rencontre, et sa règle : voir le constructeur.
+import { stadeDeLaRencontre } from '../../shared/stades.js';
 
 /**
  * Moteur de duel N contre N.
@@ -23,7 +25,7 @@ export const RULES = {
   get goalsToWin() { return reglage('duel.buts_pour_gagner'); },
   get breathMax() { return reglage('virage.souffle_max'); },
   get breathPerSec() { return reglage('virage.souffle_par_sec'); },
-  decayPerSec: 2.5,
+  get decayPerSec() { return reglage('duel.decroissance'); },
   get dureeMs() { return reglage('duel.duree_min') * 60_000; },
   mainVisible: DECK_RULES.mainVisible,
   refillMs: 4000,          // délai avant qu'une carte jouée soit remplacée
@@ -36,6 +38,21 @@ export const RULES = {
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const now0 = () => Date.now();
+
+/**
+ * Un nombre stable tiré d'un identifiant de duel.
+ *
+ * `stadeDeLaRencontre` attend une graine numérique — le Virage lui donne
+ * l'identifiant du match, qui en est un. Celui d'un duel est une chaîne, et
+ * `Number('d-7f3a')` vaut `NaN` : la fonction retombe alors sur zéro, donc sur
+ * le premier stade, **pour tous les duels du jeu**. Le lieu aurait existé sans
+ * jamais changer, ce qui est la façon la plus discrète de ne pas exister.
+ */
+function hachage(texte) {
+  let h = 0;
+  for (const c of String(texte ?? '')) h = (h * 31 + c.codePointAt(0)) % 0x7fffffff;
+  return h;
+}
 
 /**
  * Le geste du prochain chant.
@@ -110,8 +127,51 @@ function creerJoueur(p, side) {
    `modsDe` sait où trouver le Fanzzy en tribune, et le Virage le sait
    autrement. */
 
-/** Les modificateurs en vigueur : ceux du Fanzzy, plus les effets temporaires. */
-const modsDe = (j, t) => modsAvecEffets(j.fanzzy[j.actif]?.mods, j.effets, t);
+/**
+ * Les modificateurs en vigueur : ceux du Fanzzy, ceux du lieu, plus les effets
+ * temporaires posés par les cartes.
+ *
+ * **Le lieu y était absent, et il l'était partout.** `stades.js` décrit dix
+ * lieux, chacun avec ses `mods` et une phrase qui dit au joueur ce qu'il va
+ * devoir faire autrement — « le souffle revient bien plus lentement », « un
+ * geste parfait paie double ». Aucun de ces effets n'était appliqué nulle
+ * part : le Virage envoyait le stade au client pour le dessiner, le duel n'en
+ * avait même pas, et les `mods` étaient un commentaire.
+ *
+ * Ils se composent **avant** les effets temporaires et de la même façon que
+ * l'équipement : les facteurs se multiplient, les décalages s'additionnent.
+ * L'ordre importe peu ici puisque la multiplication commute — ce qui compte est
+ * qu'ils soient là, et des deux côtés.
+ */
+const modsDe = (j, t, stade = null) =>
+  modsAvecEffets(avecLieu(j.fanzzy[j.actif]?.mods, stade), j.effets, t);
+
+/**
+ * Compose les modificateurs d'un lieu avec ceux d'un Fanzzy.
+ *
+ * Écrite ici et non dans `stades.js` parce que c'est une règle de moteur et non
+ * une description de lieu — et le Virage l'importe, plutôt que d'en écrire une
+ * seconde qui finirait par diverger.
+ */
+export function avecLieu(mods = {}, stade = null) {
+  if (!stade?.mods) return mods ?? {};
+  const out = { ...(mods ?? {}) };
+  /* La même partition que `combine` dans `inventaire.js`. Elle y est écrite
+     pour l'équipement ; la répéter serait une seconde vérité, mais l'importer
+     obligerait le moteur à connaître l'inventaire. Le jour où un troisième
+     porteur de modificateurs apparaît, c'est cette liste-là qu'il faudra
+     sortir — pas avant. */
+  const facteurs = ['tempoWindow', 'mashBonus', 'holdBonus', 'perfectBonus',
+    'parryBonus', 'parryResist', 'breathBonus', 'refundBonus', 'costPenalty',
+    'pushMult', 'ferveurBonus'];
+  const decalages = ['tempoInterval', 'mashTime', 'holdForgive'];
+  for (const [k, v] of Object.entries(stade.mods)) {
+    if (facteurs.includes(k)) out[k] = (out[k] ?? 1) * v;
+    else if (decalages.includes(k)) out[k] = (out[k] ?? 0) + v;
+    else out[k] = v;
+  }
+  return out;
+}
 
 /**
  * L'âge suivant d'un Fanzzy en tribune, ou `undefined`.
@@ -136,6 +196,23 @@ export class DuelNvN {
     this.id = id;
     this.fixture = fixture;
     this.mode = mode;
+
+    /* **Le lieu de la rencontre.**
+     *
+     * Le duel n'en avait aucun. `stades.js` explique pourtant, en tête, que le
+     * stade appartient au match et qu'« en duel, il est tiré parmi ceux que les
+     * deux joueurs possèdent » : c'était écrit, documenté, et personne ne
+     * l'appelait. Le duel se jouait dans le vide, sans décor et sans règle de
+     * lieu, pendant que le Virage en affichait un.
+     *
+     * Tiré sur l'identifiant du duel, comme le Virage le tire sur celui du
+     * match : les deux clients trouvent le même lieu sans avoir à se parler, et
+     * la même rencontre rejouée donne le même stade.
+     *
+     * Les possessions sont vides tant que les stades ne se collectionnent pas —
+     * c'est exactement ce que fait le Virage, et la ligne à changer le jour où
+     * ils se gagneront est celle-ci. */
+    this.stade = stadeDeLaRencontre([], hachage(id));
     this.rope = 0;
     this.goals = [0, 0];
     this.debut = now;
@@ -167,7 +244,7 @@ export class DuelNvN {
     const dt = (t - (j.regenAt ?? t)) / 1000;
     j.regenAt = t;
     if (aEffet(j, 'silence', t)) return;
-    const m = modsDe(j, t);
+    const m = modsDe(j, t, this.stade);
     const frein = j.effets.find((e) => e.type === 'breath_mult' && e.fin > t)?.valeur ?? 1;
     j.breath = Math.min(RULES.breathMax,
       j.breath + RULES.breathPerSec * dt * (m.breathBonus ?? 1) * frein);
@@ -180,7 +257,7 @@ export class DuelNvN {
    * c'est ce qui empêche le nombre de décider seul du résultat.
    */
   pousser(j, montant, t, evenements) {
-    const m = modsDe(j, t);
+    const m = modsDe(j, t, this.stade);
     let v = montant * (m.pushMult ?? 1);
 
     // Fenêtre collective ouverte par un coéquipier.
@@ -296,7 +373,7 @@ export class DuelNvN {
     if (aEffet(j, 'silence', t)) throw new Cheat('silenced');
     if (j.breath < RULES.chantCost) throw new Cheat('not_enough_breath');
 
-    const m = modsDe(j, t);
+    const m = modsDe(j, t, this.stade);
     const geste = j.geste;
     let q = grade(geste, taps, m, { motif: j.motif });
 
@@ -322,11 +399,27 @@ export class DuelNvN {
     for (const e of j.effets) if (e.charges !== undefined && e.mods) e.charges--;
     nettoyerEffets(j, t);
 
+    /* **La mise.** Elle se résout ici, au chant qui suit la carte, et pas
+       ailleurs : c'est le seul endroit où l'on sait si le pari est gagné.
+       Un geste au-dessus de la moitié double la poussée ; en dessous, la mise
+       est perdue et coûte le souffle promis. Elle se consomme dans les deux
+       cas — sinon on la garderait indéfiniment en attendant un bon geste, et
+       ce ne serait plus un pari. */
+    const mise = j.effets.find((e) => e.type === 'double_next' && e.fin > t);
+    let facteur = 1;
+    if (mise) {
+      const gagne = !backfire && quality >= 0.5;
+      facteur = gagne ? 2 : 1;
+      if (!gagne) j.breath = Math.max(0, j.breath - (mise.valeur ?? 20));
+      mise.fin = 0;                       // consommée, gagnée ou perdue
+      evenements.push(this.ev('effect', { userId, type: 'double_next_resolu', gagne }));
+    }
+
     if (backfire) {
       const faux = { ...j, side: j.side ^ 1 };
       this.pousser(faux, RULES.chantPower * 0.35, t, evenements);
     } else {
-      this.pousser(j, RULES.chantPower * quality, t, evenements);
+      this.pousser(j, RULES.chantPower * quality * facteur, t, evenements);
     }
     return evenements;
   }
@@ -362,14 +455,27 @@ export class DuelNvN {
     if (c.evolution && !ageSuivant(j.fanzzy[j.actif])) {
       throw new Cheat('evolution_locked');
     }
-    if (j.breath < carte.cost) throw new Cheat('not_enough_breath');
+    /* **La tournée** paie à la place du joueur.
+     *
+     * Elle est lue **avant** le contrôle de souffle, et c'est tout son intérêt :
+     * elle permet de jouer une carte qu'on n'aurait pas les moyens de jouer.
+     * Lue après, elle n'aurait fait qu'économiser du souffle qu'on avait déjà,
+     * ce qui est ce que fait déjà `refill`. */
+    const tournee = j.effets.find((e) => e.type === 'cost_free'
+      && e.fin > t && (e.valeur ?? 0) > 0);
+    const prix = tournee ? 0 : carte.cost;
+    if (j.breath < prix) throw new Cheat('not_enough_breath');
 
     // Renvoi : la carte se retourne contre celui qui la joue.
     const adverses = [...this.joueurs.values()].filter((x) => x.side !== j.side);
     const miroir = adverses.map((a) => a.effets.find((e) => e.type === 'reflect' && e.charges > 0))
       .find(Boolean);
 
-    j.breath -= carte.cost;
+    j.breath -= prix;
+    /* La tournée se décompte ici, une fois la carte réellement jouée : un
+       refus plus haut — carte en recharge, condition non remplie — ne doit pas
+       consommer une gratuité que le joueur n'a pas utilisée. */
+    if (tournee) tournee.valeur--;
     j.cooldowns[cardId] = t + carte.cd * 1000;
     j.main = j.main.filter((x) => x !== cardId);
     j.defausse.push(cardId);
@@ -521,6 +627,100 @@ export class DuelNvN {
           delai: e.delai, cardId: carte.id }));
         break;
 
+      /* --------------------------------------------- les cinq mécaniques neuves
+
+         Elles ne sont pas des variantes : chacune agit sur une chose que rien
+         d'autre ne touchait. Les vingt-quatre cartes d'origine se partageaient
+         vingt et un types d'effet, donc en ajouter cinq de plus sans mécanique
+         neuve aurait fait cinq cartes qu'on reconnaît en une partie et qu'on
+         cesse de regarder à la deuxième. */
+
+      /**
+       * **L'ancre.** La corde cesse de retomber, pour tout le monde.
+       *
+       * C'est la seule carte qui touche à la décroissance, et c'est ce qui la
+       * rend lisible : elle ne pousse pas, elle **garde**. Une tribune qui mène
+       * de cent points et qui tient huit secondes de plus gagne autant qu'avec
+       * une grosse poussée — sans avoir eu à réussir un geste.
+       *
+       * Posée sur la partie et non sur un joueur : la corde est commune, et un
+       * gel qui ne vaudrait que pour un camp n'aurait aucun sens physique.
+       */
+      case 'freeze_decay':
+        this.geleeJusqua = Math.max(this.geleeJusqua ?? 0, t + e.duree);
+        evenements.push(this.ev('effect', { type: 'freeze_decay', duree: e.duree }));
+        break;
+
+      /**
+       * **La mise.** Le prochain chant compte double — et s'il rate, il coûte.
+       *
+       * La seule carte du jeu qui puisse se retourner contre celui qui la joue
+       * autrement qu'en souffle. C'est voulu : toutes les autres sont des gains
+       * plus ou moins gros, et un paquet sans aucun pari se joue sans réfléchir.
+       */
+      case 'double_next':
+        poserEffet(j, { type: 'double_next', fin: t + e.duree, valeur: e.gage ?? 20 });
+        evenements.push(this.ev('effect', { userId: j.userId, type: 'double_next',
+          duree: e.duree }));
+        break;
+
+      /**
+       * **La tournée.** Les prochaines cartes ne coûtent rien.
+       *
+       * Elle ne donne pas de souffle — `refill` le fait déjà — elle en fait
+       * gagner en le dépensant. Deux cartes chères jouées coup sur coup, ce
+       * qu'aucun souffle ne permet normalement.
+       */
+      case 'cost_free':
+        poserEffet(j, { type: 'cost_free', fin: t + (e.duree ?? 15_000), valeur: e.cartes ?? 2 });
+        evenements.push(this.ev('effect', { userId: j.userId, type: 'cost_free',
+          cartes: e.cartes ?? 2 }));
+        break;
+
+      /**
+       * **Le long chant.** Une poussée étalée, et non un coup.
+       *
+       * `delayed_push` frappe une fois, plus tard. Celle-ci frappe un peu, dix
+       * fois, pendant dix secondes : elle traverse un bouclier qui n'absorbe
+       * qu'un coup, et elle se fait manger par la décroissance si l'adversaire
+       * tient. Deux façons opposées de miser sur le temps.
+       */
+      case 'push_over_time': {
+        const n = Math.max(1, e.coups ?? 10);
+        const pas = (e.duree ?? 10_000) / n;
+        for (let k = 1; k <= n; k++) {
+          this.differes.push({ side: j.side, userId: j.userId,
+            quand: t + k * pas, valeur: e.valeur / n });
+        }
+        evenements.push(this.ev('arme', { userId: j.userId, side: j.side,
+          delai: pas, cardId: carte.id, coups: n }));
+        break;
+      }
+
+      /**
+       * **Le retournement.** L'écart est réduit de moitié, quel qu'il soit.
+       *
+       * Il ne renverse pas la corde — une carte qui échangerait les positions
+       * ferait perdre une partie gagnée à celui qui a bien joué, et c'est la
+       * définition d'un mauvais jeu. Elle efface la moitié du travail adverse,
+       * ce qui est déjà la carte la plus violente du paquet : d'où son coût, sa
+       * recharge, et son unicité.
+       *
+       * Elle n'agit **que si l'on est mené** : jouée en tête, elle réduirait
+       * son propre avantage. Le filtre est ici et non dans le client, pour la
+       * même raison que tout le reste — un client modifié la jouerait quand
+       * même.
+       */
+      case 'halve_gap': {
+        const mene = j.side === 0 ? this.rope > 0 : this.rope < 0;
+        if (!mene) break;
+        const avant = this.rope;
+        this.rope /= 2;
+        evenements.push(this.ev('effect', { type: 'halve_gap',
+          valeur: Math.round(Math.abs(avant - this.rope)) }));
+        break;
+      }
+
       /**
        * La Relève. Contrairement au remplacement, elle ne demande aucun choix :
        * un personnage n'a qu'un âge suivant. On l'applique donc tout de suite,
@@ -583,7 +783,9 @@ export class DuelNvN {
     const dt = (t - this.dernier) / 1000;
     this.dernier = t;
 
-    const retour = RULES.decayPerSec * dt;
+    /* L'ancre suspend la décroissance, pour les deux camps. La corde est
+       commune : un gel qui ne vaudrait que d'un côté n'aurait aucun sens. */
+    const retour = t < (this.geleeJusqua ?? 0) ? 0 : RULES.decayPerSec * dt;
     if (this.rope > 0) this.rope = Math.max(0, this.rope - retour);
     else if (this.rope < 0) this.rope = Math.min(0, this.rope + retour);
 
@@ -637,6 +839,12 @@ export class DuelNvN {
 
     return {
       id: this.id, mode: this.mode, fixture: this.fixture,
+      /* Le lieu. Le client en tire le décor de la corde, et sa phrase d'effet :
+         un stade qui change les règles sans le dire est un stade qui donne
+         l'impression que le jeu triche. */
+      stade: this.stade
+        ? { id: this.stade.id, nom: this.stade.nom, effet: this.stade.effet }
+        : null,
       rope: Math.round(this.rope), goals: [...this.goals],
       resteMs: Math.max(0, this.fin - t),
       termine: this.termine, vainqueur: this.vainqueur,
@@ -652,7 +860,7 @@ export class DuelNvN {
         // Recalculée à chaque vue, et non une fois pour toutes : le Métronome
         // et le Vent de face changent la fenêtre en cours de partie, et
         // l'affichage doit suivre le barème sous peine de mentir au joueur.
-        gestes: resoudreGeste(modsDe(moi, t), { motif: moi.motif }),
+        gestes: resoudreGeste(modsDe(moi, t, this.stade), { motif: moi.motif }),
         /* Le geste du prochain chant. Il vient du serveur et change d'un chant
            à l'autre : la page l'annonce sur le bouton pour qu'on sache ce qui
            arrive avant d'appuyer. */

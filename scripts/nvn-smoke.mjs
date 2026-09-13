@@ -487,5 +487,66 @@ check('un entraînement ne compte pas',
     grade('retenue', Array.from({ length: 26 }, (_, i) => i * 150 + (i % 4) * 13)) < 0.2);
 }
 
+/* ------------------------------------------------------ on peut marquer
+
+ * Le seul contrôle qui dise que le jeu se joue.
+ *
+ * Toutes les autres éprouvent des mécaniques — le souffle se débite, un geste
+ * raté ne pousse pas, un bouclier absorbe. Aucune ne vérifiait qu'une partie
+ * **produise un but**, et elle n'en produisait plus : cinq minutes de duel se
+ * terminaient sur un nul, et les vingt-six contrôles du duel étaient verts.
+ *
+ * ## Pourquoi deux joueurs et non un seul
+ *
+ * Ma première version jouait en solo, et elle ne mordait pas : même avec
+ * l'ancien équilibrage, un joueur que personne ne contre finit toujours par
+ * marquer. Le défaut n'existe qu'**avec quelqu'un en face** — deux camps qui
+ * poussent, la décroissance par-dessus, et la corde qui ne quitte jamais zéro.
+ *
+ * C'est la situation que le joueur vit, donc c'est celle qu'on joue : un joueur
+ * appliqué, un chant toutes les cinq secondes ; en face, la cadence et
+ * l'adresse du bot d'entraînement.
+ */
+{
+  const d = duel(1, 'classe');
+  let t0 = t;
+  let buts = 0;
+  let prochainBot = 0;
+
+  /* Le geste de tempo demande quatre secondes et demie à exécuter : cinq
+     secondes entre deux chants est ce qu'un humain appliqué peut tenir, pas un
+     rythme optimiste. */
+  for (let k = 0; k < 60; k++) {
+    t0 += 6000;
+    d.tick(t0);
+
+    try {
+      const ev = d.chanter(impose(d, '0-0', 'tempo'), { taps: tempoParfait() }, t0);
+      buts += ev.filter((e) => e.t === 'goal').length;
+    } catch { /* souffle insuffisant : il attend */ }
+
+    /* En face, la cadence et l'adresse du bot : un chant toutes les huit
+       secondes et demie, à ±150 ms près. */
+    if (t0 >= prochainBot) {
+      prochainBot = t0 + 8500;
+      try {
+        d.chanter(impose(d, '1-0', 'tempo'), {
+          taps: Array.from({ length: 8 }, (_, i) => jitter(i * 560, 150)),
+        }, t0);
+      } catch { /* pareil */ }
+    }
+  }
+
+  check(`un joueur ordinaire marque contre le rythme d un bot (${buts} but(s) en 5 min)`,
+    buts >= 1
+    || (console.log('        la corde n’a jamais atteint le but : c’est le nul '
+      + 'systématique qu’on cherche à empêcher'), false));
+
+  /* Et pas trop : un but toutes les dix secondes ferait un score de tennis, et
+     la corde n'aurait plus aucun sens. */
+  check('sans que le duel tourne au score de tennis', buts <= 12
+    || (console.log('        ', buts, 'buts en cinq minutes'), false));
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 process.exit(failures ? 1 : 0);

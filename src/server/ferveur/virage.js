@@ -3,6 +3,8 @@ import { grade, applyHeroMods, resoudreGeste, Cheat } from './gestures.js';
 import { ACTION_BY_ID, ACTIONS_VIRAGE, dansLeVirage } from '../../shared/duel/actions.js';
 import { CHANTS, ORDRE } from '../../shared/duel/chants.js';
 import { stadeDeLaRencontre } from '../../shared/stades.js';
+// La composition lieu + Fanzzy vit dans le moteur de duel : une seule règle.
+import { avecLieu } from '../nvn/engine.js';
 import { poserEffet, nettoyerEffets, modsAvecEffets } from '../../shared/duel/effets.js';
 
 /**
@@ -131,6 +133,12 @@ function melanger(t) {
   }
   return a;
 }
+
+/* Le lieu était calculé **dans l'état**, à chaque diffusion — dix fois par
+   seconde, pour un résultat qui ne change jamais de tout le match. Ce n'était
+   pas un coût sensible, mais c'était surtout un endroit où le lieu n'était pas
+   consultable : le calcul de poussée en a besoin lui aussi, et il aurait fallu
+   le refaire là-bas, avec une seconde chance de le faire autrement. */
 
 /** Une foule deux fois plus nombreuse pèse 18 % de plus, pas 100 %. */
 export function crowdFactor(n) {
@@ -313,6 +321,27 @@ export class VirageRoom {
   }
 
   /** Les actifs : ceux qui ont poussé récemment. Une app ouverte ne compte pas. */
+  /**
+   * Le stade où se joue la rencontre.
+   *
+   * **Il appartient au match, pas à un joueur** — c'est la règle écrite dans
+   * `stades.js`, et c'est elle qui empêche un stade de devenir un avantage
+   * qu'on achète. Il découle donc de l'identifiant du match : tout le monde
+   * dans la salle voit le même, et le même à chaque fois qu'on y revient.
+   *
+   * L'intersection des possessions n'a pas de sens dans une salle ouverte à
+   * tous — on passe donc un tableau vide, ce qui ouvre les dix. Le jour où le
+   * stade viendra du vrai lieu du match, c'est cette ligne-là qui changera, et
+   * elle seule.
+   *
+   * Mémorisé : il ne change pas d'un bout à l'autre d'un match, et il est lu à
+   * chaque chant autant qu'à chaque diffusion.
+   */
+  stade() {
+    this._stade ??= stadeDeLaRencontre([], this.fixture.id);
+    return this._stade;
+  }
+
   crowd() {
     const now = Date.now();
     const n = [0, 0];
@@ -350,7 +379,13 @@ export class VirageRoom {
        les cartes ont posés. Sans cette ligne, le Métronome et le Second
        souffle coûtaient du souffle et ne changeaient rien au geste — une
        carte qu'on joue et qui ne fait rien est pire qu'une carte absente. */
-    const mods = modsAvecEffets(m.mods, m.effets, now);
+    /* Le lieu en fait partie, et il n'en faisait pas partie. La salle envoyait
+       son stade au client pour qu'il le dessine, et les `mods` de ce stade —
+       « le souffle revient bien plus lentement », « un geste parfait paie
+       double » — n'étaient appliqués nulle part. Dix lieux décrits, zéro lieu
+       qui change quoi que ce soit. La composition est celle du duel, importée
+       et non recopiée. */
+    const mods = modsAvecEffets(avecLieu(m.mods, this.stade()), m.effets, now);
 
     /* La note est calculée ici, à partir des instants de frappe.
 
@@ -988,7 +1023,7 @@ export class VirageRoom {
        * à tous — on passe donc un tableau vide, ce qui ouvre les cinq. Le jour
        * où le stade viendra du vrai lieu du match, c'est cette ligne-là qui
        * changera, et elle seule. */
-      stade: stadeDeLaRencontre([], this.fixture.id),
+      stade: this.stade(),
       /* Le catalogue des cartes d'action jouables ici. Il part avec l'état
          plutôt que d'être recopié dans la page : le jour où une carte change
          de portée, le Virage suit sans déploiement du client. */

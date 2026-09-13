@@ -193,11 +193,22 @@ check('et la ferveur n’y est pas réduite', A.state.you.neutre === false);
    du vrai match. Un contrôle qui veut un chant précis règle donc l'horloge sur
    le moment où ce chant est offert — plutôt que d'aller neutraliser la règle
    qu'il est justement censé traverser. */
-/* Les douze chants, écrits ici à la main : le contrôle « les douze finissent
-   tous par passer » ne veut rien dire s'il lit sa liste de référence dans le
-   fichier qu'il contrôle. */
-const ORDRE_ATTENDU = ['reprise', 'roulement', 'repons', 'onetaitla', 'salves',
-  'contrechant', 'craquage', 'montee', 'tenir', 'mur', 'relance', 'cadence'];
+/* Les chants, écrits ici à la main : le contrôle « ils finissent tous par
+   passer » ne veut rien dire s'il lit sa liste de référence dans le fichier
+   qu'il contrôle. Cinq se sont ajoutés — les cinq épreuves qui ne sont pas du
+   rythme — et cette liste-ci se met à jour à la main aussi. C'est le prix de
+   la discipline, et il est bon marché. */
+const ORDRE_ATTENDU = ['reprise', 'roulement', 'bache', 'repons', 'onetaitla',
+  'damier', 'salves', 'contrechant', 'moulinet', 'craquage', 'montee',
+  'aupoint', 'tenir', 'mur', 'appel', 'relance', 'cadence'];
+
+/* Les quinze gestes du jeu, écrits à la main pour la même raison. Le duel les
+   fait tourner depuis toujours ; le Virage n'en portait que dix, et **rien ne
+   le comptait** — douze chants couvraient dix gestes, et les cinq épreuves
+   étaient inatteignables dans le mode où l'on passe quatre-vingt-dix minutes. */
+const GESTES_ATTENDUS = ['tempo', 'mash', 'hold', 'contretemps', 'echo',
+  'crescendo', 'relance', 'salves', 'tenue', 'retenue',
+  'tifo', 'memoire', 'mosaique', 'echarpe', 'capo'];
 
 const offrir = (id) => {
   const salle = virage.rooms.get(7001);
@@ -224,9 +235,14 @@ const offrir = (id) => {
   const tailles = new Set();
   let melange = true, glisse = true;
 
-  for (let rang = 0; rang < 12; rang++) {
+  const tousGestes = new Set();
+  /* On parcourt un tour complet : autant de rangs que de chants. Douze était
+     le compte d'alors, pas une propriété — le figer aurait fait passer les
+     cinq derniers à la trappe sans qu'un contrôle bouge. */
+  for (let rang = 0; rang < ORDRE_ATTENDU.length; rang++) {
     const r = salle.repertoire(rang);
     r.forEach((id) => tous.add(id));
+    salle.chantsOfferts(rang).forEach((c) => tousGestes.add(c.gest));
     tailles.add(r.length);
     tailles.add(new Set(r).size);          // cinq chants *distincts*
     const gestes = new Set(salle.chantsOfferts(rang).map((c) => c.gest));
@@ -237,8 +253,19 @@ const offrir = (id) => {
 
   check('le répertoire n’offre que cinq chants à la fois',
     [...tailles].every((n) => n === 5));
-  check('mais les douze finissent tous par passer',
-    tous.size === 12 && ORDRE_ATTENDU.every((id) => tous.has(id)));
+  check(`mais les ${ORDRE_ATTENDU.length} finissent tous par passer`,
+    tous.size === ORDRE_ATTENDU.length && ORDRE_ATTENDU.every((id) => tous.has(id))
+    || (console.log('        vus :', tous.size, '· manquants :',
+      ORDRE_ATTENDU.filter((id) => !tous.has(id)).join(', ')), false));
+
+  /* Et **les quinze gestes** avec eux. C'est la propriété qui manquait : les
+     cinq épreuves — dessiner, se souvenir, allumer, tourner, suivre — étaient
+     écrites, éprouvées, jouables en duel, et n'apparaissaient jamais au Virage
+     faute d'un chant qui les demande. */
+  check(`les ${GESTES_ATTENDUS.length} gestes du jeu passent tous au Virage`,
+    GESTES_ATTENDUS.every((g) => tousGestes.has(g))
+    || (console.log('        absents :',
+      GESTES_ATTENDUS.filter((g) => !tousGestes.has(g)).join(', ')), false));
   /* Sans cette propriété, dix minutes de match pourraient se jouer entièrement
      au martelage : c'est elle, et elle seule, qui justifie l'ordre écrit. */
   check('et cinq chants consécutifs mêlent toujours au moins quatre gestes', melange);
@@ -635,7 +662,26 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
   check('la main du Virage est tirée du deck', m3.main.length === 5);
   check('et aucune carte de duel n’y entre',
     ![...m3.main, ...m3.pioche].some((id) => duel.has(id)));
-  check('les cartes qui traversent restent au duel', duel.size === 7);
+  /* **Les cartes nommées, et non leur nombre.**
+   *
+   * Ce contrôle disait `duel.size === 7`. Un nombre ne dit rien de ce qu'il
+   * compte : il rougit dès qu'on ajoute une carte, quelle qu'elle soit, et il
+   * se répare en écrivant 8 — ce qui ne vérifie plus rien du tout.
+   *
+   * La liste, elle, force une décision : ajouter une carte qui vise l'adversaire
+   * oblige à venir l'écrire ici, donc à se demander si elle a sa place au
+   * Virage. C'est exactement la question que ce contrôle existe pour poser. */
+  const RESTENT_AU_DUEL = ['a-silence', 'a-brouillard', 'a-parcage', 'a-vol',
+    'a-vent', 'a-bache', 'a-miroir', 'a-retournement'];
+  const ecart = [
+    ...RESTENT_AU_DUEL.filter((id) => !duel.has(id)).map((id) => `+${id}`),
+    ...[...duel].filter((id) => !RESTENT_AU_DUEL.includes(id)).map((id) => `-${id}`),
+  ];
+  check('les cartes qui traversent restent au duel, et ce sont celles-là',
+    ecart.length === 0
+    || (console.log('        écart :', ecart.join(' ')),
+      console.log('        — une carte qui vise l’adversaire n’entre pas au '
+        + 'Virage : dis-le ici si c’est voulu'), false));
 
   /* Une carte de duel forcée dans la main est refusée, et le refus nomme sa
      cause. C'est le filet contre le client modifié. */

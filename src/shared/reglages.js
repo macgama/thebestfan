@@ -105,8 +105,10 @@ export const REGLAGES = [
 
   /* ------------------------------------------------------------ virage */
   { cle: 'virage.but_a', section: 'virage', type: 'entier',
-    titre: 'La corde marque à', unite: 'points', min: 50, max: 2000, defaut: 400,
-    aide: 'L’effort collectif qu’il faut pour arracher un but de jeu.' },
+    titre: 'La corde marque à', unite: 'points', min: 50, max: 2000, defaut: 260,
+    aide: 'L’effort collectif qu’il faut pour arracher un but de jeu. À 400, le ' +
+      'marqueur restait à zéro toute la rencontre : il fallait plus de cent ' +
+      'secondes de chant ininterrompu, sans personne en face.' },
 
   { cle: 'virage.souffle_max', section: 'virage', type: 'entier',
     titre: 'Souffle maximum', unite: 'points', min: 20, max: 500, defaut: 100 },
@@ -117,9 +119,10 @@ export const REGLAGES = [
       'c’est lui qui dit combien de gestes on peut enchaîner.' },
 
   { cle: 'virage.decroissance', section: 'virage', type: 'decimal',
-    titre: 'La corde retombe de', unite: 'points/seconde', min: 0, max: 30, pas: 0.5, defaut: 3,
+    titre: 'La corde retombe de', unite: 'points/seconde', min: 0, max: 30, pas: 0.1, defaut: 1.4,
     aide: 'À zéro, la corde ne redescend jamais et le but finit toujours par ' +
-      'tomber tout seul.' },
+      'tomber tout seul. À 3, elle mangeait l’essentiel de ce qu’une tribune ' +
+      'poussait, et le marqueur ne bougeait pas.' },
 
   { cle: 'virage.inactif_sec', section: 'virage', type: 'entier',
     titre: 'On sort de la foule après', unite: 'secondes sans geste', min: 15, max: 600, defaut: 90,
@@ -131,7 +134,17 @@ export const REGLAGES = [
 
   /* -------------------------------------------------------------- duel */
   { cle: 'duel.but_a', section: 'duel', type: 'entier',
-    titre: 'La corde marque à', unite: 'points', min: 50, max: 2000, defaut: 300 },
+    titre: 'La corde marque à', unite: 'points', min: 50, max: 2000, defaut: 200,
+    aide: 'À 300, un duel de cinq minutes se terminait sur un nul : les deux ' +
+      'camps se neutralisaient et la décroissance mangeait le reste.' },
+
+  /* Elle était la seule des cinq valeurs du duel à être écrite en dur, et c'est
+     justement celle qu'il a fallu changer. Une valeur d'équilibrage qui échappe
+     au registre est une valeur qu'on ne retouche pas en regardant jouer. */
+  { cle: 'duel.decroissance', section: 'duel', type: 'decimal',
+    titre: 'La corde retombe de', unite: 'points/seconde', min: 0, max: 30, pas: 0.1, defaut: 1.2,
+    aide: 'À 2,5, elle mangeait tout l’écart entre les deux camps : la corde ' +
+      'oscillait autour de zéro pendant cinq minutes.' },
 
   { cle: 'duel.buts_pour_gagner', section: 'duel', type: 'entier',
     titre: 'Buts pour gagner', unite: 'buts', min: 1, max: 10, defaut: 3 },
@@ -140,8 +153,9 @@ export const REGLAGES = [
     titre: 'Durée d’un duel', unite: 'minutes', min: 1, max: 30, defaut: 5 },
 
   { cle: 'duel.chant_puissance', section: 'duel', type: 'entier',
-    titre: 'Un chant parfait pousse de', unite: 'points', min: 1, max: 200, defaut: 30,
-    aide: 'Avant les modificateurs du Fanzzy.' },
+    titre: 'Un chant parfait pousse de', unite: 'points', min: 1, max: 200, defaut: 44,
+    aide: 'Avant les modificateurs du Fanzzy. Un geste de tempo demande quatre ' +
+      'secondes et demie : à 30, un bon chant ne se voyait pas sur la corde.' },
 
   { cle: 'duel.chant_cout', section: 'duel', type: 'entier',
     titre: 'Un chant coûte', unite: 'souffle', min: 0, max: 100, defaut: 18 },

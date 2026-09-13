@@ -42,8 +42,23 @@ export class Triche extends Error {
   constructor(code) { super(code); this.code = code; }
 }
 
-/** Les cinq familles, dans l'ordre où elles ont été écrites. */
-export const EPREUVES = ['tifo', 'memoire', 'mosaique', 'echarpe', 'capo'];
+/**
+ * Les sept familles, dans l'ordre où elles ont été écrites.
+ *
+ * Les cinq premières demandent toutes la même chose sous des habits
+ * différents : **reproduire quelque chose qu'on vient de voir** — une forme,
+ * des paires, une grille, un cercle, une suite. C'est une seule qualité de
+ * joueur, mesurée cinq fois.
+ *
+ * Les deux dernières mesurent autre chose, et c'est pour ça qu'elles existent :
+ * `tri` mesure la vitesse de discrimination — voir vite et ne pas se tromper —
+ * et `compte` mesure l'horloge intérieure, sans rien à regarder du tout. Un
+ * joueur bon aux cinq premières n'est pas nécessairement bon à celles-ci, et
+ * c'est exactement ce qu'on cherche : que le répertoire récompense plusieurs
+ * sortes de gens.
+ */
+export const EPREUVES = ['tifo', 'memoire', 'mosaique', 'echarpe', 'capo',
+  'tri', 'compte'];
 
 export const REGLES = {
   /* Tracer une forme sans quitter le trait. `tolerance` est en fraction du
@@ -69,6 +84,24 @@ export const REGLES = {
      dépasse l'empan de la plupart des gens, et c'est le but — on ne cherche
      pas le sans-faute, on cherche jusqu'où chacun va. */
   capo: { zones: 6, longueur: 6, pas: 620, ms: 9000 },
+
+  /* **Le tri des cartons.** Vingt-quatre cartons de trois couleurs, on ramasse
+     ceux d'une seule, le plus vite possible. Rien à mémoriser : tout reste à
+     l'écran du début à la fin.
+
+     Un tiers de cartons justes — huit sur vingt-quatre — parce qu'une cible
+     majoritaire se ramasse en balayant l'écran sans regarder. Six secondes :
+     de quoi en prendre six ou sept en se dépêchant, pas les huit. */
+  tri: { cartons: 24, couleurs: 3, ms: 6000 },
+
+  /* **Le compte.** Le virage compte à rebours avant le craquage, puis le
+     compte s'éteint et il faut tomber juste quand même.
+
+     `visible` est ce qu'on voit ; `cible` ce qu'il faut atteindre. La
+     différence — entre deux et quatre secondes — est le temps qu'on doit tenir
+     à l'aveugle. `tolerance` est l'erreur qui vaut encore quelque chose : à une
+     seconde près on a quelque chose, à zéro on a tout. */
+  compte: { visible: 3000, cibleMin: 5000, cibleMax: 8000, tolerance: 1000, ms: 12_000 },
 };
 
 /* --------------------------------------------------------------- le hasard
@@ -186,6 +219,28 @@ export function consigneDe(epreuve, graine = 0) {
       ...REGLES.capo,
       suite: Array.from({ length: longueur }, () => Math.floor(rnd() * zones)),
     };
+  }
+
+  if (epreuve === 'tri') {
+    const { cartons, couleurs } = REGLES.tri;
+    const cible = Math.floor(rnd() * couleurs);
+    /* Un tiers exactement de chaque couleur, puis mélangé. Tirer chaque carton
+       au hasard donnerait des plateaux à trois cibles et des plateaux à quinze :
+       la même épreuve ne vaudrait pas la même chose d'une fois sur l'autre, et
+       la note cesserait de comparer quoi que ce soit. */
+    const parCouleur = Math.floor(cartons / couleurs);
+    const plateau = melanger(
+      Array.from({ length: cartons }, (_, i) =>
+        Math.min(couleurs - 1, Math.floor(i / parCouleur))), rnd);
+    return { ...REGLES.tri, cible, plateau };
+  }
+
+  if (epreuve === 'compte') {
+    const { cibleMin, cibleMax } = REGLES.compte;
+    /* La cible change à chaque fois : fixe, on l'apprendrait une fois pour
+       toutes et l'horloge intérieure ne servirait plus à rien. */
+    return { ...REGLES.compte,
+      cible: Math.round(cibleMin + rnd() * (cibleMax - cibleMin)) };
   }
 
   throw new Triche('epreuve.inconnue');
@@ -319,6 +374,63 @@ export function noter(epreuve, consigne, reponse, mods = {}) {
     let n = 0;
     while (n < consigne.suite.length && rendue[n] === consigne.suite[n]) n++;
     return Math.min(1.2, (n / consigne.suite.length) * (mods.memoireBonus ?? 1));
+  }
+
+  /**
+   * **Le tri.** Combien de bons cartons ramassés, moins les mauvais.
+   *
+   * Un mauvais carton coûte un bon, sans demi-mesure : l'épreuve mesure la
+   * discrimination, et une pénalité tiède se laisserait battre en ramassant
+   * tout l'écran. C'est la seule note du répertoire où il vaut mieux s'arrêter
+   * que continuer quand on n'est plus sûr.
+   *
+   * Elle ne dépend d'aucun bonus de mémoire : rien n'est caché. `tempoWindow`
+   * n'y ferait rien non plus — ce n'est pas du rythme. Aucun équipement ne
+   * l'aide, et c'est voulu : il doit rester une épreuve que le sac ne change
+   * pas.
+   */
+  if (epreuve === 'tri') {
+    const touches = Array.isArray(r.touches) ? r.touches : [];
+    humain(r.instants);
+    const vus = new Set();
+    let bons = 0;
+    let mauvais = 0;
+    for (const i of touches) {
+      if (!Number.isInteger(i) || vus.has(i)) continue;   // deux fois le même ne compte qu'une
+      const couleur = consigne.plateau[i];
+      if (couleur === undefined) continue;
+      vus.add(i);
+      if (couleur === consigne.cible) bons++; else mauvais++;
+    }
+    const aTrouver = consigne.plateau.filter((c) => c === consigne.cible).length;
+    if (!aTrouver) return 0;
+    return Math.max(0, Math.min(1.2, (bons - mauvais) / aTrouver));
+  }
+
+  /**
+   * **Le compte.** Tomber juste, sans rien à regarder.
+   *
+   * Le seul endroit du jeu où l'on ne mesure ni la précision d'un doigt ni une
+   * mémoire, mais une horloge intérieure. Le compte à rebours s'affiche trois
+   * secondes puis s'éteint : le reste se tient à l'aveugle.
+   *
+   * **L'instant est mesuré par le client**, comme tous les gestes de rythme du
+   * jeu : on ne peut pas faire autrement, la latence réseau vaudrait plusieurs
+   * fois l'écart qu'on mesure. Le garde-fou est le même que partout — un écart
+   * nul est refusé, parce qu'un humain ne tombe pas à la milliseconde.
+   */
+  if (epreuve === 'compte') {
+    const ecoule = Number(r.ecoule);
+    if (!Number.isFinite(ecoule) || ecoule < 0) return 0;
+    /* Une réponse au-delà du temps imparti n'est pas une réponse tardive :
+       c'est une réponse qui n'a pas été donnée pendant l'épreuve. */
+    if (ecoule > consigne.ms) throw new Triche('reponse.hors_delai');
+    const ecart = Math.abs(ecoule - consigne.cible);
+    /* Exactement à la milliseconde : personne ne fait ça. Un client qui rend
+       zéro d'écart rend un nombre calculé, pas un geste. */
+    if (ecart === 0) throw new Triche('reponse.trop_juste');
+    return Math.max(0, Math.min(1.2,
+      (1 - ecart / consigne.tolerance) * (mods.memoireBonus ?? 1)));
   }
 
   throw new Triche('epreuve.inconnue');

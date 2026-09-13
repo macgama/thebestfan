@@ -115,6 +115,27 @@ h2 i{font-style:normal;opacity:.7}
 .cote.eux{right:0;background:
   linear-gradient(270deg,rgba(60,130,232,.42),rgba(60,130,232,.10))}
 
+/* Le stade en fond d'arène. Les mêmes règles qu'au Virage, et pour la même
+   raison : `object-fit: cover` recadrerait sur la hauteur dès que la zone est
+   plus étroite que le dessin, et c'est justement les deux tribunes, sur les
+   côtés, qu'on perdrait. On impose la largeur, la hauteur déborde.
+
+   Plus sombre qu'au Virage — 0,34 contre 0,5 — parce que l'arène du duel porte
+   deux territoires colorés par-dessus, et que le décor doit passer dessous
+   sans entrer en concurrence avec l'information. */
+.stade{position:absolute;inset:0;overflow:hidden;border-radius:14px;
+  pointer-events:none;z-index:0}
+.stade .tbf-stade-fond{position:absolute;left:0;top:50%;width:100%;height:auto;
+  transform:translateY(-50%);object-fit:unset;opacity:.34}
+/* Le nom du lieu et ce qu'il change. Un stade qui modifie les règles sans le
+   dire donne l'impression que le jeu triche : la phrase est courte, en bas de
+   l'arène, et elle ne bouge plus. */
+.lieu{position:absolute;left:10px;right:10px;bottom:7px;z-index:4;text-align:center;
+  font-size:9.5px;letter-spacing:.08em;line-height:1.35;opacity:.55;pointer-events:none;
+  text-shadow:0 1px 6px rgba(0,0,0,.9)}
+.lieu b{font-family:var(--banner);letter-spacing:.14em;color:var(--projo);opacity:.9}
+.lieu:empty{display:none}
+
 /* La corde elle-même, tendue en travers de l'arène. */
 .fil-corde{position:absolute;left:0;right:0;top:50%;height:3px;margin-top:-1.5px;
   background:linear-gradient(90deg,rgba(242,238,228,.15),rgba(242,238,228,.5),rgba(242,238,228,.15))}
@@ -298,6 +319,11 @@ h2 i{font-style:normal;opacity:.7}
     <button class="son" id="son" type="button" aria-label="Couper le son">♪</button>
 
     <div class="arene" id="arene">
+      <!-- Le stade, sous tout le reste. Le duel se jouait sur un fond noir uni
+           pendant que le Virage montrait son lieu : même mécanique, deux
+           décors, et le joueur ne pouvait pas savoir que les deux écrans
+           parlaient du même jeu. -->
+      <div class="stade" id="stade"></div>
       <div class="cote moi" id="coteMoi"></div>
       <div class="cote eux" id="coteEux"></div>
       <div class="fil-corde"></div>
@@ -305,6 +331,7 @@ h2 i{font-style:normal;opacity:.7}
       <div class="ecart" id="ecart">0<small>ÉGALITÉ</small></div>
       <div class="foule moi" id="fouleMoi"></div>
       <div class="foule eux" id="fouleEux"></div>
+      <div class="lieu" id="lieu"></div>
     </div>
 
     <div class="effets" id="effets"></div>
@@ -341,6 +368,8 @@ h2 i{font-style:normal;opacity:.7}
 <script src="/fanzzy-art.js"></script>
 <script src="/action-art.js"></script>
 <!-- Le déroulé des dix gestes, partagé avec le Grand Virage. -->
+<!-- Le stade et la lumiere de ses tribunes, comme au Virage. -->
+<script src="/stade-art.js"></script>
 <script src="/geste.js"></script>
 <script>
 /* =======================================================================
@@ -683,6 +712,39 @@ function quitterFile() {
 
 /* ------------------------------------------------------- affichage */
 
+/**
+ * Le stade du duel, monté une seule fois.
+ *
+ * Le duel se jouait sur un fond noir uni, pendant que le Grand Virage montrait
+ * le lieu de la rencontre. Même mécanique, même corde, deux décors — et rien ne
+ * disait au joueur que c'était le même jeu.
+ *
+ * Le lieu vient du serveur et ne change pas de tout le duel : on le monte au
+ * premier état reçu, et le garde-fou du haut empêche de le remonter à chacune
+ * des dix vues par seconde — ce qui rechargerait le dessin en boucle.
+ *
+ * Les deux couleurs sont celles des camps de l'arène, pas celles des clubs : un
+ * duel n'oppose pas deux clubs, il oppose deux tribunes, et le joueur a déjà
+ * appris que l'or est chez lui et le bleu en face.
+ */
+let stade = null;
+
+function monterStade() {
+  if (stade || !S.vue?.stade || !window.TBF_STADE) return;
+  stade = window.TBF_STADE.monter($('stade'), {
+    id: S.vue.stade.id,
+    couleurs: ['var(--projo)', 'var(--bleu)'],
+  });
+  /* Le nom du lieu et ce qu'il change. Depuis que les `mods` du stade sont
+     réellement appliqués, un joueur qui ne les lit nulle part croit que le jeu
+     lui a retiré du souffle sans raison. */
+  const l = $('lieu');
+  if (l) {
+    l.innerHTML = `<b>${esc(S.vue.stade.nom ?? '')}</b>`
+      + (S.vue.stade.effet ? ` · ${esc(S.vue.stade.effet)}` : '');
+  }
+}
+
 function rendreDuel() {
   const v = S.vue;
   if (!v) return;
@@ -695,6 +757,8 @@ function rendreDuel() {
   const s = Math.max(0, Math.round((v.resteMs ?? 0) / 1000));
   $('horloge').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   $('modeTag').textContent = v.mode === 'classe' ? 'CLASSÉ' : 'ENTRAÎNEMENT';
+
+  monterStade();
 
   /* L'arène. Le moteur compte positif vers le camp 1 ; on l'oriente pour que
      « vers la droite » veuille toujours dire « ta tribune avance ».

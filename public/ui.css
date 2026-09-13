@@ -405,10 +405,22 @@ body{
   padding-left:12px;
   position:relative;
 }
+/* **La barre d'accent est une écharpe.**
+ *
+ * C'était un trait doré uni, et il faisait déjà son travail : la même marque
+ * sur les vingt écrans. Mais un trait doré uni est la marque de n'importe quel
+ * jeu ; deux couleurs en oblique sont celle d'une tribune, et ça ne coûte pas
+ * un octet de plus.
+ *
+ * Les couleurs viennent de `--e1` et `--e2` : un écran peut la peindre aux
+ * siennes — le Virage en rouge, le classeur en bleu — sans réécrire la règle.
+ */
 .tbf-titre::before{
-  content:"";position:absolute;left:0;top:.12em;bottom:.12em;width:4px;
-  border-radius:3px;background:var(--projo);
-  box-shadow:0 0 10px rgba(245,195,59,.45);
+  content:"";position:absolute;left:0;top:.12em;bottom:.12em;width:5px;
+  border-radius:3px;
+  background:repeating-linear-gradient(155deg,
+    var(--e1,var(--projo)) 0 7px,var(--e2,var(--flare)) 7px 14px);
+  box-shadow:0 0 0 1px rgba(4,7,11,.85),0 0 10px rgba(245,195,59,.35);
 }
 /* Le sous-titre d'un écran : plus petit que tout le reste, et il le reste. */
 /* Posé sous une barre d'onglets, il n'a plus besoin de sa marge du haut :
@@ -437,6 +449,335 @@ body{
 .b-epique{border-color:var(--r-epique)}
 .b-legendaire{border-color:var(--r-legendaire);
   box-shadow:0 0 14px rgba(245,195,59,.18)}
+
+
+/* ==================================================== LA PLAQUE
+
+   Le vocabulaire d'objet de l'interface. Tout ce qui se touche en est fait.
+
+   ## Pourquoi
+
+   L'interface était juste et plate : un rectangle à filet d'un pixel, posé sur
+   une photo, la même chose pour un bouton, un panneau, un onglet et une carte.
+   Rien n'y avait de **matière**, donc rien n'y avait de poids : le joueur ne
+   pouvait pas distinguer d'un coup d'œil ce qui se touche de ce qui s'affiche,
+   et un écran où tout se ressemble ne donne envie de rien.
+
+   Les jeux dont on s'inspire — Brawl Stars, Clash Royale — ne font pas autre
+   chose : leurs boutons sont des **objets**, pas des zones. Quatre traits
+   suffisent à les fabriquer, et ce sont ceux-là :
+
+   1. **Le cerne.** Deux pixels presque noirs tout autour. C'est ce qui fait
+      « jeu » plus que n'importe quoi d'autre : un objet détouré se pose sur
+      l'image au lieu d'y être découpé.
+   2. **La tranche.** Cinq pixels de la même couleur en plus sombre, dessous.
+      L'objet a une épaisseur, donc il peut s'enfoncer.
+   3. **La lumière.** Un filet clair au bord supérieur, dedans. La face devient
+      convexe.
+   4. **L'ombre portée.** L'objet décolle du fond.
+
+   ## Ce qui en fait une tribune plutôt qu'un jeu de bonbons
+
+   La grammaire ci-dessus est commune à tous ces jeux. Ce qui appartient à
+   celui-ci :
+
+   — **Le lettrage de banderole.** `--banner` en capitales espacées, avec une
+     ombre dure : le texte est peint sur la plaque, il ne flotte pas au-dessus.
+   — **L'écharpe.** Une bande de rayures obliques à deux couleurs, au bord
+     supérieur des plaques importantes. C'est le seul motif du jeu, et il ne
+     vient de nulle part ailleurs.
+   — **Le coin coupé.** Le bas-droit des plaques est presque carré quand les
+     trois autres coins sont ronds. Une plaque vissée, pas un galet.
+   — **La couleur par destination.** Le Virage est rouge, le Duel bleu, la
+     Boutique dorée. Neuf portes grises se lisent une par une ; neuf portes de
+     couleur se reconnaissent.
+
+   ## Comment s'en servir
+
+       <a class="tbf-plaque" data-ton="flare">…</a>     un bouton
+       <a class="tbf-case"   data-ton="flare">…</a>     une tuile carrée
+       <button class="tbf-plaque tbf-bloc" data-ton="or">…</button>   pleine largeur
+
+   `data-ton` et non une classe : l'attribut existait déjà dans ce sens
+   (`data-jeton`, `data-pastille`), et un ton est une donnée de la destination,
+   pas une variante de mise en page.
+
+   Sans `data-ton`, la plaque est en béton — le ton neutre. C'est voulu : une
+   plaque de plus sur un écran ne doit pas obliger à choisir une couleur.     */
+
+/* ----------------------------------------------------------- les tons
+
+   Quatre valeurs par ton, et elles sont écrites en clair plutôt que calculées.
+   `color-mix` ferait tenir la table en quatre lignes, mais une teinte dérivée
+   par la machine passe à côté de ce qui compte : le vert du gazon n'éclaircit
+   pas comme le rouge d'un fumigène, et c'est l'œil qui en décide.            */
+
+/* **Le béton est porté par la plaque, pas par `[data-ton]`.**
+
+   Il l'était : la table commençait par `[data-ton]{…}`, qui ne s'applique
+   qu'aux éléments **portant** l'attribut. Une plaque sans ton n'avait donc ni
+   face, ni cerne, ni encre — toutes ses couleurs étaient des variables vides,
+   la règle entière était invalide, et l'objet devenait transparent.
+
+   Le bouton de menu de l'accueil a disparu comme ça : il était bien là, à sa
+   place, avec sa taille et ses trois barres — peintes en rien sur un fond de
+   rien. Aucune erreur, aucune trace dans la console, et aucun contrôle ne peut
+   voir une couleur manquante. */
+.tbf-plaque,.tbf-case,.tbf-onglets,.tbf-cadre{
+  --face:#232B36;   /* la face de la plaque */
+  --haut:#3D4857;   /* le haut de la face, plus clair : la convexité */
+  --tranche:#0E1319;/* l'épaisseur, dessous */
+  --cerne:#04070B;  /* le trait qui détoure */
+  --encre:#F2EEE4;  /* le texte posé dessus */
+}
+[data-ton=or]     {--face:#F5C33B;--haut:#FFE596;--tranche:#9A7412;--cerne:#2A1E04;--encre:#1B1305}
+[data-ton=flare]  {--face:#E0402C;--haut:#FF8B74;--tranche:#8E1D12;--cerne:#2A0904;--encre:#FFF3F0}
+[data-ton=vert]   {--face:#1E9E6A;--haut:#5FDFA6;--tranche:#0D5B3B;--cerne:#032116;--encre:#F0FFF8}
+[data-ton=bleu]   {--face:#3C82E8;--haut:#94C1FF;--tranche:#1B3E75;--cerne:#04142B;--encre:#F4F8FF}
+[data-ton=violet] {--face:#8257DA;--haut:#C3A6FF;--tranche:#3E2870;--cerne:#120929;--encre:#F8F4FF}
+[data-ton=craie]  {--face:#E6E1D4;--haut:#FFFFFF;--tranche:#8C877A;--cerne:#23211B;--encre:#15130E}
+
+/* ------------------------------------------------------ la plaque même
+
+   `--epaisseur` est la seule mesure à retenir : la tranche, l'enfoncement au
+   doigt et la place réservée dessous en découlent tous. La changer en un point
+   change l'objet entier, et rien ne peut se désaccorder.                     */
+
+.tbf-plaque,.tbf-case{
+  --epaisseur:5px;
+  position:relative;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  box-sizing:border-box;
+  border:0;
+  margin-bottom:var(--epaisseur);   /* la tranche est une ombre : elle ne pousse
+                                       rien toute seule, et deux plaques
+                                       empilées se chevaucheraient sans cette
+                                       réserve */
+  background:linear-gradient(180deg,var(--haut) 0%,var(--face) 42%,var(--face) 100%);
+  color:var(--encre);
+  font-family:var(--banner);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  text-decoration:none;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  box-shadow:
+    0 0 0 2px var(--cerne),                        /* le cerne */
+    0 var(--epaisseur) 0 0 var(--tranche),         /* la tranche */
+    0 var(--epaisseur) 0 2px var(--cerne),         /* et son cerne */
+    0 calc(var(--epaisseur) + 6px) 14px rgba(0,0,0,.5),  /* l'ombre portée */
+    inset 0 2px 0 rgba(255,255,255,.30);           /* la lumière du haut */
+  /* Le coin bas-droit presque carré : une plaque vissée. */
+  border-radius:13px 13px 13px 4px;
+  transition:transform .08s ease,box-shadow .08s ease,filter .14s ease;
+}
+
+.tbf-plaque{padding:13px 17px;font-size:14px;font-weight:600;min-height:46px}
+
+/* **L'enfoncement.** La plaque descend exactement de son épaisseur et la
+   tranche disparaît : le doigt a poussé l'objet jusqu'au fond de sa course.
+   C'est le seul retour au toucher qui se sente physique — un simple
+   changement d'opacité se lit comme une panne. */
+.tbf-plaque:active,.tbf-case:active{
+  transform:translateY(var(--epaisseur));
+  box-shadow:
+    0 0 0 2px var(--cerne),
+    0 0 0 0 var(--tranche),
+    0 0 0 2px var(--cerne),
+    0 2px 4px rgba(0,0,0,.45),
+    inset 0 2px 0 rgba(255,255,255,.18);
+}
+.tbf-plaque:focus-visible,.tbf-case:focus-visible{
+  outline:3px solid var(--projo);outline-offset:3px;
+}
+/* Rien de tout cela n'a de sens sans le mouvement : à animation réduite, la
+   plaque s'éteint au lieu de s'enfoncer. */
+@media (prefers-reduced-motion:reduce){
+  .tbf-plaque,.tbf-case{transition:none}
+  .tbf-plaque:active,.tbf-case:active{transform:none;filter:brightness(.82)}
+}
+
+/* Une plaque hors service garde sa forme et perd sa couleur : elle reste au
+   même endroit, elle ne répond plus. La faire disparaître déplacerait tout ce
+   qui l'entoure au moment précis où le joueur cherche à comprendre. */
+.tbf-plaque[disabled],.tbf-plaque[aria-disabled=true],
+.tbf-case[disabled],.tbf-case[aria-disabled=true]{
+  filter:grayscale(.85) brightness(.6);cursor:default;pointer-events:none;
+}
+
+/* Le texte est peint sur la plaque : une ombre dure dessous, et rien de flou. */
+.tbf-plaque,.tbf-case{text-shadow:0 1px 0 rgba(0,0,0,.28)}
+[data-ton=or] .lib,[data-ton=craie] .lib,
+[data-ton=or],[data-ton=craie]{text-shadow:0 1px 0 rgba(255,255,255,.34)}
+
+/* L'icône. Elle prend l'encre du ton, jamais une couleur à elle : deux
+   couleurs sur un bouton de quarante pixels, c'est une de trop. */
+.tbf-plaque svg,.tbf-case svg{
+  stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;flex:none;
+}
+.tbf-plaque svg{width:19px;height:19px}
+
+/* Pleine largeur, pour l'action principale d'un écran. */
+.tbf-bloc{width:100%;font-size:16px;padding:15px 18px;min-height:54px;letter-spacing:.12em}
+.tbf-grande{--epaisseur:6px;font-size:17px;padding:17px 20px;min-height:58px}
+
+/* ------------------------------------------------------------ la tuile
+
+   La brique des deux rails de l'accueil : une plaque carrée, l'icône au-dessus
+   de l'étiquette. Elle est ici et non dans `index.html` parce qu'elle sert
+   aussi ailleurs — partout où un écran propose des destinations plutôt que des
+   actions.                                                                   */
+
+.tbf-case{
+  flex-direction:column;gap:5px;
+  aspect-ratio:1;width:100%;
+  padding:6px 4px;
+  font-size:clamp(7.6px,2.15vw,10.5px);
+  font-weight:600;letter-spacing:.01em;
+  border-radius:14px 14px 14px 5px;
+}
+.tbf-case svg{width:clamp(18px,5.4vw,23px);height:clamp(18px,5.4vw,23px)}
+.tbf-case .lib{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* **La pastille**, posée sur le cerne et non dedans : un compteur qui chevauche
+   le coin dit « il y a quelque chose là-dedans » mieux qu'un nombre rangé à
+   l'intérieur, qui se lit comme une légende. */
+.tbf-plaque[data-pastille]::after,.tbf-case[data-pastille]::after{
+  content:attr(data-pastille);position:absolute;top:-7px;right:-7px;
+  min-width:20px;height:20px;padding:0 5px;border-radius:10px;
+  background:var(--flare);color:#fff;
+  font-family:var(--banner);font-size:11px;font-weight:700;line-height:20px;
+  text-align:center;letter-spacing:0;text-shadow:none;
+  box-shadow:0 0 0 2px #04070B,0 2px 6px rgba(0,0,0,.6);
+}
+/* Sur une plaque déjà rouge, la pastille rouge disparaîtrait. */
+.tbf-plaque[data-ton=flare][data-pastille]::after,
+.tbf-case[data-ton=flare][data-pastille]::after{background:var(--projo);color:#1B1305}
+
+/* --------------------------------------------------------- l'étiquette
+
+   Une plaque qui ne se touche pas : un prix, un coût, un compte. Elle a le
+   cerne et la lumière — donc la matière du jeu — mais ni tranche ni
+   enfoncement, parce qu'un objet qui a l'air de s'enfoncer et qui ne réagit pas
+   au doigt est pire qu'un objet plat. C'est ce qui distingue une valeur d'une
+   action, et le joueur l'apprend en une fois.                                */
+
+.tbf-etiquette{
+  --face:#232B36;--haut:#3D4857;--cerne:#04070B;--encre:#F2EEE4;
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 9px;border-radius:8px 8px 8px 3px;
+  background:linear-gradient(180deg,var(--haut) 0%,var(--face) 55%);
+  color:var(--encre);
+  font-family:var(--banner);font-size:13px;letter-spacing:.04em;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+  box-shadow:0 0 0 1.5px var(--cerne),0 2px 5px rgba(0,0,0,.45),
+    inset 0 1px 0 rgba(255,255,255,.22);
+}
+.tbf-etiquette[data-ton=or]{--face:#F5C33B;--haut:#FFE596;--cerne:#2A1E04;--encre:#1B1305}
+.tbf-etiquette[data-ton=flare]{--face:#E0402C;--haut:#FF8B74;--cerne:#2A0904;--encre:#FFF3F0}
+.tbf-etiquette[data-ton=vert]{--face:#1E9E6A;--haut:#5FDFA6;--cerne:#032116;--encre:#F0FFF8}
+.tbf-etiquette[data-ton=bleu]{--face:#3C82E8;--haut:#94C1FF;--cerne:#04142B;--encre:#F4F8FF}
+.tbf-etiquette[data-ton=violet]{--face:#8257DA;--haut:#C3A6FF;--cerne:#120929;--encre:#F8F4FF}
+
+/* ------------------------------------------------------------ l'écharpe
+
+   Des rayures obliques à deux couleurs — le motif d'une écharpe de club, et le
+   seul motif du jeu. Posée en bande fine au bord supérieur d'une plaque ou
+   d'un panneau, elle dit « tribune » sans qu'aucun mot n'ait à le dire.
+
+   `--e1` et `--e2` pour que chaque écran puisse la peindre à ses couleurs : la
+   même bande sert au bandeau de la boutique et au titre du Virage.           */
+
+.tbf-echarpe{
+  --e1:var(--projo);--e2:var(--flare);
+  height:6px;border-radius:3px;
+  background:repeating-linear-gradient(115deg,
+    var(--e1) 0 9px,var(--e2) 9px 18px);
+  box-shadow:0 0 0 1.5px var(--cerne,#04070B),0 2px 6px rgba(0,0,0,.5);
+}
+
+/* ------------------------------------------------------------- le cadre
+
+   Le panneau `.pan` reste ce qu'il est : une surface calme pour du texte et des
+   listes, et il y en a des dizaines par écran. Lui donner la matière d'une
+   plaque ferait un écran entièrement en relief, c'est-à-dire un écran sans
+   hiérarchie — c'est le défaut exact des interfaces « gaming » ratées.
+
+   `.tbf-cadre` est le panneau qui compte : celui qu'on regarde en arrivant. Un
+   par écran, deux au plus.                                                   */
+
+.tbf-cadre{
+  position:relative;
+  /* `color` et `font` hérités, comme `.pan` les hérite. Sans cette ligne, un
+     cadre posé sur une balise `<a>` reprend le bleu de lien du navigateur : sur
+     l'accueil, « COLLECTION 4/152 » et l'affiche du jour sont ressortis en bleu
+     électrique, et rien dans la feuille ne le disait. */
+  color:inherit;font:inherit;text-decoration:none;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.05) 0,rgba(255,255,255,0) 42%),
+    var(--panneau);
+  border-radius:15px 15px 15px 5px;
+  box-shadow:
+    0 0 0 2px #04070B,
+    0 0 0 3px rgba(242,238,228,.07),
+    0 10px 26px rgba(0,0,0,.5),
+    inset 0 1px 0 rgba(255,255,255,.10);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  overflow:hidden;
+}
+/* La bande d'écharpe du cadre, peinte dans son bord haut. */
+.tbf-cadre[data-echarpe]::before{
+  content:"";position:absolute;left:0;right:0;top:0;height:4px;
+  background:repeating-linear-gradient(115deg,
+    var(--e1,var(--projo)) 0 9px,var(--e2,var(--flare)) 9px 18px);
+}
+
+/* ----------------------------------------------------------- les onglets
+
+   Cinq écrans avaient leur propre barre d'onglets — `.tabs`, `.onglets`, deux
+   façons de marquer l'actif. Ils n'avaient jamais tout à fait la même hauteur
+   ni le même creux, et personne ne pouvait le voir puisqu'on ne regarde qu'un
+   écran à la fois.
+
+   Un rail creusé, et la plaque du ton choisi qui vient s'y poser : l'onglet
+   actif est un objet, les autres sont des trous.                             */
+
+.tbf-onglets{
+  display:flex;gap:6px;padding:5px;
+  background:rgba(4,7,11,.55);
+  border-radius:14px;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.6),0 0 0 1px rgba(242,238,228,.07);
+}
+.tbf-onglet{
+  flex:1 1 0;min-width:0;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 8px;min-height:40px;
+  border:0;background:none;color:var(--craie);
+  font-family:var(--banner);font-size:12.5px;letter-spacing:.1em;
+  text-transform:uppercase;text-decoration:none;
+  border-radius:10px;opacity:.5;cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:opacity .14s ease;
+}
+.tbf-onglet:hover{opacity:.78}
+.tbf-onglet.on{
+  opacity:1;
+  color:var(--encre);
+  background:linear-gradient(180deg,var(--haut) 0%,var(--face) 46%,var(--face) 100%);
+  box-shadow:0 0 0 2px var(--cerne),0 3px 0 0 var(--tranche),
+    0 3px 0 2px var(--cerne),0 6px 12px rgba(0,0,0,.45),
+    inset 0 2px 0 rgba(255,255,255,.28);
+  text-shadow:0 1px 0 rgba(0,0,0,.25);
+  transform:translateY(-1px);
+}
+.tbf-onglet svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;flex:none}
+/* Le rail porte le ton par défaut de l'onglet actif : sans lui, `var(--face)`
+   ne vaudrait rien et l'onglet actif serait transparent. */
+.tbf-onglets:not([data-ton]){--face:#F5C33B;--haut:#FFE596;--tranche:#9A7412;
+  --cerne:#2A1E04;--encre:#1B1305}
 
 /* ------------------------------------------------------------- panneaux */
 
@@ -887,3 +1228,25 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
 .grille.memo i.prise{background:rgba(47,184,166,.26);border-color:var(--c,#2FB8A6);
   color:var(--c,#2FB8A6)}
 .grille.capo i{aspect-ratio:1.25;border-radius:9px}
+
+/* Le tri. Les cartons portent leur couleur d'emblée — rien n'est caché — et
+   `--t` est posée par la page, une par carton. Un carton pris s'efface au lieu
+   de disparaître : la grille garde sa forme, et le joueur voit ce qu'il a déjà
+   fouillé. */
+.grille.tri i{background:var(--t,#C2CAD6);border-color:rgba(0,0,0,.45);border-radius:6px}
+.grille.tri i.pris{opacity:.2;transform:scale(.86)}
+/* Un mauvais carton se marque : l'épreuve en retire un bon, et une pénalité
+   qu'on ne voit pas passer se lit comme une note injuste. */
+.grille.tri i.rate{opacity:.34;box-shadow:inset 0 0 0 3px #E0402C}
+
+/* Le compte. Un seul chiffre, très gros, au milieu — et rien d'autre : c'est
+   la seule épreuve où l'écran doit devenir inutile en cours de route. */
+.compte{display:grid;place-items:center;gap:6px;width:100%;height:100%;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;cursor:pointer}
+.compte b{font-family:var(--banner);font-size:clamp(38px,13vw,64px);line-height:1;
+  color:var(--c,#E08A2C);font-variant-numeric:tabular-nums;
+  text-shadow:0 0 26px rgba(224,138,44,.4)}
+/* Éteint : la case garde sa hauteur, sinon tout l'écran remonte au moment
+   précis où le joueur doit ne plus bouger. */
+.compte b.noir{opacity:0}
+.compte b::after{content:"";display:block;height:0}
