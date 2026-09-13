@@ -94,6 +94,20 @@ export const INVITES = {
     + 'already drawing breath to start it again, the pause before the restart'],
   cadence: ['sky blue', 'a supporter counting out an exact measured beat with a raised '
     + 'finger, calm and precise amid a crowd that follows him note for note'],
+
+  /* Les cinq qui ne sont pas du rythme. Leur sujet ne montre pas des mains qui
+     frappent mais un geste qu'on trace, qu'on retient, qu'on suit : c'est ce
+     qui les distingue à l'œil dans le répertoire. */
+  bache: ['violet', 'supporters unrolling an enormous painted banner across the whole '
+    + 'stand, arms high, the cloth rippling as it catches the light'],
+  damier: ['emerald', 'a chequerboard of coloured cards held up across the stand, half '
+    + 'of them already flipped, a pattern forming row by row'],
+  aupoint: ['sky blue', 'two supporters pointing at each other across the stand having '
+    + 'found the same gesture at the same instant, recognition on both faces'],
+  moulinet: ['amber', 'a supporter whirling his scarf overhead in a fast circle, the '
+    + 'whole row doing the same, a wheel of colour above the crowd'],
+  appel: ['crimson', 'a capo high on the barrier, megaphone raised, calling a section '
+    + 'of the stand that rises to answer him'],
 };
 
 export const inviteDe = (id) => {

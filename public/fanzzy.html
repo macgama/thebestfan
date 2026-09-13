@@ -217,18 +217,6 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Onglets en haut plutôt qu'en bas : la barre de navigation commune occupe
    déjà le bas de l'écran, et deux barres superposées se recouvraient — les
    onglets devenaient inatteignables. */
-.nav{display:flex;gap:6px;padding:4px 16px 10px;flex:none;z-index:5}
-/* `button` **et** `a` : le troisième onglet mène à une autre page, donc c'est
-   un lien — et un lien doit l'être, pour qu'on puisse l'ouvrir dans un nouvel
-   onglet ou le copier. Ne styler que les boutons laissait le deck en texte nu
-   au milieu de deux onglets. */
-.nav button,.nav a{flex:1;background:var(--panneau);backdrop-filter:blur(10px);
-  border:1px solid rgba(242,238,228,.14);text-decoration:none;
-  border-radius:8px;color:inherit;display:flex;align-items:center;justify-content:center;gap:7px;
-  padding:9px 4px;font-size:11px;letter-spacing:.08em;font-family:var(--banner);opacity:.55;
-  cursor:pointer}
-.nav button.on,.nav a.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
-.nav svg{width:15px;height:15px}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -244,14 +232,14 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
        maintenant où l'on est, et le répéter trente pixels plus bas ne faisait
        qu'occuper la place au-dessus des onglets. L'écran commence donc par ses
        onglets, comme le deck. -->
-  <nav class="nav">
+  <nav class="nav tbf-onglets">
     <!-- L'ordre dit le chemin : mon personnage, puis ma collection, puis le
          kiosque où l'agrandir. Le kiosque venait en premier et « DUEL » en
          dernier — l'écran d'accueil de la section était donc la boutique, et
          le personnage qu'on a choisi, le dernier onglet. On entre chez soi
          avant d'entrer au magasin. -->
-    <button data-go="equipe" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>MON FANZZY</button>
-    <button data-go="dex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18M4 8h4M4 13h4"/></svg>CLASSEUR</button>
+    <button data-go="equipe" class="tbf-onglet on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>MON FANZZY</button>
+    <button class="tbf-onglet" data-go="dex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18M4 8h4M4 13h4"/></svg>CLASSEUR</button>
     <!-- Le troisième onglet **change de page**, et c est assumé : le deck a
          mille lignes à lui, et les fondre ici ferait un fichier que personne
          ne relit. Les deux écrans portent la même barre, de sorte que le

@@ -42,11 +42,6 @@ input:focus{outline:none;border-color:var(--projo)}
   border:1px solid rgba(242,238,228,.2);opacity:.55}
 .lg .t.t1{border-color:var(--projo);color:var(--projo);opacity:1}
 
-.tabs{display:flex;gap:5px;padding:0 15px 10px}
-.tabs button{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.13);border-radius:7px;
-  color:inherit;padding:9px 4px;font-family:var(--banner);font-size:11px;letter-spacing:.06em;
-  cursor:pointer;opacity:.55}
-.tabs button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
 
 table{width:100%;border-collapse:collapse;font-size:12.5px}
 th{font-family:var(--banner);font-size:9.5px;letter-spacing:.13em;opacity:.42;text-align:right;
@@ -89,6 +84,24 @@ td.pts{font-family:var(--banner);font-size:15px}
 <meta name="theme-color" content="#0A0D11">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+/* Les boutons de cette barre n'ont pas de classe : ils sont les seuls enfants
+   du rail, et lui seul les désigne. */
+.tabs.tbf-onglets > button{
+  flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 8px;min-height:40px;border:0;background:none;color:var(--craie);
+  font-family:var(--banner);font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;
+  border-radius:10px;opacity:.5;cursor:pointer;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;transition:opacity .14s ease;
+}
+.tabs.tbf-onglets > button.on{
+  opacity:1;color:var(--encre);
+  background:linear-gradient(180deg,var(--haut) 0%,var(--face) 46%,var(--face) 100%);
+  box-shadow:0 0 0 2px var(--cerne),0 3px 0 0 var(--tranche),0 3px 0 2px var(--cerne),
+    0 6px 12px rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.28);
+  text-shadow:0 1px 0 rgba(0,0,0,.25);transform:translateY(-1px);
+}
+</style>
 </head>
 <body>
 <main id="app">
@@ -183,7 +196,7 @@ function debounce(fn, ms) { return (...a) => { clearTimeout(t); t = setTimeout((
 async function ouvrir(id) {
   vue = 'ligue'; ligue = id; onglet = 'classement';
   $('back').classList.add('on');
-  $('head').innerHTML = `<div class="tabs" id="tabs">
+  $('head').innerHTML = `<div class="tabs tbf-onglets" id="tabs">
     <button data-t="classement" class="on">CLASSEMENT</button>
     <button data-t="resultats">RÉSULTATS</button>
     <button data-t="scorers">BUTEURS</button>

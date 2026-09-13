@@ -136,6 +136,27 @@ export const INVITES = {
   'a-tifo': ['red', 'a giant painted banner unfurling down the whole height of a terrace, '
     + 'hundreds of hands passing it over their heads, the crowd disappearing beneath it, '
     + 'red night stadium'],
+
+  /* Les cinq de septembre 2026. Quatre d'entre elles agissent sur une chose
+     qu'on ne voit pas — le temps qui passe, le prix d'une carte, un pari, une
+     avance qui fond. Le sujet est donc chaque fois le **geste du supporter**
+     qui les incarne, jamais l'abstraction : on ne dessine pas « la corde cesse
+     de retomber », on dessine des gens qui tiennent. */
+  'a-ancre': ['silver', 'a whole row of supporters braced against the barrier, feet set, '
+    + 'arms locked together, leaning back as one and refusing to give a centimetre, '
+    + 'jaws set, cold silver night light'],
+  'a-mise': ['orange', 'a single supporter at the front of the terrace taking a huge '
+    + 'breath before one all-or-nothing shout, everyone around him turned towards him '
+    + 'and waiting, the whole stand held in suspense, warm orange light'],
+  'a-tournee': ['amber', 'a supporter carrying an armful of steaming cups along a packed '
+    + 'terrace row, hands reaching out to take them, laughter and open faces, everyone '
+    + 'served, warm amber glow'],
+  'a-longchant': ['violet', 'a terrace deep into a slow repeating chant, rows swaying in '
+    + 'unison, mouths open on the same syllable, no flares and no banners — just the '
+    + 'endurance of it, steady violet night light'],
+  'a-retournement': ['crimson', 'a terrace that has just woken up, the front row surging '
+    + 'forward against the barrier, disbelief turning into fury on their faces, the '
+    + 'moment a lost match stops being lost, deep crimson light'],
 };
 
 export const inviteDe = (id) => {

@@ -37,17 +37,6 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    qui disparaît à l'appui pendant que le bouton descend. C'est le seul retour
    tactile dont dispose une page web, et il fait toute la différence entre une
    liste de réglages et un écran de jeu. */
-.tabs{display:flex;gap:8px;padding:11px 16px 10px}
-.tab{flex:1;background:rgba(16,22,31,.92);border:0;border-radius:11px;
-  color:inherit;padding:12px 8px 11px;font-family:var(--banner);font-size:13px;
-  letter-spacing:.09em;cursor:pointer;opacity:.6;
-  box-shadow:0 4px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(242,238,228,.1);
-  transition:transform .1s,box-shadow .1s,opacity .1s}
-.tab:active{transform:translateY(4px);box-shadow:0 0 0 rgba(0,0,0,.6)}
-.tab.on{background:var(--craie);color:#0B0E13;opacity:1;
-  box-shadow:0 4px 0 #6E6A61,inset 0 1px 0 rgba(255,255,255,.5)}
-.tab b{color:var(--projo)}
-.tab.on b{color:#8A6A0B}
 
 h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;margin:20px 16px 9px;
   display:flex;align-items:baseline;gap:8px}
@@ -260,13 +249,11 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 .barre .info.pb{color:var(--flare);opacity:.95}
 /* Le bouton d'enregistrement est l'action principale de l'écran : c'est le
    seul qui a droit à la couleur pleine et au socle le plus épais. */
-.btn{background:linear-gradient(180deg,#FFDC7A,var(--projo) 45%,#D0A020);border:0;color:#161006;
-  border-radius:10px;padding:13px 18px 12px;font-family:var(--banner);font-size:13px;
-  letter-spacing:.1em;cursor:pointer;flex:none;
-  box-shadow:0 4px 0 #8A6A0B,inset 0 1px 0 rgba(255,255,255,.55);
-  transition:transform .1s,box-shadow .1s}
-.btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 #8A6A0B}
-.btn:disabled{filter:grayscale(.85);opacity:.45;cursor:default;box-shadow:0 4px 0 rgba(0,0,0,.4)}
+/* Enregistrer le deck. Une plaque dorée : c'est l'action qui valide tout
+   l'écran. Elle ne garde que son `flex:none`, qui l'empêche de s'étirer dans
+   la barre du bas. */
+.btn{flex:none;padding:13px 18px;font-size:13px;letter-spacing:.1em}
+.btn:disabled{filter:grayscale(.85);opacity:.45;cursor:default;pointer-events:none}
 
 /* ------------------------------------------------------------- panneaux */
 
@@ -323,18 +310,6 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 /* La barre des trois écrans de cartes. Elle est identique à celle de la page
    des Fanzzy : c est la même section, et deux barres différentes feraient
    croire à deux endroits. */
-.nav{display:flex;gap:6px;padding:4px 16px 10px;flex:none;z-index:5}
-/* `button` **et** `a` : le troisième onglet mène à une autre page, donc c'est
-   un lien — et un lien doit l'être, pour qu'on puisse l'ouvrir dans un nouvel
-   onglet ou le copier. Ne styler que les boutons laissait le deck en texte nu
-   au milieu de deux onglets. */
-.nav button,.nav a{flex:1;background:var(--panneau);backdrop-filter:blur(10px);
-  border:1px solid rgba(242,238,228,.14);text-decoration:none;
-  border-radius:8px;color:inherit;display:flex;align-items:center;justify-content:center;gap:7px;
-  padding:9px 4px;font-size:11px;letter-spacing:.08em;font-family:var(--banner);opacity:.55;
-  cursor:pointer}
-.nav button.on,.nav a.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
-.nav svg{width:15px;height:15px}
 
 /* ------------------------------------------------- la carte en grand
 
@@ -416,10 +391,10 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 </head>
 <body>
 <main id="app">
-  <nav class="nav">
-    <a href="/fanzzy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>MON FANZZY</a>
-    <a href="/fanzzy?ecran=dex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18M4 8h4M4 13h4"/></svg>CLASSEUR</a>
-    <a class="on" href="/deck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h10v13H4zM8 4h10v13"/></svg>DECK</a>
+  <nav class="nav tbf-onglets">
+    <a class="tbf-onglet" href="/fanzzy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>MON FANZZY</a>
+    <a class="tbf-onglet" href="/fanzzy?ecran=dex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18M4 8h4M4 13h4"/></svg>CLASSEUR</a>
+    <a class="tbf-onglet on" href="/deck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h10v13H4zM8 4h10v13"/></svg>DECK</a>
   </nav>
   <div class="top">
     <h1 class="tbf-titre">MON DECK<small>trois Fanzzy, dix cartes</small></h1>
@@ -432,7 +407,7 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 <div class="barre" id="barre" style="display:none">
   <div class="in">
     <div class="info" id="info"></div>
-    <button class="btn" id="save" disabled>ENREGISTRER</button>
+    <button class="btn tbf-plaque" data-ton="or" id="save" disabled>ENREGISTRER</button>
   </div>
 </div>
 
@@ -717,10 +692,10 @@ function rendre() {
   corps.push(`<div class="nomdeck"><span>NOM</span>
     <input id="nom" maxlength="32" value="${esc(S.deck.nom)}" autocomplete="off"></div>`);
 
-  corps.push(`<div class="tabs">
-    <button class="tab ${S.onglet === 'tribune' ? 'on' : ''}" data-onglet="tribune">TRIBUNE
+  corps.push(`<div class="tabs tbf-onglets">
+    <button class="tab tbf-onglet ${S.onglet === 'tribune' ? 'on' : ''}" data-onglet="tribune">TRIBUNE
       <b>${S.deck.fanzzy.length}/${placesFanzzy()}</b></button>
-    <button class="tab ${S.onglet === 'cartes' ? 'on' : ''}" data-onglet="cartes">CARTES
+    <button class="tab tbf-onglet ${S.onglet === 'cartes' ? 'on' : ''}" data-onglet="cartes">CARTES
       <b>${S.deck.actions.length}/${S.regles.actions}</b></button>
   </div>`);
 
@@ -1090,7 +1065,7 @@ function panneauCarte(id) {
     bas = `<div class="vide" style="padding:18px 10px">Tes ${S.regles.actions} emplacements sont pris.<br>
       Retire une carte pour faire de la place.</div>`;
   } else {
-    bas = `<div style="padding:6px 0 10px"><button class="btn" style="width:100%"
+    bas = `<div style="padding:6px 0 10px"><button class="btn tbf-plaque" data-ton="or" style="width:100%"
       data-ajouter="${a.id}">AJOUTER AU DECK${n ? ` (${S.regles.copiesMax == null ? `déjà ×${n}` : `${n}/${S.regles.copiesMax}`})` : ''}</button></div>`;
   }
 

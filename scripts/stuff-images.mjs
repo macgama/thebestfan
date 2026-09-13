@@ -99,6 +99,38 @@ export const INVITES = {
   bache: 'a heavy plain tarpaulin banner, rolled and bundled into a thick coil, brass '
     + 'eyelets along its edge, a length of rope threaded through them, creased and '
     + 'weather-stained canvas, completely blank with nothing painted on it',
+
+  /* Les dix du second sac.
+     Deux pièges appris sur les sept premières, et qui se rappellent ici :
+     un vêtement finit porté par quelqu'un si l'on ne dit pas deux fois qu'il
+     est vide (voir la capuche) ; et tout ce qui peut porter un écusson en
+     porte un, inventé, si l'on n'écrit pas qu'il n'y a rien dessus. */
+  gants: 'a pair of dark knitted fingerless gloves, thick wool, the cut edges of the '
+    + 'fingers frayed, one lying flat and one half curled, well worn',
+  sifflet: 'a small metal pea whistle on a short braided cord, brass and chrome, '
+    + 'scratched from use, the cord coiled loosely beside it',
+  carnet: 'a small pocket notebook stuffed with folded paper slips, its cardboard cover '
+    + 'soft and curling, a rubber band around it, held half open, the visible pages '
+    + 'covered in illegible handwritten scribbles with no readable words',
+  bonnet: 'a thick knitted beanie hat with a folded brim and bold horizontal stripes, '
+    + 'empty and unworn, slumped and holding its shape. Nobody is wearing it, there is '
+    + 'no head inside it, no crest and no lettering on it',
+  brassard: 'a wide fabric captain armband with a buckle strap, bold two-tone diagonal '
+    + 'stripes, lying curled into a loop, worn edges, completely blank with no letters '
+    + 'or numbers on it',
+  drapeau: 'a large supporter flag on a wooden pole, the plain fabric furled loosely '
+    + 'around the shaft with one corner falling open, a leather grip on the pole, no '
+    + 'emblem and nothing written on the cloth',
+  tifosac: 'an open cardboard box packed upright with hundreds of thin coloured card '
+    + 'sheets, a few loose cards spilling over the rim, the box scuffed at the corners',
+  cornet: 'a compressed air horn canister with a red plastic trumpet fitting screwed on '
+    + 'top, a dented metal can, condensation on the surface, no label and no text on it',
+  chrono: 'an old mechanical stopwatch with a chrome case and a large crown button, its '
+    + 'lanyard ring at the top with a short leather strap, the dial face plain with '
+    + 'simple tick marks and no numbers',
+  fanion: 'a small triangular pennant on a short varnished stick, heavy velvet with a '
+    + 'gold bullion fringe along the bottom edge, faded and slightly moth-eaten, the '
+    + 'fabric completely plain with no crest, no date and no lettering',
 };
 
 export const inviteDe = (id) => (INVITES[id]
@@ -251,7 +283,25 @@ for (const s of STUFF) {
     .joinChannel(masque, { raw: { width: info.width, height: info.height, channels: 1 } })
     .png().toBuffer();
 
-  const decoupe = await sharp(pleine)
+  /* **On recadre sur l'objet avant de réduire.**
+   *
+   * Les sept premières pièces sont arrivées en mille vingt-quatre par mille
+   * vingt-quatre, parce que c'est ce qui avait été demandé. Les dix suivantes
+   * sont arrivées en seize-neuvièmes : le générateur a rendu le format qu'il
+   * voulait sans le dire autrement que dans un champ de sa réponse.
+   *
+   * Sans recadrage, `fit:'contain'` aurait fait tenir une image large dans une
+   * icône carrée : l'objet, qui occupe la moitié centrale du cadre, se serait
+   * retrouvé au quart de la vignette, entouré de vide — plus petit que les sept
+   * autres, et personne n'aurait su pourquoi.
+   *
+   * Le fond étant déjà transparent à ce stade, `trim` coupe exactement sur
+   * l'objet. La chaîne devient indifférente au cadrage qu'on lui envoie, ce qui
+   * vaut mieux que de dépendre d'un format qu'on ne contrôle pas. */
+  const serre = await sharp(pleine).trim({ threshold: 1 }).png().toBuffer()
+    .catch(() => pleine);   // une image entièrement pleine n'a rien à couper
+
+  const decoupe = await sharp(serre)
     .resize(COTE, COTE, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png().toBuffer();
   await sharp(decoupe).avif({ quality: 66 }).toFile(path.join(CIBLE, `${s.id}.avif`));

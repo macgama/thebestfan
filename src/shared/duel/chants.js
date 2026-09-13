@@ -1,10 +1,10 @@
 /**
- * Les douze chants du Grand Virage.
+ * Les dix-sept chants du Grand Virage.
  *
  * Ils vivaient dans `src/server/ferveur/virage.js`, en `const` privée. Trois
  * autres endroits en ont désormais besoin — la chaîne d'illustrations, le
- * module d'images du navigateur, et les contrôles qui vérifient que les douze
- * sont dessinés — et aucun ne peut importer un moteur de salle pour lire une
+ * module d'images du navigateur, et les contrôles qui vérifient qu'ils sont
+ * tous dessinés — et aucun ne peut importer un moteur de salle pour lire une
  * table de cinq lignes.
  *
  * Le fichier est à côté de `actions.js`, et pour la même raison : un catalogue
@@ -31,6 +31,25 @@ export const CHANTS = {
   mur:         { nom: 'Le mur',          gest: 'tempo',       cost: 38, power: 46 },
   relance:     { nom: 'La relance',      gest: 'relance',     cost: 30, power: 40 },
   cadence:     { nom: 'La cadence',      gest: 'retenue',     cost: 24, power: 38 },
+
+  /* ------------------------------------- les cinq qui ne sont pas du rythme
+
+     Le duel faisait déjà tourner les quinze gestes ; le Virage n'en portait
+     que dix, parce qu'il tire le sien de la carte de chant. Les cinq absents
+     étaient les cinq épreuves — dessiner, se souvenir, allumer, tourner,
+     suivre — écrites, éprouvées, jouables en duel, et **inatteignables dans le
+     mode où l'on passe quatre-vingt-dix minutes**.
+
+     Elles poussent plus fort à coût comparable, et ce n'est pas une faveur :
+     dessiner un tifo prend six secondes, une mosaïque neuf, là où un tempo en
+     prend quatre et demie. À puissance égale, personne ne les choisirait, et
+     l'on aurait ajouté cinq cartes que le répertoire ferait tourner sans que
+     personne les joue. */
+  bache:       { nom: 'La bâche',        gest: 'tifo',        cost: 30, power: 54 },
+  damier:      { nom: 'Le damier',       gest: 'mosaique',    cost: 28, power: 50 },
+  aupoint:     { nom: 'Au point',        gest: 'memoire',     cost: 26, power: 47 },
+  moulinet:    { nom: 'Le moulinet',     gest: 'echarpe',     cost: 25, power: 42 },
+  appel:       { nom: 'L’appel du capo', gest: 'capo',        cost: 29, power: 49 },
 };
 
 /**
@@ -43,8 +62,13 @@ export const CHANTS = {
  * où la tribune ne ferait que marteler. Un contrôle le vérifie, et une mutation
  * qui groupe les gestes par famille le fait tomber.
  */
-export const ORDRE = ['reprise', 'roulement', 'repons', 'onetaitla', 'salves',
-  'contrechant', 'craquage', 'montee', 'tenir', 'mur', 'relance', 'cadence'];
+/* Les cinq épreuves s'**intercalent** au lieu de se coller à la fin. Le
+   répertoire est une fenêtre de cinq qui glisse le long de cette liste : mises
+   bout à bout, elles donneraient un quart d'heure sans rien à dessiner, puis un
+   quart d'heure sans rien à chanter. Un Virage doit faire passer les deux. */
+export const ORDRE = ['reprise', 'roulement', 'bache', 'repons', 'onetaitla',
+  'damier', 'salves', 'contrechant', 'moulinet', 'craquage', 'montee',
+  'aupoint', 'tenir', 'mur', 'appel', 'relance', 'cadence'];
 
-/** Les douze, sous forme de liste — pour qui veut les parcourir. */
+/** Tous, sous forme de liste — pour qui veut les parcourir. */
 export const LISTE_CHANTS = ORDRE.map((id) => ({ id, ...CHANTS[id] }));

@@ -42,26 +42,59 @@
     sessionStorage.setItem(CLE, '1');
   } catch { /* stockage refusé : on la montre, c est tout */ }
 
-  /* Combien de temps, au plus. Assez pour que l'éventail se déploie et que le
-     nom se lise — c'est une ouverture, pas une révérence. */
-  const AU_PLUS = 1800;
-  /* Et au moins, une fois lancé : sans ce plancher, un accueil déjà en cache
-     fait clignoter l'écran, ce qui est pire que de ne pas l'avoir. */
-  const AU_MOINS = 600;
+  /**
+   * Combien de temps l'ouverture tient l'écran.
+   *
+   * Dix secondes. Elle en tenait 1800 ms et partait au premier toucher — le bon
+   * réglage du temps où elle passait à **chaque** visite de l'accueil. Elle ne
+   * passe qu'une fois par session depuis, et dix secondes une fois par session,
+   * c'est le temps d'une ouverture de jeu.
+   *
+   * C'est long, et il faut le savoir : quelqu'un qui ouvre l'application pour
+   * vérifier un score attendra dix secondes pour une information qui en demande
+   * deux. C'est une décision de rythme, et elle tient dans cette constante.
+   */
+  const DUREE = 10_000;
 
   const depart = performance.now();
   let parti = false;
 
+  /* La jauge suit le temps réel.
+   *
+   * Dix secondes sans rien qui avance se lisent comme une panne : on recharge,
+   * et l'on repart pour dix secondes. Elle était déjà dans le cadre, purement
+   * décorative — elle dit maintenant où l'on en est.
+   *
+   * `requestAnimationFrame` plutôt qu'une minuterie : la jauge ne décide de
+   * rien, elle ne fait que suivre, et un cadre sauté ne coûte qu'un cadre. */
+  const jauge = ecran.querySelector('.jauge i, .barre i, [data-jauge]');
+  if (jauge) {
+    const suivre = () => {
+      if (parti) return;
+      const part = Math.min(1, (performance.now() - depart) / DUREE);
+      jauge.style.width = `${(part * 100).toFixed(1)}%`;
+      if (part < 1) requestAnimationFrame(suivre);
+    };
+    requestAnimationFrame(suivre);
+  }
+
   function partir() {
     if (parti) return;
     parti = true;
-    const reste = Math.max(0, AU_MOINS - (performance.now() - depart));
+    const reste = Math.max(0, DUREE - (performance.now() - depart));
     setTimeout(() => {
       ecran.classList.add('partie');
       /* On le retire vraiment, une fois la transition finie. `visibility` le
          sort déjà de l'ordre de tabulation, mais une image de fond qui
          respire pour personne consomme un calque de composition pour rien. */
-      setTimeout(() => ecran.remove(), 700);
+      setTimeout(() => {
+        ecran.remove();
+        /* Le rideau est levé. Ce que l'accueil gardait pour ce moment — le
+           salut du personnage — peut se jouer : joué plus tôt, il se déroulait
+           entièrement derrière l'écran d'ouverture, et le joueur ne voyait
+           jamais son Fanzzy arriver. */
+        dispatchEvent(new Event('tbf:ouverture-finie'));
+      }, 700);
     }, reste);
   }
 
@@ -90,7 +123,14 @@
   /* Les trois sorties. La minuterie est posée en premier : si tout le reste
      échoue — un script cassé plus haut, un réseau mort — elle part quand même,
      et c'est elle qui empêche l'écran d'ouverture de devenir une porte close. */
-  setTimeout(partir, AU_PLUS);
-  addEventListener('tbf:pret', partir, { once: true });
-  addEventListener('pointerdown', partir, { once: true });
+  /* Une seule sortie : le temps.
+   *
+   * `tbf:pret` et le toucher partaient **avant** la durée — ils faisaient de
+   * 1800 ms un plafond, pas une durée. Maintenant que la durée est voulue, ils
+   * n'ont plus de sens : l'écran tient dix secondes, et `partir` attend de
+   * toute façon ce qu'il reste à tenir.
+   *
+   * Rien ne piège le joueur pour autant : c'est borné, ça avance visiblement,
+   * et le navigateur garde son bouton. */
+  setTimeout(partir, DUREE);
 })();

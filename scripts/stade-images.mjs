@@ -45,6 +45,88 @@ const CIBLE = path.join(RACINE, 'public', 'img', 'stade');
  */
 const LARGEUR = 720;
 
+/* -------------------------------------------------------------- les invites
+
+   Trois exigences portent tout le reste, et elles ne se négocient pas : c'est
+   d'elles que dépendent la mesure du plan et l'éclairage des tribunes.
+
+   1. **Vue du dessus, terrain vertical.** Les deux grandes tribunes tombent
+      alors à gauche et à droite, et c'est ce cadrage-là qui permet d'y poser
+      deux camps. Un stade rendu en oblique n'a plus de côtés.
+
+   2. **Les tribunes sont dans l'ombre.** Le jeu les allume lui-même, en
+      `mix-blend-mode: screen` — un mode qui *ajoute* de la lumière. Une
+      tribune déjà éclairée ne peut plus s'éclairer : on obtiendrait un
+      autocollant coloré à la place d'une foule.
+
+   3. **La pelouse est franchement verte et éclairée.** C'est à sa teinte que
+      `boiteDuTerrain` reconnaît le terrain. Une pelouse sombre, et le plan
+      sort faux — sans qu'aucune erreur ne soit levée.                        */
+
+const STYLE = `Style: stylised 3D illustration, modern mobile game art,
+painterly, rich but restrained palette, deep night atmosphere. NOT photorealistic,
+NOT a satellite photo, NOT a technical diagram.
+
+Composition: strict top-down aerial view, looking straight down. The pitch is
+VERTICAL, a tall rectangle running from the top of the frame to the bottom, its
+centre line horizontal. The two main stands are the long sides, LEFT and RIGHT
+of the pitch, filling the frame edge to edge.
+
+Lighting: the pitch is brightly lit by floodlights and reads as a clear
+saturated green. The two side stands are DARK — deep shadow, the crowd only
+suggested as texture and speckle, no lit faces, no bright seats, no glowing
+screens. They must stay unlit.
+
+Strictly forbidden: any text, letters, numbers, logos, club crests,
+advertising boards with writing, scoreboards, watermark, people seen from the
+side, oblique or three-quarter camera angles.`;
+
+/** Le sujet de chaque lieu. */
+export const INVITES = {
+  chaudron: 'a compact old football ground at night, the stands rising steeply '
+    + 'right at the touchline with almost no run-off, concrete terracing, a tight '
+    + 'bowl packed in among city rooftops',
+  montagne: 'a small mountain stadium at night, snow on the stand roofs and '
+    + 'banked along the touchlines, dark pine forest and bare rock beyond the ends, '
+    + 'thin cold air, floodlight beams visible',
+  arene: 'a modern enclosed arena at night seen through its glass roof structure, '
+    + 'clean geometric stands, a perfectly even pitch, no wind, everything sealed '
+    + 'and still',
+  poussiere: 'a dry stadium at night on red earth, the pitch worn and patchy with '
+    + 'bald ochre areas, dust hanging in the floodlight beams, simple open stands '
+    + 'of raw concrete',
+  piste: 'a large athletics stadium at night, a running track with lane markings '
+    + 'encircling the football pitch and pushing the stands far back from the '
+    + 'touchlines, wide empty space between crowd and grass',
+
+  /* Les cinq de septembre 2026. */
+  tole: 'a stadium at night whose side stands are covered by long low corrugated '
+    + 'metal roofs, rusted and patched, the roofs almost touching the terracing so '
+    + 'the crowd is buried in shadow beneath them',
+  marin: 'a seaside stadium at night, one end open straight onto dark water and '
+    + 'a harbour wall, wind visibly bending the corner flags and the floodlight '
+    + 'beams full of sea spray, salt-stained concrete',
+  huisclos: 'a stadium at night played behind closed doors, the pitch brightly lit '
+    + 'and the two side stands completely EMPTY — bare rows of seats in shadow, not '
+    + 'a single person anywhere, the emptiness obvious',
+  neige: 'a stadium at night during heavy snowfall, the pitch green but streaked '
+    + 'and patched with snow, the pitch lines repainted in blue and already fading, '
+    + 'snow piled thick on the stand roofs, falling flakes caught in the floodlights',
+  annexe: 'a small training ground pitch at night, no real stands at all — just a '
+    + 'low metal handrail and two shallow rows of dark benches down each side, a '
+    + 'few portable floodlight masts, a fence and dark trees beyond',
+};
+
+export const inviteDe = (id) => (INVITES[id]
+  ? `Subject: ${INVITES[id]}.\n\n${STYLE}` : null);
+
+if (process.argv.includes('--invites')) {
+  for (const s of STADES) {
+    console.log(`\n=== ${s.id} — ${s.nom} (${s.rar})\n${inviteDe(s.id) ?? '(aucune invite)'}`);
+  }
+  process.exit(0);
+}
+
 /** La vignette de la carte à collectionner, bien plus petite. */
 const VIGNETTE = 300;
 

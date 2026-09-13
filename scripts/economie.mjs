@@ -30,15 +30,35 @@ import { DEX, RATES, SCARVES, EVO_COST } from '../src/shared/fanzzy/dex.js';
 import { MAX_PACKS, PACK_REGEN_MS, PACK_PRICE } from '../src/server/fanzzy/index.js';
 
 const TAILLE_PAQUET = 5;
-const PLACES_GARANTIES = 3;      // les trois premières sont toujours communes
-const CHANCE_SKIN = 0.22;        // sur les places 4 et 5, si un skin est libre
+const PLACES_QUI_ROULENT = 2;    // les deux premières tirent leur rareté
+
+/* Quelles places rendent un supporter, et lesquelles rendent autre chose.
+ *
+ * La simulation modélisait « cinq supporters, dont les places 4 et 5 peuvent
+ * devenir un skin une fois sur cinq ». Le serveur ne fait plus rien de tel : il
+ * décide d'abord quelles places rendent un supporter — la première toujours, la
+ * deuxième sept fois sur dix, jamais les trois autres — et remplit le reste
+ * avec la table des places ouvertes. */
+const PLACES_SUPPORTER_SURES = 1;
+const CHANCE_DEUXIEME = 0.7;
+
+/* La table des places ouvertes, à l'identique du serveur. La simulation ne
+   distingue pas action / stuff / skin — aucune ne rend de carte de collection —
+   mais les écharpes, si : ce sont elles qui paient les évolutions. */
+const PART_ECHARPES = 0.25;
+const POIGNEES = [[6, 0.55], [14, 0.33], [30, 0.12]];
 
 {
   const src = readFileSync(new URL('../src/server/fanzzy/index.js', import.meta.url), 'utf8');
   const attendu = [
-    [`CHANCE_SKIN = ${CHANCE_SKIN}`, 'la chance de tirer un skin'],
-    [`i < ${PLACES_GARANTIES} ? 'commune'`, 'le nombre de places garanties en commune'],
+    [`const PLACES_QUI_ROULENT = ${PLACES_QUI_ROULENT};`, 'le nombre de places qui tirent leur rareté'],
+    ['i < PLACES_QUI_ROULENT ? pickRarity(i + 4)', 'la table de rareté employée par ces places'],
     [`length: ${TAILLE_PAQUET} }`, 'la taille du paquet'],
+    [`i >= ${PLACES_SUPPORTER_SURES + 1} || (i === ${PLACES_SUPPORTER_SURES} `
+      + `&& Math.random() >= ${CHANCE_DEUXIEME})`, 'la règle des places ouvertes'],
+    [`['echarpes', ${PART_ECHARPES}]`, 'la part des écharpes dans les places ouvertes'],
+    [`const POIGNEES = [[${POIGNEES[0].join(', ')}], [${POIGNEES[1].join(', ')}], `
+      + `[${POIGNEES[2].join(', ')}]];`, 'les poignées d’écharpes'],
   ];
   const perdus = attendu.filter(([motif]) => !src.includes(motif));
   if (perdus.length) {
@@ -50,7 +70,6 @@ const CHANCE_SKIN = 0.22;        // sur les places 4 et 5, si un skin est libre
 }
 
 const args = process.argv.slice(2);
-const PLANCHER = args.includes('--plancher');
 const chiffres = args.filter((a) => !a.startsWith('--')).map(Number);
 const CIBLE = chiffres[0] || null;
 const TIRAGES = chiffres[1] || 2000;
@@ -121,31 +140,62 @@ function tirerRarete(place) {
 }
 
 /**
- * Un booster, exactement comme `drawPack` côté serveur.
+ * Un booster, exactement comme `drawPack` et `openPack` côté serveur.
  *
- * `plancher` active la variante proposée : les trois places garanties ne
- * restent en commune que **tant qu'il manque une commune** au joueur dans
- * cette série. Une fois qu'il les a toutes, elles montent au tirage normal.
- *
- * Sans cette variante, un joueur qui possède les vingt-cinq communes reçoit
- * trois doublons garantis à une écharpe pièce dans chaque paquet, jusqu'à la
- * fin du jeu — soixante pour cent de chaque booster devient du remplissage.
- * C'est invisible à 27 cartes et écrasant à 100.
+ * L'ancienne version acceptait un `plancher` : une variante où les trois places
+ * garanties en commune montaient au tirage normal une fois le joueur en
+ * possession de toutes les communes de la série. Cette variante n'a plus
+ * d'objet — il n'y a plus de places garanties en commune, puisque les seules
+ * places que le joueur reçoive tirent désormais leur rareté.
  */
-function ouvrir(setId, possedeQuelqueChose, manqueCommune) {
+function ouvrir(setId) {
   const tirees = [];
+  let ecarpes = 0;
   for (let i = 0; i < TAILLE_PAQUET; i++) {
-    // Les places 4 et 5 peuvent devenir un skin, mais seulement si le joueur
-    // possède déjà un Fanzzy à habiller.
-    if (i >= PLACES_GARANTIES && possedeQuelqueChose && Math.random() < CHANCE_SKIN) {
-      tirees.push(null);           // un skin : ni carte neuve, ni doublon
+    /* Une place ouverte ne rend jamais de supporter. Le serveur y appelle
+       `tirerAutreChose`, qui **ne peut pas échouer** : chaque catégorie sans
+       stock retombe sur les écharpes, jamais sur le supporter tiré. La carte de
+       collection de cette place est donc perdue quoi qu'il arrive — c'est la
+       différence avec l'ancienne version, où la place revenait au supporter dès
+       que le joueur n'avait rien à habiller. */
+    const ouverte = i >= PLACES_SUPPORTER_SURES + 1
+      || (i === PLACES_SUPPORTER_SURES && Math.random() >= CHANCE_DEUXIEME);
+    if (ouverte) {
+      if (Math.random() < PART_ECHARPES) ecarpes += tirerPoignee();
+      tirees.push(null);
       continue;
     }
-    const garantie = i < PLACES_GARANTIES && (!PLANCHER || manqueCommune);
-    const rar = garantie ? 'commune' : tirerRarete(Math.max(4, i + 1));
+    const rar = i < PLACES_QUI_ROULENT ? tirerRarete(i + 4) : 'commune';
     tirees.push(rnd(pool(setId, rar)));
   }
-  return tirees;
+  return { tirees, ecarpes };
+}
+
+/** La poignée d'écharpes d'une place ouverte, comme le serveur la tire. */
+function tirerPoignee() {
+  const r = Math.random();
+  let acc = 0;
+  for (const [n, p] of POIGNEES) { acc += p; if (r < acc) return n; }
+  return POIGNEES[0][0];
+}
+
+/**
+ * Ce qu'un booster peut rendre — **mesuré**, non supposé.
+ *
+ * Croiser `drawPack` et la règle des places ouvertes demande de lire deux
+ * fonctions écrites à cent lignes d'écart, et le résultat n'est écrit nulle
+ * part. On ouvre donc cent mille paquets à blanc et on regarde ce qui en sort :
+ * si une rareté n'arrive jamais, la collection est inatteignable, et la
+ * médiane qu'on s'apprêtait à publier ne voudrait rien dire.
+ */
+function raretesAtteignables() {
+  const vues = new Set();
+  for (let k = 0; k < 100_000; k++) {
+    for (const c of ouvrir(SET_IDS[k % SET_IDS.length], true, true).tirees) {
+      if (c) vues.add(c.rar);
+    }
+  }
+  return vues;
 }
 
 /* --------------------------------------------------------- une collection */
@@ -175,8 +225,9 @@ function unePartie() {
   while (eus.size < total && paquets < PLAFOND) {
     const set = SET_IDS.slice().sort((a, b) => manquePar(b) - manquePar(a))[0];
     if (manquePar(set) === 0) break;
-    const manqueCommune = POOLS.get(`${set}/commune`).some((c) => !eus.has(c.id));
-    for (const c of ouvrir(set, eus.size > 0, manqueCommune)) {
+    const paquet = ouvrir(set);
+    ecarpes += paquet.ecarpes;
+    for (const c of paquet.tirees) {
       if (!c) continue;
       if (eus.has(c.id)) { ecarpes += SCARVES[c.rar]; doublons++; }
       else {
@@ -198,6 +249,27 @@ function unePartie() {
 
 const moyenne = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
 const mediane = (xs) => { const t = xs.slice().sort((a, b) => a - b); return t[Math.floor(t.length / 2)]; };
+
+/* Avant de simuler deux mille collections, on vérifie qu'il y en ait une à
+   faire. Sans cela, une rareté hors d'atteinte fait tourner chaque partie
+   jusqu'au plafond — deux mille fois deux cent mille paquets — pour publier au
+   bout du compte une médiane calculée sur un tableau vide. */
+{
+  const atteignables = raretesAtteignables();
+  const visees = [...new Set(CARTES.map((c) => c.rar))];
+  const perdues = visees.filter((r) => !atteignables.has(r));
+  if (perdues.length) {
+    console.error(`\nAucun booster ne peut rendre : ${perdues.join(', ')}.`);
+    console.error('\nSeules les places qui rendent un supporter comptent : la première, et la');
+    console.error('deuxième trois fois sur dix. Les trois autres sont ouvertes, donc');
+    console.error('toujours remplacées par autre chose — la rareté qu’elles tirent est');
+    console.error('jetée avec la carte.');
+    console.error('\nLa collection est inatteignable : il n’y a pas de médiane à publier.');
+    console.error('Cela se règle dans src/server/fanzzy/index.js, en donnant le tirage de');
+    console.error('rareté aux places que le joueur reçoit — voir `PLACES_QUI_ROULENT`.\n');
+    process.exit(1);
+  }
+}
 
 const parties = Array.from({ length: TIRAGES }, unePartie);
 const abouties = parties.filter((p) => p.complet);

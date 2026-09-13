@@ -41,6 +41,24 @@ const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
 let failures = 0;
+/**
+ * Le temps qu'on laisse à l'écran d'ouverture pour s'en aller.
+ *
+ * **Lu dans `ouverture.js`**, et non recopié : il en tenait 1800 ms, il en
+ * tient dix mille, et un délai recopié dans une suite est un délai qui finit
+ * par mentir — trois contrôles ont expiré en annonçant « le Fanzzy ne salue
+ * pas » alors que l'ouverture était simplement encore là.
+ *
+ * La marge est large : ce n'est pas la durée qu'on éprouve ici, c'est que
+ * l'écran finisse par partir. Le contrôle qui juge vraiment la durée est celui
+ * qui la mesure.
+ */
+const OUVERTURE_MS = (() => {
+  const src = readFileSync(new URL('../public/ouverture.js', import.meta.url), 'utf8');
+  const m = src.match(/const DUREE = ([\d_]+)/);
+  return (m ? Number(m[1].replace(/_/g, '')) : 2000) + 4000;
+})();
+
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
 
 /* ------------------------------------------------------------- la base */
@@ -213,7 +231,7 @@ async function ouvrir(largeur = 400, hauteur = 880) {
      suivent éprouveraient donc l ouverture au lieu de l accueil, et le
      rougissement ne dirait pas ce qui ne va pas. On attend qu il parte. */
   await page.waitForFunction(() => !document.getElementById('ouverture'),
-    { timeout: 6000 }).catch(() => {});
+    { timeout: OUVERTURE_MS }).catch(() => {});
   return page;
 }
 
@@ -1068,7 +1086,7 @@ await page.close();
     /* Et il s en va. Sans ce contrôle, une ouverture qui reste est une porte
        close : le jeu est derrière, et personne ne peut y entrer. */
     const parti = await p3.waitForFunction(() => !document.getElementById("ouverture"),
-      { timeout: 6000 }).then(() => true).catch(() => false);
+      { timeout: OUVERTURE_MS }).then(() => true).catch(() => false);
     check("puis il s en va tout seul", parti);
 
     /* Une fois par session, et pas une fois par visite : l accueil est
@@ -1093,7 +1111,7 @@ await page.close();
     return {
       barre: Boolean(document.getElementById('tbf-nav')),
       rails: document.querySelectorAll('.rail').length,
-      cases: document.querySelectorAll('.rail .case').length,
+      cases: document.querySelectorAll('.rail .tbf-case').length,
       defilePage: document.documentElement.scrollHeight > document.documentElement.clientHeight + 1,
       defileApp: app.scrollHeight > app.clientHeight + 1,
       debordeLarge: document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -1105,9 +1123,9 @@ await page.close();
       // Un libellé de rail rogné ne se voit qu’à l’usage, sur un vrai
       // téléphone. On mesure le libellé et non la case : la pastille de
       // compteur est en position absolue et déborde exprès.
-      rognes: [...document.querySelectorAll('.rail .case .lib')]
+      rognes: [...document.querySelectorAll('.rail .tbf-case .lib')]
         .filter((l) => l.scrollWidth > l.clientWidth + 1).map((l) => l.textContent.trim()),
-      ou: [...document.querySelectorAll('.rail .case')].map((a) => a.getAttribute('href')),
+      ou: [...document.querySelectorAll('.rail .tbf-case')].map((a) => a.getAttribute('href')),
     };
   });
 

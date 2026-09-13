@@ -73,10 +73,7 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
 .langues button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
 
 .actions{padding:22px 14px 30px;display:flex;flex-direction:column;gap:9px}
-.btn{border-radius:9px;padding:14px;font-family:var(--banner);font-size:14px;letter-spacing:.08em;
-  cursor:pointer;border:1px solid rgba(242,238,228,.2);background:var(--panneau);backdrop-filter:blur(10px);color:inherit;
-  text-align:center;text-decoration:none;display:block}
-.btn.rouge{border-color:rgba(224,64,44,.5);color:var(--flare)}
+.btn{padding:14px;font-size:14px;letter-spacing:.08em;width:100%}
 .btn.danger{border:0;background:none;color:rgba(224,64,44,.6);font-size:11.5px;letter-spacing:.04em;
   font-family:var(--ui);text-decoration:underline;padding:6px}
 .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#171C23;z-index:80;
@@ -139,8 +136,8 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
   </div>
 
   <div class="actions">
-    <button class="btn" id="resend" style="display:none">RENVOYER LE MAIL DE VÉRIFICATION</button>
-    <button class="btn rouge" id="logout">SE DÉCONNECTER</button>
+    <button class="btn tbf-plaque" id="resend" style="display:none">RENVOYER LE MAIL DE VÉRIFICATION</button>
+    <button class="btn tbf-plaque" data-ton="flare" id="logout">SE DÉCONNECTER</button>
     <button class="btn danger" id="supprimer">Supprimer définitivement mon compte</button>
   </div>
 </div></main>

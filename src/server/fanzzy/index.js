@@ -140,7 +140,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
   }
 
   /**
-   * Cinq cartes d'une série. Les trois premières sont communes.
+   * Cinq cartes d'une série. Les deux premières tirent leur rareté, les trois
+   * suivantes sont communes — et de toute façon remplacées par `openPack`.
    *
    * **Le repli descend l'échelle au lieu de sauter directement aux communes.**
    * L'ancienne version tentait la rareté tirée puis, si elle était vide,
@@ -175,8 +176,27 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
     }
 
     const ECHELLE = ['legendaire', 'epique', 'rare', 'commune'];
+
+    /* **Le tirage de rareté va sur les places qui rendent un supporter.**
+     *
+     * Il allait sur les deux dernières, et `RATES` le dit encore : « les deux
+     * dernières places sont les seules qui peuvent tomber sur une légendaire ».
+     * Mais `openPack` a fait des trois dernières places des places ouvertes,
+     * qui ne rendent plus jamais de supporter : le tirage de rareté roulait
+     * donc sur des cartes systématiquement jetées.
+     *
+     * Résultat : **aucune légendaire ne pouvait sortir d'un booster**, et les
+     * quatorze personnages légendaires publiés étaient hors d'atteinte. Les
+     * deux règles étaient justes chacune de son côté et fausses ensemble — ce
+     * que ni l'une ni l'autre ne pouvait dire seule, puisqu'elles vivent à cent
+     * lignes d'écart. C'est `scripts/economie.mjs` qui l'a vu, en mesurant ce
+     * qu'un booster rend au lieu de le supposer.
+     *
+     * Les deux places conservées portent donc les deux tables : la première au
+     * taux le plus prudent, la deuxième au plus généreux. */
+    const PLACES_QUI_ROULENT = 2;
     return Array.from({ length: 5 }, (_, i) => {
-      const vise = i < 3 ? 'commune' : pickRarity(i + 1);
+      const vise = i < PLACES_QUI_ROULENT ? pickRarity(i + 4) : 'commune';
       // On redescend depuis le cran visé : une série sans épique donne une rare
       // plutôt qu'une commune, ce qui reste plus proche de ce qu'on promettait.
       const depart = Math.max(0, ECHELLE.indexOf(vise));

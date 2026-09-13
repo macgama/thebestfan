@@ -36,6 +36,7 @@
     relance: 'RELANCE', salves: 'SALVES', tenue: 'SANG-FROID', retenue: 'MESURE',
     tifo: 'TIFO', memoire: 'LES VISAGES', mosaique: 'MOSAÏQUE',
     echarpe: 'L’ÉCHARPE', capo: 'LE CAPO',
+    tri: 'LE TRI', compte: 'LE COMPTE',
   };
   const AIDE = {
     tempo: 'Tape sur chaque pulsation',
@@ -53,6 +54,8 @@
     mosaique: 'Retiens la mosaïque, puis refais-la',
     echarpe: 'Fais tourner l’écharpe — rond et régulier',
     capo: 'Regarde la suite du capo, puis répète-la',
+    tri: 'Ramasse **uniquement** les cartons de la bonne couleur',
+    compte: 'Le compte s’éteint. Touche pile quand il arrive à zéro.',
   };
   /* La couleur dit la famille du geste avant qu'on ait lu son nom : or pour le
      rythme, bleu pour la vitesse, craie pour la tenue, vert pour la mesure. */
@@ -66,6 +69,10 @@
        et l’œil doit le savoir avant d’avoir lu le nom. */
     tifo: '#8257DA', echarpe: '#8257DA',
     memoire: '#2FB8A6', mosaique: '#2FB8A6', capo: '#2FB8A6',
+    /* Les deux dernières ne retiennent rien : l'une trie à vue, l'autre
+       compte dans le noir. Elles ont donc leur propre teinte — ambre — pour
+       qu'on ne les prenne pas pour des épreuves de mémoire. */
+    tri: '#E08A2C', compte: '#E08A2C',
   };
 
   const label = (g) => LABEL[g] ?? String(g ?? '').toUpperCase();
@@ -526,6 +533,97 @@
             if (c) c.className = 'on';
             buzz(14);
           });
+          break;
+        }
+
+        /**
+         * **Le tri des cartons.** Ramasser une couleur, laisser les deux
+         * autres, le plus vite possible.
+         *
+         * Rien n'est caché et rien ne s'éteint : c'est la seule épreuve où tout
+         * reste à l'écran du début à la fin. Ce qu'elle mesure n'est pas la
+         * mémoire mais la discrimination sous la pression du temps — et un
+         * mauvais carton coûte un bon, donc s'arrêter quand on n'est plus sûr
+         * est un choix qui se défend.
+         */
+        case 'tri': {
+          const g = gestes?.tri ?? {};
+          const plateau = g.plateau ?? [];
+          const cible = g.cible ?? 0;
+          rendre = { touches: [], instants: [] };
+          /* Les trois couleurs sont fixes, pas tirées : le joueur doit
+             reconnaître « le rouge » d'une partie à l'autre, et une palette qui
+             change à chaque fois lui referait apprendre l'épreuve. */
+          const TEINTES = ['#E0402C', '#3C82E8', '#F5C33B'];
+          const cotes = Math.ceil(Math.sqrt(plateau.length || 1));
+          zone.innerHTML = `<div class="grille tri" id="pad"
+            style="grid-template-columns:repeat(${cotes},1fr)">${
+            plateau.map((c, i) =>
+              `<i data-c="${i}" style="--t:${TEINTES[c] ?? TEINTES[0]}"></i>`).join('')
+            }</div><div class="s" id="s">RAMASSE LE <b
+              style="color:${TEINTES[cible] ?? TEINTES[0]}">■</b></div>`;
+          const pad = $('pad');
+          pad.onpointerdown = (e) => {
+            const c = e.target.closest('[data-c]');
+            if (!c || c.classList.contains('pris')) return;
+            const i = Number(c.dataset.c);
+            rendre.touches.push(i);
+            rendre.instants.push(maintenant());
+            /* On montre tout de suite si c'était bon. Le joueur le sait déjà —
+               il voit les couleurs — et le lui cacher ne rendrait pas
+               l'épreuve plus difficile, seulement moins lisible. */
+            c.className = plateau[i] === cible ? 'pris' : 'pris rate';
+            buzz(plateau[i] === cible ? 9 : 22);
+          };
+          apres(g.ms ?? 6000, finir);
+          break;
+        }
+
+        /**
+         * **Le compte.** Le rebours s'affiche, puis s'éteint, et il faut tomber
+         * juste quand même.
+         *
+         * La seule épreuve du jeu où il n'y a rien à regarder au moment où l'on
+         * agit. On donne donc trois secondes de compte visible pour caler
+         * l'horloge, puis on l'éteint : ce qui reste à tenir est l'écart entre
+         * ce qu'on a vu et la cible, et il change à chaque fois.
+         *
+         * `maintenant()` des deux côtés : l'écart rendu est une durée mesurée
+         * chez le joueur, jamais un instant absolu. Une horloge décalée de dix
+         * minutes n'y change rien.
+         */
+        case 'compte': {
+          const g = gestes?.compte ?? {};
+          const cible = g.cible ?? 6000;
+          const visible = g.visible ?? 3000;
+          const depart = maintenant();
+          rendre = { ecoule: 0, instants: [] };
+          zone.innerHTML = `<div class="compte" id="pad">
+            <b id="cpt">—</b><small id="s">TOUCHE À ZÉRO</small></div>`;
+          const cpt = $('cpt');
+          /* Le rebours ne se rafraîchit qu'au dixième : à la milliseconde, le
+             joueur lirait le chiffre au lieu de compter, et l'épreuve
+             mesurerait sa vue. */
+          const tic = setInterval(() => {
+            const passe = maintenant() - depart;
+            if (passe >= visible) {
+              cpt.textContent = '';
+              cpt.classList.add('noir');
+              clearInterval(tic);
+              return;
+            }
+            cpt.textContent = ((cible - passe) / 1000).toFixed(1);
+          }, 100);
+          $('pad').onpointerdown = () => {
+            if (rendre.ecoule) return;              // un seul coup, le premier
+            rendre.ecoule = maintenant() - depart;
+            clearInterval(tic);
+            cpt.classList.remove('noir');
+            cpt.textContent = '✓';
+            buzz(14);
+            finir();
+          };
+          apres(g.ms ?? 12_000, () => { clearInterval(tic); finir(); });
           break;
         }
 
