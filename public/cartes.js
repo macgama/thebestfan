@@ -26,8 +26,15 @@
  */
 (() => {
 const ART = {
+  TR: 'img/pack-la-tribune',
+  MS: 'img/pack-metiers-du-stade',
+  BG: 'img/pack-bestiaire-des-gradins',
   VN: 'img/pack-virage-nord',
   NE: 'img/pack-nuits-europeennes',
+  OB: 'img/pack-ce-qui-traine',
+  RV: 'img/pack-les-revenants',
+  EP: 'img/pack-les-epoques',
+  IM: 'img/pack-virage-impossible',
   burst: 'video/gerbe.mp4',
 };
 

@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « la barre dit où l’on est, et la carte tient
-dans l’écran ».
+Dernière mise à jour : session « le kiosque ne propose que ce qu’on peut
+ouvrir, et les neuf séries ont leur paquet ».
 
 ---
 
@@ -2067,6 +2067,90 @@ il ne défile pas, le bouton reste sous les yeux, et le dessin reste regardable.
 **jsdom ne met rien en page.** Une suite qui y tourne ne peut jamais dire si
 quelque chose dépasse : elle ne peut parler que d'intentions. C'est pourquoi le
 tour existe.
+
+---
+
+## 4 vicies ter. Le kiosque : dix paquets, et rien qu’on ne puisse ouvrir
+
+### Comment les boosters se débloquent
+
+Les neuf séries s’ouvrent au niveau, et **le niveau ouvre, il ne donne pas** —
+c’est la règle qui tient tout le jeu. Un joueur de niveau 30 n’a aucun avantage
+sur la corde ; il a seulement accès à plus de choses à collectionner.
+
+| Série | Niveau |
+|---|---|
+| LA TRIBUNE | 1 |
+| LES MÉTIERS DU STADE | 3 |
+| LE BESTIAIRE DES GRADINS | 6 |
+| VIRAGE NORD | 9 |
+| NUITS EUROPÉENNES | 12 |
+| CE QUI TRAÎNE AU STADE | 15 |
+| LES REVENANTS | 18 |
+| LES ÉPOQUES | 22 |
+| LE VIRAGE IMPOSSIBLE | 26 |
+
+### Ce qui n’allait pas
+
+Le carrousel présentait **les neuf**, dont huit hors de portée pour qui
+commence. Pire, la série affichée au premier chargement pouvait elle-même être
+verrouillée : bouton gris, « NIVEAU 9 REQUIS », et rien qui dise qu’il suffisait
+de glisser. On arrivait au kiosque devant une porte fermée.
+
+### Ce que ça devient
+
+Le carrousel ne porte plus que des paquets **ouvrables**, et il en porte **dix** :
+on choisit le sien.
+
+**Le paquet choisi ne change rien au tirage.** Les cartes sont tirées par le
+serveur à l’ouverture, et le numéro du paquet ne lui est même pas envoyé. Ce
+n’est pas un détail : le jour où ce choix influencerait le contenu, les joueurs
+s’en apercevraient en quelques heures, un « paquet qui donne les légendaires »
+circulerait, et il faudrait honorer une superstition qu’on aurait fabriquée
+soi-même. Le geste est là pour le geste — ouvrir un booster est une cérémonie,
+et une cérémonie sans choix n’en est pas une.
+
+La série se choisit sur une rangée de pastilles au-dessus, qui ne liste que
+l’ouvert et **disparaît quand il n’y en a qu’une** : un sélecteur à un seul
+choix n’est pas un choix. Et ce qui vient se dit en une ligne discrète — « À
+venir : LES MÉTIERS DU STADE, au niveau 3 » — à côté du choix au lieu d’être
+dedans. Un jeu montre ce qui l’attend ; il ne le met pas sur le chemin.
+
+### Les neuf séries ont enfin leur paquet
+
+`ART` n’en déclarait que **deux** sur neuf. Les sept autres tombaient sur le
+repli dessiné — correct, mais c’est un repli. **`LA TRIBUNE` en faisait
+partie**, c’est-à-dire le premier paquet que voit tout nouveau joueur.
+
+Sept visuels produits sur Artlist, dans le style des deux existants : sachet
+scellé, deux projecteurs croisés, fond noir, bande de couleur de la série. Aux
+trois formats du dépôt (avif, webp, jpg) et à la définition des deux premiers —
+deux définitions dans un même carrousel se voient.
+
+### Deux défauts trouvés en chemin
+
+**Le révélateur s’affichait en permanence.** Quand le kiosque a quitté la page
+des Fanzzy, son balisage est parti — **et sa feuille est restée**. Or la
+première règle de `#opener` est `display:none` : sans elle, le panneau de
+révélation était rendu nu, sous le kiosque. C’est le « 1 / 5 — Fermer » qui
+traînait en bas de l’écran. **Troisième fois** que cette faute se produit dans
+ce dépôt : du balisage qu’on déplace, une feuille qu’on oublie.
+
+**`hidden` ne cachait pas.** La rangée des séries s’affichait alors que le code
+la cachait : le navigateur implémente `hidden` par `display:none`, mais toute
+règle `display` d’une feuille le bat. `.series{display:flex}` suffisait à le
+rendre décoratif. Cent trente-trois éléments portent `hidden` ici ; la règle est
+donc posée une fois pour tous dans `ui.css`, et c’est l’un des rares endroits
+où `!important` se justifie.
+
+### Un contrôle réécrit plutôt qu’effacé
+
+Quatre contrôles éprouvaient une série verrouillée **présentée dans le
+carrousel**. Le kiosque n’en présente plus. L’idée qu’ils défendaient reste
+entière — « un jeu ne cache pas ce qui vient » — et c’est elle qu’on reprend,
+sur sa nouvelle forme : ce qui vient est annoncé à côté du choix. Le filet de
+sécurité ne bouge pas : un onglet resté ouvert peut encore demander une série
+verrouillée, et le serveur la refuse en nommant sa cause.
 
 ---
 

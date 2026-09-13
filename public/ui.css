@@ -277,6 +277,20 @@
    Quatre pages avaient déjà `user-select:none` pour elles seules ; seize ne
    l'avaient pas, et aucune n'avait `touch-callout`. */
 
+/* ----------------------------------------------------------- `hidden`
+
+   Il doit cacher. Le navigateur l'implémente par `display:none`, mais **toute**
+   règle `display` d'une feuille le bat : un sélecteur de classe l'emporte sur
+   la feuille par défaut. `.series{display:flex}` suffisait donc à rendre
+   `hidden` purement décoratif — la rangée des séries s'affichait alors que le
+   code la cachait, et rien ne le signalait.
+
+   Cent trente-trois éléments portent `hidden` dans ce dépôt. La règle est donc
+   posée une fois pour tous, et `!important` se justifie ici comme rarement : on
+   ne répare pas une spécificité en en empilant une autre, on déclare que
+   `hidden` gagne toujours. */
+[hidden]{display:none !important}
+
 *{
   box-sizing:border-box;
   -webkit-tap-highlight-color:transparent;
