@@ -19,7 +19,11 @@
    information qui engage. */
 
 .rayon{margin:0 0 6px;padding:0 2px}
-.rayon h2{font-family:var(--banner);font-size:15px;letter-spacing:.14em;margin:18px 0 2px}
+/* La casse se décide ici et non dans la donnée : « ÉQUIPEMENT » est écrit
+   dans la page, « Billets » vient du nom du rayon, et sans cette ligne le
+   lecteur voit deux niveaux de titre là où il n'y en a qu'un. */
+.rayon h2{font-family:var(--banner);font-size:15px;letter-spacing:.14em;
+  margin:18px 0 2px;text-transform:uppercase}
 .rayon p{margin:0 0 10px;font-size:11.5px;opacity:.5;line-height:1.5}
 
 .etal{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
@@ -99,7 +103,7 @@
 </head>
 <body>
 <main id="app">
-  <h1 class="titre">LA BOUTIQUE</h1>
+  <h1 class="tbf-titre">LA BOUTIQUE</h1>
 
   <div class="avoir" id="avoir" hidden>
     <span><i class="b"></i><b id="avBil">0</b></span>

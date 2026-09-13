@@ -9,7 +9,14 @@
 <style>
 
 *{box-sizing:border-box}
-body{margin:0;background:#0A0D11;color:var(--craie);font-family:var(--ui);font-size:14px}
+/* `display:block`, et ce n est pas cosmétique : `ui.css` pose
+   `body{display:flex}` pour centrer la colonne du jeu. L administration n a pas
+   cette colonne — son en-tete, son menu et son contenu se retrouvaient donc
+   **cote a cote** sur une meme ligne, et la page debordait de cent vingt pixels
+   a gauche comme a droite. Sur un ecran large personne ne le voyait ; sur un
+   telephone l ecran etait inutilisable. */
+body{margin:0;display:block;background:#0A0D11;color:var(--craie);
+  font-family:var(--ui);font-size:14px}
 header{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid rgba(242,238,228,.12)}
 header h1{font-family:var(--banner);font-size:17px;letter-spacing:.16em;margin:0;flex:1}
 header .who{font-size:12px;opacity:.5}
@@ -19,6 +26,12 @@ nav button{background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.14);bor
   cursor:pointer;opacity:.55}
 nav button.on{background:var(--craie);color:#0B0E13;opacity:1}
 main{padding:0 18px 40px;max-width:1100px}
+/* Les tableaux de l'administration ont huit colonnes : ils ne rentreront jamais
+   dans un téléphone, et il n'y a aucune raison de les y forcer. Ils défilent
+   donc **dans leur propre boîte**, sans entraîner la page — sans quoi tout
+   l'écran glisse latéralement et l'on perd le menu en cherchant une colonne. */
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tbl table{min-width:560px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:18px}
 .card{border:1px solid rgba(242,238,228,.12);border-radius:10px;padding:12px;background:rgba(0,0,0,.3)}
 .card b{display:block;font-family:var(--banner);font-size:22px;color:var(--projo)}
@@ -235,7 +248,7 @@ const VUES = {
         ${c(d.jeu.supporters,'DANS LE VIRAGE')}${c(d.competitions.activees,'COMPÉTITIONS ACTIVES')}
       </div>
       <h3 style="font-family:var(--banner);font-size:12px;letter-spacing:.15em;opacity:.5">EXPLOITATION</h3>
-      <table><tbody>
+      <div class="tbl"><table><tbody>
         <tr><td>Quota API du jour</td><td>${d.quota
           ? `${d.quota.usedToday} utilisés · ${d.quota.budgetLeft} restants` : 'suivi inactif'}</td></tr>
         <tr><td>Messagerie</td><td>${d.mail
@@ -246,7 +259,7 @@ const VUES = {
         <tr><td>Outils</td><td class="act">
           <button class="mini" id="purge">Purger le cache</button>
           <button class="mini" id="mail">Envoi de contrôle</button></td></tr>
-      </tbody></table>`;
+      </tbody></table></div>`;
     $('purge').onclick = async () => {
       const r = await api('/cache/purge', {});
       alert(`${r.purge} entrées purgées`); rendre();
@@ -328,8 +341,8 @@ const VUES = {
       </div>`.concat(`
       <div class="compte">${d.fanzzy.length} cartes · ${publies} publiées ·
         ${d.fanzzy.length - publies} retirées · ${ILLUSTRES.size} dessinées</div>
-      <table><thead><tr><th></th><th>NOM</th><th>TYPE</th><th>SÉRIE</th><th>RARETÉ</th><th></th></tr></thead>
-      <tbody id="corps">${liste.map(ligne).join('') || '<tr><td colspan="6" class="vide">Rien ne correspond.</td></tr>'}</tbody></table>`);
+      <div class="tbl"><table><thead><tr><th></th><th>NOM</th><th>TYPE</th><th>SÉRIE</th><th>RARETÉ</th><th></th></tr></thead>
+      <tbody id="corps">${liste.map(ligne).join('') || '<tr><td colspan="6" class="vide">Rien ne correspond.</td></tr>'}</tbody></table></div>`);
 
     // Un clic bascule la série. On envoie la liste complète des ouvertes et non
     // un différentiel : deux onglets d'administration ouverts en même temps
@@ -504,9 +517,9 @@ const VUES = {
       <div class="bar"><button class="mini" id="nouveau">Nouveau thème</button></div>
       <div class="compte">${d.tenues.length} thèmes · ${publies} distribués ·
         ${d.tenues.length - publies} retirés</div>
-      <table><thead><tr><th>NOM</th><th>RARETÉ</th><th>DESCRIPTION</th>
+      <div class="tbl"><table><thead><tr><th>NOM</th><th>RARETÉ</th><th>DESCRIPTION</th>
         <th>DOSSIERS</th><th></th></tr></thead>
-      <tbody id="corps">${d.tenues.map(ligne).join('')}</tbody></table>`;
+      <tbody id="corps">${d.tenues.map(ligne).join('')}</tbody></table></div>`;
 
     const formulaire = (x) => `
       <tr class="fzedit"><td colspan="5">
@@ -588,7 +601,7 @@ const VUES = {
     $('main').innerHTML = `
       <div class="bar"><input id="q" placeholder="pseudo ou adresse" value="${esc(terme)}">
         <button class="mini" id="go">Chercher</button></div>
-      <table><thead><tr><th>JOUEUR</th><th>ÉTAT</th><th>BOURSE</th><th>JEU</th><th>ACTIONS</th></tr></thead>
+      <div class="tbl"><table><thead><tr><th>JOUEUR</th><th>ÉTAT</th><th>BOURSE</th><th>JEU</th><th>ACTIONS</th></tr></thead>
       <tbody>${d.joueurs.map((u) => `
         <tr><td><b>${esc(u.pseudo)}</b>
           ${u.role==='admin'?'<span class="pill admin">ADMIN</span>':''}
@@ -605,7 +618,7 @@ const VUES = {
           <button class="mini ${u.status==='locked'?'vert':'rouge'}" data-a="toggle"
             data-status="${u.status}">${u.status==='locked'?'Débloquer':'Bloquer'}</button>
           <button class="mini" data-a="role" data-role="${u.role}">${u.role==='admin'?'Rétrograder':'Promouvoir'}</button>
-        </td></tr>`).join('')}</tbody></table>`;
+        </td></tr>`).join('')}</tbody></table></div>`;
 
     $('go').onclick = () => VUES.joueurs($('q').value.trim());
     $('q').onkeydown = (e) => { if (e.key === 'Enter') VUES.joueurs($('q').value.trim()); };
@@ -628,7 +641,7 @@ const VUES = {
     $('main').innerHTML = `
       <div class="bar"><input id="q" placeholder="nom ou pays" value="${esc(terme)}">
         <button class="mini" id="go">Chercher</button></div>
-      <table><thead><tr><th>COMPÉTITION</th><th>SAISON</th><th>COUVERTURE</th><th>PALIER</th><th>ÉTAT</th></tr></thead>
+      <div class="tbl"><table><thead><tr><th>COMPÉTITION</th><th>SAISON</th><th>COUVERTURE</th><th>PALIER</th><th>ÉTAT</th></tr></thead>
       <tbody>${d.competitions.map((c) => `
         <tr data-id="${c.league_id}" data-s="${c.season}">
           <td><b>${esc(c.name)}</b><br><span style="opacity:.45;font-size:11px">${esc(c.country ?? '')} · ${esc(c.family)}</span></td>
@@ -639,7 +652,7 @@ const VUES = {
             `<option value="${t}" ${c.tier===t?'selected':''}>palier ${t}</option>`).join('')}</select></td>
           <td class="act"><button class="mini ${c.enabled?'rouge':'vert'}" data-a="toggle"
             data-on="${c.enabled}">${c.enabled?'Désactiver':'Activer'}</button></td>
-        </tr>`).join('')}</tbody></table>`;
+        </tr>`).join('')}</tbody></table></div>`;
     $('go').onclick = () => VUES.competitions($('q').value.trim());
     const maj = async (tr, corps) => {
       await api(`/competition/${tr.dataset.id}/${tr.dataset.s}`, corps, 'PATCH');
@@ -746,14 +759,14 @@ const VUES = {
 
   async journal() {
     const d = await api('/journal?limite=150');
-    $('main').innerHTML = `<table><thead><tr><th>QUAND</th><th>QUI</th><th>ACTION</th><th>CIBLE</th><th>DÉTAIL</th></tr></thead>
+    $('main').innerHTML = `<div class="tbl"><table><thead><tr><th>QUAND</th><th>QUI</th><th>ACTION</th><th>CIBLE</th><th>DÉTAIL</th></tr></thead>
       <tbody>${d.journal.map((l)=>`<tr>
         <td style="white-space:nowrap">${jour(l.au)}</td>
         <td>${esc(l.acteur ?? 'système')}</td>
         <td><b style="font-family:var(--banner)">${esc(l.action)}</b></td>
         <td style="font-size:11px;opacity:.6">${esc(l.cible ?? '')}</td>
         <td class="log">${esc(JSON.stringify(l.detail ?? {}))}</td></tr>`).join('')
-        || '<tr><td colspan="5" class="vide">Journal vide.</td></tr>'}</tbody></table>`;
+        || '<tr><td colspan="5" class="vide">Journal vide.</td></tr>'}</tbody></table></div>`;
   },
 };
 

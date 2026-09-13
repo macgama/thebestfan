@@ -290,8 +290,15 @@ function rendre() {
       .filter((g) => g.matchs.length);
   }
 
-  $('sous').textContent = data.enDirect
-    ? `${data.total} MATCHS · ${data.enDirect} EN DIRECT` : `${data.total} MATCHS`;
+  /* `?? 0` : sans lui, une journée sans données affiche « undefined MATCHS »
+     en grand sous le titre. Ce n'est pas une panne — l'écran fonctionne — c'est
+     la trace visible d'une donnée absente, et c'est ce que le joueur retient.
+     Et à zéro, on écrit une phrase plutôt qu'un compte : « 0 MATCHS » se lit
+     comme un bug, « aucun match » se lit comme une information. */
+  const total = data.total ?? 0;
+  $('sous').textContent = total === 0 ? 'AUCUN MATCH AUJOURD’HUI'
+    : data.enDirect ? `${total} MATCHS · ${data.enDirect} EN DIRECT`
+      : `${total} MATCH${total > 1 ? 'S' : ''}`;
 
   $('liste').innerHTML = groupes.length ? groupes.map((g) => `
     <div class="ligue ${g.mien ? 'mien' : ''}">

@@ -23,6 +23,7 @@ import { createFanzzy } from './src/server/fanzzy/index.js';
 import { charger as chargerCatalogue } from './src/server/fanzzy/catalogue.js';
 import { chargerReglages, reglagesPublics } from './src/server/reglages/index.js';
 import { reglage } from './src/shared/reglages.js';
+import { entetesDeSecurite, debitMaximal } from './src/server/garde/index.js';
 import { chargerTenues } from './src/server/fanzzy/tenues.js';
 import { createVirage } from './src/server/ferveur/index.js';
 import { createTeletext } from './src/server/teletext/index.js';
@@ -44,6 +45,37 @@ const http = createServer(app);
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1); // Infomaniak place un proxy devant : X-Forwarded-For fait foi
+
+/* ------------------------------------------------------------ les gardes
+
+   Avant tout le reste, et ce n'est pas une préférence de rangement : un garde
+   posé après une route ne la garde pas. Ceux-ci couvrent donc les fichiers, les
+   routeurs et le webhook de Stripe, sans exception à retenir.
+
+   Ils ne protègent **pas** le code envoyé au navigateur : sur le web, il n'y a
+   rien à protéger de ce côté-là. Tout ce qui part au client est lisible, et
+   l'obscurcir ne ralentit que les curieux. La sécurité du jeu tient à ce que le
+   serveur ne croie rien sur parole — c'est déjà le cas partout : les gestes
+   sont notés ici, l'identité vient de la session et jamais du message, et
+   chaque requête SQL est paramétrée. */
+
+const SITE_EN_HTTPS = String(process.env.SITE_URL || '').startsWith('https://');
+app.use(entetesDeSecurite({ https: SITE_EN_HTTPS }));
+
+/* Le débit maximal. Les sockets étaient déjà bridées — un chant toutes les
+   trois secondes, une action toutes les demi-secondes — mais **aucune route
+   HTTP ne l'était**. Rien n'empêchait un script d'ouvrir des boosters ou de
+   tenter des achats mille fois par seconde.
+
+   `/healthz` en est exempté : c'est la sonde de l'hébergeur, elle appelle sans
+   arrêt et elle a le droit. Le webhook de Stripe aussi : Stripe rejoue ses
+   événements en rafale quand il croit qu'on ne répond pas, et lui répondre 429
+   le ferait rejouer encore plus. Sa protection à lui est la signature, qui est
+   plus sûre qu'un compteur. */
+const limiteur = debitMaximal({
+  exemptes: ['/healthz', '/api/boutique/webhook'],
+});
+app.use(limiteur);
 
 const io = new Server(http, {
   path: '/socket.io',

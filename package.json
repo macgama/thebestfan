@@ -52,7 +52,11 @@
     "epreuves:ui": "node scripts/epreuves-ui-smoke.mjs",
     "boutique:smoke": "node scripts/boutique-smoke.mjs",
     "boosters:ui": "node scripts/boosters-ui-smoke.mjs",
-    "reglages:smoke": "node scripts/reglages-smoke.mjs"
+    "reglages:smoke": "node scripts/reglages-smoke.mjs",
+    "promesses": "node scripts/promesses.mjs",
+    "tour:ui": "node scripts/tour-ui-smoke.mjs",
+    "securite": "node scripts/securite.mjs",
+    "garde:smoke": "node scripts/garde-smoke.mjs"
   },
   "dependencies": {
     "express": "^4.22.2",

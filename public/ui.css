@@ -34,6 +34,16 @@
   --violet:#8257DA;
   --gris:#C2CAD6;
 
+  /* Les raretés. Elles étaient redéfinies dans le classeur, dans le deck, dans
+     la boutique et sur la fiche — quatre fois les mêmes quatre couleurs, et la
+     boutique en avait déjà une nuance de moins. Une couleur de rareté est une
+     **information** : la même carte doit être du même bleu sur les quatre
+     écrans, sinon le joueur apprend quatre codes au lieu d'un. */
+  --r-commune:#C2CAD6;
+  --r-rare:#5FA8FF;
+  --r-epique:#B98CFF;
+  --r-legendaire:#F5C33B;
+
   --banner:"Oswald","Arial Narrow",Impact,sans-serif;
   --ui:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 
@@ -251,7 +261,56 @@
    défilent dans les deux sens. */
 :where(*)::-webkit-scrollbar-corner{background:transparent}
 
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* ------------------------------------------------------- le geste au doigt
+
+   Un appui long sur une carte ouvrait le menu du navigateur — « Enregistrer
+   l'image », « Copier ». Le geste appartenait pourtant au jeu : maintenir pour
+   chauffer, tirer pour déchirer, garder le doigt sur une carte. Le navigateur
+   le confisquait, et le joueur se retrouvait avec un menu système par-dessus sa
+   partie.
+
+   **Ce n'est pas une protection du contenu.** L'image est déjà dans le
+   navigateur : un onglet ou les outils de développement suffisent à la
+   récupérer, et prétendre le contraire serait se mentir. C'est une correction
+   de confort — qu'un geste de jeu reste un geste de jeu.
+
+   Quatre pages avaient déjà `user-select:none` pour elles seules ; seize ne
+   l'avaient pas, et aucune n'avait `touch-callout`. */
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+  /* Le menu d'appui long. C'est celui-ci, exactement, qui manquait. */
+  -webkit-touch-callout:none;
+  -webkit-user-select:none;
+  user-select:none;
+}
+
+/* Les images ne se traînent pas hors de la fenêtre à la souris, et ne portent
+   pas de menu à elles. */
+img,svg{-webkit-user-drag:none;user-drag:none}
+
+/* **L'exception, et elle compte plus que la règle.** Tout ce qui se lit et se
+   recopie reste sélectionnable : un pseudo, un code d'ami, un identifiant de
+   partie, un message d'erreur, et tout champ de saisie. Une application où
+   l'on ne peut rien copier est une application dont on ne peut pas demander de
+   l'aide — et c'est un prix bien trop élevé pour éviter un menu contextuel.
+
+   Les champs de saisie sont dans la liste parce que `user-select:none` sur
+   `*` les atteint aussi : sans cette ligne, on ne peut plus corriger le milieu
+   de son adresse électronique au doigt. */
+input,textarea,select,[contenteditable],
+.tbf-copiable,.tbf-selectionnable,code,pre,
+[data-copiable]{
+  -webkit-touch-callout:default;
+  -webkit-user-select:text;
+  user-select:text;
+}
+/* `overscroll-behavior` sur **html** et pas seulement sur body : le geste de
+   tirer-pour-recharger est décidé par l'élément racine, et le poser plus bas
+   ne l'atteint pas. Pendant une partie, les gestes vont dans tous les sens — un
+   chant qui commence trop haut devenait un rechargement, au milieu d'un but. */
+html{overscroll-behavior-y:none}
 html,body{margin:0;min-height:100%}
 body{
   background:#04060A;
@@ -297,7 +356,67 @@ body{
   position:relative;z-index:1;
   width:100%;max-width:var(--colonne);min-height:100dvh;
   display:flex;flex-direction:column;
+  /* La gouttière, garantie une fois pour toutes.
+
+     Sur la boutique, le titre et les intertitres touchaient le bord gauche de
+     l'écran. Ce n'était cassé nulle part — c'était seulement mal fini, et mal
+     fini partout finit par ressembler à un brouillon. La poser ici plutôt que
+     dans chaque page, c'est s'assurer que la prochaine page l'aura sans qu'on
+     y pense.
+
+     En variable, pour que les écrans pleine largeur — la scène de l'accueil,
+     la tribune du Virage — la remettent à zéro sur leur seul conteneur au lieu
+     de se battre avec une valeur en dur. */
+  --gouttiere:14px;
+  padding-inline:var(--gouttiere);
 }
+/* Ce qui doit aller d'un bord à l'autre reprend la gouttière et la rend. */
+.tbf-pleine-largeur{margin-inline:calc(-1 * var(--gouttiere));
+  width:calc(100% + 2 * var(--gouttiere))}
+
+/* ------------------------------------------------ la grammaire des écrans
+
+   Trois règles qui ne coûtent rien et qui se voient partout. */
+
+/* **Le titre d'écran.** Une barre d'accent à gauche, le lettrage du jeu, et
+   l'espacement des capitales. Ce qui le rend « jeu » n'est pas la barre — c'est
+   qu'elle soit la même sur les vingt écrans. */
+.tbf-titre{
+  font-family:var(--banner);
+  font-size:clamp(19px,5.6vw,24px);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  line-height:1.1;
+  margin:18px 0 12px;
+  padding-left:12px;
+  position:relative;
+}
+.tbf-titre::before{
+  content:"";position:absolute;left:0;top:.12em;bottom:.12em;width:4px;
+  border-radius:3px;background:var(--projo);
+  box-shadow:0 0 10px rgba(245,195,59,.45);
+}
+/* Le sous-titre d'un écran : plus petit que tout le reste, et il le reste. */
+.tbf-titre small{
+  display:block;font-family:var(--ui);font-size:11px;letter-spacing:.06em;
+  text-transform:none;opacity:.5;margin-top:5px;font-weight:400;
+}
+
+/* **Les chiffres qui comptent.** Un solde, un score, un compte de collection :
+   ils se lisent d'un coup d'œil ou ils ne servent à rien. */
+.tbf-chiffre{font-family:var(--banner);color:var(--projo);
+  font-variant-numeric:tabular-nums;letter-spacing:.02em}
+
+/* **Les couleurs de rareté**, utilisables partout par leur nom. */
+.r-commune{color:var(--r-commune)}
+.r-rare{color:var(--r-rare)}
+.r-epique{color:var(--r-epique)}
+.r-legendaire{color:var(--r-legendaire)}
+.b-commune{border-color:var(--r-commune)}
+.b-rare{border-color:var(--r-rare)}
+.b-epique{border-color:var(--r-epique)}
+.b-legendaire{border-color:var(--r-legendaire);
+  box-shadow:0 0 14px rgba(245,195,59,.18)}
 
 /* ------------------------------------------------------------- panneaux */
 
@@ -313,6 +432,32 @@ body{
 button.pan,a.pan{cursor:pointer}
 button.pan:active,a.pan:active{transform:scale(.96)}
 .pan:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
+
+/* **La profondeur.** Un filet clair au bord supérieur : c'est ce qui distingue
+   une surface posée sur le décor d'un rectangle peint dessus. Un seul pixel,
+   et il change tout — les panneaux cessent d'être des trous dans l'image.
+
+   `inset` plutôt qu'une seconde bordure : une bordure décalerait le contenu
+   d'un pixel, et sur une grille de cartes ce pixel se voit. */
+.pan{box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}
+
+/* **Le retour au toucher**, sur tout ce qui se touche. Un écran qui ne répond
+   pas au doigt donne l'impression d'avoir raté sa cible — on appuie deux fois,
+   et la seconde fois part souvent ailleurs.
+
+   La transition ne porte que sur `transform` : tout ce qui passe par le
+   compositeur ne fait ni calcul de mise en page ni redessin, donc cent
+   panneaux à l'écran ne coûtent pas plus qu'un. */
+a.pan,button.pan,.pan[role="button"],[data-go],[data-onglet]{
+  transition:transform .1s ease, border-color .16s ease;
+}
+a.pan:active,button.pan:active,.pan[role="button"]:active{
+  transform:translateY(2px) scale(.985);
+}
+@media (prefers-reduced-motion:reduce){
+  a.pan,button.pan,.pan[role="button"]{transition:none}
+  a.pan:active,button.pan:active,.pan[role="button"]:active{transform:none}
+}
 
 /* ------------------------------------------------------- titre de page */
 
@@ -361,6 +506,19 @@ button.pan:active,a.pan:active{transform:scale(.96)}
   margin-left:1px;font-weight:400}
 .tbf-jeton{text-decoration:none;color:inherit}
 .tbf-jeton:active .tbf-plus{opacity:1;color:var(--projo)}
+
+/* L'identité cède la place, parce qu'elle est la seule qui le puisse : la
+   flèche, les jetons et le menu ont des tailles fixes et des rôles qu'on ne
+   peut pas réduire. Sans `min-width:0`, un enfant de flex refuse de descendre
+   sous sa taille minimale de contenu — c'est le même piège que `1fr` en
+   grille — et il pousse les autres dehors au lieu de se tronquer. */
+.tbf-moi{min-width:0;overflow:hidden}
+.tbf-moi > span{min-width:0;display:block}
+.tbf-moi b,.tbf-moi small{display:block;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;max-width:100%}
+/* Sous quatre cents pixels, la ligne du club s'efface. Un nom de club coupé
+   après trois lettres n'informe personne et occupe la place du pseudo. */
+@media (max-width:400px){ .tbf-moi small{display:none} }
 
 .tbf-bourse{display:flex;gap:6px;margin-left:auto;align-items:center}
 .tbf-jeton{
