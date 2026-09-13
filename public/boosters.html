@@ -26,6 +26,20 @@
    écran large. */
 .carousel{position:relative;width:100%;height:320px;perspective:1100px;touch-action:pan-y;
   overflow-x:clip}
+
+/* Les séries ouvertes, en pastilles. Seules celles qu'on peut ouvrir y
+   figurent : les autres se disent en une ligne, plus bas. */
+.series{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:0 12px 8px}
+.series button{background:rgba(255,255,255,.05);border:1px solid rgba(242,238,228,.16);
+  border-radius:20px;color:inherit;font-family:var(--banner);font-size:10.5px;
+  letter-spacing:.1em;padding:5px 11px;cursor:pointer;opacity:.62;
+  transition:transform .1s ease,opacity .16s ease}
+.series button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
+.series button:active{transform:translateY(2px)}
+
+/* Ce qui vient. Discret par construction : c'est une promesse, pas une offre. */
+.avenir{text-align:center;font-size:11px;opacity:.42;padding:6px 16px 0;line-height:1.5}
+.avenir b{color:var(--projo);font-family:var(--banner);letter-spacing:.08em;opacity:.9}
 .slide{position:absolute;left:50%;top:50%;width:186px;aspect-ratio:.62;margin:0;cursor:grab;
   transform-style:preserve-3d;transition:transform .55s cubic-bezier(.22,.9,.28,1),opacity .45s,filter .45s;
   border-radius:11px;overflow:hidden;border:1px solid rgba(0,0,0,.6);
@@ -174,6 +188,40 @@
   font-family:var(--banner);font-size:14px;letter-spacing:.05em;text-align:center}
 .titre{font-family:var(--banner);font-size:20px;letter-spacing:.14em;
   margin:0 0 10px;padding:0 16px}
+/* --------------------------------------------- la révélation, en plein écran
+
+   Elle vivait dans la page des Fanzzy, où son balisage n’est plus. Ici, il
+   n’y avait **aucune règle** : or la première est `display:none`. Le panneau
+   de révélation était donc affiché en permanence et sans mise en page, sous
+   le kiosque — le « 1 / 5 — Fermer » qui traînait en bas de l’écran.
+
+   Troisième fois que cette faute se produit : du balisage qu’on déplace, une
+   feuille qu’on oublie. Rien ne lève, et le symptôme ne dit pas sa cause. */
+/* ---------------------------------------------------------- ouverture */
+#opener{position:absolute;inset:0;z-index:22;display:none;flex-direction:column;
+  background:radial-gradient(120% 70% at 50% 20%,#1D242D,#05070A 70%)}
+#opener.on{display:flex}
+.ohead{display:flex;justify-content:space-between;align-items:center;padding:15px 18px;font-size:11.5px;opacity:.6}
+.ohead button{background:none;border:0;color:inherit;font-size:12px;cursor:pointer;text-decoration:underline}
+.ostage{flex:1;display:grid;place-items:center;position:relative;padding:0 34px}
+.reveal{width:min(70%,250px);position:absolute;transition:transform .42s cubic-bezier(.2,.8,.25,1),opacity .3s;cursor:pointer}
+.reveal .flip{position:relative;width:100%;aspect-ratio:63/88;transform-style:preserve-3d;
+  transition:transform .55s cubic-bezier(.3,.9,.3,1)}
+.reveal.flipped .flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:4%}
+.face.back{background:linear-gradient(160deg,#20262F,#0D1116);border:2px solid #39414E;display:grid;
+  place-items:center;box-shadow:0 18px 36px rgba(0,0,0,.6)}
+.face.front{transform:rotateY(180deg)}
+.burst{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:30}
+.newtag{position:absolute;top:-24px;left:50%;transform:translateX(-50%);font-family:var(--banner);
+  font-size:11px;letter-spacing:.2em;color:var(--projo)}
+.ofoot{padding:14px 18px 26px;display:flex;flex-direction:column;gap:9px;align-items:center}
+.hint{font-size:11.5px;opacity:.5}
+.ghost{border:1px solid rgba(242,238,228,.28);border-radius:6px;padding:9px 18px;font-size:12.5px;
+  background:none;color:inherit;cursor:pointer;font-family:inherit}
+.summary{display:none;grid-template-columns:repeat(5,1fr);gap:5px;padding:0 12px;width:100%}
+.summary.on{display:grid}
+
 </style>
 </head>
 <body>
@@ -182,6 +230,9 @@
   <div class="annonce" id="annonce" hidden></div>
   <section class="screen" id="s-kiosque">
     <div class="stage">
+      <!-- Les séries ouvertes. Cachée tant qu'il n'y en a qu'une : un
+           sélecteur à un seul choix n'est pas un choix, c'est un bandeau. -->
+      <div class="series" id="series" hidden></div>
       <div class="setname" id="setName"></div>
       <div class="setline" id="setLine"></div>
       <div class="carousel" id="carousel"><div class="packglow"></div><div class="shadow"></div></div>
@@ -189,6 +240,11 @@
         <button id="prevSet">‹</button><div class="dots" id="setDots"></div><button id="nextSet">›</button>
       </div>
       <div class="tearhint" id="tearhint">GLISSE POUR CHANGER · TOUCHE POUR OUVRIR</div>
+      <!-- Ce qui vient, en une ligne. Le kiosque montrait les huit séries
+           verrouillées dans le carrousel : on glissait au milieu de ce qu'on ne
+           peut pas ouvrir pour retrouver ce qu'on peut. Un jeu montre ce qui
+           l'attend, il ne le met pas sur le chemin. -->
+      <div class="avenir" id="avenir" hidden></div>
     </div>
     <button class="cta" id="openBtn">OUVRIR LE BOOSTER</button>
     <div class="regen" id="regenTxt"></div>
@@ -255,10 +311,38 @@ const { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSO
  * on peut donc les faire glisser au doigt, avec la position qui suit le geste
  * en temps réel plutôt que de sauter d'une série à l'autre.
  */
+/**
+ * Combien de paquets on présente au choix.
+ *
+ * Dix, comme sur un présentoir. **Le paquet choisi ne change rien au tirage** :
+ * les cartes sont tirées par le serveur à l'ouverture, et le numéro du paquet
+ * ne lui est même pas envoyé. Le geste est là pour le geste — ouvrir un
+ * booster est une cérémonie, et une cérémonie sans choix n'en est pas une.
+ *
+ * Le jour où ce choix influencerait le contenu, les joueurs s'en apercevraient
+ * en quelques heures, un « paquet qui donne les légendaires » circulerait, et
+ * il faudrait honorer une superstition qu'on aurait fabriquée soi-même.
+ */
+const PAQUETS_AU_CHOIX = 10;
+
+/** Les séries que ce joueur peut ouvrir, dans l'ordre du catalogue. */
+const seriesOuvertes = () => SETS.filter(serieDebloquee);
+
+/**
+ * L'éventail : dix paquets de la série choisie.
+ *
+ * Il présentait les neuf séries, dont huit verrouillées pour qui commence : on
+ * glissait longuement au milieu de ce qu'on ne peut pas ouvrir. La série se
+ * choisit maintenant sur les pastilles du dessus, et le carrousel ne sert plus
+ * qu'à prendre **son** paquet.
+ */
 function buildCarousel() {
   const c = $('carousel');
   c.querySelectorAll('.slide').forEach((n) => n.remove());
-  SETS.forEach((set, i) => {
+  const set = SETS[S.set];
+  if (!set) return;
+
+  for (let i = 0; i < PAQUETS_AU_CHOIX; i++) {
     const el = document.createElement('div');
     el.className = 'slide';
     el.dataset.i = String(i);
@@ -268,16 +352,16 @@ function buildCarousel() {
     // Repli sur l'illustration dessinée si le visuel ne charge pas.
     img.onerror = () => { img.remove(); el.insertAdjacentHTML('afterbegin', packArt(set)); };
     c.appendChild(el);
-  });
+  }
   placeCarousel(0);
 }
 
 function placeCarousel(drag = 0) {
   const w = 210;
-  SETS.forEach((_, i) => {
+  for (let i = 0; i < PAQUETS_AU_CHOIX; i++) {
     const el = $('carousel').querySelector(`.slide[data-i="${i}"]`);
-    if (!el) return;
-    const off = i - S.set - drag;
+    if (!el) continue;
+    const off = i - (S.paquet ?? 0) - drag;
     const abs = Math.abs(off);
     el.style.transform =
       `translate(-50%,-50%) translateX(${off * w}px) translateZ(${-abs * 190}px) ` +
@@ -286,7 +370,7 @@ function placeCarousel(drag = 0) {
     el.classList.toggle('center', abs < 0.5);
     el.classList.toggle('side', abs >= 0.5);
     el.classList.toggle('hidden', abs > 1.8);
-  });
+  }
 }
 
 /** Ce joueur peut-il ouvrir cette série ? `null` = progression non montée. */
@@ -315,8 +399,38 @@ function tickRegen() {
 }
 
 function renderKiosque() {
+  /* La série affichée est toujours ouverte : le kiosque ne présente plus que
+     ce qu'on peut ouvrir. Si l'état du joueur n'est pas encore arrivé —
+     `S.series` absent — `serieDebloquee` rend vrai, et l'on montre tout
+     plutôt qu'un écran vide. */
+  const ouvertes = seriesOuvertes();
+  if (ouvertes.length && !serieDebloquee(SETS[S.set] ?? {})) {
+    S.set = SETS.indexOf(ouvertes[0]);
+    S.paquet = 0;
+    buildCarousel();
+  }
+
   const s = SETS[S.set];
+  if (!s) return;
   const ouvrable = serieDebloquee(s);
+
+  /* Les pastilles de série. Cachées tant qu'il n'y en a qu'une : un sélecteur
+     à un seul choix n'est pas un choix, c'est un bandeau. */
+  const rangee = $('series');
+  rangee.hidden = ouvertes.length < 2;
+  rangee.innerHTML = ouvertes.map((o) => `<button data-serie="${esc(o.id)}"
+    class="${o.id === s.id ? 'on' : ''}">${esc(o.nom)}</button>`).join('');
+
+  /* Ce qui vient. Une ligne, discrète : c'est une promesse, pas une offre. */
+  const suivante = SETS.filter((x) => !serieDebloquee(x))
+    .sort((a, b) => (Number(a.niveau) || 99) - (Number(b.niveau) || 99))[0];
+  const av = $('avenir');
+  if (suivante) {
+    av.hidden = false;
+    av.innerHTML = `À venir : <b>${esc(suivante.nom)}</b>, au niveau ${
+      Number(suivante.niveau) || '?'}`;
+  } else av.hidden = true;
+
   $('setName').textContent = s.nom;
   /* Une série hors de portée annonce **ce qu'elle demande**, et le bouton le
      répète. Le kiosque proposait les neuf séries sans distinction : le joueur
@@ -332,20 +446,37 @@ function renderKiosque() {
   $('carousel').classList.toggle('verrou', !ouvrable);
   $('openBtn').textContent = ouvrable
     ? 'OUVRIR LE BOOSTER' : `NIVEAU ${s.niveau ?? '?'} REQUIS`;
-  $('tearhint').textContent = ouvrable
-    ? 'GLISSE POUR CHANGER · TOUCHE POUR OUVRIR' : 'GLISSE POUR VOIR LES AUTRES SÉRIES';
-  $('setDots').innerHTML = SETS.map((_, i) => `<i class="${i === S.set ? 'on' : ''}"></i>`).join('');
+  $('tearhint').textContent = 'CHOISIS TON PAQUET · TOUCHE POUR OUVRIR';
+  /* Un point par paquet, pas par série : c'est le paquet qu'on choisit ici. */
+  $('setDots').innerHTML = Array.from({ length: PAQUETS_AU_CHOIX },
+    (_, i) => `<i class="${i === (S.paquet ?? 0) ? 'on' : ''}"></i>`).join('');
   placeCarousel(0);
   tickRegen();
 }
 
-function goSet(delta) {
-  S.set = (S.set + delta + SETS.length) % SETS.length;
+/** Passer d'un paquet à l'autre. Le contenu ne change pas — voir la note de
+    `PAQUETS_AU_CHOIX` — mais le geste, lui, est la moitié du plaisir. */
+function goPaquet(delta) {
+  S.paquet = ((S.paquet ?? 0) + delta + PAQUETS_AU_CHOIX) % PAQUETS_AU_CHOIX;
   audio.flip();
   renderKiosque();
 }
-$('prevSet').onclick = () => goSet(-1);
-$('nextSet').onclick = () => goSet(1);
+$('prevSet').onclick = () => goPaquet(-1);
+$('nextSet').onclick = () => goPaquet(1);
+
+/** Changer de série depuis les pastilles. Le choix du paquet repart à zéro :
+    ce sont d'autres paquets, il serait étrange de garder le neuvième. */
+$('series').onclick = (e) => {
+  const b = e.target.closest('[data-serie]');
+  if (!b) return;
+  const i = SETS.findIndex((x) => x.id === b.dataset.serie);
+  if (i < 0 || i === S.set) return;
+  S.set = i;
+  S.paquet = 0;
+  audio.flip();
+  buildCarousel();
+  renderKiosque();
+};
 
 /* Glissement au doigt : la position suit le geste, puis s'aimante. */
 (() => {
@@ -362,8 +493,8 @@ $('nextSet').onclick = () => goSet(1);
     if (x0 === null) return;
     const d = (e.clientX - x0) / 190;
     x0 = null;
-    if (d < -0.28) goSet(1);
-    else if (d > 0.28) goSet(-1);
+    if (d < -0.28) goPaquet(1);
+    else if (d > 0.28) goPaquet(-1);
     else { placeCarousel(0); if (!dragging) startTear(); }
   };
   c.addEventListener('pointerup', end);

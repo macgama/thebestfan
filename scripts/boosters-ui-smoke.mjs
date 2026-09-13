@@ -191,50 +191,71 @@ check('le kiosque annonce le bon nombre de Fanzzy par set',
   await page.evaluate(() => /\d+ Fanzzy/.test(
     document.getElementById('setLine')?.textContent ?? '')));
 
-/* ------------------------------------------- une série hors de portée
+/* ------------------------------------- ce qu'on peut ouvrir, et ce qui vient
 
  * Les séries se débloquent au niveau. Le kiosque les proposait **toutes** :
- * le joueur en choisissait une hors de portée, appuyait sur « ouvrir le
- * booster », et découvrait le refus après coup — sous la forme d'un code brut,
- * « Ouverture impossible (fanzzy.error.set_locked) ». Deux fautes en une : le
- * kiosque promettait ce qu'il ne pouvait pas tenir, et le message ne nommait
- * pas sa cause.
+ * on glissait longuement entre huit paquets hors de portée pour retrouver le
+ * seul ouvrable, et la série affichée au premier chargement pouvait elle-même
+ * être verrouillée — bouton gris, « NIVEAU 9 REQUIS », sans rien qui dise
+ * qu'il suffisait de glisser.
  *
- * Un jeu ne cache pas ce qui vient : il le montre verrouillé, avec ce qu'il
- * demande. Le compte de test est au niveau 1 — il n'a donc que la première
- * série, et toutes les autres doivent s'annoncer comme telles.
+ * Le carrousel ne porte donc plus que des paquets ouvrables, et il en porte
+ * dix : on choisit le sien. **Ce choix ne change rien au tirage** — voir la
+ * note de `PAQUETS_AU_CHOIX` — c'est un geste de cérémonie.
+ *
+ * Mais un jeu ne cache pas ce qui vient : ce qui suit s'annonce en une ligne,
+ * à côté du choix au lieu d'être dedans. Le compte de test est au niveau 1,
+ * il n'a donc que la première série.
  */
 {
-  const etat = await page.evaluate(async () => {
-    const debut = SETS.findIndex((s) => !S.series || !S.series.has(s.id));
-    if (debut < 0) return null;
-    S.set = debut;
-    renderKiosque();
-    return {
-      id: SETS[debut].id,
-      ligne: document.getElementById('setLine').textContent,
-      bouton: document.getElementById('openBtn').textContent,
-      ferme: document.getElementById('openBtn').disabled,
-      verrou: document.getElementById('carousel').classList.contains('verrou'),
-    };
-  });
+  const vu = await page.evaluate(() => ({
+    /* La série présentée est ouverte. C'est l'invariant : le kiosque ne
+       propose jamais ce qu'il ne peut pas tenir. */
+    serieOuverte: !S.series || S.series.has(SETS[S.set]?.id),
+    nom: document.getElementById('setName')?.textContent ?? '',
+    /* Dix paquets au choix, tous de cette série. */
+    paquets: document.querySelectorAll('#carousel .slide').length,
+    /* Ce qui vient, annoncé sans être sur le chemin. */
+    avenir: document.getElementById('avenir')?.hidden === false
+      ? document.getElementById('avenir').textContent : null,
+    /* Les pastilles ne listent que l'ouvert, et disparaissent s'il n'y en a
+       qu'une : un sélecteur à un seul choix n'est pas un choix. */
+    pastilles: [...document.querySelectorAll('#series button')].map((b) => b.textContent),
+    pastillesCachees: document.getElementById('series')?.hidden === true,
+    verrouillees: SETS.filter((x) => S.series && !S.series.has(x.id)).length,
+    total: SETS.length,
+    bouton: document.getElementById('openBtn')?.textContent ?? '',
+  }));
 
-  if (!etat) {
-    console.log('  --   toutes les séries sont débloquées : section sautée');
-  } else {
-    check('une série hors de portée annonce le niveau qu’elle demande',
-      /niveau \d+/i.test(etat.ligne)
-      || (console.log('        elle dit :', etat.ligne), false));
-    check('le bouton le répète au lieu de promettre un booster',
-      /niveau \d+/i.test(etat.bouton));
-    check('et il est fermé', etat.ferme === true);
-    check('le paquet se voit, éteint : c’est ce qui donne envie', etat.verrou);
+  check('le kiosque ne présente qu\u2019une série ouvrable', vu.serieOuverte === true
+    || (console.log('        présentée :', vu.nom), false));
+  check(`dix paquets au choix (${vu.paquets})`, vu.paquets === 10);
+  check('le bouton ne réclame plus un niveau',
+    !/niveau \d+/i.test(vu.bouton)
+    || (console.log('        bouton :', vu.bouton), false));
+
+  if (vu.verrouillees > 0) {
+    /* Un jeu ne cache pas ce qui vient : il le dit, à côté du choix. */
+    check('ce qui vient est annoncé', Boolean(vu.avenir)
+      || (console.log('        aucune ligne « à venir »'), false));
+    check('avec son nom et le niveau qu\u2019il demande',
+      /niveau \d+/i.test(vu.avenir ?? '')
+      || (console.log('        elle dit :', vu.avenir), false));
   }
 
-  /* Le filet de sécurité. Le kiosque ne propose plus une série verrouillée,
-     mais un onglet resté ouvert peut encore en demander le booster. Le refus
-     doit alors nommer sa cause — c'est ce code brut, affiché tel quel, qui a
-     fait remonter la panne. */
+  /* Au niveau 1 il n'y a qu'une série : la rangée de pastilles n'a rien à
+     proposer et ne doit pas s'afficher. */
+  if (vu.pastilles.length < 2) {
+    check('un sélecteur à un seul choix ne s\u2019affiche pas', vu.pastillesCachees === true);
+  } else {
+    check('les pastilles ne listent que les séries ouvertes',
+      vu.pastilles.length === vu.total - vu.verrouillees);
+  }
+
+  /* Le filet de sécurité, inchangé. Le kiosque ne propose plus une série
+     verrouillée, mais un onglet resté ouvert peut encore en demander le
+     booster. Le refus doit nommer sa cause — c'est ce code brut, affiché tel
+     quel, qui avait fait remonter la panne. */
   const dit = await page.evaluate(async () => {
     const r = await fetch('/api/fanzzy/open', {
       method: 'POST', headers: { 'content-type': 'application/json' },
