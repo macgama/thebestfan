@@ -7,7 +7,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <style>
-:root{--rail:clamp(56px,15vw,74px)}
+:root{--rail:clamp(58px,16vw,76px)}
+/* L'accueil est un écran **plein cadre** : ses deux rails touchent les bords
+   par construction, et la scène occupe tout ce qui reste. La gouttière commune
+   de `ui.css` — quatorze pixels de chaque côté — y rétrécissait la grille au
+   point de pousser le rail droit hors de l'écran ; et comme `.centre` rogne,
+   rien ne le signalait. Les écrans pleine largeur la remettent donc à zéro,
+   c'est exactement pour ça qu'elle est en variable. */
+#app{--gouttiere:0}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
 body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
@@ -140,8 +147,15 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* `overflow:hidden` : le halo et l’ombre au sol débordent volontairement du
    personnage. Sans cette clôture ils allongeaient la page de seize pixels
    sur un écran court, pour un décor que personne ne voit dépasser. */
-.centre{display:grid;grid-template-columns:var(--rail) 1fr var(--rail);align-items:center;
-  flex:1 1 auto;min-height:0;overflow:hidden}
+/* `minmax(0, 1fr)` et non `1fr`. Le piège le plus classique des grilles :
+   `1fr` vaut `minmax(auto, 1fr)`, et ce `auto` refuse de descendre sous la
+   taille minimale du contenu. La scène porte un personnage large : elle
+   imposait sa largeur, poussait les deux rails hors du cadre, et
+   `overflow:hidden` les rognait en silence. Cinq destinations sur neuf étaient
+   amputées — le duel, les matchs, le classement, les amis, la boutique — et
+   aucune mesure de débordement ne pouvait le voir. */
+.centre{display:grid;grid-template-columns:var(--rail) minmax(0,1fr) var(--rail);
+  align-items:center;flex:1 1 auto;min-height:0;overflow:hidden}
 /* Cinq tuiles, et `.centre` est en `overflow:hidden` : sans plafond, la
    cinquième sort de l'écran sur un téléphone court et se fait couper sans que
    rien ne le signale. Le rail tient dans la hauteur qu'on lui donne ; les
@@ -150,9 +164,14 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .rail{display:flex;flex-direction:column;gap:8px;z-index:3;
   max-height:100%;min-height:0}
 .rail .case{min-height:0;flex:0 1 auto}
+/* `CLASSEMENT` fait dix caractères : à 56 px de rail il ne tenait pas, et les
+   points de suspension transformaient une destination en devinette. Trois
+   corrections, aucune spectaculaire — un rail un peu plus large, l'espacement
+   des lettres ramené à zéro sur l'étiquette seule, et la taille qui suit la
+   largeur de l'écran plutôt qu'un palier fixe. */
 .case{aspect-ratio:1;width:100%;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:5px;font-size:clamp(8.5px,2.3vw,10.5px);font-weight:600;
-  letter-spacing:.02em;opacity:.72;position:relative;text-decoration:none;color:inherit;
+  justify-content:center;gap:5px;font-size:clamp(7.6px,2.15vw,10.5px);font-weight:600;
+  letter-spacing:0;opacity:.72;position:relative;text-decoration:none;color:inherit;
   font-family:var(--banner)}
 .case:hover{opacity:1;border-color:rgba(242,238,228,.24)}
 .case .lib{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

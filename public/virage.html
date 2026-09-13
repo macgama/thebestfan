@@ -1191,6 +1191,9 @@ function souvenir(g) {
   const demande = Number(new URLSearchParams(location.search).get('match'));
   if (Number.isInteger(demande) && demande > 0) {
     socket.emit('virage:join', { fixtureId: demande });
+  // La barre prévient au rechargement tant qu'on est dans la salle : le jeu se
+  // remet seul, mais la corde retombe pendant les deux secondes du rechargement.
+  window.TBF_BARRE?.enPartie?.(true);
   }
 
   let matchs = [];

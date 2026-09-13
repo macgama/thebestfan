@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « l’argent réel n’achète plus de coffre :
-il achète des billets, et les billets achètent des objets nommés ».
+Dernière mise à jour : session « le serveur ne croit rien sur parole,
+et le geste au doigt appartient au jeu ».
 
 ---
 
@@ -1774,6 +1774,218 @@ de l'accueil ont rougi sur « le Fanzzy équipé n'est pas nommé », parce que 
 l'état du joueur tombait avec la requête. `billets.sql` est maintenant monté par
 les vingt-cinq suites concernées, et déclaré dans `schema-smoke` et
 `DEPLOIEMENT.md`.
+
+---
+
+## 4 septendecies. Le contrôle de toutes les fonctionnalités
+
+### Deux instruments neufs
+
+**`npm run promesses`** croise ce que les pages appellent avec ce que le
+serveur monte. Il ne lance rien, il lit — c'est ce qui lui permet de couvrir les
+vingt pages d'un coup. Il existe pour une classe de panne qu'aucune suite ne
+trouve : une page qui appelle une route absente reçoit un 404, son `catch`
+l'avale, et l'écran s'affiche simplement sans la chose qu'il devait montrer.
+C'est exactement ce qui était arrivé à la clé `annonce`.
+
+Il dit aussi ce qu'on ne sert pas, et **la dette de couverture** — sans faire
+rougir : un avertissement qui fait échouer devient un avertissement qu'on
+désactive.
+
+**`npm run tour:ui`** ouvre les vingt écrans et vérifie ce qui doit être vrai
+partout. Onze pages avaient une suite ; **neuf n'en avaient aucune**, dont la
+boutique et l'inscription — l'écran où l'on prend l'argent et celui qui accueille
+les nouveaux. Écrire neuf suites complètes n'était pas tenable ; garantir un
+plancher sur les vingt l'était.
+
+Ses sept contrôles, par écran : aucune erreur de script ; la page affiche du
+contenu ; aucun `undefined`, `NaN` ou code d'erreur sous les yeux du joueur ;
+rien ne déborde à 360 px ; aucun libellé coupé ; rien ne touche le bord ; tout
+ce qui se touche est visible ; les liens mènent quelque part.
+
+### Ce que le tour a trouvé
+
+| Écran | Défaut | Depuis |
+|---|---|---|
+| accueil | **le rail droit était hors de l'écran** — cinq destinations sur neuf amputées | longtemps |
+| administration | en-tête et contenu **côte à côte**, 120 px hors cadre de chaque côté | l'adoption de `ui.css` |
+| matchs | « **undefined MATCHS** » en grand quand la journée est vide | — |
+| boosters | le carrousel poussait la page à **1013 px** de large sur un écran de 360 | — |
+| boutique | titres et intertitres collés au bord | ce tour-ci |
+
+**Le rail de l'accueil est le plus instructif.** `grid-template-columns: … 1fr …`
+ne veut pas dire « prends ce qui reste » : `1fr` vaut `minmax(auto, 1fr)`, et ce
+`auto` refuse de descendre sous la taille minimale du contenu. La scène portait
+un personnage large, imposait sa largeur, et poussait les deux rails dehors.
+Comme `.centre` est en `overflow:hidden`, **rien ne débordait** : ça rognait, en
+silence. La correction tient en huit caractères — `minmax(0,1fr)` — et il a
+fallu une capture d'écran pour la voir.
+
+**L'administration était côte à côte** parce que `ui.css` pose
+`body{display:flex}` pour centrer la colonne du jeu, et que l'administration n'a
+pas cette colonne. Sur un écran large, invisible ; sur un téléphone,
+inutilisable.
+
+### Trois fois où le contrôle avait tort
+
+Un audit qui crie au loup est pire qu'un audit absent : on apprend à lire ses
+lignes rouges en diagonale.
+
+- `promesses` ne lisait que les guillemets simples. `app.use("/api/boutique", …)`
+  est en doubles, et quatre adresses parfaitement servies étaient rapportées
+  comme absentes.
+- Le tour mesurait la **boîte** au lieu de l'encre : `h1{padding:16px}` pose son
+  texte à seize pixels et sa boîte à zéro, et trois pages correctes étaient
+  signalées. Un `Range` mesure ce que l'œil voit.
+- Le premier banc d'essai rendait vingt-sept rouges dont vingt-cinq venaient de
+  lui : pas d'identité servie, donc pas de barre nulle part ; pas de socket.io,
+  donc trois écrans en erreur ; un joueur jamais passé par l'accueil, donc des
+  redirections parfaitement justes comptées comme des pannes.
+
+---
+
+## 4 octodecies. Une grammaire commune — `ui.css`
+
+Les vingt écrans étaient corrects et se ressemblaient peu. Ce qui manquait
+n'était pas de la couleur — il y en a — c'était **la répétition**. Un jeu se
+reconnaît à ce que le même geste produise toujours le même effet.
+
+| Règle | Ce qu'elle répare |
+|---|---|
+| `--gouttiere`, sur `#app` | plus aucun texte collé au bord ; les écrans pleine largeur la remettent à zéro |
+| `--r-commune/rare/epique/legendaire` | les raretés étaient redéfinies quatre fois, avec une nuance de décalage |
+| `.tbf-titre` | huit écrans écrivaient leur titre de huit façons ; barre d'accent dorée, lettrage du jeu |
+| `.tbf-chiffre` | un solde, un score : ça se lit d'un coup d'œil ou ça ne sert à rien |
+| `.pan` + filet clair | un panneau cesse d'être un trou dans l'image |
+| `:active` sur tout ce qui se touche | un écran qui ne répond pas au doigt fait appuyer deux fois |
+
+**Aucune animation permanente n'a été ajoutée.** Ce qui bouge sans arrêt cesse
+d'être remarqué en dix secondes et coûte de la batterie pour ça — la leçon de la
+respiration du personnage. Tout est statique au repos et ne s'anime qu'au
+toucher, en `transform` seul, donc sans mise en page ni redessin.
+
+### Deux pièges de flex et de grille, la même cause
+
+`min-width:0` sur l'identité de la barre, `minmax(0,1fr)` sur la grille de
+l'accueil : dans les deux cas, un enfant refusait de descendre sous la taille
+minimale de son contenu et poussait ses voisins dehors. C'est le même piège sous
+deux noms, et il vaut la peine de le reconnaître du premier coup d'œil.
+
+---
+
+## 4 novemdecies. La sécurité, et ce qu'elle peut réellement couvrir
+
+### La règle qui gouverne tout le reste
+
+**Sur le web, le code du joueur appartient au joueur.** Il peut le lire, le
+modifier, le remplacer par un script. Minifier, obscurcir, désactiver le clic
+droit ne ralentissent que les curieux de trois minutes. La question n'est jamais
+« comment cacher le code » mais **« que se passe-t-il si le client ment »**.
+
+Trois choses ne doivent donc jamais venir du client, et c'était déjà le cas
+partout :
+
+| Ce qui ne vient jamais du client | Où ça se décide |
+|---|---|
+| **Qui il est** | la session, jamais le corps de la requête |
+| **Combien il a marqué** | `grade()` note les gestes bruts, côté serveur |
+| **Combien coûte ce qu'il achète** | le catalogue et le registre, jamais la page |
+
+### Ce qui était déjà solide
+
+Mots de passe en scrypt ; jetons de session **hachés en base** — une base lue ne
+donne pas de sessions utilisables ; cookie `httpOnly` + `sameSite` ; tentatives
+de connexion comptées ; défense CSRF par vérification d'origine ; **tout le SQL
+paramétré** ; les gestes notés côté serveur avec un filet anti-robot ; les
+cadences des sockets bridées ; aucun secret versionné.
+
+### Les trois manques trouvés
+
+**1. Aucun en-tête de sécurité.** Sans `X-Frame-Options`, un site tiers affiche
+thebestfan dans un cadre transparent par-dessus ses propres boutons : le joueur
+croit cliquer chez eux et clique chez nous, connecté. Sept en-têtes sont posés
+dans `src/server/garde/`, écrits à la main plutôt qu'avec `helmet` — sept
+lignes, aucune dépendance de plus, et chacune lisible avec sa raison.
+
+La politique de contenu assume ce qu'elle ne peut pas encore faire :
+`'unsafe-inline'` sur les scripts est **nécessaire** tant que les vingt pages
+portent leur script en ligne, ce qui est le parti pris du dépôt. L'écrire est
+plus honnête que de laisser croire la politique stricte.
+
+**2. Aucune limite de cadence sur les routes HTTP.** Les sockets étaient bridées
+— un chant toutes les trois secondes — mais rien n'empêchait un script d'appeler
+`/api` mille fois par seconde. Une fenêtre glissante, lectures et écritures
+comptées séparément, `/healthz` et le webhook de Stripe exemptés.
+
+**3. Une interpolation SQL**, dans `admin/index.js`. Elle est **sûre** —
+`champs` ne contient que des littéraux écrits douze lignes plus haut — mais
+« sûr parce que je viens de le relire » ne se transmet pas. Elle porte donc un
+marqueur `sql-sur` avec sa justification, et l'audit la **compte** au lieu de
+la taire : une exception qu'on voit peut être remise en cause, une exception
+qu'on a fait taire est une exception qu'on a oubliée.
+
+### Deux instruments permanents
+
+`npm run securite` vérifie quinze invariants. Il ne cherche pas des failles —
+aucun script ne fait ça — il vérifie que les **décisions déjà prises** tiennent
+encore, parce qu'elles se défont sans bruit : un `requireAdmin` oublié sur une
+route neuve, un identifiant lu dans le corps « juste pour ce cas-là ».
+
+`npm run garde:smoke` éprouve les gardes eux-mêmes. Un limiteur rate de deux
+façons opposées et **les deux sont silencieuses** : trop lâche il ne bloque
+rien et l'on se croit protégé ; trop serré il bloque des joueurs, qui ne se
+plaignent pas — ils s'en vont. Les deux bords sont donc éprouvés.
+
+Et le tour des vingt écrans passe désormais **sous les en-têtes réels** : une
+politique de contenu ne casse pas bruyamment, elle refuse une ressource et
+écrit une ligne dans une console que personne ne lit.
+
+### Ce qu'aucun script ne peut dire
+
+Le mot de passe de la base vit dans le fichier d'environnement du serveur. Rien
+ici ne peut dire s'il est fort, ni qui le connaît, ni si l'accès à la base est
+ouvert depuis l'extérieur. Ce sont des questions d'hébergement, et elles se
+règlent chez Infomaniak.
+
+---
+
+## 4 vicies. Le geste au doigt, et le rechargement
+
+### L'appui long ouvrait le menu du navigateur
+
+Maintenir pour chauffer, tirer pour déchirer, garder le doigt sur une carte :
+tous ces gestes appartiennent au jeu, et le navigateur les confisquait pour
+proposer « Enregistrer l'image ». `-webkit-touch-callout: none` n'existait
+**nulle part** ; `user-select: none` vivait dans quatre pages sur vingt.
+
+Les trois règles sont maintenant dans `ui.css`, donc partout — avec une
+**exception qui compte plus que la règle** : tout ce qui se lit et se recopie
+reste sélectionnable, y compris les champs de saisie. Une application où l'on ne
+peut rien copier est une application dont on ne peut pas demander de l'aide.
+
+**Ce n'est pas une protection du contenu**, et le commentaire le dit : l'image
+est déjà dans le navigateur, un onglet suffit à la récupérer. C'est une
+correction de confort.
+
+### Le rechargement
+
+Deux choses différentes, une seule ressemblait à un défaut.
+
+`overscroll-behavior` était posé sur `body` — or le tirer-pour-recharger est
+décidé par l'élément **racine**. Pendant une partie, un geste de chant qui
+commence trop haut devenait un rechargement. La règle est maintenant sur
+`html`.
+
+Le rechargement volontaire, lui, ne casse rien : le Virage se rejoint à la
+reconnexion, le duel reprend par `nvn:resume`. On ne cherche donc pas à
+l'empêcher — **on ne peut pas, et il ne faudrait pas** : le navigateur garde
+toujours son bouton, et une page dont on ne peut pas sortir est un piège. La
+barre prévient seulement quand une partie tourne.
+
+Ce garde a d'ailleurs été écrit deux fois : la première version lisait une
+classe que **personne ne posait**. C'est le troisième mécanisme complet,
+correct, et branché sur rien qu'on trouve dans ce dépôt — la famille de la clé
+`annonce`.
 
 ---
 

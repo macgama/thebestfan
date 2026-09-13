@@ -290,6 +290,32 @@
     if (!enJeu) haut.querySelector('.tbf-moi b').textContent = user.pseudo ?? '';
     app.prepend(haut);
 
+    /* ------------------------------------------- recharger pendant une partie
+
+       On ne peut pas empêcher un rechargement, et il ne faudrait pas : le
+       navigateur garde toujours son bouton, et une page dont on ne peut pas
+       sortir est un piège. Ce qu'on peut faire est de prévenir quand il coûte
+       quelque chose.
+
+       Le jeu se remet seul — le Virage se rejoint à la reconnexion, le duel
+       reprend sa place — mais la corde retombe pendant les deux secondes du
+       rechargement, et un joueur qui recharge par réflexe ne le sait pas.
+
+       Le navigateur n'affiche ce message que si le joueur a déjà touché la
+       page : c'est une règle du navigateur, pas un oubli, et elle nous
+       arrange — on ne prévient donc jamais quelqu'un qui n'a rien commencé. */
+    if (enJeu) {
+      window.addEventListener('beforeunload', (e) => {
+        if (!document.body.classList.contains('tbf-en-partie')) return;
+        e.preventDefault();
+        // Le texte est ignoré par tous les navigateurs depuis longtemps ; seul
+        // le fait de l'appeler compte. On l'écrit quand même : le jour où l'un
+        // d'eux le réaffiche, il vaut mieux qu'il dise quelque chose.
+        e.returnValue = 'Ta partie est en cours.';
+        return e.returnValue;
+      });
+    }
+
     /* Le bandeau d'annonce. En arrière-plan, et sans `await` : personne
        n'attend une phrase. S'il n'y a rien à dire, rien n'est ajouté au
        document — un bandeau vide occupe de la place et fait douter. */
@@ -385,6 +411,18 @@
      * quarante-cinq écharpes les verrait toujours à l'écran.
      */
     window.TBF_BARRE = {
+      /**
+       * Dire qu'une partie tourne — ou qu'elle ne tourne plus.
+       *
+       * Seule la page sait : le Virage l'est dès qu'il a rejoint une salle, le
+       * duel dès qu'un adversaire est en face. La barre ne peut pas le deviner,
+       * et deviner mal préviendrait au mauvais moment — ce qui apprend à
+       * ignorer l'avertissement.
+       */
+      enPartie(oui) {
+        document.body.classList.toggle('tbf-en-partie', Boolean(oui));
+      },
+
       bourse(scarves, packs) {
         // Les jetons n'existent pas sur un écran de jeu : on ne les cherche
         // qu'après s'être assuré qu'ils sont là.

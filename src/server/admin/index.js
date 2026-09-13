@@ -504,6 +504,15 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     }
     if (!champs.length) return tenuePar(id);
 
+    /* sql-sur : `champs` ne contient que des littéraux écrits douze lignes
+       plus haut — « nom = ? », « texte = ? », « rar = ? », « publie = ? » — et
+       chaque valeur part en paramètre. Rien de ce que le client envoie
+       n'atteint la chaîne SQL ; il ne décide que **quelles** colonnes sont
+       reprises, parmi quatre que ce fichier énumère.
+
+       Le marqueur est là pour que l'audit `npm run securite` compte cette
+       exception au lieu de la taire : une interpolation dans du SQL se relit,
+       toujours, même quand elle est juste. */
     await pool.execute(`UPDATE tenues SET ${champs.join(', ')} WHERE id = ?`, [...vals, id]);
     await rechargerTenues(pool);
     await journal(acteur, 'tenue.modifiee', id, corps, ip_);

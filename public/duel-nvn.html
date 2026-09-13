@@ -615,6 +615,7 @@ function connecter() {
     fermerVoile();
     // Reprise : si un duel nous attendait, le serveur nous y remet.
     if (S.vue && !S.vue.termine) socket.emit('nvn:resume');
+    window.TBF_BARRE?.enPartie?.(Boolean(S.vue && !S.vue.termine));
   });
 
   socket.on('connect_error', () => {
