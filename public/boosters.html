@@ -219,8 +219,67 @@
 .hint{font-size:11.5px;opacity:.5}
 .ghost{border:1px solid rgba(242,238,228,.28);border-radius:6px;padding:9px 18px;font-size:12.5px;
   background:none;color:inherit;cursor:pointer;font-family:inherit}
-.summary{display:none;grid-template-columns:repeat(5,1fr);gap:5px;padding:0 12px;width:100%}
+/* ------------------------------------------------------------- le butin
+
+   Cinq vignettes collées au bas d'un écran aux trois quarts vide : c'était le
+   dernier moment de la cérémonie, traité comme un pied de page. La scène
+   vidée gardait six cents pixels de noir au-dessus.
+
+   Les cartes prennent maintenant la place — trois en haut, deux en bas,
+   centrées — et la scène s'efface quand le butin paraît. */
+.summary{display:none;width:100%;flex:1 1 auto;min-height:0;
+  align-content:center;justify-content:center;
+  /* **Six** colonnes pour trois cartes par rangée : c'est ce qui permet de
+     centrer la seconde rangée, incomplète, sans marge négative. Ma première
+     version décalait les deux dernières à la main — et les éjectait du cadre,
+     laissant une pastille « NOUVEAU » flotter seule sous la grille. */
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:14px 10px;padding:4px 12px}
 .summary.on{display:grid}
+.summary > *{grid-column:span 2}
+.summary > :nth-child(4){grid-column:2 / span 2}
+.summary > :nth-child(5){grid-column:4 / span 2}
+
+/* L'arrivée en cascade. Elle ne dure que l'arrivée : une fois posées, les
+   cartes ne bougent plus. Ce qui clignote en permanence cesse d'être remarqué
+   en dix secondes — la leçon du personnage qui respirait derrière un onglet
+   caché — et coûte de la batterie pour ça. */
+.summary > *{
+  animation:butin .42s cubic-bezier(.2,1.3,.4,1) backwards;
+  animation-delay:calc(var(--n, 0) * 90ms);
+}
+@keyframes butin{
+  from{opacity:0;transform:translateY(22px) scale(.88)}
+  to{opacity:1;transform:none}
+}
+
+/* La lueur, **et seulement sur ce qui la mérite**. Une légendaire qui brille
+   au milieu de quatre communes se voit ; cinq cartes qui brillent ensemble ne
+   disent plus rien. */
+.summary > .rare .fz{box-shadow:0 0 16px rgba(95,168,255,.28)}
+.summary > .epique .fz{box-shadow:0 0 20px rgba(185,140,255,.34)}
+.summary > .legendaire .fz{box-shadow:0 0 26px rgba(245,195,59,.45)}
+
+/* Ce qu'on n'avait pas encore. C'est l'information que le joueur cherche en
+   premier, et elle n'était nulle part : cinq cartes rangées, sans savoir
+   lesquelles étaient neuves. */
+.summary > .neuf{position:relative}
+.summary > .neuf::after{
+  /* À gauche, et non au centre : l'âge de la carte — « ÉVO 1 »,
+     « LÉGENDAIRE » — occupe le coin droit depuis qu'il a été ajouté, et deux
+     étiquettes qui se recouvrent n'en font lire aucune. */
+  content:"NOUVEAU";position:absolute;top:-7px;left:6px;
+  font-family:var(--banner);font-size:8.5px;letter-spacing:.16em;
+  background:var(--projo);color:#0B0E13;border-radius:20px;padding:2px 7px;
+  z-index:6;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.6);
+}
+
+/* Le titre du butin. Il dit ce qu'on a eu avant qu'on ait compté. */
+.butintitre{text-align:center;font-family:var(--banner);letter-spacing:.18em;
+  font-size:13px;opacity:.75;padding:6px 0 2px}
+.butintitre b{color:var(--projo)}
+
+@media (prefers-reduced-motion:reduce){ .summary > *{animation:none} }
 
 </style>
 </head>
@@ -268,6 +327,7 @@
     <div class="flash" id="flash"></div>
     <div class="ohead"><span id="oProg">1 / 5</span><button id="oClose">Fermer</button></div>
     <div class="ostage" id="ostage"></div>
+    <div class="butintitre" id="butinTitre" hidden></div>
     <div class="summary" id="summary"></div>
     <div class="ofoot"><div class="hint" id="oHint"></div><button class="ghost" id="oAction" style="display:none"></button></div>
   </div>
@@ -785,6 +845,9 @@ async function openPack() {
     st.appendChild(el);
   });
   $('summary').classList.remove('on');
+  $('butinTitre').hidden = true;
+  // La scène était repliée par le récapitulatif du paquet précédent.
+  $('ostage').style.display = '';
   $('oAction').style.display = 'none';
   $('oHint').textContent = 'Touche la carte pour la retourner';
   $('oProg').textContent = `1 / ${pull.length}`;
@@ -828,18 +891,43 @@ $('ostage').onclick = () => {
   }
 };
 $('oAction').onclick = () => finishPack();
-$('oClose').onclick = () => { $('opener').classList.remove('on'); renderDex(); };
+$('oClose').onclick = () => { $('opener').classList.remove('on'); renderKiosque(); };
 
 function finishPack() {
   $('ostage').innerHTML = '';
+  /* La scène vidée gardait six cents pixels de noir au-dessus du butin. On la
+     replie : la grille prend la place, et c'est elle qu'on est venu voir. */
+  $('ostage').style.display = 'none';
   $('oProg').textContent = `${pull.length} / ${pull.length}`;
   const gained = S.lastGain ?? 0;
   $('oHint').textContent = gained
     ? `Rangées dans le classeur · +${gained} écharpes en doublons`
     : 'Rangées dans le classeur';
   $('burst').classList.remove('on');
+
+  /* Ce qu'on n'avait pas encore. C'est ce que le joueur cherche en premier, et
+     ce n'était écrit nulle part : cinq cartes rangées, sans savoir lesquelles
+     étaient neuves. `fresh` est rempli à la révélation, carte par carte. */
+  const neuves = pull.filter((f) => fresh.has(f.id)).length;
+  const t = $('butinTitre');
+  t.hidden = false;
+  /* Quatre cas, quatre phrases. Coller un « TOUT » invariable devant un accord
+     au féminin pluriel donnait « TOUT NOUVELLES DANS LE CLASSEUR » — et une
+     phrase bancale sur l'écran le plus regardé du jeu se remarque tout de
+     suite. */
+  t.innerHTML =
+    neuves === 0 ? 'AUCUNE NOUVELLE — QUE DES DOUBLONS'
+      : neuves === pull.length ? 'TOUTES NOUVELLES DANS LE CLASSEUR'
+        : neuves === 1 ? `<b>1</b> NOUVELLE SUR ${pull.length}`
+          : `<b>${neuves}</b> NOUVELLES SUR ${pull.length}`;
+
   const sum = $('summary');
-  sum.innerHTML = pull.map((f, i) => `<div data-i="${i}">${cardHTML(f, { mini:true })}</div>`).join('');
+  /* `--n` porte le rang : c'est lui qui échelonne l'arrivée. Le faire en CSS
+     plutôt qu'avec cinq minuteries évite qu'une carte reste invisible si la
+     page se fige une demi-seconde au mauvais moment. */
+  sum.innerHTML = pull.map((f, i) =>
+    `<div data-i="${i}" style="--n:${i}" class="${esc(f.rar ?? '')}${
+      fresh.has(f.id) ? ' neuf' : ''}">${cardHTML(f, { mini:true })}</div>`).join('');
   sum.classList.add('on');
   sum.onclick = (e) => {
     const d = e.target.closest('[data-i]');
@@ -847,13 +935,24 @@ function finishPack() {
     // grille, pas par-dessus un booster à moitié déchiré.
     if (!d) return;
     $('opener').classList.remove('on');
-    renderDex(); renderTeam();
+    /* `renderKiosque` et non `renderDex` : le classeur n'est pas sur cette
+       page. L'ancien appel levait **avant** `ouvrirFiche`, et toucher une carte
+       du butin se contentait donc de fermer l'écran. */
+    renderKiosque();
     ouvrirFiche(pull[+d.dataset.i].id);
   };
   const a = $('oAction');
   a.style.display = 'block'; a.textContent = 'Terminer';
-  a.onclick = () => { $('opener').classList.remove('on'); a.onclick = () => finishPack(); renderDex(); renderTeam(); };
-  renderDex(); tickRegen();
+  a.onclick = () => {
+    $('opener').classList.remove('on');
+    a.onclick = () => finishPack();
+    renderKiosque();
+  };
+  /* `renderKiosque` redessine le compte de boosters, l'état du bouton et le
+     compte à rebours — tout ce qui vient de changer. L'ancien `renderDex`
+     levait ici, donc `tickRegen` n'était jamais atteint et le kiosque restait
+     sur ses valeurs d'avant l'ouverture. */
+  renderKiosque();
 }
 
 /** Superpose la gerbe d'étincelles en mode « screen » : seul ce qui brille apparaît. */

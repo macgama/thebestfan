@@ -503,6 +503,75 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
   await pageG.close();
 }
 
+/* --------------------------------------------------------------- le butin
+
+ * Le dernier moment de la cérémonie : ce qu'on vient de trouver. Il
+ * s'affichait en cinq vignettes collées au bas d'un écran aux trois quarts
+ * vide — la scène de révélation restait là, vidée, et gardait six cents pixels
+ * de noir au-dessus. Rien ne pouvait le signaler : une vignette trop petite ne
+ * casse pas.
+ */
+{
+  const butin = await page.evaluate(async () => {
+    /* On ouvre un paquet et on va droit au récapitulatif : c'est lui qu'on
+       éprouve, pas la cérémonie, qui a ses propres contrôles. */
+    if (typeof startTear === 'function') { /* le geste a le sien */ }
+    await openPack();
+    finishPack();
+    await new Promise((r) => setTimeout(r, 120));
+
+    const sum = document.getElementById('summary');
+    const cartes = [...sum.querySelectorAll('[data-i]')];
+    const r = sum.getBoundingClientRect();
+    const une = cartes[0]?.getBoundingClientRect();
+
+    return {
+      combien: cartes.length,
+      /* La scène vidée est repliée : sans ça, elle gardait la place et le
+         butin se tassait dessous. */
+      scenePliee: getComputedStyle(document.getElementById('ostage')).display === 'none',
+      /* Assez grandes pour qu'on voie le dessin. Cinq vignettes de soixante
+         pixels ne montrent rien de ce qu'on vient de gagner. */
+      largeurCarte: Math.round(une?.width ?? 0),
+      hauteurGrille: Math.round(r.height),
+      ecran: window.innerHeight,
+      titre: document.getElementById('butinTitre')?.textContent ?? '',
+      titreVisible: document.getElementById('butinTitre')?.hidden === false,
+      /* La lueur ne va qu'à ce qui la mérite : cinq cartes qui brillent
+         ensemble ne disent plus rien. */
+      brillantes: cartes.filter((c) =>
+        /rare|epique|legendaire/.test(c.className)).length,
+      /* L'arrivée ne tourne pas en boucle. Ce qui bouge sans arrêt cesse
+         d'être remarqué en dix secondes et coûte de la batterie pour ça. */
+      enBoucle: cartes.some((c) =>
+        getComputedStyle(c).animationIterationCount !== '1'),
+    };
+  });
+
+  if (process.env.CAPTURE) {
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    await page.screenshot({ path: join(tmpdir(), 'butin.png') });
+    console.log('   capture :', join(tmpdir(), 'butin.png'));
+  }
+
+  check(`le butin montre les cinq cartes (${butin.combien})`, butin.combien === 5);
+  check('la scène vidée ne garde plus la place', butin.scenePliee === true);
+  check(`les cartes sont assez grandes pour qu'on les voie (${butin.largeurCarte} px)`,
+    butin.largeurCarte >= 85
+    || (console.log('        trop petites pour montrer un dessin'), false));
+
+  /* C'est ce que le joueur cherche en premier, et ce n'était écrit nulle part :
+     cinq cartes rangées, sans savoir lesquelles étaient neuves. */
+  check('le butin dit ce qui est nouveau', butin.titreVisible === true
+    && /NOUVELLE|DOUBLON/i.test(butin.titre)
+    || (console.log('        titre :', JSON.stringify(butin.titre)), false));
+
+  check('l\u2019arrivée ne tourne pas en boucle', butin.enBoucle === false);
+  check(`la lueur ne va qu'aux cartes qui la méritent (${butin.brillantes}/5)`,
+    butin.brillantes <= 5);
+}
+
 await nav.close();
 await new Promise((r) => http.close(r));
 await pool.end();

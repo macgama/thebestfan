@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « le kiosque ne propose que ce qu’on peut
-ouvrir, et les neuf séries ont leur paquet ».
+Dernière mise à jour : session « le butin prend la place, et quatre appels
+morts sont tombés avec ».
 
 ---
 
@@ -2151,6 +2151,80 @@ entière — « un jeu ne cache pas ce qui vient » — et c’est elle qu’on 
 sur sa nouvelle forme : ce qui vient est annoncé à côté du choix. Le filet de
 sécurité ne bouge pas : un onglet resté ouvert peut encore demander une série
 verrouillée, et le serveur la refuse en nommant sa cause.
+
+---
+
+## 4 vicies quater. Le butin, et quatre appels morts
+
+### Le récapitulatif était traité comme un pied de page
+
+Cinq vignettes de soixante pixels, collées au bas d'un écran aux trois quarts
+vide : la scène de révélation restait là, vidée de ses cartes, et gardait six
+cents pixels de noir au-dessus. C'est le dernier moment de la cérémonie — celui
+qu'on regarde en se demandant ce qu'on a eu.
+
+Il prend maintenant la place : cinq cartes à 116 px, trois en haut, deux
+centrées en dessous, qui arrivent **en cascade**. La scène vidée se replie.
+
+**Et il dit ce qui est nouveau** — « 4 NOUVELLES SUR 5 » — l'information que le
+joueur cherche en premier et qui n'était écrite nulle part : cinq cartes
+rangées, sans savoir lesquelles on avait déjà.
+
+### Les effets, et leur limite
+
+Ils ne durent que l'arrivée. Une fois les cinq cartes posées, **l'écran est
+immobile** — c'est la règle du dépôt, héritée du personnage qui respirait pour
+rien derrière un onglet caché. Ce qui bouge passe par `transform` et `opacity`,
+donc par le compositeur seul.
+
+La lueur ne va qu'aux cartes qui la méritent : une légendaire qui brille au
+milieu de quatre communes se voit, cinq cartes qui brillent ensemble ne disent
+plus rien.
+
+### Quatre appels morts, et ce qu'ils cassaient
+
+`renderDex()` et `renderTeam()` — les rendus du classeur et de la tribune —
+étaient appelés **quatre fois** dans la page des boosters. Ils n'y existent pas :
+ils vivaient dans la page des Fanzzy, d'où le kiosque a déménagé.
+
+| Appel | Ce que ça cassait |
+|---|---|
+| dans le clic du butin | **toucher une carte ne faisait rien** : l'exception tombait avant `ouvrirFiche` |
+| en fin de `finishPack` | `tickRegen()` n'était jamais atteint — compte de boosters et compte à rebours figés |
+| « Fermer », « Terminer » | levaient après avoir fermé : sans conséquence visible |
+
+Quatre exceptions par ouverture de booster, dans une console que personne ne
+lit. C'est le prix des extractions : le code part, **les appels restent**, et
+rien ne lève au chargement puisqu'une fonction absente ne se remarque qu'au
+moment où on l'appelle. C'est la quatrième fois dans ce dépôt.
+
+Le remplaçant est `renderKiosque()` : il redessine le compte de boosters,
+l'état du bouton et le compte à rebours — exactement le travail que les deux
+autres faisaient sur leur écran.
+
+### Deux fautes de ma part, vues sur capture
+
+**Mes marges négatives éjectaient deux cartes.** Pour centrer la seconde rangée
+j'avais décalé les quatrième et cinquième à la main : elles sortaient du cadre,
+et une pastille « NOUVEAU » flottait seule sous la grille, orpheline. La grille
+à **six colonnes** fait le travail sans bricolage — c'est la façon classique de
+centrer une rangée incomplète.
+
+**« TOUT NOUVELLES DANS LE CLASSEUR »** — un « TOUT » invariable collé devant un
+accord au féminin pluriel. Quatre cas, quatre phrases.
+
+### Pourquoi des cartes paraissent vides
+
+Elles ne sont pas cassées : **elles ne sont pas encore dessinées**. Le rendu
+procédural — silhouette, projecteurs, gradins — est le repli assumé, et il vaut
+mieux qu'un trou.
+
+**198 des 460 cartes sont illustrées**, soit 43 %, et la couverture est
+uniforme : 43 % pour `LA TRIBUNE`, 42 % pour `LES MÉTIERS DU STADE`, 34 % pour
+`LE BESTIAIRE`. Un joueur qui ouvre un booster voit donc en moyenne deux ou
+trois cartes dessinées sur cinq.
+
+262 illustrations restent à produire. C'est une production, pas une correction.
 
 ---
 
