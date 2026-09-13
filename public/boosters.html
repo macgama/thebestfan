@@ -298,7 +298,8 @@ function tickRegen() {
   // partagent le même bandeau. Le kiosque est l'écran qui la fait le plus
   // bouger : sans cette poussée, un joueur qui vient de dépenser quarante-cinq
   // écharpes les verrait encore affichées.
-  window.TBF_BARRE?.bourse(S.scarves, S.packs);
+  /* La barre ne porte plus la bourse : le kiosque affiche son solde lui-même,
+     dans la page où il sert à décider. */
   // Deux raisons de fermer le bouton, et elles ne se disent pas pareil : plus
   // de booster, ou série pas encore débloquée. Le libellé est posé par
   // `renderKiosque`, qui seul connaît la série affichée.

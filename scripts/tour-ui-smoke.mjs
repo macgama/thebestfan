@@ -438,6 +438,61 @@ for (const [route, nom] of tousLesEcrans) {
   await page.close();
 }
 
+/* ------------------------------------- la carte en grand tient à l'écran
+
+   Le seul endroit du jeu où un panneau s'ouvre par-dessus la page, et celui où
+   l'on décide : on regarde une carte, et on l'ajoute — ou pas. Le bouton était
+   sous le bord de l'écran, et il fallait faire défiler pour le trouver.
+
+   Cette mesure ne peut se faire qu'ici : `deck:ui` tourne sous jsdom, qui ne
+   met rien en page et ne saurait dire si quelque chose dépasse. */
+{
+  const page = await nav.newPage();
+  await page.setViewport({ width: 360, height: 780 });
+  await page.goto(base + '/deck', { waitUntil: 'networkidle0' }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 600));
+
+  const vu = await page.evaluate(async () => {
+    document.querySelector('[data-onglet="cartes"]')?.click();
+    await new Promise((r) => setTimeout(r, 200));
+    const rangee = document.querySelector('[data-detail]');
+    if (!rangee) return { ouvert: false };
+    rangee.click();
+    await new Promise((r) => setTimeout(r, 300));
+
+    const p = document.querySelector('#panneau');
+    const carte = document.querySelector('.grandeCarte');
+    if (!p || !carte) return { ouvert: false };
+
+    const r = p.getBoundingClientRect();
+    const bas = [...p.querySelectorAll('button,.vide')].pop();
+    return {
+      ouvert: true,
+      hauteur: Math.round(r.height),
+      ecran: window.innerHeight,
+      // Le panneau lui-même ne doit pas avoir à défiler.
+      defile: p.scrollHeight > p.clientHeight + 2,
+      // Et ce qui décide — le bouton, ou le refus qui le remplace — doit être
+      // visible sans un geste de plus.
+      basVisible: bas ? bas.getBoundingClientRect().bottom <= window.innerHeight + 2 : false,
+      art: Math.round(document.querySelector('.gcArt')?.getBoundingClientRect().height ?? 0),
+    };
+  });
+  await page.close();
+
+  console.log('— la carte en grand (/deck)');
+  check('  le panneau de carte s’ouvre', vu.ouvert === true);
+  if (vu.ouvert) {
+    check(`  il tient dans l’écran (${vu.hauteur} px sur ${vu.ecran})`,
+      vu.hauteur <= vu.ecran);
+    check('  et il n’a pas à défiler', vu.defile === false);
+    check('  ce qui décide reste sous les yeux, sans défiler', vu.basVisible === true);
+    /* Le dessin doit rester **regardable** : le réduire jusqu'à le faire
+       disparaître ferait tenir le panneau sans rendre service. */
+    check(`  le dessin reste assez grand pour être regardé (${vu.art} px)`, vu.art >= 150);
+  }
+}
+
 if (process.env.CAPTURE) console.log(`\n   captures dans ${tmpdir()}`);
 
 await nav.close();

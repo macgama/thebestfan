@@ -172,7 +172,7 @@ async function load() {
         .then((r) => r.json()).catch(() => ({ wallet: { scarves: 0 } })),
     ]);
     scarves = fz.wallet?.scarves ?? 0;
-    window.TBF_BARRE?.bourse(scarves);
+    /* La barre ne porte plus la bourse — le carnet affiche la sienne. */
 
     const vecus = mine.souvenirs.filter((s) => s.kind === 'presence').length;
     const recup = mine.souvenirs.length - vecus;

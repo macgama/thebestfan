@@ -273,10 +273,20 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 .voile{position:fixed;inset:0;background:rgba(3,5,8,.72);z-index:70;display:none;
   align-items:flex-end;justify-content:center}
 .voile.on{display:flex}
-.panneau{width:100%;max-width:460px;max-height:82dvh;overflow:auto;background:#10151C;
+/* Une **colonne** et non un bloc qui défile : l'en-tête reste en haut, le
+   corps prend ce qui reste, et le bouton d'action reste sous les yeux. Avant,
+   le panneau défilait en entier et l'on devait descendre pour trouver le prix
+   et le bouton — sur l'écran même où l'on vient pour décider. */
+.panneau{width:100%;max-width:460px;max-height:86dvh;
+  display:flex;flex-direction:column;background:#10151C;
   border-top-left-radius:16px;border-top-right-radius:16px;border:1px solid rgba(242,238,228,.14);
   border-bottom:0;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
-.panneau .ph{position:sticky;top:0;background:#10151C;padding:15px 16px 11px;z-index:2;
+/* `min-height:0` : sans lui, un enfant de flex refuse de descendre sous la
+   taille minimale de son contenu, et le corps repousserait le bouton hors de
+   l'écran. C'est le même piège que `1fr` en grille, rencontré deux fois déjà
+   dans ce dépôt — il vaut la peine de le reconnaître du premier coup d'œil. */
+.panneau .pc{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain}
+.panneau .ph{flex:none;background:#10151C;padding:15px 16px 11px;z-index:2;
   display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(242,238,228,.08)}
 .panneau .ph h3{flex:1;margin:0;font-family:var(--banner);font-size:15px;letter-spacing:.09em}
 .panneau .ph button{background:none;border:0;color:inherit;opacity:.45;font-size:22px;cursor:pointer;
@@ -333,9 +343,26 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 
    Le dessin passe en premier et prend toute la largeur. C'est le point de
    l'écran : on vient ici pour regarder la carte, le reste est légende. */
-.grandeCarte{display:flex;flex-direction:column;gap:12px}
+.grandeCarte{display:flex;flex-direction:column;gap:10px;min-height:0;flex:1 1 auto}
 
-.gcArt{position:relative;width:100%;aspect-ratio:63/80;border-radius:12px;overflow:hidden;
+/* Le dessin prend **ce qui reste**, au lieu d'imposer la proportion d'une
+   carte. À 63/80 il faisait près de six cents pixels de haut : le texte, les
+   chiffres et le bouton partaient sous le bord de l'écran.
+
+   Il garde une hauteur minimale — en dessous, on ne voit plus ce qu'on est venu
+   voir — et l'image est en `contain`, donc elle ne se déforme jamais quelle que
+   soit la place qu'on lui laisse. */
+/* La proportion d'une carte, **plafonnée**. C'est bien elle qu'on vient
+   regarder — mais à 63/80 pleine largeur, le dessin faisait près de six cents
+   pixels de haut et poussait le texte, les chiffres et le bouton sous le bord.
+
+   Le plafond en `dvh` le fait respirer sur un grand écran et se replier sur un
+   petit, sans qu'aucune valeur soit à reprendre. Une hauteur minimale garantit
+   qu'on voit toujours quelque chose ; `contain` garantit qu'il ne se déforme
+   jamais, quelle que soit la place qu'on lui laisse. */
+.gcArt{position:relative;width:100%;flex:0 1 auto;
+  aspect-ratio:63/80;max-height:46dvh;min-height:150px;
+  border-radius:12px;overflow:hidden;
   background:linear-gradient(165deg,rgba(255,255,255,.06),rgba(0,0,0,.45));
   border:1px solid var(--fc,#8257DA)}
 /* Le glyphe de famille, dessous : il reste si l'illustration ne charge pas —
@@ -343,8 +370,8 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 .gcArt>svg{position:absolute;left:50%;top:50%;width:38%;height:38%;
   transform:translate(-50%,-50%);fill:none;stroke:var(--fc,#8257DA);stroke-width:1.4;
   opacity:.5}
-.gcArt .gcIllu{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  object-position:50% 34%}
+.gcArt .gcIllu{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  object-position:50% 42%}
 
 .gcRang{display:flex;align-items:center;gap:8px;font-size:10.5px;letter-spacing:.14em;
   text-transform:uppercase}

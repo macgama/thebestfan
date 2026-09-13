@@ -585,6 +585,12 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
              trois silhouettes serrées, un groupe et non une personne. -->
         <a class="pan case" href="/kop">
           <svg viewBox="0 0 24 24"><path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20a7 7 0 0 1 14 0M17 20a5 5 0 0 0-3-4.6M16 11a3 3 0 0 0 0-6"/></svg><span class="lib">KOP</span></a>
+        <!-- Le kiosque. Il avait son onglet sur la page des Fanzzy ; quand
+             celle-ci est passée à trois onglets, il n'est resté que le menu
+             accordéon — c'est-à-dire nulle part. Un sachet, et sa pastille :
+             un booster non ouvert ne se rappelle à personne. -->
+        <a class="pan case" href="/boosters" id="caseBoosters">
+          <svg viewBox="0 0 24 24"><path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg><span class="lib">BOOSTERS</span></a>
       </nav>
 
       <div class="scene" id="scene">
@@ -1214,6 +1220,16 @@ async function jsonp(url, options) {
       const reste = Math.max(0, total - eus);
       if (reste) $('caseFanzzy').dataset.pastille = reste;
       else delete $('caseFanzzy').dataset.pastille;
+    }
+
+    /* Les boosters qui attendent. Un sachet non ouvert ne se rappelle à
+       personne : sans ce chiffre on découvre trois semaines plus tard qu'on en
+       avait douze, et douze boosters ouverts d'affilée, c'est soixante cartes
+       vues sans en regarder une seule. */
+    {
+      const n = Number(coll?.wallet?.packs ?? 0);
+      const t = $('caseBoosters');
+      if (t) { if (n) t.dataset.pastille = n; else delete t.dataset.pastille; }
     }
     /* ------------------------------------------- le Fanzzy au centre
 

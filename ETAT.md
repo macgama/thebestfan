@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « le serveur ne croit rien sur parole,
-et le geste au doigt appartient au jeu ».
+Dernière mise à jour : session « la barre dit où l’on est, et la carte tient
+dans l’écran ».
 
 ---
 
@@ -1986,6 +1986,87 @@ Ce garde a d'ailleurs été écrit deux fois : la première version lisait une
 classe que **personne ne posait**. C'est le troisième mécanisme complet,
 correct, et branché sur rien qu'on trouve dans ce dépôt — la famille de la clé
 `annonce`.
+
+---
+
+## 4 vicies bis. La barre, les trois écrans, et la carte
+
+### Le kiosque était devenu introuvable
+
+Quand la page des Fanzzy est passée à trois onglets — Mon Fanzzy, Classeur,
+Deck — l'onglet KIOSQUE a disparu, et avec lui **le seul chemin visible vers
+l'ouverture des boosters**. Il restait le menu accordéon, au milieu de treize
+entrées : c'est-à-dire nulle part. Exactement ce qui était arrivé à la boutique,
+pour la même raison, deux sessions plus tôt.
+
+Il a maintenant sa tuile sur l'accueil, au rail de gauche, avec la pastille du
+nombre qui attend — un sachet non ouvert ne se rappelle à personne.
+
+### La barre du haut
+
+Elle portait cinq choses : la flèche, l'avatar avec le pseudo et le club, deux
+jetons de monnaie, le menu. Sur 360 px, elles se disputaient la place — pseudo
+tronqué, club réduit à « Lausanne … » — et **aucune ne disait où l'on est**.
+
+Elle porte maintenant : une flèche, le **nom de l'écran**, le menu.
+
+Le pseudo et le club vivent sur le profil, qui est fait pour eux. Les soldes
+s'affichent là où ils décident de quelque chose : la boutique, le kiosque, le
+carnet. **Le menu est resté** — il n'était pas nommé dans la demande, et le
+retirer aurait une conséquence qui dépasse l'apparence : il n'est monté que par
+cette barre, donc il disparaîtrait de dix-sept écrans et l'accueil deviendrait
+le seul chemin vers quoi que ce soit. C'est peut-être ce qu'il faut faire, mais
+c'est une décision de navigation, et elle tient en une ligne le jour venu.
+
+**Deux restes sont partis avec les jetons** : un appel à `/api/me/state` à
+chaque chargement de page, uniquement pour remplir des éléments qui n'existaient
+plus, et `TBF_BARRE.bourse()` avec ses deux appelants. Les deux étaient protégés
+par des `if` : rien ne cassait, et c'est ce qui rend ce genre de reste
+dangereux — il ne se signale pas.
+
+### Les trois écrans avaient trois ossatures
+
+| | Fanzzy (avant) | Deck (avant) |
+|---|---|---|
+| en haut | « FANZZY / collection » | les onglets |
+| puis | les onglets | « MON DECK », barre dorée |
+| puis | « LE CLASSEUR », autre style | le contenu |
+
+Passer de l'un à l'autre donnait l'impression de changer d'application — ce
+qu'on cherchait précisément à éviter en leur donnant la même barre d'onglets.
+
+**L'ordre est désormais le même partout** : onglets, titre d'écran à barre
+dorée, contenu. Et « FANZZY / collection » disparaît : la barre du haut le dit
+déjà. « Mon Fanzzy » a gagné un titre au passage — sans lui, l'écran commençait
+par une carte, et l'on ne savait pas si l'onglet avait répondu.
+
+### La carte en grand ne tenait pas dans l'écran
+
+Le dessin occupait `aspect-ratio: 63/80` pleine largeur, soit près de six cents
+pixels de haut. Avec le texte, les chiffres et le bouton, il fallait faire
+défiler — **sur l'écran même où l'on vient décider**, et le bouton d'ajout était
+en bas.
+
+Le panneau est maintenant une colonne : en-tête fixe, corps qui se réduit. Le
+dessin garde la proportion d'une carte mais **plafonnée** en `dvh` : grand quand
+il y a la place, replié quand il n'y en a pas. Mesuré : 638 px de panneau sur
+780 d'écran, sans défilement, avec 359 px de dessin.
+
+### Un contrôle qui empêchait de réparer
+
+`deck:ui` affirmait « le dessin occupe un cadre au format d'une carte » —
+c'est-à-dire `aspect-ratio: 63/80`, **un détail de mise en page et non
+l'exigence**. Il rougissait quand on corrigeait le défaut, ce qui est la
+meilleure façon d'apprendre à contourner un contrôle.
+
+Il est remplacé par deux, chacun là où il peut se mesurer : sous jsdom, ce que
+la feuille **déclare** (une colonne, un plafond en `dvh`, une image en
+`contain`) ; dans le tour, en vrai navigateur, ce qui compte — le panneau tient,
+il ne défile pas, le bouton reste sous les yeux, et le dessin reste regardable.
+
+**jsdom ne met rien en page.** Une suite qui y tourne ne peut jamais dire si
+quelque chose dépasse : elle ne peut parler que d'intentions. C'est pourquoi le
+tour existe.
 
 ---
 

@@ -397,6 +397,12 @@ body{
   box-shadow:0 0 10px rgba(245,195,59,.45);
 }
 /* Le sous-titre d'un écran : plus petit que tout le reste, et il le reste. */
+/* Posé sous une barre d'onglets, il n'a plus besoin de sa marge du haut :
+   elle servait à l'écarter du bord de l'écran, et les onglets le font déjà.
+   Sans cette règle, chaque page rattrapait l'écart à sa façon — c'est-à-dire
+   différemment. */
+.nav + * .tbf-titre,.tabs + * .tbf-titre,.nav + .top .tbf-titre{margin-top:10px}
+
 .tbf-titre small{
   display:block;font-family:var(--ui);font-size:11px;letter-spacing:.06em;
   text-transform:none;opacity:.5;margin-top:5px;font-weight:400;
@@ -519,6 +525,14 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
 /* Sous quatre cents pixels, la ligne du club s'efface. Un nom de club coupé
    après trois lettres n'informe personne et occupe la place du pseudo. */
 @media (max-width:400px){ .tbf-moi small{display:none} }
+
+/* Le nom de l'écran. Poussé à droite, il pousse le menu au bord et devient
+   le centre de gravité de la barre — au lieu d'être un élément de plus dans
+   une file de cinq qui se disputaient trois cent soixante pixels. */
+.tbf-ou{margin-left:auto;font-family:var(--banner);letter-spacing:.16em;
+  text-transform:uppercase;font-size:clamp(13px,3.9vw,16px);opacity:.82;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
+  padding-right:2px}
 
 .tbf-bourse{display:flex;gap:6px;margin-left:auto;align-items:center}
 .tbf-jeton{
