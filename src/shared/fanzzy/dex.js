@@ -238,34 +238,65 @@ const DEX = [
   { id:'X5', nom:'La Nuit du 8e', type:'pyro', set:'GD', stage:1, rar:'legendaire',
     mods:{ perfectBonus:1.45, tempoWindow:1.2, mashBonus:1.08 }, cri:{ label:'PROLONGATIONS', gest:'relance', power:90 } },
   /**
-   * LE GAMIN DE DEVANT — le premier Fanzzy à avoir une vraie histoire.
+   * LE FAUX DÉPART — celui qui lance trop tôt.
    *
-   * Onze ans, premier rang, mains crispées sur la barrière, à hurler contre
-   * des types trois fois plus grands que lui. Il ne connaît pas encore tous
-   * les chants, mais il ne s'arrête jamais.
+   * ## Pourquoi ce personnage a changé d'identité
    *
-   * Ses modificateurs racontent exactement ça : sa colère rend ses gestes
-   * parfaits plus percutants que ceux de n'importe qui, mais il n'a pas le
-   * coffre pour tenir la distance. C'est un Fanzzy de coups d'éclat, pas de
-   * régularité — et sa lignée le fait grandir avec la tribune.
+   * `G1` était « Le Gamin de Devant » : onze ans, premier rang, mains sur la
+   * barrière, il ne connaissait pas encore tous les chants mais il ne
+   * s'arrêtait jamais. Sa lignée le faisait grandir jusqu'à devenir capo.
+   *
+   * C'était **Le Petit Teigneux** (`TR1`), écrit une seconde fois. Onze ans,
+   * premier rang, la voix avant les mots, et une lignée qui vieillit jusqu'au
+   * bout du virage. Deux noms, deux histoires, deux cris — et un seul
+   * personnage. Au point que le troisième âge de TR1 finit en gueulant « sur
+   * un gamin de onze ans qui connaît déjà les chants », qui était très
+   * exactement G1.
+   *
+   * Dans un jeu de collection, c'est la faute la plus chère possible : une
+   * carte de moins à trouver, et un joueur qui se demande s'il a mal vu.
+   *
+   * **L'identifiant ne bouge pas.** Les possessions, les decks et les tenues
+   * référencent `G1`, `G2`, `G3` : les renommer confisquerait la carte à ceux
+   * qui l'ont déjà. On change qui il est, pas où il est rangé.
+   *
+   * ## Qui il est maintenant
+   *
+   * Ses modificateurs n'ont pas bougé d'un chiffre, et ils dictaient déjà le
+   * personnage — il suffisait de les lire. Un `perfectBonus` énorme, un
+   * `breathBonus` sous la barre : quelqu'un dont le geste juste vaut plus que
+   * celui de n'importe qui, et qui n'a aucun coffre pour tenir la distance.
+   * **Des coups d'éclat, pas de la régularité.**
+   *
+   * C'est celui qui lance un chant trois secondes trop tôt, tout seul, dans le
+   * silence. Neuf fois sur dix personne ne suit et il se rassoit. La dixième,
+   * la tribune part avec lui, et c'est ce soir-là qu'on raconte.
+   *
+   * Sa lignée est donc un apprentissage de **l'attente** — et le catalogue le
+   * disait déjà sans que personne ne l'entende : au troisième âge, ses bonus de
+   * vitesse disparaissent au profit d'une fenêtre de tempo à 1,6 et d'une
+   * cadence ralentie de soixante millisecondes. Il ne va pas plus vite en
+   * vieillissant. Il laisse plus de silence, et tout le monde l'attend.
    */
-  { id:'G1', nom:'Le Gamin de Devant', type:'voix', set:'TR', stage:1, rar:'commune', evo:'G2',
-    histoire:'Onze ans, premier rang, mains sur la barrière. Il ne connaît pas encore '
-      + 'tous les chants, mais il ne s\u2019arrête jamais.',
+  { id:'G1', nom:'Le Faux Départ', type:'voix', set:'TR', stage:1, rar:'commune', evo:'G2',
+    histoire:'Il lance le chant trois secondes trop tôt, tout seul, et sa voix retombe '
+      + 'dans le silence. Une fois sur dix la tribune part avec lui, et c’est ce '
+      + 'soir-là qu’on raconte.',
     mods:{ perfectBonus:1.35, breathBonus:0.85, tempoWindow:1.1 },
-    cri:{ label:'CRIS DE GOSSE', gest:'tempo', power:58 } },
+    cri:{ label:'TROP TÔT', gest:'tempo', power:58 } },
 
-  { id:'G2', nom:'Le Gamin du Virage', type:'voix', set:'TR', stage:2, rar:'rare', evo:'G3',
-    histoire:'Il a grandi de dix centimètres et appris tous les chants. On lui laisse '
-      + 'le mégaphone quand le capo s\u2019enroue.',
+  { id:'G2', nom:'Le Bon Moment', type:'voix', set:'TR', stage:2, rar:'rare', evo:'G3',
+    histoire:'Il a appris à compter jusqu’à trois avant d’ouvrir la bouche. '
+      + 'Il lance deux fois moins souvent, et on le suit presque toujours.',
     mods:{ perfectBonus:1.45, breathBonus:0.92, tempoWindow:1.3 },
-    cri:{ label:'TOUTE LA JOURNÉE', gest:'tempo', power:70 } },
+    cri:{ label:'LÀ, C’EST LÀ', gest:'tempo', power:70 } },
 
-  { id:'G3', nom:'Le Gosse est Capo', type:'voix', set:'TR', stage:3, rar:'epique',
-    histoire:'Vingt ans plus tard, il est dos au terrain, face à sa tribune. '
-      + 'Il n\u2019a jamais raté un match depuis.',
+  { id:'G3', nom:'Le Silence d’Avant', type:'voix', set:'TR', stage:3, rar:'epique',
+    histoire:'Il ne lance plus rien : il lève la main, et deux mille personnes se '
+      + 'taisent en même temps. Ce silence-là dure ce qu’il veut, et c’est '
+      + 'devenu le plus beau moment du match.',
     mods:{ perfectBonus:1.5, tempoWindow:1.6, tempoInterval:60 },
-    cri:{ label:'CELUI QUI N\u2019A JAMAIS LÂCHÉ', gest:'tempo', power:84 } },
+    cri:{ label:'QUAND JE LÈVE LA MAIN', gest:'tempo', power:84 } },
 
   { id:'X6', nom:'Section Cendrée', type:'fide', set:'TR', stage:1, rar:'commune',
     mods:{ holdBonus:1.05, breathBonus:1.04 }, cri:{ label:'FIDÈLES', gest:'hold', power:48 } },

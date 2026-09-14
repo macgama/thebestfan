@@ -200,7 +200,17 @@ console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
      Elles ne sont pas invisibles pour autant : sans adresse, la fiche tombe sur
      le rendu procédural. Mais une légendaire en silhouette géométrique n'est
      pas une légendaire, et c'est bien une dette. */
-  const DETTE = 167;
+  /* 167 → 170, **relevé en connaissance de cause**, ce qui est le seul motif
+     admissible. La lignée G1/G2/G3 a changé d'identité : elle s'appelait « Le
+     Gamin de Devant » et c'était Le Petit Teigneux (TR1) écrit une seconde
+     fois — même âge, même place, même parka. Elle est devenue « Le Faux
+     Départ », et ses trois dessins, qui montraient l'autre gamin, sont partis
+     dans `art/_doublons/`.
+
+     Trois cartes de plus sans dessin, donc, et c'est un progrès : une
+     silhouette dit « pas encore dessiné », un visage emprunté dit une chose
+     fausse. */
+  const DETTE = 170;
   check(`et ${DEX.length - avec} cartes restent sans dessin d’aucune sorte`,
     DEX.length - avec <= DETTE
     || (console.log('        ', DEX.filter((f) => !adresse(f.id))

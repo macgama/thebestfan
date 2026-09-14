@@ -219,20 +219,41 @@ async function grilleEtats(p) {
  * montrait deux centimètres plus bas. Le pire genre de faux : il se contredit
  * dans le même écran.
  *
- * L'ordre compte. Le buste est un cadrage fait pour une vignette ; le repos des
- * états est un plein-pied. On prend ce qui existe, en préférant ce qui est
- * fait pour cette taille-là.
+ * **L'ordre compte, et c'est le portrait qui gagne.** Chaque âge de la seconde
+ * arborescence a le sien — `e2/base/portrait.png` — produit à chaque passage de
+ * la chaîne, exactement comme `TR1-buste.png` l'est pour un premier âge. Le
+ * jeu s'en sert déjà pour l'avatar et les vignettes de deck.
+ *
+ * Un premier jet s'arrêtait au repos, `neutre.png`, qui est un plein-pied : la
+ * lignée montrait un visage en gros plan à l'âge 1 et deux silhouettes entières
+ * aux âges 2 et 3. Trois cadrages pour trois âges du même personnage, ce qui se
+ * lit comme trois images empruntées ailleurs.
  */
+const chemin = (racine, stade, nom) =>
+  path.join(IMG, racine, `e${stade}`, 'base', `${nom}.png`);
+
 async function dessinDe(age, racine, stade, large = 128) {
-  return (await buste(age.id, large))
+  /* Le portrait de la seconde arborescence **avant** le buste de la première,
+     et c'est délibéré. Les deux font 320×320, mais elles ne cadrent pas pareil :
+     la première serre le visage, la seconde prend les épaules. Prendre le buste
+     pour l'âge 1 et les portraits pour les âges 2 et 3 donnait trois cadrages
+     différents pour trois âges du même personnage — ce qui se lit comme trois
+     images empruntées ailleurs.
+
+     Une lignée se lit d'un seul rang : ses âges viennent de la même chaîne, ou
+     d'aucune. C'est la même règle que le cadrage commun des douze états, d'un
+     cran au-dessus. */
+  return (await vignette(chemin(racine, stade, 'portrait'), large))
+    ?? (await buste(age.id, large))
     ?? (await plein(age.id, large))
-    ?? (await vignette(path.join(IMG, racine, `e${stade}`, 'base', 'neutre.png'), large));
+    ?? (await vignette(chemin(racine, stade, 'neutre'), large));
 }
 
 /** Ce même dessin existe-t-il, sans le produire ? Pour les comptes. */
 const aUnDessin = (age, racine, stade) =>
   existsSync(path.join(IMG, `${age.id}.png`))
-  || existsSync(path.join(IMG, racine, `e${stade}`, 'base', 'neutre.png'));
+  || existsSync(chemin(racine, stade, 'neutre'))
+  || existsSync(chemin(racine, stade, 'portrait'));
 
 /** La lignée en images : les âges, avec ce que chacun coûte. */
 async function bandeAges(p) {
@@ -378,6 +399,23 @@ nav.familles a{display:inline-flex;align-items:center;gap:7px;text-decoration:no
 nav.familles svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;
   stroke-linecap:round;stroke-linejoin:round}
 
+/* Le filtre par série. Il ne ressemble pas à la rangée du dessus, exprès :
+   celle-ci emmène quelque part, celui-là retire ce qu'on ne veut pas voir. Des
+   pastilles rondes contre des plaques carrées, et une étiquette devant chacune.
+   Deux gestes différents ne doivent pas porter la même forme. */
+.filtres{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 22px}
+.filtres .quoi{font-family:var(--banner);font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;opacity:.4;margin-right:4px}
+.filtres button{font:inherit;font-size:11.5px;color:inherit;cursor:pointer;
+  background:var(--pan);border:1px solid var(--trait);border-radius:6px;
+  padding:6px 11px;display:inline-flex;align-items:center;gap:7px;
+  border-left:3px solid var(--sc,var(--trait))}
+.filtres button b{font-weight:400;opacity:.4;font-variant-numeric:tabular-nums}
+.filtres button:hover{border-color:var(--sc,var(--craie))}
+.filtres button.on{background:var(--sc,var(--craie));color:#0B0E13}
+.filtres button.on b{opacity:.55}
+.vide-filtre{opacity:.5;padding:40px 0;text-align:center}
+
 .famille{margin:0 0 46px}
 .famille h2{display:flex;align-items:center;gap:10px;font-family:var(--banner);
   font-size:19px;letter-spacing:.07em;
@@ -472,6 +510,26 @@ const corps = `<div class="enveloppe">
 <a href="#tenues"><svg viewBox="0 0 24 24"><path d="M8 4l4 2 4-2 4 3-3 3v10H7V10L4 7z"/></svg>Les tenues <b style="opacity:.45;font-weight:400">${tenues.length}</b></a>
 </nav>
 
+<!-- Deux rangées, deux gestes, et il faut que ça se voie : celle du dessus
+     **emmène** quelque part, celle-ci **retire** ce qu'on ne veut pas voir.
+     Sans les deux étiquettes, on clique sur une série en attendant de sauter à
+     un endroit, et la page semble avoir perdu la moitié de son contenu.
+
+     Le catalogue se range par famille — c'est ainsi que le jeu l'emploie — mais
+     il se collectionne par série : un booster tire dans une seule. Les deux
+     lectures sont légitimes, et aucune n'est le rangement de l'autre. D'où un
+     filtre plutôt qu'un second classement. -->
+<div class="filtres" id="filtres">
+  <span class="quoi">Série</span>
+  <button class="on" data-serie="" aria-pressed="true">Toutes<b>${PERSOS.length}</b></button>
+  ${SETS.filter((s) => PERSOS.some((p) => p.set === s.id)).map((s) => {
+    const n = PERSOS.filter((p) => p.set === s.id).length;
+    return `<button data-serie="${esc(s.id)}" aria-pressed="false"
+      style="--sc:${esc(s.c1)}">${esc(s.nom)}<b>${n}</b></button>`;
+  }).join('')}
+</div>
+<p class="vide-filtre" id="vide" hidden>Aucun personnage dans cette série.</p>
+
 ${sections.join('\n')}
 
 ${blocTenues}
@@ -484,7 +542,67 @@ ${blocTenues}
   douze situations.<br>
   Généré le ${new Date().toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' })}.
 </footer>
-</div>`;
+</div>
+
+<script>
+/* Le filtre par série.
+ *
+ * Tout le travail est déjà fait à la génération : chaque fiche porte son
+ * \`data-serie\`. Il ne reste qu'à cacher, et à tenir les comptes à jour — une
+ * famille qui annonce « 40 personnages » alors qu'on n'en voit que trois fait
+ * douter du filtre plus que de la page.
+ *
+ * Sans JavaScript, tout reste affiché : c'est le bon repli pour un document de
+ * référence. On ne cache rien qu'on ne sache remontrer.
+ */
+(() => {
+  const barre = document.getElementById('filtres');
+  const vide = document.getElementById('vide');
+  const fiches = [...document.querySelectorAll('.perso')];
+  const familles = [...document.querySelectorAll('.famille')];
+  const tenues = document.getElementById('tenues');
+
+  barre.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-serie]');
+    if (!b) return;
+    const serie = b.dataset.serie;
+
+    for (const x of barre.querySelectorAll('button')) {
+      const on = x === b;
+      x.classList.toggle('on', on);
+      x.setAttribute('aria-pressed', String(on));
+    }
+
+    for (const f of fiches) f.hidden = Boolean(serie) && f.dataset.serie !== serie;
+
+    /* Une famille sans un seul personnage visible s'efface : laisser son titre
+       et sa grille vide donnerait six sections mortes sous la seule qui compte.
+       Et son compte dit ce qu'on voit, pas ce que le catalogue contient. */
+    let total = 0;
+    for (const fam of familles) {
+      if (fam === tenues) continue;
+      const vus = [...fam.querySelectorAll('.perso')].filter((x) => !x.hidden);
+      fam.hidden = vus.length === 0;
+      total += vus.length;
+      const dit = fam.querySelector('h2 span');
+      if (dit) {
+        if (!dit.dataset.tout) dit.dataset.tout = dit.textContent;
+        const dessines = vus.filter((x) => x.dataset.dessine === 'oui').length;
+        dit.textContent = serie
+          ? vus.length + ' personnage' + (vus.length > 1 ? 's' : '')
+            + ' · ' + dessines + ' dessiné' + (dessines > 1 ? 's' : '')
+          : dit.dataset.tout;
+      }
+    }
+
+    /* Les tenues ne sont d'aucune série — elles se portent sur n'importe quel
+       Fanzzy. Les laisser sous un filtre de série les ferait passer pour les
+       tenues de cette série-là. */
+    if (tenues) tenues.hidden = Boolean(serie);
+    vide.hidden = total > 0;
+  });
+})();
+</script>`;
 
 /**
  * Deux formes, un seul contenu.
