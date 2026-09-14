@@ -60,22 +60,25 @@
    * côté. Ce n'est pas de la lisibilité, c'est du gâchis — on ne lit pas un
    * classement dans une bande de cinq cents pixels quand on en a mille.
    *
-   * Elle grandit donc avec l'écran, **jusqu'à 900 px**. Le plafond n'est pas de
-   * la timidité : au-delà, une ligne de texte dépasse la centaine de caractères
-   * et l'œil perd le début de la ligne suivante. Neuf cents pixels remplissent
-   * une tablette en portrait comme en paysage, et centrent proprement sur un
-   * écran de bureau.
+   * Elle remplit donc l'écran, **jusqu'à 900 px**. Le plafond n'est pas de la
+   * timidité : au-delà, une ligne de texte dépasse la centaine de caractères et
+   * l'œil perd le début de la ligne suivante. Neuf cents pixels remplissent une
+   * tablette en portrait comme en paysage, et centrent proprement sur un écran
+   * de bureau.
+   *
+   * **Sans palier.** Il y en a eu un, à sept cents pixels : en dessous, la
+   * colonne restait à 520. Une tablette de cinq cent soixante-dix-huit pixels
+   * tombait donc pile dans l'angle mort — trop large pour le téléphone, trop
+   * étroite pour le palier — et gardait trente pixels de noir de chaque côté
+   * pour rien. Un seuil qui découpe les écrans en deux familles se trompe
+   * toujours sur ceux du milieu ; `min()` n'a pas ce défaut.
    *
    * **Elle est la seule vérité sur ce point.** Chaque page portait la sienne —
    * 440, 460 ou 520 selon l'écran et le jour — ce qui faisait trois largeurs
    * différentes dans la même application, et rendait ce réglage-ci sans effet.
    * Une page qui écrit sa largeur en dur redevient une exception qu'il faudra
    * retrouver. */
-  --colonne:520px;
-}
-
-@media (min-width:700px){
-  :root{ --colonne:min(100vw, 900px); }
+  --colonne:min(100vw, 900px);
 }
 
 /* ------------------------------------------------------------- la rareté

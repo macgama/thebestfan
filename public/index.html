@@ -8,7 +8,18 @@
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
 <style>
-:root{--rail:clamp(58px,16vw,76px)}
+/* ## La largeur d'un rail
+ *
+ * Une part de **la colonne**, et non de la fenêtre. C'est la colonne qui porte
+ * les deux rails : les mesurer sur `vw` marchait tant que les deux se
+ * confondaient, et devenait faux dès que la colonne a cessé de remplir l'écran.
+ * Sur un écran de mille trois cents pixels, seize pour cent de la fenêtre font
+ * un rail de deux cents — dans une colonne qui en fait neuf cents.
+ *
+ * Le plafond est à **88 px**. Il a été à 104, posé au jugé : à l'écran les
+ * tuiles écrasaient le personnage et le jeu ressemblait à une télécommande.
+ * Une tuile d'accueil est un point de départ, pas la chose qu'on regarde. */
+:root{--rail:clamp(58px,calc(var(--colonne) * .155),88px)}
 /* L'accueil est un écran **plein cadre** : ses deux rails touchent les bords
    par construction, et la scène occupe tout ce qui reste. La gouttière commune
    de `ui.css` — quatorze pixels de chaque côté — y rétrécissait la grille au
@@ -383,25 +394,31 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
  * On élargit donc le rail et on grossit ce qu'il porte. Le `16vw` du téléphone
  * devient une largeur fixe : à mille pixels d'écran, seize pour cent feraient
  * un rail de cent soixante, ce qui est un panneau, pas une colonne de boutons. */
+/* ## Ce qui reste à régler quand l'écran est large
+ *
+ * Presque rien, et c'est voulu. Le rail suit la colonne par son `clamp`, et les
+ * tuiles suivent le rail : icône et libellé sont déjà en `clamp` dans `ui.css`,
+ * ils atteignent leur taille maximale et s'y arrêtent. C'est la bonne
+ * proportion — une tuile d'accueil est un point de départ, pas la chose qu'on
+ * regarde.
+ *
+ * Le premier jet forçait ici un rail de 104 px, des icônes de 30 et des
+ * libellés de 12. À l'écran, les tuiles écrasaient le personnage. Elles sont
+ * revenues à ce que les `clamp` communs donnent ; il ne reste que la barre du
+ * haut, un peu plus épaisse parce qu'elle porte des nombres qu'on lit de loin.
+ */
 @media (min-width:700px){
-  :root{ --rail:104px }
-  .haut{ --haut-h:52px }
-  .jeton{ font-size:19px }
-  .jeton svg{ width:26px;height:26px }
-  .rail{ gap:8px }
-  /* Le coin inférieur gauche reste court : c'est la forme de la tuile dans tout
-     le jeu, et l'arrondir ici en ferait un autre objet. */
-  .rail .tbf-case{ --epaisseur:5px;border-radius:18px 18px 18px 6px;gap:7px }
-  .rail .tbf-case svg{ width:30px;height:30px }
-  .rail .lib{ font-size:12px }
+  .haut{ --haut-h:48px }
+  .jeton{ font-size:18px }
+  .jeton svg{ width:24px;height:24px }
+  .rail{ gap:6px }
   /* Le personnage a plus de place : il la prend. Sans ça, la colonne du milieu
      s'élargit et lui reste à sa taille, seul au centre d'un vide. */
   .pile{ max-width:min(100%,420px) }
-  /* Et on lui rend les pixels que la barre du haut vient de prendre. Elle passe
-     de quarante-quatre à cinquante-deux ; le personnage est mesuré en part de
-     la hauteur d'écran, et il les perdait tous. La réserve du haut ne bouge
-     pas — c'est l'amplitude du saut, elle ne dépend pas de l'écran — donc c'est
-     la marge du bas qui cède. */
+  /* Et on lui rend les pixels que la barre du haut vient de prendre : il est
+     mesuré en part de la hauteur d'écran, et il les perdait tous. La réserve du
+     haut ne bouge pas — c'est l'amplitude du saut, elle ne dépend pas de
+     l'écran — donc c'est la marge du bas qui cède. */
   .scene{ padding-bottom:2px }
   .hub{ gap:6px }
 }
