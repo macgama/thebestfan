@@ -203,12 +203,43 @@ async function grilleEtats(p) {
   return `<div class="skins">${blocs.join('')}</div>`;
 }
 
+/**
+ * Le dessin d'un âge — **les deux rangements, dans l'ordre**.
+ *
+ * Le jeu a deux arborescences d'images, et elles ne se nomment pas pareil :
+ *
+ *   `TR1.png`, `TR1-buste.png`       le plein-pied, rangé par identifiant d'âge
+ *   `TR1/e2/base/neutre.png`         les douze états, rangés par **lignée** et
+ *                                    numéro d'évolution
+ *
+ * Un âge supérieur n'a jamais de plein-pied à son nom : `TR1B.png` n'existe
+ * pas, et n'a aucune raison d'exister — son repos vit dans `TR1/e2/`. La page
+ * ne regardait que le premier rangement, si bien qu'elle affichait
+ * « pas dessiné » pour Le Teigneux **au-dessus de ses douze états**, qu'elle
+ * montrait deux centimètres plus bas. Le pire genre de faux : il se contredit
+ * dans le même écran.
+ *
+ * L'ordre compte. Le buste est un cadrage fait pour une vignette ; le repos des
+ * états est un plein-pied. On prend ce qui existe, en préférant ce qui est
+ * fait pour cette taille-là.
+ */
+async function dessinDe(age, racine, stade, large = 128) {
+  return (await buste(age.id, large))
+    ?? (await plein(age.id, large))
+    ?? (await vignette(path.join(IMG, racine, `e${stade}`, 'base', 'neutre.png'), large));
+}
+
+/** Ce même dessin existe-t-il, sans le produire ? Pour les comptes. */
+const aUnDessin = (age, racine, stade) =>
+  existsSync(path.join(IMG, `${age.id}.png`))
+  || existsSync(path.join(IMG, racine, `e${stade}`, 'base', 'neutre.png'));
+
 /** La lignée en images : les âges, avec ce que chacun coûte. */
 async function bandeAges(p) {
   const ages = lignee(p);
   const cases = [];
-  for (const a of ages) {
-    const src = (await buste(a.id)) ?? (await plein(a.id, 128));
+  for (const [i, a] of ages.entries()) {
+    const src = await dessinDe(a, p.id, i + 1);
     cases.push(`<div class="age${src ? '' : ' vide'}">
       ${src ? `<img src="${src}" alt="${esc(a.nom)}" loading="lazy">`
         : '<div class="apas">pas dessiné</div>'}
@@ -226,7 +257,7 @@ async function bandeAges(p) {
 async function fiche(p) {
   const s = SET_PAR_ID.get(p.set);
   const ages = lignee(p);
-  const dessines = ages.filter((a) => existsSync(path.join(IMG, `${a.id}.png`))).length;
+  const dessines = ages.filter((a, i) => aUnDessin(a, p.id, i + 1)).length;
   return `<article class="perso" id="f-${esc(p.id)}" data-serie="${esc(p.set)}"
       data-dessine="${dessines ? 'oui' : 'non'}">
     <header>
