@@ -1646,8 +1646,10 @@ Toucher sa monnaie est le geste que tout joueur essaie en premier. Les deux
 jetons de la barre — écharpes et boosters — étaient des `div` inertes qui
 affichaient un nombre ; ce sont maintenant des liens vers la boutique, avec un
 `+` discret. **Deux barres à traiter** : l'accueil a la sienne, antérieure à
-`nav.js` et jamais remplacée, avec son propre balisage. Les fusionner serait le
-bon geste ; ce n'est pas ce tour-ci.
+`nav.js` et jamais remplacée, avec son propre balisage. *(Le menu des deux a
+depuis été fusionné dans `public/menu.js` — voir 4 tricies quater. Les barres
+elles-mêmes restent distinctes, et c'est voulu : l'accueil est un écran de jeu
+plein cadre, les autres pages ont un titre et une flèche de retour.)*
 
 ---
 
@@ -3526,6 +3528,277 @@ Trente passes vertes d'affilée après correction.
 
 ---
 
+## 4 tricies quater. Un seul menu, et les saisons qui s'enregistrent enfin
+
+Quatre défauts signalés sur des captures, et tous les quatre avaient la même
+forme : **rien ne cassait**. Deux menus s'ouvraient, un bouton se cliquait, un
+formulaire se refermait. C'est la famille de pannes qu'aucune suite n'attrape
+tant qu'on ne lui demande pas de comparer deux choses entre elles.
+
+### Il y avait deux menus, et ils avaient divergé de six entrées
+
+`nav.js` montait le menu sur les dix-huit pages de contenu : onze destinations
+en trois rubriques, l'accueil en tête, la déconnexion en dernier. L'accueil, qui
+ne charge pas `nav.js` — ses deux rails portent sa navigation — s'était écrit
+**le sien**, à la main, dans son HTML.
+
+| | menu commun | menu de l'accueil |
+|---|---|---|
+| destinations | 11 | 5 |
+| rubriques | JOUER · MA COLLECTION · LE FOOTBALL | aucune |
+| absents | — | Virage, duel, boutique, boosters, carnet, amis |
+| déconnexion | sans confirmation | avec confirmation |
+
+Un joueur qui ouvrait le menu depuis l'accueil et le rouvrait depuis le
+classeur voyait deux jeux différents. C'est la **seconde vérité**, pour la
+cinquième fois de ce projet, et cette fois elle portait aussi une incohérence de
+sécurité : la déconnexion demandait d'un côté et pas de l'autre. Une
+confirmation qui n'apparaît que sur certains écrans est pire qu'aucune — on
+apprend que le jeu ne demande pas, et on cesse de lire le jour où il demande.
+
+`public/menu.js` porte désormais la liste, les icônes, la construction du
+tiroir, la confirmation de sortie, l'entrée d'administration et la pastille du
+direct. `nav.js` l'appelle, l'accueil l'appelle, **et l'administration aussi** —
+elle n'avait qu'un lien « retour au jeu », et un administrateur qui voulait le
+kiosque devait repasser par l'accueil.
+
+### L'entrée ADMIN était partie sans rien dire
+
+```js
+a.innerHTML = '…ADMIN';
+nav.appendChild(a);        // `nav` n'existe plus depuis la barre du bas
+```
+
+`nav` était l'élément de la barre du bas, supprimée deux tours plus tôt. La
+référence levait une `ReferenceError`, que le `try { … } catch { /* module
+absent */ }` du bloc avalait — et **plus aucun administrateur ne voyait
+l'entrée**, sans erreur en console, sans trace, sans test rouge.
+
+Un `catch` muet autour d'un ajout facultatif est le meilleur endroit du monde
+pour cacher une panne. Celui-ci a survécu à toutes les relectures parce qu'il
+ressemblait à une précaution.
+
+Au passage, l'accueil décidait de cette entrée sur `user.role === 'admin'`
+pendant que les autres pages interrogeaient `estAdmin` côté serveur : deux
+réponses possibles à la même question. Il n'en reste que la seconde.
+
+### « Impossible. » — les saisons ne s'enregistraient pas
+
+Le formulaire de saison marchait, la confirmation s'affichait, et cliquer
+« Enregistrer » donnait une boîte d'alerte disant `Impossible.`
+
+```js
+const api = async (p, body, method) => { … }          // trois arguments
+
+api(`/saison/${s.id}`, { method: 'PATCH', body: corps });   // deux…
+```
+
+Le deuxième argument est **le corps**. Ces quatre appels-ci y passaient un objet
+d'options : le serveur recevait un `POST` dont le corps était
+`{ method: 'PATCH', body: {…} }`, refusait sans code, et l'écran affichait le
+seul message qui ne dit rien. Aucune saison n'a jamais pu être modifiée, lancée
+ni supprimée depuis cet écran. Les seize autres appels de la page avaient la
+bonne forme, ce qui est exactement ce qui rend la faute invisible à la
+relecture.
+
+`admin-smoke` éprouvait les routes — elles étaient bonnes. `admin-ui-smoke`
+prenait une capture du formulaire — il s'affichait très bien. **Personne ne
+cliquait sur Enregistrer.** Le contrôle le fait maintenant, et il relit la
+base : c'est le seul endroit où « le formulaire s'est refermé » et « c'est
+enregistré » ne se ressemblent pas.
+
+### Et le serveur lançait une saison sur une requête fautive
+
+En cherchant pourquoi la mutation du bouton « lancer » ne faisait pas tomber le
+test, la vraie raison est apparue côté serveur :
+
+```js
+lancerSaison(…, req.body?.lancer !== false, …)
+```
+
+Un corps que la route ne comprend pas — champ absent, mal nommé, mal emballé —
+vaut donc **lance**. C'est le pire défaut imaginable pour le geste qui ouvre du
+contenu à tous les joueurs au même instant, et l'écran cassé le démontrait : il
+était incapable de refermer une saison et parfaitement capable d'en ouvrir une.
+`lancer` doit maintenant être un booléen, sinon `admin.error.lancer_manquant`.
+
+### « On ne sait pas si les modifications ont été prises en compte »
+
+C'était vrai partout, pas seulement sur les saisons. Chaque écrit se faisait en
+silence : le formulaire se refermait, la liste se redessinait, et rien ne
+distinguait un enregistrement réussi d'un formulaire simplement fermé.
+
+Les réglages avaient le cas le plus net. Ils s'enregistrent **champ par champ**,
+sans bouton — délibérément, parce qu'un bouton unique obligerait à deviner
+lequel des vingt-six champs le serveur a refusé. Leur seul accusé de réception
+vivait dans un bandeau collé en pied de liste, sous vingt-six lignes : on
+touchait un champ en haut de l'écran, et rien ne bougeait là où on regardait.
+
+Ce qui manquait n'était donc pas le bouton, mais **la réponse**. Un reçu se pose
+maintenant par-dessus la page, en haut à droite, sur chaque écriture des sept
+onglets, et le refus y passe en rouge avec sa raison en français. Il n'y en a
+jamais qu'un : deux messages empilés se lisent comme une erreur.
+
+### Ce qui garde tout ça
+
+`scripts/menu-smoke.mjs` ouvre le menu **en cliquant le bouton** sur l'accueil,
+sur une page de contenu et sur l'administration, pour un compte administrateur
+et pour un compte ordinaire, puis compare les listes obtenues. Il ne relit pas
+`menu.js` pour se donner raison : la liste des seize destinations attendues est
+écrite dans le contrôle. Quatre mutations, quatre rouges — l'entrée ADMIN
+retirée, l'accueil qui s'écarte, la confirmation de sortie ôtée, la page
+courante qui ne se marque plus.
+
+`verif-pages` refuse en plus une page sans `menu.js` et une page qui écrit son
+propre tiroir. `admin-ui-smoke` joue le cycle complet d'une saison — brouillon,
+modification, lancement, retour en brouillon, suppression — et vérifie après le
+lancement que le jeu n'ouvre plus que la série cochée.
+
+Un détail attrapé en chemin : les règles d'onglets de l'administration visaient
+l'élément `nav`. Le tiroir commun est lui aussi un `<nav>`, et il héritait
+`display:flex`. C'est le piège des classes sans préfixe, sur un nom de balise.
+
+### Dix-sept lignes, et la hauteur qui ment
+
+Le menu en portait seize et en porte dix-sept, puisque l'entrée ADMIN y arrive
+enfin. Mesuré : **879 px de contenu dans 808 px de place** — « Se déconnecter »
+tombait sous le bord, c'est-à-dire précisément la ligne qu'on vient chercher.
+Un écart qu'on ne voit pas tant qu'on ne le mesure pas, parce que le tiroir
+défile : il a l'air entier.
+
+Trois pixels repris ligne par ligne — interligne à 1 px, lignes à 10 px de
+hauteur, rubriques resserrées — et 816 px tiennent dans 818. Plus de
+défilement sur un écran de neuf cents pixels.
+
+Et `100vh` a été remplacé par `100dvh`, avec `vh` gardé au-dessus en repli.
+`100vh` vaut la **plus grande** hauteur possible sur un téléphone, barre
+d'adresse repliée : tant qu'elle est dépliée, un menu calculé dessus dépasse
+exactement de la hauteur de cette barre. Le contrôle ne l'aurait jamais vu — un
+navigateur sans interface mobile n'a pas de barre d'adresse qui bouge.
+
+Et un affichage trompeur, corrigé : une saison lancée qui n'ouvre aucune série
+laisse le jeu **toutes séries ouvertes** — c'est le cas de la saison 1 reprise —
+mais sa carte affichait « Séries — », ce qui se lit comme « plus rien ». L'écran
+dit maintenant, en haut, les séries ouvertes en ce moment.
+
+---
+
+## 4 tricies quinquies. Le classeur se tait sur ce qui n'existe pas encore
+
+### Une promesse qu'on ne peut pas tenir n'est pas un but
+
+Le classeur montrait **tout le catalogue publié** : deux cent quarante-sept
+silhouettes grises, dont une bonne part appartient à des séries qu'aucune saison
+n'a ouvertes. Un classeur est une promesse — « voilà ce qu'il y a à trouver » —
+et une promesse hors de portée ne donne pas un objectif, elle donne un mur.
+
+Elle coûtait aussi la seule chose qu'une saison a à vendre : la **surprise**.
+Lancer LES VIP devant quelqu'un qui a déjà fait défiler leurs quinze silhouettes
+pendant trois semaines n'annonce rien.
+
+Les saisons étant additives, « la saison en cours et toutes celles d'avant » est
+exactement la liste des séries ouvertes, que le serveur calcule déjà. La page ne
+la recalcule pas — elle la lit.
+
+**Sauf ce qu'on possède.** Refermer une série cesse de distribuer ; ça n'efface
+pas les cartes de qui les a. Un filtre écrit trop vite casse ce cas en premier,
+et c'est celui qui transformerait une collection en trou. Les deux moitiés ont
+leur mutation et leur rouge.
+
+### La fiche montrait le contraire de la grille
+
+La grille affiche un Fanzzy qu'on n'a pas en silhouette grise, cadenassée.
+L'ouvrir le rendait à ses couleurs, avec ses trois âges, ses effets et ses
+tenues à fouiller case par case. Deux images contradictoires du même
+personnage, à un doigt l'une de l'autre — et la seconde livrait précisément ce
+que la première disait ne pas avoir.
+
+Elle reste éteinte : le même `grayscale(1)` que la grille, les rangées inertes,
+et la pastille du cri redevenue un simple texte — c'était le seul élément qui
+répondait encore, une carte éteinte qui pousse un cri quand on la touche.
+
+« Inerte » se mesure des deux côtés. `pointer-events:none` ferme la souris ;
+sans `disabled`, la tabulation traversait toujours une rangée de quinze boutons
+muets. Le premier jet n'avait que la moitié, et la suite l'a dit.
+
+Le panneau de détail décrivait « ÂGE À VENIR » d'un personnage qu'on ne possède
+à aucun âge. Il dit maintenant la seule chose qu'on veuille savoir devant une
+carte grise : dans quel booster elle se tire. Le nom de la série vient du
+serveur (`setNom`) — une table « TR → LA TRIBUNE » écrite dans la page aurait
+été la copie de trop.
+
+---
+
+## 4 tricies sexies. Le catalogue illustré, et cent trois cartes muettes
+
+### Ce que le dossier ne pouvait pas dire
+
+`dossier.html` dit les règles, les barèmes et les chiffres. Il ne montre pas une
+image, et c'est très bien : il se lit.
+
+Il restait l'autre question — **qu'est-ce qui est dessiné**. Six cent
+quarante-trois cartes, douze états par âge, trois âges par personnage, neuf
+tenues : cette comptabilité ne tient dans aucune tête, et elle n'existait nulle
+part. On savait « il manque des dessins ». On ne savait pas lesquels.
+
+`catalogue.html` — `npm run catalogue` — range le catalogue **par famille**,
+parce que c'est ainsi que le jeu l'emploie, et donne pour chaque personnage sa
+lignée en images, ses effets, son cri, et une grille dépliable de douze états
+sur trois âges. Les vignettes sont réduites à cent trente pixels et incrustées
+en `data:` : la page doit s'ouvrir seule, sur une machine qui n'a pas le dépôt,
+et une page qui pointe vers `/img/...` est vide partout ailleurs.
+
+Ce qu'elle a appris du premier coup :
+
+| | |
+|---|---|
+| personnages | 247 |
+| premiers âges dessinés | 158 |
+| à dessiner | 89 |
+| avec leurs douze états | **1** |
+| tenues dessinées | **1 sur 9** |
+
+Les trois nombres que le dossier annonçait à cet endroit — « 198 personnages,
+262 âges, 183 cartes » — étaient **écrits à la main**, dans un document dont
+l'en-tête promet qu'il ne peut pas mentir plus longtemps qu'une commande. Ils
+dataient du lot d'avant. Ils se comptent maintenant sur le disque.
+
+### Cent trois cartes portaient un effet que personne ne pouvait lire
+
+En confrontant la table des effets de la page à toutes les clés employées :
+`modsText`, dans `public/cartes.js`, ne nommait ni `parryResist` — **cent trois
+cartes** — ni `costPenalty` — dix-sept. Sur toutes, la fiche affichait la liste
+des effets **sans celui-là**.
+
+La faute est invisible par construction. La liste n'était pas vide, elle était
+incomplète, et une carte qui montre deux effets sur trois a exactement l'air
+d'une carte qui en a deux. Rien à l'écran ne manque, rien ne casse, aucune
+console ne parle. C'est la même famille que l'entrée ADMIN avalée par un
+`catch` : une absence qui ressemble à une présence.
+
+`catalogue:test` refuse désormais qu'une clé employée par une carte ou une
+pièce d'équipement reste sans phrase — et, dans l'autre sens, qu'une phrase
+décrive un effet que plus rien ne porte. Le contrôle ne ramasse que ces deux
+sources : les stades et les bonus de KOP portent les mêmes clés mais s'affichent
+ailleurs, avec leur propre texte, et les mêler ferait rougir le contrôle pour
+`pushMult`, que nulle carte ne porte. Un garde-fou qui se plaint de ce qui va
+bien est un garde-fou qu'on désactive.
+
+### Deux formes, un seul contenu
+
+`--nu` retire la coque HTML pour la publication en artefact, qui pose la sienne.
+Le fichier autonome la garde : sans `<!doctype>`, un navigateur rend la page en
+mode « quirks » et elle perd sa mise en page sans rien dire. Les deux formes
+viennent des mêmes chaînes — sinon l'une prend du retard, et ce serait toujours
+celle qu'on regarde le moins.
+
+Un accent grave dans un commentaire CSS a refermé le gabarit de chaîne au
+mauvais endroit pendant l'écriture. C'est la faute que `verif-pages` traque dans
+`public/` depuis qu'elle a cassé `nav.js` deux fois ; elle se produit aussi dans
+les scripts, où rien ne la guette — seule l'exécution l'a dite.
+
+---
+
 ## 5. Ce qui reste à faire
 
 Par ordre d'utilité.
@@ -3540,9 +3813,20 @@ Par ordre d'utilité.
    le compte à chaque passage, et son seuil est un cliquet : il ne monte que si
    on le décide.
 
+   **Le détail, dessin par dessin, est dans `catalogue.html`** — `npm run
+   catalogue`, publié en artefact. C'est là qu'on voit lesquels manquent, et
+   non plus seulement combien : quatre-vingt-neuf personnages sur deux cent
+   quarante-sept attendent leur premier âge.
+
    Reste ensuite, à plus long terme, à dessiner les âges **pour de bon** : voir
    un personnage vieillir est ce que le jeu promet, et le repli montre le bon
    personnage sans montrer son âge.
+
+   Et les **états** : douze par âge, et ils n'existent que pour **un seul**
+   personnage (TR1). Les deux cent quarante-six autres jouent leur image de
+   repos dans les douze situations — un but et une défaite leur donnent le même
+   visage. Même remarque pour les **tenues** : neuf existent dans le jeu, une
+   seule est dessinée.
 
 2. **Une mise en page pour écran large.** L'application est en colonne étroite
    centrée, pensée pour le téléphone. Sur un ordinateur, les deux tiers de
@@ -3616,6 +3900,46 @@ déduire ; ce serait la première chose que le fil affirme sans l'avoir vue.
 ---
 
 ## 6. Pièges connus
+
+**Un `catch` muet autour d'un ajout facultatif cache une panne pour de bon.**
+L'entrée ADMIN du menu se posait avec `nav.appendChild(a)`, sur une variable
+disparue avec la barre du bas. La `ReferenceError` tombait dans un
+`catch { /* module absent */ }`, et plus aucun administrateur n'a vu l'entrée —
+sans erreur en console, sans trace, sans test rouge. Le `catch` ressemblait à
+une précaution, ce qui lui a permis de survivre à toutes les relectures. Règle :
+un `try` autour d'un ajout facultatif doit entourer **l'appel réseau**, pas la
+construction du DOM qui suit ; et ce qui doit apparaître pour certains comptes
+seulement se vérifie dans une suite, en comparant les deux comptes.
+
+**Une liste incomplète a l'air d'une liste.** `modsText` nommait onze effets sur
+treize : `parryResist`, porté par **cent trois cartes**, et `costPenalty`, porté
+par dix-sept, n'avaient aucune phrase. La fiche affichait donc leurs effets sans
+celui-là. Rien n'était vide, rien ne cassait, aucune console ne parlait — et une
+carte qui montre deux effets sur trois a exactement l'air d'une carte qui en a
+deux. Règle : partout où du code traduit un ensemble de clés en texte, un
+contrôle doit confronter la table **à toutes les clés réellement employées**.
+C'est `catalogue:test` qui le fait ici.
+
+**Un accent grave dans un commentaire CSS ferme le gabarit de chaîne.**
+`verif-pages` le traque dans `public/` depuis qu'il a cassé `nav.js` deux fois.
+Il se produit aussi dans les **scripts** — `catalogue.mjs` l'a fait — où rien ne
+le guette : le message du moteur pointe cinquante lignes plus bas, sur un mot au
+hasard du CSS. Dans un bloc CSS écrit en gabarit, on n'écrit pas d'accent grave,
+même pour citer un nom de propriété.
+
+**Deux navigations finissent toujours par ne plus dire la même chose.** Elles
+l'ont fait trois fois : barre du bas contre tiroir, puis menu commun contre
+menu de l'accueil (six entrées d'écart et une confirmation de déconnexion
+présente d'un seul côté). Rien ne casse jamais — les deux s'ouvrent, les deux
+mènent quelque part. `scripts/menu-smoke.mjs` compare désormais les listes
+obtenues en **cliquant** le bouton de chaque page.
+
+**Le deuxième argument de `api()` est le corps, pas des options.** Quatre appels
+de l'écran d'administration y passaient `{ method, body }` : le serveur recevait
+un POST dont le corps était `{ method: 'PATCH', … }`, refusait sans code, et
+l'écran affichait « Impossible. ». Les seize autres appels de la même page
+étaient corrects, ce qui rend la faute invisible à la relecture — on lit une
+ligne qui ressemble à `fetch`, et `fetch` prend bien des options.
 
 **Pousser sur GitHub ne met rien en ligne.** C'est le piège le plus cher de ce
 projet, parce qu'il ne ressemble pas à une panne : le code est sur GitHub, le

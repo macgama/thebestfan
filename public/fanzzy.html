@@ -343,7 +343,33 @@ function renderDex() {
     `<button class="filt ${S.filter === k ? 'on' : ''}" data-f="${k}"
       ${c ? `style="--fc:${c}"` : ''}>${l}</button>`).join('');
 
-  const list = PERSOS.filter((f) => S.filter === 'all' ? true
+  /**
+   * Le classeur ne range que ce que les saisons ont ouvert.
+   *
+   * Il montrait **tout le catalogue publié**, séries à venir comprises : deux
+   * cent quarante-sept silhouettes grises dont une bonne part n'existe encore
+   * pour personne. Un classeur est une promesse — « voilà ce qu'il y a à
+   * trouver » — et une promesse qu'on ne peut pas tenir aujourd'hui n'est pas
+   * un but, c'est un mur. La surprise d'une saison neuve disparaissait aussi :
+   * tout avait déjà été vu en gris.
+   *
+   * Les saisons sont additives — l'union de toutes celles qui sont lancées —
+   * donc « la saison en cours et toutes celles d'avant » est exactement
+   * `SETS`, que le serveur calcule. On ne refait pas ce calcul ici.
+   *
+   * **Sauf ce qu'on possède déjà.** Une série qu'on referme cesse de
+   * distribuer ; elle n'efface pas les cartes de qui les a. Les faire
+   * disparaître du classeur transformerait une collection en trou, et c'est
+   * la seule chose qu'un collectionneur ne pardonne pas.
+   *
+   * `SETS` vide — aucune saison lancée, ou aucune qui nomme une série — veut
+   * dire « pas de restriction », comme côté serveur. Le jour où le kiosque
+   * n'aurait rien à ouvrir, un classeur vide serait un contresens.
+   */
+  const ouvertes = new Set(SETS.map((s) => s.id));
+  const visible = (f) => !ouvertes.size || ouvertes.has(f.set) || Boolean(S.col[f.id]);
+
+  const list = PERSOS.filter(visible).filter((f) => S.filter === 'all' ? true
     : S.filter === 'miss' ? !S.col[f.id] : f.type === S.filter);
   // La progression se compte sur les séries ouvertes, pas sur tout le
   // catalogue : afficher « 31/166 » à quelqu'un qui possède déjà tout ce qu'il
@@ -649,6 +675,7 @@ document.querySelectorAll('.nav button').forEach((b) => {
 })();
 </script>
 <script src="/fx.js" defer></script>
+<script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>
 </body>
 </html>

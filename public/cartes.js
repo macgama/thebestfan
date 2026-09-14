@@ -364,6 +364,18 @@ function modsText(f) {
   if (m.parryBonus) out.push(`Contre ×${m.parryBonus}`);
   if (m.breathBonus) out.push(`Souffle +${Math.round((m.breathBonus - 1) * 100)} %`);
   if (m.refundBonus) out.push(`Reprise ×${m.refundBonus}`);
+  /* Ces deux-là manquaient, et ce n'est pas un détail : **cent trois cartes**
+     portent `parryResist` et dix-sept portent `costPenalty`. Sur toutes, la
+     fiche affichait la liste des effets sans celui-là — un effet qui agit dans
+     le duel et que le joueur ne pouvait lire nulle part.
+
+     La faute est invisible par construction : la liste n'était pas vide, elle
+     était juste incomplète, et une carte qui montre deux effets sur trois a
+     exactement l'air d'une carte qui en a deux. Trouvée en écrivant le
+     catalogue illustré, qui compare cette table à toutes les clés employées ;
+     `catalogue:test` refuse désormais qu'une clé reste sans phrase. */
+  if (m.parryResist) out.push(`Résiste au contre ×${m.parryResist}`);
+  if (m.costPenalty) out.push(`Chants plus chers ×${m.costPenalty}`);
   return out;
 }
 

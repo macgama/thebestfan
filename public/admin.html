@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
+<script src="/menu.js"></script>
 <style>
 
 *{box-sizing:border-box}
@@ -21,11 +22,15 @@ body{margin:0;display:block;background:#0A0D11;color:var(--craie);
 header{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid rgba(242,238,228,.12)}
 header h1{font-family:var(--banner);font-size:17px;letter-spacing:.16em;margin:0;flex:1}
 header .who{font-size:12px;opacity:.5}
-nav{display:flex;gap:6px;padding:12px 18px;flex-wrap:wrap}
-nav button{background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.14);border-radius:7px;
+/* #nav et non nav : le tiroir du menu commun est lui aussi un <nav>, et un
+   sélecteur d élément lui imposait display:flex — ses onze lignes partaient
+   alors en colonne unique écrasée. Le même piège que les classes sans
+   préfixe, sur un nom de balise. */
+#nav{display:flex;gap:6px;padding:12px 18px;flex-wrap:wrap}
+#nav button{background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.14);border-radius:7px;
   color:inherit;padding:8px 14px;font-family:var(--banner);font-size:12px;letter-spacing:.06em;
   cursor:pointer;opacity:.55}
-nav button.on{background:var(--craie);color:#0B0E13;opacity:1}
+#nav button.on{background:var(--craie);color:#0B0E13;opacity:1}
 main{padding:0 18px 40px;max-width:1100px}
 /* Les tableaux de l'administration ont huit colonnes : ils ne rentreront jamais
    dans un téléphone, et il n'y a aucune raison de les y forcer. Ils défilent
@@ -88,6 +93,30 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
   background:rgba(242,238,228,.5);transition:left .16s ease,background .16s ease}
 .bascule[aria-pressed=true]{border-color:var(--vert);background:rgba(30,158,106,.2)}
 .bascule[aria-pressed=true] i{left:23px;background:var(--vert)}
+/* ------------------------------------------------------------- le reçu
+   Un écrit part vers le serveur et revient : tant que rien ne le dit, on ne
+   sait pas si c'est fait. Le bandeau au pied des réglages le disait déjà — au
+   pied, c'est-à-dire sous vingt-six lignes, hors de l'écran au moment précis
+   où l'on vient de toucher un champ du haut.
+
+   Le reçu se pose donc par-dessus, en haut à droite, et s'efface seul. Il ne
+   remplace pas le bouton « Enregistrer » des formulaires : il répond à la
+   question que ce bouton laisse en suspens — est-ce que c'est passé ? */
+/* Sous l'en-tête, et non dans son coin : à `top:14px` le reçu recouvrait le
+   bouton du menu, qui vit exactement là. Un message qui cache une commande
+   est un message qui gêne. */
+.recu{position:fixed;z-index:60;top:68px;right:14px;max-width:min(360px,84vw);
+  padding:10px 14px;border-radius:9px;font-size:12.5px;line-height:1.5;
+  background:rgba(12,17,24,.97);border:1px solid var(--vert);color:var(--craie);
+  box-shadow:0 14px 40px rgba(0,0,0,.6);
+  opacity:0;transform:translateY(-8px);transition:opacity .18s ease,transform .18s ease;
+  pointer-events:none}
+.recu.on{opacity:1;transform:none}
+.recu.rate{border-color:var(--flare);color:#FFD9D2}
+.recu b{font-family:var(--banner);letter-spacing:.08em;display:block;font-size:10px;
+  opacity:.6;margin-bottom:2px}
+@media (prefers-reduced-motion:reduce){.recu{transition:none}}
+
 .enreg{position:sticky;bottom:0;background:linear-gradient(transparent,#0B0E13 28%);
   padding:18px 0 8px;display:flex;gap:10px;align-items:center}
 .enreg .quoi{font-size:11.5px;opacity:.55}
@@ -178,8 +207,13 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
+<!-- Le menu du jeu, ici aussi. Cette page n'avait qu'un lien « retour au jeu » :
+     un administrateur qui veut le classeur ou le kiosque devait repasser par
+     l'accueil. Le menu est le même qu'ailleurs — c'est tout l'intérêt. -->
 <header><h1>ADMINISTRATION</h1><span class="who" id="who"></span>
-  <a href="/" style="color:var(--projo);font-size:12px">retour au jeu</a></header>
+  <a href="/" style="color:var(--projo);font-size:12px">retour au jeu</a>
+  <button class="pan tbf-burger" id="burger" aria-label="Menu"
+    ><span></span><span></span><span></span></button></header>
 <nav id="nav"></nav>
 <main id="main"><div class="vide">Chargement…</div></main>
 
@@ -202,6 +236,44 @@ const api = async (p, body, method) => {
     { code:j.error, raison:j.raison, status:r.status });
   return j;
 };
+/**
+ * Le reçu : ce qui vient d'être écrit, ou refusé.
+ *
+ * Chaque écran de cette page enregistrait en silence. Le formulaire se
+ * refermait, la liste se redessinait, et c'était tout : rien ne distinguait un
+ * enregistrement réussi d'un formulaire simplement fermé. Sur les réglages,
+ * c'était pire — ils s'enregistrent champ par champ, sans bouton, et la seule
+ * trace était un bandeau collé en pied de page qu'on ne voit pas depuis le
+ * haut de la liste.
+ *
+ * Un reçu par-dessus la page, qui s'efface seul. Il n'y a **qu'un** reçu à la
+ * fois : deux messages empilés se lisent comme une erreur, et le second
+ * annulerait la lecture du premier.
+ *
+ * @param {string} texte ce qui s'est passé, en clair.
+ * @param {boolean} [rate] vrai pour un refus : le reçu passe au rouge et reste
+ *   deux fois plus longtemps, parce qu'il y a quelque chose à faire.
+ */
+let minuteurRecu = null;
+function recu(texte, rate = false) {
+  let el = document.querySelector('.recu');
+  if (!el) { el = document.createElement('div'); el.className = 'recu'; document.body.append(el); }
+  el.className = 'recu' + (rate ? ' rate' : '');
+  el.setAttribute('role', 'status');
+  /* Une balise pour l'étiquette, `textContent` pour le message : il contient
+     des noms de saison et des refus du serveur, c'est-à-dire de la saisie. */
+  el.innerHTML = '<b></b><span></span>';
+  el.querySelector('b').textContent = rate ? 'REFUSÉ' : 'ENREGISTRÉ';
+  el.querySelector('span').textContent = texte;
+  requestAnimationFrame(() => el.classList.add('on'));
+  clearTimeout(minuteurRecu);
+  minuteurRecu = setTimeout(() => el.classList.remove('on'), rate ? 7000 : 3200);
+}
+
+/** Le refus du serveur, dit en français, dans le reçu. */
+const recuRate = (e) => recu(MSG_FANZZY[e.code] ?? e.raison ?? e.code
+  ?? 'le serveur n’a pas dit pourquoi.', true);
+
 const jour = (d) => new Date(d).toLocaleString('fr', { day:'2-digit', month:'2-digit',
   hour:'2-digit', minute:'2-digit' });
 
@@ -233,6 +305,8 @@ const MSG_FANZZY = {
     + 'elle ne pourrait pas distribuer de booster.',
   'admin.error.saison_inconnue': 'Cette saison n’existe pas.',
   'admin.error.saison_sans_nom': 'Donne un nom à la saison : c’est ce que les joueurs liront.',
+  'admin.error.lancer_manquant': 'La demande n’a pas dit s’il fallait lancer ou refermer. '
+    + 'Recharge l’écran et recommence — le serveur refuse de deviner sur ce geste-là.',
   'admin.error.saison_lancee': 'Une saison lancée ne se supprime pas. Remets-la d’abord '
     + 'en brouillon — c’est un geste distinct, et réversible.',
   'admin.error.stuff_inconnu': 'Cette pièce d’équipement n’existe pas.',
@@ -390,6 +464,16 @@ const VUES = {
         <p class="series-t">SAISON EN COURS
           <span>${enCours ? `Saison ${enCours.numero} — ${esc(enCours.nom)}`
             : 'aucune saison lancée — toutes les séries restent ouvertes'}</span></p>
+        <!-- Ce que le jeu applique **en ce moment**, et non ce que les cartes
+             annoncent. Une saison lancée qui n'ouvre aucune série laisse le jeu
+             toutes séries ouvertes — c'était le cas de la saison 1 reprise, et
+             la carte affichait « Séries — » sans dire ce que ce tiret produit.
+             Un tableau qui montre une liste vide sans montrer son effet donne
+             exactement la mauvaise impression : qu'il n'y a plus rien. -->
+        <p class="series-t">SÉRIES OUVERTES EN CE MOMENT
+          <span>${d.ouvertes
+            ? esc(noms(d.ouvertes, 'series'))
+            : 'toutes — aucune saison lancée n’en nomme'}</span></p>
         <p class="series-n">Une saison ouvre ses séries et publie ses tenues, pour
           tout le monde, à l'instant du lancement. L'équipement et les cartes
           d'action y sont <b>annoncés</b> et non retenus : ils vivent dans le code,
@@ -450,10 +534,20 @@ const VUES = {
           stuff: coches('s-stuff'), actions: coches('s-actions'),
         };
         try {
-          if (s) await api(`/saison/${s.id}`, { method: 'PATCH', body: corps });
-          else await api('/saisons', { method: 'POST', body: corps });
+          /* api(chemin, corps, methode) — trois arguments, et le deuxième est
+             le corps. Ces quatre appels-ci passaient un objet { method, body } en
+             deuxième place : le serveur recevait donc un POST dont le corps était
+             { method: 'PATCH', body: {...} }, refusait sans code, et l'écran
+             affichait « Impossible. » — le seul message qui ne dit rien. Aucune
+             saison n'a jamais pu être modifiée, lancée ni supprimée depuis cet
+             écran. Les seize autres appels de la page avaient la bonne forme :
+             c'est ce qui rend cette faute-là invisible à la relecture. */
+          if (s) await api(`/saison/${s.id}`, corps, 'PATCH');
+          else await api('/saisons', corps);
+          recu(s ? `saison ${v.numero || ''} « ${$('s-nom').value} » modifiée.`
+            : `brouillon « ${$('s-nom').value} » créé. Il n'ouvre rien tant qu'il n'est pas lancé.`);
           VUES.saisons();
-        } catch (e) { alert(MSG_FANZZY[e.code] ?? e.code ?? 'Impossible.'); }
+        } catch (e) { recuRate(e); }
       };
     }
 
@@ -486,9 +580,11 @@ const VUES = {
         });
         if (!ok) return;
         try {
-          await api(`/saison/${s.id}/lancer`, { method: 'POST', body: { lancer: !s.lancee } });
+          await api(`/saison/${s.id}/lancer`, { lancer: !s.lancee });
+          recu(s.lancee ? `saison ${s.numero} remise en brouillon.`
+            : `saison ${s.numero} lancée. Ce qu'elle ouvre est ouvert pour tout le monde.`);
           VUES.saisons();
-        } catch (e) { alert(MSG_FANZZY[e.code] ?? e.code ?? 'Impossible.'); }
+        } catch (e) { recuRate(e); }
       };
     }
 
@@ -501,8 +597,11 @@ const VUES = {
             + 'ne change pour les joueurs.',
           oui: 'SUPPRIMER', ton: 'flare',
         }))) return;
-        try { await api(`/saison/${s.id}`, { method: 'DELETE' }); VUES.saisons(); }
-        catch (e) { alert(MSG_FANZZY[e.code] ?? e.code ?? 'Impossible.'); }
+        try {
+          await api(`/saison/${s.id}`, undefined, 'DELETE');
+          recu(`brouillon « ${s.nom} » supprimé.`);
+          VUES.saisons();
+        } catch (e) { recuRate(e); }
       };
     }
   },
@@ -648,6 +747,7 @@ const VUES = {
         try {
           if (x) await api('/fanzzy/' + encodeURIComponent(x.id), corps, 'PATCH');
           else await api('/fanzzy', corps);
+          recu((x ? 'Fanzzy ' : 'Fanzzy créé : ') + (corps.nom ?? x.id) + '.');
           VUES.fanzzy(filtre);
         } catch (e) { $('f-err').textContent = MSG_FANZZY[e.code] ?? (e.code ?? 'échec'); }
       };
@@ -667,6 +767,7 @@ const VUES = {
       if (pub) {
         const x = d.fanzzy.find((y) => y.id === pub.dataset.publier);
         await api('/fanzzy/' + encodeURIComponent(x.id), { publie: !x.publie }, 'PATCH');
+        recu(x.nom + (x.publie ? ' dépublié.' : ' publié.'));
         return VUES.fanzzy(filtre);
       }
       if (!mod) return;
@@ -767,7 +868,8 @@ const VUES = {
           texte: $('t-texte').value.trim() };
         $('t-err').textContent = '';
         try {
-          if (x) await api('/tenues/' + encodeURIComponent(x.id), corps, 'PATCH');
+          if (x) { await api('/tenues/' + encodeURIComponent(x.id), corps, 'PATCH');
+            recu('thème ' + corps.nom + ' modifié.'); }
           else {
             /* Le serveur répond avec le nom de fichier attendu. On le montre au
                lieu de refermer en silence : sans dessin, le thème s'affiche
@@ -797,6 +899,7 @@ const VUES = {
       if (pub) {
         const x = d.tenues.find((y) => y.id === pub.dataset.publier);
         await api('/tenues/' + encodeURIComponent(x.id), { publie: !x.publie }, 'PATCH');
+        recu(x.nom + (x.publie ? ' dépublié.' : ' publié.'));
         return VUES.tenues();
       }
       if (!mod) return;
@@ -844,9 +947,15 @@ const VUES = {
         toggle: { status: b.dataset.status === 'locked' ? 'active' : 'locked' },
         role: { role: b.dataset.role === 'admin' ? 'joueur' : 'admin' },
       }[b.dataset.a];
-      try { await api('/joueur/' + id, corps, 'PATCH'); VUES.joueurs($('q')?.value ?? ''); }
-      catch (err) { alert(err.code === 'admin.error.not_yourself'
-        ? 'Impossible sur son propre compte.' : 'Refusé : ' + err.code); }
+      try {
+        await api('/joueur/' + id, corps, 'PATCH');
+        recu('joueur ' + id + ' : ' + Object.keys(corps).join(', ') + '.');
+        VUES.joueurs($('q')?.value ?? '');
+      } catch (err) {
+        recu(err.code === 'admin.error.not_yourself'
+          ? 'on ne change pas son propre compte depuis ici.'
+          : (MSG_FANZZY[err.code] ?? err.raison ?? err.code), true);
+      }
     };
   },
 
@@ -870,6 +979,7 @@ const VUES = {
     $('go').onclick = () => VUES.competitions($('q').value.trim());
     const maj = async (tr, corps) => {
       await api(`/competition/${tr.dataset.id}/${tr.dataset.s}`, corps, 'PATCH');
+      recu('compétition ' + tr.dataset.id + ' : ' + Object.keys(corps).join(', ') + '.');
       VUES.competitions($('q')?.value ?? '');
     };
     $('main').onclick = async (e) => {
@@ -932,11 +1042,18 @@ const VUES = {
 
     /* Chaque champ s'enregistre seul, à la sortie. Un bouton « Enregistrer »
        unique obligerait à deviner lequel des vingt-six champs a été refusé
-       quand le serveur en refuse un. */
+       quand le serveur en refuse un.
+
+       Ce qui manquait n'était donc pas le bouton, mais **la réponse** : le seul
+       accusé de réception vivait dans un bandeau collé en pied de liste, sous
+       vingt-six lignes. On touchait un champ en haut de l'écran et rien ne
+       bougeait à l'endroit où l'on regardait. Le reçu se pose désormais
+       par-dessus la page ; le bandeau reste, il porte la dernière ligne. */
     const poser = async (cle, valeur, el) => {
       try {
         await api('/reglage/' + encodeURIComponent(cle), { valeur }, 'PUT');
         $('quoi').textContent = `${cle} enregistré.`;
+        recu(`${cle} = ${valeur}`);
         el?.closest('.rg')?.classList.add('change');
       } catch (e) {
         /* Le redessin **d'abord**, le message ensuite. Dans l'autre ordre, le
@@ -944,6 +1061,7 @@ const VUES = {
            lignes correctes chacune, et ensemble elles ne montraient rien. */
         await VUES.reglages();
         $('quoi').textContent = 'Refusé — ' + (e.raison || e.message || e.code);
+        recuRate(e);
       }
     };
 
@@ -966,6 +1084,7 @@ const VUES = {
       if (rd) {
         await api('/reglage/' + encodeURIComponent(rd.dataset.rendre), undefined, 'DELETE');
         $('quoi').textContent = `${rd.dataset.rendre} rendu au défaut.`;
+        recu(`${rd.dataset.rendre} rendu à sa valeur par défaut.`);
         return VUES.reglages();
       }
     };
@@ -983,6 +1102,8 @@ const VUES = {
         || '<tr><td colspan="5" class="vide">Journal vide.</td></tr>'}</tbody></table></div>`;
   },
 };
+
+window.TBF_MENU.monter($('burger'));
 
 (async () => {
   try {

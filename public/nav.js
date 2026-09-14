@@ -42,70 +42,17 @@
   if (SANS_BARRE.includes(chemin)) return;
 
   /**
-   * Le menu, et lui seul.
+   * Le menu vient de menu.js, et de nulle part ailleurs.
    *
-   * ## Ce qu'il remplace
+   * Ce fichier portait la liste des destinations, les icônes et la
+   * construction du tiroir. L'accueil, qui ne charge pas ce fichier, s'était
+   * écrit le sien à la main : cinq lignes contre onze, et une déconnexion qui
+   * ne demandait rien d'un côté pendant qu'elle demandait de l'autre.
    *
-   * Il y avait **deux** navigations, et elles ne disaient pas la même chose.
-   * La barre du bas menait à l'accueil, au Virage, au duel, au classeur, aux
-   * matchs, au classement et au profil. Le tiroir menait au deck, au profil,
-   * aux clubs, au KOP, aux amis et au télétexte. Aucune des deux n'était
-   * complète, et le KOP — qui est au centre du jeu — n'était accessible que
-   * par celle qu'on ouvre exprès.
-   *
-   * C'est le même défaut que le jeu a déjà corrigé trois fois ailleurs : une
-   * règle écrite à deux endroits. « Où puis-je aller ? » n'a qu'une bonne
-   * réponse, et elle tient maintenant dans une seule liste.
-   *
-   * ## Pourquoi en rubriques
-   *
-   * Onze destinations à plat, c'est un mur. Rangées par ce qu'on vient y
-   * faire — jouer, collectionner, suivre le football — on retrouve la sienne
-   * sans lire les autres. L'ordre à l'intérieur d'une rubrique est celui de
-   * la fréquence, pas de l'alphabet.
+   * Tout cela vit désormais dans menu.js — une seule liste, un seul tiroir,
+   * une seule confirmation de sortie. Voir l'en-tête de ce fichier.
    */
-  /**
-   * Le nom de l'écran, tel qu'il s'affiche dans la barre.
-   *
-   * Court, et différent du libellé du menu : « Mes Fanzzy » dit où l'on **va**,
-   * « Fanzzy » dit où l'on **est**. Le second se lit d'un coup d'œil, ce qui
-   * est tout ce qu'on demande à un titre de barre.
-   *
-   * Une route absente de cette table n'affiche pas de titre plutôt qu'un titre
-   * deviné : « /duel-nvn » rendu en « Duel Nvn » est pire que rien.
-   */
-  const TITRES = {
-    '/fanzzy': 'Fanzzy', '/boosters': 'Boosters', '/deck': 'Deck',
-    '/boutique': 'Boutique', '/virage': 'Virage', '/duel-nvn': 'Duel',
-    '/kop': 'KOP', '/amis': 'Amis', '/equipes': 'Clubs', '/matchs': 'Matchs',
-    '/teletext': 'Télétexte', '/classement': 'Classement', '/carnet': 'Carnet',
-    '/profil': 'Profil', '/compte': 'Compte', '/admin': 'Administration',
-    '/diagnostic': 'Diagnostic',
-  };
-
-  const MENU = [
-    { titre: 'JOUER', liens: [
-      ['/virage', 'virage', 'Le Grand Virage'],
-      ['/duel-nvn', 'duel', 'Duel de tribunes'],
-      // Le KOP est au centre du jeu : il ouvre la rubrique de ce qu'on fait à
-      // plusieurs, et il n'est plus derrière un second menu.
-      ['/kop', 'kop', 'Mon KOP'],
-      ['/deck', 'deck', 'Mon deck'],
-      ['/boosters', 'pack', 'Mes boosters'],
-      ['/boutique', 'boutique', 'La boutique'],
-    ] },
-    { titre: 'MA COLLECTION', liens: [
-      ['/fanzzy', 'fanzzy', 'Mes Fanzzy'],
-      ['/carnet', 'carnet', 'Mon carnet'],
-      ['/amis', 'amis', 'Mes amis'],
-    ] },
-    { titre: 'LE FOOTBALL', liens: [
-      ['/matchs', 'teletext', 'Les matchs du jour'],
-      ['/equipes', 'clubs', 'Mes clubs'],
-      ['/teletext', 'teletext', 'Classements et buteurs'],
-      ['/classement', 'classement', 'Classement des supporters'],
-    ] },
-  ];
+  const { TITRES, ICONES } = window.TBF_MENU;
 
 
   /* Ce qui reste ici plutôt que dans ui.css : une seule déclaration, et elle
@@ -201,35 +148,6 @@
 
   /* --------------------------------------------------- la barre du haut */
 
-  const ICONES = {
-    // Reprises de l'ancienne barre du bas, qui avait les siennes de son côté.
-    virage: 'M3 20l9-16 9 16zM7 20l5-9 5 9',
-    duel: 'M4 4l7 7M20 4l-7 7M12 13v7M8 20h8',
-    fanzzy: 'M4 4h13l3 3v13H4zM8 8h6M8 12h8M8 16h5',
-    carnet: 'M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2zM5 18h14M9 8h6',
-    classement: 'M6 21V9M12 21V4M18 21v-7M3 21h18',
-    accueil: 'M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
-    deck: 'M4 7h10v13H4zM8 4h10v13',
-    profil: 'M12 8a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 20a7 7 0 0 1 14 0',
-    clubs: 'M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6z',
-    // Trois silhouettes serrées : un groupe, pas une personne.
-    kop: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20a7 7 0 0 1 14 0M17 20a5 5 0 0 0-3-4.6M16 11a3 3 0 0 0 0-6',
-    // Deux silhouettes côte à côte, et un plus : on en ajoute une.
-    amis: 'M9 11a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4M2 20a7 7 0 0 1 14 0M18 8v6M15 11h6',
-    teletext: 'M3 4h18v16H3zM7 9h10M7 13h6',
-    compte: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6M12 3v3M12 18v3M3 12h3M18 12h3',
-    admin: 'M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6zM9 12l2 2 4-4',
-    sortie: 'M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 8l-4 4 4 4M6 12h9',
-    // Un panier : deux roues et une anse. Reconnaissable à vingt pixels.
-    boutique: 'M6 6h15l-1.5 9h-12zM6 6L5 3H2M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2',
-    // Un paquet fermé, avec sa bande à déchirer en haut.
-    pack: 'M4 8h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM4 8l1.5-4h13L20 8M9 4v4M15 4v4',
-    // Une flèche vers la gauche, pour rentrer. Volontairement pas un chevron
-    // seul : à quarante pixels, un chevron se confond avec un bouton de repli.
-    retour: 'M15 5l-7 7 7 7',
-  };
-  const item = (href, cle, texte, classe = '') =>
-    `<a href="${href}" class="${classe}"><svg viewBox="0 0 24 24"><path d="${ICONES[cle]}"/></svg>${texte}</a>`;
 
   /**
    * Monte la barre du haut, si le joueur est connecté.
@@ -348,56 +266,12 @@
       })
       .catch(() => {});
 
-    const tiroir = document.createElement('nav');
-    tiroir.id = 'tbf-tiroir';
-    tiroir.className = 'tbf-tiroir';
-    tiroir.setAttribute('aria-label', 'Le reste du jeu');
-    tiroir.hidden = true;
-    /* La page où l'on est se marque, et ne se propose pas.
-       Sans ça le menu offre d'aller là où on est déjà, ce qui est le meilleur
-       moyen de faire douter quelqu'un de l'endroit où il se trouve. */
-    const ici = (href) => chemin === href
-      || (href === '/matchs' && chemin === '/teletext' && false);
-
-    tiroir.innerHTML = `<a class="tbf-tiroir-ici" href="/">${
-      ICONES.accueil ? `<svg viewBox="0 0 24 24"><path d="${ICONES.accueil}"/></svg>` : ''
-    }L\u2019accueil</a>`
-      + MENU.map((r) => `<div class="tbf-rubrique">${r.titre}</div>`
-        + r.liens.map(([href, cle, texte]) =>
-          item(href, cle, texte, ici(href) ? 'on' : '')).join('')).join('')
-      + '<hr>'
-      + item('/profil', 'profil', 'Mon profil')
-      + item('/compte', 'compte', 'Mon compte')
-      + item('#', 'sortie', 'Se déconnecter', 'sortie');
-    const rideau = document.createElement('div');
-    rideau.className = 'tbf-voile';
-    document.body.append(tiroir, rideau);
-
-    const bouton = haut.querySelector('.tbf-burger');
-    const ouvrir = (oui) => {
-      // `hidden` et la classe : la classe anime, l'attribut sort vraiment le
-      // menu de l'ordre de tabulation. Sans lui, la tabulation traverse un
-      // menu invisible.
-      if (oui) tiroir.hidden = false;
-      requestAnimationFrame(() => {
-        tiroir.classList.toggle('on', oui);
-        rideau.classList.toggle('on', oui);
-        bouton.setAttribute('aria-expanded', String(oui));
-        if (!oui) {
-          setTimeout(() => { if (!tiroir.classList.contains('on')) tiroir.hidden = true; }, 200);
-        }
-      });
-    };
-    bouton.addEventListener('click', () => ouvrir(!tiroir.classList.contains('on')));
-    rideau.addEventListener('click', () => ouvrir(false));
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ouvrir(false); });
-
-    tiroir.querySelector('.sortie').addEventListener('click', async (e) => {
-      e.preventDefault();
-      try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); }
-      catch { /* hors ligne : on recharge quand même, la session locale ne sert plus */ }
-      location.href = '/';
-    });
+    /* Le tiroir, monté par menu.js sur le bouton que cette barre vient de
+       dessiner. Sa liste, son entrée d’administration, la pastille du direct
+       et la confirmation de déconnexion ne sont plus l’affaire de ce fichier :
+       l’accueil monte exactement le même, et deux menus qui divergent est la
+       faute que menu.js existe pour empêcher. */
+    window.TBF_MENU.monter(haut.querySelector('.tbf-burger'));
 
     /* Plus de bourse à remplir ici.
 
@@ -434,10 +308,9 @@
 
     };
 
-    return { tiroir, haut };
   }
 
-  const enHaut = barreDuHaut();
+  barreDuHaut();
 
   /* ------------------------------------------- plus de barre du bas
 
@@ -476,44 +349,4 @@
     }, 1400);
   }
 
-  /* Entrée d'administration, ajoutée seulement si le compte y a droit. */
-  (async () => {
-    try {
-      const r = await fetch('/api/admin/suis-je', { credentials: 'same-origin' });
-      if (!r.ok) return;
-      const { admin } = await r.json();
-      if (!admin) return;
-      const a = document.createElement('a');
-      a.href = '/admin';
-      a.style.setProperty('--c', '#E0402C');
-      a.className = chemin === '/admin' ? 'on' : '';
-      a.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-        stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 3l8 4v6c0 4-3.5 7-8 8-4.5-1-8-4-8-8V7zM9 12l2 2 4-4"/></svg>ADMIN`;
-      nav.appendChild(a);
-
-      // Et dans le menu du haut, juste avant la déconnexion.
-      const monte = await enHaut;
-      monte?.tiroir.querySelector('.sortie')
-        ?.insertAdjacentHTML('beforebegin', item('/admin', 'admin', 'Administration'));
-    } catch { /* module absent */ }
-  })();
-
-  /* Pastille rouge quand un match des clubs suivis est en cours.
-     Elle vivait sur la barre du bas ; elle se pose maintenant sur le bouton du
-     menu et sur la ligne du Virage à l'intérieur — c'est-à-dire là où on la
-     verra de toute façon, et là où elle mène. */
-  (async () => {
-    try {
-      const r = await fetch('/api/virage/live', { credentials: 'same-origin' });
-      if (!r.ok) return;
-      const { matchs = [] } = await r.json();
-      if (!matchs.some((m) => m.open)) return;
-      const monte = await enHaut;
-      monte?.haut.querySelector('.tbf-burger')
-        ?.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
-      monte?.tiroir.querySelector('a[href="/virage"]')
-        ?.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
-    } catch { /* module non monté */ }
-  })();
 })();

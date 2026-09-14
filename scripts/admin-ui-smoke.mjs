@@ -37,18 +37,27 @@ async function jusqua(fn, ms = 8000) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities, saisons,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users,
   admin_audit, reglages`);
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql',
-                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'admin.sql']) {
+                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'admin.sql',
+                 // Sans elle, l'onglet SAISONS se monte sur une table absente et
+                 // le contrôle mesurerait un écran vide plutôt que l'écran.
+                 'saisons.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
-// On repart d'un catalogue propre : les essais précédents laissent des ZZ.
+/* On repart d'un catalogue propre : les essais précédents laissent des ZZ.
+   Les thèmes d'essai aussi — ils n'étaient effacés qu'à la **fin** de la
+   suite, si bien qu'une exécution interrompue en laissait derrière elle et
+   que la suivante tombait sur « cet identifiant est déjà pris », quatre
+   contrôles rouges plus loin. Un nettoyage de fin ne nettoie qu'après les
+   passages réussis, c'est-à-dire pas ceux qui en ont besoin. */
 await raw.query(`DELETE FROM fanzzy WHERE id LIKE 'ZZ%'`);
+await raw.query(`DELETE FROM tenues WHERE id LIKE 'zz%'`);
 
 const U = 'dddddddd-0000-0000-0000-0000000000d1';
 await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash,role)
@@ -364,6 +373,149 @@ check('rendre au défaut efface la ligne au lieu d’y écrire le défaut',
   restant.length === 0);
 
 await pool.execute('DELETE FROM reglages');
+
+/* ============================================================== les saisons
+
+   L'onglet qui ouvre le contenu du jeu pour tout le monde — et le seul de
+   cette page qui n'était éprouvé que par une capture d'écran.
+
+   Il ne marchait pas. Ses quatre appels passaient `{ method, body }` en
+   deuxième argument de `api(chemin, corps, methode)`, où l'on attend le corps :
+   le serveur recevait un POST dont le corps était `{ method: 'PATCH', ... }`,
+   refusait sans code, et l'écran affichait « Impossible. ». Aucune saison ne
+   pouvait être modifiée, lancée ni supprimée. `admin-smoke` éprouvait les
+   routes — elles étaient bonnes — et la capture montrait le formulaire, qui
+   s'affichait très bien. Personne ne cliquait sur « Enregistrer ».
+
+   On clique donc, et on regarde **la base** : c'est le seul endroit où la
+   différence entre « le formulaire s'est refermé » et « c'est enregistré »
+   existe vraiment. */
+
+await page.evaluate(() => [...document.querySelectorAll('#nav button')]
+  .find((b) => /SAISONS/.test(b.textContent))?.click());
+check('l’onglet des saisons se monte', await jusqua(async () =>
+  await page.$('#nouvelle-saison') !== null));
+
+/* La série qu'on ouvrira. Prise dans les listes de l'écran lui-même : le
+   serveur refuse une série sans carte de stade 1 publiée, et un identifiant
+   écrit en dur ici tomberait le jour où cette série-là est vidée. */
+const serieChoisie = await page.evaluate(() => {
+  document.getElementById('nouvelle-saison').click();
+  const c = document.querySelector('#s-series input[type=checkbox]');
+  return c ? c.value : null;
+});
+check('le formulaire propose les séries du catalogue', serieChoisie !== null);
+
+await page.evaluate((serie) => {
+  document.getElementById('s-num').value = '77';
+  document.getElementById('s-nom').value = 'Saison d’essai';
+  document.getElementById('s-txt').value = 'Pour voir si le bouton écrit.';
+  const c = [...document.querySelectorAll('#s-series input[type=checkbox]')]
+    .find((i) => i.value === serie);
+  c.checked = true;
+  document.getElementById('s-ok').click();
+}, serieChoisie);
+
+check('« Créer le brouillon » écrit vraiment en base', await jusqua(async () => {
+  const [r] = await pool.query('SELECT id FROM saisons WHERE nom = ?', ['Saison d’essai']);
+  return r.length === 1;
+}));
+
+/* Le reçu. C'est lui qui répond à la question que le bouton laissait ouverte :
+   est-ce que c'est passé ? Sans lui, le formulaire se refermait et un
+   administrateur n'avait aucun moyen de le savoir depuis l'écran. */
+check('et l’écran le dit, au lieu de refermer en silence', await jusqua(async () =>
+  await page.evaluate(() => {
+    const r = document.querySelector('.recu.on');
+    return Boolean(r) && !r.classList.contains('rate');
+  }), 3000));
+
+const [[brouillon]] = await pool.query(
+  'SELECT id, numero, series FROM saisons WHERE nom = ?', ['Saison d’essai']);
+check('avec le numéro et la série cochés', Number(brouillon.numero) === 77
+  && String(brouillon.series).includes(serieChoisie));
+
+/* --------------------------------------------------------- la modification */
+
+/* Par identifiant, et non « la dernière carte » : les cartes sont rendues de
+   la plus récente à la plus ancienne, et `.at(-1)` visait donc la saison 1
+   reprise par `sql/saisons.sql`. Le contrôle renommait une saison et en
+   relisait une autre. */
+check('le brouillon apparaît dans la liste', await jusqua(async () =>
+  await page.evaluate((id) =>
+    document.querySelector(`[data-editer-saison="${id}"]`) !== null, brouillon.id)));
+await page.evaluate((id) =>
+  document.querySelector(`[data-editer-saison="${id}"]`).click(), brouillon.id);
+await jusqua(async () => await page.$('#s-nom') !== null);
+await page.evaluate(() => {
+  document.getElementById('s-nom').value = 'Saison relue';
+  document.getElementById('s-ok').click();
+});
+check('« Enregistrer » modifie une saison existante', await jusqua(async () => {
+  const [r] = await pool.query('SELECT nom FROM saisons WHERE id = ?', [brouillon.id]);
+  return r[0]?.nom === 'Saison relue';
+}));
+
+/* ------------------------------------------------------------ le lancement
+
+   Le geste le plus visible du jeu : il ouvre du contenu pour tous les joueurs
+   connectés. Il passe par une confirmation, qu'on accepte comme le ferait un
+   administrateur — en cliquant, pas en la contournant. */
+
+const dire = async (mot) => page.evaluate((m) => {
+  const b = [...document.querySelectorAll('.tbf-dial button, dialog button')]
+    .find((x) => new RegExp(m, 'i').test(x.textContent));
+  b?.click();
+  return Boolean(b);
+}, mot);
+
+await page.evaluate((id) => document.querySelector(`[data-lancer="${id}"]`).click(),
+  brouillon.id);
+await dodo(400);
+check('lancer une saison demande confirmation', await page.evaluate(() =>
+  /LANCER LA SAISON/i.test(document.body.textContent)));
+check('et la confirmation nomme ce qui s’ouvre', await page.evaluate(() =>
+  /série\(s\)/.test(document.body.textContent)));
+await dire('LANCER');
+
+check('la saison est lancée en base', await jusqua(async () => {
+  const [r] = await pool.query('SELECT lancee_a FROM saisons WHERE id = ?', [brouillon.id]);
+  return r[0]?.lancee_a != null;
+}));
+
+/* Et le jeu l'applique : la série cochée est désormais la seule ouverte.
+   Sans ce contrôle, « lancée » ne serait qu'une date dans une colonne. */
+{
+  const { seriesOuvertes } = await import('../src/server/fanzzy/catalogue.js');
+  const ouvertes = seriesOuvertes();
+  check('et le jeu n’ouvre plus qu’elle',
+    Array.isArray(ouvertes) && ouvertes.length === 1 && ouvertes[0] === serieChoisie);
+}
+
+/* ------------------------------------------ le retour en arrière, et l'effacement
+
+   Une saison lancée ne se supprime pas : c'est un refus du serveur, et l'écran
+   doit le dire en français. On le remet donc en brouillon d'abord — le geste
+   distinct et réversible que le refus recommande. */
+
+await page.evaluate((id) => document.querySelector(`[data-lancer="${id}"]`).click(),
+  brouillon.id);
+await dodo(400);
+await dire('REFERMER');
+check('remettre en brouillon referme la saison', await jusqua(async () => {
+  const [r] = await pool.query('SELECT lancee_a FROM saisons WHERE id = ?', [brouillon.id]);
+  return r[0]?.lancee_a == null;
+}));
+
+await page.evaluate((id) => document.querySelector(`[data-suppr-saison="${id}"]`).click(),
+  brouillon.id);
+await dodo(400);
+await dire('SUPPRIMER');
+check('un brouillon se supprime', await jusqua(async () => {
+  const [r] = await pool.query('SELECT id FROM saisons WHERE id = ?', [brouillon.id]);
+  return r.length === 0;
+}));
+
 
 check('aucune erreur de script pendant toute la session', erreurs.length === 0);
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));

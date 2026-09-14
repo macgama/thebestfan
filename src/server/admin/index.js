@@ -828,9 +828,22 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   /* Le geste le plus visible de toute l'administration : il change le jeu de
      tous les joueurs connectés. D'où une route à lui, et non un champ de plus
      dans la modification. */
-  router.post('/saison/:id/lancer', safe(async (req, res) =>
-    res.json(await lancerSaison(req.user.id, req.params.id,
-      req.body?.lancer !== false, ip(req)))));
+  /* `lancer` doit être un booléen, et rien d'autre.
+
+     Cette route lisait `req.body?.lancer !== false` : un corps qu'elle ne
+     comprenait pas — champ absent, mal nommé, mal emballé — voulait donc dire
+     **lance**. C'est le pire défaut possible pour le geste qui ouvre du
+     contenu à tous les joueurs en même temps : une requête fautive ne
+     produisait pas un refus, elle produisait un lancement. L'écran l'a
+     démontré à ses dépens, en envoyant pendant des semaines un corps de la
+     mauvaise forme : impossible de refermer une saison, très possible d'en
+     ouvrir une.
+
+     Un geste irréversible aux yeux des joueurs se demande explicitement. */
+  router.post('/saison/:id/lancer', safe(async (req, res) => {
+    if (typeof req.body?.lancer !== 'boolean') throw fail('admin.error.lancer_manquant');
+    return res.json(await lancerSaison(req.user.id, req.params.id, req.body.lancer, ip(req)));
+  }));
 
   router.delete('/saison/:id', safe(async (req, res) =>
     res.json(await supprimerSaison(req.user.id, req.params.id, ip(req)))));

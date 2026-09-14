@@ -765,12 +765,23 @@ await page.close();
   await page.close();
 }
 
-/* ------------------------------------------------------------- le menu */
+/* ------------------------------------------------------------- le menu
+
+   Ce qui se vérifie **ici**, c'est le bouton de cette page et la place que le
+   tiroir y trouve : l'accueil est le seul écran plein cadre du jeu, et son
+   bouton est une plaque qui suit la hauteur de sa rangée, pas le bouton nu des
+   autres pages.
+
+   Ce que ce bloc vérifiait aussi — la liste des destinations, l'entrée
+   d'administration, les liens qui mènent quelque part — est parti dans
+   `scripts/menu-smoke.mjs`. Le menu est désormais monté par `public/menu.js`
+   pour toutes les pages, et une liste relue ici en aurait fait la seconde
+   copie : c'est exactement la faute que ce regroupement a corrigée. */
 
 {
   const page = await ouvrir();
   const avant = await page.evaluate(() => ({
-    cache: document.getElementById('tiroir').hidden,
+    cache: document.querySelector('.tbf-tiroir').hidden,
     deplie: document.getElementById('burger').getAttribute('aria-expanded'),
   }));
   check('le menu est replié au chargement', avant.cache === true && avant.deplie === 'false');
@@ -778,12 +789,10 @@ await page.close();
   await page.click('#burger');
   await new Promise((r) => setTimeout(r, 300));
   const apres = await page.evaluate(() => {
-    const t = document.getElementById('tiroir');
+    const t = document.querySelector('.tbf-tiroir');
     return {
       ouvert: t.classList.contains('on') && !t.hidden,
       deplie: document.getElementById('burger').getAttribute('aria-expanded'),
-      liens: [...t.querySelectorAll('a')].filter((a) => !a.hidden)
-        .map((a) => a.getAttribute('href')),
       // Un menu qui sort de l'écran est un menu dont la moitié est perdue.
       dansLEcran: t.getBoundingClientRect().right <= innerWidth + 1
         && t.getBoundingClientRect().bottom <= innerHeight + 1,
@@ -792,22 +801,26 @@ await page.close();
   check('le bouton l’ouvre', apres.ouvert && apres.deplie === 'true');
   check('et il tient dans l’écran', apres.dansLEcran);
 
-  // Un lien de menu vers une page inexistante est un cul-de-sac silencieux :
-  // le joueur atterrit sur une 404 sans comprendre.
-  const routes = ['/deck', '/profil', '/equipes', '/kop', '/teletext',
-    '/compte', '/admin', '#'];
-  const inconnus = apres.liens.filter((h) => !routes.includes(h));
-  check('tous ses liens mènent à une page qui existe', inconnus.length === 0);
-  if (inconnus.length) console.log('    inconnus :', inconnus.join(', '));
-  check('il donne accès au deck et au compte',
-    apres.liens.includes('/deck') && apres.liens.includes('/compte'));
-  check('l’administration reste cachée à un joueur ordinaire',
-    !apres.liens.includes('/admin'));
+  /* En bas à gauche, et non `page.click('.tbf-voile')`.
 
-  await page.click('#voile');
+     Puppeteer clique le **centre** de l'élément visé, et le voile occupe tout
+     l'écran : son centre est le centre de la fenêtre. Sur un téléphone étroit,
+     le tiroir commun — 268 px ancrés à droite — recouvre ce centre, si bien
+     que le clic atterrissait sur un lien du menu et partait vers la boutique.
+     Le contrôle mesurait alors un document qui n'existait plus.
+
+     On vise donc un point qui est vraiment à côté. Le geste reste celui d'un
+     joueur : un vrai clic sur le voile, pas un `.click()` provoqué en script —
+     un voile qui ne recevrait pas les clics laisserait la page manipulable
+     derrière lui. */
+  const dehors = await page.evaluate(() => {
+    const t = document.querySelector('.tbf-tiroir').getBoundingClientRect();
+    return t.left > 60 ? [20, Math.round(innerHeight / 2)] : [20, innerHeight - 20];
+  });
+  await page.mouse.click(dehors[0], dehors[1]);
   await new Promise((r) => setTimeout(r, 300));
   check('cliquer à côté le referme', await page.evaluate(() =>
-    !document.getElementById('tiroir').classList.contains('on')));
+    !document.querySelector('.tbf-tiroir')?.classList.contains('on')));
   await page.close();
 }
 
