@@ -1251,6 +1251,10 @@ if (process.env.CAPTURE) {
       home_goals: 1, away_goals: 0, crowd: [12, 9],
     }, 400, 880],
     ['tablette', null, 834, 1112],
+    /* Cinq cent soixante-dix-huit : l'écran qui tombait dans l'angle mort du
+       palier de sept cents et gardait ses bandes noires. */
+    ['petite-tablette', null, 578, 828],
+    ['large', null, 1362, 940],
   ]) {
     direct = etat;
     const p = await ouvrir(l, h);

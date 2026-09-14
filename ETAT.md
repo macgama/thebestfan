@@ -3460,18 +3460,34 @@ fichiers**, et trois valeurs différentes pour la même application.
 Sur une tablette, tout tenait donc dans un rail de cinq cents pixels au milieu
 d'un écran noir, et élargir la variable ne changeait rien du tout.
 
-Les dix-huit pointent maintenant sur `var(--colonne)`, qui vaut 520 px sur
-téléphone et `min(100vw, 900px)` au-delà. Le plafond n'est pas de la
-timidité : au-delà de neuf cents pixels, une ligne de texte dépasse la centaine
-de caractères et l'œil perd le début de la ligne suivante.
+Les dix-huit pointent maintenant sur `var(--colonne)`, qui vaut
+`min(100vw, 900px)` — **sans palier**.
+
+Il y en a eu un, à sept cents pixels : en dessous, la colonne restait à 520. Une
+tablette de cinq cent soixante-dix-huit pixels tombait donc pile dans l'angle
+mort — trop large pour le téléphone, trop étroite pour le palier — et gardait
+trente pixels de noir de chaque côté pour rien. Un seuil qui découpe les écrans
+en deux familles se trompe toujours sur ceux du milieu ; `min()` n'a pas ce
+défaut.
+
+Le plafond, lui, reste : au-delà de neuf cents pixels, une ligne de texte
+dépasse la centaine de caractères et l'œil perd le début de la ligne suivante.
 
 `admin.html` reste à mille cent, et c'est la seule exception : ce n'est pas un
 écran de supporter mais un écran de gestion, et un tableau à six colonnes ne se
 lit pas dans neuf cents. Elle est nommée dans `verif-pages`, avec sa raison.
 
-Sur l'accueil, la colonne gagnée est **remplie** : rail à 104 px, tuiles plus
-grandes, personnage plus grand. Une colonne qui s'élargit pendant que son
-contenu garde sa taille de téléphone ne fait que déplacer le vide.
+Sur l'accueil, le rail suit **la colonne** et non la fenêtre :
+`clamp(58px, 15,5 % de la colonne, 88px)`. Les mesurer en `vw` marchait tant que
+les deux se confondaient et devenait faux dès que la colonne a cessé de remplir
+l'écran — sur mille trois cents pixels, seize pour cent de la fenêtre font un
+rail de deux cents dans une colonne qui en fait neuf cents.
+
+Le plafond a d'abord été posé à 104 px, au jugé. À l'écran, les tuiles
+écrasaient le personnage et le jeu ressemblait à une télécommande. À 88, les
+`clamp` communs d'`ui.css` suffisent pour l'icône et le libellé : il n'y a plus
+rien à forcer. **Une tuile d'accueil est un point de départ, pas la chose qu'on
+regarde.**
 
 ### Deux contrôles qui n'existaient pas
 
