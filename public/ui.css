@@ -1049,7 +1049,7 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
      largeur commune : sur une page plus large, le menu se serait ancré à
      trente pixels du bord qu' il vise. */
   right:max(10px,calc(50vw - var(--tbf-colonne,var(--colonne)) / 2 + 10px));
-  width:min(230px,72vw);padding:6px;display:grid;gap:2px;
+  width:min(230px,72vw);padding:6px;display:grid;gap:1px;
   background:rgba(12,17,24,.96);border:1px solid var(--trait);border-radius:var(--r);
   box-shadow:0 24px 60px rgba(0,0,0,.7);
   transform-origin:100% 0;transform:scale(.9);opacity:0;pointer-events:none;
@@ -1057,7 +1057,7 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
 }
 .tbf-tiroir.on{transform:scale(1);opacity:1;pointer-events:auto}
 .tbf-tiroir a{
-  display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
   color:inherit;text-decoration:none;font-size:14px;
 }
 .tbf-tiroir a:hover,.tbf-tiroir a:focus-visible{background:rgba(242,238,228,.08)}
@@ -1071,10 +1071,23 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
 /* Le menu est désormais la seule navigation du jeu : il porte onze
    destinations au lieu de six, et il lui faut donc de la place et des
    rubriques. Sans elles, onze lignes à plat forment un mur qu'on ne lit pas. */
-.tbf-tiroir{width:min(268px,80vw);max-height:calc(100vh - 92px);overflow:auto}
+/* La hauteur disponible, et pourquoi `dvh`.
+ *
+ * Le menu porte dix-sept lignes depuis que l'entrée d'administration y arrive
+ * vraiment — elle ne s'y posait plus, et personne ne l'avait vu. Sur un écran
+ * de neuf cents pixels, la dernière ligne tombait sous le bord : c'est-à-dire
+ * « Se déconnecter », celle qu'on vient chercher.
+ *
+ * `100vh` ment sur un téléphone. Il vaut la **plus grande** hauteur possible,
+ * barre d'adresse repliée ; tant qu'elle est dépliée, un menu calculé dessus
+ * dépasse de sa hauteur à elle. `dvh` suit la fenêtre réellement visible.
+ * `vh` reste écrit au-dessus en repli : un navigateur qui ignore `dvh` ignore
+ * la ligne entière, il ne tombe pas sur zéro. */
+.tbf-tiroir{width:min(268px,80vw);max-height:calc(100vh - 70px);overflow:auto}
+.tbf-tiroir{max-height:calc(100dvh - 70px)}
 .tbf-rubrique{
   font-family:var(--banner);font-size:8.5px;letter-spacing:.2em;opacity:.42;
-  padding:10px 12px 4px;
+  padding:9px 12px 3px;
 }
 .tbf-rubrique:first-child{padding-top:4px}
 /* La page où l'on est : marquée, et volontairement pas cliquable au regard —

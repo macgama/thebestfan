@@ -43,7 +43,7 @@ async function jusqua(fn, ms = 8000) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities, saisons, reglages, admin_audit,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
@@ -57,7 +57,10 @@ await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
 // sans jamais éprouver le cas qui a produit la panne.
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql',
                  'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'stades.sql',
-                 'niveau.sql']) {
+                 // Les saisons décident de ce que le classeur range. Sans cette table,
+                 // le jeu tourne toutes séries ouvertes et la restriction ne s'éprouve pas.
+                 // 'admin.sql' vient avec : la reprise de la saison 1 lit 'reglages'.
+                 'niveau.sql', 'admin.sql', 'saisons.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
@@ -454,6 +457,154 @@ check('les Fanzzy non possédés portent leur nom',
     await fiche.screenshot({ path: join(tmpdir(), 'fiche.png') });
   }
   await fiche.close();
+}
+
+/* ------------------------- le classeur ne range que ce qui est ouvert
+
+ * Il montrait **tout le catalogue publié**, séries à venir comprises : deux
+ * cent quarante-sept silhouettes grises, dont une bonne part n'existe encore
+ * pour personne. Un classeur est une promesse — « voilà ce qu'il y a à
+ * trouver » — et une promesse qu'on ne peut pas tenir n'est pas un but, c'est
+ * un mur. La surprise d'une saison neuve disparaissait avec : tout avait déjà
+ * été vu, en gris.
+ *
+ * Les saisons sont additives, donc « la saison en cours et toutes celles
+ * d'avant » est exactement la liste des séries ouvertes.
+ *
+ * Le contrôle lance une vraie saison qui n'ouvre qu'une série, recharge le
+ * serveur comme le fait l'administration, et compte les cases. C'est le seul
+ * moyen d'éprouver la restriction : jusqu'ici aucune suite n'avait de saison
+ * lancée, donc tout était ouvert et le filtre n'avait rien à filtrer.
+ */
+{
+  const { chargerSaisons } = await import('../src/server/fanzzy/saisons.js');
+  const { chargerSeries } = await import('../src/server/fanzzy/catalogue.js');
+
+  // La série du Fanzzy équipé, pour que l'écran « Mon Fanzzy » reste sensé.
+  const laSerie = PUBLIE.find((f) => f.id === 'V1').set;
+  await pool.query('DELETE FROM saisons');
+  await pool.query(
+    `INSERT INTO saisons (numero, nom, texte, series, tenues, lancee_a)
+     VALUES (9, 'Essai', 'Pour voir.', ?, JSON_ARRAY(), NOW(3))`,
+    [JSON.stringify([laSerie])]);
+  await chargerSaisons(pool);
+  await chargerSeries(pool);
+
+  /* `sansCache`, et c'est essentiel. `/api/fanzzy/dex` est servie avec une
+     minute de cache — la bonne durée en production, puisqu'une saison se lance
+     depuis l'administration. Ici, la page rejouait la réponse d'avant : elle
+     recevait toutes les séries ouvertes et le contrôle mesurait un classeur
+     qui n'avait jamais entendu parler de la saison qu'on venait de lancer. */
+  const p = await ouvrir({ sansCache: true });
+  await p.evaluate(() => [...document.querySelectorAll('button')]
+    .find((b) => /CLASSEUR/i.test(b.textContent))?.click());
+  await dodo(400);
+
+  const vu = await p.evaluate(() => ({
+    cases: [...document.querySelectorAll('#grid .slot')].map((s) => s.dataset.open),
+    total: document.getElementById('progTxt')?.textContent ?? '',
+  }));
+
+  /* Ce qui doit s'y trouver : les personnages de la série ouverte, **plus**
+     ceux qu'on possède déjà ailleurs. Fermer une série cesse de distribuer ;
+     ça n'efface pas les cartes de qui les a, et les faire disparaître du
+     classeur transformerait une collection en trou. */
+  const PERSOS_TOUS = PUBLIE.filter((f) => !PUBLIE.some((x) => x.evo === f.id));
+  const MIENS = ['G1', 'X7', 'X8', 'V1', 'P1'];
+  const attendus = PERSOS_TOUS
+    .filter((f) => f.set === laSerie || MIENS.includes(f.id)).map((f) => f.id);
+
+  const trop = vu.cases.filter((id) => !attendus.includes(id));
+  const manque = attendus.filter((id) => !vu.cases.includes(id));
+
+  check('une saison lancée restreint le classeur à ses séries',
+    vu.cases.length < PERSOS_TOUS.length && trop.length === 0);
+  if (trop.length) console.log('    en trop :', trop.slice(0, 8).join(' '));
+  check('et rien de ce qui est ouvert ne manque', manque.length === 0);
+  if (manque.length) console.log('    manquent :', manque.slice(0, 8).join(' '));
+
+  /* Le cas qui compte vraiment : une carte possédée dans une série **fermée**
+     reste au classeur. C'est la promesse faite au collectionneur, et c'est ce
+     qu'un filtre écrit trop vite casse en premier. */
+  const dehors = MIENS.filter((id) => PERSOS_TOUS.find((f) => f.id === id)?.set !== laSerie);
+  check('une carte possédée dans une série fermée reste rangée',
+    dehors.length > 0 && dehors.every((id) => vu.cases.includes(id))
+    || (console.log('    hors saison :', dehors.join(' ')), false));
+
+  await p.close();
+
+  /* On rend le banc comme on l'a trouvé : les contrôles qui suivent comptent
+     sur un catalogue entier, et une suite qui laisse son décor derrière elle
+     fait tomber la suivante sans dire pourquoi. */
+  await pool.query('DELETE FROM saisons');
+  await chargerSaisons(pool);
+  await chargerSeries(pool);
+}
+
+/* ------------------------- la fiche d'un Fanzzy qu'on ne possède pas
+
+ * La grille le montre en silhouette grise. L'ouvrir le rendait à ses
+ * couleurs, avec ses âges, ses effets et ses tenues à fouiller case par case :
+ * deux images contradictoires du même personnage, à un doigt l'une de l'autre,
+ * et la seconde livrait tout ce que la première disait ne pas avoir.
+ *
+ * Elle reste maintenant éteinte, et inerte. « Inerte » se mesure des deux
+ * côtés : la souris (`pointer-events`) et le clavier (`disabled`). Il en
+ * manquait un dans le premier jet — une rangée de boutons muets accessible à
+ * la tabulation.
+ */
+{
+  const pas = await nav.newPage();
+  pas.on('pageerror', (e) => erreurs.push(e.message));
+  await pas.setViewport({ width: 400, height: 880 });
+  /* X1 : publié, jamais possédé par ce compte — les cinq possédés sont G1, X7,
+     X8, V1 et P1. Pris dans le catalogue plutôt qu'écrit en dur, pour que le
+     contrôle survive à un catalogue qui bouge. */
+  const absent = PUBLIE.find((f) => !['G1', 'X7', 'X8', 'V1', 'P1'].includes(f.id)
+    && !PUBLIE.some((x) => x.evo === f.id));
+  await pas.goto(`${base}/fanzzy/${absent.id}`, { waitUntil: 'networkidle0' });
+  const la = await pas.waitForSelector('.fiche', { timeout: 8000 })
+    .then(() => true).catch(() => false);
+  check('la fiche d’un Fanzzy non possédé s’affiche', la);
+
+  if (la) {
+    const e = await pas.evaluate(() => {
+      const f = document.querySelector('.fiche');
+      const art = document.querySelector('.fiche .art');
+      const rangs = document.querySelector('.fiche .rangs');
+      const cases = [...document.querySelectorAll('.fiche .case')];
+      return {
+        marquee: f.classList.contains('pas-a-moi'),
+        // Le même gris que la grille : ce doit être reconnaissable comme le
+        // même état, pas comme un défaut d'affichage.
+        gris: getComputedStyle(art).filter,
+        rangsInertes: getComputedStyle(rangs).pointerEvents === 'none',
+        casesMortes: cases.length > 0 && cases.every((c) => c.disabled),
+        auClavier: cases.every((c) => c.tabIndex < 0),
+        // Le cri ne se crie pas : c'était le seul élément qui répondait encore
+        // sur une carte éteinte.
+        criBouton: Boolean(document.querySelector('.fiche [data-cri]')),
+        // Ce qu'on a le droit de savoir avant de l'avoir reste lisible.
+        nom: document.querySelector('.fiche h1')?.textContent ?? '',
+        detail: document.querySelector('#fiche-detail')?.textContent ?? '',
+        bouton: document.querySelector('.actions .bt')?.textContent ?? '',
+      };
+    });
+    check('elle est marquée comme telle', e.marquee);
+    check('le personnage y est gris, comme dans la grille',
+      /grayscale/.test(e.gris) || (console.log('        filtre :', e.gris), false));
+    check('les rangées ne répondent pas à la souris', e.rangsInertes);
+    check('ni au clavier', e.casesMortes && e.auClavier);
+    check('le cri n’est plus un bouton', !e.criBouton);
+    check('le nom, la famille et la rareté restent lisibles',
+      e.nom.trim().length > 3 && /Commune|Rare|Épique|Légendaire/.test(e.nom));
+    check('et la fiche dit comment l’obtenir',
+      /booster/i.test(e.detail) || (console.log('        dit :', e.detail), false));
+    check('en nommant sa série', /LA TRIBUNE|LES |LE |CE QUI/i.test(e.detail)
+      || (console.log('        dit :', e.detail), false));
+    check('l’action reste « pas encore à toi »', /PAS ENCORE/i.test(e.bouton));
+  }
+  await pas.close();
 }
 
 /* ------------------------------------ la fiche par-dessus le classeur

@@ -219,5 +219,50 @@ console.log('\nLes stades');
     || (console.log('        sans phrase :', muets.map((s) => s.id).join(', ')), false));
 }
 
+/* ============================================ les effets ont tous une phrase
+
+   Un effet que le jeu applique et que la carte n'affiche pas est un effet qui
+   n'existe pas pour le joueur. C'est arrivé, et à grande échelle : `modsText`
+   dans `public/cartes.js` ne nommait ni `parryResist` — **cent trois cartes** —
+   ni `costPenalty` — dix-sept. La liste des effets n'était pas vide sur ces
+   cartes, seulement incomplète, et une carte qui montre deux effets sur trois
+   a exactement l'air d'une carte qui en a deux. Personne ne peut voir ça en
+   relisant.
+
+   On lit donc la table de la page — à l'expression régulière, faute de pouvoir
+   importer un script de navigateur — et on la confronte aux clés employées par
+   **le catalogue et l'équipement**, qui sont les deux seules choses que
+   `modsText` rend. Les stades et les bonus de KOP portent les mêmes clés mais
+   s'affichent ailleurs, avec leur propre phrase — le contrôle juste au-dessus
+   vérifie qu'aucun stade n'est muet. Les mêler ici ferait rougir ce contrôle
+   pour `pushMult`, que nulle carte ne porte : un garde-fou qui se plaint de ce
+   qui va bien est un garde-fou qu'on désactive. */
+
+console.log('\nLes effets');
+
+{
+  const { readFileSync } = await import('node:fs');
+  const source = readFileSync(new URL('../public/cartes.js', import.meta.url), 'utf8');
+  const corps = source.slice(source.indexOf('function modsText'),
+    source.indexOf('function rarMark'));
+  const nommees = new Set([...corps.matchAll(/\bm\.([A-Za-z]+)/g)].map((x) => x[1]));
+
+  const employees = new Set();
+  const ramasser = (o) => { for (const k of Object.keys(o?.mods ?? {})) employees.add(k); };
+  DEX.forEach(ramasser);
+  STUFF.forEach(ramasser);
+
+  const orphelines = [...employees].filter((k) => !nommees.has(k));
+  check(`les ${employees.size} effets employés ont tous une phrase`,
+    orphelines.length === 0
+    || (console.log('        sans phrase :', orphelines.join(', ')), false));
+
+  /* Et l'inverse : une phrase pour un effet que plus rien ne porte décrit un
+     jeu qui n'existe plus. Moins grave, mais c'est la même dérive. */
+  const mortes = [...nommees].filter((k) => !employees.has(k));
+  check('et aucune phrase ne décrit un effet disparu', mortes.length === 0
+    || (console.log('        sans porteur :', mortes.join(', ')), false));
+}
+
 console.log(ko ? `\n${ko} échec(s)\n` : '\ntout est vert\n');
 process.exitCode = ko ? 1 : 0;

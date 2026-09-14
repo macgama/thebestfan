@@ -54,6 +54,31 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
  * c'est très différent d'inventer un chiffre. Un document de référence qui
  * refuse de se générer sans base serait un document qu'on ne génère plus.
  */
+/**
+ * Ce qui est dessiné, compté **sur le disque**.
+ *
+ * Ce paragraphe portait trois nombres écrits à la main — « 198 personnages,
+ * 262 âges, 183 cartes » — dans un document dont l'en-tête promet qu'il ne peut
+ * pas mentir plus longtemps qu'une commande. Ils dataient du lot d'avant, et
+ * rien n'aurait prévenu : un chiffre faux a exactement l'air d'un chiffre.
+ *
+ * Le compte qui décide est celui des **premiers âges**. Un âge supérieur sans
+ * dessin tombe sur celui de son premier âge, donc dessiner une lignée efface la
+ * dette de tous ses âges d'un coup.
+ */
+const DESSINS = await (async () => {
+  const { existsSync } = await import('node:fs');
+  const img = path.join(RACINE, 'public', 'img', 'fanzzy');
+  const suite = new Set(DEX.map((f) => f.evo).filter(Boolean));
+  const persos = DEX.filter((f) => f.publie !== false && !suite.has(f.id));
+  const faits = persos.filter((p) => existsSync(path.join(img, `${p.id}.png`))).length;
+  const etats = await import('node:fs/promises')
+    .then((fs) => fs.readFile(path.join(img, 'index.json'), 'utf8'))
+    .then((t) => Object.keys(JSON.parse(t).fanzzy ?? {}).length)
+    .catch(() => 0);
+  return { total: persos.length, faits, restent: persos.length - faits, etats };
+})();
+
 const SAISONS = await (async () => {
   if (!process.env.DATABASE_URL) return [];
   try {
@@ -810,10 +835,14 @@ tr:last-child td{border-bottom:0}
     <div class="e" data-f="fait"><b>LA SÉCURITÉ</b><p>Notation côté serveur, détection de
       frappes non humaines, en-têtes de sécurité, limitation de débit, SQL paramétré.</p></div>
 
-    <div class="e" data-f="partiel"><b>LES ILLUSTRATIONS</b><p>198 personnages dessinés en
-      propre ; 262 âges montrent le dessin de leur premier âge. <b>183 cartes</b>
-      attendent encore le leur — 31 légendaires et les cinq séries neuves. Quarante-quatre
-      dessins en effaceraient cent trente-deux : les âges suivent leur premier âge.</p></div>
+    <div class="e" data-f="partiel"><b>LES ILLUSTRATIONS</b><p>${DESSINS.faits}
+      personnages sur ${DESSINS.total} sont dessinés ; <b>${DESSINS.restent}</b> attendent
+      encore leur premier âge, et leurs âges supérieurs avec — un âge sans dessin tombe sur
+      celui de son premier. Les douze états ne sont dessinés que pour
+      ${DESSINS.etats} personnage${DESSINS.etats > 1 ? 's' : ''}.<br>
+      Le détail, dessin par dessin :
+      <a href="https://claude.ai/code/artifact/e1a1cacd-6653-4db2-981a-792cbfe94162"
+        >le catalogue illustré</a>.</p></div>
     <div class="e" data-f="partiel"><b>LA BOUTIQUE</b><p>L’étal fonctionne en écharpes et en
       billets. Les paiements en euros ne sont <b>pas branchés</b> : la boutique est en
       vitrine.</p></div>

@@ -246,8 +246,21 @@
         .map((r) => [r, cases.filter((x) => x.rang === r)])
         .filter(([, l]) => l.length);
 
+      /* Un Fanzzy qu'on ne possède pas est **éteint**, fiche comprise.
+       *
+       * La grille le montrait en silhouette grise, et l'ouvrir le rendait à ses
+       * couleurs, avec ses âges, ses effets et ses tenues à fouiller case par
+       * case. Deux images du même personnage, contradictoires, à un doigt
+       * l'une de l'autre : celle qui dit « tu ne l'as pas » et celle qui le
+       * livre entier.
+       *
+       * Ce qui reste lisible est ce qu'un joueur a le droit de savoir avant de
+       * l'avoir : son nom, sa famille, sa rareté, sa silhouette, et comment on
+       * l'obtient. Le reste s'ouvre avec la carte. */
+      const aMoi = Boolean(d.possede);
+
       hote.innerHTML = `
-        <div class="fiche">
+        <div class="fiche${aMoi ? '' : ' pas-a-moi'}">
           <div class="head">
             ${opts.fermer
               ? '<button class="rond" data-fermer aria-label="Fermer">✕</button>'
@@ -264,8 +277,14 @@
             <div class="txt">
               <div class="pastilles">
                 <span class="pastille" style="--c:${c}"><b>${NOMTYPE[f.type] ?? f.type}</b></span>
-                <button class="pastille" data-cri style="cursor:pointer">
-                  Cri : <b style="color:${c}">${esc(f.cri?.label ?? '—')}</b> ▸</button>
+                ${aMoi
+                  ? `<button class="pastille" data-cri style="cursor:pointer">
+                      Cri : <b style="color:${c}">${esc(f.cri?.label ?? '—')}</b> ▸</button>`
+                  /* Le cri se **crie** quand on touche la pastille. Sur un
+                     Fanzzy qu'on n'a pas, c'est le seul élément qui répondait
+                     encore — une carte éteinte qui pousse un cri. */
+                  : `<span class="pastille">Cri : <b style="color:${c}">${
+                    esc(f.cri?.label ?? '—')}</b></span>`}
               </div>
               <h2>${esc(f.nom)}</h2>
               <div class="sous">${d.possede
@@ -275,7 +294,7 @@
             </div>
           </div>
 
-          <div class="rangs">${rangs.map(([nom, l]) => `
+          <div class="rangs" ${aMoi ? '' : 'aria-hidden="true"'}>${rangs.map(([nom, l]) => `
             <div class="rang"><h4>${nom}</h4><div class="cases">${l.map(caseHTML).join('')}</div></div>`).join('')}
           </div>
 
@@ -293,8 +312,12 @@
       const dedans = x.image
         ? `<img src="${x.image}" alt="" onerror="this.remove()">`
         : trait(x.icone ?? 'age');
+      /* `disabled` et non seulement `pointer-events:none` : une case
+         inaccessible à la souris reste accessible au clavier, et la tabulation
+         emmenait dans une rangée de boutons muets. Le style fait le reste. */
+      const mort = d.possede ? '' : ' disabled tabindex="-1"';
       return `<button class="case ${x.ok ? 'ok' : 'verrou'} ${x.cle === choisie ? 'choisie' : ''}"
-        style="--cc:${x.couleur}" data-case="${esc(x.cle)}" title="${esc(x.titre)}">
+        style="--cc:${x.couleur}" data-case="${esc(x.cle)}" title="${esc(x.titre)}"${mort}>
         <span class="pav"></span>
         <span class="dedans">${dedans}</span>
         ${x.ok ? '' : '<span class="cadenas">🔒</span>'}
@@ -304,8 +327,23 @@
 
     /** Le détail de la case regardée. Hauteur fixe : rien ne saute. */
     function rendreDetail() {
-      const x = cases.find((y) => y.cle === choisie);
       const n = hote.querySelector('#fiche-detail');
+      /* Sur un Fanzzy qu'on n'a pas, le détail d'une case choisie au hasard
+         n'a pas de sens : il décrivait « ÂGE À VENIR » d'un personnage qu'on
+         ne possède à aucun âge. Une seule phrase à la place, celle qui répond
+         à la question qu'on se pose en regardant une carte grise. */
+      if (!d.possede) {
+        /* Le nom de la série vient du serveur (`setNom`). Une table « TR → LA
+           TRIBUNE » écrite ici serait une copie de celle de `dex.js`, et les
+           cinq séries neuves ont déjà montré ce que devient une copie. */
+        const s = d.fanzzy.setNom;
+        n.innerHTML = `<div class="t">Comment l’obtenir<em>${
+          esc(NOMRAR[d.fanzzy.rar] ?? d.fanzzy.rar)}</em></div>
+          <p>Il se tire dans les boosters${s ? ` de ${esc(s)}` : ''}. Ses âges,
+          ses effets et ses tenues s’ouvrent avec lui.</p>`;
+        return;
+      }
+      const x = cases.find((y) => y.cle === choisie);
       if (!x) { n.innerHTML = ''; return; }
       n.innerHTML = `
         <div class="t">${esc(x.titre)}<em>${esc(x.sorte)}</em></div>

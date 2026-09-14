@@ -239,6 +239,36 @@ for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
     propre = false;
   }
 
+  /* **Un seul menu, et une seule liste de destinations.**
+
+     L'accueil s'était écrit le sien, à la main, dans son HTML : cinq entrées
+     quand le menu commun en portait onze, sans rubriques, et avec une
+     déconnexion qui demandait confirmation d'un côté et pas de l'autre. Rien
+     ne cassait — les deux menus s'ouvraient, les deux menaient quelque part —
+     et c'est bien pour ça que l'écart a tenu.
+
+     Deux contrôles, parce que la faute a deux formes. Un tiroir écrit à la
+     main dans une page, d'abord : c'est ainsi qu'elle est née. Et une page
+     sans `menu.js`, ensuite : `nav.js` s'en sert, et son absence le ferait
+     lever avant même de poser la barre du haut.
+
+     `MENU_A_PART` n'a que les deux écrans où l'on n'est pas encore entré dans
+     le jeu : proposer « Mon deck » à quelqu'un qui n'a pas de compte n'est pas
+     une navigation, c'est une impasse de plus. */
+  const MENU_A_PART = new Set(['compte.html', 'bienvenue.html']);
+  if (!MENU_A_PART.has(nom)) {
+    if (!/src\s*=\s*["']\/menu\.js/.test(html)) {
+      ko(nom, 'menu.js n’est pas chargée : cette page n’a pas le menu du jeu '
+        + '(et nav.js, qui s’en sert, lèverait avant de poser la barre du haut)');
+      propre = false;
+    }
+    if (/class\s*=\s*["'][^"']*\btiroir\b/.test(html)) {
+      ko(nom, 'un tiroir de menu écrit dans la page : le menu vient de menu.js, '
+        + 'et un second finit toujours par ne plus dire la même chose');
+      propre = false;
+    }
+  }
+
   /* **Une seule largeur de colonne pour toute l'application.**
 
      Chaque page portait la sienne — 440, 460 ou 520 pixels selon l'écran et le

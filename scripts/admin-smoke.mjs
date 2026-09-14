@@ -403,6 +403,20 @@ check('une pièce d’équipement inconnue est refusée',
 r = await call(`/api/admin/saison/${essai.id}/lancer`, { method: 'POST', body: { lancer: false } });
 check('la remettre en brouillon referme ses séries', r.json.ouvertes === null);
 
+/* Un corps que la route ne comprend pas ne veut pas dire « lance ».
+
+   Elle lisait `lancer !== false` : champ absent, mal nommé ou mal emballé
+   valaient tous « oui ». Le geste le plus visible du jeu — celui qui ouvre du
+   contenu à tous les joueurs au même instant — se déclenchait donc sur une
+   requête fautive, et c'est précisément ce que l'écran d'administration a fait
+   pendant des semaines en envoyant un corps de la mauvaise forme. */
+r = await call(`/api/admin/saison/${essai.id}/lancer`, { method: 'POST', body: {} });
+check('une demande de lancement sans réponse claire est refusée, pas devinée',
+  r.status === 400 && r.json.error === 'admin.error.lancer_manquant');
+r = await call(`/api/admin/saisons`);
+check('et elle n’a rien lancé',
+  r.json.saisons.find((x) => x.id === essai.id)?.lancee === false);
+
 r = await call(`/api/admin/saison/${essai.id}`, { method: 'DELETE' });
 check('et un brouillon se supprime', r.status === 200
   && !r.json.saisons.some((x) => x.id === essai.id));

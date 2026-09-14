@@ -136,31 +136,18 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 .bourse{display:flex;gap:10px;margin-left:auto;align-items:center}
 
-/* Le menu. L'accueil ne charge pas la barre commune : sans lui, tout ce qui
-   n'a pas sa tuile — le deck, le télétexte, le compte — serait injoignable
-   depuis l'écran principal. */
+/* Le bouton du menu. L'accueil ne charge pas la barre commune — ses deux rails
+   la remplacent — mais il charge le **menu** commun : sans lui, tout ce qui n'a
+   pas sa tuile serait injoignable depuis l'écran principal, et il l'était à
+   moitié tant que cette page s'écrivait le sien. */
 /* Les trois barres s'empilent : la plaque, elle, range ses enfants en ligne. */
-.burger{width:var(--haut-h);height:var(--haut-h);min-height:0;flex-direction:column;gap:4px;
+.burger{display:flex;width:var(--haut-h);height:var(--haut-h);min-height:0;flex-direction:column;gap:4px;
   padding:12px 10px;flex:none}
 .burger span{display:block;height:2.5px;width:100%;background:var(--encre);border-radius:2px;
   box-shadow:0 1px 0 rgba(0,0,0,.25)}
-.voile{position:fixed;inset:0;z-index:8;background:rgba(4,6,10,.72);opacity:0;
-  pointer-events:none;transition:opacity .2s ease;backdrop-filter:blur(3px)}
-.voile.on{opacity:1;pointer-events:auto}
-.tiroir{position:absolute;z-index:9;top:calc(env(safe-area-inset-top) + 58px);right:10px;
-  width:min(230px,72vw);padding:6px;display:grid;gap:2px;
-  background:rgba(12,17,24,.96);border:1px solid var(--trait);border-radius:var(--r);
-  box-shadow:0 24px 60px rgba(0,0,0,.7);
-  transform-origin:100% 0;transform:scale(.9);opacity:0;pointer-events:none;
-  transition:opacity .16s ease,transform .16s ease}
-.tiroir.on{transform:scale(1);opacity:1;pointer-events:auto}
-.tiroir a{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;
-  color:inherit;text-decoration:none;font-size:14px}
-.tiroir a:hover,.tiroir a:focus-visible{background:rgba(242,238,228,.08)}
-.tiroir a svg{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;
-  stroke-linecap:round;stroke-linejoin:round;opacity:.7}
-.tiroir hr{border:0;border-top:1px solid var(--trait);margin:4px 8px}
-.tiroir a.sortie{color:#F0846F}
+/* Le tiroir, son voile et ses rubriques vivent dans ui.css (.tbf-tiroir).
+   Ils étaient recopiés ici, à une largeur et une élévation près : deux menus
+   qui se ressemblent sans être les mêmes, c'est le début de la dérive. */
 
 /* --------------------------------------------------------- bande centrale */
 /* `overflow:hidden` : le halo et l’ombre au sol débordent volontairement du
@@ -635,23 +622,14 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
            aria-label="Mes boosters — aller à la boutique">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg>
           <span id="packs">0</span><b class="plus" aria-hidden="true">+</b></a>
-        <button class="tbf-plaque burger" id="burger" aria-label="Menu" aria-expanded="false"
-          aria-controls="tiroir"><span></span><span></span><span></span></button>
+        <button class="tbf-plaque burger tbf-burger" id="burger" aria-label="Menu"
+          ><span></span><span></span><span></span></button>
       </div>
     </header>
 
-    <nav class="tiroir" id="tiroir" aria-label="Le reste du jeu" hidden>
-      <a href="/deck"><svg viewBox="0 0 24 24"><path d="M4 7h10v13H4z"/><path d="M8 4h10v13"/></svg>Mon deck</a>
-      <a href="/profil"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Mon profil</a>
-      <a href="/equipes"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6z"/></svg>Mes clubs</a>
-      <a href="/kop"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0M16.5 20a4.5 4.5 0 0 0-2.6-4.1"/><circle cx="16" cy="8" r="2.6"/></svg>Mon KOP</a>
-      <a href="/teletext"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h6"/></svg>Télétexte</a>
-      <hr>
-      <a href="/compte"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>Mon compte</a>
-      <a href="/admin" id="lienAdmin" hidden><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>Administration</a>
-      <a href="#" class="sortie" id="sortir"><svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8l-4 4 4 4M6 12h9"/></svg>Se déconnecter</a>
-    </nav>
-    <div class="voile" id="voile"></div>
+    <!-- Le tiroir et son voile ne sont plus écrits ici : menu.js les monte,
+         avec la même liste que sur les dix-huit autres pages. Ce bloc portait
+         cinq destinations quand le menu commun en portait onze. -->
 
     <div class="centre">
       <nav class="rail" aria-label="Le jeu">
@@ -762,6 +740,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
      fanzzy-etats.js, lui, sait quel dessin montrer pour un Fanzzy donné dans un
      état donné — et sur quoi retomber quand ce dessin n'existe pas encore. -->
+<script src="/menu.js"></script>
 <script src="/fanzzy-etats.js"></script>
 <!-- `fanzzy-art.js` pour son seul répertoire d'illustrations : c'est lui qui
      sait quels Fanzzy sont dessinés et où. L'accueil ne dessine toujours rien
@@ -1199,43 +1178,10 @@ function saluer() {
 
 /* -------------------------------------------------------------- le menu */
 
-{
-  const tiroir = $('tiroir');
-  const voile = $('voile');
-  const bouton = $('burger');
-
-  const ouvrir = (oui) => {
-    // `hidden` et la classe : la classe anime, l'attribut sort vraiment le
-    // menu de l'ordre de tabulation. Sans lui, la tabulation traverse un
-    // menu invisible.
-    if (oui) tiroir.hidden = false;
-    requestAnimationFrame(() => {
-      tiroir.classList.toggle('on', oui);
-      voile.classList.toggle('on', oui);
-      bouton.setAttribute('aria-expanded', String(oui));
-      if (!oui) setTimeout(() => { if (!tiroir.classList.contains('on')) tiroir.hidden = true; }, 200);
-    });
-  };
-
-  bouton.addEventListener('click', () => ouvrir(!tiroir.classList.contains('on')));
-  voile.addEventListener('click', () => ouvrir(false));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ouvrir(false); });
-
-  $('sortir').addEventListener('click', async (e) => {
-    e.preventDefault();
-    // Même règle qu'au profil : la déconnexion se demande. Ici le bouton est
-    // dans un tiroir qu'on ouvre pour aller ailleurs, et il est le dernier de
-    // la liste — c'est celui qu'on touche en visant le précédent.
-    if (!(await window.TBF_DIALOGUE?.confirmer({
-      titre: 'SE DÉCONNECTER ?',
-      texte: 'Ta collection et tes duels restent. Il faudra te reconnecter pour y revenir.',
-      oui: 'SE DÉCONNECTER', ton: 'flare',
-    }))) return;
-    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); }
-    catch { /* hors ligne : on recharge quand même, la session locale ne sert plus */ }
-    location.href = '/';
-  });
-}
+/* Le tiroir vient de menu.js — la même liste, les mêmes rubriques et la même
+   confirmation de sortie que partout ailleurs. Cette page montait le sien :
+   cinq destinations au lieu de onze, et aucune entrée d’administration. */
+window.TBF_MENU.monter($('burger'));
 
 /* ------------------------------------------------------------ le hub */
 
@@ -1263,7 +1209,10 @@ async function jsonp(url, options) {
      sont vides, et il ne restait qu'un rectangle noir sous la pastille. Les
      deux se lisent au profil, qui est à un doigt d'ici. */
   $('initiale').textContent = (user.pseudo ?? '?').trim().charAt(0).toLowerCase() || '?';
-  if (user.role === 'admin') $('lienAdmin').hidden = false;
+  /* L'entrée d'administration n'est plus décidée ici. Elle se lisait sur
+     `user.role`, pendant que les autres pages interrogeaient `estAdmin` côté
+     serveur : deux réponses possibles à la même question. menu.js ne garde que
+     la seconde, qui est celle qui fait autorité. */
 
   // Les clubs suivis : à savoir de quel côté du score se réjouir.
   const mesClubs = new Set();

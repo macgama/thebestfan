@@ -878,6 +878,12 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null })
            elle affichait donc le Choriste avec le nom du Meneur de chant. */
         ageId: f.id,
         nom: f.nom, type: f.type, set: f.set, stage: stade, rar: f.rar,
+        /* Le nom de la série, et pas seulement son identifiant.
+           La fiche d'un Fanzzy qu'on ne possède pas dit maintenant dans quel
+           booster il se tire ; sans ce champ elle aurait dû se fabriquer sa
+           propre table « TR → LA TRIBUNE », c'est-à-dire une copie de moins en
+           moins juste de celle qui vit dans `dex.js`. */
+        setNom: SETS.find((s) => s.id === f.set)?.nom ?? null,
         mods: f.mods, cri: f.cri, evo: f.evo ?? null,
         histoire: f.histoire ?? null,
       },
