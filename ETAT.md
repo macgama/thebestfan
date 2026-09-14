@@ -2607,6 +2607,64 @@ Virage. C'est la question que ce contrôle existe pour poser.
 
 ---
 
+### L'onglet qui n'en était pas un, et les 262 dessins retrouvés
+
+Deux défauts vus sur capture, tous deux instructifs.
+
+**Le troisième onglet de la page des Fanzzy était un lien nu.** Il portait
+`class="go"` quand les deux autres n'avaient pas de classe : le remplacement
+qui a posé `.tbf-onglet` ne l'a pas reconnu, et aucune règle ne visait `.go`
+dans cette page. Résultat : « DECK » en bleu de navigateur, hors de la barre,
+posé à côté d'elle.
+
+Le contrôle « aucun bouton n'est resté au style du navigateur » ne pouvait pas
+le voir — il ne regarde que les `<button>`, et un `<a>` sans style n'est ni gris
+ni en relief. Il y a donc maintenant un contrôle **structurel** : *chaque enfant
+d'un rail d'onglets est un onglet*. Il ne juge pas une couleur, il vérifie que
+les deux moitiés d'une même brique sont bien ensemble.
+
+En chemin, deux autres choses :
+
+— `.tbf-onglet` était un conteneur flex, et son étiquette est un **texte nu**
+  posé à côté d'une icône. Un texte nu dans un conteneur flex devient un élément
+  anonyme qui **ne sait pas rétrécir**, et `text-overflow:ellipsis` n'agit
+  jamais sur un conteneur flex : trois onglets qui refusent de céder débordent
+  leur rail. Il est en bloc maintenant, l'icône en `inline-block`.
+— Sur un écran étroit, **l'icône part avant l'étiquette** — un pictogramme qu'on
+  reconnaît ne vaut pas un mot qu'on lit. Le seuil est à 400 px parce qu'un
+  téléphone ordinaire fait 360, et que « MON FANZZY » n'y passait plus.
+
+Trois pages avaient recopié la règle de l'onglet pour leurs boutons nus, et ces
+copies portaient le défaut de l'original. Leurs dix boutons prennent la classe
+comme tout le monde ; les trois copies s'en vont.
+
+**Et le dessin manquant.** Le Fanzzy équipé s'affichait en silhouette
+géométrique. Ce n'était pas une image cassée : c'était `MS9C`, le troisième âge
+de `MS9` — et **`MS9` est dessiné**.
+
+Les identifiants d'une lignée s'écrivent `MS9`, `MS9B`, `MS9C`. **Deux cent
+soixante-deux cartes du catalogue sont des âges supérieurs de personnages déjà
+dessinés** — c'est exactement le reliquat annoncé depuis des sessions comme « 262
+illustrations à produire ». Il n'y avait rien à produire : il manquait un repli.
+
+`FZART.adresse` descend maintenant sur la racine de la lignée quand l'âge n'a
+pas son propre dessin. Le rendu procédural reste ce qu'il a toujours été — le
+repli du **personnage inconnu** — et cesse d'être celui d'un personnage connu
+qu'on n'a pas encore redessiné plus vieux. Rien ne ment au joueur : la carte
+affiche son étage à côté du dessin. Le jour où un troisième âge est dessiné, il
+prend la place sans qu'on touche à la fonction.
+
+L'administration suit la même résolution : elle listait deux cent soixante-deux
+tirets là où le joueur, lui, voit un personnage.
+
+`images:test` mesure désormais **combien de cartes du catalogue réel obtiennent
+une adresse** : 198 dessinées en propre, 262 par leur premier âge, **31 sans
+rien**. Ces trente et une sont les légendaires écrites cette session : ce sont
+les seules cartes du jeu encore en rendu procédural, et il leur faut une vraie
+production d'illustrations.
+
+---
+
 ## 5. Ce qui reste à faire
 
 Par ordre d'utilité.
@@ -2620,10 +2678,15 @@ Par ordre d'utilité.
    seule. **C'est une décision de conception, pas une correction** : rien n'est
    cassé tant qu'elle n'est pas prise.
 
-1. **Illustrer les âges.** C'est le seul manque qui se voit à l'écran. Deux cent
-   soixante-seize âges à dessiner, plus les tenues et les objets portés. La
-   chaîne les avale par lots, le repli tient en attendant — mais un catalogue
-   où tout le monde reste au premier âge ne montre pas ce que le jeu promet.
+1. **Dessiner les trente et une légendaires de septembre 2026.** Ce sont
+   désormais les **seules** cartes du jeu en rendu procédural : les 262 âges
+   qu'on croyait à produire avaient simplement un repli manquant, et ils
+   montrent maintenant leur personnage au premier âge. `images:test` donne le
+   compte exact à chaque passage.
+
+   Reste ensuite, à plus long terme, à dessiner les âges **pour de bon** : voir
+   un personnage vieillir est ce que le jeu promet, et le repli montre le bon
+   personnage sans montrer son âge.
 
 2. **Une mise en page pour écran large.** L'application est en colonne étroite
    centrée, pensée pour le téléphone. Sur un ordinateur, les deux tiers de

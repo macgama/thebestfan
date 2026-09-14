@@ -7,7 +7,9 @@
  *     pas se centrer dessus ;
  *   — un fond uni à détourer.
  */
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir, rm, readFile } from 'node:fs/promises';
+// Le repli de lignée s'éprouve sur le vrai `fanzzy-art.js`, monté en bac.
+import { Script, createContext } from 'node:vm';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import sharp from 'sharp';
@@ -147,6 +149,45 @@ for (let i = 3; i < dej.data.length; i += 4) if (dej.data[i] > 40) opaques++;
 const part = opaques / (dl * dej.info.height);
 check('et il n’est pas noyé dans un rectangle noir', part < 0.8);
 console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
+
+/* ------------------------------------- le repli sur la racine de la lignée
+
+   Deux cent soixante-deux cartes du catalogue sont des **âges supérieurs de
+   personnages déjà dessinés**. Sans repli, elles tombaient toutes sur le rendu
+   procédural — une silhouette géométrique dans un cône de projecteur — alors
+   que le bon personnage existe, dessiné, à son premier âge.
+
+   Le contrôle ne mesure pas une image : il mesure **combien de cartes du
+   catalogue réel obtiennent une adresse**. C'est le seul chiffre qui dise si le
+   repli sert encore à quelque chose, et il rougirait le jour où la règle de
+   nommage des âges changerait sans que personne ne prévienne. */
+{
+  const { DEX } = await import('../src/shared/fanzzy/dex.js');
+  const source = await readFile(new URL('../public/fanzzy-art.js', import.meta.url), 'utf8');
+
+  /* Le fichier est un script de navigateur : on lui prête un `document` qui
+     sait faire un canvas muet, et on lui prend son global. */
+  const bac = createContext({
+    window: {}, document: { createElement: () => ({ toDataURL: () => '' }) },
+  });
+  new Script(source).runInContext(bac);
+  const { adresse, ILLUSTRES } = bac.window.FZART;
+
+  const avec = DEX.filter((f) => adresse(f.id)).length;
+  const enPropre = DEX.filter((f) => ILLUSTRES.has(f.id)).length;
+  const gagnees = avec - enPropre;
+
+  check(`le repli rend un dessin à ${gagnees} âges de personnages déjà dessinés`,
+    gagnees > 200
+    || (console.log(`        ${enPropre} en propre, ${avec} au total — `
+      + 'la règle de nommage des âges a-t-elle changé ?'), false));
+  check(`et ${DEX.length - avec} cartes restent sans dessin d’aucune sorte`,
+    DEX.length - avec <= 31
+    || (console.log('        ', DEX.filter((f) => !adresse(f.id))
+      .slice(0, 8).map((f) => f.id).join(' ')), false));
+  console.log(`     ${enPropre} dessinées · ${gagnees} par leur premier âge · `
+    + `${DEX.length - avec} sans rien`);
+}
 
 await rm(tmp, { recursive: true, force: true });
 console.log(ko ? `\n${ko} échec(s)\n` : '\ntout est vert\n');

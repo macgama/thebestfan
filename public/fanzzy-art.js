@@ -108,6 +108,32 @@
   };
 
   /**
+   * **Un âge sans dessin retombe sur celui de son premier âge.**
+   *
+   * Les identifiants d'une lignée s'écrivent `MS9`, `MS9B`, `MS9C` : le premier
+   * âge est la racine, les suivants ajoutent une lettre. Deux cent soixante-deux
+   * cartes du catalogue sont des âges supérieurs **de personnages qui, eux, sont
+   * dessinés** — c'est tout le reliquat d'illustrations annoncé dans `ETAT.md`.
+   *
+   * Sans ce repli, elles tombaient toutes sur le rendu procédural : une
+   * silhouette géométrique dans un cône de projecteur. Or le rendu procédural
+   * est le repli du **personnage inconnu**, pas celui d'un personnage connu
+   * qu'on n'a pas encore redessiné plus vieux. Montrer La Chance du Stade au
+   * premier âge, c'est montrer le bon personnage ; montrer une silhouette,
+   * c'est n'en montrer aucun.
+   *
+   * Rien ne ment au joueur : la carte affiche son étage à côté du dessin, et
+   * `ages.js` décrit ce que l'âge change. Le jour où le troisième âge est
+   * dessiné, il prend la place sans qu'on touche à cette fonction.
+   */
+  const racineIllustree = (id) => {
+    if (!id) return null;
+    if (ILLUSTRES.has(id)) return id;
+    const racine = /^([A-Z]+\d+)/.exec(id)?.[1];
+    return racine && racine !== id && ILLUSTRES.has(racine) ? racine : null;
+  };
+
+  /**
    * L'adresse du dessin, sans la balise autour.
    *
    * `illustration` rend du HTML tout fait, ce qui convient à une carte mais
@@ -116,8 +142,9 @@
    * une seconde façon d'écrire le même chemin finit toujours par diverger.
    */
   const adresse = (id, variante = 'buste') => {
-    if (!id || !ILLUSTRES.has(id)) return null;
-    return `/img/fanzzy/${id}${variante === 'buste' ? '-buste' : ''}${IMG_EXT}`;
+    const vu = racineIllustree(id);
+    if (!vu) return null;
+    return `/img/fanzzy/${vu}${variante === 'buste' ? '-buste' : ''}${IMG_EXT}`;
   };
 
   /** Fond seul, sans silhouette : sert de décor aux illustrations. */
@@ -196,6 +223,7 @@
     setTypes,
     seeded,
     ILLUSTRES,
+    racineIllustree,
     illustration,
     adresse,
     art,

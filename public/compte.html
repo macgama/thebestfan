@@ -24,19 +24,10 @@ main{width:100%;max-width:390px}
 /* La barre d'onglets est celle de `ui.css`. Ses boutons n'ont pas de classe :
    ils sont les seuls enfants du rail, et lui seul les désigne. */
 .tabs{margin-bottom:22px}
-.tabs > button{
-  flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;
-  padding:11px 8px;min-height:42px;border:0;background:none;color:var(--craie);
-  font-family:var(--banner);font-size:13px;letter-spacing:.14em;text-transform:uppercase;
-  border-radius:10px;opacity:.5;cursor:pointer;transition:opacity .14s ease;
-}
-.tabs > button.on{
-  opacity:1;color:var(--encre);
-  background:linear-gradient(180deg,var(--haut) 0%,var(--face) 46%,var(--face) 100%);
-  box-shadow:0 0 0 2px var(--cerne),0 3px 0 0 var(--tranche),0 3px 0 2px var(--cerne),
-    0 6px 12px rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.28);
-  text-shadow:0 1px 0 rgba(0,0,0,.25);transform:translateY(-1px);
-}
+/* Les boutons de cette barre portent `.tbf-onglet`, comme partout : la règle
+   est dans `ui.css`. Elle a été recopiée ici un temps, sous prétexte que ces
+   boutons n'ont pas de classe — et cette copie a gardé un défaut que la
+   commune, elle, a perdu. */
 label{display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.55;margin:16px 0 7px}
 input{width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.16);border-radius:6px;
   color:var(--craie);padding:13px 14px;font-size:15px;font-family:inherit}
@@ -91,8 +82,8 @@ button.go[disabled]{filter:grayscale(.85);opacity:.5;pointer-events:none}
   <!-- déconnecté -->
   <section id="gate">
     <div class="tabs tbf-onglets">
-      <button id="tabLogin" class="on" data-t="tab.login"></button>
-      <button id="tabRegister" data-t="tab.register"></button>
+      <button id="tabLogin" class="tbf-onglet on" data-t="tab.login"></button>
+      <button id="tabRegister" class="tbf-onglet" data-t="tab.register"></button>
     </div>
 
     <form id="formLogin">

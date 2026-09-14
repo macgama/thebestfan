@@ -298,8 +298,12 @@ const VUES = {
     const publies = d.fanzzy.filter((x) => x.publie).length;
 
     const ligne = (x) => {
-      const vign = ILLUSTRES.has(x.id)
-        ? `<img src="/img/fanzzy/${x.id}-buste.png" alt="" loading="lazy">`
+      /* La même résolution que le jeu : un âge sans dessin montre celui de son
+         premier âge. Sans cette ligne, l administration listait deux cent
+         soixante-deux tirets là où le joueur, lui, voit un personnage. */
+      const dessin = window.FZART?.racineIllustree?.(x.id);
+      const vign = dessin
+        ? `<img src="/img/fanzzy/${dessin}-buste.png" alt="" loading="lazy">`
         : '<div class="sil">—</div>';
       return `<tr class="fzrow ${x.publie ? '' : 'depublie'}" data-id="${x.id}">
         <td>${vign}</td>
