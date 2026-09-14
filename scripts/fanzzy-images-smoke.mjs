@@ -200,17 +200,26 @@ console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
      Elles ne sont pas invisibles pour autant : sans adresse, la fiche tombe sur
      le rendu procédural. Mais une légendaire en silhouette géométrique n'est
      pas une légendaire, et c'est bien une dette. */
-  /* 167 → 170, **relevé en connaissance de cause**, ce qui est le seul motif
-     admissible. La lignée G1/G2/G3 a changé d'identité : elle s'appelait « Le
-     Gamin de Devant » et c'était Le Petit Teigneux (TR1) écrit une seconde
-     fois — même âge, même place, même parka. Elle est devenue « Le Faux
-     Départ », et ses trois dessins, qui montraient l'autre gamin, sont partis
-     dans `art/_doublons/`.
+  /* **167 → 217, relevé en connaissance de cause** — le seul motif admissible,
+     et il tient en une phrase : cinquante de ces cartes affichaient le dessin
+     de quelqu'un d'autre.
 
-     Trois cartes de plus sans dessin, donc, et c'est un progrès : une
+     Dix-sept illustrations étaient rangées sous un identifiant `X<n>` qui ne
+     leur appartenait pas. Le même lot avait été livré deux fois : nommé à la
+     main le 6-7 septembre, puis remis le 8 en passant par `rendus.js`, qui l'a
+     posé sur ses vraies cartes. Dans chacune des dix-sept paires, le côté `X`
+     n'a aucun numéro de rendu et le côté nommé en a un — le constat est net et
+     il ne souffre pas d'interprétation. Les fichiers `X` sont partis dans
+     `art/_doublons/`, et leurs âges supérieurs ont perdu leur repli avec eux.
+
+     S'y ajoute la lignée G1/G2/G3, qui s'appelait « Le Gamin de Devant » et
+     était Le Petit Teigneux (TR1) écrit une seconde fois.
+
+     Cinquante cartes de plus sans dessin, donc, et c'est un progrès : **une
      silhouette dit « pas encore dessiné », un visage emprunté dit une chose
-     fausse. */
-  const DETTE = 170;
+     fausse.** La dette n'a pas augmenté, elle vient seulement d'être comptée
+     juste. */
+  const DETTE = 217;
   check(`et ${DEX.length - avec} cartes restent sans dessin d’aucune sorte`,
     DEX.length - avec <= DETTE
     || (console.log('        ', DEX.filter((f) => !adresse(f.id))
@@ -301,17 +310,26 @@ console.log('\nLes doublons de dessin');
     }
   }
 
-  /* **Cliquet, pas cible.** Dix-sept paires existent au moment où ce contrôle
-     est écrit ; les corriger demande dix-sept dessins, pas une commande. Le
-     nombre ne doit jamais monter — une carte neuve qui reprend le visage d'une
-     autre serait rouge le jour même. Il descend à chaque dessin livré. */
-  const JUMEAUX = 17;
-  check(`${jumeaux.length} paire(s) de cartes partagent un rendu`,
+  /* **Zéro, et ce n'est plus un cliquet : c'est une règle.**
+
+     Il y en avait dix-sept quand ce contrôle a été écrit, toutes dues au même
+     lot livré deux fois. Elles sont parties d'un coup, parce qu'il ne s'agissait
+     pas de dessiner dix-sept images mais de retirer dix-sept fichiers rangés
+     sous le mauvais nom.
+
+     Le seuil reste donc à zéro, et il n'a aucune raison de remonter : deux
+     cartes ne peuvent pas montrer le même rendu. Le jour où une livraison en
+     réintroduit une, ce contrôle rougit avant que personne ne l'ait vue. */
+  const JUMEAUX = 0;
+  check(jumeaux.length
+    ? `${jumeaux.length} paire(s) de cartes partagent un rendu`
+    : 'aucune carte ne porte le dessin d’une autre',
     jumeaux.length <= JUMEAUX
     || (console.log('        ', jumeaux.slice(0, 6)
       .map(([a, b]) => `${a.id}=${b.id}`).join('  ')),
-      console.log(`        — il y en avait ${JUMEAUX}. Une carte neuve porte le `
-        + 'dessin d’une autre. `npm run doublons` les met côte à côte.'), false));
+      console.log('        — deux cartes ne peuvent pas montrer le même rendu. '
+        + '`npm run doublons` les met côte à côte ; le fichier à retirer est '
+        + 'celui dont l’identifiant n’a pas de numéro dans rendus.js.'), false));
   if (jumeaux.length) {
     console.log(`     ${jumeaux.length} paire(s) : `
       + jumeaux.slice(0, 4).map(([a, b]) => `${a.id}≡${b.id}`).join(' · ')

@@ -238,6 +238,52 @@ console.log('\nLes stades');
    pour `pushMult`, que nulle carte ne porte : un garde-fou qui se plaint de ce
    qui va bien est un garde-fou qu'on désactive. */
 
+/* ======================================= deux cartes, un seul nom
+
+   Un classeur qui affiche deux fois la même ligne fait croire à un doublon, et
+   le joueur cherche ce qu'il a raté. C'est arrivé : `BG15` et `BG27`
+   s'appelaient tous les deux « Le Chat du Terrain », dans la même série — la
+   commune et la légendaire du même chat.
+
+   Le cri compte autant que le nom : c'est lui qui s'affiche en gros sur la
+   fiche, et deux fiches au même cri se lisent comme une seule carte vue deux
+   fois. `X49` criait « DE MON TEMPS » exactement comme `TR12`.
+
+   **Les âges supérieurs sont hors du contrôle du cri**, et seulement de
+   celui-là. Un cri est trois mots ; sur six cent quarante-trois cartes dont
+   deux cent soixante-douze sont des âges, « MAINTENANT » et « ON Y VA »
+   finissent par se croiser sans que ce soit une faute. Ce qui compte est que
+   deux **personnages** ne crient pas la même chose. */
+
+console.log('\nLes noms et les cris');
+
+{
+  const suite = new Set(DEX.map((f) => f.evo).filter(Boolean));
+  const publies = DEX.filter((f) => f.publie !== false);
+  const persos = publies.filter((f) => !suite.has(f.id));
+
+  const grouper = (liste, cle) => {
+    const m = new Map();
+    for (const f of liste) {
+      const k = cle(f);
+      if (!k) continue;
+      if (!m.has(k)) m.set(k, []);
+      m.get(k).push(f.id);
+    }
+    return [...m].filter(([, l]) => l.length > 1);
+  };
+
+  const noms = grouper(publies, (f) => f.nom);
+  check('aucune carte ne porte le nom d’une autre', noms.length === 0
+    || (console.log('        ', noms.map(([n, l]) => `${n} → ${l.join(' ')}`)
+      .join(' · ')), false));
+
+  const cris = grouper(persos, (f) => f.cri?.label);
+  check('aucun personnage ne crie ce qu’un autre crie', cris.length === 0
+    || (console.log('        ', cris.map(([n, l]) => `${n} → ${l.join(' ')}`)
+      .join(' · ')), false));
+}
+
 console.log('\nLes effets');
 
 {
