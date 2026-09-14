@@ -3,6 +3,9 @@ import { TYPES, RAR, SETS } from '../../shared/fanzzy/dex.js';
 import { parIdentifiant, recharger, tous, chargerSeries, seriesOuvertes, serieOuverte }
   from '../fanzzy/catalogue.js';
 import { toutesTenues, tenuePar, rechargerTenues } from '../fanzzy/tenues.js';
+import { chargerSaisons, toutesLesSaisons, saisonEnCours } from '../fanzzy/saisons.js';
+import { STUFF } from '../../shared/fanzzy/inventaire.js';
+import { ACTIONS } from '../../shared/duel/actions.js';
 import { REGLAGES, SECTIONS, DEFAUTS } from '../../shared/reglages.js';
 // Les gestes du jeu viennent de leur source unique : voir plus bas.
 import { GESTES as GESTES_DU_JEU } from '../ferveur/gestures.js';
@@ -410,35 +413,173 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     });
   }
 
-  /**
-   * Fixe la liste des séries ouvertes.
-   *
-   * `null` ou une liste vide rouvrent tout. C'est délibéré : le jour où
-   * quelqu'un vide le champ par erreur, le jeu s'ouvre au lieu de se fermer à
-   * double tour, et l'erreur se voit tout de suite au lieu de vider les
-   * boutiques en silence.
-   */
-  async function fixerSeries(acteur, ids, ip_) {
-    const connues = new Set(SETS.map((s) => s.id));
-    const liste = Array.isArray(ids) ? [...new Set(ids.map(String))] : [];
-    const inconnues = liste.filter((id) => !connues.has(id));
-    if (inconnues.length) throw fail('admin.error.serie_inconnue');
+  /* ================================================================ saisons
 
-    // Une série ouverte sans carte de stade 1 publiée ferait lever le tirage au
-    // premier booster. On refuse ici, où l'on peut encore le dire.
+     Une saison ouvre du contenu pour **tout le monde en même temps**, et
+     l'annonce. Voir `src/server/fanzzy/saisons.js` pour ce qu'elle ouvre
+     réellement et pourquoi elle a remplacé l'ouverture par niveau.
+
+     Il n'y a plus de « fixer les séries ouvertes » : les séries ouvertes sont
+     l'union des saisons lancées, et rien d'autre ne les décide. Une liste
+     modifiable à côté des saisons aurait été une seconde vérité, et le jour où
+     les deux divergent personne ne sait laquelle le jeu applique.            */
+
+  /** Ce qu'une saison peut nommer. Tout le reste est refusé, nommément. */
+  function validerContenu(p) {
+    const liste = (v) => (Array.isArray(v) ? [...new Set(v.map(String))] : []);
+    const series = liste(p.series);
+    const tenues = liste(p.tenues);
+    const stuff = liste(p.stuff);
+    const actions = liste(p.actions);
+
+    const inconnue = series.find((id) => !SETS.some((s) => s.id === id));
+    if (inconnue) throw fail('admin.error.serie_inconnue');
+
+    /* Une série ouverte sans carte de stade 1 publiée ferait lever le tirage au
+       premier booster. On refuse ici, où l'on peut encore le dire — et au
+       moment de la **préparer**, pas au moment de la lancer devant tout le
+       monde. */
     const cartes = tous();
-    const vides = liste.filter((id) =>
+    const vide = series.find((id) =>
       !cartes.some((f) => f.set === id && f.publie && f.stage === 1));
-    if (vides.length) throw fail('admin.error.serie_sans_carte');
+    if (vide) throw fail('admin.error.serie_sans_carte');
+
+    if (tenues.some((id) => !tenuePar(id))) throw fail('admin.error.tenue_inconnue');
+    if (stuff.some((id) => !STUFF.some((s) => s.id === id))) {
+      throw fail('admin.error.stuff_inconnu');
+    }
+    if (actions.some((id) => !ACTIONS.some((a) => a.id === id))) {
+      throw fail('admin.error.action_inconnue');
+    }
+    return { series, tenues, stuff, actions };
+  }
+
+  /* `texte` existe déjà plus haut et tronque sans jamais rendre `null`. Ici on
+     veut la nuance : une annonce vide n'est pas une chaîne vide, c'est **pas
+     d'annonce** — et une colonne qui contient `''` se lit comme un texte qu'on
+     a oublié d'écrire. D'où un nom distinct plutôt qu'un second `texte`, que
+     JavaScript refuse de toute façon dans la même portée. */
+  const texteOuRien = (v, max) => {
+    const s = String(v ?? '').trim();
+    return s ? s.slice(0, max) : null;
+  };
+
+  async function listerSaisons() {
+    return {
+      saisons: toutesLesSaisons(),
+      enCours: saisonEnCours(),
+      series: listerSeries(),
+      ouvertes: seriesOuvertes(),
+      /* De quoi remplir les listes de l'écran sans une seconde requête, et
+         surtout sans que la page se fabrique sa propre idée de ce qui existe. */
+      choix: {
+        series: SETS.map((s) => ({ id: s.id, nom: s.nom })),
+        tenues: toutesTenues().map((t) => ({ id: t.id, nom: t.nom, publie: t.publie })),
+        stuff: STUFF.map((s) => ({ id: s.id, nom: s.nom })),
+        actions: ACTIONS.map((a) => ({ id: a.id, nom: a.nom })),
+      },
+    };
+  }
+
+  async function creerSaison(acteur, p, ip_) {
+    const c = validerContenu(p ?? {});
+    const nom = texteOuRien(p?.nom, 64);
+    if (!nom) throw fail('admin.error.saison_sans_nom');
+    /* Le numéro proposé suit le plus grand existant. Il reste modifiable : on
+       peut vouloir une saison 0 d'archive, ou renuméroter. */
+    const suivant = toutesLesSaisons().reduce((m, s) => Math.max(m, s.numero), 0) + 1;
+    const numero = Number.isInteger(Number(p?.numero)) && Number(p.numero) >= 0
+      ? Number(p.numero) : suivant;
+
+    const r = await q(
+      `INSERT INTO saisons (numero, nom, texte, series, tenues, stuff, actions)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [numero, nom, texteOuRien(p?.texte, 500), JSON.stringify(c.series),
+       JSON.stringify(c.tenues), JSON.stringify(c.stuff), JSON.stringify(c.actions)]);
+    await chargerSaisons(pool);
+    await journal(acteur, 'saison.creee', String(r.insertId), { nom, numero, ...c }, ip_);
+    return listerSaisons();
+  }
+
+  async function modifierSaison(acteur, id, p, ip_) {
+    const avant = toutesLesSaisons().find((s) => s.id === Number(id));
+    if (!avant) throw fail('admin.error.saison_inconnue', 404);
+    const c = validerContenu(p ?? {});
+    const nom = texteOuRien(p?.nom, 64) ?? avant.nom;
 
     await q(
-      `INSERT INTO reglages (cle, valeur, maj_par) VALUES ('series_actives', ?, ?)
-       ON DUPLICATE KEY UPDATE valeur = VALUES(valeur), maj_par = VALUES(maj_par)`,
-      [JSON.stringify(liste), acteur]);
+      `UPDATE saisons SET numero = ?, nom = ?, texte = ?, series = ?, tenues = ?,
+                          stuff = ?, actions = ?
+        WHERE id = ?`,
+      [Number.isInteger(Number(p?.numero)) ? Number(p.numero) : avant.numero,
+       nom, texteOuRien(p?.texte, 500), JSON.stringify(c.series), JSON.stringify(c.tenues),
+       JSON.stringify(c.stuff), JSON.stringify(c.actions), avant.id]);
+    await chargerSaisons(pool);
+    /* Modifier une saison **déjà lancée** change ce qui est ouvert. On recharge
+       donc les séries, sans quoi le jeu continuerait de distribuer selon
+       l'ancienne liste jusqu'au prochain redémarrage. */
     await chargerSeries(pool);
-    await journal(acteur, 'series.ouvertes', liste.join(',') || 'toutes',
-      { series: liste }, ip_);
-    return { series: listerSeries(), ouvertes: seriesOuvertes() };
+    await journal(acteur, 'saison.modifiee', String(avant.id), { nom, ...c }, ip_);
+    return listerSaisons();
+  }
+
+  /**
+   * Lance une saison, ou la remet en brouillon.
+   *
+   * Lancer, c'est **ouvrir ses séries et publier ses tenues**, pour tout le
+   * monde, à cet instant. C'est le geste le plus visible de toute
+   * l'administration : il change le jeu de tous les joueurs connectés.
+   *
+   * Remettre en brouillon referme les séries que cette saison-là ouvrait — et
+   * seulement celles-là : les séries d'une autre saison lancée restent
+   * ouvertes, puisque les séries ouvertes sont l'union. Les tenues publiées ne
+   * se dépublient pas : quelqu'un les a peut-être déjà gagnées, et une tenue
+   * qui disparaît d'une collection est une perte, pas une fermeture.
+   */
+  async function lancerSaison(acteur, id, lancer, ip_) {
+    const s = toutesLesSaisons().find((x) => x.id === Number(id));
+    if (!s) throw fail('admin.error.saison_inconnue', 404);
+
+    if (lancer) {
+      /* On revalide au lancement. Le catalogue a pu bouger depuis la création —
+         une carte dépubliée, une série vidée — et lancer une saison dont une
+         série n'a plus de carte de stade 1 ferait lever le premier booster. */
+      validerContenu(s);
+      await q(`UPDATE saisons SET lancee_a = NOW(3) WHERE id = ?`, [s.id]);
+      if (s.tenues.length) {
+        /* `IN (?)` avec un tableau : mysql2 déplie la liste. `execute` ne le
+           fait pas — il prépare la requête, et un tableau y devient une seule
+           valeur. D'où `query`, et la liste construite à partir d'identifiants
+           déjà vérifiés par `validerContenu`. */
+        await pool.query(`UPDATE tenues SET publie = 1 WHERE id IN (?)`, [s.tenues]);
+        await rechargerTenues(pool);
+      }
+    } else {
+      await q(`UPDATE saisons SET lancee_a = NULL WHERE id = ?`, [s.id]);
+    }
+
+    await chargerSaisons(pool);
+    await chargerSeries(pool);
+    await journal(acteur, lancer ? 'saison.lancee' : 'saison.retiree', String(s.id),
+      { nom: s.nom, numero: s.numero, series: s.series, tenues: s.tenues }, ip_);
+    return listerSaisons();
+  }
+
+  /**
+   * Supprime une saison.
+   *
+   * Refusé si elle est lancée : on ne retire pas du jeu ce que des joueurs sont
+   * en train de collectionner par un bouton de suppression. Il faut d'abord la
+   * remettre en brouillon, ce qui est un geste distinct et réversible.
+   */
+  async function supprimerSaison(acteur, id, ip_) {
+    const s = toutesLesSaisons().find((x) => x.id === Number(id));
+    if (!s) throw fail('admin.error.saison_inconnue', 404);
+    if (s.lancee) throw fail('admin.error.saison_lancee');
+    await q(`DELETE FROM saisons WHERE id = ?`, [s.id]);
+    await chargerSaisons(pool);
+    await journal(acteur, 'saison.supprimee', String(s.id), { nom: s.nom }, ip_);
+    return listerSaisons();
   }
 
   async function listerFanzzy() {
@@ -669,8 +810,30 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     res.json({ fanzzy: await listerFanzzy(), types: TYPES, sets: SETS, rar: RAR,
                series: listerSeries(), ouvertes: seriesOuvertes() })));
 
-  router.put('/series', safe(async (req, res) =>
-    res.json(await fixerSeries(req.user.id, req.body?.series, ip(req)))));
+  /* ------------------------------------------------------- les saisons
+
+     `PUT /series` n'existe plus. Les séries ouvertes sont l'union des saisons
+     lancées, et rien d'autre ne les décide : une liste modifiable à côté aurait
+     été une seconde vérité, et le jour où les deux divergent personne ne sait
+     laquelle le jeu applique. */
+
+  router.get('/saisons', safe(async (_req, res) => res.json(await listerSaisons())));
+
+  router.post('/saisons', safe(async (req, res) =>
+    res.json(await creerSaison(req.user.id, req.body ?? {}, ip(req)))));
+
+  router.patch('/saison/:id', safe(async (req, res) =>
+    res.json(await modifierSaison(req.user.id, req.params.id, req.body ?? {}, ip(req)))));
+
+  /* Le geste le plus visible de toute l'administration : il change le jeu de
+     tous les joueurs connectés. D'où une route à lui, et non un champ de plus
+     dans la modification. */
+  router.post('/saison/:id/lancer', safe(async (req, res) =>
+    res.json(await lancerSaison(req.user.id, req.params.id,
+      req.body?.lancer !== false, ip(req)))));
+
+  router.delete('/saison/:id', safe(async (req, res) =>
+    res.json(await supprimerSaison(req.user.id, req.params.id, ip(req)))));
 
   router.post('/fanzzy', safe(async (req, res) =>
     res.json(await creerFanzzy(req.user.id, req.body ?? {}, ip(req)))));
@@ -703,6 +866,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
 
   return Object.assign(module, { router, requireAdmin, estAdmin, amorcer, apercu, joueurs,
     modifier, competitions, modifierCompetition, reglages, fixerReglage, journal,
-    listerFanzzy, creerFanzzy, modifierFanzzy, listerSeries, fixerSeries,
+    listerFanzzy, creerFanzzy, modifierFanzzy, listerSeries,
+    listerSaisons, creerSaison, modifierSaison, lancerSaison, supprimerSaison,
     creerTenue, modifierTenue });
 }

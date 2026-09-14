@@ -167,6 +167,15 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       m.socket.emit('nvn:start', duel.vue(userId));
     }
 
+    /* L'affiche part **après** le départ, et sans le retenir : elle lit la base,
+       et un duel n'a pas à attendre une requête pour commencer. Un client qui ne
+       la reçoit pas joue exactement comme avant. */
+    void affiche(duel).then((a) => {
+      for (const m of membres.values()) {
+        if (m.socket?.connected) m.socket.emit('nvn:affiche', a);
+      }
+    }).catch((e) => console.error('[nvn] affiche', e.message));
+
     salle.timer = setInterval(() => void horloge(salle), TICK_MS);
     return salle;
   }
@@ -191,10 +200,26 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     return touchees;
   }
 
-  /** Diffusion : les événements partent à tous, les vues restent privées. */
+  /**
+   * Diffusion : les événements partent à tous, les vues restent privées.
+   *
+   * **L'état part même quand il ne s'est rien passé**, et c'est le point.
+   *
+   * La fonction commençait par `if (!evenements?.length) return;` : entre deux
+   * actions, plus rien ne partait. Or il se passe quelque chose en permanence —
+   * la corde retombe de 1,2 point par seconde, l'horloge tourne, le souffle
+   * revient. Le joueur voyait donc une corde **figée** jusqu'à ce que quelqu'un
+   * chante, puis un saut. La décroissance, qui est la tension du jeu, était
+   * invisible : on ne pouvait pas voir qu'on était en train de perdre son
+   * avance sans rien faire.
+   *
+   * Les **événements** restent conditionnels — envoyer un tableau vide dix fois
+   * par seconde n'apprendrait rien à personne. C'est l'état qui part à chaque
+   * battement, et il ne coûte que ce qu'il pèse : une salle diffuse deux fois
+   * par seconde.
+   */
   function diffuser(salle, evenements) {
-    if (!evenements?.length) return;
-    io.to(salle.room).emit('nvn:events', evenements);
+    if (evenements?.length) io.to(salle.room).emit('nvn:events', evenements);
     for (const [userId, m] of salle.membres) {
       if (m.socket?.connected) m.socket.emit('nvn:state', salle.duel.vue(userId));
     }
@@ -214,11 +239,24 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
           const j = salle.duel.joueur(userId);
           const carte = j.main[Math.floor(Math.random() * j.main.length)];
           if (carte && Math.random() < 0.35) ev.push(...salle.duel.jouer(userId, carte, t));
-          else ev.push(...salle.duel.chanter(userId, {
-            geste: 'tempo',
-            taps: Array.from({ length: 8 }, (_, i) =>
-              i * 560 + (Math.random() * 2 - 1) * 260 * (1 - m.bot.adresse)),
-          }, t));
+          else {
+            /* Le bot choisit son chant comme un joueur : dans le répertoire du
+               duel. Il envoyait `geste: 'tempo'`, un champ que le moteur
+               n'a jamais lu — il chantait donc le geste que la rotation lui
+               donnait, quel qu'il soit, avec des frappes de tempo. Il ratait
+               tous les gestes qui n'en sont pas, et personne ne s'en étonnait
+               puisqu'un bot est censé rater.
+
+               Il prend au hasard : un bot qui optimiserait son souffle serait
+               un adversaire d'entraînement plus dur qu'un humain. */
+            const chant = salle.duel.repertoire[
+              Math.floor(Math.random() * salle.duel.repertoire.length)];
+            ev.push(...salle.duel.chanter(userId, {
+              cardId: chant,
+              taps: Array.from({ length: 8 }, (_, i) =>
+                i * 560 + (Math.random() * 2 - 1) * 260 * (1 - m.bot.adresse)),
+            }, t));
+          }
         } catch { /* souffle insuffisant ou geste refusé : il attend */ }
       }
 
@@ -300,9 +338,94 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     return m;
   }
 
+  /**
+   * Verse les gains de fin de duel — et **dit ce qu'elle a versé**.
+   *
+   * Elle ne disait rien. Le joueur voyait son solde d'écharpes changer entre
+   * deux écrans sans savoir ni combien ni pourquoi, et la part reversée à son
+   * KOP n'existait que dans un message socket séparé, envoyé au milieu d'une
+   * fin de partie — c'est-à-dire au moment où personne ne regarde encore.
+   *
+   * Le retour est indexé par joueur : c'est l'écran de fin qui décide de
+   * l'ordre et de ce qu'il en montre.
+   */
+  /**
+   * Les cinq derniers duels classés d'une poignée de joueurs.
+   *
+   * Une seule requête pour tout le monde, et non une par joueur : à cinq contre
+   * cinq, dix requêtes au coup d'envoi pour afficher dix pastilles seraient dix
+   * requêtes de trop.
+   *
+   * Le **plus récent d'abord** — c'est le sens dans lequel on lit une forme, et
+   * celui qui a perdu ses quatre premiers et gagné le dernier ne raconte pas la
+   * même chose que l'inverse.
+   *
+   * Un joueur sans historique rend une liste vide, jamais `null` : l'écran
+   * affiche « premier duel », ce qui est une information, là où une absence
+   * l'obligerait à deviner.
+   */
+  async function forme(userIds) {
+    const vrais = [...new Set(userIds)].filter((u) => u && !String(u).startsWith('bot:'));
+    const out = new Map(vrais.map((u) => [u, []]));
+    if (!vrais.length) return out;
+    try {
+      /* `ended_at` est indexé avec `user_id` : on prend large et on coupe à
+         cinq par joueur en mémoire. Une fenêtre par joueur en SQL demanderait
+         une jointure latérale pour économiser quelques dizaines de lignes. */
+      const trous = vrais.map(() => '?').join(',');
+      const lignes = await q(
+        `SELECT user_id, outcome, goals_for, goals_against, ended_at
+           FROM duel_results
+          WHERE user_id IN (${trous})
+          ORDER BY ended_at DESC
+          LIMIT ?`, [...vrais, vrais.length * 5]);
+      for (const l of lignes) {
+        const liste = out.get(l.user_id);
+        if (liste && liste.length < 5) {
+          liste.push({ issue: l.outcome, pour: l.goals_for, contre: l.goals_against });
+        }
+      }
+    } catch (e) {
+      /* La forme est un ornement. Une table absente ou une base lente ne doit
+         pas empêcher un duel de commencer : on rend des listes vides, et
+         l'affiche dit simplement qu'elle ne sait pas. */
+      console.error('[nvn] forme récente', e.message);
+    }
+    return out;
+  }
+
+  /**
+   * L'affiche : qui joue, avec quels Fanzzy, dans quel état de forme.
+   *
+   * Elle ne contient **que** ce que l'état ne dit pas déjà. Le score, la corde
+   * et la main partent dix fois par seconde dans `vue()` ; l'affiche part une
+   * fois, au coup d'envoi, et ne revient jamais.
+   */
+  async function affiche(duel) {
+    const joueurs = [...duel.joueurs.values()];
+    const formes = await forme(joueurs.map((j) => j.userId));
+    return {
+      id: duel.id, mode: duel.mode,
+      stade: duel.stade
+        ? { id: duel.stade.id, nom: duel.stade.nom, effet: duel.stade.effet } : null,
+      joueurs: joueurs.map((j) => ({
+        userId: j.userId, nom: j.nom, side: j.side,
+        bot: String(j.userId).startsWith('bot:'),
+        /* Tous ses Fanzzy, pas seulement celui qui entre : l'affiche montre
+           l'équipe, et c'est en la voyant qu'on comprend qu'on peut changer. */
+        fanzzy: j.fanzzy.map((f) => ({
+          id: f.id, nom: f.nom, stade: f.stade ?? 1, type: f.type,
+          rar: f.rar, cri: f.cri?.label ?? null, geste: f.cri?.gest ?? null,
+        })),
+        forme: formes.get(j.userId) ?? [],
+      })),
+    };
+  }
+
   async function recompenser(salle) {
     const d = salle.duel;
     const bareme = GAIN[d.mode] ?? GAIN.entrainement;
+    const verse = new Map();
     try {
       // Un bot n'a pas de bourse, et lui en créer une inventerait un joueur.
       const humains = [...d.joueurs].filter(([userId]) => !userId.startsWith('bot:'));
@@ -316,6 +439,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         await q(`INSERT IGNORE INTO user_wallet (user_id) VALUES (?)`, [userId]);
         await q(`UPDATE user_wallet SET scarves = scarves + ? WHERE user_id = ?`,
           [montant, userId]);
+        verse.set(userId, { echarpes: montant, pourSonClub, xp: 0, kop: null });
 
         /* L'XP, elle, **ne double pas** pour son club.
            Les écharpes récompensent la ferveur, et il est juste qu'elles
@@ -327,6 +451,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
           const gain = (XP.duel[d.mode] ?? XP.duel.entrainement)
             + (gagne ? XP.victoire : 0);
           await niveau.gagner(userId, gain);
+          verse.get(userId).xp = gain;
         }
 
         /* La part du club, versée au pot du KOP.
@@ -345,8 +470,10 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
           if (r.sansKop) {
             m?.socket?.emit('nvn:kop', { sansKop: true, teamId: clubs.get(userId),
               perdu: part });
+            verse.get(userId).kop = { sansKop: true, perdu: part };
           } else if (r.verse) {
             m?.socket?.emit('nvn:kop', { verse: r.verse, kop: r.nom });
+            verse.get(userId).kop = { verse: r.verse, nom: r.nom };
           }
         }
       }
@@ -355,6 +482,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       // que la bourse n’a pas pu être créditée. On le dit et on continue.
       console.error('[nvn] écharpes de fin de duel', e.message);
     }
+    return verse;
   }
   async function fermer(salle) {
     clearInterval(salle.timer);
@@ -369,20 +497,47 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     // plutôt qu'une façon de jouer. Il paie maintenant, moins qu'un duel
     // classé, et il reste hors du classement — c'est là qu'est la différence,
     // pas dans la récompense.
-    await recompenser(salle);
+    const gains = await recompenser(salle);
 
-    // Seul un duel classé s'écrit au classement. Les bots n'y figurent pas.
-    if (d.mode !== 'classe' || d.vainqueur === null) return;
+    /* **L'écran de fin.**
+     *
+     * Rien n'annonçait la fin d'un duel : le client la déduisait du drapeau
+     * `termine` dans un état parmi dix par seconde, et posait un voile gris
+     * avec un mot dessus. Cinq minutes de jeu se terminaient sur moins qu'un
+     * message d'erreur.
+     *
+     * Le bilan part **avant** l'écriture en base : un joueur n'a pas à attendre
+     * une requête pour savoir s'il a gagné, et une base indisponible ne doit
+     * pas lui voler sa fin de partie. */
+    {
+      const bilan = d.bilan();
+      for (const [userId, m] of salle.membres) {
+        if (!m.socket?.connected) continue;
+        m.socket.emit('nvn:fin', { ...bilan, gains: gains.get(userId) ?? null });
+      }
+    }
+
+    /* **Les nuls s'écrivent aussi.**
+     *
+     * Seuls les duels classés **avec un vainqueur** étaient enregistrés. La
+     * table accepte pourtant `draw` depuis le premier jour : les matchs nuls
+     * n'étaient donc nulle part, et « tes cinq derniers duels » aurait menti
+     * par omission — en oubliant exactement les parties les plus serrées.
+     *
+     * L'entraînement reste dehors, et c'est une autre décision : il ne compte
+     * pas, c'est là toute sa différence avec le duel classé. */
+    if (d.mode !== 'classe') return;
     try {
       for (const [userId, j] of d.joueurs) {
         if (userId.startsWith('bot:')) continue;
         const adverse = [...d.joueurs.values()].find((x) => x.side !== j.side);
+        const issue = d.vainqueur === null || d.vainqueur === undefined ? 'draw'
+          : (j.side === d.vainqueur ? 'win' : 'loss');
         await q(
           `INSERT IGNORE INTO duel_results
              (duel_id, user_id, opponent_id, outcome, goals_for, goals_against, ended_at)
            VALUES (?, ?, ?, ?, ?, ?, NOW(3))`,
-          [d.id, userId, adverse?.userId ?? 'inconnu',
-           j.side === d.vainqueur ? 'win' : 'loss',
+          [d.id, userId, adverse?.userId ?? 'inconnu', issue,
            d.goals[j.side], d.goals[j.side ^ 1]]);
       }
     } catch (e) {

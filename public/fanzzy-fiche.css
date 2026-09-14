@@ -50,7 +50,10 @@
 .fiche .vitrine.r-legendaire{box-shadow:inset 0 0 0 2.5px var(--rc),0 5px 0 var(--rc2),
   0 0 34px rgba(245,195,59,.3),0 10px 24px rgba(0,0,0,.55)}
 .fiche .art{position:absolute;inset:0}
-.fiche .art svg{width:100%;height:100%;display:block}
+/* Le décor est en position absolue comme le personnage, et non dans le flux :
+   les deux se superposent, et c'est l'ordre du document qui décide lequel est
+   devant — le SVG est inséré avant l'image. */
+.fiche .art svg{position:absolute;inset:0;width:100%;height:100%;display:block}
 /* `contain`, posé sur la base du cadre : le personnage est inscrit entier.
    Un débordement en hauteur cadre joliment un buste dans une vitrine courte,
    mais coupe la tête dès qu'elle grandit — et une tête coupée se lit comme
@@ -143,7 +146,12 @@
 
 /* ---------------------------------------------------------- les actions */
 
-.fiche .actions{padding:10px 14px 10px;display:flex;gap:9px;flex:none}
+/* `min-height` sur la rangée elle-même, en plus de la hauteur fixe des boutons
+   ci-dessous. Elle peut être **vide** — une installation sans module de deck
+   n'affiche aucun bouton principal — et une rangée qui s'effondre à zéro rend
+   quinze pixels à la vitrine, donc fait grandir le personnage d'un coup. La
+   place est réservée qu'il y ait un bouton ou non. */
+.fiche .actions{padding:10px 14px 10px;display:flex;gap:9px;flex:none;min-height:74px}
 /* Hauteur fixe, et ce n'est pas cosmétique : un bouton qui porte un prix tient
    sur deux lignes, un bouton simple sur une seule. La rangée grandissait donc
    de quinze pixels selon la case regardée — et comme la vitrine au-dessus est

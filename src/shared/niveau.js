@@ -98,46 +98,59 @@ export const ecarpesDuPalier = (n) => 10 * n;
 /**
  * Ce que chaque palier ouvre.
  *
- * Les séries sont rangées de la plus lisible à la plus étrange : on commence
- * par des gens de tribune, on finit par ceux qui n'ont rien à faire là. Un
- * joueur qui découvre le jeu ne doit pas tomber sur un vampire à sa deuxième
- * carte.
+ * ## Le niveau n'ouvre plus de séries
  *
- * **Le niveau et l'administration se combinent, ils ne se remplacent pas.** Une
- * série est proposée si elle est ouverte *et* si le joueur l'a atteinte :
- * l'administration décide de ce qui existe pour tout le monde, le niveau de ce
- * qui existe pour lui.
+ * Il en ouvrait : LA TRIBUNE au niveau 1, LES MÉTIERS DU STADE au 3, LE VIRAGE
+ * IMPOSSIBLE au 26. Ça marchait, et ça avait un défaut qu'on ne voit qu'en
+ * regardant le jeu vivre : **rien n'arrivait jamais à personne en même temps**.
+ * Chacun découvrait une série le jour où son compteur d'expérience passait un
+ * seuil, seul, sans que ce jour-là existe pour qui que ce soit d'autre. Deux
+ * joueurs qui se parlent ne parlent alors jamais de la même chose, et il n'y a
+ * rien à annoncer — puisqu'il n'y a rien de neuf, seulement quelqu'un qui
+ * rattrape.
+ *
+ * Les séries s'ouvrent désormais par **saison**, depuis l'administration, pour
+ * tout le monde le même jour. Voir `src/server/fanzzy/saisons.js`.
+ *
+ * ## Ce qu'il ouvre encore
+ *
+ * Des **capacités**, et rien que des capacités : des emplacements de club à
+ * suivre, des rangs de tribune dans le deck. C'est la bonne chose à confier au
+ * niveau — elles n'ont de sens que pour un joueur donné, et personne n'a envie
+ * qu'on les lui annonce.
+ *
+ * Le niveau ne donne toujours **aucune puissance** : un joueur de niveau 30 n'a
+ * pas un gramme d'avance sur la corde. S'il en avait, l'ancienneté deviendrait
+ * de la force et le nouveau venu n'aurait plus de raison de rester.
  */
 export const PALIERS = [
-  { niveau: 1, series: ['TR'] },
-  { niveau: 3, series: ['MS'] },
   { niveau: 4, slots: 3 },
   { niveau: 5, deckFanzzy: 3 },
-  { niveau: 6, series: ['BG'] },
-  { niveau: 9, series: ['VN'], slots: 4 },
-  { niveau: 12, series: ['NE'] },
+  { niveau: 9, slots: 4 },
   { niveau: 14, slots: 5 },
-  { niveau: 15, series: ['OB'] },
-  { niveau: 18, series: ['RV'] },
   { niveau: 19, slots: 6 },
-  { niveau: 22, series: ['EP'] },
   { niveau: 24, slots: 7 },
-  { niveau: 26, series: ['IM'] },
   { niveau: 30, slots: 8 },
 ];
 
-/** Ce qu'un joueur de ce niveau a le droit de faire. */
+/**
+ * Ce qu'un joueur de ce niveau a le droit de faire.
+ *
+ * `series` n'y est plus. Ceux qui s'en servaient croisaient le niveau avec les
+ * séries ouvertes de l'administration ; il n'y a plus qu'une règle, et elle vit
+ * dans `catalogue.js`. Laisser un `series` vide ici aurait été pire que de le
+ * retirer : chaque lecteur aurait dû deviner s'il veut dire « aucune série » ou
+ * « ce n'est plus ma question ».
+ */
 export function droits(niveau) {
-  const series = new Set();
   let slots = 2;                 // ce que reçoit un nouveau venu
   let deckFanzzy = 2;
   for (const p of PALIERS) {
     if (p.niveau > niveau) continue;
-    for (const s of p.series ?? []) series.add(s);
     if (p.slots) slots = p.slots;
     if (p.deckFanzzy) deckFanzzy = p.deckFanzzy;
   }
-  return { series, slots, deckFanzzy };
+  return { slots, deckFanzzy };
 }
 
 /** Ce que ce palier précis apporte, pour l'annoncer au moment où il tombe. */

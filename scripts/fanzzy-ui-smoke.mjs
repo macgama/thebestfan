@@ -103,7 +103,13 @@ const requireAuth = (q, _s, n) => { q.user = { id: U }; n(); };
    refus après avoir appuyé, sous la forme d'un code brut. */
 const { createNiveau } = await import('../src/server/niveau/index.js');
 const niveau = createNiveau({ pool, requireAuth });
-const fanzzy = createFanzzy({ pool, requireAuth, niveau });
+/* Le module de deck est monté lui aussi : la fiche s'en sert pour dire où le
+   personnage se trouve dans la tribune du joueur, et pour l'y placer. Sans lui
+   la fiche retire son bouton d'action — ce qui est le bon comportement en
+   production, mais fait éprouver ici une page qui n'existe nulle part. */
+const { createDecks } = await import('../src/server/deck/index.js');
+const decks = createDecks({ pool, requireAuth, niveau });
+const fanzzy = createFanzzy({ pool, requireAuth, niveau, decks });
 
 /**
  * Un interrupteur pour amputer la réponse du catalogue.
@@ -119,6 +125,7 @@ app.use('/api/fanzzy', (q, s, n) => {
   }
   n();
 }, fanzzy.router);
+app.use('/api/deck', decks.router);
 app.get('/fanzzy', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'fanzzy.html')));
 // La fiche d'un Fanzzy, servie comme `server.js` le fait : c'est la page que
 // la grille ouvre quand on touche une carte.

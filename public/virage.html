@@ -6,12 +6,13 @@
 <title>Grand Virage — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
 <style>
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
 body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
-#app{position:relative;width:100%;max-width:440px;height:100dvh;display:flex;flex-direction:column;
+#app{position:relative;width:100%;max-width:var(--colonne);height:100dvh;display:flex;flex-direction:column;
   background:radial-gradient(110% 30% at 50% 0%,rgba(60,130,232,.15),transparent 60%),
              radial-gradient(110% 30% at 50% 100%,rgba(245,195,59,.15),transparent 60%),
              linear-gradient(180deg,#141A21,#0A0D11 50%,#141A21);overflow:hidden}
@@ -101,7 +102,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    dont la seule issue était de recharger la page. Et le choix est cohérent :
    qui a ouvert le fil regarde le fil, qui lui annonce déjà le but. */
 .feuille{position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:440px;z-index:95;display:none;flex-direction:column;
+  width:100%;max-width:var(--colonne);z-index:95;display:none;flex-direction:column;
   background:rgba(5,7,10,.96)}
 .feuille.on{display:flex}
 .feuille .tete{flex:none;display:flex;align-items:center;gap:10px;padding:14px 15px 10px}

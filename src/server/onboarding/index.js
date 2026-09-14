@@ -1,8 +1,13 @@
 import express from 'express';
 import { SCARVES } from '../../shared/fanzzy/dex.js';
 import { publies, parIdentifiant } from '../fanzzy/catalogue.js';
-import { STUFF, ACTIONS, SKIN_BY_ID, STUFF_BY_ID, combine }
+import { STUFF, SKIN_BY_ID, STUFF_BY_ID, combine }
   from '../../shared/fanzzy/inventaire.js';
+/* Les cartes d'action viennent du **catalogue du jeu**, et de nulle part
+   ailleurs. `inventaire.js` en portait une liste de quatre, qui avait divergé :
+   un nouveau joueur sur quatre recevait `a-relance`, une carte qui n'existe
+   pas. Voir la note à l'endroit où cette liste se trouvait. */
+import { ACTIONS } from '../../shared/duel/actions.js';
 import { toutesTenues } from '../fanzzy/tenues.js';
 import { verifierEmplacement, SLOTS_DEPART, SLOTS_MAX } from './slots.js';
 
@@ -145,12 +150,36 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
     const communs = publies().filter((f) => f.rar === 'commune');
     const bons = publies().filter((f) => ['rare', 'epique'].includes(f.rar));
     const equipement = STUFF.filter((s) => ['commune', 'rare'].includes(s.rar));
+    /* **Cinq cartes d'action, et l'Arbitre parmi elles.**
+     *
+     * Il y en avait **une**. Un deck demande exactement dix cartes et n'impose
+     * aucun plafond par carte, donc le premier deck légal d'un nouveau joueur
+     * était dix fois la même : jouable, et sans aucune décision à prendre.
+     *
+     * L'Arbitre est garanti et non tiré. C'est la carte qui ouvre le
+     * changement : sans elle, les deux Fanzzy du paquet de bienvenue ne
+     * servent à rien — le second reste sur le banc pendant tout le duel, et le
+     * joueur n'a aucun moyen de découvrir qu'une tribune se relaie. Une
+     * mécanique entière du jeu dépendait d'un tirage à une chance sur dix-sept.
+     *
+     * Les quatre autres sont tirées sans remise parmi les cartes de début :
+     * tirer avec remise donnerait parfois quatre fois le même Fumigène, ce qui
+     * ramènerait exactement au problème qu'on vient de corriger. */
+    const OUVRE_LE_CHANGEMENT = 'a-arbitre';
+    const debutantes = ACTIONS.filter((a) => ['commune', 'rare'].includes(a.rar)
+      && a.id !== OUVRE_LE_CHANGEMENT);
+    const melange = [...debutantes];
+    for (let i = melange.length - 1; i > 0; i--) {
+      const k = Math.floor(Math.random() * (i + 1));
+      [melange[i], melange[k]] = [melange[k], melange[i]];
+    }
 
     return [
       { type: 'fanzzy', id: rnd(communs).id },
       { type: 'fanzzy', id: rnd(bons).id },
       { type: 'stuff', id: rnd(equipement).id },
-      { type: 'action', id: rnd(ACTIONS).id },
+      { type: 'action', id: OUVRE_LE_CHANGEMENT },
+      ...melange.slice(0, 4).map((a) => ({ type: 'action', id: a.id })),
       { type: 'scarves', amount: 80 + Math.floor(Math.random() * 40) },
     ];
   }

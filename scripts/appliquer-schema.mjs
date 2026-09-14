@@ -53,7 +53,11 @@ const SQL = path.join(RACINE, 'sql');
  */
 const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', 'fanzzy',
   'teletext', 'inventaire', 'skins', 'tenues', 'deck', 'admin', 'kop', 'amis',
-  'niveau', 'raretes', 'stades'];
+  'niveau', 'raretes', 'stades', 'boutique', 'billets', 'saisons',
+  // En dernier, la seule reprise de données : `series-neuves.sql` range
+  // quarante-deux cartes dans leur nouvelle série. Il suppose donc les lignes
+  // posées par `fanzzy.sql` et le réglage posé par `admin.sql`.
+  'series-neuves'];
 
 const verifierSeulement = process.argv.includes('--verifier-seulement');
 const url = process.env.DATABASE_URL;

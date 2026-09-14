@@ -25,12 +25,17 @@
  * Script classique, pas module : comme tout ce qui vit dans `public/`.
  */
 (() => {
+/* Le visuel du paquet, série par série. **La table est volontairement
+   incomplète** : une série sans entrée est dessinée par `packArt`, qui compose
+   un paquet à partir de ses deux couleurs. C'est le repli, pas une panne — et
+   c'est ce qui permet d'ajouter une série sans attendre son illustration.
+
+   VIRAGE NORD et NUITS EUROPÉENNES sont parties avec leurs séries ; leurs
+   fichiers restent dans `public/img/` et ne sont plus demandés. */
 const ART = {
   TR: 'img/pack-la-tribune',
   MS: 'img/pack-metiers-du-stade',
   BG: 'img/pack-bestiaire-des-gradins',
-  VN: 'img/pack-virage-nord',
-  NE: 'img/pack-nuits-europeennes',
   OB: 'img/pack-ce-qui-traine',
   RV: 'img/pack-les-revenants',
   EP: 'img/pack-les-epoques',
@@ -184,7 +189,21 @@ let BY_ID = new Map();
 /** Les personnages : une entrée par lignée, jamais ses âges supérieurs. */
 const PERSOS = [];
 let TYPES = {};
+/** Les séries **ouvertes**. C'est ce dans quoi un joueur peut tirer aujourd'hui. */
 const SETS = [];
+/**
+ * Et toutes les séries, ouvertes ou non, avec leur champ `ouverte`.
+ *
+ * Le kiosque en a besoin : il annonce ce qui vient — « trois séries en attente
+ * d'une saison ». Il ne pouvait pas, puisque `SETS` était déjà filtré ; il s'en
+ * remettait alors à la liste des séries débloquées du joueur, qui n'existe plus
+ * depuis que les saisons ouvrent pour tout le monde.
+ *
+ * Deux listes plutôt qu'un filtre à chaque site d'appel : les écrans qui tirent
+ * — kiosque, boosters — veulent les ouvertes, et ce sont les plus nombreux.
+ * C'est le cas courant qui garde le nom court.
+ */
+const SETS_TOUTES = [];
 // Ce qu'un joueur peut encore obtenir : le catalogue publié restreint aux
 // séries ouvertes. Le serveur le calcule et l'envoie — la page le recalculerait
 // mal le jour où la règle se nuance, et c'est le genre de copie que ce projet a
@@ -244,6 +263,10 @@ async function chargerCatalogue() {
   // dans le catalogue — un joueur qui possède déjà une de leurs cartes doit
   // continuer à la voir — mais on ne peut plus en acheter le booster.
   remplir(SETS, d.sets.filter((x) => x.ouverte !== false));
+  remplir(SETS_TOUTES, d.sets);
+  /* La saison en cours, pour que le kiosque puisse l'annoncer. Elle vient de la
+     même réponse que le catalogue : c'est du contenu, pas un état de joueur. */
+  S.saison = d.saison ?? null;
   /* Un nombre ne se mute pas : il vit dans l'état, qui est un objet partagé.
      C'est le seul des douze conteneurs qui ait dû changer de place. */
   S.aCollectionner = d.aCollectionner ?? d.dex.length;
@@ -273,9 +296,12 @@ async function load() {
   S.active = st.wallet.active;
   S.nextIn = st.wallet.nextPackInMs;
   S.packPrice = st.packPrice;
-  /* Les séries que ce joueur a débloquées. `null` quand la progression n'est
-     pas montée : tout est alors ouvert, comme avant. */
-  S.series = st.series ? new Set(st.series) : null;
+  /* La saison en cours, et celle que ce joueur a déjà vue annoncée.
+     `S.series` — les séries que ce joueur-là avait débloquées, tirées de son
+     niveau — n'existe plus : les séries s'ouvrent par saison, pour tout le monde
+     le même jour, et `serieDebloquee` lit le champ `ouverte` du catalogue. */
+  S.saison = st.saison ?? S.saison ?? null;
+  S.saisonVue = st.saisonVue ?? null;
   /* L état a changé. On ne dit pas **qui** doit se redessiner : ce fichier
      est partagé par deux écrans qui n affichent pas les mêmes choses, et il
      appelait le rendu du kiosque même sur la page des Fanzzy, où ni le bouton
@@ -423,5 +449,5 @@ function cardHTML(f, opts = {}) {
   /* L'état est un **objet partagé**, pas une copie : le kiosque le modifie en
      ouvrant un booster, la page des Fanzzy le relit. Exporter une copie ferait
      deux vérités dont l'une vieillirait en silence. */
-  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, chargerCatalogue, clamp, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid };
+  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, chargerCatalogue, clamp, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid };
 })();

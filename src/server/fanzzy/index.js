@@ -9,9 +9,10 @@ import { STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 // Les tenues viennent de la base : elles se créent depuis l'administration,
 // et une liste figée dans le code redeviendrait une seconde vérité.
 import { toutesTenues, tenuesPubliees } from './tenues.js';
-import { ACTIONS } from '../../shared/duel/actions.js';
+import { ACTIONS, DECK_RULES } from '../../shared/duel/actions.js';
 import { DEFAUTS, reglage } from '../../shared/reglages.js';
-import { XP, PALIERS } from '../../shared/niveau.js';
+import { XP } from '../../shared/niveau.js';
+import { saisonsLancees, saisonEnCours } from './saisons.js';
 
 /**
  * Collection Fanzzy, tenue par le serveur.
@@ -50,14 +51,28 @@ const prixPack = () => reglage('pack.prix_echarpes');
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
 /**
- * À quel niveau chaque série se débloque.
+ * Quelle saison a ouvert chaque série.
  *
- * Déduit des paliers plutôt que recopié : une table de plus à tenir à jour
- * finirait par diverger de celle qui décide vraiment, et le kiosque
- * annoncerait « niveau 12 » sur une série que le serveur ouvre au niveau 9.
+ * Remplace `NIVEAU_DE_SERIE`, qui disait à quel niveau une série se débloquait :
+ * le niveau n'ouvre plus de séries, les saisons le font. Déduit des saisons
+ * lancées plutôt que recopié — une table de plus à tenir à jour finirait par
+ * diverger de celle qui décide vraiment.
+ *
+ * Une série ouverte par deux saisons est attribuée à la **plus ancienne** :
+ * c'est le jour où elle est arrivée dans le jeu qui intéresse le joueur, pas la
+ * dernière fois qu'on l'a renommée dans une liste.
  */
-const NIVEAU_DE_SERIE = Object.fromEntries(
-  PALIERS.flatMap((p) => (p.series ?? []).map((s) => [s, p.niveau])));
+function saisonDeSerie() {
+  const par = {};
+  for (const s of saisonsLancees()) {
+    for (const id of s.series) {
+      if (!par[id] || s.numero < par[id].numero) {
+        par[id] = { numero: s.numero, nom: s.nom };
+      }
+    }
+  }
+  return par;
+}
 
 /**
  * `niveau` est facultatif : sans lui le module tourne exactement comme avant,
@@ -65,7 +80,14 @@ const NIVEAU_DE_SERIE = Object.fromEntries(
  * progression de monter le module seul, et à une installation dont
  * `sql/niveau.sql` n'est pas encore appliqué de continuer à distribuer.
  */
-export function createFanzzy({ pool, requireAuth, niveau = null }) {
+/**
+ * @param {object} [opts.decks]  le module de deck, s'il est monté. La fiche s'en
+ *   sert pour dire **où** ce personnage se trouve dans la tribune du joueur —
+ *   titulaire, remplaçant, ou nulle part — et quelles places sont ouvertes. Sans
+ *   lui, la fiche reste lisible et le bouton d'entrée en duel disparaît : mieux
+ *   vaut pas de bouton qu'un bouton qui ne peut pas tenir sa promesse.
+ */
+export function createFanzzy({ pool, requireAuth, niveau = null, decks = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -111,6 +133,23 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
   async function collection(userId) {
     const rows = await q(`SELECT fanzzy_id, copies FROM user_fanzzy WHERE user_id = ?`, [userId]);
     return Object.fromEntries(rows.map((r) => [r.fanzzy_id, r.copies]));
+  }
+
+  /**
+   * La dernière saison dont ce joueur a vu l'annonce.
+   *
+   * La colonne vient de `sql/saisons.sql`, que rien n'oblige à appliquer. Sans
+   * elle on rend `null` : l'annonce s'affiche, ce qui est le bon défaut — mieux
+   * vaut la montrer une fois de trop que de la perdre en silence.
+   */
+  async function saisonVue(userId) {
+    try {
+      const r = await q(`SELECT saison_vue FROM user_wallet WHERE user_id = ?`, [userId]);
+      return r[0]?.saison_vue ?? null;
+    } catch (e) {
+      if (e.code !== 'ER_BAD_FIELD_ERROR') throw e;
+      return null;
+    }
   }
 
   /**
@@ -359,16 +398,15 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
     // peut encore demander son booster : le refus se décide ici.
     if (!serieOuverte(setId)) throw fail('fanzzy.error.set_closed');
 
-    /* Le niveau et l'administration se combinent, ils ne se remplacent pas :
-       l'administration décide de ce qui existe pour tout le monde, le niveau de
-       ce qui existe pour ce joueur-là. Une série peut donc être ouverte et
-       hors de portée, et le code d'erreur le dit — « fermée » aurait laissé
-       croire à une décision de l'administration, et le joueur aurait attendu
-       au lieu de jouer. */
-    if (niveau) {
-      const d = await niveau.droitsDe(userId);
-      if (!d.series.has(setId)) throw fail('fanzzy.error.set_locked');
-    }
+    /* **Il n'y a plus de second verrou.** Le niveau du joueur en posait un :
+       une série pouvait être ouverte pour tout le monde et hors de portée pour
+       celui-là. Deux règles pour une question, et le joueur devait comprendre
+       laquelle le refusait.
+
+       Les séries s'ouvrent maintenant par saison, pour tout le monde le même
+       jour. `fanzzy.error.set_locked` n'est plus émis nulle part ; le message
+       reste traduit côté client le temps qu'un onglet resté ouvert depuis avant
+       le déploiement finisse sa session. */
 
     await wallet(userId);   // recharge avant de débiter
 
@@ -635,14 +673,22 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
       // autre forme.
       dex: publies().map((f) => ({ ...f, racine: racineDe(f.id),
         stade: lignee(f.id).findIndex((x) => x.id === f.id) + 1 })),
-      // `ouverte` porte l'information ; le kiosque n'affiche que celles-là, et
-      // la progression ne se compte que sur elles.
-      // `ouverte` est la décision de l'administration ; `niveau` est le palier
-      // auquel la série se débloque. Les deux sont les mêmes pour tout le
-      // monde, donc ils ont leur place dans cette réponse partagée — ce qui
-      // dépend du joueur, c'est `series` dans `/state`.
-      sets: SETS.map((s) => ({ ...s, ouverte: serieOuverte(s.id),
-        niveau: NIVEAU_DE_SERIE[s.id] ?? 1 })),
+      /* `ouverte` porte l'information : le kiosque n'affiche que celles-là, et
+         la progression ne se compte que sur elles. `saison` dit **par quelle
+         saison** elle est arrivée — ce qui remplace l'ancien `niveau`, et qui
+         est désormais la même chose pour tout le monde.
+
+         Une série fermée n'a pas de saison : c'est ce qui permet à l'écran de
+         dire « pas encore » plutôt que d'inventer une date. */
+      sets: (() => {
+        const parSerie = saisonDeSerie();
+        return SETS.map((s) => ({ ...s, ouverte: serieOuverte(s.id),
+          saison: parSerie[s.id] ?? null }));
+      })(),
+      /* La saison en cours, pour que le kiosque puisse l'annoncer. Ici plutôt
+         que dans `/state` : elle ne dépend pas du joueur, et cette réponse-ci
+         est celle que toutes les pages chargent déjà. */
+      saison: saisonEnCours(),
       // Ce qu'un joueur peut encore obtenir. La page pourrait le recalculer,
       // mais elle le recalculerait *mal* le jour où la règle se nuance — et
       // c'est précisément le genre de copie que ce projet a déjà payé.
@@ -660,27 +706,52 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
   });
 
   /**
-   * L'état du joueur, dont **les séries qu'il a débloquées**.
+   * L'état du joueur.
    *
-   * Le kiosque les ignorait. `/dex` dit quelles séries sont ouvertes — c'est
-   * une décision de l'administration, la même pour tout le monde — mais pas
-   * lesquelles ce joueur-ci peut ouvrir, qui dépend de son niveau. Le carrousel
-   * proposait donc les neuf séries, le joueur en choisissait une hors de
-   * portée, et il découvrait le refus **après** avoir appuyé sur « ouvrir le
-   * booster » : « Ouverture impossible (fanzzy.error.set_locked) ».
+   * `series` y portait **les séries que ce joueur-là avait débloquées**, tirées
+   * de son niveau. Il n'y en a plus : les séries s'ouvrent par saison, pour tout
+   * le monde le même jour, et `/dex` les sert déjà à tous. Une liste par joueur
+   * qui vaudrait la même chose pour tout le monde serait une requête de plus
+   * pour redire ce qui est déjà dit.
    *
-   * Un jeu ne cache pas ce qui vient : il le montre verrouillé, avec le
-   * niveau qu'il demande. C'est cette liste qui le permet.
+   * Ce qui reste vrai, et qui valait la peine : **un jeu ne cache pas ce qui
+   * vient**. Le kiosque montre les séries fermées, verrouillées, en disant
+   * qu'elles attendent une saison — plutôt que de laisser le joueur les
+   * découvrir par un refus après avoir appuyé.
+   *
+   * `saisonVue` sert à ne montrer l'annonce qu'une fois. Ce joueur-là l'a vue
+   * ou non : c'est bien un état de joueur, et sa place est ici.
    */
   router.get('/state', requireAuth, (req, res) =>
     send(res, Promise.all([
       wallet(req.user.id), collection(req.user.id), stades(req.user.id),
-      niveau ? niveau.droitsDe(req.user.id).then((d) => [...d.series]) : null,
-    ]).then(([w, col, st, series]) => ({ wallet: w, collection: col, stades: st,
-      series, maxPacks: maxPacks(), packPrice: prixPack() }))));
+      saisonVue(req.user.id),
+    ]).then(([w, col, st, vue]) => ({ wallet: w, collection: col, stades: st,
+      saison: saisonEnCours(), saisonVue: vue,
+      maxPacks: maxPacks(), packPrice: prixPack() }))));
 
+  /**
+   * « J'ai vu l'annonce de cette saison. »
+   *
+   * Sans cette marque, l'annonce reviendrait à chaque ouverture du kiosque, pour
+   * toujours — et une annonce qu'on ne peut pas faire taire est une annonce
+   * qu'on apprend à ne plus lire. La suivante ne serait pas lue non plus.
+   */
+  router.post('/saison-vue', requireAuth, (req, res) => send(res, (async () => {
+    const s = saisonEnCours();
+    if (!s) return { saisonVue: null };
+    await q(`UPDATE user_wallet SET saison_vue = ? WHERE user_id = ?`, [s.id, req.user.id]);
+    return { saisonVue: s.id };
+  })()));
+
+  /* Le repli est **LA TRIBUNE**, la seule série ouverte au niveau 1 : un joueur
+     qui n'en a pas encore débloqué d'autre ne peut ouvrir que celle-là.
+     Il valait `VN` — une série qui n'existe plus depuis la dissolution de
+     VIRAGE NORD, ce qui faisait d'une requête sans série une ouverture vide.
+     Un repli qui nomme une série codée en dur doit nommer celle que tout le
+     monde possède. */
   router.post('/open', requireAuth, (req, res) =>
-    send(res, openPack(req.user.id, String(req.body?.set ?? 'VN'), { buy: Boolean(req.body?.buy) })
+    send(res, openPack(req.user.id, String(req.body?.set ?? 'TR'), { buy: Boolean(req.body?.buy) })
       .then(async (r) => ({ ...r, wallet: await wallet(req.user.id) }))));
 
   router.post('/evolve', requireAuth, (req, res) =>
@@ -724,6 +795,49 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
    * Tout est assemblé côté serveur en une seule fois : la page n'a pas à
    * enchaîner cinq requêtes pour afficher une carte.
    */
+  /**
+   * Les places de la tribune du deck, et qui les occupe.
+   *
+   * Une place par rang ouvert : la première est le titulaire — celui qui entre
+   * au coup d'envoi — les suivantes sont des remplaçants, que la carte
+   * Changement fait entrer en cours de partie.
+   *
+   * Rend `null` si le module de deck n'est pas monté. La fiche retire alors son
+   * bouton plutôt que d'en proposer un qui échouerait.
+   */
+  async function laTribune(userId, fanzzyId) {
+    if (!decks) return null;
+    try {
+      const [deck, possede] = await Promise.all([
+        decks.deckDe(userId), decks.possessions(userId),
+      ]);
+      const rangs = deck?.fanzzy ?? [];
+      /* Le plafond vient du niveau, borné par la règle — exactement comme dans
+         l'écran de deck. Le recopier ici donnerait une seconde vérité. */
+      const ouvertes = Math.min(DECK_RULES.fanzzy, possede.fanzzyMax);
+      return {
+        places: Array.from({ length: ouvertes }, (_, i) => {
+          const occupant = rangs[i] ? parIdentifiant(rangs[i].id) : null;
+          return {
+            place: i,
+            role: i === 0 ? 'titulaire' : 'remplacant',
+            /* **Atteignable ou non.** Poser quelqu'un au rang 2 quand le rang 1
+               est vide laisserait un trou, et c'est `fanzzy[0]` qui décide du
+               titulaire : le serveur refuse, la page grise. */
+            ouverte: i <= rangs.length,
+            occupant: occupant ? { id: occupant.id, nom: occupant.nom } : null,
+          };
+        }),
+        /* Où est ce personnage aujourd'hui. `-1` : nulle part. */
+        siege: rangs.findIndex((x) => x.id === racineDe(String(fanzzyId ?? ''))),
+      };
+    } catch {
+      /* Un deck illisible ne doit pas emporter la fiche : le joueur perdrait
+         l'accès à sa collection entière pour un JSON abîmé. */
+      return null;
+    }
+  }
+
   async function fiche(userId, fanzzyId) {
     // La fiche d'un âge supérieur est la fiche de son personnage : c'est le
     // même individu, et le joueur n'en possède qu'un.
@@ -731,13 +845,18 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
     const perso = parIdentifiant(id);
     if (!perso) return null;
 
-    const [mien, skins, stuff, w] = await Promise.all([
+    const [mien, skins, stuff, w, tribune] = await Promise.all([
       q(`SELECT copies, stage, first_at FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
         [userId, id]),
       q(`SELECT skin_id, stage, equipped, got_at FROM user_skins
           WHERE user_id = ? AND fanzzy_id = ?`, [userId, id]),
       q(`SELECT stuff_id, copies, slot FROM user_stuff WHERE user_id = ?`, [userId]),
       q(`SELECT active_fanzzy FROM user_wallet WHERE user_id = ?`, [userId]),
+      /* La tribune du deck, assemblée ici et pas par la page.
+         Elle enchaînerait sinon deux requêtes pour afficher une carte, et la
+         seconde arriverait après le premier rendu — le bouton changerait de
+         texte sous le doigt du joueur. */
+      laTribune(userId, id),
     ]);
 
     const ages = lignee(id);
@@ -765,7 +884,14 @@ export function createFanzzy({ pool, requireAuth, niveau = null }) {
       possede: mien[0]?.copies ?? 0,
       stade,
       depuis: mien[0]?.first_at ?? null,
-      equipe: w[0]?.active_fanzzy === id,
+      /* **L'avatar, et non le deck.** C'est le personnage que voient les amis
+         et l'accueil. Le champ s'appelait `equipe` et la fiche en tirait
+         « DÉJÀ EN DUEL » — sur quelqu'un qui n'était dans aucun deck. Renommé
+         pour ce qu'il est ; ce qui concerne le duel est dans `tribune`. */
+      avatar: w[0]?.active_fanzzy === id,
+      /* Où il est dans la tribune du deck, et quelles places sont ouvertes.
+         `null` si le module de deck n'est pas monté. */
+      tribune,
       /* Les tenues de **l’âge atteint**, et rien d’autre.
 
          Un skin appartient désormais à un âge : le Capo n’hérite pas de la

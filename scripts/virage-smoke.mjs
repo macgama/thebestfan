@@ -17,7 +17,8 @@ import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 import { VirageRoom } from '../src/server/ferveur/virage.js';
-import { resoudreGeste } from '../src/server/ferveur/gestures.js';
+import { resoudreGeste, GESTES } from '../src/server/ferveur/gestures.js';
+import { ORDRE } from '../src/shared/duel/chants.js';
 import { ACTIONS, ACTIONS_VIRAGE, ACTION_BY_ID, dansLeVirage }
   from '../src/shared/duel/actions.js';
 
@@ -199,16 +200,59 @@ check('et la ferveur n’y est pas réduite', A.state.you.neutre === false);
    rythme — et cette liste-ci se met à jour à la main aussi. C'est le prix de
    la discipline, et il est bon marché. */
 const ORDRE_ATTENDU = ['reprise', 'roulement', 'bache', 'repons', 'onetaitla',
-  'damier', 'salves', 'contrechant', 'moulinet', 'craquage', 'montee',
-  'aupoint', 'tenir', 'mur', 'appel', 'relance', 'cadence'];
+  'damier', 'salves', 'trilage', 'contrechant', 'moulinet', 'craquage', 'montee',
+  'aupoint', 'rebours', 'tenir', 'mur', 'appel', 'relance', 'cadence'];
+
+/* **La liste écrite à la main est confrontée à celle du jeu.**
+ *
+ * Elle est écrite ici pour forcer une décision consciente : ajouter un chant
+ * doit obliger à venir dire où il se place dans la rotation. Mais elle ne force
+ * cette décision que si l'on est prévenu qu'elle a divergé — sinon elle reste
+ * vraie sur elle-même et fausse sur le jeu, ce qui est exactement ce qui vient
+ * d'arriver avec le tri et le compte. */
+{
+  const enTrop = ORDRE.filter((id) => !ORDRE_ATTENDU.includes(id));
+  const enMoins = ORDRE_ATTENDU.filter((id) => !ORDRE.includes(id));
+  check(`la rotation attendue couvre les ${ORDRE.length} chants du jeu`,
+    enTrop.length === 0 && enMoins.length === 0
+    || (console.log('        absents de la liste :', enTrop.join(', ') || '—'),
+      console.log('        inconnus du jeu :', enMoins.join(', ') || '—'),
+      console.log('        — dis ici où le nouveau chant se place dans la '
+        + 'rotation, puis vérifie qu’il y est bien intercalé'), false));
+}
 
 /* Les quinze gestes du jeu, écrits à la main pour la même raison. Le duel les
    fait tourner depuis toujours ; le Virage n'en portait que dix, et **rien ne
    le comptait** — douze chants couvraient dix gestes, et les cinq épreuves
    étaient inatteignables dans le mode où l'on passe quatre-vingt-dix minutes. */
+/* **Les gestes attendus sont ceux du jeu**, et non une liste à part.
+ *
+ * Elle en portait quinze, écrits à la main. Le jeu en a dix-sept depuis que le
+ * tri et le compte existent : la liste est restée vraie sur elle-même et fausse
+ * sur le jeu, et les deux nouveaux mini-jeux se sont retrouvés injouables au
+ * Virage sans qu'un seul contrôle ne rougisse.
+ *
+ * Une liste écrite à la main force une décision consciente — c'est pour ça
+ * qu'elle avait été choisie. Mais elle ne force cette décision que si l'on est
+ * prévenu qu'elle a divergé : elle est donc **confrontée** à `GESTES`, et c'est
+ * cette confrontation qui rougit le jour où l'on ajoute un geste.
+ *
+ * L'ordre reste à la main : c'est une décision de jeu — quel geste on rencontre
+ * en premier — et elle ne se déduit de rien. */
 const GESTES_ATTENDUS = ['tempo', 'mash', 'hold', 'contretemps', 'echo',
   'crescendo', 'relance', 'salves', 'tenue', 'retenue',
-  'tifo', 'memoire', 'mosaique', 'echarpe', 'capo'];
+  'tifo', 'memoire', 'mosaique', 'echarpe', 'capo', 'tri', 'compte'];
+
+{
+  const oublies = GESTES.filter((g) => !GESTES_ATTENDUS.includes(g));
+  const inventes = GESTES_ATTENDUS.filter((g) => !GESTES.includes(g));
+  check(`la liste attendue couvre les ${GESTES.length} gestes du jeu`,
+    oublies.length === 0 && inventes.length === 0
+    || (console.log('        absents de la liste :', oublies.join(', ') || '—'),
+      console.log('        inconnus du jeu :', inventes.join(', ') || '—'),
+      console.log('        — un geste sans chant est injouable au Virage : '
+        + 'écris-lui le sien dans chants.js'), false));
+}
 
 const offrir = (id) => {
   const salle = virage.rooms.get(7001);

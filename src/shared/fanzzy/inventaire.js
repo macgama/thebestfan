@@ -124,15 +124,21 @@ export const STUFF = [
 export const SKIN_BY_ID = new Map(SKINS.map((s) => [s.id, s]));
 export const STUFF_BY_ID = new Map(STUFF.map((s) => [s.id, s]));
 
-/** Cartes d'action du paquet de bienvenue, jouables en duel. */
-export const ACTIONS = [
-  { id: 'a-fumigene', nom: 'Fumigène', texte: 'Une poussée immédiate, sans geste.' },
-  { id: 'a-silence',  nom: 'Silence radio', texte: 'Coupe le chant adverse 4 secondes.' },
-  { id: 'a-relance',  nom: 'Seconde jeunesse', texte: 'Rend la moitié de ton souffle.' },
-  { id: 'a-bache',    nom: 'Bâche surprise', texte: 'Annule la prochaine poussée adverse.' },
-];
-
-export const ACTION_BY_ID = new Map(ACTIONS.map((a) => [a.id, a]));
+/* **Il n'y a plus de liste de cartes d'action ici.**
+ *
+ * Il y en avait une, de quatre lignes, présentée comme « les cartes du paquet de
+ * bienvenue ». C'était une **seconde vérité** : le vrai catalogue vit dans
+ * `src/shared/duel/actions.js`, et les deux ont divergé.
+ *
+ * `a-relance` — « Seconde jeunesse » — figurait ici et **n'existait pas** dans
+ * le catalogue, où la carte s'appelle `a-secondsouffle`. Le paquet de bienvenue
+ * tirait au hasard dans ces quatre-là : **un nouveau joueur sur quatre
+ * repartait donc avec une carte d'action inexistante**. Elle était écrite dans
+ * sa bourse, elle n'apparaissait dans aucun catalogue, et son deck la refusait
+ * en « carte inconnue » — pour une carte qu'on venait de lui offrir.
+ *
+ * L'accueil des nouveaux importe maintenant `ACTIONS` de `duel/actions.js`,
+ * comme tout le reste du jeu. */
 
 /**
  * Combine les modificateurs du Fanzzy et des deux pièces portées.

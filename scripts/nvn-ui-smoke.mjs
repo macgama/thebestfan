@@ -20,6 +20,7 @@ import { createDecks } from '../src/server/deck/index.js';
 import { createNvN } from '../src/server/nvn/index.js';
 import { GESTURES, resoudreGeste } from '../src/server/ferveur/gestures.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
+import { CHANTS, ORDRE } from '../src/shared/duel/chants.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
@@ -48,7 +49,11 @@ await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   duel_results, duel_events, duels, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql',
-                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql']) {
+                 /* `duel.sql` manquait : `duel_results` n'existait donc pas, la
+                    forme récente de chaque joueur échouait en silence, et
+                    l'affiche disait « PREMIER DUEL » à tout le monde — pour une
+                    table absente, pas pour un joueur sans passé. */
+                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'duel.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
@@ -88,6 +93,24 @@ await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,statu
 for (const id of U) {
   await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1)`, [id]);
 }
+/* Un passé pour le premier joueur : six duels, dont le plus ancien ne doit
+   **pas** apparaître — l'affiche n'en montre que cinq. Les issues sont
+   distinctes pour que l'ordre se lise : la plus récente est une victoire, la
+   plus ancienne visible un nul. */
+{
+  const passe = [
+    ['win', 3, 1, 1], ['loss', 0, 2, 2], ['win', 2, 2, 3],
+    ['loss', 1, 4, 4], ['draw', 2, 2, 5], ['win', 9, 0, 6],
+  ];
+  for (const [issue, pour, contre, ilYA] of passe) {
+    await raw.query(
+      `INSERT INTO duel_results (duel_id, user_id, opponent_id, outcome,
+         goals_for, goals_against, ended_at)
+       VALUES (?, ?, ?, ?, ?, ?, NOW(3) - INTERVAL ? HOUR)`,
+      [`passe-${ilYA}`, U[0], U[1], issue, pour, contre, ilYA]);
+  }
+}
+
 await raw.end();
 
 /* ----------------------------------------------------------- le serveur */
@@ -242,6 +265,26 @@ const apparie = await jusqua(async () =>
   await A.page.evaluate(() => document.getElementById('jeu').classList.contains('on')));
 check('les deux joueurs sont appariés et le duel s\u2019ouvre', apparie);
 
+/* **On impose un chant de tempo au répertoire de ce duel.**
+ *
+ * Les cinq chants offerts sont tirés de l identifiant du duel, qui est un
+ * uuid : rien ne garantit qu il y ait du tempo dedans. Or le tempo est le seul
+ * geste que cette suite sait exécuter — huit frappes sur une pulsation — et
+ * c est son barème qui vient d être lu.
+ *
+ * On l impose donc, plutôt que de relancer le duel jusqu à tomber dessus. Ce
+ * qu on éprouve ici est la chaîne « je touche un chant, le mini-jeu s ouvre, le
+ * serveur note » ; la variété du répertoire, elle, a son contrôle dans
+ * nvn-smoke.
+ */
+{
+  const salle = [...nvn.salles.values()][0];
+  const tempo = ORDRE.find((id) => CHANTS[id].gest === 'tempo');
+  if (salle && tempo) salle.duel.repertoire[0] = tempo;
+  // L état part dix fois par seconde : le prochain porte le nouveau répertoire.
+  await dodo(900);
+}
+
 const ouvert = await A.page.evaluate(() => ({
   horloge: document.getElementById('horloge').textContent,
   mode: document.getElementById('modeTag').textContent,
@@ -250,8 +293,93 @@ const ouvert = await A.page.evaluate(() => ({
   cartes: document.querySelectorAll('#mainCartes .ct').length,
   fanzzy: document.querySelectorAll('#equipe .fz').length,
   actif: document.querySelector('#equipe .fz.actif')?.textContent.trim(),
-  chanter: document.getElementById('chanterSous').textContent,
+  /* La rangée des chants a remplacé le bouton unique. On lit ce qu'elle
+     porte : c'est la seule façon de vérifier que le joueur a bien un choix. */
+  chants: [...document.querySelectorAll('#chants .chant')].map((c) => ({
+    id: c.dataset.chant,
+    nom: c.querySelector('b')?.textContent.trim(),
+    geste: c.querySelector('.g')?.textContent.trim(),
+    cout: Number(c.querySelector('.c')?.textContent),
+    pousse: Number(c.querySelector('.p')?.textContent),
+    hors: c.classList.contains('dim'),
+  })),
 }));
+/* ============================================== l'affiche du duel
+
+   **Un duel commençait sans qu'on sache contre qui on jouait.** La corde
+   apparaissait, et il fallait chanter. Les trois Fanzzy de chacun, la forme
+   récente des deux joueurs, le lieu — tout était déjà connu du serveur au coup
+   d'envoi, et rien n'en sortait.
+
+   Elle arrive sur `nvn:affiche`, juste après `nvn:start`, et elle se retire
+   d'elle-même au bout de six secondes : c'est une affiche, pas une salle
+   d'attente. */
+{
+  const aff = await A.page.evaluate(() => {
+    const e = document.getElementById('affiche');
+    if (!e || e.hidden) return null;
+    return {
+      visible: true,
+      camps: e.querySelectorAll('.camp-bloc').length,
+      vignettes: e.querySelectorAll('.fz-aff').length,
+      entrent: e.querySelectorAll('.fz-aff.entre').length,
+      noms: [...e.querySelectorAll('.camp-bloc .qui b')].map((b) => b.textContent.trim()),
+      lieu: document.getElementById('afficheLieu').textContent.trim(),
+      /* Le sien en premier : « en haut » veut dire « moi » sur les deux écrans
+         du jeu, et changer cet ordre selon le camp tiré ferait chercher. */
+      premier: e.querySelector('.camp-bloc')?.classList.contains('moi'),
+      forme: [...e.querySelectorAll('.camp-bloc.moi .forme i')]
+        .map((x) => x.textContent.trim()),
+      sansPasse: [...e.querySelectorAll('.camp-bloc.eux .forme small')]
+        .some((x) => /PREMIER DUEL/.test(x.textContent)),
+    };
+  });
+
+  /* La regarder vaut mieux que la mesurer : deux \u00e9crans qui encadrent un duel
+     sont des images avant d'\u00eatre des chiffres. */
+  if (process.env.CAPTURE) {
+    await A.page.screenshot({ path: `${process.env.TEMP ?? '/tmp'}/duel-affiche.png` });
+  }
+
+  check('l\u2019affiche s\u2019ouvre au coup d\u2019envoi', aff?.visible === true
+    || (console.log('        elle est restée cachée'), false));
+  if (aff) {
+    check('elle montre les deux camps', aff.camps === 2);
+    /* Le contrôle qui porte : on doit voir **toute l'équipe**, pas seulement
+       celui qui entre. C'est en voyant les trois qu'on comprend qu'on peut
+       changer. */
+    check(`et les trois Fanzzy de chacun (${aff.vignettes})`, aff.vignettes === 6);
+    check('dont celui qui entre, marqué', aff.entrent === 2);
+    check('elle nomme les deux joueurs',
+      aff.noms.some((n) => /Sédunois/.test(n)) && aff.noms.some((n) => /Bâloise/.test(n)));
+    /* **La forme récente, et dans le bon sens.**
+
+       Six duels sont semés, l'affiche n'en montre que cinq — et le plus récent
+       en premier, parce que c'est le sens dans lequel on lit une forme : celui
+       qui a perdu ses quatre premiers et gagné le dernier ne raconte pas la
+       même chose que l'inverse. */
+    check(`elle montre la forme récente (${aff.forme.join('')})`,
+      aff.forme.length === 5
+      || (console.log('        pastilles :', aff.forme.join(' ')), false));
+    check('la plus récente d\u2019abord', aff.forme[0] === 'V'
+      && aff.forme[4] === 'N'
+      || (console.log('        ordre :', aff.forme.join('')), false));
+    /* Et l'adversaire, qui n'a pas de passé, le dit au lieu de laisser un vide. */
+    check('et un joueur sans passé le dit', aff.sansPasse === true);
+
+    check('elle annonce le lieu de la rencontre', aff.lieu.length > 3
+      || (console.log('        lieu :', JSON.stringify(aff.lieu)), false));
+    check('et le camp du joueur vient en premier', aff.premier === true);
+  }
+
+  /* Elle se retire seule. Une affiche qui resterait à l'écran cacherait la
+     corde pendant qu'elle bouge, et le joueur perdrait le début du duel sans
+     comprendre pourquoi. */
+  await new Promise((r) => { setTimeout(r, 6400); });
+  const partie = await A.page.evaluate(() => document.getElementById('affiche').hidden);
+  check('puis se retire d\u2019elle-même', partie === true);
+}
+
 check('l\u2019horloge démarre à cinq minutes', /^[45]:/.test(ouvert.horloge));
 check('le duel est marqué classé', ouvert.mode === 'CLASSÉ');
 check('chaque tribune a sa foule', ouvert.fouleMoi === 1 && ouvert.fouleEux === 1);
@@ -301,7 +429,20 @@ check('la main montre cinq emplacements', ouvert.cartes === 5);
 }
 check('les trois Fanzzy du deck sont là', ouvert.fanzzy === 3);
 check('le titulaire est en jeu', /EN JEU/.test(ouvert.actif ?? ''));
-check('le bouton annonce le cri et le geste', /TEMPO|MARTELAGE|ENDURANCE/.test(ouvert.chanter));
+/* **Cinq chants, et ils se distinguent.**
+
+   Le duel n'en offrait aucun : un bouton, et le serveur imposait le geste. Tous
+   les chants coûtaient dix-huit pour pousser quarante-quatre — choisir n'aurait
+   rien changé. Ce qu'on éprouve ici est donc la décision elle-même : cinq
+   cartes, des gestes différents, et des prix différents. */
+check(`l'écran offre cinq chants (${ouvert.chants.length})`, ouvert.chants.length === 5);
+check('chacun porte son nom, son geste, son coût et sa poussée',
+  ouvert.chants.every((c) => c.nom && c.geste && c.cout > 0 && c.pousse > 0)
+  || (console.log('        ', JSON.stringify(ouvert.chants)), false));
+check(`ils ne portent pas tous le même geste (${new Set(ouvert.chants.map((c) => c.geste)).size})`,
+  new Set(ouvert.chants.map((c) => c.geste)).size >= 2);
+check('ni le même prix',
+  new Set(ouvert.chants.map((c) => c.cout)).size >= 2);
 
 /* ------------------------------------------ les Fanzzy ont un visage */
 
@@ -346,7 +487,14 @@ check('un joueur sans équipement garde la pulsation de base',
 const ferveurAvant = await A.page.evaluate(() =>
   S.vue.equipes[S.vue.moi.side][0].ferveur);
 
-await A.page.evaluate(() => document.getElementById('chanter').click());
+/* On choisit **le chant de tempo** : c'est celui dont la suite sait exécuter
+   le geste, et c'est son barème qui a été lu juste au-dessus. */
+const chantTempo = ouvert.chants.find((c) => /TEMPO/.test(c.geste))?.id;
+check('un chant de tempo est offert', Boolean(chantTempo)
+  || (console.log('        gestes offerts :',
+    ouvert.chants.map((c) => c.geste).join(', ')), false));
+await A.page.evaluate((id) => document.querySelector(`[data-chant="${id}"]`)?.click(),
+  chantTempo);
 check('le mini-jeu s\u2019ouvre', await jusqua(async () =>
   await A.page.evaluate(() => document.getElementById('mini').classList.contains('on'))));
 
@@ -475,9 +623,9 @@ check('et ce n\u2019est pas un « impossible » générique',
      flotte désormais au-dessus de l'écran de jeu et pourrait tout aussi bien
      se poser sur quelque chose qu'on vise. */
   const chevauche = await A.page.evaluate(() => {
-    const b = document.getElementById('chanter');
+    const b = document.getElementById('chants');
     const m = document.querySelector('.tbf-burger');
-    if (!b) return 'bouton de chant introuvable';
+    if (!b) return 'rangée des chants introuvable';
     if (!m) return 'bouton de menu introuvable : plus aucune sortie en jeu';
     const rb = b.getBoundingClientRect();
     const rm = m.getBoundingClientRect();
@@ -487,8 +635,8 @@ check('et ce n\u2019est pas un « impossible » générique',
     return croise ? Math.round(Math.min(rb.right, rm.right) - Math.max(rb.left, rm.left)) : 0;
   });
   /**
- * Un écran de jeu ne se fait pas défiler. Le bouton de chant est la seule
- * action : s'il passe sous le pli, le joueur ne le trouve pas, et rien à
+ * Un écran de jeu ne se fait pas défiler. La rangée des chants est la seule
+ * action : si elle passe sous le pli, le joueur ne la trouve pas, et rien à
  * l'écran ne lui dit qu'il faut faire glisser la page.
  */
 {
@@ -500,14 +648,14 @@ check('et ce n\u2019est pas un « impossible » générique',
   check('l\u2019écran de duel ne défile pas', !defile.page && !defile.app);
 }
 
-check('le bouton de menu ne recouvre pas le bouton de chant',
+check('le bouton de menu ne recouvre pas les chants',
     chevauche === 0);
   if (chevauche) console.log(`    recouvrement : ${chevauche} px`);
 
   // Le message d'erreur non plus : il apparaît précisément quand le joueur
   // vient d'être refusé, c'est-à-dire au moment où il regarde son bouton.
   const surToast = await A.page.evaluate(() => {
-    const b = document.getElementById('chanter');
+    const b = document.getElementById('chants');
     const t = document.getElementById('toast');
     t.classList.add('on');
     const rb = b.getBoundingClientRect();
@@ -540,6 +688,71 @@ if (process.env.CAPTURE) {
   await A.page.screenshot({ path: join(tmpdir(), 'nvn-duel-full.png'), fullPage: true });
   console.log(`   captures : ${join(tmpdir(), 'nvn-duel.png')}`);
 }
+/* ============================================== le bilan de fin de duel
+
+   **Cinq minutes de jeu se terminaient sur un voile gris avec un mot dessus** —
+   moins qu'un message d'erreur. Tout ce que montre cet écran était compté
+   pendant la partie et n'était raconté à personne : les cartes jouées, les
+   changements, la carte préférée, ce que le duel a rapporté.
+
+   On force la fin plutôt que d'attendre cinq minutes : la salle est exposée par
+   le module, et son horloge fait le reste. C'est le chemin réel — `fermer()`
+   est la seule porte de sortie d'un duel, quelle qu'en soit la raison. */
+{
+  const salle = [...nvn.salles.values()][0];
+  if (!salle) {
+    check('une salle est ouverte pour éprouver la fin', false);
+  } else {
+    /* On avance la fin dans le passé et on laisse l'horloge la constater. Poser
+       `termine` à la main court-circuiterait justement ce qu'on veut éprouver. */
+    salle.duel.fin = Date.now() - 1;
+    await new Promise((r) => { setTimeout(r, 900); });
+
+    const bil = await A.page.evaluate(() => {
+      const e = document.getElementById('bilan');
+      if (!e || e.hidden) return null;
+      return {
+        visible: true,
+        titre: document.getElementById('bilanTitre').textContent.trim(),
+        score: document.getElementById('bilanScore').textContent.trim(),
+        lieu: document.getElementById('bilanLieu').textContent.trim(),
+        gains: [...e.querySelectorAll('.gain small')].map((x) => x.textContent.trim()),
+        lignes: [...e.querySelectorAll('.stat .quoi')].map((x) => x.textContent.trim()),
+        sortie: document.getElementById('bilanSortir').textContent.trim(),
+        /* Le voile gris de l'ancienne fin ne doit plus se montrer : les deux
+           ensemble donneraient deux résultats superposés. */
+        voile: document.getElementById('voile').classList.contains('on'),
+      };
+    });
+
+    check('le bilan s\u2019ouvre à la fin du duel', bil?.visible === true
+      || (console.log('        il est resté caché'), false));
+
+    if (bil) {
+      check(`il annonce le résultat (${bil.titre})`,
+        /VICTOIRE|DÉFAITE|MATCH NUL/.test(bil.titre));
+      check(`et le score (${bil.score})`, /\d.*\d/.test(bil.score));
+      check('il rappelle le lieu', bil.lieu.length > 2);
+      /* Le contrôle qui porte : **ce que le duel a rapporté**. Les écharpes
+         étaient versées en silence, et le joueur voyait son solde changer entre
+         deux écrans sans savoir ni combien ni pourquoi. */
+      check(`il dit ce qu\u2019on a gagné (${bil.gains.join(', ') || 'rien'})`,
+        bil.gains.includes('ÉCHARPES'));
+      /* Et les chiffres du match, les deux camps côte à côte : c'est la
+         comparaison qui intéresse, pas le chiffre isolé. */
+      check(`il compte le match (${bil.lignes.length} lignes)`,
+        ['CHANTS', 'CARTES JOUÉES', 'CHANGEMENTS'].every((l) => bil.lignes.includes(l))
+        || (console.log('        lignes :', bil.lignes.join(' | ')), false));
+      check('il offre une sortie', /REVENIR/i.test(bil.sortie));
+      check('et l\u2019ancien voile gris ne se montre plus', bil.voile === false);
+    }
+
+    if (process.env.CAPTURE) {
+      await A.page.screenshot({ path: `${process.env.TEMP ?? '/tmp'}/duel-bilan.png` });
+    }
+  }
+}
+
 await nav.close();
 nvn.stop();
 io.close();

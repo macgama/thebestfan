@@ -72,11 +72,19 @@ check('au niveau maximum, la jauge est pleine plutôt que divisée par zéro',
 
 {
   const d1 = droits(1);
-  check('au niveau 1 : une série, deux clubs, deux Fanzzy',
-    d1.series.size === 1 && d1.series.has('TR') && d1.slots === 2 && d1.deckFanzzy === 2);
+  check('au niveau 1 : deux clubs, deux Fanzzy',
+    d1.slots === 2 && d1.deckFanzzy === 2);
+
+  /* **Le niveau n'ouvre plus de séries**, et c'est ce que ce contrôle défend.
+     Elles s'ouvrent par saison, pour tout le monde le même jour. Un `series`
+     qui réapparaîtrait ici serait le retour de la règle qu'on vient de retirer,
+     et deux règles pour une question laissent le joueur deviner laquelle le
+     refuse. */
+  check('le niveau n’ouvre aucune série',
+    droits(NIVEAU_MAX).series === undefined
+    && PALIERS.every((p) => p.series === undefined));
 
   const dMax = droits(NIVEAU_MAX);
-  check('au niveau maximum, toutes les séries sont ouvertes', dMax.series.size === 9);
   check('et les huit emplacements de club', dMax.slots === 8);
   check('et les trois emplacements de deck', dMax.deckFanzzy === 3);
 
@@ -87,19 +95,24 @@ check('au niveau maximum, la jauge est pleine plutôt que divisée par zéro',
   let avant = droits(1);
   for (let n = 2; n <= NIVEAU_MAX; n++) {
     const d = droits(n);
-    if (d.slots < avant.slots || d.deckFanzzy < avant.deckFanzzy
-        || [...avant.series].some((s) => !d.series.has(s))) recul = n;
+    if (d.slots < avant.slots || d.deckFanzzy < avant.deckFanzzy) recul = n;
     avant = d;
   }
   check('aucun palier ne retire quoi que ce soit',
     recul === null || (console.log('        recul au niveau', recul), false));
 
   check('chaque palier apporte quelque chose',
-    PALIERS.every((p) => p.series?.length || p.slots || p.deckFanzzy));
+    PALIERS.every((p) => p.slots || p.deckFanzzy));
   check('les paliers sont dans l’ordre',
     PALIERS.every((p, i) => i === 0 || p.niveau > PALIERS[i - 1].niveau));
+  /* L'intervalle a changé parce que les paliers se sont clairsemés : ceux qui
+     ouvraient des séries sont partis avec elles. Ce que le contrôle défend est
+     le même — deux niveaux franchis d'un coup n'avalent aucun palier — et il le
+     vérifie sur un intervalle qui en contient toujours deux. */
   check('deux niveaux d’un coup n’avalent aucun palier',
-    paliersEntre(3, 6).map((p) => p.niveau).join(',') === '4,5,6');
+    paliersEntre(3, 5).map((p) => p.niveau).join(',') === '4,5');
+  check('et un intervalle sans palier n’en invente pas',
+    paliersEntre(6, 8).length === 0);
 }
 
 /* ============================================================== en base */
@@ -157,7 +170,11 @@ let r = await call('/api/niveau');
 check('un nouveau joueur est au niveau 1 sans XP', r.json.niveau === 1 && r.json.xp === 0);
 check('et la route annonce le barème',
   r.json.gains?.pack === XP.pack && r.json.gains?.duel?.classe === XP.duel.classe);
-check('il ne voit qu’une série', r.json.series.length === 1 && r.json.series[0] === 'TR');
+/* La route du niveau ne sert plus de séries. Elles ne dépendent plus du
+   joueur : une saison les ouvre pour tout le monde le même jour, et le
+   catalogue les porte déjà. Redire ici ce qui vaut pour tous serait une
+   seconde vérité à tenir à jour. */
+check('la route du niveau ne parle pas de séries', r.json.series === undefined);
 
 /* ------------------------------------------------- l'XP se gagne en jouant */
 
@@ -167,16 +184,19 @@ check('un booster s’ouvre', r.json.cards?.length === 5);
 check('et il rapporte de l’XP', (await xpEnBase()) === avantXp + XP.pack);
 check('l’ouverture annonce la progression', r.json.niveau?.xp === avantXp + XP.pack);
 
-/* ------------------------------------- une série non atteinte se refuse
+/* ----------------------------- le niveau ne ferme plus aucune série
 
-   Le kiosque ne la propose pas, mais un client modifié — ou un onglet resté
-   ouvert — peut encore en demander le booster. Et le refus doit se distinguer
-   d'une série fermée par l'administration : dans un cas le joueur doit jouer,
-   dans l'autre il doit attendre. Deux situations, deux messages.            */
+   Il y avait ici un contrôle du refus « série au-dessus de ton niveau ». Il
+   n'a plus de sujet : les séries s'ouvrent par saison, pour tout le monde le
+   même jour, et un joueur de niveau 1 tire dans tout ce qui est ouvert.
+
+   C'est la règle qu'on vérifie maintenant, et dans ce sens-là : LE VIRAGE
+   IMPOSSIBLE s'ouvrait au niveau 26. Le demander au niveau 1 doit marcher. */
 
 r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'IM' } });
-check('une série au-dessus de son niveau est refusée',
-  r.json.error === 'fanzzy.error.set_locked');
+check('un joueur de niveau 1 ouvre la série qui demandait le niveau 26',
+  r.json.cards?.length === 5
+  || (console.log('        refus :', r.json.error), false));
 
 /* ------------------------------------------------------ monter de palier */
 
@@ -204,19 +224,25 @@ await pool.query('UPDATE user_wallet SET xp = ? WHERE user_id = ?', [seuil(5) - 
 const saut = await niveau.gagner(U, coutDuPalier(5) + coutDuPalier(6));
 check('un gros gain peut franchir deux paliers',
   saut.avant === 4 && saut.niveau === 6 && saut.xp === seuil(7) - 1);
-check('et aucun palier n’est avalé au passage',
-  saut.paliers.some((p) => p.niveau === 5) && saut.paliers.some((p) => p.niveau === 6));
+/* Un seul palier entre 4 et 6 depuis que ceux des séries sont partis : le 5,
+   qui ouvre le troisième rang de tribune. C'est lui qui ne doit pas être
+   avalé. */
+check('et le palier franchi est annoncé',
+  saut.paliers.some((p) => p.niveau === 5)
+  || (console.log('        annoncés :', saut.paliers.map((p) => p.niveau).join(',')), false));
 
 /* ------------------------------------------- ce que le palier a ouvert */
 
 r = await call('/api/niveau');
-check('les séries suivent le niveau',
-  r.json.series.includes('MS') && r.json.series.includes('BG')
-  && !r.json.series.includes('IM'));
 check('et le troisième emplacement de deck est ouvert', r.json.deckFanzzy === 3);
 
+/* **Aucune série n'est hors de portée d'un joueur de niveau 1.** C'est le cœur
+   du changement : le kiosque distribuait selon le niveau, il distribue selon la
+   saison. Une série ouverte se tire, quel que soit le compteur d'expérience de
+   celui qui la demande. */
 r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'MS' } });
-check('une série atteinte se distribue', r.json.cards?.length === 5);
+check('une série ouverte se distribue, sans condition de niveau',
+  r.json.cards?.length === 5);
 
 /* ------------------------------------------- le plafond des clubs suivis
 
@@ -305,7 +331,6 @@ check('deux passent', r.json.deck?.fanzzy?.length === 2);
   const d = await degrade.droitsDe(U);
 
   check('sans la colonne, le manque est signalé', d.indisponible === true);
-  check('et toutes les séries restent ouvertes', d.series.size === 9);
   check('et les trois emplacements de deck aussi', d.deckFanzzy === 3);
   check('et le plafond de clubs n’est pas rabaissé', d.slots === 8);
 }

@@ -44,6 +44,18 @@ import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 const DOSSIER = 'public';
 
 /** Pages où la barre commune n'a délibérément pas sa place. */
+/* Les pages qui ne suivent pas la colonne du jeu, et pourquoi.
+ *
+ * `admin.html` est hors jeu au sens propre : ce n'est pas un écran de supporter
+ * mais un écran de gestion — des tables de joueurs, un journal, un catalogue de
+ * six cents cartes. Il tient sa largeur à mille cent pixels parce qu'un tableau
+ * à six colonnes ne se lit pas dans neuf cents, et il n'a aucune raison de
+ * suivre la colonne du jeu.
+ *
+ * C'est la seule, et toute autre entrée ici demande la même justification :
+ * une exception écrite sans raison redevient une largeur oubliée. */
+const HORS_COLONNE = new Set(['admin.html']);
+
 const SANS_BARRE = new Set(['compte.html', 'bienvenue.html', 'admin.html',
   // L'accueil porte sa navigation dans ses deux rails : la barre du bas y
   // ferait doublon et passerait sous le bouton d'entrée.
@@ -207,6 +219,58 @@ for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
 
   if (!SANS_BARRE.has(nom) && !/src\s*=\s*["']\/nav\.js/.test(html)) {
     ko(nom, 'la barre commune (nav.js) n\u2019est pas chargée : la page est un cul-de-sac');
+    propre = false;
+  }
+
+  /* **La boîte de confirmation, partout.**
+
+     Chaque écran a au moins un geste qui engage, et la seule chose pire qu'une
+     absence de confirmation est une confirmation qui n'apparaît que sur
+     certains écrans : le joueur apprend alors que le jeu ne demande pas, et il
+     cesse de lire le jour où il demande.
+
+     Les appels sont écrits `window.TBF_DIALOGUE?.confirmer(...)`. Sans le
+     script, la garde `?.` rend `undefined` — donc le geste **passe sans rien
+     demander** au lieu de lever. Un oubli ici ne casse rien et retire une
+     protection : exactement la faute qu'aucune suite n'attrape. */
+  if (!/src\s*=\s*["']\/dialogue\.js/.test(html)) {
+    ko(nom, 'dialogue.js n’est pas chargée : les confirmations de cette page '
+      + 'passeraient sans rien demander');
+    propre = false;
+  }
+
+  /* **Une seule largeur de colonne pour toute l'application.**
+
+     Chaque page portait la sienne — 440, 460 ou 520 pixels selon l'écran et le
+     jour. Trois largeurs dans le même jeu, et surtout : la variable `--colonne`
+     d'`ui.css`, qui prétend décider de ce réglage, n'avait aucun effet. Sur une
+     tablette, tout tenait dans un rail étroit au milieu d'un écran noir, et
+     élargir la variable ne changeait rien du tout.
+
+     Une largeur en dur ne casse rien et ne se voit pas dans un diff : c'est
+     exactement le genre d'exception qui revient.
+
+     Le contrôle vise **la coque de page** — `#app` ou `main` — et rien d'autre.
+     Un premier jet regardait tous les `max-width` : il attrapait un paragraphe
+     d'administration capé à six cent quarante pixels pour se lire, ce qui est
+     exactement ce qu'il faut faire. Une largeur de texte n'est pas une largeur
+     de colonne, et un contrôle qui confond les deux se fait désactiver. */
+  const enDur = [];
+  for (const bloc of (HORS_COLONNE.has(nom) ? [] : html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g))) {
+    const css = bloc[1].replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const regle of css.split('}')) {
+      const [tete, corps] = regle.split('{');
+      if (!corps) continue;
+      // Le sujet est la coque : `#app`, ou `main` seul — pas `main .carte`.
+      if (!/(^|,)\s*(#app|main)\s*(,|$)/.test(tete)) continue;
+      const m = /max-width:\s*(\d+)px/.exec(corps);
+      if (m) enDur.push(m[1]);
+    }
+  }
+  if (enDur.length) {
+    ko(nom, `la coque de page fixe sa largeur : ${[...new Set(enDur)].join(', ')}px. `
+      + 'Emploie `var(--colonne)` — sinon cette page ne suivra pas quand la '
+      + 'colonne s’élargira, et personne ne le verra.');
     propre = false;
   }
 
@@ -387,6 +451,109 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
       + ' — les invites sont dans scripts/chant-images.mjs --invites');
   } else if (chants.length) {
     ok('chant-art.js', `${chants.length} chant(s) illustrés en trois formats`);
+  }
+}
+
+/* ============================= le préfixe de la feuille commune
+
+   **Une classe sans préfixe dans `ui.css` réécrit celle d'une page qui ne lui
+   a rien demandé.**
+
+   La règle est écrite en tête de `ui.css` depuis toujours : « Sans ce préfixe,
+   `.voile` de deck.html et `.pastille` de fanzzy-fiche.html seraient réécrits
+   par des règles qu'ils n'ont pas demandées. » Elle n'était vérifiée par
+   personne, et elle a fini par être enfreinte.
+
+   Le mini-jeu du compte est arrivé dans `ui.css` sous le nom `.compte`. Le deck
+   avait déjà un `.compte` — le compteur d'exemplaires d'une carte. La feuille
+   commune est chargée **avant** le style de la page, donc la page gagnait sur
+   les propriétés qu'elles partageaient ; mais `width:100%` et `height:100%`
+   n'existaient que dans la commune et s'appliquaient sans opposition. Le petit
+   compteur « ×1 » prenait toute la largeur de la ligne, le texte de la carte
+   tombait à un mot par ligne, et rien n'était en erreur nulle part.
+
+   Le contrôle compare les classes déclarées dans `ui.css` à celles employées
+   dans les pages. Il ne juge pas le nom : il signale une classe **qui existe
+   des deux côtés** sans être une brique partagée déclarée.                   */
+{
+  const commune = await readFile(path.join(DOSSIER, 'ui.css'), 'utf8');
+
+  /* Les briques partagées qui n'ont **pas** le préfixe, et c'est voulu : ce
+     sont des vocabulaires que les pages emploient délibérément. La liste est
+     courte exprès — elle doit rester une exception qu'on relit. */
+  const PARTAGEES = new Set([
+    'pan',
+    'r-commune', 'r-rare', 'r-epique', 'r-legendaire',
+    'b-commune', 'b-rare', 'b-epique', 'b-legendaire',
+    /* Les formes du mini-jeu, posées par `geste.js` dans la zone que la page
+       lui prête : elles n'appartiennent à aucune page en propre.
+
+       **`grille` en est sortie.** Elle y était depuis le début, et c'était une
+       erreur : deux pages s'en servaient déjà pour autre chose — la grille des
+       cartes d'action du deck, et les formulaires de l'administration. La règle
+       commune leur imposait `width:86%; margin:0 auto`, qui n'a de sens que pour
+       la mosaïque : le formulaire des saisons sortait donc centré sur les deux
+       tiers de la largeur, avec son champ d'annonce débordant par-dessus son
+       étiquette.
+
+       Une exception écrite « c'est du vocabulaire partagé » ne le rend pas
+       partagé. `geste.js` pose maintenant `tbf-grille`. */
+    'pad', 'ring', 'illu', 'illuwrap',
+    'memo', 'trace', 'rond', 'mise', 'vue', 'prise', 'hit', 'beat', 'noir',
+    'on', 'n', 's', 'lib', 'sil', 'tri', 'capo',
+  ]);
+
+  /* **On regarde le sujet de la règle, pas ses ancêtres.**
+     Ce qui compte n'est pas quelles classes un sélecteur mentionne : c'est sur
+     quel élément les propriétés atterrissent — le dernier composé — et si cet
+     élément est tenu par un ancêtre de la feuille commune.
+
+     `.tbf-tiroir .pip` ne peut atteindre que ce que la commune a elle-même
+     posé ; `.compte` tout seul atteint n'importe quel `.compte` de n'importe
+     quelle page. La différence est là, et elle est entière. */
+  const sujetsLibres = (css) => {
+    const libres = new Set();
+    const tenu = (c) => c.startsWith('tbf-') || PARTAGEES.has(c);
+    const classes = (compose) =>
+      [...compose.matchAll(/\.([a-zA-Z][\w-]*)/g)].map((m) => m[1]);
+
+    for (const regle of css.replace(/\/\*[\s\S]*?\*\//g, '').split('}')) {
+      const tete = regle.split('{')[0];
+      if (!tete || !tete.includes('.')) continue;
+      for (const sel of tete.split(',')) {
+        const composes = sel.trim().split(/\s*[\s>+~]\s*/).filter(Boolean);
+        if (!composes.length) continue;
+        const sujet = composes[composes.length - 1];
+        const porte = composes.slice(0, -1).some((c) => classes(c).some(tenu));
+        if (porte) continue;                    // tenu par un ancêtre commun
+        for (const c of classes(sujet)) if (!tenu(c)) libres.add(c);
+      }
+    }
+    return libres;
+  };
+
+  const deLaCommune = [...sujetsLibres(commune)];
+
+  /* Ce que les pages emploient réellement : leurs attributs `class`, y compris
+     ceux qu'un gabarit de chaîne écrit depuis le JavaScript. */
+  const employees = new Set();
+  for (const f of (await readdir(DOSSIER)).filter((x) => x.endsWith('.html'))) {
+    const page = await readFile(path.join(DOSSIER, f), 'utf8');
+    for (const m of page.matchAll(/class="([^"\$]*)"/g)) {
+      for (const c of m[1].split(/\s+/)) if (c) employees.add(c);
+    }
+  }
+
+  const collisions = deLaCommune.filter((c) => employees.has(c));
+  if (collisions.length) {
+    ko('ui.css', `classe(s) sans préfixe employée(s) par une page : ${collisions.join(', ')}`);
+    console.log('       La feuille commune est chargée avant le style des pages : toute');
+    console.log('       propriété qu’elle est seule à poser s’applique sans opposition.');
+    console.log('       Préfixe en « tbf- », ou déclare la classe dans PARTAGEES si');
+    console.log('       c’est un vocabulaire voulu.');
+  } else {
+    ok('ui.css', 'aucune classe sans préfixe ne marche sur celles des pages '
+      + `(${deLaCommune.length} hors vocabulaire partagé)`);
   }
 }
 

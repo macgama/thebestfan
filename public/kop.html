@@ -8,12 +8,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100dvh}
 body{background:radial-gradient(120% 50% at 50% -8%,rgba(245,195,59,.13),transparent 60%),var(--beton);
      color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;padding:26px 16px 80px}
-main{width:100%;max-width:440px}
+main{width:100%;max-width:var(--colonne)}
 h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em;margin:0 0 4px;text-align:center}
 .sub{text-align:center;font-size:11px;letter-spacing:.2em;opacity:.45;margin-bottom:22px}
 h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;margin:24px 2px 9px}
@@ -380,9 +381,17 @@ $('corps').addEventListener('click', async (ev) => {
       return charger();
     }
     if (d.quitter) {
-      // Un geste irréversible mérite une question. Ce qui est versé est versé,
-      // et on ne le découvre pas après coup.
-      if (!confirm('Quitter ce KOP ? Ce que tu as versé reste au pot.')) return undefined;
+      /* Un geste irréversible mérite une question. Ce qui est versé est versé,
+         et on ne le découvre pas après coup.
+         C'était `confirm()` — la boîte grise du navigateur, en police système,
+         précédée de « thebestfan.online indique ». Elle sort de l'univers du
+         jeu à l'instant précis où on demande au joueur de s'engager. */
+      if (!(await window.TBF_DIALOGUE?.confirmer({
+        titre: 'QUITTER CE KOP ?',
+        texte: 'Ce que tu as versé au pot y reste. Tu perds ta part des bonus '
+          + 'votés, et il faudra être réinvité pour revenir.',
+        oui: 'QUITTER', ton: 'flare',
+      }))) return undefined;
       await api(`/${d.quitter}/quitter`, { method: 'POST' });
       S.ouvert = null;
       return charger();

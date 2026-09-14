@@ -6,6 +6,7 @@
 <title>Fanzzy — collection</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
 <link rel="stylesheet" href="/cartes.css">
 <style>
 
@@ -20,7 +21,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    `padding-bottom` : la page fait exactement une hauteur d'écran et ne défile
    pas, donc rien ne la décale au-dessus de la barre du bas — le bouton
    « ouvrir le booster » passait dessous. */
-#app{position:relative;width:100%;max-width:440px;height:100dvh;overflow:hidden;display:flex;flex-direction:column;
+#app{position:relative;width:100%;max-width:var(--colonne);height:100dvh;overflow:hidden;display:flex;flex-direction:column;
   padding-bottom:calc(var(--nav-h,62px) + env(safe-area-inset-bottom));
   background:radial-gradient(120% 55% at 50% -8%,rgba(245,195,59,.15),transparent 62%)}
 
@@ -287,6 +288,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <!-- Sans « defer » : le script en ligne ci-dessous lit FZART dès sa première
      ligne, il doit donc déjà exister. -->
 <script src="/fanzzy-art.js"></script>
+<script src="/fanzzy-fond.js"></script>
 <!-- Ce que le classeur et les boosters partagent : l état, le catalogue, le
      dessin d une carte. **Après** fanzzy-art.js, dont il lit FZART dès sa
      première ligne — l ordre n est pas un détail de mise en page. -->
@@ -326,7 +328,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Les aides communes vivent dans /cartes.js : l'état, le catalogue, le
    dessin d'une carte, la table des raretés. Le kiosque les partageait sans
    que rien ne le dise ; il a son écran à lui, et elles ont leur fichier. */
-const { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, chargerCatalogue, clamp, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid } = window.TBF_CARTES;
+const { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, chargerCatalogue, clamp, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid } = window.TBF_CARTES;
 
 
 /* ------------------------------------------------------------ classeur */
@@ -382,7 +384,11 @@ function renderDex() {
     return `<div class="slot" data-open="${f.id}"${retard}>${cardHTML(age, { mini:true })}
       ${n > 1 ? `<div class="dupe">×${n}</div>` : ''}
       ${stade > 1 ? `<div class="stade">${'★'.repeat(stade - 1)}</div>` : ''}
-      ${S.active === f.id ? '<div class="active-tag">DUEL</div>' : ''}</div>`;
+      ${/* « AVATAR » et non « DUEL ». `S.active` est `user_wallet.active_fanzzy` :
+            le personnage que voient l'accueil et les amis. Il n'a jamais eu le
+            moindre rapport avec le deck de duel, et le dire faisait chercher
+            longtemps pourquoi ce Fanzzy-là n'entrait pas sur la corde. */
+        S.active === f.id ? '<div class="active-tag">AVATAR</div>' : ''}</div>`;
   }).join('') : `<div class="empty">${S.filter === 'miss' ? 'Collection complète.' : 'Rien ici pour l\u2019instant.'}</div>`;
 }
 $('filters').onclick = (e) => { const b = e.target.closest('[data-f]'); if (b) { S.filter = b.dataset.f; renderDex(); } };
@@ -528,7 +534,10 @@ function renderTeam() {
       <div class="tpile" id="tpile"></div>
       <div class="ombre"></div>
       <div class="trar">${rarMark(age.rar)}</div>
-      <div class="ttag">EN DUEL</div>
+      <!-- Cet onglet montre l'**avatar** : celui que voient l'accueil et les
+           amis. Il disait « EN DUEL », ce qui était faux — la tribune du duel
+           se règle dans le deck, ou depuis la fiche d'un Fanzzy. -->
+      <div class="ttag">TON AVATAR</div>
       <div class="ttxt">
         <div class="tpast">
           <span><b>${esc(t.nom)}</b></span>

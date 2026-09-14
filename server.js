@@ -174,6 +174,14 @@ if (process.env.DATABASE_URL) {
       // une ligne de journal que c'est voulu et non un réglage perdu.
       + (cat.series ? ` · séries ouvertes : ${cat.series.join(', ')}`
                     : ' · toutes les séries ouvertes'));
+    /* Les saisons sont chargées par `chargerCatalogue` — ce sont elles qui
+       décident des séries ouvertes, et tout ce qui monte un catalogue passe par
+       là. On ne les charge pas ici, on les annonce : le jour où le kiosque ne
+       propose plus rien, cette ligne dit si c'est une saison mal réglée ou un
+       fichier de schéma non appliqué. */
+    console.log(cat.saisons === null
+      ? 'saisons : table absente — applique sql/saisons.sql'
+      : `saisons : ${cat.saisons} déclarée(s)`);
     const mailer = createMailer({
       smtpUrl: process.env.SMTP_URL,
       host: process.env.SMTP_HOST,
@@ -306,7 +314,10 @@ if (process.env.DATABASE_URL) {
     console.log('authentification active');
 
     // ---- collection Fanzzy
-    fanzzy = createFanzzy({ pool, requireAuth: auth.requireAuth, niveau });
+    /* `decks` : la fiche d'un Fanzzy dit où il est dans la tribune du joueur
+       et permet de l'y placer. Le module de deck est monté plus haut, ce qui
+       rend la dépendance possible dans ce sens et pas dans l'autre. */
+    fanzzy = createFanzzy({ pool, requireAuth: auth.requireAuth, niveau, decks });
     app.use('/api/fanzzy', fanzzy.router);
     globalThis.fanzzy = fanzzy;
     console.log('collection fanzzy active');

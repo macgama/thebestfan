@@ -105,18 +105,126 @@ check('trois Fanzzy', A.state.moi.fanzzy.length === 3);
 check('le match support est transmis', A.state.fixture?.id === 900);
 check('duel classé', A.state.mode === 'classe');
 
+
+/**
+ * Une suite de frappes qui passe, geste par geste.
+ *
+ * Le serveur **note** ce qu'on lui envoie : une note nulle ne pousse pas la
+ * corde, et « la corde a bougé » échouerait alors pour une raison qui n'a rien à
+ * voir avec le réseau. On produit donc, pour chaque famille de geste, quelque
+ * chose que le barème reconnaît — sans chercher la perfection, qui n'est pas le
+ * sujet ici.
+ */
+function gestePassable(gest) {
+  /* **Toutes les suites de frappes tremblent.**
+   *
+   * Le serveur refuse les frappes de métronome : deux intervalles identiques à
+   * moins de six millisecondes près valent `inhuman_regularity`, et il a
+   * raison — un humain ne tape pas deux fois de suite au même écart.
+   *
+   * Le premier jet ne faisait trembler que le tempo. Le répertoire étant tiré
+   * de l'identifiant du duel, cette suite tombait donc **une fois sur deux**,
+   * selon que le chant offert demandait un geste tremblé ou non — et sans rien
+   * qui nomme la cause, puisque le refus part sur un autre canal que les
+   * contrôles qui échouaient ensuite. */
+  const bruit = (a = 18) => Math.random() * a * 2 - a;
+  const tremble = (t) => t.map((x, i) => Math.round(i === 0 ? x : x + bruit(9)));
+
+  switch (gest) {
+    // Les gestes de maintien : un appui long, rendu par deux instants. Pas de
+    // cadence, donc rien à trembler.
+    case 'hold':   return [0, 3200];
+    case 'tenue':  return [0, 3600];
+    case 'relance': return [0, 1900];
+    // Le martelage : le plus de frappes possible en trois secondes.
+    case 'mash':   return tremble(Array.from({ length: 22 }, (_, i) => i * 135));
+    case 'retenue': return tremble(Array.from({ length: 12 }, (_, i) => i * 330));
+    case 'contretemps':
+      return Array.from({ length: 6 }, (_, i) => Math.round(310 + i * 620 + bruit()));
+    case 'crescendo': {
+      const t = [0];
+      let pas = 700;
+      for (let i = 1; i < 10; i++) { t.push(t[i - 1] + pas); pas -= 49; }
+      return tremble(t);
+    }
+    case 'salves': {
+      const t = [];
+      for (let r = 0; r < 3; r++) {
+        for (let k = 0; k < 4; k++) t.push(r * 1400 + k * 160);
+      }
+      return tremble(t);
+    }
+    // Le tempo et tout le reste : huit frappes régulières.
+    default:
+      return Array.from({ length: 8 }, (_, i) => Math.round(i * 560 + bruit()));
+  }
+}
+
 /* ------------------------------------------------------------ actions */
 
-A.socket.emit('nvn:chant', { geste:'tempo',
-  taps: Array.from({length:8},(_,i)=>i*560 + (Math.random()*40-20)) });
+/* **On choisit un chant, pas un geste.**
+ *
+ * Le duel proposait dix gestes à tour de rôle et le client annonçait le sien :
+ * un client modifié jouait alors toujours celui qu'il réussit. Il reçoit
+ * maintenant un répertoire de cinq chants, tiré de l'identifiant de la partie,
+ * et il en joue un — avec son coût et sa poussée. C'est exactement le Virage.
+ *
+ * Le chant est donc pris **dans l'état**, et pas écrit en dur : le répertoire
+ * change d'un duel à l'autre, et un identifiant figé ici ne serait au
+ * répertoire qu'une fois sur quatre. */
+/* **Un chant de rythme**, et pas une épreuve.
+ *
+ * Sept des dix-sept mini-jeux sont des épreuves : le serveur envoie une consigne
+ * — une forme à tracer, une grille à refaire — et note une *réponse*, pas des
+ * frappes. Leur chanter des instants de frappe donne zéro, la corde ne bouge
+ * pas, et ce contrôle-ci échoue une fois sur deux selon le répertoire tiré.
+ *
+ * Ce que cette suite éprouve est le **réseau** : que le chant parte, revienne
+ * aux deux joueurs et déplace la corde. Les épreuves ont la leur,
+ * `epreuves-ui-smoke`. On prend donc un chant qui se note aux frappes. */
+/* Les gestes que cette suite sait **rejouer sans rien lire**.
+ *
+ * Ce sont ceux dont la consigne tient dans le barème : huit frappes sur une
+ * pulsation, un appui de trois secondes, douze frappes exactement. On les
+ * fabrique de mémoire et le serveur les reconnaît.
+ *
+ * `echo` n'en est pas, et c'est la deuxième cause d'échec intermittent trouvée
+ * ici : son motif de cinq coups est **tiré par le serveur à chaque chant** et
+ * envoyé dans la consigne. Le rejouer sans l'avoir lu donne zéro, la corde ne
+ * bouge pas, et quatre contrôles tombent derrière. Les sept épreuves sont dans
+ * le même cas, et sont déjà exclues.
+ *
+ * Ce que cette suite éprouve est le **réseau**. Les mini-jeux ont `epreuves:ui`
+ * et `virage:ui`, qui lisent la consigne avant d'y répondre. */
+const RYTHMES = new Set(['tempo', 'mash', 'hold', 'contretemps',
+  'crescendo', 'relance', 'salves', 'tenue', 'retenue']);
+const monChant = A.state.chants.find((c) => RYTHMES.has(c.gest));
+check('le répertoire propose au moins un chant de rythme', Boolean(monChant)
+  || (console.log('        répertoire :',
+    A.state.chants.map((c) => `${c.id}/${c.gest}`).join(' ')), false));
+/* **Le souffle est rempli avant de chanter**, et c'est nécessaire.
+ *
+ * Les chants coûtent de vingt-deux à trente-huit de souffle, et le répertoire
+ * est tiré de l'identifiant du duel : selon la partie, le seul chant de rythme
+ * offert est parfois le plus cher. Le moteur le refusait alors pour
+ * `not_enough_breath`, la corde ne bougeait pas, et sept contrôles tombaient en
+ * cascade — une fois sur deux, sans rien qui nomme la cause.
+ *
+ * Ce que cette suite éprouve est le **réseau** : que le chant parte, revienne
+ * aux deux joueurs et déplace la corde. L'économie du souffle a la sienne. */
+const salleA = [...N.salles.values()][0];
+salleA.duel.joueurs.get(U[0]).breath = 100;
+
+A.socket.emit('nvn:chant', { cardId: monChant.id,
+  taps: gestePassable(monChant.gest) });
 check('le chant est diffusé aux deux', await until(()=>
-  A.events.some((e)=>e.t==='chant') && B.events.some((e)=>e.t==='chant')));
+  A.events.some((e)=>e.t==='chant') && B.events.some((e)=>e.t==='chant'))
+  || (console.log(`        chant ${monChant.id}/${monChant.gest} (coût ${monChant.cost})`,
+    '· refus :', A.errors.at(-1)?.code ?? '—'), false));
 check('la corde a bougé', await until(()=>A.state.rope !== 0));
 
-// Souffle rétabli côté moteur : le chant précédent l'a entamé, et une carte
-// refusée faute de souffle ferait passer les tests suivants pour de mauvaises
-// raisons.
-const salleA = [...N.salles.values()][0];
+// Et rétabli après : le chant l'a entamé, et une carte refusée faute de souffle
+// ferait passer les tests suivants pour de mauvaises raisons.
 salleA.duel.joueurs.get(U[0]).breath = 100;
 
 /* La première carte de la main, mais **jouable sans condition**.
@@ -168,8 +276,9 @@ salle.duel.goals = [2, 2];
 salle.duel.rope = -299;
 salle.duel.joueurs.get(U[0]).breath = 100;
 A.errors.length = 0;
-A.socket.emit('nvn:chant', { geste:'tempo',
-  taps: Array.from({length:8},(_,i)=>i*560 + (Math.random()*30-15)) });
+// Le même chant qu'au début, et pris dans l'état pour la même raison : le
+// répertoire est tiré de l'identifiant de la partie.
+A.socket.emit('nvn:chant', { cardId: monChant.id, taps: gestePassable(monChant.gest) });
 check('la partie se termine', await until(()=>A.events.some((e)=>e.t==='over')));
 await wait(600);
 const [res] = await pool.query('SELECT user_id, outcome FROM duel_results WHERE duel_id = ?',

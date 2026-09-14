@@ -2665,24 +2665,864 @@ production d'illustrations.
 
 ---
 
+### Le compteur qui prenait toute la ligne
+
+Dans le catalogue du deck, le petit « ×1 » s'étirait sur toute la largeur et le
+texte des cartes tombait à un mot par ligne.
+
+**J'avais nommé le nouveau mini-jeu `.compte` dans `ui.css`.** Le deck avait
+déjà un `.compte` — son compteur d'exemplaires. La feuille commune est chargée
+**avant** le style de la page : la page gagnait donc sur les propriétés qu'elles
+partageaient, mais `width:100%` et `height:100%` n'existaient que dans la
+commune et s'appliquaient sans opposition. Rien n'était en erreur nulle part.
+
+C'est exactement la règle que `ui.css` énonce en tête depuis toujours — « sans
+ce préfixe, `.voile` de deck.html et `.pastille` de fanzzy-fiche.html seraient
+réécrits par des règles qu'ils n'ont pas demandées ». Elle n'était vérifiée par
+personne.
+
+`npm run pages` la vérifie maintenant. Le contrôle ne regarde pas quelles
+classes un sélecteur mentionne, mais **sur quel élément les propriétés
+atterrissent** — le dernier composé — et s'il est tenu par un ancêtre de la
+commune. `.tbf-tiroir .pip` ne peut atteindre que ce que la commune a elle-même
+posé ; `.compte` tout seul atteint n'importe quel `.compte` de n'importe quelle
+page. Sa première version signalait huit règles saines : elle lisait toutes les
+classes au lieu du seul sujet.
+
+### Un nouveau joueur sur quatre recevait une carte qui n'existe pas
+
+Trouvé en répondant à la question « le joueur a-t-il un deck de base ? ».
+
+`inventaire.js` portait une liste de quatre cartes d'action, présentée comme
+« les cartes du paquet de bienvenue ». C'était une **seconde vérité** : le vrai
+catalogue vit dans `duel/actions.js`, et les deux avaient divergé. `a-relance`
+— « Seconde jeunesse » — y figurait quand la carte du jeu s'appelle
+`a-secondsouffle`.
+
+Le paquet de bienvenue tirait au hasard dans ces quatre-là. **Une inscription
+sur quatre offrait donc une carte inexistante** : écrite dans la bourse du
+joueur, absente de tout catalogue, et refusée par son propre deck en « carte
+inconnue » — pour une carte qu'on venait de lui donner.
+
+La liste en double est supprimée. L'accueil des nouveaux importe le catalogue,
+comme tout le reste du jeu, et tire parmi les cartes commune et rare — sans quoi
+on offrirait une légendaire à l'inscription, ce que rien n'a jamais voulu.
+
+**La suite qui aurait dû le voir n'était lancée par personne.** Elle existait
+(`scripts/onboarding-smoke.mjs`), elle vérifiait « une carte d'action » — le
+**compte**, jamais l'existence. Elle est maintenant dans la batterie sous
+`npm run bienvenue:smoke`, et elle demande que la carte existe et qu'elle soit
+une carte de début.
+
+En l'y mettant, elle est sortie rouge sur autre chose : elle épinglait
+`r.json.stuff.length === 7`, juste sous un commentaire qui explique pourquoi le
+compte des tenues, lui, ne s'écrit plus en dur. Elle avait rougi le jour où dix
+pièces d'équipement sont arrivées, et personne ne l'avait su.
+
+### Ce que reçoit un nouveau joueur, et la règle des exemplaires
+
+Pour mémoire, parce que la question revient :
+
+**Il n'y a pas de deck de base.** Le deck est vide à l'inscription, et le joueur
+le construit. Ce qu'il reçoit, c'est un paquet de bienvenue —
+`tirerBienvenue()` — et une réserve :
+
+| à l'inscription | |
+|---|---|
+| Fanzzy | 2 (un commun, un rare ou épique) |
+| équipement | 1 (commune ou rare) |
+| carte d'action | **1** (commune ou rare) |
+| écharpes | 80 à 120 |
+| boosters en réserve | 3, puis 1 toutes les 10 min jusqu'à 12 |
+
+**Une carte d'action ne se possède qu'une fois.** `possede.actions` est un
+ensemble d'identifiants : on l'a ou on ne l'a pas. Un doublon tiré d'un booster
+rend des écharpes, jamais un second exemplaire.
+
+**Et pourtant le deck en accepte dix du même.** `DECK_RULES.copiesMax` vaut
+`null` — aucun plafond — et c'est délibéré : un deck demande exactement dix
+cartes d'action, un débutant en possède une poignée, et remplir dix emplacements
+sans doublon serait arithmétiquement impossible. Les dix exemplaires sont **le
+même droit répété**, pas dix cartes gagnées.
+
+La conséquence à garder en tête : avec **une seule** carte d'action à
+l'inscription, le premier deck légal est dix fois la même carte. C'est jouable
+et ce n'est pas satisfaisant — la question « combien de cartes d'action offrir
+au départ » reste ouverte, et se règle en une ligne dans `tirerBienvenue()`.
+
+---
+
+## 4 vicies septies. L'affiche, le bilan, et cinq cartes pour commencer
+
+### Un duel commençait et se terminait sans rien dire
+
+Il commençait sur une corde qui apparaît : on ne savait ni contre qui on jouait,
+ni avec quoi, ni où. Il se terminait sur un voile gris avec un mot dessus —
+moins qu'un message d'erreur pour cinq minutes de jeu.
+
+Tout ce que montrent les deux nouveaux écrans était **déjà connu du serveur** à
+ces deux instants. Rien n'en sortait.
+
+**L'affiche**, sur `nvn:affiche`, juste après le départ :
+
+— les deux camps, le sien toujours en premier — « en haut » veut dire « moi »
+  sur les deux écrans du jeu ;
+— **les trois Fanzzy de chacun**, pas seulement celui qui entre : c'est en
+  voyant les trois qu'on comprend qu'on peut changer. Celui qui entre porte la
+  couleur de son camp et sa marque ;
+— la **forme récente** de chaque joueur : cinq pastilles, la plus récente à
+  gauche, avec le décompte. Un joueur sans passé le dit — « premier duel » est
+  une information, une absence n'en est pas une ;
+— le lieu et ce qu'il change.
+
+Elle se retire seule au bout de six secondes. C'est une affiche, pas une salle
+d'attente : un joueur qui doit toucher un bouton pour entrer dans un duel déjà
+commencé perd les secondes qu'il regarde.
+
+**Le bilan**, sur `nvn:fin`, au coup de sifflet : le résultat, le score, ce que
+le duel a rapporté — écharpes, XP, part versée au KOP — la carte préférée avec
+son dessin, puis les chiffres du match **les deux camps côte à côte**, parce que
+c'est la comparaison qui intéresse et non le chiffre isolé : chants, cartes
+jouées, changements, relèves, ferveur, et qui a poussé.
+
+L'ancien voile reste en repli, pour le cas où le bilan n'arrive pas — une
+connexion coupée au dernier instant vaut mieux qu'un écran de jeu figé dont on
+ne sort pas.
+
+### Ce qu'il a fallu ajouter pour qu'il y ait quelque chose à dire
+
+**Le moteur ne comptait rien.** Trois compteurs et une liste par joueur —
+cartes jouées et leur tally, remplacements, relèves, Fanzzy réellement montés.
+Ils ne coûtent rien pendant la partie, et `bilan()` ne fait que les mettre en
+forme, une fois, à la fermeture.
+
+La relève est comptée **à part** du remplacement : l'une fait grandir celui qui
+est déjà en tribune, l'autre en fait entrer un autre. Les mêler donnerait un
+chiffre qui ne veut rien dire.
+
+**`recompenser` versait en silence.** Écharpes, XP et part de KOP partaient
+sans que rien ne le dise : le joueur voyait son solde changer entre deux écrans.
+Elle rend maintenant ce qu'elle a versé.
+
+**Les matchs nuls n'étaient nulle part.** Seuls les duels classés **avec un
+vainqueur** s'écrivaient dans `duel_results`. La table accepte pourtant `draw`
+depuis le premier jour : « tes cinq derniers duels » aurait menti par omission,
+en oubliant exactement les parties les plus serrées.
+
+### Cinq cartes d'action à l'inscription, dont l'Arbitre
+
+Il y en avait **une**. Un deck demande exactement dix cartes et n'impose aucun
+plafond par carte : le premier deck légal d'un nouveau joueur était donc dix
+fois la même — jouable, et sans aucune décision à prendre.
+
+L'Arbitre est **garanti**, pas tiré. C'est la carte qui ouvre le changement :
+sans elle, le second Fanzzy du paquet de bienvenue reste sur le banc pendant
+tout le duel et le joueur ne découvre jamais qu'une tribune se relaie. Une
+mécanique entière dépendait d'un tirage à une chance sur dix-sept.
+
+Les quatre autres sont tirées **sans remise** parmi les cartes de début : avec
+remise, on retomberait parfois sur quatre Fumigènes, c'est-à-dire sur le
+problème qu'on vient de corriger.
+
+### Deux collisions de noms, la même leçon
+
+`.compte` venait d'être corrigée entre `ui.css` et le deck. L'affiche en a
+produit une seconde, **à l'intérieur d'une même page** cette fois : mes
+`.camp-bloc .qui .cote` contre le `.cote` du duel, qui positionne les deux
+territoires de l'arène en `position:absolute; width:50%`. Ma règle réglait la
+police et le fond, jamais la position : les deux petites étiquettes « TOI » et
+« EN FACE » sont devenues deux blocs de couleur en travers de l'écran.
+
+Le contrôle posé la veille ne pouvait pas la voir — il compare `ui.css` aux
+pages, pas une page à elle-même. Celle-ci a été trouvée **en regardant la
+capture**, ce qui reste le seul moyen pour une classe de nom courant dans un
+fichier de mille lignes.
+
+### La suite du duel éprouvait une table absente
+
+`nvn-ui-smoke` ne chargeait pas `duel.sql`. `duel_results` n'existait donc pas,
+la forme récente échouait en silence — elle est écrite pour ça — et l'affiche
+disait « premier duel » à tout le monde. Le contrôle serait passé au vert sur
+une requête cassée.
+
+Six résultats sont maintenant semés pour l'un des deux joueurs, et la suite
+vérifie que l'affiche **n'en montre que cinq**, dans le bon ordre : la plus
+récente d'abord, parce que celui qui a perdu ses quatre premiers et gagné le
+dernier ne raconte pas la même chose que l'inverse.
+
+**À savoir** : `reglages:smoke` sort parfois en code non nul après avoir écrit
+« tout est vert ». C'est une assertion libuv au démontage, propre à Windows
+(`UV_HANDLE_CLOSING`), et non un contrôle qui échoue. Trois passages d'affilée
+sortent à zéro.
+
+---
+
+## 4 vicies octies. Le duel se joue comme le Virage
+
+### La dernière différence est tombée
+
+Elle était demandée depuis longtemps — « il faut que le VIRAGE et les DUEL se
+déroulent selon le même processus » — et elle a été reportée deux fois. La
+voici traitée.
+
+Le duel **imposait** le geste : une rotation du serveur, le sien un chant sur
+deux, les seize autres à tour de rôle. Tous les chants coûtaient dix-huit pour
+pousser quarante-quatre : appuyer sur le bouton était le seul geste, et il n'y
+avait rien à décider.
+
+Le duel reçoit le **répertoire du Virage** : cinq chants parmi dix-neuf, chacun
+avec son coût et sa poussée. Les deux écrans se jouent désormais avec le même
+geste de la main, et le duel y gagne une décision qu'il n'avait pas — un gros
+chant coûte plus de souffle et rend plus.
+
+`chanter(userId, { cardId, taps })` au lieu de `chanter(userId, { taps })`. Le
+coût, la poussée et le geste viennent de la carte. Le bot choisit dans le
+répertoire comme un joueur — il envoyait `geste: 'tempo'`, un champ que le
+moteur n'a jamais lu.
+
+**Le répertoire d'un duel est fixe** pendant les cinq minutes : celui du Virage
+tourne toutes les dix minutes de match réel, ce qui n'a pas de sens sur une
+partie plus courte que ça. Il est tiré de l'identifiant du duel — les deux
+joueurs ont les mêmes cinq chants, et deux duels n'ont pas les mêmes. C'est ce
+qui remplace la rotation : on rencontre les dix-sept gestes en jouant plusieurs
+parties, au lieu de les voir tous défiler dans une seule.
+
+**Une correction à ce qui avait été écrit ici :** j'avais noté qu'unifier ferait
+« perdre au deck la moitié de son objet ». C'était faux, et c'est ce qui avait
+servi à repousser. Les chants du Virage ne viennent pas du deck — ce sont cinq
+chants globaux, les mêmes pour toute la tribune. Le deck, c'est trois Fanzzy et
+dix cartes d'action, dans les deux modes. Unifier ne lui retire rien.
+
+### La corde était figée à l'écran
+
+Trouvé en cherchant pourquoi la suite du duel était instable.
+
+`diffuser` commençait par `if (!evenements?.length) return;` : entre deux
+actions, **plus rien ne partait au client**. Or il se passe quelque chose en
+permanence — la corde retombe de 1,2 point par seconde, l'horloge tourne, le
+souffle revient. Le joueur voyait donc une corde immobile jusqu'à ce que
+quelqu'un chante, puis un saut.
+
+La décroissance est la tension du jeu : on ne pouvait pas voir qu'on perdait son
+avance sans rien faire. L'état part maintenant à chaque battement — deux fois
+par seconde. Les **événements**, eux, restent conditionnels : un tableau vide dix
+fois par seconde n'apprend rien à personne.
+
+### « EN FACDUEL »
+
+La barre commune écrit le nom de l'écran entre ses deux boutons. Sur un écran de
+jeu, la page a déjà son propre en-tête au même endroit — le score et l'horloge
+du duel — et les deux se superposaient. Le titre est retiré sur les barres de
+jeu, et là seulement.
+
+### Les familles disent enfin ce qu'elles font
+
+`geste` (un mot) est devenu `gestes` (une liste), et cette liste **est** la
+règle : un personnage ne peut porter que l'un des gestes de sa famille.
+
+| famille | son geste | ses variantes |
+|---|---|---|
+| Voix | tempo | contretemps, écho, capo |
+| Percussion | martelage | crescendo, salves |
+| Fidélité | endurance | sang-froid, mesure |
+| Tifo | tifo | mosaïque, tri |
+| Pyro | relance | compte |
+| Déplacement | écharpe | mémoire |
+
+Les dix-sept gestes y sont répartis sans trou ni doublon. Quatre-vingt-dix
+personnages de stade 1 ont changé de cri ; les cent vingt-cinq qui étaient déjà
+justes gardent le leur, et les âges suivent — `agesDe` reprend le geste du
+premier âge.
+
+**Six âges écrits à la main** — les lignées T, Y et D, antérieures à
+`dex-ages.js` — dérivaient de leur propre personnage : un joueur qui faisait
+grandir son Fanzzy perdait le geste qu'il avait appris.
+
+Nouvelle suite `npm run catalogue:test` : treize contrôles de **cohérence**,
+pas de fonctionnement. Chacun correspond à une phrase écrite quelque part dans
+le projet et vérifie que le contenu la tient encore — cinq légendaires par
+série, un revers par pièce d'équipement, un effet que le moteur sait résoudre
+par carte d'action, une règle par stade.
+
+### Deux mini-jeux injouables au Virage, pour la deuxième fois
+
+`tri` et `compte` avaient été ajoutés au moteur et au duel **sans leur écrire
+de chant**. Le Virage ne propose que les gestes portés par un chant de son
+répertoire : ils y étaient donc injouables, exactement comme les cinq épreuves
+l'avaient été.
+
+Un geste vit dans deux listes qui ne se parlent pas : `GESTES`, où il se
+déclare — et le duel le rend jouable automatiquement — et `ORDRE`, le répertoire
+des chants. Le contrôle censé le voir portait une liste de quinze gestes écrite
+à la main : restée vraie sur elle-même et fausse sur le jeu.
+
+Les deux listes écrites à la main de `virage-smoke` sont maintenant
+**confrontées** à celles du jeu. Elles restent à la main — ajouter un chant doit
+obliger à dire où il se place dans la rotation — mais elles rougissent quand
+elles ont divergé, ce qui est la seule façon pour qu'une décision consciente
+reste consciente.
+
+---
+
+## 4 vicies novies. Les variantes comptent, et le dossier se génère
+
+### Une famille annonçait quatre gestes et n'en jouait qu'un
+
+Les familles disaient vrai depuis la session précédente, mais seulement à moitié.
+La Voix comptait **vingt-neuf tempo pour un contretemps et un écho** : les deux
+variantes existaient au catalogue et pas dans le jeu. Un joueur qui voulait un
+Fanzzy spécialisé en contretemps avait une carte sur trente-cinq à trouver.
+
+La règle de répartition est maintenant **la moitié au geste éponyme, le reste
+partagé également**. La moitié suffit à ce qu'une Voix reste une Voix — c'est ce
+que le contrôle exige déjà — et les vingt-neuf trentièmes n'ajoutaient qu'un
+appauvrissement.
+
+| famille | avant | après |
+|---|---|---|
+| Voix | tempo 29 · capo 4 · contretemps 1 · écho 1 | tempo 18 · contretemps 6 · écho 6 · capo 5 |
+| Percussion | mash 28 · crescendo 1 | mash 15 · crescendo 7 · salves 7 |
+| Fidélité | hold 50 · retenue 3 · tenue 1 | hold 27 · tenue 14 · retenue 13 |
+
+Cent cinq personnages ont changé de variante, de façon déterministe sur leur
+identifiant : relancer le calcul donne le même catalogue. Les trois autres
+familles étaient déjà réparties et n'ont pas bougé.
+
+`catalogue:test` a un contrôle de plus : **chaque variante est réellement
+jouable** — au moins un huitième de sa famille. Le seuil est bas exprès : ce
+n'est pas une cible d'équilibrage, c'est le plancher sous lequel une variante
+n'existe qu'au catalogue.
+
+### Le dossier de l'administrateur
+
+`npm run dossier` génère un document complet des mécaniques —
+`scripts/dossier.mjs`, publié comme artefact.
+
+**Il est généré et non écrit**, et c'est tout son intérêt : les nombres, les
+règles, les coûts et les barèmes viennent des mêmes modules que le jeu. Un
+document qui dit « dix-sept mini-jeux, vingt-neuf cartes, dix stades » est faux
+le jour où l'on en ajoute un, et personne ne le sait. Celui-ci ne peut pas mentir
+plus longtemps qu'une commande.
+
+Douze sections : ce qu'est un Fanzzy et ses dix caractéristiques, les six
+familles avec la répartition de leurs gestes, les neuf séries, **les dix-sept
+mini-jeux avec leur règle exacte** — la phrase est écrite à la main, les nombres
+viennent du barème — les dix-neuf chants, les deux modes comparés, les
+vingt-neuf cartes d'action, les dix-sept pièces, les dix stades, l'économie, les
+trente-quatre réglages de l'administration, et l'état du développement.
+
+Seule la dernière section est écrite à la main : aucun module ne sait dire si une
+chose est finie.
+
+**Quatre-vingt-onze kilo-octets** contre trois mégaoctets et demi pour le
+document qu'il remplace — celui-ci portait cent vingt-six illustrations en
+base64. Un dossier de référence se lit, il ne s'admire pas.
+
+### Trois pièges de mise en page, tous le même
+
+Le tableau des mécaniques s'empile sur téléphone : chaque ligne devient un bloc,
+l'en-tête de colonne passe en étiquette. Trois essais avant que ça tienne à
+320 px, et les trois fautes étaient la même famille :
+
+1. **En flex**, le contenu d'une cellule est un texte nu — un élément anonyme qui
+   ne sait pas rétrécir sous sa largeur minimale. C'est exactement le défaut des
+   onglets, deux sessions plus tôt.
+2. **En grille à deux colonnes**, pas mieux : un titre suivi d'un `<span>` fait
+   *trois* éléments avec le pseudo-élément, et le troisième repassait à la ligne
+   dans la colonne étroite.
+3. **En bloc**, il n'y a plus ni colonne ni élément à répartir. Plus une valeur
+   de réglage en texte long rangée dans la colonne des nombres, qui refusait de
+   céder.
+
+Et une quatrième fois le piège des accents graves : un commentaire CSS contenant
+`\`nowrap\`` à l'intérieur d'un gabarit de chaîne a cassé le générateur.
+
+---
+
+## 4 tricies. Cinq séries neuves, et deux qui n'existent plus
+
+### Ce qui a été ajouté
+
+Cinq séries, soixante-deux personnages écrits, plus douze arrivés par déménagement — **soixante-douze personnages de stade 1 publiés** :
+
+| série | ce qu'elle raconte | cartes | ouverte au |
+|---|---|---|---|
+| LES VIP | ceux qui sont là pour autre chose que le match | 15 | niveau 16 |
+| LA GASTRONOMIE DE COMPTOIR | ce qui se mange et se boit debout | 14 | niveau 8 |
+| LES GALÈRES DE DÉPLACEMENT | on y arrive quand même, et ensemble | 14 | niveau 10 |
+| LES PHÉNOMÈNES MÉTÉO | le vent, la pluie, la grêle | 14 | niveau 20 |
+| LES HÉROS DU CANAPÉ | ceux qui n’y sont pas et qui parlent le plus fort | 15 | niveau 12 |
+
+Chacune a ses cinq légendaires, ses communes, ses gestes répartis dans sa
+famille, et **ses quarante-quatre lignées** — deux âges par personnage, écrits à
+la main comme tous les autres.
+
+L'échelle de niveaux se lit maintenant comme un éloignement progressif du
+siège : on est dans la tribune, puis derrière la buvette, puis sur la route,
+puis sur le canapé, puis dans la loge, puis il n'y a plus personne du tout — le
+vent, les morts, les siècles, l'impossible.
+
+**Aucun palier existant n'a bougé.** TR, MS, BG, OB, RV, EP et IM gardent leur
+niveau : changer le niveau d'une série reprendrait à un joueur ce qu'il a
+ouvert. Les cinq neuves n'occupent que des niveaux qui n'ouvraient rien.
+
+### VIRAGE NORD et NUITS EUROPÉENNES sont dissoutes
+
+C'étaient les deux plus maigres — seize et neuf personnages publiés, quand LA
+TRIBUNE en compte trente-cinq. Une série est une étagère à compléter ; une
+étagère de neuf cases se remplit par accident, elle ne se collectionne pas.
+
+Et leurs sujets appartenaient ailleurs. VIRAGE NORD, « béton, pluie, hiver »,
+c'était la tribune ordinaire. NUITS EUROPÉENNES, « jeudi soir, 900 km »,
+c'était le déplacement — et le déplacement a maintenant sa série.
+
+**Rien n'a été supprimé.** Quarante-deux personnages ont changé de champ `set`
+et gardé leur identifiant. Les possessions, les decks, les tenues et les âges
+désignent une carte par son identifiant : ils ont suivi sans qu'on y touche.
+
+| vers | combien | qui |
+|---|---|---|
+| LA TRIBUNE | 24 | la tribune ordinaire, et les cinq légendaires du virage : capo, bâche, tambour, muret, torche |
+| LES GALÈRES DE DÉPLACEMENT | 7 | les cinq légendaires des nuits européennes, et deux dépubliés |
+| LES MÉTIERS DU STADE | 3 | la stadière, les souterrains, la touche |
+| LA GASTRONOMIE DE COMPTOIR | 3 | ce qui se mangeait déjà debout |
+| LES HÉROS DU CANAPÉ | 2 | la radio, la streameuse |
+| LES VIP, LES PHÉNOMÈNES MÉTÉO, LE BESTIAIRE | 1 chacune | l'agent en tribune d'honneur, le vent, le loup |
+
+LA TRIBUNE compte donc **dix légendaires**. Le contrôle exigeait exactement
+cinq, et il avait tort : ce qu'on veut vérifier, c'est qu'aucune série n'est
+sans sommet. Un plafond n'apporte rien. La plus ancienne série est aussi la plus
+profonde, et c'est très bien ainsi.
+
+### Le catalogue vit en base, et l'amorçage n'écrase rien
+
+`sql/series-neuves.sql` déménage **soixante-douze lignes** — les quarante-deux
+premiers âges et les trente âges supérieurs. C'est le piège que la base locale a
+révélé au premier essai : « X1B » et « X1C » portent leur propre `set_id`, et
+les oublier laissait trente cartes rangées dans deux séries que plus aucune page
+n'affiche. Tirables et invisibles.
+
+Le fichier retire aussi VN et NE de `series_actives`, et **n'ouvre pas** les cinq
+neuves : une installation qui a restreint ses séries l'a fait exprès.
+
+Deux listes d'application existaient et avaient divergé — `schema-smoke.mjs` en
+appliquait vingt, `appliquer-schema.mjs` dix-huit. `boutique.sql` et
+`billets.sql` manquaient au script de déploiement, qui est précisément celui
+dont tout le projet dépend pour ne plus revivre le 8 septembre. Les deux listes
+sont maintenant identiques.
+
+### Trois contrôles qui mentaient par un nombre écrit à la main
+
+Les trois ont rougi sur ce lot, et aucun ne parlait d'un vrai défaut :
+
+1. `niveau-smoke` attendait `series.size === 9`. Il lit `SETS.length`.
+2. `catalogue-smoke` exigeait exactement cinq légendaires. Il en exige au moins cinq.
+3. `fanzzy-images-smoke` tolérait trente et une cartes sans dessin. C'est un
+   **cliquet** désormais nommé, avec ce qu'il contient et ce qui le ferait
+   descendre.
+
+Un nombre recopié dans un test ne dit rien de plus que la source dont il vient,
+et il ment dès que la source bouge. Le troisième reste écrit à la main, et c'est
+volontaire : une dette qu'on ne voit plus est une dette qu'on ne paie jamais.
+
+### La dette d'illustrations
+
+Cent quatre-vingt-trois cartes n'ont aucun dessin : les trente et une
+légendaires, et les cent cinquante-deux lignes des cinq séries neuves. Sans
+adresse, la fiche tombe sur le rendu procédural — elles ne sont pas invisibles,
+mais une légendaire en silhouette géométrique n'est pas une légendaire.
+
+**Quarante-quatre dessins en effaceraient cent trente-deux** : les âges
+supérieurs tombent sur le dessin de leur premier âge, et les quarante-quatre
+lignées neuves en ont chacune deux. C'est là qu'il faut mettre la prochaine
+fournée, pas sur les légendaires.
+
+---
+
+## 4 tricies semel. Le bouton qui mentait, la case de BD, et un décor par série
+
+### « EMMENER EN DUEL » n'emmenait personne en duel
+
+Il écrivait `user_wallet.active_fanzzy` — **l'avatar**, le personnage que voient
+l'accueil et les amis. Le Fanzzy n'entrait dans aucun deck, ne poussait sur
+aucune corde, et la fiche affichait ensuite « DÉJÀ EN DUEL » sur quelqu'un qui
+ne jouerait jamais. Le bouton disait une chose et en faisait une autre.
+
+Il fait maintenant ce qu'il dit, et il demande **où** : un deck a un titulaire,
+celui qui entre au coup d'envoi, et des remplaçants que la carte Changement fait
+entrer. Ce n'est pas la même décision, et la fiche ne peut pas la prendre à la
+place du joueur.
+
+`POST /api/deck/placer` pose un personnage à un rang. Le reste du deck n'est pas
+touché — les pièces des autres rangs, les dix cartes d'action, le nom. Trois
+règles le tiennent :
+
+- **Un déplacement est un échange.** Passer son titulaire en remplaçant laissait
+  sinon le rang 0 vide et le deck invalide, et le sortant disparaissait sans que
+  rien ne le dise. Les deux personnages échangent leur place, équipement compris.
+- **Pas de trou au milieu.** Le rang 2 ne s'ouvre que si le rang 1 est occupé :
+  c'est `fanzzy[0]` qui décide du titulaire, et un trou ferait mener le deck par
+  le premier rang non vide, qui n'est pas celui qu'on a choisi.
+- **Un âge supérieur place son personnage.** Ouvrir la fiche du Capo et le
+  placer place le Choriste, qui est le même individu.
+
+Deux défauts trouvés par les contrôles écrits pour l'occasion, dont un dans le
+code neuf : `Number(null)` vaut **zéro**. Un appel sans place aurait donc nommé
+un titulaire en silence, en sortant celui qui y était — le contraire exact de ce
+que la question est là pour obtenir. Le type est vérifié avant la valeur.
+
+Les étiquettes ont suivi : la carte du classeur dit « AVATAR » et non « DUEL »,
+l'onglet dit « TON AVATAR ». Elles nommaient le deck en parlant d'autre chose.
+
+### Une seule boîte pour demander « es-tu sûr ? »
+
+Il y en avait trois façons, et elles ne se ressemblaient pas : **rien du tout**
+pour la plupart des gestes — se déconnecter, emmener un Fanzzy en duel,
+acheter — ; **`confirm()` du navigateur** pour quitter un KOP, une boîte système
+grise précédée de « thebestfan.online indique », qui sort de l'univers du jeu à
+l'instant précis où l'on demande au joueur de s'engager ; et **un panneau écrit
+à la main** pour l'évolution, riche et juste, mais qui ne vivait que dans la
+fiche.
+
+C'est la troisième qui a gagné. `public/dialogue.js` — `TBF_DIALOGUE.confirmer`,
+qui rend une promesse. La règle qu'elle porte : **une confirmation montre ce
+qu'on va perdre**, elle ne demande pas deux fois. Un « es-tu sûr ? » auquel
+personne ne peut répondre autrement qu'au hasard ne protège de rien ; il apprend
+seulement à appuyer sur OUI sans lire.
+
+Ce qu'elle garantit : le geste qui engage est **toujours à droite**, le focus
+entre dans la boîte et n'en sort pas, Échap et le fond annulent, et `surOui`
+retient la fermeture pendant l'appel réseau — sans lui, l'échec arriverait une
+seconde après la disparition de la boîte, sur une page qui a déjà tourné.
+
+Branchée sur la déconnexion (trois écrans), la sortie d'un KOP, l'achat en
+billets, la commande en euros, l'entrée en duel, et la suppression du compte —
+qui garde son mot de passe mais perd son `prompt()`.
+
+`verif-pages` exige maintenant `dialogue.js` **sur chaque page**. Les appels
+s'écrivent `window.TBF_DIALOGUE?.confirmer(...)` : sans le script, la garde `?.`
+rend `undefined` et le geste **passe sans rien demander** au lieu de lever. Un
+oubli ne casserait rien et retirerait une protection — la faute qu'aucune suite
+n'attrape.
+
+### Le moment fort est une case de bande dessinée
+
+« GOAL ! » était du lettrage nu posé sur le personnage, avec un contour sombre
+pour tenir. Ça ne tenait pas : du jaune sur un maillot jaune, sur une pelouse
+verte, sur une photo de stade éclairée aux projecteurs — il y a toujours un fond
+qui gagne. On voyait qu'il se passait quelque chose sans pouvoir lire quoi.
+
+Il a maintenant un cadre, un fond opaque et des rayons, et il est **au centre de
+l'écran**. La case règle les deux problèmes d'un coup : elle isole le lettrage du
+fond, donc il se lit ; et elle fait l'événement, parce qu'un panneau qui tombe au
+milieu de l'écran est une interruption et non une décoration.
+
+Le panneau est posé sur `document.body` et non dans la boîte du personnage —
+c'est ce qui permet de le centrer sur la page. `momentDans` ne servait qu'à
+contourner ça : il est ignoré. Un seul panneau par page, sans quoi deux scènes
+en posaient deux au même endroit et couper l'un laissait l'autre affiché.
+
+`.tbf-vignette` est un vocabulaire partagé : le résultat du duel — VICTOIRE,
+DÉFAITE, MATCH NUL — porte exactement le même cadre. Ce sont les deux mots que
+le jeu dit le plus fort, et qu'ils se ressemblent est ce qui les fait reconnaître
+avant d'être lus.
+
+### Un décor derrière chaque Fanzzy
+
+Les personnages étaient détourés sur du noir, avec un halo teinté par la
+famille. Le Gamin au Tambour de LA TRIBUNE et le Loup du BESTIAIRE se tenaient
+devant exactement le même vide, à la nuance de bleu près : deux cent quatre-vingts
+personnages, un seul lieu.
+
+`public/fanzzy-fond.js` compose le décor à partir des quatre choses demandées,
+chacune sur une couche qui ne marche pas sur les autres :
+
+| ce qui décide | ce que ça change |
+|---|---|
+| **la série** | le *lieu* — les gradins, le couloir de service, le comptoir, l'autoroute de nuit, le salon, la loge, le ciel… douze silhouettes |
+| **la tenue** | l'*époque* — toute la palette bascule. C'est ce qui fait qu'une tenue se voit de loin au lieu de se chercher sur le costume |
+| **l'âge** | la *lumière* — un projecteur au premier, trois au troisième. Une légendaire a sa couronne, qui ne se gagne pas |
+| **la famille** | l'*accent* — la couleur du halo et un motif : ondes pour la Voix, peau de tambour pour la Percussion, fanions pour le Tifo |
+
+Il est déterministe, semé sur l'identifiant : deux rendus de la même fiche
+donnent le même décor. Le classeur et la fiche partagent le même, `artFond` y
+déléguant — deux décors pour le même personnage, c'est le joueur qui apprend
+deux fois où il habite.
+
+**Trois défauts n'ont été vus qu'en regardant l'image**, et aucun contrôle
+automatique ne les aurait nommés :
+
+1. **Le cadre était carré.** Avec `slice`, un carré posé dans une vitrine de
+   370 × 565 s'agrandit d'un facteur 5,65 — chaque forme sortait une fois et
+   demie trop grosse, les têtes de la foule en pastilles de dix-sept pixels. Le
+   décor n'était pas mal dessiné, il était trop gros pour être reconnu. En
+   portrait, le facteur tombe à 3,8.
+2. **Les silhouettes étaient claires.** Des formes pâles sur un ciel sombre
+   donnaient une bouillie olive. Le principe manquait, et il est le même depuis
+   toujours dans un stade : on est dans le noir, la lumière est au-dessus. Un
+   décor est **du noir sur un ciel éclairé**.
+3. **L'accent de famille peignait au lieu de teinter.** À trente pour cent, les
+   ondes de la Voix étaient la seule chose visible — une tache plus grande que le
+   personnage.
+
+---
+
+## 4 tricies bis. Les saisons remplacent les niveaux
+
+### Ce qui n'allait pas dans l'ouverture par niveau
+
+Les séries s'ouvraient au niveau du joueur : LA TRIBUNE au 1, LES MÉTIERS DU
+STADE au 3, LE VIRAGE IMPOSSIBLE au 26. Ça marchait, et ça avait un défaut qu'on
+ne voit qu'en regardant le jeu vivre : **rien n'arrivait jamais à personne en
+même temps**.
+
+Chacun découvrait une série le jour où son compteur d'expérience passait un
+seuil, seul, sans que ce jour-là existe pour qui que ce soit d'autre. Deux
+joueurs qui se parlent ne parlent alors jamais de la même chose, et il n'y a
+rien à annoncer — puisqu'il n'y a rien de neuf, seulement quelqu'un qui rattrape.
+
+Une saison ouvre **pour tout le monde le même jour**. C'est ce qui permet de
+relancer le jeu.
+
+### Ce qu'une saison est
+
+Une ligne de la table `saisons` : un numéro, un nom, une annonce, et quatre
+listes de contenu. Elle se prépare **en brouillon** — rien ne change pour
+personne — et se lance d'un geste distinct, qui est le plus visible de toute
+l'administration : il change le jeu de tous les joueurs connectés, à la seconde.
+
+Ce qu'elle ouvre vraiment :
+
+| ce qu'elle nomme | ce qui se passe au lancement |
+|---|---|
+| **séries** | elles s'ouvrent — c'est le levier principal |
+| **tenues** | elles se publient |
+| **équipement** | annoncé, pas retenu |
+| **cartes d'action** | annoncé, pas retenu |
+
+Les deux dernières sont du **code**, pas de la base : rien ne sait encore les
+garder fermées. Le dire plutôt que de faire semblant — et le jour où elles
+vivront en base comme le catalogue, les deux champs deviendront des leviers sans
+changer de forme.
+
+**Additif, jamais soustractif.** Les séries ouvertes sont l'**union** de toutes
+les saisons lancées. La saison 4 n'annule pas la 3 : un collectionneur qui a
+commencé LES REVENANTS doit pouvoir les finir, et une série qui se referme
+derrière lui transformerait sa collection en dette. Refermer reste possible — on
+remet la saison en brouillon — et c'est délibérément malcommode.
+
+### Les trois endroits où le changement se voit
+
+**L'administration** a un onglet SAISONS, qui est désormais le seul d'où l'on
+ouvre du contenu. L'onglet FANZZY montre les séries ouvertes, il ne les règle
+plus : un second interrupteur aurait été une seconde vérité, et le jour où les
+deux divergent personne ne sait laquelle le jeu applique. La confirmation de
+lancement **énumère ce qui s'ouvre** — un « es-tu sûr ? » auquel on ne peut
+répondre qu'au hasard ne protège de rien.
+
+**Le kiosque** annonce la saison en cours, une fois par joueur. Le serveur
+retient la dernière vue : une annonce qu'on ne peut pas faire taire est une
+annonce qu'on apprend à ne plus lire, et la suivante ne le serait pas non plus.
+Il dit aussi ce qui attend — « trois séries en attente d'une saison » — **sans
+promettre de date**. Il disait « au niveau 12 » ; une saison se lance quand
+l'administration la lance, et annoncer une échéance qu'on ne tiendra peut-être
+pas est pire que de n'en annoncer aucune.
+
+**Le niveau** n'ouvre plus que des capacités : des emplacements de club, un
+troisième rang de tribune. Sept paliers au lieu de dix-neuf. C'est la bonne
+chose à lui confier — une capacité n'a de sens que pour un joueur donné, et
+personne n'a envie qu'on la lui annonce. `fanzzy.error.set_locked` n'est plus
+émis nulle part : il ne reste qu'une règle, donc un seul refus.
+
+### La migration, et ce qu'elle évite
+
+`sql/saisons.sql` crée une **saison 1** faite de ce que l'installation ouvrait
+déjà — la liste de `reglages.series_actives`, ou toutes les séries si ce réglage
+était absent. Sans cette reprise, une base en service se retrouverait **sans
+aucune série ouverte** le jour du déploiement : l'union des saisons lancées
+serait vide et le kiosque n'aurait plus rien à distribuer.
+
+`chargerCatalogue` charge les saisons lui-même, et en premier. Ce n'est pas une
+commodité : `chargerSeries` en dépend entièrement, et tout ce qui monte un
+catalogue passe déjà par là. Le confier à l'appelant aurait voulu dire l'ajouter
+à dix-neuf suites et à chaque nouvelle, avec pour seule sanction d'un oubli une
+exception au premier affichage du kiosque.
+
+### Quatre suites que personne ne lançait
+
+`admin-smoke`, `fanzzy-smoke`, `classement-smoke`, `souvenirs-smoke` et
+`nvn-net-smoke` n'étaient dans **aucun script npm**. Elles ne se lançaient donc
+que si quelqu'un tapait leur chemin de mémoire, ce que personne ne fait — et deux
+d'entre elles avaient dérivé en silence pendant des semaines :
+
+- `fanzzy-smoke` tirait dans VIRAGE NORD et NUITS EUROPÉENNES, dissoutes. Elle
+  levait au premier booster. Elle figeait aussi « la première carte est un
+  supporter **commun** », ce qui n'est plus vrai depuis que les deux premières
+  places tirent leur rareté — sans quoi aucune légendaire n'était atteignable.
+  Elle passait quand même, parce qu'elle tirait dans une série trop pauvre pour
+  avoir autre chose que des communes ;
+- `nvn-net-smoke` chantait en choisissant son **geste**, ce que le duel refuse
+  depuis qu'il a reçu le répertoire du Virage. Sept contrôles tombaient en
+  cascade, la corde n'ayant jamais bougé.
+
+Une suite qu'on ne lance jamais ne protège de rien, et pire : elle fait croire
+que la chose est couverte. C'est l'exact équivalent, pour les tests, de la
+promesse sans destinataire que `promesses.mjs` traque par ailleurs — qui le
+traque donc maintenant aussi.
+
+### Une collision qu'une exception cachait
+
+`.grille` était déclarée sans préfixe dans `ui.css`, et **inscrite dans la liste
+des exceptions** du contrôle de préfixe : « vocabulaire partagé, posé par
+geste.js ». Elle ne l'était pas. Deux pages s'en servaient déjà pour autre
+chose — la grille des cartes d'action du deck, et les formulaires de
+l'administration — et la règle commune leur imposait `width:86%; margin:0 auto`,
+qui n'a de sens que pour la mosaïque.
+
+Le formulaire des saisons sortait donc centré sur les deux tiers de la largeur,
+avec son champ d'annonce débordant par-dessus son étiquette. Vu sur la capture,
+pas autrement.
+
+**Écrire « c'est du vocabulaire partagé » ne rend rien partagé.** La classe
+s'appelle `tbf-grille`, l'exception est retirée.
+
+---
+
+## 4 tricies ter. L'accueil respire, et l'application tient enfin la tablette
+
+### Trois cadres de trop
+
+**L'avatar avait un cadre.** Une plaque sombre autour de la pastille dorée, qui
+portait le pseudo et le nom du club à côté. Sur un compte neuf ces deux lignes
+sont vides : il ne restait qu'un rectangle noir pendant sous la pastille, plus
+haut que tous les boutons de la rangée, sans rien dedans. Les deux se lisent au
+profil, qui est à un doigt de là. Le cadre est parti, et avec lui la jauge de
+palier ; le niveau reste, en pastille sur l'avatar.
+
+**Les deux jetons aussi.** Une plaque dorée autour d'un compteur doré et une
+plaque rouge autour d'un compteur rouge : deux fois la même information, et deux
+boutons qui criaient plus fort que les dix destinations du jeu. Il reste le
+dessin et le nombre.
+
+Tout ce qui est dans la barre du haut fait maintenant **la même hauteur**. C'est
+la seule chose qui fasse une rangée : trois objets de trente-huit, quarante-
+quatre et cinquante-deux pixels côte à côte se lisent comme trois accidents.
+
+### L'écharpe, en quatre essais ratés
+
+Le jeton des écharpes portait un carré rayé en CSS. Il est passé en dessin au
+trait, comme tout le reste du jeu — et il a fallu **huit tracés, regardés à
+vingt-deux pixels**, pour en trouver un qui se lise :
+
+| tracé | ce qu'on voit à 22 px |
+|---|---|
+| boucle nouée + franges | un verre à pied |
+| bande diagonale | un pansement |
+| col + deux pans | une échelle |
+| nœud + franges | une table |
+| col en V | un pantalon |
+| pendue à franges | une cravate |
+| nœud à deux pans | un portique |
+| **bande à rayures obliques** | **une écharpe** |
+
+C'est celui-là. Et ce n'est pas un hasard : c'est déjà ainsi que le jeu dessine
+une écharpe partout ailleurs — `.tbf-echarpe`, des rayures obliques. À cette
+taille il ne reste que la silhouette, et la silhouette d'une écharpe de
+supporter est une bande rayée.
+
+Le sachet des boosters, lui, reprend **le dessin exact** de la tuile BOOSTERS.
+Un même objet dessiné de deux façons, ce sont deux objets à apprendre.
+
+### Les deux rails se répondent rangée par rangée
+
+CARNET et MATCHS ont échangé leur place. Chaque rangée porte désormais une
+couleur **et** un sujet :
+
+| | à gauche | à droite |
+|---|---|---|
+| rouge — ce qui se joue | VIRAGE | DUEL |
+| bleu — ce qui se collectionne | FANZZY | CARNET |
+| vert — ce qui se regarde | MATCHS | CLASSEMENT |
+| violet — les autres | KOP | AMIS |
+| jaune — ce qui s'achète | BOOSTERS | BOUTIQUE |
+
+Dix tuiles sans logique de rangée sont dix choses à retenir ; cinq paires en
+font cinq.
+
+### La largeur : une seule vérité, enfin
+
+`ui.css` déclare `--colonne` depuis toujours, avec un commentaire expliquant
+qu'au-delà du téléphone on centre plutôt que d'étirer. **Cette variable n'avait
+aucun effet.** Chaque page écrivait sa propre largeur en dur — 440, 460 ou 520
+pixels selon l'écran et le jour — soit **dix-huit largeurs dans quinze
+fichiers**, et trois valeurs différentes pour la même application.
+
+Sur une tablette, tout tenait donc dans un rail de cinq cents pixels au milieu
+d'un écran noir, et élargir la variable ne changeait rien du tout.
+
+Les dix-huit pointent maintenant sur `var(--colonne)`, qui vaut 520 px sur
+téléphone et `min(100vw, 900px)` au-delà. Le plafond n'est pas de la
+timidité : au-delà de neuf cents pixels, une ligne de texte dépasse la centaine
+de caractères et l'œil perd le début de la ligne suivante.
+
+`admin.html` reste à mille cent, et c'est la seule exception : ce n'est pas un
+écran de supporter mais un écran de gestion, et un tableau à six colonnes ne se
+lit pas dans neuf cents. Elle est nommée dans `verif-pages`, avec sa raison.
+
+Sur l'accueil, la colonne gagnée est **remplie** : rail à 104 px, tuiles plus
+grandes, personnage plus grand. Une colonne qui s'élargit pendant que son
+contenu garde sa taille de téléphone ne fait que déplacer le vide.
+
+### Deux contrôles qui n'existaient pas
+
+`verif-pages` refuse désormais qu'une **coque de page** écrive sa largeur en
+dur. Le premier jet regardait tous les `max-width` et attrapait un paragraphe
+d'administration capé à six cent quarante pixels pour se lire — ce qui est
+exactement ce qu'il faut faire. Une largeur de texte n'est pas une largeur de
+colonne, et un contrôle qui confond les deux se fait désactiver.
+
+`tour:ui` refait **tout le tour à 834 pixels**, la largeur d'une tablette en
+portrait. Il y vérifie deux choses qui ne se voient pas autrement : que chaque
+écran remplit la colonne, et qu'aucun ne déborde. Toutes les suites visitaient
+le jeu à trois cent soixante pixels ; une page qui se casse à neuf cents serait
+partie en ligne sans que rien ne proteste.
+
+### Et une suite qui tombait une fois sur deux
+
+`nvn-net-smoke` échouait par intermittence depuis qu'elle avait été remise à
+jour — sept contrôles d'un coup, ou aucun. Deux causes, toutes deux dans le
+test et non dans le jeu :
+
+1. **Le souffle.** Les chants coûtent de 22 à 38, le répertoire est tiré de
+   l'identifiant du duel, et selon la partie le seul chant de rythme offert
+   était le plus cher. Le moteur le refusait pour `not_enough_breath`.
+2. **La régularité.** Le serveur refuse les frappes de métronome — deux
+   intervalles identiques à six millisecondes près valent
+   `inhuman_regularity`, et il a raison. Le test ne faisait trembler que le
+   tempo ; le martelage et la mesure arrivaient au métronome.
+
+Et une troisième, plus subtile : `echo` rejoue un motif de cinq coups **tiré
+par le serveur à chaque chant**. Le rejouer sans l'avoir lu donne zéro. Il est
+sorti de la liste des gestes que cette suite sait fabriquer de mémoire — ce
+qu'elle éprouve est le réseau, et les mini-jeux ont leurs propres suites.
+
+Trente passes vertes d'affilée après correction.
+
+---
+
 ## 5. Ce qui reste à faire
 
 Par ordre d'utilité.
 
-0. **Trancher entre la rotation et la main.** C'est la seule différence qui
-   reste entre le Virage et le duel : en duel le geste est imposé par une
-   rotation, au Virage il découle de la carte de chant qu'on joue. Tout le reste
-   — répertoire, quinze gestes, barème — est déjà commun. Les deux voies sont
-   décrites en fin de section 4 vicies quinquies. Faire jouer ses cartes en duel
-   est celle qui va dans le sens du jeu, et elle demande une session à elle
-   seule. **C'est une décision de conception, pas une correction** : rien n'est
-   cassé tant qu'elle n'est pas prise.
+1. **Dessiner les quarante-quatre lignées des cinq séries neuves**, puis les
+   trente et une légendaires de septembre 2026. Dans cet ordre, et pas dans
+   l'autre : un âge supérieur sans dessin tombe sur celui de son premier âge,
+   donc **quarante-quatre dessins en effacent cent trente-deux** là où
+   trente et un dessins de légendaires n'en effacent que trente et un.
 
-1. **Dessiner les trente et une légendaires de septembre 2026.** Ce sont
-   désormais les **seules** cartes du jeu en rendu procédural : les 262 âges
-   qu'on croyait à produire avaient simplement un repli manquant, et ils
-   montrent maintenant leur personnage au premier âge. `images:test` donne le
-   compte exact à chaque passage.
+   Cent quatre-vingt-trois cartes sont en rendu procédural. `images:test` tient
+   le compte à chaque passage, et son seuil est un cliquet : il ne monte que si
+   on le décide.
 
    Reste ensuite, à plus long terme, à dessiner les âges **pour de bon** : voir
    un personnage vieillir est ce que le jeu promet, et le repli montre le bon

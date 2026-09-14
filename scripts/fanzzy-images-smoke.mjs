@@ -181,10 +181,31 @@ console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
     gagnees > 200
     || (console.log(`        ${enPropre} en propre, ${avec} au total — `
       + 'la règle de nommage des âges a-t-elle changé ?'), false));
+  /* **Ce nombre est un cliquet, pas une cible.** Il ne doit jamais monter sans
+     qu'on l'ait décidé, et il descend à chaque fournée dessinée.
+
+     Les cent soixante-sept en attente sont du contenu écrit récemment et
+     pas encore illustré : les trente et une légendaires ajoutées pour donner un
+     sommet à chaque série, et les cent cinquante-deux lignes des cinq séries
+     neuves — LES VIP, LA GASTRONOMIE DE COMPTOIR, LES GALÈRES DE DÉPLACEMENT,
+     LES PHÉNOMÈNES MÉTÉO, LES HÉROS DU CANAPÉ.
+
+     **Quarante-quatre dessins suffiraient à en effacer cent trente-deux** : les
+     âges supérieurs tombent sur le dessin de leur premier âge, et les quarante-
+     quatre lignées neuves en ont chacune deux. C'est là qu'il faut mettre la
+     prochaine fournée, pas sur les légendaires.
+
+     Elles ne sont pas invisibles pour autant : sans adresse, la fiche tombe sur
+     le rendu procédural. Mais une légendaire en silhouette géométrique n'est
+     pas une légendaire, et c'est bien une dette. */
+  const DETTE = 167;
   check(`et ${DEX.length - avec} cartes restent sans dessin d’aucune sorte`,
-    DEX.length - avec <= 31
+    DEX.length - avec <= DETTE
     || (console.log('        ', DEX.filter((f) => !adresse(f.id))
-      .slice(0, 8).map((f) => f.id).join(' ')), false));
+      .slice(0, 8).map((f) => f.id).join(' ')),
+      console.log(`        — la dette était de ${DETTE} : ce lot ajoute des `
+        + 'cartes sans dessin. Lance `npm run images`, ou relève le cliquet '
+        + 'en connaissance de cause.'), false));
   console.log(`     ${enPropre} dessinées · ${gagnees} par leur premier âge · `
     + `${DEX.length - avec} sans rien`);
 }

@@ -6,12 +6,13 @@
 <title>Mon profil — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
 <style>
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
 body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
-#app{position:relative;width:100%;max-width:460px;min-height:100dvh;display:flex;flex-direction:column}
+#app{position:relative;width:100%;max-width:var(--colonne);min-height:100dvh;display:flex;flex-direction:column}
 
 .carte{position:relative;margin:14px 14px 0;border-radius:16px;overflow:hidden;
   border:1px solid rgba(242,238,228,.14);min-height:150px;display:flex;flex-direction:column;
@@ -325,19 +326,51 @@ $('resend').onclick = async () => {
 };
 
 $('logout').onclick = async () => {
+  /* La déconnexion se demande. Sur téléphone, ce bouton est au bas d'une page
+     qu'on fait défiler, et un appui s'y donne en rangeant l'appareil — on
+     rouvre alors le jeu sur un écran de connexion sans comprendre. */
+  if (!(await window.TBF_DIALOGUE?.confirmer({
+    titre: 'SE DÉCONNECTER ?',
+    texte: 'Ta collection et tes duels restent. Il faudra te reconnecter pour y revenir.',
+    oui: 'SE DÉCONNECTER', ton: 'flare',
+  }))) return;
   try { await auth('/logout', {}); } catch {}
   location.href = '/';
 };
 
+/* La suppression du compte : le seul geste du jeu qu'on ne peut pas défaire.
+   Le mot de passe reste demandé — c'est ce qui protège d'un téléphone laissé
+   déverrouillé — mais plus par `prompt()`, la boîte système qui ne dit rien de
+   ce qu'on perd et qu'on valide d'un Entrée. */
 $('supprimer').onclick = async () => {
-  const mdp = prompt('Cette action est définitive : tes cartes, tes souvenirs et tes duels seront perdus.\n\nSaisis ton mot de passe pour confirmer.');
-  if (!mdp) return;
-  try {
-    await auth('/me', { password: mdp }, 'DELETE');
-    location.href = '/';
-  } catch (e) {
-    toast(e.code === 'auth.error.bad_credentials' ? 'Mot de passe incorrect' : 'Suppression impossible');
-  }
+  let mdp = '';
+  await window.TBF_DIALOGUE?.confirmer({
+    titre: 'SUPPRIMER TON COMPTE ?',
+    texte: 'Définitif. Tes cartes, tes tenues, tes souvenirs, tes duels et ta place '
+      + 'au KOP disparaissent. Rien de tout cela ne peut être rendu.',
+    corps: '<label class="tbf-dial-champ">Ton mot de passe'
+      + '<input type="password" autocomplete="current-password" id="supMdp"></label>',
+    oui: 'TOUT SUPPRIMER', ton: 'flare', non: 'GARDER MON COMPTE',
+    apres: (boite) => {
+      const champ = boite.querySelector('#supMdp');
+      const oui = boite.querySelector('[data-oui]');
+      const peindre = () => { mdp = champ.value; oui.disabled = !mdp; };
+      champ.addEventListener('input', peindre);
+      peindre();
+    },
+    surOui: async () => {
+      if (!mdp) return false;
+      try {
+        await auth('/me', { password: mdp }, 'DELETE');
+      } catch (e) {
+        toast(e.code === 'auth.error.bad_credentials'
+          ? 'Mot de passe incorrect' : 'Suppression impossible');
+        return false;
+      }
+      location.href = '/';
+      return true;
+    },
+  });
 };
 
 /* -------------------------------------------------------- démarrage */

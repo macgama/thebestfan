@@ -108,6 +108,12 @@
    On laisse donc la boîte remplir la fenêtre et c'est `object-fit` qui
    recadre le contenu, centré horizontalement et posé sur la base. Ni
    l'animation ni le débordement ne peuvent le déplacer. */
+/* La boîte qui empile le décor et le personnage. **Elle doit remplir son
+   parent** : sans hauteur définie, le `height:100%` du SVG de décor retombe sur
+   la taille intrinsèque du `viewBox`, et le décor prend la forme de son dessin
+   au lieu de celle de la carte. Ça ne se voyait pas tant que le viewBox du fond
+   avait le rapport de la carte ; les décors par série ne l'ont pas. */
+.illuwrap{position:absolute;inset:0}
 .illuwrap .illu{position:absolute;left:0;bottom:0;width:100%;height:104%;
   object-fit:cover;object-position:50% 100%;filter:drop-shadow(0 3px 8px rgba(0,0,0,.6))}
 /* Un objet n'est pas un personnage : il est détouré et n'a ni pieds ni sol.

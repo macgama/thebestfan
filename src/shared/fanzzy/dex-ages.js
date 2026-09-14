@@ -781,11 +781,12 @@ export const AGES = {
       + 'onze ans à régler ça et le stade retient son souffle chaque fois.', 'MAINTENANT'],
   ],
 
-  /* ========================================== VIRAGE NORD · NUITS · IMPOSSIBLE
+  /* ================================================= LES CARTES « X »
 
-     Les trois premières séries, celles d'avant le grand lot. Elles racontent
-     le même virage à des heures différentes, et leurs personnages suivent la
-     même règle que les autres.                                               */
+     Les personnages d'avant le grand lot. Ils venaient de trois séries — VIRAGE
+     NORD, NUITS EUROPÉENNES, LE VIRAGE IMPOSSIBLE — dont les deux premières ont
+     été dissoutes ; ils sont aujourd'hui répartis dans six séries, et leur champ
+     `set` est le seul à faire foi. Le bloc reste groupé par numérotation.     */
 
   X1: [
     ['Le Lanceur de Ola', 'Il ne la suit plus, il la lance. Il faut trois essais et un peu de honte, '
@@ -890,5 +891,332 @@ export const AGES = {
       + 'annoncent. Le virage les lit à voix haute et invente la suite.', 'ATTENTION, ENCORE DES TRAVAUX'],
     ['Le Chantier', 'Elle a un gilet, un casque, un plan et une équipe. La nouvelle buvette est '
       + 'd’elle. Elle n’a toujours rien expliqué à personne.', 'C’EST BIENTÔT FINI'],
+  ],
+
+  /* ================================================================ LES VIP
+
+     Ils sont là pour une autre raison que le match : le buffet, la photo, le
+     mandat, le client. La série serait une moquerie si elle s'arrêtait là, et
+     une moquerie ne se collectionne pas longtemps.
+
+     Leur progression est donc **une conversion, et elle se paie**. Aucun ne
+     devient un ultra ; chacun descend d'un étage et y reste. Le troisième âge
+     ne renie pas le premier — le Chat Person trouve toujours que ça fait du
+     bruit, il ne partirait simplement plus.                                 */
+
+  VP1: [
+    ['Le Voisin de Loge', 'Il a cessé d’applaudir les passes latérales. Il ne sait pas quand ni '
+      + 'pourquoi, mais il s’est levé un soir de mars et il est resté debout.', 'JE ME LÈVE'],
+    ['Celui Qui a Descendu', 'Il a rendu la loge et pris un abonnement en haut du virage, au prix '
+      + 'le plus bas du stade. Il trouve toujours que ça fait du bruit. Il ne partirait pour rien '
+      + 'au monde.', 'ÇA FAIT DU BRUIT, OUI'],
+  ],
+  VP2: [
+    ['Celui Qui a Retourné le Téléphone', 'Il a filmé le virage au lieu de sa nuque, une fois, par '
+      + 'accident. La vidéo a fait dix fois ses chiffres habituels et il n’a pas compris pourquoi.',
+      'REGARDEZ-LES'],
+    ['L’Archiviste du Virage', 'Quatre ans de tifos, de bâches et de montées, filmés de face et '
+      + 'donnés au club. On ne voit jamais son visage dans ses vidéos. C’était pourtant tout ce '
+      + 'qu’il voulait montrer.', 'C’EST PAS MOI, C’EST EUX'],
+  ],
+  VP3: [
+    ['L’Ancien Ministre', 'Il n’est plus en campagne et il vient quand même. Il connaît le nom de '
+      + 'l’attaquant depuis trois saisons, maintenant, et il le dit moins fort.', 'JE CONNAIS LE NOM'],
+    ['L’Abonné du Rang 14', 'Personne ne se souvient de son mandat. Tout le monde sait qu’il tient '
+      + 'la buvette du virage le samedi et qu’il rend la monnaie juste.', 'DEUX CAFÉS ?'],
+  ],
+  VP4: [
+    ['Celui Qui a Demandé', 'Il a fini par demander de quel côté était son équipe. La question a '
+      + 'fait rire tout le rang, et le rang lui a expliqué pendant une mi-temps entière.',
+      'C’EST CELUI-LÀ ?'],
+    ['Le Parrain du Nouveau', 'Il repère à chaque match celui qui n’ose pas demander, et il va '
+      + 's’asseoir à côté. Il a offert quatorze écharpes en six ans.', 'TU PEUX DEMANDER'],
+  ],
+  VP5: [
+    ['La Loge Rendue', 'Le club n’a pas trouvé de repreneur et l’a ouverte aux associations. Douze '
+      + 'places, douze gamins, un buffet qui ne reste plus intact.', 'ELLE EST PLEINE'],
+    ['La Tribune des Gosses', 'Il n’y a plus de buffet, il y a des banderoles collées aux vitres. '
+      + 'C’est la seule loge du stade qui chante, et elle chante faux.', 'ON EST LÀ-HAUT'],
+  ],
+  VP6: [
+    ['Celui Qui a Écouté', 'Sa voisine a fini sa phrase, puis elle a fini la sienne. Il a mis onze '
+      + 'ans à se taire et une mi-temps à apprendre.', 'JE VOUS ÉCOUTE'],
+    ['L’Assesseur', 'Il tient la touche des équipes de jeunes le dimanche matin, mal, et il le '
+      + 'sait. Elle est venue le corriger deux fois. Il l’a remerciée les deux fois.',
+      'J’AI LEVÉ TROP TÔT'],
+  ],
+  VP7: [
+    ['Le Gamin Qui Redescend', 'Il a trouvé l’escalier qui mène du salon d’honneur au virage. Il '
+      + 'fait le trajet à chaque mi-temps et il ne l’a dit à personne.', 'JE REVIENS'],
+    ['Le Président Qui Monte à Pied', 'Il a le bureau de son père et il ne s’y assoit pas les soirs '
+      + 'de match. On le trouve debout au rang 12, avec le maillot sans floquage.', 'JE SUIS EN HAUT'],
+  ],
+  VP8: [
+    ['Celui Qui a Tourné l’Objectif', 'Il a raté l’action une fois de plus et il a photographié le '
+      + 'virage à la place. C’est la photo que le club a mise en une.', 'JE L’AI EUE'],
+    ['L’Œil du Virage', 'Vingt ans de tribune populaire, aucune photo de but. Son exposition tient '
+      + 'dans le hall et elle ne montre que des gens qui regardent.', 'REGARDEZ-VOUS'],
+  ],
+  VP9: [
+    ['La Table Qui S’Est Levée', 'Un but à la 89e, et douze personnes en costume debout d’un coup, '
+      + 'dont deux avec la serviette encore autour du cou.', 'ON S’EST LEVÉS'],
+    ['Le Rang des Partenaires', 'Ils ont demandé des places debout et le club a dit oui. La nappe a '
+      + 'disparu, le dessert aussi, et personne ne s’en est plaint.', 'ON RESTE DEBOUT'],
+  ],
+
+  /* =============================================== LA GASTRONOMIE DE COMPTOIR
+
+     Ce qui se mange et se boit debout. Ce sont des choses, pas des gens : elles
+     ne font pas carrière, elles **deviennent plus elles-mêmes**. La merguez ne
+     s'améliore pas — elle devient inattaquable.
+
+     Deux entrées font exception et c'est voulu : le thermos et le cornet de
+     frites finissent par parler de ceux qui les tiennent. Un objet de virage
+     ne vaut que par la main qui le passe au rang d'à côté.                  */
+
+  GC1: [
+    ['La Merguez de la Maison', 'Toujours noire dehors et glacée dedans. Le nouveau gérant a voulu '
+      + 'la changer. Il a reculé devant une pétition de quatre cents signatures.', 'ON Y TOUCHE PAS'],
+    ['La Merguez de 1998', 'Elle a un panneau, une date et une file. Des gens qui ne regardent pas '
+      + 'le match viennent la manger. Elle est toujours aussi mauvaise, et c’est le sujet.',
+      'TOUJOURS LA MÊME'],
+  ],
+  GC2: [
+    ['La Bière du But', 'Elle ne tombe plus par maladresse : elle tombe à la 92e, et trois rangs ont '
+      + 'la nuque mouillée en riant.', 'C’EST POUR LE BUT'],
+    ['La Douche du Virage', 'Premier but de la saison, tout le monde lève son gobelet et personne ne '
+      + 'le rattrape. Ce n’est écrit nulle part et ça se fait depuis onze ans.', 'LEVEZ-LES'],
+  ],
+  GC3: [
+    ['Le Triangle Sans Date', 'On a arrêté d’imprimer la date. Personne ne l’a demandé, ce qui en '
+      + 'dit long sur tout le monde.', 'ON SAIT PAS'],
+    ['Le Monument sous Plastique', 'Au menu depuis trente ans, au même prix, et resté exactement '
+      + 'aussi mauvais. C’est devenu une forme de loyauté.', 'C’EST TOUJOURS DU THON'],
+  ],
+  GC4: [
+    ['La Frite Qu’On Mange Quand Même', 'Elle plie toujours. On la mange toujours. Deux faits qui ne '
+      + 'se sont jamais contredits.', 'ELLE TOMBE ENCORE'],
+    ['Le Cornet Partagé', 'Un cornet pour quatre, posé sur un genou, au dernier rang. Elles sont '
+      + 'molles, tièdes, et il n’en reste jamais.', 'PRENDS-EN'],
+  ],
+  GC5: [
+    ['Le Gobelet de la Cuisine', 'Il a quitté le stade dans une poche. Il sert au café du matin '
+      + 'depuis deux ans, avec le logo du sponsor de la saison 2019.', 'JE L’AI GARDÉ'],
+    ['L’Étagère de Gobelets', 'Quarante-trois, rangés par saison, dans une cuisine. C’est la seule '
+      + 'collection de la maison que personne n’a le droit de jeter.', 'IL EN MANQUE DEUX'],
+  ],
+  GC6: [
+    ['La Queue Qui Se Parle', 'Douze minutes de file, et on a fini par se dire bonjour. Trois '
+      + 'amitiés du virage sont nées entre la caisse et le percolateur.', 'TU ÉTAIS OÙ, TOI ?'],
+    ['Le Deuxième Virage', 'On y rate la reprise et on y refait le match d’avant. Certains y vont '
+      + 'sans avoir soif.', 'JE PRENDS RIEN'],
+  ],
+  GC7: [
+    ['Le Thermos Qui Fait le Tour', 'Six personnes acceptent maintenant. Le café n’est pas meilleur ; '
+      + 'le rang a juste compris ce qu’on lui proposait.', 'À TOI'],
+    ['Le Thermos Sans Lui', 'Il n’est plus là. Le thermos est venu quand même, porté par quelqu’un '
+      + 'd’autre, et il a fait le tour du rang comme d’habitude.', 'IL EN RESTE'],
+  ],
+  GC8: [
+    ['Le Barbecue du Parking', 'Deux heures avant, trois grilles, et une odeur qui traverse la '
+      + 'route. Personne n’a jamais demandé d’autorisation.', 'C’EST PRÊT'],
+    ['Le Repas d’Avant-Match', 'Cent vingt personnes, des tables pliantes, et le club qui ferme les '
+      + 'yeux depuis quinze ans. La meilleure buvette du stade est dehors.', 'IL Y EN A POUR TOUS'],
+  ],
+  GC9: [
+    ['Le Siège Qu’On Évite', 'Rang 9, place 14. Les habitués savent. Les nouveaux apprennent, une '
+      + 'fois.', 'PAS CELUI-LÀ'],
+    ['La Relique du Rang 9', 'Le stade a été rénové. Le siège a été gardé, remonté à l’identique, '
+      + 'avec ce qu’il y avait dessous. Quelqu’un a décidé que c’était de l’histoire.',
+      'IL EST TOUJOURS LÀ'],
+  ],
+
+  /* ================================================ LES GALÈRES DE DÉPLACEMENT
+
+     Une galère de déplacement raconte toujours la même chose : on y arrive
+     quand même, et on y arrive ensemble. La progression va donc de l'incident
+     subi à **l'incident devenu rituel** — le car sans chauffage en a un, et il
+     l'a gardé après avoir eu le chauffage. Ce n'était pas le froid.         */
+
+  GD1: [
+    ['Le Minibus Réparé', 'Quelqu’un s’y connaissait, finalement, et c’était la personne à qui on '
+      + 'n’avait pas demandé. Ils sont arrivés à la 20e.', 'ELLE REPART'],
+    ['Le Minibus de Tout le Monde', 'Cent quatre-vingt mille kilomètres et un nom peint sur le '
+      + 'flanc. Trois générations de déplacements sont montées dedans. Il tombe encore en panne.',
+      'ON MONTE'],
+  ],
+  GD2: [
+    ['Le GPS Qu’On N’Écoute Plus', 'Il annonce toujours vingt minutes. On a pris l’habitude de '
+      + 'doubler, et on arrive à l’heure depuis.', 'DIS-EN QUARANTE'],
+    ['La Route Qu’On Connaît', 'Personne ne l’allume plus. Quarante déplacements par an et une '
+      + 'sortie d’autoroute qu’on prend les yeux fermés, en chantant.', 'TOURNE À DROITE'],
+  ],
+  GD3: [
+    ['Le Péagiste Qui Reconnaît le Car', 'Il ouvre les yeux, maintenant, et il lève la barrière '
+      + 'avant qu’on s’arrête. Il n’a jamais dit un mot.', 'IL A OUVERT'],
+    ['Celui de la Cabine 4', 'Il a une écharpe accrochée derrière lui et personne ne sait qui la lui '
+      + 'a donnée. Le car klaxonne chaque fois. Il lève la main chaque fois.', 'IL A FAIT SIGNE'],
+  ],
+  GD4: [
+    ['La Roue de Secours', 'Elle était bien sous les écharpes. Sept personnes ont déchargé le coffre '
+      + 'sur le trottoir, en maillot, sous la pluie, en quatre minutes.', 'ON L’A'],
+    ['Les Quatre Minutes', 'C’est le record, et il est affiché dans le local du groupe. Ceux qui ont '
+      + 'fait le changement ne se parlaient pas avant ce jour-là.', 'ON L’A FAIT'],
+  ],
+  GD5: [
+    ['L’Aire du Retour', 'Même café tiède, même néon. On y parle, cette fois : il y a eu un but à la '
+      + '88e et il faut le raconter quarante fois.', 'RACONTE ENCORE'],
+    ['Le Point de Rendez-Vous', 'Trois cars, deux groupes, une aire d’autoroute à quatre heures du '
+      + 'matin. Ils ne sont pas du même club. Ils se serrent la main depuis six ans.', 'VOUS AUSSI ?'],
+  ],
+  GD6: [
+    ['Le Car aux Drapeaux', 'On a arrêté d’attendre le chauffage. Les drapeaux servent de '
+      + 'couvertures et personne ne les a jamais autant aimés.', 'SERRE-TOI'],
+    ['Le Car du Groupe', 'Il a le chauffage, maintenant. Tout le monde dort quand même à quatre sous '
+      + 'deux drapeaux. Ce n’était pas le froid, en fait.', 'ON EST SERRÉS'],
+  ],
+  GD7: [
+    ['Le Contrôle Qui Dure', 'Quarante passeports, deux agents, et le coup d’envoi passé. On a '
+      + 'écouté le premier but debout dans une file.', 'ON A ENTENDU'],
+    ['La File Qui Chante', 'On a fini par chanter dans la file, doucement, à cause des agents. Ils '
+      + 'ont laissé faire. Deux d’entre eux connaissaient les paroles.', 'DOUCEMENT'],
+  ],
+  GD8: [
+    ['Le Quai Qui S’Organise', 'Trente personnes, quatre voitures, et un covoiturage monté en onze '
+      + 'minutes sur un quai. Il restait deux personnes sans place. Elles ont eu une place.',
+      'QUI PREND QUI ?'],
+    ['Le Quai 3', 'C’est là qu’on se retrouve maintenant, même quand le train n’est pas supprimé. Le '
+      + 'panneau d’affichage a moins d’importance que prévu.', 'ON EST OÙ D’HABITUDE'],
+  ],
+  GD9: [
+    ['L’Escorte Qu’On Salue', 'Du péage au parking sans un arrêt, et une main levée à la fenêtre du '
+      + 'dernier car. Le motard a répondu.', 'IL A RÉPONDU'],
+    ['Le Convoi', 'Deux cents personnes, quatre cars, gyrophares. On n’est pas importants, on est '
+      + 'nombreux, et ce jour-là on n’a pas fait la différence.', 'ON EST NOMBREUX'],
+  ],
+
+  /* ================================================== LES PHÉNOMÈNES MÉTÉO
+
+     Le vent, la pluie, la grêle : rien de tout cela n'a d'intention, et c'est
+     exactement ce qui les rend jouables. Ils montent en **intensité**, puis le
+     virage se les approprie — le vent finit sur le plan du stade, la grêle
+     finit en chant. Un phénomène devient un personnage le jour où des gens
+     décident de faire quelque chose avec.                                   */
+
+  MT1: [
+    ['Le Vent de la Seconde Période', 'Il tourne toujours à la mi-temps. Les deux entraîneurs le '
+      + 'savent et font semblant de ne pas en tenir compte.', 'IL VA TOURNER'],
+    ['Le Vent du Stade', 'Il a un nom dans le club, une direction connue et une statistique. On l’a '
+      + 'mis sur le plan du stade, en flèche, à l’entrée du virage.', 'IL EST À NOUS'],
+  ],
+  MT2: [
+    ['La Pluie Qui Reste', 'Quatre-vingt-dix minutes sans une accalmie, et pas un siège libre dans '
+      + 'le virage. Les capuches ne servent toujours à rien.', 'ON EST TREMPÉS'],
+    ['Le Match de la Pluie', 'On en parle encore. Personne ne se souvient du score, tout le monde se '
+      + 'souvient d’être resté debout jusqu’au bout.', 'ON EST RESTÉS'],
+  ],
+  MT3: [
+    ['Le Quart d’Heure Ouest', 'Dix-sept heures pile, et le virage a compris qu’il pouvait s’en '
+      + 'servir. Les bâches se lèvent d’un coup à la 62e.', 'MAINTENANT'],
+    ['L’Heure du Virage', 'Le club programme les coups d’envoi en fonction. Ce n’est écrit dans '
+      + 'aucun règlement et ça se voit dans le calendrier.', 'À DIX-SEPT HEURES'],
+  ],
+  MT4: [
+    ['Le Brouillard Qui Chante', 'On ne voit plus rien, alors on écoute. Le virage a chanté '
+      + 'quatre-vingt-dix minutes d’un match qu’il n’a pas vu.', 'ON CHANTE PAREIL'],
+    ['Le Match Qu’On a Entendu', 'Le seul match dont personne n’a de photo. Tout le monde raconte le '
+      + 'même but, et chacun le raconte différemment.', 'JE L’AI ENTENDU'],
+  ],
+  MT5: [
+    ['La Grêle sur les Bâches', 'Cinq minutes de tambour sur deux cents mètres de plastique tendu. '
+      + 'Le virage a suivi le rythme sans se concerter.', 'TAPEZ AVEC'],
+    ['Les Cinq Minutes Blanches', 'La pelouse blanche, l’arbitre qui laisse jouer, et un chant né ce '
+      + 'soir-là qu’on entend encore. Il dure exactement cinq minutes.', 'ENCORE CINQ'],
+  ],
+  MT6: [
+    ['La Pause Fraîcheur', 'Trente-huit degrés, et le virage est resté debout pendant que la tribune '
+      + 's’asseyait. Ce n’était pas malin.', 'ON RESTE DEBOUT'],
+    ['L’Ombre Partagée', 'Deux bâches tendues au-dessus du rang, à bout de bras, à tour de rôle. '
+      + 'Personne n’a demandé qui tenait quoi.', 'TIENS ÇA'],
+  ],
+  MT7: [
+    ['Le Terrain Praticable', 'Quelqu’un a fini par marcher dessus. Le match s’est joué et trois '
+      + 'joueurs sont tombés avant la première minute, comme prévu.', 'ÇA GLISSE ENCORE'],
+    ['Les Bénévoles de Sept Heures', 'Quarante personnes, du sel, des bâches, et quatre heures avant '
+      + 'le coup d’envoi. Le match a eu lieu. Personne ne l’a su.', 'ON A DÉGAGÉ'],
+  ],
+  MT8: [
+    ['La Bourrasque Attendue', 'Le virage souffle quand le ballon part. Ça ne change rien et ça se '
+      + 'fait quand même, à chaque corner, depuis deux saisons.', 'SOUFFLEZ'],
+    ['Le Douzième Souffle', 'Trois buts lui sont attribués. Aucun n’est pour le même camp. Le virage '
+      + 'souffle quand même, et c’est bien le sujet.', 'ON SOUFFLE TOUS'],
+  ],
+
+  /* ================================================== LES HÉROS DU CANAPÉ
+
+     Ceux qui ne sont pas au stade, et qui en parlent le plus fort. La série se
+     moquerait d'eux facilement, et le jeu n'y gagnerait rien.
+
+     Leur progression est **une descente du volume**. L'expert efface moins,
+     le troll garde un seul club, le commentateur du salon baisse le son — et
+     ce qu'ils gagnent en se taisant, c'est quelqu'un à qui parler. Le Footix
+     finit vieux du rang 7, et il ne se moque jamais de celui qui arrive.    */
+
+  HC1: [
+    ['Celui Qui N’Efface Plus', 'Il laisse ses mauvais pronostics en ligne, maintenant. Ses chiffres '
+      + 'ont baissé et il dort mieux.', 'JE M’ÉTAIS TROMPÉ'],
+    ['L’Analyste du Club', 'Il fait les retours vidéo des équipes de jeunes, gratuitement, le mardi '
+      + 'soir. Il n’a plus de compte. Il n’avait jamais eu autant à dire.', 'REGARDE CE DÉCALAGE'],
+  ],
+  HC2: [
+    ['Celui Qui a Choisi', 'Il n’en a gardé qu’un, des six. Celui qui perdait le plus. Il ne sait '
+      + 'pas expliquer pourquoi.', 'CELUI-LÀ'],
+    ['L’Abonné du Mercredi', 'Il commente toujours après le coup de sifflet, mais depuis la tribune, '
+      + 'et seulement pour dire que c’était pas si mal.', 'C’ÉTAIT PAS SI MAL'],
+  ],
+  HC3: [
+    ['Celui Qui a Pris un Abonnement', 'Il connaît les onze noms, maintenant, et deux chants sur '
+      + 'trois. Il a payé le déplacement le plus long de la saison, en janvier, pour un 0-3.',
+      'JE CONNAIS'],
+    ['Le Vieux du Rang 7', 'Personne ne se rappelle qu’il a commencé après une coupe. Lui s’en '
+      + 'souvient très bien, et il ne se moque jamais de celui qui arrive.', 'TU VIENS D’OÙ ?'],
+  ],
+  HC4: [
+    ['Celui Qui Baisse le Son', 'Il a coupé la télé et gardé la radio. Il double toujours, mais il a '
+      + 'cessé d’être en avance.', 'IL VA TIRER, LÀ'],
+    ['La Voix du Salon', 'Il commente pour son père, qui ne voit plus l’écran. Il est légèrement en '
+      + 'avance, exprès, pour lui laisser le temps de se lever.', 'IL VA TIRER, PAPA'],
+  ],
+  HC5: [
+    ['Le Débat de Mardi', 'Quatorze angles, six jours, et toujours pas d’accord. Deux camps se sont '
+      + 'formés et ils se parlent encore.', 'REGARDE DE LÀ'],
+    ['L’Action de la Saison', 'Personne n’a tranché. C’est devenu un point de repère : on dit « avant '
+      + 'l’action » et « après l’action », et tout le monde sait.', 'ON SAURA JAMAIS'],
+  ],
+  HC6: [
+    ['Les Trente Secondes', 'Il a compris qu’il vivait chaque but deux fois : par le cri du voisin, '
+      + 'puis par l’image. Il a arrêté de s’en plaindre.', 'JE L’AI ENTENDU D’ABORD'],
+    ['Le Mur Mitoyen', 'Ils ne se sont jamais rencontrés. Il connaît la voix de son voisin mieux que '
+      + 'celle du commentateur, et il tape au mur pour répondre.', 'J’AI TAPÉ AU MUR'],
+  ],
+  HC7: [
+    ['L’Oncle en Majuscules', 'Trente-huit messages sur quarante, et personne ne lui a jamais '
+      + 'expliqué la touche. Personne ne le fera.', 'IL ÉCRIT FORT'],
+    ['Le Groupe Qui Se Déplace', 'Quatorze ans de messages, et un premier déplacement à douze, en '
+      + 'car, l’an dernier. L’oncle a payé les places et n’a rien écrit ce jour-là.',
+      'ON Y VA ENSEMBLE'],
+  ],
+  HC8: [
+    ['Celui Qui a Parié le Dimanche', 'Il a annoncé avant, une fois, devant témoins. Il s’est '
+      + 'trompé. Il l’a raconté lui-même toute la semaine.', 'J’AI DIT AVANT'],
+    ['Le Bulletin du Vendredi', 'Il publie ses pronostics le vendredi, signés, avec son taux de '
+      + 'réussite en bas de page. Il est mauvais et il est lu par trois cents personnes.',
+      'C’EST ÉCRIT'],
+  ],
+  HC9: [
+    ['Celui Qui S’Est Tu', 'Il avait l’attaquant adverse dans son équipe et il n’a rien dit. Il a '
+      + 'même hué un peu, pour la forme. Ça lui a coûté douze points.', 'RIEN DIT'],
+    ['Le Sélectionneur du Virage', 'Il a monté la ligue du groupe, quarante équipes, et il s’interdit '
+      + 'les joueurs adverses. Il finit dernier chaque saison, exprès.', 'PAS D’ADVERSAIRES'],
   ],
 };

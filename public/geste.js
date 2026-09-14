@@ -433,7 +433,7 @@
           const cotes = g.cotes ?? 4;
           const n = cotes * cotes;
           rendre = { grille: Array.from({ length: n }, () => 0), instants: [] };
-          zone.innerHTML = `<div class="grille" id="pad"
+          zone.innerHTML = `<div class="tbf-grille" id="pad"
             style="grid-template-columns:repeat(${cotes},1fr)">${
             Array.from({ length: n }, (_, i) =>
               `<i data-c="${i}" class="${g.grille?.[i] ? 'on' : ''}"></i>`).join('')
@@ -463,7 +463,7 @@
           const g = gestes?.memoire ?? {};
           const cartes = g.cartes ?? [];
           rendre = { paires: [], instants: [] };
-          zone.innerHTML = `<div class="grille memo" id="pad"
+          zone.innerHTML = `<div class="tbf-grille memo" id="pad"
             style="grid-template-columns:repeat(4,1fr)">${
             cartes.map((v, i) => `<i data-c="${i}" data-v="${v}" class="vue">${v + 1}</i>`)
               .join('')}</div><div class="s" id="s">RETIENS LES PAIRES</div>`;
@@ -504,7 +504,7 @@
           const g = gestes?.capo ?? {};
           const zones = g.zones ?? 6;
           rendre = { suite: [], instants: [] };
-          zone.innerHTML = `<div class="grille capo" id="pad"
+          zone.innerHTML = `<div class="tbf-grille capo" id="pad"
             style="grid-template-columns:repeat(3,1fr)">${
             Array.from({ length: zones }, (_, i) => `<i data-c="${i}"></i>`).join('')
             }</div><div class="s" id="s">REGARDE</div>`;
@@ -556,7 +556,7 @@
              change à chaque fois lui referait apprendre l'épreuve. */
           const TEINTES = ['#E0402C', '#3C82E8', '#F5C33B'];
           const cotes = Math.ceil(Math.sqrt(plateau.length || 1));
-          zone.innerHTML = `<div class="grille tri" id="pad"
+          zone.innerHTML = `<div class="tbf-grille tri" id="pad"
             style="grid-template-columns:repeat(${cotes},1fr)">${
             plateau.map((c, i) =>
               `<i data-c="${i}" style="--t:${TEINTES[c] ?? TEINTES[0]}"></i>`).join('')
@@ -598,7 +598,7 @@
           const visible = g.visible ?? 3000;
           const depart = maintenant();
           rendre = { ecoule: 0, instants: [] };
-          zone.innerHTML = `<div class="compte" id="pad">
+          zone.innerHTML = `<div class="tbf-compte" id="pad">
             <b id="cpt">—</b><small id="s">TOUCHE À ZÉRO</small></div>`;
           const cpt = $('cpt');
           /* Le rebours ne se rafraîchit qu'au dixième : à la milliseconde, le
