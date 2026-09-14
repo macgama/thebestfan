@@ -43,12 +43,12 @@ for (const [i, id] of U.entries()) {
   await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
     [id, `n${i}@ex.fr`, `Duelliste${i}`]);
   await raw.query(`INSERT INTO user_wallet (user_id,scarves) VALUES (?,0)`, [id]);
-  for (const f of ['V1','P1','F1']) {
+  for (const f of ['TR32','MS30','TR33']) {
     await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)`, [id, f]);
   }
   await raw.query(`INSERT INTO user_decks (user_id,nom,contenu) VALUES (?,?,?)`,
     [id, 'Deck', JSON.stringify({ nom:'Deck',
-      fanzzy:[{id:'V1',stuff:[]},{id:'P1',stuff:[]},{id:'F1',stuff:[]}], actions: dix })]);
+      fanzzy:[{id:'TR32',stuff:[]},{id:'MS30',stuff:[]},{id:'TR33',stuff:[]}], actions: dix })]);
 }
 await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle')`);
 // Le premier duelliste suit Sion, qui joue le match 900 ; le second ne suit

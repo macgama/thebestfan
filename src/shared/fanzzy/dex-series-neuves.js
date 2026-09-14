@@ -13,7 +13,7 @@
  * maintenant sa série.
  *
  * **Rien n'est perdu.** Les possessions d'un joueur référencent l'identifiant
- * d'une carte, jamais sa série : `X52` reste `X52`, dans son deck, dans son
+ * d'une carte, jamais sa série : `TR55` reste `TR55`, dans son deck, dans son
  * classeur, avec ses tenues. Ce qui change est l'étagère sur laquelle elle est
  * rangée. Le déménagement se fait dans `dex.js` — le champ `set` — et en base
  * par `sql/series-neuves.sql`, parce que le catalogue vit en base et que

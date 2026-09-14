@@ -66,12 +66,12 @@ const U = 'cccccccc-0000-0000-0000-000000000001';
 await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
                  VALUES (?,?,?,'x')`, [U, 'virage-ui@ex.fr', 'Momo']);
 await raw.query(`INSERT INTO user_wallet (user_id, scarves, active_fanzzy)
-                 VALUES (?, 100, 'V1')`, [U]);
+                 VALUES (?, 100, 'TR32')`, [U]);
 /* Le Fanzzy équipé est **monté au second âge**, et c'est délibéré : la tribune
    doit montrer le Meneur de chant, pas le Choriste. Au premier âge, une page
    qui ignorerait complètement le stade passerait tous les contrôles. */
 await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies,stage)
-                 VALUES (?, 'V1', 1, 2)`, [U]);
+                 VALUES (?, 'TR32', 1, 2)`, [U]);
 /* Le club du joueur a ses couleurs, lues une fois dans son blason. Elles sont
    **volontairement sombres** : un bleu marine de blason, écrit tel quel sur le
    noir de l'écran, ne se lit pas du tout. C'est le cas qu'on veut éprouver —
@@ -593,7 +593,7 @@ check('et le bouton de fermeture aussi',
   }));
 
   check('le serveur donne le personnage, pas seulement ses barèmes',
-    p.fanzzy?.id === 'V1');
+    p.fanzzy?.id === 'TR32');
   check('à l’âge atteint',
     p.fanzzy?.evo === 2 && /Meneur/.test(p.fanzzy?.nom ?? '')
     || (console.log('        il envoie :', JSON.stringify(p.fanzzy)), false));

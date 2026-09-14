@@ -50,6 +50,8 @@
     "catalogue:test": "node scripts/catalogue-smoke.mjs",
     "dossier": "node scripts/dossier.mjs",
     "catalogue": "node scripts/catalogue.mjs",
+    "prefixes": "node scripts/fanzzy-prefixes.mjs",
+    "identites": "node scripts/fanzzy-identites.mjs",
     "economie": "node scripts/economie.mjs",
     "pages": "node scripts/verif-pages.mjs",
     "menu:smoke": "node scripts/menu-smoke.mjs",

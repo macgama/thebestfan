@@ -369,7 +369,7 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
 /**
  * `public/fanzzy.html` a longtemps gardé sa propre copie du catalogue, et
  * cette copie avait divergé : la lignée du Gamin de Devant y manquait alors
- * que le serveur la tirait des boosters, et un G1 sorti d'un paquet cassait
+ * que le serveur la tirait des boosters, et un TR37 sorti d'un paquet cassait
  * l'ouverture.
  *
  * La page lit maintenant `/api/fanzzy/dex`. Ce contrôle garde la porte

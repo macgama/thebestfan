@@ -44,35 +44,35 @@ export const DEX_LEGENDES = [
      bâche, tambour, muret, torche sont les archétypes du virage ordinaire.
 
      Le virage d'origine, celui des cartes `X`. Sa numérotation reprend là où
-     le lot de 2026 l'avait laissée — X52 et suivants — plutôt que de rouvrir
+     le lot de 2026 l'avait laissée — TR55 et suivants — plutôt que de rouvrir
      des trous : un identifiant réutilisé désigne deux cartes dans les
      sauvegardes des joueurs qui possédaient la première.                   */
 
-  { id: 'X52', nom: 'Le Capo Historique', type: 'voix', set: 'TR', stage: 1, rar: 'legendaire',
+  { id: 'TR55', nom: 'Le Capo Historique', type: 'voix', set: 'TR', stage: 1, rar: 'legendaire',
     histoire: 'Trente et un ans dos au terrain. Il n’a jamais vu un but de sa vie et '
       + 'il les a tous entendus.',
     mods: { tempoWindow: 1.28, breathBonus: 1.2, parryResist: 0.85 },
     cri: { label: 'TOUT LE MONDE DEBOUT', gest: 'echo', power: 82 } },
 
-  { id: 'X53', nom: 'La Bâche de 89', type: 'tifo', set: 'TR', stage: 1, rar: 'legendaire',
+  { id: 'TR56', nom: 'La Bâche de 89', type: 'tifo', set: 'TR', stage: 1, rar: 'legendaire',
     histoire: 'Repeinte quatre fois, recousue partout. On devine encore le premier nom '
       + 'dessous, et personne n’ose le recouvrir tout à fait.',
     mods: { parryBonus: 1.55, perfectBonus: 1.2, tempoWindow: 0.86 },
     cri: { label: 'ELLE A TOUT VU', gest: 'mosaique', power: 80 } },
 
-  { id: 'X54', nom: 'Le Tambour Fêlé', type: 'perc', set: 'TR', stage: 1, rar: 'legendaire',
+  { id: 'TR57', nom: 'Le Tambour Fêlé', type: 'perc', set: 'TR', stage: 1, rar: 'legendaire',
     histoire: 'La peau est crevée depuis un derby de 2011. Il sonne faux et le virage '
       + 'tape dessus quand même, parce que c’est ce son-là qu’il connaît.',
     mods: { mashBonus: 1.34, mashTime: 900, holdBonus: 0.88 },
     cri: { label: 'ÇA SONNE PAS, ON TAPE', gest: 'crescendo', power: 78 } },
 
-  { id: 'X55', nom: 'Le Muret du Fond', type: 'fide', set: 'TR', stage: 1, rar: 'legendaire',
+  { id: 'TR58', nom: 'Le Muret du Fond', type: 'fide', set: 'TR', stage: 1, rar: 'legendaire',
     histoire: 'Deux mètres de béton où quatre générations ont écrit au marqueur. '
       + 'Il ne bouge pas, il ne chante pas, et sans lui le virage s’assoit.',
     mods: { holdBonus: 1.4, holdForgive: 3, parryResist: 1.25, tempoInterval: 90 },
     cri: { label: 'ON NE RECULE PAS', gest: 'tenue', power: 81 } },
 
-  { id: 'X56', nom: 'La Torche de Minuit', type: 'pyro', set: 'TR', stage: 1, rar: 'legendaire',
+  { id: 'TR59', nom: 'La Torche de Minuit', type: 'pyro', set: 'TR', stage: 1, rar: 'legendaire',
     histoire: 'Allumée une seule fois par saison, au moment que personne ne choisit. '
       + 'Elle décide toute seule et le virage suit.',
     mods: { perfectBonus: 1.5, refundBonus: 1.3, backfire: 1.45 },
@@ -84,19 +84,19 @@ export const DEX_LEGENDES = [
      a été dissoute : les cinq sont passées aux GALÈRES DE DÉPLACEMENT, qui sont
      exactement leur sujet.                                                  */
 
-  { id: 'X57', nom: 'Le Douanier du Car 3', type: 'depl', set: 'GD', stage: 1, rar: 'legendaire',
+  { id: 'GD14', nom: 'Le Douanier du Car 3', type: 'depl', set: 'GD', stage: 1, rar: 'legendaire',
     histoire: 'Il a compté les mêmes trente-neuf personnes à l’aller et au retour, '
       + 'pendant vingt ans, et il n’en a jamais perdu une.',
     mods: { breathBonus: 1.38, refundBonus: 1.25, mashBonus: 0.88 },
     cri: { label: 'PERSONNE NE RESTE', gest: 'memoire', power: 77 } },
 
-  { id: 'X58', nom: 'La Mosaïque de Séville', type: 'tifo', set: 'GD', stage: 1, rar: 'legendaire',
+  { id: 'GD15', nom: 'La Mosaïque de Séville', type: 'tifo', set: 'GD', stage: 1, rar: 'legendaire',
     histoire: 'Douze mille cartons distribués en quarante minutes par huit personnes '
       + 'qui ne s’étaient jamais rencontrées.',
     mods: { perfectBonus: 1.42, parryBonus: 1.2, costPenalty: 1.18 },
     cri: { label: 'LEVEZ, MAINTENANT', gest: 'tri', power: 83 } },
 
-  { id: 'X59', nom: 'Le Dernier Train', type: 'depl', set: 'GD', stage: 1, rar: 'legendaire',
+  { id: 'GD16', nom: 'Le Dernier Train', type: 'depl', set: 'GD', stage: 1, rar: 'legendaire',
     histoire: 'Il part à 23 h 14 et le match finit à 23 h 09. Ceux qui le prennent '
       + 'chantent plus fort que tout le monde jusqu’à la 88e.',
     mods: { tempoInterval: -80, breathBonus: 1.22, holdForgive: 0 },
@@ -107,31 +107,31 @@ export const DEX_LEGENDES = [
      La série des situations qui ne devraient pas exister. Elle n'avait aucune
      carte haute, ce qui était le comble pour une série qui porte ce nom.    */
 
-  { id: 'X60', nom: 'Le But Refusé Trois Fois', type: 'pyro', set: 'IM', stage: 1, rar: 'legendaire',
+  { id: 'IM18', nom: 'Le But Refusé Trois Fois', type: 'pyro', set: 'IM', stage: 1, rar: 'legendaire',
     histoire: 'Trois arbitres, trois décisions, trois fois le même silence. Le virage '
       + 'a chanté les trois fois, plus fort à chaque reprise.',
     mods: { perfectBonus: 1.46, refundBonus: 1.4, backfire: 1.5 },
     cri: { label: 'ON RECOMMENCE', gest: 'compte', power: 83 } },
 
-  { id: 'X61', nom: 'La Minute 97', type: 'voix', set: 'IM', stage: 1, rar: 'legendaire',
+  { id: 'IM19', nom: 'La Minute 97', type: 'voix', set: 'IM', stage: 1, rar: 'legendaire',
     histoire: 'Il n’y avait que six minutes annoncées. Personne n’a jamais su d’où '
       + 'venait la septième, et personne ne l’a réclamée.',
     mods: { tempoWindow: 1.32, tempoInterval: -60, parryResist: 0.8 },
     cri: { label: 'ENCORE UNE', gest: 'capo', power: 84 } },
 
-  { id: 'X62', nom: 'Le Gardien qui Monte', type: 'depl', set: 'IM', stage: 1, rar: 'legendaire',
+  { id: 'IM20', nom: 'Le Gardien qui Monte', type: 'depl', set: 'IM', stage: 1, rar: 'legendaire',
     histoire: 'Il a traversé tout le terrain sur un corner et il n’est jamais redescendu '
       + 'dans les mémoires.',
     mods: { mashBonus: 1.42, breathBonus: 1.15, parryResist: 0.72 },
     cri: { label: 'IL MONTE', gest: 'memoire', power: 82 } },
 
-  { id: 'X63', nom: 'Le Virage à Sept', type: 'fide', set: 'IM', stage: 1, rar: 'legendaire',
+  { id: 'IM21', nom: 'Le Virage à Sept', type: 'fide', set: 'IM', stage: 1, rar: 'legendaire',
     histoire: 'Huis clos partiel, sept personnes autorisées. Ils ont fait le service '
       + 'complet, chant par chant, pour un stade vide.',
     mods: { holdBonus: 1.44, breathBonus: 1.3, mashBonus: 0.82 },
     cri: { label: 'ON EST LÀ QUAND MÊME', gest: 'retenue', power: 80 } },
 
-  { id: 'X64', nom: 'La Remontada de Nulle Part', type: 'perc', set: 'IM', stage: 1, rar: 'legendaire',
+  { id: 'IM22', nom: 'La Remontada de Nulle Part', type: 'perc', set: 'IM', stage: 1, rar: 'legendaire',
     histoire: 'Zéro-trois à la mi-temps. Personne n’est parti, et c’est la seule chose '
       + 'que le virage revendique.',
     mods: { mashBonus: 1.3, perfectBonus: 1.34, costPenalty: 1.22 },

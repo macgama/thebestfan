@@ -557,7 +557,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null })
 
   async function evolve(userId, idDemande) {
     // On accepte l'identifiant de n'importe quel âge : un deck ou un lien
-    // enregistré avant le repliage désigne encore « V2 ».
+    // enregistré avant le repliage désigne encore « TR32B ».
     const id = racineDe(String(idDemande));
     const perso = parIdentifiant(id);
     if (!perso) throw fail('fanzzy.error.unknown');
@@ -777,7 +777,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null })
 
   router.post('/active', requireAuth, (req, res) => send(res, (async () => {
     // On équipe un personnage, jamais un âge : c'est le même individu, et la
-    // collection ne connaît que lui. Accepter « V2 » tel quel poserait dans la
+    // collection ne connaît que lui. Accepter « TR32B » tel quel poserait dans la
     // bourse un identifiant introuvable au moment de le dessiner.
     const id = racineDe(String(req.body?.id ?? ''));
     if (!parIdentifiant(id)) throw fail('fanzzy.error.unknown');
@@ -975,8 +975,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null })
     /* Deux identifiants, et les confondre donne le mauvais dessin : `id` est
        la lignée — c'est sous ce nom que sont rangés les douze états — tandis
        que `age` est la carte du catalogue, sous laquelle est rangée
-       l'illustration en pied. Le Meneur de chant, c'est `V1` avec `evo: 2`
-       pour ses états, et `V2` pour son dessin. */
+       l'illustration en pied. Le Meneur de chant, c'est `TR32` avec `evo: 2`
+       pour ses états, et `TR32B` pour son dessin. */
     return { id, age: age.id, evo, nom: age.nom,
       cri: age.cri?.label ?? null, rar: age.rar ?? null };
   }

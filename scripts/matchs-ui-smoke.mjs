@@ -24,6 +24,7 @@
  *
  * Avant de lancer :  npm install --no-save puppeteer
  */
+import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -88,6 +89,39 @@ const match = () => ({
   statistiques: [], compositions: null, stale: false,
 });
 
+/**
+ * Un Fanzzy qui a **vraiment ses états**, lu sur le manifeste.
+ *
+ * La suite nommait `G1` en dur. Ce dessin est parti — il montrait un autre
+ * personnage — et trois contrôles sont devenus rouges en annonçant que le
+ * Fanzzy n'exultait plus, alors qu'il n'avait simplement plus d'image de but.
+ *
+ * On demande donc au manifeste qui sait faire « but », « encaisse » et
+ * « victoire » : ce sont les trois états que ces contrôles éprouvent.
+ */
+const MANIF = JSON.parse(readFileSync(path.join(RACINE, 'public', 'img', 'fanzzy',
+  'index.json'), 'utf8')).fanzzy ?? {};
+const AVEC_ETATS = Object.entries(MANIF).find(([, m]) =>
+  ['but', 'encaisse', 'victoire'].every((e) =>
+    m.evolutions?.e1?.skins?.base?.etats?.includes(e)))?.[0];
+if (!AVEC_ETATS) throw new Error(
+  'aucun Fanzzy n’a ses états de but : la suite ne peut pas éprouver la scène.');
+
+/**
+ * La scène **traverse** un état, elle ne s'y installe pas.
+ *
+ * Les trois contrôles lisaient `etat()` après l'apparition du bandeau. Ils ne
+ * passaient que parce que le Fanzzy d'essai n'avait aucune image d'état :
+ * sans rien à jouer, la scène restait sur l'état logique indéfiniment. Avec
+ * un Fanzzy réellement dessiné, elle joue son but et revient au repos — en
+ * quelques centaines de millisecondes, soit bien avant qu'on regarde.
+ *
+ * On **attend** l'état au lieu de le lire : c'est « il est passé par là »,
+ * qui est la vraie promesse. Un but fait tressaillir le personnage, il ne le
+ * fige pas.
+ */
+const passePar = (e) => jusqua(async () =>
+  await page.evaluate(() => FICHE?.scene?.etat?.() ?? null) === e, 4000);
 const app = express();
 app.get('/api/tt/jour', (_q, s) => s.json(jour()));
 app.get('/api/tt/match/:id', (_q, s) => s.json(match()));
@@ -95,7 +129,8 @@ app.get('/api/tt/match/:id', (_q, s) => s.json(match()));
 // exulte ou encaisse.
 app.get('/api/football/follows', (_q, s) => s.json({ teams: [{ id: 11, name: 'Garudayaksa' }] }));
 app.get('/api/fanzzy/state', (_q, s) => s.json({
-  wallet: { active: 'G1', scarves: 0, packs: 0 }, stades: {}, collection: { G1: 1 },
+  wallet: { active: AVEC_ETATS, scarves: 0, packs: 0 }, stades: {},
+  collection: { [AVEC_ETATS]: 1 },
 }));
 app.get('/api/auth/me', (_q, s) => s.json({ user: { pseudo: 'Momo' } }));
 app.get('/matchs', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'aujourdhui.html')));
@@ -223,6 +258,7 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
     evenements: [{ minute: 22, extra: null, equipe: 11, type: 'Goal',
       detail: 'Normal Goal', joueur: 'Diallo', passeur: null }] };
   await page.evaluate(() => relire());
+  const vuBut = await passePar('but');
   await jusqua(async () => await page.evaluate(() =>
     document.querySelector('.tbf-moment')?.classList.contains('on') ?? false));
 
@@ -233,7 +269,7 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
     etat: FICHE.scene?.etat?.() ?? null,
     score: document.querySelector('#fcorps .sc .n')?.textContent.trim() ?? '',
   }));
-  check('un but de ton club le fait exulter', moment.etat === 'but');
+  check('un but de ton club le fait exulter', moment.etat === 'but' || vuBut);
   check('et le bandeau dit GOAL !', /GOAL/.test(moment.titre));
   check('avec le buteur et la minute',
     /Diallo/.test(moment.sous) && /22/.test(moment.sous)
@@ -250,19 +286,19 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
     evenements: [...etat.evenements, { minute: 30, extra: null, equipe: 22, type: 'Goal',
       detail: 'Normal Goal', joueur: 'Keller', passeur: null }] };
   await page.evaluate(() => relire());
+  const vuEncaisse = await passePar('encaisse');
   await jusqua(async () => /ENCAISSE/.test(await page.evaluate(() =>
     document.querySelector('.tbf-moment b')?.textContent ?? '')));
-  check('un but d’en face le fait encaisser',
-    await page.evaluate(() => FICHE.scene?.etat?.()) === 'encaisse');
+  check('un but d’en face le fait encaisser', vuEncaisse);
 
   /* Le coup de sifflet final, une fois. La fiche est relue toutes les trente
      secondes : revoir la défaite à chaque relecture serait insupportable. */
   etat = { ...etat, status: 'FT', live: false, fini: true };
   await page.evaluate(() => relire());
+  const vuDefaite = await passePar('defaite');
   await jusqua(async () => /DÉFAITE/.test(await page.evaluate(() =>
     document.querySelector('.tbf-moment b')?.textContent ?? '')));
-  check('le coup de sifflet final annonce le résultat',
-    await page.evaluate(() => FICHE.scene?.etat?.()) === 'defaite');
+  check('le coup de sifflet final annonce le résultat', vuDefaite);
 
   await page.evaluate(() => { document.querySelector('.tbf-moment').classList.remove('on'); });
   await page.evaluate(() => relire());

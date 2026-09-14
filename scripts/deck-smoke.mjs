@@ -27,7 +27,7 @@ await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES
   [U,'d@ex.fr','Deckeur']);
 await raw.query(`INSERT INTO user_wallet (user_id,scarves,action_cards) VALUES (?,500,?)`,
   [U, JSON.stringify(['a-silence','a-vol','a-metronome','a-appel'])]);
-for (const f of ['V1','V2','P1','F1']) {
+for (const f of ['TR32','TR32B','MS30','TR33']) {
   await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)`,[U,f]);
 }
 for (const s of ['jumelles','echarpe','tambour']) {
@@ -84,12 +84,12 @@ check('les communes sont offertes', r.json.possede.actions.length > 4);
 
 /* --------------------------------------------------------- validation */
 
-/* Trois personnages **différents**. `V2` n'est plus un Fanzzy à part : c'est le
-   deuxième âge de `V1`, et un deck qui alignerait les deux alignerait deux fois
+/* Trois personnages **différents**. `TR32B` n'est plus un Fanzzy à part : c'est le
+   deuxième âge de `TR32`, et un deck qui alignerait les deux alignerait deux fois
    la même personne. Le deck le refuse maintenant comme un doublon — voir le cas
    dédié plus bas. */
 const bon = { nom:'Virage Nord',
-  fanzzy:[{id:'V1',stuff:['jumelles']},{id:'P1',stuff:['echarpe','tambour']},{id:'F1',stuff:[]}],
+  fanzzy:[{id:'TR32',stuff:['jumelles']},{id:'MS30',stuff:['echarpe','tambour']},{id:'TR33',stuff:[]}],
   actions: dixCartes };
 
 r = await call('/api/deck/mien', { method:'PUT', body: bon });
@@ -99,21 +99,21 @@ check('avertissement si aucun arbitre',
 
 const cas = [
   ['aucun Fanzzy', { ...bon, fanzzy: [] }, 'deck.error.fanzzy_count'],
-  ['quatre Fanzzy', { ...bon, fanzzy: [...bon.fanzzy, {id:'T1'}] }, 'deck.error.fanzzy_count'],
-  ['Fanzzy en double', { ...bon, fanzzy:[{id:'V1'},{id:'V1'},{id:'P1'}] }, 'deck.error.fanzzy_duplicate'],
+  ['quatre Fanzzy', { ...bon, fanzzy: [...bon.fanzzy, {id:'MS31'}] }, 'deck.error.fanzzy_count'],
+  ['Fanzzy en double', { ...bon, fanzzy:[{id:'TR32'},{id:'TR32'},{id:'MS30'}] }, 'deck.error.fanzzy_duplicate'],
   // Deux âges du même personnage, c'est la même personne deux fois. Le deck
   // ramenant tout au premier âge, le doublon est vu au lieu de passer.
   ['le même personnage à deux âges',
-    { ...bon, fanzzy:[{id:'V1'},{id:'V2'},{id:'P1'}] }, 'deck.error.fanzzy_duplicate'],
-  ['Fanzzy non possédé', { ...bon, fanzzy:[{id:'T1'},{id:'P1'},{id:'F1'}] }, 'deck.error.fanzzy_not_owned'],
+    { ...bon, fanzzy:[{id:'TR32'},{id:'TR32B'},{id:'MS30'}] }, 'deck.error.fanzzy_duplicate'],
+  ['Fanzzy non possédé', { ...bon, fanzzy:[{id:'MS31'},{id:'MS30'},{id:'TR33'}] }, 'deck.error.fanzzy_not_owned'],
   ['trois pièces sur un Fanzzy',
-    { ...bon, fanzzy:[{id:'V1',stuff:['jumelles','echarpe','tambour']},{id:'P1'},{id:'F1'}] },
+    { ...bon, fanzzy:[{id:'TR32',stuff:['jumelles','echarpe','tambour']},{id:'MS30'},{id:'TR33'}] },
     'deck.error.too_much_stuff'],
   ['même pièce sur deux Fanzzy',
-    { ...bon, fanzzy:[{id:'V1',stuff:['jumelles']},{id:'P1',stuff:['jumelles']},{id:'F1'}] },
+    { ...bon, fanzzy:[{id:'TR32',stuff:['jumelles']},{id:'MS30',stuff:['jumelles']},{id:'TR33'}] },
     'deck.error.stuff_shared'],
   ['équipement non possédé',
-    { ...bon, fanzzy:[{id:'V1',stuff:['megaphone']},{id:'P1'},{id:'F1'}] },
+    { ...bon, fanzzy:[{id:'TR32',stuff:['megaphone']},{id:'MS30'},{id:'TR33'}] },
     'deck.error.stuff_not_owned'],
   ['neuf cartes', { ...bon, actions: dixCartes.slice(0,9) }, 'deck.error.actions_count'],
   ['carte non possédée', { ...bon, actions: ['a-miroir', ...dixCartes.slice(0,9)] },
@@ -136,11 +136,11 @@ r = await call('/api/deck/mien', { method:'PUT', body:
 check('deux Fanzzy suffisent', r.json.deck?.fanzzy?.length === 2);
 
 r = await call('/api/deck/mien', { method:'PUT', body:
-  { ...bon, fanzzy: [{ id:'V1' }] } });
+  { ...bon, fanzzy: [{ id:'TR32' }] } });
 check('un seul Fanzzy aussi', r.json.deck?.fanzzy?.length === 1);
 
 r = await call('/api/deck/mien', { method:'PUT', body:
-  { ...bon, fanzzy: [{ id:'V1', stuff: [] }, { id:'P1' }, { id:'F1' }] } });
+  { ...bon, fanzzy: [{ id:'TR32', stuff: [] }, { id:'MS30' }, { id:'TR33' }] } });
 check('un Fanzzy sans équipement est accepté',
   r.json.deck?.fanzzy?.[0]?.stuff?.length === 0);
 
@@ -204,46 +204,46 @@ check('le match du jour arrive en tête', r.json.matchs[0].mode === 'classe');
 {
   const poser = (id, place) => call('/api/deck/placer', { method: 'POST', body: { id, place } });
 
-  // On repart du deck valide : V1 titulaire, P1 et F1 remplaçants.
+  // On repart du deck valide : TR32 titulaire, MS30 et TR33 remplaçants.
   await call('/api/deck/mien', { method: 'PUT', body: bon });
 
-  r = await poser('F1', 0);
-  check('placer au rang 0 met le personnage titulaire', r.json.deck?.fanzzy?.[0]?.id === 'F1');
+  r = await poser('TR33', 0);
+  check('placer au rang 0 met le personnage titulaire', r.json.deck?.fanzzy?.[0]?.id === 'TR33');
   /* **Un échange, pas une insertion.** Sans lui, déplacer le titulaire laisserait
      le rang 0 vide et le deck invalide — et le sortant disparaîtrait du deck sans
      que rien ne le dise. */
-  check('et le sortant prend la place libérée', r.json.deck.fanzzy[2]?.id === 'V1');
+  check('et le sortant prend la place libérée', r.json.deck.fanzzy[2]?.id === 'TR32');
   check('le deck garde ses trois rangs', r.json.deck.fanzzy.length === 3);
   check('et ses dix cartes d’action', r.json.deck.actions.length === 10);
-  check('l’écran sait qui a cédé sa place', r.json.remplace === 'V1');
+  check('l’écran sait qui a cédé sa place', r.json.remplace === 'TR32');
   /* L'équipement suit son porteur : c'est le sien, et le voir rester au rang
      serait incompréhensible. */
   check('l’équipement voyage avec le personnage',
     r.json.deck.fanzzy[2].stuff?.[0] === 'jumelles');
 
-  r = await poser('F1', 2);
+  r = await poser('TR33', 2);
   check('replacer le même personnage ailleurs le déplace',
-    r.json.deck.fanzzy.filter((f) => f.id === 'F1').length === 1
-    && r.json.deck.fanzzy[2].id === 'F1');
+    r.json.deck.fanzzy.filter((f) => f.id === 'TR33').length === 1
+    && r.json.deck.fanzzy[2].id === 'TR33');
 
   /* Une carte qu'on ne possède pas ne se place pas. Le client ne la propose
      pas, mais le client n'est pas ce qui décide.
 
-     `TR1` et non `V3` : `V3` est le **troisième âge** de `V1`, donc `racineDe`
-     le ramène à `V1`, qui est possédé. Le premier essai y est tombé — et c'est
+     `TR1` et non `TR32C` : `TR32C` est le **troisième âge** de `TR32`, donc `racineDe`
+     le ramène à `TR32`, qui est possédé. Le premier essai y est tombé — et c'est
      précisément le comportement qu'on veut, pas un défaut : un joueur qui ouvre
      la fiche d'un âge supérieur place le personnage, pas l'âge. */
   r = await poser('TR1', 0);
   check('un Fanzzy non possédé est refusé', r.json.error === 'deck.error.fanzzy_not_owned');
 
-  r = await poser('V3', 1);
-  check('un âge supérieur place son personnage', r.json.deck?.fanzzy?.[1]?.id === 'V1');
+  r = await poser('TR32C', 1);
+  check('un âge supérieur place son personnage', r.json.deck?.fanzzy?.[1]?.id === 'TR32');
 
   r = await poser('PASUNID', 0);
   check('un identifiant inconnu est refusé', r.json.error === 'deck.error.fanzzy_unknown');
 
   for (const mauvaise of [-1, 3, 99, 'titulaire', null]) {
-    r = await poser('V1', mauvaise);
+    r = await poser('TR32', mauvaise);
     if (r.json.error !== 'deck.error.place_hors_deck') {
       check(`place « ${mauvaise} » refusée`, false);
       break;
@@ -256,10 +256,10 @@ check('le match du jour arrive en tête', r.json.matchs[0].mode === 'classe');
      serait alors mené par le premier rang non vide, qui n'est pas celui que le
      joueur a choisi. */
   await call('/api/deck/mien', { method: 'PUT',
-    body: { ...bon, fanzzy: [{ id: 'V1', stuff: [] }] } });
-  r = await poser('P1', 2);
+    body: { ...bon, fanzzy: [{ id: 'TR32', stuff: [] }] } });
+  r = await poser('MS30', 2);
   check('on ne saute pas une place vide', r.json.error === 'deck.error.place_vide_avant');
-  r = await poser('P1', 1);
+  r = await poser('MS30', 1);
   check('mais la place juste après la dernière s’ouvre', r.json.deck?.fanzzy?.length === 2);
 }
 

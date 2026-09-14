@@ -88,7 +88,7 @@ export function createDecks({ pool, requireAuth, niveau = null }) {
    * qu'on joue, pas par ce qu'on a payé.
    *
    * D'où la traduction faite ici : un deck enregistré avant le repliage des
-   * âges désigne encore « V2 ». On le ramène à son personnage à la lecture
+   * âges désigne encore « TR32B ». On le ramène à son personnage à la lecture
    * comme à l'écriture — c'est ce qui répare tout seul les decks existants, et
    * ce qui évite d'aller réécrire du JSON en SQL dans la migration.
    */

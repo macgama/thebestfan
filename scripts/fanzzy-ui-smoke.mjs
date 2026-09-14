@@ -13,7 +13,7 @@
  *
  * Usage : node scripts/fanzzy-ui-smoke.mjs
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,6 +29,56 @@ const DB = baseDeTest();
 // Voir deck-ui-smoke : `.pathname` donne « /C:/… » sous Windows, ce qui rend
 // la suite inutilisable là où elle est justement censée tourner avant livraison.
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
+
+const PUBLIE = DEX.filter((f) => f.publie !== false);
+
+/**
+ * Un Fanzzy **réellement dessiné**, lu sur le disque.
+ *
+ * La suite nommait 'TR37' en dur comme « le Fanzzy illustré ». Le jour où ce
+ * dessin est parti — il montrait Le Petit Teigneux sous un autre nom — quatre
+ * contrôles sont devenus rouges sans que rien ne soit cassé dans le jeu : ils
+ * éprouvaient une carte qui ne remplissait plus leur hypothèse.
+ *
+ * Un test qui écrit en dur un fait sur le contenu se casse à chaque fois que
+ * le contenu bouge, et — bien pire — il peut cesser de mesurer quoi que ce
+ * soit sans le dire. On demande donc au disque, et le contrôle suit le lot.
+ */
+const IMG = path.join(RACINE, 'public', 'img', 'fanzzy');
+
+/* Les quatre que la suite emploie pour eux-mêmes, et qu'on ne remplace pas :
+   `TR32` est monté au second âge — c'est lui qui prouve que la fiche montre le
+   dessin de l'âge atteint et non celui de la lignée — et les trois autres
+   peuplent la grille. Le cinquième est choisi pour une seule propriété :
+   être dessiné. */
+const NOMMES = ['TR39', 'TR40', 'TR32', 'MS30'];
+
+/* Un **personnage**, pas un âge supérieur — et d'une lignée que le compte ne
+   possède pas déjà. Le premier jet prenait le premier dessin venu et tombait
+   sur `TR32B`, le second âge de `TR32` : la grille range des personnages, donc
+   posséder les deux ne faisait qu'une case, et trois contrôles de comptage
+   sont devenus rouges en annonçant autre chose que la cause. */
+const SUITE = new Set(PUBLIE.map((f) => f.evo).filter(Boolean));
+const lignee = (id) => {
+  let r = PUBLIE.find((f) => f.id === id);
+  for (let g = 0; g < 8 && r; g++) {
+    const p = PUBLIE.find((f) => f.evo === r.id);
+    if (!p) break;
+    r = p;
+  }
+  return r?.id ?? id;
+};
+const PRISES = new Set(NOMMES.map(lignee));
+const ILLUSTRE = PUBLIE.find((f) =>
+  !SUITE.has(f.id)
+  && !PRISES.has(lignee(f.id))
+  && existsSync(path.join(IMG, f.id + '.png'))
+  && existsSync(path.join(IMG, f.id + '-buste.png')))?.id;
+if (!ILLUSTRE) throw new Error(
+  'aucun Fanzzy dessiné dans public/img/fanzzy : la suite ne peut rien éprouver.');
+
+/** Ce que le compte d’essai possède. Une seule liste, lue partout. */
+const COLLECTION = [ILLUSTRE, ...NOMMES];
 
 let failures = 0;
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
@@ -73,20 +123,20 @@ await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
    verrait tous refusés. Le niveau 9 laisse verrouillées les séries des paliers
    suivants, ce qui est exactement ce qu'il faut pour éprouver le kiosque. */
 const { seuil } = await import('../src/shared/niveau.js');
-/* Le Fanzzy équipé est **V1 au second âge**, et c'est délibéré : l'écran
+/* Le Fanzzy équipé est **TR32 au second âge**, et c'est délibéré : l'écran
    « Mon Fanzzy » doit montrer le Meneur de chant et non le Choriste, dans un
-   cadre rare et non commun. Équipé d'un G1 resté au premier âge, la page
+   cadre rare et non commun. Équipé d'un TR37 resté au premier âge, la page
    pouvait ignorer le stade et ignorer la rareté sans qu'aucun contrôle ne
    bouge — tout le catalogue est commun au premier âge. */
 await raw.query(`INSERT INTO user_wallet (user_id,scarves,packs,xp,active_fanzzy)
-                 VALUES (?,900,9,?,'V1')`, [U, seuil(9)]);
-// G1 est possédé : c'est le Fanzzy illustré, et c'est lui qui cassait la page.
-// V1 est monté au second âge : la rareté suit le stade, donc c'est la seule
+                 VALUES (?,900,9,?,'TR32')`, [U, seuil(9)]);
+// TR37 est possédé : c'est le Fanzzy illustré, et c'est lui qui cassait la page.
+// TR32 est monté au second âge : la rareté suit le stade, donc c'est la seule
 // façon d'avoir autre chose que du commun dans la grille — et c'est ce qui
 // permet de vérifier que la rareté se voit.
-for (const f of ['G1', 'X7', 'X8', 'V1', 'P1']) {
+for (const f of COLLECTION) {
   await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies,stage) VALUES (?,?,1,?)`,
-    [U, f, f === 'V1' ? 2 : 1]);
+    [U, f, f === 'TR32' ? 2 : 1]);
 }
 await raw.end();
 
@@ -169,7 +219,7 @@ async function ouvrir({ sansCache = false } = {}) {
    ce qui se joue — une carte retirée qui resterait dans la grille laisserait
    une case impossible à remplir, et la progression n'atteindrait jamais 100 %. */
 
-const PUBLIE = DEX.filter((f) => f.publie !== false);
+
 
 
 {
@@ -346,7 +396,7 @@ check('les Fanzzy non possédés portent leur nom',
   const fiche = await nav.newPage();
   fiche.on('pageerror', (e) => erreurs.push(e.message));
   await fiche.setViewport({ width: 400, height: 880 });
-  await fiche.goto(`${base}/fanzzy/G1`, { waitUntil: 'networkidle0' });
+  await fiche.goto(`${base}/fanzzy/${ILLUSTRE}`, { waitUntil: 'networkidle0' });
   const prete = await fiche.waitForSelector('.fiche .case', { timeout: 8000 })
     .then(() => true).catch(() => false);
   check('la fiche d’un Fanzzy s’affiche', prete);
@@ -427,13 +477,14 @@ check('les Fanzzy non possédés portent leur nom',
     const dessin = await fiche.evaluate(() =>
       document.querySelector('.fiche .art img')?.getAttribute('src') ?? '');
     check('le dessin de la vitrine est bien celui du personnage',
-      /G1/.test(dessin) || (console.log('        il montre :', dessin), false));
+      new RegExp(ILLUSTRE + '[-.]').test(dessin)
+      || (console.log('        il montre :', dessin, '— attendu', ILLUSTRE), false));
 
-    /* Le dessin est celui de **l'âge atteint**, et c'est V1 qui le prouve :
+    /* Le dessin est celui de **l'âge atteint**, et c'est TR32 qui le prouve :
        ce compte l'a monté au second âge. La fiche demandait l'illustration
        sous le nom de la lignée — elle montrait donc le Choriste sous le nom
        du Meneur de chant, ce qui ressemble à un personnage parfaitement
-       valide et ne se voit jamais. G1, resté au premier âge, ne pouvait pas
+       valide et ne se voit jamais. TR37, resté au premier âge, ne pouvait pas
        faire la différence. */
     const evolue = await nav.newPage();
     evolue.on('pageerror', (e) => erreurs.push(e.message));
@@ -481,7 +532,7 @@ check('les Fanzzy non possédés portent leur nom',
   const { chargerSeries } = await import('../src/server/fanzzy/catalogue.js');
 
   // La série du Fanzzy équipé, pour que l'écran « Mon Fanzzy » reste sensé.
-  const laSerie = PUBLIE.find((f) => f.id === 'V1').set;
+  const laSerie = PUBLIE.find((f) => f.id === 'TR32').set;
   await pool.query('DELETE FROM saisons');
   await pool.query(
     `INSERT INTO saisons (numero, nom, texte, series, tenues, lancee_a)
@@ -510,7 +561,10 @@ check('les Fanzzy non possédés portent leur nom',
      ça n'efface pas les cartes de qui les a, et les faire disparaître du
      classeur transformerait une collection en trou. */
   const PERSOS_TOUS = PUBLIE.filter((f) => !PUBLIE.some((x) => x.evo === f.id));
-  const MIENS = ['G1', 'X7', 'X8', 'V1', 'P1'];
+  /* La collection du compte, écrite une seule fois plus haut : la recopier ici
+     ferait deux listes, et la seconde se tromperait le jour où la première
+     change — ce qui vient exactement d’arriver. */
+  const MIENS = COLLECTION;
   const attendus = PERSOS_TOUS
     .filter((f) => f.set === laSerie || MIENS.includes(f.id)).map((f) => f.id);
 
@@ -557,10 +611,10 @@ check('les Fanzzy non possédés portent leur nom',
   const pas = await nav.newPage();
   pas.on('pageerror', (e) => erreurs.push(e.message));
   await pas.setViewport({ width: 400, height: 880 });
-  /* X1 : publié, jamais possédé par ce compte — les cinq possédés sont G1, X7,
-     X8, V1 et P1. Pris dans le catalogue plutôt qu'écrit en dur, pour que le
+  /* TR35 : publié, jamais possédé par ce compte — les cinq possédés sont TR37, TR39,
+     TR40, TR32 et MS30. Pris dans le catalogue plutôt qu'écrit en dur, pour que le
      contrôle survive à un catalogue qui bouge. */
-  const absent = PUBLIE.find((f) => !['G1', 'X7', 'X8', 'V1', 'P1'].includes(f.id)
+  const absent = PUBLIE.find((f) => !COLLECTION.includes(f.id)
     && !PUBLIE.some((x) => x.evo === f.id));
   await pas.goto(`${base}/fanzzy/${absent.id}`, { waitUntil: 'networkidle0' });
   const la = await pas.waitForSelector('.fiche', { timeout: 8000 })

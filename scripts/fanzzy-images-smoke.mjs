@@ -212,7 +212,7 @@ console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
      il ne souffre pas d'interprétation. Les fichiers `X` sont partis dans
      `art/_doublons/`, et leurs âges supérieurs ont perdu leur repli avec eux.
 
-     S'y ajoute la lignée G1/G2/G3, qui s'appelait « Le Gamin de Devant » et
+     S'y ajoute la lignée TR37/TR37B/TR37C, qui s'appelait « Le Gamin de Devant » et
      était Le Petit Teigneux (TR1) écrit une seconde fois.
 
      Cinquante cartes de plus sans dessin, donc, et c'est un progrès : **une

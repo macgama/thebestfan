@@ -66,12 +66,12 @@ const NOMS = { [ANA]: 'Ana', [BOB]: 'Bob', [CLA]: 'Clara', [DAN]: 'Dan' };
 for (const [id, nom] of Object.entries(NOMS)) {
   await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
     [id, `${nom.toLowerCase()}@ex.fr`, nom]);
-  await raw.query(`INSERT INTO user_wallet (user_id,scarves,active_fanzzy) VALUES (?,50,'V1')`,
+  await raw.query(`INSERT INTO user_wallet (user_id,scarves,active_fanzzy) VALUES (?,50,'TR32')`,
     [id]);
 }
 /* Clara a fait évoluer son Choriste : elle joue le Meneur de chant. C'est ce
    que les autres doivent voir d'elle — on se reconnaît à son personnage. */
-await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies,stage) VALUES (?,'V1',1,2)`,
+await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies,stage) VALUES (?,'TR32',1,2)`,
   [CLA]);
 await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle'),(99,'Lugano')`);
 // Ana suit Sion et Bâle. Bob suit Sion. Clara suit Sion et Bâle. Dan ne suit
@@ -83,7 +83,7 @@ await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 /* Le catalogue : sans lui, on ne sait pas que le second âge du Choriste
-   s'appelle V2, et l'avatar d'un ami montrerait le personnage qu'il n'est
+   s'appelle TR32B, et l'avatar d'un ami montrerait le personnage qu'il n'est
    plus. Chargé comme le fait server.js. */
 await chargerCatalogue(pool);
 const kop = createKop({ pool, requireAuth: (r, _s, n) => n() });
@@ -117,7 +117,7 @@ const A = createAmis({ pool, requireAuth: (r, _s, n) => n(), kop });
      plus l'être — et personne ne s'en apercevrait, puisque ça ressemble à un
      personnage parfaitement valide. */
   check('chacun est montré par son Fanzzy, à l’âge atteint',
-    par.get(CLA)?.fanzzy === 'V2' && par.get(BOB)?.fanzzy === 'V1'
+    par.get(CLA)?.fanzzy === 'TR32B' && par.get(BOB)?.fanzzy === 'TR32'
     || (console.log('        elle joue :', par.get(CLA)?.fanzzy), false));
   const deDan = await A.suggestions(DAN);
   check('celui qui ne partage rien ne voit personne', deDan.length === 0);

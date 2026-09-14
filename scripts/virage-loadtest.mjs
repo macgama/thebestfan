@@ -48,7 +48,7 @@ if (!REMOTE) {
     const id = `load-${String(i).padStart(5, '0')}-0000-0000-000000000000`.slice(0, 36);
     await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
       [id, `l${i}@ex.fr`, `L${i}`]);
-    await raw.query(`INSERT INTO user_wallet (user_id,scarves,active_fanzzy) VALUES (?,0,'V1')`, [id]);
+    await raw.query(`INSERT INTO user_wallet (user_id,scarves,active_fanzzy) VALUES (?,0,'TR32')`, [id]);
     await raw.query(`INSERT INTO user_follows (user_id,team_id) VALUES (?,?)`, [id, i % 2 ? 91 : 85]);
   }
   await raw.end();

@@ -67,13 +67,13 @@
    * vérifie que les six fichiers existent avant de laisser livrer.
    */
   const ILLUSTRES = new Set([
-    'V1', 'V2', 'V3', 'P1', 'P2', 'P3', 'F1', 'F2',
-    'F3', 'T1', 'T2', 'T3', 'Y1', 'Y2', 'Y3', 'D1',
-    'D2', 'D3', 'X6', 'X9', 'X10', 'X11', 'X12', 'X15',
-    'X17', 'X26', 'X27', 'X34', 'X35', 'X42', 'X47', 'X22',
-    'X31', 'X36', 'X37', 'X43', 'X46', 'X16', 'X18', 'X19',
-    'X21', 'X23', 'X24', 'X25', 'X28', 'X29', 'X33', 'X38',
-    'X44', 'X45', 'X50', 'X51', 'TR1', 'TR2', 'TR3', 'TR4',
+    'TR32', 'TR32B', 'TR32C', 'MS30', 'MS30B', 'MS30C', 'TR33', 'TR33B',
+    'TR33C', 'MS31', 'MS31B', 'MS31C', 'TR34', 'TR34B', 'TR34C', 'MS32',
+    'MS32B', 'MS32C', 'TR38', 'GC15', 'GC16', 'TR41', 'TR42', 'BG28',
+    'TR43', 'TR45', 'TR46', 'GC17', 'TR47', 'MS34', 'TR50', 'TR53',
+    'GD12', 'GD13', 'MS35', 'HC16', 'TR54', 'IM1', 'IM2', 'IM3',
+    'IM4', 'IM5', 'IM6', 'IM7', 'IM8', 'IM9', 'IM12', 'IM13',
+    'IM14', 'IM15', 'IM16', 'IM17', 'TR1', 'TR2', 'TR3', 'TR4',
     'TR5', 'TR6', 'TR7', 'TR8', 'TR9', 'TR10', 'TR11', 'TR12',
     'TR13', 'TR14', 'TR15', 'TR16', 'TR17', 'TR18', 'TR19', 'TR20',
     'TR21', 'TR22', 'TR23', 'TR24', 'TR25', 'TR26', 'TR27', 'MS1',
@@ -89,7 +89,7 @@
     'OB4', 'OB5', 'OB6', 'OB7', 'OB8', 'OB9', 'OB10', 'OB11',
     'OB12', 'EP1', 'EP2', 'EP3', 'EP4', 'EP5', 'EP6', 'EP7',
     'EP8', 'EP9', 'EP10', 'EP11', 'EP12', 'EP13', 'EP14', 'EP15',
-    'EP16', 'EP17', 'X52', 'VP1', 'VP2', 'VP3', 'VP4', 'GC1',
+    'EP16', 'EP17', 'TR55', 'VP1', 'VP2', 'VP3', 'VP4', 'GC1',
   ]);
 
   /**

@@ -84,7 +84,7 @@ const CARTES = ['a-fumigene','a-torche','a-bache','a-thermos','a-arbitre',
 function duel(n = 1, mode = 'entrainement', t = 1_000_000, id = 'd1') {
   const eq = (side) => Array.from({ length: n }, (_, i) => ({
     userId: `${side}-${i}`, nom: `J${side}${i}`,
-    loadout: loadout(['V1','P1','F1'], CARTES),
+    loadout: loadout(['TR32','MS30','TR33'], CARTES),
   }));
   return new DuelNvN({ id, equipes:[eq(0), eq(1)], mode, now: t,
     fixture: { id: 7001, elapsed: 20 } });
@@ -323,17 +323,17 @@ check('un entraînement ne compte pas',
 {
   const CARTES_R = ['a-releve','a-releve','a-fumigene','a-torche','a-bache',
                     'a-thermos','a-arbitre','a-silence','a-vol','a-craquage'];
-  // V1 → V2 → V3 : le Choriste, le Meneur de chant, le Capo di Curva.
-  const chaine = ages('V1');
+  // TR32 → TR32B → TR32C : le Choriste, le Meneur de chant, le Capo di Curva.
+  const chaine = ages('TR32');
 
   const duelR = (debloque) => {
     const eq = (side) => [{ userId: `${side}-0`, nom: `J${side}`,
-      loadout: loadout(['V1','P1','F1'], CARTES_R, {}, debloque) }];
+      loadout: loadout(['TR32','MS30','TR33'], CARTES_R, {}, debloque) }];
     return new DuelNvN({ id:'dR', equipes:[eq(0), eq(1)], mode:'entrainement',
       now: t, fixture: { id: 7001, elapsed: 20 } });
   };
 
-  let dR = duelR({ V1: 3 });
+  let dR = duelR({ TR32: 3 });
   let j = dR.joueurs.get('0-0');
   j.main.push('a-releve');
   j.breath = 100;
@@ -390,7 +390,7 @@ check('un entraînement ne compte pas',
      objets Fanzzy ; s'il travaillait sur ceux du loadout, un joueur qui
      enchaîne deux parties repartirait avec son personnage déjà grandi, et la
      règle « tout le monde entre au premier âge » tomberait en silence. */
-  const partage = loadout(['V1','P1','F1'], CARTES_R, {}, { V1: 3 });
+  const partage = loadout(['TR32','MS30','TR33'], CARTES_R, {}, { TR32: 3 });
   const eqP = (side) => [{ userId: `${side}-0`, nom: `J${side}`, loadout: partage }];
   const d1 = new DuelNvN({ id:'p1', equipes:[eqP(0), eqP(1)], mode:'entrainement',
     now: t, fixture: { id: 7001, elapsed: 20 } });

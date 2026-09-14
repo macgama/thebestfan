@@ -63,8 +63,8 @@ const goal = (seq, minute, team, sh, sa, player) => ({
 
 /* --------------------------------------------------- les deux premiers buts */
 
-await S.recordPush({ userId: U[0], fixtureId: 5001, side: 0, fanzzyId: 'V3', amount: 40 });
-await S.recordPush({ userId: U[1], fixtureId: 5001, side: 0, fanzzyId: 'P2', amount: 25 });
+await S.recordPush({ userId: U[0], fixtureId: 5001, side: 0, fanzzyId: 'TR32C', amount: 40 });
+await S.recordPush({ userId: U[1], fixtureId: 5001, side: 0, fanzzyId: 'MS30B', amount: 25 });
 
 let r = await S.mintGoal(goal(1, 23, 85, 1, 0, 'Diallo'));
 check('but frappé', r.minted === true);
@@ -81,7 +81,7 @@ check('compétition désactivée : aucune carte', r.reason === 'league_not_eligi
 
 await pool.query(
   `UPDATE virage_presence SET last_push_at = NOW(3) - INTERVAL 10 MINUTE WHERE user_id = ?`, [U[1]]);
-await S.recordPush({ userId: U[0], fixtureId: 5001, side: 0, fanzzyId: 'V3', amount: 30 });
+await S.recordPush({ userId: U[0], fixtureId: 5001, side: 0, fanzzyId: 'TR32C', amount: 30 });
 
 r = await S.mintGoal(goal(2, 67, 91, 1, 1, 'Keller'));
 check('seul celui qui poussait encore reçoit la deuxième', r.presents === 1);
@@ -95,7 +95,7 @@ who = U[0];
 r = await call('/api/souvenirs/mine');
 check('le fidèle a les trois souvenirs', r.json.souvenirs.length === 3);
 check('tous en présence', r.json.souvenirs.every((s) => s.kind === 'presence'));
-check('le Fanzzy porté est conservé', r.json.souvenirs[0].fanzzy_id === 'V3');
+check('le Fanzzy porté est conservé', r.json.souvenirs[0].fanzzy_id === 'TR32C');
 check('le buteur et la minute sont sur la carte',
   r.json.souvenirs.some((s) => s.player === 'Diallo' && s.minute === 87));
 check('le score final figure',
@@ -157,7 +157,7 @@ check('une vignette périmée disparaît du marché',
 /* ---------------------------------------------------- présence trop ancienne */
 
 await pool.query('DELETE FROM virage_presence');
-await S.recordPush({ userId: U[2], fixtureId: 5002, side: 0, fanzzyId: 'Y1', amount: 10 });
+await S.recordPush({ userId: U[2], fixtureId: 5002, side: 0, fanzzyId: 'TR34', amount: 10 });
 await pool.query(
   `UPDATE virage_presence SET last_push_at = NOW(3) - INTERVAL ? SECOND WHERE user_id = ?`,
   [Math.floor(PRESENCE_WINDOW_MS / 1000) + 30, U[2]]);

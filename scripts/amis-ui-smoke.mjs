@@ -59,12 +59,12 @@ for (const [id, nom] of Object.entries(NOMS)) {
     [id, `${nom.toLowerCase()}@ex.fr`, nom]);
   // `active_fanzzy` : la page montre le personnage de chacun à la place d'une
   // initiale. C'est ce qui fait qu'on se reconnaît avant de lire un pseudo.
-  await raw.query(`INSERT INTO user_wallet (user_id,scarves,active_fanzzy) VALUES (?,60,'V1')`,
+  await raw.query(`INSERT INTO user_wallet (user_id,scarves,active_fanzzy) VALUES (?,60,'TR32')`,
     [id]);
 }
 /* Sarah a fait évoluer son Choriste. La page doit montrer le Meneur de chant :
    c'est le personnage qu'elle joue, et celui auquel on la reconnaîtra. */
-await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies,stage) VALUES (?,'V1',1,2)`,
+await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies,stage) VALUES (?,'TR32',1,2)`,
   [ELLE]);
 await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle'),(99,'Lugano')`);
 /* Sarah partage deux clubs avec moi, Tarek un seul, et Tarek suit en plus
@@ -78,7 +78,7 @@ await raw.end();
 /* ----------------------------------------------------------- le serveur */
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
-// Sans catalogue, on ne sait pas que le second âge du Choriste s'appelle V2.
+// Sans catalogue, on ne sait pas que le second âge du Choriste s'appelle TR32B.
 await chargerCatalogue(pool);
 let moi = MOI;
 const requireAuth = (r, _s, n) => { r.user = { id: moi }; n(); };

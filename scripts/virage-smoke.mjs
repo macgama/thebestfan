@@ -53,7 +53,7 @@ const U = ['bbbbbbbb-0000-0000-0000-00000000000' + 1,
 for (const [i, id] of U.entries()) {
   await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
     [id, `v${i}@ex.fr`, `Virage${i}`]);
-  await raw.query(`INSERT INTO user_wallet (user_id, scarves, active_fanzzy) VALUES (?, 100, 'V1')`, [id]);
+  await raw.query(`INSERT INTO user_wallet (user_id, scarves, active_fanzzy) VALUES (?, 100, 'TR32')`, [id]);
 }
 await raw.query(`INSERT INTO teams (id,name) VALUES (85,'FC Sion'),(91,'FC Bâle')`);
 await raw.query(`INSERT INTO leagues (id,name) VALUES (207,'Super League')`);
@@ -586,7 +586,7 @@ check('seuls les chanteurs récents la reçoivent', r.presents === 2);
 identite = U[0];
 const mesA = await souvenirs.collection(U[0]);
 check('le supporter actif a sa carte', mesA.length === 1 && mesA[0].player === 'Diallo');
-check('le Fanzzy équipé est gravé dessus', mesA[0].fanzzy_id === 'V1');
+check('le Fanzzy équipé est gravé dessus', mesA[0].fanzzy_id === 'TR32');
 const mesC = await souvenirs.collection(U[2]);
 check('l\u2019inactif ne l\u2019a pas', mesC.length === 0);
 

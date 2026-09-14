@@ -9,9 +9,9 @@
  *   npm install --no-save sharp
  *   node scripts/fanzzy-images.mjs <dossier-des-rendus> [--sortie public/img/fanzzy]
  *
- * Chaque fichier du dossier nommé `<ID>.png` — `X9.png`, `X10.png`… — produit
- * les six fichiers attendus : `X9.{avif,webp,png}` en 520×945 et
- * `X9-buste.{avif,webp,png}` en 320×320, fond transparent.
+ * Chaque fichier du dossier nommé `<ID>.png` — `GC15.png`, `GC16.png`… — produit
+ * les six fichiers attendus : `GC15.{avif,webp,png}` en 520×945 et
+ * `GC15-buste.{avif,webp,png}` en 320×320, fond transparent.
  *
  * Les trois pièges, et ce que le code en fait :
  *

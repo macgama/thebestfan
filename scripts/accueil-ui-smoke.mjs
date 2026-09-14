@@ -40,6 +40,34 @@ import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
+/**
+ * Un Fanzzy **réellement dessiné**, lu sur le disque.
+ *
+ * La suite nommait 'TR37' en dur comme « le Fanzzy illustré ». Le jour où ce
+ * dessin est parti — il montrait Le Petit Teigneux sous un autre nom — dix
+ * contrôles sont devenus rouges sans que rien ne soit cassé dans le jeu : ils
+ * éprouvaient une carte qui ne remplissait plus leur hypothèse.
+ *
+ * Un test qui écrit en dur un fait sur le contenu se casse dès que le contenu
+ * bouge, et — bien pire — il peut cesser de mesurer quoi que ce soit sans le
+ * dire. On demande donc au disque, et le contrôle suit le lot.
+ *
+ * Un **personnage**, jamais un âge supérieur : l'accueil affiche le Fanzzy
+ * équipé à l'âge atteint, et équiper directement un second âge éprouverait un
+ * état que le jeu ne produit pas.
+ */
+const IMG_FZ = path.join(RACINE, 'public', 'img', 'fanzzy');
+const { DEX: CATALOGUE } = await import('../src/shared/fanzzy/dex.js');
+const PUB = CATALOGUE.filter((f) => f.publie !== false);
+const AGE_SUP = new Set(PUB.map((f) => f.evo).filter(Boolean));
+/* `TR32` est exclu : la suite le possède déjà pour lui-même, et le choisir ici
+   l'aurait inséré deux fois dans la collection du compte. */
+const ILLUSTRE = PUB.find((f) => !AGE_SUP.has(f.id) && f.id !== 'TR32'
+  && existsSync(path.join(IMG_FZ, f.id + '.png'))
+  && existsSync(path.join(IMG_FZ, f.id + '-buste.png')))?.id;
+if (!ILLUSTRE) throw new Error(
+  'aucun Fanzzy dessiné dans public/img/fanzzy : la suite ne peut rien éprouver.');
+
 let failures = 0;
 /**
  * Le temps qu'on laisse à l'écran d'ouverture pour s'en aller.
@@ -86,7 +114,7 @@ await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
 await raw.query(`INSERT INTO user_wallet (user_id,scarves,packs,xp,onboarded_at)
                  VALUES (?,90,12,?,NOW(3))`,
   [U, seuil(4) + Math.round((seuil(5) - seuil(4)) / 2)]);
-for (const id of ['G1', 'V1']) {
+for (const id of [ILLUSTRE, 'TR32']) {
   await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)`, [U, id]);
 }
 await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle')`);
@@ -413,7 +441,7 @@ for (const [nom, l, h, plancher] of [
 {
   /* Un Fanzzy équipé, sans quoi il n'y a pas d'intrus possible : le
      supporter est alors le bon personnage. */
-  await equiper('G1');
+  await equiper(ILLUSTRE);
   const page = await ouvrir();
   await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
   const premiere = await page.evaluate(() =>
@@ -437,7 +465,7 @@ for (const [nom, l, h, plancher] of [
   }));
   check('le Fanzzy équipé est nommé à l’écran', qui.visible && qui.nom.length > 2
     || (console.log('        la plaque dit :', JSON.stringify(qui)), false));
-  check('et c’est bien son nom, pas son identifiant', qui.nom !== 'G1');
+  check('et c’est bien son nom, pas son identifiant', qui.nom !== ILLUSTRE);
   /* L'évolution ne s'annonce que si la lignée en a plusieurs : promettre
      « 1 / 3 » à un Fanzzy qui n'évolue jamais est une promesse en l'air. */
   check('son âge est annoncé, et par rapport au nombre d’âges qu’il a',
@@ -521,7 +549,7 @@ for (const [nom, l, h, plancher] of [
     /\/img\/supporter\//.test(arrive)
     || (console.log('        elle montre :', arrive || '(rien)'), false));
   await page.close();
-  await pool.query('UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?', ['G1', U]);
+  await pool.query('UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?', [ILLUSTRE, U]);
 }
 
 /* ------------------------------------------------------ changer de pose */
@@ -706,7 +734,7 @@ await page.close();
      On retombe donc sur son plein-pied. Immobile — il ne change plus de
      dessin au but — mais c'est bien lui, et la scène bouge quand même. */
   const SANS_ETATS = Object.keys(catalogue).length
-    ? ['G1', 'V1', 'X7'].find((id) => !catalogue[id]) : null;
+    ? [ILLUSTRE, 'TR32', 'TR39'].find((id) => !catalogue[id]) : null;
   if (!SANS_ETATS) {
     console.log('  --   tous les Fanzzy d’essai ont leurs états : section sautée');
   } else {
@@ -1070,7 +1098,7 @@ await page.close();
      hauteur, et c'est justement à trois cent vingt pixels qu'elle peut faire
      déborder le reste. La mesurer sur un écran où elle est absente ne dirait
      rien du tout. */
-  await equiper('G1');
+  await equiper(ILLUSTRE);
   const page = await ouvrir(320, 640);
   {
     const p3 = await (nav.createBrowserContext?.() ?? nav.createIncognitoBrowserContext())

@@ -57,15 +57,15 @@ await chargerTenues(pool);
 
 /* ------------------------------------------ ce que le catalogue sait dire */
 
-check('un âge supérieur remonte à son personnage', racineDe('V3') === 'V1');
-check('un personnage est sa propre racine', racineDe('V1') === 'V1');
+check('un âge supérieur remonte à son personnage', racineDe('TR32C') === 'TR32');
+check('un personnage est sa propre racine', racineDe('TR32') === 'TR32');
 check('un identifiant inconnu se rend tel quel', racineDe('ZZ404') === 'ZZ404');
 
-const ch = lignee('V2');
+const ch = lignee('TR32B');
 check('la lignée se lit depuis n’importe lequel de ses âges',
-  ch.length === 3 && ch.map((f) => f.id).join(',') === 'V1,V2,V3');
+  ch.length === 3 && ch.map((f) => f.id).join(',') === 'TR32,TR32B,TR32C');
 check('le deuxième âge porte son propre nom',
-  auStade('V1', 2)?.nom === 'Meneur de chant');
+  auStade('TR32', 2)?.nom === 'Meneur de chant');
 // Une légendaire n'a pas de lignée : c'est sa définition. Elle sert donc de
 // témoin pour le cas « personnage à un seul âge », que TR1 incarnait avant
 // d'avoir la sienne.
@@ -104,11 +104,11 @@ for (const [u, mail, nom] of [[A, 'a@ex.fr', 'Ana'], [B, 'b@ex.fr', 'Bo'], [C, '
     [u, mail, nom]);
 }
 await raw.query(`INSERT INTO user_wallet (user_id,scarves,packs,active_fanzzy) VALUES
-  (?,10,0,'V2'), (?,10,0,'V3'), (?,10,0,'TR1')`, [A, B, C]);
+  (?,10,0,'TR32B'), (?,10,0,'TR32C'), (?,10,0,'TR1')`, [A, B, C]);
 await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES
-  (?,'V1',2), (?,'V2',1), (?,'F1',1),
-  (?,'V3',1),
-  (?,'TR1',3), (?,'V1',1)`, [A, A, A, B, C, C]);
+  (?,'TR32',2), (?,'TR32B',1), (?,'TR33',1),
+  (?,'TR32C',1),
+  (?,'TR1',3), (?,'TR32',1)`, [A, A, A, B, C, C]);
 
 const migrer = async () =>
   raw.query(readFileSync(path.join(RACINE, 'sql', 'stades.sql'), 'utf8'));
@@ -120,25 +120,25 @@ const collec = async (u) => Object.fromEntries(
     .map((r) => [r.fanzzy_id, { copies: r.copies, stage: r.stage }]));
 
 let a = await collec(A);
-check('le personnage et son âge supérieur fusionnent', a.V1 !== undefined && a.V2 === undefined);
-check('au plus haut stade atteint', a.V1?.stage === 2);
-check('et les doublons se cumulent au lieu de disparaître', a.V1?.copies === 3);
-check('les autres cartes ne bougent pas', a.F1?.copies === 1 && a.F1?.stage === 1);
+check('le personnage et son âge supérieur fusionnent', a.TR32 !== undefined && a.TR32B === undefined);
+check('au plus haut stade atteint', a.TR32?.stage === 2);
+check('et les doublons se cumulent au lieu de disparaître', a.TR32?.copies === 3);
+check('les autres cartes ne bougent pas', a.TR33?.copies === 1 && a.TR33?.stage === 1);
 
 let b = await collec(B);
 check('qui n’avait plus que le dernier âge garde son personnage',
-  b.V1 !== undefined && b.V3 === undefined);
-check('au stade 3', b.V1?.stage === 3);
+  b.TR32 !== undefined && b.TR32C === undefined);
+check('au stade 3', b.TR32?.stage === 3);
 
 let c = await collec(C);
 check('une collection sans évolution est intacte',
-  c.TR1?.copies === 3 && c.TR1?.stage === 1 && c.V1?.stage === 1);
+  c.TR1?.copies === 3 && c.TR1?.stage === 1 && c.TR32?.stage === 1);
 
 const equipe = async (u) =>
   (await pool.query('SELECT active_fanzzy f FROM user_wallet WHERE user_id = ?', [u]))[0][0].f;
 
-check('le Fanzzy équipé suit son personnage', await equipe(A) === 'V1');
-check('même depuis le dernier âge', await equipe(B) === 'V1');
+check('le Fanzzy équipé suit son personnage', await equipe(A) === 'TR32');
+check('même depuis le dernier âge', await equipe(B) === 'TR32');
 check('et celui qui n’avait rien d’évolué garde le sien', await equipe(C) === 'TR1');
 
 /* --------------------------------------------------------- rejouable
@@ -161,7 +161,7 @@ if (avant !== apres) { console.log('    avant :', avant); console.log('    aprè
    les modificateurs de chaque stade.                                          */
 
 check('les trois âges existent toujours au catalogue',
-  ['V1', 'V2', 'V3'].every((id) => parIdentifiant(id) !== undefined));
+  ['TR32', 'TR32B', 'TR32C'].every((id) => parIdentifiant(id) !== undefined));
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await raw.end();
