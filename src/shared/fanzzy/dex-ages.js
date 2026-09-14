@@ -808,11 +808,13 @@ export const AGES = {
       + 'club si le club tombe, et elle le sait.', 'ON SERA ENCORE LÀ'],
   ],
   X7: [
-    ['Le Chercheur des Trois', 'Il en a trouvé deux, en quatre ans, dans une brocante. Il en cherche '
-      + 'une, une seule, et il ne dort pas très bien.', 'IL M’EN MANQUE UNE'],
-    ['L’Album Complet', 'La dernière carte lui a été donnée par un gamin qui ne savait pas ce qu’elle '
-      + 'valait. Il a rendu l’album au club. Il a recommencé une collection le lendemain.',
-      'ON A TOUT GARDÉ'],
+    ['Le Dernier à Sortir', 'Le stadier a arrêté de lui demander de partir : il lui laisse la rangée et va '
+      + 'fumer. Ils se disent au revoir, chaque samedi, à la même heure.',
+      'ON FERME'],
+    ['Le Gardien des Clés', 'Le club lui a donné un trousseau, officiellement pour vérifier les portes. C’est '
+      + 'surtout pour qu’il puisse rester aussi longtemps qu’il veut, et tout le monde le '
+      + 'sait.',
+      'LES CLÉS'],
   ],
   X8: [
     ['La Mascotte du Samedi', 'Le costume est à sa taille. Elle fait le tour du terrain avant le '
@@ -827,10 +829,12 @@ export const AGES = {
       + 'lui dit quand se lever. Il n’a pas oublié.', 'FAIS COMME MOI'],
   ],
   X39: [
-    ['La Cagoule Rangée', 'La cagoule est dans la poche et le lapin rose est sur la table. Il a '
-      + 'découvert que personne ne s’en moquait, ce qui l’a beaucoup surpris.', 'PAS MÉCHANT DU TOUT'],
-    ['Le Lapin Rose', 'Le virage a fait une bâche avec le lapin dessus. Elle est sortie en derby et '
-      + 'elle a fait rire le stade entier, y compris le parcage adverse.', 'C’EST MOI, LE LAPIN'],
+    ['Le Carré Retourné', 'Il a compris le jour où quelqu’un lui a tenu le poignet avant le déploiement. Son '
+      + 'carton est à l’endroit depuis, et la mosaïque est parfaite. Elle est moins drôle.',
+      'J’AI COMPRIS'],
+    ['Celui Qui Distribue', 'C’est lui qui pose les cartons rangée par rangée, la veille au soir, tout seul. Il '
+      + 'en retourne un exprès, quelque part, et il ne dit jamais lequel.',
+      'TOURNEZ-LE'],
   ],
   X41: [
     ['L’Homme Sans le Costume', 'Il a enlevé la tête pour de bon et il a un badge à son nom. Les '
@@ -845,10 +849,12 @@ export const AGES = {
       + 'venir s’asseoir dans la vitrine avec, ce qui a clos la discussion.', 'IL RESTE SUR MA TÊTE'],
   ],
   X48: [
-    ['Le Gosse Qui a Compris', 'Il a gagné le match d’après. Il fait toujours la tête, parce qu’il '
-      + 'a compris qu’il y en aurait toujours un autre.', 'C’EST JAMAIS JUSTE'],
-    ['L’Entraîneur des Petits', 'Il coache les U9 et il leur dit que perdre le samedi, ça arrive. Il '
-      + 'ne s’en est jamais convaincu lui-même.', 'ON REJOUE SAMEDI'],
+    ['La Note Placée', 'Il a trouvé où poser sa voix et il ne casse plus. Trois rangées lui ont demandé de '
+      + 'recommencer comme avant.',
+      'JE LA TIENS'],
+    ['La Fausse Note Officielle', 'Le virage casse la note avec lui, tous ensemble, à chaque reprise. C’est devenu la '
+      + 'façon dont ce chant se chante ici, et les visiteurs ne comprennent jamais.',
+      'CASSEZ-LA AVEC MOI'],
   ],
   X49: [
     ['Le Râleur Abonné', 'Trente-huitième saison, et rien ne va toujours. Il a commencé à râler sur '
@@ -881,16 +887,20 @@ export const AGES = {
       + 'commentaire dans le stade, en direct, sur le but du titre.', 'ET LÀ, ÇA Y EST'],
   ],
   X30: [
-    ['Le Videur Assis', 'Il n’a toujours jamais eu à se lever, et maintenant il a une chaise. C’est '
-      + 'la promotion la plus discrète de l’histoire du club.', 'TOUJOURS PAS PAR ICI'],
-    ['La Porte', 'Il n’est plus là. La porte est ouverte et personne n’essaie de passer, par respect '
-      + 'ou par prudence. Ça marche depuis six ans.', 'IL EST PASSÉ QUELQU’UN ?'],
+    ['Le Drapeau Adopté', 'Le virage a appris le nom du club et le chante une fois par match, au hasard, sans '
+      + 'que personne sache pourquoi. Le club en question l’ignore complètement.',
+      'ON L’A GARDÉ'],
+    ['Le Drapeau du Virage', 'Il est en tête de cortège depuis quatre ans. Deux clubs se réclament de lui, et il '
+      + 'n’appartient toujours à personne.',
+      'IL EST DES DEUX'],
   ],
   X32: [
-    ['La Mascotte à Deux Panneaux', 'Elle en porte deux, et personne ne sait toujours ce qu’ils '
-      + 'annoncent. Le virage les lit à voix haute et invente la suite.', 'ATTENTION, ENCORE DES TRAVAUX'],
-    ['Le Chantier', 'Elle a un gilet, un casque, un plan et une équipe. La nouvelle buvette est '
-      + 'd’elle. Elle n’a toujours rien expliqué à personne.', 'C’EST BIENTÔT FINI'],
+    ['Le Chantier au Rythme', 'Les ouvriers ont compris et ils le font exprès. Ils frappent avec le virage '
+      + 'pendant toute la première mi-temps, puis ils s’arrêtent pour regarder le match.',
+      'ON SUIT LE RYTHME'],
+    ['La Grue Qui Salue', 'Le chantier est fini depuis deux ans. La grue est restée : le club l’a rachetée et '
+      + 'elle salue le virage avant chaque coup d’envoi.',
+      'ON A FINI'],
   ],
 
   /* ================================================================ LES VIP

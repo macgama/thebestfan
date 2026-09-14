@@ -72,7 +72,11 @@ export const DEX_NEUVES = [
     histoire: 'Il a payé la loge pour le buffet et il trouve que les chants font du '
       + 'bruit. Il applaudit une passe latérale.',
     mods: { parryResist: 1.14, breathBonus: 0.94 },
-    cri: { label: 'UN PEU DE TENUE', gest: 'hold', power: 44 } },
+    /* « UN PEU DE TENUE » était déjà le cri de BG11, Le Manchot en Nœud
+       Papillon — qui, lui, parle vraiment de tenue vestimentaire. Celui-ci ne
+       reproche pas une tenue, il reproche le bruit : son cri le dit
+       maintenant. */
+    cri: { label: 'MOINS FORT, MERCI', gest: 'hold', power: 44 } },
 
   { id: 'VP2', nom: 'L’Influenceur de Dos', type: 'tifo', set: 'VP', stage: 1, rar: 'commune',
     histoire: 'Il filme le virage en se filmant devant. On ne verra jamais le match, '

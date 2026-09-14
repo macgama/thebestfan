@@ -309,11 +309,12 @@ const DEX = [
    * durée et il récupère ce que les autres gaspillent, mais il ne fait
    * jamais de coup d'éclat.
    */
-  { id:'X7', nom:'Le Trieur de Doubles', type:'fide', set:'TR', stage:1, rar:'commune',
-    histoire:'Il connaît par cœur les trois qui lui manquent. Il les cherche depuis '
-      + 'deux ans, et il n\u2019a jamais jeté une carte de sa vie.',
+  { id:'X7', nom:'Celui Qui Reste', type:'fide', set:'TR', stage:1, rar:'commune',
+    histoire:'Il est encore assis vingt minutes après le coup de sifflet, seul '
+      + 'dans sa rangée, face à une pelouse qu’on arrose déjà. Il n’attend '
+      + 'rien. Il n’est juste pas pressé.',
     mods:{ holdBonus:1.12, refundBonus:1.35 },
-    cri:{ label:'ON A TOUT GARDÉ', gest:'hold', power:58 } },
+    cri:{ label:'ENCORE CINQ MINUTES', gest:'hold', power:58 } },
 
   /**
    * LA MASCOTTE DU DIMANCHE — sept ans, un costume trop grand, et le seul
@@ -432,11 +433,12 @@ const DEX = [
     mods:{ tempoWindow:1.4, tempoInterval:70 },
     cri:{ label:'TOUT LE MONDE AVEC MOI', gest:'tempo', power:76 } },
 
-  { id:'X39', nom:'La Cagoule Rose', type:'tifo', set:'TR', stage:1, rar:'commune',
-    histoire:'Il a l’air terrible jusqu’à ce qu’il sorte son téléphone. '
-      + 'La coque est un lapin rose. Il assume.',
+  { id:'X39', nom:'Le Carré à l’Envers', type:'tifo', set:'TR', stage:1, rar:'commune',
+    histoire:'Dans chaque mosaïque il y a un carton retourné, et c’est toujours '
+      + 'le sien. Le virage a arrêté de lui en vouloir : on le cherche des '
+      + 'yeux avant de chercher le dessin.',
     mods:{ parryBonus:1.35, perfectBonus:1.1 },
-    cri:{ label:'PAS SI MÉCHANT', gest:'mosaique', power:56 } },
+    cri:{ label:'JE L’AI À L’ENVERS', gest:'mosaique', power:56 } },
 
   { id:'X41', nom:'L’Homme dans la Mascotte', type:'fide', set:'TR', stage:1, rar:'commune',
     histoire:'Il a la tête sous le bras et vingt minutes pour souffler. Personne '
@@ -456,17 +458,24 @@ const DEX = [
     mods:{ holdBonus:1.08 },
     cri:{ label:'COMME D’HABITUDE', gest:'tenue', power:49 } },
 
-  { id:'X48', nom:'Le Gosse qui Boude', type:'voix', set:'TR', stage:1, rar:'commune',
-    histoire:'Il a la coupe et il fait la tête quand même. Son équipe a perdu '
-      + 'le match d’après, et ça compte plus.',
+  { id:'X48', nom:'La Note Qui Casse', type:'voix', set:'TR', stage:1, rar:'commune',
+    histoire:'Il monte avec tout le monde et sa voix lâche toujours au même '
+      + 'endroit. Le virage a fini par attendre ce moment-là, et plus personne '
+      + 'ne chante la note juste.',
     mods:{ perfectBonus:1.18, breathBonus:0.94 },
-    cri:{ label:'C’EST PAS JUSTE', gest:'contretemps', power:50 } },
+    cri:{ label:'ÇA VA CASSER', gest:'contretemps', power:50 } },
 
   { id:'X49', nom:'Le Râleur du Rang B', type:'fide', set:'TR', stage:1, rar:'commune',
     histoire:'Rien ne va, rien n’a jamais été aussi mauvais, et il a repris son '
       + 'abonnement pour la trente-deuxième année.',
     mods:{ holdBonus:1.14, holdForgive:1 },
-    cri:{ label:'DE MON TEMPS', gest:'retenue', power:58 } },
+    /* Il criait « DE MON TEMPS », mot pour mot comme TR12 « Le Ballon de
+       Cuir ». Deux cartes différentes peuvent se ressembler ; elles ne peuvent
+       pas crier la même chose — le cri est ce qui s'affiche en gros sur la
+       fiche, et deux fiches au même cri se lisent comme une seule carte vue
+       deux fois. Le personnage, lui, est distinct : celui-ci râle sur tout,
+       l'autre garde une relique. */
+    cri:{ label:'RIEN NE VA', gest:'retenue', power:58 } },
 
   /* ================================ LES ANCIENNES NUITS EUROPÉENNES, la suite
 
@@ -578,17 +587,19 @@ const DEX = [
     mods:{ tempoWindow:1.12 },
     cri:{ label:'LE CRI DU POULET', gest:'tempo', power:44 } },
 
-  { id:'X30', nom:'Le Videur', type:'tifo', set:'IM', stage:1, rar:'commune',
-    histoire:'Costume trois pièces, oreillette, deux cents kilos de calme. '
-      + 'Il n’a jamais eu à se lever.',
+  { id:'X30', nom:'Le Drapeau Perdu', type:'tifo', set:'IM', stage:1, rar:'commune',
+    histoire:'Un drapeau d’un club de troisième division d’un autre pays, agité '
+      + 'au coin du virage par quelqu’un que personne ne connaît. Il vient à '
+      + 'tous les matchs.',
     mods:{ parryBonus:1.55, holdBonus:1.08 },
-    cri:{ label:'PAS PAR ICI', gest:'tifo', power:60 } },
+    cri:{ label:'CE N’EST PAS LE BON', gest:'tifo', power:60 } },
 
-  { id:'X32', nom:'La Mascotte Casquée', type:'perc', set:'IM', stage:1, rar:'commune',
-    histoire:'Boule de poils jaune, casque de chantier, panneau en bois. Personne '
-      + 'ne sait ce qu’elle annonce et tout le monde applaudit.',
+  { id:'X32', nom:'Le Marteau-Piqueur', type:'perc', set:'IM', stage:1, rar:'commune',
+    histoire:'Le chantier du parvis n’a jamais fini et il travaille aussi le '
+      + 'samedi. À la trente-huitième minute, il est tombé pile sur le tempo '
+      + 'du virage, et deux mille personnes ont chanté avec lui.',
     mods:{ mashBonus:1.08 },
-    cri:{ label:'ATTENTION TRAVAUX', gest:'mash', power:47 } },
+    cri:{ label:'TAC TAC TAC', gest:'mash', power:47 } },
 
   { id:'X33', nom:'Le Nain de Jardin', publie:false /* refait OB11 */, type:'fide', set:'IM', stage:1, rar:'commune',
     histoire:'Volé dans un jardin en 1987, emmené à tous les déplacements depuis. '

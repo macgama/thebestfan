@@ -206,7 +206,14 @@ export const DEX_LEGENDES = [
     mods: { perfectBonus: 1.48, tempoInterval: -90, backfire: 1.55 },
     cri: { label: 'BOUGE PAS', gest: 'compte', power: 79 } },
 
-  { id: 'BG27', nom: 'Le Chat du Terrain', type: 'fide', set: 'BG', stage: 1, rar: 'legendaire',
+  /* Il s'appelait « Le Chat du Terrain », **exactement comme BG15** — deux
+     cartes, un seul nom, dans la même série. Un collectionneur qui voit deux
+     fois la même ligne dans son classeur croit à un doublon et cherche ce
+     qu'il a raté.
+     Celle-ci est la légendaire, et elle raconte un moment précis : les neuf
+     minutes. C'est ce moment qui la nomme désormais. BG15, la commune, garde le
+     nom générique — c'est le même chat, ce n'est pas la même carte. */
+  { id: 'BG27', nom: 'Les Neuf Minutes', type: 'fide', set: 'BG', stage: 1, rar: 'legendaire',
     histoire: 'Neuf minutes d’arrêt de jeu, quatre stadiers à quatre pattes, et lui '
       + 'assis au point de penalty à se laver une patte.',
     mods: { holdBonus: 1.36, holdForgive: 4, mashBonus: 0.8 },

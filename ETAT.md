@@ -3831,6 +3831,100 @@ mauvais endroit pendant l'écriture. C'est la faute que `verif-pages` traque dan
 `public/` depuis qu'elle a cassé `nav.js` deux fois ; elle se produit aussi dans
 les scripts, où rien ne la guette — seule l'exécution l'a dite.
 
+## 4 tricies septies. Dix-sept dessins rendus à leur carte
+
+Le catalogue illustré a été écrit pour dire ce qui manque. La première chose
+qu'il a dite, c'est ce qui était **en trop**.
+
+### Le même lot livré deux fois
+
+Dix-sept cartes `X<n>` portaient le rendu exact d'une autre carte du catalogue.
+Pas « se ressemblent » : le même dessin, à moins de deux bits d'empreinte sur
+soixante-quatre.
+
+Le constat qui tranche tient en une colonne :
+
+| | côté `X` | côté nommé |
+|---|---|---|
+| numéro dans `rendus.js` | **aucun** | 002, 007, 010, 019… |
+| date du fichier | 6-7 septembre | 8 septembre |
+
+Les dix-sept paires, sans exception. Le même lot a été livré deux fois : nommé à
+la main d'abord, puis remis en passant par `rendus.js`, qui l'a posé sur ses
+vraies cartes. Les fichiers de la première livraison sont restés, et le jeu les
+servait.
+
+`rendus.js` est la table qui fait foi — « on n'y touche plus, un numéro déjà
+attribué le reste ». Le dessin appartient donc à la carte qui a le numéro. Les
+dix-sept fichiers `X` sont partis dans `art/_doublons/`, et leurs âges
+supérieurs ont perdu leur repli avec eux : la dette passe de 167 à 217.
+
+**Elle n'a pas augmenté, elle vient d'être comptée juste.** Cinquante cartes
+affichaient le visage de quelqu'un d'autre ; elles affichent maintenant une
+silhouette, qui dit « pas encore dessiné » au lieu de dire une chose fausse.
+
+Le seuil des jumeaux passe à **zéro**, et ce n'est plus un cliquet mais une
+règle : deux cartes ne peuvent pas montrer le même rendu. Le jour où une
+livraison en réintroduit une, `images:test` rougit avant que personne ne l'ait
+vue.
+
+### Cinq personnages écrits deux fois
+
+Le dessin partagé cachait autre chose. Sur les dix-sept paires, cinq n'étaient
+pas seulement un fichier mal rangé : **c'était le même personnage, écrit deux
+fois**, jusqu'au bout de sa lignée.
+
+| avant | doublait | devenu |
+|---|---|---|
+| `X7` Le Trieur de Doubles | `TR2` Le Collectionneur — les deux lignées finissent sur l'album complet | **Celui Qui Reste** |
+| `X30` Le Videur | `BG21` L'Orang-outan en Costume — « il n'a jamais eu à se lever », mot pour mot | **Le Drapeau Perdu** |
+| `X32` La Mascotte Casquée | `BG20` L'Abeille de Chantier — casque jaune, panneau, personne ne l'écoute | **Le Marteau-Piqueur** |
+| `X39` La Cagoule Rose | `TR5` La Cagoule Timide — la cagoule au secret tendre, et les deux finissent en peluche | **Le Carré à l'Envers** |
+| `X48` Le Gosse qui Boude | `TR13` Le Bébé Vainqueur — l'enfant à la coupe, et les deux finissent entraîneur des petits | **La Note Qui Casse** |
+
+Quinze textes réécrits, base et âges. **Aucun chiffre n'a bougé** : ni la
+famille, ni la série, ni la rareté, ni les modificateurs, ni le geste, ni la
+puissance. L'équilibre du jeu est exactement celui d'avant — seule l'identité
+change, et l'identifiant reste, parce que les possessions le référencent.
+
+Les douze autres paires étaient bien douze personnages différents qui portaient
+le même dessin par accident. Leur carte n'avait rien à changer.
+
+### Deux collisions de texte, trouvées en chemin
+
+`BG15` et `BG27` s'appelaient tous les deux **« Le Chat du Terrain »**, dans la
+même série : la commune et la légendaire du même chat. Un classeur qui affiche
+deux fois la même ligne fait croire à un doublon, et on cherche ce qu'on a raté.
+La légendaire raconte un moment précis — neuf minutes d'arrêt de jeu, quatre
+stadiers à quatre pattes — et s'appelle désormais **« Les Neuf Minutes »**.
+
+`X49` criait **« DE MON TEMPS »** exactement comme `TR12`, et `VP1` **« UN PEU
+DE TENUE »** comme `BG11`. Le cri est ce qui s'affiche en gros sur la fiche :
+deux fiches au même cri se lisent comme une seule carte vue deux fois. Les
+personnages, eux, étaient distincts — seuls les cris ont changé.
+
+`catalogue:test` refuse maintenant deux cartes de même nom, et deux
+**personnages** de même cri. Les âges supérieurs sont hors de ce second
+contrôle, et seulement de celui-là : un cri fait trois mots, et sur deux cent
+soixante-douze âges « MAINTENANT » finit par se croiser sans que ce soit une
+faute.
+
+### Ce que cette famille de fautes a en commun
+
+Rien n'était cassé. Les images existaient, chacune valide, chacune au bon
+endroit du disque. `images:test` comptait deux dessins et il avait raison. Les
+noms se lisaient, les cris se criaient.
+
+C'est la signature de tout ce qu'on a trouvé dans ce tour : **une absence qui
+ressemble à une présence**. L'entrée ADMIN avalée par un `catch`. Onze effets
+nommés sur treize. Un âge « pas dessiné » au-dessus de ses douze états. Deux
+cartes, un visage.
+
+Aucune ne se voit en relisant du code, parce qu'il n'y a rien d'anormal à lire.
+Toutes se voient en **comparant deux choses entre elles** — ce qu'une page qui
+met tout côte à côte fait pour rien, et ce qu'aucun humain ne fait sur cent
+soixante-dix-huit dessins.
+
 ---
 
 ## 5. Ce qui reste à faire
@@ -3848,9 +3942,13 @@ Par ordre d'utilité.
    on le décide.
 
    **Le détail, dessin par dessin, est dans `catalogue.html`** — `npm run
-   catalogue`, publié en artefact. C'est là qu'on voit lesquels manquent, et
-   non plus seulement combien : quatre-vingt-neuf personnages sur deux cent
-   quarante-sept attendent leur premier âge.
+   catalogue`, publié en artefact, avec un filtre par série. C'est là qu'on voit
+   lesquels manquent, et non plus seulement combien : **cent sept personnages
+   sur deux cent quarante-sept** attendent leur premier âge.
+
+   Le compte est monté de quatre-vingt-neuf à cent sept sans qu'un dessin ait
+   été perdu : dix-huit cartes affichaient le visage d'une autre. Voir
+   4 tricies septies.
 
    Reste ensuite, à plus long terme, à dessiner les âges **pour de bon** : voir
    un personnage vieillir est ce que le jeu promet, et le repli montre le bon
