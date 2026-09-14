@@ -8,6 +8,8 @@
  *   — un fond uni à détourer.
  */
 import { mkdir, rm, readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 // Le repli de lignée s'éprouve sur le vrai `fanzzy-art.js`, monté en bac.
 import { Script, createContext } from 'node:vm';
 import { execFileSync } from 'node:child_process';
@@ -208,6 +210,103 @@ console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
         + 'en connaissance de cause.'), false));
   console.log(`     ${enPropre} dessinées · ${gagnees} par leur premier âge · `
     + `${DEX.length - avec} sans rien`);
+}
+
+/* ======================================= deux cartes, un seul dessin
+
+   La faute la plus coûteuse qu'un jeu de collection puisse commettre, et la
+   seule qu'aucun contrôle technique n'attrapait : les deux images existent,
+   chacune est valide, chacune est au bon endroit, et le compte des dessins en
+   voit deux. Rien n'est cassé. C'est simplement une carte de moins à
+   collectionner, et un joueur qui se demande s'il a mal vu.
+
+   Elle est arrivée en nombre : dix-neuf cartes `X<n>` portent le rendu d'une
+   autre carte du catalogue. Le même lot a été livré deux fois — nommé par
+   identifiant `X` le 7 septembre, puis remis le 8 en passant par les numéros de
+   `rendus.js`, qui l'ont posé sur ses vraies cartes. Les fichiers `X` sont
+   restés.
+
+   On compare par **empreinte de différence**, jamais par octets : deux rendus
+   du même prompt ne sont pas identiques à l'octet — grain, compression, une
+   mèche ailleurs — et une comparaison de fichiers n'aurait rien vu.
+
+   Le seuil est serré exprès. À deux bits sur soixante-quatre, c'est le même
+   rendu, point. Plus haut, on attrape des personnages qui se ressemblent
+   légitimement — un tambour et un abonné en manteau sombre se croisent à six —
+   et un contrôle qui se plaint de ce qui va bien est un contrôle qu'on
+   désactive. La ressemblance de **conception**, elle, ne se mesure pas : elle
+   se regarde, avec `npm run doublons`. */
+
+console.log('\nLes doublons de dessin');
+
+{
+  /* Le catalogue est importé ici comme dans le bloc précédent : chacun a sa
+     portée, et un import hissé en tête ne servirait qu'à créer une dépendance
+     entre deux contrôles qui n'en ont pas. */
+  const { DEX } = await import('../src/shared/fanzzy/dex.js');
+
+  const empreinte = async (f) => {
+    const { data } = await sharp(f).flatten({ background: '#000000' })
+      .greyscale().resize(9, 8, { fit: 'fill' }).raw()
+      .toBuffer({ resolveWithObject: true });
+    const bits = [];
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 8; x++) bits.push(data[y * 9 + x] > data[y * 9 + x + 1] ? 1 : 0);
+    }
+    return bits;
+  };
+
+  /* Les âges d'une même lignée sont exclus : ils se ressemblent par
+     construction, c'est le personnage qui vieillit, et les compter noierait
+     les vraies collisions. */
+  const suite = new Set(DEX.map((f) => f.evo).filter(Boolean));
+  const racine = new Map();
+  for (const f of DEX) {
+    let r = f;
+    for (let g = 0; g < 8; g++) {
+      const p = DEX.find((x) => x.evo === r.id);
+      if (!p) break;
+      r = p;
+    }
+    racine.set(f.id, r.id);
+  }
+
+  const DOSSIER = new URL('../public/img/fanzzy/', import.meta.url);
+  const liste = [];
+  for (const f of DEX.filter((x) => x.publie !== false)) {
+    const p = new URL(`${f.id}.png`, DOSSIER);
+    if (!existsSync(p)) continue;
+    liste.push({ id: f.id, nom: f.nom, racine: racine.get(f.id) ?? f.id,
+      // `fileURLToPath` : sharp veut un chemin, pas une URL — et l'erreur qu'il
+      // rend (« Unsupported input … of type object ») ne dit pas laquelle.
+      bits: await empreinte(fileURLToPath(p)) });
+  }
+
+  const jumeaux = [];
+  for (let i = 0; i < liste.length; i++) {
+    for (let j = i + 1; j < liste.length; j++) {
+      if (liste[i].racine === liste[j].racine) continue;
+      const d = liste[i].bits.reduce((n, v, k) => n + (v === liste[j].bits[k] ? 0 : 1), 0);
+      if (d <= 2) jumeaux.push([liste[i], liste[j], d]);
+    }
+  }
+
+  /* **Cliquet, pas cible.** Dix-sept paires existent au moment où ce contrôle
+     est écrit ; les corriger demande dix-sept dessins, pas une commande. Le
+     nombre ne doit jamais monter — une carte neuve qui reprend le visage d'une
+     autre serait rouge le jour même. Il descend à chaque dessin livré. */
+  const JUMEAUX = 17;
+  check(`${jumeaux.length} paire(s) de cartes partagent un rendu`,
+    jumeaux.length <= JUMEAUX
+    || (console.log('        ', jumeaux.slice(0, 6)
+      .map(([a, b]) => `${a.id}=${b.id}`).join('  ')),
+      console.log(`        — il y en avait ${JUMEAUX}. Une carte neuve porte le `
+        + 'dessin d’une autre. `npm run doublons` les met côte à côte.'), false));
+  if (jumeaux.length) {
+    console.log(`     ${jumeaux.length} paire(s) : `
+      + jumeaux.slice(0, 4).map(([a, b]) => `${a.id}≡${b.id}`).join(' · ')
+      + (jumeaux.length > 4 ? ' …' : ''));
+  }
 }
 
 await rm(tmp, { recursive: true, force: true });

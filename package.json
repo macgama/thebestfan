@@ -45,6 +45,7 @@
     "manifeste": "node scripts/fanzzy-manifeste.mjs",
     "veille": "node scripts/fanzzy-veille.mjs",
     "images:test": "node scripts/fanzzy-images-smoke.mjs",
+    "doublons": "node scripts/fanzzy-doublons.mjs",
     "etats:test": "node scripts/etats-smoke.mjs",
     "catalogue:test": "node scripts/catalogue-smoke.mjs",
     "dossier": "node scripts/dossier.mjs",
