@@ -1,0 +1,1582 @@
+<title>Le dossier du jeu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Le jeu se joue de nuit, sous les projecteurs, et ce dossier reste dans ce
+   monde quel que soit le thème de qui le lit : parti pris, pas oubli. Toutes
+   les couleurs sont donc posées explicitement. */
+:root{
+  --nuit:#0C0F14; --beton:#161B22; --carte:#1A2029;
+  --craie:#EFEBE1; --craie-2:#98A1AC;
+  --projo:#F5C33B; --flare:#E0402C; --vert:#4FB98A; --bleu:#5FA8FF;
+  --trait:rgba(239,235,225,.11);
+  --banner:"Oswald","Arial Narrow",Impact,sans-serif;
+  --ui:"Barlow",ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--nuit);color:var(--craie);font-family:var(--ui);
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(120% 55% at 50% -12%,rgba(245,195,59,.10),transparent 62%)}
+.enveloppe{max-width:1100px;margin:0 auto;padding:0 20px 90px}
+b{font-weight:600;color:var(--craie)}
+code,.cle{overflow-wrap:anywhere}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;
+  background:var(--beton);padding:1px 5px;color:var(--craie-2)}
+
+/* --------------------------------------------------------------- ouverture */
+.tete{padding:54px 0 30px;border-bottom:1px solid var(--trait)}
+.eyebrow{font-family:var(--banner);font-size:11px;letter-spacing:.34em;color:var(--projo);
+  margin:0 0 14px;text-transform:uppercase}
+h1{font-family:var(--banner);font-weight:700;font-size:clamp(36px,7.4vw,66px);line-height:.95;
+  letter-spacing:.02em;margin:0;text-wrap:balance}
+h1 em{font-style:normal;color:var(--projo)}
+.chapo{max-width:64ch;color:var(--craie-2);margin:20px 0 0;font-size:16.5px}
+.compte{display:flex;flex-wrap:wrap;gap:22px 38px;margin:30px 0 0;padding:0;list-style:none}
+.compte li{display:flex;flex-direction:column;gap:2px}
+.compte b{font-family:var(--banner);font-size:29px;line-height:1;font-variant-numeric:tabular-nums;
+  color:var(--craie)}
+.compte span{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--craie-2)}
+.sommaire{display:flex;flex-wrap:wrap;gap:8px;margin:30px 0 0;padding:0;list-style:none}
+.sommaire a{display:block;text-decoration:none;color:var(--craie);
+  border:1px solid var(--trait);border-left:3px solid var(--projo);
+  padding:7px 13px;font-family:var(--banner);font-size:12.5px;letter-spacing:.08em}
+.sommaire a:hover{background:var(--beton)}
+.sommaire a:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
+
+/* ---------------------------------------------------------------- sections */
+.sec{padding:56px 0 0;scroll-margin-top:16px}
+.sec-tete{border-top:2px solid var(--projo);padding-top:16px;
+  display:flex;align-items:flex-start;gap:18px}
+.sec-num{font-family:var(--banner);font-size:42px;line-height:.9;margin:0;
+  color:var(--projo);font-variant-numeric:tabular-nums;flex:none}
+.sec-tete h2{font-family:var(--banner);font-weight:600;font-size:clamp(21px,3.2vw,29px);
+  letter-spacing:.05em;margin:0;line-height:1.06;text-wrap:balance}
+.sec-tete p{margin:6px 0 0;color:var(--craie-2);max-width:66ch}
+h3{font-family:var(--banner);font-weight:600;font-size:15px;letter-spacing:.15em;
+  margin:34px 0 12px;color:var(--craie);text-transform:uppercase}
+
+p{max-width:74ch}
+.note{color:var(--craie-2);font-size:13.5px;max-width:72ch}
+
+/* ------------------------------------------------------------------ tables */
+table{width:100%;border-collapse:collapse;margin:14px 0 0;font-size:13.5px}
+th{font-family:var(--banner);font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--craie-2);text-align:left;padding:0 12px 8px 0;font-weight:500;
+  border-bottom:1px solid var(--trait);vertical-align:bottom}
+td{padding:11px 12px 11px 0;border-bottom:1px solid var(--trait);vertical-align:top}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.nom{font-family:var(--banner);font-size:14.5px;letter-spacing:.02em;color:var(--craie)}
+.cle{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
+  color:var(--craie-2)}
+.dit{color:var(--craie-2);font-size:13px;line-height:1.5}
+.tag{display:inline-block;font-family:var(--banner);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;padding:2px 7px;border:1px solid currentColor;white-space:nowrap}
+.or{color:var(--projo)} .rouge{color:var(--flare)} .vert{color:var(--vert)}
+.bleu{color:var(--bleu)} .gris{color:var(--craie-2)}
+
+/* Sur téléphone une table à cinq colonnes est illisible : chaque ligne devient
+   un bloc, et l'en-tête de colonne passe en étiquette devant sa valeur. */
+@media (max-width:720px){
+  table,thead,tbody,tr,td{display:block;width:100%}
+  thead{display:none}
+  tr{border-bottom:1px solid var(--trait);padding:12px 0}
+  tr:last-child{border-bottom:0}
+  /* **L etiquette prend sa propre ligne.**
+
+     Deux essais avant celui-ci. En flex, le contenu d une cellule est un texte
+     nu qui ne sait pas retrecir sous sa largeur minimale. En grille a deux
+     colonnes, ce n etait pas mieux : un titre suivi d un <span> fait *trois*
+     elements avec le pseudo-element, et le troisieme repassait a la ligne dans
+     la colonne etroite de quatre-vingt-huit pixels.
+
+     En bloc, il n y a plus ni colonne ni element a repartir : l etiquette est
+     au-dessus, la valeur dessous, et rien ne peut deborder. C est aussi ce qui
+     se lit le mieux sur un telephone. */
+  td{border:0;padding:3px 0 5px;display:block}
+  /* En pile, un nombre n'a plus de voisin à bousculer : l'interdiction de
+     retour à la ligne ne protège plus rien, et empêche seulement une longue
+     valeur de céder. */
+  td.n{white-space:normal}
+  td::before{content:attr(data-t);display:block;font-family:var(--banner);
+    font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--craie-2);margin-bottom:1px}
+  td:empty{display:none}
+}
+
+/* ------------------------------------------------------------------ cartes */
+.cartes{display:grid;gap:1px;margin-top:16px;background:var(--trait);
+  border:1px solid var(--trait);grid-template-columns:repeat(auto-fill,minmax(268px,1fr))}
+.c{background:var(--carte);padding:14px 16px 16px}
+.c-tete{display:flex;align-items:baseline;gap:9px;margin-bottom:5px}
+.c-tete .cle{margin-left:auto}
+.c h4{font-family:var(--banner);font-weight:600;font-size:16px;letter-spacing:.02em;
+  margin:0 0 6px;line-height:1.14;text-wrap:balance}
+.c p{margin:0;color:var(--craie-2);font-size:13px;line-height:1.5}
+.mods{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:5px}
+.mods li{font-size:10.5px;padding:2px 7px;border:1px solid;font-variant-numeric:tabular-nums}
+.mods .plus{color:var(--vert);border-color:rgba(79,185,138,.4)}
+.mods .moins{color:var(--flare);border-color:rgba(224,64,44,.45)}
+
+/* ------------------------------------------------------------------- barre */
+.barre{display:flex;height:8px;margin:6px 0 0;background:var(--beton);overflow:hidden}
+.barre i{display:block;height:100%}
+.leg{display:flex;flex-wrap:wrap;gap:4px 12px;margin:7px 0 0;padding:0;list-style:none;
+  font-size:11.5px;color:var(--craie-2)}
+.leg li{display:flex;align-items:center;gap:5px}
+.leg em{width:8px;height:8px;display:block;flex:none}
+.leg b{font-variant-numeric:tabular-nums}
+
+/* -------------------------------------------------------------------- état */
+.etat{display:grid;gap:1px;background:var(--trait);border:1px solid var(--trait);
+  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));margin-top:16px}
+.e{background:var(--carte);padding:14px 16px}
+.e b{display:block;font-family:var(--banner);font-size:13px;letter-spacing:.1em;
+  margin-bottom:5px}
+.e p{margin:0;font-size:12.5px;color:var(--craie-2);line-height:1.5}
+.e[data-f=fait] b{color:var(--vert)}
+.e[data-f=partiel] b{color:var(--projo)}
+.e[data-f=reste] b{color:var(--flare)}
+
+.pied{margin-top:66px;padding-top:22px;border-top:1px solid var(--trait);
+  color:var(--craie-2);font-size:13.5px;max-width:70ch}
+.pied p{margin:0 0 12px}
+</style>
+
+<div class="enveloppe">
+
+<header class="tete">
+  <p class="eyebrow">thebestfan · dossier de développement</p>
+  <h1>Le jeu,<br><em>mécanique par mécanique</em></h1>
+  <p class="chapo">Ce dossier est <b>généré depuis le code</b> : les nombres, les règles,
+    les coûts et les barèmes viennent des mêmes modules que le jeu. Un document écrit à la
+    main serait faux au premier ajout, et personne ne le saurait. Il se refait par
+    <code>node scripts/dossier.mjs</code>.</p>
+  <ul class="compte">
+    <li><b>643</b><span>cartes au catalogue</span></li>
+    <li><b>247</b><span>personnages tirables</span></li>
+    <li><b>12</b><span>séries</span></li>
+    <li><b>17</b><span>mini-jeux</span></li>
+    <li><b>19</b><span>chants</span></li>
+    <li><b>29</b><span>cartes d’action</span></li>
+    <li><b>17</b><span>pièces d’équipement</span></li>
+    <li><b>10</b><span>stades</span></li>
+  </ul>
+  <ul class="sommaire">
+    <li><a href="#fanzzy">LE FANZZY</a></li>
+    <li><a href="#familles">LES FAMILLES</a></li>
+    <li><a href="#series">LES SÉRIES</a></li>
+    <li><a href="#minijeux">LES MINI-JEUX</a></li>
+    <li><a href="#chants">LES CHANTS</a></li>
+    <li><a href="#modes">LES DEUX MODES</a></li>
+    <li><a href="#actions">LES CARTES D’ACTION</a></li>
+    <li><a href="#stuff">L’ÉQUIPEMENT</a></li>
+    <li><a href="#stades">LES STADES</a></li>
+    <li><a href="#economie">L’ÉCONOMIE</a></li>
+    <li><a href="#reglages">L’ADMINISTRATION</a></li>
+    <li><a href="#etat">OÙ ON EN EST</a></li>
+  </ul>
+</header>
+
+<!-- ====================================================== le Fanzzy -->
+<section class="sec" id="fanzzy">
+  <header class="sec-tete"><p class="sec-num">1</p><div>
+    <h2>Ce qu’est un Fanzzy</h2>
+    <p>Dix caractéristiques, dont deux seulement décident de ce qu’il fait en jeu :
+      ses modificateurs et son cri.</p>
+  </div></header>
+
+  <table>
+    <thead><tr><th>Champ</th><th>Exemple</th><th>Ce que c’est</th></tr></thead>
+    <tbody>
+      <tr><td data-t="Champ"><span class="cle">id</span></td><td data-t="Exemple" class="n">TR1</td>
+        <td data-t="Rôle" class="dit">L’identifiant. La lignée s’y lit : <code>TR1</code>,
+          <code>TR1B</code>, <code>TR1C</code> sont les trois âges du même personnage.</td></tr>
+      <tr><td data-t="Champ"><span class="cle">nom</span></td><td data-t="Exemple">Le Petit Teigneux</td>
+        <td data-t="Rôle" class="dit">—</td></tr>
+      <tr><td data-t="Champ"><span class="cle">set</span></td><td data-t="Exemple">TR · LA TRIBUNE</td>
+        <td data-t="Rôle" class="dit"><b>La série.</b> L’unité de collection : un booster
+          tire dans une seule série, et les séries s’ouvrent <b>par saison</b> —
+          depuis l’administration, pour tout le monde le même jour.</td></tr>
+      <tr><td data-t="Champ"><span class="cle">type</span></td><td data-t="Exemple">voix · Voix</td>
+        <td data-t="Rôle" class="dit"><b>La famille.</b> Elle décide des gestes que le
+          personnage peut porter — voir la section suivante.</td></tr>
+      <tr><td data-t="Champ"><span class="cle">rar</span></td><td data-t="Exemple">commune</td>
+        <td data-t="Rôle" class="dit">La rareté. Elle <b>suit l’âge</b> : stade 1 commune,
+          stade 2 rare, stade 3 épique. La légendaire est hors échelle.</td></tr>
+      <tr><td data-t="Champ"><span class="cle">stage</span></td><td data-t="Exemple" class="n">1</td>
+        <td data-t="Rôle" class="dit">L’âge : 1, 2 ou 3. Un booster ne donne que du stade 1 ;
+          les suivants s’achètent en écharpes.</td></tr>
+      <tr><td data-t="Champ"><span class="cle">evo</span></td><td data-t="Exemple" class="n">TR1B</td>
+        <td data-t="Rôle" class="dit">L’âge suivant, ou rien. Une légendaire n’en a
+          jamais — c’est sa définition.</td></tr>
+      <tr><td data-t="Champ"><span class="cle">histoire</span></td><td data-t="Exemple">« Onze ans, une parka trop grande… »</td>
+        <td data-t="Rôle" class="dit">Deux phrases. Elles ne font rien, et c’est
+          précisément pour elles qu’on collectionne.</td></tr>
+      <tr><td data-t="Champ"><span class="cle">mods</span></td><td data-t="Exemple">tempoWindow ×1,1</td>
+        <td data-t="Rôle" class="dit"><b>Ses modificateurs</b>, de un à quatre. Même
+          vocabulaire que l’équipement, les KOP et les stades — le moteur ne sait pas d’où
+          vient un modificateur, et c’est ce qui permet d’en ajouter sans le toucher.</td></tr>
+      <tr><td data-t="Champ"><span class="cle">cri</span></td><td data-t="Exemple">« C’EST PAS FINI » · tempo · 48</td>
+        <td data-t="Rôle" class="dit"><b>Sa spécialité.</b> Un libellé, un geste, et une
+          puissance. Le geste doit appartenir à sa famille.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Le vocabulaire des modificateurs</h3>
+  <p class="note">Quinze clés, partagées par les Fanzzy, l’équipement, les stades et les
+    bonus de KOP. Un facteur se multiplie (1,1 = +10 %), un décalage s’additionne.</p>
+  <table>
+    <thead><tr><th>Clé</th><th>Ce qu’elle change</th><th>Sens</th></tr></thead>
+    <tbody>
+      <tr><td data-t="Clé"><span class="cle">tempoWindow</span></td>
+        <td data-t="Effet" class="dit">fenêtre de tempo</td>
+        <td data-t="Sens" class="dit">facteur</td></tr>
+      <tr><td data-t="Clé"><span class="cle">tempoInterval</span></td>
+        <td data-t="Effet" class="dit">cadence</td>
+        <td data-t="Sens" class="dit">décalage</td></tr>
+      <tr><td data-t="Clé"><span class="cle">mashBonus</span></td>
+        <td data-t="Effet" class="dit">martelage</td>
+        <td data-t="Sens" class="dit">facteur</td></tr>
+      <tr><td data-t="Clé"><span class="cle">mashTime</span></td>
+        <td data-t="Effet" class="dit">temps de martelage</td>
+        <td data-t="Sens" class="dit">décalage</td></tr>
+      <tr><td data-t="Clé"><span class="cle">holdBonus</span></td>
+        <td data-t="Effet" class="dit">tenue</td>
+        <td data-t="Sens" class="dit">facteur</td></tr>
+      <tr><td data-t="Clé"><span class="cle">holdForgive</span></td>
+        <td data-t="Effet" class="dit">tolérance de tenue</td>
+        <td data-t="Sens" class="dit">décalage</td></tr>
+      <tr><td data-t="Clé"><span class="cle">parryBonus</span></td>
+        <td data-t="Effet" class="dit">contre</td>
+        <td data-t="Sens" class="dit">facteur</td></tr>
+      <tr><td data-t="Clé"><span class="cle">parryResist</span></td>
+        <td data-t="Effet" class="dit">résistance au contre</td>
+        <td data-t="Sens" class="dit">facteur</td></tr>
+      <tr><td data-t="Clé"><span class="cle">perfectBonus</span></td>
+        <td data-t="Effet" class="dit">geste parfait</td>
+        <td data-t="Sens" class="dit">facteur</td></tr>
+      <tr><td data-t="Clé"><span class="cle">backfire</span></td>
+        <td data-t="Effet" class="dit">retour de bâton</td>
+        <td data-t="Sens" class="dit">décalage</td></tr>
+      <tr><td data-t="Clé"><span class="cle">breathBonus</span></td>
+        <td data-t="Effet" class="dit">souffle</td>
+        <td data-t="Sens" class="dit">facteur</td></tr>
+      <tr><td data-t="Clé"><span class="cle">refundBonus</span></td>
+        <td data-t="Effet" class="dit">reprise</td>
+        <td data-t="Sens" class="dit">facteur</td></tr>
+      <tr><td data-t="Clé"><span class="cle">costPenalty</span></td>
+        <td data-t="Effet" class="dit">prix des cartes</td>
+        <td data-t="Sens" class="dit">facteur</td></tr>
+      <tr><td data-t="Clé"><span class="cle">pushMult</span></td>
+        <td data-t="Effet" class="dit">poussée</td>
+        <td data-t="Sens" class="dit">facteur</td></tr>
+      <tr><td data-t="Clé"><span class="cle">ferveurBonus</span></td>
+        <td data-t="Effet" class="dit">ferveur</td>
+        <td data-t="Sens" class="dit">facteur</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ===================================================== les familles -->
+<section class="sec" id="familles">
+  <header class="sec-tete"><p class="sec-num">2</p><div>
+    <h2>Les six familles</h2>
+    <p>La famille d’un personnage décide des <b>gestes qu’il peut porter</b>. Les
+      17 mini-jeux y sont répartis sans trou ni doublon : chacun appartient à
+      une famille et à une seule.</p>
+  </div></header>
+
+  <p class="note">Le premier geste de chaque liste est celui qui porte le nom de la
+    famille — il équipe la moitié de ses cartes. Les autres sont ses variantes, et elles
+    se partagent le reste : sans elles, choisir une Voix voudrait toujours dire choisir
+    un tempo.</p>
+
+  <div class="cartes"><div class="c">
+      <p class="c-tete"><span class="nom" style="color:#F5C33B">Voix</span>
+        <span class="cle">voix · 40 cartes</span></p>
+      <div class="barre"><i style="width:42.5%;
+        background:#F5C33B;opacity:1"></i><i style="width:20%;
+        background:#F5C33B;opacity:0.78"></i><i style="width:20%;
+        background:#F5C33B;opacity:0.56"></i><i style="width:17.5%;
+        background:#F5C33B;opacity:0.33999999999999997"></i></div>
+      <ul class="leg"><li><em style="background:#F5C33B;
+        opacity:1"></em>TEMPO <b>17</b></li><li><em style="background:#F5C33B;
+        opacity:0.78"></em>CONTRETEMPS <b>8</b></li><li><em style="background:#F5C33B;
+        opacity:0.56"></em>ÉCHO <b>8</b></li><li><em style="background:#F5C33B;
+        opacity:0.33999999999999997"></em>LE CAPO <b>7</b></li></ul>
+    </div><div class="c">
+      <p class="c-tete"><span class="nom" style="color:#3C82E8">Percussion</span>
+        <span class="cle">perc · 32 cartes</span></p>
+      <div class="barre"><i style="width:43.75%;
+        background:#3C82E8;opacity:1"></i><i style="width:28.125%;
+        background:#3C82E8;opacity:0.78"></i><i style="width:28.125%;
+        background:#3C82E8;opacity:0.56"></i></div>
+      <ul class="leg"><li><em style="background:#3C82E8;
+        opacity:1"></em>MARTELAGE <b>14</b></li><li><em style="background:#3C82E8;
+        opacity:0.78"></em>CRESCENDO <b>9</b></li><li><em style="background:#3C82E8;
+        opacity:0.56"></em>SALVES <b>9</b></li></ul>
+    </div><div class="c">
+      <p class="c-tete"><span class="nom" style="color:#C2CAD6">Fidélité</span>
+        <span class="cle">fide · 64 cartes</span></p>
+      <div class="barre"><i style="width:53.125%;
+        background:#C2CAD6;opacity:1"></i><i style="width:21.875%;
+        background:#C2CAD6;opacity:0.78"></i><i style="width:25%;
+        background:#C2CAD6;opacity:0.56"></i></div>
+      <ul class="leg"><li><em style="background:#C2CAD6;
+        opacity:1"></em>ENDURANCE <b>34</b></li><li><em style="background:#C2CAD6;
+        opacity:0.78"></em>SANG-FROID <b>14</b></li><li><em style="background:#C2CAD6;
+        opacity:0.56"></em>MESURE <b>16</b></li></ul>
+    </div><div class="c">
+      <p class="c-tete"><span class="nom" style="color:#8257DA">Tifo</span>
+        <span class="cle">tifo · 44 cartes</span></p>
+      <div class="barre"><i style="width:47.72727272727273%;
+        background:#8257DA;opacity:1"></i><i style="width:27.27272727272727%;
+        background:#8257DA;opacity:0.78"></i><i style="width:25%;
+        background:#8257DA;opacity:0.56"></i></div>
+      <ul class="leg"><li><em style="background:#8257DA;
+        opacity:1"></em>TIFO <b>21</b></li><li><em style="background:#8257DA;
+        opacity:0.78"></em>MOSAÏQUE <b>12</b></li><li><em style="background:#8257DA;
+        opacity:0.56"></em>LE TRI <b>11</b></li></ul>
+    </div><div class="c">
+      <p class="c-tete"><span class="nom" style="color:#E0402C">Pyro</span>
+        <span class="cle">pyro · 21 cartes</span></p>
+      <div class="barre"><i style="width:52.38095238095239%;
+        background:#E0402C;opacity:1"></i><i style="width:47.61904761904761%;
+        background:#E0402C;opacity:0.78"></i></div>
+      <ul class="leg"><li><em style="background:#E0402C;
+        opacity:1"></em>RELANCE <b>11</b></li><li><em style="background:#E0402C;
+        opacity:0.78"></em>LE COMPTE <b>10</b></li></ul>
+    </div><div class="c">
+      <p class="c-tete"><span class="nom" style="color:#1E9E6A">Déplacement</span>
+        <span class="cle">depl · 46 cartes</span></p>
+      <div class="barre"><i style="width:47.82608695652174%;
+        background:#1E9E6A;opacity:1"></i><i style="width:52.17391304347826%;
+        background:#1E9E6A;opacity:0.78"></i></div>
+      <ul class="leg"><li><em style="background:#1E9E6A;
+        opacity:1"></em>L’ÉCHARPE <b>22</b></li><li><em style="background:#1E9E6A;
+        opacity:0.78"></em>LES VISAGES <b>24</b></li></ul>
+    </div></div>
+</section>
+
+<!-- ====================================================== les séries -->
+<section class="sec" id="series">
+  <header class="sec-tete"><p class="sec-num">3</p><div>
+    <h2>Les 12 séries</h2>
+    <p>Un booster tire dans une seule série. Chacune a <b>au moins cinq légendaires</b> —
+      c’est son point le plus haut, et une série sans sommet est une série qu’on collectionne
+      sans rien espérer. LA TRIBUNE en compte dix : elle a hérité de celles de VIRAGE NORD,
+      dissoute avec les NUITS EUROPÉENNES au profit des cinq séries neuves. Aucune carte n’a
+      été supprimée — les quarante-deux ont changé de série en gardant leur identifiant, donc
+      les collections, les decks et les tenues les ont suivies.</p>
+    <p>Une série s’ouvre <b>par saison</b>, depuis l’administration, pour tout le monde
+      le même jour — et non plus au niveau de chaque joueur. Cette base ne déclare aucune saison — ou n’était pas joignable au moment de générer : toutes les séries sont alors ouvertes.</p>
+  </div></header>
+
+  <table>
+    <thead><tr><th>Série</th><th>Ce qu’elle raconte</th><th>Stade 1</th><th>Communes</th><th>Légendaires</th><th>Ouverte par</th></tr></thead>
+    <tbody><tr>
+        <td data-t="Série"><span class="nom" style="color:#8257DA">LE VIRAGE IMPOSSIBLE</span>
+          <br><span class="cle">IM</span></td>
+        <td data-t="Ligne" class="dit">ceux qui ne devraient pas être là</td>
+        <td data-t="Stade 1" class="n">7</td>
+        <td data-t="Communes" class="n">2</td>
+        <td data-t="Légendaires" class="n or">5</td>
+        <td data-t="Saison" class="n">—</td></tr><tr>
+        <td data-t="Série"><span class="nom" style="color:#E0402C">LA TRIBUNE</span>
+          <br><span class="cle">TR</span></td>
+        <td data-t="Ligne" class="dit">ceux qui reviennent chaque samedi</td>
+        <td data-t="Stade 1" class="n">51</td>
+        <td data-t="Communes" class="n">41</td>
+        <td data-t="Légendaires" class="n or">10</td>
+        <td data-t="Saison" class="n">—</td></tr><tr>
+        <td data-t="Série"><span class="nom" style="color:#E08A2C">LES MÉTIERS DU STADE</span>
+          <br><span class="cle">MS</span></td>
+        <td data-t="Ligne" class="dit">ceux qui font tourner la baraque</td>
+        <td data-t="Stade 1" class="n">33</td>
+        <td data-t="Communes" class="n">28</td>
+        <td data-t="Légendaires" class="n or">5</td>
+        <td data-t="Saison" class="n">—</td></tr><tr>
+        <td data-t="Série"><span class="nom" style="color:#1E9E6A">LE BESTIAIRE DES GRADINS</span>
+          <br><span class="cle">BG</span></td>
+        <td data-t="Ligne" class="dit">ils ont pris une place, personne n’a rien dit</td>
+        <td data-t="Stade 1" class="n">27</td>
+        <td data-t="Communes" class="n">22</td>
+        <td data-t="Légendaires" class="n or">5</td>
+        <td data-t="Saison" class="n">—</td></tr><tr>
+        <td data-t="Série"><span class="nom" style="color:#8257DA">LES REVENANTS</span>
+          <br><span class="cle">RV</span></td>
+        <td data-t="Ligne" class="dit">le virage d’après minuit</td>
+        <td data-t="Stade 1" class="n">21</td>
+        <td data-t="Communes" class="n">16</td>
+        <td data-t="Légendaires" class="n or">5</td>
+        <td data-t="Saison" class="n">—</td></tr><tr>
+        <td data-t="Série"><span class="nom" style="color:#3C82E8">CE QUI TRAÎNE AU STADE</span>
+          <br><span class="cle">OB</span></td>
+        <td data-t="Ligne" class="dit">un siège, un cône, une main en mousse</td>
+        <td data-t="Stade 1" class="n">17</td>
+        <td data-t="Communes" class="n">12</td>
+        <td data-t="Légendaires" class="n or">5</td>
+        <td data-t="Saison" class="n">—</td></tr><tr>
+        <td data-t="Série"><span class="nom" style="color:#C2CAD6">LES ÉPOQUES</span>
+          <br><span class="cle">EP</span></td>
+        <td data-t="Ligne" class="dit">ils ont trouvé une porte, on ne sait pas laquelle</td>
+        <td data-t="Stade 1" class="n">19</td>
+        <td data-t="Communes" class="n">14</td>
+        <td data-t="Légendaires" class="n or">5</td>
+        <td data-t="Saison" class="n">—</td></tr><tr>
+        <td data-t="Série"><span class="nom" style="color:#C9A227">LES VIP</span>
+          <br><span class="cle">VP</span></td>
+        <td data-t="Ligne" class="dit">ils ont la meilleure place et ils regardent leur téléphone</td>
+        <td data-t="Stade 1" class="n">15</td>
+        <td data-t="Communes" class="n">10</td>
+        <td data-t="Légendaires" class="n or">5</td>
+        <td data-t="Saison" class="n">—</td></tr><tr>
+        <td data-t="Série"><span class="nom" style="color:#E08A2C">LA GASTRONOMIE DE COMPTOIR</span>
+          <br><span class="cle">GC</span></td>
+        <td data-t="Ligne" class="dit">ce qu’on mange debout, et qu’on regrette</td>
+        <td data-t="Stade 1" class="n">14</td>
+        <td data-t="Communes" class="n">9</td>
+        <td data-t="Légendaires" class="n or">5</td>
+        <td data-t="Saison" class="n">—</td></tr><tr>
+        <td data-t="Série"><span class="nom" style="color:#4A8FC0">LES GALÈRES DE DÉPLACEMENT</span>
+          <br><span class="cle">GD</span></td>
+        <td data-t="Ligne" class="dit">neuf cents kilomètres, et ça commence mal</td>
+        <td data-t="Stade 1" class="n">14</td>
+        <td data-t="Communes" class="n">9</td>
+        <td data-t="Légendaires" class="n or">5</td>
+        <td data-t="Saison" class="n">—</td></tr><tr>
+        <td data-t="Série"><span class="nom" style="color:#7FB3B5">LES PHÉNOMÈNES MÉTÉO</span>
+          <br><span class="cle">MT</span></td>
+        <td data-t="Ligne" class="dit">le onzième joueur, et il n’est d’aucun camp</td>
+        <td data-t="Stade 1" class="n">14</td>
+        <td data-t="Communes" class="n">9</td>
+        <td data-t="Légendaires" class="n or">5</td>
+        <td data-t="Saison" class="n">—</td></tr><tr>
+        <td data-t="Série"><span class="nom" style="color:#9A6FD0">LES HÉROS DU CANAPÉ</span>
+          <br><span class="cle">HC</span></td>
+        <td data-t="Ligne" class="dit">ils n’y étaient pas, et ils savent mieux</td>
+        <td data-t="Stade 1" class="n">15</td>
+        <td data-t="Communes" class="n">10</td>
+        <td data-t="Légendaires" class="n or">5</td>
+        <td data-t="Saison" class="n">—</td></tr></tbody>
+  </table>
+
+  <h3>L’échelle des raretés</h3>
+  <p class="note">Elle disait deux choses à la fois — la force d’un personnage et sa
+    rareté au tirage. Elle n’en dit plus qu’une : <b>la rareté suit l’âge</b>.</p>
+  <table>
+    <thead><tr><th>Rareté</th><th>Ce que c’est</th><th>Un doublon rend</th><th>Y monter coûte</th></tr></thead>
+    <tbody>
+      <tr><td data-t="Rareté"><span class="tag gris">Commune</span></td>
+        <td data-t="Sens" class="dit">Stade 1 — ce qu’un booster donne</td>
+        <td data-t="Doublon" class="n">1 écharpe</td><td data-t="Coût" class="n">—</td></tr>
+      <tr><td data-t="Rareté"><span class="tag bleu">Rare</span></td>
+        <td data-t="Sens" class="dit">Stade 2 — s’achète, ne se tire pas</td>
+        <td data-t="Doublon" class="n">3 écharpes</td>
+        <td data-t="Coût" class="n">25 écharpes</td></tr>
+      <tr><td data-t="Rareté"><span class="tag" style="color:#B98CFF">Épique</span></td>
+        <td data-t="Sens" class="dit">Stade 3 — s’achète, ne se tire pas</td>
+        <td data-t="Doublon" class="n">10 écharpes</td>
+        <td data-t="Coût" class="n">90 écharpes</td></tr>
+      <tr><td data-t="Rareté"><span class="tag or">Légendaire</span></td>
+        <td data-t="Sens" class="dit">Hors échelle — <b>aucune lignée</b>. Elle ne se
+          fabrique pas à l’écharpe, elle se tire.</td>
+        <td data-t="Doublon" class="n">45 écharpes</td><td data-t="Coût" class="n">—</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Un booster tire cinq cartes, dont <b>deux seulement rendent un
+    supporter</b> — la première toujours, la deuxième sept fois sur dix. Ce sont elles qui
+    portent le tirage de rareté : 5 % de légendaire sur la première,
+    15 % sur la deuxième. Les trois autres places rendent un objet,
+    une tenue, une carte d’action ou des écharpes.</p>
+</section>
+
+<!-- ==================================================== les mini-jeux -->
+<section class="sec" id="minijeux">
+  <header class="sec-tete"><p class="sec-num">4</p><div>
+    <h2>Les 17 mini-jeux</h2>
+    <p>C’est ce qu’on fait réellement avec ses doigts. Chacun est <b>noté par le
+      serveur</b> à partir des instants de frappe ou de la réponse rendue : le client
+      n’attribue jamais de note, et ne connaît aucun nombre de jeu.</p>
+  </div></header>
+
+  <p class="note">Les dix premiers sont des <b>gestes de rythme</b> : le serveur reçoit une
+    suite d’instants et la juge. Les sept derniers sont des <b>épreuves</b> : le serveur
+    envoie une consigne — une forme, une grille, une suite — et note la réponse. Les
+    moteurs ne savent pas laquelle est laquelle ; ils demandent une note, ils reçoivent
+    une note.</p>
+
+  <table>
+    <thead><tr><th>Mini-jeu</th><th>Famille</th><th>Ce qu’il mesure</th><th>La règle</th><th>Son chant</th></tr></thead>
+    <tbody><tr>
+        <td data-t="Mini-jeu"><span class="nom">TEMPO</span>
+          <br><span class="cle">tempo</span>
+          </td>
+        <td data-t="Famille" class="dit" style="color:#F5C33B">Voix</td>
+        <td data-t="Mesure" class="dit">la régularité</td>
+        <td data-t="Règle" class="dit">8 frappes, une par pulsation de 560 ms. Fenêtre de ±200 ms.</td>
+        <td data-t="Chant" class="dit">La reprise<br>Le mur</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">MARTELAGE</span>
+          <br><span class="cle">mash</span>
+          </td>
+        <td data-t="Famille" class="dit" style="color:#3C82E8">Percussion</td>
+        <td data-t="Mesure" class="dit">la vitesse</td>
+        <td data-t="Règle" class="dit">Le plus de frappes possible en 3 s. 21 frappes valent le plein.</td>
+        <td data-t="Chant" class="dit">Le roulement<br>Le craquage</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">ENDURANCE</span>
+          <br><span class="cle">hold</span>
+          </td>
+        <td data-t="Famille" class="dit" style="color:#C2CAD6">Fidélité</td>
+        <td data-t="Mesure" class="dit">la constance</td>
+        <td data-t="Règle" class="dit">Garder le doigt appuyé 3,2 s sans lâcher.</td>
+        <td data-t="Chant" class="dit">On était là</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">CONTRETEMPS</span>
+          <br><span class="cle">contretemps</span>
+          </td>
+        <td data-t="Famille" class="dit" style="color:#F5C33B">Voix</td>
+        <td data-t="Mesure" class="dit">le décalage</td>
+        <td data-t="Règle" class="dit">6 frappes <b>entre</b> les pulsations de 620 ms. Fenêtre plus étroite qu'au tempo : ±170 ms.</td>
+        <td data-t="Chant" class="dit">Le contre-chant</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">ÉCHO</span>
+          <br><span class="cle">echo</span>
+          </td>
+        <td data-t="Famille" class="dit" style="color:#F5C33B">Voix</td>
+        <td data-t="Mesure" class="dit">l’oreille</td>
+        <td data-t="Règle" class="dit">Un motif de 5 coups est joué une fois, puis on le refait. Unité de 280 ms, fenêtre ±190 ms. Le motif change à chaque chant.</td>
+        <td data-t="Chant" class="dit">Le répons</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">CRESCENDO</span>
+          <br><span class="cle">crescendo</span>
+          </td>
+        <td data-t="Famille" class="dit" style="color:#3C82E8">Percussion</td>
+        <td data-t="Mesure" class="dit">l’accélération</td>
+        <td data-t="Règle" class="dit">10 frappes en accélérant régulièrement de 700 à 260 ms. Fenêtre ±165 ms.</td>
+        <td data-t="Chant" class="dit">La montée</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">RELANCE</span>
+          <br><span class="cle">relance</span>
+          </td>
+        <td data-t="Famille" class="dit" style="color:#E0402C">Pyro</td>
+        <td data-t="Mesure" class="dit">l’instant</td>
+        <td data-t="Règle" class="dit">Tenir au moins 900 ms, puis lâcher <b>pile</b> sur la pulsation de 1900 ms. Fenêtre ±230 ms.</td>
+        <td data-t="Chant" class="dit">La relance</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">SALVES</span>
+          <br><span class="cle">salves</span>
+          </td>
+        <td data-t="Famille" class="dit" style="color:#3C82E8">Percussion</td>
+        <td data-t="Mesure" class="dit">le découpage</td>
+        <td data-t="Règle" class="dit">3 rafales de 4 frappes, séparées par des silences de 700 ms. Tolérance 260 ms.</td>
+        <td data-t="Chant" class="dit">Les salves</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">SANG-FROID</span>
+          <br><span class="cle">tenue</span>
+          </td>
+        <td data-t="Famille" class="dit" style="color:#C2CAD6">Fidélité</td>
+        <td data-t="Mesure" class="dit">le sang-froid</td>
+        <td data-t="Règle" class="dit">Tenir le plus longtemps possible — mais <b>lâcher avant 4,2 s</b>. Au-delà, tout est perdu : le seul geste où en faire trop coûte plus cher que d'en faire trop peu.</td>
+        <td data-t="Chant" class="dit">À perdre haleine</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">MESURE</span>
+          <br><span class="cle">retenue</span>
+          </td>
+        <td data-t="Famille" class="dit" style="color:#C2CAD6">Fidélité</td>
+        <td data-t="Mesure" class="dit">le compte exact</td>
+        <td data-t="Règle" class="dit"><b>Exactement 12 frappes</b> en 4 s. Ni plus, ni moins.</td>
+        <td data-t="Chant" class="dit">La cadence</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">TIFO</span>
+          <br><span class="cle">tifo</span>
+          <br><span class="tag gris">épreuve</span></td>
+        <td data-t="Famille" class="dit" style="color:#8257DA">Tifo</td>
+        <td data-t="Mesure" class="dit">le tracé</td>
+        <td data-t="Règle" class="dit">Tracer une forme au doigt en 6 s sans quitter le trait. Noté sur trois choses multipliées : la précision, le parcours entier, et l'ordre.</td>
+        <td data-t="Chant" class="dit">La bâche</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">LES VISAGES</span>
+          <br><span class="cle">memoire</span>
+          <br><span class="tag gris">épreuve</span></td>
+        <td data-t="Famille" class="dit" style="color:#1E9E6A">Déplacement</td>
+        <td data-t="Mesure" class="dit">la mémoire des paires</td>
+        <td data-t="Règle" class="dit">4 paires de visages montrées 2 s, puis retournées. Les retrouver en 12 s. Un essai raté coûte, moins qu'une paire ne rapporte.</td>
+        <td data-t="Chant" class="dit">Au point</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">MOSAÏQUE</span>
+          <br><span class="cle">mosaique</span>
+          <br><span class="tag gris">épreuve</span></td>
+        <td data-t="Famille" class="dit" style="color:#8257DA">Tifo</td>
+        <td data-t="Mesure" class="dit">la mémoire spatiale</td>
+        <td data-t="Règle" class="dit">Une grille 4×4 dont 6 cases s'allument 1,1 s, puis s'éteignent. La refaire en 9 s. Une case fausse annule une case juste.</td>
+        <td data-t="Chant" class="dit">Le damier</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">L’ÉCHARPE</span>
+          <br><span class="cle">echarpe</span>
+          <br><span class="tag gris">épreuve</span></td>
+        <td data-t="Famille" class="dit" style="color:#1E9E6A">Déplacement</td>
+        <td data-t="Mesure" class="dit">le geste circulaire</td>
+        <td data-t="Règle" class="dit">3 tours d'écharpe en 7 s, ronds et réguliers, dans le sens indiqué. Le sens change d'une fois sur l'autre.</td>
+        <td data-t="Chant" class="dit">Le moulinet</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">LE CAPO</span>
+          <br><span class="cle">capo</span>
+          <br><span class="tag gris">épreuve</span></td>
+        <td data-t="Famille" class="dit" style="color:#F5C33B">Voix</td>
+        <td data-t="Mesure" class="dit">l’empan mnésique</td>
+        <td data-t="Règle" class="dit">Le capo montre une suite de 6 coups sur 6 zones, à 620 ms. Noté sur le <b>plus long début juste</b>, pas sur le nombre de coups justes.</td>
+        <td data-t="Chant" class="dit">L’appel du capo</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">LE TRI</span>
+          <br><span class="cle">tri</span>
+          <br><span class="tag gris">épreuve</span></td>
+        <td data-t="Famille" class="dit" style="color:#8257DA">Tifo</td>
+        <td data-t="Mesure" class="dit">la discrimination rapide</td>
+        <td data-t="Règle" class="dit">24 cartons de 3 couleurs : ramasser une seule couleur en 6 s. <b>Un mauvais carton coûte un bon</b> — s'arrêter quand on n'est plus sûr est un choix qui se défend.</td>
+        <td data-t="Chant" class="dit">Le tri des cartons</td></tr><tr>
+        <td data-t="Mini-jeu"><span class="nom">LE COMPTE</span>
+          <br><span class="cle">compte</span>
+          <br><span class="tag gris">épreuve</span></td>
+        <td data-t="Famille" class="dit" style="color:#E0402C">Pyro</td>
+        <td data-t="Mesure" class="dit">l’horloge intérieure</td>
+        <td data-t="Règle" class="dit">Un compte à rebours s'affiche 3 s puis <b>s'éteint</b>. Toucher quand il arrive à zéro : entre 5 et 8 s, tolérance 1 s. Le seul geste où il n'y a rien à regarder au moment d'agir.</td>
+        <td data-t="Chant" class="dit">Le compte à rebours</td></tr></tbody>
+  </table>
+
+  <h3>Comment un joueur y accède</h3>
+  <p>Par <b>un chant</b>, et seulement par là — dans les deux modes, depuis que le duel a
+    reçu le répertoire du Virage. Le joueur se voit offrir cinq chants parmi
+    19, chacun portant son geste, son coût en souffle et sa poussée. Choisir
+    un chant, c’est choisir un mini-jeu <em>et</em> une dépense.</p>
+  <p class="note">Un geste sans chant est donc <b>injouable</b>, où qu’il soit déclaré par
+    ailleurs. C’est arrivé deux fois — aux cinq épreuves, puis au tri et au compte — et
+    <code>virage-smoke</code> le vérifie maintenant en confrontant le répertoire à la liste
+    des gestes du jeu.</p>
+</section>
+
+<!-- ====================================================== les chants -->
+<section class="sec" id="chants">
+  <header class="sec-tete"><p class="sec-num">5</p><div>
+    <h2>Les 19 chants</h2>
+    <p>Le répertoire. Cinq sont offerts à la fois, dans l’ordre ci-dessous — au Virage
+      il tourne toutes les dix minutes de match réel ; en duel il est fixe, tiré de
+      l’identifiant de la partie.</p>
+  </div></header>
+
+  <table>
+    <thead><tr><th>Chant</th><th>Mini-jeu</th><th>Coût</th><th>Poussée</th><th>Effet</th></tr></thead>
+    <tbody><tr>
+        <td data-t="Chant"><span class="nom">La reprise</span>
+          <br><span class="cle">reprise</span></td>
+        <td data-t="Mini-jeu" class="dit">TEMPO</td>
+        <td data-t="Coût" class="n">22</td>
+        <td data-t="Poussée" class="n or">26</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">Le roulement</span>
+          <br><span class="cle">roulement</span></td>
+        <td data-t="Mini-jeu" class="dit">MARTELAGE</td>
+        <td data-t="Coût" class="n">26</td>
+        <td data-t="Poussée" class="n or">30</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">La bâche</span>
+          <br><span class="cle">bache</span></td>
+        <td data-t="Mini-jeu" class="dit">TIFO</td>
+        <td data-t="Coût" class="n">30</td>
+        <td data-t="Poussée" class="n or">54</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">Le répons</span>
+          <br><span class="cle">repons</span></td>
+        <td data-t="Mini-jeu" class="dit">ÉCHO</td>
+        <td data-t="Coût" class="n">24</td>
+        <td data-t="Poussée" class="n or">32</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">On était là</span>
+          <br><span class="cle">onetaitla</span></td>
+        <td data-t="Mini-jeu" class="dit">ENDURANCE</td>
+        <td data-t="Coût" class="n">30</td>
+        <td data-t="Poussée" class="n or">34</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">Le damier</span>
+          <br><span class="cle">damier</span></td>
+        <td data-t="Mini-jeu" class="dit">MOSAÏQUE</td>
+        <td data-t="Coût" class="n">28</td>
+        <td data-t="Poussée" class="n or">50</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">Les salves</span>
+          <br><span class="cle">salves</span></td>
+        <td data-t="Mini-jeu" class="dit">SALVES</td>
+        <td data-t="Coût" class="n">27</td>
+        <td data-t="Poussée" class="n or">35</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">Le tri des cartons</span>
+          <br><span class="cle">trilage</span></td>
+        <td data-t="Mini-jeu" class="dit">LE TRI</td>
+        <td data-t="Coût" class="n">24</td>
+        <td data-t="Poussée" class="n or">38</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">Le contre-chant</span>
+          <br><span class="cle">contrechant</span></td>
+        <td data-t="Mini-jeu" class="dit">CONTRETEMPS</td>
+        <td data-t="Coût" class="n">28</td>
+        <td data-t="Poussée" class="n or">36</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">Le moulinet</span>
+          <br><span class="cle">moulinet</span></td>
+        <td data-t="Mini-jeu" class="dit">L’ÉCHARPE</td>
+        <td data-t="Coût" class="n">25</td>
+        <td data-t="Poussée" class="n or">42</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">Le craquage</span>
+          <br><span class="cle">craquage</span></td>
+        <td data-t="Mini-jeu" class="dit">MARTELAGE</td>
+        <td data-t="Coût" class="n">34</td>
+        <td data-t="Poussée" class="n or">52</td>
+        <td data-t="Effet" class="dit">fatigue</td></tr><tr>
+        <td data-t="Chant"><span class="nom">La montée</span>
+          <br><span class="cle">montee</span></td>
+        <td data-t="Mini-jeu" class="dit">CRESCENDO</td>
+        <td data-t="Coût" class="n">32</td>
+        <td data-t="Poussée" class="n or">44</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">Au point</span>
+          <br><span class="cle">aupoint</span></td>
+        <td data-t="Mini-jeu" class="dit">LES VISAGES</td>
+        <td data-t="Coût" class="n">26</td>
+        <td data-t="Poussée" class="n or">47</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">Le compte à rebours</span>
+          <br><span class="cle">rebours</span></td>
+        <td data-t="Mini-jeu" class="dit">LE COMPTE</td>
+        <td data-t="Coût" class="n">31</td>
+        <td data-t="Poussée" class="n or">51</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">À perdre haleine</span>
+          <br><span class="cle">tenir</span></td>
+        <td data-t="Mini-jeu" class="dit">SANG-FROID</td>
+        <td data-t="Coût" class="n">26</td>
+        <td data-t="Poussée" class="n or">48</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">Le mur</span>
+          <br><span class="cle">mur</span></td>
+        <td data-t="Mini-jeu" class="dit">TEMPO</td>
+        <td data-t="Coût" class="n">38</td>
+        <td data-t="Poussée" class="n or">46</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">L’appel du capo</span>
+          <br><span class="cle">appel</span></td>
+        <td data-t="Mini-jeu" class="dit">LE CAPO</td>
+        <td data-t="Coût" class="n">29</td>
+        <td data-t="Poussée" class="n or">49</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">La relance</span>
+          <br><span class="cle">relance</span></td>
+        <td data-t="Mini-jeu" class="dit">RELANCE</td>
+        <td data-t="Coût" class="n">30</td>
+        <td data-t="Poussée" class="n or">40</td>
+        <td data-t="Effet" class="dit">—</td></tr><tr>
+        <td data-t="Chant"><span class="nom">La cadence</span>
+          <br><span class="cle">cadence</span></td>
+        <td data-t="Mini-jeu" class="dit">MESURE</td>
+        <td data-t="Coût" class="n">24</td>
+        <td data-t="Poussée" class="n or">38</td>
+        <td data-t="Effet" class="dit">—</td></tr></tbody>
+  </table>
+</section>
+
+<!-- ==================================================== les deux modes -->
+<section class="sec" id="modes">
+  <header class="sec-tete"><p class="sec-num">6</p><div>
+    <h2>Les deux façons de jouer</h2>
+    <p>Elles se jouent désormais <b>de la même manière</b> : même répertoire, mêmes
+      mini-jeux, même barème, même deck. Ce qui les distingue est <em>contre qui</em> on
+      tire la corde.</p>
+  </div></header>
+
+  <table>
+    <thead><tr><th></th><th>Le duel</th><th>Le Grand Virage</th></tr></thead>
+    <tbody>
+      <tr><td data-t="En face" class="dit"><b>En face</b></td>
+        <td data-t="Duel" class="dit">Un adversaire, ou une petite tribune (jusqu’à 5 contre 5)</td>
+        <td data-t="Virage" class="dit">Une foule d’inconnus, des deux côtés</td></tr>
+      <tr><td data-t="Durée" class="dit"><b>Durée</b></td>
+        <td data-t="Duel" class="n">5 minutes</td>
+        <td data-t="Virage" class="dit">Toute la durée du vrai match</td></tr>
+      <tr><td data-t="But" class="dit"><b>La corde marque à</b></td>
+        <td data-t="Duel" class="n">200 points</td>
+        <td data-t="Virage" class="n">260 points</td></tr>
+      <tr><td data-t="Retour" class="dit"><b>Elle retombe de</b></td>
+        <td data-t="Duel" class="n">1.2 / s</td>
+        <td data-t="Virage" class="n">1.4 / s</td></tr>
+      <tr><td data-t="Chants" class="dit"><b>Le chant</b></td>
+        <td data-t="Duel" class="dit">5 offerts, fixes pour la partie</td>
+        <td data-t="Virage" class="dit">5 offerts, ils tournent toutes les 10 min de match</td></tr>
+      <tr><td data-t="Cartes" class="dit"><b>Cartes d’action</b></td>
+        <td data-t="Duel" class="dit">Les 29</td>
+        <td data-t="Virage" class="dit">21 — celles qui
+          n’agressent personne. Une carte qui traverse serait écrasante contre trois cents
+          personnes, ou nulle une fois divisée par l’effectif.</td></tr>
+      <tr><td data-t="Gains" class="dit"><b>On y gagne</b></td>
+        <td data-t="Duel" class="dit">Écharpes, XP, part au KOP, classement</td>
+        <td data-t="Virage" class="dit">Ferveur, et une carte-souvenir par but réel vécu</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Le deck</h3>
+  <p class="note">Le même dans les deux modes : <b>3 Fanzzy au plus</b>
+    (un seul suffit), 2 pièces d’équipement par Fanzzy, et
+    <b>exactement 10 cartes d’action</b> dont 5
+    visibles à la fois. Aucun plafond par carte : dix exemplaires de la même sont permis —
+    un débutant en possède cinq, et dix emplacements à remplir sans doublon serait
+    arithmétiquement impossible.</p>
+</section>
+
+<!-- ================================================ les cartes d'action -->
+<section class="sec" id="actions">
+  <header class="sec-tete"><p class="sec-num">7</p><div>
+    <h2>Les 29 cartes d’action</h2>
+    <p>Ce qu’on joue <em>entre</em> les chants. Elles coûtent du souffle, ont une recharge,
+      et changent les règles quelques secondes.</p>
+  </div></header>
+
+  <table>
+    <thead><tr><th>Carte</th><th>Famille</th><th>Coût</th><th>Recharge</th><th>Ce qu’elle fait</th><th>Virage</th></tr></thead>
+    <tbody><tr>
+      <td data-t="Carte"><span class="nom">Fumigène</span>
+        <br><span class="cle">a-fumigene</span></td>
+      <td data-t="Famille" class="dit">pousse
+        <br><span class="tag gris">commune</span></td>
+      <td data-t="Coût" class="n">20</td>
+      <td data-t="Recharge" class="n">8 s</td>
+      <td data-t="Effet" class="dit">Une poussée immédiate, sans geste à réussir.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Craquage</span>
+        <br><span class="cle">a-craquage</span></td>
+      <td data-t="Famille" class="dit">pousse
+        <br><span class="tag gris">rare</span></td>
+      <td data-t="Coût" class="n">34</td>
+      <td data-t="Recharge" class="n">16 s</td>
+      <td data-t="Effet" class="dit">Grosse poussée, mais ton souffle revient deux fois moins vite pendant 6 s.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Torche</span>
+        <br><span class="cle">a-torche</span></td>
+      <td data-t="Famille" class="dit">pousse
+        <br><span class="tag gris">commune</span></td>
+      <td data-t="Coût" class="n">26</td>
+      <td data-t="Recharge" class="n">12 s</td>
+      <td data-t="Effet" class="dit">Poussée moyenne. Double si ta tribune est en train de reculer.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Silence radio</span>
+        <br><span class="cle">a-silence</span></td>
+      <td data-t="Famille" class="dit">entrave
+        <br><span class="tag gris">rare</span></td>
+      <td data-t="Coût" class="n">30</td>
+      <td data-t="Recharge" class="n">20 s</td>
+      <td data-t="Effet" class="dit">Coupe le souffle adverse 4 s. Leur colère monte pendant ce temps.</td>
+      <td data-t="Virage" class="n"><span class="gris">non</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Brouillard</span>
+        <br><span class="cle">a-brouillard</span></td>
+      <td data-t="Famille" class="dit">entrave
+        <br><span class="tag gris">rare</span></td>
+      <td data-t="Coût" class="n">26</td>
+      <td data-t="Recharge" class="n">18 s</td>
+      <td data-t="Effet" class="dit">Cache les cartes de l’adversaire pendant 6 s. Il joue à l’aveugle.</td>
+      <td data-t="Virage" class="n"><span class="gris">non</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Parcage fermé</span>
+        <br><span class="cle">a-parcage</span></td>
+      <td data-t="Famille" class="dit">entrave
+        <br><span class="tag bleu">epique</span></td>
+      <td data-t="Coût" class="n">38</td>
+      <td data-t="Recharge" class="n">26 s</td>
+      <td data-t="Effet" class="dit">L’adversaire ne peut plus jouer de carte d’action pendant 8 s.</td>
+      <td data-t="Virage" class="n"><span class="gris">non</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Vol de souffle</span>
+        <br><span class="cle">a-vol</span></td>
+      <td data-t="Famille" class="dit">souffle
+        <br><span class="tag gris">rare</span></td>
+      <td data-t="Coût" class="n">22</td>
+      <td data-t="Recharge" class="n">14 s</td>
+      <td data-t="Effet" class="dit">Prend 25 de souffle à l’adversaire, t’en rend 15.</td>
+      <td data-t="Virage" class="n"><span class="gris">non</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Thermos</span>
+        <br><span class="cle">a-thermos</span></td>
+      <td data-t="Famille" class="dit">souffle
+        <br><span class="tag gris">commune</span></td>
+      <td data-t="Coût" class="n">12</td>
+      <td data-t="Recharge" class="n">18 s</td>
+      <td data-t="Effet" class="dit">Rend la moitié de ton souffle manquant.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Collecte</span>
+        <br><span class="cle">a-collecte</span></td>
+      <td data-t="Famille" class="dit">souffle
+        <br><span class="tag bleu">epique</span></td>
+      <td data-t="Coût" class="n">30</td>
+      <td data-t="Recharge" class="n">30 s</td>
+      <td data-t="Effet" class="dit">Rend 20 de souffle à toute ta tribune, toi compris.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Métronome</span>
+        <br><span class="cle">a-metronome</span></td>
+      <td data-t="Famille" class="dit">geste
+        <br><span class="tag gris">rare</span></td>
+      <td data-t="Coût" class="n">24</td>
+      <td data-t="Recharge" class="n">20 s</td>
+      <td data-t="Effet" class="dit">Tes deux prochains chants ont une fenêtre de tempo deux fois plus large.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Vent de face</span>
+        <br><span class="cle">a-vent</span></td>
+      <td data-t="Famille" class="dit">geste
+        <br><span class="tag bleu">epique</span></td>
+      <td data-t="Coût" class="n">32</td>
+      <td data-t="Recharge" class="n">24 s</td>
+      <td data-t="Effet" class="dit">Rétrécit d’un tiers la fenêtre de tempo adverse pendant 10 s.</td>
+      <td data-t="Virage" class="n"><span class="gris">non</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Second souffle</span>
+        <br><span class="cle">a-secondsouffle</span></td>
+      <td data-t="Famille" class="dit">geste
+        <br><span class="tag gris">rare</span></td>
+      <td data-t="Coût" class="n">28</td>
+      <td data-t="Recharge" class="n">22 s</td>
+      <td data-t="Effet" class="dit">Ton prochain geste raté compte comme moyen au lieu de zéro.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Bâche</span>
+        <br><span class="cle">a-bache</span></td>
+      <td data-t="Famille" class="dit">garde
+        <br><span class="tag gris">commune</span></td>
+      <td data-t="Coût" class="n">24</td>
+      <td data-t="Recharge" class="n">15 s</td>
+      <td data-t="Effet" class="dit">Absorbe la prochaine poussée adverse, jusqu’à 40.</td>
+      <td data-t="Virage" class="n"><span class="gris">non</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Renvoi</span>
+        <br><span class="cle">a-miroir</span></td>
+      <td data-t="Famille" class="dit">garde
+        <br><span class="tag or">legendaire</span></td>
+      <td data-t="Coût" class="n">40</td>
+      <td data-t="Recharge" class="n">40 s</td>
+      <td data-t="Effet" class="dit">La prochaine carte d’action adverse se retourne contre elle.</td>
+      <td data-t="Virage" class="n"><span class="gris">non</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Appel du capo</span>
+        <br><span class="cle">a-appel</span></td>
+      <td data-t="Famille" class="dit">collectif
+        <br><span class="tag gris">rare</span></td>
+      <td data-t="Coût" class="n">26</td>
+      <td data-t="Recharge" class="n">25 s</td>
+      <td data-t="Effet" class="dit">Ouvre une fenêtre de 5 s : chaque coéquipier qui chante dedans pousse +40 %.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Mosaïque</span>
+        <br><span class="cle">a-mosaique</span></td>
+      <td data-t="Famille" class="dit">collectif
+        <br><span class="tag bleu">epique</span></td>
+      <td data-t="Coût" class="n">34</td>
+      <td data-t="Recharge" class="n">30 s</td>
+      <td data-t="Effet" class="dit">Ne fait rien seul. Poussée de 18 par coéquipier ayant chanté dans les 10 s.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Chœur</span>
+        <br><span class="cle">a-choeur</span></td>
+      <td data-t="Famille" class="dit">collectif
+        <br><span class="tag or">legendaire</span></td>
+      <td data-t="Coût" class="n">30</td>
+      <td data-t="Recharge" class="n">45 s</td>
+      <td data-t="Effet" class="dit">Toute la tribune doit taper dans la même seconde. Décuplé si tout le monde suit.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Remontada</span>
+        <br><span class="cle">a-remontada</span></td>
+      <td data-t="Famille" class="dit">bascule
+        <br><span class="tag bleu">epique</span></td>
+      <td data-t="Coût" class="n">30</td>
+      <td data-t="Recharge" class="n">60 s</td>
+      <td data-t="Effet" class="dit">Jouable seulement si tu es mené d’au moins un but. Grosse poussée.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Arbitre — changement</span>
+        <br><span class="cle">a-arbitre</span></td>
+      <td data-t="Famille" class="dit">bascule
+        <br><span class="tag gris">commune</span></td>
+      <td data-t="Coût" class="n">18</td>
+      <td data-t="Recharge" class="n">20 s</td>
+      <td data-t="Effet" class="dit">Fait entrer un autre Fanzzy de ton deck. Son équipement le suit.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Relève</span>
+        <br><span class="cle">a-releve</span></td>
+      <td data-t="Famille" class="dit">bascule
+        <br><span class="tag gris">commune</span></td>
+      <td data-t="Coût" class="n">30</td>
+      <td data-t="Recharge" class="n">30 s</td>
+      <td data-t="Effet" class="dit">Ton Fanzzy en tribune passe à son âge suivant, si tu l’as débloqué. Son équipement le suit.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Changement de chant</span>
+        <br><span class="cle">a-relais</span></td>
+      <td data-t="Famille" class="dit">souffle
+        <br><span class="tag gris">rare</span></td>
+      <td data-t="Coût" class="n">20</td>
+      <td data-t="Recharge" class="n">35 s</td>
+      <td data-t="Effet" class="dit">Défausse ta main et reprends-en cinq. Ce que tu jettes revient dans la pioche.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Nouveau souffle</span>
+        <br><span class="cle">a-souffleneuf</span></td>
+      <td data-t="Famille" class="dit">souffle
+        <br><span class="tag or">legendaire</span></td>
+      <td data-t="Coût" class="n">38</td>
+      <td data-t="Recharge" class="n">75 s</td>
+      <td data-t="Effet" class="dit">Toutes tes cartes redeviennent jouables sur-le-champ : plus aucune recharge.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Tifo</span>
+        <br><span class="cle">a-tifo</span></td>
+      <td data-t="Famille" class="dit">pousse
+        <br><span class="tag bleu">epique</span></td>
+      <td data-t="Coût" class="n">26</td>
+      <td data-t="Recharge" class="n">40 s</td>
+      <td data-t="Effet" class="dit">Se déplie pendant 8 s — tout le monde le voit — puis pousse très fort.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Prolongations</span>
+        <br><span class="cle">a-prolongations</span></td>
+      <td data-t="Famille" class="dit">bascule
+        <br><span class="tag or">legendaire</span></td>
+      <td data-t="Coût" class="n">45</td>
+      <td data-t="Recharge" class="n">90 s</td>
+      <td data-t="Effet" class="dit">Après la 75e minute du vrai match seulement. Double ta poussée pendant 15 s.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">L’Ancre</span>
+        <br><span class="cle">a-ancre</span></td>
+      <td data-t="Famille" class="dit">garde
+        <br><span class="tag gris">rare</span></td>
+      <td data-t="Coût" class="n">28</td>
+      <td data-t="Recharge" class="n">35 s</td>
+      <td data-t="Effet" class="dit">La corde cesse de retomber pendant 8 s, pour les deux tribunes.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">La Mise</span>
+        <br><span class="cle">a-mise</span></td>
+      <td data-t="Famille" class="dit">geste
+        <br><span class="tag gris">rare</span></td>
+      <td data-t="Coût" class="n">16</td>
+      <td data-t="Recharge" class="n">22 s</td>
+      <td data-t="Effet" class="dit">Ton prochain chant compte double. S’il est raté, il te coûte 20 de souffle.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">La Tournée</span>
+        <br><span class="cle">a-tournee</span></td>
+      <td data-t="Famille" class="dit">souffle
+        <br><span class="tag bleu">epique</span></td>
+      <td data-t="Coût" class="n">22</td>
+      <td data-t="Recharge" class="n">40 s</td>
+      <td data-t="Effet" class="dit">Tes deux prochaines cartes ne coûtent rien.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Le Long Chant</span>
+        <br><span class="cle">a-longchant</span></td>
+      <td data-t="Famille" class="dit">pousse
+        <br><span class="tag gris">commune</span></td>
+      <td data-t="Coût" class="n">24</td>
+      <td data-t="Recharge" class="n">18 s</td>
+      <td data-t="Effet" class="dit">Pousse un peu, dix fois de suite, pendant dix secondes.</td>
+      <td data-t="Virage" class="n"><span class="vert">oui</span></td>
+    </tr><tr>
+      <td data-t="Carte"><span class="nom">Le Retournement</span>
+        <br><span class="cle">a-retournement</span></td>
+      <td data-t="Famille" class="dit">bascule
+        <br><span class="tag or">legendaire</span></td>
+      <td data-t="Coût" class="n">42</td>
+      <td data-t="Recharge" class="n">80 s</td>
+      <td data-t="Effet" class="dit">Efface la moitié de l’avance adverse. Ne se joue que si tu es mené.</td>
+      <td data-t="Virage" class="n"><span class="gris">non</span></td>
+    </tr></tbody>
+  </table>
+</section>
+
+<!-- ===================================================== l'équipement -->
+<section class="sec" id="stuff">
+  <header class="sec-tete"><p class="sec-num">8</p><div>
+    <h2>Les 17 pièces d’équipement</h2>
+    <p>Deux au plus par Fanzzy. <b>Chacune a un revers</b>, sans exception : une pièce qui
+      n’aurait que des bonus ne se choisirait pas, elle s’accumulerait.</p>
+  </div></header>
+
+  <div class="cartes"><div class="c">
+    <p class="c-tete"><span class="tag gris">commune</span>
+      <span class="cle">jumelles</span></p>
+    <h4>Jumelles</h4>
+    <p>Tu vois venir le rythme, mais tu chantes plus lentement.</p>
+    <ul class="mods"><li class="plus">fenêtre de tempo +25 %</li><li class="moins">cadence +70</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">commune</span>
+      <span class="cle">echarpe</span></p>
+    <h4>Écharpe du club</h4>
+    <p>Tiens plus longtemps, respire moins bien.</p>
+    <ul class="mods"><li class="plus">tenue +15 %</li><li class="moins">souffle -10 %</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">rare</span>
+      <span class="cle">tambour</span></p>
+    <h4>Tambour de poche</h4>
+    <p>Martelage plus court à réussir, mais moins récompensé.</p>
+    <ul class="mods"><li class="plus">temps de martelage -600</li><li class="moins">martelage -6 %</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">rare</span>
+      <span class="cle">capuche</span></p>
+    <h4>Capuche</h4>
+    <p>On te contre moins bien, tu contres moins bien aussi.</p>
+    <ul class="mods"><li class="moins">contre -20 %</li><li class="plus">résistance au contre +30 %</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag bleu">epique</span>
+      <span class="cle">megaphone</span></p>
+    <h4>Mégaphone</h4>
+    <p>Tes gestes parfaits comptent double, tes ratés se retournent.</p>
+    <ul class="mods"><li class="plus">geste parfait +40 %</li><li class="moins">retour de bâton oui</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag bleu">epique</span>
+      <span class="cle">thermos</span></p>
+    <h4>Thermos</h4>
+    <p>Le souffle revient plus vite, les grosses cartes coûtent plus cher.</p>
+    <ul class="mods"><li class="plus">souffle +20 %</li><li class="plus">prix des cartes +15 %</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag or">legendaire</span>
+      <span class="cle">bache</span></p>
+    <h4>Bout de bâche</h4>
+    <p>Le contre devient redoutable, le chant s’affaiblit.</p>
+    <ul class="mods"><li class="plus">contre +60 %</li><li class="moins">fenêtre de tempo -15 %</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">commune</span>
+      <span class="cle">gants</span></p>
+    <h4>Gants coupés</h4>
+    <p>Le martelage part plus vite, la tenue glisse des doigts.</p>
+    <ul class="mods"><li class="plus">martelage +18 %</li><li class="moins">tolérance de tenue -1</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">commune</span>
+      <span class="cle">sifflet</span></p>
+    <h4>Sifflet à roulette</h4>
+    <p>Le contretemps devient lisible, le tempo se brouille.</p>
+    <ul class="mods"><li class="plus">cadence -55</li><li class="moins">fenêtre de tempo -8 %</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">commune</span>
+      <span class="cle">carnet</span></p>
+    <h4>Carnet de chants</h4>
+    <p>Tu te souviens mieux, tu improvises moins.</p>
+    <ul class="mods"><li class="plus">geste parfait +22 %</li><li class="moins">martelage -10 %</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">rare</span>
+      <span class="cle">bonnet</span></p>
+    <h4>Bonnet de virage</h4>
+    <p>Le souffle revient, la fenêtre se resserre.</p>
+    <ul class="mods"><li class="plus">souffle +24 %</li><li class="moins">fenêtre de tempo -10 %</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">rare</span>
+      <span class="cle">brassard</span></p>
+    <h4>Brassard de capo</h4>
+    <p>Tu tiens la corde longtemps, tu la reprends mal.</p>
+    <ul class="mods"><li class="plus">tenue +30 %</li><li class="plus">tolérance de tenue +2</li><li class="moins">reprise -18 %</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">rare</span>
+      <span class="cle">drapeau</span></p>
+    <h4>Drapeau à deux mains</h4>
+    <p>Les tifos portent loin ; les deux mains prises, le martelage souffre.</p>
+    <ul class="mods"><li class="plus">contre +30 %</li><li class="moins">temps de martelage +500</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag bleu">epique</span>
+      <span class="cle">tifosac</span></p>
+    <h4>Sac de cartons</h4>
+    <p>La mosaïque se monte vite, le souffle y passe.</p>
+    <ul class="mods"><li class="plus">geste parfait +34 %</li><li class="moins">souffle -16 %</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag bleu">epique</span>
+      <span class="cle">cornet</span></p>
+    <h4>Cornet de brume</h4>
+    <p>Une poussée qui ne se retourne jamais contre toi, et qui coûte.</p>
+    <ul class="mods"><li class="plus">retour de bâton non</li><li class="plus">prix des cartes +30 %</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag bleu">epique</span>
+      <span class="cle">chrono</span></p>
+    <h4>Chronomètre de poche</h4>
+    <p>Le rythme se lit à la seconde près, le contre ne se lit plus du tout.</p>
+    <ul class="mods"><li class="plus">fenêtre de tempo +30 %</li><li class="moins">résistance au contre -22 %</li></ul>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag or">legendaire</span>
+      <span class="cle">fanion</span></p>
+    <h4>Fanion de 1904</h4>
+    <p>Tout tient plus longtemps. Rien ne repart vite.</p>
+    <ul class="mods"><li class="plus">tenue +50 %</li><li class="plus">résistance au contre +35 %</li><li class="moins">cadence +120</li><li class="moins">martelage -20 %</li></ul>
+  </div></div>
+</section>
+
+<!-- ========================================================= les stades -->
+<section class="sec" id="stades">
+  <header class="sec-tete"><p class="sec-num">9</p><div>
+    <h2>Les 10 stades</h2>
+    <p>Le lieu appartient <b>au match</b>, jamais à un joueur — et son effet s’applique aux
+      deux camps. Un stade qui avantagerait son propriétaire serait la première chose du jeu
+      à donner de la puissance sans que l’adversaire l’ait choisie.</p>
+  </div></header>
+
+  <div class="cartes"><div class="c">
+    <p class="c-tete"><span class="tag gris">commune</span>
+      <span class="cle">chaudron</span></p>
+    <h4>Le Chaudron</h4>
+    <p>Les tribunes sont à trois mètres de la touche. Tout s’entend, tout porte.</p>
+    <ul class="mods"><li class="plus">poussée +8 %</li><li class="moins">souffle -6 %</li></ul>
+    <p style="margin-top:9px;color:var(--projo);font-size:12.5px">Tout le monde pousse plus fort, et se fatigue plus vite.</p>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">rare</span>
+      <span class="cle">montagne</span></p>
+    <h4>Le Nid d’Aigle</h4>
+    <p>Mille six cents mètres, la neige sur les toits, et l’air qui manque.</p>
+    <ul class="mods"><li class="moins">souffle -20 %</li></ul>
+    <p style="margin-top:9px;color:var(--projo);font-size:12.5px">L’air est rare : le souffle revient bien plus lentement, des deux côtés.</p>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">rare</span>
+      <span class="cle">arene</span></p>
+    <h4>L’Arène</h4>
+    <p>Un bol fermé, un toit de verre, et pas un souffle d’air qui entre.</p>
+    <ul class="mods"><li class="plus">fenêtre de tempo +12 %</li></ul>
+    <p style="margin-top:9px;color:var(--projo);font-size:12.5px">Rien ne perturbe le rythme : la fenêtre de tempo est plus large pour tous.</p>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag bleu">epique</span>
+      <span class="cle">poussiere</span></p>
+    <h4>La Poussière</h4>
+    <p>La terre rouge monte dans les projecteurs et ne redescend jamais.</p>
+    <ul class="mods"><li class="moins">fenêtre de tempo -12 %</li><li class="plus">geste parfait +25 %</li></ul>
+    <p style="margin-top:9px;color:var(--projo);font-size:12.5px">Le rythme est difficile à tenir, mais un geste parfait paie double.</p>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">commune</span>
+      <span class="cle">piste</span></p>
+    <h4>La Piste</h4>
+    <p>Une piste d’athlétisme entre la foule et le terrain. Le son se perd en route.</p>
+    <ul class="mods"><li class="moins">poussée -10 %</li><li class="plus">ferveur +10 %</li></ul>
+    <p style="margin-top:9px;color:var(--projo);font-size:12.5px">La foule est loin : on pousse moins, mais la ferveur se gagne plus vite.</p>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">rare</span>
+      <span class="cle">tole</span></p>
+    <h4>Le Toit de Tôle</h4>
+    <p>Une casquette de tôle ondulée au-dessus du virage. Le bruit ne sort pas.</p>
+    <ul class="mods"><li class="plus">poussée +14 %</li><li class="moins">fenêtre de tempo -14 %</li></ul>
+    <p style="margin-top:9px;color:var(--projo);font-size:12.5px">On s’entend pousser, on ne s’entend plus compter : le rythme devient dur à tenir.</p>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">rare</span>
+      <span class="cle">marin</span></p>
+    <h4>Le Bord de Mer</h4>
+    <p>Le vent de travers entre par la tribune ouverte et emporte la moitié des chants.</p>
+    <ul class="mods"><li class="moins">geste parfait -18 %</li><li class="plus">souffle +22 %</li></ul>
+    <p style="margin-top:9px;color:var(--projo);font-size:12.5px">Le vent emporte les beaux gestes et rend le souffle plus vite, pour tous.</p>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag bleu">epique</span>
+      <span class="cle">huisclos</span></p>
+    <h4>Le Stade Vide</h4>
+    <p>Huis clos. On entend le ballon, les crampons, et chaque fausse note.</p>
+    <ul class="mods"><li class="plus">fenêtre de tempo +30 %</li><li class="moins">ferveur -30 %</li></ul>
+    <p style="margin-top:9px;color:var(--projo);font-size:12.5px">Rien ne couvre le rythme, et rien ne le porte non plus : la ferveur monte à peine.</p>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag bleu">epique</span>
+      <span class="cle">neige</span></p>
+    <h4>La Neige</h4>
+    <p>Les lignes ont été repassées en bleu trois fois. On ne les voit déjà plus.</p>
+    <ul class="mods"><li class="moins">cadence +130</li><li class="plus">résistance au contre +30 %</li></ul>
+    <p style="margin-top:9px;color:var(--projo);font-size:12.5px">Tout est ralenti : moins d’occasions de chanter, mais les contres portent moins.</p>
+  </div><div class="c">
+    <p class="c-tete"><span class="tag gris">commune</span>
+      <span class="cle">annexe</span></p>
+    <h4>Le Terrain Annexe</h4>
+    <p>Deux cents personnes le long d’une main courante. Tout le monde se connaît.</p>
+    <ul class="mods"><li class="moins">poussée -14 %</li><li class="plus">reprise +35 %</li></ul>
+    <p style="margin-top:9px;color:var(--projo);font-size:12.5px">On pousse peu, mais le souffle dépensé revient bien mieux.</p>
+  </div></div>
+</section>
+
+<!-- ========================================================= l'économie -->
+<section class="sec" id="economie">
+  <header class="sec-tete"><p class="sec-num">10</p><div>
+    <h2>L’économie</h2>
+    <p>Le booster donne les personnages, les doublons donnent les écharpes, les écharpes
+      font grandir les personnages. C’est la boucle entière.</p>
+  </div></header>
+
+  <table>
+    <thead><tr><th>Ce que c’est</th><th>Valeur</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td data-t="Quoi" class="dit"><b>Boosters au départ</b></td>
+        <td data-t="Valeur" class="n">3</td>
+        <td data-t="Note" class="dit">Trois, pas douze : douze d’un coup, c’est cinq minutes
+          d’ouverture puis plus rien à faire pendant deux heures.</td></tr>
+      <tr><td data-t="Quoi" class="dit"><b>Réserve maximale</b></td>
+        <td data-t="Valeur" class="n">12</td><td data-t="Note" class="dit">—</td></tr>
+      <tr><td data-t="Quoi" class="dit"><b>Un booster se recharge en</b></td>
+        <td data-t="Valeur" class="n">10 min</td>
+        <td data-t="Note" class="dit">Soit 144 par jour
+          en se connectant régulièrement.</td></tr>
+      <tr><td data-t="Quoi" class="dit"><b>Un booster s’achète</b></td>
+        <td data-t="Valeur" class="n">45 écharpes</td><td data-t="Note" class="dit">—</td></tr>
+      <tr><td data-t="Quoi" class="dit"><b>Faire grandir</b></td>
+        <td data-t="Valeur" class="n">25 puis 90</td>
+        <td data-t="Note" class="dit">Une lignée complète coûte 115 écharpes.</td></tr>
+      <tr><td data-t="Quoi" class="dit"><b>XP par booster</b></td>
+        <td data-t="Valeur" class="n">5</td><td data-t="Note" class="dit">—</td></tr>
+      <tr><td data-t="Quoi" class="dit"><b>XP par duel</b></td>
+        <td data-t="Valeur" class="n">12 / 20</td>
+        <td data-t="Note" class="dit">Entraînement / classé, plus 15 en cas de
+          victoire. L’XP <b>ne double pas</b> quand on pousse pour son club : les écharpes
+          récompensent la ferveur, le niveau mesure le temps passé à jouer.</td></tr>
+      <tr><td data-t="Quoi" class="dit"><b>Paliers de niveau</b></td>
+        <td data-t="Valeur" class="n">7</td>
+        <td data-t="Note" class="dit">Ils ouvrent des <b>capacités</b>, et rien que des
+          capacités : des emplacements de club à suivre, un troisième rang de tribune.
+          Les séries en sont sorties — elles s’ouvrent par saison. Une capacité n’a de
+          sens que pour un joueur donné, et personne n’a envie qu’on la lui annonce.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Les deux monnaies</h3>
+  <p class="note"><b>Les écharpes</b> se gagnent en jouant : doublons, fins de duel, part du
+    KOP. Elles paient les évolutions et les boosters. <b>Les billets</b> s’achètent avec de
+    l’argent réel et ne paient que des tenues et de l’équipement — jamais un booster, jamais
+    une carte. On n’achète pas de la collection.</p>
+</section>
+
+<!-- ==================================================== l'administration -->
+<section class="sec" id="reglages">
+  <header class="sec-tete"><p class="sec-num">11</p><div>
+    <h2>Ce qui se règle sans déploiement</h2>
+    <p>34 réglages en 7 sections, modifiables depuis
+      <code>/admin</code>. Ils prennent effet immédiatement : le jeu les relit à chaque
+      lecture, il ne les copie pas au démarrage.</p>
+  </div></header>
+
+  <h3>BOOSTERS ET ÉCHARPES</h3>
+    <p class="note">Le rythme auquel on reçoit des cartes, et ce qu’elles coûtent.</p>
+    <table>
+      <thead><tr><th>Réglage</th><th>Défaut</th><th>Bornes</th><th>Clé</th></tr></thead>
+      <tbody><tr>
+        <td data-t="Réglage" class="dit">Un booster tous les <span class="gris">(minutes)</span></td>
+        <td data-t="Défaut" class="n">10</td>
+        <td data-t="Bornes" class="n gris">1 – 1440</td>
+        <td data-t="Clé"><span class="cle">pack.regen_min</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Boosters offerts à l’inscription <span class="gris">(boosters)</span></td>
+        <td data-t="Défaut" class="n">3</td>
+        <td data-t="Bornes" class="n gris">0 – 20</td>
+        <td data-t="Clé"><span class="cle">pack.depart</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Réserve maximale <span class="gris">(boosters)</span></td>
+        <td data-t="Défaut" class="n">12</td>
+        <td data-t="Bornes" class="n gris">1 – 99</td>
+        <td data-t="Clé"><span class="cle">pack.max</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Acheter un booster coûte <span class="gris">(écharpes)</span></td>
+        <td data-t="Défaut" class="n">45</td>
+        <td data-t="Bornes" class="n gris">1 – 999</td>
+        <td data-t="Clé"><span class="cle">pack.prix_echarpes</span></td></tr>
+      </tbody></table><h3>LE GRAND VIRAGE</h3>
+    <p class="note">La salle collective adossée à un vrai match.</p>
+    <table>
+      <thead><tr><th>Réglage</th><th>Défaut</th><th>Bornes</th><th>Clé</th></tr></thead>
+      <tbody><tr>
+        <td data-t="Réglage" class="dit">La corde marque à <span class="gris">(points)</span></td>
+        <td data-t="Défaut" class="n">260</td>
+        <td data-t="Bornes" class="n gris">50 – 2000</td>
+        <td data-t="Clé"><span class="cle">virage.but_a</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Souffle maximum <span class="gris">(points)</span></td>
+        <td data-t="Défaut" class="n">100</td>
+        <td data-t="Bornes" class="n gris">20 – 500</td>
+        <td data-t="Clé"><span class="cle">virage.souffle_max</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Souffle regagné <span class="gris">(par seconde)</span></td>
+        <td data-t="Défaut" class="n">13</td>
+        <td data-t="Bornes" class="n gris">1 – 60</td>
+        <td data-t="Clé"><span class="cle">virage.souffle_par_sec</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">La corde retombe de <span class="gris">(points/seconde)</span></td>
+        <td data-t="Défaut" class="n">1.4</td>
+        <td data-t="Bornes" class="n gris">0 – 30</td>
+        <td data-t="Clé"><span class="cle">virage.decroissance</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">On sort de la foule après <span class="gris">(secondes sans geste)</span></td>
+        <td data-t="Défaut" class="n">90</td>
+        <td data-t="Bornes" class="n gris">15 – 600</td>
+        <td data-t="Clé"><span class="cle">virage.inactif_sec</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Un vrai but secoue la corde de <span class="gris">(points)</span></td>
+        <td data-t="Défaut" class="n">90</td>
+        <td data-t="Bornes" class="n gris">0 – 400</td>
+        <td data-t="Clé"><span class="cle">virage.secousse_but_reel</span></td></tr>
+      </tbody></table><h3>LES DUELS</h3>
+    <p class="note">Les parties courtes, entre joueurs ou contre la machine.</p>
+    <table>
+      <thead><tr><th>Réglage</th><th>Défaut</th><th>Bornes</th><th>Clé</th></tr></thead>
+      <tbody><tr>
+        <td data-t="Réglage" class="dit">La corde marque à <span class="gris">(points)</span></td>
+        <td data-t="Défaut" class="n">200</td>
+        <td data-t="Bornes" class="n gris">50 – 2000</td>
+        <td data-t="Clé"><span class="cle">duel.but_a</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">La corde retombe de <span class="gris">(points/seconde)</span></td>
+        <td data-t="Défaut" class="n">1.2</td>
+        <td data-t="Bornes" class="n gris">0 – 30</td>
+        <td data-t="Clé"><span class="cle">duel.decroissance</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Buts pour gagner <span class="gris">(buts)</span></td>
+        <td data-t="Défaut" class="n">3</td>
+        <td data-t="Bornes" class="n gris">1 – 10</td>
+        <td data-t="Clé"><span class="cle">duel.buts_pour_gagner</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Durée d’un duel <span class="gris">(minutes)</span></td>
+        <td data-t="Défaut" class="n">5</td>
+        <td data-t="Bornes" class="n gris">1 – 30</td>
+        <td data-t="Clé"><span class="cle">duel.duree_min</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Un chant parfait pousse de <span class="gris">(points)</span></td>
+        <td data-t="Défaut" class="n">44</td>
+        <td data-t="Bornes" class="n gris">1 – 200</td>
+        <td data-t="Clé"><span class="cle">duel.chant_puissance</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Un chant coûte <span class="gris">(souffle)</span></td>
+        <td data-t="Défaut" class="n">18</td>
+        <td data-t="Bornes" class="n gris">0 – 100</td>
+        <td data-t="Clé"><span class="cle">duel.chant_cout</span></td></tr>
+      </tbody></table><h3>LA COMPOSITION DU DECK</h3>
+    <p class="note">Ce qu’un joueur peut emmener. Changer ces nombres rend des decks existants invalides : le serveur les refusera au prochain enregistrement.</p>
+    <table>
+      <thead><tr><th>Réglage</th><th>Défaut</th><th>Bornes</th><th>Clé</th></tr></thead>
+      <tbody><tr>
+        <td data-t="Réglage" class="dit">Fanzzy par deck <span class="gris">(personnages)</span></td>
+        <td data-t="Défaut" class="n">3</td>
+        <td data-t="Bornes" class="n gris">1 – 8</td>
+        <td data-t="Clé"><span class="cle">deck.fanzzy</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Cartes d’action par deck <span class="gris">(cartes)</span></td>
+        <td data-t="Défaut" class="n">10</td>
+        <td data-t="Bornes" class="n gris">1 – 30</td>
+        <td data-t="Clé"><span class="cle">deck.actions</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Cartes en main <span class="gris">(cartes)</span></td>
+        <td data-t="Défaut" class="n">5</td>
+        <td data-t="Bornes" class="n gris">1 – 10</td>
+        <td data-t="Clé"><span class="cle">deck.main_visible</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Pièces d’équipement par Fanzzy <span class="gris">(pièces)</span></td>
+        <td data-t="Défaut" class="n">2</td>
+        <td data-t="Bornes" class="n gris">0 – 6</td>
+        <td data-t="Clé"><span class="cle">deck.stuff_par_fanzzy</span></td></tr>
+      </tbody></table><h3>LA PROGRESSION</h3>
+    <p class="note">L’expérience gagnée par action.</p>
+    <table>
+      <thead><tr><th>Réglage</th><th>Défaut</th><th>Bornes</th><th>Clé</th></tr></thead>
+      <tbody><tr>
+        <td data-t="Réglage" class="dit">Ouvrir un booster rapporte <span class="gris">(XP)</span></td>
+        <td data-t="Défaut" class="n">5</td>
+        <td data-t="Bornes" class="n gris">0 – 500</td>
+        <td data-t="Clé"><span class="cle">xp.pack</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Un duel d’entraînement rapporte <span class="gris">(XP)</span></td>
+        <td data-t="Défaut" class="n">12</td>
+        <td data-t="Bornes" class="n gris">0 – 500</td>
+        <td data-t="Clé"><span class="cle">xp.duel_entrainement</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Un duel classé rapporte <span class="gris">(XP)</span></td>
+        <td data-t="Défaut" class="n">20</td>
+        <td data-t="Bornes" class="n gris">0 – 500</td>
+        <td data-t="Clé"><span class="cle">xp.duel_classe</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Gagner rapporte en plus <span class="gris">(XP)</span></td>
+        <td data-t="Défaut" class="n">15</td>
+        <td data-t="Bornes" class="n gris">0 – 500</td>
+        <td data-t="Clé"><span class="cle">xp.victoire</span></td></tr>
+      </tbody></table><h3>L’ÉTAL EN BILLETS</h3>
+    <p class="note">Ce que coûtent les objets achetés en billets. Les prix en euros, eux, vivent dans le catalogue de la boutique et ne se règlent pas ici : un prix qu’un écran peut changer d’un doigt est un prix qui finira changé par erreur.</p>
+    <table>
+      <thead><tr><th>Réglage</th><th>Défaut</th><th>Bornes</th><th>Clé</th></tr></thead>
+      <tbody><tr>
+        <td data-t="Réglage" class="dit">Pièce d’équipement commune <span class="gris">(billets)</span></td>
+        <td data-t="Défaut" class="n">45</td>
+        <td data-t="Bornes" class="n gris">1 – 9999</td>
+        <td data-t="Clé"><span class="cle">billets.stuff_commune</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Pièce rare <span class="gris">(billets)</span></td>
+        <td data-t="Défaut" class="n">110</td>
+        <td data-t="Bornes" class="n gris">1 – 9999</td>
+        <td data-t="Clé"><span class="cle">billets.stuff_rare</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Pièce épique <span class="gris">(billets)</span></td>
+        <td data-t="Défaut" class="n">260</td>
+        <td data-t="Bornes" class="n gris">1 – 9999</td>
+        <td data-t="Clé"><span class="cle">billets.stuff_epique</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Pièce légendaire <span class="gris">(billets)</span></td>
+        <td data-t="Défaut" class="n">520</td>
+        <td data-t="Bornes" class="n gris">1 – 9999</td>
+        <td data-t="Clé"><span class="cle">billets.stuff_legendaire</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Une tenue, sur un Fanzzy <span class="gris">(billets)</span></td>
+        <td data-t="Défaut" class="n">130</td>
+        <td data-t="Bornes" class="n gris">1 – 9999</td>
+        <td data-t="Clé"><span class="cle">billets.tenue</span></td></tr>
+      </tbody></table><h3>L’EXPLOITATION</h3>
+    <p class="note">Ce qui s’adresse aux joueurs depuis l’administration.</p>
+    <table>
+      <thead><tr><th>Réglage</th><th>Défaut</th><th>Bornes</th><th>Clé</th></tr></thead>
+      <tbody><tr>
+        <td data-t="Réglage" class="dit">Afficher un bandeau d’annonce</td>
+        <td data-t="Défaut" class="n">false</td>
+        <td data-t="Bornes" class="n gris">—</td>
+        <td data-t="Clé"><span class="cle">annonce.actif</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Texte de l’annonce</td>
+        <td data-t="Défaut" class="n"></td>
+        <td data-t="Bornes" class="n gris">—</td>
+        <td data-t="Clé"><span class="cle">annonce.texte</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Ton du bandeau</td>
+        <td data-t="Défaut" class="n">info</td>
+        <td data-t="Bornes" class="n gris">—</td>
+        <td data-t="Clé"><span class="cle">annonce.ton</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Fermer le jeu aux joueurs</td>
+        <td data-t="Défaut" class="n">false</td>
+        <td data-t="Bornes" class="n gris">—</td>
+        <td data-t="Clé"><span class="cle">maintenance.actif</span></td></tr><tr>
+        <td data-t="Réglage" class="dit">Message de fermeture</td>
+        <td data-t="Défaut" class="dit">Le jeu est fermé quelques minutes, le temps d’une mise à jour.</td>
+        <td data-t="Bornes" class="n gris">—</td>
+        <td data-t="Clé"><span class="cle">maintenance.texte</span></td></tr>
+      </tbody></table>
+
+  <p class="note" style="margin-top:20px">Ce qui <b>ne</b> se règle pas ici : les taux de
+    tirage, les barèmes des gestes et les prix en euros. Ils décrivent les règles du jeu et
+    non son équilibrage — et un prix qu’un écran peut changer d’un doigt est un prix qui
+    finira changé par erreur.</p>
+</section>
+
+<!-- =========================================================== l'état -->
+<section class="sec" id="etat">
+  <header class="sec-tete"><p class="sec-num">12</p><div>
+    <h2>Où en est le développement</h2>
+    <p>Ce qui tourne, ce qui tourne à moitié, et ce qui manque. Cette section est la seule
+      écrite à la main — aucun module ne sait dire si une chose est finie.</p>
+  </div></header>
+
+  <div class="etat">
+    <div class="e" data-f="fait"><b>LE JEU</b><p>Duel et Grand Virage, 17
+      mini-jeux, 19 chants, 29 cartes d’action. Les deux modes
+      se jouent de la même façon.</p></div>
+    <div class="e" data-f="fait"><b>LE CATALOGUE</b><p>643 cartes,
+      12 séries, au moins cinq légendaires chacune. Chaque famille tient sa promesse de
+      gestes.</p></div>
+    <div class="e" data-f="fait"><b>LA COLLECTION</b><p>Boosters, kiosque, classeur, deck,
+      évolutions, 17 pièces d’équipement, tenues.</p></div>
+    <div class="e" data-f="fait"><b>LE SOCIAL</b><p>KOP avec pot commun et votes, amis,
+      classements, cartes-souvenirs liées aux vrais buts.</p></div>
+    <div class="e" data-f="fait"><b>L’ADMINISTRATION</b><p>34 réglages,
+      catalogue éditable, journal d’audit, gestion des joueurs.</p></div>
+    <div class="e" data-f="fait"><b>LA SÉCURITÉ</b><p>Notation côté serveur, détection de
+      frappes non humaines, en-têtes de sécurité, limitation de débit, SQL paramétré.</p></div>
+
+    <div class="e" data-f="partiel"><b>LES ILLUSTRATIONS</b><p>198 personnages dessinés en
+      propre ; 262 âges montrent le dessin de leur premier âge. <b>183 cartes</b>
+      attendent encore le leur — 31 légendaires et les cinq séries neuves. Quarante-quatre
+      dessins en effaceraient cent trente-deux : les âges suivent leur premier âge.</p></div>
+    <div class="e" data-f="partiel"><b>LA BOUTIQUE</b><p>L’étal fonctionne en écharpes et en
+      billets. Les paiements en euros ne sont <b>pas branchés</b> : la boutique est en
+      vitrine.</p></div>
+    <div class="e" data-f="partiel"><b>LES STADES</b><p>Les 10 existent,
+      s’affichent et appliquent leurs effets. Ils ne se <b>collectionnent pas encore</b> :
+      le lieu est tiré du match, pas des possessions.</p></div>
+
+    <div class="e" data-f="reste"><b>ÉCRAN LARGE</b><p>L’application est une colonne pensée
+      pour le téléphone. Sur un ordinateur, les deux tiers de l’écran sont vides.</p></div>
+    <div class="e" data-f="reste"><b>LES ÂGES DESSINÉS</b><p>Voir un personnage vieillir est
+      ce que le jeu promet. Le repli montre le bon personnage, pas son âge.</p></div>
+    <div class="e" data-f="reste"><b>LE JURIDIQUE</b><p>Droit de rétractation, mentions
+      légales et TVA : rien de tout cela n’est traité, et il le faudra avant le premier
+      paiement réel.</p></div>
+  </div>
+</section>
+
+<footer class="pied">
+  <p><b>Ce dossier se refait.</b> <code>node scripts/dossier.mjs</code> le régénère depuis
+    le catalogue réel. Les nombres, les règles, les coûts et les barèmes ne peuvent donc pas
+    vieillir plus longtemps qu’une commande — seule la dernière section, celle de l’état,
+    est écrite à la main.</p>
+  <p>Généré le 14 septembre 2026.</p>
+</footer>
+
+</div>

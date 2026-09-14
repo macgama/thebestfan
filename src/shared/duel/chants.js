@@ -50,6 +50,15 @@ export const CHANTS = {
   aupoint:     { nom: 'Au point',        gest: 'memoire',     cost: 26, power: 47 },
   moulinet:    { nom: 'Le moulinet',     gest: 'echarpe',     cost: 25, power: 42 },
   appel:       { nom: 'L’appel du capo', gest: 'capo',        cost: 29, power: 49 },
+
+  /* Les deux derniers mini-jeux. Ils sont arrivés au moteur et au duel sans
+     passer par ici, et le Virage ne propose que les gestes portés par un chant :
+     ils y étaient donc injouables. C'est la deuxième fois que ce chemin se
+     coupe — d'où le contrôle de `virage-smoke`, qui confronte désormais le
+     répertoire à la liste des gestes du jeu plutôt qu'à une liste écrite à la
+     main. */
+  trilage:  { nom: 'Le tri des cartons', gest: 'tri',   cost: 24, power: 38 },
+  rebours:  { nom: 'Le compte à rebours', gest: 'compte', cost: 31, power: 51 },
 };
 
 /**
@@ -67,8 +76,8 @@ export const CHANTS = {
    bout à bout, elles donneraient un quart d'heure sans rien à dessiner, puis un
    quart d'heure sans rien à chanter. Un Virage doit faire passer les deux. */
 export const ORDRE = ['reprise', 'roulement', 'bache', 'repons', 'onetaitla',
-  'damier', 'salves', 'contrechant', 'moulinet', 'craquage', 'montee',
-  'aupoint', 'tenir', 'mur', 'appel', 'relance', 'cadence'];
+  'damier', 'salves', 'trilage', 'contrechant', 'moulinet', 'craquage', 'montee',
+  'aupoint', 'rebours', 'tenir', 'mur', 'appel', 'relance', 'cadence'];
 
 /** Tous, sous forme de liste — pour qui veut les parcourir. */
 export const LISTE_CHANTS = ORDRE.map((id) => ({ id, ...CHANTS[id] }));

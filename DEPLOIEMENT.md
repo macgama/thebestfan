@@ -72,7 +72,7 @@ curl -s https://thebestfan.online/healthz
 ```bash
 cd ~/sites/thebestfan.online
 for f in auth football minutes couleurs duel souvenirs fanzzy teletext inventaire skins tenues deck admin kop amis \
-         niveau raretes stades boutique billets; do
+         niveau raretes stades boutique billets saisons series-neuves; do
   mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
 done
 ```
@@ -110,8 +110,29 @@ que `raretes` les a rangées.
   collections existantes** — c'est la seule migration du projet dans ce cas.
   `node scripts/stades-smoke.mjs` la rejoue sur une collection fabriquée avant
   que tu la lances ici.
+- `series-neuves.sql` range quarante-deux cartes ailleurs. VIRAGE NORD et
+  NUITS EUROPÉENNES ont été dissoutes au profit de cinq séries neuves, et le
+  catalogue s'amorce en `INSERT IGNORE` : sans ce fichier, une base en service
+  garderait ces quarante-deux cartes dans deux séries que plus aucune page
+  n'affiche — tirables et invisibles. Aucun identifiant ne change, donc les
+  collections, les decks et les tenues suivent seuls. Il retire aussi VN et NE
+  de `series_actives` ; il **n'ouvre pas** les cinq séries neuves, c'est à
+  l'administration de le faire si cette installation restreint ses séries.
+- `saisons.sql` crée la table qui ouvre le contenu, et **change une mécanique du
+  jeu** : les séries s'ouvraient au niveau du joueur, elles s'ouvrent désormais
+  par saison, depuis l'administration, pour tout le monde le même jour.
 
-Contrôle : `SHOW TABLES;` doit en lister **37**.
+  Il crée une **saison 1** faite de ce que l'installation ouvrait déjà — la
+  liste de `reglages.series_actives`, ou toutes les séries si ce réglage était
+  absent. **Sans cette reprise, une base en service se retrouverait sans aucune
+  série ouverte** : l'union des saisons lancées serait vide et le kiosque
+  n'aurait plus rien à distribuer. Elle ne s'exécute qu'une fois, sur une base
+  qui n'a encore aucune saison.
+
+  Après le déploiement, l'onglet **SAISONS** de `/admin` est le seul endroit d'où
+  l'on ouvre une série. L'onglet FANZZY ne les règle plus : il les montre.
+
+Contrôle : `SHOW TABLES;` doit en lister **38**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`

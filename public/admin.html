@@ -6,6 +6,7 @@
 <title>Administration — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
 <style>
 
 *{box-sizing:border-box}
@@ -100,14 +101,26 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
   display:grid;place-items:center;font-size:9px;opacity:.5}
 .fzrow.depublie{opacity:.45}
 .fzedit{background:rgba(0,0,0,.35)}
-.fzedit .grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;
-  padding:12px 6px}
-.fzedit label{display:block;font-size:10px;letter-spacing:.1em;opacity:.5;margin-bottom:4px;
-  font-family:var(--banner)}
-.fzedit input,.fzedit select,.fzedit textarea{width:100%}
-.fzedit textarea{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);border-radius:6px;
+/* Le formulaire, partagé par la fiche d'un Fanzzy et par celle d'une saison.
+   `.sai-edit` est dans chaque sélecteur et non recopié en dessous : le premier
+   jet n'avait que `.fzedit`, et le formulaire des saisons sortait sans grille —
+   le champ d'annonce se réduisait à cent soixante pixels avec son texte qui
+   débordait par-dessus l'étiquette. Une mise en page qui n'existe que pour un
+   écran sur deux est une mise en page qu'on refera de travers. */
+.fzedit .grille,.sai-edit .grille{display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;padding:12px 6px}
+.fzedit label,.sai-edit label{display:block;font-size:10px;letter-spacing:.1em;opacity:.5;
+  margin-bottom:4px;font-family:var(--banner)}
+.fzedit input,.fzedit select,.fzedit textarea,
+.sai-edit .grille input,.sai-edit .grille textarea{width:100%}
+.fzedit textarea,.sai-edit textarea{background:rgba(0,0,0,.4);
+  border:1px solid rgba(242,238,228,.18);border-radius:6px;
   color:inherit;padding:8px 10px;font-family:inherit;font-size:13px;min-height:66px;resize:vertical}
-.fzedit .large{grid-column:1/-1}
+.fzedit .large,.sai-edit .large{grid-column:1/-1}
+/* L'étiquette d'une case à cocher n'est pas une étiquette de champ : elle est
+   à côté de sa case, pas au-dessus, et elle se lit. */
+.sai-edit .sai-k{display:inline-flex;font-size:11.5px;letter-spacing:0;opacity:1;
+  margin-bottom:0;font-family:var(--ui);text-transform:none}
 .fzedit .actions{padding:0 6px 14px;display:flex;gap:8px;align-items:center}
 .fzedit .err{color:var(--flare);font-size:12px}
 .series{border:1px solid rgba(242,238,228,.14);border-radius:10px;padding:12px 14px;margin:0 0 12px}
@@ -115,14 +128,43 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
 .series-t span{display:block;font-family:var(--ui);font-size:12px;letter-spacing:0;
   opacity:.55;margin-top:3px;text-transform:none}
 .series-l{display:flex;flex-wrap:wrap;gap:6px}
-.series button{background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.14);
-  border-radius:8px;color:inherit;font:inherit;padding:7px 11px;cursor:pointer;text-align:left}
-.series button b{display:block;font-family:var(--banner);font-size:11.5px;letter-spacing:.06em}
-.series button span{font-size:10px;opacity:.45}
-.series button.on{border-color:#1E9E6A;background:rgba(30,158,106,.14)}
-.series button.on b{color:#4FB98A}
-.series button:disabled{opacity:.35;cursor:not-allowed}
+/* Les séries ne sont plus des boutons : elles se lisent, elles ne se règlent
+   plus ici. Ce sont les saisons qui les ouvrent. */
+.series .serie{background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.14);
+  border-radius:8px;padding:7px 11px;text-align:left;opacity:.4}
+.series .serie b{display:block;font-family:var(--banner);font-size:11.5px;letter-spacing:.06em}
+.series .serie > span{display:block;font-size:10px;opacity:.55}
+.series .serie.on{border-color:#1E9E6A;background:rgba(30,158,106,.14);opacity:1}
+.series .serie.on b{color:#4FB98A}
 .series-n{margin:10px 0 0;font-size:11px;opacity:.42;line-height:1.6}
+
+/* ------------------------------------------------------------- les saisons */
+.sai{border:1px solid rgba(242,238,228,.13);border-radius:11px;padding:13px 15px;
+  margin:0 0 10px;background:rgba(0,0,0,.22)}
+/* Une saison lancée porte un liseré vert à gauche : c'est ce qui est en jeu,
+   et ça doit se voir sans lire. */
+.sai.on{border-left:4px solid #1E9E6A}
+.sai-t{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.sai-t b{font-family:var(--banner);font-size:14px;letter-spacing:.05em}
+.sai-e{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.45}
+.sai.on .sai-e{color:#4FB98A;opacity:.85}
+.sai-x{margin:7px 0 0;font-size:12.5px;line-height:1.6;opacity:.72}
+.sai-c{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:11px 0 0;
+  font-size:11.5px}
+.sai-c dt{font-family:var(--banner);font-size:10px;letter-spacing:.12em;opacity:.45;
+  text-transform:uppercase}
+.sai-c dd{margin:0;opacity:.8;overflow-wrap:anywhere}
+.sai-a{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.sai-edit{border-color:rgba(245,195,59,.4);background:rgba(245,195,59,.05)}
+.sai-l{margin-top:13px}
+.sai-lt{margin:0 0 6px;font-family:var(--banner);font-size:10px;letter-spacing:.13em;
+  opacity:.5;text-transform:uppercase}
+.sai-ks{display:flex;flex-wrap:wrap;gap:5px}
+.sai-k{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer;
+  border:1px solid rgba(242,238,228,.13);border-radius:7px;padding:5px 9px;
+  background:rgba(0,0,0,.25)}
+.sai-k:has(input:checked){border-color:#1E9E6A;background:rgba(30,158,106,.14)}
+.sai-k input{margin:0;accent-color:#1E9E6A}
 .depot{background:rgba(30,158,106,.12);border:1px solid rgba(30,158,106,.4);border-radius:8px;padding:11px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.6}
 .depot code{background:rgba(0,0,0,.4);padding:1px 5px;border-radius:4px}
 .compte{font-size:11.5px;opacity:.5;margin-bottom:10px}
@@ -189,6 +231,12 @@ const MSG_FANZZY = {
   'admin.error.serie_inconnue': 'Cette série n’existe pas.',
   'admin.error.serie_sans_carte': 'Cette série n’a aucune carte de stade 1 publiée : '
     + 'elle ne pourrait pas distribuer de booster.',
+  'admin.error.saison_inconnue': 'Cette saison n’existe pas.',
+  'admin.error.saison_sans_nom': 'Donne un nom à la saison : c’est ce que les joueurs liront.',
+  'admin.error.saison_lancee': 'Une saison lancée ne se supprime pas. Remets-la d’abord '
+    + 'en brouillon — c’est un geste distinct, et réversible.',
+  'admin.error.stuff_inconnu': 'Cette pièce d’équipement n’existe pas.',
+  'admin.error.action_inconnue': 'Cette carte d’action n’existe pas.',
   'admin.error.fanzzy_id': 'Identifiant invalide : une lettre puis des lettres ou chiffres, ex. X52.',
   'admin.error.fanzzy_existe': 'Cet identifiant est déjà pris.',
   'admin.error.fanzzy_inconnu': 'Ce Fanzzy n’existe pas.',
@@ -211,8 +259,9 @@ const MSG_FANZZY = {
 };
 
 const ONGLETS = [
-  ['apercu','APERÇU'], ['fanzzy','FANZZY'], ['tenues','TENUES'], ['joueurs','JOUEURS'],
-  ['competitions','COMPÉTITIONS'], ['reglages','RÉGLAGES'], ['journal','JOURNAL'],
+  ['apercu','APERÇU'], ['saisons','SAISONS'], ['fanzzy','FANZZY'], ['tenues','TENUES'],
+  ['joueurs','JOUEURS'], ['competitions','COMPÉTITIONS'], ['reglages','RÉGLAGES'],
+  ['journal','JOURNAL'],
 ];
 let onglet = 'apercu';
 
@@ -282,6 +331,182 @@ const VUES = {
    * identifiant effacé orphelinerait les collections, les decks et le Fanzzy
    * équipé de tous ceux qui le possèdent. On dépublie.
    */
+  /**
+   * Les saisons.
+   *
+   * ## Ce que cet écran décide
+   *
+   * **Tout ce qui s'ouvre dans le jeu.** Les séries s'ouvraient au niveau du
+   * joueur : chacun découvrait le jeu seul, à son rythme, et le jour où une
+   * série arrivait n'existait pour personne d'autre. Une saison ouvre pour tout
+   * le monde le même jour — c'est ce qui permet d'annoncer quelque chose.
+   *
+   * ## Le brouillon, et le lancement
+   *
+   * Une saison se prépare sans que rien ne change pour personne : on la compose,
+   * on la relit, on la garde. **Lancer** est un geste distinct, et c'est le plus
+   * visible de toute l'administration — il change le jeu de tous les joueurs
+   * connectés, à la seconde. D'où la confirmation, qui énumère ce qui s'ouvre.
+   *
+   * Remettre en brouillon referme les séries de cette saison-là, et seulement
+   * celles-là. Les tenues publiées ne se dépublient pas : quelqu'un les a
+   * peut-être déjà gagnées.
+   */
+  async saisons() {
+    const d = await api('/saisons');
+    const fmt = (v) => (v ? new Date(v).toLocaleDateString('fr-CH',
+      { day: 'numeric', month: 'long', year: 'numeric' }) : '');
+
+    /* Les noms plutôt que les identifiants. Un administrateur qui relit une
+       saison avant de la lancer doit lire « LES VIP », pas « VP ». */
+    const noms = (ids, source) => ids
+      .map((id) => d.choix[source].find((x) => x.id === id)?.nom ?? id).join(' · ');
+
+    const carte = (s) => `
+      <div class="sai ${s.lancee ? 'on' : ''}">
+        <div class="sai-t">
+          <b>Saison ${s.numero} — ${esc(s.nom)}</b>
+          <span class="sai-e">${s.lancee ? `lancée le ${esc(fmt(s.lanceeA))}` : 'brouillon'}</span>
+        </div>
+        ${s.texte ? `<p class="sai-x">${esc(s.texte)}</p>` : ''}
+        <dl class="sai-c">
+          <dt>Séries</dt><dd>${esc(noms(s.series, 'series')) || '—'}</dd>
+          <dt>Tenues</dt><dd>${esc(noms(s.tenues, 'tenues')) || '—'}</dd>
+          <dt>Équipement</dt><dd>${esc(noms(s.stuff, 'stuff')) || '—'}</dd>
+          <dt>Cartes</dt><dd>${esc(noms(s.actions, 'actions')) || '—'}</dd>
+        </dl>
+        <div class="sai-a">
+          <button class="mini" data-editer-saison="${s.id}">Modifier</button>
+          <button class="mini ${s.lancee ? 'rouge' : 'vert'}" data-lancer="${s.id}">
+            ${s.lancee ? 'Remettre en brouillon' : 'Lancer la saison'}</button>
+          ${s.lancee ? ''
+            : `<button class="mini rouge" data-suppr-saison="${s.id}">Supprimer</button>`}
+        </div>
+      </div>`;
+
+    const enCours = d.enCours;
+    $('main').innerHTML = `
+      <div class="series">
+        <p class="series-t">SAISON EN COURS
+          <span>${enCours ? `Saison ${enCours.numero} — ${esc(enCours.nom)}`
+            : 'aucune saison lancée — toutes les séries restent ouvertes'}</span></p>
+        <p class="series-n">Une saison ouvre ses séries et publie ses tenues, pour
+          tout le monde, à l'instant du lancement. L'équipement et les cartes
+          d'action y sont <b>annoncés</b> et non retenus : ils vivent dans le code,
+          et rien ne sait encore les garder fermés.</p>
+      </div>
+      <div class="bar"><button class="mini" id="nouvelle-saison">Nouvelle saison</button></div>
+      <div id="sai-form"></div>
+      ${d.saisons.length
+        ? [...d.saisons].reverse().map(carte).join('')
+        : '<div class="vide">Aucune saison. Le jeu tourne toutes séries ouvertes.</div>'}`;
+
+    /** Le formulaire. Les quatre listes sont des cases à cocher : une saison se
+        relit d'un coup d'œil, et un champ de texte à identifiants séparés par des
+        virgules est exactement ce qu'on remplit de travers un soir de lancement. */
+    const cases = (source, choisis) => d.choix[source].map((x) => `
+      <label class="sai-k"><input type="checkbox" value="${esc(x.id)}"
+        ${choisis.includes(x.id) ? 'checked' : ''}>${esc(x.nom)}</label>`).join('');
+
+    function formulaire(s) {
+      const v = s ?? { numero: '', nom: '', texte: '',
+        series: [], tenues: [], stuff: [], actions: [] };
+      $('sai-form').innerHTML = `
+        <div class="sai sai-edit">
+          <div class="grille">
+            <div><label>NUMÉRO</label>
+              <input id="s-num" type="number" min="0" value="${esc(v.numero)}"
+                placeholder="suivant"></div>
+            <div class="large"><label>NOM</label>
+              <input id="s-nom" maxlength="64" value="${esc(v.nom)}"
+                placeholder="Le virage s’agrandit"></div>
+            <div class="large"><label>L’ANNONCE FAITE AUX JOUEURS</label>
+              <textarea id="s-txt" maxlength="500"
+                placeholder="Cinq séries neuves, des tenues, et de quoi refaire le tour du stade.">${esc(v.texte ?? '')}</textarea></div>
+          </div>
+          <div class="sai-l"><p class="sai-lt">SÉRIES — elles s’ouvrent</p>
+            <div class="sai-ks" id="s-series">${cases('series', v.series)}</div></div>
+          <div class="sai-l"><p class="sai-lt">TENUES — elles se publient</p>
+            <div class="sai-ks" id="s-tenues">${cases('tenues', v.tenues)}</div></div>
+          <div class="sai-l"><p class="sai-lt">ÉQUIPEMENT — annoncé seulement</p>
+            <div class="sai-ks" id="s-stuff">${cases('stuff', v.stuff)}</div></div>
+          <div class="sai-l"><p class="sai-lt">CARTES D’ACTION — annoncées seulement</p>
+            <div class="sai-ks" id="s-actions">${cases('actions', v.actions)}</div></div>
+          <div class="sai-a">
+            <button class="mini" id="s-annuler">Annuler</button>
+            <button class="mini vert" id="s-ok">${s ? 'Enregistrer' : 'Créer le brouillon'}</button>
+          </div>
+        </div>`;
+      $('sai-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      const coches = (id) => [...document.querySelectorAll(`#${id} input:checked`)]
+        .map((i) => i.value);
+      $('s-annuler').onclick = () => { $('sai-form').innerHTML = ''; };
+      $('s-ok').onclick = async () => {
+        const corps = {
+          numero: $('s-num').value === '' ? undefined : Number($('s-num').value),
+          nom: $('s-nom').value, texte: $('s-txt').value,
+          series: coches('s-series'), tenues: coches('s-tenues'),
+          stuff: coches('s-stuff'), actions: coches('s-actions'),
+        };
+        try {
+          if (s) await api(`/saison/${s.id}`, { method: 'PATCH', body: corps });
+          else await api('/saisons', { method: 'POST', body: corps });
+          VUES.saisons();
+        } catch (e) { alert(MSG_FANZZY[e.code] ?? e.code ?? 'Impossible.'); }
+      };
+    }
+
+    $('nouvelle-saison').onclick = () => formulaire(null);
+    for (const b of document.querySelectorAll('[data-editer-saison]')) {
+      b.onclick = () => formulaire(d.saisons.find((s) => s.id === Number(b.dataset.editerSaison)));
+    }
+
+    for (const b of document.querySelectorAll('[data-lancer]')) {
+      b.onclick = async () => {
+        const s = d.saisons.find((x) => x.id === Number(b.dataset.lancer));
+        /* La confirmation **énumère ce qui s'ouvre**. Un « es-tu sûr ? » auquel
+           on ne peut répondre qu'au hasard ne protège de rien, et ce geste-ci
+           change le jeu de tous les joueurs connectés. */
+        const ouvre = [
+          s.series.length ? `${s.series.length} série(s) : ${noms(s.series, 'series')}` : null,
+          s.tenues.length ? `${s.tenues.length} tenue(s) : ${noms(s.tenues, 'tenues')}` : null,
+        ].filter(Boolean).join('\n');
+        const ok = await window.TBF_DIALOGUE?.confirmer(s.lancee ? {
+          titre: `REMETTRE LA SAISON ${s.numero} EN BROUILLON ?`,
+          texte: 'Ses séries se referment pour tout le monde. Personne ne perd ce '
+            + 'qu’il possède déjà, mais les boosters de ces séries cessent d’être '
+            + 'proposés. Les tenues publiées restent publiées.',
+          oui: 'REFERMER', ton: 'flare',
+        } : {
+          titre: `LANCER LA SAISON ${s.numero} ?`,
+          texte: `« ${s.nom} » s’ouvre pour tous les joueurs, maintenant.\n\n`
+            + (ouvre || 'Elle n’ouvre aucun contenu — elle ne fera qu’annoncer.'),
+          oui: 'LANCER', ton: 'vert',
+        });
+        if (!ok) return;
+        try {
+          await api(`/saison/${s.id}/lancer`, { method: 'POST', body: { lancer: !s.lancee } });
+          VUES.saisons();
+        } catch (e) { alert(MSG_FANZZY[e.code] ?? e.code ?? 'Impossible.'); }
+      };
+    }
+
+    for (const b of document.querySelectorAll('[data-suppr-saison]')) {
+      b.onclick = async () => {
+        const s = d.saisons.find((x) => x.id === Number(b.dataset.supprSaison));
+        if (!(await window.TBF_DIALOGUE?.confirmer({
+          titre: `SUPPRIMER LE BROUILLON ?`,
+          texte: `« ${s.nom} » sera effacée. Elle n’a jamais été lancée, donc rien `
+            + 'ne change pour les joueurs.',
+          oui: 'SUPPRIMER', ton: 'flare',
+        }))) return;
+        try { await api(`/saison/${s.id}`, { method: 'DELETE' }); VUES.saisons(); }
+        catch (e) { alert(MSG_FANZZY[e.code] ?? e.code ?? 'Impossible.'); }
+      };
+    }
+  },
+
   async fanzzy(filtre = '') {
     const d = await api('/fanzzy');
     const typesOpt = Object.entries(d.types)
@@ -320,14 +545,14 @@ const VUES = {
             ${x.publie ? 'Retirer' : 'Publier'}</button></td></tr>`;
     };
 
-    // Le bandeau des séries. C'est l'interrupteur qui décide de ce qu'un
-    // joueur peut obtenir : une série fermée ne se propose plus au kiosque et
-    // ne se tire plus. Ce qu'il possède déjà lui reste — fermer, c'est cesser
-    // de distribuer, pas confisquer.
-    const serie = (x) => `<button class="serie ${x.ouverte ? 'on' : ''}" data-serie="${x.id}"
-        title="${x.tirables} carte(s) tirable(s) sur ${x.publiees} publiée(s)"
-        ${x.tirables ? '' : 'disabled'}>
-        <b>${esc(x.nom)}</b><span>${x.tirables} tirables</span></button>`;
+    /* Le bandeau des séries est devenu **une lecture seule**. Il montre ce qui
+       est ouvert et par quelle saison ; il ne l'ouvre plus. Les séries ouvertes
+       sont l'union des saisons lancées, et un second interrupteur ici aurait été
+       une seconde vérité — le jour où les deux divergent, personne ne sait
+       laquelle le jeu applique. L'onglet SAISONS est le seul levier. */
+    const serie = (x) => `<span class="serie ${x.ouverte ? 'on' : ''}"
+        title="${x.tirables} carte(s) tirable(s) sur ${x.publiees} publiée(s)">
+        <b>${esc(x.nom)}</b><span>${x.tirables} tirables</span></span>`;
     const toutesOuvertes = d.series.every((x) => x.ouverte);
 
     $('main').innerHTML = `
@@ -337,7 +562,8 @@ const VUES = {
             : d.series.filter((x) => x.ouverte).map((x) => x.nom).join(' · ') || 'aucune'}</span></p>
         <div class="series-l">${d.series.map(serie).join('')}</div>
         <p class="series-n">Une série grisée n'a aucune carte de stade 1 publiée : elle ne
-          pourrait pas distribuer de booster. Tout fermer revient à tout ouvrir.</p>
+          pourrait pas distribuer de booster. <b>Pour en ouvrir une, lance une
+          saison</b> — onglet SAISONS.</p>
       </div>
       <div class="bar">
         <input id="q" placeholder="nom, identifiant, série, rareté" value="${esc(filtre)}" style="flex:1">
@@ -347,22 +573,6 @@ const VUES = {
         ${d.fanzzy.length - publies} retirées · ${ILLUSTRES.size} dessinées</div>
       <div class="tbl"><table><thead><tr><th></th><th>NOM</th><th>TYPE</th><th>SÉRIE</th><th>RARETÉ</th><th></th></tr></thead>
       <tbody id="corps">${liste.map(ligne).join('') || '<tr><td colspan="6" class="vide">Rien ne correspond.</td></tr>'}</tbody></table></div>`);
-
-    // Un clic bascule la série. On envoie la liste complète des ouvertes et non
-    // un différentiel : deux onglets d'administration ouverts en même temps
-    // s'écraseraient proprement au lieu de composer un état que personne n'a voulu.
-    for (const b of document.querySelectorAll('[data-serie]')) {
-      b.onclick = async () => {
-        const ouvertes = d.series.filter((x) => x.ouverte).map((x) => x.id);
-        const id = b.dataset.serie;
-        const suite = ouvertes.includes(id)
-          ? ouvertes.filter((x) => x !== id) : [...ouvertes, id];
-        try {
-          await api('/series', { method: 'PUT', body: { series: suite } });
-          VUES.fanzzy(filtre);
-        } catch (e) { alert(MSG_FANZZY[e.code] ?? e.code ?? 'Impossible.'); }
-      };
-    }
 
     $('q').oninput = (e) => { clearTimeout($('q')._t);
       $('q')._t = setTimeout(() => VUES.fanzzy(e.target.value), 250); };

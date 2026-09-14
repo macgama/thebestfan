@@ -73,9 +73,20 @@
     12%{transform:translate(-8px,4px)}28%{transform:translate(7px,-6px)}
     46%{transform:translate(-6px,-3px)}64%{transform:translate(5px,4px)}
     82%{transform:translate(-3px,2px)}}
+  /* L'annonce brève du duel : « RELÈVE », « RENVOI », « CHANTE MAINTENANT ».
+     Elle porte **une plaque** et non plus une simple ombre portée. Le lettrage
+     nu ne tenait pas au-dessus d'une corde en mouvement, d'un personnage et
+     d'une photo de stade : il y a toujours un fond qui gagne.
+     Plus légère que la case du moment fort — celle-ci passe en une seconde et
+     demie pendant qu'on tape, elle ne doit pas masquer le geste. */
   .fx-titre{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:93;
     font-family:"Oswald","Arial Narrow",Impact,sans-serif;letter-spacing:.08em;text-align:center;
-    pointer-events:none;text-shadow:0 6px 34px rgba(0,0,0,.95);opacity:0;white-space:nowrap}
+    pointer-events:none;opacity:0;white-space:nowrap;
+    padding:11px 22px;border-radius:4px;border:2px solid rgba(4,7,11,.9);
+    background:linear-gradient(178deg,rgba(18,23,31,.94),rgba(8,11,15,.94));
+    box-shadow:0 0 0 1.5px currentColor,0 16px 40px rgba(0,0,0,.72);
+    text-shadow:0 3px 0 rgba(4,7,11,.85);max-width:calc(100vw - 32px);
+    overflow:hidden;text-overflow:ellipsis}
   .fx-titre.go{animation:fxtitre 1.7s cubic-bezier(.2,.9,.3,1)}
   @keyframes fxtitre{0%{opacity:0;transform:translate(-50%,-50%) scale(.55)}
     16%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}

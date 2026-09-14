@@ -6,6 +6,7 @@
 <title>thebestfan — le jeu des tribunes</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
 <style>
 :root{--rail:clamp(58px,16vw,76px)}
 /* L'accueil est un écran **plein cadre** : ses deux rails touchent les bords
@@ -22,7 +23,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 /* L'accueil est un écran de jeu : il tient dans la fenêtre et ne défile pas.
    `height` et non `min-height`, sinon le bouton d'entrée passe sous le pli. */
-#app{position:relative;width:100%;max-width:520px;height:100dvh;overflow:hidden;
+#app{position:relative;width:100%;max-width:var(--colonne);height:100dvh;overflow:hidden;
   display:flex;flex-direction:column;background:#04060A}
 
 /* Le décor et son voile viennent de ui.css : ce sont les mêmes que sur toutes
@@ -77,58 +78,58 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    seulement : une tranche plus fine, parce qu'un objet de trente-huit pixels
    n'a pas la même épaisseur qu'un bouton de cinquante-huit ; et l'alignement
    par le haut, la tranche occupant les derniers pixels. */
-.haut{display:flex;align-items:flex-start;gap:8px;flex:none}
-.haut .tbf-plaque,.haut .tbf-cadre{--epaisseur:3px}
-.moi{display:flex;align-items:center;gap:9px;padding:6px 14px 6px 6px;min-width:0;
-  text-decoration:none}
-/* Le niveau se pose sur l’avatar plutôt que de prendre une ligne : la barre
-   du haut est déjà pleine, et un chiffre de plus en largeur écraserait le
-   pseudo sur les petits écrans. */
+/* Tout ce qui est dans la barre du haut a **la même hauteur**. C'est la seule
+   chose qui fasse une rangée : trois objets de trente-huit, quarante-quatre et
+   cinquante-deux pixels alignés côte à côte se lisent comme trois accidents. */
+.haut{display:flex;align-items:center;gap:8px;flex:none;--haut-h:44px}
+.haut .tbf-plaque{--epaisseur:3px}
+.moi{display:flex;align-items:center;text-decoration:none;flex:none}
+/* Le niveau se pose sur l’avatar plutôt que de prendre une ligne : la barre du
+   haut est déjà pleine, et c’est désormais le seul endroit où il s’affiche. */
 .pastille{position:relative}
 .pastille .niv{position:absolute;right:-4px;bottom:-4px;min-width:17px;height:17px;
   border-radius:9px;background:#0B0E13;border:1px solid var(--projo);color:var(--projo);
   font-style:normal;font-family:var(--banner);font-size:10px;line-height:15px;
   text-align:center;padding:0 3px}
-.qui{min-width:0}
-/* La jauge du palier : deux pixels. Elle n’a pas à se lire, elle a à se
-   remplir — c’est en la voyant bouger qu’on comprend qu’ouvrir un booster
-   fait progresser. */
-.nivBar{display:block;height:2px;border-radius:2px;background:rgba(242,238,228,.14);
-  margin-top:4px;max-width:32vw;overflow:hidden}
-.nivBar i{display:block;height:100%;width:0;background:var(--projo);
-  transition:width .5s cubic-bezier(.3,.9,.4,1)}
-.pastille{width:38px;height:38px;flex:none;border-radius:11px;display:grid;place-items:center;
-  font-family:var(--banner);font-size:19px;line-height:1;color:#1A0C04;
-  background:linear-gradient(150deg,var(--projo),#B8860B)}
+/* La pastille dorée, seule. Elle fait la hauteur de la rangée — c'est ce que
+   « même hauteur que les boutons de droite » veut dire, et ça se règle ici une
+   fois plutôt qu'en trois endroits. */
+.pastille{width:var(--haut-h);height:var(--haut-h);flex:none;border-radius:13px;
+  display:grid;place-items:center;
+  font-family:var(--banner);font-size:21px;line-height:1;color:#1A0C04;
+  background:linear-gradient(150deg,var(--projo),#B8860B);
+  box-shadow:0 3px 0 #6B4E0A,inset 0 1px 0 rgba(255,255,255,.45)}
+.moi:active .pastille{transform:translateY(3px);box-shadow:0 0 0 #6B4E0A}
 /* L’initiale occupe toute la pastille : c’est elle que la page réécrit, et
    le badge du niveau doit rester en dehors de ce qu’elle efface. */
 .pastille>#initiale{grid-area:1/1;display:grid;place-items:center;width:100%;height:100%}
-.moi b{font-size:15px;font-weight:700;display:block;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;max-width:32vw}
-.moi small{display:block;font-size:11px;opacity:.55;margin-top:1px;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap;max-width:32vw}
-/* Le « + » des jetons. Discret par construction : s'il se lisait comme un
-   bouton, il ferait concurrence au nombre, qui est l'information. */
-.jeton{text-decoration:none;color:inherit}
-.jeton .plus{font-family:var(--banner);font-size:12px;line-height:1;opacity:.45;
-  margin-left:1px;font-weight:400}
+
+/* ## Les deux jetons, sans plaque
+   Une plaque dorée autour d'un compteur doré disait deux fois la même chose, et
+   criait plus fort que les dix destinations du jeu. Il reste le dessin et le
+   nombre : c'est une **lecture**, pas un bouton — même s'il se touche. */
+.jeton{display:flex;align-items:center;gap:7px;text-decoration:none;color:var(--craie);
+  height:var(--haut-h);padding:0 4px;font-family:var(--banner);font-size:17px;
+  letter-spacing:.02em;font-variant-numeric:tabular-nums;line-height:1}
+.jeton svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round}
+/* Le dessin prend la couleur de ce qu'il compte ; le nombre reste en craie.
+   L'inverse — un nombre coloré — se lit comme une alerte. */
+.jeton.ech svg{stroke:var(--projo)}
+.jeton.pack svg{stroke:var(--flare)}
+.jeton:active{transform:translateY(2px)}
+/* Le « + ». Discret par construction : s'il se lisait comme un bouton, il
+   ferait concurrence au nombre, qui est l'information. */
+.jeton .plus{font-size:13px;line-height:1;opacity:.4;font-weight:400}
 .jeton:active .plus{opacity:1;color:var(--projo)}
 
-.bourse{display:flex;gap:6px;margin-left:auto;align-items:flex-start}
-.jeton{gap:6px;padding:9px 10px;min-height:44px;font-size:15px;letter-spacing:.02em;
-  font-variant-numeric:tabular-nums}
-.jeton i{width:15px;height:15px;flex:none;font-style:normal;
-  box-shadow:0 0 0 1.5px var(--cerne)}
-.jeton.ech i{border-radius:3px;
-  background:repeating-linear-gradient(45deg,var(--projo) 0 4px,var(--craie) 4px 8px)}
-.jeton.pack i{border-radius:50%;
-  background:radial-gradient(circle at 32% 30%,#FFB9AC,var(--flare) 55%,#8E1D12)}
+.bourse{display:flex;gap:10px;margin-left:auto;align-items:center}
 
 /* Le menu. L'accueil ne charge pas la barre commune : sans lui, tout ce qui
    n'a pas sa tuile — le deck, le télétexte, le compte — serait injoignable
    depuis l'écran principal. */
 /* Les trois barres s'empilent : la plaque, elle, range ses enfants en ligne. */
-.burger{width:44px;height:44px;min-height:0;flex-direction:column;gap:4px;
+.burger{width:var(--haut-h);height:var(--haut-h);min-height:0;flex-direction:column;gap:4px;
   padding:12px 10px;flex:none}
 .burger span{display:block;height:2.5px;width:100%;background:var(--encre);border-radius:2px;
   box-shadow:0 1px 0 rgba(0,0,0,.25)}
@@ -370,6 +371,40 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 @media (min-aspect-ratio:1/1){
   .duo{grid-template-columns:1fr 1fr}
 }
+
+/* ## La tablette
+ *
+ * La colonne grandit avec l'écran — c'est `--colonne`, dans `ui.css`. Ce qu'elle
+ * ne peut pas faire seule, c'est **remplir** la largeur gagnée : le rail est en
+ * `16vw`, donc il grandissait bien, mais les tuiles gardaient leur taille de
+ * téléphone au milieu d'un rail devenu large, et le personnage flottait entre
+ * deux colonnes vides.
+ *
+ * On élargit donc le rail et on grossit ce qu'il porte. Le `16vw` du téléphone
+ * devient une largeur fixe : à mille pixels d'écran, seize pour cent feraient
+ * un rail de cent soixante, ce qui est un panneau, pas une colonne de boutons. */
+@media (min-width:700px){
+  :root{ --rail:104px }
+  .haut{ --haut-h:52px }
+  .jeton{ font-size:19px }
+  .jeton svg{ width:26px;height:26px }
+  .rail{ gap:8px }
+  /* Le coin inférieur gauche reste court : c'est la forme de la tuile dans tout
+     le jeu, et l'arrondir ici en ferait un autre objet. */
+  .rail .tbf-case{ --epaisseur:5px;border-radius:18px 18px 18px 6px;gap:7px }
+  .rail .tbf-case svg{ width:30px;height:30px }
+  .rail .lib{ font-size:12px }
+  /* Le personnage a plus de place : il la prend. Sans ça, la colonne du milieu
+     s'élargit et lui reste à sa taille, seul au centre d'un vide. */
+  .pile{ max-width:min(100%,420px) }
+  /* Et on lui rend les pixels que la barre du haut vient de prendre. Elle passe
+     de quarante-quatre à cinquante-deux ; le personnage est mesuré en part de
+     la hauteur d'écran, et il les perdait tous. La réserve du haut ne bouge
+     pas — c'est l'amplitude du saut, elle ne dépend pas de l'écran — donc c'est
+     la marge du bas qui cède. */
+  .scene{ padding-bottom:2px }
+  .hub{ gap:6px }
+}
 @media (prefers-reduced-motion:reduce){
   .flotte,.pile,.bascule,.salut,.sol,.halo,.pt{animation:none !important}
   .pose{transition:none}
@@ -542,24 +577,47 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
   <div class="hub" id="hub">
 
+    <!-- ## L'en-tête, et les trois cadres qu'il a perdus
+
+         **L'avatar n'a plus de cadre.** Il en avait un — une plaque sombre
+         autour de la pastille dorée — qui portait le pseudo et le nom du club à
+         côté. Sur un compte neuf ces deux lignes sont vides : il ne restait
+         qu'un rectangle noir pendant sous la pastille, plus haut que tous les
+         boutons de la rangée, sans rien dedans. Le pseudo se lit au profil, qui
+         est à un doigt d'ici.
+
+         **Les deux jetons non plus.** Une plaque dorée autour d'un compteur
+         doré et une plaque rouge autour d'un compteur rouge, c'était deux fois
+         la même information et deux boutons qui criaient plus fort que les dix
+         destinations du jeu. Il reste le dessin et le nombre — et le dessin est
+         maintenant le **même** que celui de la destination correspondante :
+         l'écharpe de la boutique, le sachet des boosters. Un même objet dessiné
+         de deux façons, c'est deux objets à apprendre. -->
     <header class="haut">
-      <a class="tbf-cadre moi" href="/profil">
+      <a class="moi" href="/profil" aria-label="Mon profil">
         <span class="pastille"><span id="initiale">—</span>
           <i class="niv" id="nivPastille" hidden></i></span>
-        <span class="qui"><b id="pseudo">—</b><small id="clubline"></small>
-          <span class="nivBar" id="nivBar" hidden><i></i></span></span>
       </a>
       <div class="bourse">
         <!-- Toucher sa monnaie mène à la boutique : c'est le geste que tout
              joueur essaie en premier, et il ne menait nulle part. La boutique
              existait pourtant, rangée dans le menu au milieu de treize autres
              entrées — c'est-à-dire nulle part. -->
-        <a class="tbf-plaque jeton ech" data-ton="or" href="/boutique"
-           aria-label="Mes écharpes — aller à la boutique"
-           ><i></i><span id="scarves">0</span><b class="plus" aria-hidden="true">+</b></a>
-        <a class="tbf-plaque jeton pack" data-ton="flare" href="/boutique"
-           aria-label="Mes boosters — aller à la boutique"
-           ><i></i><span id="packs">0</span><b class="plus" aria-hidden="true">+</b></a>
+        <a class="jeton ech" href="/boutique"
+           aria-label="Mes écharpes — aller à la boutique">
+          <!-- L'écharpe : une bande rayée, et pas une écharpe « portée ».
+               Quatre autres tracés ont été essayés et regardés à vingt-deux
+               pixels — la boucle nouée donne un verre à pied, les deux pans
+               donnent un pantalon, la bande pendue donne une cravate. Ce qui se
+               lit, c'est la bande à rayures obliques : c'est déjà ainsi que le
+               jeu dessine une écharpe partout ailleurs (`.tbf-echarpe`), et à
+               cette taille il ne reste de toute façon que la silhouette. -->
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5"/><path d="M8 8.5 6 15.5M13 8.5l-2 7M18 8.5l-2 7"/></svg>
+          <span id="scarves">0</span><b class="plus" aria-hidden="true">+</b></a>
+        <a class="jeton pack" href="/boutique"
+           aria-label="Mes boosters — aller à la boutique">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg>
+          <span id="packs">0</span><b class="plus" aria-hidden="true">+</b></a>
         <button class="tbf-plaque burger" id="burger" aria-label="Menu" aria-expanded="false"
           aria-controls="tiroir"><span></span><span></span><span></span></button>
       </div>
@@ -584,8 +642,10 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
           <svg viewBox="0 0 24 24"><path d="M3 20l9-16 9 16zM7 20l5-9 5 9"/></svg><span class="lib">VIRAGE</span></a>
         <a class="tbf-case" data-ton="bleu" href="/fanzzy" id="caseFanzzy">
           <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg><span class="lib">FANZZY</span></a>
-        <a class="tbf-case" data-ton="vert" href="/carnet">
-          <svg viewBox="0 0 24 24"><path d="M12 21s-7-4.6-7-9.6A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 3.4c0 5-7 9.6-7 9.6z"/></svg><span class="lib">CARNET</span></a>
+        <!-- Les matchs passent à gauche, en face du classement — voir la note
+             sur les deux rails, plus bas dans le rail d'en face. -->
+        <a class="tbf-case" data-ton="vert" href="/matchs">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 9v10"/></svg><span class="lib">MATCHS</span></a>
         <!-- Le KOP est au centre du jeu et n'était accessible que par le menu :
              trois silhouettes serrées, un groupe et non une personne. -->
         <a class="tbf-case" data-ton="violet" href="/kop">
@@ -627,8 +687,18 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
       <nav class="rail" aria-label="Les autres">
         <a class="tbf-case" data-ton="flare" href="/duel-nvn">
           <svg viewBox="0 0 24 24"><path d="M4 4l7 7M20 4l-7 7M12 13v7M8 20h8"/></svg><span class="lib">DUEL</span></a>
-        <a class="tbf-case" data-ton="bleu" href="/matchs">
-          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 9v10"/></svg><span class="lib">MATCHS</span></a>
+        <!-- ## Les deux rails se répondent rangée par rangée
+             Chaque rangée porte **une couleur et un sujet** : le rouge pour ce
+             qui se joue (VIRAGE, DUEL), le bleu pour ce qui se collectionne
+             (FANZZY, CARNET), le vert pour ce qui se regarde (MATCHS,
+             CLASSEMENT), le violet pour les autres (KOP, AMIS), le jaune pour
+             ce qui s'achète (BOOSTERS, BOUTIQUE).
+             CARNET et MATCHS ont donc échangé leur place : le carnet range des
+             cartes, il appartient au bleu des Fanzzy ; les matchs se regardent,
+             ils appartiennent au vert du classement. Dix tuiles sans logique de
+             rangée sont dix choses à retenir ; cinq paires en font cinq. -->
+        <a class="tbf-case" data-ton="bleu" href="/carnet">
+          <svg viewBox="0 0 24 24"><path d="M12 21s-7-4.6-7-9.6A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 3.4c0 5-7 9.6-7 9.6z"/></svg><span class="lib">CARNET</span></a>
         <a class="tbf-case" data-ton="vert" href="/classement">
           <svg viewBox="0 0 24 24"><path d="M6 21V9M12 21V4M18 21v-7M3 21h18"/></svg><span class="lib">CLASSEMENT</span></a>
         <!-- Deux silhouettes et un plus : on en ajoute une. Même dessin que
@@ -682,6 +752,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
      équipé quand ses douze états n'existent pas encore, plutôt que d'afficher
      le supporter générique, qui est quelqu'un d'autre. -->
 <script src="/fanzzy-art.js"></script>
+<script src="/fanzzy-fond.js"></script>
 <!-- L ouverture : l éventail de Fanzzy, et le moment où l écran s en va.
      Après fanzzy-art.js, dont il lit la liste des personnages dessinés. -->
 <script src="/ouverture.js"></script>
@@ -1135,6 +1206,14 @@ function saluer() {
 
   $('sortir').addEventListener('click', async (e) => {
     e.preventDefault();
+    // Même règle qu'au profil : la déconnexion se demande. Ici le bouton est
+    // dans un tiroir qu'on ouvre pour aller ailleurs, et il est le dernier de
+    // la liste — c'est celui qu'on touche en visant le précédent.
+    if (!(await window.TBF_DIALOGUE?.confirmer({
+      titre: 'SE DÉCONNECTER ?',
+      texte: 'Ta collection et tes duels restent. Il faudra te reconnecter pour y revenir.',
+      oui: 'SE DÉCONNECTER', ton: 'flare',
+    }))) return;
     try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); }
     catch { /* hors ligne : on recharge quand même, la session locale ne sert plus */ }
     location.href = '/';
@@ -1162,12 +1241,14 @@ async function jsonp(url, options) {
   // Une image de délai avant l'entrée : le hub vient de passer de `display:none`
   // à visible, et une animation lancée dans la même image ne se joue pas.
   requestAnimationFrame(entrer);
-  $('pseudo').textContent = user.pseudo;
+  /* L'initiale, et rien d'autre. Le pseudo et le nom du club s'écrivaient à
+     côté, dans un cadre qui n'existe plus : sur un compte neuf ces deux lignes
+     sont vides, et il ne restait qu'un rectangle noir sous la pastille. Les
+     deux se lisent au profil, qui est à un doigt d'ici. */
   $('initiale').textContent = (user.pseudo ?? '?').trim().charAt(0).toLowerCase() || '?';
   if (user.role === 'admin') $('lienAdmin').hidden = false;
 
-  // Les clubs suivis servent deux fois : à écrire la ligne sous le pseudo, et
-  // à savoir de quel côté du score se réjouir.
+  // Les clubs suivis : à savoir de quel côté du score se réjouir.
   const mesClubs = new Set();
   try {
     const st = await jsonp('/api/me/state', { credentials:'same-origin' });
@@ -1176,18 +1257,15 @@ async function jsonp(url, options) {
     $('scarves').textContent = st.scarves ?? 0;
     $('packs').textContent = st.packs ?? 0;
     for (const f of st.follows ?? []) mesClubs.add(f.team_id ?? f.id);
-    const principal = st.follows?.find((f) => f.is_main) ?? st.follows?.[0];
-    $('clubline').textContent = principal
-      ? `${principal.name} · ${st.slots.used}/${st.slots.total} clubs`
-      : 'aucun club suivi';
   } catch { /* module non monté */ }
 
   /* ------------------------------------------------------- le niveau
 
-     Un chiffre sur l'avatar et une jauge de deux pixels sous le pseudo. Elle
-     n'a pas à se lire : elle a à se remplir. C'est en la voyant bouger après un
-     booster qu'on comprend qu'ouvrir fait progresser — un texte « 47/220 XP »
-     dirait la même chose et ne se regarderait jamais.
+     Un chiffre sur l'avatar. Il y avait aussi une jauge de deux pixels sous le
+     pseudo — elle n'avait pas à se lire, elle avait à se remplir, et c'est en
+     la voyant bouger après un booster qu'on comprenait qu'ouvrir fait
+     progresser. Elle est partie avec le cadre qui la portait ; le chiffre, lui,
+     reste, et il est ce qu'on regarde.
 
      Rien ne s'affiche tant que le module n'a pas répondu : une pastille « 1 »
      posée par défaut mentirait pendant la seconde du chargement, et c'est
@@ -1197,10 +1275,7 @@ async function jsonp(url, options) {
     if (niv?.niveau) {
       $('nivPastille').textContent = niv.niveau;
       $('nivPastille').hidden = false;
-      $('nivBar').hidden = false;
-      $('nivBar').firstElementChild.style.width =
-        `${Math.round((niv.max ? 1 : niv.part) * 100)}%`;
-      $('nivBar').title = niv.max
+      $('nivPastille').title = niv.max
         ? `Niveau ${niv.niveau}, le dernier`
         : `Niveau ${niv.niveau} · ${niv.dans}/${niv.pour} XP`;
     }

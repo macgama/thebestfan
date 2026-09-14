@@ -9,6 +9,7 @@ import { GESTES, GESTURES, MOTIFS, grade, instantsDuMotif }
 import { ACTION_BY_ID } from '../src/shared/duel/actions.js';
 import { BY_ID } from '../src/shared/fanzzy/dex.js';
 import { combine } from '../src/shared/fanzzy/inventaire.js';
+import { CHANTS, ORDRE } from '../src/shared/duel/chants.js';
 
 let failures = 0;
 
@@ -22,7 +23,26 @@ let failures = 0;
  * moteur n'écoute plus. Sans ça, ils noteraient des frappes de tempo contre
  * le geste du moment, et ils échoueraient un chant sur deux.
  */
-const impose = (duel, id, geste) => { duel.joueurs.get(id).geste = geste; return id; };
+/**
+ * Fait chanter un joueur **sur un geste précis**, par la carte qui le porte.
+ *
+ * Le duel n'impose plus le geste : il offre cinq chants, et c'est la carte
+ * choisie qui décide. Ces contrôles portent sur un geste précis — le tempo,
+ * presque toujours — et doivent donc trouver sa carte.
+ *
+ * Si le répertoire tiré pour ce duel ne l'offre pas, on l'y met : le contrôle
+ * éprouve la mécanique du geste, pas la chance du tirage. La contrainte du
+ * répertoire, elle, a son propre contrôle plus bas.
+ */
+function chante(duel, userId, geste, opts, t) {
+  let cardId = duel.repertoire.find((id) => CHANTS[id].gest === geste);
+  if (!cardId) {
+    cardId = Object.keys(CHANTS).find((id) => CHANTS[id].gest === geste);
+    if (!cardId) throw new Error(`aucun chant ne porte le geste « ${geste} »`);
+    duel.repertoire[0] = cardId;
+  }
+  return duel.chanter(userId, { cardId, ...opts }, t);
+}
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
 const jitter = (t, a = 25) => Math.max(0, t + (Math.random() * a * 2 - a));
 const tempoParfait = () => Array.from({ length: 8 }, (_, i) => jitter(i * 560, 30));
@@ -58,12 +78,15 @@ function loadout(ids, cartes, stuff = {}, debloque = {}) {
 const CARTES = ['a-fumigene','a-torche','a-bache','a-thermos','a-arbitre',
                 'a-silence','a-vol','a-craquage','a-remontada','a-mosaique'];
 
-function duel(n = 1, mode = 'entrainement', t = 1_000_000) {
+/* `id` est un paramètre depuis que le répertoire de chants en découle : deux
+   duels du même nom offrent les mêmes cinq chants, et c'est précisément ce
+   qu'un contrôle de variété doit pouvoir faire varier. */
+function duel(n = 1, mode = 'entrainement', t = 1_000_000, id = 'd1') {
   const eq = (side) => Array.from({ length: n }, (_, i) => ({
     userId: `${side}-${i}`, nom: `J${side}${i}`,
     loadout: loadout(['V1','P1','F1'], CARTES),
   }));
-  return new DuelNvN({ id:'d1', equipes:[eq(0), eq(1)], mode, now: t,
+  return new DuelNvN({ id, equipes:[eq(0), eq(1)], mode, now: t,
     fixture: { id: 7001, elapsed: 20 } });
 }
 
@@ -78,7 +101,7 @@ check('corde au centre', v.rope === 0);
 
 d.joueurs.get('0-0').breath = 100;
 const memeGeste = tempoParfait();
-let ev = d.chanter(impose(d, '0-0', 'tempo'), { taps: memeGeste }, t);
+let ev = chante(d, '0-0', 'tempo', { taps: memeGeste }, t);
 check('chant noté par le serveur', ev[0].t === 'chant' && ev[0].quality > 0.6);
 check('la corde penche du bon côté', d.rope < 0);
 check('le souffle est débité', d.vue('0-0').moi.breath < 100);
@@ -92,7 +115,7 @@ d.joueurs.get('1-0').breath = 100;
 // s'écartait parfois de plus de 1. L'échec tombait environ une fois sur dix
 // et n'avait rien à voir avec ce que le test vérifie — que la tribune adverse
 // pousse bien en sens inverse. À gestes identiques, l'annulation est exacte.
-d.chanter(impose(d, '1-0', 'tempo'), { taps: memeGeste }, t);
+chante(d, '1-0', 'tempo', { taps: memeGeste }, t);
 check('l\u2019adverse pousse dans l\u2019autre sens', Math.abs(d.rope) < 1);
 
 // Souffle rétabli : sinon le refus viendrait du manque de souffle, pas de
@@ -101,7 +124,7 @@ d.joueurs.get('0-0').breath = 100;
 // Vingt frappes à 20 ms d'écart : sous le plafond de frappes, mais bien
 // au-dessus de ce qu'un doigt humain peut faire.
 try {
-  d.chanter(impose(d, '0-0', 'tempo'), { taps: Array.from({ length:20 }, (_, i) => i * 20) }, t);
+  chante(d, '0-0', 'tempo', { taps: Array.from({ length:20 }, (_, i) => i * 20) }, t);
   check('frappes inhumaines rejetées', false);
 } catch (e) {
   check(`frappes inhumaines rejetées (${e.code})`, e.code === 'ferveur.error.taps_too_fast');
@@ -110,7 +133,7 @@ try {
 // Et le plafond de frappes, qui est un contrôle distinct.
 d.joueurs.get('0-0').breath = 100;
 try {
-  d.chanter(impose(d, '0-0', 'tempo'), { taps: Array.from({ length:40 }, (_, i) => i * 90) }, t);
+  chante(d, '0-0', 'tempo', { taps: Array.from({ length:40 }, (_, i) => i * 90) }, t);
   check('plafond de frappes', false);
 } catch (e) {
   check('trop de frappes rejeté', e.code === 'ferveur.error.too_many_taps');
@@ -139,11 +162,11 @@ d = duel(1); t = 1_000_000;
 d.joueurs.get('0-0').breath = 100; d.joueurs.get('1-0').breath = 100;
 d.joueurs.get('0-0').main = ['a-silence','a-vol','a-bache','a-thermos','a-arbitre'];
 d.jouer('0-0', 'a-silence', t);
-try { d.chanter(impose(d, '1-0', 'tempo'), { taps: tempoParfait() }, t + 500); check('silence sans effet', false); }
+try { chante(d, '1-0', 'tempo', { taps: tempoParfait() }, t + 500); check('silence sans effet', false); }
 catch (e) { check('le silence coupe le chant adverse', e.code.includes('silenced')); }
 d.tick(t + 5000);
 d.joueurs.get('1-0').breath = 100;
-ev = d.chanter(impose(d, '1-0', 'tempo'), { taps: tempoParfait() }, t + 5000);
+ev = chante(d, '1-0', 'tempo', { taps: tempoParfait() }, t + 5000);
 check('le silence s\u2019arrête bien après 4 s', ev[0].t === 'chant');
 
 const avant = d.joueurs.get('1-0').breath;
@@ -207,8 +230,8 @@ check('mosaïque compte les coéquipiers qui ont chanté',
 
 const solo = duel(1); const cinq = duel(5);
 for (const D of [solo, cinq]) for (const j of D.joueurs.values()) j.breath = 100;
-solo.chanter(impose(solo, '0-0', 'tempo'), { taps: tempoParfait() }, t);
-for (let i = 0; i < 5; i++) cinq.chanter(impose(cinq, `0-${i}`, 'tempo'), { taps: tempoParfait() }, t);
+chante(solo, '0-0', 'tempo', { taps: tempoParfait() }, t);
+for (let i = 0; i < 5; i++) chante(cinq, `0-${i}`, 'tempo', { taps: tempoParfait() }, t);
 check('cinq chanteurs ne poussent pas cinq fois plus',
   Math.abs(Math.abs(cinq.rope) - Math.abs(solo.rope)) < Math.abs(solo.rope) * 0.35);
 
@@ -218,7 +241,7 @@ d = duel(1, 'classe'); t = 1_000_000;
 d.goals = [2, 0];
 d.rope = -RULES.goalAt + 1;
 d.joueurs.get('0-0').breath = 100;
-ev = d.chanter(impose(d, '0-0', 'tempo'), { taps: tempoParfait() }, t);
+ev = chante(d, '0-0', 'tempo', { taps: tempoParfait() }, t);
 check('troisième but : la partie s\u2019arrête', d.termine && d.vainqueur === 0);
 check('le duel classé est signalé comme tel',
   ev.some((e) => e.t === 'over' && e.classement === true));
@@ -391,50 +414,135 @@ check('un entraînement ne compte pas',
     vue.moi.fanzzy[1].ages?.length === 1);
 }
 
-/* ============================ dix gestes, et ils tournent ================
+/* ==================== cinq chants offerts, et on choisit ================
 
    Le duel proposait **toujours** le même geste : celui du cri du Fanzzy,
-   pendant les cinq minutes. Ce n'est pas le nombre de gestes qui rendait le
-   jeu répétitif, c'est ça. Ces contrôles portent donc sur la rotation autant
-   que sur la notation.
+   pendant cinq minutes. On y a répondu par une rotation imposée par le serveur ;
+   le Virage, lui, y répondait depuis toujours en offrant cinq chants parmi
+   dix-neuf et en laissant choisir.
+
+   Les deux modes ont maintenant la réponse du Virage — c'est la dernière
+   différence entre eux qui tombe. Ce qui doit rester vrai n'est donc plus
+   « les gestes défilent » mais « il y a un choix, et il est borné ».
    ===================================================================== */
 {
   const solo2 = duel(1);
-  const j = solo2.joueurs.get('0-0');
-  const sien = j.fanzzy[0]?.cri?.gest ?? 'tempo';
 
-  check('le duel annonce le geste du prochain chant',
-    typeof solo2.vue('0-0').moi.geste === 'string');
-  check('et il commence par celui du Fanzzy', solo2.vue('0-0').moi.geste === sien);
+  /* **Cinq chants, et le même répertoire pour les deux camps.** La corde est
+     commune ; les moyens de la tirer aussi. Un joueur qui aurait cinq chants
+     plus forts que l'autre ne jouerait pas le même jeu. */
+  check('le duel offre cinq chants', solo2.repertoire.length === 5);
+  check('et l’état les décrit, pas seulement nommés',
+    solo2.vue('0-0').chants.length === 5
+    && solo2.vue('0-0').chants.every((c) => c.nom && c.gest && c.cost && c.power));
 
-  /* On enchaîne des chants et on regarde ce que le serveur propose. Le geste
-     du joueur doit revenir souvent — c'est sa spécialité, ses modificateurs
-     ne paient que là — mais il ne doit pas être le seul. */
-  const vus = [];
-  for (let i = 0; i < 12; i++) {
-    const g = solo2.joueurs.get('0-0').geste;
-    vus.push(g);
+  /* Ils ne portent pas tous le même geste. Cinq chants de tempo rendraient le
+     choix décoratif, et on retomberait exactement sur ce qu'on corrige. */
+  const gestes = new Set(solo2.vue('0-0').chants.map((c) => c.gest));
+  check(`les cinq chants portent des gestes différents (${gestes.size})`,
+    gestes.size >= 3
+    || (console.log('        gestes :', [...gestes].join(' ')), false));
+
+  /* **Le répertoire est une règle, pas une suggestion de la page.** Sans ce
+     refus, un client modifié demanderait le chant le plus rentable des
+     dix-neuf à chaque fois, et le tirage du répertoire ne servirait à rien. */
+  const dehors = ORDRE.find((id) => !solo2.repertoire.includes(id));
+  let refuse = null;
+  try {
     solo2.joueurs.get('0-0').breath = 100;
-    // Des frappes quelconques : ce qu'on mesure ici, c'est la rotation.
-    try { solo2.chanter('0-0', { taps: [0, 200, 500, 900] }, t + i * 100); } catch { /* peu importe */ }
-  }
-  const distincts = new Set(vus);
-  check('le geste change d’un chant à l’autre', distincts.size >= 4);
-  if (distincts.size < 4) console.log('        vus :', vus.join(' '));
-  check('et celui du Fanzzy revient régulièrement',
-    vus.filter((g) => g === sien).length >= 5);
-  check('tous les gestes proposés sont connus', vus.every((g) => GESTES.includes(g)));
+    solo2.chanter('0-0', { cardId: dehors, taps: tempoParfait() }, t);
+  } catch (e) { refuse = e.code; }
+  check('un chant hors répertoire est refusé', refuse === 'ferveur.error.chant_hors_repertoire'
+    || (console.log('        refus :', refuse), false));
 
-  /* Le client ne choisit plus son geste. C'est le point : sinon il jouerait
-     toujours celui qu'il réussit, et la rotation ne servirait à rien. */
-  const avant = solo2.joueurs.get('0-0').geste;
-  solo2.joueurs.get('0-0').breath = 100;
-  solo2.joueurs.get('0-0').geste = 'tenue';
-  const ev = solo2.chanter('0-0', { geste: 'mash', taps: [0, 3000] }, t + 9000);
-  check('le geste annoncé par le client est ignoré',
-    ev.find((e) => e.t === 'chant') && avant !== null);
-  check('c’est le geste du serveur qui est noté',
-    solo2.joueurs.get('0-0').chants > 0);
+  let inconnu = null;
+  try { solo2.chanter('0-0', { cardId: 'pas-un-chant', taps: tempoParfait() }, t); }
+  catch (e) { inconnu = e.code; }
+  check('et un chant qui n’existe pas aussi', inconnu === 'ferveur.error.unknown_card');
+
+  /* **Le coût et la poussée viennent de la carte.** C'est toute la décision
+     qu'on vient d'ajouter : un gros chant coûte plus de souffle et rend plus.
+     Tant que les deux étaient constants, choisir ne changeait rien. */
+  {
+    /* Les deux chants de tempo : même geste, prix du simple au double. On les
+       pose dans le répertoire plutôt que de prendre le moins cher et le plus
+       cher au hasard — ceux-là auraient des gestes différents, et l'on
+       mesurerait alors la capacité du contrôle à exécuter quinze gestes au lieu
+       de mesurer un prix. */
+    const tempos = ORDRE.filter((id) => CHANTS[id].gest === 'tempo')
+      .sort((a, b) => CHANTS[a].cost - CHANTS[b].cost);
+    const [petit, gros] = [tempos[0], tempos[tempos.length - 1]];
+    solo2.repertoire[0] = petit;
+    solo2.repertoire[1] = gros;
+
+    check(`deux chants du même geste n'ont pas le même prix (${CHANTS[petit].cost} et ${CHANTS[gros].cost})`,
+      CHANTS[petit].cost !== CHANTS[gros].cost);
+
+    const j = solo2.joueurs.get('0-0');
+    j.breath = 100;
+    solo2.chanter('0-0', { cardId: petit, taps: tempoParfait() }, t + 20_000);
+    const coutPetit = 100 - j.breath;
+    j.breath = 100;
+    solo2.chanter('0-0', { cardId: gros, taps: tempoParfait() }, t + 40_000);
+    const coutGros = 100 - j.breath;
+    check(`le gros chant coûte plus que le petit (${coutPetit} contre ${coutGros})`,
+      coutGros > coutPetit);
+
+    /* Et il pousse plus. Sans ça, le prix serait une punition et personne ne
+       choisirait jamais le gros chant. */
+    const corde = (id) => {
+      const d = duel(1);
+      d.repertoire[0] = id;
+      d.joueurs.get('0-0').breath = 100;
+      d.chanter('0-0', { cardId: id, taps: tempoParfait() }, t);
+      return Math.abs(d.rope);
+    };
+    const poussePetit = corde(petit);
+    const pousseGros = corde(gros);
+    check(`et il pousse plus fort (${Math.round(poussePetit)} contre ${Math.round(pousseGros)})`,
+      pousseGros > poussePetit);
+  }
+
+  /* Le geste noté est **celui de la carte**, et non celui du Fanzzy : c'est ce
+     qui fait qu'on découvre un geste en choisissant un chant. */
+  {
+    /* On donne au Fanzzy un geste de martelage et on lui fait chanter un chant
+       de tempo. Si la notation suivait encore le personnage, des frappes de
+       tempo seraient jugées au martelage et la note s'effondrerait — c'est
+       exactement la faute que la rotation avait déjà value au Virage. */
+    const solo3 = duel(1);
+    const j3 = solo3.joueurs.get('0-0');
+    j3.fanzzy[0].cri = { ...j3.fanzzy[0].cri, gest: 'mash' };
+    const chantTempo = ORDRE.find((id) => CHANTS[id].gest === 'tempo');
+    solo3.repertoire[0] = chantTempo;
+
+    j3.breath = 100;
+    const ev = solo3.chanter('0-0', { cardId: chantTempo, taps: tempoParfait() }, t);
+    const chant = ev.find((e) => e.t === 'chant');
+    check(`le geste noté est celui de la carte, pas du Fanzzy (${chant?.geste})`,
+      chant?.geste === 'tempo');
+    check('et l’événement dit quelle carte a été chantée', chant?.cardId === chantTempo);
+    /* La note le prouve : des frappes de tempo jugées au martelage vaudraient
+       zéro, et la corde n'aurait pas bougé. */
+    check(`et la note est celle d’un tempo réussi (${chant?.quality})`,
+      (chant?.quality ?? 0) > 0.5);
+  }
+
+  /* Deux duels différents n'offrent pas les mêmes cinq chants : c'est ce qui
+     remplace la rotation. On rencontre les dix-sept gestes en jouant plusieurs
+     parties, au lieu de les voir tous défiler dans une seule. */
+  {
+    const vus = new Set();
+    for (let k = 0; k < 12; k++) {
+      /* Douze duels aux identifiants différents — c'est le moteur qui tire leur
+         répertoire, pas le contrôle : le recalculer ici reviendrait à vérifier
+         que le contrôle est d'accord avec lui-même. */
+      const d3 = duel(1, 'entrainement', t, `rep-${k}`);
+      for (const id of d3.repertoire) vus.add(CHANTS[id].gest);
+    }
+    check(`douze duels font rencontrer ${vus.size} gestes différents`, vus.size >= 8
+      || (console.log('        vus :', [...vus].join(' ')), false));
+  }
 }
 
 /* -------------------------------------------- l'écho, motif après motif */
@@ -445,12 +553,18 @@ check('un entraînement ne compte pas',
   const e = duel(1);
   const j = e.joueurs.get('0-0');
 
+  /* Le répons est le chant d'écho : on le pose dans le répertoire plutôt que
+     d'écrire `j.geste`, qui n'existe plus depuis que le geste vient de la
+     carte choisie. */
+  const repons = ORDRE.find((id) => CHANTS[id].gest === 'echo');
+  e.repertoire[0] = repons;
+
   const motifs = new Set();
   for (let i = 0; i < 7; i++) {
     motifs.add(e.vue('0-0').moi.gestes.echo.motif);
     j.breath = 100;
-    j.geste = 'echo';
-    e.chanter('0-0', { taps: e.vue('0-0').moi.gestes.echo.instants }, t + i * 50);
+    e.chanter('0-0', { cardId: repons, taps: e.vue('0-0').moi.gestes.echo.instants },
+      t + i * 50);
   }
   check('le motif de l’écho change d’un chant à l’autre', motifs.size >= 5);
 
@@ -460,11 +574,11 @@ check('un entraînement ne compte pas',
   check('tous les motifs d’écho ont la même durée', durees.size === 1);
 
   /* Jouer le motif qu'on a reçu paie ; en jouer un autre, non. */
-  j.breath = 100; j.geste = 'echo'; j.motif = 0;
-  const bon = e.chanter('0-0', { taps: instantsDuMotif(MOTIFS[0]) }, t + 8000)
+  j.breath = 100; j.motif = 0;
+  const bon = e.chanter('0-0', { cardId: repons, taps: instantsDuMotif(MOTIFS[0]) }, t + 8000)
     .find((x) => x.t === 'chant')?.quality ?? 0;
-  j.breath = 100; j.geste = 'echo'; j.motif = 0;
-  const faux = e.chanter('0-0', { taps: instantsDuMotif(MOTIFS[3]) }, t + 9000)
+  j.breath = 100; j.motif = 0;
+  const faux = e.chanter('0-0', { cardId: repons, taps: instantsDuMotif(MOTIFS[3]) }, t + 9000)
     .find((x) => x.t === 'chant')?.quality ?? 0;
   check('refaire le motif reçu paie', bon > 0.9);
   check('et en refaire un autre paie moins', faux < bon - 0.2);
@@ -521,7 +635,7 @@ check('un entraînement ne compte pas',
     d.tick(t0);
 
     try {
-      const ev = d.chanter(impose(d, '0-0', 'tempo'), { taps: tempoParfait() }, t0);
+      const ev = chante(d, '0-0', 'tempo', { taps: tempoParfait() }, t0);
       buts += ev.filter((e) => e.t === 'goal').length;
     } catch { /* souffle insuffisant : il attend */ }
 
@@ -530,7 +644,7 @@ check('un entraînement ne compte pas',
     if (t0 >= prochainBot) {
       prochainBot = t0 + 8500;
       try {
-        d.chanter(impose(d, '1-0', 'tempo'), {
+        chante(d, '1-0', 'tempo', {
           taps: Array.from({ length: 8 }, (_, i) => jitter(i * 560, 150)),
         }, t0);
       } catch { /* pareil */ }

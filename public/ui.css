@@ -52,10 +52,30 @@
   --trait:rgba(242,238,228,.10);
   --r:15px;
 
-  /* La largeur de la colonne. Le jeu se joue sur téléphone : au-delà, on
-     centre au lieu d'étirer — une ligne de classement large de mille pixels
-     ne se lit pas mieux. */
+  /* ## La largeur de la colonne
+   *
+   * Le jeu se joue sur téléphone, et la colonne y fait toute la largeur. Sur
+   * une tablette, elle restait à 520 px : l'application tenait dans un rail
+   * étroit au milieu d'un écran noir, avec deux cents pixels de vide de chaque
+   * côté. Ce n'est pas de la lisibilité, c'est du gâchis — on ne lit pas un
+   * classement dans une bande de cinq cents pixels quand on en a mille.
+   *
+   * Elle grandit donc avec l'écran, **jusqu'à 900 px**. Le plafond n'est pas de
+   * la timidité : au-delà, une ligne de texte dépasse la centaine de caractères
+   * et l'œil perd le début de la ligne suivante. Neuf cents pixels remplissent
+   * une tablette en portrait comme en paysage, et centrent proprement sur un
+   * écran de bureau.
+   *
+   * **Elle est la seule vérité sur ce point.** Chaque page portait la sienne —
+   * 440, 460 ou 520 selon l'écran et le jour — ce qui faisait trois largeurs
+   * différentes dans la même application, et rendait ce réglage-ci sans effet.
+   * Une page qui écrit sa largeur en dur redevient une exception qu'il faudra
+   * retrouver. */
   --colonne:520px;
+}
+
+@media (min-width:700px){
+  :root{ --colonne:min(100vw, 900px); }
 }
 
 /* ------------------------------------------------------------- la rareté
@@ -143,27 +163,85 @@
   filter:drop-shadow(0 10px 26px rgba(0,0,0,.7))}
 .tbf-pose.on{opacity:1}
 
-/* Le moment fort. « GOAL ! » au-dessus du personnage, et il reste là aussi
-   longtemps que la pose. Un but qui passe en deux secondes et demie ne laisse
-   aucune trace : le temps de sortir le téléphone de sa poche, tout est fini. */
-.tbf-moment{position:absolute;left:0;right:0;top:8%;z-index:6;text-align:center;
-  pointer-events:none;color:var(--mc,var(--projo));opacity:0}
-.tbf-moment b{display:block;font-family:var(--banner);font-size:clamp(26px,10vw,48px);
-  line-height:.95;letter-spacing:.04em;text-transform:uppercase;
-  text-shadow:0 0 26px rgba(0,0,0,.95),0 5px 0 rgba(0,0,0,.55);
-  -webkit-text-stroke:1.5px rgba(4,6,10,.75)}
+/* ------------------------------------------------------------- LE MOMENT FORT
+
+   « GOAL ! », « ON ENCAISSE », « VICTOIRE ». Il reste aussi longtemps que la
+   pose du personnage : un but qui passe en deux secondes et demie ne laisse
+   aucune trace — le temps de sortir le téléphone de sa poche, tout est fini.
+
+   ## Pourquoi c'est une case de bande dessinée
+
+   C'était du lettrage nu posé sur le personnage, avec un contour sombre pour
+   tenir. Ça ne tenait pas : « GOAL ! » en jaune sur un maillot jaune, sur une
+   pelouse verte, sur une photo de stade éclairée aux projecteurs — il y a
+   toujours un fond qui gagne. On voyait qu'il se passait quelque chose sans
+   pouvoir lire quoi, c'est-à-dire le contraire de ce qu'on voulait.
+
+   La case règle les deux problèmes d'un coup. Elle **isole** le lettrage du
+   fond, donc il se lit ; et elle **fait** l'événement, parce qu'un panneau qui
+   tombe au milieu de l'écran est une interruption, pas une décoration.
+
+   Posée sur le document (voir `fanzzy-scene.js`), donc centrée sur la page et
+   non dans un coin de la boîte du personnage. */
+/* ## La vignette
+
+   Le cadre lui-même, isolé pour être réemployé : le moment fort s'en sert, et
+   l'écran de résultat du duel aussi. Deux copies du même dessin finissent
+   toujours par diverger — ce dépôt l'a déjà payé avec la table des familles,
+   écrite dans le classeur et dans le duel, dont une couleur n'existait que d'un
+   côté.
+
+   `--mc` porte la couleur du camp. Elle est posée par la page ou par la scène,
+   et c'est la seule chose qui change d'une vignette à l'autre. */
+.tbf-vignette{position:relative;text-align:center;
+  padding:20px 26px 18px;
+  background:linear-gradient(178deg,#12171F 0%,#080B0F 100%);
+  /* Le trait d'encre, épais et noir : c'est lui qui fait la case. Le liseré de
+     couleur par-dessus dit de quel camp vient le moment. */
+  border:3px solid #04070B;border-radius:4px;
+  box-shadow:0 0 0 2px var(--mc,var(--projo)),0 26px 60px rgba(0,0,0,.8),
+    inset 0 0 0 1px rgba(255,255,255,.06);
+  /* Légèrement de travers, comme une vignette collée à la main. */
+  transform:rotate(-1.6deg)}
+/* Les rayons. Ils partent de derrière la case, en éventail : le signe le plus
+   ancien de la bande dessinée pour dire « ici, maintenant, fort ».
+   `z-index:-1` sur un enfant d'un élément **non positionné dans un contexte
+   d'empilement** passerait derrière la page ; `.tbf-vignette` est en
+   `position:relative`, ce qui le retient derrière son seul parent. */
+.tbf-vignette::before{content:"";position:absolute;inset:-42%;z-index:-1;
+  background:repeating-conic-gradient(from 0deg at 50% 50%,
+    var(--mc,var(--projo)) 0deg 6deg,transparent 6deg 18deg);
+  opacity:.16;-webkit-mask:radial-gradient(closest-side,#000 38%,transparent 82%);
+          mask:radial-gradient(closest-side,#000 38%,transparent 82%)}
+/* Le lettrage de vignette : gras, capitales, ombre franche sous le trait
+   plutôt que floue. Une ombre floue fait « texte posé sur une image » ; une
+   ombre nette fait « lettrage dessiné ». */
+.tbf-vignette-mot{display:block;font-family:var(--banner);
+  font-size:clamp(30px,11vw,54px);line-height:.94;letter-spacing:.03em;
+  text-transform:uppercase;color:var(--mc,var(--projo));
+  text-shadow:0 4px 0 rgba(4,7,11,.9);-webkit-text-stroke:1px rgba(4,6,10,.6);
+  text-wrap:balance}
+
+.tbf-moment{position:fixed;inset:0;z-index:95;display:grid;place-items:center;
+  padding:18px;pointer-events:none;color:var(--mc,var(--projo));opacity:0;
+  /* Le voile. Assez pour que la case décolle, assez peu pour qu'on continue de
+     voir le match derrière : c'est ce qu'on est en train de regarder. */
+  background:radial-gradient(58% 42% at 50% 50%,rgba(4,6,10,.62),rgba(4,6,10,.12) 76%,
+    transparent)}
+.tbf-moment .tbf-vignette{max-width:min(420px,100%)}
+.tbf-moment b{display:block}
 /* Le buteur et la minute. Ils viennent de la base, jamais de l'API : le
    relevé du direct les y a déjà écrits. */
 .tbf-moment small{display:block;font-family:var(--banner);font-size:clamp(11px,3.4vw,15px);
-  letter-spacing:.12em;margin-top:5px;color:var(--craie);opacity:.85;
-  text-shadow:0 2px 12px rgba(0,0,0,.95)}
+  letter-spacing:.14em;margin-top:8px;color:var(--craie);opacity:.8}
 .tbf-moment small:empty{display:none}
-.tbf-moment.on{opacity:1;animation:tbf-momentIn .6s cubic-bezier(.2,1.6,.35,1)}
+.tbf-moment.on{opacity:1;animation:tbf-momentVoile .28s ease}
+.tbf-moment.on .tbf-vignette{animation:tbf-momentIn .6s cubic-bezier(.2,1.6,.35,1)}
 /* La barre se vide : elle dit combien de temps le moment tient encore. Sans
    elle, quinze secondes d'immobilité passeraient pour un élément d'interface
    plutôt que pour un événement. */
-.tbf-moment.on::after{content:"";display:block;height:3px;width:44%;margin:9px auto 0;
-  border-radius:2px;background:currentColor;opacity:.8;
+.tbf-moment.on .tbf-vignette::after{content:"";display:block;height:3px;width:52%;
+  margin:13px auto 0;border-radius:2px;background:currentColor;opacity:.8;
   animation:tbf-momentBarre var(--mt,15s) linear forwards}
 
 @keyframes tbf-souffle{0%,100%{transform:scale(1,1) rotate(0deg)}
@@ -199,14 +277,20 @@
   38%{transform:translateY(-1.1%) scale(.995,1.008)}
   72%{transform:translateY(.2%) scale(1.004,.996)}}
 
-@keyframes tbf-momentIn{0%{opacity:0;transform:scale(.4) rotate(-7deg)}
-  55%{opacity:1;transform:scale(1.14) rotate(2deg)}
-  100%{opacity:1;transform:scale(1) rotate(0)}}
-@keyframes tbf-momentBarre{from{width:44%}to{width:0}}
+/* La case tombe et se cale. Elle finit à -1,6° et non à zéro : c'est
+   l'inclinaison de repos posée sur `.tbf-vignette`, et y revenir à plat la ferait
+   sauter d'un cran à la fin de l'animation. */
+@keyframes tbf-momentIn{0%{opacity:0;transform:scale(.4) rotate(-9deg)}
+  55%{opacity:1;transform:scale(1.12) rotate(2deg)}
+  100%{opacity:1;transform:scale(1) rotate(-1.6deg)}}
+@keyframes tbf-momentVoile{from{opacity:0}to{opacity:1}}
+@keyframes tbf-momentBarre{from{width:52%}to{width:0}}
 
 @media (prefers-reduced-motion:reduce){
   .tbf-souffle,.tbf-salut,.tbf-monte,.tbf-saut,.tbf-change,.tbf-vie{animation:none !important}
-  .tbf-moment.on{animation:none}
+  /* La case apparaît sans tomber ni tourner. La barre du temps reste : elle
+     n'est pas du mouvement décoratif, elle dit combien de temps il reste. */
+  .tbf-moment.on .tbf-vignette{animation:none;transform:rotate(-1.6deg)}
 }
 
 /* ------------------------------------------------------ le bandeau d'annonce
@@ -1025,6 +1109,15 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
 /* La barre laisse passer les clics, ses deux boutons les prennent : entre eux
    se trouve l'en-tête du jeu, qui doit rester cliquable. */
 .tbf-haut-jeu .tbf-bourse,.tbf-haut-jeu .tbf-retour{pointer-events:auto}
+/* **Pas de titre sur un écran de jeu.**
+
+   La barre commune écrit le nom de l'écran entre les deux boutons. Sur une page
+   de contenu c'est ce qui dit où l'on est ; sur un écran de jeu, la page a déjà
+   son propre en-tête au même endroit — le score et l'horloge du duel, le nom du
+   match au Virage — et les deux se superposaient : on lisait « EN FACDUEL ».
+
+   Le titre est donc retiré là, et là seulement. L'écran se nomme tout seul. */
+.tbf-haut-jeu .tbf-ou{display:none}
 /* Sans elle, la flèche absente laisserait le bouton de menu glisser à gauche :
    `space-between` place son unique enfant au début. */
 .tbf-haut-jeu .tbf-bourse{margin-left:auto}
@@ -1242,41 +1335,131 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
    sur les cases plutôt qu'une hauteur : la zone n'a pas la même taille dans le
    duel et dans le Virage, et des cases carrées y sont plus lisibles qu'un
    quadrillage écrasé. */
-.grille{display:grid;gap:5px;width:86%;margin:0 auto;touch-action:manipulation;
+.tbf-grille{display:grid;gap:5px;width:86%;margin:0 auto;touch-action:manipulation;
   -webkit-user-select:none;user-select:none}
-.grille i{aspect-ratio:1;border-radius:7px;background:rgba(242,238,228,.08);
+.tbf-grille i{aspect-ratio:1;border-radius:7px;background:rgba(242,238,228,.08);
   border:1px solid rgba(242,238,228,.12);display:grid;place-items:center;
   font-style:normal;font-family:var(--banner);font-size:15px;color:transparent;
   transition:background .12s ease,border-color .12s ease}
 /* Allumée par le serveur pendant l'aperçu. */
-.grille i.on{background:var(--c,#2FB8A6);border-color:var(--c,#2FB8A6)}
+.tbf-grille i.on{background:var(--c,#2FB8A6);border-color:var(--c,#2FB8A6)}
 /* Posée par le joueur : creuse, pour qu'on distingue ce qu'on a mis de ce
    qu'on a vu — sans quoi on ne sait plus si on recopie ou si on se souvient. */
-.grille i.mise{background:rgba(47,184,166,.3);border-color:var(--c,#2FB8A6)}
+.tbf-grille i.mise{background:rgba(47,184,166,.3);border-color:var(--c,#2FB8A6)}
 /* Les visages : retournés, puis pris. */
-.grille.memo i.vue{background:rgba(242,238,228,.16);color:var(--craie)}
-.grille.memo i.prise{background:rgba(47,184,166,.26);border-color:var(--c,#2FB8A6);
+.tbf-grille.memo i.vue{background:rgba(242,238,228,.16);color:var(--craie)}
+.tbf-grille.memo i.prise{background:rgba(47,184,166,.26);border-color:var(--c,#2FB8A6);
   color:var(--c,#2FB8A6)}
-.grille.capo i{aspect-ratio:1.25;border-radius:9px}
+.tbf-grille.capo i{aspect-ratio:1.25;border-radius:9px}
 
 /* Le tri. Les cartons portent leur couleur d'emblée — rien n'est caché — et
    `--t` est posée par la page, une par carton. Un carton pris s'efface au lieu
    de disparaître : la grille garde sa forme, et le joueur voit ce qu'il a déjà
    fouillé. */
-.grille.tri i{background:var(--t,#C2CAD6);border-color:rgba(0,0,0,.45);border-radius:6px}
-.grille.tri i.pris{opacity:.2;transform:scale(.86)}
+.tbf-grille.tri i{background:var(--t,#C2CAD6);border-color:rgba(0,0,0,.45);border-radius:6px}
+.tbf-grille.tri i.pris{opacity:.2;transform:scale(.86)}
 /* Un mauvais carton se marque : l'épreuve en retire un bon, et une pénalité
    qu'on ne voit pas passer se lit comme une note injuste. */
-.grille.tri i.rate{opacity:.34;box-shadow:inset 0 0 0 3px #E0402C}
+.tbf-grille.tri i.rate{opacity:.34;box-shadow:inset 0 0 0 3px #E0402C}
 
 /* Le compte. Un seul chiffre, très gros, au milieu — et rien d'autre : c'est
    la seule épreuve où l'écran doit devenir inutile en cours de route. */
-.compte{display:grid;place-items:center;gap:6px;width:100%;height:100%;
+.tbf-compte{display:grid;place-items:center;gap:6px;width:100%;height:100%;
   touch-action:manipulation;-webkit-user-select:none;user-select:none;cursor:pointer}
-.compte b{font-family:var(--banner);font-size:clamp(38px,13vw,64px);line-height:1;
+.tbf-compte b{font-family:var(--banner);font-size:clamp(38px,13vw,64px);line-height:1;
   color:var(--c,#E08A2C);font-variant-numeric:tabular-nums;
   text-shadow:0 0 26px rgba(224,138,44,.4)}
 /* Éteint : la case garde sa hauteur, sinon tout l'écran remonte au moment
    précis où le joueur doit ne plus bouger. */
-.compte b.noir{opacity:0}
-.compte b::after{content:"";display:block;height:0}
+.tbf-compte b.noir{opacity:0}
+.tbf-compte b::after{content:"";display:block;height:0}
+
+/* ==================================================== LA BOÎTE DE CONFIRMATION
+
+   Posée par `dialogue.js`. Voir ce fichier pour la règle : une confirmation
+   montre ce qu'on va perdre, elle ne demande pas deux fois.
+
+   Le fond est opaque à 72 % et flouté. Ce n'est pas de la décoration : la
+   question porte sur quelque chose qui se voit derrière — un Fanzzy, un deck,
+   un KOP — et l'écran doit reculer sans disparaître. */
+.tbf-dial-fond{position:fixed;inset:0;z-index:160;display:grid;place-items:center;
+  padding:20px;background:rgba(5,8,12,.72);backdrop-filter:blur(7px);
+  opacity:0;transition:opacity .18s ease}
+.tbf-dial-fond.on{opacity:1}
+
+.tbf-dial{width:min(420px,100%);max-height:calc(100vh - 40px);overflow:auto;
+  background:linear-gradient(180deg,#161C25,#0D1116);
+  border:1px solid rgba(242,238,228,.16);border-radius:var(--r);
+  box-shadow:0 24px 70px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.06);
+  padding:20px 18px 16px;transform:scale(.93) translateY(10px);
+  transition:transform .2s cubic-bezier(.2,1.5,.4,1)}
+.tbf-dial-fond.on .tbf-dial{transform:none}
+
+/* La bande d'écharpe en tête. Elle dit « c'est le jeu qui te parle » — sans
+   elle, la boîte ressemble à un panneau système de plus. */
+.tbf-dial::before{content:"";display:block;height:4px;border-radius:2px;
+  margin:-6px 0 15px;
+  background:repeating-linear-gradient(115deg,var(--projo) 0 9px,transparent 9px 18px)}
+
+.tbf-dial h3{margin:0;font-family:var(--banner);font-size:19px;letter-spacing:.05em;
+  line-height:1.18;text-transform:uppercase;color:var(--craie);text-wrap:balance}
+.tbf-dial p{margin:9px 0 0;font-size:13px;line-height:1.6;color:rgba(242,238,228,.7)}
+
+.tbf-dial-quoi{display:flex;gap:9px;margin-top:17px}
+.tbf-dial-bt{flex:1;min-width:0;border:0;border-radius:11px;cursor:pointer;
+  padding:12px 10px;font-family:var(--banner);font-size:13px;letter-spacing:.09em;
+  text-transform:uppercase;background:#202833;color:var(--craie);
+  box-shadow:0 3px 0 #0A0D11;transition:transform .09s ease,box-shadow .09s ease}
+.tbf-dial-bt small{display:block;font-family:var(--ui);font-size:10px;
+  letter-spacing:.04em;opacity:.72;margin-top:3px;text-transform:none}
+.tbf-dial-bt:active{transform:translateY(3px);box-shadow:0 0 0 #0A0D11}
+.tbf-dial-bt:focus-visible{outline:3px solid var(--projo);outline-offset:3px}
+.tbf-dial-bt[disabled]{opacity:.45;cursor:default}
+/* Le bouton qui engage. Il est à droite, toujours : le geste qui coûte ne doit
+   pas être à la place où le pouce retombe. */
+.tbf-dial-bt.oui{flex:1.35;background:var(--bleu);color:#08101C;box-shadow:0 3px 0 #1E4E90}
+.tbf-dial-bt.oui[data-ton=or]{background:var(--projo);color:#0B0E13;box-shadow:0 3px 0 #6B4E0A}
+.tbf-dial-bt.oui[data-ton=flare]{background:var(--flare);color:#FFF3F1;box-shadow:0 3px 0 #7A1D13}
+.tbf-dial-bt.oui[data-ton=vert]{background:var(--vert);color:#04150E;box-shadow:0 3px 0 #0C4A31}
+
+@media (prefers-reduced-motion:reduce){
+  .tbf-dial-fond,.tbf-dial{transition:none}
+  .tbf-dial{transform:none}
+}
+
+/* Les places de la tribune, dans la boîte qui demande où placer un Fanzzy.
+   Une place par rang ouvert, avec ce qui s'y passe et **qui en sort** : une
+   place occupée est un personnage qu'on remplace, et l'apprendre après coup
+   revient à le perdre sans l'avoir décidé. */
+.tbf-dial-places{display:flex;flex-direction:column;gap:7px;margin-top:14px}
+.tbf-dial-places .place{display:block;width:100%;text-align:left;cursor:pointer;
+  border:1px solid rgba(242,238,228,.13);border-radius:11px;padding:10px 12px;
+  background:rgba(255,255,255,.03);color:var(--craie);
+  transition:border-color .12s ease,background .12s ease}
+.tbf-dial-places .place .role{display:block;font-family:var(--banner);font-size:12px;
+  letter-spacing:.12em}
+.tbf-dial-places .place .qui{display:block;font-size:12px;margin-top:2px;
+  color:rgba(242,238,228,.82)}
+.tbf-dial-places .place .quand{display:block;font-size:10.5px;margin-top:3px;
+  color:rgba(242,238,228,.42)}
+.tbf-dial-places .place.on{border-color:var(--vert);background:rgba(30,158,106,.14)}
+.tbf-dial-places .place.on .role{color:var(--vert)}
+/* Là où il est déjà. Ni un choix ni une erreur : une information. */
+.tbf-dial-places .place.moi .qui{color:var(--projo)}
+.tbf-dial-places .place[disabled]{opacity:.4;cursor:default}
+.tbf-dial-places .place:focus-visible{outline:3px solid var(--projo);outline-offset:2px}
+/* Pendant l'envoi. Le curseur dit que quelque chose part, sans rien déplacer :
+   un indicateur qui pousse le contenu ferait sauter la boîte sous le doigt. */
+.tbf-dial-fond.attend .tbf-dial{cursor:progress}
+.tbf-dial-fond.attend .tbf-dial-bt.oui{opacity:.7}
+
+/* Un champ dans la boîte. Rare par construction : une confirmation qui demande
+   à taper quelque chose n'est justifiée que là où le geste est définitif — la
+   suppression du compte, et rien d'autre pour l'instant. */
+.tbf-dial-champ{display:block;margin-top:14px;font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:rgba(242,238,228,.55);font-family:var(--banner)}
+.tbf-dial-champ input{display:block;width:100%;margin-top:6px;padding:11px 12px;
+  border-radius:10px;border:1px solid rgba(242,238,228,.16);background:rgba(0,0,0,.34);
+  color:var(--craie);font-family:var(--ui);font-size:15px;letter-spacing:normal;
+  text-transform:none}
+.tbf-dial-champ input:focus-visible{outline:2px solid var(--projo);outline-offset:1px}

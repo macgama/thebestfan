@@ -185,5 +185,38 @@ if (sansSuite.length) {
   ok('chaque page a une suite d’interface');
 }
 
+/* ------------------------------------------- une suite que personne ne lance
+
+   Quatre suites de ce dépôt étaient dans **aucun script npm**. Elles ne se
+   lançaient donc que si quelqu'un tapait leur chemin de mémoire, ce que
+   personne ne fait — et elles avaient dérivé en silence pendant des semaines :
+
+   — `fanzzy-smoke` tirait dans VIRAGE NORD et NUITS EUROPÉENNES, dissoutes
+     depuis. Elle levait au premier booster ;
+   — `nvn-net-smoke` chantait en choisissant son geste, ce que le duel refuse
+     depuis qu'il a reçu le répertoire du Virage. Sept contrôles tombaient.
+
+   Une suite qu'on ne lance jamais ne protège de rien, et pire : elle donne
+   l'impression que la chose est couverte. C'est l'exact équivalent, pour les
+   tests, de la promesse sans destinataire que ce script traque par ailleurs. */
+{
+  const pkg = JSON.parse(await readFile('package.json', 'utf8'));
+  const lances = JSON.stringify(pkg.scripts ?? {});
+  /* Seules les suites. Les chaînes de production — les images, le manifeste, la
+     veille, le déploiement — se lancent à la main par nature, et exiger un
+     script pour chacune ferait du bruit sans rien défendre. */
+  const orphelines = (await readdir('scripts'))
+    .filter((f) => /-smoke\.mjs$/.test(f))
+    .filter((f) => !lances.includes(f));
+
+  if (orphelines.length) {
+    ko('package.json', `${orphelines.length} suite(s) dans aucun script npm : `
+      + `${orphelines.join(', ')}. Personne ne les lance, donc elles dérivent — `
+      + 'et une suite qui ne tourne jamais fait croire que la chose est couverte.');
+  } else {
+    ok('chaque suite est lançable par npm');
+  }
+}
+
 console.log(fautes ? `\n${fautes} promesse(s) non tenue(s)` : '\ntout est vert');
 process.exit(fautes ? 1 : 0);

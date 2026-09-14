@@ -91,7 +91,8 @@
     'RV21', 'OB1', 'OB2', 'OB3', 'OB4', 'OB5', 'OB6', 'OB7',
     'OB8', 'OB9', 'OB10', 'OB11', 'OB12', 'EP1', 'EP2', 'EP3',
     'EP4', 'EP5', 'EP6', 'EP7', 'EP8', 'EP9', 'EP10', 'EP11',
-    'EP12', 'EP13', 'EP14', 'EP15', 'EP16', 'EP17',
+    'EP12', 'EP13', 'EP14', 'EP15', 'EP16', 'EP17', 'X52', 'VP1',
+    'VP2', 'VP3', 'VP4', 'GC1',
   ]);
 
   /**
@@ -147,8 +148,20 @@
     return `/img/fanzzy/${vu}${variante === 'buste' ? '-buste' : ''}${IMG_EXT}`;
   };
 
-  /** Fond seul, sans silhouette : sert de décor aux illustrations. */
+  /**
+   * Fond seul, sans silhouette : sert de décor aux illustrations.
+   *
+   * **Il délègue à `fanzzy-fond.js` quand ce module est chargé**, pour que la
+   * carte du classeur et la fiche montrent le même lieu. Deux décors pour le
+   * même personnage, c'est le joueur qui apprend deux fois où il habite.
+   *
+   * Le repli — le halo teinté d'origine — reste pour les pages qui ne chargent
+   * pas le module des décors. Une carte sans fond du tout se lirait comme une
+   * image manquante ; un fond simple ne se lit pas du tout, ce qui est le but.
+   */
   function artFond(f) {
+    const neuf = window.TBF_FOND?.fond?.(f);
+    if (neuf) return neuf;
     const tc = couleur(f);
     return `<svg viewBox="0 0 128 100" preserveAspectRatio="xMidYMid slice"
       xmlns="http://www.w3.org/2000/svg">

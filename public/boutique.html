@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
 <style>
 /* La boutique.
 
@@ -241,6 +242,18 @@ $('etal').addEventListener('click', async (e) => {
     return;
   }
 
+  /* Une dépense se demande. Ici elle est définitive — les billets ne se
+     remboursent pas — et les lignes de l'étal se touchent en faisant défiler.
+     Le prix est répété dans la boîte : c'est ce qu'on regarde, et c'est ce
+     qu'on aurait dû relire avant de toucher. */
+  const prix = Number(b.dataset.prix) || 0;
+  if (!(await window.TBF_DIALOGUE?.confirmer({
+    titre: `ACHETER ${(b.querySelector('b')?.textContent ?? '').toUpperCase()} ?`,
+    texte: `${prix} billet${prix > 1 ? 's' : ''} seront débités. Les billets ne se `
+      + 'remboursent pas.',
+    oui: 'ACHETER', sousOui: `${prix} billet${prix > 1 ? 's' : ''}`, ton: 'or',
+  }))) return;
+
   b.disabled = true;
   try {
     const r = await fetch('/api/boutique/depenser', {
@@ -274,6 +287,19 @@ const MESSAGES = {
 $('rayons').addEventListener('click', async (e) => {
   const b = e.target.closest('[data-art]');
   if (!b || !ouvert || b.disabled) return;
+
+  /* De l'argent réel. La confirmation ne remplace pas l'écran de paiement — on
+     part chez Stripe juste après — mais elle évite d'y partir par accident, et
+     surtout elle laisse une dernière occasion de lire le prix sur la même page
+     que le reste de la boutique. */
+  if (!(await window.TBF_DIALOGUE?.confirmer({
+    titre: `PASSER COMMANDE ?`,
+    texte: `${b.querySelector('b')?.textContent ?? 'Cet article'} — `
+      + `${b.querySelector('.prix')?.textContent ?? ''}. Tu seras conduit chez Stripe `
+      + 'pour payer. Rien n’est débité avant.',
+    oui: 'CONTINUER', sousOui: b.querySelector('.prix')?.textContent ?? '', ton: 'or',
+  }))) return;
+
   b.disabled = true;
   try {
     const r = await fetch('/api/boutique/commander', {

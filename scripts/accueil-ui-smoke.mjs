@@ -1166,30 +1166,37 @@ await page.close();
 {
   const page = await ouvrir();
   const hud = await page.evaluate(() => ({
-    pseudo: document.getElementById('pseudo').textContent,
     initiale: document.getElementById('initiale').textContent,
-    club: document.getElementById('clubline').textContent,
+    /* Le pseudo et le nom du club ne sont plus dans l'en-tête : ils vivaient
+       dans un cadre sombre autour de l'avatar, et sur un compte neuf ces deux
+       lignes sont vides — il ne restait qu'un rectangle noir sous la pastille.
+       On vérifie donc qu'ils ont bien **disparu du document**, et pas seulement
+       qu'ils sont cachés : un élément laissé là se fait réécrire par un script
+       qui croit encore parler à quelqu'un. */
+    pseudoParti: document.getElementById('pseudo') === null,
+    clubParti: document.getElementById('clubline') === null,
     ecarpes: document.getElementById('scarves').textContent,
     boosters: document.getElementById('packs').textContent,
     collec: document.getElementById('collecTxt').textContent,
     jauge: document.getElementById('collecBar').style.width,
     entrer: document.getElementById('entrer').getAttribute('href'),
   }));
-  check('le pseudo et son initiale sont posés',
-    hud.pseudo === 'Momo' && hud.initiale === 'm');
-  check('le club suivi est nommé', /Sion/.test(hud.club));
-  /* Le niveau : un chiffre sur l’avatar, une jauge sous le pseudo. Rien ne
-     doit s'afficher tant que le module n'a pas répondu — une pastille « 1 »
-     posée par défaut mentirait pendant la seconde du chargement, et c’est
-     précisément le moment où on la regarde. */
+  check('l’initiale est posée sur l’avatar', hud.initiale === 'm');
+  check('le pseudo et le club ont quitté l’en-tête',
+    hud.pseudoParti && hud.clubParti);
+  /* Le niveau : un chiffre sur l’avatar, et c'est désormais le seul endroit. La
+     jauge de palier est partie avec le cadre qui la portait. Rien ne doit
+     s'afficher tant que le module n'a pas répondu — une pastille « 1 » posée
+     par défaut mentirait pendant la seconde du chargement, et c’est précisément
+     le moment où on la regarde. */
   const niv = await page.evaluate(() => ({
     pastille: document.getElementById('nivPastille')?.textContent ?? '',
     visible: document.getElementById('nivPastille')?.hidden === false,
-    jauge: document.getElementById('nivBar')?.firstElementChild?.style.width ?? '',
+    infobulle: document.getElementById('nivPastille')?.title ?? '',
   }));
   check('le niveau est affiché sur l’avatar', niv.visible && niv.pastille === '4');
-  check('et la jauge du palier est remplie à moitié',
-    /^4[5-9]%$|^5[0-5]%$/.test(niv.jauge));
+  check('et il dit où on en est dans son palier', /XP/.test(niv.infobulle)
+    || (console.log('        infobulle :', niv.infobulle), false));
 
   check('la bourse affiche écharpes et boosters',
     hud.ecarpes === '90' && hud.boosters === '12');
@@ -1233,13 +1240,20 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
 if (process.env.CAPTURE) {
   // Dans le dossier temporaire du système, pas dans le dépôt : une capture n'a
   // rien à faire dans un commit, et `/tmp` en dur ne marche pas sous Windows.
-  for (const [nom, etat] of [['repos', null], ['match', {
-    id: 1, open: true, elapsed: 37, status_short: '2H',
-    home_id: 85, away_id: 91, home_name: 'Sion', away_name: 'Bâle',
-    home_goals: 1, away_goals: 0, crowd: [12, 9],
-  }]]) {
+  /* Trois tailles, et la tablette en fait partie : c'est l'écran où la colonne
+     s'élargit, et c'est le seul endroit où l'on voit si elle remplit vraiment
+     la largeur gagnée ou si tout reste à sa taille de téléphone au milieu. */
+  for (const [nom, etat, l, h] of [
+    ['repos', null, 400, 880],
+    ['match', {
+      id: 1, open: true, elapsed: 37, status_short: '2H',
+      home_id: 85, away_id: 91, home_name: 'Sion', away_name: 'Bâle',
+      home_goals: 1, away_goals: 0, crowd: [12, 9],
+    }, 400, 880],
+    ['tablette', null, 834, 1112],
+  ]) {
     direct = etat;
-    const p = await ouvrir();
+    const p = await ouvrir(l, h);
     await new Promise((r) => setTimeout(r, 800));
     const f = path.join(tmpdir(), `accueil-${nom}.png`);
     await p.screenshot({ path: f, fullPage: false });

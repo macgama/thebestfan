@@ -12,9 +12,14 @@ import { XP, niveauPour, progression, droits, paliersEntre, ecarpesDuPalier, NIV
  * jamais la colonne eux-mêmes. Sans ce passage obligé, la montée de palier
  * serait détectée à trois endroits différents, et un jour à deux seulement.
  *
- * **Autoriser.** `droitsDe()` répond « ce joueur a-t-il le droit ». Les séries,
- * les slots d'équipe et les emplacements de deck passent par là plutôt que de
- * refaire chacun sa comparaison de niveau.
+ * **Autoriser.** `droitsDe()` répond « ce joueur a-t-il le droit ». Les slots
+ * d'équipe et les emplacements de deck passent par là plutôt que de refaire
+ * chacun sa comparaison de niveau.
+ *
+ * Les **séries** en sont sorties : elles s'ouvrent par saison, pour tout le
+ * monde le même jour, et plus au niveau de chacun. Ce que le niveau ouvre
+ * encore est une capacité — elle n'a de sens que pour un joueur donné, et
+ * personne n'a envie qu'on la lui annonce.
  *
  * **Un gain d'XP ne fait jamais échouer ce qui l'a produit.** Un booster ouvert
  * reste ouvert même si la bourse n'a pas pu être créditée : les cartes sont
@@ -145,8 +150,10 @@ export function createNiveau({ pool, requireAuth }) {
       part: d.part,
       max: d.max,
       niveauMax: NIVEAU_MAX,
-      // Des tableaux, pas des `Set` : ceci part en JSON.
-      series: [...d.series],
+      /* Plus de `series` ici. Le niveau n'ouvre plus de séries — ce sont les
+         saisons, depuis l'administration, pour tout le monde le même jour. Les
+         séries ouvertes sont dans `/api/fanzzy/dex`, qui les sert déjà à tous
+         puisqu'elles ne dépendent plus du joueur. */
       slots: d.slots,
       deckFanzzy: d.deckFanzzy,
       // Ce que rapporte chaque geste, pour que l'écran puisse l'annoncer sans

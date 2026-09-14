@@ -371,7 +371,17 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
 if (process.env.CAPTURE) {
   const { tmpdir } = await import('node:os');
   await page.screenshot({ path: path.join(tmpdir(), 'admin-fanzzy.png'), fullPage: false });
-  console.log(`   capture : ${path.join(tmpdir(), 'admin-fanzzy.png')}`);
+
+  /* L'écran des saisons, qui est le seul endroit d'où l'on ouvre du contenu. Il
+     se regarde : trois défauts du lot précédent n'ont été vus que sur l'image. */
+  await page.evaluate(() => [...document.querySelectorAll('nav button')]
+    .find((b) => /SAISONS/.test(b.textContent))?.click());
+  await new Promise((r) => setTimeout(r, 500));
+  await page.evaluate(() => document.getElementById('nouvelle-saison')?.click());
+  await new Promise((r) => setTimeout(r, 400));
+  await page.screenshot({ path: path.join(tmpdir(), 'admin-saisons.png'), fullPage: true });
+  console.log(`   captures : ${path.join(tmpdir(), 'admin-fanzzy.png')}`);
+  console.log(`              ${path.join(tmpdir(), 'admin-saisons.png')}`);
 }
 
 await nav.close();

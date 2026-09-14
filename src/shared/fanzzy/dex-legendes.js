@@ -38,64 +38,69 @@
 
 export const DEX_LEGENDES = [
 
-  /* ================================================= VIRAGE NORD (5 neuves)
+  /* ======================================= L'ANCIEN VIRAGE NORD (5 neuves)
+
+     Sa série a été dissoute et ces cinq-là sont passées à LA TRIBUNE : capo,
+     bâche, tambour, muret, torche sont les archétypes du virage ordinaire.
 
      Le virage d'origine, celui des cartes `X`. Sa numérotation reprend là où
      le lot de 2026 l'avait laissée — X52 et suivants — plutôt que de rouvrir
      des trous : un identifiant réutilisé désigne deux cartes dans les
      sauvegardes des joueurs qui possédaient la première.                   */
 
-  { id: 'X52', nom: 'Le Capo Historique', type: 'voix', set: 'VN', stage: 1, rar: 'legendaire',
+  { id: 'X52', nom: 'Le Capo Historique', type: 'voix', set: 'TR', stage: 1, rar: 'legendaire',
     histoire: 'Trente et un ans dos au terrain. Il n’a jamais vu un but de sa vie et '
       + 'il les a tous entendus.',
     mods: { tempoWindow: 1.28, breathBonus: 1.2, parryResist: 0.85 },
-    cri: { label: 'TOUT LE MONDE DEBOUT', gest: 'capo', power: 82 } },
+    cri: { label: 'TOUT LE MONDE DEBOUT', gest: 'echo', power: 82 } },
 
-  { id: 'X53', nom: 'La Bâche de 89', type: 'tifo', set: 'VN', stage: 1, rar: 'legendaire',
+  { id: 'X53', nom: 'La Bâche de 89', type: 'tifo', set: 'TR', stage: 1, rar: 'legendaire',
     histoire: 'Repeinte quatre fois, recousue partout. On devine encore le premier nom '
       + 'dessous, et personne n’ose le recouvrir tout à fait.',
     mods: { parryBonus: 1.55, perfectBonus: 1.2, tempoWindow: 0.86 },
-    cri: { label: 'ELLE A TOUT VU', gest: 'tifo', power: 80 } },
+    cri: { label: 'ELLE A TOUT VU', gest: 'mosaique', power: 80 } },
 
-  { id: 'X54', nom: 'Le Tambour Fêlé', type: 'perc', set: 'VN', stage: 1, rar: 'legendaire',
+  { id: 'X54', nom: 'Le Tambour Fêlé', type: 'perc', set: 'TR', stage: 1, rar: 'legendaire',
     histoire: 'La peau est crevée depuis un derby de 2011. Il sonne faux et le virage '
       + 'tape dessus quand même, parce que c’est ce son-là qu’il connaît.',
     mods: { mashBonus: 1.34, mashTime: 900, holdBonus: 0.88 },
-    cri: { label: 'ÇA SONNE PAS, ON TAPE', gest: 'mash', power: 78 } },
+    cri: { label: 'ÇA SONNE PAS, ON TAPE', gest: 'crescendo', power: 78 } },
 
-  { id: 'X55', nom: 'Le Muret du Fond', type: 'fide', set: 'VN', stage: 1, rar: 'legendaire',
+  { id: 'X55', nom: 'Le Muret du Fond', type: 'fide', set: 'TR', stage: 1, rar: 'legendaire',
     histoire: 'Deux mètres de béton où quatre générations ont écrit au marqueur. '
       + 'Il ne bouge pas, il ne chante pas, et sans lui le virage s’assoit.',
     mods: { holdBonus: 1.4, holdForgive: 3, parryResist: 1.25, tempoInterval: 90 },
-    cri: { label: 'ON NE RECULE PAS', gest: 'hold', power: 81 } },
+    cri: { label: 'ON NE RECULE PAS', gest: 'tenue', power: 81 } },
 
-  { id: 'X56', nom: 'La Torche de Minuit', type: 'pyro', set: 'VN', stage: 1, rar: 'legendaire',
+  { id: 'X56', nom: 'La Torche de Minuit', type: 'pyro', set: 'TR', stage: 1, rar: 'legendaire',
     histoire: 'Allumée une seule fois par saison, au moment que personne ne choisit. '
       + 'Elle décide toute seule et le virage suit.',
     mods: { perfectBonus: 1.5, refundBonus: 1.3, backfire: 1.45 },
-    cri: { label: 'MAINTENANT', gest: 'crescendo', power: 84 } },
+    cri: { label: 'MAINTENANT', gest: 'compte', power: 84 } },
 
-  /* ============================================= NUITS EUROPÉENNES (3 neuves)
+  /* =================================== LES ANCIENNES NUITS (3 neuves)
 
-     Elle en avait déjà deux — le Parcage 400 places et la Nuit du 8e.       */
+     Elle en avait déjà deux — le Parcage 400 places et la Nuit du 8e. La série
+     a été dissoute : les cinq sont passées aux GALÈRES DE DÉPLACEMENT, qui sont
+     exactement leur sujet.                                                  */
 
-  { id: 'X57', nom: 'Le Douanier du Car 3', type: 'depl', set: 'NE', stage: 1, rar: 'legendaire',
+  { id: 'X57', nom: 'Le Douanier du Car 3', type: 'depl', set: 'GD', stage: 1, rar: 'legendaire',
     histoire: 'Il a compté les mêmes trente-neuf personnes à l’aller et au retour, '
       + 'pendant vingt ans, et il n’en a jamais perdu une.',
     mods: { breathBonus: 1.38, refundBonus: 1.25, mashBonus: 0.88 },
-    cri: { label: 'PERSONNE NE RESTE', gest: 'tenue', power: 77 } },
+    cri: { label: 'PERSONNE NE RESTE', gest: 'memoire', power: 77 } },
 
-  { id: 'X58', nom: 'La Mosaïque de Séville', type: 'tifo', set: 'NE', stage: 1, rar: 'legendaire',
+  { id: 'X58', nom: 'La Mosaïque de Séville', type: 'tifo', set: 'GD', stage: 1, rar: 'legendaire',
     histoire: 'Douze mille cartons distribués en quarante minutes par huit personnes '
       + 'qui ne s’étaient jamais rencontrées.',
     mods: { perfectBonus: 1.42, parryBonus: 1.2, costPenalty: 1.18 },
-    cri: { label: 'LEVEZ, MAINTENANT', gest: 'mosaique', power: 83 } },
+    cri: { label: 'LEVEZ, MAINTENANT', gest: 'tri', power: 83 } },
 
-  { id: 'X59', nom: 'Le Dernier Train', type: 'depl', set: 'NE', stage: 1, rar: 'legendaire',
+  { id: 'X59', nom: 'Le Dernier Train', type: 'depl', set: 'GD', stage: 1, rar: 'legendaire',
     histoire: 'Il part à 23 h 14 et le match finit à 23 h 09. Ceux qui le prennent '
       + 'chantent plus fort que tout le monde jusqu’à la 88e.',
     mods: { tempoInterval: -80, breathBonus: 1.22, holdForgive: 0 },
-    cri: { label: 'ON A CINQ MINUTES', gest: 'salves', power: 79 } },
+    cri: { label: 'ON A CINQ MINUTES', gest: 'memoire', power: 79 } },
 
   /* =========================================== LE VIRAGE IMPOSSIBLE (5 neuves)
 
@@ -106,31 +111,31 @@ export const DEX_LEGENDES = [
     histoire: 'Trois arbitres, trois décisions, trois fois le même silence. Le virage '
       + 'a chanté les trois fois, plus fort à chaque reprise.',
     mods: { perfectBonus: 1.46, refundBonus: 1.4, backfire: 1.5 },
-    cri: { label: 'ON RECOMMENCE', gest: 'relance', power: 83 } },
+    cri: { label: 'ON RECOMMENCE', gest: 'compte', power: 83 } },
 
   { id: 'X61', nom: 'La Minute 97', type: 'voix', set: 'IM', stage: 1, rar: 'legendaire',
     histoire: 'Il n’y avait que six minutes annoncées. Personne n’a jamais su d’où '
       + 'venait la septième, et personne ne l’a réclamée.',
     mods: { tempoWindow: 1.32, tempoInterval: -60, parryResist: 0.8 },
-    cri: { label: 'ENCORE UNE', gest: 'contretemps', power: 84 } },
+    cri: { label: 'ENCORE UNE', gest: 'capo', power: 84 } },
 
   { id: 'X62', nom: 'Le Gardien qui Monte', type: 'depl', set: 'IM', stage: 1, rar: 'legendaire',
     histoire: 'Il a traversé tout le terrain sur un corner et il n’est jamais redescendu '
       + 'dans les mémoires.',
     mods: { mashBonus: 1.42, breathBonus: 1.15, parryResist: 0.72 },
-    cri: { label: 'IL MONTE', gest: 'mash', power: 82 } },
+    cri: { label: 'IL MONTE', gest: 'memoire', power: 82 } },
 
   { id: 'X63', nom: 'Le Virage à Sept', type: 'fide', set: 'IM', stage: 1, rar: 'legendaire',
     histoire: 'Huis clos partiel, sept personnes autorisées. Ils ont fait le service '
       + 'complet, chant par chant, pour un stade vide.',
     mods: { holdBonus: 1.44, breathBonus: 1.3, mashBonus: 0.82 },
-    cri: { label: 'ON EST LÀ QUAND MÊME', gest: 'tenue', power: 80 } },
+    cri: { label: 'ON EST LÀ QUAND MÊME', gest: 'retenue', power: 80 } },
 
   { id: 'X64', nom: 'La Remontada de Nulle Part', type: 'perc', set: 'IM', stage: 1, rar: 'legendaire',
     histoire: 'Zéro-trois à la mi-temps. Personne n’est parti, et c’est la seule chose '
       + 'que le virage revendique.',
     mods: { mashBonus: 1.3, perfectBonus: 1.34, costPenalty: 1.22 },
-    cri: { label: 'RIEN N’EST FINI', gest: 'crescendo', power: 84 } },
+    cri: { label: 'RIEN N’EST FINI', gest: 'salves', power: 84 } },
 
   /* ==================================================== LA TRIBUNE (4 neuves)
 
@@ -141,7 +146,7 @@ export const DEX_LEGENDES = [
     histoire: 'Première rangée, première place, depuis l’ouverture du stade. Le club a '
       + 'changé trois fois de propriétaire, lui n’a jamais changé de siège.',
     mods: { holdBonus: 1.38, holdForgive: 3, refundBonus: 1.2, tempoWindow: 0.88 },
-    cri: { label: 'J’ÉTAIS DÉJÀ LÀ', gest: 'hold', power: 80 } },
+    cri: { label: 'J’ÉTAIS DÉJÀ LÀ', gest: 'tenue', power: 80 } },
 
   { id: 'TR29', nom: 'La Mère du Virage', type: 'voix', set: 'TR', stage: 1, rar: 'legendaire',
     histoire: 'Elle engueule l’arbitre, l’attaquant et son propre fils dans la même '
@@ -153,13 +158,13 @@ export const DEX_LEGENDES = [
     histoire: 'Il ne connaît pas les paroles et il crie plus fort que tout le monde. '
       + 'Dans douze ans ce sera lui qui portera quelqu’un.',
     mods: { tempoInterval: -70, perfectBonus: 1.3, holdBonus: 0.84 },
-    cri: { label: 'PLUS FORT', gest: 'echo', power: 76 } },
+    cri: { label: 'PLUS FORT', gest: 'contretemps', power: 76 } },
 
   { id: 'TR31', nom: 'L’Écharpe des Trois Générations', type: 'tifo', set: 'TR', stage: 1, rar: 'legendaire',
     histoire: 'Le grand-père l’a tricotée, le père l’a brûlée à moitié, le fils l’a '
       + 'recousue. Elle est trop courte pour le cou de personne.',
     mods: { parryBonus: 1.48, holdBonus: 1.18, mashBonus: 0.86 },
-    cri: { label: 'ELLE RESTE DANS LA FAMILLE', gest: 'echarpe', power: 79 } },
+    cri: { label: 'ELLE RESTE DANS LA FAMILLE', gest: 'mosaique', power: 79 } },
 
   /* ======================================== LES MÉTIERS DU STADE (3 neuves) */
 
@@ -173,13 +178,13 @@ export const DEX_LEGENDES = [
     histoire: 'Quarante mille personnes reconnaissent sa voix et douze savent son nom. '
       + 'Elle annonce les buts comme on annonce une naissance.',
     mods: { tempoWindow: 1.3, refundBonus: 1.28, backfire: 1.3 },
-    cri: { label: 'BUTEUR, NUMÉRO…', gest: 'capo', power: 82 } },
+    cri: { label: 'BUTEUR, NUMÉRO…', gest: 'contretemps', power: 82 } },
 
   { id: 'MS29', nom: 'Le Régisseur des Lumières', type: 'tifo', set: 'MS', stage: 1, rar: 'legendaire',
     histoire: 'Il éteint tout pendant huit secondes avant le coup d’envoi. Il a inventé '
       + 'ça un soir de panne et personne ne l’a jamais su.',
     mods: { perfectBonus: 1.44, parryBonus: 1.22, breathBonus: 0.88 },
-    cri: { label: 'NOIR COMPLET', gest: 'mosaique', power: 81 } },
+    cri: { label: 'NOIR COMPLET', gest: 'tri', power: 81 } },
 
   /* ==================================== LE BESTIAIRE DES GRADINS (4 neuves) */
 
@@ -187,25 +192,25 @@ export const DEX_LEGENDES = [
     histoire: 'Il monte dans le car sans billet et il descend au bon arrêt. Personne ne '
       + 'sait à qui il est et tout le monde l’attend.',
     mods: { breathBonus: 1.34, mashBonus: 1.14, parryResist: 0.8 },
-    cri: { label: 'IL EST DÉJÀ MONTÉ', gest: 'tenue', power: 77 } },
+    cri: { label: 'IL EST DÉJÀ MONTÉ', gest: 'memoire', power: 77 } },
 
   { id: 'BG25', nom: 'Le Corbeau des Projecteurs', type: 'tifo', set: 'BG', stage: 1, rar: 'legendaire',
     histoire: 'Il se pose sur le pylône nord à la 70e, tous les matchs. Le virage a '
       + 'décidé que c’était bon signe, et il a rarement eu tort.',
     mods: { parryBonus: 1.42, perfectBonus: 1.26, tempoInterval: 110 },
-    cri: { label: 'IL EST REVENU', gest: 'tifo', power: 80 } },
+    cri: { label: 'IL EST REVENU', gest: 'tri', power: 80 } },
 
   { id: 'BG26', nom: 'La Guêpe de Septembre', type: 'pyro', set: 'BG', stage: 1, rar: 'legendaire',
     histoire: 'Un rang entier debout, les bras en l’air, et pas une note chantée. '
       + 'Le virage d’en face a cru à un tifo et a répondu.',
     mods: { perfectBonus: 1.48, tempoInterval: -90, backfire: 1.55 },
-    cri: { label: 'BOUGE PAS', gest: 'salves', power: 79 } },
+    cri: { label: 'BOUGE PAS', gest: 'compte', power: 79 } },
 
   { id: 'BG27', nom: 'Le Chat du Terrain', type: 'fide', set: 'BG', stage: 1, rar: 'legendaire',
     histoire: 'Neuf minutes d’arrêt de jeu, quatre stadiers à quatre pattes, et lui '
       + 'assis au point de penalty à se laver une patte.',
     mods: { holdBonus: 1.36, holdForgive: 4, mashBonus: 0.8 },
-    cri: { label: 'IL PREND SON TEMPS', gest: 'retenue', power: 78 } },
+    cri: { label: 'IL PREND SON TEMPS', gest: 'tenue', power: 78 } },
 
   /* ================================= CE QUI TRAÎNE AU STADE (5 neuves)
 
@@ -215,31 +220,31 @@ export const DEX_LEGENDES = [
     histoire: 'Cassé depuis onze ans, jamais remplacé. Son abonné s’assoit dessus quand '
       + 'même et prétend que c’est plus confortable.',
     mods: { holdBonus: 1.42, parryResist: 1.28, tempoWindow: 0.85 },
-    cri: { label: 'IL TIENT ENCORE', gest: 'hold', power: 80 } },
+    cri: { label: 'IL TIENT ENCORE', gest: 'retenue', power: 80 } },
 
   { id: 'OB14', nom: 'Le Mégaphone Rouillé', type: 'voix', set: 'OB', stage: 1, rar: 'legendaire',
     histoire: 'Il grésille et il déforme, et c’est précisément pour ça qu’on l’entend '
       + 'du virage d’en face.',
     mods: { tempoWindow: 1.34, perfectBonus: 1.2, refundBonus: 0.82 },
-    cri: { label: 'RÉPÉTEZ APRÈS MOI', gest: 'capo', power: 83 } },
+    cri: { label: 'RÉPÉTEZ APRÈS MOI', gest: 'contretemps', power: 83 } },
 
   { id: 'OB15', nom: 'Le Bidon Percé', type: 'perc', set: 'OB', stage: 1, rar: 'legendaire',
     histoire: 'Ramassé derrière la buvette en 2007. Il a remplacé un vrai tambour '
       + 'pendant deux saisons et personne n’a demandé à le changer.',
     mods: { mashBonus: 1.4, mashTime: 850, holdBonus: 0.86 },
-    cri: { label: 'ÇA FERA L’AFFAIRE', gest: 'mash', power: 79 } },
+    cri: { label: 'ÇA FERA L’AFFAIRE', gest: 'salves', power: 79 } },
 
   { id: 'OB16', nom: 'Le Filet du But Nord', type: 'tifo', set: 'OB', stage: 1, rar: 'legendaire',
     histoire: 'Il a encaissé tous les buts de la décennie et il en a rendu trois, sur '
       + 'des frappes que personne ne revoit sans rire.',
     mods: { parryBonus: 1.52, parryResist: 1.2, tempoInterval: 120 },
-    cri: { label: 'IL GONFLE', gest: 'tifo', power: 81 } },
+    cri: { label: 'IL GONFLE', gest: 'mosaique', power: 81 } },
 
   { id: 'OB17', nom: 'La Pancarte Oubliée', type: 'depl', set: 'OB', stage: 1, rar: 'legendaire',
     histoire: '« ON REVIENDRA ». Accrochée un soir de descente, jamais décrochée. '
       + 'Ils sont revenus, et elle est toujours là.',
     mods: { breathBonus: 1.36, refundBonus: 1.32, mashBonus: 0.84 },
-    cri: { label: 'ON REVIENDRA', gest: 'echarpe', power: 80 } },
+    cri: { label: 'ON REVIENDRA', gest: 'memoire', power: 80 } },
 
   /* ======================================================= LES ÉPOQUES (2) */
 
@@ -253,5 +258,5 @@ export const DEX_LEGENDES = [
     histoire: 'Il a tout fait dans les années quatre-vingt et il tient la buvette des '
       + 'jeunes depuis quinze ans. Il connaît les chants d’avant les chants.',
     mods: { perfectBonus: 1.4, parryBonus: 1.3, backfire: 1.4 },
-    cri: { label: 'C’ÉTAIT UNE AUTRE ÉPOQUE', gest: 'crescendo', power: 82 } },
+    cri: { label: 'C’ÉTAIT UNE AUTRE ÉPOQUE', gest: 'compte', power: 82 } },
 ];

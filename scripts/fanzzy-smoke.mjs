@@ -9,6 +9,7 @@ import { ACTIONS } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
+import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 
 const DB = baseDeTest();
 let failures = 0;
@@ -27,11 +28,19 @@ for (const f of ['auth.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inve
                  'skins.sql', 'tenues.sql', 'admin.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
-// Les réglages ne sont pas dans le DROP ci-dessus : la table est partagée par
-// les suites. Une restriction laissée par un passage précédent — ou par cette
-// suite interrompue en plein milieu — fermerait les séries et ferait échouer
-// tout ce qui ouvre un booster, très loin d'ici et sans rapport apparent.
-await raw.query(`DELETE FROM reglages WHERE cle = 'series_actives'`);
+/* La table des saisons est partagée par les suites, et c'est elle qui décide
+   des séries ouvertes. Une saison laissée par un passage précédent — ou par
+   cette suite interrompue en plein milieu — fermerait des séries et ferait
+   échouer tout ce qui ouvre un booster, très loin d'ici et sans rapport
+   apparent. On repart donc de « aucune saison », c'est-à-dire tout ouvert. */
+await raw.query(`CREATE TABLE IF NOT EXISTS saisons (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT, numero SMALLINT NOT NULL,
+  nom VARCHAR(64) NOT NULL, texte VARCHAR(500) NULL, series JSON NULL,
+  tenues JSON NULL, stuff JSON NULL, actions JSON NULL, lancee_a DATETIME(3) NULL,
+  cree_a DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  maj_a DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+await raw.query('DELETE FROM saisons');
 const U = '11111111-2222-3333-4444-555555555555';
 await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
   [U, 'f@ex.fr', 'Fan']);
@@ -82,7 +91,7 @@ check('et la réserve n’est donc pas pleine', PACKS_DEPART < MAX_PACKS);
 check('aucune écharpe au départ', r.json.wallet.scarves === 0);
 check('collection vide', Object.keys(r.json.collection).length === 0);
 
-r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'VN' } });
+r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'TR' } });
 check('cinq cartes tirées', r.json.cards?.length === 5);
 check('toutes typées', r.json.cards.every((c) =>
   ['fanzzy', 'skin', 'stuff', 'action', 'echarpes'].includes(c.type)));
@@ -95,16 +104,29 @@ check('toutes typées', r.json.cards.every((c) =>
 check('aucun skin au premier booster',
   r.json.cards.every((c) => c.type !== 'skin'));
 check('toutes du bon set',
-  r.json.cards.filter((c) => c.type === 'fanzzy').every((c) => BY_ID.get(c.id).set === 'VN'));
-check('la première carte est un supporter commun, toujours',
-  r.json.cards[0].type === 'fanzzy' && BY_ID.get(r.json.cards[0].id).rar === 'commune');
+  r.json.cards.filter((c) => c.type === 'fanzzy').every((c) => BY_ID.get(c.id).set === 'TR'));
+/* **Un supporter, oui. Commune, non.**
+ *
+ * Ce contrôle exigeait une commune, et c'était vrai tant qu'aucune place du
+ * booster ne tirait sa rareté. Depuis que les deux premières la tirent — sans
+ * quoi aucune légendaire n'était atteignable — la première carte peut être
+ * rare, épique ou légendaire, et c'est exactement ce qu'on voulait.
+ *
+ * Il passait quand même, parce qu'il tirait dans une série trop pauvre pour
+ * avoir autre chose que des communes. Ce qui reste garanti, et qui est
+ * l'invariant réel : **la première carte est toujours un supporter**. C'est ce
+ * qu'un joueur vient chercher, et un booster qui s'ouvre sur trois écharpes
+ * n'est pas un booster. */
+check('la première carte est un supporter, toujours',
+  r.json.cards[0].type === 'fanzzy'
+  || (console.log('        elle est :', r.json.cards[0].type), false));
 check('un booster consommé', r.json.wallet.packs === PACKS_DEPART - 1);
 check('la recharge est amorcée', typeof r.json.wallet.nextPackInMs === 'number');
 check('un Fanzzy est équipé d\u2019office', Boolean(r.json.wallet.active));
 
-r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'NE' } });
+r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'MS' } });
 check('deuxième série disponible',
-  r.json.cards.filter((c) => c.type === 'fanzzy').every((c) => BY_ID.get(c.id).set === 'NE'));
+  r.json.cards.filter((c) => c.type === 'fanzzy').every((c) => BY_ID.get(c.id).set === 'MS'));
 
 const [[baseSkin]] = await pool.query(
   `SELECT COUNT(*) AS n FROM user_skins WHERE user_id = ? AND skin_id = 'base'`, [U]);
@@ -124,7 +146,7 @@ let maxFanzzy = 0;
 let echarpesTombees = 0;
 const ouvertures = 40;
 for (let i = 0; i < ouvertures; i++) {
-  const o = await call('/api/fanzzy/open', { method: 'POST', body: { set: i % 2 ? 'NE' : 'VN' } });
+  const o = await call('/api/fanzzy/open', { method: 'POST', body: { set: i % 2 ? 'MS' : 'TR' } });
   const cartes = o.json.cards ?? [];
   skinsTombes += cartes.filter((c) => c.type === 'skin').length;
   echarpesTombees += cartes.filter((c) => c.type === 'echarpes').length;
@@ -208,17 +230,17 @@ check(`l'équipement tombe dans les boosters (${stuffRecu.length} pièces)`,
 
 // On vide la réserve pour vérifier le refus puis l'achat.
 await pool.query('UPDATE user_wallet SET packs = 0 WHERE user_id = ?', [U]);
-r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'VN' } });
+r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'TR' } });
 check('sans booster : refus', r.json.error === 'fanzzy.error.no_packs');
 
 // Solde remis à zéro explicitement : les doublons des ouvertures précédentes
 // pourraient sinon suffire à payer, et le test ne vérifierait plus rien.
 await pool.query('UPDATE user_wallet SET scarves = 0 WHERE user_id = ?', [U]);
-r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'VN', buy: true } });
+r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'TR', buy: true } });
 check('sans écharpes non plus', r.json.error === 'fanzzy.error.not_enough_scarves');
 
 await pool.query('UPDATE user_wallet SET scarves = 500 WHERE user_id = ?', [U]);
-r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'VN', buy: true } });
+r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'TR', buy: true } });
 check('booster acheté en écharpes', r.json.cards?.length === 5);
 // Le prix est débité, mais les doublons du même booster recréditent aussitôt :
 // c'est le solde net qu'il faut vérifier, pas une simple soustraction.
@@ -323,8 +345,8 @@ check('Fanzzy inexistant refusé', r.json.error === 'fanzzy.error.unknown');
 
 await pool.query('UPDATE user_wallet SET packs = 1, scarves = 0 WHERE user_id = ?', [U]);
 const deux = await Promise.all([
-  call('/api/fanzzy/open', { method: 'POST', body: { set: 'VN' } }),
-  call('/api/fanzzy/open', { method: 'POST', body: { set: 'VN' } }),
+  call('/api/fanzzy/open', { method: 'POST', body: { set: 'TR' } }),
+  call('/api/fanzzy/open', { method: 'POST', body: { set: 'TR' } }),
 ]);
 const ouverts = deux.filter((d) => d.json.cards).length;
 check('un seul booster pour deux requêtes simultanées', ouverts === 1);
@@ -356,7 +378,12 @@ r = await call('/api/fanzzy/fiche/INEXISTANT');
 check('Fanzzy inconnu : 404', r.status === 404);
 
 r = await call('/api/fanzzy/stuff');
-check('catalogue de l\u2019équipement servi', r.json.stuff.length === 7);
+/* Le nombre vient de la source et non d'un 7 en dur : il en valait sept, il en
+   vaut dix-sept, et il changera encore. Un test qui fige un total casse à chaque
+   pièce ajoutée sans avoir rien attrapé. */
+check(`catalogue de l'équipement servi (${STUFF.length})`,
+  r.json.stuff.length === STUFF.length
+  || (console.log('        servi :', r.json.stuff?.length), false));
 
 /* ------------------------------------------------- les séries ouvertes
 
@@ -365,12 +392,17 @@ check('catalogue de l\u2019équipement servi', r.json.stuff.length === 7);
    fermeture peut encore en demander le booster. */
 {
   const { chargerSeries } = await import('../src/server/fanzzy/catalogue.js');
+  const { chargerSaisons } = await import('../src/server/fanzzy/saisons.js');
   const ouverte = 'TR';
   const fermee = SETS.map((s) => s.id).find((id) => id !== ouverte);
 
+  /* **Une saison lancée**, et c'est elle qui ouvre. Le réglage
+     `series_actives` n'a plus aucun effet : les séries ouvertes sont l'union
+     des saisons lancées, et rien d'autre ne les décide. */
   await pool.execute(
-    `INSERT INTO reglages (cle, valeur) VALUES ('series_actives', ?)
-     ON DUPLICATE KEY UPDATE valeur = VALUES(valeur)`, [JSON.stringify([ouverte])]);
+    `INSERT INTO saisons (numero, nom, series, lancee_a) VALUES (1, 'Essai', ?, NOW(3))`,
+    [JSON.stringify([ouverte])]);
+  await chargerSaisons(pool);
   await chargerSeries(pool);
 
   r = await call('/api/fanzzy/dex');
@@ -399,9 +431,10 @@ check('catalogue de l\u2019équipement servi', r.json.stuff.length === 7);
   check('la série ouverte, elle, distribue toujours',
     Array.isArray(r.json.cards) && r.json.cards.length === 5);
 
-  // On rouvre tout : les autres suites partagent cette base, et une restriction
+  // On rouvre tout : les autres suites partagent cette base, et une saison
   // oubliée les ferait échouer ailleurs, très loin d'ici.
-  await pool.execute(`DELETE FROM reglages WHERE cle = 'series_actives'`);
+  await pool.execute('DELETE FROM saisons');
+  await chargerSaisons(pool);
   await chargerSeries(pool);
 }
 

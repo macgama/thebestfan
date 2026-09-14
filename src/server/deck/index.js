@@ -281,6 +281,80 @@ export function createDecks({ pool, requireAuth, niveau = null }) {
     }));
   }
 
+  /* ------------------------------------------------- placer depuis la fiche
+
+     La fiche d'un Fanzzy porte un bouton « EMMENER EN DUEL ». Il écrivait
+     `user_wallet.active_fanzzy` — c'est-à-dire **l'avatar**, celui que voient
+     les amis et l'accueil. Le personnage n'entrait pas en duel pour autant, et
+     la fiche affichait ensuite « DÉJÀ EN DUEL » sur quelqu'un qui n'était dans
+     aucun deck. Le bouton disait une chose et en faisait une autre.
+
+     Il fait maintenant ce qu'il dit, et il demande **où** : un deck a un
+     titulaire, celui qui entre au coup d'envoi, et des remplaçants que la carte
+     Changement fait entrer. Ce n'est pas la même décision, et la fiche ne peut
+     pas la prendre à la place du joueur.
+
+     Le reste du deck n'est pas touché : les pièces des autres rangs, les dix
+     cartes d'action et le nom restent exactement où ils sont.
+  */
+  async function placer(userId, { id: brut, place: placeBrute }) {
+    const id = racineDe(String(brut ?? ''));
+    if (!parIdentifiant(id)) throw fail('deck.error.fanzzy_unknown');
+
+    const possede = await possessions(userId);
+    if (!possede.fanzzy.has(id)) throw fail('deck.error.fanzzy_not_owned', { id });
+
+    const places = Math.min(DECK_RULES.fanzzy, possede.fanzzyMax);
+    /* `typeof === 'number'` avant tout le reste, et ce n'est pas de la
+       pédanterie : `Number(null)`, `Number('')`, `Number(false)` et `Number([])`
+       valent tous **zéro**. Un appel sans place, ou avec une place vide, aurait
+       donc nommé un titulaire en silence — en sortant celui qui y était.
+       C'est le contraire exact de ce que la question « titulaire ou
+       remplaçant ? » est là pour obtenir. */
+    const place = typeof placeBrute === 'number' ? placeBrute
+      : (typeof placeBrute === 'string' && placeBrute.trim() !== '' ? Number(placeBrute) : NaN);
+    if (!Number.isInteger(place) || place < 0 || place >= places) {
+      throw fail('deck.error.place_hors_deck', { place: placeBrute, places });
+    }
+
+    const deck = (await deckDe(userId)) ?? { fanzzy: [], actions: [], nom: 'Mon deck' };
+    const rangs = [...(deck.fanzzy ?? [])];
+
+    /* **Le trou au milieu.** Placer en remplaçant 2 quand le remplaçant 1 est
+       vide laisserait un trou dans la liste, et le premier rang non vide n'est
+       plus le titulaire — c'est `loadout` qui décide, et il lit `fanzzy[0]`.
+       On comble donc les places manquantes… avec quoi ? Rien. Alors on refuse,
+       et la page n'ouvre ce choix que sur une place atteignable. */
+    if (place > rangs.length) throw fail('deck.error.place_vide_avant', { place });
+
+    /* Un personnage déjà au deck qu'on place ailleurs **se déplace**, il ne se
+       duplique pas : `validerDeck` refuse les doublons, et le joueur qui glisse
+       son titulaire en remplaçant veut à l'évidence l'y déplacer. Il emporte son
+       équipement avec lui — c'est le sien. */
+    const dejaLa = rangs.findIndex((f) => f.id === id);
+    const sortant = rangs[place] ?? null;
+    const entrant = dejaLa >= 0 ? rangs[dejaLa] : { id, stuff: [] };
+
+    if (dejaLa >= 0 && dejaLa !== place) {
+      /* L'échange plutôt que le décalage : sans lui, déplacer le titulaire en
+         remplaçant laisserait le rang 0 vide et le deck invalide. Les deux
+         personnages échangent leur place, équipement compris. */
+      rangs[dejaLa] = sortant ?? null;
+      if (!sortant) rangs.splice(dejaLa, 1);
+    }
+    rangs[place] = entrant;
+
+    const propre = { ...deck, fanzzy: rangs.filter(Boolean) };
+    const r = await enregistrer(userId, propre);
+    return {
+      ...r,
+      place,
+      // Qui a cédé sa place, pour que l'écran puisse le dire plutôt que de
+      // laisser le joueur s'apercevoir plus tard qu'il a perdu un rang.
+      remplace: sortant && sortant.id !== id ? sortant.id : null,
+    };
+  }
+
   /* -------------------------------------------------------------- routes */
 
   const router = express.Router();
@@ -324,6 +398,10 @@ export function createDecks({ pool, requireAuth, niveau = null }) {
   router.put('/mien', requireAuth, safe(async (req, res) =>
     res.json(await enregistrer(req.user.id, req.body ?? {}))));
 
+  /** Poser un Fanzzy à une place précise, depuis sa fiche. Voir `placer`. */
+  router.post('/placer', requireAuth, safe(async (req, res) =>
+    res.json(await placer(req.user.id, req.body ?? {}))));
+
   router.get('/loadout', requireAuth, safe(async (req, res) =>
     res.json((await loadout(req.user.id)) ?? { error: 'deck.error.none' })));
 
@@ -334,5 +412,6 @@ export function createDecks({ pool, requireAuth, niveau = null }) {
   router.get('/match/:id', requireAuth, safe(async (req, res) =>
     res.json(await matchSupport(Number(req.params.id), req.user.id))));
 
-  return { router, deckDe, loadout, enregistrer, matchSupport, matchsProposables, possessions };
+  return { router, deckDe, loadout, enregistrer, placer, matchSupport, matchsProposables,
+    possessions };
 }

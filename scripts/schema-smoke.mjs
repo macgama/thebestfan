@@ -48,7 +48,15 @@ const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', '
   // La boutique en dernier : sa table d achats s accroche à users, qui vient
   // du premier fichier, mais elle livre des écharpes et des boosters — donc
   // elle suppose la bourse, qui vient de souvenirs.sql.
-  'boutique', 'billets'];
+  'boutique', 'billets',
+  // Les saisons : elles s'appuient sur `reglages` (admin.sql) pour reprendre
+  // l'ancienne liste des séries ouvertes, et sur `user_wallet` (souvenirs.sql)
+  // pour la colonne qui retient l'annonce déjà vue.
+  'saisons',
+  // Et vraiment en dernier, la seule reprise de données : elle ne déclare
+  // aucune table, elle range des cartes déjà posées par fanzzy.sql et corrige
+  // un réglage posé par admin.sql.
+  'series-neuves'];
 
 {
   const surLeDisque = (await readdir(SQL)).filter((f) => f.endsWith('.sql'))

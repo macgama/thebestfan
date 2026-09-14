@@ -192,6 +192,77 @@ check('les matchs passés ne sont pas proposés',
   r.json.matchs.every((m)=>m.id !== 1));
 check('le match du jour arrive en tête', r.json.matchs[0].mode === 'classe');
 
+/* ------------------------------------------- placer depuis la fiche
+
+   Le bouton « EMMENER EN DUEL » de la fiche d'un Fanzzy. Il écrivait
+   `user_wallet.active_fanzzy` — **l'avatar**, celui que voient les amis et
+   l'accueil — et le personnage n'entrait dans aucun deck. La fiche affichait
+   ensuite « DÉJÀ EN DUEL » sur quelqu'un qui ne jouerait jamais.
+
+   Ce que ces contrôles défendent, c'est qu'il fasse ce qu'il dit, et qu'il ne
+   puisse pas casser le deck en le faisant. */
+{
+  const poser = (id, place) => call('/api/deck/placer', { method: 'POST', body: { id, place } });
+
+  // On repart du deck valide : V1 titulaire, P1 et F1 remplaçants.
+  await call('/api/deck/mien', { method: 'PUT', body: bon });
+
+  r = await poser('F1', 0);
+  check('placer au rang 0 met le personnage titulaire', r.json.deck?.fanzzy?.[0]?.id === 'F1');
+  /* **Un échange, pas une insertion.** Sans lui, déplacer le titulaire laisserait
+     le rang 0 vide et le deck invalide — et le sortant disparaîtrait du deck sans
+     que rien ne le dise. */
+  check('et le sortant prend la place libérée', r.json.deck.fanzzy[2]?.id === 'V1');
+  check('le deck garde ses trois rangs', r.json.deck.fanzzy.length === 3);
+  check('et ses dix cartes d’action', r.json.deck.actions.length === 10);
+  check('l’écran sait qui a cédé sa place', r.json.remplace === 'V1');
+  /* L'équipement suit son porteur : c'est le sien, et le voir rester au rang
+     serait incompréhensible. */
+  check('l’équipement voyage avec le personnage',
+    r.json.deck.fanzzy[2].stuff?.[0] === 'jumelles');
+
+  r = await poser('F1', 2);
+  check('replacer le même personnage ailleurs le déplace',
+    r.json.deck.fanzzy.filter((f) => f.id === 'F1').length === 1
+    && r.json.deck.fanzzy[2].id === 'F1');
+
+  /* Une carte qu'on ne possède pas ne se place pas. Le client ne la propose
+     pas, mais le client n'est pas ce qui décide.
+
+     `TR1` et non `V3` : `V3` est le **troisième âge** de `V1`, donc `racineDe`
+     le ramène à `V1`, qui est possédé. Le premier essai y est tombé — et c'est
+     précisément le comportement qu'on veut, pas un défaut : un joueur qui ouvre
+     la fiche d'un âge supérieur place le personnage, pas l'âge. */
+  r = await poser('TR1', 0);
+  check('un Fanzzy non possédé est refusé', r.json.error === 'deck.error.fanzzy_not_owned');
+
+  r = await poser('V3', 1);
+  check('un âge supérieur place son personnage', r.json.deck?.fanzzy?.[1]?.id === 'V1');
+
+  r = await poser('PASUNID', 0);
+  check('un identifiant inconnu est refusé', r.json.error === 'deck.error.fanzzy_unknown');
+
+  for (const mauvaise of [-1, 3, 99, 'titulaire', null]) {
+    r = await poser('V1', mauvaise);
+    if (r.json.error !== 'deck.error.place_hors_deck') {
+      check(`place « ${mauvaise} » refusée`, false);
+      break;
+    }
+  }
+  check('une place hors du deck est refusée', true);
+
+  /* **Le trou au milieu.** Poser quelqu'un au rang 2 quand le rang 1 est vide
+     laisserait un trou, et c'est `fanzzy[0]` qui décide du titulaire : le deck
+     serait alors mené par le premier rang non vide, qui n'est pas celui que le
+     joueur a choisi. */
+  await call('/api/deck/mien', { method: 'PUT',
+    body: { ...bon, fanzzy: [{ id: 'V1', stuff: [] }] } });
+  r = await poser('P1', 2);
+  check('on ne saute pas une place vide', r.json.error === 'deck.error.place_vide_avant');
+  r = await poser('P1', 1);
+  check('mais la place juste après la dernière s’ouvre', r.json.deck?.fanzzy?.length === 2);
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end(); http.close();
 process.exit(failures ? 1 : 0);

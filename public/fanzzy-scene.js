@@ -67,9 +67,10 @@
    *
    * @param {HTMLElement} hote      la boîte qui portera le personnage
    * @param {object}      [opts]
-   * @param {HTMLElement} [opts.momentDans]  où poser le bandeau du moment fort.
-   *   Par défaut la boîte du personnage — mais dans le virage elle occupe un
-   *   coin de l'écran, et « GOAL ! » doit tenir toute la largeur.
+   * @param {HTMLElement} [opts.momentDans]  **obsolète, et volontairement
+   *   ignoré.** Le panneau du moment fort est désormais posé sur le document,
+   *   au centre de l'écran — voir plus bas. Le paramètre reste accepté pour que
+   *   les pages qui le passent encore ne lèvent pas.
    * @param {string}      [opts.fond]  l'état de repos, `neutre` par défaut.
    */
   function creer(hote, opts = {}) {
@@ -89,10 +90,38 @@
     </div></div></div>`;
     hote.appendChild(el);
 
-    const banniere = document.createElement('div');
-    banniere.className = 'tbf-moment';
-    banniere.innerHTML = '<b></b><small></small>';
-    (opts.momentDans ?? el).appendChild(banniere);
+    /**
+     * Le panneau du moment fort : « GOAL ! », « ON ENCAISSE », « VICTOIRE ».
+     *
+     * ## Il est posé sur le document, pas dans la scène
+     *
+     * C'était du lettrage nu, en surimpression sur le personnage, avec un
+     * contour sombre pour tenir. Ça ne tenait pas : un « GOAL ! » jaune sur un
+     * maillot jaune, sur une pelouse verte, sur une photo de stade éclairée par
+     * des projecteurs — il y a toujours un fond qui gagne. Le joueur voyait
+     * qu'il se passait quelque chose sans pouvoir lire quoi.
+     *
+     * Il a maintenant **un cadre et un fond opaque**, et il est au centre de
+     * l'écran. Un panneau de bande dessinée : la case est ce qui rend le
+     * lettrage lisible, et c'est aussi ce qui fait l'événement.
+     *
+     * Le poser sur `document.body` plutôt que dans la boîte du personnage est
+     * ce qui permet de le centrer sur la page. Dans la scène, il héritait de sa
+     * largeur — un coin d'écran dans le Virage — et se serait centré dans un
+     * coin. `momentDans` est donc ignoré ; il ne servait qu'à contourner ça.
+     */
+    /* **Un seul par page.** Deux scènes montées sur le même écran posaient
+       deux panneaux au même endroit, superposés au pixel près : le second
+       recouvrait le premier, et couper l'un laissait l'autre affiché. Il n'y a
+       de toute façon jamais deux moments forts à lire en même temps. */
+    let banniere = document.querySelector('body > .tbf-moment');
+    if (!banniere) {
+      banniere = document.createElement('div');
+      banniere.className = 'tbf-moment';
+      banniere.innerHTML = '<div class="tbf-vignette">'
+        + '<b class="tbf-vignette-mot"></b><small></small></div>';
+      document.body.appendChild(banniere);
+    }
 
     const calques = [...el.querySelectorAll('.tbf-pose')];
     let devant = 0;

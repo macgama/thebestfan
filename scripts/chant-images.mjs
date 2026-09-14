@@ -108,6 +108,17 @@ export const INVITES = {
     + 'whole row doing the same, a wheel of colour above the crowd'],
   appel: ['crimson', 'a capo high on the barrier, megaphone raised, calling a section '
     + 'of the stand that rises to answer him'],
+
+  /* Les deux derniers mini-jeux. Ni l'un ni l'autre ne montre quelqu'un qui
+     chante : l'un trie à vue, l'autre compte dans le noir. Leur sujet est donc
+     le **geste des mains** et le **regard**, pas la bouche ouverte — c'est ce
+     qui les distingue à l'œil des dix-sept autres. */
+  trilage: ['amber', 'supporters sorting a huge pile of coloured tifo cards at speed, '
+    + 'hands flying, sorted stacks growing beside them, concentration and hurry on '
+    + 'their faces'],
+  rebours: ['crimson', 'a whole terrace counting down together in the dark before the '
+    + 'flares, every hand raised with fingers extended, faces lit only by the pitch, '
+    + 'the instant before it all goes off'],
 };
 
 export const inviteDe = (id) => {

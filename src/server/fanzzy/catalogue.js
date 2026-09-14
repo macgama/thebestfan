@@ -18,6 +18,9 @@
  * On dépublie : la carte sort des tirages, elle reste connue du jeu.
  */
 import { DEX as AMORCE } from '../../shared/fanzzy/dex.js';
+// Les saisons décident des séries ouvertes : `charger` les charge donc en
+// premier, et personne d'autre n'a à y penser. Voir `charger` plus bas.
+import { chargerSaisons } from './saisons.js';
 
 let charge = false;
 let liste = [];
@@ -129,13 +132,23 @@ export async function recharger(pool) {
   return liste.length;
 }
 
-/** À appeler une fois au démarrage, avant de monter les modules du jeu. */
+/**
+ * À appeler une fois au démarrage, avant de monter les modules du jeu.
+ *
+ * **Il charge les saisons lui-même**, et en premier. Ce n'est pas une commodité :
+ * `chargerSeries` en dépend entièrement — les séries ouvertes sont l'union des
+ * saisons lancées — et tout ce qui monte un catalogue passe déjà par ici. Le
+ * confier à l'appelant aurait voulu dire l'ajouter à dix-neuf suites et à chaque
+ * nouvelle, avec pour seule sanction d'un oubli une exception au premier
+ * affichage du kiosque.
+ */
 export async function charger(pool) {
+  const saisons = await chargerSaisons(pool);
   const amorces = await amorcer(pool);
   const liens = await raccrocherLignees(pool);
   const n = await recharger(pool);
   const series = await chargerSeries(pool);
-  return { total: n, amorces, liens, series };
+  return { total: n, amorces, liens, series, saisons };
 }
 
 /* --------------------------------------------------------------- lecture */
@@ -247,16 +260,26 @@ export function personnages() {
 /* ------------------------------------------------- les séries ouvertes
 
    Le catalogue publié n'est pas ce qu'un joueur peut obtenir *aujourd'hui*.
-   Cent soixante-six cartes d'un coup, c'est trop pour commencer : la
-   simulation demande cinq cents boosters pour tout avoir, et un joueur qui lit
-   « 1/166 » à sa première ouverture sait qu'il n'y arrivera jamais. On ouvre
-   donc les séries une par une, en commençant par LA TRIBUNE — trente-neuf
-   cartes, qui se complètent.
+   Six cent quarante cartes d'un coup, c'est trop pour commencer : un joueur qui
+   lit « 1/280 » à sa première ouverture sait qu'il n'y arrivera jamais. On
+   ouvre donc les séries par vagues.
 
-   La liste vit dans la table `reglages`, sous la clé `series_actives`, écrite
-   depuis l'administration. **Absente, tout est ouvert** : une installation
-   neuve se comporte comme avant, et le jour où quelqu'un vide la valeur par
-   erreur, le jeu s'ouvre au lieu de se fermer.
+   ## Ce sont les saisons qui ouvrent, plus le niveau du joueur
+
+   Chaque série s'ouvrait à un **niveau** : LA TRIBUNE au 1, LES MÉTIERS DU
+   STADE au 3, et ainsi de suite jusqu'au 26. C'était une progression
+   solitaire — chacun découvrait le jeu à son rythme, seul, et le jour où une
+   série arrivait n'existait pour personne d'autre. Deux joueurs qui se
+   parlaient ne parlaient jamais de la même chose.
+
+   Une saison ouvre **pour tout le monde en même temps**. C'est ce qui permet de
+   relancer le jeu, d'annoncer quelque chose, et que ce quelque chose soit
+   partagé. Voir `saisons.js`.
+
+   Les séries ouvertes sont donc **l'union des saisons lancées**. Aucune saison
+   en base — une installation dont `sql/saisons.sql` n'est pas appliqué — et
+   tout reste ouvert : le jeu s'ouvre plutôt que de se fermer à double tour, et
+   l'erreur se voit tout de suite au lieu de vider les kiosques en silence.
 
    Ce qui n'est PAS filtré : ce qu'un joueur possède déjà. Fermer une série ne
    lui retire rien — sa carte reste dans son classeur, dans son deck et sur son
@@ -266,31 +289,39 @@ const TOUTES = null;         // `null` : aucune restriction enregistrée
 let ouvertes = TOUTES;
 
 /**
- * Relit les séries ouvertes. Appelée au démarrage et après chaque écriture de
- * l'administration, comme `recharger`.
+ * Relit les séries ouvertes depuis les saisons lancées.
+ *
+ * Appelée au démarrage et après chaque écriture de l'administration, comme
+ * `recharger`. Le nom reste : c'est bien la liste des séries ouvertes qu'elle
+ * charge, et seule sa source a changé.
  */
 export async function chargerSeries(pool) {
   let rows = [];
   try {
     [rows] = await pool.execute(
-      `SELECT valeur FROM reglages WHERE cle = 'series_actives'`);
+      `SELECT series FROM saisons WHERE lancee_a IS NOT NULL`);
   } catch (e) {
-    // `reglages` vient de sql/admin.sql, que rien n'oblige à appliquer. Sans ce
-    // filet, une installation sans administration ferait lever le démarrage —
-    // et le catch de server.js éteindrait *toutes* les routes /api, connexion
-    // comprise. C'est exactement la panne du 8 septembre, reprise sur une autre
-    // table. Pas de réglages, pas de restriction : tout est ouvert.
+    /* `saisons` vient de sql/saisons.sql, que rien n'oblige à appliquer. Sans
+       ce filet, une installation sans ce fichier ferait lever le démarrage — et
+       le catch de server.js éteindrait *toutes* les routes /api, connexion
+       comprise. C'est exactement la panne du 8 septembre, reprise sur une autre
+       table. Pas de saisons, pas de restriction : tout est ouvert. */
     if (e.code !== 'ER_NO_SUCH_TABLE') throw e;
-    console.warn('table reglages absente : toutes les séries restent ouvertes '
-      + '(applique sql/admin.sql pour pouvoir les fermer)');
+    console.warn('table saisons absente : toutes les séries restent ouvertes '
+      + '(applique sql/saisons.sql pour pouvoir lancer des saisons)');
     ouvertes = TOUTES;
     return null;
   }
-  const brut = rows[0]?.valeur;
-  const v = typeof brut === 'string' ? JSON.parse(brut) : brut;
-  // Une liste vide serait un jeu fermé à double tour, et ce n'est jamais ce
-  // qu'on veut dire — on l'interprète comme « aucune restriction ».
-  ouvertes = Array.isArray(v) && v.length ? new Set(v) : TOUTES;
+
+  const vues = new Set();
+  for (const r of rows) {
+    const v = typeof r.series === 'string' ? JSON.parse(r.series) : r.series;
+    for (const id of Array.isArray(v) ? v : []) vues.add(String(id));
+  }
+  /* Aucune saison lancée, ou des saisons qui n'ouvrent rien : on interprète
+     comme « aucune restriction » plutôt que comme « rien ». Un jeu sans une
+     seule série ouverte n'est jamais ce qu'on a voulu dire. */
+  ouvertes = vues.size ? vues : TOUTES;
   return ouvertes ? [...ouvertes] : null;
 }
 

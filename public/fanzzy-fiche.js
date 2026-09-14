@@ -42,6 +42,16 @@
   const NOMRAR = { commune: 'Commune', rare: 'Rare', epique: 'Épique',
                    legendaire: 'Légendaire' };
 
+  /**
+   * Le rang qu'occupe ce personnage dans la tribune du deck : 0 pour le
+   * titulaire, 1 et 2 pour les remplaçants, **-1 s'il n'y est pas**.
+   *
+   * `-1` et non `null` : c'est ce que rend `findIndex`, et le serveur le
+   * transmet tel quel. Traduire ici en aurait fait une seconde convention à
+   * retenir, pour ne rien gagner.
+   */
+  const siege = (d) => (Number.isInteger(d?.tribune?.siege) ? d.tribune.siege : -1);
+
   const api = async (chemin, corps, methode) => {
     const r = await fetch('/api/fanzzy' + chemin, {
       method: methode ?? (corps === undefined ? 'GET' : 'POST'),
@@ -248,7 +258,9 @@
           <div class="vitrine r-${esc(f.rar)}" style="--c:${c}">
             <div class="art" id="fiche-art"></div><div class="ombre"></div>
             <div class="rar">${marque(f.rar)}</div>
-            ${d.equipe ? '<div class="tag">EN DUEL</div>' : ''}
+            ${siege(d) >= 0
+              ? `<div class="tag">${siege(d) === 0 ? 'TITULAIRE' : 'REMPLAÇANT'}</div>`
+              : ''}
             <div class="txt">
               <div class="pastilles">
                 <span class="pastille" style="--c:${c}"><b>${NOMTYPE[f.type] ?? f.type}</b></span>
@@ -307,15 +319,27 @@
      * La première est la seule qui compte — emmener ce Fanzzy en duel. La
      * seconde est celle de la case regardée : évoluer, porter une tenue. Elle
      * apparaît et disparaît, la première jamais.
+     *
+     * Le bouton d'entrée en duel **change de verbe** quand le personnage est
+     * déjà dans la tribune : « CHANGER DE PLACE ». Le désactiver serait plus
+     * simple et bien pire — c'est exactement là qu'on veut passer un titulaire
+     * en remplaçant, et c'est le seul écran d'où on peut le faire en regardant
+     * la carte.
      */
     function rendreActions() {
       const x = cases.find((y) => y.cle === choisie);
       const n = hote.querySelector('#fiche-actions');
+      const place = siege(d);
       const principal = !d.possede
         ? '<button class="bt" disabled>PAS ENCORE À TOI<small>ouvre des boosters</small></button>'
-        : d.equipe
-          ? '<button class="bt" disabled>DÉJÀ EN DUEL</button>'
-          : '<button class="bt primaire" data-emmener>EMMENER EN DUEL</button>';
+        /* Sans module de deck monté, pas de bouton. Mieux vaut rien qu'une
+           promesse que le serveur ne peut pas tenir. */
+        : !d.tribune
+          ? ''
+          : place >= 0
+            ? `<button class="bt" data-emmener>CHANGER DE PLACE<small>${
+              place === 0 ? 'titulaire' : `remplaçant ${place}`}</small></button>`
+            : '<button class="bt primaire" data-emmener>EMMENER EN DUEL</button>';
 
       const second = x?.action?.quoi === 'evoluer'
         ? `<button class="bt or" data-evoluer>${x.action.libelle}<small>${esc(x.action.cout)}</small></button>`
@@ -336,17 +360,33 @@
     function dessiner(f) {
       const art = hote.querySelector('#fiche-art');
       const c = COUL[f.type] ?? '#F5C33B';
-      art.style.background = `radial-gradient(75% 60% at 50% 75%, ${c}3A, transparent 70%), #0A0E13`;
+
+      /* **Le décor**, avant le personnage. Il vient de sa série, de sa tenue
+         portée, de son âge et de sa famille — voir `fanzzy-fond.js`. C'était un
+         halo teinté sur du noir : le Gamin au Tambour de LA TRIBUNE et le Loup
+         du BESTIAIRE se tenaient devant exactement le même vide.
+
+         `porte` et non la première tenue possédée : c'est celle qui est sur lui,
+         et le fond doit dire ce qu'on voit. */
+      const tenue = d.skins?.find((s) => s.porte)?.id ?? 'base';
+      const decor = window.TBF_FOND?.fond?.({
+        id: f.id, set: f.set, type: f.type, stage: d.stade ?? f.stage, rar: f.rar, skin: tenue,
+      });
+      art.style.background = decor ? 'none'
+        : `radial-gradient(75% 60% at 50% 75%, ${c}3A, transparent 70%), #0A0E13`;
+
       const adresse = window.FZART?.adresse?.(f.ageId ?? f.id, 'plein');
       if (!adresse) {
-        // Pas d'illustration pour ce Fanzzy : le dessin géométrique, comme
-        // dans la grille. Un halo seul ne dit pas de qui il s'agit.
+        /* Pas d'illustration pour ce Fanzzy : le dessin géométrique, comme dans
+           la grille. Il porte déjà son propre fond, on ne lui en met pas deux —
+           le décor reviendra avec son dessin. */
         art.innerHTML = window.FZART?.artProcedural?.({ id: f.ageId ?? f.id, type: f.type,
           rar: f.rar, nom: f.nom }) ?? '';
         return;
       }
+      art.innerHTML = decor ?? '';
       const img = new Image();
-      img.onload = () => { art.innerHTML = ''; art.appendChild(img); };
+      img.onload = () => { art.appendChild(img); };
       // Trois formats à essayer dans l'ordre : un navigateur sans AVIF ne
       // signale rien, il n'affiche simplement pas l'image.
       const formats = ['.avif', '.webp', '.png'];
@@ -388,13 +428,7 @@
 
     function brancherActions() {
       const n = hote.querySelector('#fiche-actions');
-      n.querySelector('[data-emmener]')?.addEventListener('click', async () => {
-        try {
-          await api('/active', { id: d.fanzzy.id });
-          dire('Il entrera en duel.');
-          await recharger();
-        } catch { dire('Impossible pour le moment.'); }
-      });
+      n.querySelector('[data-emmener]')?.addEventListener('click', () => placer());
 
       n.querySelector('[data-porter]')?.addEventListener('click', async (e) => {
         const id = e.currentTarget.dataset.porter;
@@ -420,6 +454,100 @@
      * écharpes sur un simple appui, et le joueur découvrait après coup ce qu'il
      * avait acheté.
      */
+    /**
+     * Emmener ce Fanzzy en duel, à une place qu'on choisit.
+     *
+     * ## Pourquoi c'est une question et non un bouton
+     *
+     * Le bouton écrivait `active_fanzzy` — **l'avatar**, celui que voient les
+     * amis et l'accueil. Le personnage n'entrait dans aucun deck, et la fiche
+     * affichait ensuite « DÉJÀ EN DUEL » sur quelqu'un qui ne jouerait jamais.
+     *
+     * Il pose maintenant le personnage dans la tribune, et il demande **où** :
+     * le titulaire entre au coup d'envoi, les remplaçants attendent la carte
+     * Changement. Ce n'est pas la même chose, et la fiche ne peut pas décider à
+     * la place du joueur.
+     *
+     * ## Et pourquoi elle dit qui sort
+     *
+     * Une place occupée est un personnage qu'on remplace. Le lui dire après
+     * coup, c'est lui faire découvrir la perte en ouvrant son deck trois écrans
+     * plus loin ; le lui dire avant, c'est une décision.
+     */
+    function placer() {
+      const t = d.tribune;
+      if (!t?.places?.length) { dire('La tribune n’est pas accessible.'); return; }
+
+      const ici = siege(d);
+      let voulue = ici >= 0 ? null : (t.places.find((p) => p.ouverte)?.place ?? null);
+      const choix = t.places.map((p) => {
+        const moi = p.occupant?.id === d.fanzzy.id;
+        const bloque = !p.ouverte && !moi;
+        return `<button type="button" class="place ${moi ? 'moi' : ''}"
+            data-place="${p.place}" ${bloque ? 'disabled' : ''}>
+          <span class="role">${p.role === 'titulaire' ? 'TITULAIRE' : `REMPLAÇANT ${p.place}`}</span>
+          <span class="qui">${moi ? 'il y est déjà'
+            : p.occupant ? `${esc(p.occupant.nom)} sort`
+              : bloque ? 'remplis la place d’avant' : 'libre'}</span>
+          <span class="quand">${p.role === 'titulaire'
+            ? 'entre au coup d’envoi' : 'entre sur une carte Changement'}</span>
+        </button>`;
+      }).join('');
+
+      window.TBF_DIALOGUE?.confirmer({
+        titre: ici >= 0 ? 'CHANGER DE PLACE ?' : `${f.nom.toUpperCase()} EN DUEL ?`,
+        texte: 'Le titulaire entre au coup d’envoi. Les remplaçants attendent '
+          + 'qu’une carte Changement les fasse entrer.',
+        corps: `<div class="tbf-dial-places">${choix}</div>`,
+        oui: 'PLACER',
+        ton: 'vert',
+        /* Le bouton de confirmation n'ouvre rien tant qu'aucune place n'est
+           choisie. Choisir *est* la décision ; un « PLACER » actif d'emblée
+           poserait le personnage au premier rang sans qu'on l'ait demandé.
+           Sauf pour qui n'est encore nulle part : la première place libre est
+           alors une proposition, pas un choix imposé. */
+        apres: (boite) => {
+          const oui = boite.querySelector('[data-oui]');
+          const peindre = () => {
+            boite.querySelectorAll('.place').forEach((b) =>
+              b.classList.toggle('on', Number(b.dataset.place) === voulue));
+            oui.disabled = voulue === null;
+          };
+          boite.querySelector('.tbf-dial-places').addEventListener('click', (e) => {
+            const b = e.target.closest('[data-place]');
+            if (!b || b.disabled) return;
+            voulue = Number(b.dataset.place);
+            peindre();
+          });
+          peindre();
+        },
+        surOui: async () => {
+          if (voulue === null) return false;
+          try {
+            const r = await fetch('/api/deck/placer', {
+              method: 'POST', credentials: 'same-origin',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ id: d.fanzzy.id, place: voulue }),
+            });
+            const j = await r.json().catch(() => ({}));
+            if (j.error) throw Object.assign(new Error(j.error), { code: j.error });
+          } catch (e) {
+            dire(e.code === 'deck.error.fanzzy_not_owned'
+              ? 'Il n’est pas encore à toi.'
+              : e.code === 'deck.error.place_vide_avant'
+                ? 'Remplis d’abord la place précédente.'
+                : 'Impossible pour le moment.');
+            return false;
+          }
+          dire(voulue === 0 ? `${f.nom} est titulaire.`
+            : `${f.nom} entre en remplaçant ${voulue}.`);
+          window.FX?.flash?.('#1E9E6A');
+          await recharger();
+          return true;
+        },
+      });
+    }
+
     function demander() {
       const x = cases.find((y) => y.cle === choisie);
       const vers = x?.action?.vers;

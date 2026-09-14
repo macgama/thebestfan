@@ -4,7 +4,8 @@ import { createServer } from 'node:http';
 import express from 'express';
 import { createOnboarding, SLOTS_DEPART } from '../src/server/onboarding/index.js';
 import { BY_ID } from '../src/shared/fanzzy/dex.js';
-import { STUFF_BY_ID, combine } from '../src/shared/fanzzy/inventaire.js';
+import { STUFF, STUFF_BY_ID, combine } from '../src/shared/fanzzy/inventaire.js';
+import { ACTION_BY_ID } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues, toutesTenues, tenuesPubliees } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
@@ -52,8 +53,13 @@ let r = await call('/api/me/catalogue');
    Ce qui compte, c’est que la route serve *tout* le catalogue et pas
    seulement les thèmes publiés — un joueur qui possède un ancien thème doit
    continuer de le voir nommé et illustré, même s’il ne tombe plus. */
-check('catalogue servi', r.json.skins.length === toutesTenues().length
-  && r.json.stuff.length === 7);
+/* Le compte de l’équipement se déduit lui aussi. Il était écrit « 7 » en dur,
+   juste sous un commentaire qui explique pourquoi celui des tenues ne l’est
+   plus. Il a rougi le jour où dix pièces sont arrivées, et personne ne l’a su :
+   cette suite n’était dans aucune commande de la batterie. */
+check(`catalogue servi (${r.json.stuff.length} pièces)`,
+  r.json.skins.length === toutesTenues().length
+  && r.json.stuff.length === STUFF.length);
 check('y compris les thèmes dépubliés, pour ceux qui les possèdent',
   tenuesPubliees().length < toutesTenues().length
   && r.json.skins.some((t) => t.id === 'pluie'));
@@ -66,12 +72,58 @@ check('inscription non terminée', r.json.onboarded === false);
 
 r = await call('/api/me/welcome', { body: { teamId: 85 } });
 const cartes = r.json.cartes;
-check('cinq cartes', cartes.length === 5);
+/* Le paquet ne se compte plus en lignes : il en a neuf depuis que les cartes
+   d'action sont cinq. Ce qui doit rester vrai, c'est **ce qu'il contient**, et
+   chaque sorte a son contrôle juste en dessous. */
+check(`le paquet est complet (${cartes.length} lots)`,
+  ['fanzzy', 'stuff', 'action', 'scarves'].every(
+    (t) => cartes.some((c) => c.type === t)));
 check('deux Fanzzy', cartes.filter((c) => c.type === 'fanzzy').length === 2);
 check('au moins un Fanzzy peu commun ou mieux',
   cartes.some((c) => c.type === 'fanzzy' && BY_ID.get(c.id).rar !== 'commune'));
 check('une pièce d\u2019équipement', cartes.filter((c) => c.type === 'stuff').length === 1);
-check('une carte d\u2019action', cartes.filter((c) => c.type === 'action').length === 1);
+const actions = cartes.filter((c) => c.type === 'action').map((c) => c.id);
+check(`cinq cartes d\u2019action (${actions.length})`, actions.length === 5);
+
+/* **Et l'Arbitre est dedans.**
+ *
+ * C'est la carte qui ouvre le changement de Fanzzy. Le paquet de bienvenue
+ * donne deux personnages : sans elle, le second reste sur le banc pendant tout
+ * le duel et le joueur ne découvre jamais qu'une tribune se relaie. Une
+ * mécanique entière dépendait sinon d'un tirage à une chance sur dix-sept.
+ *
+ * Le contrôle nomme la carte plutôt que de chercher son effet : si elle est un
+ * jour remplacée, c'est ici qu'on doit venir le dire, pas ailleurs. */
+check('dont l\u2019Arbitre, qui ouvre le changement',
+  actions.includes('a-arbitre')
+  || (console.log('        reçues :', actions.join(', ')), false));
+
+/* Sans remise : quatre fois le même Fumigène ramènerait exactement au problème
+   qu'on vient de corriger — dix emplacements de deck et rien à y décider. */
+check('et cinq cartes différentes', new Set(actions).size === actions.length);
+
+/* **Et elle existe.**
+ *
+ * Le contrôle comptait la carte sans jamais demander si elle était réelle.
+ * `inventaire.js` portait une liste de quatre cartes de bienvenue, doublon du
+ * vrai catalogue, et les deux avaient divergé : `a-relance` y figurait quand la
+ * carte du jeu s'appelle `a-secondsouffle`.
+ *
+ * **Un nouveau joueur sur quatre repartait donc avec une carte inexistante** —
+ * écrite dans sa bourse, absente de tout catalogue, et refusée par son propre
+ * deck en « carte inconnue », pour une carte qu'on venait de lui offrir.
+ *
+ * Un compte ne pouvait pas voir ça. L'existence, si. */
+{
+  const inconnues = actions.filter((id) => !ACTION_BY_ID.has(id));
+  check('et ces cinq cartes existent au catalogue', inconnues.length === 0
+    || (console.log('        ', inconnues.join(', '),
+      'ne sont pas des cartes du jeu'), false));
+  const hautes = actions.filter(
+    (id) => !['commune', 'rare'].includes(ACTION_BY_ID.get(id)?.rar));
+  check('et ce sont des cartes de début, pas des légendaires',
+    hautes.length === 0 || (console.log('        ', hautes.join(', ')), false));
+}
 check('des écharpes', r.json.scarves >= 80);
 check('un Fanzzy équipé d\u2019office', Boolean(r.json.activeFanzzy));
 
@@ -82,7 +134,8 @@ check('inscription terminée', r.json.onboarded === true);
 check('le skin de base est donné avec le Fanzzy',
   r.json.skins.some((s) => s.skin_id === 'base' && s.equipped === 1));
 check('l\u2019équipement reçu est porté', r.json.stuff.some((s) => s.slot === 1));
-check('la carte d\u2019action est en poche', r.json.actions.length === 1);
+check(`les cinq cartes sont en poche (${r.json.actions.length})`,
+  r.json.actions.length === 5);
 
 r = await call('/api/me/welcome', { body: { teamId: 91 } });
 check('le paquet de bienvenue ne s\u2019ouvre qu\u2019une fois',

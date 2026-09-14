@@ -210,8 +210,10 @@ check('le kiosque annonce le bon nombre de Fanzzy par set',
 {
   const vu = await page.evaluate(() => ({
     /* La série présentée est ouverte. C'est l'invariant : le kiosque ne
-       propose jamais ce qu'il ne peut pas tenir. */
-    serieOuverte: !S.series || S.series.has(SETS[S.set]?.id),
+       propose jamais ce qu'il ne peut pas tenir.
+       `SETS` ne contient plus que les ouvertes ; `SETS_TOUTES` les porte
+       toutes, avec leur champ `ouverte`. */
+    serieOuverte: SETS[S.set]?.ouverte !== false,
     nom: document.getElementById('setName')?.textContent ?? '',
     /* Dix paquets au choix, tous de cette série. */
     paquets: document.querySelectorAll('#carousel .slide').length,
@@ -222,8 +224,8 @@ check('le kiosque annonce le bon nombre de Fanzzy par set',
        qu'une : un sélecteur à un seul choix n'est pas un choix. */
     pastilles: [...document.querySelectorAll('#series button')].map((b) => b.textContent),
     pastillesCachees: document.getElementById('series')?.hidden === true,
-    verrouillees: SETS.filter((x) => S.series && !S.series.has(x.id)).length,
-    total: SETS.length,
+    verrouillees: SETS_TOUTES.filter((x) => x.ouverte === false).length,
+    total: SETS_TOUTES.length,
     bouton: document.getElementById('openBtn')?.textContent ?? '',
   }));
 
@@ -238,8 +240,13 @@ check('le kiosque annonce le bon nombre de Fanzzy par set',
     /* Un jeu ne cache pas ce qui vient : il le dit, à côté du choix. */
     check('ce qui vient est annoncé', Boolean(vu.avenir)
       || (console.log('        aucune ligne « à venir »'), false));
-    check('avec son nom et le niveau qu\u2019il demande',
-      /niveau \d+/i.test(vu.avenir ?? '')
+    /* Elle disait « au niveau 12 ». Elle ne le dit plus, et pas seulement
+       parce que le niveau n'ouvre plus rien : **on ne connaît pas la date**.
+       Une saison se lance quand l'administration la lance, et annoncer une
+       échéance qu'on ne tiendra peut-être pas est pire que de n'en annoncer
+       aucune. Elle nomme donc les séries, et dit qu'elles attendent. */
+    check('avec leur nom, et sans promettre de date',
+      /saison/i.test(vu.avenir ?? '') && !/niveau \d+/i.test(vu.avenir ?? '')
       || (console.log('        elle dit :', vu.avenir), false));
   }
 
@@ -252,23 +259,32 @@ check('le kiosque annonce le bon nombre de Fanzzy par set',
       vu.pastilles.length === vu.total - vu.verrouillees);
   }
 
-  /* Le filet de sécurité, inchangé. Le kiosque ne propose plus une série
-     verrouillée, mais un onglet resté ouvert peut encore en demander le
-     booster. Le refus doit nommer sa cause — c'est ce code brut, affiché tel
-     quel, qui avait fait remonter la panne. */
-  const dit = await page.evaluate(async () => {
-    const r = await fetch('/api/fanzzy/open', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      credentials: 'same-origin', body: JSON.stringify({ set: 'IM' }),
-    });
-    return (await r.json()).error ?? null;
-  });
-  check('le serveur refuse bien une série hors de portée',
-    dit === 'fanzzy.error.set_locked');
+  /* Le filet de sécurité. Le kiosque ne propose plus une série fermée, mais
+     un onglet resté ouvert peut encore en demander le booster. Le refus doit
+     nommer sa cause — c'est ce code brut, affiché tel quel, qui avait fait
+     remonter la panne.
+
+     Le code a changé de sens : `set_locked` disait « au-dessus de ton niveau »
+     et n'est plus émis nulle part. Il ne reste que `set_closed`, « aucune
+     saison ne l'a ouverte », qui vaut pour tout le monde pareil. */
+  const fermee = await page.evaluate(() =>
+    SETS_TOUTES.find((x) => x.ouverte === false)?.id ?? null);
+  if (fermee) {
+    const dit = await page.evaluate(async (id) => {
+      const r = await fetch('/api/fanzzy/open', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        credentials: 'same-origin', body: JSON.stringify({ set: id }),
+      });
+      return (await r.json()).error ?? null;
+    }, fermee);
+    check('le serveur refuse bien une série qu’aucune saison n’a ouverte',
+      dit === 'fanzzy.error.set_closed'
+      || (console.log('        il dit :', dit), false));
+  }
   check('et la page sait le dire en français',
     await page.evaluate(() => {
       const src = document.documentElement.innerHTML;
-      return /fanzzy\.error\.set_locked'\s*:\s*'[^']+/.test(src);
+      return /fanzzy\.error\.set_closed'\s*:\s*'[^']+/.test(src);
     }));
 }
 

@@ -15,13 +15,18 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
+/* `saisons` est dans la liste, et c'est nécessaire : la table décide des séries
+   ouvertes pour tout le jeu, et `sql/saisons.sql` n'y repose sa saison 1 que si
+   elle est vide. Une saison laissée par un passage précédent — ou par une suite
+   voisine — fermerait des séries que celle-ci croit ouvertes, et les contrôles
+   parleraient d'un état que personne n'a voulu. */
+await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities, saisons,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, reglages, admin_audit, user_decks, user_stuff, user_skins,
   user_fanzzy, user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache,
   souvenir_leagues, duel_results, duel_events, duels, user_follows, fixture_events, standings,
   fixtures, team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 for (const f of ['auth.sql','football.sql', 'minutes.sql', 'couleurs.sql','souvenirs.sql', 'billets.sql','fanzzy.sql','inventaire.sql', 'skins.sql', 'tenues.sql',
-                 'teletext.sql','admin.sql']) {
+                 'teletext.sql','admin.sql','saisons.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 // La table `fanzzy` n'est pas dans le DROP ci-dessus, et c'est voulu : elle
@@ -193,7 +198,7 @@ const combienAvant = r.json.fanzzy.length;
 
 // Création.
 r = await call('/api/admin/fanzzy', { body: { id:'ZZ9', nom:'Le Testeur', type:'voix',
-  set:'VN', rar:'commune', stage:1, cri:{ label:'ESSAI', gest:'tempo', power:50 },
+  set:'TR', rar:'commune', stage:1, cri:{ label:'ESSAI', gest:'tempo', power:50 },
   mods:{ tempoWindow:1.1 } } });
 check('un Fanzzy se crée', r.status === 200 && r.json.id === 'ZZ9');
 check('et il arrive aussitôt dans le cache du jeu',
@@ -202,13 +207,13 @@ check('avec ses effets', parIdentifiant('ZZ9')?.mods?.tempoWindow === 1.1);
 
 // Le même identifiant deux fois.
 r = await call('/api/admin/fanzzy', { body: { id:'ZZ9', nom:'Doublon', type:'voix',
-  set:'VN', rar:'commune', cri:{ label:'X', gest:'tempo', power:50 } } });
+  set:'TR', rar:'commune', cri:{ label:'X', gest:'tempo', power:50 } } });
 check('un identifiant déjà pris est refusé',
   r.json.error === 'admin.error.fanzzy_existe');
 
 // Les validations.
 r = await call('/api/admin/fanzzy', { body: { id:'zz-8', nom:'Mauvais', type:'voix',
-  set:'VN', rar:'commune', cri:{ label:'X', gest:'tempo', power:50 } } });
+  set:'TR', rar:'commune', cri:{ label:'X', gest:'tempo', power:50 } } });
 check('un identifiant mal formé est refusé', r.json.error === 'admin.error.fanzzy_id');
 
 r = await call('/api/admin/fanzzy/ZZ9', { method:'PATCH', body:{ type:'inconnu' } });
@@ -268,16 +273,47 @@ check('les séries sont listées avec leur état',
 check('toutes les séries sont ouvertes au départ',
   r.json.ouvertes === null && r.json.series.every((s) => s.ouverte));
 
-// La série de la carte d'essai : c'est elle qu'on va garder ouverte.
+/* ================================================= les saisons
+
+   Les séries s'ouvraient au niveau du joueur, et l'administration en tenait la
+   liste à part. Il n'y a plus qu'un levier : **une saison**, qui ouvre pour
+   tout le monde le même jour. `PUT /api/admin/series` n'existe plus.
+
+   Ce qui se vérifie ici est ce qui se vérifiait avant — qui a le droit
+   d'ouvrir, ce qu'on refuse d'ouvrir, et que le catalogue ne perde rien — plus
+   ce que la saison ajoute : le brouillon, le lancement, et le retour. */
+
+// La série de la carte d'essai : c'est elle qu'on va ouvrir.
 const uneSerie = parIdentifiant('ZZ9').set;
 
-r = await call('/api/admin/series', { method: 'PUT', body: { series: [uneSerie] } });
-check('on n’ouvre qu’une série', r.status === 200
+r = await call('/api/admin/saisons');
+check('les saisons se listent, avec de quoi en composer une',
+  Array.isArray(r.json.saisons)
+  && Array.isArray(r.json.choix?.series) && Array.isArray(r.json.choix?.tenues)
+  && Array.isArray(r.json.choix?.stuff) && Array.isArray(r.json.choix?.actions));
+
+r = await call('/api/admin/saisons', { method: 'POST',
+  body: { nom: 'Essai', texte: 'Pour voir.', series: [uneSerie] } });
+check('une saison se crée en brouillon', r.status === 200
+  && r.json.saisons.some((x) => x.nom === 'Essai' && x.lancee === false));
+
+const essai = r.json.saisons.find((x) => x.nom === 'Essai');
+
+/* **Un brouillon n'ouvre rien.** C'est tout l'intérêt : on prépare une saison
+   sans que rien ne change pour personne, et on la relit avant de la lancer. */
+r = await call('/api/admin/fanzzy');
+check('un brouillon ne change rien à ce qui est ouvert', r.json.ouvertes === null);
+
+r = await call('/api/admin/saisons', { method: 'POST', body: { series: [uneSerie] } });
+check('une saison sans nom est refusée', r.json.error === 'admin.error.saison_sans_nom');
+
+r = await call(`/api/admin/saison/${essai.id}/lancer`, { method: 'POST', body: { lancer: true } });
+check('la lancer ouvre ses séries', r.status === 200
   && r.json.ouvertes?.length === 1 && r.json.ouvertes[0] === uneSerie);
 
 r = await call('/api/admin/fanzzy');
-check('les autres sont fermées',
-  r.json.series.filter((s) => s.ouverte).length === 1);
+check('et les autres sont fermées',
+  r.json.series.filter((x) => x.ouverte).length === 1);
 
 // Le point qui compte : le catalogue ne perd rien. Une carte d'une série
 // fermée reste connue, sinon la collection de qui la possède se briserait.
@@ -289,13 +325,20 @@ check('le catalogue garde toutes ses cartes',
     Boolean(ailleurs && parIdentifiant(ailleurs.id)));
 }
 
+/* Une saison lancée ne se supprime pas : on ne retire pas du jeu ce que des
+   joueurs collectionnent par un bouton. Il faut d'abord la remettre en
+   brouillon, ce qui est un geste distinct et réversible. */
+r = await call(`/api/admin/saison/${essai.id}`, { method: 'DELETE' });
+check('une saison lancée ne se supprime pas', r.json.error === 'admin.error.saison_lancee');
+
 // Une série sans carte de stade 1 publiée ne peut pas distribuer : on refuse
 // de l'ouvrir plutôt que de laisser le premier booster lever.
 {
-  const vide = SETS.map((s) => s.id).find((id) =>
+  const vide = SETS.map((x) => x.id).find((id) =>
     !publies().some((f) => f.set === id && f.stage === 1));
   if (vide) {
-    r = await call('/api/admin/series', { method: 'PUT', body: { series: [uneSerie, vide] } });
+    r = await call('/api/admin/saisons', { method: 'POST',
+      body: { nom: 'Vide', series: [uneSerie, vide] } });
     check('une série sans carte tirable est refusée',
       r.json.error === 'admin.error.serie_sans_carte');
   } else {
@@ -304,20 +347,73 @@ check('le catalogue garde toutes ses cartes',
   }
 }
 
-r = await call('/api/admin/series', { method: 'PUT', body: { series: ['ZZZ'] } });
+r = await call('/api/admin/saisons', { method: 'POST',
+  body: { nom: 'Inconnue', series: ['ZZZ'] } });
 check('une série inconnue est refusée', r.json.error === 'admin.error.serie_inconnue');
 
-r = await call('/api/admin/series', { method: 'PUT', body: { series: [] } });
-check('tout fermer revient à tout ouvrir',
-  (await call('/api/admin/fanzzy')).json.ouvertes === null);
+/* **Le lancement revalide.**
+ *
+ * Un brouillon se prépare des semaines avant d'être lancé, et le catalogue
+ * bouge entre-temps : une carte dépubliée ici, une série vidée là. Lancer une
+ * saison dont une série n'a plus aucune carte de stade 1 publiée ferait lever le
+ * premier booster — devant tout le monde, puisqu'une saison s'ouvre pour tout le
+ * monde.
+ *
+ * On rejoue exactement ça : on compose un brouillon valide, on vide la série
+ * par-derrière, et on lance. Puis on remet tout en place — cette suite tourne
+ * sur le vrai catalogue, elle n'a pas le droit de le laisser abîmé.
+ */
+{
+  // La plus petite série publiée : le moins de cartes à dépublier et à rendre.
+  const compte = new Map();
+  for (const f of publies().filter((f) => f.stage === 1)) {
+    compte.set(f.set, [...(compte.get(f.set) ?? []), f.id]);
+  }
+  const [petite, cartes] = [...compte.entries()].sort((a, b) => a[1].length - b[1].length)[0];
+
+  r = await call('/api/admin/saisons', { method: 'POST',
+    body: { nom: 'Fragile', series: [petite] } });
+  const fragile = r.json.saisons.find((x) => x.nom === 'Fragile');
+  check('un brouillon sur une série pleine est accepté', Boolean(fragile));
+
+  for (const id of cartes) {
+    await call(`/api/admin/fanzzy/${id}`, { method: 'PATCH', body: { publie: false } });
+  }
+  r = await call(`/api/admin/saison/${fragile.id}/lancer`, { method: 'POST', body: { lancer: true } });
+  check('une saison dont une série s’est vidée depuis ne se lance pas',
+    r.json.error === 'admin.error.serie_sans_carte'
+    || (console.log('        elle répond :', JSON.stringify(r.json).slice(0, 90)), false));
+
+  for (const id of cartes) {
+    await call(`/api/admin/fanzzy/${id}`, { method: 'PATCH', body: { publie: true } });
+  }
+  await call(`/api/admin/saison/${fragile.id}`, { method: 'DELETE' });
+  check('et le catalogue est rendu intact',
+    publies().filter((f) => f.set === petite && f.stage === 1).length === cartes.length);
+}
+
+r = await call('/api/admin/saisons', { method: 'POST',
+  body: { nom: 'Objet', stuff: ['pas-une-piece'] } });
+check('une pièce d’équipement inconnue est refusée',
+  r.json.error === 'admin.error.stuff_inconnu');
+
+/* Le retour en brouillon referme ses séries. Plus aucune saison lancée : on
+   retombe sur « aucune restriction », qui est le bon défaut — un jeu sans une
+   seule série ouverte n'est jamais ce qu'on a voulu dire. */
+r = await call(`/api/admin/saison/${essai.id}/lancer`, { method: 'POST', body: { lancer: false } });
+check('la remettre en brouillon referme ses séries', r.json.ouvertes === null);
+
+r = await call(`/api/admin/saison/${essai.id}`, { method: 'DELETE' });
+check('et un brouillon se supprime', r.status === 200
+  && !r.json.saisons.some((x) => x.id === essai.id));
 
 r = await call('/api/admin/journal');
-check('l’ouverture des séries est journalisée',
-  r.json.journal.some((l) => l.action === 'series.ouvertes'));
+check('le lancement d’une saison est journalisé',
+  r.json.journal.some((l) => l.action === 'saison.lancee'));
 
 moi = B;
-r = await call('/api/admin/series', { method: 'PUT', body: { series: [uneSerie] } });
-check('un joueur ne peut pas ouvrir ou fermer une série', r.status === 403);
+r = await call('/api/admin/saisons', { method: 'POST', body: { nom: 'Pirate' } });
+check('un joueur ne peut pas lancer de saison', r.status === 403);
 moi = A;
 
 /* ================================================ le catalogue des tenues

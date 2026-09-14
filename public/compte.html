@@ -8,13 +8,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
 <style>
 
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100dvh}
 body{background:radial-gradient(120% 55% at 50% -8%,rgba(245,195,59,.15),transparent 62%),var(--beton);
      color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;padding:34px 18px 60px}
-main{width:100%;max-width:390px}
+main{width:100%;max-width:var(--colonne)}
 .wordmark{font-family:var(--banner);font-weight:600;font-size:26px;letter-spacing:.2em;text-align:center}
 .wordmark small{display:block;font-size:9.5px;letter-spacing:.34em;opacity:.5;margin-top:6px;font-family:var(--ui)}
 .langs{display:flex;gap:6px;justify-content:center;margin:22px 0 26px}
@@ -407,7 +408,15 @@ $('formReset').onsubmit = async (e) => {
   else say('gateMsg', r.json.error ?? 'auth.error.server');
 };
 
-$('btnLogout').onclick = async () => { await api('/logout'); user = null; tab('login'); render(); };
+$('btnLogout').onclick = async () => {
+  // Même règle que partout : la déconnexion se demande.
+  if (!(await window.TBF_DIALOGUE?.confirmer({
+    titre: 'SE DÉCONNECTER ?',
+    texte: 'Ta collection et tes duels restent. Il faudra te reconnecter pour y revenir.',
+    oui: 'SE DÉCONNECTER', ton: 'flare',
+  }))) return;
+  await api('/logout'); user = null; tab('login'); render();
+};
 $('btnResend').onclick = async () => { await api('/resend-verification'); say('acMsg', 'sent.verify', 'ok'); };
 
 /* -------------------------------------------------------- démarrage */

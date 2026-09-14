@@ -2,6 +2,9 @@ import { reglage } from '../../shared/reglages.js';
 import { grade, applyHeroMods, resoudreGeste, Cheat, GESTES, MOTIFS }
   from '../ferveur/gestures.js';
 import { ACTION_BY_ID, DECK_RULES } from '../../shared/duel/actions.js';
+/* Les chants, partagés avec le Virage. Le duel les impose plus : il les offre,
+   comme lui, et c'est la dernière différence entre les deux modes qui tombe. */
+import { CHANTS, ORDRE } from '../../shared/duel/chants.js';
 import { poserEffet, nettoyerEffets, aEffet, modsAvecEffets } from '../../shared/duel/effets.js';
 // Le lieu de la rencontre, et sa règle : voir le constructeur.
 import { stadeDeLaRencontre } from '../../shared/stades.js';
@@ -54,23 +57,19 @@ function hachage(texte) {
   return h;
 }
 
-/**
- * Le geste du prochain chant.
+/* **La rotation des gestes n'existe plus.**
  *
- * Une fois sur deux, le sien — celui du cri de son Fanzzy. C'est sa
- * spécialité : ses modificateurs ne valent que là, et il faut donc qu'il
- * revienne assez souvent pour que le choix du personnage compte.
+ * Elle imposait le geste du prochain chant : celui du Fanzzy une fois sur deux,
+ * les seize autres à tour de rôle. C'était la réponse à un vrai problème — un
+ * joueur faisait le même geste pendant cinq minutes — mais c'était la réponse
+ * du duel, et le Virage en avait une autre : offrir cinq chants et laisser
+ * choisir.
  *
- * L'autre fois, un des neuf autres, à tour de rôle et non au hasard : un
- * tirage aléatoire donne des répétitions, et trois « sang-froid » d'affilée
- * ressemblent à une panne. Le tour de rôle garantit qu'on les voit tous.
- */
-function prochainGeste(j) {
-  const sien = j.fanzzy[j.actif]?.cri?.gest ?? 'tempo';
-  if (j.chants % 2 === 0) return sien;
-  const autres = GESTES.filter((g) => g !== sien);
-  return autres[Math.floor(j.chants / 2) % autres.length];
-}
+ * Les deux modes ont maintenant celle du Virage. On rencontre les dix-sept
+ * gestes en jouant plusieurs duels, puisque les cinq chants offerts changent
+ * d'une partie à l'autre — au lieu de les voir tous défiler dans une seule.
+ *
+ * `GESTES` reste importé : `grade` s'en sert pour refuser un geste inconnu. */
 
 /* ------------------------------------------------------------- joueurs */
 
@@ -106,6 +105,24 @@ function creerJoueur(p, side) {
     geste: loadout.fanzzy[0]?.cri?.gest ?? 'tempo',
     motif: 0,
     chants: 0,
+
+    /* ------------------------------------------------ ce qu'on racontera après
+
+       Un duel ne laissait **aucune trace** de la façon dont il s'était joué :
+       un score, un vainqueur, et c'est tout. On ne pouvait donc rien dire au
+       joueur de ce qu'il venait de faire — quelles cartes il avait aimées,
+       combien de fois il avait changé de Fanzzy, qui avait poussé.
+
+       Trois compteurs et une liste. Ils ne coûtent rien pendant la partie et
+       ce sont eux qui font l'écran de fin. */
+    cartesJouees: {},               // id de carte d'action -> nombre de fois jouée
+    chantsJoues: {},                // id de chant -> nombre de fois chanté
+    changements: 0,                 // remplacements : un autre Fanzzy entre
+    releves: 0,                     // relèves : celui qui est là grandit
+    /* Les Fanzzy réellement montés en tribune, dans l'ordre. Le loadout dit
+       qui est **disponible** ; celui-ci dit qui a joué, ce qui n'est pas la
+       même chose dès qu'un joueur garde un remplaçant sur le banc. */
+    vus: [loadout.fanzzy[0]?.id].filter(Boolean),
 
     breath: 40,
     ferveur: 0,
@@ -213,6 +230,23 @@ export class DuelNvN {
      * c'est exactement ce que fait le Virage, et la ligne à changer le jour où
      * ils se gagneront est celle-ci. */
     this.stade = stadeDeLaRencontre([], hachage(id));
+
+    /* **Les cinq chants offerts.**
+     *
+     * Le duel n'en offrait aucun : il imposait le geste par une rotation, et
+     * tous les chants coûtaient 18 pour pousser 44. Le Virage, lui, en propose
+     * cinq parmi dix-neuf, chacun avec son coût et sa poussée — choisir y est
+     * une décision de souffle.
+     *
+     * Fixes pendant toute la partie : ceux du Virage tournent toutes les dix
+     * minutes de match réel, ce qui n'a aucun sens sur un duel qui dure cinq
+     * minutes. Tirés de l'identifiant du duel, donc **les mêmes pour les deux
+     * joueurs** — la corde est commune, les moyens de la tirer aussi — et
+     * différents d'un duel à l'autre, ce qui fait rencontrer les dix-sept
+     * gestes en jouant plusieurs parties. */
+    const depart = hachage(`${id}:chants`) % ORDRE.length;
+    this.repertoire = Array.from({ length: 5 },
+      (_, i) => ORDRE[(depart + i) % ORDRE.length]);
     this.rope = 0;
     this.goals = [0, 0];
     this.debut = now;
@@ -366,15 +400,32 @@ export class DuelNvN {
    * Le paramètre reste accepté et **ignoré** : les anciens clients continuent
    * de l'envoyer, et il ne sert plus à rien.
    */
-  chanter(userId, { taps }, t = now0()) {
+  /**
+   * Chanter — **en choisissant son chant**, comme au Virage.
+   *
+   * Le geste était imposé par une rotation et tous les chants coûtaient 18 pour
+   * pousser 44 : appuyer sur le bouton était le seul geste, et il n'y avait
+   * rien à décider. Le chant vient maintenant d'une carte du répertoire, avec
+   * son coût et sa poussée — ce qui rend le duel identique au Virage, et lui
+   * donne la décision de souffle qui lui manquait.
+   */
+  chanter(userId, { cardId, taps }, t = now0()) {
     if (this.termine) throw new Cheat('duel_over');
     const j = this.joueur(userId);
+
+    const card = CHANTS[cardId];
+    if (!card) throw new Cheat('unknown_card');
+    /* Le répertoire est une règle, pas une suggestion de la page — même raison
+       qu'au Virage : un client modifié demanderait sinon le chant le plus
+       rentable des dix-neuf à chaque fois. */
+    if (!this.repertoire.includes(cardId)) throw new Cheat('chant_hors_repertoire');
+
     this.regen(j, t);
     if (aEffet(j, 'silence', t)) throw new Cheat('silenced');
-    if (j.breath < RULES.chantCost) throw new Cheat('not_enough_breath');
+    if (j.breath < card.cost) throw new Cheat('not_enough_breath');
 
     const m = modsDe(j, t, this.stade);
-    const geste = j.geste;
+    const geste = card.gest;
     let q = grade(geste, taps, m, { motif: j.motif });
 
     // « Second souffle » : un raté compte comme moyen, une seule fois.
@@ -382,17 +433,22 @@ export class DuelNvN {
     if (plancher && q < plancher.valeur) { q = plancher.valeur; plancher.charges--; }
 
     const { quality, backfire } = applyHeroMods(q, m);
-    j.breath -= RULES.chantCost;
+    j.breath -= card.cost;
     j.dernierChant = t;
+    /* Ce qu'on racontera après : quels chants ce joueur a aimés. Même compteur
+       que les cartes d'action, et il nourrit le même écran de fin. */
+    j.chantsJoues[cardId] = (j.chantsJoues[cardId] ?? 0) + 1;
 
-    /* Le geste suivant est tiré **après** la notation, jamais avant : le
-       joueur doit être jugé sur celui qu'on lui a montré. */
+    /* Le craquage fatigue celui qui le pousse — c'est ce qui le distingue d'un
+       gros chant ordinaire. La règle vient du Virage, comme le chant lui-même. */
+    if (card.effect === 'fatigue') j.fatigueJusqua = t + 4000;
+
     j.chants++;
     j.motif = (j.motif + 1) % MOTIFS.length;
-    j.geste = prochainGeste(j);
 
     const evenements = [this.ev('chant', {
-      userId, side: j.side, geste, quality: Number(quality.toFixed(3)), backfire,
+      userId, side: j.side, geste, cardId,
+      quality: Number(quality.toFixed(3)), backfire,
     })];
 
     // Les charges d'un modificateur temporaire se consomment au chant.
@@ -415,11 +471,13 @@ export class DuelNvN {
       evenements.push(this.ev('effect', { userId, type: 'double_next_resolu', gagne }));
     }
 
+    /* La poussée vient de **la carte**, plus d'une constante. C'est toute la
+       décision qu'on vient d'ajouter : un gros chant coûte plus et rend plus. */
     if (backfire) {
       const faux = { ...j, side: j.side ^ 1 };
-      this.pousser(faux, RULES.chantPower * 0.35, t, evenements);
+      this.pousser(faux, card.power * 0.35, t, evenements);
     } else {
-      this.pousser(j, RULES.chantPower * quality * facteur, t, evenements);
+      this.pousser(j, card.power * quality * facteur, t, evenements);
     }
     return evenements;
   }
@@ -472,6 +530,8 @@ export class DuelNvN {
       .find(Boolean);
 
     j.breath -= prix;
+    // Ce qu'on racontera après : quelles cartes ce joueur a réellement aimées.
+    j.cartesJouees[cardId] = (j.cartesJouees[cardId] ?? 0) + 1;
     /* La tournée se décompte ici, une fois la carte réellement jouée : un
        refus plus haut — carte en recharge, condition non remplie — ne doit pas
        consommer une gratuité que le joueur n'a pas utilisée. */
@@ -736,6 +796,10 @@ export class DuelNvN {
         const suivant = ageSuivant(f);
         if (!suivant) break;          // filtré par la condition ; on ne casse rien
         f.stade = (f.stade ?? 1) + 1;
+        /* Compté à part du remplacement : une relève fait grandir celui qui est
+           déjà en tribune, un remplacement en fait entrer un autre. Les mêler
+           donnerait un chiffre qui ne veut rien dire. */
+        j.releves++;
         f.nom = suivant.nom;
         f.cri = suivant.cri;
         f.mods = suivant.mods;
@@ -772,7 +836,76 @@ export class DuelNvN {
     droit.charges--;
     nettoyerEffets(j, t);
     j.actif = index;
+    j.changements++;
+    // Un Fanzzy qu'on remonte une seconde fois n'est pas un participant de plus.
+    if (!j.vus.includes(j.fanzzy[index].id)) j.vus.push(j.fanzzy[index].id);
     return [this.ev('swap', { userId, index, fanzzy: j.fanzzy[index].id })];
+  }
+
+  /* ------------------------------------------------------------- bilan */
+
+  /**
+   * Ce qui s'est passé, joueur par joueur.
+   *
+   * **Un duel ne laissait aucune trace de la façon dont il s'était joué.** Il
+   * rendait un score et un vainqueur ; on ne pouvait donc rien dire au joueur
+   * de ce qu'il venait de faire, et la fin d'un duel se résumait à un mot sur
+   * un voile gris.
+   *
+   * Rien n'est calculé ici : tout est déjà compté pendant la partie, et cette
+   * méthode ne fait que le mettre en forme. Elle est appelée une fois, à la
+   * fermeture — ce qui la rend gratuite pendant les cinq minutes qui comptent.
+   *
+   * La carte préférée est celle qu'on a **jouée le plus souvent**, et non la
+   * plus chère ou la plus décisive : c'est un souvenir, pas une analyse. À
+   * égalité, la première rencontrée — il n'y a pas de départage qui vaille la
+   * peine d'être expliqué.
+   */
+  bilan() {
+    const par = (j) => {
+      const paires = Object.entries(j.cartesJouees);
+      const [prefId, prefN] = paires.reduce(
+        (m, p) => (p[1] > m[1] ? p : m), [null, 0]);
+      return {
+        userId: j.userId, nom: j.nom, side: j.side,
+        buts: this.goals[j.side],
+        ferveur: j.ferveur,
+        chants: j.chants,
+        /* Le nombre de cartes **jouées**, pas le nombre de cartes différentes :
+           c'est ce que le joueur a fait, pas ce qu'il possédait. */
+        cartes: paires.reduce((n, p) => n + p[1], 0),
+        preferee: prefId ? { id: prefId, fois: prefN } : null,
+        /* Et le chant préféré, depuis que le duel en offre le choix. Il ne
+           voulait rien dire tant que le geste était imposé : un joueur ne
+           choisissait pas, il subissait une rotation. */
+        chantPrefere: (() => {
+          const [id, n] = Object.entries(j.chantsJoues)
+            .reduce((m, p) => (p[1] > m[1] ? p : m), [null, 0]);
+          return id ? { id, nom: CHANTS[id]?.nom ?? id, fois: n } : null;
+        })(),
+        changements: j.changements,
+        releves: j.releves,
+        /* Les Fanzzy réellement montés, avec le nom qu'ils portaient à la fin :
+           un personnage qui a grandi pendant le duel n'a plus le même. */
+        fanzzy: j.vus.map((id) => {
+          const f = j.fanzzy.find((x) => x.id === id);
+          return { id, nom: f?.nom ?? id, stade: f?.stade ?? 1 };
+        }),
+        /* Celui qui était en tribune au coup de sifflet. C'est lui que l'écran
+           de fin met en avant, dans l'état du résultat. */
+        dernier: j.fanzzy[j.actif]?.id ?? null,
+        connecte: j.connecte,
+        bot: String(j.userId).startsWith('bot:'),
+      };
+    };
+    return {
+      id: this.id, mode: this.mode,
+      goals: [...this.goals],
+      vainqueur: this.vainqueur,
+      stade: this.stade ? { id: this.stade.id, nom: this.stade.nom } : null,
+      dureeMs: Math.max(0, this.dernier - this.debut),
+      joueurs: [...this.joueurs.values()].map(par),
+    };
   }
 
   /* ---------------------------------------------------------- horloge */
@@ -842,6 +975,11 @@ export class DuelNvN {
       /* Le lieu. Le client en tire le décor de la corde, et sa phrase d'effet :
          un stade qui change les règles sans le dire est un stade qui donne
          l'impression que le jeu triche. */
+      /* Les cinq chants offerts, décrits et non seulement nommés — exactement
+         comme les envoie le Virage. La page n'a pas à connaître la table des
+         chants : le jour où l'un change de coût, les deux écrans suivent sans
+         déploiement du client. */
+      chants: this.repertoire.map((id) => ({ id, ...CHANTS[id] })),
       stade: this.stade
         ? { id: this.stade.id, nom: this.stade.nom, effet: this.stade.effet }
         : null,
@@ -861,10 +999,9 @@ export class DuelNvN {
         // et le Vent de face changent la fenêtre en cours de partie, et
         // l'affichage doit suivre le barème sous peine de mentir au joueur.
         gestes: resoudreGeste(modsDe(moi, t, this.stade), { motif: moi.motif }),
-        /* Le geste du prochain chant. Il vient du serveur et change d'un chant
-           à l'autre : la page l'annonce sur le bouton pour qu'on sache ce qui
-           arrive avant d'appuyer. */
-        geste: moi.geste,
+        /* Le geste de son Fanzzy. Il ne décide plus de rien — c'est la carte
+           choisie qui porte le geste — mais il reste affiché : c'est la
+           spécialité du personnage, et savoir laquelle aide à choisir. */
         sienGeste: moi.fanzzy[moi.actif]?.cri?.gest ?? 'tempo',
         fanzzy: moi.fanzzy.map((f, i) => ({ ...f, actif: i === moi.actif })),
         cooldowns: Object.fromEntries(Object.entries(moi.cooldowns)
