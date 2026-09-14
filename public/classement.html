@@ -50,20 +50,6 @@ h1 small{display:block;font-size:9px;letter-spacing:.3em;opacity:.45;margin-top:
 <style>
 /* Les boutons de cette barre n'ont pas de classe : ils sont les seuls enfants
    du rail, et lui seul les désigne. */
-.tabs.tbf-onglets > button{
-  flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:7px;
-  padding:10px 8px;min-height:40px;border:0;background:none;color:var(--craie);
-  font-family:var(--banner);font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;
-  border-radius:10px;opacity:.5;cursor:pointer;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;transition:opacity .14s ease;
-}
-.tabs.tbf-onglets > button.on{
-  opacity:1;color:var(--encre);
-  background:linear-gradient(180deg,var(--haut) 0%,var(--face) 46%,var(--face) 100%);
-  box-shadow:0 0 0 2px var(--cerne),0 3px 0 0 var(--tranche),0 3px 0 2px var(--cerne),
-    0 6px 12px rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.28);
-  text-shadow:0 1px 0 rgba(0,0,0,.25);transform:translateY(-1px);
-}
 </style>
 </head>
 <body>
@@ -71,9 +57,9 @@ h1 small{display:block;font-size:9px;letter-spacing:.3em;opacity:.45;margin-top:
   <h1 class="tbf-titre">CLASSEMENTS<small>QUI FAIT LE PLUS DE BRUIT</small></h1>
   <div class="moi" id="moi" style="display:none"></div>
   <div class="tabs tbf-onglets">
-    <button data-t="supporters" class="on">SUPPORTERS</button>
-    <button data-t="tribunes">TRIBUNES</button>
-    <button data-t="duellistes">DUELS</button>
+    <button data-t="supporters" class="tbf-onglet on">SUPPORTERS</button>
+    <button data-t="tribunes" class="tbf-onglet">TRIBUNES</button>
+    <button data-t="duellistes" class="tbf-onglet">DUELS</button>
   </div>
   <div class="list" id="list"><div class="spin"></div></div>
 </main>

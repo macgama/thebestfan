@@ -87,20 +87,6 @@ td.pts{font-family:var(--banner);font-size:15px}
 <style>
 /* Les boutons de cette barre n'ont pas de classe : ils sont les seuls enfants
    du rail, et lui seul les désigne. */
-.tabs.tbf-onglets > button{
-  flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:7px;
-  padding:10px 8px;min-height:40px;border:0;background:none;color:var(--craie);
-  font-family:var(--banner);font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;
-  border-radius:10px;opacity:.5;cursor:pointer;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;transition:opacity .14s ease;
-}
-.tabs.tbf-onglets > button.on{
-  opacity:1;color:var(--encre);
-  background:linear-gradient(180deg,var(--haut) 0%,var(--face) 46%,var(--face) 100%);
-  box-shadow:0 0 0 2px var(--cerne),0 3px 0 0 var(--tranche),0 3px 0 2px var(--cerne),
-    0 6px 12px rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.28);
-  text-shadow:0 1px 0 rgba(0,0,0,.25);transform:translateY(-1px);
-}
 </style>
 </head>
 <body>
@@ -197,11 +183,11 @@ async function ouvrir(id) {
   vue = 'ligue'; ligue = id; onglet = 'classement';
   $('back').classList.add('on');
   $('head').innerHTML = `<div class="tabs tbf-onglets" id="tabs">
-    <button data-t="classement" class="on">CLASSEMENT</button>
-    <button data-t="resultats">RÉSULTATS</button>
-    <button data-t="scorers">BUTEURS</button>
-    <button data-t="assists">PASSEURS</button>
-    <button data-t="cards">CARTONS</button>
+    <button data-t="classement" class="tbf-onglet on">CLASSEMENT</button>
+    <button data-t="resultats" class="tbf-onglet">RÉSULTATS</button>
+    <button data-t="scorers" class="tbf-onglet">BUTEURS</button>
+    <button data-t="assists" class="tbf-onglet">PASSEURS</button>
+    <button data-t="cards" class="tbf-onglet">CARTONS</button>
   </div>`;
   $('tabs').onclick = (e) => {
     const b = e.target.closest('[data-t]');

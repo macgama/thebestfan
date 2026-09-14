@@ -346,6 +346,30 @@ for (const [route, nom] of tousLesEcrans) {
         .map((el) => ((el.textContent ?? '').trim() || el.getAttribute('aria-label')
           || el.className).slice(0, 24)),
 
+      /* **Un rail d'onglets dont un enfant n'est pas un onglet.**
+       *
+       * Le rail creusé et l'onglet qui s'y pose vont par deux : l'un ne veut
+       * rien dire sans l'autre. Un enfant qui n'a pas reçu `.tbf-onglet` ne
+       * disparaît pas et ne devient pas gris — il reste **un lien nu**, dans
+       * le bleu du navigateur, en dehors de la barre, à côté d'elle.
+       *
+       * C'est arrivé au troisième onglet de la page des Fanzzy. Il portait
+       * `class="go"` quand les deux autres n'avaient pas de classe : le
+       * remplacement qui a posé `.tbf-onglet` ne l'a pas reconnu, et il n'y
+       * avait aucune règle pour `.go` dans cette page. Le contrôle du dessus ne
+       * pouvait pas le voir — il ne regarde que les `<button>`, et un `<a>` sans
+       * style n'est ni gris ni en relief.
+       *
+       * Celui-ci est structurel, et c'est ce qui le rend sûr : il ne juge pas
+       * une couleur, il vérifie que les deux moitiés d'une même brique sont
+       * bien ensemble. */
+      orphelins: [...document.querySelectorAll('.tbf-onglets')]
+        .flatMap((rail) => [...rail.children]
+          .filter((el) => !el.classList.contains('tbf-onglet')))
+        .slice(0, 5)
+        .map((el) => ((el.textContent ?? '').trim() || el.className
+          || el.tagName).slice(0, 24)),
+
       /* **Un bouton resté au style du navigateur.**
        *
        * Le pendant de la plaque peinte en rien, et il arrive par le chemin
@@ -472,6 +496,11 @@ for (const [route, nom] of tousLesEcrans) {
     || (console.log('        peintes en rien :', vu.fantomes.join(' | ')),
       console.log('        — une variable de ton absente rend toutes leurs '
         + 'règles invalides, en silence'), false));
+
+  check(`  chaque enfant d’un rail d’onglets est un onglet`, vu.orphelins.length === 0
+    || (console.log('        hors barre :', vu.orphelins.join(' | ')),
+      console.log('        — sans `tbf-onglet`, il reste un lien nu posé à '
+        + 'côté de la barre'), false));
 
   check(`  aucun bouton n’est resté au style du navigateur`, vu.systeme.length === 0
     || (console.log('        gris système :', vu.systeme.join(' | ')),

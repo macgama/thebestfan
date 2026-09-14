@@ -750,12 +750,30 @@ body{
   border-radius:14px;
   box-shadow:inset 0 2px 5px rgba(0,0,0,.6),0 0 0 1px rgba(242,238,228,.07);
 }
+/* **L'onglet n'est pas un conteneur flex, et c'est délibéré.**
+ *
+ * Il l'était, et deux choses n'allaient pas. Son étiquette est un **texte nu**
+ * posé à côté d'une icône — `<svg/>MON FANZZY` — et un texte nu dans un
+ * conteneur flex devient un élément anonyme qui **ne sait pas rétrécir** sous sa
+ * largeur minimale. Trois onglets qui refusent de céder débordent leur rail, et
+ * `text-overflow:ellipsis`, qui n'agit jamais sur un conteneur flex, ne
+ * rattrapait rien.
+ *
+ * En bloc, avec l'icône en `inline-block`, les deux se remettent en place :
+ * l'étiquette redevient du texte ordinaire, elle se coupe proprement si l'écran
+ * est très étroit, et la ligne se centre par `line-height` plutôt que par un
+ * alignement de flex.
+ */
 .tbf-onglet{
   flex:1 1 0;min-width:0;
-  display:flex;align-items:center;justify-content:center;gap:7px;
-  padding:10px 8px;min-height:40px;
+  display:block;text-align:center;
+  padding:10px 6px;line-height:20px;min-height:40px;
   border:0;background:none;color:var(--craie);
-  font-family:var(--banner);font-size:12.5px;letter-spacing:.1em;
+  /* La taille suit la largeur de l'écran, et l'espacement des capitales avec
+     elle. Trois onglets dont le plus long fait dix caractères — « MON
+     FANZZY » — ne tiennent pas à 360 px au corps de douze et demi : l'étiquette
+     se coupait, et une destination tronquée se devine au lieu de se lire. */
+  font-family:var(--banner);font-size:clamp(10.5px,3.1vw,12.5px);letter-spacing:.06em;
   text-transform:uppercase;text-decoration:none;
   border-radius:10px;opacity:.5;cursor:pointer;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -772,8 +790,20 @@ body{
   text-shadow:0 1px 0 rgba(0,0,0,.25);
   transform:translateY(-1px);
 }
+/* L'icône suit le texte au lieu d'être un élément de flex. `vertical-align`
+   plutôt qu'un alignement de conteneur : c'est une image dans une ligne de
+   texte, et elle se cale sur la ligne. */
 .tbf-onglet svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;
-  stroke-linecap:round;stroke-linejoin:round;flex:none}
+  stroke-linecap:round;stroke-linejoin:round;
+  display:inline-block;vertical-align:-2.5px;margin-right:6px}
+/* **Sur un écran étroit, l'icône part avant l'étiquette.**
+
+   C'est l'arbitrage qui compte ici : un pictogramme qu'on reconnaît ne vaut pas
+   un mot qu'on lit, et trois destinations tronquées se devinent quand trois
+   mots entiers se lisent. Le seuil est à 400 px et non à 340, parce qu'un
+   téléphone ordinaire fait 360 et que c'est là que le mot le plus long ne
+   passait plus. */
+@media (max-width:400px){ .tbf-onglet svg{display:none} }
 /* Le rail porte le ton par défaut de l'onglet actif : sans lui, `var(--face)`
    ne vaudrait rien et l'onglet actif serait transparent. */
 .tbf-onglets:not([data-ton]){--face:#F5C33B;--haut:#FFE596;--tranche:#9A7412;
