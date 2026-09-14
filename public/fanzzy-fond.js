@@ -76,6 +76,26 @@
      Semé sur l'identifiant : le même personnage a toujours le même décor, et
      deux voisins n'ont jamais le même. `FZART.seeded` fait déjà exactement ça —
      on s'en sert plutôt que d'en écrire un second, qui dériverait. */
+  /**
+   * Deux couleurs mêlées, pour le ciel d'une légendaire.
+   *
+   * On **mêle** au lieu de remplacer : une légendaire de LES REVENANTS garde son
+   * violet de nuit sous l'or, une légendaire des ÉPOQUES garde son ocre. Un ciel
+   * doré identique pour les douze séries effacerait la série au moment précis où
+   * la carte est la plus regardée.
+   *
+   * @param {string} a  couleur d'origine, `#rrggbb`
+   * @param {string} b  couleur versée dedans
+   * @param {number} t  la part de `b`, de 0 à 1
+   */
+  const melange = (a, b, t) => {
+    const lire = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+    const [r1, g1, b1] = lire(a);
+    const [r2, g2, b2] = lire(b);
+    const m = (x, y) => Math.round(x + (y - x) * t).toString(16).padStart(2, '0');
+    return `#${m(r1, r2)}${m(g1, g2)}${m(b1, b2)}`;
+  };
+
   const graine = (cle) => (window.FZART?.seeded?.(cle)
     ?? (() => { let n = 1; return () => (n = (n * 16807) % 2147483647) / 2147483647; })());
 
@@ -324,16 +344,62 @@
      Une légendaire n'a pas d'âge : elle a sa lumière à elle, la couronne dorée,
      et c'est le seul endroit du décor où la famille ne décide pas de la
      couleur. Une légendaire est dorée parce qu'elle est légendaire. */
-  function lumiere(stage, legendaire, accent, u) {
+  /**
+   * La gloire d'une légendaire.
+   *
+   * Elle avait un halo doré, un anneau fin et huit pastilles. C'était juste, et
+   * ça ne se voyait pas : à la taille d'une vignette de classeur, un anneau à
+   * trente pour cent d'opacité sur du noir est du noir. Une légendaire tombe
+   * une fois sur vingt boosters, et le décor ne le disait pas.
+   *
+   * Ce qui le dit, c'est **la gloire** — l'éventail de rayons qui part de
+   * derrière le personnage. C'est le vocabulaire de l'apparition, il se lit à
+   * quarante pixels comme à quatre cents, et aucune autre carte du jeu n'en a.
+   *
+   * Vingt-quatre rayons, larges au bord et pointus au centre, d'opacité
+   * alternée : l'alternance suffit à donner l'impression que la lumière tourne,
+   * sans une seule animation. C'est important — ce décor est dessiné vingt fois
+   * sur une grille, et vingt rotations coûteraient une page qui rame pour un
+   * effet que personne ne regarde.
+   *
+   * Le reste monte d'un cran : le halo passe de 34 % à 55 %, l'anneau devient
+   * double, et les éclats sont vingt au lieu de huit, de tailles inégales.
+   */
+  function lumiere(stage, legendaire, accent, u, r) {
     if (legendaire) {
-      return `<circle cx="50" cy="74" r="62" fill="url(#or${u})"/>
-        <circle cx="50" cy="74" r="40" fill="none" stroke="#F5C33B" stroke-width="1.2"
-          opacity=".3"/>
-        ${[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
-    const a = (i / 8) * Math.PI * 2;
-    return `<circle cx="${(50 + Math.cos(a) * 44).toFixed(1)}"
-            cy="${(74 + Math.sin(a) * 44).toFixed(1)}" r="1.8" fill="#F5C33B" opacity=".5"/>`;
-  }).join('')}`;
+      const RAYONS = 24;
+      const gloire = Array.from({ length: RAYONS }, (_, i) => {
+        const a = (i / RAYONS) * Math.PI * 2;
+        const b = ((i + 0.42) / RAYONS) * Math.PI * 2;
+        // Du centre vers le bord : deux points loin, un point près. Un triangle
+        // fin, donc, et non un secteur — un secteur ferait un disque strié.
+        const x1 = (50 + Math.cos(a) * 72).toFixed(1);
+        const y1 = (74 + Math.sin(a) * 72).toFixed(1);
+        const x2 = (50 + Math.cos(b) * 72).toFixed(1);
+        const y2 = (74 + Math.sin(b) * 72).toFixed(1);
+        return `<path d="M50 74L${x1} ${y1}L${x2} ${y2}Z" fill="#F5C33B"
+          opacity="${i % 2 ? '.075' : '.04'}"/>`;
+      }).join('');
+
+      /* Les éclats. Semés par la graine du personnage : deux légendaires n'ont
+         pas la même poussière, et c'est ce qui empêche le décor de se lire
+         comme un gabarit. */
+      const eclats = Array.from({ length: 20 }, () => {
+        const a = r() * Math.PI * 2;
+        const d = 26 + r() * 44;
+        return `<circle cx="${(50 + Math.cos(a) * d).toFixed(1)}"
+          cy="${(74 + Math.sin(a) * d * 0.9).toFixed(1)}"
+          r="${(0.7 + r() * 1.8).toFixed(1)}" fill="#FFE596"
+          opacity="${(0.35 + r() * 0.45).toFixed(2)}"/>`;
+      }).join('');
+
+      return `<g opacity=".9">${gloire}</g>
+        <circle cx="50" cy="74" r="62" fill="url(#or${u})"/>
+        <circle cx="50" cy="74" r="41" fill="none" stroke="#FFE596" stroke-width="0.7"
+          opacity=".45"/>
+        <circle cx="50" cy="74" r="37" fill="none" stroke="#F5C33B" stroke-width="1.6"
+          opacity=".26"/>
+        ${eclats}`;
     }
     const n = Math.min(3, Math.max(1, Number(stage) || 1));
     // Un projecteur au premier âge, trois au troisième. Ils s'écartent en
@@ -385,15 +451,16 @@
       xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id="c${u}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="${p.haut}"/><stop offset="1" stop-color="${p.bas}"/>
+          <stop offset="0" stop-color="${legendaire ? melange(p.haut, '#6A4E12', 0.5) : p.haut}"/>
+          <stop offset="1" stop-color="${legendaire ? melange(p.bas, '#241A05', 0.45) : p.bas}"/>
         </linearGradient>
         <radialGradient id="h${u}">
           <stop offset="0" stop-color="${accent}" stop-opacity=".3"/>
           <stop offset="1" stop-color="${accent}" stop-opacity="0"/>
         </radialGradient>
         <radialGradient id="or${u}">
-          <stop offset="0" stop-color="#F5C33B" stop-opacity=".34"/>
-          <stop offset=".6" stop-color="#F5C33B" stop-opacity=".12"/>
+          <stop offset="0" stop-color="#FFE596" stop-opacity=".42"/>
+          <stop offset=".55" stop-color="#F5C33B" stop-opacity=".2"/>
           <stop offset="1" stop-color="#F5C33B" stop-opacity="0"/>
         </radialGradient>
       </defs>
@@ -412,7 +479,7 @@
       <g transform="translate(0,50)">
         ${lieu(f.set)(p, r)}
         ${(MOTIFS[f.type] ?? (() => ''))(accent)}
-        ${lumiere(f.stage, legendaire, accent, u)}
+        ${lumiere(f.stage, legendaire, accent, u, r)}
         <!-- Le pied d'ombre. Sans lui le personnage flotte : il est détouré,
              donc rien ne le rattache au sol du décor. -->
         <ellipse cx="50" cy="97" rx="30" ry="5" fill="#000" opacity=".5"/>

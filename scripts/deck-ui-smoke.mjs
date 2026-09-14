@@ -75,8 +75,8 @@ await raw.query(`INSERT INTO user_wallet (user_id,scarves,action_cards,xp) VALUE
 /** Un compte fraîchement sorti du paquet de bienvenue : deux Fanzzy. */
 const donnerFanzzy = (id) =>
   raw.query(`INSERT IGNORE INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)`, [U, id]);
-await donnerFanzzy('V1');
-await donnerFanzzy('P1');
+await donnerFanzzy('TR32');
+await donnerFanzzy('MS30');
 for (const s of ['jumelles', 'echarpe', 'tambour']) {
   await raw.query(`INSERT INTO user_stuff (user_id,stuff_id,copies) VALUES (?,?,1)`, [U, s]);
 }
@@ -294,7 +294,7 @@ clic(T(dom).querySelector('[data-fermer]'));
 
 /* ============================ 2. compte complet ======================= */
 
-await donnerFanzzy('F1');
+await donnerFanzzy('TR33');
 dom.window.close();
 dom = await ouvrirPage();
 await jusqua(() => T(dom).getElementById('corps').querySelector('.tabs'));
@@ -633,7 +633,7 @@ clic(T(dom).querySelector('[data-fermer]'));
   const dit = await bas.window.eval(`(async () => {
     const r = await fetch('/api/deck/mien', { method:'PUT',
       headers:{'content-type':'application/json'},
-      body: JSON.stringify({ nom:'Trop', fanzzy:[{id:'V1'},{id:'V2'},{id:'P1'}], actions:[] }) });
+      body: JSON.stringify({ nom:'Trop', fanzzy:[{id:'TR32'},{id:'TR32B'},{id:'MS30'}], actions:[] }) });
     const j = await r.json();
     return (j.detail ?? []).find((p) => p.code === 'deck.error.fanzzy_count') ?? null;
   })()`);
@@ -670,7 +670,7 @@ check('le bouton se referme après enregistrement',
 // On retire un Fanzzy de la collection dans le dos de la page : au prochain
 // envoi, le serveur refusera. C'est exactement le cas qui produisait autrefois
 // un « impossible » sans cause.
-await pool.query(`DELETE FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = 'F1'`, [U]);
+await pool.query(`DELETE FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = 'TR33'`, [U]);
 clic(T(dom).querySelector('[data-onglet="tribune"]'));
 await jusqua(() => T(dom).querySelector('.rang'));
 const nom = T(dom).getElementById('nom');

@@ -265,7 +265,7 @@ check('au niveau 9, il s’achète', r.json.slots === 4);
 
 /* ---------------------------------------- le deck respecte son plafond */
 
-for (const f of ['V1', 'P1', 'F1']) {
+for (const f of ['TR32', 'MS30', 'TR33']) {
   await pool.query(`INSERT IGNORE INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)`,
     [U, f]);
 }
@@ -283,13 +283,13 @@ const communes = (await call('/api/deck/catalogue')).json.actions
 const dix = [...communes, ...communes, ...communes].slice(0, 10);
 r = await call('/api/deck/mien', { method: 'PUT', body: {
   nom: 'Trop grand',
-  fanzzy: [{ id: 'V1' }, { id: 'P1' }, { id: 'F1' }],
+  fanzzy: [{ id: 'TR32' }, { id: 'MS30' }, { id: 'TR33' }],
   actions: dix } });
 check('un troisième Fanzzy est refusé à ce niveau',
   (r.json.detail ?? []).some((p) => p.code === 'deck.error.fanzzy_count' && p.max === 2));
 
 r = await call('/api/deck/mien', { method: 'PUT', body: {
-  nom: 'Juste bien', fanzzy: [{ id: 'V1' }, { id: 'P1' }], actions: dix } });
+  nom: 'Juste bien', fanzzy: [{ id: 'TR32' }, { id: 'MS30' }], actions: dix } });
 check('deux passent', r.json.deck?.fanzzy?.length === 2);
 
 /* --------------------------------------------- le niveau ne rend pas fort

@@ -150,10 +150,10 @@
     /**
      * Deux identifiants, et les confondre donne le mauvais dessin.
      *
-     * Les **états** sont rangés par personnage : `V1/e2/base/but`. Le second
+     * Les **états** sont rangés par personnage : `TR32/e2/base/but`. Le second
      * âge du Choriste s'y demande sous le nom de la lignée, avec `evo: 2`.
      * Les **illustrations en pied**, elles, sont rangées par carte du
-     * catalogue : le Meneur de chant est `V2.avif`, pas `V1.avif`.
+     * catalogue : le Meneur de chant est `TR32B.avif`, pas `TR32.avif`.
      *
      * Demander le plein-pied sous le nom de la lignée affiche donc le premier
      * âge à quelqu'un qui a payé quatre-vingt-dix écharpes pour ne plus le

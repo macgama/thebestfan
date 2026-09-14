@@ -70,20 +70,20 @@ await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
    verrait tous refusés. Le niveau 9 laisse verrouillées les séries des paliers
    suivants, ce qui est exactement ce qu'il faut pour éprouver le kiosque. */
 const { seuil } = await import('../src/shared/niveau.js');
-/* Le Fanzzy équipé est **V1 au second âge**, et c'est délibéré : l'écran
+/* Le Fanzzy équipé est **TR32 au second âge**, et c'est délibéré : l'écran
    « Mon Fanzzy » doit montrer le Meneur de chant et non le Choriste, dans un
-   cadre rare et non commun. Équipé d'un G1 resté au premier âge, la page
+   cadre rare et non commun. Équipé d'un TR37 resté au premier âge, la page
    pouvait ignorer le stade et ignorer la rareté sans qu'aucun contrôle ne
    bouge — tout le catalogue est commun au premier âge. */
 await raw.query(`INSERT INTO user_wallet (user_id,scarves,packs,xp,active_fanzzy)
-                 VALUES (?,900,9,?,'V1')`, [U, seuil(9)]);
-// G1 est possédé : c'est le Fanzzy illustré, et c'est lui qui cassait la page.
-// V1 est monté au second âge : la rareté suit le stade, donc c'est la seule
+                 VALUES (?,900,9,?,'TR32')`, [U, seuil(9)]);
+// TR37 est possédé : c'est le Fanzzy illustré, et c'est lui qui cassait la page.
+// TR32 est monté au second âge : la rareté suit le stade, donc c'est la seule
 // façon d'avoir autre chose que du commun dans la grille — et c'est ce qui
 // permet de vérifier que la rareté se voit.
-for (const f of ['G1', 'X7', 'X8', 'V1', 'P1']) {
+for (const f of ['TR37', 'TR39', 'TR40', 'TR32', 'MS30']) {
   await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies,stage) VALUES (?,?,1,?)`,
-    [U, f, f === 'V1' ? 2 : 1]);
+    [U, f, f === 'TR32' ? 2 : 1]);
 }
 await raw.end();
 
@@ -297,7 +297,7 @@ const ouverture = await page.evaluate(async () => {
   });
   const j = await r.json();
   /* Chaque **Fanzzy** tiré doit être connu de la page, sinon l'ouverture casse
-     — c'est la faute qui a coûté le plus cher ici, un G1 sorti d'un booster que
+     — c'est la faute qui a coûté le plus cher ici, un TR37 sorti d'un booster que
      le catalogue recopié ne connaissait pas.
 
      Les autres types ne sont pas dans `BY_ID` et n'ont rien à y faire : un skin,

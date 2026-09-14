@@ -114,9 +114,23 @@ console.log('\nLes familles');
 /* **Un âge ne change pas de spécialité.**
  *
  * `agesDe` reprend le geste du premier âge pour les quatre cent trente-cinq
- * âges calculés. Les trois premières lignées — T, Y, D — datent d'avant et sont
- * écrites à la main : leurs âges avaient dérivé, et un joueur qui faisait
- * grandir son personnage perdait le geste qu'il avait appris. */
+ * âges calculés. Les sept premières lignées datent d'avant et sont écrites à la
+ * main : leurs âges avaient dérivé, et un joueur qui faisait grandir son
+ * personnage perdait le geste qu'il avait appris.
+ *
+ * **Ce contrôle ne les voyait pas.** `racine('T2')` rend `'T2'` — le motif
+ * `^([A-Z]+\d+)` avale l'identifiant entier quand l'âge s'écrit en entrée
+ * numérotée. Il comparait donc T2 avec lui-même, et passait au vert sur
+ * exactement les lignées qu'il avait été écrit pour surveiller.
+ *
+ * Le renommage par série l'a démasqué : `T2` est devenu `MS31B`, le motif s'est
+ * arrêté à `MS31`, et deux lignées ont rougi le jour même. Le Colleur
+ * d'affiches jouait `tifo` et ses deux âges `tri` ; l'Auto-stoppeur jouait
+ * `echarpe` et ses âges `memoire`. Corrigé.
+ *
+ * La leçon n'est pas sur les gestes : **un raccourci d'identifiant dans un
+ * contrôle peut le rendre aveugle à son propre sujet**, sans rien casser et
+ * sans jamais rougir. */
 {
   const derivent = DEX.filter((f) => f.stage > 1
     && BY_ID.get(racine(f.id))?.cri?.gest !== f.cri?.gest);

@@ -788,26 +788,26 @@ export const AGES = {
      été dissoutes ; ils sont aujourd'hui répartis dans six séries, et leur champ
      `set` est le seul à faire foi. Le bloc reste groupé par numérotation.     */
 
-  X1: [
+  TR35: [
     ['Le Lanceur de Ola', 'Il ne la suit plus, il la lance. Il faut trois essais et un peu de honte, '
       + 'et à la troisième vingt mille personnes se lèvent.', 'OLA, ENCORE'],
     ['Le Douzième', 'Le club a retiré le numéro 12 et il l’a donné au virage. C’est lui qui a reçu le '
       + 'maillot, un soir, devant tout le monde, et il n’a rien pu dire.', 'ON EST DOUZE'],
   ],
-  X2: [
+  MT14: [
     ['Écharpes Nouées', 'Les écharpes ne sont plus levées : elles sont attachées les unes aux autres '
       + 'et elles font le tour du bloc. Personne ne récupère la sienne avant la fin.',
       'ON LES ATTACHE'],
     ['La Voûte', 'Quatre mille écharpes forment un toit au-dessus du virage à l’entrée des joueurs. '
       + 'Ça dure quarante secondes et ça se voit depuis l’autre bout de la ville.', 'LEVEZ TOUT'],
   ],
-  X6: [
+  TR38: [
     ['Section Debout', 'La section cendrée a obtenu ses places debout, après onze ans de dossiers. '
       + 'Elle a fêté ça en restant assise tout un match, par ironie.', 'TOUJOURS FIDÈLES'],
     ['La Section', 'Elle a soixante ans, deux cents membres et ses propres statuts. Elle survivra au '
       + 'club si le club tombe, et elle le sait.', 'ON SERA ENCORE LÀ'],
   ],
-  X7: [
+  TR39: [
     ['Le Dernier à Sortir', 'Le stadier a arrêté de lui demander de partir : il lui laisse la rangée et va '
       + 'fumer. Ils se disent au revoir, chaque samedi, à la même heure.',
       'ON FERME'],
@@ -816,19 +816,19 @@ export const AGES = {
       + 'sait.',
       'LES CLÉS'],
   ],
-  X8: [
+  TR40: [
     ['La Mascotte du Samedi', 'Le costume est à sa taille. Elle fait le tour du terrain avant le '
       + 'coup d’envoi et elle a le droit de toucher le ballon, une fois.', 'LA PELUCHE ARRIVE'],
     ['Le Costume Transmis', 'Elle a passé le costume à un gamin de sept ans et elle l’a aidé à '
       + 'l’enfiler. Elle regarde depuis le bord, les mains dans les poches.', 'À TOI DE COURIR'],
   ],
-  X20: [
+  TR44: [
     ['Le Deuxième Match', 'Il connaît deux chants et il sait quand se lever. Il regarde encore son '
       + 'voisin, mais moins, et son voisin a commencé à lui parler.', 'PRESQUE COMME LES AUTRES'],
     ['Celui Qui Explique', 'Il est assis à côté de quelqu’un qui vient pour la première fois, et il '
       + 'lui dit quand se lever. Il n’a pas oublié.', 'FAIS COMME MOI'],
   ],
-  X39: [
+  TR48: [
     ['Le Carré Retourné', 'Il a compris le jour où quelqu’un lui a tenu le poignet avant le déploiement. Son '
       + 'carton est à l’endroit depuis, et la mosaïque est parfaite. Elle est moins drôle.',
       'J’AI COMPRIS'],
@@ -836,19 +836,19 @@ export const AGES = {
       + 'en retourne un exprès, quelque part, et il ne dit jamais lequel.',
       'TOURNEZ-LE'],
   ],
-  X41: [
+  TR49: [
     ['L’Homme Sans le Costume', 'Il a enlevé la tête pour de bon et il a un badge à son nom. Les '
       + 'gens le reconnaissent enfin, et ça lui fait un drôle d’effet.', 'DIX MINUTES'],
     ['Le Visage', 'Il est sur l’affiche de la saison, sans costume, avec la tête de mascotte sous le '
       + 'bras. Vingt-deux ans dedans, et une photo dehors.', 'ME VOILÀ, POUR DE BON'],
   ],
-  X47: [
+  TR50: [
     ['Le Bob Usé', 'Le bob a trente-quatre ans et deux reprises cousues main. Même place, même '
       + 'sandwich, et il a arrêté de compter il y a longtemps.', 'COMME TOUJOURS'],
     ['Le Bob du Musée', 'Le club a demandé le bob pour la vitrine. Il a dit non. Il a proposé de '
       + 'venir s’asseoir dans la vitrine avec, ce qui a clos la discussion.', 'IL RESTE SUR MA TÊTE'],
   ],
-  X48: [
+  TR51: [
     ['La Note Placée', 'Il a trouvé où poser sa voix et il ne casse plus. Trois rangées lui ont demandé de '
       + 'recommencer comme avant.',
       'JE LA TIENS'],
@@ -856,37 +856,37 @@ export const AGES = {
       + 'façon dont ce chant se chante ici, et les visiteurs ne comprennent jamais.',
       'CASSEZ-LA AVEC MOI'],
   ],
-  X49: [
+  TR52: [
     ['Le Râleur Abonné', 'Trente-huitième saison, et rien ne va toujours. Il a commencé à râler sur '
       + 'ceux qui râlent, ce qui l’occupe beaucoup.', 'DE MON TEMPS, DÉJÀ'],
     ['La Mauvaise Foi', 'Le club a mis une plaque à son nom sur son siège, de son vivant. Il a dit '
       + 'que la plaque était mal vissée. Il pleurait un peu.', 'ELLE EST DE TRAVERS'],
   ],
-  X3: [
+  TR36: [
     ['Mosaïque à Deux Tribunes', 'Le dessin couvre deux virages et il faut quatre mille personnes '
       + 'pour le tenir. Vingt secondes de préparation, six secondes d’image.', 'DÉPLOIEMENT, TOUS'],
     ['La Mosaïque', 'Le stade entier, quatre couleurs, un dessin visible d’avion. La photo a fait le '
       + 'tour de l’Europe et personne ne sait qui l’a conçue.', 'TOUT LE STADE'],
   ],
-  X13: [
+  VP15: [
     ['L’Agent Qui Connaît Tout le Monde', 'Il connaît vraiment quelqu’un, cette fois, et le transfert '
       + 's’est fait. On lui fait un peu plus confiance, et on a un peu tort.', 'J’AI CE QU’IL FAUT'],
     ['Le Carnet d’Adresses', 'Il a placé quatorze joueurs et il a refusé le poste de directeur '
       + 'sportif. Il préfère la tribune d’honneur et le téléphone.', 'JE M’EN OCCUPE'],
   ],
-  X14: [
+  MS33: [
     ['Le Siffleur Entendu', 'On l’a entendu, une fois, un soir de coupe, et le stade s’est tu. '
       + 'Personne ne l’a toujours pas vu.', 'DEUX COUPS DE SIFFLET'],
     ['Le Souterrain', 'Le virage siffle avec lui à la 74e, tous les matchs, depuis onze ans. Ceux '
       + 'qui ont commencé ne savent plus pourquoi.', 'ON SIFFLE TOUS'],
   ],
-  X40: [
+  HC15: [
     ['La Radio du Virage', 'Six mille auditeurs, un banc en plastique, toujours la pluie. Elle a '
       + 'refusé deux fois une place en cabine chauffée.', 'ET IL Y A BUT, ENCORE'],
     ['La Voix du Samedi', 'Trois générations ont appris les buts par sa voix. Le club diffuse son '
       + 'commentaire dans le stade, en direct, sur le but du titre.', 'ET LÀ, ÇA Y EST'],
   ],
-  X30: [
+  IM10: [
     ['Le Drapeau Adopté', 'Le virage a appris le nom du club et le chante une fois par match, au hasard, sans '
       + 'que personne sache pourquoi. Le club en question l’ignore complètement.',
       'ON L’A GARDÉ'],
@@ -894,7 +894,7 @@ export const AGES = {
       + 'n’appartient toujours à personne.',
       'IL EST DES DEUX'],
   ],
-  X32: [
+  IM11: [
     ['Le Chantier au Rythme', 'Les ouvriers ont compris et ils le font exprès. Ils frappent avec le virage '
       + 'pendant toute la première mi-temps, puis ils s’arrêtent pour regarder le match.',
       'ON SUIT LE RYTHME'],

@@ -66,7 +66,7 @@ for (const [i, id] of U.entries()) {
                    VALUES (?,?,?,'x')`, [id, `duel${i}@ex.fr`, i ? 'Bâloise' : 'Sédunois']);
   await raw.query(`INSERT INTO user_wallet (user_id,scarves,action_cards) VALUES (?,300,?)`,
     [id, JSON.stringify(['a-silence'])]);
-  for (const f of ['V1', 'P1', 'F1']) {
+  for (const f of ['TR32', 'MS30', 'TR33']) {
     await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies) VALUES (?,?,1)`, [id, f]);
   }
   // Un joueur équipé de Jumelles : c'est lui qui révèle un barème de geste
@@ -77,8 +77,8 @@ for (const [i, id] of U.entries()) {
   await raw.query(`INSERT INTO user_decks (user_id,nom,contenu,actif) VALUES (?,?,?,1)`,
     [id, 'Test', JSON.stringify({
       nom: 'Test',
-      fanzzy: [{ id: 'V1', stuff: i === 0 ? ['jumelles'] : [] }, { id: 'P1', stuff: [] },
-               { id: 'F1', stuff: [] }],
+      fanzzy: [{ id: 'TR32', stuff: i === 0 ? ['jumelles'] : [] }, { id: 'MS30', stuff: [] },
+               { id: 'TR33', stuff: [] }],
       actions: dix })]);
 }
 

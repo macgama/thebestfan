@@ -173,7 +173,7 @@ const api = async (path, body, method) => {   // eslint-disable-line no-unused-v
  * main, plus les types, les paliers de rareté, les sets et les taux de
  * tirage. Elles avaient divergé sans que rien ne le signale — la lignée du
  * Gamin de Devant manquait dans la page alors que le serveur la tirait des
- * boosters, et un G1 sorti d'un paquet arrivait ici comme `undefined` et
+ * boosters, et un TR37 sorti d'un paquet arrivait ici comme `undefined` et
  * cassait l'ouverture.
  *
  * Une copie qu'il faut penser à mettre à jour finit toujours par ne plus

@@ -57,7 +57,18 @@ const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', '
   // En dernier, la seule reprise de données : `series-neuves.sql` range
   // quarante-deux cartes dans leur nouvelle série. Il suppose donc les lignes
   // posées par `fanzzy.sql` et le réglage posé par `admin.sql`.
-  'series-neuves'];
+  'series-neuves',
+  /* Les deux reprises de septembre, dans le même ordre que schema-smoke.mjs —
+     c'est cette paire-là qui avait divergé le 8 septembre, et deux fichiers
+     manquants au déploiement avaient éteint le site.
+
+     Elles ne déclarent aucune table et ne font rien sur une base neuve : le
+     catalogue y est amorcé depuis le code, donc déjà juste. Sur une base
+     existante, prefixes.sql donne à chaque carte le préfixe de sa série — en
+     suivant l'identifiant dans les six tables qui le référencent, JSON des
+     decks compris — et identites.sql rattrape ce qu'INSERT IGNORE ne sait pas
+     dire : un nom changé dans le code n'atteint jamais une ligne déjà posée. */
+  'prefixes', 'identites'];
 
 const verifierSeulement = process.argv.includes('--verifier-seulement');
 const url = process.env.DATABASE_URL;

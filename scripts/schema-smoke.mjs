@@ -56,7 +56,20 @@ const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', '
   // Et vraiment en dernier, la seule reprise de données : elle ne déclare
   // aucune table, elle range des cartes déjà posées par fanzzy.sql et corrige
   // un réglage posé par admin.sql.
-  'series-neuves'];
+  'series-neuves',
+  /* Les deux reprises de septembre. Elles ne déclarent aucune table : elles
+     corrigent des lignes déjà posées par fanzzy.sql, et sur une base neuve
+     elles ne trouvent rien à faire — le catalogue y est amorcé depuis le code,
+     donc déjà juste.
+
+     prefixes.sql donne à chaque carte le préfixe de sa série et suit
+     l'identifiant dans les six tables qui le référencent, JSON des decks
+     compris. identites.sql rattrape ce qu'INSERT IGNORE ne sait pas dire : un
+     nom ou un cri changé dans le code n'atteint jamais une ligne existante.
+
+     Après series-neuves, qui déplace des cartes d'une série à l'autre : le
+     préfixe se calcule sur la série d'arrivée. */
+  'prefixes', 'identites'];
 
 {
   const surLeDisque = (await readdir(SQL)).filter((f) => f.endsWith('.sql'))
