@@ -1,0 +1,50 @@
+{
+  "id": "TR2",
+  "rev": 1,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "salut",
+            "pousse",
+            "but",
+            "encaisse",
+            "attente",
+            "victoire",
+            "defaite",
+            "occasion",
+            "decision",
+            "progression",
+            "ennui"
+          ],
+          "portrait": true,
+          "sha": "2a58a8405c78"
+        }
+      }
+    },
+    "e2": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "sha": "e33303833179"
+        }
+      }
+    },
+    "e3": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "sha": "beb5f55eaf19"
+        }
+      }
+    }
+  }
+}
