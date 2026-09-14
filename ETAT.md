@@ -4238,8 +4238,27 @@ public/img/fanzzy/TR1/
 ```
 
 ```bash
-node scripts/fanzzy-art.mjs art/TR1/_src [--skin hiver --repli base]
+npm run art art/TR1/_src        # un lot  (= node scripts/fanzzy-art.mjs …)
+npm run art:tout                # tous ceux qui ont bougé
+npm run art:tout -- --force     # tous, quoi qu'il arrive
 ```
+
+**Rien ne surveille `art/`, et rien ne doit le surveiller.** Déposer des images
+dans `art/TR2/_src` ne produit rien : c'est une commande, pas un observateur.
+Un observateur qui réencode cinq mégaoctets à chaque écriture pendant qu'on
+copie quarante fichiers serait une nuisance, pas un service.
+
+Ce qui manquait n'était donc pas la surveillance mais **une seule commande à
+connaître** : `art:tout` fait le tour de tous les `art/<ID>/_src` et ne refait
+que ceux dont un fichier source est plus récent que le `manifeste.json`
+produit. Il n'a pas de logique à lui — il appelle `fanzzy-art.mjs` une fois par
+dossier, parce qu'une seconde implémentation « juste pour boucler » serait la
+plus coûteuse des secondes vérités de ce projet.
+
+Son premier passage a d'ailleurs montré à quoi il sert : **TR1 avait un `e3`
+sans `neutre`** dont la source attendait dans `_src` depuis un lot entier. Un
+état manquant ne se signale jamais — le jeu retombe sur le stade d'en dessous,
+et ça ressemble à un choix.
 
 Les sources restent dans **`art/<ID>/_src/`, hors de `public/`** — et hors du
 dépôt, `.gitignore` les écarte : douze rendus 2K par stade, cinq mégaoctets
