@@ -3784,6 +3784,40 @@ ailleurs, avec leur propre texte, et les mêler ferait rougir le contrôle pour
 `pushMult`, que nulle carte ne porte. Un garde-fou qui se plaint de ce qui va
 bien est un garde-fou qu'on désactive.
 
+### Le Gamin de Devant était Le Petit Teigneux
+
+Le doublon que le catalogue a rendu visible n'était pas seulement une affaire de
+fichiers. `G1` « Le Gamin de Devant » — onze ans, premier rang, mains sur la
+barrière, une lignée qui vieillit jusqu'à devenir capo — **est** `TR1` « Le
+Petit Teigneux » — onze ans, la voix avant les mots, une lignée qui vieillit
+jusqu'au bout du virage. Deux noms, deux histoires, deux cris, un personnage.
+
+Le troisième âge de TR1 le disait mot pour mot sans que personne ne l'entende :
+« il gueule sur un gamin de onze ans qui connaît déjà les chants ». C'était G1.
+
+`G1` est devenu **Le Faux Départ** : celui qui lance un chant trois secondes
+trop tôt, tout seul, dans le silence. Neuf fois sur dix personne ne suit ; la
+dixième, la tribune part avec lui.
+
+**Ses modificateurs n'ont pas bougé d'un chiffre** — ils dictaient déjà le
+personnage, il suffisait de les lire. `perfectBonus` énorme, `breathBonus` sous
+la barre : des coups d'éclat, pas de la régularité. Et au troisième âge, ses
+bonus de vitesse disparaissent au profit d'une fenêtre de tempo à 1,6 et d'une
+cadence ralentie de soixante millisecondes — il ne va pas plus vite en
+vieillissant, il laisse plus de silence. La lignée est un apprentissage de
+l'attente, et le catalogue l'écrivait déjà en nombres.
+
+**L'identifiant ne bouge pas.** Les possessions, les decks et les tenues
+référencent `G1`, `G2`, `G3` : les renommer confisquerait la carte à ceux qui
+l'ont. On change qui il est, pas où il est rangé.
+
+Ses trois dessins sont partis dans `art/_doublons/` avec un fichier qui dit
+pourquoi. Ils ne sont pas effacés — un dessin coûte des crédits et une attente —
+mais ils ne sont plus servis : tout ce qui est sous `public/` part en ligne, et
+la carte affichait le mauvais visage. La dette passe de 167 à 170, ce qui est un
+progrès : **une silhouette dit « pas encore dessiné », un visage emprunté dit
+une chose fausse.**
+
 ### Deux formes, un seul contenu
 
 `--nu` retire la coque HTML pour la publication en artefact, qui pose la sienne.
