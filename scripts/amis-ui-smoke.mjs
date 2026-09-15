@@ -157,7 +157,7 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
      Choriste ressemblerait à un personnage parfaitement valide, et personne
      ne verrait jamais l'erreur. */
   check('et à l’âge qu’il a atteint',
-    /V2/.test(avatars.find((a) => a.nom === 'Sarah')?.src ?? '')
+    /TR32B/.test(avatars.find((a) => a.nom === 'Sarah')?.src ?? '')
     || (console.log('        elle montre :',
       avatars.find((a) => a.nom === 'Sarah')?.src), false));
 

@@ -219,7 +219,14 @@ console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
      silhouette dit « pas encore dessiné », un visage emprunté dit une chose
      fausse.** La dette n'a pas augmenté, elle vient seulement d'être comptée
      juste. */
-  const DETTE = 217;
+  /* 217 → 244. Vingt-sept de plus, et pour une fois ce n'est pas une
+     correction : **ce sont des cartes neuves**. LA TRIBUNE avait quarante et
+     une communes jouables en face de dix légendaires ; les neuf ajoutées la
+     portent à cinquante, et chacune arrive avec ses deux âges.
+
+     C'est la seule raison admissible de relever ce cliquet en plus de celles
+     déjà écrites : du contenu ajouté, et non du contenu perdu. */
+  const DETTE = 244;
   check(`et ${DEX.length - avec} cartes restent sans dessin d’aucune sorte`,
     DEX.length - avec <= DETTE
     || (console.log('        ', DEX.filter((f) => !adresse(f.id))

@@ -47,7 +47,7 @@ export const SETS_2026 = [
 
 export const DEX_2026 = [
 
-  /* ==================================================== LA TRIBUNE (27)
+  /* ==================================================== LA TRIBUNE (36)
 
      Le public ordinaire. C'est la série la plus nombreuse et la plus
      commune : c'est elle qu'on tire en ouvrant un booster, et c'est bien —
@@ -214,6 +214,85 @@ export const DEX_2026 = [
       + 'qu’elle. Elle hurle à contretemps et personne ne la corrige.',
     mods: { tempoWindow: 1.22, tempoInterval: -40 },
     cri: { label: 'ALLEZ ALLEZ ALLEZ', gest: 'echo', power: 46 } },
+
+  /* --------------------------------------------- neuf de plus, septembre
+
+     LA TRIBUNE comptait quarante et une communes jouables : quarante-neuf au
+     catalogue, dont huit dépubliées parce qu’elles refaisaient un personnage
+     du lot de 2026. Ces neuf-là la portent à cinquante, en face des dix
+     légendaires.
+
+     Elles prennent les numéros 60 à 68, et non les huit trous laissés par les
+     dépubliées : un numéro attribué le reste. Le reprendre ferait deux cartes
+     différentes sous un même identifiant à un an d’intervalle, et les
+     possessions de ceux qui ont la première pointeraient sur la seconde.
+
+     Les gestes sont choisis pour ne pas déséquilibrer les familles : le geste
+     éponyme doit rester majoritaire chez chacune, et aucune variante ne doit
+     tomber sous un huitième — `catalogue:test` vérifie les deux. */
+  { id: 'TR60', nom: 'Le Traducteur', type: 'voix', set: 'TR', stage: 1, rar: 'commune',
+    histoire: 'Il explique les paroles aux nouveaux, ligne par ligne, avec une '
+      + 'mesure de retard. À la fin du chant, ils savent tout et ils n’ont rien '
+      + 'chanté.',
+    mods: { tempoWindow: 1.16, tempoInterval: 30 },
+    cri: { label: 'C’EST « JAMAIS », PAS « TOUJOURS »', gest: 'tempo', power: 47 } },
+
+  { id: 'TR61', nom: 'Le Prénom Crié', type: 'voix', set: 'TR', stage: 1, rar: 'commune',
+    histoire: 'Il crie le prénom des joueurs, jamais le nom de famille. Il est le '
+      + 'seul du virage à le faire et deux d’entre eux se retournent maintenant '
+      + 'quand ils l’entendent.',
+    mods: { tempoWindow: 1.12, perfectBonus: 1.15 },
+    cri: { label: 'VAS-Y MARCO', gest: 'tempo', power: 49 } },
+
+  { id: 'TR62', nom: 'Le Siège Qui Claque', type: 'perc', set: 'TR', stage: 1, rar: 'commune',
+    histoire: 'Il frappe sur le dossier du siège devant lui, qui est vide depuis '
+      + 'quatre saisons. Le plastique a fendu et sonne mieux qu’avant : personne '
+      + 'ne demande plus à le remplacer.',
+    mods: { mashBonus: 1.14, breathBonus: 0.96 },
+    cri: { label: 'ÇA TAPE DERRIÈRE', gest: 'mash', power: 48 } },
+
+  { id: 'TR63', nom: 'Les Mains Gelées', type: 'perc', set: 'TR', stage: 1, rar: 'commune',
+    histoire: 'Elle applaudit par rafales de dix pour se réchauffer les doigts, '
+      + 'toutes les cinq minutes, sans rapport avec le match. Le virage a fini par '
+      + 'applaudir avec elle.',
+    mods: { mashBonus: 1.08, breathBonus: 1.06 },
+    cri: { label: 'POUR SE RÉCHAUFFER', gest: 'salves', power: 45 } },
+
+  { id: 'TR64', nom: 'Le Parapluie Retourné', type: 'fide', set: 'TR', stage: 1, rar: 'commune',
+    histoire: 'Le vent l’a retourné à la vingtième minute. Il le tient quand même, '
+      + 'au-dessus de rien, jusqu’au coup de sifflet — le lâcher serait admettre '
+      + 'quelque chose.',
+    mods: { holdBonus: 1.15, holdForgive: 1 },
+    cri: { label: 'IL VA S’ARRÊTER', gest: 'hold', power: 46 } },
+
+  { id: 'TR65', nom: 'Le Compteur de Passes', type: 'fide', set: 'TR', stage: 1, rar: 'commune',
+    histoire: 'Il compte les passes réussies à voix basse et s’arrête exactement à '
+      + 'cent, quoi qu’il arrive ensuite. Personne ne sait ce qui se passe s’il '
+      + 'se trompe, et lui non plus.',
+    mods: { holdBonus: 1.08, perfectBonus: 1.2 },
+    cri: { label: 'QUATRE-VINGT-DIX-NEUF', gest: 'retenue', power: 44 } },
+
+  { id: 'TR66', nom: 'Le Drap de Bain', type: 'tifo', set: 'TR', stage: 1, rar: 'commune',
+    histoire: 'Sa banderole est un drap de bain avec un motif de poissons qu’on '
+      + 'devine sous la peinture. Il jure que ça ne se voit pas d’en face.',
+    mods: { parryBonus: 1.3, holdBonus: 1.04 },
+    cri: { label: 'ÇA SE VOIT PAS TANT', gest: 'tifo', power: 47 } },
+
+  { id: 'TR67', nom: 'L’Allumette Mouillée', type: 'pyro', set: 'TR', stage: 1, rar: 'commune',
+    histoire: 'Sa torche part une fois sur deux, et le virage retient son souffle à '
+      + 'chaque tentative. Les soirs où elle prend, le bruit est deux fois plus '
+      + 'fort que le feu.',
+    mods: { perfectBonus: 1.28, backfire: 1 },
+    cri: { label: 'UNE SECONDE', gest: 'relance', power: 50 } },
+
+  { id: 'TR68', nom: 'L’Écharpe Trop Longue', type: 'depl', set: 'TR', stage: 1, rar: 'commune',
+    histoire: 'Trois mètres quarante, un cadeau de sa tante. Elle balaie deux rangées '
+      + 'à chaque tour et il s’excuse à chaque tour, sans jamais ralentir.',
+    mods: { breathBonus: 1.1, parryResist: 1.12 },
+    /* « PARDON, PARDON » était déjà le cri de BG6, L'Élan des Travées, qui
+       s'excuse pour ses bois. Deux personnages ne crient pas la même chose. */
+    cri: { label: 'ATTENTION DERRIÈRE', gest: 'echarpe', power: 46 } },
+
 
   /* ============================================ LES MÉTIERS DU STADE (26)
 

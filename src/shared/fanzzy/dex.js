@@ -485,7 +485,7 @@ const DEX = [
      Leur série a été dissoute : le déplacement a maintenant la sienne, et ceux
      qui regardaient de loin ont LES HÉROS DU CANAPÉ. Lire leur champ `set`. */
 
-  { id:'TR53', nom:'Le Craqueur de la Nuit', publie:false /* refait Y3 */, type:'pyro', set:'TR', stage:1, rar:'commune',
+  { id:'TR53', nom:'Le Craqueur de la Nuit', publie:false /* refait TR34C */, type:'pyro', set:'TR', stage:1, rar:'commune',
     histoire:'Blouson noir, écharpe à damier, et un fumigène qu’il tient à bout '
       + 'de bras comme une torche olympique.',
     mods:{ perfectBonus:1.4, backfire:true },

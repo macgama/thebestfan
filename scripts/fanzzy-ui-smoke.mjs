@@ -489,14 +489,14 @@ check('les Fanzzy non possédés portent leur nom',
     const evolue = await nav.newPage();
     evolue.on('pageerror', (e) => erreurs.push(e.message));
     await evolue.setViewport({ width: 400, height: 880 });
-    await evolue.goto(`${base}/fanzzy/V1`, { waitUntil: 'networkidle0' });
+    await evolue.goto(`${base}/fanzzy/TR32`, { waitUntil: 'networkidle0' });
     await evolue.waitForSelector('.fiche .art img', { timeout: 8000 }).catch(() => {});
     const age = await evolue.evaluate(() => ({
       dessin: document.querySelector('.fiche .art img')?.getAttribute('src') ?? '',
       nom: document.querySelector('.fiche h2')?.textContent.trim() ?? '',
     }));
     check('la fiche montre le dessin de l’âge atteint, pas celui de la lignée',
-      /V2/.test(age.dessin)
+      /TR32B/.test(age.dessin)
       || (console.log('        elle montre :', age.dessin), false));
     check('et son nom va avec', /Meneur/.test(age.nom)
       || (console.log('        elle nomme :', age.nom), false));

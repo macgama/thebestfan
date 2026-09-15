@@ -604,7 +604,7 @@ check('et le bouton de fermeture aussi',
   check('et son cri, qui déclenche la vidéo d’un geste parfait',
     Boolean(p.fanzzy?.cri));
   check('le dessin montré est celui du second âge',
-    /V2/.test(p.src) || (console.log('        il montre :', p.src), false));
+    /TR32B/.test(p.src) || (console.log('        il montre :', p.src), false));
   check('il respire', p.souffle !== 'none' && p.souffle !== '');
   check('il n’intercepte pas les appuis de la tribune',
     p.sous !== 'le personnage' || (console.log('        sous le doigt :', p.sous), false));
