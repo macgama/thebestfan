@@ -228,10 +228,17 @@ const DEX = [
     mods:{ breathBonus:1.24, refundBonus:1.8 }, cri:{ label:'ON EST VENUS POUR ÇA', gest:'echarpe', power:76 } },
   // --- sans évolution
   { id:'TR35', nom:'Le Douzième Homme', type:'voix', set:'TR', stage:1, rar:'commune',
+    histoire:'Il n’est personne en particulier, et c’est exactement ce qu’il '
+      + 'est : n’importe qui, debout, la bouche grande ouverte. Enlevez-le et il '
+      + 'manque une voix sur deux mille. Enlevez-en deux mille et il n’y a plus '
+      + 'de virage.',
     mods:{ tempoWindow:1.3, breathBonus:1.1 }, cri:{ label:'OLA', gest:'tempo', power:68 } },
   { id:'MT14', nom:'Écharpes au Vent', type:'fide', set:'MT', stage:1, rar:'commune',
     mods:{ holdBonus:1.1 }, cri:{ label:'LEVER LES BRAS', gest:'hold', power:56 } },
   { id:'TR36', nom:'Mosaïque Populaire', type:'tifo', set:'TR', stage:1, rar:'commune',
+    histoire:'Elle tient son carton à bout de bras pendant quatre minutes, sans '
+      + 'savoir de quelle couleur il est ni ce que ça dessine. Elle verra la photo '
+      + 'le lendemain, comme tout le monde.',
     mods:{ parryBonus:1.3 }, cri:{ label:'DÉPLOIEMENT', gest:'tifo', power:56 } },
   { id:'GD10', nom:'Parcage 400 places', type:'depl', set:'GD', stage:1, rar:'legendaire',
     mods:{ breathBonus:1.14, parryBonus:1.4 }, cri:{ label:'ÉCHO DU PARCAGE', gest:'echarpe', power:72 } },
@@ -299,6 +306,9 @@ const DEX = [
     cri:{ label:'QUAND JE LÈVE LA MAIN', gest:'tempo', power:84 } },
 
   { id:'TR38', nom:'Section Cendrée', type:'fide', set:'TR', stage:1, rar:'commune',
+    histoire:'Elle était debout du temps où il n’y avait pas de sièges, et elle '
+      + 'est restée debout quand on les a posés. Son siège est plié depuis '
+      + 'onze ans et il est comme neuf.',
     mods:{ holdBonus:1.05, breathBonus:1.04 }, cri:{ label:'FIDÈLES', gest:'hold', power:48 } },
 
   /**

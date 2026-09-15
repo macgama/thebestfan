@@ -143,8 +143,12 @@ no real people`;
 const FAMILLE = {
   voix: 'mouth open mid-shout, chest out, one hand cupped beside the mouth',
   perc: 'holding or wearing a simple drum, sticks in hand, mid-beat',
-  tifo: 'holding up a plain coloured banner or sheet of fabric, arms raised',
-  pyro: 'lit by a warm orange glow from below, wisps of smoke around the legs',
+  tifo: 'holding up a sheet of fabric, arms raised — the fabric is completely '
+    + 'blank: one plain colour or one simple painted shape, and absolutely no'
+    + ' writing, no letters and no numbers anywhere on it',
+  pyro: 'holding a single lit flare or torch high in one hand — the flame and'
+    + ' its warm orange light come only from what they hold, never from the'
+    + ' ground, and there is no fire around the feet',
   depl: 'a long knitted two-colour scarf held wide between both hands',
   fide: 'arms folded or hands in pockets, feet planted, unmovable',
 };
@@ -166,6 +170,132 @@ const SERIE = {
   HC: 'at home: tracksuit, slippers, phone or remote in hand, sofa clothes',
 };
 
+/* -------------------------------------------------------------- qui c'est
+
+   **Cinquante cartes décrites par la même phrase donnent cinquante fois le même
+   homme.** Les sept premiers rendus de LA TRIBUNE l'ont montré sans appel :
+   quatre étaient le même quadragénaire en parka verte, et deux étaient
+   indiscernables l'un de l'autre. La ligne de SERIE dit le costume — « parka,
+   sweat à capuche, bonnet, bottes » — et le générateur, à qui on ne donne rien
+   de plus, dessine chaque fois son idée moyenne de ce costume.
+
+   C'est le même défaut qu'on a déjà corrigé à la main cette semaine : deux
+   Fanzzy qui partagent un visage. Le corriger carte par carte après coup, ce
+   serait le recorriger à chaque nouvelle série. Il se corrige ici.
+
+   Ces listes ne décrivent pas des personnages : elles décrivent des **corps**,
+   ceux qu'on trouve dans une tribune. Le tirage part de l'identifiant de la
+   carte, donc il ne bouge jamais : régénérer TR44 redonne le même corps, et
+   deux cartes voisines ne tombent pas sur le même.
+
+   Et cette ligne **passe après l'histoire**, littéralement : l'histoire dit
+   « sept ans » ou « un costume deux tailles trop grand », et c'est elle qui
+   gagne. Une description tirée au sort qui écrase le texte de la carte, ce
+   serait exactement la deuxième vérité qu'on cherche à supprimer. */
+
+/** Un entier stable tiré d'une chaîne. Le sel donne des tirages indépendants
+    pour l'âge, la carrure et le reste : sans lui, tous les traits d'une carte
+    sortent du même nombre et avancent ensemble d'une carte à l'autre. */
+function graine(texte, sel) {
+  let h = 2166136261;
+  for (const c of `${sel}:${texte}`) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  return h >>> 0;
+}
+const tire = (liste, id, sel) => liste[graine(id, sel) % liste.length];
+
+const CORPS = {
+  qui: ['a man', 'a man', 'a woman', 'a woman', 'a man', 'a woman'],
+  /* Rangés du plus jeune au plus vieux : la pilosité grise se tire plus bas à
+     partir de cet indice, et une barbe blanche à vingt ans était le deuxième
+     accroc du premier essai. */
+  age: ['barely out of their teens', 'in their twenties', 'in their thirties',
+    'in their thirties', 'in their forties', 'in their fifties',
+    'in their sixties', 'in their seventies'],
+  taille: ['lean and wiry', 'broad and heavy-set', 'short and stocky',
+    'tall and thin', 'square-shouldered', 'round and comfortable',
+    'small and compact'],
+  /* Les cheveux seuls : rien ici ne dépend de qui porte la tête. */
+  cheveux: ['short cropped hair', 'a shaved head', 'thick curly hair',
+    'long hair tied back', 'thinning hair combed flat', 'a messy fringe',
+    'hair pushed up under the hat', 'a short practical cut'],
+  /* La barbe ne se tire que pour les hommes — et la version grise seulement
+     passé la cinquantaine, d'où les deux listes. */
+  barbe: ['clean-shaven', 'three days of stubble', 'a short trimmed beard',
+    'a thick moustache', 'clean-shaven'],
+  barbeAgee: ['a full grey beard', 'a white moustache', 'grey stubble',
+    'clean-shaven', 'a short grey beard'],
+  peau: ['light skin', 'light skin', 'brown skin', 'dark skin', 'olive skin',
+    'brown skin'],
+  /* La couleur du dessus, parce que c'est elle qu'on voit de loin — et c'est
+     elle qui rendait les quatre premiers rendus interchangeables. */
+  couleur: ['dark green', 'navy blue', 'charcoal grey', 'faded black',
+    'rust brown', 'deep burgundy', 'olive khaki', 'stone beige'],
+};
+
+/** Les séries où le personnage n'a pas de corps humain : rien à tirer. */
+const SANS_CORPS = new Set(['OB', 'GC', 'MT', 'BG', 'IM']);
+
+/** L'indice à partir duquel les poils grisonnent, dans CORPS.age. */
+const AGE_GRIS = 5;
+
+/**
+ * Le genre que la carte annonce déjà, ou null si elle ne dit rien.
+ *
+ * « Celui Qui Reste » tiré au féminin, c'était deux vérités de plus : le nom
+ * dit « Celui », l'histoire dit « Il est encore assis », et le dessin montrait
+ * une femme de dix-neuf ans. Le français de la carte est écrit avant le
+ * tirage ; c'est donc lui qui décide, et le tirage ne sert qu'aux cartes
+ * muettes sur ce point.
+ *
+ * On ne lit que ce qui est sans ambiguïté : le pronom qui ouvre l'histoire, et
+ * « Celui »/« Celle » dans le nom. « Le » et « La » ne disent rien — « La
+ * Mascotte du Dimanche » est un rôle, pas une personne, et son histoire dit
+ * « Elle ».
+ */
+function genreDit(f) {
+  const nom = f.nom ?? '';
+  if (/^Celui\b/i.test(nom)) return 'a man';
+  if (/^Celle\b/i.test(nom)) return 'a woman';
+  /* Les pronoms de l'histoire. En minuscule aussi : « Le Râleur du Rang B »
+     sortait femme parce que son « il » est au milieu de la phrase. Et « il y a »
+     est écarté — c'est le seul « il » qui ne désigne personne.
+
+     **Quand les deux genres apparaissent, on ne tranche pas.** « L’Écharpe Trop
+     Longue » dit « Elle balaie deux rangées et il s’excuse » : le « elle », c’est
+     l’écharpe. Aucun motif ne sait distinguer le sujet de l’objet dans une phrase
+     française, et deviner ici, c’est se tromper une fois sur deux. On rend alors
+     `ambigu` : le tirage se tait sur ce point et laisse le texte de la carte
+     décider seul. */
+  const dit = (f.histoire ?? '').replace(/\bil y a\b/gi, ' ');
+  const lui = /\bils?\b/i.test(dit);
+  const elle = /\belles?\b/i.test(dit);
+  if (lui && elle) return 'ambigu';
+  if (lui) return 'a man';
+  if (elle) return 'a woman';
+  return null;
+}
+
+function corps(f) {
+  if (SANS_CORPS.has(f.set)) return '';
+  const t = (sel) => tire(CORPS[sel], f.id, sel);
+  const annonce = genreDit(f);
+  /* Sans genre annoncé, on tire ; avec un genre ambigu, on ne dit rien et la
+     pilosité ne se tire pas non plus — une barbe trancherait ce que la phrase
+     laisse ouvert. */
+  const qui = annonce === 'ambigu' ? 'a supporter' : (annonce ?? t('qui'));
+  const iAge = graine(f.id, 'age') % CORPS.age.length;
+  const age = CORPS.age[iAge];
+  /* Une femme ne tire pas de barbe, et personne ne grisonne avant son heure. */
+  const barbe = qui === 'a man'
+    ? `, ${t(iAge >= AGE_GRIS ? 'barbeAgee' : 'barbe')}`
+    : '';
+  return `Who to draw — unless the French text above says otherwise, in which `
+    + `case follow the French text: ${qui} ${age.replace(/\btheir\b/,
+      qui === 'a woman' ? 'her' : qui === 'a man' ? 'his' : 'their')}, ${t('taille')}, `
+    + `${t('cheveux')}${barbe}, ${t('peau')}. Their outer layer is `
+    + `${t('couleur')}. Give them a face that belongs to no one else in the `
+    + 'collection.';
+}
 /* -------------------------------------------------------------- le choix */
 
 const args = process.argv.slice(2);
@@ -242,8 +372,22 @@ function invite(f) {
     '',
     `Character: "${f.nom}".`,
     f.histoire ? `Who they are — this is written in French, follow it closely: ${f.histoire}` : '',
-    serie ? `Kind and wardrobe: ${serie}.` : '',
-    famille ? `Pose and props: ${famille}.` : '',
+    serie
+      ? `Kind and wardrobe, unless the French text above describes different `
+        + `clothes, in which case follow the French text: ${serie}.`
+      : '',
+    corps(f),
+    /* La pose de famille cède elle aussi devant le texte de la carte. « Les
+       Mains Gelées » applaudit pour se réchauffer les doigts et la Percussion
+       lui mettait un tambour ; « Le Parapluie Retourné » tient un parapluie
+       retourné et la Fidélité lui croisait les bras ; « Le Drap de Bain » a une
+       serviette peinte et le Tifo lui donnait une banderole unie. Trois fois le
+       même défaut : une ligne qui décrit la famille appliquée comme si elle
+       décrivait la carte. */
+    famille
+      ? `Pose and props, unless the French text above describes a different `
+        + `gesture or object, in which case follow the French text: ${famille}.`
+      : '',
     chose
       ? `CRITICAL — there is NO human being in this image. The ${chose} IS the `
         + 'character: it has a small face, two thin arms and two short legs, and it '
