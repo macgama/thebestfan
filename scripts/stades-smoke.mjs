@@ -95,8 +95,8 @@ check('aucun âge supérieur ne compte dans la collection à faire',
 
 /* ------------------------------------------------- une collection à replier */
 
-const A = 'ffffffff-0000-0000-0000-00000000000a';   // possède V1 ×2 et V2 ×1
-const B = 'ffffffff-0000-0000-0000-00000000000b';   // n'a plus que V3
+const A = 'ffffffff-0000-0000-0000-00000000000a';   // possède TR32 ×2 et TR32B ×1
+const B = 'ffffffff-0000-0000-0000-00000000000b';   // n'a plus que TR32C
 const C = 'ffffffff-0000-0000-0000-00000000000c';   // rien d'évolué
 
 for (const [u, mail, nom] of [[A, 'a@ex.fr', 'Ana'], [B, 'b@ex.fr', 'Bo'], [C, 'c@ex.fr', 'Cy']]) {

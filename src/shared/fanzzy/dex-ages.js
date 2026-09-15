@@ -1229,4 +1229,76 @@ export const AGES = {
     ['Le Sélectionneur du Virage', 'Il a monté la ligue du groupe, quarante équipes, et il s’interdit '
       + 'les joueurs adverses. Il finit dernier chaque saison, exprès.', 'PAS D’ADVERSAIRES'],
   ],
+  TR60: [
+    ['Le Traducteur Rattrapé', 'Il a arrêté d’expliquer et il chante avec eux. Les nouveaux apprennent en trois '
+      + 'matchs au lieu de trois saisons, et personne n’a compris pourquoi.',
+      'CHANTE, TU VERRAS'],
+    ['Le Livret', 'Il a imprimé les paroles, vingt pages agrafées, distribuées à l’entrée. Le club '
+      + 'les réimprime chaque année et son nom n’est écrit nulle part dessus.',
+      'C’EST ÉCRIT DEDANS'],
+  ],
+  TR61: [
+    ['Le Prénom Repris', 'Trois rangées crient le prénom avec lui. Le joueur lève la main sans se retourner, '
+      + 'et c’est devenu le signe qu’il a entendu.',
+      'AVEC MOI : MARCO'],
+    ['Celui Qu’ils Connaissent', 'Deux joueurs lui disent bonjour avant l’échauffement. Il ne leur a jamais parlé '
+      + 'ailleurs qu’en criant, et il ne compte pas commencer.',
+      'IL M’A VU'],
+  ],
+  TR62: [
+    ['Les Deux Sièges', 'Il a trouvé que le siège d’à côté sonne plus grave. Il joue les deux, une main '
+      + 'chacun, et le rang entier suit sans savoir qu’il suit.',
+      'GRAVE ET AIGU'],
+    ['La Rangée Entière', 'Onze sièges vides, onze notes. Le club a renoncé à les remplacer et il a fini par '
+      + 'les numéroter à la craie.',
+      'ONZE SIÈGES'],
+  ],
+  TR63: [
+    ['Les Mains Rouges', 'Elle a arrêté d’avoir froid il y a deux hivers et elle continue. C’est devenu le '
+      + 'moment où le virage sait qu’il reste vingt minutes.',
+      'ENCORE DIX'],
+    ['Le Quart d’Heure', 'Le virage applaudit à sa place quand elle n’est pas là. Elle l’a appris en '
+      + 'revenant après trois mois, et elle n’a rien dit.',
+      'ILS L’ONT FAIT SANS MOI'],
+  ],
+  TR64: [
+    ['Le Parapluie Plié', 'Il l’a réparé avec du gaffer et il ne l’ouvre plus. Il le tient fermé, en l’air, '
+      + 'et tout le monde a compris ce que ça veut dire.',
+      'JE LE GARDE'],
+    ['Le Mât', 'Ce n’est plus un parapluie : c’est une hampe de deux mètres avec les couleurs au '
+      + 'bout. Les armatures sont d’origine et il le précise toujours.',
+      'IL A TENU VINGT ANS'],
+  ],
+  TR65: [
+    ['Le Carnet', 'Il note maintenant, parce que de tête il perdait le fil à la quatre-vingtième. '
+      + 'Trois saisons de passes, colonne par colonne, et aucune raison.',
+      'C’EST NOTÉ'],
+    ['La Statistique', 'Le club lui demande ses chiffres avant la presse. Il les donne, il ne les commente '
+      + 'jamais, et il refuse qu’on mette son nom dessus.',
+      'DEMANDEZ-MOI'],
+  ],
+  TR66: [
+    ['Le Drap Repeint', 'Deux couches de plus et les poissons ont disparu. Il regrette un peu, et il a '
+      + 'gardé une photo d’avant dans sa poche.',
+      'ON NE LES VOIT PLUS'],
+    ['La Bâche Cousue', 'Six draps assemblés couvrent la moitié du virage. Elle sort deux fois par saison '
+      + 'et il faut onze personnes pour la tenir.',
+      'À SIX MAINS'],
+  ],
+  TR67: [
+    ['La Torche Sèche', 'Il les garde au chaud sous sa veste depuis un derby raté. Elle part à tous les '
+      + 'coups et le virage a perdu quelque chose en route.',
+      'CETTE FOIS, SÛR'],
+    ['Le Départ du Feu', 'C’est lui qui donne le signal aux douze autres torches. Il attend toujours une '
+      + 'seconde de trop, exprès, parce que le silence d’avant vaut le feu.',
+      'MAINTENANT, TOUS'],
+  ],
+  TR68: [
+    ['L’Écharpe Nouée Court', 'Il a fait trois tours de cou et elle ne balaie plus personne. Deux rangées ont dit '
+      + 'que c’était dommage.',
+      'JE LA RACCOURCIS'],
+    ['Les Trois Mètres Quarante', 'Sa tante est morte en février et il l’a redéployée entière. Le rang se penche pour '
+      + 'la laisser passer, tous les samedis, sans qu’il ait rien demandé.',
+      'ELLE ÉTAIT À ELLE'],
+  ],
 };

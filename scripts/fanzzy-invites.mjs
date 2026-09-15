@@ -38,11 +38,43 @@
  * Après génération : `node scripts/fanzzy-images.mjs art/neuves` détoure et
  * range, puis `node scripts/maj-illustres.mjs` inscrit les identifiants.
  *
+ * ## Les âges se demandent autrement
+ *
+ *
+ *
+ * Un âge supérieur n’est pas un autre personnage : c’est **le même, plus**
+ *
+ * **vieux**. Le demander en texte depuis zéro donne un inconnu qui porte le
+ *
+ * même manteau, et le joueur qui fait évoluer sa carte voit son personnage
+ *
+ * remplacé au lieu de grandir — le contraire exact de ce que l’évolution
+ *
+ * promet.
+ *
+ *
+ *
+ * On les demande donc **en image-à-image**, avec le dessin du premier âge en
+ *
+ * référence : `input: { assetId }` après `upload_image`, et une invite qui ne
+ *
+ * nomme que ce qui change. Une invite qui redécrit tout le personnage fait
+ *
+ * régénérer toute l’image et perd le visage — c’est la règle de l’édition,
+ *
+ * et elle vaut ici parce que vieillir quelqu’un *est* une édition.
+ *
+ *
+ *
+ * `--ages` écrit ces invites-là. Elles sont courtes exprès.
+ *
+ *
  * Usage :
  *   node scripts/fanzzy-invites.mjs                 toutes les cartes sans dessin
  *   node scripts/fanzzy-invites.mjs VP1 GC3         celles-là, et rien d'autre
  *   node scripts/fanzzy-invites.mjs --set VP        une série entière
  *   node scripts/fanzzy-invites.mjs --json          de quoi alimenter un script
+ *   node scripts/fanzzy-invites.mjs --ages --set TR  les âges 2 et 3, en i2i
  */
 import { readFile } from 'node:fs/promises';
 import { createContext, Script } from 'node:vm';
@@ -154,13 +186,31 @@ async function dejaDessines() {
 
 const illustres = await dejaDessines();
 
-/* **Les premiers âges seulement.** Un âge supérieur sans dessin tombe sur celui
-   de son premier âge : quarante-quatre dessins en effacent cent trente-deux, et
-   dessiner les âges est un autre chantier — celui de les faire vieillir. */
-const choisies = DEX.filter((f) => f.stage === 1 && f.publie !== false)
+/* **Les premiers âges par défaut.** Un âge supérieur sans dessin tombe sur
+   celui de son premier âge : un dessin de racine en efface trois, et c'est de
+   loin le meilleur rapport. `--ages` demande l'autre chantier, celui de les
+   faire vieillir. */
+const ages = process.argv.includes('--ages');
+
+const racineDe = (id) => {
+  let r = DEX.find((f) => f.id === id);
+  for (let g = 0; g < 8 && r; g++) {
+    const parent = DEX.find((f) => f.evo === r.id);
+    if (!parent) break;
+    r = parent;
+  }
+  return r;
+};
+
+const choisies = DEX
+  .filter((f) => f.publie !== false && (ages ? f.stage > 1 : f.stage === 1))
   .filter((f) => (ids.length ? ids.includes(f.id)
     : set ? f.set === set
-      : !illustres.has(f.id)));
+      : !illustres.has(f.id)))
+  /* Un âge dont le premier âge n'est pas encore dessiné n'a pas de référence :
+     on ne peut pas vieillir quelqu'un qu'on n'a pas. Il attend son tour, et
+     c'est une raison de plus de faire les racines d'abord. */
+  .filter((f) => !ages || illustres.has(racineDe(f.id)?.id));
 
 /* ------------------------------------------------------------- l'écriture */
 
@@ -212,15 +262,62 @@ function invite(f) {
   ].filter(Boolean).join('\n');
 }
 
+/**
+ * L'invite d'un **âge supérieur**, pour l'image-à-image.
+ *
+ * Elle ne décrit ni le rendu, ni le cadrage, ni le fond : tout cela est déjà
+ * dans l'image de référence, et le redire ferait régénérer la frame entière.
+ * Elle ne nomme que **ce qui a changé**, et ce qui a changé est écrit dans
+ * l'histoire de l'âge — c'est le seul texte du projet qui dise ce que les
+ * années ont fait à ce personnage-là.
+ *
+ * L'écart d'âge est donné en clair. « Plus vieux » est trop vague pour un
+ * générateur : entre le premier et le deuxième âge il y a une jeunesse, entre
+ * le deuxième et le troisième une vie.
+ */
+function inviteAge(f) {
+  const r = racineDe(f.id);
+  /* Pas de nombre d'années écrit ici : l'histoire de l'âge en donne souvent
+     un, et deux chiffres qui se contredisent dans la même invite donnent un
+     personnage entre les deux. On dit l'ampleur, le texte dit la mesure. */
+  const bond = f.stage === 2
+    ? 'clearly older — grown up, not yet middle-aged'
+    : 'much older — this is the last age of a long life';
+  return [
+    `Keep the exact same character from the reference image — same face `
+      + 'structure, same build, same style of clothing, same background, same '
+      + 'framing, same lighting, same render style. Change only the age.',
+    '',
+    `Make them ${bond}. ${f.stage === 2
+      ? 'A fuller frame, a more settled face, hair and clothing that '
+        + 'have moved on a little.'
+      : 'Grey or white hair, lines on the face, a heavier or more '
+        + 'stooped frame, worn clothing that has been kept a long time.'}`,
+    '',
+    `They are now called "${f.nom}".`,
+    f.histoire ? `What has become of them — written in French, follow it `
+      + `closely: ${f.histoire}` : '',
+    r?.nom ? `They were "${r.nom}" in the reference image.` : '',
+    '',
+    'Do not change anything else. One single figure, same empty flat background.',
+  ].filter(Boolean).join('\n');
+}
+
 const lot = choisies.map((f) => ({
-  id: f.id, nom: f.nom, set: f.set, type: f.type, rar: f.rar, invite: invite(f),
+  id: f.id, nom: f.nom, set: f.set, type: f.type, rar: f.rar,
+  stade: f.stage,
+  /* La carte dont il faut envoyer le dessin en référence. Vide pour un premier
+     âge, qui se demande en texte. */
+  reference: ages ? (racineDe(f.id)?.id ?? null) : null,
+  invite: ages ? inviteAge(f) : invite(f),
 }));
 
 if (json) {
   console.log(JSON.stringify(lot, null, 1));
 } else {
   for (const x of lot) {
-    console.log(`\n${'='.repeat(70)}\n${x.id} — ${x.nom}  [${x.set} · ${TYPES[x.type]?.nom ?? x.type} · ${x.rar}]\n`);
+    console.log(`\n${'='.repeat(70)}\n${x.id} — ${x.nom}  [${x.set} · ${TYPES[x.type]?.nom ?? x.type} · ${x.rar}]`
+      + (x.reference ? `\n  référence (image-à-image) : ${x.reference}.png\n` : '\n'));
     console.log(x.invite);
   }
   console.log(`\n${lot.length} invite(s).`);

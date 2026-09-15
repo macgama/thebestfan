@@ -685,7 +685,7 @@ check('un refus du serveur est affiché', affiche);
 check('et il nomme la cause, pas « impossible »',
   /Tu ne possèdes pas ce Fanzzy/.test(texte(dom)));
 check('le nom du Fanzzy fautif est donné',
-  /Abonné|F1/.test(texte(dom)));
+  /Abonné|TR33/.test(texte(dom)));
 
 /* ---------------------------------------------------------------- fin */
 

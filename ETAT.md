@@ -3925,6 +3925,150 @@ Toutes se voient en **comparant deux choses entre elles** — ce qu'une page qui
 met tout côte à côte fait pour rien, et ce qu'aucun humain ne fait sur cent
 soixante-dix-huit dessins.
 
+## 4 tricies octies. Un identifiant qui dit sa série
+
+### Cent dix-neuf cartes portaient un préfixe étranger
+
+`V1` « Choriste », `G1`, `F1`, `X23` : tous dans LA TRIBUNE, et rien dans leur
+identifiant ne le disait. Pour qui range des dessins, écrit `rendus.js` ou
+cherche une carte, c'étaient cent dix-neuf occasions de se tromper.
+
+Le plan se calcule (`npm run prefixes`), il ne s'écrit pas. Il refuse de tourner
+si une destination existe déjà ou si une carte hors série n'est rattachée à
+aucune lignée — un plan qui écrase une carte vivante est pire que pas de plan.
+
+**Les âges suivent en suffixe, pas en numéro.** `V1` devient `TR32`, ses âges
+`TR32B` et `TR32C` — pas `TR33` et `TR34`, qui laisseraient croire à trois
+personnages. Sept lignées écrivaient encore leurs âges en entrées numérotées ;
+seuls leurs **identifiants** changent. Les convertir à la table `AGES` aurait
+recalculé leurs modificateurs par formule et fait passer `G1B` de 1,45 à 1,7 de
+geste parfait sans que personne ne l'ait demandé. Un renommage qui rééquilibre
+le jeu au passage est un renommage dont on ne relit plus le diff.
+
+### Ce qu'un identifiant touche vraiment
+
+Six tables, plus le **JSON** de `user_decks.contenu`. Rater une seule place,
+c'est effacer une carte de la collection de quelqu'un.
+
+`sql/prefixes.sql` les fait toutes dans une transaction, par **table de
+correspondance** : huit instructions au lieu des neuf cent cinquante-deux du
+premier jet, qu'aucun humain n'aurait relues. C'est le motif de `stades.sql`.
+
+Elle se rejoue sans dommage, et c'est nécessaire : le catalogue s'amorce en
+`INSERT IGNORE` au démarrage, donc un serveur qui démarre avec le code neuf
+**avant** la migration a deux lignes pour la même carte. Le `DELETE` d'ouverture
+retire la ligne neuve du catalogue au profit de l'ancienne, qui porte les
+possessions. Et si un compte détient les deux identifiants — cas qui n'existe
+que sur une base déjà passée au code neuf — les exemplaires **s'additionnent**
+et le stade le plus haut l'emporte. Perdre un doublon serait discret et
+définitif.
+
+### Le second trou : `INSERT IGNORE` ne sait pas corriger
+
+Le catalogue vit en base parce qu'il s'édite depuis l'administration, et
+s'amorce en `INSERT IGNORE` pour ne pas écraser ces corrections. La contrepartie
+n'était écrite nulle part : **changer le nom, l'histoire ou le cri d'une carte
+existante dans le code ne change rien du tout.**
+
+Les dix-neuf réécritures du tour précédent — Le Faux Départ, Celui Qui Reste,
+Les Neuf Minutes — n'auraient jamais atteint le jeu. `npm run identites` compare
+le code à une base réelle et produit `sql/identites.sql` : un `UPDATE` par carte
+divergente, et rien d'autre. Pas de réécriture en masse — elle effacerait les
+corrections faites à l'écran, qui sont la raison d'être de cette table.
+
+`publie` est délibérément hors du rapprochement : c'est le seul champ que
+l'administration décide, et le resynchroniser depuis le code annulerait le
+retrait d'une carte.
+
+Les deux migrations sont dans l'ordre d'application des **deux** scripts qui
+doivent toujours s'accorder — c'est cette paire qui avait divergé le 8 septembre.
+
+### Le renommage a démasqué un contrôle aveugle
+
+`catalogue:test` vérifiait qu'un âge garde le geste de son personnage. Son
+helper `racine(id)` prenait `^([A-Z]+\d+)` — qui avale l'identifiant entier
+quand l'âge s'écrit `T2`. Il comparait donc T2 avec lui-même, et **passait au
+vert sur exactement les lignées qu'il avait été écrit pour surveiller**.
+
+Devenus `MS31B` et `MS32B`, ils ont rougi le jour même : le Colleur d'affiches
+jouait `tifo` et ses deux âges `tri` ; l'Auto-stoppeur jouait `echarpe` et ses
+âges `memoire`. Un joueur qui faisait grandir son personnage perdait le geste
+qu'il avait appris.
+
+La leçon n'est pas sur les gestes : **un raccourci d'identifiant dans un contrôle
+peut le rendre aveugle à son propre sujet**, sans rien casser et sans jamais
+rougir.
+
+### Trois suites nommaient une carte en dur
+
+`accueil:ui`, `fanzzy:ui` et `matchs:ui` écrivaient `'G1'` comme « le Fanzzy
+illustré ». Ce dessin est parti — il montrait quelqu'un d'autre — et quatorze
+contrôles sont devenus rouges en annonçant un défaut du jeu là où il n'y avait
+qu'une hypothèse périmée dans le test.
+
+Elles demandent maintenant **au disque** et au manifeste : un personnage
+réellement dessiné, d'une lignée que le compte ne possède pas déjà, et pour
+`matchs:ui` un qui sache faire « but », « encaisse » et « victoire ».
+
+Un défaut plus subtil s'y cachait. `matchs:ui` lisait `FICHE.scene.etat()` après
+l'apparition du bandeau, et ne passait que parce que le Fanzzy d'essai n'avait
+**aucune image d'état** : sans rien à jouer, la scène restait sur l'état logique
+indéfiniment. Avec un personnage dessiné, elle joue son but et revient au repos
+bien avant la lecture. On **attend** l'état au lieu de le lire — « il est passé
+par là », qui est la vraie promesse : un but fait tressaillir le personnage, il
+ne le fige pas.
+
+---
+
+## 4 tricies novies. La gloire des légendaires, et neuf communes
+
+### Une légendaire se voit
+
+Elle avait un halo doré, un anneau fin et huit pastilles. C'était juste, et ça
+ne se voyait pas : à la taille d'une vignette de classeur, un anneau à trente
+pour cent d'opacité sur du noir est du noir. Une légendaire tombe une fois sur
+vingt boosters, et le décor ne le disait pas.
+
+Ce qui le dit, c'est **la gloire** — vingt-quatre rayons en éventail derrière le
+personnage, d'opacité alternée. L'alternance suffit à donner l'impression que la
+lumière tourne **sans une seule animation**, ce qui compte : ce décor est dessiné
+vingt fois sur une grille, et vingt rotations feraient ramer la page pour un
+effet que personne ne regarde.
+
+S'y ajoutent un anneau double et vingt éclats semés par la graine du personnage —
+deux légendaires n'ont pas la même poussière, et c'est ce qui empêche le décor de
+se lire comme un gabarit.
+
+Le ciel est **mêlé** d'or, pas remplacé : une légendaire des REVENANTS garde son
+violet de nuit, une des ÉPOQUES son ocre. Un ciel doré identique pour les douze
+séries effacerait la série au moment précis où la carte est la plus regardée.
+
+Premier jet trop fort : les rayons allaient jusqu'aux coins et noyaient le lieu.
+Raccourcis de 96 à 72, opacité descendue d'un tiers, et le stade réapparaît sous
+la lumière.
+
+### Cinquante contre dix
+
+LA TRIBUNE comptait quarante et une communes jouables — quarante-neuf au
+catalogue, dont huit dépubliées parce qu'elles refaisaient un personnage du lot
+de 2026 — en face de dix légendaires.
+
+Neuf de plus la portent à cinquante : **TR60 à TR68**, et non les huit trous
+laissés par les dépubliées. Un numéro attribué le reste ; le reprendre ferait
+deux cartes différentes sous un même identifiant à un an d'intervalle.
+
+Leurs gestes sont choisis pour ne pas déséquilibrer les familles — le geste
+éponyme doit rester majoritaire chez chacune et aucune variante ne doit tomber
+sous un huitième, ce que `catalogue:test` vérifie. Deux Voix en tempo, une
+Percussion en martelage contre une en salves, et ainsi de suite.
+
+Il a attrapé une collision au passage : `ATTENTION DERRIÈRE` a remplacé
+`PARDON, PARDON`, déjà crié par L'Élan des Travées.
+
+Vingt-sept cartes avec leurs âges, et la dette d'illustrations passe de 217 à
+244. Pour une fois ce n'est pas une correction : **c'est du contenu ajouté**, et
+c'est la seule autre raison admissible de relever ce cliquet.
+
 ---
 
 ## 5. Ce qui reste à faire
@@ -3937,18 +4081,20 @@ Par ordre d'utilité.
    donc **quarante-quatre dessins en effacent cent trente-deux** là où
    trente et un dessins de légendaires n'en effacent que trente et un.
 
-   Cent quatre-vingt-trois cartes sont en rendu procédural. `images:test` tient
-   le compte à chaque passage, et son seuil est un cliquet : il ne monte que si
-   on le décide.
+   Deux cent quarante-quatre cartes sont en rendu procédural. `images:test`
+   tient le compte à chaque passage, et son seuil est un cliquet : il ne monte
+   que si on le décide, et chaque relèvement porte sa raison en commentaire.
 
    **Le détail, dessin par dessin, est dans `catalogue.html`** — `npm run
    catalogue`, publié en artefact, avec un filtre par série. C'est là qu'on voit
-   lesquels manquent, et non plus seulement combien : **cent sept personnages
-   sur deux cent quarante-sept** attendent leur premier âge.
+   lesquels manquent, et non plus seulement combien : **cent seize personnages
+   sur deux cent cinquante-six** attendent leur premier âge.
 
-   Le compte est monté de quatre-vingt-neuf à cent sept sans qu'un dessin ait
-   été perdu : dix-huit cartes affichaient le visage d'une autre. Voir
-   4 tricies septies.
+   Le compte a monté deux fois sans qu'un dessin soit perdu. D'abord de
+   quatre-vingt-neuf à cent sept : dix-huit cartes affichaient le visage d'une
+   autre, et une silhouette dit « pas encore dessiné » là où un visage emprunté
+   disait une chose fausse (4 tricies septies). Puis à cent seize, avec les neuf
+   communes neuves de LA TRIBUNE (4 tricies novies).
 
    Reste ensuite, à plus long terme, à dessiner les âges **pour de bon** : voir
    un personnage vieillir est ce que le jeu promet, et le repli montre le bon
