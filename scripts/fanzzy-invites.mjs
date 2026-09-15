@@ -267,11 +267,16 @@ function genreDit(f) {
      `ambigu` : le tirage se tait sur ce point et laisse le texte de la carte
      décider seul. */
   const dit = (f.histoire ?? '').replace(/\bil y a\b/gi, ' ');
-  const lui = /\bils?\b/i.test(dit);
-  const elle = /\belles?\b/i.test(dit);
-  if (lui && elle) return 'ambigu';
-  if (lui) return 'a man';
-  if (elle) return 'a woman';
+  const lui = (dit.match(/\bils?\b/gi) ?? []).length;
+  const elle = (dit.match(/\belles?\b/gi) ?? []).length;
+  /* Les deux pronoms se côtoient souvent parce que l'un désigne un objet :
+     « Elle tient son carton … sans savoir de quelle couleur il est » parle
+     d'une femme et d'un carton, et « Elle balaie deux rangées et il s'excuse »
+     parle d'une écharpe et d'un homme. Le sujet du texte est celui qui revient
+     le plus ; à égalité, la phrase ne tranche pas, et nous non plus. */
+  if (lui > elle) return 'a man';
+  if (elle > lui) return 'a woman';
+  if (lui) return 'ambigu';
   return null;
 }
 

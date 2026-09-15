@@ -226,7 +226,14 @@ console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
 
      C'est la seule raison admissible de relever ce cliquet en plus de celles
      déjà écrites : du contenu ajouté, et non du contenu perdu. */
-  const DETTE = 244;
+  /* 244 → 179. Les vingt-sept premiers âges de LA TRIBUNE sont dessinés, et
+     chacun en emporte deux derrière lui : la série est complète, cinquante
+     communes et dix légendaires, toutes avec un visage.
+
+     Le cliquet **descend** ici, et c'est le seul sens dans lequel on peut le
+     bouger sans s'expliquer. Le laisser à 244 laisserait passer sans bruit la
+     perte de soixante-cinq dessins. */
+  const DETTE = 179;
   check(`et ${DEX.length - avec} cartes restent sans dessin d’aucune sorte`,
     DEX.length - avec <= DETTE
     || (console.log('        ', DEX.filter((f) => !adresse(f.id))
