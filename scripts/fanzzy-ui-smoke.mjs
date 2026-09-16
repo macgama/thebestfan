@@ -296,13 +296,59 @@ const grille = await page.evaluate(() => ({
   cases: document.querySelectorAll('#grid .slot').length,
   possedees: document.querySelectorAll('#grid .slot:not(.locked)').length,
   progression: document.getElementById('progTxt')?.textContent ?? '',
+  /* L'ordre affiche, pour verifier qu'une lignee se lit d'un bloc : TR1, TR1B,
+     TR1C, puis TR2. Trois par rangee, donc une lignee par rangee. */
+  ordre: [...document.querySelectorAll('#grid .slot [data-id]')]
+    .map((c) => c.getAttribute('data-id')),
 }));
-/* Une case par personnage, pas une par âge. Le classeur montrait vingt et une
-   cases pour les sept lignées alors que la jauge n'en comptait que sept : le
-   joueur voyait « 5/159 » sous cent soixante-six vignettes. */
+
+/* **Une case par age**, et non plus une par personnage.
+
+   Le classeur ne montrait qu'une case par lignee — celle du personnage, au
+   stade atteint. Les deux autres ages existaient, avec leur nom, leur dessin,
+   leur cri et leur prix, et n'apparaissaient nulle part : on ne pouvait ni les
+   regarder avant de payer, ni les revoir apres. Un classeur est une promesse,
+   et il en cachait les deux tiers. */
 const PERSOS = PUBLIE.filter((f) => !PUBLIE.some((x) => x.evo === f.id));
-check('la grille affiche un personnage par case', grille.cases === PERSOS.length);
-check('les cartes possédées sont distinguées', grille.possedees === 5);
+check(`la grille affiche un age par case (${grille.cases})`,
+  grille.cases === PUBLIE.length
+  || (console.log('        vu', grille.cases, 'pour', PUBLIE.length, 'cartes publiees'), false));
+
+/* Les ages d'une meme lignee se suivent, et les lignees sont dans l'ordre
+   numerique : TR1, TR1B, TR1C, TR2… C'est ce qui rend la progression lisible
+   d'un coup d'oeil sur une grille de trois colonnes. */
+{
+  const racine = (id) => /^([A-Z]+\d+)/.exec(id)?.[1] ?? id;
+  const groupes = [];
+  for (const id of grille.ordre) {
+    const r = racine(id);
+    if (groupes[groupes.length - 1]?.r !== r) groupes.push({ r, n: 0 });
+    groupes[groupes.length - 1].n++;
+  }
+  check('les ages d une lignee se suivent',
+    new Set(groupes.map((g) => g.r)).size === groupes.length
+    || (console.log('        une lignee est coupee en deux'), false));
+  const num = (r) => Number(/\d+/.exec(r)?.[0] ?? 0);
+  const serie = (r) => /^[A-Z]+/.exec(r)[0];
+  /* Serie par serie : la grille range TR1, TR2, TR3 dans une serie, puis passe
+     a la suivante. Comparer la liste a plat melangerait deux series et ferait
+     echouer un ordre parfaitement juste — c'est ce qu'a fait le premier jet. */
+  const parSerie = new Map();
+  for (const g of groupes) {
+    if (!parSerie.has(serie(g.r))) parSerie.set(serie(g.r), []);
+    parSerie.get(serie(g.r)).push(num(g.r));
+  }
+  const fautive = [...parSerie].find(([, ns]) => ns.some((n, i) => i > 0 && n < ns[i - 1]));
+  check('et les lignees sont dans l ordre numerique', !fautive
+    || (console.log('        serie', fautive[0], ':', fautive[1].slice(0, 10).join(' ')), false));
+}
+
+/* Le compte possede suit la meme regle que l'affichage : on possede « le
+   Choriste au stade 2 », donc ses deux premiers ages, pas le troisieme. Le
+   banc possede cinq personnages, dont un monte au second age. */
+check(`les cartes possedees sont distinguees (${grille.possedees})`,
+  grille.possedees === 6
+  || (console.log('        cases non verrouillees :', grille.possedees), false));
 /* Le dénominateur compte des **personnages**, pas des lignes de catalogue.
    Les quatorze âges supérieurs des sept lignées ne s'obtiennent pas en booster,
    ils s'achètent en écharpes : les mettre au dénominateur promettait au joueur
@@ -892,10 +938,21 @@ check('les Fanzzy non possédés portent leur nom',
     apresCroix.adresse === '/fanzzy'
     || (console.log('        elle laisse :', apresCroix.adresse), false));
 
-  /* Un Fanzzy qu'on ne possède pas ouvre la **même** fiche. Avant, il
-     changeait de page : deux gestes différents pour deux cartes de la même
-     grille, sans que rien ne l'explique. */
-  await p.evaluate(() => document.querySelector('#grid .slot.locked').click());
+  /* Un Fanzzy qu'on ne possede pas ouvre la **meme** fiche. Avant, il changeait
+     de page : deux gestes differents pour deux cartes de la meme grille, sans
+     que rien ne l'explique.
+
+     On vise un personnage **absent de la collection**, et non le premier
+     verrou venu : depuis que la grille montre les trois ages, un verrou est
+     le plus souvent un age non atteint d'un personnage qu'on possede — sa
+     fiche dit alors tout autre chose, et a juste titre. */
+  const ouvert = await p.evaluate((miens) => {
+    const c = [...document.querySelectorAll('#grid .slot.locked[data-open]')]
+      .find((x) => !miens.includes(x.dataset.open));
+    c?.click();
+    return Boolean(c);
+  }, COLLECTION);
+  check('la grille montre un personnage qu on ne possede pas', ouvert);
   const absent = await jusqua(async () => await p.evaluate(() =>
     Boolean(document.querySelector('#detail.on .fiche'))));
   check('une carte qu’on n’a pas ouvre la même fiche', absent);

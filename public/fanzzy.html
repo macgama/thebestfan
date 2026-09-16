@@ -373,15 +373,53 @@ function renderDex() {
    * n'aurait rien à ouvrir, un classeur vide serait un contresens.
    */
   const ouvertes = new Set(SETS.map((s) => s.id));
-  const visible = (f) => !ouvertes.size || ouvertes.has(f.set) || Boolean(S.col[f.id]);
 
-  const list = PERSOS.filter(visible).filter((f) => S.filter === 'all' ? true
-    : S.filter === 'miss' ? !S.col[f.id] : f.type === S.filter);
-  // La progression se compte sur les séries ouvertes, pas sur tout le
-  // catalogue : afficher « 31/166 » à quelqu'un qui possède déjà tout ce qu'il
-  // peut posséder est le pire message qu'on puisse envoyer à un
-  // collectionneur. Les cartes d'une série refermée qu'il possède déjà comptent
-  // au numérateur — elles sont à lui — d'où le plafond sur le dénominateur.
+  /* La collection est rangee par **personnage** : `S.col` et `S.stades` sont
+     indexes sur la racine d'une lignee, pas sur chacun de ses ages. C'est la
+     regle posee par `stades.sql` — on possede « le Choriste au stade 2 », pas
+     « le Meneur de chant ». */
+  const racineDe = (f) => f.racine ?? f.id;
+  const stadeDe = (f) => f.stade ?? 1;
+  const possede = (f) => Boolean(S.col[racineDe(f)])
+    && (S.stades?.[racineDe(f)] ?? 1) >= stadeDe(f);
+
+  const visible = (f) => !ouvertes.size || ouvertes.has(f.set) || Boolean(S.col[racineDe(f)]);
+
+  /* **Les trois ages, et non le seul personnage.**
+
+     Le classeur ne montrait qu'une case par lignee — celle du personnage, au
+     stade atteint. Les deux autres ages existaient, avaient leur nom, leur
+     dessin, leur cri et leur prix, et n'apparaissaient nulle part : on ne
+     pouvait ni les regarder avant de payer, ni les revoir apres. Un classeur
+     est une promesse, et il en cachait les deux tiers.
+
+     Chacun a maintenant sa case, a la suite, dans l'ordre : TR1, TR1B, TR1C,
+     puis TR2. Trois par rangee, donc une lignee par rangee — ce n'est pas un
+     hasard de mise en page, c'est ce qui rend la progression lisible d'un coup
+     d'oeil. */
+  const rang = (f) => {
+    const m = /^([A-Z]+)(\d+)/.exec(racineDe(f));
+    return [m?.[1] ?? '', Number(m?.[2] ?? 0), stadeDe(f)];
+  };
+  const list = DEX.filter(visible)
+    .filter((f) => (S.filter === 'all' ? true
+      : S.filter === 'miss' ? !possede(f) : f.type === S.filter))
+    .sort((a, b) => {
+      const [sa, na, ea] = rang(a);
+      const [sb, nb, eb] = rang(b);
+      return sa.localeCompare(sb) || (na - nb) || (ea - eb);
+    });
+
+  /* La progression se compte toujours sur les **personnages**, et pas sur les
+     ages maintenant affiches. Un age superieur ne se trouve pas dans un
+     booster, il s'achete en echarpes : le compter parmi « ce qu'il reste a
+     trouver » donnerait un objectif qu'aucune ouverture ne fait avancer.
+
+     Elle se compte aussi sur les series ouvertes : afficher « 31/166 » a
+     quelqu'un qui possede deja tout ce qu'il peut posseder est le pire message
+     qu'on puisse envoyer a un collectionneur. Les cartes d'une serie refermee
+     qu'il possede comptent au numerateur — elles sont a lui — d'ou le plafond
+     sur le denominateur. */
   const owned = PERSOS.filter((f) => S.col[f.id]).length;
   const total = Math.max(S.aCollectionner, owned);
   $('progBar').style.width = `${(owned / total) * 100}%`;
@@ -396,31 +434,37 @@ function renderDex() {
     $('grid').insertAdjacentHTML('afterbegin', '');
   }
   $('grid').innerHTML = list.length ? list.map((f, i) => {
-    const n = S.col[f.id] ?? 0;
-    // Le retard d'entrée est plafonné : sans ce plafond, la cent-cinquantième
-    // carte se poserait quatre secondes après la première.
+    // Le retard d'entree est plafonne : sans ce plafond, la cent-cinquantieme
+    // carte se poserait quatre secondes apres la premiere.
     const retard = ` style="animation-delay:${Math.min(i, 11) * 28}ms"`;
-    if (!n) {
-      /* Le personnage qu'on n'a pas est là quand même, en ombre. Voir la
-         grille : une case vide ne donne envie de rien, une silhouette si. Le
-         nom reste dans le texte de la case — c'est ce que le test lit. */
-      return `<div class="slot locked" data-open="${f.id}"${retard}>${
-        cardHTML(f, { mini: true, verrou: true })}</div>`;
+    const racine = racineDe(f);
+    const etage = stadeDe(f);
+    /* La case ouvre la fiche du **personnage** : c'est elle qui porte les trois
+       ages, et on y choisit celui qu'on regarde. Ouvrir par l'age enverrait sur
+       la meme fiche par un chemin de plus. */
+    if (!possede(f)) {
+      /* Ce qu'on n'a pas est la quand meme, en ombre. Une case vide ne donne
+         envie de rien, une silhouette si — et pour un age superieur, c'est elle
+         qui donne envie de payer l'evolution. */
+      return `<div class="slot locked" data-open="${racine}"${retard}>${
+        cardHTML(f, { mini: true, verrou: true })}
+        ${etage > 1 ? `<div class="stade">${'★'.repeat(etage - 1)}</div>` : ''}</div>`;
     }
-    // La case montre le personnage **tel qu'il est aujourd'hui** : celui qui a
-    // payé quatre-vingt-dix écharpes doit voir son Capo, pas le gamin de
-    // départ. Le stade se lit alors d'un coup d'œil sur la grille — le seul
-    // endroit où le joueur compare ses cartes entre elles.
-    const age = ageDe(f);
-    const stade = S.stades?.[f.id] ?? 1;
-    return `<div class="slot" data-open="${f.id}"${retard}>${cardHTML(age, { mini:true })}
+    /* Les doublons se comptent par personnage : le badge n'a de sens que sur le
+       premier age, sinon il repeterait trois fois le meme nombre. */
+    const n = etage === 1 ? (S.col[racine] ?? 0) : 0;
+    return `<div class="slot" data-open="${racine}"${retard}>${cardHTML(f, { mini:true })}
       ${n > 1 ? `<div class="dupe">×${n}</div>` : ''}
-      ${stade > 1 ? `<div class="stade">${'★'.repeat(stade - 1)}</div>` : ''}
+      ${etage > 1 ? `<div class="stade">${'★'.repeat(etage - 1)}</div>` : ''}
       ${/* « AVATAR » et non « DUEL ». `S.active` est `user_wallet.active_fanzzy` :
             le personnage que voient l'accueil et les amis. Il n'a jamais eu le
             moindre rapport avec le deck de duel, et le dire faisait chercher
-            longtemps pourquoi ce Fanzzy-là n'entrait pas sur la corde. */
-        S.active === f.id ? '<div class="active-tag">AVATAR</div>' : ''}</div>`;
+            longtemps pourquoi ce Fanzzy-la n'entrait pas sur la corde.
+
+            Sur l'age reellement joue, et non sur les trois : l'avatar est un
+            age precis. */
+        S.active === racine && (S.stades?.[racine] ?? 1) === etage
+          ? '<div class="active-tag">AVATAR</div>' : ''}</div>`;
   }).join('') : `<div class="empty">${S.filter === 'miss' ? 'Collection complète.' : 'Rien ici pour l\u2019instant.'}</div>`;
 }
 $('filters').onclick = (e) => { const b = e.target.closest('[data-f]'); if (b) { S.filter = b.dataset.f; renderDex(); } };
