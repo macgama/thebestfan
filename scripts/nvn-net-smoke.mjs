@@ -84,6 +84,7 @@ function co(id) {
   socket.on('nvn:events', (e)=>p.events.push(...e));
   socket.on('nvn:error', (e)=>p.errors.push(e.code));
   socket.on('nvn:file', (f)=>{ p.file=f; });
+  socket.on('nvn:fin', (f)=>{ p.fin=f; });
   // `nvn:file` est la mienne, `nvn:attentes` sont toutes celles du serveur.
   socket.on('nvn:attentes', (d)=>{ p.attentes = d?.attentes ?? []; });
   return p;
@@ -645,6 +646,171 @@ check('sans deck, la file est refusée', await until(()=>D.errors.includes('ferv
     check('sans aucun bot', bots.length === 0);
   }
   for (const p of tous) p.socket.disconnect();
+}
+
+
+/* ------------------------------------------- la prime des grands formats
+
+ * Un 2v2 demandait de réunir quatre personnes au lieu de deux et payait
+ * exactement pareil : le format n'entrait nulle part dans le calcul. Un 3v3
+ * était donc un mauvais marché — plus dur à remplir, pas mieux payé — et
+ * personne n'avait de raison d'attendre.
+ *
+ * Elle porte sur le format **joué** et non demandé : un 3v3 parti à deux contre
+ * deux au repli est un 2v2, et il paie comme un 2v2. Payer le format demandé
+ * reviendrait à payer une attente qui n'a pas eu lieu — et à récompenser le
+ * fait de viser grand plutôt que de jouer.
+ *
+ * Elle ne touche pas l'expérience : le niveau mesure le temps passé à jouer, et
+ * un 3v3 n'en demande pas plus qu'un 1v1.
+ */
+{
+  const { primeDeFormat } = await import('../src/server/deck/index.js');
+
+  check('un 1v1 ne touche aucune prime', primeDeFormat('1v1') === 1);
+  check('un 2v2 en touche une', primeDeFormat('2v2') > 1);
+  check('et elle croît avec le format',
+    primeDeFormat('3v3') > primeDeFormat('2v2')
+    && primeDeFormat('5v5') > primeDeFormat('3v3'));
+  /* **Modeste**, et c'est délibéré : un 3v3 n'est pas trois fois plus d'effort
+     pour un joueur, c'est le même chant avec plus de monde autour. Une prime
+     qui doublerait ferait du format le seul choix qui compte. */
+  check('sans jamais doubler le barème', primeDeFormat('5v5') < 2
+    || (console.log('        5v5 :', primeDeFormat('5v5')), false));
+
+  /* Le versement réel, et pas seulement la formule. Deux supporters jouent un
+     2v2 contre des bots : leur bourse doit porter la prime. */
+  const M = co(U[0]), N2 = co(U[1]);
+  await until(() => M.socket.connected && N2.socket.connected);
+  M.state = null; N2.state = null;
+  await pool.query('UPDATE user_wallet SET scarves = 0 WHERE user_id IN (?, ?)', [U[0], U[1]]);
+
+  M.socket.emit('nvn:queue', { format: '2v2', fixtureId: 901, camp: 0, contreBot: true });
+  const ouvert = await until(() => M.state, 6000);
+  check('un 2v2 d’entraînement s’ouvre', ouvert);
+
+  if (ouvert) {
+    /* On termine le duel tout de suite : ce qu'on mesure est le versement, pas
+       le déroulé — il est éprouvé plus haut. */
+    const salleM = [...N.salles.values()].find((s) => s.duel.id === M.state.id);
+    check('le duel retient le format joué', salleM?.duel.format === '2v2'
+      || (console.log('        format :', salleM?.duel.format), false));
+
+    /* **Le camp d’en face, lu sur l’état** et non écrit en dur. Le joueur
+       suit Sion, qui joue à l’extérieur du match 901 : il est donc du camp 1,
+       quel que soit le `camp` demandé — un camp ne se choisit que lorsqu’on
+       ne suit aucun des deux clubs. Le premier jet faisait abandonner le
+       camp 0 en croyant frapper les bots, et faisait perdre le joueur. */
+    salleM.duel.forfait(M.state.moi.side ^ 1);   // les bots abandonnent
+    await until(async () => (await bourse(U[0])) > 0, 8000);
+    const paye = await bourse(U[0]);
+    /* Entraînement gagné = 15, prime du 2v2, et le double du club : U[0] suit
+       Sion, qui joue le match 901. */
+    const attendu = Math.round(15 * primeDeFormat('2v2')) * 2;
+    check(`un 2v2 paie sa prime (${paye})`, paye === attendu
+      || (console.log('        attendu', attendu, '· reçu', paye), false));
+    /* Et la preuve que ça change quelque chose : sans prime, ce serait 30. */
+    check('c’est bien plus qu’un 1v1', paye > 15 * 2);
+  }
+  M.socket.disconnect(); N2.socket.disconnect();
+}
+
+
+/* --------------------------------- « peu importe le format » : se croiser
+
+ * La file est indexée `format:match:camp`. Deux personnes qui attendent sur le
+ * même match, l'une en 3v3 et l'autre en 1v1, ne se rencontraient donc jamais —
+ * pas même au bout de deux minutes, pas même une fois que le repli par palier
+ * avait fait descendre la première jusqu'à 1v1 : elle descend dans **sa** file,
+ * et l'autre est dans une autre clé.
+ *
+ * C'est le cas le plus fréquent d'un soir creux. Trois personnes en ligne,
+ * trois formats différents, et trois duels contre des bots.
+ *
+ * Un joueur qui coche « peu importe » accepte tout dès la première seconde, et
+ * se fait apparier avec la file voisine sans attendre quoi que ce soit.
+ */
+{
+  const P = co(U[0]), Q = co(U[1]);
+  await until(() => P.socket.connected && Q.socket.connected);
+  P.state = null; Q.state = null; P.file = null; Q.file = null;
+
+  /* **Deux souples, deux formats, et ca part tout de suite.** C'est le cas que
+     la case existe pour resoudre : chacun a coche « peu importe », donc rien
+     n'empeche de les faire jouer ensemble a la plus petite taille commune. */
+  P.socket.emit('nvn:queue', { format: '3v3', fixtureId: 900, camp: 0, souple: true });
+  check('le premier attend', await until(() => P.file, 4000));
+  check('et rien ne part tant qu il est seul', !P.state);
+
+  Q.socket.emit('nvn:queue', { format: '1v1', fixtureId: 900, camp: 1, souple: true });
+
+  const ensemble = await until(() => P.state && Q.state, 8000);
+  check('deux joueurs souples se croisent malgre des formats differents', ensemble
+    || (console.log('        P:', Boolean(P.state), 'Q:', Boolean(Q.state),
+      '· refus :', Q.errors.join(', ') || '(aucun)'), false));
+
+  if (ensemble) {
+    check('dans le même duel', P.state.id === Q.state.id);
+    /* **À 1v1**, c'est-à-dire au plus petit dénominateur : le joueur souple
+       accepte tout, celui qui attendait un 3v3 n'accepte pas plus que trois, et
+       il n'y a que deux personnes. */
+    check('au format que les deux peuvent tenir',
+      P.state.equipes.map((e) => e.length).join('v') === '1v1'
+      || (console.log('        équipes :',
+        P.state.equipes.map((e) => e.length).join('v')), false));
+    check('chacun de son côté', P.state.moi.side !== Q.state.moi.side);
+    /* Et sans bot : c'est tout l'intérêt de les avoir rapprochés. */
+    check('et sans aucun bot', P.state.equipes.flat()
+      .every((x) => !String(x.userId ?? '').startsWith('bot:')));
+  }
+
+  /* **Jamais plus grand que ce qui a été demandé.** Le repli fait descendre, il
+     ne fait pas monter : quelqu'un venu pour un 1v1 ne doit pas se retrouver
+     dans un 3v3, qui demande plus de monde et paie une prime qu'il n'avait pas
+     en tête. */
+  {
+    const t = Date.now();
+    const petit = { format: '1v1', depuis: t, support: { mode: 'classe' } };
+    check('un 1v1 n’est jamais aspiré dans un plus grand format',
+      N.accepte ? !N.accepte(petit, 3, t) : true);
+  }
+
+  P.socket.disconnect(); Q.socket.disconnect();
+
+  /* **Un souple et un patient.** Celui qui a demande un 3v3 ne se laisse pas
+     tirer vers le bas des la premiere seconde — il a demande un 3v3, et rien ne
+     s'est encore passe qui justifie de lui donner moins. Mais apres les deux
+     tiers de son attente, le repli l'amene a accepter un 1v1, et le souple d'en
+     face le prend alors sans qu'aucun bot n'entre.
+
+     C'est la rencontre que rien ne permettait : le repli le faisait descendre
+     dans **sa** file, et l'autre etait dans une autre cle. */
+  {
+    const R = co(U[2]), S2 = co(U[3]);
+    await until(() => R.socket.connected && S2.socket.connected);
+    R.state = null; S2.state = null; R.file = null; S2.file = null;
+
+    R.socket.emit('nvn:queue', { format: '3v3', fixtureId: 900, camp: 0 });
+    await until(() => R.file, 4000);
+    S2.socket.emit('nvn:queue', { format: '1v1', fixtureId: 900, camp: 1, souple: true });
+    await until(() => S2.file, 4000);
+    check('un 3v3 tout neuf ne se laisse pas rabaisser', !R.state && !S2.state);
+
+    /* On l'antidate au-dela des deux tiers : le cran ou un 3v3 accepte un 1v1. */
+    for (const f of N.files.values()) {
+      for (const x of f) if (x.userId === U[2]) x.depuis = Date.now() - 100_000;
+    }
+
+    const croise = await until(() => R.state && S2.state, 8000);
+    check('mais apres l attente, le souple le rejoint', croise
+      || (console.log('        R:', Boolean(R.state), 'S:', Boolean(S2.state)), false));
+    if (croise) {
+      check('dans le meme duel, sans bot', R.state.id === S2.state.id
+        && R.state.equipes.flat()
+          .every((x) => !String(x.userId ?? '').startsWith('bot:')));
+    }
+    R.socket.disconnect(); S2.socket.disconnect();
+  }
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
