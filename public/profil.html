@@ -50,6 +50,105 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
 .vide{padding:18px 14px;font-size:12.5px;opacity:.45;text-align:center;line-height:1.6}
 .vide a{color:var(--projo)}
 
+
+/* --------------------------------------------------- le chemin du niveau
+
+   Un joueur ne voyait de son niveau qu'une pastille sur l'accueil : un chiffre,
+   sans jauge, sans suite, sans rien qui dise à quoi il sert. Monter d'un niveau
+   n'était donc jamais attendu, et le palier qui ouvre un troisième Fanzzy au
+   deck arrivait comme une surprise chez ceux qui le remarquaient.
+
+   Le chemin montre **où l'on est et ce qui vient** : la marche en cours, sa
+   jauge, puis les suivantes avec ce que chacune ouvre. */
+.niv-tete{display:flex;align-items:center;gap:12px;padding:13px 14px 10px}
+.niv-rond{flex:none;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--banner);font-size:22px;line-height:1;color:var(--projo);
+  background:radial-gradient(circle,rgba(245,195,59,.18),transparent 70%);
+  box-shadow:inset 0 0 0 2px var(--projo),0 0 22px -6px rgba(245,195,59,.7)}
+.niv-rond small{display:block;font-size:7px;letter-spacing:.16em;opacity:.55;
+  color:var(--craie);margin-top:2px}
+.niv-txt{flex:1;min-width:0}
+.niv-txt b{display:block;font-family:var(--banner);font-size:14px;letter-spacing:.04em}
+.niv-txt span{display:block;font-size:10.5px;opacity:.5;margin-top:3px}
+.niv-jauge{height:8px;border-radius:5px;background:rgba(242,238,228,.1);overflow:hidden;
+  margin:7px 14px 0;position:relative}
+.niv-jauge i{display:block;height:100%;border-radius:5px;
+  background:linear-gradient(90deg,#B98A14,var(--projo));
+  /* La jauge **pousse** au chargement : c'est le seul moment où l'on voit
+     l'avancée bouger, et un trait déjà posé ne se lit pas comme un progrès. */
+  transition:width .9s cubic-bezier(.2,.9,.25,1)}
+.niv-jauge::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.35) 50%,transparent 58%);
+  background-size:260% 100%;animation:jauge 3.4s ease-in-out infinite}
+@keyframes jauge{0%{background-position:150% 0}60%,100%{background-position:-60% 0}}
+
+/* Les marches. Elles défilent horizontalement : le chemin continue au-delà de
+   l'écran, et c'est exactement ce qu'on veut faire sentir. */
+.marches{display:flex;gap:8px;overflow-x:auto;padding:12px 14px 14px;scrollbar-width:none}
+.marches::-webkit-scrollbar{display:none}
+.marche{flex:none;width:118px;border-radius:11px;padding:10px;position:relative;
+  border:1px solid rgba(242,238,228,.1);background:rgba(0,0,0,.24)}
+.marche.faite{opacity:.42}
+.marche.ici{border-color:var(--projo);background:rgba(245,195,59,.08)}
+.marche .r{font-family:var(--banner);font-size:9px;letter-spacing:.14em;opacity:.5}
+.marche.ici .r{color:var(--projo);opacity:1}
+.marche .n{font-family:var(--banner);font-size:17px;line-height:1.1;margin-top:3px}
+.marche ul{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.marche li{font-size:10px;opacity:.72;line-height:1.35;padding-left:11px;position:relative}
+.marche li::before{content:"";position:absolute;left:0;top:5px;width:5px;height:5px;
+  border-radius:50%;background:var(--projo);opacity:.7}
+/* Un palier qui ouvre vraiment quelque chose se distingue d'une marche
+   ordinaire : sinon le chemin n'est qu'une suite de chiffres. */
+.marche.cle{box-shadow:0 0 0 1px rgba(245,195,59,.4),0 0 22px -8px rgba(245,195,59,.8)}
+
+/* ------------------------------------------------------- le parcours
+
+   Ce qu'un joueur a joué, et ce que ça lui a rapporté. Le profil listait ce
+   qu'il **possède** — des clubs, un Fanzzy, de l'équipement — et rien de ce
+   qu'il a **fait** : une carte de membre sans carnet de bord.
+
+   Deux blocs : le compte par sorte de partie, puis la liste. Le compte est une
+   grille de deux colonnes plutôt qu'un tableau — il faut qu'elle tienne sur un
+   téléphone, et un tableau à six colonnes n'y tient pas. */
+.sortes{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;padding:12px}
+.sorte{border:1px solid rgba(242,238,228,.1);border-radius:10px;padding:10px 11px;
+  background:rgba(0,0,0,.22)}
+.sorte .q{font-family:var(--banner);font-size:9.5px;letter-spacing:.12em;
+  color:var(--c,var(--projo))}
+.sorte .n{font-family:var(--banner);font-size:20px;line-height:1.1;margin-top:5px}
+.sorte .n small{font-family:var(--ui);font-size:10px;opacity:.45;letter-spacing:.06em}
+.sorte .d{font-size:10.5px;opacity:.55;margin-top:5px;line-height:1.45}
+/* La ferveur : c'est le nombre que le joueur vient chercher, il est donc à part
+   et il ne se confond pas avec un compte de parties. */
+.sorte .f{font-family:var(--banner);font-size:11.5px;color:var(--projo);margin-top:6px}
+
+.parcours{display:flex;flex-direction:column}
+.part{display:flex;align-items:center;gap:10px;padding:11px 13px;
+  border-top:1px solid rgba(242,238,228,.07)}
+.part:first-child{border-top:0}
+/* La pastille dit d'un coup lequel des deux jeux c'était : or pour le virage,
+   violet pour le duel — les couleurs que ces deux écrans portent déjà. */
+.part .jeu{flex:none;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;
+  font-family:var(--banner);font-size:8px;letter-spacing:.06em;
+  border:1px solid var(--c,var(--projo));color:var(--c,var(--projo))}
+.part .qui{flex:1;min-width:0}
+.part .qui b{display:block;font-size:12.5px;font-weight:400;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.part .qui span{display:block;font-size:10px;opacity:.5;margin-top:3px;letter-spacing:.03em}
+.part .gain{flex:none;text-align:right}
+.part .gain b{display:block;font-family:var(--banner);font-size:14px;color:var(--projo);line-height:1}
+.part .gain span{display:block;font-size:9px;opacity:.45;letter-spacing:.1em;margin-top:3px}
+/* L'issue d'un duel se lit à la couleur avant de se lire au mot. */
+.part .issue{font-family:var(--banner);font-size:9px;letter-spacing:.1em;
+  border-radius:4px;padding:2px 6px;border:1px solid currentColor}
+.part .issue.win{color:var(--vert)}
+.part .issue.loss{color:var(--flare)}
+.part .issue.draw{color:var(--gris,#C2CAD6)}
+.encore{width:100%;background:none;border:0;border-top:1px solid rgba(242,238,228,.07);
+  color:var(--projo);padding:13px;font-family:var(--banner);font-size:10.5px;
+  letter-spacing:.14em;cursor:pointer}
+.encore:disabled{opacity:.35;cursor:default}
+
 .stuff{display:flex;gap:8px;padding:12px}
 .slot{flex:1;border:1px dashed rgba(242,238,228,.2);border-radius:10px;padding:11px 8px;text-align:center;
   min-height:78px;display:flex;flex-direction:column;justify-content:center;gap:4px;cursor:pointer}
@@ -109,6 +208,16 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
 
   <h2>MES CLUBS</h2>
   <div class="bloc" id="clubs"></div>
+
+  <h2>MON NIVEAU</h2>
+  <div class="bloc" id="niveau">
+    <div class="vide">chargement…</div>
+  </div>
+
+  <h2>MON PARCOURS</h2>
+  <div class="bloc" id="parcours">
+    <div class="vide">chargement…</div>
+  </div>
 
   <h2>MON FANZZY</h2>
   <div class="bloc" id="fanzzy"></div>
@@ -181,6 +290,200 @@ function toast(t) {
 }
 
 let user = null, etat = null, catalogue = null, loadout = null, souvenirs = [];
+
+
+
+/* --------------------------------------------------- le chemin du niveau
+
+   Le joueur ne voyait de son niveau qu'une pastille sur l'accueil : un chiffre,
+   sans jauge, sans suite, sans rien qui dise à quoi il sert. Monter d'un niveau
+   n'était jamais attendu, et le palier qui ouvre un troisième Fanzzy au deck
+   arrivait comme une surprise chez ceux qui le remarquaient.
+
+   Le serveur envoie la **donnée** — le rang et ce qu'il ouvre — et cette page
+   la met en mots. C'est le partage habituel : le serveur compte, l'écran nomme.
+   Une page qui porterait sa propre copie de la table finirait par promettre un
+   déblocage que le serveur refuse. */
+
+/** Combien de marches on montre devant soi. Au-delà, ce n'est plus un but. */
+const MARCHES = 6;
+
+/** Ce qu'une marche ouvre, en toutes lettres. */
+function ouvre(palier, echarpes) {
+  const l = [];
+  if (echarpes) l.push(`${echarpes} écharpes`);
+  /* Les deux seuls déblocages du jeu, et ils s'écrivent en clair : « slots: 4 »
+     ne veut rien dire pour personne. Le niveau **ouvre**, il ne rend jamais
+     plus fort — c'est la règle du jeu, et la formulation doit la porter. */
+  if (palier?.slots) l.push(`${palier.slots}ᵉ club à suivre`);
+  if (palier?.deckFanzzy) l.push(`${palier.deckFanzzy}ᵉ Fanzzy au deck`);
+  return l;
+}
+
+function rendreNiveau(n) {
+  const hote = $('niveau');
+  const parNiveau = new Map((n.paliers ?? []).map((p) => [p.niveau, p]));
+
+  /* La marche en cours, puis les suivantes. On s'arrête au dernier niveau :
+     au-delà l'XP continue de compter mais n'ouvre plus rien, et proposer des
+     marches qui n'existent pas serait une promesse en l'air. */
+  const marches = [];
+  for (let k = n.niveau; k < n.niveau + MARCHES && k <= (n.niveauMax ?? 30); k++) {
+    const p = parNiveau.get(k);
+    marches.push({ niveau: k, palier: p,
+      echarpes: p?.echarpes ?? 10 * k, ici: k === n.niveau, cle: Boolean(p) });
+  }
+
+  const part = n.max ? 1 : Math.max(0, Math.min(1, n.part ?? 0));
+  hote.innerHTML = `
+    <div class="niv-tete">
+      <div class="niv-rond">${n.niveau}<small>NIVEAU</small></div>
+      <div class="niv-txt">
+        <b>${n.max ? 'Dernier niveau atteint' : `Vers le niveau ${n.niveau + 1}`}</b>
+        <span>${n.max ? `${n.xp} XP au total`
+          : `${n.dans} / ${n.pour} XP · encore ${Math.max(0, n.pour - n.dans)}`}</span>
+      </div>
+    </div>
+    <div class="niv-jauge"><i style="width:0"></i></div>
+    <div class="marches">${marches.map((m) => `
+      <div class="marche ${m.ici ? 'ici' : ''} ${m.cle ? 'cle' : ''}">
+        <div class="r">${m.ici ? 'TU Y ES' : 'NIVEAU'}</div>
+        <div class="n">${m.niveau}</div>
+        <ul>${ouvre(m.palier, m.echarpes).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+      </div>`).join('')}</div>`;
+
+  /* La jauge **pousse** après le rendu : c'est le seul moment où le joueur voit
+     son avancée bouger. Posée à sa largeur finale d'emblée, elle se lirait comme
+     un trait, pas comme un progrès. Deux images successives, sinon le navigateur
+     regroupe les deux styles et l'animation n'a pas lieu. */
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const i = hote.querySelector('.niv-jauge i');
+    if (i) i.style.width = `${Math.round(part * 100)}%`;
+  }));
+}
+
+async function chargerNiveau() {
+  try {
+    rendreNiveau(await api('/api/niveau', ''));
+  } catch {
+    /* La progression est un module facultatif : sans lui, le profil doit
+       s'afficher quand même, et le dire plutôt que laisser un bloc vide. */
+    $('niveau').innerHTML =
+      '<div class="vide">Ta progression n’est pas lisible pour le moment.</div>';
+  }
+}
+
+/* ------------------------------------------------------ le parcours
+
+   Ce que le joueur a joué, et ce que ça lui a rapporté. Le profil disait ce
+   qu'il **possède** — des clubs, un Fanzzy, de l'équipement — et rien de ce
+   qu'il a **fait** : une carte de membre sans carnet de bord. Tout était en
+   base depuis le premier jour ; rien ne le lisait.
+
+   Les libellés sont écrits ici et les nombres viennent du serveur. Ce partage
+   n'est pas cosmétique : le jour où l'entraînement cessera de compter au
+   classement, c'est une règle du serveur qui changera, et cette page ne doit
+   pas en porter une copie. Elle ne fait que nommer. */
+
+const NOM_SORTE = { entrainement: 'ENTRAÎNEMENT', classe: 'CLASSÉ' };
+
+/** Le titre d'une sorte de partie : « CLASSÉ · 2v2 », « GRAND VIRAGE ». */
+function titreSorte(s) {
+  if (s.jeu === 'virage') return 'GRAND VIRAGE';
+  const mode = NOM_SORTE[s.mode] ?? String(s.mode ?? '').toUpperCase();
+  /* Le format manque sur les parties d'avant qu'on l'écrive. On dit « DUEL »
+     plutôt que d'inventer un format : une case vide est une vérité, un « 1v1 »
+     supposé est un mensonge qui a l'air d'une donnée. */
+  return s.format ? `${mode} · ${s.format}` : `${mode} · DUEL`;
+}
+
+function rendreParcours(p, { ajouter = false } = {}) {
+  const hote = $('parcours');
+
+  const sortes = (p.sortes ?? []).map((s) => {
+    const couleur = s.jeu === 'virage' ? 'var(--projo)'
+      : s.mode === 'classe' ? 'var(--violet)' : 'var(--gris,#C2CAD6)';
+    /* Un virage ne se gagne ni ne se perd : on y pousse. Lui coller un bilan
+       de victoires y mettrait une notion qui n'existe pas dans ce jeu-là. */
+    const bilan = s.jeu === 'virage'
+      ? `${s.joues} match${s.joues > 1 ? 's' : ''} poussé${s.joues > 1 ? 's' : ''}`
+      : `${s.gagnes} gagné${s.gagnes > 1 ? 's' : ''} · ${s.nuls} nul${s.nuls > 1 ? 's' : ''}`
+        + ` · ${s.perdus} perdu${s.perdus > 1 ? 's' : ''}`;
+    return `<div class="sorte" style="--c:${couleur}">
+      <div class="q">${esc(titreSorte(s))}</div>
+      <div class="n">${s.joues}<small> partie${s.joues > 1 ? 's' : ''}</small></div>
+      <div class="d">${esc(bilan)}</div>
+      <div class="f">${s.ferveur} ferveur</div>
+    </div>`;
+  }).join('');
+
+  const lignes = (p.lignes ?? []).map((l) => {
+    const virage = l.jeu === 'virage';
+    const couleur = virage ? 'var(--projo)' : 'var(--violet)';
+    const quand = new Date(l.quand).toLocaleDateString(document.documentElement.lang || 'fr',
+      { day: 'numeric', month: 'short' });
+    const contre = l.match
+      ? `${l.match.domicile} – ${l.match.exterieur}` : 'match inconnu';
+    /* Ce qu'on lit sous le nom du match : la compétition, le club poussé, et
+       la date. « Neutre » est dit, parce que c'est ce qui divise la ferveur par
+       deux — une règle qu'on ne découvre sinon qu'en comparant deux soirées. */
+    const sous = [l.match?.competition, l.pour ? `pour ${l.pour}` : null,
+                  l.neutre ? 'neutre' : null, quand].filter(Boolean).join(' · ');
+    const issue = l.issue
+      ? `<span class="issue ${esc(l.issue)}">${
+        { win: 'GAGNÉ', loss: 'PERDU', draw: 'NUL' }[l.issue] ?? ''}</span>` : '';
+    const score = l.score ? `${l.score.pour}–${l.score.contre}` : '';
+    return `<div class="part">
+      <span class="jeu" style="--c:${couleur}">${virage ? 'VIR' : (esc(l.format ?? 'DUEL'))}</span>
+      <span class="qui"><b>${esc(contre)}</b><span>${esc(sous)}</span></span>
+      ${issue}
+      <span class="gain"><b>+${l.ferveur}</b><span>${esc(score) || 'FERVEUR'}</span></span>
+    </div>`;
+  }).join('');
+
+  if (ajouter) {
+    $('parcoursListe').insertAdjacentHTML('beforeend', lignes);
+  } else if (!(p.lignes ?? []).length) {
+    hote.innerHTML = `<div class="vide">Tu n’as encore rien joué.<br>
+      <a href="/virage">Entre dans un virage</a> ou <a href="/duel-nvn">lance un duel</a>.</div>`;
+    return;
+  } else {
+    hote.innerHTML = `
+      <div class="sortes">${sortes}</div>
+      <div class="parcours" id="parcoursListe">${lignes}</div>
+      <button class="encore" id="encore">VOIR PLUS</button>`;
+  }
+
+  /* Le bouton porte le curseur de la page suivante, et disparaît quand il n'y
+     en a plus. C'est la réponse qui le dit — voir `suite` côté serveur — et non
+     la page qui le devine en comparant des longueurs. */
+  const bt = $('encore');
+  if (!bt) return;
+  if (!p.suite) { bt.remove(); return; }
+  bt.dataset.suite = p.suite;
+  bt.disabled = false;
+  bt.textContent = 'VOIR PLUS';
+}
+
+async function chargerParcours(avant = null) {
+  try {
+    const p = await api('/api/rank', `/parcours${avant ? `?avant=${encodeURIComponent(avant)}` : ''}`);
+    rendreParcours(p, { ajouter: Boolean(avant) });
+  } catch {
+    /* Le parcours est un ajout, pas le cœur de la page : s'il ne vient pas, on
+       le dit à sa place et le reste du profil s'affiche normalement. */
+    if (!avant) $('parcours').innerHTML =
+      '<div class="vide">Ton parcours n’est pas lisible pour le moment.</div>';
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const bt = e.target.closest('#encore');
+  if (!bt) return;
+  bt.disabled = true;
+  bt.textContent = 'UN INSTANT…';
+  chargerParcours(bt.dataset.suite);
+});
 
 /* ------------------------------------------------------------- rendu */
 
@@ -395,6 +698,11 @@ $('supprimer').onclick = async () => {
     // Le reste est facultatif : le profil doit s'afficher même si un module manque.
     loadout = await me('/loadout').catch(() => null);
     souvenirs = await api('/api/souvenirs', '/mine').then((d) => d.souvenirs).catch(() => []);
+    /* Sans `await` : le parcours peut demander deux requêtes en base, et le
+       reste du profil n’a aucune raison de l’attendre. Il se pose quand il
+       arrive, à sa place, qui est déjà dessinée. */
+    chargerParcours();
+    chargerNiveau();
 
     const prix = [0, 0, 120, 220, 380, 600, 900, 1300];
     etat.prixSlot = prix[etat.slots.total] ?? 1300;

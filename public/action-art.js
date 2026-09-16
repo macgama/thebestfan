@@ -101,8 +101,46 @@
    *   l'effet va se produire — le nœud de la corde. `depuis` : l'élément
    *   d'où elle part, quand on l'a sous la main.
    */
+  /* ------------------------------------------ la file d'attente des cartes
+
+     Une carte jouée vole au milieu de l'écran, par-dessus tout — `z-index: 95`,
+     au-dessus même de la fenêtre des épreuves. Quand l'adversaire jouait
+     pendant qu'on refaisait une mosaïque ou qu'on triait des cartons, sa carte
+     passait devant la grille : on perdait de vue ce qu'on était en train de
+     faire, avec un chronomètre qui courait.
+
+     Monter la fenêtre au-dessus de la carte aurait réglé le recouvrement et
+     créé pire : la carte se serait jouée derrière un voile opaque, et on
+     n'aurait jamais su ce que l'autre venait de poser.
+
+     Elle est donc **mise de côté** et rejouée à la fermeture. Rien n'est perdu,
+     rien ne gêne. La file est bornée à trois : au-delà, ce n'est plus de
+     l'information, c'est un défilé — on garde les trois dernières, qui sont
+     celles dont l'effet est encore à l'écran. */
+  let suspendu = false;
+  const enAttente = [];
+  const GARDE = 3;
+
+  /** Met les cartes en attente. Appelé quand une épreuve prend l'écran. */
+  function suspendre() { suspendu = true; }
+
+  /** Rejoue ce qui s'est joué pendant, espacé pour rester lisible. */
+  function reprendre() {
+    suspendu = false;
+    const file = enAttente.splice(0, enAttente.length);
+    file.forEach((args, i) => setTimeout(() => jouee(...args), i * 520));
+  }
+
   function jouee(a, { pour = true, vers = null, depuis = null } = {}) {
     if (!a) return;
+    if (suspendu) {
+      enAttente.push([a, { pour, vers, depuis: null }]);
+      /* `depuis` est mis à null : la carte de départ aura disparu de la main
+         d'ici là, et voler depuis un élément retiré donne un point à zéro,
+         c'est-à-dire un vol depuis le coin de l'écran. */
+      if (enAttente.length > GARDE) enAttente.shift();
+      return;
+    }
     const fam = famDe(a);
     const doux = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -178,5 +216,5 @@
     window.FX?.son?.('carte');
   }
 
-  window.TBF_ACTION = { FAM, famDe, adresse, illustration, jouee };
+  window.TBF_ACTION = { FAM, famDe, adresse, illustration, jouee, suspendre, reprendre };
 })();

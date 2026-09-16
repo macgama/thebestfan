@@ -313,6 +313,12 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   background:rgba(0,0,0,.3);padding:12px;cursor:pointer;display:flex;align-items:center;
   gap:9px;flex-wrap:wrap}
 .match.off{opacity:.4;pointer-events:none}
+/* Le match qu'on vient chercher par un lien. Il est amené sous les yeux et
+   marqué : arriver depuis la fiche d'un match sur une liste de trente
+   rencontres, sans rien qui désigne la sienne, se lit comme un menu et non
+   comme une réponse. */
+.match.vise{border-color:var(--projo);box-shadow:0 0 0 1px var(--projo),
+  0 0 26px -6px rgba(245,195,59,.5)}
 .match img{width:24px;height:24px;object-fit:contain}
 .match .n{flex:1;min-width:0;text-align:left}
 .match .n b{font-family:var(--banner);font-size:13px;display:block}
@@ -841,6 +847,11 @@ function fail(code) {
     'ferveur.error.evolution_locked':'L\u2019âge suivant de ton Fanzzy n\u2019est pas débloqué',
     'ferveur.error.not_in_virage':'Tu n\u2019es plus dans la tribune',
     'ferveur.error.chant_hors_repertoire':'Ce chant n\u2019est plus au r\u00e9pertoire',
+    /* La porte fermée. Elle n’a plus de raison d’arriver depuis que la salle
+       se sème depuis la journée (voir `poserDepuisLaJournee`), mais si elle
+       arrive, « Refusé par le serveur » ne dit rien à personne — et c’est
+       exactement ce qu’a lu le joueur qui a cru que le bouton ne marchait pas. */
+    'ferveur.error.no_fixture':'Ce match n’est pas ouvert pour l’instant',
   })[code] ?? 'Refusé par le serveur';
   e.className = 'err on';
   clearTimeout(e._t); e._t = setTimeout(() => { e.className = 'err'; }, 2600);
@@ -857,6 +868,10 @@ function openMini(card) {
     $('miniTitle').textContent = LABEL[card.gest];
     $('miniHint').textContent = HINT[card.gest];
     $('verdict').textContent = '';
+    /* L’épreuve prend l’écran : les cartes jouées par les autres passaient
+       par-dessus la grille — voir `suspendre` dans action-art.js. Elles
+       reviennent à la fermeture, rien n’est perdu. */
+    window.TBF_ACTION?.suspendre?.();
     m.classList.add('on');
     let k = 3;
     const tick = () => {
@@ -872,6 +887,7 @@ function openMini(card) {
 
 function closeMini(taps) {
   $('mini').classList.remove('on');
+  window.TBF_ACTION?.reprendre?.();
   $('miniZone').innerHTML = '';
   return taps;
 }
@@ -1372,8 +1388,20 @@ function souvenir(g) {
     const carteM = $('matchs').querySelector(`[data-id="${parLien}"]`);
     // Absent de la liste — un match qui n'a pas encore commencé : on tente
     // quand même, le serveur dira non s'il faut.
-    if (carteM) carteM.click();
-    else socket.emit('virage:join', { fixtureId: parLien });
+    if (carteM) {
+      carteM.click();
+      /* **On amène le match sous les yeux.** Si aucun des deux clubs n’est le
+         nôtre, le clic ne fait pas entrer : il déplie la carte pour demander
+         le camp — et cette carte pouvait se trouver n’importe où dans une
+         liste de trente rencontres. Vu du joueur qui vient d’appuyer sur
+         « GRAND VIRAGE » depuis une fiche de match, la page s’ouvrait
+         simplement sur un menu, et rien ne disait que sa question était en
+         bas de l’écran. */
+      carteM.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      carteM.classList.add('vise');
+    } else {
+      socket.emit('virage:join', { fixtureId: parLien });
+    }
   }
 
 

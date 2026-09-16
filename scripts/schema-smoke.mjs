@@ -69,7 +69,12 @@ const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', '
 
      Après series-neuves, qui déplace des cartes d'une série à l'autre : le
      préfixe se calcule sur la série d'arrivée. */
-  'prefixes', 'identites'];
+  'prefixes', 'identites',
+  /* Les deux colonnes qui disent de quelle **sorte** un duel était. Elles
+     viennent après duel.sql, qui pose la table, et n'ont d'autre dépendance :
+     le parcours du joueur se lit sur elles, et les classements écartent
+     l'entraînement grâce à elles. */
+  'historique'];
 
 {
   const surLeDisque = (await readdir(SQL)).filter((f) => f.endsWith('.sql'))

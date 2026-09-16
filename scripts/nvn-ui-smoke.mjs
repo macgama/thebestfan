@@ -338,8 +338,50 @@ await A.page.evaluate(() => {
   document.getElementById('entrer')?.click();
 });
 await dodo(400);
-check('le premier joueur voit qu\u2019il attend',
-  /file/i.test(await A.page.evaluate(() => document.getElementById('voileTitre').textContent)));
+/* **La salle d'attente**, et non trois phrases.
+
+   Elle disait « 1 sur 3 », « il manque 2 supporters de Vissel Kobe », « des
+   bots complètent après 120 secondes ». C'est exact, et ça ne donne envie de
+   rien : on attend deux minutes devant un compteur, sans savoir qui est là ni
+   voir arriver personne.
+
+   Elle montre maintenant les deux tribunes place par place, avec le portrait
+   du Fanzzy que chacun aligne. Et elle dit ce qui manque **des deux côtés** :
+   dans un 3v3 entré seul, il manque deux supporters chez soi avant d'en
+   manquer trois en face, et le message d'avant ne nommait que le second. */
+{
+  const salle = await A.page.evaluate(() => {
+    const s = document.querySelector('.salle');
+    if (!s) return null;
+    return {
+      tribunes: [...s.querySelectorAll('.tribune-att h4')].map((h) =>
+        h.textContent.replace(/\s+/g, ' ').trim()),
+      prises: s.querySelectorAll('.place-att.pris').length,
+      libres: s.querySelectorAll('.place-att.libre').length,
+      portraits: s.querySelectorAll('.place-att.pris img').length,
+      rebours: document.getElementById('rebours')?.textContent.trim() ?? '',
+    };
+  });
+  check('le premier joueur arrive dans une salle d’attente', Boolean(salle)
+    || (console.log('        voile :', await A.page.evaluate(() =>
+      document.getElementById('voileTitre').textContent)), false));
+  if (salle) {
+    check('elle montre les deux tribunes', salle.tribunes.length === 2
+      || (console.log('        ', JSON.stringify(salle.tribunes)), false));
+    check('la sienne en premier', /MA TRIBUNE/.test(salle.tribunes[0] ?? ''));
+    /* Un 1v1 : une place de chaque côté, la sienne prise et celle d'en face
+       libre. C'est le plus petit cas, et c'est celui qui vérifie que les places
+       se comptent sur le format et non sur le nombre de présents. */
+    check('sa place est prise', salle.prises === 1);
+    check('et celle d’en face attend quelqu’un', salle.libres === 1);
+    /* Le portrait est **tout l'intérêt** : c'est ce qui distingue une salle
+       d'attente d'un compteur. */
+    check('on voit le Fanzzy qu’il aligne', salle.portraits === 1);
+    check('et le rebours avant les supporters d’appoint tourne',
+      /\d+/.test(salle.rebours)
+      || (console.log('        il dit :', salle.rebours), false));
+  }
+}
 
 await B.page.evaluate(() => {
   document.querySelector('[data-fmt="1v1"]')?.click();
@@ -456,6 +498,46 @@ const ouvert = await A.page.evaluate(() => ({
     check('elle annonce le lieu de la rencontre', aff.lieu.length > 3
       || (console.log('        lieu :', JSON.stringify(aff.lieu)), false));
     check('et le camp du joueur vient en premier', aff.premier === true);
+
+  /* **L'affiche tient dans la colonne, sur n'importe quel écran.**
+
+     `.grand` est `position: fixed; inset: 0` — c'est juste, pour le fond : un
+     duel qui se termine ne doit pas laisser voir sa corde derrière son
+     résultat. Mais les enfants héritaient de cette largeur. Sur un écran de
+     bureau, l'affiche s'étalait sur mille neuf cents pixels pendant que le
+     reste du jeu tenait dans neuf cents : les vignettes de Fanzzy y faisaient
+     six cents pixels de large, la troisième sortait du champ, et il fallait
+     faire défiler une affiche qui ne reste que six secondes.
+
+     Aucun contrôle ne pouvait le voir : la suite tournait en 400 px de large,
+     c'est-à-dire précisément la seule largeur où le défaut n'existe pas. On
+     mesure donc **large**, là où le jeu se regarde aussi. */
+  {
+    const avant = A.page.viewport();
+    await A.page.setViewport({ width: 1440, height: 900 });
+    const large = await A.page.evaluate(() => {
+      const e = document.getElementById('affiche');
+      const colonne = parseFloat(getComputedStyle(document.getElementById('app')).width);
+      const debords = [...e.querySelectorAll('.camp-bloc, .fz-aff, .grand-haut, .camps')]
+        .map((n) => Math.round(n.getBoundingClientRect().width))
+        .filter((w) => w > colonne + 1);
+      return {
+        colonne: Math.round(colonne),
+        vignette: Math.round(e.querySelector('.fz-aff')?.getBoundingClientRect().width ?? 0),
+        debords: debords.length,
+        defileH: document.documentElement.scrollWidth > innerWidth + 1,
+      };
+    });
+    check('sur un grand écran, l’affiche tient dans la colonne du jeu',
+      large.debords === 0
+      || (console.log('        ', large.debords, 'élément(s) plus larges que',
+        large.colonne, 'px'), false));
+    check('les vignettes gardent une taille de carte',
+      large.vignette > 60 && large.vignette < 340
+      || (console.log('        vignette :', large.vignette, 'px'), false));
+    check('et rien ne déborde sur le côté', !large.defileH);
+    await A.page.setViewport(avant);
+  }
   }
 
   /* Elle se retire seule. Une affiche qui resterait à l'écran cacherait la

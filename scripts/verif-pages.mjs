@@ -627,6 +627,39 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
   }
 }
 
+/* ============================ le deck et le classeur ont le même fond
+
+   `nav.js` pose sur chaque page un décor de stade derrière la colonne. Le
+   classeur le laisse passer — son `#app` ne porte qu'un halo translucide —
+   tandis que le deck avait posé par-dessus un aplat opaque qui le masquait.
+   Deux onglets voisins, un seul geste pour passer de l'un à l'autre, et le
+   fond changeait : on ne lisait pas « une autre section », on lisait « une
+   autre application ».
+
+   Le contrôle compare les deux déclarations telles qu'elles sont écrites. Il
+   ne mesure pas un pixel — il n'y a pas de navigateur ici — mais il attrape
+   exactement ce qui s'est produit : l'un des deux écrans qui reçoit un fond et
+   pas l'autre. */
+
+{
+  const fondDe = (nom) => {
+    const src = readFileSync(path.join(DOSSIER, nom), 'utf8');
+    const m = /#app\{[^}]*\}/s.exec(src);
+    if (!m) return null;
+    const b = /background:([^;}]*)/s.exec(m[0]);
+    return b ? b[1].replace(/\s+/g, ' ').trim() : null;
+  };
+  const classeur = fondDe('fanzzy.html');
+  const deck = fondDe('deck.html');
+  if (classeur && classeur === deck) {
+    ok('deck.html', 'même fond de colonne que le classeur');
+  } else {
+    ko('deck.html', 'son fond de colonne diffère de celui du classeur');
+    console.log('        classeur :', classeur);
+    console.log('        deck     :', deck);
+  }
+}
+
 /* ================================ les liens qui ne mènent nulle part
 
    Le classeur portait un bouton « ENTRER EN DUEL » qui envoyait sur `/duel`.

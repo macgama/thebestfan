@@ -186,6 +186,32 @@
         pad.onpointerleave = lacher;
       };
 
+      /**
+       * « C'EST FAIT » — finir avant la fin du temps.
+       *
+       * Trois épreuves se **terminent** vraiment : la mosaïque est refaite, les
+       * paires sont retrouvées, les cartons sont ramassés. Le joueur le sait
+       * avant la minuterie — souvent trois ou quatre secondes avant — et il
+       * restait devant un écran plein pendant que le duel continuait derrière.
+       * Une épreuve qui fait perdre du temps après avoir été réussie punit la
+       * réussite.
+       *
+       * Le bouton ne remplace pas la minuterie, il la double : elle reste le
+       * plafond pour qui hésite, il devient le plancher pour qui a fini. Et il
+       * ne paraît que sur ces épreuves-là — sur le tempo ou le martelage, le
+       * temps **est** l'épreuve, et un bouton qui l'écourte n'aurait aucun sens.
+       */
+      const valider = (texte = 'C’EST FAIT') => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tbf-valider';
+        b.id = 'valider';
+        b.textContent = texte;
+        b.onclick = finir;
+        zone.appendChild(b);
+        return b;
+      };
+
       /* ------------------------------------------------------ les dix */
 
       switch (kind) {
@@ -454,6 +480,7 @@
               rendre.instants.push(maintenant());
               buzz(9);
             };
+            valider();
             apres(g.ms ?? 9000, finir);
           });
           break;
@@ -495,6 +522,7 @@
               });
               if (rendre.paires.length >= (g.paires ?? 4)) apres(700, finir);
             };
+            valider('J’AI FINI');
             apres(g.ms ?? 12000, finir);
           });
           break;
@@ -575,6 +603,7 @@
             c.className = plateau[i] === cible ? 'pris' : 'pris rate';
             buzz(plateau[i] === cible ? 9 : 22);
           };
+          valider('J’AI TOUT RAMASSÉ');
           apres(g.ms ?? 6000, finir);
           break;
         }

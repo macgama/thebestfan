@@ -667,6 +667,46 @@ check('la foule compte les deux tribunes', crowd[0] === 2 && crowd[1] === 1);
   check('et il est ouvert, puisqu’il se joue', autre?.open === true);
   check('mais ce n’est pas chez moi', autre?.mien === false);
 
+
+  /* ------------------------ entrer dans un match que la base ignore
+
+     Le contrôle du dessus prouve que le match **paraît** dans la liste. Le
+     joueur, lui, touchait son camp et il ne se passait rien : `roomFor` ne lit
+     que `fixtures`, la ligne n'existait pas, `virage:join` répondait
+     `no_fixture`, et la page l'écrivait tout en bas de l'écran, hors du champ
+     de vision.
+
+     Une liste qui propose plus large que la porte n'ouvre est pire qu'une
+     liste courte : elle promet, et elle referme sans le dire. Voir
+     `poserDepuisLaJournee`. */
+  /* Un supporter à lui, et non `U[0]` : `roomOfUser` est indexé par joueur,
+     donc réutiliser A l'aurait déplacé de salle — et le contrôle du départ,
+     cent lignes plus bas, serait devenu rouge pour une raison sans rapport. */
+  const E = connect('bbbbbbbb-0000-0000-0000-000000000008');
+  await until(() => E.socket.connected);
+  E.socket.emit('virage:join', { fixtureId: 9100, camp: 'exterieur' });
+  const entre = await until(() => E.state?.fixture?.id === 9100, 4000);
+  check('on entre vraiment dans un match que la base ignorait', entre
+    || (console.log('        refus :', E.errors.join(', ') || '(silence)'), false));
+
+  if (entre) {
+    check('la salle nomme les deux clubs',
+      E.state.fixture.homeName === 'Metalist 1925 U19'
+      && E.state.fixture.awayName === 'Zhytomyr U19');
+    check('et le camp choisi est respecté', E.state.you.side === 1);
+    /* La ligne est **écrite**, pas seulement montée en mémoire : la présence
+       au virage, les classements par compétition et le guetteur retombent
+       tous sur `fixtures`. Une salle sans ligne aurait marché à l'écran et
+       perdu tout ce qui en sort. */
+    const [[f]] = await pool.query(
+      'SELECT league_id, home_id, away_id, status_short FROM fixtures WHERE id = 9100');
+    check('et le match est désormais connu de la base', Boolean(f)
+      || (console.log('        rien en base pour 9100'), false));
+    check('avec sa compétition et ses deux clubs',
+      f?.league_id === 333 && f?.home_id === 700 && f?.away_id === 701);
+  }
+  E.socket.disconnect();
+
   /* Une panne du télétexte ne doit pas vider l'écran : on retombe sur la base,
      c'est-à-dire sur ce qu'on avait avant — incomplet, jamais rien. */
   journee = () => { throw new Error('télétexte injoignable'); };

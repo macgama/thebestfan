@@ -72,7 +72,7 @@ curl -s https://thebestfan.online/healthz
 ```bash
 cd ~/sites/thebestfan.online
 for f in auth football minutes couleurs duel souvenirs fanzzy teletext inventaire skins tenues deck admin kop amis \
-         niveau raretes stades boutique billets saisons series-neuves; do
+         niveau raretes stades boutique billets saisons series-neuves historique; do
   mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
 done
 ```
@@ -131,6 +131,18 @@ que `raretes` les a rangées.
 
   Après le déploiement, l'onglet **SAISONS** de `/admin` est le seul endroit d'où
   l'on ouvre une série. L'onglet FANZZY ne les règle plus : il les montre.
+
+- `historique.sql` ajoute `format` et `mode` à `duel_results`. Le jeu écrivait
+  ses duels sans jamais noter de quelle sorte ils étaient : un 1v1 classé et un
+  2v2 d'entraînement y étaient la même ligne, et l'entraînement, lui, n'était
+  pas écrit du tout. Sans ces deux colonnes, la page **PROFIL** ne peut rien
+  raconter au joueur de ce qu'il a joué.
+
+  Les lignes existantes prennent `mode = 'classe'`, ce qui est exact — aucune
+  ligne d'avant cette migration n'est un entraînement — et `format` nul, parce
+  qu'il n'est pas devinable. Les classements écartent désormais l'entraînement
+  **à la lecture** : c'est cette migration qui leur en donne le moyen, donc ils
+  comptent double tant qu'elle n'est pas appliquée.
 
 Contrôle : `SHOW TABLES;` doit en lister **39**.
 

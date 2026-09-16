@@ -32,7 +32,7 @@ await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 for (const f of ['auth.sql','football.sql', 'minutes.sql', 'couleurs.sql','duel.sql','souvenirs.sql', 'billets.sql','fanzzy.sql',
-                 'inventaire.sql', 'skins.sql', 'tenues.sql','deck.sql']) {
+                 'inventaire.sql', 'skins.sql', 'tenues.sql','deck.sql', 'historique.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 const U = ['e1','e2','e3','e4'].map((x, i) =>
@@ -435,6 +435,77 @@ await pool.query('DELETE FROM user_decks WHERE user_id = ?', [U[3]]);
 D.errors.length = 0;
 D.socket.emit('nvn:queue', { format:'1v1', fixtureId:900 });
 check('sans deck, la file est refusée', await until(()=>D.errors.includes('ferveur.error.no_deck')));
+
+
+/* ============================================ quitter un duel : le forfait
+
+   On pouvait partir sans rien. La salle attendait quatre-vingt-dix secondes,
+   retirait le joueur « sans le punir », et le duel continuait à un contre zéro
+   jusqu'au temps réglementaire : celui qui restait gagnait en regardant une
+   corde immobile pendant trois minutes, celui qui partait ne perdait rien.
+
+   Partir quand ça tourne mal était donc la façon la moins coûteuse de perdre,
+   et le duel n'avait plus d'enjeu dès le second but encaissé.
+
+   Trois choses se vérifient ici, et c'est le trio qui compte : le duel se
+   **termine**, l'autre camp **gagne**, et le fuyard **ne touche rien** — ni
+   écharpes, ni XP. Une sanction qui n'en est pas une vaut mieux annoncée
+   qu'appliquée à moitié. */
+{
+  const E = co(U[2]), F = co(U[3]);
+  check('deux nouveaux supporters connectés',
+    await until(() => E.socket.connected && F.socket.connected));
+
+  /* Le quatrième duelliste a perdu son deck au contrôle d’avant — celui qui
+     vérifie qu’on refuse la file sans deck. On le lui rend : sans lui, le
+     duel ne se forme pas et l’échec parle d’autre chose que du forfait. */
+  await pool.query(`INSERT INTO user_decks (user_id,nom,contenu) VALUES (?,?,?)
+     ON DUPLICATE KEY UPDATE contenu = VALUES(contenu)`,
+    [U[3], 'Deck', JSON.stringify({ nom: 'Deck',
+      fanzzy: [{ id: 'TR32', stuff: [] }, { id: 'MS30', stuff: [] },
+               { id: 'TR33', stuff: [] }], actions: dix })]);
+  await pool.query('UPDATE user_wallet SET scarves = 0 WHERE user_id IN (?, ?)', [U[2], U[3]]);
+  E.socket.emit('nvn:queue', { format: '1v1', fixtureId: 900, camp: 0 });
+  F.socket.emit('nvn:queue', { format: '1v1', fixtureId: 900, camp: 1 });
+  const partis = await until(() => E.state && F.state, 8000);
+  check('leur duel est formé', partis);
+
+  if (partis) {
+    E.events.length = 0; F.events.length = 0;
+    E.socket.emit('nvn:forfait');
+
+    const fini = await until(() => F.events.some((e) => e.t === 'over'), 6000);
+    check('abandonner termine le duel sur-le-champ', fini
+      || (console.log('        événements :',
+        F.events.map((e) => e.t).join(', ')), false));
+
+    const over = F.events.find((e) => e.t === 'over');
+    check('et c’est un forfait, pas une fin au temps', over?.raison === 'forfait'
+      || (console.log('        raison :', over?.raison), false));
+    /* Le camp resté en place gagne. `side` de F est 1 : c'est lui le vainqueur
+       puisque E, du camp 0, est parti. */
+    check('celui qui reste gagne le duel', over?.vainqueur === 1
+      || (console.log('        vainqueur :', over?.vainqueur), false));
+
+    /* Et les bourses, qui sont la seule preuve qui compte : une fin de duel
+       qui annonce un vainqueur sans rien verser serait un message, pas une
+       règle. */
+    await until(async () => {
+      const [[x]] = await pool.query(
+        'SELECT scarves FROM user_wallet WHERE user_id = ?', [U[3]]);
+      return Number(x?.scarves ?? 0) > 0;
+    }, 6000);
+    const [[gagnant]] = await pool.query(
+      'SELECT scarves FROM user_wallet WHERE user_id = ?', [U[3]]);
+    const [[fuyard]] = await pool.query(
+      'SELECT scarves FROM user_wallet WHERE user_id = ?', [U[2]]);
+    check('le gagnant touche ce qui était prévu', Number(gagnant?.scarves) > 0
+      || (console.log('        il touche :', gagnant?.scarves), false));
+    check('et celui qui abandonne ne touche rien', Number(fuyard?.scarves) === 0
+      || (console.log('        il touche :', fuyard?.scarves), false));
+  }
+  E.socket.disconnect(); F.socket.disconnect();
+}
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 for (const p of [A, B2, C, D]) p.socket.disconnect();

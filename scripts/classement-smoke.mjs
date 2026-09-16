@@ -16,7 +16,7 @@ await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql','football.sql', 'minutes.sql', 'couleurs.sql','duel.sql','souvenirs.sql', 'billets.sql','fanzzy.sql','inventaire.sql', 'skins.sql', 'kop.sql']) {
+for (const f of ['auth.sql','football.sql', 'minutes.sql', 'couleurs.sql','duel.sql','souvenirs.sql', 'billets.sql','fanzzy.sql','inventaire.sql', 'skins.sql', 'kop.sql', 'historique.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 await raw.query(`INSERT INTO teams (id,name,country) VALUES
@@ -185,7 +185,105 @@ check('une compétition sans match rend des listes vides',
   r.joueurs.length === 0 && r.tribunes.length === 0 && r.kops.length === 0);
 
 
+/* ============================================ le parcours d'un joueur
+
+ * « Qu'est-ce que j'ai joué, et qu'est-ce que ça m'a rapporté ? »
+ *
+ * Le jeu savait répondre à tout le monde et à personne en particulier. Un
+ * joueur n'avait aucun moyen de retrouver sa soirée : ni la liste de ses
+ * parties, ni ce que chacune avait donné. Tout était en base depuis le premier
+ * jour, rien ne le lisait.
+ *
+ * Ce qui se vérifie ici tient en trois points : les sortes de parties sont
+ * comptées **séparément** — un 2v2 d'entraînement n'est pas un 1v1 classé —,
+ * l'entraînement figure au parcours mais **pas** aux classements, et
+ * l'historique mêle duels et virages dans le bon ordre.
+ */
+{
+  /* Deux entraînements et un 2v2 classé, posés sur le joueur qu'on interroge.
+     Le reste du banc garde ses lignes d'avant — `mode` y vaut « classe » par
+     défaut, ce qui est exactement ce que dit la migration du passé. */
+  await pool.query(`UPDATE duel_results SET format = '1v1' WHERE user_id = ?`, [moi]);
+  await pool.query(
+    `INSERT INTO duel_results
+       (duel_id, user_id, opponent_id, outcome, goals_for, goals_against,
+        fixture_id, team_id, ferveur, format, mode, ended_at)
+     VALUES ('e1-u1', ?, 'x', 'win',  2, 1, 7001, 85, 40, '1v1', 'entrainement', NOW(3)),
+            ('e2-u1', ?, 'x', 'loss', 0, 3, 7001, 85, 10, '2v2', 'entrainement', NOW(3)),
+            ('c4-u1', ?, 'x', 'draw', 1, 1, 7001, 85, 90, '2v2', 'classe', NOW(3))`,
+    [moi, moi, moi]);
+
+  const p = await get('/api/rank/parcours');
+
+  const sorte = (jeu, mode, format) => (p.sortes ?? []).find((s) =>
+    s.jeu === jeu && s.mode === mode && s.format === format);
+
+  check('le parcours sépare les sortes de partie',
+    Boolean(sorte('duel', 'entrainement', '1v1'))
+    && Boolean(sorte('duel', 'entrainement', '2v2'))
+    && Boolean(sorte('duel', 'classe', '2v2'))
+    || (console.log('        vu :', JSON.stringify(p.sortes)), false));
+
+  check('et compte gagnés, nuls et perdus',
+    sorte('duel', 'entrainement', '1v1')?.gagnes === 1
+    && sorte('duel', 'classe', '2v2')?.nuls === 1);
+
+  check('le Grand Virage y figure comme une sorte à part',
+    sorte('virage', null, null)?.joues === 1);
+
+  /* Le total dit **deux** nombres : tout ce qu'on a gagné, et la part qui
+     compte au classement. Les deux côte à côte disent la règle mieux qu'une
+     phrase — et c'est le serveur qui les calcule, pour que la page ne la
+     recopie pas. */
+  check('le total additionne les deux jeux',
+    p.total?.parties === (p.sortes ?? []).reduce((n, s) => n + s.joues, 0));
+  check('et met à part la ferveur qui compte au classement',
+    p.total?.ferveurClassee === p.total.ferveur - 50
+    || (console.log('        ', JSON.stringify(p.total)), false));
+
+  /* L'entraînement ne remonte nulle part. C'est sa seule différence avec le
+     classé, et elle se joue **à la lecture** : les lignes sont écrites, les
+     classements les écartent. */
+  /* Le classement est mémorisé deux minutes, et la suite en a déjà demandé un
+     plus haut : sans cet oubli, on relirait l'état d'avant les lignes qu'on
+     vient d’écrire, et le contrôle passerait au vert sans rien éprouver. */
+  C.oublier();
+  const duel = await get('/api/rank/duellistes');
+  /* Par identifiant et non par pseudo : `moi` change au fil de la suite, et
+     nommer un joueur en dur ferait lire les parties de quelqu'un d'autre —
+     ce qui est exactement arrivé au premier jet. */
+  const mien = (duel.classement ?? []).find((x) => x.public_id === moi);
+  check('l’entraînement ne gonfle pas le classement des duellistes',
+    Number(mien?.joues) === 4
+    || (console.log('        parties comptées :', mien?.joues), false));
+
+  /* L'historique : les deux jeux mêlés, la plus récente d'abord. */
+  check('l’historique mêle duels et virages',
+    (p.lignes ?? []).some((l) => l.jeu === 'duel')
+    && (p.lignes ?? []).some((l) => l.jeu === 'virage'));
+  check('et il est rangé du plus récent au plus ancien',
+    (p.lignes ?? []).every((l, i, t) =>
+      i === 0 || new Date(t[i - 1].quand) >= new Date(l.quand)));
+
+  const une = (p.lignes ?? []).find((l) => l.jeu === 'duel' && l.match);
+  check('chaque ligne nomme le match qui la portait',
+    une?.match?.domicile === 'Petit Club' && une?.match?.exterieur === 'Gros Club');
+  check('et le club pour lequel on poussait', une?.pour === 'Petit Club');
+  check('elle dit ce qu’elle a rapporté', typeof une?.ferveur === 'number');
+
+  /* La pagination est **par curseur** et non par numéro de page : deux parties
+     peuvent finir pendant qu'on lit, et un OFFSET en rendrait une deux fois. */
+  const court = await get('/api/rank/parcours?limite=2');
+  check('la liste se demande par tranches', (court.lignes ?? []).length === 2);
+  check('et elle donne le curseur de la suite', Boolean(court.suite));
+  const suite = await get(`/api/rank/parcours?limite=2&avant=${encodeURIComponent(court.suite)}`);
+  check('la suite ne rejoue pas ce qu’on a déjà vu',
+    (suite.lignes ?? []).every((l) => new Date(l.quand) < new Date(court.suite)));
+  check('et elle ne recompte pas les statistiques', suite.sortes === undefined);
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
+
 /**
  * La sortie, et pourquoi elle ne passe pas par `process.exit()`.
  *
