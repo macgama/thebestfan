@@ -222,6 +222,44 @@ for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
     propre = false;
   }
 
+  /* **Une page qui ne s'installerait pas.**
+
+     Le jeu s'installe sur un téléphone : une icône sur l'écran d'accueil, et
+     plus de barre de navigateur. Cela ne tient qu'à des déclarations recopiées
+     dans l'en-tête de chaque page — c'est ainsi que le HTML fonctionne — et
+     trois d'entre elles les avaient perdues en chemin : boosters, boutique et
+     le KOP. Rien ne cassait. Un joueur qui installait depuis l'une de ces
+     pages obtenait simplement un raccourci qui rouvrait le navigateur, barre
+     d'adresse comprise, et il n'avait aucun moyen de savoir pourquoi.
+
+     C'est la faute typique qu'on ne voit jamais en essayant : on essaie depuis
+     l'accueil, qui les avait. */
+  const POUR_INSTALLER = [
+    ['manifest.webmanifest', 'le manifeste — sans lui, pas d’installation du tout'],
+    ['viewport-fit=cover', 'viewport-fit=cover — sans lui, l’encoche mange l’écran'],
+    ['apple-mobile-web-app-capable', 'la balise d’iOS — sans elle, iPhone rouvre Safari'],
+    ['apple-touch-icon', 'l’icône d’iOS — sans elle, iPhone pose une capture d’écran'],
+    ['theme-color', 'la couleur de la barre d’état'],
+  ];
+  for (const [motif, quoi] of POUR_INSTALLER) {
+    if (!html.includes(motif)) {
+      ko(nom, `${quoi} manque : installée depuis cette page, l’application `
+        + 'ne serait pas en plein écran');
+      propre = false;
+    }
+  }
+
+  /* Et le script qui inscrit le service worker, sans lequel Chrome ne propose
+     rien. Il est à part parce qu'aucun fichier commun n'est chargé par les
+     vingt pages : `nav.js` manque sur quatre écrans, `menu.js` sur deux, et
+     c'est justement `/compte` — par où passent tous les nouveaux — qui tombait
+     dans les deux trous. */
+  if (!/src\s*=\s*["']\/pwa\.js/.test(html)) {
+    ko(nom, 'pwa.js n’est pas chargée : depuis cette page, Android ne '
+      + 'proposera pas d’installer le jeu');
+    propre = false;
+  }
+
   /* **La boîte de confirmation, partout.**
 
      Chaque écran a au moins un geste qui engage, et la seule chose pire qu'une
