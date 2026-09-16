@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import express from 'express';
 import { DuelNvN, RULES } from './engine.js';
 import { Cheat } from '../ferveur/gestures.js';
-import { FORMATS } from '../deck/index.js';
+import { FORMATS, primeDeFormat } from '../deck/index.js';
 import { XP } from '../../shared/niveau.js';
 import { reglage } from '../../shared/reglages.js';
 // La même règle qu'au Virage : le club qu'on soutient dans cette
@@ -51,7 +51,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
   /* ------------------------------------------------------- appariement */
 
-  async function entrerEnFile(socket, { format, fixtureId, camp, contreBot }) {
+  async function entrerEnFile(socket, { format, fixtureId, camp, contreBot, souple }) {
     const u = socket.data?.user;
     // On vérifie l'identifiant, pas seulement la présence de l'objet : une
     // session à moitié montée donnait un `{ userId: undefined }` bien truthy,
@@ -108,6 +108,11 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
     file.push({ userId: u.userId, nom: u.name, socket, loadout, support,
                 depuis: Date.now(), format, camp: monCamp,
+                /* « Peu importe le format » : ce joueur accepte tout dès la
+                   première seconde, et devient appariable avec ceux qui
+                   attendent dans une autre file du même match. Voir
+                   `tenterLarge`. */
+                souple: Boolean(souple),
                 neutre: club.neutre, teamId: club.teamId, bonus,
                 contreBot: Boolean(contreBot) });
     files.set(c, file);
@@ -118,7 +123,22 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
     annoncerAttentes();
     if (contreBot) return ouvrirAvecBots(c);
-    return tenterAppariement(format, Number(fixtureId));
+    const partiVite = tenterAppariement(format, Number(fixtureId));
+    if (partiVite) return partiVite;
+
+    /* **Sans attendre la veille**, si quelqu’un accepte déjà de jouer avec
+       celui qui vient d’arriver. C’est le cas d’un joueur souple — « peu
+       importe le format » — qui rejoint une file voisine : lui faire
+       patienter deux secondes de plus n’a aucune raison d’être, et ces deux
+       secondes sont exactement celles où il se demande si ça marche.
+
+       Du plus grand au plus petit : quatre personnes qui peuvent faire un
+       2v2 ne doivent pas se retrouver à deux duels de 1v1. */
+    for (let k = Math.max(...Object.values(FORMATS)); k >= 1; k--) {
+      const parti = tenterLarge(Number(fixtureId), k);
+      if (parti) return parti;
+    }
+    return null;
   }
 
   /**
@@ -317,6 +337,78 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     /* Le format **joué** : un 3v3 parti à deux contre deux est un 2v2, et c'est
        ce qui doit figurer au parcours du joueur. */
     return ouvrir(equipes, equipes[0][0].support, `${possible}v${possible}`);
+  }
+
+  /**
+   * Cette personne accepte-t-elle de jouer **à tant contre tant**, maintenant ?
+   *
+   * Deux choses l'assouplissent. Le temps d'abord : `tailleAcceptee` fait
+   * descendre son format d'un cran à mesure qu'elle attend. Et son propre
+   * choix ensuite — « peu importe le format » —, qui lui fait tout accepter
+   * dès la première seconde.
+   *
+   * La réponse est bornée **des deux côtés**, et la borne haute compte autant
+   * que l'autre : le repli fait descendre, il ne fait jamais monter. Quelqu'un
+   * venu pour un 3v3 n'a pas à se retrouver dans un 5v5 — plus de monde à
+   * réunir, plus d'attente, et une prime qu'il n'avait pas en tête.
+   */
+  function accepte(f, k, t) {
+    if (f.souple) return true;
+    const demande = FORMATS[f.format] ?? 1;
+    if (k > demande) return false;
+    const attente = attenteAvantBots(f.support?.mode);
+    return tailleAcceptee(demande, t - f.depuis, attente) <= k;
+  }
+
+  /**
+   * L'appariement **à travers les formats**, pour un match donné.
+   *
+   * ## Le trou que le repli par palier ne bouche pas
+   *
+   * La file est indexée `format:match:camp`. Deux personnes qui attendent sur
+   * le même match, l'une en 3v3 et l'autre en 1v1, ne se rencontrent donc
+   * jamais — pas même au bout de deux minutes, pas même quand le repli a fait
+   * descendre la première jusqu'à 1v1 : elle descend dans **sa** file, et
+   * l'autre est dans une autre clé.
+   *
+   * C'est le cas le plus fréquent d'un soir creux. Trois personnes en ligne,
+   * trois formats différents, et trois duels contre des bots.
+   *
+   * ## Ce qu'on fait
+   *
+   * On rassemble, camp par camp, tout ce qui attend sur ce match **quel que
+   * soit le format**, et on ne garde que ceux qui acceptent la taille visée —
+   * par le temps écoulé ou parce qu'ils ont dit « peu importe ». Si les deux
+   * camps en ont assez, le duel part.
+   *
+   * Les plus anciens d'abord : celui qui attend depuis deux minutes passe
+   * avant celui qui vient d'arriver, quel que soit son format.
+   */
+  function tenterLarge(fixtureId, taille, t = Date.now()) {
+    const suffixe = `:${fixtureId}:`;
+    const parCamp = [0, 1].map((camp) => {
+      const pris = [];
+      for (const [k, file] of files) {
+        if (!k.includes(suffixe) || !k.endsWith(`:${camp}`)) continue;
+        for (const f of file) if (accepte(f, taille, t)) pris.push({ k, f });
+      }
+      return pris.sort((a, b) => a.f.depuis - b.f.depuis).slice(0, taille);
+    });
+    if (parCamp.some((p) => p.length < taille)) return null;
+
+    /* On retire chacun de **sa** file, qui n'est pas la même pour tous : c'est
+       tout l'intérêt de ce chemin. */
+    for (const p of parCamp.flat()) {
+      const file = files.get(p.k) ?? [];
+      const i = file.indexOf(p.f);
+      if (i >= 0) file.splice(i, 1);
+      if (!file.length) files.delete(p.k);
+    }
+    annoncerAttentes();
+    const equipes = parCamp.map((p) => p.map((x) => x.f));
+    /* Le format **joué** : quatre personnes venues de trois files différentes
+       jouent un 2v2, et c'est ce qui doit figurer à leur parcours. */
+    return ouvrir(equipes, equipes[0][0].support, `${taille}v${taille}`);
   }
 
   /**
@@ -691,6 +783,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
   async function recompenser(salle) {
     const d = salle.duel;
     const bareme = GAIN[d.mode] ?? GAIN.entrainement;
+    const prime = primeDeFormat(d.format);
     const verse = new Map();
     try {
       // Un bot n'a pas de bourse, et lui en créer une inventerait un joueur.
@@ -705,7 +798,12 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
            partir quand ça tourne mal serait la façon la moins coûteuse de
            perdre, et le duel n’aurait plus d’enjeu dès le second but. */
         const aFuit = d.forfaits?.has(j.side);
-        const base = aFuit ? 0 : (gagne ? bareme.gagne : bareme.perdu);
+        /* La prime entre dans `base`, donc avant le double du club **et**
+           avant la part du KOP : ce que le groupe touche suit ce que son
+           membre a gagné, ce qui est exactement ce que « une part » veut
+           dire. Voir `primeDeFormat`. */
+        const base = aFuit ? 0
+          : Math.round((gagne ? bareme.gagne : bareme.perdu) * prime);
         const pourSonClub = clubs.has(userId);
         const montant = base * (pourSonClub ? DOUBLE_CLUB : 1);
         await q(`INSERT IGNORE INTO user_wallet (user_id) VALUES (?)`, [userId]);
@@ -720,7 +818,12 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
            joueur qui progresse deux fois plus vite, pour un choix fait à
            l'inscription. */
         /* Pas d’XP non plus pour un forfait : le niveau mesure le temps passé
-           à jouer, et quitter la salle n’en est pas. */
+           à jouer, et quitter la salle n’en est pas.
+
+           **Ni la prime de format.** Pour la même raison : un 3v3 ne demande
+           pas plus de temps qu’un 1v1, il demande plus de monde. Les
+           écharpes paient l’attente et la coordination ; le niveau, lui, ne
+           mesure que les parties jouées. */
         if (niveau && !aFuit) {
           const gain = (XP.duel[d.mode] ?? XP.duel.entrainement)
             + (gagne ? XP.victoire : 0);
@@ -1013,6 +1116,16 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       if (seuil < FORMATS[file[0].format]) {
         tenterAppariement(file[0].format, fixtureId, seuil);
       }
+      /* **Et à travers les formats.** Le repli ci-dessus fait descendre une
+         file dans **sa** clé ; il ne rapproche pas deux personnes qui
+         attendent sur le même match dans deux formats différents — le cas le
+         plus fréquent d’un soir creux. `tenterLarge` les rassemble.
+
+         Du plus grand au plus petit : quatre personnes qui peuvent faire un
+         2v2 ne doivent pas se retrouver à deux duels de 1v1. */
+      for (let k = Math.max(...Object.values(FORMATS)); k >= 1; k--) {
+        if (tenterLarge(fixtureId, k, t)) break;
+      }
     }
   }, 2000);
   veille.unref?.();
@@ -1121,7 +1234,10 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     });
   });
 
-  return { router, salles, files, filesParMatch, alertePour,
+  /* `accepte` est exporté pour les tests : la borne haute — « jamais plus
+     grand que ce qui a été demandé » — ne se voit pas depuis une socket, et
+     c’est pourtant elle qui empêche un 1v1 de finir dans un 5v5. */
+  return { router, salles, files, filesParMatch, alertePour, accepte,
            ouvrir, ouvrirAvecBots, tenterAppariement, butReel,
            stop: () => { clearInterval(veille); for (const s of salles.values()) clearInterval(s.timer); } };
 }
