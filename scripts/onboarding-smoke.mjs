@@ -101,6 +101,15 @@ check('au moins un Fanzzy peu commun ou mieux',
   check('les Fanzzy du paquet sont au premier âge',
     siens.every((f) => f.stage === 1)
     || (console.log('        âges :', siens.map((f) => `${f.id}/${f.stage}`).join(' ')), false));
+  /* **Le paquet dit qui il contient.** Il ne rendait que des identifiants :
+     la page affichait « TR1 » en gros, là où le joueur découvre le nom de son
+     premier supporter. Le serveur a le catalogue en mémoire ; le nom coûte
+     trois mots par carte et évite une requête de plus. */
+  const nommes = cartes.filter((c) => c.type === 'fanzzy');
+  check('chaque Fanzzy du paquet arrive avec son nom',
+    nommes.every((c) => c.nom && c.nom !== c.id)
+    || (console.log('        reçus :', nommes.map((c) => `${c.id}=${c.nom}`).join(' ')), false));
+
   check('et d’une série ouverte', siens.every((f) => f.set === 'TR')
     || (console.log('        séries :', siens.map((f) => `${f.id}/${f.set}`).join(' ')), false));
 }

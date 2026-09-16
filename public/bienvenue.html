@@ -149,6 +149,13 @@ input:focus{outline:none;border-color:var(--projo)}
    pose juste son ombre sur la carte. */
 .face.front .objet{width:112px;height:112px;object-fit:contain;
   filter:drop-shadow(0 4px 10px rgba(0,0,0,.7))}
+/* Le Fanzzy, la carte d'action, les écharpes. Leurs bibliothèques nomment
+   leur image 'illu' — c'est la classe qu'elles emploient partout ailleurs, et
+   on ne la renomme pas ici pour la seule commodité d'une feuille de style.
+   Plus grande que l'objet : un supporter est un personnage, pas un accessoire,
+   et c'est la première fois qu'on le voit. */
+.face.front .illu{width:150px;height:150px;object-fit:contain;border-radius:10px;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.75))}
 .newtag{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-family:var(--banner);
   font-size:11px;letter-spacing:.2em;color:var(--projo)}
 .burst{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:9}
@@ -463,10 +470,27 @@ function ouvrir() {
 
 /* ----------------------------------------------------- révélation */
 
+/**
+ * Ce qu'une carte montre au moment où elle se retourne.
+ *
+ * **Seul l'équipement était illustré.** Un Fanzzy affichait son identifiant —
+ * « TR1 » en gros — et une carte d'action son nom sur fond vide, alors que les
+ * dessins des uns et des autres existent depuis longtemps : `fanzzy-art.js`
+ * et `action-art.js` les servent partout ailleurs dans le jeu. Ils n'étaient
+ * pas chargés ici, et la page n'avait pas non plus le nom des Fanzzy.
+ *
+ * C'est la première chose qu'un joueur voit de sa collection. Elle doit
+ * ressembler à ce qu'il collectionne.
+ *
+ * Chaque dessin se retire tout seul s'il manque — voir les `onerror` des trois
+ * bibliothèques : une carte sans image reste une carte, jamais un carré vide.
+ */
 function faceCarte(c) {
   const coul = COUL[c.type];
   const info = {
-    fanzzy: () => ({ t: c.id, d: 'Un supporter rejoint ta collection.' }),
+    // Le nom vient du paquet lui-même : le serveur le joint depuis son
+    // catalogue, la page n'a rien à aller chercher.
+    fanzzy: () => ({ t: c.nom ?? c.id, d: 'Un supporter rejoint ta collection.' }),
     stuff: () => {
       const s = catalogue?.stuff.find((x) => x.id === c.id);
       return { t: s?.nom ?? c.id, d: s?.texte ?? '' };
@@ -475,18 +499,24 @@ function faceCarte(c) {
       const a = catalogue?.actions.find((x) => x.id === c.id);
       return { t: a?.nom ?? c.id, d: a?.texte ?? '' };
     },
-    scarves: () => ({ t: '', d: 'De quoi ouvrir ton prochain booster.', big: '+' + c.amount }),
+    scarves: () => ({ t: 'Écharpes', d: 'De quoi ouvrir ton prochain booster.',
+                      big: '+' + c.amount }),
   }[c.type]();
 
-  /* L'objet, quand c'en est un. C'est la première fois qu'un joueur voit une
-     pièce d'équipement — autant qu'il la voie. */
-  const objet = c.type === 'stuff' && window.TBF_STUFF
-    ? window.TBF_STUFF.illustration(c.id, 'objet') : '';
+  const dessin = {
+    fanzzy: () => window.FZART?.illustration?.({ id: c.id }, 'buste') ?? '',
+    stuff: () => window.TBF_STUFF?.illustration?.(c.id, 'objet') ?? '',
+    action: () => window.TBF_ACTION?.illustration?.(c.id, 'illu') ?? '',
+    // Les écharpes ont leur dessin comme le reste, et il vient du même endroit
+    // que celui de l'équipement — voir `stuff-art.js`.
+    scarves: () => window.TBF_STUFF?.illustrationGain?.('echarpes') ?? '',
+  }[c.type]() || '';
 
   return `<div class="face front" style="--c:${coul}">
     <div class="k">${NOM[c.type]}</div>
-    ${objet}
-    ${info.big ? `<div class="big">${info.big}</div>` : `<div class="t">${esc(info.t)}</div>`}
+    ${dessin}
+    ${info.big ? `<div class="big">${info.big}</div>` : ''}
+    <div class="t">${esc(info.t)}</div>
     <div class="d">${esc(info.d)}</div>
   </div>`;
 }
@@ -590,6 +620,12 @@ $('b4b').onclick = () => { location.href = '/equipes'; };
      carte, et la première carte se retourne avant qu'un script différé ait
      eu le droit de s'exécuter. -->
 <script src="/stuff-art.js"></script>
+<!-- Les Fanzzy et les cartes d'action ont leurs dessins comme l'équipement a
+     les siens — ils n'étaient simplement pas chargés ici. C'est la première
+     carte que le joueur voit de sa vie : elle ne peut pas être un rectangle
+     vide avec un identifiant dessus. Sans « defer », même raison. -->
+<script src="/fanzzy-art.js"></script>
+<script src="/action-art.js"></script>
 <script src="/fx.js" defer></script>
 <script src="/pwa.js" defer></script>
 </body>

@@ -263,7 +263,20 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
         [scarves, premier.id, JSON.stringify(actions), userId]);
 
       await conn.commit();
-      return { cartes, scarves, activeFanzzy: premier.id };
+
+      /* **Le paquet dit ce qu'il contient, pas seulement ses références.**
+         Il ne rendait que `{ type, id }` : la page n'avait aucun moyen de
+         nommer un Fanzzy, et affichait « TR1 » en gros au moment exact où le
+         joueur découvre son premier supporter. Le nom vient du catalogue, que
+         le serveur a déjà en mémoire — l'envoyer coûte trois mots par carte,
+         et lui éviter une requête de plus en vaut cent. */
+      const nommees = cartes.map((c) => {
+        if (c.type !== 'fanzzy') return c;
+        const f = parIdentifiant(c.id);
+        return { ...c, nom: f?.nom ?? c.id, set: f?.set ?? null, rar: f?.rar ?? null };
+      });
+
+      return { cartes: nommees, scarves, activeFanzzy: premier.id };
     } catch (e) {
       await conn.rollback();
       throw e;
