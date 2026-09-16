@@ -660,6 +660,12 @@ document.querySelectorAll('.nav button').forEach((b) => {
 
 (async () => {
   try {
+    /* **Le manifeste des etats d’abord.** Il porte les dessins des ages
+       superieurs — voir `adresse` dans fanzzy-art.js. Sans lui, le premier
+       rendu prend le repli, c’est-a-dire le visage du premier age, et rien ne
+       vient le corriger ensuite. Il ne leve jamais : absent, la page
+       s’affiche exactement comme avant. */
+    await Promise.resolve(window.TBF_ETATS?.charger?.()).catch(() => null);
     await load();
   } catch (e) {
     if (e.message === 'auth') return;

@@ -30,7 +30,7 @@
  * Sortie : 0 si tout va bien, 1 sinon — utilisable tel quel avant un déploiement.
  */
 import { readdir, readFile } from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { Script } from 'node:vm';
 import path from 'node:path';
 /* Les listes de référence viennent des modules eux-mêmes, pas d'une lecture au
@@ -717,6 +717,47 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
     if (manque.length) ko(nom, `dessine des cartes sans ${manque.join(' ni ')}`);
     else ok(nom, 'charge les trois bibliothèques de dessin');
   }
+}
+
+
+/* ============ combien de lignees montrent vraiment leur evolution
+
+   Faire grandir un supporter coute vingt-cinq echarpes au stade 2, puis
+   quatre-vingt-dix au stade 3. Ce qu'on achete est un dessin : un nom et des
+   bonus changent aussi, mais c'est le dessin qu'on montre aux autres.
+
+   Or il manque presque partout. Ce compte le dit a chaque passage, et il ne
+   fait **pas** echouer la livraison : c'est une production d'images en cours,
+   pas une faute de code. Un rouge permanent serait un rouge qu'on apprend a
+   ignorer, et le jour ou il signalerait autre chose, personne ne le verrait.
+
+   Deux systemes comptent : le fichier plat `<id>.png`, et le dossier d'etats
+   `<racine>/e<n>/base/neutre.png` que `adresse` sait desormais lire. Une
+   lignee est complete si chacun de ses ages a l'un ou l'autre. */
+
+{
+  const { DEX } = await import('../src/shared/fanzzy/dex.js');
+  const IMG = path.join(DOSSIER, 'img', 'fanzzy');
+  const suivi = new Set(DEX.map((f) => f.evo).filter(Boolean));
+  const evoDe = (id) => {
+    const m = /^[A-Z]+\d+([A-Z])$/.exec(String(id ?? ''));
+    return m ? m[1].charCodeAt(0) - 64 : 1;
+  };
+  const racineDe = (id) => /^([A-Z]+\d+)/.exec(String(id ?? ''))?.[1] ?? id;
+  const dessine = (id) => existsSync(path.join(IMG, `${id}.png`))
+    || existsSync(path.join(IMG, racineDe(id), `e${evoDe(id)}`, 'base', 'neutre.png'))
+    || existsSync(path.join(IMG, racineDe(id), `e${evoDe(id)}`, 'base', 'attente.png'));
+
+  const lignees = DEX.filter((f) => !suivi.has(f.id) && f.evo);
+  const completes = lignees.filter((f) => {
+    let c = f;
+    if (!dessine(f.id)) return false;
+    while (c?.evo) { c = DEX.find((x) => x.id === c.evo); if (c && !dessine(c.id)) return false; }
+    return true;
+  });
+  const ages = DEX.filter((f) => suivi.has(f.id));
+  ok('les dessins', `${completes.length}/${lignees.length} lignee(s) entierement dessinee(s)`
+    + ` — ${ages.filter((f) => dessine(f.id)).length}/${ages.length} age(s) superieur(s)`);
 }
 
 /* ================================ les liens qui ne mènent nulle part

@@ -43,6 +43,11 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <main id="app"><div class="spin" id="spin"></div><div id="page" style="display:none"></div></main>
 
 <script src="/fanzzy-art.js"></script>
+<!-- Le manifeste des etats : il porte les dessins des ages superieurs, rangee
+     par evolution. Sans lui, un Fanzzy grandi garde le visage de son premier
+     age — voir `adresse` dans fanzzy-art.js. Facultatif : absent, on retombe
+     sur le fichier plat, comme avant. -->
+<script src="/fanzzy-etats.js"></script>
 <script src="/fanzzy-fond.js"></script>
 <script src="/fanzzy-fiche.js"></script>
 <script>
@@ -53,7 +58,12 @@ const id = new URLSearchParams(location.search).get('id')
 
 /* Aucune croix ici : on n'est pas par-dessus quelque chose, on est *quelque
    part*. La fiche affiche donc sa flèche de retour vers le classeur. */
-window.TBF_FICHE.ouvrir(document.getElementById('page'), id).finally(() => {
+/* **Le manifeste d’abord.** La fiche ne se dessine qu’une fois : si elle
+   part avant que les etats soient la, elle prend le repli — le dessin du
+   premier age — et rien ne vient le corriger. Il ne leve jamais, et une
+   fiche sans manifeste s’affiche exactement comme avant. */
+Promise.resolve(window.TBF_ETATS?.charger?.()).catch(() => null).then(() =>
+  window.TBF_FICHE.ouvrir(document.getElementById('page'), id)).finally(() => {
   document.getElementById('spin').style.display = 'none';
   // `flex` et non `block` : la fiche tient dans l'écran par une colonne flex,
   // et un `display:block` posé ici la ferait retomber sur la hauteur de son
