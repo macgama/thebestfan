@@ -58,7 +58,12 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 // sur un catalogue vide.
 await chargerCatalogue(pool);
 await chargerTenues(pool);
-const D = createDecks({ pool, requireAuth: (r,_s,n)=>{ r.user={id:U}; n(); } });
+/* La journée du football, telle que le télétexte la sert. Nulle par défaut :
+   la plupart des contrôles n'en ont que faire, et le choix du match doit tenir
+   sans elle. Le dernier bloc la remplit. */
+let journee = null;
+const D = createDecks({ pool, requireAuth: (r,_s,n)=>{ r.user={id:U}; n(); },
+  jourDuFoot: () => journee });
 const app = express(); app.use('/api/deck', D.router);
 const http = createServer(app); await new Promise((r)=>http.listen(0,r));
 const base = `http://localhost:${http.address().port}`;
@@ -165,8 +170,16 @@ check('cinq cartes visibles', r.json.mainVisible === DECK_RULES.mainVisible);
 r = await call('/api/deck/match/1');
 check('match d\u2019hier refusé', r.json.error === 'duel.error.fixture_past');
 
+/* **Classé, c'est en cours — et non « aujourd'hui ».**
+
+   La règle d'avant faisait compter au classement un duel joué à dix heures du
+   matin sur une rencontre du soir : on poussait pour une tribune qui n'existait
+   pas encore. Un duel de tribunes se joue pendant le match, sinon il ne se
+   distingue en rien d'un entraînement, et c'est ce qu'il devient. */
 r = await call('/api/deck/match/2');
-check('match du jour : classé', r.json.mode === 'classe');
+check('match du jour pas encore commencé : entraînement', r.json.mode === 'entrainement');
+check('et la page dit pourquoi', /n’a pas commencé/.test(r.json.raison ?? '')
+  || (console.log('        elle dit :', r.json.raison), false));
 
 r = await call('/api/deck/match/4');
 check('match en cours : classé', r.json.mode === 'classe' && r.json.enCours === true);
@@ -263,6 +276,64 @@ check('le match du jour arrive en tête', r.json.matchs[0].mode === 'classe');
   check('mais la place juste après la dernière s’ouvre', r.json.deck?.fanzzy?.length === 2);
 }
 
+/* ===================================== la journée complète la base
+
+   La table `fixtures` ne connaît que les clubs suivis : le guetteur ne relève
+   qu'eux, c'est ainsi qu'il tient dans le quota. La liste des matchs support en
+   ignorait donc la moitié — « il en manque pas mal par rapport à la page des
+   matchs » — et donnait un statut périmé sur ceux qu'elle avait.
+
+   La journée du football, celle que lit la page des matchs, fait foi. Deux
+   choses à éprouver, et elles sont contraires : elle **ajoute** ce que la base
+   ignore, et elle **corrige** ce que la base croit savoir. */
+
+{
+  journee = {
+    groupes: [
+      // Le match 4 est en base, à la 20e minute. La journée le donne fini :
+      // il doit disparaître de la liste, et non y rester « en cours ».
+      { ligue: { id: 207, name: 'Super League', tier: 2 },
+        matchs: [{
+          id: 4, date: new Date(Date.now() - 2 * 3600e3).toISOString(),
+          status: 'FT', elapsed: 90, live: false, fini: true,
+          home: { id: 85, name: 'Sion', goals: 2 },
+          away: { id: 91, name: 'Bâle', goals: 1 },
+        }] },
+      // Et un match que la base n'a jamais vu, en cours.
+      { ligue: { id: 39, name: 'Premier League', tier: 1 },
+        matchs: [{
+          id: 5000, date: new Date(Date.now() - 30 * 60e3).toISOString(),
+          status: '1H', elapsed: 28, live: true, fini: false,
+          home: { id: 33, name: 'Manchester United', goals: 1 },
+          away: { id: 40, name: 'Liverpool', goals: 0 },
+        }] },
+    ],
+  };
+
+  r = await call('/api/deck/matchs?tous=1');
+  const noms = (r.json.matchs ?? []).map((m) => m.home_name);
+  check('un match que la base ignore paraît dans la liste',
+    noms.includes('Manchester United'));
+
+  const inconnu = r.json.matchs.find((m) => m.id === 5000);
+  check('il est classé, puisqu’il se joue', inconnu?.mode === 'classe');
+  check('avec sa compétition', inconnu?.league_name === 'Premier League');
+  check('et ce qui se joue passe devant', r.json.matchs[0]?.id === 5000);
+
+  check('un match que la journée dit fini quitte la liste',
+    !(r.json.matchs ?? []).some((m) => m.id === 4));
+
+  /* Et il faut pouvoir l'entrer : la liste le propose, `matchSupport` doit
+     l'accepter. Sans cela, on cliquerait sur un match pour s'entendre répondre
+     qu'il n'existe pas. */
+  r = await call('/api/deck/match/5000');
+  check('et on peut le choisir comme support', r.json.mode === 'classe');
+  check('avec ses deux clubs',
+    r.json.fixture?.home?.name === 'Manchester United'
+    && r.json.fixture?.away?.name === 'Liverpool');
+
+  journee = null;
+}
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end(); http.close();
 process.exit(failures ? 1 : 0);

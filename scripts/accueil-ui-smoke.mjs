@@ -169,6 +169,13 @@ app.get('/api/auth/me', (_q, s) => s.json({ user: { pseudo: 'Momo' } }));
 let direct = null;
 app.get('/api/virage/live', (_q, s) => s.json({ matchs: direct ? [direct] : [] }));
 
+/* Ce qui attend un duel. Une file ne vit que deux minutes : c'est ce qui en
+   fait un bon signal, et c'est ce que l'accueil doit dire — mais seulement
+   quand elle existe. */
+let attente = null;
+app.get('/api/nvn/attentes', (_q, s) => s.json({ attentes: attente ? [attente] : [],
+                                                 alerte: attente }));
+
 /* Le relevé d'événements, tel que la base le porte. L'accueil y lit le nom du
    buteur et sa minute — sans appel à l'API, le relevé du direct les a déjà
    écrits. Un talon rend le buteur pilotable, donc le but rejouable. */
@@ -215,6 +222,16 @@ const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
 const erreurs = [];
 
 /** Le premier dessin qui s'affiche pour de bon, ou '' si rien ne vient. */
+/** Attend qu'une condition devienne vraie, ou renonce. */
+async function jusqua(fn, ms = 4000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    if (await fn()) return true;
+    await new Promise((r) => setTimeout(r, 60));
+  }
+  return false;
+}
+
 async function jusquaSrc(page, ms = 1200) {
   const t0 = Date.now();
   while (Date.now() - t0 < ms) {
@@ -1325,6 +1342,48 @@ if (process.env.CAPTURE) {
     await p.close();
   }
 }
+
+/* ================================= quelqu'un attend un duel
+
+   Une file de duel ne vit que deux minutes, le temps qu'un joueur est devant
+   son écran : quand elle existe, quelqu'un attend **maintenant**, et le dire
+   ici est la seule chance qu'il trouve du monde.
+
+   Deux contrôles, et le second compte autant que le premier : le bouton le dit
+   quand c'est vrai, et **ne le dit pas** le reste du temps. Une alerte
+   permanente cesse d'être une alerte — c'est la faute qu'on vient de corriger
+   sur la pastille du Virage. */
+
+{
+  direct = null;                     // aucun match : le bouton propose le duel
+  attente = null;
+  let page = await ouvrir();
+  await new Promise((r) => setTimeout(r, 700));
+  check('sans personne en file, le bouton ne promet rien',
+    (await page.evaluate(() => document.getElementById('entrer').textContent.trim()))
+      === 'Prendre ma place');
+
+  attente = {
+    fixtureId: 1, format: '1v1', attendus: 1, camps: [1, 0], mode: 'classe',
+    clubs: [{ id: 85, name: 'Sion' }, { id: 91, name: 'Bâle' }],
+    mien: true, presents: 1, campQuiManque: 1, manque: 1,
+  };
+  page = await ouvrir();
+  const dit = await jusqua(async () =>
+    /attend/.test(await page.evaluate(() =>
+      document.getElementById('entrer').textContent)));
+  check('quand quelqu’un attend, le bouton le dit', dit
+    || (console.log('        il dit :', await page.evaluate(() =>
+      document.getElementById('entrer').textContent.trim())), false));
+  check('et il nomme le match',
+    /Sion – Bâle/.test(await page.evaluate(() =>
+      document.getElementById('entrer').textContent)));
+  check('et il mène au duel',
+    (await page.evaluate(() => document.getElementById('entrer').getAttribute('href')))
+      === '/duel-nvn');
+  attente = null;
+}
+
 await nav.close();
 http.close();
 await pool.end();

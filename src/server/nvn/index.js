@@ -126,6 +126,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       botDansMs: attenteAvantBots(support.mode),
     });
 
+    annoncerAttentes();
     if (contreBot) return ouvrirAvecBots(c);
     return tenterAppariement(format, Number(fixtureId));
   }
@@ -148,13 +149,18 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     ? reglage('duel.attente_classe_sec') * 1000 : BOT_APRES_MS);
 
   function quitterFile(userId) {
+    let parti = false;
     for (const [c, file] of files) {
       const i = file.findIndex((f) => f.userId === userId);
       if (i === -1) continue;
       file.splice(i, 1);
       if (!file.length) files.delete(c);
       else files.set(c, file);
+      parti = true;
     }
+    /* On n'annonce que si quelque chose a bougé : `quitterFile` est appelée à
+       chaque déconnexion, et la plupart ne concernent personne qui attendait. */
+    if (parti) annoncerAttentes();
   }
 
   /**
@@ -174,6 +180,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
     const equipes = camps.map((f) => f.splice(0, taille));
     cles.forEach((k, i) => { if (!camps[i].length) files.delete(k); });
+    // Les deux files se vident d'un coup : ceux qui regardaient doivent le voir.
+    annoncerAttentes();
     return ouvrir(equipes, equipes[0][0].support);
   }
 
@@ -191,6 +199,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     const taille = FORMATS[format];
     const humains = file.splice(0, taille);
     if (!file.length) files.delete(c);
+    annoncerAttentes();
 
     const equipes = [[], []];
     equipes[camp] = [...humains];
@@ -760,6 +769,97 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
   const router = express.Router();
 
+  /* ==================================================== qui attend, et où
+
+     Jusqu'ici, personne ne voyait rien. On choisissait un format, un match, un
+     camp, on appuyait, et on attendait **seul et aveugle** : deux joueurs
+     pouvaient attendre au même moment sur deux matchs différents sans jamais
+     se croiser. C'était la moitié manquante du duel par camps — le bonus du
+     camp délaissé ne sert à rien si personne ne voit qu'un camp est délaissé.
+
+     **On dit combien, et de quel côté. Jamais qui.** Cela suffit à décider, ne
+     révèle les habitudes de personne, et reste juste quand quelqu'un se
+     déconnecte entre deux affichages.
+
+     Rien n'est écrit en base : une file vit deux minutes, le temps qu'on est
+     devant l'écran. C'est un panneau d'affichage, pas un carnet de
+     rendez-vous.                                                            */
+
+  /** Les files regroupées par match et par format, telles qu'on les montre. */
+  function filesParMatch() {
+    const parMatch = new Map();
+    for (const file of files.values()) {
+      if (!file.length) continue;
+      const { format, camp, support } = file[0];
+      const fixture = support?.fixture;
+      if (!fixture?.id) continue;
+      const cle = `${fixture.id}:${format}`;
+      const e = parMatch.get(cle) ?? {
+        fixtureId: Number(fixture.id), format,
+        attendus: FORMATS[format] ?? 1,
+        camps: [0, 0],
+        clubs: [fixture.home, fixture.away],
+        mode: support.mode,
+      };
+      e.camps[camp] = file.length;
+      parMatch.set(cle, e);
+    }
+    return [...parMatch.values()];
+  }
+
+  /**
+   * L'annonce des files à tous ceux qui préparent un duel.
+   *
+   * Diffusée plutôt que sondée : entre « 2 t'attendent » et « 2 t'attendaient
+   * il y a trente secondes », il y a toute la différence entre une invitation
+   * et une déception. Le contenu est le même pour tout le monde — c'est la
+   * page qui sait quels clubs sont les siens, et qui n'a donc rien à demander.
+   */
+  const annoncerAttentes = () => io.emit('nvn:attentes', { attentes: filesParMatch() });
+
+  /**
+   * Ce qui mérite de déranger quelqu'un sur l'accueil.
+   *
+   * **Une seule attente, la plus pertinente**, et rien du tout le reste du
+   * temps : une alerte allumée en permanence cesse d'être une alerte, on
+   * vient de l'apprendre avec la pastille du Virage.
+   *
+   * L'ordre dit ce qui compte : d'abord un match d'un de mes clubs, puis la
+   * file la plus remplie — c'est celle qui partira le plus vite, donc celle où
+   * mon arrivée change quelque chose.
+   */
+  async function alertePour(userId) {
+    const attentes = filesParMatch().filter((a) => a.camps.some((n) => n > 0));
+    if (!attentes.length) return null;
+
+    const suivis = new Set((await q(
+      `SELECT team_id FROM user_follows WHERE user_id = ?`, [userId]))
+      .map((r) => r.team_id));
+
+    const avecMien = attentes.map((a) => ({
+      ...a,
+      mien: a.clubs.some((c) => suivis.has(c?.id)),
+      presents: a.camps[0] + a.camps[1],
+    }));
+    avecMien.sort((x, y) => (y.mien - x.mien) || (y.presents - x.presents));
+
+    const a = avecMien[0];
+    /* Le camp où il manque du monde : c'est celui qu'on propose de tenir, et
+       c'est là que la ferveur vaut davantage. À égalité, celui d'en face de
+       ceux qui attendent déjà. */
+    const manque = a.camps[0] <= a.camps[1] ? 0 : 1;
+    return { ...a, campQuiManque: manque, manque: Math.max(0, a.attendus - a.camps[manque]) };
+  }
+
+  router.get('/attentes', requireAuth, async (req, res) => {
+    try {
+      res.json({ attentes: filesParMatch(), alerte: await alertePour(req.user.id) });
+    } catch (e) {
+      console.error('[nvn] attentes', e.message);
+      res.status(503).json({ error: 'nvn.error.server' });
+    }
+  });
+
   router.get('/etat', requireAuth, (req, res) => {
     res.json({
       formats: Object.keys(FORMATS),
@@ -769,6 +869,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     });
   });
 
-  return { router, salles, files, ouvrir, ouvrirAvecBots, tenterAppariement, butReel,
+  return { router, salles, files, filesParMatch, alertePour,
+           ouvrir, ouvrirAvecBots, tenterAppariement, butReel,
            stop: () => { clearInterval(veille); for (const s of salles.values()) clearInterval(s.timer); } };
 }

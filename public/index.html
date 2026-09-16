@@ -1758,6 +1758,40 @@ async function jsonp(url, options) {
     minuteur = setTimeout(veiller, ms);
   };
 
+
+/* ------------------------------------------- quelqu'un attend un duel
+
+   Une file de duel ne vit que deux minutes, le temps qu'un joueur est devant
+   son écran. C'est précisément ce qui en fait un bon signal : quand elle
+   existe, **quelqu'un attend maintenant**, et le dire ici est la seule chance
+   qu'il trouve quelqu'un.
+
+   On ne change que le bouton, et seulement quand il y a lieu. Une pastille
+   permanente cesse d'être une alerte — on vient de l'apprendre avec celle du
+   Virage, allumée tous les soirs pour ne rien dire.
+
+   Le texte est écrit ici et non au serveur, comme partout ailleurs : le
+   serveur envoie des nombres et des noms de clubs, la page sait dans quelle
+   langue elle est. */
+async function alerteDuel() {
+  let a = null;
+  try {
+    const r = await jsonp('/api/nvn/attentes', { credentials: 'same-origin' });
+    a = r?.alerte ?? null;
+  } catch { return; }              // duels non montés : le bouton ne change pas
+  if (!a?.clubs?.length) return;
+
+  const combien = (a.camps?.[0] ?? 0) + (a.camps?.[1] ?? 0);
+  if (!combien) return;
+
+  const affiche = `${a.clubs[0]?.name ?? ''} – ${a.clubs[1]?.name ?? ''}`;
+  $('entrer').href = '/duel-nvn';
+  $('entrer').textContent = combien > 1
+    ? `${combien} t’attendent sur ${affiche}`
+    : `Quelqu’un t’attend sur ${affiche}`;
+  $('entrer').dataset.ton = 'or';
+}
+
   async function veiller() {
     if (document.hidden) { planifier(30_000); return; }
 
@@ -1784,6 +1818,8 @@ async function jsonp(url, options) {
       $('direct').href = '/matchs';
       $('entrer').href = '/duel-nvn';
       $('entrer').textContent = 'Prendre ma place';
+      // Et si quelqu'un attend vraiment, on le dit à sa place.
+      void alerteDuel();
 
       /* Le coup de sifflet final.
          Un match fini sort de la liste des matchs ouverts : sans ce détour,

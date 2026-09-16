@@ -6,6 +6,9 @@ import { jourISO } from '../../shared/jour.js';
 // Le club qu'on soutient dans une rencontre, et de quel côté il joue :
 // la même règle qu'au Virage et qu'au Duel, écrite une seule fois.
 import { clubParmi, campDe } from '../football/suivis.js';
+// La journée du football : la seule source complète de ce qui se joue
+// aujourd'hui. La table `fixtures` ne connaît que les clubs suivis.
+import { journeeParId, TERMINE } from '../football/journee.js';
 import { PALIERS } from '../../shared/niveau.js';
 
 /**
@@ -45,7 +48,11 @@ function prochainPalierFanzzy(actuel) {
 export const FORMATS = { '1v1': 1, '2v2': 2, '3v3': 3, '4v4': 4, '5v5': 5 };
 const LIVE = ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT'];
 
-export function createDecks({ pool, requireAuth, niveau = null }) {
+export function createDecks({ pool, requireAuth, niveau = null,
+                             /* Posée après coup par server.js : le télétexte
+                                se monte après les decks. Absente, on retombe
+                                sur la base — incomplète, jamais rien. */
+                             jourDuFoot = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -185,6 +192,11 @@ export function createDecks({ pool, requireAuth, niveau = null }) {
 
   /**
    * Décide si un match peut servir de support, et ce que vaut le duel.
+   *
+   * **La journée l'emporte sur la base.** La table `fixtures` ne connaît que
+   * les clubs suivis ; un match qu'elle ignore serait refusé alors qu'il se
+   * joue et que la liste vient de le proposer. Voir `football/journee.js`.
+   *
    * On compare des jours, pas des heures : un match programmé à 20h45
    * aujourd'hui doit pouvoir être choisi dès le matin.
    */
@@ -200,22 +212,42 @@ export function createDecks({ pool, requireAuth, niveau = null }) {
          JOIN teams a ON a.id = f.away_id
          LEFT JOIN leagues l ON l.id = f.league_id
         WHERE f.id = ?`, [fixtureId]);
-    if (!rows.length) throw fail('duel.error.fixture_unknown');
-    const f = rows[0];
+
+    const duJour = (await journeeParId(jourDuFoot)).get(Number(fixtureId));
+    if (!rows.length && !duJour) throw fail('duel.error.fixture_unknown');
+
+    const base = rows[0] ?? {};
+    const auj = new Date().toISOString().slice(0, 10);
+    const f = duJour ? {
+      id: duJour.id,
+      status_short: duJour.status,
+      elapsed: duJour.elapsed,
+      kickoff_at: duJour.date,
+      jour: String(duJour.date).slice(0, 10),
+      aujourdhui: auj,
+      home_id: duJour.home.id, home_name: duJour.home.name, home_logo: duJour.home.logo,
+      away_id: duJour.away.id, away_name: duJour.away.name, away_logo: duJour.away.logo,
+      league_name: duJour.leagueName,
+    } : base;
 
     // jourISO et pas String(...).slice(0, 10) : voir src/shared/jour.js. La
     // seconde forme comparait des noms de jours de la semaine et refusait un
     // match à venir comme s'il était passé.
     const jour = jourISO(f.jour);
-    const auj = jourISO(f.aujourdhui);
+    const ajd = jourISO(f.aujourdhui);
     const enCours = LIVE.includes(f.status_short);
-    const termine = ['FT', 'AET', 'PEN'].includes(f.status_short);
+    const termine = TERMINE.includes(f.status_short);
 
     // Un match terminé, ou d'un jour passé : refusé. On ne rejoue pas une
     // soirée qu'on n'a pas vécue.
-    if (termine || jour < auj) throw fail('duel.error.fixture_past');
+    if (termine || jour < ajd) throw fail('duel.error.fixture_past');
 
-    const mode = (jour === auj || enCours) ? 'classe' : 'entrainement';
+    /* **Classé, c'est en cours.** La règle disait « le match est aujourd'hui »,
+       et un duel joué à dix heures du matin comptait pour une rencontre du
+       soir : on poussait pour une tribune qui n'existait pas encore. Un duel de
+       tribunes se joue pendant le match, sinon il ne se distingue en rien d'un
+       entraînement — et c'est exactement ce qu'il devient. */
+    const mode = enCours ? 'classe' : 'entrainement';
 
     /* Le club soutenu, et donc le camp. La page en a besoin **avant**
        l'entrée en file : chez soi le camp est décidé et il n'y a rien à
@@ -242,10 +274,11 @@ export function createDecks({ pool, requireAuth, niveau = null }) {
       neutre: club.neutre,
       // L'explication est renvoyée au client : il ne doit pas avoir à deviner
       // pourquoi un duel ne compte pas.
-      raison: mode === 'classe'
-        ? (enCours ? 'Le match est en cours : ce duel comptera au classement.'
-                   : 'Match du jour : ce duel comptera au classement.')
-        : 'Match à venir : entraînement, sans effet sur le classement.',
+      raison: enCours
+        ? 'Le match est en cours : ce duel comptera au classement.'
+        : (jour === ajd
+          ? 'Le match n’a pas commencé : entraînement, sans effet sur le classement.'
+          : 'Match à venir : entraînement, sans effet sur le classement.'),
       // Ce match met-il en jeu un club suivi ? Le duel rapporte alors le
       // double. `userId` est facultatif : appelé sans lui — depuis la file du
       // NvN, qui ne veut que le support du duel — la question ne se pose pas.
@@ -278,21 +311,53 @@ export function createDecks({ pool, requireAuth, niveau = null }) {
         ORDER BY aujourdhui DESC, f.kickoff_at
         LIMIT 60`, args);
 
-    // Les clubs suivis, une fois pour toute la liste. Avec `tous=1` elle peut
-    // contenir soixante matchs, et une requête par ligne pour lire une table de
-    // deux entrées serait absurde.
     /* Triés — le club principal d'abord — parce que c'est cet ordre qui
        départage un derby, et que `clubParmi` compte dessus. */
     const suivis = await q(
       `SELECT team_id, is_main FROM user_follows WHERE user_id = ?
         ORDER BY is_main DESC, created_at`, [userId]);
+    const mesClubs = new Set(suivis.map((r) => r.team_id));
 
-    return rows.map((f) => {
+    const parId = new Map();
+    for (const f of rows) parId.set(Number(f.id), { ...f });
+
+    /* **La journée du football se superpose à la base.**
+     *
+     * La base ne connaît que les clubs suivis : la liste ignorait la moitié
+     * des rencontres en direct, et affichait « classé » sur des matchs dont
+     * elle croyait encore qu'ils n'avaient pas commencé. La journée a tout ce
+     * qui se joue aujourd'hui, et elle l'a juste ; la base garde les huit
+     * prochains jours, qu'elle seule connaît. Voir `football/journee.js`. */
+    for (const [id, m] of await journeeParId(jourDuFoot)) {
+      /* Un match fini n'est le support de rien : on ne rejoue pas une soirée.
+         On l'**efface** au lieu de l'ignorer : la base peut le croire encore en
+         cours, et l'ignorer laisserait sa ligne périmée en tête de liste. */
+      if (m.fini) { parId.delete(id); continue; }
+      parId.set(id, {
+        ...parId.get(id),
+        id,
+        status_short: m.status,
+        elapsed: m.elapsed,
+        kickoff_at: m.date,
+        home_goals: m.home.goals, away_goals: m.away.goals,
+        home_id: m.home.id, away_id: m.away.id,
+        home_name: m.home.name, home_logo: m.home.logo,
+        away_name: m.away.name, away_logo: m.away.logo,
+        league_name: m.leagueName,
+        tier: m.tier,
+      });
+    }
+
+    const liste = [...parId.values()].map((f) => {
       const club = clubParmi(suivis, f.home_id, f.away_id);
+      const enCours = LIVE.includes(f.status_short);
       return {
         ...f,
-        enCours: LIVE.includes(f.status_short),
-        mode: (f.aujourdhui || LIVE.includes(f.status_short)) ? 'classe' : 'entrainement',
+        enCours,
+        /* **Classé, c'est en cours.** Voir `matchSupport`, qui applique la
+           même règle — et qui fait autorité, puisque c'est lui qui décide au
+           moment de l'entrée en file. */
+        mode: enCours ? 'classe' : 'entrainement',
         // Pousser pour son club rapporte le double. Le dire **avant** le choix :
         // une règle qu'on ne découvre qu'en lisant son solde après coup ne pèse
         // sur aucune décision, et c'est pourtant là qu'elle doit peser.
@@ -301,7 +366,23 @@ export function createDecks({ pool, requireAuth, niveau = null }) {
         monCamp: campDe(club.teamId, f.home_id, f.away_id),
       };
     });
-  }
+
+    /* L'ordre, maintenant que la liste couvre le monde entier. Ce qui se joue
+       d'abord — c'est ce qu'on vient chercher — puis mes clubs, puis les
+       grandes compétitions, puis l'heure. Trié par heure seule, une finale de
+       Ligue des champions se retrouvait derrière un championnat U19. */
+    liste.sort((a, b) =>
+      (b.enCours - a.enCours) || (b.mien - a.mien)
+      || ((a.tier ?? 3) - (b.tier ?? 3))
+      || (new Date(a.kickoff_at) - new Date(b.kickoff_at)));
+
+    const visibles = tousLesClubs ? liste : liste.filter((f) => f.mien);
+
+    /* Soixante, comme avant : la requête s'arrêtait là, et la journée pourrait
+       en ajouter trois cents un samedi soir. Ce qui se joue est en tête, donc
+       ce qui tombe est ce qu'on n'allait pas choisir de toute façon. */
+    return visibles.slice(0, 60);  }
+
 
   /* ------------------------------------------------- placer depuis la fiche
 
