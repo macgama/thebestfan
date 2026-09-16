@@ -41,35 +41,71 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    les autres pages, et c'est ici qu'ils ont été réglés. */
 .spark{position:absolute;width:3px;height:3px;border-radius:50%;z-index:1;pointer-events:none;opacity:0}
 
-/* ------------------------------------------------------- vitrine */
+/* ------------------------------------------------------- vitrine
+
+   ## Elle tient dans la fenêtre, comme le hub
+
+   La vitrine est le premier écran du jeu, et le jeu est un écran qui ne défile
+   pas. Elle défilait pourtant dès qu'on lui a ajouté les matchs du jour et les
+   visages : on voyait le logo, la promesse, et il fallait faire glisser la
+   page pour trouver le bouton — le seul geste qu'on attend de quelqu'un qui
+   arrive.
+
+   Elle tient donc, et de deux façons qui se complètent :
+
+   **Tout ce qui prend de la hauteur se mesure en `vh`.** Chaque marge, chaque
+   retrait et chaque corps de texte est un `clamp(plancher, Xvh, plafond)` : le
+   plafond est le réglage d'origine, tenu sur un grand écran ; le plancher est
+   la limite en deçà de laquelle ça cesse d'être lisible. Entre les deux, la
+   page se resserre d'elle-même, sans palier visible.
+
+   **Ce qui reste en trop s'en va, dans un ordre décidé.** Le resserrement ne
+   suffit pas sur un écran court : il faut retirer. L'ordre est écrit plus bas,
+   du plus superflu au moins — la légende du compte, puis les sous-titres des
+   trois promesses, puis le troisième match, et ainsi de suite. Ce qui ne part
+   jamais : le logo, la promesse, le bouton, la mention légale.
+
+   `overflow-y:auto` reste malgré tout. Ce n'est pas une contradiction, c'est
+   la soupape : sur un écran de trois cents pixels, ou avec un corps de texte
+   forcé par le système, il vaudra toujours mieux faire défiler que rogner la
+   mention légale au ciseau.                                                 */
 .wrap{position:relative;z-index:3;flex:1;display:flex;flex-direction:column;overflow-y:auto}
-.pitch{margin-top:auto;padding:22px 22px 0;text-align:center}
-.embleme{width:94px;height:auto;display:block;margin:0 auto 14px;
+.pitch{margin-top:auto;padding:clamp(6px,1.8vh,22px) 22px 0;text-align:center}
+.embleme{width:clamp(44px,8.4vh,94px);height:auto;display:block;
+  margin:0 auto clamp(5px,1.4vh,14px);
   filter:drop-shadow(0 8px 30px rgba(245,195,59,.35));animation:flotte 5s ease-in-out infinite}
 @keyframes flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @media (prefers-reduced-motion:reduce){.embleme{animation:none}}
-.logo{font-family:var(--banner);font-weight:700;font-size:40px;letter-spacing:.1em;line-height:.95;
+.logo{font-family:var(--banner);font-weight:700;font-size:clamp(24px,4.1vh,40px);
+  letter-spacing:.1em;line-height:.95;
   text-shadow:0 4px 34px rgba(0,0,0,.95)}
 .logo em{font-style:normal;color:var(--projo)}
-.logo small{display:block;font-family:var(--ui);font-size:10px;letter-spacing:.34em;
-  opacity:.6;margin-top:11px;font-weight:400}
-.claim{font-family:var(--banner);font-size:19px;line-height:1.3;margin:22px 0 0;
+.logo small{display:block;font-family:var(--ui);font-size:clamp(8px,1.05vh,10px);
+  letter-spacing:.32em;opacity:.6;margin-top:clamp(4px,1.1vh,11px);font-weight:400}
+.claim{font-family:var(--banner);font-size:clamp(14px,2vh,19px);line-height:1.3;
+  margin:clamp(8px,2.1vh,22px) 0 0;
   text-shadow:0 2px 18px rgba(0,0,0,.9)}
 .claim b{color:var(--projo)}
-.sell{font-size:13px;opacity:.68;line-height:1.7;margin:12px auto 0;max-width:330px;
+.sell{font-size:clamp(10.5px,1.35vh,13px);opacity:.68;line-height:1.55;
+  margin:clamp(5px,1.2vh,12px) auto 0;max-width:330px;
   text-shadow:0 2px 14px rgba(0,0,0,.9)}
-.bullets{display:flex;gap:8px;padding:20px 18px 0}
-.bullet{flex:1;border:1px solid var(--trait);border-radius:11px;padding:11px 9px;
+.bullets{display:flex;gap:8px;padding:clamp(8px,1.9vh,20px) 18px 0}
+.bullet{flex:1;border:1px solid var(--trait);border-radius:11px;
+  padding:clamp(6px,1.15vh,11px) 9px;
   background:var(--panneau);backdrop-filter:blur(10px);backdrop-filter:blur(5px);text-align:center}
 .bullet b{display:block;font-family:var(--banner);font-size:11.5px;letter-spacing:.05em;color:var(--projo)}
 .bullet span{font-size:10px;opacity:.55;line-height:1.35;display:block;margin-top:4px}
 /* La plaque d'entrée de l'écran non connecté. Elle ne garde que sa marge : sa
    matière est celle de `ui.css`, comme partout ailleurs. */
-.cta{margin:22px 18px 10px}
-.second{display:block;text-align:center;padding:12px;color:var(--craie);opacity:.6;font-size:13px;
-  text-decoration:none}
+.cta{margin:clamp(10px,2.1vh,22px) 18px clamp(3px,1vh,10px)}
+.second{display:block;text-align:center;padding:clamp(6px,1.25vh,12px);color:var(--craie);
+  opacity:.6;font-size:13px;text-decoration:none}
 .second b{color:var(--projo)}
-.legal{text-align:center;font-size:10.5px;opacity:.32;padding:4px 24px 22px;line-height:1.7}
+/* `margin:0` : c'est un paragraphe, et les vingt et un pixels que le
+   navigateur lui donnait tout seul au-dessus et en dessous étaient le plus
+   gros poste de la vitrine après le logo. */
+.legal{text-align:center;font-size:10.5px;opacity:.32;margin:0;
+  padding:clamp(7px,1.3vh,13px) 24px clamp(8px,2.1vh,22px);line-height:1.6}
 .legal a{color:inherit}
 
 /* -------------------------------------- la preuve : le direct et les visages
@@ -90,13 +126,12 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    réseau, les scores non : on tient donc les visages jusqu'à ce que les
    scores sachent s'ils ont quelque chose à dire.
 
-   Sur la hauteur : `.pitch` porte un `margin-top:auto`. Tant que la vitrine
-   tient dans la fenêtre, ce qu'on insère au milieu repousse le haut et non le
-   bas — le bouton d'entrée ne bouge pas d'un pixel. C'est ce qui permet de
-   mettre le direct **au-dessus** de lui, là où il se lit, plutôt que sous la
-   ligne de flottaison où l'on ne descend pas.                              */
-.preuve{padding:20px 18px 0}
-.preuve h3{display:flex;align-items:center;gap:9px;margin:0 0 9px;
+   Sur la place : le direct est **au-dessus** du bouton, là où il se lit, et
+   les visages en dessous. `.pitch` porte un `margin-top:auto`, donc ce qu'on
+   insère au milieu repousse le haut et non le bas — le bouton ne descend
+   pas.                                                                     */
+.preuve{padding:clamp(8px,1.9vh,20px) 18px 0}
+.preuve h3{display:flex;align-items:center;gap:9px;margin:0 0 clamp(5px,.95vh,9px);
   font-family:var(--banner);font-weight:600;font-size:11px;letter-spacing:.2em;
   text-transform:uppercase;opacity:.5}
 .preuve h3::after{content:"";flex:1;height:1px;background:var(--trait)}
@@ -111,39 +146,84 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Les matchs se lisent comme sur la page des matchs — l'heure ou la minute à
    gauche, les deux clubs empilés à droite. Le lien « tous les matchs » y mène :
    y arriver et trouver une seconde mise en page serait arriver ailleurs. */
-.scores{display:flex;flex-direction:column;gap:6px}
-.sc{display:flex;align-items:center;gap:10px;padding:8px 11px;
+.scores{display:flex;flex-direction:column;gap:clamp(4px,.65vh,6px)}
+.sc{display:flex;align-items:center;gap:10px;padding:clamp(4px,.85vh,8px) 11px;
   border:1px solid var(--trait);border-radius:11px;background:var(--panneau);
   backdrop-filter:blur(5px)}
 .sc .quand{flex:none;width:42px;text-align:center;font-family:var(--banner);
   font-size:11px;letter-spacing:.04em;opacity:.5}
 .sc.live .quand{color:var(--flare);opacity:1}
-.sc .eq{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
-.sc .r{display:flex;align-items:center;gap:7px;font-size:12.5px;line-height:1.2}
+.sc .eq{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.sc .r{display:flex;align-items:center;gap:7px;line-height:1.25;
+  font-size:clamp(11px,1.32vh,12.5px)}
 .sc .r img{width:15px;height:15px;flex:none;object-fit:contain}
 .sc .r span{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .sc .r b{flex:none;font-family:var(--banner);font-size:14px;min-width:11px;text-align:right}
 /* Le perdant s'efface : le score se lit alors d'un coup, sans le relire. */
 .sc .r.perd{opacity:.42}
-/* Sur un écran court, le troisième match pousse le bouton d’entrée sous la
-   ligne de flottaison — et un bouton qu’il faut aller chercher n’en est plus
-   un. On en montre deux ; le lien « tous les matchs » est juste en dessous,
-   et le tri met de toute façon le plus vivant en premier. */
-@media (max-height:760px){.sc:nth-child(3){display:none}}
-.preuve .plus{display:block;text-align:center;padding:9px 0 0;text-decoration:none;
+.preuve .plus{display:block;text-align:center;padding:clamp(5px,.95vh,9px) 0 0;
+  text-decoration:none;
   font-family:var(--banner);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
   color:var(--projo);opacity:.75}
 
 /* Les visages. Des bustes et non des pleins-pieds : à cette taille un
    personnage en entier n'est plus qu'une silhouette, et ce qu'on montre ici
-   est précisément qu'ils ont chacun une tête. */
-.eventail{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
-@media (min-width:520px){.eventail{grid-template-columns:repeat(8,1fr)}}
-.eventail i{display:grid;place-items:center;aspect-ratio:1;overflow:hidden;
+   est précisément qu'ils ont chacun une tête.
+
+   **Une seule rangée, toujours.** Deux rangées de quatre coûtaient cent
+   pixels de plus qu'une rangée de huit pour la même chose dite : il y en a
+   beaucoup. Sur un téléphone la rangée passe à cinq, et les trois autres
+   partent — cinq visages de soixante pixels valent mieux que huit de
+   trente-cinq, où l'on ne distingue plus un chapeau d'une casquette. */
+.eventail{display:grid;grid-template-columns:repeat(8,1fr);gap:clamp(4px,.8vh,7px);
+  justify-items:center}
+.eventail i{width:100%;max-width:clamp(46px,9.8vh,100px);aspect-ratio:1;
+  display:grid;place-items:center;overflow:hidden;
   border:1px solid var(--trait);border-radius:12px;
   background:radial-gradient(circle at 50% 32%,rgba(245,195,59,.13),transparent 70%),var(--panneau)}
 .eventail img{width:100%;height:100%;object-fit:contain}
-.combien{text-align:center;font-size:11px;opacity:.4;margin:9px 0 0;line-height:1.5}
+@media (max-width:520px){
+  .eventail{grid-template-columns:repeat(5,1fr)}
+  .eventail i:nth-child(n+6){display:none}
+}
+.combien{text-align:center;font-size:clamp(10px,1.2vh,11px);opacity:.4;
+  margin:clamp(5px,.95vh,9px) 0 0;line-height:1.5}
+
+/* ## L'ordre dans lequel on retire
+
+   Du plus superflu au moins, et chaque palier est la hauteur en dessous de
+   laquelle la chose ne rentrait plus. Ils sont écrits ensemble, ici, parce
+   qu'un ordre de priorité éparpillé dans une feuille de style n'est plus un
+   ordre — c'est six décisions indépendantes qui finissent par se contredire.
+
+   Ne partent jamais, à aucune hauteur : le logo, la promesse, le bouton
+   d'entrée, la ligne « déjà une place ? » et la mention légale. Le reste est
+   de l'argumentaire, et un argumentaire qu'on ne peut pas lire d'un coup
+   d'œil n'argumente pas.                                                   */
+
+/* 1. La légende du compte : la rangée de visages dit déjà « il y en a
+      beaucoup », et elle le dit mieux qu'une phrase. */
+@media (max-height:1020px){.combien{display:none}}
+/* 2. Les sous-titres des trois promesses. Les trois mots en or se lisent
+      seuls — et les blocs qui suivent montrent ce que les sous-titres
+      expliquaient. */
+@media (max-height:960px){.bullet span{display:none}}
+/* 3. Le troisième match. Le tri met le plus vivant en premier, donc ce qui
+      part est toujours le moins intéressant des trois. */
+@media (max-height:900px){.sc:nth-child(3){display:none}}
+/* 4. Le lien « tous les matchs », puis le deuxième match. Un match en direct
+      et le bouton d'entrée, c'est encore la page qu'on voulait montrer. */
+@media (max-height:740px){
+  .preuve .plus{display:none}
+  .sc:nth-child(2){display:none}
+}
+/* 5. Les trois promesses en entier, et l'argumentaire sous le titre. À cette
+      hauteur il ne reste que le nom, la phrase d'accroche, un match et la
+      porte — et c'est encore une page qui se tient. */
+@media (max-height:620px){
+  .bullets{display:none}
+  .sell{display:none}
+}
 
 /* ============================================================== le hub
 
