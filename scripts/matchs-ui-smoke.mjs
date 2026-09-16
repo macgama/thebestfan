@@ -56,11 +56,31 @@ let etat = {
 };
 const luA = () => Date.now() - VU_IL_Y_A_MIN * 60_000;
 
+/* Une sélection nationale, servie **à la demande**. Elle ne figure pas dans la
+   journée ordinaire : les contrôles qui précèdent comptent les groupes et les
+   matchs, et une seconde compétition permanente les ferait tous mentir. */
+let selections = false;
+const MONDIAL = {
+  ligue: { id: 10, name: 'Friendlies', country: 'World', drapeau: null },
+  mien: false, live: false,
+  matchs: [{
+    id: 9902, date: new Date(Date.now() + 90 * 60_000).toISOString(),
+    status: 'NS', elapsed: null, extra: null, luA: luA(),
+    home: { id: 9, name: 'Spain', logo: '', goals: null },
+    away: { id: 768, name: 'Italy', logo: '', goals: null },
+    live: false, fini: false, mien: false,
+  }],
+};
+
 const jour = () => ({
   date: new Date().toISOString().slice(0, 10),
-  total: 1, enDirect: etat.live ? 1 : 0, stale: false,
+  total: selections ? 2 : 1, enDirect: etat.live ? 1 : 0, stale: false,
   groupes: [{
-    ligue: { id: 274, name: 'Liga 1', country: 'Indonesia' },
+    /* Le drapeau porte le code ISO dont la page tire « Indonésie ». Le serveur
+       le fait suivre depuis la réponse de l'API ; le talon fait de même, sans
+       quoi la page n'aurait rien à traduire et le contrôle n'éprouverait rien. */
+    ligue: { id: 274, name: 'Liga 1', country: 'Indonesia',
+             drapeau: 'https://media.api-sports.io/flags/id.svg' },
     mien: true, live: etat.live,
     matchs: [{
       id: MATCH, date: new Date(Date.now() - 25 * 60_000).toISOString(),
@@ -69,7 +89,7 @@ const jour = () => ({
       away: { id: 22, name: 'Persik Kediri', logo: '', goals: etat.away },
       live: etat.live, fini: etat.fini, mien: true,
     }],
-  }],
+  }, ...(selections ? [MONDIAL] : [])],
 });
 
 const match = () => ({
@@ -409,6 +429,75 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
   connecte = true;
   await page.goto(base + '/matchs', { waitUntil: 'networkidle0' });
   await jusqua(async () => await page.$('.liste .m') !== null);
+}
+
+/* ------------------------------------------ le pays, et la recherche par pays
+
+   Deux choses que le code ne dit pas :
+
+     1. **Le pays est écrit dans la langue du lecteur.** La page ne tient pas de
+        table de traduction : elle tire un code ISO du drapeau et laisse `Intl`
+        faire le reste. Si le serveur cessait de faire suivre le drapeau, tout
+        continuerait de fonctionner — en anglais, sans que rien ne casse. Ce
+        contrôle est le seul endroit où ça se verrait.
+
+     2. **Un terme français atteint une sélection nationale.** L'API nomme les
+        sélections en anglais : « Spain ». Taper « espagne » ne peut les
+        trouver que si la page retraduit le terme cherché vers l'anglais.      */
+
+{
+  /* La langue du joueur, posée **avant** que la page s'exécute : c'est bien la
+     clé que `compte.html` écrit, pas un réglage inventé pour la suite. */
+  await page.evaluateOnNewDocument(() => {
+    try { localStorage.setItem('tbf_locale', 'fr'); } catch { /* refusé : tant pis */ }
+  });
+  await page.goto(base + '/matchs', { waitUntil: 'networkidle0' });
+  await jusqua(async () => await page.$('.liste .m') !== null);
+
+  const paysVu = await page.$eval('.ligue .pays', (n) => n.textContent.trim());
+  check('le pays est écrit dans la langue du lecteur',
+    paysVu === 'Indonésie' || (console.log('        il dit :', paysVu), false));
+
+  const chercher = async (v) => {
+    await page.evaluate((x) => {
+      const q = document.getElementById('q');
+      q.value = x;
+      q.dispatchEvent(new Event('input'));
+    }, v);
+    await dodo(350);                       // le temps de la saisie différée
+    return page.evaluate(() => [...document.querySelectorAll('.liste .m')]
+      .map((m) => m.textContent.replace(/\s+/g, ' ').trim()));
+  };
+
+  check('chercher le pays dans sa langue donne ses compétitions',
+    (await chercher('indonés')).length === 1);
+  check('et le nom anglais marche toujours', (await chercher('indonesia')).length === 1);
+  /* Sans accent : personne ne compose « é » dans un champ de recherche, et un
+     champ qui l'exige ne rend rien sans dire pourquoi. */
+  check('l’accent n’est pas obligatoire', (await chercher('indonesie')).length === 1);
+  check('un pays qui ne joue pas ne rend rien', (await chercher('espagne')).length === 0);
+
+  /* La sélection espagnole, dans une compétition internationale. C'est le cas
+     que la recherche par pays devait ouvrir : un jour de trêve, aucun club
+     espagnol ne joue, et c'est précisément là qu'on cherche « Espagne ». */
+  await chercher('');                      // sinon le filtre survit au rechargement
+  selections = true;
+  await page.evaluate(() => charger());
+  await jusqua(async () => (await page.$('.liste .ligue')).length === 2);
+
+  const trouve = await chercher('espagne');
+  check('« espagne » trouve la sélection espagnole', trouve.length === 1);
+  check('et c’est bien son match', /Spain/.test(trouve[0] ?? ''));
+  check('un pays sans code ISO se dit quand même',
+    (await page.evaluate(() => [...document.querySelectorAll('.ligue .pays')]
+      .map((n) => n.textContent.trim()))).includes('International'));
+
+  /* On rend la journée telle qu'on l'a trouvée : la capture d'écran porte sur
+     la page ordinaire, pas sur une journée de sélections. */
+  await chercher('');
+  selections = false;
+  await page.evaluate(() => charger());
+  await jusqua(async () => (await page.$('.liste .ligue')).length === 1);
 }
 
 if (process.env.CAPTURE) {
