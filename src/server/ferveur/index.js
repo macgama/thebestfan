@@ -85,6 +85,74 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
   }
 
   /**
+   * Le match que la base ne connaît pas encore, posé depuis la journée.
+   *
+   * ## La panne
+   *
+   * La liste « ailleurs en direct » vient de `journeeParId` — le monde entier,
+   * en un appel. La table `fixtures`, elle, n'est remplie par le collecteur que
+   * pour les clubs suivis et les salles occupées. L'écran proposait donc des
+   * rencontres dont le serveur n'avait **jamais entendu parler** : on touchait
+   * « Martina Franca », `fixtureInfo` ne trouvait rien, `virage:join` répondait
+   * `no_fixture`, et la page affichait « Refusé par le serveur » tout en bas,
+   * hors du champ de vision. Vu du joueur : rien ne se passe.
+   *
+   * C'est la troisième fois que cette même cause frappe — l'écran des scores,
+   * la liste du duel, et maintenant l'entrée au Virage. Le motif est toujours
+   * le même : **ce qui s'affiche vient de la journée, ce qui s'ouvre vient de
+   * la base**, et les deux ne connaissent pas les mêmes matchs.
+   *
+   * ## Pourquoi on écrit, au lieu de monter la salle en mémoire
+   *
+   * Parce que tout ce qui suit l'entrée retombe en base : `virage_presence`
+   * porte un `fixture_id`, les classements par compétition joignent `fixtures`,
+   * et le collecteur ne suit que des matchs qu'il connaît. Une salle sans ligne
+   * aurait marché à l'écran et perdu tout ce qui en sort.
+   *
+   * La saison vient de la table des compétitions quand elle y est ; sinon de
+   * l'année du coup d'envoi. C'est une approximation assumée et bornée : elle
+   * ne sert qu'à ranger le match dans un classement, et la ligne est corrigée
+   * dès le premier passage du collecteur, qui, lui, tient la saison de l'API.
+   */
+  async function poserDepuisLaJournee(fixtureId) {
+    const m = (await journeeParId(jourDuFoot)).get(Number(fixtureId));
+    if (!m?.leagueId || !m.home?.id || !m.away?.id) return null;
+
+    await q(
+      `INSERT INTO leagues (id, name, country) VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE name = VALUES(name), country = VALUES(country)`,
+      [m.leagueId, m.leagueName ?? String(m.leagueId), m.country ?? null]);
+
+    for (const c of [m.home, m.away]) {
+      await q(
+        `INSERT INTO teams (id, name, logo) VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE name = VALUES(name), logo = VALUES(logo)`,
+        [c.id, c.name ?? String(c.id), c.logo ?? null]);
+    }
+
+    const [ligue] = await q(
+      'SELECT current_season FROM leagues WHERE id = ?', [m.leagueId]);
+    const saison = Number(ligue?.current_season)
+      || new Date(m.date ?? Date.now()).getUTCFullYear();
+
+    await q(
+      `INSERT INTO fixtures (id, league_id, season, home_id, away_id,
+                             home_goals, away_goals, status_short, elapsed,
+                             elapsed_extra, kickoff_at, polled_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(3))
+       ON DUPLICATE KEY UPDATE
+         home_goals = VALUES(home_goals), away_goals = VALUES(away_goals),
+         status_short = VALUES(status_short), elapsed = VALUES(elapsed),
+         elapsed_extra = VALUES(elapsed_extra), polled_at = NOW(3)`,
+      [Number(fixtureId), m.leagueId, saison, m.home.id, m.away.id,
+       m.home.goals ?? null, m.away.goals ?? null, m.status ?? 'NS',
+       m.elapsed ?? null, m.extra ?? null,
+       new Date(m.date ?? Date.now()).toISOString().slice(0, 19).replace('T', ' ')]);
+
+    return true;
+  }
+
+  /**
    * Ouvre la salle d'un match, une seule fois.
    *
    * La création demande un aller-retour en base. Sans mémoriser la promesse en
@@ -97,7 +165,11 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
     if (enCours.has(fixtureId)) return enCours.get(fixtureId);
 
     const p = (async () => {
-      const f = await fixtureInfo(fixtureId);
+      /* La base d’abord, la journée ensuite. Voir `poserDepuisLaJournee` :
+         l'écran propose le monde entier, la table ne connaît que les clubs
+         suivis, et il ne faut pas que la porte se referme là-dessus. */
+      let f = await fixtureInfo(fixtureId);
+      if (!f && await poserDepuisLaJournee(fixtureId)) f = await fixtureInfo(fixtureId);
       if (!f) return null;
       // Les couleurs des deux clubs, si on ne les a pas encore. La salle
       // s'ouvre sans les attendre : elles seront là au prochain match.

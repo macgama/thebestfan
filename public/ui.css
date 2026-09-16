@@ -1385,6 +1385,19 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
    qu'on ne voit pas passer se lit comme une note injuste. */
 .tbf-grille.tri i.rate{opacity:.34;box-shadow:inset 0 0 0 3px #E0402C}
 
+
+/* « C'EST FAIT ». Le bouton qui finit une épreuve avant sa minuterie.
+
+   Il est **sous** la grille et non à côté : le pouce qui vient de poser la
+   dernière case est déjà là, et un bouton qu'il faut aller chercher en haut de
+   l'écran coûterait le temps qu'il fait gagner. Voir `geste.js`. */
+.tbf-valider{margin:14px auto 0;display:block;background:none;color:var(--c,#F5C33B);
+  border:1px solid currentColor;border-radius:999px;padding:9px 20px;cursor:pointer;
+  font-family:var(--banner);font-size:11.5px;letter-spacing:.16em;
+  transition:transform .1s,background .12s}
+.tbf-valider:active{transform:translateY(2px)}
+.tbf-valider:hover{background:color-mix(in srgb,currentColor 14%,transparent)}
+
 /* Le compte. Un seul chiffre, très gros, au milieu — et rien d'autre : c'est
    la seule épreuve où l'écran doit devenir inutile en cours de route. */
 .tbf-compte{display:grid;place-items:center;gap:6px;width:100%;height:100%;

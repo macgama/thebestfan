@@ -1,5 +1,6 @@
 import express from 'express';
-import { XP, niveauPour, progression, droits, paliersEntre, ecarpesDuPalier, NIVEAU_MAX }
+import { XP, niveauPour, progression, droits, paliersEntre, ecarpesDuPalier, NIVEAU_MAX,
+  PALIERS }
   from '../../shared/niveau.js';
 
 /**
@@ -159,6 +160,27 @@ export function createNiveau({ pool, requireAuth }) {
       // Ce que rapporte chaque geste, pour que l'écran puisse l'annoncer sans
       // recopier le barème — une copie qui divergerait au premier réglage.
       gains: XP,
+      /* **Le chemin**, palier par palier : ce qui est derrière, ce qui vient.
+
+         Un joueur ne voyait de son niveau qu'une pastille sur l'accueil — un
+         chiffre, sans jauge, sans suite, sans rien qui dise à quoi il sert.
+         Monter d'un niveau n'était donc jamais attendu, et le palier qui ouvre
+         un troisième Fanzzy au deck arrivait comme une surprise chez ceux qui
+         le remarquaient.
+
+         On envoie la **donnée** — le rang et ce qu'il ouvre — et non la phrase :
+         c'est à l'écran de nommer, et au serveur de compter. Une page qui
+         porterait sa propre copie de la table promettrait un jour un déblocage
+         que le serveur refuse. */
+      paliers: PALIERS.map((p) => ({
+        niveau: p.niveau,
+        slots: p.slots ?? null,
+        deckFanzzy: p.deckFanzzy ?? null,
+        /* Les écharpes que ce palier verse en arrivant. Elles existent depuis
+           longtemps — voir `ecarpesDuPalier` — et rien ne les annonçait jamais
+           avant qu'elles tombent. */
+        echarpes: ecarpesDuPalier(p.niveau),
+      })),
     });
   });
 

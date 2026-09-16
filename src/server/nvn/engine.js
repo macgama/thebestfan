@@ -255,6 +255,10 @@ export class DuelNvN {
     this.seq = 0;
     this.termine = false;
     this.vainqueur = null;
+    /* Les camps partis en cours de route. Voir `forfait` : un perdant par
+       abandon ne touche rien, un perdant qui est allé au bout touche le
+       barème. La différence se décide ici, pas au moment de payer. */
+    this.forfaits = new Set();
     this.joueurs = new Map();
     this.rallies = [];               // fenêtres collectives ouvertes
     this.differes = [];              // poussées armées, qui frapperont plus tard
@@ -388,6 +392,20 @@ export class DuelNvN {
     this.rope = 0;
     evenements.push(this.ev('goal', { side, goals: [...this.goals] }));
     if (this.goals[side] >= RULES.goalsToWin) this.finir(side, 'buts', evenements);
+  }
+
+  /**
+   * Un camp abandonne : le duel se termine, et l’autre gagne.
+   *
+   * `forfaits` retient **qui** est parti, parce que la récompense en dépend :
+   * un perdant ordinaire touche le barème du perdu, un forfaitaire ne touche
+   * rien. Sans cette mémoire, `recompenser` ne pourrait pas les distinguer —
+   * il ne verrait qu’une défaite de plus.
+   */
+  forfait(side, evenements = []) {
+    this.forfaits.add(side);
+    this.finir(side ^ 1, 'forfait', evenements);
+    return evenements;
   }
 
   finir(vainqueur, raison, evenements) {

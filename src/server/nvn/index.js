@@ -112,23 +112,97 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
                 contreBot: Boolean(contreBot) });
     files.set(c, file);
 
-    const clubs = [support.fixture.home, support.fixture.away];
-    socket.emit('nvn:file', {
-      format, mode: support.mode, raison: support.raison,
-      camp: monCamp, neutre: club.neutre,
-      club: clubs[monCamp], enFaceClub: clubs[monCamp ^ 1],
-      attendus: taille, presents: file.length,
-      enFace: enFace.length,
-      // Ce qu'il manque **en face** : c'est cette phrase-là qui fait venir
-      // quelqu'un tenir le camp délaissé.
-      manqueEnFace: Math.max(0, taille - enFace.length),
-      renfort: Number(bonus.toFixed(2)),
-      botDansMs: attenteAvantBots(support.mode),
-    });
+    /* À toute la file, et non au seul arrivant : ceux qui attendaient déjà ne
+       voyaient jamais personne entrer. Voir `diffuserFile`. */
+    diffuserFile(format, Number(fixtureId));
 
     annoncerAttentes();
     if (contreBot) return ouvrirAvecBots(c);
     return tenterAppariement(format, Number(fixtureId));
+  }
+
+  /**
+   * L'état d'une file, tel qu'on le montre à l'un de ses membres.
+   *
+   * ## Ce qui manquait
+   *
+   * La salle d'attente était **trois phrases**. « 1 sur 3 », « il manque 2
+   * supporters de Vissel Kobe », « des bots complètent après 120 secondes ».
+   * C'est exact, et ça ne donne envie de rien : on attend deux minutes devant
+   * un compteur, sans savoir qui est là ni voir arriver personne.
+   *
+   * Elle montre maintenant **les deux tribunes**, place par place : qui est
+   * entré, avec le Fanzzy qu'il aligne, et combien de places restent vides de
+   * chaque côté. Attendre devient regarder se remplir.
+   *
+   * ## Pourquoi la perspective change selon le lecteur
+   *
+   * « Ma tribune » et « en face » ne désignent pas les mêmes gens selon le camp
+   * où l'on est. Le payload est donc construit **par destinataire** — c'est le
+   * seul moyen que « en haut, c'est moi » reste vrai pour tout le monde, ce qui
+   * est la convention de tous les écrans du jeu.
+   */
+  function etatFile(format, fixtureId, camp, support) {
+    const taille = FORMATS[format];
+    const mien = files.get(cle(format, fixtureId, camp)) ?? [];
+    const face = files.get(cle(format, fixtureId, camp ^ 1)) ?? [];
+    const clubs = [support.fixture.home, support.fixture.away];
+
+    /* Le Fanzzy **titulaire** : c'est lui qu'on voit entrer au coup d'envoi, et
+       c'est donc lui qui représente son supporter dans la salle d'attente. Un
+       joueur sans deck lisible n'a pas de portrait — ce n'est pas une erreur,
+       c'est quelqu'un qui n'a pas encore monté sa tribune. */
+    const vu = (f) => ({
+      userId: f.userId,
+      nom: f.nom,
+      fanzzy: f.loadout?.fanzzy?.[0]
+        ? { id: f.loadout.fanzzy[0].id, nom: f.loadout.fanzzy[0].nom }
+        : null,
+      /* Depuis quand il attend. Voir arriver quelqu'un est la moitié de
+         l'intérêt ; savoir qu'il est là depuis une minute est l'autre. */
+      depuis: f.depuis,
+    });
+
+    return {
+      format, mode: support.mode, raison: support.raison,
+      camp, attendus: taille,
+      club: clubs[camp], enFaceClub: clubs[camp ^ 1],
+      presents: mien.length, enFace: face.length,
+      manqueEnFace: Math.max(0, taille - face.length),
+      // Ce qui manque **de mon côté** : le message ne le disait pas, et dans un
+      // 3v3 entré seul il manque deux supporters ici avant d'en manquer trois
+      // en face. On ne peut pas inviter ce qu'on ne sait pas qu'il manque.
+      manqueChezMoi: Math.max(0, taille - mien.length),
+      tribunes: { moi: mien.map(vu), eux: face.map(vu) },
+      /* L'instant où les bots entrent, et non la durée restante : une durée
+         envoyée une fois est fausse une seconde plus tard, et la page ne
+         pouvait qu'afficher une phrase figée. Avec un instant, elle décompte. */
+      botA: Date.now() + attenteAvantBots(support.mode),
+      botDansMs: attenteAvantBots(support.mode),
+    };
+  }
+
+  /**
+   * Annonce l'état de la file à **tous** ceux qui y sont, des deux côtés.
+   *
+   * Il n'était envoyé qu'à celui qui venait d'entrer. Ceux qui attendaient
+   * déjà ne voyaient donc jamais personne arriver : leur écran restait sur
+   * « 1 sur 3 » jusqu'au coup d'envoi, et l'attente n'avait aucun signe de vie.
+   */
+  function diffuserFile(format, fixtureId) {
+    for (const camp of [0, 1]) {
+      const file = files.get(cle(format, fixtureId, camp)) ?? [];
+      for (const f of file) {
+        /* Le renfort est **celui de chacun**, figé à son entrée : le recalculer
+           ici donnerait à tout le monde celui du dernier arrivé. */
+        f.socket.emit('nvn:file', {
+          ...etatFile(format, fixtureId, camp, f.support),
+          neutre: f.neutre,
+          renfort: Number(f.bonus.toFixed(2)),
+          moi: f.userId,
+        });
+      }
+    }
   }
 
   /**
@@ -150,6 +224,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
   function quitterFile(userId) {
     let parti = false;
+    // Les files touchées, pour ne les rediffuser qu’une fois chacune.
+    const vidangees = new Set();
     for (const [c, file] of files) {
       const i = file.findIndex((f) => f.userId === userId);
       if (i === -1) continue;
@@ -157,10 +233,21 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       if (!file.length) files.delete(c);
       else files.set(c, file);
       parti = true;
+      /* Le format et le match, tirés de la clé : ceux qui restent doivent voir
+         la place se vider. Une salle d’attente où personne ne part jamais
+         montre des gens qui ne viendront pas. */
+      const [fmt, fix] = c.split(':');
+      vidangees.add(`${fmt}:${fix}`);
     }
     /* On n'annonce que si quelque chose a bougé : `quitterFile` est appelée à
        chaque déconnexion, et la plupart ne concernent personne qui attendait. */
-    if (parti) annoncerAttentes();
+    if (parti) {
+      for (const v of vidangees) {
+        const [fmt, fix] = v.split(':');
+        diffuserFile(fmt, Number(fix));
+      }
+      annoncerAttentes();
+    }
   }
 
   /**
@@ -533,7 +620,13 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
       for (const [userId, j] of humains) {
         const gagne = d.vainqueur !== null && j.side === d.vainqueur;
-        const base = gagne ? bareme.gagne : bareme.perdu;
+        /* **Le forfait ne paie pas.** Un perdant qui est allé au bout touche
+           le barème du perdu — il a joué, il a donné de la voix. Celui qui
+           quitte la salle en cours de route ne touche rien : sans cela,
+           partir quand ça tourne mal serait la façon la moins coûteuse de
+           perdre, et le duel n’aurait plus d’enjeu dès le second but. */
+        const aFuit = d.forfaits?.has(j.side);
+        const base = aFuit ? 0 : (gagne ? bareme.gagne : bareme.perdu);
         const pourSonClub = clubs.has(userId);
         const montant = base * (pourSonClub ? DOUBLE_CLUB : 1);
         await q(`INSERT IGNORE INTO user_wallet (user_id) VALUES (?)`, [userId]);
@@ -547,7 +640,9 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
            jouer : le doubler ferait d'un joueur qui suit trois gros clubs un
            joueur qui progresse deux fois plus vite, pour un choix fait à
            l'inscription. */
-        if (niveau) {
+        /* Pas d’XP non plus pour un forfait : le niveau mesure le temps passé
+           à jouer, et quitter la salle n’en est pas. */
+        if (niveau && !aFuit) {
           const gain = (XP.duel[d.mode] ?? XP.duel.entrainement)
             + (gagne ? XP.victoire : 0);
           await niveau.gagner(userId, gain);
@@ -624,9 +719,18 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
      * n'étaient donc nulle part, et « tes cinq derniers duels » aurait menti
      * par omission — en oubliant exactement les parties les plus serrées.
      *
-     * L'entraînement reste dehors, et c'est une autre décision : il ne compte
-     * pas, c'est là toute sa différence avec le duel classé. */
-    if (d.mode !== 'classe') return;
+     * ## Et l'entraînement aussi, désormais
+     *
+     * Il restait dehors, parce qu'il ne compte pas — c'est toute sa différence
+     * avec le duel classé. Mais « ne pas compter » et « ne pas exister » sont
+     * deux choses : un joueur qui a passé une soirée à s'entraîner ne trouvait
+     * aucune trace de sa soirée, et son parcours commençait au premier classé.
+     *
+     * La ligne porte donc sa **sorte** — `mode` et `format` — et ce sont les
+     * classements qui écartent l'entraînement, à la lecture, là où la règle se
+     * décide. C'est le sens de ces deux colonnes : ne rien perdre à
+     * l'écriture, et trier à la lecture.
+     */
     try {
       /* **Le duel rapporte de la ferveur**, la même que le Virage — le moteur
          la compte par joueur depuis le premier jour, elle n'était simplement
@@ -658,11 +762,12 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         await q(
           `INSERT IGNORE INTO duel_results
              (duel_id, user_id, opponent_id, outcome, goals_for, goals_against,
-              fixture_id, team_id, ferveur, ended_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(3))`,
+              fixture_id, team_id, ferveur, format, mode, ended_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(3))`,
           [d.id, userId, adverse?.userId ?? 'inconnu', issue,
            d.goals[j.side], d.goals[j.side ^ 1],
-           f?.id ?? null, m?.teamId ?? null, ferveur]);
+           f?.id ?? null, m?.teamId ?? null, ferveur, d.format ?? null,
+           d.mode ?? 'entrainement']);
       }
     } catch (e) {
       console.error('[nvn] enregistrement du résultat', e.message);
@@ -698,6 +803,51 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         if (!(e instanceof Cheat)) console.error('[nvn] file', e.message);
         socket.emit('nvn:error', { code: e.code ?? 'nvn.error.server' });
       }
+    });
+
+    /**
+     * Quitter un duel en cours : le **forfait**.
+     *
+     * ## Ce qui se passait avant
+     *
+     * Rien. On fermait l'onglet, la salle attendait quatre-vingt-dix secondes,
+     * puis retirait le joueur « sans le punir » — et le duel continuait à un
+     * contre zéro jusqu'au temps réglementaire. Celui qui restait gagnait sa
+     * partie en regardant une corde immobile pendant trois minutes, et celui
+     * qui partait ne perdait rien du tout.
+     *
+     * Partir sans conséquence est la meilleure façon de rendre une défaite
+     * gratuite : il suffit de sortir quand ça tourne mal.
+     *
+     * ## Ce qui se passe maintenant
+     *
+     * Le duel **se termine sur-le-champ**, avec le camp resté en place pour
+     * vainqueur. Celui qui part perd, et un perdant par forfait ne touche
+     * rien — ni écharpes, ni XP. Celui qui reste touche exactement ce qui était
+     * prévu : il a joué, il n'y est pour rien.
+     *
+     * La coupure réseau, elle, garde ses quatre-vingt-dix secondes de grâce :
+     * un tunnel n'est pas un abandon, et les confondre punirait le métro.
+     * C'est toute la différence entre ce message, que le joueur envoie
+     * exprès, et une déconnexion, qu'il subit.
+     */
+    socket.on('nvn:forfait', () => {
+      const u = moi();
+      const salle = maSalle();
+      if (!u || !salle || salle.duel.termine) return;
+      const m = salle.duel.joueurs.get(u.userId);
+      if (!m) return;
+      /* Les événements que `forfait` produit — dont le `over` qui annonce le
+         vainqueur — sont **collectés et diffusés**. Le premier jet appelait
+         `forfait(side)` sans recueillir son tableau : la fin de duel partait
+         dans un tableau jeté, et les deux écrans restaient sur la corde
+         pendant que la bourse, elle, était déjà payée. */
+      const evs = salle.duel.forfait(m.side);
+      evs.push({ seq: ++salle.duel.seq, t: 'forfait', userId: u.userId, side: m.side });
+      diffuser(salle, evs);
+      /* `fermer` verse et enregistre. Le camp qui part est déjà marqué : voir
+         `recompenser`, qui ne donne rien à un forfaitaire. */
+      fermer(salle);
     });
 
     socket.on('nvn:leave_queue', () => {

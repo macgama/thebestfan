@@ -676,7 +676,16 @@ function dessinerFiche() {
       <a class="aller ${virageOuvert ? '' : 'eteint'}" data-porte="virage"
          href="${virageOuvert ? `/virage?match=${f.id}` : '#'}">GRAND VIRAGE
         <small>${virageOuvert ? 'pousser avec la tribune' : 'pendant le match seulement'}</small></a>
-      <a class="aller" data-porte="duel" href="/duel-nvn">DUEL<small>tribune contre tribune</small></a>
+      <!-- **Le match voyage avec le lien.** Le bouton menait à « /duel-nvn »
+           tout court : on arrivait sur la liste de tous les matchs jouables,
+           et il fallait y retrouver celui qu’on venait de quitter. Le virage
+           transmettait déjà le sien ; le duel, non, sans autre raison qu’un
+           oubli. La page de duel sait lire « ?match= » depuis toujours.
+
+           Pas d’accent grave ici : ce balisage vit dans un gabarit de chaîne
+           JavaScript, et un accent grave le referme. C’est la faute que
+           verif-pages guette, et elle vient de se produire. -->
+      <a class="aller" data-porte="duel" href="/duel-nvn?match=${f.id}">DUEL<small>tribune contre tribune</small></a>
     </div>
     <div class="souspage" id="souspage">
       <button data-s="fil" class="${FICHE.volet === 'fil' ? 'on' : ''}">LE FIL</button>

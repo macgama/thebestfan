@@ -41,6 +41,11 @@ export function createClassements({ pool, requireAuth }) {
     return valeur;
   }
 
+  /* Uniquement pour les tests : un classement est mémorisé deux minutes, et
+     une suite qui écrit des lignes puis relit obtient sinon l'état d'avant —
+     un rouge qui ne parle de rien. Même rôle que `oublier` du catalogue. */
+  function oublier() { cache.clear(); }
+
   /** Fenêtre : la saison en cours, ou les trente derniers jours. */
   const depuis = (periode) => (periode === 'mois'
     ? 'AND vp.last_push_at > (NOW(3) - INTERVAL 30 DAY)' : '');
@@ -96,7 +101,7 @@ export function createClassements({ pool, requireAuth }) {
               ROUND(100 * SUM(dr.outcome = 'win') / COUNT(*)) AS taux
          FROM duel_results dr
          JOIN users u ON u.public_id = dr.user_id
-        WHERE u.status = 'active'
+        WHERE u.status = 'active' AND dr.mode = 'classe'
         GROUP BY u.public_id, u.pseudo
        HAVING joues >= 3
         ORDER BY gagnes DESC, taux DESC
@@ -121,7 +126,13 @@ export function createClassements({ pool, requireAuth }) {
      pousser sur un match dont aucun club n'est le sien — compte pour lui-même
      et pour la compétition, mais sa ligne porte `team_id` nul : elle ne
      remonte ni à une tribune ni à un KOP, dont il n'est pas membre. C'est la
-     règle du jeu, et elle est écrite ici en une condition de jointure. */
+     règle du jeu, et elle est écrite ici en une condition de jointure.
+
+     **L'entraînement ne compte pas.** Il s'écrit désormais — un joueur doit
+     retrouver ses soirées dans son parcours — mais il ne rapporte rien à
+     personne : c'est toute sa différence avec le duel classé. Le tri se fait
+     ici, à la lecture, et non à l'écriture. Écarter ces parties au moment de
+     les enregistrer aurait rendu le classement juste et le parcours faux. */
 
   const SOURCE = `
     SELECT vp.user_id, vp.team_id, vp.ferveur
@@ -132,7 +143,7 @@ export function createClassements({ pool, requireAuth }) {
     SELECT dr.user_id, dr.team_id, dr.ferveur
       FROM duel_results dr
       JOIN fixtures f ON f.id = dr.fixture_id
-     WHERE f.league_id = ? AND f.season = ?`;
+     WHERE f.league_id = ? AND f.season = ? AND dr.mode = 'classe'`;
 
   /**
    * La saison à classer, quand la page n'en demande pas.
@@ -294,7 +305,7 @@ export function createClassements({ pool, requireAuth }) {
 
     const [duels] = await q(
       `SELECT SUM(outcome = 'win') AS gagnes, COUNT(*) AS joues
-         FROM duel_results WHERE user_id = ?`, [userId]);
+         FROM duel_results WHERE user_id = ? AND mode = 'classe'`, [userId]);
 
     return {
       ferveur: Number(ferveur.f), matchs: ferveur.m,
@@ -302,6 +313,165 @@ export function createClassements({ pool, requireAuth }) {
       sur: total.n,
       duels: { gagnes: Number(duels.gagnes ?? 0), joues: Number(duels.joues ?? 0) },
     };
+  }
+
+  /* ================================================== le parcours d'un joueur
+
+     « Qu'est-ce que j'ai joué, et qu'est-ce que ça m'a rapporté ? »
+
+     Le jeu savait répondre à tout le monde — les classements — et à personne en
+     particulier. Un joueur n'avait aucun moyen de retrouver sa soirée : ni la
+     liste de ses parties, ni ce que chacune avait donné, ni même combien il en
+     avait joué. Tout était en base depuis le premier jour, et rien ne le
+     lisait.
+
+     ## Une monnaie, deux façons de la gagner
+
+     Le Grand Virage et le Duel rapportent la même chose — de la ferveur — et
+     c'est ce qui permet de les mettre dans la même liste et de les additionner.
+     Ce qui les distingue est la **sorte** de partie : le virage, et les quatre
+     sortes de duel (entraînement ou classé, 1v1 ou 2v2). On les compte donc
+     séparément et on les totalise ensemble.
+
+     ## Pourquoi deux requêtes et non une vue
+
+     Le décompte parcourt tout le passé ; la liste n'en montre que vingt lignes.
+     Les mêmes lignes servent deux questions de tailles très différentes, et une
+     seule requête aurait obligé à choisir laquelle des deux faire mal. */
+
+  /**
+   * Ce qu'il a joué, par sorte, depuis toujours.
+   *
+   * `mode` et `format` viennent de `duel_results` (voir `sql/historique.sql`).
+   * Le format est nul pour les parties d'avant ces colonnes : on les range sous
+   * « duel », sans inventer un format qu'on ne connaît pas.
+   */
+  async function statsDe(userId) {
+    const duels = await q(
+      `SELECT mode, format,
+              COUNT(*)                   AS joues,
+              SUM(outcome = 'win')       AS gagnes,
+              SUM(outcome = 'draw')      AS nuls,
+              SUM(outcome = 'loss')      AS perdus,
+              COALESCE(SUM(ferveur), 0)  AS ferveur,
+              COALESCE(SUM(goals_for), 0)     AS pour,
+              COALESCE(SUM(goals_against), 0) AS contre
+         FROM duel_results
+        WHERE user_id = ?
+        GROUP BY mode, format`, [userId]);
+
+    const [virage] = await q(
+      `SELECT COUNT(*) AS matchs, COALESCE(SUM(ferveur), 0) AS ferveur
+         FROM virage_presence WHERE user_id = ?`, [userId]);
+
+    const sortes = duels.map((d) => ({
+      jeu: 'duel',
+      mode: d.mode,
+      format: d.format ?? null,
+      joues: Number(d.joues),
+      gagnes: Number(d.gagnes), nuls: Number(d.nuls), perdus: Number(d.perdus),
+      ferveur: Number(d.ferveur),
+      buts: { pour: Number(d.pour), contre: Number(d.contre) },
+    }));
+    if (Number(virage?.matchs ?? 0) > 0) {
+      sortes.push({ jeu: 'virage', mode: null, format: null,
+        joues: Number(virage.matchs), ferveur: Number(virage.ferveur) });
+    }
+
+    /* Le total ne s'additionne pas à l'écran : une page qui refait la somme la
+       referait mal le jour où l'entraînement cesse de compter, ou commence. */
+    return {
+      sortes,
+      total: {
+        parties: sortes.reduce((n, s) => n + s.joues, 0),
+        ferveur: sortes.reduce((n, s) => n + s.ferveur, 0),
+        /* La ferveur **classée** à part : c'est elle seule qui pèse dans les
+           classements, et les deux nombres côte à côte disent la règle mieux
+           qu'une phrase. */
+        ferveurClassee: sortes
+          .filter((s) => s.jeu === 'virage' || s.mode === 'classe')
+          .reduce((n, s) => n + s.ferveur, 0),
+      },
+    };
+  }
+
+  /**
+   * Ses dernières parties, duels et virages mêlés, la plus récente d'abord.
+   *
+   * `avant` est l'horodatage de la dernière ligne reçue : c'est une pagination
+   * par curseur et non par numéro de page. Deux parties peuvent finir pendant
+   * qu'on lit, et un `OFFSET` en rendrait une deux fois et en sauterait une
+   * autre — exactement sur l'écran où l'on compte ce qu'on a fait.
+   *
+   * Les deux moitiés sont tirées séparément puis fusionnées : une `UNION` aurait
+   * obligé les deux à porter les mêmes colonnes, donc à inventer un `outcome`
+   * pour le virage et un `camp` pour le duel.
+   */
+  async function historiqueDe(userId, { limite = 20, avant = null } = {}) {
+    const n = Math.min(50, Math.max(1, Number(limite) || 20));
+    const borne = avant ? new Date(avant) : null;
+    const filtre = borne && !Number.isNaN(borne.getTime())
+      ? borne.toISOString().slice(0, 23).replace('T', ' ') : null;
+
+    const match = `
+        LEFT JOIN fixtures f ON f.id = %.fixture_id
+        LEFT JOIN teams  h ON h.id = f.home_id
+        LEFT JOIN teams  a ON a.id = f.away_id
+        LEFT JOIN leagues l ON l.id = f.league_id`;
+
+    const duels = await q(
+      `SELECT dr.ended_at AS quand, dr.outcome, dr.goals_for, dr.goals_against,
+              dr.ferveur, dr.mode, dr.format, dr.team_id,
+              f.id AS fixture_id, f.home_id, f.away_id, l.name AS competition,
+              h.name AS domicile, h.logo AS domicile_logo,
+              a.name AS exterieur, a.logo AS exterieur_logo
+         FROM duel_results dr ${match.split('%').join('dr')}
+        WHERE dr.user_id = ? ${filtre ? 'AND dr.ended_at < ?' : ''}
+        ORDER BY dr.ended_at DESC
+        LIMIT ${n}`, filtre ? [userId, filtre] : [userId]);
+
+    const virages = await q(
+      `SELECT vp.joined_at AS quand, vp.ferveur, vp.side, vp.team_id,
+              f.id AS fixture_id, f.home_id, f.away_id, l.name AS competition,
+              h.name AS domicile, h.logo AS domicile_logo,
+              a.name AS exterieur, a.logo AS exterieur_logo
+         FROM virage_presence vp ${match.split('%').join('vp')}
+        WHERE vp.user_id = ? ${filtre ? 'AND vp.joined_at < ?' : ''}
+        ORDER BY vp.joined_at DESC
+        LIMIT ${n}`, filtre ? [userId, filtre] : [userId]);
+
+    const ligne = (r, jeu) => ({
+      jeu,
+      quand: r.quand,
+      ferveur: Number(r.ferveur ?? 0),
+      mode: r.mode ?? null,
+      format: r.format ?? null,
+      issue: r.outcome ?? null,
+      score: jeu === 'duel'
+        ? { pour: Number(r.goals_for ?? 0), contre: Number(r.goals_against ?? 0) } : null,
+      /* Le camp du virage se dit en club et non en 0/1 : « tu poussais pour le
+         FC Sion » se lit, « side: 0 » se décode. */
+      pour: r.team_id
+        ? (r.team_id === r.home_id ? r.domicile : r.exterieur)
+        : (r.side === 1 ? r.exterieur : r.side === 0 ? r.domicile : null),
+      neutre: !r.team_id,
+      match: r.fixture_id ? {
+        id: r.fixture_id, competition: r.competition ?? null,
+        domicile: r.domicile, domicileLogo: r.domicile_logo,
+        exterieur: r.exterieur, exterieurLogo: r.exterieur_logo,
+      } : null,
+    });
+
+    const tout = [...duels.map((r) => ligne(r, 'duel')),
+                  ...virages.map((r) => ligne(r, 'virage'))]
+      .sort((x, y) => new Date(y.quand) - new Date(x.quand))
+      .slice(0, n);
+
+    /* `suite` porte le curseur de la page suivante, et vaut `null` quand il n'y
+       a plus rien : c'est à la réponse de le dire, pas à la page de le deviner
+       en comparant des longueurs. */
+    return { lignes: tout,
+             suite: tout.length === n ? tout[tout.length - 1].quand : null };
   }
 
   /* ---------------------------------------------------------- routes */
@@ -353,6 +523,27 @@ export function createClassements({ pool, requireAuth }) {
   router.get('/moi', requireAuth, safe(async (req, res) =>
     res.json(await maPlace(req.user.id))));
 
+  /**
+   * Le parcours du joueur : ce qu’il a joué, et ce que ça lui a rapporté.
+   *
+   * Les statistiques et la première page d’historique arrivent ensemble : le
+   * profil les montre côte à côte, et deux appels pour un seul écran feraient
+   * apparaître la moitié avant l’autre.
+   *
+   * `avant` demande la suite. Aucun cache : c’est le seul écran où le joueur
+   * vient vérifier ce qu’il vient de faire, et deux minutes de retard y
+   * ressemblent à une partie perdue.
+   */
+  router.get('/parcours', requireAuth, safe(async (req, res) => {
+    const avant = req.query.avant ? String(req.query.avant) : null;
+    const [stats, histoire] = await Promise.all([
+      avant ? null : statsDe(req.user.id),
+      historiqueDe(req.user.id, { avant, limite: req.query.limite }),
+    ]);
+    res.set('cache-control', 'no-store');
+    res.json({ ...(stats ?? {}), ...histoire });
+  }));
+
   return { router, supporters, tribunes, duellistes, maPlace,
-           competition, maPlaceDans, saisonDe };
+           competition, maPlaceDans, saisonDe, statsDe, historiqueDe, oublier };
 }
