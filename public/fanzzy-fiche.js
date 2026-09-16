@@ -513,6 +513,14 @@
      * plus loin ; le lui dire avant, c'est une décision.
      */
     function placer() {
+      /* **`d.fanzzy.nom` et non `f.nom`.** `f` est le paramètre de
+         `peindre(f)` — l'âge atteint —, et il n'existe pas ici. La ligne
+         levait donc un `ReferenceError` au premier appui, avant même que la
+         boîte s'ouvre : le bouton ne faisait **rien**, sans un mot, depuis
+         l'écran qui dit « emmener en duel ». Une erreur dans un écouteur ne
+         remonte nulle part — elle part dans la console et la page continue
+         comme si de rien n'était. */
+      const nom = d.fanzzy.nom;
       const t = d.tribune;
       if (!t?.places?.length) { dire('La tribune n’est pas accessible.'); return; }
 
@@ -533,7 +541,7 @@
       }).join('');
 
       window.TBF_DIALOGUE?.confirmer({
-        titre: ici >= 0 ? 'CHANGER DE PLACE ?' : `${f.nom.toUpperCase()} EN DUEL ?`,
+        titre: ici >= 0 ? 'CHANGER DE PLACE ?' : `${nom.toUpperCase()} EN DUEL ?`,
         texte: 'Le titulaire entre au coup d’envoi. Les remplaçants attendent '
           + 'qu’une carte Changement les fasse entrer.',
         corps: `<div class="tbf-dial-places">${choix}</div>`,
@@ -577,8 +585,8 @@
                 : 'Impossible pour le moment.');
             return false;
           }
-          dire(voulue === 0 ? `${f.nom} est titulaire.`
-            : `${f.nom} entre en remplaçant ${voulue}.`);
+          dire(voulue === 0 ? `${nom} est titulaire.`
+            : `${nom} entre en remplaçant ${voulue}.`);
           window.FX?.flash?.('#1E9E6A');
           await recharger();
           return true;

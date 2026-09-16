@@ -510,6 +510,114 @@ check('les Fanzzy non possédés portent leur nom',
   await fiche.close();
 }
 
+
+/* --------------------------------- les onglets du classeur, même gabarit
+
+ * « PYRO n'a pas les mêmes proportions que les autres. » Il en a huit,
+ * `.chips` est un `display:flex` qui défile, et rien ne portait `flex:none` :
+ * les boutons se **rétrécissent** pour tenir dans la largeur avant que le
+ * défilement ne serve à quoi que ce soit. Le rétrécissement est proportionnel
+ * à la largeur de départ, donc chaque onglet perd une quantité différente —
+ * le texte se serre contre les bords, et pas également.
+ *
+ * On mesure le blanc réel de chaque côté du texte. Une page où tous les
+ * onglets ont le même gabarit a le même blanc partout.
+ */
+{
+  const onglets = await page.evaluate(() => {
+    const p = document.getElementById('filters');
+    return [...p.querySelectorAll('.filt')].map((b) => {
+      const r = b.getBoundingClientRect();
+      const t = document.createRange();
+      t.selectNodeContents(b);
+      const m = t.getBoundingClientRect();
+      return { nom: b.textContent.trim(),
+        gauche: Math.round((m.left - r.left) * 10) / 10,
+        droite: Math.round((r.right - m.right) * 10) / 10 };
+    });
+  });
+  const marges = onglets.flatMap((o) => [o.gauche, o.droite]);
+  const ecart = Math.max(...marges) - Math.min(...marges);
+  check('tous les onglets du classeur ont le même blanc autour du mot',
+    ecart <= 1
+    || (console.log('        écart de', ecart, 'px :',
+      onglets.map((o) => `${o.nom} ${o.gauche}/${o.droite}`).join(', ')), false));
+  check('et aucun n’est rogné', onglets.every((o) => o.gauche >= 6 && o.droite >= 6)
+    || (console.log('        ', JSON.stringify(onglets)), false));
+}
+
+/* ------------------------------------ emmener ce Fanzzy en duel, vraiment
+
+ * Le bouton le plus important de la fiche, et celui que rien n'éprouvait. Il
+ * ouvre une question — titulaire ou remplaçant ? — puis écrit dans le deck.
+ * Trois pièces indépendantes doivent tenir ensemble : le bouton, la boîte de
+ * dialogue, et `/api/deck/placer`. Deux d'entre elles peuvent disparaître
+ * **sans aucune erreur** : `window.TBF_DIALOGUE?.confirmer` sur un module
+ * absent ne fait rien du tout, et une tribune sans place ouverte non plus.
+ *
+ * « Il ne se passe rien » est exactement la forme que prend cette panne, et
+ * c'est la seule qu'aucune lecture du code ne rattrape. On appuie donc.
+ */
+{
+  const fiche = await nav.newPage();
+  fiche.on('pageerror', (e) => erreurs.push(`fiche duel : ${e.message}`));
+  await fiche.setViewport({ width: 400, height: 880 });
+  await fiche.goto(`${base}/fanzzy/${ILLUSTRE}`, { waitUntil: 'networkidle0' });
+  await fiche.waitForSelector('.fiche .case', { timeout: 8000 }).catch(() => {});
+
+  const bouton = await fiche.evaluate(() => {
+    const b = document.querySelector('[data-emmener]');
+    return b ? b.textContent.replace(/\s+/g, ' ').trim() : null;
+  });
+  check('la fiche offre d’emmener le personnage en duel', bouton !== null
+    || (console.log('        aucun bouton [data-emmener]'), false));
+
+  await fiche.evaluate(() => document.querySelector('[data-emmener]')?.click());
+  const ouverte = await jusqua(async () => fiche.evaluate(() =>
+    document.querySelectorAll('.tbf-dial-places .place').length > 0));
+  check('appuyer dessus ouvre le choix de la place', ouverte
+    || (console.log('        rien ne s’est ouvert —',
+      await fiche.evaluate(() => JSON.stringify({
+        dialogue: typeof window.TBF_DIALOGUE,
+        boites: document.querySelectorAll('.tbf-dial, [data-oui]').length,
+      }))), false));
+
+  if (ouverte) {
+    const places = await fiche.evaluate(() =>
+      [...document.querySelectorAll('.tbf-dial-places .place')].map((b) => ({
+        role: b.querySelector('.role')?.textContent.trim(),
+        bloque: b.disabled,
+      })));
+    check('elle propose un titulaire et des remplaçants', places.length >= 2
+      || (console.log('        places :', JSON.stringify(places)), false));
+    check('et la première est prenable', places[0] && !places[0].bloque);
+
+    /* On choisit le titulaire et on valide. Ce qui compte n'est pas le toast :
+       c'est que le deck, relu depuis le serveur, contienne ce personnage. Un
+       message de réussite sur une écriture qui n'a pas eu lieu est précisément
+       ce que ce projet a déjà payé. */
+    await fiche.evaluate(() => {
+      document.querySelector('.tbf-dial-places [data-place="0"]').click();
+      document.querySelector('[data-oui]').click();
+    });
+    const pose = await jusqua(async () => {
+      const d = await (await fetch(`${base}/api/deck/mien`)).json().catch(() => null);
+      return d?.deck?.fanzzy?.[0]?.id === ILLUSTRE;
+    }, 6000);
+    check('valider le pose vraiment titulaire dans le deck', pose
+      || (console.log('        deck :', JSON.stringify(
+        await (await fetch(`${base}/api/deck/mien`)).json().catch(() => null)).slice(0, 200)), false));
+
+    /* Et la fiche se met à jour sans rechargement : le verbe passe de
+       « EMMENER » à « CHANGER DE PLACE ». Sans ça, le joueur appuie une
+       seconde fois en croyant que rien n'a marché. */
+    const apres = await jusqua(async () => fiche.evaluate(() =>
+      /CHANGER/.test(document.querySelector('[data-emmener]')?.textContent ?? '')));
+    check('et la fiche dit désormais qu’il y est', apres);
+  }
+  await fiche.close();
+}
+
 /* ------------------------- le classeur ne range que ce qui est ouvert
 
  * Il montrait **tout le catalogue publié**, séries à venir comprises : deux
@@ -1054,6 +1162,19 @@ if (process.env.CAPTURE) {
   await page.screenshot({ path: join(tmpdir(), 'classeur-detail.png') });
   console.log(`   captures : ${join(tmpdir(), 'classeur.png')}`);
 }
+
+/* ------------------------------------------- personne n’a jeté en chemin
+
+ * `erreurs` se remplit depuis huit pages, et une seule ligne la regardait —
+ * tout en haut, avant que la plupart n'existent. Tout ce qui tombait ensuite
+ * était collecté puis oublié.
+ *
+ * C'est ainsi qu'un `ReferenceError` dans l'écouteur du bouton « EMMENER EN
+ * DUEL » a vécu : une exception dans un écouteur ne remonte à personne, la
+ * page continue, et le bouton ne fait simplement rien. Le seul témoin était
+ * cette liste, que rien ne lisait. */
+check('aucune page n’a jeté d’erreur de script', erreurs.length === 0
+  || (console.log('       ', erreurs.slice(0, 5)), false));
 
 await nav.close();
 await new Promise((r) => http.close(r));
