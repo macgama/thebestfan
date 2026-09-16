@@ -792,6 +792,146 @@ const laScene = () => page.evaluate(() => ({
   check('il est bien dans l’écran', sortie.dansLEcran === true);
 }
 
+
+/* ================================ l'écran de choix, quand il y a du monde
+
+   Depuis que la liste montre **tout** ce qui se joue et non plus les seuls
+   clubs suivis, elle fait quarante lignes un samedi soir. Le voile centrait
+   son contenu : au-delà d'un écran, le titre et le champ de recherche
+   sortaient **par le haut**, hors d'atteinte — on ne remonte pas au-dessus du
+   début d'une zone qui défile. L'écran s'ouvrait au milieu d'une liste de
+   matchs turcs, sans rien dire de ce qu'on regardait.
+
+   Le contrôle mesure donc une **position**, pas une présence : le titre existe
+   dans les deux cas, il n'est simplement plus sur l'écran. */
+
+{
+  const page2 = await nav.newPage();
+  page2.on('pageerror', (e) => erreurs.push(e.message));
+  await page2.setViewport({ width: 400, height: 880 });
+  await page2.goto(base + '/virage', { waitUntil: 'networkidle0' });
+
+  // Quarante rencontres en direct, comme un soir de coupe.
+  await page2.evaluateOnNewDocument(() => {
+    window.__beaucoup = Array.from({ length: 40 }, (_, i) => ({
+      id: 9000 + i, open: true, elapsed: 20 + i, status_short: '2H',
+      luA: Date.now(), mien: false, crowd: [0, 0],
+      home_id: 500 + i, away_id: 600 + i,
+      home_name: `Club ${i}`, away_name: `Adverse ${i}`,
+      home_goals: 0, away_goals: 0,
+      league_name: i % 2 ? 'Türkiye Kupası' : 'Thai League 2',
+      pays: i % 2 ? 'Turkey' : 'Thailand',
+      drapeau: `https://media.api-sports.io/flags/${i % 2 ? 'tr' : 'th'}.svg`,
+      homeColors: [], awayColors: [],
+    }));
+
+    // Le détournement voyage avec le talon : même document, même moment.
+    const vrai = window.fetch;
+    window.fetch = (u, o) => (String(u).includes('/api/virage/live')
+      ? Promise.resolve(new Response(JSON.stringify(
+        { matchs: window.__beaucoup, ferveurNeutre: 0.5 }),
+      { headers: { 'content-type': 'application/json' } }))
+      : vrai(u, o));
+  });
+  await page2.reload({ waitUntil: 'networkidle0' });
+  await wait(900);
+
+  const vu = await page2.evaluate(() => {
+    const t = document.getElementById('veilTitle').getBoundingClientRect();
+    const q = document.getElementById('q');
+    return {
+      titreEnHaut: Math.round(t.top),
+      titreVisible: t.top >= 0 && t.bottom <= innerHeight,
+      champ: Boolean(q) && !document.getElementById('rech').hidden,
+      lignes: document.querySelectorAll('.match').length,
+    };
+  });
+  check('quarante matchs sont proposés', vu.lignes === 40);
+  check('et le titre reste à l’écran', vu.titreVisible
+    || (console.log('        il est à', vu.titreEnHaut, 'px'), false));
+  check('avec le champ de recherche', vu.champ === true);
+
+  /* La recherche : une équipe, une compétition, ou **un pays dans sa langue**.
+     La page est lue en français ; les matchs, eux, arrivent avec « Turkey ».
+     Sans la traduction faite chez le lecteur, « turquie » ne trouverait rien. */
+  const chercher = async (mot) => {
+    await page2.evaluate((x) => {
+      const q = document.getElementById('q');
+      q.value = x;
+      q.dispatchEvent(new Event('input'));
+    }, mot);
+    await wait(320);
+    return page2.evaluate(() => document.querySelectorAll('.match').length);
+  };
+
+  check('chercher une compétition réduit la liste', await chercher('thai') === 20);
+  check('chercher un club aussi', await chercher('Club 7') === 1);
+  check('et un pays dans la langue du lecteur', await chercher('turquie') === 20
+    || (console.log('        il en reste :', await chercher('turquie')), false));
+  check('sans rien trouver, la page le dit',
+    await chercher('zzzz') === 0 && /Aucun match ne répond/.test(
+      await page2.evaluate(() => document.getElementById('matchs').textContent)));
+
+  await chercher('');
+  await page2.close();
+}
+
+/* ------------------------------------------- le menu, sur un écran de jeu
+
+   La barre laisse passer les clics — entre ses deux boutons se trouve
+   l'en-tête du jeu, qui doit rester cliquable — et elle les rend à ses
+   boutons, nommés un par un. Le bouton de menu n'était pas de la liste : elle
+   nommait le solde d'écharpes, retiré de la barre le jour où elle a été
+   simplifiée. Le sélecteur ne désignait plus rien, et le menu du Virage ne
+   s'ouvrait plus. Un écran de jeu sans menu est un cul-de-sac. */
+{
+  const ouvert = await page.evaluate(async () => {
+    const b = document.querySelector('.tbf-burger');
+    if (!b) return 'pas de bouton';
+    // Ce que le doigt touche vraiment à cet endroit-là de l'écran.
+    const r = b.getBoundingClientRect();
+    const dessus = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    if (!b.contains(dessus) && dessus !== b) return 'recouvert par ' + (dessus?.className ?? '?');
+    b.click();
+    await new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)));
+    return document.querySelector('.tbf-tiroir.on') ? 'ouvert' : 'sans effet';
+  });
+  check('le bouton de menu ouvre le tiroir sur un écran de jeu', ouvert === 'ouvert'
+    || (console.log('        il dit :', ouvert), false));
+}
+
+
+/* ------------------------------------------------ inviter sur ce match
+
+   Un virage se pousse à plusieurs, et le jeu n'avait aucun moyen de faire
+   venir quelqu'un. Ce qui est éprouvé ici est **ce qui part** : le lien doit
+   porter le match, et rien d'autre. Porter aussi la tribune enverrait
+   l'invité du côté de l'expéditeur — parfois contre son propre club. */
+{
+  const partage = await page.evaluate(async () => {
+    // Le navigateur du banc ne sait pas partager : on lui apprend, et on note.
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: async (d) => { window.__partage = d; },
+    });
+    // `TBF_PARTAGE` a lu `navigator.share` au chargement : on redit au bouton
+    // qu'il peut paraître, comme la page le fait au premier rendu.
+    window.TBF_PARTAGE.possible = true;
+    const b = document.getElementById('partager');
+    b.hidden = false;
+    b.click();
+    await new Promise((ok) => setTimeout(ok, 120));
+    return window.__partage ?? null;
+  });
+
+  check('le Virage sait inviter quelqu’un', Boolean(partage));
+  check('et le lien porte le match', /\/virage\?match=8001/.test(partage?.url ?? '')
+    || (console.log('        il envoie :', partage?.url), false));
+  check('mais pas la tribune', !/camp/.test(partage?.url ?? ''));
+  check('et le message nomme la rencontre', /Sion|Bâle/.test(partage?.text ?? '')
+    || (console.log('        il dit :', partage?.text), false));
+}
+
 check('aucune erreur de script sur le virage',
   erreurs.length === 0 || (console.log('    ', erreurs.join(' / ')), false));
 

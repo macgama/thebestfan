@@ -762,6 +762,49 @@ check('le bouton de menu ne recouvre pas les chants',
 
 /* ------------------------------------------------------- pas d'erreur JS */
 
+
+/* =========================================== inviter quelqu'un dans sa file
+
+   Une file de duel ne vit que deux minutes : c'est exactement le moment où
+   l'on voudrait dire « viens, je t'attends », et le jeu n'avait aucun moyen de
+   le faire.
+
+   Deux choses à éprouver, et la première est celle qui décide de tout :
+   **le lien envoie dans le camp d'en face**. Deux joueurs du même côté ne se
+   rencontrent jamais — ils attendent ensemble. */
+
+{
+  const lien = await A.page.evaluate(() => lienDeMaFile({
+    fixtureId: 7, format: '1v1', camp: 0,
+    enFaceClub: { id: 91, name: 'Bâle' },
+  }));
+  check('le lien d’invitation porte le match et le format',
+    /match=7/.test(lien) && /format=1v1/.test(lien)
+    || (console.log('        il dit :', lien), false));
+  check('et il envoie dans le camp d’en face', /camp=1/.test(lien)
+    || (console.log('        il dit :', lien), false));
+}
+
+/* Et à l'arrivée : format, match et camp déjà posés. Un lien qui ouvrirait la
+   page au début du parcours ne serait pas une invitation, ce serait une
+   adresse. */
+{
+  const invite = await ouvrir(U[1]);
+  await invite.page.goto(`${base}/duel-nvn?match=7&format=1v1&camp=1`,
+    { waitUntil: 'networkidle0' });
+  await dodo(900);
+
+  const pose = await invite.page.evaluate(() => ({
+    format: S.format, match: S.fixtureId, camp: S.camp,
+    formatMarque: document.querySelector('[data-fmt].on')?.textContent.trim(),
+  }));
+  check('l’invité arrive sur le bon format',
+    pose.format === '1v1' && pose.formatMarque === '1v1');
+  check('sur le bon match', pose.match === 7);
+  check('et dans le camp qu’on lui a réservé', pose.camp === 1);
+  await invite.page.close();
+}
+
 check('aucune erreur de script pendant toute la partie',
   A.erreurs.length === 0 && B.erreurs.length === 0);
 if (A.erreurs.length) console.log('   ', A.erreurs.slice(0, 3));
