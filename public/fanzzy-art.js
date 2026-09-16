@@ -136,14 +136,55 @@
   };
 
   /**
+   * Le numero d'age que porte un identifiant.
+   *
+   * Une lignee s'ecrit `TR2`, `TR2B`, `TR2C` : le premier age est la racine
+   * nue, les suivants ajoutent une lettre. B vaut donc deux, C vaut trois.
+   */
+  const evoDe = (id) => {
+    const m = /^[A-Z]+\d+([A-Z])$/.exec(String(id ?? ''));
+    return m ? m[1].charCodeAt(0) - 64 : 1;
+  };
+
+  /**
    * L'adresse du dessin, sans la balise autour.
    *
-   * `illustration` rend du HTML tout fait, ce qui convient à une carte mais
-   * pas à une page qui pose l'image elle-même — l'accueil croise deux calques
-   * et a besoin de l'adresse seule. Elle la construisait sinon de son côté, et
-   * une seconde façon d'écrire le même chemin finit toujours par diverger.
+   * `illustration` rend du HTML tout fait, ce qui convient a une carte mais
+   * pas a une page qui pose l'image elle-meme — l'accueil croise deux calques
+   * et a besoin de l'adresse seule. Elle la construisait sinon de son cote, et
+   * une seconde facon d'ecrire le meme chemin finit toujours par diverger.
+   *
+   * ## Les ages superieurs passent d'abord par les etats
+   *
+   * Le depot porte **deux** systemes d'images. Les fichiers plats —
+   * `/img/fanzzy/TR2.png` — que lisent les cartes, le classeur, la fiche et le
+   * deck ; et les dossiers d'etats — `/img/fanzzy/TR2/e2/base/neutre.png` —
+   * que lisent l'accueil et le virage.
+   *
+   * Sur trois cent quatre-vingt-deux ages superieurs, **douze** ont leur
+   * fichier plat. Les autres retombaient donc sur le dessin de leur premier
+   * age : on payait cent quinze echarpes pour faire grandir son supporter, et
+   * la carte montrait toujours l'enfant. Alors que pour une partie d'entre eux
+   * le dessin d'adulte **existe**, range dans le second systeme, et que l'ecran
+   * « Mon FANZZY » le montrait deja — d'ou deux ecrans du meme jeu qui
+   * affichaient deux personnages differents sous le meme nom.
+   *
+   * On regarde donc les etats avant de se rabattre, et on n'accepte que l'age
+   * **exactement demande** : `portrait()` sait redescendre d'un stade, et
+   * accepter sa descente reviendrait a reprendre le repli qu'on corrige.
+   *
+   * Facultatif de bout en bout : sans `fanzzy-etats.js` charge, ou sans
+   * manifeste, on retombe sur le fichier plat comme avant.
    */
   const adresse = (id, variante = 'buste') => {
+    const evo = evoDe(id);
+    const racine = /^([A-Z]+\d+)/.exec(String(id ?? ''))?.[1];
+    if (evo > 1 && racine && window.TBF_ETATS?.pret?.()) {
+      const r = variante === 'buste'
+        ? window.TBF_ETATS.portrait(racine, { evo })
+        : window.TBF_ETATS.resoudre(racine, { evo, etat: 'neutre' });
+      if (r?.evo === evo) return r.src;
+    }
     const vu = racineIllustree(id);
     if (!vu) return null;
     return `/img/fanzzy/${vu}${variante === 'buste' ? '-buste' : ''}${IMG_EXT}`;

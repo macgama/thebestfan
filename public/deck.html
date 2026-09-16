@@ -459,6 +459,11 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
      même module que le classeur — une seule définition de « comment on dessine
      un Fanzzy », et le deck n'a pas sa propre idée du sujet. -->
 <script src="/fanzzy-art.js"></script>
+<!-- Le manifeste des etats : il porte les dessins des ages superieurs, rangee
+     par evolution. Sans lui, un Fanzzy grandi garde le visage de son premier
+     age — voir `adresse` dans fanzzy-art.js. Facultatif : absent, on retombe
+     sur le fichier plat, comme avant. -->
+<script src="/fanzzy-etats.js"></script>
 <script src="/fanzzy-fond.js"></script>
 
 <!-- Les familles de cartes, leurs dessins, et ce qu’on voit quand une carte part :
@@ -654,6 +659,12 @@ function rangHTML(rar) {
 /* --------------------------------------------------------- chargement */
 
 async function charger() {
+  /* **Le manifeste des etats d'abord.** Il porte les dessins des ages
+     superieurs — voir `adresse` dans fanzzy-art.js. Sans lui, le premier rendu
+     prend le repli, c'est-a-dire le visage du premier age, et rien ne vient le
+     corriger ensuite. Il ne leve jamais : absent, la page s'affiche exactement
+     comme avant. */
+  await Promise.resolve(window.TBF_ETATS?.charger?.()).catch(() => null);
   // Trois catalogues immuables et l'état du joueur. Les catalogues portent
   // un cache d'une heure côté serveur : les redemander ne coûte rien.
   const [mien, cat, dex, stuff] = await Promise.all([

@@ -585,6 +585,33 @@ for (const [nom, l, h, plancher] of [
   await pool.query('UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?', [ILLUSTRE, U]);
 }
 
+
+/* ------------------------- un Fanzzy grandi montre son age, pas son enfance
+
+ * Le depot porte deux systemes d'images : les fichiers plats
+ * — `/img/fanzzy/TR2.png` — que lisent les cartes, et les dossiers d'etats
+ * — `/img/fanzzy/TR2/e2/base/neutre.png` — que lit l'accueil.
+ *
+ * Sur trois cent quatre-vingt-deux ages superieurs, douze seulement ont leur
+ * fichier plat. On payait donc cent quinze echarpes pour faire grandir son
+ * supporter, et la carte montrait toujours l'enfant — alors que le dessin
+ * d'adulte existe pour une partie d'entre eux, range dans l'autre systeme.
+ *
+ * TR2 est l'un des deux personnages dont les trois evolutions sont dessinees :
+ * c'est donc lui qui permet de verifier qu'un stade 2 se voit.
+ */
+{
+  await equiper('TR2', 2);
+  const page = await ouvrir();
+  const vu = await jusqua(async () =>
+    /\/TR2\/e2\//.test((await scene(page))?.src ?? ''), 9000);
+  check('un Fanzzy au stade 2 montre le dessin de son stade', vu
+    || (console.log('        la scene montre :',
+      (await scene(page))?.src ?? '(rien)'), false));
+  await page.close();
+  await pool.query('UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?', [ILLUSTRE, U]);
+}
+
 /* ------------------------------------------------------ changer de pose */
 
 // `window.TBF` est la poignée que la page expose. On passe par elle plutôt
