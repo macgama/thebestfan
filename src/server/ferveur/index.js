@@ -1,6 +1,10 @@
 import express from 'express';
 import { VirageRoom, RULES } from './virage.js';
 import { Cheat } from './gestures.js';
+// Le club qu'on soutient dans une rencontre : la même règle qu'au duel,
+// écrite une seule fois. Elle remplace un `suivis[0]` qui laissait l'ordre
+// de la base décider du camp dans un derby.
+import { clubSoutenu } from '../football/suivis.js';
 
 /**
  * Couche réseau du Grand Virage.
@@ -201,13 +205,11 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
        * Ce qu'on gagne n'est pas le même : voir `RULES.ferveurNeutre`. La
        * ferveur d'un neutre compte moitié — on peut venir pousser partout, on
        * ne se bâtit une réputation que chez soi. */
-      const suivis = await q(
-        `SELECT team_id FROM user_follows WHERE user_id = ? AND team_id IN (?, ?)`,
-        [u.userId, room.fixture.homeId, room.fixture.awayId]);
-      const neutre = suivis.length === 0;
+      const { teamId, neutre } = await clubSoutenu(q, u.userId,
+        room.fixture.homeId, room.fixture.awayId);
       const side = neutre
         ? (camp === 'exterieur' || camp === 1 ? 1 : 0)
-        : (suivis[0].team_id === room.fixture.awayId ? 1 : 0);
+        : (teamId === room.fixture.awayId ? 1 : 0);
 
       const hero = await fanzzy.activeFanzzy(u.userId);
       const mods = hero ? { id: hero.id, ...hero.mods } : {};

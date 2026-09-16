@@ -4,6 +4,10 @@ import { DuelNvN, RULES } from './engine.js';
 import { Cheat } from '../ferveur/gestures.js';
 import { FORMATS } from '../deck/index.js';
 import { XP } from '../../shared/niveau.js';
+import { reglage } from '../../shared/reglages.js';
+// La même règle qu'au Virage : le club qu'on soutient dans cette
+// rencontre, ou rien du tout si on n'en suit aucun des deux.
+import { clubSoutenu } from '../football/suivis.js';
 
 /**
  * Couche réseau du duel N contre N.
@@ -528,17 +532,40 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
      * pas, c'est là toute sa différence avec le duel classé. */
     if (d.mode !== 'classe') return;
     try {
+      /* **Le duel rapporte de la ferveur**, la même que le Virage — le moteur
+         la compte par joueur depuis le premier jour, elle n'était simplement
+         écrite nulle part. Un duel ne pouvait donc compter dans aucun
+         classement, et le mot « points » du jeu n'avait qu'une source.
+
+         Le match support donne la compétition : elle n'est pas recopiée ici,
+         `fixtures` la porte déjà. Le club, lui, est celui qu'on suit parmi les
+         deux — et à défaut on est neutre, la ferveur vaut moitié et ne
+         rapporte à aucune tribune. C'est la règle du Virage, appliquée telle
+         quelle : venir jouer sur le match des autres se fait, mais on ne se
+         bâtit une réputation que chez soi. */
+      const f = d.fixture ?? null;
+      const neutreCoef = reglage('ferveur.neutre');
+
       for (const [userId, j] of d.joueurs) {
         if (userId.startsWith('bot:')) continue;
         const adverse = [...d.joueurs.values()].find((x) => x.side !== j.side);
         const issue = d.vainqueur === null || d.vainqueur === undefined ? 'draw'
           : (j.side === d.vainqueur ? 'win' : 'loss');
+
+        const club = f?.home?.id && f?.away?.id
+          ? await clubSoutenu(q, userId, f.home.id, f.away.id)
+          : { teamId: null, neutre: true };
+        const ferveur = Math.max(0,
+          Math.round((j.ferveur ?? 0) * (club.neutre ? neutreCoef : 1)));
+
         await q(
           `INSERT IGNORE INTO duel_results
-             (duel_id, user_id, opponent_id, outcome, goals_for, goals_against, ended_at)
-           VALUES (?, ?, ?, ?, ?, ?, NOW(3))`,
+             (duel_id, user_id, opponent_id, outcome, goals_for, goals_against,
+              fixture_id, team_id, ferveur, ended_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(3))`,
           [d.id, userId, adverse?.userId ?? 'inconnu', issue,
-           d.goals[j.side], d.goals[j.side ^ 1]]);
+           d.goals[j.side], d.goals[j.side ^ 1],
+           f?.id ?? null, club.teamId, ferveur]);
       }
     } catch (e) {
       console.error('[nvn] enregistrement du résultat', e.message);

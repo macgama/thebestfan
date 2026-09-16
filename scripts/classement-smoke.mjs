@@ -16,7 +16,7 @@ await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql','football.sql', 'minutes.sql', 'couleurs.sql','duel.sql','souvenirs.sql', 'billets.sql','fanzzy.sql','inventaire.sql', 'skins.sql']) {
+for (const f of ['auth.sql','football.sql', 'minutes.sql', 'couleurs.sql','duel.sql','souvenirs.sql', 'billets.sql','fanzzy.sql','inventaire.sql', 'skins.sql', 'kop.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 await raw.query(`INSERT INTO teams (id,name,country) VALUES
@@ -38,12 +38,68 @@ for (const [id,pseudo,club,ferveur] of gens) {
     VALUES (?,?,?,?),(?,?,?,?),(?,?,?,?)`,
     [`d1-${id}`,pid,'x','win', `d2-${id}`,pid,'x', ferveur>200?'win':'loss', `d3-${id}`,pid,'x','loss']);
 }
+/* ------------------------------------------- deux compétitions, et des KOP
+
+   Les classements par compétition lisent la ferveur à travers `fixtures` :
+   sans match, il n'y a pas de compétition, et sans deuxième compétition on ne
+   verrait pas que le filtre filtre.
+
+   **Rien n'est ajouté, tout est complété.** Une présence ou un duel de plus
+   déplacerait les moyennes et les comptes de victoires que les contrôles plus
+   haut éprouvent — et un banc dont les nombres bougent quand on ajoute un
+   sujet n'éprouve plus le premier. */
+
+await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,kickoff_at)
+  VALUES (7001,61,2026,85,91,'FT',NOW()),
+         (7002,207,2026,85,91,'FT',NOW())`);
+
+// Le club soutenu, sur les présences déjà écrites : c'est lui, et non les
+// clubs suivis, qui décide de ce qui remonte à une tribune ou à un KOP.
+await raw.query(`UPDATE virage_presence vp
+   JOIN user_follows uf ON uf.user_id = vp.user_id
+    SET vp.team_id = uf.team_id, vp.side = IF(uf.team_id = 85, 0, 1)`);
+
+// La ferveur du duel, posée sur des duels qui existent déjà.
+await raw.query(`UPDATE duel_results dr
+   JOIN user_follows uf ON uf.user_id = dr.user_id
+    SET dr.fixture_id = 7001, dr.team_id = uf.team_id, dr.ferveur = 100
+  WHERE dr.duel_id LIKE 'd1-%'`);
+
+/* Une ferveur énorme dans une **autre** compétition, glissée sur un duel qui
+   existait déjà. Si elle remonte dans le classement de la Ligue 1, c'est que
+   la jointure ne filtre rien. */
+await raw.query(`UPDATE duel_results
+    SET fixture_id = 7002, team_id = 85, ferveur = 5000
+  WHERE duel_id = 'd2-u1'`);
+
+/* Deux KOP, un par club. Celui du Petit Club a deux membres très actifs,
+   celui du Gros Club deux membres plus mous : la division par le nombre doit
+   remettre le petit devant, comme pour les tribunes. */
+const KOPS = [['k1', 85, 'Les Fidèles', ['u1', 'u2']],
+              ['k2', 91, 'La Tribune Nord', ['u3', 'u4']]];
+for (const [kid, club, nom, membres] of KOPS) {
+  const id = `${kid}000000-0000-0000-0000-0000000000`.slice(0, 36);
+  const chef = `${membres[0]}0000-0000-0000-0000-00000000000${membres[0].slice(1)}`.slice(0, 36);
+  await raw.query(`INSERT INTO kops (id,team_id,nom,createur) VALUES (?,?,?,?)`,
+    [id, club, nom, chef]);
+  for (const m of membres) {
+    const pid = `${m}0000-0000-0000-0000-00000000000${m.slice(1)}`.slice(0, 36);
+    await raw.query(`INSERT INTO kop_membres (kop_id,user_id,team_id) VALUES (?,?,?)`,
+      [id, pid, club]);
+  }
+}
+
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 let moi = 'u10000-0000-0000-0000-000000000001'.slice(0,36);
 const C = createClassements({ pool, requireAuth: (r,_s,n)=>{ r.user={id:moi}; n(); } });
-const app = express(); app.use('/api/rank', C.router);
+const app = express();
+/* `attachUser` pose `req.user` sur chaque requête en production ; le banc
+   fait pareil, sans quoi la place du lecteur dans un classement de
+   compétition ne serait jamais lue. */
+app.use((req, _res, next) => { req.user = { id: moi }; next(); });
+app.use('/api/rank', C.router);
 const http = createServer(app); await new Promise((r)=>http.listen(0,r));
 const base = `http://localhost:${http.address().port}`;
 const get = async (p) => (await fetch(base+p)).json();
@@ -77,6 +133,57 @@ check('mes duels comptés', r.duels.joues === 3);
 moi = 'u60000-0000-0000-0000-000000000006'.slice(0,36);
 r = await get('/api/rank/moi');
 check('le dernier est bien dernier', r.rang === 6);
+
+/* =============================== les classements d'une compétition
+
+   Ce qu'ils ajoutent au classement général n'est pas une vue de plus : c'est
+   un classement qu'on peut gagner. Personne ne vise la tête d'un classement
+   mondial ; tout le monde vise la tête de sa compétition.
+
+   Trois choses s'y jouent et aucune ne se lit dans le code :
+
+     1. la ferveur du **Duel** compte au même titre que celle du Virage ;
+     2. la compétition **filtre** — une ferveur gagnée ailleurs ne remonte pas ;
+     3. le club soutenu décide de ce qui revient à une tribune et à un KOP. */
+
+r = await get('/api/rank/competition/61?saison=2026');
+
+check('la saison demandée est celle rendue', r.saison === 2026);
+check('les joueurs de la compétition sont classés', r.joueurs.length === 6);
+check('en tête, celui qui a le plus donné', r.joueurs[0].pseudo === 'Momo');
+check('la ferveur du duel s’ajoute à celle du virage',
+  Number(r.joueurs[0].ferveur) === 1000
+  || (console.log('        il dit :', r.joueurs[0].ferveur), false));
+check('une ferveur gagnée dans une autre compétition ne remonte pas',
+  Number(r.joueurs[0].ferveur) < 5000);
+
+check('les tribunes de la compétition sont classées', r.tribunes.length === 2);
+check('le petit club passe devant grâce à la moyenne',
+  r.tribunes[0].name === 'Petit Club');
+check('et sa moyenne est par supporter, pas par joueur présent',
+  Number(r.tribunes[0].moyenne) === 900
+  || (console.log('        elle dit :', r.tribunes[0].moyenne), false));
+
+check('les KOP sont classés', r.kops.length === 2);
+check('celui du club le plus fervent devant', r.kops[0].nom === 'Les Fidèles');
+check('un KOP ne marque que ce que ses membres ont donné pour son club',
+  Number(r.kops[0].ferveur) === 1800
+  || (console.log('        il dit :', r.kops[0].ferveur), false));
+check('divisé par le nombre de membres', Number(r.kops[0].moyenne) === 900);
+
+check('ma place dans cette compétition', r.moi?.rang === 6);
+
+/* La compétition où un seul joueur a poussé : le classement existe quand
+   même, et il n'invente personne. */
+r = await get('/api/rank/competition/207?saison=2026');
+check('une compétition peu jouée se classe aussi', r.joueurs.length === 1);
+check('sans tribune fantôme', r.tribunes.length === 1);
+
+/* Une compétition dont on n'a aucun match : une page vide, pas une panne. */
+r = await get('/api/rank/competition/4242');
+check('une compétition sans match rend des listes vides',
+  r.joueurs.length === 0 && r.tribunes.length === 0 && r.kops.length === 0);
+
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 /**
