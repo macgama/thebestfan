@@ -646,6 +646,66 @@ for (const [route, nom] of tousLesEcrans) {
     || (console.log('        débordent :', debordent.join(', ')), false));
 }
 
+
+/* ================================ le premier geste du jeu : le paquet
+
+   C'est la première chose qu'un joueur fait, et celle dont il se souviendra.
+   Elle se jouait au milieu d'une **carte blanche** : `.pack` est un `<button>`,
+   et un bouton arrive avec un fond clair, une bordure en relief et un
+   rembourrage que rien ne retirait. Du blanc sur les côtés, et une bande à
+   arracher entièrement blanche tant que l'image du haut n'était pas posée.
+
+   Aucune lecture de la feuille de style ne l'attrape : la faute n'est pas dans
+   ce qui est écrit, elle est dans ce qui ne l'est pas. Il faut demander au
+   navigateur ce qu'il a vraiment calculé. */
+
+{
+  const page = await nav.newPage();
+  await page.setViewport({ width: 390, height: 844 });
+  /* **Sans JavaScript.** La page de bienvenue renvoie ailleurs un joueur déjà
+     inscrit — et celui du banc l'est. Or ce qu'on mesure ici est du style, que
+     le navigateur calcule sans exécuter une ligne : on coupe donc le script
+     plutôt que de simuler une inscription entière pour lire un fond. */
+  await page.setJavaScriptEnabled(false);
+  await page.goto(`${base}/bienvenue`, { waitUntil: 'domcontentloaded' });
+
+  /* On ne traverse pas l'inscription : ce qu'on mesure est un pixel, pas un
+     parcours. Le paquet est dans le document dès le chargement — sa scène est
+     seulement transparente — et le navigateur a déjà calculé son fond, sa
+     bordure et son rembourrage, qui sont exactement ce qui était faux. */
+  const vu = await page.evaluate(() => {
+    const paquet = document.getElementById('pack');
+    const bande = document.getElementById('packlip');
+    if (!paquet || !bande) return { absent: location.pathname };
+
+    const p = getComputedStyle(paquet);
+    const l = getComputedStyle(bande);
+    // « Clair » : la somme des trois canaux d'un fond de bouton par défaut
+    // tourne autour de 700 ; la nuit du stade est sous 60.
+    const clarte = (c) => (c.match(/\d+/g) ?? [0, 0, 0])
+      .slice(0, 3).reduce((a, b) => a + Number(b), 0);
+    return {
+      fond: clarte(p.backgroundColor),
+      fondBande: clarte(l.backgroundColor),
+      bordure: parseFloat(p.borderTopWidth),
+      marge: parseFloat(p.paddingTop) + parseFloat(p.paddingLeft),
+      large: Math.round(paquet.getBoundingClientRect().width),
+    };
+  });
+
+  check('la page de bienvenue porte bien le paquet', !vu.absent
+    || (console.log('        on est sur', vu.absent), false));
+  check('le paquet n’a pas de fond clair derrière lui', vu.fond < 90
+    || (console.log('        clarté du fond :', vu.fond), false));
+  check('ni la bande qu’on arrache', vu.fondBande < 90);
+  check('pas de bordure de bouton', vu.bordure === 0);
+  check('ni de rembourrage qui laisse voir les bords', vu.marge === 0);
+  check('et il occupe l’écran', vu.large >= 200
+    || (console.log('        largeur :', vu.large, 'px'), false));
+
+  await page.close();
+}
+
 if (process.env.CAPTURE) console.log(`\n   captures dans ${tmpdir()}`);
 
 await nav.close();
