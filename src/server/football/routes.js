@@ -54,27 +54,46 @@ export function createFootball({ pool, client, io, requireAuth, onGoal, onFinish
   const fail = (res, code, status = 400) => res.status(status).json({ error: code });
 
   /** Recherche : base d'abord, API seulement si elle ne suffit pas. */
+  /**
+   * Chercher une équipe — un club, ou une sélection nationale.
+   *
+   * Le terme arrive tel qu'il a été tapé, et les pays qu'il désigne arrivent
+   * **en anglais** : c'est le navigateur qui traduit, parce que c'est lui qui
+   * sait dans quelle langue il est. Voir `public/pays.js`, partagé avec les
+   * trois autres recherches du jeu.
+   */
   router.get('/search', async (req, res) => {
     const term = String(req.query.q ?? '').trim();
     if (term.length < 3) return fail(res, 'football.error.query_short');
 
+    /* Bornés à dix : au-delà, le mot tapé ne désigne plus un pays en
+       particulier, et la requête chercherait la moitié du monde. */
+    const pays = String(req.query.pays ?? '').split(',')
+      .map((p) => p.trim()).filter(Boolean).slice(0, 10);
+
     try {
-      const key = term.toLowerCase();
-      let rows = await store.searchTeamsLocal(term);
+      // La clé porte les pays : « suisse » et « suisse + Switzerland » ne sont
+      // pas la même question, et la seconde peut réussir là où la première a
+      // échoué.
+      const key = `${term.toLowerCase()}|${pays.join(',')}`;
+      let rows = await store.searchTeamsLocal(term, pays);
       const asked = searched.get(key) ?? 0;
 
       // On ne dérange l'API que si la base ne connaît rien, et jamais deux
       // fois pour le même terme dans la journée.
       if (rows.length === 0 && Date.now() - asked > SEARCH_TTL) {
         searched.set(key, Date.now());
-        const api = await client.searchTeams(term);
+        /* **Sous le nom que l'API connaît.** Elle ne parle qu'anglais :
+           lui demander « suisse » ne rendait rien, et le joueur restait devant
+           un écran vide alors que sa sélection existe. */
+        const api = await client.searchTeams(pays[0] ?? term);
         for (const r of api.slice(0, 20)) await store.upsertTeam(r.team);
-        rows = await store.searchTeamsLocal(term);
+        rows = await store.searchTeamsLocal(term, pays);
       }
       res.json({ teams: rows });
     } catch (e) {
       // Quota épuisé : on rend ce que la base connaît plutôt qu'une erreur.
-      const rows = await store.searchTeamsLocal(term).catch(() => []);
+      const rows = await store.searchTeamsLocal(term, pays).catch(() => []);
       res.json({ teams: rows, partial: true });
     }
   });

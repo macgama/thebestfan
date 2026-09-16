@@ -40,11 +40,34 @@ export function createFootballStore(pool) {
       );
     },
 
-    async searchTeamsLocal(term) {
+    /**
+     * Chercher une équipe par son nom, ou **par son pays**.
+     *
+     * Le nom seul ne suffisait pas. Quelqu'un qui tape « suisse » sur un écran
+     * français ne trouvait rien : la base range « Switzerland », et aucun club
+     * suisse ne porte le mot dans son nom. Le premier écran du jeu répondait
+     * donc « aucun club trouvé » à un mot parfaitement juste.
+     *
+     * Les pays arrivent **en anglais**, traduits par le navigateur qui sait
+     * dans quelle langue il est — voir `public/pays.js`. Le serveur ne traduit
+     * rien : il reçoit des noms qu'il peut comparer.
+     *
+     * `national` d'abord : celui qui tape le nom d'un pays cherche d'abord sa
+     * sélection, et les clubs viennent après. Sans ce tri, « Switzerland »
+     * arrivait derrière onze clubs aux noms plus courts.
+     */
+    async searchTeamsLocal(term, pays = []) {
+      const ou = ['name LIKE ?'];
+      const args = [`%${term}%`];
+      if (pays.length) {
+        ou.push(`country IN (${pays.map(() => '?').join(',')})`);
+        args.push(...pays);
+      }
       return q(
-        `SELECT id, name, country, logo FROM teams
-          WHERE name LIKE ? ORDER BY CHAR_LENGTH(name) LIMIT 12`,
-        [`%${term}%`],
+        `SELECT id, name, country, logo, national FROM teams
+          WHERE ${ou.join(' OR ')}
+          ORDER BY national DESC, CHAR_LENGTH(name) LIMIT 12`,
+        args,
       );
     },
 

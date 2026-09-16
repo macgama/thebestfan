@@ -22,6 +22,9 @@ const check = (label, cond) => {
 
 const TEAM = { id: 85, name: 'Paris Sportif', code: 'PSP', country: 'France', logo: 'l.png', founded: 1970, national: false };
 const OPPO = { id: 91, name: 'Union Portelle', code: 'UPO', country: 'France', logo: 'o.png', national: false };
+/* Une sélection nationale. Elle porte le nom de son pays — c'est ainsi que
+   l'API les nomme — et c'est ce qui rend la recherche par pays possible. */
+const BLEUS = { id: 700, name: 'France', code: 'FRA', country: 'France', logo: 'fr.png', national: true };
 let apiCalls = 0;
 const state = {
   status: 'NS', elapsed: null, home: 0, away: 0,
@@ -32,7 +35,7 @@ const state = {
 const fakeApi = express();
 fakeApi.use((req, _res, next) => { apiCalls++; next(); });
 fakeApi.get('/teams', (req, res) => {
-  const list = [TEAM, OPPO].filter((t) =>
+  const list = [TEAM, OPPO, BLEUS].filter((t) =>
     (req.query.id && Number(req.query.id) === t.id) ||
     (req.query.search && t.name.toLowerCase().includes(String(req.query.search).toLowerCase())));
   res.set('x-ratelimit-requests-remaining', '7000');
@@ -169,6 +172,39 @@ await call('/api/football/search?q=Portelle');
 check('même recherche servie par la base, sans appel API', apiCalls === callsAfterFirstSearch);
 r = await call('/api/football/search?q=Paris');
 check('recherche suivante trouve un autre club', r.json.teams?.some((t) => t.id === 85));
+
+
+/* ------------------------------------------- chercher un pays, pas un nom
+
+   Le premier écran du jeu demande « ton club ». Quelqu'un qui tape « suisse »
+   n'y trouvait rien : la base range « Switzerland », et aucun club suisse ne
+   porte le mot dans son nom. Le jeu répondait « aucun club trouvé » à un mot
+   parfaitement juste, sur l'écran où l'on décide de rester ou de partir.
+
+   La page traduit le terme et envoie le pays **en anglais** — le serveur ne
+   traduit rien, il compare. Voir `public/pays.js`. */
+
+/* La sélection, posée en base : les recherches précédentes ont déjà rempli
+   la table de clubs français, donc le service ne redemandera rien à l'API —
+   c'est son travail. Sans cette ligne, on éprouverait la recherche sur une
+   base où la sélection n'existe pas, et l'échec ne dirait rien. */
+await pool.query(
+  `INSERT INTO teams (id,name,country,logo,national) VALUES (700,'France','France','fr.png',1)
+     ON DUPLICATE KEY UPDATE national = VALUES(national)`);
+
+r = await call('/api/football/search?q=france&pays=France');
+check('chercher un pays rend ses équipes',
+  (r.json.teams ?? []).some((t) => t.id === 85));
+check('et la sélection nationale vient en tête',
+  r.json.teams?.[0]?.id === 700
+  || (console.log('        en tête :', r.json.teams?.[0]?.name), false));
+check('elle est marquée comme telle', Number(r.json.teams?.[0]?.national) === 1);
+
+/* Le mot tapé continue de chercher un nom : un pays en plus, jamais à la
+   place. Sans cela, chercher « Paris » cesserait de trouver le club. */
+r = await call('/api/football/search?q=Paris&pays=France');
+check('le nom cherché passe toujours',
+  (r.json.teams ?? []).some((t) => t.id === 85));
 
 /* ------------------------------------------------------- abonnement */
 
