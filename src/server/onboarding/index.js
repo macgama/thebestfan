@@ -1,6 +1,8 @@
 import express from 'express';
 import { SCARVES } from '../../shared/fanzzy/dex.js';
-import { publies, parIdentifiant } from '../fanzzy/catalogue.js';
+/* `obtenables` et non `publies` : publiées, **de série ouverte**, et le
+   premier âge seul. Voir `tirerBienvenue`. */
+import { obtenables, parIdentifiant } from '../fanzzy/catalogue.js';
 import { STUFF, SKIN_BY_ID, STUFF_BY_ID, combine }
   from '../../shared/fanzzy/inventaire.js';
 /* Les cartes d'action viennent du **catalogue du jeu**, et de nulle part
@@ -143,12 +145,45 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
 
   /**
    * Le paquet de bienvenue. Cinq cartes, toujours les mêmes catégories :
-   * deux Fanzzy dont un peu commun au moins, une pièce d'équipement, une
-   * carte d'action, et des écharpes. Aucun mauvais tirage possible.
+   * deux Fanzzy dont un beau, une pièce d'équipement, des cartes d'action, et
+   * des écharpes. Aucun mauvais tirage possible.
+   *
+   * ## Il tirait dans tout le catalogue, et il court-circuitait le jeu
+   *
+   * `publies()`, c'est **toute** carte publiée : les six cent quarante, séries
+   * fermées comprises, et chaque **âge** de chaque personnage. Un nouveau
+   * joueur recevait donc, à sa toute première ouverture, des cartes qu'il ne
+   * pouvait ni jouer ni retrouver au kiosque — la seule chose que le jeu lui
+   * demandait de faire, collectionner, commençait par deux cartes hors-jeu.
+   *
+   * Pire, et plus discret : il demandait « un Fanzzy rare ou épique ». Or
+   * `openPack` l'écrit en toutes lettres — **la rareté suit le stade** : une
+   * rare est un stade 2, une épique un stade 3. En tirer une, c'est offrir un
+   * Capo di Curva à quelqu'un qui n'a jamais vu le Choriste, et contourner les
+   * cent quinze écharpes que coûte l'évolution. Le booster s'en garde depuis
+   * longtemps ; le paquet de bienvenue n'avait jamais reçu la consigne.
+   *
+   * ## Ce qu'il tire maintenant
+   *
+   * `obtenables()` : publiées, **de série ouverte**, premier âge seul. C'est
+   * exactement la liste d'un booster, et il n'y a aucune raison que le premier
+   * paquet soit plus large que les suivants — au contraire.
+   *
+   * Au premier âge, il n'existe que deux raretés : commune et légendaire. Le
+   * « beau » Fanzzy du paquet est donc une **légendaire**, ce qui tient la
+   * promesse d'origine — un cran au-dessus de commun — sans rien court-
+   * circuiter : une légendaire de stade 1 est un personnage, pas une avance
+   * sur son évolution.
+   *
+   * Les replis existent parce qu'une série ouverte peut n'avoir aucune
+   * légendaire : mieux vaut deux communes qu'une erreur au premier écran.
    */
   function tirerBienvenue() {
-    const communs = publies().filter((f) => f.rar === 'commune');
-    const bons = publies().filter((f) => ['rare', 'epique'].includes(f.rar));
+    const ouvrables = obtenables();
+    const communs = ouvrables.filter((f) => f.rar === 'commune');
+    const beaux = ouvrables.filter((f) => f.rar !== 'commune');
+    const premier = communs.length ? communs : ouvrables;
+    const second = beaux.length ? beaux : premier;
     const equipement = STUFF.filter((s) => ['commune', 'rare'].includes(s.rar));
     /* **Cinq cartes d'action, et l'Arbitre parmi elles.**
      *
@@ -175,8 +210,8 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
     }
 
     return [
-      { type: 'fanzzy', id: rnd(communs).id },
-      { type: 'fanzzy', id: rnd(bons).id },
+      { type: 'fanzzy', id: rnd(premier).id },
+      { type: 'fanzzy', id: rnd(second).id },
       { type: 'stuff', id: rnd(equipement).id },
       { type: 'action', id: OUVRE_LE_CHANGEMENT },
       ...melange.slice(0, 4).map((a) => ({ type: 'action', id: a.id })),

@@ -76,7 +76,19 @@ input:focus{outline:none;border-color:var(--projo)}
 
 /* ---------------------------------------------------- le paquet */
 .packwrap{position:relative;perspective:1000px;margin-bottom:8px}
-.pack{width:196px;aspect-ratio:.62;border-radius:11px;overflow:hidden;position:relative;cursor:pointer;
+/* **Un `<button>` n'arrive pas nu.** Il porte un fond clair, une bordure en
+   relief et un rembourrage, et rien ici ne les retirait : le paquet flottait au
+   milieu d'une carte blanche, avec du blanc sur les côtés et une bande à
+   arracher entièrement blanche tant que l'image du haut n'était pas posée.
+
+   C'est le tout premier geste du jeu, celui dont on se souvient. Il se joue
+   maintenant sur le paquet, et sur rien d'autre.
+
+   Le fond reste **noir** plutôt qu'absent : pendant les quelques dizaines de
+   millisecondes où l'image se décode, on voit la nuit du stade et non un trou
+   blanc. */
+.pack{width:min(64vw,232px);aspect-ratio:.62;border-radius:11px;overflow:hidden;position:relative;
+  cursor:pointer;background:#05070A;border:0;padding:0;-webkit-appearance:none;appearance:none;
   box-shadow:0 30px 60px rgba(0,0,0,.75);touch-action:none}
 .pack img{width:100%;height:100%;object-fit:cover;display:block}
 /* La bande qu'on arrache, comme au kiosque. `--p` est l'avancée, de 0 à 1, et
@@ -88,6 +100,7 @@ input:focus{outline:none;border-color:var(--projo)}
   transform .32s cubic-bezier(.2,1.4,.5,1)}
 
 .pack .lip{position:absolute;left:0;right:0;top:0;height:var(--bande);overflow:hidden;
+  background:#05070A;
   clip-path:inset(0 0 0 calc(var(--p) * 100%));
   transform:rotate(calc(var(--p) * 5deg)) translateY(calc(var(--p) * -6px));
   transform-origin:100% 100%;z-index:3}
@@ -107,7 +120,10 @@ input:focus{outline:none;border-color:var(--projo)}
 .pack .grip::after{content:"";position:absolute;inset:7px;border-left:2px solid #05070A;
   border-bottom:2px solid #05070A;transform:rotate(45deg) translate(1px,-1px)}
 @keyframes tirette{0%,100%{transform:translateX(0)}50%{transform:translateX(-7px)}}
-.glowring{position:absolute;left:50%;top:50%;width:280px;height:280px;transform:translate(-50%,-50%);
+/* Le halo suivait une taille écrite en dur : sur un grand écran il éclairait
+   le vide à côté du paquet, sur un petit il débordait de la scène. */
+.glowring{position:absolute;left:50%;top:50%;width:min(86vw,320px);height:min(86vw,320px);
+  transform:translate(-50%,-50%);
   border-radius:50%;background:radial-gradient(circle,rgba(245,195,59,.26),transparent 65%);
   filter:blur(16px);pointer-events:none;opacity:.6;animation:breathe 4s ease-in-out infinite}
 @keyframes breathe{0%,100%{opacity:.4}50%{opacity:.95}}

@@ -21,13 +21,20 @@ await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'tenues.sql']) {
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'tenues.sql', 'saisons.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 const U = 'cccccccc-0000-0000-0000-000000000001';
 await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
   [U, 'n@ex.fr', 'Nouveau']);
 await raw.query(`INSERT INTO teams (id,name) VALUES (85,'FC Sion'),(91,'FC Bâle'),(61,'PSG'),(7,'OM')`);
+/* **Une seule série ouverte**, LA TRIBUNE, comme au lancement du jeu. Sans
+   saison lancée, tout est ouvert et le paquet de bienvenue pourrait puiser
+   partout sans qu'on s'en aperçoive — c'est précisément ce qu'il faisait. */
+await raw.query(
+  `INSERT INTO saisons (id, numero, nom, series, lancee_a) VALUES (1, 1, 'Saison 1', ?, NOW(3))
+     ON DUPLICATE KEY UPDATE series = VALUES(series), lancee_a = VALUES(lancee_a)`,
+  [JSON.stringify(['TR'])]);
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
@@ -81,6 +88,22 @@ check(`le paquet est complet (${cartes.length} lots)`,
 check('deux Fanzzy', cartes.filter((c) => c.type === 'fanzzy').length === 2);
 check('au moins un Fanzzy peu commun ou mieux',
   cartes.some((c) => c.type === 'fanzzy' && BY_ID.get(c.id).rar !== 'commune'));
+
+/* **Ce qu'il ne doit pas contenir**, et c'est là que le paquet était faux.
+
+   Il tirait dans tout le catalogue publié : des séries fermées, qu'on ne peut
+   ni jouer ni retrouver au kiosque, et des **âges avancés** — un Capo di Curva
+   offert à quelqu'un qui n'a jamais vu le Choriste, alors que l'évolution
+   coûte cent quinze écharpes. Le booster s'en gardait déjà ; ce paquet-ci
+   n'avait jamais reçu la consigne. */
+{
+  const siens = cartes.filter((c) => c.type === 'fanzzy').map((c) => BY_ID.get(c.id));
+  check('les Fanzzy du paquet sont au premier âge',
+    siens.every((f) => f.stage === 1)
+    || (console.log('        âges :', siens.map((f) => `${f.id}/${f.stage}`).join(' ')), false));
+  check('et d’une série ouverte', siens.every((f) => f.set === 'TR')
+    || (console.log('        séries :', siens.map((f) => `${f.id}/${f.set}`).join(' ')), false));
+}
 check('une pièce d\u2019équipement', cartes.filter((c) => c.type === 'stuff').length === 1);
 const actions = cartes.filter((c) => c.type === 'action').map((c) => c.id);
 check(`cinq cartes d\u2019action (${actions.length})`, actions.length === 5);
