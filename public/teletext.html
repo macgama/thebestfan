@@ -106,6 +106,24 @@ td.pts{font-family:var(--banner);font-size:15px}
 .m .live{color:var(--flare);font-weight:600;font-size:10.5px}
 .round{font-family:var(--banner);font-size:9.5px;letter-spacing:.14em;opacity:.4;padding:14px 6px 2px}
 
+/* ------------------------------------------------------- la ferveur
+
+   Six onglets ne tiennent pas côte à côte sur trois cent soixante pixels :
+   à `flex:1 1 0`, « CLASSEMENT » devenait « CLASSE… » et une destination
+   tronquée se devine au lieu de se lire.
+
+   `flex:1 0 auto` garde les deux comportements : sur un écran large les six
+   se partagent le rail, sur un écran étroit ils gardent leur texte et le rail
+   défile. L'onglet choisi est ramené dans la vue par le clic. */
+.tabs.tbf-onglets{overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
+.tabs.tbf-onglets::-webkit-scrollbar{display:none}
+.tabs .tbf-onglet{flex:1 0 auto;padding-left:13px;padding-right:13px}
+
+.chips.ech{padding:12px 3px 10px}
+.maplace{font-size:12px;padding:2px 6px 12px;opacity:.75;line-height:1.6}
+.maplace b{font-family:var(--banner);font-size:14px;color:var(--projo)}
+.maplace.vide{opacity:.45}
+
 .note{font-size:11px;opacity:.45;text-align:center;padding:14px 20px;line-height:1.6}
 .note.stale{color:var(--projo);opacity:.75}
 .empty{text-align:center;padding:44px 20px;opacity:.5;font-size:13px;line-height:1.7}
@@ -177,13 +195,21 @@ const moi = () => (window.TBF_MOI ??= fetch('/api/auth/me', { credentials: 'same
  * Un écran qui tourne indéfiniment est le pire des retours : l'utilisateur ne
  * sait pas s'il doit attendre, recharger, ou si c'est cassé.
  */
-async function api(p, options = {}) {
-  const r = await fetch('/api/tt' + p,
+async function appel(url, options = {}) {
+  const r = await fetch(url,
     { signal: AbortSignal.timeout(12000), credentials: 'same-origin', ...options });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw Object.assign(new Error(j.error ?? 'erreur'), { code: j.error, detail: j.detail });
   return j;
 }
+
+/** Le télétexte : ce que l'API de football sait du championnat. */
+const api = (p, options) => appel('/api/tt' + p, options);
+/* Les classements de ferveur : ce que **nos joueurs** ont fait. Deux services
+   bien distincts — l'un se met en cache pour économiser un quota, l'autre
+   agrège nos propres tables — et deux préfixes pour qu'on ne les confonde
+   jamais en lisant le code. */
+const rang = (p) => appel('/api/rank' + p);
 
 function panne(e) {
   const msg = e.name === 'TimeoutError' ? 'Le serveur met trop de temps à répondre.'
@@ -312,6 +338,10 @@ function debounce(fn, ms) { return (...a) => { clearTimeout(t); t = setTimeout((
 
 async function ouvrir(id) {
   vue = 'ligue'; ligue = id; onglet = 'classement'; journee = null;
+  /* La saison et les classements appartiennent à la compétition qu'on
+     quitte : les garder ferait afficher les siens sous le nom de l'autre,
+     le temps d'un aller-retour au serveur. */
+  SAISON = null; FERVEUR = null; echelle = 'joueurs';
   $('back').classList.add('on');
   $('titre').className = '';
   $('head').innerHTML = `<div class="tabs tbf-onglets" id="tabs">
@@ -320,11 +350,17 @@ async function ouvrir(id) {
     <button data-t="scorers" class="tbf-onglet">BUTEURS</button>
     <button data-t="assists" class="tbf-onglet">PASSEURS</button>
     <button data-t="cards" class="tbf-onglet">CARTONS</button>
+    <!-- Le seul onglet qui parle du jeu et non du football : ce que les
+         supporters ont donné dans cette compétition. -->
+    <button data-t="ferveur" class="tbf-onglet">FERVEUR</button>
   </div>`;
   $('tabs').onclick = (e) => {
     const b = e.target.closest('[data-t]');
     if (!b) return;
     onglet = b.dataset.t;
+    // Le rail défile quand les six onglets ne tiennent pas : on ramène dans la
+    // vue celui qu'on vient de choisir, sinon il reste à moitié caché.
+    b.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     journee = null;                    // on revient toujours sur la journée du jour
     [...$('tabs').children].forEach((x) => x.classList.toggle('on', x === b));
     charger();
@@ -335,6 +371,9 @@ async function ouvrir(id) {
 async function charger() {
   veiller(null);
   $('list').innerHTML = '<div class="spin"></div>';
+  /* La ferveur ne passe pas par le télétexte : elle n'a ni cache d'API ni
+     quota à ménager, et son adresse n'est pas la même. */
+  if (onglet === 'ferveur') return chargerFerveur();
   const route = { classement:'', resultats:'/results', scorers:'/scorers',
                   assists:'/assists', cards:'/cards' }[onglet];
   const suite = onglet === 'resultats' && journee
@@ -347,6 +386,10 @@ async function charger() {
 
   $('tnom').textContent = d.league.name;
   $('tsous').textContent = `${nomPays(d.league)} · saison ${d.league.season}`;
+  /* La saison que le télétexte a retenue sur les dates de la compétition. Le
+     classement la reprend telle quelle plutôt que de la recalculer : une
+     seule règle, un seul endroit. */
+  SAISON = d.league.season ?? null;
 
   if (d.unsupported) {
     $('list').innerHTML = `<div class="empty">Cette donnée n'existe pas pour cette compétition.<br>
@@ -518,6 +561,117 @@ function rendreJoueurs(d) {
           <span>${esc(p.name)}<br><small style="opacity:.45">${esc(p.team ?? '')}</small></span></td>
         <td>${p.played}</td>
         <td class="pts">${col[1](p)}</td>
+      </tr>`).join('')}</tbody></table>`;
+}
+
+/* ======================================================= la ferveur
+
+   Ce que les joueurs ont donné dans cette compétition — au Grand Virage et au
+   Duel, qui comptent la même chose. Trois échelles, et elles ne récompensent
+   pas la même vertu :
+
+     — les **supporters**, sur ce que chacun a donné ;
+     — les **tribunes**, c'est-à-dire les clubs, ramenés au nombre de leurs
+       supporters : sans cette division, le plus gros gagne toujours et
+       personne ne défend le sien ;
+     — les **KOP**, ramenés au nombre de leurs membres, pour la même raison.
+
+   Ces listes ne viennent pas du télétexte : elles sont calculées chez nous,
+   sur ce que les joueurs ont fait. C'est la seule partie de cette page qui
+   parle du jeu et non du football.                                          */
+
+const ECHELLES = [['joueurs', 'SUPPORTERS'], ['tribunes', 'TRIBUNES'], ['kops', 'KOP']];
+let echelle = 'joueurs';
+/** La dernière réponse : changer d'échelle ne doit rien redemander. */
+let FERVEUR = null;
+/** La saison que le télétexte a retenue, transmise telle quelle au classement. */
+let SAISON = null;
+
+const rangTexte = (n) => (n === 1 ? '1er' : `${n}e`);
+
+async function chargerFerveur() {
+  const quelle = ligue;
+  let d;
+  try { d = await rang(`/competition/${ligue}${SAISON ? `?saison=${SAISON}` : ''}`); }
+  catch (e) { return panne(e); }
+  if (quelle !== ligue || vue !== 'ligue' || onglet !== 'ferveur') return;
+  FERVEUR = d;
+  rendreFerveur();
+}
+
+function rendreFerveur() {
+  const d = FERVEUR;
+  if (!d) return;
+
+  const chips = `<div class="chips ech">${ECHELLES.map(([cle, titre]) =>
+    `<button class="chip ${echelle === cle ? 'on' : ''}" data-e="${cle}">${titre}</button>`
+  ).join('')}</div>`;
+
+  /* La ligne du lecteur, au-dessus de la liste. Un classement de cinquante n'a
+     d'intérêt que si on y figure ; pour tous les autres, « 312e sur 1 400 »
+     vaut mieux que rien — et « personne n'a encore poussé » vaut mieux qu'un
+     vide qu'on prend pour une panne. */
+  const moi = d.moi && d.moi.rang
+    ? `<div class="maplace">Tu es <b>${rangTexte(d.moi.rang)}</b> sur ${d.moi.sur}
+         · ${d.moi.ferveur} de ferveur</div>`
+    : d.moi
+      ? '<div class="maplace vide">Tu n’as encore rien donné dans cette compétition.</div>'
+      : '';
+
+  const liste = d[echelle] ?? [];
+  $('list').innerHTML = chips + moi + (liste.length ? tableFerveur(liste) : `
+    <div class="empty">Personne n’a encore poussé dans cette compétition.<br>
+      Le premier match en direct ouvre le Grand Virage.</div>`);
+
+  $('list').querySelector('.ech').onclick = (e) => {
+    const b = e.target.closest('[data-e]');
+    if (!b || b.dataset.e === echelle) return;
+    echelle = b.dataset.e;
+    rendreFerveur();
+  };
+}
+
+/**
+ * Les trois tableaux.
+ *
+ * La colonne de droite n'est pas la même selon l'échelle, et c'est le point :
+ * un supporter est classé sur ce qu'il a donné, un club et un KOP sur leur
+ * **moyenne**. Afficher partout un total ferait croire que les trois listes
+ * répondent à la même question.
+ */
+function tableFerveur(liste) {
+  if (echelle === 'joueurs') {
+    return `<table>
+      <thead><tr><th>#</th><th>SUPPORTER</th><th>SÉANCES</th><th>FERVEUR</th></tr></thead>
+      <tbody>${liste.map((p, i) => `
+        <tr class="${i < 3 ? 'top3' : ''}">
+          <td>${i + 1}</td>
+          <td class="club"><span>${esc(p.pseudo)}<br>
+            <small style="opacity:.45">${esc(p.club ?? '')}</small></span></td>
+          <td>${p.seances}</td>
+          <td class="pts">${p.ferveur}</td>
+        </tr>`).join('')}</tbody></table>`;
+  }
+  if (echelle === 'tribunes') {
+    return `<table>
+      <thead><tr><th>#</th><th>CLUB</th><th>SUPP.</th><th>MOYENNE</th></tr></thead>
+      <tbody>${liste.map((t, i) => `
+        <tr class="${i < 3 ? 'top3' : ''}">
+          <td>${i + 1}</td>
+          <td class="club"><img src="${esc(t.logo)}" alt=""><span>${esc(t.name)}</span></td>
+          <td>${t.supporters}</td>
+          <td class="pts">${t.moyenne}</td>
+        </tr>`).join('')}</tbody></table>`;
+  }
+  return `<table>
+    <thead><tr><th>#</th><th>KOP</th><th>MEMBRES</th><th>MOYENNE</th></tr></thead>
+    <tbody>${liste.map((k, i) => `
+      <tr class="${i < 3 ? 'top3' : ''}">
+        <td>${i + 1}</td>
+        <td class="club"><img src="${esc(k.logo)}" alt=""><span>${esc(k.nom)}<br>
+          <small style="opacity:.45">${esc(k.club ?? '')}</small></span></td>
+        <td>${k.membres}</td>
+        <td class="pts">${k.moyenne}</td>
       </tr>`).join('')}</tbody></table>`;
 }
 

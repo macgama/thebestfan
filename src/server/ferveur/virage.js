@@ -435,13 +435,7 @@ export class VirageRoom {
     // `ferveurBonus` : ce qui compte au classement. Séparé de la corde
     // exprès — un KOP peut vouloir peser sur le match sans peser sur le
     // classement, et l’inverse.
-    m.ferveur += Math.round(Math.max(0, perCapita) * (mods.ferveurBonus ?? 1)
-      * (m.neutre ? RULES.ferveurNeutre : 1));
-    this.dirty = true;
-
-    // Présence : c'est ce que consulteront les cartes-souvenirs au prochain but.
-    this.onPush?.({ userId, fixtureId: this.fixture.id, side: m.side,
-      fanzzyId: m.mods.id ?? null, amount: perCapita }).catch?.(() => {});
+    this.crediter(m, perCapita, mods);
 
     if (Math.abs(this.rope) >= RULES.goalAt) this.scoreGoal(this.rope > 0 ? 1 : 0);
 
@@ -518,6 +512,41 @@ export class VirageRoom {
   }
 
   /**
+   * Ce qu'une poussée rapporte à celui qui l'a donnée.
+   *
+   * **Le même nombre part des deux côtés**, et c'est tout l'objet de cette
+   * méthode. La salle ajoutait à `m.ferveur` un montant corrigé — le bonus du
+   * Fanzzy, la moitié du neutre — et envoyait à la base le montant brut. Le
+   * supporter lisait donc un chiffre à l'écran pendant que le classement en
+   * comptait un autre : pour un neutre, exactement le double de ce qui lui
+   * était annoncé. La règle « la ferveur d'un neutre vaut moitié » était écrite
+   * dans le commentaire de `RULES.ferveurNeutre` et vraie nulle part.
+   *
+   * **La poussée d'une carte d'action compte enfin.** Elle n'était envoyée à la
+   * base par aucun chemin : on pouvait passer un match à jouer des cartes et
+   * n'apparaître dans aucun classement.
+   *
+   * Le club part avec, et c'est **celui qu'on a poussé** — pas ceux qu'on suit.
+   * Nul pour un neutre : il chante pour une tribune dont il n'est pas, et sa
+   * ferveur ne doit rien rapporter ni à ce club ni à un KOP.
+   */
+  crediter(m, perCapita, mods = m.mods) {
+    const gagne = Math.round(Math.max(0, perCapita) * (mods.ferveurBonus ?? 1)
+      * (m.neutre ? RULES.ferveurNeutre : 1));
+    m.ferveur += gagne;
+    this.dirty = true;
+
+    /* Présence : c'est ce que consulteront les cartes-souvenirs au prochain
+       but, et les classements bien après le match. */
+    this.onPush?.({
+      userId: m.userId, fixtureId: this.fixture.id, side: m.side,
+      teamId: m.neutre ? null : (m.side ? this.fixture.awayId : this.fixture.homeId),
+      fanzzyId: m.mods.id ?? null, amount: gagne,
+    })?.catch?.(() => {});
+    return gagne;
+  }
+
+  /**
    * Pousse la corde de la part d'un membre, aux règles du Virage.
    *
    * Le même chemin que le chant : multiplicateur de but réel, taille de foule,
@@ -532,9 +561,7 @@ export class VirageRoom {
     const perCapita = amount / n;
     const signed = m.side === 0 ? -perCapita : perCapita;
     this.rope = clamp(this.rope + signed, -RULES.goalAt, RULES.goalAt);
-    m.ferveur += Math.round(Math.max(0, perCapita) * (m.mods.ferveurBonus ?? 1)
-      * (m.neutre ? RULES.ferveurNeutre : 1));
-    this.dirty = true;
+    this.crediter(m, perCapita);
     evenements.push({ t: 'push', side: m.side, valeur: Math.round(perCapita) });
     if (Math.abs(this.rope) >= RULES.goalAt) this.scoreGoal(this.rope > 0 ? 1 : 0);
     return perCapita;

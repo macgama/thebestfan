@@ -22,6 +22,10 @@
  *   5. **Les résultats donnent toutes les journées**, s'ouvrent sur celle du
  *      jour, font courir la minute d'un match en cours, et mènent à la fiche.
  *
+ *   6. **La ferveur** est le seul onglet qui parle du jeu : ce que les
+ *      supporters ont donné dans cette compétition. Il transmet la saison,
+ *      et il n'interroge le serveur qu'une fois pour trois échelles.
+ *
  * Le serveur est un talon : les vraies routes sont éprouvées par
  * `teletext-smoke`. Ce qu'on veut ici, c'est ce que la page **fait** de la
  * réponse.
@@ -153,6 +157,36 @@ app.get('/api/tt/league/:id/results', (q, s) => {
     stale: false,
   });
 });
+/* Les classements de ferveur. Ils ne viennent pas du télétexte : c'est notre
+   propre base, et le talon compte ce que la page lui demande — c'est ça qu'on
+   éprouve, pas le contenu. */
+let derniereRang = null;
+let appelsRang = 0;
+let ferveurVide = false;
+app.get('/api/rank/competition/:id', (q, s) => {
+  derniereRang = { id: q.params.id, ...q.query };
+  appelsRang++;
+  if (ferveurVide) {
+    return s.json({ saison: 2026, joueurs: [], tribunes: [], kops: [], moi: null });
+  }
+  s.json({
+    saison: 2026,
+    joueurs: [
+      { public_id: 'u1', pseudo: 'Momo', ferveur: 1000, seances: 4, club: 'FC Sion' },
+      { public_id: 'u2', pseudo: 'Sarah', ferveur: 800, seances: 3, club: 'FC Sion' },
+    ],
+    tribunes: [
+      { id: 85, name: 'FC Sion', logo: '', ferveur: 1800, supporters: 2, moyenne: 900 },
+      { id: 91, name: 'FC Bâle', logo: '', ferveur: 900, supporters: 4, moyenne: 225 },
+    ],
+    kops: [
+      { id: 'k1', nom: 'Les Fidèles', club: 'FC Sion', logo: '',
+        membres: 2, ferveur: 1800, moyenne: 900 },
+    ],
+    moi: { ferveur: 120, seances: 2, rang: 6, sur: 6 },
+  });
+});
+
 app.get('/api/auth/me', (_q, s) => (connecte
   ? s.json({ user: { pseudo: 'Momo' } })
   : s.status(401).json({ error: 'auth.required' })));
@@ -348,6 +382,61 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
   await page.evaluate(() => document.querySelector('.m').click());
   await jusqua(async () => page.url().includes('/matchs'));
   check('un match mène à sa fiche', page.url().includes('/matchs?match=601'));
+}
+
+
+/* --------------------------------------------------------- la ferveur
+
+   Le seul onglet qui parle du jeu et non du football. Trois choses s'y
+   jouent, et aucune ne se lit dans le code :
+
+     — la saison que le télétexte a retenue est **transmise** au classement ;
+       sans elle, le serveur retomberait sur la plus récente qu'il connaisse et
+       la page afficherait une autre année que son propre titre ;
+     — changer d'échelle ne **redemande rien** : les trois listes arrivent
+       ensemble, et trois allers-retours pour trois onglets se sentiraient ;
+     — la place du lecteur est dite même quand il n'est pas dans les cinquante
+       premiers. C'est la seule ligne de la page qui parle de lui.            */
+
+{
+  await page.goto(base + '/teletext?ligue=207', { waitUntil: 'networkidle0' });
+  await jusqua(async () => await page.$('#tabs') !== null);
+
+  await page.evaluate(() => document.querySelector('[data-t=ferveur]').click());
+  await jusqua(async () => await page.$('.chips.ech') !== null);
+
+  check('la saison du télétexte part avec la demande', derniereRang?.saison === '2026');
+  check('et la compétition aussi', derniereRang?.id === '207');
+
+  const premier = await page.$eval('tbody tr td.club', (n) => n.textContent.trim());
+  check('les supporters de la compétition sont classés', premier.startsWith('Momo'));
+  check('avec le club qu’ils défendent', premier.includes('FC Sion'));
+  check('et leur ferveur', await page.$eval('tbody tr td.pts', (n) => n.textContent.trim()) === '1000');
+
+  const place = await page.$eval('.maplace', (n) => n.textContent.replace(/\s+/g, ' ').trim());
+  check('la place du lecteur est dite', /6e sur 6/.test(place)
+    || (console.log('        elle dit :', place), false));
+
+  const avant = appelsRang;
+  await page.evaluate(() => document.querySelector('[data-e=tribunes]').click());
+  await jusqua(async () => (await page.$eval('thead', (n) => n.textContent)).includes('CLUB'));
+  check('changer d’échelle ne redemande rien au serveur', appelsRang === avant);
+  check('les tribunes sont classées sur leur moyenne',
+    (await page.$eval('thead', (n) => n.textContent)).includes('MOYENNE'));
+
+  await page.evaluate(() => document.querySelector('[data-e=kops]').click());
+  await jusqua(async () => (await page.$eval('thead', (n) => n.textContent)).includes('KOP'));
+  check('et les KOP ont la leur',
+    (await page.$eval('tbody tr td.club', (n) => n.textContent)).includes('Les Fidèles'));
+
+  /* Une compétition où personne n'a encore poussé : une phrase, pas un vide.
+     Un tableau vide se lit comme une panne. */
+  ferveurVide = true;
+  await page.evaluate(() => { echelle = 'joueurs'; charger(); });
+  await jusqua(async () => await page.$('.empty') !== null);
+  check('sans personne, la page le dit au lieu de rester vide',
+    (await page.$eval('.empty', (n) => n.textContent)).includes('poussé'));
+  ferveurVide = false;
 }
 
 check('aucune erreur de script sur la page des compétitions',

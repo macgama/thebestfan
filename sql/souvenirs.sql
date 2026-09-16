@@ -94,3 +94,17 @@ CREATE TABLE IF NOT EXISTS user_wallet (
   updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   CONSTRAINT fk_wallet_user FOREIGN KEY (user_id) REFERENCES users(public_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Le club réellement poussé — et non ceux qu'on suit.
+--
+-- Le Grand Virage s'ouvre sur tous les matchs : on y entre en soutenant un club
+-- dont on n'est pas. `side` dit de quel côté de la corde on a tiré, jamais si
+-- ce côté était le sien, et les classements par compétition ont besoin de la
+-- différence : la ferveur d'un neutre compte pour lui et pour la compétition,
+-- jamais pour une tribune ni pour un KOP dont il n'est pas membre.
+--
+-- Nul veut dire neutre. Les lignes écrites avant cette colonne restent nulles :
+-- elles ne rapporteront rien à aucune tribune, ce qui est le choix prudent —
+-- mieux vaut n'attribuer à personne que d'attribuer au hasard.
+ALTER TABLE virage_presence ADD COLUMN IF NOT EXISTS team_id INT NULL;
+ALTER TABLE virage_presence ADD INDEX IF NOT EXISTS idx_team (team_id);

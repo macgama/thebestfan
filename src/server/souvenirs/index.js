@@ -29,15 +29,16 @@ export function createSouvenirs({ pool, requireAuth }) {
    * Enregistre une poussée dans le Grand Virage.
    * Appelée par la couche temps réel à chaque contribution, pas par le client.
    */
-  async function recordPush({ userId, fixtureId, side, fanzzyId, amount }) {
+  async function recordPush({ userId, fixtureId, side, teamId = null, fanzzyId, amount }) {
     await q(
-      `INSERT INTO virage_presence (user_id, fixture_id, side, fanzzy_id, ferveur)
-       VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO virage_presence (user_id, fixture_id, side, team_id, fanzzy_id, ferveur)
+       VALUES (?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE
          ferveur = ferveur + VALUES(ferveur),
          fanzzy_id = VALUES(fanzzy_id),
          last_push_at = NOW(3)`,
-      [userId, fixtureId, side ? 1 : 0, fanzzyId ?? null, Math.max(0, Math.round(amount ?? 0))],
+      [userId, fixtureId, side ? 1 : 0, teamId ?? null, fanzzyId ?? null,
+       Math.max(0, Math.round(amount ?? 0))],
     );
   }
 

@@ -56,3 +56,21 @@ CREATE TABLE IF NOT EXISTS duel_results (
 
 -- Les tables fixtures, fixture_events et user_follows sont désormais
 -- définies par sql/football.sql, qui fait autorité.
+
+-- Ce qu'un duel a rapporté, et à qui.
+--
+-- La table ne gardait qu'un Elo et une issue : ni le match support, ni le club
+-- soutenu, ni la ferveur — que le moteur compte pourtant par joueur depuis le
+-- premier jour, sans jamais l'écrire. Un duel ne pouvait donc figurer dans
+-- aucun classement de compétition, faute de savoir de laquelle il relevait.
+--
+-- La compétition et la saison ne sont pas recopiées ici : `fixtures` les porte
+-- déjà, et deux endroits qui disent la même chose finissent par se contredire.
+-- Une jointure coûte moins cher qu'un désaccord.
+--
+-- `fixture_id` nul : un duel d'avant ces colonnes. Il ne compte nulle part,
+-- plutôt que de compter au mauvais endroit.
+ALTER TABLE duel_results ADD COLUMN IF NOT EXISTS fixture_id INT NULL;
+ALTER TABLE duel_results ADD COLUMN IF NOT EXISTS team_id    INT NULL;
+ALTER TABLE duel_results ADD COLUMN IF NOT EXISTS ferveur    INT NOT NULL DEFAULT 0;
+ALTER TABLE duel_results ADD INDEX IF NOT EXISTS idx_fixture (fixture_id);

@@ -129,6 +129,16 @@ export const REGLAGES = [
     aide: 'Sans ça, une tribune de trois cents dont deux cents sont partis ' +
       'dilue l’effort de ceux qui restent.' },
 
+  { cle: 'ferveur.neutre', section: 'virage', type: 'decimal',
+    titre: 'Ferveur en soutenant un club qu’on ne suit pas', unite: '× la normale',
+    min: 0, max: 1, pas: 0.05, defaut: 0.5,
+    aide: 'Au Virage comme au Duel. Ce qui est réduit, c’est ce que le ' +
+      'supporter gagne — jamais ce qu’il apporte : une tribune qui pousserait ' +
+      'à moitié serait une tribune qu’on décourage de venir, et le but est ' +
+      'l’inverse. À 1, venir pousser ailleurs vaut autant que chez soi et les ' +
+      'classements de compétition n’ont plus de chez-soi ; à 0, plus personne ' +
+      'n’a de raison d’entrer dans un match qui n’est pas le sien.' },
+
   { cle: 'virage.secousse_but_reel', section: 'virage', type: 'entier',
     titre: 'Un vrai but secoue la corde de', unite: 'points', min: 0, max: 400, defaut: 90 },
 
