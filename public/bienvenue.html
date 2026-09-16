@@ -51,6 +51,12 @@ input:focus{outline:none;border-color:var(--projo)}
   background:rgba(6,9,13,.92);border:1px solid rgba(242,238,228,.14);border-radius:11px;
   padding:5px;backdrop-filter:blur(10px)}
 .res:empty{display:none}
+/* Une sélection nationale se distingue d'un club : « France » et « Stade
+   Français » se ressemblent dans une liste, et ce ne sont pas du tout les
+   mêmes couleurs à porter. */
+.nat{font-family:var(--banner);font-size:8px;letter-spacing:.12em;
+  border:1px solid var(--projo);color:var(--projo);border-radius:4px;
+  padding:2px 5px;flex:none;align-self:center}
 .club{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:8px;cursor:pointer;
   border:1px solid transparent;background:transparent;text-align:left;width:100%;
   color:var(--craie);font-family:inherit}
