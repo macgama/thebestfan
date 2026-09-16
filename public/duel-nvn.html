@@ -8,6 +8,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
+<!-- Partager le lien de sa file : une file vit deux minutes, c'est le moment
+     où l'on veut dire « viens, je t'attends ». -->
+<script src="/partage.js" defer></script>
 <style>
 :root{--ambre:#E08A2C}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -80,6 +83,11 @@ h2 i{font-style:normal;opacity:.7}
 .mt .q.attente{color:var(--bleu, #7FB2FF);border-color:currentColor}
 .raison.attend{opacity:.9}
 .raison.attend b{color:var(--projo);font-family:var(--banner);font-size:13px}
+/* Inviter, depuis la file. Posé dans le texte du voile, donc en ligne. */
+.inviter{display:inline-block;margin-top:12px;background:none;color:var(--projo);
+  border:1px solid var(--projo);border-radius:8px;font:inherit;font-size:13px;
+  padding:9px 16px;cursor:pointer}
+.inviter:hover{background:rgba(245,195,59,.12)}
 .trib small{display:block;font-family:var(--ui);font-size:9.5px;letter-spacing:.06em;
   opacity:.55;margin-top:3px;font-weight:400}
 /* Ce qui se déplie sous le match choisi. Rattaché à lui par la bordure et le
@@ -701,6 +709,42 @@ function toast(t) {
 }
 const dire = (code) => toast(MESSAGES[code] ?? `Refusé par le serveur : ${code}`);
 
+
+/* ------------------------------------------------- faire venir quelqu'un
+
+   Une file de duel ne vit que deux minutes. C'est exactement le moment où l'on
+   voudrait dire « viens, je t'attends » — et le jeu n'avait aucun moyen de le
+   faire. Le seul canal qui marche est celui que les gens emploient déjà :
+   WhatsApp, un message.
+
+   **Le lien envoie dans le camp d'en face.** C'est tout l'intérêt : deux
+   joueurs du même côté ne se rencontrent jamais, ils attendent ensemble. Si
+   celui qui reçoit suit un des deux clubs, le serveur décide pour lui de toute
+   façon — on ne peut pas pousser contre son propre club, et le lien ne le fera
+   pas changer d'avis. */
+function lienDeMaFile(p) {
+  const params = new URLSearchParams({
+    match: String(p?.fixtureId ?? S.fixtureId ?? ''),
+    format: String(p?.format ?? S.format),
+  });
+  // Le camp d'en face, pour que le duel parte au lieu de s'allonger.
+  if (p?.camp === 0 || p?.camp === 1) params.set('camp', String(p.camp ^ 1));
+  return `/duel-nvn?${params}`;
+}
+
+async function inviterAuDuel(p) {
+  const chez = p?.enFaceClub?.name;
+  const quoi = await window.TBF_PARTAGE.envoyer({
+    titre: 'Duel de tribunes',
+    texte: chez
+      ? `Je t’attends en face, avec ${chez}. Tribune contre tribune.`
+      : 'Je t’attends pour un duel de tribunes.',
+    url: lienDeMaFile(p),
+  });
+  if (quoi === 'copie') toast('Lien copié.');
+  else if (quoi === null) toast('Impossible de partager ici.');
+}
+
 function voile(titre, texte, bouton) {
   $('voileTitre').textContent = titre;
   $('voileTexte').innerHTML = texte ?? '';
@@ -1018,8 +1062,15 @@ function connecter() {
     if (p?.botDansMs) {
       lignes.push(`Des bots complètent après ${Math.round(p.botDansMs / 1000)} secondes.`);
     }
+    /* Inviter quelqu'un, tant qu'on attend. Le bouton n'existe que si le
+       navigateur sait faire quelque chose — un bouton qui ne fait rien est
+       pire que pas de bouton. */
+    if (window.TBF_PARTAGE?.possible) {
+      lignes.push('<button class="inviter" id="inviter">Inviter quelqu’un</button>');
+    }
     voile('Dans la file', lignes.join('<br>'),
       { texte:'Quitter la file', action: quitterFile });
+    if ($('inviter')) $('inviter').onclick = () => inviterAuDuel(p);
   });
 
   /* Le panneau d'affichage : ce qui attend, partout, à chaque mouvement.
@@ -1785,6 +1836,24 @@ addEventListener('load', () => {
 
     // Un match du jour d'abord : c'est celui qu'on vient jouer.
     S.fixtureId = S.matchs.find((m) => m.mode === 'classe')?.id ?? S.matchs[0]?.id ?? null;
+
+    /* **Arriver par un lien d'invitation.** Format, match et camp sont déjà
+       décidés par celui qui a invité : on les pose, et il ne reste qu'à
+       appuyer. Un lien qui ouvrirait la page au début du parcours ne serait
+       pas une invitation, ce serait une adresse.
+
+       Chaque valeur est vérifiée contre ce que la page connaît : un lien peut
+       être vieux d'une heure, et le match plus être là. */
+    {
+      const q = new URLSearchParams(location.search);
+      const f = q.get('format');
+      if (f && (formatsMemo ?? []).includes(f)) S.format = f;
+      const id = Number(q.get('match'));
+      if (S.matchs.some((m) => m.id === id)) S.fixtureId = id;
+      const c = Number(q.get('camp'));
+      if (c === 0 || c === 1) S.camp = c;
+    }
+
     // Ce qui attend déjà : la diffusion ne dira rien tant que personne ne bouge.
     await lireAttentes();
     rendrePrepa(sansDeckMemo, formatsMemo);

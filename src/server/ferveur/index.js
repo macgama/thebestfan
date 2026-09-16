@@ -509,6 +509,9 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         home_name: m.home.name, home_logo: m.home.logo,
         away_name: m.away.name, away_logo: m.away.logo,
         league_name: m.leagueName,
+        // Le pays de la compétition : la page en fait un nom dans la langue du
+        // lecteur, et un terme de recherche. Voir public/pays.js.
+        pays: m.country, drapeau: m.drapeau,
         // Le palier de la compétition : il décide de l'ordre, plus bas.
         tier: m.tier,
       });

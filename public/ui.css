@@ -1123,8 +1123,15 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
   display:flex;align-items:center;justify-content:space-between;
 }
 /* La barre laisse passer les clics, ses deux boutons les prennent : entre eux
-   se trouve l'en-tête du jeu, qui doit rester cliquable. */
-.tbf-haut-jeu .tbf-bourse,.tbf-haut-jeu .tbf-retour{pointer-events:auto}
+   se trouve l'en-tête du jeu, qui doit rester cliquable.
+
+   **Le bouton de menu n'était pas de la liste.** Elle nommait `.tbf-bourse`,
+   le solde d'écharpes, retiré de la barre le jour où elle a été simplifiée.
+   Le sélecteur est resté, il ne désignait plus rien, et le menu du Grand
+   Virage et du Duel ne s'ouvrait donc plus : les clics traversaient le bouton.
+   Un écran de jeu sans menu est un cul-de-sac — c'est justement le défaut que
+   cette barre existe pour éviter. */
+.tbf-haut-jeu .tbf-burger,.tbf-haut-jeu .tbf-retour{pointer-events:auto}
 /* **Pas de titre sur un écran de jeu.**
 
    La barre commune écrit le nom de l'écran entre les deux boutons. Sur une page
@@ -1136,7 +1143,7 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
 .tbf-haut-jeu .tbf-ou{display:none}
 /* Sans elle, la flèche absente laisserait le bouton de menu glisser à gauche :
    `space-between` place son unique enfant au début. */
-.tbf-haut-jeu .tbf-bourse{margin-left:auto}
+.tbf-haut-jeu .tbf-burger{margin-left:auto}
 .tbf-burger{position:relative}
 
 /* La flèche de retour. Même taille et même matière que le bouton de menu :

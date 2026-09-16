@@ -44,6 +44,13 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .score{font-family:var(--banner);font-size:24px;flex:none;min-width:64px;text-align:center;line-height:1}
 .score small{display:block;font-size:8.5px;letter-spacing:.16em;opacity:.5;font-family:var(--ui);margin-top:3px}
 .score.surge{color:var(--projo);animation:pulse 1s infinite}
+/* Inviter quelqu'un. Sous le score, minuscule : c'est une chose qu'on fait une
+   fois en entrant, pas toutes les trente secondes — et la place au-dessus
+   appartient au match. */
+.inviter{display:block;margin:4px auto 0;background:none;border:1px solid rgba(242,238,228,.22);
+  border-radius:5px;color:var(--craie);font-family:var(--ui);font-size:8px;letter-spacing:.14em;
+  padding:3px 7px;opacity:.55;cursor:pointer}
+.inviter:hover{opacity:1;border-color:var(--projo);color:var(--projo)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
 
 /* ------------------------------------------------------------- le fil
@@ -271,12 +278,37 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 /* Opaque, et pas à 96 % : derrière le voile il y a l'en-tête du jeu, avec ses
    blasons vides et son « 0 – 0 » d'avant l'entrée. Quatre pour cent suffisaient
-   à le laisser transparaître, et l'écran de choix paraissait sale. */
+   à le laisser transparaître, et l'écran de choix paraissait sale.
+
+   **Une tête fixe et une liste qui défile**, et non plus un bloc centré.
+   Le voile centrait tout son contenu et laissait déborder ce qui dépassait :
+   avec quarante rencontres en direct — depuis que la liste montre tout ce qui
+   se joue et non plus les seuls clubs suivis — le titre et le champ de
+   recherche sortaient **par le haut**, hors d'atteinte, puisqu'on ne peut pas
+   remonter au-dessus du début d'une zone qui défile. L'écran s'ouvrait au
+   milieu d'une liste de matchs turcs, sans rien dire de ce qu'on regardait.
+
+   La tête réserve aussi la place des deux boutons flottants — retour et menu —
+   qui vivent au-dessus d'elle. */
 .veil{position:absolute;inset:0;background:#05070A;z-index:30;display:none;flex-direction:column;
-  align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;overflow-y:auto}
+  align-items:center;padding:0;text-align:center;overflow:hidden}
 .veil.on{display:flex}
+.veil .tete{flex:none;width:100%;max-width:380px;
+  padding:calc(env(safe-area-inset-top) + 62px) 22px 10px}
+.veil .liste{flex:1;min-height:0;width:100%;overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  padding:4px 22px calc(env(safe-area-inset-bottom) + 24px)}
 .veil h1{font-family:var(--banner);font-size:24px;letter-spacing:.1em;margin:0}
-.veil p{font-size:12.5px;opacity:.62;line-height:1.6;margin:0;max-width:320px}
+.veil p{font-size:12.5px;opacity:.62;line-height:1.6;margin:10px auto 0;max-width:320px}
+/* Le champ de recherche, comme sur la page des matchs et celle des
+   compétitions : même geste, même promesse — une équipe, une compétition, ou
+   un pays dans sa langue. */
+.veil .rech{margin-top:12px}
+.veil .rech input{width:100%;background:rgba(0,0,0,.4);border-radius:8px;
+  border:1px solid rgba(242,238,228,.16);color:var(--craie);
+  padding:10px 12px;font-size:14px;font-family:inherit}
+.veil .rech input:focus{outline:none;border-color:var(--projo)}
+.veil .vide{font-size:12px;opacity:.45;padding:26px 10px;line-height:1.7}
 .match{width:100%;max-width:340px;border:1px solid rgba(242,238,228,.16);border-radius:10px;
   background:rgba(0,0,0,.3);padding:12px;cursor:pointer;display:flex;align-items:center;
   gap:9px;flex-wrap:wrap}
@@ -335,7 +367,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <main id="app">
   <div class="hud">
     <div class="club" id="clubFoe"><img alt=""><div><b>—</b><small>EN FACE</small></div></div>
-    <div class="score"><span id="score">0 – 0</span><small id="phase">GRAND VIRAGE</small></div>
+    <div class="score"><span id="score">0 – 0</span><small id="phase">GRAND VIRAGE</small>
+      <button class="inviter" id="partager" hidden
+        aria-label="Inviter quelqu’un sur ce match">INVITER</button></div>
     <div class="club me" id="clubMe"><img alt=""><div><b>—</b><small>TA TRIBUNE</small></div></div>
   </div>
 
@@ -383,9 +417,17 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <div class="souvenir" id="souvenir"></div>
 
   <div class="veil on" id="veil">
-    <h1 id="veilTitle">LE GRAND VIRAGE</h1>
-    <p id="veilText">Tout le monde pousse sur la même corde pendant le vrai match. Un but réel la secoue et ouvre une minute où tout compte double.</p>
-    <div id="matchs"></div>
+    <!-- La tête ne défile pas : avec quarante matchs en direct, le titre et le
+         champ de recherche sortaient par le haut, hors d'atteinte. -->
+    <div class="tete">
+      <h1 id="veilTitle">LE GRAND VIRAGE</h1>
+      <p id="veilText">Tout le monde pousse sur la même corde pendant le vrai match. Un but réel la secoue et ouvre une minute où tout compte double.</p>
+      <div class="rech" id="rech" hidden>
+        <input id="q" placeholder="Chercher une équipe, une compétition, un pays…"
+          autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <div class="liste" id="matchs"></div>
   </div>
 </main>
 
@@ -412,6 +454,12 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
      un but peut tomber la seconde d'après. -->
 <!-- L’horloge du match : la même sur les trois écrans qui l’affichent. -->
 <script src="/horloge.js"></script>
+<!-- Le nom des pays dans la langue du lecteur, et la recherche par pays :
+     partagé avec la page des matchs et celle des compétitions. -->
+<script src="/pays.js"></script>
+<!-- Partager un lien vers ce match : la feuille du téléphone, WhatsApp, un
+     message. Un virage se pousse à plusieurs. -->
+<script src="/partage.js"></script>
 <script src="/fanzzy-art.js"></script>
 <!-- Les familles de cartes, leurs dessins, et la carte qu'on voit partir. La
      même que le classeur et le duel : le Virage n'a pas sa propre idée d'une
@@ -763,6 +811,21 @@ function float(txt, color) {
   el.style.left = '58%'; el.style.top = '46%';
   $('rope').appendChild(el); setTimeout(() => el.remove(), 1200);
 }
+/**
+ * Un mot bref au joueur, là où les refus s'affichent déjà.
+ *
+ * `fail` ne sait dire que des codes d'erreur connus ; le partage, lui, a des
+ * choses à annoncer qui ne sont pas des fautes — « lien copié ». Les deux
+ * passent par le même endroit de l'écran, sinon le joueur devrait apprendre
+ * deux endroits où regarder.
+ */
+function mot(texte) {
+  const e = $('err');
+  e.textContent = texte;
+  e.className = 'err on';
+  clearTimeout(e._t); e._t = setTimeout(() => { e.className = 'err'; }, 2600);
+}
+
 function fail(code) {
   const e = $('err');
   e.textContent = ({
@@ -782,6 +845,7 @@ function fail(code) {
   e.className = 'err on';
   clearTimeout(e._t); e._t = setTimeout(() => { e.className = 'err'; }, 2600);
 }
+
 
 /* ------------------------------------------------------------ les gestes
    Le client ne fait qu'enregistrer les instants et les transmettre. */
@@ -1190,12 +1254,7 @@ function souvenir(g) {
      donné ici — le serveur le déduit des clubs suivis, et propose de le
      choisir si aucun des deux n'est à nous. */
   const demande = Number(new URLSearchParams(location.search).get('match'));
-  if (Number.isInteger(demande) && demande > 0) {
-    socket.emit('virage:join', { fixtureId: demande });
-  // La barre prévient au rechargement tant qu'on est dans la salle : le jeu se
-  // remet seul, mais la corde retombe pendant les deux secondes du rechargement.
-  window.TBF_BARRE?.enPartie?.(true);
-  }
+  const parLien = Number.isInteger(demande) && demande > 0 ? demande : null;
 
   let matchs = [];
   const lire = async () => {
@@ -1233,6 +1292,33 @@ function souvenir(g) {
     { statut: m.status_short, minute: m.elapsed, extra: m.elapsed_extra, vuA: m.luA },
     { HT: 'MT', BT: 'PAUSE', INT: 'INTERROMPU' }) || (m.elapsed ? m.elapsed + "'" : 'BIENTÔT');
 
+  /* ------------------------------------------------------- la recherche
+
+     Depuis que la liste montre **tout** ce qui se joue, elle fait quarante
+     lignes un samedi soir. Le même geste que sur la page des matchs et celle
+     des compétitions, et la même promesse : une équipe, une compétition, ou un
+     pays **dans sa langue** — la traduction se fait chez le lecteur, à partir
+     du code ISO que porte le drapeau. Tout cela vit dans `public/pays.js`,
+     écrit une fois pour les trois pages. */
+  const { pli, cherches: paysCherches } = window.TBF_PAYS;
+  const nomPays = (m) => window.TBF_PAYS.nom(m.pays, m.drapeau);
+
+  let terme = '';
+
+  function filtrer(liste) {
+    if (!terme) return liste;
+    const cherches = paysCherches(terme);
+    const estCePays = (nom) => Boolean(nom)
+      && cherches.some((p) => pli(nom).includes(p));
+    return liste.filter((m) =>
+      pli(m.home_name).includes(terme) || pli(m.away_name).includes(terme)
+      || pli(m.league_name).includes(terme)
+      || pli(m.pays).includes(terme) || pli(nomPays(m)).includes(terme)
+      || estCePays(m.pays)
+      // Une sélection nationale porte le nom de son pays, en anglais.
+      || estCePays(m.home_name) || estCePays(m.away_name));
+  }
+
   const carte = (m) => {
     const joue = m.home_goals != null && m.away_goals != null;
     return `<div class="match ${m.open ? '' : 'off'} ${m.mien ? '' : 'ailleurs'}"
@@ -1249,19 +1335,88 @@ function souvenir(g) {
   };
 
   const peindre = () => {
-    const miens = matchs.filter((m) => m.mien);
-    const autres = matchs.filter((m) => !m.mien && m.open);
+    /* Le champ ne paraît qu'à partir du moment où il sert. Sous une poignée de
+       matchs, chercher est plus long que lire — et un champ de recherche devant
+       trois lignes donne l'impression qu'il manque quelque chose. Il reste
+       ensuite tant qu'on a tapé quelque chose, sinon il disparaîtrait sous les
+       doigts au moment où le filtre vide la liste. */
+    $('rech').hidden = matchs.length < 8 && !terme;
+
+    const vus = filtrer(matchs);
+    const miens = vus.filter((m) => m.mien);
+    const autres = vus.filter((m) => !m.mien && m.open);
     const part = Math.round((FERVEUR_NEUTRE ?? 0.5) * 100);
-    $('matchs').innerHTML = (matchs.length ? [
+
+    $('matchs').innerHTML = (vus.length ? [
       miens.length ? `<div class="rubrique">TES CLUBS</div>${miens.map(carte).join('')}` : '',
       autres.length ? `<div class="rubrique">AILLEURS EN DIRECT
         <small>tu choisis ton camp · ferveur à ${part} %</small></div>${autres.map(carte).join('')}` : '',
     ].join('') : '')
-      || `<p>Aucun match en direct pour l’instant.<br>
-          <a href="/equipes" style="color:var(--projo)">Suis un club</a>
-          pour être prévenu quand le tien joue.</p>`;
+      || (terme
+        ? `<div class="vide">Aucun match ne répond à « ${esc(terme)} ».<br>
+            Essaie un club, une compétition, ou un pays.</div>`
+        : `<p>Aucun match en direct pour l’instant.<br>
+            <a href="/equipes" style="color:var(--projo)">Suis un club</a>
+            pour être prévenu quand le tien joue.</p>`);
   };
   peindre();
+
+  /* **Entrer par un lien**, une fois la liste dessinée.
+     Le geste est exactement celui d'un clic sur la carte du match : on entre
+     directement si l'on suit un des deux clubs, et sinon la carte se déplie
+     pour demander le camp. Le raccourci d'avant entrait **sans demander**, et
+     plaçait donc tout neutre du côté du domicile sans qu'il l'ait choisi —
+     invisible tant que ce chemin ne servait qu'au bouton d'une fiche de match,
+     et faux dès qu'on partage un lien. */
+  if (parLien) {
+    const carteM = $('matchs').querySelector(`[data-id="${parLien}"]`);
+    // Absent de la liste — un match qui n'a pas encore commencé : on tente
+    // quand même, le serveur dira non s'il faut.
+    if (carteM) carteM.click();
+    else socket.emit('virage:join', { fixtureId: parLien });
+  }
+
+
+  /* ----------------------------------------------- faire venir du monde
+
+     Un virage se pousse à plusieurs, et le jeu n'avait aucun moyen d'inviter
+     qui que ce soit. Le seul canal qui marche est celui que les gens emploient
+     déjà : « viens, je suis là », envoyé sur WhatsApp ou par message.
+
+     Le lien porte **le match**, pas la tribune : celui qui arrive choisit son
+     camp comme tout le monde, et s'il suit un des deux clubs il n'a même pas à
+     choisir. L'envoyer d'office dans la tribune de l'expéditeur serait décider
+     à sa place, parfois contre son propre club.
+
+     Le bouton ne paraît que si le navigateur sait faire quelque chose : un
+     bouton qui ne fait rien est pire que pas de bouton. */
+  $('partager').hidden = !window.TBF_PARTAGE?.possible;
+  $('partager').onclick = async (e) => {
+    e.stopPropagation();
+    const f = S?.fixture;
+    const id = f?.id ?? demande;
+    if (!id) return;
+    // La salle nomme ses clubs `homeName`/`awayName` — voir `fixtureInfo`.
+    const affiche = f?.homeName && f?.awayName
+      ? `${f.homeName} – ${f.awayName}` : 'un match en direct';
+    const quoi = await window.TBF_PARTAGE.envoyer({
+      titre: 'Le Grand Virage',
+      texte: `Je pousse sur ${affiche}. Viens tenir la corde avec moi.`,
+      url: `/virage?match=${encodeURIComponent(id)}`,
+    });
+    if (quoi === 'copie') mot('Lien copié');
+    else if (quoi === null) mot('Impossible de partager ici');
+  };
+
+  /* Court délai : filtrer à chaque frappe sur quarante matchs saccade, et le
+     champ est souvent tenu d'un pouce. */
+  {
+    let t = null;
+    $('q').oninput = () => {
+      clearTimeout(t);
+      t = setTimeout(() => { terme = pli($('q').value.trim()); peindre(); }, 200);
+    };
+  }
 
   /* L'écran de choix vit aussi longtemps qu'un match — on peut l'ouvrir à la
      vingtième minute et entrer à la soixante-dixième. La liste était lue une

@@ -55,6 +55,11 @@ export async function journeeParId(jourDuFoot) {
         id: Number(m.id),
         leagueId: g.ligue?.id ?? null,
         leagueName: g.ligue?.name ?? null,
+        /* Le pays, et le drapeau qui porte son code ISO. C'est ce qui permet
+           de chercher « suisse » sur un écran français : la traduction se fait
+           chez le lecteur, à partir du code. Voir public/pays.js. */
+        country: g.ligue?.country ?? null,
+        drapeau: g.ligue?.drapeau ?? null,
         // Le palier de la compétition : il sert à ordonner une liste devenue
         // mondiale, pour qu'une finale ne passe pas derrière un championnat U19.
         tier: g.ligue?.tier ?? 3,
