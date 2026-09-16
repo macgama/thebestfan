@@ -483,7 +483,7 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
   await chercher('');                      // sinon le filtre survit au rechargement
   selections = true;
   await page.evaluate(() => charger());
-  await jusqua(async () => (await page.$('.liste .ligue')).length === 2);
+  await jusqua(async () => (await page.$$('.liste .ligue')).length === 2);
 
   const trouve = await chercher('espagne');
   check('« espagne » trouve la sélection espagnole', trouve.length === 1);
@@ -497,7 +497,7 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
   await chercher('');
   selections = false;
   await page.evaluate(() => charger());
-  await jusqua(async () => (await page.$('.liste .ligue')).length === 1);
+  await jusqua(async () => (await page.$$('.liste .ligue')).length === 1);
 }
 
 if (process.env.CAPTURE) {

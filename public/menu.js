@@ -48,7 +48,7 @@
     '/fanzzy': 'Fanzzy', '/boosters': 'Boosters', '/deck': 'Deck',
     '/boutique': 'Boutique', '/virage': 'Virage', '/duel-nvn': 'Duel',
     '/kop': 'KOP', '/amis': 'Amis', '/equipes': 'Clubs', '/matchs': 'Matchs',
-    '/teletext': 'Télétexte', '/classement': 'Classement', '/carnet': 'Carnet',
+    '/teletext': 'Compétitions', '/classement': 'Classement', '/carnet': 'Carnet',
     '/profil': 'Profil', '/compte': 'Compte', '/admin': 'Administration',
     '/diagnostic': 'Diagnostic',
   };
@@ -107,7 +107,7 @@
     { titre: 'LE FOOTBALL', liens: [
       ['/matchs', 'teletext', 'Les matchs du jour'],
       ['/equipes', 'clubs', 'Mes clubs'],
-      ['/teletext', 'teletext', 'Classements et buteurs'],
+      ['/teletext', 'teletext', 'Toutes les compétitions'],
       ['/classement', 'classement', 'Classement des supporters'],
     ] },
   ];

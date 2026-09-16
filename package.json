@@ -23,6 +23,7 @@
     "amis:ui": "node scripts/amis-ui-smoke.mjs",
     "equipes:ui": "node scripts/equipes-ui-smoke.mjs",
     "matchs:ui": "node scripts/matchs-ui-smoke.mjs",
+    "competitions:ui": "node scripts/competitions-ui-smoke.mjs",
     "nvn:smoke": "node scripts/nvn-smoke.mjs",
     "virage:smoke": "node scripts/virage-smoke.mjs",
     "deck:ui": "node scripts/deck-ui-smoke.mjs",

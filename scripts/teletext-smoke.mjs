@@ -19,7 +19,7 @@ const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
-                 duels, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
+                 duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'teletext.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
@@ -27,14 +27,37 @@ for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'sou
 const today = new Date().toISOString().slice(0, 10);
 const debut = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10);
 const fin = new Date(Date.now() + 200 * 864e5).toISOString().slice(0, 10);
+const jourDe = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+
+/* Sept lignes pour quatre compétitions : le sommaire doit savoir en écarter
+   trois. Une saison ancienne de la même compétition, une Coupe du monde close
+   qu'on veut pourtant revoir, un Euro trop vieux pour l'être, et une ligue
+   entre deux saisons. */
 await raw.query(
-  `INSERT INTO souvenir_leagues (league_id,season,name,country,type,family,has_events,
+  `INSERT INTO souvenir_leagues (league_id,season,name,country,country_code,type,family,has_events,
      has_standings,has_top_scorers,has_top_assists,has_top_cards,tier,starts_on,ends_on,enabled)
-   VALUES (207,2026,'Super League','Switzerland','League','championnat',1,1,1,1,1,2,?,?,1),
-          (207,2025,'Super League','Switzerland','League','championnat',1,1,1,1,1,2,'2025-07-01','2026-05-30',1),
-          (61,2026,'Ligue 1','France','League','championnat',1,1,1,1,1,1,?,?,1),
-          (999,2026,'Petite Coupe','France','Cup','coupe',1,0,0,0,0,3,?,?,1)`,
-  [debut, fin, debut, fin, debut, fin]);
+   VALUES (207,2026,'Super League','Switzerland','CH','League','championnat',1,1,1,1,1,2,?,?,1),
+          (207,2025,'Super League','Switzerland','CH','League','championnat',1,1,1,1,1,2,'2025-07-01','2026-05-30',1),
+          (61,2026,'Ligue 1','France','FR','League','championnat',1,1,1,1,1,1,?,?,1),
+          (999,2026,'Petite Coupe','France','FR','Cup','coupe',1,0,0,0,0,3,?,?,1),
+          (1,2022,'World Cup','World',NULL,'Cup','international',1,0,0,0,0,1,?,?,1),
+          (1,2018,'World Cup','World',NULL,'Cup','international',1,0,0,0,0,1,?,?,1),
+          (2,2016,'Euro Championship','World',NULL,'Cup','international',1,0,0,0,0,1,?,?,1),
+          (500,2026,'Eliteserien','Norway','NO','League','championnat',1,1,0,0,0,3,?,?,1)`,
+  [debut, fin, debut, fin, debut, fin,
+   jourDe(-1400), jourDe(-1370),        // Coupe du monde : moins de quatre ans
+   jourDe(-2900), jourDe(-2870),        // l'édition d'avant : trop vieille
+   jourDe(-3700), jourDe(-3670),        // Euro : trop vieux
+   jourDe(-400), jourDe(-200)]);        // Eliteserien : entre deux saisons
+
+/* Un joueur, pour les compétitions suivies. Le banc n'a pas
+   d'authentification : `req.user` est posé à la main plus bas, comme le fait
+   `attachUser` en production. */
+await raw.query(
+  `INSERT INTO users (email, pseudo, password_hash, public_id, email_verified_at)
+   VALUES ('tt@test.local', 'Teletexte', 'x', UUID(), NOW())`);
+const [[moi]] = await raw.query('SELECT public_id FROM users LIMIT 1');
+const MOI = moi.public_id;
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
@@ -86,10 +109,28 @@ const client = {
       ];
     }
     if (path === '/fixtures') {
-      return [{ fixture: { id: 1, date: '2026-09-13T16:00:00+00:00', status: { short: 'FT' } },
-                league: { round: 'Journée 5' },
-                teams: { home: { id: 85, name: 'Sion' }, away: { id: 91, name: 'Bâle' } },
-                goals: { home: 2, away: 1 } }];
+      /* Trois journées, datées **par rapport à aujourd'hui** : c'est la seule
+         façon d'éprouver « la journée en cours » sans que le banc devienne
+         faux le mois prochain. La cinquième se joue à l'instant, et c'est donc
+         elle que le service doit choisir tout seul. */
+      const m = (id, jours, round, statut, h, a) => ({
+        fixture: { id, date: new Date(Date.now() + jours * 864e5).toISOString(),
+                   status: { short: statut } },
+        league: { id: 207, season: 2026, round },
+        teams: { home: { id: 85, name: 'Sion' }, away: { id: 91, name: 'Bâle' } },
+        goals: { home: h, away: a },
+      });
+      const saison = [m(1, -8, 'Journée 4', 'FT', 1, 0),
+                      m(2, -0.04, 'Journée 5', 'FT', 2, 1),
+                      m(3, 7, 'Journée 6', 'NS', null, null)];
+      // Une fiche demande un match, et un seul.
+      if (params?.id) return saison.filter((x) => x.fixture.id === Number(params.id));
+      // La fenêtre du direct : deux jours de part et d'autre, pas la saison.
+      if (params?.from) {
+        return saison.filter((x) =>
+          Math.abs(Date.now() - Date.parse(x.fixture.date)) < 2 * 864e5);
+      }
+      return saison;
     }
     return [];
   },
@@ -106,11 +147,21 @@ const client = {
 };
 
 const T = createTeletext({ pool, client });
-const app = express(); app.use('/api/tt', T.router);
+const app = express();
+/* Le banc n'a pas d'authentification : on pose `req.user` comme le fait
+   `attachUser` en production, et on le retire pour éprouver ce que voit un
+   visiteur sans compte. */
+let qui = null;
+app.use((req, _res, next) => { if (qui) req.user = { id: qui }; next(); });
+app.use('/api/tt', T.router);
 const http = createServer(app); await new Promise((r) => http.listen(0, r));
 const base = `http://localhost:${http.address().port}`;
 const get = async (p) => {
   const r = await fetch(base + p);
+  return { status: r.status, json: await r.json().catch(() => ({})) };
+};
+const envoyer = async (methode, p) => {
+  const r = await fetch(base + p, { method: methode });
   return { status: r.status, json: await r.json().catch(() => ({})) };
 };
 
@@ -128,6 +179,77 @@ check('filtre par pays', r.json.leagues.every((l) => l.country === 'France'));
 
 r = await get('/api/tt/countries');
 check('liste des pays', r.json.countries.some((c) => c.country === 'Switzerland'));
+
+/* --------------------------------------- ce que le sommaire montre, et pas
+
+   Neuf cent cinquante compétitions, c'est un annuaire. Ce qu'on vient
+   chercher, c'est ce qui se joue — plus les grandes compétitions de
+   sélections, qu'on veut revoir longtemps après leur finale. Ces contrôles
+   tiennent les deux bords : ce qui doit rester, et ce qui doit partir. */
+
+r = await get('/api/tt/leagues');
+let noms = r.json.leagues.map((l) => l.name);
+check('une compétition n’est listée qu’une fois, pas une fois par saison',
+  noms.filter((n) => n === 'Super League').length === 1);
+check('la dernière Coupe du monde reste au sommaire', noms.includes('World Cup'));
+check('mais pas l’Euro d’il y a dix ans', !noms.includes('Euro Championship'));
+check('une ligue entre deux saisons ne paraît pas', !noms.includes('Eliteserien'));
+check('ce qui court est marqué en cours',
+  r.json.leagues.find((l) => l.name === 'Ligue 1')?.en_cours === true);
+check('et la Coupe du monde close ne l’est pas',
+  r.json.leagues.find((l) => l.name === 'World Cup')?.en_cours === false);
+
+/* Nommer une compétition lève la restriction : on a dit ce qu'on cherchait,
+   ce serait absurde de le cacher parce que sa saison est finie. */
+r = await get('/api/tt/leagues?q=Eliteserien');
+check('mais on la retrouve dès qu’on la nomme',
+  r.json.leagues.some((l) => l.name === 'Eliteserien'));
+
+/* Le pays arrive **en anglais**, traduit par le navigateur : c'est ainsi que
+   la base le range, et c'est ce qui permet à « norvège » de trouver Norway. */
+r = await get('/api/tt/leagues?pays=Norway');
+check('un pays retraduit en anglais trouve ses compétitions',
+  r.json.leagues.some((l) => l.name === 'Eliteserien'));
+
+/* Le code ISO seul, sans le nom : c'est la voie qui reste quand l'API et
+   `Intl` n'écrivent pas le pays de la même façon. */
+r = await get('/api/tt/leagues?codes=NO');
+check('et son code ISO aussi, quand les deux noms divergent',
+  r.json.leagues.some((l) => l.name === 'Eliteserien'));
+
+r = await get('/api/tt/countries');
+check('le code ISO du pays part avec la liste',
+  r.json.countries.find((c) => c.country === 'Switzerland')?.code === 'CH');
+
+/* ------------------------------------------------ les compétitions suivies
+
+   On suit une compétition comme on suit un club, mais sans qu'elle coûte le
+   moindre appel. Le contrôle qui compte est le troisième : une compétition
+   suivie ne doit **jamais** quitter le sommaire, même hors saison — c'est
+   toute la raison de l'étoile. */
+
+r = await get('/api/tt/favoris');
+check('sans compte, on ne suit rien', r.status === 401);
+
+qui = MOI;
+let f = await envoyer('POST', '/api/tt/favoris/500');
+check('on suit une compétition', f.json.leagues.includes(500));
+
+r = await get('/api/tt/leagues');
+check('une compétition suivie reste au sommaire, même hors saison',
+  r.json.leagues.some((l) => l.name === 'Eliteserien' && l.favori === true));
+check('et elle passe devant', r.json.leagues[0]?.league_id === 500);
+
+f = await envoyer('POST', '/api/tt/favoris/424242');
+check('une compétition inconnue se refuse', f.status === 404);
+
+f = await envoyer('DELETE', '/api/tt/favoris/500');
+check('on cesse de la suivre', !f.json.leagues.includes(500));
+r = await get('/api/tt/leagues');
+check('et elle quitte le sommaire',
+  !r.json.leagues.some((l) => l.name === 'Eliteserien'));
+qui = null;
+
 
 /* ------------------------------------------------------------- saisons */
 
@@ -163,6 +285,48 @@ check('pas de buteurs quand la couverture manque', r.json.unsupported === true);
 
 r = await get('/api/tt/league/207/results');
 check('résultats chargés', r.json.matchs[0]?.home?.goals === 2);
+
+/* ------------------------------------------------------- les journées
+
+   La page ne montrait qu'une fenêtre de vingt jours : ni la troisième
+   journée, ni la fin du calendrier. Ce qui est éprouvé ici, ce n'est pas
+   seulement qu'elles sont toutes là, c'est **ce que ça coûte** — la saison
+   entière tient dans un appel, et en changer ne doit plus rien coûter. */
+
+check('toutes les journées de la saison sont offertes',
+  (r.json.journees ?? []).length === 3);
+check('et celle du jour est choisie d’office', r.json.journee === 'Journée 5');
+check('l’instant de lecture accompagne une journée qui se joue',
+  Number.isFinite(r.json.luA));
+
+const avantJournee = appels;
+r = await get('/api/tt/league/207/results?journee=' + encodeURIComponent('Journée 4'));
+check('on peut remonter à une journée passée',
+  r.json.journee === 'Journée 4' && r.json.matchs[0]?.id === 1);
+check('une journée hors du direct ne fait pas courir la minute', r.json.luA === null);
+
+r = await get('/api/tt/league/207/results?journee=' + encodeURIComponent('Journée 6'));
+check('et descendre au calendrier à venir',
+  r.json.journee === 'Journée 6' && r.json.matchs[0]?.home?.goals === null);
+check('changer de journée ne redemande rien à l’API', appels === avantJournee);
+
+r = await get('/api/tt/league/207/results?journee=Journée%2099');
+check('une journée qui n’existe pas retombe sur celle du jour',
+  r.json.journee === 'Journée 5');
+
+
+/* ------------------------------------------- le lien vers la compétition
+
+   La page des matchs bâtit « /teletext?ligue=… » sur `ligue.id`. La colonne,
+   elle, s'appelle `league_id` : sans ce renvoi, la page écrivait
+   « ligue=undefined » et le clic retombait sur le sommaire — la compétition
+   était à un clic, et ce clic n'existait pas. */
+{
+  const j = await T.jour(new Date().toISOString().slice(0, 10));
+  const g = (j.groupes ?? [])[0];
+  check('chaque compétition du jour porte son identifiant', g?.ligue?.id === 207);
+  check('et le drapeau dont la page tire le nom du pays', g?.ligue && 'drapeau' in g.ligue);
+}
 
 /* ------------------------------------------------------------- panne */
 
