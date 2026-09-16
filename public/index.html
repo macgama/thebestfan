@@ -1843,10 +1843,31 @@ async function alerteDuel() {
   if (!combien) return;
 
   const affiche = `${a.clubs[0]?.name ?? ''} – ${a.clubs[1]?.name ?? ''}`;
-  $('entrer').href = '/duel-nvn';
-  $('entrer').textContent = combien > 1
-    ? `${combien} t’attendent sur ${affiche}`
-    : `Quelqu’un t’attend sur ${affiche}`;
+
+  /* **Le lien porte la place à tenir.** Il menait à `/duel-nvn` tout court :
+     on arrivait sur la liste de tous les matchs jouables, et il fallait y
+     retrouver celui dont on venait de lire le nom, puis le format, puis le
+     camp. Trois choix pour une invitation qui en avait déjà fait trois.
+
+     La page de duel lit `match`, `format` et `camp` depuis toujours — c'est le
+     même chemin que le lien d'invitation entre amis. */
+  const q = new URLSearchParams({ match: String(a.fixtureId) });
+  if (a.format) q.set('format', a.format);
+  if (a.campQuiManque === 0 || a.campQuiManque === 1) q.set('camp', String(a.campQuiManque));
+  $('entrer').href = `/duel-nvn?${q}`;
+
+  /* **Le camp qui manque, nommé.** Le serveur le calcule depuis longtemps —
+     `campQuiManque` et `manque` — et rien ne les affichait. Or « 2 t'attendent »
+     ne dit pas où se mettre, alors que « il manque 2 supporters de Vissel
+     Kobe » est une place précise, et c'est ce qui décide quelqu'un à venir. */
+  const club = a.clubs[a.campQuiManque]?.name;
+  const manque = Number(a.manque) || 0;
+  const ou = manque > 0 && club
+    ? `il manque ${manque} ${manque > 1 ? 'supporters' : 'supporter'} de ${club}`
+    : affiche;
+
+  $('entrer').innerHTML = `${combien > 1 ? `${combien} t’attendent` : 'Quelqu’un t’attend'}`
+    + `<small>${a.format ? `${a.format} · ` : ''}${esc(ou)}</small>`;
   $('entrer').dataset.ton = 'or';
 }
 
@@ -1915,6 +1936,10 @@ async function alerteDuel() {
     $('direct').href = '/virage';
     $('entrer').href = '/virage';
     $('entrer').textContent = 'Entrer dans le virage';
+    /* Pas d’alerte de duel ici, et c’est voulu : quand un club du joueur
+       joue, le virage passe avant. Le bouton est le seul endroit où l’alerte
+       peut s’écrire, et le lui prendre ce soir-là remplacerait l’essentiel
+       par l’accessoire. */
 
     // Le match est lancé : le supporter pousse. C'est son état de fond tant
     // que la rencontre dure, pas une célébration passagère.

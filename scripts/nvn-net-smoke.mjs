@@ -348,7 +348,19 @@ A.errors.length = 0;
 // Le même chant qu'au début, et pris dans l'état pour la même raison : le
 // répertoire est tiré de l'identifiant de la partie.
 A.socket.emit('nvn:chant', { cardId: monChant.id, taps: gestePassable(monChant.gest) });
-check('la partie se termine', await until(()=>A.events.some((e)=>e.t==='over')));
+{
+  /* Une fenêtre large : ce qui est éprouvé est que la partie **se termine**,
+     pas qu’elle se termine en six secondes. */
+  const fini = await until(() => A.events.some((e) => e.t === 'over'), 15_000);
+  /* **Le refus, s’il y en a eu un.** Ce contrôle a déjà échoué sans rien
+     dire : le chant peut être écarté — souffle insuffisant, cadence, geste
+     jugé inhumain — et on ne lisait alors que « la partie ne se termine
+     pas », ce qui envoie chercher au mauvais endroit. */
+  check('la partie se termine', fini
+    || (console.log('        refus :', A.errors.join(', ') || '(aucun)',
+      '· corde :', Math.round(salle.duel.rope),
+      '· buts :', salle.duel.goals.join('–')), false));
+}
 /* **On attend l'écriture au lieu de lui laisser six cents millisecondes.**
    La fin d'un duel récompense d'abord les joueurs, écrit ensuite le résultat,
    et les deux passent par la base : un délai fixe est un pari sur la charge de
@@ -420,7 +432,13 @@ check('les places sont tenues par des bots',
   C.state.equipes.flat().length === 4);
 check('un entraînement ne compte pas', C.state.mode === 'entrainement');
 const avant = C.events.length;
-check('les bots jouent', await until(()=>C.events.length > avant, 9000));
+/* **Vingt secondes, et non neuf.** Un bot chante d'abord entre 2,5 et 5,5 s,
+   puis toutes les 7 à 13 s — et son premier chant peut être écarté faute de
+   souffle. Le pire cas honnête est donc proche de dix-neuf secondes, et la
+   fenêtre de neuf en attrapait la plupart sans les attraper toutes : le
+   contrôle clignotait environ une fois sur six, en accusant les bots de ne
+   pas jouer alors qu'ils jouaient une seconde plus tard. */
+check('les bots jouent', await until(()=>C.events.length > avant, 20_000));
 
 /* ---------------------------------------------------------- refus utiles */
 
@@ -560,6 +578,73 @@ check('sans deck, la file est refusée', await until(()=>D.errors.includes('ferv
         'sur', G.state.equipes.flat().length), false));
   }
   G.socket.disconnect(); H.socket.disconnect();
+}
+
+
+/* ------------------------------- le repli par palier : jouer plus petit
+
+ * Un 3v3 attendait ses six supporters pendant deux minutes, puis basculait d'un
+ * coup en entraînement contre des bots. Entre les deux, rien : quatre personnes
+ * présentes sur le même match restaient assises à se regarder pendant cent
+ * vingt secondes, alors qu'un 2v2 était jouable dès la quarantième. Et le repli
+ * coûtait cher, puisque passer aux bots **déclasse** le duel.
+ *
+ * On descend maintenant d'un cran à mesure que le temps passe, et le duel
+ * **reste classé** : il oppose de vrais gens, c'est la seule chose que le
+ * classement demande.
+ *
+ * Deux supporters de chaque côté d'un 3v3 : au tiers de l'attente, ça part en
+ * 2v2. C'est le cas que ce bloc éprouve, et il vérifie les trois choses qui
+ * comptent — que ça parte, que ce soit à quatre, et que ce soit classé.
+ */
+{
+  const I = co(U[0]), J = co(U[1]), K = co(U[2]), L = co(U[3]);
+  const tous = [I, J, K, L];
+  await until(() => tous.every((p) => p.socket.connected));
+  for (const p of tous) { p.state = null; p.file = null; }
+
+  /* Le match 900 est en direct : son duel est **classé**, et c'est ce statut
+     qu'on veut voir survivre au repli. */
+  I.socket.emit('nvn:queue', { format: '3v3', fixtureId: 900, camp: 0 });
+  J.socket.emit('nvn:queue', { format: '3v3', fixtureId: 900, camp: 0 });
+  K.socket.emit('nvn:queue', { format: '3v3', fixtureId: 900, camp: 1 });
+  L.socket.emit('nvn:queue', { format: '3v3', fixtureId: 900, camp: 1 });
+  check('quatre supporters attendent un 3v3, deux de chaque côté',
+    await until(() => tous.every((p) => p.file), 5000));
+
+  /* Personne ne part tant que le temps ne l'autorise pas : le repli est un
+     palier, pas une porte ouverte. */
+  check('à cet instant, aucun duel ne part', tous.every((p) => !p.state));
+
+  /* On antidate d'un peu plus du tiers de l'attente : c'est le cran où un 3v3
+     accepte de partir à quatre. Vieillir les entrées plutôt qu'attendre
+     quarante secondes ne change rien à ce qui est éprouvé. */
+  const attente = 120_000;
+  for (const f of N.files.values()) {
+    for (const x of f) x.depuis = Date.now() - Math.ceil(attente * 0.40);
+  }
+
+  const parti = await until(() => tous.every((p) => p.state), 8000);
+  check('au tiers de l’attente, le duel part en plus petit', parti
+    || (console.log('        partis :', tous.filter((p) => p.state).length, 'sur 4'), false));
+
+  if (parti) {
+    check('tous dans le même duel',
+      new Set(tous.map((p) => p.state.id)).size === 1);
+    check('à deux contre deux', I.state.equipes.map((e) => e.length).join('v') === '2v2'
+      || (console.log('        équipes :',
+        I.state.equipes.map((e) => e.length).join('v')), false));
+    /* **Et classé.** C'est tout l'intérêt du palier : l'ancien repli passait par
+       les bots, qui déclassent. Quatre personnes qui jouent vraiment ensemble
+       n'ont aucune raison d'être écartées du classement. */
+    check('et il compte au classement', I.state.mode === 'classe'
+      || (console.log('        mode :', I.state.mode), false));
+    /* Aucune machine : le palier sert justement à les éviter. */
+    const bots = I.state.equipes.flat()
+      .filter((p) => String(p.userId ?? '').startsWith('bot:'));
+    check('sans aucun bot', bots.length === 0);
+  }
+  for (const p of tous) p.socket.disconnect();
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
