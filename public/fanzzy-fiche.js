@@ -395,7 +395,17 @@
      * montrait donc le Choriste sous le nom du Meneur de chant, ce qui
      * ressemble à un personnage parfaitement valide et ne se voit pas.
      */
-    function dessiner(f) {
+    /**
+     * Le personnage dans la vitrine, à l’âge qu’on regarde.
+     *
+     * `etage` est l'âge **choisi**, et non l'âge atteint. Il valait toujours
+     * `d.stade` : toucher la première case de la rangée ÂGES changeait le
+     * texte en dessous — « Tu es passé par là » — et laissait le dessin sur
+     * l'âge courant. Quelqu'un qui avait payé son évolution ne pouvait donc
+     * plus jamais revoir l’enfant qu’il avait été, alors que la rangée
+     * d'âges n'est là que pour ça.
+     */
+    function dessiner(f, etage = d.stade) {
       const art = hote.querySelector('#fiche-art');
       const c = COUL[f.type] ?? '#F5C33B';
 
@@ -408,7 +418,7 @@
          et le fond doit dire ce qu'on voit. */
       const tenue = d.skins?.find((s) => s.porte)?.id ?? 'base';
       const decor = window.TBF_FOND?.fond?.({
-        id: f.id, set: f.set, type: f.type, stage: d.stade ?? f.stage, rar: f.rar, skin: tenue,
+        id: f.id, set: f.set, type: f.type, stage: etage ?? f.stage, rar: f.rar, skin: tenue,
       });
       art.style.background = decor ? 'none'
         : `radial-gradient(75% 60% at 50% 75%, ${c}3A, transparent 70%), #0A0E13`;
@@ -456,6 +466,21 @@
         choisie = b.dataset.case;
         hote.querySelectorAll('.case').forEach((n) =>
           n.classList.toggle('choisie', n.dataset.case === choisie));
+        /* **Un âge touché se montre.** La rangée ÂGES n’existe que pour
+           regarder les trois visages d’une lignée ; sans ce rappel, elle ne
+           changeait que le texte, et le dessin restait sur l’âge atteint.
+
+           Les autres rangées — effets, tenues — ne touchent pas à la
+           vitrine : elles parlent de l’âge qu’on regarde, elles n’en
+           changent pas. */
+        const idAge = /^age:(.+)$/.exec(choisie ?? '')?.[1];
+        if (idAge) {
+          const a = (d.lignee ?? []).find((x) => x.id === idAge);
+          if (a) {
+            dessiner({ ...d.fanzzy, ageId: a.id, nom: a.nom, rar: a.rar ?? d.fanzzy.rar },
+              a.stage);
+          }
+        }
         rendreDetail();
         rendreActions();
         brancherActions();

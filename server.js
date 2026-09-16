@@ -59,7 +59,20 @@ app.set('trust proxy', 1); // Infomaniak place un proxy devant : X-Forwarded-For
    sont notés ici, l'identité vient de la session et jamais du message, et
    chaque requête SQL est paramétrée. */
 
-const SITE_EN_HTTPS = String(process.env.SITE_URL || '').startsWith('https://');
+/* **`PUBLIC_ORIGIN` en premier, `SITE_URL` en repli.**
+
+   Cette ligne ne lisait que `SITE_URL` — une variable que rien d'autre ne
+   lit dans le serveur, et que la procédure de déploiement ne demande pas.
+   Une installation faite selon la documentation posait donc `PUBLIC_ORIGIN`,
+   laissait `SITE_URL` vide, et **n'envoyait jamais l'en-tête HSTS** : le
+   site répond en HTTPS, et aucun navigateur ne se le voit dire. Quelqu’un
+   qui tape l'adresse sans protocole passe en clair au moins une fois.
+
+   Deux noms pour la même chose finissent toujours par se contredire : on
+   lit d'abord celui que tout le monde emploie, et l'autre reste accepté pour
+   les installations qui l'ont déjà posé. */
+const SITE_EN_HTTPS = [process.env.PUBLIC_ORIGIN, process.env.SITE_URL, ORIGIN]
+  .some((u) => String(u || '').startsWith('https://'));
 app.use(entetesDeSecurite({ https: SITE_EN_HTTPS }));
 
 /* Le débit maximal. Les sockets étaient déjà bridées — un chant toutes les
