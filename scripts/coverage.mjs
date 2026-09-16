@@ -67,6 +67,10 @@ for (const l of rows) {
     id: l.league.id,
     nom: l.league.name,
     pays: l.country?.name ?? null,
+    /* Les deux lettres ISO du pays. C'est la seule chose de cette réponse qui
+       permette de dire « Espagne » plutôt que « Spain » sans tenir une table
+       de traductions : le navigateur fait le reste. Voir public/pays.js. */
+    code: l.country?.code ?? null,
     type: l.league.type,
     famille: classer(l),
     saison: saison.year,
@@ -137,6 +141,7 @@ await pool.query(`
     season     SMALLINT     NOT NULL,
     name       VARCHAR(120) NOT NULL,
     country    VARCHAR(80)  NULL,
+    country_code CHAR(2)    NULL,
     type       VARCHAR(20)  NULL,
     family     VARCHAR(20)  NOT NULL,
     has_events TINYINT(1)   NOT NULL DEFAULT 0,
@@ -224,7 +229,7 @@ function palier(e) {
 }
 
 const values = eligibles.map((e) => [
-  e.id, e.saison, e.nom, e.pays, e.type, e.famille,
+  e.id, e.saison, e.nom, e.pays, e.code, e.type, e.famille,
   1, e.lineups ? 1 : 0, e.classement ? 1 : 0,
   e.buteurs ? 1 : 0, e.passeurs ? 1 : 0, e.cartons ? 1 : 0,
   palier(e), e.debut, e.fin,
@@ -234,11 +239,12 @@ const values = eligibles.map((e) => [
 for (let i = 0; i < values.length; i += 200) {
   await pool.query(
     `INSERT INTO souvenir_leagues
-       (league_id, season, name, country, type, family, has_events, has_lineups,
+       (league_id, season, name, country, country_code, type, family, has_events, has_lineups,
         has_standings, has_top_scorers, has_top_assists, has_top_cards, tier,
         starts_on, ends_on, enabled)
      VALUES ?
-     ON DUPLICATE KEY UPDATE name=VALUES(name), country=VALUES(country), type=VALUES(type),
+     ON DUPLICATE KEY UPDATE name=VALUES(name), country=VALUES(country),
+       country_code=VALUES(country_code), type=VALUES(type),
        family=VALUES(family), has_events=VALUES(has_events), has_lineups=VALUES(has_lineups),
        has_standings=VALUES(has_standings), has_top_scorers=VALUES(has_top_scorers),
        has_top_assists=VALUES(has_top_assists), has_top_cards=VALUES(has_top_cards),

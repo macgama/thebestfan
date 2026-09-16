@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Télétexte — thebestfan</title>
+<title>Toutes les compétitions — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
@@ -22,6 +22,20 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .top h1{font-family:var(--banner);font-size:19px;letter-spacing:.14em;margin:0;flex:1;min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .top h1 small{display:block;font-size:9px;letter-spacing:.24em;opacity:.5;margin-top:3px;font-family:var(--ui)}
+.top .jour{color:var(--projo);font-size:11.5px;text-decoration:none;white-space:nowrap}
+
+/* Le nom de la page était écrit deux fois : une fois par la barre du haut,
+   une fois ici, l'un sous l'autre et dans la même police. Il ne paraît donc
+   plus que lorsque la barre ne le dit pas — elle ne se monte que pour un
+   joueur connecté, et un visiteur sans compte n'a que ce titre-ci.
+
+   D'où `:has` plutôt qu'une classe posée en JavaScript : la règle suit la
+   barre qu'elle arrive avant ou après, et si le navigateur ne connaît pas
+   `:has`, on retombe sur l'ancien affichage — jamais sur une page sans titre.
+   Le sous-titre, lui, reste : il dit ce que la liste montre, ce qu'aucune
+   barre ne dira. */
+body:has(.tbf-haut) .top h1.page>span{display:none}
+body:has(.tbf-haut) .top h1.page>small{margin-top:0;font-size:10px}
 
 .search{padding:0 15px 10px}
 input{width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.16);border-radius:7px;
@@ -32,6 +46,8 @@ input:focus{outline:none;border-color:var(--projo)}
 .chip{white-space:nowrap;font-size:11px;padding:6px 11px;border-radius:999px;cursor:pointer;
   border:1px solid rgba(242,238,228,.16);background:rgba(0,0,0,.25);color:inherit;opacity:.6;font-family:inherit}
 .chip.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1;font-weight:600}
+.chip.mien{border-color:var(--projo);color:var(--projo);opacity:1}
+.chip.mien.on{background:var(--projo);color:#0B0E13}
 
 .list{flex:1;padding:0 12px 26px}
 .lg{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;cursor:pointer;
@@ -42,7 +58,25 @@ input:focus{outline:none;border-color:var(--projo)}
 .lg .t{font-family:var(--banner);font-size:9px;letter-spacing:.1em;border-radius:3px;padding:2px 6px;
   border:1px solid rgba(242,238,228,.2);opacity:.55}
 .lg .t.t1{border-color:var(--projo);color:var(--projo);opacity:1}
+/* « En cours » se lit d'un coup d'œil et ne se confond pas avec le palier :
+   l'un dit ce qui se joue, l'autre ce qui compte. */
+.lg .enc{font-family:var(--banner);font-size:8.5px;letter-spacing:.1em;color:var(--vert);
+  border:1px solid rgba(74,222,128,.4);border-radius:3px;padding:2px 5px;flex:none}
+.lg .fav{background:none;border:0;padding:0;margin:-4px 0 -4px -2px;cursor:pointer;font-size:18px;
+  line-height:1;color:rgba(242,238,228,.22);flex:none;transition:color .15s,transform .12s}
+.lg .fav.on{color:var(--projo)}
+.lg .fav:active{transform:scale(1.3)}
 
+/* ------------------------------------------------------- les journées */
+.journees{display:flex;align-items:center;gap:7px;padding:10px 4px 4px}
+.journees select{flex:1;min-width:0;background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.16);
+  border-radius:7px;color:var(--craie);padding:9px 11px;font-size:13px;font-family:inherit;
+  font-family:var(--banner);letter-spacing:.06em}
+.journees select:focus{outline:none;border-color:var(--projo)}
+.journees option{background:#10151B;color:var(--craie)}
+.journees button{background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.16);border-radius:7px;
+  color:inherit;width:34px;height:36px;cursor:pointer;font-size:15px;flex:none;font-family:inherit}
+.journees button:disabled{opacity:.25;cursor:default}
 
 table{width:100%;border-collapse:collapse;font-size:12.5px}
 th{font-family:var(--banner);font-size:9.5px;letter-spacing:.13em;opacity:.42;text-align:right;
@@ -61,7 +95,8 @@ td.pts{font-family:var(--banner);font-size:15px}
 .form i.W{background:var(--vert)}.form i.D{background:rgba(242,238,228,.35)}.form i.L{background:var(--flare)}
 
 .m{display:flex;align-items:center;gap:9px;padding:9px 6px;border-top:1px solid rgba(242,238,228,.07);
-  font-size:12.5px}
+  font-size:12.5px;cursor:pointer}
+.m:hover{background:rgba(242,238,228,.035)}
 .m .s{flex:1;display:flex;align-items:center;gap:6px;min-width:0}
 .m .s.a{justify-content:flex-end;text-align:right}
 .m .s span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -94,17 +129,24 @@ td.pts{font-family:var(--banner);font-size:15px}
 <main id="app">
   <div class="top">
     <button class="back" id="back">‹</button>
-    <h1 id="titre">TÉLÉTEXTE<small id="sub">tous les championnats</small></h1>
-    <a href="/matchs" style="color:var(--projo);font-size:11.5px;text-decoration:none;
-      white-space:nowrap">matchs du jour ›</a>
+    <h1 id="titre" class="page"><span id="tnom">TOUTES LES COMPÉTITIONS</span
+      ><small id="tsous">ce qui se joue en ce moment</small></h1>
+    <a class="jour" href="/matchs">matchs du jour ›</a>
   </div>
   <div id="head"></div>
   <div class="list" id="list"><div class="spin"></div></div>
 </main>
 
+<!-- La minute d'un match en direct, la même que dans le Grand Virage et la
+     page des matchs : elle court entre deux relevés, sans un appel de plus. -->
+<script src="/horloge.js"></script>
+<!-- Le nom des pays dans la langue du lecteur, partagé avec la page des
+     matchs. Classique et sans « defer » : le rendu s'en sert tout de suite. -->
+<script src="/pays.js"></script>
 <script>
 /* =======================================================================
-   Télétexte.
+   Toutes les compétitions.
+
    Tout vient du serveur, qui met en cache : ouvrir une compétition mille
    fois ne coûte qu'un appel à l'API.
    ======================================================================= */
@@ -112,13 +154,32 @@ td.pts{font-family:var(--banner);font-size:15px}
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
   (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+
+const LANGUE = window.TBF_PAYS.locale;
+/** Le pays d'une compétition, dans la langue du lecteur. */
+const nomPays = (l) => window.TBF_PAYS.nom(l.country, l.country_code);
+
+/**
+ * Qui regarde — ou personne.
+ *
+ * Une seule promesse pour tout le document, partagée avec `nav.js` sous ce
+ * nom : sans ce partage, la page poserait deux fois la même question au même
+ * serveur, et c'est le genre de doublon qui finit par donner deux réponses
+ * différentes.
+ */
+const moi = () => (window.TBF_MOI ??= fetch('/api/auth/me', { credentials: 'same-origin' })
+  .then((r) => (r.ok ? r.json() : null))
+  .then((j) => j?.user ?? null)
+  .catch(() => null));
+
 /**
  * Toute requête a une limite de temps et un message d'erreur.
  * Un écran qui tourne indéfiniment est le pire des retours : l'utilisateur ne
  * sait pas s'il doit attendre, recharger, ou si c'est cassé.
  */
-async function api(p) {
-  const r = await fetch('/api/tt' + p, { signal: AbortSignal.timeout(12000) });
+async function api(p, options = {}) {
+  const r = await fetch('/api/tt' + p,
+    { signal: AbortSignal.timeout(12000), credentials: 'same-origin', ...options });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw Object.assign(new Error(j.error ?? 'erreur'), { code: j.error, detail: j.detail });
   return j;
@@ -135,34 +196,101 @@ function panne(e) {
 }
 
 let vue = 'sommaire', ligue = null, onglet = 'classement';
-let pays = '', terme = '';
+let paysFiltre = '', terme = '', filtreFavoris = false;
+/** La journée demandée, ou `null` pour celle que le serveur juge courante. */
+let journee = null;
+/** La dernière réponse des résultats : la minute court dessus entre deux relevés. */
+let RES = null;
+
+/* ------------------------------------------------- les compétitions suivies
+
+   On suit une compétition comme on suit un club, et pour la même raison : on
+   ne veut pas la retrouver chaque fois parmi neuf cent cinquante. Mais elles
+   ne se ressemblent que là — un club suivi fait travailler le guetteur,
+   une compétition suivie n'ordonne qu'une liste. D'où une table à elle, et
+   aucun plafond.
+
+   Deux choses en découlent, et ce sont les deux raisons de suivre :
+   une compétition suivie passe **devant** les autres, et elle ne quitte
+   **jamais** le sommaire, même entre deux saisons.                          */
+
+let favoris = null;                    // null : on ne sait pas encore. Set : on sait.
+let connu = null;
+
+async function chargerFavoris() {
+  const u = await moi();
+  connu = u ?? false;
+  if (!u) { favoris = new Set(); return; }
+  try { favoris = new Set((await api('/favoris')).leagues); }
+  catch { favoris = new Set(); }       // hors ligne : pas d'étoile, pas de panne
+}
+
+async function basculer(id, bouton) {
+  if (!connu || !favoris) return;
+  const suivi = favoris.has(id);
+  /* On peint d'abord, on demande ensuite. Une étoile qui attend le serveur
+     pour s'allumer donne l'impression que le clic n'a pas pris — et le geste
+     se répète, ce qui est exactement ce qu'on ne veut pas. */
+  bouton.classList.toggle('on', !suivi);
+  try {
+    const r = await api(`/favoris/${id}`, { method: suivi ? 'DELETE' : 'POST' });
+    favoris = new Set(r.leagues);
+  } catch {
+    bouton.classList.toggle('on', suivi);   // refus du serveur : on rend la main
+  }
+}
 
 /* ------------------------------------------------------------ sommaire */
 
 async function sommaire() {
   vue = 'sommaire';
+  veiller(null);
   $('back').classList.remove('on');
-  $('titre').innerHTML = 'TÉLÉTEXTE<small>tous les championnats</small>';
+  $('titre').className = 'page';
+  $('tnom').textContent = 'TOUTES LES COMPÉTITIONS';
+  $('tsous').textContent = (terme || paysFiltre || filtreFavoris)
+    ? 'résultat de la recherche' : 'ce qui se joue en ce moment';
   $('head').innerHTML = `
     <div class="search"><input id="q" placeholder="Chercher une compétition ou un pays…" value="${esc(terme)}"></div>
     <div class="chips" id="pays"></div>`;
   $('list').innerHTML = '<div class="spin"></div>';
 
+  if (favoris === null) await chargerFavoris();
+
+  /* Le terme peut désigner un pays : « espagne » comme « spain ». On le
+     retraduit ici, et on envoie au serveur le code ISO **et** le nom anglais
+     — il range les deux, et aucun des deux n'est complet à lui seul. */
+  const designes = window.TBF_PAYS.designes(terme);
+  const q = new URLSearchParams({ q: terme, country: paysFiltre });
+  if (designes.length) {
+    q.set('pays', designes.map((p) => p.nom).join(','));
+    q.set('codes', designes.map((p) => p.code).join(','));
+  }
+  if (filtreFavoris) q.set('favoris', '1');
+
   let leagues, countries;
   try {
     ([{ leagues }, { countries }] = await Promise.all([
-      api(`/leagues?q=${encodeURIComponent(terme)}&country=${encodeURIComponent(pays)}`),
+      api(`/leagues?${q}`),
       api('/countries'),
     ]));
   } catch (e) { return panne(e); }
 
-  $('pays').innerHTML = `<button class="chip ${pays ? '' : 'on'}" data-p="">TOUT</button>` +
-    countries.slice(0, 24).map((c) =>
-      `<button class="chip ${pays === c.country ? 'on' : ''}" data-p="${esc(c.country)}">${esc(c.country)}</button>`).join('');
+  const mien = connu
+    ? `<button class="chip mien ${filtreFavoris ? 'on' : ''}" data-mien="1">★ MES COMPÉTITIONS</button>`
+    : '';
+  $('pays').innerHTML = mien
+    + `<button class="chip ${paysFiltre ? '' : 'on'}" data-p="">TOUT</button>`
+    + countries.slice(0, 24).map((c) =>
+      `<button class="chip ${paysFiltre === c.country ? 'on' : ''}" data-p="${esc(c.country)}"
+        >${esc(window.TBF_PAYS.nom(c.country, c.code))}</button>`).join('');
 
   $('list').innerHTML = leagues.length ? leagues.map((l) => `
     <div class="lg" data-l="${l.league_id}">
-      <div class="n"><b>${esc(l.name)}</b><small>${esc(l.country ?? '')} · saison ${l.season}</small></div>
+      ${connu ? `<button class="fav ${favoris.has(l.league_id) ? 'on' : ''}" data-fav="${l.league_id}"
+        aria-label="Suivre cette compétition">★</button>` : ''}
+      <div class="n"><b>${esc(l.name)}</b><small>${esc(nomPays(l))} · saison ${l.season}</small></div>
+      ${l.en_cours ? '<span class="enc">EN COURS</span>' : ''}
       <span class="t ${l.tier === 1 ? 't1' : ''}">${
         l.tier === 1 ? 'MAJEURE' : l.tier === 2 ? 'SUIVIE' : ''}</span>
     </div>`).join('')
@@ -170,8 +298,10 @@ async function sommaire() {
 
   $('q').oninput = debounce(() => { terme = $('q').value.trim(); sommaire(); }, 320);
   $('pays').onclick = (e) => {
+    const m = e.target.closest('[data-mien]');
+    if (m) { filtreFavoris = !filtreFavoris; paysFiltre = ''; return sommaire(); }
     const b = e.target.closest('[data-p]');
-    if (b) { pays = b.dataset.p; sommaire(); }
+    if (b) { paysFiltre = b.dataset.p; filtreFavoris = false; sommaire(); }
   };
 }
 
@@ -181,8 +311,9 @@ function debounce(fn, ms) { return (...a) => { clearTimeout(t); t = setTimeout((
 /* ---------------------------------------------------------- une ligue */
 
 async function ouvrir(id) {
-  vue = 'ligue'; ligue = id; onglet = 'classement';
+  vue = 'ligue'; ligue = id; onglet = 'classement'; journee = null;
   $('back').classList.add('on');
+  $('titre').className = '';
   $('head').innerHTML = `<div class="tabs tbf-onglets" id="tabs">
     <button data-t="classement" class="tbf-onglet on">CLASSEMENT</button>
     <button data-t="resultats" class="tbf-onglet">RÉSULTATS</button>
@@ -194,6 +325,7 @@ async function ouvrir(id) {
     const b = e.target.closest('[data-t]');
     if (!b) return;
     onglet = b.dataset.t;
+    journee = null;                    // on revient toujours sur la journée du jour
     [...$('tabs').children].forEach((x) => x.classList.toggle('on', x === b));
     charger();
   };
@@ -201,14 +333,20 @@ async function ouvrir(id) {
 }
 
 async function charger() {
+  veiller(null);
   $('list').innerHTML = '<div class="spin"></div>';
   const route = { classement:'', resultats:'/results', scorers:'/scorers',
                   assists:'/assists', cards:'/cards' }[onglet];
+  const suite = onglet === 'resultats' && journee
+    ? `?journee=${encodeURIComponent(journee)}` : '';
+  const quelle = ligue;
   let d;
-  try { d = await api(`/league/${ligue}${route}`); }
+  try { d = await api(`/league/${ligue}${route}${suite}`); }
   catch (e) { return panne(e); }
+  if (quelle !== ligue || vue !== 'ligue') return;   // on a changé d'avis pendant l'attente
 
-  $('titre').innerHTML = `${esc(d.league.name)}<small>${esc(d.league.country ?? '')} · saison ${d.league.season}</small>`;
+  $('tnom').textContent = d.league.name;
+  $('tsous').textContent = `${nomPays(d.league)} · saison ${d.league.season}`;
 
   if (d.unsupported) {
     $('list').innerHTML = `<div class="empty">Cette donnée n'existe pas pour cette compétition.<br>
@@ -222,7 +360,7 @@ async function charger() {
 
   if (d.stale) {
     $('list').insertAdjacentHTML('beforeend',
-      '<div class="note stale">Données un peu anciennes : le service de résultats n\u2019a pas répondu.</div>');
+      '<div class="note stale">Données un peu anciennes : le service de résultats n’a pas répondu.</div>');
   }
 }
 
@@ -243,27 +381,128 @@ function rendreClassement(d) {
     </table>`).join('');
 }
 
-function rendreResultats(d) {
-  if (!d.matchs.length) return $('list').innerHTML = '<div class="empty">Aucun match sur la période.</div>';
-  let round = null;
-  $('list').innerHTML = d.matchs.map((m) => {
-    const titre = m.round !== round ? `<div class="round">${esc(m.round ?? '')}</div>` : '';
-    round = m.round;
-    const live = ['1H','HT','2H','ET','P','LIVE'].includes(m.status);
-    const joue = m.home.goals !== null && m.home.goals !== undefined;
-    const d2 = new Date(m.date);
-    const quand = live ? `<span class="live">${m.status === 'HT' ? 'MT' : (m.elapsed ?? '') + "'"}</span>`
-      : d2.toLocaleDateString('fr', { day:'numeric', month:'short' }) + '<br>' +
-        d2.toLocaleTimeString('fr', { hour:'2-digit', minute:'2-digit' });
-    return `${titre}<div class="m">
-      <div class="s"><img src="${esc(m.home.logo)}" alt=""><span>${esc(m.home.name)}</span></div>
-      ${joue ? `<div class="sc">${m.home.goals} – ${m.away.goals}</div>`
-             : `<div class="when">${quand}</div>`}
-      ${joue && live ? `<div class="when">${quand}</div>` : ''}
-      <div class="s a"><span>${esc(m.away.name)}</span><img src="${esc(m.away.logo)}" alt=""></div>
-    </div>`;
-  }).join('');
+/* ------------------------------------------------------- les résultats */
+
+/**
+ * Le nom d'une journée, dans la langue du lecteur.
+ *
+ * L'API n'écrit qu'en anglais et toujours de la même façon : « Regular Season
+ * - 12 ». Le reste — phases de groupes, huitièmes, barrages — porte des noms
+ * trop variés pour qu'une table tienne, et on les laisse tels quels plutôt que
+ * d'en traduire un sur trois : une liste à moitié traduite se lit plus mal
+ * qu'une liste qui ne l'est pas.
+ */
+const MOT_JOURNEE = { fr: 'Journée', en: 'Matchday', de: 'Spieltag', es: 'Jornada' };
+function titreJournee(round) {
+  const m = /^Regular Season\s*-\s*(\d+)$/i.exec(round ?? '');
+  return m ? `${MOT_JOURNEE[LANGUE] ?? MOT_JOURNEE.fr} ${m[1]}` : (round || '—');
 }
+
+/**
+ * La minute affichée. Le calcul vit dans `/horloge.js`, partagé avec le Grand
+ * Virage et la page des matchs. Ce qui reste ici est le vocabulaire de cette
+ * page — « MT », « PROL. » — et lui seul.
+ */
+function minuteDe(m, luA) {
+  if (!m.live) return null;
+  return window.TBF_HORLOGE?.texte(
+    { statut: m.status, minute: m.elapsed, extra: m.extra, vuA: luA },
+    { HT: 'MT', BT: 'PROL.' }) || null;
+}
+
+function ligneMatch(m, luA) {
+  const joue = m.home.goals !== null && m.home.goals !== undefined;
+  const d2 = new Date(m.date);
+  const quand = m.live
+    ? `<span class="live" data-live="${m.id}">${esc(minuteDe(m, luA) ?? '—')}</span>`
+    : d2.toLocaleDateString(LANGUE, { day:'numeric', month:'short' }) + '<br>' +
+      d2.toLocaleTimeString(LANGUE, { hour:'2-digit', minute:'2-digit' });
+  return `<div class="m" data-m="${m.id}">
+    <div class="s"><img src="${esc(m.home.logo)}" alt=""><span>${esc(m.home.name)}</span></div>
+    ${joue ? `<div class="sc">${m.home.goals} – ${m.away.goals}</div>`
+           : `<div class="when">${quand}</div>`}
+    ${joue && m.live ? `<div class="when">${quand}</div>` : ''}
+    <div class="s a"><span>${esc(m.away.name)}</span><img src="${esc(m.away.logo)}" alt=""></div>
+  </div>`;
+}
+
+/**
+ * Les résultats, journée par journée.
+ *
+ * La page ne montrait qu'une fenêtre de vingt jours autour d'aujourd'hui : ni
+ * la troisième journée, ni la fin du calendrier. Le serveur rend maintenant
+ * la saison entière et désigne la journée en cours ; il ne reste ici qu'à
+ * offrir le menu qui permet d'en changer.
+ *
+ * Les flèches encadrent le menu déroulant plutôt que de le remplacer : d'une
+ * journée à la voisine, c'est un geste au lieu de trois, et c'est le
+ * déplacement qu'on fait vingt fois pour un qu'on fait au hasard.
+ */
+function rendreResultats(d) {
+  RES = d;
+  journee = d.journee;
+  const js = d.journees ?? [];
+  const rang = js.findIndex((j) => j.round === d.journee);
+
+  const menu = js.length > 1 ? `
+    <div class="journees">
+      <button id="jprec" ${rang <= 0 ? 'disabled' : ''} aria-label="Journée précédente">‹</button>
+      <select id="jsel" aria-label="Choisir une journée">${js.map((j) =>
+        `<option value="${esc(j.round)}"${j.round === d.journee ? ' selected' : ''}
+          >${esc(titreJournee(j.round))}</option>`).join('')}</select>
+      <button id="jsuiv" ${rang < 0 || rang >= js.length - 1 ? 'disabled' : ''}
+        aria-label="Journée suivante">›</button>
+    </div>` : '';
+
+  const corps = d.matchs.length
+    ? (js.length > 1 ? '' : `<div class="round">${esc(titreJournee(d.journee))}</div>`)
+      + d.matchs.map((m) => ligneMatch(m, d.luA)).join('')
+    : '<div class="empty">Aucun match sur cette journée.</div>';
+
+  $('list').innerHTML = menu + corps;
+
+  if (js.length > 1) {
+    const aller = (n) => {
+      if (n < 0 || n >= js.length) return;
+      journee = js[n].round;
+      charger();
+    };
+    $('jsel').onchange = (e) => { journee = e.target.value; charger(); };
+    $('jprec').onclick = () => aller(rang - 1);
+    $('jsuiv').onclick = () => aller(rang + 1);
+  }
+
+  veiller(d.matchs.some((m) => m.live));
+}
+
+/* ------------------------------------------------------------ le direct
+
+   Deux rythmes, et ce n'est pas un raffinement : la minute doit avancer
+   chaque dizaine de secondes, alors qu'un score ne change qu'à un but. Faire
+   courir les deux ensemble reviendrait à redemander la journée six fois par
+   minute pour afficher un chiffre que le navigateur sait déjà calculer.      */
+
+let minuterie = null;
+
+function veiller(live) {
+  clearTimeout(minuterie);
+  if (!live) return;
+  minuterie = setTimeout(() => {
+    // Onglet caché : on ne redemande rien, on se rendort. Personne ne regarde.
+    if (document.hidden) return veiller(true);
+    if (vue === 'ligue' && onglet === 'resultats') charger();
+  }, 30_000);
+}
+
+/** La minute, recalculée sur place à partir du relevé déjà reçu. */
+setInterval(() => {
+  if (!RES || vue !== 'ligue' || onglet !== 'resultats') return;
+  for (const m of RES.matchs) {
+    if (!m.live) continue;
+    const n = document.querySelector(`[data-live="${m.id}"]`);
+    if (n) n.textContent = minuteDe(m, RES.luA) ?? '—';
+  }
+}, 10_000);
 
 function rendreJoueurs(d) {
   if (!d.players.length) return $('list').innerHTML = '<div class="empty">Classement indisponible.</div>';
@@ -285,9 +524,22 @@ function rendreJoueurs(d) {
 /* ------------------------------------------------------------ routage */
 
 $('list').addEventListener('click', (e) => {
+  /* L'étoile d'abord : elle est **dans** la ligne de la compétition, et sans
+     ce retour anticipé un clic dessus ouvrirait aussi la compétition. */
+  const f = e.target.closest('[data-fav]');
+  if (f) { e.stopPropagation(); return basculer(Number(f.dataset.fav), f); }
+
   const l = e.target.closest('[data-l]');
-  if (l) ouvrir(Number(l.dataset.l));
+  if (l) return ouvrir(Number(l.dataset.l));
+
+  /* Un match mène à sa fiche, qui vit sur la page des matchs. On y envoie
+     plutôt que de la recopier ici : c'est le même écran, avec le fil, les
+     statistiques et les compositions — et un match de la quatrième journée
+     n'est dans la journée de personne. */
+  const m = e.target.closest('[data-m]');
+  if (m) location.href = `/matchs?match=${m.dataset.m}`;
 });
+
 $('back').onclick = () => {
   // On nettoie l'adresse : revenir au sommaire puis rafraîchir ne doit pas
   // rouvrir la compétition qu'on vient de quitter.
@@ -301,8 +553,15 @@ $('back').onclick = () => {
  * fallait retrouver la compétition à la main parmi neuf cent cinquante.
  */
 const demandee = Number(new URLSearchParams(location.search).get('ligue'));
-if (Number.isInteger(demandee) && demandee > 0) ouvrir(demandee);
-else sommaire();
+if (Number.isInteger(demandee) && demandee > 0) {
+  // Les favoris se chargent en parallèle : ils ne servent qu'au sommaire, et
+  // faire attendre la compétition pour une étoile qu'on ne voit pas encore
+  // serait un aller-retour de trop devant un écran vide.
+  chargerFavoris();
+  ouvrir(demandee);
+} else {
+  sommaire();
+}
 </script>
 <script src="/fx.js" defer></script>
 <script src="/menu.js" defer></script>

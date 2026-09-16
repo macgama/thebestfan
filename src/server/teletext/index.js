@@ -36,6 +36,10 @@ const TTL = {
   cards: 12 * 3600,
   fixtures: 3600,
   fixturesLive: 60,
+  // Un calendrier ne bouge pas, et les scores des journées passées non
+  // plus. Ce qui bouge tient dans la fenêtre de deux jours, bien plus
+  // légère, que l’on redemande seule pendant un direct.
+  saison: 12 * 3600,
   day: 300,
   dayLive: 60,
 };
@@ -144,7 +148,7 @@ export function createTeletext({ pool, client, footballStore = null }) {
    */
   async function seasonOf(leagueId) {
     const rows = await q(
-      `SELECT season, starts_on, ends_on, name, country, family, type,
+      `SELECT season, starts_on, ends_on, name, country, country_code, family, type,
               has_standings, has_top_scorers, has_top_assists, has_top_cards
          FROM souvenir_leagues WHERE league_id = ? ORDER BY season DESC`,
       [leagueId]);
@@ -242,8 +246,12 @@ export function createTeletext({ pool, client, footballStore = null }) {
            lecteur sans qu'on tienne une liste de deux cents pays dans le
            dépôt. Il arrive dans la réponse qu'on lit déjà : il ne coûte pas
            un appel de plus. */
+        /* `id` : la page des matchs bâtit le lien vers la compétition avec
+           lui. Sans, elle écrivait « /teletext?ligue=undefined » et le
+           clic retombait sur le sommaire — la colonne s’appelle
+           `league_id`, et ce nom-là ne sort pas d’ici. */
         parLigue.set(l.league_id,
-          { ligue: { ...l, drapeau: r.league?.flag ?? null }, matchs: [] });
+          { ligue: { ...l, id: l.league_id, drapeau: r.league?.flag ?? null }, matchs: [] });
       }
       parLigue.get(l.league_id).matchs.push(m);
     }
@@ -523,51 +531,164 @@ export function createTeletext({ pool, client, footballStore = null }) {
     return { league: s, players, stale: Boolean(stale) };
   }
 
-  async function results(leagueId) {
+  /* --------------------------------------------------------- les journées
+
+     La page des résultats ne montrait qu'une fenêtre de vingt jours autour
+     d'aujourd'hui. On ne pouvait ni revoir la troisième journée, ni lire le
+     calendrier de la fin de saison : pour une page qui s'appelle
+     « résultats », c'est l'essentiel qui manquait.
+
+     Il fallait donc la saison entière — et la saison entière tient dans **un
+     seul appel**, exactement comme la fenêtre de vingt jours. Ce qui change
+     n'est pas le nombre d'appels, c'est ce qu'on en garde.
+
+     Deux caches, et c'est là que se joue le quota :
+
+       — **la saison**, gardée douze heures. Un calendrier ne bouge pas, et
+         les scores des journées passées non plus.
+       — **la fenêtre autour d'aujourd'hui**, gardée quarante-cinq secondes
+         dès qu'un match est en cours. C'est elle, et elle seule, qu'on
+         redemande pendant qu'on regarde.
+
+     Les deux se superposent : la journée affichée prend ses scores de la
+     fenêtre quand elle y figure, du calendrier sinon. Sans cette séparation,
+     suivre un direct redemanderait la saison entière toutes les minutes.   */
+
+  /** Ce qu'on garde d'un match. Le reste de la réponse pèse dix fois plus. */
+  const traitMatch = (r) => ({
+    id: r.fixture.id,
+    date: r.fixture.date,
+    status: r.fixture.status?.short,
+    elapsed: r.fixture.status?.elapsed ?? null,
+    // Le temps additionnel : sans lui, la page ne peut afficher que « 90+ ».
+    extra: r.fixture.status?.extra ?? null,
+    round: r.league?.round ?? null,
+    live: enDirect(r.fixture.status?.short),
+    fini: fini(r.fixture.status?.short),
+    home: { id: r.teams.home.id, name: r.teams.home.name, logo: r.teams.home.logo,
+            goals: r.goals?.home ?? null, vainqueur: r.teams.home.winner ?? null },
+    away: { id: r.teams.away.id, name: r.teams.away.name, logo: r.teams.away.logo,
+            goals: r.goals?.away ?? null, vainqueur: r.teams.away.winner ?? null },
+  });
+
+  /**
+   * Ce qu'on vient de lire sert à tout le monde : équipes, calendriers et
+   * matchs terminés sont rangés durablement.
+   *
+   * Appelé **depuis le récupérateur**, donc une fois par appel à l'API et non
+   * à chaque lecture. Une saison complète, c'est quatre cents écritures : les
+   * refaire à chaque ouverture de page aurait remplacé un problème de quota
+   * par un problème de base.
+   */
+  async function ranger(rows) {
+    if (!footballStore) return;
+    for (const r of rows ?? []) {
+      try {
+        await footballStore.upsertTeam(r.teams.home);
+        await footballStore.upsertTeam(r.teams.away);
+        await footballStore.upsertFixture({
+          id: r.fixture.id, leagueId: r.league.id, season: r.league.season,
+          round: r.league.round, homeId: r.teams.home.id, awayId: r.teams.away.id,
+          homeGoals: r.goals?.home ?? null, awayGoals: r.goals?.away ?? null,
+          status: r.fixture.status?.short ?? 'NS', elapsed: r.fixture.status?.elapsed ?? null,
+          elapsedExtra: r.fixture.status?.extra ?? null,
+          venue: r.fixture.venue?.name ?? null,
+          kickoffAt: new Date(r.fixture.date).toISOString().slice(0, 19).replace('T', ' '),
+        });
+      } catch { /* le télétexte ne doit pas tomber pour une écriture */ }
+    }
+  }
+
+  /**
+   * La journée en cours, au sens du calendrier et non du classement.
+   *
+   * Trois heures de battement après le dernier coup d'envoi : pendant qu'on
+   * joue le dernier match d'une journée, c'est encore celle-là qu'on veut
+   * voir, pas la suivante. Entre deux journées, on montre celle qui vient —
+   * un supporter regarde plus souvent devant que derrière.
+   */
+  function journeeCourante(journees) {
+    const now = Date.now();
+    const dedans = journees.find((j) =>
+      Date.parse(j.debut) <= now && now <= Date.parse(j.fin) + 3 * 3600e3);
+    return (dedans ?? journees.find((j) => Date.parse(j.debut) > now)
+      ?? journees.at(-1))?.round ?? null;
+  }
+
+  async function results(leagueId, { journee = null } = {}) {
     const s = await seasonOf(leagueId);
     if (!s) return null;
-    const live = await hasLive(leagueId);
-    const from = new Date(Date.now() - 10 * 864e5).toISOString().slice(0, 10);
-    const to = new Date(Date.now() + 10 * 864e5).toISOString().slice(0, 10);
 
-    const { data, stale } = await cached(
-      `fixtures:${leagueId}:${s.season}:${from}`,
-      live ? TTL.fixturesLive : TTL.fixtures,
-      () => client.call('/fixtures', { league: leagueId, season: s.season, from, to, timezone: 'UTC' }));
+    const { data: saison, stale } = await cached(
+      `saison:${leagueId}:${s.season}`, TTL.saison,
+      async () => {
+        const rows = await client.call('/fixtures',
+          { league: leagueId, season: s.season, timezone: 'UTC' });
+        await ranger(rows);
+        return (rows ?? []).map(traitMatch);
+      });
 
-    // Ce qu'on vient de lire sert à tout le monde : équipes, calendriers et
-    // matchs terminés sont rangés durablement. Un match fini ne change plus
-    // jamais — le redemander un jour serait un appel perdu.
-    if (footballStore) {
-      for (const r of data ?? []) {
-        try {
-          await footballStore.upsertTeam(r.teams.home);
-          await footballStore.upsertTeam(r.teams.away);
-          await footballStore.upsertFixture({
-            id: r.fixture.id, leagueId: r.league.id, season: r.league.season,
-            round: r.league.round, homeId: r.teams.home.id, awayId: r.teams.away.id,
-            homeGoals: r.goals?.home ?? null, awayGoals: r.goals?.away ?? null,
-            status: r.fixture.status?.short ?? 'NS', elapsed: r.fixture.status?.elapsed ?? null,
-            elapsedExtra: r.fixture.status?.extra ?? null,
-            venue: r.fixture.venue?.name ?? null,
-            kickoffAt: new Date(r.fixture.date).toISOString().slice(0, 19).replace('T', ' '),
+    const matchs = [...(saison ?? [])]
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    /* Les journées, dans l'ordre du calendrier et non dans celui de leur nom :
+       « Regular Season - 10 » se range avant « - 9 » par ordre alphabétique,
+       et une phase finale n'a pas de numéro du tout. La date du premier coup
+       d'envoi, elle, ne se trompe jamais. */
+    const parJournee = new Map();
+    for (const m of matchs) {
+      const r = m.round ?? '—';
+      if (!parJournee.has(r)) parJournee.set(r, []);
+      parJournee.get(r).push(m);
+    }
+    const journees = [...parJournee].map(([round, ms]) => ({
+      round,
+      debut: ms[0].date,
+      fin: ms.at(-1).date,
+      joues: ms.filter((m) => m.fini).length,
+      total: ms.length,
+    }));
+
+    const choisie = parJournee.has(journee) ? journee : journeeCourante(journees);
+    let liste = parJournee.get(choisie) ?? [];
+
+    /* Le direct, s'il peut y en avoir un. Deux jours de part et d'autre : au-
+       delà, aucun score ne peut plus changer et la fenêtre ne rapporterait
+       qu'un appel de plus. */
+    let luA = null;
+    const bientot = liste.some((m) =>
+      Math.abs(Date.now() - Date.parse(m.date)) < 2 * 864e5);
+    if (bientot) {
+      const from = new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10);
+      const to = new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10);
+      const live = await hasLive(leagueId);
+      try {
+        const fenetre = await cached(
+          `fenetre:${leagueId}:${s.season}:${from}`,
+          live ? TTL.fixturesLive : TTL.fixtures,
+          async () => {
+            const rows = await client.call('/fixtures',
+              { league: leagueId, season: s.season, from, to, timezone: 'UTC' });
+            await ranger(rows);
+            return (rows ?? []).map(traitMatch);
           });
-        } catch { /* le télétexte ne doit pas tomber pour une écriture */ }
-      }
+        const frais = new Map((fenetre.data ?? []).map((m) => [m.id, m]));
+        luA = fenetre.luA ?? null;
+        liste = liste.map((m) => (frais.has(m.id) ? frais.get(m.id) : m));
+      } catch { /* la fenêtre est un supplément : sans elle, le calendrier reste */ }
     }
 
-    const matchs = (data ?? []).map((r) => ({
-      id: r.fixture.id,
-      date: r.fixture.date,
-      status: r.fixture.status?.short,
-      elapsed: r.fixture.status?.elapsed,
-      extra: r.fixture.status?.extra ?? null,
-      round: r.league?.round,
-      home: { id: r.teams.home.id, name: r.teams.home.name, logo: r.teams.home.logo, goals: r.goals?.home },
-      away: { id: r.teams.away.id, name: r.teams.away.name, logo: r.teams.away.logo, goals: r.goals?.away },
-    })).sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    return { league: s, matchs, stale: Boolean(stale) };
+    return {
+      league: s,
+      journees: journees.map((j) => ({ ...j, en: j.round === choisie })),
+      journee: choisie,
+      // L'instant de la lecture chez l'API : le client fait courir la minute à
+      // partir de là, sans redemander quoi que ce soit. Nul quand la journée
+      // affichée est trop loin pour qu'un match y soit en cours.
+      luA,
+      matchs: liste,
+      stale: Boolean(stale),
+    };
   }
 
   /* -------------------------------------------------------------- routes */
@@ -579,7 +700,7 @@ export function createTeletext({ pool, client, footballStore = null }) {
    * Un joueur qui fait des allers-retours entre classement et buteurs ne
    * redemande alors rien au serveur, qui ne redemande rien à l'API.
    */
-  const BROWSER = { '': 900, '/results': 120, '/scorers': 3600, '/assists': 3600, '/cards': 3600 };
+  const BROWSER = { '': 900, '/results': 30, '/scorers': 3600, '/assists': 3600, '/cards': 3600 };
 
   const send = (res, p, maxAge = 900) => p.then((v) => {
     if (v) res.set('cache-control', `private, max-age=${maxAge}`);
@@ -610,41 +731,187 @@ export function createTeletext({ pool, client, footballStore = null }) {
     });
   };
 
-  /** Le sommaire : servi depuis la base, jamais un appel à l'API. */
+/**
+   * Un compte, pour les deux routes qui écrivent au nom du joueur.
+   *
+   * Ce module ne prend pas `requireAuth` en paramètre comme ses voisins :
+   * `attachUser` pose déjà `req.user` sur chaque requête, et le télétexte est
+   * le seul service monté sans rien exiger — toutes ses lectures sont
+   * publiques, y compris pour un visiteur sans compte. Une dépendance de plus
+   * dans la signature ferait payer à tout le fichier le prix de deux routes.
+   * Le code d'erreur est celui du module d'authentification, à la lettre : la
+   * page ne doit pas avoir à reconnaître deux façons de dire la même chose.
+   */
+  const exigeCompte = (req, res, next) =>
+    (req.user ? next() : res.status(401).json({ error: 'auth.error.unauthenticated' }));
+
+  /**
+   * Le sommaire : servi depuis la base, jamais un appel à l'API.
+   *
+   * **Ce qui est montré par défaut n'est pas tout.** Neuf cent cinquante
+   * compétitions, c'est un annuaire ; ce qu'on vient chercher, c'est ce qui se
+   * joue en ce moment. La liste par défaut ne garde donc que les compétitions
+   * dont la saison court aujourd'hui, les grandes compétitions de sélections
+   * des quatre dernières années — une Coupe du monde reste ce qu'on veut
+   * revoir longtemps après — et celles que le joueur suit, qui ne doivent
+   * jamais disparaître de sa liste, saison ou pas.
+   *
+   * Dès qu'une recherche ou un pays est demandé, la restriction tombe : on a
+   * nommé ce qu'on cherchait, ce serait absurde de le cacher parce que sa
+   * saison est finie.
+   */
   router.get('/leagues', safe(async (req, res) => {
     const terme = String(req.query.q ?? '').trim();
     const pays = String(req.query.country ?? '').trim();
     const famille = String(req.query.family ?? '').trim();
+    const seulementFavoris = req.query.favoris === '1';
+    /* Les pays que le terme désigne, résolus par le navigateur et transmis
+       sous leur nom **anglais** : c'est ainsi que la base les range, et c'est
+       ce qui permet à « espagne » de trouver « Spain ». Voir public/pays.js.
+       Borné à quarante : au-delà, le terme ne désigne plus rien de précis. */
+    const paysCherches = String(req.query.pays ?? '').split(',')
+      .map((p) => p.trim()).filter(Boolean).slice(0, 40);
+    /* Et leurs codes ISO. Les deux, parce qu'aucun ne suffit seul : la colonne
+       `country_code` est juste mais peut être vide tant que coverage.mjs n'a
+       pas tourné, et le nom anglais d'`Intl` ne colle pas toujours à celui de
+       l'API — « Czechia » contre « Czech-Republic ». */
+    const codesCherches = String(req.query.codes ?? '').split(',')
+      .map((c) => c.trim().toUpperCase()).filter((c) => /^[A-Z]{2}$/.test(c)).slice(0, 40);
 
-    const where = ['enabled = 1'];
-    const args = [];
-    if (terme) { where.push('(name LIKE ? OR country LIKE ?)'); args.push(`%${terme}%`, `%${terme}%`); }
-    if (pays) { where.push('country = ?'); args.push(pays); }
-    if (famille) { where.push('family = ?'); args.push(famille); }
+    const today = new Date().toISOString().slice(0, 10);
+    const moi = req.user?.id ?? null;
+
+    /* `starts_on` inconnu : on affiche. Une date manquante veut dire qu'on ne
+       sait pas, et on ne cache pas ce qu'on ne sait pas. */
+    const EN_COURS = `(l.starts_on IS NULL OR l.ends_on IS NULL
+       OR (l.starts_on <= ? AND ? <= l.ends_on))`;
+
+    const where = ['l.enabled = 1'];
+    const args = [moi];                    // le LEFT JOIN des favoris passe en premier
+    /* Une compétition par ligne, pas une par saison. La table en garde
+       plusieurs — c'est elle qui sait quelle saison est éligible aux cartes —
+       mais le sommaire n'a qu'une chose à montrer : la compétition. */
+    where.push(`l.season = (SELECT MAX(s2.season) FROM souvenir_leagues s2
+                             WHERE s2.league_id = l.league_id AND s2.enabled = 1)`);
+
+    if (terme || paysCherches.length || codesCherches.length) {
+      const ou = ['l.name LIKE ?', 'l.country LIKE ?'];
+      args.push(`%${terme}%`, `%${terme}%`);
+      if (paysCherches.length) {
+        ou.push(`l.country IN (${paysCherches.map(() => '?').join(',')})`);
+        args.push(...paysCherches);
+      }
+      if (codesCherches.length) {
+        ou.push(`l.country_code IN (${codesCherches.map(() => '?').join(',')})`);
+        args.push(...codesCherches);
+      }
+      where.push(`(${ou.join(' OR ')})`);
+    }
+    if (pays) { where.push('l.country = ?'); args.push(pays); }
+    if (famille) { where.push('l.family = ?'); args.push(famille); }
+    if (seulementFavoris) where.push('f.user_id IS NOT NULL');
+
+    if (!terme && !pays && !famille && !paysCherches.length && !codesCherches.length
+        && !seulementFavoris) {
+      where.push(`(${EN_COURS}
+        OR (l.family = 'international' AND l.ends_on >= DATE_SUB(?, INTERVAL 4 YEAR))
+        OR f.user_id IS NOT NULL)`);
+      args.push(today, today, today);
+    }
 
     const rows = await q(
-      `SELECT league_id, name, country, type, family, season, tier,
-              has_standings, has_top_scorers
-         FROM souvenir_leagues
+      `SELECT l.league_id, l.name, l.country, l.country_code, l.type, l.family,
+              l.season, l.tier, l.has_standings, l.has_top_scorers,
+              l.starts_on, l.ends_on,
+              ${EN_COURS} AS en_cours,
+              f.user_id IS NOT NULL AS favori
+         FROM souvenir_leagues l
+         LEFT JOIN user_league_follows f
+                ON f.league_id = l.league_id AND f.user_id = ?
         WHERE ${where.join(' AND ')}
-        ORDER BY tier, country, name
-        LIMIT 200`, args);
-    res.json({ leagues: rows });
+        ORDER BY favori DESC, en_cours DESC, l.tier, l.country, l.name
+        LIMIT 200`,
+      [today, today, ...args]);
+
+    res.json({
+      leagues: rows.map((l) => ({
+        ...l,
+        en_cours: Boolean(Number(l.en_cours)),
+        favori: Boolean(Number(l.favori)),
+        starts_on: l.starts_on ? jourDeColonne(l.starts_on) : null,
+        ends_on: l.ends_on ? jourDeColonne(l.ends_on) : null,
+      })),
+    });
   }));
 
-  /** Les pays disponibles, pour le sélecteur. */
+  /**
+   * Les pays disponibles, pour le sélecteur.
+   *
+   * Le code ISO part avec : sans lui la page ne saurait écrire « Espagne », et
+   * une pastille en anglais au-dessus d'une liste traduite se remarque plus
+   * qu'une page entièrement anglaise. `MAX` plutôt que `MIN` : il ignore les
+   * valeurs nulles, donc une seule compétition renseignée suffit à nommer le
+   * pays tant que `coverage.mjs` n'a pas tout rempli.
+   */
   router.get('/countries', safe(async (_req, res) => {
     const rows = await q(
-      `SELECT country, COUNT(*) AS n FROM souvenir_leagues
+      `SELECT country, MAX(country_code) AS code, COUNT(*) AS n
+         FROM souvenir_leagues
         WHERE enabled = 1 AND country IS NOT NULL
         GROUP BY country ORDER BY n DESC`);
     res.json({ countries: rows });
   }));
 
+  /* ------------------------------------------------- compétitions suivies
+
+     Distinctes des clubs suivis, et c'est tout l'intérêt : on peut vouloir la
+     Champions League sans suivre aucun de ses clubs, ou la Coupe du monde sans
+     suivre de sélection.
+
+     Aucun plafond, contrairement aux clubs. Un club suivi coûte des appels —
+     le guetteur va chercher ses matchs — tandis qu'une compétition suivie ne
+     coûte qu'une ligne : elle ne déclenche rien, elle ordonne une liste. Un
+     plafond sans raison est une règle qu'on ne saurait pas expliquer.        */
+
+  const favorisDe = async (userId) => (await q(
+    `SELECT league_id FROM user_league_follows WHERE user_id = ? ORDER BY created_at`,
+    [userId])).map((r) => r.league_id);
+
+  router.get('/favoris', exigeCompte, safe(async (req, res) => {
+    res.json({ leagues: await favorisDe(req.user.id) });
+  }));
+
+  router.post('/favoris/:id', exigeCompte, safe(async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: 'teletext.error.unknown_league' });
+    }
+    /* On refuse ce qui n'existe pas : une étoile posée sur une compétition
+       inconnue ne se verrait nulle part et ne s'enlèverait jamais. */
+    const connue = await q(
+      `SELECT 1 FROM souvenir_leagues WHERE league_id = ? AND enabled = 1 LIMIT 1`, [id]);
+    if (!connue.length) {
+      return res.status(404).json({ error: 'teletext.error.unknown_league' });
+    }
+    await q(`INSERT IGNORE INTO user_league_follows (user_id, league_id) VALUES (?, ?)`,
+      [req.user.id, id]);
+    res.json({ leagues: await favorisDe(req.user.id) });
+  }));
+
+  router.delete('/favoris/:id', exigeCompte, safe(async (req, res) => {
+    await q(`DELETE FROM user_league_follows WHERE user_id = ? AND league_id = ?`,
+      [req.user.id, Number(req.params.id)]);
+    res.json({ leagues: await favorisDe(req.user.id) });
+  }));
+
   router.get('/league/:id', (req, res) =>
     send(res, standings(Number(req.params.id)), BROWSER['']));
+  /* La journée voulue voyage dans l’adresse : le navigateur garde alors
+     chacune pour son compte, et revenir à la précédente ne redemande rien. */
   router.get('/league/:id/results', (req, res) =>
-    send(res, results(Number(req.params.id)), BROWSER['/results']));
+    send(res, results(Number(req.params.id),
+      { journee: req.query.journee ? String(req.query.journee) : null }),
+      BROWSER['/results']));
   router.get('/league/:id/scorers', (req, res) =>
     send(res, ranking(Number(req.params.id), 'scorers'), BROWSER['/scorers']));
   router.get('/league/:id/assists', (req, res) =>
