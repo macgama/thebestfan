@@ -167,6 +167,27 @@ export const REGLAGES = [
     aide: 'Avant les modificateurs du Fanzzy. Un geste de tempo demande quatre ' +
       'secondes et demie : à 30, un bon chant ne se voyait pas sur la corde.' },
 
+  /* Les deux réglages de l'appariement par camp. Ils gouvernent ensemble une
+     seule chose : est-ce qu'un duel classé trouve de vrais adversaires. */
+
+  { cle: 'duel.renfort_max', section: 'duel', type: 'decimal',
+    titre: 'Ferveur en tenant le camp délaissé', unite: '× la normale au maximum',
+    min: 1, max: 4, pas: 0.1, defaut: 2,
+    aide: 'Un duel est tribune contre tribune : un match dont personne ne suit ' +
+      'le visiteur ne se remplirait jamais. Celui qui va tenir ce camp-là est ' +
+      'donc payé de sa peine, d’autant plus que le camp était vide à son ' +
+      'arrivée. À 1, le renfort ne rapporte rien et les matchs déséquilibrés ' +
+      'ne partent plus.' },
+
+  { cle: 'duel.attente_classe_sec', section: 'duel', type: 'entier',
+    titre: 'Avant que des bots complètent un duel classé', unite: 'secondes',
+    min: 20, max: 900, defaut: 120,
+    aide: 'Un entraînement bascule au bout de vingt secondes : on vient y ' +
+      'jouer seul, tout de suite. Un duel classé mérite qu’on laisse à ' +
+      'quelqu’un le temps de venir tenir le camp qui manque — vingt secondes ' +
+      'n’en laissent aucun, et on jouerait toujours contre des machines. Trop ' +
+      'long, et le joueur repart avant que le duel commence.' },
+
   { cle: 'duel.chant_cout', section: 'duel', type: 'entier',
     titre: 'Un chant coûte', unite: 'souffle', min: 0, max: 100, defaut: 18 },
 

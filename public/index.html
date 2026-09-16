@@ -1769,7 +1769,12 @@ async function jsonp(url, options) {
     try {
       const { matchs = [] } = await jsonp('/api/virage/live', { credentials:'same-origin' });
       liste = matchs;
-      m = matchs.find((x) => x.open) ?? null;
+      /* `mien` : **un de mes clubs**. La liste porte désormais tous les
+         matchs en direct du monde, parce que le Virage s'ouvre sur tous ;
+         l'accueil, lui, raconte le match du joueur. Sans cette condition, le
+         supporter se serait mis à pousser pour une rencontre indonésienne en
+         annonçant « ton club joue ». */
+      m = matchs.find((x) => x.open && x.mien) ?? null;
     } catch { planifier(180_000); return; }   // suivi non actif
 
     if (!m) {
@@ -1789,7 +1794,8 @@ async function jsonp(url, options) {
          On n'annonce que ce qu'on a vu vivre : `scoreVu` porte le match qu'on
          suivait. Sans cette garde, ouvrir l'accueil le lendemain matin
          célébrerait la victoire de la veille comme si elle venait de tomber. */
-      const fini = liste.find((x) => ['FT', 'AET', 'PEN'].includes(x.status_short));
+      const fini = liste.find((x) => x.mien
+        && ['FT', 'AET', 'PEN'].includes(x.status_short));
       if (fini && scoreVu?.startsWith(`${fini.id}:`) && finVue !== fini.id) {
         finVue = fini.id;
         const chezMoi = mesClubs.has(fini.home_id);

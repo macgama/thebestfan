@@ -216,7 +216,9 @@
     fetch('/api/virage/live', { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!d?.matchs?.some((m) => m.open)) return;
+        // `mien` : la liste couvre maintenant tous les matchs en direct, et
+        // une pastille allumée en permanence ne prévient plus de rien.
+        if (!d?.matchs?.some((m) => m.open && m.mien)) return;
         bouton.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
         tiroir.querySelector('a[href="/virage"]')
           ?.insertAdjacentHTML('beforeend', '<span class="pip"></span>');

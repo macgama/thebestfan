@@ -3,6 +3,9 @@ import { ACTIONS, ACTION_BY_ID, DECK_RULES, validerDeck } from '../../shared/due
 import { parIdentifiant, racineDe, lignee } from '../fanzzy/catalogue.js';
 import { STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 import { jourISO } from '../../shared/jour.js';
+// Le club qu'on soutient dans une rencontre, et de quel côté il joue :
+// la même règle qu'au Virage et qu'au Duel, écrite une seule fois.
+import { clubParmi, campDe } from '../football/suivis.js';
 import { PALIERS } from '../../shared/niveau.js';
 
 /**
@@ -214,9 +217,18 @@ export function createDecks({ pool, requireAuth, niveau = null }) {
 
     const mode = (jour === auj || enCours) ? 'classe' : 'entrainement';
 
-    const mien = userId ? (await q(
-      `SELECT 1 FROM user_follows WHERE user_id = ? AND team_id IN (?, ?) LIMIT 1`,
-      [userId, f.home_id, f.away_id])).length > 0 : false;
+    /* Le club soutenu, et donc le camp. La page en a besoin **avant**
+       l'entrée en file : chez soi le camp est décidé et il n'y a rien à
+       demander ; ailleurs, c'est au joueur de dire quelle tribune il vient
+       tenir. Lui montrer un choix qu'il n'a pas, ou l'envoyer sans choisir,
+       seraient deux façons de lui mentir. */
+    const club = userId ? clubParmi(await q(
+      `SELECT team_id, is_main FROM user_follows
+        WHERE user_id = ? AND team_id IN (?, ?)
+        ORDER BY is_main DESC, created_at`,
+      [userId, f.home_id, f.away_id]), f.home_id, f.away_id)
+      : { teamId: null, neutre: true };
+    const mien = !club.neutre;
     return {
       fixture: {
         id: f.id, jour, status: f.status_short, elapsed: f.elapsed,
@@ -226,6 +238,8 @@ export function createDecks({ pool, requireAuth, niveau = null }) {
       },
       mode,
       enCours,
+      monCamp: campDe(club.teamId, f.home_id, f.away_id),
+      neutre: club.neutre,
       // L'explication est renvoyée au client : il ne doit pas avoir à deviner
       // pourquoi un duel ne compte pas.
       raison: mode === 'classe'
@@ -267,18 +281,26 @@ export function createDecks({ pool, requireAuth, niveau = null }) {
     // Les clubs suivis, une fois pour toute la liste. Avec `tous=1` elle peut
     // contenir soixante matchs, et une requête par ligne pour lire une table de
     // deux entrées serait absurde.
-    const mesClubs = new Set((await q(
-      `SELECT team_id FROM user_follows WHERE user_id = ?`, [userId])).map((r) => r.team_id));
+    /* Triés — le club principal d'abord — parce que c'est cet ordre qui
+       départage un derby, et que `clubParmi` compte dessus. */
+    const suivis = await q(
+      `SELECT team_id, is_main FROM user_follows WHERE user_id = ?
+        ORDER BY is_main DESC, created_at`, [userId]);
 
-    return rows.map((f) => ({
-      ...f,
-      enCours: LIVE.includes(f.status_short),
-      mode: (f.aujourdhui || LIVE.includes(f.status_short)) ? 'classe' : 'entrainement',
-      // Pousser pour son club rapporte le double. Le dire **avant** le choix :
-      // une règle qu'on ne découvre qu'en lisant son solde après coup ne pèse
-      // sur aucune décision, et c'est pourtant là qu'elle doit peser.
-      mien: mesClubs.has(f.home_id) || mesClubs.has(f.away_id),
-    }));
+    return rows.map((f) => {
+      const club = clubParmi(suivis, f.home_id, f.away_id);
+      return {
+        ...f,
+        enCours: LIVE.includes(f.status_short),
+        mode: (f.aujourdhui || LIVE.includes(f.status_short)) ? 'classe' : 'entrainement',
+        // Pousser pour son club rapporte le double. Le dire **avant** le choix :
+        // une règle qu'on ne découvre qu'en lisant son solde après coup ne pèse
+        // sur aucune décision, et c'est pourtant là qu'elle doit peser.
+        mien: !club.neutre,
+        // Et de quel côté : la page en fait un camp imposé ou un choix.
+        monCamp: campDe(club.teamId, f.home_id, f.away_id),
+      };
+    });
   }
 
   /* ------------------------------------------------- placer depuis la fiche

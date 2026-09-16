@@ -264,6 +264,22 @@ async function ouvrir(largeur = 400, hauteur = 880) {
 }
 
 /** L'état des deux calques : lequel est visible, et sur quel dessin. */
+/**
+ * Attend qu'une pose donnée s'affiche.
+ *
+ * La scène **traverse** un état : un but fait tressaillir le personnage, il ne
+ * le fige pas. Entre l'aller-retour réseau et la durée de l'animation, le
+ * moment où l'image est à l'écran ne se prédit pas — il se guette.
+ */
+const posePassePar = async (page, motif, ms = 5000) => {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    if (motif.test((await scene(page)).src ?? '')) return true;
+    await new Promise((r) => setTimeout(r, 60));
+  }
+  return false;
+};
+
 const scene = (page) => page.evaluate(() => {
   const calques = [...document.querySelectorAll('#pile .pose')];
   const visible = calques.find((c) => c.classList.contains('on'));
@@ -688,9 +704,8 @@ await page.close();
       await equiper(ID, 2);
       page = await ouvrir();
       await page.evaluate((etat) => TBF.pose(etat), e2[0]);
-      await new Promise((r) => setTimeout(r, 600));
       check('au stade 2, c’est le second âge qui s’affiche',
-        new RegExp(`/img/fanzzy/${ID}/e2/base/${e2[0]}\\.`).test((await scene(page)).src ?? ''));
+        await posePassePar(page, new RegExp(`/img/fanzzy/${ID}/e2/base/${e2[0]}\\.`)));
 
       /* Et un état que le second âge n'a pas ne laisse pas de trou : il retombe
          sur `neutre` du *même* âge, pas sur la bonne pose d'un âge d'avant.
@@ -859,6 +874,9 @@ await page.close();
     id: 1, open: true, elapsed: 37, status_short: '2H',
     home_id: 85, away_id: 91, home_name: 'Sion', away_name: 'Bâle',
     home_goals: 1, away_goals: 0, crowd: [12, 9],
+    // `mien` : un de mes clubs joue. Le vrai service le pose sur chaque
+    // match de la liste, et l’accueil ne parle que de ceux-là.
+    mien: true,
     /* Les couleurs du club, extraites une fois de son blason côté serveur.
        Volontairement sombres : c'est le cas qui compte. Une couleur de blason
        est faite pour du papier blanc, et écrite telle quelle sur le noir de
@@ -887,16 +905,14 @@ await page.close();
   // page doit savoir faire toute seule.
   direct = { ...direct, home_goals: 2 };
   await page.evaluate(() => TBF.veiller());
-  await new Promise((r) => setTimeout(r, 700));
   check('mon club marque : il exulte',
-    /\/img\/supporter\/goal\./.test((await scene(page)).src ?? ''));
+    await posePassePar(page, /\/img\/supporter\/goal\./));
 
   // L'adversaire égalise : il prend sa tête dans les mains.
   direct = { ...direct, away_goals: 1 };
   await page.evaluate(() => TBF.veiller());
-  await new Promise((r) => setTimeout(r, 700));
   check('l’adversaire marque : il encaisse',
-    /\/img\/supporter\/sad\./.test((await scene(page)).src ?? ''));
+    await posePassePar(page, /\/img\/supporter\/sad\./));
 
   /* ------------------------------------------- le moment fort tient
 
@@ -1055,7 +1071,7 @@ await page.close();
    * l'accueil le lendemain matin célébrerait la victoire de la veille comme
    * si elle venait de tomber. */
   {
-    direct = { id: 9, open: true, elapsed: 88, status_short: '2H',
+    direct = { id: 9, open: true, elapsed: 88, status_short: '2H', mien: true,
       home_id: 85, away_id: 91, home_name: 'Sion', away_name: 'Bâle',
       home_goals: 3, away_goals: 1, crowd: [4, 2] };
     await page.evaluate(() => TBF.veiller());
@@ -1290,6 +1306,9 @@ if (process.env.CAPTURE) {
       id: 1, open: true, elapsed: 37, status_short: '2H',
       home_id: 85, away_id: 91, home_name: 'Sion', away_name: 'Bâle',
       home_goals: 1, away_goals: 0, crowd: [12, 9],
+    // `mien` : un de mes clubs joue. Le vrai service le pose sur chaque
+    // match de la liste, et l’accueil ne parle que de ceux-là.
+    mien: true,
     }, 400, 880],
     ['tablette', null, 834, 1112],
     /* Cinq cent soixante-dix-huit : l'écran qui tombait dans l'angle mort du
