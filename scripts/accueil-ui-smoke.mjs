@@ -1375,12 +1375,32 @@ if (process.env.CAPTURE) {
   check('quand quelqu’un attend, le bouton le dit', dit
     || (console.log('        il dit :', await page.evaluate(() =>
       document.getElementById('entrer').textContent.trim())), false));
-  check('et il nomme le match',
-    /Sion – Bâle/.test(await page.evaluate(() =>
+  /* **Le camp qui manque, nommé.** Le serveur calcule `campQuiManque` et
+     `manque` depuis longtemps, et rien ne les affichait : « 2 t'attendent » ne
+     dit pas où se mettre, alors que « il manque 1 supporter de Bâle » est une
+     place précise — et c'est ce qui décide quelqu'un à venir. */
+  check('et il nomme la place à tenir',
+    /il manque 1 supporter de Bâle/.test(await page.evaluate(() =>
+      document.getElementById('entrer').textContent))
+    || (console.log('        il dit :', await page.evaluate(() =>
+      document.getElementById('entrer').textContent.replace(/\s+/g, ' ').trim())), false));
+  check('et le format',
+    /1v1/.test(await page.evaluate(() =>
       document.getElementById('entrer').textContent)));
-  check('et il mène au duel',
-    (await page.evaluate(() => document.getElementById('entrer').getAttribute('href')))
-      === '/duel-nvn');
+  /* **Le lien porte la place.** Il menait à `/duel-nvn` tout court : on
+     arrivait sur la liste de tous les matchs jouables, et il fallait y
+     retrouver celui dont on venait de lire le nom, puis le format, puis le
+     camp. Trois choix pour une invitation qui en avait déjà fait trois. */
+  {
+    const href = await page.evaluate(() =>
+      document.getElementById('entrer').getAttribute('href'));
+    const u = new URL(href, 'http://x');
+    check('et il mène directement à cette place', u.pathname === '/duel-nvn'
+      && u.searchParams.get('match') === '1'
+      && u.searchParams.get('format') === '1v1'
+      && u.searchParams.get('camp') === '1'
+      || (console.log('        il mène à :', href), false));
+  }
   attente = null;
 }
 

@@ -251,7 +251,46 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
   }
 
   /**
-   * Deux camps pleins, et le duel part.
+   * Jusqu'à combien on accepte de rétrécir, après tout ce temps d'attente.
+   *
+   * ## Le tout ou rien d'avant
+   *
+   * Un 3v3 attendait ses six supporters pendant deux minutes, puis basculait
+   * d'un coup en entraînement contre des bots. Entre les deux, rien : quatre
+   * personnes présentes sur le même match restaient assises à se regarder
+   * pendant cent vingt secondes, alors qu'un 2v2 était jouable dès la
+   * quarantième.
+   *
+   * Et le repli coûtait cher : passer aux bots **déclasse** le duel, donc les
+   * quatre finissaient par jouer un entraînement qui ne compte nulle part.
+   *
+   * ## Le palier
+   *
+   * On descend d'un cran à mesure que le temps passe : un 3v3 accepte de partir
+   * à 2v2 au tiers de l'attente, à 1v1 aux deux tiers, et les bots ne viennent
+   * qu'au bout. **Le duel reste classé** — il oppose de vrais gens, c'est la
+   * seule chose que le classement demande.
+   *
+   * Jouer un 2v2 contre des humains vaut mieux qu'un 3v3 contre des machines.
+   * C'est tout ce que cette fonction dit.
+   *
+   * `ecoule` est le temps du **plus ancien** des deux camps : celui qui attend
+   * depuis le début est celui dont la patience décide.
+   */
+  function tailleAcceptee(attendu, ecoule, attente) {
+    if (attendu <= 1 || ecoule <= 0) return attendu;
+    /* Linéaire, et arrondi vers le haut : au tiers du temps un 3v3 accepte 2,
+       aux deux tiers il accepte 1. Un 5v5 descend de cinq à un par le même
+       chemin, sans qu'on ait à écrire une table. */
+    const part = Math.min(1, ecoule / Math.max(1, attente));
+    return Math.max(1, Math.ceil(attendu * (1 - part)));
+  }
+
+  /**
+   * Deux camps assez peuplés, et le duel part — au format demandé, ou plus bas.
+   *
+   * `minimum` est ce qu'on accepte aujourd'hui : `taille` tant que personne n'a
+   * attendu, moins à mesure que le temps passe. Voir `tailleAcceptee`.
    *
    * Il n'y a plus d'alternance à faire : **le camp est l'équipe**. La liste
    * répartissait les arrivants un sur deux pour que les six premiers d'un 3v3
@@ -259,17 +298,25 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
    * c'était la bonne réponse tant que les deux tribunes n'étaient qu'un ordre
    * d'arrivée. Elles portent maintenant les couleurs d'un vrai club.
    */
-  function tenterAppariement(format, fixtureId) {
+  function tenterAppariement(format, fixtureId, minimum = null) {
     const taille = FORMATS[format];
     const cles = [cle(format, fixtureId, 0), cle(format, fixtureId, 1)];
     const camps = cles.map((k) => files.get(k) ?? []);
-    if (camps[0].length < taille || camps[1].length < taille) return null;
 
-    const equipes = camps.map((f) => f.splice(0, taille));
+    /* Le nombre qu'on peut aligner **des deux côtés** : un duel se joue à
+       nombre égal, sinon un camp pousse à trois contre deux et le score ne veut
+       plus rien dire. */
+    const possible = Math.min(camps[0].length, camps[1].length, taille);
+    const seuil = Math.max(1, Math.min(taille, minimum ?? taille));
+    if (possible < seuil) return null;
+
+    const equipes = camps.map((f) => f.splice(0, possible));
     cles.forEach((k, i) => { if (!camps[i].length) files.delete(k); });
     // Les deux files se vident d'un coup : ceux qui regardaient doivent le voir.
     annoncerAttentes();
-    return ouvrir(equipes, equipes[0][0].support, format);
+    /* Le format **joué** : un 3v3 parti à deux contre deux est un 2v2, et c'est
+       ce qui doit figurer au parcours du joueur. */
+    return ouvrir(equipes, equipes[0][0].support, `${possible}v${possible}`);
   }
 
   /**
@@ -937,12 +984,35 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
   const veille = setInterval(() => {
     const t = Date.now();
+    /* Un tour par **match et format**, et non par file : le repli regarde les
+       deux camps ensemble, et les traiter séparément le ferait deux fois — ou
+       ouvrirait deux duels là où un seul devait partir. */
+    const vus = new Set();
     for (const [c, file] of [...files]) {
-      // Un joueur seul un mardi soir doit pouvoir jouer : au bout du délai,
-      // les places manquantes sont tenues par des bots, en entraînement. Le
-      // délai est plus long pour un duel classé — voir `attenteAvantBots`.
-      const attente = attenteAvantBots(file[0]?.support?.mode);
-      if (file.some((f) => t - f.depuis > attente)) ouvrirAvecBots(c);
+      if (!file.length) continue;
+      const fixtureId = Number(file[0].support?.fixture?.id);
+      const paire = `${file[0].format}:${fixtureId}`;
+      if (vus.has(paire)) continue;
+      vus.add(paire);
+
+      const attente = attenteAvantBots(file[0].support?.mode);
+      /* Le plus ancien des **deux** camps : celui qui attend depuis le début
+         est celui dont la patience décide, quel que soit son côté. */
+      const deux = [0, 1].map((camp) =>
+        files.get(cle(file[0].format, fixtureId, camp)) ?? []).flat();
+      if (!deux.length) continue;
+      const ecoule = t - Math.min(...deux.map((f) => f.depuis));
+
+      /* **Le repli d'abord, les bots ensuite.** Un 3v3 accepte de partir à 2v2
+         au tiers de l'attente, à 1v1 aux deux tiers — entre de vrais gens, donc
+         classé. Les machines ne viennent qu'au bout, et elles déclassent.
+         Jouer plus petit contre des humains vaut mieux que jouer grand contre
+         des bots. */
+      if (ecoule > attente) { ouvrirAvecBots(c); continue; }
+      const seuil = tailleAcceptee(FORMATS[file[0].format], ecoule, attente);
+      if (seuil < FORMATS[file[0].format]) {
+        tenterAppariement(file[0].format, fixtureId, seuil);
+      }
     }
   }, 2000);
   veille.unref?.();
