@@ -11,6 +11,7 @@
     "build": "npm install && node build.mjs",
     "schema:appliquer": "node --env-file-if-exists=.env scripts/appliquer-schema.mjs",
     "schema:smoke": "node scripts/schema-smoke.mjs",
+    "prefixes:smoke": "node scripts/prefixes-smoke.mjs",
     "auth:smoke": "node scripts/auth-smoke.mjs",
     "bienvenue:smoke": "node scripts/onboarding-smoke.mjs",
     "foot:smoke": "node scripts/football-smoke.mjs",
