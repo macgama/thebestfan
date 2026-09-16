@@ -294,8 +294,14 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
      première ligne — l ordre n est pas un détail de mise en page. -->
 <script src="/cartes.js"></script>
 <!-- Les dessins de l’équipement : sans eux, une pièce tirée d’un booster
-     s’affichait en silhouette procédurale, comme un Fanzzy sans visage. -->
+     s’affichait en silhouette procédurale, comme un Fanzzy sans visage.
+     Il sert aussi aux écharpes, dont le dessin est rangé avec les gains. -->
 <script src="/stuff-art.js"></script>
+<!-- Et ceux des cartes d’action, qui n’étaient chargés nulle part ici : une
+     carte d’action tirée d’un booster tombait donc sur la même silhouette
+     grise que les écharpes, et deux cartes très différentes se ressemblaient
+     trait pour trait au moment précis où on les découvre. -->
+<script src="/action-art.js"></script>
 <!-- Les douze états du Fanzzy équipé : c'est ce qui fait saluer le personnage
      sur l'écran « Mon Fanzzy », exactement comme sur l'accueil. Le module ne
      lève jamais et ne demande rien tant qu'on ne l'appelle pas. -->

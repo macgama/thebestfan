@@ -421,6 +421,42 @@ function objetHTML(f) {
     ${window.TBF_STUFF.illustration(f.id, 'illu objet')}</div>`;
 }
 
+/**
+ * Le dessin d'une carte, quelle que soit sa sorte.
+ *
+ * ## Trois sortes sur quatre tombaient sur une silhouette
+ *
+ * `art()` dessine des Fanzzy. Tout le reste — une carte d'action, une poignée
+ * d'écharpes — n'est pas un Fanzzy, et retombait donc sur le bonhomme gris
+ * procédural : on ouvrait un booster pour y trouver deux silhouettes
+ * identiques nommées « 14 écharpes » et « 35 écharpes ».
+ *
+ * L'équipement avait déjà été rattrapé, seul, par `objetHTML`. Les deux autres
+ * suivent ici, au même endroit, pour qu'on n'ait plus à se souvenir lequel des
+ * quatre est branché.
+ *
+ * Les écharpes prennent **le même dessin qu'à la création d'un compte** —
+ * `TBF_STUFF.illustrationGain('echarpes')`, la pile noir, blanc et orange. Deux
+ * écrans qui montrent la même monnaie doivent montrer la même image, sinon le
+ * joueur croit avoir gagné autre chose.
+ *
+ * Chaque branche est **facultative** : ces trois bibliothèques sont chargées
+ * page par page, et une page qui n'en charge pas une doit retomber sur le
+ * dessin procédural plutôt que de ne rien afficher.
+ */
+function dessinDeCarte(f) {
+  if (f.stuff) return objetHTML(f);
+  if (f.action && window.TBF_ACTION) {
+    return `<div class="illuwrap">${artFond(f)}
+      ${window.TBF_ACTION.illustration(f.id, 'illu')}</div>`;
+  }
+  if (f.echarpes && window.TBF_STUFF?.illustrationGain) {
+    return `<div class="illuwrap">${artFond(f)}
+      ${window.TBF_STUFF.illustrationGain('echarpes', 'illu objet')}</div>`;
+  }
+  return art(f);
+}
+
 function cardHTML(f, opts = {}) {
   const t = TYPES[f.type];
   const holo = !opts.verrou && ['epique','legendaire'].includes(f.rar) ? ' holo' : '';
@@ -432,7 +468,7 @@ function cardHTML(f, opts = {}) {
           stroke-linecap="round"><path d="${t.ico}"/></svg></div>
         <div class="nm">${f.nom}</div>
       </div>
-      <div class="art">${f.stuff ? objetHTML(f) : art(f)}</div>
+      <div class="art">${dessinDeCarte(f)}</div>
       ${opts.verrou ? `<svg class="cadenas" viewBox="0 0 24 24" stroke-linecap="round">
         <rect x="4" y="10" width="16" height="11" rx="2.5"/>
         <path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>` : ''}
@@ -461,5 +497,5 @@ function cardHTML(f, opts = {}) {
   /* L'état est un **objet partagé**, pas une copie : le kiosque le modifie en
      ouvrant un booster, la page des Fanzzy le relit. Exporter une copie ferait
      deux vérités dont l'une vieillirait en silence. */
-  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, chargerCatalogue, clamp, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid };
+  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, chargerCatalogue, clamp, dessinDeCarte, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid };
 })();

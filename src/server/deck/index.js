@@ -3,6 +3,9 @@ import { ACTIONS, ACTION_BY_ID, DECK_RULES, validerDeck } from '../../shared/due
 import { parIdentifiant, racineDe, lignee } from '../fanzzy/catalogue.js';
 import { STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 import { jourISO } from '../../shared/jour.js';
+// La prime des grands formats se lit dans les réglages : elle s’ajuste depuis
+// /admin, comme le reste du barème. Voir `primeDeFormat`.
+import { reglage } from '../../shared/reglages.js';
 // Le club qu'on soutient dans une rencontre, et de quel côté il joue :
 // la même règle qu'au Virage et qu'au Duel, écrite une seule fois.
 import { clubParmi, campDe } from '../football/suivis.js';
@@ -46,6 +49,28 @@ function prochainPalierFanzzy(actuel) {
  */
 
 export const FORMATS = { '1v1': 1, '2v2': 2, '3v3': 3, '4v4': 4, '5v5': 5 };
+
+/**
+ * La prime des grands formats.
+ *
+ * Un 2v2 demandait de réunir quatre personnes au lieu de deux et payait
+ * exactement pareil : le format n'entrait nulle part dans le calcul. Un 3v3
+ * était donc un mauvais marché — plus dur à remplir, pas mieux payé — et
+ * personne n'avait de raison d'attendre.
+ *
+ * Elle reste **modeste**, et c'est délibéré : un 3v3 n'est pas trois fois plus
+ * d'effort pour un joueur, c'est le même chant avec plus de monde autour. Ce
+ * qu'on paie est l'attente et la coordination, pas la peine.
+ *
+ * Elle vit ici plutôt que dans le duel parce que **deux modules la lisent** :
+ * `nvn` pour verser, et cette page-ci pour l'annoncer au moment où le joueur
+ * choisit son format. Une règle qu’on découvre en lisant son solde après
+ * coup n'est pas une règle, c'est une surprise.
+ */
+export function primeDeFormat(format) {
+  const taille = FORMATS[format] ?? 1;
+  return 1 + Math.max(0, taille - 1) * reglage('duel.prime_format');
+}
 const LIVE = ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT'];
 
 export function createDecks({ pool, requireAuth, niveau = null,
@@ -555,7 +580,12 @@ export function createDecks({ pool, requireAuth, niveau = null,
   /** Catalogue et règles : tout ce qu'il faut pour construire l'écran de deck. */
   router.get('/catalogue', (_req, res) => {
     res.set('cache-control', 'public, max-age=3600');
-    res.json({ actions: ACTIONS, regles: DECK_RULES, formats: Object.keys(FORMATS) });
+    /* `primes` à côté de `formats` : la page nomme, le serveur compte. Sans
+       elles, l'écran devrait refaire le calcul — donc en porter une copie,
+       qui divergerait au premier réglage changé depuis /admin. */
+    res.json({ actions: ACTIONS, regles: DECK_RULES, formats: Object.keys(FORMATS),
+      primes: Object.fromEntries(Object.keys(FORMATS)
+        .map((f) => [f, Number(primeDeFormat(f).toFixed(2))])) });
   });
 
   router.get('/mien', requireAuth, safe(async (req, res) => {

@@ -57,6 +57,19 @@ h2 i{font-style:normal;opacity:.7}
 
 /* La portée de la liste des matchs. Elle imite les onglets de format juste
    au-dessus : même geste, même endroit, donc rien de neuf à comprendre. */
+
+/* « Peu importe le format » : une case, sous les formats. Elle n’est pas un
+   format de plus — cocher « tous » à côté de cinq choix exclusifs se lirait
+   comme un sixième. D’où la forme d’un interrupteur, et sa place en dessous. */
+.souple{display:flex;align-items:center;gap:10px;width:calc(100% - 28px);margin:8px 14px 0;
+  background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.13);border-radius:9px;
+  padding:9px 11px;color:inherit;cursor:pointer;text-align:left;font-family:var(--banner);
+  font-size:11px;letter-spacing:.06em;opacity:.65}
+.souple.on{opacity:1;border-color:var(--projo);background:rgba(245,195,59,.1);color:var(--projo)}
+.souple .case{flex:none;width:17px;height:17px;border-radius:5px;display:grid;place-items:center;
+  border:1px solid currentColor;font-size:11px;line-height:1}
+.souple small{display:block;font-family:var(--ui);font-size:9.5px;letter-spacing:.02em;
+  opacity:.6;margin-top:3px;color:var(--craie)}
 .portee{display:flex;gap:6px;padding:0 14px 8px}
 .pt{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.13);border-radius:999px;
   color:inherit;padding:8px;font-size:10px;letter-spacing:.1em;cursor:pointer;opacity:.5;
@@ -980,6 +993,8 @@ async function preparer() {
       api(`/api/deck/matchs${S.tousLesMatchs ? '?tous=1' : ''}`),
     ]);
     S.catalogue = cat.actions ?? [];
+    // Ce que chaque format paie en plus. Voir `primeDeFormat` côté serveur.
+    S.primes = cat.primes ?? {};
     S.matchs = matchs.matchs ?? [];
 
     // Sans deck, la file refuserait l'entrée après trois minutes d'attente :
@@ -1036,8 +1051,30 @@ function rendrePrepa(sansDeck, formats) {
   }
 
   out.push(`<h2>LE FORMAT <i>· la file est par format et par match</i></h2>`);
-  out.push(`<div class="formats">${formats.map((f) =>
-    `<button class="fmt ${f === S.format ? 'on' : ''}" data-fmt="${f}">${f}</button>`).join('')}</div>`);
+  /* **La prime du format, annoncée au moment du choix.** Un 2v2 demande de
+     réunir quatre personnes au lieu de deux : il paie donc un peu plus, et
+     le dire ici est la seule façon que ça pèse dans la décision. Le taux
+     vient du serveur — il se règle depuis /admin, et la page n’en porte pas
+     de copie. */
+  out.push(`<div class="formats">${formats.map((f) => {
+    const p = S.primes?.[f] ?? 1;
+    const prime = p > 1 ? `<small>+${Math.round((p - 1) * 100)} %</small>` : '';
+    return `<button class="fmt ${f === S.format ? 'on' : ''}" data-fmt="${f}">${f}${prime}</button>`;
+  }).join('')}</div>`);
+  /* **« Peu importe le format ».**
+
+     La file est indexée par format : deux personnes qui attendent sur le
+     même match, l’une en 3v3 et l’autre en 1v1, ne se rencontrent jamais —
+     pas même au bout de deux minutes. C’est le cas le plus fréquent d’un
+     soir creux : trois joueurs en ligne, trois formats, trois duels contre
+     des bots.
+
+     Cocher ceci, c’est accepter de jouer avec tous les autres, quel que
+     soit le format qu’ils ont choisi. */
+  out.push(`<button class="souple ${S.souple ? 'on' : ''}" data-souple>
+    <span class="case">${S.souple ? '✓' : ''}</span>
+    Peu importe le format<small>joue avec tous ceux qui attendent sur ce match</small>
+  </button>`);
 
   out.push(`<h2>LE MATCH SUPPORT</h2>`);
   /* La portée de la liste.
@@ -1158,6 +1195,7 @@ function souLeMatch(choisi, sansDeck) {
 $('prepaCorps').addEventListener('click', (e) => {
   const f = e.target.closest('[data-fmt]');
   if (f) { S.format = f.dataset.fmt; return preparerRendu(); }
+  if (e.target.closest('[data-souple]')) { S.souple = !S.souple; return preparerRendu(); }
   const m = e.target.closest('[data-fixture]');
   // Changer de match remet la tribune à zéro : ce ne sont plus les mêmes clubs.
   if (m) { S.fixtureId = Number(m.dataset.fixture); S.camp = null; return preparerRendu(); }
@@ -1322,7 +1360,7 @@ function entrerEnFile() {
   if (!S.fixtureId) return toast('Choisis d\u2019abord un match support.');
   if (!socket?.connected) return toast('Pas de connexion au serveur.');
   socket.emit('nvn:queue',
-    { format:S.format, fixtureId:S.fixtureId, camp:S.camp ?? 0 });
+    { format:S.format, fixtureId:S.fixtureId, camp:S.camp ?? 0, souple:S.souple });
   voile('Dans la file', 'Recherche d\u2019adversaires…',
     { texte:'Quitter la file', action: quitterFile });
 }
@@ -2012,6 +2050,8 @@ addEventListener('load', () => {
       api(`/api/deck/matchs${S.tousLesMatchs ? '?tous=1' : ''}`),
     ]);
     S.catalogue = cat.actions ?? [];
+    // Ce que chaque format paie en plus. Voir `primeDeFormat` côté serveur.
+    S.primes = cat.primes ?? {};
     S.matchs = matchs.matchs ?? [];
     formatsMemo = cat.formats ?? formatsMemo;
 

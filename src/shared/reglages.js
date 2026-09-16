@@ -188,6 +188,28 @@ export const REGLAGES = [
       'n’en laissent aucun, et on jouerait toujours contre des machines. Trop ' +
       'long, et le joueur repart avant que le duel commence.' },
 
+  /* La prime des grands formats.
+
+     Un 2v2 demandait de réunir quatre personnes au lieu de deux, et payait
+     exactement pareil : le format n'entrait nulle part dans le calcul. Un 3v3
+     était donc un mauvais marché — plus dur à remplir, pas mieux payé — et
+     personne n'avait de raison d'attendre.
+
+     Elle reste **modeste**, et c'est délibéré : un 3v3 n'est pas trois fois
+     plus d'effort pour toi, c'est le même chant avec plus de monde autour. Ce
+     qu'on paie est l'attente et la coordination, pas la peine.
+
+     Elle porte sur le format **joué** et non demandé : un 3v3 parti à deux
+     contre deux au repli est un 2v2, et il paie comme un 2v2. À 0, les formats
+     redeviennent équivalents. */
+  { cle: 'duel.prime_format', section: 'duel', type: 'decimal',
+    titre: 'Prime par supporter en plus par camp', unite: '× les écharpes',
+    min: 0, max: 1, pas: 0.05, defaut: 0.15,
+    aide: 'À 0,15 : un 1v1 paie 30 écharpes en victoire classée, un 2v2 en ' +
+      'paie 35, un 3v3 39, un 5v5 48. Elle ne touche pas l’expérience — le ' +
+      'niveau mesure le temps passé à jouer, et un 3v3 n’en demande pas plus ' +
+      'qu’un 1v1.' },
+
   { cle: 'duel.chant_cout', section: 'duel', type: 'entier',
     titre: 'Un chant coûte', unite: 'souffle', min: 0, max: 100, defaut: 18 },
 

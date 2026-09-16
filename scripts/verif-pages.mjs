@@ -691,6 +691,34 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
   }
 }
 
+
+/* ========== une page qui dessine des cartes charge tous les dessins
+
+   `cardHTML` sait dessiner quatre sortes de carte, et chacune va chercher ses
+   images dans une bibliothèque différente : `fanzzy-art.js` pour les
+   personnages, `stuff-art.js` pour l'équipement et les écharpes,
+   `action-art.js` pour les cartes d'action.
+
+   Une page qui en oublie une ne casse pas : la carte concernée retombe sur la
+   silhouette procédurale. C'est exactement ce qui s'est produit — les boosters
+   ne chargeaient pas `action-art.js`, et une carte d'action tirée s'affichait
+   comme un bonhomme gris, identique à la poignée d'écharpes d'à côté, au
+   moment précis où l'on découvre ce qu'on a gagné.
+
+   Un repli silencieux ne se voit pas à la lecture du code : il faut ouvrir un
+   booster et tomber sur la bonne carte. D'où ce contrôle. */
+
+{
+  const BIBLIOS = ['/fanzzy-art.js', '/stuff-art.js', '/action-art.js'];
+  for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
+    const src = readFileSync(path.join(DOSSIER, nom), 'utf8');
+    if (!src.includes('/cartes.js')) continue;
+    const manque = BIBLIOS.filter((b) => !src.includes(b));
+    if (manque.length) ko(nom, `dessine des cartes sans ${manque.join(' ni ')}`);
+    else ok(nom, 'charge les trois bibliothèques de dessin');
+  }
+}
+
 /* ================================ les liens qui ne mènent nulle part
 
    Le classeur portait un bouton « ENTRER EN DUEL » qui envoyait sur `/duel`.
