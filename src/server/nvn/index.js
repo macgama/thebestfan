@@ -7,7 +7,7 @@ import { XP } from '../../shared/niveau.js';
 import { reglage } from '../../shared/reglages.js';
 // La même règle qu'au Virage : le club qu'on soutient dans cette
 // rencontre, ou rien du tout si on n'en suit aucun des deux.
-import { clubSoutenu } from '../football/suivis.js';
+import { clubSoutenu, campDe } from '../football/suivis.js';
 
 /**
  * Couche réseau du duel N contre N.
@@ -17,10 +17,16 @@ import { clubSoutenu } from '../football/suivis.js';
  *
  * Deux choix qui gouvernent le reste :
  *
- * **La file est par format ET par match support.** Deux joueurs qui veulent
- * un 3v3 sur Sion–Bâle jouent ensemble ; celui qui veut un 3v3 sur un autre
- * match attend ailleurs. C'est plus lent à remplir, mais un duel adossé à un
- * match qu'on ne suit pas ne veut rien dire.
+ * **La file est par format, par match support ET par camp.** Deux joueurs qui
+ * veulent un 3v3 sur Sion–Bâle jouent ensemble ; celui qui veut un 3v3 sur un
+ * autre match attend ailleurs. Et les deux tribunes du duel sont les deux
+ * clubs du match : on est placé d'office du côté du club qu'on suit, et on
+ * choisit son camp quand on n'en suit aucun.
+ *
+ * C'est deux fois plus lent à remplir, et c'est le prix de la chose : un duel
+ * dont les deux tribunes se valent n'est pas un duel de tribunes. Le camp
+ * délaissé est annoncé dans la file et sa ferveur vaut davantage — sans quoi
+ * un match dont personne ne suit le visiteur ne partirait jamais.
  *
  * **Une déconnexion ne fait pas perdre l'équipe.** Le joueur cesse simplement
  * de pousser et sa place l'attend : les tribunes ne s'effondrent pas parce que
@@ -41,11 +47,11 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     const [rows] = await pool.execute(sql, params);
     return rows;
   };
-  const cle = (format, fixtureId) => `${format}:${fixtureId}`;
+  const cle = (format, fixtureId, camp) => `${format}:${fixtureId}:${camp}`;
 
   /* ------------------------------------------------------- appariement */
 
-  async function entrerEnFile(socket, { format, fixtureId, contreBot }) {
+  async function entrerEnFile(socket, { format, fixtureId, camp, contreBot }) {
     const u = socket.data?.user;
     // On vérifie l'identifiant, pas seulement la présence de l'objet : une
     // session à moitié montée donnait un `{ userId: undefined }` bien truthy,
@@ -59,24 +65,87 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     // maintenant que faire attendre trois minutes pour rien.
     const loadout = await decks.loadout(u.userId);
     if (!loadout) throw new Cheat('no_deck');
-    const support = await decks.matchSupport(Number(fixtureId));
+    const support = await decks.matchSupport(Number(fixtureId), u.userId);
+    const maison = support.fixture.home.id;
+    const exterieur = support.fixture.away.id;
+
+    /* Le camp.
+     *
+     * **Chez soi, il ne se choisit pas** : il découle du club qu'on suit, et
+     * c'est ce qui empêche d'aller pousser contre son propre club. Même règle
+     * qu'au Grand Virage, et la même fonction — il n'y en a qu'une.
+     *
+     * **Ailleurs, il se choisit**, et c'est tout l'objet de ce duel-ci : on
+     * vient tenir une tribune qui n'est pas la sienne. */
+    const club = await clubSoutenu(q, u.userId, maison, exterieur);
+    const monCamp = club.neutre
+      ? (Number(camp) === 1 ? 1 : 0)
+      : campDe(club.teamId, maison, exterieur);
 
     quitterFile(u.userId);
-    const c = cle(format, fixtureId);
+
+    const taille = FORMATS[format];
+    const c = cle(format, fixtureId, monCamp);
     const file = files.get(c) ?? [];
+    const enFace = files.get(cle(format, fixtureId, monCamp ^ 1)) ?? [];
+
+    /* Le renfort.
+     *
+     * Un duel est maintenant tribune contre tribune : un match dont personne
+     * ne suit l'équipe visiteuse ne se remplirait jamais. Celui qui va tenir le
+     * camp délaissé en est donc payé — sa ferveur vaut davantage, et d'autant
+     * plus que ce camp était vide quand il est arrivé.
+     *
+     * Le bonus est **figé à l'entrée** et ne bouge plus. Il récompense un
+     * geste — être venu là où il manquait du monde — et non un état : au coup
+     * d'envoi, les deux camps sont pleins et l'état a disparu.
+     *
+     * Il dépend du camp et non de la personne : un supporter du club délaissé
+     * en profite comme un neutre. Un bonus qui dépendrait aussi de qui l'on est
+     * demanderait deux phrases pour s'expliquer au lieu d'une. */
+    const manque = Math.max(0, Math.min(taille, enFace.length - file.length));
+    const bonus = 1 + (manque / taille) * (reglage('duel.renfort_max') - 1);
+
     file.push({ userId: u.userId, nom: u.name, socket, loadout, support,
-                depuis: Date.now(), format, contreBot: Boolean(contreBot) });
+                depuis: Date.now(), format, camp: monCamp,
+                neutre: club.neutre, teamId: club.teamId, bonus,
+                contreBot: Boolean(contreBot) });
     files.set(c, file);
 
+    const clubs = [support.fixture.home, support.fixture.away];
     socket.emit('nvn:file', {
       format, mode: support.mode, raison: support.raison,
-      attendus: FORMATS[format] * 2, presents: file.length,
-      botDansMs: support.mode === 'entrainement' ? BOT_APRES_MS : null,
+      camp: monCamp, neutre: club.neutre,
+      club: clubs[monCamp], enFaceClub: clubs[monCamp ^ 1],
+      attendus: taille, presents: file.length,
+      enFace: enFace.length,
+      // Ce qu'il manque **en face** : c'est cette phrase-là qui fait venir
+      // quelqu'un tenir le camp délaissé.
+      manqueEnFace: Math.max(0, taille - enFace.length),
+      renfort: Number(bonus.toFixed(2)),
+      botDansMs: attenteAvantBots(support.mode),
     });
 
     if (contreBot) return ouvrirAvecBots(c);
-    return tenterAppariement(c);
+    return tenterAppariement(format, Number(fixtureId));
   }
+
+  /**
+   * Le temps qu'on laisse à de vraies gens avant d'appeler des bots.
+   *
+   * Vingt secondes pour un entraînement : on vient y jouer seul, tout de
+   * suite. Bien plus pour un duel classé, et c'est nouveau — la file se scinde
+   * désormais en deux camps, et vingt secondes ne laissent à personne le temps
+   * de venir tenir celui qui manque. Le renfort n'aurait alors jamais lieu :
+   * on jouerait toujours contre des machines avant qu'un humain arrive.
+   *
+   * Le serveur basculait déjà au bout de vingt secondes pour un duel classé
+   * **sans le dire** — il annonçait `botDansMs` seulement en entraînement. Le
+   * délai est maintenant annoncé dans les deux cas : un joueur qui attend a le
+   * droit de savoir combien de temps.
+   */
+  const attenteAvantBots = (mode) => (mode === 'classe'
+    ? reglage('duel.attente_classe_sec') * 1000 : BOT_APRES_MS);
 
   function quitterFile(userId) {
     for (const [c, file] of files) {
@@ -88,32 +157,43 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     }
   }
 
-  function tenterAppariement(c) {
-    const file = files.get(c);
-    if (!file) return null;
-    const taille = FORMATS[file[0].format];
-    if (file.length < taille * 2) return null;
+  /**
+   * Deux camps pleins, et le duel part.
+   *
+   * Il n'y a plus d'alternance à faire : **le camp est l'équipe**. La liste
+   * répartissait les arrivants un sur deux pour que les six premiers d'un 3v3
+   * ne forment pas une équipe d'habitués contre une équipe de retardataires —
+   * c'était la bonne réponse tant que les deux tribunes n'étaient qu'un ordre
+   * d'arrivée. Elles portent maintenant les couleurs d'un vrai club.
+   */
+  function tenterAppariement(format, fixtureId) {
+    const taille = FORMATS[format];
+    const cles = [cle(format, fixtureId, 0), cle(format, fixtureId, 1)];
+    const camps = cles.map((k) => files.get(k) ?? []);
+    if (camps[0].length < taille || camps[1].length < taille) return null;
 
-    const pris = file.splice(0, taille * 2);
-    if (!file.length) files.delete(c);
-    // Une alternance simple répartit les premiers arrivés des deux côtés :
-    // sans elle, les six premiers d'un 3v3 formeraient une équipe d'habitués
-    // contre une équipe de retardataires.
-    const equipes = [[], []];
-    pris.forEach((p, i) => equipes[i % 2].push(p));
-    return ouvrir(equipes, pris[0].support);
+    const equipes = camps.map((f) => f.splice(0, taille));
+    cles.forEach((k, i) => { if (!camps[i].length) files.delete(k); });
+    return ouvrir(equipes, equipes[0][0].support);
   }
 
-  /** Entraînement immédiat : les places manquantes sont tenues par des bots. */
+  /**
+   * Entraînement immédiat : les places manquantes sont tenues par des bots.
+   *
+   * Les humains gardent **leur** camp, les bots tiennent le reste — le leur
+   * comme celui d'en face. Un camp est un club : on ne mélange pas, même
+   * quand la moitié de la salle est faite de machines.
+   */
   function ouvrirAvecBots(c) {
     const file = files.get(c);
     if (!file?.length) return null;
-    const taille = FORMATS[file[0].format];
-    const humains = file.splice(0, taille * 2);
+    const { format, camp } = file[0];
+    const taille = FORMATS[format];
+    const humains = file.splice(0, taille);
     if (!file.length) files.delete(c);
 
     const equipes = [[], []];
-    humains.forEach((p, i) => equipes[i % 2].push(p));
+    equipes[camp] = [...humains];
     for (const side of [0, 1]) {
       while (equipes[side].length < taille) {
         equipes[side].push(faireBot(humains[0].loadout, equipes[side].length, side));
@@ -159,7 +239,14 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
     const membres = new Map();
     equipes.flat().forEach((p) => membres.set(p.userId, {
-      socket: p.socket, bot: p.bot ?? null, coupeA: null, nom: p.nom }));
+      socket: p.socket, bot: p.bot ?? null, coupeA: null, nom: p.nom,
+      /* Ce que le joueur a décidé **en entrant en file** : le club qu'il
+         défend, s'il y était chez lui, et ce que son renfort lui vaut. Retenu
+         ici plutôt que relu à la fin — un joueur peut cesser de suivre un club
+         pendant le duel, et ce qui compte est ce qui était vrai au moment du
+         choix. Les bots n'ont rien décidé : les valeurs par défaut sont les
+         leurs, et elles ne servent jamais puisqu'on les écarte. */
+      neutre: p.neutre ?? true, teamId: p.teamId ?? null, bonus: p.bonus ?? 1 }));
 
     const salle = { duel, membres, room: `nvn:${id}` };
     salles.set(id, salle);
@@ -191,12 +278,12 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
    * n'en savent rien : un but à Lens ne doit pas secouer une corde tendue sur
    * un match de Super League.
    */
-  function butReel(g, abonnes) {
+  function butReel(g) {
     let touchees = 0;
     for (const salle of salles.values()) {
       if (Number(salle.duel.fixture?.id) !== Number(g.fixtureId)) continue;
       const ev = salle.duel.butReel(
-        { teamId: g.teamId, minute: g.minute, joueur: g.player }, abonnes);
+        { teamId: g.teamId, minute: g.minute, joueur: g.player });
       if (!ev.length) continue;
       touchees++;
       diffuser(salle, ev);
@@ -552,11 +639,12 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         const issue = d.vainqueur === null || d.vainqueur === undefined ? 'draw'
           : (j.side === d.vainqueur ? 'win' : 'loss');
 
-        const club = f?.home?.id && f?.away?.id
-          ? await clubSoutenu(q, userId, f.home.id, f.away.id)
-          : { teamId: null, neutre: true };
-        const ferveur = Math.max(0,
-          Math.round((j.ferveur ?? 0) * (club.neutre ? neutreCoef : 1)));
+        /* Le camp, le club et le renfort ont été décidés à l'entrée en file :
+           on les relit sur la salle plutôt que d'interroger la base une
+           seconde fois pour une réponse qui pourrait avoir changé entre-temps. */
+        const m = salle.membres.get(userId);
+        const ferveur = Math.max(0, Math.round((j.ferveur ?? 0)
+          * (m?.neutre === false ? 1 : neutreCoef) * (m?.bonus ?? 1)));
 
         await q(
           `INSERT IGNORE INTO duel_results
@@ -565,7 +653,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(3))`,
           [d.id, userId, adverse?.userId ?? 'inconnu', issue,
            d.goals[j.side], d.goals[j.side ^ 1],
-           f?.id ?? null, club.teamId, ferveur]);
+           f?.id ?? null, m?.teamId ?? null, ferveur]);
       }
     } catch (e) {
       console.error('[nvn] enregistrement du résultat', e.message);
@@ -660,8 +748,10 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     const t = Date.now();
     for (const [c, file] of [...files]) {
       // Un joueur seul un mardi soir doit pouvoir jouer : au bout du délai,
-      // les places manquantes sont tenues par des bots, en entraînement.
-      if (file.some((f) => t - f.depuis > BOT_APRES_MS)) ouvrirAvecBots(c);
+      // les places manquantes sont tenues par des bots, en entraînement. Le
+      // délai est plus long pour un duel classé — voir `attenteAvantBots`.
+      const attente = attenteAvantBots(file[0]?.support?.mode);
+      if (file.some((f) => t - f.depuis > attente)) ouvrirAvecBots(c);
     }
   }, 2000);
   veille.unref?.();

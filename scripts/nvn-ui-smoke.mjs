@@ -90,9 +90,14 @@ await raw.query(`INSERT INTO leagues (id,name) VALUES (207,'Super League')`);
 await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,kickoff_at)
   VALUES (7,207,2026,85,91,'1H', UTC_TIMESTAMP() - INTERVAL 20 MINUTE),
          (8,207,2026,60,61,'NS', UTC_TIMESTAMP() + INTERVAL 2 DAY)`);
-for (const id of U) {
-  await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1)`, [id]);
-}
+/* **Chacun son club, et ce sont les deux du match.** Les deux joueurs
+   suivaient Sion : depuis que les tribunes d'un duel sont les deux clubs de la
+   rencontre, ils seraient tous deux du côté du domicile et ne se
+   rencontreraient jamais. C'est le cas ordinaire d'un duel de tribunes —
+   quelqu'un de chaque côté — et c'est aussi celui où personne n'a de choix à
+   faire. */
+await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1)`, [U[0]]);
+await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,91,1)`, [U[1]]);
 /* Un passé pour le premier joueur : six duels, dont le plus ancien ne doit
    **pas** apparaître — l'affiche n'en montre que cinq. Les issues sont
    distinctes pour que l'ordre se lise : la plus récente est une victoire, la
@@ -176,12 +181,24 @@ const base = `http://localhost:${http.address().port}`;
 
 const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
 
+/**
+ * Un joueur, avec son propre navigateur.
+ *
+ * **Un contexte chacun, et non deux onglets du même navigateur.** Les cookies
+ * appartiennent au navigateur, pas à l'onglet : le second `setCookie` écrasait
+ * le premier, et la page du premier joueur parlait ensuite au serveur sous
+ * l'identité du second. C'est resté invisible tant que les deux suivaient le
+ * même club — ils recevaient la même liste de matchs, la même réponse, et
+ * personne ne pouvait voir la substitution. Dès qu'ils suivent deux clubs
+ * différents, le premier joueur s'est vu annoncer la tribune de l'autre.
+ */
 async function ouvrir(userId) {
-  const page = await nav.newPage();
+  const contexte = await nav.createBrowserContext();
+  const page = await contexte.newPage();
   const erreurs = [];
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.setViewport({ width: 400, height: 880 });
-  await page.setCookie({ name: 'tbf_test', value: userId,
+  await contexte.setCookie({ name: 'tbf_test', value: userId,
     domain: 'localhost', path: '/' });
   await page.goto(`${base}/duel-nvn`, { waitUntil: 'networkidle0' });
   await dodo(900);
@@ -240,6 +257,50 @@ const tousM = await portee('tous');
 check('« tous les matchs » en propose davantage', tousM.matchs.length === 2);
 check('dont un match sans club suivi', tousM.matchs.some((m) => /Lugano/.test(m)));
 check('et un seul porte le badge du double', tousM.doubles === 1);
+
+/* --------------------------------------------------------- la tribune
+
+   Les deux camps d'un duel sont les deux clubs du match. Le premier joueur
+   suit Sion, qui reçoit ; le second suit Bâle. Aucun des deux n'a de choix à
+   faire, et c'est ce qu'on éprouve d'abord : un joueur chez lui ne doit pas
+   voir de boutons, seulement le nom de sa tribune. */
+
+const chezMoi = await A.page.evaluate(() => ({
+  boutons: document.querySelectorAll('[data-camp]').length,
+  texte: document.getElementById('prepaCorps').textContent.replace(/\s+/g, ' '),
+}));
+check('chez soi, aucune tribune à choisir', chezMoi.boutons === 0);
+check('mais on dit laquelle est la sienne',
+  /Tu es chez toi\s*:\s*Sion/.test(chezMoi.texte)
+  || (console.log('        il dit :', chezMoi.texte.slice(-260)), false));
+
+/* Et sur un match dont aucun club n'est suivi, l'inverse : deux boutons, et
+   l'entrée fermée tant qu'on n'a pas dit pour qui l'on vient chanter. */
+
+await portee('tous');
+const neutre = await A.page.evaluate(() => {
+  const m = [...document.querySelectorAll('[data-fixture]')]
+    .find((x) => /Lugano/.test(x.textContent));
+  m?.click();
+  return {
+    boutons: [...document.querySelectorAll('[data-camp]')].map((b) => b.textContent.trim()),
+    entrerActif: !document.getElementById('entrer')?.disabled,
+  };
+});
+check('sans club dans le match, les deux tribunes sont proposées',
+  neutre.boutons.length === 2 && neutre.boutons.some((n) => /Lugano/.test(n)));
+check('et l’entrée reste fermée tant qu’on n’a pas choisi',
+  neutre.entrerActif === false);
+
+const apresChoix = await A.page.evaluate(() => {
+  document.querySelector('[data-camp="1"]')?.click();
+  return {
+    choisi: document.querySelector('[data-camp="1"]')?.classList.contains('on'),
+    entrerActif: !document.getElementById('entrer')?.disabled,
+  };
+});
+check('choisir une tribune la marque', apresChoix.choisi === true);
+check('et ouvre l’entrée en file', apresChoix.entrerActif === true);
 
 // On revient sur ses clubs : la suite du test compte sur ce match-là.
 await portee('miens');
@@ -472,6 +533,12 @@ check('ni le même prix',
 
 /* ------------------------------------ le barème du geste suit l'équipement */
 
+/* Le barème arrive avec le premier état du duel, qui vient du réseau : le
+   lire aussitôt après l'appariement, c'est le lire une fois sur cinq avant
+   qu'il soit là. Les deux contrôles tombaient alors ensemble, en accusant
+   l'équipement d'un joueur pour une question de milliseconde. */
+await jusqua(async () =>
+  Boolean(await A.page.evaluate(() => S.vue?.moi?.gestes?.tempo)));
 const bareme = await A.page.evaluate(() => S.vue?.moi?.gestes);
 const attendu = resoudreGeste({ tempoWindow: 1.2 * 1.25, tempoInterval: 70 }).tempo;
 check('le serveur envoie le barème du geste à l\u2019écran', Boolean(bareme?.tempo));

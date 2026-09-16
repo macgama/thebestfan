@@ -36,6 +36,16 @@ h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;ma
 h2 i{font-style:normal;opacity:.7}
 
 .formats{display:flex;gap:6px;padding:0 14px}
+/* Les deux tribunes. Deux boutons larges et de même poids : aucun des deux
+   n'est le choix par défaut, et c'est le propos — on vient tenir l'une ou
+   l'autre. */
+.tribunes{display:flex;gap:8px;padding:0 14px}
+.trib{flex:1;min-width:0;padding:11px 8px;border-radius:9px;cursor:pointer;
+  border:1px solid rgba(242,238,228,.18);background:rgba(0,0,0,.28);color:inherit;
+  font-family:var(--banner);font-size:12.5px;letter-spacing:.04em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trib.on{background:var(--craie);color:#0B0E13;border-color:var(--craie)}
+.raison.chezmoi b{color:var(--projo)}
 .fmt{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.14);border-radius:9px;
   color:inherit;padding:12px 4px;font-family:var(--banner);font-size:13px;letter-spacing:.05em;cursor:pointer;
   opacity:.5}
@@ -421,8 +431,21 @@ h2 i{font-style:normal;opacity:.7}
    exactement au moment où le joueur regarde ce bouton. La position se calcule
    donc depuis les mêmes grandeurs que la marge du bouton, pour qu'elle suive
    si l'une d'elles change. */
+/* ------------------------------------------------ le message d'erreur
+
+   Il se posait **au-dessus d'une hauteur devinée** : `bottom: 124px`, la
+   hauteur qu'avait la rangée de chants le jour où on l'a mesurée. Or cette
+   rangée n'a pas de hauteur fixe — le nom d'un chant passe parfois à deux
+   lignes, et le répertoire est tiré de l'identifiant du duel. Selon la partie,
+   le message recouvrait le bouton de dix à quarante-six pixels, c'est-à-dire
+   exactement le bouton que le joueur regarde au moment où on lui dit non.
+
+   La hauteur est donc **mesurée** et non supposée : `--chants-h` suit la
+   rangée, quoi qu'elle contienne. Le repli de 124 px reste pour le premier
+   rendu, avant que la mesure ait eu lieu. */
 .toast{position:fixed;left:50%;z-index:90;transform:translateX(-50%);background:#171C23;
-  bottom:calc(124px + var(--nav-h,62px) * .45 + env(safe-area-inset-bottom));
+  bottom:calc(var(--chants-h, 124px) + 12px + var(--nav-h,62px) * .45
+              + env(safe-area-inset-bottom));
   border:1px solid rgba(242,238,228,.2);border-radius:7px;padding:11px 16px;font-size:12.5px;display:none;
   max-width:88vw;text-align:center}
 .toast.on{display:block}
@@ -672,7 +695,7 @@ const fermerVoile = () => $('voile').classList.remove('on');
 /* ------------------------------------------------------------ état */
 
 const S = {
-  format: '3v3', fixtureId: null, matchs: [], catalogue: [],
+  format: '3v3', fixtureId: null, camp: null, matchs: [], catalogue: [],
   vue: null, enFile: false, dernierSeq: 0, occupe: false,
   // La portée de la liste des matchs : ses clubs, ou tout le championnat. On
   // peut jouer pour n’importe quel match — c’est ce qui permet de trouver un
@@ -760,9 +783,43 @@ function rendrePrepa(sansDeck, formats) {
       : 'Match à venir : entraînement, sans effet sur le classement.'}
       ${choisi.mien ? '<br><b>Un de tes clubs joue : ce duel rapporte le double d’écharpes.</b>' : ''}
       </div>`);
+
+    /* ------------------------------------------------------- le camp
+
+       Les deux tribunes du duel sont les deux clubs du match.
+
+       **Chez soi, il n'y a rien à choisir** : on ne pousse pas contre son
+       propre club. On le dit quand même, plutôt que de ne rien afficher — un
+       joueur qui ne voit pas de choix doit savoir que c'en est un qui a été
+       fait pour lui, sinon il le cherche.
+
+       **Ailleurs, il faut choisir**, et le bouton reste fermé tant que ce
+       n'est pas fait. Entrer en file sans avoir dit pour qui l'on chante
+       enverrait tout le monde du côté du domicile par défaut, et le camp
+       visiteur ne se remplirait jamais. */
+    if (choisi.monCamp !== null && choisi.monCamp !== undefined) {
+      const clubs = [choisi.home_name, choisi.away_name];
+      out.push(`<h2>TA TRIBUNE</h2>`);
+      out.push(`<div class="raison chezmoi">Tu es chez toi :
+        <b>${esc(clubs[choisi.monCamp])}</b>. Le camp ne se choisit pas —
+        on ne pousse pas contre son club.</div>`);
+    } else {
+      out.push(`<h2>TA TRIBUNE <i>· pour qui viens-tu chanter ?</i></h2>`);
+      out.push(`<div class="tribunes">${[choisi.home_name, choisi.away_name]
+        .map((nom, i) => `<button class="trib ${S.camp === i ? 'on' : ''}"
+          data-camp="${i}">${esc(nom)}</button>`).join('')}</div>`);
+      out.push(`<div class="raison">Aucun de tes clubs ne joue : tu viens tenir
+        une tribune qui n’est pas la tienne. <b>Prends celle qui manque de
+        monde</b> — ta ferveur y vaut jusqu’au double.</div>`);
+    }
   }
 
-  out.push(`<button class="gros" id="entrer" ${sansDeck || !S.fixtureId ? 'disabled' : ''}>
+  /* Fermé tant qu'on n'a pas dit pour qui l'on chante : un neutre envoyé
+     sans choix irait par défaut du côté du domicile, et le camp visiteur ne se
+     remplirait jamais. */
+  const sansCamp = Boolean(choisi) && choisi.monCamp == null && S.camp === null;
+  out.push(`<button class="gros" id="entrer"
+    ${sansDeck || !S.fixtureId || sansCamp ? 'disabled' : ''}>
     ENTRER EN FILE</button>`);
   out.push(`<div class="raison">Si personne ne se présente, des bots complètent
     les places au bout de vingt secondes et le duel devient un entraînement.</div>`);
@@ -774,7 +831,10 @@ $('prepaCorps').addEventListener('click', (e) => {
   const f = e.target.closest('[data-fmt]');
   if (f) { S.format = f.dataset.fmt; return preparerRendu(); }
   const m = e.target.closest('[data-fixture]');
-  if (m) { S.fixtureId = Number(m.dataset.fixture); return preparerRendu(); }
+  // Changer de match remet la tribune à zéro : ce ne sont plus les mêmes clubs.
+  if (m) { S.fixtureId = Number(m.dataset.fixture); S.camp = null; return preparerRendu(); }
+  const t = e.target.closest('[data-camp]');
+  if (t) { S.camp = Number(t.dataset.camp); return preparerRendu(); }
   /* Changer de portée relit la liste : elle vient du serveur, qui seul sait
      quels matchs existent et lesquels mettent un club suivi en jeu. Le match
      choisi est remis à zéro — il peut très bien ne plus être dans la liste. */
@@ -847,10 +907,34 @@ function connecter() {
   socket.on('nvn:fin', (b) => { try { montrerBilan(b); } catch (e) {
     console.error('bilan', e); } });
 
+  /**
+   * La file, et ce qu'elle annonce.
+   *
+   * Deux choses qui n'y étaient pas, et qui décident de tout :
+   *
+   *   — **ce qu'il manque en face.** Un duel est tribune contre tribune : si
+   *     personne ne tient le camp visiteur, rien ne part. Le dire, c'est la
+   *     seule chance qu'un joueur aille le tenir.
+   *   — **le délai avant les bots**, qui n'était annoncé qu'en entraînement
+   *     alors que le serveur basculait aussi pour un duel classé. Quelqu'un
+   *     qui attend a le droit de savoir combien de temps.
+   */
   socket.on('nvn:file', (p) => {
     S.enFile = true;
-    voile('Dans la file', `Format ${esc(S.format)} · ${p?.presents ?? 1} en attente.<br>`
-      + 'Des bots complètent après vingt secondes.',
+    const lignes = [];
+    if (p?.club?.name) {
+      lignes.push(`Tribune <b>${esc(p.club.name)}</b>`
+        + (p.renfort > 1 ? ` · ferveur ×${String(p.renfort).replace('.', ',')}` : ''));
+    }
+    lignes.push(`Format ${esc(S.format)} · ${p?.presents ?? 1} sur ${p?.attendus ?? 1}`);
+    if (p?.manqueEnFace > 0 && p?.enFaceClub?.name) {
+      lignes.push(`Il manque <b>${p.manqueEnFace}</b> supporter${
+        p.manqueEnFace > 1 ? 's' : ''} de ${esc(p.enFaceClub.name)}.`);
+    }
+    if (p?.botDansMs) {
+      lignes.push(`Des bots complètent après ${Math.round(p.botDansMs / 1000)} secondes.`);
+    }
+    voile('Dans la file', lignes.join('<br>'),
       { texte:'Quitter la file', action: quitterFile });
   });
 
@@ -885,10 +969,33 @@ function connecter() {
   });
 }
 
+/**
+ * La hauteur de la rangée de chants, mesurée plutôt que devinée.
+ *
+ * Le message d'erreur se pose juste au-dessus d'elle. Elle n'a pas de hauteur
+ * fixe : le nom d'un chant passe parfois à deux lignes, et le répertoire change
+ * d'une partie à l'autre. Une valeur écrite en dur dans le CSS était juste pour
+ * le duel où on l'avait mesurée, et fausse pour les autres.
+ *
+ * `ResizeObserver` plutôt qu'une mesure au rendu : la rangée change aussi quand
+ * l'écran tourne ou qu'une carte devient trop chère, et ces moments-là
+ * n'appellent aucune de nos fonctions.
+ */
+{
+  const rangee = $('chants');
+  if (rangee && window.ResizeObserver) {
+    new ResizeObserver(() => {
+      document.documentElement.style.setProperty(
+        '--chants-h', `${Math.round(rangee.getBoundingClientRect().height)}px`);
+    }).observe(rangee);
+  }
+}
+
 function entrerEnFile() {
   if (!S.fixtureId) return toast('Choisis d\u2019abord un match support.');
   if (!socket?.connected) return toast('Pas de connexion au serveur.');
-  socket.emit('nvn:queue', { format:S.format, fixtureId:S.fixtureId });
+  socket.emit('nvn:queue',
+    { format:S.format, fixtureId:S.fixtureId, camp:S.camp ?? 0 });
   voile('Dans la file', 'Recherche d\u2019adversaires…',
     { texte:'Quitter la file', action: quitterFile });
 }

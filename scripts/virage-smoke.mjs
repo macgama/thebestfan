@@ -94,8 +94,13 @@ io.use((socket, next) => {
 });
 const souvenirs = createSouvenirs({ pool, requireAuth: (r, _s, n) => { r.user = { id: identite }; n(); } });
 const fanzzy = createFanzzy({ pool, requireAuth: (r, _s, n) => { r.user = { id: identite }; n(); } });
+/* La journée du football, telle que le télétexte la sert. Nulle par défaut :
+   la plupart des contrôles n'en ont que faire, et le Virage doit tenir sans
+   elle. Le bloc de `/live` la remplit le moment venu. */
+let journee = null;
 const virage = createVirage({ pool, io, souvenirs, fanzzy,
-  requireAuth: (r, _s, n) => { r.user = { id: identite }; n(); } });
+  requireAuth: (r, _s, n) => { r.user = { id: identite }; n(); },
+  jourDuFoot: () => (typeof journee === 'function' ? journee() : journee) });
 app.use('/api/virage', virage.router);
 await new Promise((r) => http.listen(0, r));
 const url = `http://localhost:${http.address().port}`;
@@ -609,14 +614,66 @@ check('la foule compte les deux tribunes', crowd[0] === 2 && crowd[1] === 1);
  * exulte quand *son* club marque, encaisse quand c'est l'autre. Décider de
  * quel côté on est demande les identifiants des équipes. Les rapprocher par
  * le nom marcherait presque, et « presque » veut dire que le personnage se
- * réjouit parfois d'un but encaissé. */
+ * réjouit parfois d'un but encaissé.
+ *
+ * ## La journée fait foi
+ *
+ * La table `fixtures` ne connaît que ce que le guetteur relève, et le guetteur
+ * ne relève que les clubs suivis. La liste « ailleurs en direct » en sortait :
+ * elle annonçait un 1–0 à la 34e sur une rencontre qui en était à 3–2 à la
+ * 83e, et ignorait les matchs que personne ne suit.
+ *
+ * Le talon ci-dessous met les deux cas dans la même réponse : le match déjà en
+ * base, mais plus avancé, et un match que la base ignore. */
 {
+  journee = {
+    groupes: [
+      { ligue: { id: 207, name: 'Super League' },
+        matchs: [{
+          id: 7001, date: new Date().toISOString(), status: '2H',
+          elapsed: 83, extra: null, luA: Date.now(), live: true, fini: false,
+          home: { id: 85, name: 'FC Sion', logo: '', goals: 3 },
+          away: { id: 91, name: 'FC Bâle', logo: '', goals: 2 },
+        }] },
+      { ligue: { id: 333, name: 'U19 League' },
+        matchs: [{
+          id: 9100, date: new Date().toISOString(), status: '1H',
+          elapsed: 37, extra: null, luA: Date.now(), live: true, fini: false,
+          home: { id: 700, name: 'Metalist 1925 U19', logo: '', goals: 1 },
+          away: { id: 701, name: 'Zhytomyr U19', logo: '', goals: 1 },
+        }] },
+    ],
+  };
+
   const r = await fetch(`${url}/api/virage/live`).then((x) => x.json());
-  const m = r.matchs?.[0];
+  const par = (id) => (r.matchs ?? []).find((m) => Number(m.id) === id);
+  const m = par(7001);
+
   check('/live nomme les deux équipes par leur identifiant',
     typeof m?.home_id === 'number' && typeof m?.away_id === 'number');
   check('et donne le score et la minute',
     'home_goals' in (m ?? {}) && 'elapsed' in (m ?? {}));
+
+  check('le score vient de la journée, pas de la ligne en base',
+    m?.home_goals === 3 && m?.away_goals === 2
+    || (console.log('        il dit :', m?.home_goals, '–', m?.away_goals), false));
+  check('et la minute aussi', m?.elapsed === 83);
+  check('la compétition est nommée', m?.league_name === 'Super League');
+
+  const autre = par(9100);
+  check('un match que la base ignore paraît quand même', Boolean(autre));
+  check('avec son score et sa compétition',
+    autre?.home_goals === 1 && autre?.league_name === 'U19 League');
+  check('et il est ouvert, puisqu’il se joue', autre?.open === true);
+  check('mais ce n’est pas chez moi', autre?.mien === false);
+
+  /* Une panne du télétexte ne doit pas vider l'écran : on retombe sur la base,
+     c'est-à-dire sur ce qu'on avait avant — incomplet, jamais rien. */
+  journee = () => { throw new Error('télétexte injoignable'); };
+  const repli = await fetch(`${url}/api/virage/live`).then((x) => x.json());
+  check('sans la journée, la liste tient encore sur la base',
+    (repli.matchs ?? []).some((x) => Number(x.id) === 7001));
+  journee = null;
 }
 
 for (const m of room.members.values()) m.lastPush = Date.now() - 120_000;

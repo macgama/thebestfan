@@ -35,8 +35,8 @@ export const RULES = {
   // Poussée d'un chant parfait, avant les modificateurs du Fanzzy.
   get chantPower() { return reglage('duel.chant_puissance'); },
   get chantCost() { return reglage('duel.chant_cout'); },
-  butReelSouffle: 25,      // souffle offert à qui suit le club qui vient de marquer
-  butReelSecousse: 55,     // secousse maximale : une tribune entière acquise au buteur
+  butReelSouffle: 25,      // souffle rendu à la tribune du club qui vient de marquer
+  butReelSecousse: 55,     // ce qu'un vrai but pousse sur la corde, du côté du buteur
 };
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -324,44 +324,58 @@ export class DuelNvN {
   /* ------------------------------------------------------------ but réel */
 
   /**
+   * Le camp d'un club dans ce duel : 0 à domicile, 1 à l'extérieur.
+   *
+   * Nul quand le club n'est pas de cette rencontre — un but à Lens ne regarde
+   * pas une corde tendue sur un match de Super League.
+   */
+  coteDe(teamId) {
+    if (teamId == null || !this.fixture) return null;
+    if (Number(teamId) === Number(this.fixture.home?.id)) return 0;
+    if (Number(teamId) === Number(this.fixture.away?.id)) return 1;
+    return null;
+  }
+
+  /**
    * Le vrai match a bougé : un club vient de marquer.
    *
-   * Les deux tribunes d'un duel ne sont pas les deux clubs du match — les
-   * équipes se forment par ordre d'arrivée en file, pas par couleur. Un but
-   * réel ne peut donc pas « pousser du côté du domicile » comme au Grand
-   * Virage. Ce qui compte ici, c'est **qui suit le club qui vient de
-   * marquer**, et ces gens-là peuvent être des deux côtés de la corde.
+   * **Les deux tribunes d'un duel sont les deux clubs du match.** Elles ne
+   * l'étaient pas : les équipes se formaient par ordre d'arrivée en file, et un
+   * but réel ne pouvait donc pas « pousser du côté du domicile ». On regardait
+   * alors *qui suit le club buteur*, gens qui pouvaient être des deux côtés de
+   * la corde — la secousse se calculait en proportion, et à nombre égal elle ne
+   * bougeait pas. C'était la meilleure réponse possible à une question mal
+   * posée.
    *
-   * Chacun d'eux reçoit un souffle. La corde penche du côté où ils sont les
-   * plus nombreux, en proportion de l'effectif. À nombre égal elle tressaille
-   * sans bouger : deux tribunes qui exultent en même temps ne se poussent pas
-   * l'une l'autre, et un derby ne doit avantager personne.
+   * Depuis que la file se scinde par camp, la question ne se pose plus : le but
+   * secoue la corde du côté de la tribune qui l'a marqué, exactement comme au
+   * Grand Virage, et c'est ce que « tribune contre tribune » veut dire. Chacun
+   * de ce côté reprend son souffle.
    *
-   * @param abonnes Set des userId qui suivent le club buteur.
+   * Les neutres de ce camp en profitent comme les autres. C'est voulu : ils
+   * sont venus tenir cette tribune-là, et une tribune qui exulte n'exulte pas
+   * à moitié pour ceux qui la renforcent.
    */
-  butReel({ teamId, minute = null, joueur = null }, abonnes, t = now0()) {
+  butReel({ teamId, minute = null, joueur = null }, t = now0()) {
     if (this.termine) return [];
+    const side = this.coteDe(teamId);
+    if (side === null) return [];
 
-    const concernes = [0, 0];
+    let souffles = 0;
     for (const j of this.joueurs.values()) {
-      if (!abonnes?.has(j.userId)) continue;
-      concernes[j.side]++;
+      if (j.side !== side) continue;
+      souffles++;
       this.regen(j, t);
       j.breath = clamp(j.breath + RULES.butReelSouffle, 0, RULES.breathMax);
     }
-    // Personne ne suit ce club : le but ne regarde pas ce duel.
-    if (!concernes[0] && !concernes[1]) return [];
 
     const evenements = [];
-    const parCote = Math.max(1, (this.tailles[0] + this.tailles[1]) / 2);
-    const part = clamp((concernes[0] - concernes[1]) / parCote, -1, 1);
     // La tribune 0 tire vers le négatif : voir `pousser`.
-    const secousse = -part * RULES.butReelSecousse;
+    const secousse = (side === 0 ? -1 : 1) * RULES.butReelSecousse;
     this.rope = clamp(this.rope + secousse, -RULES.goalAt, RULES.goalAt);
 
     evenements.push(this.ev('but_reel', {
-      teamId, minute, joueur,
-      souffles: concernes,
+      teamId, minute, joueur, side, souffles,
       secousse: Math.round(secousse),
     }));
 

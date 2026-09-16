@@ -20,7 +20,7 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 async function until(fn, ms = 6000) {
   const t0 = Date.now();
-  while (Date.now() - t0 < ms) { if (fn()) return true; await wait(25); }
+  while (Date.now() - t0 < ms) { if (await fn()) return true; await wait(25); }
   return false;
 }
 
@@ -97,9 +97,27 @@ check('mise en file confirmée', await until(()=>A.file !== null));
 check('le mode du match est annoncé', A.file.mode === 'classe');
 check('pas d\u2019appariement seul', A.state === null);
 
-B.socket.emit('nvn:queue', { format:'1v1', fixtureId:900 });
+/* ------------------------------------------------------- les deux camps
+
+   Les deux tribunes d'un duel sont les deux clubs du match. Le premier
+   duelliste suit Sion, qui reçoit : son camp est décidé pour lui, et il n'a
+   rien à choisir. Le second ne suit personne : il choisit, et il choisit le
+   camp vide — c'est exactement le geste que le renfort doit payer. */
+
+check('chez soi, le camp ne se choisit pas',
+  A.file.camp === 0 && A.file.neutre === false);
+check('et la file dit quel club on défend', A.file.club?.id === 85);
+check('elle dit aussi ce qu’il manque en face', A.file.manqueEnFace === 1);
+check('sans club dans ce match, rien à renforcer encore', A.file.renfort === 1);
+
+B.socket.emit('nvn:queue', { format:'1v1', fixtureId:900, camp:1 });
 check('duel formé à deux', await until(()=>A.state && B.state));
+check('le neutre a pris le camp qu’il a demandé',
+  B.file.camp === 1 && B.file.neutre === true);
+check('et tenir le camp vide double sa ferveur', B.file.renfort === 2
+  || (console.log('        il dit :', B.file.renfort), false));
 check('camps opposés', A.state.moi.side !== B.state.moi.side);
+check('et le camp est le club', A.state.moi.side === 0 && B.state.moi.side === 1);
 check('main de cinq cartes', A.state.moi.main.length === 5);
 check('trois Fanzzy', A.state.moi.fanzzy.length === 3);
 check('le match support est transmis', A.state.fixture?.id === 900);
@@ -223,6 +241,18 @@ check('le chant est diffusé aux deux', await until(()=>
     '· refus :', A.errors.at(-1)?.code ?? '—'), false));
 check('la corde a bougé', await until(()=>A.state.rope !== 0));
 
+/* Le neutre chante une fois lui aussi. Sans ferveur de son côté, le contrôle
+   du renfort plus bas ne mesurerait que zéro contre zéro — et passerait au
+   vert quelle que soit la règle. */
+{
+  const sonChant = B.state.chants.find((c) => RYTHMES.has(c.gest));
+  salleA.duel.joueurs.get(U[1]).breath = 100;
+  if (sonChant) {
+    B.socket.emit('nvn:chant', { cardId: sonChant.id, taps: gestePassable(sonChant.gest) });
+    await until(() => (salleA.duel.joueurs.get(U[1]).ferveur ?? 0) > 0);
+  }
+}
+
 // Et rétabli après : le chant l'a entamé, et une carte refusée faute de souffle
 // ferait passer les tests suivants pour de mauvaises raisons.
 salleA.duel.joueurs.get(U[0]).breath = 100;
@@ -280,12 +310,43 @@ A.errors.length = 0;
 // répertoire est tiré de l'identifiant de la partie.
 A.socket.emit('nvn:chant', { cardId: monChant.id, taps: gestePassable(monChant.gest) });
 check('la partie se termine', await until(()=>A.events.some((e)=>e.t==='over')));
-await wait(600);
-const [res] = await pool.query('SELECT user_id, outcome FROM duel_results WHERE duel_id = ?',
-  [salle.duel.id]);
-check('le duel classé est enregistré', res.length === 2);
+/* **On attend l'écriture au lieu de lui laisser six cents millisecondes.**
+   La fin d'un duel récompense d'abord les joueurs, écrit ensuite le résultat,
+   et les deux passent par la base : un délai fixe est un pari sur la charge de
+   la machine. Il était perdu environ une fois sur trois — la table encore
+   vide, les bourses à zéro, et trois contrôles rouges qui accusaient le calcul
+   des gains alors que rien n'avait encore eu le temps d'être écrit. */
+const resultats = async () => (await pool.query(
+  'SELECT user_id, outcome, team_id, ferveur FROM duel_results WHERE duel_id = ?',
+  [salle.duel.id]))[0];
+check('le duel classé est enregistré',
+  await until(async () => (await resultats()).length === 2));
+const res = await resultats();
 check('un gagnant et un perdant',
   res.filter((r)=>r.outcome==='win').length === 1 && res.filter((r)=>r.outcome==='loss').length === 1);
+
+
+/* --------------------------------------------- ce que le duel a rapporté
+
+   Le duel écrit maintenant de la ferveur, la même que le Grand Virage, et il
+   dit pour quel club. Deux règles s'y croisent sur le neutre, et elles se
+   compensent exactement : sa ferveur vaut moitié parce qu'il n'est pas chez
+   lui, et double parce qu'il est venu tenir le camp que personne ne voulait.
+   C'est le sens de tout ce mécanisme — venir pousser ailleurs vaut alors
+   autant que rester chez soi, et le match part. */
+
+const ligne = (u) => res.find((r) => r.user_id === u);
+const brut = (u) => salle.duel.joueurs.get(u)?.ferveur ?? 0;
+
+check('celui qui suit un club défend ce club', ligne(U[0])?.team_id === 85);
+check('le neutre ne défend aucun club', ligne(U[1])?.team_id === null);
+
+check('la ferveur du duel est inscrite', brut(U[0]) > 0 && ligne(U[0])?.ferveur > 0);
+check('entière pour qui est chez lui',
+  ligne(U[0])?.ferveur === Math.round(brut(U[0])));
+check('et la moitié du neutre annule le double du renfort',
+  brut(U[1]) > 0 && ligne(U[1])?.ferveur === Math.round(brut(U[1]) * 0.5 * 2)
+  || (console.log('        brut', brut(U[1]), '· inscrit', ligne(U[1])?.ferveur), false));
 
 /* ------------------------------------------ le double pour son club
 

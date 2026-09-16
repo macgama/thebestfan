@@ -358,7 +358,13 @@ if (process.env.DATABASE_URL) {
        haut, donc disponible : sans lui la salle s'ouvre quand même, et tout le
        monde y entre avec sa voix pour seule arme. */
     virage = createVirage({ pool, io, requireAuth: auth.requireAuth,
-      souvenirs, fanzzy, kop, couleurs, decks });
+      souvenirs, fanzzy, kop, couleurs, decks,
+      /* La journée du football, pour la liste « ailleurs en direct ».
+         Le télétexte n'est pas encore monté — il l'est plus bas, et il a besoin
+         du client API. On passe donc une **fonction** : elle lira `teletext`
+         au moment de l'appel, pas maintenant. Tant qu'il n'est pas là, la liste
+         retombe sur la base, qui ne connaît que les clubs suivis. */
+      jourDuFoot: () => teletext?.jour('') ?? null });
     app.use('/api/virage', virage.router);
     console.log('grand virage actif');
 
@@ -408,13 +414,13 @@ if (process.env.DATABASE_URL) {
             });
           } catch (e) { console.error('[souvenir]', e.message); }
 
-          // 2. Le but déborde sur les duels adossés à ce match : ceux qui
-          //    suivent le club buteur reprennent leur souffle, et la corde
-          //    tressaille du côté où ils sont les plus nombreux.
-          try {
-            const abonnes = new Set(await football.store.followersOfTeam(g.teamId));
-            nvn?.butReel(g, abonnes);
-          } catch (e) { console.error('[nvn] but réel', e.message); }
+          // 2. Le but déborde sur les duels adossés à ce match : la tribune
+          //    du club buteur reprend son souffle, et la corde tressaille de
+          //    son côté. Depuis que les deux camps d'un duel sont les deux
+          //    clubs du match, il n'y a plus à demander à la base qui suit
+          //    qui — c'est une lecture de moins à chaque but.
+          try { nvn?.butReel(g); }
+          catch (e) { console.error('[nvn] but réel', e.message); }
         },
       });
       app.use('/api/football', football.router);

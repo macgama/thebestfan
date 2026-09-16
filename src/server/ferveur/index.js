@@ -25,7 +25,14 @@ const MAX_CARTES_PER_10S = 8;
    lui, et un club sans couleur garde celle du jeu. Une teinte manquante ne
    doit jamais empêcher d'entrer dans une tribune. */
 export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
-                               kop = null, couleurs = null, decks = null }) {
+                               kop = null, couleurs = null, decks = null,
+                               /* La journée du football, telle que la page des
+                                  matchs la lit — un appel pour le monde entier,
+                                  mis en cache. Elle est posée après coup par
+                                  server.js : le télétexte se monte après le
+                                  Virage. Absente, la liste retombe sur la base,
+                                  qui ne connaît que les clubs suivis. */
+                               jourDuFoot = null }) {
   const rooms = new Map();          // fixtureId -> VirageRoom
   const enCours = new Map();        // créations en vol, pour n'en faire qu'une
   const roomOfUser = new Map();     // userId -> fixtureId
@@ -417,7 +424,32 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
   const router = express.Router();
   router.use(express.json({ limit: '8kb' }));
 
-  /** Les matchs de mes clubs où je peux entrer maintenant. */
+  /**
+   * Les matchs où je peux entrer maintenant : les miens, et ceux d'ailleurs.
+   *
+   * ## Deux sources, et il en fallait deux
+   *
+   * La table `fixtures` ne connaît que ce que le guetteur relève, et le
+   * guetteur ne relève que les clubs suivis et les salles occupées — c'est
+   * ainsi qu'il tient dans le quota. Pour tout le reste, sa ligne est celle du
+   * jour où quelqu'un s'y est intéressé, ou n'existe pas du tout.
+   *
+   * La liste « ailleurs en direct » sortait pourtant de cette table. Elle
+   * affichait donc un 1–2 à la 57e sur une rencontre qui en était à 3–2 à la
+   * 83e, et ignorait purement et simplement les matchs dont aucun club n'est
+   * suivi par personne. La page des matchs, au même instant, avait juste : elle
+   * lit la **journée entière**, un seul appel pour le monde entier, mis en
+   * cache quarante-cinq secondes.
+   *
+   * C'est donc cette journée-là qui fait foi ici aussi. Elle ne coûte rien de
+   * plus — le cache est partagé avec la page des matchs — et elle a l'autre
+   * qualité qu'on cherchait : elle est **complète**.
+   *
+   * La base garde deux choses qu'elle seule sait : les couleurs des clubs, et
+   * les matchs d'un club suivi dans une compétition que le jeu n'a pas activée.
+   * On garde donc les deux, et la journée l'emporte quand les deux parlent du
+   * même match.
+   */
   router.get('/live', requireAuth, async (req, res) => {
     const rows = await q(
       // `home_id` et `away_id` : sans eux, l'accueil ne peut pas savoir de quel
@@ -431,9 +463,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
               f.home_goals, f.away_goals, f.kickoff_at,
               f.home_id, f.away_id,
               h.name AS home_name, h.logo AS home_logo,
-              h.color1 AS home_c1, h.color2 AS home_c2,
-              a.name AS away_name, a.logo AS away_logo,
-              a.color1 AS away_c1, a.color2 AS away_c2, l.name AS league_name
+              a.name AS away_name, a.logo AS away_logo, l.name AS league_name
          FROM fixtures f
          JOIN teams h ON h.id = f.home_id
          JOIN teams a ON a.id = f.away_id
@@ -454,15 +484,73 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       `SELECT team_id FROM user_follows WHERE user_id = ?`, [req.user.id]))
       .map((r) => r.team_id));
 
+    const parId = new Map();
+    for (const f of rows) parId.set(Number(f.id), { ...f });
+
+    /* La journée, si le télétexte est monté. Une panne de ce côté ne doit pas
+       vider l'écran : on retombe alors sur la base, c'est-à-dire sur ce qu'on
+       avait avant — incomplet, mais jamais rien. */
+    try {
+      const j = await jourDuFoot?.();
+      for (const g of j?.groupes ?? []) {
+        for (const m of g.matchs ?? []) {
+          if (!m.live) continue;
+          parId.set(Number(m.id), {
+            ...parId.get(Number(m.id)),
+            id: m.id,
+            status_short: m.status, elapsed: m.elapsed, elapsed_extra: m.extra,
+            luA: m.luA ?? null,
+            home_goals: m.home.goals ?? null, away_goals: m.away.goals ?? null,
+            kickoff_at: m.date,
+            home_id: m.home.id, away_id: m.away.id,
+            home_name: m.home.name, home_logo: m.home.logo,
+            away_name: m.away.name, away_logo: m.away.logo,
+            league_name: g.ligue?.name ?? null,
+            // Le palier de la compétition : il décide de l'ordre, plus bas.
+            tier: g.ligue?.tier ?? 3,
+          });
+        }
+      }
+    } catch (e) {
+      console.error('[virage] journée', e.message);
+    }
+
+    /* `mien` : un de mes clubs joue. Le camp découle alors du club suivi et
+       la ferveur compte plein ; ailleurs, on choisit son camp et elle compte
+       moitié. Écrit une fois, lu par le tri et par la réponse. */
+    const estMien = (m) => suivis.has(m.home_id) || suivis.has(m.away_id);
+
+    /* L'ordre, maintenant que la liste couvre le monde entier.
+       Un samedi soir, c'est trente rencontres : triées par heure de coup
+       d'envoi, une finale de Ligue des champions se retrouvait derrière un
+       championnat U19. Les miennes d'abord, puis les grandes compétitions,
+       puis l'heure. Le palier vient de `souvenir_leagues` ; une ligne que
+       seule la base connaît prend le plus bas, faute de mieux. */
+    const matchs = [...parId.values()].sort((a, b) =>
+      (estMien(b) - estMien(a)) || ((a.tier ?? 3) - (b.tier ?? 3))
+      || (new Date(a.kickoff_at) - new Date(b.kickoff_at)));
+
+    /* Les couleurs, en une requête pour toute la liste. Elles ne pouvaient plus
+       venir de la jointure du dessus : la moitié des matchs n'en sort plus. */
+    const ids = [...new Set(matchs.flatMap((m) => [m.home_id, m.away_id]).filter(Boolean))];
+    const teintes = new Map();
+    if (ids.length) {
+      for (const t of await q(
+        `SELECT id, color1, color2 FROM teams WHERE id IN (${ids.map(() => '?').join(',')})`,
+        ids)) {
+        teintes.set(t.id, [t.color1, t.color2].filter(Boolean));
+      }
+    }
+
     /* Les couleurs manquantes partent se chercher **à côté** de la réponse.
        La liste s'affiche avec ce qu'on a ; les blasons lus maintenant
        teindront l'écran au prochain chargement. Attendre un téléchargement
        d'image pour montrer les matchs du soir serait payer une panne pour un
        dégradé. */
-    couleurs?.assurerPlusTard(rows.flatMap((f) => [f.home_id, f.away_id]));
+    couleurs?.assurerPlusTard(ids);
 
     res.json({
-      matchs: rows.map((f) => ({
+      matchs: matchs.map((f) => ({
         ...f,
         // L'écran de choix fait courir la minute avec, comme la page des
         // matchs : sans lui, il affichait la minute de son chargement pendant
@@ -470,13 +558,10 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         luA: f.luA == null ? null : Number(f.luA),
         // Une à deux couleurs, jamais de tableau vide déguisé en couleur : la
         // page teste la longueur et retombe sur la sienne.
-        homeColors: [f.home_c1, f.home_c2].filter(Boolean),
-        awayColors: [f.away_c1, f.away_c2].filter(Boolean),
-        crowd: rooms.get(f.id)?.crowd() ?? [0, 0],
-        // `mien` : un de mes clubs joue. Le camp découle alors du club suivi
-        // et la ferveur compte plein ; ailleurs, on choisit son camp et elle
-        // compte moitié.
-        mien: suivis.has(f.home_id) || suivis.has(f.away_id),
+        homeColors: teintes.get(f.home_id) ?? [],
+        awayColors: teintes.get(f.away_id) ?? [],
+        crowd: rooms.get(Number(f.id))?.crowd() ?? [0, 0],
+        mien: estMien(f),
         open: ['1H', 'HT', '2H', 'ET', 'P', 'LIVE'].includes(f.status_short)
           || new Date(f.kickoff_at) - Date.now() < 30 * 60_000,
       })),
