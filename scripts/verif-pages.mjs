@@ -30,6 +30,7 @@
  * Sortie : 0 si tout va bien, 1 sinon — utilisable tel quel avant un déploiement.
  */
 import { readdir, readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { Script } from 'node:vm';
 import path from 'node:path';
 /* Les listes de référence viennent des modules eux-mêmes, pas d'une lecture au
@@ -42,6 +43,7 @@ import { LISTE_CHANTS } from '../src/shared/duel/chants.js';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 
 const DOSSIER = 'public';
+const RACINE = '.';
 
 /** Pages où la barre commune n'a délibérément pas sa place. */
 /* Les pages qui ne suivent pas la colonne du jeu, et pourquoi.
@@ -622,6 +624,95 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
   } else {
     ok('ui.css', 'aucune classe sans préfixe ne marche sur celles des pages '
       + `(${deLaCommune.length} hors vocabulaire partagé)`);
+  }
+}
+
+/* ================================ les liens qui ne mènent nulle part
+
+   Le classeur portait un bouton « ENTRER EN DUEL » qui envoyait sur `/duel`.
+   Le duel se joue sur `/duel-nvn` : le bouton menait à une page d'erreur,
+   depuis l'écran qui l'annonce. Rien ne regardait jamais **où** un lien mène —
+   un chemin est une chaîne de caractères, et une chaîne fausse a exactement
+   l'air d'une chaîne juste.
+
+   Ce contrôle relit les routes que `server.js` sert, et les compare à tout ce
+   que les pages désignent : les `href` du balisage et les `location.href` du
+   script. Une adresse qui ne correspond à aucune route est nommée ici, et non
+   découverte par un joueur.
+
+   Ce qu'il laisse passer, et pourquoi :
+
+     — les adresses **externes**, les ancres et les `mailto:` : ce n'est pas
+       notre affaire ;
+     — les chemins **construits** — `/fanzzy/${id}` — dont on ne vérifie que le
+       préfixe, puisque la route est elle-même paramétrée ;
+     — tout ce que sert `express.static`, c'est-à-dire le contenu de `public/`.
+       Un fichier qui existe sur le disque est servi, et il est déjà vérifié
+       ailleurs.                                                             */
+
+function routesServies() {
+  const src = readFileSync(path.join(RACINE, 'server.js'), 'utf8');
+  const vues = new Set();
+  for (const m of src.matchAll(/app\.get\(\s*'(\/[^']*)'/g)) vues.add(m[1]);
+  /* Les **routeurs montés sous un préfixe** — `app.use('/api/auth', …)`.
+     Leurs routes ne sont écrites nulle part dans `server.js` : les lire
+     demanderait d'ouvrir chaque module, et ce contrôle regarde les écrans,
+     pas les services. On accepte donc tout ce qui passe sous un préfixe
+     monté.
+
+     Sans cela il criait sur `/api/auth/google/start`, qui existe et marche
+     très bien — et un contrôle qui crie à tort est un contrôle qu'on
+     finit par éteindre. */
+  const prefixes = [];
+  for (const m of src.matchAll(/app\.use\(\s*'(\/[^']*)'/g)) prefixes.push(m[1]);
+  return { vues, prefixes };
+}
+
+/** Une adresse est-elle servie ? */
+function menePart(chemin, { vues, prefixes }, fichiersPublics) {
+  const net = chemin.split('?')[0].split('#')[0].replace(/\/$/, '') || '/';
+  if (vues.has(net)) return true;
+  if (prefixes.some((p) => net === p || net.startsWith(`${p}/`))) return true;
+  // Une route paramétrée : `/fanzzy/:id` couvre `/fanzzy/TR1`.
+  for (const r of vues) {
+    if (!r.includes(':')) continue;
+    const motif = new RegExp(`^${r.replace(/:[^/]+/g, '[^/]+')}$`);
+    if (motif.test(net)) return true;
+  }
+  // Un fichier de `public/`, servi par express.static.
+  return fichiersPublics.has(net.replace(/^\//, ''));
+}
+
+{
+  const routes = routesServies();
+  const publics = new Set();
+  const marcher = async (rel) => {
+    for (const e of await readdir(path.join(DOSSIER, rel), { withFileTypes: true })) {
+      const sous = rel ? `${rel}/${e.name}` : e.name;
+      if (e.isDirectory()) await marcher(sous);
+      else publics.add(sous);
+    }
+  };
+  await marcher('');
+
+  const perdus = [];
+  for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
+    const html = await readFile(path.join(DOSSIER, nom), 'utf8');
+    const vus = new Set();
+    for (const m of html.matchAll(/href\s*=\s*["'](\/[^"'#?]*)/g)) vus.add(m[1]);
+    for (const m of html.matchAll(/location\.href\s*=\s*['"](\/[^'"$]*)['"]/g)) vus.add(m[1]);
+    for (const c of vus) {
+      // Les chemins assemblés à l'exécution portent un `${` : on ne juge que
+      // ce qui est écrit en entier.
+      if (c.includes('${') || c.includes('//')) continue;
+      if (!menePart(c, routes, publics)) perdus.push(`${nom} → ${c}`);
+    }
+  }
+
+  if (perdus.length) {
+    for (const p of perdus) ko(p.split(' → ')[0], `mène nulle part : ${p.split(' → ')[1]}`);
+  } else {
+    ok('les pages', `chaque lien mène à une route servie (${routes.vues.size} routes)`);
   }
 }
 

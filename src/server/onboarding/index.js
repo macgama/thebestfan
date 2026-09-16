@@ -36,7 +36,8 @@ const rnd = (a) => a[Math.floor(Math.random() * a.length)];
  * d'avant — huit — et rien ne change : une installation dont
  * `sql/niveau.sql` n'est pas encore appliqué continue de fonctionner.
  */
-export function createOnboarding({ pool, requireAuth, football = null, niveau = null }) {
+export function createOnboarding({ pool, requireAuth, football = null, niveau = null,
+  decks = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -52,7 +53,10 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
    * écran. On garde la référence dans un objet que `server.js` rebranche une
    * fois le module prêt, comme il le fait déjà pour l'administration.
    */
-  const module = { football };
+  /* `decks` sert au deck de départ, écrit à la première ouverture de paquet.
+     Il vient en paramètre et non par rebranchement : `server.js` monte les
+     decks avant l'inscription, il l'a donc déjà sous la main. */
+  const module = { football, decks };
 
   /* ------------------------------------------------------------- état */
 
@@ -263,6 +267,24 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
         [scarves, premier.id, JSON.stringify(actions), userId]);
 
       await conn.commit();
+      /* ------------------------------------ la tribune de départ
+
+         Le joueur sortait d'ici avec des cartes, un avatar — et **un deck
+         vide**. Or le premier écran qu'il croise ensuite lui propose d'entrer
+         en duel : il y arrivait sans personne sur la corde, et devait monter
+         une tribune avant d'avoir compris ce qu'était une tribune.
+
+         Le Fanzzy qu'on vient de lui donner devient donc son titulaire, avec
+         dix cartes d'action prises dans ce qu'il possède. C'est un point de
+         départ jouable, qu'il remaniera à l'écran de deck.
+
+         **Hors transaction, et sans faire échouer l'ouverture.** Le paquet est
+         écrit et validé ; perdre cinq cartes parce qu'un deck de commodité n'a
+         pas pu s'enregistrer serait absurde. Voir `premierDeck`, qui ne touche
+         à rien si un deck existe déjà. */
+      try { await module.decks?.premierDeck(userId, premier.id); }
+      catch { /* il montera sa tribune lui-même. */ }
+
 
       /* **Le paquet dit ce qu'il contient, pas seulement ses références.**
          Il ne rendait que `{ type, id }` : la page n'avait aucun moyen de

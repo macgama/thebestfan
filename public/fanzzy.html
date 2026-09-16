@@ -583,8 +583,12 @@ function renderTeam() {
       <a class="dbtn" href="/fanzzy/${f.id}">SA FICHE</a>
     </div>`;
 
-  // Le Fanzzy équipé est déjà connu du serveur : le duel le lira lui-même.
-  $('goDuel').onclick = () => { location.href = '/duel'; };
+  /* Le Fanzzy équipé est déjà connu du serveur : le duel le lira lui-même.
+
+     **L'adresse était `/duel`**, qui n'existe pas : le duel se joue sur
+     `/duel-nvn`. Le bouton menait donc à une page d'erreur, depuis l'écran qui
+     dit « entrer en duel » — et rien ne regardait jamais où il mène. */
+  $('goDuel').onclick = () => { location.href = '/duel-nvn'; };
   habiller(f, age, stade);
 }
 

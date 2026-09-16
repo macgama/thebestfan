@@ -21,7 +21,7 @@ await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'tenues.sql', 'saisons.sql']) {
+for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'saisons.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 const U = 'cccccccc-0000-0000-0000-000000000001';
@@ -43,7 +43,13 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 // sur un catalogue vide.
 await chargerCatalogue(pool);
 await chargerTenues(pool);
-const O = createOnboarding({ pool, requireAuth: (r, _s, n) => { r.user = { id: U }; n(); } });
+const requireAuth = (r, _s, n) => { r.user = { id: U }; n(); };
+/* Le module de deck est monté ici comme `server.js` le monte : c'est lui qui
+   écrit la tribune de départ à l'ouverture du paquet. Sans lui, la suite
+   éprouverait une inscription qui n'existe nulle part. */
+const { createDecks } = await import('../src/server/deck/index.js');
+const decks = createDecks({ pool, requireAuth });
+const O = createOnboarding({ pool, requireAuth, decks });
 const app = express(); app.use('/api/me', O.router);
 const http = createServer(app); await new Promise((r) => http.listen(0, r));
 const base = `http://localhost:${http.address().port}`;
@@ -78,6 +84,9 @@ check('inscription non terminée', r.json.onboarded === false);
 /* ------------------------------------------------------ le paquet */
 
 r = await call('/api/me/welcome', { body: { teamId: 85 } });
+// Gardé de côté : les contrôles du deck de départ, plus bas, en ont besoin
+// et `r` aura changé dix fois d'ici là.
+const r0 = r;
 const cartes = r.json.cartes;
 /* Le paquet ne se compte plus en lignes : il en a neuf depuis que les cartes
    d'action sont cinq. Ce qui doit rester vrai, c'est **ce qu'il contient**, et
@@ -168,6 +177,38 @@ check('le skin de base est donné avec le Fanzzy',
 check('l\u2019équipement reçu est porté', r.json.stuff.some((s) => s.slot === 1));
 check(`les cinq cartes sont en poche (${r.json.actions.length})`,
   r.json.actions.length === 5);
+
+
+/* ------------------------------------------- la tribune de départ
+
+   Le joueur sortait d'ici avec des cartes, un avatar — et **un deck vide**.
+   L'écran suivant lui propose d'entrer en duel ; il y arrivait sans personne
+   sur la corde, et devait monter une tribune avant d'avoir compris ce
+   qu'était une tribune.
+
+   Deux règles se croisaient pour rendre ça inévitable : `validerDeck` exige
+   dix cartes d'action, et un deck neuf n'en a aucune. Toute tentative
+   d'enregistrement — celle de la fiche Fanzzy comprise — était refusée par
+   `deck.error.invalid`, sans que rien à l'écran ne dise laquelle des dix
+   places manquait. */
+{
+  const [[d]] = await pool.query(
+    'SELECT contenu FROM user_decks WHERE user_id = ? AND actif = 1', [U]);
+  const deck = d && (typeof d.contenu === 'string' ? JSON.parse(d.contenu) : d.contenu);
+  check('le paquet de bienvenue monte un deck', Boolean(deck)
+    || (console.log('        aucun deck en base'), false));
+  check('le Fanzzy reçu y est titulaire',
+    deck?.fanzzy?.[0]?.id === r0.json.activeFanzzy
+    || (console.log('        titulaire :', deck?.fanzzy?.[0]?.id,
+      '— attendu', r0.json.activeFanzzy), false));
+  /* Dix cartes, prises dans ce qu'il possède : c'est la seule façon qu'un
+     premier deck passe la validation, et c'est aussi un deck jouable. */
+  check('et il part avec ses dix cartes d’action',
+    deck?.actions?.length === 10
+    || (console.log('        cartes :', deck?.actions?.length), false));
+  check('toutes tirées de ce qu’il a en poche',
+    (deck?.actions ?? []).every((a) => typeof a === 'string' && a.length > 0));
+}
 
 r = await call('/api/me/welcome', { body: { teamId: 91 } });
 check('le paquet de bienvenue ne s\u2019ouvre qu\u2019une fois',

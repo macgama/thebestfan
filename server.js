@@ -346,7 +346,8 @@ if (process.env.DATABASE_URL) {
     console.log('cartes-souvenirs actives');
 
     // ---- inscription, emplacements de suivi, inventaire
-    onboarding = createOnboarding({ pool, requireAuth: auth.requireAuth, football: null, niveau });
+    onboarding = createOnboarding({ pool, requireAuth: auth.requireAuth, football: null,
+      niveau, decks });
     app.use('/api/me', onboarding.router);
     console.log('inscription et inventaire actifs');
 

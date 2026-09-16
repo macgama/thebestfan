@@ -400,6 +400,63 @@ export function createDecks({ pool, requireAuth, niveau = null,
      Le reste du deck n'est pas touché : les pièces des autres rangs, les dix
      cartes d'action et le nom restent exactement où ils sont.
   */
+  /**
+   * Le deck qu'on écrit à quelqu'un qui n'en a jamais monté.
+   *
+   * ## Pourquoi un deck vide est refusé, et pourquoi c'est un piège
+   *
+   * `validerDeck` exige **dix cartes d'action**, ni neuf ni onze. La règle est
+   * juste — un duel se joue à dix — mais elle s'applique aussi au tout premier
+   * enregistrement. Un nouveau venu qui posait son Fanzzy depuis sa fiche
+   * partait donc de `{ fanzzy: [lui], actions: [] }`, et le serveur répondait
+   * `deck.error.invalid`. La fiche disait « Impossible pour le moment », le
+   * deck restait vide, et rien n'expliquait au joueur qu'il lui manquait dix
+   * cartes qu'il **possède déjà**.
+   *
+   * Les communes sont offertes à tout le monde (voir `possessions`) : il y a
+   * toujours de quoi remplir les dix places. On les remplit donc, en tournant
+   * sur ce qu'il a — un deck de départ jouable, qu'il remaniera à l'écran de
+   * deck quand il en aura envie. Ce n'est pas un choix qu'on lui confisque,
+   * c'est un choix qu'on ne lui impose pas avant sa première partie.
+   */
+  function deckNeuf(possede) {
+    const dispo = [...possede.actions];
+    /* Aucune carte d'action du tout : on rend un deck vide plutôt que de
+       boucler sur une liste vide. `validerDeck` le refusera, et c'est la bonne
+       réponse — mais elle viendra d'une règle, pas d'un `%` par zéro. */
+    const actions = dispo.length
+      ? Array.from({ length: DECK_RULES.actions }, (_, i) => dispo[i % dispo.length])
+      : [];
+    return { fanzzy: [], actions, nom: 'Mon deck' };
+  }
+
+  /**
+   * Le deck de bienvenue : un titulaire et dix cartes, écrits une seule fois.
+   *
+   * Appelé à l'ouverture du paquet de bienvenue. Sans lui, le joueur sortait
+   * de sa première ouverture avec des cartes, un avatar — et un deck vide :
+   * l'écran de duel lui demandait de monter une tribune avant d'avoir compris
+   * ce qu'était une tribune.
+   *
+   * Il ne fait rien si un deck existe déjà : c'est un point de départ, jamais
+   * une remise à zéro.
+   */
+  async function premierDeck(userId, fanzzyId) {
+    if (await deckDe(userId)) return null;
+    const id = racineDe(String(fanzzyId ?? ''));
+    if (!parIdentifiant(id)) return null;
+    const possede = await possessions(userId);
+    if (!possede.fanzzy.has(id)) return null;
+    try {
+      return await enregistrer(userId, { ...deckNeuf(possede), fanzzy: [{ id, stuff: [] }] });
+    } catch {
+      /* Un deck de départ qu'on ne peut pas écrire ne doit pas faire échouer
+         l'ouverture du paquet : le joueur perdrait ses cinq cartes pour une
+         commodité. Il montera sa tribune lui-même. */
+      return null;
+    }
+  }
+
   async function placer(userId, { id: brut, place: placeBrute }) {
     const id = racineDe(String(brut ?? ''));
     if (!parIdentifiant(id)) throw fail('deck.error.fanzzy_unknown');
@@ -420,7 +477,9 @@ export function createDecks({ pool, requireAuth, niveau = null,
       throw fail('deck.error.place_hors_deck', { place: placeBrute, places });
     }
 
-    const deck = (await deckDe(userId)) ?? { fanzzy: [], actions: [], nom: 'Mon deck' };
+    /* Pas encore de deck : on en fabrique un complet plutôt que la coquille
+       vide d'avant, que `validerDeck` refusait aussitôt. Voir `deckNeuf`. */
+    const deck = (await deckDe(userId)) ?? deckNeuf(possede);
     const rangs = [...(deck.fanzzy ?? [])];
 
     /* **Le trou au milieu.** Placer en remplaçant 2 quand le remplaçant 1 est
@@ -515,6 +574,6 @@ export function createDecks({ pool, requireAuth, niveau = null,
   router.get('/match/:id', requireAuth, safe(async (req, res) =>
     res.json(await matchSupport(Number(req.params.id), req.user.id))));
 
-  return { router, deckDe, loadout, enregistrer, placer, matchSupport, matchsProposables,
-    possessions };
+  return { router, deckDe, loadout, enregistrer, placer, premierDeck, matchSupport,
+    matchsProposables, possessions };
 }
