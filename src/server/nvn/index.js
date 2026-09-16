@@ -269,34 +269,62 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     cles.forEach((k, i) => { if (!camps[i].length) files.delete(k); });
     // Les deux files se vident d'un coup : ceux qui regardaient doivent le voir.
     annoncerAttentes();
-    return ouvrir(equipes, equipes[0][0].support);
+    return ouvrir(equipes, equipes[0][0].support, format);
   }
 
   /**
    * Entraînement immédiat : les places manquantes sont tenues par des bots.
    *
-   * Les humains gardent **leur** camp, les bots tiennent le reste — le leur
-   * comme celui d'en face. Un camp est un club : on ne mélange pas, même
-   * quand la moitié de la salle est faite de machines.
+   * Les humains gardent **leur** camp, les bots tiennent le reste. Un camp est
+   * un club : on ne mélange pas, même quand la moitié de la salle est faite de
+   * machines.
+   *
+   * ## On ramasse les deux camps, et c'est le point
+   *
+   * La fonction ne lisait qu'**une** file — celle dont la minuterie venait
+   * d'expirer — et remplissait l'autre côté de bots sans jamais regarder qui
+   * l'attendait. Sur un 3v3 avec deux supporters d'un côté et deux de l'autre,
+   * elle ouvrait donc un duel à deux humains contre trois bots, puis un second
+   * à deux humains contre trois bots. Quatre personnes présentes sur le même
+   * match, à la même seconde, et aucune n'a joué contre une autre.
+   *
+   * C'est le contraire exact de ce que le repli est censé faire : il est là
+   * pour qu'on puisse jouer quand il n'y a personne, pas pour séparer ceux qui
+   * sont venus. On prend donc **ce qu'il y a des deux côtés**, et les bots ne
+   * bouchent que ce qui reste vraiment vide.
    */
   function ouvrirAvecBots(c) {
     const file = files.get(c);
     if (!file?.length) return null;
-    const { format, camp } = file[0];
+    const { format } = file[0];
     const taille = FORMATS[format];
-    const humains = file.splice(0, taille);
-    if (!file.length) files.delete(c);
+    const fixtureId = Number(file[0].support?.fixture?.id);
+
+    /* Les deux files du même match et du même format. Celle qui a déclenché la
+       minuterie n'a aucune priorité : ce qui compte est qu'un maximum de gens
+       jouent ensemble. */
+    const parCamp = [0, 1].map((camp) => files.get(cle(format, fixtureId, camp)) ?? []);
+    const humains = parCamp.map((f) => f.splice(0, taille));
+    if (!humains.some((h) => h.length)) return null;
+
+    for (const camp of [0, 1]) {
+      const k = cle(format, fixtureId, camp);
+      if (!(files.get(k) ?? []).length) files.delete(k);
+    }
     annoncerAttentes();
 
-    const equipes = [[], []];
-    equipes[camp] = [...humains];
+    /* Le modèle de deck que copient les bots : celui d'un humain présent, quel
+       que soit son camp. Sans humain du tout on ne serait pas ici. */
+    const modele = (humains[0][0] ?? humains[1][0]).loadout;
+    const equipes = [[...humains[0]], [...humains[1]]];
     for (const side of [0, 1]) {
       while (equipes[side].length < taille) {
-        equipes[side].push(faireBot(humains[0].loadout, equipes[side].length, side));
+        equipes[side].push(faireBot(modele, equipes[side].length, side));
       }
     }
     // Un entraînement ne compte jamais, même adossé à un match du jour.
-    return ouvrir(equipes, { ...humains[0].support, mode: 'entrainement' });
+    const support = (humains[0][0] ?? humains[1][0]).support;
+    return ouvrir(equipes, { ...support, mode: 'entrainement' });
   }
 
   function faireBot(modele, i, side) {
@@ -323,7 +351,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
 
   /* ------------------------------------------------------------ salles */
 
-  function ouvrir(equipes, support) {
+  function ouvrir(equipes, support, format) {
     const id = randomUUID();
     const duel = new DuelNvN({
       id,
@@ -331,6 +359,10 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         userId: p.userId, nom: p.nom, loadout: p.loadout }))),
       fixture: support.fixture,
       mode: support.mode,
+      /* Le format **joué**, déduit des équipes plutôt que de la demande :
+         un 3v3 qui part à deux contre deux est un 2v2, et c’est ce qui
+         s’est passé qu’on enregistre. */
+      format: format ?? `${equipes[0].length}v${equipes[1].length}`,
     });
 
     const membres = new Map();

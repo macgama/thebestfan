@@ -209,10 +209,19 @@ export class DuelNvN {
    * @param opts.fixture  le match réel support
    * @param opts.mode     'classe' ou 'entrainement'
    */
-  constructor({ id, equipes, fixture, mode = 'entrainement', duree = RULES.dureeMs, now = now0() }) {
+  constructor({ id, equipes, fixture, mode = 'entrainement', format = null,
+    duree = RULES.dureeMs, now = now0() }) {
     this.id = id;
     this.fixture = fixture;
     this.mode = mode;
+    /* **Le format joué**, et non celui qui a été demandé. Un 3v3 qui part à
+       deux contre deux faute de monde est un 2v2 : c’est ce qui s’est passé
+       qu’on enregistre, et c’est lui que le parcours du joueur montrera.
+
+       Il manquait tout court : la colonne `duel_results.format` recevait
+       `undefined` depuis le premier jour de son existence, donc `NULL`, et
+       aucun écran ne pouvait dire « tes 2v2 ». */
+    this.format = format;
 
     /* **Le lieu de la rencontre.**
      *

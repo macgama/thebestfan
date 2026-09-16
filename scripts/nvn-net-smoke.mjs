@@ -409,6 +409,7 @@ check(`celui qui suit un club du match touche le double (${gainA})`,
 check(`l’autre touche le barème simple (${gainB})`,
   gainB === BAREME[issue(U[1])]);
 
+
 /* -------------------------------------------------- entraînement et bots */
 
 const C = co(U[2]);
@@ -505,6 +506,60 @@ check('sans deck, la file est refusée', await until(()=>D.errors.includes('ferv
       || (console.log('        il touche :', fuyard?.scarves), false));
   }
   E.socket.disconnect(); F.socket.disconnect();
+}
+
+
+/* ------------------------ le repli aux bots ne sépare pas ceux qui sont là
+
+ * `ouvrirAvecBots` ne lisait qu'**une** file — celle dont la minuterie venait
+ * d'expirer — et remplissait l'autre côté de bots sans regarder qui
+ * l'attendait. Sur un 2v2 avec un supporter de chaque côté, elle ouvrait donc
+ * un duel à un humain contre trois bots, puis un second à un humain contre
+ * trois bots : deux personnes présentes sur le même match, à la même seconde,
+ * et aucune n'a joué contre l'autre.
+ *
+ * C'est le contraire de ce que le repli est censé faire. Il est là pour qu'on
+ * puisse jouer quand il n'y a personne, pas pour séparer ceux qui sont venus.
+ *
+ * On force la bascule en vieillissant les entrées plutôt qu'en attendant vingt
+ * secondes : ce qu'on éprouve est le partage, pas la minuterie.
+ */
+{
+  /* Les deux derniers supporters, et pas `U[0]`/`U[1]` : ceux-là jouent
+     encore plus haut, et `salleDe` est indexé par joueur — une seconde
+     session sur le même identifiant le sort de sa salle. */
+  const G = co(U[2]), H = co(U[3]);
+  await until(() => G.socket.connected && H.socket.connected);
+  G.state = null; H.state = null;
+
+  G.socket.emit('nvn:queue', { format: '2v2', fixtureId: 901, camp: 0 });
+  H.socket.emit('nvn:queue', { format: '2v2', fixtureId: 901, camp: 1 });
+  const enFile = await until(() => G.file && H.file, 4000);
+  check('deux supporters attendent, un de chaque côté', enFile);
+
+  /* La veille bascule au bout du délai. On antidate leur arrivée pour ne pas
+     faire durer la suite vingt secondes. */
+  for (const f of N.files.values()) for (const x of f) x.depuis = 0;
+
+  const ouvert = await until(() => G.state && H.state, 8000);
+  check('le repli les fait jouer ensemble', ouvert
+    || (console.log('        G:', Boolean(G.state), 'H:', Boolean(H.state)), false));
+
+  if (ouvert) {
+    /* Le même duel, et non deux : c'est l'identifiant qui le dit, pas le fait
+       que les deux aient reçu quelque chose. */
+    check('et dans le même duel', G.state.id === H.state.id
+      || (console.log('        ', G.state.id, 'vs', H.state.id), false));
+    check('chacun de son côté', G.state.moi.side !== H.state.moi.side);
+    /* Les bots ne bouchent que ce qui reste vraiment vide : deux humains, deux
+       machines, et non un humain contre trois machines. */
+    const gens = G.state.equipes.flat()
+      .filter((p) => !String(p.userId ?? '').startsWith('bot:'));
+    check('les bots ne bouchent que les places restées vides', gens.length === 2
+      || (console.log('        humains :', gens.length,
+        'sur', G.state.equipes.flat().length), false));
+  }
+  G.socket.disconnect(); H.socket.disconnect();
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
