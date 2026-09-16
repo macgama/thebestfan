@@ -104,6 +104,11 @@ input:focus{outline:none;border-color:var(--projo)}
 /* Éteint plutôt qu’absent : un bouton qui disparaît laisse croire qu’on a mal
    vu, un bouton éteint qui dit « pendant le match seulement » se comprend. */
 .f .aller.eteint{opacity:.4;pointer-events:none}
+/* L’invitation posée sur les deux portes quand personne n’est connecté.
+   Le lien vit dans le `corps` de la boîte de dialogue, qui est fait pour
+   ça — voir `dialogue.js`. */
+.tbf-dial .deja{margin-top:13px;font-size:12px;opacity:.7}
+.tbf-dial .deja a{color:var(--projo);font-weight:600}
 
 /* Le nom de la compétition mène à sa page, ici aussi. */
 .f .aff .lg{text-decoration:none;color:inherit;display:inline-block}
@@ -172,7 +177,10 @@ input:focus{outline:none;border-color:var(--projo)}
   <div class="jours" id="jours"></div>
   <div class="filtres">
     <button data-f="tous" class="on">TOUS</button>
-    <button data-f="mien">MES CLUBS</button>
+    <!-- Caché par défaut : il ne paraît que pour qui suit des clubs. Voir
+         `moi()` plus bas — un filtre qui ne peut rien filtrer est un
+         bouton qui ment. -->
+    <button data-f="mien" id="fMien" hidden>MES CLUBS</button>
     <button data-f="live" class="direct">EN DIRECT</button>
   </div>
   <div class="rech"><input id="q" placeholder="Chercher une équipe ou une compétition…"></div>
@@ -624,10 +632,10 @@ function dessinerFiche() {
       ${f.arbitre ? `<span>M. ${esc(f.arbitre)}</span>` : ''}
     </div>
     <div class="allers">
-      <a class="aller ${virageOuvert ? '' : 'eteint'}"
+      <a class="aller ${virageOuvert ? '' : 'eteint'}" data-porte="virage"
          href="${virageOuvert ? `/virage?match=${f.id}` : '#'}">GRAND VIRAGE
         <small>${virageOuvert ? 'pousser avec la tribune' : 'pendant le match seulement'}</small></a>
-      <a class="aller" href="/duel-nvn">DUEL<small>tribune contre tribune</small></a>
+      <a class="aller" data-porte="duel" href="/duel-nvn">DUEL<small>tribune contre tribune</small></a>
     </div>
     <div class="souspage" id="souspage">
       <button data-s="fil" class="${FICHE.volet === 'fil' ? 'on' : ''}">LE FIL</button>
@@ -707,6 +715,106 @@ function dessinerVolet() {
   };
   $('souscontenu').innerHTML = VOLETS[FICHE.volet]();
 }
+
+/**
+ * Qui regarde cette page — ou personne.
+ *
+ * **Une seule promesse pour tout le document.** `nav.js` pose exactement la
+ * même sous ce nom pour décider s'il monte la barre du haut : sans ce partage,
+ * la page poserait deux fois la même question au même serveur, et c'est le
+ * genre de doublon qui finit un jour par donner deux réponses différentes.
+ *
+ * Elle rend l'utilisateur ou `null`, hors ligne compris. Ici, **ne pas savoir
+ * revient à ne pas être connecté** : la page des matchs se lit sans compte, et
+ * une panne d'authentification ne doit pas la fermer.
+ */
+const moi = () => (window.TBF_MOI ??= fetch('/api/auth/me', { credentials: 'same-origin' })
+  .then((r) => (r.ok ? r.json() : null))
+  .then((j) => j?.user ?? null)
+  .catch(() => null));
+
+/* La réponse, retenue pour être lisible **sans attendre**. Un clic ne peut pas
+   patienter : le temps qu'une promesse aboutisse, le navigateur a déjà suivi
+   le lien et `preventDefault()` arrive trop tard. */
+let connu = null;
+moi().then((u) => {
+  connu = u ?? false;
+  /* « Mes clubs » ne paraît que pour qui en suit. Le bouton naît caché dans le
+     HTML plutôt que d'être retiré ici : un bouton qu'on voit disparaître fait
+     douter de ce qu'on vient de lire, un bouton qui n'a jamais été là ne
+     manque à personne. Le prix se paie côté joueur connecté, qui le voit
+     arriver après un dixième de seconde — et c'est le seul à qui il serve. */
+  if (u) $('fMien').hidden = false;
+});
+
+/* ----------------------------------------- les deux portes, sans compte
+
+   Le Grand Virage et le Duel restent **visibles** pour un visiteur sans
+   compte, et c'est voulu : ce sont les deux choses que ce jeu sait faire et
+   qu'aucun autre écran public ne montre. Les cacher reviendrait à ne rien
+   proposer à celui qui vient tout juste de découvrir le jeu.
+
+   Ils ne s'ouvrent pas pour autant. Le geste est retenu, et remplacé par une
+   invitation qui dit **ce qu'il y a derrière la porte** — pas un « connectez-
+   vous » sec, qui se lit comme un refus et n'apprend rien.                   */
+
+const PORTES = {
+  virage: {
+    titre: 'ENTRER DANS LE GRAND VIRAGE',
+    texte: 'Pendant le vrai match, tu pousses sur la corde avec les autres '
+      + 'supporters de ton club, minute par minute. Chaque but vécu depuis le '
+      + 'virage te laisse une carte que personne ne pourra t’acheter.',
+  },
+  duel: {
+    titre: 'TRIBUNE CONTRE TRIBUNE',
+    texte: 'Tu alignes tes supporters, l’autre tribune aligne les siens, et le '
+      + 'chant le plus fort l’emporte. Il faut une place et quelques cartes '
+      + 'pour entrer.',
+  },
+};
+
+/**
+ * L'invitation.
+ *
+ * Pas de `ton` : dans une boîte de dialogue, `flare` veut dire « ceci
+ * détruit » et `or` « ceci coûte ». Entrer dans le jeu ne fait ni l'un ni
+ * l'autre, et emprunter le rouge de la destruction pour une inscription
+ * gratuite abîmerait les deux mots à la fois.
+ */
+function inviter(quelle) {
+  const p = PORTES[quelle] ?? PORTES.virage;
+  const boite = window.TBF_DIALOGUE;
+  /* Sans la boîte — script non chargé — on emmène directement plutôt que de ne
+     rien faire : un bouton qui ne répond pas est pire qu'un détour. */
+  if (!boite) { location.href = '/compte'; return; }
+
+  boite.confirmer({
+    titre: p.titre,
+    texte: p.texte,
+    /* Le lien discret sous le texte : on propose de prendre une place, on ne
+       demande pas d'en créer une à qui en a déjà une. */
+    corps: '<p class="deja">Déjà une place ? <a href="/compte">Se connecter</a></p>',
+    oui: 'PRENDRE MA PLACE',
+    sousOui: 'gratuit',
+    non: 'PLUS TARD',
+  }).then((oui) => { if (oui) location.href = '/compte'; });
+}
+
+/* Posé une fois sur le cadre, jamais sur les liens : la fiche se redessine à
+   chaque relevé du direct, et un écouteur posé sur les boutons repartirait
+   avec eux toutes les trente secondes. */
+$('fcorps').addEventListener('click', (e) => {
+  const lien = e.target.closest('.aller');
+  if (!lien || connu) return;          // connecté : le lien fait son travail
+
+  /* On retient le geste **avant** de savoir. Si la réponse n'est pas encore
+     arrivée — le cas d'un clic très rapide — laisser passer enverrait un
+     visiteur sans compte sur un écran qui le refusera. Retenir puis suivre le
+     lien soi-même ne coûte qu'un battement, et jamais au mauvais moment. */
+  e.preventDefault();
+  const cible = lien.getAttribute('href');
+  moi().then((u) => { if (u) location.href = cible; else inviter(lien.dataset.porte); });
+});
 
 $('fiche').addEventListener('click', (e) => {
   if (e.target.id === 'fiche') fermerFiche();

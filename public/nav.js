@@ -176,11 +176,18 @@
      * quoi distraire. */
     const enJeu = ECRANS_DE_JEU.includes(chemin);
 
-    let user = null;
-    try {
-      const r = await fetch('/api/auth/me', { credentials: 'same-origin' });
-      if (r.ok) user = (await r.json()).user;
-    } catch { /* hors ligne */ }
+    /* **Une seule promesse par page.** La question « qui es-tu ? » se posait
+       ici et, sur la page des matchs, une seconde fois pour décider ce que
+       voit un visiteur sans compte. Deux appels identiques au même serveur,
+       c'est deux réponses possibles à la même question : on la retient sous
+       `window.TBF_MOI`, et le premier des deux scripts à passer la pose.
+
+       Rendre `null` en cas d'échec plutôt que lever : hors ligne, la barre
+       ne se monte pas, et c'est exactement ce qu'on avait avant. */
+    const user = await (window.TBF_MOI ??= fetch('/api/auth/me', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => j?.user ?? null)
+      .catch(() => null));
     if (!user) return;
 
     const boutonHTML = `<button class="pan tbf-burger" aria-label="Menu" aria-expanded="false"

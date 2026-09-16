@@ -132,8 +132,18 @@ app.get('/api/fanzzy/state', (_q, s) => s.json({
   wallet: { active: AVEC_ETATS, scarves: 0, packs: 0 }, stades: {},
   collection: { [AVEC_ETATS]: 1 },
 }));
-app.get('/api/auth/me', (_q, s) => s.json({ user: { pseudo: 'Momo' } }));
+/* Connecté par défaut : tout ce qui précède éprouve le joueur qui a une place.
+   Le dernier bloc bascule ce drapeau pour éprouver celui qui n'en a pas. */
+let connecte = true;
+app.get('/api/auth/me', (_q, s) => (connecte
+  ? s.json({ user: { pseudo: 'Momo' } })
+  : s.status(401).json({ error: 'auth.required' })));
 app.get('/matchs', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'aujourdhui.html')));
+/* Les trois destinations qu'on peut atteindre depuis la fiche. Des talons : on
+   éprouve **où l'on arrive**, pas ce qu'on y trouve. */
+for (const ou of ['/virage', '/duel-nvn', '/compte']) {
+  app.get(ou, (_q, s) => s.type('html').send('<h1>' + ou + '</h1>'));
+}
 app.use(express.static(path.join(RACINE, 'public')));
 
 const http = createServer(app);
@@ -321,6 +331,84 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
      mal vu ; un bouton éteint qui dit pourquoi se comprend. */
   check('et le Grand Virage s’y éteint, en disant pourquoi',
     virage.eteint && /match/.test(virage.texte));
+}
+
+/* ------------------------------------------------ la page vue sans compte
+
+   Depuis que la vitrine propose « tous les matchs », cette page est le premier
+   écran du jeu qu'un visiteur sans compte puisse atteindre. Deux choses y
+   changent, et aucune ne se lit dans le code :
+
+     — **« mes clubs » ne paraît pas.** Un filtre qui ne peut rien filtrer est
+       un bouton qui ment, et il ment à celui qui ne connaît pas encore le jeu.
+
+     — **les deux portes restent visibles, mais ne s'ouvrent pas.** Ce sont les
+       deux seules choses que ce jeu sait faire et qu'aucun autre écran public
+       ne montre : les cacher ne proposerait rien à personne. Le geste est donc
+       retenu, et remplacé par une invitation qui dit ce qu'il y a derrière.
+
+   Le contrôle qui compte est le quatrième : que le visiteur **ne parte pas**.
+   Sans lui, une invitation qui s'affiche pendant que la page change d'adresse
+   passerait au vert sans rien empêcher.                                     */
+
+{
+  connecte = false;
+  // Le bloc précédent a laissé le match terminé ; le Grand Virage s'éteint sur
+  // un match fini, et un bouton éteint ne se clique pas.
+  etat = { status: '2H', elapsed: 19, extra: null,
+           home: 0, away: 1, live: true, fini: false, evenements: [] };
+
+  await page.goto(base + '/matchs', { waitUntil: 'networkidle0' });
+  await jusqua(async () => await page.$('.liste .m') !== null);
+  await jusqua(async () => await page.evaluate(() =>
+    document.getElementById('fMien')?.hidden === true));
+
+  check('sans compte, le filtre « mes clubs » ne paraît pas',
+    await page.evaluate(() => document.getElementById('fMien')?.hidden === true));
+  check('et il reste les deux filtres qui savent répondre',
+    await page.evaluate(() => [...document.querySelectorAll('.filtres button')]
+      .filter((b) => !b.hidden).length === 2));
+
+  await page.evaluate(() => document.querySelector('.liste .m').click());
+  await jusqua(async () => await page.$('#fcorps .aller') !== null);
+
+  check('mais les deux portes du jeu restent visibles',
+    await page.evaluate(() => document.querySelectorAll('#fcorps .aller').length === 2));
+
+  await page.evaluate(() => document.querySelector('[data-porte=virage]').click());
+  await jusqua(async () => await page.$('.tbf-dial') !== null);
+
+  const invite = await page.evaluate(() => ({
+    titre: document.querySelector('.tbf-dial h3')?.textContent.trim() ?? '',
+    texte: document.querySelector('.tbf-dial p')?.textContent.trim() ?? '',
+    connexion: document.querySelector('.tbf-dial .deja a')?.getAttribute('href') ?? '',
+  }));
+  check('le Grand Virage n’ouvre pas, il invite',
+    /VIRAGE/.test(invite.titre) || (console.log('        elle dit :', invite.titre), false));
+  check('et l’invitation dit ce qu’il y a derrière la porte', invite.texte.length > 60);
+  check('sans oublier ceux qui ont déjà une place', invite.connexion === '/compte');
+  check('le visiteur, lui, n’est pas parti dans le virage', !page.url().includes('/virage'));
+
+  await page.evaluate(() => document.querySelector('.tbf-dial-bt[data-non]').click());
+  await jusqua(async () => await page.$('.tbf-dial') === null);
+
+  await page.evaluate(() => document.querySelector('[data-porte=duel]').click());
+  await jusqua(async () => await page.$('.tbf-dial') !== null);
+  const titreDuel = await page.evaluate(() =>
+    document.querySelector('.tbf-dial h3')?.textContent.trim() ?? '');
+  check('le duel a sa propre invitation, pas celle du virage',
+    titreDuel.length > 0 && !/VIRAGE/.test(titreDuel));
+  check('et le visiteur n’est pas parti en duel non plus', !page.url().includes('/duel'));
+
+  await page.evaluate(() => document.querySelector('.tbf-dial-bt[data-oui]').click());
+  await jusqua(async () => page.url().includes('/compte'));
+  check('« prendre ma place » mène au compte', page.url().includes('/compte'));
+
+  /* On rend la page telle qu'on l'a trouvée : la capture d'écran et le dernier
+     contrôle portent sur la page des matchs, pas sur celle du compte. */
+  connecte = true;
+  await page.goto(base + '/matchs', { waitUntil: 'networkidle0' });
+  await jusqua(async () => await page.$('.liste .m') !== null);
 }
 
 if (process.env.CAPTURE) {
