@@ -60,12 +60,17 @@ const fixturePayload = () => ({
 });
 fakeApi.get('/fixtures', (_req, res) => res.json({ errors: [], response: [fixturePayload()] }));
 fakeApi.get('/fixtures/events', (_req, res) => res.json({ errors: [], response: state.events }));
+/* Quand il est allume, le faux serveur glisse une ligne sans equipe devant
+   les deux bonnes — exactement ce que rend parfois l’API. */
+let standingsAbime = false;
 fakeApi.get('/standings', (_req, res) => res.json({
   errors: [],
   response: [{
     league: {
       id: 61, season: 2026,
       standings: [[
+        ...(standingsAbime
+          ? [{ rank: 0, team: {}, points: 0, all: {}, form: null, group: null }] : []),
         { rank: 1, team: TEAM, points: 12, all: { played: 5, win: 4, draw: 0, lose: 1, goals: { for: 11, against: 4 } }, form: 'WWWLW', group: 'Ligue 1' },
         { rank: 2, team: OPPO, points: 9, all: { played: 5, win: 3, draw: 0, lose: 2, goals: { for: 7, against: 6 } }, form: 'WLWLW', group: 'Ligue 1' },
       ]],
@@ -449,6 +454,38 @@ check('premier du classement correct', r.json.standings?.[0]?.team_id === 85 && 
 const before = apiCalls;
 await foot.poller.refreshStandings();
 check('classement récent non redemandé à l\u2019API', apiCalls === before);
+
+/* ------------------ une ligne de classement sans equipe n'arrete rien
+
+ * `s.team.id` arrive parfois vide : une competition dont la phase n'a pas
+ * encore de classement, un en-tete de groupe rendu comme une ligne. La colonne
+ * `team_id` refuse le nul, et l'insertion levait — « Column 'team_id' cannot
+ * be null ».
+ *
+ * Le pire n'etait pas la ligne perdue, c'etait la boucle : l'erreur remontait,
+ * donc toutes les competitions suivantes n'etaient pas rafraichies. Pendant six
+ * heures, jusqu'au tour suivant, qui echouait au meme endroit. Une seule ligne
+ * malformee privait tout le monde de son classement.
+ */
+{
+  // On abime la reponse de l'API : une ligne sans equipe, devant les deux bonnes.
+  standingsAbime = true;
+  await pool.query('DELETE FROM standings');
+
+  let leve = null;
+  try { await foot.poller.refreshStandings(); }
+  catch (e) { leve = e.message; }
+  check('une ligne sans equipe ne fait pas lever le rafraichissement', leve === null
+    || (console.log('        il a leve :', leve), false));
+
+  r = await call('/api/football/league/61/standings?season=2026');
+  check('et les lignes valides sont bien enregistrees', r.json.standings?.length === 2
+    || (console.log('        lignes :', r.json.standings?.length), false));
+  check('la ligne muette, elle, est ecartee',
+    (r.json.standings ?? []).every((x) => x.team_id));
+
+  standingsAbime = false;
+}
 
 /* ------------------------------------------------------------- quota */
 

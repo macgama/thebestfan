@@ -284,27 +284,61 @@ export function createPoller({ client, store, broadcast, onGoal, onFinished,
 
   /* -------------------------------------------------------- classements */
 
+  /**
+   * Les classements des competitions que quelqu'un suit.
+   *
+   * ## Deux defauts, et le second coutait plus cher que le premier
+   *
+   * **Une ligne sans equipe.** `s.team.id` arrivait parfois vide — une
+   * competition dont la phase n'a pas encore de classement, un en-tete de
+   * groupe rendu comme une ligne. La colonne `team_id` refuse le nul, et
+   * l'insertion levait : « Column 'team_id' cannot be null ».
+   *
+   * **Et la boucle s'arretait la.** L'erreur remontait jusqu'a `safely`, donc
+   * toutes les competitions qui venaient apres dans la liste n'etaient pas
+   * rafraichies — pendant six heures, jusqu'au tour suivant, qui echouait au
+   * meme endroit. Une seule ligne malformee privait tout le monde de son
+   * classement, et le journal ne nommait qu'elle.
+   *
+   * On ecarte donc la ligne muette, et on isole chaque competition : celle qui
+   * echoue le dit, les autres passent.
+   */
   async function refreshStandings() {
     const stale = await store.staleLeagues(6);
+    let ecartees = 0;
     for (const { league_id: leagueId, season } of stale) {
-      const rows = await client.standings(leagueId, season);
-      const groups = rows[0]?.league?.standings ?? [];
-      for (const group of groups) {
-        await store.upsertStandings(leagueId, season, group.map((s) => ({
-          teamId: s.team.id,
-          rank: s.rank,
-          points: s.points,
-          played: s.all?.played ?? 0,
-          win: s.all?.win ?? 0,
-          draw: s.all?.draw ?? 0,
-          lose: s.all?.lose ?? 0,
-          goalsFor: s.all?.goals?.for ?? 0,
-          goalsAgainst: s.all?.goals?.against ?? 0,
-          form: s.form ?? null,
-          group: s.group ?? null,
-        })));
-        for (const s of group) await store.upsertTeam(s.team);
+      try {
+        const rows = await client.standings(leagueId, season);
+        const groups = rows[0]?.league?.standings ?? [];
+        for (const group of groups) {
+          /* Sans identifiant d'equipe, la ligne ne designe personne : on ne
+             peut ni l'ecrire ni la lire, et l'inventer serait pire. */
+          const utiles = (group ?? []).filter((s) => Number.isFinite(Number(s?.team?.id)));
+          ecartees += (group ?? []).length - utiles.length;
+          if (!utiles.length) continue;
+          await store.upsertStandings(leagueId, season, utiles.map((s) => ({
+            teamId: s.team.id,
+            rank: s.rank,
+            points: s.points,
+            played: s.all?.played ?? 0,
+            win: s.all?.win ?? 0,
+            draw: s.all?.draw ?? 0,
+            lose: s.all?.lose ?? 0,
+            goalsFor: s.all?.goals?.for ?? 0,
+            goalsAgainst: s.all?.goals?.against ?? 0,
+            form: s.form ?? null,
+            group: s.group ?? null,
+          })));
+          for (const s of utiles) await store.upsertTeam(s.team);
+        }
+      } catch (e) {
+        /* Nommer la competition : « cannot be null » sans son numero envoyait
+           chercher dans deux cents classements. */
+        console.warn(`[foot] classement ${leagueId}/${season} :`, e.message);
       }
+    }
+    if (ecartees) {
+      console.warn(`[foot] ${ecartees} ligne(s) de classement sans equipe, ecartee(s)`);
     }
     return stale.length;
   }
