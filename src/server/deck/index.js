@@ -185,7 +185,32 @@ export function createDecks({ pool, requireAuth, niveau = null,
        ON DUPLICATE KEY UPDATE nom = VALUES(nom), contenu = VALUES(contenu), maj = NOW(3)`,
       [userId, propre.nom, JSON.stringify(propre)]);
 
-    return { deck: propre, avertissements: v.avertissements };
+    /* ------------------------------------ le titulaire est « Mon FANZZY »
+
+       Deux notions vivaient côte à côte sans jamais se parler :
+       `user_wallet.active_fanzzy`, l'**avatar** que voient l'accueil, les amis
+       et l'écran « Mon FANZZY » ; et `fanzzy[0]`, le **titulaire** qui entre
+       au coup d'envoi du duel. Un joueur pouvait donc lire « TITULAIRE » sur
+       la fiche d'un personnage et en voir un autre partout ailleurs dans
+       l'application — sans que rien ne soit en panne, et sans qu'aucun écran
+       ne puisse le lui expliquer.
+
+       C'est une notion de trop. Le personnage qu'on met en avant est celui
+       qu'on aligne : le titulaire devient donc l'avatar, ici et nulle part
+       ailleurs — `enregistrer` est le seul passage obligé, que le changement
+       vienne de l'écran de deck ou du bouton « emmener en duel » d'une fiche.
+
+       Pas de `COALESCE` : c'est un **remplacement**. Le premier deck en avait
+       besoin, un changement de titulaire demande le contraire. */
+    const titulaire = propre.fanzzy[0]?.id ?? null;
+    if (titulaire) {
+      await q(
+        `INSERT INTO user_wallet (user_id, active_fanzzy) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE active_fanzzy = VALUES(active_fanzzy)`,
+        [userId, titulaire]);
+    }
+
+    return { deck: propre, avertissements: v.avertissements, titulaire };
   }
 
   /* ------------------------------------------------------- choix du match */

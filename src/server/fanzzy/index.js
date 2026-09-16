@@ -775,6 +775,21 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null })
     res.json({ stuff: STUFF, skins: toutesTenues() });
   });
 
+  /**
+   * L'avatar — et depuis la règle du titulaire, un simple raccourci.
+   *
+   * « Mon FANZZY » et le titulaire du deck étaient deux notions séparées : on
+   * pouvait lire « TITULAIRE » sur la fiche d'un personnage et en voir un autre
+   * partout ailleurs. C'est une notion de trop ; le personnage qu'on met en
+   * avant est celui qu'on aligne, et c'est `enregistrer` qui l'écrit désormais.
+   *
+   * Cette route reste parce qu'elle est le seul endroit qui pouvait encore les
+   * séparer. Elle **passe donc par le deck** quand il est là : demander l'avatar,
+   * c'est demander le brassard. Le repli existe pour une installation sans
+   * module de deck, et pour le cas où le deck refuse — un joueur sans carte
+   * d'action, par exemple : il vaut mieux un avatar posé qu'un refus sur un
+   * geste qui n'a jamais rien refusé.
+   */
   router.post('/active', requireAuth, (req, res) => send(res, (async () => {
     // On équipe un personnage, jamais un âge : c'est le même individu, et la
     // collection ne connaît que lui. Accepter « TR32B » tel quel poserait dans la
@@ -784,6 +799,12 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null })
     const owned = await q(`SELECT 1 FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
       [req.user.id, id]);
     if (!owned.length) throw fail('fanzzy.error.not_owned');
+    if (decks) {
+      try {
+        await decks.placer(req.user.id, { id, place: 0 });
+        return { active: id };
+      } catch { /* le deck a refusé : on pose au moins l'avatar. */ }
+    }
     await q(`UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?`, [id, req.user.id]);
     return { active: id };
   })()));

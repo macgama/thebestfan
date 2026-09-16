@@ -61,6 +61,14 @@ const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
 let failures = 0;
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
+const dodo = (ms) => new Promise((r) => setTimeout(r, ms));
+/* La recherche du club est différée de 320 ms : une attente fixe suffirait
+   aujourd'hui et lâcherait le jour où le délai bouge. On regarde plutôt. */
+async function jusqua(fn, ms = 6000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) { if (await fn()) return true; await dodo(60); }
+  return false;
+}
 
 /* ------------------------------------------------------------- la base */
 
@@ -717,6 +725,95 @@ for (const [route, nom] of tousLesEcrans) {
 
   await page.close();
 }
+
+/* ------------------------------ le premier écran cherche dans sa langue
+
+ * « Ton club ». Quelqu'un qui tape « suisse » n'obtenait rien : la base range
+ * « Switzerland », et aucun club suisse ne porte le mot dans son nom. Le jeu
+ * répondait « Aucun club trouvé » à un mot parfaitement juste, sur l'écran où
+ * l'on décide de rester ou de partir.
+ *
+ * Et ce qu'il trouvait, il l'écrivait en anglais — « Switzerland » sous un
+ * drapeau suisse. Le reste de l'application traduit depuis `pays.js` ; cette
+ * page-ci, la première de toutes, ne l'avait jamais reçu.
+ *
+ * On intercepte la recherche plutôt que de monter le football : ce qui se
+ * vérifie est ce que la page **demande** et ce qu'elle **écrit**, pas ce que
+ * l'API sait répondre.
+ */
+{
+  const page = await nav.newPage();
+  await page.setViewport({ width: 390, height: 844 });
+
+  let demande = null;
+  await page.setRequestInterception(true);
+  page.on('request', (r) => {
+    /* Le compte du banc est **déjà inscrit** : la page le renverrait à
+       l'accueil au premier chargement. On lui répond qu'il ne l'est pas —
+       c'est la recherche du club qu'on éprouve, pas la garde d'entrée. */
+    if (r.url().includes('/api/me/state')) {
+      r.respond({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ onboarded: false, slots: { used: 0, max: 2 } }) });
+      return;
+    }
+    if (!r.url().includes('/api/football/search')) { r.continue(); return; }
+    demande = r.url();
+    r.respond({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ teams: [
+        { id: 15, name: 'Switzerland', country: 'Switzerland', logo: '', national: 1 },
+        { id: 16, name: 'Switzerland W', country: 'Switzerland', logo: '', national: 1 },
+        { id: 17, name: 'FC Sion', country: 'Switzerland', logo: '', national: 0 },
+      ] }) });
+  });
+
+  await page.goto(`${base}/bienvenue`, { waitUntil: 'domcontentloaded' });
+  const arrive = await page.evaluate(() => Boolean(document.getElementById('q')));
+  check('la recherche du club est bien sur cette page', arrive
+    || (console.log('        on est sur', await page.url()), false));
+
+  if (arrive) {
+    /* Le mot est tapé en français. La page doit en tirer le pays anglais
+       toute seule — le serveur ne traduit rien, il compare. */
+    await page.evaluate(() => {
+      const q = document.getElementById('q');
+      q.value = 'suisse';
+      q.dispatchEvent(new Event('input'));
+    });
+    const venu = await jusqua(async () =>
+      page.evaluate(() => document.querySelectorAll('#res .club').length > 0));
+    check('taper « suisse » rend des équipes', venu);
+    check('et la page a demandé le pays sous son nom anglais',
+      /* Sans égard à la casse : `cherches()` rend les noms **pliés** — minuscules
+         et sans accents — et la base compare sans casse. C’est la convention de
+         `pays.js`, la même sur toutes les pages. */
+      /pays=[^&]*switzerland/i.test(demande ?? '')
+      || (console.log('        demandé :', demande), false));
+
+    const lignes = await page.evaluate(() => [...document.querySelectorAll('#res .club')]
+      .map((b) => ({ nom: b.querySelector('b')?.textContent.trim(),
+        sous: b.querySelector('small')?.textContent.trim() })));
+    check('le pays est écrit en français sous chaque équipe',
+      lignes.every((l) => l.sous === 'Suisse')
+      || (console.log('        ', JSON.stringify(lignes)), false));
+    /* Une sélection nationale **est** un pays : son nom se traduit, suffixe
+       compris. Un nom de club, lui, ne se traduit jamais. */
+    check('la sélection nationale porte son nom français', lignes[0]?.nom === 'Suisse'
+      || (console.log('        elle s’appelle', lignes[0]?.nom), false));
+    check('l’équipe féminine garde son suffixe', lignes[1]?.nom === 'Suisse W'
+      || (console.log('        elle s’appelle', lignes[1]?.nom), false));
+    check('et le nom du club reste intact', lignes[2]?.nom === 'FC Sion');
+
+    /* Le libellé que le joueur lit avant de chercher : l'écran ne demande pas
+       qu'un club, il accepte une sélection nationale. */
+    const dit = await page.evaluate(() =>
+      (document.getElementById('s2')?.textContent ?? '').replace(/\s+/g, ' '));
+    check('l’écran dit qu’on peut aussi choisir son équipe nationale',
+      /équipe nationale/i.test(dit)
+      || (console.log('        il dit :', dit.slice(0, 120)), false));
+  }
+  await page.close();
+}
+
 
 if (process.env.CAPTURE) console.log(`\n   captures dans ${tmpdir()}`);
 

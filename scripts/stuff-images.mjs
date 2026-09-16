@@ -83,6 +83,24 @@ const COTE = 256;
    lui qui rend le détourage fiable, et un dégradé ou une ombre portée le
    ferait échouer en laissant une auréole. Et **l'objet seul** : pas de main
    qui le tient, pas de sol sous lui — la main viendra du personnage. */
+/* Le fond, et pourquoi il n'est pas toujours le même.
+
+   Le détourage part des bords et se propage **par ressemblance de couleur** :
+   tout ce qui touche le bord et ressemble au fond disparaît. Un objet qui
+   porte du noir jusque sur sa silhouette est donc mangé par un fond noir — les
+   écharpes rayées noir, blanc et orange sont arrivées sans leurs rayures
+   noires, et le contrôle de surface n'a rien dit puisque la part de fond
+   restait normale.
+
+   Le vert de studio règle ça une fois pour toutes, et il n'y a aucune raison
+   de le réserver à ce cas : aucun objet du jeu n'est vert. Le noir d'origine
+   n'était utile que pour juger l'image à l'œil pendant la génération — ce
+   qu'on ne fait plus, puisque la planche contact vient après le détourage. */
+const FOND = `Background: a completely flat, uniform, saturated studio green
+(#00B140), the exact same colour everywhere. No gradient, no vignette, no
+floor, no surface, no cast shadow, no reflection, no green glow or green rim
+spilling onto the object itself.`;
+
 const STYLE = `Style: stylised 3D game item icon, modern mobile game art,
 chunky readable silhouette, bold simplified shapes, clean edges, soft key light
 with a strong cool rim light separating the object from the background,
@@ -91,18 +109,21 @@ painterly texture. NOT photorealistic.
 Composition: the object alone, centred, filling most of the frame, seen at a
 slight three-quarter angle, floating.
 
-Background: a completely flat, uniform, very dark navy-black (#04060A). No
-gradient, no vignette, no floor, no surface, no cast shadow, no reflection, no
-glow spilling onto the background.
+${FOND}
 
 Strictly forbidden: any text, letters, numbers, logos, real club crests, card
 frame or border, human figures or hands, watermark.`;
 
 /** Le sujet de chaque pièce. */
 export const INVITES = {
+  /* Les couleurs sont nommées, et ce sont celles du jeu : noir, blanc, orange.
+     Sans consigne, le générateur peint des écharpes rouge et or — jolies, et
+     étrangères à tout le reste de l'écran. Une monnaie se reconnaît d'un coup
+     d'œil ou ne se reconnaît pas. */
   echarpes: 'a small neat stack of several folded knitted football supporter scarves '
-    + 'piled on top of one another, chunky wool with bold horizontal stripes, fringed '
-    + 'ends visible at the sides, slightly worn',
+    + 'piled on top of one another, chunky wool with bold horizontal stripes in deep '
+    + 'black, off-white and warm orange only, fringed ends visible at the sides, '
+    + 'slightly worn',
   billets: 'a small loose fan of four or five paper football match tickets, thick card '
     + 'stock with a perforated tear line and a torn stub edge, one ticket slightly '
     + 'curled at the corner, no writing on them',

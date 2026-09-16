@@ -7,6 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
+<!-- Les noms de pays dans la langue du joueur. Classique et non differe :
+     la recherche du club s en sert des la premiere frappe. -->
+<script src="/pays.js"></script>
 <style>
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
@@ -202,8 +205,8 @@ input:focus{outline:none;border-color:var(--projo)}
   <section class="scene" id="s2">
     <div class="pick">
       <h1 class="title" style="font-size:24px">TON CLUB</h1>
-      <p class="sub" style="margin-top:9px">Celui pour qui tu chanteras. Tu pourras en suivre un second tout de suite après.</p>
-      <input id="q" placeholder="Cherche ton club…" autocomplete="off" spellcheck="false">
+      <p class="sub" style="margin-top:9px">Ton club ou ton équipe nationale : celui pour qui tu chanteras. Tu pourras en suivre un second tout de suite après.</p>
+      <input id="q" placeholder="Cherche ton club ou ton pays…" autocomplete="off" spellcheck="false">
       <div class="res" id="res"></div>
       <button class="go tbf-plaque" data-ton="flare" id="b2" disabled>C'EST MON CLUB</button>
     </div>
@@ -286,6 +289,36 @@ $('b1').onclick = () => { scene(2); setTimeout(() => $('q').focus(), 400); buzz(
 
 /* ---------------------------------------------------- choix du club */
 
+/* ------------------------------------------------- chercher dans sa langue
+
+   Le tout premier écran du jeu demandait « ton club » et ne comprenait que
+   l'anglais. Quelqu'un qui tape « suisse » n'obtenait rien — la base range
+   « Switzerland », et aucun club suisse ne porte le mot dans son nom. Le jeu
+   répondait « Aucun club trouvé » à un mot parfaitement juste, sur l'écran
+   où l'on décide de rester ou de partir.
+
+   Et ce qu'il trouvait, il l'écrivait en anglais : « Switzerland »,
+   « Switzerland », sous un drapeau suisse. Le reste de l'application traduit
+   depuis `pays.js` ; cette page-ci, la première de toutes, ne l'avait jamais
+   reçu.
+
+   Deux gestes, donc : on **envoie** les pays que le mot désigne, sous leur
+   nom anglais — le serveur ne traduit rien, il compare — et on **réécrit**
+   ce qui revient dans la langue du lecteur. */
+const P = () => window.TBF_PAYS;
+
+/* Le nom d'une sélection nationale **est** un nom de pays : « Switzerland »
+   n'est pas le nom propre d'un club, c'est « Suisse » écrit en anglais. On le
+   traduit donc, suffixe compris — l'API range l'équipe féminine sous
+   « Switzerland W ». Le nom d'un club, lui, ne se traduit jamais : le Bayern
+   s'appelle le Bayern dans toutes les langues. */
+const nomEquipe = (x) => {
+  if (!Number(x.national) || !P()) return x.name;
+  const m = /^(.+?)\s+(W)$/.exec(x.name);
+  const traduit = P().nom(m ? m[1] : x.name);
+  return m ? `${traduit} ${m[2]}` : traduit;
+};
+
 let t = null;
 $('q').oninput = () => {
   clearTimeout(t);
@@ -293,16 +326,21 @@ $('q').oninput = () => {
   if (terme.length < 3) { $('res').innerHTML = ''; return; }
   t = setTimeout(async () => {
     try {
-      const r = await fetch('/api/football/search?q=' + encodeURIComponent(terme),
+      /* Les pays que le mot désigne, en anglais. Le mot tapé continue de
+         chercher un **nom** : un pays en plus, jamais à la place — sans quoi
+         chercher « Paris » cesserait de trouver le club. */
+      const pays = P()?.cherches(terme) ?? [];
+      const r = await fetch('/api/football/search?q=' + encodeURIComponent(terme)
+        + (pays.length ? '&pays=' + encodeURIComponent(pays.join(',')) : ''),
         { credentials:'same-origin' });
       const { teams = [] } = await r.json();
       // Le pays manque souvent : on retombe sur la compétition, et on
       // n'affiche pas une ligne vide qui laisserait croire à un bug.
-      const sous = (x) => x.country || x.league || '';
+      const sous = (x) => (x.country ? (P()?.nom(x.country) ?? x.country) : (x.league || ''));
       $('res').innerHTML = teams.slice(0, 8).map((x) => `
-        <button class="club" data-id="${x.id}" data-nom="${esc(x.name)}">
+        <button class="club" data-id="${x.id}" data-nom="${esc(nomEquipe(x))}">
           <img src="${esc(x.logo)}" alt="" loading="lazy">
-          <span class="n"><b>${esc(x.name)}</b>
+          <span class="n"><b>${esc(nomEquipe(x))}</b>
             ${sous(x) ? `<small>${esc(sous(x))}</small>` : ''}</span>
         </button>`).join('') || '<p class="sub" style="padding:14px">Aucun club trouvé.</p>';
     } catch { $('res').innerHTML = '<p class="sub">Recherche indisponible.</p>'; }

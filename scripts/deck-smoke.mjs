@@ -234,6 +234,36 @@ check('le match du jour arrive en tête', r.json.matchs[0].mode === 'classe');
   check('l’équipement voyage avec le personnage',
     r.json.deck.fanzzy[2].stuff?.[0] === 'jumelles');
 
+
+  /* ---------------------------- le titulaire est « Mon FANZZY »
+
+     Deux notions vivaient côte à côte sans se parler : `active_fanzzy`, le
+     personnage que montrent l'accueil, les amis et l'écran « Mon FANZZY », et
+     `fanzzy[0]`, celui qui entre au coup d'envoi. Un joueur lisait donc
+     « TITULAIRE » sur une fiche et voyait quelqu'un d'autre partout ailleurs
+     — sans panne, et sans qu'aucun écran ne puisse le lui expliquer.
+
+     C'est une notion de trop. Ce qui se vérifie ici, c'est que le brassard et
+     l'avatar ne peuvent plus se séparer, quel que soit le chemin pris. */
+  const avatar = async () => (await pool.query(
+    'SELECT active_fanzzy FROM user_wallet WHERE user_id = ?', [U]))[0][0]?.active_fanzzy;
+
+  await call('/api/deck/mien', { method: 'PUT', body: bon });
+  check('enregistrer un deck fait du titulaire le Fanzzy de la maison',
+    (await avatar()) === bon.fanzzy[0].id
+    || (console.log('        avatar :', await avatar(), '— titulaire', bon.fanzzy[0].id), false));
+
+  await poser('TR33', 0);
+  check('et changer de titulaire depuis une fiche le suit',
+    (await avatar()) === 'TR33'
+    || (console.log('        avatar :', await avatar()), false));
+
+  /* Poser quelqu'un en **remplaçant** ne touche pas à l'avatar : c'est le rang
+     0 qui porte la règle, pas le fait d'entrer au deck. */
+  await poser('TR32', 1);
+  check('mais entrer en remplaçant ne prend pas le brassard',
+    (await avatar()) === 'TR33');
+
   r = await poser('TR33', 2);
   check('replacer le même personnage ailleurs le déplace',
     r.json.deck.fanzzy.filter((f) => f.id === 'TR33').length === 1
