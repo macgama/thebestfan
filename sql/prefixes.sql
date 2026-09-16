@@ -31,8 +31,14 @@
 -- laisse le renommage se faire. Aucune table de joueur n'est jamais supprimée,
 -- et une seconde exécution ne trouve plus rien à faire.
 --
--- Produit par scripts/fanzzy-prefixes-appliquer.mjs à partir du catalogue.
--- Ne pas modifier à la main.
+-- ## Ce fichier ne se régénère plus
+--
+-- Il a été écrit par scripts/fanzzy-prefixes-appliquer.mjs, puis **repris à la
+-- main** : la table de correspondance, la fusion des doublons et les trois
+-- suppressions en deux temps n'existent pas dans le générateur, qui en est
+-- resté à huit UPDATE par carte. Le relancer écraserait tout cela par une
+-- version plus fragile. Le plan des identifiants, lui, reste celui du
+-- catalogue — c'est la liste ci-dessous, et elle ne bouge plus.
 
 START TRANSACTION;
 
@@ -171,9 +177,30 @@ SET @@session.foreign_key_checks = 0;
 
 -- La ligne neuve écrite par un amorçage prématuré s'efface au profit de
 -- l'ancienne, qui porte les possessions. Voir l'en-tête.
-DELETE f FROM fanzzy f
-  JOIN tmp_prefixes m ON m.neuf = f.id
- WHERE EXISTS (SELECT 1 FROM fanzzy o WHERE o.id = m.ancien);
+--
+-- **Le repérage passe par une table, pas par un sous-`SELECT`.** MySQL et
+-- MariaDB refusent, selon la version, qu'un `DELETE` lise la table qu'il vide :
+--
+--     Table 'f' is specified twice, both as a target for 'DELETE'
+--     and as a separate source for data
+--
+-- Le serveur de production l'a refusé là où la machine de développement
+-- l'acceptait, et la migration s'est arrêtée là. Une **lecture** ordinaire n'a
+-- pas cette limite, et un `DELETE` qui ne lit plus qu'une table temporaire non
+-- plus : les deux temps séparés passent partout. Les trois suppressions de ce
+-- fichier suivent le même motif, pour la même raison.
+DROP TEMPORARY TABLE IF EXISTS tmp_doubles;
+CREATE TEMPORARY TABLE tmp_doubles (
+  id VARCHAR(12) NOT NULL PRIMARY KEY
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO tmp_doubles (id)
+  SELECT m.neuf
+    FROM tmp_prefixes m
+    JOIN fanzzy n ON n.id = m.neuf
+    JOIN fanzzy o ON o.id = m.ancien;
+
+DELETE f FROM fanzzy f JOIN tmp_doubles d ON d.id = f.id;
 
 UPDATE fanzzy f JOIN tmp_prefixes m ON m.ancien = f.id  SET f.id  = m.neuf;
 UPDATE fanzzy f JOIN tmp_prefixes m ON m.ancien = f.evo SET f.evo = m.neuf;
@@ -194,22 +221,50 @@ UPDATE user_fanzzy n
   JOIN user_fanzzy o ON o.user_id = n.user_id AND o.fanzzy_id = m.ancien
    SET o.copies = o.copies + n.copies,
        o.stage  = GREATEST(o.stage, n.stage);
+-- Même motif qu'au catalogue : on repère d'abord, on supprime ensuite. Le
+-- repérage doit venir **après** la fusion ci-dessus, sinon on effacerait des
+-- exemplaires qui n'ont pas encore été reversés.
+DROP TEMPORARY TABLE IF EXISTS tmp_doubles_u;
+CREATE TEMPORARY TABLE tmp_doubles_u (
+  user_id   CHAR(36)    NOT NULL,
+  fanzzy_id VARCHAR(12) NOT NULL,
+  PRIMARY KEY (user_id, fanzzy_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO tmp_doubles_u (user_id, fanzzy_id)
+  SELECT n.user_id, n.fanzzy_id
+    FROM user_fanzzy n
+    JOIN tmp_prefixes m ON m.neuf = n.fanzzy_id
+    JOIN user_fanzzy o ON o.user_id = n.user_id AND o.fanzzy_id = m.ancien;
+
 DELETE n FROM user_fanzzy n
-  JOIN tmp_prefixes m ON m.neuf = n.fanzzy_id
- WHERE EXISTS (SELECT 1 FROM (SELECT user_id, fanzzy_id FROM user_fanzzy) o
-                WHERE o.user_id = n.user_id AND o.fanzzy_id = m.ancien);
+  JOIN tmp_doubles_u d ON d.user_id = n.user_id AND d.fanzzy_id = n.fanzzy_id;
 
 UPDATE user_fanzzy u JOIN tmp_prefixes m ON m.ancien = u.fanzzy_id
    SET u.fanzzy_id = m.neuf;
 
 -- Les tenues : une tenue possédée deux fois reste une tenue possédée. Rien à
--- additionner, on retire la ligne neuve.
+-- additionner, on retire la ligne neuve. Le repérage est plus fin ici — une
+-- tenue n'est un doublon que pour le **même âge et la même tenue**.
+DROP TEMPORARY TABLE IF EXISTS tmp_doubles_s;
+CREATE TEMPORARY TABLE tmp_doubles_s (
+  user_id   CHAR(36)    NOT NULL,
+  fanzzy_id VARCHAR(12) NOT NULL,
+  stage     TINYINT     NOT NULL,
+  skin_id   VARCHAR(24) NOT NULL,
+  PRIMARY KEY (user_id, fanzzy_id, stage, skin_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO tmp_doubles_s (user_id, fanzzy_id, stage, skin_id)
+  SELECT n.user_id, n.fanzzy_id, n.stage, n.skin_id
+    FROM user_skins n
+    JOIN tmp_prefixes m ON m.neuf = n.fanzzy_id
+    JOIN user_skins o ON o.user_id = n.user_id AND o.fanzzy_id = m.ancien
+                     AND o.stage = n.stage AND o.skin_id = n.skin_id;
+
 DELETE n FROM user_skins n
-  JOIN tmp_prefixes m ON m.neuf = n.fanzzy_id
- WHERE EXISTS (SELECT 1 FROM (SELECT user_id, fanzzy_id, stage, skin_id
-                                FROM user_skins) o
-                WHERE o.user_id = n.user_id AND o.fanzzy_id = m.ancien
-                  AND o.stage = n.stage AND o.skin_id = n.skin_id);
+  JOIN tmp_doubles_s d ON d.user_id = n.user_id AND d.fanzzy_id = n.fanzzy_id
+                      AND d.stage = n.stage AND d.skin_id = n.skin_id;
 UPDATE user_skins s JOIN tmp_prefixes m ON m.ancien = s.fanzzy_id
    SET s.fanzzy_id = m.neuf;
 UPDATE user_wallet w JOIN tmp_prefixes m ON m.ancien = w.active_fanzzy
@@ -228,16 +283,35 @@ PREPARE p FROM @sql; EXECUTE p; DEALLOCATE PREPARE p;
 
 -- Le deck est un document JSON : les identifiants y sont des valeurs de
 -- chaîne. On remplace **avec leurs guillemets** — dans {"id":"X1"} on cherche
--- `"X1"`. Sans eux, `"X13"` deviendrait `"TR32"3"`.
+-- `"X1"`. Sans eux, `"X13"` deviendrait `"VP15"3"`, et la règle de `X13`
+-- mordrait sur `X13B`, qui est une autre carte.
+--
+-- **Un seul passage ne suffisait pas.** `UPDATE … JOIN` n'applique qu'une
+-- affectation par ligne visée : un deck portant deux cartes renommées n'en
+-- voyait qu'une corrigée, l'autre gardait son ancien identifiant, et rien ne
+-- le signalait puisque le document restait un JSON valide. Le joueur aurait
+-- découvert un emplacement vide dans son deck, des semaines plus tard, sans
+-- que personne puisse relier les deux.
+--
+-- On construit donc **un seul REPLACE imbriqué** qui les traite toutes en une
+-- fois. Le texte est assemblé depuis la table de correspondance plutôt
+-- qu'écrit ici : cent dix-neuf appels imbriqués à la main ne se relisent pas,
+-- et une liste écrite deux fois finit par diverger.
+SET SESSION group_concat_max_len = 1048576;
+
+SET @remplacements = (
+  SELECT CONCAT(REPEAT('REPLACE(', COUNT(*)), 'contenu',
+                GROUP_CONCAT(CONCAT(',''"', ancien, '"'',''"', neuf, '"'')')
+                             ORDER BY ancien SEPARATOR ''))
+    FROM tmp_prefixes);
+
 SET @sql = IF((SELECT COUNT(*) FROM information_schema.tables
                 WHERE table_schema = DATABASE() AND table_name = 'user_decks') > 0,
-  'UPDATE user_decks d JOIN tmp_prefixes m
-      ON d.contenu LIKE CONCAT(''%"'', m.ancien, ''"%'')
-     SET d.contenu = REPLACE(d.contenu, CONCAT(''"'', m.ancien, ''"''),
-                                        CONCAT(''"'', m.neuf, ''"''))',
+  CONCAT('UPDATE user_decks SET contenu = ', @remplacements),
   'DO 0');
 PREPARE p FROM @sql; EXECUTE p; DEALLOCATE PREPARE p;
 
 SET @@session.foreign_key_checks = 1;
+DROP TEMPORARY TABLE IF EXISTS tmp_doubles, tmp_doubles_u, tmp_doubles_s;
 DROP TEMPORARY TABLE tmp_prefixes;
 COMMIT;

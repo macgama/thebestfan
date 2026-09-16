@@ -132,7 +132,7 @@ que `raretes` les a rangées.
   Après le déploiement, l'onglet **SAISONS** de `/admin` est le seul endroit d'où
   l'on ouvre une série. L'onglet FANZZY ne les règle plus : il les montre.
 
-Contrôle : `SHOW TABLES;` doit en lister **38**.
+Contrôle : `SHOW TABLES;` doit en lister **39**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`
