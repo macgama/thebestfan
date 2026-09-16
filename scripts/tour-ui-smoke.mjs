@@ -700,6 +700,18 @@ for (const [route, nom] of tousLesEcrans) {
   check('ni la bande qu’on arrache', vu.fondBande < 90);
   check('pas de bordure de bouton', vu.bordure === 0);
   check('ni de rembourrage qui laisse voir les bords', vu.marge === 0);
+  /* **Les trois bibliothèques de dessin.** Seul l'équipement était illustré :
+     un Fanzzy montrait son identifiant et une carte d'action son nom sur fond
+     vide, alors que leurs dessins existent et servent partout ailleurs. Ils
+     n'étaient simplement pas chargés sur cette page-ci — la seule où le joueur
+     voit ses cartes pour la première fois. */
+  const dessins = await page.evaluate(() => [...document.scripts]
+    .map((x) => x.getAttribute('src') ?? ''));
+  for (const lib of ['/fanzzy-art.js', '/action-art.js', '/stuff-art.js']) {
+    check(`le paquet charge ${lib}`, dessins.includes(lib)
+      || (console.log('        chargés :', dessins.filter(Boolean).join(' ')), false));
+  }
+
   check('et il occupe l’écran', vu.large >= 200
     || (console.log('        largeur :', vu.large, 'px'), false));
 

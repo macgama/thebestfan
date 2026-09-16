@@ -41,8 +41,30 @@ import { fileURLToPath } from 'node:url';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
-const SOURCE = path.join(RACINE, 'art', 'stuff');
-const CIBLE = path.join(RACINE, 'public', 'img', 'stuff');
+
+/**
+ * Ce que ce script détoure, et où.
+ *
+ * **Les gains passent par ici aussi**, et non par un second script. Une pile
+ * d'écharpes et une poignée de billets sont exactement ce que sont les pièces
+ * d'équipement : des objets dessinés sur fond plat, qu'on sert détourés parce
+ * qu'ils finissent posés sur autre chose — une carte qui se retourne, un
+ * bandeau de gain. Le détourage est délicat, il est écrit une fois, et deux
+ * copies auraient divergé à la première correction.
+ *
+ * Les gains n'ont ni rareté ni texte : ce ne sont pas des cartes, ce sont les
+ * deux monnaies du jeu. D'où une liste à eux, réduite à ce qu'elle doit être.
+ */
+const GAINS = [{ id: 'echarpes', nom: 'Écharpes' }, { id: 'billets', nom: 'Billets' }];
+
+const FAMILLES = [
+  { nom: 'stuff', pieces: STUFF,
+    source: path.join(RACINE, 'art', 'stuff'),
+    cible: path.join(RACINE, 'public', 'img', 'stuff') },
+  { nom: 'gains', pieces: GAINS,
+    source: path.join(RACINE, 'art', 'gains'),
+    cible: path.join(RACINE, 'public', 'img', 'gains') },
+];
 
 /**
  * La taille servie.
@@ -78,6 +100,12 @@ frame or border, human figures or hands, watermark.`;
 
 /** Le sujet de chaque pièce. */
 export const INVITES = {
+  echarpes: 'a small neat stack of several folded knitted football supporter scarves '
+    + 'piled on top of one another, chunky wool with bold horizontal stripes, fringed '
+    + 'ends visible at the sides, slightly worn',
+  billets: 'a small loose fan of four or five paper football match tickets, thick card '
+    + 'stock with a perforated tear line and a torn stub edge, one ticket slightly '
+    + 'curled at the corner, no writing on them',
   jumelles: 'a pair of compact well-used binoculars with a worn leather neck strap '
     + 'curling beside them, rubber armour, textured focus wheel',
   echarpe: 'a thick knitted football supporter scarf, chunky wool with bold horizontal '
@@ -203,30 +231,39 @@ function detourer({ data, width, height }, reference) {
 /* ------------------------------------------------------------- l'exécution */
 
 if (process.argv.includes('--invites')) {
-  for (const s of STUFF) {
-    console.log(`\n=== ${s.id} — ${s.nom} (${s.rar})\n${inviteDe(s.id) ?? '(aucune invite)'}`);
+  for (const f of FAMILLES) {
+    for (const s of f.pieces) {
+      console.log(`\n=== ${s.id} — ${s.nom}${s.rar ? ` (${s.rar})` : ''}`
+        + `\n${inviteDe(s.id) ?? '(aucune invite)'}`);
+    }
   }
   process.exit(0);
 }
 
 const sharp = (await import('sharp')).default;
-await mkdir(CIBLE, { recursive: true });
 
-if (!existsSync(SOURCE)) {
-  console.error(`\n  ${SOURCE} n'existe pas.\n\n`
-    + '  Les dessins produits par Artlist se déposent là, un fichier par pièce,\n'
-    + '  nommé de son identifiant : art/stuff/echarpe.png\n\n'
-    + '  Les invites : node scripts/stuff-images.mjs --invites\n');
-  process.exit(1);
-}
-
-const sources = (await readdir(SOURCE)).filter((f) => /\.(png|jpe?g|webp)$/i.test(f));
-const connus = new Set(STUFF.map((s) => s.id));
 let faits = 0;
 const manquantes = [];
 const suspectes = [];
+const orphelins = [];
 
-for (const s of STUFF) {
+for (const FAMILLE of FAMILLES) {
+  const { source: SOURCE, cible: CIBLE } = FAMILLE;
+  await mkdir(CIBLE, { recursive: true });
+
+  if (!existsSync(SOURCE)) {
+    console.error(`\n  ${SOURCE} n'existe pas.\n\n`
+      + '  Les dessins produits par Artlist se déposent là, un fichier par pièce,\n'
+      + `  nommé de son identifiant : art/${FAMILLE.nom}/<identifiant>.png\n\n`
+      + '  Les invites : node scripts/stuff-images.mjs --invites\n');
+    process.exit(1);
+  }
+
+  const sources = (await readdir(SOURCE)).filter((f) => /\.(png|jpe?g|webp)$/i.test(f));
+  const connus = new Set(FAMILLE.pieces.map((s) => s.id));
+  orphelins.push(...sources.map((f) => f.replace(/\.[^.]+$/, '')).filter((n) => !connus.has(n)));
+
+  for (const s of FAMILLE.pieces) {
   const src = sources.find((f) => f.replace(/\.[^.]+$/, '') === s.id);
   if (!src) { manquantes.push(s.id); continue; }
 
@@ -310,11 +347,10 @@ for (const s of STUFF) {
     .toFile(path.join(CIBLE, `${s.id}.png`));
   faits++;
   process.stdout.write(`\r  ${faits} pièce(s) rangée(s)`);
+  }
 }
 
-const orphelins = sources.map((f) => f.replace(/\.[^.]+$/, '')).filter((n) => !connus.has(n));
-
-console.log(`\n${faits} pièce(s) détourée(s) en trois formats dans public/img/stuff.`);
+console.log(`\n${faits} pièce(s) détourée(s) en trois formats dans public/img.`);
 if (manquantes.length) console.log(`Sans dessin : ${manquantes.join(', ')}`);
 if (suspectes.length) {
   console.log(`\nDétourage douteux — à regarder : ${suspectes.join(', ')}`);
@@ -325,5 +361,6 @@ if (orphelins.length) {
   console.log('Vérifie leur nom : il doit être exactement l’identifiant de la pièce.');
 }
 
-await writeFile(path.join(CIBLE, 'liste.json'),
+/* La liste sert au classeur d'équipement, qui n'existe que pour `stuff`. */
+await writeFile(path.join(FAMILLES[0].cible, 'liste.json'),
   `${JSON.stringify(STUFF.filter((s) => !manquantes.includes(s.id)).map((s) => s.id))}\n`);

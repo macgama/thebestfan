@@ -39,6 +39,17 @@
   const adresse = (id) => `/img/stuff/${id}${ext()}`;
 
   /**
+   * Les deux monnaies du jeu : les écharpes et les billets. Elles sont dessinées
+   * comme l'équipement — objet détouré sur fond plat, mêmes trois formats, même
+   * script — et servies d'ici pour la même raison : la négociation de format est
+   * une règle, et une règle ne se recopie pas.
+   */
+  const gain = (id) => `/img/gains/${id}${ext()}`;
+  const illustrationGain = (id, classe = 'illu') =>
+    `<img class="${classe}" src="${gain(id)}" alt="" loading="lazy"
+      onerror="this.onerror=null;this.src='/img/gains/${id}.png'">`;
+
+  /**
    * L'illustration d'une pièce, en HTML.
    *
    * `this.remove()` est le repli : un fichier absent retire son image et
@@ -63,5 +74,5 @@
     return `<span class="${classe} r-${s.rar ?? 'commune'}">${illustration(s.id)}</span>`;
   }
 
-  window.TBF_STUFF = { adresse, illustration, pastille };
+  window.TBF_STUFF = { adresse, illustration, pastille, gain, illustrationGain };
 })();
