@@ -660,6 +660,37 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
   }
 }
 
+
+/* ================== le dessin détouré ne se pose pas sur une plaque
+
+   Les illustrations Fanzzy sont détourées : fond transparent, personnage seul.
+   « Mon FANZZY » les montre ainsi, debout, sans cadre. La tribune du deck, elle,
+   les recadrait dans un carré sombre de cinquante-quatre pixels — donc coupait
+   le geste, qui est précisément ce qui distingue un Capo d'un Tambour quand on
+   lit sa tribune de loin.
+
+   Deux choses se vérifient, et la seconde est celle qui compte : que le deck
+   demande bien le dessin **en pied**, et qu'aucune plaque ne revienne derrière.
+   Un fond opaque sous un dessin qu'on a détouré exprès annule tout le travail
+   de détourage, et ça ne se voit qu'à l'œil. */
+
+{
+  const src = readFileSync(path.join(DOSSIER, 'deck.html'), 'utf8');
+  const enPied = /illustration\?\.\(f,\s*'plein'\)/.test(src);
+  if (enPied) ok('deck.html', 'la tribune montre le personnage en pied');
+  else ko('deck.html', 'la tribune ne demande plus le dessin en pied (« plein »)');
+
+  const regle = /\.tete \.face\{[^}]*\}/s.exec(src)?.[0] ?? '';
+  /* `background` tout court : un dégradé ou une couleur pleine font le même
+     tort. La lueur de rareté, elle, vit sur `::before` — pas sur la boîte. */
+  if (/background\s*:/.test(regle)) {
+    ko('deck.html', 'une plaque est revenue derrière le Fanzzy détouré');
+    console.log('        règle :', regle.replace(/\s+/g, ' ').slice(0, 120));
+  } else {
+    ok('deck.html', 'aucune plaque derrière le Fanzzy détouré');
+  }
+}
+
 /* ================================ les liens qui ne mènent nulle part
 
    Le classeur portait un bouton « ENTRER EN DUEL » qui envoyait sur `/duel`.

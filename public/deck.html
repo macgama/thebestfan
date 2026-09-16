@@ -79,22 +79,50 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
   background:var(--tc,#8257DA);position:relative}
 .pip svg{width:24px;height:24px}
 
-/* ------------------------------------------------- le Fanzzy, en visage
+/* ------------------------------------------------- le Fanzzy, en entier
 
    La tribune montrait un carré de couleur avec le pictogramme du type. Le
-   classeur, lui, affiche les personnages dessinés — et c'est le même joueur
-   qui passe de l'un à l'autre pour composer son deck. Il choisissait des
-   noms ici et des visages là.
+   classeur, lui, affiche les personnages dessinés — et c'est le même joueur qui
+   passe de l'un à l'autre pour composer son deck. Il choisissait des noms ici
+   et des visages là.
 
-   Le portrait remplace donc la pastille quand le Fanzzy est illustré, avec le
-   cadre de sa rareté, et le type redescend en petite pastille dans le coin.
-   Les 262 Fanzzy pas encore dessinés gardent l'ancienne pastille : le repli
-   est le même que partout ailleurs. */
-.tete .face{width:54px;height:54px;flex:none;border-radius:12px;position:relative;
-  overflow:hidden;background:#0B1017;
-  box-shadow:inset 0 0 0 2px var(--rc,#C2CAD6),0 3px 0 var(--rc2,#4E5865),0 5px 9px rgba(0,0,0,.5)}
-.tete .face img{width:100%;height:100%;object-fit:cover;object-position:50% 6%;display:block}
-.tete .face .type{position:absolute;right:-2px;bottom:-2px;width:19px;height:19px;border-radius:50%;
+   ## Puis un visage, mais dans une boîte
+
+   Le portrait est arrivé, **recadré dans une plaque sombre** de cinquante-quatre
+   pixels, avec un cadre de rareté autour. Or les dessins sont détourés : ils
+   n'ont pas de fond, et c'est ainsi que « Mon FANZZY » les montre — le
+   personnage se tient là, sans cadre. Deux écrans voisins donnaient donc deux
+   traitements au même dessin, et celui du deck le rognait au menton.
+
+   ## Ce qu'il est maintenant
+
+   Le personnage **entier**, posé sur rien. `contain` et non `cover` : un
+   recadrage coupe toujours quelque chose, et ce qu'il coupait ici était le
+   geste — le Capo qui porte la main à la bouche, le Tambour bras levés.
+
+   La rareté ne disparaît pas pour autant : elle passe du cadre à une **lueur**
+   sous les pieds. C'est la même information, et elle ne remet pas de boîte
+   autour d'un dessin qui a été détouré exprès. Les 262 Fanzzy pas encore
+   dessinés gardent la pastille de type : le repli est le même que partout. */
+/* Plus haut que large : un personnage debout, et non un cadre carré. Assez
+   grand pour qu’on lise le geste — le Capo porte la main à la bouche, le
+   Tambour lève les bras — qui est ce qui les distingue de loin. */
+.tete .face{width:56px;height:74px;flex:none;position:relative;
+  display:flex;align-items:flex-end;justify-content:center}
+/* La lueur de rareté, sous les pieds. `--rc` vient de `ui.css` — gris commun,
+   bleu rare, violet épique, or légendaire — comme partout ailleurs. */
+.tete .face::before{content:"";position:absolute;left:50%;bottom:1px;width:86%;height:26%;
+  transform:translateX(-50%);border-radius:50%;
+  background:radial-gradient(ellipse,var(--rc,#C2CAD6),transparent 70%);opacity:.5}
+.tete .face img{position:relative;width:100%;height:100%;object-fit:contain;
+  object-position:50% 100%;display:block;
+  /* L'ombre portée remplace le relief que donnait la plaque : sans elle, un
+     personnage clair sur un panneau clair perd ses contours. */
+  filter:drop-shadow(0 3px 5px rgba(0,0,0,.6))}
+/* La pastille de type se pose **à côté** du personnage, pas dessus : le
+   dessin est centré dans sa boîte et occupe les deux tiers de la largeur,
+   donc le coin est libre. */
+.tete .face .type{position:absolute;right:-2px;bottom:2px;width:19px;height:19px;border-radius:50%;
   background:var(--tc,#8257DA);display:grid;place-items:center;
   box-shadow:0 0 0 2px #10151C}
 .tete .face .type svg{width:11px;height:11px}
@@ -796,10 +824,15 @@ function tribuneHTML() {
                <span>Ajouter une pièce</span></span>`}</button>`);
     }
 
-    /* Le visage plutôt que la pastille, quand le dessin existe. `illustration`
-       rend `null` pour les Fanzzy pas encore illustrés — on retombe alors sur
-       la pastille de type, exactement comme avant. */
-    const buste = window.FZART?.illustration?.(f, 'buste') ?? null;
+    /* **Le personnage en pied**, et non son buste : c’est ainsi que
+       « Mon FANZZY » le montre, et c’est le même dessin détouré. Le buste
+       était un carré, qu’il fallait recadrer dans une plaque sombre — donc
+       couper le geste, qui est précisément ce qui distingue un Capo d’un
+       Tambour.
+
+       `illustration` rend `null` pour les Fanzzy pas encore illustrés : on
+       retombe alors sur la pastille de type, exactement comme avant. */
+    const buste = window.FZART?.illustration?.(f, 'plein') ?? null;
     const tete = buste
       ? `<div class="face r-${f.rar ?? 'commune'}">${buste}
           <span class="type"><svg viewBox="0 0 24 24" fill="none" stroke="#0B0E13"
