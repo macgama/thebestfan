@@ -96,8 +96,20 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .bullet b{display:block;font-family:var(--banner);font-size:11.5px;letter-spacing:.05em;color:var(--projo)}
 .bullet span{font-size:10px;opacity:.55;line-height:1.35;display:block;margin-top:4px}
 /* La plaque d'entrée de l'écran non connecté. Elle ne garde que sa marge : sa
-   matière est celle de `ui.css`, comme partout ailleurs. */
-.cta{margin:clamp(10px,2.1vh,22px) 18px clamp(3px,1vh,10px)}
+   matière est celle de `ui.css`, comme partout ailleurs.
+
+   **`width:auto` et non la largeur héritée.** `.tbf-bloc` pose `width:100%`,
+   qui vaut toute la colonne ; les dix-huit pixels de marge de chaque côté
+   s'ajoutaient donc à cette largeur au lieu de s'y prendre, et le bouton
+   dépassait de trente-six pixels. Ça ne se voyait pas comme un bouton trop
+   large — `.wrap` défile, donc son `overflow-x` vaut `auto` lui aussi, et
+   c'est une **barre de défilement horizontale** qui apparaissait en bas de
+   l'écran d'accueil. Dans une colonne flex, `width:auto` remplit exactement ce
+   qui reste une fois les marges prises, ce qui est ce qu'on voulait dire.
+
+   La règle reste ici plutôt que dans `ui.css` : `.tbf-bloc` est juste, c'est de
+   lui donner des marges latérales qui ne l'était pas. */
+.cta{margin:clamp(10px,2.1vh,22px) 18px clamp(3px,1vh,10px);width:auto}
 .second{display:block;text-align:center;padding:clamp(6px,1.25vh,12px);color:var(--craie);
   opacity:.6;font-size:13px;text-decoration:none}
 .second b{color:var(--projo)}
