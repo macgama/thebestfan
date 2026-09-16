@@ -225,6 +225,27 @@
       })
       .catch(() => {});
 
+    /* Et la même pastille quand quelqu'un attend un duel. Une file ne vit que
+       deux minutes, le temps qu'un joueur est devant son écran : quand elle
+       existe, c'est que quelqu'un attend **maintenant**, et le dire est la
+       seule chance qu'il trouve du monde. Deux pastilles au plus, jamais
+       allumées pour rien. */
+    fetch('/api/nvn/attentes', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const a = d?.alerte;
+        if (!a || !((a.camps?.[0] ?? 0) + (a.camps?.[1] ?? 0))) return;
+        const duel = tiroir.querySelector('a[href="/duel-nvn"]');
+        if (!duel) return;
+        duel.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
+        // Sur le bouton aussi, s'il n'y en a pas déjà une : on prévient d'une
+        // chose à faire, pas de laquelle.
+        if (!bouton.querySelector('.pip')) {
+          bouton.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
+        }
+      })
+      .catch(() => {});
+
     return { tiroir, voile, ouvrir };
   }
 

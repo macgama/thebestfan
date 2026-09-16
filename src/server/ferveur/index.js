@@ -5,6 +5,9 @@ import { Cheat } from './gestures.js';
 // écrite une seule fois. Elle remplace un `suivis[0]` qui laissait l'ordre
 // de la base décider du camp dans un derby.
 import { clubSoutenu } from '../football/suivis.js';
+// La journée du football, lue une fois pour tous ceux qui en ont besoin :
+// le Virage ici, le choix du match support dans deck/.
+import { journeeParId } from '../football/journee.js';
 
 /**
  * Couche réseau du Grand Virage.
@@ -487,32 +490,28 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
     const parId = new Map();
     for (const f of rows) parId.set(Number(f.id), { ...f });
 
-    /* La journée, si le télétexte est monté. Une panne de ce côté ne doit pas
-       vider l'écran : on retombe alors sur la base, c'est-à-dire sur ce qu'on
-       avait avant — incomplet, mais jamais rien. */
-    try {
-      const j = await jourDuFoot?.();
-      for (const g of j?.groupes ?? []) {
-        for (const m of g.matchs ?? []) {
-          if (!m.live) continue;
-          parId.set(Number(m.id), {
-            ...parId.get(Number(m.id)),
-            id: m.id,
-            status_short: m.status, elapsed: m.elapsed, elapsed_extra: m.extra,
-            luA: m.luA ?? null,
-            home_goals: m.home.goals ?? null, away_goals: m.away.goals ?? null,
-            kickoff_at: m.date,
-            home_id: m.home.id, away_id: m.away.id,
-            home_name: m.home.name, home_logo: m.home.logo,
-            away_name: m.away.name, away_logo: m.away.logo,
-            league_name: g.ligue?.name ?? null,
-            // Le palier de la compétition : il décide de l'ordre, plus bas.
-            tier: g.ligue?.tier ?? 3,
-          });
-        }
-      }
-    } catch (e) {
-      console.error('[virage] journée', e.message);
+    /* La journée se superpose à la base. Une panne de ce côté ne vide pas
+       l'écran : `journeeParId` rend alors une liste vide et l'on retombe sur
+       la base — incomplète, mais jamais rien.
+
+       On ne garde que ce qui se joue : le Virage est un tir à la corde pendant
+       un vrai match, et une rencontre terminée n'a pas de tribune. */
+    for (const [id, m] of await journeeParId(jourDuFoot)) {
+      if (!m.live) continue;
+      parId.set(id, {
+        ...parId.get(id),
+        id,
+        status_short: m.status, elapsed: m.elapsed, elapsed_extra: m.extra,
+        luA: m.luA,
+        home_goals: m.home.goals, away_goals: m.away.goals,
+        kickoff_at: m.date,
+        home_id: m.home.id, away_id: m.away.id,
+        home_name: m.home.name, home_logo: m.home.logo,
+        away_name: m.away.name, away_logo: m.away.logo,
+        league_name: m.leagueName,
+        // Le palier de la compétition : il décide de l'ordre, plus bas.
+        tier: m.tier,
+      });
     }
 
     /* `mien` : un de mes clubs joue. Le camp découle alors du club suivi et

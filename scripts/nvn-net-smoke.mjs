@@ -84,6 +84,8 @@ function co(id) {
   socket.on('nvn:events', (e)=>p.events.push(...e));
   socket.on('nvn:error', (e)=>p.errors.push(e.code));
   socket.on('nvn:file', (f)=>{ p.file=f; });
+  // `nvn:file` est la mienne, `nvn:attentes` sont toutes celles du serveur.
+  socket.on('nvn:attentes', (d)=>{ p.attentes = d?.attentes ?? []; });
   return p;
 }
 
@@ -110,6 +112,43 @@ check('et la file dit quel club on défend', A.file.club?.id === 85);
 check('elle dit aussi ce qu’il manque en face', A.file.manqueEnFace === 1);
 check('sans club dans ce match, rien à renforcer encore', A.file.renfort === 1);
 
+
+/* ------------------------------------------------- qui attend, et où
+
+   Personne ne voyait rien : on entrait en file seul et aveugle, et deux
+   joueurs pouvaient attendre au même moment sur deux matchs différents sans
+   jamais se croiser. C'était la moitié manquante du duel par camps — un bonus
+   pour le camp délaissé ne sert à rien si personne ne voit qu'un camp est
+   délaissé.
+
+   Deux chemins, et il faut les deux : l'annonce **diffusée** à ceux qui sont
+   déjà sur la page, et l'état **demandé** par qui vient d'arriver. */
+
+check('l’attente est annoncée à tout le monde',
+  await until(() => (B.attentes ?? []).length === 1));
+
+{
+  const a = (B.attentes ?? [])[0];
+  check('elle nomme le match et le format',
+    a?.fixtureId === 900 && a?.format === '1v1');
+  check('et dit combien attendent de chaque côté',
+    a?.camps?.[0] === 1 && a?.camps?.[1] === 0
+    || (console.log('        elle dit :', JSON.stringify(a?.camps)), false));
+  check('mais jamais qui', JSON.stringify(a ?? {}).includes(U[0]) === false);
+}
+
+{
+  const r = await fetch(`${url}/api/nvn/attentes`).then((x) => x.json());
+  check('et qui arrive après peut la demander', (r.attentes ?? []).length === 1);
+
+  /* L'alerte de l'accueil : une seule attente, la plus pertinente. Le lecteur
+     du banc suit Sion, qui joue ce match — c'est donc la sienne. */
+  check('l’accueil reçoit une alerte', Boolean(r.alerte));
+  check('elle porte sur un match de mes clubs', r.alerte?.mien === true);
+  check('et désigne le camp qui manque de monde',
+    r.alerte?.campQuiManque === 1 && r.alerte?.manque === 1
+    || (console.log('        elle dit :', JSON.stringify(r.alerte)), false));
+}
 B.socket.emit('nvn:queue', { format:'1v1', fixtureId:900, camp:1 });
 check('duel formé à deux', await until(()=>A.state && B.state));
 check('le neutre a pris le camp qu’il a demandé',

@@ -246,7 +246,11 @@ if (process.env.DATABASE_URL) {
     console.log('amis actifs');
 
     // ---- decks de duel et choix du match support
-    decks = createDecks({ pool, requireAuth: auth.requireAuth, niveau });
+    decks = createDecks({ pool, requireAuth: auth.requireAuth, niveau,
+      /* La journée du football, pour le choix du match support. Même détour que
+         pour le Virage : le télétexte se monte plus bas, la fonction le lira au
+         moment de l'appel. Voir src/server/football/journee.js. */
+      jourDuFoot: () => teletext?.jour('') ?? null });
     app.use('/api/deck', decks.router);
     globalThis.decks = decks;
     console.log('decks actifs');

@@ -302,6 +302,31 @@ const apresChoix = await A.page.evaluate(() => {
 check('choisir une tribune la marque', apresChoix.choisi === true);
 check('et ouvre l’entrée en file', apresChoix.entrerActif === true);
 
+/* **Le choix se déplie sous le match**, pas au bas de la page.
+
+   La liste fait soixante lignes depuis qu'elle montre tout ce qui se joue : on
+   cliquait un match en haut, et ce qu'il fallait faire ensuite se trouvait
+   mille pixels plus bas, hors de l'écran. Ce contrôle regarde **où** sont les
+   boutons, pas s'ils existent — c'est toute la question. */
+const place = await A.page.evaluate(() => {
+  const choisi = document.querySelector('.mt.on');
+  const sous = choisi?.nextElementSibling;
+  const entrer = document.getElementById('entrer');
+  return {
+    juste: sous?.classList.contains('souscarte') ?? false,
+    dedans: Boolean(sous?.contains(entrer)),
+    // Et pas d'un écran de haut : le geste suivant doit être sous le doigt.
+    ecart: entrer && choisi
+      ? Math.round(entrer.getBoundingClientRect().top - choisi.getBoundingClientRect().bottom)
+      : null,
+  };
+});
+check('le choix se déplie juste sous le match', place.juste === true);
+check('et le bouton d’entrée est dedans', place.dedans === true);
+check('à portée de doigt, pas à un écran de là',
+  place.ecart !== null && place.ecart >= 0 && place.ecart < 260
+  || (console.log('        écart :', place.ecart, 'px'), false));
+
 // On revient sur ses clubs : la suite du test compte sur ce match-là.
 await portee('miens');
 
