@@ -72,6 +72,79 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .legal{text-align:center;font-size:10.5px;opacity:.32;padding:4px 24px 22px;line-height:1.7}
 .legal a{color:inherit}
 
+/* -------------------------------------- la preuve : le direct et les visages
+
+   La vitrine disait ce que le jeu fait ; elle ne le montrait pas. Deux blocs
+   s'en chargent, et ils ne racontent rien de plus — ils affichent la chose
+   elle-même : les vrais matchs du jour, et des supporters tirés du catalogue.
+
+   **Ils restent fermés tant qu'ils n'ont rien.** Les deux naissent `hidden` et
+   ne s'ouvrent qu'une fois remplis. Un cadre « les matchs du jour » sans un
+   seul match dedans dit au visiteur que rien ne tourne ici, ce qui est
+   exactement l'inverse de ce qu'on cherche à lui montrer — et c'est le cas
+   ordinaire d'un mardi matin, ou d'une mise en ligne où le télétexte est
+   éteint.
+
+   **Ils s'ouvrent ensemble.** Deux révélations à deux instants font sauter la
+   page deux fois sous les yeux du visiteur. Les visages sont prêts sans
+   réseau, les scores non : on tient donc les visages jusqu'à ce que les
+   scores sachent s'ils ont quelque chose à dire.
+
+   Sur la hauteur : `.pitch` porte un `margin-top:auto`. Tant que la vitrine
+   tient dans la fenêtre, ce qu'on insère au milieu repousse le haut et non le
+   bas — le bouton d'entrée ne bouge pas d'un pixel. C'est ce qui permet de
+   mettre le direct **au-dessus** de lui, là où il se lit, plutôt que sous la
+   ligne de flottaison où l'on ne descend pas.                              */
+.preuve{padding:20px 18px 0}
+.preuve h3{display:flex;align-items:center;gap:9px;margin:0 0 9px;
+  font-family:var(--banner);font-weight:600;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;opacity:.5}
+.preuve h3::after{content:"";flex:1;height:1px;background:var(--trait)}
+/* Le point rouge ne décore pas : il n'est posé que lorsqu'un match est
+   vraiment en cours, et c'est la seule chose de la vitrine qui bouge pour une
+   raison. */
+.preuve h3 i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--flare);
+  box-shadow:0 0 0 0 rgba(224,64,44,.55);animation:pouls 1.8s ease-out infinite}
+@keyframes pouls{70%,100%{box-shadow:0 0 0 7px rgba(224,64,44,0)}}
+@media (prefers-reduced-motion:reduce){.preuve h3 i{animation:none}}
+
+/* Les matchs se lisent comme sur la page des matchs — l'heure ou la minute à
+   gauche, les deux clubs empilés à droite. Le lien « tous les matchs » y mène :
+   y arriver et trouver une seconde mise en page serait arriver ailleurs. */
+.scores{display:flex;flex-direction:column;gap:6px}
+.sc{display:flex;align-items:center;gap:10px;padding:8px 11px;
+  border:1px solid var(--trait);border-radius:11px;background:var(--panneau);
+  backdrop-filter:blur(5px)}
+.sc .quand{flex:none;width:42px;text-align:center;font-family:var(--banner);
+  font-size:11px;letter-spacing:.04em;opacity:.5}
+.sc.live .quand{color:var(--flare);opacity:1}
+.sc .eq{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.sc .r{display:flex;align-items:center;gap:7px;font-size:12.5px;line-height:1.2}
+.sc .r img{width:15px;height:15px;flex:none;object-fit:contain}
+.sc .r span{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.sc .r b{flex:none;font-family:var(--banner);font-size:14px;min-width:11px;text-align:right}
+/* Le perdant s'efface : le score se lit alors d'un coup, sans le relire. */
+.sc .r.perd{opacity:.42}
+/* Sur un écran court, le troisième match pousse le bouton d’entrée sous la
+   ligne de flottaison — et un bouton qu’il faut aller chercher n’en est plus
+   un. On en montre deux ; le lien « tous les matchs » est juste en dessous,
+   et le tri met de toute façon le plus vivant en premier. */
+@media (max-height:760px){.sc:nth-child(3){display:none}}
+.preuve .plus{display:block;text-align:center;padding:9px 0 0;text-decoration:none;
+  font-family:var(--banner);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--projo);opacity:.75}
+
+/* Les visages. Des bustes et non des pleins-pieds : à cette taille un
+   personnage en entier n'est plus qu'une silhouette, et ce qu'on montre ici
+   est précisément qu'ils ont chacun une tête. */
+.eventail{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+@media (min-width:520px){.eventail{grid-template-columns:repeat(8,1fr)}}
+.eventail i{display:grid;place-items:center;aspect-ratio:1;overflow:hidden;
+  border:1px solid var(--trait);border-radius:12px;
+  background:radial-gradient(circle at 50% 32%,rgba(245,195,59,.13),transparent 70%),var(--panneau)}
+.eventail img{width:100%;height:100%;object-fit:contain}
+.combien{text-align:center;font-size:11px;opacity:.4;margin:9px 0 0;line-height:1.5}
+
 /* ============================================================== le hub
 
    Un écran de jeu, pas une page. Trois bandes : les compteurs en haut, le
@@ -572,9 +645,30 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
       <div class="bullet"><b>FANZZY</b><span>Collectionne et fais évoluer</span></div>
       <div class="bullet"><b>SOUVENIRS</b><span>Une carte par but vécu</span></div>
     </div>
+
+    <!-- Le direct, **au-dessus** du bouton : c'est la preuve que la première
+         promesse — « la ferveur suit le vrai match » — n'est pas une phrase.
+         Rempli et ouvert par `garnirVitrine()` ; voir la note de `.preuve`
+         dans la feuille de style pour le pourquoi de la place et du silence. -->
+    <section class="preuve" id="vDirect" hidden>
+      <h3><i id="vPoint" hidden></i><span id="vTitre">Les matchs du jour</span></h3>
+      <div class="scores" id="vScores"></div>
+      <a class="plus" href="/matchs">Tous les matchs ›</a>
+    </section>
+
     <a class="cta tbf-plaque tbf-bloc tbf-grande" data-ton="flare"
       href="/compte">PRENDRE MA PLACE</a>
     <a class="second" href="/compte">Déjà une place ? <b>Se connecter</b></a>
+
+    <!-- Les visages, sous le bouton : ils ne décident personne, ils
+         rassurent. Tirés au hasard à chaque visite — la vitrine ne montre pas
+         huit cartes, elle montre qu'il y en a beaucoup. -->
+    <section class="preuve" id="vGalerie" hidden>
+      <h3><span>Les supporters à collectionner</span></h3>
+      <div class="eventail" id="vEventail"></div>
+      <p class="combien" id="vCombien"></p>
+    </section>
+
     <p class="legal">Gratuit · Clubs, groupes et illustrations du jeu sont fictifs<br>
       Résultats fournis par API-Football</p>
   </div>
@@ -742,6 +836,12 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
      état donné — et sur quoi retomber quand ce dessin n'existe pas encore. -->
 <script src="/menu.js"></script>
 <script src="/fanzzy-etats.js"></script>
+<!-- L'horloge d'un match en direct, pour la vitrine : le serveur donne la
+     minute lue et l'instant de cette lecture, elle fait défiler le reste. Sans
+     elle, l'écran non connecté afficherait la minute de son chargement pendant
+     tout le match. Le hub, lui, n'en a pas besoin — il relit le direct toutes
+     les vingt-cinq secondes. -->
+<script src="/horloge.js"></script>
 <!-- `fanzzy-art.js` pour son seul répertoire d'illustrations : c'est lui qui
      sait quels Fanzzy sont dessinés et où. L'accueil ne dessine toujours rien
      en géométrie — il s'en sert pour retomber sur le plein-pied du personnage
@@ -1183,6 +1283,153 @@ function saluer() {
    cinq destinations au lieu de onze, et aucune entrée d’administration. */
 window.TBF_MENU.monter($('burger'));
 
+/* -------------------------------------- la vitrine : le direct et les visages
+
+   Ce que voit quelqu'un qui n'a pas de compte. Deux blocs, dont aucun n'est
+   indispensable : ils s'ouvrent s'ils ont quelque chose à montrer, ils restent
+   fermés sinon, et la vitrine se lit exactement pareil dans les deux cas.
+
+   Ni l'un ni l'autre ne demande à être connecté. `/api/tt/jour` est public et
+   passe par le cache du télétexte — le premier visiteur de la journée paie un
+   appel à API-Football, les mille suivants ne paient rien — et le répertoire
+   des dessins est déjà dans la page, apporté par `fanzzy-art.js`.          */
+
+/**
+ * Huit visages, tirés sans remise parmi les Fanzzy **dessinés**.
+ *
+ * `FZART.ILLUSTRES` est la seule liste qui sache lesquels le sont ; la
+ * recopier ici l'aurait fait mentir au premier dessin ajouté. Un tirage et non
+ * une rangée figée : huit cartes toujours les mêmes se retiennent au bout de
+ * trois visites, et la collection paraît alors petite.
+ *
+ * Rend `false` quand aucun dessin n'est disponible — la galerie reste fermée
+ * plutôt que d'ouvrir huit cadres vides.
+ */
+function visagesVitrine() {
+  const grille = $('vEventail');
+  const tous = [...(window.FZART?.ILLUSTRES ?? [])];
+  if (!grille || !tous.length) return false;
+
+  const pris = [];
+  while (pris.length < Math.min(8, tous.length)) {
+    const f = tous[Math.floor(Math.random() * tous.length)];
+    if (!pris.includes(f)) pris.push(f);
+  }
+
+  grille.innerHTML = pris
+    .map((id) => window.FZART.adresse(id, 'buste'))
+    .filter(Boolean)
+    /* Un dessin manquant emporte son cadre : mieux vaut sept visages que sept
+       visages et un carré vide, qui se lit comme une image cassée. */
+    .map((src) => `<i><img src="${src}" alt="" loading="lazy" decoding="async"
+        onerror="this.parentNode.remove()"></i>`)
+    .join('');
+
+  /* Le compte se lit sur la liste, il ne s'écrit pas à la main : recopié, il
+     aurait menti au premier personnage ajouté. Arrondi à la dizaine
+     inférieure — « plus de deux cent trente » est une promesse tenue, « deux
+     cent trente-sept » une précision dont personne n'a l'usage. */
+  $('vCombien').textContent = `Plus de ${Math.floor(tous.length / 10) * 10} `
+    + 'supporters à trouver, faire évoluer et aligner';
+  return true;
+}
+
+/**
+ * Les matchs du jour, et ceux qui se jouent en ce moment.
+ *
+ * Rend le nombre de matchs en direct, ou `null` quand il n'y a rien à
+ * montrer — télétexte éteint, réseau coupé, journée sans match. Dans ce
+ * dernier cas **on ne touche à rien** : un bloc déjà rempli garde ce qu'il
+ * affiche plutôt que de se vider sur une réponse ratée.
+ */
+async function scoresVitrine() {
+  let d;
+  try {
+    const r = await fetch('/api/tt/jour', { credentials: 'same-origin' });
+    if (!r.ok) return null;
+    d = await r.json();
+  } catch { return null; }
+
+  const tous = (d.groupes ?? []).flatMap((g) => g.matchs ?? []);
+  if (!tous.length) return null;
+
+  /* L'ordre dans lequel un supporter regarde une journée : ce qui se joue
+     maintenant, puis ce qui va se jouer, puis ce qui vient de finir. Les
+     matchs à venir du plus proche au plus lointain, les terminés du plus
+     récent au plus ancien — dans les deux cas, le plus vivant d'abord. */
+  const rang = (m) => (m.live ? 0 : m.fini ? 2 : 1);
+  const choisis = tous
+    .sort((a, b) => rang(a) - rang(b)
+      || (rang(a) === 2 ? new Date(b.date) - new Date(a.date)
+                        : new Date(a.date) - new Date(b.date)))
+    .slice(0, 3);
+
+  /* La minute vient de `/horloge.js`, comme partout ailleurs dans le jeu. Elle
+     se tait quand elle ne sait pas — mi-temps, interruption, minute absente —
+     et un match en cours doit quand même se voir comme tel : d'où le repli. */
+  const minute = (m) => window.TBF_HORLOGE?.texte(
+    { statut: m.status, minute: m.elapsed, extra: m.extra, vuA: m.luA },
+    { HT: 'MT', BT: 'PROL.' }) || null;
+
+  const cote = (t, perd) => `<div class="r ${perd ? 'perd' : ''}">
+      <img src="${esc(t.logo)}" alt="" loading="lazy" decoding="async"
+        onerror="this.remove()">
+      <span>${esc(t.name)}</span><b>${t.goals ?? ''}</b></div>`;
+
+  $('vScores').innerHTML = choisis.map((m) => {
+    const quand = m.live ? (minute(m) ?? 'DIRECT')
+      : m.fini ? 'FINI'
+      : new Date(m.date).toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
+    return `<div class="sc ${m.live ? 'live' : ''}">
+      <div class="quand">${esc(quand)}</div>
+      <div class="eq">${cote(m.home, m.fini && m.away.vainqueur)}${
+        cote(m.away, m.fini && m.home.vainqueur)}</div>
+    </div>`;
+  }).join('');
+
+  const live = d.enDirect ?? 0;
+  $('vPoint').hidden = !live;
+  $('vTitre').textContent = live
+    ? `${live} match${live > 1 ? 's' : ''} en direct`
+    : `${d.total} match${d.total > 1 ? 's' : ''} aujourd’hui`;
+  $('vDirect').hidden = false;
+  return live;
+}
+
+/**
+ * Le battement du direct sur la vitrine.
+ *
+ * Une minute tant qu'un match est en cours — la minute affichée vieillit et
+ * les buts tombent — cinq minutes sinon. Onglet caché, on ne relit pas :
+ * personne ne regarde. Le télétexte garde de toute façon sa réponse
+ * quarante-cinq secondes, donc ce battement ne coûte pas un appel de plus à
+ * API-Football que la page des matchs ouverte à côté.
+ */
+function veillerVitrine(live) {
+  setTimeout(async () => {
+    if (document.hidden) return veillerVitrine(live);
+    veillerVitrine((await scoresVitrine()) ?? live);
+  }, live ? 60_000 : 300_000);
+}
+
+/**
+ * Remplit la vitrine, puis l'ouvre — dans cet ordre, et d'un seul coup.
+ *
+ * Les visages sont prêts sans réseau, les scores non. Les ouvrir à mesure
+ * ferait sauter la page deux fois : on attend donc le réseau, et les deux
+ * blocs apparaissent ensemble. L'attente ne se voit pas — l'écran d'ouverture
+ * couvre la page pendant ses dix secondes.
+ */
+async function garnirVitrine() {
+  const visages = visagesVitrine();
+  const live = await scoresVitrine();
+  if (visages) $('vGalerie').hidden = false;
+  /* Rien n'est arrivé du premier coup : il n'y a rien à rafraîchir, et un
+     battement qui tourne dans le vide n'ouvrira pas un bloc qu'on a renoncé
+     à montrer. */
+  if (live !== null) veillerVitrine(live);
+}
+
 /* ------------------------------------------------------------ le hub */
 
 async function jsonp(url, options) {
@@ -1197,7 +1444,10 @@ async function jsonp(url, options) {
     if (r.ok) user = (await r.json()).user;
   } catch { /* hors ligne : la vitrine suffit */ }
 
-  if (!user) return;
+  /* Pas de compte : la vitrine reste, et elle se garnit. C'est décidé ici
+     plutôt que dans un second appel à `/api/auth/me` — deux fois la même
+     question au même serveur finit par recevoir deux réponses. */
+  if (!user) { garnirVitrine(); return; }
 
   $('vitrine').style.display = 'none';
   $('hub').classList.add('on');
