@@ -1384,6 +1384,62 @@ if (process.env.CAPTURE) {
   attente = null;
 }
 
+
+/* ============================ installer le jeu sur l'appareil
+
+   Trois cas, et le troisième est celui qu'on oublie toujours :
+
+     — le navigateur sait installer : un bouton, et le geste est fait ;
+     — c'est un iPhone : Safari n'envoie aucun événement et n'expose aucune
+       commande. On ne peut qu'expliquer le geste, et ne rien dire serait pire,
+       puisque aucun autre chemin ne mène à l'icône ;
+     — rien des deux : **on ne propose rien du tout**. Une invitation qui ne
+       mène nulle part est pire qu'une absence d'invitation, et c'est le cas
+       qu'on ne voit jamais en essayant sur son propre téléphone. */
+
+{
+  const page = await ouvrir();
+  await new Promise((r) => setTimeout(r, 400));
+
+  const visible = () => page.evaluate(() => {
+    const z = document.getElementById('installe');
+    return Boolean(z) && !z.hidden
+      && getComputedStyle(z).display !== 'none' ? z.textContent.trim() : null;
+  });
+
+  check('sans rien à proposer, on ne propose rien', await visible() === null);
+
+  /* La proposition du navigateur. On la simule telle qu'elle arrive : un
+     événement annulable, que `pwa.js` retient. */
+  await page.evaluate(() => window.dispatchEvent(
+    new Event('beforeinstallprompt', { cancelable: true })));
+  await new Promise((r) => setTimeout(r, 150));
+  check('quand le navigateur sait installer, le bouton paraît',
+    /Installer/.test(await visible() ?? '')
+    || (console.log('        il dit :', await visible()), false));
+  await page.close();
+}
+
+{
+  /* Un iPhone. `pwa.js` le reconnaît à la signature du navigateur, et la page
+     explique le geste au lieu d'offrir un bouton qui ne ferait rien. */
+  const page = await ouvrir();
+  await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) '
+    + 'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1');
+  await page.reload({ waitUntil: 'networkidle0' });
+  await new Promise((r) => setTimeout(r, 400));
+
+  const texte = await page.evaluate(() => {
+    const z = document.getElementById('installe');
+    return z && !z.hidden ? z.textContent.replace(/\s+/g, ' ').trim() : null;
+  });
+  check('sur iPhone, on explique le geste', /écran d’accueil/.test(texte ?? '')
+    || (console.log('        il dit :', texte), false));
+  check('et on ne montre pas de bouton qui ne ferait rien',
+    await page.evaluate(() => !document.getElementById('poser')));
+  await page.close();
+}
+
 await nav.close();
 http.close();
 await pool.end();

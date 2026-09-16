@@ -116,6 +116,14 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* `margin:0` : c'est un paragraphe, et les vingt et un pixels que le
    navigateur lui donnait tout seul au-dessus et en dessous étaient le plus
    gros poste de la vitrine après le logo. */
+/* L'invitation à installer. Discrète : elle s'adresse à quelqu'un qui est
+   déjà là et qui joue — ce n'est pas elle qu'il est venu chercher. */
+.installe{text-align:center;padding:10px 20px 0}
+.installe button{background:none;border:1px solid rgba(242,238,228,.25);border-radius:8px;
+  color:var(--craie);font:inherit;font-size:12.5px;padding:9px 16px;cursor:pointer;opacity:.75}
+.installe button:hover{opacity:1;border-color:var(--projo);color:var(--projo)}
+.installe small{font-size:11.5px;opacity:.5;line-height:1.7}
+.installe b{color:var(--craie);opacity:.85}
 .legal{text-align:center;font-size:10.5px;opacity:.32;margin:0;
   padding:clamp(7px,1.3vh,13px) 24px clamp(8px,2.1vh,22px);line-height:1.6}
 .legal a{color:inherit}
@@ -915,6 +923,10 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
       </div>
       <a class="entrer tbf-plaque tbf-bloc tbf-grande" data-ton="flare"
         id="entrer" href="/duel-nvn">Prendre ma place</a>
+      <!-- Installer le jeu sur l'appareil. Caché par défaut : il ne paraît que
+           lorsqu'il y a vraiment quelque chose à proposer — voir
+           `inviterInstallation`. -->
+      <div class="installe" id="installe" hidden></div>
     </footer>
 
   </div>
@@ -1759,6 +1771,52 @@ async function jsonp(url, options) {
   };
 
 
+/* ------------------------------------------- installer le jeu sur l'appareil
+
+   Le navigateur propose l'installation **une fois**, très tôt, puis l'enterre
+   dans un menu que personne n'ouvre. `pwa.js` retient cette proposition ; il
+   ne reste qu'à offrir un endroit où la reprendre.
+
+   Trois cas, et le troisième est celui qu'on oublie toujours :
+
+     — le navigateur sait installer : un bouton, et le geste est fait ;
+     — c'est un iPhone : Safari ne sait pas installer tout seul et n'envoie
+       aucun événement. On ne peut qu'expliquer le geste — et ne rien dire
+       serait pire, puisque aucun autre chemin ne mène à l'icône ;
+     — le jeu tourne **déjà** comme une application : on ne propose rien. Un
+       bouton « installer » dans une application installée est la meilleure
+       façon de faire douter quelqu'un de ce qu'il a sous les yeux.
+
+   La ligne ne s'affiche donc jamais pour rien. */
+function inviterInstallation() {
+  const zone = $('installe');
+  if (!zone) return;
+  const p = window.TBF_PWA;
+
+  if (!p || p.installe) { zone.hidden = true; return; }
+
+  if (p.possible) {
+    zone.hidden = false;
+    zone.innerHTML = '<button id="poser">Installer l’application</button>';
+    $('poser').onclick = () => p.installer();
+    return;
+  }
+
+  if (p.ios) {
+    zone.hidden = false;
+    zone.innerHTML = '<small>Pour l’avoir en plein écran : '
+      + '<b>Partager</b>, puis <b>Sur l’écran d’accueil</b>.</small>';
+    return;
+  }
+
+  zone.hidden = true;
+}
+
+/* `pwa.js` est chargé en `defer` : il peut arriver après ce script, et la
+   proposition du navigateur plus tard encore. On écoute donc, au lieu de
+   regarder une fois. */
+window.addEventListener('tbf-pwa', inviterInstallation);
+inviterInstallation();
 /* ------------------------------------------- quelqu'un attend un duel
 
    Une file de duel ne vit que deux minutes, le temps qu'un joueur est devant
@@ -1935,5 +1993,6 @@ async function alerteDuel() {
 })();
 </script>
 <script src="/fx.js" defer></script>
+<script src="/pwa.js" defer></script>
 </body>
 </html>

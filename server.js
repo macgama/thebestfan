@@ -477,6 +477,22 @@ const typer = (res, chemin) => {
   if (t) res.setHeader('content-type', t);
 };
 
+/* **Le service worker ne se met jamais en cache.**
+ *
+ * C'est lui qui décide de ce que le navigateur garde : un service worker
+ * périmé est un jeu périmé, et il le resterait aussi longtemps que son cache.
+ * Les navigateurs le savent et le relisent au plus toutes les vingt-quatre
+ * heures ; on leur dit ici de le relire à chaque fois. Le fichier pèse quatre
+ * kilo-octets, et c'est le prix d'un déploiement qui prend effet.
+ *
+ * Cette route passe avant le static, qui le servirait avec l'en-tête des
+ * fichiers ordinaires. */
+app.get('/sw.js', (_req, res) => {
+  res.set('cache-control', 'no-cache');
+  res.type('application/javascript');
+  res.sendFile(path.join(__dirname, 'public/sw.js'));
+});
+
 /* Le seul fichier de `/img` qui doit changer.
  *
  * `index.json` dit quels dessins existent pour chaque Fanzzy. Il vit avec eux
