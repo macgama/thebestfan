@@ -470,10 +470,19 @@ check('les Fanzzy non possédés portent leur nom',
       await fiche.evaluate(() =>
         document.documentElement.scrollHeight <= innerHeight + 1));
 
-    /* Le dessin est celui de **l'âge atteint**. La fiche demandait
-       l'illustration sous le nom de la lignée : elle montrait donc le premier
-       âge sous le nom du dernier, ce qui ressemble à un personnage
-       parfaitement valide et ne se voit jamais. */
+    /* Le dessin est celui de **l'age atteint**. La fiche demandait
+       l'illustration sous le nom de la lignee : elle montrait donc le premier
+       age sous le nom du dernier, ce qui ressemble a un personnage parfaitement
+       valide et ne se voit jamais.
+
+       **On revient d'abord sur l'age courant.** Les trois cases touchees juste
+       au-dessus l'ont ete au hasard, et depuis que la vitrine suit l'age
+       choisi, l'une d'elles a pu la deplacer — ce controle lisait alors le
+       dessin d'un autre age et accusait la fiche a tort. Ce qu'il eprouve est
+       le rendu de l'age courant : on le lui redonne explicitement. */
+    await fiche.evaluate(() => {
+      document.querySelector('[data-case^="age:"]')?.click();
+    });
     const dessin = await fiche.evaluate(() =>
       document.querySelector('.fiche .art img')?.getAttribute('src') ?? '');
     check('le dessin de la vitrine est bien celui du personnage',
@@ -500,6 +509,38 @@ check('les Fanzzy non possédés portent leur nom',
       || (console.log('        elle montre :', age.dessin), false));
     check('et son nom va avec', /Meneur/.test(age.nom)
       || (console.log('        elle nomme :', age.nom), false));
+
+    /* **On peut revenir voir l'enfant.**
+
+       La rangee ÂGES n'existe que pour regarder les trois visages d'une
+       lignee. Toucher la premiere case changeait le texte en dessous — « Tu es
+       passe par la » — et laissait le dessin sur l'age atteint : quelqu'un qui
+       avait paye son evolution ne pouvait plus jamais revoir son premier age.
+
+       TR32 est monte au second age sur ce banc, et ses trois ages sont
+       dessines : c'est donc lui qui permet de le verifier. */
+    const premier = await evolue.evaluate(() => {
+      const cases = [...document.querySelectorAll('[data-case^="age:"]')];
+      cases[0]?.click();
+      return cases.length;
+    });
+    check('la rangee des ages porte bien les trois', premier === 3
+      || (console.log('        cases d age :', premier), false));
+
+    const revenu = await jusqua(async () => evolue.evaluate(() =>
+      /TR32[.-]/.test(document.querySelector('.fiche .art img')?.getAttribute('src') ?? '')));
+    check('toucher le premier age ramene son dessin', revenu
+      || (console.log('        elle montre toujours :', await evolue.evaluate(() =>
+        document.querySelector('.fiche .art img')?.getAttribute('src'))), false));
+
+    /* Et le retour : on rouvre l'age atteint, on retrouve son dessin. Sans ce
+       controle, une vitrine qui se figerait sur le premier age passerait. */
+    await evolue.evaluate(() => {
+      [...document.querySelectorAll('[data-case^="age:"]')][1]?.click();
+    });
+    const rendu = await jusqua(async () => evolue.evaluate(() =>
+      /TR32B/.test(document.querySelector('.fiche .art img')?.getAttribute('src') ?? '')));
+    check('et revenir a l age atteint le retrouve', rendu);
     await evolue.close();
   }
   if (process.env.CAPTURE) {
