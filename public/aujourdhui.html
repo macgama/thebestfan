@@ -211,6 +211,131 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
   (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
 
+/* ================================================= le nom des pays
+
+   API-Football écrit les pays en anglais, et seulement en anglais :
+   « Germany », « Czech-Republic », « South-Korea ». Une page française qui
+   range ses matchs sous « Germany » n'est pas traduite à moitié, elle est
+   écrite à moitié.
+
+   **On ne tient pas de liste.** Deux cents pays dans quatre langues, ce sont
+   huit cents chaînes à écrire une fois et à ne plus jamais relire : la
+   première faute y resterait des années. Le navigateur a déjà cette table —
+   c'est `Intl.DisplayNames` — et il lui faut un **code ISO**, pas un nom.
+
+   Le code, c'est le **drapeau** qui le porte : `…/flags/de.svg`. API-Football
+   le donne dans la réponse qu'on lit déjà, et le serveur le fait suivre sous
+   `ligue.drapeau` — voir `jour()` dans `src/server/teletext/index.js`. Ça ne
+   coûte pas un appel de plus.
+
+   Restent cinq cas sans code ISO : les quatre nations britanniques, qui n'en
+   ont pas, et les compétitions internationales, dont l'API dit que le pays est
+   « World ». Cinq entrées écrites à la main contre deux cents : c'est le
+   rapport qu'on cherchait.                                                  */
+
+const LOCALES = ['fr', 'en', 'de', 'es'];
+/* La langue est celle que le joueur a choisie au compte, retenue par
+   `compte.html` sous cette clé. On la lit ici plutôt que d'attendre
+   `/api/auth/me` : le rendu est synchrone, et un visiteur sans compte a
+   quand même une langue — celle de son navigateur. */
+let locale = LOCALES.find((l) => navigator.language.toLowerCase().startsWith(l)) || 'fr';
+try { const s = localStorage.getItem('tbf_locale'); if (LOCALES.includes(s)) locale = s; } catch {}
+
+const SANS_CODE = {
+  fr: { World: 'International', England: 'Angleterre', Scotland: 'Écosse',
+        Wales: 'Pays de Galles', 'Northern-Ireland': 'Irlande du Nord' },
+  // L'API écrit déjà en anglais : il n'y a rien à corriger.
+  en: {},
+  de: { World: 'International', England: 'England', Scotland: 'Schottland',
+        Wales: 'Wales', 'Northern-Ireland': 'Nordirland' },
+  es: { World: 'Internacional', England: 'Inglaterra', Scotland: 'Escocia',
+        Wales: 'Gales', 'Northern-Ireland': 'Irlanda del Norte' },
+};
+
+const REGIONS = (() => {
+  try { return new Intl.DisplayNames([locale], { type: 'region', fallback: 'none' }); }
+  catch { return null; }   // moteur trop ancien : on gardera l'anglais
+})();
+
+const codeISO = (drapeau) => /\/flags\/([a-z]{2})\.svg/i.exec(drapeau ?? '')?.[1] ?? null;
+
+/**
+ * Le texte réduit à ce qu'on tape vraiment : minuscules, sans accents.
+ *
+ * Personne ne cherche « Corée du Sud » en composant le « é ». Un champ de
+ * recherche qui exige l'accent exact **ne trouve rien** et ne dit pas pourquoi
+ * — c'est le pire des deux : le joueur croit que le match n'existe pas. On plie
+ * les deux côtés, le terme cherché comme le nom trouvé, et « coree », « Corée »
+ * et « COREE » désignent enfin la même chose.
+ */
+const pli = (x) => (x ?? '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+
+/**
+ * Le nom d'un pays dans la langue du lecteur.
+ *
+ * Retombe **toujours** sur ce que l'API a écrit plutôt que sur rien : un pays
+ * sans nom se lit comme une panne, un pays en anglais se lit.
+ */
+const nomsVus = new Map();
+function pays(nomApi, drapeau) {
+  const cle = `${nomApi}|${drapeau}`;
+  if (nomsVus.has(cle)) return nomsVus.get(cle);
+  const code = codeISO(drapeau);
+  let nom = (SANS_CODE[locale] ?? {})[nomApi] ?? null;
+  if (!nom && code && REGIONS) {
+    try { nom = REGIONS.of(code.toUpperCase()) ?? null; } catch { nom = null; }
+  }
+  nom = nom || nomApi || '';
+  nomsVus.set(cle, nom);
+  return nom;
+}
+
+/**
+ * La table des pays dans les deux langues, construite par le navigateur.
+ *
+ * Elle sert à **la recherche**, pas à l'affichage : taper « espagne » doit
+ * trouver la Liga *et* la sélection espagnole. Or l'API nomme les sélections
+ * comme les pays, en anglais — « Spain », « Spain U21 », « Spain W ». Traduire
+ * le terme cherché vers l'anglais est donc le seul moyen qu'un mot français
+ * atteigne une équipe nationale.
+ *
+ * Les six cent soixante-seize codes possibles sont demandés un par un :
+ * `Intl` n'expose aucune liste de régions. C'est quelques millisecondes, faites
+ * **une seule fois et seulement si l'on cherche** — jamais au chargement.
+ */
+let TABLE_PAYS = null;
+function tablePays() {
+  if (TABLE_PAYS) return TABLE_PAYS;
+  TABLE_PAYS = [];
+  let anglais;
+  try {
+    anglais = new Intl.DisplayNames(['en'], { type: 'region', fallback: 'none' });
+  } catch { return TABLE_PAYS; }
+  for (let i = 65; i <= 90; i++) {
+    for (let j = 65; j <= 90; j++) {
+      const code = String.fromCharCode(i, j);
+      let ang = null;
+      let loc = null;
+      try { ang = anglais.of(code); loc = REGIONS?.of(code) ?? null; } catch { continue; }
+      if (!ang) continue;
+      TABLE_PAYS.push({ ang: ang.toLowerCase(), loc: pli(loc ?? ang), plie: pli(ang) });
+    }
+  }
+  return TABLE_PAYS;
+}
+
+/**
+ * Les noms **anglais** des pays que ce terme désigne.
+ *
+ * Trois lettres au minimum : en dessous, « in » désignerait l'Inde, la Chine et
+ * l'Argentine à la fois, et la recherche rendrait la moitié de la journée.
+ * Au-dessus, on accepte large — c'est une recherche, pas un formulaire.
+ */
+function paysCherches(t) {
+  if (t.length < 3) return [];
+  return tablePays().filter((p) => p.loc.includes(t) || p.plie.includes(t)).map((p) => p.plie);
+}
+
 let date = new Date().toISOString().slice(0, 10);
 let filtre = 'tous', terme = '', data = null, minuterie = null;
 
@@ -250,7 +375,7 @@ let t = null;
 $('q').oninput = () => {
   clearTimeout(t);
   // Court délai : filtrer à chaque frappe sur huit cents matchs saccade.
-  t = setTimeout(() => { terme = $('q').value.trim().toLowerCase(); rendre(); }, 200);
+  t = setTimeout(() => { terme = pli($('q').value.trim()); rendre(); }, 200);
 };
 
 /**
@@ -294,11 +419,35 @@ function rendre() {
   if (filtre === 'live') groupes = groupes.filter((g) => g.live)
     .map((g) => ({ ...g, matchs: g.matchs.filter((m) => m.live) }));
   if (terme) {
-    groupes = groupes.map((g) => ({ ...g,
-      matchs: (g.ligue.name.toLowerCase().includes(terme) ? g.matchs
-        : g.matchs.filter((m) => m.home.name.toLowerCase().includes(terme)
-          || m.away.name.toLowerCase().includes(terme))) }))
-      .filter((g) => g.matchs.length);
+    /* Un terme peut désigner un pays : « espagne » comme « spain ». On le
+       traduit une fois pour toute la liste, et non par compétition — c'est
+       six cent soixante-seize appels à `Intl`, pas deux mille. */
+    const cherches = paysCherches(terme);
+    const estCePays = (nom) => Boolean(nom)
+      && cherches.some((p) => pli(nom).includes(p));
+
+    groupes = groupes.map((g) => {
+      /* La compétition répond pour **tous** ses matchs : chercher « france »
+         doit donner la Ligue 1 entière, pas les seuls matchs où un club a
+         « france » dans son nom.
+
+         Trois façons de la nommer, parce que trois peuvent être tapées : son
+         nom, le pays tel que l'API l'écrit, et le pays tel que le lecteur le
+         lit. « Tchéquie » ne ressemble à « Czech-Republic » que par la
+         troisième. */
+      const laCompetition = pli(g.ligue.name).includes(terme)
+        || pli(g.ligue.country).includes(terme)
+        || pli(pays(g.ligue.country, g.ligue.drapeau)).includes(terme)
+        || estCePays(g.ligue.country);
+
+      /* Une équipe répond par son nom — et une **sélection** répond aussi par
+         son pays, puisque l'API la nomme comme lui : « Spain », « Spain U21 ».
+         C'est ce qui fait qu'un terme français atteint une équipe nationale. */
+      const laquelle = (m) => [m.home.name, m.away.name]
+        .some((n) => pli(n).includes(terme) || estCePays(n));
+
+      return { ...g, matchs: laCompetition ? g.matchs : g.matchs.filter(laquelle) };
+    }).filter((g) => g.matchs.length);
   }
 
   /* `?? 0` : sans lui, une journée sans données affiche « undefined MATCHS »
@@ -316,7 +465,7 @@ function rendre() {
       <!-- Le nom de la compétition mène à sa page : classement, buteurs,
            calendrier. On voyait un match de Liga 1 sans pouvoir savoir qui
            mène le championnat, alors que la page existe. -->
-      <a class="t" href="/teletext?ligue=${g.ligue.id}">${esc(g.ligue.name)}<span class="pays">${esc(g.ligue.country ?? '')}</span>
+      <a class="t" href="/teletext?ligue=${g.ligue.id}">${esc(g.ligue.name)}<span class="pays">${esc(pays(g.ligue.country, g.ligue.drapeau))}</span>
         <span class="sep"></span><span class="fl">›</span></a>
       ${g.matchs.map((m) => {
         const min = minute(m);

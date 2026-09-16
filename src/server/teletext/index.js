@@ -236,7 +236,14 @@ export function createTeletext({ pool, client, footballStore = null }) {
         mien: suivis.has(r.teams.home.id) || suivis.has(r.teams.away.id),
       };
       if (!parLigue.has(l.league_id)) {
-        parLigue.set(l.league_id, { ligue: l, matchs: [] });
+        /* Le drapeau porte le **code ISO** du pays — `…/flags/de.svg` — et
+           c'est la seule chose de cette réponse qui le donne. La page des
+           matchs s'en sert pour écrire le nom du pays dans la langue du
+           lecteur sans qu'on tienne une liste de deux cents pays dans le
+           dépôt. Il arrive dans la réponse qu'on lit déjà : il ne coûte pas
+           un appel de plus. */
+        parLigue.set(l.league_id,
+          { ligue: { ...l, drapeau: r.league?.flag ?? null }, matchs: [] });
       }
       parLigue.get(l.league_id).matchs.push(m);
     }
