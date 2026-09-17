@@ -4209,6 +4209,26 @@ que la page en réclamait un quatrième. Il monte maintenant le vrai
 `fanzzy-art.js` et vérifie que l'adresse qu'il construit — et son secours —
 désignent des fichiers qui existent.
 
+**Et l'AVIF est revenu, servi par le serveur.** C'est la suite logique du
+constat : le navigateur dit déjà ce qu'il sait lire, à chaque requête d'image,
+dans `Accept`. Il n'y a rien à deviner, il y a à lire.
+`src/server/images/index.js` relève au démarrage les images qui ont un jumeau
+`.avif` — 584 sur les 4 000 fichiers de `/img` — et, quand le navigateur a
+annoncé `image/avif` en toutes lettres, réécrit l'adresse demandée avant le
+`express.static` de `/img`. **L'adresse ne change pas côté page** : le HTML, le
+classeur, le service worker et le manifeste des états continuent de parler de
+`.webp`, et personne n'a à savoir ce qui part sur le fil. Les 28,7 Mo de WebP
+deviennent 18,3 Mo d'AVIF pour qui sait les lire — **36 % de moins**.
+
+Deux pièges y sont écrits noir sur blanc, et `images:smoke` les tient : **un
+joker ne vaut pas une déclaration de capacité** — Safari 15 annonce `image/`
+suivi d'une étoile et ne sait pas lire un AVIF, l'accepter referait la faute
+qu'on vient de corriger, en plus discret ; et **`Vary: Accept` n'est pas une
+politesse** — deux navigateurs demandent la même adresse et reçoivent deux
+fichiers, sans cet en-tête un cache partagé sert l'AVIF de l'un à l'autre. La
+suite rejoue les en-têtes réels de quatre navigateurs, dont Safari 15 et Safari
+17, sur les vraies images.
+
 **Un `catch` muet autour d'un ajout facultatif cache une panne pour de bon.**
 L'entrée ADMIN du menu se posait avec `nav.appendChild(a)`, sur une variable
 disparue avec la barre du bas. La `ReferenceError` tombait dans un
