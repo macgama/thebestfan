@@ -4599,6 +4599,28 @@ couvre qu'une moitié de la chaîne ne couvre rien.
 
 `invites:test` tient les six règles, et casse volontairement sur chacune.
 
+### TR1 n'a plus qu'un état à ses deux âges supérieurs
+
+Les douze états de `e2` et `e3` avaient été générés sous l'ancienne invite, celle
+qui ne portait pas la formule de `VISUELS.md` : ils sont couverts d'écussons de
+club, et on y lit « CAPO », « TICKET », « 200-20… ». Le troisième âge tient en
+plus un tambour alors que la carte est une **Voix**.
+
+Ils sont donc retirés — soixante-trois fichiers, seize mégaoctets — et il ne
+reste que `neutre` et `portrait` à chaque âge. Le repli est écrit pour ça : « un
+état absent retombe sur `neutre` ». Le personnage ne réagit plus au but à ces
+deux âges, mais il est là, à son âge, et le jeu n'expose plus ces images.
+
+**Pourquoi pas seulement remplacer le `neutre` :** `fanzzy-art.mjs` calcule
+**un cadrage par âge, l'union de ses douze états**, et l'applique à tous. Un
+`neutre` neuf à côté de onze anciens ferait sauter le personnage d'un état à
+l'autre — un défaut qui se lit comme un bug d'affichage, jamais comme un
+cadrage. L'unité de reprise est donc l'âge entier, et les rendus d'origine des
+onze autres états ne sont pas dans le dépôt (`art/**/_src/` est ignoré par git).
+
+Le jour où l'on redessine ces deux âges, c'est douze états chacun, d'un seul
+passage, avec l'invite d'aujourd'hui.
+
 ### Les quatre chaînes
 
 Quatre sortes de dessins, quatre chaînes. Celle des Fanzzy d’abord, qui est

@@ -106,8 +106,24 @@ scripts/etats-smoke.mjs             attentes mises à jour + secours() éprouvé
 ETAT.md                             § 6, Pièges connus : l'entrée complète
 ```
 
-`public/img/` n'a pas changé : les AVIF étaient déjà tous là, ils n'étaient
-simplement jamais servis.
+### Images retirées
+
+```
+public/img/fanzzy/TR1/e2/base/     dix états sur douze — il reste neutre
+public/img/fanzzy/TR1/e3/base/     onze états sur douze — il reste neutre
+```
+
+Soixante-trois fichiers, seize mégaoctets. Ils portaient des écussons de club et
+les mots « CAPO » et « TICKET » : ils avaient été produits par l'invite d'âge
+d'avant, qui ne portait pas la formule de `VISUELS.md`. Le repli du jeu est
+écrit pour ce cas — un état absent retombe sur `neutre` — et `index.json` est
+régénéré en conséquence. **Rien à faire de plus au déploiement** : le manifeste
+est servi avec une heure de cache, les joueurs déjà en ligne cessent de demander
+ces états dans l'heure, et d'ici là un état manquant ne casse rien, il ne change
+simplement pas la pose.
+
+Le reste de `public/img/` n'a pas changé : les AVIF étaient déjà tous là, ils
+n'étaient simplement jamais servis.
 
 ---
 

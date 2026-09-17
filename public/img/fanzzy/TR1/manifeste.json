@@ -28,17 +28,7 @@
       "skins": {
         "base": {
           "etats": [
-            "neutre",
-            "salut",
-            "pousse",
-            "encaisse",
-            "attente",
-            "victoire",
-            "defaite",
-            "occasion",
-            "decision",
-            "progression",
-            "ennui"
+            "neutre"
           ],
           "portrait": true,
           "sha": "7c796cd7b01c"
@@ -49,18 +39,7 @@
       "skins": {
         "base": {
           "etats": [
-            "neutre",
-            "salut",
-            "pousse",
-            "but",
-            "encaisse",
-            "attente",
-            "victoire",
-            "defaite",
-            "occasion",
-            "decision",
-            "progression",
-            "ennui"
+            "neutre"
           ],
           "portrait": true,
           "sha": "5cbda6cdbe56"
