@@ -303,16 +303,35 @@ titre('Un âge reste dans sa famille');
   const perc = lot.filter((x) => x.type === 'perc');
   check(`les ${perc.length} âges de la Percussion interdisent le porte-voix`,
     perc.length > 0 && perc.every((x) => /no megaphone/.test(x.invite)));
-  check('chaque âge remplace l’objet du premier au lieu d’en ajouter un second',
-    lot.every((x) => /replace it, do not add a second one/.test(x.invite)));
+  /* La Fidélité ne tient rien : sa montée est une tenue, pas un objet, et les
+     deux lignes n'ont donc pas la même forme. Une seule règle les couvre : une
+     invite d'âge dit **soit** ce que le personnage tient, **soit** comment il se
+     tient — jamais les deux, jamais ni l'une ni l'autre. */
+  const tient = lot.filter((x) => /• what they hold/.test(x.invite));
+  const seTient = lot.filter((x) => /• how they stand/.test(x.invite));
+  check(`${tient.length} âges disent ce qu’ils tiennent, ${seTient.length} comment ils se tiennent, aucun les deux`,
+    tient.length + seTient.length === lot.length
+    && !lot.some((x) => /• what they hold/.test(x.invite) && /• how they stand/.test(x.invite)));
+  check('un objet qui monte remplace celui du premier âge au lieu de s’y ajouter',
+    tient.every((x) => /replace it, do not add a second one/.test(x.invite)));
+  check('et une tenue qui monte garde ce que le personnage avait dans les mains',
+    seTient.every((x) => /keep whatever they are holding in the reference image/.test(x.invite)));
 
   /* Et la ligne de famille cède devant le français de la carte, comme au
      premier âge. Sans ça, Le Collectionneur — une Fidélité qui tient un album —
      se retrouve les bras croisés et les mains vides au deuxième âge, alors que
      toute sa lignée parle de ses cartes. */
   check('l’objet de famille cède devant le texte de la carte',
-    lot.every((x) => /UNLESS the French text further down names something else/
+    tient.every((x) => /UNLESS the French text above names an object of their own/
       .test(x.invite)));
+
+  /* Et le français est écrit **avant** les consignes, comme au premier âge : un
+     modèle suit l'instruction concrète qu'il vient de lire, pas celle qui
+     viendra. Dans l'autre ordre, une Fidélité dont la lignée parle de cartes
+     revient bras croisés et mains vides. */
+  check('et il est écrit avant elles, pas après',
+    lot.every((x) => x.invite.indexOf("What they have become") > 0
+      && x.invite.indexOf("What they have become") < x.invite.indexOf("What else changes")));
 }
 
 titre('La règle de droits couvre les deux bouts de la chaîne');
@@ -331,11 +350,25 @@ titre('La règle de droits couvre les deux bouts de la chaîne');
   /* Les pastilles cousues sont l'endroit exact où le générateur écrit : les
      deux âges de TR1 en sont revenus couverts de mots. L'interdit doit être là
      où naît l'envie. */
-  /* Les porteurs de vêtements, c'est-à-dire tout ce qui n'est pas un objet, une
-     bête ou un phénomène — ceux-là ne portent ni parka ni pastilles. */
-  const habilles = lot.filter((x) => !/It does not age/.test(x.invite));
-  check(`et les ${habilles.length} qui portent des vêtements interdisent l’écriture sur les pastilles`,
-    habilles.every((x) => /badges, bands and cloth carry NO writing/.test(x.invite)));
+  /* Et l'interdit posé **sur les objets qui appellent l'écriture**. La formule
+     générale de `VISUELS.md` n'a pas suffi une seule fois sur cinq images —
+     « CAPO », « TICKET », « EVENT », « PRESS », « COLLECTION 2019 », toujours
+     sur un objet fait pour porter des mots. Il vaut pour les premiers âges
+     comme pour les suivants : c'est là que le générateur écrit. */
+  const partout = [...lot, ...invitesDe('TR'), ...invitesDe('GC')];
+  check(`les ${partout.length} invites disent qu’un livre, un badge ou un billet est vierge`,
+    /* Les mots, pas les retours à la ligne : la clause est écrite en gabarit et
+       coupe ses lignes où elle veut. Un contrôle qui cherche la phrase telle
+       qu'on l'a tapée échoue à la première reformulation de la mise en page. */
+    partout.every((x) => {
+      const nu = x.invite.replace(/\s+/g, ' ');
+      return /nothing in the image is written on/i.test(nu)
+        /* Et l'objet reste l'objet : la première version disait « leave it
+           bare » et le générateur a rendu un livre nu, sans cartes — un
+           collectionneur qui ne collectionne plus rien. On interdit les mots,
+           pas les images. */
+        && /Keep every object exactly as recognisable as it should be/.test(nu);
+    }));
 }
 
 console.log(rouge ? `\n${rouge} test(s) en échec` : '\ntout est vert');

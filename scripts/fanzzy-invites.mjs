@@ -137,6 +137,35 @@ const GARDE = `no text, no letters, no numbers, no logos, no brand marks,
 no club crests, no team names, no sponsor logos, no identifiable jerseys,
 no real people`;
 
+/**
+ * L'interdit d'écrire, posé **sur les objets qui appellent l'écriture**.
+ *
+ * `VISUELS.md` l'annonce : « les générateurs ajoutent spontanément des écussons
+ * sur les vestes et des lettres sur les bannières, même quand on le leur
+ * interdit ». La formule générale n'a pas suffi une seule fois sur cinq images
+ * : « CAPO » et « TICKET » sur un manteau, « EVENT » sur un badge, « PRESS » sur
+ * un autre, « COLLECTION 2019 » sur un album. À chaque fois sur un objet **fait
+ * pour porter des mots** — un livre, un carton, une étiquette, un papier.
+ *
+ * L'interdit général reste, il couvre le cas qu'on n'a pas prévu. Celui-ci le
+ * double là où la faute se produit vraiment, en nommant les objets un par un :
+ * un modèle qui lit « no text » en fin d'invite écrit quand même sur la
+ * couverture d'un album, parce qu'une couverture d'album *a* un titre. Il faut
+ * lui dire que celle-là n'en a pas.
+ *
+ * C'est le même geste que la clause des Tifo — « the fabric is completely
+ * blank » — qui, elle, tient depuis qu'elle existe.
+ */
+const RIEN_D_ECRIT = `CRITICAL — nothing in the image is written on. Books,
+albums, folders, collectible cards, stickers, badges, patches, lanyards, passes,
+tickets, sheets of paper, signs, labels and clothing tags carry NO letters, NO
+words, NO numbers, NO titles, NO logos and NO emblems anywhere on them.
+
+They are still fully there and fully detailed: a collectible card shows a small
+painted picture or a plain block of colour, an album is a thick ringed binder
+full of card sleeves, a badge is a circle of plain colour. Keep every object
+exactly as recognisable as it should be — simply with no writing on it.`;
+
 /* Ce que chaque famille ajoute au personnage. Une ligne, et seulement ce qui se
    voit : la Voix a la bouche ouverte, la Percussion tient quelque chose qui
    sonne. Un trait de caractère qui ne se dessine pas n'a rien à faire ici. */
@@ -548,6 +577,8 @@ function invite(f) {
     '',
     STYLE,
     '',
+    RIEN_D_ECRIT,
+    '',
     GARDE,
   ].filter(Boolean).join('\n');
 }
@@ -622,11 +653,21 @@ const MONTEE = {
   depl: ['a long knitted two-colour scarf worn around the neck',
     'the same scarf held wide between both hands',
     'the same scarf held high and taut, a worn travel bag across the body'],
-  fide: ['hands in pockets',
-    'arms folded, feet planted, immovable',
-    'the same folded arms and planted feet, in a heavier longer coat — their '
-      + 'strength is that they have not moved'],
+  /* La Fidélité ne tient rien : sa force est de ne pas bouger. Sa montée est
+     donc une **tenue**, pas un objet — et c'est ce qui a coûté deux rendus au
+     Collectionneur. La ligne s'intitulait « ce qu'ils tiennent » et décrivait
+     des bras croisés : un modèle qui lit ça vide les mains, quoi qu'on écrive
+     ailleurs. On ne lui demande plus d'arbitrer entre deux instructions
+     contraires, on ne lui en donne qu'une. */
+  fide: null,
 };
+
+/** Pour la Fidélité, dont la montée est une tenue et non un objet. */
+const MONTEE_TENUE = [null,
+  'they stand more solidly than before, weight settled, nothing moves them — '
+    + 'and they keep whatever they are holding in the reference image',
+  'they are immovable, weight low, planted — and they keep whatever they are '
+    + 'holding in the reference image, worn and familiar after all these years'];
 
 /** Les familles dont l'objet ne doit jamais apparaître ici. */
 const PAS_CHEZ_MOI = {
@@ -636,6 +677,8 @@ const PAS_CHEZ_MOI = {
   pyro: 'no drum, no drumsticks, no flag, no banner, no megaphone',
   depl: 'no drum, no drumsticks, no flare, no megaphone, no banner',
   fide: 'no drum, no drumsticks, no flare, no flag, no banner, no megaphone',
+  /* La Fidélité garde ce qu'elle avait : on ne lui ajoute rien et on ne lui
+     retire rien. */
 };
 
 /** Les quatre autres axes, pour un personnage qui a un corps et des vêtements. */
@@ -740,29 +783,36 @@ function inviteAge(f) {
     chose ? '' : `CRITICAL — it must still be recognisably the SAME PERSON, not `
       + `someone else of that age. ${OSSATURE}`,
     '',
+    /* ## Le français d'abord, les consignes ensuite
+       
+       L'ordre n'est pas cosmétique, il décide de qui gagne. L'invite des
+       premiers âges pose l'histoire **avant** la garde-robe et la pose, et
+       chacune de ces lignes dit « sauf si le texte français ci-dessus dit
+       autre chose » : c'est ce qui fait que Le Collectionneur garde son album.
+       
+       Les âges faisaient l'inverse — les cinq axes, puis l'histoire — avec la
+       même clause en travers. Elle n'a pas tenu : au deuxième âge, une Fidélité
+       dont toute la lignée parle de cartes est revenue bras croisés et mains
+       vides. Un modèle suit l'instruction concrète qu'il vient de lire, pas
+       celle qui viendra. */
+    `They are now called "${f.nom}".`,
+    f.histoire ? 'What they have become — this is written in French, follow it '
+      + `closely, and it wins over every instruction below: ${f.histoire}` : '',
+    r?.nom ? `They were "${r.nom}" in the reference image.` : '',
+    '',
     `What else changes — ${rang}`,
     `• ${axes[0]};`,
     `• ${axes[1]};`,
     `• ${axes[2]};`,
     `• ${axes[3]}.`,
-    /* La ligne de famille cède devant le français de la carte, exactement comme
-       au premier âge. Sans cette clause, Le Collectionneur — une Fidélité qui
-       tient un album et un éventail de cartes — se retrouve les bras croisés et
-       les mains vides au deuxième âge, alors que toute sa lignée parle de ses
-       cartes : la bourse du parvis, puis la collection exposée dans le hall.
-       C'est la faute que `invite()` corrige depuis longtemps pour les premiers
-       âges, et qu'`inviteAge()` refaisait pour tous les autres. */
     montee
-      ? `• what they hold, UNLESS the French text further down names something `
-        + `else — in that case keep what the French text says and ignore this `
-        + `line: in the reference image they had ${montee[0]}, now they have `
+      ? `• what they hold, UNLESS the French text above names an object of their `
+        + `own — in that case they keep that object and this line is ignored: in `
+        + `the reference image they had ${montee[0]}, now they have `
         + `${montee[f.stage - 1]}; replace it, do not add a second one.`
-      : '',
-    '',
-    `They are now called "${f.nom}".`,
-    f.histoire ? 'What they have become — written in French, follow it closely, '
-      + `and it wins over everything above: ${f.histoire}` : '',
-    r?.nom ? `They were "${r.nom}" in the reference image.` : '',
+      : (!chose && MONTEE_TENUE[f.stage - 1]
+        ? `• how they stand: ${MONTEE_TENUE[f.stage - 1]}.`
+        : ''),
     '',
     'Do not change anything else. One single figure, same empty flat background.',
     '',
@@ -773,9 +823,7 @@ function inviteAge(f) {
     PAS_CHEZ_MOI[f.type]
       ? `CRITICAL — they belong to one family only: ${PAS_CHEZ_MOI[f.type]}.`
       : '',
-    chose ? '' : 'CRITICAL — the badges, bands and cloth carry NO writing, NO '
-      + 'letters, NO numbers, NO crests, NO emblems, NO shields: plain flat '
-      + 'colours and simple shapes only.',
+    RIEN_D_ECRIT,
     '',
     GARDE,
   ].filter(Boolean).join('\n');
