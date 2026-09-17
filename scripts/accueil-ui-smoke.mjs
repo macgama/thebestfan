@@ -1576,19 +1576,53 @@ if (process.env.CAPTURE) {
   check('le bouton s’efface, il n’y a plus rien à décider', v.valider === false);
   check('et la coche revient sur la plaque', /✓/.test(v.plaque)
     || (console.log('        elle dit :', v.plaque), false));
-  await page.close();
-}
 
-{
-  /* Au retour, c'est **l'âge choisi** qui accueille, pas l'âge atteint. Sans
-     quoi le choix serait un réglage qu'il faut refaire à chaque visite,
-     c'est-à-dire pas un choix. */
-  const page = await ouvrir();
+  /* ------------------------------ et au retour, dans le **même** navigateur
+
+     Le défaut ne se voit que là, et il a failli passer : `ouvrir()` fabrique
+     un contexte neuf à chaque appel — c'est ce qu'il faut pour isoler les
+     contrôles, et c'est exactement ce qui le masquait. Sans `localStorage`,
+     la page repart du serveur et tombe juste ; avec, elle repeint d'abord ce
+     qu'elle a retenu.
+
+     Or elle ne retenait que **la lignée** (`TR32`), pas la carte de l'âge
+     (`TR32C`) : elle reposait donc le premier âge à chaque retour. Et la
+     réponse du serveur ne le corrigeait pas — même personnage, même âge, même
+     tenue, donc « rien à redessiner ».
+
+     On refait donc le geste du joueur : on va voir une autre page, et on
+     revient. */
+  await page.goto(base + '/fanzzy', { waitUntil: 'domcontentloaded' });
+  await page.goto(base + '/', { waitUntil: 'networkidle0' });
   await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
-  const src = await page.evaluate(() =>
+  /* Le temps que la réponse du serveur passe : c'est justement le moment où le
+     souvenir est seul à l'écran, et où l'on veut qu'il ait eu raison. */
+  await new Promise((r) => setTimeout(r, 600));
+  let src = await page.evaluate(() =>
     document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '');
-  check('à la visite suivante, c’est l’âge choisi qui accueille',
-    /TR32\./.test(src) || (console.log('        elle montre :', src), false));
+  check('en revenant d’une autre page, c’est toujours l’âge choisi',
+    /TR32\./.test(src) && !/TR32[BC]/.test(src)
+    || (console.log('        elle montre :', src), false));
+
+  /* L'autre sens, qui est le cas du joueur : il a choisi un âge **supérieur**,
+     et le souvenir reposait la lignée, c'est-à-dire le premier âge. C'est ce
+     qu'il a décrit — « il reprend toujours l'évolution 1 ». */
+  await page.click('#ageApres');
+  await new Promise((r) => setTimeout(r, 300));
+  await page.click('#ageApres');
+  await new Promise((r) => setTimeout(r, 300));
+  await page.click('#ageValider');
+  await page.waitForFunction(
+    () => document.getElementById('ageValider')?.hidden === true,
+    { timeout: 5000 }).catch(() => {});
+  await page.goto(base + '/fanzzy', { waitUntil: 'domcontentloaded' });
+  await page.goto(base + '/', { waitUntil: 'networkidle0' });
+  await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 600));
+  src = await page.evaluate(() =>
+    document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '');
+  check('et un âge supérieur choisi ne retombe pas sur le premier',
+    /TR32C/.test(src) || (console.log('        elle montre :', src), false));
   await page.close();
 }
 
