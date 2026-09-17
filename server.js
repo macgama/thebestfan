@@ -20,7 +20,8 @@ import { createFootball } from './src/server/football/routes.js';
 import { createCouleurs } from './src/server/football/couleurs.js';
 import { createSouvenirs } from './src/server/souvenirs/index.js';
 import { createFanzzy } from './src/server/fanzzy/index.js';
-import { charger as chargerCatalogue } from './src/server/fanzzy/catalogue.js';
+import { charger as chargerCatalogue, ecartsCatalogue }
+  from './src/server/fanzzy/catalogue.js';
 import { chargerReglages, reglagesPublics } from './src/server/reglages/index.js';
 import { reglage } from './src/shared/reglages.js';
 import { entetesDeSecurite, debitMaximal } from './src/server/garde/index.js';
@@ -558,6 +559,32 @@ app.get('/api/public/reglages', (_req, res) => {
   res.json(reglagesPublics());
 });
 
+/**
+ * Le catalogue en trois chiffres, pour `/healthz`.
+ *
+ * Rien sur les écarts quand il n'y en a pas : une clé « ecarts: 0 » à chaque
+ * lecture se regarde deux fois puis plus jamais, et c'est exactement ce qu'on
+ * cherche à éviter ici.
+ */
+function catalogueEnBref() {
+  const e = ecartsCatalogue();
+  if (!e) return 'non chargé';
+  const orphelines = e.orphelines.filter((o) => o.publie).length;
+  return {
+    cartes: e.compteurs.base,
+    aCollectionner: e.compteurs.aCollectionner,
+    ...(e.faute ? {
+      ecarts: {
+        ...(e.manquantes.length ? { manquantes: e.manquantes.length } : {}),
+        ...(orphelines ? { orphelines } : {}),
+        ...(e.doublons.length ? { doublons: e.doublons.length } : {}),
+        voir: 'npm run ecarts',
+      },
+    } : {}),
+    ...(e.retouchees.length ? { retouchees: e.retouchees.length } : {}),
+  };
+}
+
 app.get('/healthz', (_req, res) => {
   // `ok` disait vrai tant que le processus respirait — y compris quand plus
   // aucune route /api n'existait. Une surveillance branchée dessus n'avait donc
@@ -576,6 +603,19 @@ app.get('/healthz', (_req, res) => {
     football: football ? 'actif' : 'désactivé',
     souvenirs: souvenirs ? 'actives' : 'désactivées',
     fanzzy: fanzzy ? 'active' : 'désactivée',
+    /* L'écart entre `dex.js` et la table `fanzzy`, relevé au chargement.
+     *
+     * Il est ici parce que c'est ici qu'on regarde après une mise en ligne, et
+     * qu'une divergence de catalogue ne se voit nulle part ailleurs : ni
+     * erreur, ni page cassée — un compteur qui n'est pas le bon, des semaines
+     * plus tard.
+     *
+     * **Il ne touche pas à `ok`.** Ce drapeau dit si le site est ouvert, et un
+     * catalogue qui a dérivé reste un site parfaitement ouvert. Le faire
+     * passer au rouge ferait échouer des déploiements sains et apprendrait à
+     * tout le monde à ignorer le rouge — ce qui coûterait la panne suivante,
+     * la vraie. */
+    catalogue: catalogueEnBref(),
     virage: virage ? virage.rooms.size + ' salle(s)' : 'désactivé',
     teletext: teletext ? 'actif' : 'désactivé',
     onboarding: onboarding ? 'actif' : 'désactivé',

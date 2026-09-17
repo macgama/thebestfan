@@ -614,6 +614,32 @@ n'en est plus que **l'amorçage** : au démarrage, ses cartes absentes de la bas
 y sont insérées, et **jamais celles qui existent déjà** — une modification
 faite dans l'administration doit survivre au redémarrage suivant.
 
+**L'écart entre le code et la base se dit tout seul, à chaque démarrage.**
+`amorcer` n'écrase jamais une ligne existante — c'est voulu, sans quoi chaque
+redémarrage effacerait les corrections faites à l'écran. La contrepartie est
+qu'une carte modifiée dans `dex.js` peut ne jamais arriver en base, et qu'une
+ligne que le code ne connaît plus peut continuer d'être distribuée : **aucun
+des deux ne lève d'erreur**. Quatre migrations de `sql/` n'existent que pour
+rattraper ça après coup — `identites.sql`, `raretes.sql`, `series-neuves.sql`,
+`prefixes.sql`.
+
+`src/server/fanzzy/ecarts.js` compare les deux catalogues à chaque `charger()`,
+c'est-à-dire au démarrage du serveur et dans chacune des suites. Trois écarts
+sont des **fautes** qu'aucune manœuvre normale ne produit — une carte du code
+absente de la base, une ligne publiée inconnue du code, deux cartes publiées
+sous le même nom — et le journal les nomme. Le quatrième, une carte dont un
+champ diffère, est **ambigu par construction** : ça peut être une correction
+faite à l'écran, qui est la raison d'être de cette table. On le compte, on ne
+crie pas. Une alarme qui se déclenche sur du travail normal cesse d'être lue au
+troisième démarrage, et on perd les trois autres avec elle.
+
+Le silence est le cas normal : une base amorcée depuis `dex.js` et jamais
+retouchée ne dit rien. `ecarts:test` le vérifie sur les 670 cartes réelles,
+sans base de données — la comparaison est une fonction pure. `/healthz` porte
+le même constat, sans toucher à `ok` : un catalogue qui a dérivé reste un site
+ouvert. `npm run ecarts` en donne le détail, carte par carte et champ par
+champ, et **sort en erreur** sur une faute.
+
 Trois règles de cet écran, qui ne se négocient pas :
 
 - **On ne supprime jamais une carte.** Un identifiant effacé orphelinerait les

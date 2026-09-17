@@ -21,10 +21,13 @@ import { DEX as AMORCE } from '../../shared/fanzzy/dex.js';
 // Les saisons décident des séries ouvertes : `charger` les charge donc en
 // premier, et personne d'autre n'a à y penser. Voir `charger` plus bas.
 import { chargerSaisons } from './saisons.js';
+import { comparer, resumer } from './ecarts.js';
 
 let charge = false;
 let liste = [];
 let parId = new Map();
+/** Le dernier constat d'écart entre `dex.js` et la base. `null` avant chargement. */
+let ecarts = null;
 
 /**
  * Le catalogue n'a jamais été chargé.
@@ -148,7 +151,25 @@ export async function charger(pool) {
   const liens = await raccrocherLignees(pool);
   const n = await recharger(pool);
   const series = await chargerSeries(pool);
-  return { total: n, amorces, liens, series, saisons };
+
+  /* ## Le constat d'écart, à chaque démarrage, et à voix haute
+
+     `amorcer` n'écrase jamais une ligne existante — c'est voulu, et ça ne
+     changera pas. Mais ça veut dire qu'une carte modifiée dans `dex.js` peut
+     ne jamais arriver en base, et qu'une ligne que le code ne connaît plus
+     peut continuer d'être distribuée. **Aucun des deux ne lève d'erreur.**
+     Jusqu'ici, ça se voyait à un compteur bizarre dans le classeur, des
+     semaines plus tard, et il fallait penser à lancer `npm run ecarts`.
+
+     Un garde-fou qu'on lance à la main se lance après avoir vu le symptôme.
+     Celui-ci parle tout seul, ici, parce que tout ce qui monte un catalogue
+     passe par `charger` — le serveur comme les dix-neuf suites. Une base
+     amorcée depuis le même `dex.js` ne dit rien du tout : le silence est le
+     cas normal, et c'est ce qui rend le bruit lisible le jour où il arrive. */
+  ecarts = comparer({ code: AMORCE, base: liste, ouvertes });
+  for (const ligne of resumer(ecarts)) console.warn(ligne);
+
+  return { total: n, amorces, liens, series, saisons, ecarts };
 }
 
 /* --------------------------------------------------------------- lecture */
@@ -347,6 +368,15 @@ export function obtenables() {
   return personnages().filter((f) => f.publie && serieOuverte(f.set));
 }
 
+/**
+ * Le dernier constat d'écart entre `dex.js` et la base, ou `null`.
+ *
+ * Il est calculé au chargement et pas à la demande : il porte l'état du
+ * catalogue **tel qu'il a été monté**, ce qui est précisément la question
+ * qu'on pose après un déploiement. `/healthz` le sert.
+ */
+export const ecartsCatalogue = () => ecarts;
+
 /** Utile aux tests et au diagnostic. */
 export const estCharge = () => charge;
 
@@ -354,4 +384,5 @@ export const estCharge = () => charge;
 export function oublier() {
   charge = false; liste = []; parId = new Map();
   racines = new Map(); chaines = new Map();
+  ecarts = null;
 }
