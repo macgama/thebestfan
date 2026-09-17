@@ -86,7 +86,7 @@ const apiUrl = `http://localhost:${apiServer.address().port}`;
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 // Les tables des souvenirs référencent users : on les enlève d'abord.
-await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,

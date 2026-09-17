@@ -58,11 +58,21 @@ export function createAmis({ pool, requireAuth, kop = null }) {
    * démarrage du serveur, mais une suite de test peut monter ce module sans
    * lui. Un avatar au premier âge vaut mieux qu'une liste d'amis qui lève.
    */
-  function ageDe(id, stade) {
+  function ageDe(id, stade, choisi) {
     if (!id) return null;
     try {
       const racine = racineDe(id);
-      return (auStade(racine, Math.max(1, Number(stade) || 1)) ?? { id: racine }).id;
+      /* **L'âge choisi passe devant l'âge atteint**, borné par lui. Quelqu'un
+         peut préférer se montrer jeune : l'âge 1 n'est pas une version
+         inférieure du personnage, c'est un autre dessin. Mais la borne reste,
+         sinon une colonne restée sur 3 après une remise à zéro afficherait ici
+         un personnage que son propriétaire n'a pas fait grandir.
+
+         Nul = l'âge atteint, qui est ce que cette fonction rendait avant : tant
+         que personne n'a choisi, la liste d'amis est exactement celle d'hier. */
+      const atteint = Math.max(1, Number(stade) || 1);
+      const n = Math.min(atteint, Math.max(1, Number(choisi) || atteint));
+      return (auStade(racine, n) ?? { id: racine }).id;
     } catch { return id; }
   }
 
@@ -82,7 +92,7 @@ export function createAmis({ pool, requireAuth, kop = null }) {
   async function tableau(userId) {
     const lignes = await q(
       `SELECT am.a, am.b, am.par, am.etat, am.demande_le,
-              u.public_id, u.pseudo, w.active_fanzzy, uf.stage
+              u.public_id, u.pseudo, w.active_fanzzy, w.active_evo, uf.stage
          FROM amities am
          JOIN users u ON u.public_id = IF(am.a = ?, am.b, am.a)
          LEFT JOIN user_wallet w ON w.user_id = u.public_id
@@ -95,7 +105,7 @@ export function createAmis({ pool, requireAuth, kop = null }) {
     const gens = lignes.map((l) => ({
       id: l.public_id,
       pseudo: l.pseudo,
-      fanzzy: ageDe(l.active_fanzzy, l.stage),
+      fanzzy: ageDe(l.active_fanzzy, l.stage, l.active_evo),
       etat: l.etat,
       // « à moi de répondre » : la demande vient de l'autre.
       aMoi: l.etat === 'demande' && l.par !== userId,
@@ -149,7 +159,8 @@ export function createAmis({ pool, requireAuth, kop = null }) {
        coïncider le jour où ils changeraient de forme — en ne montrant rien
        d'autre qu'une suggestion qui revient alors qu'on l'a écartée. */
     const lignes = await q(
-      `SELECT u.public_id AS id, u.pseudo, w.active_fanzzy AS fanzzy, uf.stage, t.name AS club
+      `SELECT u.public_id AS id, u.pseudo, w.active_fanzzy AS fanzzy, w.active_evo AS evo,
+                uf.stage, t.name AS club
          FROM user_follows f
          JOIN user_follows moi ON moi.team_id = f.team_id AND moi.user_id = ?
          JOIN users u ON u.public_id = f.user_id
@@ -168,7 +179,7 @@ export function createAmis({ pool, requireAuth, kop = null }) {
     const par = new Map();
     for (const l of lignes) {
       const g = par.get(l.id)
-        ?? { id: l.id, pseudo: l.pseudo, fanzzy: ageDe(l.fanzzy, l.stage), clubs: [] };
+        ?? { id: l.id, pseudo: l.pseudo, fanzzy: ageDe(l.fanzzy, l.stage, l.evo), clubs: [] };
       if (l.club) g.clubs.push(l.club);
       par.set(l.id, g);
     }

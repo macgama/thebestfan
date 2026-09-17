@@ -87,7 +87,13 @@ function saisonDeSerie() {
  *   lui, la fiche reste lisible et le bouton d'entrée en duel disparaît : mieux
  *   vaut pas de bouton qu'un bouton qui ne peut pas tenir sa promesse.
  */
-export function createFanzzy({ pool, requireAuth, niveau = null, decks = null }) {
+export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
+  /* L’abonnement ouvre le **rythme** des boosters : une réserve plus haute et
+     une recharge plus courte. Rien d’autre — voir `abonnement/index.js`, qui
+     porte la règle : on vend de la largeur et du confort, jamais de la
+     puissance. Absent, tout le monde est joueur inscrit, ce qui est l'état
+     d'avant. */
+  abonnement = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -96,25 +102,35 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null })
   /* -------------------------------------------------------- portefeuille */
 
   /**
-   * Recharge les boosters au prorata du temps écoulé, puis renvoie l'état.
-   * Le calcul se fait à la lecture plutôt qu'avec une tâche périodique :
-   * pas de minuterie à maintenir, et le résultat est le même.
+   * Recharge les boosters au prorata du temps ecoule, puis renvoie l'etat.
+   * Le calcul se fait a la lecture plutot qu'avec une tache periodique :
+   * pas de minuterie a maintenir, et le resultat est le meme.
+   *
+   * **Le plafond et la cadence dependent de l'abonnement**, et de rien d'autre.
+   * Ce sont les deux seules choses que l'abonnement change ici : la reserve est
+   * plus haute et le booster revient plus vite. Le contenu d'un booster, lui,
+   * est exactement le meme — sans quoi on vendrait de la collection, donc de la
+   * puissance par la bande.
    */
   async function wallet(userId) {
+    const abonne = abonnement ? await abonnement.estAbonne(userId) : false;
+    const plafond = abonnement ? abonnement.plafondPacks(abonne) : maxPacks();
+    const cadence = abonnement ? abonnement.regenMs(abonne) : regenMs();
     await q(
       `INSERT IGNORE INTO user_wallet (user_id, scarves, packs) VALUES (?, 0, ?)`,
       [userId, packsDepart()],
     );
     const w = (await q(
-      `SELECT scarves, billets, packs, packs_at, active_fanzzy FROM user_wallet WHERE user_id = ?`,
+      `SELECT scarves, billets, packs, packs_at, active_fanzzy, active_evo
+         FROM user_wallet WHERE user_id = ?`,
       [userId],
     ))[0];
 
-    if (w.packs < maxPacks()) {
-      const gained = Math.floor((Date.now() - new Date(w.packs_at).getTime()) / regenMs());
+    if (w.packs < plafond) {
+      const gained = Math.floor((Date.now() - new Date(w.packs_at).getTime()) / cadence);
       if (gained > 0) {
-        const packs = Math.min(maxPacks(), w.packs + gained);
-        const at = new Date(new Date(w.packs_at).getTime() + gained * regenMs());
+        const packs = Math.min(plafond, w.packs + gained);
+        const at = new Date(new Date(w.packs_at).getTime() + gained * cadence);
         await q(`UPDATE user_wallet SET packs = ?, packs_at = ? WHERE user_id = ?`,
           [packs, at, userId]);
         w.packs = packs; w.packs_at = at;
@@ -124,10 +140,14 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null })
       w.packs_at = new Date();
     }
 
-    const nextIn = w.packs >= maxPacks() ? null
-      : Math.max(0, regenMs() - (Date.now() - new Date(w.packs_at).getTime()));
+    const nextIn = w.packs >= plafond ? null
+      : Math.max(0, cadence - (Date.now() - new Date(w.packs_at).getTime()));
     return { scarves: w.scarves, billets: w.billets, packs: w.packs,
-      nextPackInMs: nextIn, active: w.active_fanzzy };
+      nextPackInMs: nextIn, active: w.active_fanzzy,
+      /* L’âge auquel le montrer. Nul = l’âge atteint, et c’est ce que lit
+         l’accueil : la bourse disait déjà qui est à l’écran, elle dit
+         maintenant à quel âge — la page n’a pas deux réponses à rapprocher. */
+      activeEvo: w.active_evo === null ? null : Number(w.active_evo) };
   }
 
   async function collection(userId) {
@@ -796,17 +816,51 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null })
     // bourse un identifiant introuvable au moment de le dessiner.
     const id = racineDe(String(req.body?.id ?? ''));
     if (!parIdentifiant(id)) throw fail('fanzzy.error.unknown');
-    const owned = await q(`SELECT 1 FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
-      [req.user.id, id]);
-    if (!owned.length) throw fail('fanzzy.error.not_owned');
+    const stade = (await q(
+      `SELECT stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
+      [req.user.id, id]))[0];
+    if (!stade) throw fail('fanzzy.error.not_owned');
+
+    /* ----------------------------------------------------- et à quel âge
+
+       Le même geste dit qui et à quel âge, parce que c'est **une seule
+       décision** : « voilà le personnage qu'on voit de moi ». Une seconde
+       route pour l'âge aurait demandé deux appels pour un seul choix, et
+       laissé exister l'instant où la bourse porte un personnage et l'âge d'un
+       autre.
+
+       L'âge demandé ne peut pas dépasser l'âge atteint : on montre ce qu'on a
+       fait grandir, et rien de plus. Au-delà, ce serait un aperçu de ce qu'on
+       n'a pas payé, exposé aux amis comme s'il était acquis.
+
+       Absent, il vaut **nul**, c'est-à-dire l'âge atteint. C'est aussi ce qui
+       remet les compteurs à zéro en changeant de personnage : le classeur
+       envoie `{ id }` sans âge, et le nouveau venu se montre donc au sien —
+       garder l'âge du précédent l'afficherait à un stade qu'il n'a peut-être
+       jamais atteint. */
+    const atteint = Math.max(1, Number(stade.stage) || 1);
+    const brut = req.body?.evo;
+    let evo = null;
+    if (brut !== undefined && brut !== null && brut !== '') {
+      const n = Number(brut);
+      if (!Number.isInteger(n) || n < 1) throw fail('fanzzy.error.age_inconnu');
+      if (n > atteint) throw fail('fanzzy.error.age_non_atteint', { atteint });
+      /* L'âge atteint s'écrit nul plutôt que son numéro : sans cela, choisir
+         « le dernier » aujourd'hui figerait l'affichage sur cet âge-là, et le
+         joueur qui fait grandir son Fanzzy demain ne le verrait pas changer. */
+      evo = n < atteint ? n : null;
+    }
+
     if (decks) {
       try {
         await decks.placer(req.user.id, { id, place: 0 });
-        return { active: id };
+        await q(`UPDATE user_wallet SET active_evo = ? WHERE user_id = ?`, [evo, req.user.id]);
+        return { active: id, activeEvo: evo };
       } catch { /* le deck a refusé : on pose au moins l'avatar. */ }
     }
-    await q(`UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?`, [id, req.user.id]);
-    return { active: id };
+    await q(`UPDATE user_wallet SET active_fanzzy = ?, active_evo = ? WHERE user_id = ?`,
+      [id, evo, req.user.id]);
+    return { active: id, activeEvo: evo };
   })()));
 
   /**
@@ -982,12 +1036,24 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null })
    * pour ne plus le voir.
    */
   async function personnageActif(userId) {
-    const w = (await q(`SELECT active_fanzzy FROM user_wallet WHERE user_id = ?`, [userId]))[0];
+    const w = (await q(
+      `SELECT active_fanzzy, active_evo FROM user_wallet WHERE user_id = ?`, [userId]))[0];
     if (!w?.active_fanzzy) return null;
     const id = racineDe(w.active_fanzzy);
     const r = (await q(`SELECT stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
       [userId, id]))[0];
-    const evo = Math.max(1, Number(r?.stage) || 1);
+    const atteint = Math.max(1, Number(r?.stage) || 1);
+    /* **L'âge choisi, borné par l'âge atteint.** Le joueur peut préférer se
+       montrer jeune — c'est son visage, et celui de l'âge 1 n'a rien d'une
+       version inférieure. Mais la borne reste : une colonne qui dirait 3 alors
+       que la collection n'a fait grandir qu'au 2 afficherait aux amis un
+       personnage que son propriétaire n'a pas. Ça arrive sans mauvaise
+       intention — un âge choisi puis une remise à zéro de la collection — et
+       le clamp coûte moins cher que d'y penser à chaque écriture.
+
+       Nul = l'âge atteint, ce qui est le comportement d'avant : personne
+       n'ayant encore choisi, tout le monde se voit exactement comme hier. */
+    const evo = Math.min(atteint, Math.max(1, Number(w.active_evo) || atteint));
     // `auStade` peut ne rien rendre : cent cinquante-deux personnages n'ont
     // qu'un âge écrit, et une base qui annonce un stade 2 inexistant ne doit
     // pas faire disparaître le personnage de l'écran.

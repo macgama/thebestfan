@@ -74,7 +74,11 @@ const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', '
      viennent après duel.sql, qui pose la table, et n'ont d'autre dépendance :
      le parcours du joueur se lit sur elles, et les classements écartent
      l'entraînement grâce à elles. */
-  'historique'];
+  'historique',
+  /* L'abonnement. Il s'accroche à `users` et à rien d'autre : ce qu'il ouvre
+     se lit à la lecture, dans les modules, et aucune table ne le référence.
+     Il peut donc venir en dernier sans rien attendre. */
+  'abonnement'];
 
 {
   const surLeDisque = (await readdir(SQL)).filter((f) => f.endsWith('.sql'))

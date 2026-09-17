@@ -14,7 +14,7 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
@@ -263,6 +263,37 @@ check('le match du jour arrive en tête', r.json.matchs[0].mode === 'classe');
   await poser('TR32', 1);
   check('mais entrer en remplaçant ne prend pas le brassard',
     (await avatar()) === 'TR33');
+
+  /* ------------------------- l'âge choisi appartient au personnage choisi
+
+     L'accueil laisse dire **à quel âge** on se montre : `active_evo`, à côté de
+     `active_fanzzy`. Changer de titulaire doit donc l'effacer — un âge choisi
+     pour un personnage ne veut rien dire pour le suivant, et le garder
+     afficherait le nouveau venu à un stade qu'il n'a peut-être jamais atteint.
+
+     Mais **seulement** quand le titulaire change. `enregistrer` passe ici à
+     chaque sauvegarde du deck, y compris quand on ne touche qu'à une carte
+     d'action : effacer à tous les coups annulerait le choix du joueur pour un
+     geste qui n'a rien à voir, et il ne saurait jamais lequel des deux écrans
+     le lui a repris. */
+  const ageMontre = async () => (await pool.query(
+    'SELECT active_evo FROM user_wallet WHERE user_id = ?', [U]))[0][0]?.active_evo;
+
+  await pool.query('UPDATE user_wallet SET active_evo = 1 WHERE user_id = ?', [U]);
+  await call('/api/deck/mien', { method: 'PUT', body: { ...bon,
+    fanzzy: [{ id: 'TR33', stuff: [] }, ...bon.fanzzy.filter((f) => f.id !== 'TR33')] } });
+  check('enregistrer sans changer de titulaire garde l’âge choisi',
+    Number(await ageMontre()) === 1
+    || (console.log('        l’âge montré :', await ageMontre()), false));
+
+  await poser('TR32', 0);
+  check('mais changer de titulaire remet l’âge à celui du nouveau',
+    (await ageMontre()) === null
+    || (console.log('        l’âge montré :', await ageMontre()), false));
+
+  // On remet le deck dans l'état que la suite attend.
+  await poser('TR33', 0);
+  await poser('TR32', 1);
 
   r = await poser('TR33', 2);
   check('replacer le même personnage ailleurs le déplace',

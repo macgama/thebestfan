@@ -75,7 +75,7 @@ async function jusqua(fn, ms = 6000) {
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 await raw.query('SET FOREIGN_KEY_CHECKS = 0');
-await raw.query(`DROP TABLE IF EXISTS achats, admin_journal, reglages, competitions,
+await raw.query(`DROP TABLE IF EXISTS abonnements, achats, admin_journal, reglages, competitions,
   kop_membres, kops, amis, user_stuff, user_skins, user_fanzzy, user_souvenirs,
   user_decks, virage_presence, user_niveau, tenues, fanzzy, user_wallet,
   user_league_follows, team_leagues, teams, leagues, sessions, users`);

@@ -126,10 +126,26 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
 
   /* ---------------------------------------------------------- joueurs */
 
+  /**
+   * La liste des joueurs de l'administration.
+   *
+   * Elle dit **l'échéance de l'abonnement**, et non un simple oui/non :
+   * « abonné jusqu'au 12 mars » se lit, « abonné : oui » demande une seconde
+   * question. Une ligne sans échéance veut dire sans terme — un accès offert
+   * par l'administration — et `abonne` sépare ce cas de « pas de ligne du
+   * tout », que rien d'autre ne distinguerait.
+   *
+   * **L'abonnement se lit à part, et son absence ne casse rien.** Une
+   * sous-requête dans le SELECT principal aurait éteint tout l'écran des
+   * joueurs sur une base où `sql/abonnement.sql` n'est pas encore appliqué :
+   * c'est la panne que ce projet a déjà payée le 8 septembre, un écran entier
+   * perdu pour une colonne manquante. Une table absente veut dire « personne
+   * n'est abonné », et l'administration reste utilisable.
+   */
   async function joueurs({ q: terme = '', limite = 40, offset = 0 } = {}) {
     const where = terme ? `WHERE (u.pseudo LIKE ? OR u.email LIKE ?)` : '';
     const args = terme ? [`%${terme}%`, `%${terme}%`] : [];
-    return q(
+    const lignes = await q(
       `SELECT u.public_id, u.pseudo, u.email, u.role, u.status, u.locale,
               u.email_verified_at, u.created_at, u.last_login_at,
               w.scarves, w.packs, w.follow_slots, w.onboarded_at,
@@ -140,6 +156,25 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
          ${where}
         ORDER BY u.created_at DESC
         LIMIT ${Number(limite) || 40} OFFSET ${Number(offset) || 0}`, args);
+
+    if (!lignes.length) return lignes;
+    let abos = new Map();
+    try {
+      const ids = lignes.map((l) => l.public_id);
+      const rows = await q(
+        `SELECT user_id, formule, fin, (fin IS NULL OR fin > NOW(3)) AS actif
+           FROM abonnements WHERE user_id IN (${ids.map(() => '?').join(',')})`, ids);
+      abos = new Map(rows.map((r) => [r.user_id, r]));
+    } catch (e) {
+      if (e?.code !== 'ER_NO_SUCH_TABLE') throw e;
+    }
+    return lignes.map((l) => {
+      const a = abos.get(l.public_id);
+      return { ...l,
+        abonne: Boolean(a && Number(a.actif)),
+        abo_fin: a?.fin ?? null,
+        abo_formule: a?.formule ?? null };
+    });
   }
 
   /**
@@ -741,6 +776,52 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
 
   router.patch('/joueur/:id', safe(async (req, res) =>
     res.json(await modifier(req.user.id, req.params.id, req.body ?? {}, ip(req)))));
+
+  /* -------------------------------------------------------- abonnement
+
+     Accorder un abonnement depuis l'administration. C'est ce qui permet
+     d'ouvrir la bêta et d'éprouver les deux côtés du jeu **sans attendre le
+     prestataire de paiement** — et c'est aussi le geste de service après-vente
+     du jour où il sera branché : un remboursement, un mois offert.
+
+     Comme toute écriture d'administration, il passe par `admin_audit` : qui,
+     sur qui, quelle formule, combien de jours. Un accès offert sans trace est
+     un accès dont plus personne ne sait d'où il vient.
+
+     La règle de ce que l'abonnement ouvre ne vit pas ici : elle est dans
+     `abonnement/index.js`, et l'administration ne fait que l'accorder. */
+
+  router.post('/joueur/:id/abonnement', safe(async (req, res) => {
+    if (!deps.abonnement) return res.status(503).json({ error: 'admin.error.abo_absent' });
+    const cible = (await q('SELECT public_id, pseudo FROM users WHERE public_id = ?',
+      [req.params.id]))[0];
+    if (!cible) return res.status(404).json({ error: 'admin.error.joueur_inconnu' });
+
+    /* `jours` nul veut dire **sans terme** : c'est ce qu'on pose pour un
+       bêta-testeur. Rien ne l'expire, et c'est voulu — un accès offert qui
+       s'éteint sans prévenir se lit comme une panne. */
+    const brut = req.body?.jours;
+    const jours = brut === null || brut === undefined || brut === ''
+      ? null : Math.min(3650, Math.max(1, Number(brut) || 0));
+    if (jours !== null && !Number.isInteger(jours)) {
+      return res.status(400).json({ error: 'admin.error.jours' });
+    }
+    const formule = ['mensuel', 'annuel', 'offert'].includes(req.body?.formule)
+      ? req.body.formule : 'offert';
+
+    const etat = await deps.abonnement.accorder(cible.public_id,
+      { formule, jours, source: 'admin' });
+    await journal(req.user.id, 'abonnement.accorder', cible.public_id,
+      { formule, jours }, ip(req));
+    res.json({ abonnement: etat });
+  }));
+
+  router.delete('/joueur/:id/abonnement', safe(async (req, res) => {
+    if (!deps.abonnement) return res.status(503).json({ error: 'admin.error.abo_absent' });
+    const etat = await deps.abonnement.retirer(req.params.id);
+    await journal(req.user.id, 'abonnement.retirer', req.params.id, null, ip(req));
+    res.json({ abonnement: etat });
+  }));
 
   router.get('/competitions', safe(async (req, res) => res.json({
     competitions: await competitions({

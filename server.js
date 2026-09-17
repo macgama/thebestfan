@@ -33,6 +33,7 @@ import { createGoogleAuth } from './src/server/auth/google.js';
 import { createClassements } from './src/server/classements/index.js';
 import { createDecks } from './src/server/deck/index.js';
 import { createNiveau } from './src/server/niveau/index.js';
+import { createAbonnement } from './src/server/abonnement/index.js';
 import { createKop } from './src/server/kop/index.js';
 import { createAmis } from './src/server/amis/index.js';
 import { createAdmin } from './src/server/admin/index.js';
@@ -138,6 +139,7 @@ let socketAuth = null;
 let football = null;
 let souvenirs = null;
 let fanzzy = null;
+let abonnement = null;
 let virage = null;
 let teletext = null;
 let onboarding = null;
@@ -234,6 +236,19 @@ if (process.env.DATABASE_URL) {
 
     app.use('/api/auth', auth.router);
 
+    /* ---- l'abonnement
+
+       Monté **avant** tout ce qui ouvre quelque chose, parce que tout ce qui
+       ouvre quelque chose le lui demande. Il vend de la largeur et du
+       confort, jamais de la puissance : tous les formats de duel, tous les
+       âges et tous les classements restent ouverts à tout le monde. Voir la
+       tête de `abonnement/index.js`. */
+    abonnement = createAbonnement({ pool, requireAuth: auth.requireAuth });
+    app.use('/api/abonnement', abonnement.router);
+    globalThis.abonnement = abonnement;
+    console.log('abonnement actif');
+
+
     // ---- niveau et XP
     //
     // Monté avant tout ce qui le consulte : decks, duels, collection et
@@ -248,7 +263,7 @@ if (process.env.DATABASE_URL) {
     //
     // Monté avant les duels et le virage, qui le consultent : le premier y
     // verse la part du club, le second y lit les bonus actifs.
-    kop = createKop({ pool, io, requireAuth: auth.requireAuth });
+    kop = createKop({ pool, io, requireAuth: auth.requireAuth, abonnement });
     app.use('/api/kop', kop.router);
     console.log('KOP actifs');
 
@@ -277,7 +292,10 @@ if (process.env.DATABASE_URL) {
 
     // ---- administration
     admin = createAdmin({ pool, requireAuth: auth.requireAuth,
-      deps: { client: globalThis.footClient ?? null, virage: null } });
+      /* `abonnement` : l'administration peut en accorder un, ce qui ouvre la
+         bêta sans attendre le prestataire de paiement — et restera le geste
+         de service après-vente quand il sera branché. */
+      deps: { client: globalThis.footClient ?? null, virage: null, abonnement } });
     app.use('/api/admin', admin.router);
 
     /* ------------------------------------------------- la fermeture du jeu
@@ -322,7 +340,7 @@ if (process.env.DATABASE_URL) {
     console.log('administration active');
 
     // ---- classements
-    classements = createClassements({ pool, requireAuth: auth.requireAuth });
+    classements = createClassements({ pool, requireAuth: auth.requireAuth, abonnement });
     app.use('/api/rank', classements.router);
     console.log('classements actifs');
 
@@ -336,7 +354,8 @@ if (process.env.DATABASE_URL) {
     /* `decks` : la fiche d'un Fanzzy dit où il est dans la tribune du joueur
        et permet de l'y placer. Le module de deck est monté plus haut, ce qui
        rend la dépendance possible dans ce sens et pas dans l'autre. */
-    fanzzy = createFanzzy({ pool, requireAuth: auth.requireAuth, niveau, decks });
+    fanzzy = createFanzzy({ pool, requireAuth: auth.requireAuth, niveau, decks,
+      abonnement });
     app.use('/api/fanzzy', fanzzy.router);
     globalThis.fanzzy = fanzzy;
     console.log('collection fanzzy active');
@@ -356,13 +375,13 @@ if (process.env.DATABASE_URL) {
       : "boutique en vitrine — STRIPE_SECRET_KEY et STRIPE_WEBHOOK_SECRET manquent");
 
     // ---- cartes-souvenirs
-    souvenirs = createSouvenirs({ pool, requireAuth: auth.requireAuth });
+    souvenirs = createSouvenirs({ pool, requireAuth: auth.requireAuth, abonnement });
     app.use('/api/souvenirs', souvenirs.router);
     console.log('cartes-souvenirs actives');
 
     // ---- inscription, emplacements de suivi, inventaire
     onboarding = createOnboarding({ pool, requireAuth: auth.requireAuth, football: null,
-      niveau, decks });
+      niveau, decks, abonnement });
     app.use('/api/me', onboarding.router);
     console.log('inscription et inventaire actifs');
 

@@ -20,6 +20,7 @@
     "deck:smoke": "node scripts/deck-smoke.mjs",
     "stades:smoke": "node scripts/stades-smoke.mjs",
     "niveau:smoke": "node scripts/niveau-smoke.mjs",
+    "abo:smoke": "node scripts/abonnement-smoke.mjs",
     "kop:smoke": "node scripts/kop-smoke.mjs",
     "amis:smoke": "node scripts/amis-smoke.mjs",
     "amis:ui": "node scripts/amis-ui-smoke.mjs",

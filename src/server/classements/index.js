@@ -26,7 +26,12 @@ import express from 'express';
 
 const TTL_MS = 5 * 60 * 1000;
 
-export function createClassements({ pool, requireAuth }) {
+export function createClassements({ pool, requireAuth,
+  /* L'abonnement ouvre la **mémoire longue** du parcours : un joueur inscrit
+     voit ses vingt dernières parties, un abonné tout son historique. Rien
+     n’est effacé, et les classements ne changent pas d’un iota — c’est la
+     lecture qui s’arrête. Voir `abonnement/index.js`. */
+  abonnement = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -413,6 +418,36 @@ export function createClassements({ pool, requireAuth }) {
     const filtre = borne && !Number.isNaN(borne.getTime())
       ? borne.toISOString().slice(0, 23).replace('T', ' ') : null;
 
+    /* **Le plancher d’un joueur inscrit.**
+
+       Sans abonnement, le parcours s’arrête aux vingt dernières parties. On
+       ne le fait pas en comptant les lignes rendues : la pagination est par
+       curseur, donc le serveur ne sait pas à quelle page il en est, et un
+       compteur porté dans le curseur se falsifierait d’un doigt.
+
+       On cherche donc **la date de la vingtième partie**, une fois, et on
+       refuse tout ce qui est plus ancien. C’est exact, sans état, et
+       impossible à contourner en demandant une page plus lointaine.
+
+       `null` = aucune limite : c’est ce que rend un abonnement, et aussi ce
+       qu’on obtient sans module d’abonnement monté. */
+    let plancher = null;
+    if (abonnement) {
+      const garde = abonnement.profondeurParcours(await abonnement.estAbonne(userId));
+      if (garde !== null) {
+        const [p] = await q(
+          `SELECT quand FROM (
+             SELECT ended_at AS quand FROM duel_results WHERE user_id = ?
+             UNION ALL
+             SELECT joined_at AS quand FROM virage_presence WHERE user_id = ?
+           ) x ORDER BY quand DESC LIMIT 1 OFFSET ?`,
+          [userId, userId, garde - 1]);
+        /* Moins de parties que la limite : il les voit toutes, et il n’y a
+           rien à cacher. */
+        plancher = p?.quand ?? null;
+      }
+    }
+
     const match = `
         LEFT JOIN fixtures f ON f.id = %.fixture_id
         LEFT JOIN teams  h ON h.id = f.home_id
@@ -462,16 +497,30 @@ export function createClassements({ pool, requireAuth }) {
       } : null,
     });
 
-    const tout = [...duels.map((r) => ligne(r, 'duel')),
-                  ...virages.map((r) => ligne(r, 'virage'))]
-      .sort((x, y) => new Date(y.quand) - new Date(x.quand))
-      .slice(0, n);
+    let tout = [...duels.map((r) => ligne(r, 'duel')),
+               ...virages.map((r) => ligne(r, 'virage'))]
+      .sort((x, y) => new Date(y.quand) - new Date(x.quand));
+
+    /* Le plancher coupe **avant** la tranche, et non après : sinon une page
+       pleine de parties trop anciennes rendrait une liste vide en annonçant
+       qu’il y a une suite. Voir le calcul du plancher, plus haut. */
+    const tronque = plancher !== null
+      && tout.some((l) => new Date(l.quand) < new Date(plancher));
+    if (plancher !== null) {
+      tout = tout.filter((l) => new Date(l.quand) >= new Date(plancher));
+    }
+    tout = tout.slice(0, n);
 
     /* `suite` porte le curseur de la page suivante, et vaut `null` quand il n'y
        a plus rien : c'est à la réponse de le dire, pas à la page de le deviner
-       en comparant des longueurs. */
+       en comparant des longueurs.
+
+       `tronque` dit que la mémoire s’arrête là **par abonnement**, et non
+       parce qu’il n’a rien joué de plus. Les deux se ressemblent à l’écran, et
+       les confondre laisserait croire que des parties ont disparu. */
     return { lignes: tout,
-             suite: tout.length === n ? tout[tout.length - 1].quand : null };
+             suite: tout.length === n && !tronque ? tout[tout.length - 1].quand : null,
+             tronque };
   }
 
   /* ---------------------------------------------------------- routes */

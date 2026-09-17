@@ -52,7 +52,7 @@ async function jusqua(fn, ms = 5000) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
@@ -246,7 +246,19 @@ await jusqua(() => T(dom).getElementById('voile').classList.contains('on'));
       cadre: c.querySelector('.tbf-piece')?.className ?? '',
     }));
   check('le panneau propose des pièces', lignes.length > 0);
-  const propres = lignes.filter((l) => l.src === `/img/stuff/${l.id}.png`);
+  /* **Le format ne fait pas partie de ce qu’on éprouve.**
+
+     Ce contrôle et celui de l’emplacement exigeaient `.png`. Or
+     `stuff-art.js` sert le format que le navigateur sait lire — AVIF, WebP,
+     PNG en dernier recours — et la détection vit dans `fanzzy-art.js`. Le
+     jour où elle a rendu `.webp` sous jsdom, les deux sont devenus rouges
+     sans que rien ne soit cassé : la pièce portait bien son propre dessin,
+     avec la bonne extension.
+
+     Ce qui compte est **quelle pièce** est dessinée, pas dans quel format.
+     On compare donc le chemin sans son extension. */
+  const sansExt = (x) => String(x ?? '').replace(/.(avif|webp|png)$/, '');
+  const propres = lignes.filter((x) => sansExt(x.src) === `/img/stuff/${x.id}`);
   check('chaque pièce proposée porte son propre dessin',
     lignes.length > 0 && propres.length === lignes.length);
   if (propres.length !== lignes.length) {
@@ -269,9 +281,11 @@ check('l\u2019effet combiné est affiché', /Effet ·/.test(texte(dom)));
   const nom = pose?.querySelector('b')?.textContent.trim();
   const src = pose?.querySelector('.tbf-piece .illu')?.getAttribute('src') ?? null;
   const attendu = STUFF.find((s) => s.nom === nom)?.id;
-  check('l\u2019emplacement montre l\u2019objet posé',
-    Boolean(attendu) && src === `/img/stuff/${attendu}.png`);
-  if (src !== `/img/stuff/${attendu}.png`) {
+  // Sans l’extension, pour la même raison qu’au-dessus.
+  const nu = String(src ?? '').replace(/.(avif|webp|png)$/, '');
+  check('l’emplacement montre l’objet posé',
+    Boolean(attendu) && nu === `/img/stuff/${attendu}`);
+  if (nu !== `/img/stuff/${attendu}`) {
     console.log('        posée :', nom, '→', src, '(attendu', attendu, ')');
   }
 }

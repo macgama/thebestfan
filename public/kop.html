@@ -135,6 +135,11 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
   (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 
 const MESSAGES = {
+  /* **Créer** demande un abonnement, **rejoindre** non. Le message le dit
+     dans cet ordre : ce qui est encore possible avant ce qui ne l’est pas,
+     sinon on lit un refus là où il y a une porte ouverte. */
+  'kop.error.abonnement':     'Rejoindre un KOP est ouvert à tous ; en créer un demande '
+                              + 'un abonnement. Cherche celui de ton club juste en dessous.',
   'kop.error.nom':            'Ce nom ne va pas : entre 3 et 40 caractères, sans balise.',
   'kop.error.club':           'Ce club n’existe pas.',
   'kop.error.pas_ton_club':   'Tu ne suis pas ce club. Suis-le d’abord depuis « Mes clubs ».',
