@@ -367,8 +367,20 @@ titre('La règle de droits couvre les deux bouts de la chaîne');
            bare » et le générateur a rendu un livre nu, sans cartes — un
            collectionneur qui ne collectionne plus rien. On interdit les mots,
            pas les images. */
-        && /Keep every object exactly as recognisable as it should be/.test(nu);
+        && /Keep every object exactly as recognisable as it should be/.test(nu)
+        /* Vingt-six cartes racontent une écriture — une banderole peinte, une
+           pancarte, des torses où « les lettres s'alignent ». Elles ont besoin
+           d'une issue, sinon le générateur écrit : l'objet se montre roulé,
+           plié ou de dos, et le moment se lit sur le personnage. */
+        && /show that object rolled up, folded, turned away/.test(nu);
     }));
+
+  /* Et le français de la carte ne lève jamais une règle de droits. « La
+     Banderole Écrite » disait, à la lettre, que le texte gagne sur tout ce qui
+     suit — donc sur l'interdiction d'écrire. */
+  check('le texte de la carte ne peut pas lever une ligne CRITICAL',
+    partout.every((x) => /EXCEPT the ones marked CRITICAL, which always win/
+      .test(x.invite.replace(/\s+/g, ' '))));
 }
 
 console.log(rouge ? `\n${rouge} test(s) en échec` : '\ntout est vert');

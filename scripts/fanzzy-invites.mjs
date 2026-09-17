@@ -164,7 +164,14 @@ words, NO numbers, NO titles, NO logos and NO emblems anywhere on them.
 They are still fully there and fully detailed: a collectible card shows a small
 painted picture or a plain block of colour, an album is a thick ringed binder
 full of card sleeves, a badge is a circle of plain colour. Keep every object
-exactly as recognisable as it should be — simply with no writing on it.`;
+exactly as recognisable as it should be — simply with no writing on it.
+
+If the French text says that something HAS BEEN written or painted — a banner,
+a sign, a shirt, a wall — then show that object rolled up, folded, turned away
+from the camera or held against the body, so that the written face is never
+visible. The moment is in the character: paint on their hands, the way they
+hold it. Never draw the words, not even blurred, not even foreign or invented
+letters.`;
 
 /* Ce que chaque famille ajoute au personnage. Une ligne, et seulement ce qui se
    voit : la Voix a la bouche ouverte, la Percussion tient quelque chose qui
@@ -546,7 +553,9 @@ function invite(f) {
       + 'completely plain flat mid-grey background.',
     '',
     `Character: "${f.nom}".`,
-    f.histoire ? `Who they are — this is written in French, follow it closely: ${f.histoire}` : '',
+    f.histoire ? 'Who they are — this is written in French, follow it closely, '
+      + 'and it wins over every instruction below EXCEPT the ones marked '
+      + `CRITICAL, which always win: ${f.histoire}` : '',
     serie
       ? `Kind and wardrobe, unless the French text above describes different `
         + `clothes, in which case follow the French text: ${serie}.`
@@ -796,8 +805,15 @@ function inviteAge(f) {
        vides. Un modèle suit l'instruction concrète qu'il vient de lire, pas
        celle qui viendra. */
     `They are now called "${f.nom}".`,
+    /* « Il gagne sur tout ce qui suit » était un blanc-seing, et il couvrait
+       aussi les lignes de droits. La carte TR3B s'appelle « La Banderole
+       Écrite » : à la lettre, le texte autorisait le générateur à écrire les
+       trois mots sur la bâche, ce que `VISUELS.md` interdit sans exception. Le
+       français décide de ce que le personnage est devenu, jamais de ce qu'on a
+       le droit de dessiner. */
     f.histoire ? 'What they have become — this is written in French, follow it '
-      + `closely, and it wins over every instruction below: ${f.histoire}` : '',
+      + 'closely, and it wins over every instruction below EXCEPT the ones '
+      + `marked CRITICAL, which always win: ${f.histoire}` : '',
     r?.nom ? `They were "${r.nom}" in the reference image.` : '',
     '',
     `What else changes — ${rang}`,
