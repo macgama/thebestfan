@@ -642,25 +642,34 @@ function invite(f) {
  * joue pas — exactement la faute que `FAMILLE` corrige déjà pour les premiers
  * âges, refaite ici parce que l'invite des âges ne disait rien du domaine.
  *
- * Le premier élément sert à nommer d'où l'on part : une édition qui dit « ils
- * avaient ceci, ils ont maintenant cela » remplace l'objet au lieu d'en ajouter
- * un second.
+ * Le tableau ne dit plus d'où l'on part. Il l'a dit un temps, un objet de
+ * départ par famille, pour qu'une édition annonce « ils avaient ceci, ils ont
+ * maintenant cela » et remplace au lieu d'ajouter. Mais cet objet était une
+ * supposition sur un dessin que le générateur n'a jamais lu : la Voix partait
+ * « les mains vides », et le premier âge de TR4 tient un téléphone — il filme
+ * tout, c'est sa carte. La phrase devenait fausse devant l'image, et un modèle
+ * qui doit arbitrer entre ce qu'on lui écrit et ce qu'il voit garde les deux
+ * objets : exactement l'ajout qu'on voulait empêcher.
+ *
+ * On ne nomme donc plus le point de départ, on le désigne : « ce qu'ils
+ * tenaient dans les mains sur l'image de référence ». C'est vrai quel que soit
+ * le dessin, mains vides comprises. Ce qui est *porté* est explicitement
+ * épargné, sinon le casque de TR4 et l'écharpe du Déplacement partiraient avec.
  */
 const MONTEE = {
-  voix: ['nothing in their hands',
-    'one hand cupped beside the mouth, mouth open mid-shout',
+  /* Le deuxième âge de la Voix ne tient rien : il crie, une main en coupe
+     devant la bouche. Écrit sous l'étiquette « ce qu'ils tiennent », c'était
+     la faute du Collectionneur refaite à l'identique — on demandait un objet
+     et on décrivait une posture. Il passe donc par `tenue`. */
+  voix: [{ tenue: 'one hand cupped beside the mouth, mouth open mid-shout' },
     'a plain smooth megaphone cone raised high in one hand, mouth wide open'],
-  perc: ['a pair of drumsticks',
-    'a simple street drum on a strap, sticks mid-beat',
+  perc: ['a simple street drum on a strap, sticks mid-beat',
     'a large bass drum strapped across the body, one heavy beater raised'],
-  tifo: ['a small piece of plain cloth',
-    'a plain single-colour flag on a short pole, held up',
+  tifo: ['a plain single-colour flag on a short pole, held up',
     'a large folded plain banner over one shoulder and a tall bare pole'],
-  pyro: ['an unlit flare held down at their side',
-    'one lit flare held up, its warm light only on them',
+  pyro: ['one lit flare held up, its warm light only on them',
     'one lit flare held at arm’s length above the head, thin smoke rising'],
-  depl: ['a long knitted two-colour scarf worn around the neck',
-    'the same scarf held wide between both hands',
+  depl: ['the same scarf held wide between both hands',
     'the same scarf held high and taut, a worn travel bag across the body'],
   /* La Fidélité ne tient rien : sa force est de ne pas bouger. Sa montée est
      donc une **tenue**, pas un objet — et c'est ce qui a coûté deux rendus au
@@ -822,10 +831,16 @@ function inviteAge(f) {
     `• ${axes[2]};`,
     `• ${axes[3]}.`,
     montee
-      ? `• what they hold, UNLESS the French text above names an object of their `
-        + `own — in that case they keep that object and this line is ignored: in `
-        + `the reference image they had ${montee[0]}, now they have `
-        + `${montee[f.stage - 1]}; replace it, do not add a second one.`
+      ? (montee[f.stage - 2].tenue
+        ? `• how they stand, UNLESS the French text above names an object of their `
+          + `own — in that case they keep that object and this line is ignored: `
+          + `${montee[f.stage - 2].tenue}. Their hands are free: whatever they held `
+          + `in the reference image is gone. What they WEAR stays with them.`
+        : `• what they hold, UNLESS the French text above names an object of their `
+          + `own — in that case they keep that object and this line is ignored: they `
+          + `now have ${montee[f.stage - 2]}, and it is their only object — whatever `
+          + `they were holding in their hands in the reference image is gone, `
+          + `replaced by this one. Never draw both. What they WEAR stays with them.`)
       : (!chose && MONTEE_TENUE[f.stage - 1]
         ? `• how they stand: ${MONTEE_TENUE[f.stage - 1]}.`
         : ''),
