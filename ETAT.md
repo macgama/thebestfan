@@ -4543,22 +4543,26 @@ Déploiement complet : voir `DEPLOIEMENT.md`.
 
 ## 9. Fabriquer une illustration
 
-### Les âges montent dans leur domaine, ils ne vieillissent pas
+### Un Fanzzy traverse une vie
 
-La règle a changé, et elle change les deux bouts de la chaîne — le dessin et le
-texte. L'invite des âges disait `Change only the age` : le deuxième âge « grown
-up », le troisième « the last age of a long life ». Trois dessins, trois
-personnes. Le joueur qui paie quatre-vingt-dix écharpes voyait son personnage
-**remplacé**, ce qui est le contraire de ce que l'évolution promet.
+Âge 1 l'enfant ou l'adolescent, âge 2 l'adulte, âge 3 le vieux. C'est le
+vieillissement qui porte l'évolution, et la raison est simple : **c'est ce qui
+est amusant**. Voir son personnage traverser une vie est une récompense ; le
+voir gagner deux pastilles cousues n'en est pas une.
 
-Le cas limite le dit mieux qu'un argument : Le Petit Teigneux a onze ans.
-Vieilli deux fois, il devient un homme de cinquante-sept ans dont ni le visage
-ni la silhouette ne rappellent la carte payée.
+**La règle a été essayée dans l'autre sens, et l'essai a tranché.** Une version
+de `inviteAge()` a figé l'âge pour ne faire monter que le domaine — le
+raisonnement tenait sur le papier : le joueur qui paie quatre-vingt-dix
+écharpes doit reconnaître son personnage, et un gamin de onze ans vieilli deux
+fois devient un homme de cinquante-sept dont plus rien ne rappelle la première
+carte. Les deux dessins qui en sont sortis ont montré ce que le papier ne dit
+pas : un gamin qui reste un gamin avec plus d'écussons n'est pas une évolution,
+c'est une variante. Deux cent soixante crédits, et la bonne réponse — c'est
+pour ça qu'on essaie sur une lignée avant les cent trente-sept autres.
 
-**L'âge est donc un invariant, et le domaine est ce qui monte.** Cinq axes le
-disent dans le dessin, choisis parce qu'ils se lisent à quarante-huit pixels —
-dans le classeur, une carte fait cent cinquante pixels de haut, et une évolution
-qui ne se voit qu'en plein écran ne se voit pas :
+**Ce que l'essai a laissé derrière lui**, et qui est le vrai gain : les cinq
+axes ne remplacent plus l'âge, ils le **dessinent**. Une ride ne se voit pas à
+cent cinquante pixels de haut ; une silhouette, si.
 
 | | Âge 1 | Âge 2 | Âge 3 |
 |---|---|---|---|
@@ -4568,15 +4572,24 @@ qui ne se voit qu'en plein écran ne se voit pas :
 | accumulation | rien | quelques pastilles unies | couvert, écharpe au poignet |
 | ouverture | bras au corps | menton levé | bras ouverts, face caméra |
 
-Ce qui ne bouge **jamais** : le visage, la palette, la carrure, le rendu, le
-cadrage. C'est là qu'est la reconnaissance, et c'est tout ce qu'on protège.
+**Vieillir quelqu'un et le remplacer sont deux choses différentes**, et un
+générateur ne fait pas la différence tout seul : il redessine un visage moyen
+de l'âge demandé. `OSSATURE` lui interdit donc ce qui ne bouge pas — la forme
+des yeux, le nez, la mâchoire, le teint, la palette du vêtement — et ne lui
+laisse que ce que les années font vraiment : les cheveux, la peau, la carrure,
+le port. C'est la seule ligne qui sépare « il a grandi » de « ce n'est plus
+lui ».
 
-`MONTEE`, dans `scripts/fanzzy-invites.mjs`, tient l'escalade **famille par
-famille** : la Voix passe de la voix nue aux mains en porte-voix puis au
-porte-voix, la Percussion des baguettes à la grosse caisse. Ce n'est pas une
-élégance : le troisième âge de TR1, un personnage Voix, est arrivé avec un
-tambour sanglé sur le ventre — le dessin annonçait une famille que la carte ne
-joue pas, et c'est le geste qui décide de ce qu'on peut faire en duel.
+**Une bête, un objet ou un phénomène ne vieillit pas** : il monte en intensité,
+comme `dex-ages.js` l'écrit depuis le premier jour. Demander des cheveux gris à
+une merguez n'a jamais eu de sens.
+
+`MONTEE` tient l'escalade **famille par famille** : la Voix passe de la voix nue
+aux mains en porte-voix puis au porte-voix, la Percussion des baguettes à la
+grosse caisse. Ce n'est pas une élégance : le troisième âge de TR1, un
+personnage Voix, est arrivé avec un tambour sanglé sur le ventre — le dessin
+annonçait une famille que la carte ne joue pas, et c'est le geste qui décide de
+ce qu'on peut faire en duel.
 
 **Et la formule de `VISUELS.md` y est maintenant.** Elle ne vivait que dans
 l'invite des premiers âges. Les deux seules images du jeu qui portent du texte
@@ -4584,17 +4597,7 @@ interdit et des écussons de club sont précisément les deux âges supérieurs 
 TR1, sortis de la fonction qui ne la portait pas. Une règle de droits qui ne
 couvre qu'une moitié de la chaîne ne couvre rien.
 
-**Le texte suit la même règle**, sans quoi elle ne sert à rien : l'invite dit
-que le français de la carte gagne sur tout le reste, donc une histoire qui dit
-« quarante ans plus tard » rend un vieillard quoi qu'on interdise par ailleurs.
-Huit âges sur trois cent quatre-vingt-deux parlaient de vieillir ; ils sont
-réécrits. Les dates restent permises — « sa collection est complète depuis
-1993 » parle de la collection, pas des rides de son propriétaire.
-
-`invites:test` tient les quatre règles, et sur **tout le catalogue** pour les
-textes, pas seulement sur les âges déjà dessinables : un texte qui vieillit son
-personnage est une dette du jour où son premier âge sera dessiné, et on ne veut
-pas la découvrir ce jour-là.
+`invites:test` tient les six règles, et casse volontairement sur chacune.
 
 ### Les quatre chaînes
 
