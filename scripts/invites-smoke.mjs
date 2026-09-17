@@ -312,10 +312,42 @@ titre('Un âge reste dans sa famille');
   check(`${tient.length} âges disent ce qu’ils tiennent, ${seTient.length} comment ils se tiennent, aucun les deux`,
     tient.length + seTient.length === lot.length
     && !lot.some((x) => /• what they hold/.test(x.invite) && /• how they stand/.test(x.invite)));
-  check('un objet qui monte remplace celui du premier âge au lieu de s’y ajouter',
-    tient.every((x) => /replace it, do not add a second one/.test(x.invite)));
-  check('et une tenue qui monte garde ce que le personnage avait dans les mains',
-    seTient.every((x) => /keep whatever they are holding in the reference image/.test(x.invite)));
+  /* ## Le point de départ se désigne, il ne se nomme pas
+     
+     La ligne annonçait d'où l'on part — « in the reference image they had
+     nothing in their hands » — avec un objet de départ écrit par famille. Ce
+     n'était pas une lecture du dessin, c'était une supposition sur lui : le
+     premier âge de TR4 tient un téléphone, parce qu'il filme tout, et la
+     Voix partait « les mains vides ». Un modèle qui doit arbitrer entre la
+     phrase et l'image garde les deux objets — l'ajout que la ligne existait
+     pour empêcher.
+     
+     L'invite désigne donc le point de départ au lieu de le nommer, ce qui est
+     vrai de n'importe quel dessin, mains vides comprises. */
+  check('aucune invite ne prétend savoir ce que tient le dessin de référence',
+    !lot.some((x) => /in the reference image they (had|have) [a-z]/.test(x.invite)));
+  check('un objet qui monte chasse ce que la référence montre, quel qu’il soit',
+    tient.every((x) => /it is their only object/.test(x.invite)
+      && /in the reference image is gone/.test(x.invite)
+      && /Never draw both/.test(x.invite)));
+  /* Et ce qui est *porté* survit à ce remplacement, sinon le casque de TR4 et
+     l'écharpe du Déplacement partiraient avec le téléphone. */
+  check('et ce qui est porté survit à ce remplacement',
+    tient.every((x) => /What they WEAR stays with them/.test(x.invite)));
+  /* Une tenue qui monte tranche elle aussi le sort des mains, dans un sens ou
+     dans l'autre : la Fidélité garde ce qu'elle tient — c'est toute sa carte —
+     et la Voix les libère pour crier. Ce qu'on ne veut plus, c'est une ligne
+     qui laisse le modèle deviner. */
+  check('et une tenue qui monte tranche le sort des mains au lieu de le taire',
+    seTient.every((x) => /keep whatever they are holding in the reference image/.test(x.invite)
+      || /Their hands are free/.test(x.invite)));
+  /* Le deuxième âge de la Voix décrit une main en coupe devant la bouche : une
+     posture. Sous l'étiquette « ce qu'ils tiennent », c'était la faute du
+     Collectionneur refaite — on demandait un objet, on décrivait un geste. */
+  const voix2 = lot.filter((x) => x.type === 'voix' && x.stade === 2);
+  check(`les ${voix2.length} deuxièmes âges de la Voix passent par la tenue, pas par l’objet`,
+    voix2.length > 0 && voix2.every((x) => /• how they stand/.test(x.invite)
+      && !/• what they hold/.test(x.invite)));
 
   /* Et la ligne de famille cède devant le français de la carte, comme au
      premier âge. Sans ça, Le Collectionneur — une Fidélité qui tient un album —
