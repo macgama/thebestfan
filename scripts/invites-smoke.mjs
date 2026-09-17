@@ -217,34 +217,102 @@ titre('Les âges vieillissent, et restent la même personne');
   const lot = [...ages('TR'), ...ages('MS')];
   check(`${lot.length} invite(s) d’âge à éprouver`, lot.length > 0);
 
-  check('toutes demandent un pas d’âge net',
-    lot.every((x) => /Make them clearly older|Make them much older/.test(x.invite)));
-
-  /* Deux âges qui demandent le même pas donnent deux fois le même dessin, et le
-     joueur paie deux fois pour la même carte. */
+  /* ## Trente et cinquante, et pas la fin d'une vie
+     
+     Le troisième âge demandait « the last age of a long life » — cheveux
+     blancs, visage buriné, dos voûté. C'est mot pour mot ce que la ligne
+     CRITICAL d'à côté protège : même couleur de cheveux, même visage, même
+     carrure. L'invite se contredisait, et un modèle qui doit trancher entre
+     deux ordres contraires dessine quelqu'un d'autre.
+     
+     Les deux bornes sont donc nommées — trente, cinquante — et le troisième
+     âge interdit explicitement ce qui effaçait le personnage. */
   const deux = lot.filter((x) => x.stade === 2);
   const trois = lot.filter((x) => x.stade === 3);
-  check('le deuxième et le troisième âge ne demandent pas le même pas',
-    deux.every((x) => /clearly older/.test(x.invite))
-    && trois.every((x) => /much older/.test(x.invite))
-    && deux.length > 0 && trois.length > 0);
+  check('les deux âges nomment leur borne, trente puis cinquante',
+    deux.length > 0 && trois.length > 0
+    && deux.every((x) => /around thirty years old/.test(x.invite))
+    && trois.every((x) => /around fifty years old/.test(x.invite)));
+  check('et le troisième âge n’efface plus ce qui fait reconnaître le personnage',
+    trois.every((x) => /no white hair, no stoop, no frailty/.test(x.invite)
+      && !/grey or white hair/.test(x.invite)
+      && !/lined and weathered/.test(x.invite)));
+  /* Le chiffre est écrit **au-dessus** du texte français, que la clause
+     générale ne couvre donc pas : « it wins over every instruction below ».
+     Quarante-neuf textes d'âge citent une durée, et deux chiffres qui se
+     contredisent donnent un personnage entre les deux. La ligne d'âge cède
+     donc explicitement, et dit qu'une durée n'est pas un âge. */
+  check('et le chiffre cède devant l’âge que donne la carte',
+    lot.every((x) => /If the French text below states their age, that age wins/
+      .test(x.invite)
+      && /a number of years spent doing something is not their age/.test(x.invite)));
 
   /* La ligne qui sépare « il a grandi » de « ce n'est plus lui ». Un générateur
      à qui l'on demande « le même, plus vieux » dessine un visage moyen de l'âge
      demandé : on lui interdit l'ossature, et on ne lui laisse que ce que les
      années font vraiment. */
-  check('toutes exigent la même personne, ossature nommée',
-    lot.every((x) => /recognisably the SAME PERSON/.test(x.invite)
+  check('toutes exigent le même personnage, ossature nommée',
+    lot.every((x) => /recognisably the SAME CHARACTER/.test(x.invite)
       && /Same bone structure/.test(x.invite)));
   check('et toutes gardent le cadrage de la référence',
     lot.every((x) => /same framing/.test(x.invite)));
 
-  /* Un objet, une bête ou un phénomène n'a pas d'âge : `dex-ages.js` écrit
-     qu'il monte en intensité, et lui demander des cheveux gris n'a aucun sens. */
-  const choses = ages('BG');
-  check(`les ${choses.length} âges du bestiaire montent en intensité au lieu de vieillir`,
-    choses.length > 0 && choses.every((x) => /It does not age/.test(x.invite)
-      && !/grey or white hair/.test(x.invite)));
+  /* ## Trois échelles, et deux langues pour la première
+     
+     Une seule table répondait à deux questions — « est-ce un humain ? » et
+     « comment ça évolue ? ». Le Bestiaire en payait le prix : un hibou n'étant
+     pas un humain, il était rangé avec la merguez et montait en intensité au
+     lieu de vieillir, alors que ses propres textes parlent de soixante-dix ans
+     de feuilles de match.
+     
+     Le Bestiaire vieillit donc, mais dans sa langue : ni cheveux, ni teint, ni
+     blouson à fermer. */
+  const betes = ages('BG');
+  check(`les ${betes.length} âges du bestiaire vieillissent, dans la langue d’une bête`,
+    betes.length > 0
+    && betes.every((x) => /in its prime|past its prime/.test(x.invite)
+      && /SAME ANIMAL/.test(x.invite))
+    && !betes.some((x) => /the hair still its own colour|same skin tone/i.test(x.invite)));
+  check('et aucun ne se voit demander de fermer un blouson ni de coudre une pastille',
+    betes.every((x) => !/outer layer|cloth badges sewn/.test(x.invite)));
+
+  /* Le fabriqué s'use — et « usé » doit se lire patine, jamais avarie : à
+     quarante-huit pixels, abîmé et vieux se ressemblent, et un objet abîmé se
+     lit comme une carte moins bonne. L'interdit est en CRITICAL, donc hors de
+     portée du texte de la carte. */
+  const objets = ages('OB');
+  check(`les ${objets.length} âges des objets s’usent au lieu de vieillir`,
+    objets.length > 0
+    && objets.every((x) => /not older but (used|long used)/.test(x.invite)
+      && /SAME OBJECT/.test(x.invite)));
+  check('et le troisième âge d’un objet interdit l’avarie en CRITICAL',
+    objets.filter((x) => x.stade === 3).length > 0
+    && objets.filter((x) => x.stade === 3)
+      .every((x) => /CRITICAL — worn, never damaged/.test(x.invite)));
+
+  /* Ni vivant ni fabriqué : une averse ne s'use pas et une merguez n'a pas
+     trente ans. C'est la règle d'écriture de `dex-ages.js`, et la seule qui ait
+     un sens pour elles. Les deux âges disaient le même texte — deux fois le
+     même dessin, payé deux fois. */
+  const phenos = [...ages('GC'), ...ages('MT')];
+  check(`les ${phenos.length} âges des phénomènes montent en intensité`,
+    phenos.length > 0
+    && phenos.every((x) => /not older and not worn/.test(x.invite)
+      && /SAME ONE/.test(x.invite)));
+  check('et leurs deux âges ne demandent pas le même pas',
+    phenos.filter((x) => x.stade === 2).every((x) => /MORE ITSELF/.test(x.invite))
+    && phenos.filter((x) => x.stade === 3).every((x) => /fully ITSELF/.test(x.invite))
+    && phenos.filter((x) => x.stade === 2).length > 0
+    && phenos.filter((x) => x.stade === 3).length > 0);
+
+  /* Et l'identité est exigée des trois échelles, pas seulement des vivants :
+     c'est la demande derrière tout le reste — qu'on retrouve le personnage
+     d'un âge à l'autre. */
+  check('les trois échelles exigent qu’on retrouve le même personnage',
+    [...lot, ...betes, ...objets, ...phenos]
+      .every((x) => /CRITICAL — it must still be recognisably the SAME /.test(x.invite)));
+
+  const choses = betes;
 
   /* La référence est toujours le premier âge : deux éditions en cascade
      perdent le visage qu'on vient de protéger. */

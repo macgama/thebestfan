@@ -539,15 +539,57 @@ const choisies = DEX
    capitales, le générateur dessine un humain qui tient l'objet — ou pire, les
    deux fondus l'un dans l'autre. C'est arrivé au premier essai : la merguez
    portait un blouson et avait des épaules d'homme. */
-const CHOSES = {
+const PAS_HUMAIN = {
   OB: 'stadium object', GC: 'piece of stadium food or drink',
   MT: 'weather phenomenon', BG: 'animal',
 };
 
+/**
+ * Comment une carte traverse ses trois âges.
+ *
+ * Deux questions qu'on avait confondues en une : « est-ce un humain ? » et
+ * « comment ça évolue ? ». Un seul tableau répondait aux deux, et le Bestiaire
+ * en payait le prix — un hibou n'est pas un humain, donc il était rangé avec
+ * la merguez et « montait en intensité » au lieu de vieillir. Or ses propres
+ * textes le font vieillir : le deuxième âge du Hibou Statisticien parle de
+ * soixante-dix ans de feuilles de match. La série disait une chose, l'invite
+ * en demandait une autre.
+ *
+ * Les deux questions sont donc posées séparément. `PAS_HUMAIN` dit ce qu'on
+ * dessine, `ECHELLE` dit ce que le temps lui fait :
+ *
+ *   - `vivant`     — il vieillit : enfant ou ado, trente ans, cinquante ans.
+ *   - `fabrique`   — il s'use : neuf, servi, patiné. Jamais cassé.
+ *   - `phenomene`  — il ne fait ni l'un ni l'autre : il devient plus lui-même.
+ *
+ * La troisième échelle n'est pas un reliquat. Une averse et une merguez ne
+ * sont ni des vivants ni des machines : « usé mais expérimenté » ne veut rien
+ * dire pour une averse, et c'est pour elles que la montée en intensité a été
+ * écrite.
+ */
+const ECHELLE = { OB: 'fabrique', GC: 'phenomene', MT: 'phenomene' };
+const echelleDe = (f) => ECHELLE[f.set] ?? 'vivant';
+
+/**
+ * Et l'échelle des vivants se dit en deux langues.
+ *
+ * Un hibou vieillit comme un homme — c'est bien la même échelle — mais il n'a
+ * ni cheveux, ni teint, ni blouson à fermer. Faire basculer le Bestiaire chez
+ * les vivants sans ça lui collait « the hair still its own colour », « same
+ * skin tone » et « a few small plain round cloth badges sewn onto it ».
+ *
+ * L'échelle dit ce que le temps fait, le dialecte dit avec quel vocabulaire.
+ * Les trois échelles restent trois ; `bete` et `humain` sont deux façons de
+ * dire la première.
+ */
+const dialecteDe = (f) => (echelleDe(f) === 'vivant'
+  ? (PAS_HUMAIN[f.set] === 'animal' ? 'bete' : 'humain')
+  : echelleDe(f));
+
 function invite(f) {
   const famille = FAMILLE[f.type] ?? '';
   const serie = SERIE[f.set] ?? '';
-  const chose = CHOSES[f.set];
+  const chose = PAS_HUMAIN[f.set];
   return [
     'A single stylised 3D character, full body, standing, isolated on a '
       + 'completely plain flat mid-grey background.',
@@ -719,7 +761,7 @@ const AXES = {
  * carrière, il devient plus lui-même ». Les pastilles cousues et le manteau
  * long n'ont rien à lui dire ; la masse, la densité et la couleur, si.
  */
-const AXES_CHOSE = {
+const AXES_PHENOMENE = {
   2: ['standing a little straighter, more solidly planted',
     'slightly bigger and denser, its colours deeper',
     'its surface more defined — grain, seams or fur clearly readable',
@@ -731,20 +773,157 @@ const AXES_CHOSE = {
 };
 
 /**
- * Ce que les années font, et ce qu'elles ne doivent pas faire.
+ * Et pour ce qui a été fabriqué, qui ne grossit pas : il sert.
  *
- * Pas de nombre d'années ici : l'histoire de l'âge en donne souvent un, et deux
- * chiffres qui se contredisent dans la même invite donnent un personnage entre
- * les deux. On dit l'ampleur du pas, le texte de la carte dit la mesure.
+ * La montée en intensité ne lui va pas — un objet du stade qui devient deux
+ * fois plus gros au troisième âge n'est plus le même objet. Ce qui change,
+ * c'est son état : le neuf qui perd son brillant, puis la patine de ce qu'on
+ * a gardé longtemps parce que ça marchait.
+ *
+ * Le troisième axe porte l'expérience, faute de quoi « usé » se lirait comme
+ * « abîmé » : ce qu'on lui a ajouté, rafistolé, ce qui s'est marqué à force.
+ */
+/**
+ * Et pour une bête, qui vieillit sans garde-robe.
+ *
+ * Les cinq axes des humains passent par le vêtement — le blouson qu'on ferme,
+ * les pastilles qu'on coud. Une bête n'en a pas : ce qui s'accumule chez elle,
+ * c'est le pelage, les marques, et ce qu'on lui a donné à garder.
+ */
+const AXES_BETE = {
+  2: ['standing a little straighter, more solidly planted',
+    'its coat or feathers thicker and better kept than before',
+    'one or two marks of a life lived — a notch, a scar, a patch of '
+      + 'different colour',
+    'the face more awake, looking straight at the camera'],
+  3: ['planted wide and low, unmistakably heavy',
+    'its coat or feathers paler around the face, thicker still at the neck',
+    'many marks of a long life, each one plain to see',
+    'the face fully alive and certain, facing the camera dead on'],
+};
+
+const AXES_FABRIQUE = {
+  2: ['sitting a little more solidly, as if it has found its place',
+    'the shine gone off its surface, edges softened by handling',
+    'one or two small marks of use — a scuff, a crease, a faded patch',
+    'the face more awake, looking straight at the camera'],
+  3: ['planted heavily, settled where it belongs',
+    'its surface polished smooth where hands go, its colours faded and mellow',
+    'several small careful repairs and added parts, each one still working',
+    'the face fully alive and certain, facing the camera dead on'],
+};
+
+/**
+ * Ce que le temps fait à chaque échelle, et ce qu'il ne doit pas faire.
+ *
+ * ## Pourquoi le troisième âge disait des chiffres qu'il ne fallait pas
+ *
+ * L'échelle allait jusqu'au bout d'une vie : « grey or white hair, a lined and
+ * weathered face, a heavier or more stooped frame ». Or c'est mot pour mot ce
+ * que la ligne CRITICAL d'à côté protège — `OSSATURE` demande la même couleur
+ * de cheveux, le même visage, la même carrure. L'invite se contredisait elle-
+ * même : garde la même personne, et change précisément ce qui la fait
+ * reconnaître. Un modèle qui doit trancher entre deux ordres contraires dessine
+ * quelqu'un d'autre, et c'est ce qu'on voyait — l'écart entre le deuxième et le
+ * troisième âge ne venait pas de la distance en années, il venait de là.
+ *
+ * Trente et cinquante ans **ajoutent** au lieu de remplacer : des rides aux
+ * yeux, du gris aux tempes, une carrure plus lourde, posés sur des traits qui
+ * restent. Ce qui portait la lisibilité de l'évolution, ce sont les cinq axes
+ * — ils existent pour ça, et ils la portent maintenant seuls.
+ *
+ * ## Le chiffre et le texte de la carte
+ *
+ * L'ancienne version refusait tout nombre, et la raison était bonne :
+ * quarante-neuf textes d'âge citent une durée — « onze ans », « soixante-dix
+ * ans de feuilles de match » — et deux chiffres qui se contredisent dans une
+ * même invite donnent un personnage entre les deux.
+ *
+ * Mais se taire ne réglait rien, ça laissait seulement le modèle deviner. Le
+ * chiffre est donc écrit **et** subordonné : chaque ligne dit que le français
+ * de la carte gagne s'il donne un âge, et qu'une durée passée à faire quelque
+ * chose n'est pas un âge. C'est nécessaire ici et nulle part ailleurs, parce
+ * que cette ligne est écrite *au-dessus* du texte français — la clause générale
+ * « it wins over every instruction below » ne la couvre pas.
  */
 const AGE = {
-  2: 'clearly older, one full step of a life: a child has become a teenager, '
-    + 'a teenager a young adult, an adult a settled adult. A taller or fuller '
-    + 'frame, a face that has lost its childhood softness, hair that has been '
-    + 'cut differently since.',
-  3: 'much older — this is the last age of a long life: grey or white hair, a '
-    + 'lined and weathered face, a heavier or more stooped frame, hands that '
-    + 'show the years.',
+  humain: {
+    2: 'around thirty years old: a grown adult, fuller in the frame than the '
+      + 'child or teenager they were, the face set and no longer soft, the hair '
+      + 'still its own colour, worn differently since. Not old, not grey, not '
+      + 'weathered. If the French text below states their age, that age wins — '
+      + 'and a number of years spent doing something is not their age.',
+    3: 'around fifty years old: settled and solid, lines at the eyes and the '
+      + 'mouth, some grey at the temples, a heavier build, hands that have '
+      + 'worked. This is mid-life and not old age: still upright, still strong, '
+      + 'no white hair, no stoop, no frailty. If the French text below states '
+      + 'their age, that age wins — and a number of years spent doing something '
+      + 'is not their age.',
+  },
+  /* La même échelle, dans la langue d'une bête : ni cheveux, ni rides, ni
+     tempes grises — un pelage, un bec, une démarche. */
+  bete: {
+    2: 'fully grown and in its prime: bigger and heavier than the young animal '
+      + 'it was, its body filled out, its coat or feathers thick and well kept, '
+      + 'its movements sure. Not old, not greying, not worn. If the French text '
+      + 'below states its age, that age wins — and a number of years spent doing '
+      + 'something is not its age.',
+    3: 'past its prime but not old: heavier and broader still, the fur or '
+      + 'feathers around its face paler than the rest, a few marks of a long '
+      + 'life. Still strong, still upright, still quick — not frail, not '
+      + 'sickly, not near its end. If the French text below states its age, that '
+      + 'age wins — and a number of years spent doing something is not its age.',
+  },
+  /* Un objet ne vieillit pas, il sert. Et « usé » doit se lire *patine*, jamais
+     *avarie* : à quarante-huit pixels, abîmé et vieux se ressemblent, et un
+     objet abîmé se lit comme une carte moins bonne — le contraire de ce qu'une
+     évolution promet. D'où l'interdit en CRITICAL, qu'aucun texte de carte ne
+     peut lever. */
+  fabrique: {
+    2: 'not older but used: still sound and complete, simply no longer new — '
+      + 'the shine gone off it, its edges softened by handling, its colours a '
+      + 'little less fresh.',
+    3: 'not older but long used: deeply patinated — surfaces polished smooth '
+      + 'where hands go, colours faded and mellow, a few small repairs that were '
+      + 'made carefully to keep it working. It looks trusted, kept for years '
+      + 'because it works.\nCRITICAL — worn, never damaged: no cracks, no rust, '
+      + 'no tears, no missing pieces, no dirt, nothing broken.',
+  },
+  /* Ni vivant ni fabriqué : une averse ne s'use pas et une merguez n'a pas
+     trente ans. C'est la règle d'écriture de `dex-ages.js`, et la seule qui ait
+     un sens pour elles. Les deux âges disent maintenant deux pas différents —
+     le même texte aux deux donnait deux fois le même dessin. */
+  phenomene: {
+    2: 'not older and not worn: MORE ITSELF — a step bigger and denser, its '
+      + 'colours deeper, its presence heavier.',
+    3: 'not older and not worn: fully ITSELF — at its largest and densest, its '
+      + 'colours at their strongest, impossible to look past.',
+  },
+};
+
+/**
+ * Et l'identité, à chaque échelle.
+ *
+ * C'est la demande derrière tout le reste : qu'on retrouve l'âme du personnage
+ * d'un âge à l'autre. Elle n'était exigée que des vivants — un objet et une
+ * bête pouvaient revenir en n'importe quel autre objet, n'importe quelle autre
+ * bête. Elle est exigée des trois, en nommant ce qui doit tenir.
+ */
+const IDENTITE = {
+  /* `OSSATURE` est ajoutée au moment de l'écriture : elle est déclarée plus
+     bas, avec le reste de ce qui ne doit pas bouger. */
+  humain: 'CRITICAL — it must still be recognisably the SAME CHARACTER, not '
+    + 'someone else of that age.',
+  bete: 'CRITICAL — it must still be recognisably the SAME ANIMAL, not another '
+    + 'one of its species: same species, same build, same head shape, same eye '
+    + 'shape and eye colour, same beak or muzzle, same markings and the same '
+    + 'coat or plumage colours, same anything it wears or carries.',
+  fabrique: 'CRITICAL — it must still be recognisably the SAME OBJECT, not '
+    + 'another one like it: same shape, same proportions, same colours, same '
+    + 'markings, same face. Only its condition changes.',
+  phenomene: 'CRITICAL — it must still be recognisably the SAME ONE, not '
+    + 'another of its kind: same shape, same proportions, same colours, same '
+    + 'markings, same face. Only its scale and its intensity change.',
 };
 
 /**
@@ -780,26 +959,28 @@ const OSSATURE = 'Same bone structure, same eye shape and eye colour, same nose,
  */
 function inviteAge(f) {
   const r = racineDe(f.id);
-  const chose = CHOSES[f.set];
-  const axes = chose ? AXES_CHOSE[f.stage] : AXES[f.stage];
+  const dialecte = dialecteDe(f);
+  const vivant = echelleDe(f) === 'vivant';
+  /* Seul l'humain est « them » : une bête, un objet et une averse sont « it »,
+     et leurs textes d'échelle sont écrits ainsi. */
+  const pronom = dialecte === 'humain' ? 'them' : 'it';
+  const axes = ({ humain: AXES, bete: AXES_BETE, fabrique: AXES_FABRIQUE,
+    phenomene: AXES_PHENOMENE })[dialecte][f.stage];
   const montee = MONTEE[f.type];
   const rang = f.stage === 2
     ? 'They have taken their place: the terrace knows them now.'
     : 'They lead now: everyone around them follows what they do.';
 
   return [
-    'Take the character from the reference image and show them at a later age. '
-      + 'Same background, same framing, same lighting, same render style.',
+    `Take the character from the reference image and show ${pronom} ${vivant
+      ? 'at a later age' : 'in a later state'}. Same background, same `
+      + 'framing, same lighting, same render style.',
     '',
-    /* Un objet, une bête ou un phénomène ne vieillit pas : il monte en
-       intensité — c'est la règle d'écriture de `dex-ages.js`, et la seule qui
-       ait un sens pour une merguez. */
-    chose
-      ? 'It does not age: it becomes MORE ITSELF — bigger, denser, its colours '
-        + 'stronger, its presence heavier. Not older, not more broken.'
-      : `Make them ${AGE[f.stage]}`,
-    chose ? '' : `CRITICAL — it must still be recognisably the SAME PERSON, not `
-      + `someone else of that age. ${OSSATURE}`,
+    /* Trois échelles, une par manière de traverser le temps : le vivant
+       vieillit, le fabriqué s'use, le phénomène monte en intensité. */
+    `Make ${pronom} ${AGE[dialecte][f.stage]}`,
+    dialecte === 'humain'
+      ? `${IDENTITE.humain} ${OSSATURE}` : IDENTITE[dialecte],
     '',
     /* ## Le français d'abord, les consignes ensuite
        
@@ -841,7 +1022,7 @@ function inviteAge(f) {
           + `now have ${montee[f.stage - 2]}, and it is their only object — whatever `
           + `they were holding in their hands in the reference image is gone, `
           + `replaced by this one. Never draw both. What they WEAR stays with them.`)
-      : (!chose && MONTEE_TENUE[f.stage - 1]
+      : (vivant && MONTEE_TENUE[f.stage - 1]
         ? `• how they stand: ${MONTEE_TENUE[f.stage - 1]}.`
         : ''),
     '',
