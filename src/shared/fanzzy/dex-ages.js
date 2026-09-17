@@ -18,8 +18,26 @@
  *
  * La règle d'écriture qui tient tout : **le troisième âge doit rendre le
  * premier plus touchant, pas le renier.** Le Petit Teigneux ne devient pas un
- * héros ; il devient l'homme qui accueille le prochain petit teigneux. C'est ce
+ * héros ; il devient celui que le prochain petit teigneux regarde. C'est ce
  * qui fait qu'on garde la carte au lieu de la remplacer.
+ *
+ * ## Et il ne vieillit pas
+ *
+ * Écrit après coup, parce que le dessin l'a imposé. Les trois âges se voient
+ * côte à côte dans le classeur, et le joueur qui paie quatre-vingt-dix écharpes
+ * doit reconnaître **son** personnage plus fort — pas son remplaçant. Un gamin
+ * de onze ans vieilli deux fois devient un homme de cinquante-sept ans dont
+ * rien, ni le visage ni la silhouette, ne rappelle la première carte.
+ *
+ * Le texte d'un âge ne dit donc plus le temps qui passe : il dit **la place
+ * prise**. « Quarante ans plus tard » devient « personne ne dit plus petit ».
+ * C'est la même promotion, sans l'état civil — et ça ne retire rien à ce que la
+ * carte racontait, puisque ce qu'elle racontait était déjà une place et non un
+ * âge : « il gagne une place, pas des muscles », trois paragraphes plus haut.
+ *
+ * Les dates, elles, restent permises : « sa collection est complète depuis
+ * 1993 » parle de la collection, pas des rides de son propriétaire.
+ * `scripts/fanzzy-invites.mjs` tient l'autre bout de la règle, côté dessin.
  */
 
 export const AGES = {
@@ -30,13 +48,16 @@ export const AGES = {
      grandissant : ils gagnent une place, une habitude, et à la fin une trace
      que les autres remarquent.                                              */
 
+  /* Le premier écrit sous la règle des âges sans vieillissement, et le cas qui
+     l'a imposée : ses trois noms étaient trois âges. Il a toujours onze ans aux
+     trois étages ; ce qui monte, c'est la place qu'on lui laisse. */
   TR1: [
-    ['Le Teigneux', 'Dix-sept ans, la même parka, les épaules qui ont rattrapé le tissu. '
-      + 'Il ne connaît plus les chants avant les paroles : il connaît les paroles avant tout le monde.',
+    ['Le Teigneux', 'Personne ne dit plus « petit ». Même parka trop grande, mêmes onze ans, '
+      + 'mais quand il reprend un chant, trois rangées suivent sans se demander qui a commencé.',
       'ON LÂCHE RIEN'],
-    ['Le Vieux Teigneux', 'Quarante ans plus tard, la parka est au musée du club et lui est toujours '
-      + 'debout. Il gueule sur un gamin de onze ans qui connaît déjà les chants. Il ne dira jamais '
-      + 'que c’est son plus beau souvenir de la saison.', 'C’EST JAMAIS FINI'],
+    ['Le Teigneux qui Lance', 'C’est lui qui donne le départ, maintenant. Il attend le silence — '
+      + 'deux secondes qui durent une heure — et il lance. Le virage entier part derrière un gamin '
+      + 'qui n’arrive pas à l’épaule du type d’à côté.', 'C’EST JAMAIS FINI'],
   ],
   TR2: [
     ['L’Échangiste', 'Il a compris que l’album ne se complète pas seul. Il a monté la bourse aux '
@@ -62,7 +83,7 @@ export const AGES = {
   TR5: [
     ['La Cagoule Baissée', 'Il a enlevé la cagoule le jour où sa fille a voulu voir sa tête sur la '
       + 'photo. En dessous, il y avait un monsieur très ordinaire, et un peu gêné.', 'JE DIS UN PEU'],
-    ['Le Grand-Père en Peluche', 'Il a rendu la peluche, il en a racheté douze. Il en donne une par '
+    ['Celui Qui Donne la Peluche', 'Il a rendu la peluche, il en a racheté douze. Il en donne une par '
       + 'match au gamin qui pleure, et il y a toujours un gamin qui pleure.', 'TIENS, PRENDS'],
   ],
   TR6: [
@@ -82,8 +103,8 @@ export const AGES = {
     ['Le Porteur Debout', 'Le petit ne dort plus : il hurle sur ses épaules et lui tient les '
       + 'oreilles. Il a mal au dos tous les lundis et il ne changerait pour rien au monde.',
       'TIENS-TOI BIEN'],
-    ['Les Épaules du Virage', 'Le petit est grand, et c’est lui qui porte son père en fin de match. '
-      + 'Le vieux fait semblant de protester. Deux rangées les regardent en souriant.',
+    ['Les Épaules du Virage', 'Ce ne sont plus seulement les épaules de son fils. Trois gamins '
+      + 'du rang savent que le but se voit mieux de là-haut, et qu’on y monte chacun son tour.',
       'À TON TOUR'],
   ],
   TR9: [
@@ -282,8 +303,9 @@ export const AGES = {
   MS12: [
     ['Le Gardien du Filet', 'Il recoud les filets à la main entre deux matchs, comme les filets du '
       + 'port. Le club en a acheté des neufs ; ils sont restés dans le carton.', 'ÇA TIENT ENCORE'],
-    ['Le Vieux du Port', 'Il ne monte plus les marches. Il salue le terrain depuis le grillage et le '
-      + 'stade entier attend qu’il ait fini pour siffler le coup d’envoi.', 'TENEZ BON, LES GARS'],
+    ['Celui Qu’on Attend', 'Son salut au terrain est devenu une règle non écrite : il salue '
+      + 'depuis le grillage, et le stade entier attend qu’il ait fini pour siffler le coup '
+      + 'd’envoi.', 'TENEZ BON, LES GARS'],
   ],
   MS13: [
     ['La Cheffe d’Infirmerie', 'Deux lits, un défibrillateur, et la place libre est toujours là. Elle '
@@ -1188,7 +1210,7 @@ export const AGES = {
     ['Celui Qui a Pris un Abonnement', 'Il connaît les onze noms, maintenant, et deux chants sur '
       + 'trois. Il a payé le déplacement le plus long de la saison, en janvier, pour un 0-3.',
       'JE CONNAIS'],
-    ['Le Vieux du Rang 7', 'Personne ne se rappelle qu’il a commencé après une coupe. Lui s’en '
+    ['Celui du Rang 7', 'Personne ne se rappelle qu’il a commencé après une coupe. Lui s’en '
       + 'souvient très bien, et il ne se moque jamais de celui qui arrive.', 'TU VIENS D’OÙ ?'],
   ],
   HC4: [
