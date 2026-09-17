@@ -33,22 +33,64 @@
     'victoire', 'defaite', 'occasion', 'decision', 'progression', 'ennui'];
 
   /**
-   * Deux extensions, pas une.
+   * ## Le format des images : on ne le devine plus
    *
-   * Un décor est une photo : son dernier recours est le JPEG. Un personnage est
-   * détouré : le sien doit garder sa transparence, donc PNG. Les confondre a
-   * déjà donné au supporter de l'accueil un fond blanc opaque sur les
-   * navigateurs sans AVIF ni WebP.
+   * La détection d'avant demandait à un canvas ce qu'il savait **écrire** —
+   * `toDataURL('image/avif')`, puis `toDataURL('image/webp')` — et prenait la
+   * réponse pour ce que le navigateur savait **afficher**. Ce sont deux
+   * questions sans rapport, et la réponse à la première ne dit rien de la
+   * seconde :
+   *
+   *   — **aucun navigateur n'encode l'AVIF**, pas même Chrome. La branche
+   *     `.avif` ne s'ouvrait donc pour personne : les vingt-quatre mégaoctets
+   *     d'AVIF du dépôt n'ont jamais été servis à qui que ce soit.
+   *   — **Safari n'encode pas le WebP**, et les Firefox d'avant la 96 non plus
+   *     — alors que les deux le lisent depuis des années.
+   *
+   * Tout ce qui n'est pas Chrome retombait donc sur `.jpg`. Or **aucun Fanzzy
+   * n'est publié en JPEG** : un personnage est détouré, il est rangé en AVIF,
+   * WebP et PNG. L'accueil demandait `/img/fanzzy/TR57.jpg`, recevait un 404,
+   * et laissait le cadre vide — sur Firefox et sur iPhone, pendant que Chrome
+   * allait très bien. La fiche « Mon Fanzzy », elle, s'en sortait : son
+   * `<img onerror>` retombe sur le PNG, ce que l'accueil ne faisait pas.
+   *
+   * On ne devine donc plus. **Le WebP est lu partout** — Safari 14 et Firefox
+   * 65, c'est-à-dire 2020, bien avant le `dvh` de 2022 dont ce jeu ne peut pas
+   * se passer — et **chaque image du dépôt a son jumeau `.webp`**. C'est le
+   * format de tout le monde, et il n'y a plus rien à détecter.
+   *
+   * Les deux noms restent, parce que les deux replis restent : un décor est une
+   * photo, son dernier recours est le JPEG ; un personnage est détouré, le sien
+   * doit garder sa transparence, donc PNG. Les confondre a déjà donné au
+   * supporter de l'accueil un fond blanc opaque.
    */
-  const EXT = (() => {
-    try {
-      const c = document.createElement('canvas');
-      if (c.toDataURL('image/avif').startsWith('data:image/avif')) return '.avif';
-      if (c.toDataURL('image/webp').startsWith('data:image/webp')) return '.webp';
-    } catch { /* pas de canvas : un test, un mode strict — tant pis */ }
-    return '.jpg';
-  })();
-  const EXT_ALPHA = EXT === '.jpg' ? '.png' : EXT;
+  const EXT = '.webp';
+  const EXT_ALPHA = '.webp';
+
+  /** Le dernier recours d'une photo — décor, carte d'action, chant. */
+  const REPLI = '.jpg';
+  /** Le dernier recours d'un dessin détouré — un Fanzzy, une pièce, une monnaie. */
+  const REPLI_ALPHA = '.png';
+
+  /**
+   * L'adresse de secours d'un dessin qui n'a pas pu se charger.
+   *
+   * On remplace **l'extension**, jamais la fin de la chaîne : la révision vit
+   * dans la requête — `neutre.webp?v=10` — et couper les cinq derniers
+   * caractères donnait `neutre.webp?v` suivi de `.png`.
+   *
+   * Rend `null` quand il n'y a plus rien à essayer : l'adresse est déjà au
+   * dernier recours, ou ce n'est pas une image. C'est ce qui permet à l'appelant
+   * de s'arrêter au lieu de redemander deux fois la même chose.
+   *
+   * @param {string} src     l'adresse qui vient d'échouer
+   * @param {boolean} [alpha] le dessin est détouré (défaut) ou c'est une photo
+   */
+  const secours = (src, alpha = true) => {
+    const neuf = String(src ?? '')
+      .replace(/\.(avif|webp|png|jpe?g)(?=$|\?)/i, alpha ? REPLI_ALPHA : REPLI);
+    return neuf && neuf !== String(src ?? '') ? neuf : null;
+  };
 
   /* ------------------------------------------------------------ le catalogue */
 
@@ -185,5 +227,6 @@
     }
   }
 
-  window.TBF_ETATS = { ETATS, EXT, EXT_ALPHA, charger, pret, resoudre, portrait, precharger };
+  window.TBF_ETATS = { ETATS, EXT, EXT_ALPHA, REPLI, REPLI_ALPHA, secours,
+    charger, pret, resoudre, portrait, precharger };
 })();

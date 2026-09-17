@@ -51,6 +51,8 @@
     "veille": "node scripts/fanzzy-veille.mjs",
     "images:test": "node scripts/fanzzy-images-smoke.mjs",
     "ecarts": "node scripts/fanzzy-ecarts.mjs",
+    "ecarts:test": "node scripts/ecarts-smoke.mjs",
+    "reconciliation:test": "node scripts/reconciliation-smoke.mjs",
     "invites": "node scripts/fanzzy-invites.mjs",
     "invites:test": "node scripts/invites-smoke.mjs",
     "doublons": "node scripts/fanzzy-doublons.mjs",
@@ -78,6 +80,7 @@
     "garde:smoke": "node scripts/garde-smoke.mjs",
     "admin:smoke": "node scripts/admin-smoke.mjs",
     "fanzzy:smoke": "node scripts/fanzzy-smoke.mjs",
+    "images:smoke": "node scripts/images-smoke.mjs",
     "classement:smoke": "node scripts/classement-smoke.mjs",
     "souvenirs:smoke": "node scripts/souvenirs-smoke.mjs",
     "nvn:net": "node scripts/nvn-net-smoke.mjs"

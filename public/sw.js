@@ -79,7 +79,16 @@ self.addEventListener('activate', (e) => {
   })());
 });
 
-/** Les dessins : ils ne changent pas, et ce sont eux qui pèsent. */
+/* Les dessins : ils ne changent pas, et ce sont eux qui pèsent.
+ *
+ * Depuis que le serveur négocie le format, l'adresse ne dit plus ce qu'elle
+ * renvoie : `neutre.webp` repart en AVIF à qui l'a annoncé dans `Accept`. Le
+ * cache tient quand même, et sans rien changer ici — la réponse porte
+ * `Vary: Accept`, et `cache.match` s'en sert : un enregistrement ne ressort que
+ * pour une requête dont l'`Accept` correspond. Dans le pire des cas on manque
+ * le cache et on redemande au réseau, ce qui est la bonne panne. Le jour où
+ * quelqu'un ajoute `{ ignoreVary: true }` pour « améliorer le taux de cache »,
+ * c'est un AVIF servi à un navigateur qui ne sait pas le lire. */
 const estUneImage = (url) => url.origin === self.location.origin
   && /^\/img\//.test(url.pathname)
   && /\.(avif|webp|png|jpg|jpeg|svg|ico)$/i.test(url.pathname);

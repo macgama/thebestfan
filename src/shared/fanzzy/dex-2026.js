@@ -59,9 +59,15 @@ export const DEX_2026 = [
     mods: { tempoWindow: 1.1 },
     cri: { label: 'C’EST PAS FINI', gest: 'tempo', power: 48 } },
 
+  /* L'âge est écrit, et il le fallait : son dessin est un gamin depuis toujours,
+     mais aucune ligne de la carte ne le disait — le tirage de corps de
+     `fanzzy-invites.mjs` lui donnait donc soixante ans, et regénérer la carte
+     rendait un inconnu. Le français de la carte gagne sur le tirage : c'est la
+     règle, encore fallait-il s'en servir. Et une lignée qui finit sur une
+     collection complète depuis 1993 a besoin de commencer jeune. */
   { id: 'TR2', nom: 'Le Collectionneur', type: 'fide', set: 'TR', stage: 1, rar: 'commune',
-    histoire: 'Il a l’album complet de 2019 et il le sort à la moindre occasion. '
-      + 'Il regarde plus ses cartes que le match, mais il est toujours là.',
+    histoire: 'Douze ans et l’album complet de 2019, qu’il sort à la moindre '
+      + 'occasion. Il regarde plus ses cartes que le match, mais il est toujours là.',
     mods: { holdBonus: 1.06, refundBonus: 1.15 },
     cri: { label: 'JE L’AI EN DOUBLE', gest: 'hold', power: 46 } },
 

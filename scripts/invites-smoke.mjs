@@ -58,6 +58,19 @@ const tr = invitesDe('TR');
 
 titre('Chaque carte a son propre corps');
 {
+  /* Sur **tout le catalogue** et non sur la seule TRIBUNE : le jour où la table
+     des âges a été rétrécie pour laisser aux lignées la place de vieillir, deux
+     cartes des MÉTIERS DU STADE se sont mises à décrire le même homme — et ce
+     contrôle, qui ne regardait qu'une série, les a laissées passer. Un
+     garde-fou qui ne couvre qu'une série ne couvre pas le catalogue. */
+  const tout = ['TR', 'MS', 'BG', 'RV', 'OB', 'EP', 'VP', 'GC', 'GD', 'MT', 'HC', 'IM']
+    .flatMap((s) => invitesDe(s));
+  const partout = tout.map(corpsDe).filter(Boolean);
+  const doubles = partout.filter((c, i) => partout.indexOf(c) !== i);
+  check(`les ${partout.length} corps décrits par le catalogue sont tous distincts`,
+    doubles.length === 0
+    || (console.log('        ', [...new Set(doubles)].join('\n         ')), false));
+
   const corps = tr.map(corpsDe).filter(Boolean);
   const uniques = new Set(corps);
   check(`les ${tr.length} cartes de LA TRIBUNE décrivent ${uniques.size} corps distincts`,
@@ -177,6 +190,297 @@ titre('Les endroits où le générateur écrit des mots malgré l’interdit');
   const enMain = pyros.filter((x) => /no fire around the feet/.test(x.invite));
   check(`les ${pyros.length} cartes Pyro gardent la flamme en main, pas au sol`,
     pyros.length > 0 && enMain.length === pyros.length);
+}
+
+/* ================================================ les âges traversent une vie
+
+   Un Fanzzy vieillit : l'enfant devient adulte, l'adulte devient vieux. C'est
+   ce qui rend l'évolution désirable, et c'est la règle après un aller-retour —
+   une version l'a figé pour ne faire monter que le domaine, et les deux dessins
+   qui en sont sortis ont montré qu'un gamin avec plus d'écussons n'est pas une
+   évolution.
+
+   Le cinquième mensonge est donc ailleurs, et il est resté : **vieillir
+   quelqu'un et le remplacer sont deux choses différentes**, et un générateur ne
+   fait pas la différence tout seul. Les deux âges de TR1 générés sous
+   l'ancienne invite portent trois défauts d'un coup : un tambour sur un
+   personnage Voix, des écussons de club, et le mot « CAPO » en travers d'une
+   pastille — la formule de `VISUELS.md` ne vivait que dans l'invite des
+   premiers âges. */
+
+const ages = (set) => JSON.parse(execFileSync(process.execPath,
+  ['scripts/fanzzy-invites.mjs', '--json', '--ages', '--set', set],
+  { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }));
+
+titre('Les âges vieillissent, et restent la même personne');
+{
+  const lot = [...ages('TR'), ...ages('MS')];
+  check(`${lot.length} invite(s) d’âge à éprouver`, lot.length > 0);
+
+  /* ## Trente et cinquante, et pas la fin d'une vie
+     
+     Le troisième âge demandait « the last age of a long life » — cheveux
+     blancs, visage buriné, dos voûté. C'est mot pour mot ce que la ligne
+     CRITICAL d'à côté protège : même couleur de cheveux, même visage, même
+     carrure. L'invite se contredisait, et un modèle qui doit trancher entre
+     deux ordres contraires dessine quelqu'un d'autre.
+     
+     Les deux bornes sont donc nommées — trente, cinquante — et le troisième
+     âge interdit explicitement ce qui effaçait le personnage. */
+  const deux = lot.filter((x) => x.stade === 2);
+  const trois = lot.filter((x) => x.stade === 3);
+  check('les deux âges nomment leur borne, trente puis cinquante',
+    deux.length > 0 && trois.length > 0
+    && deux.every((x) => /around thirty years old/.test(x.invite))
+    && trois.every((x) => /around fifty years old/.test(x.invite)));
+  check('et le troisième âge n’efface plus ce qui fait reconnaître le personnage',
+    trois.every((x) => /no white hair, no stoop, no frailty/.test(x.invite)
+      && !/grey or white hair/.test(x.invite)
+      && !/lined and weathered/.test(x.invite)));
+  /* Le chiffre est écrit **au-dessus** du texte français, que la clause
+     générale ne couvre donc pas : « it wins over every instruction below ».
+     Quarante-neuf textes d'âge citent une durée, et deux chiffres qui se
+     contredisent donnent un personnage entre les deux. La ligne d'âge cède
+     donc explicitement, et dit qu'une durée n'est pas un âge. */
+  check('et le chiffre cède devant l’âge que donne la carte',
+    lot.every((x) => /If the French text below states their age, that age wins/
+      .test(x.invite)
+      && /a number of years spent doing something is not their age/.test(x.invite)));
+
+  /* La ligne qui sépare « il a grandi » de « ce n'est plus lui ». Un générateur
+     à qui l'on demande « le même, plus vieux » dessine un visage moyen de l'âge
+     demandé : on lui interdit l'ossature, et on ne lui laisse que ce que les
+     années font vraiment. */
+  check('toutes exigent le même personnage, ossature nommée',
+    lot.every((x) => /recognisably the SAME CHARACTER/.test(x.invite)
+      && /Same bone structure/.test(x.invite)));
+  check('et toutes gardent le cadrage de la référence',
+    lot.every((x) => /same framing/.test(x.invite)));
+
+  /* ## Trois échelles, et deux langues pour la première
+     
+     Une seule table répondait à deux questions — « est-ce un humain ? » et
+     « comment ça évolue ? ». Le Bestiaire en payait le prix : un hibou n'étant
+     pas un humain, il était rangé avec la merguez et montait en intensité au
+     lieu de vieillir, alors que ses propres textes parlent de soixante-dix ans
+     de feuilles de match.
+     
+     Le Bestiaire vieillit donc, mais dans sa langue : ni cheveux, ni teint, ni
+     blouson à fermer. */
+  const betes = ages('BG');
+  check(`les ${betes.length} âges du bestiaire vieillissent, dans la langue d’une bête`,
+    betes.length > 0
+    && betes.every((x) => /in its prime|past its prime/.test(x.invite)
+      && /SAME ANIMAL/.test(x.invite))
+    && !betes.some((x) => /the hair still its own colour|same skin tone/i.test(x.invite)));
+  check('et aucun ne se voit demander de fermer un blouson ni de coudre une pastille',
+    betes.every((x) => !/outer layer|cloth badges sewn/.test(x.invite)));
+
+  /* Le fabriqué s'use — et « usé » doit se lire patine, jamais avarie : à
+     quarante-huit pixels, abîmé et vieux se ressemblent, et un objet abîmé se
+     lit comme une carte moins bonne. L'interdit est en CRITICAL, donc hors de
+     portée du texte de la carte. */
+  const objets = ages('OB');
+  check(`les ${objets.length} âges des objets s’usent au lieu de vieillir`,
+    objets.length > 0
+    && objets.every((x) => /not older but (used|long used)/.test(x.invite)
+      && /SAME OBJECT/.test(x.invite)));
+  check('et le troisième âge d’un objet interdit l’avarie en CRITICAL',
+    objets.filter((x) => x.stade === 3).length > 0
+    && objets.filter((x) => x.stade === 3)
+      .every((x) => /CRITICAL — worn, never damaged/.test(x.invite)));
+
+  /* Ni vivant ni fabriqué : une averse ne s'use pas et une merguez n'a pas
+     trente ans. C'est la règle d'écriture de `dex-ages.js`, et la seule qui ait
+     un sens pour elles. Les deux âges disaient le même texte — deux fois le
+     même dessin, payé deux fois. */
+  const phenos = [...ages('GC'), ...ages('MT')];
+  check(`les ${phenos.length} âges des phénomènes montent en intensité`,
+    phenos.length > 0
+    && phenos.every((x) => /not older and not worn/.test(x.invite)
+      && /SAME ONE/.test(x.invite)));
+  check('et leurs deux âges ne demandent pas le même pas',
+    phenos.filter((x) => x.stade === 2).every((x) => /MORE ITSELF/.test(x.invite))
+    && phenos.filter((x) => x.stade === 3).every((x) => /fully ITSELF/.test(x.invite))
+    && phenos.filter((x) => x.stade === 2).length > 0
+    && phenos.filter((x) => x.stade === 3).length > 0);
+
+  /* Et l'identité est exigée des trois échelles, pas seulement des vivants :
+     c'est la demande derrière tout le reste — qu'on retrouve le personnage
+     d'un âge à l'autre. */
+  check('les trois échelles exigent qu’on retrouve le même personnage',
+    [...lot, ...betes, ...objets, ...phenos]
+      .every((x) => /CRITICAL — it must still be recognisably the SAME /.test(x.invite)));
+
+  const choses = betes;
+
+  /* La référence est toujours le premier âge : deux éditions en cascade
+     perdent le visage qu'on vient de protéger. */
+  const racines = new Set(DEX.filter((f) => f.stage === 1).map((f) => f.id));
+  check('toutes partent du premier âge, jamais de l’âge précédent',
+    [...lot, ...choses].every((x) => racines.has(x.reference)));
+}
+
+titre('Une lignée a la place de vieillir deux fois');
+{
+  /* Le tirage de corps ne savait pas qu'une carte avec un `evo` sera dessinée
+     trois fois, chaque fois plus vieille. Il donnait « in their sixties » au
+     premier âge de soixante-cinq lignées sur cent trente-sept, et les deux âges
+     suivants n'avaient plus nulle part où aller. */
+  /* « in **his** forties » — `corps()` accorde le possessif au genre, et un
+     contrôle qui ne cherche que « their » ne trouve jamais rien. Il passait
+     donc au vert sans rien éprouver, ce qui est pire que pas de contrôle. */
+  const vieux = /in (their|his|her) (forties|fifties|sixties|seventies)/;
+  const lot = [...invitesDe('TR'), ...invitesDe('MS'), ...invitesDe('VP')];
+  const aSuite = lot.filter((x) => DEX.find((f) => f.id === x.id)?.evo);
+  const tropVieux = aSuite.filter((x) => vieux.test(corpsDe(x) ?? ''));
+  check(`les ${aSuite.length} premiers âges qui ont une suite commencent jeunes`,
+    aSuite.length > 0 && tropVieux.length === 0
+    || (console.log('        ', tropVieux.map((x) => x.id).join(' ')), false));
+
+  /* Et une carte sans lignée garde tout le tableau : Le Vieux Marin a le droit
+     d'être vieux dès le premier jour, il n'ira nulle part. On le mesure sur tout
+     le catalogue — LA TRIBUNE n'a plus une seule carte publiée sans suite, et
+     une preuve cherchée là où le cas n'existe pas ne prouve rien. */
+  /* Et quand la carte donne l'âge, le tirage se tait : ni âge tiré, ni barbe, et
+     le mot suit le nombre. « a man, trois jours de barbe » sur « Douze ans » ne
+     donne pas un enfant, ça donne un compromis — un adolescent qui se rase. */
+  const nomme = ['TR1', 'TR2', 'MS30'].map((id) => lot.find((x) => x.id === id)).filter(Boolean);
+  check(`les ${nomme.length} cartes qui écrivent leur âge sont dessinées en enfants`,
+    nomme.length === 3
+    && nomme.every((x) => /^a (boy|girl|child),/.test(corpsDe(x) ?? ''))
+    && nomme.every((x) => !/stubble|beard|moustache/.test(corpsDe(x) ?? '')));
+
+  const ailleurs = ['TR', 'MS', 'BG', 'RV', 'OB', 'EP', 'VP', 'GC', 'GD', 'MT', 'HC', 'IM']
+    .flatMap((s) => invitesDe(s))
+    .filter((x) => !DEX.find((f) => f.id === x.id)?.evo);
+  check(`une carte sans suite garde le tableau complet (${ailleurs.length} cartes concernées)`,
+    ailleurs.some((x) => vieux.test(corpsDe(x) ?? '')));
+}
+
+titre('Un âge reste dans sa famille');
+{
+  const lot = [...ages('TR'), ...ages('MS')];
+  /* Le troisième âge de TR1 est arrivé avec un tambour sanglé sur le ventre
+     alors que la carte est une Voix. Le dessin annonçait une famille que la
+     carte ne joue pas — et c'est le geste, pas le dessin, qui décide de ce
+     qu'on peut faire en duel. */
+  const voix = lot.filter((x) => x.type === 'voix');
+  check(`les ${voix.length} âges de la Voix interdisent le tambour`,
+    voix.length > 0 && voix.every((x) => /no drum, no drumsticks/.test(x.invite)));
+  const perc = lot.filter((x) => x.type === 'perc');
+  check(`les ${perc.length} âges de la Percussion interdisent le porte-voix`,
+    perc.length > 0 && perc.every((x) => /no megaphone/.test(x.invite)));
+  /* La Fidélité ne tient rien : sa montée est une tenue, pas un objet, et les
+     deux lignes n'ont donc pas la même forme. Une seule règle les couvre : une
+     invite d'âge dit **soit** ce que le personnage tient, **soit** comment il se
+     tient — jamais les deux, jamais ni l'une ni l'autre. */
+  const tient = lot.filter((x) => /• what they hold/.test(x.invite));
+  const seTient = lot.filter((x) => /• how they stand/.test(x.invite));
+  check(`${tient.length} âges disent ce qu’ils tiennent, ${seTient.length} comment ils se tiennent, aucun les deux`,
+    tient.length + seTient.length === lot.length
+    && !lot.some((x) => /• what they hold/.test(x.invite) && /• how they stand/.test(x.invite)));
+  /* ## Le point de départ se désigne, il ne se nomme pas
+     
+     La ligne annonçait d'où l'on part — « in the reference image they had
+     nothing in their hands » — avec un objet de départ écrit par famille. Ce
+     n'était pas une lecture du dessin, c'était une supposition sur lui : le
+     premier âge de TR4 tient un téléphone, parce qu'il filme tout, et la
+     Voix partait « les mains vides ». Un modèle qui doit arbitrer entre la
+     phrase et l'image garde les deux objets — l'ajout que la ligne existait
+     pour empêcher.
+     
+     L'invite désigne donc le point de départ au lieu de le nommer, ce qui est
+     vrai de n'importe quel dessin, mains vides comprises. */
+  check('aucune invite ne prétend savoir ce que tient le dessin de référence',
+    !lot.some((x) => /in the reference image they (had|have) [a-z]/.test(x.invite)));
+  check('un objet qui monte chasse ce que la référence montre, quel qu’il soit',
+    tient.every((x) => /it is their only object/.test(x.invite)
+      && /in the reference image is gone/.test(x.invite)
+      && /Never draw both/.test(x.invite)));
+  /* Et ce qui est *porté* survit à ce remplacement, sinon le casque de TR4 et
+     l'écharpe du Déplacement partiraient avec le téléphone. */
+  check('et ce qui est porté survit à ce remplacement',
+    tient.every((x) => /What they WEAR stays with them/.test(x.invite)));
+  /* Une tenue qui monte tranche elle aussi le sort des mains, dans un sens ou
+     dans l'autre : la Fidélité garde ce qu'elle tient — c'est toute sa carte —
+     et la Voix les libère pour crier. Ce qu'on ne veut plus, c'est une ligne
+     qui laisse le modèle deviner. */
+  check('et une tenue qui monte tranche le sort des mains au lieu de le taire',
+    seTient.every((x) => /keep whatever they are holding in the reference image/.test(x.invite)
+      || /Their hands are free/.test(x.invite)));
+  /* Le deuxième âge de la Voix décrit une main en coupe devant la bouche : une
+     posture. Sous l'étiquette « ce qu'ils tiennent », c'était la faute du
+     Collectionneur refaite — on demandait un objet, on décrivait un geste. */
+  const voix2 = lot.filter((x) => x.type === 'voix' && x.stade === 2);
+  check(`les ${voix2.length} deuxièmes âges de la Voix passent par la tenue, pas par l’objet`,
+    voix2.length > 0 && voix2.every((x) => /• how they stand/.test(x.invite)
+      && !/• what they hold/.test(x.invite)));
+
+  /* Et la ligne de famille cède devant le français de la carte, comme au
+     premier âge. Sans ça, Le Collectionneur — une Fidélité qui tient un album —
+     se retrouve les bras croisés et les mains vides au deuxième âge, alors que
+     toute sa lignée parle de ses cartes. */
+  check('l’objet de famille cède devant le texte de la carte',
+    tient.every((x) => /UNLESS the French text above names an object of their own/
+      .test(x.invite)));
+
+  /* Et le français est écrit **avant** les consignes, comme au premier âge : un
+     modèle suit l'instruction concrète qu'il vient de lire, pas celle qui
+     viendra. Dans l'autre ordre, une Fidélité dont la lignée parle de cartes
+     revient bras croisés et mains vides. */
+  check('et il est écrit avant elles, pas après',
+    lot.every((x) => x.invite.indexOf("What they have become") > 0
+      && x.invite.indexOf("What they have become") < x.invite.indexOf("What else changes")));
+}
+
+titre('La règle de droits couvre les deux bouts de la chaîne');
+{
+  const lot = [...ages('TR'), ...ages('BG'), ...ages('RV')];
+  /* Les mots, pas les retours à la ligne — le document et l'invite ne les
+     coupent pas au même endroit, exactement comme pour les premiers âges. */
+  const nu = (t) => t.replace(/\s+/g, ' ').trim();
+  const garde = nu('no text, no letters, no numbers, no logos, no brand marks, '
+    + 'no club crests, no team names, no sponsor logos, no identifiable jerseys, '
+    + 'no real people');
+  const sansGarde = lot.filter((x) => !nu(x.invite).includes(garde));
+  check(`les ${lot.length} invites d’âge portent la formule de VISUELS.md`,
+    sansGarde.length === 0
+    || (console.log('        ', sansGarde.map((x) => x.id).join(' ')), false));
+  /* Les pastilles cousues sont l'endroit exact où le générateur écrit : les
+     deux âges de TR1 en sont revenus couverts de mots. L'interdit doit être là
+     où naît l'envie. */
+  /* Et l'interdit posé **sur les objets qui appellent l'écriture**. La formule
+     générale de `VISUELS.md` n'a pas suffi une seule fois sur cinq images —
+     « CAPO », « TICKET », « EVENT », « PRESS », « COLLECTION 2019 », toujours
+     sur un objet fait pour porter des mots. Il vaut pour les premiers âges
+     comme pour les suivants : c'est là que le générateur écrit. */
+  const partout = [...lot, ...invitesDe('TR'), ...invitesDe('GC')];
+  check(`les ${partout.length} invites disent qu’un livre, un badge ou un billet est vierge`,
+    /* Les mots, pas les retours à la ligne : la clause est écrite en gabarit et
+       coupe ses lignes où elle veut. Un contrôle qui cherche la phrase telle
+       qu'on l'a tapée échoue à la première reformulation de la mise en page. */
+    partout.every((x) => {
+      const nu = x.invite.replace(/\s+/g, ' ');
+      return /nothing in the image is written on/i.test(nu)
+        /* Et l'objet reste l'objet : la première version disait « leave it
+           bare » et le générateur a rendu un livre nu, sans cartes — un
+           collectionneur qui ne collectionne plus rien. On interdit les mots,
+           pas les images. */
+        && /Keep every object exactly as recognisable as it should be/.test(nu)
+        /* Vingt-six cartes racontent une écriture — une banderole peinte, une
+           pancarte, des torses où « les lettres s'alignent ». Elles ont besoin
+           d'une issue, sinon le générateur écrit : l'objet se montre roulé,
+           plié ou de dos, et le moment se lit sur le personnage. */
+        && /show that object rolled up, folded, turned away/.test(nu);
+    }));
+
+  /* Et le français de la carte ne lève jamais une règle de droits. « La
+     Banderole Écrite » disait, à la lettre, que le texte gagne sur tout ce qui
+     suit — donc sur l'interdiction d'écrire. */
+  check('le texte de la carte ne peut pas lever une ligne CRITICAL',
+    partout.every((x) => /EXCEPT the ones marked CRITICAL, which always win/
+      .test(x.invite.replace(/\s+/g, ' '))));
 }
 
 console.log(rouge ? `\n${rouge} test(s) en échec` : '\ntout est vert');

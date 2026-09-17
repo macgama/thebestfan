@@ -614,6 +614,83 @@ n'en est plus que **l'amorçage** : au démarrage, ses cartes absentes de la bas
 y sont insérées, et **jamais celles qui existent déjà** — une modification
 faite dans l'administration doit survivre au redémarrage suivant.
 
+**L'écart entre le code et la base se dit tout seul, à chaque démarrage.**
+`amorcer` n'écrase jamais une ligne existante — c'est voulu, sans quoi chaque
+redémarrage effacerait les corrections faites à l'écran. La contrepartie est
+qu'une carte modifiée dans `dex.js` peut ne jamais arriver en base, et qu'une
+ligne que le code ne connaît plus peut continuer d'être distribuée : **aucun
+des deux ne lève d'erreur**. Quatre migrations de `sql/` n'existent que pour
+rattraper ça après coup — `identites.sql`, `raretes.sql`, `series-neuves.sql`,
+`prefixes.sql`.
+
+`src/server/fanzzy/ecarts.js` compare les deux catalogues à chaque `charger()`,
+c'est-à-dire au démarrage du serveur et dans chacune des suites. Trois écarts
+sont des **fautes** qu'aucune manœuvre normale ne produit — une carte du code
+absente de la base, une ligne publiée inconnue du code, deux cartes publiées
+sous le même nom — et le journal les nomme. Le quatrième, une carte dont un
+champ diffère, est **ambigu par construction** : ça peut être une correction
+faite à l'écran, qui est la raison d'être de cette table. On le compte, on ne
+crie pas. Une alarme qui se déclenche sur du travail normal cesse d'être lue au
+troisième démarrage, et on perd les trois autres avec elle.
+
+Le silence est le cas normal : une base amorcée depuis `dex.js` et jamais
+retouchée ne dit rien. `ecarts:test` le vérifie sur les 670 cartes réelles,
+sans base de données — la comparaison est une fonction pure. `/healthz` porte
+le même constat, sans toucher à `ok` : un catalogue qui a dérivé reste un site
+ouvert. `npm run ecarts` en donne le détail, carte par carte et champ par
+champ, et **sort en erreur** sur une faute.
+
+**Et le code redescend dans la base, sans écraser personne.** Le constat
+ci-dessus disait l'écart ; il ne le réparait pas, et les quatre migrations de
+rattrapage restaient à écrire à la main. `src/server/fanzzy/reconciliation.js`
+le fait au démarrage, champ par champ.
+
+On ne peut pas trancher en regardant deux valeurs : « le nom du code diffère du
+nom en base » ne dit pas **qui** a bougé. Il en faut une troisième — la colonne
+`fanzzy.amorce`, posée par `sql/fanzzy.sql`, qui garde ce que le code disait la
+dernière fois qu'il a écrit cette carte. Alors chaque champ se décide seul :
+
+  code == base                → rien à faire ; la référence s'aligne si elle a
+                                pris du retard, aucune donnée ne bouge.
+  code != base == référence   → personne n'y a touché à l'écran : **le code
+                                fait foi**, la valeur est reprise.
+  code != base != référence   → l'écran a tranché avant : **la base garde sa
+                                version**, et le démarrage annonce le conflit.
+
+C'est la fusion à trois points d'un `git merge`, pour la même raison : deux
+auteurs légitimes sur la même donnée, aucun des deux ne doit écraser l'autre en
+silence.
+
+Quatre choses en découlent, et aucune n'est négociable :
+
+- **`NULL` veut dire « pas gérée par le code ».** Une carte créée depuis
+  l'administration n'est pas dans `dex.js` : son `NULL` la protège pour
+  toujours. Une ligne d'avant ce mécanisme est adoptée — référence = son état
+  actuel — **à la seule condition qu'`admin_audit` ne garde aucune trace d'une
+  modification la concernant**. Journal absent : on n'adopte rien. Une table
+  manquante ne doit jamais se lire comme « personne n'a rien fait ».
+- **La référence dit ce que le code a réellement posé**, jamais ce qu'il aurait
+  voulu poser. Un champ en conflit garde sa référence d'avant : sinon elle
+  annoncerait une valeur que la base n'a jamais portée, et la décision suivante
+  deviendrait illisible.
+- **Un disjoncteur à soixante cartes.** Au-delà, rien n'est écrit et le
+  démarrage dit pourquoi. Une fournée de contenu réécrit dix cartes ; six cents,
+  c'est un accident — un `dex.js` à moitié chargé, une base amorcée depuis une
+  autre branche. `TBF_RECONCILIATION_MAX` relève la barre le jour où c'est
+  voulu.
+- **Sans la colonne, tout se désactive en le disant.** Le déploiement pousse le
+  code et jamais le schéma : écrire dans une colonne absente ferait lever
+  l'amorçage, et le `catch` du démarrage éteindrait toutes les routes `/api`.
+  C'est la panne du 8 septembre 2026, mot pour mot. On regarde donc avant
+  d'écrire.
+
+`reconciliation:test` éprouve la règle sans base, sur des cas fabriqués — dont
+la moitié vérifient qu'elle **s'abstient** : la correction jamais écrasée, la
+carte inconnue du code jamais touchée, la ligne d'avant restée protégée, le
+plafond qui bloque. Le dernier contrôle rejoue les 670 cartes réelles deux fois
+de suite : une réconciliation qui ne converge pas est une écriture en boucle sur
+la table la plus lue du jeu.
+
 Trois règles de cet écran, qui ne se négocient pas :
 
 - **On ne supprime jamais une carte.** Un identifiant effacé orphelinerait les
@@ -4179,6 +4256,56 @@ déduire ; ce serait la première chose que le fil affirme sans l'avoir vue.
 
 ## 6. Pièges connus
 
+**Un canvas dit ce qu'il sait écrire, jamais ce que le navigateur sait lire.**
+Trois fichiers choisissaient le format des images en demandant à un canvas
+`toDataURL('image/avif')`, puis `toDataURL('image/webp')`, et prenaient la
+réponse pour ce que le navigateur savait **afficher**. Les deux questions n'ont
+aucun rapport : **personne n'encode l'AVIF**, pas même Chrome — la branche
+`.avif` ne s'est donc jamais ouverte, et les vingt-quatre mégaoctets d'AVIF du
+dépôt n'ont jamais été servis à personne — et **Safari n'encode pas le WebP**
+alors qu'il le lit depuis 2020. Tout ce qui n'était pas Chrome retombait donc
+sur `.jpg`. Or un Fanzzy est **détouré** : il n'existe qu'en AVIF, WebP et PNG.
+L'accueil demandait `/img/fanzzy/TR57.jpg`, recevait un 404, et sa réécriture de
+secours ne connaissait que `.avif` et `.webp` — le `.jpg` passait au travers,
+les deux calques restaient éteints, et l'écran d'accueil n'avait **plus personne
+au centre** sur Firefox et sur iPhone, avec le nom du Fanzzy écrit juste en
+dessous. La fiche « Mon Fanzzy » montrait le même personnage sans broncher : son
+`<img onerror>` retombe sur le PNG. Deux écrans du même jeu, deux réponses,
+aucune erreur en console.
+
+Trois règles en sortent. **On ne devine plus le format** : le WebP est lu
+partout depuis Safari 14 et Firefox 65, bien avant le `dvh` de 2022 dont ce jeu
+ne peut pas se passer, et chaque image du dépôt a son jumeau `.webp` —
+`fanzzy-etats.js` le sert à tout le monde et n'a plus rien à détecter. **Le
+repli suit la famille du dessin**, jamais l'inverse : un personnage détouré
+retombe en PNG, une photo en JPEG ; `secours()` est le seul endroit qui le sait,
+et il remplace l'extension sans manger la révision de `?v=`. Et **un contrôle de
+fichiers présents ne vaut rien sans un contrôle de l'adresse demandée** :
+`verif-pages` vérifiait les trois formats sur disque depuis toujours, pendant
+que la page en réclamait un quatrième. Il monte maintenant le vrai
+`fanzzy-art.js` et vérifie que l'adresse qu'il construit — et son secours —
+désignent des fichiers qui existent.
+
+**Et l'AVIF est revenu, servi par le serveur.** C'est la suite logique du
+constat : le navigateur dit déjà ce qu'il sait lire, à chaque requête d'image,
+dans `Accept`. Il n'y a rien à deviner, il y a à lire.
+`src/server/images/index.js` relève au démarrage les images qui ont un jumeau
+`.avif` — 584 sur les 4 000 fichiers de `/img` — et, quand le navigateur a
+annoncé `image/avif` en toutes lettres, réécrit l'adresse demandée avant le
+`express.static` de `/img`. **L'adresse ne change pas côté page** : le HTML, le
+classeur, le service worker et le manifeste des états continuent de parler de
+`.webp`, et personne n'a à savoir ce qui part sur le fil. Les 28,7 Mo de WebP
+deviennent 18,3 Mo d'AVIF pour qui sait les lire — **36 % de moins**.
+
+Deux pièges y sont écrits noir sur blanc, et `images:smoke` les tient : **un
+joker ne vaut pas une déclaration de capacité** — Safari 15 annonce `image/`
+suivi d'une étoile et ne sait pas lire un AVIF, l'accepter referait la faute
+qu'on vient de corriger, en plus discret ; et **`Vary: Accept` n'est pas une
+politesse** — deux navigateurs demandent la même adresse et reçoivent deux
+fichiers, sans cet en-tête un cache partagé sert l'AVIF de l'un à l'autre. La
+suite rejoue les en-têtes réels de quatre navigateurs, dont Safari 15 et Safari
+17, sur les vraies images.
+
 **Un `catch` muet autour d'un ajout facultatif cache une panne pour de bon.**
 L'entrée ADMIN du menu se posait avec `nav.appendChild(a)`, sur une variable
 disparue avec la barre du bas. La `ReferenceError` tombait dans un
@@ -4415,6 +4542,86 @@ Déploiement complet : voir `DEPLOIEMENT.md`.
 ---
 
 ## 9. Fabriquer une illustration
+
+### Un Fanzzy traverse une vie
+
+Âge 1 l'enfant ou l'adolescent, âge 2 l'adulte, âge 3 le vieux. C'est le
+vieillissement qui porte l'évolution, et la raison est simple : **c'est ce qui
+est amusant**. Voir son personnage traverser une vie est une récompense ; le
+voir gagner deux pastilles cousues n'en est pas une.
+
+**La règle a été essayée dans l'autre sens, et l'essai a tranché.** Une version
+de `inviteAge()` a figé l'âge pour ne faire monter que le domaine — le
+raisonnement tenait sur le papier : le joueur qui paie quatre-vingt-dix
+écharpes doit reconnaître son personnage, et un gamin de onze ans vieilli deux
+fois devient un homme de cinquante-sept dont plus rien ne rappelle la première
+carte. Les deux dessins qui en sont sortis ont montré ce que le papier ne dit
+pas : un gamin qui reste un gamin avec plus d'écussons n'est pas une évolution,
+c'est une variante. Deux cent soixante crédits, et la bonne réponse — c'est
+pour ça qu'on essaie sur une lignée avant les cent trente-sept autres.
+
+**Ce que l'essai a laissé derrière lui**, et qui est le vrai gain : les cinq
+axes ne remplacent plus l'âge, ils le **dessinent**. Une ride ne se voit pas à
+cent cinquante pixels de haut ; une silhouette, si.
+
+| | Âge 1 | Âge 2 | Âge 3 |
+|---|---|---|---|
+| empreinte au sol | pieds joints | écartement d'épaules | plantés, ancrés |
+| masse du vêtement | flottant, trop grand | ajusté, fermé | long, lourd, ouvert |
+| objet du domaine | le corps seul | l'amorce du geste | l'objet de la famille |
+| accumulation | rien | quelques pastilles unies | couvert, écharpe au poignet |
+| ouverture | bras au corps | menton levé | bras ouverts, face caméra |
+
+**Vieillir quelqu'un et le remplacer sont deux choses différentes**, et un
+générateur ne fait pas la différence tout seul : il redessine un visage moyen
+de l'âge demandé. `OSSATURE` lui interdit donc ce qui ne bouge pas — la forme
+des yeux, le nez, la mâchoire, le teint, la palette du vêtement — et ne lui
+laisse que ce que les années font vraiment : les cheveux, la peau, la carrure,
+le port. C'est la seule ligne qui sépare « il a grandi » de « ce n'est plus
+lui ».
+
+**Une bête, un objet ou un phénomène ne vieillit pas** : il monte en intensité,
+comme `dex-ages.js` l'écrit depuis le premier jour. Demander des cheveux gris à
+une merguez n'a jamais eu de sens.
+
+`MONTEE` tient l'escalade **famille par famille** : la Voix passe de la voix nue
+aux mains en porte-voix puis au porte-voix, la Percussion des baguettes à la
+grosse caisse. Ce n'est pas une élégance : le troisième âge de TR1, un
+personnage Voix, est arrivé avec un tambour sanglé sur le ventre — le dessin
+annonçait une famille que la carte ne joue pas, et c'est le geste qui décide de
+ce qu'on peut faire en duel.
+
+**Et la formule de `VISUELS.md` y est maintenant.** Elle ne vivait que dans
+l'invite des premiers âges. Les deux seules images du jeu qui portent du texte
+interdit et des écussons de club sont précisément les deux âges supérieurs de
+TR1, sortis de la fonction qui ne la portait pas. Une règle de droits qui ne
+couvre qu'une moitié de la chaîne ne couvre rien.
+
+`invites:test` tient les six règles, et casse volontairement sur chacune.
+
+### TR1 n'a plus qu'un état à ses deux âges supérieurs
+
+Les douze états de `e2` et `e3` avaient été générés sous l'ancienne invite, celle
+qui ne portait pas la formule de `VISUELS.md` : ils sont couverts d'écussons de
+club, et on y lit « CAPO », « TICKET », « 200-20… ». Le troisième âge tient en
+plus un tambour alors que la carte est une **Voix**.
+
+Ils sont donc retirés — soixante-trois fichiers, seize mégaoctets — et il ne
+reste que `neutre` et `portrait` à chaque âge. Le repli est écrit pour ça : « un
+état absent retombe sur `neutre` ». Le personnage ne réagit plus au but à ces
+deux âges, mais il est là, à son âge, et le jeu n'expose plus ces images.
+
+**Pourquoi pas seulement remplacer le `neutre` :** `fanzzy-art.mjs` calcule
+**un cadrage par âge, l'union de ses douze états**, et l'applique à tous. Un
+`neutre` neuf à côté de onze anciens ferait sauter le personnage d'un état à
+l'autre — un défaut qui se lit comme un bug d'affichage, jamais comme un
+cadrage. L'unité de reprise est donc l'âge entier, et les rendus d'origine des
+onze autres états ne sont pas dans le dépôt (`art/**/_src/` est ignoré par git).
+
+Le jour où l'on redessine ces deux âges, c'est douze états chacun, d'un seul
+passage, avec l'invite d'aujourd'hui.
+
+### Les quatre chaînes
 
 Quatre sortes de dessins, quatre chaînes. Celle des Fanzzy d’abord, qui est
 la plus ancienne et la plus exigeante ; les trois autres — cartes d’action,

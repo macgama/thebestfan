@@ -31,7 +31,7 @@
  */
 import { readdir, readFile } from 'node:fs/promises';
 import { readFileSync, existsSync } from 'node:fs';
-import { Script } from 'node:vm';
+import { Script, createContext } from 'node:vm';
 import path from 'node:path';
 /* Les listes de référence viennent des modules eux-mêmes, pas d'une lecture au
    motif du fichier source. Une première version lisait les identifiants à
@@ -463,6 +463,56 @@ for (const nom of fichiers.filter((f) => f.endsWith('.js')).sort()) {
   }
   if (manquants.length) ko('fanzzy-art.js', `illustrations annoncées mais absentes : ${manquants.join(', ')}`);
   else if (brut !== undefined) ok('fanzzy-art.js', `${illu.length} illustration(s) présentes en trois formats`);
+
+  /* ------------------------- et l'extension que le navigateur va demander
+
+     Le contrôle d'au-dessus vérifie que les fichiers sont là. Il ne dit rien de
+     **celui que la page demande**, et c'est par là que le personnage de
+     l'accueil a disparu : les Fanzzy sont publiés en AVIF, WebP et PNG, et
+     `fanzzy-art.js` servait un `.jpg` à tout ce qui n'est pas Chrome. Trois
+     formats au vert, un quatrième demandé, et un 404 sur chaque écran d'accueil
+     de Firefox et d'iPhone.
+
+     On monte donc le vrai module et on regarde les deux adresses qu'il
+     construit — le buste d'une carte, le plein-pied de l'accueil — ainsi que
+     l'adresse de secours qui prend le relais quand la première échoue. Les
+     trois doivent désigner un fichier qui existe. */
+  {
+    const bac = {
+      // Un `window` nu : le module doit savoir se passer de `fanzzy-etats.js`,
+      // et un canvas qui lève est le cas d'un mode de confidentialité strict.
+      window: {},
+      document: { createElement: () => { throw new Error('pas de canvas'); } },
+    };
+    bac.globalThis = bac;
+    new Script(artjs, { filename: 'fanzzy-art.js' }).runInContext(createContext(bac));
+    const { adresse, secours } = bac.window.FZART ?? {};
+    if (typeof adresse !== 'function') {
+      ko('fanzzy-art.js', 'FZART.adresse introuvable : le contrôle des '
+        + 'extensions ne vérifie plus rien');
+    } else {
+      const fantomes = [];
+      // Un échantillon suffit : l'extension ne dépend pas du personnage. On
+      // prend le premier et le dernier de la liste, plus le Fanzzy équipé par
+      // défaut, pour que l'oubli d'une variante se voie quand même.
+      for (const id of [illu[0], illu.at(-1), 'TR57'].filter(Boolean)) {
+        for (const variante of ['buste', 'plein']) {
+          const src = adresse(id, variante);
+          if (!src) continue;
+          for (const adr of [src, secours?.(src)].filter(Boolean)) {
+            const f = path.join(DOSSIER, adr.split('?')[0].replace(/^\//, ''));
+            if (!existsSync(f)) fantomes.push(adr);
+          }
+        }
+      }
+      if (fantomes.length) {
+        ko('fanzzy-art.js', 'adresses servies au navigateur mais sans fichier : '
+          + `${fantomes.join(', ')} — un Fanzzy n'existe qu'en .avif, .webp et .png`);
+      } else {
+        ok('fanzzy-art.js', 'l’adresse servie et son secours désignent des fichiers présents');
+      }
+    }
+  }
 
   /* Les dessins des cartes d'action.
      La liste de référence est le catalogue lui-même : `action-art.js` promet

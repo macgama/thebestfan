@@ -21,10 +21,15 @@ import { DEX as AMORCE } from '../../shared/fanzzy/dex.js';
 // Les saisons décident des séries ouvertes : `charger` les charge donc en
 // premier, et personne d'autre n'a à y penser. Voir `charger` plus bas.
 import { chargerSaisons } from './saisons.js';
+import { comparer, resumer } from './ecarts.js';
+import { fusionner, resumerFusion, instantane, CHAMPS, MAX_DEFAUT }
+  from './reconciliation.js';
 
 let charge = false;
 let liste = [];
 let parId = new Map();
+/** Le dernier constat d'écart entre `dex.js` et la base. `null` avant chargement. */
+let ecarts = null;
 
 /**
  * Le catalogue n'a jamais été chargé.
@@ -90,6 +95,28 @@ async function raccrocherLignees(pool) {
 }
 
 /**
+ * La colonne `amorce` est-elle là ?
+ *
+ * Elle vient de `sql/fanzzy.sql`, et **rien n'oblige à le rejouer** : le
+ * déploiement pousse le code, jamais le schéma. Écrire dedans sans le
+ * demander ferait lever l'amorçage, le `catch` du démarrage attraperait tout,
+ * et *toutes* les routes `/api` disparaîtraient — connexion comprise. C'est
+ * mot pour mot la panne du 8 septembre 2026, onze heures durant, sur un
+ * fichier de schéma oublié.
+ *
+ * On regarde donc avant d'écrire. Sans la colonne, le catalogue s'amorce comme
+ * avant et la réconciliation se tait : le jeu tourne, il ne reprend rien, et le
+ * démarrage dit quel fichier appliquer.
+ *
+ * Pas de cache : une requête au démarrage, et les suites qui refont la table
+ * entre deux appels obtiennent la vérité du moment plutôt qu'un souvenir.
+ */
+async function colonneAmorce(pool) {
+  const [rows] = await pool.query(`SHOW COLUMNS FROM fanzzy LIKE 'amorce'`);
+  return rows.length > 0;
+}
+
+/**
  * Amorçage : les cartes de `dex.js` que la base ne connaît pas encore.
  *
  * `INSERT IGNORE` et non `REPLACE` : on ajoute ce qui manque, on n'écrase
@@ -101,7 +128,7 @@ async function raccrocherLignees(pool) {
  * silencieusement du catalogue réel — exactement la faute que ce projet a déjà
  * payée avec le catalogue recopié dans la page.
  */
-async function amorcer(pool) {
+async function amorcer(pool, avecAmorce) {
   let pose = 0;
   for (const [i, f] of AMORCE.entries()) {
     // `publie` vient de la fiche et non d'un 1 en dur : trente-deux anciennes
@@ -109,16 +136,105 @@ async function amorcer(pool) {
     // proposées. Écrire 1 quoi qu'il arrive les remettrait dans les tirages à
     // chaque base neuve, et il faudrait les retirer à la main après chaque
     // installation — ce que personne ne pense à faire.
+    /* La ligne emporte sa **référence d'amorçage** : ce que le code disait au
+       moment où elle a été posée. C'est elle qui permettra plus tard de savoir
+       si une valeur a bougé parce que le code a changé ou parce que quelqu'un
+       l'a corrigée à l'écran — deux choses qu'aucune comparaison des seules
+       valeurs ne peut distinguer. Voir `reconciliation.js`. */
+    const champs = ['id', 'nom', 'type', 'set_id', 'stage', 'rar', 'evo',
+      'histoire', 'mods', 'cri', 'publie', 'ordre'];
+    const valeurs = [f.id, f.nom, f.type, f.set, f.stage, f.rar, f.evo ?? null,
+      f.histoire ?? null, JSON.stringify(f.mods ?? {}), JSON.stringify(f.cri ?? {}),
+      f.publie === false ? 0 : 1, i];
+    if (avecAmorce) { champs.push('amorce'); valeurs.push(JSON.stringify(instantane(f))); }
     const [r] = await pool.execute(
-      `INSERT IGNORE INTO fanzzy
-         (id, nom, type, set_id, stage, rar, evo, histoire, mods, cri, publie, ordre)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [f.id, f.nom, f.type, f.set, f.stage, f.rar, f.evo ?? null,
-       f.histoire ?? null, JSON.stringify(f.mods ?? {}), JSON.stringify(f.cri ?? {}),
-       f.publie === false ? 0 : 1, i]);
+      `INSERT IGNORE INTO fanzzy (${champs.join(', ')})
+       VALUES (${champs.map(() => '?').join(', ')})`, valeurs);
     if (r.affectedRows) pose++;
   }
   return pose;
+}
+
+/* ------------------------------------------------------- la réconciliation
+
+   `amorcer` pose les cartes neuves. Celle-ci fait redescendre le code dans les
+   cartes **déjà là** — ce qu'`INSERT IGNORE` ne saura jamais faire — sans
+   écraser une correction faite à l'écran. La règle vit dans
+   `reconciliation.js`, pure et éprouvée à part ; ici, on lit, on écrit, on
+   raconte.                                                                   */
+
+/** Les colonnes SQL des champs gérés. `set` est réservé, d'où `set_id`. */
+const COLONNE = { nom: 'nom', set: 'set_id', stage: 'stage', rar: 'rar', evo: 'evo',
+  histoire: 'histoire', mods: 'mods', cri: 'cri', publie: 'publie' };
+
+/** Une valeur de champ vers ce que le pilote doit envoyer. */
+const versSql = (champ, v) => {
+  if (champ === 'publie') return v ? 1 : 0;
+  if (champ === 'mods' || champ === 'cri') return JSON.stringify(v ?? {});
+  return v ?? null;
+};
+
+/**
+ * Les cartes que l'administration a modifiées, d'après son journal.
+ *
+ * Sert au seul cas des lignes d'avant ce mécanisme : sans référence
+ * d'amorçage, c'est la seule trace qui dise si quelqu'un y a touché. Le journal
+ * peut manquer — `sql/admin.sql` non appliqué — et alors **on n'adopte rien** :
+ * une table absente ne doit jamais se lire comme « personne n'a rien fait ».
+ */
+async function cartesTouchees(pool) {
+  try {
+    const [rows] = await pool.query(
+      `SELECT DISTINCT cible FROM admin_audit WHERE action LIKE 'fanzzy.%' AND cible IS NOT NULL`);
+    return { connu: true, ids: new Set(rows.map((r) => r.cible)) };
+  } catch (e) {
+    if (e.code !== 'ER_NO_SUCH_TABLE') throw e;
+    return { connu: false, ids: new Set() };
+  }
+}
+
+/**
+ * Fait redescendre le code dans la base, champ par champ.
+ *
+ * Ne lève jamais pour une raison de schéma : sans la colonne `amorce`, elle se
+ * désactive en le disant. Le jeu tourne exactement comme avant — il ne reprend
+ * simplement rien — et c'est le bon comportement pour une pièce qui s'ajoute :
+ * la panne du 8 septembre 2026 est partie d'un fichier de schéma non appliqué
+ * qui a éteint toutes les routes `/api`.
+ */
+async function reconcilier(pool, avecAmorce) {
+  if (!avecAmorce) {
+    console.warn('catalogue : colonne `amorce` absente, réconciliation désactivée '
+      + '— applique sql/fanzzy.sql pour que les corrections du code atteignent '
+      + 'les cartes déjà en base.');
+    return null;
+  }
+  const colonnes = [...new Set(Object.values(COLONNE))].join(', ');
+  const [rows] = await pool.query(`SELECT id, ${colonnes}, amorce FROM fanzzy`);
+
+  const touchees = await cartesTouchees(pool);
+  const base = rows.map((r) => ({
+    ...versJeu(r),
+    amorce: typeof r.amorce === 'string' ? JSON.parse(r.amorce) : r.amorce,
+    /* Journal absent : on ne sait pas, donc on ne touche pas. `true` ici veut
+       dire « considère-la comme corrigée à l'écran », ce qui est le refus
+       d'adopter — le seul défaut qui ne perd rien. */
+    toucheeAdmin: touchees.connu ? touchees.ids.has(r.id) : true,
+  }));
+
+  const max = Number(process.env.TBF_RECONCILIATION_MAX) || MAX_DEFAUT;
+  const plan = fusionner({ code: AMORCE, base, max });
+  for (const ligne of resumerFusion(plan)) console.warn(ligne);
+  if (plan.bloque) return plan;
+
+  for (const e of plan.ecrire) {
+    const champs = Object.keys(e.valeurs);
+    const sets = [...champs.map((c) => `${COLONNE[c]} = ?`), 'amorce = ?'];
+    await pool.execute(
+      `UPDATE fanzzy SET ${sets.join(', ')} WHERE id = ?`,
+      [...champs.map((c) => versSql(c, e.valeurs[c])), JSON.stringify(e.amorce), e.id]);
+  }
+  return plan;
 }
 
 /** Relit toute la table. Appelé au démarrage et après chaque écriture. */
@@ -144,11 +260,34 @@ export async function recharger(pool) {
  */
 export async function charger(pool) {
   const saisons = await chargerSaisons(pool);
-  const amorces = await amorcer(pool);
+  const avecAmorce = await colonneAmorce(pool);
+  const amorces = await amorcer(pool, avecAmorce);
   const liens = await raccrocherLignees(pool);
+  /* Après l'amorçage — qui pose les cartes neuves avec leur référence — et
+     avant la relecture, pour que la mémoire porte l'état fusionné et non celui
+     d'avant. */
+  const fusion = await reconcilier(pool, avecAmorce);
   const n = await recharger(pool);
   const series = await chargerSeries(pool);
-  return { total: n, amorces, liens, series, saisons };
+
+  /* ## Le constat d'écart, à chaque démarrage, et à voix haute
+
+     `amorcer` n'écrase jamais une ligne existante — c'est voulu, et ça ne
+     changera pas. Mais ça veut dire qu'une carte modifiée dans `dex.js` peut
+     ne jamais arriver en base, et qu'une ligne que le code ne connaît plus
+     peut continuer d'être distribuée. **Aucun des deux ne lève d'erreur.**
+     Jusqu'ici, ça se voyait à un compteur bizarre dans le classeur, des
+     semaines plus tard, et il fallait penser à lancer `npm run ecarts`.
+
+     Un garde-fou qu'on lance à la main se lance après avoir vu le symptôme.
+     Celui-ci parle tout seul, ici, parce que tout ce qui monte un catalogue
+     passe par `charger` — le serveur comme les dix-neuf suites. Une base
+     amorcée depuis le même `dex.js` ne dit rien du tout : le silence est le
+     cas normal, et c'est ce qui rend le bruit lisible le jour où il arrive. */
+  ecarts = comparer({ code: AMORCE, base: liste, ouvertes });
+  for (const ligne of resumer(ecarts)) console.warn(ligne);
+
+  return { total: n, amorces, liens, series, saisons, ecarts, fusion };
 }
 
 /* --------------------------------------------------------------- lecture */
@@ -347,6 +486,15 @@ export function obtenables() {
   return personnages().filter((f) => f.publie && serieOuverte(f.set));
 }
 
+/**
+ * Le dernier constat d'écart entre `dex.js` et la base, ou `null`.
+ *
+ * Il est calculé au chargement et pas à la demande : il porte l'état du
+ * catalogue **tel qu'il a été monté**, ce qui est précisément la question
+ * qu'on pose après un déploiement. `/healthz` le sert.
+ */
+export const ecartsCatalogue = () => ecarts;
+
 /** Utile aux tests et au diagnostic. */
 export const estCharge = () => charge;
 
@@ -354,4 +502,5 @@ export const estCharge = () => charge;
 export function oublier() {
   charge = false; liste = []; parId = new Map();
   racines = new Map(); chaines = new Map();
+  ecarts = null;
 }

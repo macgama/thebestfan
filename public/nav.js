@@ -116,18 +116,18 @@
   /**
    * La photo de tribune, sous un voile.
    *
-   * Le format est choisi par le navigateur, pas deviné : un `.avif` servi à un
-   * navigateur qui ne le lit pas ne déclenche même pas d'erreur visible, il
-   * laisse juste un fond noir.
+   * Le format n'est plus deviné. Le canvas à qui on le demandait répondait ce
+   * qu'il savait **écrire**, ce qui ne dit rien de ce que le navigateur sait
+   * **afficher** : personne n'encode l'AVIF, Safari n'encode pas le WebP, et
+   * tous les deux les lisent. Le raisonnement complet est dans
+   * `fanzzy-etats.js`, avec le trou qu'il a creusé sur l'accueil.
+   *
+   * Ici la faute ne se voyait pas — le décor existe aussi en JPEG, il arrivait
+   * donc, simplement six fois plus lourd que nécessaire sur tout ce qui n'est
+   * pas Chrome. Le WebP est lu partout depuis 2020 et chaque décor a le sien ;
+   * le JPEG reste en repli par `onerror`, pour le navigateur d'avant.
    */
-  const EXT = (() => {
-    try {
-      const c = document.createElement('canvas');
-      if (c.toDataURL('image/avif').startsWith('data:image/avif')) return '.avif';
-      if (c.toDataURL('image/webp').startsWith('data:image/webp')) return '.webp';
-    } catch { /* pas de canvas */ }
-    return '.jpg';
-  })();
+  const EXT = '.webp';
 
   const decor = document.createElement('div');
   decor.className = 'tbf-decor';
@@ -140,9 +140,16 @@
   {
     const img = new Image();
     img.onload = () => { decor.style.backgroundImage = `url("${img.src}")`; decor.classList.add('on'); };
-    // Le décor d'avant reste en repli : une mise en ligne où l'image manque
-    // laisserait sinon une page noire, et une page noire ne dit pas pourquoi.
-    img.onerror = () => { img.onerror = null; img.src = '/img/hero' + EXT; };
+    /* Deux replis, dans cet ordre : le décor d'avant, puis le JPEG. Une mise en
+       ligne où l'image manque laisserait sinon une page noire, et une page
+       noire ne dit pas pourquoi ; un navigateur sans WebP — il en reste —
+       aurait eu la même, sans qu'on sache non plus. */
+    const replis = ['/img/hero' + EXT, '/img/accueil.jpg', '/img/hero.jpg'];
+    img.onerror = () => {
+      const suivant = replis.shift();
+      if (!suivant) { img.onerror = null; return; }
+      img.src = suivant;
+    };
     img.src = '/img/accueil' + EXT;
   }
 
