@@ -1271,7 +1271,15 @@ function souvenir() {
                         la réponse du serveur, c'est-à-dire trois allers-retours
                         après le personnage qu'elles commandent. */
                      atteint: j.atteint ?? (j.evo ?? 1),
-                     choisi: j.choisi ?? (j.evo ?? 1) } : null;
+                     choisi: j.choisi ?? (j.evo ?? 1),
+                     /* **La carte de l'âge**, et non seulement la lignée.
+                        `TR1` range les douze états ; l'illustration en pied,
+                        elle, est rangée sous `TR1C` pour le troisième âge. Un
+                        souvenir qui ne gardait que la lignée repeignait donc le
+                        premier âge à chaque retour sur l'accueil — et la
+                        réponse du serveur ne le corrigeait pas, puisqu'elle
+                        portait la même identité. Voir `memeQuAvant`. */
+                     carte: j.carte ?? j.id } : null;
   } catch { return null; }
 }
 
@@ -1280,7 +1288,8 @@ function retenir(p) {
   try {
     localStorage.setItem(MEMOIRE, JSON.stringify(
       p ? { id: p.id, evo: p.evo, skin: p.skin, nom: p.nom ?? '', ages: p.ages ?? 1,
-            atteint: p.atteint ?? p.evo, choisi: p.choisi ?? p.evo }
+            atteint: p.atteint ?? p.evo, choisi: p.choisi ?? p.evo,
+            carte: p.carte ?? p.id }
         : { aucun: true }));
   } catch { /* stockage refusé : on repartira de zéro, sans plus */ }
 }
@@ -1366,7 +1375,7 @@ async function montrerAge(evo) {
   if (n === equipe.evo) return;
   const carte = lignee.ages.find((a) => a.stade === n);
   equipe = { ...equipe, evo: n, plein: pleinDe(equipe.id, n),
-    nom: carte?.nom ?? equipe.nom };
+    nom: carte?.nom ?? equipe.nom, carte: carte?.id ?? equipe.id };
   precharger();
   /* `force` : l'état ne change pas, le personnage si — sans lui, `pose` voit
      le même nom d'état et ne redessine rien. Et le rebond, parce qu'un
@@ -1449,7 +1458,7 @@ let filet = null;
        lesquelles on voit son Fanzzy sans pouvoir en changer. La réponse
        corrige, elle n'inaugure pas. */
     lignee = { atteint: vu.atteint ?? vu.evo, choisi: vu.choisi ?? vu.evo,
-      ages: [{ stade: vu.evo, id: vu.id, nom: vu.nom }] };
+      ages: [{ stade: vu.evo, id: vu.carte ?? vu.id, nom: vu.nom }] };
     equipe = { ...vu, plein: pleinDe(vu.id, vu.evo) };
     precharger();
     pose('neutre');
@@ -1879,8 +1888,11 @@ async function jsonp(url, options) {
       // `skin` n'est pas encore un réglage du joueur : tant qu'il n'y en a
       // qu'un, le demander explicitement évite d'avoir à revenir ici le jour
       // où il y en aura deux.
-      const candidat = { id: actif, evo: choisi, skin: 'base',
-        atteint, choisi };
+      const candidat = { id: actif, evo: choisi, skin: 'base', atteint, choisi,
+        /* La carte du catalogue de cet âge-là : c'est elle qui porte
+           l'illustration, et c'est elle qu'il faut retenir pour que le
+           prochain chargement reparte du bon dessin. */
+        carte: ligne.find((a) => a.stade === choisi)?.id ?? actif };
       /* Le plein-pied, comme dernier recours. `resoudre` ne connaît que les
          personnages dont les douze états sont dessinés — il y en a un — alors
          que deux cents ont leur illustration. Sans ce repli, presque tout le
@@ -1909,8 +1921,14 @@ async function jsonp(url, options) {
            maintenant qui montrer, et le supporter n'a plus à prendre la
            place. */
         clearTimeout(filet); filet = null;
+        /* « Le même » veut dire **le même dessin**, pas la même identité.
+           Comparer id + âge + tenue suffisait tant que l'accueil ne montrait
+           qu'un âge ; depuis qu'il les fait défiler, deux états portant la même
+           identité peuvent pointer vers deux illustrations différentes, et le
+           raccourci figeait alors à l'écran celle que le souvenir avait posée.
+           On compare donc aussi l'adresse qu'on s'apprête à peindre. */
         const memeQuAvant = equipe?.id === candidat.id && equipe?.evo === candidat.evo
-          && equipe?.skin === candidat.skin;
+          && equipe?.skin === candidat.skin && equipe?.plein === candidat.plein;
         equipe = candidat;
         retenir(candidat);
         precharger();
