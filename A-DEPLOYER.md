@@ -7,7 +7,7 @@ sur `claude/dreamy-lovelace-mjqpea`, plus les mises à jour de ce fichier :
 622eaa7  L'accueil sans personnage : le format d'image n'est plus deviné
 d027bc3  L'AVIF revient, négocié par le serveur
 a69b5b8  Le catalogue dit tout seul quand il a dérivé du code
-????????  Le code redescend dans la base, sans écraser personne
+8fce760  Le code redescend dans la base, sans écraser personne
 ```
 
 **Une colonne s'ajoute** — `fanzzy.amorce` — et elle est déclarée dans
