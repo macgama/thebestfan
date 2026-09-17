@@ -411,44 +411,186 @@ function invite(f) {
   ].filter(Boolean).join('\n');
 }
 
+/* ==================================================== la montée des âges
+
+   ## Un âge supérieur ne vieillit plus
+
+   L'invite d'avant disait `Change only the age`, et elle le disait bien : le
+   deuxième âge « grown up, not yet middle-aged », le troisième « much older —
+   this is the last age of a long life ». Trois dessins, trois personnes.
+
+   C'est ce qui casse la promesse de l'évolution. Le joueur qui paie quatre-
+   vingt-dix écharpes pour faire monter son Fanzzy veut voir **son** personnage
+   plus fort, pas son remplaçant. Et le cas limite le dit mieux qu'un argument :
+   Le Petit Teigneux a onze ans. Vieilli deux fois, il devient un homme de
+   cinquante-sept ans qui n'a plus rien du gamin de la première carte — on ne
+   reconnaît ni le visage, ni la silhouette, ni l'idée.
+
+   La règle est donc inversée : **l'âge est un invariant, le domaine est ce qui
+   monte.** Le personnage ne vieillit pas, il prend sa place, puis il la tient.
+
+   ## Cinq axes, et aucun n'est l'âge
+
+   Ils sont choisis pour une seule raison : **ils se lisent à quarante-huit
+   pixels**. Dans le classeur, une carte fait cent cinquante pixels de haut ;
+   une évolution qui ne se voit qu'en plein écran ne se voit pas.
+
+     1. l'empreinte au sol — pieds joints, puis écartés, puis plantés ;
+     2. la masse du vêtement — flottant, ajusté, long et lourd ;
+     3. l'objet du domaine — il monte **dans sa famille**, jamais ailleurs ;
+     4. l'accumulation — les pastilles cousues, l'écharpe au poignet ;
+     5. l'ouverture — bras au corps, menton levé, bras ouverts.
+
+   Ce qui ne bouge **jamais** : le visage, la palette, la carrure, le rendu, le
+   cadrage. C'est là qu'est la reconnaissance, et c'est tout ce qu'on protège.  */
+
+/**
+ * Ce que le personnage tient, à chacun des trois âges.
+ *
+ * L'escalade reste **dans la famille**, et c'est une correction, pas une
+ * précaution : le troisième âge de TR1, un personnage Voix, est arrivé avec un
+ * tambour sanglé sur le ventre. Le dessin annonçait une famille que la carte ne
+ * joue pas — exactement la faute que `FAMILLE` corrige déjà pour les premiers
+ * âges, refaite ici parce que l'invite des âges ne disait rien du domaine.
+ *
+ * Le premier élément sert à nommer d'où l'on part : une édition qui dit « ils
+ * avaient ceci, ils ont maintenant cela » remplace l'objet au lieu d'en ajouter
+ * un second.
+ */
+const MONTEE = {
+  voix: ['nothing in their hands',
+    'one hand cupped beside the mouth, mouth open mid-shout',
+    'a plain smooth megaphone cone raised high in one hand, mouth wide open'],
+  perc: ['a pair of drumsticks',
+    'a simple street drum on a strap, sticks mid-beat',
+    'a large bass drum strapped across the body, one heavy beater raised'],
+  tifo: ['a small piece of plain cloth',
+    'a plain single-colour flag on a short pole, held up',
+    'a large folded plain banner over one shoulder and a tall bare pole'],
+  pyro: ['an unlit flare held down at their side',
+    'one lit flare held up, its warm light only on them',
+    'one lit flare held at arm’s length above the head, thin smoke rising'],
+  depl: ['a long knitted two-colour scarf worn around the neck',
+    'the same scarf held wide between both hands',
+    'the same scarf held high and taut, a worn travel bag across the body'],
+  fide: ['hands in pockets',
+    'arms folded, feet planted, immovable',
+    'the same folded arms and planted feet, in a heavier longer coat — their '
+      + 'strength is that they have not moved'],
+};
+
+/** Les familles dont l'objet ne doit jamais apparaître ici. */
+const PAS_CHEZ_MOI = {
+  voix: 'no drum, no drumsticks, no flare, no flag, no banner',
+  perc: 'no megaphone, no flare, no flag, no banner',
+  tifo: 'no drum, no drumsticks, no flare, no megaphone',
+  pyro: 'no drum, no drumsticks, no flag, no banner, no megaphone',
+  depl: 'no drum, no drumsticks, no flare, no megaphone, no banner',
+  fide: 'no drum, no drumsticks, no flare, no flag, no banner, no megaphone',
+};
+
+/** Les quatre autres axes, pour un personnage qui a un corps et des vêtements. */
+const AXES = {
+  2: ['feet shoulder-width apart, weight settled',
+    'the same outer layer, now worn closed and fitting them properly',
+    'a few small plain round cloth badges sewn onto it',
+    'chin up, chest forward, looking straight at the camera'],
+  3: ['legs planted wide, weight low, rooted to the spot',
+    'the same outer layer, longer and heavier, worn open over the rest',
+    'many small plain cloth badges across it, and a band of cloth tied '
+      + 'around one wrist',
+    'both arms open, chest out, facing the camera dead on'],
+};
+
+/**
+ * Et pour ceux qui n'ont ni corps ni vêtements.
+ *
+ * `dex-ages.js` l'écrit déjà : une bête, un revenant ou un objet « ne fait pas
+ * carrière, il devient plus lui-même ». Les pastilles cousues et le manteau
+ * long n'ont rien à lui dire ; la masse, la densité et la couleur, si.
+ */
+const AXES_CHOSE = {
+  2: ['standing a little straighter, more solidly planted',
+    'slightly bigger and denser, its colours deeper',
+    'its surface more defined — grain, seams or fur clearly readable',
+    'the face more awake, looking straight at the camera'],
+  3: ['planted wide and low, unmistakably heavy',
+    'clearly bigger, its colours at their strongest',
+    'its surface at its richest, every detail deliberate',
+    'the face fully alive and certain, facing the camera dead on'],
+};
+
 /**
  * L'invite d'un **âge supérieur**, pour l'image-à-image.
  *
  * Elle ne décrit ni le rendu, ni le cadrage, ni le fond : tout cela est déjà
  * dans l'image de référence, et le redire ferait régénérer la frame entière.
- * Elle ne nomme que **ce qui a changé**, et ce qui a changé est écrit dans
- * l'histoire de l'âge — c'est le seul texte du projet qui dise ce que les
- * années ont fait à ce personnage-là.
+ * Elle ne nomme que ce qui change — et ce qui change, maintenant, est une
+ * montée dans le domaine et non un vieillissement.
  *
- * L'écart d'âge est donné en clair. « Plus vieux » est trop vague pour un
- * générateur : entre le premier et le deuxième âge il y a une jeunesse, entre
- * le deuxième et le troisième une vie.
+ * **La référence est toujours le premier âge**, jamais l'âge précédent : deux
+ * éditions en cascade perdent le visage, et c'est le visage qu'on protège.
+ *
+ * **Et la formule de `VISUELS.md` y est.** Elle n'y était pas — elle ne vivait
+ * que dans l'invite des premiers âges. Les deux seules images du jeu qui
+ * portent du texte interdit et des écussons de club sont précisément les deux
+ * âges supérieurs de TR1, sortis de cette fonction. Une règle de droits qui ne
+ * couvre qu'une moitié de la chaîne ne couvre rien.
  */
 function inviteAge(f) {
   const r = racineDe(f.id);
-  /* Pas de nombre d'années écrit ici : l'histoire de l'âge en donne souvent
-     un, et deux chiffres qui se contredisent dans la même invite donnent un
-     personnage entre les deux. On dit l'ampleur, le texte dit la mesure. */
-  const bond = f.stage === 2
-    ? 'clearly older — grown up, not yet middle-aged'
-    : 'much older — this is the last age of a long life';
+  const chose = CHOSES[f.set];
+  const axes = chose ? AXES_CHOSE[f.stage] : AXES[f.stage];
+  const montee = MONTEE[f.type];
+  const rang = f.stage === 2
+    ? 'They have taken their place: the terrace knows them now.'
+    : 'They lead now: everyone around them follows what they do.';
+
   return [
-    `Keep the exact same character from the reference image — same face `
-      + 'structure, same build, same style of clothing, same background, same '
-      + 'framing, same lighting, same render style. Change only the age.',
+    'Keep the exact same character from the reference image — same face, same '
+      + 'hair, same build, same height, same colours, same clothes, same '
+      + 'background, same framing, same lighting, same render style.',
     '',
-    `Make them ${bond}. ${f.stage === 2
-      ? 'A fuller frame, a more settled face, hair and clothing that '
-        + 'have moved on a little.'
-      : 'Grey or white hair, lines on the face, a heavier or more '
-        + 'stooped frame, worn clothing that has been kept a long time.'}`,
+    /* La phrase la plus importante de l'invite, et elle est en capitales parce
+       qu'un générateur à qui l'on donne un nouveau nom et une nouvelle histoire
+       vieillit le sujet de lui-même — c'est son réflexe, et il faut le couper
+       net. */
+    chose
+      ? 'CRITICAL — IT DOES NOT GET OLDER, more worn out or more broken. It is '
+        + 'the same object, at the same moment of its life, become stronger.'
+      : 'CRITICAL — THEY DO NOT GET OLDER. Same age, same face, same young or '
+        + 'old features as in the reference image. No grey hair, no new lines, '
+        + 'no stoop, no beard that was not there. What changes is not their age.',
+    '',
+    `What changes — ${rang}`,
+    `• ${axes[0]};`,
+    `• ${axes[1]};`,
+    `• ${axes[2]};`,
+    `• ${axes[3]}.`,
+    montee
+      ? `• in the reference image they had ${montee[0]}; now they have `
+        + `${montee[f.stage - 1]} — replace it, do not add a second one.`
+      : '',
     '',
     `They are now called "${f.nom}".`,
-    f.histoire ? `What has become of them — written in French, follow it `
-      + `closely: ${f.histoire}` : '',
+    f.histoire ? 'What they have become — written in French, follow it closely, '
+      + `and it wins over everything above: ${f.histoire}` : '',
     r?.nom ? `They were "${r.nom}" in the reference image.` : '',
     '',
     'Do not change anything else. One single figure, same empty flat background.',
+    '',
+    /* Les pastilles cousues sont l'endroit exact où un générateur écrit : les
+       deux âges de TR1 en sont revenus couverts de « CAPO », « TICKET » et de
+       boucliers à lions. L'interdit doit être là où naît l'envie, pas seulement
+       dans la formule générale. */
+    PAS_CHEZ_MOI[f.type]
+      ? `CRITICAL — they belong to one family only: ${PAS_CHEZ_MOI[f.type]}.`
+      : '',
+    chose ? '' : 'CRITICAL — the badges, bands and cloth carry NO writing, NO '
+      + 'letters, NO numbers, NO crests, NO emblems, NO shields: plain flat '
+      + 'colours and simple shapes only.',
+    '',
+    GARDE,
   ].filter(Boolean).join('\n');
 }
 
