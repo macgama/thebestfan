@@ -18,7 +18,18 @@ import { BONUS, BONUS_PAR_ID, DUREE_VOTE_MS, PART_POT, depouiller, nomValide }
  * parce qu'on ne l'a écrite nulle part — il n'y a simplement pas de fonction
  * pour le faire.
  */
-export function createKop({ pool, requireAuth, io = null }) {
+export function createKop({ pool, requireAuth, io = null,
+  /* **Créer** un KOP est un geste d'abonné ; **rejoindre** reste libre.
+
+     C’est la porte la mieux placée de tout l’abonnement : elle fait payer
+     ceux qui organisent, c’est-à-dire ceux qui font vivre le jeu, et chaque
+     abonné ramène des joueurs inscrits au lieu d’en éloigner. Un KOP qui
+     existe est ouvert à tous — l’abonnement ne ferme aucune porte à
+     personne, il en ouvre une à celui qui veut tenir la barre.
+
+     Et rien de ce qu’un KOP apporte en jeu n’est réservé : ses bonus valent
+     pour tous ses membres, abonnés ou non. Voir `abonnement/index.js`. */
+  abonnement = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -65,6 +76,11 @@ export function createKop({ pool, requireAuth, io = null }) {
   }
 
   async function creer(userId, teamId, nomBrut) {
+    /* Le refus vient **en premier** : inutile de valider un nom et un club
+       pour annoncer ensuite qu’on n’a pas le droit. */
+    if (abonnement && !(await abonnement.estAbonne(userId))) {
+      throw fail('kop.error.abonnement');
+    }
     const nom = nomValide(nomBrut);
     if (!nom) throw fail('kop.error.nom');
     if (!Number.isFinite(Number(teamId))) throw fail('kop.error.club');

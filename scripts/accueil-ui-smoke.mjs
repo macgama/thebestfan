@@ -93,7 +93,7 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
@@ -1484,6 +1484,136 @@ if (process.env.CAPTURE) {
     || (console.log('        il dit :', texte), false));
   check('et on ne montre pas de bouton qui ne ferait rien',
     await page.evaluate(() => !document.getElementById('poser')));
+  await page.close();
+}
+
+/* ------------------------------------------------ faire défiler ses âges
+
+ * Le joueur qui a fait grandir son Fanzzy possède **plusieurs dessins du même
+ * personnage**, et l'accueil n'en montrait qu'un : le dernier. Celui qui a payé
+ * le troisième âge ne pouvait plus revoir celui avec lequel il a commencé —
+ * l'âge 1 n'est pas une version inférieure, c'est un autre dessin.
+ *
+ * Deux gestes, et la séparation est tout l'objet du contrôle : les flèches
+ * **regardent**, le bouton **décide**. Enregistrer à chaque flèche ferait de la
+ * curiosité un choix, et on ne pourrait plus regarder sans engager ce que les
+ * amis voient de soi.
+ *
+ * `TR32` est le personnage de la suite et ses trois âges sont dessinés : c'est
+ * le seul endroit du catalogue où l'on peut éprouver un défilé qui montre
+ * vraiment trois images différentes.
+ */
+{
+  await equiper('TR32', 3);
+  await pool.query('UPDATE user_wallet SET active_evo = NULL WHERE user_id = ?', [U]);
+  const page = await ouvrir();
+  await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+
+  /** Ce que la rangée d'âges montre, et ce que le personnage à l'écran vaut. */
+  const lire = () => page.evaluate(() => {
+    const b = (id) => document.getElementById(id);
+    const vis = (e) => Boolean(e) && !e.hidden && e.getBoundingClientRect().width > 0;
+    return {
+      src: document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '',
+      plaque: b('quiEvo')?.textContent.trim() ?? '',
+      avant: vis(b('ageAvant')), apres: vis(b('ageApres')),
+      avantMort: b('ageAvant')?.disabled ?? null,
+      apresMort: b('ageApres')?.disabled ?? null,
+      valider: vis(b('ageValider')),
+    };
+  });
+
+  /* Par défaut, l'âge atteint : c'est ce que le joueur a payé, et le
+     comportement d'avant. Rien ne change pour qui n'a jamais rien choisi. */
+  let v = await lire();
+  check('sans rien avoir choisi, on voit l’âge atteint',
+    /TR32C/.test(v.src) || (console.log('        elle montre :', v.src), false));
+  check('les flèches paraissent quand il y a plusieurs âges', v.avant && v.apres);
+  /* Au bout de la lignée, estompée et inerte — pas retirée : une flèche qui
+     disparaît déplace la plaque sous le doigt entre deux appuis. */
+  check('et celle du dernier âge est inerte, pas absente', v.apresMort === true && v.apres);
+  check('rien à valider tant qu’on regarde ce qu’on montre déjà', v.valider === false);
+  check('et la plaque porte la coche de ce qu’on montre',
+    /✓/.test(v.plaque) || (console.log('        elle dit :', v.plaque), false));
+
+  /* On remonte la lignée jusqu'au premier âge. Trois dessins distincts : c'est
+     le contrôle qui prouve que le défilé montre autre chose et pas la même
+     image trois fois. */
+  await page.click('#ageAvant');
+  await new Promise((r) => setTimeout(r, 350));
+  const deux = (await lire()).src;
+  await page.click('#ageAvant');
+  await new Promise((r) => setTimeout(r, 350));
+  v = await lire();
+  check('la flèche remonte d’un âge', /TR32B/.test(deux)
+    || (console.log('        elle montre :', deux), false));
+  check('et jusqu’au premier, que l’évolution avait rendu invisible',
+    /TR32\./.test(v.src) || (console.log('        elle montre :', v.src), false));
+  check('arrivé au premier, sa flèche est inerte', v.avantMort === true);
+  check('et la plaque suit', /1 \/ 3/.test(v.plaque)
+    || (console.log('        elle dit :', v.plaque), false));
+
+  /* **Rien n'a été écrit.** C'est la moitié qui compte : le défilé regarde. */
+  const avantChoix = (await pool.query(
+    'SELECT active_evo e FROM user_wallet WHERE user_id = ?', [U]))[0][0].e;
+  check('faire défiler n’écrit rien', avantChoix === null
+    || (console.log('        la base dit :', avantChoix), false));
+
+  /* Le bouton n'est là **que** maintenant : ce qu'on regarde n'est plus ce
+     qu'on montre. */
+  check('et c’est là que le bouton se propose', v.valider === true);
+  check('la coche a quitté la plaque', /✓/.test(v.plaque) === false);
+
+  await page.click('#ageValider');
+  await page.waitForFunction(
+    () => document.getElementById('ageValider')?.hidden === true,
+    { timeout: 5000 }).catch(() => {});
+  const apresChoix = (await pool.query(
+    'SELECT active_evo e FROM user_wallet WHERE user_id = ?', [U]))[0][0].e;
+  check('valider écrit l’âge choisi', Number(apresChoix) === 1
+    || (console.log('        la base dit :', apresChoix), false));
+  v = await lire();
+  check('le bouton s’efface, il n’y a plus rien à décider', v.valider === false);
+  check('et la coche revient sur la plaque', /✓/.test(v.plaque)
+    || (console.log('        elle dit :', v.plaque), false));
+  await page.close();
+}
+
+{
+  /* Au retour, c'est **l'âge choisi** qui accueille, pas l'âge atteint. Sans
+     quoi le choix serait un réglage qu'il faut refaire à chaque visite,
+     c'est-à-dire pas un choix. */
+  const page = await ouvrir();
+  await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+  const src = await page.evaluate(() =>
+    document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '');
+  check('à la visite suivante, c’est l’âge choisi qui accueille',
+    /TR32\./.test(src) || (console.log('        elle montre :', src), false));
+  await page.close();
+}
+
+{
+  /* Un Fanzzy qu'on n'a pas fait grandir : pas de flèches. Deux flèches mortes
+     autour d'un « 1 / 3 » demandent de comprendre pourquoi elles ne font
+     rien — et la réponse, « il faut payer », se dit au classeur, avec le prix,
+     pas sur l'écran d'accueil. */
+  await equiper('TR32', 1);
+  await pool.query('UPDATE user_wallet SET active_evo = NULL WHERE user_id = ?', [U]);
+  const page = await ouvrir();
+  await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+  const v = await page.evaluate(() => {
+    const vis = (id) => { const e = document.getElementById(id);
+      return Boolean(e) && !e.hidden && e.getBoundingClientRect().width > 0; };
+    return { avant: vis('ageAvant'), apres: vis('ageApres'), valider: vis('ageValider'),
+      plaque: document.getElementById('quiEvo')?.textContent.trim() ?? '' };
+  });
+  check('sans âge supérieur atteint, pas de flèches',
+    v.avant === false && v.apres === false);
+  check('ni de bouton à valider', v.valider === false);
+  /* La plaque reste : elle dit ce qu'il est et ce qu'il peut devenir. C'est
+     elle qui donne envie d'aller voir le prix. */
+  check('mais la plaque dit toujours où il en est', /^ÉVOLUTION 1 \/ 3$/.test(v.plaque)
+    || (console.log('        elle dit :', v.plaque), false));
   await page.close();
 }
 

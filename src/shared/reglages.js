@@ -63,6 +63,12 @@ export const SECTIONS = [
     aide: 'Ce que coûtent les objets achetés en billets. Les prix en euros, eux, ' +
       'vivent dans le catalogue de la boutique et ne se règlent pas ici : un prix ' +
       'qu’un écran peut changer d’un doigt est un prix qui finira changé par erreur.' },
+  { id: 'abonnement', titre: 'L’ABONNEMENT',
+    aide: 'Ce que l’abonnement ouvre. Il vend de la largeur et du confort, ' +
+      'jamais de la puissance : tous les formats de duel, tous les âges et ' +
+      'tous les classements restent ouverts à tout le monde. Un avantage sur ' +
+      'la corde ferait à l’argent ce que le jeu refuse déjà au temps — voir ' +
+      '`shared/niveau.js`, « le niveau ne donne aucune puissance ».' },
   { id: 'exploitation', titre: 'L’EXPLOITATION',
     aide: 'Ce qui s’adresse aux joueurs depuis l’administration.' },
 ];
@@ -212,6 +218,48 @@ export const REGLAGES = [
 
   { cle: 'duel.chant_cout', section: 'duel', type: 'entier',
     titre: 'Un chant coûte', unite: 'souffle', min: 0, max: 100, defaut: 18 },
+
+
+  /* ------------------------------------------------------- abonnement
+
+     Ce que l'abonnement ouvre, et rien d'autre. Chacun de ces réglages a son
+     jumeau gratuit juste au-dessus dans sa propre section : c'est ce qui permet
+     de lire l'écart d'un coup d'œil, et de le ramener à zéro sans livraison si
+     l'abonnement se révèle trop généreux — ou pas assez. */
+
+  { cle: 'abo.pack_max', section: 'abonnement', type: 'entier',
+    titre: 'Réserve maximale d’un abonné', unite: 'boosters', min: 1, max: 99, defaut: 24,
+    aide: 'Le plafond gratuit est de douze. Ce qui s’achète ici est le droit ' +
+      'de s’absenter deux jours sans rien perdre, pas des cartes en plus : la ' +
+      'réserve se remplit au même rythme pour tout le monde si l’autre réglage ' +
+      'reste égal.' },
+
+  { cle: 'abo.pack_regen_min', section: 'abonnement', type: 'entier',
+    titre: 'Un booster tous les, pour un abonné', unite: 'minutes',
+    min: 1, max: 1440, defaut: 6,
+    aide: 'Dix minutes pour un joueur inscrit, six pour un abonné. C’est du ' +
+      'rythme, donc de la collection plus vite remplie — et la collection ne ' +
+      'pèse rien sur la corde, puisqu’un deck entre toujours au premier âge.' },
+
+  { cle: 'abo.clubs_en_plus', section: 'abonnement', type: 'entier',
+    titre: 'Emplacements de club en plus', unite: 'clubs', min: 0, max: 8, defaut: 2,
+    aide: 'Par-dessus ce que le niveau ouvre déjà, de deux à huit. Suivre un ' +
+      'club de plus donne des matchs de plus à vivre ; ça ne donne aucun ' +
+      'avantage en duel.' },
+
+  { cle: 'abo.parcours_libre', section: 'abonnement', type: 'entier',
+    titre: 'Parties gardées au parcours sans abonnement', unite: 'parties',
+    min: 5, max: 500, defaut: 20,
+    aide: 'Un joueur inscrit voit ses vingt dernières parties ; un abonné a ' +
+      'tout son historique. Les parties ne sont jamais effacées — c’est la ' +
+      'lecture qui s’arrête, et elle rouvre entièrement dès l’abonnement.' },
+
+  { cle: 'abo.souvenirs_libres', section: 'abonnement', type: 'entier',
+    titre: 'Cartes-souvenirs lisibles sans abonnement', unite: 'cartes',
+    min: 5, max: 500, defaut: 20,
+    aide: 'Mêmes règles que le parcours : rien n’est perdu, la vitrine est ' +
+      'plus courte. Ce qu’on vend est la mémoire longue, pas les souvenirs ' +
+      'eux-mêmes.' },
 
   /* -------------------------------------------------------------- deck */
   { cle: 'deck.fanzzy', section: 'deck', type: 'entier',

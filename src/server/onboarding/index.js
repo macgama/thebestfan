@@ -10,7 +10,7 @@ import { STUFF, SKIN_BY_ID, STUFF_BY_ID, combine }
    un nouveau joueur sur quatre recevait `a-relance`, une carte qui n'existe
    pas. Voir la note à l'endroit où cette liste se trouvait. */
 import { ACTIONS } from '../../shared/duel/actions.js';
-import { toutesTenues } from '../fanzzy/tenues.js';
+import { toutesTenues, tenuesPubliees } from '../fanzzy/tenues.js';
 import { verifierEmplacement, SLOTS_DEPART, SLOTS_MAX } from './slots.js';
 
 /**
@@ -37,7 +37,11 @@ const rnd = (a) => a[Math.floor(Math.random() * a.length)];
  * `sql/niveau.sql` n'est pas encore appliqué continue de fonctionner.
  */
 export function createOnboarding({ pool, requireAuth, football = null, niveau = null,
-  decks = null }) {
+  decks = null,
+  /* L'abonnement ouvre deux choses ici : un emplacement de club de plus, et
+     le droit de porter toute tenue publiée. Ni l’un ni l’autre ne pèse sur
+     la corde — voir `abonnement/index.js`. */
+  abonnement = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -56,7 +60,7 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
   /* `decks` sert au deck de départ, écrit à la première ouverture de paquet.
      Il vient en paramètre et non par rebranchement : `server.js` monte les
      decks avant l'inscription, il l'a donc déjà sous la main. */
-  const module = { football, decks };
+  const module = { football, decks, abonnement };
 
   /* ------------------------------------------------------------- état */
 
@@ -131,8 +135,15 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
    */
   async function buySlot(userId) {
     const w = (await q(`SELECT follow_slots, scarves FROM user_wallet WHERE user_id = ?`, [userId]))[0];
-    const plafond = niveau ? Math.min(SLOTS_MAX, (await niveau.droitsDe(userId)).slots)
-                           : SLOTS_MAX;
+    /* **L'abonnement lève le plafond, il n'offre pas l'emplacement.** Les
+       écharpes restent ce qu’il en coûte : c’est la même règle que pour le
+       niveau, qui « ouvre le droit d’en avoir un de plus » sans le donner.
+       On vend donc de la largeur, et le joueur la paie quand même. */
+    const enPlus = module.abonnement
+      ? module.abonnement.clubsEnPlus(await module.abonnement.estAbonne(userId)) : 0;
+    const plafond = niveau
+      ? Math.min(SLOTS_MAX, (await niveau.droitsDe(userId)).slots + enPlus)
+      : SLOTS_MAX;
     if (w.follow_slots >= plafond) {
       throw fail(w.follow_slots >= SLOTS_MAX ? 'onboarding.error.max_slots'
                                             : 'onboarding.error.slot_locked');
@@ -328,15 +339,29 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
   }
 
   /**
-   * Porter une tenue — **à un âge précis**.
+   * Porter une tenue.
    *
-   * Un skin appartient désormais à un âge et non au personnage. Sans le stade,
-   * l'extinction des autres tenues balaierait les trois âges pour en allumer
-   * une seule : le personnage se retrouverait nu à ses autres stades sans que
-   * personne l'ait demandé, et il faudrait y retourner pour comprendre.
+   * ## Ce que l'abonnement ouvre ici
    *
-   * Le stade par défaut est celui que le joueur a atteint — celui qu'il
-   * regarde, et le seul dont la fiche lui propose les tenues.
+   * Une tenue est **purement décorative** : elle n'entre dans aucun
+   * modificateur, et le duel ne la lit jamais. C'est donc exactement ce qu'un
+   * abonnement peut vendre sans toucher à l'équilibre — de l'identité, pas de
+   * la puissance.
+   *
+   * Un abonné peut porter n'importe quelle tenue **publiée** ; un joueur
+   * inscrit ne porte que celles qu'il a gagnées.
+   *
+   * ## Et il la garde
+   *
+   * La tenue prise pendant l'abonnement s'inscrit dans `user_skins` comme une
+   * autre : elle reste à lui quand l'abonnement s'arrête. C'est la règle que ce
+   * jeu s'est déjà donnée ailleurs — « fermer, c'est cesser de distribuer », une
+   * série qu'on referme n'efface pas les cartes de qui les possède. Reprendre
+   * une tenue qu'on a vue sur son personnage serait la seule chose qu'un
+   * collectionneur ne pardonne pas.
+   *
+   * Ce qui s'arrête à l'échéance est donc le droit d'en prendre de nouvelles,
+   * et non celles qu'on porte.
    */
   async function wearSkin(userId, fanzzyId, skinId, stade = null) {
     const s = stade ?? Number((await q(
@@ -347,7 +372,22 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
       `SELECT 1 FROM user_skins
         WHERE user_id = ? AND fanzzy_id = ? AND stage = ? AND skin_id = ?`,
       [userId, fanzzyId, s, skinId]);
-    if (!owned.length) throw fail('onboarding.error.not_owned');
+
+    if (!owned.length) {
+      /* Non possédée. Un abonné la prend si elle est publiée ; les autres
+         reçoivent le refus d'avant, mot pour mot. */
+      const abonne = module.abonnement ? await module.abonnement.estAbonne(userId) : false;
+      const publiee = abonne && tenuesPubliees().some((t) => t.id === skinId);
+      if (!publiee) throw fail('onboarding.error.not_owned');
+      /* Le personnage doit quand même être à lui : une tenue se porte sur
+         quelqu'un, et l'abonnement n'offre pas les Fanzzy. */
+      const sien = await q(
+        `SELECT 1 FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`, [userId, fanzzyId]);
+      if (!sien.length) throw fail('onboarding.error.not_owned');
+      await q(
+        `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, stage, skin_id, equipped)
+         VALUES (?, ?, ?, ?, 0)`, [userId, fanzzyId, s, skinId]);
+    }
 
     await q(`UPDATE user_skins SET equipped = 0
               WHERE user_id = ? AND fanzzy_id = ? AND stage = ?`,

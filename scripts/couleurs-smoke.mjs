@@ -263,7 +263,7 @@ function blason({ largeur = 20, hauteur = 20, parts }) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS achats, fixture_events, standings, fixtures,
+await raw.query(`DROP TABLE IF EXISTS abonnements, achats, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, api_cache`);
 for (const f of ['football.sql', 'minutes.sql', 'couleurs.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));

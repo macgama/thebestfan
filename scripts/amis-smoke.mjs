@@ -42,7 +42,7 @@ async function refus(fn) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities, kop_bulletins, kop_votes,
+await raw.query(`DROP TABLE IF EXISTS abonnements, achats, kop_invites, amities, kop_bulletins, kop_votes,
   kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
@@ -119,6 +119,31 @@ const A = createAmis({ pool, requireAuth: (r, _s, n) => n(), kop });
   check('chacun est montré par son Fanzzy, à l’âge atteint',
     par.get(CLA)?.fanzzy === 'TR32B' && par.get(BOB)?.fanzzy === 'TR32'
     || (console.log('        elle joue :', par.get(CLA)?.fanzzy), false));
+  /* ------------------------------------------- et à l'âge qu'elle a choisi
+
+     Clara peut préférer se montrer avec le Choriste, celui avec lequel elle a
+     commencé : l'âge 1 n'est pas une version inférieure du personnage, c'est
+     un autre dessin. L'écran d'accueil lui offre le choix, et **ce choix vaut
+     ici aussi** — c'est même tout ce qu'il veut dire. Une liste d'amis qui
+     continuerait d'afficher l'âge atteint ferait mentir le bouton qu'elle
+     vient de toucher.
+
+     La borne reste : la valeur est plafonnée par l'âge atteint, sans quoi une
+     colonne restée sur 3 après une remise à zéro montrerait ici un personnage
+     que Clara n'a pas fait grandir. */
+  await pool.query('UPDATE user_wallet SET active_evo = 1 WHERE user_id = ?', [CLA]);
+  const choisi = new Map((await A.suggestions(ANA)).map((g) => [g.id, g]));
+  check('l’âge choisi sur l’accueil est celui que les amis voient',
+    choisi.get(CLA)?.fanzzy === 'TR32'
+    || (console.log('        elle joue :', choisi.get(CLA)?.fanzzy), false));
+
+  await pool.query('UPDATE user_wallet SET active_evo = 3 WHERE user_id = ?', [CLA]);
+  const trop = new Map((await A.suggestions(ANA)).map((g) => [g.id, g]));
+  check('un âge au-delà de ce qu’elle a fait grandir est ramené au sien',
+    trop.get(CLA)?.fanzzy === 'TR32B'
+    || (console.log('        elle joue :', trop.get(CLA)?.fanzzy), false));
+  await pool.query('UPDATE user_wallet SET active_evo = NULL WHERE user_id = ?', [CLA]);
+
   const deDan = await A.suggestions(DAN);
   check('celui qui ne partage rien ne voit personne', deDan.length === 0);
 

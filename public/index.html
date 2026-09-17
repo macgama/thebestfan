@@ -442,6 +442,31 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .qui small{display:block;font-size:10px;letter-spacing:.16em;margin-top:2px;
   color:var(--projo);opacity:.9;text-shadow:0 2px 10px rgba(0,0,0,.9)}
 .qui small:empty{display:none}
+/* Le défilé des âges. `.qui` coupe les gestes — c'était une plaque à lire —
+   et on les rend ici, aux seuls éléments qui en ont besoin : deux flèches et
+   un bouton. Les rendre à tout le bloc reprendrait au personnage le petit saut
+   qu'on lui tape dessus, qui passe derrière. */
+.ages{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:2px}
+.ages .fl[hidden]{display:none}
+.ages .fl{pointer-events:auto;appearance:none;border:0;cursor:pointer;
+  width:26px;height:26px;border-radius:999px;font:700 17px/1 system-ui;
+  color:#fff;background:rgba(255,255,255,.12);
+  display:grid;place-items:center;transition:background .15s,opacity .15s}
+.ages .fl:hover{background:rgba(255,255,255,.22)}
+/* Au bout de la lignée : estompée et inerte, plutôt que retirée. Une flèche qui
+   disparaît déplace la plaque sous le doigt entre deux appuis. */
+.ages .fl:disabled{opacity:.22;cursor:default;background:rgba(255,255,255,.08)}
+/* Il ne paraît **que** lorsque l'âge regardé n'est pas encore celui qu'on
+   montre : un bouton toujours là finirait par se lire comme une décoration, et
+   c'est justement le seul geste de cet écran qui écrit quelque chose. */
+.cestlui{pointer-events:auto;appearance:none;cursor:pointer;margin:7px auto 0;display:block;
+  border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:5px 14px;
+  font:700 10px/1 var(--banner,system-ui);letter-spacing:.16em;text-transform:uppercase;
+  color:#0c0c0c;background:var(--projo,#ffb703);
+  box-shadow:0 4px 16px rgba(0,0,0,.5);animation:cestluiIn .22s ease both}
+.cestlui[hidden]{display:none}
+.cestlui:disabled{opacity:.6;cursor:default}
+@keyframes cestluiIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 /* Vide tant que le serveur n'a pas répondu : un cadre qui se remplit après
    coup fait sauter la scène, un cadre absent ne fait rien du tout. */
 .qui:not(.on){display:none}
@@ -907,7 +932,29 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
     <!-- Qui est à l'écran : le nom du Fanzzy équipé et l'âge qu'il a atteint.
          Dans le flux, sous les rails — posée dans la scène, elle passait sous
          le personnage, qui occupe toute sa hauteur. -->
-    <div class="qui" id="qui"><b id="quiNom"></b><small id="quiEvo"></small></div>
+    <div class="qui" id="qui">
+      <b id="quiNom"></b>
+      <!-- Le défilé des âges. Trois pièces et pas une de plus : une flèche de
+           chaque côté pour passer d'un âge à l'autre, la plaque qui dit lequel,
+           et un bouton qui n'apparaît **que** lorsque ce qu'on regarde n'est pas
+           encore ce que les autres voient.
+
+           Il vit dans le flux et non dans la scène : posé sur le personnage, il
+           tomberait au milieu d'un dessin qui occupe toute la hauteur — et sur
+           un téléphone, sous le pouce plutôt qu'à portée de lui.
+
+           Ce sont **les flèches** qui se cachent quand il n'y a qu'un âge, et
+           non la rangée : la plaque, elle, se peint dès la première ligne
+           depuis le souvenir de la dernière visite, et la faire attendre la
+           réponse du serveur redonnerait le visage sans nom qu'on a mis du
+           temps à corriger. -->
+      <div class="ages" id="ages">
+        <button type="button" class="fl" id="ageAvant" aria-label="L’âge précédent" hidden>‹</button>
+        <small id="quiEvo" aria-live="polite"></small>
+        <button type="button" class="fl" id="ageApres" aria-label="L’âge suivant" hidden>›</button>
+      </div>
+      <button type="button" class="cestlui" id="ageValider" hidden>C’est lui, partout</button>
+    </div>
 
     <footer class="bas">
       <div class="duo">
@@ -1218,7 +1265,13 @@ function souvenir() {
     const j = JSON.parse(localStorage.getItem(MEMOIRE) ?? "null");
     if (j?.aucun) return { aucun: true };
     return j?.id ? { id: j.id, evo: j.evo ?? 1, skin: j.skin ?? "base",
-                     nom: j.nom ?? '', ages: j.ages ?? 1 } : null;
+                     nom: j.nom ?? '', ages: j.ages ?? 1,
+                     /* L'âge atteint et l'âge montré voyagent avec le reste :
+                        sans eux, les flèches et la coche n'apparaîtraient qu'à
+                        la réponse du serveur, c'est-à-dire trois allers-retours
+                        après le personnage qu'elles commandent. */
+                     atteint: j.atteint ?? (j.evo ?? 1),
+                     choisi: j.choisi ?? (j.evo ?? 1) } : null;
   } catch { return null; }
 }
 
@@ -1226,7 +1279,8 @@ function souvenir() {
 function retenir(p) {
   try {
     localStorage.setItem(MEMOIRE, JSON.stringify(
-      p ? { id: p.id, evo: p.evo, skin: p.skin, nom: p.nom ?? '', ages: p.ages ?? 1 }
+      p ? { id: p.id, evo: p.evo, skin: p.skin, nom: p.nom ?? '', ages: p.ages ?? 1,
+            atteint: p.atteint ?? p.evo, choisi: p.choisi ?? p.evo }
         : { aucun: true }));
   } catch { /* stockage refusé : on repartira de zéro, sans plus */ }
 }
@@ -1246,9 +1300,133 @@ function retenir(p) {
 function nommer(p) {
   const nom = p?.nom ?? '';
   $('quiNom').textContent = nom;
-  $('quiEvo').textContent = (p?.ages ?? 1) > 1 ? `ÉVOLUTION ${p.evo} / ${p.ages}` : '';
+  /* La coche dit « c'est celui-là qu'on voit de toi ». Elle tient lieu d'état
+     au repos du bouton, qui n'est pas là : deux signes pour la même chose — un
+     bouton grisé *et* une coche — feraient hésiter sur lequel lire. */
+  const coche = nom && p.evo === lignee.choisi && lignee.atteint > 1 ? ' ✓' : '';
+  $('quiEvo').textContent = (p?.ages ?? 1) > 1
+    ? `ÉVOLUTION ${p.evo} / ${p.ages}${coche}` : '';
   $('qui').classList.toggle('on', Boolean(nom));
+  commandes();
 }
+
+/* --------------------------------------------------- le défilé des âges
+
+   Ce que le joueur regarde et ce que les autres voient sont **deux choses**,
+   et c'est tout l'objet de ces trois boutons : il fait défiler les âges de son
+   Fanzzy, il en valide un, et c'est seulement là que le reste du jeu change
+   d'avis. Les confondre — enregistrer à chaque flèche — ferait de la curiosité
+   une décision, et on ne pourrait plus regarder sans choisir.
+
+   `atteint` borne le défilé : on ne fait défiler que ce qu'on a fait grandir.
+   Les âges suivants existent, ils sont au classeur avec leur prix ; les offrir
+   ici en aperçu les ferait passer pour acquis, et le retour au vrai âge se
+   lirait comme une perte.
+
+   Et l'âge 1 reste accessible **toujours**, même quand on a payé le 3. Ce n'est
+   pas une version inférieure du personnage, c'est un autre dessin — celui avec
+   lequel on a commencé, et certains y tiennent. */
+let lignee = { atteint: 1, choisi: 1, ages: [] };
+
+/**
+ * L'adresse du plein-pied **de cet âge-là**.
+ *
+ * La lignée range les douze états sous la racine — `TR32` — mais
+ * l'illustration en pied sous la carte du catalogue — `TR32B` pour le
+ * deuxième âge. Prendre la racine pour les deux, ce qu'on faisait, affichait
+ * le premier âge à qui avait payé le deuxième : le choix était bien pris en
+ * base, il n'était simplement jamais dessiné.
+ */
+function pleinDe(racine, evo) {
+  const carte = lignee.ages.find((a) => a.stade === evo);
+  return window.FZART?.adresse?.(carte?.id ?? racine, 'plein') ?? null;
+}
+
+/** Les flèches et le bouton, remis d'accord avec ce qui est à l'écran. */
+function commandes() {
+  const vu = equipe?.evo ?? 1;
+  const plusieurs = Boolean(equipe) && lignee.atteint > 1;
+  const av = $('ageAvant'); const ap = $('ageApres'); const ok = $('ageValider');
+  if (!av || !ap || !ok) return;
+  /* Au bout de la lignée, la flèche est **estompée et inerte**, pas retirée :
+     une flèche qui disparaît déplace la plaque sous le doigt entre deux
+     appuis, et on valide alors sans l'avoir voulu. */
+  av.hidden = !plusieurs; ap.hidden = !plusieurs;
+  av.disabled = vu <= 1;
+  ap.disabled = vu >= lignee.atteint;
+  ok.hidden = !plusieurs || vu === lignee.choisi;
+  ok.disabled = false;
+  ok.textContent = 'C’est lui, partout';
+}
+
+/** Montre un autre âge — **à l'écran seulement**. Rien n'est écrit. */
+async function montrerAge(evo) {
+  if (!equipe) return;
+  const n = Math.min(lignee.atteint, Math.max(1, evo));
+  if (n === equipe.evo) return;
+  const carte = lignee.ages.find((a) => a.stade === n);
+  equipe = { ...equipe, evo: n, plein: pleinDe(equipe.id, n),
+    nom: carte?.nom ?? equipe.nom };
+  precharger();
+  /* `force` : l'état ne change pas, le personnage si — sans lui, `pose` voit
+     le même nom d'état et ne redessine rien. Et le rebond, parce qu'un
+     changement instantané se lit comme un défaut d'affichage plutôt que comme
+     le geste qu'on vient de faire. */
+  await pose(poseActuelle ?? 'neutre', 0, true);
+  rejouer('change');
+  window.FX?.son?.('tic');
+  nommer(equipe);
+  retenir(equipe);
+}
+
+/**
+ * Valider : c'est ici, et nulle part ailleurs, que le reste du jeu apprend à
+ * quel âge montrer ce joueur — les amis, le direct, le KOP.
+ *
+ * On passe par `/api/fanzzy/active` avec le personnage **et** l'âge, plutôt
+ * que par une route qui ne dirait que l'âge : c'est une seule décision — « voilà
+ * de quoi j'ai l'air » — et deux routes laisseraient exister l'instant où la
+ * base porte un personnage et l'âge d'un autre.
+ *
+ * Le serveur reste juge : il borne l'âge à ce qui a été fait grandir et rend ce
+ * qu'il a retenu. On recopie sa réponse plutôt que de supposer la nôtre.
+ */
+async function validerAge() {
+  if (!equipe) return;
+  const ok = $('ageValider');
+  ok.disabled = true; ok.textContent = 'Un instant…';
+  try {
+    const r = await jsonp('/api/fanzzy/active', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: equipe.id, evo: equipe.evo }),
+    });
+    /* `jsonp` ne regarde pas le code HTTP : un refus revient donc ici comme
+       un objet ordinaire portant `error`, et sans ce contrôle il se lisait
+       comme une réussite dont l'âge serait « le dernier ». Le joueur voyait le
+       bouton disparaître et croyait que c'était fait. */
+    if (r?.error) throw new Error(r.error);
+    /* `activeEvo` nul veut dire « l'âge atteint » : c'est ainsi que le serveur
+       écrit « le dernier », pour que faire grandir son Fanzzy demain change
+       l'affichage sans avoir à revenir ici. On le relit donc comme tel. */
+    lignee.choisi = Math.min(lignee.atteint,
+      Math.max(1, Number(r?.activeEvo) || lignee.atteint));
+    equipe = { ...equipe, choisi: lignee.choisi, atteint: lignee.atteint };
+    retenir(equipe);
+    nommer(equipe);
+    rejouer('coucou');
+    window.FX?.son?.('ok');
+  } catch {
+    /* Le geste n'a pas pris. On le redit plutôt que de laisser croire qu'il est
+       passé : un bouton qui disparaît sur un échec est un mensonge poli. */
+    ok.disabled = false;
+    ok.textContent = 'Réessayer';
+  }
+}
+
+$('ageAvant')?.addEventListener('click', () => montrerAge((equipe?.evo ?? 1) - 1));
+$('ageApres')?.addEventListener('click', () => montrerAge((equipe?.evo ?? 1) + 1));
+$('ageValider')?.addEventListener('click', validerAge);
 
 /* Le filet, pour la toute première visite : sans souvenir, on attend la
    réponse plutôt que d'afficher un inconnu — mais pas indéfiniment. Une
@@ -1265,7 +1443,14 @@ let filet = null;
        l'extension que ce navigateur-ci sait lire, et un souvenir écrit sur un
        autre appareil — ou avant une mise à jour du format — pointerait vers
        une image qui n'existe pas. On ne garde que l'identité. */
-    equipe = { ...vu, plein: window.FZART?.adresse?.(vu.id, 'plein') ?? null };
+    /* Le défilé s'amorce du souvenir lui aussi, et pour la même raison que le
+       visage : les flèches commandent le personnage qui est déjà là, et les
+       faire attendre la réponse du serveur donnerait trois secondes pendant
+       lesquelles on voit son Fanzzy sans pouvoir en changer. La réponse
+       corrige, elle n'inaugure pas. */
+    lignee = { atteint: vu.atteint ?? vu.evo, choisi: vu.choisi ?? vu.evo,
+      ages: [{ stade: vu.evo, id: vu.id, nom: vu.nom }] };
+    equipe = { ...vu, plein: pleinDe(vu.id, vu.evo) };
     precharger();
     pose('neutre');
     nommer(vu);              // son nom arrive avec son visage, pas après
@@ -1671,15 +1856,40 @@ async function jsonp(url, options) {
        l'écran et l'accueil ne s'en aperçoit pas.                             */
     const actif = coll?.wallet?.active;
     if (actif) {
+      /* ----------------------------------------- la lignée, avant le reste
+
+         Les âges de ce personnage, rangés : le défilé s'appuie dessus, et le
+         plein-pied aussi — l'illustration de chaque âge est rangée sous **sa**
+         carte du catalogue (`TR32B`), pas sous la racine (`TR32`). Les lire
+         avant de composer le candidat évite d'avoir à le recomposer après.
+
+         `atteint` vient de la collection, `choisi` de la bourse. Le second
+         peut être nul — c'est ainsi que le serveur écrit « le dernier », pour
+         que faire grandir son Fanzzy demain change l'affichage sans avoir à
+         revenir le dire. */
+      const ligne = (dex.dex ?? []).filter((f) => f.racine === actif)
+        .map((f) => ({ stade: f.stade ?? 1, id: f.id, nom: f.nom }))
+        .sort((a, b) => a.stade - b.stade);
+      const atteint = Math.max(1, Number(coll.stades?.[actif]) || 1);
+      const choisi = Math.min(atteint,
+        Math.max(1, Number(coll.wallet?.activeEvo) || atteint));
+      lignee = { atteint, choisi, ages: ligne.length ? ligne
+        : [{ stade: 1, id: actif, nom: '' }] };
+
       // `skin` n'est pas encore un réglage du joueur : tant qu'il n'y en a
       // qu'un, le demander explicitement évite d'avoir à revenir ici le jour
       // où il y en aura deux.
-      const candidat = { id: actif, evo: coll.stades?.[actif] ?? 1, skin: 'base' };
+      const candidat = { id: actif, evo: choisi, skin: 'base',
+        atteint, choisi };
       /* Le plein-pied, comme dernier recours. `resoudre` ne connaît que les
          personnages dont les douze états sont dessinés — il y en a un — alors
          que deux cents ont leur illustration. Sans ce repli, presque tout le
-         monde voyait le supporter générique à la place de son Fanzzy. */
-      candidat.plein = window.FZART?.adresse?.(actif, 'plein') ?? null;
+         monde voyait le supporter générique à la place de son Fanzzy.
+
+         Il est pris **à l'âge montré** et non à la racine : c'est ce qui
+         faisait qu'un joueur ayant payé le deuxième âge continuait de voir le
+         premier sur son écran d'accueil. */
+      candidat.plein = pleinDe(actif, choisi);
 
       /* Le manifeste des états est **facultatif**, et le bloc entier en
          dépendait : `if (actif && await charger())`. Un manifeste absent —
@@ -1726,9 +1936,8 @@ async function jsonp(url, options) {
            trois : toutes les lignées n'en ont pas autant, et annoncer « 1 / 3 »
            à un Fanzzy qui n'évolue jamais promet quelque chose qui n'arrivera
            pas. Quand il n'y a qu'un âge, on ne dit rien du tout. */
-        const ages = (dex.dex ?? []).filter((f) => f.racine === actif);
         candidat.nom = age?.nom ?? def?.nom ?? '';
-        candidat.ages = ages.reduce((n, f) => Math.max(n, f.stade ?? 1), 1);
+        candidat.ages = lignee.ages.reduce((n, f) => Math.max(n, f.stade ?? 1), 1);
         retenir(candidat);       // le nom rejoint le souvenir du visage
         nommer(candidat);
       }

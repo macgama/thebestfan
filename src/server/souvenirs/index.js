@@ -17,7 +17,12 @@ export const MARKET_DAYS = 15;
 /** Prix d'une vignette, en écharpes. Une finale vaut plus qu'un match de poule. */
 const PRICE = { championnat: 60, coupe: 90, international: 140, amical: 30 };
 
-export function createSouvenirs({ pool, requireAuth }) {
+export function createSouvenirs({ pool, requireAuth,
+  /* L'abonnement ouvre la **mémoire longue** : un joueur inscrit voit ses
+     vingt dernières cartes, un abonné les voit toutes. Rien n’est effacé —
+     c’est la lecture qui s’arrête, et elle rouvre entièrement dès
+     l’abonnement. Voir `abonnement/index.js`. */
+  abonnement = null }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
@@ -106,8 +111,23 @@ export function createSouvenirs({ pool, requireAuth }) {
                  JOIN teams a ON a.id = s.away_id
                  LEFT JOIN leagues l ON l.id = s.league_id`;
 
+  /**
+   * Les cartes-souvenirs du joueur, les plus récentes d’abord.
+   *
+   * **La vitrine est plus courte sans abonnement, la collection est la
+   * même.** Aucune carte n’est effacée ni reprise : la lecture s’arrête aux
+   * vingt dernières, et elle rouvre entièrement le jour de l’abonnement.
+   * C’est la règle de ce jeu — « fermer, c’est cesser de distribuer » — et
+   * reprendre un souvenir vécu serait exactement ce qu’il refuse.
+   *
+   * `profondeur` nulle veut dire « tout » : c’est ce que rend un abonnement,
+   * et c’est aussi ce qu’on obtient sans module d’abonnement monté — donc le
+   * comportement d’avant, inchangé.
+   */
   async function collection(userId) {
-    return q(
+    const abonne = abonnement ? await abonnement.estAbonne(userId) : true;
+    const profondeur = abonnement ? abonnement.profondeurSouvenirs(abonne) : null;
+    const rows = await q(
       `SELECT ${CARD}, us.kind, us.fanzzy_id, us.ferveur, us.acquired_at
          ${JOINS}
          JOIN user_souvenirs us ON us.souvenir_id = s.id
@@ -115,6 +135,16 @@ export function createSouvenirs({ pool, requireAuth }) {
         ORDER BY s.kickoff_at DESC, s.seq`,
       [userId],
     );
+    return profondeur === null ? rows : rows.slice(0, profondeur);
+  }
+
+  /** Combien il en a vraiment, quelle que soit la profondeur lue. Sans ce
+      nombre, l’écran ne pourrait pas dire « et 34 autres, avec
+      l’abonnement » — il ne verrait que ce qu’on lui a montré. */
+  async function combien(userId) {
+    const [r] = await q(
+      'SELECT COUNT(*) AS n FROM user_souvenirs WHERE user_id = ?', [userId]);
+    return Number(r?.n ?? 0);
   }
 
   /** Le marché : quinze jours, et seulement ce que le joueur n'a pas déjà. */
@@ -183,7 +213,13 @@ export function createSouvenirs({ pool, requireAuth }) {
   router.use(express.json({ limit: '8kb' }));
 
   router.get('/mine', requireAuth, async (req, res) => {
-    res.json({ souvenirs: await collection(req.user.id) });
+    const [souvenirs, total] = await Promise.all([
+      collection(req.user.id), combien(req.user.id),
+    ]);
+    /* `total` dit ce qu’il possède, `souvenirs` ce qu’on lui montre. Les deux
+       ensemble permettent à l’écran d’annoncer ce que l’abonnement rouvre,
+       sans jamais laisser croire que des cartes ont disparu. */
+    res.json({ souvenirs, total, tronque: total > souvenirs.length });
   });
 
   router.get('/market', requireAuth, async (req, res) => {

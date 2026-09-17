@@ -119,7 +119,16 @@ check('au niveau maximum, la jauge est pleine plutôt que divisée par zéro',
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
+/* `saisons` fait partie du ménage, et son absence coûtait cher.
+
+   Cette suite ne la créait ni ne la supprimait : elle héritait donc de celle
+   qu'une autre avait laissée. Or `fanzzy-ui` et `onboarding` lancent une
+   saison qui n'ouvre que LA TRIBUNE — après elles, « un joueur de niveau 1
+   ouvre la série qui demandait le niveau 26 » échouait sur
+   `fanzzy.error.set_closed`, et accusait le niveau alors que la série était
+   simplement fermée. Le rouge dépendait de l’ordre des suites, donc il
+   apparaissait une fois sur trois et jamais quand on le cherchait. */
+await raw.query(`DROP TABLE IF EXISTS abonnements, saisons, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,

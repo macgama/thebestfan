@@ -226,12 +226,24 @@ export function createDecks({ pool, requireAuth, niveau = null,
        vienne de l'écran de deck ou du bouton « emmener en duel » d'une fiche.
 
        Pas de `COALESCE` : c'est un **remplacement**. Le premier deck en avait
-       besoin, un changement de titulaire demande le contraire. */
+       besoin, un changement de titulaire demande le contraire.
+
+       `active_evo` — l'âge auquel on se montre — repart à nul **quand le
+       titulaire change, et seulement alors**. Deux pièges, un de chaque côté :
+       le garder ferait apparaître le nouveau venu à l'âge choisi pour le
+       précédent, qu'il n'a peut-être jamais atteint ; l'effacer à chaque
+       enregistrement annulerait le choix du joueur dès qu'il touche à une
+       carte d'action, ce qui n'a rien à voir. D'où le `<=>` — l'égalité qui
+       accepte les nuls — et l'ordre des deux affectations : MariaDB les
+       évalue de gauche à droite, donc `active_evo` doit se décider **avant**
+       que `active_fanzzy` ne soit écrasé. */
     const titulaire = propre.fanzzy[0]?.id ?? null;
     if (titulaire) {
       await q(
         `INSERT INTO user_wallet (user_id, active_fanzzy) VALUES (?, ?)
-         ON DUPLICATE KEY UPDATE active_fanzzy = VALUES(active_fanzzy)`,
+         ON DUPLICATE KEY UPDATE
+           active_evo = IF(active_fanzzy <=> VALUES(active_fanzzy), active_evo, NULL),
+           active_fanzzy = VALUES(active_fanzzy)`,
         [userId, titulaire]);
     }
 

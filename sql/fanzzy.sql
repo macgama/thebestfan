@@ -114,3 +114,21 @@ ALTER TABLE fanzzy ADD COLUMN IF NOT EXISTS amorce JSON NULL;
 -- Le Fanzzy équipé pour les duels. Colonne ajoutée à la bourse existante :
 -- c'est la même ligne, lue au même moment que les écharpes et les boosters.
 ALTER TABLE user_wallet ADD COLUMN IF NOT EXISTS active_fanzzy VARCHAR(12) NULL;
+
+-- L'âge auquel on le montre.
+--
+-- `active_fanzzy` dit **qui**, cette colonne dit **à quel âge**. Elles vont par
+-- paire et vivent donc sur la même ligne : deux tables pour une seule décision
+-- finiraient par se contredire, et l'écran d'accueil montrerait un âge que la
+-- liste d'amis ignore.
+--
+-- Nul veut dire **l'âge atteint**, qui était le comportement d'avant : une base
+-- où personne n'a encore choisi affiche exactement ce qu'elle affichait hier.
+-- Ce n'est pas un défaut de la colonne, c'est sa valeur par défaut — celui qui
+-- a payé quatre-vingt-dix écharpes pour faire grandir son Capo veut le voir
+-- grandi, tant qu'il n'a pas dit le contraire.
+--
+-- Changer de personnage la remet à nul : un âge choisi pour un Fanzzy ne veut
+-- rien dire pour le suivant, et le garder ferait apparaître le nouveau venu à
+-- un âge qu'il n'a peut-être jamais atteint.
+ALTER TABLE user_wallet ADD COLUMN IF NOT EXISTS active_evo TINYINT UNSIGNED NULL;

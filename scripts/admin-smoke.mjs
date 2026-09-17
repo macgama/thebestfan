@@ -20,13 +20,13 @@ const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
    elle est vide. Une saison laissée par un passage précédent — ou par une suite
    voisine — fermerait des séries que celle-ci croit ouvertes, et les contrôles
    parleraient d'un état que personne n'a voulu. */
-await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities, saisons,
+await raw.query(`DROP TABLE IF EXISTS abonnements, achats, kop_invites, amities, saisons,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, reglages, admin_audit, user_decks, user_stuff, user_skins,
   user_fanzzy, user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache,
   souvenir_leagues, duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings,
   fixtures, team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 for (const f of ['auth.sql','football.sql', 'minutes.sql', 'couleurs.sql','souvenirs.sql', 'billets.sql','fanzzy.sql','inventaire.sql', 'skins.sql', 'tenues.sql',
-                 'teletext.sql','admin.sql','saisons.sql']) {
+                 'teletext.sql','admin.sql','saisons.sql','abonnement.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 // La table `fanzzy` n'est pas dans le DROP ci-dessus, et c'est voulu : elle
@@ -57,8 +57,14 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 await chargerCatalogue(pool);
 await chargerTenues(pool);
 let moi = B;   // on commence en simple joueur
+/* L'abonnement est monté comme `server.js` le monte : sans lui,
+   l'administration répond « module absent » et les contrôles ci-dessous
+   éprouveraient ce refus plutôt que le geste. */
+const { createAbonnement } = await import('../src/server/abonnement/index.js');
+const abonnement = createAbonnement({ pool, requireAuth: (r,_s,n)=>n() });
 const adm = createAdmin({ pool,
-  requireAuth: (r,_s,n)=>{ r.user = { id: moi, email: moi===A?'patron@ex.fr':'joueur@ex.fr' }; n(); } });
+  requireAuth: (r,_s,n)=>{ r.user = { id: moi, email: moi===A?'patron@ex.fr':'joueur@ex.fr' }; n(); },
+  deps: { abonnement } });
 const app = express(); app.use('/api/admin', adm.router);
 const http = createServer(app); await new Promise((r)=>http.listen(0,r));
 const base = `http://localhost:${http.address().port}`;
@@ -483,8 +489,70 @@ moi = A;
   // directement — c’est un test, pas un usage.
   await pool.query(`DELETE FROM tenues WHERE id = 'carnaval'`);
 }
+
+/* ------------------------------ accorder un abonnement depuis l'administration
+
+ * C'est ce qui permet d'ouvrir la bêta et d'éprouver les deux côtés du jeu
+ * **sans attendre le prestataire de paiement** — et ce sera le geste de service
+ * après-vente du jour où il sera branché : un remboursement, un mois offert.
+ *
+ * Comme toute écriture d'administration, il passe par `admin_audit`. Un accès
+ * offert sans trace est un accès dont plus personne ne sait d'où il vient.
+ */
+{
+  const cible = (await pool.query(
+    "SELECT public_id FROM users WHERE pseudo = 'Joueur'"))[0][0]?.public_id;
+  check('un joueur existe pour ce contrôle', Boolean(cible));
+
+  r = await call(`/api/admin/joueur/${cible}/abonnement`,
+    { method: 'POST', body: { formule: 'offert', jours: null } });
+  check('l’administration accorde un abonnement', r.json.abonnement?.abonne === true
+    || (console.log('        rendu :', JSON.stringify(r.json).slice(0, 140)), false));
+  /* Sans terme : c'est ce qu'on pose pour un bêta-testeur. Rien ne l'expire, et
+     c'est voulu — un accès offert qui s'éteint sans prévenir se lit comme une
+     panne. */
+  check('et il est sans terme', r.json.abonnement?.fin === null);
+
+  /* La liste des joueurs le dit, avec son échéance : « abonné jusqu'au 12
+     mars » se lit, « abonné : oui » demande une seconde question. */
+  r = await call('/api/admin/joueurs?q=Joueur');
+  const vu = r.json.joueurs?.find((j) => j.public_id === cible);
+  check('la liste des joueurs montre qui est abonné', vu?.abonne === true
+    || (console.log('        vu :', JSON.stringify(vu).slice(0, 160)), false));
+  check('et sous quelle formule', vu?.abo_formule === 'offert');
+
+  /* Tracé, comme toute écriture d'administration. */
+  r = await call('/api/admin/journal');
+  const trace = (r.json.journal ?? []).find((x) => x.action === 'abonnement.accorder');
+  check('l’accord est journalisé', Boolean(trace)
+    || (console.log('        actions :',
+      (r.json.journal ?? []).map((x) => x.action).join(', ')), false));
+  check('et le journal nomme la cible', trace?.cible === cible);
+
+  /* Une durée bornée, pour le cas d'un mois offert. */
+  r = await call(`/api/admin/joueur/${cible}/abonnement`,
+    { method: 'POST', body: { formule: 'mensuel', jours: 30 } });
+  check('une durée bornée s’accorde aussi', r.json.abonnement?.fin !== null
+    && r.json.abonnement?.abonne === true);
+
+  /* Et on peut le retirer. */
+  r = await call(`/api/admin/joueur/${cible}/abonnement`, { method: 'DELETE' });
+  check('l’administration retire un abonnement', r.json.abonnement?.abonne === false);
+  r = await call('/api/admin/journal');
+  check('le retrait est journalisé aussi',
+    (r.json.journal ?? []).some((x) => x.action === 'abonnement.retirer'));
+
+  /* Un joueur qui n'existe pas se dit, plutôt que de rendre un abonnement
+     accordé à personne. */
+  r = await call('/api/admin/joueur/inconnu-0000/abonnement',
+    { method: 'POST', body: { formule: 'offert' } });
+  check('un joueur inconnu est refusé', r.json.error === 'admin.error.joueur_inconnu'
+    || (console.log('        rendu :', JSON.stringify(r.json).slice(0, 120)), false));
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end();
+
 await new Promise((r) => http.close(r));
 // Pas de process.exit : il coupe la boucle pendant que le pool rend ses
 // sockets, et libuv s’arrête au hasard sur UV_HANDLE_CLOSING.

@@ -51,7 +51,7 @@ const tables = await q(
   `SELECT table_name AS t FROM information_schema.tables WHERE table_schema = DATABASE()`);
 if (tables.length) {
   await cnx.query('SET FOREIGN_KEY_CHECKS = 0');
-  await cnx.query(`DROP TABLE IF EXISTS ${tables.map((r) => `\`${r.t}\``).join(', ')}`);
+  await cnx.query(`DROP TABLE IF EXISTS abonnements, ${tables.map((r) => `\`${r.t}\``).join(', ')}`);
   await cnx.query('SET FOREIGN_KEY_CHECKS = 1');
 }
 for (const n of SOCLE) await cnx.query(fichier(n));

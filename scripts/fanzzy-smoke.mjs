@@ -17,7 +17,7 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS achats, kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
@@ -340,6 +340,65 @@ check('le duel le lit à son premier âge', eq?.id === base1.id && Boolean(eq.mo
 const jamais = DEX.find((f) => !Object.keys(col).includes(f.id) && f.id !== base1.evo);
 r = await call('/api/fanzzy/active', { method: 'POST', body: { id: 'Z9' } });
 check('Fanzzy inexistant refusé', r.json.error === 'fanzzy.error.unknown');
+
+/* -------------------------------------------------- et à quel âge le montrer
+
+ * `active_fanzzy` dit **qui**, `active_evo` dit **à quel âge**. Une seule
+ * décision — « voilà de quoi j'ai l'air » — donc un seul geste : la même route
+ * porte les deux. Deux routes laisseraient exister l'instant où la bourse
+ * porte un personnage et l'âge d'un autre, et c'est l'écran d'accueil de
+ * quelqu'un qui l'apprendrait.
+ *
+ * Le joueur qui a payé le deuxième âge peut vouloir montrer le premier : ce
+ * n'est pas une version inférieure du personnage, c'est un autre dessin, celui
+ * avec lequel il a commencé. Ce que le jeu refuse, c'est l'inverse — montrer un
+ * âge qu'on n'a pas fait grandir.
+ */
+await pool.query('UPDATE user_fanzzy SET stage = 2 WHERE user_id = ? AND fanzzy_id = ?',
+  [U, base1.id]);
+
+r = await call('/api/fanzzy/active', { method: 'POST', body: { id: base1.id, evo: 1 } });
+check('on peut demander à se montrer au premier âge', r.json.activeEvo === 1
+  || (console.log('        rendu :', JSON.stringify(r.json)), false));
+let perso = await F.personnageActif(U);
+check('et c’est cet âge-là que voient les autres', perso?.evo === 1
+  && perso?.age === base1.id);
+check('la bourse le dit à l’écran qui le propose',
+  (await F.wallet(U)).activeEvo === 1);
+
+/* **L'âge atteint s'écrit nul plutôt que son numéro.** Sans cela, choisir « le
+   dernier » aujourd'hui figerait l'affichage sur cet âge-là, et le joueur qui
+   fait grandir son Fanzzy demain ne le verrait pas changer — il reviendrait ici
+   sans savoir pourquoi, ou n'y reviendrait pas. */
+r = await call('/api/fanzzy/active', { method: 'POST', body: { id: base1.id, evo: 2 } });
+check('choisir l’âge atteint veut dire « le dernier », et non « celui-ci »',
+  r.json.activeEvo === null || (console.log('        rendu :', JSON.stringify(r.json)), false));
+perso = await F.personnageActif(U);
+check('on se montre donc à l’âge atteint', perso?.evo === 2 && perso?.age === base1.evo);
+
+/* Un âge qu'on n'a pas fait grandir : refusé. L'accepter afficherait aux amis
+   un personnage que son propriétaire n'a pas, et le retour au vrai âge — au
+   prochain calcul — se lirait comme une perte. */
+r = await call('/api/fanzzy/active', { method: 'POST', body: { id: base1.id, evo: 3 } });
+check('un âge non atteint est refusé', r.json.error === 'fanzzy.error.age_non_atteint'
+  || (console.log('        rendu :', JSON.stringify(r.json)), false));
+r = await call('/api/fanzzy/active', { method: 'POST', body: { id: base1.id, evo: 0 } });
+check('un âge qui n’existe pas aussi', r.json.error === 'fanzzy.error.age_inconnu');
+
+/* Et le personnage reste montré à l'âge qu'il avait : un refus ne doit rien
+   changer, sans quoi une demande invalide serait une façon de remettre à
+   zéro. */
+check('un refus ne touche pas à ce qui était choisi',
+  (await F.wallet(U)).activeEvo === null);
+
+/* Sans âge demandé — c'est ce qu'envoie le classeur, qui change de personnage
+   et ne parle pas d'âge — on repart de l'âge atteint. Garder l'âge du
+   précédent montrerait le nouveau venu à un stade qu'il n'a peut-être jamais
+   atteint. */
+await call('/api/fanzzy/active', { method: 'POST', body: { id: base1.id, evo: 1 } });
+r = await call('/api/fanzzy/active', { method: 'POST', body: { id: base1.id } });
+check('équiper sans parler d’âge repart de l’âge atteint', r.json.activeEvo === null
+  && (await F.wallet(U)).activeEvo === null);
 
 /* ------------------------------------------------------- concurrence */
 
