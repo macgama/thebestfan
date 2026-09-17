@@ -413,27 +413,28 @@ function invite(f) {
 
 /* ==================================================== la montée des âges
 
-   ## Un âge supérieur ne vieillit plus
+   ## Un Fanzzy traverse une vie
 
-   L'invite d'avant disait `Change only the age`, et elle le disait bien : le
-   deuxième âge « grown up, not yet middle-aged », le troisième « much older —
-   this is the last age of a long life ». Trois dessins, trois personnes.
+   Âge 1 l'enfant ou l'adolescent, âge 2 l'adulte, âge 3 le vieux. C'est le
+   vieillissement qui porte l'évolution, et ce n'est pas une préférence
+   d'écriture : c'est ce qui est **amusant**. Voir son personnage traverser une
+   vie est une récompense ; le voir gagner deux pastilles cousues n'en est pas
+   une.
 
-   C'est ce qui casse la promesse de l'évolution. Le joueur qui paie quatre-
-   vingt-dix écharpes pour faire monter son Fanzzy veut voir **son** personnage
-   plus fort, pas son remplaçant. Et le cas limite le dit mieux qu'un argument :
-   Le Petit Teigneux a onze ans. Vieilli deux fois, il devient un homme de
-   cinquante-sept ans qui n'a plus rien du gamin de la première carte — on ne
-   reconnaît ni le visage, ni la silhouette, ni l'idée.
+   Cette règle a été essayée dans l'autre sens, et l'essai a tranché. Une
+   version de cette fonction figeait l'âge et ne faisait monter que le domaine
+   — le raisonnement était bon sur le papier, la reconnaissance du personnage
+   passait avant tout. Les deux dessins qui en sont sortis ont montré ce que le
+   papier ne dit pas : un gamin qui reste un gamin avec plus d'écussons, ce
+   n'est pas une évolution, c'est une variante. On revient donc au
+   vieillissement, et on garde de l'essai ce qu'il a apporté.
 
-   La règle est donc inversée : **l'âge est un invariant, le domaine est ce qui
-   monte.** Le personnage ne vieillit pas, il prend sa place, puis il la tient.
+   ## Ce que l'essai a apporté, et qui reste
 
-   ## Cinq axes, et aucun n'est l'âge
-
-   Ils sont choisis pour une seule raison : **ils se lisent à quarante-huit
-   pixels**. Dans le classeur, une carte fait cent cinquante pixels de haut ;
-   une évolution qui ne se voit qu'en plein écran ne se voit pas.
+   Les cinq axes. Ils ne remplacent plus l'âge — ils le **dessinent**, et
+   surtout ils le rendent lisible là où l'âge seul ne l'est pas : dans le
+   classeur, une carte fait cent cinquante pixels de haut, et une ride ne s'y
+   voit pas. Une silhouette, si.
 
      1. l'empreinte au sol — pieds joints, puis écartés, puis plantés ;
      2. la masse du vêtement — flottant, ajusté, long et lourd ;
@@ -441,8 +442,15 @@ function invite(f) {
      4. l'accumulation — les pastilles cousues, l'écharpe au poignet ;
      5. l'ouverture — bras au corps, menton levé, bras ouverts.
 
-   Ce qui ne bouge **jamais** : le visage, la palette, la carrure, le rendu, le
-   cadrage. C'est là qu'est la reconnaissance, et c'est tout ce qu'on protège.  */
+   ## Et ce qui reste protégé
+
+   Vieillir quelqu'un et le remplacer sont deux choses différentes, et un
+   générateur ne fait pas la différence tout seul : il redessine un visage
+   moyen de l'âge demandé. On lui interdit donc **l'ossature** — la forme des
+   yeux, le nez, la mâchoire, le teint, la palette du vêtement — et on ne lui
+   laisse que ce que les années font vraiment : les cheveux, la peau, la
+   carrure, le port. C'est la seule ligne qui sépare « il a grandi » de
+   « ce n'est plus lui », et elle vaut pour les trois âges.                   */
 
 /**
  * Ce que le personnage tient, à chacun des trois âges.
@@ -521,12 +529,43 @@ const AXES_CHOSE = {
 };
 
 /**
+ * Ce que les années font, et ce qu'elles ne doivent pas faire.
+ *
+ * Pas de nombre d'années ici : l'histoire de l'âge en donne souvent un, et deux
+ * chiffres qui se contredisent dans la même invite donnent un personnage entre
+ * les deux. On dit l'ampleur du pas, le texte de la carte dit la mesure.
+ */
+const AGE = {
+  2: 'clearly older, one full step of a life: a child has become a teenager, '
+    + 'a teenager a young adult, an adult a settled adult. A taller or fuller '
+    + 'frame, a face that has lost its childhood softness, hair that has been '
+    + 'cut differently since.',
+  3: 'much older — this is the last age of a long life: grey or white hair, a '
+    + 'lined and weathered face, a heavier or more stooped frame, hands that '
+    + 'show the years.',
+};
+
+/**
+ * Ce qui fait que c'est toujours **lui**, et pas quelqu'un du même âge.
+ *
+ * C'est la moitié de l'invite qui demande le plus de précision : un générateur
+ * à qui l'on demande « le même, plus vieux » dessine un visage moyen de l'âge
+ * demandé. On nomme donc ce qui ne bouge pas — l'ossature, pas l'apparence —
+ * et on l'oppose explicitement à ce que les années ont le droit de changer.
+ */
+const OSSATURE = 'Same bone structure, same eye shape and eye colour, same nose, '
+  + 'same jaw and chin, same ears, same skin tone, same freckles or marks, same '
+  + 'natural hair colour where it has not greyed. Same wardrobe and same colour '
+  + 'palette — these are their clothes, aged with them, not new ones.';
+
+/**
  * L'invite d'un **âge supérieur**, pour l'image-à-image.
  *
  * Elle ne décrit ni le rendu, ni le cadrage, ni le fond : tout cela est déjà
  * dans l'image de référence, et le redire ferait régénérer la frame entière.
- * Elle ne nomme que ce qui change — et ce qui change, maintenant, est une
- * montée dans le domaine et non un vieillissement.
+ * Elle nomme trois choses, dans cet ordre : ce que les années font, ce qu'elles
+ * n'ont pas le droit de toucher, et ce que le personnage est devenu dans son
+ * domaine.
  *
  * **La référence est toujours le premier âge**, jamais l'âge précédent : deux
  * éditions en cascade perdent le visage, et c'est le visage qu'on protège.
@@ -547,22 +586,20 @@ function inviteAge(f) {
     : 'They lead now: everyone around them follows what they do.';
 
   return [
-    'Keep the exact same character from the reference image — same face, same '
-      + 'hair, same build, same height, same colours, same clothes, same '
-      + 'background, same framing, same lighting, same render style.',
+    'Take the character from the reference image and show them at a later age. '
+      + 'Same background, same framing, same lighting, same render style.',
     '',
-    /* La phrase la plus importante de l'invite, et elle est en capitales parce
-       qu'un générateur à qui l'on donne un nouveau nom et une nouvelle histoire
-       vieillit le sujet de lui-même — c'est son réflexe, et il faut le couper
-       net. */
+    /* Un objet, une bête ou un phénomène ne vieillit pas : il monte en
+       intensité — c'est la règle d'écriture de `dex-ages.js`, et la seule qui
+       ait un sens pour une merguez. */
     chose
-      ? 'CRITICAL — IT DOES NOT GET OLDER, more worn out or more broken. It is '
-        + 'the same object, at the same moment of its life, become stronger.'
-      : 'CRITICAL — THEY DO NOT GET OLDER. Same age, same face, same young or '
-        + 'old features as in the reference image. No grey hair, no new lines, '
-        + 'no stoop, no beard that was not there. What changes is not their age.',
+      ? 'It does not age: it becomes MORE ITSELF — bigger, denser, its colours '
+        + 'stronger, its presence heavier. Not older, not more broken.'
+      : `Make them ${AGE[f.stage]}`,
+    chose ? '' : `CRITICAL — it must still be recognisably the SAME PERSON, not `
+      + `someone else of that age. ${OSSATURE}`,
     '',
-    `What changes — ${rang}`,
+    `What else changes — ${rang}`,
     `• ${axes[0]};`,
     `• ${axes[1]};`,
     `• ${axes[2]};`,

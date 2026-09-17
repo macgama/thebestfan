@@ -179,51 +179,65 @@ titre('Les endroits où le générateur écrit des mots malgré l’interdit');
     pyros.length > 0 && enMain.length === pyros.length);
 }
 
-/* ============================================ les âges ne vieillissent plus
+/* ================================================ les âges traversent une vie
 
-   Le cinquième mensonge, et le plus cher : l'invite des âges disait
-   `Change only the age`. Le joueur qui paie quatre-vingt-dix écharpes voyait
-   son personnage **remplacé** par quelqu'un de plus vieux — un gamin de onze
-   ans devenu un homme de cinquante-sept, dont ni le visage ni la silhouette ne
-   rappelaient la carte qu'il avait payée.
+   Un Fanzzy vieillit : l'enfant devient adulte, l'adulte devient vieux. C'est
+   ce qui rend l'évolution désirable, et c'est la règle après un aller-retour —
+   une version l'a figé pour ne faire monter que le domaine, et les deux dessins
+   qui en sont sortis ont montré qu'un gamin avec plus d'écussons n'est pas une
+   évolution.
 
-   Les deux âges de TR1 sont les seuls qui aient été générés sous l'ancienne
-   règle, et ils portent les trois défauts d'un coup : un tambour sur un
-   personnage Voix, des écussons de club, et le mot « CAPO » écrit en travers
-   d'une pastille. La formule de `VISUELS.md` ne vivait que dans l'invite des
+   Le cinquième mensonge est donc ailleurs, et il est resté : **vieillir
+   quelqu'un et le remplacer sont deux choses différentes**, et un générateur ne
+   fait pas la différence tout seul. Les deux âges de TR1 générés sous
+   l'ancienne invite portent trois défauts d'un coup : un tambour sur un
+   personnage Voix, des écussons de club, et le mot « CAPO » en travers d'une
+   pastille — la formule de `VISUELS.md` ne vivait que dans l'invite des
    premiers âges. */
 
 const ages = (set) => JSON.parse(execFileSync(process.execPath,
   ['scripts/fanzzy-invites.mjs', '--json', '--ages', '--set', set],
   { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }));
 
-titre('Les âges montent dans leur domaine, ils ne vieillissent pas');
+titre('Les âges vieillissent, et restent la même personne');
 {
-  const lot = [...ages('TR'), ...ages('MS'), ...ages('BG')];
+  const lot = [...ages('TR'), ...ages('MS')];
   check(`${lot.length} invite(s) d’âge à éprouver`, lot.length > 0);
 
-  const vieillissent = lot.filter((x) => /\bolder\b|grey hair|white hair|lines on the face|stoop/i
-    .test(x.invite.replace(/NO grey hair, no new lines, no stoop[^.]*\./i, '')
-      .replace(/THEY DO NOT GET OLDER[^.]*\./i, '')
-      .replace(/IT DOES NOT GET OLDER[^.]*\./i, '')));
-  check('aucune n’ordonne de vieillir le personnage',
-    vieillissent.length === 0
-    || (console.log('        ', vieillissent.map((x) => x.id).join(' ')), false));
+  check('toutes demandent un pas d’âge net',
+    lot.every((x) => /Make them clearly older|Make them much older/.test(x.invite)));
 
-  check('toutes interdisent le vieillissement en toutes lettres',
-    lot.every((x) => /DOES NOT GET OLDER|DO NOT GET OLDER/.test(x.invite)));
+  /* Deux âges qui demandent le même pas donnent deux fois le même dessin, et le
+     joueur paie deux fois pour la même carte. */
+  const deux = lot.filter((x) => x.stade === 2);
+  const trois = lot.filter((x) => x.stade === 3);
+  check('le deuxième et le troisième âge ne demandent pas le même pas',
+    deux.every((x) => /clearly older/.test(x.invite))
+    && trois.every((x) => /much older/.test(x.invite))
+    && deux.length > 0 && trois.length > 0);
 
-  /* Le visage est la seule chose que le joueur reconnaît d'un âge à l'autre.
-     Une invite qui ne le protège pas rend un inconnu, et l'évolution devient un
-     remplacement. */
-  check('toutes protègent le visage et le cadrage',
-    lot.every((x) => /same face/.test(x.invite) && /same framing/.test(x.invite)));
+  /* La ligne qui sépare « il a grandi » de « ce n'est plus lui ». Un générateur
+     à qui l'on demande « le même, plus vieux » dessine un visage moyen de l'âge
+     demandé : on lui interdit l'ossature, et on ne lui laisse que ce que les
+     années font vraiment. */
+  check('toutes exigent la même personne, ossature nommée',
+    lot.every((x) => /recognisably the SAME PERSON/.test(x.invite)
+      && /Same bone structure/.test(x.invite)));
+  check('et toutes gardent le cadrage de la référence',
+    lot.every((x) => /same framing/.test(x.invite)));
+
+  /* Un objet, une bête ou un phénomène n'a pas d'âge : `dex-ages.js` écrit
+     qu'il monte en intensité, et lui demander des cheveux gris n'a aucun sens. */
+  const choses = ages('BG');
+  check(`les ${choses.length} âges du bestiaire montent en intensité au lieu de vieillir`,
+    choses.length > 0 && choses.every((x) => /It does not age/.test(x.invite)
+      && !/grey or white hair/.test(x.invite)));
 
   /* La référence est toujours le premier âge : deux éditions en cascade
      perdent le visage qu'on vient de protéger. */
   const racines = new Set(DEX.filter((f) => f.stage === 1).map((f) => f.id));
   check('toutes partent du premier âge, jamais de l’âge précédent',
-    lot.every((x) => racines.has(x.reference)));
+    [...lot, ...choses].every((x) => racines.has(x.reference)));
 }
 
 titre('Un âge reste dans sa famille');
@@ -259,43 +273,11 @@ titre('La règle de droits couvre les deux bouts de la chaîne');
   /* Les pastilles cousues sont l'endroit exact où le générateur écrit : les
      deux âges de TR1 en sont revenus couverts de mots. L'interdit doit être là
      où naît l'envie. */
-  const habilles = lot.filter((x) => !/IT DOES NOT GET OLDER/.test(x.invite));
+  /* Les porteurs de vêtements, c'est-à-dire tout ce qui n'est pas un objet, une
+     bête ou un phénomène — ceux-là ne portent ni parka ni pastilles. */
+  const habilles = lot.filter((x) => !/It does not age/.test(x.invite));
   check(`et les ${habilles.length} qui portent des vêtements interdisent l’écriture sur les pastilles`,
     habilles.every((x) => /badges, bands and cloth carry NO writing/.test(x.invite)));
-}
-
-titre('Les textes des âges ne parlent plus de vieillir');
-{
-  /* Le dessin et le texte doivent dire la même chose. L'invite le dit
-     explicitement : le français de la carte **gagne** sur tout le reste. Une
-     invite qui interdit le vieillissement sous une histoire qui dit « quarante
-     ans plus tard » rend donc un vieillard, et la règle ne sert à rien.
-
-     Ce contrôle porte sur **tout le catalogue**, pas seulement sur les âges
-     déjà dessinables : un texte qui vieillit son personnage est une dette du
-     jour où son premier âge sera dessiné, et on ne veut pas la découvrir ce
-     jour-là.
-
-     Ce qu'on cherche, c'est le **personnage** qui prend de l'âge, pas le temps
-     qui passe autour de lui : « sa collection est complète depuis 1993 » parle
-     de la collection, et « vingt ans de chants » d'une archive. Les deux
-     restent permis, et `dex-ages.js` l'écrit. */
-  const suspect = new RegExp([
-    '\\bvieux\\b', '\\bvieille\\b', 'grand-père', 'grand-mère',
-    'cheveux gris', 'cheveux blancs', '\\bcanne\\b', 'à la retraite',
-    'ans plus tard', 'ans de plus',
-    // « Onze ans, une parka trop grande » — l'âge en apposition, qui est
-    // l'idiome d'écriture du catalogue et donc l'endroit où il se glisse.
-    '(^|[.!?]\\s)(onze|douze|treize|quatorze|quinze|seize|dix-sept|dix-huit'
-      + '|dix-neuf|vingt|trente|quarante|cinquante|soixante)\\s+ans\\s*,',
-  ].join('|'), 'i');
-
-  const contradictoires = DEX.filter((f) => f.stage > 1 && f.publie !== false
-    && suspect.test(`${f.nom ?? ''}. ${f.histoire ?? ''}`));
-  check(`aucun des ${DEX.filter((f) => f.stage > 1 && f.publie !== false).length} âges du catalogue ne porte un texte qui le vieillit`,
-    contradictoires.length === 0
-    || (console.log('        à réécrire : '
-      + contradictoires.map((f) => `${f.id} « ${f.nom} »`).join(', ')), false));
 }
 
 console.log(rouge ? `\n${rouge} test(s) en échec` : '\ntout est vert');

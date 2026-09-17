@@ -154,8 +154,8 @@ const DEX = [
       + 'trouve que c’est très bien comme ça.',
     mods:{ tempoWindow:1.2 }, cri:{ label:'REPRISE', gest:'tempo', power:52 } },
   { id:'TR32B', nom:'Meneur de chant', type:'voix', set:'TR', stage:2, rar:'rare', evo:'TR32C',
-    histoire:'Il a arrêté de regarder le terrain. Il lance le chant, bras levé, '
-      + 'et il attend que la tribune le rattrape — elle le rattrape toujours.',
+    histoire:'Six ans plus tard, il a arrêté de regarder le terrain. Il lance le '
+      + 'chant, bras levé, et il attend que la tribune le rattrape.',
     mods:{ tempoWindow:1.45, tempoInterval:40 }, cri:{ label:'MUR DU SON', gest:'tempo', power:64 } },
   { id:'TR32C', nom:'Capo di Curva', type:'voix', set:'TR', stage:3, rar:'epique',
     histoire:'Le mégaphone pend à son poing, éteint : il n’en a plus besoin. '
@@ -171,24 +171,22 @@ const DEX = [
       + 'Il ne suit plus le rythme : c’est lui qui le donne.',
     mods:{ mashBonus:1.1, mashTime:-500 }, cri:{ label:'CADENCE', gest:'mash', power:66 } },
   { id:'MS30C', nom:'Grosse Caisse Sud', type:'perc', set:'MS', stage:3, rar:'epique',
-    histoire:'Une grosse caisse aussi large que lui, l’écharpe nouée en bandeau, '
-      + 'et les pieds bien plantés. Quand il s’arrête, le virage s’arrête.',
+    histoire:'Vingt ans, une grosse caisse aussi large que lui, et l’écharpe du '
+      + 'gamin nouée en bandeau. Quand il s’arrête, le virage s’arrête.',
     mods:{ mashBonus:1.16, mashTime:-800 }, cri:{ label:'TEMPO INFERNAL', gest:'mash', power:76 } },
   // --- FIDÉLITÉ
   { id:'TR33', nom:'Abonné', type:'fide', set:'TR', stage:1, rar:'commune', evo:'TR33B',
     histoire:'La personne la plus ordinaire de la tribune, et celle qui est '
       + 'toujours là. Mains dans les poches, thermos dans l’autre.',
     mods:{ holdBonus:1.07 }, cri:{ label:'PRÉSENTS', gest:'hold', power:50 } },
-  { id:'TR33B', nom:'La Garde du Bloc C', type:'fide', set:'TR', stage:2, rar:'rare', evo:'TR33C',
-    histoire:'La veste couverte de pin’s, le thermos toujours plein, et une place '
-      + 'que personne ne prend même quand il est en retard. C’est lui qu’on va voir '
-      + 'quand on veut savoir ce qui s’est passé en 98.',
+  { id:'TR33B', nom:'Vieille Garde', type:'fide', set:'TR', stage:2, rar:'rare', evo:'TR33C',
+    histoire:'Douze ans de plus, les cheveux gris, la veste couverte de pin’s. '
+      + 'C’est lui qu’on va voir quand on veut savoir ce qui s’est passé en 98.',
     mods:{ holdBonus:1.12, holdForgive:1 }, cri:{ label:'ON ÉTAIT LÀ', gest:'hold', power:64 } },
   { id:'TR33C', nom:'Doyen du Bloc C', type:'fide', set:'TR', stage:3, rar:'epique',
-    histoire:'Plaid sur l’épaule, écharpe devenue presque incolore, et la seule '
-      + 'place du bloc qui porte un nom. Il n’a manqué aucun samedi, et personne n’a '
-      + 'jamais su depuis quand.',
-    mods:{ holdBonus:1.2, holdForgive:2, breathBonus:1.08 }, cri:{ label:'AUCUN SAMEDI', gest:'hold', power:80 } },
+    histoire:'Canne, plaid sur l’épaule, écharpe devenue presque incolore. '
+      + 'Cinquante ans de samedis, et il n’en a manqué aucun.',
+    mods:{ holdBonus:1.2, holdForgive:2, breathBonus:1.08 }, cri:{ label:'CINQUANTE ANS', gest:'hold', power:80 } },
   // --- TIFO
   { id:'MS31', nom:'Colleur d\u2019affiches', type:'tifo', set:'MS', stage:1, rar:'commune', evo:'MS31B',
     histoire:'Il pose les avis de déplacement la nuit, capuche relevée, un œil sur '
