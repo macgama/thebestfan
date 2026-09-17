@@ -68,7 +68,14 @@ const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', '
      suivant l'identifiant dans les six tables qui le référencent, JSON des
      decks compris — et identites.sql rattrape ce qu'INSERT IGNORE ne sait pas
      dire : un nom changé dans le code n'atteint jamais une ligne déjà posée. */
-  'prefixes', 'identites'];
+  'prefixes', 'identites',
+  /* `historique.sql` manquait à cette liste alors que le contrôle du schéma,
+     lui, lit tout le dossier : `schema:appliquer` appliquait donc vingt-quatre
+     fichiers puis annonçait « SCHÉMA INCOMPLET » sur une base neuve, en
+     nommant deux colonnes de `duel_results` que personne n'avait oubliées.
+     Une commande qui finit en rouge après avoir bien travaillé apprend à
+     ignorer le rouge. */
+  'historique'];
 
 const verifierSeulement = process.argv.includes('--verifier-seulement');
 const url = process.env.DATABASE_URL;

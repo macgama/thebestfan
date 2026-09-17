@@ -55,6 +55,62 @@ CREATE TABLE IF NOT EXISTS user_fanzzy (
   CONSTRAINT fk_uf_user FOREIGN KEY (user_id) REFERENCES users(public_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- La référence d'amorçage : ce que le code disait la dernière fois qu'il a
+-- écrit cette carte.
+--
+-- ## Le trou qu'elle bouche
+--
+-- Le catalogue vit en base et s'amorce depuis `dex.js` en `INSERT IGNORE` : on
+-- ajoute ce qui manque, on n'écrase jamais ce qui existe. C'est voulu — sans
+-- ça, chaque redémarrage effacerait les corrections faites à l'écran
+-- d'administration.
+--
+-- La contrepartie n'était tenue par rien : **changer une carte déjà en base
+-- dans le code ne change rien.** La ligne est là, `IGNORE` l'ignore, et le jeu
+-- continue d'afficher l'ancienne version, sans erreur et sans trace. Quatre
+-- fichiers de ce dossier n'existent que pour rattraper ça à la main —
+-- `identites.sql`, `raretes.sql`, `series-neuves.sql`, `prefixes.sql` — et
+-- c'est quatre fois le même travail : lire le code, lire la base, écrire les
+-- `UPDATE` de la différence.
+--
+-- ## Pourquoi une colonne, et pas une règle
+--
+-- Le code et l'écran ont tous les deux le droit d'écrire, et on ne peut pas
+-- trancher entre eux en regardant leurs deux valeurs : « le nom du code diffère
+-- du nom en base » ne dit pas **qui** a bougé. Il en faut une troisième — ce
+-- que le code disait quand la ligne a été posée. Avec elle, la question se
+-- répond champ par champ, et sans supposition :
+--
+--   base == amorce  →  personne n'y a touché à l'écran : le code fait foi,
+--                      la valeur est reprise et l'amorce suit.
+--   base != amorce  →  quelqu'un l'a corrigée à l'écran : on n'y touche pas,
+--                      et le démarrage le dit si le code voulait autre chose.
+--
+-- C'est la fusion à trois points d'un `git merge`, et c'est exactement pour la
+-- même raison : deux auteurs sur la même donnée, aucun des deux ne doit écraser
+-- l'autre en silence.
+--
+-- ## Ce que veut dire NULL
+--
+-- **NULL = cette ligne n'est pas gérée par le code.** Deux cas :
+--
+--   — une carte créée depuis l'administration : elle n'est pas dans `dex.js`,
+--     il n'y a rien à réconcilier, et son NULL la protège pour toujours ;
+--   — une ligne d'avant ce mécanisme : on ne sait pas ce que le code disait
+--     quand elle a été posée. Le démarrage l'adopte — amorce = son état actuel
+--     — **à la seule condition que `admin_audit` ne garde aucune trace d'une
+--     modification de cette carte**. Une carte corrigée à l'écran garde son
+--     NULL et reste intouchable.
+--
+-- Ici plutôt que dans un fichier à part : `fanzzy.sql` est rejoué à chaque
+-- passage de schéma, et **toutes les suites l'appliquent**. Une migration
+-- séparée aurait laissé dix-neuf suites tourner sans la colonne, donc dix-neuf
+-- suites où le démarrage annonce une réconciliation désactivée — un avertissement
+-- que tout le monde apprend à sauter, y compris le jour où il est vrai.
+--
+-- Rejouable, et sans effet sur une base déjà à jour.
+ALTER TABLE fanzzy ADD COLUMN IF NOT EXISTS amorce JSON NULL;
+
 -- Le Fanzzy équipé pour les duels. Colonne ajoutée à la bourse existante :
 -- c'est la même ligne, lue au même moment que les écharpes et les boosters.
 ALTER TABLE user_wallet ADD COLUMN IF NOT EXISTS active_fanzzy VARCHAR(12) NULL;
