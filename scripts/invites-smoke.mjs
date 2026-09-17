@@ -58,6 +58,19 @@ const tr = invitesDe('TR');
 
 titre('Chaque carte a son propre corps');
 {
+  /* Sur **tout le catalogue** et non sur la seule TRIBUNE : le jour où la table
+     des âges a été rétrécie pour laisser aux lignées la place de vieillir, deux
+     cartes des MÉTIERS DU STADE se sont mises à décrire le même homme — et ce
+     contrôle, qui ne regardait qu'une série, les a laissées passer. Un
+     garde-fou qui ne couvre qu'une série ne couvre pas le catalogue. */
+  const tout = ['TR', 'MS', 'BG', 'RV', 'OB', 'EP', 'VP', 'GC', 'GD', 'MT', 'HC', 'IM']
+    .flatMap((s) => invitesDe(s));
+  const partout = tout.map(corpsDe).filter(Boolean);
+  const doubles = partout.filter((c, i) => partout.indexOf(c) !== i);
+  check(`les ${partout.length} corps décrits par le catalogue sont tous distincts`,
+    doubles.length === 0
+    || (console.log('        ', [...new Set(doubles)].join('\n         ')), false));
+
   const corps = tr.map(corpsDe).filter(Boolean);
   const uniques = new Set(corps);
   check(`les ${tr.length} cartes de LA TRIBUNE décrivent ${uniques.size} corps distincts`,
@@ -240,6 +253,43 @@ titre('Les âges vieillissent, et restent la même personne');
     [...lot, ...choses].every((x) => racines.has(x.reference)));
 }
 
+titre('Une lignée a la place de vieillir deux fois');
+{
+  /* Le tirage de corps ne savait pas qu'une carte avec un `evo` sera dessinée
+     trois fois, chaque fois plus vieille. Il donnait « in their sixties » au
+     premier âge de soixante-cinq lignées sur cent trente-sept, et les deux âges
+     suivants n'avaient plus nulle part où aller. */
+  /* « in **his** forties » — `corps()` accorde le possessif au genre, et un
+     contrôle qui ne cherche que « their » ne trouve jamais rien. Il passait
+     donc au vert sans rien éprouver, ce qui est pire que pas de contrôle. */
+  const vieux = /in (their|his|her) (forties|fifties|sixties|seventies)/;
+  const lot = [...invitesDe('TR'), ...invitesDe('MS'), ...invitesDe('VP')];
+  const aSuite = lot.filter((x) => DEX.find((f) => f.id === x.id)?.evo);
+  const tropVieux = aSuite.filter((x) => vieux.test(corpsDe(x) ?? ''));
+  check(`les ${aSuite.length} premiers âges qui ont une suite commencent jeunes`,
+    aSuite.length > 0 && tropVieux.length === 0
+    || (console.log('        ', tropVieux.map((x) => x.id).join(' ')), false));
+
+  /* Et une carte sans lignée garde tout le tableau : Le Vieux Marin a le droit
+     d'être vieux dès le premier jour, il n'ira nulle part. On le mesure sur tout
+     le catalogue — LA TRIBUNE n'a plus une seule carte publiée sans suite, et
+     une preuve cherchée là où le cas n'existe pas ne prouve rien. */
+  /* Et quand la carte donne l'âge, le tirage se tait : ni âge tiré, ni barbe, et
+     le mot suit le nombre. « a man, trois jours de barbe » sur « Douze ans » ne
+     donne pas un enfant, ça donne un compromis — un adolescent qui se rase. */
+  const nomme = ['TR1', 'TR2', 'MS30'].map((id) => lot.find((x) => x.id === id)).filter(Boolean);
+  check(`les ${nomme.length} cartes qui écrivent leur âge sont dessinées en enfants`,
+    nomme.length === 3
+    && nomme.every((x) => /^a (boy|girl|child),/.test(corpsDe(x) ?? ''))
+    && nomme.every((x) => !/stubble|beard|moustache/.test(corpsDe(x) ?? '')));
+
+  const ailleurs = ['TR', 'MS', 'BG', 'RV', 'OB', 'EP', 'VP', 'GC', 'GD', 'MT', 'HC', 'IM']
+    .flatMap((s) => invitesDe(s))
+    .filter((x) => !DEX.find((f) => f.id === x.id)?.evo);
+  check(`une carte sans suite garde le tableau complet (${ailleurs.length} cartes concernées)`,
+    ailleurs.some((x) => vieux.test(corpsDe(x) ?? '')));
+}
+
 titre('Un âge reste dans sa famille');
 {
   const lot = [...ages('TR'), ...ages('MS')];
@@ -255,6 +305,14 @@ titre('Un âge reste dans sa famille');
     perc.length > 0 && perc.every((x) => /no megaphone/.test(x.invite)));
   check('chaque âge remplace l’objet du premier au lieu d’en ajouter un second',
     lot.every((x) => /replace it, do not add a second one/.test(x.invite)));
+
+  /* Et la ligne de famille cède devant le français de la carte, comme au
+     premier âge. Sans ça, Le Collectionneur — une Fidélité qui tient un album —
+     se retrouve les bras croisés et les mains vides au deuxième âge, alors que
+     toute sa lignée parle de ses cartes. */
+  check('l’objet de famille cède devant le texte de la carte',
+    lot.every((x) => /UNLESS the French text further down names something else/
+      .test(x.invite)));
 }
 
 titre('La règle de droits couvre les deux bouts de la chaîne');
