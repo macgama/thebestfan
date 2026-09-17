@@ -37,6 +37,7 @@ import { createAmis } from './src/server/amis/index.js';
 import { createAdmin } from './src/server/admin/index.js';
 import { createNvN } from './src/server/nvn/index.js';
 import { createBoutique } from './src/server/boutique/index.js';
+import { negocierAvif } from './src/server/images/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ORIGIN = process.env.PUBLIC_ORIGIN ?? 'https://thebestfan.online';
@@ -521,6 +522,21 @@ app.get('/img/fanzzy/index.json', (_req, res) => {
   res.set('cache-control', 'public, max-age=3600');
   res.sendFile(path.join(__dirname, 'public/img/fanzzy/index.json'));
 });
+
+/* L'AVIF part à qui l'a annoncé dans `Accept`, sous l'adresse du WebP.
+ *
+ * C'est le serveur qui négocie, et c'est le seul endroit où la question se
+ * pose correctement : le navigateur dit ce qu'il sait **lire** à chaque
+ * requête d'image. La page, elle, avait essayé de le deviner en demandant à un
+ * canvas ce qu'il savait **écrire** — personne n'encode l'AVIF, le format n'a
+ * donc jamais été servi à qui que ce soit, et tout ce qui n'était pas Chrome
+ * repartait avec une extension qui ne désignait aucun fichier. Le détail est
+ * dans `src/server/images/index.js`.
+ *
+ * Avant le static, forcément : un middleware posé après ne réécrit plus rien.
+ * Et `typer` reste en place derrière — c'est lui qui donne son type MIME à
+ * l'AVIF, qu'Express ne connaît toujours pas. */
+app.use('/img', negocierAvif(path.join(__dirname, 'public/img')));
 
 // Les visuels ne changent jamais : un an de cache. Les pages, une heure.
 app.use('/img', express.static(path.join(__dirname, 'public/img'),
