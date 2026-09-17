@@ -239,6 +239,44 @@ const SANS_CORPS = new Set(['OB', 'GC', 'MT', 'BG', 'IM']);
 const AGE_GRIS = 5;
 
 /**
+ * **Une lignée doit avoir la place de vieillir deux fois.**
+ *
+ * Le tirage d'âge ne savait pas qu'un personnage avec un `evo` sera dessiné
+ * trois fois, chaque fois plus vieux. Il donnait donc « in their sixties » au
+ * premier âge de soixante-cinq lignées sur cent trente-sept — et les deux âges
+ * suivants n'avaient plus nulle part où aller : un homme de soixante ans qui
+ * vieillit deux fois finit centenaire, et la carte du milieu ne se distingue
+ * plus de rien.
+ *
+ * Une carte qui a une suite tire donc dans la **moitié jeune** du tableau :
+ * adolescent, vingtaine, trentaine. La suite fait le reste — un pas de vie au
+ * deuxième âge, le dernier au troisième. Une carte sans lignée garde tout le
+ * tableau : `Le Vieux Marin` a le droit d'être vieux dès le premier jour, il
+ * n'ira nulle part.
+ *
+ * **Une table à part, et plus fine.** Réduire `CORPS.age` à ses quatre premières
+ * entrées était le geste évident, et il a immédiatement fait doublonner deux
+ * cartes de LA TRIBUNE — un tirage à quatre valeurs sur cent trente-sept
+ * lignées ne fait pas cent trente-sept corps distincts, et « cinquante cartes,
+ * un seul homme » est précisément la faute que cette section corrige. La moitié
+ * jeune a donc sa propre table, où elle gagne le détail qu'elle mérite : c'est
+ * là que vivent toutes les lignées du jeu.
+ *
+ * Les cartes sans suite gardent `CORPS.age` intact — leur tirage ne bouge pas
+ * d'un iota, et `Le Vieux Marin` a toujours le droit d'être vieux dès le
+ * premier jour.
+ */
+const AGE_JEUNE = ['barely out of their teens', 'in their early twenties',
+  'in their mid-twenties', 'in their late twenties', 'in their early thirties',
+  'in their mid-thirties', 'in their late thirties'];
+/* Sept entrées et pas six : à six, `MS2` et `MS22` décrivaient exactement le
+   même corps. Le nombre n'a rien de magique — c'est celui qui ne fait
+   doublonner personne, et `invites:test` compare désormais les cent
+   soixante-dix-sept corps du catalogue entier pour que le jour où il redevient
+   faux se voie tout de suite. La fin de la table reste jeune : « late thirties »
+   laisse encore la place de deux pas de vie. */
+
+/**
  * Le genre que la carte annonce déjà, ou null si elle ne dit rien.
  *
  * « Celui Qui Reste » tiré au féminin, c'était deux vérités de plus : le nom
@@ -280,26 +318,129 @@ function genreDit(f) {
   return null;
 }
 
-function corps(f) {
-  if (SANS_CORPS.has(f.set)) return '';
-  const t = (sel) => tire(CORPS[sel], f.id, sel);
+/**
+ * L'âge que la carte annonce déjà, ou `null` si elle n'en dit rien.
+ *
+ * Même principe que `genreDit` et pour la même raison : le français de la carte
+ * est écrit avant le tirage, c'est donc lui qui décide. « Douze ans et l'album
+ * complet de 2019 » sous une ligne qui ajoute « à peine sorti de
+ * l'adolescence, trois jours de barbe » ne donne pas un enfant, ça donne un
+ * compromis — un garçon de quinze ans qui se rase.
+ *
+ * Quand la carte dit l'âge, on **retire l'âge et la pilosité** du tirage et on
+ * garde le reste : la carrure, les cheveux, la peau, la couleur du dessus. Ce
+ * sont les traits que le texte ne donne jamais, et c'est justement pour eux que
+ * le tirage existe.
+ */
+const EN_ANNEES = { sept: 7, huit: 8, neuf: 9, dix: 10, onze: 11, douze: 12,
+  treize: 13, quatorze: 14, quinze: 15, seize: 16, 'dix-sept': 17, 'dix-huit': 18,
+  'dix-neuf': 19, vingt: 20 };
+const AGE_DIT = new RegExp(`\\b(${Object.keys(EN_ANNEES).join('|')})\\s+ans\\b`, 'i');
+/** L'âge en années que la carte annonce, ou `null`. */
+const ageDit = (f) => {
+  const m = AGE_DIT.exec(f.histoire ?? '');
+  return m ? EN_ANNEES[m[1].toLowerCase()] : null;
+};
+
+/**
+ * Et le mot qui va avec cet âge-là.
+ *
+ * « a man » sur un garçon de douze ans est la même contradiction qu'une barbe :
+ * le texte dit l'enfant, le tirage dit l'adulte, et le générateur rend un
+ * adolescent moyen. Le nombre est écrit dans la carte — autant s'en servir
+ * jusqu'au bout.
+ */
+function motDeLAge(annees, qui) {
+  const h = qui === 'a man';
+  const f = qui === 'a woman';
+  if (annees < 16) return h ? 'a boy' : f ? 'a girl' : 'a child';
+  if (annees <= 20) return h ? 'a young man' : f ? 'a young woman' : 'a young supporter';
+  return qui;
+}
+
+/**
+ * Les corps, attribués **une fois pour toutes et sans doublon**.
+ *
+ * Six tirages indépendants sur le même identifiant, c'est un paradoxe des
+ * anniversaires : sur cent soixante-dix-sept cartes, on attend une poignée de
+ * corps identiques, et on en avait. Deux existaient avant qu'on touche à quoi
+ * que ce soit — `MS23`/`EP11`, `MS21`/`EP13` — et rétrécir la table des âges
+ * pour laisser aux lignées la place de vieillir en a ajouté deux. Aucune table
+ * ne descend à zéro : c'est de la chance, pas un réglage, et on a essayé quatre
+ * tailles pour s'en convaincre.
+ *
+ * On attribue donc, au lieu de tirer. Chaque carte essaie sa combinaison ; si
+ * elle est déjà prise, elle retire avec une graine décalée jusqu'à en trouver
+ * une libre. « Un visage qui n'appartient à personne d'autre » devient vrai par
+ * construction, et `invites:test` l'exige sur le catalogue entier.
+ *
+ * **L'attribution se fait sur tout `DEX`, dans son ordre, au chargement du
+ * module** — jamais sur ce que l'appelant demande. Sans ça, `--set TR` et
+ * `--set MS` se disputeraient les mêmes combinaisons et une carte changerait de
+ * corps selon la commande tapée, ce que le contrôle « relancer le script
+ * redonne les mêmes » a précisément pour but d'empêcher.
+ */
+const CORPS_PAR_ID = (() => {
+  const pris = new Set();
+  const out = new Map();
+  for (const f of DEX) {
+    if (f.stage !== 1 || SANS_CORPS.has(f.set)) continue;
+    for (let essai = 0; essai < 40; essai++) {
+      // Le premier essai garde la graine historique : une carte qui n'entre en
+      // conflit avec personne ne bouge pas d'un mot.
+      const suffixe = essai ? `#${essai}` : '';
+      const ligne = decrire(f, suffixe);
+      /* On compare le **corps**, pas la phrase entière : la couleur du dessus
+         vient après, et deux personnes identiques dans deux manteaux de
+         couleurs différentes restent la même personne. C'est déjà la clef que
+         `invites:test` regarde. */
+      const clef = ligne.split('. Their outer')[0];
+      if (essai < 39 && pris.has(clef)) continue;
+      pris.add(clef);
+      out.set(f.id, ligne);
+      break;
+    }
+  }
+  return out;
+})();
+
+/** La description d'un corps pour une graine donnée. Voir `CORPS_PAR_ID`. */
+function decrire(f, suffixe = '') {
+  const t = (sel) => tire(CORPS[sel], f.id + suffixe, sel);
   const annonce = genreDit(f);
   /* Sans genre annoncé, on tire ; avec un genre ambigu, on ne dit rien et la
      pilosité ne se tire pas non plus — une barbe trancherait ce que la phrase
      laisse ouvert. */
   const qui = annonce === 'ambigu' ? 'a supporter' : (annonce ?? t('qui'));
-  const iAge = graine(f.id, 'age') % CORPS.age.length;
-  const age = CORPS.age[iAge];
+  /* Une carte qui a une suite tire dans la table jeune : il lui faut la place de
+     vieillir deux fois. Les autres gardent le tableau complet. */
+  const table = f.evo ? AGE_JEUNE : CORPS.age;
+  const iAge = graine(f.id + suffixe, 'age') % table.length;
+  const age = table[iAge];
   /* Une femme ne tire pas de barbe, et personne ne grisonne avant son heure. */
+  /* `AGE_GRIS` est un indice dans `CORPS.age` : il ne veut rien dire dans la
+     table jeune, où personne ne grisonne. */
   const barbe = qui === 'a man'
-    ? `, ${t(iAge >= AGE_GRIS ? 'barbeAgee' : 'barbe')}`
+    ? `, ${t(!f.evo && iAge >= AGE_GRIS ? 'barbeAgee' : 'barbe')}`
     : '';
+  /* La carte a donné l'âge : le tirage se tait sur l'âge et sur la barbe, et ne
+     dit plus que ce que le texte ne dit jamais. */
+  const dit = ageDit(f);
+  const quiEtAge = dit
+    ? motDeLAge(dit, qui)
+    : `${qui} ${age.replace(/\btheir\b/,
+      qui === 'a woman' ? 'her' : qui === 'a man' ? 'his' : 'their')}`;
   return `Who to draw — unless the French text above says otherwise, in which `
-    + `case follow the French text: ${qui} ${age.replace(/\btheir\b/,
-      qui === 'a woman' ? 'her' : qui === 'a man' ? 'his' : 'their')}, ${t('taille')}, `
-    + `${t('cheveux')}${barbe}, ${t('peau')}. Their outer layer is `
+    + `case follow the French text: ${quiEtAge}, ${t('taille')}, `
+    + `${t('cheveux')}${dit ? '' : barbe}, ${t('peau')}. Their outer layer is `
     + `${t('couleur')}. Give them a face that belongs to no one else in the `
     + 'collection.';
+}
+
+/** Le corps de cette carte : celui qui lui a été attribué, et personne d'autre. */
+function corps(f) {
+  if (SANS_CORPS.has(f.set)) return '';
+  return CORPS_PAR_ID.get(f.id) ?? decrire(f);
 }
 /* -------------------------------------------------------------- le choix */
 
@@ -604,9 +745,18 @@ function inviteAge(f) {
     `• ${axes[1]};`,
     `• ${axes[2]};`,
     `• ${axes[3]}.`,
+    /* La ligne de famille cède devant le français de la carte, exactement comme
+       au premier âge. Sans cette clause, Le Collectionneur — une Fidélité qui
+       tient un album et un éventail de cartes — se retrouve les bras croisés et
+       les mains vides au deuxième âge, alors que toute sa lignée parle de ses
+       cartes : la bourse du parvis, puis la collection exposée dans le hall.
+       C'est la faute que `invite()` corrige depuis longtemps pour les premiers
+       âges, et qu'`inviteAge()` refaisait pour tous les autres. */
     montee
-      ? `• in the reference image they had ${montee[0]}; now they have `
-        + `${montee[f.stage - 1]} — replace it, do not add a second one.`
+      ? `• what they hold, UNLESS the French text further down names something `
+        + `else — in that case keep what the French text says and ignore this `
+        + `line: in the reference image they had ${montee[0]}, now they have `
+        + `${montee[f.stage - 1]}; replace it, do not add a second one.`
       : '',
     '',
     `They are now called "${f.nom}".`,
