@@ -13,8 +13,15 @@
  *   - un métier monte en **responsabilité** : on passe de celui qui fait à
  *     celui qui décide, puis à celui dont on parle encore quand il n'est plus
  *     là ;
- *   - une bête, un revenant ou un objet monte en **intensité** : ils ne font
- *     pas carrière, ils deviennent plus eux-mêmes.
+ *   - un revenant monte en **intensité** : il ne fait pas carrière, il devient
+ *     plus lui-même ;
+ *   - une bête **vieillit**, comme un humain : ce paragraphe disait le
+ *     contraire, et les textes déjà écrits le démentaient — le deuxième âge du
+ *     Hibou Statisticien parle de soixante-dix ans de feuilles de match. Elle
+ *     vieillit dans sa langue, un pelage et des marques plutôt qu'un blouson ;
+ *   - un objet **s'use** : neuf, servi, patiné. Jamais cassé — à quarante-huit
+ *     pixels, abîmé et vieux se ressemblent, et un objet abîmé se lit comme une
+ *     carte moins bonne.
  *
  * La règle d'écriture qui tient tout : **le troisième âge doit rendre le
  * premier plus touchant, pas le renier.** Le Petit Teigneux ne devient pas un
