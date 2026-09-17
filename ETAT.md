@@ -640,6 +640,57 @@ le même constat, sans toucher à `ok` : un catalogue qui a dérivé reste un si
 ouvert. `npm run ecarts` en donne le détail, carte par carte et champ par
 champ, et **sort en erreur** sur une faute.
 
+**Et le code redescend dans la base, sans écraser personne.** Le constat
+ci-dessus disait l'écart ; il ne le réparait pas, et les quatre migrations de
+rattrapage restaient à écrire à la main. `src/server/fanzzy/reconciliation.js`
+le fait au démarrage, champ par champ.
+
+On ne peut pas trancher en regardant deux valeurs : « le nom du code diffère du
+nom en base » ne dit pas **qui** a bougé. Il en faut une troisième — la colonne
+`fanzzy.amorce`, posée par `sql/fanzzy.sql`, qui garde ce que le code disait la
+dernière fois qu'il a écrit cette carte. Alors chaque champ se décide seul :
+
+  code == base                → rien à faire ; la référence s'aligne si elle a
+                                pris du retard, aucune donnée ne bouge.
+  code != base == référence   → personne n'y a touché à l'écran : **le code
+                                fait foi**, la valeur est reprise.
+  code != base != référence   → l'écran a tranché avant : **la base garde sa
+                                version**, et le démarrage annonce le conflit.
+
+C'est la fusion à trois points d'un `git merge`, pour la même raison : deux
+auteurs légitimes sur la même donnée, aucun des deux ne doit écraser l'autre en
+silence.
+
+Quatre choses en découlent, et aucune n'est négociable :
+
+- **`NULL` veut dire « pas gérée par le code ».** Une carte créée depuis
+  l'administration n'est pas dans `dex.js` : son `NULL` la protège pour
+  toujours. Une ligne d'avant ce mécanisme est adoptée — référence = son état
+  actuel — **à la seule condition qu'`admin_audit` ne garde aucune trace d'une
+  modification la concernant**. Journal absent : on n'adopte rien. Une table
+  manquante ne doit jamais se lire comme « personne n'a rien fait ».
+- **La référence dit ce que le code a réellement posé**, jamais ce qu'il aurait
+  voulu poser. Un champ en conflit garde sa référence d'avant : sinon elle
+  annoncerait une valeur que la base n'a jamais portée, et la décision suivante
+  deviendrait illisible.
+- **Un disjoncteur à soixante cartes.** Au-delà, rien n'est écrit et le
+  démarrage dit pourquoi. Une fournée de contenu réécrit dix cartes ; six cents,
+  c'est un accident — un `dex.js` à moitié chargé, une base amorcée depuis une
+  autre branche. `TBF_RECONCILIATION_MAX` relève la barre le jour où c'est
+  voulu.
+- **Sans la colonne, tout se désactive en le disant.** Le déploiement pousse le
+  code et jamais le schéma : écrire dans une colonne absente ferait lever
+  l'amorçage, et le `catch` du démarrage éteindrait toutes les routes `/api`.
+  C'est la panne du 8 septembre 2026, mot pour mot. On regarde donc avant
+  d'écrire.
+
+`reconciliation:test` éprouve la règle sans base, sur des cas fabriqués — dont
+la moitié vérifient qu'elle **s'abstient** : la correction jamais écrasée, la
+carte inconnue du code jamais touchée, la ligne d'avant restée protégée, le
+plafond qui bloque. Le dernier contrôle rejoue les 670 cartes réelles deux fois
+de suite : une réconciliation qui ne converge pas est une écriture en boucle sur
+la table la plus lue du jeu.
+
 Trois règles de cet écran, qui ne se négocient pas :
 
 - **On ne supprime jamais une carte.** Un identifiant effacé orphelinerait les

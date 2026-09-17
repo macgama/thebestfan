@@ -1,21 +1,28 @@
 # À déposer sur Infomaniak
 
-**Session « le format d'image ne se devine plus ».** Deux commits de code sur
-`claude/dreamy-lovelace-mjqpea`, plus la mise à jour de ce fichier :
+**Session « le format d'image, puis le catalogue ».** Quatre commits de code
+sur `claude/dreamy-lovelace-mjqpea`, plus les mises à jour de ce fichier :
 
 ```
 622eaa7  L'accueil sans personnage : le format d'image n'est plus deviné
 d027bc3  L'AVIF revient, négocié par le serveur
+a69b5b8  Le catalogue dit tout seul quand il a dérivé du code
+????????  Le code redescend dans la base, sans écraser personne
 ```
 
-Livraison **front et serveur, sans base** : aucun fichier de `sql/` n'a changé,
-aucune table ni colonne n'est ajoutée, et **aucune dépendance nouvelle** —
-`package-lock.json` n'a pas bougé, `npm ci` passe tel quel. Le retour arrière
-est un `git revert` de ces deux commits, rien d'autre à défaire.
+**Une colonne s'ajoute** — `fanzzy.amorce` — et elle est déclarée dans
+`sql/fanzzy.sql`, qui est rejoué à chaque passage de schéma. Aucune table
+nouvelle, aucune donnée déplacée, **aucune dépendance nouvelle**
+(`package-lock.json` n'a pas bougé, `npm ci` passe tel quel). Sans la colonne,
+le jeu tourne exactement comme avant et le démarrage dit quoi appliquer : rien
+ne s'éteint si le schéma est oublié.
+
+Le retour arrière est un `git revert` des commits de code. La colonne peut
+rester : plus personne ne la lit.
 
 ---
 
-## Ce que ça corrige
+## Ce que ça corrige — 1. l'accueil sans personnage
 
 L'écran d'accueil n'avait **plus de personnage au centre** sur Firefox et sur
 téléphone, avec le nom du Fanzzy écrit juste en dessous, pendant que Chrome
@@ -39,6 +46,21 @@ seulement quand, le navigateur l'a annoncé. **28,7 Mo de WebP deviennent
 18,3 Mo d'AVIF** pour qui sait les lire, soit 36 % de moins ; c'est la première
 fois que l'AVIF du dépôt sert à quelque chose.
 
+## Ce que ça corrige — 2. le catalogue qui dérivait en silence
+
+Le catalogue vit en base et s'amorce depuis `dex.js` en `INSERT IGNORE` : on
+ajoute ce qui manque, on n'écrase jamais ce qui existe — sans quoi chaque
+redémarrage effacerait les corrections faites à l'écran. La contrepartie n'était
+tenue par rien : **changer une carte déjà en base dans le code ne changeait
+rien.** Quatre fichiers de `sql/` n'existent que pour rattraper ça à la main.
+
+Deux pièces, désormais. Le **constat** compare les deux catalogues à chaque
+démarrage et nomme au journal les trois écarts qu'aucune manœuvre normale ne
+produit. La **réconciliation** fait redescendre le code dans les cartes déjà
+posées, champ par champ, en s'arrêtant devant tout ce qui a été corrigé à
+l'écran — la colonne `fanzzy.amorce` garde ce que le code disait la dernière
+fois, ce qui permet de savoir *qui* a bougé au lieu de le supposer.
+
 ---
 
 ## Les fichiers qui ont changé
@@ -50,13 +72,23 @@ Si tu préfères ne téléverser que le delta plutôt que tout remplacer.
 ```
 src/server/images/index.js          la négociation de format : Accept → AVIF
 scripts/images-smoke.mjs            sa suite de tests — npm run images:smoke
+src/server/fanzzy/ecarts.js         le constat d'écart code / base
+scripts/ecarts-smoke.mjs            npm run ecarts:test
+src/server/fanzzy/reconciliation.js la fusion à trois points du catalogue
+scripts/reconciliation-smoke.mjs    npm run reconciliation:test
 ```
 
 ### Fichiers remplacés
 
 ```
-server.js                           négociation montée avant le static de /img
-package.json                        la ligne « images:smoke »
+server.js                           négociation /img ; l'écart du catalogue
+                                    dans /healthz
+package.json                        les trois nouvelles suites
+sql/fanzzy.sql                      colonne `amorce` : ce que le code disait
+                                    la dernière fois qu'il a écrit la carte
+src/server/fanzzy/catalogue.js      amorçage, réconciliation, constat d'écart
+scripts/fanzzy-ecarts.mjs           la loupe, sur le module partagé
+scripts/appliquer-schema.mjs        historique.sql manquait à la liste
 public/fanzzy-etats.js              plus de détection ; EXT, REPLI et secours()
 public/fanzzy-art.js                deux extensions au lieu d'une : un Fanzzy
                                     détouré ne peut plus être demandé en .jpg
@@ -74,8 +106,8 @@ scripts/etats-smoke.mjs             attentes mises à jour + secours() éprouvé
 ETAT.md                             § 6, Pièges connus : l'entrée complète
 ```
 
-**Aucun fichier SQL n'a changé**, et `public/img/` non plus : les AVIF étaient
-déjà tous là, ils n'étaient simplement jamais servis.
+`public/img/` n'a pas changé : les AVIF étaient déjà tous là, ils n'étaient
+simplement jamais servis.
 
 ---
 
@@ -105,7 +137,19 @@ devient sale et le `git pull` suivant refuse de fusionner sans le dire.
 Attendre la fin de la construction **avant** de redémarrer : `npm start` ne
 fait jamais de `git pull`.
 
-### 3. Vérifier que c'est bien le nouveau code qui tourne
+### 3. Passer le schéma
+
+Le workflow le fait avant de redémarrer. À la main :
+
+```bash
+cd ~/sites/thebestfan.online && npm run schema:appliquer
+```
+
+Il ajoute `fanzzy.amorce` et ne touche à rien d'autre. Si tu l'oublies, le jeu
+tourne quand même : le démarrage écrit « colonne `amorce` absente,
+réconciliation désactivée » et `/healthz` nomme le fichier.
+
+### 4. Vérifier que c'est bien le nouveau code qui tourne
 
 ```bash
 curl -s https://thebestfan.online/healthz
@@ -116,7 +160,7 @@ curl -s https://thebestfan.online/healthz
 répond, en servant le code d'avant, et tout ce qui suit serait vérifié pour
 rien.
 
-### 4. Vérifier la négociation — deux commandes
+### 5. Vérifier la négociation — deux commandes
 
 C'est le seul contrôle qui ne se fait pas à l'œil, et c'est le cœur de la
 livraison. **La même adresse** doit rendre deux fichiers différents :
@@ -140,7 +184,7 @@ chez les seuls joueurs qui passent par ce cache.
 Si les deux réponses sont identiques, le middleware n'est pas monté (code non
 tiré par le `git pull`) ou quelque chose en amont réécrit `Accept`.
 
-### 5. Vérifier l'accueil, là où ça se voyait
+### 6. Vérifier l'accueil, là où ça se voyait
 
 **Sur Firefox et sur un iPhone**, pas sur Chrome — c'est Chrome qui allait bien.
 
@@ -154,6 +198,39 @@ tiré par le `git pull`) ou quelque chose en amont réécrit `Accept`.
 Si l'accueil est encore vide sur un appareil : vider le cache du site. Le
 service worker garde les images en cache-first, et un `.jpg` en 404 n'a rien
 mis en cache — mais une page HTML d'avant, si.
+
+### 7. Lire ce que le démarrage dit du catalogue
+
+C'est la première mise en ligne où le code redescend dans la table `fanzzy`.
+Les lignes à chercher dans le journal, dans cet ordre d'importance :
+
+```
+catalogue : N carte(s) d’avant la réconciliation prises en charge …
+catalogue : N carte(s) reprise(s) du code — TR2 (nom) …
+catalogue : N carte(s) que le code voulait changer et qui ont été corrigées à l’écran …
+```
+
+La première n'arrive **qu'une fois**, au premier démarrage sur cette base :
+c'est l'adoption des lignes d'avant le mécanisme. Le compte attendu est proche
+du nombre de cartes, moins celles que tu as corrigées depuis `/admin` — elles
+restent hors de portée, et le journal les compte à part.
+
+La deuxième liste ce que le code vient de reprendre. Sur cette base, ce sont les
+écarts que `sql/identites.sql` rattrapait à la main : ils devraient disparaître
+d'eux-mêmes.
+
+La troisième est la seule qui demande une décision, et elle n'est pas urgente :
+le code voulait changer une carte que tu avais corrigée à l'écran. La base garde
+**ta** version. `npm run ecarts` dit laquelle, champ par champ.
+
+Si le journal annonce à la place « N cartes seraient reprises du code, au-delà
+des 60 admises — rien n'a été écrit », **ne relève pas le plafond par réflexe** :
+c'est le disjoncteur, et une fournée de contenu ne réécrit pas soixante cartes.
+Regarde d'abord `npm run ecarts`.
+
+Puis, une fois : `curl -s https://thebestfan.online/healthz` doit montrer
+`catalogue: { cartes: …, aCollectionner: … }` **sans clé `ecarts`**. Une clé
+`ecarts` qui reste après ce déploiement est une faute réelle, pas un reliquat.
 
 ---
 
@@ -178,4 +255,4 @@ Rien de neuf dans cette livraison. La liste à jour est en `ETAT.md` § 7 bis, e
 le point 0 est celui qui compte : **cinq migrations ne sont peut-être pas
 appliquées en production** — `minutes`, `couleurs`, `amis`, `boutique`,
 `billets`. Le démarrage les contrôle et `/healthz` répond `ok: false` en les
-nommant. C'est la vérification de l'étape 3, et c'est pour ça qu'elle est là.
+nommant. C'est la vérification de l'étape 4, et c'est pour ça qu'elle est là.
