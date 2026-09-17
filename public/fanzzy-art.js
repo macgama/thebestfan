@@ -16,21 +16,32 @@
  */
 (() => {
   /**
-   * Meilleur format d'image que le navigateur sait lire. L'écart n'est pas
-   * anecdotique : le paquet rouge pèse 7,2 Mo en PNG d'origine, 58 Ko en AVIF.
+   * Le format d'image servi. La règle est écrite une seule fois, dans
+   * `fanzzy-etats.js` — pourquoi on ne la devine plus, et pourquoi le WebP est
+   * le format de tout le monde, s'y lisent en entier. Ce module la reprend de
+   * là quand elle est chargée, et garde la même valeur en dur sinon : il sert
+   * des pages — le classeur, la boutique — qui n'ont pas besoin des états.
+   *
+   * **Deux extensions, pas une**, et c'est la faute qu'on corrige ici : un
+   * Fanzzy est détouré, il n'existe qu'en AVIF, WebP et PNG. Le `.jpg` que
+   * l'ancienne détection servait à tout ce qui n'est pas Chrome ne désignait
+   * aucun fichier du dépôt — d'où l'accueil sans personnage. Le JPEG reste le
+   * dernier recours des **photos** : décors, cartes d'action, chants.
    */
-  const IMG_EXT = (() => {
-    // `toDataURL` lève dans un environnement sans canvas — un test hors
-    // navigateur, un mode de confidentialité strict. Ce module dessine tout le
-    // reste sans canvas : il serait absurde qu'un simple test de format le
-    // fasse tomber en entier. On retombe sur le format le plus universel.
-    try {
-      const c = document.createElement('canvas');
-      if (c.toDataURL('image/avif').startsWith('data:image/avif')) return '.avif';
-      if (c.toDataURL('image/webp').startsWith('data:image/webp')) return '.webp';
-    } catch { /* pas de canvas : tant pis pour la détection */ }
-    return '.jpg';
-  })();
+  const IMG_EXT = window.TBF_ETATS?.EXT ?? '.webp';
+  const IMG_EXT_ALPHA = window.TBF_ETATS?.EXT_ALPHA ?? '.webp';
+
+  /**
+   * L'adresse de secours d'un dessin détouré qui n'a pas pu se charger.
+   *
+   * On remplace l'extension, on ne coupe pas la fin de la chaîne : une adresse
+   * d'état porte sa révision — `portrait.webp?v=3` —, et `slice` en rendait
+   * `portrait.webp?v` suivi de `.png`, c'est-à-dire un second 404 à la place du
+   * repli. `fanzzy-etats.js` sait déjà le faire ; on le refait ici à
+   * l'identique pour les pages qui ne le chargent pas.
+   */
+  const secours = (src) => window.TBF_ETATS?.secours?.(src)
+    ?? String(src).replace(/\.(avif|webp|png|jpe?g)(?=$|\?)/i, '.png');
 
   /** Table des types, renseignée par la page une fois le catalogue reçu. */
   let TYPES = {};
@@ -104,9 +115,8 @@
   const illustration = (f, variante = 'buste') => {
     const src = adresse(f?.id, variante);
     if (!src) return null;
-    const base = src.slice(0, -IMG_EXT.length);
     return `<img class="illu" alt="" loading="lazy" decoding="async" src="${src}"
-      onerror="this.onerror=null;this.src='${base}.png'">`;
+      onerror="this.onerror=null;this.src='${secours(src)}'">`;
   };
 
   /**
@@ -187,7 +197,7 @@
     }
     const vu = racineIllustree(id);
     if (!vu) return null;
-    return `/img/fanzzy/${vu}${variante === 'buste' ? '-buste' : ''}${IMG_EXT}`;
+    return `/img/fanzzy/${vu}${variante === 'buste' ? '-buste' : ''}${IMG_EXT_ALPHA}`;
   };
 
   /**
@@ -274,6 +284,10 @@
 
   window.FZART = {
     IMG_EXT,
+    IMG_EXT_ALPHA,
+    secours,
+    // `src` sert aux **photos** — les sachets de la boutique, les décors : elles
+    // sont publiées en AVIF, WebP et JPEG, jamais en PNG.
     src: (base) => base + IMG_EXT,
     setTypes,
     seeded,
