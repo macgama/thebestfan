@@ -47,8 +47,11 @@ const INDEX = { fanzzy: {
 const bac = { console };
 bac.window = bac;
 bac.document = {
-  // Pas de canvas ici : c'est justement le cas que le module doit encaisser,
-  // et il doit alors retomber sur les formats universels.
+  /* Pas de canvas ici, et le module ne doit plus en vouloir : il en demandait
+     un pour savoir quel format servir, ce qui était déjà une mauvaise question
+     — un canvas dit ce qu'il sait écrire, pas ce que le navigateur sait lire.
+     On garde le piège en place pour que le jour où quelqu'un remet une
+     détection, ce contrôle le dise au lieu de la laisser passer. */
   createElement: () => { throw new Error('pas de canvas'); },
 };
 bac.fetch = async () => ({ ok: true, json: async () => INDEX });
@@ -60,8 +63,25 @@ const E = bac.window.TBF_ETATS;
 
 check('le module s’expose', typeof E?.resoudre === 'function');
 check('douze états', E.ETATS.length === 12);
-check('sans canvas, le personnage garde sa transparence',
-  E.EXT === '.jpg' && E.EXT_ALPHA === '.png');
+/* ## Le format ne se devine plus
+
+   Le WebP pour tout le monde — il est lu partout depuis 2020, et chaque image
+   du dépôt a son jumeau. Le repli d'un personnage reste le PNG : il est
+   détouré, un JPEG lui rendrait son carré noir. Et surtout **aucun Fanzzy
+   n'est publié en JPEG** : c'est le `.jpg` que servait l'ancienne détection à
+   tout ce qui n'est pas Chrome qui a vidé l'accueil de son personnage sur
+   Firefox et sur iPhone. */
+check('un seul format servi, lisible partout',
+  E.EXT === '.webp' && E.EXT_ALPHA === '.webp');
+check('le repli d’un personnage garde sa transparence',
+  E.REPLI_ALPHA === '.png' && E.REPLI === '.jpg');
+check('le secours remplace l’extension sans manger la révision',
+  E.secours('/img/fanzzy/TR1/e1/base/neutre.webp?v=10')
+    === '/img/fanzzy/TR1/e1/base/neutre.png?v=10');
+check('le secours d’une photo est le JPEG',
+  E.secours('/img/accueil.webp', false) === '/img/accueil.jpg');
+check('au dernier recours, le secours rend null plutôt que la même adresse',
+  E.secours('/img/fanzzy/TR1.png') === null);
 
 /* ------------------------------------------- avant le chargement, rien */
 
@@ -75,7 +95,7 @@ check('le manifeste est chargé', E.pret() !== null);
 
 let r = E.resoudre('TR1', { evo: 1, etat: 'but' });
 check('l’état demandé quand il existe',
-  r.src === '/img/fanzzy/TR1/e1/base/but.png?v=4' && r.exact === true);
+  r.src === '/img/fanzzy/TR1/e1/base/but.webp?v=4' && r.exact === true);
 
 check('la révision casse le cache', r.src.endsWith('?v=4'));
 
@@ -128,7 +148,7 @@ check('un repli circulaire se termine et retombe sur base', r?.skin === 'base');
 
 r = E.portrait('TR1', { evo: 1 });
 check('le portrait quand il existe',
-  r.src === '/img/fanzzy/TR1/e1/base/portrait.png?v=4' && r.exact === true);
+  r.src === '/img/fanzzy/TR1/e1/base/portrait.webp?v=4' && r.exact === true);
 
 r = E.portrait('TR1', { evo: 2 });
 check('un stade sans portrait prend celui d’en dessous',

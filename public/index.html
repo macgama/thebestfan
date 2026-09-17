@@ -992,9 +992,15 @@ const { EXT, EXT_ALPHA } = window.TBF_ETATS;
     $('fond').style.backgroundImage = `url("${img.src}")`;
     $('fond').classList.add('on');
   };
-  // Le décor d'avant reste en repli : une mise en ligne où l'image manque
-  // laisserait sinon un écran noir, et un écran noir ne dit pas pourquoi.
-  img.onerror = () => { img.onerror = null; img.src = '/img/hero' + EXT; };
+  /* Deux replis, dans cet ordre : le décor d'avant, puis le JPEG. Une mise en
+     ligne où l'image manque laisserait sinon un écran noir, et un écran noir ne
+     dit pas pourquoi ; un navigateur sans WebP aurait eu le même. */
+  const replis = ['/img/hero' + EXT, '/img/accueil' + window.TBF_ETATS.REPLI];
+  img.onerror = () => {
+    const suivant = replis.shift();
+    if (!suivant) { img.onerror = null; return; }
+    img.src = suivant;
+  };
   img.src = '/img/accueil' + EXT;
 }
 
@@ -1127,9 +1133,22 @@ async function pose(nom, tenir, force) {
   derriere.src = src;
   try { await derriere.decode(); }
   catch {
-    // Le format moderne peut manquer là où le PNG existe : on retente une fois.
-    // La révision vit dans la requête, on ne remplace que l'extension.
-    try { derriere.src = src.replace(/\.(avif|webp)(\?|$)/, '.png$2'); await derriere.decode(); }
+    /* Un dessin qui ne se charge pas retombe sur le PNG, qui existe pour tous
+       les personnages. La révision vit dans la requête : on remplace
+       l'extension, jamais la fin de la chaîne — c'est `secours` qui le sait.
+
+       Il a fallu qu'il la sache : la réécriture d'avant ne connaissait que
+       `.avif` et `.webp`, et laissait passer le `.jpg` que l'ancienne
+       détection de format servait à tout ce qui n'est pas Chrome. L'accueil
+       demandait alors `/img/fanzzy/TR57.jpg`, qui n'existe pas, ne retentait
+       rien, et **les deux calques restaient éteints** : un écran d'accueil sans
+       personne dessus sur Firefox et sur iPhone, avec le nom du Fanzzy écrit en
+       dessous. C'est exactement le cadre vide que tout ce fichier s'applique à
+       éviter, et il a duré parce que rien ne le disait — pas d'erreur, pas de
+       trace, juste un trou. */
+    const repli = window.TBF_ETATS.secours(src);
+    if (!repli) return;                      // déjà au dernier recours
+    try { derriere.src = repli; await derriere.decode(); }
     catch { return; }                        // cet état n'est pas dessiné
   }
 

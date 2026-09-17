@@ -4179,6 +4179,36 @@ déduire ; ce serait la première chose que le fil affirme sans l'avoir vue.
 
 ## 6. Pièges connus
 
+**Un canvas dit ce qu'il sait écrire, jamais ce que le navigateur sait lire.**
+Trois fichiers choisissaient le format des images en demandant à un canvas
+`toDataURL('image/avif')`, puis `toDataURL('image/webp')`, et prenaient la
+réponse pour ce que le navigateur savait **afficher**. Les deux questions n'ont
+aucun rapport : **personne n'encode l'AVIF**, pas même Chrome — la branche
+`.avif` ne s'est donc jamais ouverte, et les vingt-quatre mégaoctets d'AVIF du
+dépôt n'ont jamais été servis à personne — et **Safari n'encode pas le WebP**
+alors qu'il le lit depuis 2020. Tout ce qui n'était pas Chrome retombait donc
+sur `.jpg`. Or un Fanzzy est **détouré** : il n'existe qu'en AVIF, WebP et PNG.
+L'accueil demandait `/img/fanzzy/TR57.jpg`, recevait un 404, et sa réécriture de
+secours ne connaissait que `.avif` et `.webp` — le `.jpg` passait au travers,
+les deux calques restaient éteints, et l'écran d'accueil n'avait **plus personne
+au centre** sur Firefox et sur iPhone, avec le nom du Fanzzy écrit juste en
+dessous. La fiche « Mon Fanzzy » montrait le même personnage sans broncher : son
+`<img onerror>` retombe sur le PNG. Deux écrans du même jeu, deux réponses,
+aucune erreur en console.
+
+Trois règles en sortent. **On ne devine plus le format** : le WebP est lu
+partout depuis Safari 14 et Firefox 65, bien avant le `dvh` de 2022 dont ce jeu
+ne peut pas se passer, et chaque image du dépôt a son jumeau `.webp` —
+`fanzzy-etats.js` le sert à tout le monde et n'a plus rien à détecter. **Le
+repli suit la famille du dessin**, jamais l'inverse : un personnage détouré
+retombe en PNG, une photo en JPEG ; `secours()` est le seul endroit qui le sait,
+et il remplace l'extension sans manger la révision de `?v=`. Et **un contrôle de
+fichiers présents ne vaut rien sans un contrôle de l'adresse demandée** :
+`verif-pages` vérifiait les trois formats sur disque depuis toujours, pendant
+que la page en réclamait un quatrième. Il monte maintenant le vrai
+`fanzzy-art.js` et vérifie que l'adresse qu'il construit — et son secours —
+désignent des fichiers qui existent.
+
 **Un `catch` muet autour d'un ajout facultatif cache une panne pour de bon.**
 L'entrée ADMIN du menu se posait avec `nav.appendChild(a)`, sur une variable
 disparue avec la barre du bas. La `ReferenceError` tombait dans un

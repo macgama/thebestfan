@@ -195,10 +195,17 @@
       derriere.src = src;
       try { await derriere.decode(); }
       catch {
-        // Le format moderne peut manquer là où le PNG existe : on retente une
-        // fois. La révision vit dans la requête, on ne change que l'extension.
+        /* Le format moderne peut manquer là où le PNG existe : on retente une
+           fois, par `secours`, qui remplace l'extension sans toucher à la
+           révision. La réécriture d'avant ne connaissait que `.avif` et
+           `.webp` et laissait passer le `.jpg` que servait l'ancienne
+           détection de format — c'est ce qui a vidé l'accueil de son
+           personnage sur tout ce qui n'est pas Chrome. */
+        const repli = window.TBF_ETATS?.secours?.(src)
+          ?? window.FZART?.secours?.(src);
+        if (!repli) return false;            // déjà au dernier recours
         try {
-          derriere.src = src.replace(/\.(avif|webp)(\?|$)/, '.png$2');
+          derriere.src = repli;
           await derriere.decode();
         } catch { return false; }            // cet état n'est pas dessiné
       }
