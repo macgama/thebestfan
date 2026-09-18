@@ -53,7 +53,23 @@ for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'sou
                     forme récente de chaque joueur échouait en silence, et
                     l'affiche disait « PREMIER DUEL » à tout le monde — pour une
                     table absente, pas pour un joueur sans passé. */
-                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'duel.sql']) {
+                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'duel.sql',
+                 /* `historique.sql` manquait, et cette suite **détruit**
+                    `duel_results` au démarrage : elle la reconstruisait donc
+                    dans sa forme d'il y a six mois, sans `mode`, `format`,
+                    `fanzzy_id`, `xp`, `duree_s` ni `side`.
+
+                    Deux dégâts, et le second est le pire. Ici, la fin de duel
+                    n'arrivait plus à se ranger — `Unknown column 'mode' in
+                    'WHERE'` — mais `nvn` attrape et journalise, donc la suite
+                    restait verte : un duel joué entièrement, et aucune trace.
+                    Et comme les suites partagent une base, **toutes celles qui
+                    passaient après héritaient de la table amputée**.
+
+                    C'est la seule suite qui laisse la base plus pauvre qu'elle
+                    ne l'a trouvée. Le contrôle ajouté à la fin garde la porte :
+                    si la ligne ne s'écrit pas, elle rougit ici. */
+                 'historique.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
@@ -643,18 +659,39 @@ check('ni le même prix',
 /* Le barème arrive avec le premier état du duel, qui vient du réseau : le
    lire aussitôt après l'appariement, c'est le lire une fois sur cinq avant
    qu'il soit là. Les deux contrôles tombaient alors ensemble, en accusant
-   l'équipement d'un joueur pour une question de milliseconde. */
-await jusqua(async () =>
-  Boolean(await A.page.evaluate(() => S.vue?.moi?.gestes?.tempo)));
+   l'équipement d'un joueur pour une question de milliseconde.
+
+   **On attendait A et on lisait B.** L'attente n'avait été posée que pour le
+   premier des deux joueurs : celui d'en face était lu sans rien attendre, et
+   son barème arrivait quand il arrivait. Seule, la suite passait — la machine
+   n'a rien d'autre à faire. En série derrière quinze autres, elle rougissait
+   une fois sur deux, et le message accusait l'équipement.
+
+   La fenêtre passe aussi à quinze secondes : huit suffisent sur une machine au
+   repos, et c'est précisément la condition dans laquelle on ne reproduit
+   jamais le défaut. */
+const attenduA = async () => Boolean(await A.page.evaluate(() => S.vue?.moi?.gestes?.tempo));
+const attenduB = async () => Number.isFinite(
+  await B.page.evaluate(() => S.vue?.moi?.gestes?.tempo?.interval ?? NaN));
+const arriveA = await jusqua(attenduA, 15000);
+const arriveB = await jusqua(attenduB, 15000);
+check('le barème des deux joueurs arrive à l’écran', arriveA && arriveB
+  || (console.log('        A :', arriveA, '· B :', arriveB), false));
+
 const bareme = await A.page.evaluate(() => S.vue?.moi?.gestes);
 const attendu = resoudreGeste({ tempoWindow: 1.2 * 1.25, tempoInterval: 70 }).tempo;
 check('le serveur envoie le barème du geste à l\u2019écran', Boolean(bareme?.tempo));
 check('et il tient compte des Jumelles du joueur',
-  bareme.tempo.interval === attendu.interval && bareme.tempo.interval > GESTURES.tempo.interval);
+  bareme?.tempo?.interval === attendu.interval
+  && bareme?.tempo?.interval > GESTURES.tempo.interval
+  || (console.log('        il dit :', JSON.stringify(bareme?.tempo),
+    '· attendu', attendu.interval), false));
 
 const baremeB = await B.page.evaluate(() => S.vue?.moi?.gestes?.tempo?.interval);
 check('un joueur sans équipement garde la pulsation de base',
-  baremeB === GESTURES.tempo.interval);
+  baremeB === GESTURES.tempo.interval
+  || (console.log('        il dit :', baremeB,
+    '· attendu', GESTURES.tempo.interval), false));
 
 /* -------------------------------------------------------------- chanter */
 
@@ -967,6 +1004,29 @@ if (process.env.CAPTURE) {
     if (process.env.CAPTURE) {
       await A.page.screenshot({ path: `${process.env.TEMP ?? '/tmp'}/duel-bilan.png` });
     }
+  }
+}
+
+/* ================================= le duel s'est-il rangé quelque part ?
+
+   Tout ce qui précède regarde l'écran. Rien ne regardait la base, et c'est
+   précisément là que le duel disparaissait en silence : l'écriture est dans un
+   `try` qui journalise et continue — à raison, un duel fini ne doit pas casser
+   sur une question d'archive — mais personne ne lisait le journal.
+
+   On ne contrôle pas la valeur des colonnes, `nvn:net` s'en charge. On
+   contrôle qu'**il y a une ligne**, et qu'elle porte les champs récents : c'est
+   ce qui distingue une table à jour d'une table reconstruite de travers. */
+{
+  const [lignes] = await pool.query(
+    `SELECT fanzzy_id, side, mode, duree_s FROM duel_results WHERE user_id = ?`, [U[0]]);
+  check('le duel joué laisse une ligne dans l\u2019historique', lignes.length > 0
+    || (console.log('        duel_results est vide pour ce joueur'), false));
+  if (lignes.length) {
+    const l = lignes[lignes.length - 1];
+    check('et elle dit le Fanzzy, le camp et la sorte de partie',
+      Boolean(l.fanzzy_id) && l.side !== null && Boolean(l.mode)
+      || (console.log('        elle dit :', JSON.stringify(l)), false));
   }
 }
 

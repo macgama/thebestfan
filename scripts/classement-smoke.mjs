@@ -176,8 +176,32 @@ check('le gros club a plus de supporters mais moins de moyenne',
 
 r = await get('/api/rank/duellistes');
 check('classement des duels', r.classement.length === 6);
-check('trié sur les victoires', Number(r.classement[0].gagnes) === 2);
-check('taux de victoire calculé', Number(r.classement[0].taux) === 67);
+
+/* **Il ne trie plus sur les victoires.** C'était le cas, et ça récompensait
+   celui qui joue beaucoup : quelqu'un qui gagne une fois sur deux mais joue
+   trois soirs par semaine passait devant quelqu'un qui gagne quatre fois sur
+   cinq. Le tri se fait maintenant sur la **cote**, qui tient compte de
+   l'adversaire — voir `shared/cote.js`.
+
+   Ces deux contrôles décrivaient l'ancien tri et rougissaient sur le nouveau.
+   Ils sont remplacés, pas retirés : le taux et les victoires restent servis,
+   ils ne décident simplement plus de l'ordre. */
+check('la cote est servie avec chaque ligne',
+  r.classement.every((x) => Number.isFinite(Number(x.cote)))
+  || (console.log('        il rend :', JSON.stringify(r.classement[0])), false));
+/* Les lignes de ce jeu d'essai sont posées à la main, sans cote écrite : elles
+   valent donc le défaut de la colonne, mille. Ce qui compte ici est que la
+   valeur remonte jusqu'à l'écran, pas ce qu'elle vaut — le calcul est éprouvé
+   dans `cote:test`, et son écriture dans `nvn:net`. */
+check('et le tri se fait dessus, de la plus haute à la plus basse',
+  r.classement.every((x, i, t) => i === 0 || Number(t[i - 1].cote) >= Number(x.cote))
+  || (console.log('        l’ordre :',
+    r.classement.map((x) => x.cote).join(' ')), false));
+/* Les victoires et le taux restent lisibles : ils ne classent plus, ils
+   informent. Les retirer de la réponse aurait vidé la ligne de l'écran. */
+check('les victoires restent servies, sans classer',
+  r.classement.every((x) => Number.isFinite(Number(x.gagnes))
+    && Number.isFinite(Number(x.taux))));
 
 r = await get('/api/rank/moi');
 /* La même somme que la liste, et c'est tout l'objet : « ma place » lisait le

@@ -41,6 +41,13 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .club>div{min-width:0}
 .club small{font-size:9.5px;opacity:.5;letter-spacing:.1em;display:block;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* **Une étiquette coupée ne dit plus rien.** « TA TRIB… » et « EN F… » ne
+   distinguent plus les deux camps, ce qui est précisément leur seul travail.
+   Sur les écrans étroits, l'interlettrage part le premier : il est là pour
+   l'allure, et l'allure passe après la lecture. */
+@media (max-width:420px){
+  .club small{font-size:9px;letter-spacing:.02em}
+}
 .score{font-family:var(--banner);font-size:24px;flex:none;min-width:64px;text-align:center;line-height:1}
 .score small{display:block;font-size:8.5px;letter-spacing:.16em;opacity:.5;font-family:var(--ui);margin-top:3px}
 .score.surge{color:var(--projo);animation:pulse 1s infinite}

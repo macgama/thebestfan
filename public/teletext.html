@@ -43,7 +43,12 @@ input{width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.1
 input:focus{outline:none;border-color:var(--projo)}
 .chips{display:flex;gap:6px;overflow-x:auto;padding:0 15px 10px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{white-space:nowrap;font-size:11px;padding:6px 11px;border-radius:999px;cursor:pointer;
+/* Quarante-quatre pixels : la pulpe d'un doigt, et le minimum des deux
+   plateformes. L'audit d'interface les a tous comptés d'un coup — ce n'est
+   jamais une faute de conception, c'est une hauteur qu'on ne mesure pas en
+   regardant. */
+.chip{white-space:nowrap;font-size:11px;padding:6px 14px;min-height:44px;border-radius:999px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
   border:1px solid rgba(242,238,228,.16);background:rgba(0,0,0,.25);color:inherit;opacity:.6;font-family:inherit}
 .chip.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1;font-weight:600}
 .chip.mien{border-color:var(--projo);color:var(--projo);opacity:1}

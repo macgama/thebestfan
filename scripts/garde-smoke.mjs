@@ -80,12 +80,14 @@ console.log('\n— le débit maximal —');
 
 {
   const limiteur = debitMaximal({ fenetreMs: 60_000, maxParFenetre: 10, maxEcritures: 4,
-    exemptes: ['/healthz'] });
+    maxStatiques: 25, exemptes: ['/healthz'] });
   const app = express();
   app.use(limiteur);
   app.get('/healthz', (_q, s) => s.send('ok'));
   app.get('/api/x', (_q, s) => s.json({ ok: true }));
   app.post('/api/x', (_q, s) => s.json({ ok: true }));
+  app.get('/ui.css', (_q, s) => s.type('css').send('body{}'));
+  app.get('/boutique', (_q, s) => s.type('html').send('<!doctype html><p>boutique'));
   const http = createServer(app);
   await new Promise((r) => http.listen(0, r));
   const base = `http://127.0.0.1:${http.address().port}`;
@@ -126,6 +128,53 @@ console.log('\n— le débit maximal —');
   const sonde = [];
   for (let i = 0; i < 30; i++) sonde.push(await fetch(base + '/healthz').then((r2) => r2.status));
   check('la sonde de l’hébergeur n’est jamais bridée', sonde.every((s) => s === 200));
+
+  /* ------------------------------------------- les fichiers, seau à part
+
+     **Une page de ce jeu, ce n'est pas une requête** : c'est trente à cinquante
+     fichiers. Comptés avec les appels de jeu, le plafond tombait au bout de six
+     pages, et l'audit d'interface a fini par photographier une boutique servie
+     en JSON brut.
+
+     On éprouve donc les deux sens : vingt fichiers ne ferment pas le jeu, et
+     une rafale de jeu ne ferme pas les fichiers. C'est la séparation qui
+     compte, pas les chiffres. */
+  limiteur.oublier();
+  const fichiers = [];
+  for (let i = 0; i < 20; i++) fichiers.push(await fetch(base + '/ui.css').then((r2) => r2.status));
+  check('vingt fichiers d’affilée passent', fichiers.every((x) => x === 200)
+    || (console.log('        vu :', fichiers.join(',')), false));
+  check('et ils n’ont rien pris au quota du jeu', (await lire()) === 200);
+
+  limiteur.oublier();
+  for (let i = 0; i < 11; i++) await lire();
+  check('à l’inverse, le jeu bridé laisse passer les fichiers',
+    (await fetch(base + '/ui.css').then((r2) => r2.status)) === 200);
+
+  /* ------------------------------------------- le refus d'une navigation
+
+     Le navigateur qui reçoit du JSON en réponse à une barre d'adresse l'affiche
+     tel quel. C'est ce que l'audit a mesuré : du texte noir sur fond noir au
+     milieu de la boutique, qui disait « app.error.trop_de_requetes » à un
+     joueur qui voulait acheter une écharpe. */
+  limiteur.oublier();
+  for (let i = 0; i < 11; i++) await lire();
+  const nav = await fetch(base + '/boutique', { headers: { accept: 'text/html' } });
+  check('une navigation refusée reçoit une page, pas du JSON',
+    nav.status === 429 && /text\/html/.test(nav.headers.get('content-type') ?? '')
+    || (console.log('        il rend :', nav.status, nav.headers.get('content-type')), false));
+  const texte = await nav.text();
+  check('et cette page est écrite pour un joueur', /Une seconde/.test(texte)
+    && !/app\.error/.test(texte));
+  check('elle revient d’elle-même quand la minute est passée',
+    /http-equiv="refresh"/.test(texte));
+
+  /* L'appel de jeu, lui, garde son objet : l'écran sait le lire et l'afficher
+     dans sa langue. Lui servir de l'HTML casserait le `await r.json()` de tous
+     les appels du jeu. */
+  const api = await fetch(base + '/api/x', { headers: { accept: 'text/html' } });
+  check('mais un appel de jeu garde son code',
+    api.status === 429 && (await api.json()).error === 'app.error.trop_de_requetes');
 
   limiteur.arreter();
   await new Promise((r2) => http.close(r2));

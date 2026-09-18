@@ -300,4 +300,15 @@ oublierReglages();
 await pool.end();
 
 console.log(rates ? `\n${rates} test(s) en échec` : '\ntout est vert');
-process.exit(rates ? 1 : 0);
+/* **Pas de `process.exit`.** Il coupe la boucle d'événements pendant que le
+   pool rend ses sockets, et libuv s'arrête au hasard sur `UV_HANDLE_CLOSING` —
+   sous Windows, un code de sortie 3221226505 juste après un « tout est vert »
+   parfaitement vert.
+
+   La suite passait donc, et le lanceur la comptait en échec : il juge sur le
+   code de sortie, et il a raison — une suite qui plante avant son premier
+   contrôle n'écrit rien, et la juger sur son texte la déclarerait verte.
+
+   `exitCode` dit la même chose et laisse Node finir ce qu'il a commencé. Le
+   reste du dépôt le fait déjà ; celle-ci avait été oubliée. */
+process.exitCode = rates ? 1 : 0;
