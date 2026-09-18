@@ -198,7 +198,17 @@ que `raretes` les a rangées.
   **à la lecture** : c'est cette migration qui leur en donne le moyen, donc ils
   comptent double tant qu'elle n'est pas appliquée.
 
-Contrôle : `SHOW TABLES;` doit en lister **41**.
+- `amis.sql` gagne la table `parrainages` : le lien d'invitation qu'un joueur
+  envoie à quelqu'un qui ne joue pas encore. Un code par personne, créé au
+  premier partage et jamais renouvelé — c'est un lien qui reste des mois dans
+  une conversation de groupe.
+
+  Rien ne change pour les comptes existants : la table naît vide, et le bouton
+  n'apparaît dans **AMIS** que si le navigateur sait partager ou copier. Le
+  fichier est rejouable, comme les autres ; le relancer sur une base à jour ne
+  fait rien.
+
+Contrôle : `SHOW TABLES;` doit en lister **42**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`

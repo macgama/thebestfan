@@ -645,10 +645,51 @@ $('b4b').onclick = () => { location.href = '/equipes'; };
 
 /* ------------------------------------------------------- démarrage */
 
+/**
+ * Le parrainage, réclamé ici et nulle part ailleurs.
+ *
+ * Quelqu'un est arrivé par le lien d'un ami : `/compte` a rangé le code, et
+ * cette page est le point où **tous les chemins d'inscription se rejoignent**
+ * — le formulaire comme la connexion Google. Le réclamer côté formulaire
+ * n'aurait couvert que la moitié des nouveaux venus, et une invitation qui
+ * marche selon le bouton employé est pire qu'une invitation qui ne marche pas.
+ *
+ * Le code est **effacé dès que le serveur a tranché**, quelle que soit sa
+ * réponse : le lien a servi, ou il ne servira jamais — compte déjà ancien,
+ * amitié déjà existante, code périmé. Le garder ferait rejouer l'appel à
+ * chaque passage, pour un refus qui ne changera pas.
+ *
+ * Une panne de réseau, en revanche, **le laisse en place** : là, rien n'a été
+ * tranché, et la prochaine ouverture réessaiera. C'est la seule distinction qui
+ * compte ici, et c'est celle qu'on rate en effaçant dans un `finally`.
+ *
+ * Rien n'est annoncé au joueur. L'ami apparaît dans sa liste, et c'est la
+ * bonne façon de le lui dire : une cérémonie d'accueil qui commence par une
+ * notification administrative n'accueille personne.
+ */
+async function reclamerLeParrainage() {
+  let code = null;
+  try { code = localStorage.getItem('tbf.parrainage'); } catch { /* privée */ }
+  if (!code) return;
+  try {
+    await fetch('/api/amis/parrainage', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
+    try { localStorage.removeItem('tbf.parrainage'); } catch { /* privée */ }
+  } catch { /* réseau : on garde le code pour la prochaine fois */ }
+}
+
 (async () => {
   try {
     catalogue = await fetch('/api/me/catalogue').then((r) => r.json());
     const st = await fetch('/api/me/state', { credentials:'same-origin' }).then((r) => r.json());
+    /* Avant la redirection, et sans l'attendre : un compte déjà inscrit qui
+       repasse ici avec un code en attente — il vient de suivre le lien d'un
+       ami depuis son téléphone — doit quand même le voir réclamé. Le serveur
+       refusera si la fenêtre est passée, et c'est lui que ça regarde. */
+    reclamerLeParrainage();
     // Déjà inscrit : on ne rejoue pas la cérémonie.
     if (st.onboarded) location.href = '/';
   } catch { location.href = '/compte'; }

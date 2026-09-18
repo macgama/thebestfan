@@ -36,6 +36,19 @@ main{width:100%;max-width:var(--colonne)}
   justify-content:center;font-size:11px;letter-spacing:.08em;cursor:pointer;opacity:.55;
   font-family:inherit}
 .langs button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1;font-weight:600}
+
+/* Le mot de celui qui t’a invité.
+
+   Il est **au-dessus des onglets**, avant tout formulaire : c’est la raison
+   pour laquelle on est là, et elle doit se lire avant qu’on décide entre
+   « connexion » et « inscription ». Placé dessous, il aurait expliqué après
+   coup ce qu’on venait de faire. */
+.invite{display:flex;align-items:center;gap:11px;margin:0 0 16px;padding:11px 13px;
+  border:1px solid rgba(245,195,59,.34);background:rgba(245,195,59,.07);border-radius:11px;
+  text-align:left;line-height:1.5}
+.invite img{width:38px;height:38px;object-fit:contain;flex:none}
+.invite span{font-size:12.5px}
+.invite b{color:var(--projo)}
 /* La barre d'onglets est celle de `ui.css`. Ses boutons n'ont pas de classe :
    ils sont les seuls enfants du rail, et lui seul les désigne. */
 .tabs{margin-bottom:22px}
@@ -117,6 +130,7 @@ button.go[disabled]{filter:grayscale(.85);opacity:.5;pointer-events:none}
 
   <!-- déconnecté -->
   <section id="gate">
+    <div id="invite" class="invite hide"></div>
     <div class="tabs tbf-onglets">
       <button id="tabLogin" class="tbf-onglet on" data-t="tab.login"></button>
       <button id="tabRegister" class="tbf-onglet" data-t="tab.register"></button>
@@ -178,7 +192,8 @@ button.go[disabled]{filter:grayscale(.85);opacity:.5;pointer-events:none}
 
 <script>
 const I18N = {
-  fr:{ 'tagline':'le jeu de cartes des tribunes','tab.login':'CONNEXION','tab.register':'INSCRIPTION',
+  fr:{ 'tagline':'le jeu de cartes des tribunes',
+    'invite.par':'<b>{pseudo}</b> t’invite à prendre ta place. Crée ton compte : vous serez amis tout de suite.','tab.login':'CONNEXION','tab.register':'INSCRIPTION',
     'field.email':'Adresse e-mail','field.password':'Mot de passe','field.newPassword':'Nouveau mot de passe',
     'field.pseudo':'Pseudo','action.login':'ENTRER DANS LA TRIBUNE','action.register':'CRÉER MON COMPTE',
     'action.forgot':'Mot de passe oublié ?','action.send':'ENVOYER LE LIEN','action.back':'Retour à la connexion',
@@ -208,7 +223,8 @@ const I18N = {
     'auth.error.token_invalid':'Ce lien est invalide ou a expiré.',
     'auth.error.unauthenticated':'Session expirée.','auth.error.bad_origin':'Requête refusée.',
     'auth.error.server':'Erreur du serveur. Réessaie dans un instant.','auth.error.network':'Connexion impossible.' },
-  en:{ 'tagline':'the terrace card game','tab.login':'SIGN IN','tab.register':'SIGN UP',
+  en:{ 'tagline':'the terrace card game',
+    'invite.par':'<b>{pseudo}</b> is saving you a place. Sign up and you’ll be friends right away.','tab.login':'SIGN IN','tab.register':'SIGN UP',
     'field.email':'Email address','field.password':'Password','field.newPassword':'New password',
     'field.pseudo':'Username','action.login':'ENTER THE STAND','action.register':'CREATE MY ACCOUNT',
     'action.forgot':'Forgot your password?','action.send':'SEND THE LINK','action.back':'Back to sign in',
@@ -238,7 +254,8 @@ const I18N = {
     'auth.error.token_invalid':'This link is invalid or has expired.',
     'auth.error.unauthenticated':'Session expired.','auth.error.bad_origin':'Request refused.',
     'auth.error.server':'Server error. Try again in a moment.','auth.error.network':'Cannot reach the server.' },
-  de:{ 'tagline':'das Kartenspiel der Kurve','tab.login':'ANMELDEN','tab.register':'REGISTRIEREN',
+  de:{ 'tagline':'das Kartenspiel der Kurve',
+    'invite.par':'<b>{pseudo}</b> hält dir einen Platz frei. Melde dich an — ihr seid sofort Freunde.','tab.login':'ANMELDEN','tab.register':'REGISTRIEREN',
     'field.email':'E-Mail-Adresse','field.password':'Passwort','field.newPassword':'Neues Passwort',
     'field.pseudo':'Benutzername','action.login':'IN DEN BLOCK','action.register':'KONTO ERSTELLEN',
     'action.forgot':'Passwort vergessen?','action.send':'LINK SENDEN','action.back':'Zurück zur Anmeldung',
@@ -268,7 +285,8 @@ const I18N = {
     'auth.error.token_invalid':'Dieser Link ist ungültig oder abgelaufen.',
     'auth.error.unauthenticated':'Sitzung abgelaufen.','auth.error.bad_origin':'Anfrage abgelehnt.',
     'auth.error.server':'Serverfehler. Versuche es gleich noch einmal.','auth.error.network':'Server nicht erreichbar.' },
-  es:{ 'tagline':'el juego de cartas de la grada','tab.login':'ENTRAR','tab.register':'REGISTRARSE',
+  es:{ 'tagline':'el juego de cartas de la grada',
+    'invite.par':'<b>{pseudo}</b> te guarda un sitio. Crea tu cuenta: seréis amigos enseguida.','tab.login':'ENTRAR','tab.register':'REGISTRARSE',
     'field.email':'Correo electrónico','field.password':'Contraseña','field.newPassword':'Nueva contraseña',
     'field.pseudo':'Nombre','action.login':'ENTRAR EN LA GRADA','action.register':'CREAR MI CUENTA',
     'action.forgot':'¿Olvidaste la contraseña?','action.send':'ENVIAR EL ENLACE','action.back':'Volver a entrar',
@@ -532,6 +550,65 @@ $('formSupprimer').onsubmit = async (e) => {
   }
   const params = new URLSearchParams(location.search);
 
+  /* ------------------------------------------------- l’invitation d’un ami
+
+     On arrive ici par le lien de quelqu’un qui joue déjà. Trois gestes, dans
+     cet ordre, et chacun compte :
+
+       1. **le code est mis de côté** avant tout le reste. La page va changer
+          d’adresse — la vérification d’e-mail fait un `replaceState`, Google
+          fait un aller-retour complet — et un code qui ne vit que dans la
+          barre d’adresse ne survit à aucun des deux.
+
+       2. **on montre qui invite**, en demandant son pseudo au serveur. Sans
+          ça, le lien envoie sur un formulaire d’inscription ordinaire et rien
+          ne dit qu’on est attendu. C’est tout ce qui distingue une invitation
+          d’une publicité.
+
+       3. **l’onglet bascule sur INSCRIPTION.** Celui qui suit ce lien n’a pas
+          de compte : lui présenter « connexion » d’abord, c’est lui demander
+          un mot de passe qu’il n’a pas.
+
+     Le code est **conservé en `localStorage`**, pas réclamé ici : c’est
+     `/bienvenue` qui le réclame, parce que c’est là que tombent les deux
+     chemins d’inscription — le formulaire et Google. Le faire ici ne couvrirait
+     que le premier, et une invitation qui marche une fois sur deux selon le
+     bouton employé est pire qu’une invitation qui ne marche pas. */
+  const CLE_AMI = 'tbf.parrainage';
+  const codeAmi = params.get('ami');
+  if (codeAmi) {
+    try { localStorage.setItem(CLE_AMI, codeAmi); } catch { /* navigation privée */ }
+    history.replaceState({}, '', '/compte');
+  }
+  let venuParUnAmi = false;
+  {
+    let garde = null;
+    try { garde = localStorage.getItem(CLE_AMI); } catch { /* idem */ }
+    if (garde) {
+      venuParUnAmi = true;
+      fetch('/api/amis/invitation/' + encodeURIComponent(garde))
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (!d?.parrain?.pseudo) return;
+          /* Le pseudo vient du serveur et part dans un `innerHTML` — le bandeau
+             porte du gras, il ne peut donc pas être du texte. Il est validé à
+             l'inscription, mais une validation en amont n'est pas un échappement :
+             la règle peut changer, et c'est ici que ça coûterait. */
+          const sur = String(d.parrain.pseudo).replace(/[&<>"]/g,
+            (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+          const buste = window.FZART?.adresse?.(d.parrain.fanzzy, 'buste');
+          $('invite').innerHTML = (buste ? `<img src="${buste}" alt="">` : '')
+            + `<span>${t('invite.par', { pseudo: sur })}</span>`;
+          show('invite', true);
+        })
+        /* Le lien ne mène plus à personne — compte supprimé, code tronqué par
+           une messagerie. On n’en dit rien : l’inscription reste possible, et
+           annoncer « ton invitation est invalide » à quelqu’un qui arrive pour
+           la première fois serait l’accueillir par un reproche. */
+        .catch(() => {});
+    }
+  }
+
   const verifyToken = params.get('verifier');
   if (verifyToken) {
     const r = await api('/verify', { token: verifyToken });
@@ -544,10 +621,19 @@ $('formSupprimer').onsubmit = async (e) => {
   const me = await api('/me', undefined, 'GET');
   if (me.status === 200) { user = me.json.user; locale = user.locale || locale; applyLocale(); }
 
-  if (params.get('reinitialiser')) tab('reset'); else tab('login');
+  if (params.get('reinitialiser')) tab('reset');
+  /* Celui qui suit un lien d'invitation n'a pas de compte : lui ouvrir
+     « connexion » d'abord, c'est lui demander un mot de passe qu'il n'a pas.
+     À moins qu'il soit déjà connecté, auquel cas il ne voit pas ces onglets. */
+  else if (venuParUnAmi && !user) tab('register');
+  else tab('login');
   render();
 })();
 </script>
+<!-- Le buste du parrain, et rien d’autre : `fanzzy-art.js` sait rendre une
+     adresse d’image sans le catalogue. S’il manque, le bandeau se montre
+     quand même, avec le pseudo seul — c’est lui qui porte le message. -->
+<script src="/fanzzy-art.js"></script>
 <script src="/fx.js" defer></script>
 <script src="/pwa.js" defer></script>
 </body>

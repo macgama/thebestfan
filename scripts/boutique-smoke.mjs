@@ -41,7 +41,7 @@ const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
    temps du ménage, sinon MySQL refuse de laisser tomber une table qu une autre
    référence encore — et il a raison. */
 await raw.query('SET FOREIGN_KEY_CHECKS = 0');
-await raw.query(`DROP TABLE IF EXISTS abonnements, achats, tenues, user_stuff, user_skins, user_fanzzy,
+await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, tenues, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, user_decks, virage_presence, user_wallet, users`);
 await raw.query('SET FOREIGN_KEY_CHECKS = 1');
 const { readFile } = await import('node:fs/promises');
