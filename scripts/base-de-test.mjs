@@ -26,7 +26,99 @@
  * personne ne peut prétendre l'avoir écrit sans savoir ce qu'il faisait.
  */
 
+import { openSync, closeSync, writeFileSync, readFileSync, unlinkSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 const DEFAUT = 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
+
+/* ============================================ une suite à la fois, et pas deux
+
+   **Les suites partagent une seule base, et chacune commence par la vider.**
+   Deux suites lancées en même temps se détruisent donc mutuellement : la
+   seconde efface les tables de la première au milieu de ses contrôles, et ce
+   qui rougit ensuite ne parle de rien.
+
+   Ça n'est pas théorique — c'est arrivé deux fois en une session, parce qu'on
+   lance volontiers une suite « juste pour vérifier » pendant qu'une batterie
+   tourne en fond. Les contrôles qui tombent alors accusent le code, et on perd
+   une demi-heure à chercher une régression qui n'existe pas.
+
+   L'isolation propre serait **une base par suite**. Elle demande le droit de
+   créer des bases, que le compte `tbf` n'a pas :
+
+       GRANT ALL PRIVILEGES ON `tbf_%`.* TO 'tbf'@'%';
+
+   Tant que ce droit n'est pas donné, un verrou fait le travail : il ne sépare
+   pas les suites, il les empêche de se croiser. C'est moins bien et c'est
+   suffisant.
+
+   **Un fichier, et non un verrou MySQL.** `GET_LOCK` demanderait une connexion,
+   donc une fonction asynchrone, donc quarante-sept appels à modifier. Un
+   fichier se prend et se rend sans rien attendre, depuis la fonction que toutes
+   les suites appellent déjà. */
+
+const VERROU = path.join(fileURLToPath(new URL('..', import.meta.url)), '.tbf-suite.lock');
+
+/* Dix minutes : plus long que la plus lente des suites, plus court qu'une
+   pause. Au-delà, le verrou est tenu par un processus mort — un Ctrl-C, un
+   plantage — et le garder fermé bloquerait tout le monde pour rien. */
+const PERIME_MS = 10 * 60_000;
+
+/** Le nom de la suite en cours, tel qu'on le montre. */
+const quiSuisJe = () => path.basename(process.argv[1] ?? 'inconnu');
+
+function prendreLeVerrou() {
+  if (process.env.TBF_SANS_VERROU === '1') return;
+
+  for (let essai = 0; essai < 2; essai++) {
+    try {
+      const fd = openSync(VERROU, 'wx');
+      closeSync(fd);
+      /* On écrit **après** avoir créé le fichier : la création est ce qui est
+         atomique, le contenu n'est là que pour nommer le coupable. */
+      try {
+        writeFileSync(VERROU, JSON.stringify({ suite: quiSuisJe(), pid: process.pid, a: Date.now() }));
+      } catch { /* le verrou tient même sans son étiquette */ }
+      const rendre = () => { try { unlinkSync(VERROU); } catch { /* déjà rendu */ } };
+      process.on('exit', rendre);
+      process.on('SIGINT', () => { rendre(); process.exit(130); });
+      return;
+    } catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+
+      let tenu = null;
+      try { tenu = JSON.parse(readFileSync(VERROU, 'utf8')); } catch { /* illisible */ }
+      const age = tenu?.a ? Date.now() - tenu.a : Infinity;
+
+      if (age > PERIME_MS) {
+        /* Périmé : on le reprend, et on le dit. Un verrou qu'on force en
+           silence est un verrou qui ne protège plus personne. */
+        console.warn(`  (verrou de test périmé, laissé par ${tenu?.suite ?? '?'} — repris)`);
+        try { unlinkSync(VERROU); } catch { /* quelqu'un l'a repris avant nous */ }
+        continue;
+      }
+
+      console.error([
+        '',
+        '  ARRÊT — une autre suite travaille déjà sur cette base.',
+        '',
+        `  Elle : ${tenu?.suite ?? 'inconnue'} (pid ${tenu?.pid ?? '?'}, depuis ${
+          Math.round(age / 1000)} s)`,
+        `  Toi  : ${quiSuisJe()}`,
+        '',
+        '  Les suites vident la base au démarrage : les lancer ensemble les fait',
+        '  échouer toutes les deux, et ce qui rougit ensuite ne parle de rien.',
+        '',
+        '  Attends la fin de la première, ou lance-les en série :',
+        '',
+        '      npm test',
+        '',
+      ].join('\n'));
+      process.exit(1);
+    }
+  }
+}
 
 /** Les hôtes qui désignent la machine où tourne le test. */
 const LOCAUX = new Set(['localhost', '127.0.0.1', '::1', '[::1]', '']);
@@ -48,7 +140,9 @@ export function baseDeTest() {
     process.exit(1);
   }
 
-  if (LOCAUX.has(hote) || process.env.TBF_BASE_JETABLE === '1') return url;
+  /* Le verrou se prend **une fois l'hôte validé** : un refus de base distante
+     ne doit pas laisser derrière lui un fichier qui bloquerait les suivantes. */
+  if (LOCAUX.has(hote) || process.env.TBF_BASE_JETABLE === '1') { prendreLeVerrou(); return url; }
 
   console.error([
     '',

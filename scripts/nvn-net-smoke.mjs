@@ -71,6 +71,14 @@ const app = express(); const http = createServer(app);
 const io = new Server(http, { cors:{origin:'*'} });
 io.use((s, next) => { s.data.user = { userId: s.handshake.auth.token, name: 'J' }; next(); });
 const decks = createDecks({ pool, requireAuth: (r,_s,n)=>n() });
+/* **Pas de module de niveau ici, et c'est délibéré.**
+   Ce banc mesure ce qu'un duel paie en écharpes, et il le mesure en lisant la
+   bourse. Or franchir un palier de niveau verse lui aussi des écharpes : monter
+   le module ajouterait au solde une somme qui ne vient pas du duel, et les
+   contrôles de barème se mettraient à mesurer deux choses à la fois.
+   Conséquence à connaître : `duel_results.xp` vaut zéro dans tout ce fichier —
+   c'est la vérité de ce banc, pas un défaut d'écriture. Le contenu de la
+   colonne se vérifie donc ailleurs. */
 const N = createNvN({ pool, io, decks, requireAuth: (r,_s,n)=>{ r.user={id:U[0]}; n(); } });
 app.use('/api/nvn', N.router);
 await new Promise((r)=>http.listen(0,r));
@@ -369,13 +377,80 @@ A.socket.emit('nvn:chant', { cardId: monChant.id, taps: gestePassable(monChant.g
    vide, les bourses à zéro, et trois contrôles rouges qui accusaient le calcul
    des gains alors que rien n'avait encore eu le temps d'être écrit. */
 const resultats = async () => (await pool.query(
-  'SELECT user_id, outcome, team_id, ferveur FROM duel_results WHERE duel_id = ?',
+  `SELECT user_id, outcome, team_id, ferveur, fanzzy_id, xp, duree_s, side,
+          elo_before, elo_after
+     FROM duel_results WHERE duel_id = ?`,
   [salle.duel.id]))[0];
 check('le duel classé est enregistré',
   await until(async () => (await resultats()).length === 2));
 const res = await resultats();
 check('un gagnant et un perdant',
   res.filter((r)=>r.outcome==='win').length === 1 && res.filter((r)=>r.outcome==='loss').length === 1);
+
+/* ------------------------------- ce que la ligne dit de la partie jouée
+
+   Le parcours montrait une issue, un score et de la ferveur. Il ne disait ni
+   avec quel Fanzzy on avait joué, ni ce que la partie avait rapporté en
+   progression, ni combien de temps elle avait duré, ni de quel côté on était.
+   Les quatre se vérifient ici parce que c'est la seule suite qui joue un vrai
+   duel de bout en bout : ailleurs, les lignes sont posées à la main et
+   diraient donc ce qu'on veut bien leur faire dire. */
+check('la ligne dit avec quel Fanzzy on a joué',
+  res.every((r) => typeof r.fanzzy_id === 'string' && r.fanzzy_id.length > 1)
+  || (console.log('        elle dit :', res.map((r) => r.fanzzy_id).join(', ')), false));
+
+/* **L'XP est écrite, et elle recopie ce que les gains ont versé.** Ici zéro,
+   parce que ce banc ne monte pas le module de niveau — voir plus haut, c'est
+   voulu. Ce que ce contrôle défend, c'est que la colonne existe, qu'elle est
+   remplie, et qu'elle ne porte pas un chiffre inventé sur place : un barème
+   recalculé au moment d'écrire finirait par ne plus dire la même chose que ce
+   que le joueur a réellement touché, et c'est l'écran du parcours qui
+   annoncerait le mauvais nombre. Le barème lui-même se vérifie dans
+   `niveau:smoke`. */
+check('elle dit l’XP versée, sans en inventer',
+  res.every((r) => r.xp !== null && Number(r.xp) === 0)
+  || (console.log('        elle dit :', res.map((r) => r.xp).join(', ')), false));
+
+/* La durée est celle du jeu, pas celle de l'écriture : entre la fin de la
+   partie et cette ligne il y a les écharpes, l'XP et les KOP. */
+check('elle dit combien de temps ça a duré',
+  res.every((r) => r.duree_s !== null && Number(r.duree_s) >= 0)
+  || (console.log('        elle dit :', res.map((r) => r.duree_s).join(', ')), false));
+
+/* **Les deux camps, et ils sont différents.** Sans cette colonne on ne peut pas
+   reconstituer qui jouait avec qui : sur un match nul, les deux côtés portent
+   exactement les mêmes buts, et déduire le camp du score échouerait donc
+   précisément sur les parties les plus serrées. */
+const camps = res.map((r) => Number(r.side)).sort();
+check('elle dit de quel côté chacun était', camps.length === 2 && camps[0] !== camps[1]
+  && camps.every((c) => c === 0 || c === 1)
+  || (console.log('        les camps :', JSON.stringify(camps)), false));
+
+/* ------------------------------------------------------------- la cote
+
+   Deux colonnes existaient depuis le premier jour — `elo_before` et
+   `elo_after` — et rien ne les avait jamais écrites : mille partout, sur
+   toutes les lignes. Un schéma qui décrit un classement qui n'existe pas se
+   lit comme une fonction débranchée.
+
+   Ce duel-ci est **classé**, donc il cote. La formule est éprouvée seule dans
+   `cote:test` ; ce qu'on vérifie ici, c'est qu'elle est branchée. */
+/* Le gagnant et le perdant, nommés une fois pour les contrôles qui suivent. */
+const gagnant = res.find((r) => r.outcome === 'win');
+const perdant = res.find((r) => r.outcome === 'loss');
+
+check('les deux partent de la cote de départ',
+  res.every((r) => Number(r.elo_before) === 1000)
+  || (console.log('        avant :', res.map((r) => r.elo_before).join(', ')), false));
+check('le gagnant monte et le perdant descend',
+  Number(gagnant?.elo_after) > 1000 && Number(perdant?.elo_after) < 1000
+  || (console.log('        gagnant', gagnant?.elo_after,
+    '· perdant', perdant?.elo_after), false));
+/* À cotes égales, ce que l'un gagne est ce que l'autre perd. C'est la
+   propriété qui garde la somme des cotes constante, et donc le classement
+   comparable d'une semaine sur l'autre. */
+check('et à cotes égales, l’un gagne ce que l’autre perd',
+  (Number(gagnant.elo_after) - 1000) === (1000 - Number(perdant.elo_after)));
 
 
 /* --------------------------------------------- ce que le duel a rapporté

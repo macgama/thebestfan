@@ -1,4 +1,5 @@
 import express from 'express';
+import { parIdentifiant } from '../fanzzy/catalogue.js';
 
 /**
  * Les classements.
@@ -51,23 +52,62 @@ export function createClassements({ pool, requireAuth,
      un rouge qui ne parle de rien. Même rôle que `oublier` du catalogue. */
   function oublier() { cache.clear(); }
 
+  /* ============================================ la ferveur, où qu'elle naisse
+
+     **Une seule monnaie, deux sources.** Le Grand Virage et le duel classé
+     rapportent la même ferveur ; elle est comptée, écrite et lue de la même
+     façon dans les deux cas.
+
+     Ce n'était pas vrai. Le classement par compétition additionnait déjà les
+     deux — voir `SOURCE`, plus bas, qui fait exactement ça — pendant que les
+     deux classements qu'on voit en premier, SUPPORTERS et TRIBUNES, ne lisaient
+     que `virage_presence`. Un joueur qui ne faisait que des duels avait donc
+     de la ferveur, la voyait dans son parcours, la voyait au classement de la
+     Ligue 1, et restait à zéro au classement des supporters. **Le même mot
+     mesurait deux choses selon l'onglet**, et rien à l'écran ne pouvait
+     l'expliquer.
+
+     Il y avait deux réponses cohérentes — additionner partout, ou séparer
+     partout. C'est la première qui est retenue : elle récompense de jouer,
+     quelle que soit la façon, et elle ne demande à personne de choisir entre
+     pousser et se battre.
+
+     **L'entraînement reste dehors**, et c'est toute sa différence avec le duel
+     classé. Le tri se fait ici, à la lecture, jamais à l'écriture : un joueur
+     doit retrouver ses soirées d'entraînement dans son parcours, elles ne
+     doivent simplement rapporter à personne.
+
+     `quand` porte la date des deux côtés sous un seul nom — `last_push_at`
+     pour le virage, `ended_at` pour le duel — pour que la fenêtre de temps
+     n'ait pas à savoir d'où vient la ligne.
+
+     `team_id` nul veut dire neutre : la ligne compte pour le joueur et pour la
+     compétition, jamais pour une tribune. La règle s'applique d'elle-même, par
+     la condition de jointure, sans avoir à l'écrire deux fois. */
+  const FERVEUR = `
+    SELECT user_id, team_id, ferveur, fixture_id, last_push_at AS quand
+      FROM virage_presence
+    UNION ALL
+    SELECT user_id, team_id, ferveur, fixture_id, ended_at AS quand
+      FROM duel_results WHERE mode = 'classe'`;
+
   /** Fenêtre : la saison en cours, ou les trente derniers jours. */
   const depuis = (periode) => (periode === 'mois'
-    ? 'AND vp.last_push_at > (NOW(3) - INTERVAL 30 DAY)' : '');
+    ? 'AND x.quand > (NOW(3) - INTERVAL 30 DAY)' : '');
 
   /* -------------------------------------------------------- supporters */
 
   async function supporters(periode = 'saison', limite = 50) {
     return memo(`sup:${periode}:${limite}`, () => q(
       `SELECT u.public_id, u.pseudo,
-              SUM(vp.ferveur) AS ferveur,
-              COUNT(DISTINCT vp.fixture_id) AS matchs,
+              SUM(x.ferveur) AS ferveur,
+              COUNT(DISTINCT x.fixture_id) AS matchs,
               (SELECT COUNT(*) FROM user_souvenirs us
                 WHERE us.user_id = u.public_id AND us.kind = 'presence') AS vecus,
               (SELECT t.name FROM user_follows f JOIN teams t ON t.id = f.team_id
                 WHERE f.user_id = u.public_id ORDER BY f.is_main DESC LIMIT 1) AS club
-         FROM virage_presence vp
-         JOIN users u ON u.public_id = vp.user_id
+         FROM (${FERVEUR}) x
+         JOIN users u ON u.public_id = x.user_id
         WHERE u.status = 'active' ${depuis(periode)}
         GROUP BY u.public_id, u.pseudo
         ORDER BY ferveur DESC
@@ -105,12 +145,12 @@ export function createClassements({ pool, requireAuth,
     return memo(`trib:${limite}`, () => q(
       `SELECT t.id, t.name, t.logo, t.country,
               COUNT(DISTINCT f.user_id) AS supporters,
-              COALESCE(SUM(vp.ferveur), 0) AS ferveur,
-              ROUND(COALESCE(SUM(vp.ferveur), 0) / GREATEST(COUNT(DISTINCT f.user_id), 1)) AS moyenne
+              COALESCE(SUM(x.ferveur), 0) AS ferveur,
+              ROUND(COALESCE(SUM(x.ferveur), 0) / GREATEST(COUNT(DISTINCT f.user_id), 1)) AS moyenne
          FROM user_follows f
          JOIN teams t ON t.id = f.team_id
-         LEFT JOIN virage_presence vp
-                ON vp.user_id = f.user_id AND vp.team_id = f.team_id
+         LEFT JOIN (${FERVEUR}) x
+                ON x.user_id = f.user_id AND x.team_id = f.team_id
          GROUP BY t.id, t.name, t.logo, t.country
         HAVING supporters >= 1
         ORDER BY moyenne DESC, ferveur DESC
@@ -119,18 +159,92 @@ export function createClassements({ pool, requireAuth,
 
   /* -------------------------------------------------------- duellistes */
 
+  /**
+   * Les duellistes, classés sur leur **cote**.
+   *
+   * ## Pourquoi pas sur les victoires
+   *
+   * C'était le cas, et ça récompensait celui qui joue beaucoup : quelqu'un qui
+   * gagne une fois sur deux mais joue trois soirs par semaine passait devant
+   * quelqu'un qui gagne quatre fois sur cinq et joue le samedi. Ce n'est pas
+   * faux — l'assiduité compte — mais ce n'est pas ce que le mot « duelliste »
+   * promet, et l'assiduité a son tableau à elle depuis qu'existe celui des
+   * entraînements.
+   *
+   * Une cote répond à l'autre question : **contre qui as-tu gagné ?** Voir
+   * `shared/cote.js` pour la formule et les trois choix qui ne sont pas dedans.
+   *
+   * ## La cote du moment, c'est la dernière écrite
+   *
+   * Elle est cumulative : chaque partie part de la précédente. La cote actuelle
+   * de quelqu'un est donc l'`elo_after` de sa dernière partie classée, et non
+   * une moyenne ni une somme — les deux n'auraient aucun sens ici.
+   *
+   * D'où la sous-requête plutôt qu'un `MAX` : `MAX(elo_after)` rendrait le
+   * meilleur jour de quelqu'un, pas son niveau. C'est une erreur qui ne se voit
+   * pas, parce que les deux nombres se ressemblent.
+   */
   async function duellistes(limite = 50) {
     return memo(`duel:${limite}`, () => q(
       `SELECT u.public_id, u.pseudo,
               SUM(dr.outcome = 'win') AS gagnes,
               COUNT(*) AS joues,
-              ROUND(100 * SUM(dr.outcome = 'win') / COUNT(*)) AS taux
+              ROUND(100 * SUM(dr.outcome = 'win') / COUNT(*)) AS taux,
+              (SELECT d2.elo_after FROM duel_results d2
+                WHERE d2.user_id = u.public_id AND d2.mode = 'classe'
+                ORDER BY d2.ended_at DESC LIMIT 1) AS cote
          FROM duel_results dr
          JOIN users u ON u.public_id = dr.user_id
         WHERE u.status = 'active' AND dr.mode = 'classe'
         GROUP BY u.public_id, u.pseudo
        HAVING joues >= 3
-        ORDER BY gagnes DESC, taux DESC
+        ORDER BY cote DESC, joues DESC
+        LIMIT ${Number(limite) || 50}`));
+  }
+
+  /* ---------------------------------------------------- les entraînements
+
+     **Un tableau de l'assiduité, et surtout pas un second classement.**
+
+     L'entraînement ne rapporte rien : pas de ferveur, aucun effet sur le
+     classement, et c'est toute sa différence avec le duel classé. Mais « ne
+     rien rapporter » et « n'exister nulle part » sont deux choses, et c'est la
+     seconde qu'on corrige ici : quelqu'un qui passe une soirée à s'entraîner
+     n'en trouvait aucune trace ailleurs que dans son propre parcours.
+
+     ## Il classe sur les parties jouées, pas sur les victoires
+
+     Et ce n'est pas un détail de présentation. L'entraînement se joue aussi
+     contre des machines — c'est même sa raison d'être, on s'entraîne quand
+     personne n'est là. Classer sur les victoires ferait donc un tableau de qui
+     bat le plus de bots, ce qui se gagne en y passant la nuit et ne dit rien de
+     personne. Les parties jouées, elles, coûtent le même prix à tout le monde :
+     cinq minutes chacune. Le tableau dit **qui s'entraîne**, et c'est ce qu'on
+     voulait encourager.
+
+     Les victoires sont montrées à côté, parce qu'elles intéressent celui qui
+     les a — mais elles ne départagent qu'à égalité de parties, et jamais avant.
+
+     ## Trois parties, comme l'autre
+
+     Le même plancher que `duellistes`, pour la même raison : une liste où l'on
+     entre après une partie est une liste où tout le monde est, donc une liste
+     que personne ne regarde.
+   */
+
+  async function assidus(limite = 50) {
+    return memo(`entr:${limite}`, () => q(
+      `SELECT u.public_id, u.pseudo,
+              COUNT(*) AS joues,
+              SUM(dr.outcome = 'win') AS gagnes,
+              (SELECT t.name FROM user_follows fo JOIN teams t ON t.id = fo.team_id
+                WHERE fo.user_id = u.public_id ORDER BY fo.is_main DESC LIMIT 1) AS club
+         FROM duel_results dr
+         JOIN users u ON u.public_id = dr.user_id
+        WHERE u.status = 'active' AND dr.mode = 'entrainement'
+        GROUP BY u.public_id, u.pseudo
+       HAVING joues >= 3
+        ORDER BY joues DESC, gagnes DESC
         LIMIT ${Number(limite) || 50}`));
   }
 
@@ -317,17 +431,22 @@ export function createClassements({ pool, requireAuth,
    * pour tous les autres, savoir qu'on est 312e sur 1 400 vaut mieux que rien.
    */
   async function maPlace(userId) {
+    /* **La même source que la liste où l'on se cherche.** Ces trois requêtes
+       ne lisaient que le virage pendant que SUPPORTERS en lit deux : le joueur
+       lisait « 312e sur 1 400 » sous une liste qui ne le classait pas sur les
+       mêmes nombres. Une place qui ne correspond pas au classement qu'elle
+       surmonte est pire qu'une absence de place. */
     const [ferveur] = await q(
-      `SELECT COALESCE(SUM(ferveur), 0) AS f, COUNT(DISTINCT fixture_id) AS m
-         FROM virage_presence WHERE user_id = ?`, [userId]);
+      `SELECT COALESCE(SUM(x.ferveur), 0) AS f, COUNT(DISTINCT x.fixture_id) AS m
+         FROM (${FERVEUR}) x WHERE x.user_id = ?`, [userId]);
 
     const [rang] = await q(
       `SELECT COUNT(*) + 1 AS rang FROM (
-         SELECT user_id, SUM(ferveur) AS f FROM virage_presence GROUP BY user_id
+         SELECT user_id, SUM(ferveur) AS f FROM (${FERVEUR}) y GROUP BY user_id
        ) x WHERE x.f > ?`, [ferveur.f]);
 
     const [total] = await q(
-      `SELECT COUNT(DISTINCT user_id) AS n FROM virage_presence`);
+      `SELECT COUNT(DISTINCT x.user_id) AS n FROM (${FERVEUR}) x`);
 
     const [duels] = await q(
       `SELECT SUM(outcome = 'win') AS gagnes, COUNT(*) AS joues
@@ -487,8 +606,10 @@ export function createClassements({ pool, requireAuth,
        (`'inconnu'`). Dans les trois, on rend la ligne sans nom plutôt que de
        perdre la partie. */
     const duels = await q(
-      `SELECT dr.ended_at AS quand, dr.outcome, dr.goals_for, dr.goals_against,
+      `SELECT dr.duel_id, dr.ended_at AS quand, dr.outcome,
+              dr.goals_for, dr.goals_against,
               dr.ferveur, dr.mode, dr.format, dr.team_id, dr.opponent_id,
+              dr.fanzzy_id, dr.xp, dr.duree_s, dr.side,
               uo.pseudo AS adversaire,
               f.id AS fixture_id, f.home_id, f.away_id, l.name AS competition,
               h.name AS domicile, h.logo AS domicile_logo,
@@ -509,6 +630,72 @@ export function createClassements({ pool, requireAuth,
         ORDER BY vp.joined_at DESC
         LIMIT ${n}`, filtre ? [userId, filtre] : [userId]);
 
+    /* ============================================ qui jouait avec, qui contre
+
+       `opponent_id` ne nomme **qu'un** adversaire, pris au hasard parmi ceux
+       d'en face : sur un 3v3 il en tait cinq. Les lignes d'une même partie
+       partagent `duel_id` et portent chacune leur camp, alors on les relit
+       toutes d'un coup.
+
+       Une seule requête pour toute la page, pas une par ligne : vingt parties
+       de 3v3 feraient vingt allers-retours pour une réponse qui tient en un
+       `IN`. Elle passe par `pool.query` et non `execute` — un `IN (?)` déplié
+       depuis un tableau est une chose que l'instruction préparée ne sait pas
+       faire.
+
+       **Les bots n'ont pas de ligne** : `fermer` les saute, et c'est juste —
+       une machine n'a pas d'historique. Le camp se retrouve donc incomplet, et
+       on ne le cache pas : le format dit combien on attendait de chaque côté,
+       la différence est le nombre de machines, et l'écran peut dire « avec
+       deux bots » plutôt que de laisser croire qu'on était seul. */
+    /** Le nom d'un Fanzzy, quand le catalogue est chargé. Sous garde : une
+        suite peut monter ce module seul, et un identifiant nu vaut mieux qu'une
+        page qui lève. */
+    const nomDe = (id) => { try { return parIdentifiant(id)?.nom ?? null; } catch { return null; } };
+
+    const camps = new Map();
+    if (duels.length) {
+      const [rangs] = await pool.query(
+        `SELECT dr.duel_id, dr.user_id, dr.side, u.pseudo
+           FROM duel_results dr
+           LEFT JOIN users u ON u.public_id = dr.user_id
+          WHERE dr.duel_id IN (?)`,
+        [duels.map((d) => d.duel_id)]);
+      for (const x of rangs) {
+        if (!camps.has(x.duel_id)) camps.set(x.duel_id, []);
+        camps.get(x.duel_id).push(x);
+      }
+    }
+
+    /** Combien de joueurs par camp le format annonçait. `3v3` → 3. */
+    const parCamp = (format) => {
+      const m = /^(\d+)v(\d+)$/.exec(String(format ?? ''));
+      return m ? Number(m[1]) : 1;
+    };
+
+    /**
+     * Les deux listes, et ce qui manque de chaque côté.
+     *
+     * Le lecteur est retiré de la sienne : « avec Marie » se lit, « avec moi et
+     * Marie » se relit deux fois.
+     */
+    const equipes = (r) => {
+      const tous = camps.get(r.duel_id) ?? [];
+      const attendu = parCamp(r.format);
+      const mien = tous.filter((x) => x.side === r.side && x.user_id !== userId);
+      const leur = tous.filter((x) => x.side !== r.side);
+      const nom = (x) => x.pseudo ?? null;
+      return {
+        avec: mien.map(nom).filter(Boolean),
+        contre: leur.map(nom).filter(Boolean),
+        /* Ce que les machines occupaient. Négatif impossible, mais `max` le
+           garde vrai si le format ment — une partie ouverte en 3v3 qui part à
+           deux ne doit pas annoncer « -1 bot ». */
+        botsAvec: Math.max(0, attendu - 1 - mien.length),
+        botsContre: Math.max(0, attendu - leur.length),
+      };
+    };
+
     const ligne = (r, jeu) => ({
       jeu,
       quand: r.quand,
@@ -523,6 +710,31 @@ export function createClassements({ pool, requireAuth,
          « contre un bot », qui est une information. */
       adversaire: jeu === 'duel' ? (r.adversaire ?? null) : null,
       contreBot: jeu === 'duel' && String(r.opponent_id ?? '').startsWith('bot:'),
+      /* **Les deux camps, nommés.** Voir `equipes`. */
+      ...(jeu === 'duel' ? equipes(r) : {}),
+      /* Le Fanzzy aligné au coup d'envoi, avec son nom : `TR32` ne dit rien à
+         personne, « Choriste » se reconnaît. Le catalogue peut ne pas être
+         chargé — une suite monte ce module seul — et l'identifiant nu vaut
+         alors mieux que rien. */
+      fanzzy: jeu === 'duel' && r.fanzzy_id
+        ? { id: r.fanzzy_id, nom: nomDe(r.fanzzy_id) } : null,
+      /* L'XP et la durée, et les deux ne se comportent pas pareil.
+
+         `xp` est `NOT NULL DEFAULT 0` : une partie d'avant la colonne rend donc
+         **zéro**, comme un forfait — qui n'en verse pas non plus, c'est la
+         règle. Les deux cas se confondent, et ce n'est pas grave : dans les
+         deux, il n'y a rien à annoncer, et l'écran n'écrit rien. Écrire « +0 XP »
+         serait la seule faute possible ici.
+
+         `duree_s` est nullable, elle : une partie d'avant la colonne rend nul et
+         l'écran se tait, là où zéro aurait annoncé un duel de zéro seconde. */
+      xp: jeu === 'duel' ? Number(r.xp ?? 0) : null,
+      duree: jeu === 'duel' && r.duree_s !== null ? Number(r.duree_s) : null,
+      /* La tribune tenue, **même en neutre**. `pour` rend le club soutenu et
+         vaut nul pour un neutre : on ne savait donc pas de quel côté il était,
+         alors que c'est la seule chose qui situe un duel. Le camp le dit. */
+      camp: jeu === 'duel' && r.side !== null
+        ? (Number(r.side) === 0 ? r.domicile : r.exterieur) : null,
       /* Le camp du virage se dit en club et non en 0/1 : « tu poussais pour le
          FC Sion » se lit, « side: 0 » se décode. */
       pour: r.team_id
@@ -585,6 +797,15 @@ export function createClassements({ pool, requireAuth,
     res.json({ classement: await duellistes() });
   }));
 
+  /* Sa propre adresse, et non un paramètre de la précédente : ce n'est pas le
+     même classement vu autrement, c'est une autre question — « qui s'entraîne »
+     et non « qui gagne ». Les confondre sous un filtre finirait par faire
+     croire qu'on peut monter au classement en s'entraînant. */
+  router.get('/entrainements', safe(async (_req, res) => {
+    res.set('cache-control', 'private, max-age=120');
+    res.json({ classement: await assidus() });
+  }));
+
   /**
    * Les classements d'une compétition.
    *
@@ -632,6 +853,6 @@ export function createClassements({ pool, requireAuth,
     res.json({ ...(stats ?? {}), ...histoire });
   }));
 
-  return { router, supporters, tribunes, duellistes, maPlace,
+  return { router, supporters, tribunes, duellistes, assidus, maPlace,
            competition, maPlaceDans, saisonDe, statsDe, historiqueDe, oublier };
 }

@@ -163,6 +163,19 @@ check('le retirer le retire vraiment', (await abonnement.estAbonne(LIBRE)) === f
   check('la route rend l’état du joueur', r.abonne === true);
   check('et ce que l’abonnement ouvre', r.ouvre?.packMax === reglage('abo.pack_max'));
   check('ainsi que ce qui reste libre pour tous', Array.isArray(r.libre) && r.libre.length > 0);
+
+  /* **Et ce qu'on a sans lui**, pour que l'écran écrive « 24 au lieu de 12 ».
+     Un chiffre seul ne se compare à rien, et « plus de boosters » ne veut rien
+     dire. La page avait recopié ce second nombre et annonçait « au lieu de 10 »
+     quand le réglage en dit douze : un barème recopié dans une page ment au
+     premier ajustement fait depuis /admin, et personne ne relit une page pour
+     vérifier un nombre qu'il croit connaître. */
+  check('et ce qu’on a sans lui, pour pouvoir comparer',
+    r.sans?.packMax === reglage('pack.max')
+    && r.sans?.packRegenMin === reglage('pack.regen_min')
+    || (console.log('        elle rend :', JSON.stringify(r.sans),
+      '· attendu', reglage('pack.max'), reglage('pack.regen_min')), false));
+  check('et les deux ne disent pas la même chose', r.sans?.packMax !== r.ouvre?.packMax);
 }
 
 /* --------------------------------------------- ce qu'il n'ouvre PAS
@@ -190,8 +203,16 @@ check('tous les formats de duel restent ouverts à tous',
 /* Le module d'abonnement n'expose **aucune** porte vers le jeu lui-même. Si
    l'une apparaît, elle sera nommée ici, et il faudra la défendre. */
 {
+  /* La liste des exclus est de la **plomberie**, pas des portes : monter un
+     routeur, lire un état, poser ou retirer une ligne, repousser une échéance
+     quand le prestataire annonce une facture payée. Aucune n'ouvre quoi que ce
+     soit dans le jeu.
+
+     `renouveler` a été ajoutée ici le jour où Stripe est passé en abonnement,
+     et l'y ajouter est le geste que ce contrôle réclame : on ne grossit pas la
+     liste sans venir dire pourquoi. */
   const portes = Object.keys(abonnement).filter((k) =>
-    !['router', 'estAbonne', 'etat', 'accorder', 'retirer'].includes(k));
+    !['router', 'estAbonne', 'etat', 'accorder', 'renouveler', 'retirer'].includes(k));
   const attendues = ['plafondPacks', 'regenMs', 'profondeurParcours',
     'profondeurSouvenirs', 'clubsEnPlus'];
   check(`l’abonnement n’ouvre que le rythme, la mémoire et la largeur (${portes.length})`,

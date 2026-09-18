@@ -72,6 +72,11 @@ const versJeu = (r) => ({
   tenues: lireJson(r.tenues),
   stuff: lireJson(r.stuff),
   actions: lireJson(r.actions),
+  /* Les stades rejoignent les trois autres familles de contenu. La colonne
+     est arrivée après les autres : une base d'avant sql/contenus.sql ne la
+     sert pas, et `lireJson` rend alors une liste vide — une saison sans
+     stade, ce qui est la vérité. */
+  stades: lireJson(r.stades),
   // `lancee` plutôt qu'un booléen déduit ailleurs : la date porte les deux
   // informations, et un écran qui veut dire « lancée le 3 octobre » l'a sous la
   // main sans seconde requête.
@@ -90,8 +95,12 @@ const versJeu = (r) => ({
 export async function chargerSaisons(pool) {
   try {
     const [rows] = await pool.execute(
-      `SELECT id, numero, nom, texte, series, tenues, stuff, actions, lancee_a
-         FROM saisons ORDER BY numero, id`);
+      /* Toutes les colonnes, et non la liste nommée qu'il y avait ici.
+         `stades` est arrivée avec sql/contenus.sql : la nommer ferait lever
+         sur une base où ce fichier n'est pas appliqué, et le `catch` en
+         dessous ne rattrape que la table absente — pas la colonne. Une base
+         d'avant rend alors une saison sans stade, ce qui est sa vérité. */
+      `SELECT * FROM saisons ORDER BY numero, id`);
     liste = rows.map(versJeu);
     charge = true;
     return liste.length;

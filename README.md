@@ -13,6 +13,15 @@ pour chaque entrée ce qui ne va pas aujourd'hui plutôt qu'un souhait. Il sort
 d'un contrôle général de l'application et se relit avant de choisir sur quoi
 travailler.
 
+`JURIDIQUE.md` est le dossier à donner à un juriste : ce qui est vendu, ce
+qui est tiré au sort, et où passe la frontière. Ce n’est pas un avis de droit
+et il ne peut pas en tenir lieu — il est là pour qu’une consultation coûte une
+heure au lieu de trois. `CGV.md`, `CONFIDENTIALITE.md`,
+`MENTIONS-LEGALES.md` et `LICENCE-API-FOOTBALL.md` sont les documents qui
+manquaient : des **projets**, écrits d’après ce que le code fait, à faire relire
+avant publication. Ce qui est entre crochets attend une information que seul
+l’éditeur possède.
+
 ## La forme du projet
 
 Node.js et MariaDB, hébergé chez Infomaniak. Données sportives fournies par

@@ -417,6 +417,17 @@ function rendreParcours(p, { ajouter = false } = {}) {
     </div>`;
   }).join('');
 
+  /* Sous le gros chiffre : le score d'un duel, sinon le mot « ferveur ». L'XP
+     s'y ajoute quand on la connaît — elle est nulle pour les parties d'avant la
+     colonne, et écrire « +0 XP » serait un mensonge là où la vérité est « on ne
+     sait pas ». C'est ce qu'on regarde en premier après une partie, et le
+     parcours n'en montrait rien. */
+  const gain = (l, score) => {
+    const bouts = [score || 'FERVEUR'];
+    if (l.xp) bouts.push(`+${l.xp} XP`);
+    return bouts.join(' · ');
+  };
+
   const lignes = (p.lignes ?? []).map((l) => {
     const virage = l.jeu === 'virage';
     /* **La couleur dit si ça a compté**, comme les tuiles du haut : l'or du
@@ -443,9 +454,46 @@ function rendreParcours(p, { ajouter = false } = {}) {
        pèse quelque part : la ligne ne le disait nulle part. */
     const sorte = virage ? null
       : l.mode === 'classe' ? 'classé' : 'entraînement';
-    const sous = [sorte, virage ? null : (l.adversaire || l.contreBot ? rencontre : null),
-                  l.match?.competition, l.pour ? `pour ${l.pour}` : null,
-                  l.neutre ? 'neutre' : null, quand].filter(Boolean).join(' · ');
+
+    /* **Qui était là.** `opponent_id` ne nommait qu'un adversaire, pris au
+       hasard : sur un 3v3 il en taisait cinq. On dit maintenant les deux camps
+       — les coéquipiers d'abord, parce qu'on cherche d'abord avec qui on a
+       joué — et les machines sont comptées plutôt que passées sous silence.
+       « contre Marie et 2 bots » est une phrase vraie ; « contre Marie » sur un
+       3v3 en est une fausse. */
+    const gens = (liste, bots) => {
+      const noms = [...(liste ?? [])];
+      if (bots > 0) noms.push(`${bots} bot${bots > 1 ? 's' : ''}`);
+      if (!noms.length) return null;
+      if (noms.length === 1) return noms[0];
+      return `${noms.slice(0, -1).join(', ')} et ${noms[noms.length - 1]}`;
+    };
+    const coequipiers = virage ? null : gens(l.avec, l.botsAvec);
+    const adversaires = virage ? null : gens(l.contre, l.botsContre);
+
+    /* La durée, dite comme on la dit à voix haute. Les secondes seules sous la
+       minute : un abandon à la trentième seconde doit se lire comme tel, et
+       « 0 min » le cacherait. */
+    const duree = l.duree == null ? null
+      : l.duree < 60 ? `${l.duree} s`
+      : `${Math.round(l.duree / 60)} min`;
+
+    /* **La tribune tenue, même en neutre.** `pour` vaut nul pour un neutre : on
+       ne savait donc pas de quel côté il s'était rangé, alors que c'est la
+       seule chose qui situe un duel. Le camp le dit, et « neutre » reste dit à
+       côté parce que c'est ce qui divise la ferveur par deux. */
+    const tribune = l.pour ?? l.camp;
+
+    const sous = [sorte,
+                  coequipiers ? `avec ${coequipiers}` : null,
+                  adversaires ? `contre ${adversaires}` : null,
+                  virage ? null : (l.adversaire || l.contreBot
+                    || coequipiers || adversaires ? rencontre : null),
+                  l.match?.competition,
+                  tribune ? `pour ${tribune}` : null,
+                  l.neutre ? 'neutre' : null,
+                  l.fanzzy ? `en ${l.fanzzy.nom ?? l.fanzzy.id}` : null,
+                  duree, quand].filter(Boolean).join(' · ');
     const issue = l.issue
       ? `<span class="issue ${esc(l.issue)}">${
         { win: 'GAGNÉ', loss: 'PERDU', draw: 'NUL' }[l.issue] ?? ''}</span>` : '';
@@ -454,7 +502,7 @@ function rendreParcours(p, { ajouter = false } = {}) {
       <span class="jeu" style="--c:${couleur}">${virage ? 'VIR' : (esc(l.format ?? 'DUEL'))}</span>
       <span class="qui"><b>${esc(contre)}</b><span>${esc(sous)}</span></span>
       ${issue}
-      <span class="gain"><b>+${l.ferveur}</b><span>${esc(score) || 'FERVEUR'}</span></span>
+      <span class="gain"><b>+${l.ferveur}</b><span>${esc(gain(l, score))}</span></span>
     </div>`;
   }).join('');
 

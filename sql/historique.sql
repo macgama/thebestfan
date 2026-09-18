@@ -28,3 +28,46 @@ ALTER TABLE duel_results ADD INDEX IF NOT EXISTS idx_user_sorte (user_id, mode, 
 
 -- Le Virage, lui, n'a rien à ajouter : `virage_presence` porte déjà le match,
 -- le camp, le club et la ferveur. Il lui manquait seulement d'être lu.
+
+-- ---------------------------------------------------------------------------
+-- Ce qu'une ligne de duel ne disait pas encore
+--
+-- Le parcours montrait une issue, un score et de la ferveur. Il ne disait ni
+-- avec quel Fanzzy on avait joué, ni ce que la partie avait rapporté en
+-- progression, ni combien de temps elle avait duré, ni qui était dans quel
+-- camp. Quatre colonnes, et chacune répond à une question qu'un joueur pose.
+
+-- **Le Fanzzy aligné au coup d'envoi**, c'est-à-dire le titulaire. Pas les
+-- remplaçants entrés en cours de partie : celui qui a commencé est celui dont
+-- on se souvient, et c'est lui qui permettra « ton Capo a gagné huit duels sur
+-- onze » — la phrase qui donne envie d'en faire grandir un second.
+ALTER TABLE duel_results ADD COLUMN IF NOT EXISTS fanzzy_id VARCHAR(12) NULL;
+
+-- L'XP versée pour cette partie. Elle était calculée, versée, et jamais
+-- conservée : le parcours montrait la ferveur — qui ne fait pas monter de
+-- niveau — et rien de la progression, qui est pourtant ce qu'on regarde en
+-- premier quand on vient de jouer. Nulle pour un forfait, comme la règle le
+-- veut.
+ALTER TABLE duel_results ADD COLUMN IF NOT EXISTS xp INT NOT NULL DEFAULT 0;
+
+-- La durée, en secondes. Un duel de cinq minutes et un abandon à la trentième
+-- seconde se lisaient exactement pareil. `SMALLINT UNSIGNED` tient dix-huit
+-- heures : largement au-dessus de ce qu'un duel peut durer, et deux octets.
+ALTER TABLE duel_results ADD COLUMN IF NOT EXISTS duree_s SMALLINT UNSIGNED NULL;
+
+-- Le camp : 0 pour la tribune de domicile, 1 pour celle de l'extérieur, comme
+-- partout ailleurs dans le jeu.
+--
+-- **Sans lui, on ne peut pas dire qui jouait avec qui.** Les lignes d'un même
+-- duel partagent `duel_id`, et on pourrait croire que `goals_for` suffit à
+-- séparer les deux camps — il le fait, sauf sur un match nul, où les deux
+-- côtés portent exactement les mêmes nombres. C'est précisément la partie la
+-- plus serrée, donc celle dont on veut se souvenir. Une colonne vaut mieux
+-- qu'une déduction qui échoue là où ça compte.
+--
+-- `opponent_id` ne la remplace pas : elle ne nomme qu'un adversaire, choisi au
+-- hasard parmi ceux d'en face, ce qui ne dit rien d'un 3v3.
+ALTER TABLE duel_results ADD COLUMN IF NOT EXISTS side TINYINT NULL;
+
+-- Reconstituer les deux camps d'une partie, par son identifiant.
+ALTER TABLE duel_results ADD INDEX IF NOT EXISTS idx_duel_camp (duel_id, side);

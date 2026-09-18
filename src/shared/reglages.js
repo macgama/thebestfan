@@ -59,8 +59,9 @@ export const SECTIONS = [
       'existants invalides : le serveur les refusera au prochain enregistrement.' },
   { id: 'progression', titre: 'LA PROGRESSION',
     aide: 'L’expérience gagnée par action.' },
-  { id: 'etal', titre: 'L’ÉTAL EN BILLETS',
-    aide: 'Ce que coûtent les objets achetés en billets. Les prix en euros, eux, ' +
+  { id: 'etal', titre: 'L’ÉTAL EN ÉCHARPES',
+    aide: 'Ce que coûtent les objets nommés — une pièce d’équipement, une tenue — ' +
+      'payés en écharpes gagnées en jouant. Les prix en euros, eux, ' +
       'vivent dans le catalogue de la boutique et ne se règlent pas ici : un prix ' +
       'qu’un écran peut changer d’un doigt est un prix qui finira changé par erreur.' },
   { id: 'abonnement', titre: 'L’ABONNEMENT',
@@ -292,21 +293,21 @@ export const REGLAGES = [
       'perdre trois duels doit rester plus profitable que ne pas jouer.' },
 
   /* --------------------------------------------------------------- étal */
-  { cle: 'billets.stuff_commune', section: 'etal', type: 'entier',
+  { cle: 'etal.stuff_commune', section: 'etal', type: 'entier',
     titre: 'Pièce d’équipement commune', unite: 'billets', min: 1, max: 9999, defaut: 45 },
 
-  { cle: 'billets.stuff_rare', section: 'etal', type: 'entier',
+  { cle: 'etal.stuff_rare', section: 'etal', type: 'entier',
     titre: 'Pièce rare', unite: 'billets', min: 1, max: 9999, defaut: 110 },
 
-  { cle: 'billets.stuff_epique', section: 'etal', type: 'entier',
+  { cle: 'etal.stuff_epique', section: 'etal', type: 'entier',
     titre: 'Pièce épique', unite: 'billets', min: 1, max: 9999, defaut: 260 },
 
-  { cle: 'billets.stuff_legendaire', section: 'etal', type: 'entier',
+  { cle: 'etal.stuff_legendaire', section: 'etal', type: 'entier',
     titre: 'Pièce légendaire', unite: 'billets', min: 1, max: 9999, defaut: 520,
     aide: 'Une pièce légendaire porte les modificateurs les plus francs : son prix ' +
       'est ce qui tient la distance entre un joueur qui paie et un joueur qui joue.' },
 
-  { cle: 'billets.tenue', section: 'etal', type: 'entier',
+  { cle: 'etal.tenue', section: 'etal', type: 'entier',
     titre: 'Une tenue, sur un Fanzzy', unite: 'billets', min: 1, max: 9999, defaut: 130,
     aide: 'Le même prix quelle que soit la rareté : une tenue ne change rien au jeu, ' +
       'elle change ce qu’on regarde.' },

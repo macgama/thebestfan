@@ -69,13 +69,67 @@ doute après une mise en ligne :
 curl -s https://thebestfan.online/healthz
 ```
 
+### Le code d'abord, le schéma ensuite
+
+**Les fichiers `sql/` arrivent avec le code.** Le Manager pousse le dépôt ;
+la boucle ci-dessous lit les fichiers **du serveur**. Lancer le schéma avant
+d'avoir déployé fait donc chercher un fichier qui n'est pas encore là :
+
+```
+-bash: sql/contenus.sql: No such file or directory
+```
+
+Ce n'est pas une erreur de base, c'est un ordre inversé. **Déploie, puis
+applique.**
+
+### La boucle
+
+Elle vérifie que tout est là **avant** de toucher à la base, et demande le mot
+de passe **une fois**. L'ancienne version le redemandait à chaque fichier —
+vingt-six fois — et surtout : un fichier manquant la faisait passer au suivant
+sans rien dire de plus qu'une ligne perdue au milieu. On croyait le schéma
+appliqué, et il l'était à moitié.
+
 ```bash
 cd ~/sites/thebestfan.online
-for f in auth football minutes couleurs duel souvenirs fanzzy teletext inventaire skins tenues deck admin kop amis \
-         niveau raretes stades boutique billets saisons series-neuves historique \n         abonnement; do
-  mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p o42s1v_thebestfan < sql/$f.sql
+
+FICHIERS="auth football minutes couleurs duel souvenirs fanzzy teletext
+          inventaire skins tenues deck admin kop amis niveau raretes stades
+          boutique billets saisons series-neuves historique abonnement contenus"
+
+# 1. Tout est-il là ? On regarde avant d'écrire quoi que ce soit.
+manquants=""
+for f in $FICHIERS; do
+  [ -f "sql/$f.sql" ] || manquants="$manquants $f"
 done
+if [ -n "$manquants" ]; then
+  echo "ARRÊT — ces fichiers ne sont pas sur le serveur :$manquants"
+  echo "Le code n'est pas à jour. Déploie depuis le Manager, puis recommence."
+  exit 1
+fi
+
+# 2. Le mot de passe, une seule fois.
+read -s -p "Mot de passe MySQL : " MDP; echo
+
+# 3. On applique, et on s'arrête à la première erreur.
+for f in $FICHIERS; do
+  printf '  %-16s' "$f"
+  if mysql -h o42s1v.myd.infomaniak.com -u o42s1v_tbf -p"$MDP" \
+           o42s1v_thebestfan < "sql/$f.sql" 2>/tmp/err; then
+    echo "ok"
+  else
+    echo "ÉCHEC"; cat /tmp/err
+    echo "Le schéma est incomplet. Corrige, puis relance : c'est rejouable."
+    unset MDP; exit 1
+  fi
+done
+unset MDP
+echo "Schéma à jour."
 ```
+
+Chaque fichier est **rejouable** : le relancer sur une base déjà à jour ne
+fait rien. Il n'y a donc aucune raison d'hésiter à recommencer la boucle
+entière après avoir corrigé quoi que ce soit.
 
 Les trois derniers ne créent **aucune table** : ils ajoutent des colonnes et
 reprennent des données. Ils n'entrent donc pas dans le compte ci-dessous, ils
@@ -144,7 +198,7 @@ que `raretes` les a rangées.
   **à la lecture** : c'est cette migration qui leur en donne le moyen, donc ils
   comptent double tant qu'elle n'est pas appliquée.
 
-Contrôle : `SHOW TABLES;` doit en lister **40**.
+Contrôle : `SHOW TABLES;` doit en lister **41**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`

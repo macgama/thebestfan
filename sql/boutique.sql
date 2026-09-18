@@ -58,3 +58,37 @@ CREATE TABLE IF NOT EXISTS achats (
   CONSTRAINT fk_achats_user FOREIGN KEY (user_id)
     REFERENCES users(public_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------------
+-- Les billets n'existent plus : l'étal se paie en écharpes
+--
+-- L'argent réel n'achète que l'abonnement, et les écharpes ne se gagnent qu'en
+-- jouant. La chaîne euro → tirage n'est plus coupée par une séparation qu'il
+-- fallait tenir — deux compteurs, deux règles, et la vigilance de ne jamais les
+-- mélanger — elle est coupée **à la racine** : il n'y a plus de monnaie
+-- achetable du tout.
+--
+-- Les cinq prix de l'étal changent donc de préfixe, de `billets.` à `etal.`.
+-- **Un renommage sans cette migration perd les ajustements faits depuis
+-- /admin, en silence** : la ligne resterait en base sous l'ancienne clé, plus
+-- personne ne la lirait, et le prix reviendrait à son défaut sans qu'aucun
+-- écran ne le dise. C'est exactement le genre de perte qu'on ne remarque que
+-- des semaines plus tard, en se demandant pourquoi un objet est moins cher.
+--
+-- `IGNORE` : si quelqu'un a déjà posé la nouvelle clé, on garde la sienne et on
+-- jette l'ancienne. Deux valeurs pour un même prix, c'est une de trop, et la
+-- plus récente est la bonne.
+UPDATE IGNORE reglages SET cle = CONCAT('etal.', SUBSTRING(cle, 9))
+ WHERE cle LIKE 'billets.%';
+DELETE FROM reglages WHERE cle LIKE 'billets.%';
+
+-- La colonne `user_wallet.billets` **reste**, et elle ne bouge plus.
+--
+-- On ne la supprime pas : elle porte ce que des joueurs ont payé en euros, et
+-- effacer la trace d'un paiement est la seule chose qu'on ne puisse pas
+-- reprendre. On ne la convertit pas en écharpes non plus — ce serait rouvrir la
+-- chaîne euro → écharpe → booster pour ceux qui en ont, c'est-à-dire refaire
+-- exactement ce qu'on vient de fermer.
+--
+-- Un solde restant se rembourse, par Stripe, à la personne. C'est la réponse
+-- honnête, et la seule.

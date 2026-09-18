@@ -106,7 +106,16 @@ const get = async (p) => (await fetch(base+p)).json();
 
 let r = await get('/api/rank/supporters');
 check('classement des supporters', r.classement.length === 6);
-check('trié sur la ferveur', r.classement[0].pseudo === 'Momo' && Number(r.classement[0].ferveur) === 900);
+/* **900 de virage plus 5 100 de duels classés.** Ce contrôle attendait 900 :
+   il mesurait l'époque où ce classement ne lisait que le Grand Virage. La
+   ferveur du duel était comptée, écrite, montrée au parcours et au classement
+   par compétition — et ignorée ici. Le nombre change parce que le sens
+   change, et c'est la décision qu'on vient de prendre : la ferveur est la
+   ferveur, d'où qu'elle vienne. */
+check('trié sur la ferveur',
+  r.classement[0].pseudo === 'Momo' && Number(r.classement[0].ferveur) === 6000
+  || (console.log('        en tête :', r.classement[0].pseudo,
+    r.classement[0].ferveur), false));
 check('le club du joueur est indiqué', r.classement[0].club === 'Petit Club');
 
 r = await get('/api/rank/tribunes');
@@ -154,8 +163,14 @@ const gros = r.classement.find((x)=>x.name==='Gros Club');
   await pool.query('DELETE FROM user_follows WHERE user_id = ? AND team_id = 91', [moi]);
   C.oublier();
 }
+/* Les deux moyennes montent, et pour la même raison : les duels classés de
+   chaque supporter remontent désormais à la tribune pour laquelle il a joué.
+   Petit Club : 1 600 de virage + 5 200 de duels sur 2 fidèles. Gros Club :
+   500 + 400 sur 4. L'ordre, lui, ne bouge pas — c'est bien la moyenne qui
+   classe, pas le total. */
 check('la moyenne est bien par supporter',
-  Number(petit.moyenne) === 800 && Number(gros.moyenne) === 125);
+  Number(petit.moyenne) === 3400 && Number(gros.moyenne) === 225
+  || (console.log('        petit', petit.moyenne, '· gros', gros.moyenne), false));
 check('le gros club a plus de supporters mais moins de moyenne',
   gros.supporters > petit.supporters && Number(gros.moyenne) < Number(petit.moyenne));
 
@@ -165,7 +180,11 @@ check('trié sur les victoires', Number(r.classement[0].gagnes) === 2);
 check('taux de victoire calculé', Number(r.classement[0].taux) === 67);
 
 r = await get('/api/rank/moi');
-check('ma ferveur', r.ferveur === 900);
+/* La même somme que la liste, et c'est tout l'objet : « ma place » lisait le
+   virage seul pendant que SUPPORTERS en lit deux, et le joueur lisait donc un
+   rang calculé sur d'autres nombres que le classement qu'il surmonte. */
+check('ma ferveur', r.ferveur === 6000
+  || (console.log('        elle dit :', r.ferveur), false));
 check('mon rang', r.rang === 1 && r.sur === 6);
 check('mes duels comptés', r.duels.joues === 3);
 
@@ -368,6 +387,147 @@ check('une compétition sans match rend des listes vides',
   /* Et l'adversaire qu'on ne retrouve pas ne fait pas disparaître la partie. */
   check('un adversaire introuvable garde quand même sa ligne',
     duels.some((l) => l.adversaire === null && l.contreBot === false));
+}
+
+/* ======================================= une seule monnaie, deux sources
+
+   **La ferveur est la ferveur**, qu'elle vienne du Grand Virage ou d'un duel
+   classé. Elle est comptée et écrite pareil des deux côtés ; elle doit être
+   lue pareil.
+
+   Elle ne l'était pas. Le classement par compétition additionnait déjà les deux
+   — et le fait toujours — pendant que SUPPORTERS et TRIBUNES ne lisaient que
+   `virage_presence`. Quelqu'un qui ne faisait que des duels avait de la
+   ferveur, la voyait dans son parcours et au classement de la Ligue 1, et
+   restait à zéro au classement des supporters. Le même mot mesurait deux
+   choses selon l'onglet.
+
+   On fabrique donc le cas qui n'apparaissait nulle part : un joueur qui n'a
+   jamais mis les pieds dans un virage et qui a gagné des duels. */
+{
+  const DUELLISTE = 'd90000-0000-0000-0000-000000000009'.slice(0, 36);
+  await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash,status)
+                    VALUES (?,?,?,'x','active')`,
+    [DUELLISTE, 'duelliste@ex.fr', 'Rachid']);
+  // Il suit le Gros Club (91) et n'a aucune ligne de virage.
+  await pool.query('INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,91,1)',
+    [DUELLISTE]);
+  await pool.query(`INSERT INTO duel_results
+      (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,ended_at)
+    VALUES ('dz-1',?,'x','win',7001,91,400,'classe',NOW(3)),
+           ('dz-2',?,'x','win',7001,91,350,'classe',NOW(3))`, [DUELLISTE, DUELLISTE]);
+  /* Et une soirée d'entraînement, qui ne doit rien rapporter à personne :
+     c'est toute la différence avec le duel classé, et le tri se fait à la
+     lecture — la ligne existe, elle ne compte pas. */
+  await pool.query(`INSERT INTO duel_results
+      (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,ended_at)
+    VALUES ('dz-3',?,'x','win',7001,91,9999,'entrainement',NOW(3))`, [DUELLISTE]);
+  C.oublier();
+
+  const sup = (await get('/api/rank/supporters')).classement ?? [];
+  const lui = sup.find((x) => x.pseudo === 'Rachid');
+  check('un joueur qui ne fait que des duels est classé parmi les supporters',
+    Boolean(lui)
+    || (console.log('        la liste :', sup.map((x) => x.pseudo).join(', ')), false));
+  check('avec la ferveur de ses duels classés', Number(lui?.ferveur) === 750
+    || (console.log('        il a :', lui?.ferveur), false));
+  /* Neuf mille neuf cent quatre-vingt-dix-neuf d'entraînement le mettraient
+     premier : c'est le contrôle qui compte le plus ici. */
+  check('et l’entraînement ne lui rapporte rien', Number(lui?.ferveur) !== 10749);
+
+  /* La tribune de son club l'encaisse aussi : il a poussé **pour elle**. */
+  const trib = (await get('/api/rank/tribunes')).classement ?? [];
+  const gros3 = trib.find((x) => x.name === 'Gros Club');
+  check('et sa tribune reçoit cette ferveur', Number(gros3?.ferveur) >= 750
+    || (console.log('        elle a :', gros3?.ferveur), false));
+
+  /* Et sa place le dit comme la liste : les deux lisaient deux sources
+     différentes, et le joueur lisait « 312e » sous un classement qui ne le
+     classait pas sur les mêmes nombres. */
+  const avant = moi;
+  moi = DUELLISTE;
+  const place = await get('/api/rank/moi');
+  moi = avant;
+  check('sa place est calculée sur la même ferveur que la liste',
+    Number(place.ferveur) === 750
+    || (console.log('        sa place dit :', JSON.stringify(place)), false));
+  check('et elle le classe', Number(place.rang) > 0);
+
+  await pool.query(`DELETE FROM duel_results WHERE user_id = ?`, [DUELLISTE]);
+  await pool.query(`DELETE FROM user_follows WHERE user_id = ?`, [DUELLISTE]);
+  await pool.query(`DELETE FROM users WHERE public_id = ?`, [DUELLISTE]);
+  C.oublier();
+}
+
+/* ==================================== le tableau de ceux qui s'entraînent
+
+   L'entraînement ne rapporte rien — pas de ferveur, aucun effet sur les
+   classements — et c'est toute sa différence avec le duel classé. Mais « ne
+   rien rapporter » et « n'exister nulle part » sont deux choses : quelqu'un qui
+   passe une soirée à s'entraîner n'en trouvait aucune trace ailleurs que dans
+   son propre parcours.
+
+   **Il classe sur les parties jouées, pas sur les victoires**, et c'est le
+   contrôle qui compte le plus ici. On s'entraîne aussi contre des machines :
+   classer sur les victoires ferait un tableau de qui bat le plus de bots, ce
+   qui se gagne en y passant la nuit et ne dit rien de personne. Les parties
+   coûtent le même prix à tout le monde — cinq minutes chacune. */
+{
+  const ASSIDU = 'a90000-0000-0000-0000-00000000000a'.slice(0, 36);
+  const VAINQUEUR = 'v90000-0000-0000-0000-00000000000v'.slice(0, 36);
+  for (const [id, mail, nom] of [[ASSIDU, 'assidu@ex.fr', 'Nadia'],
+    [VAINQUEUR, 'vainqueur@ex.fr', 'Tonio']]) {
+    await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash,status)
+                      VALUES (?,?,?,'x','active')`, [id, mail, nom]);
+  }
+  // Nadia joue beaucoup et perd souvent. Tonio joue peu et gagne tout.
+  const lignes = [];
+  for (let i = 0; i < 6; i++) lignes.push([`en-a${i}`, ASSIDU, i < 2 ? 'win' : 'loss']);
+  for (let i = 0; i < 3; i++) lignes.push([`en-v${i}`, VAINQUEUR, 'win']);
+  for (const [duel, uid, issue] of lignes) {
+    await pool.query(`INSERT INTO duel_results
+        (duel_id,user_id,opponent_id,outcome,ferveur,mode,ended_at)
+      VALUES (?,?,'bot:aaaa1111',?,0,'entrainement',NOW(3))`, [duel, uid, issue]);
+  }
+  C.oublier();
+
+  const e = (await get('/api/rank/entrainements')).classement ?? [];
+  const nadia = e.find((x) => x.pseudo === 'Nadia');
+  const tonio = e.find((x) => x.pseudo === 'Tonio');
+  check('le tableau des entraînements existe et se remplit', Boolean(nadia && tonio)
+    || (console.log('        il rend :', JSON.stringify(e).slice(0, 160)), false));
+  check('il compte les parties jouées', Number(nadia?.joues) === 6);
+  check('et montre les victoires à côté', Number(nadia?.gagnes) === 2);
+  /* Tonio gagne trois fois sur trois, Nadia deux fois sur six : sur les
+     victoires, Tonio serait devant à égalité de taux parfait. C'est bien
+     l'assiduité qui classe. */
+  check('celui qui joue le plus passe devant celui qui gagne le mieux',
+    e.indexOf(nadia) < e.indexOf(tonio)
+    || (console.log('        l’ordre :', e.map((x) => x.pseudo).join(', ')), false));
+
+  /* Et il ne déborde nulle part : l'entraînement ne rapporte aucune ferveur,
+     donc ni le classement des supporters ni celui des duellistes ne doivent
+     avoir bougé. C'est la moitié de la règle, et c'est celle qu'on casse en
+     voulant bien faire. */
+  const sup2 = (await get('/api/rank/supporters')).classement ?? [];
+  check('s’entraîner ne fait entrer personne au classement des supporters',
+    !sup2.some((x) => x.pseudo === 'Nadia'));
+  const duel2 = (await get('/api/rank/duellistes')).classement ?? [];
+  check('ni à celui des duellistes',
+    !duel2.some((x) => x.pseudo === 'Nadia'));
+
+  /* Trois parties au minimum, comme pour les duellistes : une liste où l'on
+     entre après une partie est une liste où tout le monde est. */
+  await pool.query(`DELETE FROM duel_results WHERE duel_id IN ('en-a0','en-a1','en-a2','en-a3')`);
+  C.oublier();
+  const e2 = (await get('/api/rank/entrainements')).classement ?? [];
+  check('en dessous de trois parties, on n’y figure pas',
+    !e2.some((x) => x.pseudo === 'Nadia')
+    || (console.log('        il rend encore :', JSON.stringify(e2).slice(0, 120)), false));
+
+  await pool.query('DELETE FROM duel_results WHERE user_id IN (?,?)', [ASSIDU, VAINQUEUR]);
+  await pool.query('DELETE FROM users WHERE public_id IN (?,?)', [ASSIDU, VAINQUEUR]);
+  C.oublier();
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);

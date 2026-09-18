@@ -70,11 +70,20 @@ export function createAbonnement({ pool, requireAuth }) {
   }
 
   /** L'état complet, pour l'écran qui le montre. */
-  async function etat(userId) {
+  async function etat(userId) { return etatVia(q, userId); }
+
+  /**
+   * Le même, avec un lecteur choisi.
+   *
+   * Une transaction en cours doit relire par **sa** connexion : le pool lui
+   * rendrait l'état d'avant l'écriture, et `accorder` annoncerait « non
+   * abonné » à l'instant où il vient de poser la ligne.
+   */
+  async function etatVia(lire, userId) {
     const defaut = { abonne: false, formule: null, fin: null, source: null };
     if (!userId) return defaut;
     try {
-      const [a] = await q(
+      const [a] = await lire(
         `SELECT formule, debut, fin, source FROM abonnements WHERE user_id = ?`, [userId]);
       if (!a) return defaut;
       const actif = a.fin === null || new Date(a.fin) > new Date();
@@ -95,10 +104,28 @@ export function createAbonnement({ pool, requireAuth }) {
    *
    * `jours` nul veut dire sans terme : c'est ce que pose un administrateur pour
    * un bêta-testeur. Rien ne l'expire, et c'est voulu.
+   *
+   * ## `conn` : écrire **dans** la transaction de l'appelant
+   *
+   * La boutique livre à l'intérieur d'une transaction, et c'est elle qui tient
+   * la propriété : si la remise échoue après le débit, le `rollback` défait
+   * tout. Écrire par le pool depuis ici sortirait de cette transaction — un
+   * abonnement posé survivrait à l'annulation de l'achat qui l'a payé.
+   *
+   * Et ce n'est pas qu'une question de propreté : la transaction tient un
+   * verrou sur la ligne, une écriture par le pool l'attend, et six
+   * encaissements simultanés se bloquent les uns les autres jusqu'au
+   * `Lock wait timeout`. C'est ce qui est arrivé, et c'est ce qui l'a révélé.
+   *
+   * Nul par défaut : l'administration, elle, n'a pas de transaction à partager.
    */
   async function accorder(userId, { formule = 'offert', jours = null,
-    source = 'admin', reference = null } = {}) {
-    await q(
+    source = 'admin', reference = null, conn = null } = {}) {
+    const ecrire = conn
+      ? (sql, params) => conn.query(sql, params).then(([r]) => r)
+      : q;
+
+    await ecrire(
       `INSERT INTO abonnements (user_id, formule, fin, source, reference)
        VALUES (?, ?, ${jours === null ? 'NULL'
     : 'DATE_ADD(GREATEST(NOW(3), COALESCE(fin, NOW(3))), INTERVAL ? DAY)'}, ?, ?)
@@ -109,7 +136,41 @@ export function createAbonnement({ pool, requireAuth }) {
     : 'DATE_ADD(GREATEST(NOW(3), COALESCE(abonnements.fin, NOW(3))), INTERVAL ? DAY)'}`,
       jours === null ? [userId, formule, source, reference]
         : [userId, formule, jours, source, reference, jours]);
-    return etat(userId);
+    /* Relu par la **même** connexion quand il y en a une : hors transaction, le
+       pool rendrait l'état d'avant l'écriture qu'on vient de faire. */
+    return conn ? etatVia((sql, pp) => conn.query(sql, pp).then(([r]) => r), userId)
+      : etat(userId);
+  }
+
+  /**
+   * Repousser l'échéance d'un abonnement **retrouvé par sa référence**.
+   *
+   * C'est ce que le prestataire de paiement appelle à chaque facture payée, et
+   * une fois de plus à la résiliation. Il ne connaît pas nos joueurs : il
+   * connaît l'identifiant de l'abonnement qu'il gère, et c'est ce que
+   * `reference` porte depuis le premier jour — la colonne existait pour ça.
+   *
+   * **La date vient d'en face**, pas de notre calendrier. Stripe sait quand le
+   * mois s'arrête ; recopier « trente et un jours » décalerait d'un jour à
+   * chaque renouvellement, et le décalage s'accumulerait sans que personne ne
+   * le voie avant un an.
+   *
+   * Une référence inconnue ne lève pas et n'écrit rien : un événement qui
+   * concerne un abonnement qu'on n'a jamais posé — un essai de test, un compte
+   * supprimé — est une nouvelle sans conséquence, et la rejeter ferait rejouer
+   * Stripe indéfiniment.
+   */
+  async function renouveler(reference, fin) {
+    if (!reference) return { touche: 0 };
+    try {
+      const r = await q(
+        'UPDATE abonnements SET fin = ? WHERE reference = ?',
+        [fin ?? null, String(reference)]);
+      return { touche: r.affectedRows ?? 0 };
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE') return { touche: 0 };
+      throw e;
+    }
   }
 
   /** Retirer. La ligne part : une échéance au passé dirait la même chose, et il
@@ -165,6 +226,19 @@ export function createAbonnement({ pool, requireAuth }) {
           parcoursLibre: reglage('abo.parcours_libre'),
           souvenirsLibres: reglage('abo.souvenirs_libres'),
         },
+        /* **Et ce qu'on a sans lui.** L'écran qui propose l'abonnement doit
+           écrire « 24 au lieu de 12 » : un chiffre seul ne se compare à rien,
+           et « plus de boosters » ne veut rien dire du tout.
+
+           Les deux côtés partent d'ici plutôt que la page ne retienne le
+           second. Elle l'avait fait, et elle annonçait « au lieu de 10 » quand
+           le réglage en dit douze — une page qui recopie un barème le fait
+           mentir au premier ajustement depuis /admin, et personne ne relit une
+           page pour vérifier un nombre qu'on croit connaître. */
+        sans: {
+          packMax: plafondPacks(false),
+          packRegenMin: reglage('pack.regen_min'),
+        },
         /* Et ce dont il ne décide pas. La liste est courte et elle est là pour
            être lue : c'est la promesse du jeu, et un joueur qui hésite à
            s'abonner doit pouvoir vérifier qu'il ne lui manque rien pour jouer. */
@@ -177,6 +251,6 @@ export function createAbonnement({ pool, requireAuth }) {
     }
   });
 
-  return { router, estAbonne, etat, accorder, retirer,
+  return { router, estAbonne, etat, accorder, renouveler, retirer,
     plafondPacks, regenMs, profondeurParcours, profondeurSouvenirs, clubsEnPlus };
 }

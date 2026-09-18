@@ -233,7 +233,19 @@ console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
      Le cliquet **descend** ici, et c'est le seul sens dans lequel on peut le
      bouger sans s'expliquer. Le laisser à 244 laisserait passer sans bruit la
      perte de soixante-cinq dessins. */
-  const DETTE = 179;
+  /* 179 → 220. Quarante et une de plus, et c'est **du contenu ajouté** : la
+     série LA REPRISE, douze lignées communes de trois âges et cinq légendaires.
+     Elles n'ont aucune image et elles n'en auront pas avant que quelqu'un les
+     dessine — 1 476 fichiers d'états et 41 cartes.
+
+     C'est la seule raison admissible de relever ce cliquet, et elle est déjà
+     écrite au-dessus : on le bouge pour du contenu neuf, jamais pour du contenu
+     perdu. Le laisser à 179 aurait voulu dire refuser toute nouvelle série tant
+     qu'elle n'est pas dessinée — ce qui interdirait d'écrire une saison avant de
+     l'illustrer, alors que c'est l'ordre naturel.
+
+     `npm run dessins --serie RP` dit où en est cette dette-là. */
+  const DETTE = 220;
   check(`et ${DEX.length - avec} cartes restent sans dessin d’aucune sorte`,
     DEX.length - avec <= DETTE
     || (console.log('        ', DEX.filter((f) => !adresse(f.id))

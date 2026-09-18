@@ -37,7 +37,7 @@ async function jusqua(fn, ms = 8000) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS abonnements, achats, kop_invites, amities, saisons,
+await raw.query(`DROP TABLE IF EXISTS contenus, abonnements, achats, kop_invites, amities, saisons,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
@@ -47,7 +47,7 @@ for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'sou
                  'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'admin.sql',
                  // Sans elle, l'onglet SAISONS se monte sur une table absente et
                  // le contrôle mesurerait un écran vide plutôt que l'écran.
-                 'saisons.sql']) {
+                 'saisons.sql','contenus.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 /* On repart d'un catalogue propre : les essais précédents laissent des ZZ.
@@ -295,6 +295,41 @@ await page.evaluate(() => [...document.querySelectorAll('nav button')]
 check('l’écran des réglages se peuple depuis le registre', await jusqua(async () =>
   await page.evaluate(() => document.querySelectorAll('#main .rg').length > 15)));
 
+/* ------------------------- les avantages de l'abonnement se règlent d'ici
+
+   Ils vivent dans le registre comme le reste du barème, et c'est ce qui permet
+   de les ajuster pendant la bêta sans relivrer : « vingt-quatre boosters,
+   est-ce trop ? » se répond en une soirée d'essai, pas en un déploiement.
+
+   Ce contrôle regarde la **section**, et non les clés une à une : c'est elle
+   qui porte la règle en toutes lettres — « il vend de la largeur et du confort,
+   jamais de la puissance » — et c'est elle que quelqu'un lira avant de changer
+   un nombre. Une section qui disparaîtrait de l'écran laisserait les cinq
+   réglages sans leur phrase. */
+{
+  const abo = await page.evaluate(() => {
+    const sect = [...document.querySelectorAll('#main .sect')]
+      .find((x) => /ABONNEMENT/i.test(x.querySelector('h3')?.textContent ?? ''));
+    if (!sect) return null;
+    return {
+      aide: sect.querySelector('.sh')?.textContent.replace(/\s+/g, ' ').trim() ?? '',
+      champs: [...sect.querySelectorAll('.rg')]
+        .map((r) => r.querySelector('.lib b')?.textContent.trim() ?? ''),
+      reglables: sect.querySelectorAll('input,select,button.bascule').length,
+    };
+  });
+  check('l’abonnement a sa section dans les réglages', Boolean(abo)
+    || (console.log('        sections vues :', await page.evaluate(() =>
+      [...document.querySelectorAll('#main .sect h3')].map((h) => h.textContent).join(' | '))), false));
+  check('ses cinq avantages s’y règlent', (abo?.reglables ?? 0) >= 5
+    || (console.log('        champs :', JSON.stringify(abo?.champs)), false));
+  /* La phrase compte autant que les champs : c'est elle qui arrête la main de
+     celui qui voudrait « rendre l'abonnement plus attractif ». */
+  check('et la section rappelle ce qu’il n’a pas le droit de vendre',
+    /jamais de la puissance/i.test(abo?.aide ?? '')
+    || (console.log('        elle dit :', abo?.aide), false));
+}
+
 const ecran = await page.evaluate(() => {
   const rg = [...document.querySelectorAll('#main .rg')];
   return {
@@ -534,6 +569,126 @@ if (process.env.CAPTURE) {
   await page.screenshot({ path: path.join(tmpdir(), 'admin-saisons.png'), fullPage: true });
   console.log(`   captures : ${path.join(tmpdir(), 'admin-fanzzy.png')}`);
   console.log(`              ${path.join(tmpdir(), 'admin-saisons.png')}`);
+}
+
+/* =============================== TOUS les champs, un par un, jusqu'en base
+
+   ## Pourquoi ce contrôle existe
+
+   L'écran des réglages en compte une quarantaine. Les suites en éprouvaient
+   **un** — `virage.but_a` — et en déduisaient que le mécanisme marchait. C'est
+   vrai du mécanisme ; ça ne dit rien des trente-neuf autres, dont chacun a son
+   type, ses bornes et son nom de clé. Une clé mal orthographiée dans le
+   registre, un type que le serveur refuse, une borne qui exclut sa propre
+   valeur par défaut : rien de tout ça ne se voit en relisant, et tout ça
+   s'enregistre en silence ou refuse en silence.
+
+   ## Ce qu'il fait
+
+   Pour chaque réglage : il calcule une valeur **différente de celle affichée**
+   mais dans les bornes, la pose par l'écran comme le ferait un doigt, puis va
+   la relire **en base**. Pas dans la page — la page pourrait afficher ce
+   qu'elle vient de taper sans que rien ne soit parti.
+
+   Et il remet tout en état après : les autres suites partagent cette base.
+*/
+{
+  await page.evaluate(() => [...document.querySelectorAll('nav button')]
+    .find((b) => /RÉGLAGES/i.test(b.textContent))?.click());
+  await jusqua(async () => await page.evaluate(() =>
+    document.querySelectorAll('#main .rg').length > 15));
+
+  /** Le registre, tel que le serveur le déclare. */
+  const registre = await page.evaluate(async () => {
+    const r = await fetch('/api/admin/registre', { credentials: 'same-origin' });
+    return r.json();
+  });
+
+  /**
+   * Une valeur neuve, différente de l'actuelle et dans les bornes.
+   *
+   * Différente, parce qu'un champ qu'on « change » pour la même valeur ne
+   * déclenche aucun `change` dans un navigateur : le contrôle passerait au vert
+   * sans que rien n'ait été posé.
+   */
+  const neuve = (r, actuelle) => {
+    if (r.type === 'booleen') return !actuelle;
+    /* Un texte libre n'a pas de « cran suivant » : on en écrit un, court et
+       reconnaissable. Sans ce cas, le seul champ de texte de l'écran — le
+       message de fermeture, celui que tous les joueurs liront un jour de
+       panne — restait le seul jamais éprouvé. */
+    if (r.type === 'texte') return 'Essai du banc, à effacer.';
+    if (r.type === 'choix') {
+      const autres = (r.choix ?? []).map(([v]) => v).filter((v) => v !== actuelle);
+      return autres[0] ?? null;
+    }
+    const min = Number(r.min ?? 0);
+    const max = Number(r.max ?? 1000);
+    const pas = r.type === 'decimal' ? 0.01 : 1;
+    const haut = Number(actuelle) + pas;
+    const bas = Number(actuelle) - pas;
+    if (haut <= max) return Number(haut.toFixed(2));
+    if (bas >= min) return Number(bas.toFixed(2));
+    return null;   // borne d'un seul cran : rien à changer
+  };
+
+  const rates = [];
+  const sautes = [];
+  let poses = 0;
+
+  for (const r of registre.reglages) {
+    const actuelle = registre.valeurs[r.cle];
+    const v = neuve(r, actuelle);
+    if (v === null || v === undefined) { sautes.push(r.cle); continue; }
+
+    /* On pose par l'écran, pas par l'API : c'est le chemin du doigt qu'on
+       éprouve — le champ, son `change`, la lecture de son type, l'appel. */
+    const pose = await page.evaluate(async ({ cle, val, type }) => {
+      const el = document.querySelector(`[data-champ="${CSS.escape(cle)}"]`)
+        ?? document.querySelector(`[data-bascule="${CSS.escape(cle)}"]`);
+      if (!el) return 'aucun champ à l’écran';
+      if (el.dataset.bascule !== undefined) { el.click(); return null; }
+      el.value = String(val);
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return null;
+    }, { cle: r.cle, val: v, type: r.type });
+
+    if (pose) { rates.push(`${r.cle} : ${pose}`); continue; }
+    poses += 1;
+
+    /* **On relit en base**, et pas à l'écran. Une page peut montrer ce qu'on
+       vient d'y taper sans que rien ne soit parti — c'est même le défaut le
+       plus courant de ce genre d'écran. */
+    const arrive = await jusqua(async () => {
+      const [l] = await pool.query('SELECT valeur FROM reglages WHERE cle = ?', [r.cle]);
+      if (!l.length) return false;
+      const brutVal = l[0].valeur;
+      const lu = typeof brutVal === 'string' ? brutVal : JSON.stringify(brutVal);
+      return String(lu).replace(/^"|"$/g, '') === String(v);
+    }, 4000);
+
+    if (!arrive) {
+      const [l] = await pool.query('SELECT valeur FROM reglages WHERE cle = ?', [r.cle]);
+      rates.push(`${r.cle} : posé ${v}, la base dit ${
+        l.length ? JSON.stringify(l[0].valeur) : '(rien)'}`);
+    }
+  }
+
+  check(`tous les champs des réglages s'enregistrent (${poses} éprouvés)`,
+    rates.length === 0
+    || (console.log('        ratés :'), rates.forEach((x) => console.log('          ' + x)), false));
+  /* Les sautés sont ceux dont la borne ne laisse aucun autre cran — un booléen
+     n'en a pas, un choix à une seule option non plus. Les taire ferait croire
+     à une couverture complète. */
+  if (sautes.length) console.log(`        (${sautes.length} sans autre valeur possible : ${sautes.join(', ')})`);
+  check('et aucun réglage n’est resté hors de portée du doigt',
+    poses + sautes.length === registre.reglages.length
+    || (console.log('        déclarés', registre.reglages.length,
+      '· posés', poses, '· sautés', sautes.length), false));
+
+  /* La base repart propre : les autres suites la partagent, et un barème
+     décalé d'un cran fait rougir très loin d'ici. */
+  await pool.execute('DELETE FROM reglages');
 }
 
 await nav.close();

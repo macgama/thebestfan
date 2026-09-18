@@ -7,6 +7,7 @@
     "node": ">=20"
   },
   "scripts": {
+    "test": "node scripts/tout-tester.mjs",
     "start": "node --env-file-if-exists=.env server.js",
     "build": "npm install && node build.mjs",
     "schema:appliquer": "node --env-file-if-exists=.env scripts/appliquer-schema.mjs",
@@ -21,6 +22,7 @@
     "stades:smoke": "node scripts/stades-smoke.mjs",
     "niveau:smoke": "node scripts/niveau-smoke.mjs",
     "abo:smoke": "node scripts/abonnement-smoke.mjs",
+    "contenus:smoke": "node scripts/contenus-smoke.mjs",
     "kop:smoke": "node scripts/kop-smoke.mjs",
     "amis:smoke": "node scripts/amis-smoke.mjs",
     "amis:ui": "node scripts/amis-ui-smoke.mjs",
@@ -43,6 +45,9 @@
     "images": "node scripts/fanzzy-images.mjs",
     "art": "node scripts/fanzzy-art.mjs",
     "art:tout": "node scripts/fanzzy-art-tout.mjs",
+    "dessins": "node scripts/dessins.mjs",
+    "quota": "node scripts/quota.mjs",
+    "charge": "node scripts/virage-loadtest.mjs",
     "actions": "node scripts/action-images.mjs",
     "actions:invites": "node scripts/action-images.mjs --invites",
     "stuff": "node scripts/stuff-images.mjs",
@@ -59,6 +64,7 @@
     "doublons": "node scripts/fanzzy-doublons.mjs",
     "etats:test": "node scripts/etats-smoke.mjs",
     "catalogue:test": "node scripts/catalogue-smoke.mjs",
+    "cote:test": "node scripts/cote-smoke.mjs",
     "dossier": "node scripts/dossier.mjs",
     "catalogue": "node scripts/catalogue.mjs",
     "prefixes": "node scripts/fanzzy-prefixes.mjs",

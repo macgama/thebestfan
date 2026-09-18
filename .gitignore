@@ -30,3 +30,4 @@ art/**/_src/
 # la servir plus grande. Ils restent donc dans l'historique. Ne pas les ranger
 # sous `_src/` pour « faire comme les autres » : ce ne sont pas les mêmes
 # fichiers.
+.tbf-suite.lock

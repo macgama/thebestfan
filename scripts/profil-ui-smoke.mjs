@@ -89,13 +89,21 @@ await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,statu
 await raw.query(`INSERT INTO virage_presence (user_id,fixture_id,side,team_id,ferveur,joined_at)
                  VALUES (?,7001,0,85,240,NOW(3) - INTERVAL 5 MINUTE)`, [U]);
 await raw.query(
+  /* `p2` est le 2v2 qui éprouve les ajouts : un Fanzzy aligné, de l'XP, une
+     durée, un camp, et un coéquipier qui reste à nommer plus bas.
+
+     Les autres lignes gardent leurs colonnes vides **exprès** : ce sont les
+     parties d'avant la migration, et l'écran ne doit rien inventer pour elles.
+     `xp` y vaut zéro et non nul — la colonne est `NOT NULL DEFAULT 0`, donc
+     c'est bien ce qu'une vraie ligne ancienne porte, et c'est ce qu'il faut
+     éprouver. Zéro et « on ne sait pas » se disent pareil à l'écran : rien. */
   `INSERT INTO duel_results
      (duel_id,user_id,opponent_id,outcome,goals_for,goals_against,
-      fixture_id,team_id,ferveur,format,mode,ended_at)
-   VALUES ('p1',?,'x','win', 3,1,7001,85, 120,'1v1','classe',       NOW(3) - INTERVAL 1 MINUTE),
-          ('p2',?,'x','loss',0,2,7001,85,  60,'2v2','classe',       NOW(3) - INTERVAL 2 MINUTE),
-          ('p3',?,'x','draw',1,1,7001,85,  30,'1v1','entrainement', NOW(3) - INTERVAL 3 MINUTE),
-          ('p4',?,'x','win', 2,0,7001,NULL,15,'2v2','entrainement', NOW(3) - INTERVAL 4 MINUTE)`,
+      fixture_id,team_id,ferveur,format,mode,fanzzy_id,xp,duree_s,side,ended_at)
+   VALUES ('p1',?,'x','win', 3,1,7001,85, 120,'1v1','classe',       NULL,0,NULL,NULL, NOW(3) - INTERVAL 1 MINUTE),
+          ('p2',?,'x','loss',0,2,7001,85,  60,'2v2','classe',       'TR32',24,312,0, NOW(3) - INTERVAL 2 MINUTE),
+          ('p3',?,'x','draw',1,1,7001,85,  30,'1v1','entrainement', NULL,0,NULL,NULL, NOW(3) - INTERVAL 3 MINUTE),
+          ('p4',?,'x','win', 2,0,7001,NULL,15,'2v2','entrainement', NULL,0,NULL,NULL, NOW(3) - INTERVAL 4 MINUTE)`,
   [U, U, U, U]);
 await raw.end();
 
@@ -276,6 +284,83 @@ if (vu.encore) {
 
 check('aucune erreur de script sur le profil', erreurs.length === 0
   || (console.log('       ', erreurs.slice(0, 3)), false));
+
+/* ================================ ce qu'une ligne de duel dit maintenant
+
+   Elle montrait une issue, un score et de la ferveur. Elle ne disait ni avec
+   quel Fanzzy on avait joué, ni ce que la partie avait rapporté en progression,
+   ni combien de temps elle avait duré, ni qui était dans quel camp —
+   `opponent_id` ne nommant qu'un adversaire pris au hasard, ce qui ne dit rien
+   d'un 3v3.
+
+   On pose un coéquipier et deux adversaires sur `p2`, puis on lit la ligne
+   telle qu'elle s'affiche. */
+{
+  const AMI = 'cccc0000-0000-0000-0000-00000000000c';
+  const ADV = 'dddd0000-0000-0000-0000-00000000000d';
+  for (const [id, nom] of [[AMI, 'Marie'], [ADV, 'Rachid']]) {
+    await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
+                      VALUES (?,?,?,'x')`, [id, `${nom.toLowerCase()}@ex.fr`, nom]);
+  }
+  /* Marie est du même côté que le lecteur (camp 0), Rachid d'en face. Le 2v2
+     attend deux joueurs par camp : il manque donc **un** adversaire, et c'était
+     une machine. L'écran doit le dire plutôt que de laisser croire qu'on était
+     à deux contre un. */
+  await pool.query(`INSERT INTO duel_results
+      (duel_id,user_id,opponent_id,outcome,goals_for,goals_against,
+       fixture_id,team_id,ferveur,format,mode,side,ended_at)
+    VALUES ('p2',?,'x','loss',0,2,7001,85,10,'2v2','classe',0, NOW(3) - INTERVAL 2 MINUTE),
+           ('p2',?,'x','win', 2,0,7001,91,10,'2v2','classe',1, NOW(3) - INTERVAL 2 MINUTE)`,
+    [AMI, ADV]);
+
+  await page.reload({ waitUntil: 'networkidle0' });
+  await jusqua(async () =>
+    page.evaluate(() => document.querySelectorAll('#parcours .part').length > 0));
+
+  const l = await page.evaluate(() => {
+    const p2 = [...document.querySelectorAll('#parcours .part')]
+      .find((x) => /2v2/.test(x.querySelector('.jeu')?.textContent ?? '')
+                && /PERDU/.test(x.querySelector('.issue')?.textContent ?? ''));
+    return p2 ? {
+      sous: p2.querySelector('.qui span')?.textContent.replace(/\s+/g, ' ').trim(),
+      gain: p2.querySelector('.gain span')?.textContent.trim(),
+    } : null;
+  });
+  check('la ligne du 2v2 classé se retrouve', Boolean(l)
+    || (console.log('        aucune ligne 2v2 perdue'), false));
+
+  check('elle nomme le coéquipier', /avec Marie/.test(l?.sous ?? '')
+    || (console.log('        elle dit :', l?.sous), false));
+  /* Un adversaire humain, une machine : la phrase doit porter les deux.
+     « contre Rachid » seul serait faux sur un 2v2. */
+  check('elle nomme l’adversaire et compte la machine',
+    /contre Rachid et 1 bot/.test(l?.sous ?? '')
+    || (console.log('        elle dit :', l?.sous), false));
+  check('elle dit avec quel Fanzzy on a joué', /en Choriste/.test(l?.sous ?? '')
+    || (console.log('        elle dit :', l?.sous), false));
+  check('et combien de temps ça a duré', /5 min/.test(l?.sous ?? '')
+    || (console.log('        elle dit :', l?.sous), false));
+  /* L'XP à côté du score : c'est ce qu'on regarde en premier après une partie,
+     et le parcours n'en montrait rien. */
+  check('l’XP est annoncée avec le score', /\+24 XP/.test(l?.gain ?? '')
+    || (console.log('        elle dit :', l?.gain), false));
+
+  /* Et les parties d'avant la migration n'inventent rien : pas de « +0 XP »,
+     pas de « 0 s ». Zéro serait un mensonge là où la vérité est « on ne sait
+     pas ». */
+  const vieille = await page.evaluate(() => {
+    const p1 = [...document.querySelectorAll('#parcours .part')]
+      .find((x) => /GAGNÉ/.test(x.querySelector('.issue')?.textContent ?? '')
+                && /1v1/.test(x.querySelector('.jeu')?.textContent ?? ''));
+    return p1 ? {
+      sous: p1.querySelector('.qui span')?.textContent.replace(/\s+/g, ' ').trim(),
+      gain: p1.querySelector('.gain span')?.textContent.trim(),
+    } : null;
+  });
+  check('une partie d’avant ces colonnes n’invente pas de chiffres',
+    Boolean(vieille) && !/XP/.test(vieille.gain ?? '') && !/ 0 s/.test(vieille.sous ?? '')
+    || (console.log('        elle dit :', JSON.stringify(vieille)), false));
+}
 
 await nav.close();
 await new Promise((r) => http.close(r));
