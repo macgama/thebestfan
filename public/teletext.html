@@ -624,9 +624,35 @@ function rendreFerveur() {
       : '';
 
   const liste = d[echelle] ?? [];
-  $('list').innerHTML = chips + moi + (liste.length ? tableFerveur(liste) : `
-    <div class="empty">Personne n’a encore poussé dans cette compétition.<br>
-      Le premier match en direct ouvre le Grand Virage.</div>`);
+  /* **Trois échelles, trois façons d'être vide — et une seule phrase pour les
+     dire toutes, ce qui la rendait fausse deux fois sur trois.**
+   *
+   * Un supporter qui pousse **en neutre** n'appartient à aucune tribune : sa
+   * ferveur compte pour lui et pour la compétition, jamais pour un club. Un
+   * joueur sans KOP, pareil. Les deux tableaux sont alors vides **à juste
+   * titre** — et ils annonçaient « personne n'a encore poussé » juste à côté
+   * d'un onglet SUPPORTERS qui affichait trois cent soixante-quatre.
+   *
+   * Dire « personne n'a joué » quand quelqu'un vient de jouer, c'est envoyer
+   * chercher une panne qui n'existe pas. Chaque échelle explique donc sa propre
+   * absence, et l'explication est la règle du jeu, pas une excuse. */
+  const aDeLaFerveur = (d.joueurs ?? []).length > 0;
+  const RIEN = {
+    joueurs: 'Personne n’a encore poussé dans cette compétition.<br>'
+      + 'Le premier match en direct ouvre le Grand Virage.',
+    tribunes: aDeLaFerveur
+      ? 'De la ferveur a été donnée ici, mais <b>en neutre</b> : personne n’a '
+        + 'encore poussé <i>pour</i> un club de cette compétition.<br>'
+        + 'Suis un club depuis « Mes clubs », et ta ferveur ira à sa tribune.'
+      : 'Aucune tribune n’a encore de ferveur dans cette compétition.',
+    kops: aDeLaFerveur
+      ? 'De la ferveur a été donnée ici, mais par personne qui appartienne à un '
+        + 'KOP de cette compétition.<br>Un KOP ne marque que ce que ses membres '
+        + 'donnent <i>pour son club</i>.'
+      : 'Aucun KOP n’a encore de ferveur dans cette compétition.',
+  };
+  $('list').innerHTML = chips + moi + (liste.length ? tableFerveur(liste)
+    : `<div class="empty">${RIEN[echelle] ?? RIEN.joueurs}</div>`);
 
   $('list').querySelector('.ech').onclick = (e) => {
     const b = e.target.closest('[data-e]');

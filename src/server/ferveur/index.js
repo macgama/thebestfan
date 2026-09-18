@@ -8,6 +8,7 @@ import { clubSoutenu } from '../football/suivis.js';
 // La journée du football, lue une fois pour tous ceux qui en ont besoin :
 // le Virage ici, le choix du match support dans deck/.
 import { journeeParId } from '../football/journee.js';
+import { ancrerDepuisLaJournee } from '../football/ancrage.js';
 
 /**
  * Couche réseau du Grand Virage.
@@ -114,43 +115,12 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
    * ne sert qu'à ranger le match dans un classement, et la ligne est corrigée
    * dès le premier passage du collecteur, qui, lui, tient la saison de l'API.
    */
-  async function poserDepuisLaJournee(fixtureId) {
-    const m = (await journeeParId(jourDuFoot)).get(Number(fixtureId));
-    if (!m?.leagueId || !m.home?.id || !m.away?.id) return null;
-
-    await q(
-      `INSERT INTO leagues (id, name, country) VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE name = VALUES(name), country = VALUES(country)`,
-      [m.leagueId, m.leagueName ?? String(m.leagueId), m.country ?? null]);
-
-    for (const c of [m.home, m.away]) {
-      await q(
-        `INSERT INTO teams (id, name, logo) VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE name = VALUES(name), logo = VALUES(logo)`,
-        [c.id, c.name ?? String(c.id), c.logo ?? null]);
-    }
-
-    const [ligue] = await q(
-      'SELECT current_season FROM leagues WHERE id = ?', [m.leagueId]);
-    const saison = Number(ligue?.current_season)
-      || new Date(m.date ?? Date.now()).getUTCFullYear();
-
-    await q(
-      `INSERT INTO fixtures (id, league_id, season, home_id, away_id,
-                             home_goals, away_goals, status_short, elapsed,
-                             elapsed_extra, kickoff_at, polled_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(3))
-       ON DUPLICATE KEY UPDATE
-         home_goals = VALUES(home_goals), away_goals = VALUES(away_goals),
-         status_short = VALUES(status_short), elapsed = VALUES(elapsed),
-         elapsed_extra = VALUES(elapsed_extra), polled_at = NOW(3)`,
-      [Number(fixtureId), m.leagueId, saison, m.home.id, m.away.id,
-       m.home.goals ?? null, m.away.goals ?? null, m.status ?? 'NS',
-       m.elapsed ?? null, m.extra ?? null,
-       new Date(m.date ?? Date.now()).toISOString().slice(0, 19).replace('T', ' ')]);
-
-    return true;
-  }
+  /* Le corps est parti dans `football/ancrage.js` : le duel en avait besoin
+     **aussi**, et ne l'avait pas — d'où des duels enregistrés sur un match
+     qu'aucune ligne ne nommait, affichés « match inconnu » pour toujours. Une
+     écriture, deux appelants. */
+  const poserDepuisLaJournee = (fixtureId) =>
+    ancrerDepuisLaJournee({ q, jourDuFoot }, fixtureId);
 
   /**
    * Ouvre la salle d'un match, une seule fois.

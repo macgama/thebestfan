@@ -588,6 +588,50 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
     butin.brillantes <= 5);
 }
 
+/* ============================================ acheter un booster aux écharpes
+
+   **Le chemin le plus court entre deux fautes : une affordance montrée quand
+   elle ne sert pas, et cachée quand elle sert.**
+
+   Le bouton d'ouverture se fermait dès `packs <= 0`. Or le client n'envoie
+   `buy` que dans ce cas précis : la seule situation où l'on paie était donc la
+   seule où le bouton ne répondait pas. Et l'écran annonçait « ou 45 écharpes »
+   pendant qu'il restait des boosters gratuits — où le serveur consomme la
+   réserve et ne prélève rien.
+
+   Le serveur savait acheter depuis le premier jour. Il n'a jamais reçu la
+   demande, et aucun contrôle ne s'en est aperçu parce qu'ils partaient tous
+   d'une réserve pleine. Celui-ci part d'une réserve vide, qui est l'état dans
+   lequel se trouve n'importe quel joueur au bout de quelques ouvertures. */
+{
+  const p2 = await ouvrir();
+  await p2.evaluate(() => { S.packs = 0; S.scarves = 900; renderKiosque(); tickRegen(); });
+  await dodo(250);
+
+  const vu = await p2.evaluate(() => ({
+    ferme: document.getElementById('openBtn').disabled,
+    libelle: document.getElementById('openBtn').textContent.trim(),
+  }));
+  check('réserve vide et écharpes en poche : le bouton reste ouvert', !vu.ferme
+    || (console.log('        il est fermé · libellé :', vu.libelle), false));
+  check('et il dit ce que ça coûte', /ÉCHARPES/.test(vu.libelle)
+    || (console.log('        il dit :', vu.libelle), false));
+
+  /* Sans écharpes, le bouton se ferme — mais en disant pourquoi. « Rien ne se
+     passe » et « il te manque quelque chose » demandent deux gestes différents. */
+  await p2.evaluate(() => { S.scarves = 0; renderKiosque(); tickRegen(); });
+  await dodo(250);
+  const sans = await p2.evaluate(() => ({
+    ferme: document.getElementById('openBtn').disabled,
+    libelle: document.getElementById('openBtn').textContent.trim(),
+  }));
+  check('sans écharpes, il se ferme', sans.ferme);
+  check('et il nomme ce qui manque', /IL TE FAUT/.test(sans.libelle)
+    || (console.log('        il dit :', sans.libelle), false));
+
+  await p2.close();
+}
+
 await nav.close();
 await new Promise((r) => http.close(r));
 await pool.end();

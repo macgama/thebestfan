@@ -184,6 +184,12 @@ export function createClassements({ pool, requireAuth,
    * meilleur jour de quelqu'un, pas son niveau. C'est une erreur qui ne se voit
    * pas, parce que les deux nombres se ressemblent.
    */
+  /* Trois parties avant d'entrer, pour les duels comme pour l'entraînement.
+     Nommé plutôt qu'écrit deux fois dans deux `HAVING` : le jour où le chiffre
+     bouge, il doit bouger dans la règle **et** dans la phrase que lit le
+     joueur, et deux littéraux ne bougent jamais ensemble. */
+  const PLANCHER_CLASSE = 3;
+
   async function duellistes(limite = 50) {
     return memo(`duel:${limite}`, () => q(
       `SELECT u.public_id, u.pseudo,
@@ -197,7 +203,7 @@ export function createClassements({ pool, requireAuth,
          JOIN users u ON u.public_id = dr.user_id
         WHERE u.status = 'active' AND dr.mode = 'classe'
         GROUP BY u.public_id, u.pseudo
-       HAVING joues >= 3
+       HAVING joues >= ${PLANCHER_CLASSE}
         ORDER BY cote DESC, joues DESC
         LIMIT ${Number(limite) || 50}`));
   }
@@ -243,7 +249,7 @@ export function createClassements({ pool, requireAuth,
          JOIN users u ON u.public_id = dr.user_id
         WHERE u.status = 'active' AND dr.mode = 'entrainement'
         GROUP BY u.public_id, u.pseudo
-       HAVING joues >= 3
+       HAVING joues >= ${PLANCHER_CLASSE}
         ORDER BY joues DESC, gagnes DESC
         LIMIT ${Number(limite) || 50}`));
   }
@@ -792,9 +798,20 @@ export function createClassements({ pool, requireAuth,
     res.json({ classement: await tribunes() });
   }));
 
+  /* **Le plancher voyage avec la liste.**
+   *
+   * Ces deux tableaux n'admettent qu'au bout de trois parties — une liste où
+   * l'on entre après une partie est une liste où tout le monde est. La règle
+   * est bonne ; ce qui ne l'était pas, c'est que l'écran n'en savait rien. Un
+   * joueur qui avait gagné son premier duel classé lisait « ce classement est
+   * encore vide, sois le premier à y entrer » alors qu'il venait précisément
+   * d'y entrer — et que le tableau, lui, l'attendait deux parties de plus.
+   *
+   * Un écran qui ignore la condition d'entrée invente forcément une phrase
+   * fausse. Il la reçoit donc. */
   router.get('/duellistes', safe(async (_req, res) => {
     res.set('cache-control', 'private, max-age=120');
-    res.json({ classement: await duellistes() });
+    res.json({ classement: await duellistes(), plancher: PLANCHER_CLASSE });
   }));
 
   /* Sa propre adresse, et non un paramètre de la précédente : ce n'est pas le
@@ -803,7 +820,7 @@ export function createClassements({ pool, requireAuth,
      croire qu'on peut monter au classement en s'entraînant. */
   router.get('/entrainements', safe(async (_req, res) => {
     res.set('cache-control', 'private, max-age=120');
-    res.json({ classement: await assidus() });
+    res.json({ classement: await assidus(), plancher: PLANCHER_CLASSE });
   }));
 
   /**

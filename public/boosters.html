@@ -507,14 +507,34 @@ function tickRegen() {
   // Deux raisons de fermer le bouton, et elles ne se disent pas pareil : plus
   // de booster, ou série pas encore débloquée. Le libellé est posé par
   // `renderKiosque`, qui seul connaît la série affichée.
-  $('openBtn').disabled = S.packs <= 0 || !serieDebloquee(SETS[S.set] ?? {});
+  /**
+   * **L'achat aux écharpes était inatteignable.**
+   *
+   * Le bouton se fermait dès `packs <= 0`, et le client n'envoie `buy` que
+   * dans ce cas précis : la seule situation où l'on paie était donc la seule
+   * où le bouton ne répondait pas. L'écran proposait « ou 45 écharpes » pendant
+   * qu'il restait des boosters gratuits — où le serveur consomme la réserve et
+   * ne prélève rien — et se verrouillait à l'instant où payer aurait servi.
+   *
+   * Le serveur, lui, savait acheter depuis le premier jour. Il n'a jamais reçu
+   * la demande.
+   */
+  const prix = Number(S.packPrice ?? 45);
+  const payant = S.packs <= 0;
+  const peutPayer = payant && Number(S.scarves ?? 0) >= prix;
+  $('openBtn').disabled = !serieDebloquee(SETS[S.set] ?? {})
+    || (payant && !peutPayer);
   const el = $('regenTxt');
   if (S.packs >= MAXP || S.nextIn == null) el.textContent = 'Réserve pleine';
   else if (S.nextIn <= 0) { el.textContent = 'Booster prêt'; load().catch(() => {}); }
   else {
+    /* L'offre d'acheter n'a de sens que **quand la réserve est vide** : tant
+       qu'il reste un booster gratuit, le serveur le consomme et ne prélève
+       rien. L'annoncer plus tôt faisait croire à un choix qui n'existait pas. */
     el.textContent = `Booster suivant dans ${Math.floor(S.nextIn / 60000)}:` +
       `${String(Math.floor(S.nextIn % 60000 / 1000)).padStart(2, '0')}` +
-      (S.scarves >= (S.packPrice ?? 45) ? ` · ou ${S.packPrice ?? 45} écharpes` : '');
+      (S.packs <= 0 && Number(S.scarves ?? 0) >= prix
+        ? ` · ou ${prix} écharpes tout de suite` : '');
   }
 }
 
@@ -612,7 +632,13 @@ function renderKiosque() {
         <rect x="4" y="10" width="16" height="11" rx="2.5"/>
         <path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Ouverte par une prochaine saison</span>`;
   $('carousel').classList.toggle('verrou', !ouvrable);
-  $('openBtn').textContent = ouvrable ? 'OUVRIR LE BOOSTER' : 'PAS ENCORE OUVERTE';
+  /* Le prix est **sur le bouton**, pas à côté : c'est au moment d'appuyer qu'on
+     décide de dépenser, et une ligne d'aide sous le pouce ne se lit pas. */
+  const px = Number(S.packPrice ?? 45);
+  $('openBtn').textContent = !ouvrable ? 'PAS ENCORE OUVERTE'
+    : S.packs > 0 ? 'OUVRIR LE BOOSTER'
+    : Number(S.scarves ?? 0) >= px ? `OUVRIR · ${px} ÉCHARPES`
+    : `IL TE FAUT ${px} ÉCHARPES`;
   $('tearhint').textContent = 'CHOISIS TON PAQUET · TOUCHE POUR OUVRIR';
   /* Un point par paquet, pas par série : c'est le paquet qu'on choisit ici. */
   $('setDots').innerHTML = Array.from({ length: PAQUETS_AU_CHOIX },
