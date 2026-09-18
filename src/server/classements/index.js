@@ -80,6 +80,26 @@ export function createClassements({ pool, requireAuth,
    * Les clubs, classés sur la ferveur moyenne par supporter.
    * Un petit club dont trente fidèles chantent juste passe devant un géant
    * dont mille abonnés regardent — c'est exactement ce qu'on veut célébrer.
+   *
+   * ## La jointure porte **deux** conditions, et la seconde est la règle
+   *
+   * Elle n'en portait qu'une — `vp.user_id = f.user_id` — et la ferveur d'un
+   * supporter était donc versée à **tous les clubs qu'il suit**. Quelqu'un qui
+   * suit Sion et Bâle et qui pousse une soirée entière dans le virage de Sion
+   * faisait monter Bâle d'autant, sans y avoir chanté une seule fois.
+   *
+   * Ça ne se voyait pas : les deux nombres étaient plausibles, le classement
+   * gardait un ordre vraisemblable, et il fallait suivre deux clubs pour que
+   * l'écart existe — ce que fait une minorité de joueurs, mais la plus
+   * assidue. Le résultat était un classement des clubs les plus **suivis en
+   * plus d'un autre**, pas des mieux poussés.
+   *
+   * `vp.team_id` porte la réponse depuis `sql/historique.sql`, et le
+   * classement par compétition l'utilise déjà (voir `SOURCE`). Les deux
+   * lectures disent enfin la même chose.
+   *
+   * Un neutre a `team_id` nul : sa ferveur ne remonte à aucune tribune, ce
+   * qui est la règle du jeu, et la condition l'applique sans avoir à l'écrire.
    */
   async function tribunes(limite = 50) {
     return memo(`trib:${limite}`, () => q(
@@ -89,7 +109,8 @@ export function createClassements({ pool, requireAuth,
               ROUND(COALESCE(SUM(vp.ferveur), 0) / GREATEST(COUNT(DISTINCT f.user_id), 1)) AS moyenne
          FROM user_follows f
          JOIN teams t ON t.id = f.team_id
-         LEFT JOIN virage_presence vp ON vp.user_id = f.user_id
+         LEFT JOIN virage_presence vp
+                ON vp.user_id = f.user_id AND vp.team_id = f.team_id
          GROUP BY t.id, t.name, t.logo, t.country
         HAVING supporters >= 1
         ORDER BY moyenne DESC, ferveur DESC
@@ -454,13 +475,26 @@ export function createClassements({ pool, requireAuth,
         LEFT JOIN teams  a ON a.id = f.away_id
         LEFT JOIN leagues l ON l.id = f.league_id`;
 
+    /* **Contre qui.** `opponent_id` est écrit depuis le premier jour et n'était
+       relu nulle part : la ligne disait le match de football — « Sion – Bâle » —
+       et pas l'adversaire, qui est pourtant le sujet d'un duel. « J'ai perdu
+       contre Marie » se raconte ; « j'ai perdu sur Sion – Bâle » ne dit rien de
+       ce qui s'est passé.
+
+       Jointure à gauche, et c'est nécessaire dans trois cas : l'adversaire était
+       un bot (`bot:xxxxxxxx`, aucune ligne dans `users`), il a fermé son compte
+       depuis, ou la partie est d'avant que la colonne soit remplie
+       (`'inconnu'`). Dans les trois, on rend la ligne sans nom plutôt que de
+       perdre la partie. */
     const duels = await q(
       `SELECT dr.ended_at AS quand, dr.outcome, dr.goals_for, dr.goals_against,
-              dr.ferveur, dr.mode, dr.format, dr.team_id,
+              dr.ferveur, dr.mode, dr.format, dr.team_id, dr.opponent_id,
+              uo.pseudo AS adversaire,
               f.id AS fixture_id, f.home_id, f.away_id, l.name AS competition,
               h.name AS domicile, h.logo AS domicile_logo,
               a.name AS exterieur, a.logo AS exterieur_logo
-         FROM duel_results dr ${match.split('%').join('dr')}
+         FROM duel_results dr
+         LEFT JOIN users uo ON uo.public_id = dr.opponent_id ${match.split('%').join('dr')}
         WHERE dr.user_id = ? ${filtre ? 'AND dr.ended_at < ?' : ''}
         ORDER BY dr.ended_at DESC
         LIMIT ${n}`, filtre ? [userId, filtre] : [userId]);
@@ -484,6 +518,11 @@ export function createClassements({ pool, requireAuth,
       issue: r.outcome ?? null,
       score: jeu === 'duel'
         ? { pour: Number(r.goals_for ?? 0), contre: Number(r.goals_against ?? 0) } : null,
+      /* Le pseudo s'il y en a un, et sinon **pourquoi il n'y en a pas**. Un
+         champ vide ferait écrire « contre — » ; le drapeau laisse la page dire
+         « contre un bot », qui est une information. */
+      adversaire: jeu === 'duel' ? (r.adversaire ?? null) : null,
+      contreBot: jeu === 'duel' && String(r.opponent_id ?? '').startsWith('bot:'),
       /* Le camp du virage se dit en club et non en 0/1 : « tu poussais pour le
          FC Sion » se lit, « side: 0 » se décode. */
       pour: r.team_id

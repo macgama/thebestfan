@@ -47,11 +47,17 @@ const fichier = (n) => readFileSync(path.join(SQL, `${n}.sql`), 'utf8');
 
 /* Table rase : les autres suites laissent la base dans l'état qui les arrange,
    et une migration mesurée sur un résidu ne mesure rien. */
+
+/* La liste se lit **en base**, elle ne s'écrit pas à la main : c'est la seule
+   qui n'a pas à être tenue à jour quand une table apparaît. Y ajouter un nom
+   en dur le fait compter deux fois — `ER_NONUNIQ_TABLE`, et la suite entière
+   tombe avant son premier contrôle. C'est arrivé le jour où `abonnements` a
+   été ajoutée aux trente autres suites, qui, elles, ont bien une liste fixe. */
 const tables = await q(
   `SELECT table_name AS t FROM information_schema.tables WHERE table_schema = DATABASE()`);
 if (tables.length) {
   await cnx.query('SET FOREIGN_KEY_CHECKS = 0');
-  await cnx.query(`DROP TABLE IF EXISTS abonnements, ${tables.map((r) => `\`${r.t}\``).join(', ')}`);
+  await cnx.query(`DROP TABLE IF EXISTS ${tables.map((r) => `\`${r.t}\``).join(', ')}`);
   await cnx.query('SET FOREIGN_KEY_CHECKS = 1');
 }
 for (const n of SOCLE) await cnx.query(fichier(n));

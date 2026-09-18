@@ -1,6 +1,6 @@
 {
   "id": "TR2",
-  "rev": 1,
+  "rev": 2,
   "evolutions": {
     "e1": {
       "skins": {
@@ -31,7 +31,7 @@
             "neutre"
           ],
           "portrait": true,
-          "sha": "e33303833179"
+          "sha": "8ca02aa45c4a"
         }
       }
     },

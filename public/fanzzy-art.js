@@ -86,6 +86,12 @@
     'TR52', 'TR53', 'GD12', 'GD13', 'MS35', 'HC16', 'TR54', 'IM1',
     'IM2', 'IM3', 'IM4', 'IM5', 'IM6', 'IM7', 'IM8', 'IM9',
     'IM12', 'IM13', 'IM14', 'IM15', 'IM16', 'IM17', 'TR1', 'TR2',
+    /* Les âges supérieurs des trois lignées dont la carte est dessinée.
+       Sans eux, `racineIllustree` redescendait à la racine et servait le
+       dessin du **premier âge** à qui avait payé le deuxième — en silence, ce
+       qui est le pire : les six fichiers étaient produits, ils n'étaient
+       simplement déclarés nulle part. */
+    'TR1B', 'TR1C', 'TR3B', 'TR3C', 'TR50B', 'TR50C',
     'TR3', 'TR4', 'TR5', 'TR6', 'TR7', 'TR8', 'TR9', 'TR10',
     'TR11', 'TR12', 'TR13', 'TR14', 'TR15', 'TR16', 'TR17', 'TR18',
     'TR19', 'TR20', 'TR21', 'TR22', 'TR23', 'TR24', 'TR25', 'TR26',
