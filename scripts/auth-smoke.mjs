@@ -327,6 +327,68 @@ const [sess] = await pool.query('SELECT token_hash FROM sessions LIMIT 1');
 check('aucun jeton de session en clair en base',
   sess.length === 0 || /^[0-9a-f]{64}$/.test(sess[0].token_hash));
 
+/* ================================ ce que /healthz raconte au monde entier
+
+   **Cette sonde est publique.** Pas de session, pas de jeton, pas de réseau
+   privé : l'hébergeur doit pouvoir l'appeler, donc tout le monde le peut.
+
+   Le 18 septembre 2026, elle publiait le mot de passe SMTP du domaine. La
+   variable `SMTP_URL` avait été écrite sans schéma — `adresse:motdepasse:465`
+   au lieu d'une URL — nodemailer avait échoué en citant la valeur reçue, et
+   cette valeur était rangée telle quelle dans l'état servi.
+
+   Personne n'avait tort dans cette chaîne : un message d'erreur cite ce qu'on
+   lui donne, et une sonde dit pourquoi ça ne marche pas. C'est la **jonction**
+   qui était fausse, et elle ne se voit qu'en la regardant de dehors.
+
+   Ces contrôles la regardent de dehors, avec la vraie forme du défaut. */
+console.log('\n— ce que la sonde publique laisse voir —');
+{
+  const { createMailer } = await import('../src/server/auth/mailer.js');
+
+  const SECRET = 'MotDePasseTresSecret_42';
+  const m = createMailer({ smtpUrl: `compte@exemple.fr:${SECRET}:465` });
+
+  /* Avant même d'essayer d'envoyer : la forme est reconnue, et elle est dite
+     sans citer la valeur. Laisser nodemailer découvrir le défaut, c'est
+     échanger un diagnostic clair contre un message obscur. */
+  const forme = m.status;
+  check('une URL SMTP sans schéma est reconnue comme telle',
+    typeof forme.forme === 'string' && /smtps:\/\//.test(forme.forme)
+    || (console.log('        il dit :', JSON.stringify(forme)), false));
+  check('et le diagnostic ne répète pas la valeur',
+    !JSON.stringify(forme).includes(SECRET));
+
+  /* Puis avec la vraie erreur de nodemailer, qui est celle qui a fui. */
+  await m.test('personne@exemple.fr').catch(() => {});
+  const apres = m.status;
+  check('l’erreur du transport est bien remontée',
+    typeof apres.erreur === 'string' && apres.erreur.length > 0);
+  check('mais le mot de passe n’y est plus',
+    !JSON.stringify(apres).includes(SECRET)
+    || (console.log('        il publie :', apres.erreur), false));
+  check('il est remplacé par une marque lisible',
+    /caviardé/.test(apres.erreur));
+
+  /* La forme en URL complète fuit autrement : c'est l'URL entière qui porte le
+     secret, et c'est elle que le message cite. */
+  const m2 = createMailer({ smtpUrl: `smtps://compte%40exemple.fr:${SECRET}@mail.invalide:465` });
+  await m2.test('personne@exemple.fr').catch(() => {});
+  check('une URL complète ne fuit pas non plus',
+    !JSON.stringify(m2.status).includes(SECRET)
+    || (console.log('        il publie :', m2.status.erreur), false));
+
+  /* Et la forme recommandée — quatre variables séparées — dont le mot de passe
+     ne traverse jamais une chaîne. C'est le chemin normal, il doit être
+     couvert comme les autres. */
+  const m3 = createMailer({
+    host: 'mail.invalide', port: 465, user: 'compte@exemple.fr', pass: SECRET });
+  await m3.test('personne@exemple.fr').catch(() => {});
+  check('ni les quatre variables séparées',
+    !JSON.stringify(m3.status).includes(SECRET)
+    || (console.log('        il publie :', m3.status.erreur), false));
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end();
 http.close();

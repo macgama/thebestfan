@@ -173,20 +173,85 @@ visible. The moment is in the character: paint on their hands, the way they
 hold it. Never draw the words, not even blurred, not even foreign or invented
 letters.`;
 
-/* Ce que chaque famille ajoute au personnage. Une ligne, et seulement ce qui se
-   voit : la Voix a la bouche ouverte, la Percussion tient quelque chose qui
-   sonne. Un trait de caractère qui ne se dessine pas n'a rien à faire ici. */
+/* Ce que chaque famille ajoute au personnage. Seulement ce qui se voit : la Voix
+   a la bouche ouverte, la Percussion tient quelque chose qui sonne. Un trait de
+   caractère qui ne se dessine pas n'a rien à faire ici.
+
+   **Cinq poses par famille, et non une.** C'était une ligne unique, et six
+   lignes pour deux cent soixante-treize personnages font quarante-cinq
+   personnages par geste. Les corps varient déjà bien — l'âge a vingt-cinq
+   valeurs, la peau quatre, la silhouette sept — mais deux cartes qui partagent
+   la pose, le cadrage et la lumière se ressemblent quoi qu'on fasse du visage.
+   C'est ce que montrent RP1 et RP2 : deux Voix, deux corps sans rapport, et la
+   même main en coupe devant la même bouche.
+
+   Le tirage part de l'identifiant, comme celui du corps : il ne bouge jamais, et
+   régénérer une carte trois mois plus tard redonne sa pose.
+
+   Les clauses de droits — la bâche vierge, la flamme qui ne vient que de la
+   main — sont **recollées à chaque variante** plutôt que réécrites cinq fois :
+   une règle de droits qu'on recopie est une règle qu'on oublie une fois sur
+   cinq, et c'est cette fois-là qui coûte. */
+
+/** La bâche du Tifo ne porte jamais rien. Valable pour les cinq poses. */
+const BACHE_VIERGE = ' — the fabric is completely blank: one plain colour or one'
+  + ' simple painted shape, and absolutely no writing, no letters and no numbers'
+  + ' anywhere on it';
+/** Le feu du Pyro ne vient que de ce qu'il tient. Valable pour les cinq poses. */
+const FEU_TENU = ' — the flame and its warm orange light come only from what they'
+  + ' hold, never from the ground, and there is no fire around the feet';
+
 const FAMILLE = {
-  voix: 'mouth open mid-shout, chest out, one hand cupped beside the mouth',
-  perc: 'holding or wearing a simple drum, sticks in hand, mid-beat',
-  tifo: 'holding up a sheet of fabric, arms raised — the fabric is completely '
-    + 'blank: one plain colour or one simple painted shape, and absolutely no'
-    + ' writing, no letters and no numbers anywhere on it',
-  pyro: 'holding a single lit flare or torch high in one hand — the flame and'
-    + ' its warm orange light come only from what they hold, never from the'
-    + ' ground, and there is no fire around the feet',
-  depl: 'a long knitted two-colour scarf held wide between both hands',
-  fide: 'arms folded or hands in pockets, feet planted, unmovable',
+  voix: [
+    'mouth open mid-shout, chest out, one hand cupped beside the mouth',
+    'both hands cupped around the mouth, head tipped back, shouting upward',
+    'one arm raised straight above the head, mouth wide open, calling a chant',
+    'leaning forward, weight on the front foot, both fists clenched, roaring',
+    'turned away from the pitch to face the crowd, arms wide, mouth open, '
+      + 'conducting the singing',
+  ],
+  perc: [
+    'holding or wearing a simple drum, sticks in hand, mid-beat',
+    'a large drum strapped across the chest, both sticks raised high before the '
+      + 'next beat',
+    'a small hand drum tucked under one arm, striking it with the flat of the palm',
+    'sticks crossed above the head, mouth open, setting the tempo',
+    'bent slightly over a drum held between the knees, hammering it',
+  ],
+  tifo: [
+    'holding up a sheet of fabric, arms raised' + BACHE_VIERGE,
+    'a wide plain cloth spread between both outstretched arms, held at shoulder '
+      + 'height' + BACHE_VIERGE,
+    'a rolled length of cloth carried over one shoulder, one hand steadying it'
+      + BACHE_VIERGE,
+    'a plain flag on a short bare pole held upright in both hands' + BACHE_VIERGE,
+    'crouched, unfolding a large sheet of cloth across their knees'
+      + BACHE_VIERGE,
+  ],
+  pyro: [
+    'holding a single lit flare or torch high in one hand' + FEU_TENU,
+    'one lit flare held straight out at arm’s length to the side, head turned '
+      + 'away from it' + FEU_TENU,
+    'a lit flare held low against the hip, the other hand shielding the face'
+      + FEU_TENU,
+    'both hands around a single lit torch raised in front of the chest' + FEU_TENU,
+    'one arm thrown up with a lit flare, the other pointing forward' + FEU_TENU,
+  ],
+  depl: [
+    'a long knitted two-colour scarf held wide between both hands',
+    'a long knitted two-colour scarf whirled above the head, one arm raised',
+    'a long knitted two-colour scarf wound twice around the neck, hands in '
+      + 'pockets, a worn bag across the body',
+    'a long knitted two-colour scarf held taut across the chest, arms crossed',
+    'a long knitted two-colour scarf trailing from one raised fist, mid-stride',
+  ],
+  fide: [
+    'arms folded or hands in pockets, feet planted, unmovable',
+    'arms folded high on the chest, chin down, looking straight ahead',
+    'hands deep in pockets, shoulders up against the cold, feet planted',
+    'one hand resting on the opposite forearm, perfectly still, watching',
+    'seated squarely on an unseen bench, forearms on the knees, leaning forward',
+  ],
 };
 
 /* Ce que la série ajoute au costume et à l'objet tenu. Le décor, lui, ne vient
@@ -204,7 +269,42 @@ const SERIE = {
   GD: 'travel-worn: crumpled clothes, backpack, thermos, tired eyes',
   MT: 'a weather phenomenon given a body: swirling, translucent, made of air or water',
   HC: 'at home: tracksuit, slippers, phone or remote in hand, sofa clothes',
+  /* **LA REPRISE n'avait pas de ligne du tout**, et une série absente d'ici ne
+     se voit nulle part : `SERIE[f.set] ?? ''` laisse simplement tomber la
+     phrase du costume, et le générateur dessine alors son idée moyenne de
+     « quelqu'un » — une veste de terrain, un pantalon, des bottes. Les deux
+     premières cartes de la série sont sorties habillées pareil, et ce n'était
+     pas un hasard de tirage : rien ne leur disait quoi porter.
+
+     La série raconte la première journée après la coupure. Son costume, c'est
+     donc l'été qui n'est pas encore parti : on s'est habillé pour un match de
+     mai et il fait dix degrés de moins que prévu. C'est ce qui la distingue de
+     LA TRIBUNE, dont les supporters sont en parka d'hiver. */
+  RP: 'first match of the season, dressed for summer and caught out by the '
+    + 'cold: short sleeves or a thin shirt under an unzipped jacket, a scarf '
+    + 'still stiff from its packet, sunglasses pushed up into the hair, pale '
+    + 'lighter colours than the rest of the crowd',
 };
+
+/* Une série sans costume ne se voit pas : la phrase disparaît, l'invite reste
+   valide, et le générateur comble le vide avec sa moyenne. C'est arrivé à LA
+   REPRISE, et ça se serait reproduit à chaque saison neuve — puisqu'une saison
+   neuve, c'est précisément une série qu'on vient d'ajouter.
+
+   La liste est donc comparée au catalogue, ici, au chargement du script : mieux
+   vaut un arrêt net qu'une série entière dessinée en costume générique. Les
+   familles sans corps humain sont écartées — un objet vivant n'a pas de
+   garde-robe. */
+{
+  const sansCostume = [...new Set(DEX.filter((f) => f.stage === 1).map((f) => f.set))]
+    .filter((set) => set && !SERIE[set] && !SANS_CORPS.has(set));
+  if (sansCostume.length) {
+    console.error(`\nARRÊT — ces séries n'ont pas de ligne dans SERIE : ${sansCostume.join(', ')}`);
+    console.error('Sans elle, leurs personnages sortent tous habillés pareil.');
+    console.error('Ajoute-la dans scripts/fanzzy-invites.mjs, à côté des douze autres.\n');
+    process.exit(1);
+  }
+}
 
 /* -------------------------------------------------------------- qui c'est
 
@@ -262,10 +362,28 @@ const CORPS = {
     'clean-shaven', 'a short grey beard'],
   peau: ['light skin', 'light skin', 'brown skin', 'dark skin', 'olive skin',
     'brown skin'],
+  /* **Le vêtement lui-même, et pas seulement sa couleur.** On tirait huit
+     teintes et la série disait le costume ; tout le monde portait donc la même
+     veste, dans une nuance différente. À trois cent vingt pixels dans le
+     classeur, une nuance ne se voit pas — une silhouette, si.
+
+     Il cède devant la ligne de garde-robe de la série : un agent de sécurité
+     porte son gilet jaune, pas un cardigan, et c'est la série qui le dit. */
+  vetement: ['hooded parka', 'padded bomber jacket', 'long wool overcoat',
+    'zip-up tracksuit top', 'heavy knitted cardigan', 'canvas work jacket',
+    'thin windbreaker', 'denim jacket', 'quilted body-warmer over a jumper',
+    'fleece-lined hooded sweatshirt'],
   /* La couleur du dessus, parce que c'est elle qu'on voit de loin — et c'est
-     elle qui rendait les quatre premiers rendus interchangeables. */
+     elle qui rendait les quatre premiers rendus interchangeables.
+
+     **Six teintes claires ajoutées aux huit sombres.** Les huit d'origine sont
+     toutes désaturées — vert foncé, marine, anthracite, noir délavé — et une
+     grille de deux cents vignettes n'y montrait que des vestes sombres. Une
+     tribune n'est pas monochrome. */
   couleur: ['dark green', 'navy blue', 'charcoal grey', 'faded black',
-    'rust brown', 'deep burgundy', 'olive khaki', 'stone beige'],
+    'rust brown', 'deep burgundy', 'olive khaki', 'stone beige',
+    'washed denim blue', 'pale grey', 'mustard yellow', 'off-white',
+    'brick red', 'dusty teal'],
 };
 
 /** Les séries où le personnage n'a pas de corps humain : rien à tirer. */
@@ -469,7 +587,9 @@ function decrire(f, suffixe = '') {
   return `Who to draw — unless the French text above says otherwise, in which `
     + `case follow the French text: ${quiEtAge}, ${t('taille')}, `
     + `${t('cheveux')}${dit ? '' : barbe}, ${t('peau')}. Their outer layer is `
-    + `${t('couleur')}. Give them a face that belongs to no one else in the `
+    + `a ${t('vetement')} in ${t('couleur')} — unless the wardrobe line above `
+    + 'names a different outer layer, which wins. '
+    + 'Give them a face that belongs to no one else in the '
     + 'collection.';
 }
 
@@ -587,7 +707,11 @@ const dialecteDe = (f) => (echelleDe(f) === 'vivant'
   : echelleDe(f));
 
 function invite(f) {
-  const famille = FAMILLE[f.type] ?? '';
+  /* La pose se tire, comme le corps. Le sel `pose` la rend indépendante de
+     l'âge et de la carrure : sans lui, tous les traits d'une carte avanceraient
+     ensemble d'une carte à l'autre. */
+  const poses = FAMILLE[f.type];
+  const famille = poses ? tire(poses, f.id, 'pose') : '';
   const serie = SERIE[f.set] ?? '';
   const chose = PAS_HUMAIN[f.set];
   return [
@@ -741,18 +865,77 @@ const PAS_CHEZ_MOI = {
      retire rien. */
 };
 
-/** Les quatre autres axes, pour un personnage qui a un corps et des vêtements. */
+/**
+ * Les quatre autres axes, pour un personnage qui a un corps et des vêtements.
+ *
+ * **Trois variantes par axe, tirées de l'identifiant.** C'était une ligne fixe,
+ * et une ligne fixe appliquée à deux cent soixante-treize lignées donne deux
+ * cent soixante-treize troisièmes âges qui font le même geste : bras ouverts,
+ * porte-voix levé, bandeau au poignet. RP1C et RP2C ne se distinguaient que par
+ * le visage et la couleur de la veste.
+ *
+ * Les quatre axes gardent leur **sens** — l'empreinte au sol s'élargit, le
+ * vêtement s'alourdit, l'accumulation s'accumule, l'ouverture s'ouvre. Ce qui
+ * varie, c'est la façon de le dire. Un axe qui changerait de sens selon le
+ * tirage ne serait plus un axe, ce serait du hasard : voir le tableau de
+ * `ETAT.md` § 9, qui décrit ce que chaque âge doit montrer.
+ *
+ * Le sel de chaque axe est distinct — `sol2`, `sol3`, `tissu2`… — sinon les
+ * quatre lignes d'un personnage avancent ensemble et on retombe sur trois
+ * variantes au lieu de quatre-vingt-une.
+ */
 const AXES = {
-  2: ['feet shoulder-width apart, weight settled',
-    'the same outer layer, now worn closed and fitting them properly',
-    'a few small plain round cloth badges sewn onto it',
-    'chin up, chest forward, looking straight at the camera'],
-  3: ['legs planted wide, weight low, rooted to the spot',
-    'the same outer layer, longer and heavier, worn open over the rest',
-    'many small plain cloth badges across it, and a band of cloth tied '
+  2: [['feet shoulder-width apart, weight settled',
+    'both feet flat and square, no longer shifting',
+    'standing with one foot slightly forward, steady'],
+  ['the same outer layer, now worn closed and fitting them properly',
+    'the same outer layer, zipped up and finally the right size on them',
+    'the same outer layer, buttoned to the neck, sleeves pushed back'],
+  ['a few small plain round cloth badges sewn onto it',
+    'two or three small plain round cloth badges on one sleeve',
+    'a handful of small plain round cloth badges across the chest'],
+  ['chin up, chest forward, looking straight at the camera',
+    'head level, shoulders squared, meeting the camera without effort',
+    'chin lifted, one shoulder slightly forward, looking straight ahead']],
+  /* **« round » n'est pas une coquetterie, c'est la règle de droits.**
+     L'âge 2 le disait, l'âge 3 l'avait perdu — et un générateur à qui on
+     demande « des pastilles de tissu » sans préciser la forme les dessine en
+     **écusson**, parce que c'est ce qu'il a vu sur toutes les vestes du monde.
+     Un écusson vierge n'est pas un écusson de club, mais `VISUELS.md` écrit
+     « des personnages fictifs, avec vêtements usés et **sans écusson** », et
+     prévoit exactement ce cas : « les générateurs ajoutent spontanément des
+     écussons sur les vestes […] régénérer plutôt que retoucher ».
+
+     Régénérer une image coûte cent trente crédits. Corriger le mot ici les
+     économise sur les deux cent soixante-douze lignées qui restent. Vu sur
+     RP1C, le 18 septembre 2026. */
+  3: [['legs planted wide, weight low, rooted to the spot',
+    'feet set wide and heavy, as if they have stood there for years',
+    'one leg forward, weight low, immovable'],
+  ['the same outer layer, longer and heavier, worn open over the rest',
+    'the same outer layer, now a long heavy coat hanging open',
+    'the same outer layer, heavy and worn soft, open and pushed back at the '
+      + 'shoulders'],
+  /* « round » n'est pas une coquetterie : voir plus bas. Chaque variante le
+     redit, parce que c'est la ligne que le générateur lit pour dessiner les
+     pastilles, et une variante qui l'oublie redonne des écussons. */
+  ['many small plain round cloth badges across it — round only, never '
+      + 'shield-shaped and never crest-shaped — and a band of cloth tied '
       + 'around one wrist',
-    'both arms open, chest out, facing the camera dead on'],
+  'the front covered in small plain round cloth badges — round only, never '
+      + 'shield-shaped and never crest-shaped — and a strip of cloth knotted '
+      + 'at the wrist',
+  'small plain round cloth badges crowded on both sleeves — round only, never '
+      + 'shield-shaped and never crest-shaped — and a faded band of cloth tied '
+      + 'around one wrist'],
+  ['both arms open, chest out, facing the camera dead on',
+    'one arm thrown wide, the other low, facing the camera without moving',
+    'arms spread and slightly lowered, palms open, facing the camera']],
 };
+
+/** Une ligne d'axe, tirée pour cette carte. Un sel par axe et par âge. */
+const axesDe = (id, age) => AXES[age].map((variantes, i) =>
+  tire(variantes, id, `axe${age}-${i}`));
 
 /**
  * Et pour ceux qui n'ont ni corps ni vêtements.
@@ -964,8 +1147,12 @@ function inviteAge(f) {
   /* Seul l'humain est « them » : une bête, un objet et une averse sont « it »,
      et leurs textes d'échelle sont écrits ainsi. */
   const pronom = dialecte === 'humain' ? 'them' : 'it';
-  const axes = ({ humain: AXES, bete: AXES_BETE, fabrique: AXES_FABRIQUE,
-    phenomene: AXES_PHENOMENE })[dialecte][f.stage];
+  /* Seul l humain a des axes a variantes : une bete, un objet et une averse
+     n ont ni vetement ni posture, et leurs trois tables sont restees des
+     lignes fixes. `axesDe` tire ; les autres se lisent telles quelles. */
+  const axes = dialecte === 'humain' ? axesDe(f.id, f.stage)
+    : ({ bete: AXES_BETE, fabrique: AXES_FABRIQUE,
+      phenomene: AXES_PHENOMENE })[dialecte][f.stage];
   const montee = MONTEE[f.type];
   const rang = f.stage === 2
     ? 'They have taken their place: the terrace knows them now.'
