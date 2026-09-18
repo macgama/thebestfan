@@ -42,4 +42,23 @@ s = s.slice(0, i) + [DEBUT, ...lignes].join(NL) + NL + s.slice(j);
 writeFileSync(F, s, 'utf8');
 
 console.log(`ILLUSTRES : ${ids.length} Fanzzy dessinés sur ${DEX.length}`);
-if (sans.length) console.log(`Encore sans illustration (${sans.length}) : ${sans.join(', ')}`);
+
+/**
+ * La liste des manquants, **seulement quand on l'a demandée**.
+ *
+ * Quatre cent cinquante identifiants sur une ligne : c'est exactement ce qu'on
+ * veut quand on lance ce script pour savoir quoi dessiner, et c'est un mur
+ * quand `fanzzy-images` l'enchaîne après un lot de trois — le rapport des
+ * fichiers écrits disparaît dessous.
+ *
+ * On distingue les deux par `process.argv[1]` : appelé en ligne de commande,
+ * il parle ; importé par un autre script, il se contente du compte. `--tout`
+ * force le détail dans les deux cas.
+ */
+const appeleDirectement = /maj-illustres\.mjs$/.test(process.argv[1] ?? '');
+if (sans.length && (appeleDirectement || process.argv.includes('--tout'))) {
+  console.log(`Encore sans illustration (${sans.length}) : ${sans.join(', ')}`);
+} else if (sans.length) {
+  console.log(`${sans.length} encore sans illustration — `
+    + `node scripts/maj-illustres.mjs pour la liste.`);
+}
