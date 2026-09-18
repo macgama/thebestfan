@@ -117,8 +117,24 @@ async function charger() {
 
   const c = d.classement ?? [];
   if (!c.length) {
-    $('list').innerHTML = `<div class="empty">Ce classement est encore vide.<br>
-      Sois le premier à y entrer.</div>`;
+    /* **Un tableau vide a deux causes, et elles n'appellent pas le même geste.**
+     *
+     * Personne n'a encore joué : « sois le premier » est juste, et c'est une
+     * invitation. Ou bien des gens ont joué mais aucun n'a atteint le plancher
+     * d'entrée — et la même phrase devient fausse, doublement : elle nie des
+     * parties qui ont eu lieu, et elle promet une place à qui vient d'en
+     * manquer une.
+     *
+     * C'est ce qu'a lu quelqu'un qui venait de gagner son premier duel classé.
+     * Le serveur envoie donc son plancher, et l'écran dit la condition au lieu
+     * de la deviner. */
+    const n = Number(d.plancher) || 0;
+    $('list').innerHTML = n
+      ? `<div class="empty">Personne n'a encore ${n} parties à son compteur.<br>
+          Ce tableau n'admet qu'à partir de la <b>${n}<sup>e</sup></b> — sans quoi
+          tout le monde y serait dès le premier soir.</div>`
+      : `<div class="empty">Ce classement est encore vide.<br>
+          Sois le premier à y entrer.</div>`;
     return;
   }
 

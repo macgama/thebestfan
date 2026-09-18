@@ -12,6 +12,7 @@ import { clubParmi, campDe } from '../football/suivis.js';
 // La journée du football : la seule source complète de ce qui se joue
 // aujourd'hui. La table `fixtures` ne connaît que les clubs suivis.
 import { journeeParId, TERMINE } from '../football/journee.js';
+import { ancrerDepuisLaJournee } from '../football/ancrage.js';
 import { PALIERS } from '../../shared/niveau.js';
 
 /**
@@ -297,6 +298,28 @@ export function createDecks({ pool, requireAuth, niveau = null,
 
     const duJour = (await journeeParId(jourDuFoot)).get(Number(fixtureId));
     if (!rows.length && !duJour) throw fail('duel.error.fixture_unknown');
+
+    /* **Le match n'est pas encore en base : on l'y met.**
+     *
+     * `fixtures` est un cache des compétitions suivies ; la journée du jour,
+     * elle, contient le monde entier. On peut donc lancer un duel sur un match
+     * dont aucune ligne n'existe — et c'est ce qui se passait, en silence.
+     *
+     * `duel_results.fixture_id` pointait alors vers rien. La jointure du
+     * parcours rendait `NULL`, et la ligne s'affichait « match inconnu », sans
+     * recours : le match était joué, la partie enregistrée, et son identité
+     * perdue. Un supporter voyait son virage du soir nommé et son duel du même
+     * soir anonyme, parce que le virage, lui, écrivait cette ligne depuis le
+     * premier jour.
+     *
+     * L'écriture est **sous garde et sans conséquence** : elle échoue si la
+     * base est indisponible, et un duel ne doit pas refuser de démarrer pour
+     * une ligne de cache. On perd alors le nom du match, ce qui est exactement
+     * l'état d'avant. */
+    if (!rows.length && duJour) {
+      try { await ancrerDepuisLaJournee({ q, jourDuFoot }, fixtureId); }
+      catch (e) { console.error('[deck] ancrage du match', e.message); }
+    }
 
     const base = rows[0] ?? {};
     const auj = new Date().toISOString().slice(0, 10);

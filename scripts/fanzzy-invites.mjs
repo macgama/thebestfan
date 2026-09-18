@@ -75,10 +75,13 @@
  *   node scripts/fanzzy-invites.mjs --set VP        une série entière
  *   node scripts/fanzzy-invites.mjs --json          de quoi alimenter un script
  *   node scripts/fanzzy-invites.mjs --ages --set TR  les âges 2 et 3, en i2i
+ *   node scripts/fanzzy-invites.mjs --etats RP1     les douze états d'un âge
+ *   node scripts/fanzzy-invites.mjs --etats RP1 RP1B RP1C   une lignée entière
  */
 import { readFile } from 'node:fs/promises';
 import { createContext, Script } from 'node:vm';
 import { DEX, TYPES } from '../src/shared/fanzzy/dex.js';
+import { ETATS, ETAT_QUAND } from '../src/shared/fanzzy/rendus.js';
 
 /* --------------------------------------------------------------- le style
 
@@ -624,6 +627,12 @@ const illustres = await dejaDessines();
    faire vieillir. */
 const ages = process.argv.includes('--ages');
 
+/* **Les états, c'est l'autre chantier — et le plus lourd.** Une carte, c'est un
+   dessin ; un personnage qui réagit au match, c'est douze de plus **par âge**.
+   Le drapeau est donc explicite, et il ne travaille jamais sur tout le
+   catalogue par défaut : il faut nommer les cartes ou une série. */
+const etats = process.argv.includes('--etats');
+
 const racineDe = (id) => {
   let r = DEX.find((f) => f.id === id);
   for (let g = 0; g < 8 && r; g++) {
@@ -634,11 +643,19 @@ const racineDe = (id) => {
   return r;
 };
 
+/* Les états ne se filtrent pas par âge : les trois en ont besoin, et c'est
+   justement l'âge qui décide de la référence. */
 const choisies = DEX
-  .filter((f) => f.publie !== false && (ages ? f.stage > 1 : f.stage === 1))
+  .filter((f) => f.publie !== false
+    && (etats ? true : ages ? f.stage > 1 : f.stage === 1))
   .filter((f) => (ids.length ? ids.includes(f.id)
     : set ? f.set === set
       : !illustres.has(f.id)))
+  /* Un état se demande **depuis le dessin de sa propre carte**. Sans lui, il n'y
+     a rien à envoyer en référence — et une invite d'état écrite en texte pur
+     rend un inconnu qui fait le bon geste, ce qui est précisément ce que les
+     douze états perdus de TR1 avaient donné. */
+  .filter((f) => !etats || illustres.has(f.id))
   /* Un âge dont le premier âge n'est pas encore dessiné n'a pas de référence :
      on ne peut pas vieillir quelqu'un qu'on n'a pas. Il attend son tour, et
      c'est une raison de plus de faire les racines d'abord. */
@@ -844,6 +861,57 @@ const MONTEE = {
      ailleurs. On ne lui demande plus d'arbitrer entre deux instructions
      contraires, on ne lui en donne qu'une. */
   fide: null,
+};
+
+/* ==================================================== les douze états
+
+   Un Fanzzy dessiné, c'est une carte. Un Fanzzy **vivant**, c'est douze
+   dessins : le jeu en montre un selon ce qui arrive au match, à l'accueil et
+   dans le virage. `src/shared/fanzzy/rendus.js` dit quand chacun se déclenche ;
+   ce qui suit dit **ce que ça donne à l'écran**, ce qui n'est pas la même
+   question et n'était écrit nulle part.
+
+   Deux règles gouvernent cette table, et elles viennent l'une et l'autre d'un
+   dégât déjà payé :
+
+   — **Un état est un moment, pas une humeur.** « content » ne se dessine pas ;
+     « les deux bras en l'air, la bouche grande ouverte » si. Les douze lignes
+     décrivent donc un corps, jamais un adjectif.
+
+   — **Le personnage ne change pas.** Même visage, mêmes vêtements, même objet.
+     C'est la seule chose qui fait qu'on reconnaît le même personnage d'un état
+     à l'autre — et c'est ce que les douze états perdus de TR1 n'avaient pas :
+     régénérés en texte, ils revenaient avec un tambour alors que la carte est
+     une Voix.
+
+   L'objet de famille **reste dans les mains** sauf quand le moment l'interdit :
+   on ne cache pas son visage dans ses mains en tenant un fumigène. Les lignes
+   qui reprennent les mains le disent explicitement. */
+const ETAT_JEU = {
+  neutre: 'standing calmly, weight even, watching the pitch — this is the '
+    + 'resting pose the eleven others depart from',
+  salut: 'greeting someone they are glad to see: one hand raised in a wave, '
+    + 'head slightly tilted, a warm open smile',
+  pousse: 'pushing the team on: leaning forward from the waist, both fists '
+    + 'closed at chest height, shouting hard, eyes narrowed',
+  but: 'the goal has just gone in: both arms thrown straight up, head back, '
+    + 'mouth wide open, everything in the body going upward',
+  encaisse: 'they have just conceded: shoulders dropped, head down, one hand '
+    + 'on the back of the neck, looking at the ground',
+  attente: 'waiting for kick-off: weight on one leg, arms loose or folded, '
+    + 'looking off to one side, patient and a little restless',
+  victoire: 'it is won: chest out, chin up, both arms spread wide and low, a '
+    + 'broad slow smile — triumph settled, not the burst of a goal',
+  defaite: 'it is lost: standing very still, arms hanging, staring straight '
+    + 'ahead at nothing, jaw set',
+  occasion: 'the shot went just wide: both hands on top of the head, elbows '
+    + 'out, mouth open in disbelief, body arched back',
+  decision: 'a decision has gone against them: one arm thrown out to the side '
+    + 'palm up, the other pointing at the pitch, shouting a question',
+  progression: 'something has just been earned: standing taller than before, '
+    + 'one fist clenched at the hip, a small proud closed-mouth smile',
+  ennui: 'nothing is happening and has not for a while: slouched, weight fully '
+    + 'on one hip, half-lidded eyes, looking anywhere but at the pitch',
 };
 
 /** Pour la Fidélité, dont la montée est une tenue et non un objet. */
@@ -1117,6 +1185,13 @@ const IDENTITE = {
  * demandé. On nomme donc ce qui ne bouge pas — l'ossature, pas l'apparence —
  * et on l'oppose explicitement à ce que les années ont le droit de changer.
  */
+/* Ce qui fait qu'on reconnaît quelqu'un, et rien d'autre. `OSSATURE` l'emploie
+   puis y ajoute une phrase sur des vêtements vieillis, qui ne vaut que pour un
+   changement d'âge ; les états reprennent cette moitié-ci seule. */
+const TRAITS = 'Same bone structure, same eye shape and eye colour, same nose, '
+  + 'same jaw and chin, same ears, same skin tone, same freckles or marks, same '
+  + 'hair.';
+
 const OSSATURE = 'Same bone structure, same eye shape and eye colour, same nose, '
   + 'same jaw and chin, same ears, same skin tone, same freckles or marks, same '
   + 'natural hair colour where it has not greyed. Same wardrobe and same colour '
@@ -1228,22 +1303,171 @@ function inviteAge(f) {
   ].filter(Boolean).join('\n');
 }
 
-const lot = choisies.map((f) => ({
-  id: f.id, nom: f.nom, set: f.set, type: f.type, rar: f.rar,
-  stade: f.stage,
-  /* La carte dont il faut envoyer le dessin en référence. Vide pour un premier
-     âge, qui se demande en texte. */
-  reference: ages ? (racineDe(f.id)?.id ?? null) : null,
-  invite: ages ? inviteAge(f) : invite(f),
-}));
+/**
+ * L'invite d'un **état**, en image-à-image depuis le dessin de la carte.
+ *
+ * ## Pourquoi la référence est la carte elle-même
+ *
+ * Un âge supérieur se demande depuis la **racine** : c'est le même personnage,
+ * plus vieux. Un état se demande depuis **sa propre carte** : c'est le même
+ * personnage, au même âge, à un autre moment du match. Prendre la racine pour
+ * référence ferait rajeunir le deuxième âge à chaque état, et on retrouverait
+ * douze dessins d'un homme de trente ans sur une carte qui en annonce cinquante.
+ *
+ * ## Ce qui ne bouge pas, et pourquoi c'est presque tout
+ *
+ * Même visage, mêmes vêtements, même objet, même cadrage, même fond. Un état
+ * n'est pas une variante du personnage : c'est **une seconde de sa vie**. Tout
+ * ce qui change tient dans une ligne — ce que fait le corps.
+ *
+ * C'est aussi ce qui permet à `fanzzy-art.mjs` de calculer **un seul cadrage
+ * par âge**, l'union des douze états. Un état dessiné plus large que les autres
+ * fait rapetisser le personnage sur les douze, et l'œil lit ça comme un défaut
+ * d'affichage, jamais comme un cadrage.
+ *
+ * ## L'objet reste dans les mains
+ *
+ * Sauf quand le moment l'interdit — on ne se prend pas la tête à deux mains en
+ * tenant un fumigène. Les lignes concernées de `ETAT_JEU` le disent alors
+ * elles-mêmes, et cette invite n'a pas à trancher : elle pose la règle, la
+ * table pose l'exception.
+ */
+function inviteEtat(f, etat) {
+  /* Trois pronoms et un accord, parce qu'un seul ne suffit pas : « show
+     **them** » est un complément, « whatever **they** hold » un sujet, et une
+     bête au singulier veut « holds ». Le premier jet n'en gardait qu'un et
+     écrivait « whatever them hold », que le générateur lit tant bien que mal —
+     mais une invite bancale est une invite qu'on n'ose plus corriger, parce
+     qu'on ne sait plus ce qui tenait la sortie debout. */
+  const dialecte = dialecteDe(f);
+  const humain = dialecte === 'humain';
+  const pronom = humain ? 'them' : 'it';     // complément : show ___
+  const sujet = humain ? 'they' : 'it';      // sujet : ___ hold(s)
+  const tient = humain ? 'hold' : 'holds';
+  const leur = humain ? 'their' : 'its';
+
+  return [
+    `Take the character from the reference image and show ${pronom} at a `
+      + `different moment. Same character, same age, ${humain ? 'same clothes, ' : ''}`
+      + 'same background, same framing, same lighting, same render style.',
+    '',
+    /* L'identité d'abord, et en CRITICAL : c'est la ligne qui distingue douze
+       états d'un personnage de douze personnages qui se ressemblent. */
+    /* **`OSSATURE` ne convient pas ici.** Elle sert aux âges, et finit par
+       « ce sont leurs vêtements, vieillis avec eux, pas des neufs » — une
+       phrase qui n'a aucun sens entre deux états séparés par trois secondes de
+       match, et qui invite le modèle à patiner un tissu sans raison. On reprend
+       donc la partie du visage, qui est celle qui compte, et on écrit la suite
+       pour ce cas-ci. */
+    /* La ligne d'identité existe déjà, une par dialecte — `IDENTITE` — et elle
+       est écrite pour chacun : une bête garde son plumage, un objet garde sa
+       forme. La réécrire ici en « same outfit » donnait « mêmes vêtements » à
+       une main en mousse, et une double espace là où `TRAITS` ne s'appliquait
+       pas. On reprend donc celle du dialecte, et on n'ajoute que ce qui est
+       propre aux états : **rien ne change sauf l'instant**. */
+    /* Les lignes d'identité finissent sur ce que l'âge change — « quelqu'un
+       d'autre de cet âge », « seule sa condition change », « seules son échelle
+       et son intensité changent ». Entre deux états, **rien** ne change de
+       cela : garder ces queues-là contredisait la phrase suivante dans la même
+       ligne. On les coupe, la partie utile reste entière. */
+    [IDENTITE[dialecte]
+      .replace(/,? not someone else of that age\./, '.')
+      .replace(/ Only its condition changes\./, '')
+      .replace(/ Only its scale and its intensity change\./, ''),
+      humain ? TRAITS : '',
+      `Nothing about ${pronom} has changed except what ${sujet} `
+        + `${humain ? 'are' : 'is'} doing in this instant.`,
+    ].filter(Boolean).join(' '),
+    '',
+    `This is "${f.nom}".`,
+    f.histoire ? 'Who they are — this is written in French and it wins over '
+      + 'every instruction below EXCEPT the ones marked CRITICAL, which always '
+      + `win: ${f.histoire}` : '',
+    '',
+    `The moment — ${ETAT_QUAND[etat]} :`,
+    `• ${ETAT_JEU[etat]}.`,
+    /* **Les douze moments sont écrits pour un corps humain**, parce que c'est
+       ce qu'est la grande majorité du catalogue. Une main en mousse n'a pas de
+       nuque à saisir ni de hanche sur laquelle s'appuyer.
+       `dex-ages.js` pose déjà la règle pour les âges — « une bête ne fait pas de
+       geste humain » — et elle vaut ici : on ne réécrit pas quarante-huit
+       lignes, on demande la traduction. Le modèle sait très bien ce que
+       « abattu » donne sur une merguez ; il ne sait pas quoi faire d'une main
+       posée sur une nuque qui n'existe pas. */
+    humain ? '' : `• ${sujet} ${humain ? 'have' : 'has'} no human limbs to `
+      + `borrow: translate that moment into the body ${sujet} actually ${tient === 'hold' ? 'have' : 'has'}, `
+      + 'using whatever it does have — its shape, its lean, its face, what it '
+      + 'is made of. Never graft arms or legs onto it.',
+    /* La ligne qui a coûté le plus cher ailleurs : sans elle, un modèle à qui
+       l'on demande une nouvelle pose vide les mains « pour faire propre ». */
+    /* « in their hands » sur une main en mousse : elle n'en a pas. Ce qu'on
+       veut dire vaut pour les quatre dialectes — ce qui est porté reste porté —
+       et se dit sans nommer d'anatomie. */
+    `• whatever ${sujet} ${tient} or ${humain ? 'carry' : 'carries'} in the `
+      + `reference image is still there, unless the line above says otherwise. `
+      + `What ${sujet} WEAR${humain ? '' : 'S'} always stays.`,
+    '',
+    'Do not change anything else. One single figure, same empty flat background.',
+    '',
+    PAS_CHEZ_MOI[f.type]
+      ? `CRITICAL — they belong to one family only: ${PAS_CHEZ_MOI[f.type]}.`
+      : '',
+    RIEN_D_ECRIT,
+    '',
+    GARDE,
+  ].filter(Boolean).join('\n');
+}
+
+/**
+ * Le nom que le fichier doit porter, et le dossier où le déposer.
+ *
+ * `fanzzy-art.mjs` ne devine rien : c'est **le nom du fichier** qui dit l'âge,
+ * la tenue et l'état, aux positions fixes `<racine>-e<n>-<tenue>-<état>.png`.
+ * Un rendu mal nommé n'est pas refusé, il est rangé ailleurs — et on le
+ * découvre en ne voyant pas le personnage réagir.
+ *
+ * Le dire ici, à côté de l'invite qui l'a produit, évite d'avoir à le déduire
+ * d'une documentation au moment précis où l'on manipule trente-six fichiers.
+ */
+const fichierEtat = (f, etat) => {
+  const racine = racineDe(f.id)?.id ?? f.id;
+  return `art/${racine}/_src/${racine}-e${f.stage}-base-${etat}.png`;
+};
+
+/* En mode états, une carte donne **douze lignes** et non une : c'est l'unité de
+   travail de `fanzzy-art.mjs`, qui calcule un cadrage commun aux douze. En
+   faire une à la fois donnerait douze cadrages, donc un personnage qui saute
+   d'un état à l'autre. */
+const lot = etats
+  ? choisies.flatMap((f) => ETATS.map((etat) => ({
+    id: f.id, nom: f.nom, set: f.set, type: f.type, rar: f.rar,
+    stade: f.stage, etat,
+    /* Sa propre carte, pas sa racine : voir `inviteEtat`. */
+    reference: f.id,
+    fichier: fichierEtat(f, etat),
+    invite: inviteEtat(f, etat),
+  })))
+  : choisies.map((f) => ({
+    id: f.id, nom: f.nom, set: f.set, type: f.type, rar: f.rar,
+    stade: f.stage,
+    /* La carte dont il faut envoyer le dessin en référence. Vide pour un premier
+       âge, qui se demande en texte. */
+    reference: ages ? (racineDe(f.id)?.id ?? null) : null,
+    invite: ages ? inviteAge(f) : invite(f),
+  }));
 
 if (json) {
   console.log(JSON.stringify(lot, null, 1));
 } else {
   for (const x of lot) {
-    console.log(`\n${'='.repeat(70)}\n${x.id} — ${x.nom}  [${x.set} · ${TYPES[x.type]?.nom ?? x.type} · ${x.rar}]`
-      + (x.reference ? `\n  référence (image-à-image) : ${x.reference}.png\n` : '\n'));
+    console.log(`\n${'='.repeat(70)}\n${x.id}${x.etat ? ' · ' + x.etat.toUpperCase() : ''}`
+      + ` — ${x.nom}  [${x.set} · ${TYPES[x.type]?.nom ?? x.type} · ${x.rar}]`
+      + (x.reference ? `\n  référence (image-à-image) : ${x.reference}.png` : '')
+      /* Le nom du fichier est la moitié du travail : `fanzzy-art.mjs` ne devine
+         ni l'âge ni l'état, il les lit aux positions fixes du nom. */
+      + (x.fichier ? `\n  à enregistrer sous  : ${x.fichier}` : '') + '\n');
     console.log(x.invite);
   }
-  console.log(`\n${lot.length} invite(s).`);
+  console.log(`\n${lot.length} invite(s)${
+    etats ? ` — ${choisies.length} âge(s) × ${ETATS.length} états` : ''}.`);
 }

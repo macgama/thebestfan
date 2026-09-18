@@ -483,5 +483,90 @@ titre('La règle de droits couvre les deux bouts de la chaîne');
       .test(x.invite.replace(/\s+/g, ' '))));
 }
 
+/* ==================================================== les douze états
+
+   Un Fanzzy dessiné, c'est une carte. Un Fanzzy vivant, c'est douze dessins de
+   plus **par âge** — et c'est le chantier qui a déjà coûté le plus cher : les
+   douze états des deux âges supérieurs de TR1 ont été jetés, soixante-trois
+   fichiers, parce qu'ils portaient des écussons, du texte, et un tambour sur une
+   carte qui est une Voix.
+
+   Ces contrôles tiennent les trois choses qui l'avaient causé. */
+
+const etatsDe = (...ids) => JSON.parse(execFileSync(process.execPath,
+  ['scripts/fanzzy-invites.mjs', '--json', '--etats', ...ids],
+  { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }));
+
+titre('Les douze états sont douze moments du même personnage');
+{
+  const { ETATS } = await import('../src/shared/fanzzy/rendus.js');
+  const lot = etatsDe('TR1', 'TR2');
+
+  check('une carte donne douze invites, une par état',
+    lot.length === 24 && new Set(lot.map((x) => x.etat)).size === 12
+    || (console.log('        ', lot.length, 'invites ·',
+      new Set(lot.map((x) => x.etat)).size, 'états'), false));
+  check('et ce sont les douze du jeu, pas douze autres',
+    ETATS.every((e) => lot.some((x) => x.etat === e)));
+
+  /* **La référence est la carte elle-même**, et non sa racine. Un âge se demande
+     depuis son premier âge — c'est le même, plus vieux ; un état se demande
+     depuis sa propre carte — c'est le même, au même âge, une seconde plus tard.
+     Confondre les deux ferait rajeunir le troisième âge douze fois. */
+  const c = etatsDe('TR1B');
+  check('un état se demande depuis sa propre carte, pas depuis sa racine',
+    c.every((x) => x.reference === 'TR1B')
+    || (console.log('        référence :', c[0]?.reference), false));
+
+  /* Le nom du fichier est la moitié du travail : `fanzzy-art.mjs` lit l'âge, la
+     tenue et l'état **aux positions fixes du nom**, et range ailleurs ce qui est
+     mal nommé — sans rien refuser. */
+  check('chaque invite dit sous quel nom enregistrer le rendu',
+    c.every((x) => x.fichier === `art/TR1/_src/TR1-e2-base-${x.etat}.png`)
+    || (console.log('        ', c[0]?.fichier), false));
+
+  /* La règle de droits couvre les deux autres chaînes ; elle doit couvrir
+     celle-ci, qui produira le plus gros volume d'images du projet. */
+  const sansGarde = lot.filter((x) =>
+    !/no club crests, no team names/.test(x.invite.replace(/\s+/g, ' ')));
+  check('les vingt-quatre portent la formule de VISUELS.md', sansGarde.length === 0
+    || (console.log('        ', sansGarde.map((x) => x.id + '/' + x.etat).join(' ')), false));
+  check('et l’interdit d’écrire sur les objets',
+    lot.every((x) => /nothing in the image is written on/.test(x.invite)));
+
+  /* **Le tambour de TR1C.** Une Voix ne tient pas de tambour, et c'est le geste
+     qui décide de ce qu'on peut jouer en duel : un dessin qui annonce une autre
+     famille ment sur la carte. */
+  check('la famille est verrouillée dans chaque état',
+    lot.every((x) => /they belong to one family only/.test(x.invite)));
+  check('et la Voix ne se voit pas offrir de tambour',
+    lot.filter((x) => x.type === 'voix')
+      .every((x) => /no drum, no drumsticks/.test(x.invite)));
+
+  /* Ce qui distingue douze états d'un personnage de douze personnages qui se
+     ressemblent. */
+  check('chaque état exige le même personnage, en CRITICAL',
+    lot.every((x) => /CRITICAL — it must still be recognisably the SAME/
+      .test(x.invite)));
+  check('et ne laisse changer que l’instant',
+    lot.every((x) => /except what the[my]? .{0,4}is|except what they are doing/
+      .test(x.invite.replace(/\s+/g, ' '))));
+
+  /* L'objet de famille reste dans les mains. Sans cette ligne, un modèle à qui
+     l'on demande une nouvelle pose vide les mains « pour faire propre ». */
+  check('l’objet tenu ne disparaît pas d’un état à l’autre',
+    lot.every((x) => /is still there, unless the line above says otherwise/
+      .test(x.invite.replace(/\s+/g, ' '))));
+
+  /* Les douze moments sont écrits pour un corps humain. Ce qui n'en a pas doit
+     recevoir la consigne de traduire, jamais des bras greffés. */
+  const objets = etatsDe('OB1');
+  check('un objet vivant ne se voit pas greffer de bras',
+    objets.every((x) => /Never graft arms or legs onto it/.test(x.invite))
+    || (console.log('        ', objets[0]?.invite.slice(0, 80)), false));
+  check('et on ne lui parle pas de ses vêtements',
+    objets.every((x) => !/same clothes/.test(x.invite)));
+}
+
 console.log(rouge ? `\n${rouge} test(s) en échec` : '\ntout est vert');
 process.exit(rouge ? 1 : 0);
