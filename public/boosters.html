@@ -238,8 +238,13 @@
   transition:transform .55s cubic-bezier(.3,.9,.3,1)}
 .reveal.flipped .flip{transform:rotateY(180deg)}
 .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:4%}
-.face.back{background:linear-gradient(160deg,#20262F,#0D1116);border:2px solid #39414E;display:grid;
-  place-items:center;box-shadow:0 18px 36px rgba(0,0,0,.6)}
+/* Le dos porte le dessin de la série, posé bord à bord. Le dégradé et le
+   triangle restent **dessous** : une série neuve dont le dos n'est pas encore
+   dessiné s'ouvre quand même, avec l'ancien fond. */
+.face.back{background:linear-gradient(160deg,#20262F,#0D1116) center/cover no-repeat;
+  border:2px solid #39414E;display:grid;place-items:center;overflow:hidden;
+  box-shadow:0 18px 36px rgba(0,0,0,.6)}
+.face.back.dessine>svg{display:none}
 .face.front{transform:rotateY(180deg)}
 .burst{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:30}
 .newtag{position:absolute;top:-24px;left:50%;transform:translateX(-50%);font-family:var(--banner);
@@ -982,12 +987,19 @@ async function openPack() {
   tickRegen();
 
   const st = $('ostage'); st.innerHTML = '';
+  /* **Le dos, c'est celui du sachet — pas celui de la carte.** La nuance
+     compte : montrer la série de la carte qu'on tient renseignerait sur elle
+     avant de la retourner, et un booster n'a plus rien à révéler si son dos
+     l'a déjà dit. Le sachet, lui, on l'a choisi soi-même une seconde plus
+     tôt. */
+  const dosDuSachet = window.FZART?.dos?.((SETS[S.set] ?? {}).id);
   pull.forEach((f, i) => {
     const el = document.createElement('div');
     el.className = 'reveal'; el.style.zIndex = 20 - i;
     el.style.transform = `translateY(${i * 7}px) scale(${1 - i * .03})`;
     el.innerHTML = `<div class="flip">
-      <div class="face back"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#39414E" stroke-width="1.4"><path d="M3 20l9-16 9 16z"/><path d="M7 20l5-9 5 9"/></svg></div>
+      <div class="face back${dosDuSachet ? ' dessine' : ''}"${dosDuSachet
+        ? ` style="background-image:url('${dosDuSachet}')"` : ''}><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#39414E" stroke-width="1.4"><path d="M3 20l9-16 9 16z"/><path d="M7 20l5-9 5 9"/></svg></div>
       <div class="face front">${cardHTML(f)}</div></div>`;
     st.appendChild(el);
   });

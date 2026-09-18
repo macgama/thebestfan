@@ -13,14 +13,14 @@
  *
  * Usage : node scripts/fanzzy-ui-smoke.mjs
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
-import { DEX } from '../src/shared/fanzzy/dex.js';
+import { DEX, SETS } from '../src/shared/fanzzy/dex.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
@@ -410,6 +410,42 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
     await pageG.evaluate(() => document.querySelectorAll('#ostage > *').length) === 5);
   check('un booster a été consommé', await boosters() === avant - 1);
 
+  /* ---------------------------------------------- le dos porte la série
+
+     **Les treize séries se retournaient sur le même dos** : un dégradé gris
+     et un petit triangle au trait, identique pour LA TRIBUNE, LE BESTIAIRE et
+     LA REPRISE. C'est pourtant la seule image qu'on regarde pendant la seconde
+     qui précède le tirage — celle qui donne envie de retourner. La série, qui
+     est le premier plaisir de la collection, n'existait qu'**après**.
+
+     On vérifie deux choses, et la seconde est la plus facile à casser : que
+     le dos est bien dessiné, et qu'il est celui du **sachet** et non celui de
+     la carte. Donner à chaque carte le dos de sa propre série reviendrait à
+     annoncer ce qu'elle est avant de la retourner — un booster n'a plus rien
+     à révéler si son dos l'a déjà dit. */
+  const dos = await pageG.evaluate(() => {
+    const dos = [...document.querySelectorAll('#ostage .face.back')];
+    return {
+      fonds: dos.map((d) => getComputedStyle(d).backgroundImage),
+      dessines: dos.filter((d) => d.classList.contains('dessine')).length,
+      total: dos.length,
+      attendu: (SETS[S.set] ?? {}).id,
+      triangles: dos.filter((d) => {
+        const svg = d.querySelector('svg');
+        return svg && getComputedStyle(svg).display !== 'none';
+      }).length,
+    };
+  });
+  check(`les cinq dos portent un dessin (${dos.dessines}/${dos.total})`,
+    dos.dessines === dos.total);
+  check(`et c’est celui du sachet ouvert — ${dos.attendu}`,
+    !!dos.attendu && dos.fonds.every((f) => f.includes(`/img/dos/${dos.attendu}.`))
+      || (console.log('        fonds :', dos.fonds[0]), false));
+  check('un seul dos pour tout le paquet : rien ne trahit la carte d’en dessous',
+    new Set(dos.fonds).size === 1);
+  check('et le triangle de secours s’efface quand le dessin est là',
+    dos.triangles === 0);
+
   /* 2 — l'avancée suit la main, pas les images.
 
      Le même trajet en six mouvements et en vingt-quatre doit donner la même
@@ -630,6 +666,30 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
     || (console.log('        il dit :', sans.libelle), false));
 
   await p2.close();
+}
+
+/* ==================================== chaque série a son dos, dans les trois
+
+   Le contrôle du navigateur, plus haut, ne voit qu'une série : celle du sachet
+   qu'il vient d'ouvrir. Les douze autres ne se cassent donc jamais sous ses
+   yeux — et c'est exactement ce qui arrive le jour où une saison neuve arrive
+   sans son dessin : la page se replie sur le dégradé gris, sans rien dire, et
+   personne ne s'en aperçoit avant un joueur.
+
+   Les trois formats comptent aussi. `negocierAvif` sert l'AVIF à qui l'accepte
+   et le WebP aux autres ; il ne remplace l'extension **que** si le fichier
+   AVIF existe. Un dos publié en WebP seul marcherait donc partout — et c'est
+   précisément pour ça qu'il faut le vérifier ici plutôt qu'à l'écran. */
+{
+  const dossier = path.join(RACINE, 'public', 'img', 'dos');
+  const manquants = [];
+  for (const serie of SETS) {
+    for (const ext of ['.webp', '.avif', '.png']) {
+      if (!existsSync(path.join(dossier, serie.id + ext))) manquants.push(serie.id + ext);
+    }
+  }
+  check(`les ${SETS.length} séries ont leur dos en webp, avif et png`,
+    !manquants.length || (console.log('        manque :', manquants.join(', ')), false));
 }
 
 await nav.close();

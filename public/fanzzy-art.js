@@ -295,6 +295,21 @@
     // `src` sert aux **photos** — les sachets de la boutique, les décors : elles
     // sont publiées en AVIF, WebP et JPEG, jamais en PNG.
     src: (base) => base + IMG_EXT,
+    /**
+     * Le dos d'une carte, par série.
+     *
+     * **Les treize séries se retournaient toutes sur le même dos** : un
+     * dégradé gris et un petit triangle au trait. C'est pourtant la seule
+     * image qu'on regarde pendant la seconde qui précède le tirage — celle
+     * d'avant, celle qui fait qu'on a envie de retourner. Elle ne disait rien
+     * du sachet qu'on venait d'ouvrir, et la série, qui est le premier plaisir
+     * de la collection, n'existait qu'**après** le retournement.
+     *
+     * Le repli garde l'ancien fond : une série neuve dont le dos n'est pas
+     * encore dessiné doit s'ouvrir quand même. C'est exactement le cas qui
+     * arrive à chaque saison.
+     */
+    dos: (code) => (code ? `/img/dos/${String(code).toUpperCase()}${IMG_EXT}` : null),
     setTypes,
     seeded,
     ILLUSTRES,

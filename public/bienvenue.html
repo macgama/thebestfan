@@ -139,8 +139,11 @@ input:focus{outline:none;border-color:var(--projo)}
   transition:transform .6s cubic-bezier(.3,.9,.3,1)}
 .reveal.flipped .flip{transform:rotateY(180deg)}
 .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;overflow:hidden}
-.face.back{background:linear-gradient(160deg,#20262F,#0D1116);border:2px solid #39414E;
-  display:grid;place-items:center}
+/* Même dos qu'au kiosque, et pour la même raison : c'est l'image qu'on regarde
+   pendant la seconde d'avant. Le dégradé reste dessous, en repli. */
+.face.back{background:linear-gradient(160deg,#20262F,#0D1116) center/cover no-repeat;
+  border:2px solid #39414E;display:grid;place-items:center}
+.face.back.dessine>svg{display:none}
 .face.front{transform:rotateY(180deg);border:2px solid var(--c);
   background:linear-gradient(155deg,#1C222B,#0C1015);display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:9px;padding:20px;text-align:center}
@@ -561,13 +564,20 @@ function faceCarte(c) {
 
 function reveler() {
   const s = $('s3');
+  /* **Un seul dos pour tout le paquet, celui de sa série.** Les cartes de
+     bienvenue ne sont pas toutes des Fanzzy — il y a des actions, du stuff,
+     des écharpes —, et donner à chacune le dos de sa propre série reviendrait
+     à annoncer ce qu'elle est avant de la retourner. On prend donc la série du
+     premier supporter du paquet : c'est celle du sachet. */
+  const dos = window.FZART?.dos?.(cartes.find((c) => c.set)?.set);
   cartes.forEach((c, i) => {
     const el = document.createElement('div');
     el.className = 'reveal';
     el.style.zIndex = 20 - i;
     el.style.transform = `translateY(${i * 7}px) scale(${1 - i * .03})`;
     el.innerHTML = `<div class="flip">
-      <div class="face back"><svg width="52" height="52" viewBox="0 0 24 24" fill="none"
+      <div class="face back${dos ? ' dessine' : ''}"${dos
+        ? ` style="background-image:url('${dos}')"` : ''}><svg width="52" height="52" viewBox="0 0 24 24" fill="none"
         stroke="#39414E" stroke-width="1.4"><path d="M3 20l9-16 9 16z"/><path d="M7 20l5-9 5 9"/></svg></div>
       ${faceCarte(c)}</div>`;
     s.appendChild(el);
