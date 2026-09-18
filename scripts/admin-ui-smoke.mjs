@@ -75,8 +75,14 @@ const app = express();
 // /compte à la moindre erreur. Sans cette route, le test mesurait une page
 // dont le corps avait déjà été remplacé.
 app.get('/api/auth/me', (_q, s) => s.json({ user: { pseudo: 'Patronne' } }));
+const { createContenus } = await import('../src/server/contenus/index.js');
+const contenus = createContenus({ pool });
+await contenus.semer();
+await contenus.charger();
+
 const admin = createAdmin({ pool,
-  requireAuth: (r, _s, n) => { r.user = { id: U, email: 'admin@ex.fr' }; n(); } });
+  requireAuth: (r, _s, n) => { r.user = { id: U, email: 'admin@ex.fr' }; n(); },
+  deps: { contenus } });
 app.use('/api/admin', admin.router);
 app.get('/admin', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'admin.html')));
 app.use(express.static(path.join(RACINE, 'public')));
@@ -689,6 +695,120 @@ if (process.env.CAPTURE) {
   /* La base repart propre : les autres suites la partagent, et un barème
      décalé d'un cran fait rougir très loin d'ici. */
   await pool.execute('DELETE FROM reglages');
+}
+
+/* ==================================================== la navigation, rangée
+
+   Huit onglets à plat, c'est une liste qu'on relit entièrement à chaque fois.
+   Trois familles disent en plus ce que chacun décide : le contenu, les nombres,
+   ou rien du tout — il regarde. */
+{
+  const fam = await page.evaluate(() =>
+    [...document.querySelectorAll('#nav .fam i')].map((x) => x.textContent.trim()));
+  check('les onglets sont rangés en familles', fam.length === 3
+    || (console.log('        vu :', JSON.stringify(fam)), false));
+  check('et les familles se nomment',
+    /CONTENU/.test(fam[0] ?? '') && /JEU/.test(fam[1] ?? '') && /EXPLOITATION/.test(fam[2] ?? ''));
+  /* **On ne compte pas, on nomme.** Le premier jet vérifiait « huit boutons »
+     et rougissait le jour où CONTENUS est arrivé — en accusant le regroupement
+     d'avoir perdu un onglet, alors qu'il en avait gagné un. Un nombre attendu
+     se périme à chaque ajout ; une liste de noms dit ce qu'on veut vraiment
+     savoir : **le rangement n'a fait disparaître personne.** */
+  const attendus = ['SAISONS', 'FANZZY', 'CONTENUS', 'TENUES', 'RÉGLAGES',
+    'APERÇU', 'JOUEURS', 'COMPÉTITIONS', 'JOURNAL'];
+  const vus = await page.evaluate(() =>
+    [...document.querySelectorAll('#nav button')].map((b) => b.textContent.trim()));
+  check('le rangement n’a fait disparaître aucun onglet',
+    attendus.every((t) => vus.includes(t))
+    || (console.log('        manquent :',
+      attendus.filter((t) => !vus.includes(t)).join(' ')), false));
+  check('et n’en a inventé aucun', vus.every((t) => attendus.includes(t))
+    || (console.log('        en trop :',
+      vus.filter((t) => !attendus.includes(t)).join(' ')), false));
+}
+
+/* ==================================================== l'aperçu qui oriente
+
+   Il ne montrait que des compteurs de population. La question qu'on se pose en
+   ouvrant cette page — *qu'est-ce que les joueurs peuvent obtenir aujourd'hui,
+   et où ça se règle* — traverse quatre onglets et n'avait aucune réponse. */
+await page.evaluate(() => [...document.querySelectorAll('nav button')]
+  .find((b) => /APERÇU/i.test(b.textContent))?.click());
+await dodo(500);
+{
+  const t = await page.evaluate(() => document.getElementById('main').textContent);
+  check('l’aperçu dit ce qui est en jeu', /CE QUI EST EN JEU/.test(t)
+    || (console.log('        il dit :', t.slice(0, 120)), false));
+  check('il nomme les séries ouvertes', /Séries ouvertes/.test(t));
+  check('et il nomme l’onglet où ça se change', /SAISONS/.test(t));
+}
+
+/* ==================================================== l'onglet CONTENUS
+
+   Vingt-neuf cartes d'action, dix-sept pièces d'équipement, dix stades, et
+   aucun écran : on ne pouvait les ouvrir qu'en les cochant dans une saison, et
+   jamais les refermer. */
+await page.evaluate(() => [...document.querySelectorAll('nav button')]
+  .find((b) => /CONTENUS/i.test(b.textContent))?.click());
+check('l’onglet des contenus se monte', await jusqua(async () =>
+  await page.evaluate(() => document.querySelectorAll('#c-corps tr').length > 20)));
+{
+  const total = await page.evaluate(() => document.querySelectorAll('#c-corps tr').length);
+  check('les trois familles y sont ensemble', total >= 50
+    || (console.log('        lignes :', total), false));
+
+  /* Le filtre est structuré, et pas plein texte : « toutes les cartes d'action
+     retirées » ne se tape pas dans une boîte de recherche. */
+  await page.select('#c-famille', 'stade');
+  await dodo(350);
+  const stades = await page.evaluate(() => document.querySelectorAll('#c-corps tr').length);
+  check('filtrer sur une famille réduit la liste', stades > 0 && stades < total
+    || (console.log('        stades :', stades, 'sur', total), false));
+
+  /* **Le geste qui manquait.** Une saison ouvre ; rien ne refermait. */
+  await page.evaluate(() => document.querySelector('#c-corps [data-basculer]')?.click());
+  await dodo(700);
+  const retires = await page.evaluate(() =>
+    document.querySelectorAll('#c-corps tr.depublie').length);
+  check('retirer un contenu se voit à l’écran', retires >= 1
+    || (console.log('        retirés :', retires), false));
+
+  await page.select('#c-etat', 'retire');
+  await dodo(350);
+  check('et le filtre « retirés seulement » le retrouve',
+    (await page.evaluate(() => document.querySelectorAll('#c-corps tr').length)) === retires);
+
+  /* On remet le jeu comme on l'a trouvé : les suites partagent une base. */
+  await page.evaluate(() => document.querySelector('#c-corps [data-basculer]')?.click());
+  await dodo(700);
+}
+
+/* ==================================================== les filtres du catalogue
+
+   Sept cent onze cartes derrière un seul champ libre. « Qu'est-ce qui n'est pas
+   dessiné dans cette série » ne se tape pas. */
+await page.evaluate(() => [...document.querySelectorAll('nav button')]
+  .find((b) => /FANZZY/i.test(b.textContent))?.click());
+await jusqua(async () =>
+  await page.evaluate(() => document.querySelectorAll('#corps .fzrow').length > 20));
+{
+  const tout = await page.evaluate(() => document.querySelectorAll('#corps .fzrow').length);
+  await page.select('#f-et', 'nu');
+  await dodo(400);
+  const nus = await page.evaluate(() => document.querySelectorAll('#corps .fzrow').length);
+  check('on peut ne voir que ce qui n’est pas dessiné', nus > 0 && nus < tout
+    || (console.log('        pas dessinés :', nus, 'sur', tout), false));
+
+  /* Les filtres se **cumulent** : c'est comme ça qu'on cherche du travail à
+     faire. Un filtre qui remplacerait le précédent obligerait à tout retaper. */
+  await page.select('#f-rr', 'legendaire');
+  await dodo(400);
+  const deux = await page.evaluate(() => document.querySelectorAll('#corps .fzrow').length);
+  check('et les filtres se cumulent', deux <= nus
+    || (console.log('        cumul :', deux, '>', nus), false));
+  check('le compte annonce ce qui est affiché et sur combien',
+    /affichée\(s\) sur/.test(await page.evaluate(() =>
+      document.querySelector('.compte')?.textContent ?? '')));
 }
 
 await nav.close();

@@ -62,9 +62,14 @@ let moi = B;   // on commence en simple joueur
    éprouveraient ce refus plutôt que le geste. */
 const { createAbonnement } = await import('../src/server/abonnement/index.js');
 const abonnement = createAbonnement({ pool, requireAuth: (r,_s,n)=>n() });
+const { createContenus } = await import('../src/server/contenus/index.js');
+const contenus = createContenus({ pool });
+await contenus.semer();
+await contenus.charger();
+
 const adm = createAdmin({ pool,
   requireAuth: (r,_s,n)=>{ r.user = { id: moi, email: moi===A?'patron@ex.fr':'joueur@ex.fr' }; n(); },
-  deps: { abonnement } });
+  deps: { abonnement, contenus } });
 const app = express(); app.use('/api/admin', adm.router);
 const http = createServer(app); await new Promise((r)=>http.listen(0,r));
 const base = `http://localhost:${http.address().port}`;
@@ -548,6 +553,76 @@ moi = A;
     { method: 'POST', body: { formule: 'offert' } });
   check('un joueur inconnu est refusé', r.json.error === 'admin.error.joueur_inconnu'
     || (console.log('        rendu :', JSON.stringify(r.json).slice(0, 120)), false));
+}
+
+/* ======================================================= les contenus du jeu
+
+   Vingt-neuf cartes d'action, dix-sept pièces d'équipement, dix stades. Ils
+   avaient un module capable de les publier et **aucune route pour l'atteindre**
+   : on ne pouvait les ouvrir qu'en les cochant dans une saison, jamais les
+   refermer. Ces contrôles tiennent la porte ouverte.
+
+   Le refus d'un identifiant inconnu compte autant que la réussite : le code
+   porte la forme, la base porte l'état, et un état sans forme est une ligne que
+   plus aucun écran ne sait afficher. */
+console.log('\n— les contenus —');
+{
+  const lire = async () => (await call('/api/admin/contenus')).json;
+  const basculer = (famille, ids, publie) =>
+    call('/api/admin/contenus/publier', { body: { famille, ids, publie } });
+
+  const d = await lire();
+  check('les contenus se listent', d.disponible === true
+    || (console.log('        il rend :', JSON.stringify(d).slice(0, 140)), false));
+  check('les trois familles sont là',
+    ['action', 'stuff', 'stade'].every((f) => Array.isArray(d.familles?.[f]?.liste))
+    || (console.log('        familles :', Object.keys(d.familles ?? {}).join(' ')), false));
+  check('et chaque famille porte son nom en français',
+    Object.values(d.familles).every((f) => typeof f.nom === 'string' && f.nom.length > 3));
+
+  const cible = d.familles.stade.liste[0];
+  check('un stade est publié au départ', cible.publie !== false);
+
+  await basculer('stade', [cible.id], false);
+  const revu = (await lire()).familles.stade.liste.find((x) => x.id === cible.id);
+  check('retirer un stade le sort du jeu', revu.publie === false
+    || (console.log('        il dit :', JSON.stringify(revu)), false));
+
+  /* **C'est le geste qui manquait.** Une saison ouvre ; jusqu'ici rien ne
+     refermait. */
+  await basculer('stade', [cible.id], true);
+  check('et le republier le remet',
+    (await lire()).familles.stade.liste.find((x) => x.id === cible.id).publie !== false);
+
+  const j = (await call('/api/admin/journal')).json;
+  const lignes = j.journal ?? j.lignes ?? [];
+  check('les deux gestes sont journalisés',
+    lignes.filter((l) => String(l.action).startsWith('contenu.')).length >= 2
+    || (console.log('        journal :', JSON.stringify(lignes).slice(0, 160)), false));
+
+  let x = await basculer('licornes', ['x'], true);
+  check('une famille inventée est refusée',
+    x.json.error === 'admin.error.famille_inconnue'
+    || (console.log('        il dit :', x.status, JSON.stringify(x.json)), false));
+  x = await basculer('stade', ['pas-un-stade'], true);
+  check('un identifiant que le code ne connaît pas est refusé',
+    x.json.error === 'admin.error.contenu_inconnu'
+    || (console.log('        il dit :', x.status, JSON.stringify(x.json)), false));
+  x = await basculer('stade', [], true);
+  check('une liste vide ne fait rien, et le dit',
+    x.json.error === 'admin.error.nothing_to_do');
+}
+
+/* Les stades étaient absents des choix servis à l'écran des saisons : la
+   colonne existait, le serveur les acceptait, et le formulaire ne pouvait pas
+   les proposer. Un champ réglable qu'aucun écran n'atteint n'existe pas. */
+{
+  const d = (await call('/api/admin/saisons')).json;
+  check('l’écran des saisons reçoit la liste des stades',
+    Array.isArray(d.choix?.stades) && d.choix.stades.length > 0
+    || (console.log('        choix :', Object.keys(d.choix ?? {}).join(' ')), false));
+  check('et chaque stade y porte un nom',
+    (d.choix.stades ?? []).every((x) => x.id && x.nom));
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);

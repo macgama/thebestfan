@@ -26,7 +26,18 @@ header .who{font-size:12px;opacity:.5}
    sélecteur d élément lui imposait display:flex — ses onze lignes partaient
    alors en colonne unique écrasée. Le même piège que les classes sans
    préfixe, sur un nom de balise. */
-#nav{display:flex;gap:6px;padding:12px 18px;flex-wrap:wrap}
+.h3{font-family:var(--banner);font-size:12px;letter-spacing:.15em;opacity:.5}
+#nav{display:flex;gap:18px;padding:12px 18px;flex-wrap:wrap;align-items:flex-end}
+/* Une famille d'onglets : son titre au-dessus, ses boutons dessous. Le titre
+   n'est pas cliquable — c'est une étiquette de rayon, pas une destination. */
+.fam{display:flex;flex-direction:column;gap:5px}
+.fam i{font-style:normal;font-size:8.5px;letter-spacing:.18em;opacity:.38;
+  font-family:var(--banner);padding-left:2px}
+.fam{position:relative}
+.fam::after{content:'';position:absolute;right:-9px;top:14px;bottom:2px;width:1px;
+  background:rgba(242,238,228,.1)}
+.fam:last-child::after{display:none}
+.fam>span{display:flex;gap:6px;flex-wrap:wrap}
 #nav button{background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.14);border-radius:7px;
   color:inherit;padding:8px 14px;font-family:var(--banner);font-size:12px;letter-spacing:.06em;
   cursor:pointer;opacity:.55}
@@ -277,6 +288,10 @@ function recu(texte, rate = false) {
 const recuRate = (e) => recu(MSG_FANZZY[e.code] ?? e.raison ?? e.code
   ?? 'le serveur n’a pas dit pourquoi.', true);
 
+/** Une option de liste déroulante, avec la sélection déjà posée. */
+const optSel = (v, t, sel) =>
+  `<option value="${esc(v)}"${v === (sel ?? '') ? ' selected' : ''}>${esc(t)}</option>`;
+
 const jour = (d) => new Date(d).toLocaleString('fr', { day:'2-digit', month:'2-digit',
   hour:'2-digit', minute:'2-digit' });
 
@@ -333,17 +348,39 @@ const MSG_FANZZY = {
   'admin.error.tenue_existe': 'Cet identifiant de thème est déjà pris.',
   'admin.error.tenue_inconnue': 'Ce thème n’existe pas.',
   'admin.error.nothing_to_do': 'Rien n’a changé.',
+  'admin.error.contenus_absents': 'Les contenus ne sont pas branchés : applique '
+    + 'sql/contenus.sql, puis redémarre le serveur.',
+  'admin.error.famille_inconnue': 'Cette famille de contenu n’existe pas.',
+  'admin.error.contenu_inconnu': 'Cet élément n’existe pas dans le code : la base '
+    + 'porte l’état, le code porte la forme.',
 };
 
-const ONGLETS = [
-  ['apercu','APERÇU'], ['saisons','SAISONS'], ['fanzzy','FANZZY'], ['tenues','TENUES'],
-  ['joueurs','JOUEURS'], ['competitions','COMPÉTITIONS'], ['reglages','RÉGLAGES'],
-  ['journal','JOURNAL'],
+/**
+ * Les onglets, **par famille**.
+ *
+ * Il y en avait huit, à plat, dans l'ordre où ils avaient été écrits. Huit
+ * boutons sans hiérarchie, c'est une liste qu'on relit entièrement à chaque
+ * fois — et surtout ça tait la chose la plus utile : **quatre de ces onglets
+ * décident du contenu du jeu, un décide de ses nombres, et les quatre derniers
+ * ne décident de rien, ils regardent.**
+ *
+ * Le regroupement le dit sans une phrase d'explication. Il ne change aucune
+ * vue : ce sont les mêmes écrans, rangés.
+ */
+const FAMILLES_ONGLETS = [
+  ['LE CONTENU', [['saisons','SAISONS'], ['fanzzy','FANZZY'],
+    ['contenus','CONTENUS'], ['tenues','TENUES']]],
+  ['LE JEU', [['reglages','RÉGLAGES']]],
+  ['L’EXPLOITATION', [['apercu','APERÇU'], ['joueurs','JOUEURS'],
+    ['competitions','COMPÉTITIONS'], ['journal','JOURNAL']]],
 ];
+const ONGLETS = FAMILLES_ONGLETS.flatMap(([, liste]) => liste);
 let onglet = 'apercu';
 
-$('nav').innerHTML = ONGLETS.map(([k,t]) =>
-  `<button data-o="${k}" class="${k===onglet?'on':''}">${t}</button>`).join('');
+$('nav').innerHTML = FAMILLES_ONGLETS.map(([titre, liste]) =>
+  `<div class="fam"><i>${titre}</i><span>${liste.map(([k,t]) =>
+    `<button data-o="${k}" class="${k===onglet?'on':''}">${t}</button>`).join('')}</span></div>`
+).join('');
 $('nav').onclick = (e) => {
   const b = e.target.closest('[data-o]'); if (!b) return;
   onglet = b.dataset.o;
@@ -363,17 +400,72 @@ async function rendre() {
 }
 
 const VUES = {
+  /**
+   * L'aperçu, et **ce qui est en jeu en ce moment**.
+   *
+   * Il ne montrait que des compteurs de population — joueurs, souvenirs,
+   * adresses vérifiées. De bons chiffres, et aucune réponse à la seule question
+   * qu'on se pose en ouvrant cette page : *qu'est-ce que les joueurs peuvent
+   * obtenir aujourd'hui, et où est-ce que ça se règle ?*
+   *
+   * Cette question-là traverse quatre onglets — SAISONS ouvre les séries,
+   * FANZZY publie carte par carte, CONTENUS publie le reste, RÉGLAGES fixe les
+   * nombres — et rien ne les reliait. Le bandeau ci-dessous les relie, et
+   * chaque ligne **nomme l'onglet** où elle se change.
+   *
+   * Les trois appels sont facultatifs : s'ils échouent, le bandeau disparaît et
+   * l'aperçu reste ce qu'il était. Un tableau de bord qui empêche de lire les
+   * compteurs parce qu'une table manque serait pire que pas de tableau de bord.
+   */
   async apercu() {
     const d = await api('/apercu');
+    const [sai, fz, cont] = await Promise.all([
+      api('/saisons').catch(() => null),
+      api('/fanzzy').catch(() => null),
+      api('/contenus').catch(() => null),
+    ]);
+
+    const enJeu = () => {
+      if (!sai) return '';
+      const ouvertes = sai.ouvertes
+        ? sai.ouvertes.map((id) => sai.choix.series.find((x) => x.id === id)?.nom ?? id)
+        : null;
+      const brouillons = (sai.saisons ?? []).filter((x) => !x.lancee);
+      const tirables = fz ? fz.fanzzy.filter((x) => x.publie && x.stage === 1).length : null;
+      const retirees = fz ? fz.fanzzy.filter((x) => !x.publie).length : null;
+      const fermes = cont?.disponible
+        ? Object.values(cont.familles).reduce((n, f) =>
+          n + f.liste.filter((x) => x.publie === false).length, 0) : null;
+
+      const l = (quoi, valeur, ou) => `<tr><td>${quoi}</td><td>${valeur}</td>
+        <td style="opacity:.42;font-size:11px;white-space:nowrap">${ou}</td></tr>`;
+
+      return `<h3 class="h3">CE QUI EST EN JEU EN CE MOMENT</h3>
+      <div class="tbl"><table><tbody>
+        ${l('Séries ouvertes', ouvertes === null
+          ? '<b>toutes</b> — aucune saison lancée n’en nomme'
+          : ouvertes.length ? esc(ouvertes.join(' · ')) : '<b>aucune</b>', 'SAISONS')}
+        ${l('Saison en cours', sai.enCours
+          ? `${esc(sai.enCours.nom)} (n° ${sai.enCours.numero})` : 'aucune', 'SAISONS')}
+        ${l('Brouillons prêts', brouillons.length
+          ? esc(brouillons.map((x) => x.nom).join(' · ')) : 'aucun', 'SAISONS')}
+        ${tirables === null ? '' : l('Fanzzy tirables',
+          `${tirables} de premier âge publiés${retirees ? ` · ${retirees} carte(s) retirée(s)` : ''}`,
+          'FANZZY')}
+        ${fermes === null ? '' : l('Contenus retirés',
+          fermes ? `${fermes} élément(s) hors du jeu` : 'aucun — tout est publié', 'CONTENUS')}
+      </tbody></table></div>`;
+    };
+
     const c = (v, l) => `<div class="card"><b>${v ?? 0}</b><span>${l}</span></div>`;
-    $('main').innerHTML = `
+    $('main').innerHTML = enJeu() + `
       <div class="cards">
         ${c(d.joueurs.total,'JOUEURS')}${c(d.joueurs.nouveaux,'CETTE SEMAINE')}
         ${c(d.joueurs.verifies,'ADRESSES VÉRIFIÉES')}${c(d.joueurs.admins,'ADMINS')}
         ${c(d.jeu.souvenirs,'SOUVENIRS')}${c(d.jeu.vecus,'DONT VÉCUS')}
         ${c(d.jeu.supporters,'DANS LE VIRAGE')}${c(d.competitions.activees,'COMPÉTITIONS ACTIVES')}
       </div>
-      <h3 style="font-family:var(--banner);font-size:12px;letter-spacing:.15em;opacity:.5">EXPLOITATION</h3>
+      <h3 class="h3">EXPLOITATION</h3>
       <div class="tbl"><table><tbody>
         <tr><td>Quota API du jour</td><td>${d.quota
           ? `${d.quota.usedToday} utilisés · ${d.quota.budgetLeft} restants` : 'suivi inactif'}</td></tr>
@@ -451,6 +543,7 @@ const VUES = {
           <dt>Tenues</dt><dd>${esc(noms(s.tenues, 'tenues')) || '—'}</dd>
           <dt>Équipement</dt><dd>${esc(noms(s.stuff, 'stuff')) || '—'}</dd>
           <dt>Cartes</dt><dd>${esc(noms(s.actions, 'actions')) || '—'}</dd>
+          <dt>Stades</dt><dd>${esc(noms(s.stades ?? [], 'stades')) || '—'}</dd>
         </dl>
         <div class="sai-a">
           <button class="mini" data-editer-saison="${s.id}">Modifier</button>
@@ -477,10 +570,12 @@ const VUES = {
           <span>${d.ouvertes
             ? esc(noms(d.ouvertes, 'series'))
             : 'toutes — aucune saison lancée n’en nomme'}</span></p>
-        <p class="series-n">Une saison ouvre ses séries et publie ses tenues, pour
-          tout le monde, à l'instant du lancement. L'équipement et les cartes
-          d'action y sont <b>annoncés</b> et non retenus : ils vivent dans le code,
-          et rien ne sait encore les garder fermés.</p>
+        <p class="series-n">Une saison ouvre ses séries et publie <b>tout le reste</b> —
+          tenues, équipement, cartes d'action, stades — pour tout le monde, à
+          l'instant du lancement. Remettre en brouillon referme les séries et
+          <b>elles seules</b> : ce qui a été publié reste publié, parce que
+          quelqu'un l'a peut-être déjà gagné. Pour retirer une pièce
+          d'équipement, une carte ou un stade, va dans <b>CONTENUS</b>.</p>
       </div>
       <div class="bar"><button class="mini" id="nouvelle-saison">Nouvelle saison</button></div>
       <div id="sai-form"></div>
@@ -497,7 +592,7 @@ const VUES = {
 
     function formulaire(s) {
       const v = s ?? { numero: '', nom: '', texte: '',
-        series: [], tenues: [], stuff: [], actions: [] };
+        series: [], tenues: [], stuff: [], actions: [], stades: [] };
       $('sai-form').innerHTML = `
         <div class="sai sai-edit">
           <div class="grille">
@@ -515,10 +610,12 @@ const VUES = {
             <div class="sai-ks" id="s-series">${cases('series', v.series)}</div></div>
           <div class="sai-l"><p class="sai-lt">TENUES — elles se publient</p>
             <div class="sai-ks" id="s-tenues">${cases('tenues', v.tenues)}</div></div>
-          <div class="sai-l"><p class="sai-lt">ÉQUIPEMENT — annoncé seulement</p>
+          <div class="sai-l"><p class="sai-lt">ÉQUIPEMENT — il se publie</p>
             <div class="sai-ks" id="s-stuff">${cases('stuff', v.stuff)}</div></div>
-          <div class="sai-l"><p class="sai-lt">CARTES D’ACTION — annoncées seulement</p>
+          <div class="sai-l"><p class="sai-lt">CARTES D’ACTION — elles se publient</p>
             <div class="sai-ks" id="s-actions">${cases('actions', v.actions)}</div></div>
+          <div class="sai-l"><p class="sai-lt">STADES — ils se publient</p>
+            <div class="sai-ks" id="s-stades">${cases('stades', v.stades)}</div></div>
           <div class="sai-a">
             <button class="mini" id="s-annuler">Annuler</button>
             <button class="mini vert" id="s-ok">${s ? 'Enregistrer' : 'Créer le brouillon'}</button>
@@ -535,6 +632,7 @@ const VUES = {
           nom: $('s-nom').value, texte: $('s-txt').value,
           series: coches('s-series'), tenues: coches('s-tenues'),
           stuff: coches('s-stuff'), actions: coches('s-actions'),
+          stades: coches('s-stades'),
         };
         try {
           /* api(chemin, corps, methode) — trois arguments, et le deuxième est
@@ -609,18 +707,49 @@ const VUES = {
     }
   },
 
-  async fanzzy(filtre = '') {
+  /**
+   * Le catalogue, **trié plutôt que cherché**.
+   *
+   * Il n'avait qu'un champ libre. Un champ libre répond bien à « où est le
+   * Choriste » et très mal aux questions qu'on se pose vraiment devant sept
+   * cent onze cartes : *qu'est-ce qui n'est pas dessiné dans LA REPRISE ?*,
+   * *quelles légendaires sont retirées ?*, *qu'est-ce qui reste à faire sur les
+   * percussions ?* Aucune de ces trois-là ne se tape dans une boîte de texte.
+   *
+   * Le champ reste — il sert — et quatre listes s'ajoutent à côté. L'état des
+   * filtres voyage dans un objet plutôt que dans une chaîne, sans quoi
+   * rafraîchir la vue après une modification en perdrait trois sur quatre.
+   */
+  async fanzzy(f = {}) {
     const d = await api('/fanzzy');
+    /* Rétrocompatible : deux endroits rappellent encore `VUES.fanzzy('')`. */
+    const flt = typeof f === 'string' ? { q: f } : (f ?? {});
+    const filtre = flt.q ?? '';
     const typesOpt = Object.entries(d.types)
       .map(([k, t]) => `<option value="${k}">${esc(t.nom)}</option>`).join('');
     const setsOpt = d.sets.map((s) => `<option value="${s.id}">${esc(s.nom)}</option>`).join('');
     const rarOpt = Object.keys(d.rar).map((r) => `<option value="${r}">${r}</option>`).join('');
 
-    const f = filtre.trim().toLowerCase();
-    const liste = f
-      ? d.fanzzy.filter((x) => `${x.id} ${x.nom} ${x.set_id} ${x.rar} ${x.type}`
-          .toLowerCase().includes(f))
-      : d.fanzzy;
+    const mot = filtre.trim().toLowerCase();
+    /* Chaque filtre est indépendant : « série RP » et « pas dessiné » se
+       cumulent, parce que c'est exactement comme ça qu'on cherche du travail à
+       faire. Un filtre qui remplacerait le précédent obligerait à tout retaper. */
+    const liste = d.fanzzy
+      .filter((x) => !flt.set || x.set_id === flt.set)
+      .filter((x) => !flt.type || x.type === flt.type)
+      .filter((x) => !flt.rar || x.rar === flt.rar)
+      .filter((x) => {
+        if (!flt.etat) return true;
+        if (flt.etat === 'publie') return Boolean(x.publie);
+        if (flt.etat === 'retire') return !x.publie;
+        /* « dessiné » se lit comme le jeu le lit : un âge sans dessin retombe
+           sur celui de son premier âge, et l'écran doit dire la même chose que
+           la vitrine, sinon on redessine ce qui est déjà visible. */
+        const dessine = Boolean(window.FZART?.racineIllustree?.(x.id));
+        return flt.etat === 'dessine' ? dessine : !dessine;
+      })
+      .filter((x) => !mot || `${x.id} ${x.nom} ${x.set_id} ${x.rar} ${x.type}`
+        .toLowerCase().includes(mot));
 
     const publies = d.fanzzy.filter((x) => x.publie).length;
 
@@ -668,16 +797,31 @@ const VUES = {
           saison</b> — onglet SAISONS.</p>
       </div>
       <div class="bar">
-        <input id="q" placeholder="nom, identifiant, série, rareté" value="${esc(filtre)}" style="flex:1">
+        <select id="f-set">${optSel('', 'toutes les séries', flt.set)}${
+          d.sets.map((x) => optSel(x.id, x.nom, flt.set)).join('')}</select>
+        <select id="f-fam">${optSel('', 'toutes les familles', flt.type)}${
+          Object.entries(d.types).map(([k, t]) => optSel(k, t.nom, flt.type)).join('')}</select>
+        <select id="f-rr">${optSel('', 'toutes les raretés', flt.rar)}${
+          Object.keys(d.rar).map((r) => optSel(r, r, flt.rar)).join('')}</select>
+        <select id="f-et">${optSel('', 'tous les états', flt.etat)}${
+          optSel('publie', 'publiés', flt.etat)}${optSel('retire', 'retirés', flt.etat)}${
+          optSel('dessine', 'dessinés', flt.etat)}${
+          optSel('nu', 'pas dessinés', flt.etat)}</select>
+        <input id="q" placeholder="nom ou identifiant" value="${esc(filtre)}" style="flex:1;min-width:140px">
         <button class="mini" id="nouveau">Nouveau Fanzzy</button>
       </div>`.concat(`
-      <div class="compte">${d.fanzzy.length} cartes · ${publies} publiées ·
-        ${d.fanzzy.length - publies} retirées · ${ILLUSTRES.size} dessinées</div>
+      <div class="compte">${liste.length} affichée(s) sur ${d.fanzzy.length} ·
+        ${publies} publiées · ${d.fanzzy.length - publies} retirées ·
+        ${ILLUSTRES.size} dessinées</div>
       <div class="tbl"><table><thead><tr><th></th><th>NOM</th><th>TYPE</th><th>SÉRIE</th><th>RARETÉ</th><th></th></tr></thead>
       <tbody id="corps">${liste.map(ligne).join('') || '<tr><td colspan="6" class="vide">Rien ne correspond.</td></tr>'}</tbody></table></div>`);
 
-    $('q').oninput = (e) => { clearTimeout($('q')._t);
-      $('q')._t = setTimeout(() => VUES.fanzzy(e.target.value), 250); };
+    const relireFz = () => VUES.fanzzy({
+      set: $('f-set').value, type: $('f-fam').value, rar: $('f-rr').value,
+      etat: $('f-et').value, q: $('q').value });
+    for (const id of ['f-set', 'f-fam', 'f-rr', 'f-et']) $(id).onchange = relireFz;
+    $('q').oninput = () => { clearTimeout($('q')._t);
+      $('q')._t = setTimeout(relireFz, 250); };
 
     /** Le formulaire, ouvert sous la ligne qu'il modifie. */
     const formulaire = (x) => `
@@ -801,6 +945,105 @@ const VUES = {
    * ressemble pas à une erreur et n'en est pas une : c'est à l'écran de le
    * dire, pas au joueur de le deviner.
    */
+  /**
+   * Les contenus : cartes d'action, équipement, stades.
+   *
+   * Vingt-neuf, dix-sept et dix. Ils n'avaient **aucun écran** : on ne pouvait
+   * les ouvrir qu'en les cochant dans une saison, et jamais les refermer. Les
+   * Fanzzy et les tenues ont chacun le leur ; ces trois familles-là étaient les
+   * seules à n'exister que dans le code.
+   *
+   * Le filtre est **structuré et non plein texte** : on cherche ici « toutes
+   * les cartes d'action retirées » ou « les stades publiés », pas un mot. Un
+   * champ libre répond bien à « où est machin » et très mal à « qu'est-ce qui
+   * est ouvert », qui est la question qu'on se pose devant cet écran.
+   */
+  async contenus(f = {}) {
+    const d = await api('/contenus');
+    if (!d.disponible) {
+      $('main').innerHTML = `<div class="vide">Les contenus ne sont pas branchés :
+        applique <b>sql/contenus.sql</b>, puis redémarre. En attendant, tout est
+        jouable et rien ne peut être retiré.</div>`;
+      return;
+    }
+
+    const familles = Object.entries(d.familles);
+    const f2 = { famille: f.famille ?? '', etat: f.etat ?? '', q: f.q ?? '' };
+    const mot = f2.q.trim().toLowerCase();
+
+    const lignes = familles
+      .filter(([k]) => !f2.famille || k === f2.famille)
+      .flatMap(([k, { liste }]) => liste.map((x) => ({ ...x, famille: k })))
+      .filter((x) => (f2.etat === '' ? true
+        : f2.etat === 'publie' ? x.publie !== false : x.publie === false))
+      .filter((x) => !mot || `${x.id} ${x.nom ?? ''} ${x.rar ?? ''}`.toLowerCase().includes(mot));
+
+    const total = familles.reduce((n, [, x]) => n + x.liste.length, 0);
+    const publies = familles.reduce((n, [, x]) =>
+      n + x.liste.filter((y) => y.publie !== false).length, 0);
+
+    const ligne = (x) => `<tr class="${x.publie === false ? 'depublie' : ''}">
+      <td><b>${esc(x.nom ?? x.id)}</b>
+        ${x.publie === false ? '<span class="pill off">RETIRÉ</span>' : ''}
+        <br><span style="opacity:.45;font-size:11px">${esc(x.id)}</span></td>
+      <td>${esc(d.familles[x.famille].nom)}</td>
+      <td>${esc(x.rar ?? '—')}</td>
+      <td style="text-align:right">
+        <button class="mini ${x.publie === false ? 'vert' : 'rouge'}"
+          data-basculer="${esc(x.id)}" data-famille="${esc(x.famille)}"
+          data-publie="${x.publie === false ? '1' : '0'}">
+          ${x.publie === false ? 'Publier' : 'Retirer'}</button></td></tr>`;
+
+    const opt = (v, t, sel) => `<option value="${v}"${v === sel ? ' selected' : ''}>${t}</option>`;
+    $('main').innerHTML = `
+      <div class="series">
+        <p class="series-t">CE QUI EST EN JEU
+          <span>${publies} publié(s) sur ${total}</span></p>
+        <p class="series-n">Retirer une carte d'action, une pièce d'équipement ou un
+          stade le sort des tirages et des parties <b>immédiatement</b>, sans
+          l'effacer. C'est le seul endroit d'où l'on referme ce qu'une saison a
+          ouvert — <b>SAISONS</b> ouvre, il ne referme que les séries.</p>
+      </div>
+      <div class="bar">
+        <select id="c-famille">${opt('', 'toutes les familles', f2.famille)}${
+          familles.map(([k, v]) => opt(k, v.nom, f2.famille)).join('')}</select>
+        <select id="c-etat">${opt('', 'publiés et retirés', f2.etat)}${
+          opt('publie', 'publiés seulement', f2.etat)}${
+          opt('retire', 'retirés seulement', f2.etat)}</select>
+        <input id="c-q" placeholder="nom ou identifiant" value="${esc(f2.q)}" style="flex:1">
+      </div>
+      <div class="compte">${lignes.length} ligne(s)</div>
+      <div class="tbl"><table><thead><tr><th>NOM</th><th>FAMILLE</th><th>RARETÉ</th><th></th></tr></thead>
+      <tbody id="c-corps">${lignes.map(ligne).join('')
+        || '<tr><td colspan="4" class="vide">Rien ne correspond.</td></tr>'}</tbody></table></div>`;
+
+    const relire = () => VUES.contenus({
+      famille: $('c-famille').value, etat: $('c-etat').value, q: $('c-q').value });
+    $('c-famille').onchange = relire;
+    $('c-etat').onchange = relire;
+    $('c-q').oninput = () => { clearTimeout($('c-q')._t);
+      $('c-q')._t = setTimeout(relire, 250); };
+
+    /* L'écouteur va sur le corps du tableau, pas sur `#main` : un `onclick`
+       posé sur `#main` survit au changement d'onglet — `innerHTML` remplace les
+       enfants, jamais les gestionnaires du parent — et resterait branché sous
+       toutes les vues suivantes. */
+    $('c-corps').onclick = async (e) => {
+      const b = e.target.closest('[data-basculer]');
+      if (!b) return;
+      b.disabled = true;
+      try {
+        const r = await api('/contenus/publier', { famille: b.dataset.famille,
+          ids: [b.dataset.basculer], publie: b.dataset.publie === '1' });
+        /* `recu(texte, rate)` — le second argument dit **l'échec**, pas la
+           réussite. Y passer `r.change > 0` aurait peint en rouge tout ce qui
+           marche. */
+        recu(b.dataset.publie === '1' ? 'Publié.' : 'Retiré du jeu.');
+        await relire();
+      } catch (err) { b.disabled = false; recuRate(err); }
+    };
+  },
+
   async tenues() {
     const d = await api('/tenues');
     const rarOpt = Object.keys(d.rar)

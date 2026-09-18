@@ -520,6 +520,13 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
         tenues: toutesTenues().map((t) => ({ id: t.id, nom: t.nom, publie: t.publie })),
         stuff: STUFF.map((s) => ({ id: s.id, nom: s.nom })),
         actions: ACTIONS.map((a) => ({ id: a.id, nom: a.nom })),
+        /* **Les stades manquaient.** La colonne `saisons.stades` existe,
+           `validerContenu` les accepte et `lancerSaison` les publie — mais ils
+           n'étaient pas dans cette liste, donc l'écran ne pouvait pas les
+           proposer. Dix stades dans le code, aucun levier pour les ouvrir : un
+           champ réglable qui n'apparaît nulle part est un champ qui n'existe
+           pas, quoi qu'en dise le serveur. */
+        stades: STADES.map((x) => ({ id: x.id, nom: x.nom })),
       },
     };
   }
@@ -974,6 +981,48 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
      explication, et la fiche chercherait un identifiant qui n'existe plus. On
      dépublie — `publie: false` la sort des boosters et la laisse à qui l'a
      gagnée.                                                                 */
+
+  /* ================================================ les contenus du jeu
+
+     Vingt-neuf cartes d'action, dix-sept pièces d'équipement, dix stades. Ils
+     ont un module qui sait les publier — `contenus.publier` — et **aucune route
+     ne l'atteignait** : on ne pouvait les ouvrir qu'en les cochant dans une
+     saison, et jamais les refermer. Les Fanzzy et les tenues ont chacun leur
+     écran ; ces trois familles-là n'avaient rien.
+
+     Facultatif de bout en bout : sans `sql/contenus.sql` appliqué, le module
+     n'est pas branché. La route le **dit** au lieu de lever, et l'écran affiche
+     alors la liste sans ses boutons — voir le repli de `contenus/index.js`. */
+  router.get('/contenus', safe(async (_req, res) => {
+    if (!module.deps.contenus) return res.json({ disponible: false, familles: {} });
+    const { tous: tousLes, FAMILLES } = await import('../contenus/index.js');
+    const familles = {};
+    for (const [famille, { nom }] of Object.entries(FAMILLES)) {
+      familles[famille] = { nom, liste: tousLes(famille) };
+    }
+    res.json({ disponible: true, familles });
+  }));
+
+  router.post('/contenus/publier', safe(async (req, res) => {
+    if (!module.deps.contenus) throw fail('admin.error.contenus_absents');
+    const { FAMILLES } = await import('../contenus/index.js');
+    const famille = String(req.body?.famille ?? '');
+    if (!FAMILLES[famille]) throw fail('admin.error.famille_inconnue');
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(String) : [];
+    if (!ids.length) throw fail('admin.error.nothing_to_do');
+    /* Un identifiant que le code ne connaît pas ne se publie pas : le code
+       porte la forme, la base porte l'état, et un état sans forme est une ligne
+       que plus aucun écran ne sait afficher. */
+    const connus = new Set(FAMILLES[famille].source.map((x) => x.id));
+    const inconnu = ids.find((id) => !connus.has(id));
+    if (inconnu) throw fail('admin.error.contenu_inconnu');
+
+    const publie = Boolean(req.body?.publie);
+    const change = await module.deps.contenus.publier(famille, ids, publie);
+    await journal(req.user.id, publie ? 'contenu.publie' : 'contenu.retire',
+      `${famille}:${ids.join(',')}`, { famille, ids, publie }, ip(req));
+    res.json({ change });
+  }));
 
   router.get('/tenues', safe(async (_req, res) =>
     // `rar` avec : l’écran de création a besoin de l’échelle, et une seconde
