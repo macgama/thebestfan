@@ -115,6 +115,45 @@ check('le petit club passe devant grâce à la moyenne',
   r.classement[0].name === 'Petit Club');
 const petit = r.classement.find((x)=>x.name==='Petit Club');
 const gros = r.classement.find((x)=>x.name==='Gros Club');
+
+/* ------------------------- la ferveur va au club pour lequel on a poussé
+
+   La jointure ne regardait que `user_id` : la ferveur d'un supporter était
+   versée à **tous les clubs qu'il suit**. Quelqu'un qui suit les deux et qui
+   pousse une soirée entière pour le Petit Club faisait monter le Gros Club
+   d'autant, sans y avoir chanté une fois.
+
+   Ça ne se voyait pas, et c'est pour ça que ça a duré : les deux nombres
+   restaient plausibles, l'ordre restait vraisemblable, et il fallait suivre
+   deux clubs pour que l'écart existe. Le jeu de données de cette suite donnait
+   un club par joueur — le cas exact où le défaut n'apparaît jamais.
+
+   On fait donc suivre les deux clubs à quelqu'un, et on regarde si le club où
+   il n'a pas mis les pieds encaisse sa ferveur. */
+{
+  const avant = Number(gros.ferveur);
+  /* Momo pousse pour le Petit Club (85) ; on lui fait suivre le Gros (91)
+     aussi. `moi` **est** son identifiant public — l'écrire 'u1' en dur passait
+     par `INSERT IGNORE`, qui avale le refus de clé étrangère : la ligne n'était
+     jamais posée et le contrôle passait au vert sans rien mesurer. */
+  const [ins] = await pool.query(`INSERT INTO user_follows (user_id, team_id, is_main)
+                                  VALUES (?, 91, 0)`, [moi]);
+  check('le second club est bien suivi', ins.affectedRows === 1);
+  C.oublier();
+  const r2 = await get('/api/rank/tribunes');
+  const gros2 = r2.classement.find((x) => x.name === 'Gros Club');
+  check('suivre un club ne lui donne pas la ferveur poussée ailleurs',
+    Number(gros2.ferveur) === avant
+    || (console.log(`        il passe de ${avant} à ${gros2.ferveur}`), false));
+  /* Et il compte quand même comme supporter : c'est bien un fidèle de plus,
+     simplement un qui n'a encore rien donné là-bas. La moyenne baisse, et
+     c'est juste — c'est exactement ce que ce classement mesure. */
+  check('mais il compte bien comme supporter de plus',
+    Number(gros2.supporters) === Number(gros.supporters) + 1);
+
+  await pool.query('DELETE FROM user_follows WHERE user_id = ? AND team_id = 91', [moi]);
+  C.oublier();
+}
 check('la moyenne est bien par supporter',
   Number(petit.moyenne) === 800 && Number(gros.moyenne) === 125);
 check('le gros club a plus de supporters mais moins de moyenne',
@@ -280,6 +319,55 @@ check('une compétition sans match rend des listes vides',
   check('la suite ne rejoue pas ce qu’on a déjà vu',
     (suite.lignes ?? []).every((l) => new Date(l.quand) < new Date(court.suite)));
   check('et elle ne recompte pas les statistiques', suite.sortes === undefined);
+}
+
+/* --------------------------------------------- l'historique dit contre qui
+
+   `duel_results.opponent_id` était écrit depuis le premier jour et relu nulle
+   part : la ligne du parcours donnait le match de football et pas l'adversaire,
+   qui est pourtant le sujet d'un duel.
+
+   Trois cas, et les trois doivent rendre une ligne : un vrai adversaire, un
+   bot, et un identifiant qu'on ne retrouve pas. Une jointure fermée aurait fait
+   disparaître les deux derniers du parcours — c'est-à-dire la plupart des
+   parties d'un joueur qui s'entraîne. */
+{
+  const [sarahRow] = (await pool.query(
+    'SELECT public_id FROM users WHERE pseudo = ? LIMIT 1', ['Sarah']))[0];
+  const sarah = sarahRow?.public_id;
+  check('un second joueur existe pour ce contrôle', Boolean(sarah));
+
+  /* **Les duels de `moi`, pas ceux de u1.** `moi` est réaffecté plus haut dans
+     cette suite — il désigne Inès et non Momo au moment où on arrive ici. On
+     retrouve donc les parties par le lecteur lui-même, ce qui reste juste
+     quelle que soit la valeur du dessus. */
+  const [mesDuels] = await pool.query(
+    'SELECT duel_id FROM duel_results WHERE user_id = ? ORDER BY duel_id', [moi]);
+  check('le lecteur a au moins trois duels', mesDuels.length >= 3
+    || (console.log('        il en a :', mesDuels.length), false));
+  const maj = (i, v) => pool.query(
+    'UPDATE duel_results SET opponent_id = ? WHERE duel_id = ? AND user_id = ?',
+    [v, mesDuels[i].duel_id, moi]);
+  await maj(0, sarah);
+  await maj(1, 'bot:abcd1234');
+  await maj(2, 'inconnu');
+
+  const h = await C.historiqueDe(moi, { limite: 50 });
+  const duels = (h.lignes ?? []).filter((l) => l.jeu === 'duel');
+  check('les trois duels sont dans le parcours', duels.length >= 3
+    || (console.log('        il en rend :', duels.length), false));
+
+  check('celui contre un joueur le nomme',
+    duels.some((l) => l.adversaire === 'Sarah')
+    || (console.log('        adversaires :',
+      JSON.stringify(duels.map((l) => l.adversaire))), false));
+  /* Un bot n'a pas de ligne dans `users` : il n'a pas de pseudo, et c'est le
+     drapeau qui laisse la page écrire « contre un bot » plutôt que « contre — ». */
+  check('celui contre un bot le dit sans inventer de pseudo',
+    duels.some((l) => l.contreBot === true && l.adversaire === null));
+  /* Et l'adversaire qu'on ne retrouve pas ne fait pas disparaître la partie. */
+  check('un adversaire introuvable garde quand même sa ligne',
+    duels.some((l) => l.adversaire === null && l.contreBot === false));
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);

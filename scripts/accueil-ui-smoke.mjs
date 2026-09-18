@@ -1651,6 +1651,73 @@ if (process.env.CAPTURE) {
   await page.close();
 }
 
+/* --------------------------- le défilé sur un personnage **à états dessinés**
+
+ * `TR1` et `TR2` sont les deux seuls personnages du catalogue dont les états
+ * sont dessinés, et ils passent par un **tout autre chemin** que les deux cents
+ * autres : `source()` interroge `TBF_ETATS.resoudre` d'abord, et ne retombe sur
+ * le plein-pied que s'il ne rend rien. Les contrôles précédents éprouvent
+ * `TR32`, qui n'a pas d'états : ils ne disent donc **rien** de ce chemin-là.
+ *
+ * Deux choses s'y jouent qui ne se jouent nulle part ailleurs :
+ *
+ *   — le manifeste n'a que `neutre` aux âges 2 et 3. `resoudre` doit rester à
+ *     l'âge demandé en retombant sur `neutre`, et non descendre d'un âge en
+ *     gardant l'état — descendre rajeunirait le personnage à chaque pose ;
+ *   — au premier dessin, `TBF_ETATS` n'est **pas encore chargé** : `resoudre`
+ *     rend nul et c'est le plein-pied du souvenir qui est peint. C'est
+ *     exactement l'instant où le défaut de l'âge se logeait.
+ */
+{
+  await equiper('TR1', 3);
+  await pool.query('UPDATE user_wallet SET active_evo = 2 WHERE user_id = ?', [U]);
+  const page = await ouvrir();
+  await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 600));
+
+  const age = () => page.evaluate(() => {
+    const src = document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '';
+    /* L'âge se lit dans les deux écritures : `/TR1/e2/base/neutre.webp` pour
+       un état dessiné, `/TR1B.webp` pour le plein-pied de la carte. Les deux
+       sont des réponses valables — ce qui compte est qu'elles disent **deux**,
+       pas **un**. */
+    const etat = /\/TR1\/e(\d)\//.exec(src);
+    const carte = /\/TR1(B|C)?\.(webp|avif|png)/.exec(src);
+    return { src, evo: etat ? Number(etat[1])
+      : (carte ? ({ undefined: 1, B: 2, C: 3 })[carte[1]] : null) };
+  });
+
+  let v = await age();
+  check('un personnage à états dessinés s’affiche à l’âge choisi', v.evo === 2
+    || (console.log('        elle montre :', v.src), false));
+
+  /* Le geste du joueur, mot pour mot : « je change de page et je reviens ». */
+  await page.goto(base + '/fanzzy', { waitUntil: 'domcontentloaded' });
+  await page.goto(base + '/', { waitUntil: 'networkidle0' });
+  await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 600));
+  v = await age();
+  check('et il y reste en revenant d’une autre page', v.evo === 2
+    || (console.log('        elle montre :', v.src), false));
+
+  /* Le salut se joue à l'arrivée. Le manifeste n'a pas de `salut` aux âges 2
+     et 3 : `resoudre` doit retomber sur le `neutre` **du même âge**, et non
+     sur le `salut` de l'âge 1. Descendre d'un âge ferait rajeunir le
+     personnage au moment précis où il fait coucou. */
+  const apresSalut = await page.evaluate(async () => {
+    const tous = [];
+    for (const e of ['salut', 'pousse', 'but']) {
+      const r = window.TBF_ETATS.resoudre('TR1', { evo: 2, skin: 'base', etat: e });
+      tous.push(r ? r.evo : null);
+    }
+    return tous;
+  });
+  check('un état non dessiné retombe sur le neutre du même âge, pas sur l’âge d’avant',
+    apresSalut.every((e) => e === 2)
+    || (console.log('        âges rendus :', JSON.stringify(apresSalut)), false));
+  await page.close();
+}
+
 await nav.close();
 http.close();
 await pool.end();

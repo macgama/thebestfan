@@ -8,6 +8,11 @@ joue, et repart avec une carte-souvenir par but vécu.
 décrit où en est le projet, ce qui marche, ce qui reste à faire et les pièges
 qui ont déjà coûté des séances.
 
+`IDEES.md` prend la suite : ce qui n'est pas encore écrit, rangé par valeur, et
+pour chaque entrée ce qui ne va pas aujourd'hui plutôt qu'un souhait. Il sort
+d'un contrôle général de l'application et se relit avant de choisir sur quoi
+travailler.
+
 ## La forme du projet
 
 Node.js et MariaDB, hébergé chez Infomaniak. Données sportives fournies par

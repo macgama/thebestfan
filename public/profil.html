@@ -419,15 +419,32 @@ function rendreParcours(p, { ajouter = false } = {}) {
 
   const lignes = (p.lignes ?? []).map((l) => {
     const virage = l.jeu === 'virage';
-    const couleur = virage ? 'var(--projo)' : 'var(--violet)';
-    const quand = new Date(l.quand).toLocaleDateString(document.documentElement.lang || 'fr',
-      { day: 'numeric', month: 'short' });
-    const contre = l.match
+    /* **La couleur dit si ça a compté**, comme les tuiles du haut : l'or du
+       virage, le violet du duel classé, le gris de l'entraînement. Toutes les
+       lignes de duel étaient violettes, classées ou non — la page disait donc
+       le contraire de son propre résumé, deux centimètres plus haut. */
+    const couleur = virage ? 'var(--projo)'
+      : l.mode === 'classe' ? 'var(--violet)' : 'var(--gris,#C2CAD6)';
+    const quand = new Date(l.quand).toLocaleString(document.documentElement.lang || 'fr',
+      { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    /* **Le titre dit le sujet de la partie.** Pour un virage, c'est le match :
+       on y est venu pour lui. Pour un duel, c'est l'adversaire — « perdu contre
+       Marie » se raconte, « perdu sur Sion – Bâle » ne dit rien de ce qui s'est
+       passé. Le match redescend alors d'une ligne, où il reste lisible. */
+    const rencontre = l.match
       ? `${l.match.domicile} – ${l.match.exterieur}` : 'match inconnu';
-    /* Ce qu'on lit sous le nom du match : la compétition, le club poussé, et
-       la date. « Neutre » est dit, parce que c'est ce qui divise la ferveur par
-       deux — une règle qu'on ne découvre sinon qu'en comparant deux soirées. */
-    const sous = [l.match?.competition, l.pour ? `pour ${l.pour}` : null,
+    const contre = virage ? rencontre
+      : l.adversaire ? `contre ${l.adversaire}`
+      : l.contreBot ? 'contre un bot' : rencontre;
+    /* Ce qu'on lit dessous : la sorte de partie, la compétition, le club poussé,
+       et la date. « Neutre » est dit, parce que c'est ce qui divise la ferveur
+       par deux — une règle qu'on ne découvre sinon qu'en comparant deux
+       soirées. Et « entraînement », parce que c'est ce qui décide si la partie
+       pèse quelque part : la ligne ne le disait nulle part. */
+    const sorte = virage ? null
+      : l.mode === 'classe' ? 'classé' : 'entraînement';
+    const sous = [sorte, virage ? null : (l.adversaire || l.contreBot ? rencontre : null),
+                  l.match?.competition, l.pour ? `pour ${l.pour}` : null,
                   l.neutre ? 'neutre' : null, quand].filter(Boolean).join(' · ');
     const issue = l.issue
       ? `<span class="issue ${esc(l.issue)}">${

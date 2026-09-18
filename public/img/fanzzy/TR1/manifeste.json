@@ -1,6 +1,6 @@
 {
   "id": "TR1",
-  "rev": 10,
+  "rev": 11,
   "evolutions": {
     "e1": {
       "skins": {
@@ -28,10 +28,21 @@
       "skins": {
         "base": {
           "etats": [
-            "neutre"
+            "neutre",
+            "salut",
+            "pousse",
+            "but",
+            "encaisse",
+            "attente",
+            "victoire",
+            "defaite",
+            "occasion",
+            "decision",
+            "progression",
+            "ennui"
           ],
           "portrait": true,
-          "sha": "7c796cd7b01c"
+          "sha": "c2964211b0cc"
         }
       }
     },
@@ -39,10 +50,21 @@
       "skins": {
         "base": {
           "etats": [
-            "neutre"
+            "neutre",
+            "salut",
+            "pousse",
+            "but",
+            "encaisse",
+            "attente",
+            "victoire",
+            "defaite",
+            "occasion",
+            "decision",
+            "progression",
+            "ennui"
           ],
           "portrait": true,
-          "sha": "5cbda6cdbe56"
+          "sha": "47b266d43f0b"
         }
       }
     }

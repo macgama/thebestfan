@@ -256,7 +256,13 @@ await jusqua(async () => await page.$('#fcorps .aff') !== null);
   check('elle propose d’entrer dans le Grand Virage', Boolean(virage));
   check('et le bouton mène à **ce** match', virage?.href === `/virage?match=${MATCH}`
     || (console.log('        il mène à :', virage?.href), false));
-  check('elle propose aussi le duel', duel?.href === '/duel-nvn');
+  /* **Et lui aussi porte le match.** Le bouton menait à `/duel-nvn` tout court,
+     c'est-à-dire au menu du duel : on arrivait sur une liste où il fallait
+     retrouver à la main le match qu'on venait de quitter. Le contrôle attendait
+     encore l'ancienne adresse et rougissait sur le correctif. */
+  check('elle propose aussi le duel', Boolean(duel));
+  check('et le duel part sur ce match-là', duel?.href === `/duel-nvn?match=${MATCH}`
+    || (console.log('        il mène à :', duel?.href), false));
   check('le nom de la compétition y mène aussi', f.ligue === '/teletext?ligue=274');
 
   /* Tant que le match est en cours, la fiche se relit toute seule. C'est ce

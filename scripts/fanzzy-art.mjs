@@ -36,9 +36,12 @@
  * `001evo2-victoire` — collait un âge optionnel au numéro, il fallait deviner
  * où finissait le nombre, et rien n'y exprimait une tenue.
  *
- * Le numéro est traduit en identifiant de catalogue par
- * `src/shared/fanzzy/rendus.js` ; un fichier nommé avec l'identifiant
- * (`TR1-e1-base-neutre.png`) marche aussi.
+ * **Nomme les fichiers avec l'identifiant de catalogue** — `TR1`, `MS15`,
+ * `BG22` : c'est celui qu'on lit partout ailleurs, dans le catalogue, dans la
+ * base et dans les adresses servies, et le dossier se relit sans traduire.
+ * Le numéro de rendu (`001-e1-base-neutre.png`) reste accepté pour les lots
+ * d'avant — `src/shared/fanzzy/rendus.js` garde la table — mais les deux ne
+ * se mélangent pas dans un même dossier : le script s'arrête et le dit.
  *
  * ---
  *
@@ -264,6 +267,7 @@ if (!fichiers.length) {
 const parEvo = new Map();      // evo -> [{ tenue, etat, objet, chemin }]
 const objetsSeuls = new Map(); // nom -> chemin
 const ignores = [];
+const cles = new Set();
 let cle = null;
 
 for (const f of fichiers.sort()) {
@@ -273,10 +277,38 @@ for (const f of fichiers.sort()) {
   if (n.objetSeul) { objetsSeuls.set(n.objetSeul, path.join(SOURCE, f)); continue; }
   if (!ETATS.includes(n.etat)) { ignores.push(f); continue; }
 
+  cles.add(n.cle);
   cle ??= n.cle;
   if (n.cle !== cle) { ignores.push(f); continue; }
   if (!parEvo.has(n.evo)) parEvo.set(n.evo, []);
   parEvo.get(n.evo).push({ ...n, chemin: path.join(SOURCE, f) });
+}
+
+/* ------------------------------------------------ un lot, un personnage
+
+   **Deux clés dans le même dossier arrêtent tout.** Le lot prenait la
+   première dans l'ordre alphabétique et poussait le reste dans `ignores`,
+   une ligne parmi trente à la fin d'une sortie qu'on ne relit pas. On a donc
+   déposé trois nouveaux dessins nommés `TR1-…` à côté de trente-trois
+   `001-…`, lancé le script, et regardé un rendu inchangé sans comprendre :
+   `001` triait avant `TR1`, et les trois images n'ont jamais été lues.
+
+   Les deux écritures sont valables — le numéro de rendu ou l'identifiant de
+   catalogue — mais rien ne dit au script que `001` et `TR1` sont le même
+   personnage, et il vaut mieux qu'il refuse que de deviner. */
+
+if (cles.size > 1) {
+  const listees = [...cles].sort();
+  console.error(`\nDeux façons de nommer dans ${SOURCE} : ${listees.join(', ')}.
+
+Un dossier \`_src\` porte **un seul** personnage, et le script ne peut pas
+savoir que deux préfixes désignent le même. Renomme tout avec la même clé —
+l'identifiant de catalogue de préférence, il se lit :
+
+  ${listees[0]}-e1-base-neutre.png  →  TR1-e1-base-neutre.png
+
+Rien n'a été produit ; les dessins en place sont intacts.`);
+  process.exit(1);
 }
 
 /* ------------------------------------------------------- les objets seuls

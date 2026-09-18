@@ -435,7 +435,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
    Posé au pied du personnage, dans la scène : c'est là que le regard est déjà,
    et cela ne prend aucune place aux rails. */
-.qui{flex:none;text-align:center;padding:0 12px 6px;pointer-events:none}
+.qui{position:relative;flex:none;text-align:center;padding:0 12px 6px;pointer-events:none}
 .qui b{display:block;font-family:var(--banner);font-size:clamp(15px,4.4vw,19px);
   letter-spacing:.06em;text-shadow:0 2px 14px rgba(0,0,0,.95);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -446,12 +446,24 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    et on les rend ici, aux seuls éléments qui en ont besoin : deux flèches et
    un bouton. Les rendre à tout le bloc reprendrait au personnage le petit saut
    qu'on lui tape dessus, qui passe derrière. */
-.ages{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:2px}
+/* **La rangée ne coûte rien en hauteur.** Le personnage est le sujet de cet
+   écran, et `accueil:ui` défend qu'il occupe au moins 60 % de la page sur un
+   téléphone court. Ajoutée en flux, cette rangée lui reprenait une trentaine de
+   pixels ; les flèches sont donc posées **par-dessus** la plaque, de part et
+   d'autre, et la ligne garde exactement la hauteur du texte qu'elle portait
+   déjà. */
+.ages{position:relative;display:flex;align-items:center;justify-content:center;
+  gap:10px;margin-top:2px;min-height:0}
 .ages .fl[hidden]{display:none}
-.ages .fl{pointer-events:auto;appearance:none;border:0;cursor:pointer;
-  width:26px;height:26px;border-radius:999px;font:700 17px/1 system-ui;
+.ages .fl{position:absolute;top:50%;transform:translateY(-50%);
+  pointer-events:auto;appearance:none;border:0;cursor:pointer;
+  width:24px;height:24px;border-radius:999px;font:700 16px/1 system-ui;
   color:#fff;background:rgba(255,255,255,.12);
   display:grid;place-items:center;transition:background .15s,opacity .15s}
+/* Aux bords de la plaque, pas collées au texte : la lignée se lit au milieu,
+   les deux sens de lecture l'encadrent. */
+#ageAvant{right:calc(50% + 62px)}
+#ageApres{left:calc(50% + 62px)}
 .ages .fl:hover{background:rgba(255,255,255,.22)}
 /* Au bout de la lignée : estompée et inerte, plutôt que retirée. Une flèche qui
    disparaît déplace la plaque sous le doigt entre deux appuis. */
@@ -459,14 +471,22 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Il ne paraît **que** lorsque l'âge regardé n'est pas encore celui qu'on
    montre : un bouton toujours là finirait par se lire comme une décoration, et
    c'est justement le seul geste de cet écran qui écrit quelque chose. */
-.cestlui{pointer-events:auto;appearance:none;cursor:pointer;margin:7px auto 0;display:block;
+/* Hors du flux, pour la même raison que les flèches : il n'apparaît que
+   lorsque l'âge regardé n'est pas celui qu'on montre, et une rangée qui
+   apparaît et disparaît ferait sauter le personnage de trente pixels à chaque
+   coup de flèche. Posé au-dessus de la plaque, sur le bas de la scène, il est
+   là où le regard vient de passer. */
+.cestlui{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+  margin-bottom:8px;white-space:nowrap;
+  pointer-events:auto;appearance:none;cursor:pointer;display:block;
   border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:5px 14px;
   font:700 10px/1 var(--banner,system-ui);letter-spacing:.16em;text-transform:uppercase;
   color:#0c0c0c;background:var(--projo,#ffb703);
   box-shadow:0 4px 16px rgba(0,0,0,.5);animation:cestluiIn .22s ease both}
 .cestlui[hidden]{display:none}
 .cestlui:disabled{opacity:.6;cursor:default}
-@keyframes cestluiIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@keyframes cestluiIn{from{opacity:0;transform:translateX(-50%) translateY(5px)}
+  to{opacity:1;transform:translateX(-50%)}}
 /* Vide tant que le serveur n'a pas répondu : un cadre qui se remplit après
    coup fait sauter la scène, un cadre absent ne fait rien du tout. */
 .qui:not(.on){display:none}
@@ -1921,15 +1941,25 @@ async function jsonp(url, options) {
            maintenant qui montrer, et le supporter n'a plus à prendre la
            place. */
         clearTimeout(filet); filet = null;
-        /* « Le même » veut dire **le même dessin**, pas la même identité.
-           Comparer id + âge + tenue suffisait tant que l'accueil ne montrait
-           qu'un âge ; depuis qu'il les fait défiler, deux états portant la même
-           identité peuvent pointer vers deux illustrations différentes, et le
-           raccourci figeait alors à l'écran celle que le souvenir avait posée.
-           On compare donc aussi l'adresse qu'on s'apprête à peindre. */
-        const memeQuAvant = equipe?.id === candidat.id && equipe?.evo === candidat.evo
-          && equipe?.skin === candidat.skin && equipe?.plein === candidat.plein;
+        /* « Le même » veut dire **la même image**, et rien d'autre.
+
+           Ce raccourci comparait l'identité — personnage, âge, tenue — et c'est
+           ce qui a laissé le défaut le plus long de cet écran : au retour sur
+           l'accueil, le souvenir repeint avant que le manifeste des états soit
+           chargé, donc `resoudre` rend nul et c'est le plein-pied qui est posé.
+           Or `FZART.adresse` **redescend à l'âge dessiné le plus proche** quand
+           la carte d'un âge n'a pas d'illustration : pour TR1, dont seuls les
+           états sont dessinés aux âges 2 et 3, il rendait le dessin de l'âge 1.
+           La réponse du serveur arrivait ensuite avec la bonne image animée —
+           et ne la peignait pas, parce que l'identité n'avait pas bougé.
+
+           On ne compare donc plus des identités mais **l'adresse effectivement
+           affichée et celle qu'on obtiendrait maintenant**. C'est la seule
+           comparaison qui ne puisse pas se tromper : elle interroge `source`,
+           qui est exactement ce qui décide du dessin. */
+        const affichee = calques[devant]?.getAttribute('src') ?? null;
         equipe = candidat;
+        const memeQuAvant = source(poseActuelle ?? 'neutre') === affichee;
         retenir(candidat);
         precharger();
         /* `force` : l'état ne change pas, le personnage si. Sans lui, `pose`

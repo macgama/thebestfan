@@ -229,7 +229,19 @@ export function createAmis({ pool, requireAuth, kop = null }) {
       throw fail('amis.error.deja_demande');
     }
     if (deja?.etat === 'refuse') {
-      const depuis = Date.now() - Number(deja.depuisLe ?? 0);
+      /* **Jamais négatif.** Le refus vient d'être écrit par `NOW(3)`, l'horloge
+         de MySQL, et on le compare à `Date.now()`, celle de Node. Les deux
+         dérivent l'une par rapport à l'autre d'une milliseconde ou deux — assez
+         pour que la réponse soit dans un futur proche à l'instant où on la
+         relit, et `Math.ceil` répondait alors **huit jours pour une règle qui
+         en dit sept**.
+
+         C'est la deuxième fois que ce calcul annonce huit : la première venait
+         du fuseau du pilote, corrigée en passant l'époque en SQL (voir
+         `lien`). Celle-ci est plus fine et ne se voyait qu'une fois sur deux.
+         Une horloge d'avance n'est pas un fait, c'est un artefact : on la lit
+         donc comme « à l'instant ». */
+      const depuis = Math.max(0, Date.now() - Number(deja.depuisLe ?? 0));
       if (depuis < DELAI_APRES_REFUS_MS) {
         throw fail('amis.error.refus_recent',
           { jours: Math.ceil((DELAI_APRES_REFUS_MS - depuis) / 86_400_000) });
