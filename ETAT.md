@@ -4632,14 +4632,29 @@ Le jeu attend deux fichiers par Fanzzy, en trois formats chacun : un plein pied
 320×320 pour le classeur. Fond transparent.
 
 **Ce n'est plus à faire à la main.** `scripts/fanzzy-images.mjs` exécute toute
-la chaîne. Nomme chaque rendu du nom du Fanzzy et lance :
+la chaîne. Nomme chaque rendu du nom du Fanzzy, dépose-le dans `art/neuves`,
+et lance :
 
 ```bash
 npm install --no-save sharp
-node scripts/fanzzy-images.mjs <dossier-des-rendus>
+npm run images
 ```
 
-`X9.png` produit les six fichiers de `X9`. `sharp` n'est pas en
+`X9.png` produit les six fichiers de `X9`.
+
+**Sans argument, il lit `art/neuves`** — c'est le seul endroit où l'on dépose
+des rendus, et le redire à chaque fois n'apprenait rien à personne. Un chemin
+passé en argument gagne toujours, ce qui permet de traiter un lot isolé sans
+repasser sur les rendus déjà rangés.
+
+**Il enchaîne `maj-illustres`.** Le script s'arrêtait après avoir écrit les six
+fichiers, en demandant d'ajouter l'identifiant à `ILLUSTRES` — une étape qu'on
+oublie, et dont l'oubli est silencieux : le dessin est là, le jeu montre quand
+même la silhouette. `--sans-liste` saute l'inscription, pour un lot qu'on veut
+détourer sans encore le montrer.
+
+Attention : `art/neuves` n'est **pas surveillé**. Y déposer un fichier ne
+déclenche rien ; c'est la commande qui travaille. `sharp` n'est pas en
 `devDependencies`, pour la même raison que `puppeteer` : il embarque des
 binaires natifs qui alourdiraient l'installation sur le serveur, et il ne sert
 qu'à fabriquer des images, jamais à en servir.

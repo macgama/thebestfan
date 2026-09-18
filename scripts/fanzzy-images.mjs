@@ -33,6 +33,7 @@
  *      tête survit.
  */
 import { readdir, mkdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -40,14 +41,30 @@ import sharp from 'sharp';
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
 const args = process.argv.slice(2);
-const SOURCE = args.filter((a,i)=>args[i-1]!=='--sortie'&&args[i-1]!=='--seuils').find((a) => !a.startsWith('--'));
+
+/**
+ * Le dossier par défaut : `art/neuves`.
+ *
+ * Sans lui, `npm run images` ne faisait qu'afficher son mode d'emploi, et il
+ * fallait retaper le chemin à chaque fois. Or il n'y a qu'un seul endroit où
+ * l'on dépose des rendus — celui-là — et le dire ici évite de le redire
+ * cinquante fois.
+ *
+ * Un chemin passé en argument gagne toujours : c'est ce qui permet de traiter
+ * un lot isolé sans repasser sur les trente rendus déjà rangés.
+ */
+const DEFAUT = 'art/neuves';
+const SOURCE = args.filter((a, i) => args[i - 1] !== '--sortie' && args[i - 1] !== '--seuils')
+  .find((a) => !a.startsWith('--')) ?? DEFAUT;
 const SORTIE = (() => {
   const i = args.indexOf('--sortie');
   return i >= 0 ? args[i + 1] : path.join(RACINE, 'public', 'img', 'fanzzy');
 })();
 
-if (!SOURCE) {
-  console.error('Usage : node scripts/fanzzy-images.mjs <dossier-des-rendus> [--sortie <dossier>]');
+if (!existsSync(SOURCE)) {
+  console.error(`Le dossier « ${SOURCE} » n'existe pas.`);
+  console.error('Usage : node scripts/fanzzy-images.mjs [dossier] [--sortie <dossier>]');
+  console.error(`Sans argument, il lit « ${DEFAUT} ».`);
   process.exit(1);
 }
 
@@ -334,8 +351,28 @@ for (const f of fichiers) {
   }
 }
 
+/**
+ * L'inscription dans `ILLUSTRES`, **enchaînée**.
+ *
+ * Le script disait « ajoute les identifiants à ILLUSTRES » et s'arrêtait là.
+ * C'est une étape qu'on oublie, et son oubli est silencieux : les six fichiers
+ * sont écrits, le personnage est dessiné, et le jeu continue de montrer sa
+ * silhouette parce que la liste ne le connaît pas. Un défaut qui ressemble à un
+ * dessin raté alors que le dessin est là.
+ *
+ * `maj-illustres` ne fait aucune supposition : il relit le dossier servi et
+ * n'inscrit que les identifiants qui ont **leurs six fichiers et une fiche au
+ * catalogue**. L'enchaîner ne peut donc rien casser — au pire il ne change
+ * rien.
+ *
+ * `--sans-liste` le saute, pour un lot qu'on veut détourer sans encore le
+ * montrer.
+ */
+if (!erreurs && !args.includes('--sans-liste')) {
+  await import('./maj-illustres.mjs');
+}
+
 console.log(erreurs
   ? `\n${erreurs} rendu(s) en échec.\n`
-  : '\nTerminé. Ajoute les identifiants à ILLUSTRES dans public/fanzzy-art.js,'
-    + '\npuis lance node scripts/verif-pages.mjs pour vérifier les six fichiers.\n');
-process.exit(erreurs ? 1 : 0);
+  : '\nTerminé. Lance node scripts/verif-pages.mjs pour vérifier les six fichiers.\n');
+process.exitCode = erreurs ? 1 : 0;
