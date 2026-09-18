@@ -1333,8 +1333,20 @@ function nommer(p) {
      au repos du bouton, qui n'est pas là : deux signes pour la même chose — un
      bouton grisé *et* une coche — feraient hésiter sur lequel lire. */
   const coche = nom && p.evo === lignee.choisi && lignee.atteint > 1 ? ' ✓' : '';
+  /* **Et la plaque ne promet pas un dessin qui n'existe pas.**
+
+     Cent trente-six lignées sur deux cent cinquante-six ont leur carte du
+     premier âge et rien au-dessus. Pour elles, demander l'âge 2 rendait le
+     dessin de l'âge 1 — `FZART.adresse` redescend à l'âge illustré le plus
+     proche, ce qui est le bon repli — pendant que la plaque annonçait
+     « ÉVOLUTION 2 / 3 ». Le joueur voyait donc le même personnage sous deux
+     numéros et en concluait, à raison, que son choix n'avait pas été pris.
+
+     Le repli reste : un dessin un peu plus jeune vaut mieux qu'un cadre vide.
+     C'est la phrase qui change. */
+  const promis = nom && (p?.ages ?? 1) > 1 && !dessineA(p.evo) ? ' · dessin à venir' : '';
   $('quiEvo').textContent = (p?.ages ?? 1) > 1
-    ? `ÉVOLUTION ${p.evo} / ${p.ages}${coche}` : '';
+    ? `ÉVOLUTION ${p.evo} / ${p.ages}${coche}${promis}` : '';
   $('qui').classList.toggle('on', Boolean(nom));
   commandes();
 }
@@ -1369,6 +1381,29 @@ let lignee = { atteint: 1, choisi: 1, ages: [] };
 function pleinDe(racine, evo) {
   const carte = lignee.ages.find((a) => a.stade === evo);
   return window.FZART?.adresse?.(carte?.id ?? racine, 'plein') ?? null;
+}
+
+/**
+ * Le dessin de cet âge-là existe-t-il **vraiment** ?
+ *
+ * Les deux systèmes d'images répondent chacun pour soi. `resoudre` rend l'âge
+ * qu'il a réellement trouvé — il redescend quand l'âge demandé n'est pas
+ * dessiné — et `racineIllustree` dit si la carte demandée est celle qui sera
+ * servie, ou si c'est celle d'un âge d'avant.
+ *
+ * Tant que le manifeste n'est pas chargé, on ne sait pas : on répond « oui »,
+ * parce qu'une plaque qui annonce « dessin à venir » pendant une seconde puis
+ * se ravise est plus troublante que le défaut qu'elle corrige.
+ */
+function dessineA(evo) {
+  if (!equipe) return true;
+  if (window.TBF_ETATS?.pret?.()) {
+    const r = window.TBF_ETATS.resoudre(equipe.id, { evo, skin: equipe.skin, etat: 'neutre' });
+    if (r) return r.evo === evo;
+  }
+  const carte = lignee.ages.find((a) => a.stade === evo);
+  if (!carte) return true;
+  return window.FZART?.racineIllustree?.(carte.id) === carte.id;
 }
 
 /** Les flèches et le bouton, remis d'accord avec ce qui est à l'écran. */

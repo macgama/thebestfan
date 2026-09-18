@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<title>L’abonnement — TheBestFan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
+<style>
+/* L'écran de l'abonnement.
+
+   ## Ce qu'il doit faire, dans cet ordre
+
+   1. **Dire ce qui reste libre.** C'est la première chose, avant le prix et
+      avant la liste de ce qui s'ouvre. Un joueur qui arrive ici se demande ce
+      qu'on lui retire s'il ne paie pas ; tant qu'il n'a pas la réponse, il ne
+      lit pas le reste. La réponse est « rien de ce qui se joue », et elle est
+      assez rare dans ce genre de jeu pour valoir la place d'honneur.
+   2. **Dire ce qui s'ouvre**, en chiffres et non en adjectifs. « Plus de
+      boosters » ne veut rien dire ; « 24 en réserve au lieu de 10 » se compare.
+   3. **Proposer.** Le bouton vient en dernier, quand les deux questions sont
+      réglées.
+
+   ## Pourquoi la liste des chiffres vient du serveur
+
+   `/api/abonnement` rend `ouvre` et `libre`. La page n'en porte aucune copie :
+   les valeurs vivent dans les réglages, elles s'ajustent depuis /admin sans
+   livraison, et une page qui les recopierait mentirait au premier réglage
+   changé. C'est la même règle que partout ailleurs ici. */
+
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100dvh}
+body{background:radial-gradient(120% 55% at 50% -8%,rgba(245,195,59,.15),transparent 62%),var(--beton);
+     color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
+     padding:18px 16px 90px}
+main{width:100%;max-width:var(--colonne)}
+
+.chapeau{text-align:center;margin:8px 0 22px}
+.chapeau h1{font-family:var(--banner);font-size:clamp(22px,6.2vw,30px);letter-spacing:.1em;
+  margin:0 0 6px}
+.chapeau p{margin:0;font-size:12.5px;opacity:.55;line-height:1.55}
+
+/* L'état, quand on est déjà abonné. Une plaque et pas un bandeau : c'est une
+   réponse à une question qu'on est venu poser, pas une alerte. */
+.etat{display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:13px;
+  background:rgba(94,223,166,.1);border:1px solid rgba(94,223,166,.3);margin-bottom:20px}
+.etat b{font-family:var(--banner);font-size:15px;letter-spacing:.06em}
+.etat span{font-size:11.5px;opacity:.6;display:block;margin-top:2px}
+
+/* **Ce qui reste libre** — le bloc le plus haut et le plus lisible de l'écran.
+   Il porte la promesse du jeu, et il doit tenir sans qu'on fasse défiler. */
+.libre{padding:15px 16px;border-radius:14px;margin-bottom:22px;
+  background:linear-gradient(168deg,rgba(255,255,255,.07),rgba(0,0,0,.3));
+  border:1px solid rgba(242,238,228,.14)}
+.libre h2{font-family:var(--banner);font-size:13px;letter-spacing:.14em;margin:0 0 10px;
+  text-transform:uppercase;opacity:.75}
+.libre ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.libre li{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.4}
+.libre li::before{content:"✓";color:var(--vert,#5FDFA6);font-weight:700;flex:none}
+.libre p{margin:11px 0 0;font-size:11.5px;opacity:.5;line-height:1.5}
+
+.ouvre h2{font-family:var(--banner);font-size:13px;letter-spacing:.14em;margin:0 0 10px;
+  text-transform:uppercase;opacity:.75}
+.ouvre ul{margin:0 0 20px;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.ouvre li{display:flex;gap:11px;align-items:flex-start;padding:11px 13px;border-radius:11px;
+  background:rgba(255,255,255,.045);border:1px solid rgba(242,238,228,.11);
+  font-size:13px;line-height:1.4}
+.ouvre li b{font-family:var(--banner);color:var(--projo);font-size:15px;flex:none;
+  min-width:44px;text-align:right}
+.ouvre li span{opacity:.72}
+.ouvre li small{display:block;opacity:.5;font-size:11px;margin-top:2px}
+
+.prendre{margin-top:4px}
+.vide{opacity:.5;font-size:13px;text-align:center;padding:26px 0}
+</style>
+</head>
+<body>
+<main>
+  <div class="chapeau">
+    <h1>L’ABONNEMENT</h1>
+    <p>Ce qu’il change, et ce qu’il ne change pas.</p>
+  </div>
+  <div id="corps"><div class="vide">Un instant…</div></div>
+</main>
+
+<script src="/fx.js" defer></script>
+<script src="/menu.js" defer></script>
+<script src="/nav.js" defer></script>
+<script src="/pwa.js" defer></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+  (c) => ({ '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;' }[c]));
+
+/**
+ * La date d'échéance, telle qu'on la dit.
+ *
+ * Nulle veut dire **sans terme** — c'est ce que pose un administrateur pour un
+ * bêta-testeur, rien ne l'expire, et le taire laisserait croire à un oubli.
+ */
+const jour = (d) => new Date(d).toLocaleDateString('fr', {
+  day: 'numeric', month: 'long', year: 'numeric' });
+
+/* Les quatre portes, dans l'ordre où elles comptent pour quelqu'un qui joue.
+   Le libellé est ici, les **chiffres** viennent du serveur : c'est lui qui
+   connaît les réglages, et ils s'ajustent depuis /admin sans qu'on relivre
+   cette page. */
+function portes(o, sans) {
+  return [
+    { n: o.packMax, quoi: 'boosters en réserve',
+      sous: `au lieu de ${sans.packMax} — de quoi partir en week-end sans rien perdre` },
+    { n: `${o.packRegenMin} min`, quoi: 'entre deux boosters',
+      sous: `au lieu de ${sans.packRegenMin} minutes` },
+    { n: `+${o.clubsEnPlus}`, quoi: 'clubs suivis en plus',
+      sous: 'par-dessus ce que le niveau ouvre déjà' },
+    { n: '∞', quoi: 'de mémoire',
+      sous: `tout ton parcours et toutes tes cartes-souvenirs, au lieu des ${
+        o.parcoursLibre} dernières parties` },
+    { n: '∞', quoi: 'de tenues',
+      sous: 'porte n’importe quelle tenue publiée, et garde celles que tu portes' },
+    { n: '1', quoi: 'KOP à créer',
+      sous: 'rejoindre un KOP reste ouvert à tout le monde' },
+  ];
+}
+
+(async () => {
+  let d;
+  try {
+    d = await fetch('/api/abonnement', { credentials: 'same-origin' }).then((r) => r.json());
+  } catch {
+    $('corps').innerHTML = '<div class="vide">Serveur injoignable.</div>';
+    return;
+  }
+  if (d.error) {
+    $('corps').innerHTML = d.error === 'auth.error.unauthenticated'
+      ? '<div class="vide">Connecte-toi pour voir ton abonnement.<br><a href="/compte">Se connecter</a></div>'
+      : '<div class="vide">L’abonnement n’est pas disponible pour le moment.</div>';
+    return;
+  }
+
+  /* **Les deux côtés viennent du serveur.** Cette page en avait recopié un —
+     « au lieu de 10 boosters » — et le réglage en disait douze. Un barème
+     recopié dans une page ment au premier ajustement fait depuis /admin, et
+     personne ne relit une page pour vérifier un nombre qu'il croit connaître.
+     La route rend donc `ouvre` **et** `sans`. */
+  const o = d.ouvre ?? {};
+  const sans = d.sans ?? {};
+
+  const libre = (d.libre ?? []).map((x) => `<li>${esc(x)}</li>`).join('');
+
+  const etat = d.abonne
+    ? `<div class="etat"><div>
+         <b>TU ES ABONNÉ</b>
+         <span>${esc(d.formule ?? '')}${d.fin
+           ? ` · jusqu’au ${jour(d.fin)}`
+           : ' · sans terme'}</span>
+       </div></div>`
+    : '';
+
+  /* **Ce qui reste libre, avant ce qui s'ouvre.** Un joueur qui arrive ici se
+     demande d'abord ce qu'on lui retire s'il ne paie pas. Tant qu'il n'a pas la
+     réponse, il ne lit pas le reste — et la réponse est « rien de ce qui se
+     joue ». */
+  $('corps').innerHTML = `
+    ${etat}
+    <div class="libre">
+      <h2>Libre pour tout le monde, abonné ou non</h2>
+      <ul>${libre}</ul>
+      <p>Le classement ne mesure pas ce qu’on a payé. Un joueur qui ne s’abonne
+         jamais peut être premier, et c’est la règle du jeu — pas une promesse
+         commerciale.</p>
+    </div>
+
+    <div class="ouvre">
+      <h2>Ce que l’abonnement ouvre</h2>
+      <ul>${portes(o, sans).map((p) => `<li><b>${esc(p.n)}</b>
+        <span>${esc(p.quoi)}<small>${esc(p.sous)}</small></span></li>`).join('')}</ul>
+    </div>
+
+    ${d.abonne ? '' : `<div class="prendre">
+      <button class="tbf-plaque tbf-bloc tbf-grande" data-ton="or" id="prendre"
+        style="width:100%">M’abonner</button>
+    </div>`}`;
+
+  /* Le prestataire de paiement n'est pas branché sur l'abonnement : la boutique
+     est en paiement unique, et l'abonnement demande un abonnement Stripe. On le
+     dit plutôt que d'ouvrir une page qui échouerait — et on dit par où passer
+     en attendant, parce qu'un bêta-testeur peut en recevoir un. */
+  $('prendre')?.addEventListener('click', () => {
+    window.TBF_DIALOGUE?.ouvrir?.({
+      titre: 'Bientôt',
+      texte: 'Le paiement de l’abonnement n’est pas encore branché.\n\n'
+        + 'Pendant la bêta, l’abonnement s’offre depuis l’administration : '
+        + 'demande-le, il se pose en un geste.',
+      oui: 'Compris',
+    }) ?? alert('Le paiement de l’abonnement n’est pas encore branché.');
+  });
+})();
+</script>
+</body>
+</html>

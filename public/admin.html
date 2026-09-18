@@ -56,6 +56,9 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
 .bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .pill{font-size:10px;border-radius:4px;padding:2px 7px;border:1px solid currentColor}
 .pill.admin{color:var(--projo)}.pill.locked{color:var(--flare)}.pill.off{color:var(--flare)}
+/* L abonnement : la meme pastille que les autres etats du compte, en vert —
+   c est une porte ouverte, pas un avertissement. */
+.pill.vert{color:var(--vert,#5FDFA6)}
 .log{font-family:ui-monospace,monospace;font-size:11.5px;line-height:1.7;opacity:.75}
 .log b{color:var(--projo);font-family:var(--banner)}
 .vide{opacity:.45;padding:36px;text-align:center}
@@ -918,7 +921,7 @@ const VUES = {
     $('main').innerHTML = `
       <div class="bar"><input id="q" placeholder="pseudo ou adresse" value="${esc(terme)}">
         <button class="mini" id="go">Chercher</button></div>
-      <div class="tbl"><table><thead><tr><th>JOUEUR</th><th>ÉTAT</th><th>BOURSE</th><th>JEU</th><th>ACTIONS</th></tr></thead>
+      <div class="tbl"><table><thead><tr><th>JOUEUR</th><th>ÉTAT</th><th>BOURSE</th><th>JEU</th><th>ABONNEMENT</th><th>ACTIONS</th></tr></thead>
       <tbody>${d.joueurs.map((u) => `
         <tr><td><b>${esc(u.pseudo)}</b>
           ${u.role==='admin'?'<span class="pill admin">ADMIN</span>':''}
@@ -928,6 +931,15 @@ const VUES = {
           <span style="opacity:.45;font-size:11px">inscrit le ${jour(u.created_at)}</span></td>
         <td>${u.scarves ?? 0} éch.<br><span style="opacity:.45;font-size:11px">${u.packs ?? 0} boosters · ${u.follow_slots ?? 2} slots</span></td>
         <td>${u.fanzzy ?? 0} fanzzy<br><span style="opacity:.45;font-size:11px">${u.ferveur ?? 0} ferveur</span></td>
+        <!-- **L'échéance se lit, pas seulement l'état.** « abonné : oui »
+             demande une seconde question ; « jusqu'au 12 mars » y répond. Sans
+             terme, on l'écrit : c'est ce qu'on pose à un bêta-testeur, rien ne
+             l'expire, et ça doit se voir. -->
+        <td>${u.abonne
+          ? `<span class="pill vert">${esc(u.abo_formule ?? 'abonné')}</span><br>
+             <span style="opacity:.45;font-size:11px">${
+               u.abo_fin ? 'jusqu’au ' + jour(u.abo_fin) : 'sans terme'}</span>`
+          : '<span style="opacity:.4">non</span>'}</td>
         <td class="act" data-id="${u.public_id}">
           <button class="mini" data-a="scarves">+100 éch.</button>
           <button class="mini" data-a="packs">+5 pk</button>
@@ -935,6 +947,15 @@ const VUES = {
           <button class="mini ${u.status==='locked'?'vert':'rouge'}" data-a="toggle"
             data-status="${u.status}">${u.status==='locked'?'Débloquer':'Bloquer'}</button>
           <button class="mini" data-a="role" data-role="${u.role}">${u.role==='admin'?'Rétrograder':'Promouvoir'}</button>
+          <!-- **Offrir sans terme, et un mois.** Les deux gestes existent parce
+               qu'ils ne servent pas à la même chose : le premier ouvre la bêta
+               à quelqu'un, le second est un geste de service après-vente — un
+               mois offert après un incident. Les deux sont journalisés, comme
+               toute écriture d'administration. -->
+          ${u.abonne
+            ? '<button class="mini rouge" data-a="abo_retirer">Retirer l’abo</button>'
+            : `<button class="mini vert" data-a="abo_offrir">Offrir l’abo</button>
+               <button class="mini" data-a="abo_mois">+1 mois</button>`}
         </td></tr>`).join('')}</tbody></table></div>`;
 
     $('go').onclick = () => VUES.joueurs($('q').value.trim());
@@ -942,6 +963,29 @@ const VUES = {
     $('main').onclick = async (e) => {
       const b = e.target.closest('[data-a]'); if (!b) return;
       const id = b.closest('[data-id]').dataset.id;
+
+      /* L'abonnement a ses propres routes : il ne se pose pas avec un `PATCH`
+         sur le joueur, parce qu'il ne vit pas dans `users` mais dans sa propre
+         table, avec sa formule et son échéance. Trois gestes, deux verbes. */
+      const abo = { abo_offrir: ['POST', { formule: 'offert', jours: null }],
+                    abo_mois:   ['POST', { formule: 'mensuel', jours: 30 }],
+                    abo_retirer:['DELETE', null] }[b.dataset.a];
+      if (abo) {
+        const [verbe, corpsAbo] = abo;
+        try {
+          await api('/joueur/' + id + '/abonnement', corpsAbo, verbe);
+          recu(b.dataset.a === 'abo_retirer'
+            ? 'abonnement retiré.'
+            : (b.dataset.a === 'abo_mois' ? 'un mois offert.' : 'abonnement offert, sans terme.'));
+          VUES.joueurs($('q')?.value ?? '');
+        } catch (err) {
+          recu(err.code === 'admin.error.abo_absent'
+            ? 'le module d’abonnement n’est pas monté : applique sql/abonnement.sql.'
+            : (err.raison ?? err.code), true);
+        }
+        return;
+      }
+
       const corps = {
         scarves: { scarves: 100 }, packs: { packs: 5 }, verifier: { verifier: true },
         toggle: { status: b.dataset.status === 'locked' ? 'active' : 'locked' },

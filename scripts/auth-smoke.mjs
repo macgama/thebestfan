@@ -278,6 +278,45 @@ check('compte supprimé : connexion impossible', r.status === 401);
 const apresSuppression = await authenticate(ticket, { handshake: { headers: {} } });
 check('ticket inutilisable après suppression du compte', apresSuppression === null);
 
+/* ================ ce que la politique de confidentialité affirme, vérifié ici
+
+   `PRIVACITE.md` écrit que la suppression **efface les données personnelles** et
+   conserve les parties, anonymes, parce que les effacer réécrirait les soirées
+   des adversaires. Une politique de confidentialité qui décrit un comportement
+   que rien ne vérifie est une promesse, pas une garantie — et c'est le genre de
+   promesse qu'on vient nous demander de prouver.
+
+   Ces contrôles sont donc la contrepartie du document : si quelqu'un change
+   `deleteUser`, c'est ici que ça rougit, et le document redevient vrai ou faux
+   au même moment. */
+{
+  const [[ligne]] = await pool.query(
+    `SELECT id, email, pseudo, password_hash, main_team_id, status FROM users
+      WHERE email LIKE 'supprime+%' ORDER BY id DESC LIMIT 1`);
+
+  check('l’adresse est effacée', !String(ligne.email).includes('alice@exemple.fr')
+    || (console.log('        elle dit :', ligne.email), false));
+  check('le pseudo aussi', !String(ligne.pseudo).toLowerCase().includes('alice')
+    || (console.log('        il dit :', ligne.pseudo), false));
+  /* Le mot de passe part, et c'est ce qui rend la reconnexion impossible même
+     si quelqu'un devinait l'adresse de remplacement. */
+  check('le mot de passe ne vaut plus rien', ligne.password_hash === '');
+  check('le club suivi est oublié', ligne.main_team_id === null);
+  check('et le compte est marqué supprimé', ligne.status === 'deleted');
+
+  /* **La ligne reste**, et c'est délibéré : elle porte l'identifiant public que
+     les parties déjà jouées référencent. La retirer casserait l'historique des
+     adversaires — leurs soirées, pas celles du partant. */
+  check('la ligne subsiste, sans rien qui nomme personne', Boolean(ligne));
+
+  const [[sess]] = await pool.query(
+    'SELECT COUNT(*) AS n FROM sessions WHERE user_id = ?', [ligne.id]);
+  check('plus aucune session ouverte', Number(sess.n) === 0);
+  const [[jet]] = await pool.query(
+    'SELECT COUNT(*) AS n FROM auth_tokens WHERE user_id = ?', [ligne.id]);
+  check('plus aucun jeton en attente', Number(jet.n) === 0);
+}
+
 /* --------------------------------------------------- vie privée en base */
 
 const [rows] = await pool.query(`SELECT email, pseudo, password_hash FROM users WHERE status = 'deleted'`);

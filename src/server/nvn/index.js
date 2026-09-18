@@ -5,6 +5,8 @@ import { Cheat } from '../ferveur/gestures.js';
 import { FORMATS, primeDeFormat } from '../deck/index.js';
 import { XP } from '../../shared/niveau.js';
 import { reglage } from '../../shared/reglages.js';
+import { apres as coteApres, moyenne as coteMoyenne, COTE_DEPART }
+  from '../../shared/cote.js';
 // La même règle qu'au Virage : le club qu'on soutient dans cette
 // rencontre, ou rien du tout si on n'en suit aucun des deux.
 import { clubSoutenu, campDe } from '../football/suivis.js';
@@ -928,6 +930,74 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
       const f = d.fixture ?? null;
       const neutreCoef = reglage('ferveur.neutre');
 
+      /* La durée, calculée **une fois pour la partie** : c'est la même pour
+         tout le monde, et la relire par joueur donnerait six valeurs qui ne
+         peuvent que diverger. `dernier` est le dernier battement d'horloge, et
+         non l'instant présent : entre la fin du jeu et cette écriture il y a
+         les écharpes, l'XP et les KOP, et les compter dans la durée du duel
+         ferait grandir la partie de ce que le serveur a mis à la ranger. */
+      const duree = Math.round(Math.max(0, (d.dernier ?? d.debut) - d.debut) / 1000);
+
+      /* ================================================== la cote des duellistes
+
+         **Un camp est noté par sa moyenne.** Un 3v3 n'est pas trois duels :
+         c'est une équipe contre une autre. Chaque joueur est donc évalué contre
+         la cote moyenne du camp d'en face, et tous les membres d'un camp gagnent
+         ou perdent la même chose. Les noter un par un contre un adversaire tiré
+         au hasard donnerait trois résultats différents pour une seule partie, et
+         personne ne saurait expliquer lequel est le sien.
+
+         **Seul le classé cote.** L'entraînement s'écrit — un joueur doit
+         retrouver ses soirées — mais il ne bouge aucune cote. C'est le même tri
+         que partout ailleurs, fait ici plutôt qu'à la lecture parce qu'une cote
+         est cumulative : la trier après coup demanderait de la recalculer depuis
+         le début à chaque affichage.
+
+         **Les bots ne comptent pas non plus** : ils n'ont pas de ligne, donc pas
+         de cote, et un camp entièrement composé de machines ramène la moyenne au
+         départ — ce qui n'arrive qu'en entraînement, où rien ne cote.
+
+         Les cotes d'avant sont lues **en une requête pour toute la salle** :
+         une par joueur ferait six allers-retours à la seconde où le duel se
+         range, et la partie est finie, plus rien ne presse mais rien ne doit
+         traîner non plus. */
+      const humains = [...d.joueurs.entries()].filter(([id]) => !id.startsWith('bot:'));
+      const cotes = new Map();
+      const jouees = new Map();
+      const cote = d.mode === 'classe' && humains.length > 0;
+
+      if (cote) {
+        const ids = humains.map(([id]) => id);
+        /* La dernière cote connue de chacun, et le nombre de parties classées
+           qu'il a derrière lui — le second décide du coefficient, plus grand
+           pendant les dix premières.
+
+           `ORDER BY ended_at DESC LIMIT 1` par joueur se ferait en SQL avec une
+           fenêtre ; on préfère tout lire et trier ici, parce que le volume est
+           d'une poignée de lignes par joueur et que la requête reste lisible. */
+        const [lignes] = await pool.query(
+          `SELECT user_id, elo_after, ended_at FROM duel_results
+            WHERE user_id IN (?) AND mode = 'classe'
+            ORDER BY ended_at DESC`, [ids]);
+        for (const id of ids) { cotes.set(id, COTE_DEPART); jouees.set(id, 0); }
+        /* Les lignes arrivent de la plus récente à la plus ancienne : **la
+           première rencontrée pour quelqu'un porte sa cote du moment**, et les
+           suivantes ne servent qu'à le compter. Sans ce garde, la dernière lue —
+           donc la plus vieille — écraserait la bonne. */
+        const vus = new Set();
+        for (const l of lignes) {
+          jouees.set(l.user_id, (jouees.get(l.user_id) ?? 0) + 1);
+          if (!vus.has(l.user_id)) {
+            vus.add(l.user_id);
+            cotes.set(l.user_id, Number(l.elo_after) || COTE_DEPART);
+          }
+        }
+      }
+
+      /** La cote moyenne d'un camp, humains seulement. */
+      const moyenneDe = (side) => coteMoyenne(
+        humains.filter(([, x]) => x.side === side).map(([id]) => cotes.get(id) ?? COTE_DEPART));
+
       for (const [userId, j] of d.joueurs) {
         if (userId.startsWith('bot:')) continue;
         const adverse = [...d.joueurs.values()].find((x) => x.side !== j.side);
@@ -941,15 +1011,52 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         const ferveur = Math.max(0, Math.round((j.ferveur ?? 0)
           * (m?.neutre === false ? 1 : neutreCoef) * (m?.bonus ?? 1)));
 
+        /* ------------------------------------- ce que la ligne dit désormais
+
+           **Le Fanzzy aligné au coup d'envoi**, et non les remplaçants entrés
+           en cours de route : `vus` les porte tous, dans l'ordre, et c'est le
+           premier qui est le titulaire. C'est de lui qu'on se souvient.
+
+           **L'XP versée**, relue sur `gains` — la carte que `recompenser` vient
+           de rendre — plutôt que recalculée ici. Deux calculs de la même
+           récompense finiraient par ne plus dire la même chose, et c'est
+           l'écran du parcours qui annoncerait le mauvais chiffre. Nulle pour un
+           forfait, parce que `recompenser` n'en verse pas.
+
+           **Le camp**, sans lequel on ne peut pas reconstituer qui jouait avec
+           qui : les lignes d'un même duel partagent `duel_id`, mais sur un
+           match nul les deux côtés portent exactement les mêmes buts. Déduire
+           le camp des scores échouerait donc précisément sur les parties les
+           plus serrées. */
+        /* ------------------------------------------------------- la cote
+
+           Deux colonnes existaient depuis le premier jour — `elo_before` et
+           `elo_after` — et **rien ne les avait jamais écrites** : mille partout,
+           sur toutes les lignes. Un schéma qui décrit un classement qui n'existe
+           pas se lit comme une fonction débranchée, et quelqu'un finit par bâtir
+           dessus.
+
+           Hors classé, les deux valent la cote du moment, inchangée : la partie
+           s'écrit, elle ne cote pas. Écrire zéro dirait « il a tout perdu », ce
+           qui est faux ; laisser le défaut à mille effacerait la cote réelle de
+           quelqu'un qui alterne classé et entraînement. */
+        const avant = cotes.get(userId) ?? COTE_DEPART;
+        const apres = cote
+          ? coteApres(avant, moyenneDe(j.side ^ 1), issue, jouees.get(userId) ?? 0)
+          : avant;
+
         await q(
           `INSERT IGNORE INTO duel_results
              (duel_id, user_id, opponent_id, outcome, goals_for, goals_against,
-              fixture_id, team_id, ferveur, format, mode, ended_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(3))`,
+              fixture_id, team_id, ferveur, format, mode,
+              fanzzy_id, xp, duree_s, side, elo_before, elo_after, ended_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(3))`,
           [d.id, userId, adverse?.userId ?? 'inconnu', issue,
            d.goals[j.side], d.goals[j.side ^ 1],
            f?.id ?? null, m?.teamId ?? null, ferveur, d.format ?? null,
-           d.mode ?? 'entrainement']);
+           d.mode ?? 'entrainement',
+           j.vus?.[0] ?? null, Number(gains?.get(userId)?.xp ?? 0), duree, j.side,
+           avant, apres]);
       }
     } catch (e) {
       console.error('[nvn] enregistrement du résultat', e.message);

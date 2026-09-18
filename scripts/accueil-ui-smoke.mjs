@@ -65,6 +65,36 @@ const AGE_SUP = new Set(PUB.map((f) => f.evo).filter(Boolean));
 const ILLUSTRE = PUB.find((f) => !AGE_SUP.has(f.id) && f.id !== 'TR32'
   && existsSync(path.join(IMG_FZ, f.id + '.png'))
   && existsSync(path.join(IMG_FZ, f.id + '-buste.png')))?.id;
+
+/* ==================================== un personnage qui ressemble au catalogue
+
+ * **Les trois personnages que cette suite éprouve sont les trois seuls qui
+ * soient complets.** `TR1` et `TR2` ont leurs douze états aux trois âges,
+ * `TR32` ses trois cartes : ce sont exactement les cas qui n'apprennent rien,
+ * parce qu'aucun repli ne s'y déclenche jamais.
+ *
+ * Le catalogue, lui, est fait d'autre chose : **cent trente-six lignées sur
+ * deux cent cinquante-six** ont la carte de leur premier âge et rien au-dessus.
+ * C'est le cas ordinaire, celui que presque tous les joueurs ont sous les yeux,
+ * et aucune suite ne le regardait.
+ *
+ * On en choisit donc un, et on le choisit **à partir du disque** plutôt que de
+ * l'écrire en dur : le jour où quelqu'un dessine ses âges supérieurs, ce
+ * contrôle doit se déplacer tout seul sur un autre plutôt que de rougir.
+ */
+const parIdPub = new Map(PUB.map((f) => [f.id, f]));
+const lgn = (r) => { const t = [r]; let c = r;
+  while (c?.evo && parIdPub.has(c.evo)) { c = parIdPub.get(c.evo); t.push(c); } return t; };
+const ORDINAIRE = PUB.filter((f) => !AGE_SUP.has(f.id) && f.id !== 'TR32' && f.id !== ILLUSTRE)
+  .map(lgn)
+  .find((ages) => ages.length >= 2
+    && existsSync(path.join(IMG_FZ, ages[0].id + '.png'))
+    && existsSync(path.join(IMG_FZ, ages[0].id + '-buste.png'))
+    && !existsSync(path.join(IMG_FZ, ages[1].id + '.png'))
+    && !existsSync(path.join(IMG_FZ, ages[0].id)));
+if (!ORDINAIRE) throw new Error(
+  'plus aucune lignée dont seul le premier âge est dessiné : ce contrôle n’a plus d’objet, '
+  + 'et c’est une bonne nouvelle — le retirer.');
 if (!ILLUSTRE) throw new Error(
   'aucun Fanzzy dessiné dans public/img/fanzzy : la suite ne peut rien éprouver.');
 
@@ -1716,6 +1746,62 @@ if (process.env.CAPTURE) {
     apresSalut.every((e) => e === 2)
     || (console.log('        âges rendus :', JSON.stringify(apresSalut)), false));
   await page.close();
+}
+
+/* ============================ l'échantillon représentatif, et pas le beau
+
+ * Tout ce qui précède éprouve des personnages complets. Ici on prend celui que
+ * le catalogue a vraiment : sa carte du premier âge, et rien au-dessus.
+ *
+ * Ce que ça attrape : l'accueil laisse choisir un âge, et pour cette lignée-là
+ * le dessin de l'âge 2 n'existe pas. `FZART.adresse` redescend alors à l'âge
+ * illustré le plus proche — c'est le bon repli, un dessin un peu plus jeune
+ * vaut mieux qu'un cadre vide — mais la plaque annonçait « ÉVOLUTION 2 / 3 »
+ * par-dessus le dessin de l'âge 1. Le joueur voyait le même personnage sous
+ * deux numéros, et en concluait que son choix n'avait pas été pris.
+ */
+{
+  const R = ORDINAIRE[0].id;
+  await equiper(R, 2);
+  await pool.query('UPDATE user_wallet SET active_evo = NULL WHERE user_id = ?', [U]);
+  const page = await ouvrir();
+  await page.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 600));
+
+  const v = await page.evaluate(() => ({
+    src: document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '',
+    plaque: document.getElementById('quiEvo')?.textContent.trim() ?? '',
+    dansLEcran: (() => {
+      const q = document.getElementById('qui')?.getBoundingClientRect();
+      return q ? q.bottom <= innerHeight + 1 && q.left >= -1 : false;
+    })(),
+  }));
+
+  /* Le repli a bien lieu, et c'est voulu : on montre le dessin qu'on a. */
+  check('un âge non dessiné retombe sur le dessin qu’on a',
+    new RegExp(`/${R}\\.`).test(v.src)
+    || (console.log('        il montre :', v.src), false));
+  /* Mais la plaque ne prétend pas montrer autre chose. */
+  check('et la plaque ne promet pas un dessin qui n’existe pas',
+    /dessin à venir/i.test(v.plaque)
+    || (console.log('        elle dit :', v.plaque), false));
+  check('elle dit quand même où en est le personnage',
+    /ÉVOLUTION 2 \/ \d/.test(v.plaque)
+    || (console.log('        elle dit :', v.plaque), false));
+  /* La mention rallonge la plaque : elle doit rester dans l'écran. */
+  check('et la plaque rallongée tient toujours dans l’écran', v.dansLEcran);
+
+  /* En redescendant au premier âge, la mention disparaît : ce dessin-là existe.
+     C'est le contrôle qui prouve que la mention dit quelque chose plutôt que
+     d'être affichée tout le temps. */
+  await page.click('#ageAvant');
+  await new Promise((r) => setTimeout(r, 400));
+  const bas = await page.evaluate(() =>
+    document.getElementById('quiEvo')?.textContent.trim() ?? '');
+  check('au premier âge, la mention s’efface', !/dessin à venir/i.test(bas)
+    || (console.log('        elle dit :', bas), false));
+  await page.close();
+  await equiper(R, 1);
 }
 
 await nav.close();

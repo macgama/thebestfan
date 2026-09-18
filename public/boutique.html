@@ -53,11 +53,9 @@
 /* Le bandeau du haut : ce qu'on possède déjà, pour ne pas acheter ce qu'on a.
    Il reprend exactement les jetons de la barre commune — mêmes formes, mêmes
    couleurs — parce que c'est la même monnaie. */
-/* Le billet : un rectangle d'or, distinct de l'écharpe rayée et de la
-   pastille de booster. Trois monnaies dans une même ligne doivent se
-   reconnaître sans qu'on lise le nombre. */
-.avoir .b{background:linear-gradient(135deg,var(--projo),#C9962A);border-radius:2px;
-  width:18px;height:12px}
+/* Le jeton du billet est parti avec lui. Sa règle reste ici, en commentaire,
+   parce qu'elle vaut pour les deux qui restent : deux monnaies dans une même
+   ligne doivent se reconnaître sans qu'on lise le nombre. */
 
 /* ----------------------------------------------------------------- l'étal
    Une ligne par objet, et non une grille : un objet d'étal porte un nom, une
@@ -115,7 +113,9 @@
   <h1 class="tbf-titre">LA BOUTIQUE</h1>
 
   <div class="avoir" id="avoir" hidden>
-    <span><i class="b"></i><b id="avBil">0</b></span>
+    <!-- Deux monnaies, plus trois : le billet est parti avec l'argent réel, et
+         son jeton avec lui. Un jeton qui affiche toujours zéro se lit comme une
+         monnaie qu'on ne sait pas gagner. -->
     <span><i class="e"></i><b id="avEch">0</b></span>
     <span><i class="p"></i><b id="avPack">0</b></span>
   </div>
@@ -175,8 +175,9 @@ async function monter() {
   $('mot').innerHTML = (ouvert
     ? 'Les paiements passent par <b>Stripe</b>. Nous ne voyons jamais ton numéro de carte.'
     : 'La boutique est en <b>vitrine</b> : les paiements ne sont pas encore branchés.')
-    + '<br>L’argent réel n’achète que des <b>billets</b>. Les boosters, eux, se '
-    + 'gagnent : à la recharge, ou contre des écharpes gagnées en poussant.';
+    + '<br>L’argent réel n’achète que l’<b>abonnement</b>. Tout le reste — les '
+    + 'boosters, les tenues, l’équipement — se paie en écharpes, et les écharpes '
+    + 'se gagnent en jouant.';
 
   /* Ce qu'on possède déjà. Facultatif : un visiteur non connecté voit les prix
      sans voir un solde qui n'existe pas. */
@@ -184,7 +185,6 @@ async function monter() {
     const w = await fetch('/api/fanzzy/state', { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : null));
     if (w?.wallet) {
-      $('avBil').textContent = w.wallet.billets ?? 0;
       $('avEch').textContent = w.wallet.scarves ?? 0;
       $('avPack').textContent = w.wallet.packs ?? 0;
       $('avoir').hidden = false;
@@ -196,12 +196,13 @@ async function monter() {
 
 /* --------------------------------------------------------------- l'étal
 
-   Ce que les billets achètent. Rien n'y est tiré au sort : le joueur lit le
+   Ce que les écharpes achètent, en dehors des boosters. Rien n'y est tiré au
+   sort : le joueur lit le
    nom, la phrase et le prix avant de toucher. C'est toute la différence avec
    ce que cette boutique vendait avant, où « une tenue » à 2,49 € était un
    tirage. */
 
-let billets = 0;
+let echarpes = 0;
 
 const ligneObjet = (o, assez) => `<button class="obj" data-type="${esc(o.type)}"
   data-id="${esc(o.id)}" data-prix="${o.prix}" ${assez ? '' : 'disabled'}>
@@ -219,12 +220,12 @@ async function monterEtal() {
   // lisible, et on ne met pas d'erreur devant quelqu'un qui regarde.
   if (!d) { $('etal').innerHTML = ''; return; }
 
-  billets = d.billets ?? 0;
-  $('avBil').textContent = billets;
+  echarpes = d.echarpes ?? 0;
+  $('avEch').textContent = echarpes;
 
   const bloc = (titre, phrase, objets) => objets.length
     ? `<section class="rayon"><h2>${esc(titre)}</h2><p>${esc(phrase)}</p>
-        <div class="objets">${objets.map((o) => ligneObjet(o, billets >= o.prix)).join('')}</div>
+        <div class="objets">${objets.map((o) => ligneObjet(o, echarpes >= o.prix)).join('')}</div>
       </section>`
     : '';
 
@@ -248,16 +249,16 @@ $('etal').addEventListener('click', async (e) => {
     return;
   }
 
-  /* Une dépense se demande. Ici elle est définitive — les billets ne se
-     remboursent pas — et les lignes de l'étal se touchent en faisant défiler.
-     Le prix est répété dans la boîte : c'est ce qu'on regarde, et c'est ce
-     qu'on aurait dû relire avant de toucher. */
+  /* Une dépense se demande. Ici elle est définitive — une écharpe dépensée ne
+     revient pas — et les lignes de l'étal se touchent en faisant défiler. Le
+     prix est répété dans la boîte : c'est ce qu'on regarde, et c'est ce qu'on
+     aurait dû relire avant de toucher. */
   const prix = Number(b.dataset.prix) || 0;
   if (!(await window.TBF_DIALOGUE?.confirmer({
     titre: `ACHETER ${(b.querySelector('b')?.textContent ?? '').toUpperCase()} ?`,
-    texte: `${prix} billet${prix > 1 ? 's' : ''} seront débités. Les billets ne se `
-      + 'remboursent pas.',
-    oui: 'ACHETER', sousOui: `${prix} billet${prix > 1 ? 's' : ''}`, ton: 'or',
+    texte: `${prix} écharpe${prix > 1 ? 's' : ''} seront débitées. Une écharpe `
+      + 'dépensée ne revient pas — mais elle se regagne en jouant.',
+    oui: 'ACHETER', sousOui: `${prix} écharpe${prix > 1 ? 's' : ''}`, ton: 'or',
   }))) return;
 
   b.disabled = true;
@@ -270,8 +271,8 @@ $('etal').addEventListener('click', async (e) => {
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { dire('err', MESSAGES[j.error] ?? 'Achat impossible.'); b.disabled = false; return; }
     dire('ok', 'C’est à toi. Tu le retrouves dans ton deck.');
-    billets = j.billets ?? billets;
-    $('avBil').textContent = billets;
+    echarpes = j.echarpes ?? echarpes;
+    $('avEch').textContent = echarpes;
     await monterEtal();
   } catch {
     dire('err', 'Le serveur n’a pas répondu. Rien n’a été débité.');
@@ -282,7 +283,7 @@ $('etal').addEventListener('click', async (e) => {
 /* Les refus, en français. Un code d'erreur sous les yeux d'un joueur est un
    aveu qu'on n'a pas prévu son cas. */
 const MESSAGES = {
-  'boutique.error.billets_insuffisants': 'Il te manque des billets.',
+  'boutique.error.echarpes_insuffisantes': 'Il te manque des écharpes. Pousse dans un virage, ou gagne un duel.',
   'boutique.error.objet_inconnu': 'Cet objet n’est plus en vente.',
   'boutique.error.tenue_inconnue': 'Cette tenue n’est plus en vente.',
   'boutique.error.fanzzy_non_possede': 'Tu ne possèdes pas ce Fanzzy à cet âge.',

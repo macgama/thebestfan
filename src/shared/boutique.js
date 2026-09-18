@@ -1,7 +1,7 @@
 /**
  * Le catalogue de la boutique : ce qui est en vente, et à quel prix.
  *
- * ## L'argent réel n'achète qu'une chose : des billets
+ * ## L'argent réel n'achète qu'une chose : l'abonnement
  *
  * C'est la règle qui gouverne tout ce fichier, et elle n'est pas commerciale,
  * elle est structurelle.
@@ -12,12 +12,19 @@
  * qu'une écharpe achète un booster à quarante-cinq : les vendre revenait à
  * vendre des boosters avec une étape de plus.
  *
- * Maintenant, l'argent réel achète des **billets**, et rien d'autre. Les
- * billets achètent des objets **nommés** : cette pièce-là, cette tenue-là, sur
- * ce Fanzzy-là. On voit ce qu'on prend avant de le prendre.
+ * Il y a eu une étape intermédiaire, et elle vaut d'être racontée. L'argent
+ * réel a d'abord acheté des **billets**, une seconde monnaie qui n'achetait que
+ * des objets nommés — cette pièce-là, cette tenue-là. La chaîne euro → tirage
+ * était coupée par une séparation qu'il fallait tenir : deux compteurs, deux
+ * règles, et la vigilance de ne jamais les mélanger.
  *
- * Les boosters restent : gratuits, à la recharge, ou payés en écharpes gagnées
- * en poussant. Aucun chemin ne mène d'un euro à un tirage.
+ * Les billets n'existent plus. **L'argent réel n'achète que l'abonnement**, et
+ * les écharpes ne se gagnent qu'en jouant. La chaîne n'est plus coupée par une
+ * séparation, elle est coupée **à la racine** : il n'y a plus de monnaie
+ * achetable, donc plus rien à séparer, et plus rien à tenir.
+ *
+ * Les objets nommés se paient désormais en écharpes, comme les boosters. Ce
+ * n'est pas un adoucissement de la règle, c'est sa version la plus simple.
  *
  * Ce n'est pas une précaution de façade. Plusieurs pays traitent les coffres à
  * contenu aléatoire achetés avec de l'argent comme un jeu de hasard — la
@@ -56,12 +63,19 @@
  * joueur lirait « dessine un fanion » et « tu as 200 fanions » sur le même
  * écran.
  */
-export const MONNAIE = { un: 'billet', plusieurs: 'billets', Un: 'Billet', Plusieurs: 'Billets' };
+/* Une seule monnaie, et elle se gagne. Ce mot reste servi par la route pour
+   que la page n'écrive pas « écharpe » de son côté : le jour où elle changerait
+   de nom, il y aurait un seul endroit à corriger. */
+export const MONNAIE = { un: 'écharpe', plusieurs: 'écharpes', Un: 'Écharpe', Plusieurs: 'Écharpes' };
 
 /** Les familles, pour ranger l'écran. L'ordre est celui de l'affichage. */
 export const RAYONS = [
-  { id: 'billets', nom: 'Billets',
-    texte: 'La monnaie qui achète les tenues et l’équipement, à l’unité.' },
+  /* **L'abonnement d'abord.** C'est le seul rayon qui ne s'achète pas à la
+     pièce, et le seul dont le prix se paie tous les mois : il mérite d'être lu
+     avant qu'on additionne des billets. */
+  { id: 'abonnement', nom: 'L’abonnement',
+    texte: 'Du rythme, de la mémoire et du confort. Jamais un avantage de jeu — '
+      + 'tous les formats, tous les âges et tous les classements restent ouverts à tous.' },
 ];
 
 /**
@@ -71,20 +85,29 @@ export const RAYONS = [
  * décrit. Un seul type est permis — voir `LIVRAISONS_PAYANTES`.
  */
 export const CATALOGUE = [
+  /* ---------------------------------------------------------- l'abonnement
+
+     `recurrence` est ce qui fait la différence entre un paiement et un
+     abonnement, et c'est **le serveur** qui la lit : il ouvre alors une session
+     Stripe en `mode: 'subscription'` au lieu de `'payment'`. La page, elle, ne
+     fait rien de particulier — un article est un article, et lui apprendre la
+     différence l'obligerait à la garder à jour.
+
+     `jours` est le repli, pas la règle : ce qui fait foi est la fin de période
+     que Stripe renvoie avec chaque facture payée. Il sert le premier jour, avant
+     que la moindre facture soit arrivée, et le jour où l'on accorde un
+     abonnement à la main. */
   {
-    id: 'billets-100', rayon: 'billets', nom: '100 billets',
-    texte: 'De quoi prendre deux pièces d’équipement communes.',
-    prix: 199, livraison: { type: 'billets', n: 100 },
+    id: 'abo-mensuel', rayon: 'abonnement', nom: 'Abonnement mensuel',
+    texte: 'Se renouvelle chaque mois. S’arrête quand tu veux.',
+    prix: 399, recurrence: 'month',
+    livraison: { type: 'abonnement', formule: 'mensuel', jours: 31 },
   },
   {
-    id: 'billets-550', rayon: 'billets', nom: '550 billets',
-    texte: 'Une tenue et quelques pièces, ou une pièce légendaire.',
-    prix: 899, marque: 'le plus pris', livraison: { type: 'billets', n: 550 },
-  },
-  {
-    id: 'billets-1200', rayon: 'billets', nom: '1 200 billets',
-    texte: 'De quoi habiller toute une tribune.',
-    prix: 1799, livraison: { type: 'billets', n: 1200 },
+    id: 'abo-annuel', rayon: 'abonnement', nom: 'Abonnement annuel',
+    texte: 'Douze mois d’un coup, au prix de dix.',
+    prix: 3990, marque: 'deux mois offerts', recurrence: 'year',
+    livraison: { type: 'abonnement', formule: 'annuel', jours: 366 },
   },
 ];
 
@@ -98,7 +121,30 @@ export const ARTICLE_PAR_ID = new Map(CATALOGUE.map((a) => [a.id, a]));
  * penserait à la mettre à jour. Ici, ajouter un type de livraison payante
  * oblige à venir écrire son nom sur cette ligne — c'est-à-dire à décider.
  */
-export const LIVRAISONS_PAYANTES = new Set(['billets']);
+export const LIVRAISONS_PAYANTES = new Set(['abonnement']);
+
+/**
+ * L'argent réel produit-il de la monnaie de jeu ?
+ *
+ * La réponse doit être **non**, pour toujours, et cette fonction est là pour
+ * qu'une suite puisse le demander plutôt que de le croire.
+ *
+ * Une écharpe achète un booster à quarante-cinq. Vendre des écharpes — sous
+ * n'importe quel nom, y compris « billets » — rouvrirait la chaîne euro →
+ * tirage, c'est-à-dire un coffre à contenu aléatoire payé en argent réel, que
+ * la Belgique et les Pays-Bas traitent comme un jeu de hasard. Le jeu est en
+ * français, il suit des clubs suisses et français, et il est ouvert à des
+ * mineurs.
+ *
+ * L'abonnement ne rouvre pas cette porte : il n'ajoute aucune écharpe, il
+ * change le **rythme** auquel les boosters gratuits reviennent. La nuance est
+ * réelle et elle est fine — elle est notée dans `IDEES.md`, parce qu'elle
+ * mérite d'être relue par quelqu'un dont c'est le métier avant l'ouverture.
+ */
+export const MONNAIES_ACHETABLES = ['billets', 'echarpes', 'écharpes', 'packs', 'boosters'];
+export const VEND_DE_LA_MONNAIE = () =>
+  CATALOGUE.filter((a) => MONNAIES_ACHETABLES.includes(a.livraison?.type))
+    .map((a) => a.id);
 
 /**
  * Vérifie que le catalogue tient sa promesse.

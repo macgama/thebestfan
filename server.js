@@ -34,6 +34,7 @@ import { createClassements } from './src/server/classements/index.js';
 import { createDecks } from './src/server/deck/index.js';
 import { createNiveau } from './src/server/niveau/index.js';
 import { createAbonnement } from './src/server/abonnement/index.js';
+import { createContenus } from './src/server/contenus/index.js';
 import { createKop } from './src/server/kop/index.js';
 import { createAmis } from './src/server/amis/index.js';
 import { createAdmin } from './src/server/admin/index.js';
@@ -291,11 +292,22 @@ if (process.env.DATABASE_URL) {
     console.log('duels NvN actifs');
 
     // ---- administration
+    /* Les cartes d'action, l'équipement et les stades vivaient dans le code :
+       une saison pouvait les annoncer, elle ne pouvait pas les ouvrir. Ce
+       module les sème en base et porte leur état de publication.
+
+       Chargé **avant** l'administration, parce que c'est elle qui publie au
+       lancement d'une saison. Sans la table, il le dit et le jeu garde les
+       listes du code, toutes jouables — l'état d'avant. */
+    const contenus = createContenus({ pool });
+    await contenus.charger();
+
     admin = createAdmin({ pool, requireAuth: auth.requireAuth,
       /* `abonnement` : l'administration peut en accorder un, ce qui ouvre la
          bêta sans attendre le prestataire de paiement — et restera le geste
          de service après-vente quand il sera branché. */
-      deps: { client: globalThis.footClient ?? null, virage: null, abonnement } });
+      deps: { client: globalThis.footClient ?? null, virage: null, abonnement,
+        contenus } });
     app.use('/api/admin', admin.router);
 
     /* ------------------------------------------------- la fermeture du jeu
@@ -367,7 +379,7 @@ if (process.env.DATABASE_URL) {
        qu on ait pu vérifier la signature. On accepterait alors n importe
        quel appel prétendant venir de Stripe, ce qui revient à offrir des
        boosters à qui connaît l adresse. */
-    boutique = createBoutique({ pool, requireAuth: auth.requireAuth, fanzzy });
+    boutique = createBoutique({ pool, requireAuth: auth.requireAuth, fanzzy, abonnement });
     app.use("/api/boutique", boutique.webhook);
     app.use("/api/boutique", boutique.router);
     console.log(boutique.configure()
@@ -655,6 +667,11 @@ app.get('/bienvenue', (_req, res) => res.sendFile(path.join(__dirname, 'public',
 app.get('/profil', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'profil.html')));
 app.get('/classement', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'classement.html')));
 app.get('/boutique', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'boutique.html')));
+/* L'abonnement a sa page, et non un rayon de la boutique : il ne s'achète pas
+   comme un objet, il se comprend avant de s'acheter. Il lui faut la place de
+   dire ce qu'il ouvre et, surtout, ce qu'il n'enferme pas — cette seconde
+   liste est la promesse du jeu, et elle ne tient pas dans une vignette. */
+app.get('/abonnement', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'abonnement.html')));
 app.get('/boosters', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'boosters.html')));
 app.get('/admin', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 // Fiche d'un Fanzzy : /fanzzy/V3 comme /fanzzy?id=V3, pour des liens partageables.

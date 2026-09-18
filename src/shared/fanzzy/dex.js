@@ -8,6 +8,7 @@
 import { SETS_2026, DEX_2026 } from './dex-2026.js';
 import { DEX_LEGENDES } from './dex-legendes.js';
 import { SETS_NEUVES, DEX_NEUVES } from './dex-series-neuves.js';
+import { SET_SAISON, DEX_SAISON } from './dex-saison.js';
 import { AGES } from './dex-ages.js';
 import { agesDe, idDuStade } from './ages.js';
 
@@ -697,7 +698,11 @@ const RATES = {
    Le premier âge, lui, reste écrit à la main : c'est lui qui porte l'idée du
    personnage, et une idée ne se déduit de rien.                            */
 
-const PREMIERS = [...DEX, ...DEX_2026, ...DEX_LEGENDES, ...DEX_NEUVES];
+/* `DEX_SAISON` porte ses trois âges écrits à la main, comme LA TRIBUNE le
+   fait pour ses lignées les plus anciennes : ses entrées de stade 2 et 3
+   arrivent donc par ici et non par `AGES`. Les deux façons coexistent, et la
+   boucle plus bas refuse justement de les mélanger sur une même carte. */
+const PREMIERS = [...DEX, ...DEX_2026, ...DEX_LEGENDES, ...DEX_NEUVES, ...DEX_SAISON];
 const PREMIER_PAR_ID = new Map(PREMIERS.map((f) => [f.id, f]));
 
 const SUITES = [];
@@ -731,7 +736,15 @@ for (const [id, ecrits] of Object.entries(AGES)) {
 }
 
 const TOUT = [...PREMIERS, ...SUITES];
-const TOUS_SETS = [...SETS, ...SETS_2026, ...SETS_NEUVES];
+/* La série de la saison arrive en dernier : elle s'affiche donc en dernier au
+   classeur, ce qui est sa place — c'est la plus récente, et les onglets
+   suivent l'ordre de cette liste.
+
+   Elle est **fermée** tant qu'aucune saison ne l'ouvre : les séries ouvertes
+   sont l'union des saisons lancées. Ses trente-sept cartes sont donc au
+   catalogue, visibles, et marquées comme telles — le classeur montre les
+   séries fermées plutôt que de les taire, pour qu'on sache ce qui vient. */
+const TOUS_SETS = [...SETS, ...SETS_2026, ...SETS_NEUVES, SET_SAISON];
 
 // Un identifiant en double ferait taire une carte sans le dire : la seconde
 // écraserait la première dans BY_ID, et elle disparaîtrait des tirages sans

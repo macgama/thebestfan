@@ -8,6 +8,13 @@
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
 <style>
+/* **Quatre onglets, et le quatrième est long.** `ui.css` dimensionne la barre
+   pour trois étiquettes de dix caractères ; « ENTRAÎNEMENT » en fait douze et
+   se coupait en « ENTRAÎNE… », qui se devine au lieu de se lire. On réduit le
+   corps ici, sur cette page seule, plutôt que de toucher au composant partagé
+   — les dix-huit autres pages n'ont pas ce problème, et une barre d'onglets
+   plus petite partout pour une page serait le mauvais échange. */
+.tabs .tbf-onglet{font-size:clamp(9px,2.7vw,12px);letter-spacing:.04em}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
@@ -49,6 +56,13 @@ h1 small{display:block;font-size:9px;letter-spacing:.3em;opacity:.45;margin-top:
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
+/* **Quatre onglets, et le quatrième est long.** `ui.css` dimensionne la barre
+   pour trois étiquettes de dix caractères ; « ENTRAÎNEMENT » en fait douze et
+   se coupait en « ENTRAÎNE… », qui se devine au lieu de se lire. On réduit le
+   corps ici, sur cette page seule, plutôt que de toucher au composant partagé
+   — les dix-huit autres pages n'ont pas ce problème, et une barre d'onglets
+   plus petite partout pour une page serait le mauvais échange. */
+.tabs .tbf-onglet{font-size:clamp(9px,2.7vw,12px);letter-spacing:.04em}
 /* Les boutons de cette barre n'ont pas de classe : ils sont les seuls enfants
    du rail, et lui seul les désigne. */
 </style>
@@ -61,6 +75,11 @@ h1 small{display:block;font-size:9px;letter-spacing:.3em;opacity:.45;margin-top:
     <button data-t="supporters" class="tbf-onglet on">SUPPORTERS</button>
     <button data-t="tribunes" class="tbf-onglet">TRIBUNES</button>
     <button data-t="duellistes" class="tbf-onglet">DUELS</button>
+    <!-- L'entraînement ne rapporte rien, et il existe quand même : quelqu'un
+         qui passe une soirée à s'entraîner n'en trouvait aucune trace ailleurs
+         que dans son propre parcours. Le nom de l'onglet est celui du mot que
+         le joueur cherche — il vient de jouer des « entraînements ». -->
+    <button data-t="entrainements" class="tbf-onglet">ENTRAÎNEMENT</button>
   </div>
   <div class="list" id="list"><div class="spin"></div></div>
 </main>
@@ -74,9 +93,19 @@ const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
 let onglet = 'supporters';
 
 const NOTES = {
-  supporters: 'La ferveur se gagne en chantant dans le Grand Virage. Un joueur qui n\u2019a jamais ouvert un booster peut être premier.',
+  /* **Les deux sources, dites dans l'ordre où on les rencontre.** Cette note
+     promettait le Grand Virage seul, à une époque où c'était vrai ; le duel
+     rapportait déjà de la ferveur, et elle ne comptait ici nulle part. Un
+     joueur qui ne faisait que des duels lisait donc une explication qui ne
+     décrivait pas le classement qu'il avait sous les yeux. */
+  supporters: 'La ferveur se gagne en chantant dans le Grand Virage et en gagnant des duels class\u00e9s. Un joueur qui n\u2019a jamais ouvert un booster peut être premier.',
   tribunes: 'Les clubs sont classés sur la ferveur moyenne par supporter, pas sur le total. Trente fidèles qui chantent juste passent devant mille abonnés qui regardent.',
-  duellistes: 'Duels contre de vrais adversaires uniquement. Les entraînements ne comptent pas.',
+  duellistes: 'Classé sur la cote, pas sur le nombre de victoires : battre plus fort rapporte plus, perdre contre plus faible coûte plus. Tout le monde part de 1000. Duels contre de vrais adversaires uniquement — les entraînements ne comptent pas.',
+  /* **Ce tableau classe sur les parties jouées, et il faut le dire.** On
+     s'entraîne aussi contre des machines : classer sur les victoires ferait un
+     tableau de qui bat le plus de bots, ce qui se gagne en y passant la nuit.
+     Les parties, elles, coûtent le même prix à tout le monde. */
+  entrainements: 'Qui s\u2019entraîne le plus, contre des joueurs comme contre des bots. L\u2019entraînement ne rapporte aucune ferveur et ne compte dans aucun autre classement : ce tableau dit qui joue, pas qui est le meilleur.',
 };
 
 async function charger() {
@@ -102,9 +131,20 @@ async function charger() {
       <img src="${esc(x.logo)}" alt="">
       <span class="n"><b>${esc(x.name)}</b><small>${esc(x.country ?? '')} · ${x.supporters} supporters</small></span>
       <span class="v" style="--c:var(--bleu)">${Number(x.moyenne).toLocaleString('fr')}<small>PAR TÊTE</small></span></div>`,
+    /* Le grand chiffre est **la cote**, sur laquelle on est classé ; les
+       victoires et le taux passent en dessous. L'inverse ferait lire un
+       classement de victoires rangé dans un ordre qui n'est pas le leur, ce qui
+       est la façon la plus sûre de faire croire à un défaut. */
     duellistes: (x, i) => `<div class="row ${i < 3 ? 'p' + (i + 1) : ''}">${rang(i)}
-      <span class="n"><b>${esc(x.pseudo)}</b><small>${x.joues} duels · ${x.taux}% de victoires</small></span>
-      <span class="v" style="--c:var(--flare)">${x.gagnes}<small>GAGNÉS</small></span></div>`,
+      <span class="n"><b>${esc(x.pseudo)}</b><small>${x.joues} duels · ${x.gagnes} gagnés · ${x.taux}%</small></span>
+      <span class="v" style="--c:var(--flare)">${x.cote ?? 1000}<small>COTE</small></span></div>`,
+    /* Le grand chiffre est celui sur lequel on est classé — les parties — et
+       les victoires passent en dessous. L'inverse ferait lire un classement
+       de victoires rangé dans un ordre qui n'est pas le leur, ce qui est la
+       façon la plus sûre de faire croire à un défaut. */
+    entrainements: (x, i) => `<div class="row ${i < 3 ? 'p' + (i + 1) : ''}">${rang(i)}
+      <span class="n"><b>${esc(x.pseudo)}</b><small>${esc(x.club ?? '')}${x.club ? ' · ' : ''}${x.gagnes} gagné${x.gagnes > 1 ? 's' : ''}</small></span>
+      <span class="v" style="--c:var(--craie)">${x.joues}<small>JOUÉS</small></span></div>`,
   }[onglet];
 
   $('list').innerHTML = c.map(lignes).join('') + `<div class="note">${NOTES[onglet]}</div>`;
@@ -128,8 +168,12 @@ document.querySelector('.tabs').onclick = (e) => {
          <span class="d">sur <b>${m.sur}</b> supporters classés<br>
            <b>${Number(m.ferveur).toLocaleString('fr')}</b> de ferveur sur ${m.matchs} matchs
            ${m.duels.joues ? ` · ${m.duels.gagnes}/${m.duels.joues} duels` : ''}</span>`
+      /* Les deux portes, puisque les deux mènent ici. N'en nommer qu'une
+         laissait croire que l'autre ne comptait pas — et c'était vrai, ce qui
+         est précisément ce qu'on vient de corriger. */
       : `<span class="r">—</span><span class="d">Tu n\u2019es pas encore classé.<br>
-           Entre dans le <b>Grand Virage</b> pendant un match de ton club.</span>`;
+           Entre dans le <b>Grand Virage</b> ou gagne un <b>duel classé</b>
+           pendant un match de ton club.</span>`;
     $('moi').style.display = 'flex';
   } catch { /* pas connecté */ }
 })();

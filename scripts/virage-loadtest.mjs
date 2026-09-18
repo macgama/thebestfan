@@ -29,6 +29,7 @@ if (!REMOTE) {
   const { createSouvenirs } = await import('../src/server/souvenirs/index.js');
   const { createFanzzy } = await import('../src/server/fanzzy/index.js');
   const { createVirage } = await import('../src/server/ferveur/index.js');
+  const { charger: chargerCatalogue } = await import('../src/server/fanzzy/catalogue.js');
 
   const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
   const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
@@ -37,7 +38,9 @@ if (!REMOTE) {
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-  for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql']) {
+  for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql',
+    'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'admin.sql', 'saisons.sql',
+    'contenus.sql']) {
     await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
   }
   await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Domicile'),(91,'Visiteur')`);
@@ -54,6 +57,19 @@ if (!REMOTE) {
   await raw.end();
 
   pool = mysql.createPool({ uri: DB, connectionLimit: 12, charset: 'utf8mb4' });
+
+  /* **Le catalogue, avant les modules qui en dépendent.**
+
+     Ce banc ne tournait pas. Il levait à la première entrée dans le virage —
+     « Le catalogue Fanzzy n'a pas été chargé » — parce que `ferveur` demande
+     le personnage actif de chaque supporter, et que `racineDe` refuse de
+     répondre sans catalogue.
+
+     C'est probablement pourquoi il n'a jamais servi : on le lance une fois,
+     on voit une trace de pile, et on remet à plus tard. Un banc de charge
+     qu'on ne peut pas lancer ne mesure rien, et son absence de mesure ne se
+     voit nulle part. */
+  await chargerCatalogue(pool);
   const app = express();
   http = createServer(app);
   io = new Server(http, { cors: { origin: '*' }, perMessageDeflate: false });

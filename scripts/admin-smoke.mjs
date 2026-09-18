@@ -20,13 +20,13 @@ const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
    elle est vide. Une saison laissée par un passage précédent — ou par une suite
    voisine — fermerait des séries que celle-ci croit ouvertes, et les contrôles
    parleraient d'un état que personne n'a voulu. */
-await raw.query(`DROP TABLE IF EXISTS abonnements, achats, kop_invites, amities, saisons,
+await raw.query(`DROP TABLE IF EXISTS contenus, abonnements, achats, kop_invites, amities, saisons,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, reglages, admin_audit, user_decks, user_stuff, user_skins,
   user_fanzzy, user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache,
   souvenir_leagues, duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings,
   fixtures, team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 for (const f of ['auth.sql','football.sql', 'minutes.sql', 'couleurs.sql','souvenirs.sql', 'billets.sql','fanzzy.sql','inventaire.sql', 'skins.sql', 'tenues.sql',
-                 'teletext.sql','admin.sql','saisons.sql','abonnement.sql']) {
+                 'teletext.sql','admin.sql','saisons.sql','contenus.sql','abonnement.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 // La table `fanzzy` n'est pas dans le DROP ci-dessus, et c'est voulu : elle

@@ -73,6 +73,26 @@ export function primeDeFormat(format) {
 }
 const LIVE = ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT'];
 
+/**
+ * Le jour de calendrier d'un instant, en `AAAA-MM-JJ`.
+ *
+ * **En UTC, comme tout le reste ici.** `kickoff_at` est écrit par un pilote
+ * réglé sur `timezone: 'Z'`, les requêtes comparent à `UTC_DATE()`, et mélanger
+ * les deux horloges ferait basculer la journée d'un match de vingt-deux heures
+ * dans celle de la veille. Une seule horloge, partout.
+ *
+ * Conséquence assumée, et elle se voit : pour un joueur à l'heure suisse d'été,
+ * « la journée du match » court de 2 h du matin à 1 h 59 le lendemain, pas de
+ * minuit à minuit. C'est deux heures de décalage, toujours **en faveur** du
+ * joueur qui joue tard, et jamais contre celui qui joue dans la journée. La
+ * corriger demande de décider d'un fuseau d'affichage pour le jeu entier —
+ * c'est une autre décision, et elle est notée dans `IDEES.md`.
+ */
+const jourDe = (quand) => {
+  const d = new Date(quand);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+};
+
 export function createDecks({ pool, requireAuth, niveau = null,
                              /* Posée après coup par server.js : le télétexte
                                 se monte après les decks. Absente, on retombe
@@ -298,18 +318,49 @@ export function createDecks({ pool, requireAuth, niveau = null,
     const jour = jourISO(f.jour);
     const ajd = jourISO(f.aujourdhui);
     const enCours = LIVE.includes(f.status_short);
+    // Il ne décide plus de rien — la journée s'en charge — mais il sert encore
+    // à le dire : « le match est joué » et « le match n'a pas commencé » sont
+    // deux phrases différentes pour un joueur, et la même pour la règle.
     const termine = TERMINE.includes(f.status_short);
 
-    // Un match terminé, ou d'un jour passé : refusé. On ne rejoue pas une
-    // soirée qu'on n'a pas vécue.
-    if (termine || jour < ajd) throw fail('duel.error.fixture_past');
+    /* Un match d'un jour passé : refusé. On ne rejoue pas une soirée qu'on n'a
+       pas vécue.
 
-    /* **Classé, c'est en cours.** La règle disait « le match est aujourd'hui »,
-       et un duel joué à dix heures du matin comptait pour une rencontre du
-       soir : on poussait pour une tribune qui n'existait pas encore. Un duel de
-       tribunes se joue pendant le match, sinon il ne se distingue en rien d'un
-       entraînement — et c'est exactement ce qu'il devient. */
-    const mode = enCours ? 'classe' : 'entrainement';
+       **Un match terminé du jour même, en revanche, passe.** Il ne passait pas,
+       et c'était cohérent tant que « classé » voulait dire « en cours » : un
+       match fini ne pouvait plus rien valoir. Depuis que la règle est la
+       journée, le refuser fermerait précisément la soirée — le moment où l'on
+       a envie de rejouer le match qu'on vient de regarder. */
+    if (jour < ajd) throw fail('duel.error.fixture_past');
+
+    /* ======================================= **Classé, c'est le jour du match**
+
+       La règle a fait un aller-retour, et les deux versions avaient raison
+       chacune de son côté.
+
+       Elle disait d'abord « le match est aujourd'hui ». On l'a resserrée à
+       « le match est en cours » pour une raison d'ambiance : un duel joué à dix
+       heures du matin comptait pour une rencontre du soir, et on poussait pour
+       une tribune qui n'existait pas encore.
+
+       Ce que cette raison ne pesait pas, c'est **combien de temps la porte
+       reste ouverte**. Un match dure deux heures. Hors de ces deux heures, il
+       n'existait aucun duel classé du tout — et comme l'onglet des duellistes
+       demande trois parties classées avant de montrer quelqu'un, un joueur
+       pouvait enchaîner quinze duels contre de vrais adversaires un mardi
+       après-midi et ne se voir nulle part. Il en concluait, raisonnablement,
+       que les duels ne comptaient pas.
+
+       Une règle juste que personne ne peut satisfaire ne protège rien : elle
+       ferme le jeu. La journée du match rouvre la porte sans rien céder sur
+       l'essentiel — **on joue le jour de la rencontre, pas un autre jour** —
+       et l'entraînement garde sa raison d'être, qui est de jouer sur un match
+       qui n'a pas lieu aujourd'hui.
+
+       Après le coup de sifflet final aussi : un match terminé à vingt heures
+       reste le support d'un duel jusqu'à la fin de sa journée. C'est le soir
+       qu'on en parle. */
+    const mode = jour === ajd ? 'classe' : 'entrainement';
 
     /* Le club soutenu, et donc le camp. La page en a besoin **avant**
        l'entrée en file : chez soi le camp est décidé et il n'y a rien à
@@ -336,11 +387,17 @@ export function createDecks({ pool, requireAuth, niveau = null,
       neutre: club.neutre,
       // L'explication est renvoyée au client : il ne doit pas avoir à deviner
       // pourquoi un duel ne compte pas.
-      raison: enCours
-        ? 'Le match est en cours : ce duel comptera au classement.'
-        : (jour === ajd
-          ? 'Le match n’a pas commencé : entraînement, sans effet sur le classement.'
-          : 'Match à venir : entraînement, sans effet sur le classement.'),
+      /* Quatre phrases pour trois moments, et la nuance compte : ce qui
+         décide est la journée, mais ce que le joueur veut savoir est **où en
+         est le match**. « Ce duel comptera » sur une rencontre terminée
+         laisserait croire à une erreur ; « le match est joué » l'explique. */
+      raison: jour !== ajd
+        ? 'Match à venir : entraînement, sans effet sur le classement.'
+        : enCours
+          ? 'Le match est en cours : ce duel comptera au classement.'
+          : termine
+            ? 'Le match est joué : ce duel compte encore au classement, jusqu’à ce soir.'
+            : 'Le match est aujourd’hui : ce duel comptera au classement.',
       // Ce match met-il en jeu un club suivi ? Le duel rapporte alors le
       // double. `userId` est facultatif : appelé sans lui — depuis la file du
       // NvN, qui ne veut que le support du duel — la question ne se pose pas.
@@ -366,7 +423,15 @@ export function createDecks({ pool, requireAuth, niveau = null,
          JOIN teams h ON h.id = f.home_id
          JOIN teams a ON a.id = f.away_id
          LEFT JOIN leagues l ON l.id = f.league_id
-        WHERE f.status_short NOT IN ('FT','AET','PEN','CANC','PST')
+        -- Les matchs finis du jour restent, depuis que « classé » veut dire
+        -- « le jour du match » : c'est le soir qu'on a envie de rejouer la
+        -- rencontre qu'on vient de regarder. La borne sur la date suffit à
+        -- écarter ceux d'hier.
+        --
+        -- CANC et PST partent toujours : un match annulé ou reporté n'a pas eu
+        -- lieu, il ne peut donc être le support de rien. Ce n'est pas la même
+        -- chose qu'un match terminé.
+        WHERE f.status_short NOT IN ('CANC','PST')
           AND DATE(f.kickoff_at) >= UTC_DATE()
           AND f.kickoff_at < (UTC_TIMESTAMP() + INTERVAL 8 DAY)
           ${filtre}
@@ -391,10 +456,14 @@ export function createDecks({ pool, requireAuth, niveau = null,
      * qui se joue aujourd'hui, et elle l'a juste ; la base garde les huit
      * prochains jours, qu'elle seule connaît. Voir `football/journee.js`. */
     for (const [id, m] of await journeeParId(jourDuFoot)) {
-      /* Un match fini n'est le support de rien : on ne rejoue pas une soirée.
-         On l'**efface** au lieu de l'ignorer : la base peut le croire encore en
-         cours, et l'ignorer laisserait sa ligne périmée en tête de liste. */
-      if (m.fini) { parId.delete(id); continue; }
+      /* Un match fini **reste** : c'est un support valable jusqu'à la fin de
+         sa journée. On l'écrasait auparavant, quand « classé » voulait dire
+         « en cours » et qu'une rencontre terminée ne pouvait plus rien valoir.
+
+         Sa ligne est écrasée par celle de la journée dans tous les cas, jamais
+         ignorée : la base peut le croire encore en cours, et la laisser
+         telle quelle afficherait un score figé à la 67ᵉ minute sur un match
+         terminé depuis une heure. */
       parId.set(id, {
         ...parId.get(id),
         id,
@@ -410,16 +479,29 @@ export function createDecks({ pool, requireAuth, niveau = null,
       });
     }
 
+    /* Le jour d'aujourd'hui, calculé **une fois** et sur la même horloge que
+       `matchSupport` : la colonne `aujourdhui` de la requête ne vaut que pour
+       les lignes venues de la base, et les rencontres injectées par la journée
+       n'en ont pas. Deux façons de dire « aujourd'hui » dans la même liste
+       finiraient par se contredire sur un match de vingt-trois heures. */
+    const ajd = jourDe(Date.now());
+
     const liste = [...parId.values()].map((f) => {
       const club = clubParmi(suivis, f.home_id, f.away_id);
       const enCours = LIVE.includes(f.status_short);
+    // Il ne décide plus de rien — la journée s'en charge — mais il sert encore
+    // à le dire : « le match est joué » et « le match n'a pas commencé » sont
+    // deux phrases différentes pour un joueur, et la même pour la règle.
+    const termine = TERMINE.includes(f.status_short);
+      const duJour = jourDe(f.kickoff_at) === ajd;
       return {
         ...f,
         enCours,
-        /* **Classé, c'est en cours.** Voir `matchSupport`, qui applique la
-           même règle — et qui fait autorité, puisque c'est lui qui décide au
+        aujourdhui: duJour ? 1 : 0,
+        /* **Classé, c'est le jour du match.** Voir `matchSupport`, qui applique
+           la même règle — et qui fait autorité, puisque c'est lui qui décide au
            moment de l'entrée en file. */
-        mode: enCours ? 'classe' : 'entrainement',
+        mode: duJour ? 'classe' : 'entrainement',
         // Pousser pour son club rapporte le double. Le dire **avant** le choix :
         // une règle qu'on ne découvre qu'en lisant son solde après coup ne pèse
         // sur aucune décision, et c'est pourtant là qu'elle doit peser.
@@ -433,8 +515,12 @@ export function createDecks({ pool, requireAuth, niveau = null,
        d'abord — c'est ce qu'on vient chercher — puis mes clubs, puis les
        grandes compétitions, puis l'heure. Trié par heure seule, une finale de
        Ligue des champions se retrouvait derrière un championnat U19. */
+    /* Ce qui se joue d'abord, **puis ce qui se joue aujourd'hui** — c'est
+       maintenant la même chose que « ce qui est classé », et c'est ce qu'on
+       vient chercher. Sans ce second critère, un match terminé du jour se
+       rangeait entre deux rencontres de mercredi prochain. */
     liste.sort((a, b) =>
-      (b.enCours - a.enCours) || (b.mien - a.mien)
+      (b.enCours - a.enCours) || (b.aujourdhui - a.aujourdhui) || (b.mien - a.mien)
       || ((a.tier ?? 3) - (b.tier ?? 3))
       || (new Date(a.kickoff_at) - new Date(b.kickoff_at)));
 

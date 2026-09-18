@@ -78,7 +78,11 @@ const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', '
   /* L'abonnement. Il s'accroche à `users` et à rien d'autre : ce qu'il ouvre
      se lit à la lecture, dans les modules, et aucune table ne le référence.
      Il peut donc venir en dernier sans rien attendre. */
-  'abonnement'];
+  'abonnement',
+  /* Les contenus : cartes d'action, équipement, stades. Il ajoute une colonne
+     à `saisons`, donc il vient **après** saisons.sql — c'est sa seule
+     dépendance, et l'oublier ferait lever sur un ALTER d'une table absente. */
+  'contenus'];
 
 {
   const surLeDisque = (await readdir(SQL)).filter((f) => f.endsWith('.sql'))

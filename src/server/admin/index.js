@@ -6,6 +6,7 @@ import { toutesTenues, tenuePar, rechargerTenues } from '../fanzzy/tenues.js';
 import { chargerSaisons, toutesLesSaisons, saisonEnCours } from '../fanzzy/saisons.js';
 import { STUFF } from '../../shared/fanzzy/inventaire.js';
 import { ACTIONS } from '../../shared/duel/actions.js';
+import { STADES } from '../../shared/stades.js';
 import { REGLAGES, SECTIONS, DEFAUTS } from '../../shared/reglages.js';
 // Les gestes du jeu viennent de leur source unique : voir plus bas.
 import { GESTES as GESTES_DU_JEU } from '../ferveur/gestures.js';
@@ -466,6 +467,7 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     const tenues = liste(p.tenues);
     const stuff = liste(p.stuff);
     const actions = liste(p.actions);
+    const stades = liste(p.stades);
 
     const inconnue = series.find((id) => !SETS.some((s) => s.id === id));
     if (inconnue) throw fail('admin.error.serie_inconnue');
@@ -486,7 +488,13 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     if (actions.some((id) => !ACTIONS.some((a) => a.id === id))) {
       throw fail('admin.error.action_inconnue');
     }
-    return { series, tenues, stuff, actions };
+    /* Les stades rejoignent les trois autres familles. La vérification se fait
+       contre le **code**, comme pour l'équipement et les cartes : c'est lui qui
+       dit ce qui existe, la base ne portant que l'état de publication. */
+    if (stades.some((id) => !STADES.some((x) => x.id === id))) {
+      throw fail('admin.error.stade_inconnu');
+    }
+    return { series, tenues, stuff, actions, stades };
   }
 
   /* `texte` existe déjà plus haut et tronque sans jamais rendre `null`. Ici on
@@ -527,10 +535,11 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       ? Number(p.numero) : suivant;
 
     const r = await q(
-      `INSERT INTO saisons (numero, nom, texte, series, tenues, stuff, actions)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO saisons (numero, nom, texte, series, tenues, stuff, actions, stades)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [numero, nom, texteOuRien(p?.texte, 500), JSON.stringify(c.series),
-       JSON.stringify(c.tenues), JSON.stringify(c.stuff), JSON.stringify(c.actions)]);
+       JSON.stringify(c.tenues), JSON.stringify(c.stuff), JSON.stringify(c.actions),
+       JSON.stringify(c.stades ?? [])]);
     await chargerSaisons(pool);
     await journal(acteur, 'saison.creee', String(r.insertId), { nom, numero, ...c }, ip_);
     return listerSaisons();
@@ -544,11 +553,12 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
 
     await q(
       `UPDATE saisons SET numero = ?, nom = ?, texte = ?, series = ?, tenues = ?,
-                          stuff = ?, actions = ?
+                          stuff = ?, actions = ?, stades = ?
         WHERE id = ?`,
       [Number.isInteger(Number(p?.numero)) ? Number(p.numero) : avant.numero,
        nom, texteOuRien(p?.texte, 500), JSON.stringify(c.series), JSON.stringify(c.tenues),
-       JSON.stringify(c.stuff), JSON.stringify(c.actions), avant.id]);
+       JSON.stringify(c.stuff), JSON.stringify(c.actions),
+       JSON.stringify(c.stades ?? []), avant.id]);
     await chargerSaisons(pool);
     /* Modifier une saison **déjà lancée** change ce qui est ouvert. On recharge
        donc les séries, sans quoi le jeu continuerait de distribuer selon
@@ -561,9 +571,16 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
   /**
    * Lance une saison, ou la remet en brouillon.
    *
-   * Lancer, c'est **ouvrir ses séries et publier ses tenues**, pour tout le
-   * monde, à cet instant. C'est le geste le plus visible de toute
-   * l'administration : il change le jeu de tous les joueurs connectés.
+   * Lancer, c'est **ouvrir ses séries et publier son contenu** — tenues,
+   * cartes d'action, équipement, stades — pour tout le monde, à cet instant.
+   * C'est le geste le plus visible de toute l'administration : il change le jeu
+   * de tous les joueurs connectés.
+   *
+   * Les trois dernières familles ne faisaient qu'être **annoncées** jusqu'ici :
+   * elles vivaient dans le code, une saison pouvait écrire leur nom dans son
+   * texte et rien de plus. On pouvait donc annoncer « quatre cartes d'action »
+   * qui étaient jouables depuis la livraison précédente. Voir
+   * `sql/contenus.sql`.
    *
    * Remettre en brouillon referme les séries que cette saison-là ouvrait — et
    * seulement celles-là : les séries d'une autre saison lancée restent
@@ -588,6 +605,17 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
            déjà vérifiés par `validerContenu`. */
         await pool.query(`UPDATE tenues SET publie = 1 WHERE id IN (?)`, [s.tenues]);
         await rechargerTenues(pool);
+      }
+
+      /* Les trois autres familles, par le module qui les tient. Facultatif :
+         sans `sql/contenus.sql` appliqué, tout est déjà jouable et il n'y a
+         rien à ouvrir — la saison se lance quand même, et ses séries et ses
+         tenues, elles, s'ouvrent. */
+      if (deps.contenus) {
+        for (const [famille, liste] of [['action', s.actions], ['stuff', s.stuff],
+          ['stade', s.stades]]) {
+          if (liste?.length) await deps.contenus.publier(famille, liste, true);
+        }
       }
     } else {
       await q(`UPDATE saisons SET lancee_a = NULL WHERE id = ?`, [s.id]);

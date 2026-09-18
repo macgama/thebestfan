@@ -1,5 +1,18 @@
 /**
- * L'étal : ce que les billets achètent.
+ * L'étal : ce que les écharpes achètent, en dehors des boosters.
+ *
+ * ## La monnaie a changé, la règle non
+ *
+ * Il se payait en **billets**, la monnaie que l'argent réel achetait. Les
+ * billets n'existent plus : l'argent réel n'achète plus que l'abonnement, et
+ * les écharpes ne se gagnent qu'en jouant.
+ *
+ * Ce que ça change à la chaîne euro → tirage : elle est coupée **à la
+ * racine**, et non plus par une séparation qu'il fallait tenir. Il n'y a plus
+ * de monnaie achetable du tout, donc plus rien à séparer.
+ *
+ * Ce que ça ne change pas : rien ici n'est tiré au sort, et c'était déjà la
+ * règle. Voir plus bas.
  *
  * ## Rien n'y est tiré au sort
  *
@@ -37,7 +50,7 @@ import { STUFF, STUFF_BY_ID } from './fanzzy/inventaire.js';
 export const RARETES = ['commune', 'rare', 'epique', 'legendaire'];
 
 /**
- * Le prix d'une pièce d'équipement, en billets.
+ * Le prix d'une pièce d'équipement, **en écharpes**.
  *
  * `null` pour une rareté inconnue, et non un prix par défaut : un objet dont la
  * rareté est mal écrite doit **disparaître de l'étal**, pas s'y afficher à un
@@ -45,13 +58,13 @@ export const RARETES = ['commune', 'rare', 'epique', 'legendaire'];
  */
 export function prixStuff(rarete) {
   if (!RARETES.includes(rarete)) return null;
-  return reglage(`billets.stuff_${rarete}`) ?? null;
+  return reglage(`etal.stuff_${rarete}`) ?? null;
 }
 
-/** Le prix d'une tenue, en billets. Identique quelle que soit la rareté : une
-    tenue ne change rien au jeu, elle change ce qu'on regarde. */
+/** Le prix d'une tenue, **en écharpes**. Identique quelle que soit la rareté :
+    une tenue ne change rien au jeu, elle change ce qu'on regarde. */
 export function prixTenue() {
-  return reglage('billets.tenue') ?? null;
+  return reglage('etal.tenue') ?? null;
 }
 
 /**

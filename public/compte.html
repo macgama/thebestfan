@@ -10,6 +10,14 @@
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
 <style>
+/* Le bloc de suppression. Séparé du reste par un trait et par du vide : ce
+   n'est pas une option de plus, c'est la sortie. Le lien est en petit et sans
+   couleur d'alerte — une alerte attire l'œil, et on ne cherche pas à attirer
+   l'œil ici. La couleur arrive au moment où l'on confirme, quand elle sert. */
+.fin{margin-top:40px;padding-top:18px;border-top:1px solid rgba(242,238,228,.12)}
+.fin .link{opacity:.45;font-size:12px}
+.fin .link:hover{opacity:.8}
+.prevenu{font-size:12.5px;line-height:1.6;opacity:.75;margin:10px 0 14px}
 
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100dvh}
@@ -78,6 +86,27 @@ button.go[disabled]{filter:grayscale(.85);opacity:.5;pointer-events:none}
     <button class="go tbf-plaque" data-ton="flare" id="btnLogout" data-t="account.logout"></button>
     <button class="link" id="btnResend" data-t="account.resend"></button>
     <div class="msg" id="acMsg"></div>
+
+    <!-- **Supprimer son compte.**
+
+         La route existait depuis le premier jour — `DELETE /api/auth/me`, avec
+         confirmation par mot de passe — et **aucune page ne l'appelait**. Un
+         droit qu'on ne peut pas exercer n'est pas un droit : le RGPD demande
+         que l'effacement soit à la portée de la personne, pas seulement à celle
+         de l'administrateur.
+
+         En bas de page, en discret, derrière deux gestes. Ce n'est pas une
+         action qu'on propose, c'est une action qu'on ne doit pas empêcher. -->
+    <div class="fin">
+      <button class="link" id="btnSupprimer" data-t="account.delete"></button>
+      <form id="formSupprimer" class="hide">
+        <p class="prevenu" data-t="delete.warn"></p>
+        <label data-t="field.password"></label>
+        <input type="password" id="delPassword" autocomplete="current-password" required>
+        <button class="go tbf-plaque" data-ton="flare" type="submit" data-t="delete.confirm"></button>
+        <button class="link" type="button" id="btnAnnulerSupp" data-t="action.back"></button>
+      </form>
+    </div>
   </section>
 
   <!-- déconnecté -->
@@ -153,6 +182,10 @@ const I18N = {
     'hint.reset':'Choisis un nouveau mot de passe. Toutes tes sessions seront fermées.',
     'account.pseudo':'Pseudo','account.email':'Adresse','account.status':'Adresse vérifiée',
     'account.logout':'SE DÉCONNECTER','account.resend':'Renvoyer le mail de vérification',
+    'account.delete':'Supprimer mon compte',
+    'delete.warn':'Ton pseudo et ton adresse seront effacés, et tu ne pourras plus te connecter. Les parties déjà jouées restent dans l’historique de tes adversaires, sans ton nom — les effacer reviendrait à réécrire leurs soirées. C’est définitif.',
+    'delete.confirm':'SUPPRIMER DÉFINITIVEMENT',
+    'delete.done':'Ton compte est supprimé. Merci d’être passé.',
     'account.hello':'Salut {pseudo}','account.text':'Ton compte est actif. Le kiosque et les duels arrivent bientôt.',
     'yes':'oui','no':'non','sent.verify':'Mail de vérification renvoyé.','sent.reset':'Si un compte existe, le lien vient de partir.',
     'ok.verified':'Adresse confirmée. Bienvenue dans la tribune.','ok.reset':'Mot de passe enregistré. Tu peux te connecter.',
@@ -179,6 +212,10 @@ const I18N = {
     'hint.reset':'Choose a new password. All your sessions will be closed.',
     'account.pseudo':'Username','account.email':'Address','account.status':'Address verified',
     'account.logout':'SIGN OUT','account.resend':'Resend the verification email',
+    'account.delete':'Delete my account',
+    'delete.warn':'Your nickname and address will be erased, and you will no longer be able to sign in. Games already played stay in your opponents’ history, without your name — erasing them would rewrite their evenings. This cannot be undone.',
+    'delete.confirm':'DELETE PERMANENTLY',
+    'delete.done':'Your account has been deleted. Thanks for stopping by.',
     'account.hello':'Hi {pseudo}','account.text':'Your account is active. The kiosk and duels are coming soon.',
     'yes':'yes','no':'no','sent.verify':'Verification email sent again.','sent.reset':'If an account exists, the link is on its way.',
     'ok.verified':'Address confirmed. Welcome to the stand.','ok.reset':'Password saved. You can sign in.',
@@ -205,6 +242,10 @@ const I18N = {
     'hint.reset':'Wähle ein neues Passwort. Alle Sitzungen werden beendet.',
     'account.pseudo':'Benutzername','account.email':'Adresse','account.status':'Adresse bestätigt',
     'account.logout':'ABMELDEN','account.resend':'Bestätigungsmail erneut senden',
+    'account.delete':'Mein Konto löschen',
+    'delete.warn':'Dein Name und deine Adresse werden gelöscht, und du kannst dich nicht mehr anmelden. Bereits gespielte Partien bleiben ohne deinen Namen im Verlauf deiner Gegner. Das lässt sich nicht rückgängig machen.',
+    'delete.confirm':'ENDGÜLTIG LÖSCHEN',
+    'delete.done':'Dein Konto wurde gelöscht. Danke fürs Vorbeischauen.',
     'account.hello':'Hallo {pseudo}','account.text':'Dein Konto ist aktiv. Kiosk und Duelle kommen bald.',
     'yes':'ja','no':'nein','sent.verify':'Bestätigungsmail erneut gesendet.','sent.reset':'Wenn ein Konto existiert, ist der Link unterwegs.',
     'ok.verified':'Adresse bestätigt. Willkommen im Block.','ok.reset':'Passwort gespeichert. Du kannst dich anmelden.',
@@ -231,6 +272,10 @@ const I18N = {
     'hint.reset':'Elige una nueva contraseña. Se cerrarán todas tus sesiones.',
     'account.pseudo':'Nombre','account.email':'Dirección','account.status':'Dirección verificada',
     'account.logout':'SALIR','account.resend':'Reenviar el correo de verificación',
+    'account.delete':'Eliminar mi cuenta',
+    'delete.warn':'Tu apodo y tu dirección se borrarán, y ya no podrás iniciar sesión. Las partidas ya jugadas permanecen en el historial de tus rivales, sin tu nombre. Es definitivo.',
+    'delete.confirm':'ELIMINAR DEFINITIVAMENTE',
+    'delete.done':'Tu cuenta ha sido eliminada. Gracias por pasar.',
     'account.hello':'Hola {pseudo}','account.text':'Tu cuenta está activa. El quiosco y los duelos llegan pronto.',
     'yes':'sí','no':'no','sent.verify':'Correo de verificación reenviado.','sent.reset':'Si existe una cuenta, el enlace ya va en camino.',
     'ok.verified':'Dirección confirmada. Bienvenido a la grada.','ok.reset':'Contraseña guardada. Ya puedes entrar.',
@@ -418,6 +463,48 @@ $('btnLogout').onclick = async () => {
   await api('/logout'); user = null; tab('login'); render();
 };
 $('btnResend').onclick = async () => { await api('/resend-verification'); say('acMsg', 'sent.verify', 'ok'); };
+
+/* ----------------------------------------------------- supprimer son compte
+
+   **Deux gestes, et un mot de passe.** Le lien ouvre le formulaire, le
+   formulaire demande le mot de passe, et le serveur le vérifie avant d'écrire —
+   c'est lui qui décide, pas cette page. Un compte qui se supprime d'un seul clic
+   se supprime par accident, et celui-là ne revient pas.
+
+   La route existait depuis le premier jour et aucune page ne l'appelait. Un
+   droit qu'on ne peut pas exercer n'est pas un droit. */
+$('btnSupprimer').onclick = () => {
+  $('formSupprimer').classList.remove('hide');
+  $('btnSupprimer').classList.add('hide');
+  $('delPassword').focus();
+};
+$('btnAnnulerSupp').onclick = () => {
+  $('formSupprimer').classList.add('hide');
+  $('btnSupprimer').classList.remove('hide');
+  $('delPassword').value = '';
+};
+$('formSupprimer').onsubmit = async (e) => {
+  e.preventDefault();
+  /* Une dernière fois, en toutes lettres. Le formulaire dit déjà ce qui se
+     passe ; la boîte est là pour le geste, pas pour l'information. */
+  if (!(await window.TBF_DIALOGUE?.confirmer({
+    titre: t('delete.confirm'),
+    texte: t('delete.warn'),
+    oui: t('delete.confirm'), ton: 'flare',
+  }))) return;
+
+  const r = await api('/me', { password: $('delPassword').value }, 'DELETE');
+  if (r.status !== 200) {
+    /* Le mot de passe est le seul refus possible ici, et il se dit avec les mots
+       que la page emploie déjà pour lui. */
+    say('acMsg', r.json.error ?? 'auth.error.bad_credentials', 'err');
+    return;
+  }
+  user = null;
+  tab('login');
+  render();
+  say('gateMsg', 'delete.done', 'ok');
+};
 
 /* -------------------------------------------------------- démarrage */
 

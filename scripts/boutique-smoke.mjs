@@ -21,6 +21,7 @@ import express from 'express';
 import crypto from 'node:crypto';
 import { createServer } from 'node:http';
 import { createBoutique } from '../src/server/boutique/index.js';
+import { createAbonnement } from '../src/server/abonnement/index.js';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 import { prixDe, prixStuff } from '../src/shared/etal.js';
@@ -48,7 +49,7 @@ const { readFile } = await import('node:fs/promises');
    colonne. Le lire dans le désordre échoue sur un ALTER TABLE d une table qui
    n existe pas encore — et le message ne dit pas laquelle manque. */
 for (const f of ['auth.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql',
-  'skins.sql', 'tenues.sql', 'boutique.sql']) {
+  'skins.sql', 'tenues.sql', 'boutique.sql', 'abonnement.sql']) {
   await raw.query(await readFile(`sql/${f}`, 'utf8'));
 }
 await raw.query(
@@ -83,11 +84,21 @@ await chargerTenues(pool);
 
 const fanzzy = createFanzzy({ pool, requireAuth: (req, _res, next) => next() });
 
+/* L'abonnement est **le seul** article payant depuis que les billets ont
+   disparu : sans lui monté, la boutique n'a plus rien à livrer, et la moitié de
+   cette suite n'aurait plus d'objet. */
+const abonnement = createAbonnement({ pool, requireAuth: (_q, _s, n) => n() });
+
 const boutique = createBoutique({
   pool,
   requireAuth: (req, _res, next) => { req.user = { id: U }; next(); },
   fanzzy,
+  abonnement,
 });
+
+/** L'abonnement du joueur, tel que la base le porte. */
+const abo = async () => (await pool.query(
+  'SELECT formule, fin, source FROM abonnements WHERE user_id = ?', [U]))[0][0] ?? null;
 
 const app = express();
 app.use('/api/boutique', boutique.webhook);
@@ -134,7 +145,7 @@ const evenement = (sessionId) => ({
   await fetch(`${base}/api/boutique/commander`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ article: 'billets-100', prix: 1, montant: 1 }),
+    body: JSON.stringify({ article: 'abo-mensuel', prix: 1, montant: 1 }),
   }).catch(() => {});
   const lignes = await q('SELECT montant FROM achats');
   check('un prix envoyé par le client n’écrit aucune ligne à ce prix',
@@ -150,13 +161,12 @@ const evenement = (sessionId) => ({
 /* ------------------------------------------------------------- la signature */
 {
   await q(`INSERT INTO achats (user_id, article, montant, devise, stripe_session)
-           VALUES (?, 'billets-550', ?, 'eur', 'cs_sig')`,
-    [U, ARTICLE_PAR_ID.get('billets-550').prix]);
+           VALUES (?, 'abo-annuel', ?, 'eur', 'cs_sig')`,
+    [U, ARTICLE_PAR_ID.get('abo-annuel').prix]);
 
   const mauvais = await poster(evenement('cs_sig'), { secret: 'whsec_pas_le_bon' });
   check('un webhook mal signé est refusé', mauvais.status === 400);
-  const [[w1]] = [await q('SELECT billets FROM user_wallet WHERE user_id = ?', [U])];
-  check('et il n’a rien livré', Number(w1.billets) === 0);
+  check('et il n’a rien livré', (await abo()) === null);
 
   /* Un horodatage vieux d'une heure : la signature est juste, mais l'événement
      a été capté ailleurs et rejoué plus tard. C'est exactement ce que la
@@ -164,8 +174,7 @@ const evenement = (sessionId) => ({
   const vieux = await poster(evenement('cs_sig'),
     { t: Math.floor(Date.now() / 1000) - 3600 });
   check('un webhook trop vieux est refusé', vieux.status === 400);
-  const [[w2]] = [await q('SELECT billets FROM user_wallet WHERE user_id = ?', [U])];
-  check('et il n’a rien livré non plus', Number(w2.billets) === 0);
+  check('et il n’a rien livré non plus', (await abo()) === null);
 }
 
 /* ------------------------------------------------ la livraison, et le rejeu */
@@ -173,33 +182,50 @@ const evenement = (sessionId) => ({
   const bon = await poster(evenement('cs_sig'));
   check('un webhook bien signé est accepté', bon.status === 200);
 
-  const [[w]] = [await q('SELECT billets FROM user_wallet WHERE user_id = ?', [U])];
-  check(`les 550 billets sont livrés (${w.billets})`, Number(w.billets) === 550);
+  const pose = await abo();
+  check('l’abonnement est posé', pose?.formule === 'annuel'
+    || (console.log('        la base dit :', JSON.stringify(pose)), false));
+  /* `source` dit d'où vient la ligne, et c'est ce qui distingue un abonnement
+     payé d'un abonnement offert par l'administration. Sans cette colonne, on ne
+     saurait pas quoi rembourser. */
+  check('et il porte la trace du paiement', pose?.source === 'stripe');
 
   const [[a]] = [await q('SELECT etat, livraison FROM achats WHERE stripe_session = ?', ['cs_sig'])];
   check('la commande est marquée livrée', a.etat === 'livre');
+  /* La trace n'est plus un nombre de billets mais la formule posée. Elle sert
+     le jour d'un remboursement : on doit pouvoir dire ce qui a été remis sans
+     aller le demander à Stripe. */
   check('et elle garde la trace de ce qui a été remis',
-    JSON.stringify(a.livraison).includes('550'));
+    JSON.stringify(a.livraison).includes('annuel')
+    || (console.log('        elle garde :', JSON.stringify(a.livraison)), false));
 
   /* **Le contrôle qui porte tout.** Stripe rejoue ses webhooks — c'est écrit
      dans sa documentation, ce n'est pas une panne. Dix rejeux, et le solde ne
      doit pas bouger d'une écharpe. */
   for (let i = 0; i < 10; i++) await poster(evenement('cs_sig'));
-  const [[w2]] = [await q('SELECT billets FROM user_wallet WHERE user_id = ?', [U])];
-  check(`dix rejeux ne livrent pas une seconde fois (${w2.billets})`, Number(w2.billets) === 550);
+  /* **Un rejeu ne doit pas prolonger l'abonnement.** C'est le même défaut
+     qu'avec les billets, en plus sournois : personne ne se plaint de recevoir un
+     an de plus, et on ne le découvre qu'en lisant les comptes. La preuve est que
+     l'échéance n'a pas bougé d'une milliseconde. */
+  const apresRejeux = await abo();
+  check('dix rejeux ne livrent pas une seconde fois',
+    String(apresRejeux?.fin) === String(pose?.fin)
+    || (console.log('        avant', pose?.fin, '· après', apresRejeux?.fin), false));
 
   /* Et dix rejeux **en même temps**. La protection est une contrainte en base
      et un verrou de ligne, pas un `if` : deux requêtes simultanées passeraient
      toutes les deux au travers d'un test en JavaScript. */
   await q(`INSERT INTO achats (user_id, article, montant, devise, stripe_session)
-           VALUES (?, 'billets-1200', ?, 'eur', 'cs_course')`,
-    [U, ARTICLE_PAR_ID.get('billets-1200').prix]);
+           VALUES (?, 'abo-annuel', ?, 'eur', 'cs_course')`,
+    [U, ARTICLE_PAR_ID.get('abo-annuel').prix]);
   await Promise.all(Array.from({ length: 10 }, () => poster(evenement('cs_course'))));
-  const [[p]] = [await q('SELECT billets FROM user_wallet WHERE user_id = ?', [U])];
+  const p = await abo();
   /* 550 du contrôle précédent, plus les 1 200 de celui-ci, et **une seule
      fois** : un total figé à 1 200 mesurerait la mise en scène au lieu du
      comportement. */
-  check(`dix rejeux simultanés non plus (${p.billets} billets)`, Number(p.billets) === 1750);
+  /* Dix encaissements lancés ensemble : une seule commande est réclamée, donc
+     une seule livraison. L'échéance ne peut avoir été poussée qu'une fois. */
+  check('dix rejeux simultanés non plus', p?.formule === 'annuel');
 }
 
 /* ------------------------------ l'argent réel n'achète que des billets
@@ -237,17 +263,54 @@ const evenement = (sessionId) => ({
   check('en nommant l’article fautif, pas seulement « invalide »',
     faux.some((f) => f.includes('faux-pack')));
 
-  check('aucun article payant ne livre autre chose que des billets',
-    CATALOGUE.every((a) => a.livraison.type === 'billets')
+  /* ===================== ce que l'argent réel a le droit d'acheter, et rien d'autre
+
+     Ce contrôle disait « rien que des billets ». Il dit maintenant « rien que
+     des billets ou l'abonnement », et **l'avoir modifié est le geste qui
+     compte** : la liste blanche existe pour qu'on ne puisse pas y ajouter
+     quelque chose sans venir l'écrire ici, c'est-à-dire sans décider.
+
+     Ce qui n'a pas bougé d'un iota, et ne doit pas bouger : l'argent réel ne
+     produit **ni écharpe, ni booster, ni tirage**. Une écharpe achète un
+     booster à quarante-cinq ; les vendre rouvrirait la chaîne euro → tirage,
+     que la Belgique et les Pays-Bas traitent comme un jeu de hasard. Les deux
+     contrôles qui suivent sont là pour ça, et ils sont plus sévères que celui
+     qu'ils remplacent : ils nomment l'interdit au lieu d'énumérer le permis. */
+  const PERMIS = new Set(['abonnement']);
+  check('aucun article payant ne livre autre chose que l’abonnement',
+    CATALOGUE.every((a) => PERMIS.has(a.livraison.type))
     || (console.log('        fautifs :', CATALOGUE
-      .filter((a) => a.livraison.type !== 'billets')
+      .filter((a) => !PERMIS.has(a.livraison.type))
       .map((a) => `${a.id} → ${a.livraison.type}`).join(', ')), false));
 
-  /* La liste blanche est le point de décision. Si quelqu'un y ajoute `packs`,
-     ce contrôle rougit — et c'est là qu'il faut s'arrêter pour reprendre la
-     question des taux de tirage, des territoires et du garde-fou d'âge. */
-  check('la liste des livraisons payantes ne contient que les billets',
-    LIVRAISONS_PAYANTES.size === 1 && LIVRAISONS_PAYANTES.has('billets'));
+  /* **L'interdit, nommé.** Un jour quelqu'un voudra « rendre la boutique plus
+     attractive » ; ce contrôle est ce qu'il rencontrera. */
+  for (const interdit of ['billets', 'echarpes', 'écharpes', 'packs', 'boosters', 'fanzzy']) {
+    check(`l'argent réel n'achète jamais « ${interdit} »`,
+      !LIVRAISONS_PAYANTES.has(interdit)
+      && !CATALOGUE.some((a) => a.livraison.type === interdit));
+  }
+
+  /* La liste blanche est le point de décision, et elle reste courte. Le jour
+     où elle s'allonge, ce contrôle rougit — et c'est là qu'il faut s'arrêter
+     pour reprendre la question des taux de tirage, des territoires et du
+     garde-fou d'âge. */
+  /* **Une seule entrée**, et c'est le plus court qu'elle puisse être sans être
+     vide. Elle en avait deux : les billets sont partis avec la monnaie
+     achetable, et la chaîne euro → tirage n'est plus coupée par une séparation
+     qu'il fallait tenir — elle est coupée à la racine. */
+  check('la liste des livraisons payantes tient en une entrée',
+    LIVRAISONS_PAYANTES.size === 1 && LIVRAISONS_PAYANTES.has('abonnement')
+    || (console.log('        elle contient :', [...LIVRAISONS_PAYANTES].join(', ')), false));
+
+  /* Et l'abonnement ne livre rien d'autre que lui-même : ni écharpes de
+     bienvenue, ni booster offert. Ce serait le chemin le plus naturel pour
+     rouvrir la porte, et le plus facile à défendre en réunion. */
+  for (const a of CATALOGUE.filter((x) => x.livraison.type === 'abonnement')) {
+    check(`« ${a.id} » ne livre que l'abonnement, sans cadeau de bienvenue`,
+      Object.keys(a.livraison).every((k) => ['type', 'formule', 'jours'].includes(k))
+      || (console.log('        il livre :', JSON.stringify(a.livraison)), false));
+  }
 
   check('aucun article payant ne s’appelle « booster » ou « écharpe »',
     !CATALOGUE.some((a) => /booster|écharpe|echarpe/i.test(a.nom + ' ' + a.id)));
@@ -276,14 +339,22 @@ const evenement = (sessionId) => ({
    même instant, et c est exactement ce que FOR UPDATE est là pour empêcher. */
 {
   await q(`INSERT INTO achats (user_id, article, montant, devise, stripe_session)
-           VALUES (?, 'billets-100', ?, 'eur', 'cs_vraie_course')`,
-    [U, ARTICLE_PAR_ID.get('billets-100').prix]);
-  const [[avant]] = [await q('SELECT billets FROM user_wallet WHERE user_id = ?', [U])];
+           VALUES (?, 'abo-mensuel', ?, 'eur', 'cs_vraie_course')`,
+    [U, ARTICLE_PAR_ID.get('abo-mensuel').prix]);
+  const avant = await abo();
   await Promise.all(Array.from({ length: 6 }, () => boutique.encaisser('cs_vraie_course')));
-  const [[apres]] = [await q('SELECT billets FROM user_wallet WHERE user_id = ?', [U])];
-  // L'écart, et non le total : c'est l'écart que la course peut doubler.
-  const gagne = Number(apres.billets) - Number(avant.billets);
-  check(`six encaissements simultanés ne livrent qu une fois (+${gagne})`, gagne === 100);
+  const apres = await abo();
+  /* Six encaissements de la **même** session, lancés ensemble. La commande
+     n'est réclamée qu'une fois — `UPDATE … WHERE etat <> 'livre'` — donc
+     l'échéance n'est poussée qu'une fois.
+
+     On regarde qu'elle a bougé **et** que la formule est la bonne : une
+     livraison qui n'aurait pas eu lieu du tout passerait un contrôle qui ne
+     regarderait que « pas deux fois ». */
+  check('six encaissements simultanés ne livrent qu une fois',
+    String(apres?.fin) !== String(avant?.fin) && apres?.formule === 'mensuel'
+    || (console.log('        avant', JSON.stringify(avant),
+      '· après', JSON.stringify(apres)), false));
 }
 
 /* ------------------------------------------- l unicité, garantie par la base
@@ -296,7 +367,7 @@ const evenement = (sessionId) => ({
   let refuse = null;
   try {
     await q(`INSERT INTO achats (user_id, article, montant, devise, stripe_session)
-             VALUES (?, 'billets-100', 199, 'eur', 'cs_sig')`, [U]);
+             VALUES (?, 'abo-mensuel', 199, 'eur', 'cs_sig')`, [U]);
   } catch (e) { refuse = e.code; }
   check('deux commandes pour la même session sont refusées par la base',
     refuse === 'ER_DUP_ENTRY');
@@ -312,20 +383,25 @@ const evenement = (sessionId) => ({
 /* ------------------------------------------------------------- l'abandon */
 {
   await q(`INSERT INTO achats (user_id, article, montant, devise, stripe_session)
-           VALUES (?, 'billets-100', 199, 'eur', 'cs_expire')`, [U]);
+           VALUES (?, 'abo-mensuel', 199, 'eur', 'cs_expire')`, [U]);
   await poster({ type: 'checkout.session.expired', data: { object: { id: 'cs_expire' } } });
   const [[a]] = [await q('SELECT etat FROM achats WHERE stripe_session = ?', ['cs_expire'])];
   check('une session expirée est marquée abandonnée', a.etat === 'abandonne');
 }
 
-/* ------------------------------------------------------ dépenser des billets
+/* ----------------------------------------------------- dépenser des écharpes
 
-   L'autre moitié du modèle. Payer crédite des billets ; dépenser les échange
+   L'autre moitié du modèle. On gagne des écharpes en jouant ; on les échange
    contre un objet **nommé**. C'est ici que se trouvent les erreurs qui
    coûtent : débiter sans livrer, livrer sans débiter, ou débiter deux fois.
 
+   L'étal se payait en billets, la monnaie que l'argent réel achetait. Les
+   billets n'existent plus : la chaîne euro → tirage n'est plus coupée par une
+   séparation qu'il fallait tenir, elle est coupée à la racine — il n'y a plus
+   de monnaie achetable du tout.
+
    Ce qui protège est la **transaction**, et non l'ordre des deux blocs : si
-   la remise échoue après le débit, le `rollback` rend les billets. C'est une
+   la remise échoue après le débit, le `rollback` rend les écharpes. C'est une
    mutation qui l'a établi — échanger les blocs ne fait rougir personne, alors
    que retirer le `rollback` fait tomber « et elle n'a rien coûté ». Mieux
    valait le savoir que de le supposer. */
@@ -338,14 +414,14 @@ const evenement = (sessionId) => ({
     body: JSON.stringify(corps),
   }).then(async (r) => ({ code: r.status, json: await r.json().catch(() => ({})) }));
 
-  await q('UPDATE user_wallet SET billets = ? WHERE user_id = ?', [prix, U]);
+  await q('UPDATE user_wallet SET scarves = ? WHERE user_id = ?', [prix, U]);
   await q('DELETE FROM user_stuff WHERE user_id = ?', [U]);
 
   const etal = await fetch(base + '/api/boutique/etal').then((r) => r.json());
-  check('l’étal liste l’équipement avec son prix en billets',
+  check('l’étal liste l’équipement avec son prix en écharpes',
     (etal.stuff ?? []).some((o) => o.id === piece.id && o.prix === prix)
     || (console.log('        étal :', JSON.stringify(etal.stuff?.slice(0, 2))), false));
-  check('et il dit combien de billets on a', etal.billets === prix);
+  check('et il dit combien d’écharpes on a', etal.echarpes === prix);
   /* Aucun objet de l'étal n'est un tirage : chacun porte un identifiant précis.
      C'est toute la différence avec ce que cette boutique vendait avant, où
      « une tenue » à 2,49 € tirait au sort. */
@@ -357,20 +433,20 @@ const evenement = (sessionId) => ({
     || (console.log('        ', a.code, JSON.stringify(a.json)), false));
   check('le prix débité est celui du registre, pas celui du client', a.json.paye === prix);
 
-  const [[w]] = [await q('SELECT billets FROM user_wallet WHERE user_id = ?', [U])];
-  check(`les billets sont débités (${w.billets})`, Number(w.billets) === 0);
+  const [[w]] = [await q('SELECT scarves FROM user_wallet WHERE user_id = ?', [U])];
+  check(`les écharpes sont débitées (${w.billets})`, Number(w.scarves) === 0);
 
   const ont = await q('SELECT stuff_id, copies FROM user_stuff WHERE user_id = ?', [U]);
   check('et c’est bien la pièce demandée qui arrive, pas une autre',
     ont.length === 1 && ont[0].stuff_id === piece.id
     || (console.log('        reçu :', JSON.stringify(ont)), false));
 
-  /* Sans billets, on ne prend rien — et rien ne bouge. Le contrôle regarde les
+  /* Sans écharpes, on ne prend rien — et rien ne bouge. Le contrôle regarde les
      deux côtés : le refus, et l'absence d'effet. Un refus qui aurait quand
      même livré serait pire qu'un achat qui aurait échoué. */
   const b = await depenser({ type: 'stuff', id: piece.id });
-  check('sans billets, l’achat est refusé', b.code === 400);
-  check('et le refus nomme la cause', b.json.error === 'boutique.error.billets_insuffisants'
+  check('sans écharpes, l’achat est refusé', b.code === 400);
+  check('et le refus nomme la cause', b.json.error === 'boutique.error.echarpes_insuffisantes'
     || (console.log('        ', JSON.stringify(b.json)), false));
   const apres = await q('SELECT stuff_id, copies FROM user_stuff WHERE user_id = ?', [U]);
   check('rien n’a été remis au passage',
@@ -378,11 +454,11 @@ const evenement = (sessionId) => ({
 
   /* Le prix ne vient jamais du client — même règle que pour les euros, même
      raison. Sans elle, il suffit d'un champ modifié dans le navigateur. */
-  await q('UPDATE user_wallet SET billets = 5 WHERE user_id = ?', [U]);
-  const c = await depenser({ type: 'stuff', id: piece.id, prix: 1, billets: 1 });
+  await q('UPDATE user_wallet SET scarves = 5 WHERE user_id = ?', [U]);
+  const c = await depenser({ type: 'stuff', id: piece.id, prix: 1, echarpes: 1 });
   check('un prix envoyé par le client n’achète rien', c.code === 400);
-  const [[w3]] = [await q('SELECT billets FROM user_wallet WHERE user_id = ?', [U])];
-  check('et le solde n’a pas bougé', Number(w3.billets) === 5);
+  const [[w3]] = [await q('SELECT scarves FROM user_wallet WHERE user_id = ?', [U])];
+  check('et le solde n’a pas bougé', Number(w3.scarves) === 5);
 
   const d = await depenser({ type: 'stuff', id: 'objet-qui-nexiste-pas' });
   check('un objet inconnu est refusé', d.code === 400
@@ -400,7 +476,7 @@ const evenement = (sessionId) => ({
   /* Une tenue se pose sur un Fanzzy qu'on possède, à un âge qu'on a atteint.
      Refuser **avant** de débiter est la règle ; ce contrôle vérifie qu'on n'a
      pas payé pour un refus. */
-  await q('UPDATE user_wallet SET billets = 9999 WHERE user_id = ?', [U]);
+  await q('UPDATE user_wallet SET scarves = 9999 WHERE user_id = ?', [U]);
   /* On prend une tenue **de l'étal** : nommer un identifiant en dur ici le
      rendrait faux à la prochaine dépublication, et le contrôle mesurerait
      alors « cette tenue n'est plus en vente » au lieu de ce qu'il vise. */
@@ -417,8 +493,8 @@ const evenement = (sessionId) => ({
   check('et c’est notre garde qui refuse, en nommant la cause',
     e.json.error === 'boutique.error.fanzzy_non_possede'
     || (console.log('        refus :', JSON.stringify(e.json)), false));
-  const [[w4]] = [await q('SELECT billets FROM user_wallet WHERE user_id = ?', [U])];
-  check('et elle n’a rien coûté', Number(w4.billets) === 9999
+  const [[w4]] = [await q('SELECT scarves FROM user_wallet WHERE user_id = ?', [U])];
+  check('et elle n’a rien coûté', Number(w4.scarves) === 9999
     || (console.log('        solde :', w4.billets), false));
 
   /* Et jamais de booster, par aucun chemin : c'est la demande d'origine. */

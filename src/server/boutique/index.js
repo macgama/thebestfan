@@ -46,7 +46,7 @@ import { tenuesPubliees } from '../fanzzy/tenues.js';
 
 const API = 'https://api.stripe.com/v1';
 
-export function createBoutique({ pool, requireAuth, fanzzy, site }) {
+export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = null }) {
   const q = (sql, args) => pool.query(sql, args).then(([r]) => r);
 
   const cle = () => process.env.STRIPE_SECRET_KEY || '';
@@ -117,13 +117,19 @@ export function createBoutique({ pool, requireAuth, fanzzy, site }) {
    * suivant. L'inverse — marquer livré puis remettre — perd la marchandise au
    * premier hoquet, et personne ne le sait.
    */
+  /* Injecté, et facultatif. Depuis que les billets n'existent plus, une
+     installation sans `sql/abonnement.sql` n'a **rien** à vendre : la boutique
+     se monte quand même, son catalogue est vide, et l'écran le dit. Ce qu'elle
+     ne fait dans aucun cas, c'est encaisser un abonnement sans savoir le
+     poser — voir `livrer`. */
   async function livrer(conn, userId, article) {
     const l = article.livraison;
 
-    /* Un seul type, et c'est la moitié du sujet. L'argent réel n'achète que
-       des billets : pas de booster, pas d'écharpe — une écharpe achète un
-       booster à quarante-cinq, la vendre reviendrait à vendre un coffre
-       aléatoire avec une étape de plus.
+    /* Un seul type, et c'est la moitié du sujet. **L'argent réel n'achète que
+       l'abonnement** : pas de booster, pas d'écharpe, et plus de billets non
+       plus. Une écharpe achète un booster à quarante-cinq ; vendre de la monnaie
+       de jeu, sous n'importe quel nom, reviendrait à vendre un coffre aléatoire
+       avec une étape de plus.
 
        La condition n'est pas écrite en dur mais lue dans `LIVRAISONS_PAYANTES`,
        pour qu'il n'existe **qu'un seul endroit** où l'on décide ce que l'argent
@@ -132,10 +138,25 @@ export function createBoutique({ pool, requireAuth, fanzzy, site }) {
       throw new Error('boutique.error.livraison_interdite');
     }
 
-    if (l.type === 'billets') {
-      await conn.query(
-        `UPDATE user_wallet SET billets = billets + ? WHERE user_id = ?`, [l.n, userId]);
-      return { billets: l.n };
+    /* L'abonnement ne se pose pas ici : il a son module, et lui seul sait ce
+       qu'un renouvellement fait à une échéance — il la **pousse** plus loin au
+       lieu de la remplacer, sans quoi renouveler trois jours avant le terme
+       perdrait ces trois jours. Recopier ce calcul ici en ferait une seconde
+       version, qui divergerait.
+
+       Sans module monté, on refuse plutôt que d'encaisser : une commande qui
+       échoue est rejouée par Stripe, un paiement pris sans contrepartie ne se
+       rattrape pas tout seul. */
+    if (l.type === 'abonnement') {
+      if (!abonnement) throw new Error('boutique.error.abonnement_absent');
+      /* `conn` : on écrit **dans** la transaction de l'encaissement. Sans
+         elle, un abonnement posé survivrait au `rollback` de l'achat qui l'a
+         payé — et six encaissements simultanés s'attendraient sur le verrou de
+         la même ligne jusqu'au `Lock wait timeout`. */
+      await abonnement.accorder(userId, {
+        formule: l.formule, jours: l.jours, source: 'stripe', conn,
+      });
+      return { abonnement: l.formule };
     }
 
     throw new Error('boutique.error.livraison_inconnue');
@@ -241,6 +262,38 @@ export function createBoutique({ pool, requireAuth, fanzzy, site }) {
                     WHERE stripe_session = ? AND etat = 'en_attente'`,
             [evt.data?.object?.id]);
         }
+
+        /* ================================ un abonnement vit après son premier jour
+
+           C'est ce qui le distingue d'un achat, et c'est la moitié qu'on oublie.
+           `checkout.session.completed` ne dit que le **premier** paiement.
+           Sans les deux événements qui suivent, un abonné perdrait l'accès au
+           bout d'un mois pendant que Stripe continue de le débiter — la panne la
+           plus coûteuse qu'on puisse écrire dans ce fichier, et celle qu'on ne
+           découvre qu'en lisant un message de réclamation.
+
+           **La fin de période vient de Stripe**, pas de notre calendrier :
+           c'est lui qui sait quand le mois s'arrête, et recopier « trente et un
+           jours » finirait par décaler d'un jour à chaque renouvellement. Le
+           repli sur `jours` ne sert que si la facture n'en dit rien. */
+        if (evt.type === 'invoice.paid' && abonnement) {
+          const inv = evt.data?.object;
+          const ref = inv?.subscription ?? null;
+          const fin = inv?.lines?.data?.[0]?.period?.end ?? null;
+          if (ref) await abonnement.renouveler(ref, fin ? new Date(fin * 1000) : null);
+        }
+
+        /* Résilié, ou impayé. On **ne supprime pas la ligne** : l'abonnement
+           court jusqu'au terme déjà payé, et le couper le jour de la résiliation
+           reprendrait au joueur ce qu'il a réglé. Stripe garde la même
+           distinction — `cancel_at_period_end` — et on la suit. */
+        if (evt.type === 'customer.subscription.deleted' && abonnement) {
+          const sub = evt.data?.object;
+          const fin = sub?.current_period_end ?? null;
+          if (sub?.id) {
+            await abonnement.renouveler(sub.id, fin ? new Date(fin * 1000) : new Date());
+          }
+        }
         res.json({ recu: true });
       } catch (e) {
         /* On répond 500 exprès : Stripe **rejouera**, et le rejeu est sûr.
@@ -274,32 +327,38 @@ export function createBoutique({ pool, requireAuth, fanzzy, site }) {
 
   /* -------------------------------------------------------------- l'étal
 
-     Ce que les billets achètent. Rien n'y est tiré au sort : on n'achète pas
-     « une pièce d'équipement », on achète le mégaphone. C'est ce qui permet à
-     l'argent réel d'exister ici sans que la question des coffres payants se
-     pose — la chaîne euro → billet → objet nommé ne passe jamais par le
-     hasard. */
+     Ce que les **écharpes** achètent, en dehors des boosters. Rien n'y est
+     tiré au sort : on n'achète pas « une pièce d'équipement », on achète le
+     mégaphone.
+
+     Il se payait en billets, la monnaie que l'argent réel achetait. Les billets
+     n'existent plus : la chaîne euro → tirage n'est plus coupée par une
+     séparation qu'il fallait tenir, elle est coupée à la racine — il n'y a plus
+     de monnaie achetable du tout. */
   router.get('/etal', requireAuth, async (req, res) => {
     const ont = await q('SELECT stuff_id FROM user_stuff WHERE user_id = ?', [req.user.id]);
     const [bourse] = await q(
-      'SELECT billets FROM user_wallet WHERE user_id = ?', [req.user.id]);
+      'SELECT scarves FROM user_wallet WHERE user_id = ?', [req.user.id]);
     res.json({
       monnaie: MONNAIE,
-      billets: bourse?.billets ?? 0,
+      /* `echarpes` et non `billets` : le nom du champ dit la monnaie, et le
+         garder aurait fait une page qui affiche des écharpes sous une étiquette
+         qui n'existe plus. */
+      echarpes: bourse?.scarves ?? 0,
       stuff: etalStuff(new Set(ont.map((o) => o.stuff_id))),
       tenues: etalTenues(tenuesPubliees()),
     });
   });
 
   /**
-   * Dépenser des billets sur un objet nommé.
+   * Dépenser des **écharpes** sur un objet nommé.
    *
    * Le corps ne porte **que** ce qu'on veut : le prix est relu ici, dans le
    * registre, et jamais dans ce que la page a envoyé. C'est la même règle que
    * pour les euros, pour la même raison.
    *
    * Tout tient dans une transaction, et c'est **elle** qui protège : si la
-   * remise échoue après le débit, le `rollback` rend les billets. Une mutation
+   * remise échoue après le débit, le `rollback` rend les écharpes. Une mutation
    * qui échange les deux blocs ne casse donc rien — ce qui est la preuve que
    * l'ordre n'est pas ce qui tient la propriété. Retirer le `rollback`, lui,
    * fait rougir un contrôle.
@@ -309,8 +368,8 @@ export function createBoutique({ pool, requireAuth, fanzzy, site }) {
    * ce n'est pas là qu'il faut regarder pour comprendre pourquoi rien ne se
    * perd.
    *
-   * Le débit est une **réclamation** : `SET billets = billets - ? WHERE
-   * billets >= ?`, dont on lit le nombre de lignes touchées. Deux requêtes
+   * Le débit est une **réclamation** : `SET scarves = scarves - ? WHERE
+   * scarves >= ?`, dont on lit le nombre de lignes touchées. Deux requêtes
    * simultanées ne peuvent pas débiter deux fois le même solde, et c'est
    * éprouvable — à la différence d'un verrou, qu'aucune course fabriquée ne
    * fait rougir.
@@ -332,17 +391,17 @@ export function createBoutique({ pool, requireAuth, fanzzy, site }) {
         });
 
       const [debit] = await conn.query(
-        'UPDATE user_wallet SET billets = billets - ? WHERE user_id = ? AND billets >= ?',
+        'UPDATE user_wallet SET scarves = scarves - ? WHERE user_id = ? AND scarves >= ?',
         [prix, req.user.id, prix]);
       if (!debit.affectedRows) {
         await conn.rollback();
-        return res.status(400).json({ error: 'boutique.error.billets_insuffisants' });
+        return res.status(400).json({ error: 'boutique.error.echarpes_insuffisantes' });
       }
 
       await conn.commit();
       const [bourse] = await q(
-        'SELECT billets FROM user_wallet WHERE user_id = ?', [req.user.id]);
-      return res.json({ ok: true, paye: prix, billets: bourse?.billets ?? 0, rendu });
+        'SELECT scarves FROM user_wallet WHERE user_id = ?', [req.user.id]);
+      return res.json({ ok: true, paye: prix, echarpes: bourse?.scarves ?? 0, rendu });
     } catch (e) {
       await conn.rollback().catch(() => {});
       /* Les refus de `remettre` portent leur code : « tu ne possèdes pas ce
@@ -378,13 +437,28 @@ export function createBoutique({ pool, requireAuth, fanzzy, site }) {
     if (!article) return res.status(400).json({ error: 'boutique.error.article_inconnu' });
 
     try {
+      /* **Deux modes, et c'est l'article qui décide.** `recurrence` porte
+         l'intervalle Stripe — `month` ou `year` — et sa seule présence fait
+         basculer la session en abonnement. Ouvrir un abonnement en
+         `mode: 'payment'` prendrait l'argent une fois et ne renouvellerait
+         jamais : le joueur perdrait l'accès au bout d'un mois sans que rien ne
+         le dise, et c'est la panne la plus coûteuse qu'on puisse écrire ici.
+
+         La page de retour change aussi : on revient sur l'écran de
+         l'abonnement, qui sait dire jusqu'à quand il court, et non sur la
+         boutique, qui n'en sait rien. */
+      const abonne = Boolean(article.recurrence);
+      const retour = abonne ? '/abonnement' : '/boutique';
       const session = await stripe('/checkout/sessions', {
-        mode: 'payment',
-        success_url: `${racine()}/boutique?paye=1`,
-        cancel_url: `${racine()}/boutique?annule=1`,
+        mode: abonne ? 'subscription' : 'payment',
+        success_url: `${racine()}${retour}?paye=1`,
+        cancel_url: `${racine()}${retour}?annule=1`,
         'line_items[0][quantity]': '1',
         'line_items[0][price_data][currency]': 'eur',
         'line_items[0][price_data][unit_amount]': String(article.prix),
+        ...(abonne
+          ? { 'line_items[0][price_data][recurring][interval]': article.recurrence }
+          : {}),
         'line_items[0][price_data][product_data][name]': article.nom,
         'line_items[0][price_data][product_data][description]': article.texte,
         /* Le joueur voyage dans les métadonnées **et** dans notre table. La
@@ -410,7 +484,7 @@ export function createBoutique({ pool, requireAuth, fanzzy, site }) {
 
   /*  `livrer` est exporté pour être éprouvé directement.
 
-     La règle « l argent réel n achète que des billets » vit dans une liste, et
+     La règle « l argent réel n achète que l abonnement » vit dans une liste, et
      une liste ne se tient que si quelque chose la lit. Sans cet export, on ne
      pourrait éprouver la règle qu à travers le catalogue — c est-à-dire
      vérifier que le catalogue est conforme, jamais que le moteur refuserait

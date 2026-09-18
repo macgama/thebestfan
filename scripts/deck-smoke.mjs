@@ -170,15 +170,21 @@ check('cinq cartes visibles', r.json.mainVisible === DECK_RULES.mainVisible);
 r = await call('/api/deck/match/1');
 check('match d\u2019hier refusé', r.json.error === 'duel.error.fixture_past');
 
-/* **Classé, c'est en cours — et non « aujourd'hui ».**
+/* **Classé, c'est le jour du match.**
 
-   La règle d'avant faisait compter au classement un duel joué à dix heures du
-   matin sur une rencontre du soir : on poussait pour une tribune qui n'existait
-   pas encore. Un duel de tribunes se joue pendant le match, sinon il ne se
-   distingue en rien d'un entraînement, et c'est ce qu'il devient. */
+   La règle a fait un aller-retour. Elle a d'abord dit « aujourd'hui », puis
+   « en cours » — pour qu'un duel joué le matin ne compte pas pour une
+   rencontre du soir — et elle redit « aujourd'hui ».
+
+   Ce que la version resserrée ne pesait pas, c'est combien de temps la porte
+   restait ouverte : un match dure deux heures, et hors de ces deux heures il
+   n'existait aucun duel classé du tout. Une règle juste que personne ne peut
+   satisfaire ne protège rien, elle ferme le jeu. */
 r = await call('/api/deck/match/2');
-check('match du jour pas encore commencé : entraînement', r.json.mode === 'entrainement');
-check('et la page dit pourquoi', /n’a pas commencé/.test(r.json.raison ?? '')
+check('match du jour pas encore commencé : classé quand même',
+  r.json.mode === 'classe'
+  || (console.log('        il dit :', r.json.mode, '·', r.json.raison), false));
+check('et la page dit pourquoi', /aujourd’hui/.test(r.json.raison ?? '')
   || (console.log('        elle dit :', r.json.raison), false));
 
 r = await call('/api/deck/match/4');
@@ -381,8 +387,20 @@ check('le match du jour arrive en tête', r.json.matchs[0].mode === 'classe');
   check('avec sa compétition', inconnu?.league_name === 'Premier League');
   check('et ce qui se joue passe devant', r.json.matchs[0]?.id === 5000);
 
-  check('un match que la journée dit fini quitte la liste',
-    !(r.json.matchs ?? []).some((m) => m.id === 4));
+  /* **Un match fini du jour reste dans la liste.** Il en sortait, et c'était
+     cohérent tant que « classé » voulait dire « en cours » : une rencontre
+     terminée ne pouvait plus rien valoir. Depuis que la règle est la journée,
+     l'en sortir fermerait précisément la soirée — le moment où l'on a envie de
+     rejouer le match qu'on vient de regarder. */
+  const fini = (r.json.matchs ?? []).find((m) => m.id === 4);
+  check('un match fini du jour reste dans la liste', Boolean(fini)
+    || (console.log('        les matchs :',
+      (r.json.matchs ?? []).map((m) => m.id).join(', ')), false));
+  check('et il reste classé, puisque c’est sa journée', fini?.mode === 'classe'
+    || (console.log('        il dit :', fini?.mode), false));
+  /* Mais il passe derrière ce qui se joue encore : on propose d'abord un match
+     en cours. */
+  check('sans passer devant ce qui se joue', r.json.matchs[0]?.id !== 4);
 
   /* Et il faut pouvoir l'entrer : la liste le propose, `matchSupport` doit
      l'accepter. Sans cela, on cliquerait sur un match pour s'entendre répondre
