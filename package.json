@@ -43,6 +43,7 @@
     "couleurs": "node scripts/couleurs-equipes.mjs",
     "couleurs:test": "node scripts/couleurs-smoke.mjs",
     "images": "node scripts/fanzzy-images.mjs",
+    "dos": "node scripts/dos-images.mjs",
     "art": "node scripts/fanzzy-art.mjs",
     "art:tout": "node scripts/fanzzy-art-tout.mjs",
     "dessins": "node scripts/dessins.mjs",
