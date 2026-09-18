@@ -36,9 +36,54 @@ import { readdir, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import sharp from 'sharp';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
+
+/**
+ * `sharp`, chargé à la main pour pouvoir expliquer son absence.
+ *
+ * Un `import` en tête de fichier lève avant la première ligne de code, et Node
+ * rend alors une trace de quinze lignes dont la seule utile est la première.
+ * Elle ne dit ni pourquoi le paquet manque, ni s'il **devait** être là.
+ *
+ * Or il manque pour deux raisons opposées, et le remède n'est pas le même :
+ *
+ *   — **sur une machine de travail**, il n'a jamais été installé. `sharp` n'est
+ *     pas en `devDependencies` exprès : il embarque des binaires natifs de
+ *     plusieurs dizaines de mégaoctets, et il ne sert qu'à fabriquer des
+ *     images, jamais à en servir. Une ligne l'installe.
+ *
+ *   — **sur le serveur**, il manque parce que ce script n'a rien à y faire.
+ *     C'est une chaîne d'atelier : elle écrit dans `public/img/fanzzy/`, qui
+ *     est suivi par git et livré avec le code. Ce qu'elle produirait là-bas
+ *     serait écrasé au déploiement suivant, et n'existerait dans aucun dépôt.
+ *     On dessine chez soi, on livre le résultat.
+ *
+ * On ne devine pas laquelle des deux : on dit les deux, dans cet ordre, et on
+ * laisse celui qui lit reconnaître sa situation en une seconde.
+ */
+let sharp;
+try {
+  sharp = (await import('sharp')).default;
+} catch (e) {
+  if (e?.code !== 'ERR_MODULE_NOT_FOUND') throw e;
+  console.error([
+    '',
+    '  Le paquet « sharp » n’est pas installé ici.',
+    '',
+    '  Sur ta machine — c’est là que cette chaîne travaille :',
+    '      npm install --no-save sharp',
+    '      npm run images',
+    '',
+    '  Sur le serveur — ne le lance pas là.',
+    '  Cette chaîne écrit dans public/img/fanzzy/, qui est suivi par git et',
+    '  livré avec le code : ce qu’elle produirait sur le serveur serait écrasé',
+    '  au déploiement suivant et n’existerait dans aucun dépôt.',
+    '  On dessine chez soi, on commet, on déploie.',
+    '',
+  ].join('\n'));
+  process.exit(1);
+}
 
 const args = process.argv.slice(2);
 
@@ -53,7 +98,12 @@ const args = process.argv.slice(2);
  * Un chemin passé en argument gagne toujours : c'est ce qui permet de traiter
  * un lot isolé sans repasser sur les trente rendus déjà rangés.
  */
-const DEFAUT = 'art/neuves';
+/* **Résolu depuis la racine du dépôt, pas depuis le dossier courant.** Écrit en
+   relatif, le défaut ne marchait que si l'on se trouvait exactement à la racine
+   — et le premier réflexe est justement de se placer dans `art/neuves` pour
+   vérifier qu'on a bien déposé ses fichiers, puis de lancer la commande de là.
+   Le script est au même endroit que le dépôt : il sait où il est. */
+const DEFAUT = path.join(RACINE, 'art', 'neuves');
 const SOURCE = args.filter((a, i) => args[i - 1] !== '--sortie' && args[i - 1] !== '--seuils')
   .find((a) => !a.startsWith('--')) ?? DEFAUT;
 const SORTIE = (() => {
