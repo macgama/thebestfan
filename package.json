@@ -46,6 +46,7 @@
     "art": "node scripts/fanzzy-art.mjs",
     "art:tout": "node scripts/fanzzy-art-tout.mjs",
     "dessins": "node scripts/dessins.mjs",
+    "audit:ui": "node scripts/audit-ui.mjs",
     "quota": "node scripts/quota.mjs",
     "charge": "node scripts/virage-loadtest.mjs",
     "actions": "node scripts/action-images.mjs",

@@ -119,8 +119,13 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* L'invitation à installer. Discrète : elle s'adresse à quelqu'un qui est
    déjà là et qui joue — ce n'est pas elle qu'il est venu chercher. */
 .installe{text-align:center;padding:10px 20px 0}
+/* Quarante-quatre pixels : la pulpe d'un doigt, et le minimum des deux
+   plateformes. L'audit d'interface les a tous comptés d'un coup — ce n'est
+   jamais une faute de conception, c'est une hauteur qu'on ne mesure pas en
+   regardant. */
 .installe button{background:none;border:1px solid rgba(242,238,228,.25);border-radius:8px;
-  color:var(--craie);font:inherit;font-size:12.5px;padding:9px 16px;cursor:pointer;opacity:.75}
+  color:var(--craie);font:inherit;font-size:12.5px;padding:9px 16px;min-height:44px;
+  cursor:pointer;opacity:.75}
 .installe button:hover{opacity:1;border-color:var(--projo);color:var(--projo)}
 .installe small{font-size:11.5px;opacity:.5;line-height:1.7}
 .installe b{color:var(--craie);opacity:.85}

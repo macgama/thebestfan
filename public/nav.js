@@ -76,8 +76,19 @@
      place a gauche et a droite, et ils le faisaient avec un 58px recopie dans
      chaque page. Le jour ou le bouton grandit, il en reste un a corriger.
 
-     Quarante-deux pixels de bouton, dix de marge, dix de respiration. */
-  :root{--tbf-haut-g:62px;--tbf-haut-d:62px}
+     Quarante-quatre pixels de bouton, dix de marge, dix de respiration.
+
+     **La respiration est un luxe de grand ecran.** Sur trois cent soixante
+     pixels, ces deux degagements prennent cent vingt-huit pixels, soit plus du
+     tiers de la largeur — et ce tiers est pris a l en-tete du virage, ou
+     s affichent les deux clubs et le score. L audit d interface a mesure la
+     consequence : TA TRIBUNE coupe de trente-six pixels, EN FACE de dix-huit.
+
+     Sous quatre cent vingt pixels, on garde le bouton et la marge, on rend la
+     respiration. Le bouton ne se touche pas moins bien pour autant : il fait
+     toujours ses quarante-quatre pixels. */
+  :root{--tbf-haut-g:64px;--tbf-haut-d:64px}
+  @media (max-width:420px){:root{--tbf-haut-g:52px;--tbf-haut-d:52px}}
   .tbf-spark{position:fixed;width:3px;height:3px;border-radius:50%;z-index:0;pointer-events:none;opacity:0}`;
 
   const style = document.createElement('style');

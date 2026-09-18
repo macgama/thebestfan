@@ -25,8 +25,12 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .jour small{display:block;font-family:var(--ui);font-size:9px;letter-spacing:.1em;opacity:.6}
 .jour.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
 .filtres{display:flex;gap:6px;padding:0 16px 10px}
+/* Quarante-quatre pixels : la pulpe d'un doigt, et le minimum des deux
+   plateformes. L'audit d'interface les a tous comptés d'un coup — ce n'est
+   jamais une faute de conception, c'est une hauteur qu'on ne mesure pas en
+   regardant. */
 .filtres button{flex:1;background:var(--panneau);backdrop-filter:blur(10px);border:1px solid rgba(242,238,228,.13);
-  border-radius:7px;color:inherit;padding:8px;font-family:var(--banner);font-size:11px;
+  border-radius:7px;color:inherit;padding:8px;min-height:44px;font-family:var(--banner);font-size:11px;
   letter-spacing:.06em;cursor:pointer;opacity:.55}
 .filtres button.on{background:var(--craie);color:#0B0E13;opacity:1}
 .filtres .direct.on{background:var(--flare);color:#fff;border-color:var(--flare)}

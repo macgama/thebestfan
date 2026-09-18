@@ -63,16 +63,20 @@ h2 i{font-style:normal;opacity:.7}
    comme un sixième. D’où la forme d’un interrupteur, et sa place en dessous. */
 .souple{display:flex;align-items:center;gap:10px;width:calc(100% - 28px);margin:8px 14px 0;
   background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.13);border-radius:9px;
-  padding:9px 11px;color:inherit;cursor:pointer;text-align:left;font-family:var(--banner);
-  font-size:11px;letter-spacing:.06em;opacity:.65}
+  padding:9px 11px;min-height:44px;color:inherit;cursor:pointer;text-align:left;
+  font-family:var(--banner);font-size:11px;letter-spacing:.06em;opacity:.65}
 .souple.on{opacity:1;border-color:var(--projo);background:rgba(245,195,59,.1);color:var(--projo)}
 .souple .case{flex:none;width:17px;height:17px;border-radius:5px;display:grid;place-items:center;
   border:1px solid currentColor;font-size:11px;line-height:1}
 .souple small{display:block;font-family:var(--ui);font-size:9.5px;letter-spacing:.02em;
   opacity:.6;margin-top:3px;color:var(--craie)}
 .portee{display:flex;gap:6px;padding:0 14px 8px}
+/* Quarante-quatre pixels : la pulpe d'un doigt, et le minimum des deux
+   plateformes. L'audit d'interface les a tous comptés d'un coup — ce n'est
+   jamais une faute de conception, c'est une hauteur qu'on ne mesure pas en
+   regardant. */
 .pt{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.13);border-radius:999px;
-  color:inherit;padding:8px;font-size:10px;letter-spacing:.1em;cursor:pointer;opacity:.5;
+  color:inherit;padding:8px;min-height:44px;font-size:10px;letter-spacing:.1em;cursor:pointer;opacity:.5;
   font-family:var(--banner)}
 .pt.on{opacity:1;border-color:var(--craie)}
 

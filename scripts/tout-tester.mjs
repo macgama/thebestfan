@@ -126,10 +126,22 @@ console.log(`  ${rates.length} suite(s) en échec :\n`);
 for (const r of rates) {
   console.log(`  ── ${r.nom}`);
   const lignes = r.sortie.split('\n');
-  const rouges = lignes.filter((l) => /^ FAIL /.test(l));
+  /* La ligne rouge **et ce qui la suit**. Une suite qui échoue dit souvent
+     juste après ce qu'elle a lu et ce qu'elle attendait, sur une ligne plus
+     indentée. Ne remonter que le FAIL, c'était garder l'accusation et jeter
+     la preuve : on relançait la suite seule pour la voir, et seule elle
+     passait. */
+  const rouges = [];
+  lignes.forEach((l, i) => {
+    if (!/^ FAIL /.test(l)) return;
+    rouges.push(l);
+    for (let j = i + 1; j < lignes.length && /^ {8}\S/.test(lignes[j]); j += 1) {
+      rouges.push(lignes[j]);
+    }
+  });
   if (rouges.length) {
-    for (const l of rouges.slice(0, 8)) console.log(`     ${l.trim()}`);
-    if (rouges.length > 8) console.log(`     … et ${rouges.length - 8} de plus`);
+    for (const l of rouges.slice(0, 16)) console.log(`     ${l.trim()}`);
+    if (rouges.length > 16) console.log(`     … et ${rouges.length - 16} de plus`);
   } else {
     /* Pas une ligne rouge : la suite a planté. Les dernières lignes portent
        alors la trace, et c'est tout ce qu'on a. */

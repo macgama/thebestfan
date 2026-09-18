@@ -36,9 +36,14 @@
 /* Les séries ouvertes, en pastilles. Seules celles qu'on peut ouvrir y
    figurent : les autres se disent en une ligne, plus bas. */
 .series{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:0 12px 8px}
+/* Quarante-quatre pixels : la pulpe d'un doigt, et le minimum des deux
+   plateformes. L'audit d'interface les a tous comptés d'un coup — ce n'est
+   jamais une faute de conception, c'est une hauteur qu'on ne mesure pas en
+   regardant. */
 .series button{background:rgba(255,255,255,.05);border:1px solid rgba(242,238,228,.16);
-  border-radius:20px;color:inherit;font-family:var(--banner);font-size:10.5px;
-  letter-spacing:.1em;padding:5px 11px;cursor:pointer;opacity:.62;
+  border-radius:22px;color:inherit;font-family:var(--banner);font-size:10.5px;
+  letter-spacing:.1em;padding:5px 14px;min-height:44px;cursor:pointer;opacity:.62;
+  display:inline-flex;align-items:center;justify-content:center;
   transition:transform .1s ease,opacity .16s ease}
 .series button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
 .series button:active{transform:translateY(2px)}
@@ -61,8 +66,9 @@
   line-height:1.15;text-wrap:balance}
 .saison-t{margin:6px 0 0;font-size:12px;line-height:1.6;opacity:.72}
 .saison-t:empty{display:none}
-.saison-x{position:absolute;top:6px;right:8px;background:none;border:0;color:inherit;
-  opacity:.4;font-size:14px;line-height:1;padding:6px 8px;cursor:pointer}
+.saison-x{position:absolute;top:2px;right:2px;background:none;border:0;color:inherit;
+  opacity:.4;font-size:14px;line-height:1;cursor:pointer;
+  width:44px;height:44px;display:grid;place-items:center}
 .saison-x:hover,.saison-x:focus-visible{opacity:.9}
 .slide{position:absolute;left:50%;top:50%;width:186px;aspect-ratio:.62;margin:0;cursor:grab;
   transform-style:preserve-3d;transition:transform .55s cubic-bezier(.22,.9,.28,1),opacity .45s,filter .45s;
@@ -189,8 +195,9 @@
   transform:rotate(-2deg);transition:transform .2s;display:block;background:none;padding:0}
 .pack:active{transform:rotate(-2deg) scale(.97)}
 .packnav{display:flex;align-items:center;gap:16px;margin-top:18px}
-.packnav button{width:30px;height:30px;border-radius:50%;border:1px solid rgba(242,238,228,.18);
-  background:rgba(0,0,0,.3);color:inherit;cursor:pointer}
+.packnav button{width:44px;height:44px;border-radius:50%;
+  border:1px solid rgba(242,238,228,.18);background:rgba(0,0,0,.3);color:inherit;cursor:pointer;
+  display:grid;place-items:center;font-size:17px;line-height:1}
 .dots{display:flex;gap:5px}
 .dots i{width:6px;height:6px;border-radius:50%;background:rgba(242,238,228,.22);display:block}
 .dots i.on{background:var(--projo)}

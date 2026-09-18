@@ -116,16 +116,61 @@ export function entetesDeSecurite({ https = false } = {}) {
  * est une règle du jeu et vit dans le jeu ; « pas plus de deux cents appels par
  * minute » est une règle d'exploitation et vit ici. Confondre les deux mène à
  * un jeu dont l'équilibre dépend d'un réglage d'infrastructure.
+ *
+ * ## Pourquoi les fichiers se comptent à part
+ *
+ * **Une page de ce jeu, ce n'est pas une requête.** C'est la page, sa feuille
+ * de style, ses six scripts, la police, les icônes, les blasons des équipes et
+ * les dessins des Fanzzy : entre trente et cinquante allers-retours. Comptés
+ * dans le même seau que les appels de jeu, deux cent quarante par minute
+ * tombaient au bout de **six pages** — soit un joueur qui se promène une minute
+ * dans son menu.
+ *
+ * L'audit d'interface a rencontré exactement ça : à la quinzième page visitée,
+ * la boutique, l'abonnement et les boosters ne servaient plus l'écran mais
+ * le JSON « trop_de_requetes » en texte brut.
+ *
+ * Un fichier statique coûte une lecture de disque et rien d'autre. Il a donc
+ * son propre seau, large. Ce qu'on protège vraiment — la base, Stripe,
+ * l'API-Football — est derrière /api, et ce seau-là n'a pas bougé.
  */
+/* Ce qui se sert depuis le disque et ne touche à rien. La liste est fermée
+   volontairement : un chemin inconnu tombe dans le seau étroit, ce qui est le
+   bon défaut — on préfère limiter trop que pas assez. */
+const FICHIER = /\.(?:css|m?js|map|png|jpe?g|webp|avif|gif|svg|ico|woff2?|ttf|mp4|webm|ogg|mp3|json|webmanifest|txt|xml)$/i;
+
+/* La page du refus. Pas de feuille de style liée : elle doit s'afficher
+   précisément au moment où le serveur refuse de servir des fichiers. Elle porte
+   donc ses couleurs sur elle, et elle se recharge toute seule quand la minute
+   est passée — c'est la seule chose que le joueur avait à faire. */
+const PAGE_429 = (secondes) => [
+  '<!doctype html><html lang="fr"><head><meta charset="utf-8">',
+  '<meta name="viewport" content="width=device-width,initial-scale=1">',
+  '<title>Une seconde…</title>',
+  '<meta http-equiv="refresh" content="' + secondes + '">',
+  '<style>body{margin:0;min-height:100vh;display:flex;align-items:center;',
+  'justify-content:center;background:#0A0D11;color:#F2EEE4;',
+  'font:16px/1.5 system-ui,sans-serif;text-align:center;padding:24px}',
+  'b{display:block;font-size:22px;letter-spacing:.06em;text-transform:uppercase;',
+  'margin-bottom:10px}p{opacity:.85;max-width:34ch;margin:0 auto}</style>',
+  '</head><body><div><b>Une seconde…</b><p>Tu as tourné les pages plus vite que',
+  ' le serveur ne les sert. Ça repart tout seul dans ' + secondes,
+  ' secondes.</p></div></body></html>',
+].join('');
+
 export function debitMaximal({
   fenetreMs = 60_000,
   maxParFenetre = 240,
   /* Les écritures coûtent plus cher que les lectures, et ce sont elles qu'on
      rejoue pour tricher : on les compte à part, et plus serré. */
   maxEcritures = 80,
+  /* Les fichiers : large, mais pas infini — un seau sans fond n'est plus un
+     garde. Quinze cents laisse passer trente pages en une minute, ce qu'aucun
+     doigt humain ne fait. */
+  maxStatiques = 1500,
   exemptes = [],
 } = {}) {
-  /** adresse → { lectures: number[], ecritures: number[] } */
+  /** adresse → { lectures: number[], ecritures: number[], fichiers: number[] } */
   const vus = new Map();
 
   /* Un ménage périodique : sans lui, la table garde une entrée par adresse
@@ -136,7 +181,8 @@ export function debitMaximal({
     for (const [cle, e] of vus) {
       e.lectures = e.lectures.filter((t) => t > limite);
       e.ecritures = e.ecritures.filter((t) => t > limite);
-      if (!e.lectures.length && !e.ecritures.length) vus.delete(cle);
+      e.fichiers = e.fichiers.filter((t) => t > limite);
+      if (!e.lectures.length && !e.ecritures.length && !e.fichiers.length) vus.delete(cle);
     }
   }, fenetreMs);
   menage.unref?.();
@@ -153,23 +199,38 @@ export function debitMaximal({
     const limite = now - fenetreMs;
 
     let e = vus.get(cle);
-    if (!e) { e = { lectures: [], ecritures: [] }; vus.set(cle, e); }
+    if (!e) { e = { lectures: [], ecritures: [], fichiers: [] }; vus.set(cle, e); }
     e.lectures = e.lectures.filter((t) => t > limite);
     e.ecritures = e.ecritures.filter((t) => t > limite);
+    e.fichiers = e.fichiers.filter((t) => t > limite);
 
+    /* Trois seaux, un seul choix : ce qu'on écrit, ce qu'on lit, et ce qu'on
+       sert depuis le disque. */
     const ecrit = req.method !== 'GET' && req.method !== 'HEAD';
-    const trop = ecrit
-      ? e.ecritures.length >= maxEcritures
-      : e.lectures.length >= maxParFenetre;
+    const seau = ecrit ? 'ecritures' : (FICHIER.test(req.path) ? 'fichiers' : 'lectures');
+    const plafond = {
+      ecritures: maxEcritures, fichiers: maxStatiques, lectures: maxParFenetre,
+    }[seau];
 
-    if (trop) {
+    if (e[seau].length >= plafond) {
       /* On dit **quand** réessayer. Un 429 sans `Retry-After` fait rejouer
          aussitôt, ce qui aggrave exactement ce qu'on essaie de calmer. */
       res.setHeader('Retry-After', Math.ceil(fenetreMs / 1000));
+      /* **Une navigation refusée doit rester une page.** Le navigateur qui
+         reçoit du JSON en réponse à une barre d'adresse l'affiche tel quel :
+         l'audit a photographié le message d'erreur en noir sur noir au milieu
+         de la boutique. Ce n'est pas un message, c'est une fuite de plomberie.
+
+         On ne le fait que pour ce qui demande de l'HTML et ne vient pas de
+         l'API : un appel de jeu doit continuer à recevoir un objet que le code
+         sait lire. */
+      if (!req.path.startsWith('/api') && req.accepts?.('html') === 'html') {
+        return res.status(429).type('html').send(PAGE_429(Math.ceil(fenetreMs / 1000)));
+      }
       return res.status(429).json({ error: 'app.error.trop_de_requetes' });
     }
 
-    (ecrit ? e.ecritures : e.lectures).push(now);
+    e[seau].push(now);
     next();
   };
 
@@ -180,6 +241,7 @@ export function debitMaximal({
   middleware.compte = (cle) => ({
     lectures: vus.get(cle)?.lectures.length ?? 0,
     ecritures: vus.get(cle)?.ecritures.length ?? 0,
+    fichiers: vus.get(cle)?.fichiers.length ?? 0,
   });
   middleware.arreter = () => clearInterval(menage);
 

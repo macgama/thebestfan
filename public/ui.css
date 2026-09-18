@@ -854,7 +854,14 @@ body{
 .tbf-onglet{
   flex:1 1 0;min-width:0;
   display:block;text-align:center;
-  padding:10px 6px;line-height:20px;min-height:40px;
+  /* **Quarante-quatre.** Ils en faisaient quarante, sur cinq écrans à la fois —
+     le classement, les amis, le deck, le classeur, le carnet — et c'est la
+     commande qu'on touche le plus souvent après le menu. Quatre pixels sous la
+     pulpe du doigt, répétés trente fois dans le rapport d'audit.
+
+     Deux de padding de chaque côté, et le rail ne bouge pas d'un cheveu pour
+     le reste : la ligne reste calée par `line-height`. */
+  padding:12px 6px;line-height:20px;min-height:44px;
   border:0;background:none;color:var(--craie);
   /* La taille suit la largeur de l'écran, et l'espacement des capitales avec
      elle. Trois onglets dont le plus long fait dix caractères — « MON
@@ -1027,9 +1034,17 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
 
 /* --------------------------------------------------------------- le menu */
 
+/* **Quarante-quatre, pas quarante-deux.** C'est la taille d'une pulpe de doigt,
+   et le minimum que recommandent les deux plateformes. Ces deux boutons-là
+   flottent au-dessus de tous les écrans du jeu : deux pixels manquants, et ce
+   sont les deux commandes les plus utilisées qui se ratent une fois sur dix —
+   celle qui ouvre le menu et celle qui revient en arrière.
+
+   L'audit d'interface les comptait à lui seul quatre-vingt-seize fois, sur
+   vingt pages et trois largeurs. Une ligne. */
 .tbf-burger{
-  width:42px;height:42px;flex:none;
-  display:grid;place-items:center;gap:4px;padding:11px 10px;
+  width:44px;height:44px;flex:none;
+  display:grid;place-items:center;gap:4px;padding:12px 11px;
 }
 .tbf-burger span{display:block;height:2px;width:100%;background:var(--craie);border-radius:2px}
 
@@ -1150,7 +1165,7 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
    ce sont les deux seules commandes qui flottent au-dessus d'un écran de jeu,
    et deux tailles différentes les feraient lire comme deux choses. */
 .tbf-retour{
-  width:42px;height:42px;flex:none;display:grid;place-items:center;
+  width:44px;height:44px;flex:none;display:grid;place-items:center;
   text-decoration:none;color:var(--craie);
 }
 .tbf-retour svg{

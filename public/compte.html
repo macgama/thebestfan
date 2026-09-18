@@ -27,8 +27,14 @@ main{width:100%;max-width:var(--colonne)}
 .wordmark{font-family:var(--banner);font-weight:600;font-size:26px;letter-spacing:.2em;text-align:center}
 .wordmark small{display:block;font-size:9.5px;letter-spacing:.34em;opacity:.5;margin-top:6px;font-family:var(--ui)}
 .langs{display:flex;gap:6px;justify-content:center;margin:22px 0 26px}
+/* La pastille reste une pastille — c'est sa forme qui dit « choix rapide » —
+   mais elle occupe les quarante-quatre pixels du doigt. Elle en faisait
+   vingt-sept, sur l'écran d'un joueur qui vient justement de se tromper de
+   langue et cherche à revenir. */
 .langs button{background:none;border:1px solid rgba(242,238,228,.16);color:inherit;border-radius:999px;
-  padding:5px 11px;font-size:11px;letter-spacing:.08em;cursor:pointer;opacity:.55;font-family:inherit}
+  padding:5px 14px;min-height:44px;min-width:44px;display:inline-flex;align-items:center;
+  justify-content:center;font-size:11px;letter-spacing:.08em;cursor:pointer;opacity:.55;
+  font-family:inherit}
 .langs button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1;font-weight:600}
 /* La barre d'onglets est celle de `ui.css`. Ses boutons n'ont pas de classe :
    ils sont les seuls enfants du rail, et lui seul les désigne. */
