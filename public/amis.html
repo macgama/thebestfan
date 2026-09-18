@@ -78,6 +78,18 @@ h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em
 .kops p{margin:0;font-size:11px;opacity:.55;line-height:1.6}
 
 h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;margin:22px 2px 9px}
+
+/* ------------------------------------------------------- l’invitation
+
+   Elle n’est pas dans la liste, elle est **au-dessus**. Les gens qu’on trouve
+   ici sont ceux qui jouent déjà ; celui qu’on veut vraiment faire venir n’y
+   sera jamais, et le proposer au milieu de la liste reviendrait à espérer
+   qu’on descende jusqu’en bas pour y penser. */
+.convier{border:1px solid var(--trait);border-radius:var(--r);padding:14px 14px 13px;
+  margin-bottom:14px;background:rgba(60,130,232,.07)}
+.convier h3{font-family:var(--banner);font-size:12px;letter-spacing:.14em;margin:0 0 5px}
+.convier p{margin:0 0 11px;font-size:11.5px;line-height:1.65;opacity:.62}
+.convier button{width:100%;font-size:12px;letter-spacing:.1em}
 .vide{border:1px dashed var(--trait);border-radius:var(--r);padding:20px 16px;text-align:center;
   font-size:12.5px;line-height:1.8;opacity:.85}
 .vide a{color:var(--projo)}
@@ -110,6 +122,9 @@ h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;ma
 
 <script src="/fanzzy-art.js"></script>
 <script src="/fanzzy-fond.js"></script>
+<!-- Classique et non différé : `convier()` lit `TBF_PARTAGE.possible` au
+     premier rendu, qui peut arriver avant qu’un script différé s’exécute. -->
+<script src="/partage.js"></script>
 <script>
 /* =======================================================================
    Les amis.
@@ -144,6 +159,8 @@ const MESSAGES = {
   'amis.error.pas_son_club':  'Il ne suit pas le club de ce KOP : il ne pourrait pas entrer.',
   'amis.error.deja_membre':   'Il est déjà dans ce KOP.',
   'amis.error.pas_invite':    'Cette invitation n’existe plus.',
+  'amis.error.invitation_inconnue': 'Ce lien d’invitation ne mène à personne.',
+  'amis.error.invitation_tardive':  'Ce lien ne vaut que pour un compte tout neuf.',
   'amis.error.kop_indisponible':'Les KOP ne répondent pas pour l’instant.',
   'kop.error.pas_ton_club':   'Tu ne suis pas ce club. Suis-le d’abord depuis « Mes clubs ».',
   'kop.error.deja_membre':    'Tu es déjà dans un KOP de ce club. On n’en a qu’un par club.',
@@ -226,9 +243,26 @@ const ligne = (g, boutons, dessous = '') => `
     <span class="quoi">${boutons}</span>
   </div>`;
 
+/**
+ * Le bloc d’invitation.
+ *
+ * Il ne paraît que si le navigateur sait faire quelque chose du lien — la
+ * feuille de partage du téléphone, ou le presse-papiers. Un bouton qui ne fait
+ * rien est pire que pas de bouton : voir `partage.js`, qui rend `possible`.
+ */
+function convier() {
+  if (!window.TBF_PARTAGE?.possible) return '';
+  return `<div class="convier">
+    <h3>FAIRE VENIR QUELQU’UN</h3>
+    <p>Tous ceux d’ici jouent déjà. Envoie ton lien à quelqu’un qui n’a pas
+       encore de place : vous serez amis dès qu’il aura pris la sienne.</p>
+    <button class="tbf-plaque" data-ton="bleu" data-convier>ENVOYER MON LIEN</button>
+  </div>`;
+}
+
 function vueAmis() {
   if (!S.amis.length) {
-    return `<div class="vide">Tu n’as encore personne.<br>
+    return convier() + `<div class="vide">Tu n’as encore personne.<br>
       Ouvre <b>TROUVER</b> : les supporters de tes clubs t’y attendent.</div>`;
   }
   return `<div class="gens">${S.amis.map((g) => {
@@ -282,11 +316,11 @@ function vueDemandes() {
 
 function vueTrouver() {
   if (!S.gens.length) {
-    return `<div class="vide">Personne de neuf pour l’instant.<br>
+    return convier() + `<div class="vide">Personne de neuf pour l’instant.<br>
       Suis d’autres clubs depuis <a href="/equipes">Mes clubs</a> :
       tu croiseras d’autres supporters.</div>`;
   }
-  return `<div class="gens">${S.gens.map((g) => ligne(g,
+  return convier() + `<div class="gens">${S.gens.map((g) => ligne(g,
     `<button class="bt tbf-plaque" data-ton="vert" data-demander="${esc(g.id)}">AJOUTER</button>`,
     `<span class="clubs">${(g.clubs ?? []).map((c) => `<span>${esc(c)}</span>`).join('')}</span>`,
   )).join('')}</div>`;
@@ -329,12 +363,39 @@ $('onglets').onclick = (e) => {
 $('corps').onclick = async (e) => {
   const b = e.target.closest('button[data-oui],button[data-non],button[data-demander],'
     + 'button[data-retirer],button[data-kop],button[data-inviter],'
-    + 'button[data-kopoui],button[data-kopnon]');
+    + 'button[data-kopoui],button[data-kopnon],button[data-convier]');
   if (!b) return;
   const d = b.dataset;
 
   // Le dépliage du choix de KOP ne touche pas au serveur.
   if (d.kop) { S.deplie = S.deplie === d.kop ? null : d.kop; rendre(); return; }
+
+  /* L’invitation ne change rien à la page : elle sort du jeu. Elle ne passe
+     donc pas par le `charger()` commun, qui referait les trois listes pour
+     rien — et surtout qui les referait **après** la feuille de partage, à la
+     seconde où la page reprend la main.
+
+     Le code est redemandé au serveur à chaque fois plutôt que gardé : il est
+     créé au premier appel et ne change plus jamais, l’appel est donc une
+     lecture de rien du tout, et le garder en mémoire ferait porter au premier
+     partage la charge de tous les suivants. */
+  if (d.convier !== undefined) {
+    b.disabled = true;
+    try {
+      const { code } = await api('/invitation');
+      const quoi = await window.TBF_PARTAGE.envoyer({
+        titre: 'thebestfan',
+        texte: 'Prends ta place dans la tribune. On y sera amis.',
+        url: `/compte?ami=${encodeURIComponent(code)}`,
+      });
+      if (quoi === 'copie') toast('Lien copié. Colle-le où tu veux.');
+      else if (quoi === null) toast('Impossible de partager ici.');
+    } catch (err) {
+      if (err.message !== 'auth') toast(dire(err));
+    }
+    b.disabled = false;
+    return;
+  }
 
   b.disabled = true;
   try {

@@ -41,7 +41,7 @@ async function jusqua(fn, ms = 6000) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS abonnements, achats, kop_invites, amities, kop_bulletins, kop_votes,
+await raw.query(`DROP TABLE IF EXISTS abonnements, achats, parrainages, kop_invites, amities, kop_bulletins, kop_votes,
   kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
@@ -126,6 +126,12 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
      que voit tout joueur, puisque personne n'a d'amis au départ. */
   const vide = await texte(page);
   check('sans ami, l’écran dit où en trouver', /TROUVER/.test(vide));
+  /* Et propose de faire venir quelqu'un du dehors. Sur un écran vide, envoyer
+     un lien est la seule chose qu'on puisse faire qui change quelque chose :
+     les suggestions ne proposent que des gens qui jouent déjà, et quelqu'un
+     qui n'a encore personne n'a souvent personne à y trouver. */
+  check('et propose d’en faire venir un du dehors', /FAIRE VENIR/.test(vide)
+    || (console.log('        il dit :', vide.slice(0, 120)), false));
 
   await onglet(page, 'demandes');
   check('sans demande, il le dit aussi', /Rien n’attend/.test(await texte(page)));
@@ -270,6 +276,68 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
     || (console.log('        il dit :', message), false));
   check('et jamais sous forme de code',
     !/amis\.error|kop\.error/.test(message));
+  await p.close();
+}
+
+/* ================================================= faire venir quelqu'un
+
+   Tout le reste de cet écran met en relation des gens **déjà inscrits**. Le
+   bouton d'invitation est le seul qui sorte du jeu, et c'est celui qui décide
+   si un joueur seul le reste.
+
+   On remplace `navigator.share` avant le chargement de la page plutôt qu'après :
+   `partage.js` lit `navigator.share` **à son exécution** pour décider si le
+   bouton existe, et le poser ensuite reviendrait à tester une page dans
+   laquelle le bouton ne s'est jamais affiché. On éprouve donc le vrai chemin —
+   celui du téléphone, qui est celui de presque tout le monde. */
+{
+  const p = await nav.newPage();
+  p.on('pageerror', (e) => erreurs.push(e.message));
+  await p.evaluateOnNewDocument(() => {
+    window.__partages = [];
+    navigator.share = (d) => { window.__partages.push(d); return Promise.resolve(); };
+  });
+  await p.setViewport({ width: 400, height: 900 });
+  await p.goto(base + '/amis', { waitUntil: 'networkidle0' });
+  await jusqua(async () => !/Chargement/.test(await texte(p)));
+
+  /* **Pas au-dessus de la liste d'amis.** Cet onglet-là répond à « qui j'ai » ;
+     y poser en permanence une invitation reviendrait à faire précéder la
+     réponse d'une sollicitation, sur l'écran qu'on ouvre le plus souvent. */
+  check('l’invitation ne s’impose pas au-dessus de ses amis',
+    !/FAIRE VENIR/.test(await texte(p))
+    || (console.log('        il dit :', (await texte(p)).slice(0, 120)), false));
+
+  /* Elle vit sur TROUVER, qui répond à « qui je pourrais avoir » — et c'est là
+     qu'on constate que celui qu'on cherche vraiment n'y est pas. */
+  await onglet(p, 'trouver');
+  check('elle vit là où l’on cherche des gens',
+    /FAIRE VENIR/.test(await texte(p))
+    || (console.log('        il dit :', (await texte(p)).slice(0, 120)), false));
+
+  await p.evaluate(() => document.querySelector('[data-convier]').click());
+  await jusqua(async () => (await p.evaluate(() => window.__partages.length)) > 0);
+  const envoi = await p.evaluate(() => window.__partages[0] ?? null);
+
+  check('le bouton ouvre la feuille de partage du téléphone', Boolean(envoi)
+    || (console.log('        rien n’est parti'), false));
+  /* **Le lien porte le code**, et il mène à l'inscription. Un lien qui
+     enverrait sur l'accueil ferait arriver un inconnu devant un jeu auquel il
+     n'a pas de compte, sans que rien ne dise qui l'attend. */
+  check('et le lien mène à l’inscription, avec le code',
+    /\/compte\?ami=.+/.test(envoi?.url ?? '')
+    || (console.log('        il envoie :', envoi?.url), false));
+  check('il porte aussi un mot, pas seulement une adresse',
+    Boolean(envoi?.texte ?? envoi?.text));
+
+  /* Le même lien deux fois : le code ne change pas. C'est ce qui permet de le
+     coller une fois dans une conversation de groupe et de l'y laisser. */
+  await p.evaluate(() => document.querySelector('[data-convier]').click());
+  await jusqua(async () => (await p.evaluate(() => window.__partages.length)) > 1);
+  const encore = await p.evaluate(() => window.__partages[1] ?? null);
+  check('et il ne change pas d’un partage à l’autre', encore?.url === envoi?.url
+    || (console.log('        puis :', encore?.url), false));
+
   await p.close();
 }
 

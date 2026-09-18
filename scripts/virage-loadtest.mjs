@@ -33,7 +33,14 @@ if (!REMOTE) {
 
   const DB = process.env.DATABASE_URL ?? 'mysql://tbf:tbfpass@127.0.0.1:3307/tbf';
   const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-  await raw.query(`DROP TABLE IF EXISTS abonnements, achats, kop_invites, amities,
+  /* `kops` et `kop_membres` manquaient. Le test de charge ne monte pas les KOP
+     et n'en avait donc pas besoin — mais il partage la base avec les suites,
+     et `kop_invites` référence `kops`, qui référence `users` : lancé après une
+     suite qui en a créé, il échouait sur le DROP de `users` avant d'avoir
+     ouvert une seule connexion. Il n'est pas dans `npm test`, ce qui explique
+     qu'on ne l'ait jamais vu. */
+  await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invites,
+                 kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, amities,
   user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,

@@ -1,4 +1,5 @@
 import express from 'express';
+import { randomBytes } from 'node:crypto';
 import { racineDe, auStade } from '../fanzzy/catalogue.js';
 
 /**
@@ -32,10 +33,40 @@ import { racineDe, auStade } from '../fanzzy/catalogue.js';
  * n'est possible qu'après un délai. Sans cette trace, dire non ne servirait à
  * rien : la demande reviendrait dans la seconde, autant de fois que l'autre le
  * voudrait.
+ *
+ * ## Faire venir quelqu'un du dehors
+ *
+ * Tout ce qui précède met en relation des gens **déjà inscrits**. Or un jeu de
+ * tribunes ne se joue pas avec des inconnus qu'on trouve par club commun : il
+ * se joue avec les gens à qui on dit « viens ». Le lien d'invitation est le
+ * seul chemin par lequel quelqu'un qui ne joue pas encore peut arriver ici en
+ * sachant qui l'attend.
+ *
+ * Il est **réutilisable et unique par joueur** : c'est un lien qu'on colle dans
+ * une conversation de groupe, pas un jeton à usage unique. Celui qui s'en sert
+ * devient ami sans avoir à demander — les deux ont déjà consenti, l'un en
+ * envoyant le lien, l'autre en s'en servant. Faire cliquer « accepter » à
+ * quelqu'un qui vient d'arriver par l'invitation de son ami serait lui faire
+ * répondre à une question qu'il a déjà posée.
  */
 
 /** Le délai avant de pouvoir redemander à quelqu'un qui a dit non. */
 export const DELAI_APRES_REFUS_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Le temps pendant lequel un compte neuf peut encore réclamer son parrainage.
+ *
+ * Il ne le réclame pas lui-même : la page le fait à sa place, dans la seconde
+ * qui suit l'inscription. La fenêtre existe pour le cas où elle échoue — un
+ * réseau qui lâche entre deux appels — et pour empêcher qu'un compte ancien
+ * s'ajoute des amis en rejouant des liens trouvés ailleurs.
+ *
+ * Vingt-quatre heures : assez pour un rattrapage, trop court pour en faire un
+ * usage. Un lien collé dans un groupe public reste utilisable par n'importe qui
+ * **au moment où il s'inscrit**, et c'est exactement ce qu'on veut d'une
+ * invitation partagée.
+ */
+export const FENETRE_PARRAINAGE_MS = 24 * 60 * 60 * 1000;
 
 /** Au plus tant de suggestions : c'est une page, pas un annuaire. */
 const MAX_SUGGESTIONS = 40;
@@ -356,6 +387,114 @@ export function createAmis({ pool, requireAuth, kop = null }) {
     return { rejoint };
   }
 
+  /* ------------------------------------------------------- l'invitation */
+
+  /**
+   * Le code d'invitation de quelqu'un, créé au premier partage.
+   *
+   * Pas à l'inscription : la plupart des joueurs n'inviteront jamais personne,
+   * et une table qui porte une ligne par compte pour servir un dixième d'entre
+   * eux est une table qu'on relit mal. Il naît le jour où on appuie sur le
+   * bouton, et il ne meurt qu'avec le compte.
+   *
+   * Douze caractères tirés au hasard — soixante-douze bits. Ce n'est pas un
+   * secret à protéger, c'est un identifiant qui ne doit pas se deviner : un
+   * code court se balaie, et on tomberait sur des gens au hasard.
+   */
+  async function monInvitation(userId) {
+    const deja = (await q(`SELECT code FROM parrainages WHERE par = ?`, [userId]))[0];
+    if (deja) return { code: deja.code };
+
+    /* Trois essais. La collision est invraisemblable à soixante-douze bits ;
+       la boucle est là pour ne pas rendre une erreur serveur le jour où elle
+       arrive, pas parce qu'on l'attend. */
+    for (let i = 0; i < 3; i += 1) {
+      const code = randomBytes(9).toString('base64url');
+      try {
+        await q(`INSERT INTO parrainages (code, par) VALUES (?, ?)`, [code, userId]);
+        return { code };
+      } catch (e) {
+        if (e.code !== 'ER_DUP_ENTRY') throw e;
+        /* Deux partages simultanés depuis deux onglets : c'est la contrainte
+           sur `par` qui a parlé, pas celle sur le code. Le code de l'autre
+           onglet est le bon — on le relit plutôt que d'en forcer un second. */
+        const pose = (await q(`SELECT code FROM parrainages WHERE par = ?`, [userId]))[0];
+        if (pose) return { code: pose.code };
+      }
+    }
+    throw fail('amis.error.server');
+  }
+
+  /**
+   * Qui invite, derrière un code. **Sans authentification** : celui qui suit le
+   * lien n'a pas encore de compte, c'est tout l'objet.
+   *
+   * On rend un pseudo et un Fanzzy, rien d'autre — ce qu'un classement montre
+   * déjà. Le code ne dit donc pas plus que ce que la personne montre en jouant,
+   * et il ne mène à rien qu'on puisse faire en son nom.
+   */
+  async function parrainDe(code) {
+    if (!code) return null;
+    const l = (await q(
+      `SELECT u.public_id AS id, u.pseudo, w.active_fanzzy, w.active_evo, uf.stage
+         FROM parrainages p
+         JOIN users u ON u.public_id = p.par
+         LEFT JOIN user_wallet w ON w.user_id = u.public_id
+         LEFT JOIN user_fanzzy uf ON uf.user_id = u.public_id
+                                 AND uf.fanzzy_id = w.active_fanzzy
+        WHERE p.code = ?`, [String(code)]))[0];
+    if (!l) return null;
+    return { id: l.id, pseudo: l.pseudo, fanzzy: ageDe(l.active_fanzzy, l.stage, l.active_evo) };
+  }
+
+  /**
+   * Un compte neuf réclame le parrainage qui l'a fait venir.
+   *
+   * L'amitié est écrite **acceptée**, pas en attente : les deux ont consenti,
+   * l'un en envoyant le lien, l'autre en s'en servant pour s'inscrire.
+   *
+   * Trois refus, et aucun n'est une panne :
+   *
+   *   — **le code ne mène à personne.** Un lien tronqué par une application de
+   *     messagerie, ou un compte supprimé depuis.
+   *   — **ce n'est pas un compte neuf.** La fenêtre est passée : quelqu'un
+   *     rejoue un lien ramassé ailleurs pour s'ajouter des amis.
+   *   — **ces deux-là se connaissent déjà.** Y compris un refus : le lien
+   *     d'invitation ne doit pas devenir le moyen de contourner un non. C'est
+   *     la seule mesure du jeu contre le harcèlement, et elle ne souffre pas
+   *     d'exception — même si, ici, elle ne peut se produire qu'en rejouant.
+   */
+  async function accepterParrainage(userId, code) {
+    const parrain = await parrainDe(code);
+    if (!parrain) throw fail('amis.error.invitation_inconnue');
+    if (parrain.id === userId) throw fail('amis.error.soi_meme');
+
+    const moi = (await q(
+      `SELECT UNIX_TIMESTAMP(created_at) * 1000 AS neLe FROM users WHERE public_id = ?`,
+      [userId]))[0];
+    if (!moi) throw fail('amis.error.inconnu');
+    /* L'époque en SQL, comme partout ailleurs dans ce module : relire un
+       DATETIME comme une date de JavaScript le décale du fuseau de la session,
+       et la fenêtre s'ouvrirait ou se fermerait deux heures trop tôt. */
+    if (Date.now() - Number(moi.neLe ?? 0) > FENETRE_PARRAINAGE_MS) {
+      throw fail('amis.error.invitation_tardive');
+    }
+
+    const deja = await lien(userId, parrain.id);
+    if (deja) throw fail(deja.etat === 'amis' ? 'amis.error.deja_amis' : 'amis.error.deja_demande');
+
+    const [a, b] = paire(userId, parrain.id);
+    try {
+      await q(`INSERT INTO amities (a, b, par, etat, repondu_le)
+               VALUES (?, ?, ?, 'amis', NOW(3))`, [a, b, parrain.id]);
+    } catch (e) {
+      // Deux onglets, deux fois le même lien : la base a tranché.
+      if (e.code === 'ER_DUP_ENTRY') throw fail('amis.error.deja_amis');
+      throw e;
+    }
+    return { ami: { id: parrain.id, pseudo: parrain.pseudo, fanzzy: parrain.fanzzy } };
+  }
+
   /* ------------------------------------------------------------- routes */
 
   const router = express.Router();
@@ -386,6 +525,21 @@ export function createAmis({ pool, requireAuth, kop = null }) {
   router.delete('/:id', requireAuth, safe(async (req, res) =>
     res.json(await retirer(req.user.id, String(req.params.id)))));
 
+  router.get('/invitation', requireAuth, safe(async (req, res) =>
+    res.json(await monInvitation(req.user.id))));
+
+  /* **Sans `requireAuth`**, et c'est le seul point d'entrée du module qui s'en
+     passe : celui qui arrive par le lien n'a pas de compte. Il ne lit qu'un
+     pseudo, et seulement s'il porte le code exact. */
+  router.get('/invitation/:code', safe(async (req, res) => {
+    const parrain = await parrainDe(String(req.params.code ?? ''));
+    if (!parrain) return res.status(404).json({ error: 'amis.error.invitation_inconnue' });
+    res.json({ parrain: { pseudo: parrain.pseudo, fanzzy: parrain.fanzzy } });
+  }));
+
+  router.post('/parrainage', requireAuth, safe(async (req, res) =>
+    res.json(await accepterParrainage(req.user.id, String(req.body?.code ?? '')))));
+
   router.post('/kop/inviter', requireAuth, safe(async (req, res) =>
     res.json(await inviterAuKop(req.user.id, String(req.body?.id ?? ''),
       String(req.body?.kopId ?? '')))));
@@ -395,5 +549,6 @@ export function createAmis({ pool, requireAuth, kop = null }) {
       Boolean(req.body?.ok)))));
 
   return { router, tableau, suggestions, demander, repondre, retirer,
-           inviterAuKop, repondreAuKop };
+           inviterAuKop, repondreAuKop,
+           monInvitation, parrainDe, accepterParrainage };
 }

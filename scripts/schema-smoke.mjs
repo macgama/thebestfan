@@ -139,6 +139,92 @@ check('rattrapage.sql est écarté : il corrige, il ne décrit pas',
     || (console.log(`        il annonce ${annonce || '—'}, sql/ en déclare ${declarees}`), false));
 }
 
+/* ------------------------- les suites savent-elles encore vider la base ?
+
+   Chaque suite vide la base au démarrage avec sa propre liste de `DROP TABLE`,
+   écrite à la main. Or **une table fille bloque le DROP de sa mère** : ajouter
+   une table qui référence `users` et oublier de l'ajouter à ces listes fait
+   tomber toutes les suites qui suppriment `users` — avant leur premier
+   contrôle, donc sans une seule ligne rouge pour dire pourquoi.
+
+   C'est arrivé le jour de `parrainages` : huit suites d'un coup, chacune
+   annonçant « sortie 1 · 2s » et rien d'autre. Le diagnostic a pris plus de
+   temps que la correction, qui tenait en un mot par fichier.
+
+   Ce contrôle-là s'occupe donc du dossier entier : il relit les `sql/` pour
+   savoir qui référence quoi, puis vérifie que toute suite qui supprime une
+   table mère supprime aussi ses filles. Il n'empêche pas d'ajouter une table —
+   il empêche de l'ajouter **à moitié**.
+
+   Les suites qui construisent leur liste depuis `information_schema` sont
+   écartées nommément : elles suppriment déjà tout ce qui existe, ce qui est la
+   meilleure réponse au problème, et rien ne leur manque jamais. */
+{
+  const SCRIPTS = path.join(SQL, '..', 'scripts');
+  const DYNAMIQUES = new Set(['prefixes-smoke.mjs', 'audit-ui.mjs']);
+
+  /* Qui référence qui. On lit le texte des fichiers plutôt que la base : le
+     but est de juger ce que `sql/` **déclare**, et une base dont il manque un
+     fichier rendrait un graphe incomplet sans le dire. */
+  const enfants = new Map();   // mère → [filles]
+  for (const f of (await readdir(SQL)).filter((x) => x.endsWith('.sql'))) {
+    const texte = readFileSync(path.join(SQL, f), 'utf8');
+    /* Une table court jusqu'au `CREATE TABLE` suivant : c'est assez pour
+       rattacher chaque `REFERENCES` à la table qui le porte. */
+    for (const bloc of texte.split(/CREATE TABLE IF NOT EXISTS\s+/i).slice(1)) {
+      const fille = bloc.match(/^`?(\w+)`?/)?.[1];
+      if (!fille) continue;
+      for (const m of bloc.matchAll(/REFERENCES\s+`?(\w+)`?/gi)) {
+        const mere = m[1];
+        if (mere === fille) continue;   // une hiérarchie sur elle-même
+        if (!enfants.has(mere)) enfants.set(mere, new Set());
+        enfants.get(mere).add(fille);
+      }
+    }
+  }
+  check('les fichiers de sql/ décrivent des clés étrangères', enfants.size >= 3
+    || (console.log('        mères vues :', [...enfants.keys()].join(' ')), false));
+
+  const manques = [];
+  for (const f of (await readdir(SCRIPTS)).filter((x) => x.endsWith('.mjs'))) {
+    if (DYNAMIQUES.has(f)) continue;
+    const texte = readFileSync(path.join(SCRIPTS, f), 'utf8');
+    if (!/DROP TABLE IF EXISTS/.test(texte)) continue;
+    /* **Couper les clés étrangères est l'autre bonne réponse**, et plusieurs
+       suites la prennent déjà : `SET FOREIGN_KEY_CHECKS = 0` fait tomber
+       n'importe quelle table sans égard pour ses filles. C'est même la plus
+       robuste des deux — elle ne demande rien à personne le jour où une table
+       s'ajoute. Une suite qui le fait n'a donc rien à déclarer ici.
+
+       Ce contrôle ne juge que celles qui ont choisi de nommer leur liste : à
+       elles de la tenir. */
+    if (/FOREIGN_KEY_CHECKS\s*=\s*0/.test(texte)) continue;
+    /* Ce que cette suite dit supprimer : **la clause elle-même**, et rien
+       d'autre du fichier. Chercher les noms dans tout le texte paraissait plus
+       sûr et se trompait dans l'autre sens : une suite qui ne fait qu'insérer
+       dans `users` était accusée de la supprimer sans ses filles. Trente-neuf
+       reproches, aucun vrai — un contrôle qui crie sans raison finit décoché.
+
+       La clause court jusqu'au point-virgule ou jusqu'à la fin du gabarit de
+       chaîne qui la porte : les deux formes existent dans scripts/. */
+    const nomme = new Set();
+    for (const m of texte.matchAll(/DROP TABLE IF EXISTS([^;`]*)/gi)) {
+      for (const nom of m[1].match(/[a-z_][a-z0-9_]*/gi) ?? []) nomme.add(nom);
+    }
+    for (const [mere, filles] of enfants) {
+      if (!nomme.has(mere)) continue;
+      for (const fille of filles) {
+        if (!nomme.has(fille)) manques.push(`${f} : supprime ${mere}, pas ${fille}`);
+      }
+    }
+  }
+  check('chaque suite qui vide la base emporte les tables filles',
+    manques.length === 0
+    || (console.log('       ', manques.slice(0, 6).join('\n        ')),
+      manques.length > 6 && console.log(`        … et ${manques.length - 6} de plus`),
+      false));
+}
+
 /* ------------------------------------------- la base de test est complète */
 
 const surBaseSaine = await verifierSchema(pool, SQL);

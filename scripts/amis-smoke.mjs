@@ -23,7 +23,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createAmis, DELAI_APRES_REFUS_MS } from '../src/server/amis/index.js';
+import { createAmis, DELAI_APRES_REFUS_MS, FENETRE_PARRAINAGE_MS } from '../src/server/amis/index.js';
 import { createKop } from '../src/server/kop/index.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
@@ -42,7 +42,7 @@ async function refus(fn) {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS abonnements, achats, kop_invites, amities, kop_bulletins, kop_votes,
+await raw.query(`DROP TABLE IF EXISTS abonnements, achats, parrainages, kop_invites, amities, kop_bulletins, kop_votes,
   kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
@@ -322,6 +322,95 @@ const A = createAmis({ pool, requireAuth: (r, _s, n) => n(), kop });
   await A.inviterAuKop(CLA, ANA, autre.id);
   const code = await refus(() => A.repondreAuKop(ANA, autre.id, true));
   check('un refus du KOP garde les mots du KOP', code.startsWith('kop.error.'));
+}
+
+/* ======================================================= le lien d'invitation
+
+   Tout ce qui précède met en relation des gens **déjà inscrits**. Le lien
+   d'invitation est le seul chemin par lequel quelqu'un du dehors entre, et il
+   a deux propriétés qu'on ne voit qu'en l'éprouvant : il ne change pas, et il
+   ne vaut que pour un compte neuf.
+
+   La seconde est une règle de sécurité, pas de confort. Sans elle, un lien
+   ramassé dans une conversation de groupe permettrait à n'importe quel compte
+   de s'ajouter n'importe qui — y compris quelqu'un qui l'a déjà refusé. */
+console.log('\n— le lien d’invitation —');
+{
+  const un = await A.monInvitation(ANA);
+  check('le premier partage crée un code', typeof un.code === 'string' && un.code.length >= 8
+    || (console.log('        il rend :', JSON.stringify(un)), false));
+
+  /* **Le même, toujours.** C'est un lien qu'on colle dans une conversation et
+     qui y reste des mois : en changer casserait celui d'hier, dans un fil que
+     personne ne relira. */
+  const deux = await A.monInvitation(ANA);
+  check('et le suivant rend le même', deux.code === un.code);
+
+  const bob = await A.monInvitation(BOB);
+  check('chacun a le sien', bob.code !== un.code);
+
+  /* Ce que lit celui qui n'a pas encore de compte : un pseudo, un Fanzzy, et
+     rien d'autre. Pas d'adresse, pas d'identifiant à réutiliser ailleurs. */
+  const vu = await A.parrainDe(un.code);
+  check('le lien dit qui invite', vu?.pseudo === 'Ana');
+  check('et rien de plus qu’un classement n’en montre',
+    !('email' in (vu ?? {})) && Object.keys(vu ?? {}).sort().join(',') === 'fanzzy,id,pseudo'
+    || (console.log('        il rend :', Object.keys(vu ?? {}).join(',')), false));
+  check('un code inconnu ne mène à personne', (await A.parrainDe('nexistepas')) === null);
+
+  /* ------------------------------------------------------ le compte neuf */
+
+  const NEO = 'cccccccc-0000-0000-0000-000000000009';
+  await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
+    [NEO, 'neo@ex.fr', 'Neo']);
+  await pool.query(`INSERT INTO user_wallet (user_id,scarves) VALUES (?,0)`, [NEO]);
+
+  const arrive = await A.accepterParrainage(NEO, un.code);
+  check('un compte neuf qui suit le lien devient ami', arrive?.ami?.pseudo === 'Ana');
+
+  /* **Amis tout de suite, pas en attente.** Les deux ont consenti : l'un en
+     envoyant le lien, l'autre en s'en servant pour s'inscrire. Faire cliquer
+     « accepter » à quelqu'un qui vient d'arriver par l'invitation de son ami,
+     c'est lui faire répondre à une question qu'il a déjà posée. */
+  const chezNeo = await A.tableau(NEO);
+  check('et l’amitié est immédiate, pas en attente',
+    chezNeo.amis.some((g) => g.id === ANA) && chezNeo.recues.length === 0
+    || (console.log('        amis :', chezNeo.amis.length,
+      '· reçues :', chezNeo.recues.length), false));
+  check('des deux côtés', (await A.tableau(ANA)).amis.some((g) => g.id === NEO));
+
+  /* Une seule ligne pour deux personnes, ici comme ailleurs : le parrainage ne
+     passe pas à côté du rangement de la paire. */
+  const lignes = (await pool.query(
+    `SELECT 1 FROM amities WHERE (a = ? AND b = ?) OR (a = ? AND b = ?)`,
+    [NEO, ANA, ANA, NEO]))[0];
+  check('une seule ligne en base', lignes.length === 1);
+
+  check('le même lien deux fois ne fait rien de plus',
+    await refus(() => A.accepterParrainage(NEO, un.code)) === 'amis.error.deja_amis');
+  check('et on ne se parraine pas soi-même',
+    await refus(() => A.accepterParrainage(ANA, un.code)) === 'amis.error.soi_meme');
+  check('un code inconnu est refusé nommément',
+    await refus(() => A.accepterParrainage(NEO, 'nexistepas'))
+      === 'amis.error.invitation_inconnue');
+
+  /* ------------------------------------------- un compte qui n'est plus neuf
+
+     C'est le contrôle qui compte. Sans la fenêtre, n'importe quel joueur
+     pourrait rejouer un lien trouvé ailleurs pour s'ajouter n'importe qui —
+     **y compris quelqu'un qui l'a déjà refusé**, ce qui ferait du lien
+     d'invitation le contournement du seul garde-fou du jeu contre le
+     harcèlement. */
+  const VIEUX = 'dddddddd-0000-0000-0000-000000000010';
+  await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash,created_at)
+                   VALUES (?,?,?,'x', NOW(3) - INTERVAL ? SECOND)`,
+    [VIEUX, 'vieux@ex.fr', 'Vieux', Math.round(FENETRE_PARRAINAGE_MS / 1000) + 60]);
+  await pool.query(`INSERT INTO user_wallet (user_id,scarves) VALUES (?,0)`, [VIEUX]);
+  check('un compte plus ancien que la fenêtre est refusé',
+    await refus(() => A.accepterParrainage(VIEUX, un.code)) === 'amis.error.invitation_tardive');
+  check('et rien ne s’est écrit', !(await pool.query(
+    `SELECT 1 FROM amities WHERE (a = ? AND b = ?) OR (a = ? AND b = ?)`,
+    [VIEUX, ANA, ANA, VIEUX]))[0].length);
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
