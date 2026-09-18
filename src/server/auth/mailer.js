@@ -15,6 +15,39 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
   let derniereErreur = null;
 
   /**
+   * Caviarder un message d'erreur avant de le garder.
+   *
+   * **`/healthz` est public.** Il n'y a pas de session, pas de jeton, pas de
+   * réseau privé : c'est une sonde d'hébergeur, elle doit répondre à tout le
+   * monde. Or `derniereErreur` y est servi tel quel, et nodemailer met la
+   * valeur qu'il a reçue dans ses messages — le 18 septembre 2026, la sonde
+   * annonçait au monde entier :
+   *
+   *     Cannot create property 'mailer' on string
+   *     'info@thebestfan.online:<le mot de passe>:465'
+   *
+   * Le mot de passe SMTP du domaine, en clair, sur une adresse publique, à
+   * cause d'une variable mal formée. Ce n'est pas nodemailer qui a tort : un
+   * message d'erreur cite ce qu'on lui a donné, c'est son travail.
+   *
+   * On retire donc **les secrets qu'on connaît** — on les connaît tous, ils
+   * viennent d'ici — avant de ranger quoi que ce soit. Et on passe ensuite un
+   * filet générique sur la forme `identifiant:secret@hôte`, pour le jour où un
+   * secret arrivera par un chemin qu'on n'a pas prévu.
+   */
+  const SECRETS = [pass, smtpUrl].filter((x) => typeof x === 'string' && x.length >= 4);
+  const caviarder = (message) => {
+    let t = String(message ?? '');
+    for (const secret of SECRETS) t = t.split(secret).join('[caviardé]');
+    /* Le filet : tout ce qui ressemble à des identifiants dans une URL. Il ne
+       remplace pas la liste ci-dessus — il la double, et c'est volontaire. */
+    return t.replace(/\/\/[^\s/@]+:[^\s/@]+@/g, '//[caviardé]@')
+      .replace(/'[^'\s]*:[^'\s]*:\d+'/g, "'[caviardé]'");
+  };
+  /** Tout passe par ici. Écrire dans `derniereErreur` directement est la faute. */
+  const retenir = (message) => { derniereErreur = caviarder(message); };
+
+  /**
    * Configuration du transport.
    *
    * Deux façons de le décrire, parce que l'URL est piégeuse : l'identifiant
@@ -28,6 +61,34 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
       return { host, port: p, secure: secure ?? p === 465, auth: { user, pass } };
     }
     return smtpUrl || null;
+  }
+
+  /**
+   * `SMTP_URL` est-il une URL ?
+   *
+   * Sans schéma, nodemailer reçoit une chaîne qu'il prend pour un objet de
+   * configuration et échoue sur `Cannot create property 'mailer' on string` —
+   * un message qui ne nomme pas le vrai défaut et qui, en le citant, publiait
+   * le mot de passe.
+   *
+   * On le dit donc ici, clairement, et **sans citer la valeur** : c'est la
+   * forme qui est fausse, pas le secret qui est intéressant.
+   *
+   * La cause est presque toujours la même : l'identifiant SMTP est une adresse
+   * e-mail, elle contient un `@`, et on écrit `user@domaine:motdepasse:465` en
+   * croyant faire une URL. Les quatre variables séparées — SMTP_HOST,
+   * SMTP_USER, SMTP_PASS, SMTP_PORT — n'ont pas ce piège, et c'est pour ça
+   * qu'elles passent devant dans `config()`.
+   */
+  function urlDouteuse() {
+    if (host && user) return null;
+    if (!smtpUrl) return null;
+    if (/^smtps?:\/\//i.test(smtpUrl)) return null;
+    return 'SMTP_URL n’est pas une URL : il lui manque « smtps:// » et le nom du '
+      + 'serveur. Préfère les quatre variables séparées — SMTP_HOST, SMTP_USER, '
+      + 'SMTP_PASS, SMTP_PORT — qui évitent le piège de l’arobase dans '
+      + 'l’identifiant. (La valeur n’est pas répétée ici : elle contient le mot '
+      + 'de passe, et cet état est lisible depuis /healthz, qui est public.)';
   }
 
   async function getTransport() {
@@ -46,16 +107,16 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
           console.log('[mail] connexion SMTP vérifiée');
         } catch (e) {
           etat = 'smtp-erreur';
-          derniereErreur = e.message;
-          console.error('[mail] SMTP refusé :', e.message);
+          retenir(e.message);
+          console.error('[mail] SMTP refusé :', caviarder(e.message));
           console.error('[mail] les messages seront écrits dans cette console');
           return null;
         }
         return transport;
       })().catch((e) => {
         etat = 'smtp-erreur';
-        derniereErreur = e.message;
-        console.error('[mail] transport indisponible, repli console :', e.message);
+        retenir(e.message);
+        console.error('[mail] transport indisponible, repli console :', caviarder(e.message));
         return null;
       });
     }
@@ -75,8 +136,8 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
         from: from ?? 'thebestfan <no-reply@thebestfan.online>', to, subject, text });
       return { delivered: true, logged: false, id: info.messageId };
     } catch (e) {
-      derniereErreur = e.message;
-      console.error('[mail] envoi refusé :', e.message);
+      retenir(e.message);
+      console.error('[mail] envoi refusé :', caviarder(e.message));
       console.log(`\n[mail → ${to}] ${subject}\n${text}\n`);
       return { delivered: false, logged: true, erreur: e.message };
     }
@@ -92,7 +153,19 @@ export function createMailer({ smtpUrl, host, port, user, pass, secure, from, or
 
   return {
     /** État pour /healthz et pour la route de diagnostic. */
-    get status() { return { etat, erreur: derniereErreur, configure: Boolean(config()) }; },
+    /* Ce que sert `/healthz`, qui est public. L'erreur y est déjà caviardée à
+       l'écriture ; le `caviarder` de sortie est une seconde barrière, pour le
+       jour où quelqu'un écrira dans `derniereErreur` sans passer par
+       `retenir`. Deux barrières sur un secret, ce n'est pas de la paranoïa —
+       c'est le prix d'une qui cède sans qu'on le voie. */
+    get status() {
+      const forme = urlDouteuse();
+      return {
+        etat, configure: Boolean(config()),
+        erreur: derniereErreur === null ? null : caviarder(derniereErreur),
+        ...(forme ? { forme } : {}),
+      };
+    },
 
     /** Envoi de contrôle, déclenché par un administrateur. */
     async test(to) {

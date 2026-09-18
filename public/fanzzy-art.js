@@ -86,12 +86,6 @@
     'TR52', 'TR53', 'GD12', 'GD13', 'MS35', 'HC16', 'TR54', 'IM1',
     'IM2', 'IM3', 'IM4', 'IM5', 'IM6', 'IM7', 'IM8', 'IM9',
     'IM12', 'IM13', 'IM14', 'IM15', 'IM16', 'IM17', 'TR1', 'TR2',
-    /* Les âges supérieurs des trois lignées dont la carte est dessinée.
-       Sans eux, `racineIllustree` redescendait à la racine et servait le
-       dessin du **premier âge** à qui avait payé le deuxième — en silence, ce
-       qui est le pire : les six fichiers étaient produits, ils n'étaient
-       simplement déclarés nulle part. */
-    'TR1B', 'TR1C', 'TR3B', 'TR3C', 'TR50B', 'TR50C',
     'TR3', 'TR4', 'TR5', 'TR6', 'TR7', 'TR8', 'TR9', 'TR10',
     'TR11', 'TR12', 'TR13', 'TR14', 'TR15', 'TR16', 'TR17', 'TR18',
     'TR19', 'TR20', 'TR21', 'TR22', 'TR23', 'TR24', 'TR25', 'TR26',
@@ -110,7 +104,13 @@
     'EP5', 'EP6', 'EP7', 'EP8', 'EP9', 'EP10', 'EP11', 'EP12',
     'EP13', 'EP14', 'EP15', 'EP16', 'EP17', 'TR55', 'TR56', 'TR57',
     'TR58', 'TR59', 'TR28', 'TR29', 'TR30', 'TR31', 'VP1', 'VP2',
-    'VP3', 'VP4', 'GC1',
+    'VP3', 'VP4', 'GC1', 'RP1', 'RP1B', 'RP1C', 'RP2', 'RP2B',
+    'RP2C', 'RP3', 'RP3B', 'RP3C', 'RP4', 'RP4B', 'RP4C', 'RP5',
+    'RP5B', 'RP5C', 'RP6', 'RP6B', 'RP6C', 'RP7', 'RP7B', 'RP7C',
+    'RP8', 'RP8B', 'RP8C', 'RP9', 'RP9B', 'RP9C', 'RP10', 'RP10B',
+    'RP10C', 'RP11', 'RP11B', 'RP11C', 'RP12', 'RP12B', 'RP12C', 'RP13',
+    'RP14', 'RP15', 'RP16', 'RP17', 'TR1B', 'TR1C', 'TR3B', 'TR3C',
+    'TR50B', 'TR50C',
   ]);
 
   /**
