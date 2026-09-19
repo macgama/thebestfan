@@ -1289,6 +1289,16 @@ function inviteAge(f) {
         : ''),
     '',
     'Do not change anything else. One single figure, same empty flat background.',
+    /* **Le fond est blanc, mais l'ombre portée ne l'est pas.** Les douze états
+       de RP1 sont sortis avec une flaque grise sous les pieds — un sol, en
+       somme —, et le détourage de `fanzzy-art.mjs` la garde : il ne retire
+       que le fond, et cette tache n'en fait plus partie. Deux vignettes sur
+       trente-six traînaient donc un bout de trottoir dans le classeur.
+       On l'interdit ici plutôt qu'on ne la retouche là-bas : c'est le même
+       principe que pour les écussons — régénérer, pas rattraper. */
+    'CRITICAL — no ground, no floor, no cast shadow, no contact shadow, no '
+      + 'shading of any kind under the feet. The figure sits on a completely '
+      + 'uniform background with nothing beneath it.',
     '',
     /* Les pastilles cousues sont l'endroit exact où un générateur écrit : les
        deux âges de TR1 en sont revenus couverts de « CAPO », « TICKET » et de
@@ -1408,6 +1418,16 @@ function inviteEtat(f, etat) {
       + `What ${sujet} WEAR${humain ? '' : 'S'} always stays.`,
     '',
     'Do not change anything else. One single figure, same empty flat background.',
+    /* **Le fond est blanc, mais l'ombre portée ne l'est pas.** Les douze états
+       de RP1 sont sortis avec une flaque grise sous les pieds — un sol, en
+       somme —, et le détourage de `fanzzy-art.mjs` la garde : il ne retire
+       que le fond, et cette tache n'en fait plus partie. Deux vignettes sur
+       trente-six traînaient donc un bout de trottoir dans le classeur.
+       On l'interdit ici plutôt qu'on ne la retouche là-bas : c'est le même
+       principe que pour les écussons — régénérer, pas rattraper. */
+    'CRITICAL — no ground, no floor, no cast shadow, no contact shadow, no '
+      + 'shading of any kind under the feet. The figure sits on a completely '
+      + 'uniform background with nothing beneath it.',
     '',
     PAS_CHEZ_MOI[f.type]
       ? `CRITICAL — they belong to one family only: ${PAS_CHEZ_MOI[f.type]}.`

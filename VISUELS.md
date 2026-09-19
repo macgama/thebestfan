@@ -41,6 +41,21 @@ Regarder l'image avant de l'intégrer. Les générateurs ajoutent spontanément 
 écussons sur les vestes et des lettres sur les bannières, même quand on le leur
 interdit. Si c'est le cas, régénérer plutôt que retoucher.
 
+## Les dos de carte
+
+Un dos par série, dans `art/dos/<CODE>.png`, publié par `npm run dos`. Ce sont
+les seuls visuels du jeu qui soient des **emblèmes** — et c'est précisément là
+que la règle se casse toute seule : un emblème centré et symétrique glisse vers
+l'écusson de club sans qu'on le demande.
+
+Trois interdits s'ajoutent donc à ceux du haut, et ils sont à écrire dans
+l'invite : pas de forme de blason, pas de bouclier, pas de monogramme. Le motif
+reste géométrique et ornemental, jamais héraldique.
+
+Le dos montré à l'ouverture est celui du **sachet**, jamais celui de la carte :
+une carte dont le dos annonce sa série n'a plus rien à révéler quand on la
+retourne.
+
 ## Une distinction à ne pas confondre
 
 Cette règle concerne les visuels **que nous fabriquons**.

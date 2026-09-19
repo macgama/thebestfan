@@ -30,6 +30,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
 import { createFanzzy } from '../src/server/fanzzy/index.js';
+import { BY_ID } from '../src/shared/fanzzy/dex.js';
 import { createOnboarding } from '../src/server/onboarding/index.js';
 import { createNiveau } from '../src/server/niveau/index.js';
 import { seuil } from '../src/shared/niveau.js';
@@ -724,8 +725,17 @@ await page.close();
     check('le Fanzzy équipé remplace le supporter',
       new RegExp(`/img/fanzzy/${ID}/e1/base/neutre\\.`).test(v.src ?? ''));
     check('sa révision est dans l’adresse', /\?v=\d+/.test(v.src ?? ''));
-    check('il porte son nom pour qui ne voit pas l’écran',
-      /Teigneux/.test(await page.$eval('#pile .pose.on', (n) => n.alt)));
+    /* **Le nom se lit dans le catalogue, il ne s'écrit pas ici.** `ID` est
+       choisi plus haut par ce qui est dessiné — et le jour où une lignée neuve
+       passe devant dans `index.json`, c'est elle qu'on équipe. Le contrôle
+       attendait « Teigneux » : il a rougi le soir où LA REPRISE est arrivée,
+       en annonçant une panne d'accessibilité là où il n'y avait qu'un autre
+       personnage. Un test qui nomme sa donnée mesure l'ordre du dossier. */
+    const attendu = BY_ID.get(ID)?.nom ?? '';
+    const alt = await page.$eval('#pile .pose.on', (n) => n.alt);
+    check(`il porte son nom pour qui ne voit pas l’écran — ${attendu}`,
+      !!attendu && alt.includes(attendu)
+      || (console.log('        alt :', alt), false));
 
     await page.evaluate(() => TBF.pose('but'));
     await new Promise((r) => setTimeout(r, 600));

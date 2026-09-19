@@ -566,6 +566,17 @@ titre('Les douze états sont douze moments du même personnage');
     || (console.log('        ', objets[0]?.invite.slice(0, 80)), false));
   check('et on ne lui parle pas de ses vêtements',
     objets.every((x) => !/same clothes/.test(x.invite)));
+
+  /* **Le fond est blanc, l'ombre portée ne l'est pas.** Les douze états de RP1
+     sont sortis avec une flaque grise sous les pieds, et le détourage de
+     `fanzzy-art.mjs` la garde : il ne retire que le fond, et un sol n'en fait
+     plus partie. Deux vignettes sur trente-six ont donc emporté un bout de
+     trottoir dans le classeur. C'est ici que ça se règle — comme les écussons,
+     on régénère plutôt qu'on ne retouche — et c'est ici que ça se vérifie,
+     parce qu'une image coûte cent trente crédits et qu'il y en a cinq cents. */
+  const sansOmbre = lot.filter((x) => !/no cast shadow, no contact shadow/.test(x.invite));
+  check('aucun état n’autorise d’ombre au sol', sansOmbre.length === 0
+    || (console.log('        ', sansOmbre.map((x) => x.id + '/' + x.etat).join(' ')), false));
 }
 
 console.log(rouge ? `\n${rouge} test(s) en échec` : '\ntout est vert');
