@@ -692,6 +692,83 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
     !manquants.length || (console.log('        manque :', manquants.join(', ')), false));
 }
 
+/* ================================ une carte se dessine à sa propre échelle
+
+   **Toutes les cartes du jeu étaient dessinées à la moitié de leur taille.**
+
+   `cartes.css` pose `container-type: inline-size` sur `.fz`, puis écrivait
+   `@container (min-width: 0px){ .fz{--u:1cqw} }` pour que tout ce que la carte
+   dessine suive sa largeur. Un élément qui établit un conteneur **ne peut pas
+   s'interroger lui-même** : la condition se résout contre le conteneur ancêtre,
+   il n'y en a aucun au-dessus d'une carte, et la règle n'a jamais pris. `--u`
+   restait au repli de 1,3 px quelle que soit la taille de la carte.
+
+   Ça ne se lisait pas comme une panne. Le cadre était là, les couleurs aussi,
+   avec un nom deux fois trop petit et une illustration perdue dans un grand
+   vide — ce qu'on met volontiers sur le compte du dessin.
+
+   ## Ce que ce contrôle mesure, et pourquoi pas la règle
+
+   Il ne lit pas `--u` : une valeur de variable ne dit pas si la carte est juste,
+   et la prochaine réécriture de la feuille pourrait très bien s'en passer. Il
+   mesure **le comportement** — la même carte à deux largeurs doit dessiner son
+   nom à deux tailles proportionnelles. C'est la promesse du fichier, écrite en
+   toutes lettres dans son en-tête : « juste en vignette comme en grand ». */
+{
+  const p3 = await ouvrir();
+  const mesures = await p3.evaluate(() => {
+    const hote = document.createElement('div');
+    hote.style.cssText = 'position:fixed;left:-9999px;top:0';
+    document.body.appendChild(hote);
+    const lire = (largeur) => {
+      hote.innerHTML = '<div style="width:' + largeur + 'px">'
+        + cardHTML(carteDuPaquet({ type: 'action', id: 'a-craquage' })) + '</div>';
+      const px = (sel) => {
+        const n = hote.querySelector(sel);
+        return n ? parseFloat(getComputedStyle(n).fontSize || '0') : 0;
+      };
+      const pip = hote.querySelector('.pip');
+      return {
+        nom: px('.nm'),
+        pip: pip ? pip.getBoundingClientRect().width : 0,
+        carte: hote.querySelector('.fz').getBoundingClientRect().width,
+      };
+    };
+    const petit = lire(120);
+    const grand = lire(360);
+    hote.remove();
+    return { petit, grand };
+  });
+  await p3.close();
+
+  const { petit, grand } = mesures;
+  check(`la carte suit la largeur qu'on lui donne (${Math.round(petit.carte)} / ${Math.round(grand.carte)})`,
+    Math.round(grand.carte) === 3 * Math.round(petit.carte));
+
+  /* Trois fois plus large, donc un nom trois fois plus grand — à un dixième
+     près, parce qu'un navigateur arrondit les tailles de police. */
+  const rapport = petit.nom ? grand.nom / petit.nom : 0;
+  check(`et son nom grandit avec elle (${petit.nom.toFixed(1)} → ${grand.nom.toFixed(1)} px)`,
+    Math.abs(rapport - 3) < 0.3
+    || (console.log('        rapport :', rapport.toFixed(2)), false));
+
+  /* La pastille de famille aussi : si seule la police suivait, ce serait une
+     règle recopiée à un endroit et oubliée aux autres. */
+  const rPip = petit.pip ? grand.pip / petit.pip : 0;
+  check('et la pastille de famille également',
+    Math.abs(rPip - 3) < 0.3
+    || (console.log('        rapport :', rPip.toFixed(2)), false));
+
+  /* Le repli reste **en pixels**. Le jour où quelqu'un écrit `--u:1cqw` sans
+     garde, un navigateur sans confinement rabat `cqw` sur la fenêtre : sur un
+     écran de 470 px, le rayon passe de 5 à 19 px et le nom de 8 à 28. La carte
+     devient un galet illisible, et rien ne le signale. */
+  const feuille = readFileSync(path.join(RACINE, 'public', 'cartes.css'), 'utf8');
+  check('et le repli hors conteneur est toujours en pixels',
+    /\.fz\{--u:[\d.]+px\}/.test(feuille)
+    || (console.log('        repli introuvable dans cartes.css'), false));
+}
+
 await nav.close();
 await new Promise((r) => http.close(r));
 await pool.end();

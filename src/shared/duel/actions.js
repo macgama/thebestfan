@@ -215,6 +215,111 @@ export const ACTIONS = [
        paquet — d'où le prix, la recharge de quatre-vingts secondes, et la
        condition. */
     effet: { type: 'halve_gap' } },
+
+  /* =========================================== LA REPRISE (10)
+
+     ## Ce qu'une saison doit ajouter, et ce qu'elle ne doit pas ajouter
+
+     Dix cartes de plus, et **aucun verbe de plus**. Chacune se résout avec un
+     type d'effet que le moteur sait déjà faire : `push_over_time`, `mod_foe`,
+     `shield`, `rally`… C'est délibéré. Une carte qui demanderait une mécanique
+     neuve demanderait aussi un moteur neuf, des contrôles neufs et un client
+     neuf — et le jour où l'un des trois manque, la carte existe dans le
+     catalogue, se tire dans un booster, et ne fait rien.
+
+     Ce qui est neuf, ce sont les **chiffres** et la famille : une poussée qui
+     s'installe sur seize secondes ne se joue pas comme une qui tombe d'un coup,
+     même si le moteur les traite pareil.
+
+     ## Aucune n'est meilleure que celle d'à côté
+
+     C'est la règle qui tient ce fichier : chaque carte neuve qui ressemble à
+     une ancienne **paie sa différence**. « Bâche neuve » protège presque du
+     double de « Bâche », et coûte un tiers de plus pour une recharge deux fois
+     plus longue. « Routine d'avant-match » relève un raté plus haut que « Second
+     souffle », et se paie six de plus avec huit secondes d'attente en plus.
+     Une carte strictement meilleure qu'une autre retire la plus faible du jeu
+     sans jamais l'avouer.
+
+     ## L'équilibre des familles
+
+     Les sept familles comptaient 5 / 3 / 6 / 4 / 3 / 3 / 5. Les dix vont là où
+     c'était le plus mince — entrave, garde, collectif, geste — parce qu'une
+     famille à trois cartes se joue toujours de la même façon.                 */
+
+  /* ------------------------------------------------------------- pousse */
+  { id: 'a-rp-coupdenvoi', nom: 'Coup d’envoi', fam: 'pousse', rar: 'commune', cost: 18, cd: 22,
+    texte: 'Un chant qui s’installe : seize petites poussées sur seize secondes.',
+    /* L'inverse du fumigène. Rien ne se voit à l'instant où on la joue, et elle
+       pèse plus lourd que lui au total — à condition de tenir seize secondes,
+       ce qui est précisément ce qu'une reprise ne sait pas encore faire. */
+    effet: { type: 'push_over_time', valeur: 80, coups: 16, duree: 16000 } },
+
+  /* ------------------------------------------------------------ entrave */
+  { id: 'a-rp-rouille', nom: 'Rouille', fam: 'entrave', rar: 'rare', cost: 28, cd: 22,
+    texte: 'Deux mois sans chanter : pendant 9 s, les gestes parfaits de l’adversaire ne valent plus rien de plus.',
+    /* Elle ne coupe rien et ne cache rien : elle retire la **récompense** du
+       bien-jouer. C'est l'entrave la plus cruelle du jeu contre quelqu'un qui
+       joue bien, et la plus inutile contre quelqu'un qui joue mal. */
+    effet: { type: 'mod_foe', mods: { perfectBonus: 0.7 }, duree: 9000 } },
+
+  { id: 'a-rp-horsjeu', nom: 'Hors-jeu', fam: 'entrave', rar: 'commune', cost: 22, cd: 30,
+    texte: 'Le drapeau se lève. L’adversaire ne peut plus jouer de carte pendant 4 s.',
+    /* Le parcage du pauvre : moitié moins long, moitié moins cher, et commune.
+       Elle existe pour que la famille entrave ne commence pas à trente. */
+    effet: { type: 'lock_actions', duree: 4000 } },
+
+  /* -------------------------------------------------------------- geste */
+  { id: 'a-rp-echauffement', nom: 'Échauffement', fam: 'geste', rar: 'commune', cost: 14, cd: 18,
+    texte: 'Trois chants plus faciles à placer, et un peu plus vifs.',
+    /* Trois charges au lieu de deux, mais un effet nettement plus doux que le
+       métronome : on échauffe, on ne triche pas. */
+    effet: { type: 'mod_self', mods: { tempoWindow: 1.35, mashBonus: 1.15 }, charges: 3 } },
+
+  { id: 'a-rp-routine', nom: 'Routine d’avant-match', fam: 'geste', rar: 'rare', cost: 34, cd: 30,
+    texte: 'Ton prochain raté comptera comme une bonne réussite. Une seule fois.',
+    /* Elle relève plus haut que « Second souffle » — 0,65 contre 0,5 — et se
+       paie six de plus avec huit secondes d'attente en plus. Le choix entre les
+       deux est un vrai choix, pas une mise à niveau. */
+    effet: { type: 'floor_quality', valeur: 0.65, charges: 1 } },
+
+  /* -------------------------------------------------------------- garde */
+  { id: 'a-rp-bache-neuve', nom: 'Bâche neuve', fam: 'garde', rar: 'rare', cost: 32, cd: 28,
+    texte: 'Absorbe 70 de poussée adverse.',
+    /* Presque le double de « Bâche », pour un tiers de coût en plus et une
+       recharge deux fois plus longue. On ne la joue pas au même moment. */
+    effet: { type: 'shield', valeur: 70 } },
+
+  { id: 'a-rp-filet', nom: 'Filet de chantier', fam: 'garde', rar: 'epique', cost: 30, cd: 32,
+    texte: 'Pendant 12 s, tu deviens très difficile à contrer.',
+    /* Une garde qui n'absorbe rien : elle rend le joueur mauvais à prendre.
+       C'est la seule carte de la famille qui protège **les gestes** plutôt que
+       la corde, et elle ne sert à rien contre un adversaire qui pousse au chant
+       plutôt qu'au contre. */
+    effet: { type: 'mod_self', mods: { parryResist: 1.8 }, duree: 12000 } },
+
+  /* ---------------------------------------------------------- collectif */
+  { id: 'a-rp-presentation', nom: 'Présentation de l’effectif', fam: 'collectif', rar: 'rare', cost: 24, cd: 26,
+    texte: '12 de poussée par coéquipier qui chante dans les 12 s.',
+    /* La mosaïque à portée d'un deck de début de saison : moins par tête, plus
+       de temps pour que les autres suivent. En 1v1 elle ne vaut presque rien,
+       et c'est ce qui la garde honnête. */
+    effet: { type: 'per_mate', valeur: 12, fenetre: 12000 } },
+
+  { id: 'a-rp-premier-chant', nom: 'Le premier chant de l’année', fam: 'collectif', rar: 'epique', cost: 30, cd: 34,
+    texte: 'Pendant 7 s, toute ta tribune pousse 30 % plus fort.',
+    /* Plus long que « L'appel », moins puissant. Deux cartes pour la même
+       famille et deux façons de s'en servir : un coup de poing, ou une vague. */
+    effet: { type: 'rally', duree: 7000, bonus: 1.3 } },
+
+  /* ------------------------------------------------------------ bascule */
+  { id: 'a-rp-jour-un', nom: 'Jour Un', fam: 'bascule', rar: 'legendaire', cost: 10, cd: 90,
+    texte: 'Jouable seulement si tu es mené d’au moins un but. Rend tout ton souffle.',
+    /* La carte de la remise à zéro : rien ne s'est encore joué, tout est à
+       refaire. Elle ne pousse pas d'un point — elle rend les moyens de pousser,
+       ce qui n'est pas la même chose et ne se joue pas au même moment. Une fois
+       et demie par duel au mieux, et seulement quand on perd. */
+    effet: { type: 'refill', part: 1 }, condition: { mene: 1 } },
 ];
 
 export const ACTION_BY_ID = new Map(ACTIONS.map((a) => [a.id, a]));

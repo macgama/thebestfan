@@ -119,6 +119,140 @@ export const STUFF = [
   { id: 'fanion', nom: 'Fanion de 1904', rar: 'legendaire',
     texte: 'Tout tient plus longtemps. Rien ne repart vite.',
     mods: { holdBonus: 1.5, parryResist: 1.35, tempoInterval: 120, mashBonus: 0.8 } },
+
+  /* ================================================ LA REPRISE (20)
+
+     ## Ce que la série raconte, et ce que ça donne comme objets
+
+     La première journée après la coupure. On s'est habillé pour un match de
+     mai et il fait dix degrés de moins que prévu ; l'écharpe est encore raide
+     de son sachet, les chaussures n'ont pas servi depuis trois mois, et la voix
+     ne sait plus où elle se pose. **Tout est neuf ou tout est rouillé** — et
+     c'est précisément ce que doit dire un sac : quelque chose qu'on maîtrise
+     mal, en échange de quelque chose qu'on n'avait plus.
+
+     Les deux règles du module tiennent, et la seconde est la seule qui compte
+     vraiment : **pas une seule de ces vingt pièces n'a que des bonus.** Elles
+     ont été écrites en pensant au revers d'abord, comme les dix précédentes.
+
+     ## Pourquoi un préfixe `rp-`
+
+     Les dix-sept pièces d'origine portent un identifiant nu — `jumelles`,
+     `tambour`. C'était tenable à dix-sept ; à trente-sept, et avec une saison
+     par trimestre, l'écran CONTENUS de l'administration devient une liste où
+     l'on ne sait plus ce qui vient d'où. Le préfixe range sans rien coûter, et
+     il se filtre. Les anciens gardent le leur : **rien ne se renomme**, un
+     identifiant est référencé dans `user_stuff` et dans les decks.
+
+     ## Ce qu'une pièce d'équipement n'a pas le droit de toucher
+
+     **`pushMult`.** Aucune des dix-sept d'origine ne l'emploie, et ce n'est pas
+     un oubli : la poussée brute appartient aux **lieux** et aux **moments** —
+     un stade, un appel de tribune — pas à ce qu'on porte. Un sac qui
+     multiplierait la poussée donnerait de la puissance, là où il doit donner
+     une façon de jouer.
+
+     Deux gardes le disent déjà à qui l'essaierait. `combine` ne le connaît pas
+     dans ses facteurs : deux pièces qui le porteraient s'écraseraient l'une
+     l'autre au lieu de se multiplier. Et `modsText` n'a pas de phrase pour lui :
+     la carte afficherait un effet muet. Les deux sont éprouvés par
+     `catalogue-smoke.mjs`, qui a refusé quatre de ces vingt pièces avant
+     qu'elles n'arrivent ici.
+
+     ## L'équilibre, en un coup d'œil
+
+     Six communes, six rares, cinq épiques, trois légendaires — la même pente
+     que les dix-sept d'avant. Chacune vise **un geste précis** parmi les dix,
+     et coûte quelque chose à ceux qui jouent autrement. Aucune n'est meilleure
+     partout ; c'est la seule chose qui fasse du sac une décision.                */
+
+  /* ------------------------------------------------------------ communes */
+
+  { id: 'rp-echarpe-neuve', nom: 'Écharpe encore pliée', rar: 'commune',
+    texte: 'Elle tient chaud sans plier. Elle ne se noue pas vite.',
+    mods: { holdBonus: 1.2, mashTime: 350 } },
+
+  { id: 'rp-lunettes', nom: 'Lunettes sur le front', rar: 'commune',
+    texte: 'Tu vois la pulsation arriver ; le soleil te la reprend.',
+    mods: { tempoWindow: 1.18, perfectBonus: 0.9 } },
+
+  { id: 'rp-gourde', nom: 'Gourde d’été', rar: 'commune',
+    texte: 'Le souffle revient, les gestes longs s’écourtent.',
+    mods: { breathBonus: 1.16, holdBonus: 0.9 } },
+
+  { id: 'rp-ticket-mai', nom: 'Ticket du mois de mai', rar: 'commune',
+    texte: 'Tu te souviens du dernier match. Tu ne regardes pas celui-ci.',
+    mods: { perfectBonus: 1.2, tempoWindow: 0.9 } },
+
+  { id: 'rp-crampons', nom: 'Chaussures jamais nettoyées', rar: 'commune',
+    texte: 'Tu t’arc-boutes bien. Tu ne te relèves pas vite.',
+    mods: { holdBonus: 1.18, refundBonus: 0.86 } },
+
+  { id: 'rp-casquette', nom: 'Casquette de vacances', rar: 'commune',
+    texte: 'Rien ne t’atteint. Tu ne renvoies rien non plus.',
+    mods: { parryResist: 1.24, parryBonus: 0.84 } },
+
+  /* --------------------------------------------------------------- rares */
+
+  { id: 'rp-voix-rouillee', nom: 'Pastilles pour la gorge', rar: 'rare',
+    texte: 'Deux mois sans chanter : la voix revient vite, elle sonne moins juste.',
+    mods: { breathBonus: 1.3, perfectBonus: 0.86 } },
+
+  { id: 'rp-maillot-passe', nom: 'Maillot de l’an dernier', rar: 'rare',
+    texte: 'Tu connais le refrain par cœur ; personne ne reprend avec toi.',
+    mods: { perfectBonus: 1.32, parryBonus: 0.82 } },
+
+  { id: 'rp-veste', nom: 'Veste de mi-saison', rar: 'rare',
+    texte: 'Ouverte, fermée, ouverte : tu t’adaptes vite et tu tiens mal.',
+    mods: { mashBonus: 1.26, mashTime: -400, holdForgive: -1 } },
+
+  { id: 'rp-carnet-ete', nom: 'Carnet de l’intersaison', rar: 'rare',
+    texte: 'Trois mois de chants notés. Aucun ne sort tout seul.',
+    mods: { tempoWindow: 1.28, tempoInterval: 90 } },
+
+  { id: 'rp-sifflet-sac', nom: 'Sifflet retrouvé au fond du sac', rar: 'rare',
+    texte: 'Le contretemps redevient lisible, et il coûte du souffle.',
+    mods: { tempoInterval: -60, breathBonus: 0.86 } },
+
+  { id: 'rp-abonnement', nom: 'Abonnement neuf', rar: 'rare',
+    texte: 'Ta place est payée pour l’année : tu restes. Tu ne bouges plus.',
+    mods: { holdBonus: 1.34, holdForgive: 2, mashBonus: 0.82 } },
+
+  /* ------------------------------------------------------------- épiques */
+
+  { id: 'rp-tambour-detendu', nom: 'Tambour détendu', rar: 'epique',
+    texte: 'La peau a pris l’humidité de l’été : elle roule vite, elle répond tard.',
+    mods: { mashBonus: 1.3, tempoInterval: 130 } },
+
+  { id: 'rp-bombe', nom: 'Bombe de peinture', rar: 'epique',
+    texte: 'La bâche se repeint en une nuit. La main tremble le lendemain.',
+    mods: { perfectBonus: 1.38, tempoWindow: 0.82 } },
+
+  { id: 'rp-radio', nom: 'Radio à pile', rar: 'epique',
+    texte: 'Tu entends les autres matchs : rien ne te surprend, rien ne t’emporte.',
+    mods: { parryResist: 1.4, perfectBonus: 0.86 } },
+
+  { id: 'rp-creme', nom: 'Crème solaire', rar: 'epique',
+    texte: 'Tu tiens tout l’après-midi ; les doigts glissent sur tout le reste.',
+    mods: { holdBonus: 1.4, mashBonus: 0.86, holdForgive: 1 } },
+
+  { id: 'rp-programme', nom: 'Programme de la saison', rar: 'epique',
+    texte: 'Tu sais ce qui vient. Tu ne joues plus qu’à ça.',
+    mods: { tempoWindow: 1.36, mashTime: 600 } },
+
+  /* --------------------------------------------------------- légendaires */
+
+  { id: 'rp-premiere-journee', nom: 'Billet de la première journée', rar: 'legendaire',
+    texte: 'Tout recommence, et rien ne va aussi vite qu’en mai.',
+    mods: { perfectBonus: 1.35, breathBonus: 1.2, tempoInterval: 150, mashBonus: 0.78 } },
+
+  { id: 'rp-drapeau-grenier', nom: 'Le drapeau resté au grenier', rar: 'legendaire',
+    texte: 'Il pèse encore plus lourd qu’avant. Ce qu’il couvre, personne ne le perce.',
+    mods: { parryBonus: 1.55, parryResist: 1.3, mashTime: 800, breathBonus: 0.84 } },
+
+  { id: 'rp-corde-neuve', nom: 'Corde neuve', rar: 'legendaire',
+    texte: 'Elle ne casse pas. Elle ne pardonne aucun temps mort.',
+    mods: { holdBonus: 1.55, holdForgive: -2, refundBonus: 0.8, perfectBonus: 1.15 } },
 ];
 
 export const SKIN_BY_ID = new Map(SKINS.map((s) => [s.id, s]));
