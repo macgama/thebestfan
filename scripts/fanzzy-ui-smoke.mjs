@@ -235,6 +235,52 @@ async function ouvrir({ sansCache = false } = {}) {
 const page = await ouvrir();
 
 check('la page se charge sans erreur de script', erreurs.length === 0);
+
+/* ============ dans le classeur : un premier âge se montre, une évolution se cache
+
+   Les deux cases sont grises, et elles ne demandent pas le même geste.
+
+   Un personnage qu'on n'a pas se **tire** dans un booster : le voir en ombre
+   donne envie de l'ouvrir, et c'est tout le ressort du genre. Ses âges
+   supérieurs ne se tirent pas — ils s'**achètent** en écharpes, sur un
+   personnage qu'on possède déjà. Les montrer revient à donner d'avance la seule
+   chose qu'on paie, exactement comme le faisait la fiche avant qu'on la
+   corrige.
+
+   Le flou, donc, et pas la case vide : on garde la carrure et la lumière. */
+{
+  const cases = await page.evaluate(() => {
+    const l = [...document.querySelectorAll('.slot.locked')];
+    return {
+      total: l.length,
+      /* L'étoile dit l'âge : une pour le deuxième, deux pour le troisième.
+         C'est la seule marque lisible depuis le DOM de la grille. */
+      premiers: l.filter((n) => !n.querySelector('.stade')).length,
+      superieurs: l.filter((n) => n.querySelector('.stade')).length,
+      premiersFloutes: l.filter((n) => !n.querySelector('.stade')
+        && n.classList.contains('secret')).length,
+      superieursFloutes: l.filter((n) => n.querySelector('.stade')
+        && n.classList.contains('secret')).length,
+      /* On lit le filtre calculé, pas la classe : c'est lui qui décide de ce
+         qu'on voit, et une feuille de style renommée le dirait aussitôt. */
+      flouReel: (() => {
+        const n = l.find((x) => x.classList.contains('secret'))?.querySelector('.art');
+        return n ? getComputedStyle(n).filter : null;
+      })(),
+    };
+  });
+
+  check(`le classeur montre des cases verrouillées (${cases.total})`, cases.total > 0);
+  check(`un premier âge reste en ombre, sans flou (${cases.premiers})`,
+    cases.premiersFloutes === 0
+    || (console.log('        floutés :', cases.premiersFloutes, 'sur', cases.premiers), false));
+  check(`un âge supérieur non acheté est flouté (${cases.superieurs})`,
+    cases.superieurs === 0 || cases.superieursFloutes === cases.superieurs
+    || (console.log('        floutés :', cases.superieursFloutes, 'sur', cases.superieurs), false));
+  check('et le flou est bien appliqué, pas seulement annoncé',
+    cases.superieurs === 0 || /blur\(/.test(cases.flouReel ?? '')
+    || (console.log('        filtre :', cases.flouReel), false));
+}
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
 
 check('le catalogue est arrivé du serveur',

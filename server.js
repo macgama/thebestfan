@@ -23,6 +23,7 @@ import { createFanzzy } from './src/server/fanzzy/index.js';
 import { charger as chargerCatalogue, ecartsCatalogue }
   from './src/server/fanzzy/catalogue.js';
 import { chargerReglages, reglagesPublics } from './src/server/reglages/index.js';
+import { empreinte, estampiller, releverEmpreintes } from './src/server/empreintes.js';
 import { reglage } from './src/shared/reglages.js';
 import { entetesDeSecurite, debitMaximal } from './src/server/garde/index.js';
 import { chargerTenues } from './src/server/fanzzy/tenues.js';
@@ -172,6 +173,13 @@ if (process.env.DATABASE_URL) {
        jeu lisent des valeurs qui viennent d'ici. Chargés après eux, les
        premiers appels travailleraient sur les valeurs du registre pendant que
        l'administration en affiche d'autres — et rien ne le dirait. */
+    /* Les empreintes, relevées une fois : on paie le calcul au démarrage
+       plutôt qu'à la première visite, et **un zéro ici veut dire qu'on sert le
+       site sans protection de cache** — ce qu'on ne veut pas découvrir par un
+       joueur qui redemande comment vider le sien. */
+    const estampes = releverEmpreintes(path.join(__dirname, 'public'));
+    console.log(`empreintes : ${estampes.length} fichier(s) de code sous cache long`);
+
     const reg = await chargerReglages(pool);
     console.log(`réglages : ${Object.keys(reg).length} clés effectives`);
 
@@ -570,12 +578,45 @@ app.get('/img/fanzzy/index.json', (_req, res) => {
  * l'AVIF, qu'Express ne connaît toujours pas. */
 app.use('/img', negocierAvif(path.join(__dirname, 'public/img')));
 
-// Les visuels ne changent jamais : un an de cache. Les pages, une heure.
+// Les visuels ne changent jamais : un an de cache.
 app.use('/img', express.static(path.join(__dirname, 'public/img'),
   { maxAge: '365d', immutable: true, setHeaders: typer }));
 app.use('/video', express.static(path.join(__dirname, 'public/video'),
   { maxAge: '365d', immutable: true }));
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h', setHeaders: typer }));
+
+/* ============================================ le code, et sa fraîcheur
+
+   **Les mises à jour n'arrivaient pas chez les joueurs.**
+
+   `public/` partait avec `max-age=1h` et les pages appelaient leurs scripts
+   par une adresse fixe — `<script src="/cartes.js">`. Après un déploiement, un
+   navigateur qui avait déjà ce fichier le ressortait de son propre cache sans
+   demander au serveur : la page était neuve, son code ne l'était pas. Une heure
+   en théorie, bien plus en pratique — un proxy d'hébergement garde une réponse
+   `public` et la ressert à tout le monde, et une application posée sur l'écran
+   d'accueil d'un iPhone est plus tenace encore. Les joueurs n'avaient d'autre
+   issue que de vider leur cache, pour un jeu dont le client et le serveur
+   doivent parler le même protocole.
+
+   La règle tient en une phrase, et ses deux moitiés vont ensemble : **ce qui
+   peut changer n'est jamais gardé, ce qui est gardé ne peut plus changer.**
+
+   Une adresse estampillée — `/cartes.js?v=8f3a1c2e` — décrit un contenu et non
+   un fichier : on peut la garder un an sans risque, puisqu'un contenu différent
+   porte une autre adresse. Une adresse nue, elle, ne promet rien : on la
+   revalide à chaque fois. Le coût est un aller-retour qui répond 304 sur
+   quelques octets, et ça n'arrive qu'à qui tape l'adresse à la main.
+
+   Voir `src/server/empreintes.js` pour le calcul et pour les raisons. */
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders(res, fichier, ...reste) {
+    typer(res, fichier, ...reste);
+    const estampe = /\?v=/.test(res.req?.originalUrl ?? '');
+    res.set('cache-control', estampe
+      ? 'public, max-age=31536000, immutable'
+      : 'no-cache');
+  },
+}));
 
 /**
  * Ce que les réglages disent aux joueurs.
@@ -660,32 +701,57 @@ app.get('/healthz', (_req, res) => {
   });
 });
 
-app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/teletext', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'teletext.html')));
-app.get('/matchs', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'aujourdhui.html')));
-app.get('/bienvenue', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'bienvenue.html')));
-app.get('/profil', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'profil.html')));
-app.get('/classement', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'classement.html')));
-app.get('/boutique', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'boutique.html')));
+/**
+ * Une page, estampillée et jamais mise en cache.
+ *
+ * Elle est minuscule et elle porte les adresses de tout le reste : la garder
+ * une seconde, c'est risquer de servir la carte d'un jeu qui a changé. Elle est
+ * relue à chaque requête — le disque a son propre cache, et vingt kilo-octets
+ * ne se mesurent pas à côté d'une requête SQL.
+ *
+ * `no-store` et non `no-cache` : le premier interdit de garder, le second
+ * autorise à garder en obligeant à revalider. La nuance compte à travers un
+ * proxy d'hébergement, qui répond volontiers à la place du serveur.
+ */
+function page(res, fichier) {
+  const chemin = path.join(__dirname, 'public', fichier);
+  try {
+    res.set('cache-control', 'no-store');
+    res.type('html').send(estampiller(readFileSync(chemin, 'utf8'),
+      path.join(__dirname, 'public')));
+  } catch {
+    // Le fichier manque : on laisse Express rendre son 404 plutôt que
+    // d'envoyer une page à moitié écrite.
+    res.status(404).end();
+  }
+}
+
+app.get('/', (_req, res) => page(res, 'index.html'));
+app.get('/teletext', (_req, res) => page(res, 'teletext.html'));
+app.get('/matchs', (_req, res) => page(res, 'aujourdhui.html'));
+app.get('/bienvenue', (_req, res) => page(res, 'bienvenue.html'));
+app.get('/profil', (_req, res) => page(res, 'profil.html'));
+app.get('/classement', (_req, res) => page(res, 'classement.html'));
+app.get('/boutique', (_req, res) => page(res, 'boutique.html'));
 /* L'abonnement a sa page, et non un rayon de la boutique : il ne s'achète pas
    comme un objet, il se comprend avant de s'acheter. Il lui faut la place de
    dire ce qu'il ouvre et, surtout, ce qu'il n'enferme pas — cette seconde
    liste est la promesse du jeu, et elle ne tient pas dans une vignette. */
-app.get('/abonnement', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'abonnement.html')));
-app.get('/boosters', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'boosters.html')));
-app.get('/admin', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/abonnement', (_req, res) => page(res, 'abonnement.html'));
+app.get('/boosters', (_req, res) => page(res, 'boosters.html'));
+app.get('/admin', (_req, res) => page(res, 'admin.html'));
 // Fiche d'un Fanzzy : /fanzzy/V3 comme /fanzzy?id=V3, pour des liens partageables.
-app.get('/fanzzy/:id', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'fanzzy-fiche.html')));
-app.get('/compte', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'compte.html')));
-app.get('/diagnostic', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'diagnostic.html')));
-app.get('/equipes', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'equipes.html')));
-app.get('/kop', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'kop.html')));
-app.get('/amis', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'amis.html')));
-app.get('/deck', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'deck.html')));
-app.get('/duel-nvn', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'duel-nvn.html')));
-app.get('/fanzzy', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'fanzzy.html')));
-app.get('/virage', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'virage.html')));
-app.get('/carnet', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'carnet.html')));
+app.get('/fanzzy/:id', (_req, res) => page(res, 'fanzzy-fiche.html'));
+app.get('/compte', (_req, res) => page(res, 'compte.html'));
+app.get('/diagnostic', (_req, res) => page(res, 'diagnostic.html'));
+app.get('/equipes', (_req, res) => page(res, 'equipes.html'));
+app.get('/kop', (_req, res) => page(res, 'kop.html'));
+app.get('/amis', (_req, res) => page(res, 'amis.html'));
+app.get('/deck', (_req, res) => page(res, 'deck.html'));
+app.get('/duel-nvn', (_req, res) => page(res, 'duel-nvn.html'));
+app.get('/fanzzy', (_req, res) => page(res, 'fanzzy.html'));
+app.get('/virage', (_req, res) => page(res, 'virage.html'));
+app.get('/carnet', (_req, res) => page(res, 'carnet.html'));
 
 /* -------------------------------------------------------------- socket.io */
 

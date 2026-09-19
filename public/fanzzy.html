@@ -101,6 +101,24 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    personnage. À trois dixièmes de luminosité le visage disparaissait, et une
    silhouette qu'on ne distingue pas ne vaut pas mieux qu'une case vide. */
 .slot.locked .art{filter:grayscale(1) brightness(.46) contrast(1.15)}
+
+/* **Un premier âge se montre, une évolution se cache**, et la nuance décide de
+   deux envies différentes.
+
+   Un personnage qu'on n'a pas encore se tire dans un booster : le voir en ombre
+   donne envie de l'ouvrir, et c'est tout le ressort du genre. Ses âges
+   supérieurs, eux, ne se tirent pas — ils s'achètent en écharpes, sur un
+   personnage qu'on possède déjà. Les montrer revient à donner d'avance la seule
+   chose qu'on paie, et l'évolution n'a plus rien à révéler.
+
+   Le flou, donc, et pas la case vide : on garde la carrure, la couleur et la
+   lumière — tout ce qui dit « il y a quelqu'un là-dessous ». C'est la même
+   règle que la fiche, voir `fanzzy-fiche.css`.
+
+   Trois pixels et non dix-sept : la vignette fait cent pixels de large là où la
+   vitrine en fait six cents. Un flou dimensionné pour l'une efface l'autre. */
+.slot.locked.secret .art{filter:blur(3px) grayscale(.75) brightness(.55) contrast(1.1)}
+.slot.locked.secret .nm{filter:blur(2.2px);opacity:.5}
 .slot.locked .top::before,.slot.locked .foot,.slot.locked .pip{display:none}
 .slot.locked .nm{opacity:.72}
 .slot.locked .cadenas{position:absolute;left:50%;top:40%;z-index:4;width:calc(13 * var(--u));height:calc(13 * var(--u));
@@ -443,10 +461,16 @@ function renderDex() {
        ages, et on y choisit celui qu'on regarde. Ouvrir par l'age enverrait sur
        la meme fiche par un chemin de plus. */
     if (!possede(f)) {
-      /* Ce qu'on n'a pas est la quand meme, en ombre. Une case vide ne donne
-         envie de rien, une silhouette si — et pour un age superieur, c'est elle
-         qui donne envie de payer l'evolution. */
-      return `<div class="slot locked" data-open="${racine}"${retard}>${
+      /* Ce qu'on n'a pas est là quand même, en ombre. Une case vide ne donne
+         envie de rien, une silhouette si.
+
+         **Mais pas de la même façon selon l'âge.** Un premier âge se tire dans
+         un booster : le voir donne envie de l'ouvrir. Un âge supérieur
+         s'achète, sur un personnage qu'on a déjà — le montrer donnerait
+         d'avance la seule chose qu'on paie, et l'évolution n'aurait plus rien à
+         révéler. Il est donc flouté, comme sur la fiche. */
+      const secret = etage > 1 ? ' secret' : '';
+      return `<div class="slot locked${secret}" data-open="${racine}"${retard}>${
         cardHTML(f, { mini: true, verrou: true })}
         ${etage > 1 ? `<div class="stade">${'★'.repeat(etage - 1)}</div>` : ''}</div>`;
     }
