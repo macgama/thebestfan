@@ -512,6 +512,199 @@ check('les Fanzzy non possédés portent leur nom',
       /écharpes|booster|niveau/.test(verrou)
       || (console.log('        elle dit :', verrou), false));
 
+    /* ============================ le prix se lit avant le clic, pas après
+
+       **La fiche proposait ÉVOLUER sans jamais savoir si le joueur pouvait
+       payer.** On ouvrait le panneau, on confirmait, et le refus arrivait au
+       troisième geste sous la forme d'un petit message — qui ne disait pas
+       combien il manquait, donc pas ce qu'il fallait aller faire.
+
+       C'est la faute du bouton d'ouverture du kiosque, au même endroit de la
+       boucle : une affordance montrée quand elle ne sert pas. Le contrôle part
+       donc d'une bourse vide, qui est l'état de n'importe qui après deux
+       évolutions. */
+    {
+      const lire = () => fiche.evaluate(() => {
+        const b = document.querySelector('[data-evoluer]');
+        return b ? { ferme: b.disabled, texte: b.textContent.replace(/\s+/g, ' ').trim() } : null;
+      });
+
+      // On revient sur l'âge courant : les cases touchées plus haut l'ont peut-être
+      // déplacé, et le bouton d'évolution n'existe que sur l'âge juste après.
+      await fiche.evaluate(() => {
+        const cases = [...document.querySelectorAll('[data-case^="age:"]')];
+        (cases[1] ?? cases[0])?.click();
+      });
+      const riche = await lire();
+      check('avec des écharpes en poche, le bouton propose d’évoluer',
+        riche && !riche.ferme && /ÉVOLUER/.test(riche.texte)
+        || (console.log('        il dit :', JSON.stringify(riche)), false));
+
+      await pool.query('UPDATE user_wallet SET scarves = 0 WHERE user_id = ?', [U]);
+      await fiche.reload({ waitUntil: 'networkidle0' });
+      await fiche.evaluate(() => {
+        const cases = [...document.querySelectorAll('[data-case^="age:"]')];
+        (cases[1] ?? cases[0])?.click();
+      });
+      const pauvre = await lire();
+      check('sans écharpes, il se ferme', pauvre?.ferme === true
+        || (console.log('        il dit :', JSON.stringify(pauvre)), false));
+      check('et il dit combien il en manque',
+        pauvre && /IL TE FAUT/.test(pauvre.texte) && /\d+ écharpes/.test(pauvre.texte)
+        || (console.log('        il dit :', pauvre?.texte), false));
+
+      await pool.query('UPDATE user_wallet SET scarves = 900 WHERE user_id = ?', [U]);
+      await fiche.reload({ waitUntil: 'networkidle0' });
+
+      /* --------------------------- et on évolue pour de vrai
+
+         Les contrôles du dessus éprouvent le bouton et la mécanique de la
+         cérémonie séparément. Celui-ci fait le geste entier — confirmer, payer,
+         recharger, jouer l'arrivée — parce que c'est là que les trois se
+         rencontrent, et que rien n'y était éprouvé : la cérémonie rend la main
+         au milieu, `recharger` reconstruit la fiche, et l'élément sur lequel
+         jouer l'arrivée n'existe pas encore au moment où on l'attend. Une
+         promesse qui ne se résout jamais laisserait un écran figé, sans une
+         seule erreur dans la console. */
+      const avantEvo = await pool.query(
+        'SELECT stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?',
+        [U, ILLUSTRE]).then(([r]) => Number(r[0]?.stage ?? 0));
+
+      await fiche.evaluate(() => {
+        const cases = [...document.querySelectorAll('[data-case^="age:"]')];
+        (cases[1] ?? cases[0])?.click();
+      });
+      const aBouton = await fiche.evaluate(() => {
+        const b = document.querySelector('[data-evoluer]');
+        if (!b || b.disabled) return false;
+        b.click();
+        return true;
+      });
+
+      if (!aBouton) {
+        console.log('  --   ce Fanzzy est déjà au dernier âge : évolution sautée');
+      } else {
+        await new Promise((r) => setTimeout(r, 200));
+        await fiche.evaluate(() => document.querySelector('[data-oui]')?.click());
+
+        /* Deux secondes et demie : une charge d'une seconde, le rechargement,
+           puis l'attente du dessin. On sort dès que le stade a bougé plutôt que
+           d'attendre le plafond — un contrôle qui dort toujours la même durée
+           finit par dormir moins longtemps que la machine la plus lente. */
+        let apresEvo = avantEvo;
+        for (let i = 0; i < 50 && apresEvo === avantEvo; i++) {
+          await new Promise((r) => setTimeout(r, 50));
+          apresEvo = await pool.query(
+            'SELECT stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?',
+            [U, ILLUSTRE]).then(([r]) => Number(r[0]?.stage ?? 0));
+        }
+        check(`évoluer fait vraiment grandir le Fanzzy (${avantEvo} → ${apresEvo})`,
+          apresEvo === avantEvo + 1);
+
+        /* La cérémonie doit **finir** : le dessin revient, l'arrivée se joue
+           dessus, et la fiche se laisse toucher de nouveau. Un écran qui reste
+           blanc après un paiement est la pire panne possible ici. */
+        const fini = await fiche.waitForFunction(
+          () => document.querySelector('#fiche-art img, #fiche-art svg') !== null,
+          { timeout: 4000 }).then(() => true).catch(() => false);
+        check('et la vitrine remontre le personnage après la cérémonie', fini);
+        check('sans rien jeter en chemin', erreurs.length === 0
+          || (console.log('        ', erreurs.slice(0, 2).join(' | ')), false));
+
+        await pool.query('UPDATE user_fanzzy SET stage = ? WHERE user_id = ? AND fanzzy_id = ?',
+          [avantEvo, U, ILLUSTRE]);
+        await pool.query('UPDATE user_wallet SET scarves = 900 WHERE user_id = ?', [U]);
+        await fiche.reload({ waitUntil: 'networkidle0' });
+      }
+    }
+
+    /* ==================================== la rareté se voit dans le décor
+
+       Elle ne se voyait pas. La montée existait — « un projecteur au premier
+       âge, trois au troisième » — mais elle suivait l'âge et non la rareté, et
+       son amplitude tenait dans quelques centièmes d'opacité. Une commune, une
+       rare et une épique se tenaient devant le même fond ; seule la légendaire
+       avait sa lumière. Trois quarts du catalogue ne se distinguaient que par
+       la couleur d'un liseré, à côté de la carte.
+
+       On compare les quatre décors rendus pour le **même** personnage : seule
+       la rareté change, donc toute différence vient d'elle. */
+    {
+      const fonds = await fiche.evaluate(() =>
+        ['commune', 'rare', 'epique', 'legendaire'].map((rar) =>
+          window.TBF_FOND.fond({ id: 'TR37', set: 'TR', type: 'voix', stage: 2, rar })));
+
+      check('les quatre raretés rendent quatre décors différents',
+        new Set(fonds).size === 4
+        || (console.log('        distincts :', new Set(fonds).size), false));
+
+      /* Une commune n'a pas d'aura : c'est le point de départ, et tout le reste
+         se mesure à elle. Sans ça, « plus riche » ne veut rien dire. */
+      check('la commune n’a pas d’aura', !/id="au/.test(fonds[0])
+        || /stop-opacity="0\.000"/.test(fonds[0]));
+
+      /* Chaque palier ajoute des anneaux : c'est ce qui se lit en vignette, là
+         où la couleur du ciel est trop fine pour se voir. */
+      const anneaux = fonds.map((f) => (f.match(/<circle cx="50" cy="62"/g) ?? []).length);
+      check(`et les anneaux montent d'un palier à l'autre (${anneaux.join(' → ')})`,
+        anneaux[0] < anneaux[1] && anneaux[1] < anneaux[2] && anneaux[2] < anneaux[3]);
+
+      /* Déterministe, comme tout le module : deux appels pour la même carte
+         rendent le même SVG, sinon le fond changerait à chaque rendu — et la
+         poussière de l'aura est semée, donc c'est elle qui risquait de bouger. */
+      const deux = await fiche.evaluate(() => {
+        const f = () => window.TBF_FOND.fond({ id: 'TR37', set: 'TR', type: 'voix',
+          stage: 2, rar: 'epique' }).replace(/id="[a-z]+fd\d+"/g, '');
+        return [f(), f()];
+      });
+      check('et l’aura reste la même d’un rendu à l’autre',
+        deux[0].replace(/fd\d+/g, '') === deux[1].replace(/fd\d+/g, ''));
+    }
+
+    /* ======================= la cérémonie d'évolution existe et tient le rythme
+
+       Le geste le plus cher du jeu était le seul sans récompense à l'écran : on
+       confirmait, un éclair passait, et le nouveau personnage était là. Rien
+       n'avait eu lieu.
+
+       On ne rejoue pas l'animation ici — une suite qui mesure des images
+       mesure sa machine. On vérifie ce qui se casse silencieusement : que
+       l'effet existe, qu'il rend la main **au flash** et non à la fin, et qu'il
+       tienne sans portrait à l'écran, ce qui est le cas du classeur. */
+    {
+      const ceremonie = await fiche.evaluate(async () => {
+        if (!window.FX?.evolution) return { absent: true };
+        const t0 = performance.now();
+        const suite = await window.FX.evolution(null, { nom: 'Test', rar: 'epique' });
+        return { absent: false, ms: performance.now() - t0,
+                 rendArrivee: typeof suite?.arrivee === 'function' };
+      });
+      check('la cérémonie d’évolution existe', ceremonie.absent === false);
+      check('elle rend la main avant la fin, pour qu’on substitue sous le flash',
+        ceremonie.rendArrivee === true);
+      check(`et sans portrait elle n'attend pas une seconde pour rien (${
+        Math.round(ceremonie.ms ?? -1)} ms)`, (ceremonie.ms ?? 999) < 600);
+
+      /* Jouée sur un élément, elle doit poser ses classes : c'est tout ce qui
+         relie le code à l'animation, et un renommage de classe passerait
+         inaperçu jusqu'au prochain joueur qui évolue. */
+      const classes = await fiche.evaluate(async () => {
+        const el = document.createElement('div');
+        document.body.appendChild(el);
+        const p2 = window.FX.evolution(el, { nom: 'Test', rar: 'rare' });
+        const charge = el.className;
+        const suite = await p2;
+        suite.arrivee(el);
+        const arrive = el.className;
+        el.remove();
+        return { charge, arrive };
+      });
+      check('elle marque la charge sur l’ancien', /fx-charge/.test(classes.charge)
+        || (console.log('        classe :', classes.charge), false));
+      check('et l’arrivée sur le nouveau', /fx-arrive/.test(classes.arrive)
+        || (console.log('        classe :', classes.arrive), false));
+    }
+
     check('la fiche ne défile toujours pas après trois cases',
       await fiche.evaluate(() =>
         document.documentElement.scrollHeight <= innerHeight + 1));

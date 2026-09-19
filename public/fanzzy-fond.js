@@ -365,6 +365,79 @@
    * Le reste monte d'un cran : le halo passe de 34 % à 55 %, l'anneau devient
    * double, et les éclats sont vingt au lieu de huit, de tailles inégales.
    */
+  /**
+   * Ce que chaque rareté ajoute au décor.
+   *
+   * ## Le défaut qu'on corrige
+   *
+   * La montée en puissance existait — « un projecteur au premier âge, trois au
+   * troisième » — mais elle suivait l'**âge**, pas la rareté, et son amplitude
+   * tenait dans quelques centièmes d'opacité. Une commune, une rare et une
+   * épique se tenaient devant exactement le même fond : seule la légendaire
+   * avait sa lumière. Trois quarts du catalogue ne se distinguaient donc que
+   * par la couleur d'un liseré de cadre, à côté de la carte, et pas du tout
+   * quand on regardait le personnage.
+   *
+   * Or la rareté **est** la progression dans ce jeu : elle suit le stade, et le
+   * stade s'achète en écharpes. Ce qu'on paie doit se voir.
+   *
+   * ## Ce que ça ne dit pas
+   *
+   * Rien sur la puissance. Voir `shared/niveau.js` : le niveau ne donne
+   * aucune puissance, et la rareté pas davantage — elle dit d'où vient le
+   * personnage et ce qu'on a mis dedans. Un décor plus riche est du **confort**,
+   * au sens où l'abonnement l'entend, pas un avantage.
+   *
+   * ## Pourquoi c'est dessiné et non peint
+   *
+   * Un fond peint par série et par rareté ferait cinquante-deux images, quatre
+   * de plus à chaque saison, et surtout il ne saurait pas changer d'époque avec
+   * la tenue — ce que la palette fait ici en une ligne. Le décor reste dessiné
+   * par le jeu, comme le dit `fanzzy-invites.mjs` : il ne vient jamais de
+   * l'image.
+   *
+   * `halo` est l'aura derrière le personnage, `anneaux` le nombre de cercles
+   * qui l'entourent, `poussiere` les éclats en suspension, `ciel` de combien on
+   * éclaircit le haut. Quatre chiffres, quatre marches qu'on distingue de loin.
+   */
+  const PALIERS = {
+    commune:    { halo: 0.00, anneaux: 0, poussiere: 0,  ciel: 0,    teinte: null },
+    rare:       { halo: 0.16, anneaux: 1, poussiere: 6,  ciel: 0.10, teinte: '#5FA8FF' },
+    epique:     { halo: 0.30, anneaux: 2, poussiere: 14, ciel: 0.18, teinte: '#B98CFF' },
+    legendaire: { halo: 0.42, anneaux: 3, poussiere: 22, ciel: 0.26, teinte: '#F5C33B' },
+  };
+  const palier = (rar) => PALIERS[rar] ?? PALIERS.commune;
+
+  /**
+   * L'aura : un disque derrière le personnage, des anneaux, de la poussière.
+   *
+   * Elle est **centrée sur le buste** et non sur le cadre — c'est le
+   * personnage qu'elle auréole, pas le décor. Sans ça elle se lisait comme une
+   * tache de lumière au sol.
+   *
+   * Déterministe, comme tout le module : la poussière est semée par la graine
+   * du personnage, donc deux épiques n'ont pas la même, et la même carte a
+   * toujours la sienne.
+   */
+  function aura(rar, u, r) {
+    const P = palier(rar);
+    if (!P.halo) return '';
+    const c = P.teinte;
+    const anneaux = Array.from({ length: P.anneaux }, (_, i) => `<circle cx="50" cy="62"
+      r="${(30 + i * 9).toFixed(1)}" fill="none" stroke="${c}"
+      stroke-width="${(1.1 - i * 0.28).toFixed(2)}"
+      opacity="${(P.halo * (0.62 - i * 0.14)).toFixed(3)}"/>`).join('');
+    const poussiere = Array.from({ length: P.poussiere }, () => {
+      const a = r() * Math.PI * 2;
+      const d = 22 + r() * 40;
+      return `<circle cx="${(50 + Math.cos(a) * d).toFixed(1)}"
+        cy="${(62 + Math.sin(a) * d * 0.92).toFixed(1)}"
+        r="${(0.5 + r() * 1.5).toFixed(1)}" fill="${c}"
+        opacity="${(0.25 + r() * 0.45).toFixed(2)}"/>`;
+    }).join('');
+    return `<circle cx="50" cy="62" r="46" fill="url(#au${u})"/>${anneaux}${poussiere}`;
+  }
+
   function lumiere(stage, legendaire, accent, u, r) {
     if (legendaire) {
       const RAYONS = 24;
@@ -451,12 +524,25 @@
       xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id="c${u}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="${legendaire ? melange(p.haut, '#6A4E12', 0.5) : p.haut}"/>
+          <!-- Le ciel monte d'un cran à chaque palier : c'est ce qui se voit en
+               vignette, à vingt pixels, là où l'aura est trop fine. -->
+          <stop offset="0" stop-color="${legendaire ? melange(p.haut, '#6A4E12', 0.5)
+            : palier(f.rar).teinte ? melange(p.haut, palier(f.rar).teinte, palier(f.rar).ciel)
+            : p.haut}"/>
           <stop offset="1" stop-color="${legendaire ? melange(p.bas, '#241A05', 0.45) : p.bas}"/>
         </linearGradient>
         <radialGradient id="h${u}">
           <stop offset="0" stop-color="${accent}" stop-opacity=".3"/>
           <stop offset="1" stop-color="${accent}" stop-opacity="0"/>
+        </radialGradient>
+        <!-- L'aura de rareté. Transparente au bord : elle doit **fondre** dans
+             le ciel, sinon elle se lit comme un disque posé dessus. -->
+        <radialGradient id="au${u}">
+          <stop offset="0" stop-color="${palier(f.rar).teinte ?? accent}" stop-opacity="${
+            (palier(f.rar).halo * 0.55).toFixed(3)}"/>
+          <stop offset=".6" stop-color="${palier(f.rar).teinte ?? accent}" stop-opacity="${
+            (palier(f.rar).halo * 0.18).toFixed(3)}"/>
+          <stop offset="1" stop-color="${palier(f.rar).teinte ?? accent}" stop-opacity="0"/>
         </radialGradient>
         <radialGradient id="or${u}">
           <stop offset="0" stop-color="#FFE596" stop-opacity=".42"/>
@@ -480,6 +566,10 @@
         ${lieu(f.set)(p, r)}
         ${(MOTIFS[f.type] ?? (() => ''))(accent)}
         ${lumiere(f.stage, legendaire, accent, u, r)}
+        <!-- L'aura de rareté vient **après** la lumière d'âge : les deux
+             s'additionnent, et c'est voulu — une épique au troisième âge doit
+             écraser une épique au premier, sans cesser d'être une épique. -->
+        ${aura(f.rar, u, r)}
         <!-- Le pied d'ombre. Sans lui le personnage flotte : il est détouré,
              donc rien ne le rattache au sol du décor. -->
         <ellipse cx="50" cy="97" rx="30" ry="5" fill="#000" opacity=".5"/>

@@ -410,7 +410,7 @@
 /* Les aides communes viennent de /cartes.js — l'état, le catalogue, le dessin
    d'une carte. On les réalias ici pour que le code du kiosque soit exactement
    celui qu'il était quand il vivait dans la page des Fanzzy. */
-const { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, chargerCatalogue, clamp, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid } = window.TBF_CARTES;
+const { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid } = window.TBF_CARTES;
 
 /* ------------------------------------------------------------ kiosque */
 
@@ -906,52 +906,11 @@ async function openPack() {
     return;
   }
 
-  /* Un booster tire quatre sortes de cartes, et chacune a besoin d'un nom.
-
-     La page n'en connaissait qu'une. Les tenues arrivaient sous leur
-     identifiant — « prehistorique » là où il fallait lire « Préhistorique » —
-     et l'équipement comme les cartes d'action n'étaient connus de personne :
-     ils tombaient dans la branche « carte inconnue », se faisaient jeter, et
-     le joueur lisait qu'il devait recharger sa page. Depuis que les places 4
-     et 5 s'ouvrent à tout l'inventaire, c'était le cas de la plupart des
-     boosters.
-
-     `type` sert ici à choisir une couleur et un pictogramme, faute d'en avoir
-     de propres : une tenue prend ceux du tifo, l'équipement ceux du
-     déplacement, une carte d'action ceux de la pyro. */
-  const carteDe = (c) => {
-    if (c.type === 'skin') {
-      const t = TENUES.get(c.id);
-      return { id: c.id, nom: t?.nom ?? c.id, texte: t?.texte, type: 'tifo',
-        rar: t?.rar ?? 'rare', stage: 1, skin: true, pour: c.pour };
-    }
-    if (c.type === 'stuff') {
-      const o = STUFFS.get(c.id);
-      return { id: c.id, nom: o?.nom ?? c.id, texte: o?.texte, type: 'depl',
-        rar: o?.rar ?? 'rare', stage: 1, stuff: true, mods: o?.mods };
-    }
-    if (c.type === 'action') {
-      const a = ACTES.get(c.id);
-      return { id: c.id, nom: a?.nom ?? c.id, texte: a?.texte, type: 'pyro',
-        rar: a?.rar ?? 'rare', stage: 1, action: true };
-    }
-    /* Une poignée d'écharpes. Ce n'est pas un lot de consolation : c'est ce qui
-       paie les évolutions, donc les âges qu'aucun booster ne donne. La rareté
-       suit la taille de la poignée, pour que l'ouverture ait la couleur du
-       gain plutôt qu'une couleur fixe. */
-    if (c.type === 'echarpes') {
-      const n = c.montant ?? 0;
-      // `voix` pour sa couleur : c'est l'or du jeu, celui des écharpes. Il n'y
-      // a pas de type propre à la monnaie, et en inventer un ferait apparaître
-      // une famille de plus dans tous les filtres du classeur.
-      return { id: 'echarpes', nom: `${n} écharpes`, type: 'voix',
-        texte: 'De quoi faire grandir un supporter que tu as déjà.',
-        rar: n >= 30 ? 'epique' : n >= 14 ? 'rare' : 'commune',
-        stage: 1, echarpes: true, montant: n };
-    }
-    return BY_ID.get(c.id);
-  };
-  pull = res.cards.map(carteDe);
+  /* Les quatre sortes de cartes, converties par `carteDuPaquet` — qui vit
+     dans `cartes.js` depuis que l'accueil rend les mêmes. Deux tables pour la
+     même conversion auraient divergé, et c'est exactement ce qui est arrivé au
+     catalogue recopié. */
+  pull = res.cards.map(carteDuPaquet);
 
   // Une carte que le serveur tire mais que cette page ne connaît pas arrivait
   // ici comme `undefined`, et cassait l'ouverture sans rien dire — c'est ce

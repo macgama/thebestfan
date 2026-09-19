@@ -455,8 +455,20 @@ function rendreParcours(p, { ajouter = false } = {}) {
        on y est venu pour lui. Pour un duel, c'est l'adversaire — « perdu contre
        Marie » se raconte, « perdu sur Sion – Bâle » ne dit rien de ce qui s'est
        passé. Le match redescend alors d'une ligne, où il reste lisible. */
+    /* **« Match inconnu » accusait le jeu d'avoir perdu une partie.**
+
+       Il n'en avait perdu aucune : `fixtures` est un cache des compétitions
+       suivies, et un duel joué sur un match qui n'y figure pas gardait son
+       identifiant sans qu'on sache le nommer. La partie, elle, était entière —
+       l'issue, le score, la ferveur, l'adversaire et le club soutenu, tout
+       était là. Seul le nom des deux équipes manquait, et la phrase en faisait
+       une panne.
+
+       Trois états, donc, et non deux : un match nommé, un match qu'on ne sait
+       plus nommer, et pas de match du tout. */
     const rencontre = l.match
-      ? `${l.match.domicile} – ${l.match.exterieur}` : 'match inconnu';
+      ? `${l.match.domicile} – ${l.match.exterieur}`
+      : l.oublie ? 'match non répertorié' : 'hors match';
     const contre = virage ? rencontre
       : l.adversaire ? `contre ${l.adversaire}`
       : l.contreBot ? 'contre un bot' : rencontre;

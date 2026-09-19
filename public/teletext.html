@@ -640,11 +640,13 @@ function rendreFerveur() {
   const RIEN = {
     joueurs: 'Personne n’a encore poussé dans cette compétition.<br>'
       + 'Le premier match en direct ouvre le Grand Virage.',
-    tribunes: aDeLaFerveur
-      ? 'De la ferveur a été donnée ici, mais <b>en neutre</b> : personne n’a '
-        + 'encore poussé <i>pour</i> un club de cette compétition.<br>'
-        + 'Suis un club depuis « Mes clubs », et ta ferveur ira à sa tribune.'
-      : 'Aucune tribune n’a encore de ferveur dans cette compétition.',
+    /* **Ce tableau liste désormais tout le plateau**, poussé ou non : il n'est
+       vide que si la compétition n'a aucun match pour la saison affichée. Le
+       message d'avant — « personne n'a poussé pour un club d'ici » — décrivait
+       une liste filtrée sur la ferveur, qui n'existe plus. Le garder ferait
+       chercher une panne de jeu là où il manque des matchs. */
+    tribunes: 'Aucune équipe pour cette saison.<br>'
+      + 'Le plateau se remplit avec les matchs de la compétition.',
     kops: aDeLaFerveur
       ? 'De la ferveur a été donnée ici, mais par personne qui appartienne à un '
         + 'KOP de cette compétition.<br>Un KOP ne marque que ce que ses membres '
@@ -684,13 +686,25 @@ function tableFerveur(liste) {
         </tr>`).join('')}</tbody></table>`;
   }
   if (echelle === 'tribunes') {
+    /* **Le plateau entier, et non les seuls clubs déjà poussés.**
+
+       La liste se tirait des lignes de ferveur : un club n'existait que si
+       quelqu'un avait chanté pour lui, et une compétition de vingt équipes en
+       montrait deux. On y cherchait le sien, on ne l'y trouvait pas, et rien ne
+       disait s'il était mal classé ou absent du jeu.
+
+       Les clubs à zéro sont donc là, en retrait — c'est une tribune à prendre,
+       pas une ligne vide. Et les duels sont comptés à part de la ferveur : ils
+       ne demandent ni le même temps ni le même geste que le virage. */
     return `<table>
-      <thead><tr><th>#</th><th>CLUB</th><th>SUPP.</th><th>MOYENNE</th></tr></thead>
+      <thead><tr><th>#</th><th>CLUB</th><th>SUPP.</th><th>DUELS</th><th>MOYENNE</th></tr></thead>
       <tbody>${liste.map((t, i) => `
-        <tr class="${i < 3 ? 'top3' : ''}">
-          <td>${i + 1}</td>
+        <tr class="${i < 3 && t.moyenne > 0 ? 'top3' : ''}"${
+            t.ferveur > 0 ? '' : ' style="opacity:.42"'}>
+          <td>${t.ferveur > 0 ? i + 1 : '–'}</td>
           <td class="club"><img src="${esc(t.logo)}" alt=""><span>${esc(t.name)}</span></td>
           <td>${t.supporters}</td>
+          <td>${t.duels ?? 0}</td>
           <td class="pts">${t.moyenne}</td>
         </tr>`).join('')}</tbody></table>`;
   }

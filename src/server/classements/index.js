@@ -198,7 +198,15 @@ export function createClassements({ pool, requireAuth,
               ROUND(100 * SUM(dr.outcome = 'win') / COUNT(*)) AS taux,
               (SELECT d2.elo_after FROM duel_results d2
                 WHERE d2.user_id = u.public_id AND d2.mode = 'classe'
-                ORDER BY d2.ended_at DESC LIMIT 1) AS cote
+                ORDER BY d2.ended_at DESC LIMIT 1) AS cote,
+              /* **Pour qui il se bat.** SUPPORTERS et ENTRAÎNEMENT nomment le
+                 club de chacun ; DUELS, seul des trois, le taisait — et c'est
+                 pourtant là qu'il compte le plus, puisqu'un duel classé ne se
+                 joue que pendant un match de son club. Trois tableaux côte à
+                 côte dont un seul omet la même donnée se lisent comme une
+                 donnée perdue, et c'en était une. */
+              (SELECT t.name FROM user_follows fo JOIN teams t ON t.id = fo.team_id
+                WHERE fo.user_id = u.public_id ORDER BY fo.is_main DESC LIMIT 1) AS club
          FROM duel_results dr
          JOIN users u ON u.public_id = dr.user_id
         WHERE u.status = 'active' AND dr.mode = 'classe'
@@ -280,13 +288,18 @@ export function createClassements({ pool, requireAuth,
      ici, à la lecture, et non à l'écriture. Écarter ces parties au moment de
      les enregistrer aurait rendu le classement juste et le parcours faux. */
 
+  /* `duel` distingue les deux sources sans les séparer : tout ce qui lit
+     `SOURCE` additionne la même ferveur, et ce drapeau permet à qui le veut
+     de compter les duels à part. L'annuaire des tribunes s'en sert — « combien
+     de duels se sont joués pour ce club » est une question qu'on pose devant
+     une compétition, et à laquelle rien ne répondait. */
   const SOURCE = `
-    SELECT vp.user_id, vp.team_id, vp.ferveur
+    SELECT vp.user_id, vp.team_id, vp.ferveur, 0 AS duel
       FROM virage_presence vp
       JOIN fixtures f ON f.id = vp.fixture_id
      WHERE f.league_id = ? AND f.season = ?
     UNION ALL
-    SELECT dr.user_id, dr.team_id, dr.ferveur
+    SELECT dr.user_id, dr.team_id, dr.ferveur, 1 AS duel
       FROM duel_results dr
       JOIN fixtures f ON f.id = dr.fixture_id
      WHERE f.league_id = ? AND f.season = ? AND dr.mode = 'classe'`;
@@ -325,29 +338,55 @@ export function createClassements({ pool, requireAuth,
   }
 
   /**
-   * Les tribunes, c'est-à-dire les clubs.
+   * Les tribunes d'une compétition : **toutes ses équipes**, poussées ou non.
    *
-   * Divisées par le nombre de leurs supporters, comme le classement général :
-   * sans cette division, le plus gros club gagne toujours et personne ne
-   * défend le sien. Le diviseur est le nombre de supporters du club, pas le
-   * nombre de ceux qui ont joué — mille abonnés qui regardent doivent peser
-   * contre trente fidèles qui chantent.
+   * ## Ce que la liste tirait d'elle-même
+   *
+   * Elle se construisait à partir des lignes de ferveur — `JOIN teams ON
+   * t.id = x.team_id` — puis écartait le reste par un `HAVING ferveur > 0`.
+   * Autrement dit, un club n'existait que si quelqu'un avait déjà poussé pour
+   * lui. Une compétition de vingt équipes en affichait deux, et la page les
+   * présentait comme « le classement des tribunes » : on y cherchait son club,
+   * on ne l'y trouvait pas, et rien ne disait s'il était mal classé ou
+   * simplement absent du jeu.
+   *
+   * Les équipes viennent donc de `fixtures`, qui est la même source que les
+   * résultats et le classement de la ligue affichés deux onglets plus loin :
+   * la compétition montre partout le même plateau. Un club sans ferveur figure
+   * à zéro, ce qui est une information — c'est une tribune à prendre.
+   *
+   * ## Pourquoi les duels sont comptés à part
+   *
+   * « Combien de duels se sont joués pour ce club » est la question qu'on pose
+   * devant une compétition, et la ferveur seule n'y répond pas : elle mélange
+   * le virage et le duel, qui ne demandent ni le même temps ni le même geste.
+   *
+   * ## La moyenne, comme ailleurs
+   *
+   * Divisée par le nombre de supporters du club, pas par celui de ceux qui ont
+   * joué : mille abonnés qui regardent doivent peser contre trente fidèles qui
+   * chantent. Sans cette division, le plus gros club gagne toujours et personne
+   * ne défend le sien.
    */
   async function tribunesDe(leagueId, saison, limite = 50) {
     return q(
       `SELECT t.id, t.name, t.logo,
-              SUM(x.ferveur) AS ferveur,
+              COALESCE(f.ferveur, 0) AS ferveur,
+              COALESCE(f.duels, 0) AS duels,
               COALESCE(s.n, 0) AS supporters,
-              ROUND(SUM(x.ferveur) / GREATEST(COALESCE(s.n, 1), 1)) AS moyenne
-         FROM (${SOURCE}) x
-         JOIN teams t ON t.id = x.team_id
+              ROUND(COALESCE(f.ferveur, 0) / GREATEST(COALESCE(s.n, 1), 1)) AS moyenne
+         FROM (SELECT home_id AS team_id FROM fixtures WHERE league_id = ? AND season = ?
+               UNION
+               SELECT away_id FROM fixtures WHERE league_id = ? AND season = ?) plateau
+         JOIN teams t ON t.id = plateau.team_id
          LEFT JOIN (SELECT team_id, COUNT(*) AS n FROM user_follows GROUP BY team_id) s
                 ON s.team_id = t.id
-        GROUP BY t.id, t.name, t.logo, s.n
-       HAVING ferveur > 0
-        ORDER BY moyenne DESC, ferveur DESC
+         LEFT JOIN (SELECT y.team_id, SUM(y.ferveur) AS ferveur, SUM(y.duel) AS duels
+                      FROM (${SOURCE}) y GROUP BY y.team_id) f
+                ON f.team_id = t.id
+        ORDER BY moyenne DESC, ferveur DESC, t.name ASC
         LIMIT ${Number(limite) || 50}`,
-      [leagueId, saison, leagueId, saison]);
+      [leagueId, saison, leagueId, saison, leagueId, saison, leagueId, saison]);
   }
 
   /**
@@ -454,15 +493,98 @@ export function createClassements({ pool, requireAuth,
     const [total] = await q(
       `SELECT COUNT(DISTINCT x.user_id) AS n FROM (${FERVEUR}) x`);
 
+    /* ------------------------------------- une place par échelle, pas une
+
+       **La carte « ma place » répondait toujours à la question de la ferveur**,
+       y compris sous l'onglet DUELS. Quelqu'un qui venait de jouer ses duels
+       lisait donc, au-dessus du tableau des duellistes, « 312e sur 1 400
+       supporters classés » — un rang exact, calculé sur autre chose. La
+       conclusion tombait toute seule : mes duels n'ont pas été comptés.
+
+       Ils l'étaient. La ferveur d'un duel classé entre dans `FERVEUR` comme
+       celle du virage, et c'est ce rang-là qu'il lisait. Ce qui manquait
+       n'était pas le calcul, c'était la réponse à la question posée par
+       l'onglet qu'il regardait.
+
+       Chaque échelle rend donc la sienne, et surtout **de quoi comprendre une
+       absence** : le plancher, et le nombre de parties déjà au compteur. « Tu
+       n'es pas classé » et « il te manque deux parties » demandent deux gestes
+       différents, et un seul des deux existe. */
     const [duels] = await q(
-      `SELECT SUM(outcome = 'win') AS gagnes, COUNT(*) AS joues
-         FROM duel_results WHERE user_id = ? AND mode = 'classe'`, [userId]);
+      `SELECT SUM(outcome = 'win') AS gagnes, COUNT(*) AS joues,
+              (SELECT d2.elo_after FROM duel_results d2
+                WHERE d2.user_id = ? AND d2.mode = 'classe'
+                ORDER BY d2.ended_at DESC LIMIT 1) AS cote
+         FROM duel_results WHERE user_id = ? AND mode = 'classe'`, [userId, userId]);
+
+    const [entr] = await q(
+      `SELECT COUNT(*) AS joues, SUM(outcome = 'win') AS gagnes
+         FROM duel_results WHERE user_id = ? AND mode = 'entrainement'`, [userId]);
+
+    /* Le classement des duellistes, vu d'ici, doit être **le même** que celui
+       du tableau : même plancher, même cote, même tri. Deux requêtes qui
+       classent différemment placeraient le joueur à un rang qu'il ne
+       trouverait pas dans la liste juste en dessous. */
+    const classes = (mode) => `
+      SELECT dr.user_id, COUNT(*) AS joues,
+             (SELECT d2.elo_after FROM duel_results d2
+               WHERE d2.user_id = dr.user_id AND d2.mode = '${mode}'
+               ORDER BY d2.ended_at DESC LIMIT 1) AS cote
+        FROM duel_results dr
+        JOIN users u ON u.public_id = dr.user_id
+       WHERE u.status = 'active' AND dr.mode = '${mode}'
+       GROUP BY dr.user_id
+      HAVING joues >= ${PLANCHER_CLASSE}`;
+
+    const admis = Number(duels.joues ?? 0) >= PLANCHER_CLASSE;
+    const admisEntr = Number(entr.joues ?? 0) >= PLANCHER_CLASSE;
+
+    const [rangDuel] = admis ? await q(
+      `SELECT COUNT(*) + 1 AS rang FROM (${classes('classe')}) z WHERE z.cote > ?`,
+      [Number(duels.cote ?? 0)]) : [{ rang: null }];
+    const [surDuel] = await q(
+      `SELECT COUNT(*) AS n FROM (${classes('classe')}) z`);
+
+    const [rangEntr] = admisEntr ? await q(
+      `SELECT COUNT(*) + 1 AS rang FROM (${classes('entrainement')}) z WHERE z.joues > ?`,
+      [Number(entr.joues ?? 0)]) : [{ rang: null }];
+    const [surEntr] = await q(
+      `SELECT COUNT(*) AS n FROM (${classes('entrainement')}) z`);
+
+    /* **À quelle tribune va ta ferveur.** C'est la question que pose l'onglet
+       TRIBUNES à quelqu'un qui s'y cherche — et un supporter en neutre, ou qui
+       ne suit aucun club, n'y figure jamais. Sans cette ligne, il ne pouvait
+       pas savoir pourquoi. Voir la même règle dite dans `teletext.html`. */
+    const [tribune] = await q(
+      `SELECT t.id, t.name AS nom, COALESCE(SUM(x.ferveur), 0) AS ferveur
+         FROM user_follows f
+         JOIN teams t ON t.id = f.team_id
+         LEFT JOIN (${FERVEUR}) x
+                ON x.user_id = f.user_id AND x.team_id = f.team_id
+        WHERE f.user_id = ?
+        GROUP BY t.id, t.name
+        ORDER BY MAX(f.is_main) DESC, ferveur DESC
+        LIMIT 1`, [userId]);
 
     return {
       ferveur: Number(ferveur.f), matchs: ferveur.m,
       rang: ferveur.f > 0 ? rang.rang : null,
       sur: total.n,
-      duels: { gagnes: Number(duels.gagnes ?? 0), joues: Number(duels.joues ?? 0) },
+      plancher: PLANCHER_CLASSE,
+      duels: {
+        gagnes: Number(duels.gagnes ?? 0), joues: Number(duels.joues ?? 0),
+        cote: duels.cote == null ? null : Number(duels.cote),
+        rang: rangDuel.rang == null ? null : Number(rangDuel.rang),
+        sur: Number(surDuel.n),
+      },
+      entrainements: {
+        joues: Number(entr.joues ?? 0), gagnes: Number(entr.gagnes ?? 0),
+        rang: rangEntr.rang == null ? null : Number(rangEntr.rang),
+        sur: Number(surEntr.n),
+      },
+      tribune: tribune
+        ? { id: tribune.id, nom: tribune.nom, ferveur: Number(tribune.ferveur) }
+        : null,
     };
   }
 
@@ -498,6 +620,22 @@ export function createClassements({ pool, requireAuth,
    * « duel », sans inventer un format qu'on ne connaît pas.
    */
   async function statsDe(userId) {
+    /* ------------------------------ ce qui ne doit pas dépendre de la fixture
+
+       **Le club soutenu se lit sur `dr.team_id`, pas sur le match.**
+
+       `pour` se déduisait de `home_id`/`away_id`, donc d'une ligne de
+       `fixtures` — et `fixtures` n'est qu'un cache des compétitions suivies.
+       Un duel joué sur un match qui n'y figure pas perdait d'un coup le match,
+       la compétition **et** le club. Or le club est écrit sur la ligne du duel
+       depuis le premier jour : une donnée qu'on possède ne doit pas disparaître
+       avec une jointure qui en concerne une autre.
+
+       **`dr.fixture_id` en plus de `f.id`**, parce que les deux ne disent pas la
+       même chose : le premier dit qu'un match support existait, le second qu'on
+       sait le nommer. Les confondre faisait écrire « match inconnu » sur un duel
+       qui en avait parfaitement un — et accusait le jeu d'avoir perdu une partie
+       là où il lui manquait une ligne de cache. */
     const duels = await q(
       `SELECT mode, format,
               COUNT(*)                   AS joues,
@@ -611,27 +749,48 @@ export function createClassements({ pool, requireAuth,
        depuis, ou la partie est d'avant que la colonne soit remplie
        (`'inconnu'`). Dans les trois, on rend la ligne sans nom plutôt que de
        perdre la partie. */
+    /* ------------------------------ ce qui ne doit pas dépendre de la fixture
+
+       **Le club soutenu se lit sur `dr.team_id`, pas sur le match.**
+
+       `pour` se déduisait de `home_id`/`away_id`, donc d'une ligne de
+       `fixtures` — et `fixtures` n'est qu'un cache des compétitions suivies.
+       Un duel joué sur un match qui n'y figure pas perdait d'un coup le match,
+       la compétition **et** le club. Or le club est écrit sur la ligne du duel
+       depuis le premier jour : une donnée qu'on possède ne doit pas disparaître
+       avec une jointure qui en concerne une autre.
+
+       **`dr.fixture_id` en plus de `f.id`**, parce que les deux ne disent pas la
+       même chose : le premier dit qu'un match support existait, le second qu'on
+       sait le nommer. Les confondre faisait écrire « match inconnu » sur un duel
+       qui en avait parfaitement un — et accusait le jeu d'avoir perdu une partie
+       là où il lui manquait une ligne de cache. */
     const duels = await q(
       `SELECT dr.duel_id, dr.ended_at AS quand, dr.outcome,
               dr.goals_for, dr.goals_against,
               dr.ferveur, dr.mode, dr.format, dr.team_id, dr.opponent_id,
               dr.fanzzy_id, dr.xp, dr.duree_s, dr.side,
               uo.pseudo AS adversaire,
+              tc.name AS club,
+              dr.fixture_id AS support_id,
               f.id AS fixture_id, f.home_id, f.away_id, l.name AS competition,
               h.name AS domicile, h.logo AS domicile_logo,
               a.name AS exterieur, a.logo AS exterieur_logo
          FROM duel_results dr
-         LEFT JOIN users uo ON uo.public_id = dr.opponent_id ${match.split('%').join('dr')}
+         LEFT JOIN users uo ON uo.public_id = dr.opponent_id
+         LEFT JOIN teams tc ON tc.id = dr.team_id ${match.split('%').join('dr')}
         WHERE dr.user_id = ? ${filtre ? 'AND dr.ended_at < ?' : ''}
         ORDER BY dr.ended_at DESC
         LIMIT ${n}`, filtre ? [userId, filtre] : [userId]);
 
     const virages = await q(
       `SELECT vp.joined_at AS quand, vp.ferveur, vp.side, vp.team_id,
+              tc.name AS club, vp.fixture_id AS support_id,
               f.id AS fixture_id, f.home_id, f.away_id, l.name AS competition,
               h.name AS domicile, h.logo AS domicile_logo,
               a.name AS exterieur, a.logo AS exterieur_logo
-         FROM virage_presence vp ${match.split('%').join('vp')}
+         FROM virage_presence vp
+         LEFT JOIN teams tc ON tc.id = vp.team_id ${match.split('%').join('vp')}
         WHERE vp.user_id = ? ${filtre ? 'AND vp.joined_at < ?' : ''}
         ORDER BY vp.joined_at DESC
         LIMIT ${n}`, filtre ? [userId, filtre] : [userId]);
@@ -743,15 +902,26 @@ export function createClassements({ pool, requireAuth,
         ? (Number(r.side) === 0 ? r.domicile : r.exterieur) : null,
       /* Le camp du virage se dit en club et non en 0/1 : « tu poussais pour le
          FC Sion » se lit, « side: 0 » se décode. */
-      pour: r.team_id
-        ? (r.team_id === r.home_id ? r.domicile : r.exterieur)
-        : (r.side === 1 ? r.exterieur : r.side === 0 ? r.domicile : null),
+      /* `r.club` d'abord : il vient de la ligne elle-même et survit à
+         l'absence de la fixture. Le calcul par `home_id` reste derrière,
+         pour les lignes d'avant `team_id` — et le camp derrière encore,
+         pour un neutre, dont c'est la seule façon d'être situé. */
+      pour: r.club
+        ?? (r.team_id
+          ? (r.team_id === r.home_id ? r.domicile : r.exterieur)
+          : (r.side === 1 ? r.exterieur : r.side === 0 ? r.domicile : null)),
       neutre: !r.team_id,
+      /* **Trois états, pas deux.** Un match nommé, un match qu'on ne sait plus
+         nommer, et pas de match du tout. L'écran les confondait sous « match
+         inconnu », qui accusait le jeu d'avoir perdu une partie alors qu'il
+         lui manquait seulement une ligne de cache. `oublie` porte la
+         nuance, et la page peut la dire. */
       match: r.fixture_id ? {
         id: r.fixture_id, competition: r.competition ?? null,
         domicile: r.domicile, domicileLogo: r.domicile_logo,
         exterieur: r.exterieur, exterieurLogo: r.exterieur_logo,
       } : null,
+      oublie: !r.fixture_id && !!r.support_id,
     });
 
     let tout = [...duels.map((r) => ligne(r, 'duel')),

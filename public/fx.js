@@ -68,6 +68,35 @@
   .fx-flash{position:fixed;inset:0;pointer-events:none;z-index:91;opacity:0}
   .fx-flash.go{animation:fxflash .5s ease-out}
   @keyframes fxflash{0%{opacity:.85}100%{opacity:0}}
+  /* ------------------------------------------------- l'évolution
+
+     Elle ne se voyait pas. On confirmait, la fiche se rechargeait, et le
+     nouveau personnage était simplement **là** — sans qu'on ait vu l'ancien
+     partir, ni compris qu'on venait de dépenser quatre-vingt-dix écharpes.
+     C'est le seul achat du jeu qui se paie en monnaie durement gagnée, et
+     c'était le seul geste sans récompense à l'écran.
+
+     Deux temps, et c'est tout ce qu'il faut : l'ancien **se charge** — il
+     grandit, il blanchit, il vibre —, puis le nouveau **arrive**, d'un coup,
+     depuis le blanc. Entre les deux, le flash cache la substitution : c'est
+     lui qui fait croire à une transformation plutôt qu'à un remplacement.
+
+     La propriété will-change est posée sur les deux : la charge dure une
+     seconde entière sur une image de six cents pixels, et sans elle le
+     mouvement saccade sur un téléphone. */
+  .fx-charge{animation:fxcharge 1s cubic-bezier(.5,0,.8,.3) forwards;
+    transform-origin:50% 60%;will-change:transform,filter}
+  @keyframes fxcharge{
+    0%{transform:scale(1);filter:brightness(1)}
+    55%{transform:scale(1.06) translateY(-4px);filter:brightness(1.5) saturate(.7)}
+    78%{transform:scale(1.03) translateY(-2px);filter:brightness(2.4) saturate(.3)}
+    100%{transform:scale(1.14) translateY(-8px);filter:brightness(6) saturate(0)}}
+  .fx-arrive{animation:fxarrive .72s cubic-bezier(.2,1.5,.4,1) backwards;
+    transform-origin:50% 60%;will-change:transform,filter}
+  @keyframes fxarrive{
+    0%{transform:scale(1.2);filter:brightness(5) saturate(0);opacity:.2}
+    40%{filter:brightness(1.8) saturate(.8);opacity:1}
+    100%{transform:scale(1);filter:brightness(1)}}
   .fx-shake{animation:fxshake .62s cubic-bezier(.36,.07,.19,.97)}
   @keyframes fxshake{0%,100%{transform:translate(0,0)}
     12%{transform:translate(-8px,4px)}28%{transform:translate(7px,-6px)}
@@ -382,6 +411,20 @@
                        ton({ freq: f, duree: .55, type: 'sawtooth', vol: .09, delai: i * .12 }));
                      bruit({ duree: .9, freq: 300, vol: .07, delai: .1 }); },
     encaisse: () => ton({ freq: 210, vers: 85, duree: .7, type: 'sawtooth', vol: .09 }),
+    /* L'évolution, en deux sons parce qu'elle est en deux temps.
+
+       La charge monte pendant une seconde — c'est exactement la durée de
+       l'animation, et les deux doivent finir ensemble : un son qui s'arrête
+       avant la lumière fait retomber le geste au moment où il culmine.
+
+       Le second est un accord qui se pose. Trois notes, comme le but, mais
+       tenues plus longtemps et sans le bruit de foule : on ne fête pas la même
+       chose. */
+    charge:  () => { ton({ freq: 140, vers: 720, duree: 1, type: 'sawtooth', vol: .07 });
+                     bruit({ duree: 1, freq: 900, vol: .05 }); },
+    evolue:  () => { [523, 659, 784, 1047].forEach((f, i) =>
+                       ton({ freq: f, duree: .85, type: 'sine', vol: .085, delai: i * .06 }));
+                     bruit({ duree: .35, freq: 1400, vol: .07 }); },
     butReel: () => { SONS.but(); bruit({ duree: 1.4, freq: 420, vol: .08, delai: .15 }); },
   };
 
@@ -500,6 +543,94 @@
         n: rarete === 'crown' ? 70 : 30, taille: 6, duree: 1200 });
       if (rarete === 'crown') { flash(); secousse(1.2); }
       buzz(rarete === 'crown' ? [40, 50, 40, 50, 120] : 20);
+    },
+
+    /**
+     * **L'évolution d'un Fanzzy.**
+     *
+     * Le geste le plus cher du jeu — quatre-vingt-dix écharpes, parfois deux
+     * cents — était le seul sans cérémonie : on confirmait, la fiche se
+     * rechargeait, et le nouveau personnage était là. Rien n'avait eu lieu.
+     *
+     * ## Pourquoi elle est ici et non dans la fiche
+     *
+     * Parce qu'elle se joue à trois endroits — la fiche, le classeur, et le
+     * jour où l'accueil fêtera une montée. Une cérémonie recopiée dans chacun
+     * finirait par durer trois durées différentes, et le jeu n'aurait plus de
+     * rythme à lui. Même raison que `MOMENT`, plus haut.
+     *
+     * ## La couleur vient de la rareté d'arrivée
+     *
+     * C'est elle qu'on achète : monter au troisième âge d'un épique doit
+     * éclater en violet, pas dans l'or de tout le monde. La légendaire garde
+     * l'or, et son flash blanc en plus.
+     *
+     * ## Ce qu'elle rend
+     *
+     * Une promesse qui se résout **quand l'ancien a fini de se charger**, à
+     * l'instant du flash. C'est là que l'appelant doit remplacer l'image : une
+     * seconde plus tôt on verrait la substitution, une seconde plus tard on
+     * verrait un trou. Le reste de la cérémonie se joue après, toute seule.
+     *
+     * @param {Element} portrait  l'image à faire évoluer, si elle est à l'écran
+     * @param {object}  o
+     * @param {string}  o.nom     le nom du nouvel âge, annoncé en grand
+     * @param {string}  o.rar     la rareté d'arrivée : elle donne la couleur
+     */
+    evolution(portrait, { nom = '', rar = 'commune' } = {}) {
+      const PALETTE = {
+        commune:    [COULEURS.craie],
+        rare:       [COULEURS.bleu, COULEURS.craie],
+        epique:     ['#B98CFF', COULEURS.bleu, COULEURS.craie],
+        legendaire: [COULEURS.or, COULEURS.feu, '#FFF3D0'],
+      };
+      const palette = PALETTE[rar] ?? PALETTE.commune;
+      const couleur = palette[0];
+      const { x, y } = centre(portrait);
+
+      /* La charge. Sans portrait à l'écran — le classeur en vignette, une
+         fiche déjà refermée — on saute directement au flash : la cérémonie
+         raccourcit, elle ne disparaît pas. */
+      if (portrait) {
+        portrait.classList.remove('fx-charge');
+        void portrait.offsetWidth;
+        portrait.classList.add('fx-charge');
+      }
+      buzz([18, 60, 26, 60, 34]);
+      son('charge');
+
+      const CHARGE = portrait ? 1000 : 120;
+
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          flash(rar === 'legendaire' ? '#fff' : couleur);
+          secousse(rar === 'legendaire' ? 1.3 : 1);
+          onde({ x, y, couleur, taille: rar === 'legendaire' ? 560 : 400 });
+          particules({ x, y, couleurs: palette, taille: 6, duree: 1200,
+            n: rar === 'legendaire' ? 70 : rar === 'epique' ? 46 : 30,
+            distance: rar === 'legendaire' ? 260 : 190 });
+          buzz(rar === 'legendaire' ? [40, 50, 40, 50, 120] : [30, 40, 60]);
+          son('evolue');
+
+          /* On rend la main **ici** : l'appelant remplace l'image pendant que
+             le blanc la couvre. Le titre tombe juste après, sur le personnage
+             déjà en place — l'annoncer avant nommerait quelqu'un qu'on ne voit
+             pas encore. */
+          resolve({
+            /* L'arrivée, à jouer sur la nouvelle image une fois posée. La
+               cérémonie ne sait pas quel élément ce sera : la fiche se
+               reconstruit entièrement, l'ancien n'existe plus. */
+            arrivee(neuf) {
+              if (neuf) {
+                neuf.classList.remove('fx-arrive');
+                void neuf.offsetWidth;
+                neuf.classList.add('fx-arrive');
+              }
+              if (nom) setTimeout(() => titre(nom, 'A GRANDI', couleur, 34), 180);
+            },
+          });
+        }, CHARGE);
+      });
     },
 
     /**

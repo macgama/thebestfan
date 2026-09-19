@@ -6,6 +6,10 @@
 <title>Bienvenue — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
+<!-- La feuille des cartes. Sans elle, `cardHTML` rend sa structure et rien
+     ne la dessine : c'est la même carte que partout ailleurs dans le jeu, elle
+     a la même feuille. -->
+<link rel="stylesheet" href="/cartes.css">
 <script src="/dialogue.js" defer></script>
 <!-- Les noms de pays dans la langue du joueur. Classique et non differe :
      la recherche du club s en sert des la premiere frappe. -->
@@ -144,7 +148,12 @@ input:focus{outline:none;border-color:var(--projo)}
 .face.back{background:linear-gradient(160deg,#20262F,#0D1116) center/cover no-repeat;
   border:2px solid #39414E;display:grid;place-items:center}
 .face.back.dessine>svg{display:none}
-.face.front{transform:rotateY(180deg);border:2px solid var(--c);
+/* La carte du jeu remplit la face, bord à bord : elle porte son propre cadre,
+   sa rareté et son fond. L'habillage d'avant ne vaut plus que pour le repli,
+   d'où la classe — sans elle, la bordure et le dégradé de cet écran se
+   superposaient au cadre de la carte. */
+.face.front{transform:rotateY(180deg)}
+.face.front.repli{border:2px solid var(--c);
   background:linear-gradient(155deg,#1C222B,#0C1015);display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:9px;padding:20px;text-align:center}
 .face.front .k{font-family:var(--banner);font-size:10px;letter-spacing:.22em;color:var(--c)}
@@ -258,6 +267,16 @@ const COUL = { fanzzy:'#F5C33B', stuff:'#8257DA', action:'#E0402C', scarves:'#1E
 const NOM = { fanzzy:'FANZZY', stuff:'ÉQUIPEMENT', action:'CARTE D\u2019ACTION', scarves:'ÉCHARPES' };
 
 let club = null, cartes = [], idx = 0, catalogue = null;
+/* **Le catalogue des cartes, chargé en fond dès l'arrivée.**
+
+   `cardHTML` a besoin du catalogue complet — les types, les raretés, les
+   tenues. On le demande tout de suite, pendant que le joueur choisit son club :
+   il y passe une bonne minute, et la cérémonie n'attend jamais.
+
+   `pret` est faux tant qu'il n'est pas là, et faux pour de bon s'il n'arrive
+   pas. La page retombe alors sur son ancienne tuile : une cérémonie moins belle
+   vaut mieux qu'une cérémonie qui ne s'ouvre pas. */
+let pret = false;
 
 function scene(n) {
   document.querySelectorAll('.scene').forEach((s) => s.classList.remove('on'));
@@ -526,7 +545,31 @@ function ouvrir() {
  * Chaque dessin se retire tout seul s'il manque — voir les `onerror` des trois
  * bibliothèques : une carte sans image reste une carte, jamais un carré vide.
  */
+/**
+ * La face avant d'une carte du paquet de bienvenue.
+ *
+ * **C'était la seule carte du jeu qui n'était pas une carte du jeu.** Elle
+ * montrait un buste, un nom et une phrase, dans un cadre fait pour cet écran :
+ * pas de rareté lisible, pas de cadre d'évolution, pas de holo sur un épique,
+ * pas le décor du personnage. Le joueur découvrait la vraie carte au deuxième
+ * booster, c'est-à-dire deux heures plus tard — et le premier paquet est celui
+ * dont on se souvient.
+ *
+ * `carteDuPaquet` et `cardHTML` viennent de `cartes.js`, que le kiosque emploie
+ * aussi. Ce n'est pas « la même apparence », c'est le même code : deux rendus
+ * qui se ressemblent finissent par ne plus se ressembler, et personne ne le
+ * remarque avant un joueur.
+ *
+ * Le repli garde l'ancienne tuile — si le catalogue n'a pas pu se charger, on
+ * montre un nom et un dessin plutôt qu'un rectangle vide. Une cérémonie qui
+ * s'interrompt vaut moins qu'une cérémonie moins belle.
+ */
 function faceCarte(c) {
+  const V = window.TBF_CARTES;
+  if (V && pret) {
+    return `<div class="face front">${V.cardHTML(V.carteDuPaquet(c))}</div>`;
+  }
+
   const coul = COUL[c.type];
   const info = {
     // Le nom vient du paquet lui-même : le serveur le joint depuis son
@@ -553,7 +596,7 @@ function faceCarte(c) {
     scarves: () => window.TBF_STUFF?.illustrationGain?.('echarpes') ?? '',
   }[c.type]() || '';
 
-  return `<div class="face front" style="--c:${coul}">
+  return `<div class="face front repli" style="--c:${coul}">
     <div class="k">${NOM[c.type]}</div>
     ${dessin}
     ${info.big ? `<div class="big">${info.big}</div>` : ''}
@@ -694,6 +737,9 @@ async function reclamerLeParrainage() {
 (async () => {
   try {
     catalogue = await fetch('/api/me/catalogue').then((r) => r.json());
+    window.TBF_CARTES?.chargerCatalogue?.()
+      .then(() => { pret = true; })
+      .catch((e) => console.warn('[bienvenue] catalogue des cartes', e.message));
     const st = await fetch('/api/me/state', { credentials:'same-origin' }).then((r) => r.json());
     /* Avant la redirection, et sans l'attendre : un compte déjà inscrit qui
        repasse ici avec un code en attente — il vient de suivre le lien d'un
@@ -715,6 +761,16 @@ async function reclamerLeParrainage() {
      vide avec un identifiant dessus. Sans « defer », même raison. -->
 <script src="/fanzzy-art.js"></script>
 <script src="/action-art.js"></script>
+<!-- Le décor d'une illustration : sans lui, `artFond` se replie sur un aplat
+     et le Fanzzy flotte sur du vide. La fiche et le classeur le chargent aussi. -->
+<script src="/fanzzy-fond.js"></script>
+<!-- **La même carte qu'au kiosque, parce que c'est le même module.**
+     L'accueil dessinait la sienne : un buste, un nom, une phrase. Le joueur
+     ouvrait donc son premier paquet sur des cartes qui ne ressemblaient pas à
+     celles du jeu, et découvrait les vraies au deuxième booster — alors que
+     c'est le premier paquet dont on se souvient. Sans « defer », comme les
+     autres : la première carte se retourne vite. -->
+<script src="/cartes.js"></script>
 <script src="/fx.js" defer></script>
 <script src="/pwa.js" defer></script>
 </body>

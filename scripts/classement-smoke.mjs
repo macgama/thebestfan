@@ -259,7 +259,32 @@ check('ma place dans cette compétition', r.moi?.rang === 6);
    même, et il n'invente personne. */
 r = await get('/api/rank/competition/207?saison=2026');
 check('une compétition peu jouée se classe aussi', r.joueurs.length === 1);
-check('sans tribune fantôme', r.tribunes.length === 1);
+/* **Le plateau entier, poussé ou non.**
+
+   Ce contrôle demandait l'inverse — une seule tribune, celle qui avait de la
+   ferveur — et il avait raison tant que la liste se tirait des lignes de
+   ferveur. Mais cette liste est présentée comme « les tribunes de la
+   compétition » : un joueur y cherche son club, et une compétition de vingt
+   équipes en montrait deux. Il ne pouvait pas savoir s'il était mal classé ou
+   absent du jeu.
+
+   Les équipes viennent donc des matchs, comme les résultats et le classement
+   de la ligue deux onglets plus loin. Un club à zéro est une tribune à
+   prendre, pas une ligne de trop — et « fantôme » ne s'applique qu'à une
+   équipe qui ne joue pas cette compétition, ce que le contrôle vérifie
+   toujours. */
+const noms = r.tribunes.map((t) => t.name).sort();
+check('les deux équipes du plateau y figurent, poussées ou non',
+  r.tribunes.length === 2
+  || (console.log('        la liste :', noms.join(', ')), false));
+check('celle qui a de la ferveur devant', r.tribunes[0].name === 'Petit Club'
+  || (console.log('        en tête :', r.tribunes[0].name), false));
+check('et l’autre est là, à zéro, plutôt qu’absente',
+  Number(r.tribunes[1].ferveur) === 0 && r.tribunes[1].name === 'Gros Club'
+  || (console.log('        seconde :', JSON.stringify(r.tribunes[1])), false));
+/* La compétition 61 n'a pas d'autre équipe : aucune ne doit s'y inviter. */
+check('et aucune équipe étrangère à la compétition ne s’y invite',
+  noms.every((x) => ['Petit Club', 'Gros Club'].includes(x)));
 
 /* Une compétition dont on n'a aucun match : une page vide, pas une panne. */
 r = await get('/api/rank/competition/4242');
@@ -476,6 +501,83 @@ check('une compétition sans match rend des listes vides',
     Number(place.ferveur) === 750
     || (console.log('        sa place dit :', JSON.stringify(place)), false));
   check('et elle le classe', Number(place.rang) > 0);
+
+  /* ================================ la carte « ma place » suit l'onglet
+
+     Elle répondait toujours à la question de la ferveur, y compris sous DUELS :
+     on lisait « 312e sur 1 400 supporters classés » au-dessus du classement des
+     duellistes. Le rang était exact et répondait à autre chose, et la conclusion
+     tombait toute seule — mes duels n'ont pas été comptés.
+
+     Rachid est le cas exact : deux duels classés, donc **sous le plancher**.
+     Sa carte doit dire ce qui manque, et surtout ne pas se taire. */
+  check('sa place compte ses duels classés', Number(place.duels?.joues) === 2
+    || (console.log('        elle dit :', JSON.stringify(place.duels)), false));
+  check('et ne le classe pas encore, puisqu’il est sous le plancher',
+    place.duels?.rang === null);
+  check('mais elle envoie le plancher, pour que l’écran dise combien il manque',
+    Number(place.plancher) === 3
+    || (console.log('        plancher :', place.plancher), false));
+
+  /* L'onglet TRIBUNES ne classe pas des joueurs : la question qu'on s'y pose
+     est « où va ma ferveur ». Un neutre n'en alimente aucune, et rien ne le
+     disait nulle part. */
+  check('et elle nomme la tribune qui reçoit sa ferveur',
+    place.tribune?.nom === 'Gros Club'
+    || (console.log('        tribune :', JSON.stringify(place.tribune)), false));
+
+  /* ============================ le club, dans le classement des duellistes
+
+     SUPPORTERS et ENTRAÎNEMENT nommaient le club de chacun ; DUELS, seul des
+     trois, le taisait — et c'est là qu'il compte le plus, puisqu'un duel classé
+     ne se joue que pendant un match de son club. Il lui faut une troisième
+     partie pour entrer : c'est le plancher, et il vaut aussi pour ce test. */
+  await pool.query(`INSERT INTO duel_results
+      (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,ended_at)
+    VALUES ('dz-4',?,'x','win',7001,91,100,'classe',NOW(3))`, [DUELLISTE]);
+  C.oublier();
+
+  const duel3 = (await get('/api/rank/duellistes')).classement ?? [];
+  const rachid = duel3.find((x) => x.pseudo === 'Rachid');
+  check('à la troisième partie, il entre au classement des duellistes',
+    Boolean(rachid)
+    || (console.log('        la liste :', duel3.map((x) => x.pseudo).join(', ')), false));
+  check('et sa ligne nomme son club', rachid?.club === 'Gros Club'
+    || (console.log('        elle dit :', JSON.stringify(rachid)), false));
+
+  moi = DUELLISTE;
+  const place3 = await get('/api/rank/moi');
+  check('sa carte le classe alors parmi les duellistes',
+    Number(place3.duels?.rang) > 0
+    || (console.log('        elle dit :', JSON.stringify(place3.duels)), false));
+  check('sur le même effectif que la liste',
+    Number(place3.duels?.sur) === duel3.length
+    || (console.log('        elle dit :', place3.duels?.sur, 'liste :', duel3.length), false));
+
+  /* ======================= un match que le cache ne connaît pas
+
+     `fixtures` n'est qu'un cache des compétitions suivies : on peut jouer un
+     duel sur un match qui n'y figure pas. La ligne perdait alors le match, la
+     compétition **et le club**, alors que le club est écrit dessus depuis le
+     premier jour. Le parcours affichait « match inconnu » et plus rien d'autre,
+     ce qui accusait le jeu d'avoir perdu une partie qu'il avait entière. */
+  await pool.query(`INSERT INTO duel_results
+      (duel_id,user_id,opponent_id,outcome,fixture_id,team_id,ferveur,mode,ended_at)
+    VALUES ('dz-5',?,'x','win',999777,91,10,'classe',NOW(3))`, [DUELLISTE]);
+
+  const parc = await get('/api/rank/parcours');
+  const perdue = (parc.lignes ?? []).find((l) => l.ferveur === 10);
+  check('un duel sur un match hors cache reste dans le parcours', Boolean(perdue)
+    || (console.log('        le parcours :', JSON.stringify(parc.lignes ?? []).slice(0, 200)), false));
+  check('il garde le club pour lequel on s’est battu', perdue?.pour === 'Gros Club'
+    || (console.log('        il dit :', JSON.stringify(perdue)), false));
+  check('et il dit que le match existait, au lieu de le nier',
+    perdue?.oublie === true && perdue?.match === null
+    || (console.log('        oublie :', perdue?.oublie, 'match :', perdue?.match), false));
+
+  await pool.query(`DELETE FROM duel_results WHERE duel_id IN ('dz-4','dz-5')`);
+  moi = avant;
+  C.oublier();
 
   await pool.query(`DELETE FROM duel_results WHERE user_id = ?`, [DUELLISTE]);
   await pool.query(`DELETE FROM user_follows WHERE user_id = ?`, [DUELLISTE]);
