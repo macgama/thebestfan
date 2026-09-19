@@ -10,6 +10,7 @@ import { apres as coteApres, moyenne as coteMoyenne, COTE_DEPART }
 // La même règle qu'au Virage : le club qu'on soutient dans cette
 // rencontre, ou rien du tout si on n'en suit aucun des deux.
 import { clubSoutenu, campDe } from '../football/suivis.js';
+import { assurerBourse } from '../bourse.js';
 
 /**
  * Couche réseau du duel N contre N.
@@ -808,7 +809,7 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
           : Math.round((gagne ? bareme.gagne : bareme.perdu) * prime);
         const pourSonClub = clubs.has(userId);
         const montant = base * (pourSonClub ? DOUBLE_CLUB : 1);
-        await q(`INSERT IGNORE INTO user_wallet (user_id) VALUES (?)`, [userId]);
+        await assurerBourse(q, userId);
         await q(`UPDATE user_wallet SET scarves = scarves + ? WHERE user_id = ?`,
           [montant, userId]);
         verse.set(userId, { echarpes: montant, pourSonClub, xp: 0, kop: null });

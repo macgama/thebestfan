@@ -44,6 +44,7 @@
     "couleurs:test": "node scripts/couleurs-smoke.mjs",
     "images": "node scripts/fanzzy-images.mjs",
     "dos": "node scripts/dos-images.mjs",
+    "fonds": "node scripts/fonds-images.mjs",
     "art": "node scripts/fanzzy-art.mjs",
     "art:tout": "node scripts/fanzzy-art-tout.mjs",
     "dessins": "node scripts/dessins.mjs",

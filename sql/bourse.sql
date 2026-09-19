@@ -1,0 +1,36 @@
+-- thebestfan — le défaut de la réserve de boosters.
+--
+-- À appliquer après souvenirs.sql. Rejouable.
+--
+-- ---------------------------------------------------------------------------
+-- Pourquoi ce fichier existe
+--
+-- `sql/souvenirs.sql` déclare `packs SMALLINT NOT NULL DEFAULT 3`. C'est vrai
+-- pour une base neuve — et faux pour la production, qui a créé cette table
+-- quand le défaut valait douze. `CREATE TABLE IF NOT EXISTS` ne touche pas à
+-- une table qui existe : le fichier a changé, la base n'a pas bougé.
+--
+-- Le résultat n'avait l'air d'une panne nulle part. Le schéma disait trois,
+-- l'écran d'administration disait trois, le module des boosters écrivait bien
+-- trois — mais quatre autres modules créaient la ligne sans nommer le nombre,
+-- et c'est l'inscription qui passe la première. Un nouveau joueur recevait donc
+-- douze boosters, c'est-à-dire soixante cartes avant d'avoir compris ce qu'est
+-- un Fanzzy.
+--
+-- ---------------------------------------------------------------------------
+-- Ce que ça répare, et ce que ça ne répare pas
+--
+-- Le code ne dépend plus de ce défaut : `src/server/bourse.js` nomme la réserve
+-- à chaque création, et les cinq modules passent par lui. Cette migration
+-- existe pour que la base cesse de mentir — la prochaine requête écrite à la
+-- va-vite prendrait sinon le même piège, et personne ne le verrait davantage.
+--
+-- Elle ne touche **à aucune bourse existante**. Un joueur qui a déjà reçu ses
+-- douze boosters les garde : on ne reprend pas ce qui a été donné, et une
+-- migration qui retire des boosters à des comptes en cours serait un incident
+-- bien plus grave que celui qu'elle corrige.
+--
+-- Trois plutôt que `pack.depart` : le SQL ne sait pas lire les réglages, et une
+-- valeur figée ici recommencerait l'erreur. Ce chiffre n'est plus une règle du
+-- jeu, c'est un filet — la règle vit dans l'administration.
+ALTER TABLE user_wallet MODIFY COLUMN packs SMALLINT NOT NULL DEFAULT 3;

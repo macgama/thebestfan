@@ -400,6 +400,41 @@
    * qui l'entourent, `poussiere` les éclats en suspension, `ciel` de combien on
    * éclaircit le haut. Quatre chiffres, quatre marches qu'on distingue de loin.
    */
+  /**
+   * Les décors peints disponibles, en `<SÉRIE>-<rareté>`.
+   *
+   * Réécrite par `scripts/fonds-images.mjs` — ne pas modifier à la main, comme
+   * la liste ILLUSTRES de `fanzzy-art.js`. Une entrée qui ne correspond à aucun
+   * fichier ferait un décor vide, c'est-à-dire pire que pas de décor du tout.
+   */
+  const FONDS = new Set([
+    'RP-commune',
+    'RP-epique',
+    'RP-legendaire',
+    'RP-rare',
+  ]);
+
+  /**
+   * L'adresse de la plaque d'une carte, ou `null` s'il faut la dessiner.
+   *
+   * **Seulement sur la tenue de base**, et c'est la condition qui compte. Une
+   * tenue fait basculer toute la palette du décor : le même lieu en nocturne,
+   * en ocre préhistorique, en cendre apocalyptique. C'est ce qui rend une tenue
+   * visible de loin, au lieu de se chercher sur le costume. Une plaque peinte
+   * en fin d'été ne devient pas préhistorique — la poser sous une tenue qui
+   * l'est ferait mentir la seule chose qu'on voit.
+   *
+   * Le format suit `TBF_ETATS.EXT` comme le reste des images du jeu, et le
+   * serveur sert l'AVIF à qui l'accepte — voir `src/server/images/index.js`.
+   */
+  function plaque(set, rar, skin) {
+    if (skin && skin !== 'base') return null;
+    const cle = `${set}-${rar ?? 'commune'}`;
+    if (!FONDS.has(cle)) return null;
+    const ext = window.TBF_ETATS?.EXT ?? '.webp';
+    return `/img/fonds/${cle}${ext}`;
+  }
+
   const PALIERS = {
     commune:    { halo: 0.00, anneaux: 0, poussiere: 0,  ciel: 0,    teinte: null },
     rare:       { halo: 0.16, anneaux: 1, poussiere: 6,  ciel: 0.10, teinte: '#5FA8FF' },
@@ -504,6 +539,11 @@
     const u = 'fd' + (uid++);
     const r = graine(`${f.id ?? 'x'}|${f.set ?? ''}|${f.skin ?? 'base'}`);
     const legendaire = f.rar === 'legendaire';
+    /* **La plaque remplace le lieu, pas le reste.** Le motif de famille, la
+       lumière de l'âge et l'aura de rareté se posent par-dessus comme avant :
+       c'est ce qui garde une carte peinte et une carte dessinée dans le même
+       jeu, au lieu d'en faire deux collections. */
+    const peint = plaque(f.set, f.rar, f.skin);
 
     /* **Le cadre est en portrait, et c'est la correction la plus importante du
        module.**
@@ -561,9 +601,12 @@
            4. **La lumière de l'âge**, par-dessus tout : elle éclaire la scène,
               elle n'en fait pas partie.
            5. **Le pied d'ombre**, en dernier, qui pose le personnage au sol. -->
-      <rect x="-4" y="-4" width="108" height="158" fill="url(#c${u})"/>
+      ${peint
+        ? `<image href="${peint}" x="-4" y="-4" width="108" height="158"
+             preserveAspectRatio="xMidYMid slice"/>`
+        : `<rect x="-4" y="-4" width="108" height="158" fill="url(#c${u})"/>`}
       <g transform="translate(0,50)">
-        ${lieu(f.set)(p, r)}
+        ${peint ? '' : lieu(f.set)(p, r)}
         ${(MOTIFS[f.type] ?? (() => ''))(accent)}
         ${lumiere(f.stage, legendaire, accent, u, r)}
         <!-- L'aura de rareté vient **après** la lumière d'âge : les deux

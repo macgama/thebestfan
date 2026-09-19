@@ -1,4 +1,5 @@
 import express from 'express';
+import { assurerBourse } from '../bourse.js';
 import { XP, niveauPour, progression, droits, paliersEntre, ecarpesDuPalier, NIVEAU_MAX,
   PALIERS }
   from '../../shared/niveau.js';
@@ -49,7 +50,7 @@ export function createNiveau({ pool, requireAuth }) {
     if (!n) return vide;
 
     try {
-      await q(`INSERT IGNORE INTO user_wallet (user_id) VALUES (?)`, [userId]);
+      await assurerBourse(q, userId);
       const avantXp = (await q(
         `SELECT xp FROM user_wallet WHERE user_id = ?`, [userId]))[0]?.xp ?? 0;
       const apresXp = Number(avantXp) + n;
