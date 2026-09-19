@@ -501,6 +501,30 @@ function placeCarousel(drag = 0) {
  */
 const serieDebloquee = (s) => s?.ouverte !== false;
 
+/**
+ * Peut-on ouvrir un paquet, là, maintenant ?
+ *
+ * ## Pourquoi cette fonction existe
+ *
+ * **La règle était écrite deux fois, et la seconde avait été oubliée.**
+ *
+ * Le bouton se fermait autrefois dès que la réserve tombait à zéro — donc
+ * exactement quand payer aurait servi. Ç'a été corrigé : `disabled` tient
+ * maintenant compte des écharpes. Mais `startTear` gardait sa propre garde,
+ * `if (S.packs <= 0) return;`, et personne n'y a touché.
+ *
+ * Résultat : le bouton disait « OUVRIR · 45 ÉCHARPES », il était vif, on
+ * appuyait — et **rien ne se passait**. Ni refus, ni message, ni animation. Le
+ * pire des états : l'écran promettait, acceptait le geste, et l'avalait.
+ *
+ * La règle vit donc ici, une fois, et les deux endroits l'appellent. C'est la
+ * faute que ce dépôt a déjà payée cinq fois sous le même nom — une règle écrite
+ * à deux endroits finit par ne plus dire la même chose — et c'est la seule
+ * façon connue de ne pas la repayer.
+ */
+const peutOuvrir = () => serieDebloquee(SETS[S.set] ?? {})
+  && (S.packs > 0 || Number(S.scarves ?? 0) >= Number(S.packPrice ?? 45));
+
 function tickRegen() {
   if (S.nextIn != null) S.nextIn = Math.max(0, S.nextIn - 1000);
   // La bourse vit dans la barre du haut (nav.js) depuis que toutes les pages
@@ -525,10 +549,7 @@ function tickRegen() {
    * la demande.
    */
   const prix = Number(S.packPrice ?? 45);
-  const payant = S.packs <= 0;
-  const peutPayer = payant && Number(S.scarves ?? 0) >= prix;
-  $('openBtn').disabled = !serieDebloquee(SETS[S.set] ?? {})
-    || (payant && !peutPayer);
+  $('openBtn').disabled = !peutOuvrir();
   const el = $('regenTxt');
   if (S.packs >= MAXP || S.nextIn == null) el.textContent = 'Réserve pleine';
   else if (S.nextIn <= 0) { el.textContent = 'Booster prêt'; load().catch(() => {}); }
@@ -733,7 +754,10 @@ const SEUIL_DECHIRURE = 0.72;   // au-delà, le sachet est ouvert, on ne revient
 let tear = null;
 
 function startTear() {
-  if (S.packs <= 0) return;
+  /* La même règle que celle du bouton, et par le même chemin. Elle disait
+     `S.packs <= 0` : le geste mourait ici, en silence, dans le seul cas où le
+     joueur venait de décider de payer. */
+  if (!peutOuvrir()) return;
   const set = SETS[S.set];
   const el = $('tearpack');
 

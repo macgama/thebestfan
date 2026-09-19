@@ -493,6 +493,42 @@ check('les Fanzzy non possédés portent leur nom',
     .then(() => true).catch(() => false);
   check('la fiche d’un Fanzzy s’affiche', prete);
 
+  /* ================ le bouton d'évolution est là **en arrivant**
+
+     Il ne l'était pas. L'action était accrochée à la seule case de l'âge
+     suivant, alors que la case regardée à l'ouverture est l'âge actuel : un
+     joueur ouvrait la fiche d'une commune qu'il voulait faire grandir et n'y
+     trouvait aucun bouton. Il lui fallait deviner qu'un losange plus loin dans
+     la rangée le ferait apparaître.
+
+     Rien ne rougissait : la suite ne regardait le bouton d'action qu'**après**
+     avoir cliqué une case, et il était bien là. Le contrôle mesure donc
+     maintenant ce que voit quelqu'un qui n'a rien touché — c'est-à-dire tout
+     le monde, la première seconde. */
+  if (prete) {
+    const ouverture = await fiche.evaluate(() => {
+      const bt = document.querySelector('#fiche-actions [data-evoluer]');
+      return {
+        evoluer: Boolean(bt),
+        libelle: bt ? (bt.textContent || '').replace(/\s+/g, ' ').trim() : null,
+        choisie: document.querySelector('.case.choisie')?.textContent
+          .replace(/\s+/g, ' ').trim().slice(0, 40) ?? null,
+        touche: false,
+      };
+    });
+    check('le bouton d’évolution est visible sans toucher une case',
+      ouverture.evoluer
+      || (console.log('        la case regardée est « ', ouverture.choisie,
+        ' » et aucun bouton d’évolution n’est proposé'), false));
+    /* Et il dit **lequel des deux états** il est : une promesse, ou ce qu'il
+       manque. Un bouton présent mais muet ne vaut pas mieux qu'un bouton
+       absent — c'est la règle déjà tenue plus bas, pour le cas de la bourse
+       vide. */
+    check(`et il dit ce qu’il propose (${ouverture.libelle})`,
+      /ÉVOLUER|IL TE FAUT/.test(ouverture.libelle ?? '')
+      || (console.log('        il dit :', ouverture.libelle), false));
+  }
+
   if (prete) {
     const m = await fiche.evaluate(() => ({
       defile: document.documentElement.scrollHeight > innerHeight + 1,
@@ -1658,6 +1694,84 @@ check('et elle explique pourquoi au lieu de rester vide',
     touche?.anim === 'tbf-saut'
     || (console.log('        animation vue :', touche?.anim), false));
   check('l’écran dit qu’on peut le toucher', touche?.doigt === 'pointer');
+}
+
+/* ============ le portrait mène à la fiche, et le classeur n'a qu'un gris
+
+   Deux demandes du même joueur, le même jour, et deux fautes de la même
+   famille : un écran qui montre quelque chose sans dire ce qu'on peut en
+   faire. */
+{
+  /* **Toucher le personnage ouvre sa fiche.**
+
+     Il ne se touchait pas : « SA FICHE » attendait tout en bas, sous les
+     effets. Or ce qu'on touche sur cet écran, c'est le portrait — il occupe
+     les deux tiers de la hauteur, et une image qui ne répond pas se lit comme
+     un écran figé.
+
+     Un vrai lien et non un gestionnaire de clic : il se tabule, s'ouvre dans un
+     onglet, et marche avant que le script de la page n'arrive. Le contrôle
+     regarde donc la balise, pas un écouteur. */
+  const sc = await page.evaluate(() => {
+    const el = document.getElementById('tscene');
+    if (!el) return null;
+    return { balise: el.tagName, href: el.getAttribute('href'),
+      dit: el.getAttribute('aria-label') ?? '',
+      doigt: getComputedStyle(el).cursor };
+  });
+  check('le portrait de « MON FANZZY » est un lien', sc?.balise === 'A'
+    || (console.log('        c’est un', sc?.balise ?? 'néant'), false));
+  check(`et il mène à la fiche de ce Fanzzy (${sc?.href})`,
+    /^\/fanzzy\/[A-Z0-9]+$/i.test(sc?.href ?? '')
+    || (console.log('        il mène à', sc?.href), false));
+  check('il se nomme pour qui ne voit pas l’image', (sc?.dit ?? '').length > 10);
+  check('et l’écran dit qu’on peut le toucher', sc?.doigt === 'pointer');
+}
+
+{
+  /* **Une lignée qu'on n'a pas du tout s'affiche d'un seul ton.**
+
+     Le flou des évolutions est fait pour une lignée qu'on possède : on a le
+     personnage, il reste à payer l'âge suivant, et le flou est ce qu'on achète.
+     Il éclaircissait la case — trois quarts de gris au lieu d'un gris plein —
+     si bien qu'une lignée entièrement absente s'affichait en deux tons, ses
+     âges supérieurs paraissant **moins** verrouillés que le premier. C'est
+     l'inverse de ce qui est vrai.
+
+     On mesure le filtre calculé, et non la classe : c'est lui que l'œil voit,
+     et une classe posée sans règle derrière passerait le contrôle. */
+  await page.evaluate(() => [...document.querySelectorAll('button,[data-tab],[data-onglet]')]
+    .find((b) => /CLASSEUR/i.test(b.textContent))?.click());
+  await dodo(400);
+
+  const tons = await page.evaluate(() => {
+    const gris = (el) => {
+      const f = getComputedStyle(el.querySelector('.art')).filter;
+      return { g: Number(/grayscale\(([\d.]+)\)/.exec(f)?.[1] ?? 0),
+        l: Number(/brightness\(([\d.]+)\)/.exec(f)?.[1] ?? 1),
+        flou: /blur\(/.test(f) };
+    };
+    const base = document.querySelector('.slot.locked:not(.secret)');
+    const orph = document.querySelector('.slot.locked.secret.orphelin');
+    return { base: base ? gris(base) : null, orph: orph ? gris(orph) : null };
+  });
+
+  check('le classeur montre un premier âge manquant, en gris', Boolean(tons.base)
+    || (console.log('        aucune case verrouillée de premier âge'), false));
+  check('et une évolution d’une lignée qu’on n’a pas', Boolean(tons.orph)
+    || (console.log('        aucune évolution orpheline dans la grille'), false));
+
+  if (tons.base && tons.orph) {
+    check(`les deux portent le même gris (${tons.orph.g} contre ${tons.base.g})`,
+      Math.abs(tons.orph.g - tons.base.g) < 0.01
+      || (console.log('        l’évolution est plus colorée que son premier âge'), false));
+    check(`et la même lumière (${tons.orph.l} contre ${tons.base.l})`,
+      Math.abs(tons.orph.l - tons.base.l) < 0.01);
+    /* Le flou reste : elle est du même ton, pas révélée pour autant. Sans lui,
+       on donnerait d'avance ce que l'évolution est censée révéler. */
+    check('mais l’évolution reste floutée', tons.orph.flou === true);
+    check('et le premier âge, lui, ne l’est pas', tons.base.flou === false);
+  }
 }
 
 if (process.env.CAPTURE) {

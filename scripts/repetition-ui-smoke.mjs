@@ -118,6 +118,50 @@ check('la salle annonce le geste et sa consigne', await page.evaluate(() =>
 check('le pavé du geste apparaît', await jusqua(async () =>
   page.evaluate(() => Boolean(document.getElementById('pad')))));
 
+/* ============================ le pavé est durci contre le navigateur
+
+   **Il était écrit trois fois, et deux fois mal.** Les dix épreuves vivent
+   dans `ui.css` depuis toujours ; les dix gestes de rythme partagent le même
+   pavé rond, et chaque écran en gardait sa version — le duel l'avait durci, le
+   Virage non, et cette salle-ci n'en avait aucune.
+ *
+   Ce qui manquait n'est pas cosmétique. Sans `touch-action:none`, un navigateur
+   de téléphone se réserve le droit de lire la frappe comme un début de
+   défilement ou un double-toucher à agrandir : elle arrive en retard, ou pas du
+   tout. Sans `user-select:none`, garder le doigt appuyé — ce que trois gestes
+   demandent explicitement — sélectionne le compteur, ouvre la loupe ou fait
+   surgir le menu de copie par-dessus le jeu. Et sur ordinateur, marteler
+   sélectionne le chiffre au lieu de le frapper.
+ *
+   La règle est désormais unique, donc l'éprouver ici couvre les trois écrans.
+   Une page qui reprendrait la sienne serait un retour en arrière, et ce
+   contrôle ne le verrait pas — mais `verif-pages.mjs` interdit déjà à une page
+   de restyler le vocabulaire partagé. */
+{
+  const dur = await page.evaluate(() => {
+    const p = document.getElementById('pad');
+    const s = getComputedStyle(p);
+    const r = p.getBoundingClientRect();
+    return {
+      toucher: s.touchAction,
+      selection: s.userSelect || s.webkitUserSelect,
+      large: Math.round(r.width), haut: Math.round(r.height),
+    };
+  });
+  check(`le pavé refuse le défilement du navigateur (touch-action: ${dur.toucher})`,
+    dur.toucher === 'none'
+    || (console.log('        une frappe peut être lue comme un défilement'), false));
+  check(`et la sélection de texte (user-select: ${dur.selection})`,
+    dur.selection === 'none'
+    || (console.log('        un appui long ouvrira la loupe ou le menu de copie'), false));
+  /* Et il a une taille. Sans règle du tout — le défaut de cette salle — le pavé
+     existait dans le document et ne se voyait pas : un geste qu'on ne peut pas
+     viser est un geste qu'on rate sans comprendre pourquoi. */
+  check(`et il est assez grand pour être visé (${dur.large}×${dur.haut})`,
+    dur.large >= 180 && dur.haut >= 180
+    || (console.log('        il est trop petit, ou sans style du tout'), false));
+}
+
 /* On joue le tempo pour de vrai : la page a reçu l'intervalle du serveur, on
    le lui relit plutôt que d'en écrire un ici — un nombre recopié dans un banc
    d'essai est un nombre qui divergera. */
