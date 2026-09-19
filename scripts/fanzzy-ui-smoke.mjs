@@ -546,6 +546,50 @@ check('les Fanzzy non possédés portent leur nom',
       Math.abs(hautAvant - apres.haut) < 2
       || (console.log(`        ${Math.round(hautAvant)} puis ${Math.round(apres.haut)}`), false));
 
+    /* ================================ la fiche sur un vrai téléphone
+
+       Tout ce qui précède est mesuré sur une fenêtre de huit cent quatre-vingts
+       pixels de haut. **Aucun téléphone n'a ça.** Un iPhone SE offre six cent
+       soixante-sept pixels, moins la barre d'adresse : autour de cinq cent
+       soixante utilisables. Un Android d'entrée de gamme fait à peine mieux.
+
+       Et la fiche est un écran **sans défilement** — `#app` est en `height:
+       100dvh` avec `overflow:hidden`. C'est voulu : elle doit tenir d'un coup
+       d'œil. Mais ça veut dire que ce qui déborde n'est pas repoussé plus bas,
+       il est **coupé**, et un bouton coupé n'existe pas. Le joueur ne le voit
+       pas, ne peut pas défiler pour le trouver, et conclut que sa carte ne peut
+       pas évoluer.
+
+       On mesure donc aux hauteurs qui existent vraiment, et on regarde la seule
+       chose qui compte : le bouton est-il **entièrement** dans l'écran. */
+    for (const [w, h, quoi] of [[360, 640, 'petit Android'],
+      [375, 560, 'iPhone SE, barre comprise'], [390, 664, 'iPhone 14, barre comprise']]) {
+      await fiche.setViewport({ width: w, height: h });
+      await dodo(260);
+      const p = await fiche.evaluate(() => {
+        const bt = document.querySelector('.actions .bt') ?? document.querySelector('.actions > *');
+        const r = bt?.getBoundingClientRect();
+        const app = document.getElementById('app').getBoundingClientRect();
+        return {
+          trouve: Boolean(r),
+          bas: r ? Math.round(r.bottom) : null,
+          haut: r ? Math.round(r.top) : null,
+          ecran: innerHeight,
+          coupeDeApp: r ? Math.round(r.bottom - app.bottom) : null,
+        };
+      });
+      check(`${quoi} (${w}×${h}) : la fiche garde un bouton`, p.trouve
+        || (console.log('        aucun bouton dans .actions'), false));
+      if (!p.trouve) continue;
+      check(`${quoi} : le bouton est entier dans l’écran `
+        + `(bas à ${p.bas} sur ${p.ecran})`,
+        p.bas <= p.ecran + 1
+        || (console.log(`        il dépasse de ${p.bas - p.ecran} px `
+          + `— et la fiche ne défile pas, donc il est perdu`), false));
+    }
+    await fiche.setViewport({ width: 400, height: 880 });
+    await dodo(200);
+
     /* La case qu'on n'a pas dit ce qu'il faut pour l'avoir. Un cadenas sans
        explication ne donne envie de rien — il faut lire « à trouver dans un
        booster » ou « 90 écharpes », sinon on cherche un bouton qui n'existe pas. */

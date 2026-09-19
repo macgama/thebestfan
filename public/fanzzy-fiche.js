@@ -169,6 +169,30 @@
 
       // Les âges. Le premier est acquis dès qu'on possède le personnage ; les
       // suivants s'achètent, et le prix est la seule chose qu'on veut lire.
+      /* **L'évolution se propose dès l'ouverture, et non après un toucher.**
+       *
+       * Elle n'était accrochée qu'à la case de l'âge **suivant**. Or la case
+       * regardée à l'ouverture est l'âge **actuel** — c'est ce qu'on est venu
+       * voir, et c'est le bon choix. Un joueur ouvrait donc la fiche d'une
+       * commune qu'il voulait faire grandir et n'y trouvait aucun bouton : il
+       * lui fallait deviner qu'un losange plus loin dans la rangée le ferait
+       * apparaître. L'action la plus importante du jeu — celle qui dépense les
+       * écharpes et fabrique les raretés — était cachée derrière un geste que
+       * rien n'annonçait.
+       *
+       * Elle est donc calculée **une fois pour la lignée** et posée sur les
+       * deux cases que ça concerne : celle d'où l'on part et celle où l'on va.
+       * Le même objet, donc le même bouton, donc le même prix — il n'y a pas
+       * deux façons d'évoluer selon le losange qu'on regarde.
+       */
+      const suivant = d.lignee.find((y) => !y.possede && y.stage === d.stade + 1);
+      const evoluer = suivant && d.possede
+        ? { quoi: 'evoluer', vers: suivant, libelle: 'ÉVOLUER',
+            cout: `${suivant.cout} écharpes`,
+            payable: Number(d.echarpes ?? 0) >= Number(suivant.cout ?? 0),
+            manque: Math.max(0, Number(suivant.cout ?? 0) - Number(d.echarpes ?? 0)) }
+        : null;
+
       for (const a of d.lignee) {
         const atteint = a.possede;
         liste.push({
@@ -194,12 +218,9 @@
 
              C'est la faute du bouton d'ouverture du kiosque, au même endroit
              de la boucle : une affordance montrée quand elle ne sert pas. */
-          action: !atteint && a.stage === d.stade + 1 && d.possede
-            ? { quoi: 'evoluer', vers: a, libelle: 'ÉVOLUER',
-                cout: `${a.cout} écharpes`,
-                payable: Number(d.echarpes ?? 0) >= Number(a.cout ?? 0),
-                manque: Math.max(0, Number(a.cout ?? 0) - Number(d.echarpes ?? 0)) }
-            : null,
+          /* Sur l'âge qu'il a — pour qu'on le voie en arrivant — et sur celui
+             qui vient — pour qu'on le retrouve en regardant où l'on va. */
+          action: a.stage === d.stade || a.stage === d.stade + 1 ? evoluer : null,
         });
       }
 
