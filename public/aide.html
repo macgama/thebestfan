@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aide — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
+<link rel="stylesheet" href="/cartes.css">
+<script src="/dialogue.js" defer></script>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/img/logo.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{width:100%;max-width:var(--colonne);min-height:100dvh;display:flex;flex-direction:column}
+
+/* ============================================================ la jauge
+
+   Elle est en haut, elle est large, et elle porte un chiffre : c'est la
+   première chose qu'on voit en arrivant, et la seule qu'on regarde en
+   revenant. Une barre de progression qui se remplit toute seule pendant qu'on
+   joue est la moitié de la promesse de cet écran — l'autre moitié est qu'on
+   n'a rien eu à cliquer pour ça. */
+.entete{margin:12px 14px 0;padding:14px 16px 15px;border-radius:14px;
+  border:1px solid rgba(245,195,59,.34);
+  background:linear-gradient(140deg,rgba(245,195,59,.12),rgba(8,11,16,.8))}
+.entete .haut{display:flex;align-items:baseline;gap:10px}
+.entete .compte{font-family:var(--banner);font-size:28px;line-height:1;color:var(--projo)}
+.entete .compte small{font-size:13px;opacity:.5}
+.entete .quoi{flex:1;min-width:0;font-size:11px;letter-spacing:.16em;opacity:.55;
+  text-transform:uppercase;text-align:right}
+.rail{margin-top:11px;height:9px;border-radius:99px;background:rgba(255,255,255,.08);
+  overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+.rail i{display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,var(--flare),var(--projo));
+  transition:width .9s cubic-bezier(.16,1,.3,1)}
+.entete .phrase{margin-top:10px;font-size:12.5px;line-height:1.55;opacity:.78}
+
+/* ================================================== une étape du parcours */
+.pas{margin:12px 14px 0;border-radius:14px;overflow:hidden;position:relative;
+  border:1px solid var(--trait);background:var(--panneau)}
+/* **Faite : la plaque s'allume.** C'est le seul endroit de la page où la
+   couleur veut dire quelque chose, donc elle ne sert qu'à ça. */
+.pas.ok{border-color:rgba(30,158,106,.5);
+  background:linear-gradient(140deg,rgba(30,158,106,.13),rgba(8,11,16,.72))}
+.pas .tete{display:flex;align-items:center;gap:12px;padding:13px 15px}
+.pas .num{width:30px;height:30px;flex:none;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--banner);font-size:14px;border:1.5px solid rgba(255,255,255,.22);
+  color:rgba(255,255,255,.5)}
+.pas.ok .num{border-color:var(--vert);color:#04060A;background:var(--vert)}
+.pas .nom{flex:1;min-width:0;font-family:var(--banner);font-size:15px;letter-spacing:.06em}
+.pas .etat{font-size:9.5px;letter-spacing:.22em;opacity:.45}
+.pas.ok .etat{opacity:.9;color:var(--vert)}
+.pas .corps{padding:0 15px 14px;display:grid;grid-template-columns:96px 1fr;gap:13px;
+  align-items:start}
+.pas .texte p{margin:0 0 8px;font-size:12.5px;line-height:1.6}
+.pas .texte p.pourquoi{opacity:.62;margin-bottom:0}
+/* Le bouton n'existe que sur une étape qui reste à faire, et il n'est pas
+   seulement caché : une plaque en `display:none` reste dans le document, et la
+   tentation serait de la rallumer un jour « pour ceux qui veulent y retourner ».
+   Une étape faite est un résumé, pas une invitation — et le menu mène partout. */
+.pas .aller{margin:11px 15px 14px;display:block;width:calc(100% - 30px)}
+
+/* Le visuel de gauche. Carré, pour qu'une carte, un dos de booster et un
+   emblème dessiné se posent au même endroit sans faire tressauter la ligne. */
+.vign{width:96px;aspect-ratio:1/1.34;border-radius:9px;overflow:hidden;position:relative;
+  background:#090C11;border:1px solid var(--trait);display:grid;place-items:center}
+.vign img{width:100%;height:100%;object-fit:cover;display:block}
+.vign svg{width:58%;height:58%;fill:none;stroke:rgba(245,195,59,.62);stroke-width:1.5;
+  stroke-linecap:round;stroke-linejoin:round}
+.pas.ok .vign svg{stroke:rgba(30,158,106,.75)}
+/* La carte du joueur, réduite. `--u` vient de cartes.css et pilote toute
+   l'échelle du dessin ; on ne touche donc à rien d'autre. */
+.vign .fz{width:100%;height:100%}
+.vign .cadenas{position:absolute;inset:auto 0 0;padding:4px 0 5px;text-align:center;
+  font-size:8px;letter-spacing:.2em;background:rgba(4,6,10,.82);opacity:.6}
+
+/* **L'allumage.** Une étape franchie depuis la dernière visite ne se contente
+   pas d'être verte : elle s'allume, une par une, avec un temps entre chaque.
+   C'est la récompense du détour par cet écran — et c'est aussi ce qui fait
+   comprendre, sans une phrase, que la liste s'est cochée toute seule. */
+@keyframes allume{
+  0%{transform:scale(1);box-shadow:0 0 0 0 rgba(30,158,106,0)}
+  38%{transform:scale(1.035);box-shadow:0 0 0 12px rgba(30,158,106,.22)}
+  100%{transform:scale(1);box-shadow:0 0 0 0 rgba(30,158,106,0)}
+}
+.pas.neuf{animation:allume 1s cubic-bezier(.2,.9,.25,1) both}
+@media (prefers-reduced-motion:reduce){
+  .pas.neuf{animation:none;outline:2px solid var(--vert);outline-offset:2px}
+  .rail i{transition:none}
+}
+
+/* ============================================================== la FAQ */
+.rub{margin:16px 14px 0}
+.rub h2{font-family:var(--banner);font-size:11px;letter-spacing:.26em;opacity:.45;
+  margin:0 0 8px;padding-left:2px}
+.qa{border:1px solid var(--trait);border-radius:12px;background:var(--panneau);
+  margin-bottom:8px;overflow:hidden}
+.qa summary{padding:12px 14px;font-size:13px;line-height:1.45;cursor:pointer;
+  list-style:none;display:flex;gap:10px;align-items:flex-start}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::after{content:'+';margin-left:auto;font-family:var(--banner);font-size:17px;
+  opacity:.4;line-height:1;flex:none}
+.qa[open] summary::after{content:'–'}
+.qa[open] summary{background:rgba(255,255,255,.03)}
+.qa .r{padding:0 14px 14px;font-size:12.5px;line-height:1.65;opacity:.75}
+
+.tabs{margin-top:14px}
+.vide{margin:24px 14px;text-align:center;font-size:12.5px;line-height:1.6;opacity:.55}
+.fini{margin:12px 14px 0;padding:16px;border-radius:14px;text-align:center;
+  border:1px solid rgba(30,158,106,.45);
+  background:linear-gradient(140deg,rgba(30,158,106,.16),rgba(8,11,16,.8))}
+.fini b{display:block;font-family:var(--banner);font-size:17px;letter-spacing:.1em;
+  margin-bottom:6px}
+.fini p{margin:0;font-size:12.5px;line-height:1.55;opacity:.78}
+</style>
+</head>
+<body>
+<main id="app">
+  <h1 class="tbf-titre">AIDE<small>CE QU’IL Y A À FAIRE, ET POURQUOI</small></h1>
+
+  <div class="tabs tbf-onglets">
+    <button data-t="pas" class="tbf-onglet on">PREMIERS PAS</button>
+    <button data-t="faq" class="tbf-onglet">QUESTIONS</button>
+  </div>
+
+  <div id="vue"><div class="tbf-spin"></div></div>
+</main>
+<!-- Les cinq bibliothèques de dessin, **sans `defer`** : `cardHTML` les lit de
+     façon synchrone au moment où la page écrit la vignette de la première
+     étape. Différées, elles arriveraient après, et la carte du joueur sortirait
+     sans son illustration ni son équipement. La même note vit en tête de
+     bienvenue.html, pour la même raison. -->
+<script src="/fanzzy-art.js"></script>
+<script src="/stuff-art.js"></script>
+<script src="/action-art.js"></script>
+<script src="/fanzzy-fond.js"></script>
+<script src="/cartes.js"></script>
+<script src="/fx.js" defer></script>
+<script src="/menu.js" defer></script>
+<script src="/nav.js" defer></script>
+<script>
+/* L'écran d'aide.
+ *
+ * ## Ce qu'il fait, et ce qu'il ne fait pas
+ *
+ * Il **montre** l'état du parcours, il ne le tient pas. Chaque étape est cochée
+ * ou non par le serveur, qui le lit dans ce que le joueur possède — voir
+ * `src/server/aide/index.js`. La page n'a donc aucun moyen de cocher quoi que
+ * ce soit, et c'est la garantie qui fait tenir tout le reste : un tutoriel
+ * qu'on traverse en appuyant sur « suivant » n'apprend rien.
+ *
+ * ## Ce que le navigateur retient, et pourquoi si peu
+ *
+ * Une seule chose : **combien d'étapes étaient faites la dernière fois**. Elle
+ * ne sert qu'à l'animation — savoir lesquelles allumer en arrivant. Si elle est
+ * perdue, effacée ou lue dans un autre navigateur, il ne se passe rien de
+ * fâcheux : l'écran s'affiche complet, sans cérémonie. C'est la règle qu'on
+ * s'impose pour tout ce qui vit dans le navigateur ici — de l'agrément, jamais
+ * de l'état.
+ */
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+    (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+
+  const MEMOIRE = 'tbf.parcours';
+  let onglet = 'pas';
+  let parcours = null;
+  let laFaq = null;
+
+  /* Les emblèmes des étapes qui n'ont pas de vrai visuel à montrer. Dessinés et
+     non photographiés : trois traits se lisent à quatre-vingt-seize pixels, une
+     image de stade n'y est qu'une tache. */
+  const EMBLEMES = {
+    deck: 'M4 7h10v13H4zM8 4h10v13M17 15h4M17 18h4',
+    corde: 'M2 12c4-5 6 5 10 0s6 5 10 0M12 4v3M12 17v3',
+    duel: 'M4 4l7 7M20 4l-7 7M12 13v7M8 20h8',
+    ages: 'M5 20V9l4-4 4 4v11M13 20V13l3-3 3 3v7M3 20h18',
+    dos: 'M4 8h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM4 8l1.5-4h13L20 8M9 4v4M15 4v4',
+    carte: 'M5 3h14v18H5zM9 8h6M9 12h6M9 16h3',
+  };
+  const embleme = (cle) =>
+    `<svg viewBox="0 0 24 24"><path d="${EMBLEMES[cle] ?? EMBLEMES.carte}"/></svg>`;
+
+  /**
+   * Le visuel d'une étape.
+   *
+   * Les deux premières montrent une **vraie** chose du jeu : la carte que le
+   * joueur possède, et le dos de booster de la série ouverte. Les quatre autres
+   * n'ont rien de vrai à montrer tant que le joueur ne l'a pas fait — un deck
+   * vide, une corde à l'arrêt — et prennent donc un emblème.
+   *
+   * Tout repli mène à l'emblème, jamais à un trou : cet écran est celui qu'on
+   * ouvre quand le reste va mal, et une vignette vide y serait lue comme une
+   * panne de plus.
+   */
+  function maCarte() {
+    try { return window.TBF_CARTES?.BY_ID?.get(parcours?.carteId) ?? null; }
+    catch { return null; }
+  }
+
+  function visuel(e) {
+    try {
+      const f = maCarte();
+      if (e.visuel === 'carte' && f) return window.TBF_CARTES.cardHTML(f);
+      if (e.visuel === 'dos' && f?.set) {
+        const src = window.FZART?.dos?.(f.set);
+        if (src) return `<img src="${esc(src)}" alt="">`;
+      }
+    } catch { /* le catalogue n'a pas chargé : l'emblème fait le travail */ }
+    return embleme(e.visuel);
+  }
+
+  const PAS = (e, i) => `<article class="pas${e.fait ? ' ok' : ''}" data-cle="${esc(e.cle)}">
+      <div class="tete">
+        <span class="num">${e.fait ? '&#10003;' : i + 1}</span>
+        <span class="nom">${esc(e.titre).toUpperCase()}</span>
+        <span class="etat">${e.fait ? 'FAIT' : 'À FAIRE'}</span>
+      </div>
+      <div class="corps">
+        <div class="vign">${visuel(e)}${e.fait ? '' : '<span class="cadenas">PAS ENCORE</span>'}</div>
+        <div class="texte">
+          <p>${esc(e.quoi)}</p>
+          <p class="pourquoi">${esc(e.pourquoi)}</p>
+        </div>
+      </div>
+      ${e.fait ? '' : `<a class="tbf-plaque tbf-bloc aller" href="${esc(e.ou)}"
+        >${esc(e.bouton).toUpperCase()}</a>`}
+    </article>`;
+
+  function vuePas() {
+    if (!parcours) {
+      return `<div class="vide">Connecte-toi pour suivre tes premiers pas.<br>
+        Les questions, elles, se lisent sans compte.</div>`;
+    }
+    const { faites, total, etapes } = parcours;
+    const reste = total - faites;
+    const phrase = reste === 0
+      ? 'Tu as fait le tour. Le reste, c’est du jeu.'
+      : reste === 1
+        ? 'Il t’en reste une. Elle ne se coche pas ici : elle se coche en la faisant.'
+        : 'Rien ne se coche en cliquant. Chaque ligne s’allume quand tu l’as vraiment faite.';
+
+    return `<div class="entete">
+        <div class="haut">
+          <span class="compte">${faites}<small>/${total}</small></span>
+          <span class="quoi">Premiers pas</span>
+        </div>
+        <div class="rail"><i id="jauge"></i></div>
+        <p class="phrase">${esc(phrase)}</p>
+      </div>
+      ${faites === total && parcours.paye ? `<div class="fini">
+        <b>TOUT EST FAIT</b>
+        <p>Ton booster a été versé. Il t’attend au kiosque.</p></div>` : ''}
+      ${etapes.map(PAS).join('')}`;
+  }
+
+  function vueFaq() {
+    if (!laFaq) return '<div class="tbf-spin"></div>';
+    return laFaq.map((r) => `<section class="rub">
+        <h2>${esc(r.titre).toUpperCase()}</h2>
+        ${r.questions.map((x) => `<details class="qa">
+            <summary>${esc(x.q)}</summary>
+            <div class="r">${esc(x.r)}</div>
+          </details>`).join('')}
+      </section>`).join('') + '<div style="height:26px"></div>';
+  }
+
+  /**
+   * Allumer ce qui vient d'être franchi.
+   *
+   * Décalé de cent cinquante millisecondes par étape : allumées ensemble, on en
+   * voit une seule — le regard ne se partage pas. Et le son ne part qu'une
+   * fois, quel que soit le nombre d'étapes : trois « parfait » d'affilée
+   * sonnent comme un défaut.
+   */
+  function allumer(neuves) {
+    if (!neuves.length) return;
+    let premier = true;
+    neuves.forEach((cle, i) => setTimeout(() => {
+      const el = document.querySelector(`.pas[data-cle="${cle}"]`);
+      if (!el) return;
+      el.classList.add('neuf');
+      const r = el.getBoundingClientRect();
+      window.FX?.particules?.({ x: r.left + 42, y: r.top + 28, n: 18,
+        couleurs: ['#1E9E6A', '#F5C33B'], distance: 90 });
+      if (premier) { window.FX?.son?.('parfait'); premier = false; }
+    }, 380 + i * 150));
+  }
+
+  /**
+   * La fin du parcours.
+   *
+   * La cérémonie **après** le versement, et non avant : on n'annonce pas un
+   * cadeau qu'on n'a pas encore réussi à donner. Si le serveur refuse — base
+   * incomplète, versement déjà fait dans un autre onglet — il ne se passe
+   * simplement rien de plus que les étapes qui s'allument.
+   */
+  async function finir() {
+    let r;
+    try {
+      r = await fetch('/api/aide/recompense',
+        { method: 'POST', credentials: 'same-origin' }).then((x) => x.json());
+    } catch { return; }
+    if (!r || r.error) return;
+    parcours = { ...parcours, ...r };
+    if (!r.verse) return;
+    window.FX?.flash?.('#1E9E6A');
+    window.FX?.secousse?.(1);
+    window.FX?.son?.('but');
+    window.FX?.titre?.('TOUT EST FAIT', 'Un booster pour la route', '#1E9E6A');
+    setTimeout(rendre, 1400);
+  }
+
+  function rendre() {
+    $('vue').innerHTML = onglet === 'pas' ? vuePas() : vueFaq();
+    if (onglet !== 'pas' || !parcours) return;
+    const { faites, total } = parcours;
+    /* La jauge part de zéro à chaque rendu et s'anime vers sa valeur : une barre
+       déjà pleine à l'affichage ne se remarque pas, et c'est précisément elle
+       qu'on est venu voir. */
+    requestAnimationFrame(() => {
+      const j = $('jauge');
+      if (j) j.style.width = `${Math.round((faites / total) * 100)}%`;
+    });
+  }
+
+  document.querySelector('.tabs').onclick = (e) => {
+    const b = e.target.closest('[data-t]');
+    if (!b) return;
+    onglet = b.dataset.t;
+    document.querySelectorAll('.tabs button')
+      .forEach((x) => x.classList.toggle('on', x === b));
+    rendre();
+    if (onglet === 'faq' && !laFaq) chargerFaq();
+  };
+
+  async function chargerFaq() {
+    try {
+      const d = await fetch('/api/aide/faq').then((r) => r.json());
+      laFaq = d.rubriques ?? [];
+    } catch { laFaq = []; }
+    if (onglet === 'faq') rendre();
+  }
+
+  (async () => {
+    /* Le catalogue et le parcours ensemble : ils ne dépendent pas l'un de
+       l'autre, et les enchaîner ferait attendre le second pour rien. Le
+       catalogue a le droit d'échouer — `visuel()` retombe alors sur l'emblème,
+       et l'écran reste entier. */
+    const [, d] = await Promise.all([
+      window.TBF_CARTES?.chargerCatalogue?.().catch(() => null) ?? null,
+      fetch('/api/aide/parcours', { credentials: 'same-origin' })
+        .then((r) => r.json()).catch(() => null),
+    ]);
+    /* **On exige un parcours, pas l'absence d'erreur.** Le test valait
+       « pas de champ `error` », ce qu'une réponse vide satisfait très bien :
+       une route non montée, un serveur qui rend un objet de politesse, et la
+       page partait écrire `undefined.map`. Un écran d'aide en panne est le
+       seul qui ne laisse aucun recours — on vérifie donc qu'on tient bien ce
+       qu'on croit tenir, et à défaut on montre la FAQ, qui suffit. */
+    if (Array.isArray(d?.etapes) && d.etapes.length) parcours = d;
+
+    /* Ce qui est neuf depuis la dernière visite. Lu **avant** d'écrire la
+       nouvelle valeur, faute de quoi rien ne serait jamais neuf. */
+    let avant = null;
+    try { avant = JSON.parse(localStorage.getItem(MEMOIRE) || 'null'); } catch { /* vide */ }
+    const vues = new Set(Array.isArray(avant) ? avant : []);
+    const neuves = (parcours?.etapes ?? [])
+      .filter((e) => e.fait && !vues.has(e.cle)).map((e) => e.cle);
+
+    rendre();
+    chargerFaq();
+
+    if (parcours) {
+      try {
+        localStorage.setItem(MEMOIRE,
+          JSON.stringify(parcours.etapes.filter((e) => e.fait).map((e) => e.cle)));
+      } catch { /* navigation privée : on se passe de l'animation */ }
+      /* **Rien du tout la première fois.** Un joueur qui arrive avec une étape
+         déjà cochée — le paquet de bienvenue lui a donné ses Fanzzy — n'a rien
+         franchi : lui allumer une case serait le féliciter pour ce qu'il n'a
+         pas fait. On n'allume que ce qui a changé sous ses yeux à lui. */
+      if (avant !== null) allumer(neuves);
+      if (parcours.faites === parcours.total && !parcours.paye) finir();
+    }
+  })();
+})();
+</script>
+<script src="/pwa.js" defer></script>
+</body>
+</html>

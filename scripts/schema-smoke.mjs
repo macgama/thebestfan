@@ -96,7 +96,11 @@ const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', '
   /* Les contenus : cartes d'action, équipement, stades. Il ajoute une colonne
      à `saisons`, donc il vient **après** saisons.sql — c'est sa seule
      dépendance, et l'oublier ferait lever sur un ALTER d'une table absente. */
-  'contenus'];
+  'contenus',
+  /* L'aide. Deux colonnes sur `user_wallet`, donc après souvenirs.sql et nulle
+     part ailleurs : elle ne déclare aucune table, et le parcours des premiers
+     pas lit tout le reste de ce qui existe déjà. */
+  'aide'];
 
 {
   const surLeDisque = (await readdir(SQL)).filter((f) => f.endsWith('.sql'))

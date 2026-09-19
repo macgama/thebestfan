@@ -552,6 +552,24 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 /* ------------------------------------------------------- bande du bas */
 .bas{display:grid;gap:9px;flex:none}
+/* Le rappel des premiers pas. **Il n'est là que tant qu'il sert** : le
+   parcours fini, il disparaît et ne laisse rien — pas une case grise, pas un
+   « terminé » de plus à regarder tous les jours. Un accueil se juge autant à ce
+   qu'il finit par retirer qu'à ce qu'il montre.
+
+   Au-dessus du duo et non dedans : le duo dit où l'on en est, celui-ci dit ce
+   qui reste à découvrir. Mélanger les deux ferait une rangée de trois où l'œil
+   ne saurait plus lequel est l'appel. */
+.pas1{display:flex;align-items:center;gap:11px;padding:9px 13px;border-radius:12px;
+  text-decoration:none;color:inherit;border:1px solid rgba(245,195,59,.34);
+  background:linear-gradient(120deg,rgba(245,195,59,.13),rgba(8,11,16,.7))}
+.pas1 .n{font-family:var(--banner);font-size:17px;color:var(--projo);line-height:1;flex:none}
+.pas1 .n small{font-size:10px;opacity:.5}
+.pas1 .q{flex:1;min-width:0}
+.pas1 .q b{display:block;font-family:var(--banner);font-size:12px;letter-spacing:.14em}
+.pas1 .q span{display:block;font-size:10.5px;opacity:.62;margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pas1 .fl{opacity:.45;font-size:15px;flex:none}
 .duo{display:grid;grid-template-columns:.85fr 1.3fr;gap:9px}
 .collec{padding:10px 13px;text-align:left;display:grid;gap:7px;text-decoration:none}
 .collec .t{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
@@ -982,6 +1000,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
     </div>
 
     <footer class="bas">
+      <!-- Caché par défaut, comme l'invite d'installation : il ne paraît que
+           lorsqu'il y a vraiment quelque chose à proposer. Voir `premiersPas`. -->
+      <a class="pas1" id="pas1" href="/aide" hidden></a>
       <div class="duo">
         <a class="tbf-cadre collec" href="/fanzzy">
           <span class="t"><b>COLLECTION</b><span id="collecTxt">—</span></span>
@@ -1873,6 +1894,26 @@ async function jsonp(url, options) {
         : `Niveau ${niv.niveau} · ${niv.dans}/${niv.pour} XP`;
     }
   } catch { /* progression non montée : l’accueil s’en passe */ }
+
+  /* Les premiers pas, tant qu'il en reste.
+   *
+   * **Lu, jamais écrit.** L'accueil ne coche rien et ne retient rien : il
+   * demande au serveur où en est le parcours et le montre. C'est la même
+   * source que l'écran d'aide, donc les deux ne peuvent pas se contredire.
+   *
+   * Et il se tait dans trois cas : parcours fini, route absente, ou serveur
+   * muet. Un rappel qui s'affiche vide vaut moins que pas de rappel — il
+   * occupe la place de l'appel principal en ne disant rien. */
+  try {
+    const p = await jsonp('/api/aide/parcours', { credentials: 'same-origin' });
+    const reste = (p?.etapes ?? []).find((e) => !e.fait);
+    if (reste && p.faites < p.total) {
+      $('pas1').innerHTML = `<span class="n">${p.faites}<small>/${p.total}</small></span>
+        <span class="q"><b>PREMIERS PAS</b><span>${esc(reste.titre)}</span></span>
+        <span class="fl">›</span>`;
+      $('pas1').hidden = false;
+    }
+  } catch { /* l'aide n'est pas montée : l'accueil s'en passe aussi */ }
 
   // L'avancement de la collection, et le Fanzzy équipé : une seule lecture
   // pour les deux, puisque `/api/fanzzy/state` porte déjà les deux réponses.
