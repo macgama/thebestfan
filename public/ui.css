@@ -1386,6 +1386,44 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
    Les pages gardent ce qui leur appartient — la taille de la zone, sa place à
    l'écran. Ce bloc ne décrit que ce qui se passe dedans. */
 
+/* ------------------------------------------- le pavé qu'on frappe
+
+   **Il était écrit trois fois, et deux fois mal.**
+
+   Les dix épreuves — le tracé, la grille, la bascule, la visée, la jauge — ont
+   toujours vécu ici, une seule fois, avec leur `touch-action` et leur
+   `user-select`. Les dix gestes de rythme, eux, partagent le même pavé rond, et
+   chaque écran en gardait sa version : le duel l'avait durci, le Virage non, et
+   la salle de répétition n'en avait aucune — son pavé n'avait donc ni taille ni
+   forme.
+
+   Ce que le Virage perdait n'était pas cosmétique. Sans `touch-action:none`, le
+   navigateur d'un téléphone se réserve le droit de lire la frappe comme un
+   début de défilement ou un double-toucher à agrandir : la frappe arrive en
+   retard, ou pas du tout. Sans `user-select:none`, garder le doigt appuyé —
+   ce que trois gestes demandent explicitement — sélectionne le compteur,
+   ouvre la loupe, ou fait apparaître le menu de copie par-dessus le jeu. Et
+   sur ordinateur, marteler sélectionne le chiffre au lieu de le frapper.
+
+   Une seule règle, donc, et les pages ne gardent que ce qui leur appartient :
+   la place du pavé dans leur mise en page, et rien de son comportement. */
+.pad{width:min(72vw,270px);aspect-ratio:1;border-radius:50%;position:relative;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  border:2px solid var(--c,var(--projo));
+  background:radial-gradient(circle,rgba(245,195,59,.12),transparent 70%);
+  touch-action:none;-webkit-touch-callout:none;
+  -webkit-user-select:none;user-select:none}
+.pad.hit{background:radial-gradient(circle,rgba(245,195,59,.35),transparent 70%)}
+.pad .n{font-family:var(--banner);font-size:clamp(38px,12vw,48px);line-height:1}
+.pad .s{font-size:10px;letter-spacing:.15em;opacity:.5;margin-top:3px;
+  font-family:var(--banner)}
+/* L'anneau de pulsation. `inset:-8px` : il bat **autour** du pavé et non
+   dessus, sinon il recouvre le chiffre au moment où on le lit. */
+.pad .ring,.ring{position:absolute;inset:-8px;border-radius:50%;opacity:0;
+  border:2px solid var(--c,var(--projo));pointer-events:none}
+.pad .ring.beat,.ring.beat{animation:tbf-padBat .4s ease-out}
+@keyframes tbf-padBat{0%{opacity:.9;transform:scale(.86)}100%{opacity:0;transform:scale(1.14)}}
+
 /* Le cadre où l'on trace. `touch-action:none` est indispensable et non
    décoratif : sans lui, le navigateur prend le glissement pour un défilement
    et le tracé s'arrête au premier mouvement. */

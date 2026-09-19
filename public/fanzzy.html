@@ -119,6 +119,18 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    vitrine en fait six cents. Un flou dimensionné pour l'une efface l'autre. */
 .slot.locked.secret .art{filter:blur(3px) grayscale(.75) brightness(.55) contrast(1.1)}
 .slot.locked.secret .nm{filter:blur(2.2px);opacity:.5}
+/* **Une lignée qu'on n'a pas du tout prend un seul ton.**
+
+   Le flou ci-dessus est fait pour une évolution qu'on peut acheter : on a le
+   personnage, il reste à payer. Il éclaircissait la case — trois quarts de gris
+   au lieu d'un gris plein, et plus de lumière — si bien que les trois âges
+   d'une lignée absente s'affichaient en deux tons, et que les âges supérieurs
+   paraissaient **moins** verrouillés que le premier. C'est l'inverse de ce qui
+   est vrai : sans le premier, les autres ne s'achètent même pas.
+
+   Le gris du premier âge, donc, et le flou par-dessus : toujours secrètes, mais
+   pas plus proches. */
+.slot.locked.secret.orphelin .art{filter:blur(3px) grayscale(1) brightness(.46) contrast(1.15)}
 .slot.locked .top::before,.slot.locked .foot,.slot.locked .pip{display:none}
 .slot.locked .nm{opacity:.72}
 .slot.locked .cadenas{position:absolute;left:50%;top:40%;z-index:4;width:calc(13 * var(--u));height:calc(13 * var(--u));
@@ -174,10 +186,26 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 #teamBody{flex:1;min-height:0;display:flex;flex-direction:column}
 
+/* **Le personnage est un lien vers sa fiche.**
+
+   Il ne l'était pas : « SA FICHE » attendait tout en bas, sous les effets, à
+   côté d'« ENTRER EN DUEL ». Or ce qu'on touche sur cet écran, c'est le
+   portrait — c'est lui qui occupe les deux tiers de la hauteur, et toucher une
+   image qui ne répond pas se lit comme un écran figé.
+
+   Un vrai `<a>` et non un gestionnaire de clic : il se tabule, s'ouvre dans un
+   onglet, se partage, et marche avant que le script de la page n'arrive. Le
+   bouton du bas reste — il nomme ce que le portrait ne dit pas, et deux chemins
+   vers le même endroit ne se gênent jamais. */
 .tscene{position:relative;flex:1;min-height:0;margin:2px 14px 0;border-radius:16px;overflow:hidden;
+  display:block;color:inherit;text-decoration:none;cursor:pointer;
   background:linear-gradient(160deg,#141A21,#0A0D11);
   box-shadow:inset 0 0 0 2px var(--rc,#C2CAD6),0 5px 0 var(--rc2,#4E5865),
              0 10px 24px rgba(0,0,0,.55)}
+/* Le retour visuel du toucher : sans lui, un lien qui occupe tout l'écran ne
+   se distingue pas d'un décor, et l'on ne sait pas qu'on a appuyé. */
+.tscene:active{transform:translateY(1px)}
+.tscene:focus-visible{outline:2px solid var(--projo);outline-offset:3px}
 .tscene.r-legendaire{box-shadow:inset 0 0 0 2.5px var(--rc),0 5px 0 var(--rc2),
   0 0 34px rgba(245,195,59,.3),0 10px 24px rgba(0,0,0,.55)}
 .tscene .fond{position:absolute;inset:0;opacity:.5}
@@ -469,8 +497,24 @@ function renderDex() {
          s'achète, sur un personnage qu'on a déjà — le montrer donnerait
          d'avance la seule chose qu'on paie, et l'évolution n'aurait plus rien à
          révéler. Il est donc flouté, comme sur la fiche. */
+      /* **Et pas de la même façon selon qu'on a la lignée ou pas.**
+
+         Le flou du dessus vaut pour une évolution qu'on peut **acheter** : on a
+         le personnage, on voit qu'il devient quelqu'un, on paie pour savoir
+         qui. Il ne vaut rien pour une lignée qu'on ne possède pas du tout —
+         là, l'évolution n'est pas un achat à venir, c'est une carte qu'on n'a
+         simplement pas.
+
+         Or le flou l'éclaircissait : trois quarts de gris contre un gris plein,
+         et plus de lumière. Les trois cases d'une même lignée absente
+         s'affichaient donc en deux tons, et les âges supérieurs paraissaient
+         **moins** verrouillés que le premier — l'inverse exact de ce qui est
+         vrai, puisqu'il faut d'abord avoir celui-ci. Elles prennent donc le gris
+         du premier âge, et gardent leur flou : elles restent secrètes sans
+         prétendre être plus proches. */
+      const orphelin = etage > 1 && !S.col[racine] ? ' orphelin' : '';
       const secret = etage > 1 ? ' secret' : '';
-      return `<div class="slot locked${secret}" data-open="${racine}"${retard}>${
+      return `<div class="slot locked${secret}${orphelin}" data-open="${racine}"${retard}>${
         cardHTML(f, { mini: true, verrou: true })}
         ${etage > 1 ? `<div class="stade">${'★'.repeat(etage - 1)}</div>` : ''}</div>`;
     }
@@ -626,7 +670,8 @@ function renderTeam() {
   const possede = S.col[f.id] ?? 1;
 
   $('teamBody').innerHTML = `
-    <div class="tscene r-${age.rar ?? 'commune'}" id="tscene" style="--tc:${t.c}">
+    <a class="tscene r-${age.rar ?? 'commune'}" id="tscene" style="--tc:${t.c}"
+       href="/fanzzy/${f.id}" aria-label="Ouvrir la fiche de ${esc(age.nom)}">
       <div class="fond">${artFond(age)}</div>
       <div class="halo"></div>
       <!-- La scène du personnage est montée par fanzzy-scene.js :
@@ -646,7 +691,7 @@ function renderTeam() {
         </div>
         <h2>${esc(age.nom)}</h2>
       </div>
-    </div>
+    </a>
 
     <div class="teff">${effets.length
       ? effets.map((e) => `<span>${esc(e)}</span>`).join('')

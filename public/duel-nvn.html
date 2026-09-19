@@ -346,15 +346,9 @@ h2 i{font-style:normal;opacity:.7}
 .mini.on{display:flex}
 .mini h3{font-family:var(--banner);font-size:19px;letter-spacing:.16em;margin:0;color:var(--c,var(--projo))}
 .mini p{margin:0;font-size:12.5px;opacity:.6}
-.pad{width:min(72vw,270px);aspect-ratio:1;border-radius:50%;border:2px solid var(--c,var(--projo));
-  display:flex;align-items:center;justify-content:center;position:relative;touch-action:none;
-  background:radial-gradient(circle,rgba(245,195,59,.12),transparent 70%);user-select:none}
-.pad.hit{background:radial-gradient(circle,rgba(245,195,59,.35),transparent 70%)}
-.ring{position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--c,var(--projo));opacity:0}
-.ring.beat{animation:pulse .38s ease-out}
-@keyframes pulse{0%{opacity:.9;transform:scale(.86)}100%{opacity:0;transform:scale(1.12)}}
-.pad .n{font-family:var(--banner);font-size:44px;line-height:1}
-.pad .s{font-size:9px;letter-spacing:.16em;opacity:.5;font-family:var(--banner)}
+/* Le pavé rond, son anneau et ses deux lignes de texte vivent dans ui.css :
+   c’est le même composant que le Virage et la salle de répétition dessinent.
+   Cette page en avait la bonne version ; elle est désormais la seule. */
 .compte{position:absolute;font-family:var(--banner);font-size:74px;opacity:.85;
   animation:fade .55s ease-out forwards}
 @keyframes fade{to{opacity:0;transform:scale(1.5)}}

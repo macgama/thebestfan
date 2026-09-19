@@ -270,14 +270,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .mini.on{display:flex}
 .mini h3{font-family:var(--banner);font-size:22px;letter-spacing:.1em;margin:0;color:var(--c)}
 .mini p{margin:0;font-size:12px;opacity:.6}
-.pad{width:206px;height:206px;border-radius:50%;display:grid;place-items:center;position:relative;
-  border:2px solid rgba(242,238,228,.2);background:rgba(255,255,255,.03);cursor:pointer}
-.pad.hit{background:rgba(245,195,59,.16)}
-.pad .ring{position:absolute;inset:0;border-radius:50%;border:3px solid var(--c);opacity:0}
-.pad .ring.beat{animation:beat .42s ease-out}
-@keyframes beat{from{opacity:.9;transform:scale(.72)}to{opacity:0;transform:scale(1.12)}}
-.pad .n{font-family:var(--banner);font-size:48px;line-height:1}
-.pad .s{font-size:10.5px;opacity:.5;letter-spacing:.13em;margin-top:3px}
+/* Le pavé rond, son anneau et ses deux lignes de texte vivent dans ui.css :
+   c'est le même composant que le duel et la salle de répétition dessinent, et
+   il était écrit ici **sans `touch-action` ni `user-select`**. Voir la note de
+   `.pad` dans la feuille commune. */
 .countdown{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--banner);
   font-size:84px;color:var(--c);pointer-events:none;animation:cd .55s ease-out}
 @keyframes cd{from{opacity:0;transform:scale(1.5)}60%{opacity:1}to{opacity:0;transform:scale(.85)}}

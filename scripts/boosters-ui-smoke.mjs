@@ -653,6 +653,29 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
   check('et il dit ce que ça coûte', /ÉCHARPES/.test(vu.libelle)
     || (console.log('        il dit :', vu.libelle), false));
 
+  /* **Et surtout : appuyer dessus fait quelque chose.**
+   *
+   * Le contrôle s'arrêtait au libellé et à l'état du bouton, et les deux
+   * étaient justes. Ce qui ne l'était pas, c'est la suite : `startTear` gardait
+   * sa propre garde, `if (S.packs <= 0) return`, oubliée quand on a corrigé
+   * celle du bouton. La réserve vide rendait donc le bouton vif, bien libellé,
+   * et **muet** — ni refus, ni message, ni animation. Le geste était avalé.
+   *
+   * C'est l'état le plus difficile à diagnostiquer pour un joueur, et le plus
+   * facile à laisser passer pour une suite qui ne regarde que des attributs.
+   * On appuie donc, et on regarde si le paquet s'ouvre. */
+  await p2.evaluate(() => document.getElementById('openBtn').click());
+  await dodo(300);
+  const parti = await p2.evaluate(() =>
+    document.getElementById('tearzone')?.classList.contains('on') ?? false);
+  check('et appuyer dessus ouvre vraiment le paquet', parti
+    || (console.log('        le bouton répond, mais rien ne s’ouvre'), false));
+  /* On referme par la fonction de la page, faute de bouton : la zone de
+     déchirure se quitte en tirant la bande ou en s'en allant, et laisser le
+     paquet ouvert fausserait les contrôles qui suivent. */
+  await p2.evaluate(() => fermerTear());
+  await dodo(150);
+
   /* Sans écharpes, le bouton se ferme — mais en disant pourquoi. « Rien ne se
      passe » et « il te manque quelque chose » demandent deux gestes différents. */
   await p2.evaluate(() => { S.scarves = 0; renderKiosque(); tickRegen(); });
