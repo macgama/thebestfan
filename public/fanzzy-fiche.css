@@ -78,6 +78,55 @@
  * nom, la famille et la rareté doivent rester lisibles. Ce qu'on cache, c'est
  * ce qu'il fait — pas qui il est. */
 .fiche.pas-a-moi .art{filter:grayscale(1) brightness(.5) contrast(1.12)}
+
+/* ------------------------------------------------- ce qu'on n'a pas encore
+
+   **Toucher un âge verrouillé le dessinait en grand dans la vitrine.**
+
+   La rangée ÂGES existe pour regarder les trois visages d'une lignée, et c'est
+   très bien pour ceux qu'on a payés. Mais elle donnait aussi, gratuitement et
+   en pleine taille, le visage de celui qu'on n'a pas — c'est-à-dire la seule
+   chose qu'on achète en évoluant. Le joueur voyait d'avance ce que quatre-vingt-
+   dix écharpes allaient lui donner, et l'évolution n'avait plus rien à révéler.
+
+   Le flou plutôt que l'absence : une case vide ne donne envie de rien, une
+   silhouette qu'on devine donne envie de la voir nette. On garde donc la
+   couleur, la carrure et la lumière de la rareté — tout ce qui dit « il y a
+   quelqu'un là-dessous » — et on retire le visage.
+
+   Le décor reste net, lui : il ne dit rien du personnage, et c'est lui qui
+   porte l'aura de rareté. Flouter les deux ferait une tache. */
+/* `.procedural` est posé par la page et non deviné par un sélecteur.
+   `svg:only-child` avait l'air juste — dans le repli géométrique, le dessin est
+   le seul enfant — mais le mot « ÂGE À VENIR » est ajouté juste après, et le
+   dessin cessait d'être seul à l'instant même où il fallait le flouter. Un
+   sélecteur qui dépend de ce que le voisin fera ensuite se casse toujours. */
+.fiche .art.secret img,
+.fiche .art.secret.procedural > svg{filter:blur(17px) grayscale(.5) brightness(.74);
+  transform:scale(1.04)}
+/* **Sur la poitrine, pas en bas.** À 16 % du bas, la phrase tombait derrière
+   la rangée de puces — « Fidélité », « Cri : PRÉSENTS » — qui est posée par-
+   dessus la vitrine. On lisait donc « fais-le grandir pour le d… ». Le cadenas
+   se place là où le regard va déjà : au milieu de la silhouette. */
+.fiche .art .secret-mot{position:absolute;left:0;right:0;top:44%;z-index:2;
+  text-align:center;font-family:var(--banner);font-size:12px;letter-spacing:.22em;
+  color:var(--craie);opacity:.82;text-shadow:0 2px 10px rgba(0,0,0,.9);
+  display:flex;flex-direction:column;align-items:center;gap:7px}
+.fiche .art .secret-mot svg{position:static;width:22px;height:22px;stroke:var(--craie);
+  fill:none;stroke-width:1.7;opacity:.9}
+.fiche .art .secret-mot em{font-style:normal;font-size:11px;opacity:.6;letter-spacing:.14em}
+
+/* La vignette d'un âge à venir, floutée pour la même raison. Elle garde plus
+   d'opacité que les autres cases verrouillées : à quarante-deux pixels, un
+   flou à 32 % d'opacité ne laisse plus rien du tout, et on veut une silhouette,
+   pas un trou. */
+.fiche .case.secret .dedans{opacity:.55}
+.fiche .case.secret .dedans img{filter:blur(2.6px) grayscale(.5) brightness(.8)}
+
+/* Le panneau de confirmation montre ce qu'on gagne — le nom, les effets, le
+   prix — mais pas le visage : c'est précisément ce qu'on paie, et la cérémonie
+   est faite pour le révéler. */
+.fiche .demande .duo .qui.apres img{filter:blur(7px) grayscale(.5) brightness(.7)}
 /* Les rangées deviennent une vitrine, pas un jeu de boutons. `pointer-events`
    pour la souris, `disabled` posé en HTML pour le clavier : l'un sans l'autre
    laisse une des deux portes ouverte. */
