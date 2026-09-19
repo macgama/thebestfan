@@ -49,6 +49,12 @@ const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', '
   // du premier fichier, mais elle livre des écharpes et des boosters — donc
   // elle suppose la bourse, qui vient de souvenirs.sql.
   'boutique', 'billets',
+  // `bourse.sql` remet le défaut de `user_wallet.packs` à trois. Il ne crée
+  // rien : il corrige une colonne posée par souvenirs.sql, dont le défaut a
+  // divergé entre le fichier et les bases en service — `CREATE TABLE IF NOT
+  // EXISTS` ne touche pas à une table qui existe. Après souvenirs, donc, et
+  // n'importe où ensuite.
+  'bourse',
   // Les saisons : elles s'appuient sur `reglages` (admin.sql) pour reprendre
   // l'ancienne liste des séries ouvertes, et sur `user_wallet` (souvenirs.sql)
   // pour la colonne qui retient l'annonce déjà vue.
