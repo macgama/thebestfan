@@ -330,7 +330,12 @@
          inaccessible à la souris reste accessible au clavier, et la tabulation
          emmenait dans une rangée de boutons muets. Le style fait le reste. */
       const mort = d.possede ? '' : ' disabled tabindex="-1"';
-      return `<button class="case ${x.ok ? 'ok' : 'verrou'} ${x.cle === choisie ? 'choisie' : ''}"
+      /* `secret` ne vaut que pour les **âges** : c'est le seul endroit où
+         l'image est ce qu'on achète. Une tenue verrouillée reste nette — on la
+         vise, elle n'a pas de visage à révéler, et la flouter ferait une
+         garde-robe illisible pour rien. */
+      const secret = !x.ok && String(x.cle).startsWith('age:') ? ' secret' : '';
+      return `<button class="case ${x.ok ? 'ok' : 'verrou'}${secret} ${x.cle === choisie ? 'choisie' : ''}"
         style="--cc:${x.couleur}" data-case="${esc(x.cle)}" title="${esc(x.titre)}"${mort}>
         <span class="pav"></span>
         <span class="dedans">${dedans}</span>
@@ -426,9 +431,17 @@
      * plus jamais revoir l’enfant qu’il avait été, alors que la rangée
      * d'âges n'est là que pour ça.
      */
-    function dessiner(f, etage = d.stade) {
+    function dessiner(f, etage = d.stade, acquis = true) {
       const art = hote.querySelector('#fiche-art');
       const c = COUL[f.type] ?? '#F5C33B';
+      /* **Un âge qu'on n'a pas ne se montre pas en grand.** Voir la feuille de
+         style : on garde la silhouette et la lumière, on retire le visage.
+         C'est ce que l'évolution est censée révéler, et elle ne révélait rien
+         puisqu'on pouvait tout voir d'avance en touchant une case. */
+      art.classList.toggle('secret', !acquis);
+      // Remis à chaque dessin : la même vitrine sert au dessin détouré et au
+      // repli géométrique, et la classe d'hier fausserait le flou d'aujourd'hui.
+      art.classList.remove('procedural');
 
       /* **Le décor**, avant le personnage. Il vient de sa série, de sa tenue
          portée, de son âge et de sa famille — voir `fanzzy-fond.js`. C'était un
@@ -451,6 +464,8 @@
            le décor reviendra avec son dessin. */
         art.innerHTML = window.FZART?.artProcedural?.({ id: f.ageId ?? f.id, type: f.type,
           rar: f.rar, nom: f.nom }) ?? '';
+        art.classList.add('procedural');
+        marquerSecret(art, acquis);
         return;
       }
       art.innerHTML = decor ?? '';
@@ -467,6 +482,26 @@
       };
       img.alt = '';
       img.src = adresse;
+      marquerSecret(art, acquis);
+    }
+
+    /**
+     * Le mot qui accompagne une silhouette floutée.
+     *
+     * Sans lui, un personnage flou se lit comme une image qui n'a pas fini de
+     * charger — et on attend, puis on recharge la page. Il faut dire que c'est
+     * **volontaire**, et ce qu'il faut faire pour le voir net.
+     */
+    function marquerSecret(art, acquis) {
+      art.querySelector('.secret-mot')?.remove();
+      if (acquis) return;
+      const n = document.createElement('div');
+      n.className = 'secret-mot';
+      n.innerHTML = `<svg viewBox="0 0 24 24" stroke-linecap="round" aria-hidden="true">
+        <rect x="4" y="10" width="16" height="11" rx="2.5"/>
+        <path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        ÂGE À VENIR<em>fais-le grandir pour le découvrir</em>`;
+      art.appendChild(n);
     }
 
     /* ------------------------------------------------------------- gestes */
@@ -499,7 +534,7 @@
           const a = (d.lignee ?? []).find((x) => x.id === idAge);
           if (a) {
             dessiner({ ...d.fanzzy, ageId: a.id, nom: a.nom, rar: a.rar ?? d.fanzzy.rar },
-              a.stage);
+              a.stage, Boolean(a.possede));
           }
         }
         rendreDetail();

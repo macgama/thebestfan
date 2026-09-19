@@ -618,6 +618,85 @@ check('les Fanzzy non possédés portent leur nom',
       }
     }
 
+    /* ====================== ce qu'on n'a pas encore ne se montre pas
+
+       **Toucher un âge verrouillé le dessinait en grand dans la vitrine.**
+
+       La rangée ÂGES existe pour regarder les trois visages d'une lignée, et
+       c'est très bien pour ceux qu'on a payés. Mais elle donnait aussi,
+       gratuitement et en pleine taille, le visage de celui qu'on n'a pas —
+       c'est-à-dire la seule chose qu'on achète en évoluant. L'évolution n'avait
+       plus rien à révéler, et la cérémonie révélait quelque chose de déjà vu.
+
+       Le flou et non l'absence : on garde la silhouette, la carrure et la
+       lumière de la rareté, on retire le visage. Une case vide ne donne envie
+       de rien. */
+    {
+      const etat = () => fiche.evaluate(() => {
+        const art = document.getElementById('fiche-art');
+        return {
+          secret: art.classList.contains('secret'),
+          mot: art.querySelector('.secret-mot')?.textContent.replace(/\s+/g, ' ').trim() ?? null,
+          /* Le décor doit rester **net** : c'est lui qui porte l'aura de
+             rareté, et flouter les deux ferait une tache. */
+          flouDecor: (() => {
+            const d = art.querySelector('svg');
+            return d ? getComputedStyle(d).filter : null;
+          })(),
+        };
+      });
+
+      const ages = await fiche.evaluate(() =>
+        [...document.querySelectorAll('[data-case^="age:"]')].map((b) => ({
+          cle: b.dataset.case,
+          verrou: b.classList.contains('verrou'),
+          secret: b.classList.contains('secret'),
+        })));
+
+      check(`la lignée montre ses âges (${ages.length})`, ages.length > 1);
+
+      const verrouille = ages.find((a) => a.verrou);
+      const acquis = ages.find((a) => !a.verrou);
+
+      check('un âge non atteint porte la marque du secret',
+        !verrouille || verrouille.secret === true
+        || (console.log('        ', JSON.stringify(verrouille)), false));
+      check('un âge atteint ne la porte pas',
+        !acquis || acquis.secret === false);
+
+      /* Une tenue verrouillée reste nette : on la vise, elle n'a pas de visage
+         à révéler, et la flouter ferait une garde-robe illisible pour rien. */
+      const tenueFloue = await fiche.evaluate(() =>
+        [...document.querySelectorAll('[data-case^="tenue:"]')]
+          .some((b) => b.classList.contains('secret')));
+      check('mais une tenue verrouillée, elle, reste lisible', tenueFloue === false);
+
+      if (verrouille) {
+        await fiche.evaluate((cle) =>
+          document.querySelector(`[data-case="${cle}"]`)?.click(), verrouille.cle);
+        await new Promise((r) => setTimeout(r, 120));
+        const v = await etat();
+        check('toucher un âge à venir ne le dévoile pas', v.secret === true);
+        check('et l’écran dit que c’est volontaire',
+          /ÂGE À VENIR/.test(v.mot ?? '')
+          || (console.log('        il dit :', v.mot), false));
+        check('le décor, lui, reste net — c’est lui qui porte la rareté',
+          !v.flouDecor || v.flouDecor === 'none'
+          || (console.log('        filtre :', v.flouDecor), false));
+      } else {
+        console.log('  --   ce Fanzzy est déjà au dernier âge : secret sauté');
+      }
+
+      if (acquis) {
+        await fiche.evaluate((cle) =>
+          document.querySelector(`[data-case="${cle}"]`)?.click(), acquis.cle);
+        await new Promise((r) => setTimeout(r, 120));
+        const v = await etat();
+        check('revenir sur un âge atteint le remontre en entier', v.secret === false);
+        check('et le mot disparaît avec lui', v.mot === null);
+      }
+    }
+
     /* ==================================== la rareté se voit dans le décor
 
        Elle ne se voyait pas. La montée existait — « un projecteur au premier
