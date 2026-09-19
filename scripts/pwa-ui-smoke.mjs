@@ -26,7 +26,7 @@
  *
  * Avant de lancer :  npm install --no-save puppeteer
  */
-import { readFileSync, existsSync } from 'node:fs';
+import fs, { readFileSync, existsSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -68,6 +68,113 @@ for (const taille of ['192x192', '512x512']) {
 }
 check('une icône « maskable » pour Android',
   (manifeste.icons ?? []).some((i) => i.purpose === 'maskable'));
+
+/* ===================== la mise à jour arrive-t-elle chez le joueur ?
+
+   **Elle n'arrivait pas.** `public/` partait avec `max-age=1h` et les pages
+   appelaient leurs scripts par une adresse fixe — `<script src="/cartes.js">`.
+   Après un déploiement, un navigateur qui avait déjà ce fichier le ressortait
+   de son cache **sans demander au serveur** : la page était neuve, son code ne
+   l'était pas. Les joueurs n'avaient d'autre issue que de vider leur cache,
+   pour un jeu dont le client et le serveur doivent parler le même protocole.
+
+   La règle est maintenant : ce qui peut changer n'est jamais gardé, ce qui est
+   gardé ne peut plus changer. Ces contrôles éprouvent les deux moitiés — car
+   n'en tenir qu'une donne soit un site lent, soit un site périmé, et les deux
+   se découvrent tard.
+
+   Voir `src/server/empreintes.js`. */
+{
+  const { empreinte, estampiller, releverEmpreintes } =
+    await import('../src/server/empreintes.js');
+  const PUB = path.join(RACINE, 'public');
+
+  const releve = releverEmpreintes(PUB);
+  check(`le relevé trouve les fichiers de code (${releve.length})`, releve.length > 10);
+
+  /* **Le service worker ne s'estampille jamais.** Son adresse est écrite dans
+     `pwa.js` et dans l'enregistrement du navigateur : la changer ferait croire
+     à un second service worker, et les deux cohabiteraient. */
+  check('sauf le service worker, qui a sa propre fraîcheur',
+    empreinte(PUB, '/sw.js') === null && !releve.includes('/sw.js'));
+
+  /* Une image ne s'estampille pas non plus : elle est déjà servie un an et
+     immuable, et son contenu ne change jamais sous la même adresse. */
+  check('et les images, qui ont déjà leur règle',
+    empreinte(PUB, '/img/fanzzy/index.json') === null);
+
+  /* ------------------------------------------ toutes les pages, toutes leurs adresses
+
+     Une seule adresse oubliée suffit à ramener la panne, sur une seule page,
+     et personne ne la trouve : les autres se mettent à jour normalement. */
+  const pages = fs.readdirSync(PUB).filter((f) => f.endsWith('.html'));
+  const nues = [];
+  const etrangeres = new Set();
+  let comptees = 0;
+  for (const f of pages) {
+    const html = fs.readFileSync(path.join(PUB, f), 'utf8');
+    const apres = estampiller(html, PUB);
+    for (const m of apres.matchAll(/\b(?:src|href)="(\/[^"?#>]*\.(?:js|css))"/gi)) {
+      if (m[1] === '/sw.js') continue;
+      /* Ce qui n'est pas dans `public/` n'est pas à nous : `/socket.io/socket.io.js`
+         est servi par socket.io lui-même, avec sa version dans la bibliothèque
+         et ses propres en-têtes. L'estamper voudrait lire un fichier qui
+         n'existe pas sur le disque, et le forcer ferait une adresse morte. */
+      if (!existsSync(path.join(PUB, m[1]))) { etrangeres.add(m[1]); continue; }
+      nues.push(`${f} → ${m[1]}`);
+    }
+    comptees += [...apres.matchAll(/\?v=[0-9a-f]{10}"/g)].length;
+  }
+  check(`les ${pages.length} pages sortent estampillées (${comptees} adresses)`,
+    nues.length === 0 && comptees > 30
+    || (console.log('        nues :', nues.slice(0, 4).join(', ') || '(aucune)',
+                    '· estampées :', comptees), false));
+
+  /* **Et rien d'autre ne manque.** Une adresse qui ne désigne aucun fichier
+     n'est pas seulement non estampillée : c'est un script qui ne se charge pas.
+     Le seul cas légitime est celui de socket.io ; le nommer ici fait que le
+     prochain se remarquera. */
+  check('et les seules adresses hors du dépôt sont celles de socket.io',
+    [...etrangeres].every((x) => x === '/socket.io/socket.io.js')
+    || (console.log('        aussi :', [...etrangeres].join(', ')), false));
+
+  /* L'empreinte décrit **le contenu**, et c'est toute la promesse : deux
+     contenus différents ne peuvent pas partager une adresse, sinon garder un an
+     revient à servir du périmé pour toujours — bien pire que l'heure d'avant. */
+  const avant = empreinte(PUB, '/cartes.js');
+  const chemin = path.join(PUB, 'cartes.js');
+  const copie = fs.readFileSync(chemin);
+  try {
+    fs.writeFileSync(chemin, Buffer.concat([copie, Buffer.from('\n// \n')]));
+    const apres = empreinte(PUB, '/cartes.js');
+    check('un fichier qui change change d’empreinte', avant !== apres
+      || (console.log('        les deux :', avant, apres), false));
+  } finally {
+    fs.writeFileSync(chemin, copie);
+  }
+  check('et il retrouve la sienne quand on le remet',
+    empreinte(PUB, '/cartes.js') === avant);
+
+  /* ------------------------------------------ la règle, côté serveur
+
+     Lue dans `server.js` plutôt que demandée à un serveur qu'on démarrerait :
+     le vrai serveur veut une base, des sockets et des clés d'API, et ce qu'on
+     éprouve ici est une décision écrite noir sur blanc, pas un comportement qui
+     dépend de l'état du monde.
+
+     Ce qu'on refuse : qu'une page reparte par `sendFile`. C'est la régression
+     probable — ajouter une page se fait en copiant la ligne d'à côté, et la
+     ligne d'à côté d'hier contournait l'estampillage sans rien casser
+     visiblement. */
+  const srv = fs.readFileSync(path.join(RACINE, 'server.js'), 'utf8');
+  const parSendFile = [...srv.matchAll(/sendFile\([^)]*'([^']*\.html)'/g)].map((m) => m[1]);
+  check('aucune page ne contourne l’estampillage', parSendFile.length === 0
+    || (console.log('        par sendFile :', parSendFile.join(', ')), false));
+  check('les pages ne se gardent pas', /no-store/.test(srv));
+  check('le code estampillé se garde un an et se déclare immuable',
+    /max-age=31536000, immutable/.test(srv));
+  check('et le code nu se revalide à chaque fois', /'no-cache'/.test(srv));
+}
 
 /* ----------------------------------------------------------------- le talon */
 
