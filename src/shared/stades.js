@@ -159,6 +159,82 @@ export const STADES = [
     mods: { pushMult: 0.86, refundBonus: 1.35 },
     effet: 'On pousse peu, mais le souffle dépensé revient bien mieux.',
   },
+
+  /* ================================================== LA REPRISE (5)
+
+     ## Ce qu'un lieu de reprise a de particulier
+
+     La première journée ne se joue pas dans un stade prêt. La pelouse a été
+     refaite en juillet et personne ne l'a encore usée ; une tribune est sous
+     bâche parce que les travaux ont pris du retard ; il fait trente degrés un
+     dimanche de fin août sur un gradin sans toit. Ce sont des lieux **en
+     chantier**, et c'est ce qu'il faut qu'on sente.
+
+     ## La règle, inchangée et non négociable
+
+     Un stade appartient au match, jamais à un joueur : en duel il est tiré
+     parmi ceux que **les deux** possèdent, et son effet s'applique aux deux
+     camps. Ces cinq-là changent donc la même règle pour tout le monde. Ce qui
+     départage ensuite, c'est qui a construit le bon deck pour ce lieu — pas qui
+     l'a collectionné.
+
+     ## Aucun n'est écrit « en mieux »
+
+     Chacun **ouvre une porte et en ferme une**. Un lieu qui ne ferait que
+     donner serait un lieu que tout le monde voudrait tirer, et le tirage
+     cesserait d'être une situation pour devenir une récompense.               */
+
+  {
+    id: 'rp-pelouse',
+    nom: 'La Pelouse Neuve',
+    rar: 'commune',
+    texte: 'Refaite en juillet, pas encore usée. Personne n’ose vraiment appuyer.',
+    /* Un terrain neuf se joue prudemment : les gestes sont plus propres, les
+       poussées plus timides. Les deux tribunes retiennent leur coup. */
+    mods: { perfectBonus: 1.14, pushMult: 0.93 },
+    effet: 'Les gestes parfaits rapportent plus, mais tout le monde pousse moins fort.',
+  },
+  {
+    id: 'rp-travaux',
+    nom: 'La Tribune en Travaux',
+    rar: 'rare',
+    texte: 'Un quart du virage est fermé. On s’entasse dans le reste.',
+    /* Serrés, on s'entend de tout près et l'on se relaie mal : le contre porte,
+       le souffle ne revient pas. */
+    mods: { parryBonus: 1.28, breathBonus: 0.88 },
+    effet: 'Entassés : on se contre bien mieux, et l’on récupère mal.',
+  },
+  {
+    id: 'rp-canicule',
+    nom: 'Le Dernier Dimanche d’Août',
+    rar: 'rare',
+    texte: 'Trente degrés sur un gradin sans toit. Le chant sort, il ne tient pas.',
+    /* La chaleur : on part fort et on ne dure pas. Le martelage y gagne, tout
+       ce qui demande de durer y perd. */
+    mods: { mashBonus: 1.26, holdBonus: 0.82, breathBonus: 0.9 },
+    effet: 'On démarre fort et l’on ne tient rien : le martelage gagne, l’endurance s’effondre.',
+  },
+  {
+    id: 'rp-bache',
+    nom: 'Le Virage sous Bâche',
+    rar: 'epique',
+    texte: 'La bâche du tifo n’est pas descendue. On chante derrière, sans rien voir.',
+    /* On ne voit pas le terrain : le rythme se perd, mais rien ne se lit non
+       plus de l'autre côté. Un lieu où l'on joue à l'oreille. */
+    mods: { tempoWindow: 0.8, parryResist: 1.45, tempoInterval: 80 },
+    effet: 'À l’aveugle : le rythme est bien plus dur à tenir, et personne ne se fait contrer.',
+  },
+  {
+    id: 'rp-inauguration',
+    nom: 'L’Inauguration',
+    rar: 'legendaire',
+    texte: 'Nouveau nom sur le fronton, nouveau virage, et pas une habitude en commun.',
+    /* Tout est neuf, y compris les repères : on pousse comme jamais, et rien de
+       ce qu'on savait faire ne sert. Le lieu le plus violent des quinze, dans
+       les deux sens. */
+    mods: { pushMult: 1.35, ferveurBonus: 1.2, tempoWindow: 0.78, refundBonus: 0.8 },
+    effet: 'Tout le monde pousse comme jamais, et plus personne n’a ses repères.',
+  },
 ];
 
 export const STADE_BY_ID = new Map(STADES.map((s) => [s.id, s]));

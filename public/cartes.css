@@ -59,12 +59,43 @@
    pose une carte d'une autre taille redéclare `--u`, juste en dessous. */
 .fz{--u:1.3px}
 .summary .fz{--u:.7px}
-/* Les sélecteurs sont repris un à un : sans eux, `.summary .fz` — plus
-   spécifique — garderait son repli en pixels et la vignette cesserait de
-   suivre sa largeur. Une règle de repli qui bat le raffinement, c'est le
-   raffinement qui n'existe pas. */
+
+/* **La règle portait sur `.fz`, et `.fz` est le conteneur.**
+
+   C'est la faute que ce bloc corrige, et elle s'est cachée pendant des mois
+   parce qu'elle n'a jamais rien cassé bruyamment : **un élément qui établit un
+   conteneur ne peut pas s'interroger lui-même.** `@container` se résout
+   toujours contre le conteneur **ancêtre** le plus proche ; il n'y en a aucun
+   au-dessus d'une carte, nulle part dans le jeu. La condition ne pouvait donc
+   pas être vraie, `--u` restait au repli de 1,3 px, et **toutes les cartes du
+   jeu étaient dessinées à la moitié de leur échelle** — sur une carte de 250
+   pixels, l'unité vaut 2,5 px et non 1,3.
+
+   Ça ne se lisait pas comme une panne : la carte gardait son cadre et ses
+   couleurs, avec un nom deux fois trop petit et une illustration qui flottait
+   dans un grand vide. On mettait ça sur le compte du dessin.
+
+   La preuve que le confinement marche est juste en dessous, ligne après ligne :
+   `@container (max-width: 150px){ .fz .foot{…} }` fonctionne, lui, depuis le
+   premier jour — parce qu'il vise un **descendant**.
+
+   ## La correction
+
+   `--u` descend sur `.body`, qui est dans le conteneur et peut donc l'interroger.
+   Tout le contenu de la carte en hérite : le nom, les marges, la pastille, le
+   cadenas, le badge d'âge — tout vit dans `.body`.
+
+   Ce qui reste sur `.fz` — son rayon, son liseré, son ombre portée — garde le
+   repli en pixels, parce que `.fz` ne peut toujours pas s'interroger. C'est un
+   liseré et une ombre : la partie la moins sensible à l'échelle, et la seule
+   qu'on ne peut pas déplacer sans que `overflow:hidden` la découpe.
+
+   Le repli reste **en pixels et jamais en `cqw` nu** : quand le confinement ne
+   prend pas — un navigateur d'avant 2023 —, `cqw` ne disparaît pas, elle se
+   rabat sur la fenêtre, et la carte devient un galet illisible. Voir plus haut. */
 @container (min-width: 0px){
-  .fz,.summary .fz{--u:1cqw}
+  .fz > .body,
+  .summary .fz > .body{--u:1cqw}
 }
 
 .fz{container-type:inline-size;position:relative;width:100%;aspect-ratio:63/88;border-radius:calc(4 * var(--u));

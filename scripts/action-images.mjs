@@ -157,6 +157,47 @@ export const INVITES = {
   'a-retournement': ['crimson', 'a terrace that has just woken up, the front row surging '
     + 'forward against the barrier, disbelief turning into fury on their faces, the '
     + 'moment a lost match stops being lost, deep crimson light'],
+
+  /* ------------------------------------------------- LA REPRISE
+
+     La première journée après la coupure. Trois mois d'absence, un stade qu'on
+     redécouvre, et des gens qui ne savent plus tout à fait comment on fait. La
+     lumière est celle de la fin d'août : basse, dorée, encore chaude — c'est ce
+     qui distingue ces dix des vingt-neuf autres, toutes nocturnes.
+
+     Le sujet reste **ce que la carte fait**, jamais ce qu'elle s'appelle : une
+     illustration qui décore son titre ne se reconnaît pas dans une main de
+     cinq cartes à la seconde où il faut choisir. */
+
+  'a-rp-coupdenvoi': ['amber', 'the very first seconds of a season, a terrace filling as '
+    + 'the first chant starts low at the back and spreads forward row by row, only half '
+    + 'the arms up yet, late summer sun low across the stand'],
+  'a-rp-rouille': ['grey', 'a supporter caught mid-chant with his voice gone, hand at his '
+    + 'throat, surprised and a little embarrassed, the people around him still singing '
+    + 'without him, dull grey-gold light'],
+  'a-rp-horsjeu': ['white', 'a linesman flag raised sharp against a bright late-summer '
+    + 'sky, the terrace behind it stopped dead mid-celebration, arms frozen halfway up, '
+    + 'hard white light'],
+  'a-rp-echauffement': ['amber', 'supporters stretching and rolling their shoulders '
+    + 'before kick-off, a drummer testing two loose beats, nobody serious yet, everything '
+    + 'still to come, warm amber pre-match light'],
+  'a-rp-routine': ['gold', 'the same gestures as every season — the scarf knotted the '
+    + 'same way, the same step climbed, the same place taken at the barrier — a man doing '
+    + 'exactly what he has always done, calm golden light'],
+  'a-rp-bache-neuve': ['blue', 'a brand new banner being unrolled across a whole stand, '
+    + 'the fabric still crisp and folded flat, dozens of hands passing it overhead, clean '
+    + 'blue daylight'],
+  'a-rp-filet': ['grey', 'scaffolding and safety netting across a half-finished stand, '
+    + 'supporters singing behind it, the mesh softening everything, cool grey light'],
+  'a-rp-presentation': ['gold', 'a squad lined up facing the terrace before the first '
+    + 'match, seen from behind the crowd, hundreds of raised phones and scarves, warm '
+    + 'golden late-afternoon light'],
+  'a-rp-premier-chant': ['amber', 'the first chant of the year taken up by an entire '
+    + 'stand at once, mouths open on the same syllable, visible relief and joy on their '
+    + 'faces, dust in the warm amber air'],
+  'a-rp-jour-un': ['gold', 'an empty terrace an hour before the opening match, one lone '
+    + 'supporter standing at the barrier looking at the pitch, everything still possible, '
+    + 'low golden sun across the seats'],
 };
 
 export const inviteDe = (id) => {

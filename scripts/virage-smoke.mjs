@@ -813,7 +813,18 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
    * oblige à venir l'écrire ici, donc à se demander si elle a sa place au
    * Virage. C'est exactement la question que ce contrôle existe pour poser. */
   const RESTENT_AU_DUEL = ['a-silence', 'a-brouillard', 'a-parcage', 'a-vol',
-    'a-vent', 'a-bache', 'a-miroir', 'a-retournement'];
+    'a-vent', 'a-bache', 'a-miroir', 'a-retournement',
+    /* LA REPRISE. Les trois visent quelqu'un, et au Virage il n'y a personne
+       en face : la « Rouille » affaiblit les gestes de l'adversaire, le
+       « Hors-jeu » lui verrouille la main, et la « Bâche neuve » attend sa
+       prochaine poussée. Dans une salle où trois cents personnes poussent en
+       continu, cette prochaine poussée n'est pas un événement — c'est du bruit
+       de fond, et la carte n'aurait pas de moment. Même raison que « Bâche »,
+       juste au-dessus.
+
+       Les sept autres de la saison entrent, elles : elles n'agissent que sur
+       celui qui les joue ou sur sa tribune. */
+    'a-rp-rouille', 'a-rp-horsjeu', 'a-rp-bache-neuve'];
   const ecart = [
     ...RESTENT_AU_DUEL.filter((id) => !duel.has(id)).map((id) => `+${id}`),
     ...[...duel].filter((id) => !RESTENT_AU_DUEL.includes(id)).map((id) => `-${id}`),
