@@ -81,6 +81,7 @@
     "chants": "node scripts/chant-images.mjs",
     "chants:invites": "node scripts/chant-images.mjs --invites",
     "epreuves:ui": "node scripts/epreuves-ui-smoke.mjs",
+    "gestes:test": "node scripts/gestes-smoke.mjs",
     "boutique:smoke": "node scripts/boutique-smoke.mjs",
     "boosters:ui": "node scripts/boosters-ui-smoke.mjs",
     "reglages:smoke": "node scripts/reglages-smoke.mjs",

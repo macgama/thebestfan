@@ -16,13 +16,25 @@
 import puppeteer from 'puppeteer';
 import { readFileSync } from 'node:fs';
 import { resoudreGeste, grade } from '../src/server/ferveur/gestures.js';
+import { EPREUVES } from '../src/server/ferveur/epreuves.js';
 
 const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
 const page = await nav.newPage();
 const erreurs = [];
 page.on('pageerror', (e) => erreurs.push(e.message));
 await page.setViewport({ width: 400, height: 880 });
-await page.setContent('<div id="zone" style="width:320px;height:320px"></div>');
+/* **La feuille de style vient avec.**
+
+   Le banc se contentait du HTML nu, et c'était tenable tant que toutes les
+   épreuves se dimensionnaient sur leur contenu — une grille de cases prend la
+   place de ses cases. La visée et la jauge, elles, sont des cadres vides en
+   `height:100%` : sans `ui.css`, elles font zéro pixel de haut, chaque touche
+   tombe hors du cadre et la page rend une réponse vide. Le contrôle accusait
+   alors le mini-jeu d'être cassé, alors qu'il manquait sa feuille.
+
+   Une page de test sans les styles du jeu n'éprouve pas le jeu. */
+await page.setContent('<style>' + readFileSync('public/ui.css', 'utf8') + '</style>'
+  + '<div id="zone" style="width:320px;height:320px"></div>');
 await page.evaluate(readFileSync('public/geste.js', 'utf8'));
 
 let rates = 0;
@@ -281,7 +293,188 @@ console.log(`   forme du tifo : ${gestes.tifo.forme} · suite du capo : ${gestes
   check(`tomber très loin ne vaut rien (${loin.toFixed(2)})`, loin === 0);
 }
 
-check('aucune erreur de script pendant les sept épreuves',
+
+/* ------------------------------------------------------------- la bascule
+
+   La seule épreuve où il faut **arrêter un geste déjà parti**. Ce qui compte
+   ici n'est pas qu'on puisse répondre juste — c'est que répondre sans lire
+   l'inversion ne paie pas. Le premier réglage laissait 0,70 à qui suivait
+   bêtement le côté montré, et l'épreuve entière ne valait que trois dixièmes
+   de sa note. */
+{
+  const g = gestes.bascule;
+  const jouer = (choisir) => page.evaluate(async (gestes, quoi) => {
+    const p = window.TBF_GESTE.jouer('bascule', gestes, { zone: document.getElementById('zone') });
+    const pad = document.getElementById('pad');
+    const sig = gestes.bascule.signaux;
+    const t0 = performance.now();
+    /* **On répond au rythme des signaux, pas à celui de la boucle.**
+
+       Le mini-jeu n'accepte qu'une réponse par signal et avance tout seul
+       toutes les `pas` millisecondes. Une boucle qui tapait dix fois en deux
+       secondes voyait donc sept de ses réponses ignorées, et l'exécution
+       parfaite récoltait 0,30 — le banc mesurait sa propre impatience.
+
+       Le retard varie dans la fenêtre : `humain()` refuse une régularité
+       mécanique, et tomber dessus éprouverait la défense au lieu de la note. */
+    for (let i = 0; i < sig.length; i++) {
+      const quand = i * gestes.bascule.pas + 140 + Math.random() * 260;
+      const reste = quand - (performance.now() - t0);
+      if (reste > 0) await new Promise((r) => setTimeout(r, reste));
+      const bon = sig[i].contre ? (sig[i].cote ^ 1) : sig[i].cote;
+      const k = quoi === 'juste' ? bon : quoi === 'sansLire' ? sig[i].cote : 0;
+      pad.querySelector(`[data-k="${k}"]`)
+        .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    }
+    return p;
+  }, gestes, choisir);
+
+  const juste = await jouer('juste');
+  check('la bascule rend un choix par signal',
+    Array.isArray(juste?.choix) && juste.choix.length === g.signaux.length
+    || (console.log('        elle rend :', JSON.stringify(juste).slice(0, 90)), false));
+  const noteJuste = grade('bascule', juste, {}, { motif: GRAINE });
+  check(`lire l’inversion paie (${noteJuste.toFixed(2)})`, noteJuste >= 0.9);
+
+  const sansLire = await jouer('sansLire');
+  const noteSansLire = grade('bascule', sansLire, {}, { motif: GRAINE });
+  check(`suivre le côté montré sans lire ne paie pas (${noteSansLire.toFixed(2)})`,
+    noteSansLire <= 0.6 && noteSansLire < noteJuste - 0.3
+    || (console.log('        contre juste :', noteJuste.toFixed(2)), false));
+
+  const memeCote = await jouer('meme');
+  const noteMeme = grade('bascule', memeCote, {}, { motif: GRAINE });
+  check(`et taper toujours du même côté encore moins (${noteMeme.toFixed(2)})`,
+    noteMeme <= 0.45);
+}
+
+/* --------------------------------------------------------------- la visée
+
+   L'endroit **et** l'instant, et les deux se multiplient : c'est ce qui
+   empêche de marteler le centre de l'écran en rythme. Les deux ratés ci-dessous
+   sont exactement ces deux moitiés-là, jouées séparément. */
+{
+  const g = gestes.visee;
+  const viser = (ou, retard) => page.evaluate(async (gestes, ou, retard) => {
+    const p = window.TBF_GESTE.jouer('visee', gestes, { zone: document.getElementById('zone') });
+    const pad = document.getElementById('pad');
+    const r = pad.getBoundingClientRect();
+    const t0 = performance.now();
+    for (const c of gestes.visee.cibles) {
+      const quand = c.t + retard;
+      const reste = quand - (performance.now() - t0);
+      if (reste > 0) await new Promise((res) => setTimeout(res, reste));
+      const x = ou === 'dessus' ? c.x : 0.5;
+      const y = ou === 'dessus' ? c.y : 0.5;
+      pad.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true,
+        clientX: r.left + x * r.width, clientY: r.top + y * r.height }));
+    }
+    return p;
+  }, gestes, ou, retard);
+
+  const pile = await viser('dessus', 20);
+  check('la visée rend une touche par cible',
+    Array.isArray(pile?.touches) && pile.touches.length === g.cibles.length
+    || (console.log('        elle rend :', JSON.stringify(pile).slice(0, 90)), false));
+  check('et chaque touche porte un endroit et un instant',
+    (pile?.touches ?? []).every((t) =>
+      Number.isFinite(t.x) && Number.isFinite(t.y) && Number.isFinite(t.t)));
+
+  const notePile = grade('visee', pile, {}, { motif: GRAINE });
+  check(`toucher au bon endroit et à l’heure paie (${notePile.toFixed(2)})`, notePile >= 0.8);
+
+  const tard = await viser('dessus', g.fenetre * 2.5);
+  const noteTard = grade('visee', tard, {}, { motif: GRAINE });
+  check(`au bon endroit mais trop tard ne paie pas (${noteTard.toFixed(2)})`, noteTard <= 0.2);
+
+  const ailleurs = await viser('milieu', 20);
+  const noteAilleurs = grade('visee', ailleurs, {}, { motif: GRAINE });
+  check(`à l’heure mais au milieu de l’écran non plus (${noteAilleurs.toFixed(2)})`,
+    noteAilleurs <= 0.35);
+}
+
+/* --------------------------------------------------------------- la jauge
+
+   La seule épreuve notée **en continu**. Le contrôle qui porte tout est le
+   doigt immobile : le premier réglage lui donnait 0,48 — la moitié de la note
+   sans rien faire — parce que la bande glissait d'un extrême à l'autre et le
+   croisait à chaque passage. Elle tient puis saute, désormais. */
+{
+  const g = gestes.jauge;
+  const centreDe = (t) => {
+    const s = g.sommets;
+    if (t <= s[0].t) return s[0].v;
+    for (let i = 1; i < s.length; i++) {
+      if (t <= s[i].t) {
+        const part = (t - s[i - 1].t) / Math.max(1, s[i].t - s[i - 1].t);
+        return s[i - 1].v + (s[i].v - s[i - 1].v) * part;
+      }
+    }
+    return s[s.length - 1].v;
+  };
+  const tenir = (suivre) => page.evaluate(async (gestes, suivre) => {
+    const p = window.TBF_GESTE.jouer('jauge', gestes, { zone: document.getElementById('zone') });
+    const pad = document.getElementById('pad');
+    const r = pad.getBoundingClientRect();
+    const s = gestes.jauge.sommets;
+    const centre = (t) => {
+      if (t <= s[0].t) return s[0].v;
+      for (let i = 1; i < s.length; i++) {
+        if (t <= s[i].t) {
+          const part = (t - s[i - 1].t) / Math.max(1, s[i].t - s[i - 1].t);
+          return s[i - 1].v + (s[i].v - s[i - 1].v) * part;
+        }
+      }
+      return s[s.length - 1].v;
+    };
+    const t0 = performance.now();
+    const poser = (v) => pad.dispatchEvent(new PointerEvent('pointermove', {
+      bubbles: true, buttons: 1,
+      clientX: r.left + r.width / 2,
+      clientY: r.top + (1 - v) * r.height }));
+    poser(0.5);
+    while (performance.now() - t0 < gestes.jauge.ms) {
+      const t = performance.now() - t0;
+      /* **Un tremblement, et il n'est pas décoratif.** La notation refuse une
+         réponse dont plus de la moitié des mesures tombent au millième sur la
+         bande : personne ne suit une jauge à la virgule près, et un client qui
+         le fait calcule au lieu de jouer. Un banc qui suivrait exactement
+         éprouverait donc ce refus au lieu de la note. */
+      poser(suivre ? centre(t) + (Math.random() - 0.5) * 0.03 : 0.5);
+      await new Promise((res) => setTimeout(res, 30));
+    }
+    return p;
+  }, gestes, suivre);
+
+  const suivi = await tenir(true);
+  check(`la jauge rend ses mesures (${(suivi?.mesures ?? []).length})`,
+    Array.isArray(suivi?.mesures) && suivi.mesures.length >= g.minMesures
+    || (console.log('        elle rend :', (suivi?.mesures ?? []).length), false));
+  check('et chacune porte un instant et une valeur',
+    (suivi?.mesures ?? []).every((m) => Number.isFinite(m.t) && Number.isFinite(m.v)));
+
+  const noteSuivi = grade('jauge', suivi, {}, { motif: GRAINE });
+  check(`suivre la bande paie (${noteSuivi.toFixed(2)})`, noteSuivi >= 0.8);
+
+  /* Et le refus lui-même, qui est le seul garde-fou de cette épreuve : elle
+     est notée en continu, donc un client modifié rendrait cent mesures
+     parfaites sans effort. On ne peut pas l'empêcher, on peut refuser ce qu'un
+     humain ne produit jamais. */
+  const machine = { mesures: suivi.mesures.map((m) => ({ t: m.t, v: centreDe(m.t) })) };
+  let refuse = null;
+  try { grade('jauge', machine, {}, { motif: GRAINE }); }
+  catch (e) { refuse = e.code ?? e.message; }
+  check(`suivre au millième est refusé (${refuse ?? 'accepté'})`,
+    /trop_juste/.test(refuse ?? ''));
+
+  const immobile = await tenir(false);
+  const noteImmobile = grade('jauge', immobile, {}, { motif: GRAINE });
+  check(`le doigt posé au milieu ne paie pas (${noteImmobile.toFixed(2)})`,
+    noteImmobile <= 0.35 && noteImmobile < noteSuivi - 0.4
+    || (console.log('        contre suivi :', noteSuivi.toFixed(2)), false));
+}
+
+check(`aucune erreur de script pendant les ${EPREUVES.length} épreuves`,
   erreurs.length === 0 || (console.log('    ', erreurs.join(' / ')), false));
 
 console.log(`\n${rates ? `${rates} échec(s)` : 'tout est vert'}`);

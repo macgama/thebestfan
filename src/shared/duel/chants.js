@@ -59,6 +59,17 @@ export const CHANTS = {
      main. */
   trilage:  { nom: 'Le tri des cartons', gest: 'tri',   cost: 24, power: 38 },
   rebours:  { nom: 'Le compte à rebours', gest: 'compte', cost: 31, power: 51 },
+
+  /* Les trois épreuves de décision. Elles coûtent et rendent **comme les
+     autres à difficulté comparable** : un geste neuf n'est pas une occasion de
+     glisser un chant plus rentable que les vingt-neuf d'à côté. Le prix suit la
+     durée et la charge mentale, pas la nouveauté.
+
+     Voir `epreuves.js` : ce sont les seules qui mesurent la décision, la visée
+     et le dosage — le reste du répertoire mesure le rythme ou la mémoire. */
+  renverse: { nom: 'Le renversement', gest: 'bascule', cost: 27, power: 42 },
+  fumigenes: { nom: 'Les fumigènes',  gest: 'visee',   cost: 25, power: 39 },
+  tension:  { nom: 'La tension',      gest: 'jauge',   cost: 29, power: 46 },
 };
 
 /**
@@ -71,13 +82,14 @@ export const CHANTS = {
  * où la tribune ne ferait que marteler. Un contrôle le vérifie, et une mutation
  * qui groupe les gestes par famille le fait tomber.
  */
-/* Les cinq épreuves s'**intercalent** au lieu de se coller à la fin. Le
+/* Les huit épreuves s'**intercalent** au lieu de se coller à la fin. Le
    répertoire est une fenêtre de cinq qui glisse le long de cette liste : mises
    bout à bout, elles donneraient un quart d'heure sans rien à dessiner, puis un
    quart d'heure sans rien à chanter. Un Virage doit faire passer les deux. */
-export const ORDRE = ['reprise', 'roulement', 'bache', 'repons', 'onetaitla',
-  'damier', 'salves', 'trilage', 'contrechant', 'moulinet', 'craquage', 'montee',
-  'aupoint', 'rebours', 'tenir', 'mur', 'appel', 'relance', 'cadence'];
+export const ORDRE = ['reprise', 'roulement', 'bache', 'repons', 'renverse',
+  'onetaitla', 'damier', 'salves', 'trilage', 'fumigenes', 'contrechant',
+  'moulinet', 'craquage', 'montee', 'tension', 'aupoint', 'rebours', 'tenir',
+  'mur', 'appel', 'relance', 'cadence'];
 
 /** Tous, sous forme de liste — pour qui veut les parcourir. */
 export const LISTE_CHANTS = ORDRE.map((id) => ({ id, ...CHANTS[id] }));

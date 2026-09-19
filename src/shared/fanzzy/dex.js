@@ -43,7 +43,7 @@ const TYPES = {
   perc: { nom:'Percussion', c:'#3C82E8', gestes:['mash', 'crescendo', 'salves'],
     ico:'M12 6c5 0 8 1.5 8 3.5S17 13 12 13 4 11.5 4 9.5 7 6 12 6zm-8 4v5c0 2 3.5 3.5 8 3.5s8-1.5 8-3.5v-5' },
   // Ce qui reste : tenir, tenir sans aller au bout, tenir le compte exact.
-  fide: { nom:'Fidélité', c:'#C2CAD6', gestes:['hold', 'tenue', 'retenue'],
+  fide: { nom:'Fidélité', c:'#C2CAD6', gestes:['hold', 'tenue', 'retenue', 'jauge'],
     ico:'M12 21s-7-4.4-7-9.5A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 3.5C19 16.6 12 21 12 21z' },
   // Ce qui se montre : dessiner la forme, allumer la grille, trier les cartons.
   tifo: { nom:'Tifo', c:'#8257DA', gestes:['tifo', 'mosaique', 'tri'],
@@ -52,10 +52,10 @@ const TYPES = {
      pulsation, tomber juste quand le compte s'est éteint. C'est exactement ce
      qu'est une torche qu'on allume — une seconde trop tôt ou trop tard et ce
      n'est plus le même geste. */
-  pyro: { nom:'Pyro', c:'#E0402C', gestes:['relance', 'compte'],
+  pyro: { nom:'Pyro', c:'#E0402C', gestes:['relance', 'compte', 'visee'],
     ico:'M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-2-1-3-1-4 2 1 4 3 4 6a6 6 0 0 1-12 0c0-5 6-7 6-11z' },
   // La route : l'écharpe qu'on fait tourner, les visages qu'on retient.
-  depl: { nom:'Déplacement', c:'#1E9E6A', gestes:['echarpe', 'memoire'],
+  depl: { nom:'Déplacement', c:'#1E9E6A', gestes:['echarpe', 'memoire', 'bascule'],
     ico:'M4 7h16v8H4zM4 15v3h3v-3m10 0v3h3v-3M6 10h12' },
 };
 

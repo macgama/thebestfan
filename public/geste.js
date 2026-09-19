@@ -37,6 +37,7 @@
     tifo: 'TIFO', memoire: 'LES VISAGES', mosaique: 'MOSAÏQUE',
     echarpe: 'L’ÉCHARPE', capo: 'LE CAPO',
     tri: 'LE TRI', compte: 'LE COMPTE',
+    bascule: 'LA BASCULE', visee: 'LA VISÉE', jauge: 'LA JAUGE',
   };
   const AIDE = {
     tempo: 'Tape sur chaque pulsation',
@@ -56,6 +57,12 @@
     capo: 'Regarde la suite du capo, puis répète-la',
     tri: 'Ramasse **uniquement** les cartons de la bonne couleur',
     compte: 'Le compte s’éteint. Touche pile quand il arrive à zéro.',
+    /* La consigne dit la règle **et son piège**. Une épreuve dont on découvre
+       le retournement en le ratant se lit comme une injustice, pas comme une
+       difficulté — et on ne la rejoue pas. */
+    bascule: 'Pousse du côté montré — sauf « à contre-courant », où tu vas de l’autre',
+    visee: 'Touche chaque fumigène tant qu’il brûle. Le bon endroit **et** le bon moment.',
+    jauge: 'Garde le curseur dans la bande. Elle tient, puis elle saute.',
   };
   /* La couleur dit la famille du geste avant qu'on ait lu son nom : or pour le
      rythme, bleu pour la vitesse, craie pour la tenue, vert pour la mesure. */
@@ -73,6 +80,9 @@
        compte dans le noir. Elles ont donc leur propre teinte — ambre — pour
        qu'on ne les prenne pas pour des épreuves de mémoire. */
     tri: '#E08A2C', compte: '#E08A2C',
+    /* Les trois neuves partagent le rouge : ce sont les seules qui demandent
+       de **décider vite**, et la couleur le dit avant la consigne. */
+    bascule: '#E0402C', visee: '#E0402C', jauge: '#E0402C',
   };
 
   const label = (g) => LABEL[g] ?? String(g ?? '').toUpperCase();
@@ -657,6 +667,198 @@
         }
 
         case 'mash':
+
+        /**
+         * **La bascule.** Le capo désigne un côté ; la bâche dit parfois « à
+         * contre-courant », et il faut aller de l'autre.
+         *
+         * La seule épreuve du jeu où il faut **arrêter un geste déjà parti**.
+         * Tout le reste demande de reproduire, de chercher ou de doser ; ici la
+         * main sait où aller avant que l'œil ait fini de lire, et c'est ça qu'on
+         * mesure.
+         *
+         * Le signal passe tout seul : on ne peut pas attendre le suivant pour
+         * se décider, et ne pas répondre est un choix qui se défend — ça ne
+         * rapporte rien, ça ne coûte rien de plus qu'une erreur.
+         */
+        case 'bascule': {
+          const g = gestes?.bascule ?? {};
+          const signaux = g.signaux ?? [];
+          rendre = { choix: [], instants: [] };
+          zone.innerHTML = `<div class="tbf-bascule" id="pad">
+            <div class="mot" id="mot">—</div>
+            <div class="cotes">
+              <button type="button" class="cote" data-k="0">◀</button>
+              <button type="button" class="cote" data-k="1">▶</button>
+            </div></div>`;
+          const mot = $('mot');
+          const pad = $('pad');
+          let rang = -1;
+          let repondu = true;
+
+          /* Une case par signal, remplie à mesure. Sans elle, une absence de
+             réponse décalerait tout ce qui suit : la notation lit `choix[i]`
+             pour le signal `i`, et un tableau tassé ferait juger la neuvième
+             réponse sur le dixième signal. */
+          const avancer = () => {
+            if (!repondu) rendre.choix.push(null);
+            rang++;
+            repondu = false;
+            if (rang >= signaux.length) { finir(); return; }
+            const s = signaux[rang];
+            mot.className = `mot ${s.contre ? 'contre' : ''}`;
+            mot.innerHTML = s.contre
+              ? `<b>À CONTRE-COURANT</b><span>${s.cote ? '▶' : '◀'}</span>`
+              : `<b>ON POUSSE</b><span>${s.cote ? '▶' : '◀'}</span>`;
+            buzz(s.contre ? [8, 40, 8] : 10);
+          };
+
+          pad.onpointerdown = (e) => {
+            const b = e.target.closest('[data-k]');
+            if (!b || repondu || rang < 0 || rang >= signaux.length) return;
+            repondu = true;
+            rendre.choix.push(Number(b.dataset.k));
+            rendre.instants.push(maintenant());
+            b.classList.add('pris');
+            apres(140, () => b.classList.remove('pris'));
+            buzz(14);
+          };
+
+          avancer();
+          chaque(g.pas ?? 820, avancer);
+          apres(g.ms ?? 10_000, finir);
+          break;
+        }
+
+        /**
+         * **La visée.** Les fumigènes s'allument un par un et ne durent pas.
+         *
+         * L'œil et la main ensemble, sous une horloge. Le tifo et l'écharpe
+         * suivent un tracé qui ne bouge pas et attendent le doigt ; ici la
+         * cible s'éteint, et toucher au bon endroit une seconde trop tard ne
+         * vaut rien — les deux notes se multiplient.
+         *
+         * Les coordonnées partent en **fraction du cadre** et non en pixels :
+         * le serveur note la même chose sur un téléphone et sur un écran large,
+         * et c'est lui qui a décidé où poser les cibles.
+         */
+        case 'visee': {
+          const g = gestes?.visee ?? {};
+          const cibles = g.cibles ?? [];
+          rendre = { touches: [] };
+          zone.innerHTML = '<div class="tbf-visee" id="pad"></div>';
+          const pad = $('pad');
+
+          pad.onpointerdown = (e) => {
+            const r = pad.getBoundingClientRect();
+            if (!r.width || !r.height) return;
+            rendre.touches.push({
+              x: (e.clientX - r.left) / r.width,
+              y: (e.clientY - r.top) / r.height,
+              t: maintenant(),
+            });
+            /* L'éclat marque l'endroit touché, pas la cible : le joueur doit
+               voir **son** geste, sinon il ne sait pas s'il a manqué de peu ou
+               de loin. */
+            const eclat = document.createElement('i');
+            eclat.className = 'eclat';
+            eclat.style.cssText = `left:${e.clientX - r.left}px;top:${e.clientY - r.top}px`;
+            pad.appendChild(eclat);
+            apres(400, () => eclat.remove());
+            buzz(12);
+          };
+
+          /* Chaque cible naît à son instant et s'éteint au bout de sa fenêtre.
+             La durée d'affichage est un peu plus longue que la fenêtre notée :
+             une cible qui disparaît pile quand elle cesse de valoir laisserait
+             croire qu'on l'a eue. */
+          for (const c of cibles) {
+            apres(c.t, () => {
+              const n = document.createElement('i');
+              n.className = 'cible';
+              n.style.cssText = `left:${c.x * 100}%;top:${c.y * 100}%`;
+              pad.appendChild(n);
+              requestAnimationFrame(() => n.classList.add('vue'));
+              setTimeout(() => n.remove(), (g.fenetre ?? 520) * 1.6);
+            });
+          }
+          apres((g.ms ?? 8000) + 400, finir);
+          break;
+        }
+
+        /**
+         * **La jauge.** La corde tient, puis saute. Rester dedans.
+         *
+         * La seule épreuve notée **en continu** : cent mesures plutôt qu'une
+         * poignée d'instants. Le sang-froid des dix gestes est un relâchement,
+         * une décision unique ; celle-ci demande de tenir trois secondes sans
+         * bouger, puis de courir, quatre fois de suite.
+         *
+         * La bande est dessinée ici à partir des sommets, et **notée ailleurs à
+         * partir des mêmes sommets** : la page interpole pour montrer, le
+         * serveur interpole pour juger, et c'est lui qui fait foi. Une page qui
+         * calculerait sa propre bande rejouerait la faute des Jumelles — voir
+         * `gestures.js`.
+         */
+        case 'jauge': {
+          const g = gestes?.jauge ?? {};
+          const sommets = g.sommets ?? [];
+          const largeur = g.largeur ?? 0.15;
+          rendre = { mesures: [] };
+          zone.innerHTML = `<div class="tbf-jauge" id="pad">
+            <div class="bande" id="bande"></div>
+            <div class="curseur" id="cur"></div>
+            <div class="s" id="s">GLISSE LE DOIGT — RESTE DANS LA BANDE</div></div>`;
+          const pad = $('pad');
+          const bande = $('bande');
+          const cur = $('cur');
+
+          const centre = (t) => {
+            if (!sommets.length) return 0.5;
+            if (t <= sommets[0].t) return sommets[0].v;
+            for (let i = 1; i < sommets.length; i++) {
+              if (t <= sommets[i].t) {
+                const part = (t - sommets[i - 1].t)
+                  / Math.max(1, sommets[i].t - sommets[i - 1].t);
+                return sommets[i - 1].v + (sommets[i].v - sommets[i - 1].v) * part;
+              }
+            }
+            return sommets[sommets.length - 1].v;
+          };
+
+          /* `v` est compté **du bas vers le haut** — zéro en bas — parce que
+             c'est ainsi qu'on lit une jauge, et que le serveur ne sait rien
+             d'un écran. La conversion en pourcentage CSS se fait ici, une fois. */
+          let v = 0.5;
+          const poser = (e) => {
+            const r = pad.getBoundingClientRect();
+            if (!r.height) return;
+            v = Math.min(1, Math.max(0, 1 - (e.clientY - r.top) / r.height));
+            cur.style.bottom = `${v * 100}%`;
+          };
+          pad.onpointerdown = (e) => { pad.setPointerCapture?.(e.pointerId); poser(e); };
+          pad.onpointermove = (e) => { if (e.buttons) poser(e); };
+
+          cur.style.bottom = '50%';
+          const peindre = () => {
+            const c = centre(maintenant());
+            bande.style.bottom = `${(c - largeur / 2) * 100}%`;
+            bande.style.height = `${largeur * 100}%`;
+            cur.classList.toggle('dedans', Math.abs(v - c) <= largeur / 2);
+          };
+          peindre();
+          chaque(40, peindre);
+
+          /* L'échantillon est celui du serveur : c'est lui qui fixe combien de
+             mesures il attend, et les compter autrement ferait rejeter une
+             réponse honnête pour cause de `minMesures`. */
+          chaque(g.echantillon ?? 100, () => {
+            rendre.mesures.push({ t: maintenant(), v });
+          });
+          apres(g.ms ?? 8000, finir);
+          break;
+        }
+
         default: {
           const g = gestes?.mash ?? {};
           const pad = pave(0, 'FRAPPES', false);

@@ -1,6 +1,11 @@
 /**
- * Les épreuves du virage : cinq familles qui ne sont ni du rythme ni de la
+ * Les épreuves du virage : sept familles qui ne sont ni du rythme ni de la
  * force.
+ *
+ * (Elles étaient cinq le jour où ce fichier a été écrit, et ce nombre a menti
+ * pendant deux ajouts sans que rien ne le signale — c'est ce que fait toujours
+ * un compte écrit à la main dans un commentaire. Le seul qui ne mente jamais
+ * est `EPREUVES.length`, quelques lignes plus bas.)
  *
  * ## Pourquoi un fichier à part
  *
@@ -58,7 +63,7 @@ export class Triche extends Error {
  * sortes de gens.
  */
 export const EPREUVES = ['tifo', 'memoire', 'mosaique', 'echarpe', 'capo',
-  'tri', 'compte'];
+  'tri', 'compte', 'bascule', 'visee', 'jauge'];
 
 export const REGLES = {
   /* Tracer une forme sans quitter le trait. `tolerance` est en fraction du
@@ -102,6 +107,57 @@ export const REGLES = {
      à l'aveugle. `tolerance` est l'erreur qui vaut encore quelque chose : à une
      seconde près on a quelque chose, à zéro on a tout. */
   compte: { visible: 3000, cibleMin: 5000, cibleMax: 8000, tolerance: 1000, ms: 12_000 },
+
+  /* ======================================== LES TROIS NEUVES
+
+     ## Pourquoi celles-là, et pas trois de plus du même genre
+
+     Les cinq premières épreuves demandent toutes la même chose sous des habits
+     différents — **reproduire ce qu'on vient de voir**. C'est écrit en tête de
+     ce fichier, et c'est une seule qualité de joueur mesurée cinq fois. En
+     ajouter une sixième n'aurait rien ouvert.
+
+     Ces trois-ci visent chacune un trou :
+
+       — `bascule` : **décider vite quand la règle change.** Rien dans le jeu ne
+         demande d'inhiber un geste déjà parti. Le tri s'en approche, mais on y
+         choisit à son rythme et tout reste à l'écran ; ici le signal passe.
+       — `visee` : **toucher un point qui n'est plus là quand on arrive.** Le
+         tifo et l'écharpe suivent un tracé immobile ; celle-ci mesure l'œil et
+         la main ensemble, sous une horloge.
+       — `jauge` : **doser en continu.** Le sang-froid des dix gestes est un
+         relâchement, une décision unique. Tenir une valeur dans une bande qui
+         bouge pendant huit secondes est l'exact contraire : cent petites
+         corrections, et aucune n'est la bonne très longtemps.
+
+     Un joueur bon aux cinq premières n'est pas nécessairement bon à ces
+     trois-là — et c'est tout ce qu'on cherche. */
+
+  /* **La bascule.** Le capo désigne un côté ; parfois la bâche dit « à
+     contre-courant », et il faut aller de l'autre.
+
+     `pas` est le temps entre deux signaux, `fenetre` celui qu'on a pour
+     répondre. La fenêtre est plus courte que le pas : on ne peut pas attendre
+     le signal suivant pour se décider, ce qui est précisément l'épreuve. */
+  bascule: { coups: 10, pas: 820, fenetre: 640, ms: 10_000, contrePart: 0.35 },
+
+  /* **La visée.** Six fumigènes s'allument un par un ; chacun s'éteint vite.
+
+     `rayon` est la tolérance en fraction de cadre, `fenetre` celle du temps.
+     Les deux comptent, et elles se multiplient : toucher au bon endroit trop
+     tard ne vaut rien, et toucher à temps n'importe où non plus. */
+  visee: { cibles: 6, ms: 8000, rayon: 0.16, fenetre: 520, apparition: 1150 },
+
+  /* **La jauge.** La corde monte et descend ; il faut rester dedans.
+
+     `largeur` est l'épaisseur de la bande, en fraction de la hauteur : une
+     bande étroite demande une main sûre. `points` est le nombre de sommets de
+     la trajectoire — peu de sommets font une vague lente, beaucoup une danse
+     qu'on ne suit plus. `minMesures` refuse une réponse qui n'aurait pas été
+     échantillonnée : sans lui, trois points bien placés vaudraient huit
+     secondes de travail. */
+  jauge: { ms: 8000, largeur: 0.15, points: 4, transition: 520,
+    echantillon: 100, minMesures: 40 },
 };
 
 /* --------------------------------------------------------------- le hasard
@@ -241,6 +297,103 @@ export function consigneDe(epreuve, graine = 0) {
        toutes et l'horloge intérieure ne servirait plus à rien. */
     return { ...REGLES.compte,
       cible: Math.round(cibleMin + rnd() * (cibleMax - cibleMin)) };
+  }
+
+
+  if (epreuve === 'bascule') {
+    const { coups, contrePart } = REGLES.bascule;
+    /* Le côté et l'inversion sont tirés indépendamment : sans quoi « à
+       contre-courant » finirait corrélé à un côté, et le joueur apprendrait le
+       côté au lieu de lire la consigne.
+
+       Un signal sur trois environ est inversé. Beaucoup moins, et l'on répond
+       sans lire ; beaucoup plus, et l'inversion devient la règle — on
+       l'apprendrait tout aussi bien. */
+    const signaux = Array.from({ length: coups }, () => ({
+      cote: rnd() < 0.5 ? 0 : 1,
+      contre: rnd() < contrePart,
+    }));
+    /* **Au moins deux inversions, toujours.**
+
+       Un signal sur trois est inversé en moyenne, mais la moyenne n'est pas la
+       garantie : sur dix tirages indépendants, une fois sur soixante-quinze il
+       n'y en a aucune. L'épreuve devient alors « suis le côté qu'on te
+       montre », c'est-à-dire rien du tout — et le joueur qui tombe dessus la
+       trouve facile sans savoir pourquoi.
+
+       On en impose donc deux, posées à des rangs tirés. Le reste du hasard est
+       inchangé : ce n'est pas un plafond, seulement un plancher. */
+    const rangs = melanger(Array.from({ length: coups }, (_, i) => i), rnd);
+    let deja = signaux.filter((x) => x.contre).length;
+    for (const rang of rangs) {
+      if (deja >= 2) break;
+      if (signaux[rang].contre) continue;
+      signaux[rang].contre = true;
+      deja++;
+    }
+    return { ...REGLES.bascule, signaux };
+  }
+
+  if (epreuve === 'visee') {
+    const { cibles, apparition } = REGLES.visee;
+    /* Les cibles sont tenues à l'écart des bords — 0,12 à 0,88 — pour deux
+       raisons : un fumigène à demi sorti du cadre serait injuste, et sur un
+       téléphone le bord est déjà pris par le pouce qui tient l'appareil. */
+    return { ...REGLES.visee,
+      cibles: Array.from({ length: cibles }, (_, i) => ({
+        x: 0.12 + rnd() * 0.76,
+        y: 0.12 + rnd() * 0.76,
+        t: Math.round(i * apparition + rnd() * 160),
+      })) };
+  }
+
+  if (epreuve === 'jauge') {
+    const { points, ms } = REGLES.jauge;
+    /* La trajectoire est donnée par ses sommets, et la page interpole entre
+       eux. Deux raisons de ne pas l'envoyer point par point : le message
+       resterait petit, et surtout **les deux côtés interpolent la même chose**
+       — c'est la notation qui fait foi, et elle recalcule la bande aux instants
+       que le joueur a rendus, jamais à ceux qu'il aurait choisis.
+
+       **Les sommets balaient presque toute la hauteur — 0,08 à 0,92 — et la
+       bande est étroite.** Le premier réglage gardait la bande entre 0,2 et
+       0,8 avec une largeur de 0,22 : poser le doigt au milieu et ne plus
+       bouger rapportait 0,91, c'est-à-dire que l'épreuve ne mesurait rien. Une
+       jauge qu'on tient sans la suivre n'est pas une jauge.
+
+       Deux sommets voisins ne peuvent pas être du même côté : sans cette
+       alternance, le hasard produit parfois cinq sommets groupés, et l'on
+       retombe sur la bande immobile qu'on vient de corriger. */
+    /* **Elle tient, puis elle bouge vite.**
+
+       Le premier réglage faisait glisser la bande d'un extrême à l'autre en
+       continu. Le doigt posé au milieu la croisait à chaque passage et
+       récoltait 0,48 en moyenne — presque la moitié de la note sans rien
+       faire. Le nombre de sommets n'y changeait rien : avec une interpolation
+       droite, la part de temps passée près du centre ne dépend pas de la
+       vitesse.
+
+       La trajectoire est donc un palier, puis un saut : chaque extrême est
+       posé **deux fois**, à son arrivée et à sa fin, et la page interpole entre
+       les deux — c'est-à-dire ne bouge pas. Le milieu n'est plus traversé que
+       pendant les transitions, et l'immobilité tombe sous les deux dixièmes.
+
+       Le geste y gagne aussi : on tient trois secondes, puis on court. Deux
+       qualités au lieu d'une, et c'est ce qui manquait au sang-froid des dix
+       gestes, qui ne demande qu'un relâchement. */
+    const { transition } = REGLES.jauge;
+    const duree = ms / points;
+    const sommets = [];
+    let haut = rnd() < 0.5;
+    for (let i = 0; i < points; i++) {
+      haut = !haut;
+      const v = haut ? 0.62 + rnd() * 0.3 : 0.08 + rnd() * 0.3;
+      const debut = Math.round(i * duree + (i ? transition : 0));
+      const fin = Math.round((i + 1) * duree);
+      sommets.push({ t: debut, v });
+      sommets.push({ t: Math.max(debut, fin), v });
+    }
+    return { ...REGLES.jauge, sommets };
   }
 
   throw new Triche('epreuve.inconnue');
@@ -431,6 +584,144 @@ export function noter(epreuve, consigne, reponse, mods = {}) {
     if (ecart === 0) throw new Triche('reponse.trop_juste');
     return Math.max(0, Math.min(1.2,
       (1 - ecart / consigne.tolerance) * (mods.memoireBonus ?? 1)));
+  }
+
+
+  /**
+   * **La bascule.** Décider vite, et savoir se retenir.
+   *
+   * Un signal sur trois demande l'inverse de ce qu'il montre. La difficulté
+   * n'est pas de savoir quoi faire — c'est écrit — mais d'arrêter un geste
+   * déjà parti. Rien d'autre dans le jeu ne mesure ça.
+   *
+   * Une absence de réponse vaut zéro pour ce signal, et **ne coûte rien de
+   * plus** : s'abstenir quand on n'est pas sûr est une façon de jouer, pas une
+   * triche. Une erreur, elle, ne rapporte rien non plus — la note est la part
+   * de bonnes réponses, tout simplement.
+   */
+  if (epreuve === 'bascule') {
+    const choix = Array.isArray(r.choix) ? r.choix : [];
+    humain(r.instants, { minEcart: 140 });
+    const signaux = consigne.signaux ?? [];
+    if (!signaux.length) return 0;
+    let bons = 0;
+    let rates = 0;
+    for (let i = 0; i < signaux.length; i++) {
+      const attendu = signaux[i].contre ? (signaux[i].cote ^ 1) : signaux[i].cote;
+      if (choix[i] === attendu) bons++;
+      else if (choix[i] === 0 || choix[i] === 1) rates++;   // répondu, et faux
+    }
+    /* **Une erreur coûte une réussite**, comme au tri des cartons.
+
+       Compter les seules bonnes réponses laissait 0,70 à qui ne lisait pas
+       l'inversion du tout — un signal sur trois seulement est inversé, donc
+       répondre bêtement le côté montré payait presque autant que jouer.
+       L'épreuve entière ne valait que trois dixièmes de sa note.
+
+       Avec le retranchement, ignorer l'inversion tombe à 0,30 et taper
+       toujours le même côté à zéro. Et **s'abstenir ne coûte rien de plus que
+       de ne pas gagner** : se retenir quand on n'est pas sûr reste une façon
+       de jouer, ce qui est exactement la qualité qu'on mesure. */
+    return Math.max(0, Math.min(1.2,
+      ((bons - rates) / signaux.length) * (mods.memoireBonus ?? 1)));
+  }
+
+  /**
+   * **La visée.** Toucher au bon endroit et au bon moment.
+   *
+   * Les deux se multiplient, et c'est ce qui fait l'épreuve : toucher juste
+   * trop tard ne vaut rien, et toucher à l'heure n'importe où non plus. Une
+   * somme aurait laissé rattraper l'un par l'autre, et l'on aurait pu marteler
+   * le centre de l'écran en rythme.
+   *
+   * Chaque touche est appariée à **la cible la plus proche dans le temps**, et
+   * une cible ne se touche qu'une fois. Sans ça, balayer l'écran de touches
+   * rapportait une cible par hasard toutes les demi-secondes.
+   */
+  if (epreuve === 'visee') {
+    const touches = Array.isArray(r.touches) ? r.touches : [];
+    const cibles = consigne.cibles ?? [];
+    if (!cibles.length) return 0;
+    if (touches.length > cibles.length * 4) throw new Triche('touches.trop_nombreuses');
+    for (const p of touches) {
+      if (!Number.isFinite(p?.x) || !Number.isFinite(p?.y) || !Number.isFinite(p?.t)) {
+        throw new Triche('touche.invalide');
+      }
+    }
+    const prises = new Set();
+    let total = 0;
+    for (const p of touches) {
+      let rang = -1;
+      let mieux = Infinity;
+      for (let i = 0; i < cibles.length; i++) {
+        if (prises.has(i)) continue;
+        const dt = Math.abs(p.t - cibles[i].t);
+        if (dt < mieux) { mieux = dt; rang = i; }
+      }
+      if (rang < 0) break;
+      prises.add(rang);
+      const c = cibles[rang];
+      const loin = Math.hypot(p.x - c.x, p.y - c.y);
+      const place = Math.max(0, 1 - loin / consigne.rayon);
+      const heure = Math.max(0, 1 - mieux / consigne.fenetre);
+      total += place * heure;
+    }
+    return Math.max(0, Math.min(1.2,
+      (total / cibles.length) * (mods.tempoWindow ?? 1)));
+  }
+
+  /**
+   * **La jauge.** Tenir une valeur dans une bande qui bouge.
+   *
+   * Le sang-froid des dix gestes est un relâchement : une décision, une fois.
+   * Celle-ci est son contraire — cent petites corrections, dont aucune n'est
+   * bonne très longtemps. C'est la seule épreuve où l'on est noté **en
+   * continu** plutôt que sur des instants.
+   *
+   * La bande est recalculée ici aux instants que le joueur a rendus, jamais à
+   * ceux qu'il aurait choisis : la page interpole pour dessiner, la notation
+   * interpole pour juger, et c'est elle qui fait foi.
+   *
+   * `minMesures` refuse une réponse trop peu échantillonnée — sans lui, trois
+   * points bien placés vaudraient huit secondes de travail. Et une erreur
+   * rigoureusement nulle est refusée pour la même raison qu'au compte :
+   * personne ne suit une bande au millième.
+   */
+  if (epreuve === 'jauge') {
+    const mesures = Array.isArray(r.mesures) ? r.mesures : [];
+    if (mesures.length < consigne.minMesures) return 0;
+    if (mesures.length > consigne.ms / 20) throw new Triche('mesures.trop_nombreuses');
+
+    const centre = (t) => {
+      const s = consigne.sommets ?? [];
+      if (!s.length) return 0.5;
+      if (t <= s[0].t) return s[0].v;
+      for (let i = 1; i < s.length; i++) {
+        if (t <= s[i].t) {
+          const part = (t - s[i - 1].t) / Math.max(1, s[i].t - s[i - 1].t);
+          return s[i - 1].v + (s[i].v - s[i - 1].v) * part;
+        }
+      }
+      return s[s.length - 1].v;
+    };
+
+    const demi = consigne.largeur / 2;
+    let total = 0;
+    let parfaites = 0;
+    for (const m of mesures) {
+      if (!Number.isFinite(m?.t) || !Number.isFinite(m?.v)) {
+        throw new Triche('mesure.invalide');
+      }
+      const ecart = Math.abs(m.v - centre(m.t));
+      if (ecart === 0) parfaites++;
+      /* Dedans vaut plein ; dehors, la note décroît jusqu'à une demi-bande de
+         plus. Une falaise au bord de la bande rendrait l'épreuve brutale à
+         jouer sans la rendre plus juste. */
+      total += ecart <= demi ? 1 : Math.max(0, 1 - (ecart - demi) / demi);
+    }
+    if (parfaites > mesures.length * 0.5) throw new Triche('reponse.trop_juste');
+    return Math.max(0, Math.min(1.2,
+      (total / mesures.length) * (mods.holdBonus ?? 1)));
   }
 
   throw new Triche('epreuve.inconnue');
