@@ -119,6 +119,26 @@ export const INVITES = {
   rebours: ['crimson', 'a whole terrace counting down together in the dark before the '
     + 'flares, every hand raised with fingers extended, faces lit only by the pitch, '
     + 'the instant before it all goes off'],
+
+  /* Les trois de LA REPRISE. Chacune porte une **épreuve de décision**, et non
+     un rythme : on y choisit un côté, un point, ou un niveau à tenir. Leur
+     couleur est donc neuve — un joueur qui voit du magenta dans le répertoire
+     sait avant d'avoir lu que ce n'est pas un chant qu'il connaît.
+
+     Et leur sujet montre l'instant où la décision se prend, pas le chant qui en
+     sort : le renversement est saisi **pendant** qu'il s'inverse, la visée au
+     moment où le bras se tend, la tension quand plus rien ne bouge. Un tifo
+     achevé et une bouche ouverte se ressemblent d'une image à l'autre ; ces
+     trois instants-là ne ressemblent à rien d'autre. */
+  renverse: ['magenta', 'a whole terrace leaning hard to one side while the front ranks '
+    + 'throw themselves the opposite way, caught at the exact instant the wave reverses, '
+    + 'bodies split into two directions across the stand'],
+  fumigenes: ['orange', 'a supporter reaching out to set a lit flare down on one exact '
+    + 'point of the barrier, arm fully extended and eyes fixed on that spot, thick smoke '
+    + 'already pouring from it, the rest of the stand blurred behind him'],
+  tension: ['cyan', 'a row of supporters hauling on a rope and holding it dead still at '
+    + 'one exact level, arms locked and heels dug in, every muscle taut, nothing moving '
+    + 'anywhere in the frame'],
 };
 
 export const inviteDe = (id) => {

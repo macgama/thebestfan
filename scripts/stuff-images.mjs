@@ -180,6 +180,89 @@ export const INVITES = {
   fanion: 'a small triangular pennant on a short varnished stick, heavy velvet with a '
     + 'gold bullion fringe along the bottom edge, faded and slightly moth-eaten, the '
     + 'fabric completely plain with no crest, no date and no lettering',
+
+  /* ------------------------------------------------------ LA REPRISE, les vingt
+
+     Une série sur la rentrée : tout y est soit **neuf et raide**, soit **resté
+     tout l'été quelque part**. C'est la seule chose que ces vingt invites
+     doivent tenir ensemble — un objet de LA REPRISE se reconnaît à son état, pas
+     à sa forme. Les pliures du carton, la poussière de grenier et le caoutchouc
+     encore rigide font plus pour la série que n'importe quelle couleur.
+
+     Les deux pièges des vingt-deux précédentes valent toujours, et deux d'entre
+     elles les cumulent : un vêtement finit porté si l'on ne dit pas deux fois
+     qu'il est vide, et tout ce qui peut porter un écusson en porte un, inventé,
+     si l'on n'écrit pas qu'il n'y a rien dessus. Le maillot de l'an dernier est
+     le cas limite — c'est un vêtement **et** une surface à écusson.
+
+     Les lunettes et la casquette portent un nom qui parle d'un front et d'une
+     tête ; l'invite, elle, ne montre que l'objet. Le nom raconte l'usage, le
+     dessin montre ce qu'on possède — et le style interdit de toute façon les
+     figures humaines. */
+  'rp-echarpe-neuve': 'a brand new knitted football supporter scarf still folded flat '
+    + 'in a crisp rectangle exactly as it came out of its packet, sharp unopened '
+    + 'creases, the wool bright and stiff and completely unworn, bold horizontal '
+    + 'stripes, fringed ends tucked underneath, no crest and no lettering on it',
+  'rp-lunettes': 'a pair of cheap plastic sunglasses with dark lenses, the arms splayed '
+    + 'open, one lens catching a hard highlight, the frames scratched and a little '
+    + 'twisted from being sat on, no logo anywhere on them',
+  'rp-gourde': 'a dented aluminium water bottle with a screw cap hanging from a short '
+    + 'loop, condensation beading down the metal, a film of summer dust on its '
+    + 'shoulder, the surface completely plain with no label and no text',
+  'rp-ticket-mai': 'a single creased paper match ticket from the end of an old season, '
+    + 'the card gone soft and furred along the folds, one corner torn away and the stub '
+    + 'edge ragged, the printed surface completely blank with no writing on it',
+  'rp-crampons': 'a pair of football boots caked in dried cracked mud, the studs clogged '
+    + 'solid, the laces knotted and stiffened, one boot fallen on its side and leaning '
+    + 'against the other, completely plain with no logo, no stripes and no lettering',
+  'rp-casquette': 'a faded cotton baseball cap, empty and unworn, sitting upright and '
+    + 'holding its own shape, the brim curved and sun-bleached, a dried salt line across '
+    + 'the band. Nobody is wearing it, there is no head inside it, and there is no crest '
+    + 'and no lettering on it',
+  'rp-voix-rouillee': 'a small metal tin of throat lozenges lying open, a few wrapped '
+    + 'amber lozenges spilling out beside it, the tin scratched and its lid resting '
+    + 'against it, the tin completely blank with no label and no writing',
+  'rp-maillot-passe': 'a football shirt from an old season, empty and unworn, folded '
+    + 'loosely with one sleeve hanging down, the fabric slightly bobbled and thinned by '
+    + 'washing. Nobody is wearing it, there is no body inside it, and the shirt is '
+    + 'completely plain with no crest, no sponsor, no number and no lettering',
+  'rp-veste': 'a light zip-up jacket, empty and unworn, half unzipped and slumped into '
+    + 'its own shape with the collar standing up, cuffs worn thin. Nobody is wearing it, '
+    + 'there is no body inside it, and there is no logo and no lettering on it',
+  'rp-carnet-ete': 'a thick spiral-bound notebook swollen with use, its cover curled and '
+    + 'marked by a coffee ring, a stretched elastic band holding it shut, the exposed '
+    + 'page edges dense with illegible handwritten scribbles and no readable words',
+  'rp-sifflet-sac': 'a small plastic whistle, dusty and scuffed, a tangle of frayed cord '
+    + 'and a little lint caught around it, lying as if just dug out of the bottom of a '
+    + 'bag, no writing on it',
+  'rp-abonnement': 'a crisp new plastic season pass card with a punched hole at the top '
+    + 'and a short lanyard clip, glossy and unmarked, the card surface completely blank '
+    + 'with no writing, no photograph and no crest',
+  'rp-tambour-detendu': 'a supporter drum with a visibly slack skin sagging in the '
+    + 'middle, its rope tensioning gone loose and drooping in bights, one beater lying '
+    + 'across the slack head, the wooden shell damp and dulled',
+  'rp-bombe': 'a spray paint can with its cap off, the nozzle crusted with dried paint, '
+    + 'runs of colour dried down one side of the can, the label completely blank with no '
+    + 'text and no markings',
+  'rp-radio': 'a small portable transistor radio, its telescopic aerial extended at an '
+    + 'angle, a perforated speaker grille and two round dials, the plastic casing yellowed '
+    + 'and scuffed, no writing and no numbers anywhere on it',
+  'rp-creme': 'a squeezed plastic tube of sun cream, the body crumpled and rolled up from '
+    + 'the bottom, the cap off and a bead of white cream at the nozzle, the tube '
+    + 'completely blank with no label and no text',
+  'rp-programme': 'a stapled paper season programme booklet, held half open and bent back '
+    + 'on itself, the pages soft and thumbed at the corners, the cover and the pages '
+    + 'completely blank with nothing printed on them',
+  'rp-premiere-journee': 'a single pristine match ticket on thick card with a gilded edge '
+    + 'and an unbroken perforated stub, standing upright and catching a warm highlight, '
+    + 'the surface completely blank with no writing on it',
+  'rp-drapeau-grenier': 'an enormous old supporter flag on a heavy wooden pole, the cloth '
+    + 'furled tight around the shaft with cobwebs caught in the folds and a grey film of '
+    + 'attic dust over everything, one corner falling open, the fabric completely plain '
+    + 'with no emblem and nothing written on it',
+  'rp-corde-neuve': 'a coil of brand new thick rope, bright unfrayed fibres, the coil '
+    + 'bound at one point with a neat whipping, the cut end heat-sealed, stiff and '
+    + 'springy and holding its loops',
 };
 
 export const inviteDe = (id) => (INVITES[id]

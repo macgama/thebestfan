@@ -53,6 +53,80 @@
   const famDe = (a) => FAM[a?.fam] ?? { nom: '', c: '#8257DA', c2: '#3E2870', ico: '' };
 
   /**
+   * Ce que la carte annonce, en un nombre et un mot.
+   *
+   * ## La règle, et elle n'a qu'une ligne
+   *
+   * **On lit ce que la carte porte, on ne calcule rien.** Un `push` de 22 est
+   * écrit 22, et c'est vrai de la carte quel que soit le stade, l'équipement ou
+   * le Fanzzy qui la joue. Ce que la poussée a **réellement** valu, le serveur
+   * le dit ailleurs, à la corde, où elle s'applique — et c'est très bien que
+   * les deux chiffres soient à deux endroits : l'un est la carte, l'autre est
+   * le coup.
+   *
+   * Les mettre d'accord aurait voulu dire refaire ici le calcul du moteur, donc
+   * en tenir une seconde copie, donc la voir diverger. C'est exactement la
+   * faute des pulsations dessinées en dur, payée une fois déjà.
+   *
+   * ## Pourquoi tant de sortes pour si peu de mots
+   *
+   * Les vingt-cinq effets du jeu ne se résument pas au même endroit : une
+   * poussée porte une valeur, une entrave porte une durée, un ralliement porte
+   * un facteur, et cinq d'entre eux ne portent rien du tout. Une table qui
+   * afficherait `effet.valeur` pour tout le monde écrirait « 0,5 point » sur
+   * une carte qui plafonne la qualité à la moitié.
+   *
+   * **Sans nombre, on n'en invente pas.** Le mot de la famille seul vaut mieux
+   * qu'un chiffre faux : le joueur lit un bandeau sans valeur comme « cette
+   * carte ne se compte pas », ce qui est la vérité.
+   */
+  const SECONDES = (ms) => `${Math.round((Number(ms) || 0) / 1000)} s`;
+
+  function resume(a) {
+    const e = a?.effet ?? {};
+    const fam = famDe(a);
+    const dit = (n, quoi) => ({ n, quoi: quoi ?? fam.nom });
+
+    switch (e.type) {
+      /* Les trois poussées. `delayed_push` et `push_over_time` annoncent leur
+         total : c'est ce que la carte vaut, même si elle le livre en dix coups
+         ou huit secondes plus tard — le texte de la carte, lui, dit comment. */
+      case 'push': case 'delayed_push': case 'push_over_time':
+        return dit(`+${e.valeur}`, 'POUSSÉE');
+
+      case 'team_breath': return dit(`+${e.valeur}`, 'SOUFFLE');
+      case 'steal': return dit(`+${e.valeur}`, 'VOLÉ');
+      case 'refill': return dit(`+${Math.round((e.part ?? 0) * 100)} %`, 'SOUFFLE');
+      case 'shield': return dit(`−${e.valeur}`, 'ABSORBÉ');
+      case 'per_mate': return dit(`+${e.valeur}`, 'PAR ÉQUIPIER');
+      case 'rally': return dit(`×${String(e.bonus ?? 1).replace('.', ',')}`, 'TRIBUNE');
+      case 'sync': return dit(`+${e.max}`, 'ENSEMBLE');
+
+      /* Tout ce qui dure. La durée **est** la valeur de ces cartes-là : un
+         silence de quatre secondes et un de huit ne sont pas la même carte, et
+         c'est la seule chose qui les distingue à l'œil. */
+      case 'silence': case 'blind': case 'lock_actions': case 'freeze_decay':
+      case 'mod_foe': case 'double_next':
+        return dit(SECONDES(e.duree));
+
+      case 'cost_free': return dit(`${e.cartes}`, 'GRATUITES');
+      case 'floor_quality':
+        return dit(`${Math.round((e.valeur ?? 0) * 100)} %`, 'PLANCHER');
+
+      /* `mod_self` porte des charges, pas une durée : deux gestes améliorés,
+         et c'est ce nombre-là qui compte pour décider quand la jouer.
+
+         **Au-dessus d'une seule**, et c'est la même règle qu'ailleurs ici :
+         « ×1 » n'apprend rien à personne — on sait qu'une carte jouée agit une
+         fois. Le mot seul dit alors tout ce qu'il y a à dire. */
+      case 'mod_self': case 'reflect':
+        return e.charges > 1 ? dit(`×${e.charges}`, fam.nom) : dit(null);
+
+      default: return dit(null);
+    }
+  }
+
+  /**
    * Le format servi.
    *
    * La détection est celle de `fanzzy-art.js`, empruntée plutôt que recopiée :
@@ -155,6 +229,12 @@
         <div class="cout">${a.cost ?? ''}</div>
         <div class="nm">${echappe(a.nom ?? a.id)}</div>
       </div>
+      ${(() => {
+    const r = resume(a);
+    if (!r.quoi && r.n == null) return '';
+    return `<div class="tbf-jouee-somme${r.n == null ? ' sansnombre' : ''}"
+          ><b>${echappe(r.n ?? '')}</b><span>${echappe(r.quoi)}</span></div>`;
+  })()}
       <div class="tbf-jouee-texte">${echappe(a.texte ?? '')}</div>`;
     document.body.appendChild(el);
 
@@ -216,5 +296,5 @@
     window.FX?.son?.('carte');
   }
 
-  window.TBF_ACTION = { FAM, famDe, adresse, illustration, jouee, suspendre, reprendre };
+  window.TBF_ACTION = { FAM, famDe, resume, adresse, illustration, jouee, suspendre, reprendre };
 })();

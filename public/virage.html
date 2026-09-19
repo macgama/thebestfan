@@ -1154,8 +1154,24 @@ function connect() {
     S.you.breath = r.breath; souffleVuA = Date.now(); S.you.ferveur = r.ferveur;
     $('verdict').textContent = r.quality > 0.9 ? 'PARFAIT' : r.quality > 0.7 ? 'BON'
       : r.quality > 0.4 ? 'MOYEN' : 'RATÉ';
-    // Le chiffre part de la corde, là où le joueur regarde.
-    window.FX?.poussee(r.backfire ? -r.push : r.push, $('knot'), { pour: !r.backfire });
+    /* Le chiffre part de la corde, là où le joueur regarde — **et il est gros**.
+       Il ne l'était pas : vingt-deux pixels qui montaient et s'effaçaient en une
+       seconde, par-dessus une corde qui bouge, une foule qui s'anime et un fil
+       de match qui défile. Quelqu'un qui venait de tenir une jauge huit secondes
+       ne voyait pas ce que ça lui avait rapporté, donc ne pouvait pas savoir si
+       le geste avait valu la peine — la seule chose qu'un mini-jeu doit lui
+       apprendre.
+
+       Le mot sous le nombre dit de quoi il s'agit : « POUSSÉE » quand ça part,
+       « CONTRE TOI » quand le geste se retourne. Un chiffre rouge sans mot se
+       lit comme une erreur d'affichage, pas comme un retour de flamme. */
+    window.FX?.points(r.backfire ? -r.push : r.push, $('knot'), {
+      /* La couleur vient de la palette de `fx.js` et non d'une variable CSS :
+         l'élément est posé sur `document.body`, et un `var(--projo)` le lierait
+         à une feuille que cette couche n'a aucune raison de supposer chargée. */
+      couleur: r.backfire ? window.FX.couleurs.feu : window.FX.couleurs.or,
+      quoi: r.backfire ? 'CONTRE TOI' : 'POUSSÉE',
+    });
     // Un geste parfait déclenche le Cri du Fanzzy : c'est la récompense de la
     // précision, et le seul moment où l'écran entier réagit.
     if (r.quality > 0.95 && S.you.fanzzy?.cri) {

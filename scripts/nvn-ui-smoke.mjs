@@ -20,6 +20,12 @@ import { createDecks } from '../src/server/deck/index.js';
 import { createNvN } from '../src/server/nvn/index.js';
 import { GESTURES, resoudreGeste } from '../src/server/ferveur/gestures.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
+/* Les Jumelles sont **lues**, jamais recopiées : la cible d'origine multipliait
+   1,2 par 1,25 — une supposition sur l'empilement de l'équipement et du Fanzzy
+   que rien n'éprouvait, puisque seul l'intervalle était comparé et que la
+   fenêtre n'y entre pas. La pièce donne 1,25 toute seule, et c'est elle qui
+   fait foi. */
+import { STUFF_BY_ID } from '../src/shared/fanzzy/inventaire.js';
 import { CHANTS, ORDRE } from '../src/shared/duel/chants.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
@@ -678,20 +684,53 @@ const arriveB = await jusqua(attenduB, 15000);
 check('le barème des deux joueurs arrive à l’écran', arriveA && arriveB
   || (console.log('        A :', arriveA, '· B :', arriveB), false));
 
+/**
+ * L'équipement change le barème — **mesuré par l'écart, pas par la valeur**.
+ *
+ * Les deux contrôles comparaient à des nombres absolus : 630 pour le joueur
+ * équipé, 560 pour l'autre. Ils tenaient tant qu'aucun stade ne touchait à la
+ * pulsation. Or le stade d'un duel se tire sur son identifiant, donc il change
+ * à chaque partie, et deux des quinze en changent : `neige` ajoute 130 ms,
+ * `rp-bache` en ajoute 80. Un duel tombé sur la neige lisait donc 690 là où la
+ * suite attendait 560 — et les deux contrôles rougissaient ensemble, en
+ * accusant l'équipement d'un tirage de stade.
+ *
+ * Le bon invariant est la **différence entre les deux joueurs** : le stade
+ * s'applique aux deux, l'équipement à un seul. Elle vaut exactement ce que les
+ * Jumelles donnent, sous la neige comme au Chaudron. Et elle éprouve mieux ce
+ * qu'on voulait éprouver — que l'équipement pèse — puisqu'elle ne peut pas
+ * passer par accident sur deux barèmes identiques.
+ */
 const bareme = await A.page.evaluate(() => S.vue?.moi?.gestes);
-const attendu = resoudreGeste({ tempoWindow: 1.2 * 1.25, tempoInterval: 70 }).tempo;
-check('le serveur envoie le barème du geste à l\u2019écran', Boolean(bareme?.tempo));
-check('et il tient compte des Jumelles du joueur',
-  bareme?.tempo?.interval === attendu.interval
-  && bareme?.tempo?.interval > GESTURES.tempo.interval
-  || (console.log('        il dit :', JSON.stringify(bareme?.tempo),
-    '· attendu', attendu.interval), false));
+const baremeB = await B.page.evaluate(() => S.vue?.moi?.gestes?.tempo);
+const nu = resoudreGeste({}).tempo;
+const JUMELLES = STUFF_BY_ID.get('jumelles').mods;
+const equipe = resoudreGeste(JUMELLES).tempo;
+const ecartAttendu = equipe.interval - nu.interval;
 
-const baremeB = await B.page.evaluate(() => S.vue?.moi?.gestes?.tempo?.interval);
-check('un joueur sans équipement garde la pulsation de base',
-  baremeB === GESTURES.tempo.interval
-  || (console.log('        il dit :', baremeB,
-    '· attendu', GESTURES.tempo.interval), false));
+check('le serveur envoie le barème du geste aux deux écrans',
+  Boolean(bareme?.tempo) && Number.isFinite(baremeB?.interval));
+
+check(`et les Jumelles allongent la pulsation de ${ecartAttendu} ms`,
+  bareme?.tempo?.interval - baremeB?.interval === ecartAttendu
+  || (console.log('        équipé :', bareme?.tempo?.interval,
+    '· nu :', baremeB?.interval, '· écart attendu', ecartAttendu), false));
+
+check('et elles élargissent sa fenêtre dans la même proportion',
+  Math.abs(bareme?.tempo?.window / baremeB?.window - equipe.window / nu.window) < 0.01
+  || (console.log('        équipé :', bareme?.tempo?.window,
+    '· nu :', baremeB?.window), false));
+
+/* Le stade s'applique aux deux, et il a le droit de les décaler tous les deux.
+   Ce qui ne doit jamais arriver, c'est que le joueur nu soit **plus rapide que
+   la base** — il n'existe rien qui raccourcisse la pulsation — ni qu'il
+   rattrape l'équipé, ce qui voudrait dire qu'un modificateur a fui d'un joueur
+   à l'autre. */
+check('le joueur sans équipement n’emprunte rien à son adversaire',
+  baremeB?.interval < bareme?.tempo?.interval
+  && baremeB?.interval >= GESTURES.tempo.interval
+  || (console.log('        nu :', baremeB?.interval,
+    '· base', GESTURES.tempo.interval), false));
 
 /* -------------------------------------------------------------- chanter */
 

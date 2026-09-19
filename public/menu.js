@@ -49,7 +49,8 @@
     '/boutique': 'Boutique', '/virage': 'Virage', '/duel-nvn': 'Duel',
     '/kop': 'KOP', '/amis': 'Amis', '/equipes': 'Clubs', '/matchs': 'Matchs',
     '/teletext': 'Compétitions', '/classement': 'Classement', '/carnet': 'Carnet',
-    '/profil': 'Profil', '/compte': 'Compte', '/aide': 'Aide', '/admin': 'Administration',
+    '/profil': 'Profil', '/compte': 'Compte', '/aide': 'Aide',
+    '/repetition': 'Répétition', '/admin': 'Administration',
     '/diagnostic': 'Diagnostic',
   };
 
@@ -82,6 +83,10 @@
     // et c'est exactement la raison de le garder : celui-là doit se reconnaître
     // sans apprentissage, par quelqu'un qui cherche déjà quelque chose.
     aide: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M9.4 9.3a2.6 2.6 0 1 1 3.2 2.5c-.7.2-1.1.8-1.1 1.5v.6M12 17.2h.01',
+    // Un métronome : le socle, la tige, le poids. Le seul objet du jeu qui ne
+    // serve qu'à s'exercer — et il dit le rythme, qui est ce que la moitié des
+    // gestes demandent.
+    repetition: 'M9 21h6l-1.2-15h-3.6zM7 21h10M12 6v9M10.4 12h3.2',
   };
 
   /**
@@ -102,6 +107,11 @@
       ['/deck', 'deck', 'Mon deck'],
       ['/boosters', 'pack', 'Mes boosters'],
       ['/boutique', 'boutique', 'La boutique'],
+      /* Dernière de JOUER, et bien dans JOUER : on y va pour jouer, pas parce
+         qu'on est perdu. Après les deux écrans qu'elle prépare et jamais avant
+         eux — ce n'est pas une étape à franchir pour entrer au Virage, c'est
+         un endroit où revenir quand un geste résiste. */
+      ['/repetition', 'repetition', 'La répétition'],
     ] },
     { titre: 'MA COLLECTION', liens: [
       ['/fanzzy', 'fanzzy', 'Mes Fanzzy'],

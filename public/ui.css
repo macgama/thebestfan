@@ -1243,6 +1243,40 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
   letter-spacing:.04em;color:var(--craie);
   background:linear-gradient(180deg,transparent,rgba(4,6,10,.96) 48%);
 }
+/* ------------------------------------------------- ce que la carte annonce
+
+   Le nom et le dessin disent **laquelle** c'est ; ce bandeau dit **combien**.
+   Il manquait, et ce n'était pas un détail d'affichage : une carte partait au
+   milieu de l'écran pendant une seconde et demie sans qu'on sache si elle
+   valait vingt-deux ou quatre-vingt-quinze. L'adversaire, qui ne l'a pas en
+   main, ne pouvait pas le savoir du tout.
+
+   La couleur est celle de la famille — la même que la cerne de la carte et que
+   le glyphe derrière — pour qu'une poussée rouge et un souffle bleu se
+   distinguent avant qu'on ait lu le chiffre. C'est déjà le code de l'écran de
+   deck ; on ne lui en invente pas un second.
+
+   Posé **sous** la carte et par-dessus le texte, parce qu'une carte se lit du
+   haut vers le bas : ce qu'elle est, puis ce qu'elle fait, puis ce qu'elle
+   coûte à l'autre. */
+.tbf-jouee-somme{
+  display:flex;align-items:baseline;gap:7px;padding:5px 13px 6px;border-radius:99px;
+  background:rgba(4,6,10,.82);border:1.5px solid var(--fc,#8257DA);
+  box-shadow:0 0 22px -4px var(--fc,#8257DA),0 4px 14px rgba(0,0,0,.6);
+}
+.tbf-jouee-somme b{
+  font-family:var(--banner);font-size:26px;line-height:1;color:var(--fc,#8257DA);
+  text-shadow:0 2px 10px rgba(0,0,0,.8);
+}
+.tbf-jouee-somme span{
+  font-size:9.5px;letter-spacing:.2em;font-weight:600;color:var(--craie);opacity:.72;
+}
+/* Une carte sans chiffre — elle échange un Fanzzy, elle renvoie, elle rend la
+   main — ne montre que le mot. Inventer un nombre pour remplir le bandeau
+   serait pire que le bandeau vide : le joueur le lirait comme une valeur. */
+.tbf-jouee-somme.sansnombre b{display:none}
+.tbf-jouee-somme.sansnombre span{font-size:11px;color:var(--fc,#8257DA);opacity:1}
+
 .tbf-jouee-texte{
   max-width:min(280px,80vw);text-align:center;font-size:11.5px;line-height:1.55;
   color:var(--craie);opacity:.82;text-shadow:0 2px 8px rgba(0,0,0,.9);

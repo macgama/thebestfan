@@ -37,6 +37,7 @@ import { createNiveau } from './src/server/niveau/index.js';
 import { createAbonnement } from './src/server/abonnement/index.js';
 import { createContenus } from './src/server/contenus/index.js';
 import { createAide } from './src/server/aide/index.js';
+import { createRepetition } from './src/server/repetition/index.js';
 import { createKop } from './src/server/kop/index.js';
 import { createAmis } from './src/server/amis/index.js';
 import { createAdmin } from './src/server/admin/index.js';
@@ -742,6 +743,18 @@ function page(res, fichier) {
   }
 }
 
+/* ------------------------------------------------------- la répétition
+
+   **Hors du bloc qui exige une base**, et c'est tout son intérêt. Elle ne lit
+   rien, n'écrit rien et ne paie rien : elle n'a besoin ni du pool, ni d'une
+   garde d'entrée. Elle tient donc debout les jours où le reste du jeu ne
+   répond plus — et c'est exactement l'écran qu'on a envie d'ouvrir ce jour-là.
+
+   Montée ici, entre les routeurs et les pages, parce qu'elle appartient aux
+   deux : une route d'API et l'écran qui la lit, sans une dépendance à déclarer
+   entre les deux. */
+app.use('/api/repetition', createRepetition().router);
+
 app.get('/', (_req, res) => page(res, 'index.html'));
 app.get('/teletext', (_req, res) => page(res, 'teletext.html'));
 app.get('/matchs', (_req, res) => page(res, 'aujourdhui.html'));
@@ -772,6 +785,7 @@ app.get('/carnet', (_req, res) => page(res, 'carnet.html'));
    page parce qu'un joueur bloque rarement sur une question pure — il bloque sur
    ce qu'il est en train de faire, et la réponse est à côté de l'étape. */
 app.get('/aide', (_req, res) => page(res, 'aide.html'));
+app.get('/repetition', (_req, res) => page(res, 'repetition.html'));
 
 /* -------------------------------------------------------------- socket.io */
 
