@@ -13,6 +13,7 @@ import { ACTIONS, DECK_RULES } from '../../shared/duel/actions.js';
 import { DEFAUTS, reglage } from '../../shared/reglages.js';
 import { XP } from '../../shared/niveau.js';
 import { saisonsLancees, saisonEnCours } from './saisons.js';
+import { assurerBourse } from '../bourse.js';
 
 /**
  * Collection Fanzzy, tenue par le serveur.
@@ -44,7 +45,9 @@ export const PACK_PRICE = DEFAUTS['pack.prix_echarpes'];
 /** Les mêmes, mais vivantes. Une fonction et non une constante : une constante
     relue au chargement du module ne bougerait plus jamais. */
 const maxPacks = () => reglage('pack.max');
-const packsDepart = () => reglage('pack.depart');
+/* La réserve de départ vit dans `src/server/bourse.js`, avec la fonction
+   qui ouvre une bourse : quatre autres modules en créaient une sans connaître
+   ce nombre, et c'est toujours l'un d'eux qui arrivait le premier. */
 const regenMs = () => reglage('pack.regen_min') * 60_000;
 const prixPack = () => reglage('pack.prix_echarpes');
 
@@ -116,10 +119,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     const abonne = abonnement ? await abonnement.estAbonne(userId) : false;
     const plafond = abonnement ? abonnement.plafondPacks(abonne) : maxPacks();
     const cadence = abonnement ? abonnement.regenMs(abonne) : regenMs();
-    await q(
-      `INSERT IGNORE INTO user_wallet (user_id, scarves, packs) VALUES (?, 0, ?)`,
-      [userId, packsDepart()],
-    );
+    await assurerBourse(q, userId);
     const w = (await q(
       `SELECT scarves, billets, packs, packs_at, active_fanzzy, active_evo
          FROM user_wallet WHERE user_id = ?`,

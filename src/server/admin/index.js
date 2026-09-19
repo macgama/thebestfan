@@ -11,6 +11,7 @@ import { REGLAGES, SECTIONS, DEFAUTS } from '../../shared/reglages.js';
 // Les gestes du jeu viennent de leur source unique : voir plus bas.
 import { GESTES as GESTES_DU_JEU } from '../ferveur/gestures.js';
 import { ecrireReglage, rendreAuDefaut, tousLesReglages } from '../reglages/index.js';
+import { assurerBourse } from '../bourse.js';
 
 /**
  * Administration.
@@ -216,14 +217,14 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     // s'applique au résultat, pas à l'ajustement : sinon un débit serait
     // silencieusement transformé en zéro et ne ferait rien.
     if (Number.isInteger(champs.scarves) && champs.scarves !== 0) {
-      await q(`INSERT IGNORE INTO user_wallet (user_id) VALUES (?)`, [cibleId]);
+      await assurerBourse(q, cibleId);
       await q(`UPDATE user_wallet SET scarves = GREATEST(0, scarves + ?) WHERE user_id = ?`,
         [champs.scarves, cibleId]);
       fait.scarves = champs.scarves;
     }
 
     if (Number.isInteger(champs.packs) && champs.packs !== 0) {
-      await q(`INSERT IGNORE INTO user_wallet (user_id) VALUES (?)`, [cibleId]);
+      await assurerBourse(q, cibleId);
       await q(`UPDATE user_wallet SET packs = GREATEST(0, LEAST(99, packs + ?)) WHERE user_id = ?`,
         [champs.packs, cibleId]);
       fait.packs = champs.packs;

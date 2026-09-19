@@ -277,6 +277,64 @@ const arme = combine({ tempoWindow: 1.7 }, ['jumelles']);
 check('l\u2019équipement a bien un revers',
   arme.tempoWindow > nu.tempoWindow && arme.tempoInterval > 0);
 
+/* ======================= la réserve de départ ne vient pas de la colonne
+
+   **Un nouveau joueur recevait douze boosters là où l'écran en annonçait
+   trois**, et aucun des deux endroits qui l'annoncent n'était faux.
+
+   `sql/souvenirs.sql` déclare `packs SMALLINT NOT NULL DEFAULT 3`. C'est vrai
+   pour une base neuve — et faux pour la production, qui a créé cette table
+   quand le défaut valait douze : `CREATE TABLE IF NOT EXISTS` ne touche pas à
+   une table qui existe. Le module des boosters écrivait bien le réglage, mais
+   quatre autres créaient la ligne sans nommer le nombre, et c'est l'inscription
+   qui passe la première.
+
+   Ce contrôle **reproduit la production** : on fait mentir la colonne, puis on
+   vérifie que le code ne l'écoute pas. Le faire sur une base au défaut correct
+   ne prouverait rien — c'est exactement pourquoi personne ne l'a vu.
+
+   Voir `src/server/bourse.js` et `sql/bourse.sql`. */
+{
+  const { reglage } = await import('../src/shared/reglages.js');
+  const attendu = reglage('pack.depart');
+
+  await pool.query('ALTER TABLE user_wallet MODIFY COLUMN packs SMALLINT NOT NULL DEFAULT 12');
+
+  /* Trois chemins, parce que le premier arrivé décide et qu'on ne maîtrise pas
+     l'ordre : l'inscription, la progression, et le module des boosters. */
+  const CHEMINS = [
+    ['l’inscription', 'd0000000-0000-0000-0000-00000000000a',
+      async (u) => { await O.state(u); }],
+    ['la progression', 'd0000000-0000-0000-0000-00000000000b',
+      async (u) => {
+        const { createNiveau } = await import('../src/server/niveau/index.js');
+        await createNiveau({ pool, requireAuth: (r, _s, n) => { r.user = { id: u }; n(); } })
+          .gagner(u, 1);
+      }],
+    ['le kiosque', 'd0000000-0000-0000-0000-00000000000c',
+      async (u) => {
+        const { createFanzzy } = await import('../src/server/fanzzy/index.js');
+        await createFanzzy({ pool, requireAuth: (r, _s, n) => { r.user = { id: u }; n(); } })
+          .wallet(u);
+      }],
+  ];
+
+  for (const [quoi, uid, ouvrir] of CHEMINS) {
+    await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
+                       VALUES (?,?,?,'x')`, [uid, uid.slice(0, 8) + '@ex.fr', 'Neuf']);
+    try { await ouvrir(uid); } catch (e) { console.log('        ' + quoi + ' :', e.message); }
+    const [r] = await pool.query('SELECT packs FROM user_wallet WHERE user_id = ?', [uid]);
+    const eu = r.length ? Number(r[0].packs) : null;
+    check(`${quoi} ouvre la bourse à ${attendu} boosters, pas au défaut de la colonne`,
+      eu === attendu
+      || (console.log('        elle en a :', eu), false));
+    await pool.query('DELETE FROM user_wallet WHERE user_id = ?', [uid]);
+    await pool.query('DELETE FROM users WHERE public_id = ?', [uid]);
+  }
+
+  await pool.query('ALTER TABLE user_wallet MODIFY COLUMN packs SMALLINT NOT NULL DEFAULT 3');
+}
+
 /* ================================ la cérémonie, dans un vrai navigateur
 
    **C'était la seule carte du jeu qui n'était pas une carte du jeu.**

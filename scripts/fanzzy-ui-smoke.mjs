@@ -740,6 +740,69 @@ check('les Fanzzy non possédés portent leur nom',
         deux[0].replace(/fd\d+/g, '') === deux[1].replace(/fd\d+/g, ''));
     }
 
+    /* ================= le décor peint remplace le lieu, et rien d'autre
+
+       Douze séries sur treize ont un décor **dessiné** : un lieu par série, une
+       palette par tenue, une lumière par âge, une aura par rareté. Ça ne coûte
+       aucun fichier et une saison neuve en hérite le jour où on l'ajoute.
+
+       LA REPRISE a en plus quatre plaques peintes, une par rareté. Elles ne
+       remplacent que le **lieu** : le motif de famille, la lumière et l'aura se
+       posent par-dessus, sans quoi une carte peinte et une carte dessinée
+       feraient deux collections au lieu d'une.
+
+       Et jamais sous une autre tenue que `base`. Une tenue fait basculer toute
+       la palette du décor — c'est ce qui la rend visible de loin, au lieu de se
+       chercher sur le costume. Une plaque peinte en fin d'été ne devient pas
+       préhistorique. */
+    {
+      const rendus = await fiche.evaluate(() => {
+        const f = (o) => window.TBF_FOND.fond({ id: 'RP1', set: 'RP', type: 'tifo', ...o });
+        return {
+          peinte: f({ stage: 3, rar: 'epique', skin: 'base' }),
+          sansTenue: f({ stage: 3, rar: 'epique' }),
+          autreTenue: f({ stage: 3, rar: 'epique', skin: 'prehistorique' }),
+          sansPlaque: window.TBF_FOND.fond({ id: 'TR1', set: 'TR', type: 'voix',
+            stage: 3, rar: 'epique', skin: 'base' }),
+        };
+      });
+
+      check('LA REPRISE en tenue de base montre sa plaque peinte',
+        /<image href="\/img\/fonds\/RP-epique\./.test(rendus.peinte)
+        || (console.log('        ', rendus.peinte.slice(0, 160)), false));
+      check('sans tenue nommée, c’est la base, donc la plaque aussi',
+        /<image href="\/img\/fonds\/RP-epique\./.test(rendus.sansTenue));
+
+      /* La condition qui compte : une autre époque reprend le décor dessiné,
+         dont la palette bascule. C'est aussi la plus facile à perdre au
+         prochain remaniement, parce qu'elle ne se voit que sur une tenue. */
+      check('mais une autre tenue reprend le décor dessiné',
+        !/<image href/.test(rendus.autreTenue)
+        || (console.log('        ', rendus.autreTenue.slice(0, 160)), false));
+      check('et une série sans plaque garde le sien',
+        !/<image href/.test(rendus.sansPlaque));
+
+      /* L'aura et la lumière restent posées par-dessus la plaque : c'est ce qui
+         garde les deux sortes de cartes dans le même jeu. */
+      check('la plaque ne mange ni l’aura de rareté ni la lumière',
+        /url\(#au/.test(rendus.peinte) && /<circle cx="50" cy="62"/.test(rendus.peinte));
+
+      /* Les trois formats, comme partout : `negocierAvif` ne remplace
+         l'extension que si le fichier AVIF existe, donc un décor publié en WebP
+         seul marcherait — et c'est pour ça qu'on le vérifie ici. */
+      const { existsSync } = await import('node:fs');
+      const manquants = [];
+      for (const r of ['commune', 'rare', 'epique', 'legendaire']) {
+        for (const ext of ['.webp', '.avif', '.png']) {
+          const f = path.join(RACINE, 'public', 'img', 'fonds', 'RP-' + r + ext);
+          if (!existsSync(f)) manquants.push('RP-' + r + ext);
+        }
+      }
+      check('les quatre plaques sont publiées en webp, avif et png',
+        !manquants.length
+        || (console.log('        manque :', manquants.join(', ')), false));
+    }
+
     /* ======================= la cérémonie d'évolution existe et tient le rythme
 
        Le geste le plus cher du jeu était le seul sans récompense à l'écran : on

@@ -12,6 +12,7 @@ import { STUFF, SKIN_BY_ID, STUFF_BY_ID, combine }
 import { ACTIONS } from '../../shared/duel/actions.js';
 import { toutesTenues, tenuesPubliees } from '../fanzzy/tenues.js';
 import { verifierEmplacement, SLOTS_DEPART, SLOTS_MAX } from './slots.js';
+import { assurerBourse } from '../bourse.js';
 
 /**
  * L'arrivée d'un joueur, et ce qu'il possède.
@@ -65,7 +66,7 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
   /* ------------------------------------------------------------- état */
 
   async function state(userId) {
-    await q(`INSERT IGNORE INTO user_wallet (user_id) VALUES (?)`, [userId]);
+    await assurerBourse(q, userId);
     const w = (await q(
       `SELECT scarves, packs, follow_slots, onboarded_at, active_fanzzy, action_cards
          FROM user_wallet WHERE user_id = ?`, [userId]))[0];

@@ -13,6 +13,7 @@ import { clubParmi, campDe } from '../football/suivis.js';
 // aujourd'hui. La table `fixtures` ne connaît que les clubs suivis.
 import { journeeParId, TERMINE } from '../football/journee.js';
 import { ancrerDepuisLaJournee } from '../football/ancrage.js';
+import { packsDepart } from '../bourse.js';
 import { PALIERS } from '../../shared/niveau.js';
 
 /**
@@ -261,11 +262,18 @@ export function createDecks({ pool, requireAuth, niveau = null,
     const titulaire = propre.fanzzy[0]?.id ?? null;
     if (titulaire) {
       await q(
-        `INSERT INTO user_wallet (user_id, active_fanzzy) VALUES (?, ?)
+        /* `packs` est **nommé** et non laissé au défaut de la colonne.
+
+           Ce chemin ouvre parfois la bourse : il tourne à l'ouverture du paquet
+           de bienvenue, qui pose la tribune de départ. La ligne prenait alors
+           la réserve écrite dans le schéma — une valeur figée au jour de
+           création de la table, que ni l'administration ni `pack.depart` ne
+           peuvent corriger. Voir `src/server/bourse.js`. */
+        `INSERT INTO user_wallet (user_id, active_fanzzy, packs) VALUES (?, ?, ?)
          ON DUPLICATE KEY UPDATE
            active_evo = IF(active_fanzzy <=> VALUES(active_fanzzy), active_evo, NULL),
            active_fanzzy = VALUES(active_fanzzy)`,
-        [userId, titulaire]);
+        [userId, titulaire, packsDepart()]);
     }
 
     return { deck: propre, avertissements: v.avertissements, titulaire };

@@ -95,7 +95,8 @@ cd ~/sites/thebestfan.online
 
 FICHIERS="auth football minutes couleurs duel souvenirs fanzzy teletext
           inventaire skins tenues deck admin kop amis niveau raretes stades
-          boutique billets saisons series-neuves historique abonnement contenus"
+          boutique billets saisons series-neuves historique abonnement contenus
+          bourse"
 
 # 1. Tout est-il là ? On regarde avant d'écrire quoi que ce soit.
 manquants=""
@@ -164,6 +165,20 @@ que `raretes` les a rangées.
   collections existantes** — c'est la seule migration du projet dans ce cas.
   `node scripts/stades-smoke.mjs` la rejoue sur une collection fabriquée avant
   que tu la lances ici.
+- `bourse.sql` remet le défaut de `user_wallet.packs` à trois. Il ne crée
+  rien et **ne touche à aucune bourse existante** : un joueur qui a déjà reçu
+  douze boosters les garde, on ne reprend pas ce qui a été donné.
+
+  Il répare une divergence qui n'avait l'air d'une panne nulle part.
+  `souvenirs.sql` déclare trois depuis des mois, mais `CREATE TABLE IF NOT
+  EXISTS` ne touche pas à une table qui existe : la production a gardé le douze
+  du premier jour. Le schéma disait trois, l'administration disait trois, et un
+  nouveau joueur en recevait douze — parce que quatre modules sur cinq créaient
+  la ligne sans nommer le nombre, et que l'inscription passe la première.
+
+  Le code ne dépend plus de ce défaut (`src/server/bourse.js`). Ce fichier
+  existe pour que la base cesse de mentir : sinon la prochaine requête écrite à
+  la va-vite reprendrait le même piège, et personne ne le verrait davantage.
 - `series-neuves.sql` range quarante-deux cartes ailleurs. VIRAGE NORD et
   NUITS EUROPÉENNES ont été dissoutes au profit de cinq séries neuves, et le
   catalogue s'amorce en `INSERT IGNORE` : sans ce fichier, une base en service
