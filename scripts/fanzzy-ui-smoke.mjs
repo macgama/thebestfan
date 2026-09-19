@@ -1772,6 +1772,108 @@ check('et elle explique pourquoi au lieu de rester vide',
     check('mais l’évolution reste floutée', tons.orph.flou === true);
     check('et le premier âge, lui, ne l’est pas', tons.base.flou === false);
   }
+
+/* ================= un âge atteint n'est pas verrouillé dans le classeur
+
+   `TR32` est monté au second âge : la grille doit donc montrer `TR32` **et**
+   `TR32B` en clair, et ne verrouiller que `TR32C`. Un âge qu'on a payé et qui
+   reste sous cadenas dit au joueur qu'il n'a pas ce qu'il vient d'acheter. */
+{
+  await page.evaluate(() => [...document.querySelectorAll('button,[data-tab],[data-onglet]')]
+    .find((b) => /CLASSEUR/i.test(b.textContent))?.click());
+  await dodo(500);
+
+  const vu = await page.evaluate(() => {
+    const lu = (id) => {
+      const el = [...document.querySelectorAll('#grid .slot')]
+        .find((s) => s.querySelector(`.fz[data-id="${id}"]`));
+      return el ? { la: true, verrou: el.classList.contains('locked') } : { la: false };
+    };
+    /* On lit le **rendu**, et non l'état interne de la page : celui-ci vit dans
+       une fermeture et n'est pas à portée d'ici. C'est d'ailleurs le bon choix —
+       ce qu'un joueur voit est la grille, pas une variable. */
+    return { un: lu('TR32'), deux: lu('TR32B'), trois: lu('TR32C') };
+  });
+  check('le premier âge est en clair', vu.un.la && vu.un.verrou === false
+    || (console.log('        ', JSON.stringify(vu.un)), false));
+  /* **Le cœur du contrôle.** L'âge payé doit être en clair comme le premier :
+     un cadenas dessus, et le joueur cherche ce qu'il a déjà. */
+  check('l’âge atteint aussi', vu.deux.la && vu.deux.verrou === false
+    || (console.log('        ', JSON.stringify(vu.deux)), false));
+  check('et seul l’âge suivant reste verrouillé',
+    vu.trois.la && vu.trois.verrou === true
+    || (console.log('        ', JSON.stringify(vu.trois)), false));
+}
+
+/* ============ payer une évolution la fait apparaître **sans rafraîchir**
+
+   C'est le défaut qu'un joueur a signalé, et il tenait en une phrase : « si je
+   rafraîchis la page, c'est à ce moment-là que le nouveau personnage apparaît ».
+
+   La logique de verrouillage était juste — le contrôle du dessus le montre, un
+   âge atteint s'affiche en clair au chargement. Ce qui manquait était le
+   redessin. `load()` relit la collection et les étages puis émet `tbf:bourse`,
+   en laissant chaque écran redessiner ce qu'il a ; le kiosque écoutait, le
+   classeur non. Les données étaient à jour **dans la page**, et la grille
+   montrait l'état d'avant.
+
+   Le pire des défauts d'affichage : le joueur a payé, le serveur est d'accord,
+   et l'écran dit non. Rien ne lui suggère un problème de rendu — il conclut
+   que son achat a échoué.
+
+   On l'éprouve donc par le seul chemin qui vaut : on paie pour de vrai, depuis
+   la fiche, et on regarde la grille **sans recharger**. */
+{
+  await page.evaluate(() => [...document.querySelectorAll('button,[data-tab],[data-onglet]')]
+    .find((b) => /CLASSEUR/i.test(b.textContent))?.click());
+  await dodo(400);
+
+  /* `MS30` est possédé au premier âge, et la bourse du banc porte de quoi
+     payer : c'est la lignée qu'on fait grandir ici, pour ne pas dépendre de
+     `TR32`, déjà monté par le montage. */
+  const avant = await page.evaluate(() => {
+    const el = [...document.querySelectorAll('#grid .slot')]
+      .find((s) => s.querySelector('.fz[data-id="MS30B"]'));
+    return el ? el.classList.contains('locked') : null;
+  });
+  check('le second âge de MS30 part verrouillé', avant === true
+    || (console.log('        il est déjà en clair, ou introuvable :', avant), false));
+
+  if (avant === true) {
+    /* On ouvre la fiche par la grille — le chemin du joueur — puis on paie.
+       Le bouton est là dès l'ouverture depuis qu'il ne dépend plus de la case
+       regardée ; c'est le contrôle d'au-dessus qui le garantit. */
+    await page.evaluate(() => [...document.querySelectorAll('#grid .slot')]
+      .find((s) => s.querySelector('.fz[data-id="MS30"]'))?.click());
+    const ouverte = await jusqua(async () => page.evaluate(() =>
+      Boolean(document.querySelector('#fiche-actions [data-evoluer]:not([disabled])'))), 8000);
+    check('la fiche s’ouvre avec de quoi payer', ouverte
+      || (console.log('        pas de bouton d’évolution payable'), false));
+
+    if (ouverte) {
+      await page.evaluate(() =>
+        document.querySelector('#fiche-actions [data-evoluer]').click());
+      /* La confirmation demande ce qu'on va perdre — c'est la doctrine des
+         panneaux de ce dépôt — puis la cérémonie dure une seconde et demie. */
+      const confirme = await jusqua(async () => page.evaluate(() =>
+        Boolean(document.querySelector('[data-oui]'))), 6000);
+      check('elle demande confirmation avant de dépenser', confirme);
+      if (confirme) {
+        await page.evaluate(() => document.querySelector('[data-oui]').click());
+        /* On attend que la grille change d'avis, sans jamais recharger : c'est
+           tout l'objet du contrôle. Généreux en temps — la cérémonie d'évolution
+           tient la main pendant plus d'une seconde — et strict sur le geste. */
+        const vivant = await jusqua(async () => page.evaluate(() => {
+          const el = [...document.querySelectorAll('#grid .slot')]
+            .find((s) => s.querySelector('.fz[data-id="MS30B"]'));
+          return Boolean(el) && !el.classList.contains('locked');
+        }), 12000);
+        check('et l’âge payé apparaît dans le classeur sans rafraîchir', vivant
+          || (console.log('        la grille montre encore l’état d’avant'), false));
+      }
+    }
+  }
+}
 }
 
 if (process.env.CAPTURE) {

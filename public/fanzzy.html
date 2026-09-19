@@ -801,6 +801,31 @@ document.querySelectorAll('.nav button').forEach((b) => {
   /* Le carrousel et le kiosque ont leur écran à eux — voir /boosters. Cette
      page dessine le classeur et le personnage équipé, et rien d autre. */
   renderDex(); renderTeam();
+
+  /* ================== et elle se redessine quand l'état change
+
+     **Elle ne le faisait pas.** `load()` relit la collection et les étages,
+     puis émet `tbf:bourse` en laissant chaque écran redessiner ce qu'il a —
+     c'est écrit en toutes lettres dans `cartes.js`. Le kiosque écoute. Le
+     classeur, lui, n'a jamais implémenté sa moitié du contrat.
+
+     Conséquence exacte : on payait une évolution depuis la fiche, le serveur
+     l'enregistrait, `recharger()` appelait bien `change` qui appelait bien
+     `load()` — les données étaient à jour dans la page — et la grille
+     continuait d'afficher l'ancien état. L'âge qu'on venait d'acheter restait
+     sous cadenas jusqu'au prochain rafraîchissement du navigateur.
+
+     Le pire des défauts d'affichage : le joueur a payé, le serveur est
+     d'accord, et l'écran dit non. Il n'a aucune raison de soupçonner un
+     rendu — il conclut que l'achat a échoué.
+
+     On redessine les deux surfaces de cette page, et rien d'autre : la grille,
+     et le personnage équipé. Les deux lisent `S.col` et `S.stades`, que
+     `load()` vient de remettre à jour. */
+  addEventListener('tbf:bourse', () => {
+    try { renderDex(); renderTeam(); }
+    catch (e) { console.error('[classeur] redessin', e); }
+  });
 })();
 </script>
 <script src="/fx.js" defer></script>
