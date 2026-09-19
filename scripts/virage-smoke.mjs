@@ -204,9 +204,10 @@ check('et la ferveur n’y est pas réduite', A.state.you.neutre === false);
    qu'il contrôle. Cinq se sont ajoutés — les cinq épreuves qui ne sont pas du
    rythme — et cette liste-ci se met à jour à la main aussi. C'est le prix de
    la discipline, et il est bon marché. */
-const ORDRE_ATTENDU = ['reprise', 'roulement', 'bache', 'repons', 'onetaitla',
-  'damier', 'salves', 'trilage', 'contrechant', 'moulinet', 'craquage', 'montee',
-  'aupoint', 'rebours', 'tenir', 'mur', 'appel', 'relance', 'cadence'];
+const ORDRE_ATTENDU = ['reprise', 'roulement', 'bache', 'repons', 'renverse',
+  'onetaitla', 'damier', 'salves', 'trilage', 'fumigenes', 'contrechant',
+  'moulinet', 'craquage', 'montee', 'tension', 'aupoint', 'rebours', 'tenir',
+  'mur', 'appel', 'relance', 'cadence'];
 
 /* **La liste écrite à la main est confrontée à celle du jeu.**
  *
@@ -246,7 +247,9 @@ const ORDRE_ATTENDU = ['reprise', 'roulement', 'bache', 'repons', 'onetaitla',
  * en premier — et elle ne se déduit de rien. */
 const GESTES_ATTENDUS = ['tempo', 'mash', 'hold', 'contretemps', 'echo',
   'crescendo', 'relance', 'salves', 'tenue', 'retenue',
-  'tifo', 'memoire', 'mosaique', 'echarpe', 'capo', 'tri', 'compte'];
+  'tifo', 'memoire', 'mosaique', 'echarpe', 'capo', 'tri', 'compte',
+  // Les trois épreuves de décision de LA REPRISE : décider, viser, doser.
+  'bascule', 'visee', 'jauge'];
 
 {
   const oublies = GESTES.filter((g) => !GESTES_ATTENDUS.includes(g));
