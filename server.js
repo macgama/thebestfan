@@ -36,6 +36,7 @@ import { createDecks } from './src/server/deck/index.js';
 import { createNiveau } from './src/server/niveau/index.js';
 import { createAbonnement } from './src/server/abonnement/index.js';
 import { createContenus } from './src/server/contenus/index.js';
+import { createAide } from './src/server/aide/index.js';
 import { createKop } from './src/server/kop/index.js';
 import { createAmis } from './src/server/amis/index.js';
 import { createAdmin } from './src/server/admin/index.js';
@@ -410,6 +411,16 @@ if (process.env.DATABASE_URL) {
     app.use('/api/me', onboarding.router);
     console.log('inscription et inventaire actifs');
 
+    /* ---- l'aide : la FAQ, et les premiers pas
+       Monté après l'inscription parce qu'il lit ce qu'elle écrit, et il ne
+       dépend de rien d'autre : ses six signaux se lisent directement en base,
+       sans passer par un module de jeu. Une table ou une colonne absente vaut
+       « pas fait » plutôt que de lever — c'est l'écran qu'on ouvre quand
+       quelque chose ne va pas. */
+    const aide = createAide({ pool, requireAuth: auth.requireAuth });
+    app.use('/api/aide', aide.router);
+    console.log('aide et premiers pas actifs');
+
     /* ---- les couleurs des clubs
        Extraites du blason, une fois par club, hors quota — c'est le CDN de
        l'API, pas l'API. Elles teignent « GOAL ! » aux couleurs de l'équipe.
@@ -757,6 +768,10 @@ app.get('/duel-nvn', (_req, res) => page(res, 'duel-nvn.html'));
 app.get('/fanzzy', (_req, res) => page(res, 'fanzzy.html'));
 app.get('/virage', (_req, res) => page(res, 'virage.html'));
 app.get('/carnet', (_req, res) => page(res, 'carnet.html'));
+/* L'aide porte les deux : le parcours des premiers pas et la FAQ. Une seule
+   page parce qu'un joueur bloque rarement sur une question pure — il bloque sur
+   ce qu'il est en train de faire, et la réponse est à côté de l'étape. */
+app.get('/aide', (_req, res) => page(res, 'aide.html'));
 
 /* -------------------------------------------------------------- socket.io */
 

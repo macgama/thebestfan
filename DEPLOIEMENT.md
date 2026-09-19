@@ -96,7 +96,7 @@ cd ~/sites/thebestfan.online
 FICHIERS="auth football minutes couleurs duel souvenirs fanzzy teletext
           inventaire skins tenues deck admin kop amis niveau raretes stades
           boutique billets saisons series-neuves historique abonnement contenus
-          bourse cris"
+          bourse cris aide"
 
 # 1. Tout est-il là ? On regarde avant d'écrire quoi que ce soit.
 manquants=""
@@ -245,6 +245,25 @@ que `raretes` les a rangées.
     liste. Pour en faire la révélation d'une saison, il faut les marquer
     `publie: false` sur leur fiche dans `src/shared/` **avant** le premier
     semis, ou les fermer depuis l'onglet CONTENUS de `/admin`.
+
+- `aide.sql` ajoute deux compteurs à `user_wallet`, pour le nouvel écran
+  **`/aide`** — la FAQ et le parcours des premiers pas.
+
+  `packs_ouverts` compte les boosters ouverts. C'est le seul des six signaux du
+  parcours qui n'existait nulle part : les cinq autres se lisent dans ce que le
+  joueur possède déjà. `parcours_paye` retient que le booster de fin a été
+  versé, pour qu'il le soit une fois et une seule.
+
+  **Les comptes existants partent de zéro** : un joueur d'avant cette migration
+  verra l'étape « ouvre un booster » décochée jusqu'à son prochain paquet. C'est
+  le choix honnête — on ne coche pas une case en prétendant savoir ce qu'on n'a
+  jamais écrit.
+
+  Le fichier est rejouable, et **son oubli ne casse rien** : l'ouverture de
+  booster ignore le compteur absent plutôt que de perdre les cartes du joueur,
+  et l'écran d'aide affiche le parcours en laissant l'étape décochée. C'est
+  délibéré : `/aide` est exactement l'écran qu'on ouvre quand quelque chose ne
+  va pas.
 
 - `cris.sql` fait crier les trois épreuves de LA REPRISE. La bascule, la visée et
   la jauge sont jouables par tout le monde dès leur livraison, par le répertoire

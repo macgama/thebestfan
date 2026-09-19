@@ -465,6 +465,30 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         throw fail('fanzzy.error.no_packs');
       }
 
+      /* **Une trace, pas une ressource.** Ce compteur ne décroît jamais et
+         n'entre dans aucun calcul de jeu : il sert au parcours des premiers pas,
+         qui a besoin de savoir qu'un booster a été ouvert et ne peut le deviner
+         de nulle part ailleurs. Voir `sql/aide.sql`.
+
+         Ici et non après le tirage : il compte les paquets **payés**, et un
+         paquet payé l'est même si la suite échoue. C'est d'ailleurs le seul
+         endroit du jeu où un paquet se débite.
+
+         **Et il ne peut pas faire échouer l'ouverture.** Sans `sql/aide.sql`, la
+         colonne n'existe pas : le joueur perdrait ses cinq cartes pour un
+         compteur qui ne sert qu'à cocher une case sur un écran d'aide. Le
+         marché est trop mauvais dans ce sens-là. Une instruction qui échoue
+         n'annule pas la transaction en cours — seulement elle-même — donc le
+         reste du paquet se déroule intact, et le parcours lira simplement
+         « pas encore ouvert ». */
+      try {
+        await conn.query(
+          `UPDATE user_wallet SET packs_ouverts = packs_ouverts + 1 WHERE user_id = ?`,
+          [userId]);
+      } catch (e) {
+        if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+      }
+
       const pull = drawPack(setId);
 
       const [owned] = await conn.query(

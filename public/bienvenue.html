@@ -247,6 +247,11 @@ input:focus{outline:none;border-color:var(--projo)}
     <div class="recap" id="recap"></div>
     <p class="sub" id="final"></p>
     <button class="go tbf-plaque" data-ton="flare" id="b4">ENTRER</button>
+    <!-- Le seul endroit où proposer le guide ait une chance d’être lu : le
+         joueur vient d’ouvrir cinq cartes et ne sait pas encore quoi en faire.
+         Discret, sous ENTRER, et jamais un passage obligé — on ne fait pas
+         traverser un tutoriel à quelqu’un qui veut jouer. -->
+    <button class="ghost" id="b4c">Par où commencer ?</button>
     <button class="ghost" id="b4b">Suivre un second club</button>
   </section>
 </main>
@@ -694,6 +699,7 @@ function final() {
 }
 
 $('b4').onclick = () => { location.href = '/'; };
+$('b4c').onclick = () => { location.href = '/aide'; };
 $('b4b').onclick = () => { location.href = '/equipes'; };
 
 /* ------------------------------------------------------- démarrage */

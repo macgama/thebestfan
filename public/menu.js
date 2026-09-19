@@ -49,7 +49,7 @@
     '/boutique': 'Boutique', '/virage': 'Virage', '/duel-nvn': 'Duel',
     '/kop': 'KOP', '/amis': 'Amis', '/equipes': 'Clubs', '/matchs': 'Matchs',
     '/teletext': 'Compétitions', '/classement': 'Classement', '/carnet': 'Carnet',
-    '/profil': 'Profil', '/compte': 'Compte', '/admin': 'Administration',
+    '/profil': 'Profil', '/compte': 'Compte', '/aide': 'Aide', '/admin': 'Administration',
     '/diagnostic': 'Diagnostic',
   };
 
@@ -78,6 +78,10 @@
     // Une flèche vers la gauche, pour rentrer. Volontairement pas un chevron
     // seul : à quarante pixels, un chevron se confond avec un bouton de repli.
     retour: 'M15 5l-7 7 7 7',
+    // Un point d'interrogation dans un cercle. Le plus banal des pictogrammes,
+    // et c'est exactement la raison de le garder : celui-là doit se reconnaître
+    // sans apprentissage, par quelqu'un qui cherche déjà quelque chose.
+    aide: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M9.4 9.3a2.6 2.6 0 1 1 3.2 2.5c-.7.2-1.1.8-1.1 1.5v.6M12 17.2h.01',
   };
 
   /**
@@ -152,6 +156,11 @@
         + r.liens.map(([href, cle, texte]) =>
           item(href, cle, texte, ici(href) ? 'on' : '')).join('')).join('')
       + '<hr>'
+      /* En tête du pied, avant le profil et le compte : c'est la seule entrée
+         qu'on cherche **parce qu'on est perdu**, et quelqu'un de perdu ne lit
+         pas un menu jusqu'au bout. Elle ne rejoint pas les rubriques du
+         dessus : elles disent où l'on joue, celle-ci dit comment. */
+      + item('/aide', 'aide', 'Aide et premiers pas', ici('/aide') ? 'on' : '')
       + item('/profil', 'profil', 'Mon profil', ici('/profil') ? 'on' : '')
       + item('/compte', 'compte', 'Mon compte', ici('/compte') ? 'on' : '')
       + item('#', 'sortie', 'Se déconnecter', 'sortie');

@@ -202,6 +202,7 @@ const ECRANS = [
   ['/compte', 'compte'],
   ['/teletext', 'télétexte'],
   ['/bienvenue', 'inscription'],
+  ['/aide', 'aide'],
   ['/diagnostic', 'diagnostic'],
   ['/admin', 'administration'],
 ];
