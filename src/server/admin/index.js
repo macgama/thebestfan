@@ -595,6 +595,17 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
    * ouvertes, puisque les séries ouvertes sont l'union. Les tenues publiées ne
    * se dépublient pas : quelqu'un les a peut-être déjà gagnées, et une tenue
    * qui disparaît d'une collection est une perte, pas une fermeture.
+   *
+   * **Et les stades se referment, eux.** C'est la seule des cinq familles que
+   * personne ne possède : un stade appartient au match, jamais à un joueur —
+   * c'est la règle écrite dans `stades.js`. Le refermer ne retire donc rien à
+   * personne, alors qu'une pièce d'équipement ou une carte d'action gagnée
+   * reste acquise, comme une tenue.
+   *
+   * Refermés **à l'union**, comme les séries : un stade que deux saisons
+   * lancées ouvrent reste ouvert quand l'une des deux repasse en brouillon.
+   * Sans ce calcul, remettre la saison 1 au brouillon fermerait un lieu que la
+   * saison 2 annonce — et la saison 2, elle, ne se relance pas.
    */
   async function lancerSaison(acteur, id, lancer, ip_) {
     const s = toutesLesSaisons().find((x) => x.id === Number(id));
@@ -627,6 +638,17 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
       }
     } else {
       await q(`UPDATE saisons SET lancee_a = NULL WHERE id = ?`, [s.id]);
+
+      /* L'union se recalcule **après** l'écriture, pour que la saison qu'on
+         vient de retirer n'y soit plus. La lire avant la compterait encore
+         parmi les lancées, et rien ne se fermerait jamais. */
+      if (deps.contenus && s.stades.length) {
+        await chargerSaisons(pool);
+        const ailleurs = new Set(toutesLesSaisons()
+          .filter((x) => x.lancee).flatMap((x) => x.stades));
+        const aFermer = s.stades.filter((id) => !ailleurs.has(id));
+        if (aFermer.length) await deps.contenus.publier('stade', aFermer, false);
+      }
     }
 
     await chargerSaisons(pool);

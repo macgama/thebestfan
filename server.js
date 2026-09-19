@@ -306,7 +306,12 @@ if (process.env.DATABASE_URL) {
 
        Chargé **avant** l'administration, parce que c'est elle qui publie au
        lancement d'une saison. Sans la table, il le dit et le jeu garde les
-       listes du code, toutes jouables — l'état d'avant. */
+       listes du code, toutes jouables — l'état d'avant.
+
+       Il vient **après** les modules de jeu, et c'est sans conséquence : les
+       six tirages qui le lisent le font à la requête, jamais au montage. Ce
+       qu'il faut, c'est qu'il soit chargé avant la première requête — et tout
+       ceci s'exécute avant que le serveur n'écoute. */
     const contenus = createContenus({ pool });
     await contenus.charger();
 

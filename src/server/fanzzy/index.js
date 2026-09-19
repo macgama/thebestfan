@@ -10,6 +10,11 @@ import { STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 // et une liste figée dans le code redeviendrait une seconde vérité.
 import { toutesTenues, tenuesPubliees } from './tenues.js';
 import { ACTIONS, DECK_RULES } from '../../shared/duel/actions.js';
+/* Ce que les saisons ont ouvert de l'équipement et des cartes d'action.
+   Renommé à l'import : `publies` est déjà pris ici par le catalogue Fanzzy, et
+   deux fonctions du même nom dans le même fichier finiraient par se confondre
+   au premier ajout. `jouables` dit d'ailleurs mieux ce qu'on demande. */
+import { publies as jouables } from '../contenus/index.js';
 import { DEFAUTS, reglage } from '../../shared/reglages.js';
 import { XP } from '../../shared/niveau.js';
 import { saisonsLancees, saisonEnCours } from './saisons.js';
@@ -362,12 +367,21 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     }
 
     if (cat === 'stuff') {
-      const def = STUFF.find((s) => s.rar === pickRarity(5) && !stuffPris.has(s.id))
-        ?? STUFF.find((s) => !stuffPris.has(s.id));
+      /* **Ce que la saison a ouvert, et non tout ce que le code connaît.**
+         C'est la règle des séries, appliquée à l'équipement : `publies` rend la
+         liste du code tant que `sql/contenus.sql` n'est pas appliqué, donc une
+         base incomplète joue exactement comme avant au lieu de se vider. */
+      const ouvert = jouables('stuff');
+      const def = ouvert.find((s) => s.rar === pickRarity(5) && !stuffPris.has(s.id))
+        ?? ouvert.find((s) => !stuffPris.has(s.id));
       // Tout possédé : un doublon d'équipement rapporte des écharpes, comme un
       // doublon de supporter. Il ne se perd pas.
       if (!def) {
-        const dedans = rnd(STUFF);
+        /* Le doublon se tire parmi l'**ouvert** lui aussi. Le tirer dans la
+           liste entière ne donnerait rien de neuf — un doublon ne donne que des
+           écharpes — mais il nommerait au joueur une pièce qu'il ne peut pas
+           avoir, et une carte qui passe est une carte qu'on a vue. */
+        const dedans = rnd(ouvert.length ? ouvert : STUFF);
         await conn.query(
           `UPDATE user_stuff SET copies = copies + 1 WHERE user_id = ? AND stuff_id = ?`,
           [userId, dedans.id]);
@@ -393,7 +407,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     // Une carte d'action ne se possède qu'une fois : le deck en accepte dix
     // exemplaires, mais c'est le même droit répété. Un doublon rapporte donc
     // des écharpes plutôt qu'une ligne de plus.
-    const libres = ACTIONS.filter((a) => a.rar !== 'commune' && !actionsPrises.has(a.id));
+    const libres = jouables('action')
+      .filter((a) => a.rar !== 'commune' && !actionsPrises.has(a.id));
     if (!libres.length) return echarpes();
     const vise = pickRarity(5);
     const def = rnd(libres.filter((a) => a.rar === vise).length
@@ -1126,7 +1141,11 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         const [ont] = await conn.query(
           `SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [userId]);
         const dejaLa = new Set(ont.map((s) => s.stuff_id));
-        const libres = STUFF.filter((s) => !dejaLa.has(s.id));
+        /* La boutique livre ce qui est **ouvert**, comme le booster. Une
+           commande n'est pas un raccourci vers une saison qui n'a pas commencé :
+           c'est le seul endroit où le joueur paie, et ce serait justement là que
+           la fuite se remarquerait le moins. */
+        const libres = jouables('stuff').filter((s) => !dejaLa.has(s.id));
         if (!libres.length) { rendu.scarves += SCARVES.rare; continue; }
         const def = libres[Math.floor(Math.random() * libres.length)];
         await conn.query(

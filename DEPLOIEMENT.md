@@ -96,7 +96,7 @@ cd ~/sites/thebestfan.online
 FICHIERS="auth football minutes couleurs duel souvenirs fanzzy teletext
           inventaire skins tenues deck admin kop amis niveau raretes stades
           boutique billets saisons series-neuves historique abonnement contenus
-          bourse"
+          bourse cris"
 
 # 1. Tout est-il là ? On regarde avant d'écrire quoi que ce soit.
 manquants=""
@@ -222,6 +222,48 @@ que `raretes` les a rangées.
   n'apparaît dans **AMIS** que si le navigateur sait partager ou copier. Le
   fichier est rejouable, comme les autres ; le relancer sur une base à jour ne
   fait rien.
+
+- `contenus.sql` était appliqué depuis la livraison précédente, et il ne servait
+  à rien : la table était **écrite et jamais lue**. Une saison cochait des
+  cartes d'action, de l'équipement et des stades, `publier` les marquait en
+  base, l'administration affichait ses boutons — et le jeu distribuait tout,
+  parce que les tirages lisaient les listes du code.
+
+  Les six tirages passent maintenant par elle : le booster, le paquet de
+  bienvenue, la boutique, les communes offertes au deck, et les deux moteurs qui
+  choisissent le stade d'une rencontre. **Aucun fichier SQL à appliquer** — tout
+  est déjà `publie = 1`, donc la livraison ne change rien pour personne. C'est
+  délibérément le moment de le faire.
+
+  Deux conséquences à connaître :
+
+  - **Remettre une saison en brouillon referme ses stades.** C'est la seule des
+    cinq familles que personne ne possède — un stade appartient au match. Les
+    tenues, l'équipement et les cartes d'action restent acquis, comme avant.
+  - **Les 35 contenus de LA REPRISE sont ouverts** (20 pièces, 10 cartes,
+    5 stades) : ils ont été semés avec `publie = 1` et aucune saison ne les
+    liste. Pour en faire la révélation d'une saison, il faut les marquer
+    `publie: false` sur leur fiche dans `src/shared/` **avant** le premier
+    semis, ou les fermer depuis l'onglet CONTENUS de `/admin`.
+
+- `cris.sql` fait crier les trois épreuves de LA REPRISE. La bascule, la visée et
+  la jauge sont jouables par tout le monde dès leur livraison, par le répertoire
+  de chant — mais **aucun Fanzzy ne les criait**, et un geste que personne ne
+  crie n'existe qu'au catalogue : on ne peut pas choisir un personnage pour lui.
+  Vingt et une lignées changent donc de cri, trente-trois lignes en base avec
+  leurs âges.
+
+  Les lignées sont prises sur une **variante** de chaque famille, jamais sur le
+  geste qui porte son nom : `hold`, `relance` et `echarpe` ne bougent pas d'une
+  carte. Les deux règles de famille — l'éponyme majoritaire, chaque variante
+  au-dessus d'un huitième — tiennent après coup, et `catalogue-smoke.mjs` les
+  rejoue.
+
+  Rien d'autre ne change : ni le nom, ni la rareté, ni les modificateurs, ni le
+  libellé du cri, ni la place dans une collection. Seul le mini-jeu de ces
+  cartes. Le fichier est rejouable. **Sans lui, le code et la base diraient deux
+  gestes différents pour les mêmes cartes** — et c'est la base qui gagne : le
+  joueur jouerait l'ancien.
 
 Contrôle : `SHOW TABLES;` doit en lister **42**.
 

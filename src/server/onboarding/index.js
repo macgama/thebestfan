@@ -10,6 +10,11 @@ import { STUFF, SKIN_BY_ID, STUFF_BY_ID, combine }
    un nouveau joueur sur quatre recevait `a-relance`, une carte qui n'existe
    pas. Voir la note à l'endroit où cette liste se trouvait. */
 import { ACTIONS } from '../../shared/duel/actions.js';
+/* Ce que les saisons ont ouvert de l’équipement et des cartes d’action.
+   Renommé à l’import : `publies` désigne déjà le catalogue Fanzzy dans les
+   modules voisins, et deux sens pour un nom finissent par se confondre.
+   Voir `tirerBienvenue`. */
+import { publies as jouables } from '../contenus/index.js';
 import { toutesTenues, tenuesPubliees } from '../fanzzy/tenues.js';
 import { verifierEmplacement, SLOTS_DEPART, SLOTS_MAX } from './slots.js';
 import { assurerBourse } from '../bourse.js';
@@ -200,7 +205,12 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
     const beaux = ouvrables.filter((f) => f.rar !== 'commune');
     const premier = communs.length ? communs : ouvrables;
     const second = beaux.length ? beaux : premier;
-    const equipement = STUFF.filter((s) => ['commune', 'rare'].includes(s.rar));
+    /* **Ce qu'une saison a ouvert, ici comme dans le booster.** Le paquet de
+       bienvenue est le premier tirage d'un joueur : s'il était le seul à ignorer
+       les saisons, il livrerait à chaque nouvel inscrit, et à lui seul, du
+       contenu que personne d'autre n'a encore. */
+    const equipement = jouables('stuff')
+      .filter((s) => ['commune', 'rare'].includes(s.rar));
     /* **Cinq cartes d'action, et l'Arbitre parmi elles.**
      *
      * Il y en avait **une**. Un deck demande exactement dix cartes et n'impose
@@ -217,7 +227,8 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
      * tirer avec remise donnerait parfois quatre fois le même Fumigène, ce qui
      * ramènerait exactement au problème qu'on vient de corriger. */
     const OUVRE_LE_CHANGEMENT = 'a-arbitre';
-    const debutantes = ACTIONS.filter((a) => ['commune', 'rare'].includes(a.rar)
+    const debut = jouables('action');
+    const debutantes = debut.filter((a) => ['commune', 'rare'].includes(a.rar)
       && a.id !== OUVRE_LE_CHANGEMENT);
     const melange = [...debutantes];
     for (let i = melange.length - 1; i > 0; i--) {
@@ -225,12 +236,20 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
       [melange[i], melange[k]] = [melange[k], melange[i]];
     }
 
+    /* L'Arbitre est garanti **s'il est ouvert**. Il l'est aujourd'hui et le
+       restera vraisemblablement toujours — c'est une carte de fondation, pas
+       une nouveauté de saison — mais « vraisemblablement » n'est pas une
+       garantie, et offrir une carte fermée donnerait un paquet de bienvenue
+       dont une carte sur cinq n'est pas jouable. Fermé, on prend simplement une
+       débutante de plus : le paquet garde ses cinq cartes. */
+    const arbitre = debut.some((a) => a.id === OUVRE_LE_CHANGEMENT);
+
     return [
       { type: 'fanzzy', id: rnd(premier).id },
       { type: 'fanzzy', id: rnd(second).id },
       { type: 'stuff', id: rnd(equipement).id },
-      { type: 'action', id: OUVRE_LE_CHANGEMENT },
-      ...melange.slice(0, 4).map((a) => ({ type: 'action', id: a.id })),
+      ...(arbitre ? [{ type: 'action', id: OUVRE_LE_CHANGEMENT }] : []),
+      ...melange.slice(0, arbitre ? 4 : 5).map((a) => ({ type: 'action', id: a.id })),
       { type: 'scarves', amount: 80 + Math.floor(Math.random() * 40) },
     ];
   }

@@ -8,6 +8,7 @@ import { CHANTS, ORDRE } from '../../shared/duel/chants.js';
 import { poserEffet, nettoyerEffets, aEffet, modsAvecEffets } from '../../shared/duel/effets.js';
 // Le lieu de la rencontre, et sa règle : voir le constructeur.
 import { stadeDeLaRencontre } from '../../shared/stades.js';
+import { ouverts } from '../contenus/index.js';
 
 /**
  * Moteur de duel N contre N.
@@ -237,8 +238,13 @@ export class DuelNvN {
      *
      * Les possessions sont vides tant que les stades ne se collectionnent pas —
      * c'est exactement ce que fait le Virage, et la ligne à changer le jour où
-     * ils se gagneront est celle-ci. */
-    this.stade = stadeDeLaRencontre([], hachage(id));
+     * ils se gagneront est celle-ci.
+     *
+     * Le troisième argument, lui, est déjà là : les stades qu'une saison a
+     * ouverts. Sans lui, un stade livré avec le code se jouait dès la
+     * livraison, et la saison censée l'annoncer annonçait un lieu où l'on
+     * jouait depuis des semaines. */
+    this.stade = stadeDeLaRencontre([], hachage(id), ouverts('stade'));
 
     /* **Les cinq chants offerts.**
      *

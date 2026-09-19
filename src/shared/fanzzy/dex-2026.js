@@ -381,7 +381,7 @@ export const DEX_2026 = [
     histoire: 'Elle a recousu plus de supporters que de joueurs. Elle garde toujours une '
       + 'place libre à l’infirmerie pour la fin du match.',
     mods: { holdBonus: 1.15, breathBonus: 1.2, refundBonus: 1.2 },
-    cri: { label: 'RESPIRE', gest: 'retenue', power: 67 } },
+    cri: { label: 'RESPIRE', gest: 'jauge', power: 67 } },
 
   { id: 'MS14', nom: 'Le Boulanger d’En Face', type: 'depl', set: 'MS', stage: 1, rar: 'commune',
     histoire: 'Il ouvre à quatre heures et vient à quinze. Il apporte les invendus au '
@@ -675,13 +675,13 @@ export const DEX_2026 = [
     histoire: 'Elle jette un sort sur le bus adverse à chaque match. Le bus tombe en '
       + 'panne une fois sur douze, ce qui lui suffit largement.',
     mods: { perfectBonus: 1.35, parryBonus: 1.2, backfire: true },
-    cri: { label: 'QUE ÇA CALE', gest: 'compte', power: 71 } },
+    cri: { label: 'QUE ÇA CALE', gest: 'visee', power: 71 } },
 
   { id: 'RV12', nom: 'Le Golem du Muret', type: 'fide', set: 'RV', stage: 1, rar: 'legendaire',
     histoire: 'Il est fait des pierres de l’ancienne tribune, démolie en 1987. Il n’a '
       + 'jamais accepté la démolition et il ne bougera plus.',
     mods: { holdBonus: 1.35, holdForgive: 3, parryResist: 1.4, mashBonus: 0.72 },
-    cri: { label: 'JE SUIS D’ICI', gest: 'tenue', power: 82 } },
+    cri: { label: 'JE SUIS D’ICI', gest: 'jauge', power: 82 } },
 
   { id: 'RV13', nom: 'Le Cyclope du Grand Écran', type: 'voix', set: 'RV', stage: 1, rar: 'commune',
     histoire: 'Un œil, mais il voit tout, et surtout les hors-jeu. Il conteste chaque '
@@ -895,7 +895,7 @@ export const DEX_2026 = [
     histoire: 'Il a repêché le ballon du canal quatre-vingt-treize fois. Il descend '
       + 'toujours avec la même corde et il n’en changera pas.',
     mods: { holdBonus: 1.2, holdForgive: 1, breathBonus: 1.15, mashBonus: 0.86 },
-    cri: { label: 'JE REDESCENDS', gest: 'tenue', power: 60 } },
+    cri: { label: 'JE REDESCENDS', gest: 'jauge', power: 60 } },
 
   { id: 'EP14', nom: 'Le Chevalier', type: 'tifo', set: 'EP', stage: 1, rar: 'commune',
     histoire: 'Son bouclier porte les couleurs du club depuis quatre cents ans, ce qui '

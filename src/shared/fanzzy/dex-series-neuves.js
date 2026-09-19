@@ -133,7 +133,7 @@ export const DEX_NEUVES = [
     histoire: 'Il vient une fois par saison, s’assoit trois minutes, et repart avant '
       + 'la mi-temps. Le stade porte son nom depuis avant qu’il l’achète.',
     mods: { parryResist: 1.4, parryBonus: 1.25, breathBonus: 0.82 },
-    cri: { label: 'JE REPASSERAI', gest: 'retenue', power: 78 } },
+    cri: { label: 'JE REPASSERAI', gest: 'jauge', power: 78 } },
 
   { id: 'VP11', nom: 'La Tribune Présidentielle', type: 'tifo', set: 'VP', stage: 1, rar: 'legendaire',
     histoire: 'Vitrée, chauffée, insonorisée. On y voit tout et on n’y entend rien — '
@@ -157,7 +157,7 @@ export const DEX_NEUVES = [
     histoire: 'Son nom est sur la poitrine de onze personnes et sur trente mille dos. '
       + 'Il change tous les trois ans, et personne ne se souvient du précédent.',
     mods: { breathBonus: 1.34, refundBonus: 1.26, perfectBonus: 0.84 },
-    cri: { label: 'ON VOIT NOTRE LOGO ?', gest: 'memoire', power: 79 } },
+    cri: { label: 'ON VOIT NOTRE LOGO ?', gest: 'bascule', power: 79 } },
 
   /* ============================= LA GASTRONOMIE DE COMPTOIR (GC)
 
@@ -231,19 +231,19 @@ export const DEX_NEUVES = [
     histoire: 'Gardé en cave depuis la relégation, avec une date au marqueur. Il a été '
       + 'ouvert onze ans plus tard, et il était encore bon.',
     mods: { breathBonus: 1.4, refundBonus: 1.3, tempoWindow: 0.86 },
-    cri: { label: 'ONZE ANS', gest: 'memoire', power: 81 } },
+    cri: { label: 'ONZE ANS', gest: 'bascule', power: 81 } },
 
   { id: 'GC12', nom: 'La Recette de la Buvette', type: 'fide', set: 'GC', stage: 1, rar: 'legendaire',
     histoire: 'Un cahier à spirale, quatre lignes, et le nom de celle qui l’a écrite. '
       + 'Trois générations l’ont suivi sans jamais y changer une virgule.',
     mods: { holdBonus: 1.44, refundBonus: 1.24, mashBonus: 0.84 },
-    cri: { label: 'ON N’Y TOUCHE PAS', gest: 'tenue', power: 80 } },
+    cri: { label: 'ON N’Y TOUCHE PAS', gest: 'jauge', power: 80 } },
 
   { id: 'GC13', nom: 'Le Barbecue du Parking Nord', type: 'pyro', set: 'GC', stage: 1, rar: 'legendaire',
     histoire: 'Allumé à onze heures pour un match à vingt et une. La fumée se voit de '
       + 'l’autoroute et c’est le seul panneau dont le club ait besoin.',
     mods: { perfectBonus: 1.46, breathBonus: 1.2, costPenalty: 1.3 },
-    cri: { label: 'ÇA SENT D’ICI', gest: 'compte', power: 83 } },
+    cri: { label: 'ÇA SENT D’ICI', gest: 'visee', power: 83 } },
 
   { id: 'GC14', nom: 'La Dernière Tournée', type: 'voix', set: 'GC', stage: 1, rar: 'legendaire',
     histoire: 'Payée par celui qui a le moins de raisons de payer, un soir de défaite. '
@@ -386,13 +386,13 @@ export const DEX_NEUVES = [
     histoire: 'Il souffle dans le même sens depuis que le stade existe, parce qu’on l’a '
       + 'construit dans le mauvais. L’adversaire ne le sait jamais.',
     mods: { breathBonus: 1.38, parryResist: 1.24, perfectBonus: 0.84 },
-    cri: { label: 'ON CONNAÎT', gest: 'memoire', power: 80 } },
+    cri: { label: 'ON CONNAÎT', gest: 'bascule', power: 80 } },
 
   { id: 'MT12', nom: 'Le Terrain Inondé', type: 'fide', set: 'MT', stage: 1, rar: 'legendaire',
     histoire: 'Le ballon s’arrête là où il tombe et le match devient autre chose. '
       + 'C’est le seul soir où l’équipe la plus faible a une chance.',
     mods: { holdBonus: 1.44, parryResist: 1.3, mashBonus: 0.8 },
-    cri: { label: 'IL S’ARRÊTE', gest: 'tenue', power: 81 } },
+    cri: { label: 'IL S’ARRÊTE', gest: 'jauge', power: 81 } },
 
   { id: 'MT13', nom: 'L’Éclipse de la Mi-Temps', type: 'voix', set: 'MT', stage: 1, rar: 'legendaire',
     histoire: 'Trois minutes de nuit à seize heures, et trente mille personnes qui se '
@@ -479,7 +479,7 @@ export const DEX_NEUVES = [
     histoire: 'Encore en ligne, encore actif, et le même débat qu’au premier jour. '
       + 'Quarante-sept mille messages sur un penalty non sifflé.',
     mods: { holdBonus: 1.46, parryResist: 1.26, tempoInterval: 110 },
-    cri: { label: 'PAGE 1 204', gest: 'retenue', power: 79 } },
+    cri: { label: 'PAGE 1 204', gest: 'jauge', power: 79 } },
 
   { id: 'HC13', nom: 'Le Direct Commenté', type: 'perc', set: 'HC', stage: 1, rar: 'legendaire',
     histoire: 'Du texte, rafraîchi toutes les trente secondes, et rien d’autre. C’est '
@@ -491,5 +491,5 @@ export const DEX_NEUVES = [
     histoire: 'Elle commente seule, pour trois cents personnes, un match que personne '
       + 'd’autre ne diffuse. À deux heures du matin ils sont encore là.',
     mods: { breathBonus: 1.36, refundBonus: 1.28, mashBonus: 0.84 },
-    cri: { label: 'VOUS ÊTES ENCORE LÀ ?', gest: 'memoire', power: 80 } },
+    cri: { label: 'VOUS ÊTES ENCORE LÀ ?', gest: 'bascule', power: 80 } },
 ];

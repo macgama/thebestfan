@@ -28,6 +28,23 @@
  * On charge donc **une fois au démarrage**, et on sert de la mémoire. C'est ce
  * que fait déjà `catalogue.js`, et pour la même raison.
  *
+ * ## Ce qui lit ce module, et ce qui ne le lit pas
+ *
+ * **Les tirages, et eux seuls.** Six endroits distribuent : le booster, le
+ * paquet de bienvenue, la boutique, les communes offertes au deck, et les deux
+ * moteurs qui choisissent le stade d'une rencontre. Tous les six passent par
+ * `publies` ou `ouverts`.
+ *
+ * Tout le reste continue de lire les listes du code : le moteur qui résout une
+ * carte déjà jouée, le classeur qui affiche ce qu'on possède, l'écran de deck
+ * qui dessine une pièce portée. Fermer, c'est cesser de distribuer, pas
+ * confisquer — c'est la règle des séries, et elle vaut ici pour la même raison.
+ *
+ * Ce module a d'ailleurs vécu une livraison entière sans que personne n'appelle
+ * `publies` : `publier` écrivait, l'administration montrait des boutons, et le
+ * jeu distribuait tout. Une table en écriture seule ne se voit pas — elle ne
+ * lève jamais.
+ *
  * ## Sans la table, tout est ouvert
  *
  * Une installation où `sql/contenus.sql` n'est pas appliqué joue exactement
@@ -205,6 +222,25 @@ export function tous(famille) {
 export function publies(famille) {
   if (!memoire?.[famille]) return FAMILLES[famille]?.source ?? [];
   return memoire[famille].filter((o) => o.publie);
+}
+
+/**
+ * Les identifiants jouables, en Set.
+ *
+ * C'est la forme dont les **tirages** ont besoin, et ils sont six à en avoir
+ * besoin : le booster, le paquet de bienvenue, la boutique, les cartes offertes
+ * au deck, et les deux endroits qui choisissent le stade d'une rencontre.
+ * Chacun reconstruisait sinon le même Set à sa façon, et il aurait suffi qu'un
+ * seul oublie pour que la saison fuie par là.
+ *
+ * **Ce qui se tire, et non ce qui se montre.** Un joueur voit et joue ce qu'il
+ * possède, fermé ou non — fermer, c'est cesser de distribuer, pas confisquer.
+ * C'est la règle des séries, mot pour mot, et elle vaut ici pour la même
+ * raison : une pièce d'équipement qui disparaîtrait d'un classeur serait une
+ * perte, et une perte ne s'annonce pas comme une saison.
+ */
+export function ouverts(famille) {
+  return new Set(publies(famille).map((o) => o.id));
 }
 
 /** Uniquement pour les suites : repartir sans mémoire. */
