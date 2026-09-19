@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La répétition — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/img/logo.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A0D11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{width:100%;max-width:var(--colonne);min-height:100dvh;display:flex;flex-direction:column}
+
+/* ====================================================== le choix des gestes */
+.dit{margin:10px 14px 0;padding:11px 14px;border-radius:12px;font-size:12.5px;line-height:1.55;
+  border:1px solid rgba(245,195,59,.3);
+  background:linear-gradient(140deg,rgba(245,195,59,.1),rgba(8,11,16,.7))}
+.dit b{color:var(--projo)}
+
+.fam{margin:16px 14px 0}
+.fam h2{font-family:var(--banner);font-size:11px;letter-spacing:.26em;opacity:.45;
+  margin:0 0 8px;padding-left:2px}
+.liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+
+/* Une tuile par geste. La barre de gauche porte la couleur de la famille —
+   c'est le seul endroit de l'écran où la couleur veut dire quelque chose, et
+   elle dit la même chose qu'en partie. */
+.g{position:relative;text-align:left;padding:11px 12px 11px 15px;border-radius:12px;
+  border:1px solid var(--trait);background:var(--panneau);color:inherit;font:inherit;
+  cursor:pointer;overflow:hidden}
+.g::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.g b{display:block;font-family:var(--banner);font-size:13px;letter-spacing:.07em}
+.g span{display:block;font-size:10.5px;opacity:.6;line-height:1.45;margin-top:3px}
+.g .best{display:block;margin-top:6px;font-family:var(--banner);font-size:10px;
+  letter-spacing:.14em;color:var(--c)}
+.g:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
+
+/* ============================================================ la salle */
+.salle{position:fixed;inset:0;z-index:120;background:#05070B;display:none;
+  flex-direction:column;padding:calc(env(safe-area-inset-top) + 10px) 14px
+  calc(env(safe-area-inset-bottom) + 14px)}
+.salle.on{display:flex}
+.salle .tete{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.salle .tete b{flex:1;min-width:0;font-family:var(--banner);font-size:17px;letter-spacing:.1em;
+  color:var(--c)}
+.salle .consigne{font-size:12.5px;line-height:1.55;opacity:.78;margin:0 0 12px;min-height:38px}
+.salle .consigne em{font-style:normal;color:var(--projo)}
+/* La zone que `geste.js` remplit. Il y pose ses propres formes — on ne lui
+   donne qu'une surface et on ne touche à rien de ce qu'il y met. */
+#zone{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
+
+.note{text-align:center;padding:6px 0 2px;min-height:96px}
+.note .n{font-family:var(--banner);font-size:46px;line-height:1;color:var(--c)}
+.note .n small{font-size:15px;opacity:.45}
+.note .q{font-size:12px;letter-spacing:.18em;opacity:.6;margin-top:5px}
+.note .r{font-size:11.5px;opacity:.55;line-height:1.5;margin-top:7px}
+.note .record{color:var(--projo);font-family:var(--banner);letter-spacing:.14em;font-size:11px;
+  margin-top:6px}
+.apres{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.attend{text-align:center;font-size:12px;letter-spacing:.18em;opacity:.45;padding:10px 0}
+
+@media (prefers-reduced-motion:reduce){ .g{transition:none} }
+</style>
+</head>
+<body>
+<main id="app">
+  <h1 class="tbf-titre">LA RÉPÉTITION<small>ESSAYER SANS RIEN RISQUER</small></h1>
+
+  <p class="dit">Les vingt gestes du jeu, à l'essai. <b>Rien ne compte ici</b> —
+    ni ferveur, ni écharpes, ni classement. Et rien ne t'aide non plus : aucun
+    Fanzzy, aucun équipement. C'est ta main, et rien d'autre.</p>
+
+  <div id="vue"><div class="tbf-spin"></div></div>
+  <div style="height:22px"></div>
+</main>
+
+<!-- La salle, hors de la colonne : un geste se joue plein cadre, comme en
+     partie. C'est la même surface et le même lecteur — s'entraîner sur un pavé
+     plus petit que celui du duel n'entraînerait à rien. -->
+<div class="salle" id="salle" role="dialog" aria-modal="true" aria-label="Un geste à l’essai">
+  <div class="tete">
+    <button class="tbf-plaque" id="sortir">← RETOUR</button>
+    <b id="titre">—</b>
+  </div>
+  <p class="consigne" id="consigne"></p>
+  <div id="zone"></div>
+  <div class="note" id="resultat"><div class="attend">PRÊT ?</div></div>
+  <div class="apres" id="apres" style="display:none">
+    <button class="tbf-plaque tbf-bloc" id="encore">RECOMMENCER</button>
+    <button class="tbf-plaque tbf-bloc" id="autre">UN AUTRE GESTE</button>
+  </div>
+</div>
+
+<script src="/fx.js" defer></script>
+<script src="/geste.js" defer></script>
+<script src="/menu.js" defer></script>
+<script src="/nav.js" defer></script>
+<script>
+/* La salle de répétition.
+ *
+ * ## Ce qu'elle ne fait pas
+ *
+ * **Elle ne note rien elle-même.** Le geste est joué par `geste.js` — le même
+ * lecteur qu'en duel et au Virage — et sa note vient du serveur, par le même
+ * moteur. Une salle qui aurait son propre barème aurait fini par enseigner un
+ * geste qui n'existe pas ailleurs, et c'est la pire chose qu'un entraînement
+ * puisse faire.
+ *
+ * **Elle ne calcule aucune durée**, non plus. La configuration vient de
+ * `/api/repetition`, comme `you.gestes` vient de l'état en partie. C'est la
+ * règle écrite en tête de `geste.js`, et elle a déjà été payée une fois.
+ *
+ * ## Le meilleur score
+ *
+ * Dans le navigateur, et nulle part ailleurs. Il ne vaut rien, ne se compare à
+ * personne et ne s'écrit sur aucun classement : c'est un repère qu'on se donne
+ * à soi-même entre deux essais. Perdu en changeant d'appareil, et ce n'est pas
+ * grave — c'est de l'agrément, pas de l'état, la règle que ce dépôt s'impose
+ * pour tout ce qui vit côté navigateur. Chaque lecture et chaque écriture est
+ * donc sous garde : en navigation privée, la salle marche sans mémoire.
+ */
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
+    (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+
+  const MEMOIRE = 'tbf.repetition';
+  let config = null;      // { gestes, motif, liste }
+  let courant = null;     // le geste à l'essai
+  let occupe = false;
+
+  /* Les familles, dans l'ordre où on les rencontre. Le regroupement est celui
+     des couleurs de `geste.js` : il n'y a pas deux classements des gestes, il y
+     en a un, et il est déjà dessiné en partie. */
+  const FAMILLES = [
+    ['LE RYTHME', ['tempo', 'contretemps', 'echo', 'crescendo']],
+    ['LA VITESSE', ['mash', 'salves']],
+    ['LA TENUE', ['hold', 'relance', 'tenue', 'retenue']],
+    ['LA MÉMOIRE', ['memoire', 'mosaique', 'capo']],
+    ['LE TRACÉ', ['tifo', 'echarpe']],
+    ['LE COUP D’ŒIL', ['tri', 'compte']],
+    ['LA DÉCISION', ['bascule', 'visee', 'jauge']],
+  ];
+
+  const lire = () => {
+    try { return JSON.parse(localStorage.getItem(MEMOIRE) || '{}') || {}; }
+    catch { return {}; }
+  };
+  const ecrire = (o) => {
+    try { localStorage.setItem(MEMOIRE, JSON.stringify(o)); } catch { /* privé */ }
+  };
+
+  /* La consigne porte des `**gras**` — c'est ainsi qu'elle est écrite dans
+     `geste.js`, pour les deux écrans de jeu qui la lisent déjà. On échappe
+     d'abord, on met en valeur ensuite : l'inverse laisserait passer du HTML
+     venu d'une chaîne. */
+  const consigne = (g) => esc(window.TBF_GESTE?.aide?.(g) ?? '')
+    .replace(/\*\*(.+?)\*\*/g, '<em>$1</em>');
+
+  function vue() {
+    const G = window.TBF_GESTE;
+    if (!config || !G) return '<div class="tbf-spin"></div>';
+    const best = lire();
+    const connus = new Set(config.liste);
+
+    return FAMILLES.map(([nom, gestes]) => {
+      const siens = gestes.filter((g) => connus.has(g));
+      if (!siens.length) return '';
+      return `<section class="fam">
+        <h2>${esc(nom)}</h2>
+        <div class="liste">${siens.map((g) => `<button class="g" data-g="${esc(g)}"
+            style="--c:${esc(G.couleur(g))}">
+            <b>${esc(G.label(g))}</b>
+            <span>${consigne(g)}</span>
+            ${best[g] != null
+              ? `<span class="best">TON MEILLEUR · ${Number(best[g]).toFixed(2)}</span>`
+              : '<span class="best" style="opacity:.35">JAMAIS ESSAYÉ</span>'}
+          </button>`).join('')}</div>
+      </section>`;
+    }).join('');
+  }
+
+  function rendre() { $('vue').innerHTML = vue(); }
+
+  /**
+   * Un essai, du début à la fin.
+   *
+   * La configuration est **redemandée à chaque essai**, et non gardée : le
+   * motif change avec elle. Sans ça, l'écho, les visages et la mosaïque
+   * rejoueraient éternellement la même suite, et la salle n'apprendrait qu'à
+   * réciter celle-là.
+   */
+  async function essayer(g) {
+    if (occupe) return;
+    occupe = true;
+    courant = g;
+    const G = window.TBF_GESTE;
+
+    $('salle').style.setProperty('--c', G.couleur(g));
+    $('titre').textContent = G.label(g);
+    $('consigne').innerHTML = consigne(g);
+    $('resultat').innerHTML = '<div class="attend">PRÊT ?</div>';
+    $('apres').style.display = 'none';
+    $('zone').innerHTML = '';
+    $('salle').classList.add('on');
+    $('sortir').focus();
+
+    let d = null;
+    try {
+      d = await fetch('/api/repetition').then((r) => r.json());
+    } catch { /* hors ligne */ }
+    if (!d?.gestes) {
+      $('resultat').innerHTML = '<div class="r">Le serveur n’a pas répondu.<br>'
+        + 'Reviens quand la connexion sera revenue.</div>';
+      occupe = false;
+      return;
+    }
+    config = { ...config, gestes: d.gestes, motif: d.motif };
+
+    let rendu;
+    try {
+      rendu = await G.jouer(g, d.gestes, { zone: $('zone') });
+    } catch {
+      occupe = false;
+      return;
+    }
+    /* Sorti en cours de geste : la promesse se résout quand même, et noter un
+       geste que personne n'a fini afficherait un zéro à quelqu'un qui n'a rien
+       raté. */
+    if (!$('salle').classList.contains('on') || courant !== g) { occupe = false; return; }
+
+    let note = 0;
+    let refuse = null;
+    try {
+      const r = await fetch('/api/repetition', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ geste: g, motif: d.motif, rendu }),
+      }).then((x) => x.json());
+      note = Number(r?.note) || 0;
+      refuse = r?.refuse ?? null;
+    } catch { /* on montre zéro, et on le dit */ }
+
+    montrer(g, note, refuse);
+    occupe = false;
+  }
+
+  /**
+   * Ce que le joueur lit après coup.
+   *
+   * La note d'abord, le mot ensuite. Un nombre seul n'apprend rien — « 0,62 »
+   * ne dit pas s'il faut taper plus tôt ou plus fort — mais c'est lui qui
+   * bouge d'un essai à l'autre, et c'est pour le voir bouger qu'on recommence.
+   */
+  function montrer(g, note, refuse) {
+    const best = lire();
+    const avant = best[g];
+    const record = note > 0 && (avant == null || note > avant + 0.001);
+    if (record) { best[g] = note; ecrire(best); }
+
+    const mot = refuse ? 'REFUSÉ'
+      : note >= 0.95 ? 'PARFAIT'
+      : note >= 0.8 ? 'TRÈS BIEN'
+      : note >= 0.6 ? 'ÇA VIENT'
+      : note >= 0.3 ? 'À REPRENDRE'
+      : 'RATÉ';
+
+    /* Le refus n'est pas une note basse, c'est un geste que le moteur n'a pas
+       accepté — trop vite pour une main, trop régulier pour un humain. On le
+       dit, parce qu'un joueur qui obtient zéro sans savoir pourquoi croit que
+       l'écran est cassé. */
+    $('resultat').innerHTML = `<div class="n">${note.toFixed(2)}<small>/1</small></div>
+      <div class="q">${mot}</div>
+      ${refuse ? '<div class="r">Le moteur n’a pas accepté ce geste : trop rapide, '
+        + 'ou trop régulier pour une main. En partie, il ne compterait pas non plus.</div>' : ''}
+      ${record ? '<div class="record">★ TON MEILLEUR</div>'
+        : avant != null ? `<div class="r">Ton meilleur : ${Number(avant).toFixed(2)}</div>` : ''}`;
+    $('apres').style.display = 'grid';
+    $('encore').focus();
+
+    if (record && note >= 0.6) {
+      window.FX?.son?.('parfait');
+      const r = $('resultat').getBoundingClientRect();
+      window.FX?.particules?.({ x: r.left + r.width / 2, y: r.top + 30, n: 20,
+        couleurs: [window.TBF_GESTE.couleur(g), '#F5C33B'], distance: 100 });
+    }
+  }
+
+  function sortir() {
+    $('salle').classList.remove('on');
+    $('zone').innerHTML = '';
+    courant = null;
+    occupe = false;
+    rendre();
+  }
+
+  $('vue').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-g]');
+    if (b) essayer(b.dataset.g);
+  });
+  $('sortir').onclick = sortir;
+  $('autre').onclick = sortir;
+  $('encore').onclick = () => { const g = courant; sortir(); essayer(g); };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && $('salle').classList.contains('on')) sortir();
+  });
+
+  (async () => {
+    /* **On attend `geste.js`.** Ce bloc-ci est en ligne, donc il s'exécute
+       pendant l'analyse du document — avant les scripts `defer`, qui ne partent
+       qu'une fois la page lue. En pratique l'appel réseau ci-dessous laisse
+       largement le temps aux seconds d'arriver, et c'est précisément le genre
+       de « en pratique » qui casse le jour où la réponse vient d'un cache.
+       Le lecteur de gestes est la seule chose sans laquelle cette page n'a
+       aucun sens : on l'attend pour de bon. */
+    if (!window.TBF_GESTE) {
+      await new Promise((r) => document.addEventListener('DOMContentLoaded', r, { once: true }));
+    }
+
+    try {
+      config = await fetch('/api/repetition').then((r) => r.json());
+    } catch { config = null; }
+    if (!config?.liste?.length) {
+      $('vue').innerHTML = '<div class="dit">Les gestes n’ont pas pu être chargés.<br>'
+        + 'Reviens quand la connexion sera revenue.</div>';
+      return;
+    }
+    rendre();
+  })();
+})();
+</script>
+<script src="/pwa.js" defer></script>
+</body>
+</html>

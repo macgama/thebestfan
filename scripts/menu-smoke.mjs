@@ -135,7 +135,7 @@ check('les rubriques y sont aussi',
    avec lui par construction, et laisserait passer une entrée supprimée. */
 const ATTENDUS = ['/', '/virage', '/duel-nvn', '/kop', '/deck', '/boosters', '/boutique',
   '/fanzzy', '/carnet', '/amis', '/matchs', '/equipes', '/teletext', '/classement',
-  '/profil', '/compte', '/aide'];
+  '/profil', '/compte', '/aide', '/repetition'];
 const manquants = ATTENDUS.filter((h) => !accueil.liens.includes(h));
 check('toutes les destinations du jeu y sont', manquants.length === 0);
 if (manquants.length) console.log('    manquent :', manquants.join(' '));

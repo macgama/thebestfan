@@ -125,6 +125,16 @@
     letter-spacing:.18em;opacity:.75;margin-top:9px;font-weight:400}
   .fx-nombre{position:fixed;z-index:92;font-family:"Oswald","Arial Narrow",Impact,sans-serif;
     font-size:22px;pointer-events:none;text-shadow:0 3px 14px rgba(0,0,0,.9)}
+  /* Le gain qu'on vient de faire soi-même. Le halo double l'ombre portée : le
+     nombre passe par-dessus une corde qui bouge et une foule qui s'anime, et
+     une ombre seule ne l'en détache pas. */
+  .fx-points{position:fixed;z-index:93;pointer-events:none;text-align:center;
+    filter:drop-shadow(0 0 16px currentColor)}
+  .fx-points b{display:block;font-family:"Oswald","Arial Narrow",Impact,sans-serif;
+    font-size:46px;line-height:1;font-weight:700;text-shadow:0 4px 18px rgba(0,0,0,.95)}
+  .fx-points span{display:block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:10px;
+    letter-spacing:.24em;font-weight:600;margin-top:3px;opacity:.85;
+    text-shadow:0 2px 8px rgba(0,0,0,.95)}
   .fx-onde{position:fixed;border-radius:50%;pointer-events:none;z-index:89;border:2px solid;
     opacity:0}
   .fx-onde.go{animation:fxonde .85s cubic-bezier(.15,.7,.3,1)}
@@ -529,6 +539,50 @@
       if (Math.abs(valeur) > 40) {
         particules({ x, y, n: 14, distance: 90, taille: 4,
           couleurs: [pour ? COULEURS.or : COULEURS.bleu] });
+      }
+    },
+
+    /**
+     * Ce que **mon** geste vient de rapporter, en grand.
+     *
+     * `poussee` reste ce qu'elle était : un nombre de vingt-deux pixels qui
+     * monte et s'efface, et c'est très bien pour la poussée d'en face — on doit
+     * la voir sans qu'elle prenne l'écran.
+     *
+     * Le sien, non. Un joueur qui vient de tenir une jauge pendant huit
+     * secondes regardait un chiffre de la taille d'une étiquette passer au
+     * milieu d'une corde qui bouge, d'une foule qui s'anime et d'un fil de
+     * match qui défile. Il ne voyait pas ce qu'il avait gagné — donc il ne
+     * pouvait pas savoir si son geste avait valu la peine, ce qui est la seule
+     * chose qu'un mini-jeu doit lui apprendre.
+     *
+     * Trois différences, et chacune sert : **deux fois plus gros**, un **mot
+     * dessous** qui dit de quoi il s'agit, et une **montée plus lente** — un
+     * nombre qui s'efface en une seconde se lit au jugé, pas en entier.
+     */
+    /* `ou` est **un élément ou un point**. Le Virage a un nœud à l'écran et le
+       passe tel quel ; le duel calcule la position de la corde lui-même et n'a
+       qu'un couple de coordonnées. Exiger la même forme des deux aurait obligé
+       l'un à fabriquer un élément factice pour se faire mesurer. */
+    points(valeur, ou, { couleur = COULEURS.or, quoi = '', signe = true } = {}) {
+      const { x, y } = (ou && typeof ou.x === 'number') ? ou : centre(ou);
+      const v = Math.round(valeur);
+      const n = document.createElement('div');
+      n.className = 'fx-points';
+      n.style.cssText = `left:${x}px;top:${y}px;color:${couleur}`;
+      n.innerHTML = `<b>${signe && v > 0 ? '+' : ''}${v}</b>`
+        + (quoi ? `<span>${String(quoi).replace(/[<>&]/g, '')}</span>` : '');
+      document.body.appendChild(n);
+      n.animate([
+        { transform: 'translate(-50%,-50%) scale(.6)', opacity: 0 },
+        { transform: 'translate(-50%,-85%) scale(1.15)', opacity: 1, offset: .22 },
+        { transform: 'translate(-50%,-105%) scale(1)', opacity: 1, offset: .68 },
+        { transform: 'translate(-50%,-165%) scale(.96)', opacity: 0 },
+      ], { duration: 1650, easing: 'cubic-bezier(.16,.9,.25,1)' }).onfinish = () => n.remove();
+      /* Le seuil est celui de `poussee`, et il est volontairement le même : une
+         grosse poussée fait des étincelles, qu'elle soit à soi ou pas. */
+      if (Math.abs(v) > 40) {
+        particules({ x, y, n: 16, distance: 100, taille: 4, couleurs: [couleur] });
       }
     },
 

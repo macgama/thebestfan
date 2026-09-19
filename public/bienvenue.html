@@ -156,20 +156,37 @@ input:focus{outline:none;border-color:var(--projo)}
 .face.front.repli{border:2px solid var(--c);
   background:linear-gradient(155deg,#1C222B,#0C1015);display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:9px;padding:20px;text-align:center}
-.face.front .k{font-family:var(--banner);font-size:10px;letter-spacing:.22em;color:var(--c)}
-.face.front .t{font-family:var(--banner);font-size:20px;line-height:1.15}
-.face.front .d{font-size:11.5px;opacity:.6;line-height:1.5}
-.face.front .big{font-family:var(--banner);font-size:42px;color:var(--c)}
+/* **Tout ce qui suit est au repli, et le `.repli` n'est pas décoratif.**
+
+   Ces six règles habillaient la tuile faite main, du temps où le paquet de
+   bienvenue dessinait ses propres cartes. Quand le rendu est passé au vrai
+   `cardHTML`, la bordure et le dégradé ont été rescopés — mais pas celles-ci,
+   et deux d'entre elles portent des noms que la **vraie** carte emploie :
+   `illu` et `objet`, les images de `cartes.js`.
+
+   Avec trois classes contre deux, `.face.front .illu` battait
+   `.illuwrap .illu` de `cartes.css`. L'illustration d'une carte d'action, d'une
+   pièce d'équipement ou d'une poignée d'écharpes cessait donc de remplir son
+   cadre pour se poser en timbre de cent cinquante pixels dans un coin — sur le
+   **premier paquet qu'un joueur ouvre**, et sur celui-là seulement.
+
+   Les quatre autres ne heurtaient rien : `k`, `t`, `d` et `big` n'existent que
+   dans le repli. Elles sont rescopées quand même — la prochaine classe ajoutée
+   à `cardHTML` n'aura pas à deviner laquelle des deux moitiés la concerne. */
+.face.front.repli .k{font-family:var(--banner);font-size:10px;letter-spacing:.22em;color:var(--c)}
+.face.front.repli .t{font-family:var(--banner);font-size:20px;line-height:1.15}
+.face.front.repli .d{font-size:11.5px;opacity:.6;line-height:1.5}
+.face.front.repli .big{font-family:var(--banner);font-size:42px;color:var(--c)}
 /* L'objet d'une pièce d'équipement. Détouré : il n'a pas de cadre à lui, il
    pose juste son ombre sur la carte. */
-.face.front .objet{width:112px;height:112px;object-fit:contain;
+.face.front.repli .objet{width:112px;height:112px;object-fit:contain;
   filter:drop-shadow(0 4px 10px rgba(0,0,0,.7))}
 /* Le Fanzzy, la carte d'action, les écharpes. Leurs bibliothèques nomment
    leur image 'illu' — c'est la classe qu'elles emploient partout ailleurs, et
    on ne la renomme pas ici pour la seule commodité d'une feuille de style.
    Plus grande que l'objet : un supporter est un personnage, pas un accessoire,
    et c'est la première fois qu'on le voit. */
-.face.front .illu{width:150px;height:150px;object-fit:contain;border-radius:10px;
+.face.front.repli .illu{width:150px;height:150px;object-fit:contain;border-radius:10px;
   filter:drop-shadow(0 6px 14px rgba(0,0,0,.75))}
 .newtag{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-family:var(--banner);
   font-size:11px;letter-spacing:.2em;color:var(--projo)}

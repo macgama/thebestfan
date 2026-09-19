@@ -106,6 +106,7 @@ export const ETAPES = [
       + 'ta propre tribune. Et quand un vrai but tombe, la corde se secoue.',
     ou: '/virage',
     bouton: 'Entrer dans un virage',
+    repeter: 'Répéter les gestes d’abord',
   },
   {
     cle: 'duel',
@@ -121,6 +122,7 @@ export const ETAPES = [
       + 'pas vécue.',
     ou: '/duel-nvn',
     bouton: 'Chercher un duel',
+    repeter: 'Répéter les gestes d’abord',
   },
 ];
 
@@ -247,6 +249,11 @@ const RUBRIQUES = [
           + 'déduit de la rencontre, les deux camps y ont exactement les mêmes '
           + 'règles, et la même rencontre rejouée donne le même lieu. On ne peut '
           + 'pas acheter un avantage de terrain.'],
+      ['Je rate toujours le même geste. Je peux m’entraîner ?',
+        () => 'Oui : La répétition, dans le menu. Les vingt gestes du jeu y sont à '
+          + 'l’essai, autant de fois que tu veux. Rien n’y compte — ni ferveur, ni '
+          + 'écharpes, ni classement — et rien ne t’y aide non plus : aucun Fanzzy, '
+          + 'aucun équipement. C’est ta main, et le même moteur qui te note en duel.'],
       ['Que se passe-t-il quand un vrai but est marqué ?',
         () => 'La corde se secoue, et une fenêtre s’ouvre où tout compte double '
           + 'pendant une minute. Le souffle offert ne va qu’à ceux qui suivent le '
@@ -303,6 +310,7 @@ export function faq() {
 export function etapes() {
   return ETAPES.map((e) => ({
     cle: e.cle, titre: e.titre, visuel: e.visuel, ou: e.ou, bouton: e.bouton,
+    repeter: e.repeter ?? null,
     quoi: rendre(e.quoi), pourquoi: rendre(e.pourquoi),
   }));
 }

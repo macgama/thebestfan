@@ -203,6 +203,7 @@ const ECRANS = [
   ['/teletext', 'télétexte'],
   ['/bienvenue', 'inscription'],
   ['/aide', 'aide'],
+  ['/repetition', 'répétition'],
   ['/diagnostic', 'diagnostic'],
   ['/admin', 'administration'],
 ];
@@ -815,6 +816,160 @@ for (const [route, nom] of tousLesEcrans) {
   await page.close();
 }
 
+
+
+/* ================== le paquet de bienvenue montre les cartes du jeu
+
+   La doctrine est écrite dans `carteDuPaquet` : le premier paquet n'a pas
+   « la même apparence » que le kiosque, il a **le même code**. Ce qui ne l'y
+   obligeait pas, c'est la feuille de style de la page.
+
+   `bienvenue.html` habillait autrefois ses propres tuiles, et deux de ces
+   règles portaient des noms que la vraie carte emploie : `illu` et `objet`,
+   les images de `cartes.js`. Avec trois classes contre deux, `.face.front
+   .illu` battait `.illuwrap .illu` — l'illustration d'une carte d'action,
+   d'une pièce d'équipement ou d'une poignée d'écharpes cessait de remplir son
+   cadre pour se poser en timbre de cent cinquante pixels dans un coin.
+
+   Personne ne l'a vu en test : le tour ouvre `/bienvenue` mais n'y retourne
+   aucune carte, et aucune suite ne mesurait une carte **sur cette page-là**.
+   Le défaut n'était visible que sur le premier paquet d'un vrai joueur, sur
+   l'écran dont le code dit lui-même qu'il est « celui dont on se souvient ».
+
+   On mesure donc la carte là où elle se pose. Pas une capture d'écran : le
+   rapport entre l'image et le cadre qui la porte — c'est lui qui vaut un,
+   quelle que soit la taille du paquet, du téléphone ou de la carte. */
+{
+  const page = await nav.newPage();
+  await page.setViewport({ width: 390, height: 844 });
+
+  /* **Le compte du banc est déjà inscrit**, et `/bienvenue` renvoie alors à
+     l'accueil — où le catalogue n'est pas chargé. Sans cette réponse, la mesure
+     ci-dessous ne portait pas sur la page de bienvenue : elle attendait
+     `TBF_CARTES` sur l'accueil, ne le trouvait jamais, et déclarait rouge un
+     écran qu'elle n'avait pas ouvert. C'est la même précaution que le bloc
+     voisin, pour la même raison. */
+  await page.setRequestInterception(true);
+  page.on('request', (r) => {
+    if (r.url().includes('/api/me/state')) {
+      r.respond({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ onboarded: false, slots: { used: 0, max: 2 } }) });
+      return;
+    }
+    r.continue();
+  });
+
+  await page.goto(`${base}/bienvenue`, { waitUntil: 'networkidle0' });
+
+  const pret = await jusqua(async () =>
+    page.evaluate(() => Boolean(window.TBF_CARTES?.cardHTML)));
+  check('la page de bienvenue charge les cartes du jeu', pret);
+
+  if (pret) {
+    /* Les trois sortes qui ne sont pas des supporters — ce sont elles que la
+       règle atteignait. On les pose dans la **vraie** coque du révélateur :
+       c'est la cascade de cette page qu'on éprouve, pas celle de cartes.css. */
+    const mesures = await page.evaluate(() => {
+      const V = window.TBF_CARTES;
+      const sortes = [
+        ['action', { id: 'a-arbitre', nom: 'Arbitre', type: 'pyro', rar: 'commune',
+          stage: 1, action: true }],
+        ['équipement', { id: 'jumelles', nom: 'Jumelles', type: 'depl', rar: 'commune',
+          stage: 1, stuff: true }],
+        /* `echarpes` et non `scarves` : c'est le drapeau que `dessinDeCarte`
+           regarde. Le second est le nom que le serveur emploie dans le paquet,
+           et `carteDuPaquet` traduit de l'un à l'autre — s'être trompé ici
+           aurait fait retomber la carte sur le bonhomme procédural, donc passer
+           le contrôle sans rien éprouver. */
+        ['écharpes', { id: 'echarpes', nom: '87 écharpes', type: 'fide', rar: 'commune',
+          stage: 1, echarpes: true }],
+      ];
+      /* **Posé sur le corps, pas dans la scène.** Les scènes de l'inscription
+         sont masquées tant qu'on n'y est pas, et une carte dans un conteneur
+         masqué n'a aucune dimension : la mesure rendait zéro sur zéro, ce qui
+         ressemble à un défaut et n'en est pas un.
+
+         La cascade, elle, ne dépend pas de l'endroit : `.face.front .illu` vaut
+         partout où se trouve un `.face.front`, et c'est exactement la règle
+         qu'on vient éprouver. On lui donne donc la largeur qu'a le révélateur —
+         `min(70%, 250px)` sur un écran de 390 — et rien d'autre. */
+      const hote = document.createElement('div');
+      hote.id = 'banc-paquet';
+      hote.style.cssText = 'position:fixed;left:0;top:0;width:250px;z-index:-1';
+      hote.innerHTML = sortes.map(([, f]) => `<div class="reveal"><div class="flip"
+        ><div class="face front">${V.cardHTML(f)}</div></div></div>`).join('');
+      document.body.appendChild(hote);
+      /* Les faces vivent retournées, dos au lecteur : sans annuler la rotation
+         et la perspective, tout ce qu'on mesurerait serait un raccourci. */
+      for (const el of hote.querySelectorAll('.flip, .face')) el.style.transform = 'none';
+      for (const el of hote.querySelectorAll('.reveal')) {
+        el.style.position = 'static'; el.style.transform = 'none';
+      }
+
+      /**
+       * La même carte à deux largeurs.
+       *
+       * **On ne peut pas juger un rapport isolé**, et l'avoir essayé a coûté
+       * deux faux rouges : une illustration de carte d'action remplit son cadre
+       * à 100 %, un objet d'équipement détouré y flotte à 84 % — c'est écrit
+       * dans `cartes.css` et c'est voulu. Un seuil unique déclare donc soit
+       * l'objet fautif, soit le timbre correct.
+       *
+       * Ce qui distingue vraiment les deux, c'est **comment le rapport se
+       * comporte quand la carte grandit**. Une taille en pourcentage ne bouge
+       * pas ; une taille en pixels — les 150 px de la règle fautive — fond à
+       * mesure que le cadre s'élargit. On mesure donc deux fois, et on regarde
+       * l'écart.
+       */
+      const lire = () => sortes.map(([quoi], i) => {
+        const carte = hote.querySelectorAll('.face.front')[i];
+        const cadre = carte.querySelector('.illuwrap');
+        const img = carte.querySelector('.illu');
+        if (!cadre || !img) return { quoi, trouve: false };
+        const c = cadre.getBoundingClientRect();
+        const m = img.getBoundingClientRect();
+        return { quoi, trouve: true,
+          large: c.width ? m.width / c.width : 0,
+          haut: c.height ? m.height / c.height : 0,
+          cadre: Math.round(c.width) };
+      });
+
+      const etroit = lire();
+      hote.style.width = '440px';
+      const large = lire();
+      return etroit.map((e, i) => ({ ...e,
+        etroitPx: e.cadre, largePx: large[i].cadre,
+        derive: Math.max(Math.abs(e.large - large[i].large),
+          Math.abs(e.haut - large[i].haut)) }));
+    });
+
+    for (const m of mesures) {
+      check(`la carte « ${m.quoi} » porte son illustration`, m.trouve
+        || (console.log('        pas d’illustration dans la carte'), false));
+      if (!m.trouve) continue;
+      /* **Le rapport ne bouge pas quand la carte grandit.** C'est la signature
+         d'une taille exprimée en pourcentage, donc d'une illustration tenue par
+         `cartes.css` ; une règle de page en pixels, elle, garde ses 150 px et
+         son rapport fond. Le défaut d'origine passait de 0,86 à 0,51 entre les
+         deux largeurs mesurées ici. Trois centièmes de tolérance : c'est
+         l'arrondi du navigateur, pas une marge de confort. */
+      check(`et son cadrage suit la carte (${m.large.toFixed(2)} × ${m.haut.toFixed(2)}`
+        + ` de ${m.etroitPx} à ${m.largePx}px, dérive ${m.derive.toFixed(2)})`,
+        m.derive <= 0.03
+        || (console.log('        une règle en pixels bat celle de cartes.css'), false));
+
+      /* Et elle occupe vraiment son cadre. Le seuil est bas — un objet détouré
+         y flotte à 84 %, et c'est voulu — mais il refuse le timbre : une
+         illustration qui n'occuperait pas la moitié de son cadre ne serait plus
+         une illustration de carte. */
+      check(`et elle n’est pas un timbre (${(m.large * m.haut).toFixed(2)} du cadre)`,
+        m.large >= 0.6 && m.haut >= 0.6);
+    }
+
+    await page.evaluate(() => document.getElementById('banc-paquet')?.remove());
+  }
+  await page.close();
+}
 
 if (process.env.CAPTURE) console.log(`\n   captures dans ${tmpdir()}`);
 

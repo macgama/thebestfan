@@ -67,6 +67,11 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    tentation serait de la rallumer un jour « pour ceux qui veulent y retourner ».
    Une étape faite est un résumé, pas une invitation — et le menu mène partout. */
 .pas .aller{margin:11px 15px 14px;display:block;width:calc(100% - 30px)}
+/* Les deux étapes qui demandent un geste proposent de le répéter avant. Un
+   lien sous la plaque, et pas une seconde plaque : c'est un détour offert, pas
+   une marche à monter — l'étape se coche au Virage ou en duel, jamais ici. */
+.pas .repet{display:block;margin:-6px 15px 14px;font-size:11px;letter-spacing:.06em;
+  color:var(--projo);opacity:.72;text-decoration:none}
 
 /* Le visuel de gauche. Carré, pour qu'une carte, un dos de booster et un
    emblème dessiné se posent au même endroit sans faire tressauter la ligne. */
@@ -234,6 +239,8 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
       </div>
       ${e.fait ? '' : `<a class="tbf-plaque tbf-bloc aller" href="${esc(e.ou)}"
         >${esc(e.bouton).toUpperCase()}</a>`}
+      ${e.fait || !e.repeter ? '' : `<a class="repet" href="/repetition"
+        >${esc(e.repeter)} ›</a>`}
     </article>`;
 
   function vuePas() {

@@ -130,6 +130,11 @@ h2 i{font-style:normal;opacity:.7}
 .avert b{display:block;font-family:var(--banner);font-size:12.5px;letter-spacing:.06em;margin-bottom:5px;
   color:var(--projo)}
 .avert a{color:var(--projo)}
+/* Le renvoi vers la répétition. Discret exprès — il ne se met pas sur le
+   chemin de quelqu'un qui vient chercher un duel. */
+.repet{margin:0 14px 12px;font-size:11.5px;line-height:1.5;opacity:.62}
+.repet a{color:var(--projo);text-decoration:none}
+.repet a b{font-weight:600}
 
 /* --------------------------------------------------------- le duel */
 
@@ -1054,6 +1059,19 @@ function rendrePrepa(sansDeck, formats) {
       <a href="/deck">Construire mon deck</a></div>`);
   }
 
+  /* **Le geste se répète avant, jamais pendant.**
+
+     Un duel dure cinq minutes et chaque carte y coûte du souffle : c'est le
+     plus mauvais endroit du jeu pour découvrir ce que « la jauge tient puis
+     elle saute » veut dire. La salle de répétition les joue tous les vingt,
+     sans mise et sans Fanzzy — et c'est ici qu'on y pense, sur l'écran où l'on
+     attend, pas dans un menu qu'on n'ouvre pas quand on cherche un adversaire.
+
+     Une ligne, pas une plaque : ce n'est pas une étape à franchir pour entrer
+     en duel, et rien ne doit le laisser croire. */
+  out.push(`<p class="repet"><a href="/repetition">Un geste te résiste ?
+    <b>Va le répéter</b></a> — rien n'y compte, et rien n'y aide non plus.</p>`);
+
   out.push(`<h2>LE FORMAT <i>· la file est par format et par match</i></h2>`);
   /* **La prime du format, annoncée au moment du choix.** Un 2v2 demande de
      réunir quatre personnes au lieu de deux : il paie donc un peu plus, et
@@ -1609,13 +1627,29 @@ function raconter(e) {
       break;
     }
 
+    /**
+     * Une poussée arrive au nœud.
+     *
+     * **La sienne est grosse, celle d'en face reste petite** — et ce n'est pas
+     * du favoritisme, c'est ce qui les distingue. Les deux montaient du même
+     * nœud, à vingt-deux pixels, à vingt-six pixels d'écart et dans deux
+     * couleurs : au milieu d'un duel, on ne lisait ni laquelle était la sienne,
+     * ni combien elle valait. Un joueur qui vient de réussir une visée doit
+     * voir ce que ça lui a rapporté ; ce que l'autre encaisse, il lui suffit de
+     * le remarquer.
+     *
+     * Le seuil de six reste : sous six, une poussée est du bruit de fond que
+     * personne n'a décidé, et l'annoncer en quarante-six pixels serait mentir
+     * sur son importance.
+     */
     case 'push': {
-      // Le chiffre monte du nœud, dans la couleur du camp qui pousse.
       if ((e.valeur ?? 0) < 6) break;
       const p = pointCorde();
-      FX?.nombre?.(`+${e.valeur}`, {
-        x: p.x + (pour ? 26 : -26), y: p.y, couleur: pour ? OR : BLEU, signe: false,
-      });
+      if (pour) {
+        FX?.points?.(e.valeur, p, { couleur: OR, quoi: 'POUSSÉE' });
+      } else {
+        FX?.nombre?.(`+${e.valeur}`, { x: p.x - 26, y: p.y, couleur: BLEU, signe: false });
+      }
       FX?.son?.(pour ? 'pousse' : 'contre');
       break;
     }
