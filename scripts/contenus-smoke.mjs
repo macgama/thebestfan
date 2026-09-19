@@ -24,11 +24,11 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createContenus, tous, publies, oublier, FAMILLES }
+import { createContenus, tous, publies, ouverts, oublier, FAMILLES }
   from '../src/server/contenus/index.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
-import { STADES } from '../src/shared/stades.js';
+import { STADES, STADE_DEFAUT, stadeDeLaRencontre } from '../src/shared/stades.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -72,9 +72,13 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 /* `admin.sql` avant `saisons.sql` : la reprise de la saison 1 lit
    `reglages.series_actives`, et cette table vient de admin.sql. Sans elle, le
    fichier des saisons leve sur une table absente — et le message ne dit pas
-   laquelle manque. */
-for (const f of ['auth.sql', 'souvenirs.sql', 'fanzzy.sql', 'admin.sql', 'saisons.sql',
-  'contenus.sql']) {
+   laquelle manque.
+
+   `inventaire.sql` et `deck.sql` sont là pour la dernière section : elle
+   éprouve les tirages eux-mêmes, et un tirage a besoin d'un joueur qui possède
+   des choses. */
+for (const f of ['auth.sql', 'souvenirs.sql', 'fanzzy.sql', 'inventaire.sql', 'deck.sql',
+  'admin.sql', 'saisons.sql', 'contenus.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
@@ -178,6 +182,132 @@ const contenus = createContenus({ pool });
     `SELECT COUNT(*) AS n FROM information_schema.columns
       WHERE table_schema = DATABASE() AND table_name = 'saisons' AND column_name = 'stades'`);
   check('la table des saisons porte une colonne pour les stades', Number(c.n) === 1);
+}
+
+
+/* =========================================== ce que `publie` change vraiment
+
+   C'est la section qui manquait, et son absence était le défaut : `publier`
+   écrivait, `publies` rendait, et **personne n'appelait `publies`**. Une saison
+   pouvait fermer les dix stades, le Virage continuait de les tirer. Tout ce qui
+   précède était donc vrai et sans effet — le pire état pour un contrôle, parce
+   qu'il est vert.
+
+   On éprouve ici les **tirages**, un par un, en fermant un contenu et en
+   regardant s'il cesse d'être distribué. Six endroits distribuent : le booster,
+   le paquet de bienvenue, la boutique, les communes offertes au deck, et les
+   deux moteurs qui choisissent le stade d'une rencontre. */
+
+/* ------------------------------------------------- le stade d'une rencontre
+
+   Deux cents graines et non une : le lieu se tire sur l'identifiant du match,
+   et un seul essai pourrait tomber à côté du stade fermé sans rien prouver. */
+{
+  const ferme = STADES.find((s) => s.id !== STADE_DEFAUT && s.id.startsWith('rp-'))
+    ?? STADES.at(-1);
+  await contenus.publier('stade', [ferme.id], false);
+
+  const tires = new Set();
+  for (let g = 0; g < 200; g++) tires.add(stadeDeLaRencontre([], g, ouverts('stade')).id);
+  check(`un stade fermé ne se tire plus (${tires.size} lieux sur ${STADES.length - 1})`,
+    !tires.has(ferme.id)
+    || (console.log('        il est sorti quand même :', ferme.id), false));
+
+  /* Et les autres continuent. Un filtre qui laisserait tout passer et un filtre
+     qui ne laisserait rien passer échouent tous deux au contrôle précédent —
+     non, le second le passerait. D'où celui-ci. */
+  check('et les autres se tirent toujours', tires.size >= 3
+    || (console.log('        lieux vus :', [...tires].join(', ')), false));
+
+  /* **Le stade de départ échappe à la fermeture.** Il est le repli de tous les
+     replis : une saison qui le fermerait par mégarde laisserait les rencontres
+     sans aucun lieu où se tenir. */
+  await contenus.publier('stade', [STADE_DEFAUT], false);
+  const listeFermee = ouverts('stade');
+  check('le stade de départ se ferme comme les autres, en base',
+    !listeFermee.has(STADE_DEFAUT));
+  const vus = new Set();
+  for (let g = 0; g < 200; g++) vus.add(stadeDeLaRencontre([], g, listeFermee).id);
+  check('mais il se tire quand même', vus.has(STADE_DEFAUT)
+    || (console.log('        lieux vus :', vus.size), false));
+  check('et il reste le repli quand plus rien n’est ouvert',
+    stadeDeLaRencontre([], 3, new Set()).id === STADE_DEFAUT);
+  await contenus.publier('stade', [STADE_DEFAUT, ferme.id], true);
+}
+
+/* ------------------------------------- les communes offertes au deck
+
+   **C'est la fuite qui était la plus large**, et la moins visible : c'est le
+   seul endroit du jeu où une carte d'action arrive dans la main d'un joueur
+   sans avoir été tirée. Une commune ajoutée au code était jouable par tout le
+   monde à la livraison, avant la saison censée l'annoncer.
+
+   Le contrôle passe par `possessions` — la vraie fonction, pas une copie de sa
+   logique. Une suite qui réécrirait la règle qu'elle éprouve ne vérifierait que
+   sa propre copie. */
+{
+  const { createDecks } = await import('../src/server/deck/index.js');
+  const decks = createDecks({ pool, requireAuth: (_q, _s, n) => n() });
+
+  /* L'identifiant d'un joueur est son `public_id`, pas la clé auto-incrémentée :
+     c'est lui que portent `user_wallet`, `user_stuff` et tout le reste. */
+  const userId = `ct-${Date.now()}`;
+  await pool.query(
+    `INSERT INTO users (public_id, email, pseudo, password_hash) VALUES (?, ?, ?, 'x')`,
+    [userId, `contenus-${Date.now()}@test`, 'Tirage']);
+  await pool.query(`INSERT INTO user_wallet (user_id) VALUES (?)`, [userId]);
+
+  const commune = ACTIONS.find((a) => a.rar === 'commune');
+  const avant = await decks.possessions(userId);
+  check(`une commune est offerte à tous (${commune.id})`, avant.actions.has(commune.id));
+
+  await contenus.publier('action', [commune.id], false);
+  const apres = await decks.possessions(userId);
+  check('et une commune fermée ne l’est plus', !apres.actions.has(commune.id));
+  check('les autres communes le restent', apres.actions.size === avant.actions.size - 1
+    || (console.log('        avant', avant.actions.size, '· après', apres.actions.size), false));
+
+  /* **Fermer, c'est cesser de distribuer, pas confisquer.** C'est la règle des
+     séries, mot pour mot, et c'est celle qu'on casse en filtrant trop large :
+     la carte que ce joueur a réellement gagnée reste à lui, fermée ou non. Sans
+     ce contrôle, une saison remise en brouillon viderait des decks. */
+  await pool.query(
+    `UPDATE user_wallet SET action_cards = JSON_ARRAY(?) WHERE user_id = ?`,
+    [commune.id, userId]);
+  const gagnee = await decks.possessions(userId);
+  check('mais celle qu’un joueur a gagnée lui reste', gagnee.actions.has(commune.id));
+
+  await contenus.publier('action', [commune.id], true);
+  await pool.query(`DELETE FROM user_wallet WHERE user_id = ?`, [userId]);
+  await pool.query(`DELETE FROM users WHERE public_id = ?`, [userId]);
+}
+
+/* ------------------------------------------------ et les tirages qui restent
+
+   Le booster, le paquet de bienvenue et la boutique tirent tous les trois dans
+   `jouables(famille)` — c'est-à-dire dans ce que cette suite vient d'éprouver.
+   Ce qu'on vérifie ici est qu'ils passent bien par là, et le seul moyen honnête
+   de le vérifier sans monter trois modules est de le lire.
+
+   **Un contrôle de lecture, et il est assumé.** Il ne remplace pas un tirage
+   joué ; il attrape ce qu'un tirage joué n'attrape pas — un septième endroit de
+   distribution écrit demain, qui lirait la liste du code et à qui personne ne
+   dirait rien. C'est exactement la faute qu'on vient de corriger, et elle a
+   vécu une livraison entière. */
+{
+  const SITES = [
+    ['src/server/fanzzy/index.js', 'le booster et la boutique'],
+    ['src/server/onboarding/index.js', 'le paquet de bienvenue'],
+    ['src/server/deck/index.js', 'les communes offertes'],
+    ['src/server/ferveur/virage.js', 'le stade du Virage'],
+    ['src/server/nvn/engine.js', 'le stade du duel'],
+  ];
+  for (const [f, quoi] of SITES) {
+    const src = readFileSync(path.join(RACINE, f), 'utf8');
+    check(`${quoi} lit ce que les saisons ont ouvert`,
+      /from '\.\.\/contenus\/index\.js'/.test(src)
+      || (console.log('        ', f, 'n’importe pas le module des contenus'), false));
+  }
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);

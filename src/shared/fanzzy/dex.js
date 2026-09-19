@@ -436,7 +436,7 @@ const DEX = [
     histoire:'Il repart toujours le dernier, une tour de gobelets dans les bras. '
       + 'Il dit que quelqu’un doit bien le faire.',
     mods:{ refundBonus:1.4, holdBonus:1.05 },
-    cri:{ label:'IL EN RESTE', gest:'retenue', power:47 } },
+    cri:{ label:'IL EN RESTE', gest:'jauge', power:47 } },
 
   { id:'TR47', nom:'Le Mégaphone', publie:false /* refait TR18 */, type:'voix', set:'TR', stage:1, rar:'commune',
     histoire:'Dos au terrain pendant quatre-vingt-dix minutes. Il n’a jamais vu '

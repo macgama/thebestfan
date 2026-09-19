@@ -88,7 +88,7 @@ export const DEX_LEGENDES = [
     histoire: 'Il a compté les mêmes trente-neuf personnes à l’aller et au retour, '
       + 'pendant vingt ans, et il n’en a jamais perdu une.',
     mods: { breathBonus: 1.38, refundBonus: 1.25, mashBonus: 0.88 },
-    cri: { label: 'PERSONNE NE RESTE', gest: 'memoire', power: 77 } },
+    cri: { label: 'PERSONNE NE RESTE', gest: 'bascule', power: 77 } },
 
   { id: 'GD15', nom: 'La Mosaïque de Séville', type: 'tifo', set: 'GD', stage: 1, rar: 'legendaire',
     histoire: 'Douze mille cartons distribués en quarante minutes par huit personnes '
@@ -100,7 +100,7 @@ export const DEX_LEGENDES = [
     histoire: 'Il part à 23 h 14 et le match finit à 23 h 09. Ceux qui le prennent '
       + 'chantent plus fort que tout le monde jusqu’à la 88e.',
     mods: { tempoInterval: -80, breathBonus: 1.22, holdForgive: 0 },
-    cri: { label: 'ON A CINQ MINUTES', gest: 'memoire', power: 79 } },
+    cri: { label: 'ON A CINQ MINUTES', gest: 'bascule', power: 79 } },
 
   /* =========================================== LE VIRAGE IMPOSSIBLE (5 neuves)
 
@@ -204,7 +204,7 @@ export const DEX_LEGENDES = [
     histoire: 'Un rang entier debout, les bras en l’air, et pas une note chantée. '
       + 'Le virage d’en face a cru à un tifo et a répondu.',
     mods: { perfectBonus: 1.48, tempoInterval: -90, backfire: 1.55 },
-    cri: { label: 'BOUGE PAS', gest: 'compte', power: 79 } },
+    cri: { label: 'BOUGE PAS', gest: 'visee', power: 79 } },
 
   /* Il s'appelait « Le Chat du Terrain », **exactement comme BG15** — deux
      cartes, un seul nom, dans la même série. Un collectionneur qui voit deux
@@ -227,7 +227,7 @@ export const DEX_LEGENDES = [
     histoire: 'Cassé depuis onze ans, jamais remplacé. Son abonné s’assoit dessus quand '
       + 'même et prétend que c’est plus confortable.',
     mods: { holdBonus: 1.42, parryResist: 1.28, tempoWindow: 0.85 },
-    cri: { label: 'IL TIENT ENCORE', gest: 'retenue', power: 80 } },
+    cri: { label: 'IL TIENT ENCORE', gest: 'jauge', power: 80 } },
 
   { id: 'OB14', nom: 'Le Mégaphone Rouillé', type: 'voix', set: 'OB', stage: 1, rar: 'legendaire',
     histoire: 'Il grésille et il déforme, et c’est précisément pour ça qu’on l’entend '

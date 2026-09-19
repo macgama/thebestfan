@@ -342,6 +342,71 @@ check('le catalogue garde toutes ses cartes',
 r = await call(`/api/admin/saison/${essai.id}`, { method: 'DELETE' });
 check('une saison lancée ne se supprime pas', r.json.error === 'admin.error.saison_lancee');
 
+/* ---------------------------------- le retour au brouillon referme les stades
+
+   Les cinq familles d'une saison ne se referment pas de la même façon, et la
+   différence n'est pas un oubli :
+
+     — les **séries** se referment par l'union, sans qu'on ait rien à écrire ;
+     — les **tenues**, l'**équipement** et les **cartes d'action** ne se
+       referment pas du tout : quelqu'un les a peut-être gagnées, et une carte
+       qui disparaît d'une collection est une perte, pas une fermeture ;
+     — les **stades**, si. C'est la seule famille que personne ne possède : un
+       stade appartient au match, jamais à un joueur.
+
+   Sans ce contrôle, remettre une saison en brouillon laissait ses lieux
+   ouverts — c'est-à-dire que le geste le plus visible de l'administration ne
+   se défaisait qu'à moitié, en silence. */
+{
+  const { publies: jouables } = await import('../src/server/contenus/index.js');
+  const { STADES } = await import('../src/shared/stades.js');
+  const lieu = STADES.at(-1).id;
+  const autre = STADES.at(-2).id;
+
+  r = await call('/api/admin/saisons', { method: 'POST',
+    body: { nom: 'Les lieux', series: [uneSerie], stades: [lieu, autre] } });
+  const saisonLieux = r.json.saisons?.at(-1);
+  check('une saison peut ouvrir des stades', Boolean(saisonLieux));
+
+  await call(`/api/admin/contenus/publier`, { method: 'POST',
+    body: { famille: 'stade', ids: [lieu, autre], publie: false } });
+  check('les deux lieux partent fermés',
+    !jouables('stade').some((x) => x.id === lieu || x.id === autre));
+
+  await call(`/api/admin/saison/${saisonLieux.id}/lancer`,
+    { method: 'POST', body: { lancer: true } });
+  check('la lancer les ouvre',
+    jouables('stade').some((x) => x.id === lieu)
+    && jouables('stade').some((x) => x.id === autre));
+
+  /* **L'union, et pas la liste de la saison qu'on retire.** Une seconde saison
+     lancée garde `autre` ouvert ; seul `lieu`, que personne d'autre n'annonce,
+     doit se refermer. C'est exactement la faute qu'on ferait en fermant tout ce
+     que la saison listait — et elle ne se verrait qu'au moment où un joueur
+     tomberait sur un lieu manquant. */
+  r = await call('/api/admin/saisons', { method: 'POST',
+    body: { nom: 'Les lieux, encore', series: [uneSerie], stades: [autre] } });
+  const seconde = r.json.saisons?.at(-1);
+  await call(`/api/admin/saison/${seconde.id}/lancer`,
+    { method: 'POST', body: { lancer: true } });
+
+  await call(`/api/admin/saison/${saisonLieux.id}/lancer`,
+    { method: 'POST', body: { lancer: false } });
+  check('le retour au brouillon referme le lieu qu’elle seule annonçait',
+    !jouables('stade').some((x) => x.id === lieu));
+  check('et laisse ouvert celui qu’une autre saison lancée annonce aussi',
+    jouables('stade').some((x) => x.id === autre)
+    || (console.log('        il s’est refermé :', autre), false));
+
+  await call(`/api/admin/saison/${seconde.id}/lancer`,
+    { method: 'POST', body: { lancer: false } });
+  await call(`/api/admin/saison/${seconde.id}`, { method: 'DELETE' });
+  await call(`/api/admin/saison/${saisonLieux.id}`, { method: 'DELETE' });
+  await call(`/api/admin/contenus/publier`, { method: 'POST',
+    body: { famille: 'stade', ids: [lieu, autre], publie: true } });
+}
+
+
 // Une série sans carte de stade 1 publiée ne peut pas distribuer : on refuse
 // de l'ouvrir plutôt que de laisser le premier booster lever.
 {

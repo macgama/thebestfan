@@ -3,6 +3,8 @@ import { grade, applyHeroMods, resoudreGeste, Cheat } from './gestures.js';
 import { ACTION_BY_ID, ACTIONS_VIRAGE, dansLeVirage } from '../../shared/duel/actions.js';
 import { CHANTS, ORDRE } from '../../shared/duel/chants.js';
 import { stadeDeLaRencontre } from '../../shared/stades.js';
+// Les stades qu'une saison a ouverts : voir `stade()`.
+import { ouverts } from '../contenus/index.js';
 // La composition lieu + Fanzzy vit dans le moteur de duel : une seule règle.
 import { avecLieu } from '../nvn/engine.js';
 import { poserEffet, nettoyerEffets, modsAvecEffets } from '../../shared/duel/effets.js';
@@ -330,15 +332,23 @@ export class VirageRoom {
    * dans la salle voit le même, et le même à chaque fois qu'on y revient.
    *
    * L'intersection des possessions n'a pas de sens dans une salle ouverte à
-   * tous — on passe donc un tableau vide, ce qui ouvre les dix. Le jour où le
-   * stade viendra du vrai lieu du match, c'est cette ligne-là qui changera, et
-   * elle seule.
+   * tous — on passe donc un tableau vide, ce qui ouvre les quinze. Le jour où
+   * le stade viendra du vrai lieu du match, c'est cette ligne-là qui changera,
+   * et elle seule.
+   *
+   * **Les quinze, moins ceux qu'aucune saison n'a ouverts.** Un stade est du
+   * contenu qu'une saison livre, au même titre qu'une série : le tirer avant
+   * son ouverture, c'est livrer la saison en avance à qui passe par le Virage.
+   * Ce filtre-là est la seule chose que `publie` change ici — un stade fermé
+   * ne se tire plus, et rien de ce qui a déjà été joué ne bouge.
    *
    * Mémorisé : il ne change pas d'un bout à l'autre d'un match, et il est lu à
-   * chaque chant autant qu'à chaque diffusion.
+   * chaque chant autant qu'à chaque diffusion. Ce qui veut dire qu'une saison
+   * lancée en plein match n'en change pas le lieu — c'est voulu : le stade est
+   * annoncé aux joueurs dès la première diffusion.
    */
   stade() {
-    this._stade ??= stadeDeLaRencontre([], this.fixture.id);
+    this._stade ??= stadeDeLaRencontre([], this.fixture.id, ouverts('stade'));
     return this._stade;
   }
 

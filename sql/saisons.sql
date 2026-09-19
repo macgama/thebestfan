@@ -13,14 +13,15 @@
 --
 -- ## Ce qu'une saison ouvre vraiment
 --
--- Les **séries** et les **tenues** : les deux seuls contenus du jeu qui aient
--- un état de publication. Le lancement ouvre les unes et publie les autres.
+-- Les **séries** et les **tenues**, d'abord : les deux seuls contenus du jeu
+-- qui aient eu un état de publication. Le lancement ouvre les unes et publie
+-- les autres.
 --
--- Les pièces d'équipement et les cartes d'action sont du code, pas de la base :
--- une saison peut les **annoncer** — c'est à cela que servent `stuff` et
--- `actions` — mais elle ne les retient pas, parce que rien ne sait les retenir.
--- Le jour où ils vivront en base comme le catalogue, ces deux colonnes
--- deviendront des leviers sans changer de forme.
+-- Et depuis `sql/contenus.sql`, les **pièces d'équipement**, les **cartes
+-- d'action** et les **stades**. Ces trois-là vivaient dans le code : une saison
+-- pouvait écrire leur nom dans son texte, et elles étaient jouables depuis la
+-- livraison d'avant. `stuff` et `actions` ne servaient donc qu'à rédiger une
+-- phrase. Elles ouvrent pour de bon, désormais, et `stades` les a rejointes.
 --
 -- ## Additif, jamais soustractif
 --
@@ -42,7 +43,8 @@ CREATE TABLE IF NOT EXISTS saisons (
   texte      VARCHAR(500)     NULL,
   series     JSON             NULL,
   tenues     JSON             NULL,
-  -- Annoncés, pas retenus. Voir l'en-tête.
+  -- Retenus depuis `sql/contenus.sql`, annoncés seulement avant lui. La colonne
+  -- `stades` est arrivée avec ce fichier-là et vit donc dans son ALTER.
   stuff      JSON             NULL,
   actions    JSON             NULL,
   -- `NULL` : brouillon. On prépare une saison sans que rien ne change pour

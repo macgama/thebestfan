@@ -183,15 +183,15 @@ const FIDE = [
   { id: 'RP6', nom: 'Chaise Vide', type: 'fide', stage: 1, rar: 'commune', evo: 'RP6B',
     histoire: 'Troisième rang, côté couloir. Personne ne s’assied dessus le premier jour, et personne n’en parle.',
     mods: { holdBonus: 1.07 },
-    cri: { label: 'ON SAIT', gest: 'retenue', power: 50 } },
+    cri: { label: 'ON SAIT', gest: 'jauge', power: 50 } },
   { id: 'RP6B', nom: 'Chaise Reprise', type: 'fide', stage: 2, rar: 'rare', evo: 'RP6C',
     histoire: 'Sa fille s’y est mise à la troisième journée. Elle ne connaît pas les chants et elle est à l’heure.',
     mods: { holdBonus: 1.13, holdForgive: 1 },
-    cri: { label: 'ELLE EST LÀ', gest: 'retenue', power: 67 } },
+    cri: { label: 'ELLE EST LÀ', gest: 'jauge', power: 67 } },
   { id: 'RP6C', nom: 'Chaise Léguée', type: 'fide', stage: 3, rar: 'epique',
     histoire: 'Elle connaît les chants maintenant. Elle les a appris comme lui les avait appris, en les entendant.',
     mods: { holdBonus: 1.21, holdForgive: 2, parryResist: 1.1 },
-    cri: { label: 'ELLE CONTINUE', gest: 'retenue', power: 83 } },
+    cri: { label: 'ELLE CONTINUE', gest: 'jauge', power: 83 } },
 ];
 
 /* ------------------------------------------------------------------ le tifo */
@@ -243,15 +243,15 @@ const PYRO = [
   { id: 'RP10', nom: 'Décompte Oublié', type: 'pyro', stage: 1, rar: 'commune', evo: 'RP10B',
     histoire: 'Cinq, quatre, trois — et deux tribunes qui partent à des moments différents. C’est la reprise.',
     mods: { perfectBonus: 1.06, costPenalty: 1.05 },
-    cri: { label: 'CINQ, QUATRE…', gest: 'compte', power: 48 } },
+    cri: { label: 'CINQ, QUATRE…', gest: 'visee', power: 48 } },
   { id: 'RP10B', nom: 'Décompte Repris', type: 'pyro', stage: 2, rar: 'rare', evo: 'RP10C',
     histoire: 'On a remis quelqu’un au mégaphone. Les deux tribunes partent ensemble, à une demi-seconde près.',
     mods: { perfectBonus: 1.13, costPenalty: 1 },
-    cri: { label: 'ENSEMBLE', gest: 'compte', power: 66 } },
+    cri: { label: 'ENSEMBLE', gest: 'visee', power: 66 } },
   { id: 'RP10C', nom: 'Décompte Tenu', type: 'pyro', stage: 3, rar: 'epique',
     histoire: 'Plus besoin de mégaphone. Il lève la main, et trois mille personnes comptent dans leur tête.',
     mods: { perfectBonus: 1.2, backfire: 0.95, breathBonus: 1.06 },
-    cri: { label: 'ZÉRO', gest: 'compte', power: 81 } },
+    cri: { label: 'ZÉRO', gest: 'visee', power: 81 } },
 ];
 
 /* ---------------------------------------------------------- le déplacement */
@@ -273,15 +273,15 @@ const DEPL = [
   { id: 'RP12', nom: 'Itinéraire Perdu', type: 'depl', stage: 1, rar: 'commune', evo: 'RP12B',
     histoire: 'La feuille de route de l’an dernier a servi à caler une table. On refait tout au téléphone, sur l’autoroute.',
     mods: { breathBonus: 1.05 },
-    cri: { label: 'À DROITE, NON', gest: 'memoire', power: 45 } },
+    cri: { label: 'À DROITE, NON', gest: 'bascule', power: 45 } },
   { id: 'RP12B', nom: 'Itinéraire Refait', type: 'depl', stage: 2, rar: 'rare', evo: 'RP12C',
     histoire: 'Tapé au propre, imprimé en douze exemplaires, plastifié par quelqu’un qui y tient.',
     mods: { breathBonus: 1.11, refundBonus: 1.09 },
-    cri: { label: 'SORTIE 14', gest: 'memoire', power: 64 } },
+    cri: { label: 'SORTIE 14', gest: 'bascule', power: 64 } },
   { id: 'RP12C', nom: 'Itinéraire par Cœur', type: 'depl', stage: 3, rar: 'epique',
     histoire: 'Il connaît les trois stations-service qui ouvrent la nuit et celle où le café est buvable. C’est une science.',
     mods: { breathBonus: 1.18, refundBonus: 1.15, parryResist: 1.07 },
-    cri: { label: 'JE CONNAIS', gest: 'memoire', power: 79 } },
+    cri: { label: 'JE CONNAIS', gest: 'bascule', power: 79 } },
 ];
 
 /* ------------------------------------------------------------ les cinq sommets

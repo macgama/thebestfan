@@ -255,15 +255,30 @@ export const STADE_DEFAUT = 'chaudron';
  * l'intersection est vide — personne n'a rien, ou rien en commun — on retombe
  * sur le stade de départ, que tout le monde possède.
  *
+ * `jouables` est la troisième condition, et la seule qui vienne de la base :
+ * les stades qu'une saison a ouverts. Elle est **facultative** parce que ce
+ * fichier est partagé et ne connaît ni le pool ni les saisons — c'est
+ * l'appelant, côté serveur, qui la lui donne. Sans elle, les quinze sont
+ * tirables : c'est l'état d'avant, et le bon repli pour une base où
+ * `sql/contenus.sql` n'est pas appliqué.
+ *
+ * Le stade de départ échappe au filtre. Il est le repli de tous les autres
+ * replis, et une saison qui le fermerait par mégarde laisserait les rencontres
+ * sans aucun lieu où se tenir.
+ *
  * @param possessions  un tableau par camp : les identifiants possédés.
  * @param graine       un nombre stable — l'identifiant du duel, du match —
  *   pour que les deux clients tirent le même stade sans se parler.
+ * @param jouables     un Set d'identifiants ouverts, ou `null` pour tous.
  */
-export function stadeDeLaRencontre(possessions, graine = 0) {
+export function stadeDeLaRencontre(possessions, graine = 0, jouables = null) {
+  const ouverts = jouables
+    ? STADES.filter((s) => s.id === STADE_DEFAUT || jouables.has(s.id))
+    : STADES;
   const listes = (possessions ?? []).map((p) => new Set(p ?? []));
-  let communs = STADES.filter((s) => s.id === STADE_DEFAUT
+  let communs = ouverts.filter((s) => s.id === STADE_DEFAUT
     || listes.every((l) => l.has(s.id)));
-  if (!listes.length) communs = STADES;
+  if (!listes.length) communs = ouverts;
   if (!communs.length) return STADE_BY_ID.get(STADE_DEFAUT);
   const n = Math.abs(Math.floor(Number(graine) || 0)) % communs.length;
   return communs[n];

@@ -1,5 +1,8 @@
 import express from 'express';
 import { ACTIONS, ACTION_BY_ID, DECK_RULES, validerDeck } from '../../shared/duel/actions.js';
+/* Ce que les saisons ont ouvert. Renommé à l’import : `publies` désigne déjà
+   le catalogue Fanzzy dans les modules voisins. Voir `possessions`. */
+import { publies as jouables } from '../contenus/index.js';
 import { parIdentifiant, racineDe, lignee } from '../fanzzy/catalogue.js';
 import { STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
 import { jourISO } from '../../shared/jour.js';
@@ -127,9 +130,21 @@ export function createDecks({ pool, requireAuth, niveau = null,
       // une évolution et oublie la carte qui lui donne accès.
       stades: Object.fromEntries(fz.map((f) => [f.fanzzy_id, Number(f.stage)])),
       stuff: new Set(st.map((s) => s.stuff_id)),
-      // Les communes sont offertes à tous : sans elles, un joueur qui débute
-      // ne pourrait pas remplir ses dix emplacements.
-      actions: new Set([...actions, ...ACTIONS.filter((a) => a.rar === 'commune').map((a) => a.id)]),
+      /* Les communes sont offertes à tous : sans elles, un joueur qui débute ne
+         pourrait pas remplir ses dix emplacements.
+
+         **Et c'est le seul endroit du jeu où une carte d'action arrive sans
+         avoir été tirée.** C'était donc la fuite la plus large : une commune
+         ajoutée au code se retrouvait dans la main de tout le monde à la
+         livraison, avant la saison censée l'annoncer — sans passer par un
+         booster, sans que personne ait rien ouvert. Elles passent maintenant
+         par `jouables`, comme tous les autres tirages.
+
+         Ce que le joueur a **vraiment** gagné, lui, n'est pas filtré :
+         `actions` vient de son portefeuille et entre entier. Fermer, c'est
+         cesser de distribuer, pas confisquer. */
+      actions: new Set([...actions,
+        ...jouables('action').filter((a) => a.rar === 'commune').map((a) => a.id)]),
     };
   }
 

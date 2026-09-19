@@ -76,6 +76,14 @@ const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', '
      Après series-neuves, qui déplace des cartes d'une série à l'autre : le
      préfixe se calcule sur la série d'arrivée. */
   'prefixes', 'identites',
+  /* Les cris des trois épreuves de LA REPRISE. Comme les deux précédents, il ne
+     déclare rien : il change le `gest` de trente-trois lignes déjà posées.
+
+     Après `prefixes.sql`, et c'est toute sa dépendance : il nomme ses cartes par
+     leur identifiant, et cet identifiant est celui **d'après** le préfixe. Joué
+     avant, il ne trouverait rien et se tairait — une migration qui ne lève pas
+     et ne fait rien est le pire des deux. */
+  'cris',
   /* Les deux colonnes qui disent de quelle **sorte** un duel était. Elles
      viennent après duel.sql, qui pose la table, et n'ont d'autre dépendance :
      le parcours du joueur se lit sur elles, et les classements écartent
