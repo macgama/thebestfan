@@ -110,7 +110,7 @@
     'RP8', 'RP8B', 'RP8C', 'RP9', 'RP9B', 'RP9C', 'RP10', 'RP10B',
     'RP10C', 'RP11', 'RP11B', 'RP11C', 'RP12', 'RP12B', 'RP12C', 'RP13',
     'RP14', 'RP15', 'RP16', 'RP17', 'TR1B', 'TR1C', 'TR3B', 'TR3C',
-    'TR50B', 'TR50C',
+    'TR23B', 'TR23C', 'TR50B', 'TR50C',
   ]);
 
   /**

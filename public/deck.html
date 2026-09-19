@@ -319,6 +319,11 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 .panneau .ph button{background:none;border:0;color:inherit;opacity:.45;font-size:22px;cursor:pointer;
   line-height:1;padding:0 4px}
 .panneau .pc{padding:12px 14px 4px}
+/* Le pied du panneau : ce qui décide, tenu hors du corps qui défile.
+   `flex:none` pour qu'il ne se comprime jamais, et un filet au-dessus pour
+   qu'on voie qu'il reste du texte à faire défiler derrière lui. */
+.panneau .pp{flex:none;padding:8px 14px 0;border-top:1px solid rgba(242,238,228,.08);
+  background:#10151C}
 .choix{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;
   border:1px solid rgba(242,238,228,.1);background:var(--panneau);backdrop-filter:blur(10px);margin-bottom:7px;cursor:pointer}
 .choix.pris{opacity:.35}
@@ -960,9 +965,28 @@ function cartesHTML() {
 
 /* ------------------------------------------------------------- panneaux */
 
-function ouvrir(titre, contenu) {
+/**
+ * Ouvre le panneau.
+ *
+ * `pied` est ce qui **décide** — le bouton, ou le refus qui le remplace — et il
+ * se pose **hors du corps qui défile**.
+ *
+ * La feuille de style le promettait depuis le début : « l'en-tête reste en
+ * haut, le corps prend ce qui reste, et le bouton d'action reste sous les
+ * yeux ». Le panneau n'en savait rien : tout ce qu'on lui donnait partait dans
+ * `.pc`, qui est en `overflow:auto`. Sur un écran de six cents pixels — un
+ * iPhone SE barre comprise — le dessin de la carte en prend deux cent
+ * soixante-seize, et « AJOUTER AU DECK » finissait neuf pixels **sous** le
+ * panneau. Il fallait faire défiler à l'intérieur pour le trouver, sur l'écran
+ * même où l'on vient pour décider, et rien ne disait qu'il existait.
+ *
+ * Le paramètre est facultatif : les cinq autres panneaux sont des listes de
+ * choix où chaque ligne décide, et ils n'ont pas de pied.
+ */
+function ouvrir(titre, contenu, pied = '') {
   $('panneau').innerHTML = `<div class="ph"><h3>${esc(titre)}</h3>
-    <button data-fermer="1">×</button></div><div class="pc">${contenu}</div>`;
+    <button data-fermer="1">×</button></div><div class="pc">${contenu}</div>`
+    + (pied ? `<div class="pp">${pied}</div>` : '');
   $('voile').classList.add('on');
 }
 const fermer = () => $('voile').classList.remove('on');
@@ -1126,7 +1150,10 @@ function panneauCarte(id) {
       data-ajouter="${a.id}">AJOUTER AU DECK${n ? ` (${S.regles.copiesMax == null ? `déjà ×${n}` : `${n}/${S.regles.copiesMax}`})` : ''}</button></div>`;
   }
 
-  ouvrir(a.nom, `${info}${bas}`);
+  /* Le dessin, les chiffres et le texte défilent ; ce qui décide ne défile
+     jamais. C'est le seul panneau du jeu assez haut pour que la différence se
+     voie — et c'est celui où l'on vient pour décider. */
+  ouvrir(a.nom, info, bas);
 }
 
 /* ------------------------------------------------------- enregistrement */

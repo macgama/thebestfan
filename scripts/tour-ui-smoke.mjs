@@ -566,7 +566,11 @@ for (const [route, nom] of tousLesEcrans) {
    met rien en page et ne saurait dire si quelque chose dépasse. */
 {
   const page = await nav.newPage();
-  await page.setViewport({ width: 360, height: 780 });
+  /* **Six cents pixels, et non sept cent quatre-vingts.** Un panneau de decision
+     doit tenir sur le telephone le plus court, pas sur le plus confortable :
+     un iPhone SE offre 667 px moins la barre d adresse, un Android d entree de
+     gamme a peine plus. La hauteur genereuse cachait le defaut. */
+  await page.setViewport({ width: 360, height: 600 });
   await page.goto(base + '/deck', { waitUntil: 'networkidle0' }).catch(() => {});
   await new Promise((r) => setTimeout(r, 600));
 
@@ -593,6 +597,11 @@ for (const [route, nom] of tousLesEcrans) {
       // Et ce qui décide — le bouton, ou le refus qui le remplace — doit être
       // visible sans un geste de plus.
       basVisible: bas ? bas.getBoundingClientRect().bottom <= window.innerHeight + 2 : false,
+      /* Ce qu on mesure vraiment, dit en clair : sans ces trois nombres, un
+         rouge ici n apprend rien et se contourne en elargissant le seuil. */
+      quiDecide: bas ? (bas.textContent || '').replace(/s+/g,' ').trim().slice(0,30) : null,
+      basBas: bas ? Math.round(bas.getBoundingClientRect().bottom) : null,
+      panneauBas: Math.round(r.bottom),
       art: Math.round(document.querySelector('.gcArt')?.getBoundingClientRect().height ?? 0),
     };
   });
@@ -604,7 +613,9 @@ for (const [route, nom] of tousLesEcrans) {
     check(`  il tient dans l’écran (${vu.hauteur} px sur ${vu.ecran})`,
       vu.hauteur <= vu.ecran);
     check('  et il n’a pas à défiler', vu.defile === false);
-    check('  ce qui décide reste sous les yeux, sans défiler', vu.basVisible === true);
+    check('  ce qui décide reste sous les yeux, sans défiler', vu.basVisible === true
+      || (console.log(`        « ${vu.quiDecide} » finit à ${vu.basBas} px, `
+        + `le panneau à ${vu.panneauBas}, l écran à ${vu.ecran}`), false));
     /* Le dessin doit rester **regardable** : le réduire jusqu'à le faire
        disparaître ferait tenir le panneau sans rendre service. */
     check(`  le dessin reste assez grand pour être regardé (${vu.art} px)`, vu.art >= 150);
