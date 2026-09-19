@@ -1,0 +1,72 @@
+{
+  "id": "RP1",
+  "rev": 3,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "salut",
+            "pousse",
+            "but",
+            "encaisse",
+            "attente",
+            "victoire",
+            "defaite",
+            "occasion",
+            "decision",
+            "progression",
+            "ennui"
+          ],
+          "portrait": true,
+          "sha": "ae750bb0917b"
+        }
+      }
+    },
+    "e2": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "salut",
+            "pousse",
+            "but",
+            "encaisse",
+            "attente",
+            "victoire",
+            "defaite",
+            "occasion",
+            "decision",
+            "progression",
+            "ennui"
+          ],
+          "portrait": true,
+          "sha": "daae83f0aefc"
+        }
+      }
+    },
+    "e3": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "salut",
+            "pousse",
+            "but",
+            "encaisse",
+            "attente",
+            "victoire",
+            "defaite",
+            "occasion",
+            "decision",
+            "progression",
+            "ennui"
+          ],
+          "portrait": true,
+          "sha": "7e4380d5b418"
+        }
+      }
+    }
+  }
+}
