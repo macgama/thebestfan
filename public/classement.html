@@ -152,7 +152,7 @@ async function charger() {
        classement de victoires rangé dans un ordre qui n'est pas le leur, ce qui
        est la façon la plus sûre de faire croire à un défaut. */
     duellistes: (x, i) => `<div class="row ${i < 3 ? 'p' + (i + 1) : ''}">${rang(i)}
-      <span class="n"><b>${esc(x.pseudo)}</b><small>${x.joues} duels · ${x.gagnes} gagnés · ${x.taux}%</small></span>
+      <span class="n"><b>${esc(x.pseudo)}</b><small>${esc(x.club ?? '')}${x.club ? ' · ' : ''}${x.joues} duels · ${x.gagnes} gagnés · ${x.taux}%</small></span>
       <span class="v" style="--c:var(--flare)">${x.cote ?? 1000}<small>COTE</small></span></div>`,
     /* Le grand chiffre est celui sur lequel on est classé — les parties — et
        les victoires passent en dessous. L'inverse ferait lire un classement
@@ -172,25 +172,95 @@ document.querySelector('.tabs').onclick = (e) => {
   onglet = b.dataset.t;
   document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('on', x === b));
   charger();
+  maPlace();
 };
+
+/**
+ * Ma place — **celle du tableau que je regarde**.
+ *
+ * Elle parlait toujours de ferveur, y compris sous DUELS : on lisait « 312e
+ * sur 1 400 supporters classés » juste au-dessus du classement des duellistes.
+ * Le rang était exact, il répondait simplement à une autre question — et la
+ * conclusion tombait toute seule : mes duels n'ont pas été comptés.
+ *
+ * Ils l'étaient. Un duel classé verse la même ferveur que le Grand Virage, et
+ * c'est ce rang-là qu'on lisait. Ce qui manquait n'était pas le calcul, c'était
+ * la réponse à la question posée par l'onglet.
+ *
+ * Et quand on n'y figure pas, la carte dit **pourquoi**, avec le compte exact :
+ * « il te manque deux parties » n'appelle pas le même geste que « tu n'es pas
+ * classé », et un seul des deux se rattrape ce soir.
+ */
+let place = null;
+
+const RANG = (n) => `<span class="r">${n}<sup>e</sup></span>`;
+const VIDE = '<span class="r">\u2014</span>';
+
+function maPlace() {
+  const m = place;
+  if (!m) return;
+  const el = $('moi');
+  const n = Number(m.plancher) || 0;
+
+  if (onglet === 'duellistes') {
+    const x = m.duels ?? {};
+    el.innerHTML = x.rang
+      ? `${RANG(x.rang)}<span class="d">sur <b>${x.sur}</b> duellistes classés<br>
+           <b>${x.cote ?? 1000}</b> de cote · ${x.gagnes}/${x.joues} duels gagnés</span>`
+      : x.joues
+        ? `${VIDE}<span class="d">${x.gagnes}/${x.joues} duel${x.joues > 1 ? 's' : ''} classé${x.joues > 1 ? 's' : ''} —
+             il t\u2019en faut <b>${n}</b> pour entrer au classement.<br>
+             Encore <b>${n - x.joues}</b>, et tu y es.</span>`
+        : `${VIDE}<span class="d">Aucun duel classé pour l\u2019instant.<br>
+             Un duel ne compte que <b>pendant un match de ton club</b> et
+             <b>contre de vrais adversaires</b> — complété par des bots, il
+             devient un entraînement.</span>`;
+  } else if (onglet === 'entrainements') {
+    const x = m.entrainements ?? {};
+    el.innerHTML = x.rang
+      ? `${RANG(x.rang)}<span class="d">sur <b>${x.sur}</b> qui s\u2019entraînent<br>
+           <b>${x.joues}</b> parties · ${x.gagnes} gagnée${x.gagnes > 1 ? 's' : ''}</span>`
+      : x.joues
+        ? `${VIDE}<span class="d">${x.joues} entraînement${x.joues > 1 ? 's' : ''} —
+             il t\u2019en faut <b>${n}</b> pour figurer ici.</span>`
+        : `${VIDE}<span class="d">Tu ne t\u2019es pas encore entraîné.<br>
+             L\u2019entraînement ne rapporte rien, et c\u2019est fait pour :
+             on y essaie un deck sans rien risquer.</span>`;
+  } else if (onglet === 'tribunes') {
+    /* **Ce tableau ne classe pas des joueurs**, et s'y chercher soi-même n'a
+       pas de sens. La question qu'on se pose devant lui est l'autre : à quelle
+       tribune va ma ferveur ? Un supporter qui pousse en neutre n'en alimente
+       aucune — c'est la règle du jeu, et elle n'est écrite nulle part ailleurs
+       sur cet écran. */
+    el.innerHTML = m.tribune
+      ? `<span class="r">\u2691</span><span class="d">Ta ferveur va à <b>${esc(m.tribune.nom)}</b><br>
+           <b>${Number(m.tribune.ferveur).toLocaleString('fr')}</b> donnés à sa tribune${
+             m.tribune.ferveur ? '' : ' — tu as poussé <b>en neutre</b> jusqu\u2019ici'}</span>`
+      : `${VIDE}<span class="d">Tu ne suis aucun club.<br>
+           Ta ferveur compte pour toi, jamais pour une tribune : choisis-en un
+           depuis <b>Mes clubs</b>.</span>`;
+  } else {
+    el.innerHTML = m.rang
+      ? `${RANG(m.rang)}<span class="d">sur <b>${m.sur}</b> supporters classés<br>
+           <b>${Number(m.ferveur).toLocaleString('fr')}</b> de ferveur sur ${m.matchs} matchs
+           ${m.duels.joues ? ` · ${m.duels.gagnes}/${m.duels.joues} duels` : ''}</span>`
+      /* Les deux portes, puisque les deux mènent ici. N'en nommer qu'une
+         laissait croire que l'autre ne comptait pas — et c'était vrai, ce qui
+         est précisément ce qu'on vient de corriger. */
+      : `${VIDE}<span class="d">Tu n\u2019es pas encore classé.<br>
+           Entre dans le <b>Grand Virage</b> ou gagne un <b>duel classé</b>
+           pendant un match de ton club.</span>`;
+  }
+  el.style.display = 'flex';
+}
 
 (async () => {
   charger();
   try {
     const m = await fetch('/api/rank/moi', { credentials:'same-origin' }).then((r) => r.json());
     if (m.error) return;
-    $('moi').innerHTML = m.rang
-      ? `<span class="r">${m.rang}<sup>e</sup></span>
-         <span class="d">sur <b>${m.sur}</b> supporters classés<br>
-           <b>${Number(m.ferveur).toLocaleString('fr')}</b> de ferveur sur ${m.matchs} matchs
-           ${m.duels.joues ? ` · ${m.duels.gagnes}/${m.duels.joues} duels` : ''}</span>`
-      /* Les deux portes, puisque les deux mènent ici. N'en nommer qu'une
-         laissait croire que l'autre ne comptait pas — et c'était vrai, ce qui
-         est précisément ce qu'on vient de corriger. */
-      : `<span class="r">—</span><span class="d">Tu n\u2019es pas encore classé.<br>
-           Entre dans le <b>Grand Virage</b> ou gagne un <b>duel classé</b>
-           pendant un match de ton club.</span>`;
-    $('moi').style.display = 'flex';
+    place = m;
+    maPlace();
   } catch { /* pas connecté */ }
 })();
 </script>

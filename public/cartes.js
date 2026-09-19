@@ -481,6 +481,73 @@ function cardHTML(f, opts = {}) {
   </div>`;
 }
 
+/**
+ * Une carte tirée, telle que le serveur l'annonce, rendue en entrée de
+ * catalogue — celle que `cardHTML` sait dessiner.
+ *
+ * ## Pourquoi elle est ici et non dans la page
+ *
+ * Elle a vécu dans `boosters.html`, et l'accueil en avait sa propre version :
+ * une tuile faite main, avec un buste, un nom et une phrase. Le joueur ouvrait
+ * donc son premier paquet sur des cartes qui ne ressemblaient pas à celles du
+ * jeu, et découvrait les vraies au deuxième booster. **Le premier paquet est
+ * celui dont on se souvient**, et c'était le seul à ne pas montrer le jeu.
+ *
+ * Deux tables pour la même conversion auraient divergé — c'est exactement ce
+ * qui est arrivé au catalogue recopié. Il n'y en a plus qu'une.
+ *
+ * ## Les quatre sortes, et leurs emprunts
+ *
+ * `type` sert à choisir une couleur et un pictogramme, faute d'en avoir de
+ * propres : une tenue prend ceux du tifo, l'équipement ceux du déplacement, une
+ * carte d'action ceux de la pyro.
+ *
+ * La page n'en connaissait qu'une sorte à l'origine. Les tenues arrivaient sous
+ * leur identifiant — « prehistorique » là où il fallait lire « Préhistorique » —
+ * et l'équipement comme les cartes d'action n'étaient connus de personne : ils
+ * tombaient dans la branche « carte inconnue », se faisaient jeter, et le joueur
+ * lisait qu'il devait recharger sa page.
+ *
+ * ## Deux noms pour les écharpes
+ *
+ * Le kiosque les annonce `echarpes/montant`, l'accueil `scarves/amount` : deux
+ * routes écrites à des mois d'écart pour la même monnaie. On accepte les deux
+ * ici plutôt que de renommer une réponse d'API dont d'anciens clients
+ * dépendent — et le reste du jeu n'a plus à savoir qu'il y en avait deux.
+ */
+function carteDuPaquet(c) {
+  if (c.type === 'skin') {
+    const t = TENUES.get(c.id);
+    return { id: c.id, nom: t?.nom ?? c.id, texte: t?.texte, type: 'tifo',
+      rar: t?.rar ?? 'rare', stage: 1, skin: true, pour: c.pour };
+  }
+  if (c.type === 'stuff') {
+    const o = STUFFS.get(c.id);
+    return { id: c.id, nom: o?.nom ?? c.id, texte: o?.texte, type: 'depl',
+      rar: o?.rar ?? 'rare', stage: 1, stuff: true, mods: o?.mods };
+  }
+  if (c.type === 'action') {
+    const a = ACTES.get(c.id);
+    return { id: c.id, nom: a?.nom ?? c.id, texte: a?.texte, type: 'pyro',
+      rar: a?.rar ?? 'rare', stage: 1, action: true };
+  }
+  /* Une poignée d'écharpes. Ce n'est pas un lot de consolation : c'est ce qui
+     paie les évolutions, donc les âges qu'aucun booster ne donne. La rareté
+     suit la taille de la poignée, pour que l'ouverture ait la couleur du gain
+     plutôt qu'une couleur fixe. */
+  if (c.type === 'echarpes' || c.type === 'scarves') {
+    const n = c.montant ?? c.amount ?? 0;
+    // `voix` pour sa couleur : c'est l'or du jeu, celui des écharpes. Il n'y a
+    // pas de type propre à la monnaie, et en inventer un ferait apparaître une
+    // famille de plus dans tous les filtres du classeur.
+    return { id: 'echarpes', nom: `${n} écharpes`, type: 'voix',
+      texte: 'De quoi faire grandir un supporter que tu as déjà.',
+      rar: n >= 30 ? 'epique' : n >= 14 ? 'rare' : 'commune',
+      stage: 1, echarpes: true, montant: n };
+  }
+  return BY_ID.get(c.id);
+}
+
 /* -------------------------------------------------------------- tirage
 
    Il n'est pas ici. Le serveur tire, débite le booster et écrit la collection
@@ -497,5 +564,5 @@ function cardHTML(f, opts = {}) {
   /* L'état est un **objet partagé**, pas une copie : le kiosque le modifie en
      ouvrant un booster, la page des Fanzzy le relit. Exporter une copie ferait
      deux vérités dont l'une vieillirait en silence. */
-  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, chargerCatalogue, clamp, dessinDeCarte, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid };
+  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, dessinDeCarte, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid };
 })();

@@ -926,7 +926,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       q(`SELECT skin_id, stage, equipped, got_at FROM user_skins
           WHERE user_id = ? AND fanzzy_id = ?`, [userId, id]),
       q(`SELECT stuff_id, copies, slot FROM user_stuff WHERE user_id = ?`, [userId]),
-      q(`SELECT active_fanzzy FROM user_wallet WHERE user_id = ?`, [userId]),
+      q(`SELECT active_fanzzy, scarves FROM user_wallet WHERE user_id = ?`, [userId]),
       /* La tribune du deck, assemblée ici et pas par la page.
          Elle enchaînerait sinon deux requêtes pour afficher une carte, et la
          seconde arriverait après le premier rendu — le bouton changerait de
@@ -964,6 +964,17 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       },
       possede: mien[0]?.copies ?? 0,
       stade,
+      /* **Ce qu'il a en poche.**
+
+         La fiche proposait ÉVOLUER sans jamais savoir si le joueur pouvait
+         payer : on ouvrait le panneau, on confirmait, et le refus arrivait au
+         troisième geste sous la forme d'un petit message. Deux clics pour
+         apprendre une chose qui se savait avant le premier.
+
+         C'est la même faute que le bouton d'ouverture du kiosque, et elle se
+         corrige de la même façon : le prix et la bourse voyagent ensemble, et
+         l'écran dit « il te faut » au lieu de laisser essayer. */
+      echarpes: Number(w[0]?.scarves ?? 0),
       depuis: mien[0]?.first_at ?? null,
       /* **L'avatar, et non le deck.** C'est le personnage que voient les amis
          et l'accueil. Le champ s'appelait `equipe` et la fiche en tirait

@@ -277,6 +277,123 @@ const arme = combine({ tempoWindow: 1.7 }, ['jumelles']);
 check('l\u2019équipement a bien un revers',
   arme.tempoWindow > nu.tempoWindow && arme.tempoInterval > 0);
 
+/* ================================ la cérémonie, dans un vrai navigateur
+
+   **C'était la seule carte du jeu qui n'était pas une carte du jeu.**
+
+   L'accueil dessinait la sienne — un buste, un nom, une phrase — pendant que le
+   kiosque rendait la vraie : cadre de rareté, holo sur un épique, décor du
+   personnage, âge en bas. Le joueur découvrait donc le jeu au deuxième booster,
+   c'est-à-dire deux heures plus tard, alors que **le premier paquet est celui
+   dont on se souvient**.
+
+   Les deux écrans partagent maintenant `carteDuPaquet` et `cardHTML`, dans
+   `cartes.js`. Ce contrôle existe pour que ça reste vrai : deux rendus qui se
+   ressemblent finissent par ne plus se ressembler, et personne ne le remarque
+   avant un joueur.
+
+   Il lui faut un second compte — le premier a déjà ouvert son paquet, et la
+   cérémonie ne se rejoue pas. */
+{
+  const puppeteer = (await import('puppeteer')).default;
+  const path = (await import('node:path')).default;
+  const { fileURLToPath } = await import('node:url');
+  const RACINE = fileURLToPath(new URL('..', import.meta.url));
+
+  const V = 'cccccccc-0000-0000-0000-000000000002';
+  await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash)
+                     VALUES (?,?,?,'x')`, [V, 'ceremonie@ex.fr', 'Cérémonie']);
+
+  /* Un serveur à part, avec **la page et ses fichiers**. Celui du haut ne sert
+     que l'API : il n'a ni `/bienvenue`, ni `cartes.js`, ni le catalogue des
+     Fanzzy que `cardHTML` réclame. */
+  const { createFanzzy } = await import('../src/server/fanzzy/index.js');
+  const commeLui = (r, _s, n) => { r.user = { id: V }; n(); };
+  const O2 = createOnboarding({ pool, requireAuth: commeLui, decks });
+
+  const web = express();
+  web.use('/api/me', O2.router);
+  web.use('/api/fanzzy', createFanzzy({ pool, requireAuth: commeLui }).router);
+  web.get('/bienvenue', (_q, s2) =>
+    s2.sendFile(path.join(RACINE, 'public', 'bienvenue.html')));
+  web.use(express.static(path.join(RACINE, 'public')));
+  const http2 = createServer(web);
+  await new Promise((r) => http2.listen(0, r));
+  const chez = `http://localhost:${http2.address().port}`;
+
+  const nav = await puppeteer.launch({ args: ['--no-sandbox'] });
+  const page = await nav.newPage();
+  await page.setViewport({ width: 420, height: 880 });
+  const soucis = [];
+  page.on('pageerror', (e) => soucis.push(String(e.message)));
+  await page.goto(chez + '/bienvenue', { waitUntil: 'networkidle0' });
+
+  /* On saute le choix du club : il a son propre chemin, éprouvé plus haut par
+     l'API. Ce qu'on éprouve ici commence au paquet. */
+  await page.evaluate(async () => {
+    const r = await fetch('/api/me/welcome', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ teamId: 85 }),
+    });
+    const j = await r.json();
+    if (j.error) throw new Error(j.error);
+    cartes = j.cartes;
+    scene(3);
+    preparerPaquet();
+    reveler();
+  });
+  await new Promise((r) => setTimeout(r, 400));
+
+  const vu = await page.evaluate(() => {
+    const faces = [...document.querySelectorAll('#s3 .face.front')];
+    return {
+      cartes: faces.length,
+      vraies: faces.filter((f) => f.querySelector('.fz')).length,
+      replis: faces.filter((f) => f.classList.contains('repli')).length,
+      raretes: [...new Set(faces.map((f) =>
+        [...(f.querySelector('.fz')?.classList ?? [])].find((c) => c.startsWith('r-'))))],
+      /* La carte doit **remplir** la face : l'habillage d'avant posait une
+         bordure et vingt pixels de marge, qui écrasaient le cadre de la carte
+         à l'intérieur du sien. */
+      pleine: (() => {
+        const f = faces[0], c = f?.querySelector('.fz');
+        if (!c) return null;
+        return Math.round(c.getBoundingClientRect().width)
+             >= Math.round(f.getBoundingClientRect().width) - 1;
+      })(),
+    };
+  });
+
+  check(`le paquet de bienvenue sort ses cartes (${vu.cartes})`, vu.cartes > 0);
+  check('et ce sont les cartes du jeu, pas des tuiles d’accueil',
+    vu.cartes > 0 && vu.vraies === vu.cartes
+    || (console.log('        vraies :', vu.vraies, 'sur', vu.cartes), false));
+  check('le repli ne s’est pas déclenché', vu.replis === 0);
+  check('chacune porte sa rareté', vu.raretes.every(Boolean)
+    || (console.log('        raretés :', vu.raretes.join(' ')), false));
+  check('et elle remplit la face, sans cadre par-dessus le sien', vu.pleine === true);
+
+  /* Le dos aussi : c'est l'image de la seconde d'avant, et elle doit être
+     celle de la série du sachet — pas le dégradé gris de tout le monde. */
+  const dos = await page.evaluate(() => {
+    const d = [...document.querySelectorAll('#s3 .face.back')];
+    return { total: d.length, dessines: d.filter((x) => x.classList.contains('dessine')).length,
+             fond: d[0] ? getComputedStyle(d[0]).backgroundImage : '' };
+  });
+  check('le dos porte le dessin de la série', dos.total > 0 && dos.dessines === dos.total
+    || (console.log('        dessinés :', dos.dessines, 'sur', dos.total), false));
+  check('et c’est un vrai fichier, pas le dégradé de repli',
+    /\/img\/dos\//.test(dos.fond)
+    || (console.log('        fond :', dos.fond), false));
+
+  check('et la page n’a rien jeté en chemin', soucis.length === 0
+    || (console.log('        ', soucis.slice(0, 2).join(' | ')), false));
+
+  await nav.close();
+  await new Promise((r) => http2.close(r));
+  await pool.query('DELETE FROM users WHERE public_id = ?', [V]);
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end(); http.close();
 process.exit(failures ? 1 : 0);

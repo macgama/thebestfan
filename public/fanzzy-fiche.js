@@ -183,8 +183,22 @@
           manque: atteint ? null : `${a.cout} écharpes`,
           // Évoluer ne se propose que pour **l'âge juste après** le sien : on
           // ne saute pas un étage, et le serveur le refuserait de toute façon.
+          /* **Le prix et la bourse voyagent ensemble.**
+
+             Le bouton disait ÉVOLUER quoi qu'il arrive : on ouvrait le
+             panneau, on confirmait, et le refus arrivait au troisième geste
+             sous la forme d'un petit message. Deux clics pour apprendre une
+             chose qui se savait avant le premier — et, pire, le joueur
+             n'apprenait pas **combien** il lui manquait, donc ce qu'il devait
+             aller faire.
+
+             C'est la faute du bouton d'ouverture du kiosque, au même endroit
+             de la boucle : une affordance montrée quand elle ne sert pas. */
           action: !atteint && a.stage === d.stade + 1 && d.possede
-            ? { quoi: 'evoluer', vers: a, libelle: 'ÉVOLUER', cout: `${a.cout} écharpes` }
+            ? { quoi: 'evoluer', vers: a, libelle: 'ÉVOLUER',
+                cout: `${a.cout} écharpes`,
+                payable: Number(d.echarpes ?? 0) >= Number(a.cout ?? 0),
+                manque: Math.max(0, Number(a.cout ?? 0) - Number(d.echarpes ?? 0)) }
             : null,
         });
       }
@@ -379,8 +393,15 @@
               place === 0 ? 'titulaire' : `remplaçant ${place}`}</small></button>`
             : '<button class="bt primaire" data-emmener>EMMENER EN DUEL</button>';
 
+      /* Fermé et **nommé** : « rien ne se passe » et « il te manque quarante
+         écharpes » n'appellent pas le même geste, et un seul des deux se
+         rattrape ce soir. Le bouton garde sa place — le retirer ferait croire
+         que ce Fanzzy ne grandit pas. */
       const second = x?.action?.quoi === 'evoluer'
-        ? `<button class="bt or" data-evoluer>${x.action.libelle}<small>${esc(x.action.cout)}</small></button>`
+        ? (x.action.payable
+          ? `<button class="bt or" data-evoluer>${x.action.libelle}<small>${esc(x.action.cout)}</small></button>`
+          : `<button class="bt" data-evoluer disabled>IL TE FAUT<small>${
+              x.action.manque} écharpes de plus</small></button>`)
         : x?.action?.quoi === 'porter'
           ? `<button class="bt" data-porter="${esc(x.action.tenue.id)}">${x.action.libelle}</button>`
           : '';
@@ -659,9 +680,49 @@
         try {
           await api('/evolve', { id: d.fanzzy.id });
           panneau.remove();
-          dire(`${vers.nom} — il a grandi.`);
-          window.FX?.flash?.('#F5C33B');
+
+          /* ------------------------------------------ la cérémonie
+
+             **Le geste le plus cher du jeu était le seul sans récompense à
+             l'écran.** On confirmait, un éclair jaune passait, la fiche se
+             rechargeait, et le nouveau personnage était simplement là. Rien
+             n'avait eu lieu : ni le départ de l'ancien, ni l'arrivée de l'autre,
+             ni les quatre-vingt-dix écharpes qu'on venait de dépenser.
+
+             `FX.evolution` tient le rythme — la charge, le flash, l'onde — et
+             rend la main **au moment exact du flash**, pendant que le blanc
+             couvre l'image. C'est là qu'on recharge : une seconde plus tôt on
+             verrait la substitution, une seconde plus tard un trou.
+
+             La couleur est celle de la rareté **d'arrivée**, parce que c'est
+             elle qu'on achète : monter au troisième âge d'un épique éclate en
+             violet, pas dans l'or de tout le monde. */
+          const portrait = hote.querySelector('#fiche-art img');
+          const ceremonie = window.FX?.evolution
+            ? window.FX.evolution(portrait, { nom: vers.nom, rar: vers.rar })
+            : null;
+          const suite = ceremonie ? await ceremonie : null;
+
           await recharger();
+
+          /* Le dessin arrive par `img.onload` : il n'existe pas encore quand
+             `recharger` rend la main. On l'attend brièvement plutôt que de
+             jouer l'arrivée sur un conteneur vide — et on renonce au bout d'une
+             seconde et demie, parce qu'une cérémonie qui n'arrive jamais est
+             pire qu'une cérémonie écourtée. */
+          if (suite) {
+            const attendre = async () => {
+              for (let i = 0; i < 30; i++) {
+                const n = hote.querySelector('#fiche-art img');
+                if (n) return n;
+                await new Promise((r) => setTimeout(r, 50));
+              }
+              return null;
+            };
+            suite.arrivee(await attendre());
+          } else {
+            dire(`${vers.nom} — il a grandi.`);
+          }
         } catch (e) {
           panneau.remove();
           dire(e.code === 'fanzzy.error.not_enough_scarves'
