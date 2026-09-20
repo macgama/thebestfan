@@ -236,11 +236,22 @@ check('la page se charge sans erreur de script', A.erreurs.length === 0 && B.err
 
 const prepa = await A.page.evaluate(() => ({
   formats: [...document.querySelectorAll('[data-fmt]')].map((b) => b.textContent.trim()),
+  /* `dataset` et non le texte : le bouton porte sa prime en petit, donc
+     son texte dit « 3v3+40 % » et non « 3v3 ». */
+  formatChoisi: document.querySelector('[data-fmt].on')?.dataset.fmt ?? null,
   matchs: [...document.querySelectorAll('[data-fixture]')].map((m) => m.textContent.trim()),
   entrerActif: !document.getElementById('entrer')?.disabled,
   texte: document.getElementById('prepaCorps').textContent.replace(/\s+/g, ' '),
 }));
 check('les cinq formats sont proposés', prepa.formats.length === 5);
+/* **Et c'est le 1v1 qui est coché.** Le format décidé d'avance indexe la
+   file : la page s’ouvrait sur un 3v3, donc elle mettait d’office celui qui
+   n’y touche pas dans le format le plus dur à remplir — six supporters sur
+   un même match. Un soir creux, il attend le repli puis joue contre des
+   bots. Le 1v1 est le seul qui part à deux. */
+check(`et le 1v1 est celui qui est coché (${prepa.formatChoisi})`,
+  prepa.formatChoisi === '1v1'
+  || (console.log('        la page s’ouvre sur', prepa.formatChoisi), false));
 check('le match support en cours est proposé', prepa.matchs.some((m) => /Sion/.test(m)));
 check('le duel est annoncé classé pour un match en cours',
   /comptera au classement/.test(prepa.texte));
@@ -1144,6 +1155,58 @@ if (process.env.CAPTURE) {
   }
 }
 
+/* ==================== l'écran quand la bibliothèque du direct n'arrive pas
+
+   Un joueur a décrit la panne en une phrase : « plus rien dans VIRAGE et
+   DUEL — un message de chargement dans l'un, rien dans l'autre ». Les deux
+   écrans touchés étaient exactement les deux seuls à charger
+   /socket.io/socket.io.js, et tous deux appelaient leur fonction de connexion
+   **en première ligne du démarrage, hors de tout rattrapage**. `io` absent,
+   l'appel levait, la fonction rejetait, et plus rien ne se jouait : ni les
+   appels au serveur, ni le rendu. Le duel restait sur le « Chargement… » de
+   son balisage, le Virage restait blanc.
+
+   On reproduit la vraie panne plutôt qu'un symptôme : le fichier est refusé
+   au réseau, exactement comme le ferait un mandataire qui ne relaie pas ce
+   chemin ou une extension qui le bloque.
+
+   Ce qu'on éprouve n'est pas que le direct marche — il ne marche pas, c'est
+   le postulat — mais que **la page vive sans lui** : la liste des matchs
+   arrive par des appels ordinaires, et elle n'a jamais eu besoin d'une
+   socket. Et que le joueur soit prévenu, plutôt que laissé devant un écran
+   qui ne dit rien. */
+{
+  const ctx = await nav.createBrowserContext();
+  const p = await ctx.newPage();
+  const erreurs = [];
+  p.on('pageerror', (e) => erreurs.push(e.message));
+  await p.setViewport({ width: 400, height: 880 });
+  await ctx.setCookie({ name: 'tbf_test', value: U[0], domain: 'localhost', path: '/' });
+  await p.setRequestInterception(true);
+  p.on('request', (r) => (/socket\.io/.test(r.url()) ? r.abort() : r.continue()));
+
+  await p.goto(`${base}/duel-nvn`, { waitUntil: 'domcontentloaded' });
+
+  /* **Le contrôle qui porte.** La liste des matchs doit être là. Sans le
+     rattrapage, cette attente expire et le corps de la préparation en est
+     encore à son « Chargement… ». */
+  const liste = await jusqua(async () => p.evaluate(() =>
+    document.querySelectorAll('#prepaCorps .mt[data-fixture]').length > 0), 12000);
+  check('sans la bibliothèque du direct, le duel liste quand même les matchs', liste
+    || (console.log('        #prepaCorps dit :',
+      await p.evaluate(() => document.getElementById('prepaCorps').textContent.trim().slice(0, 60))),
+      false));
+
+  /* Et il le dit. Un écran qui marche à moitié sans l'annoncer envoie le
+     joueur appuyer sur un bouton qui ne peut pas répondre. */
+  const dit = await p.evaluate(() =>
+    document.getElementById('prepaCorps').textContent);
+  check('et il prévient qu’on ne peut pas entrer en file',
+    /PAS DE CONNEXION EN DIRECT/i.test(dit)
+    || (console.log('        aucun avertissement dans la préparation'), false));
+
+  await ctx.close();
+}
 await nav.close();
 nvn.stop();
 io.close();

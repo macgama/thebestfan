@@ -932,6 +932,53 @@ const laScene = () => page.evaluate(() => ({
     || (console.log('        il dit :', partage?.text), false));
 }
 
+/* ==================== l'écran quand la bibliothèque du direct n'arrive pas
+
+   Un joueur a décrit la panne en une phrase : « plus rien dans VIRAGE et
+   DUEL ». Les deux écrans touchés étaient exactement les deux seuls à charger
+   /socket.io/socket.io.js, et tous deux appelaient leur fonction de connexion
+   **en première ligne du démarrage, hors de tout rattrapage**. `io` absent,
+   l'appel levait, la fonction de démarrage rejetait, et rien de ce qui suit
+   ne se jouait — ni la lecture des matchs, ni le rendu. Le Virage restait
+   blanc, sans un mot, parce que le code qui aurait pu parler était après la
+   ligne qui levait.
+
+   On refuse le fichier au réseau : c'est la panne telle qu'elle arrive — un
+   mandataire qui ne relaie pas ce chemin, une extension qui le bloque.
+
+   Ce qu'on éprouve n'est pas que le direct marche. Il ne marche pas, c'est le
+   postulat. On éprouve que **la page vive sans lui** : la liste arrive par un
+   appel ordinaire, elle n'a jamais eu besoin d'une socket. */
+{
+  const sans = await nav.newPage();
+  await sans.setViewport({ width: 400, height: 880 });
+  await sans.setRequestInterception(true);
+  sans.on('request', (r) => (/socket\.io/.test(r.url()) ? r.abort() : r.continue()));
+  await sans.goto(base + '/virage', { waitUntil: 'domcontentloaded' });
+
+  /* **Le contrôle qui porte.** Sans le rattrapage, `peindre()` ne tourne
+     jamais et `#matchs` reste tel que le balisage l'a laissé. */
+  let vu = null;
+  for (let i = 0; i < 100 && !vu; i++) {
+    await wait(120);
+    vu = await sans.evaluate(() => {
+      const el = document.getElementById('matchs');
+      const txt = el ? el.textContent.replace(/\s+/g, ' ').trim() : null;
+      return txt ? { txt } : null;
+    });
+  }
+  check('sans la bibliothèque du direct, le Virage dessine quand même sa liste',
+    Boolean(vu)
+    || (console.log('        #matchs est resté vide'), false));
+
+  /* Et il le dit. Montrer des matchs sur lesquels on ne peut pas pousser sans
+     prévenir enverrait le joueur appuyer sur une porte fermée. */
+  check('et il prévient qu’on ne peut pas y entrer',
+    /PAS DE CONNEXION EN DIRECT/i.test(vu?.txt ?? '')
+    || (console.log('        il dit :', (vu?.txt ?? '').slice(0, 80)), false));
+
+  await sans.close();
+}
 check('aucune erreur de script sur le virage',
   erreurs.length === 0 || (console.log('    ', erreurs.join(' / ')), false));
 

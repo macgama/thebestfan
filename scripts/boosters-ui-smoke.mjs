@@ -792,6 +792,96 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
     || (console.log('        repli introuvable dans cartes.css'), false));
 }
 
+/* ============================== la montée de niveau, quand elle s'annonce
+
+   **Tout le calcul existait, et personne ne le regardait.** `gagner()` rend
+   depuis toujours le niveau atteint, celui d'où l'on vient, les paliers
+   franchis et les écharpes versées ; ouvrir un booster le renvoyait à cette
+   page, qui le jetait, et le duel ne le lisait même pas. Un joueur montait de
+   niveau sans rien voir.
+
+   On éprouve le composant par son contrat plutôt que par une vraie montée :
+   la faire tomber pour de bon demanderait d'aligner l'XP sur un seuil, ce qui
+   éprouverait la courbe — déjà couverte par `niveau:smoke` — et non l'écran.
+   Ce qui compte ici est ce que le joueur lit. */
+{
+  const p = await ouvrir();
+
+  /* **Rien à fêter ne doit rien dessiner.** L’appelant ne vérifie pas avant
+     d’appeler — c’est la promesse de `feter` — donc une montée absente doit
+     se résoudre en silence. Si elle ouvrait un panneau vide, chaque booster
+     ordinaire se terminerait sur une fête sans objet. */
+  const muet = await p.evaluate(async () => {
+    await window.TBF_NIVEAU.feter(null);
+    await window.TBF_NIVEAU.feter({ monte: false, niveau: 3, avant: 3 });
+    return document.querySelectorAll('.tbf-niv-fond').length;
+  });
+  check('sans montée, aucun panneau ne s’ouvre', muet === 0
+    || (console.log('        ', muet, 'panneau(x) posé(s) pour rien'), false));
+
+  /* La montée qu’un joueur voit au palier 5 : un niveau gagné, cinquante
+     écharpes, et le troisième rang de tribune qui s’ouvre. Les nombres sont
+     ceux de `shared/niveau.js`, pas des valeurs choisies ici. */
+  const vu = await p.evaluate(() => {
+    window.TBF_NIVEAU.feter({ monte: true, avant: 4, niveau: 5, xp: 400,
+      ecarpes: 50, paliers: [{ niveau: 5, deckFanzzy: 3 }] });
+    const el = document.querySelector('.tbf-niv-fond');
+    if (!el) return null;
+    return { texte: el.textContent.replace(/\s+/g, ' ').trim(),
+      niveau: el.querySelector('.tbf-niv-n b')?.textContent.trim(),
+      boutons: el.querySelectorAll('button').length,
+      role: el.querySelector('[role]')?.getAttribute('role') };
+  });
+
+  check('une montée ouvre son panneau', Boolean(vu)
+    || (console.log('        rien n’a été posé dans la page'), false));
+  if (vu) {
+    check(`il annonce le niveau atteint (${vu.niveau})`, vu.niveau === '5');
+    /* **Les écharpes du palier.** Elles tombaient en silence : le solde
+       changeait entre deux écrans sans que rien ne dise combien ni pourquoi. */
+    check('il dit les écharpes gagnées', /\+50/.test(vu.texte)
+      || (console.log('        ', vu.texte), false));
+    /* **Et ce que le palier ouvre**, qui est la seule chose que le niveau ait
+       le droit de donner — voir la règle dans `shared/niveau.js` : il ouvre,
+       il ne rend pas plus fort. */
+    check('il dit ce que le palier ouvre', /FANZZY DE PLUS AU DECK/i.test(vu.texte)
+      || (console.log('        ', vu.texte), false));
+    /* Un seul bouton : une fête ne pose pas de question. C’est toute la
+       raison pour laquelle ce panneau n’est pas un `dialogue.js`. */
+    check('et il n’offre qu’une sortie', vu.boutons === 1
+      || (console.log('        ', vu.boutons, 'boutons'), false));
+    check('il se déclare comme une boîte modale', vu.role === 'alertdialog');
+
+    /* De quoi regarder la fête, le jour où on veut juger ce qu’elle donne
+       plutôt que ce qu’elle dit. */
+    if (process.env.CAPTURE) {
+      await p.screenshot({ path: `${process.env.TEMP ?? "/tmp"}/niveau-montee.png` });
+    }
+
+    /* Elle se referme, et elle ne laisse rien derrière : un panneau en
+       `position:fixed` oublié couvrirait la page entière sans qu’on voie quoi. */
+    await p.evaluate(() =>
+      document.querySelector('.tbf-niv-fond [data-fermer]').click());
+    const parti = await jusqua(async () => p.evaluate(() =>
+      document.querySelectorAll('.tbf-niv-fond').length === 0), 4000);
+    check('« CONTINUER » la referme et la retire', parti
+      || (console.log('        le panneau est resté dans la page'), false));
+  }
+
+  /* Un palier qui n’ouvre rien — quatre sur cinq — ne doit pas se terminer
+     sur un blanc. */
+  const sec = await p.evaluate(async () => {
+    window.TBF_NIVEAU.feter({ monte: true, avant: 6, niveau: 7, ecarpes: 70, paliers: [] });
+    const el = document.querySelector('.tbf-niv-fond');
+    const txt = el ? el.textContent.replace(/\s+/g, ' ').trim() : '';
+    el?.querySelector('[data-fermer]')?.click();
+    return txt;
+  });
+  check('un palier qui n’ouvre rien le dit quand même', /\+70/.test(sec) && sec.length > 20
+    || (console.log('        ', sec), false));
+
+  await p.close();
+}
 await nav.close();
 await new Promise((r) => http.close(r));
 await pool.end();
