@@ -1294,7 +1294,36 @@ let socket = null;
 function connecter() {
   socket = io({ transports:['websocket','polling'] });
 
+  /* **On ne crie pas au loup.**
+
+     Un joueur l'a dit en une phrase : « j'ai le message de connexion
+     impossible alors que la connexion fonctionne ». Il avait raison, et le
+     défaut était grossier : `connect_error` posait le voile **sur-le-champ**,
+     sur tout l’écran, et il tombait aussi quand on ne faisait que regarder la
+     liste des matchs.
+
+     Or socket.io émet `connect_error` à la moindre hésitation — un
+     WebSocket refusé avant le repli en polling, un changement de réseau, un
+     écran de téléphone qui s’éteint une seconde. Il se rebranche tout seul
+     dans la foulée, et c’est le comportement normal, pas une panne. Poser un
+     voile noir dessus, c’est apprendre au joueur que le jeu ment.
+
+     On laisse donc cinq secondes à la reconnexion avant de dire quoi que ce
+     soit. Si elle revient — le cas ordinaire — personne n’a rien vu. Si elle
+     ne revient pas, le voile arrive, et cette fois il dit vrai.
+
+     La règle vaut pour `disconnect` comme pour `connect_error` : les deux
+     décrivent le même état vu de deux endroits. */
+  const GRACE_RESEAU = 5000;
+  let alarme = null;
+  const plusTard = (titre, texte) => {
+    if (alarme) return;                       // une alarme suffit
+    alarme = setTimeout(() => { alarme = null; voile(titre, texte); }, GRACE_RESEAU);
+  };
+  const rassurer = () => { clearTimeout(alarme); alarme = null; };
+
   socket.on('connect', () => {
+    rassurer();
     fermerVoile();
     // Reprise : si un duel nous attendait, le serveur nous y remet.
     if (S.vue && !S.vue.termine) socket.emit('nvn:resume');
@@ -1302,12 +1331,12 @@ function connecter() {
   });
 
   socket.on('connect_error', () => {
-    voile('Hors ligne', 'La connexion au serveur a été perdue. On réessaie.');
+    plusTard('Hors ligne', 'La connexion au serveur a été perdue. On réessaie.');
   });
 
   socket.on('disconnect', () => {
     if (S.vue && !S.vue.termine) {
-      voile('Connexion perdue', 'Ta place t\u2019attend une minute trente. '
+      plusTard('Connexion perdue', 'Ta place t\u2019attend une minute trente. '
         + 'Tu cesses simplement de pousser, ta tribune ne s\u2019effondre pas.');
     }
   });

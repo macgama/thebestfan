@@ -992,6 +992,48 @@ if (process.env.CAPTURE) {
   await A.page.screenshot({ path: join(tmpdir(), 'nvn-duel-full.png'), fullPage: true });
   console.log(`   captures : ${join(tmpdir(), 'nvn-duel.png')}`);
 }
+/* ================= sortir en plein duel doit être annoncé, pas subi
+
+   Partir en cours de duel est un **forfait** : on perd, on ne touche rien, et
+   l'autre camp encaisse. Une sanction qu'on découvre après coup n'est pas une
+   règle, c'est un piège — c'est écrit dans la page, au-dessus du
+   gestionnaire qui intercepte les sorties.
+
+   Rien ne l'éprouvait. On clique donc la flèche pour de vrai, on regarde si
+   la question vient, et on répond **RESTER** : le contrôle ne doit pas coûter
+   le duel aux blocs qui suivent. */
+{
+  const p = A.page;
+  const enJeu = await p.evaluate(() => document.getElementById('jeu').classList.contains('on'));
+  check('le duel est bien en cours pour éprouver la sortie', enJeu
+    || (console.log('        l’écran de jeu n’est pas ouvert'), false));
+
+  if (enJeu) {
+    await p.evaluate(() => document.querySelector('.tbf-retour')?.click());
+    const demande = await jusqua(async () => p.evaluate(() =>
+      Boolean(document.querySelector('[data-non]'))), 5000);
+    /* **Le contrôle qui porte.** Sans la question, le joueur perd son duel en
+       appuyant sur une flèche de retour ordinaire. */
+    check('la flèche de retour prévient avant de faire perdre', demande
+      || (console.log('        aucune confirmation : on partirait en forfait sans le savoir'), false));
+
+    if (demande) {
+      const dit = await p.evaluate(() =>
+        document.querySelector('.tbf-dial')?.textContent.replace(/\s+/g, ' ').trim() ?? '');
+      /* Elle doit dire **ce qu’on perd**, pas demander deux fois : c’est la
+         doctrine des panneaux de ce dépôt. */
+      check('et elle dit ce que ça coûte', /forfait/i.test(dit)
+        || (console.log('        elle dit :', dit.slice(0, 90)), false));
+
+      await p.evaluate(() => document.querySelector('[data-non]').click());
+      await dodo(400);
+      const reste = await p.evaluate(() =>
+        document.getElementById('jeu').classList.contains('on') && !location.pathname.endsWith('/'));
+      check('« RESTER » laisse le duel en place', reste
+        || (console.log('        on a quitté le duel malgré le refus'), false));
+    }
+  }
+}
 /* ================== le téléphone qui décroche, et ce qu'il laisse levé
 
    Sur un mobile, la socket tombe chaque fois que l'écran s'éteint ou que le
@@ -1205,6 +1247,105 @@ if (process.env.CAPTURE) {
     /PAS DE CONNEXION EN DIRECT/i.test(dit)
     || (console.log('        aucun avertissement dans la préparation'), false));
 
+  await ctx.close();
+}
+/* ======================= une hésitation du réseau ne voile pas l’écran
+
+   « J'ai le message de connexion impossible alors que la connexion
+   fonctionne. » Le défaut était grossier : `connect_error` posait le voile
+   sur-le-champ, sur tout l'écran, et il tombait même quand on ne faisait que
+   regarder la liste des matchs.
+
+   Or socket.io émet `connect_error` à la moindre hésitation — un WebSocket
+   refusé avant le repli en polling, un changement de réseau, un écran de
+   téléphone qui s'éteint. Il se rebranche seul dans la foulée. C'est le
+   comportement ordinaire du mobile, pas une panne.
+
+   On appelle les vrais écouteurs de la page plutôt que de couper le réseau :
+   ce qu'on éprouve est la **règle** — on ne crie pas au loup — et non la
+   mécanique de reconnexion de la bibliothèque, qui a ses propres essais.
+
+   Deux contrôles, et il faut les deux : le voile ne doit pas venir tout de
+   suite, et il doit venir quand même si ça dure. Sans le second, supprimer
+   l'avertissement passerait pour une réparation. */
+{
+  const p = A.page;
+  /* On part d’un écran propre : les blocs précédents ont pu laisser un voile. */
+  await p.evaluate(() => document.getElementById('voile').classList.remove('on'));
+
+  const voile = () => p.evaluate(() =>
+    document.getElementById('voile').classList.contains('on'));
+
+  await p.evaluate(() => socket.listeners('connect_error')
+    .forEach((f) => f(new Error('websocket error'))));
+  await dodo(1200);
+  check('une coupure d’une seconde ne voile pas l’écran', (await voile()) === false
+    || (console.log('        le voile est tombé tout de suite'), false));
+
+  /* Et si ça dure, on le dit. La grâce est de cinq secondes dans la page ;
+     on attend au-delà, sans recopier la constante — ce qui compte est
+     qu'elle finisse par parler, pas qu'elle parle à la milliseconde. */
+  const finit = await jusqua(voile, 9000);
+  check('mais une coupure qui dure finit par le dire', finit
+    || (console.log('        le voile n’est jamais venu : la panne resterait muette'), false));
+
+  /* Et la reconnexion efface tout, sans laisser le voile derrière. */
+  await p.evaluate(() => socket.listeners('connect').forEach((f) => f()));
+  const efface = await jusqua(async () => (await voile()) === false, 4000);
+  check('et la reconnexion retire le voile', efface
+    || (console.log('        le voile est resté après le retour du réseau'), false));
+}
+/* ====================== la porte de sortie, et où elle mène
+
+   « Si je sors d'un virage ou d'un duel, j'arrive sur une page vide ou sur
+   une page 404. » Personne ne regardait jamais **où** la flèche de retour
+   dépose le joueur : les suites ouvrent des écrans, en mesurent le contenu,
+   et les quittent en fermant le navigateur.
+
+   Hors duel il n'y a rien à confirmer — on n'abandonne rien — donc le lien
+   navigue comme partout ailleurs. Ce qu'on éprouve est l'arrivée : un code
+   qui répond, et une page qui a quelque chose dedans. Un 404 muet et une page
+   blanche se ressemblent beaucoup vus du canapé.
+
+   Sur une page neuve : la flèche mène hors du duel, et les blocs précédents
+   ont besoin de la leur. */
+{
+  const ctx = await nav.createBrowserContext();
+  const p = await ctx.newPage();
+  const erreurs = [];
+  p.on('pageerror', (e) => erreurs.push(e.message));
+  await p.setViewport({ width: 400, height: 880 });
+  await ctx.setCookie({ name: 'tbf_test', value: U[0], domain: 'localhost', path: '/' });
+  await p.goto(`${base}/duel-nvn`, { waitUntil: 'networkidle0' });
+
+  const fleche = await p.evaluate(() => {
+    const a = document.querySelector('.tbf-retour');
+    return a ? a.getAttribute('href') : null;
+  });
+  check(`le duel offre une flèche de retour (${fleche})`, Boolean(fleche)
+    || (console.log('        aucune .tbf-retour dans la barre'), false));
+
+  if (fleche) {
+    const [rep] = await Promise.all([
+      p.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }).catch(() => null),
+      p.evaluate(() => document.querySelector('.tbf-retour').click()),
+    ]);
+    check('la flèche emmène quelque part', Boolean(rep)
+      || (console.log('        aucune navigation après le clic'), false));
+    /* **Le contrôle qui porte.** Un 404 est une page, et `page()` répond au
+       404 par un corps **vide** : les deux symptômes décrits par le joueur
+       sont les deux faces de la même chose. */
+    check(`et la page d’arrivée répond (${rep?.status() ?? 'sans réponse'})`,
+      rep?.status() === 200
+      || (console.log('        code', rep?.status(), 'sur', p.url()), false));
+
+    await dodo(700);
+    const corps = await p.evaluate(() => document.body.innerText.replace(/\s+/g, ' ').trim());
+    check(`et elle a quelque chose dedans (${corps.length} caractères)`, corps.length > 20
+      || (console.log('        la page d’arrivée est vide :', p.url()), false));
+    check('et elle n’a pas jeté d’erreur de script',
+      erreurs.length === 0 || (console.log('        ', erreurs.join(' / ')), false));
+  }
   await ctx.close();
 }
 await nav.close();
