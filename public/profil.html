@@ -150,20 +150,24 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
   letter-spacing:.14em;cursor:pointer}
 .encore:disabled{opacity:.35;cursor:default}
 
-.stuff{display:flex;gap:8px;padding:12px}
-.slot{flex:1;border:1px dashed rgba(242,238,228,.2);border-radius:10px;padding:11px 8px;text-align:center;
-  min-height:78px;display:flex;flex-direction:column;justify-content:center;gap:4px;cursor:pointer}
-.slot.plein{border-style:solid;border-color:var(--violet);background:rgba(130,87,218,.1)}
-.slot b{font-family:var(--banner);font-size:12px;letter-spacing:.03em}
-.slot span{font-size:9.5px;opacity:.5;line-height:1.35}
-.sac{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 12px}
+/* **Les deux emplacements ont disparu, et le sac reste.**
+
+   Il y avait ici deux emplacements d'équipement, avec de quoi y poser une
+   pièce. Ils ne décidaient de rien. L'équipement qui compte est attaché
+   **à chaque Fanzzy du deck** — deux pièces chacun — et c'est celui-là que
+   le Virage et le duel lisent, tous deux par `decks.loadout`. Les deux
+   emplacements de cette page vivaient dans `user_stuff.slot`, que personne
+   d'autre que cette page ne relisait.
+
+   Un écran qui laisse équiper sans que ça change quoi que ce soit est pire
+   qu'un écran vide : le joueur croit son choix fait, et il ne l'est pas. Le
+   sac, lui, reste — dire ce qu’on possède est le travail de cette page.
+   Équiper est le travail du deck, et la ligne du dessous y mène. */
+.sac{display:flex;flex-wrap:wrap;gap:6px;padding:12px}
 .obj{border:1px solid rgba(242,238,228,.14);border-radius:8px;padding:7px 10px;font-size:11px;
-  cursor:pointer;background:rgba(0,0,0,.3)}
-.obj.porte{border-color:var(--violet);color:var(--violet)}
-/* La pastille de l'emplacement, et la vignette du sac. Le sac tient sur une
-   ligne par pièce : la vignette y reste petite, juste de quoi reconnaître la
-   forme avant d'avoir lu le nom. */
-.slot .tbf-piece{width:38px;height:38px;border-radius:10px;margin:0 auto 2px}
+  background:rgba(0,0,0,.3)}
+/* La vignette du sac : petite, juste de quoi reconnaître la forme avant
+   d'avoir lu le nom. */
 .obj{display:inline-flex;align-items:center;gap:6px}
 .obj .vignette{width:20px;height:20px;object-fit:contain;flex:none;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
@@ -235,10 +239,15 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
   <h2>MON FANZZY</h2>
   <div class="bloc" id="fanzzy"></div>
 
+  <!-- Ce qu’on possède, et où l’on s’en sert. Les deux emplacements qui
+       étaient ici ne décidaient de rien : voir la note sur `.sac` plus haut. -->
   <h2>ÉQUIPEMENT</h2>
   <div class="bloc">
-    <div class="stuff" id="slots"></div>
     <div class="sac" id="sac"></div>
+    <a class="ligne" href="/deck" style="color:inherit;text-decoration:none">
+      <span class="n">Équiper mes Fanzzy</span>
+      <span class="v">deux pièces chacun, dans le deck</span>
+      <span style="opacity:.3;font-size:17px">›</span></a>
   </div>
 
   <h2>DUEL</h2>
@@ -625,24 +634,15 @@ function rendre() {
          <a class="v" href="/fanzzy" style="color:var(--projo)">changer</a></div>`
     : `<div class="vide">Aucun Fanzzy équipé.<br><a href="/fanzzy">Ouvre un booster</a></div>`;
 
-  // Équipement : deux emplacements, et le sac en dessous.
-  const portes = (etat.stuff ?? []).filter((s) => s.slot).sort((a, b) => a.slot - b.slot);
-  $('slots').innerHTML = [1, 2].map((n) => {
-    const p = portes.find((s) => s.slot === n);
-    const def = p ? catalogue.stuff.find((x) => x.id === p.stuff_id) : null;
-    return `<div class="slot ${p ? 'plein' : ''}" data-slot="${n}">
-      ${def ? `${window.TBF_STUFF.pastille(def)}
-               <b>${esc(def.nom)}</b><span>${esc(def.texte)}</span>`
-            : `<b style="opacity:.4">EMPLACEMENT ${n}</b><span>choisis une pièce</span>`}</div>`;
-  }).join('');
-
+  /* Le sac : ce qu'on possède, sans rien à y faire. Équiper se passe dans le
+     deck, pièce par Fanzzy — la ligne sous le sac y mène. */
   const sac = (etat.stuff ?? []);
   $('sac').innerHTML = sac.length
     ? sac.map((s) => {
         const def = catalogue.stuff.find((x) => x.id === s.stuff_id);
-        return `<button class="obj ${s.slot ? 'porte' : ''}" data-obj="${s.stuff_id}">
+        return `<span class="obj">
           ${def ? window.TBF_STUFF.illustration(def.id, 'vignette') : ''}
-          ${esc(def?.nom ?? s.stuff_id)}${s.copies > 1 ? ` ×${s.copies}` : ''}</button>`;
+          ${esc(def?.nom ?? s.stuff_id)}${s.copies > 1 ? ` ×${s.copies}` : ''}</span>`;
       }).join('')
     : '<span style="font-size:11.5px;opacity:.45;padding:4px">Ton sac est vide.</span>';
 
@@ -679,28 +679,6 @@ $('clubs').addEventListener('click', async (e) => {
   }
 });
 
-let choixSlot = null;
-$('slots').addEventListener('click', (e) => {
-  const s = e.target.closest('[data-slot]');
-  if (!s) return;
-  choixSlot = Number(s.dataset.slot);
-  toast(`Choisis une pièce pour l\u2019emplacement ${choixSlot}`);
-});
-
-$('sac').addEventListener('click', async (e) => {
-  const o = e.target.closest('[data-obj]');
-  if (!o) return;
-  const id = o.dataset.obj;
-  const deja = (etat.stuff ?? []).find((s) => s.stuff_id === id && s.slot);
-  try {
-    if (deja) await me('/unequip', { stuffId: id });
-    else await me('/equip', { stuffId: id, slot: choixSlot ?? 1 });
-    etat = await me('/state');
-    loadout = await me('/loadout');
-    choixSlot = null;
-    rendre();
-  } catch { toast('Impossible pour le moment'); }
-});
 
 $('langues').addEventListener('click', async (e) => {
   const b = e.target.closest('[data-lang]');

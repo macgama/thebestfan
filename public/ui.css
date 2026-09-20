@@ -1654,3 +1654,71 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
   color:var(--craie);font-family:var(--ui);font-size:15px;letter-spacing:normal;
   text-transform:none}
 .tbf-dial-champ input:focus-visible{outline:2px solid var(--projo);outline-offset:1px}
+
+/* ================================================ la montée de niveau
+
+   Posée par `niveau-fete.js`. Voir ce fichier pour la règle : le niveau
+   **ouvre**, il ne donne pas — cet écran annonce donc des capacités, et les
+   écharpes à part.
+
+   Le fond est plus opaque que celui du dialogue, et c'est voulu : une
+   confirmation porte sur ce qu'on voit derrière, une fête ne porte que sur
+   elle-même. Ce qui est derrière n'a plus rien à dire pendant deux secondes.
+
+   `z-index` au-dessus du dialogue : une montée tombe à la fin d'un booster ou
+   d'un duel, et rien de ce qui pourrait traîner ne doit passer devant. */
+.tbf-niv-fond{position:fixed;inset:0;z-index:170;display:grid;place-items:center;
+  padding:20px;background:rgba(4,6,10,.88);backdrop-filter:blur(9px);
+  opacity:0;transition:opacity .2s ease}
+.tbf-niv-fond.on{opacity:1}
+
+.tbf-niv{width:min(400px,100%);max-height:calc(100vh - 40px);overflow:auto;
+  text-align:center;color:var(--craie);
+  background:radial-gradient(120% 70% at 50% 0,rgba(245,195,59,.16),transparent 62%),
+    linear-gradient(180deg,#171D26,#0C1015);
+  border:1px solid rgba(245,195,59,.3);border-radius:var(--r);
+  box-shadow:0 26px 76px rgba(0,0,0,.72),0 0 44px rgba(245,195,59,.14),
+    inset 0 1px 0 rgba(255,255,255,.07);
+  padding:22px 18px 16px;transform:scale(.9) translateY(14px);
+  transition:transform .26s cubic-bezier(.2,1.5,.4,1)}
+.tbf-niv-fond.on .tbf-niv{transform:none}
+
+/* La rosette, et son tour lent. Douze secondes : on la remarque sans qu’elle
+   attire l'œil pendant qu'on lit ce qui est écrit dessous. */
+.tbf-niv-rosette{width:62px;height:62px;display:block;margin:0 auto 10px;
+  color:var(--projo);filter:drop-shadow(0 0 14px rgba(245,195,59,.5))}
+@media (prefers-reduced-motion:no-preference){
+  .tbf-niv-fond.on .tbf-niv-rosette{animation:tbf-niv-tour 12s linear infinite}}
+@keyframes tbf-niv-tour{to{transform:rotate(1turn)}}
+
+.tbf-niv-quoi{font-family:var(--banner);font-size:10.5px;letter-spacing:.24em;
+  opacity:.55}
+/* Le chiffre porte tout l’écran : c’est la seule chose qu’on doit retenir. */
+.tbf-niv-n{margin-top:4px;display:flex;align-items:baseline;justify-content:center;gap:9px}
+.tbf-niv-n span{font-family:var(--banner);font-size:12px;letter-spacing:.2em;opacity:.45}
+.tbf-niv-n b{font-family:var(--banner);font-size:clamp(46px,17vw,64px);line-height:.95;
+  color:var(--projo);text-shadow:0 0 26px rgba(245,195,59,.45)}
+.tbf-niv-de{font-size:11.5px;opacity:.5;margin-top:2px}
+
+.tbf-niv-gains{margin-top:15px;display:flex;flex-direction:column;gap:7px}
+.tbf-niv-ouvre{font-family:var(--banner);font-size:9.5px;letter-spacing:.22em;
+  opacity:.4;margin-top:6px}
+.tbf-niv .g{border-radius:11px;padding:10px 12px;background:rgba(0,0,0,.34);
+  box-shadow:inset 0 0 0 1px rgba(242,238,228,.1)}
+.tbf-niv .g b{display:block;font-family:var(--banner);font-size:17px;letter-spacing:.04em;
+  color:var(--projo)}
+.tbf-niv .g span{display:block;font-size:10px;letter-spacing:.13em;opacity:.55;margin-top:2px}
+/* Ce qu'un palier ouvre n'est pas une somme : le texte y est plus petit et
+   ne prend pas la couleur de la monnaie. */
+.tbf-niv .g.ouvre b{font-size:13px;color:var(--craie)}
+.tbf-niv .g.ouvre span{letter-spacing:.04em;font-size:11px;text-transform:none}
+.tbf-niv-rien{font-size:11.5px;line-height:1.6;opacity:.5;padding:4px 6px}
+
+.tbf-niv-bt{width:100%;margin-top:16px;border:0;border-radius:11px;cursor:pointer;
+  padding:14px 12px;min-height:50px;font-family:var(--banner);font-size:14px;
+  letter-spacing:.1em;color:#1A0C04;
+  background:linear-gradient(180deg,#FFD86B,var(--projo) 55%,#B8860B);
+  box-shadow:0 4px 0 #7A5A0E,inset 0 1px 0 rgba(255,255,255,.4);
+  transition:transform .1s,box-shadow .1s}
+.tbf-niv-bt:active{transform:translateY(4px);box-shadow:0 0 0 #7A5A0E}
+.tbf-niv-bt:focus-visible{outline:2px solid var(--craie);outline-offset:2px}

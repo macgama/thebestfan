@@ -1280,7 +1280,30 @@ function souvenir(g) {
 /* ----------------------------------------------------------- choix du match */
 
 (async () => {
-  connect();
+  /* **La socket ne doit jamais empêcher la page de s’afficher.**
+  
+     `io` vient de /socket.io/socket.io.js, servi par le serveur lui-même. Ce
+     fichier peut manquer — un mandataire qui ne relaie pas ce chemin, une
+     extension qui le bloque, une coupure au mauvais moment — et `io` est alors
+     **indéfini**. L’appel levait, la fonction de démarrage rejetait, et rien
+     de ce qui suit ne se jouait : aucun appel au serveur, aucun rendu.
+  
+     Vu du joueur, les deux seuls écrans qui chargent cette bibliothèque
+     tombaient ensemble et en silence — le duel restait sur son « Chargement… »
+     et le Virage restait blanc. Rien ne pouvait le lui expliquer, puisque le
+     code qui aurait pu parler était après la ligne qui levait.
+  
+     Or la liste des matchs n’a aucun besoin de socket : elle arrive par des
+     appels ordinaires. Seul **jouer** en a besoin. On sépare donc les deux : la
+     page se dessine toujours, et l’absence de direct se dit à l’endroit où elle
+     change quelque chose.
+  
+     Le rattrapage est volontairement large — `io` absent lève une
+     ReferenceError, le constructeur peut lever autre chose. Ce qu’on veut ici
+     n’est pas distinguer les causes, c’est ne pas perdre la page. */
+  let sansDirect = false;
+  try { connect(); }
+  catch (e) { sansDirect = true; console.error('[virage] socket', e.message); }
 
   /* Entrer directement dans un match, par son adresse.
 
@@ -1382,7 +1405,16 @@ function souvenir(g) {
     const autres = vus.filter((m) => !m.mien && m.open);
     const part = Math.round((FERVEUR_NEUTRE ?? 0.5) * 100);
 
-    $('matchs').innerHTML = (vus.length ? [
+    /* **Sans direct, on le dit au-dessus de la liste.** Pousser dans un
+       virage demande une connexion permanente ; la liste, non. On montre donc
+       ce qui se joue, et on prévient que l'entrée ne marchera pas. */
+    const avertir = sansDirect ? `<div class="rubrique" style="color:var(--flare)">
+      PAS DE CONNEXION EN DIRECT
+      <small>tu peux voir les matchs, pas entrer dans le virage ·
+      <a href="/diagnostic" style="color:var(--projo)">voir pourquoi</a></small>
+      </div>` : '';
+
+    $('matchs').innerHTML = avertir + ((vus.length ? [
       miens.length ? `<div class="rubrique">TES CLUBS</div>${miens.map(carte).join('')}` : '',
       autres.length ? `<div class="rubrique">AILLEURS EN DIRECT
         <small>tu choisis ton camp · ferveur à ${part} %</small></div>${autres.map(carte).join('')}` : '',
@@ -1392,7 +1424,7 @@ function souvenir(g) {
             Essaie un club, une compétition, ou un pays.</div>`
         : `<p>Aucun match en direct pour l’instant.<br>
             <a href="/equipes" style="color:var(--projo)">Suis un club</a>
-            pour être prévenu quand le tien joue.</p>`);
+            pour être prévenu quand le tien joue.</p>`));
   };
   peindre();
 

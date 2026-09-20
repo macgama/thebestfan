@@ -967,6 +967,15 @@ async function openPack() {
   S.packs = res.wallet.packs;
   S.nextIn = res.wallet.nextPackInMs;
   S.lastGain = res.scarvesGained;
+  /* **La montée de niveau, gardée pour la fin du paquet.**
+
+     Le serveur la renvoie depuis toujours avec les cartes — ouvrir un
+     booster rapporte de l'XP — et cette page la laissait tomber. On la
+     range ici plutôt que de la fêter tout de suite : le joueur vient de
+     déchirer un sachet, il regarde ses cartes, et lui couvrir l’écran
+     avant qu’il les ait retournées serait lui voler les deux moments.
+     Voir `finishPack`, qui la sort quand le paquet est fini. */
+  S.montee = res.niveau ?? null;
   tickRegen();
 
   const st = $('ostage'); st.innerHTML = '';
@@ -1083,6 +1092,18 @@ function finishPack() {
     renderKiosque();
     ouvrirFiche(pull[+d.dataset.i].id);
   };
+  /* **La fête, une fois le butin posé.**
+
+     Une seconde après, pas tout de suite : le récapitulatif arrive en
+     cascade — voir `--n` plus haut — et la fête posée dessus couperait
+     l’arrivée des cartes en deux. On la consomme, aussi : rouvrir l’écran
+     du paquet précédent ne doit pas rejouer une montée déjà célébrée. */
+  if (S.montee?.monte) {
+    const montee = S.montee;
+    S.montee = null;
+    setTimeout(() => { window.TBF_NIVEAU?.feter?.(montee); }, 1000);
+  }
+
   const a = $('oAction');
   a.style.display = 'block'; a.textContent = 'Terminer';
   a.onclick = () => {
@@ -1153,6 +1174,7 @@ setInterval(tickRegen, 1000);
 })();
 </script>
 <script src="/fx.js" defer></script>
+<script src="/niveau-fete.js" defer></script>
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>
 <script src="/pwa.js" defer></script>

@@ -979,10 +979,28 @@ function rendreSalle(p) {
 /* ------------------------------------------------------------ état */
 
 const S = {
-  format: '3v3', fixtureId: null, camp: null, matchs: [], catalogue: [],
+  /* **On ouvre sur le 1v1**, et non sur le 3v3.
+
+     Le format choisi d'avance décide de tout ce qui suit : c'est lui qui
+     indexe la file. Ouvrir sur un 3v3 posait donc le joueur qui n'y touche
+     pas — la plupart — dans le format le plus dur à remplir du jeu : six
+     supporters, trois de chaque côté, sur un même match.
+
+     Un soir creux, cela veut dire attendre le repli — qui descend à 2v2 au
+     tiers de l'attente, à 1v1 aux deux tiers — puis finir contre des bots.
+     Une première partie passée à attendre, pour jouer contre personne.
+
+     Le 1v1 est le seul format qui part à deux. C'est donc celui qui doit
+     être proposé en premier : les quatre autres restent à un doigt, et
+     celui qui les veut sait déjà ce qu’il vient chercher. */
+  format: '1v1', fixtureId: null, camp: null, matchs: [], catalogue: [],
   // Ce qui attend, par match et par format. Voir `lireAttentes`.
   attentes: [],
   vue: null, enFile: false, dernierSeq: 0, occupe: false,
+  /* Vrai quand la bibliothèque du direct n'a pas pu se charger. La page
+     fonctionne quand même — on regarde les matchs — mais on ne peut pas
+     entrer en file. Voir le démarrage, tout en bas. */
+  sansDirect: false,
   // La portée de la liste des matchs : ses clubs, ou tout le championnat. On
   // peut jouer pour n’importe quel match — c’est ce qui permet de trouver un
   // adversaire un mardi de trêve — mais on démarre sur ses clubs, parce que
@@ -1050,6 +1068,17 @@ async function lireAttentes() {
 
 function rendrePrepa(sansDeck, formats) {
   const out = [];
+
+  /* **Sans direct, on le dit tout de suite.** L'écran reste utile — la liste
+     des matchs, les formats, tout se lit — mais entrer en file demande une
+     connexion permanente, et mieux vaut l'apprendre avant d'appuyer. Le lien
+     mène au diagnostic, qui teste cette connexion et nomme ce qui l'arrête. */
+  if (S.sansDirect) {
+    out.push(`<div class="avert"><b>PAS DE CONNEXION EN DIRECT</b>
+      Les duels ont besoin d’une connexion permanente, et elle n’a pas pu
+      s’établir. Tu peux regarder les matchs, mais pas entrer en file.
+      <a href="/diagnostic">Voir ce qui la bloque</a></div>`);
+  }
 
   if (sansDeck) {
     out.push(`<div class="avert"><b>IL TE FAUT UN DECK</b>
@@ -1962,6 +1991,16 @@ function montrerBilan(b) {
   $('affiche').hidden = true;
   $('bilan').hidden = false;
   FX?.son?.(gagne ? 'but' : 'tic');
+
+  /* **Et la montée de niveau par-dessus, si elle a eu lieu.**
+
+     Après le bilan et non à sa place : le joueur vient de finir un duel, et
+     la première chose qu’il cherche est le score. La fête se pose ensuite,
+     le temps qu’il ait lu — puis elle rend le bilan, qui est resté dessous.
+
+     Le serveur ne met `montee` que s’il y a eu palier ; `feter` résout tout
+     de suite sinon, donc rien ici n’a besoin de le vérifier deux fois. */
+  setTimeout(() => { window.TBF_NIVEAU?.feter?.(b.gains?.montee); }, 1400);
 }
 
 /* ----------------------------------------------------- les gestes */
@@ -2105,7 +2144,29 @@ addEventListener('load', () => {
 });
 
 (async () => {
-  connecter();
+  /* **La socket ne doit jamais empêcher la page de s’afficher.**
+  
+     `io` vient de /socket.io/socket.io.js, servi par le serveur lui-même. Ce
+     fichier peut manquer — un mandataire qui ne relaie pas ce chemin, une
+     extension qui le bloque, une coupure au mauvais moment — et `io` est alors
+     **indéfini**. L’appel levait, la fonction de démarrage rejetait, et rien
+     de ce qui suit ne se jouait : aucun appel au serveur, aucun rendu.
+  
+     Vu du joueur, les deux seuls écrans qui chargent cette bibliothèque
+     tombaient ensemble et en silence — le duel restait sur son « Chargement… »
+     et le Virage restait blanc. Rien ne pouvait le lui expliquer, puisque le
+     code qui aurait pu parler était après la ligne qui levait.
+  
+     Or la liste des matchs n’a aucun besoin de socket : elle arrive par des
+     appels ordinaires. Seul **jouer** en a besoin. On sépare donc les deux : la
+     page se dessine toujours, et l’absence de direct se dit à l’endroit où elle
+     change quelque chose.
+  
+     Le rattrapage est volontairement large — `io` absent lève une
+     ReferenceError, le constructeur peut lever autre chose. Ce qu’on veut ici
+     n’est pas distinguer les causes, c’est ne pas perdre la page. */
+  try { connecter(); }
+  catch (e) { S.sansDirect = true; console.error('[duel] socket', e.message); }
   try {
     const [cat, matchs] = await Promise.all([
       api('/api/deck/catalogue'),
@@ -2183,6 +2244,7 @@ addEventListener('load', () => {
 })();
 </script>
 <script src="/fx.js" defer></script>
+<script src="/niveau-fete.js" defer></script>
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>
 <script src="/pwa.js" defer></script>

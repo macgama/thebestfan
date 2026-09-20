@@ -830,8 +830,21 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         if (niveau && !aFuit) {
           const gain = (XP.duel[d.mode] ?? XP.duel.entrainement)
             + (gagne ? XP.victoire : 0);
-          await niveau.gagner(userId, gain);
+          const m = await niveau.gagner(userId, gain);
           verse.get(userId).xp = gain;
+          /* **La montée de palier voyage avec le bilan.**
+
+             `gagner()` rend depuis toujours de quoi faire un écran — le
+             niveau atteint, celui d’où l’on vient, les paliers franchis et
+             les écharpes qu’ils versent — et cette ligne jetait tout. Un
+             joueur montait de niveau à la fin d’un duel sans que rien ne le
+             lui dise, et découvrait un troisième Fanzzy dans son deck des
+             jours plus tard, s’il le remarquait.
+
+             On ne le pose que s’il y a eu montée : un objet vide dans le
+             bilan obligerait la page à savoir ce qu’est une montée nulle.
+             Voir `niveau-fete.js`, qui n’a plus qu’à le recevoir. */
+          if (m?.monte) verse.get(userId).montee = m;
         }
 
         /* La part du club, versée au pot du KOP.
