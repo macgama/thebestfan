@@ -143,6 +143,10 @@
     let d = null;
     let choisie = null;          // la case regardée
     let cases = [];
+    /* L’observateur de largeur de la bande des rangées. Gardé ici pour
+       être débranché au rendu suivant : sans ça, chaque rendu en laisse
+       un de plus accroché à un élément détaché. */
+    let largeurs = null;
 
     try {
       d = await api('/fiche/' + encodeURIComponent(idDemande));
@@ -303,40 +307,85 @@
             <h1>${esc(f.nom)}<small>${NOMTYPE[f.type] ?? f.type} · ${NOMRAR[f.rar] ?? f.rar}</small></h1>
           </div>
 
-          <div class="vitrine r-${esc(f.rar)}" style="--c:${c}">
-            <div class="art" id="fiche-art"></div><div class="ombre"></div>
-            <div class="rar">${marque(f.rar)}</div>
-            ${siege(d) >= 0
-              ? `<div class="tag">${siege(d) === 0 ? 'TITULAIRE' : 'REMPLAÇANT'}</div>`
-              : ''}
-            <div class="txt">
-              <div class="pastilles">
-                <span class="pastille" style="--c:${c}"><b>${NOMTYPE[f.type] ?? f.type}</b></span>
-                ${aMoi
-                  ? `<button class="pastille" data-cri style="cursor:pointer">
-                      Cri : <b style="color:${c}">${esc(f.cri?.label ?? '—')}</b> ▸</button>`
-                  /* Le cri se **crie** quand on touche la pastille. Sur un
-                     Fanzzy qu'on n'a pas, c'est le seul élément qui répondait
-                     encore — une carte éteinte qui pousse un cri. */
-                  : `<span class="pastille">Cri : <b style="color:${c}">${
-                    esc(f.cri?.label ?? '—')}</b></span>`}
+          <!-- **Ce qui cède quand le téléphone ne donne pas la place.**
+
+               L'écran ne défile pas : ce qui déborde est coupé, pas repoussé.
+               Et il déborde pour des raisons qu'aucun navigateur de bureau ne
+               montre — la barre du haut grandit de l'encoche, le bas réserve
+               la barre gestuelle, un bandeau d'annonce s'intercale. Trois
+               dizaines de pixels chacune, pour une dizaine de marge.
+
+               Ce qui disparaissait alors était la rangée d'actions, tout en
+               bas : le joueur ouvrait la fiche d'une carte qu'il voulait faire
+               grandir et n'y trouvait aucun bouton.
+
+               La tête et les actions sont donc les deux bouts qu'on ne
+               sacrifie jamais. Tout ce qui est entre les deux tient dans ce
+               corps, qui défile quand il le faut et ne se voit pas sinon. -->
+          <div class="corps">
+            <div class="vitrine r-${esc(f.rar)}" style="--c:${c}">
+              <div class="art" id="fiche-art"></div><div class="ombre"></div>
+              <div class="rar">${marque(f.rar)}</div>
+              ${siege(d) >= 0
+                ? `<div class="tag">${siege(d) === 0 ? 'TITULAIRE' : 'REMPLAÇANT'}</div>`
+                : ''}
+              <div class="txt">
+                <div class="pastilles">
+                  <span class="pastille" style="--c:${c}"><b>${NOMTYPE[f.type] ?? f.type}</b></span>
+                  ${aMoi
+                    ? `<button class="pastille" data-cri style="cursor:pointer">
+                        Cri : <b style="color:${c}">${esc(f.cri?.label ?? '—')}</b> ▸</button>`
+                    /* Le cri se **crie** quand on touche la pastille. Sur un
+                       Fanzzy qu'on n'a pas, c'est le seul élément qui répondait
+                       encore — une carte éteinte qui pousse un cri. */
+                    : `<span class="pastille">Cri : <b style="color:${c}">${
+                      esc(f.cri?.label ?? '—')}</b></span>`}
+                </div>
+                <h2>${esc(f.nom)}</h2>
+                <div class="sous">${d.possede
+                  ? `${d.possede} exemplaire${d.possede > 1 ? 's' : ''} · étage ${d.stade}${
+                    f.cri?.power ? ` · poussée ${f.cri.power}` : ''}`
+                  : 'pas encore dans ta collection'}</div>
               </div>
-              <h2>${esc(f.nom)}</h2>
-              <div class="sous">${d.possede
-                ? `${d.possede} exemplaire${d.possede > 1 ? 's' : ''} · étage ${d.stade}${
-                  f.cri?.power ? ` · poussée ${f.cri.power}` : ''}`
-                : 'pas encore dans ta collection'}</div>
             </div>
+
+            <div class="rangs" ${aMoi ? '' : 'aria-hidden="true"'}>${rangs.map(([nom, l]) => `
+              <div class="rang"><h4>${nom}</h4><div class="cases">${l.map(caseHTML).join('')}</div></div>`).join('')}
+            </div>
+
+            <div class="detail" id="fiche-detail"></div>
           </div>
 
-          <div class="rangs" ${aMoi ? '' : 'aria-hidden="true"'}>${rangs.map(([nom, l]) => `
-            <div class="rang"><h4>${nom}</h4><div class="cases">${l.map(caseHTML).join('')}</div></div>`).join('')}
-          </div>
-
-          <div class="detail" id="fiche-detail"></div>
           <div class="actions" id="fiche-actions"></div>
         </div>`;
 
+      /* **La bande des rangées défile, et rien ne le disait.**
+
+         Les trois rangées tiennent sur une ligne qui déborde dès que le
+         personnage a quelques tenues : la dernière case est alors coupée
+         net au bord droit. Coupée net, elle ne se lit pas comme « il y en
+         a d'autres » mais comme un défaut d'affichage — et personne ne
+         pousse du doigt une image qu'il croit cassée.
+
+         Une ombre au bord tant qu'il reste quelque chose à droite, retirée
+         quand on y est arrivé. On la calcule plutôt que de la poser tout
+         le temps : une ombre permanente sur une bande qui tient entière
+         promettrait une suite qui n'existe pas. */
+      const bande = hote.querySelector('.rangs');
+      if (bande) {
+        const marquer = () => bande.classList.toggle('deborde',
+          bande.scrollWidth - bande.clientWidth - bande.scrollLeft > 2);
+        bande.addEventListener('scroll', marquer, { passive: true });
+        /* **Et à chaque fois que la largeur change**, pas seulement au rendu.
+           Calculée une fois, la réponse valait pour la fenêtre du moment :
+           tourner le téléphone, ouvrir le clavier ou passer d'un écran large
+           à un étroit laissait l'ombre absente là où la bande venait de se
+           mettre à déborder — c'est-à-dire exactement quand elle sert. */
+        largeurs?.disconnect();
+        largeurs = new ResizeObserver(marquer);
+        largeurs.observe(bande);
+        marquer();
+      }
       dessiner(f);
       rendreDetail();
       rendreActions();

@@ -119,9 +119,23 @@ input:focus{outline:none;border-color:var(--projo)}
 
 /* Le Fanzzy qui regarde. Dans le coin, au-dessus du contenu mais
    transparent aux doigts : il ne doit jamais empêcher de faire défiler la
-   liste des événements qu’il commente. */
-#fwatch{position:absolute;left:6px;bottom:calc(var(--nav-h,62px) + 6px);
+   liste des événements qu’il commente.
+
+   **fixed, et non absolute.** Il était posé en absolu dans #fiche, qui est le
+   panneau défilant du match. Un élément en absolu dans un conteneur qui défile
+   défile avec son contenu : le personnage était donc calé sur le bas du
+   *premier* écran, et dès qu'on descendait dans le fil il remontait au milieu
+   des événements — posé en travers d'une ligne, sans plus rien d'un coin. Vu
+   du joueur, une image égarée par-dessus le match.
+
+   #fiche porte un backdrop-filter, ce qui en fait le bloc de référence des
+   descendants fixes : « fixed » se règle donc sur le panneau lui-même, qui
+   couvre l'écran. Le personnage reste dans son coin, le fil passe dessous. */
+#fwatch{position:fixed;left:6px;bottom:calc(var(--nav-h,62px) + 6px);
   width:96px;height:150px;z-index:3;pointer-events:none}
+/* Sur un écran étroit, cent pixels de personnage au-dessus d'une liste pleine
+   largeur couvrent une ligne entière. Il rétrécit plutôt que de cacher. */
+@media (max-width:430px){#fwatch{width:74px;height:116px}}
 #fwatch[hidden]{display:none}
 
 .f .infos{display:flex;gap:8px;margin-top:16px;font-size:11px;opacity:.55;justify-content:center;

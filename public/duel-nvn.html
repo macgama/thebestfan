@@ -894,6 +894,10 @@ document.addEventListener('click', async (e) => {
      retomberait dans la grâce de quatre-vingt-dix secondes — c'est-à-dire dans
      le comportement qu'on vient de retirer. */
   socket.emit('nvn:forfait');
+  /* On vient de demander confirmation nous-mêmes, et le joueur a dit oui : le
+     navigateur n'a pas à reposer la question par-dessus. Une seconde boîte,
+     posée par-dessus la nôtre et dans d'autres mots, se lit comme un refus. */
+  window.TBF_BARRE?.enPartie?.(false);
   setTimeout(() => { location.href = ou; }, 180);
 }, true);
 
@@ -1323,6 +1327,14 @@ function connecter() {
     S.enFile = false;
     S.vue = vue;
     S.dernierSeq = vue.seq ?? 0;
+    /* **Le duel commence : on le dit à la barre.**
+
+       Ce drapeau n'était levé qu'à la reconnexion — voir le gestionnaire
+       « connect » plus haut. Un joueur qui jouait son duel d'une traite ne le
+       levait donc jamais, et le garde-fou qui prévient avant un rechargement
+       en pleine partie ne servait à personne. Il se lève ici, au seul endroit
+       où le duel commence pour de bon. */
+    window.TBF_BARRE?.enPartie?.(true);
     fermerVoile();
     $('prepa').style.display = 'none';
     $('jeu').classList.add('on');
@@ -1763,6 +1775,10 @@ function raconter(e) {
 function finir(v) {
   if (S.bilanVu) return;
   S.bilanVu = true;
+  /* Le repli est un écran de fin comme l'autre : il propose « Revenir », donc
+     il doit rendre la porte au joueur. Un repli qui enferme est pire que pas
+     de repli — voir montrerBilan. */
+  window.TBF_BARRE?.enPartie?.(false);
   const gagne = v.vainqueur === v.moi?.side;
   const nul = v.vainqueur === null || v.vainqueur === undefined;
   voile(nul ? 'Match nul' : gagne ? 'Victoire' : 'Défaite',
@@ -1928,6 +1944,20 @@ function montrerBilan(b) {
         <span class="quoi">TRIBUNE</span>
         <span class="d" style="font-size:11px">${fzListe(lui)}</span></div>`;
 
+  /* **Et on le baisse.**
+
+     Le défaut que ceci répare tenait en une phrase de joueur : « une fois le
+     duel terminé, il ne se passe plus rien ». Personne ne baissait ce drapeau.
+     Le bilan s'affichait, « REVENIR » appelait location.reload(), et le
+     navigateur — voyant le corps de la page se dire encore en partie —
+     demandait d'abord confirmation. Sur un téléphone cette demande se solde
+     le plus souvent par un refus, et le bouton ne faisait rien du tout.
+
+     Le joueur restait enfermé sur son propre écran de victoire.
+
+     C'est l'ordre qui compte : on range le drapeau **avant** de poser le
+     bouton, pour qu'aucun clic ne puisse arriver entre les deux. */
+  window.TBF_BARRE?.enPartie?.(false);
   $('bilanSortir').onclick = () => { location.reload(); };
   $('affiche').hidden = true;
   $('bilan').hidden = false;

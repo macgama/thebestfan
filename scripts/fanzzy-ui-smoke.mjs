@@ -623,6 +623,128 @@ check('les Fanzzy non possédés portent leur nom',
         || (console.log(`        il dépasse de ${p.bas - p.ecran} px `
           + `— et la fiche ne défile pas, donc il est perdu`), false));
     }
+    /* ================== et maintenant, la fiche sur un vrai téléphone
+
+       Les trois mesures ci-dessus tournent dans un navigateur sans châssis,
+       et c'est pour ça qu'elles étaient vertes pendant qu'un joueur
+       photographiait sa fiche sans aucun bouton. Trois hauteurs manquaient à
+       l'appel, et aucune ne se voit sur un écran d'ordinateur :
+
+         — **l'encoche**. `.tbf-haut` se rembourre de
+           `env(safe-area-inset-top)` : une trentaine de pixels sur un
+           téléphone récent, zéro ici.
+         — **la barre gestuelle**. `#app` réserve
+           `env(safe-area-inset-bottom)` en bas, autant, et zéro ici.
+         — **le bandeau d'annonce**, que nav.js insère dans `#app` quand
+           l'administration en a écrit une. La base de test n'en a jamais ;
+           une base en service en a presque toujours.
+
+       Cent pixels, contre la dizaine de marge que les mesures d'au-dessus
+       constataient. C'est tout l'écart entre une suite verte et une fiche
+       tronquée.
+
+       On ne peut pas donner une encoche à un navigateur sans écran. On pose
+       donc les trois hauteurs à la main, là où elles arriveraient. Ce qu'on
+       éprouve n'est pas le téléphone : c'est la **tolérance de la mise en
+       page** à ce qu'on lui reprenne cent pixels — et c'est le seul
+       invariant qu'une suite puisse tenir. */
+    for (const [w, h, haut, bas, annonce, quoi] of [
+      [390, 664, 47, 34, true, 'iPhone 14, encoche, barre et annonce'],
+      [360, 640, 24, 24, true, 'Android à gestes, avec annonce'],
+      [375, 560, 20, 21, false, 'iPhone SE, sans annonce'],
+    ]) {
+      await fiche.setViewport({ width: w, height: h });
+      await fiche.evaluate((c) => {
+        let s = document.getElementById('tbf-chassis');
+        if (!s) { s = document.createElement('style'); s.id = 'tbf-chassis';
+          document.head.appendChild(s); }
+        s.textContent = `#app{padding-bottom:calc(var(--nav-h,62px) + ${c.bas}px) !important}`
+          + `.tbf-haut{padding-top:${c.haut + 10}px !important}`;
+        /* Le bandeau tel que nav.js le pose : dans `#app`, juste après la
+           barre du haut. On reprend sa classe, donc ses vraies marges. */
+        document.getElementById('tbf-annonce-faux')?.remove();
+        if (c.annonce) {
+          const b = document.createElement('div');
+          b.id = 'tbf-annonce-faux';
+          b.className = 'tbf-annonce ton-info';
+          b.textContent = 'La saison LA REPRISE est ouverte.';
+          document.querySelector('.tbf-haut').after(b);
+        }
+      }, { haut, bas, annonce });
+      await dodo(300);
+      const p = await fiche.evaluate(() => {
+        const bt = document.querySelector('.actions .bt') ?? document.querySelector('.actions > *');
+        const r = bt?.getBoundingClientRect();
+        const app = document.getElementById('app');
+        const ar = app.getBoundingClientRect();
+        /* La borne n'est pas l'écran mais **le bas du contenu de `#app`** :
+           c'est lui qui coupe, puisque `#app` est en `overflow:hidden`. */
+        return { trouve: Boolean(r), haut: r ? Math.round(r.top) : null,
+          bas: r ? Math.round(r.bottom) : null,
+          borne: Math.round(ar.bottom - parseFloat(getComputedStyle(app).paddingBottom)) };
+      });
+      check(`${quoi} : la rangée d’actions existe encore`, p.trouve
+        || (console.log('        plus aucun bouton dans .actions'), false));
+      if (!p.trouve) continue;
+      /* **Le contrôle qui porte.** Entier, pas « presque » : un bouton dont
+         il reste trois pixels ne se touche pas et ne se lit pas. */
+      /* De quoi regarder la fiche telle qu'un joueur la voit, le jour où une
+         capture d'écran contredit une suite verte. */
+      if (process.env.CAPTURE) {
+        await fiche.screenshot({ path: `${process.env.TEMP ?? "/tmp"}/fiche-${w}x${h}.png` });
+      }
+      check(`${quoi} : le bouton tient entier au-dessus de la coupe`,
+        p.bas <= p.borne + 1 && p.haut >= -1
+        || (console.log(`        il dépasse de ${p.bas - p.borne} px sous la coupe`), false));
+      /* ============ et les trois textes de la vitrine ne se touchent pas
+
+         La vitrine est le **seul** élément souple de la colonne : elle
+         encaissait donc seule tout ce qu'un téléphone reprend à la page. À
+         cent vingt pixels elle ne tenait plus rien, et les trois textes
+         posés dessus se rejoignaient — le nom en grand, la phrase « fais-le
+         grandir pour le découvrir » placée au milieu de la silhouette, et la
+         ligne des exemplaires. Trois textes l'un sur l'autre.
+
+         C'est un défaut qui ne casse rien et que rien ne signale : la page
+         se charge, les boutons répondent, et le joueur lit une bouillie.
+         Aucune mesure de bouton ne pouvait le voir.
+
+         On compare donc les rectangles, et non les hauteurs : c'est le
+         chevauchement qu'on interdit, pas une valeur qu'on aurait choisie. */
+      const chevauche = await fiche.evaluate(() => {
+        const mot = document.querySelector('.art .secret-mot');
+        const txt = document.querySelector('.vitrine .txt');
+        if (!mot || !txt) return null;
+        const a = mot.getBoundingClientRect();
+        const b = txt.getBoundingClientRect();
+        return { sur: a.bottom > b.top + 1, de: Math.round(a.bottom - b.top),
+          vitrine: Math.round(document.querySelector('.vitrine').getBoundingClientRect().height) };
+      });
+      if (chevauche) {
+        check(`${quoi} : la phrase ne tombe pas dans le nom du Fanzzy`,
+          chevauche.sur === false
+          || (console.log(`        elle mord de ${chevauche.de} px, vitrine à `
+            + `${chevauche.vitrine} px de haut`), false));
+      }
+
+      /* Et la bande des rangées dit qu'elle continue. Sur ces largeurs elle
+         déborde toujours : une case coupée sans un mot se lit comme cassée. */
+      const bande = await fiche.evaluate(() => {
+        const b = document.querySelector('.rangs');
+        if (!b) return null;
+        return { deborde: b.scrollWidth - b.clientWidth > 2,
+          dit: b.classList.contains('deborde') };
+      });
+      if (bande?.deborde) {
+        check(`${quoi} : la bande des rangées annonce sa suite`, bande.dit
+          || (console.log('        elle déborde sans aucune ombre au bord'), false));
+      }
+    }
+    await fiche.evaluate(() => {
+      document.getElementById('tbf-chassis')?.remove();
+      document.getElementById('tbf-annonce-faux')?.remove();
+    });
+
     await fiche.setViewport({ width: 400, height: 880 });
     await dodo(200);
 
