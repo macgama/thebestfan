@@ -979,6 +979,73 @@ const laScene = () => page.evaluate(() => ({
 
   await sans.close();
 }
+/* ===================== quitter la tribune se dit, et mène quelque part
+
+   « Si je sors d'un virage, je n'ai pas de message qui avertit et j'arrive
+   sur une page vide. » Les deux moitiés étaient vraies. La page
+   n'interceptait aucune sortie — ni flèche, ni menu — et elle n'émettait
+   jamais `virage:leave` : le serveur gardait un supporter parti jusqu’à ce
+   que la coupure de socket soit constatée, compté dans la foule et dans le
+   classement de la salle pendant tout ce temps.
+
+   Trois contrôles : la question vient, elle dit ce qu'on manque, et **on
+   arrive sur une page qui répond**. Un 404 a un corps vide dans ce serveur —
+   `page()` répond `.end()` — donc « page blanche » et « 404 » sont les deux
+   faces de la même chose, et il faut regarder le code autant que le contenu.
+
+   Sur une page à part : les blocs précédents ont besoin de leur virage. */
+{
+  const sortir = await nav.newPage();
+  const bruits = [];
+  sortir.on('pageerror', (e) => bruits.push(e.message));
+  await sortir.setViewport({ width: 400, height: 880 });
+  await sortir.goto(base + '/virage', { waitUntil: 'networkidle0' });
+  await sortir.evaluate(() => socket.emit('virage:join', { fixtureId: 8001 }));
+  const dedans = await sortir.waitForSelector('#fil:not([hidden])', { timeout: 8000 })
+    .then(() => true).catch(() => false);
+  check('on entre dans la tribune pour éprouver la sortie', dedans);
+
+  if (dedans) {
+    await sortir.evaluate(() => document.querySelector('.tbf-retour')?.click());
+    const demande = await (async () => {
+      for (let i = 0; i < 40; i++) {
+        await wait(120);
+        if (await sortir.evaluate(() => Boolean(document.querySelector('[data-non]')))) return true;
+      }
+      return false;
+    })();
+    check('la flèche de retour demande avant de quitter la tribune', demande
+      || (console.log('        on serait parti sans un mot'), false));
+
+    if (demande) {
+      const dit = await sortir.evaluate(() =>
+        document.querySelector('.tbf-dial')?.textContent.replace(/\s+/g, ' ').trim() ?? '');
+      /* Elle doit dire ce qu’on manque, pas seulement demander : une tribune
+         qu'on quitte ne se paie pas, elle se rate. */
+      check('et elle dit ce qu’on manque en partant', /souvenir|pousse/i.test(dit)
+        || (console.log('        elle dit :', dit.slice(0, 100)), false));
+
+      const [rep] = await Promise.all([
+        sortir.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 })
+          .catch(() => null),
+        sortir.evaluate(() => document.querySelector('[data-oui]').click()),
+      ]);
+      check('« SORTIR » emmène quelque part', Boolean(rep)
+        || (console.log('        aucune navigation après avoir confirmé'), false));
+      check(`et la page d’arrivée répond (${rep?.status() ?? 'sans réponse'})`,
+        rep?.status() === 200
+        || (console.log('        code', rep?.status(), 'sur', sortir.url()), false));
+      await wait(700);
+      const corps = await sortir.evaluate(() =>
+        document.body.innerText.replace(/\s+/g, ' ').trim());
+      check(`et elle n’est pas vide (${corps.length} caractères)`, corps.length > 20
+        || (console.log('        arrivée blanche sur', sortir.url()), false));
+      check('et rien n’a cassé en chemin', bruits.length === 0
+        || (console.log('        ', bruits.join(' / ')), false));
+    }
+  }
+  await sortir.close();
+}
 check('aucune erreur de script sur le virage',
   erreurs.length === 0 || (console.log('    ', erreurs.join(' / ')), false));
 

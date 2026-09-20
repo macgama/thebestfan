@@ -69,8 +69,42 @@ socket.on('transport', name => {
   else verdict('warn','Repli en polling','La connexion permanente ne passe pas sur ce réseau. Le jeu reste jouable mais la latence sera plus élevée. Réessaie sur un autre réseau avant de conclure.');
 });
 
-socket.on('connect_error', e => verdict('ko','Connexion impossible', e.message));
-socket.on('disconnect', r => verdict('ko','Connexion perdue', r));
+/* **Un diagnostic qui ne se dédit jamais ne diagnostique rien.**
+
+   Cette page peignait « Connexion impossible » au premier `connect_error` et
+   ne repeignait plus : une hésitation d’une seconde au chargement — un
+   WebSocket refusé avant le repli en polling, la routine sur un réseau
+   mobile — laissait un verdict rouge définitif sur une connexion qui
+   marchait très bien. Un joueur nous l’a signalé, et on s’était appuyé sur
+   cette page pour chercher une panne ailleurs.
+
+   On tient donc l'état réel, et le verdict suit : une tentative ratée alors
+   qu'on n'est pas connecté est un avertissement, pas une sentence, et une
+   reconnexion efface tout. Seul un échec qui dure devient rouge. */
+let connecte = false;
+let echecs = 0;
+
+socket.on('connect', () => {
+  connecte = true; echecs = 0;
+  verdict('ok','Connecté','La connexion est établie. Le transport exact s’affiche ci-dessous.');
+});
+
+socket.on('connect_error', (e) => {
+  echecs++;
+  if (connecte) return;             // déjà en ligne : socket.io se rebranche seul
+  /* Trois tentatives avant de conclure. En dessous, on décrit ce qui se
+     passe sans prétendre savoir comment ça finit. */
+  if (echecs < 3) {
+    verdict('warn','Tentative échouée', `${e.message} — on réessaie (${echecs}).`);
+  } else {
+    verdict('ko','Connexion impossible', `${e.message} — après ${echecs} tentatives.`);
+  }
+});
+
+socket.on('disconnect', (r) => {
+  connecte = false;
+  verdict('warn','Connexion perdue', `${r} — reconnexion en cours.`);
+});
 
 setInterval(() => {
   const t0 = Date.now();

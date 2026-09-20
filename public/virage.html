@@ -1087,6 +1087,58 @@ function raconterActe(ev) {
   }
 }
 
+/* ------------------------------------------- quitter la tribune
+
+   **On partait sans un mot, et sans le dire au serveur.**
+
+   Deux manques, et le second est le plus sale. La page n’émettait jamais
+   `virage:leave` : on comptait sur la coupure de la socket pour que le
+   serveur finisse par comprendre. Entre les deux, la tribune gardait un
+   supporter qui n’était plus là — compté dans la foule, dans le classement
+   de la salle, dans ce que les autres voient.
+
+   Et rien ne prévenait le joueur. Un duel qu’on quitte est un forfait, et il
+   se dit — voir duel-nvn.html. Une tribune qu’on quitte ne coûte rien de
+   pareil, mais elle coûte quelque chose : on cesse de pousser, on perd sa
+   place dans la salle, et les cartes-souvenirs se frappent chez **les
+   présents** au moment du but. Partir juste avant un but n’est pas neutre.
+
+   La question est donc légère et elle dit vrai : on peut revenir, et voilà ce
+   qu’on manque en attendant. Une confirmation qui dramatiserait une sortie
+   sans conséquence apprendrait à passer outre — et le jour où elle compte,
+   personne ne la lirait.
+
+   On intercepte la flèche et le menu, qui sont les deux sorties. Pas la
+   fermeture de l’onglet : aucune page ne peut la retenir honnêtement, et la
+   coupure de socket la couvre déjà. */
+
+/** Dans la tribune : le serveur nous a donné un état, donc on y est. */
+const dansLaTribune = () => Boolean(S);
+
+async function quitterLaTribune() {
+  return window.TBF_DIALOGUE?.confirmer({
+    titre: 'QUITTER LA TRIBUNE ?',
+    texte: 'Tu peux revenir quand tu veux, le match continue sans toi. '
+      + 'En attendant tu ne pousses plus, et les cartes-souvenirs se frappent '
+      + 'chez ceux qui sont là au moment du but.',
+    oui: 'SORTIR',
+    non: 'RESTER',
+  }) ?? true;
+}
+
+document.addEventListener('click', async (e) => {
+  const sortie = e.target.closest('.tbf-retour, .tbf-menu a, [data-quitter-virage]');
+  if (!sortie || !dansLaTribune()) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const ou = sortie.getAttribute('href') || '/';
+  if (!(await quitterLaTribune())) return;
+  /* **On prévient le serveur avant de partir**, et on lui laisse le temps de
+     l’entendre : une navigation immédiate couperait la socket, et la tribune
+     garderait le fantôme jusqu’à ce que la coupure soit constatée. */
+  socket?.emit('virage:leave');
+  setTimeout(() => { location.href = ou; }, 180);
+}, true);
 /* -------------------------------------------------------------- réseau */
 
 function connect() {
