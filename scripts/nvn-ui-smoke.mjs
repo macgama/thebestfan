@@ -981,6 +981,32 @@ if (process.env.CAPTURE) {
   await A.page.screenshot({ path: join(tmpdir(), 'nvn-duel-full.png'), fullPage: true });
   console.log(`   captures : ${join(tmpdir(), 'nvn-duel.png')}`);
 }
+/* ================== le téléphone qui décroche, et ce qu'il laisse levé
+
+   Sur un mobile, la socket tombe chaque fois que l'écran s'éteint ou que le
+   réseau change de main. Elle revient, le serveur remet le joueur à sa place,
+   et la page prévient alors la barre du haut qu'**une partie tourne**. Ce
+   drapeau n'est pas décoratif : c'est lui qui arme l'avertissement du
+   navigateur avant un rechargement — voir `ECRANS_DE_JEU` dans nav.js.
+
+   Le chemin d'un joueur assis dans le métro passe donc par ici, et celui de la
+   suite n'y passait jamais : elle jouait un duel d'une seule traite. On lève
+   le drapeau par le seul geste qui le lève, pour que le contrôle d'après
+   puisse regarder s'il retombe. */
+{
+  await A.page.evaluate(() => { socket.disconnect(); socket.connect(); });
+  const revenu = await jusqua(async () => A.page.evaluate(() =>
+    Boolean(socket?.connected)), 8000);
+  check('la socket revient après une coupure en plein duel', revenu
+    || (console.log('        elle ne s’est pas rebranchée'), false));
+
+  const arme = await jusqua(async () => A.page.evaluate(() =>
+    document.body.classList.contains('tbf-en-partie')), 3000);
+  check('et la page se dit alors « en partie »', arme
+    || (console.log('        le drapeau n’est pas levé : le contrôle suivant ne prouverait rien'),
+      false));
+}
+
 /* ============================================== le bilan de fin de duel
 
    **Cinq minutes de jeu se terminaient sur un voile gris avec un mot dessus** —
@@ -1043,6 +1069,55 @@ if (process.env.CAPTURE) {
     if (process.env.CAPTURE) {
       await A.page.screenshot({ path: `${process.env.TEMP ?? '/tmp'}/duel-bilan.png` });
     }
+  }
+}
+
+/* ====================================== la porte du bilan, et ce qu'il y a derrière
+
+   **« Une fois le duel terminé, il ne se passe plus rien. »** Tout ce qui
+   précède éprouve le bilan — son titre, son score, ses gains, sa ligne en base
+   — et rien n'éprouvait sa **porte**. Un écran de fin dont on ne sort pas est
+   pire qu'une fin sèche : le joueur a gagné, il le lit, et le jeu s'arrête là.
+
+   Deux choses se contrôlent ici, dans l'ordre où elles cassent.
+
+   D'abord le drapeau du bloc précédent. Il est levé à la reconnexion et
+   personne ne le baissait : le duel se terminait, le bilan s'affichait, et le
+   corps de la page disait toujours qu'une partie tournait. `REVENIR` recharge
+   — et un rechargement sous ce drapeau demande d'abord confirmation au
+   navigateur. Sur un téléphone, cette demande se solde le plus souvent par un
+   refus, et le bouton ne fait **rien**.
+
+   Ensuite la porte elle-même, par un vrai clic de souris et non un `.click()`
+   posé depuis le script : c'est l'interaction réelle qui autorise le navigateur
+   à poser sa question, donc la seule qui reproduise le défaut. */
+{
+  const arme = await A.page.evaluate(() =>
+    document.body.classList.contains('tbf-en-partie'));
+  check('le coup de sifflet range le drapeau « en partie »', arme === false
+    || (console.log('        le corps porte encore tbf-en-partie après le bilan'), false));
+
+  await A.page.click('#bilanSortir');
+  /* On ne demande pas « la page a-t-elle rechargé » mais « le joueur peut-il
+     rejouer » : la liste des matchs, dépliée, avec de quoi appuyer. C'est ce
+     qu'il attend en sortant, et le seul état dont on ne soit pas prisonnier. */
+  const rendu = await jusqua(async () => A.page.evaluate(() => {
+    const p = document.getElementById('prepa');
+    if (!p || getComputedStyle(p).display === 'none') return false;
+    return document.querySelectorAll('#prepaCorps .mt[data-fixture]').length > 0;
+  }), 15000);
+  check('« REVENIR » ramène à la liste des matchs', rendu
+    || (console.log('        on reste sur le bilan : la porte ne s’ouvre pas'), false));
+
+  if (rendu) {
+    const propre = await A.page.evaluate(() => ({
+      bilan: document.getElementById('bilan')?.hidden !== false,
+      jeu: !document.getElementById('jeu')?.classList.contains('on'),
+      voile: !document.getElementById('voile')?.classList.contains('on'),
+    }));
+    check('le bilan est refermé', propre.bilan);
+    check('la corde n’est plus à l’écran', propre.jeu);
+    check('et aucun voile ne reste par-dessus', propre.voile);
   }
 }
 
