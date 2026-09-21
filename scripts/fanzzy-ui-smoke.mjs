@@ -623,6 +623,60 @@ check('les Fanzzy non possédés portent leur nom',
         || (console.log(`        il dépasse de ${p.bas - p.ecran} px `
           + `— et la fiche ne défile pas, donc il est perdu`), false));
     }
+    /* ============ et la fiche quand `--nav-h` n'a pas encore été déclarée
+
+       Toutes les mesures ci-dessus tournent avec nav.js chargé, donc avec
+       `--nav-h` à zéro. Elles étaient vertes pendant qu'un joueur
+       photographiait ses boutons coupés.
+
+       `#app` réserve `calc(var(--nav-h,62px) + env(safe-area-inset-bottom))`
+       en bas. La variable n'était déclarée que par nav.js, dans une feuille
+       injectée à l'exécution : avant que ce script différé ne tourne — et
+       pour toujours si nav.js échoue ou sort avant, ce qu'il fait sur trois
+       pages — le repli de **soixante-deux pixels** s'applique.
+
+       Sur neuf cents pixels de haut, invisible. Sur six cent soixante, c'est
+       la rangée d'actions qui passe sous la coupe.
+
+       On refuse donc nav.js au réseau : c'est la panne telle qu'elle arrive,
+       et c'est le seul moyen de mesurer ce que voit la première image. */
+    {
+      const ctx = await nav.createBrowserContext();
+      const p = await ctx.newPage();
+      await p.setViewport({ width: 390, height: 664 });
+      await ctx.setCookie({ name: 'tbf_test', value: U, domain: 'localhost', path: '/' });
+      await p.setRequestInterception(true);
+      p.on('request', (r) => (/\/nav\.js/.test(r.url()) ? r.abort() : r.continue()));
+      await p.goto(`${base}/fanzzy/${ILLUSTRE}`, { waitUntil: 'networkidle0' });
+      await p.waitForSelector('.fiche .case', { timeout: 8000 }).catch(() => null);
+      await dodo(300);
+
+      const m = await p.evaluate(() => {
+        const app = document.getElementById('app');
+        const bt = document.querySelector('.actions .bt');
+        const r = bt?.getBoundingClientRect();
+        const ar = app.getBoundingClientRect();
+        return {
+          trouve: Boolean(r),
+          bas: r ? Math.round(r.bottom) : null,
+          borne: Math.round(ar.bottom - parseFloat(getComputedStyle(app).paddingBottom)),
+          navh: getComputedStyle(document.documentElement)
+            .getPropertyValue('--nav-h').trim() || '(non déclarée)',
+        };
+      });
+
+      check(`sans nav.js, --nav-h vaut quand même zéro (${m.navh})`,
+        m.navh === '0px'
+        || (console.log('        elle vaut', m.navh, '— le repli de 62px s’applique'), false));
+      check('sans nav.js, la fiche garde sa rangée d’actions', m.trouve
+        || (console.log('        plus aucun bouton'), false));
+      if (m.trouve) {
+        check(`et le bouton tient entier au-dessus de la coupe (${m.bas}/${m.borne})`,
+          m.bas <= m.borne + 1
+          || (console.log(`        il dépasse de ${m.bas - m.borne} px`), false));
+      }
+      await ctx.close();
+    }
     /* ================== et maintenant, la fiche sur un vrai téléphone
 
        Les trois mesures ci-dessus tournent dans un navigateur sans châssis,

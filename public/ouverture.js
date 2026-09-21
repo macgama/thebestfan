@@ -42,6 +42,27 @@
     sessionStorage.setItem(CLE, '1');
   } catch { /* stockage refusé : on la montre, c est tout */ }
 
+  /* **On arrive de l'intérieur du jeu : pas d'ouverture.**
+   *
+   * Un joueur l'a décrit ainsi : « je quitte un duel, j'arrive sur la page de
+   * chargement, et il ne se passe plus rien ». Il ne se passait rien pendant
+   * **dix secondes**, ce qui, entre deux parties, ne se distingue pas d'une
+   * panne — et il rechargeait, ce qui remet dix secondes.
+   *
+   * La garde par session existait déjà et ne suffit pas : elle ne se pose qu'au
+   * premier passage **par l'accueil**. Quelqu'un qui ouvre l'application sur un
+   * match, joue, puis revient, n'y est encore jamais passé. Sa première visite
+   * de l'accueil est donc celle qui suit sa partie, c'est-à-dire le pire moment
+   * possible pour lui tenir l'écran.
+   *
+   * Le référent dit d'où l'on vient. Venir de chez nous, c'est revenir, et on
+   * ne joue pas une ouverture à quelqu'un qui revient. On la garde pour ce à
+   * quoi elle sert : arriver de l'extérieur, ou ouvrir l'application. */
+  try {
+    const ref = document.referrer;
+    if (ref && new URL(ref).origin === location.origin) { ecran.remove(); return; }
+  } catch { /* référent illisible : on la montre, c'est le cas ordinaire */ }
+
   /**
    * Combien de temps l'ouverture tient l'écran.
    *

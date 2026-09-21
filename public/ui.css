@@ -23,6 +23,30 @@
  */
 
 :root{
+  /* **La hauteur de la barre du bas : zéro, et déclarée ici.**
+
+     Elle n'existe plus — voir nav.js, qui l'a retirée. Neuf pages calculent
+     pourtant encore leur bas avec `calc(var(--nav-h,62px) + …)`, et la variable
+     n'était déclarée **que par nav.js**, dans une feuille injectée à
+     l'exécution. Trois conséquences, et la dernière se voyait sur un téléphone :
+
+       — jusqu'à ce que le script différé tourne, le repli de 62 px s'applique,
+         et la page se dessine une première fois amputée de soixante-deux
+         pixels en bas ;
+       — sur `/`, `/compte` et `/bienvenue`, nav.js sort **avant** d'injecter sa
+         feuille, donc le repli s'applique pour toujours ;
+       — si nav.js échoue pour une raison quelconque, idem, partout.
+
+     Sur un écran de neuf cents pixels, soixante-deux de perdus ne se voient
+     pas. Sur un téléphone de six cent soixante, c'est exactement la différence
+     entre « les boutons du bas sont là » et « les boutons du bas sont coupés » —
+     un joueur l'a photographié sur la fiche d'un Fanzzy.
+
+     Déclarée dans la feuille commune, elle vaut dès la première image, sur
+     toutes les pages, qu'un script tourne ou non. nav.js garde la sienne :
+     deux déclarations identiques ne peuvent pas diverger. */
+  --nav-h:0px;
+
   /* La palette. Les noms disent la matière du stade, pas la couleur : c'est ce
      qui a permis de la retoucher sans renommer quoi que ce soit. */
   --beton:#0F1216;
