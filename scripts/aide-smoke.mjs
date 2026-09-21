@@ -41,7 +41,7 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 await raw.query('SET FOREIGN_KEY_CHECKS = 0');
-await raw.query(`DROP TABLE IF EXISTS user_decks, user_stuff, user_skins, user_fanzzy,
+await raw.query(`DROP TABLE IF EXISTS user_decks, user_stuff, user_etats, user_skins, user_fanzzy,
   virage_presence, user_wallet, duel_results, duel_events, duels, souvenirs,
   user_souvenirs, sessions, auth_tokens, login_attempts, users, reglages, fanzzy`);
 await raw.query('SET FOREIGN_KEY_CHECKS = 1');

@@ -44,7 +44,13 @@ const mysql = await import('mysql2/promise');
  * D'où le contrôle juste en dessous : la liste doit couvrir tout le dossier.
  */
 const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', 'fanzzy', 'teletext',
-  'inventaire', 'skins', 'tenues', 'deck', 'admin', 'kop', 'amis', 'niveau', 'raretes', 'stades',
+  'inventaire', 'skins',
+  /* `etats.sql` suit `skins.sql` : même clé à quatre colonnes, même raison —
+     on possède l'état d'un âge, pas du personnage. Il vient après fanzzy.sql,
+     dont son rattrapage lit `user_fanzzy`, et après auth.sql pour la clé
+     étrangère vers `users`. */
+  'etats',
+  'tenues', 'deck', 'admin', 'kop', 'amis', 'niveau', 'raretes', 'stades',
   // La boutique en dernier : sa table d achats s accroche à users, qui vient
   // du premier fichier, mais elle livre des écharpes et des boosters — donc
   // elle suppose la bourse, qui vient de souvenirs.sql.

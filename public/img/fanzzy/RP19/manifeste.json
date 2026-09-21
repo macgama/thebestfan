@@ -1,18 +1,19 @@
 {
   "id": "RP19",
-  "rev": 1,
+  "rev": 2,
   "evolutions": {
     "e1": {
       "skins": {
         "base": {
           "etats": [
+            "neutre",
             "pousse",
             "joie",
             "depit",
             "colere"
           ],
-          "portrait": false,
-          "sha": "f74d7b5cab7b"
+          "portrait": true,
+          "sha": "12f250375530"
         }
       }
     }

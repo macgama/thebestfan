@@ -18,14 +18,14 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invites, amities,
-  kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy, user_souvenirs, virage_presence,
+  kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
 // admin.sql pour la table `reglages` : c'est elle qui porte les séries
 // ouvertes, et la suite en éprouve la fermeture plus bas.
 for (const f of ['auth.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql',
-                 'skins.sql', 'tenues.sql', 'admin.sql']) {
+                 'skins.sql', 'etats.sql', 'tenues.sql', 'admin.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 /* La table des saisons est partagée par les suites, et c'est elle qui décide
@@ -94,7 +94,7 @@ check('collection vide', Object.keys(r.json.collection).length === 0);
 r = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'TR' } });
 check('cinq cartes tirées', r.json.cards?.length === 5);
 check('toutes typées', r.json.cards.every((c) =>
-  ['fanzzy', 'skin', 'stuff', 'action', 'echarpes'].includes(c.type)));
+  ['fanzzy', 'skin', 'etat', 'stuff', 'action', 'echarpes'].includes(c.type)));
 /* Un skin habille un Fanzzy déjà possédé : au tout premier booster, il n'y a
    rien à habiller, et la catégorie se replie donc sur un supporter. C'est ce
    qui empêche une première ouverture de donner une tenue pour personne.
@@ -144,12 +144,18 @@ const vus = new Set(r.json.cards.map((c) => c.type));
 let premiereToujoursFanzzy = true;
 let maxFanzzy = 0;
 let echarpesTombees = 0;
+let etatsTombes = 0;
+let etatsDoublesDansUnPaquet = 0;
 const ouvertures = 40;
 for (let i = 0; i < ouvertures; i++) {
   const o = await call('/api/fanzzy/open', { method: 'POST', body: { set: i % 2 ? 'MS' : 'TR' } });
   const cartes = o.json.cards ?? [];
   skinsTombes += cartes.filter((c) => c.type === 'skin').length;
   echarpesTombees += cartes.filter((c) => c.type === 'echarpes').length;
+  const etatsDuPaquet = cartes.filter((c) => c.type === 'etat');
+  etatsTombes += etatsDuPaquet.length;
+  const cles = new Set(etatsDuPaquet.map((c) => `${c.pour}:${c.stade}:${c.id}`));
+  etatsDoublesDansUnPaquet += etatsDuPaquet.length - cles.size;
   for (const c of cartes) vus.add(c.type);
   if (cartes[0]?.type !== 'fanzzy') premiereToujoursFanzzy = false;
   maxFanzzy = Math.max(maxFanzzy, cartes.filter((c) => c.type === 'fanzzy').length);
@@ -177,7 +183,7 @@ check(`des écharpes tombent aussi (${echarpesTombees} poignées)`, echarpesTomb
    silencieusement autre chose — c'est ce qui s'est passé : toute catégorie
    inconnue sortait en carte d'action, et une table qui promettait des
    supporters n'en donnait aucun sans que rien ne rougisse. */
-for (const t of ['fanzzy', 'skin', 'stuff', 'action', 'echarpes']) {
+for (const t of ['fanzzy', 'skin', 'etat', 'stuff', 'action', 'echarpes']) {
   check(`la catégorie « ${t} » tombe vraiment`, vus.has(t));
 }
 
@@ -187,6 +193,34 @@ const [possedes] = await pool.query(`SELECT fanzzy_id FROM user_fanzzy WHERE use
 const ids = new Set(possedes.map((p) => p.fanzzy_id));
 check('un skin ne tombe que pour un Fanzzy possédé',
   skinsRecus.every((s) => ids.has(s.fanzzy_id)));
+
+/* ------------------------------------------------ les états, quatre règles
+
+   Ils étaient **donnés** avec le personnage : le posséder suffisait, et ses
+   quatre expressions s'affichaient sans que rien ne les ait fait gagner. Ils
+   se tirent maintenant en booster, et ces contrôles sont exactement ce qui
+   distingue « gagné » de « donné ». Le jour où l'un d'eux rougit, les états
+   sont redevenus un cadeau sans que personne ne l'ait décidé. */
+const [etatsRecus] = await pool.query(
+  `SELECT fanzzy_id, stage, etat FROM user_etats WHERE user_id = ?`, [U]);
+const [stades] = await pool.query(
+  `SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [U]);
+const stadeDe = new Map(stades.map((s) => [s.fanzzy_id, Number(s.stage)]));
+
+check(`des états tombent dans les boosters (${etatsTombes} sur 200 cartes)`,
+  etatsTombes > 3);
+check('ils sont bien rangés en base', etatsRecus.length > 0);
+check('un état ne tombe que pour un Fanzzy possédé',
+  etatsRecus.every((e) => ids.has(e.fanzzy_id)));
+/* Un état appartient à un âge : on ne gagne pas la joie d'un Capo qu'on n'a
+   pas fait grandir. C'est la règle des tenues appliquée aux expressions, et
+   c'est elle qui donne une raison d'évoluer. */
+check('et jamais pour un âge qu’il n’a pas débloqué',
+  etatsRecus.every((e) => Number(e.stage) <= (stadeDe.get(e.fanzzy_id) ?? 1)));
+check('chaque état tiré est l’un des quatre dessinés',
+  etatsRecus.every((e) => ['joie', 'depit', 'pousse', 'colere'].includes(e.etat)));
+check('aucun état annoncé deux fois dans le même paquet',
+  etatsDoublesDansUnPaquet === 0);
 
 /* ------------------------------- ce que les places 4 et 5 apportent
 

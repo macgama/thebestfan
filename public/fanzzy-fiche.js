@@ -119,6 +119,7 @@
     souffle: 'M3 8h9a3 3 0 1 0-3-3M3 13h13a3 3 0 1 1-3 3M3 18h7',
     reprise: 'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5',
     tenue: 'M9 3l3 2 3-2 5 3-2 4-2-1v11H8V9L6 10 4 6z',
+    etat: 'M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zM8 9h.01M16 9h.01M8 14h8a4 4 0 0 1-8 0z',
     age: 'M12 3l2.6 5.6L21 9.5l-4.5 4.3 1.1 6.2L12 17l-5.6 3 1.1-6.2L3 9.5l6.4-.9z',
   };
   const trait = (cle) => `<svg viewBox="0 0 24 24"><path d="${TRAITS[cle] ?? TRAITS.etoile}"/></svg>`;
@@ -244,6 +245,33 @@
         });
       }
 
+      /* **Les quatre états.**
+       *
+       * Ils étaient donnés avec le personnage et n'apparaissaient nulle part :
+       * un joueur pouvait jouer un an sans savoir que son Fanzzy avait quatre
+       * expressions dessinées. Ils se gagnent maintenant en booster, comme les
+       * tenues, et la rangée dit lesquelles manquent.
+       *
+       * L'aperçu est le dessin lui-même quand il est gagné — voir une case
+       * vide à côté de trois cases pleines est ce qui fait ouvrir le paquet
+       * suivant. Sinon le pictogramme seul : montrer l'état qu'on n'a pas
+       * serait le donner. */
+      for (const e of (d.etats ?? [])) {
+        liste.push({
+          cle: `etat:${e.id}`, rang: 'ÉTATS', titre: e.nom,
+          sorte: e.possede ? 'État gagné' : 'État à trouver',
+          ok: e.possede, couleur: '#3FA37A', icone: 'etat',
+          image: e.possede
+            ? (window.FZART?.adresse?.(d.fanzzy.ageId ?? d.fanzzy.id, 'buste') ?? null)
+            : null,
+          texte: e.possede
+            ? `${e.dessin} Il s'affiche tout seul au bon moment du match.`
+            : 'Sans lui, ton Fanzzy garde son air de repos — le jeu ne change pas.',
+          manque: e.possede ? null : 'à trouver dans un booster',
+          action: null,
+        });
+      }
+
       // Ce qu'il change. L'effet **réel** — celui du personnage combiné à
       // l'équipement porté — parce que c'est lui que le duel emploiera.
       const reel = lireMods(d.effetReel);
@@ -281,7 +309,7 @@
          elles repoussaient les effets hors de l'écran, où personne ne serait
          allé les chercher. Elles ferment donc la marche : ce sont les seules
          qui ne changent rien au jeu. */
-      const rangs = ['ÂGES', 'EFFETS', 'TENUES']
+      const rangs = ['ÂGES', 'EFFETS', 'ÉTATS', 'TENUES']
         .map((r) => [r, cases.filter((x) => x.rang === r)])
         .filter(([, l]) => l.length);
 

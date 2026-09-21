@@ -153,6 +153,14 @@ que `raretes` les a rangées.
   désormais à un stade, plus au personnage. Les lignes existantes valent pour
   le premier âge, ce qui est exact — elles ont toutes été gagnées avant que
   les âges existent.
+- `etats.sql` crée `user_etats` : les quatre états dessinés d’un Fanzzy — la
+  joie, le dépit, l’encouragement, la colère — deviennent des cartes à gagner
+  en booster au lieu d’être donnés avec le personnage. Même clé que
+  `user_skins`, et pour la même raison : on possède l’état d’un âge. Son
+  rattrapage offre leurs états aux Fanzzy possédés **avant le 22 septembre
+  2026**, pour que personne ne perde ce qu’il voyait la veille ; la date est
+  écrite en dur, faute de quoi chaque déploiement re-offrirait ce que les
+  boosters viennent de faire gagner.
 - `tenues.sql` sort les thèmes de tenue du code et les met en base, comme le
   catalogue des Fanzzy avant lui : l’administration peut en créer un sans
   livraison. Il dépublie les six anciens (pluie, nocturne, derby, anniv,
@@ -284,7 +292,7 @@ que `raretes` les a rangées.
   gestes différents pour les mêmes cartes** — et c'est la base qui gagne : le
   joueur jouerait l'ancien.
 
-Contrôle : `SHOW TABLES;` doit en lister **42**.
+Contrôle : `SHOW TABLES;` doit en lister **43**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`

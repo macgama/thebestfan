@@ -329,6 +329,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
   async function matchSupport(fixtureId, userId = null) {
     const rows = await q(
       `SELECT f.id, f.status_short, f.kickoff_at, f.elapsed,
+              f.home_goals, f.away_goals,
               DATE(f.kickoff_at) AS jour, UTC_DATE() AS aujourdhui,
               h.name AS home_name, h.logo AS home_logo, h.id AS home_id,
               a.name AS away_name, a.logo AS away_logo, a.id AS away_id,
@@ -370,6 +371,8 @@ export function createDecks({ pool, requireAuth, niveau = null,
       id: duJour.id,
       status_short: duJour.status,
       elapsed: duJour.elapsed,
+      home_goals: duJour.home?.goals ?? 0,
+      away_goals: duJour.away?.goals ?? 0,
       kickoff_at: duJour.date,
       jour: String(duJour.date).slice(0, 10),
       aujourdhui: auj,
@@ -443,6 +446,9 @@ export function createDecks({ pool, requireAuth, niveau = null,
     return {
       fixture: {
         id: f.id, jour, status: f.status_short, elapsed: f.elapsed,
+        /* Le score du terrain au moment où le duel se monte. Le duel le
+           tient ensuite à jour lui-même : voir `butReel` dans le moteur. */
+        goals: [Number(f.home_goals) || 0, Number(f.away_goals) || 0],
         kickoffAt: f.kickoff_at, league: f.league_name,
         home: { id: f.home_id, name: f.home_name, logo: f.home_logo },
         away: { id: f.away_id, name: f.away_name, logo: f.away_logo },

@@ -94,7 +94,7 @@ async function jusqua(fn, ms = 8000) {
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 await raw.query(`DROP TABLE IF EXISTS parrainages, contenus, abonnements, achats, kop_invites, amities, saisons, reglages, admin_audit,
-  kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
+  kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
@@ -106,7 +106,7 @@ await raw.query(`DROP TABLE IF EXISTS parrainages, contenus, abonnements, achats
 // et le kiosque n'aurait alors rien à verrouiller. La suite passerait au vert
 // sans jamais éprouver le cas qui a produit la panne.
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql',
-                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'stades.sql',
+                 'inventaire.sql', 'skins.sql', 'etats.sql', 'tenues.sql', 'deck.sql', 'stades.sql',
                  // Les saisons décident de ce que le classeur range. Sans cette table,
                  // le jeu tourne toutes séries ouvertes et la restriction ne s'éprouve pas.
                  // 'admin.sql' vient avec : la reprise de la saison 1 lit 'reglages'.
@@ -548,11 +548,16 @@ check('les Fanzzy non possédés portent leur nom',
       m.vitrine > m.ecran * 0.34
       || (console.log(`        ${Math.round(m.vitrine)} px sur ${m.ecran}`), false));
     check('et le bouton d’action est visible sans chercher', m.bouton <= m.ecran + 1);
-    check('les trois rangées de cases sont là',
+    check('les quatre rangées de cases sont là',
       /* L'ordre compte : la bande défile, et les tenues sont trop nombreuses
          pour tenir avant les effets. Placées au milieu, elles les repoussaient
-         hors de l'écran. */
-      m.rangs.join('/') === 'ÂGES/EFFETS/TENUES'
+         hors de l'écran.
+
+         Les états s'insèrent **avant** elles pour la même raison : ils sont
+         quatre, toujours, donc ils ne repoussent rien. Et ils viennent après
+         les effets parce que ce qui change le jeu se lit avant ce qui se
+         voit — un état ne donne aucun bonus, c'est même toute sa règle. */
+      m.rangs.join('/') === 'ÂGES/EFFETS/ÉTATS/TENUES'
       || (console.log('        rangées :', m.rangs.join(', ')), false));
     check('et il y a des cases à regarder', m.cases >= 4);
     check('celles qu’on n’a pas restent visibles, verrouillées', m.verrous > 0);

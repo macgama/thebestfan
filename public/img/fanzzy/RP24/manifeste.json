@@ -1,0 +1,21 @@
+{
+  "id": "RP24",
+  "rev": 2,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "af76042bf707"
+        }
+      }
+    }
+  }
+}
