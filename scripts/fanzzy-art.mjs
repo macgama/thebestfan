@@ -59,7 +59,13 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import sharp from 'sharp';
-import { PAR_NUMERO, ETATS } from '../src/shared/fanzzy/rendus.js';
+/* **ETATS_ACCEPTES et non ETATS** : la chaîne doit traiter les quatre états
+   quon dessine aujourdhui **et** les douze anciens noms déjà sur le disque.
+   Elle a rejeté un « joie » parfaitement valide le jour du changement, et
+   refuser les anciens abandonnerait quatre-vingt-six fichiers au premier
+   changement de format. Produire nest pas compter : le rapport, lui, ne prend
+   que les quatre. */
+import { PAR_NUMERO, ETATS_ACCEPTES as ETATS } from '../src/shared/fanzzy/rendus.js';
 import { agreger } from './fanzzy-manifeste.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));

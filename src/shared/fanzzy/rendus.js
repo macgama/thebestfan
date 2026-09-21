@@ -124,6 +124,24 @@ export const FAMILLE = {
   decision: 'colere',
 };
 
+/**
+ * Ce que la chaîne de production accepte de traiter.
+ *
+ * **Les deux listes réunies, et il faut les deux.** `ETATS_DESSINES` dit ce
+ * qu'on demande à un dessinateur aujourd'hui ; `ETATS` dit ce qui existe déjà
+ * sur le disque, quatre-vingt-six fichiers aux anciens noms qui servent encore
+ * — la résolution essaie toujours le nom exact avant la famille.
+ *
+ * Refuser les anciens rendrait `art:tout` incapable de retraiter ce qui est
+ * déjà produit : le jour où l'on change une taille ou un format, les
+ * quatre-vingt-six seraient abandonnés en chemin. Refuser les nouveaux, c'est
+ * ce qui vient d'arriver — la chaîne a rejeté un `joie` parfaitement valide.
+ *
+ * Le compte, lui, ne prend que les quatre : produire n'est pas compter. Voir
+ * `etatsDe` dans `scripts/dessins.mjs`.
+ */
+export const ETATS_ACCEPTES = [...new Set([...ETATS, ...ETATS_DESSINES])];
+
 /** Ce que chaque état dessiné doit montrer, pour celui qui le dessine. */
 export const ETAT_DESSIN = {
   joie: 'bras levés, on vient de marquer ou de gagner',

@@ -1,6 +1,6 @@
 {
   "id": "RP1",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -17,10 +17,13 @@
             "occasion",
             "decision",
             "progression",
-            "ennui"
+            "ennui",
+            "joie",
+            "depit",
+            "colere"
           ],
           "portrait": true,
-          "sha": "ae750bb0917b"
+          "sha": "05f67d099ea4"
         }
       }
     },

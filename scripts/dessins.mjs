@@ -97,10 +97,25 @@ function manifeste(racineId) {
   } catch { return null; }
 }
 
-/** Les états dessinés d'un âge, dans la tenue de base. */
+/**
+ * Les états dessinés d'un âge, dans la tenue de base.
+ *
+ * **Filtrés sur les quatre qui comptent**, et c'est indispensable depuis qu'on
+ * ne dessine plus les douze. Le disque porte encore les anciens noms — `but`,
+ * `encaisse`, `salut`… — et les compter donnait des lignes comme « états
+ * 36/12 » : trente-six trouvés contre douze attendus. Un rapport qui affiche
+ * plus que son total ne dit rien, et surtout il **flatte** — une lignée aux
+ * anciens noms paraîtrait plus que finie alors qu'il lui manque tout.
+ *
+ * Les anciens dessins ne sont pas perdus pour autant : la résolution essaie
+ * toujours le nom exact avant la famille, donc un `but` dessiné sert encore au
+ * moment `but`. Il ne compte simplement pas vers la nouvelle cible. `pousse`,
+ * lui, est dans les deux listes : il est repris sans rien redessiner.
+ */
 function etatsDe(racineId, evo) {
   const m = manifeste(racineId);
-  return m?.evolutions?.[`e${evo}`]?.skins?.base?.etats ?? [];
+  const tous = m?.evolutions?.[`e${evo}`]?.skins?.base?.etats ?? [];
+  return tous.filter((e) => ETATS.includes(e));
 }
 
 /* --------------------------------------------------------------- le bilan */
