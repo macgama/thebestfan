@@ -51,37 +51,10 @@ const SQL = path.join(RACINE, 'sql');
  * cette liste-ci de dériver en silence : ajouter un `.sql` sans l'inscrire
  * fait rougir une suite avant la mise en ligne.
  */
-const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', 'fanzzy',
-  'teletext', 'inventaire', 'skins',
-  /* `etats.sql` suit `skins.sql` : même clé à quatre colonnes, même raison —
-     on possède l'état d'un âge, pas du personnage. Il vient après fanzzy.sql,
-     dont son rattrapage lit `user_fanzzy`, et après auth.sql pour la clé
-     étrangère vers `users`. */
-  'etats',
-  'tenues', 'deck', 'admin', 'kop', 'amis',
-  'niveau', 'raretes', 'stades', 'boutique', 'billets', 'saisons',
-  // En dernier, la seule reprise de données : `series-neuves.sql` range
-  // quarante-deux cartes dans leur nouvelle série. Il suppose donc les lignes
-  // posées par `fanzzy.sql` et le réglage posé par `admin.sql`.
-  'series-neuves',
-  /* Les deux reprises de septembre, dans le même ordre que schema-smoke.mjs —
-     c'est cette paire-là qui avait divergé le 8 septembre, et deux fichiers
-     manquants au déploiement avaient éteint le site.
-
-     Elles ne déclarent aucune table et ne font rien sur une base neuve : le
-     catalogue y est amorcé depuis le code, donc déjà juste. Sur une base
-     existante, prefixes.sql donne à chaque carte le préfixe de sa série — en
-     suivant l'identifiant dans les six tables qui le référencent, JSON des
-     decks compris — et identites.sql rattrape ce qu'INSERT IGNORE ne sait pas
-     dire : un nom changé dans le code n'atteint jamais une ligne déjà posée. */
-  'prefixes', 'identites',
-  /* `historique.sql` manquait à cette liste alors que le contrôle du schéma,
-     lui, lit tout le dossier : `schema:appliquer` appliquait donc vingt-quatre
-     fichiers puis annonçait « SCHÉMA INCOMPLET » sur une base neuve, en
-     nommant deux colonnes de `duel_results` que personne n'avait oubliées.
-     Une commande qui finit en rouge après avoir bien travaillé apprend à
-     ignorer le rouge. */
-  'historique'];
+/* **La liste ne vit plus ici.** Elle était recopiée de `schema-smoke.mjs`,
+   et cinq noms y manquaient — dont `abonnement`. Voir l'en-tête de
+   `ordre-schema.mjs` : deux listes d'accord un jour ne le restent pas. */
+import { ORDRE } from './ordre-schema.mjs';
 
 const verifierSeulement = process.argv.includes('--verifier-seulement');
 const url = process.env.DATABASE_URL;

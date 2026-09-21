@@ -1470,17 +1470,37 @@ dire qu'on offre des boosters à qui connaît l'adresse. Le webhook est monté
 ```
 STRIPE_SECRET_KEY=sk_test_…      (puis sk_live_… le jour venu)
 STRIPE_WEBHOOK_SECRET=whsec_…
-SITE_URL=https://thebestfan.online
 ```
 
-Sans elles, la boutique s'affiche en **vitrine** : le catalogue se lit, les prix
-s'affichent, et la commande est refusée avec un code qui le dit. Un écran qui
-s'écroule parce qu'une variable manque est plus dur à diagnostiquer qu'un refus
-nommé.
+Deux variables, et non trois : l'adresse de retour se lit sur `PUBLIC_ORIGIN`,
+que la procédure de déploiement fait déjà poser. `SITE_URL` reste accepté en
+repli pour les installations qui l'ont écrit — mais il n'y a plus rien à
+ajouter pour lui.
 
-Le webhook à déclarer chez Stripe : `POST /api/boutique/webhook`, événements
-`checkout.session.completed`, `checkout.session.async_payment_succeeded`,
-`checkout.session.expired`.
+Rien d'autre n'est à créer chez Stripe : les deux formules partent en
+`price_data` à chaque session, donc **aucun produit ni aucun tarif** n'a à
+exister dans le tableau de bord. Ce qui s'y déclare, c'est le webhook.
+
+Sans ces variables, la boutique s'affiche en **vitrine** : le catalogue se lit,
+les prix s'affichent, et la commande est refusée avec un code qui le dit. Un
+écran qui s'écroule parce qu'une variable manque est plus dur à diagnostiquer
+qu'un refus nommé.
+
+Le webhook à déclarer chez Stripe : `POST /api/boutique/webhook`, **cinq**
+événements. Cette liste en annonçait trois, et c'était une erreur coûteuse :
+sans `invoice.paid`, le premier paiement passe et l'abonnement **s'éteint
+silencieusement au bout d'un mois**, faute d'avoir vu le renouvellement. Sans
+`customer.subscription.deleted`, une résiliation ne se saurait jamais. Les
+cinq sont traités dans `boutique/index.js` ; en déclarer moins revient à en
+débrancher une partie sans que rien ne le dise.
+
+| événement | ce qu'il fait |
+|---|---|
+| `checkout.session.completed` | livre la commande — c'est lui qui pose l'abonnement |
+| `checkout.session.async_payment_succeeded` | idem, pour un moyen de paiement différé |
+| `checkout.session.expired` | referme une commande abandonnée |
+| `invoice.paid` | **le renouvellement** : pousse l'échéance plus loin |
+| `customer.subscription.deleted` | la résiliation : l'échéance court jusqu'au terme payé |
 
 ### Deux décisions qui ne sont pas du code
 
