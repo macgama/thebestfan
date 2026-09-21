@@ -107,12 +107,17 @@
     'VP3', 'VP4', 'GC1', 'RP1', 'RP1B', 'RP1C', 'RP2', 'RP2B',
     'RP2C', 'RP18', 'RP18B', 'RP18C', 'RP19', 'RP19B', 'RP19C', 'RP20',
     'RP20B', 'RP20C', 'RP3', 'RP3B', 'RP3C', 'RP4', 'RP4B', 'RP4C',
-    'RP21', 'RP21B', 'RP21C', 'RP22', 'RP22B', 'RP22C', 'RP5', 'RP5B',
-    'RP5C', 'RP6', 'RP6B', 'RP6C', 'RP7', 'RP7B', 'RP7C', 'RP8',
-    'RP8B', 'RP8C', 'RP9', 'RP9B', 'RP9C', 'RP10', 'RP10B', 'RP10C',
-    'RP11', 'RP11B', 'RP11C', 'RP12', 'RP12B', 'RP12C', 'RP13', 'RP14',
-    'RP15', 'RP16', 'RP17', 'TR1B', 'TR1C', 'TR3B', 'TR3C', 'TR23B',
-    'TR23C', 'TR50B', 'TR50C',
+    'RP21', 'RP21B', 'RP21C', 'RP22', 'RP22B', 'RP22C', 'RP23', 'RP23B',
+    'RP23C', 'RP5', 'RP5B', 'RP5C', 'RP6', 'RP6B', 'RP6C', 'RP24',
+    'RP24B', 'RP24C', 'RP25', 'RP25B', 'RP25C', 'RP26', 'RP26B', 'RP26C',
+    'RP7', 'RP7B', 'RP7C', 'RP8', 'RP8B', 'RP8C', 'RP27', 'RP27B',
+    'RP27C', 'RP28', 'RP28B', 'RP28C', 'RP29', 'RP29B', 'RP29C', 'RP9',
+    'RP9B', 'RP9C', 'RP10', 'RP10B', 'RP10C', 'RP30', 'RP30B', 'RP30C',
+    'RP31', 'RP31B', 'RP31C', 'RP32', 'RP32B', 'RP32C', 'RP11', 'RP11B',
+    'RP11C', 'RP12', 'RP12B', 'RP12C', 'RP33', 'RP33B', 'RP33C', 'RP34',
+    'RP34B', 'RP34C', 'RP35', 'RP35B', 'RP35C', 'RP13', 'RP14', 'RP15',
+    'RP16', 'RP17', 'TR1B', 'TR1C', 'TR3B', 'TR3C', 'TR23B', 'TR23C',
+    'TR50B', 'TR50C',
   ]);
 
   /**
