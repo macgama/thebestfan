@@ -160,6 +160,30 @@
   const aLetat = (evolution, skin, etat) =>
     evolution.skins?.[skin]?.etats?.includes(etat) === true;
 
+  /* ------------------------------------------------ ce que le joueur a gagné
+
+     Les états sont devenus des cartes : les avoir dessinés ne suffit plus, il
+     faut les avoir tirés. Cette table dit lesquels — `{ RP21: { 1: ['joie'] } }`,
+     la forme exacte que rend `/api/fanzzy/state`.
+
+     **Nulle tant qu'on ne l'a pas posée, et c'est délibéré.** Une page qui ne
+     lit pas l'état du joueur — l'aide, un aperçu d'administration, une suite —
+     doit continuer à montrer les dessins comme avant. Seules les pages qui
+     savent à qui elles parlent posent la table, et à partir de là le repli sur
+     le repos s'applique. Sans ce `null`, oublier l'appel sur une page aurait
+     éteint toutes les expressions du jeu d'un coup, sans rien dire. */
+  let gagnes = null;
+
+  /** Pose ce que ce joueur a gagné. `null` revient à ne rien filtrer. */
+  function possedes(table) {
+    gagnes = table && typeof table === 'object' ? table : null;
+  }
+
+  /* Le repos n'est pas un état qu'on gagne : c'est la carte elle-même, celle
+     qu'on a forcément puisqu'on possède le personnage. */
+  const gagne = (id, evo, etat) => etat === 'neutre' || !gagnes
+    || (gagnes[id]?.[evo] ?? gagnes[id]?.[String(evo)] ?? []).includes(etat);
+
   /**
    * Trouve le dessin le plus proche de ce qui est demandé.
    *
@@ -201,6 +225,10 @@
       for (const etat of etats) {
         for (const skin of skins) {
           if (!aLetat(evolution, skin, etat)) continue;
+          /* Dessiné, mais pas gagné : on continue à descendre la chaîne, qui
+             finit toujours sur le repos. Le personnage reste affiché, sans son
+             expression — aucun effet sur les règles, c'est du confort. */
+          if (!gagne(id, evo, etat)) continue;
           return {
             src: url(id, evo, skin, etat, f.rev),
             etat, evo, skin,
@@ -263,5 +291,5 @@
   }
 
   window.TBF_ETATS = { ETATS, EXT, EXT_ALPHA, REPLI, REPLI_ALPHA, secours,
-    charger, pret, resoudre, portrait, precharger };
+    charger, pret, resoudre, portrait, precharger, possedes };
 })();

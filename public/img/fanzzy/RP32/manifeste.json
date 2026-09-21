@@ -1,0 +1,21 @@
+{
+  "id": "RP32",
+  "rev": 2,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "b5e2a8f12fa1"
+        }
+      }
+    }
+  }
+}

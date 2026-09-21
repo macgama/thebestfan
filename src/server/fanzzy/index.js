@@ -6,6 +6,17 @@ import { SETS, TYPES, RAR, RATES, SCARVES, EVO_COST } from '../../shared/fanzzy/
 import { tous, publies, parIdentifiant, obtenables, seriesOuvertes, serieOuverte,
   racineDe, lignee, auStade } from './catalogue.js';
 import { STUFF, STUFF_BY_ID, combine } from '../../shared/fanzzy/inventaire.js';
+/* Les quatre états dessinés. `rendus.js` fait foi : la même liste sert la
+   chaîne d'images, la résolution côté client et, maintenant, le tirage. */
+import { ETATS_DESSINES, ETAT_DESSIN } from '../../shared/fanzzy/rendus.js';
+
+/* Le nom d'un état pour le joueur. `rendus.js` décrit le **dessin** — « bras
+   levés… » — ce qui sert au dessinateur et ne se met pas sur une carte. Ici
+   on nomme le **moment**, et c'est ce que la fiche affiche. */
+const ETAT_NOM = {
+  joie: 'La joie', depit: 'Le dépit',
+  pousse: 'On pousse', colere: 'Pas content',
+};
 // Les tenues viennent de la base : elles se créent depuis l'administration,
 // et une liste figée dans le code redeviendrait une seconde vérité.
 import { toutesTenues, tenuesPubliees } from './tenues.js';
@@ -194,6 +205,37 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     return Object.fromEntries(rows.map((r) => [r.fanzzy_id, Number(r.stage)]));
   }
 
+  /**
+   * Les états gagnés, par personnage et par âge.
+   *
+   * Forme : `{ 'RP21': { 1: ['joie','depit'], 2: ['colere'] } }`. Deux
+   * niveaux plutôt qu'une clé composée, parce que les deux écrans qui la
+   * lisent posent deux questions différentes — la fiche veut les états d'un
+   * âge, le jeu veut savoir si **celui-ci** est gagné — et qu'une clé
+   * `'RP21:1:joie'` obligerait les deux à la recomposer à la main.
+   *
+   * Rendue vide si la table n'existe pas encore. C'est le bon défaut avec
+   * `resoudre` en face : rien de gagné veut dire que tout retombe sur le
+   * repos, donc un déploiement où `sql/etats.sql` manque montre des
+   * personnages au repos — et non une page blanche.
+   */
+  async function etatsGagnes(userId) {
+    let rows;
+    try {
+      rows = await q(
+        `SELECT fanzzy_id, stage, etat FROM user_etats WHERE user_id = ?`, [userId]);
+    } catch (e) {
+      if (e.code !== 'ER_NO_SUCH_TABLE') throw e;
+      return {};
+    }
+    const out = {};
+    for (const r of rows) {
+      const parAge = out[r.fanzzy_id] ??= {};
+      (parAge[Number(r.stage)] ??= []).push(r.etat);
+    }
+    return out;
+  }
+
   /* -------------------------------------------------------------- tirage */
 
   function pickRarity(slot) {
@@ -296,10 +338,21 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    * @returns {{carte, scarves}}
    */
   const PLACES_OUVERTES = [
-    ['action', 0.30],
-    ['stuff', 0.25],
-    ['skin', 0.20],
-    ['echarpes', 0.25],
+    ['action', 0.28],
+    ['stuff', 0.23],
+    ['skin', 0.14],
+    /* **Les états.** Quatre dessins par âge — la joie, le dépit,
+       l'encouragement, la colère — qui étaient donnés avec le personnage et
+       que plus rien ne faisait désirer. Ils se gagnent maintenant, comme les
+       tenues et pour la même raison : ça donne une raison de rouvrir un
+       booster une fois qu'on a la tête qu'on voulait.
+
+       Douze pour cent, soit un peu moins que les tenues : il y en a quatre
+       par âge contre une poignée de tenues, donc la case se remplit vite si
+       on tire trop souvent dedans — et une case qui se remplit vite cesse de
+       faire envie. */
+    ['etat', 0.12],
+    ['echarpes', 0.23],
   ];
 
   /* Trois poignées, de la plus probable à la plus rare. Un booster coûte
@@ -322,7 +375,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
   }
 
   async function tirerAutreChose(ctx) {
-    const { conn, userId, avant, stadeDe, skinsPris, stuffPris, actionsPrises } = ctx;
+    const { conn, userId, avant, stadeDe, skinsPris, etatsPris,
+      stuffPris, actionsPrises } = ctx;
     const cat = tirerCategorie();
 
     /* Les écharpes. Le seul lot qui ne peut pas être vide, et donc le recours
@@ -363,6 +417,37 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, stage, skin_id) VALUES (?, ?, ?, ?)`,
         [userId, p.id, p.stade, p.skin]);
       return { carte: { type: 'skin', id: p.skin, pour: p.id, stade: p.stade, new: true },
+        scarves: 0 };
+    }
+
+    /* **Un état appartient à un âge**, exactement comme une tenue : le Capo
+       n'hérite pas de la joie du gamin. On ne propose donc que les âges
+       débloqués, et que les états qui manquent encore.
+
+       Ce qui n'est pas gagné n'est pas perdu pour le jeu : `fanzzy-etats.js`
+       retombe sur le repos, et le personnage reste affiché sans son
+       expression. Aucun effet sur les règles — un état ne donne pas plus de
+       souffle qu'un skin ne donne de puissance. */
+    if (cat === 'etat') {
+      // Table absente : rien à ranger, donc rien à tirer. Voir la garde posée
+      // sur sa lecture dans `openPack`.
+      if (!etatsPris) return echarpes();
+      const places = [];
+      for (const id of avant) {
+        const stade = stadeDe.get(id) ?? 1;
+        for (let s = 1; s <= stade; s++) {
+          for (const e of ETATS_DESSINES) {
+            if (!etatsPris.has(`${id}:${s}:${e}`)) places.push({ id, stade: s, etat: e });
+          }
+        }
+      }
+      if (!places.length) return echarpes();
+      const p = rnd(places);
+      etatsPris.add(`${p.id}:${p.stade}:${p.etat}`);
+      await conn.query(
+        `INSERT IGNORE INTO user_etats (user_id, fanzzy_id, stage, etat) VALUES (?, ?, ?, ?)`,
+        [userId, p.id, p.stade, p.etat]);
+      return { carte: { type: 'etat', id: p.etat, pour: p.id, stade: p.stade, new: true },
         scarves: 0 };
     }
 
@@ -505,6 +590,20 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       const skinsPris = new Set(
         skinsOwned.map((s) => `${s.fanzzy_id}:${s.stage}:${s.skin_id}`));
 
+      /* Les états déjà gagnés, lus une fois pour les cinq places : sans ça,
+         deux places du même booster pourraient offrir deux fois la même joie
+         — l'`INSERT IGNORE` l'absorberait en base, et le joueur verrait deux
+         cartes « NOUVEAU » pour un seul gain. */
+      let etatsPris = null;
+      try {
+        const [etatsOwned] = await conn.query(
+          `SELECT fanzzy_id, stage, etat FROM user_etats WHERE user_id = ?`, [userId]);
+        etatsPris = new Set(
+          etatsOwned.map((e) => `${e.fanzzy_id}:${e.stage}:${e.etat}`));
+      } catch (e) {
+        if (e.code !== 'ER_NO_SUCH_TABLE') throw e;
+      }
+
       const [stuffOwned] = await conn.query(
         `SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [userId]);
       const stuffPris = new Set(stuffOwned.map((s) => s.stuff_id));
@@ -539,7 +638,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         const ouverte = i >= 2 || (i === 1 && Math.random() >= 0.7);
         if (ouverte) {
           const autre = await tirerAutreChose({
-            conn, userId, avant, stadeDe, skinsPris, stuffPris, actionsPrises });
+            conn, userId, avant, stadeDe, skinsPris, etatsPris, stuffPris, actionsPrises });
           if (autre) {
             scarves += autre.scarves ?? 0;
             cards.push(autre.carte);
@@ -784,8 +883,12 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
   router.get('/state', requireAuth, (req, res) =>
     send(res, Promise.all([
       wallet(req.user.id), collection(req.user.id), stades(req.user.id),
-      saisonVue(req.user.id),
-    ]).then(([w, col, st, vue]) => ({ wallet: w, collection: col, stades: st,
+      saisonVue(req.user.id), etatsGagnes(req.user.id),
+    ]).then(([w, col, st, vue, etats]) => ({ wallet: w, collection: col, stades: st,
+      /* Les états gagnés partent avec le reste de l'état du joueur : toutes
+         les pages qui dessinent un Fanzzy en expression lisent déjà cette
+         route, et en ajouter une seconde ferait deux vérités. */
+      etats,
       saison: saisonEnCours(), saisonVue: vue,
       maxPacks: maxPacks(), packPrice: prixPack() }))));
 
@@ -959,11 +1062,17 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     const perso = parIdentifiant(id);
     if (!perso) return null;
 
-    const [mien, skins, stuff, w, tribune] = await Promise.all([
+    const [mien, skins, etats, stuff, w, tribune] = await Promise.all([
       q(`SELECT copies, stage, first_at FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
         [userId, id]),
       q(`SELECT skin_id, stage, equipped, got_at FROM user_skins
           WHERE user_id = ? AND fanzzy_id = ?`, [userId, id]),
+      /* Les états gagnés de ce personnage. Sous garde : un déploiement où
+         `sql/etats.sql` n'est pas encore appliqué doit montrer une fiche sans
+         la rangée, pas une fiche en erreur. */
+      q(`SELECT etat, stage, got_at FROM user_etats
+          WHERE user_id = ? AND fanzzy_id = ?`, [userId, id])
+        .catch((e) => { if (e.code === 'ER_NO_SUCH_TABLE') return []; throw e; }),
       q(`SELECT stuff_id, copies, slot FROM user_stuff WHERE user_id = ?`, [userId]),
       q(`SELECT active_fanzzy, scarves FROM user_wallet WHERE user_id = ?`, [userId]),
       /* La tribune du deck, assemblée ici et pas par la page.
@@ -1038,6 +1147,21 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       // plutôt que de laisser croire à une perte.
       skinsAutresAges: skins.filter((x) => Number(x.stage) !== stade)
         .map((x) => ({ id: x.skin_id, stade: Number(x.stage) })),
+      /* **Les quatre états de l'âge atteint.** Même règle que les tenues, et
+         pour la même raison : un état appartient à un âge. Ils partent tous
+         les quatre, gagnés ou non — c'est la case vide qui donne envie
+         d'ouvrir un booster, et une rangée qui ne montrerait que l'acquis ne
+         dirait jamais ce qui manque.
+
+         Le libellé vient de `rendus.js` : la phrase qui décrit le dessin est
+         écrite une fois, là où la chaîne d'images la lit déjà. */
+      etats: ETATS_DESSINES.map((e) => {
+        const m = etats.find((x) => x.etat === e && Number(x.stage) === stade);
+        return { id: e, nom: ETAT_NOM[e] ?? e, dessin: ETAT_DESSIN[e] ?? '',
+                 possede: Boolean(m), depuis: m?.got_at ?? null };
+      }),
+      etatsAutresAges: etats.filter((x) => Number(x.stage) !== stade)
+        .map((x) => ({ id: x.etat, stade: Number(x.stage) })),
       // `possede` par âge veut dire « atteint », pas « détenu à part ». Un âge
       // au-delà du stade actuel se lit donc comme un objectif chiffré, ce qui
       // est exactement ce que la page en fait.

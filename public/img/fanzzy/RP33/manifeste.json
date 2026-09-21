@@ -1,0 +1,21 @@
+{
+  "id": "RP33",
+  "rev": 2,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "neutre",
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": true,
+          "sha": "594bf2d9b28b"
+        }
+      }
+    }
+  }
+}

@@ -46,7 +46,7 @@ if (noms.length) await raw.query(`DROP TABLE ${noms.join(',')}`);
 await raw.query('SET FOREIGN_KEY_CHECKS = 1');
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'duel.sql',
                  'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql',
-                 'skins.sql', 'tenues.sql', 'deck.sql', 'niveau.sql', 'kop.sql',
+                 'skins.sql', 'etats.sql', 'tenues.sql', 'deck.sql', 'niveau.sql', 'kop.sql',
                  'historique.sql', 'abonnement.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }

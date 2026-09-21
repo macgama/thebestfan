@@ -378,7 +378,8 @@ h2 i{font-style:normal;opacity:.7}
    règle que partout ailleurs dans le jeu : le fond est à l’écran, le jeu est
    dans la colonne. */
 .grand>*{width:100%;max-width:var(--colonne);margin-inline:auto}
-.grand{position:fixed;inset:0;z-index:72;display:flex;flex-direction:column;
+.grand{position:fixed;inset:0;height:100vh;height:100dvh;
+  z-index:72;display:flex;flex-direction:column;
   background:radial-gradient(120% 55% at 50% -10%,rgba(224,64,44,.2),transparent 60%),
     linear-gradient(180deg,#11161D,#05070A 55%,#05070A);
   padding:calc(env(safe-area-inset-top) + 14px) 0 calc(env(safe-area-inset-bottom) + 12px)}
@@ -500,7 +501,7 @@ h2 i{font-style:normal;opacity:.7}
   opacity:.55;display:flex;align-items:center;gap:8px}
 .tribune-att h4 em{font-style:normal;margin-left:auto;opacity:.75;color:var(--c,var(--projo))}
 .places-att{display:flex;gap:7px}
-.place-att{flex:1;min-width:0;aspect-ratio:63/84;border-radius:10px;position:relative;
+.place-att{flex:1;min-width:0;max-width:112px;aspect-ratio:63/84;border-radius:10px;position:relative;
   overflow:hidden;background:rgba(255,255,255,.03);
   box-shadow:inset 0 0 0 1px rgba(242,238,228,.12);display:flex;flex-direction:column;
   justify-content:flex-end}
@@ -533,7 +534,9 @@ h2 i{font-style:normal;opacity:.7}
    la colonne. */
 .voile>*{max-width:var(--colonne)}
 .voile{position:fixed;inset:0;z-index:70;background:rgba(4,6,10,.9);display:none;
-  flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:28px;text-align:center}
+  flex-direction:column;align-items:center;justify-content:safe center;gap:12px;
+  overflow-y:auto;text-align:center;height:100vh;height:100dvh;
+  padding:calc(env(safe-area-inset-top) + 28px) 28px calc(env(safe-area-inset-bottom) + 28px)}
 .voile.on{display:flex}
 .voile h2{font-family:var(--banner);font-size:23px;letter-spacing:.1em;margin:0;opacity:1}
 .voile p{margin:0;font-size:13px;opacity:.65;line-height:1.7;max-width:300px}
@@ -567,6 +570,33 @@ h2 i{font-style:normal;opacity:.7}
   border:1px solid rgba(242,238,228,.2);border-radius:7px;padding:11px 16px;font-size:12.5px;display:none;
   max-width:88vw;text-align:center}
 .toast.on{display:block}
+/* ------------------------------------------------- le fil du terrain
+
+   Même bande qu'au Virage, même raison : le score du **vrai match**, que le
+   duel ne montrait nulle part. Il est opaque et large parce que le score des
+   tribunes est juste au-dessus en quarante pixels — deux nombres à l'écran,
+   et c'est le mot « TERRAIN » qui dit lequel est la rencontre. */
+.fil-match{flex:none;display:none;align-items:center;gap:10px;margin:0 13px 6px;
+  padding:7px 11px;border-radius:9px;background:rgba(6,10,16,.78);
+  border:1px solid rgba(242,238,228,.24);min-height:46px;text-align:left}
+.fil-match.on{display:flex}
+.fil-match .sc{flex:none;padding-right:10px;line-height:1;
+  border-right:1px solid rgba(242,238,228,.14)}
+.fil-match .sc b{display:block;font-family:var(--banner);font-size:17px;letter-spacing:.03em;
+  font-variant-numeric:tabular-nums}
+.fil-match .sc small{display:block;font-size:9px;letter-spacing:.14em;opacity:.8;
+  margin-top:3px;color:var(--projo)}
+.fil-match .min{flex:none;font-family:var(--banner);font-size:14px;color:var(--flare);
+  letter-spacing:.04em;display:flex;align-items:center;gap:5px;
+  font-variant-numeric:tabular-nums}
+.fil-match .min::before{content:"";width:6px;height:6px;border-radius:50%;
+  background:currentColor;animation:ping 1.8s ease-out infinite}
+.fil-match .min.arret::before{animation:none;opacity:.5}
+.fil-match .min.arret{color:var(--gris)}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(224,64,44,.6)}
+  70%{box-shadow:0 0 0 7px rgba(224,64,44,0)}100%{box-shadow:0 0 0 0 rgba(224,64,44,0)}}
+.fil-match .qui{flex:1;min-width:0;font-size:11.5px;opacity:.85;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
 .vide{padding:30px 20px;text-align:center;opacity:.5;font-size:12.5px;line-height:1.8}
 .vide a{color:var(--projo)}
 </style>
@@ -590,6 +620,14 @@ h2 i{font-style:normal;opacity:.7}
       <div class="camp moi"><div class="nom" id="nomMoi">TA TRIBUNE</div><div class="b" id="butsMoi">0</div></div>
       <div class="horloge"><span id="horloge">5:00</span><small id="modeTag">—</small></div>
       <div class="camp"><div class="nom" id="nomEux">EN FACE</div><div class="b" id="butsEux">0</div></div>
+    </div>
+
+    <!-- Le score du vrai match. Voir `.fil-match` : le duel affichait le
+         score des tribunes et taisait celui de la rencontre. -->
+    <div class="fil-match" id="filMatch">
+      <span class="sc"><b id="filMatchScore">0 – 0</b><small>TERRAIN</small></span>
+      <span class="min" id="filMatchMin"></span>
+      <span class="qui" id="filMatchQui"></span>
     </div>
 
     <button class="son" id="son" type="button" aria-label="Couper le son">♪</button>
@@ -1519,6 +1557,74 @@ function monterStade() {
   }
 }
 
+/* Les statuts que l'API donne à un match en train de se jouer, et ceux
+   d'une pause. Une horloge qui tourne à la mi-temps ment aussi sûrement
+   qu'une horloge arrêtée pendant le jeu. */
+const EN_JEU = ['1H', '2H', 'ET', 'LIVE'];
+const EN_PAUSE = ['HT', 'BT', 'P', 'SUSP', 'INT'];
+
+/**
+ * La bande du terrain.
+ *
+ * Elle ne paraît qu'une fois le match commencé : avant le coup d'envoi, un
+ * « 0 – 0 · TERRAIN » n'apprend rien et prend la place de l'arène.
+ *
+ * Le score est orienté comme partout ailleurs dans le jeu — le sien à
+ * gauche — parce qu'un joueur qui lit « 1 – 0 » doit savoir sans réfléchir
+ * si c'est lui qui mène. Le camp 0 étant la maison des deux côtés
+ * (`coteDe`), l'orientation se fait avec le même index que la corde.
+ */
+function rendreFilMatch(v, mon) {
+  const bande = $('filMatch');
+  if (!bande) return;
+  const sc = v.scoreReel;
+  const statut = v.statutReel;
+  const commence = Array.isArray(sc)
+    && (EN_JEU.includes(statut) || EN_PAUSE.includes(statut)
+      || ['FT', 'AET', 'PEN'].includes(statut));
+  bande.classList.toggle('on', Boolean(commence));
+  if (!commence) return;
+
+  $('filMatchScore').textContent = `${sc[mon] ?? 0} – ${sc[mon ^ 1] ?? 0}`;
+
+  const enJeu = EN_JEU.includes(statut);
+  const min = $('filMatchMin');
+  min.textContent = minuteTerrain(v.minuteReelle, enJeu);
+  min.classList.toggle('arret', !enJeu);
+
+  $('filMatchQui').textContent = PHASE_REELLE[statut] ?? '';
+}
+
+/**
+ * La minute du terrain, avancée localement entre deux relevés.
+ *
+ * On retient l'instant où le serveur a donné cette minute-là, et on y
+ * ajoute les minutes écoulées depuis. Le repère se réarme dès que le
+ * serveur en donne une autre — un but réel — donc la dérive ne s'accumule
+ * jamais au-delà d'un duel.
+ */
+let repereMinute = null;
+
+function minuteTerrain(minute, enJeu) {
+  if (minute == null) { repereMinute = null; return ''; }
+  if (!repereMinute || repereMinute.minute !== minute) {
+    repereMinute = { minute, depuis: Date.now() };
+  }
+  const ecoulees = enJeu
+    ? Math.floor((Date.now() - repereMinute.depuis) / 60000)
+    : 0;
+  return `${minute + ecoulees}'`;
+}
+
+/* Les mêmes mots qu'au Virage : deux écrans qui décrivent la même
+   rencontre ne doivent pas la nommer autrement. */
+const PHASE_REELLE = {
+  '1H': 'COUP D’ENVOI', HT: 'MI-TEMPS', '2H': 'REPRISE',
+  BT: 'FIN DU TEMPS RÉGLEMENTAIRE', ET: 'PROLONGATION', P: 'TIRS AU BUT',
+  FT: 'FIN DU MATCH', AET: 'FIN APRÈS PROLONGATION', PEN: 'FIN AUX TIRS AU BUT',
+  SUSP: 'MATCH SUSPENDU', INT: 'MATCH INTERROMPU',
+};
+
 function rendreDuel() {
   const v = S.vue;
   if (!v) return;
@@ -1528,6 +1634,7 @@ function rendreDuel() {
 
   $('butsMoi').textContent = v.goals?.[mon] ?? 0;
   $('butsEux').textContent = v.goals?.[eux] ?? 0;
+  rendreFilMatch(v, mon);
   const s = Math.max(0, Math.round((v.resteMs ?? 0) / 1000));
   $('horloge').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   $('modeTag').textContent = v.mode === 'classe' ? 'CLASSÉ' : 'ENTRAÎNEMENT';

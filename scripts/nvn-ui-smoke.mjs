@@ -50,7 +50,7 @@ async function jusqua(fn, ms = 8000) {
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invites, amities,
-  kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_skins, user_fanzzy,
+  kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy,
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
@@ -59,7 +59,7 @@ for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'sou
                     forme récente de chaque joueur échouait en silence, et
                     l'affiche disait « PREMIER DUEL » à tout le monde — pour une
                     table absente, pas pour un joueur sans passé. */
-                 'inventaire.sql', 'skins.sql', 'tenues.sql', 'deck.sql', 'duel.sql',
+                 'inventaire.sql', 'skins.sql', 'etats.sql', 'tenues.sql', 'deck.sql', 'duel.sql',
                  /* `historique.sql` manquait, et cette suite **détruit**
                     `duel_results` au démarrage : elle la reconstruisait donc
                     dans sa forme d'il y a six mois, sans `mode`, `format`,

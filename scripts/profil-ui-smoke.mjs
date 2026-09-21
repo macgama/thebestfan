@@ -56,7 +56,7 @@ const noms = tables.map((r) => Object.values(r)[0]);
 if (noms.length) await raw.query(`DROP TABLE ${noms.join(',')}`);
 await raw.query('SET FOREIGN_KEY_CHECKS = 1');
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'duel.sql',
-                 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql',
+                 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'etats.sql',
                  'tenues.sql', 'deck.sql', 'kop.sql', 'niveau.sql',
                  // Les deux colonnes qui disent de quelle sorte un duel était.
                  // Sans elles, il n'y a rien à raconter.

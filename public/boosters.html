@@ -227,8 +227,10 @@
    Troisième fois que cette faute se produit : du balisage qu’on déplace, une
    feuille qu’on oublie. Rien ne lève, et le symptôme ne dit pas sa cause. */
 /* ---------------------------------------------------------- ouverture */
-#opener{position:absolute;inset:0;z-index:22;display:none;flex-direction:column;
-  background:radial-gradient(120% 70% at 50% 20%,#1D242D,#05070A 70%)}
+#opener{position:fixed;inset:0;z-index:22;display:none;flex-direction:column;
+  background:radial-gradient(120% 70% at 50% 20%,#1D242D,#05070A 70%);
+  height:100vh;height:100dvh;
+  padding-bottom:calc(env(safe-area-inset-bottom) + 10px)}
 #opener.on{display:flex}
 .ohead{display:flex;justify-content:space-between;align-items:center;padding:15px 18px;font-size:11.5px;opacity:.6}
 .ohead button{background:none;border:0;color:inherit;font-size:12px;cursor:pointer;text-decoration:underline}
@@ -249,7 +251,8 @@
 .burst{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:30}
 .newtag{position:absolute;top:-24px;left:50%;transform:translateX(-50%);font-family:var(--banner);
   font-size:11px;letter-spacing:.2em;color:var(--projo)}
-.ofoot{padding:14px 18px 26px;display:flex;flex-direction:column;gap:9px;align-items:center}
+.ofoot{flex:none;padding:14px 18px 20px;display:flex;flex-direction:column;gap:9px;
+  align-items:center}
 .hint{font-size:11.5px;opacity:.5}
 .ghost{border:1px solid rgba(242,238,228,.28);border-radius:6px;padding:9px 18px;font-size:12.5px;
   background:none;color:inherit;cursor:pointer;font-family:inherit}
@@ -268,6 +271,7 @@
      version décalait les deux dernières à la main — et les éjectait du cadre,
      laissant une pastille « NOUVEAU » flotter seule sous la grille. */
   grid-template-columns:repeat(6,minmax(0,1fr));
+  overflow-y:auto;
   gap:14px 10px;padding:4px 12px}
 .summary.on{display:grid}
 .summary > *{grid-column:span 2}
@@ -1096,10 +1100,9 @@ function finishPack() {
     if (!d) return;
     $('opener').classList.remove('on');
     /* `renderKiosque` et non `renderDex` : le classeur n'est pas sur cette
-       page. L'ancien appel levait **avant** `ouvrirFiche`, et toucher une carte
-       du butin se contentait donc de fermer l'écran. */
+       page. */
     renderKiosque();
-    ouvrirFiche(pull[+d.dataset.i].id);
+    ouvrirFicheDuButin(pull[+d.dataset.i].id);
   };
   /* **La fête, une fois le butin posé.**
 
@@ -1125,6 +1128,30 @@ function finishPack() {
      levait ici, donc `tickRegen` n'était jamais atteint et le kiosque restait
      sur ses valeurs d'avant l'ouverture. */
   renderKiosque();
+}
+
+/**
+ * La fiche d'une carte qu'on vient d'ouvrir.
+ *
+ * Elle s'appelait `ouvrirFiche` — le nom qu'a la fonction du **classeur**,
+ * qui n'est pas cette page-ci et que celle-ci ne charge pas. L'appel levait
+ * donc un `ReferenceError` à chaque fois, sans que rien ne le dise :
+ * l'écran du paquet venait de se fermer, et on croyait avoir raté la carte.
+ *
+ * Sans entrée d'historique, à la différence du classeur : on sort d'un plein
+ * écran, et deux adresses empilées feraient reculer deux fois.
+ */
+function ouvrirFicheDuButin(id) {
+  const n = $('detail');
+  if (!n || !window.TBF_FICHE) return;
+  n.classList.add('on');
+  n.innerHTML = '';
+  return window.TBF_FICHE.ouvrir(n, id, {
+    fermer: () => { n.classList.remove('on'); n.innerHTML = ''; },
+    // Le kiosque a pu changer pendant qu'on regardait — un âge acheté se
+    // paie en écharpes, et c'est le même solde qui achète les boosters.
+    change: renderKiosque,
+  });
 }
 
 /** Superpose la gerbe d'étincelles en mode « screen » : seul ce qui brille apparaît. */

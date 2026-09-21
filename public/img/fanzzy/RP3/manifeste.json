@@ -1,18 +1,19 @@
 {
   "id": "RP3",
-  "rev": 1,
+  "rev": 2,
   "evolutions": {
     "e1": {
       "skins": {
         "base": {
           "etats": [
+            "neutre",
             "pousse",
             "joie",
             "depit",
             "colere"
           ],
-          "portrait": false,
-          "sha": "097cb1c8312c"
+          "portrait": true,
+          "sha": "73cd2d4a0c26"
         }
       }
     }

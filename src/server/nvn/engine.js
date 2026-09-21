@@ -215,6 +215,17 @@ export class DuelNvN {
     this.id = id;
     this.fixture = fixture;
     this.mode = mode;
+
+    /* **Le score du vrai match**, semé par le support et tenu à jour par
+       les buts réels. Il n'existait pas : le duel connaissait le nom des
+       deux clubs et ignorait leur score, donc le joueur poussait sur une
+       corde sans savoir si son club menait. C'est pourtant la seule chose
+       qui se passe pendant qu'il chante. */
+    this.scoreReel = [...(fixture?.goals ?? [0, 0])];
+    /* La minute, et rien de plus : le client fait tourner l'horloge entre
+       deux buts, comme le Virage — un serveur qui ne parle qu'au but
+       laisserait la minute figée une demi-heure. */
+    this.minuteReelle = fixture?.elapsed ?? null;
     /* **Le format joué**, et non celui qui a été demandé. Un 3v3 qui part à
        deux contre deux faute de monde est un 2v2 : c’est ce qui s’est passé
        qu’on enregistre, et c’est lui que le parcours du joueur montrera.
@@ -393,9 +404,13 @@ export class DuelNvN {
     const secousse = (side === 0 ? -1 : 1) * RULES.butReelSecousse;
     this.rope = clamp(this.rope + secousse, -RULES.goalAt, RULES.goalAt);
 
+    this.scoreReel[side]++;
+    if (minute != null) this.minuteReelle = minute;
+
     evenements.push(this.ev('but_reel', {
       teamId, minute, joueur, side, souffles,
       secousse: Math.round(secousse),
+      scoreReel: [...this.scoreReel],
     }));
 
     if (Math.abs(this.rope) >= RULES.goalAt) this.but(this.rope > 0 ? 1 : 0, evenements);
@@ -1031,6 +1046,12 @@ export class DuelNvN {
         ? { id: this.stade.id, nom: this.stade.nom, effet: this.stade.effet }
         : null,
       rope: Math.round(this.rope), goals: [...this.goals],
+      /* Le terrain, à côté de la corde. Deux scores dans la même vue, et
+         c'est voulu : `goals` est celui des tribunes, `scoreReel` celui du
+         match. Les confondre est la faute que le mot « TERRAIN » écarte à
+         l'écran, et que ces deux noms écartent ici. */
+      scoreReel: [...this.scoreReel], minuteReelle: this.minuteReelle,
+      statutReel: this.fixture?.status ?? null,
       resteMs: Math.max(0, this.fin - t),
       termine: this.termine, vainqueur: this.vainqueur,
       equipes: [equipe(0), equipe(1)],

@@ -52,7 +52,13 @@ const SQL = path.join(RACINE, 'sql');
  * fait rougir une suite avant la mise en ligne.
  */
 const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', 'fanzzy',
-  'teletext', 'inventaire', 'skins', 'tenues', 'deck', 'admin', 'kop', 'amis',
+  'teletext', 'inventaire', 'skins',
+  /* `etats.sql` suit `skins.sql` : même clé à quatre colonnes, même raison —
+     on possède l'état d'un âge, pas du personnage. Il vient après fanzzy.sql,
+     dont son rattrapage lit `user_fanzzy`, et après auth.sql pour la clé
+     étrangère vers `users`. */
+  'etats',
+  'tenues', 'deck', 'admin', 'kop', 'amis',
   'niveau', 'raretes', 'stades', 'boutique', 'billets', 'saisons',
   // En dernier, la seule reprise de données : `series-neuves.sql` range
   // quarante-deux cartes dans leur nouvelle série. Il suppose donc les lignes

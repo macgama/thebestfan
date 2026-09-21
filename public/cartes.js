@@ -291,6 +291,13 @@ async function load() {
   const st = await api('/state');
   S.col = st.collection;
   S.stades = st.stades ?? {};
+  /* **Les états gagnés.** Ils étaient donnés avec le personnage ; ils se
+     tirent maintenant en booster, et `fanzzy-etats.js` doit savoir lesquels
+     pour ne montrer que ceux-là. Posé avant tout rendu : une carte dessinée
+     avant que la table arrive montrerait une expression que ce joueur n'a
+     pas gagnée, et la verrait disparaître au rendu suivant. */
+  S.etats = st.etats ?? {};
+  window.TBF_ETATS?.possedes?.(S.etats);
   S.scarves = st.wallet.scarves;
   S.packs = st.wallet.packs;
   S.active = st.wallet.active;
@@ -445,6 +452,25 @@ function objetHTML(f) {
  * dessin procédural plutôt que de ne rien afficher.
  */
 function dessinDeCarte(f) {
+  /* **Un état se dessine avec le dessin qu'il donne.**
+   *
+   * `art(f)` cherche un Fanzzy nommé `f.id` — or l'identifiant d'un état est
+   * « joie », pas « RP21 ». Sans cette branche, la carte d'un état tombait sur
+   * la silhouette grise procédurale, exactement la faute que le commentaire
+   * ci-dessus raconte pour les trois autres sortes. C'est la quatrième.
+   *
+   * On montre donc le personnage **dans cet état-là** : c'est le gain, et le
+   * voir est tout l'intérêt de l'avoir tiré. `resoudre` retombe seul sur le
+   * repos si le dessin n'existe pas encore — toutes les lignées ne sont pas
+   * dessinées, et une carte sans image serait pire qu'une carte au repos. */
+  if (f.etat && f.pour && window.TBF_ETATS) {
+    const r = window.TBF_ETATS.resoudre(f.pour, { evo: f.stage ?? 1, etat: f.id });
+    if (r?.src) {
+      return `<div class="illuwrap">${artFond(f)}
+        <img class="illu" src="${r.src}" alt="" loading="lazy"
+             onerror="this.src=window.TBF_ETATS.secours(this.src,true)||''"></div>`;
+    }
+  }
   if (f.stuff) return objetHTML(f);
   if (f.action && window.TBF_ACTION) {
     return `<div class="illuwrap">${artFond(f)}
@@ -515,7 +541,27 @@ function cardHTML(f, opts = {}) {
  * ici plutôt que de renommer une réponse d'API dont d'anciens clients
  * dépendent — et le reste du jeu n'a plus à savoir qu'il y en avait deux.
  */
+/* Le nom et la phrase d'un état, côté joueur.
+   `rendus.js` décrit le dessin — « bras levés… » — ce qui sert à le
+   fabriquer. Sur une carte, c'est le **moment** qu'on nomme : un supporter
+   ne collectionne pas « bras levés », il collectionne la joie. */
+const ETATS_CARTE = {
+  joie: ['La joie', 'But, victoire, carton pour eux — il exulte.'],
+  depit: ['Le dépit', 'On encaisse, on perd — il se prend la tête.'],
+  pousse: ['On pousse', 'Il chante, penché en avant, l’écharpe tendue.'],
+  colere: ['Pas content', 'Carton contre nous — il conteste.'],
+};
+
 function carteDuPaquet(c) {
+  /* **Un état.** Il appartient à un âge d'un personnage précis — d'où `pour`
+     et `stade`, comme pour un skin — et il ne change rien au jeu : c'est du
+     confort, jamais de la puissance. `fide` pour sa couleur, celle de la
+     fidélité : c'est ce que la case remplie raconte. */
+  if (c.type === 'etat') {
+    const [nom, texte] = ETATS_CARTE[c.id] ?? [c.id, ''];
+    return { id: c.id, nom, texte, type: 'fide', rar: 'rare',
+      stage: c.stade ?? 1, etat: true, pour: c.pour };
+  }
   if (c.type === 'skin') {
     const t = TENUES.get(c.id);
     return { id: c.id, nom: t?.nom ?? c.id, texte: t?.texte, type: 'tifo',

@@ -76,14 +76,14 @@ const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 await raw.query('SET FOREIGN_KEY_CHECKS = 0');
 await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, admin_journal, reglages, competitions,
-  kop_membres, kops, amis, user_stuff, user_skins, user_fanzzy, user_souvenirs,
+  kop_membres, kops, amis, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs,
   user_decks, virage_presence, user_niveau, tenues, fanzzy, user_wallet,
   user_league_follows, team_leagues, teams, leagues, sessions, users`);
 await raw.query('SET FOREIGN_KEY_CHECKS = 1');
 
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'duel.sql',
   'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'teletext.sql', 'inventaire.sql',
-  'skins.sql', 'tenues.sql', 'deck.sql', 'admin.sql', 'kop.sql', 'amis.sql',
+  'skins.sql', 'etats.sql', 'tenues.sql', 'deck.sql', 'admin.sql', 'kop.sql', 'amis.sql',
   'niveau.sql', 'raretes.sql', 'stades.sql', 'boutique.sql']) {
   await raw.query(await readFile(`sql/${f}`, 'utf8'));
 }

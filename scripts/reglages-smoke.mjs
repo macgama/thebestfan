@@ -47,7 +47,7 @@ const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
 await raw.query('SET FOREIGN_KEY_CHECKS = 0');
 await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, admin_journal, reglages, competitions,
-  user_stuff, user_skins, user_fanzzy, user_souvenirs, user_decks, virage_presence,
+  user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, user_decks, virage_presence,
   user_wallet, users`);
 await raw.query('SET FOREIGN_KEY_CHECKS = 1');
 for (const f of ['auth.sql', 'admin.sql']) {
