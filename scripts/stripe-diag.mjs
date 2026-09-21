@@ -71,9 +71,57 @@ if (!cle) {
   note('puis relance. Elle n’est jamais affichée par ce script.');
   process.exit(1);
 }
-const mode = cle.startsWith('sk_live_') ? 'RÉEL' : cle.startsWith('sk_test_') ? 'test' : '?';
+/* **Ce qu'on copie à la place de la clé.**
+ *
+ * Trois valeurs se ressemblent sur la page des clés de Stripe, et deux
+ * d'entre elles ne marcheront jamais ici. Le diagnostic les nomme avant
+ * d'appeler : Stripe répond bien, mais son message parle d'« API key » sans
+ * dire laquelle des trois on regarde, et on recopie alors la même. */
+const FAUSSES = [
+  ['pk_', 'la clé **publiable**',
+    ['Elle est affichée en clair, au-dessus de la secrète, et c’est pour ça',
+      'qu’on la prend : l’autre est masquée. Elle est faite pour vivre dans',
+      'une page web et ne peut rien signer — ce n’est pas une fuite, elle est',
+      'publique par construction.']],
+  ['mk_', 'l’**identifiant** d’une clé, pas la clé',
+    ['C’est le nom que Stripe donne à la ligne, visible quand on ouvre le',
+      'détail d’une clé ou dans l’adresse de la page. La clé elle-même ne',
+      'se voit qu’en cliquant sur « Révéler ».']],
+  ['rk_', 'une clé **restreinte**',
+    ['Elle peut marcher, mais seulement si on lui a donné le droit de créer',
+      'des sessions de paiement **et** de lire les webhooks. Une clé secrète',
+      'ordinaire évite d’avoir à y penser.']],
+];
+
+for (const [prefixe, quoi, pourquoi] of FAUSSES) {
+  if (!cle.startsWith(prefixe)) continue;
+  non(`STRIPE_SECRET_KEY contient ${quoi} (${cle.slice(0, 8)}…)`);
+  for (const l of pourquoi) note(l);
+  note('');
+  note('Il faut une clé qui commence par sk_ et qui fait une centaine de');
+  note('caractères :');
+  note('  1. dashboard.stripe.com/apikeys');
+  note('  2. ligne « Clé secrète » → « Révéler la clé »');
+  note('  3. copier la valeur, pas le nom de la ligne');
+  note('  4. si « Révéler » n’apparaît plus — une clé ne se montre qu’une');
+  note('     fois — créer une nouvelle clé secrète et prendre celle-là.');
+  process.exit(1);
+}
+
+const mode = cle.startsWith('sk_live_') ? 'RÉEL' : cle.startsWith('sk_test_') ? 'test' : null;
+if (!mode) {
+  non(`STRIPE_SECRET_KEY ne ressemble à aucune clé Stripe (${cle.slice(0, 8)}…)`);
+  note('Une clé secrète commence par sk_live_ ou sk_test_. Voir');
+  note('dashboard.stripe.com/apikeys, ligne « Clé secrète ».');
+  process.exit(1);
+}
 ok(`STRIPE_SECRET_KEY présente — mode ${mode} (${cle.slice(0, 8)}…)`);
-if (mode === '?') note('Ce préfixe n’est ni sk_live_ ni sk_test_ : à vérifier.');
+/* Une clé secrète fait une centaine de caractères. Trop courte, elle a été
+   recopiée à moitié — un copier-coller qui s'arrête sur un retour à la ligne,
+   ou un « … » collé depuis l'affichage masqué. */
+if (cle.length < 40) {
+  non(`elle ne fait que ${cle.length} caractères : elle a été recopiée à moitié`);
+}
 
 if (!hook) {
   non('STRIPE_WEBHOOK_SECRET : absent. Les paiements ne seront jamais livrés.');
@@ -111,7 +159,8 @@ try {
   compte = await lire('/account');
 } catch (e) {
   non(`Stripe refuse la clé : ${e.message}`);
-  note('Une clé révoquée, ou celle d’un autre compte. Rien d’autre à vérifier.');
+  note('Trois causes, dans l’ordre de fréquence : une clé recopiée à moitié,');
+  note('une clé révoquée, ou celle d’un autre compte que celui qu’on croit.');
   process.exit(1);
 }
 ok(`compte joint : ${compte.business_profile?.name || compte.id}`);
@@ -162,6 +211,8 @@ if (!points.length) {
   for (const p of points) note(`  · ${p.url} (${p.status})`);
   note('Une adresse qui diffère d’un caractère ne reçoit rien, en silence.');
 } else {
+  note(`Rappel : ce webhook est celui du mode ${mode}. Le whsec_ de l’autre`);
+  note('mode ne validera aucun appel de celui-ci — ils ne se mélangent pas.');
   if (bons.length > 1) {
     note(`${bons.length} endpoints sur la même adresse : chaque événement`);
     note('arrivera en double. Le rejeu est sûr, mais c’est du bruit.');
