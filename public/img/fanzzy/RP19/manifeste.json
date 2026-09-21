@@ -1,0 +1,20 @@
+{
+  "id": "RP19",
+  "rev": 1,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": false,
+          "sha": "f74d7b5cab7b"
+        }
+      }
+    }
+  }
+}

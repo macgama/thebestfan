@@ -1,0 +1,20 @@
+{
+  "id": "RP2",
+  "rev": 1,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": false,
+          "sha": "f9833a232a87"
+        }
+      }
+    }
+  }
+}

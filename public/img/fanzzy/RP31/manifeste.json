@@ -1,0 +1,20 @@
+{
+  "id": "RP31",
+  "rev": 1,
+  "evolutions": {
+    "e1": {
+      "skins": {
+        "base": {
+          "etats": [
+            "pousse",
+            "joie",
+            "depit",
+            "colere"
+          ],
+          "portrait": false,
+          "sha": "4c1f40456502"
+        }
+      }
+    }
+  }
+}
