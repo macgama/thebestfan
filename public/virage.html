@@ -72,17 +72,44 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    joueur pousse sur une corde dont le score n'a rien à voir avec la rencontre,
    et c'est précisément ce que le fil est là pour démêler — d'où le mot
    « TERRAIN » sous les chiffres. */
-.fil{flex:none;display:flex;align-items:center;gap:9px;margin:0 13px 5px;padding:7px 11px;
-  border-radius:9px;background:rgba(6,10,16,.78);border:1px solid rgba(242,238,228,.24);
-  cursor:pointer;min-height:46px;text-align:left}
-.fil .sc{flex:none;padding-right:9px;border-right:1px solid rgba(242,238,228,.14);line-height:1}
-.fil .sc b{font-family:var(--banner);font-size:17px;letter-spacing:.03em;display:block;
-  font-variant-numeric:tabular-nums}
+/* **`color: inherit`, et c'est tout le sujet.**
+ *
+ * La bande est un `<button>`, et un bouton n'hérite pas de la couleur de la
+ * page : le navigateur lui donne la sienne, c'est-à-dire du **noir**. Sur un
+ * fond à `rgba(6,10,16,.78)`, le score du match et la dernière action étaient
+ * donc écrits en noir sur presque noir. Mesuré : `rgb(0,0,0)` là où la page
+ * est à `rgb(242,238,228)`.
+ *
+ * Seuls survivaient les deux éléments qui portent une couleur à eux — la
+ * minute en rouge et « TERRAIN » en or — ce qui donnait une bande où l'on
+ * voyait les étiquettes et pas les informations. J'avais d'abord grossi les
+ * chiffres et opacifié le fond en croyant à un défaut de contraste ; ça ne
+ * pouvait rien donner, du noir agrandi reste du noir. */
+.fil{flex:none;display:flex;align-items:center;gap:11px;margin:0 13px 5px;padding:8px 12px;
+  border-radius:10px;background:rgba(6,10,16,.82);border:1px solid rgba(242,238,228,.26);
+  cursor:pointer;min-height:50px;text-align:left;color:inherit;font-family:inherit}
+.fil .sc{flex:none;padding-right:11px;border-right:1px solid rgba(242,238,228,.16);
+  line-height:1}
+.fil .sc b{font-family:var(--banner);font-size:20px;letter-spacing:.03em;display:block;
+  font-variant-numeric:tabular-nums;color:var(--craie)}
 /* Ce libellé porte tout le sens de la bande : sans lui, deux scores se
    suivent à l'écran sans qu'on sache lequel est le match. À 8 px et 45 %
    d'opacité il ne se lisait pas — autant l'enlever. */
-.fil .sc small{display:block;font-size:9px;letter-spacing:.14em;opacity:.8;margin-top:3px;
+.fil .sc small{display:block;font-size:9px;letter-spacing:.14em;opacity:.85;margin-top:4px;
   color:var(--projo)}
+/* **Un score ne dit rien sans ses deux camps.**
+ *
+ * « 1 – 0 » au-dessus de « TERRAIN » laissait deviner qui menait. Les deux
+ * clubs sont pourtant nommés juste au-dessus, dans l'entête — mais dans
+ * l'ordre du **match**, alors que la bande range le sien d'abord, comme tous
+ * les écrans du jeu. Les deux lignes se contredisaient donc à l'œil.
+ *
+ * Trois lettres par club, sous les chiffres, dans l'ordre de la bande : le
+ * doute disparaît sans qu'on ait à relire l'entête. */
+.fil .qui{display:flex;gap:6px;font-family:var(--banner);font-size:8.5px;
+  letter-spacing:.1em;opacity:.55;margin-top:3px}
+.fil .qui i{font-style:normal}
+.fil .qui .moi{color:var(--projo);opacity:.9}
 /* La minute du match. Elle défile localement entre deux relevés — sans quoi
    elle restait figée sur celle de l'entrée, parfois une demi-heure durant, et
    le joueur poussait en croyant le match arrêté. Le point rouge dit que ça
@@ -98,12 +125,32 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 @keyframes ping{0%{box-shadow:0 0 0 0 rgba(224,64,44,.6)}
   70%{box-shadow:0 0 0 7px rgba(224,64,44,0)}100%{box-shadow:0 0 0 0 rgba(224,64,44,0)}}
 
-.fil .der{flex:1;min-width:0;display:flex;align-items:baseline;gap:6px;
+/* La dernière action occupe tout ce qui reste. Sur un téléphone c'est
+   étroit et elle s'abrège ; sur un écran large la bande fait huit cents
+   pixels, et laisser le texte collé au score y dessinait un grand vide à
+   droite — une bande à moitié pleine se lit comme une bande en panne. */
+.fil .der{flex:1;min-width:0;display:flex;align-items:baseline;gap:7px;
   overflow:hidden;white-space:nowrap}
-.fil .der .m{font-family:var(--banner);font-size:11px;opacity:.75;flex:none}
-.fil .der .t{overflow:hidden;text-overflow:ellipsis;font-size:11.5px;opacity:.9}
-.fil .der .t small{opacity:.5}
-.fil .plus{flex:none;opacity:.4;font-size:14px;font-family:var(--banner)}
+.fil .der .m{font-family:var(--banner);font-size:11.5px;opacity:.7;flex:none;
+  font-variant-numeric:tabular-nums}
+.fil .der .t{overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+.fil .der .t small{opacity:.55}
+/* **Ce que la bande ouvre, écrit dessus.**
+ *
+ * Elle donne accès à la feuille de match — tous les buts, tous les cartons,
+ * toute la chronologie — et rien ne le disait qu'un chevron de quatorze
+ * pixels à 40 % d'opacité. Sur un écran large, la dernière action laissait en
+ * plus cinq cents pixels de vide à sa droite : une bande à moitié pleine se
+ * lit comme une bande en panne, et personne n'essaie de cliquer dessus.
+ *
+ * Le vide porte donc l'invitation. Elle disparaît sous cinq cent soixante
+ * pixels, où il n'y a plus de vide à remplir et où la place appartient à la
+ * dernière action. */
+.fil .voir{flex:none;display:none;font-family:var(--banner);font-size:9.5px;
+  letter-spacing:.14em;opacity:.45;margin-left:auto}
+@media (min-width:560px){ .fil .voir{display:block} }
+.fil:hover .voir{opacity:.75}
+.fil .plus{flex:none;opacity:.5;font-size:16px;font-family:var(--banner)}
 /* Une entrée neuve se signale une seconde et demie, puis se tait. Un fil qui
    clignote en permanence cesse d'être lu au bout de deux minutes. */
 .fil.neuf{animation:filneuf 1.5s ease-out}
@@ -270,6 +317,14 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .mini{position:absolute;inset:0;background:rgba(5,7,10,.94);z-index:20;display:none;
   flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:22px}
 .mini.on{display:flex}
+/* **La zone du mini-jeu a besoin d'une largeur.**
+
+   Le duel la déclare — `#miniZone{width:min(100%,var(--colonne))}` — le Virage
+   ne la déclarait pas. Ses pavés sont en `width:100%`, et cent pour cent d'une
+   boîte qui se dimensionne sur son contenu est une boucle que le navigateur
+   ferme au plus petit. Mesuré : la zone faisait 0 × 0 ici, contre 412 × 0 dans
+   le duel — les deux pages étaient fautives, chacune à sa manière. */
+#miniZone{width:min(100%,var(--colonne))}
 .mini h3{font-family:var(--banner);font-size:22px;letter-spacing:.1em;margin:0;color:var(--c)}
 .mini p{margin:0;font-size:12px;opacity:.6}
 /* Le pavé rond, son anneau et ses deux lignes de texte vivent dans ui.css :
@@ -385,9 +440,11 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   </div>
 
   <button class="fil" id="fil" hidden aria-haspopup="dialog">
-    <span class="sc"><b id="filScore">0 – 0</b><small>TERRAIN</small></span>
+    <span class="sc"><b id="filScore">0 – 0</b><small>TERRAIN</small>
+      <span class="qui" id="filQui"></span></span>
     <span class="min" id="filMinute"></span>
     <span class="der" id="filDer"></span>
+    <span class="voir">LA FEUILLE DE MATCH</span>
     <span class="plus">›</span>
   </button>
 
@@ -681,10 +738,30 @@ function souffleCourant() {
   return Math.min(you.breathMax ?? 100, you.breath + gagne);
 }
 
+/* Trois lettres pour un club : assez pour le reconnaître quand son nom est
+   juste au-dessus, assez court pour tenir sous deux chiffres. */
+const troisLettres = (nom) => String(nom ?? '')
+  .replace(/[^A-Za-zÀ-ÿ]/g, '').slice(0, 3).toUpperCase() || '—';
+
 function renderFil({ neuf = false } = {}) {
   if (!S) return;
   $('fil').hidden = false;
   $('filScore').textContent = scoreTerrain();
+
+  /* Les deux camps sous le score, **dans l'ordre du score** : le sien à
+     gauche, comme partout ailleurs dans le jeu. */
+  const qui = $('filQui');
+  if (qui) {
+    /* Même source que l'entête — voir `renderStatic` : le camp 0 est la
+       maison, et `S.fixture` porte les deux noms. Lire une seconde source
+       ferait deux vérités, et c'est précisément ce que cette bande répare. */
+    const fx = S.fixture;
+    const me = { n: S.you.side === 0 ? fx?.homeName : fx?.awayName };
+    const foe = { n: S.you.side === 0 ? fx?.awayName : fx?.homeName };
+    qui.innerHTML = (me.n || foe.n)
+      ? `<i class="moi">${esc(troisLettres(me?.n))}</i><i>${esc(troisLettres(foe?.n))}</i>`
+      : '';
+  }
 
   const min = minuteCourante();
   $('filMinute').textContent = minuteTexte();

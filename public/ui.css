@@ -1556,7 +1556,23 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
 
    Rien autour : chaque élément de décor serait une cible en trop pour l'œil, et
    l'épreuve mesure justement où l'œil va. */
-.tbf-visee{position:relative;width:100%;height:100%;overflow:hidden;
+/* **Une hauteur à soi, et non `100 %` d'un parent qui n'en a pas.**
+ *
+ * `height: 100%` se résout contre la hauteur du parent ; quand celle-ci vaut
+ * `auto`, le pourcentage vaut `auto` à son tour, et la boîte se dimensionne
+ * sur son contenu. Les autres épreuves s'en tiraient — leurs boutons et leur
+ * texte leur donnaient une hauteur. La visée, elle, n'a que des cibles en
+ * position absolue : **aucun contenu dans le flux, donc zéro pixel.**
+ *
+ * Mesuré : le pavé faisait 0 × 0 dans le Virage et 412 × 0 dans le duel. Or
+ * la première ligne de l'écouteur est `if (!r.width || !r.height) return;` —
+ * pas une seule touche n'était enregistrée, nulle part, depuis toujours. Les
+ * cibles apparaissaient quand même : elles sont posées en pourcentage d'une
+ * boîte de hauteur nulle, donc toutes empilées en haut à gauche.
+ *
+ * Un carré, donc, qui ne dépend de personne. */
+.tbf-visee{position:relative;width:min(100%,340px);aspect-ratio:1;margin:0 auto;
+  overflow:hidden;
   border-radius:12px;background:rgba(4,6,10,.4);touch-action:manipulation;
   -webkit-user-select:none;user-select:none;cursor:crosshair}
 .tbf-visee .cible{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;
@@ -1572,7 +1588,10 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
 @keyframes tbfEclat{to{transform:scale(2.4);opacity:0}}
 
 /* **La jauge.** Une colonne, une bande qui saute, un curseur qu'on traîne. */
-.tbf-jauge{position:relative;width:min(70%,220px);height:100%;margin:0 auto;
+/* Même défaut, même cause : la bande de la jauge est en position absolue,
+   donc la boîte n'a pas de contenu dans le flux pour se dimensionner. Une
+   hauteur à elle, plutôt qu'un pourcentage qui retombe sur `auto`. */
+.tbf-jauge{position:relative;width:min(70%,220px);height:min(58vh,320px);margin:0 auto;
   border-radius:12px;background:rgba(242,238,228,.05);
   border:1px solid rgba(242,238,228,.14);overflow:hidden;
   touch-action:none;-webkit-user-select:none;user-select:none;cursor:ns-resize}
