@@ -547,7 +547,7 @@ const MESSAGES = {
   'deck.error.fanzzy_not_owned':  'Tu ne possèdes pas ce Fanzzy.',
   'deck.error.too_much_stuff':    'Au plus deux pièces d\u2019équipement par Fanzzy.',
   'deck.error.stuff_not_owned':   'Tu ne possèdes pas cette pièce d\u2019équipement.',
-  'deck.error.stuff_shared':      'Une pièce ne peut pas être portée par deux Fanzzy à la fois.',
+  'deck.error.stuff_shared':      'Tu n’as pas assez d’exemplaires de cette pièce.',
   'deck.error.actions_count':     'Il faut exactement dix cartes d\u2019action.',
   'deck.error.action_unknown':    'Cette carte n\u2019existe pas.',
   'deck.error.action_not_owned':  'Tu ne possèdes pas cette carte.',
@@ -590,7 +590,7 @@ function toast(t) {
 
 const S = {
   deck: { nom: 'Mon deck', fanzzy: [], actions: [] },
-  possede: { fanzzy: [], stuff: [], actions: [] },
+  possede: { fanzzy: [], stuff: [], stuffCopies: {}, actions: [] },
   regles: { fanzzy: 3, fanzzyMin: 1, stuffParFanzzy: 2, actions: 10, copiesMax: null },
   dex: new Map(), types: {}, catalogue: [], stuff: new Map(),
   onglet: 'tribune', filtre: 'miennes', sale: false,
@@ -1073,18 +1073,32 @@ function panneauPiece(index, place) {
        Elles sortent des boosters, au <a href="/fanzzy">kiosque</a>.</div>`);
   }
 
+  /* **Combien de fois cette pièce est déjà posée dans le deck**, tous rangs
+     confondus, et combien on en possède. Une pièce d'équipement est un objet
+     et pas une licence : possédée deux fois, elle se porte deux fois. Ce qui
+     reste interdit est de poser deux fois le **même exemplaire**.
+
+     L'emplacement qu'on est en train de changer ne compte pas dans les
+     porteurs : on le remplace, on ne le double pas. */
+  const combien = (id) => S.deck.fanzzy
+    .flatMap((f, i) => (f?.stuff ?? []).filter((x, p) => x === id
+      && !(i === index && p === place))).length;
+
   const lignes = dispo.map((s) => {
-    // Portée par un autre rang : une pièce est un objet, pas une licence.
-    const ailleurs = portees.has(s.id);
+    const possedes = Number(S.possede.stuffCopies?.[s.id] ?? 1);
+    const poses = combien(s.id);
     const ici = surCeFanzzy[place] === s.id;
-    const doublon = !ailleurs && !ici && surCeFanzzy.includes(s.id);
-    const bloque = ailleurs || doublon;
+    const bloque = !ici && poses >= possedes;
+    const ailleurs = portees.has(s.id) && !ici;
     return `<div class="choix ${bloque ? 'pris' : ''}"
       ${bloque ? '' : `data-prendre-piece="${index}:${place}:${s.id}"`}>
       ${window.TBF_STUFF.pastille(s)}
       <div class="txt"><b>${esc(s.nom)}${rangHTML(s.rar)}</b>
         <p>${esc(s.texte)}<br>${esc(modsTexte(s.mods ?? {}).join(' · '))}</p></div>
-      <div class="tag">${ailleurs ? 'AUTRE RANG' : doublon ? 'DÉJÀ PORTÉE' : ici ? 'PORTÉE' : ''}</div>
+      <div class="tag">${ici ? 'PORTÉE'
+        : bloque ? 'TOUS PORTÉS'
+        : possedes > 1 ? `${possedes - poses} SUR ${possedes}`
+        : ailleurs ? 'AUTRE RANG' : ''}</div>
     </div>`;
   });
 
