@@ -49,7 +49,13 @@ const RACINE = fileURLToPath(new URL('..', import.meta.url));
 const IMG = path.join(RACINE, 'public', 'img', 'fanzzy');
 
 const { DEX } = await import('../src/shared/fanzzy/dex.js');
-const { ETATS } = await import('../src/shared/fanzzy/rendus.js');
+/* **Les quatre états dessinés, et non les douze moments.**
+
+   Le jeu détecte douze moments ; on en dessine quatre, et chaque moment se
+   sert dans le sien — voir FAMILLE dans rendus.js. Compter les douze ici
+   annoncerait une dette qui n a plus lieu d etre : huit lignes par age que
+   personne ne dessinera jamais, parce qu'elles n'ont plus à l'être. */
+const { ETATS_DESSINES: ETATS } = await import('../src/shared/fanzzy/rendus.js');
 
 const args = process.argv.slice(2);
 const opt = (nom) => { const i = args.indexOf(nom); return i >= 0 ? args[i + 1] : null; };

@@ -64,6 +64,74 @@ export const PAR_NUMERO = new Map(Object.entries(RENDU).map(([id, n]) => [n, id]
 export const ETATS = ['neutre', 'salut', 'pousse', 'but', 'encaisse', 'attente',
   'victoire', 'defaite', 'occasion', 'decision', 'progression', 'ennui'];
 
+/**
+ * **Les quatre états qu'on dessine vraiment.**
+ *
+ * Douze états par âge et par tenue font trente-six dessins pour un seul âge,
+ * cent huit pour une lignée, et 8 796 pour le catalogue. Ce chantier est à 3 %
+ * après des mois, et il n'allait pas finir : à ce rythme, aucun Fanzzy ne
+ * réagit jamais à rien, et les douze états n'existent que sur le papier.
+ *
+ * Quatre suffisent à couvrir ce que le jeu raconte vraiment, parce que les
+ * douze moments se rangent en quatre **humeurs** :
+ *
+ *   — on se réjouit (un but, un duel gagné, un carton pour l'autre) ;
+ *   — on encaisse (un but contre, un duel perdu) ;
+ *   — on pousse (le match est en cours, on chante) ;
+ *   — on râle (un carton contre nous, une occasion manquée).
+ *
+ * 2 932 dessins au lieu de 8 796. C'est la différence entre un chantier
+ * atteignable et un chantier décoratif — et **quatre états dessinés partout
+ * valent mieux que douze dessinés nulle part**, ce qui est la même règle que
+ * pour les cartes : une silhouette dit « pas encore fait », un état manquant
+ * ne dit rien du tout.
+ *
+ * `neutre` n'en fait pas partie, et ce n'est pas un oubli : son repli est le
+ * plein-pied de la carte, qui est déjà un personnage au repos, bien dessiné et
+ * déjà produit. Le dessiner une seconde fois serait le seul des cinq à ne rien
+ * ajouter.
+ */
+export const ETATS_DESSINES = ['joie', 'depit', 'pousse', 'colere'];
+
+/**
+ * De quel dessin se sert chaque moment.
+ *
+ * **Le jeu continue de détecter les douze.** Rien ne change dans le code qui
+ * les émet — `scene.moment('decision', …)` reste écrit tel quel — et c'est
+ * volontaire : le jour où l'on dessine un `occasion` à lui, il reprend sa place
+ * tout seul, parce que la résolution essaie toujours l'exact avant la famille.
+ *
+ * Ce qui se perd est nommé ici plutôt que caché : un tir à côté et un carton
+ * rouge font désormais le même visage. C'est le prix des deux tiers de dessins
+ * économisés, et il se lit dans cette table.
+ *
+ * `null` veut dire « aucune famille » : le moment retombe sur `neutre`, donc
+ * sur la carte. On préfère le personnage au repos à une humeur fausse —
+ * quelqu'un qui s'ennuie n'est ni joyeux ni en colère.
+ */
+export const FAMILLE = {
+  neutre: null,
+  salut: null,
+  attente: null,
+  ennui: null,
+  pousse: 'pousse',
+  but: 'joie',
+  victoire: 'joie',
+  progression: 'joie',
+  encaisse: 'depit',
+  defaite: 'depit',
+  occasion: 'colere',
+  decision: 'colere',
+};
+
+/** Ce que chaque état dessiné doit montrer, pour celui qui le dessine. */
+export const ETAT_DESSIN = {
+  joie: 'bras levés, on vient de marquer ou de gagner',
+  depit: 'tête basse ou mains sur le visage, on vient d’encaisser',
+  pousse: 'bouche ouverte, écharpe tendue, on chante',
+  colere: 'on proteste vers le terrain, mécontent de l’arbitre',
+};
+
 /** Ce que chaque état raconte, et quand le jeu le déclenche. */
 export const ETAT_QUAND = {
   neutre: 'au repos, et repli de tous les autres',
