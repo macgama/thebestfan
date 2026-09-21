@@ -28,9 +28,30 @@
  * `nav.js` et `fanzzy-art.js`.
  */
 (() => {
-  /** Les douze états, dans l'ordre où ils ont été dessinés. */
+  /** Les douze moments que le jeu sait détecter. */
   const ETATS = ['neutre', 'salut', 'pousse', 'but', 'encaisse', 'attente',
     'victoire', 'defaite', 'occasion', 'decision', 'progression', 'ennui'];
+
+  /**
+   * De quel dessin se sert chaque moment.
+   *
+   * **Copie de `FAMILLE` dans `src/shared/fanzzy/rendus.js`**, qui fait foi.
+   * Elle est recopiée parce que ce fichier est un script classique servi au
+   * navigateur et qu'il ne peut pas importer depuis `src/` — `ETATS` est
+   * recopiée juste au-dessus pour exactement la même raison, et depuis plus
+   * longtemps. `images:test` compare les deux et rougit si elles divergent :
+   * une copie surveillée vaut mieux qu'une copie oubliée.
+   *
+   * Le jeu émet toujours les douze moments. Seuls quatre sont dessinés — voir
+   * `ETATS_DESSINES` là-bas — et c'est ici que le pont se fait.
+   */
+  const FAMILLE = {
+    neutre: null, salut: null, attente: null, ennui: null,
+    pousse: 'pousse',
+    but: 'joie', victoire: 'joie', progression: 'joie',
+    encaisse: 'depit', defaite: 'depit',
+    occasion: 'colere', decision: 'colere',
+  };
 
   /**
    * ## Le format des images : on ne le devine plus
@@ -155,9 +176,23 @@
     const evoVoulu = Math.min(3, Math.max(1, Number(opt.evo) || 1));
     const skinVoulu = opt.skin || 'base';
     const etatVoulu = ETATS.includes(opt.etat) ? opt.etat : 'neutre';
-    // `neutre` deux fois dans la liste ne coûterait rien, mais brouillerait le
-    // drapeau `exact` : le repli sur neutre serait annoncé comme un succès.
-    const etats = etatVoulu === 'neutre' ? ['neutre'] : [etatVoulu, 'neutre'];
+    /* La chaîne de repli, dans l'ordre : **l'exact, sa famille, puis neutre**.
+     *
+     * La famille est l'étage neuf. Douze états par âge et par tenue ne se
+     * dessinent pas — le chantier est à 3 % — donc on en dessine quatre, et
+     * chaque moment se sert dans le sien : un but et une victoire montrent la
+     * même joie, un carton et une occasion manquée la même mauvaise humeur.
+     *
+     * L'exact reste tenté **en premier**, et c'est tout l'intérêt de faire le
+     * pont ici plutôt que de réécrire les appels : le jour où quelqu'un dessine
+     * un `occasion` à lui, il reprend sa place sans qu'on touche à rien.
+     *
+     * `neutre` n'apparaît qu'une fois, et jamais en double : le drapeau `exact`
+     * annoncerait un succès là où l'on a reculé de deux crans.
+     */
+    const famille = FAMILLE[etatVoulu] ?? null;
+    const etats = [...new Set(
+      [etatVoulu, famille, 'neutre'].filter(Boolean))];
 
     for (let evo = evoVoulu; evo >= 1; evo--) {
       const evolution = f.evolutions?.[`e${evo}`];

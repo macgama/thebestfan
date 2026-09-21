@@ -387,5 +387,66 @@ console.log('\nLes doublons de dessin');
 }
 
 await rm(tmp, { recursive: true, force: true });
+/* ============== les deux tables des familles d'état, et leur écart
+
+   `FAMILLE` dit de quel dessin se sert chacun des douze moments. Elle vit
+   dans `src/shared/fanzzy/rendus.js`, qui fait foi — et elle est **recopiée**
+   dans `public/fanzzy-etats.js`, parce que ce fichier est servi au navigateur
+   comme script classique et ne peut rien importer de `src/`. `ETATS` y est
+   recopiée depuis bien plus longtemps, pour la même raison.
+
+   Une copie non surveillée finit toujours par diverger, et celle-ci
+   divergerait en silence : un moment rangé dans une famille ici et dans une
+   autre là-bas ne casse rien — il montre simplement le mauvais visage, ce
+   qu'aucune suite ne remarque et qu'un joueur remarque tout de suite.
+
+   On compare donc les deux, clé par clé. C'est le prix d'avoir le droit de
+   recopier. */
+{
+  const source = await import('../src/shared/fanzzy/rendus.js');
+  const client = await readFile(path.join(REPO, 'public/fanzzy-etats.js'), 'utf8');
+
+  /* On lit la table du client dans son texte : la charger voudrait dire
+     exécuter un script écrit pour un navigateur. */
+  const bloc = /const FAMILLE = \{([\s\S]*?)\};/.exec(client)?.[1] ?? '';
+  const copie = {};
+  for (const m of bloc.matchAll(/(\w+)\s*:\s*(null|'([^']*)')/g)) {
+    copie[m[1]] = m[2] === 'null' ? null : m[3];
+  }
+
+  check(`la table des familles est lisible côté client (${Object.keys(copie).length} moments)`,
+    Object.keys(copie).length > 0
+    || (console.log('        FAMILLE introuvable dans public/fanzzy-etats.js'), false));
+
+  const ecarts = [];
+  for (const [moment, fam] of Object.entries(source.FAMILLE)) {
+    if (!(moment in copie)) { ecarts.push(`${moment} absent du client`); continue; }
+    if (copie[moment] !== fam) {
+      ecarts.push(`${moment} : ${fam ?? "null"} ici, ${copie[moment] ?? "null"} là-bas`);
+    }
+  }
+  for (const moment of Object.keys(copie)) {
+    if (!(moment in source.FAMILLE)) ecarts.push(`${moment} en trop côté client`);
+  }
+  check('et elle dit exactement la même chose que celle de rendus.js',
+    ecarts.length === 0
+    || (console.log('        ', ecarts.join(' · ')), false));
+
+  /* Chaque famille nommée doit être un état qui se dessine, sinon le pont
+     mène dans le vide et le moment retombe sur neutre sans que rien ne le
+     dise. */
+  const inconnues = [...new Set(Object.values(source.FAMILLE).filter(Boolean))]
+    .filter((f) => !source.ETATS_DESSINES.includes(f));
+  check(`les ${source.ETATS_DESSINES.length} états dessinés couvrent toutes les familles`,
+    inconnues.length === 0
+    || (console.log('        familles sans dessin :', inconnues.join(', ')), false));
+
+  /* Et chaque moment du jeu doit être rangé, fût-ce dans `null` : un moment
+     oublié de la table se résoudrait par `undefined`, ce que la chaîne de
+     repli traite comme une famille absente — juste, mais par accident. */
+  const orphelins = source.ETATS.filter((e) => !(e in source.FAMILLE));
+  check('et les douze moments sont tous rangés', orphelins.length === 0
+    || (console.log('        non rangés :', orphelins.join(', ')), false));
+}
 console.log(ko ? `\n${ko} échec(s)\n` : '\ntout est vert\n');
 process.exitCode = ko ? 1 : 0;
