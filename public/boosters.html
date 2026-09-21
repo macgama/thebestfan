@@ -232,6 +232,36 @@
   height:100vh;height:100dvh;
   padding-bottom:calc(env(safe-area-inset-bottom) + 10px)}
 #opener.on{display:flex}
+/* **Le fond est à l'écran, le paquet est dans la colonne.**
+
+   `inset: 0` est juste pour le fond — on ne doit pas voir le kiosque derrière
+   ses propres cartes. Mais les enfants en héritaient : sur un écran de bureau
+   de mille neuf cents pixels, le butin s'étalait sur toute la largeur et ses
+   trois cartes du haut faisaient six cent vingt pixels chacune. Des cartes à
+   jouer de la taille d'une affiche, avec « 5 / 5 » collé à un bord et
+   « Fermer » à l'autre.
+
+   C'est la règle de `.grand` dans le duel, mot pour mot, et pour la faute
+   exacte qu'elle avait déjà corrigée là-bas. Elle manquait ici. */
+/* **Le fond est à l'écran, le paquet est dans sa colonne.**
+
+   `inset: 0` est juste pour le fond — on ne doit pas voir le kiosque derrière
+   ses propres cartes. Mais les enfants en héritaient : sur un écran de bureau
+   de mille neuf cents pixels, le butin s'étalait sur toute la largeur et ses
+   trois cartes du haut faisaient cinq cent cinquante pixels chacune. Des
+   cartes à jouer de la taille d'une affiche, avec « 5 / 5 » collé à un bord
+   et « Fermer » à l'autre, dix-huit cents pixels plus loin.
+
+   C'est la règle de `.grand` dans le duel, et pour la faute exacte qu'elle y
+   avait déjà corrigée — elle manquait ici.
+
+   **Cinq cent soixante et non `--colonne`.** La colonne du jeu fait neuf
+   cents pixels ; une carte sur trois y ferait encore deux cent cinquante,
+   deux fois et demie sa taille sur un téléphone, où cette mise en page a été
+   dessinée. Une seule largeur pour tout l'écran — la tête, le titre, le
+   butin, le pied — parce qu'une cérémonie dont les quatre bandes ne sont pas
+   alignées se lit comme quatre morceaux posés l'un sous l'autre. */
+#opener > *{width:100%;max-width:min(var(--colonne), 560px);margin-inline:auto}
 .ohead{display:flex;justify-content:space-between;align-items:center;padding:15px 18px;font-size:11.5px;opacity:.6}
 .ohead button{background:none;border:0;color:inherit;font-size:12px;cursor:pointer;text-decoration:underline}
 .ostage{flex:1;display:grid;place-items:center;position:relative;padding:0 34px}
