@@ -19,6 +19,8 @@
  */
 import express from 'express';
 import crypto from 'node:crypto';
+// Pour la garde statique sur l adresse de retour, tout en bas.
+import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { createBoutique } from '../src/server/boutique/index.js';
 import { createAbonnement } from '../src/server/abonnement/index.js';
@@ -500,6 +502,34 @@ const evenement = (sessionId) => ({
   /* Et jamais de booster, par aucun chemin : c'est la demande d'origine. */
   const [[p]] = [await q('SELECT packs FROM user_wallet WHERE user_id = ?', [U])];
   check('aucun booster n’a été crédité par la dépense', Number(p.packs) === 0);
+}
+
+/* ================================ l'adresse où Stripe ramène le client
+
+   **Deux noms pour la même chose finissent toujours par se contredire.**
+
+   La phrase est de `server.js`, qui a déjà payé cette faute une fois : sa
+   ligne HSTS ne lisait que SITE_URL, que la procédure de déploiement ne
+   demande nulle part — elle fait poser PUBLIC_ORIGIN. L'en-tête ne partait
+   donc jamais sur une installation faite selon la documentation.
+
+   La boutique refaisait exactement la même, avec une facture plus lourde :
+   ses adresses de retour tombaient sur localhost:3000, c'est-à-dire qu'un
+   client payait puis se faisait renvoyer vers son propre téléphone. Rien ne
+   le disait — le paiement, lui, passait.
+
+   Ce contrôle est statique, et c'est voulu : les adresses de retour ne
+   s'observent qu'en parlant à Stripe, donc aucune suite ne peut les lire.
+   Ce qu'on peut tenir, c'est la règle — qui lit SITE_URL lit PUBLIC_ORIGIN
+   d'abord — et c'est elle qui protège du troisième oubli. */
+{
+  const src = readFileSync(new URL('../src/server/boutique/index.js', import.meta.url), 'utf8');
+  const lignes = src.split('\n')
+    .filter((l) => l.includes('process.env.SITE_URL') && !l.trimStart().startsWith('*'));
+  check('la boutique lit une adresse publique', lignes.length > 0);
+  check('et elle prend PUBLIC_ORIGIN avant SITE_URL',
+    lignes.every((l) => l.includes('process.env.PUBLIC_ORIGIN'))
+    || (console.log('        ligne :', lignes.find((l) => !l.includes('PUBLIC_ORIGIN')).trim()), false));
 }
 
 console.log(`\n${rates ? `${rates} échec(s)` : 'tout est vert'}`);

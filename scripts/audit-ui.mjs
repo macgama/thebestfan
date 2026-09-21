@@ -40,6 +40,7 @@
  *   node scripts/audit-ui.mjs --tout        sans couper la liste des défauts
  */
 import { spawn } from 'node:child_process';
+import { ORDRE } from './ordre-schema.mjs';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -80,12 +81,18 @@ if (tables.length) {
 }
 await raw.query('SET FOREIGN_KEY_CHECKS = 1');
 
-/* L'ordre du déploiement, lu dans la boucle de DEPLOIEMENT.md pour qu'il ne
-   puisse pas diverger de ce qui tourne en production. */
-const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souvenirs', 'fanzzy',
-  'teletext', 'inventaire', 'skins', 'tenues', 'deck', 'admin', 'kop', 'amis', 'niveau',
-  'raretes', 'stades', 'boutique', 'billets', 'saisons', 'series-neuves', 'historique',
-  'abonnement', 'contenus'];
+/* L'ordre du déploiement. Il vit dans `ordre-schema.mjs`, que lisent aussi la
+   commande qui applique et la suite qui vérifie.
+
+   **Il était recopié ici**, sous un commentaire affirmant qu'il était « lu
+   dans la boucle de DEPLOIEMENT.md pour qu'il ne puisse pas diverger de ce
+   qui tourne en production ». Il ne l'était pas : c'était une liste écrite à
+   la main, et six fichiers y manquaient — dont `etats.sql`. L'audit montait
+   donc des écrans sur un schéma que personne ne déploie, et une page qui
+   aurait cassé faute de table s'y serait affichée sans rien dire.
+
+   Un commentaire qui décrit une propriété que le code n'a pas est pire que
+   pas de commentaire : on cesse d'aller vérifier. */
 for (const f of ORDRE) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', `${f}.sql`), 'utf8'));
 }

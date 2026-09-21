@@ -53,8 +53,23 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
   const secretHook = () => process.env.STRIPE_WEBHOOK_SECRET || '';
   /* L'adresse publique du site, pour les retours de Stripe. En développement
      elle vaut localhost ; en ligne, elle doit être écrite — une redirection
-     vers localhost après paiement est un client perdu. */
-  const racine = () => process.env.SITE_URL || site || 'http://localhost:3000';
+     vers localhost après paiement est un client perdu.
+
+     **Et c'est exactement ce qui serait arrivé.** Cette ligne ne lisait que
+     SITE_URL, que la procédure de déploiement ne demande nulle part : elle
+     fait poser PUBLIC_ORIGIN. Une installation faite selon la documentation
+     laissait donc SITE_URL vide et renvoyait les clients payants vers
+     localhost:3000, c'est-à-dire vers leur propre téléphone, après avoir
+     encaissé. Le garde-fou décrit deux lignes plus haut ne se déclenchait
+     pas, puisqu'il surveillait la mauvaise variable.
+
+     C'est la même faute, au mot près, que celle qu'on a corrigée sur
+     l'en-tête HSTS dans server.js — voir son commentaire : « deux noms pour
+     la même chose finissent toujours par se contredire ». On lit donc d'abord
+     celui que tout le monde emploie, et l'autre reste accepté pour les
+     installations qui l'ont déjà posé. */
+  const racine = () => process.env.PUBLIC_ORIGIN || process.env.SITE_URL
+    || site || 'http://localhost:3000';
 
   const configure = () => Boolean(cle() && secretHook());
 
