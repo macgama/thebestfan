@@ -135,6 +135,27 @@ td.pts{font-family:var(--banner);font-size:15px}
 .spin{width:26px;height:26px;border:3px solid rgba(242,238,228,.18);border-top-color:var(--projo);
   border-radius:50%;animation:sp 1s linear infinite;margin:44px auto}
 @keyframes sp{to{transform:rotate(1turn)}}
+
+/* **Le bas de la page, et la barre du navigateur mobile.**
+
+   Un joueur : « je ne vois pas le bas de la page à cause du menu du bas sur
+   mobile ». Le dernier élément de ces pages était collé au bas du document,
+   et la barre du navigateur — celle qui apparaît et disparaît au défilement —
+   passe par-dessus. Un bouton qui se trouve là ne se touche pas.
+
+   `dvh` ne suffit pas : il dit la hauteur **visible**, ce qui range la mise
+   en page correctement, mais ne réserve rien contre une barre qui revient
+   pendant qu'on lit. Ce qu'il faut est un dégagement, et il coûte quarante
+   pixels de rien du tout au bas du défilement.
+
+   `env(safe-area-inset-bottom)` en plus : sur un téléphone à barre gestuelle,
+   le système mange déjà une trentaine de pixels que la page ne voit pas.
+
+   Les écrans de jeu ne passent pas par ici : ils ne défilent pas, leur budget
+   vertical est compté au pixel, et leur ajouter de la marge couperait ce
+   qu'ils tiennent tout juste — voir la fiche du Fanzzy. */
+/* tbf-degagement */
+#app{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">

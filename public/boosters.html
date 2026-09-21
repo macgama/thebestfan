@@ -315,6 +315,15 @@
 
 @media (prefers-reduced-motion:reduce){ .summary > *{animation:none} }
 
+
+/* **Le bas de la page, et la barre du navigateur mobile.**
+
+   Voir aide.html pour l'explication : le dernier element d'une page qui defile
+   est colle au bas du document, et la barre du navigateur passe par-dessus.
+   Cette page-ci n'a aucune declaration de hauteur — elle defile de bout en
+   bout — donc le probleme la concerne autant que les autres. */
+/* tbf-degagement */
+body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 </style>
 </head>
 <body>

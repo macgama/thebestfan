@@ -25,6 +25,27 @@
   dt:first-of-type,dl>dt:first-child+dd{border-top:0}
   .hint{font-size:12px;opacity:.45;line-height:1.7;margin-top:18px}
   code{background:rgba(255,255,255,.07);padding:2px 5px;border-radius:3px;font-size:11.5px}
+
+/* **Le bas de la page, et la barre du navigateur mobile.**
+
+   Un joueur : « je ne vois pas le bas de la page à cause du menu du bas sur
+   mobile ». Le dernier élément de ces pages était collé au bas du document,
+   et la barre du navigateur — celle qui apparaît et disparaît au défilement —
+   passe par-dessus. Un bouton qui se trouve là ne se touche pas.
+
+   `dvh` ne suffit pas : il dit la hauteur **visible**, ce qui range la mise
+   en page correctement, mais ne réserve rien contre une barre qui revient
+   pendant qu'on lit. Ce qu'il faut est un dégagement, et il coûte quarante
+   pixels de rien du tout au bas du défilement.
+
+   `env(safe-area-inset-bottom)` en plus : sur un téléphone à barre gestuelle,
+   le système mange déjà une trentaine de pixels que la page ne voit pas.
+
+   Les écrans de jeu ne passent pas par ici : ils ne défilent pas, leur budget
+   vertical est compté au pixel, et leur ajouter de la marge couperait ce
+   qu'ils tiennent tout juste — voir la fiche du Fanzzy. */
+/* tbf-degagement */
+body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -55,7 +76,9 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const $ = id => document.getElementById(id);
-const socket = io({ transports: ['websocket', 'polling'] });
+/* Voir duel-nvn.html. Ici plus qu’ailleurs : une page de diagnostic qui
+   abandonne au premier transport diagnostique sa propre configuration. */
+const socket = io({ transports: ['polling', 'websocket'], tryAllTransports: true });
 const rtts = [];
 
 function verdict(cls, title, text){

@@ -1292,7 +1292,34 @@ const preparerRendu = () => rendrePrepa(sansDeckMemo, formatsMemo);
 let socket = null;
 
 function connecter() {
-  socket = io({ transports:['websocket','polling'] });
+  /* **Polling d'abord, websocket ensuite — et surtout pas l'inverse.**
+  
+     Un joueur l'a décrit exactement : « pas de connexion sur mobile, alors que
+     ça marche sur l'ordinateur avec le même compte ». Le compte et le serveur
+     étaient donc hors de cause, et le transport seul restait.
+  
+     La page demandait `['websocket', 'polling']`. Cet ordre n'est pas un
+     classement de préférence : engine.io essaie le premier, et **si celui-là
+     échoue il abandonne**. C'est écrit dans la documentation de la
+     bibliothèque, à `tryAllTransports` : « if the connection with the first
+     transport fails, then the client will not test the other transports and
+     will abort the connection ». Par défaut, à false.
+  
+     Sur un ordinateur en wifi domestique, le websocket passe : personne ne voit
+     rien. Sur un réseau mobile, un proxy d'entreprise ou derrière un portail
+     captif, il est souvent bloqué — et le jeu se déclarait hors ligne sur un
+     réseau parfaitement fonctionnel.
+  
+     L'ordre par défaut de socket.io est le bon, et il l'est pour cette
+     raison-là : le long-polling passe partout où de l'HTTP passe, la connexion
+     s'établit toujours, puis elle **monte** en websocket dès que le réseau le
+     permet. On ne perd donc pas la latence du websocket là où il existe : on
+     la gagne une centaine de millisecondes plus tard, sans jamais rien casser
+     là où il n'existe pas.
+  
+     `tryAllTransports` en plus : si même le polling échoue au premier essai, on
+     veut que les autres soient tentés plutôt qu'un abandon sec. */
+  socket = io({ transports: ['polling', 'websocket'], tryAllTransports: true });
 
   /* **On ne crie pas au loup.**
 

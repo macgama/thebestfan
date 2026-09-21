@@ -106,6 +106,15 @@
 .ok{margin-top:12px;padding:10px 12px;border-radius:9px;font-size:12.5px;
   background:rgba(30,158,106,.16);border:1px solid rgba(30,158,106,.4);display:none}
 .ok.on{display:block}
+
+/* **Le bas de la page, et la barre du navigateur mobile.**
+
+   Voir aide.html pour l'explication : le dernier element d'une page qui defile
+   est colle au bas du document, et la barre du navigateur passe par-dessus.
+   Cette page-ci n'a aucune declaration de hauteur — elle defile de bout en
+   bout — donc le probleme la concerne autant que les autres. */
+/* tbf-degagement */
+body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 </style>
 </head>
 <body>

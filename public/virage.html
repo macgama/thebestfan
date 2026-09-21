@@ -1142,7 +1142,10 @@ document.addEventListener('click', async (e) => {
 /* -------------------------------------------------------------- réseau */
 
 function connect() {
-  socket = io({ transports:['websocket','polling'] });
+  /* Voir duel-nvn.html : polling d’abord, websocket ensuite. L’ordre
+     inverse fait abandonner le client sur un réseau qui bloque le
+     websocket, ce qui est le cas courant en mobile. */
+  socket = io({ transports: ['polling', 'websocket'], tryAllTransports: true });
 
   socket.on('connect', () => { if (S) socket.emit('virage:join', { fixtureId: S.fixture.id }); });
 

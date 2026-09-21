@@ -899,6 +899,81 @@ function menePart(chemin, { vues, prefixes }, fichiersPublics) {
   }
 }
 
+/* =============== le transport des sockets, et l'ordre qui compte
+
+   Un joueur : « pas de connexion sur mobile, alors que ça marche sur
+   l'ordinateur avec le même compte ». Le compte et le serveur étaient donc
+   hors de cause.
+
+   Les cinq pages qui ouvrent une socket demandaient `['websocket',
+   'polling']`. Cet ordre n'est pas une préférence : engine.io essaie le
+   premier, et **si celui-là échoue il abandonne**. Sa propre documentation le
+   dit à `tryAllTransports` — « will not test the other transports and will
+   abort the connection », false par défaut.
+
+   Un wifi domestique laisse passer le websocket ; un réseau mobile, un proxy
+   d'entreprise ou un portail captif le bloquent souvent. Le jeu se déclarait
+   alors hors ligne sur un réseau parfaitement fonctionnel — et il ne pouvait
+   pas s'en apercevoir tout seul, puisque c'est la connexion même qui manquait.
+
+   Ce contrôle est **statique**, et il doit le rester : aucun navigateur de
+   test ne tourne derrière un opérateur mobile, donc aucune suite ne peut
+   attraper ça en jouant. Ce qui se vérifie, c'est ce qui est écrit. */
+{
+  const mauvais = [];
+  for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
+    const html = await readFile(path.join(DOSSIER, nom), 'utf8');
+    for (const m of html.matchAll(/io\(\{([^}]*)\}\)/g)) {
+      const opts = m[1];
+      if (!opts.includes('transports')) continue;      // le défaut est bon
+      const ordre = /transports\s*:\s*\[([^\]]*)\]/.exec(opts)?.[1] ?? '';
+      const premier = (ordre.split(',')[0] ?? '').replace(/['" ]/g, '');
+      const replie = /tryAllTransports\s*:\s*true/.test(opts);
+      if (premier === 'websocket' && !replie) {
+        mauvais.push(`${nom} : websocket en premier sans tryAllTransports`);
+      }
+    }
+  }
+  if (mauvais.length) for (const m of mauvais) {
+    ko(m.split(' : ')[0], m.split(' : ')[1]
+      + ' — un réseau qui bloque le websocket ne se repliera pas');
+  } else ok('les sockets', 'aucune page n’abandonne au premier transport');
+}
+/* ================= le bas de la page, sous la barre du navigateur
+
+   Un joueur : « je ne vois pas le bas de la page à cause du menu du bas sur
+   mobile ». Sur une page qui défile, le dernier élément est collé au bas du
+   document, et la barre du navigateur — celle qui va et vient au défilement —
+   passe par-dessus. Un bouton qui se trouve là ne se touche pas.
+
+   `dvh` ne suffit pas, et c'est le piège : il range bien la mise en page sur
+   la hauteur **visible**, mais il ne réserve rien contre une barre qui revient
+   pendant qu'on lit. Il faut un dégagement, et il coûte quarante pixels.
+
+   Le contrôle est statique, comme celui des sockets, et pour la même raison :
+   aucun navigateur de test n'a de barre rétractable, donc aucune suite ne
+   peut l'attraper en jouant. Quatorze pages l'avaient perdu d'un coup sans
+   que rien ne le dise.
+
+   Les écrans de jeu en sont exemptés : ils ne défilent pas — `height:100dvh`
+   avec `overflow:hidden` — et leur ajouter de la marge couperait ce qu'ils
+   tiennent tout juste. */
+{
+  const nus = [];
+  for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
+    const html = await readFile(path.join(DOSSIER, nom), 'utf8');
+    // Un écran sans défilement se reconnaît à sa hauteur fixe et à sa coupe.
+    const fige = /height:\s*100dvh/.test(html) && /overflow:\s*hidden/.test(html)
+      && !/min-height:\s*100dvh/.test(html);
+    if (fige) continue;
+    const degage = /padding[^;}]*env\(safe-area-inset-bottom\)/.test(html)
+      || /padding[^;}]*var\(--nav-h/.test(html);
+    if (!degage) nus.push(nom);
+  }
+  if (nus.length) for (const n of nus) {
+    ko(n, 'aucun dégagement en bas — la barre du navigateur mobile couvrira le dernier élément');
+  } else ok('le bas des pages', 'chaque page qui défile réserve sa place sous la barre du mobile');
+}
 console.log(fautes
   ? `\n${fautes} faute(s) — ne pas livrer en l\u2019état.`
   : '\nToutes les pages compilent, la barre est partout où elle doit être.');

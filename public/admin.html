@@ -211,6 +211,15 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
 .depot{background:rgba(30,158,106,.12);border:1px solid rgba(30,158,106,.4);border-radius:8px;padding:11px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.6}
 .depot code{background:rgba(0,0,0,.4);padding:1px 5px;border-radius:4px}
 .compte{font-size:11.5px;opacity:.5;margin-bottom:10px}
+
+/* **Le bas de la page, et la barre du navigateur mobile.**
+
+   Voir aide.html pour l'explication : le dernier element d'une page qui defile
+   est colle au bas du document, et la barre du navigateur passe par-dessus.
+   Cette page-ci n'a aucune declaration de hauteur — elle defile de bout en
+   bout — donc le probleme la concerne autant que les autres. */
+/* tbf-degagement */
+body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">

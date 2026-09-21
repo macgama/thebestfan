@@ -79,6 +79,27 @@ main{width:100%;max-width:var(--colonne)}
 
 .prendre{margin-top:4px}
 .vide{opacity:.5;font-size:13px;text-align:center;padding:26px 0}
+
+/* **Le bas de la page, et la barre du navigateur mobile.**
+
+   Un joueur : « je ne vois pas le bas de la page à cause du menu du bas sur
+   mobile ». Le dernier élément de ces pages était collé au bas du document,
+   et la barre du navigateur — celle qui apparaît et disparaît au défilement —
+   passe par-dessus. Un bouton qui se trouve là ne se touche pas.
+
+   `dvh` ne suffit pas : il dit la hauteur **visible**, ce qui range la mise
+   en page correctement, mais ne réserve rien contre une barre qui revient
+   pendant qu'on lit. Ce qu'il faut est un dégagement, et il coûte quarante
+   pixels de rien du tout au bas du défilement.
+
+   `env(safe-area-inset-bottom)` en plus : sur un téléphone à barre gestuelle,
+   le système mange déjà une trentaine de pixels que la page ne voit pas.
+
+   Les écrans de jeu ne passent pas par ici : ils ne défilent pas, leur budget
+   vertical est compté au pixel, et leur ajouter de la marge couperait ce
+   qu'ils tiennent tout juste — voir la fiche du Fanzzy. */
+/* tbf-degagement */
+body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 </style>
 </head>
 <body>
