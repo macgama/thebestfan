@@ -105,12 +105,14 @@
     'EP13', 'EP14', 'EP15', 'EP16', 'EP17', 'TR55', 'TR56', 'TR57',
     'TR58', 'TR59', 'TR28', 'TR29', 'TR30', 'TR31', 'VP1', 'VP2',
     'VP3', 'VP4', 'GC1', 'RP1', 'RP1B', 'RP1C', 'RP2', 'RP2B',
-    'RP2C', 'RP3', 'RP3B', 'RP3C', 'RP4', 'RP4B', 'RP4C', 'RP5',
-    'RP5B', 'RP5C', 'RP6', 'RP6B', 'RP6C', 'RP7', 'RP7B', 'RP7C',
-    'RP8', 'RP8B', 'RP8C', 'RP9', 'RP9B', 'RP9C', 'RP10', 'RP10B',
-    'RP10C', 'RP11', 'RP11B', 'RP11C', 'RP12', 'RP12B', 'RP12C', 'RP13',
-    'RP14', 'RP15', 'RP16', 'RP17', 'TR1B', 'TR1C', 'TR3B', 'TR3C',
-    'TR23B', 'TR23C', 'TR50B', 'TR50C',
+    'RP2C', 'RP18', 'RP18B', 'RP18C', 'RP19', 'RP19B', 'RP19C', 'RP20',
+    'RP20B', 'RP20C', 'RP3', 'RP3B', 'RP3C', 'RP4', 'RP4B', 'RP4C',
+    'RP21', 'RP21B', 'RP21C', 'RP22', 'RP22B', 'RP22C', 'RP5', 'RP5B',
+    'RP5C', 'RP6', 'RP6B', 'RP6C', 'RP7', 'RP7B', 'RP7C', 'RP8',
+    'RP8B', 'RP8C', 'RP9', 'RP9B', 'RP9C', 'RP10', 'RP10B', 'RP10C',
+    'RP11', 'RP11B', 'RP11C', 'RP12', 'RP12B', 'RP12C', 'RP13', 'RP14',
+    'RP15', 'RP16', 'RP17', 'TR1B', 'TR1C', 'TR3B', 'TR3C', 'TR23B',
+    'TR23C', 'TR50B', 'TR50C',
   ]);
 
   /**
