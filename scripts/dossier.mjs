@@ -154,6 +154,28 @@ const REGLE_DITE = {
     + `Toucher quand il arrive à zéro : entre ${n(g.cibleMin / 1000)} et ${n(g.cibleMax / 1000)} s, `
     + `tolérance ${n(g.tolerance / 1000)} s. Le seul geste où il n'y a rien à regarder au `
     + `moment d'agir.`,
+
+  /* **Les trois derniers arrivés, et personne ne leur avait écrit de phrase.**
+
+     Le document tombait dessus — `REGLE_DITE[g] is not a function` — et ne
+     se produisait plus du tout. Trois gestes sans texte emportaient les
+     dix-sept autres, les barèmes, les stades et tout le reste avec eux.
+
+     Les nombres viennent des barèmes, comme partout ici ; la phrase vient de
+     ce que le joueur lit à l'écran, dans `public/geste.js`. Les inventer
+     depuis les noms de champs aurait mis de fausses règles dans le seul
+     document qui prétend les dire. */
+  bascule: (g) => `${g.coups} poussées, une toutes les ${g.pas} ms, du côté montré — `
+    + `**sauf « à contre-courant »**, environ ${Math.round(g.contrePart * 100)} % des `
+    + `coups, où il faut aller de l'autre. Fenêtre ${g.fenetre} ms.`,
+  visee: (g) => `${g.cibles} fumigènes s'allument l'un après l'autre, un toutes les `
+    + `${g.apparition} ms. Toucher chacun tant qu'il brûle : le bon endroit `
+    + `(rayon ${Math.round(g.rayon * 100)} % de la zone) **et** le bon moment `
+    + `(fenêtre ${g.fenetre} ms).`,
+  jauge: (g) => `Garder le curseur dans une bande de ${Math.round(g.largeur * 100)} % `
+    + `pendant ${n(g.ms / 1000)} s. Elle tient, puis elle saute : ${g.points} positions, `
+    + `${g.transition} ms de transition. Mesuré toutes les ${g.echantillon} ms, et il en `
+    + `faut au moins ${g.minMesures} pour que la tenue compte.`,
 };
 
 /** Ce que chaque mini-jeu mesure, en un mot. */
@@ -165,6 +187,9 @@ const MESURE = {
   mosaique: 'la mémoire spatiale', echarpe: 'le geste circulaire',
   capo: 'l’empan mnésique', tri: 'la discrimination rapide',
   compte: 'l’horloge intérieure',
+  bascule: 'la lecture d’une consigne qui se retourne',
+  visee: 'la main et l’instant, ensemble',
+  jauge: 'la correction continue',
 };
 
 const LABEL = {
@@ -173,6 +198,9 @@ const LABEL = {
   tenue: 'SANG-FROID', retenue: 'MESURE', tifo: 'TIFO', memoire: 'LES VISAGES',
   mosaique: 'MOSAÏQUE', echarpe: 'L’ÉCHARPE', capo: 'LE CAPO', tri: 'LE TRI',
   compte: 'LE COMPTE',
+  /* Les mêmes mots que `public/geste.js` : le document nomme les gestes comme
+     le jeu les nomme, sans quoi on parlerait de deux choses. */
+  bascule: 'LA BASCULE', visee: 'LA VISÉE', jauge: 'LA JAUGE',
 };
 
 /** Le gras de Markdown, et rien d'autre : les textes en portent, pas de HTML. */
@@ -586,7 +614,12 @@ tr:last-child td{border-bottom:0}
           ${epreuve ? '<br><span class="tag gris">épreuve</span>' : ''}</td>
         <td data-t="Famille" class="dit" ${fam ? `style="color:${fam[1].c}"` : ''}>${fam ? esc(fam[1].nom) : '—'}</td>
         <td data-t="Mesure" class="dit">${esc(MESURE[g] ?? '')}</td>
-        <td data-t="Règle" class="dit">${cfg ? gras(REGLE_DITE[g](cfg)) : '—'}</td>
+        <!-- Un geste neuf sans phrase se signale ici plutôt que de faire
+             tomber le document entier : un trou nommé se répare, un script
+             qui ne tourne plus se contourne et s’oublie. -->
+        <td data-t="Règle" class="dit">${cfg && REGLE_DITE[g]
+          ? gras(REGLE_DITE[g](cfg))
+          : '<span class="rouge">règle à écrire</span>'}</td>
         <td data-t="Chant" class="dit">${chants.map(esc).join('<br>') || '<span class="rouge">aucun</span>'}</td></tr>`;
     }).join('')}</tbody>
   </table>

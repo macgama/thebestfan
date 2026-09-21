@@ -245,7 +245,30 @@ console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
      l'illustrer, alors que c'est l'ordre naturel.
 
      `npm run dessins --serie RP` dit où en est cette dette-là. */
-  const DETTE = 220;
+  /* 220 → 233. **Deux mouvements en un**, et ils ne s'autorisent pas de la même
+     façon : il faut donc les dire séparément, sans quoi on ne saurait jamais
+     lequel des deux a payé pour l'autre.
+
+     **D'abord il descend, de 220 à 179.** Les dix-sept premières lignées de LA
+     REPRISE ont été dessinées depuis que ce cliquet a été posé. Le laisser à 220
+     aurait laissé passer sans bruit la perte de ces quarante et un dessins — et
+     c'est exactement ce que la note du dessus reproche à un cliquet qu'on
+     n'abaisse pas. Descendre est toujours permis, et ici c'était dû.
+
+     **Ensuite il remonte, de 179 à 233.** Cinquante-quatre cartes neuves :
+     dix-huit lignées communes de trois âges, ajoutées à LA REPRISE parce qu'elle
+     est la série d'ouverture et que douze humains laissaient croire que le jeu
+     ne collectionne que des supporters. Un oiseau, une antenne, un lierre, un
+     drone, une salamandre, un car — chacune fait signe vers une famille de
+     personnages qui vit ailleurs au catalogue. Voir l'en-tête de `dex-saison.js`,
+     qui dit aussi pourquoi les saisons suivantes reviendront à douze.
+
+     C'est du contenu **ajouté**, donc la seule raison admissible, celle qui est
+     déjà écrite trois fois au-dessus. Elles n'ont aucune image et elles n'en
+     auront pas avant que quelqu'un les dessine : 1 944 fichiers d'états et 54
+     cartes. `scripts/fanzzy_prompts.py` sait écrire leurs prompts ;
+     `npm run dessins --serie RP` dit ce qu'il reste. */
+  const DETTE = 233;
   check(`et ${DEX.length - avec} cartes restent sans dessin d’aucune sorte`,
     DEX.length - avec <= DETTE
     || (console.log('        ', DEX.filter((f) => !adresse(f.id))
