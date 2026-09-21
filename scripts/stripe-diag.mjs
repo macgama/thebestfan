@@ -87,11 +87,20 @@ const FAUSSES = [
     ['C’est le nom que Stripe donne à la ligne, visible quand on ouvre le',
       'détail d’une clé ou dans l’adresse de la page. La clé elle-même ne',
       'se voit qu’en cliquant sur « Révéler ».']],
-  ['rk_', 'une clé **restreinte**',
-    ['Elle peut marcher, mais seulement si on lui a donné le droit de créer',
-      'des sessions de paiement **et** de lire les webhooks. Une clé secrète',
-      'ordinaire évite d’avoir à y penser.']],
 ];
+
+/* **Une clé restreinte est le bon choix, pas un défaut.**
+ *
+ * La première version la refusait avec les deux autres. C'était une erreur :
+ * l'application ne fait qu'un seul appel à Stripe — créer une session de
+ * paiement — et une clé qui ne peut faire que cela expose beaucoup moins
+ * qu'une clé secrète ordinaire, laquelle peut tout, virements compris.
+ *
+ * Elle passe donc, et ce sont ses **droits** qu'on éprouve ensuite : une
+ * autorisation qui manque ne se voit pas à la lecture de la clé, seulement
+ * au moment où Stripe refuse — c'est-à-dire, sans ce contrôle, au premier
+ * joueur qui essaie de s'abonner. */
+const restreinte = cle.startsWith('rk_');
 
 for (const [prefixe, quoi, pourquoi] of FAUSSES) {
   if (!cle.startsWith(prefixe)) continue;
@@ -108,14 +117,15 @@ for (const [prefixe, quoi, pourquoi] of FAUSSES) {
   process.exit(1);
 }
 
-const mode = cle.startsWith('sk_live_') ? 'RÉEL' : cle.startsWith('sk_test_') ? 'test' : null;
+const mode = /_live_/.test(cle) ? 'RÉEL' : /_test_/.test(cle) ? 'test' : null;
 if (!mode) {
   non(`STRIPE_SECRET_KEY ne ressemble à aucune clé Stripe (${cle.slice(0, 8)}…)`);
-  note('Une clé secrète commence par sk_live_ ou sk_test_. Voir');
-  note('dashboard.stripe.com/apikeys, ligne « Clé secrète ».');
+  note('Une clé utilisable ici commence par sk_ ou rk_, suivi de live ou test.');
+  note('Voir dashboard.stripe.com/apikeys.');
   process.exit(1);
 }
-ok(`STRIPE_SECRET_KEY présente — mode ${mode} (${cle.slice(0, 8)}…)`);
+ok(`STRIPE_SECRET_KEY présente — mode ${mode} (${cle.slice(0, 8)}…)`
+  + (restreinte ? ' · clé restreinte' : ''));
 /* Une clé secrète fait une centaine de caractères. Trop courte, elle a été
    recopiée à moitié — un copier-coller qui s'arrête sur un retour à la ligne,
    ou un « … » collé depuis l'affichage masqué. */
@@ -154,27 +164,36 @@ async function lire(chemin) {
 /* ----------------------------------------------------------- le compte */
 
 console.log('\n  le compte');
-let compte;
+let compte = null;
 try {
   compte = await lire('/account');
+  ok(`compte joint : ${compte.business_profile?.name || compte.id}`);
 } catch (e) {
-  non(`Stripe refuse la clé : ${e.message}`);
-  note('Trois causes, dans l’ordre de fréquence : une clé recopiée à moitié,');
-  note('une clé révoquée, ou celle d’un autre compte que celui qu’on croit.');
-  process.exit(1);
+  /* Une clé restreinte sans le droit de lire le compte reste parfaitement
+     utilisable pour ce que l'application fait. On le dit et on continue :
+     s'arrêter ici refuserait une configuration qui marche. */
+  if (restreinte && /permission|scope|access/i.test(e.message)) {
+    note('le compte n’est pas lisible avec cette clé restreinte — sans');
+    note('conséquence : l’application ne le lit jamais. On ne pourra pas');
+    note('vérifier ici que le compte est activé pour encaisser.');
+  } else {
+    non(`Stripe refuse la clé : ${e.message}`);
+    note('Trois causes, dans l’ordre de fréquence : une clé recopiée à moitié,');
+    note('une clé révoquée, ou celle d’un autre compte que celui qu’on croit.');
+    process.exit(1);
+  }
 }
-ok(`compte joint : ${compte.business_profile?.name || compte.id}`);
 
 /* `charges_enabled` est la question qui compte : un compte créé mais non
    activé accepte les clés de test et refuse tout paiement réel. On ne s'en
    aperçoit qu'au premier client. */
-if (mode === 'RÉEL' && compte.charges_enabled === false) {
+if (mode === 'RÉEL' && compte?.charges_enabled === false) {
   non('le compte n’encaisse pas encore (charges_enabled = false)');
   note('Le dossier d’activation est incomplet : Stripe le liste dans');
   note('« requirements » sur le tableau de bord. Aucun paiement réel ne passera.');
-} else if (mode === 'RÉEL') {
+} else if (mode === 'RÉEL' && compte) {
   ok('le compte encaisse (charges_enabled)');
-} else {
+} else if (mode === 'test') {
   note('mode test : l’encaissement réel n’est pas vérifiable ici.');
 }
 
@@ -183,7 +202,7 @@ if (mode === 'RÉEL' && compte.charges_enabled === false) {
    qu'il n'encaisse pas : « tu encaisses, mais rien ne sera reversé » sous
    « le compte n'encaisse pas encore », c'est deux phrases qui se
    contredisent dans le même paragraphe, et on cesse de croire les deux. */
-if (mode === 'RÉEL' && compte.charges_enabled && compte.payouts_enabled === false) {
+if (mode === 'RÉEL' && compte?.charges_enabled && compte.payouts_enabled === false) {
   note('payouts_enabled = false : tu encaisses, mais rien n’est encore reversé.');
   note('Sans conséquence pour le joueur — c’est ton virement qui attend.');
 }
@@ -192,17 +211,31 @@ if (mode === 'RÉEL' && compte.charges_enabled && compte.payouts_enabled === fal
 
 console.log('\n  le webhook');
 let points;
+let endpointsLisibles = true;
 try {
   points = (await lire('/webhook_endpoints?limit=100')).data ?? [];
 } catch (e) {
-  non(`impossible de lire les endpoints : ${e.message}`);
+  endpointsLisibles = false;
   points = [];
+  if (restreinte && /permission|scope|access/i.test(e.message)) {
+    note('les webhooks ne sont pas lisibles avec cette clé restreinte.');
+    note('Sans conséquence pour le jeu — l’application ne les lit jamais —');
+    note('mais **ce contrôle-ci ne peut plus rien dire**, et c’est le plus');
+    note('important des six : c’est lui qui attrape la liste d’événements');
+    note('incomplète. Ajoute « Webhook Endpoints : lecture » à la clé pour');
+    note('pouvoir le passer, ou vérifie les cinq événements à la main.');
+  } else {
+    non(`impossible de lire les endpoints : ${e.message}`);
+  }
 }
 
 const attendue = origine ? `${origine}/api/boutique/webhook` : null;
 const bons = points.filter((p) => p.url === attendue);
 
-if (!points.length) {
+if (!endpointsLisibles) {
+  /* Rien à dire de plus : la remarque est déjà posée juste au-dessus, et
+     répéter « aucun endpoint » serait faux — on n'a pas pu regarder. */
+} else if (!points.length) {
   non('aucun endpoint déclaré. Stripe n’appellera jamais le site.');
   note(`À créer : POST ${attendue ?? '<PUBLIC_ORIGIN>/api/boutique/webhook'}`);
 } else if (!bons.length) {
