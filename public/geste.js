@@ -666,8 +666,6 @@
           break;
         }
 
-        case 'mash':
-
         /**
          * **La bascule.** Le capo désigne un côté ; la bâche dit parfois « à
          * contre-courant », et il faut aller de l'autre.
@@ -859,6 +857,30 @@
           break;
         }
 
+/**
+         * **Le martèlement**, et le filet pour tout geste inconnu : taper le
+         * plus vite possible, tant que ça dure.
+         *
+         * **`case 'mash'` avait perdu son corps.** Il était écrit ici, collé
+         * au `default`, les deux partageant ce bloc. Les cinq épreuves sont
+         * venues s'insérer entre les deux : le `default` est resté en bas
+         * avec le code, et `case 'mash':` est resté en haut, seul, sans corps
+         * et sans `break` — c'est-à-dire tombant dans le cas suivant.
+         *
+         * Conséquence : tout chant en martèlement — Le craquage, Le roulement
+         * — jouait **la bascule** et rendait `{ choix, instants }` au lieu
+         * d'une liste de frappes. Le serveur refusait avec `bad_taps`, que la
+         * page ne sait pas nommer, et le joueur lisait « Refusé par le
+         * serveur » après avoir martelé trois secondes pour rien.
+         *
+         * Rien ne rougissait : un `switch` qui traverse est du JavaScript
+         * valide, et aucune suite ne jouait les quinze gestes l'un après
+         * l'autre pour regarder ce que chacun rend. C'est ce que fait
+         * désormais `npm run gestes:test`.
+         *
+         * Le corps n'est pas recopié en haut : deux exemplaires du même geste
+         * finissent par diverger, et c'est déjà ce qui a produit ce bug. */
+        case 'mash':
         default: {
           const g = gestes?.mash ?? {};
           const pad = pave(0, 'FRAPPES', false);
