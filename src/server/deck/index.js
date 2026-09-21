@@ -117,7 +117,9 @@ export function createDecks({ pool, requireAuth, niveau = null,
     const fanzzyMax = niveau ? (await niveau.droitsDe(userId)).deckFanzzy : DECK_RULES.fanzzy;
     const [fz, st, w] = await Promise.all([
       q(`SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]),
-      q(`SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [userId]),
+      // `copies` et non le seul identifiant : le nombre d'exemplaires décide de
+      // combien de Fanzzy peuvent porter la pièce. Voir `stuffCopies` plus bas.
+      q(`SELECT stuff_id, copies FROM user_stuff WHERE user_id = ?`, [userId]),
       q(`SELECT action_cards FROM user_wallet WHERE user_id = ?`, [userId]),
     ]);
     const brut = w[0]?.action_cards;
@@ -130,6 +132,24 @@ export function createDecks({ pool, requireAuth, niveau = null,
       // une évolution et oublie la carte qui lui donne accès.
       stades: Object.fromEntries(fz.map((f) => [f.fanzzy_id, Number(f.stage)])),
       stuff: new Set(st.map((s) => s.stuff_id)),
+      /* **Combien d'exemplaires de chaque pièce.**
+       *
+       * Les doublons étaient comptés en base depuis toujours — le booster fait
+       * `copies = copies + 1` à chaque fois — et le sac les affichait avec un
+       * « ×3 ». Ils ne servaient à rien : la validation du deck ne savait que
+       * « possédée ou non », et refusait la même pièce sur deux Fanzzy quel que
+       * soit le nombre. Posséder cinq Jumelles valait exactement en posséder
+       * une, et le jeu annonçait les cinq.
+       *
+       * C'est la règle écrite dans `actions.js` qui le voulait, d'ailleurs :
+       * « une pièce d'équipement est un objet, pas une licence ». Un objet
+       * possédé deux fois se porte deux fois — le code appliquait une règle
+       * plus dure que la sienne.
+       *
+       * `Math.max(1, …)` : une ligne existe parce qu'on possède la pièce. Un
+       * `copies` à zéro ou nul serait une ligne fantôme, et la compter pour
+       * zéro retirerait au joueur une pièce qu'il a. */
+      stuffCopies: new Map(st.map((s) => [s.stuff_id, Math.max(1, Number(s.copies) || 1)])),
       /* Les communes sont offertes à tous : sans elles, un joueur qui débute ne
          pourrait pas remplir ses dix emplacements.
 
@@ -750,6 +770,11 @@ export function createDecks({ pool, requireAuth, niveau = null,
         // celui qui aligne un Fanzzy évolué sans embarquer de Relève.
         stades: possede.stades,
         stuff: [...possede.stuff],
+        /* Combien de chaque pièce. L'écran en a besoin pour savoir s'il peut
+           proposer une pièce déjà portée ailleurs : un objet possédé deux fois
+           se porte deux fois — voir `stuffCopies` et la validation du deck.
+           Un objet plutôt qu'une Map : c'est du JSON. */
+        stuffCopies: Object.fromEntries(possede.stuffCopies),
         actions: [...possede.actions],
       },
       regles: DECK_RULES,

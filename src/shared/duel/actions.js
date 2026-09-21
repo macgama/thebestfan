@@ -495,11 +495,31 @@ export function validerDeck(deck, possede) {
     }
   }
 
-  // Une pièce d'équipement est un objet, pas une licence : elle ne peut pas
-  // être portée par deux Fanzzy à la fois.
-  const toutStuff = fanzzy.flatMap((f) => f.stuff ?? []);
-  if (new Set(toutStuff).size !== toutStuff.length) {
-    pb.push({ code: 'deck.error.stuff_shared' });
+  /* **Une pièce d'équipement est un objet, pas une licence** — et c'est cette
+     phrase, écrite ici depuis le début, qui décide de la règle.
+
+     Elle interdisait jusqu'ici la même pièce sur deux Fanzzy, purement et
+     simplement. Ce n'était pas ce qu'elle dit : un objet possédé **deux fois**
+     se porte deux fois. Or les doublons existent — le booster fait
+     `copies = copies + 1` à chaque tirage en double, et le sac les affiche avec
+     un « ×3 ». Ils ne servaient à rien, et le jeu les montrait quand même : il
+     annonçait au joueur cinq Jumelles et lui en laissait porter une.
+
+     On compte donc les porteurs par pièce, et on les borne au nombre
+     d'exemplaires. Ce qui reste interdit est le seul cas qui l'était vraiment :
+     porter le même **exemplaire** à deux endroits.
+
+     `?? 1` quand l'appelant ne fournit pas les comptes : un test qui monte un
+     deck à la main, ou un module sans progression, retrouve exactement le
+     comportement d'avant — une pièce, un porteur. */
+  const copies = possede?.stuffCopies ?? null;
+  const porteurs = new Map();
+  for (const f of fanzzy) {
+    for (const s of f.stuff ?? []) porteurs.set(s, (porteurs.get(s) ?? 0) + 1);
+  }
+  for (const [s, n] of porteurs) {
+    const a = Number(copies?.get?.(s) ?? 1);
+    if (n > a) pb.push({ code: 'deck.error.stuff_shared', id: s, a, demande: n });
   }
 
   if (actions.length !== DECK_RULES.actions) {
