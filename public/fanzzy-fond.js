@@ -412,6 +412,10 @@
     'RP-epique',
     'RP-legendaire',
     'RP-rare',
+    'halloween-commune',
+    'halloween-epique',
+    'halloween-legendaire',
+    'halloween-rare',
   ]);
 
   /**

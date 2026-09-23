@@ -997,6 +997,28 @@ function menePart(chemin, { vues, prefixes }, fichiersPublics) {
     + (sans.length ? ` · sans dessin : ${sans.map((s) => s.id).join(', ')}` : ''));
 }
 
+/* ============================== les emblèmes ont-ils tous leur dessin ?
+
+   Même histoire que les stades, et même remède. `logo-art.js` pose son
+   image avec `onerror="this.remove()"` : un emblème sans fichier **s'efface
+   en silence**, et l'écran retrouve exactement ce qu'il avait avant. C'est
+   le bon comportement — mais c'est aussi ce qui fait qu'un oubli ne se voit
+   jamais, sur aucun écran et dans aucune suite.
+
+   Trois formats par emblème, parce que c'est le trio servi et qu'un AVIF
+   manquant ne se remarque que sur les navigateurs qui le prennent. */
+{
+  const { EMBLEMES } = await import('./logo-images.mjs');
+  let presents = new Set();
+  try {
+    presents = new Set(await readdir(new URL('../public/img/logo/', import.meta.url)));
+  } catch { /* dossier absent : tous manquants, et le compte le dira */ }
+  const FORMATS = ['.avif', '.webp', '.png'];
+  const sans = EMBLEMES.filter((e) => !FORMATS.every((x) => presents.has(e.cle + x)));
+  ok('les emblèmes', `${EMBLEMES.length - sans.length}/${EMBLEMES.length} ont leurs trois formats`
+    + (sans.length ? ` · incomplets : ${sans.map((e) => e.cle).join(', ')}` : ''));
+}
+
 console.log(fautes
   ? `\n${fautes} faute(s) — ne pas livrer en l\u2019état.`
   : '\nToutes les pages compilent, la barre est partout où elle doit être.');

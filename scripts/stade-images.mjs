@@ -147,11 +147,28 @@ export const INVITES = {
     + 'dark empty block at one end of it, while the rest of that same stand is '
     + 'visibly crammed, the crowd texture denser and tighter than opposite',
 
-  'rp-canicule': 'a football ground on a stifling late-August evening, the last '
-    + 'heat of the day still in the air — a low orange sun just gone, the sky '
-    + 'still warm above a deep dusk, heat haze shimmering over the grass, the '
-    + 'pitch dry and bleached in patches yet still green, side stands wholly '
-    + 'open with no roof at all and in deep shadow',
+  /* **Ne jamais nommer le ciel.**
+
+     La première version de cette invite disait « le ciel encore chaud
+     au-dessus d'un crépuscule profond ». Elle a rendu une photographie
+     oblique avec horizon et coucher de soleil : une vue strictement
+     verticale n'a pas de ciel, alors le modèle a incliné la caméra pour en
+     montrer un. Le STYLE interdisait pourtant les angles obliques — une
+     description qui contredit une contrainte gagne contre elle.
+
+     La chaleur se dit donc par le sol : l'herbe grillée, la terre nue aux
+     six mètres, l'air qui tremble. Et le cadrage est rappelé en chiffres —
+     le terrain sur le tiers central — parce que le plan des tribunes se
+     mesure dessus : le premier rendu les avait réduites à 4 % du cadre. */
+  'rp-canicule': 'a football ground at the end of a stifling late-August day, '
+    + 'the heat still radiating up from the ground — the pitch scorched and '
+    + 'bleached in wide pale straw-coloured patches yet still green overall, '
+    + 'bare dusty earth showing through at both goalmouths, the air above the '
+    + 'grass rippling with visible heat haze, warm amber floodlight, the side '
+    + 'stands completely open with no roof of any kind. '
+    + 'NO sky, NO horizon, NO clouds are visible — the frame contains only the '
+    + 'ground seen from directly overhead. The pitch occupies only the middle '
+    + 'THIRD of the frame width; the two stands are WIDE and fill the rest',
 
   'rp-bache': 'a football ground at night with an enormous plain tifo tarpaulin '
     + 'still hanging across one whole side stand, never lowered — a vast blank '

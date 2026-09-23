@@ -286,6 +286,20 @@
 .hint{font-size:11.5px;opacity:.5}
 .ghost{border:1px solid rgba(242,238,228,.28);border-radius:6px;padding:9px 18px;font-size:12.5px;
   background:none;color:inherit;cursor:pointer;font-family:inherit}
+/* Le pin de rareté, posé en coin de la carte révélée. `pointer-events:none`
+   parce que la tuile entière ouvre la fiche : un pin qui avale le clic
+   ferait un trou dans la seule zone qu'on a envie de toucher.
+
+   **`pinButin` et non `pinRar`** : la fiche du personnage se monte sur
+   cette page-ci aussi, et elle porte son propre pin de rareté. Deux écrans
+   différents, un seul nom, et le pin de la fiche serait parti se coller
+   dans un coin. Ce dépôt a payé exactement cette faute la semaine passée
+   avec une classe `ok` qui rendait invisible tout ce qu'on possédait. */
+.summary > * { position:relative }
+.pinButin{position:absolute;right:-5px;top:-5px;width:30px;height:30px;z-index:3;
+  object-fit:contain;pointer-events:none;
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.75))}
+
 /* ------------------------------------------------------------- le butin
 
    Cinq vignettes collées au bas d'un écran aux trois quarts vide : c'était le
@@ -432,6 +446,7 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
      s’affichait en silhouette procédurale, comme un Fanzzy sans visage.
      Il sert aussi aux écharpes, dont le dessin est rangé avec les gains. -->
 <script src="/stuff-art.js"></script>
+<script src="/logo-art.js"></script>
 <!-- Et ceux des cartes d’action, qui n’étaient chargés nulle part ici : une
      carte d’action tirée d’un booster tombait donc sur la même silhouette
      grise que les écharpes, et deux cartes très différentes se ressemblaient
@@ -1118,9 +1133,20 @@ function finishPack() {
   /* `--n` porte le rang : c'est lui qui échelonne l'arrivée. Le faire en CSS
      plutôt qu'avec cinq minuteries évite qu'une carte reste invisible si la
      page se fige une demi-seconde au mauvais moment. */
+  /* **L'emblème de rareté, sur la carte qui vient de sortir.**
+
+     C'est le seul moment du jeu où la rareté est l'information qu'on
+     attend : on déchire un paquet pour savoir ce qu'on a eu. La carte le
+     disait déjà — un losange, deux, trois, une couronne — mais en six
+     pixels dans son pied, au même endroit que le nom du type.
+
+     Le pin se pose **en coin**, par-dessus, là où l'œil arrive. Il ne
+     remplace pas le losange : celui-ci ne peut pas manquer, le pin si —
+     `TBF_LOGO` retire son image et il reste ce qu'il y avait hier. */
   sum.innerHTML = pull.map((f, i) =>
     `<div data-i="${i}" style="--n:${i}" class="${esc(f.rar ?? '')}${
-      fresh.has(f.id) ? ' neuf' : ''}">${cardHTML(f, { mini:true })}</div>`).join('');
+      fresh.has(f.id) ? ' neuf' : ''}">${cardHTML(f, { mini:true })}
+      ${window.TBF_LOGO?.rarete?.(f.rar ?? 'commune', 'pinButin') ?? ''}</div>`).join('');
   sum.classList.add('on');
   sum.onclick = (e) => {
     const d = e.target.closest('[data-i]');
