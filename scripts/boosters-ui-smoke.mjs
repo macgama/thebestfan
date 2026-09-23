@@ -181,6 +181,97 @@ const page = await ouvrir();
 check('la page des boosters se charge sans erreur de script',
   erreurs.length === 0 || (console.log('   ', erreurs.slice(0, 3)), false));
 
+/* ------------------------------ une carte d'état montre la pose gagnée
+
+   Un joueur a ouvert un paquet, gagné l'état « on pousse », et vu le
+   personnage **au repos** sous l'étiquette. Chaque pièce était pourtant
+   juste — le dessin existait, la carte était bien formée, le module était
+   chargé — et deux maillons manquaient, chacun invisible :
+
+     1. le kiosque était la **seule** page du jeu à ne jamais charger le
+        manifeste des dessins. Sans lui, `resoudre` rend `null` ;
+     2. `resoudre` ne rend une expression que si le joueur l'a gagnée, et la
+        table des gains vient de `load()`, appelé une seule fois au
+        démarrage. Au moment du butin elle date d'avant l'ouverture : le jeu
+        filtrait exactement la carte qu'il annonçait.
+
+   On éprouve les trois maillons séparément, parce qu'ils cassent pour des
+   raisons différentes. Le repli, lui, est **correct** — il montre le
+   personnage au repos, ce qui dit au moins de qui il s'agit — et c'est
+   précisément ce qui rend ce défaut si difficile à voir : rien ne rougit,
+   rien ne manque, l'image est simplement la mauvaise. */
+{
+  const vu = await page.evaluate(() => {
+    const C = window.TBF_CARTES;
+    const index = window.TBF_ETATS?.pret?.();
+    if (!index) return { manifeste: false };
+
+    /* On lit le modèle dans le manifeste plutôt que de nommer un identifiant
+       en dur, qui deviendrait faux au premier redessin. */
+    const id = Object.keys(index.fanzzy).find((k) =>
+      index.fanzzy[k].evolutions?.e1?.skins?.base?.etats?.includes('pousse'));
+    if (!id) return { manifeste: true, aucunModele: true };
+
+    const carte = C.carteDuPaquet({ type: 'etat', id: 'pousse', pour: id, stade: 1 });
+
+    /* Sans le gain, le repli sur le repos est **voulu** : on ne montre pas une
+       expression qu'on n'a pas. On vérifie les deux côtés de cette règle. */
+    window.TBF_ETATS.possedes({});
+    const sansGain = /src="([^"]+)"/.exec(C.dessinDeCarte(carte))?.[1] ?? '';
+
+    window.TBF_ETATS.possedes({ [id]: { 1: ['pousse'] } });
+    const html = C.dessinDeCarte(carte);
+    const avecGain = /src="([^"]+)"/.exec(html)?.[1] ?? '';
+
+    return { manifeste: true, id, sansGain, avecGain,
+      etiquette: /ON POUSSE/i.test(html) };
+  });
+
+  check('le kiosque a chargé le manifeste des dessins', vu.manifeste === true);
+  check('un état gagné montre sa pose, pas le repos',
+    /\/pousse\./.test(vu.avecGain ?? '')
+    || (console.log('        dessin servi :', vu.avecGain || '(aucun)'), false));
+  check('et un état non gagné reste au repos, comme la règle le veut',
+    /\/neutre\./.test(vu.sansGain ?? '')
+    || (console.log('        dessin servi :', vu.sansGain || '(aucun)'), false));
+  check('et la carte porte l’étiquette de l’état', vu.etiquette === true);
+
+  /* **Le troisième maillon : l'ouverture inscrit ce qu'elle annonce.**
+
+     C'est le défaut d'origine, et il ne se voit qu'ici : la table des gains
+     doit contenir chaque état du butin **avant** que le récapitulatif ne se
+     dessine. Un paquet sans état ne prouve rien — on le dit plutôt que de
+     laisser croire à un contrôle passé. */
+  /* **Un seul paquet, et on le dit quand il ne contient pas d état.**
+
+     En ouvrir plusieurs jusqu à en trouver un rendrait ce contrôle
+     déterministe — et épuiserait la réserve du joueur de test, sur laquelle
+     six contrôles plus bas comptent encore. Essayé : « il y a de quoi ouvrir »
+     et « le booster est bien consommé » rougissent aussitôt.
+
+     Un contrôle qui casse ses voisins pour se garantir lui-même est un
+     mauvais échange. Celui-ci passe donc son tour une fois sur deux, et il le
+     **dit** — les trois du dessus, eux, gardent la chaîne de dessin à chaque
+     exécution. */
+  const inscrits = await page.evaluate(async () => {
+    const C = window.TBF_CARTES;
+    await openPack();
+    finishPack();
+    const etats = (window.pull ?? []).filter((f) => f?.etat && f.pour);
+    return etats.map((f) => ({ id: f.id, pour: f.pour, stage: f.stage ?? 1,
+      inscrit: (C.S.etats?.[f.pour]?.[f.stage ?? 1] ?? []).includes(f.id) }));
+  }).catch(() => null);
+
+  if (!inscrits?.length) {
+    console.log('        (aucun état dans ce paquet — rien à vérifier ici)');
+  } else {
+    const manquants = inscrits.filter((e) => !e.inscrit);
+    check(`l’ouverture inscrit les ${inscrits.length} état(s) gagné(s)`,
+      manquants.length === 0
+      || (console.log('        non inscrits :',
+        manquants.map((e) => `${e.pour}/${e.stage}/${e.id}`).join(', ')), false));
+  }
+}
 /* ----------------------------------------------------------- le kiosque */
 
 /* Plus d onglet à cliquer : le kiosque **est** la page. C était la dernière
