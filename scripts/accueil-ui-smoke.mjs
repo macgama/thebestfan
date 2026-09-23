@@ -308,6 +308,39 @@ async function ouvrir(largeur = 400, hauteur = 880) {
      rougissement ne dirait pas ce qui ne va pas. On attend qu il parte. */
   await page.waitForFunction(() => !document.getElementById('ouverture'),
     { timeout: OUVERTURE_MS }).catch(() => {});
+
+  /* **La mise en page a fini de bouger.**
+
+     Sans cette attente, cette fonction rendait la page à un instant qui ne
+     dépendait de rien de mesurable : elle rendait la main dès que l'écran
+     d'ouverture partait, et cet écran tenait dix secondes. Dix secondes
+     pendant lesquelles les polices finissaient de charger et le dessin du
+     personnage de se décoder — si bien que la suite mesurait toujours une
+     page posée, **par accident**.
+
+     Le jour où l'ouverture a retrouvé ses sorties et n'a plus tenu que mille
+     deux cents millisecondes, la mesure est tombée à un pixel du seuil :
+     557 px sur 844, contre 66 % demandés. Le contrôle a rougi sans qu'une
+     seule ligne de l'accueil ait changé.
+
+     Une suite qui s'appuie sur la durée d'une animation pour savoir quand
+     regarder n'éprouve pas la page : elle éprouve l'animation. On attend
+     donc les deux seules choses qui déplacent encore quelque chose — les
+     polices, et le dessin — et plus jamais une horloge. */
+  await page.evaluate(async () => {
+    await document.fonts?.ready;
+    const pose = document.querySelector('#pile .pose.on[src]');
+    if (pose && !pose.complete) {
+      await new Promise((fini) => {
+        pose.addEventListener('load', fini, { once: true });
+        pose.addEventListener('error', fini, { once: true });
+      });
+    }
+    /* Deux cadres : le premier applique ce que le chargement vient de
+       changer, le second laisse la mise en page se stabiliser dessus. */
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  }).catch(() => {});
+
   return page;
 }
 
@@ -459,13 +492,39 @@ for (const [nom, l, h, plancher] of [
   const p = await ouvrir(l, h);
   await p.waitForSelector('#pile .pose.on[src]', { timeout: 8000 }).catch(() => {});
   const m = await p.evaluate(() => {
-    const pile = document.getElementById('pile').getBoundingClientRect();
+    /* **On arrête la respiration avant de mesurer.**
+
+       `.pile` porte l'animation `souffle`, qui la met à l'échelle en continu
+       — et `getBoundingClientRect` rend la boîte **transformée**. Ce contrôle
+       mesurait donc le personnage à l'instant où il se trouvait dans son
+       cycle de trois secondes six, et le comparait à un seuil fixe.
+
+       Il passait quand même, et pour une raison qui ne tient à rien : l'écran
+       d'ouverture tenait dix secondes, ce qui plaçait la mesure toujours à la
+       même phase. Le jour où cet écran a retrouvé ses sorties et n'a plus
+       tenu que mille deux cents millisecondes, la même page a rendu 287×557
+       au lieu de 280×561 — un rapport qui n'est même pas celui de l'élément,
+       preuve qu'on mesurait une respiration.
+
+       Une suite qui dépend de la phase d'une animation ne mesure pas ce
+       qu'elle croit. On la suspend, on force le recalcul, on mesure, on la
+       remet — et la valeur devient celle de la mise en page, la seule que ce
+       contrôle ait jamais voulu juger. */
+    const el = document.getElementById('pile');
+    const avant = el.style.animation;
+    el.style.animation = 'none';
+    void el.offsetHeight;                 // force le recalcul
+
+    const pile = el.getBoundingClientRect();
     const bande = document.querySelector('.centre').getBoundingClientRect();
-    return {
+    const vu = {
       hauteur: pile.height, largeur: pile.width, ecran: innerHeight,
       haut: pile.top, bas: pile.bottom, bandeHaut: bande.top, bandeBas: bande.bottom,
       bandeH: bande.height,
     };
+
+    el.style.animation = avant;
+    return vu;
   });
   const part = m.hauteur / m.ecran;
   check(`${nom} : le personnage tient la page (${Math.round(part * 100)} %)`,
