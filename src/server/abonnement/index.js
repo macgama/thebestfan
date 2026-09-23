@@ -413,6 +413,13 @@ export function createAbonnement({ pool, requireAuth }) {
             marque: a.marque ?? null,
             packs: a.livraison.packs ?? 0,
             mois: Math.max(1, Math.round((a.livraison.jours ?? 31) / 30.5)),
+            /* **Ce que ça fait par mois.** C'est la seule comparaison que
+               quelqu'un puisse faire de tête entre 3,99 et 39,90, et la
+               laisser faire à la page reviendrait à y remettre une division
+               de centimes — et une seconde façon de les mettre en forme. Le
+               prix part d'ici déjà écrit, comme celui du catalogue. */
+            parMois: enEuros(Math.round(
+              a.prix / Math.max(1, Math.round((a.livraison.jours ?? 31) / 30.5)))),
           })),
       });
     } catch (e) {

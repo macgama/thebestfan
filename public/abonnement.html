@@ -40,7 +40,24 @@ html,body{margin:0;min-height:100dvh}
 body{background:radial-gradient(120% 55% at 50% -8%,rgba(245,195,59,.15),transparent 62%),var(--beton);
      color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
      padding:18px 16px 90px}
-main{width:100%;max-width:var(--colonne)}
+/* **Le décor passait devant le texte.**
+
+   `nav.js` pose deux calques — la photo de tribune et son voile — en frères
+   de la colonne, en `position:fixed`. Un fond fixé crée son propre contexte
+   d'empilement et gagne contre un élément statique, même déclaré avant lui :
+   `ui.css` le dit noir sur blanc au-dessus de sa règle `#app`, et c'est pour
+   ça que cette règle existe.
+
+   Sauf que la règle vise `#app`, et cette page — **la seule des vingt et une
+   qui portent le décor** — a un `main` sans identifiant. La photo lui passait
+   donc devant : le titre, la liste de ce qui reste libre, les intitulés du
+   tableau et toute la colonne « avec » se lisaient à travers une tribune.
+
+   On ne renomme pas en `#app` : la règle de `ui.css` apporte aussi une
+   gouttière et une hauteur minimale que cette page-ci règle elle-même, et
+   les deux se cumuleraient. Deux propriétés suffisent, et elles disent
+   exactement ce qu'on veut. */
+main{width:100%;max-width:var(--colonne);position:relative;z-index:1}
 
 .chapeau{text-align:center;margin:8px 0 22px}
 .chapeau h1{font-family:var(--banner);font-size:clamp(22px,6.2vw,30px);letter-spacing:.1em;
@@ -142,7 +159,12 @@ main{width:100%;max-width:var(--colonne)}
 .formule .tete{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
 .formule .tete b{font-family:var(--banner);font-size:15px;letter-spacing:.07em}
 .formule .tete .prix{margin-left:auto;font-family:var(--banner);font-size:17px;
-  color:var(--projo);white-space:nowrap}
+  color:var(--projo);white-space:nowrap;text-align:right}
+/* Le prix ramené au mois, sous le prix affiché. En craie et non en or : c'est
+   une aide à la lecture, pas une seconde offre. */
+.formule .tete .prix em{display:block;font-style:normal;font-family:var(--ui);
+  font-size:10.5px;letter-spacing:.02em;color:var(--craie);opacity:.55;
+  margin-top:2px}
 /* Le ruban « deux mois offerts » : il vient du catalogue, comme le prix. */
 .formule .marque{font-family:var(--banner);font-size:9px;letter-spacing:.14em;
   text-transform:uppercase;padding:3px 8px;border-radius:20px;
@@ -408,14 +430,30 @@ function portes(o, sans) {
       ${(d.formules ?? []).map((f) => `<div class="formule${f.marque ? ' mise' : ''}">
         <div class="tete"><b>${esc(f.nom)}</b>${f.marque
           ? `<span class="marque">${esc(f.marque)}</span>` : ''}
-          <span class="prix">${esc(f.prixTexte)}</span></div>
+          <!-- **Ce que ça fait par mois**, pour la formule qui n'est pas
+               mensuelle. C'est la seule comparaison que quelqu'un puisse
+               faire de tête entre 3,99 et 39,90, et la lui laisser faire
+               c'est la perdre. Le serveur la calcule — la page ne divise
+               pas des centimes, elle ne les a même pas. -->
+          <span class="prix">${esc(f.prixTexte)}${f.parMois && f.mois > 1
+            ? `<em>soit ${esc(f.parMois)} par mois</em>` : ''}</span></div>
         ${f.packs ? `<div class="offert"><b>${f.packs} booster${
           f.packs > 1 ? 's' : ''}</b><span>${f.packs > 1
             ? 'dès l’ouverture — de quoi déplier une série entière le soir même'
             : 'dès l’ouverture'}</span></div>` : ''}
+        <!-- **Les deux boutons disaient la même chose.** « M'abonner » et
+             « M'abonner » : le prix était en haut de la carte, l'un au-dessus
+             de l'autre, et rien dans le geste lui-même ne disait lequel des
+             deux on était en train de choisir. Sur deux boutons voisins de
+             même taille, c'est le libellé qu'on lit, pas la carte autour.
+
+             La durée vient du champ « mois », donc du catalogue : une formule
+             trimestrielle écrirait « / 3 mois » sans qu'on touche à rien. -->
         <button class="tbf-plaque tbf-bloc${f.marque ? ' tbf-grande' : ''}"
           ${f.marque ? 'data-ton="or"' : ''} data-article="${esc(f.id)}"
-          style="width:100%">M’abonner</button>
+          style="width:100%">M’abonner — ${esc(f.prixTexte)}
+          ${f.mois === 1 ? 'par mois' : f.mois === 12 ? 'par an'
+            : `pour ${f.mois} mois`}</button>
       </div>`).join('')}
       <!-- Un serveur d'avant cette route ne rend pas « formules ». Plutôt que
            de recopier ici les prix qu'on vient d'en sortir, on envoie là où

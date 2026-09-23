@@ -291,7 +291,46 @@ const MESURE = `(() => {
   };
 
   const out = { deborde: 0, horsEcran: [], coupes: [], petits: [], pales: [],
-    sansAlt: [], cassees: [], surDegrade: 0 };
+    sansAlt: [], cassees: [], surDegrade: 0, sousDecor: [] };
+
+  /* **Le décor peut passer devant le texte, et rien ne le disait.**
+
+     \`nav.js\` pose deux calques en frères de la colonne — la photo de tribune
+     et son voile — en \`position:fixed\`. Un fond fixé crée son propre contexte
+     d'empilement et gagne contre un élément statique, même déclaré avant lui.
+     \`ui.css\` le sait et relève \`#app\` à \`position:relative;z-index:1\` — mais
+     la règle vise un identifiant, et la page de l'abonnement avait un \`main\`
+     sans identifiant. Toute sa colonne se lisait à travers une tribune floue :
+     titre, liste, intitulés du tableau, colonne « avec ».
+
+     **\`elementFromPoint\` ne peut pas le voir.** Le décor porte
+     \`pointer-events:none\` — il doit se laisser traverser au doigt — donc la
+     méthode qui dit « qu'y a-t-il à cet endroit » répond le contenu, celui-là
+     même qu'on ne voit pas. Une page entièrement illisible passait l'audit
+     sans une alerte.
+
+     On compare donc l'empilement plutôt que le pointage : tout bloc de premier
+     niveau qui porte du texte doit gagner contre le décor, c'est-à-dire être
+     positionné et porter un \`z-index\` supérieur. */
+  {
+    const decors = [...document.querySelectorAll('.tbf-decor,.tbf-grad')];
+    if (decors.length) {
+      const zDecor = Math.max(...decors.map((d) => Number(getComputedStyle(d).zIndex) || 0));
+      for (const el of document.body.children) {
+        if (decors.includes(el)) continue;
+        if (!(el.textContent ?? '').trim()) continue;
+        const s = getComputedStyle(el);
+        const r = el.getBoundingClientRect();
+        /* Sans boîte, rien à masquer : les balises \`script\` et \`template\`
+           portent du texte et n'occupent pas un pixel. */
+        if (r.height < 1 || s.display === 'none' || s.visibility === 'hidden') continue;
+        const z = s.position === 'static' ? NaN : Number(s.zIndex);
+        if (!Number.isFinite(z) || z <= zDecor) {
+          out.sousDecor.push({ q: nom(el), z: s.zIndex, pos: s.position, zDecor });
+        }
+      }
+    }
+  }
 
   out.deborde = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
 
@@ -407,10 +446,14 @@ for (const chemin of PAGES) {
     for (const x of m.pales.slice(0, 4)) note(chemin, largeur, 'pâle', `${x.q} — ${x.c}:1 (il en faut ${x.seuil}) — ${x.encre} sur ${x.sur}`);
     for (const x of m.sansAlt.slice(0, 3)) note(chemin, largeur, 'sans alt', x.q);
     for (const x of m.cassees.slice(0, 3)) note(chemin, largeur, 'image cassée', x.q);
+    for (const x of m.sousDecor.slice(0, 3)) {
+      note(chemin, largeur, 'sous le décor',
+        `${x.q} — ${x.pos}, z-index ${x.z} (le décor est à ${x.zDecor})`);
+    }
     for (const e of erreurs.slice(0, 2)) note(chemin, largeur, 'script', e.slice(0, 90));
 
     const n = m.deborde + m.horsEcran.length + m.coupes.length + m.petits.length
-      + m.pales.length + m.cassees.length + erreurs.length;
+      + m.pales.length + m.cassees.length + m.sousDecor.length + erreurs.length;
     console.log(`  ${chemin.padEnd(16)} ${String(largeur).padStart(4)} px   ${
       n === 0 ? 'rien à signaler' : `${n} chose(s)`}`);
     await page.close();
