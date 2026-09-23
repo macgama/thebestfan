@@ -112,6 +112,12 @@ main{width:100%;max-width:var(--colonne)}
 /* Le mot sous les deux boutons : ce qu'on gagne tout de suite, et ce qui se
    passe si l'on arrête. Les deux questions qu'on se pose la main sur la
    carte bancaire. */
+/* L'annonce du booster, juste au-dessus des deux boutons. En or, parce que
+   c'est la seule ligne de cette page qui parle de quelque chose qu'on reçoit
+   plutôt que de quelque chose qui s'élargit. */
+.cadeau{margin:0 0 8px;font-size:12.5px;line-height:1.5;text-align:center;
+  opacity:.9}
+.cadeau b{font-family:var(--banner);color:var(--projo);letter-spacing:.06em}
 .fin-mot{margin:12px 2px 0;font-size:11px;line-height:1.55;opacity:.55;text-align:center}
 .prendre{display:flex;flex-direction:column;gap:9px}
 .prendre em{font-style:normal;opacity:.6;font-size:11px}
@@ -283,6 +289,19 @@ function portes(o, sans) {
       <!-- Les deux formules, côte à côte. Une seule mènerait au mensuel sans
            jamais dire que l'annuel existe — or c'est lui qui est avantageux,
            et le taire n'aide personne. -->
+      <!-- **Ce qui arrive tout de suite.**
+
+           Tout ce que l'abonnement ouvre est du confort : des réserves plus
+           grandes, une mémoire plus longue, une file plus courte. Rien de
+           tout cela ne se voit dans la seconde qui suit le paiement, et un
+           paiement qui ne donne rien tout de suite se vit comme un paiement
+           qui n'a pas marché.
+
+           Le booster, lui, se voit. Il est annoncé **avant** le bouton et
+           non découvert après : une bonne surprise qu'on n'a pas promise ne
+           décide personne à payer, et c'est pourtant là qu'elle doit peser. -->
+      <p class="cadeau"><b>Un booster offert</b> à l’ouverture de ton
+        abonnement, dans les deux formules.</p>
       <button class="tbf-plaque tbf-bloc tbf-grande" data-ton="or" id="prendre"
         style="width:100%">M’abonner au mois — 3,99 €</button>
       <button class="tbf-plaque tbf-bloc" id="prendreAn"

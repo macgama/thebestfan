@@ -101,13 +101,36 @@ export const CATALOGUE = [
     id: 'abo-mensuel', rayon: 'abonnement', nom: 'Abonnement mensuel',
     texte: 'Se renouvelle chaque mois. S’arrête quand tu veux.',
     prix: 399, recurrence: 'month',
-    livraison: { type: 'abonnement', formule: 'mensuel', jours: 31 },
+    /* **Un booster avec l'abonnement**, et il est déclaré ici plutôt que
+       glissé dans le moteur.
+
+       C'est une décision de Gaël, prise en connaissance de la règle qu'elle
+       entame : l'argent réel n'achetait jusqu'ici que l'abonnement, et un
+       booster est un tirage. La chaîne euro → tirage, coupée à la racine
+       quand la monnaie achetable a disparu, se rouvre donc d'un cran.
+
+       Trois bornes la tiennent étroite, et elles sont le prix de la
+       décision. **Un seul** booster, et il ne s'achète pas séparément : on
+       ne peut pas en prendre deux. Il est **déclaré dans le catalogue**, à
+       la vue du contrôle qui surveille ce que l'argent achète, et non caché
+       dans la livraison. Et aucune monnaie ne s'achète toujours — c'est la
+       borne qui compte le plus, parce que c'est elle qui empêche de
+       transformer une carte bancaire en tirages à volonté.
+
+       La raison est celle qu'on avait écrite en face : un paiement qui ne
+       donne rien tout de suite se vit comme un paiement qui n'a pas marché.
+       L'abonnement n'ouvre que du confort, et rien de ce confort ne se voit
+       dans la seconde qui suit. Le booster, si. */
+    livraison: { type: 'abonnement', formule: 'mensuel', jours: 31, packs: 1 },
   },
   {
     id: 'abo-annuel', rayon: 'abonnement', nom: 'Abonnement annuel',
     texte: 'Douze mois d’un coup, au prix de dix.',
     prix: 3990, marque: 'deux mois offerts', recurrence: 'year',
-    livraison: { type: 'abonnement', formule: 'annuel', jours: 366 },
+    // Un booster aussi, et un seul : voir la note de l'abonnement mensuel.
+    // Douze fois moins souvent que le mensuel, pour douze mois — c'est le
+    // sens de la formule, et ce n'est pas une inégalité à corriger.
+    livraison: { type: 'abonnement', formule: 'annuel', jours: 366, packs: 1 },
   },
 ];
 
