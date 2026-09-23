@@ -32,8 +32,15 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 /* Le nom de la page était écrit deux fois : une fois par la barre du haut,
    une fois ici, l'un sous l'autre et dans la même police. Il ne paraît donc
-   plus que lorsque la barre ne le dit pas — elle ne se monte que pour un
-   joueur connecté, et un visiteur sans compte n'a que ce titre-ci.
+   plus que lorsque la barre ne le dit pas.
+
+   Ce paragraphe disait « elle ne se monte que pour un joueur connecté, et un
+   visiteur sans compte n'a que ce titre-ci ». Ce n'est plus vrai : la barre
+   se monte pour tout le monde depuis qu'elle porte la flèche de retour, qui
+   est la seule sortie d'un visiteur arrivé ici depuis la vitrine. La règle
+   ci-dessous n'a pas bougé d'un caractère — c'est la phrase qui la décrivait
+   qui avait vieilli, et une phrase périmée à côté d'une règle juste est ce
+   qu'on relit trois fois avant de comprendre.
 
    D'où `:has` plutôt qu'une classe posée en JavaScript : la règle suit la
    barre qu'elle arrive avant ou après, et si le navigateur ne connaît pas

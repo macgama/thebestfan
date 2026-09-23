@@ -206,10 +206,26 @@
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => j?.user ?? null)
       .catch(() => null));
-    if (!user) return;
+    /* **La barre ne se montait pas du tout pour un visiteur.**
 
-    const boutonHTML = `<button class="pan tbf-burger" aria-label="Menu" aria-expanded="false"
-          aria-controls="tbf-tiroir"><span></span><span></span><span></span></button>`;
+       C'était défendable tant qu'elle ne portait qu'un menu : quelqu'un sans
+       compte n'a pas de deck à ouvrir ni de classeur à lire, et un tiroir
+       plein de portes fermées est une liste de refus.
+
+       Mais elle porte aussi **la flèche de retour**, et là c'est l'inverse :
+       la vitrine envoie les visiteurs sur la page des matchs — « TOUS LES
+       MATCHS › », juste au-dessus du bouton d'inscription — et ils s'y
+       retrouvaient sans **aucun** moyen de revenir. Pas de barre, pas de
+       menu, pas de lien : le bouton du navigateur, ou rien. C'est la
+       dernière chose à faire à quelqu'un qu'on est en train de convaincre.
+
+       Le menu reste donc réservé à ceux qui ont un compte, et la sortie
+       s'ouvre à tout le monde — c'est justement le visiteur qui en a le
+       plus besoin, puisque c'est le seul qui ne connaît pas les lieux. */
+    const boutonHTML = user
+      ? `<button class="pan tbf-burger" aria-label="Menu" aria-expanded="false"
+          aria-controls="tbf-tiroir"><span></span><span></span><span></span></button>`
+      : '';
 
     /* La flèche de retour, en haut à gauche.
      *
@@ -315,7 +331,11 @@
        et la confirmation de déconnexion ne sont plus l’affaire de ce fichier :
        l’accueil monte exactement le même, et deux menus qui divergent est la
        faute que menu.js existe pour empêcher. */
-    window.TBF_MENU.monter(haut.querySelector('.tbf-burger'));
+    /* Pas de bouton pour un visiteur, donc rien à monter. `monter` sur
+       `null` ne lèverait pas — elle se contente de ne rien faire — mais un
+       appel qui ne fait rien se relit dix fois avant qu'on comprenne
+       pourquoi. */
+    if (user) window.TBF_MENU.monter(haut.querySelector('.tbf-burger'));
 
     /* Plus de bourse à remplir ici.
 

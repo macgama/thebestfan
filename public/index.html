@@ -82,6 +82,16 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .logo em{font-style:normal;color:var(--projo)}
 .logo small{display:block;font-family:var(--ui);font-size:clamp(8px,1.05vh,10px);
   letter-spacing:.32em;opacity:.6;margin-top:clamp(4px,1.1vh,11px);font-weight:400}
+/* La mention de version, entre le logo et l'accroche. Assez présente pour
+   qu'on la lise, assez discrète pour ne pas prendre le pas sur le nom du
+   jeu : un liseré et rien d'autre, sans fond plein — une pastille pleine
+   se lirait comme un étiquetage promotionnel, et c'est l'inverse de ce
+   qu'elle dit. */
+.beta{margin:7px 0 0;font-family:var(--banner);font-size:9.5px;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--projo);
+  opacity:.8;display:inline-block;padding:4px 10px;border-radius:20px;
+  border:1px solid rgba(245,195,59,.34)}
+.beta:empty{display:none}
 .claim{font-family:var(--banner);font-size:clamp(14px,2vh,19px);line-height:1.3;
   margin:clamp(8px,2.1vh,22px) 0 0;
   text-shadow:0 2px 18px rgba(0,0,0,.9)}
@@ -948,6 +958,18 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
       <img class="embleme" src="/img/logo.avif" alt=""
         onerror="this.onerror=null;this.src='/img/logo.png'">
       <div class="logo">THE<em>BEST</em>FAN<small>LE JEU DES TRIBUNES</small></div>
+      <!-- **La version, avant le bouton et non dans le pied de page.**
+
+           Dans le tiroir, le numéro de version est une mention légale : on le
+           cherche quand on veut le dire à quelqu'un. Ici, ce n'en est pas une.
+           Quelqu'un qui découvre le jeu décide sur cette page s'il ouvre un
+           compte, et « bêta » est un renseignement qui change cette
+           décision : ça se dit avant, pas en petits caractères tout en bas.
+
+           Vide tant que la requête n'a pas répondu, et sans place réservée :
+           un serveur d'avant la route rend une vitrine identique à celle
+           d'hier, au lieu d'un trou entre le logo et l'accroche. -->
+      <p class="beta" id="vBeta"></p>
       <p class="claim">Ton club joue. <b>Ta tribune aussi.</b></p>
       <p class="sell">Collectionne tes supporters, pousse sur la corde pendant les vrais matchs, et repars avec des cartes que personne ne pourra t'acheter.</p>
     </div>
@@ -1984,7 +2006,29 @@ function veillerVitrine(live) {
  * blocs apparaissent ensemble. L'attente ne se voit pas — l'écran d'ouverture
  * couvre la page pendant ses dix secondes.
  */
+/**
+ * La mention de version, sous le logo.
+ *
+ * **Elle vient du serveur et n'est écrite nulle part ici.** Le numéro vit
+ * dans `src/shared/version.js` et sort par `/api/version` ; le tiroir le lit
+ * déjà par la même route. Deux endroits qui annoncent une version finissent
+ * par en annoncer deux, et celle qu'on lit sur la vitrine est justement
+ * celle qu'on cite dans un signalement de bug.
+ *
+ * Sans `await` et sans bloquer la vitrine : personne n'attend un numéro de
+ * version. Si la route ne répond pas, la ligne reste vide et `:empty` lui
+ * retire sa place — une vitrine d'hier vaut mieux qu'un trou entre le logo
+ * et l'accroche.
+ */
+function direLaVersion() {
+  fetch('/api/version')
+    .then((r) => (r.ok ? r.json() : null))
+    .then((v) => { if (v?.etiquette) $('vBeta').textContent = v.etiquette; })
+    .catch(() => {});
+}
+
 async function garnirVitrine() {
+  direLaVersion();
   const visages = visagesVitrine();
   const live = await scoresVitrine();
   if (visages) $('vGalerie').hidden = false;
