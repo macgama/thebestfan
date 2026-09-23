@@ -506,14 +506,25 @@ body{
 /* **Le titre d'écran.** Une barre d'accent à gauche, le lettrage du jeu, et
    l'espacement des capitales. Ce qui le rend « jeu » n'est pas la barre — c'est
    qu'elle soit la même sur les vingt écrans. */
+/* **Il y avait deux blocs `.tbf-titre` dans ce fichier**, à quatre cent
+   cinquante lignes d'écart, et le second gagnait sans que rien ne le dise :
+   même sélecteur, plus bas, donc il l'emportait. Ce qui était écrit ici —
+   un corps élastique en `clamp()`, une marge de dix-huit pixels, un retrait
+   de douze — n'a jamais rien peint. On lisait la règle du haut et on voyait
+   l'effet de celle du bas.
+
+   Les deux n'en font plus qu'une, **aux valeurs de celle qui gagnait** : le
+   but est de retirer le piège, pas de changer l'écran au passage. Si le
+   corps élastique doit revenir, ce sera une décision, pas une résurrection
+   accidentelle. */
 .tbf-titre{
   font-family:var(--banner);
-  font-size:clamp(19px,5.6vw,24px);
-  letter-spacing:.14em;
+  font-size:20px;
+  letter-spacing:.15em;
   text-transform:uppercase;
   line-height:1.1;
-  margin:18px 0 12px;
-  padding-left:12px;
+  margin:0;
+  padding:14px 16px 4px;
   position:relative;
 }
 /* **La barre d'accent est une écharpe.**
@@ -541,9 +552,34 @@ body{
 .nav + * .tbf-titre,.tabs + * .tbf-titre,.nav + .top .tbf-titre{margin-top:10px}
 
 .tbf-titre small{
-  display:block;font-family:var(--ui);font-size:11px;letter-spacing:.06em;
-  text-transform:none;opacity:.5;margin-top:5px;font-weight:400;
+  display:block;font-family:var(--ui);font-size:9px;letter-spacing:.3em;
+  text-transform:none;opacity:.45;margin-top:4px;font-weight:400;
 }
+
+/* **Le sous-titre resté seul.**
+
+   La barre du haut dit déjà où l'on est, sur toutes les pages, et elle ne
+   défile pas. Un titre de page qui répétait ce mot le disait une deuxième
+   fois — une troisième quand un onglet actif le portait aussi. « Deck » en
+   haut, « DECK » sur l'onglet allumé, « MON DECK » juste en dessous.
+
+   Ce qu'on garde est la seule ligne qui apprenait quelque chose : « trois
+   Fanzzy, dix cartes ». Elle était en neuf pixels à quarante-cinq pour cent
+   d'opacité parce qu'elle vivait sous un titre ; seule, il lui faut de quoi
+   se lire. Elle garde l'écharpe oblique, qui est la marque des vingt
+   écrans — c'est elle qu'on reconnaît, pas le mot répété. */
+.tbf-sous{
+  font-family:var(--ui);font-size:12.5px;letter-spacing:.08em;
+  opacity:.62;margin:0;padding:14px 16px 14px;position:relative;
+}
+.tbf-sous::before{
+  content:"";position:absolute;left:0;top:14px;bottom:14px;width:5px;
+  border-radius:3px;
+  background:repeating-linear-gradient(155deg,
+    var(--e1,var(--projo)) 0 7px,var(--e2,var(--flare)) 7px 14px);
+  box-shadow:0 0 0 1px rgba(4,7,11,.85),0 0 10px rgba(245,195,59,.35);
+}
+.nav + * .tbf-sous,.tabs + * .tbf-sous,.nav + .top .tbf-sous{margin-top:10px}
 
 /* **Les chiffres qui comptent.** Un solde, un score, un compte de collection :
    ils se lisent d'un coup d'œil ou ils ne servent à rien. */
@@ -968,16 +1004,6 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
   a.pan:active,button.pan:active,.pan[role="button"]:active{transform:none}
 }
 
-/* ------------------------------------------------------- titre de page */
-
-.tbf-titre{
-  font-family:var(--banner);font-size:20px;letter-spacing:.15em;
-  margin:0;padding:14px 16px 4px;
-}
-.tbf-titre small{
-  display:block;font-family:var(--ui);font-size:9px;letter-spacing:.3em;
-  opacity:.45;margin-top:4px;
-}
 
 /* ==================================================== la barre du haut
 
@@ -1032,8 +1058,12 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
 /* Le nom de l'écran. Poussé à droite, il pousse le menu au bord et devient
    le centre de gravité de la barre — au lieu d'être un élément de plus dans
    une file de cinq qui se disputaient trois cent soixante pixels. */
-.tbf-ou{margin-left:auto;font-family:var(--banner);letter-spacing:.16em;
+/* `margin:0` et `font-weight:inherit` parce que c'est un `h1` depuis que les
+   pages ont cessé de répéter leur nom : sans ça le navigateur lui donne ses
+   propres marges de titre et disloque la barre. Voir `nav.js`. */
+.tbf-ou{margin:0 0 0 auto;font-family:var(--banner);letter-spacing:.16em;
   text-transform:uppercase;font-size:clamp(13px,3.9vw,16px);opacity:.82;
+  font-weight:inherit;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
   padding-right:2px}
 
@@ -1312,6 +1342,32 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
    profil. Le cadre porte la rareté — les mêmes jetons `--rc` que les Fanzzy et
    les cartes — et le dessin est détouré, donc il flotte dedans plutôt que de
    le remplir. Une pièce sans dessin garde son cadre : c'est le repli. */
+/* **L'étiquette d'un état, posée sur le dessin.**
+
+   La carte porte désormais le nom du personnage — c'est lui qu'on
+   collectionne — mais il faut encore dire **lequel** de ses quatre moments
+   on vient de gagner. En bas du dessin plutôt qu'à côté du nom : la tuile du
+   butin est étroite, et deux textes sur la même ligne se tronquent tous les
+   deux. */
+/* **La marque de l'abonné**, en pied de menu.
+
+   Verte comme le reste de ce qui est acquis dans le jeu, et discrète : elle
+   confirme, elle ne vend pas. Celui qui la lit a déjà payé — lui remettre
+   une couleur d'offre sous les yeux serait le prendre pour un prospect. */
+.tbf-abo{display:flex;align-items:center;gap:9px;margin:10px 14px 4px;
+  padding:9px 12px;border-radius:10px;
+  background:rgba(30,158,106,.12);border:1px solid rgba(30,158,106,.34)}
+.tbf-abo b{font-family:var(--banner);font-size:11px;letter-spacing:.16em;
+  color:#5EDFA6;flex:none}
+.tbf-abo span{font-size:10.5px;opacity:.55;line-height:1.3}
+.tbf-abo[hidden]{display:none}
+
+.tbf-etiq-etat{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);
+  font-family:var(--banner);font-size:8px;letter-spacing:.14em;white-space:nowrap;
+  padding:3px 8px;border-radius:20px;background:rgba(4,7,11,.82);
+  color:var(--craie);box-shadow:0 0 0 1px rgba(242,238,228,.22);
+  text-transform:uppercase;pointer-events:none}
+
 .tbf-piece{
   position:relative;display:inline-block;flex:none;
   width:46px;height:46px;border-radius:11px;

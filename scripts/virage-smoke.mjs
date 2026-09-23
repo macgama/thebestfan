@@ -19,6 +19,7 @@ import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 import { VirageRoom } from '../src/server/ferveur/virage.js';
 import { resoudreGeste, GESTES } from '../src/server/ferveur/gestures.js';
 import { ORDRE } from '../src/shared/duel/chants.js';
+import { EFFETS_CONNUS } from '../src/server/ferveur/virage.js';
 import { ACTIONS, ACTIONS_VIRAGE, ACTION_BY_ID, dansLeVirage }
   from '../src/shared/duel/actions.js';
 
@@ -806,6 +807,14 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
   check('la main du Virage est tirée du deck', m3.main.length === 5);
   check('et aucune carte de duel n’y entre',
     ![...m3.main, ...m3.pioche].some((id) => duel.has(id)));
+
+  /* **Et elle dit combien sont restées dehors.**
+
+     Le tri se faisait en silence : le joueur voyait une carte et quatre
+     cases vides, et il en a conclu que ses cartes ne se rechargeaient pas.
+     La rangée du Virage s'explique maintenant, et elle ne le peut que si ce
+     nombre lui parvient. */
+  check('et la salle dit combien sont restées au duel', m3.ecartees === duel.size);
   /* **Les cartes nommées, et non leur nombre.**
    *
    * Ce contrôle disait `duel.size === 7`. Un nombre ne dit rien de ce qu'il
@@ -827,7 +836,40 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
 
        Les sept autres de la saison entrent, elles : elles n'agissent que sur
        celui qui les joue ou sur sa tribune. */
-    'a-rp-rouille', 'a-rp-horsjeu', 'a-rp-bache-neuve'];
+    'a-rp-rouille', 'a-rp-horsjeu', 'a-rp-bache-neuve',
+
+    /* **Ces deux-là ne visent personne : elles n'ont pas d'objet.**
+
+       L'Arbitre fait entrer quelqu'un du banc, la Relève fait grandir un
+       personnage en cours de partie. Le Virage met un seul personnage en
+       tribune et n'a pas de banc — il n'y a ni remplaçant à appeler, ni
+       évolution à déclencher.
+
+       Elles étaient acceptées et traitées en « sans objet » : la carte
+       partait de la main, coûtait son souffle, et ne faisait rien. Un deck
+       de Virage pouvait porter deux cartes mortes sur dix sans que rien ne
+       le signale. Voir `SANS_OBJET_AU_VIRAGE` dans `shared/duel/actions.js`. */
+    'a-arbitre', 'a-releve'];
+
+  /* **Toute carte jouable ici a un effet que le moteur sait rendre.**
+
+     C'est le contrôle qui manquait, et son absence a coûté cher. Cinq cartes
+     étaient déclarées jouables au Virage — leur portée dit `soi`, ce qui est
+     exact — et le `switch` du moteur ne les connaissait pas. Elles tombaient
+     dans son `default`, qui lève ; or ce `throw` arrivait **après** que le
+     souffle ait été débité et la carte retirée de la main.
+
+     Le joueur payait, perdait sa carte, et lisait une erreur. C'est ce qui
+     lui a fait signaler « cette carte n'est plus dans ta main » et « les
+     cartes ne se rechargent pas » — deux symptômes d'une seule faute.
+
+     Rien ne pouvait l'attraper : les deux listes vivent dans deux fichiers
+     et personne ne les comparait. Ce contrôle les compare. */
+  const sansMoteur = ACTIONS_VIRAGE.filter((a) => !EFFETS_CONNUS.has(a.effet?.type));
+  check('chaque carte du Virage a un effet que le moteur sait rendre'
+    + (sansMoteur.length ? ' — sans moteur : '
+      + sansMoteur.map((a) => a.id + ' → ' + a.effet?.type).join(', ') : ''),
+    sansMoteur.length === 0);
   const ecart = [
     ...RESTENT_AU_DUEL.filter((id) => !duel.has(id)).map((id) => `+${id}`),
     ...[...duel].filter((id) => !RESTENT_AU_DUEL.includes(id)).map((id) => `-${id}`),

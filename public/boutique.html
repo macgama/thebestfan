@@ -159,6 +159,18 @@
 .avoir .p{border-radius:50%;
   background:radial-gradient(circle at 32% 30%,#FFB9AC,var(--flare) 55%,#8E1D12)}
 
+/* Le renvoi vers l'abonnement. Une bande, pas un bouton : ce n'est pas un
+   achat qu'on fait ici, c'est un écran qu'on va lire. */
+.vers-abo{display:flex;align-items:center;gap:10px;margin:18px 0 0;padding:13px 14px;
+  border-radius:12px;text-decoration:none;color:inherit;
+  background:linear-gradient(140deg,rgba(245,195,59,.16),rgba(245,195,59,.05));
+  border:1px solid rgba(245,195,59,.38)}
+.vers-abo b{font-family:var(--banner);font-size:13.5px;letter-spacing:.08em;
+  color:var(--projo);flex:none}
+.vers-abo span{flex:1;min-width:0;font-size:11px;opacity:.65;line-height:1.4}
+.vers-abo i{font-style:normal;font-family:var(--banner);font-size:17px;
+  opacity:.55;flex:none}
+
 .mot{margin:14px 0 0;padding:11px 13px;border-radius:10px;font-size:11.5px;
   line-height:1.55;background:rgba(0,0,0,.28);border:1px solid rgba(242,238,228,.1);
   opacity:.72}
@@ -183,7 +195,6 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 </head>
 <body>
 <main id="app">
-  <h1 class="tbf-titre">LA BOUTIQUE</h1>
 
   <div class="avoir" id="avoir" hidden>
     <!-- Deux monnaies, plus trois : le billet est parti avec l'argent réel, et
@@ -198,6 +209,15 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 
   <div id="etal"></div>
   <div id="rayons"></div>
+
+  <!-- L'abonnement a son écran ; la boutique n'y menait pas. Un joueur qui
+       lit « l'argent réel n'achète que l'abonnement » juste en dessous doit
+       pouvoir y aller d'un geste. -->
+  <a class="vers-abo" href="/abonnement">
+    <b>L’ABONNEMENT</b>
+    <span>Ce qu’il ouvre, et ce qu’il ne change pas</span>
+    <i>›</i>
+  </a>
 
   <p class="mot" id="mot"></p>
 </main>

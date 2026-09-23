@@ -238,12 +238,31 @@
        barre au lieu d'un élément de plus dans une file. */
     const haut = document.createElement('header');
     haut.className = 'tbf-haut' + (enJeu ? ' tbf-haut-jeu' : '');
-    haut.innerHTML = `${retourHTML}<span class="tbf-ou"></span>${boutonHTML}`;
+    /* **Ce titre-là est le titre de la page**, et il en est le seul.
+     *
+     * Chaque écran en portait deux, parfois trois : la barre disait « Deck »,
+     * l'onglet allumé disait « DECK », et un `h1` juste en dessous disait
+     * « MON DECK ». Trois fois le même mot sur trois centimètres, dont deux
+     * qui n'apprenaient rien à personne.
+     *
+     * C'est celui-ci qu'on garde, pour une raison mesurable : la barre ne
+     * défile pas — elle est en `flex:none` en tête de la colonne — donc il
+     * reste lisible quand on est descendu au bas d'un classeur. Un titre de
+     * page, lui, sort de l'écran au premier geste.
+     *
+     * Il devient donc un vrai `h1`, et les pages ont abandonné le leur. Un
+     * `span` quand la table n'a pas de titre : un `h1` vide serait pire que
+     * pas de `h1` du tout — un lecteur d'écran l'annoncerait et ne dirait
+     * rien. Les écrans sans entrée dans `TITRES` sont ceux qui se nomment
+     * eux-mêmes, comme l'accueil, qui n'a même pas cette barre. */
+    const titre = TITRES[chemin] ?? '';
+    const balise = titre ? 'h1' : 'span';
+    haut.innerHTML = `${retourHTML}<${balise} class="tbf-ou"></${balise}>${boutonHTML}`;
     /* `textContent` et non une interpolation : le titre vient d'une table
        écrite ici, mais la règle vaut pour tout ce qu'on pose dans du HTML
        assemblé à la main — on ne fait pas d'exception « parce que cette
        valeur-là est sûre », c'est ainsi qu'on finit par en faire une mauvaise. */
-    haut.querySelector('.tbf-ou').textContent = TITRES[chemin] ?? '';
+    haut.querySelector('.tbf-ou').textContent = titre;
     app.prepend(haut);
 
     /* ------------------------------------------- recharger pendant une partie

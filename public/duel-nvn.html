@@ -98,6 +98,13 @@ h2 i{font-style:normal;opacity:.7}
    c'est une troisième information, et la confondre avec l'une des deux ferait
    lire « classé » là où il y a « du monde ». */
 .mt .q.attente{color:var(--bleu, #7FB2FF);border-color:currentColor}
+/* Le score : craie, et sa minute en plus petit. Le `i` n'est pas un
+   italique — il ne l'est nulle part dans ce jeu — c'est la balise la plus
+   courte pour un second niveau dans une pastille de neuf pixels. */
+.mt .q.sc{color:var(--craie);border-color:rgba(242,238,228,.22);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.mt .q.sc i{font-style:normal;opacity:.5;margin-left:4px;font-size:8px}
+.mt .q.sc.live{color:var(--flare);border-color:currentColor}
 .raison.attend{opacity:.9}
 .raison.attend b{color:var(--projo);font-family:var(--banner);font-size:13px}
 /* Inviter, depuis la file. Posé dans le texte du voile, donc en ligne. */
@@ -472,8 +479,22 @@ h2 i{font-style:normal;opacity:.7}
   border-top:1px solid rgba(242,238,228,.07)}
 .stat:first-of-type{border-top:0}
 .stat b{font-family:var(--banner);font-size:14px;font-variant-numeric:tabular-nums}
-.stat .g{text-align:right;color:var(--projo)}
-.stat .d{text-align:left;color:var(--bleu)}
+/* **L'or et le bleu appartiennent aux monnaies, pas aux camps.**
+
+   Ces deux lignes peignaient « toi » en or et « lui » en bleu. Dix pixels
+   plus haut, dans le même écran, l'or est la couleur des écharpes et le
+   bleu celle de l'XP — voir `.gain b` juste au-dessus. Les deux mêmes
+   couleurs disaient donc deux choses différentes sur la même image, et
+   c'est exactement ce qu'un joueur a signalé.
+
+   Ce sont les camps qui cèdent, et pas les monnaies : une écharpe est or
+   partout dans le jeu — dans la barre, au kiosque, à la boutique — alors
+   que « toi contre lui » n'a besoin d'aucune teinte. La colonne de gauche
+   est la tienne, et elle est simplement **plus claire** que celle d'en
+   face. C'est la hiérarchie qu'on veut sur son propre écran de résultat,
+   et elle se lit sans avoir appris de code couleur. */
+.stat .g{text-align:right;color:var(--craie)}
+.stat .d{text-align:left;color:var(--gris);opacity:.72}
 .stat .quoi{font-size:9px;letter-spacing:.11em;opacity:.45;font-family:var(--banner);
   text-align:center;white-space:nowrap}
 .pref{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:10px;
@@ -1190,6 +1211,7 @@ function rendrePrepa(sansDeck, formats) {
       out.push(`<div class="mt ${on ? 'on' : ''}" data-fixture="${m.id}">
         ${m.home_logo ? `<img src="${esc(m.home_logo)}" alt="">` : ''}
         <div class="n">${esc(m.home_name)} – ${esc(m.away_name)}</div>
+        ${pastilleScore(m)}
         ${enFile ? `<div class="q attente">${enFile} EN FILE</div>` : ''}
         ${m.mien ? '<div class="q mien">×2</div>' : ''}
         <div class="q ${m.mode}">${m.mode === 'classe' ? 'CLASSÉ' : 'ENTRAÎNEMENT'}</div>
@@ -1211,6 +1233,27 @@ function rendrePrepa(sansDeck, formats) {
  * Ce qui se déplie sous le match choisi : ce que vaut le duel, la tribune, et
  * le bouton d'entrée.
  */
+/**
+ * Le score, sur la ligne d'un match qui en a un.
+ *
+ * La liste ne disait que deux noms de clubs, et rien d'autre : un joueur qui
+ * choisissait « Lyon – Lille » le soir ne pouvait pas savoir si la rencontre
+ * était à venir, en cours ou jouée. C'est pourtant la seule chose qui décide
+ * de ce qu'il va vivre — un duel sur un match en cours suit le vrai terrain.
+ *
+ * Le score est en craie et non en or : l'or dit déjà « classé » deux pastilles
+ * plus loin, et un chiffre doré à côté d'un libellé doré se lit comme une
+ * seule information.
+ */
+function pastilleScore(m) {
+  if (!m.enCours && !m.termine) return '';
+  const but = `${Number(m.home_goals) || 0} – ${Number(m.away_goals) || 0}`;
+  // La minute plutôt que le mot « en cours » : elle dit la même chose et
+  // elle dit en plus **où on en est**, ce qui décide d'entrer ou non.
+  const quand = m.enCours ? (m.elapsed ? `${m.elapsed}′` : 'EN DIRECT') : 'FINI';
+  return `<div class="q sc${m.enCours ? ' live' : ''}">${but} <i>${quand}</i></div>`;
+}
+
 function souLeMatch(choisi, sansDeck) {
   const out = [];
   out.push(`<div class="souscarte">`);
@@ -1228,9 +1271,21 @@ function souLeMatch(choisi, sansDeck) {
         : ''}</div>`);
   }
 
-  out.push(`<div class="raison">${choisi.enCours
-    ? 'Le match est en cours : ce duel comptera au classement.'
-    : 'Le match n’a pas commencé : entraînement, sans effet sur le classement.'}
+  /* **La phrase vient du serveur**, qui est le seul à connaître la règle.
+
+     Elle était écrite ici, en deux branches, et sur le mauvais critère : le
+     ballon roule ou non. Or ce qui décide du classement est **la journée**.
+     Un match terminé aujourd'hui compte encore — c'est même le moment où
+     l'on a le plus envie de le rejouer — et cette ligne lui répondait
+     « entraînement, sans effet sur le classement ». Un joueur qui lit ça
+     n'entre pas.
+
+     `raisonDuMatch`, dans `src/server/deck/index.js`, en donne les quatre
+     états à tous ses appelants. Le repli couvre une page restée ouverte
+     pendant un déploiement : elle dit ce qu'elle sait, sans rien promettre
+     sur le classement. */
+  out.push(`<div class="raison">${esc(choisi.raison
+    ?? (choisi.enCours ? 'Le match est en cours.' : 'Match à venir.'))}
     ${choisi.mien ? '<br><b>Un de tes clubs joue : ce duel rapporte le double d’écharpes.</b>' : ''}
     </div>`);
 
@@ -2081,13 +2136,20 @@ function montrerBilan(b) {
   /* `--mc` sur la vignette et non une couleur sur le titre : le cadre, les
      rayons et le lettrage s'y accordent d'un seul réglage. Peindre le titre
      seul laissait la case en jaune sur une défaite. */
+  /* **Vert pour la victoire, et non or.**
+
+     Le Virage et la fiche de match peignent déjà la victoire en vert et la
+     défaite en rouge ; ce seul écran la peignait en or. Le même événement
+     avait deux couleurs selon l'endroit, et celle-ci était en plus celle
+     des écharpes — sur un écran dont la première ligne annonce un gain
+     d'écharpes. Trois écrans disent maintenant la même chose. */
   $('bilanCase').style.setProperty('--mc', nul ? 'var(--gris)'
-    : gagne ? 'var(--projo)' : 'var(--flare)');
+    : gagne ? 'var(--vert)' : 'var(--flare)');
   /* L'écharpe du bandeau prend les couleurs du résultat : c'est la première
      chose que l'œil attrape, avant même d'avoir lu le mot. */
   const e = $('bilanEcharpe');
-  e.style.setProperty('--e1', nul ? 'var(--gris)' : gagne ? 'var(--projo)' : 'var(--flare)');
-  e.style.setProperty('--e2', nul ? '#4E5865' : gagne ? '#E08A2C' : '#8E1D12');
+  e.style.setProperty('--e1', nul ? 'var(--gris)' : gagne ? 'var(--vert)' : 'var(--flare)');
+  e.style.setProperty('--e2', nul ? '#4E5865' : gagne ? '#12613F' : '#8E1D12');
   e.style.width = '96px';
 
   $('bilanScore').innerHTML = `${b.goals?.[mien] ?? 0}<em>–</em>${b.goals?.[mien ^ 1] ?? 0}`;

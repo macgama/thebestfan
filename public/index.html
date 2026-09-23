@@ -1423,13 +1423,36 @@ function pleinDe(racine, evo) {
  */
 function dessineA(evo) {
   if (!equipe) return true;
+
+  /* **La carte d'abord, le manifeste des états ensuite.**
+   *
+   * L'ordre était l'inverse, et il a fini par mentir. Le manifeste ne connaît
+   * que les **expressions** — la joie, le dépit — et il redescend d'âge quand
+   * celui qu'on demande n'en a aucune. Il répondait donc « âge 1 » pour un
+   * personnage dont l'âge 2 est parfaitement dessiné, et l'accueil affichait
+   * « dessin à venir » sur une carte qui existe.
+   *
+   * Mesuré : RP4B, RP2B, RP4C rendent tous « âge 1 » au manifeste alors que
+   * leurs trois illustrations sont là. Le défaut est apparu le jour où j'ai
+   * donné son dessin de repos à chaque lignée de LA REPRISE : avant, le
+   * manifeste ne répondait rien pour elles et le repli sur la carte jouait.
+   * Une source qui répond toujours quelque chose est plus dangereuse qu'une
+   * source muette.
+   *
+   * L'autorité sur « cet âge est-il dessiné » est donc la carte elle-même. Le
+   * manifeste ne sert plus qu'aux personnages qui n'ont pas d'illustration
+   * plate — ceux dont seuls les états existent. */
+  const carte = lignee.ages.find((a) => a.stade === evo);
+  if (carte && window.FZART?.racineIllustree?.(carte.id) === carte.id) return true;
+
   if (window.TBF_ETATS?.pret?.()) {
     const r = window.TBF_ETATS.resoudre(equipe.id, { evo, skin: equipe.skin, etat: 'neutre' });
     if (r) return r.evo === evo;
   }
-  const carte = lignee.ages.find((a) => a.stade === evo);
-  if (!carte) return true;
-  return window.FZART?.racineIllustree?.(carte.id) === carte.id;
+  /* Ni carte ni manifeste : on ne sait pas, et on ne promet donc rien de
+     déplaisant. Voir le commentaire au-dessus — une plaque qui annonce
+     « dessin à venir » puis se ravise est pire que le défaut qu'elle corrige. */
+  return !carte;
 }
 
 /** Les flèches et le bouton, remis d'accord avec ce qui est à l'écran. */

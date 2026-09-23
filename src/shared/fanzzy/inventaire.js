@@ -35,6 +35,20 @@ export const SKINS = [
   { id: 'apocalyptique', nom: 'Apocalyptique', rar: 'epique', pour: '*',
     texte: 'Le dernier match, joué sur un terrain que personne ne tond plus.' },
 
+  /* **La première tenue qui apporte son propre décor.**
+   *
+   * Les trois du dessus repeignent la palette du décor dessiné — le même
+   * lieu en ocre, en cendre. Celle-ci pose quatre plaques peintes, une par
+   * rareté, rangées dans `public/img/fonds/` sous `halloween-<rareté>`. Voir
+   * `plaque()` dans `public/fanzzy-fond.js` : sous une tenue, c'est la tenue
+   * qui décide du lieu, ou personne.
+   *
+   * `epique` et non `legendaire` : une tenue de saison se porte, elle ne se
+   * vénère pas. Les trois légendaires du catalogue sont toutes hors
+   * circulation, et en sortir une neuve chaque automne les banaliserait. */
+  { id: 'halloween', nom: 'Halloween', rar: 'epique', pour: '*',
+    texte: 'Le virage a sorti ses masques. On ne sait plus qui chante.' },
+
   // Sortis de la circulation en septembre 2026. Conservés pour ceux qui les ont.
   { id: 'pluie', nom: 'Sous la pluie', rar: 'rare', pour: '*', publie: false },
   { id: 'nocturne', nom: 'Nocturne', rar: 'rare', pour: '*', publie: false },

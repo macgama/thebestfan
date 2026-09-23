@@ -69,6 +69,52 @@ main{width:100%;max-width:var(--colonne)}
 .ouvre h2{font-family:var(--banner);font-size:13px;letter-spacing:.14em;margin:0 0 10px;
   text-transform:uppercase;opacity:.75}
 .ouvre ul{margin:0 0 20px;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+
+/* **Le tableau comparatif.**
+
+   Deux colonnes, et la seconde tient la couleur : c'est elle qu'on vient
+   lire. La première n'est pas grisée pour autant — un « sans » illisible
+   supprimerait la comparaison, qui est tout l'intérêt du tableau.
+
+   Les intitulés sont des `<th scope="row">` : un lecteur d'écran annonce
+   alors « Boosters en réserve, avec : 24 » au lieu de lire vingt-quatre tout
+   seul au milieu de nulle part. */
+.compare{width:100%;border-collapse:collapse;margin:0 0 18px;font-size:13px}
+.compare thead th{font-family:var(--banner);font-size:9.5px;letter-spacing:.16em;
+  text-transform:uppercase;opacity:.5;padding:0 10px 8px;text-align:center;font-weight:400}
+.compare thead th.avec{color:var(--projo);opacity:.95}
+.compare tbody tr{border-top:1px solid rgba(242,238,228,.1)}
+.compare tbody th{text-align:left;font-weight:400;padding:11px 10px 11px 0;
+  vertical-align:top;min-width:0}
+.compare tbody th b{display:block;font-family:var(--banner);font-size:12.5px;
+  letter-spacing:.03em;line-height:1.25}
+.compare tbody th small{display:block;font-size:10.5px;opacity:.45;margin-top:3px;
+  line-height:1.4}
+.compare tbody td{padding:11px 10px;text-align:center;vertical-align:middle;
+  white-space:nowrap;opacity:.65}
+/* La colonne payante : fond, couleur, et un poids de plus. Elle doit se
+   détacher sans que l'autre devienne illisible. */
+.compare tbody td.avec{opacity:1;color:var(--projo);font-family:var(--banner);
+  font-size:14px;background:rgba(245,195,59,.07);
+  box-shadow:inset 1px 0 0 rgba(245,195,59,.22),inset -1px 0 0 rgba(245,195,59,.22)}
+.compare tbody tr:last-child td.avec{box-shadow:inset 1px 0 0 rgba(245,195,59,.22),
+  inset -1px 0 0 rgba(245,195,59,.22),inset 0 -1px 0 rgba(245,195,59,.22)}
+.compare thead th.avec{background:rgba(245,195,59,.07)}
+
+/* Sur un téléphone étroit, la précision sous l'intitulé prend toute la
+   place et repousse les deux colonnes hors du cadre. Elle s'efface : les
+   chiffres, eux, ne se remplacent par rien. */
+@media (max-width:380px){
+  .compare tbody th small{display:none}
+  .compare{font-size:12px}
+}
+
+/* Le mot sous les deux boutons : ce qu'on gagne tout de suite, et ce qui se
+   passe si l'on arrête. Les deux questions qu'on se pose la main sur la
+   carte bancaire. */
+.fin-mot{margin:12px 2px 0;font-size:11px;line-height:1.55;opacity:.55;text-align:center}
+.prendre{display:flex;flex-direction:column;gap:9px}
+.prendre em{font-style:normal;opacity:.6;font-size:11px}
 .ouvre li{display:flex;gap:11px;align-items:flex-start;padding:11px 13px;border-radius:11px;
   background:rgba(255,255,255,.045);border:1px solid rgba(242,238,228,.11);
   font-size:13px;line-height:1.4}
@@ -133,21 +179,33 @@ const jour = (d) => new Date(d).toLocaleDateString('fr', {
    Le libellé est ici, les **chiffres** viennent du serveur : c'est lui qui
    connaît les réglages, et ils s'ajustent depuis /admin sans qu'on relivre
    cette page. */
+/**
+ * Les six lignes du tableau, chacune avec ses deux colonnes.
+ *
+ * **Les deux côtés viennent du serveur.** `o` est ce que l'abonnement ouvre,
+ * `sans` ce qu'on a sans lui ; aucun des deux n'est écrit ici. La page avait
+ * déjà recopié un barème une fois et annonçait « au lieu de 10 » quand le
+ * réglage en disait douze — un nombre recopié ment au premier ajustement fait
+ * depuis l'administration, et personne ne relit une page pour vérifier un
+ * chiffre qu'il croit connaître.
+ *
+ * `n` est le nom de la ligne, `sous` la précision qui ne tient pas dans une
+ * colonne, et les deux valeurs se lisent côte à côte.
+ */
 function portes(o, sans) {
   return [
-    { n: o.packMax, quoi: 'boosters en réserve',
-      sous: `au lieu de ${sans.packMax} — de quoi partir en week-end sans rien perdre` },
-    { n: `${o.packRegenMin} min`, quoi: 'entre deux boosters',
-      sous: `au lieu de ${sans.packRegenMin} minutes` },
-    { n: `+${o.clubsEnPlus}`, quoi: 'clubs suivis en plus',
-      sous: 'par-dessus ce que le niveau ouvre déjà' },
-    { n: '∞', quoi: 'de mémoire',
-      sous: `tout ton parcours et toutes tes cartes-souvenirs, au lieu des ${
-        o.parcoursLibre} dernières parties` },
-    { n: '∞', quoi: 'de tenues',
-      sous: 'porte n’importe quelle tenue publiée, et garde celles que tu portes' },
-    { n: '1', quoi: 'KOP à créer',
-      sous: 'rejoindre un KOP reste ouvert à tout le monde' },
+    { n: 'Boosters en réserve', sous: 'de quoi partir en week-end sans rien perdre',
+      sans: String(sans.packMax), avec: String(o.packMax) },
+    { n: 'Entre deux boosters', sous: 'le temps que met la réserve à se remplir',
+      sans: `${sans.packRegenMin} min`, avec: `${o.packRegenMin} min` },
+    { n: 'Clubs suivis', sous: 'par-dessus ce que le niveau ouvre déjà',
+      sans: 'ce que le niveau ouvre', avec: `+${o.clubsEnPlus}` },
+    { n: 'Mémoire du parcours', sous: 'tes parties et tes cartes-souvenirs',
+      sans: `${o.parcoursLibre} dernières`, avec: 'tout' },
+    { n: 'Tenues', sous: 'celles que tu portes te restent dans tous les cas',
+      sans: 'celles que tu gagnes', avec: 'toutes les publiées' },
+    { n: 'Créer un KOP', sous: 'en rejoindre un reste ouvert à tout le monde',
+      sans: 'non', avec: 'oui' },
   ];
 }
 
@@ -201,28 +259,83 @@ function portes(o, sans) {
 
     <div class="ouvre">
       <h2>Ce que l’abonnement ouvre</h2>
-      <ul>${portes(o, sans).map((p) => `<li><b>${esc(p.n)}</b>
-        <span>${esc(p.quoi)}<small>${esc(p.sous)}</small></span></li>`).join('')}</ul>
+      <!-- **Un tableau, et non une liste.**
+
+           La liste disait « 24 boosters en réserve — au lieu de 5 ». C'est
+           exact, et il faut lire la phrase jusqu'au bout pour trouver le
+           second nombre, celui auquel on se compare. Un tableau met les deux
+           côte à côte : on voit l'écart avant d'avoir lu.
+
+           Les deux colonnes viennent du serveur — « ouvre » et « sans » — et
+           non d'un barème recopié ici. La page l'avait déjà fait une fois et
+           annonçait « au lieu de 10 » quand le réglage en disait douze. -->
+      <table class="compare">
+        <thead><tr><th></th><th>Sans</th><th class="avec">Avec</th></tr></thead>
+        <tbody>${portes(o, sans).map((p) => `<tr>
+          <th scope="row"><b>${esc(p.n)}</b><small>${esc(p.sous)}</small></th>
+          <td>${esc(p.sans ?? '—')}</td>
+          <td class="avec">${esc(p.avec ?? p.quoi)}</td>
+        </tr>`).join('')}</tbody>
+      </table>
     </div>
 
     ${d.abonne ? '' : `<div class="prendre">
+      <!-- Les deux formules, côte à côte. Une seule mènerait au mensuel sans
+           jamais dire que l'annuel existe — or c'est lui qui est avantageux,
+           et le taire n'aide personne. -->
       <button class="tbf-plaque tbf-bloc tbf-grande" data-ton="or" id="prendre"
-        style="width:100%">M’abonner</button>
+        style="width:100%">M’abonner au mois — 3,99 €</button>
+      <button class="tbf-plaque tbf-bloc" id="prendreAn"
+        style="width:100%">À l’année — 39,90 € <em>deux mois offerts</em></button>
+      <p class="fin-mot">Résiliable quand tu veux : l’échéance déjà payée court
+        jusqu’au bout, et tu gardes les tenues que tu portes.
+</p>
     </div>`}`;
 
-  /* Le prestataire de paiement n'est pas branché sur l'abonnement : la boutique
-     est en paiement unique, et l'abonnement demande un abonnement Stripe. On le
-     dit plutôt que d'ouvrir une page qui échouerait — et on dit par où passer
-     en attendant, parce qu'un bêta-testeur peut en recevoir un. */
-  $('prendre')?.addEventListener('click', () => {
-    window.TBF_DIALOGUE?.ouvrir?.({
-      titre: 'Bientôt',
-      texte: 'Le paiement de l’abonnement n’est pas encore branché.\n\n'
-        + 'Pendant la bêta, l’abonnement s’offre depuis l’administration : '
-        + 'demande-le, il se pose en un geste.',
-      oui: 'Compris',
-    }) ?? alert('Le paiement de l’abonnement n’est pas encore branché.');
-  });
+  /* **Le bouton menait à une boîte de dialogue disant « bientôt ».**
+   *
+   * Elle avait raison le jour où elle a été écrite. Depuis, la boutique sait
+   * ouvrir un abonnement Stripe — `mode: 'subscription'`, deux formules au
+   * catalogue — et c'est par elle que les joueurs s'abonnaient : cet écran-ci,
+   * celui qui explique l'abonnement, était le seul à ne pas pouvoir le vendre.
+   *
+   * Il appelle donc la même route que la boutique, avec le même corps : rien
+   * que l'identifiant de l'article. Le prix est décidé par le serveur, ici
+   * comme là-bas.
+   */
+  async function commander(article, bouton) {
+    bouton.disabled = true;
+    try {
+      const r = await fetch('/api/boutique/commander', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ article }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 401) { location.href = '/compte'; return; }
+      if (!r.ok || !j.url) {
+        /* Le cas de la vitrine : la boutique se monte sans clé Stripe et
+           refuse alors la commande. On le dit avec ses mots plutôt que de
+           laisser un bouton qui ne fait rien. */
+        bouton.disabled = false;
+        window.TBF_DIALOGUE?.ouvrir?.({
+          titre: 'Pas encore',
+          texte: 'Le paiement n’est pas disponible pour le moment.\n\n'
+            + 'Pendant la bêta, l’abonnement peut s’offrir depuis '
+            + 'l’administration : demande-le.',
+          oui: 'Compris',
+        }) ?? alert('Le paiement n’est pas disponible pour le moment.');
+        return;
+      }
+      location.href = j.url;
+    } catch {
+      bouton.disabled = false;
+    }
+  }
+
+  $('prendre')?.addEventListener('click', (e) => commander('abo-mensuel', e.currentTarget));
+  $('prendreAn')?.addEventListener('click', (e) => commander('abo-annuel', e.currentTarget));
 })();
 </script>
 </body>

@@ -301,7 +301,6 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
         <!-- Le même titre que sur le deck : barre d'accent dorée, lettrage du
              jeu. Deux écrans voisins qui titrent différemment se lisent comme
              deux applications. -->
-        <h2 class="tbf-titre">LE CLASSEUR</h2>
         <div class="n"><span id="progTxt">0/0</span></div>
       </div>
       <div class="progress"><div class="bar"><i id="progBar"></i></div></div>
@@ -316,7 +315,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
          commençait directement par une carte : on ne savait pas si l'onglet
          avait répondu, ou si la page chargeait encore. -->
     <div class="head">
-      <h2 class="tbf-titre">MON FANZZY<small>celui qui entre au coup d’envoi</small></h2>
+      <p class="tbf-sous">Celui qui entre au coup d’envoi</p>
     </div>
     <div id="teamBody"></div>
   </section>
@@ -443,17 +442,45 @@ function renderDex() {
      puis TR2. Trois par rangee, donc une lignee par rangee — ce n'est pas un
      hasard de mise en page, c'est ce qui rend la progression lisible d'un coup
      d'oeil. */
+  /* **L'ordre des séries est celui du catalogue, pas celui de l'alphabet.**
+
+     Il se lisait sur les deux lettres de l'identifiant, comparées par
+     `localeCompare`. Le classeur s'ouvrait donc sur LE BESTIAIRE et rangeait
+     LA REPRISE en dixième position — alors que LA REPRISE est la seule série
+     en production, et donc la seule que le joueur puisse remplir. Personne
+     n'a choisi cet ordre : il est tombé de BG < EP < GC.
+
+     `SETS_TOUTES` porte l'ordre voulu, et il porte aussi les séries
+     refermées — c'est ce qu'il faut, puisqu'un joueur continue de voir les
+     cartes d'une série qu'on a fermée. Une série hors table passe en fin,
+     plutôt que de se glisser au hasard au milieu.
+
+     **Et les légendaires ferment chaque série.**
+
+     Les trois âges d'une lignée sont ses trois raretés — commune, rare,
+     épique — et une rangée de trois cases les montre déjà dans cet ordre.
+     Trier sur la rareté carte par carte casserait donc ce qui vient d'être
+     construit juste au-dessus : toutes les communes du catalogue d'abord,
+     puis toutes les rares, et une lignée cesserait d'être lisible.
+
+     Il reste exactement une rareté qui ne tient dans aucune lignée : la
+     légendaire. Les soixante-seize du catalogue sont toutes sans lignée et
+     au premier âge — mesuré, pas supposé. Les sortir en fin de série donne
+     au classeur l'ordre qu'on lit de haut en bas : les lignées, puis ce qui
+     ne s'obtient qu'au tirage. */
+  const ordreSet = new Map(SETS_TOUTES.map((x, i) => [x.id, i]));
   const rang = (f) => {
     const m = /^([A-Z]+)(\d+)/.exec(racineDe(f));
-    return [m?.[1] ?? '', Number(m?.[2] ?? 0), stadeDe(f)];
+    return [ordreSet.get(f.set) ?? 99, f.rar === 'legendaire' ? 1 : 0,
+      Number(m?.[2] ?? 0), stadeDe(f)];
   };
   const list = DEX.filter(visible)
     .filter((f) => (S.filter === 'all' ? true
       : S.filter === 'miss' ? !possede(f) : f.type === S.filter))
     .sort((a, b) => {
-      const [sa, na, ea] = rang(a);
-      const [sb, nb, eb] = rang(b);
-      return sa.localeCompare(sb) || (na - nb) || (ea - eb);
+      const ra = rang(a);
+      const rb = rang(b);
+      return (ra[0] - rb[0]) || (ra[1] - rb[1]) || (ra[2] - rb[2]) || (ra[3] - rb[3]);
     });
 
   /* La progression se compte toujours sur les **personnages**, et pas sur les
