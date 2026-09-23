@@ -93,10 +93,20 @@ appliqué, et il l'était à moitié.
 ```bash
 cd ~/sites/thebestfan.online
 
-FICHIERS="auth football minutes couleurs duel souvenirs fanzzy teletext
-          inventaire skins tenues deck admin kop amis niveau raretes stades
-          boutique billets saisons series-neuves historique abonnement contenus
-          bourse cris aide"
+# La liste vient du dépôt, elle n'est plus recopiée ici.
+#
+# Elle l'a été, et elle avait divergé : trois fichiers manquaient — etats,
+# prefixes, identites — et l'ordre n'était plus le bon. Une liste recopiée
+# dans un document ne se met jamais à jour toute seule, et celle-ci décide
+# de ce qui existe en production. C'est la même faute que les trois copies
+# d'ORDRE réconciliées en septembre 2026.
+FICHIERS=$(node -e "import('./scripts/ordre-schema.mjs').then(m=>console.log(m.ORDRE.join(' ')))")
+
+if [ -z "$FICHIERS" ]; then
+  echo "ARRÊT — scripts/ordre-schema.mjs est illisible. Le code n'est pas à jour."
+  exit 1
+fi
+echo "$(echo $FICHIERS | wc -w) fichiers à appliquer."
 
 # 1. Tout est-il là ? On regarde avant d'écrire quoi que ce soit.
 manquants=""
