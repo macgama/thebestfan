@@ -45,9 +45,20 @@ import { reglage } from '../shared/reglages.js';
  * @param {string} userId
  */
 export async function assurerBourse(q, userId) {
+  /* **`packs_at` est nommée, et pas laissée au défaut de la colonne.**
+
+     Le défaut est `CURRENT_TIMESTAMP(3)`, c'est-à-dire l'heure de MySQL,
+     alors que la recharge se calcule avec celle de Node. Deux fuseaux qui
+     ne coïncident pas, et une bourse neuve naît déjà décalée : minuteur
+     absurde dans un sens, réserve qui se remplit toute seule dans l'autre.
+     Voir le pavé de `wallet`, dans `fanzzy/index.js`.
+
+     C'est la même raison que celle du reste de ce fichier, d'ailleurs : un
+     défaut de colonne est une valeur qu'on ne peut ni lire ni changer, et
+     ce n'est pas un endroit où ranger une règle. */
   await q(
-    `INSERT IGNORE INTO user_wallet (user_id, packs) VALUES (?, ?)`,
-    [userId, packsDepart()]);
+    `INSERT IGNORE INTO user_wallet (user_id, packs, packs_at) VALUES (?, ?, ?)`,
+    [userId, packsDepart(), new Date()]);
 }
 
 /**

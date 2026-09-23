@@ -64,10 +64,32 @@ const LARGEURS = opt('--largeur') ? [Number(opt('--largeur'))] : [360, 400, 768]
 
 /* Les pages, telles que `server.js` les sert. On les lit dans le fichier plutôt
    que de les énumérer : une page ajoutée sans être auditée ne se verrait
-   nulle part, et c'est exactement le genre d'oubli que cet outil corrige. */
-const PAGES = seule ? [seule] : [...readFileSync(path.join(RACINE, 'server.js'), 'utf8')
-  .matchAll(/app\.get\('(\/[a-z-]*)',\s*\(_req, res\) => res\.sendFile/g)]
-  .map((m) => m[1]);
+   nulle part, et c'est exactement le genre d'oubli que cet outil corrige.
+
+   **Deux formes, et la seconde a coûté cet audit.** Les routes rendaient
+   leur page par `res.sendFile` ; elles passent désormais par un raccourci
+   `page(res, …)` qui estampille le HTML. La recherche n'a pas suivi : elle
+   ne trouvait plus rien, la liste était vide, et l'outil annonçait « Rien à
+   signaler sur aucune page » — en n'ayant regardé aucune page.
+
+   C'est la pire panne possible pour un contrôle : il ne rougit pas, il
+   rassure. D'où le refus plus bas de travailler sur une liste vide. */
+const PAGES = seule ? [seule] : [...new Set(
+  [...readFileSync(path.join(RACINE, 'server.js'), 'utf8')
+    .matchAll(/app\.get\('(\/[a-z-]*)',\s*\(_req, res\) => (?:res\.sendFile|page\()/g)]
+    .map((m) => m[1]))];
+
+/* **Une liste vide est une panne, pas un résultat.** Sans ce garde-fou,
+   l'outil parcourt zéro page, ne trouve zéro défaut, et le dit sur le ton de
+   la bonne nouvelle. Il vaut mieux qu'il s'arrête en nommant la cause. */
+if (!PAGES.length) {
+  console.error('\nAucune page trouvée dans server.js.\n\n'
+    + '  La recherche attend `app.get(\'/x\', (_req, res) => page(res, …))`\n'
+    + '  ou la même chose avec `res.sendFile`. Si les routes ont changé de\n'
+    + '  forme, c\u2019est ici qu\u2019il faut le dire — sinon cet audit ne regarde\n'
+    + '  plus rien tout en se déclarant satisfait.\n');
+  process.exit(1);
+}
 
 /* ------------------------------------------------------------- la base */
 
@@ -153,8 +175,26 @@ const note = (page, largeur, genre, quoi) =>
 
 /** Le contraste d'un texte sur son fond, selon la formule WCAG. */
 const MESURE = `(() => {
+  /* **« color(srgb 0.95 0.83 0.49) » ne se lit pas comme « rgb(242, 212, 125) ».**
+     C'est ce que rend « color-mix », dont le jeu se sert déjà à trois endroits,
+     et ses composantes vont de zéro à un là où celles de « rgb() » vont à 255.
+     Les diviser par 255 comme les autres donnait du presque-noir, donc
+     « 1.1:1 » pour un texte crème parfaitement lisible.
+
+     C'est la même faute que le dégradé quelques lignes plus bas, et elle
+     coûte la même chose : une mesure fausse envoie corriger ce qui ne l'est
+     pas. Le nom de l'espace est retiré avant de chercher les nombres, sinon
+     le « 3 » de « display-p3 » passerait pour une composante. */
+  const lire = (c) => {
+    const espace = /^color\\(/.test(c);
+    const n = ((espace ? c.replace(/^color\\(\\s*[a-z0-9-]+/i, '') : c)
+      .match(/[\\d.]+/g) ?? []).map(Number);
+    const e = espace ? 255 : 1;
+    return [(n[0] ?? 0) * e, (n[1] ?? 0) * e, (n[2] ?? 0) * e,
+      n.length > 3 ? n[3] : 1];
+  };
   const lum = (c) => {
-    const [r, g, b] = c.match(/\\d+(\\.\\d+)?/g).slice(0, 3).map(Number)
+    const [r, g, b] = lire(c).slice(0, 3)
       .map((v) => { const s = v / 255; return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4; });
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   };
@@ -177,10 +217,6 @@ const MESURE = `(() => {
      jusqu'à la première opaque, exactement comme le navigateur la peint. */
   const composer = (dessus, dessous) => dessus.map((v, i) => Math.round(
     v * dessus[3] + dessous[i] * (1 - dessus[3])));
-  const lire = (c) => {
-    const n = (c.match(/[\\d.]+/g) ?? []).map(Number);
-    return [n[0] ?? 0, n[1] ?? 0, n[2] ?? 0, n.length > 3 ? n[3] : 1];
-  };
 
   const fond = (el) => {
     const couches = [];
@@ -388,7 +424,7 @@ await pool.end();
 /* -------------------------------------------------------------- le rapport */
 
 if (!trouvailles.length) {
-  console.log('\n  Rien à signaler sur aucune page. (Vérifie que le serveur a bien servi.)\n');
+  console.log(`\n  Rien à signaler sur les ${PAGES.length} pages auditées.\n`);
   process.exit(0);
 }
 

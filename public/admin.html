@@ -234,7 +234,11 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
      un administrateur qui veut le classeur ou le kiosque devait repasser par
      l'accueil. Le menu est le même qu'ailleurs — c'est tout l'intérêt. -->
 <header><h1>ADMINISTRATION</h1><span class="who" id="who"></span>
-  <a href="/" style="color:var(--projo);font-size:12px">retour au jeu</a>
+  <!-- La zone de touche est écrite ici plutôt que dans la feuille : ce lien
+       n'a pas de classe, et lui en inventer une pour trois propriétés
+       coûterait plus cher à relire que de les voir sur place. -->
+  <a href="/" style="color:var(--projo);font-size:12px;display:inline-flex;
+     align-items:center;min-height:44px">retour au jeu</a>
   <button class="pan tbf-burger" id="burger" aria-label="Menu"
     ><span></span><span></span><span></span></button></header>
 <nav id="nav"></nav>

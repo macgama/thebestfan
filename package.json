@@ -88,6 +88,7 @@
     "chants:invites": "node scripts/chant-images.mjs --invites",
     "epreuves:ui": "node scripts/epreuves-ui-smoke.mjs",
     "gestes:test": "node scripts/gestes-smoke.mjs",
+    "appels:test": "node scripts/appels-smoke.mjs",
     "boutique:smoke": "node scripts/boutique-smoke.mjs",
     "stripe:diag": "node --env-file-if-exists=.env scripts/stripe-diag.mjs",
     "boosters:ui": "node scripts/boosters-ui-smoke.mjs",

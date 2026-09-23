@@ -45,7 +45,13 @@ const CHANCE_DEUXIEME = 0.7;
 /* La table des places ouvertes, à l'identique du serveur. La simulation ne
    distingue pas action / stuff / skin — aucune ne rend de carte de collection —
    mais les écharpes, si : ce sont elles qui paient les évolutions. */
-const PART_ECHARPES = 0.25;
+/* Passée de 0,25 à 0,23 en septembre 2026, quand les états sont devenus des
+   cartes à tirer : les douze pour cent qu ils prennent ont ete repris sur les
+   quatre autres categories, dont celle-ci. Le controle juste en dessous a
+   refuse de tourner le jour du changement, et c est exactement son role —
+   une simulation d economie qui tourne sur des chiffres perimes ne se trompe
+   pas un peu, elle se trompe entierement. */
+const PART_ECHARPES = 0.23;
 const POIGNEES = [[6, 0.55], [14, 0.33], [30, 0.12]];
 
 {

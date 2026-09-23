@@ -147,6 +147,11 @@ async function amorcer(pool, avecAmorce) {
       f.histoire ?? null, JSON.stringify(f.mods ?? {}), JSON.stringify(f.cri ?? {}),
       f.publie === false ? 0 : 1, i];
     if (avecAmorce) { champs.push('amorce'); valeurs.push(JSON.stringify(instantane(f))); }
+    /* sql-sur : `champs` est le tableau littéral écrit six lignes plus haut,
+       auquel on n'ajoute que `amorce`. Rien n'y entre d'ailleurs. Les valeurs,
+       elles, partent toutes en paramètres — autant de `?` que de colonnes,
+       comptés sur le même tableau, ce qui rend les deux listes incapables de
+       diverger. */
     const [r] = await pool.execute(
       `INSERT IGNORE INTO fanzzy (${champs.join(', ')})
        VALUES (${champs.map(() => '?').join(', ')})`, valeurs);
@@ -209,6 +214,14 @@ async function reconcilier(pool, avecAmorce) {
       + 'les cartes déjà en base.');
     return null;
   }
+  /* sql-sur : `colonnes` est la liste des colonnes gérées, construite à
+     partir de COLONNE — une table de constantes écrite cinquante lignes plus
+     haut, dans ce fichier. Aucune donnée de requête ne la touche, et elle ne
+     porte que des noms de colonnes, qui ne peuvent pas partir en paramètre.
+
+     Le contrôle de sécurité ne peut pas le déduire — il voit une chaîne SQL
+     interpolée et s'arrête là, ce qui est exactement ce qu'on lui demande.
+     Cette note est la réponse. */
   const colonnes = [...new Set(Object.values(COLONNE))].join(', ');
   const [rows] = await pool.query(`SELECT id, ${colonnes}, amorce FROM fanzzy`);
 
@@ -230,6 +243,14 @@ async function reconcilier(pool, avecAmorce) {
   for (const e of plan.ecrire) {
     const champs = Object.keys(e.valeurs);
     const sets = [...champs.map((c) => `${COLONNE[c]} = ?`), 'amorce = ?'];
+    /* Les clés viennent du plan de fusion, donc de données — mais elles ne
+       traversent pas la chaîne SQL : elles servent d'index dans `COLONNE`, qui
+       ne rend qu'un nom de colonne connu ou `undefined`. Une clé inventée
+       produirait « undefined = ? », une requête qui échoue, jamais une requête
+       détournée.
+
+       sql-sur : `sets` n'est que des noms de `COLONNE` suivis de « = ? », et
+       toutes les valeurs partent en paramètres, `id` compris. */
     await pool.execute(
       `UPDATE fanzzy SET ${sets.join(', ')} WHERE id = ?`,
       [...champs.map((c) => versSql(c, e.valeurs[c])), JSON.stringify(e.amorce), e.id]);

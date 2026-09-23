@@ -44,20 +44,64 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* **Une étiquette coupée ne dit plus rien.** « TA TRIB… » et « EN F… » ne
    distinguent plus les deux camps, ce qui est précisément leur seul travail.
    Sur les écrans étroits, l'interlettrage part le premier : il est là pour
-   l'allure, et l'allure passe après la lecture. */
+   l'allure, et l'allure passe après la lecture.
+
+   Ça n'a pas suffi : l'audit mesurait encore quinze pixels de trop à 360 px.
+   En cherchant d'où venait la place, on tombe sur un compte qui explique
+   tout — 62 px de dégagement de chaque côté pour les deux boutons flottants,
+   soit **un tiers de l'écran** avant d'avoir écrit un seul mot. Sur les 236
+   qui restent, « GRAND VIRAGE » en réservait soixante-cinq au milieu, et les
+   deux camps se partageaient le reste : quarante-quatre pixels de texte pour
+   en écrire cinquante-neuf.
+
+   On ne touche pas au dégagement — il a déjà été monté de 58 à 62 parce que
+   le blason passait sous le bouton de menu. On reprend les pixels là où ils
+   ne servent qu'à respirer : l'interlettrage de la phase, les écarts, le
+   blason. Aucune de ces quatre reprises ne suffirait seule. */
 @media (max-width:420px){
-  .club small{font-size:9px;letter-spacing:.02em}
+  .hud{gap:6px}
+  .club{gap:5px}
+  .club img{width:22px;height:22px}
+  .club small{font-size:9px;letter-spacing:0}
+  .score{min-width:0}
+  .score small{font-size:7.5px;letter-spacing:.05em}
+}
+/* **Sous 380 px, « TA TRIBUNE » ne rentre pas, alors on écrit « TOI ».**
+
+   Les quatre reprises du dessus ont rendu treize des quinze pixels manquants.
+   Les deux derniers n'existent pas : il n'y a plus rien à gratter qui ne se
+   paie pas ailleurs, et gagner deux pixels par un demi-point de police, c'est
+   se remettre dans la même situation à la première police qui change.
+
+   Alors on arrête de rétrécir le mot et on en change. « TOI » et « EUX »
+   disent exactement ce que disaient « TA TRIBUNE » et « EN FACE » — c'est
+   déjà ce qu'on lit, en plus court. Le texte long reste dans le document
+   pour les lecteurs d'écran, qui n'ont pas de problème de largeur. */
+@media (max-width:380px){
+  .club small{font-size:0}
+  .club small::before{content:attr(data-court);font-size:9px;letter-spacing:.08em}
 }
 .score{font-family:var(--banner);font-size:24px;flex:none;min-width:64px;text-align:center;line-height:1}
 .score small{display:block;font-size:8.5px;letter-spacing:.16em;opacity:.5;font-family:var(--ui);margin-top:3px}
 .score.surge{color:var(--projo);animation:pulse 1s infinite}
 /* Inviter quelqu'un. Sous le score, minuscule : c'est une chose qu'on fait une
    fois en entrant, pas toutes les trente secondes — et la place au-dessus
-   appartient au match. */
-.inviter{display:block;margin:4px auto 0;background:none;border:1px solid rgba(242,238,228,.22);
-  border-radius:5px;color:var(--craie);font-family:var(--ui);font-size:8px;letter-spacing:.14em;
-  padding:3px 7px;opacity:.55;cursor:pointer}
-.inviter:hover{opacity:1;border-color:var(--projo);color:var(--projo)}
+   appartient au match.
+
+   **Minuscule à l'œil, pas sous le doigt.** La pastille mesurait 52×19 : on
+   la visait trois fois. Mais la grossir, c'était lui donner l'importance
+   qu'on vient de lui refuser. Alors le bouton et la pastille sont devenus
+   deux choses : le `button` est une zone de touche transparente de 44 px,
+   le `span` à l'intérieur garde le trait fin et les huit pixels de texte.
+   Les marges négatives rendent au bandeau la hauteur que la zone a prise —
+   elle déborde sur ce qu'il y a dessus et dessous, où il n'y a rien à
+   toucher. */
+.inviter{display:flex;align-items:center;justify-content:center;min-height:44px;
+  margin:-9px auto -12px;background:none;border:0;padding:0;cursor:pointer}
+.inviter span{border:1px solid rgba(242,238,228,.22);border-radius:5px;
+  color:var(--craie);font-family:var(--ui);font-size:8px;letter-spacing:.14em;
+  padding:3px 7px;opacity:.55}
+.inviter:hover span{opacity:1;border-color:var(--projo);color:var(--projo)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
 
 /* ------------------------------------------------------------- le fil
@@ -443,11 +487,13 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <body>
 <main id="app">
   <div class="hud">
-    <div class="club" id="clubFoe"><img alt=""><div><b>—</b><small>EN FACE</small></div></div>
+    <div class="club" id="clubFoe"><img alt=""><div><b>—</b>
+      <small data-court="EUX">EN FACE</small></div></div>
     <div class="score"><span id="score">0 – 0</span><small id="phase">GRAND VIRAGE</small>
       <button class="inviter" id="partager" hidden
-        aria-label="Inviter quelqu’un sur ce match">INVITER</button></div>
-    <div class="club me" id="clubMe"><img alt=""><div><b>—</b><small>TA TRIBUNE</small></div></div>
+        aria-label="Inviter quelqu’un sur ce match"><span>INVITER</span></button></div>
+    <div class="club me" id="clubMe"><img alt=""><div><b>—</b>
+      <small data-court="TOI">TA TRIBUNE</small></div></div>
   </div>
 
   <button class="fil" id="fil" hidden aria-haspopup="dialog">

@@ -65,8 +65,13 @@ input:focus{outline:none;border-color:var(--projo)}
    largeur pleine et sa marge de formulaire. */
 button.go{width:100%;margin-top:24px;padding:14px;font-size:16px;letter-spacing:.1em}
 button.go[disabled]{filter:grayscale(.85);opacity:.5;pointer-events:none}
+/* **Le bouton qui supprime un compte doit s'atteindre, pas se deviner.** Il
+   mesurait 126×16. On ne le grossit pas à l'œil — il n'a rien à réclamer —
+   mais sa zone monte à quarante-quatre pixels, et la marge du dessus se
+   réduit d'autant pour que rien ne bouge. */
 .link{background:none;border:0;color:var(--projo);font-size:12.5px;cursor:pointer;padding:0;
-  margin-top:18px;font-family:inherit;text-decoration:underline;text-underline-offset:3px}
+  margin-top:4px;font-family:inherit;text-decoration:underline;text-underline-offset:3px;
+  display:inline-flex;align-items:center;min-height:44px}
 .msg{margin-top:18px;padding:12px 14px;border-radius:6px;font-size:13px;line-height:1.55;display:none}
 .msg.on{display:block}
 .msg.err{background:rgba(224,64,44,.14);border:1px solid rgba(224,64,44,.4)}

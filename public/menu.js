@@ -189,7 +189,21 @@
       + item('/aide', 'aide', 'Aide et premiers pas', ici('/aide') ? 'on' : '')
       + item('/profil', 'profil', 'Mon profil', ici('/profil') ? 'on' : '')
       + item('/compte', 'compte', 'Mon compte', ici('/compte') ? 'on' : '')
-      + item('#', 'sortie', 'Se déconnecter', 'sortie');
+      + item('#', 'sortie', 'Se déconnecter', 'sortie')
+      /* **La version, tout en bas, et sur toutes les pages.**
+
+         Un joueur qui signale un défaut décrit ce qu'il voit ; il ne peut pas
+         dire sur quelle version il le voit. Sans ce numéro, chaque retour
+         commence par « as-tu rechargé ? » — une question qui fait porter au
+         joueur la charge de notre déploiement.
+
+         Et le mot **bêta** n'est pas de la modestie : il prévient que les
+         soldes peuvent bouger et qu'une saison peut être rejouée. Un joueur
+         prévenu pardonne, un joueur surpris s'en va.
+
+         Le tiroir est le seul élément présent sur **toutes** les pages —
+         c'est déjà pour ça que la marque d'abonnement y vit. */
+      + '<div class="tbf-version" id="tbf-version"></div>';
 
     const voile = document.createElement('div');
     voile.className = 'tbf-voile';
@@ -218,6 +232,19 @@
        * peut manquer, le joueur peut ne pas être connecté. Dans tous ces cas
        * la marque reste cachée — c'est exactement ce qu'elle doit faire, et
        * un menu ne tombe pas parce qu'un abonnement est injoignable. */
+    /* Le numéro de version. Une seule requête par page, mise en cache une
+       heure par le serveur — et si elle échoue, la ligne reste vide plutôt
+       que de mentir : un menu ne tombe pas parce qu'un numéro manque. */
+    void (async () => {
+      try {
+        const r = await fetch('/api/version');
+        if (!r.ok) return;
+        const v = await r.json();
+        const n = document.getElementById('tbf-version');
+        if (n && v?.etiquette) n.textContent = v.etiquette;
+      } catch { /* pas de numéro : le menu marche quand même */ }
+    })();
+
     void (async () => {
       try {
         const r = await fetch('/api/abonnement', { credentials: 'same-origin' });

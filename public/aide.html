@@ -70,8 +70,13 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Les deux étapes qui demandent un geste proposent de le répéter avant. Un
    lien sous la plaque, et pas une seconde plaque : c'est un détour offert, pas
    une marche à monter — l'étape se coche au Virage ou en duel, jamais ici. */
-.pas .repet{display:block;margin:-6px 15px 14px;font-size:11px;letter-spacing:.06em;
-  color:var(--projo);opacity:.72;text-decoration:none}
+/* Quinze pixels de haut, et quinze fois sur la page : c'était la trouvaille
+   la plus répétée de l'audit. Même traitement qu'ailleurs — la zone monte à
+   quarante-quatre, les marges rendent la hauteur, le lien ne change pas
+   d'allure. */
+.pas .repet{display:flex;align-items:center;margin:-20px 15px 0;font-size:11px;
+  letter-spacing:.06em;color:var(--projo);opacity:.72;text-decoration:none;
+  min-height:44px}
 
 /* Le visuel de gauche. Carré, pour qu'une carte, un dos de booster et un
    emblème dessiné se posent au même endroit sans faire tressauter la ligne. */
