@@ -140,10 +140,30 @@
       const r = window.TBF_ETATS?.resoudre?.(perso.id, {
         evo: perso.evo, skin: perso.skin, etat,
       });
-      if (r) return r.src;
-      // Pas d'états dessinés : le plein-pied, s'il existe. Il ne change pas
-      // d'un état à l'autre, mais c'est **le bon personnage** — et c'est ce
-      // que le joueur vérifie en premier.
+      /* **On n'accepte que l'âge exactement demandé.**
+
+         `resoudre` sait redescendre d'un âge, et c'est le bon réflexe pour un
+         état manquant — pas pour un âge. Les états ne sont dessinés que pour
+         une poignée de lignées ; le plein-pied, lui, existe pour deux cents
+         personnages, **à tous leurs âges**.
+
+         Un joueur a photographié son écran « Mon Fanzzy » : la Bâche Repliée
+         dessinée sous le nom de la Bâche Déployée. Il avait payé son
+         évolution, le nom la disait, et le dessin montrait l'enfant — parce
+         que le second âge manque au manifeste et que la descente était
+         acceptée sans un mot.
+
+         C'est mot pour mot la règle déjà écrite dans `fanzzy-art.js` : « on
+         n'accepte que l'âge exactement demandé, accepter sa descente
+         reviendrait à reprendre le repli qu'on corrige ». Elle était vraie
+         d'un côté et pas de l'autre.
+
+         La tenue, elle, garde son droit de repli : un skin non dessiné rend
+         le personnage sans costume, ce qui est le bon personnage. */
+      if (r && r.evo === perso.evo) return r.src;
+      // Pas d'états dessinés à cet âge-là : le plein-pied, s'il existe. Il ne
+      // change pas d'un état à l'autre, mais c'est **le bon personnage** — et
+      // c'est ce que le joueur vérifie en premier.
       return perso.plein ?? null;
     }
 
@@ -159,8 +179,12 @@
      * âge à quelqu'un qui a payé quatre-vingt-dix écharpes pour ne plus le
      * voir — sans rien casser, ce qui est le pire des cas.
      */
+    /* La tenue passe aussi au plein-pied : c'est lui qu'on voit dès qu'un âge
+       n'a pas ses états dessinés, c'est-à-dire presque toujours. Sans elle, le
+       déguisement ne paraissait que sur la poignée de lignées complètes. */
     function pleinPied(p) {
-      return p.plein ?? window.FZART?.adresse?.(p.age ?? p.id, 'plein') ?? null;
+      return p.plein
+        ?? window.FZART?.adresse?.(p.age ?? p.id, 'plein', { skin: p.skin }) ?? null;
     }
 
     /**

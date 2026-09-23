@@ -561,7 +561,14 @@
       art.style.background = decor ? 'none'
         : `radial-gradient(75% 60% at 50% 75%, ${c}3A, transparent 70%), #0A0E13`;
 
-      const adresse = window.FZART?.adresse?.(f.ageId ?? f.id, 'plein');
+      /* **Le décor portait la tenue et le personnage ne la portait pas.**
+
+         `tenue` est calculée trois lignes plus haut et part dans `TBF_FOND`,
+         qui en tire le fond — mais l'illustration était demandée sans elle.
+         Le joueur voyait donc le décor d'Halloween derrière un personnage en
+         tenue ordinaire, sur l'écran même où il venait de choisir son
+         déguisement. */
+      const adresse = window.FZART?.adresse?.(f.ageId ?? f.id, 'plein', { skin: tenue });
       if (!adresse) {
         /* Pas d'illustration pour ce Fanzzy : le dessin géométrique, comme dans
            la grille. Il porte déjà son propre fond, on ne lui en met pas deux —

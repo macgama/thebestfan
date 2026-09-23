@@ -77,6 +77,40 @@ const ILLUSTRE = PUBLIE.find((f) =>
 if (!ILLUSTRE) throw new Error(
   'aucun Fanzzy dessiné dans public/img/fanzzy : la suite ne peut rien éprouver.');
 
+/**
+ * La lignée qui fait tomber la scène d'un âge, s'il en existe une.
+ *
+ * **La condition exacte de la panne**, et elle est étroite : un manifeste qui
+ * connaît la tenue de base au premier âge et **pas** au second, alors que le
+ * fichier plat du second âge existe. `resoudre` redescend alors d'un âge et
+ * rend l'enfant, pendant que le bon dessin attend juste à côté.
+ *
+ * C'est le cas de RP7 — la Bâche Repliée devenue Bâche Déployée — dont le
+ * second âge n'a été dessiné qu'en tenue d'Halloween. On ne l'écrit pas en
+ * dur : le lot bouge, et un test qui nomme une carte se casse au premier
+ * redessin. On cherche la **condition**, qui est ce qu'on éprouve.
+ *
+ * Nul si aucune lignée n'est dans ce cas : le contrôle le dit et passe.
+ */
+const BANCAL = (() => {
+  for (const f of PUBLIE) {
+    const r = lignee(f.id);
+    const m = path.join(IMG, r, 'manifeste.json');
+    if (!existsSync(m)) continue;
+    let j = null;
+    try { j = JSON.parse(readFileSync(m, 'utf8')); } catch { continue; }
+    const e1 = j.evolutions?.e1?.skins ?? {};
+    const e2 = j.evolutions?.e2?.skins ?? {};
+    if (!e1.base || e2.base) continue;
+    /* Et le second âge doit avoir son dessin plat : c'est lui qu'on attend à
+       l'écran, et sans lui la silhouette géométrique serait la bonne réponse. */
+    const deux = r + 'B';
+    if (!existsSync(path.join(IMG, deux + '.png'))) continue;
+    return { racine: r, deux };
+  }
+  return null;
+})();
+
 /** Ce que le compte d’essai possède. Une seule liste, lue partout. */
 const COLLECTION = [ILLUSTRE, ...NOMMES];
 
@@ -233,6 +267,113 @@ async function ouvrir({ sansCache = false } = {}) {
 }
 
 const page = await ouvrir();
+
+/* ====================== l'avatar montre l'âge qu'on a payé
+
+   **Un joueur a photographié la Bâche Repliée sous le nom de la Bâche
+   Déployée.** Il avait payé son évolution, le nom la disait, et l'écran
+   « TON AVATAR » dessinait l'enfant.
+
+   La cause : `resoudre` sait **redescendre d'un âge** quand l'âge demandé
+   n'est pas au manifeste, et la scène acceptait cette descente sans un mot.
+   Les états ne sont dessinés que pour une poignée de lignées ; le
+   plein-pied, lui, existe pour deux cents personnages **à tous leurs âges**.
+   Le bon dessin était là, juste à côté.
+
+   Rien ne pouvait le dire : l'image se charge, le nom est juste, la page ne
+   lève pas. C'est un personnage qui n'est pas le bon, et il faut connaître
+   les deux dessins pour s'en apercevoir.
+
+   On n'exige pas qu'une image paraisse — toutes les lignées n'ont pas leur
+   second âge dessiné, et la silhouette géométrique est alors la bonne
+   réponse. On exige que **si une image paraît, ce ne soit pas celle du
+   premier âge**. C'est l'invariant, et il ne suppose rien du lot. */
+{
+  /* On rouvre une page **sans cache** : des blocs précédents amputent le
+     catalogue pour éprouver ses replis, et une réponse mise en cache ferait
+     arriver cet écran-ci sur un classeur vide. */
+  const avatar = await ouvrir({ sansCache: true });
+
+  /* La lignée bancale si elle existe, sinon celle qu'on a : le contrôle du
+     nom et de la présence d'un dessin vaut dans les deux cas, et seul celui
+     de l'âge a besoin du cas limite. */
+  const QUI = BANCAL?.racine ?? ILLUSTRE;
+  /* On la lui donne le temps de ce bloc, et on la reprend après : la
+     collection du compte d'essai est comptée ailleurs, et une carte de plus y
+     ferait rougir deux totaux qui n'ont rien à voir avec cet écran. */
+  if (BANCAL) {
+    await pool.query(
+      'INSERT IGNORE INTO user_fanzzy (user_id, fanzzy_id, copies, stage) VALUES (?, ?, 1, 1)',
+      [U, QUI]);
+  }
+  await pool.query(
+    'UPDATE user_fanzzy SET stage = 2 WHERE user_id = ? AND fanzzy_id = ?',
+    [U, QUI]);
+  await pool.query(
+    'UPDATE user_wallet SET active_fanzzy = ?, active_evo = NULL WHERE user_id = ?',
+    [QUI, U]);
+
+  await avatar.reload({ waitUntil: 'networkidle0' });
+  /* « MON FANZZY » est l'onglet par défaut : on attend son titre, qui n'existe
+     qu'une fois la collection lue et la scène montée. */
+  await avatar.waitForFunction(() => document.querySelector('.ttxt h2'),
+    { timeout: 10000 }).catch(() => null);
+  /* La scène pose ses images après les avoir décodées : sans cette attente, on
+     mesure des calques encore vides et l'on conclut à l'absence de dessin. */
+  await avatar.waitForFunction(() => {
+    const el = document.getElementById('tpile');
+    return Boolean(el) && (el.querySelector('[src]') || el.querySelector('svg'));
+  }, { timeout: 8000 }).catch(() => null);
+
+  /* **Toutes les adresses du calque, quelle qu'en soit la forme.** La scène
+     empile une demi-douzaine de calques et pose ses dessins tantôt en `src`,
+     tantôt en fond CSS. Chercher un `img` en particulier, c'est éprouver une
+     structure ; ce qu'on veut éprouver est **quel personnage est à l'écran**.
+     On ramasse donc tout ce qui ressemble à une image et on regarde les
+     adresses — elles portent l'âge, c'est tout ce qu'il faut. */
+  const vu = await avatar.evaluate(() => {
+    const el = document.getElementById('tpile');
+    const urls = [];
+    for (const n of el ? el.querySelectorAll('*') : []) {
+      const s = n.getAttribute('src');
+      if (s) urls.push(s);
+      const m = /url\("?([^")]+)"?\)/.exec(getComputedStyle(n).backgroundImage || '');
+      if (m) urls.push(m[1]);
+    }
+    return { urls,
+      svg: Boolean(el && el.querySelector('svg')),
+      nom: document.querySelector('.ttxt h2')?.textContent?.trim() ?? null };
+  });
+
+  check(`l’avatar nomme le second âge (${vu.nom})`, Boolean(vu.nom));
+  check(`et il montre quelque chose (${vu.urls.length} image(s)${vu.svg ? ' + silhouette' : ''})`,
+    vu.urls.length > 0 || vu.svg);
+
+  /* Deux formes interdites, et une seule idée : le fichier plat du premier
+     âge — `/img/fanzzy/TR32.avif`, `TR32-buste.avif` — et le dossier `/e1/`.
+     Le fond de tribune et les décors passent à côté : ils ne portent pas
+     l'identifiant du personnage. */
+  const premier = new RegExp(`/img/fanzzy/${QUI}[-.]|/${QUI}/e1/`);
+  const fautives = vu.urls.filter((u) => premier.test(u));
+  check(BANCAL
+    ? (fautives.length
+      ? `mais il dessine l’âge d’avant : ${fautives[0]}`
+      : `et ce n’est pas le dessin de l’âge d’avant (${BANCAL.racine})`)
+    : 'aucune lignée n’est dans le cas limite : rien à éprouver ici',
+    fautives.length === 0);
+
+  await pool.query(
+    'UPDATE user_fanzzy SET stage = 1 WHERE user_id = ? AND fanzzy_id = ?',
+    [U, QUI]);
+  if (BANCAL) {
+    await pool.query('DELETE FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?',
+      [U, QUI]);
+    await pool.query(
+      'UPDATE user_wallet SET active_fanzzy = ? WHERE user_id = ?', [ILLUSTRE, U]);
+  }
+  await avatar.close();
+}
+
 
 check('la page se charge sans erreur de script', erreurs.length === 0);
 

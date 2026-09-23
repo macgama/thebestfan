@@ -301,6 +301,11 @@ async function load() {
   S.scarves = st.wallet.scarves;
   S.packs = st.wallet.packs;
   S.active = st.wallet.active;
+  /* **La tenue portée et l'âge auquel on se montre.** Les deux viennent du
+     portefeuille, qui les calcule pour tout le jeu — sans quoi chaque écran
+     en décide, et ils finissent par ne plus montrer le même personnage. */
+  S.activeSkin = st.wallet.activeSkin ?? 'base';
+  S.activeStade = st.wallet.activeStade ?? null;
   S.nextIn = st.wallet.nextPackInMs;
   S.packPrice = st.packPrice;
   /* La saison en cours, et celle que ce joueur a déjà vue annoncée.
