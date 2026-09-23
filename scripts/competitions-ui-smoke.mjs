@@ -314,10 +314,19 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
 
 /* ------------------------------------------------------------ le titre
 
-   Deux cas contraires pour une seule règle : la barre du haut ne se monte que
-   pour un joueur connecté, et c'est elle qui nomme la page. Sans compte, elle
-   n'est pas là — et le titre de la page devient la seule chose qui dise où
-   l'on est. */
+   **La page est nommée, une fois.** C'est la règle, et les deux cas d'en
+   dessous la mesurent des deux côtés : jamais deux fois, jamais zéro.
+
+   Ce bloc disait « la barre du haut ne se monte que pour un joueur connecté »,
+   et le second contrôle mesurait donc le titre écrit dans la page. Ce n'est
+   plus vrai : la barre se monte pour tout le monde depuis qu'elle porte la
+   flèche de retour — la vitrine envoie les visiteurs sur la page des matchs,
+   et ils s'y retrouvaient sans aucun moyen de revenir.
+
+   Le contrôle rougissait donc en annonçant « la page perd son titre » alors
+   que la page était nommée, par l'autre source. Il compte maintenant les
+   titres au lieu d'en désigner un : la règle survit au changement de celui
+   qui la porte. */
 
 {
   const visible = (s) => page.evaluate((sel) => {
@@ -333,7 +342,22 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
   connecte = false;
   await page.goto(base + '/teletext', { waitUntil: 'networkidle0' });
   await jusqua(async () => await page.$('.lg') !== null);
-  check('sans compte, la page garde son titre', await visible('#tnom') === true);
+
+  const nomme = await page.evaluate(() => [...document.querySelectorAll('.tbf-ou, #tnom')]
+    .filter((n) => getComputedStyle(n).display !== 'none')
+    .map((n) => (n.textContent || '').trim())
+    .filter(Boolean));
+  check(`sans compte, la page est nommée une fois (${nomme.join(' · ') || 'pas du tout'})`,
+    nomme.length === 1);
+
+  /* **Et le visiteur a une sortie.** C'est la raison pour laquelle la barre
+     se monte pour lui, et c'est le seul endroit de la suite où l'on est
+     déconnecté : si ce contrôle n'est pas ici, il n'est nulle part. */
+  check('et il a une sortie vers l’accueil',
+    await page.$('.tbf-retour') !== null);
+  /* Pas de menu : un tiroir plein de portes fermées est une liste de refus. */
+  check('mais pas de menu, qu’il ne pourrait pas emprunter',
+    await page.$('.tbf-burger') === null);
   check('et l’étoile ne paraît pas', await page.$('.lg .fav') === null);
   connecte = true;
 }

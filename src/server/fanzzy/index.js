@@ -27,6 +27,7 @@ import { ACTIONS, DECK_RULES } from '../../shared/duel/actions.js';
    au premier ajout. `jouables` dit d'ailleurs mieux ce qu'on demande. */
 import { publies as jouables } from '../contenus/index.js';
 import { DEFAUTS, reglage } from '../../shared/reglages.js';
+import { stadeAffiche } from '../../shared/fanzzy/ages.js';
 import { XP } from '../../shared/niveau.js';
 import { saisonsLancees, saisonEnCours } from './saisons.js';
 import { assurerBourse } from '../bourse.js';
@@ -160,9 +161,18 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     const plafond = abonnement ? abonnement.plafondPacks(abonne) : maxPacks();
     const cadence = abonnement ? abonnement.regenMs(abonne) : regenMs();
     await assurerBourse(q, userId);
+    /* `uf.stage` : l'âge **atteint** du Fanzzy équipé. Il ne sert pas à la
+       recharge, il sert à savoir quelle tenue il porte — une tenue appartient
+       à un âge depuis `sql/skins.sql`, et le Capo n'hérite pas de la
+       garde-robe du gamin. En jointure plutôt qu'en seconde requête : c'est
+       la lecture la plus fréquente du jeu. */
     const w = (await q(
-      `SELECT scarves, billets, packs, packs_at, active_fanzzy, active_evo
-         FROM user_wallet WHERE user_id = ?`,
+      `SELECT w.scarves, w.billets, w.packs, w.packs_at, w.active_fanzzy, w.active_evo,
+              uf.stage AS atteint
+         FROM user_wallet w
+         LEFT JOIN user_fanzzy uf
+           ON uf.user_id = w.user_id AND uf.fanzzy_id = w.active_fanzzy
+        WHERE w.user_id = ?`,
       [userId],
     ))[0];
 
@@ -192,12 +202,40 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     const ecoule = Math.min(cadence,
       Math.max(0, Date.now() - new Date(w.packs_at).getTime()));
     const nextIn = w.packs >= plafond ? null : cadence - ecoule;
+    /* **La tenue portée, à l'âge où l'on se montre.**
+
+       Elle était enregistrée depuis toujours — `user_skins.equipped` — et
+       n'arrivait nulle part : l'accueil écrivait `skin: 'base'` en dur, avec
+       un commentaire qui disait « tant qu'il n'y en a qu'un ». Il y en a deux
+       depuis HALLOWEEN, et le joueur qui choisissait son déguisement dans le
+       classeur le voyait sur la fiche et nulle part ailleurs.
+
+       Une seule requête de plus, et seulement s'il y a quelqu'un d'équipé :
+       c'est une lecture sur clé primaire, et elle rend au choix du joueur le
+       seul effet qu'on lui avait promis. */
+    const stade = stadeAffiche(w.atteint, w.active_evo);
+    const activeSkin = w.active_fanzzy ? ((await q(
+      `SELECT skin_id FROM user_skins
+        WHERE user_id = ? AND fanzzy_id = ? AND stage = ? AND equipped = 1
+        LIMIT 1`, [userId, w.active_fanzzy, stade]))[0]?.skin_id ?? 'base') : 'base';
+
     return { scarves: w.scarves, billets: w.billets, packs: w.packs,
       nextPackInMs: nextIn, active: w.active_fanzzy,
-      /* L’âge auquel le montrer. Nul = l’âge atteint, et c’est ce que lit
-         l’accueil : la bourse disait déjà qui est à l’écran, elle dit
-         maintenant à quel âge — la page n’a pas deux réponses à rapprocher. */
-      activeEvo: w.active_evo === null ? null : Number(w.active_evo) };
+      activeSkin,
+      /* **L'âge auquel le montrer, déjà calculé.**
+
+         `activeEvo` reste ce qu'il a toujours été : le choix brut, nul quand
+         personne n'a choisi. L'accueil en a besoin tel quel pour savoir s'il
+         doit proposer de valider.
+
+         `activeStade` est la réponse, bornée par l'âge atteint — la règle est
+         dans `shared/fanzzy/ages.js`. Les écrans qui veulent seulement
+         dessiner le personnage lisent celle-ci : la page des matchs prenait
+         l'âge **atteint** et ignorait le choix, si bien qu'un joueur qui
+         préfère se montrer jeune se voyait vieux sur un écran et jeune sur
+         l'autre. */
+      activeEvo: w.active_evo === null ? null : Number(w.active_evo),
+      activeStade: stade };
   }
 
   async function collection(userId) {

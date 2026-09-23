@@ -199,14 +199,34 @@
    * Facultatif de bout en bout : sans `fanzzy-etats.js` charge, ou sans
    * manifeste, on retombe sur le fichier plat comme avant.
    */
-  const adresse = (id, variante = 'buste') => {
+  /**
+   * @param {object} [opt]
+   * @param {string} [opt.skin] la tenue à montrer. `base` par défaut, et c'est
+   *   le cas de presque tous les appels : on ne connaît la tenue que de
+   *   **son** Fanzzy, pas de celui d'en face.
+   *
+   * **Le manifeste n'était interrogé qu'au-delà du premier âge**, et c'était
+   * juste tant qu'on n'y cherchait qu'un âge : le fichier plat montre le
+   * premier, et il a l'avantage d'exister pour deux cents personnages.
+   *
+   * Une tenue, elle, n'existe que dans le manifeste — `e1/halloween/` — et
+   * jamais dans l'art plat. Sans cette ouverture, un joueur qui choisissait
+   * un déguisement sur un Fanzzy au premier âge ne le voyait nulle part, et
+   * la moitié du catalogue est au premier âge.
+   *
+   * On n'accepte la réponse que si elle porte **la tenue demandée** :
+   * `resoudre` retombe seul sur `base`, ce qui est le bon réflexe ailleurs et
+   * le mauvais ici — il rendrait un dessin d'âge supérieur là où le fichier
+   * plat, juste en dessous, a le bon.
+   */
+  const adresse = (id, variante = 'buste', { skin = 'base' } = {}) => {
     const evo = evoDe(id);
     const racine = /^([A-Z]+\d+)/.exec(String(id ?? ''))?.[1];
-    if (evo > 1 && racine && window.TBF_ETATS?.pret?.()) {
+    if ((evo > 1 || skin !== 'base') && racine && window.TBF_ETATS?.pret?.()) {
       const r = variante === 'buste'
-        ? window.TBF_ETATS.portrait(racine, { evo })
-        : window.TBF_ETATS.resoudre(racine, { evo, etat: 'neutre' });
-      if (r?.evo === evo) return r.src;
+        ? window.TBF_ETATS.portrait(racine, { evo, skin })
+        : window.TBF_ETATS.resoudre(racine, { evo, skin, etat: 'neutre' });
+      if (r?.evo === evo && (skin === 'base' || r.skin === skin)) return r.src;
     }
     const vu = racineIllustree(id);
     if (!vu) return null;

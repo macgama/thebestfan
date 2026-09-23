@@ -2196,10 +2196,19 @@ async function jsonp(url, options) {
       lignee = { atteint, choisi, ages: ligne.length ? ligne
         : [{ stade: 1, id: actif, nom: '' }] };
 
-      // `skin` n'est pas encore un réglage du joueur : tant qu'il n'y en a
-      // qu'un, le demander explicitement évite d'avoir à revenir ici le jour
-      // où il y en aura deux.
-      const candidat = { id: actif, evo: choisi, skin: 'base', atteint, choisi,
+      /* **La tenue portée, et non plus « base » en dur.**
+
+         Le commentaire d'ici disait « tant qu'il n'y en a qu'un ». Le jour est
+         venu : HALLOWEEN existe, et le joueur qui choisissait son déguisement
+         dans le classeur le voyait sur la fiche et nulle part ailleurs — pas
+         sur l'accueil, qui est justement l'écran où l'on retrouve son
+         personnage.
+
+         Elle vient du portefeuille, qui la lit à l'âge où l'on se montre : une
+         tenue appartient à un âge, et le Capo n'hérite pas de la garde-robe du
+         gamin. */
+      const candidat = { id: actif, evo: choisi, atteint, choisi,
+        skin: coll.wallet?.activeSkin ?? 'base',
         /* La carte du catalogue de cet âge-là : c'est elle qui porte
            l'illustration, et c'est elle qu'il faut retenir pour que le
            prochain chargement reparte du bon dessin. */

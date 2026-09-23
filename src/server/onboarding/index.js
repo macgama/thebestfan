@@ -1,5 +1,6 @@
 import express from 'express';
 import { SCARVES } from '../../shared/fanzzy/dex.js';
+import { stadeAffiche } from '../../shared/fanzzy/ages.js';
 /* `obtenables` et non `publies` : publiées, **de série ouverte**, et le
    premier âge seul. Voir `tirerBienvenue`. */
 import { obtenables, parIdentifiant } from '../fanzzy/catalogue.js';
@@ -422,14 +423,28 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
    * deux pièces portées. Le skin n'intervient pas, par construction.
    */
   async function loadout(userId) {
-    const w = (await q(`SELECT active_fanzzy FROM user_wallet WHERE user_id = ?`, [userId]))[0];
+    /* L'âge atteint vient avec : une tenue appartient à un âge, et sans lui
+       la requête d'en dessous ne savait pas laquelle chercher. */
+    const w = (await q(
+      `SELECT w.active_fanzzy, w.active_evo, uf.stage AS atteint
+         FROM user_wallet w
+         LEFT JOIN user_fanzzy uf
+           ON uf.user_id = w.user_id AND uf.fanzzy_id = w.active_fanzzy
+        WHERE w.user_id = ?`, [userId]))[0];
     const f = w?.active_fanzzy ? parIdentifiant(w.active_fanzzy) : null;
     const portes = await q(
       `SELECT stuff_id FROM user_stuff WHERE user_id = ? AND slot IS NOT NULL ORDER BY slot`,
       [userId]);
+    /* **`stage` manquait à cette requête.** Depuis que les tenues appartiennent
+       à un âge, un joueur peut en porter trois — une par âge — et sans la
+       condition de stade, `[0]` en prenait une au hasard. Le duel habillait
+       donc parfois le Capo avec le déguisement du gamin, et rien ne le disait :
+       le dessin existe, il est juste celui de quelqu'un d'autre. */
     const skin = (await q(
-      `SELECT skin_id FROM user_skins WHERE user_id = ? AND fanzzy_id = ? AND equipped = 1`,
-      [userId, w?.active_fanzzy ?? '']))[0]?.skin_id ?? 'base';
+      `SELECT skin_id FROM user_skins
+        WHERE user_id = ? AND fanzzy_id = ? AND stage = ? AND equipped = 1 LIMIT 1`,
+      [userId, w?.active_fanzzy ?? '', stadeAffiche(w?.atteint, w?.active_evo)
+      ]))[0]?.skin_id ?? 'base';
 
     return {
       fanzzy: f ? { id: f.id, nom: f.nom, type: f.type, cri: f.cri } : null,
