@@ -272,6 +272,38 @@ export const REGLAGES = [
       'plus courte. Ce qu’on vend est la mémoire longue, pas les souvenirs ' +
       'eux-mêmes.' },
 
+  /* ------------------------------------------- ce que le gratuit plafonne
+
+     **Ces trois-là ne sont pas comme les autres, et il faut le savoir.** Tout
+     ce qui précède élargit quelque chose à l'abonné ; ceux-ci **retirent**
+     quelque chose à celui qui ne paie pas. C'est une décision de Gaël, prise
+     en septembre 2026, et elle entame la règle inscrite en tête du module
+     d'abonnement — voir ce fichier-là, où le raisonnement est écrit en entier.
+
+     **Zéro désarme le plafond**, et c'est la valeur à poser si l'on veut
+     revenir en arrière sans livraison : c'est tout l'intérêt d'avoir mis ces
+     trois nombres ici plutôt que dans le code. */
+
+  { cle: 'abo.duels_classes_jour', section: 'abonnement', type: 'entier',
+    titre: 'Duels classés par jour, sans abonnement', unite: 'duels',
+    min: 0, max: 200, defaut: 5,
+    aide: 'Au-delà, on joue toujours — sur un match d’un autre jour, qui est ' +
+      'de l’entraînement. C’est le **compteur** qui ferme, pas le jeu. Zéro ' +
+      'désarme le plafond.' },
+
+  { cle: 'abo.virages_classes_jour', section: 'abonnement', type: 'entier',
+    titre: 'Virages comptés au classement par jour, sans abonnement',
+    unite: 'matchs', min: 0, max: 100, defaut: 2,
+    aide: 'Le troisième Virage de la journée se joue entièrement — on pousse, ' +
+      'on chante, les cartes-souvenirs tombent — mais sa ferveur ne compte ' +
+      'pas au classement. Aucune porte ne se ferme. Zéro désarme le plafond.' },
+
+  { cle: 'abo.taille_classe_libre', section: 'abonnement', type: 'entier',
+    titre: 'Plus grand format classé sans abonnement', unite: 'joueurs par camp',
+    min: 1, max: 5, defaut: 1,
+    aide: 'Le 2v2 et au-dessus restent jouables par tout le monde — en ' +
+      'entraînement. À 5, plus aucun format n’est réservé.' },
+
   /* -------------------------------------------------------------- deck */
   { cle: 'deck.fanzzy', section: 'deck', type: 'entier',
     titre: 'Fanzzy par deck', unite: 'personnages', min: 1, max: 8, defaut: 3 },

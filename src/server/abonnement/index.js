@@ -21,9 +21,38 @@ import { CATALOGUE, enEuros } from '../../shared/boutique.js';
  * supporters dont le meilleur est celui qui paie n'a plus grand-chose à
  * raconter.
  *
- * Tous les formats, tous les âges, tous les classements restent donc ouverts à
- * tout le monde. Ce module ne sait ouvrir que quatre choses : le rythme,
- * l'identité, la mémoire et le confort.
+ * Tous les âges restent donc ouverts à tout le monde, et aucune carte ne
+ * s'achète. Ce module ouvre le rythme, l'identité, la mémoire et le confort.
+ *
+ * ## Et, depuis septembre 2026, il plafonne la compétition
+ *
+ * **C'est un recul sur ce qui précède, et il est assumé.** Sans abonnement :
+ * cinq duels classés par jour, deux Virages comptés au classement par jour,
+ * et le classé s'arrête au 1v1. Décision de Gaël, prise après qu'on lui a
+ * montré la règle ci-dessus.
+ *
+ * Trois choses la tiennent aussi étroite qu'on a pu :
+ *
+ *   1. **Aucune porte ne se ferme.** Le 2v2 se joue à tout le monde, en
+ *      entraînement. Le sixième duel du jour se joue, sur un match d'un autre
+ *      jour. Le troisième Virage se joue **entièrement** — on pousse, on
+ *      chante, les cartes-souvenirs tombent. Ce qui s'arrête est le
+ *      **compteur**, jamais le jeu.
+ *   2. **Rien ne pousse plus fort.** Un abonné n'a pas une carte de plus, pas
+ *      un âge de plus, pas un point de souffle de plus. À armes égales dans
+ *      la partie, et c'est là-dessus que les deux règles citées plus haut
+ *      portaient vraiment.
+ *   3. **Les trois nombres sont des réglages**, à zéro dès qu'on veut revenir
+ *      en arrière, sans livraison ni migration.
+ *
+ * **Ce qu'on perd, et il faut l'écrire ici plutôt que le découvrir plus tard :**
+ * la cote de duel ne mesure pas le volume — cinq parties par jour suffisent à
+ * atteindre n'importe quelle cote, donc « premier sans payer » y reste vrai.
+ * La ferveur, elle, **s'accumule**. Deux Virages comptés par jour contre un
+ * nombre illimité, c'est un classement de ferveur dont la tête est réservée
+ * aux abonnés. La phrase « un joueur qui ne s'abonne jamais peut être premier »
+ * n'est donc plus vraie partout, et l'écran de l'abonnement ne la dit plus
+ * telle quelle.
  *
  * ## Une seule définition
  *
@@ -208,6 +237,94 @@ export function createAbonnement({ pool, requireAuth }) {
   /** Un emplacement de club en plus, par-dessus ce que le niveau ouvre. */
   const clubsEnPlus = (abonne) => (abonne ? reglage('abo.clubs_en_plus') : 0);
 
+  /* ------------------------------------------ ce que le gratuit plafonne
+
+     Trois fonctions nommées, comme les portes ci-dessus et pour la même
+     raison : le jour où l'une change de règle, elle change ici, et le jour où
+     l'on en ajoute une, on voit d'un coup d'œil ce qui est déjà plafonné.
+
+     **`null` veut dire sans limite**, et jamais zéro : un zéro rendu par
+     mégarde fermerait le classé à tout le monde, y compris aux abonnés. Les
+     appelants écrivent donc `reste !== null && reste <= 0`, qui ne se trompe
+     pas de sens si la valeur manque.
+
+     **Le compte se fait en SQL, des deux côtés de la comparaison.**
+     `ended_at` et `joined_at` sont écrits par MySQL ; `CURDATE()` est lu par
+     MySQL. Comparer à une date fabriquée en JavaScript remettrait les deux
+     horloges face à face, ce que ce projet vient de payer sur la recharge des
+     boosters — un minuteur à 64:28 sur une cadence de dix minutes.
+
+     **Une table absente ne ferme rien.** Même posture que `estAbonne` : sur
+     une base où le schéma n'est pas appliqué, on rend `null` et tout le monde
+     joue sans plafond. Un plafond qui se déclenche parce qu'une table manque
+     serait la pire panne possible — elle punit sans raison et ne se voit
+     nulle part. */
+
+  /** Le plafond du jour, ou `null` s'il est désarmé. */
+  const plafondJour = (cle) => {
+    const n = reglage(cle);
+    return n > 0 ? n : null;
+  };
+
+  /**
+   * Combien de duels classés il reste aujourd'hui. `null` = sans limite.
+   *
+   * Le sixième duel du jour n'est pas refusé : c'est l'entrée en **file
+   * classée** qui l'est, et un match d'un autre jour reste ouvert. Le duel est
+   * classé ou il ne l'est pas pour tout le monde à la fois — `nvn/index.js`
+   * l'explique : « les noter un par un donnerait trois résultats différents
+   * pour une seule partie ». D'où un refus à l'entrée plutôt qu'un
+   * déclassement à la sortie.
+   */
+  async function duelsClassesRestants(userId) {
+    const max = plafondJour('abo.duels_classes_jour');
+    if (max === null || await estAbonne(userId)) return null;
+    try {
+      const n = Number((await q(
+        `SELECT COUNT(*) AS n FROM duel_results
+          WHERE user_id = ? AND mode = 'classe' AND ended_at >= CURDATE()`,
+        [userId]))[0]?.n ?? 0);
+      return Math.max(0, max - n);
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE') return null;
+      throw e;
+    }
+  }
+
+  /**
+   * Combien de Virages comptés il reste aujourd'hui. `null` = sans limite.
+   *
+   * Ici, **rien n'est refusé** : on entre dans toutes les tribunes qu'on veut,
+   * et c'est la ligne de présence qui porte `classe = 0` au-delà du plafond.
+   * La différence avec le duel n'est pas un caprice : une présence au Virage
+   * est individuelle, elle ne décide du sort de personne d'autre.
+   */
+  async function viragesClassesRestants(userId) {
+    const max = plafondJour('abo.virages_classes_jour');
+    if (max === null || await estAbonne(userId)) return null;
+    try {
+      const n = Number((await q(
+        `SELECT COUNT(*) AS n FROM virage_presence
+          WHERE user_id = ? AND classe = 1 AND joined_at >= CURDATE()`,
+        [userId]))[0]?.n ?? 0);
+      return Math.max(0, max - n);
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE' || e?.code === 'ER_BAD_FIELD_ERROR') return null;
+      throw e;
+    }
+  }
+
+  /**
+   * Le plus grand format jouable **en classé**, par camp.
+   *
+   * Le 2v2 et au-dessus restent jouables par tout le monde en entraînement :
+   * c'est le compteur qui se réserve, pas le mode de jeu. `Infinity` pour un
+   * abonné plutôt qu'un grand nombre, pour que la comparaison des appelants
+   * n'ait aucun cas particulier à connaître.
+   */
+  const tailleClasseeMax = (abonne) => (abonne ? Infinity
+    : Math.max(1, reglage('abo.taille_classe_libre')));
+
   /* ---------------------------------------------------------------- routes */
 
   const router = express.Router();
@@ -226,6 +343,12 @@ export function createAbonnement({ pool, requireAuth }) {
           clubsEnPlus: reglage('abo.clubs_en_plus'),
           parcoursLibre: reglage('abo.parcours_libre'),
           souvenirsLibres: reglage('abo.souvenirs_libres'),
+          /* Les trois plafonds, vus du côté de l'abonné : il n'en a aucun.
+             Les nombres partent quand même — c'est `sans` qui les porte —
+             parce qu'un « sans limite » tout seul ne se compare à rien. */
+          duelsClassesJour: null,
+          viragesClassesJour: null,
+          tailleClassee: null,
         },
         /* **Et ce qu'on a sans lui.** L'écran qui propose l'abonnement doit
            écrire « 24 au lieu de 12 » : un chiffre seul ne se compare à rien,
@@ -239,12 +362,33 @@ export function createAbonnement({ pool, requireAuth }) {
         sans: {
           packMax: plafondPacks(false),
           packRegenMin: reglage('pack.regen_min'),
+          /* Zéro veut dire « plafond désarmé » dans les réglages, et il ne
+             faut surtout pas l'envoyer tel quel : la page écrirait « 0 duel
+             classé par jour », c'est-à-dire l'inverse exact. `null`, et la
+             ligne disparaît. */
+          duelsClassesJour: reglage('abo.duels_classes_jour') || null,
+          viragesClassesJour: reglage('abo.virages_classes_jour') || null,
+          tailleClassee: reglage('abo.taille_classe_libre'),
         },
         /* Et ce dont il ne décide pas. La liste est courte et elle est là pour
            être lue : c'est la promesse du jeu, et un joueur qui hésite à
-           s'abonner doit pouvoir vérifier qu'il ne lui manque rien pour jouer. */
-        libre: ['tous les formats de duel', 'tous les âges des Fanzzy',
-          'tous les classements', 'le Grand Virage'],
+           s'abonner doit pouvoir vérifier qu'il ne lui manque rien pour jouer.
+
+           **Elle disait « tous les classements » et ce n'est plus vrai.** Depuis
+           les plafonds, la tête du classement de ferveur — qui s'accumule —
+           est hors d'atteinte sans abonnement. La cote de duel, elle, ne
+           mesure pas le volume : cinq parties par jour suffisent à atteindre
+           n'importe quelle cote, et « premier sans payer » y reste vrai. La
+           liste dit donc l'un et pas l'autre.
+
+           Les nombres viennent des réglages, comme partout : une promesse
+           recopiée est une promesse qui ment au premier ajustement. */
+        libre: [
+          'toutes les cartes, tous les âges, tous les formats',
+          'le Grand Virage en entier, autant de matchs que tu veux',
+          `${reglage('abo.duels_classes_jour') || 'autant de'} duels classés par jour`,
+          'la première place du duel — la cote ne compte pas les parties',
+        ],
 
         /* **Les deux formules, telles que la boutique les vend.**
 
@@ -278,5 +422,6 @@ export function createAbonnement({ pool, requireAuth }) {
   });
 
   return { router, estAbonne, etat, accorder, renouveler, retirer,
-    plafondPacks, regenMs, profondeurParcours, profondeurSouvenirs, clubsEnPlus };
+    plafondPacks, regenMs, profondeurParcours, profondeurSouvenirs, clubsEnPlus,
+    duelsClassesRestants, viragesClassesRestants, tailleClasseeMax };
 }

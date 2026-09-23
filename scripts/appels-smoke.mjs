@@ -1,5 +1,11 @@
 /**
- * Une page appelle-t-elle une aide que personne ne lui donne ?
+ * Une page nomme-t-elle quelque chose qui n'existe pas ?
+ *
+ * Deux formes du même défaut, et elles sont muettes toutes les deux : une
+ * **fonction** appelée que rien ne définit, et un **code d'erreur** que le
+ * serveur envoie et que la page ne sait pas traduire. Aucune ne rougit, aucune
+ * ne se voit à la lecture, et les deux n'éclatent que sur un chemin d'erreur
+ * — c'est-à-dire le jour où quelqu'un avait déjà un problème.
  *
  * ## Pourquoi ce contrôle existe
  *
@@ -61,10 +67,26 @@ const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c
  * numéros de ligne ne bougent pas. Mais **pas les « ${…} »** : ce qu'il y a
  * entre les accolades d'un gabarit est du code comme le reste, et c'est même
  * là que vivent la moitié des appels de ce dépôt.
+ *
+ * `chaines: false` garde le contenu des chaînes et n'efface que les
+ * commentaires. C'est ce qu'il faut quand **ce qu'on cherche est une chaîne**
+ * — les codes d'erreur du bloc des refus, plus bas. Le blanchiment complet y
+ * rendait zéro résultat, donc deux contrôles verts pour la pire des raisons :
+ * ils ne mesuraient plus rien. Le parcours reste le même dans les deux cas,
+ * et c'est ce qui compte — il faut traverser une chaîne pour savoir que le
+ * `//` d'une adresse web n'ouvre pas un commentaire.
  */
-export const blanchir = (s) => {
+export const blanchir = (s, { chaines = true } = {}) => {
   const out = Array.from(s);
-  const efface = (a, b) => { for (let k = a; k < b; k += 1) if (out[k] !== '\n') out[k] = ' '; };
+  const efface = (a, b) => {
+    if (!chaines) return;
+    for (let k = a; k < b; k += 1) if (out[k] !== '\n') out[k] = ' ';
+  };
+  /* Les commentaires partent toujours : c'est le seul endroit où l'on trouve
+     du français qui ressemble à du code, dans un sens comme dans l'autre. */
+  const effaceToujours = (a, b) => {
+    for (let k = a; k < b; k += 1) if (out[k] !== '\n') out[k] = ' ';
+  };
   /* Les gabarits ouverts, et pour chacun la profondeur d'accolades où l'on se
      trouve : le « } » qui la ramène à zéro rend la main au texte du gabarit.
      Une pile, parce qu'un gabarit peut en contenir un autre — et le dépôt le
@@ -87,11 +109,11 @@ export const blanchir = (s) => {
     const d = s[i + 1];
     if (c === '/' && d === '/') {
       const j = s.indexOf('\n', i); const f = j < 0 ? s.length : j;
-      efface(i, f); i = f; continue;
+      effaceToujours(i, f); i = f; continue;
     }
     if (c === '/' && d === '*') {
       const j = s.indexOf('*/', i + 2); const f = j < 0 ? s.length : j + 2;
-      efface(i, f); i = f; continue;
+      effaceToujours(i, f); i = f; continue;
     }
     if (c === '"' || c === "'") {
       let j = i + 1;
@@ -297,6 +319,53 @@ for (const f of pages) {
   check(manque.length
     ? `${f} appelle ${manque.length} nom(s) que rien ne lui donne : ${manque.join(', ')}`
     : `${f} n’appelle que ce qu’elle a`, manque.length === 0);
+}
+
+/* ============================== les refus que le joueur doit pouvoir lire
+
+ * **Le duel refusait en langage machine.** `Cheat` préfixe ses codes de
+ * `ferveur.error.` — c'est la classe du Virage, réutilisée par le duel — et
+ * la page du duel les avait écrits sous `nvn.error.`, qui est le préfixe des
+ * refus du duel **en cours**. Trois phrases parfaitement rédigées ne
+ * servaient donc à personne, et un joueur sans deck lisait « Refusé par le
+ * serveur : ferveur.error.no_deck » sur le geste le plus courant du jeu.
+ *
+ * Un tableau de traduction dont une entrée ne correspond à rien a l'air d'un
+ * travail fait. C'est ce qui rend ce défaut-là si long à voir : on relit la
+ * phrase, on la trouve bonne, et on passe.
+ */
+console.log('\n— les refus');
+{
+  const src = (f) => readFileSync(path.join(PUB, '..', f), 'utf8');
+  /* Le serveur et la page, côte à côte. On lit les deux plutôt que d'en
+     recopier un : une liste recopiée ne mesure plus que sa propre copie. */
+  const sansCommentaires = blanchir(src('src/server/nvn/index.js'),
+    { chaines: false });
+  const emis = new Set([...sansCommentaires
+    .matchAll(/new Cheat\('([a-z_]+)'\)/g)].map((m) => `ferveur.error.${m[1]}`));
+  const page = src('public/duel-nvn.html');
+  const traduits = new Set([...page.matchAll(/'((?:nvn|ferveur)\.error\.[a-z_]+)'\s*:/g)]
+    .map((m) => m[1]));
+
+  check(`le duel peut refuser de ${emis.size} façons`, emis.size >= 4);
+  const muets = [...emis].filter((c) => !traduits.has(c));
+  check(muets.length
+    ? `${muets.length} refus s’affichent en code brut : ${muets.join(', ')}`
+    : 'et chacun a sa phrase sur la page du duel', muets.length === 0);
+
+  /* **Et l'inverse.** Une phrase écrite sous un code que personne n'envoie
+     est du travail perdu, et surtout le signe qu'on s'est trompé de préfixe
+     — c'est exactement comme ça que les trois autres se cachaient. On ne
+     regarde que les codes du duel : le Virage a sa page, et elle partage ce
+     tableau pour les refus de chant. */
+  const duServeur = new Set([...sansCommentaires
+    .matchAll(/'(nvn\.error\.[a-z_]+)'/g)].map((m) => m[1]));
+  const orphelines = [...traduits]
+    .filter((c) => c.startsWith('nvn.error.') && !duServeur.has(c));
+  check(orphelines.length
+    ? `${orphelines.length} phrase(s) sous un code que rien n’envoie : ${orphelines.join(', ')}`
+    : 'et aucune phrase n’attend un code qui n’arrive jamais',
+    orphelines.length === 0);
 }
 
 console.log(fautes ? `\n${fautes} faute(s)` : '\ntout est vert');

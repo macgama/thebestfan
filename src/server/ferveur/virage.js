@@ -309,9 +309,19 @@ export class VirageRoom {
    *   Virage se joue très bien au chant seul, et c'est d'ailleurs comme ça
    *   qu'il s'est joué jusqu'ici.
    */
-  join(userId, { side, name, mods = {}, neutre = false, perso = null, actions = [] }) {
+  /**
+   * @param {object} opt
+   * @param {boolean} [opt.classe] ce Virage compte-t-il au classement pour lui ?
+   *   Décidé par `ferveur/index.js` à la première entrée, et **posé une seule
+   *   fois** : rejoindre à nouveau — un réseau qui saute, un onglet rouvert —
+   *   ne doit pas rouvrir la question, sinon un match commencé compté
+   *   cesserait de l'être au milieu.
+   */
+  join(userId, { side, name, mods = {}, neutre = false, perso = null, actions = [],
+                 classe = true }) {
     const m = this.members.get(userId) ?? {
       side: side ? 1 : 0, name, mods, neutre, perso,
+      classe,
       userId,
       breath: 40, ferveur: 0, lastPush: 0, fatigueUntil: 0, joined: Date.now(),
       /* La main. Mêmes règles qu'au duel : cinq visibles, la suivante n'arrive
@@ -631,6 +641,10 @@ export class VirageRoom {
       userId: m.userId, fixtureId: this.fixture.id, side: m.side,
       teamId: m.neutre ? null : (m.side ? this.fixture.awayId : this.fixture.homeId),
       fanzzyId: m.mods.id ?? null, amount: gagne,
+      /* Compte-t-il au classement ? La salle ne décide pas — elle transporte.
+         `!== false` et non un booléen nu : une salle ouverte à la main, ou
+         une épreuve qui monte un membre sans le dire, compte comme avant. */
+      classe: m.classe !== false,
     })?.catch?.(() => {});
     return gagne;
   }

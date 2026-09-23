@@ -272,6 +272,32 @@ function portes(o, sans) {
       sans: 'celles que tu gagnes', avec: 'toutes les publiées' },
     { n: 'Créer un KOP', sous: 'en rejoindre un reste ouvert à tout le monde',
       sans: 'non', avec: 'oui' },
+
+    /* **Les trois plafonds de la compétition.**
+
+       Ce sont les seules lignes du tableau qui **retirent** quelque chose à
+       celui qui ne paie pas, au lieu d'élargir. Elles sont donc en dernier,
+       et leur précision dit à chaque fois ce qui reste ouvert : un plafond
+       qu'on annonce sans dire par quoi on le contourne se lit comme une
+       porte, et ce n'en est pas une.
+
+       Elles ne paraissent que si le serveur les envoie. À zéro, le plafond
+       est désarmé depuis l'administration, la route rend `null`, et la ligne
+       disparaît d'elle-même — plutôt que d'annoncer un plafond que plus
+       personne n'applique. */
+    ...(sans.duelsClassesJour ? [{
+      n: 'Duels classés par jour',
+      sous: 'les matchs des autres jours restent ouverts, en entraînement',
+      sans: nb(sans.duelsClassesJour), avec: 'sans limite' }] : []),
+    ...(sans.viragesClassesJour ? [{
+      n: 'Virages comptés au classement',
+      sous: 'les suivants se jouent en entier — seul le compteur s’arrête',
+      sans: nb(sans.viragesClassesJour, ' par jour'), avec: 'tous' }] : []),
+    ...(sans.tailleClassee >= 1 ? [{
+      n: 'Formats classés',
+      sous: 'le 2v2 et au-dessus se jouent à tout le monde, en entraînement',
+      sans: nb(sans.tailleClassee, `v${sans.tailleClassee}`),
+      avec: 'tous les formats' }] : []),
   ];
 }
 

@@ -28,6 +28,7 @@ import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { FORMATS } from '../src/server/deck/index.js';
+import { poserReglages, reglagesVivants } from '../src/shared/reglages.js';
 import { reglage } from '../src/shared/reglages.js';
 import { ARTICLE_PAR_ID } from '../src/shared/boutique.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
@@ -209,12 +210,113 @@ check('le retirer le retire vraiment', (await abonnement.estAbonne(LIBRE)) === f
     Math.max(...f.map((x) => x.packs)) > Math.min(...f.map((x) => x.packs)));
 }
 
+/* ======================================== ce que le gratuit plafonne
+
+   Trois plafonds, et un seul principe : **c'est le compteur qui s'arrête,
+   jamais le jeu**. Ce bloc éprouve le compteur ; ce qui reste jouable se
+   vérifie au duel et au Virage, où le refus est écrit.
+
+   Les lignes sont posées à la main plutôt que jouées : ce qu'on mesure ici
+   est la **lecture** du plafond, pas la façon dont les lignes arrivent. */
+{
+  const duel = (id, quand, mode) => pool.query(
+    `INSERT INTO duel_results (duel_id, user_id, opponent_id, outcome, mode, ended_at)
+     VALUES (?, ?, 'x', 'win', ?, ?)`,
+    [`d-${id}`, LIBRE, mode, quand]);
+
+  const max = reglage('abo.duels_classes_jour');
+  check(`au réveil, les ${max} duels classés du jour sont entiers`,
+    (await abonnement.duelsClassesRestants(LIBRE)) === max);
+
+  /* **Hier ne compte pas.** Le plafond est journalier, et un joueur qui
+     revient le lendemain doit retrouver ses cinq duels — sans quoi le
+     plafond serait un plafond à vie, ce qui n'est pas la même offre. */
+  await duel('hier', new Date(Date.now() - 26 * 3600e3), 'classe');
+  check('un duel classé d’hier ne mange pas le quota du jour',
+    (await abonnement.duelsClassesRestants(LIBRE)) === max);
+
+  /* **L'entraînement non plus**, et c'est tout le sens du plafond : il ne
+     ferme pas le jeu, il ferme le compteur. Si l'entraînement comptait, la
+     porte de sortie qu'on annonce sur l'écran de l'abonnement se refermerait
+     toute seule. */
+  await duel('entrainement', new Date(), 'entrainement');
+  check('un duel d’entraînement non plus',
+    (await abonnement.duelsClassesRestants(LIBRE)) === max);
+
+  for (let i = 0; i < max; i++) await duel(`jour-${i}`, new Date(), 'classe');
+  check('les duels classés du jour épuisent le quota',
+    (await abonnement.duelsClassesRestants(LIBRE)) === 0);
+
+  /* **Et un abonné n'a pas de quota du tout.** `null`, et non un grand
+     nombre : les appelants écrivent `reste !== null && reste <= 0`, qui ne se
+     trompe pas de sens le jour où la valeur manque. */
+  check('un abonné n’a pas de plafond de duels',
+    (await abonnement.duelsClassesRestants(ABO)) === null);
+
+  /* ------------------------------------------------------ le Virage
+
+     Ici rien n'est refusé : la ligne de présence porte `classe = 0` au-delà
+     du plafond, le match se joue en entier, et le classement ne la lit pas.
+     La différence avec le duel n'est pas un caprice — une présence au Virage
+     est individuelle, elle ne décide du sort de personne d'autre. */
+  const vir = (id, quand, classe) => pool.query(
+    `INSERT INTO virage_presence (user_id, fixture_id, side, ferveur, classe, joined_at)
+     VALUES (?, ?, 0, 10, ?, ?)`, [LIBRE, id, classe, quand]);
+
+  const maxV = reglage('abo.virages_classes_jour');
+  check(`au réveil, les ${maxV} Virages comptés du jour sont entiers`,
+    (await abonnement.viragesClassesRestants(LIBRE)) === maxV);
+
+  await vir(9001, new Date(Date.now() - 26 * 3600e3), 1);
+  check('un Virage d’hier ne mange pas le quota du jour',
+    (await abonnement.viragesClassesRestants(LIBRE)) === maxV);
+
+  for (let i = 0; i < maxV; i++) await vir(9100 + i, new Date(), 1);
+  check('les Virages comptés du jour épuisent le quota',
+    (await abonnement.viragesClassesRestants(LIBRE)) === 0);
+
+  /* Et ceux qui ne comptent pas ne comptent **pas non plus contre le
+     quota** : sans ce garde, le troisième Virage de la journée mangerait une
+     place qu'il n'occupe pas, et le quatrième aussi. */
+  await vir(9200, new Date(), 0);
+  check('un Virage hors classement ne compte pas contre le quota',
+    (await abonnement.viragesClassesRestants(LIBRE)) === 0);
+
+  check('un abonné n’a pas de plafond de Virages',
+    (await abonnement.viragesClassesRestants(ABO)) === null);
+
+  /* **Zéro désarme le plafond**, sans livraison ni migration. C'est le chemin
+     du retour en arrière, et il doit être éprouvé comme le reste : un bouton
+     de secours qu'on n'a jamais essayé n'est pas un bouton de secours. */
+  {
+    const avant = reglagesVivants();
+    poserReglages({ ...avant, 'abo.duels_classes_jour': 0,
+      'abo.virages_classes_jour': 0 });
+    check('à zéro, le plafond des duels est désarmé',
+      (await abonnement.duelsClassesRestants(LIBRE)) === null);
+    check('et celui des Virages aussi',
+      (await abonnement.viragesClassesRestants(LIBRE)) === null);
+    poserReglages(avant);
+  }
+
+  await pool.query('DELETE FROM duel_results WHERE user_id = ?', [LIBRE]);
+  await pool.query('DELETE FROM virage_presence WHERE user_id = ?', [LIBRE]);
+}
+
 /* --------------------------------------------- ce qu'il n'ouvre PAS
 
    C'est la moitié qui compte. Ces contrôles sont là pour échouer le jour où
    quelqu'un voudra « rendre l'abonnement plus attractif » en y mettant un
    avantage de jeu. */
 
+/* **Tous les formats restent jouables par tout le monde**, et c'est encore
+   vrai après les plafonds : ce qui se réserve est le **compteur**, jamais le
+   mode de jeu. Un 5v5 se joue à qui veut, sur un match d'un autre jour ou
+   sur celui du jour ; c'est seulement la ligne dans `duel_results` qui porte
+   `entrainement` au lieu de `classe`.
+
+   La distinction paraît mince écrite ici. Elle ne l'est pas à l'écran : un
+   format grisé dit « tu ne peux pas jouer à ça », et c'est ce qu'on refuse. */
 check('tous les formats de duel restent ouverts à tous',
   Object.keys(FORMATS).length === 5
   && !Object.keys(FORMATS).some((f) => /abo/i.test(f)));
@@ -245,10 +347,30 @@ check('tous les formats de duel restent ouverts à tous',
   const portes = Object.keys(abonnement).filter((k) =>
     !['router', 'estAbonne', 'etat', 'accorder', 'renouveler', 'retirer'].includes(k));
   const attendues = ['plafondPacks', 'regenMs', 'profondeurParcours',
-    'profondeurSouvenirs', 'clubsEnPlus'];
+    'profondeurSouvenirs', 'clubsEnPlus',
+    /* **Ces trois-là ne sont pas des portes, ce sont des plafonds**, et
+       c'est la première fois que ce module en porte. Elles ne donnent rien
+       à l'abonné : elles retirent quelque chose à celui qui ne paie pas.
+
+       Le contrôle demandait qu'une porte nouvelle soit « nommée ici, et
+       qu'il faille la défendre ». Elles le sont, et la défense tient en
+       trois points — aucune porte ne se ferme (le 2v2 se joue en
+       entraînement, le sixième duel se joue sur un autre match, le
+       troisième Virage se joue en entier), rien ne pousse plus fort, et
+       les trois nombres se désarment à zéro depuis l'administration.
+       Le raisonnement complet est en tête de `abonnement/index.js`. */
+    'duelsClassesRestants', 'viragesClassesRestants', 'tailleClasseeMax'];
   check(`l’abonnement n’ouvre que le rythme, la mémoire et la largeur (${portes.length})`,
     portes.length === attendues.length && portes.every((p) => attendues.includes(p))
     || (console.log('        portes :', portes.join(', ')), false));
+
+  /* **Un abonné n'a aucun plafond, et c'est la seule chose qu'il achète ici.**
+     `Infinity` plutôt qu'un grand nombre : un 99 finirait par être comparé à
+     un format de cent joueurs le jour où quelqu'un en inventera un. */
+  check('un abonné joue tous les formats en classé',
+    abonnement.tailleClasseeMax(true) === Infinity);
+  check('et sans abonnement, le classé s’arrête au réglage',
+    abonnement.tailleClasseeMax(false) === reglage('abo.taille_classe_libre'));
 }
 
 
