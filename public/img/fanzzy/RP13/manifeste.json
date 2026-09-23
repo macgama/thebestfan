@@ -1,6 +1,6 @@
 {
   "id": "RP13",
-  "rev": 2,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,15 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "8ab06a7ebd0c"
+          "sha": "ed8b96e58676"
+        },
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "58a7123b0a78"
         }
       }
     }

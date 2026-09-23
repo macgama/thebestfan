@@ -1,6 +1,6 @@
 {
   "id": "RP1",
-  "rev": 4,
+  "rev": 5,
   "evolutions": {
     "e1": {
       "skins": {
@@ -24,6 +24,14 @@
           ],
           "portrait": true,
           "sha": "05f67d099ea4"
+        },
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "dbf818848e0b"
         }
       }
     },
@@ -45,7 +53,15 @@
             "ennui"
           ],
           "portrait": true,
-          "sha": "daae83f0aefc"
+          "sha": "78671ab23715"
+        },
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "5b9d8c3c5349"
         }
       }
     },
@@ -67,7 +83,15 @@
             "ennui"
           ],
           "portrait": true,
-          "sha": "7e4380d5b418"
+          "sha": "d896a97860cc"
+        },
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "661b933fed66"
         }
       }
     }

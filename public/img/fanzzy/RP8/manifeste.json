@@ -1,6 +1,6 @@
 {
   "id": "RP8",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -14,6 +14,38 @@
           ],
           "portrait": true,
           "sha": "fd2f83c4cbe7"
+        },
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "7d07127da5a8"
+        }
+      }
+    },
+    "e2": {
+      "skins": {
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "72df475d4e49"
+        }
+      }
+    },
+    "e3": {
+      "skins": {
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "37fe36518c45"
         }
       }
     }
