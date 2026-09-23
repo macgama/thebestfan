@@ -110,12 +110,13 @@ export const CATALOGUE = [
        quand la monnaie achetable a disparu, se rouvre donc d'un cran.
 
        Trois bornes la tiennent étroite, et elles sont le prix de la
-       décision. **Un seul** booster, et il ne s'achète pas séparément : on
-       ne peut pas en prendre deux. Il est **déclaré dans le catalogue**, à
-       la vue du contrôle qui surveille ce que l'argent achète, et non caché
-       dans la livraison. Et aucune monnaie ne s'achète toujours — c'est la
-       borne qui compte le plus, parce que c'est elle qui empêche de
-       transformer une carte bancaire en tirages à volonté.
+       décision. Le cadeau est **attaché à une échéance** et ne s'achète pas
+       séparément : on ne peut pas en prendre deux sans payer deux mois. Il
+       est **déclaré dans le catalogue**, à la vue du contrôle qui surveille
+       ce que l'argent achète, et non caché dans la livraison. Et aucune
+       monnaie ne s'achète toujours — c'est la borne qui compte le plus,
+       parce que c'est elle qui empêche de transformer une carte bancaire en
+       tirages à volonté.
 
        La raison est celle qu'on avait écrite en face : un paiement qui ne
        donne rien tout de suite se vit comme un paiement qui n'a pas marché.
@@ -127,10 +128,27 @@ export const CATALOGUE = [
     id: 'abo-annuel', rayon: 'abonnement', nom: 'Abonnement annuel',
     texte: 'Douze mois d’un coup, au prix de dix.',
     prix: 3990, marque: 'deux mois offerts', recurrence: 'year',
-    // Un booster aussi, et un seul : voir la note de l'abonnement mensuel.
-    // Douze fois moins souvent que le mensuel, pour douze mois — c'est le
-    // sens de la formule, et ce n'est pas une inégalité à corriger.
-    livraison: { type: 'abonnement', formule: 'annuel', jours: 366, packs: 1 },
+    /* **Six, et non un.** Voir les bornes de l'abonnement mensuel : elles
+       tiennent toujours, c'est le nombre qui bouge.
+
+       Ce qui était écrit ici disait l'inverse — « douze fois moins souvent
+       que le mensuel, pour douze mois, ce n'est pas une inégalité à
+       corriger ». C'était juste vu du côté de la comptabilité et faux vu du
+       côté de celui qui paie : quarante euros d'un coup contre quatre, et la
+       même petite carte au bout. La formule annuelle demande douze mois de
+       confiance d'avance ; elle ne rendait rien de plus le jour où on la
+       donne.
+
+       Six ouvre une série entière d'un coup — c'est un **moment**, pas un
+       appoint, et c'est le seul de toute cette page qui se voie dans la
+       seconde qui suit le paiement. Le reste de l'abonnement est du confort
+       qui se découvre en jouant.
+
+       Six et non douze : un par mois payé d'avance ferait du cadeau la
+       raison de s'abonner, et l'abonnement se vendrait alors sur des cartes
+       — c'est-à-dire exactement la pente que les bornes ci-dessus
+       refusent. */
+    livraison: { type: 'abonnement', formule: 'annuel', jours: 366, packs: 6 },
   },
 ];
 

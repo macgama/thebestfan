@@ -1,5 +1,6 @@
 import express from 'express';
 import { reglage } from '../../shared/reglages.js';
+import { CATALOGUE, enEuros } from '../../shared/boutique.js';
 
 /**
  * L'abonnement : ce qui distingue un joueur inscrit d'un joueur abonné.
@@ -244,6 +245,31 @@ export function createAbonnement({ pool, requireAuth }) {
            s'abonner doit pouvoir vérifier qu'il ne lui manque rien pour jouer. */
         libre: ['tous les formats de duel', 'tous les âges des Fanzzy',
           'tous les classements', 'le Grand Virage'],
+
+        /* **Les deux formules, telles que la boutique les vend.**
+
+           La page les écrivait en dur : « 3,99 € », « 39,90 € », « deux mois
+           offerts » et « un booster offert », quatre nombres recopiés à côté
+           du seul endroit qui les décide. C'est exactement la faute que le
+           commentaire de `sans` raconte deux lignes plus haut, et qui avait
+           déjà fait annoncer « au lieu de 10 » quand le réglage disait douze.
+           Le jour où le cadeau annuel est passé de un à six, la page aurait
+           continué d'en promettre un — sur l'écran qui prend l'argent.
+
+           `mois` part d'ici aussi : c'est ce qui permet à la page de dire
+           « six boosters » sans savoir laquelle des deux formules est
+           annuelle. Elle affiche ce qu'on lui donne, dans l'ordre du
+           catalogue, et une troisième formule paraîtrait sans la toucher. */
+        formules: CATALOGUE
+          .filter((a) => a.livraison?.type === 'abonnement')
+          .map((a) => ({
+            id: a.id,
+            nom: a.nom,
+            prixTexte: enEuros(a.prix),
+            marque: a.marque ?? null,
+            packs: a.livraison.packs ?? 0,
+            mois: Math.max(1, Math.round((a.livraison.jours ?? 31) / 30.5)),
+          })),
       });
     } catch (e) {
       console.error('[abonnement]', e.message);

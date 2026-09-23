@@ -29,6 +29,7 @@ import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { FORMATS } from '../src/server/deck/index.js';
 import { reglage } from '../src/shared/reglages.js';
+import { ARTICLE_PAR_ID } from '../src/shared/boutique.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -176,6 +177,36 @@ check('le retirer le retire vraiment', (await abonnement.estAbonne(LIBRE)) === f
     || (console.log('        elle rend :', JSON.stringify(r.sans),
       '· attendu', reglage('pack.max'), reglage('pack.regen_min')), false));
   check('et les deux ne disent pas la même chose', r.sans?.packMax !== r.ouvre?.packMax);
+
+  /* **Les formules, avec leur prix et leur cadeau.**
+
+     La page les écrivait en dur — « 3,99 € », « 39,90 € », « deux mois
+     offerts », « un booster offert » — à côté du seul endroit qui les décide.
+     Quatre nombres recopiés sur l'écran qui prend l'argent, c'est-à-dire le
+     seul où se tromper coûte la confiance plutôt qu'un haussement d'épaules.
+
+     Le jour où le cadeau annuel est passé de un à six, elle aurait continué
+     d'en promettre un. Ce contrôle-là est celui qui l'aurait dit. */
+  const f = r.formules ?? [];
+  check(`la route rend les formules (${f.length})`, f.length >= 2);
+  check('chacune porte un prix déjà mis en forme',
+    f.every((x) => typeof x.prixTexte === 'string' && /\d/.test(x.prixTexte))
+    || (console.log('        elles rendent :', JSON.stringify(f)), false));
+  check('et un identifiant que la boutique sait commander',
+    f.every((x) => ARTICLE_PAR_ID.has(x.id)));
+
+  /* Le cadeau vient du catalogue et de nulle part ailleurs : recopié ici, ce
+     contrôle mesurerait sa propre copie et ne dirait plus rien. */
+  check('et le nombre de boosters que dit le catalogue',
+    f.every((x) => x.packs === (ARTICLE_PAR_ID.get(x.id)?.livraison?.packs ?? 0))
+    || (console.log('        elles rendent :',
+      f.map((x) => `${x.id} ${x.packs}`).join(' · ')), false));
+
+  /* **Et les deux formules ne donnent plus la même chose.** C'est la raison
+     d'être du bloc dessiné sur la page : tant que le cadeau était le même des
+     deux côtés, une phrase au-dessus des boutons suffisait. */
+  check('l’annuelle donne plus que la mensuelle',
+    Math.max(...f.map((x) => x.packs)) > Math.min(...f.map((x) => x.packs)));
 }
 
 /* --------------------------------------------- ce qu'il n'ouvre PAS

@@ -319,15 +319,43 @@ const evenement = (sessionId) => ({
 
      Le contrôle ne disparaît donc pas, il **change de borne**. Ce qu'il
      interdit toujours, et qui est l'essentiel : de la monnaie, des cartes
-     choisies, ou plus d'un booster. Un jour où quelqu'un écrira
-     `packs: 5` ou `scarves: 500`, cette ligne rougira — et ce sera le
-     moment de reprendre la question, pas de réécrire le nombre. */
+     choisies, ou plus que la borne du moment. Un jour où quelqu'un écrira
+     `scarves: 500`, cette ligne rougira — et ce sera le moment de reprendre
+     la question, pas de réécrire le nombre.
+
+     **La question a été reprise, et la borne est passée de un à six.** Le
+     contrôle a fait son travail : `packs: 6` sur la formule annuelle l'a
+     fait rougir, et la décision est venue d'en haut plutôt que du clavier.
+     La raison est dans `shared/boutique.js` et tient en une phrase : quarante
+     euros d'un coup contre quatre, et la même petite carte au bout.
+
+     **Six, parce que c'est moins que douze.** Un booster par mois payé
+     d'avance ferait du cadeau la raison de s'abonner, et l'abonnement se
+     vendrait alors sur des cartes — la pente exacte que tout ce bloc refuse.
+     Six ouvre une série d'un coup et s'arrête là. C'est le nombre qui dit
+     « un moment » sans dire « un abonnement à des cartes ».
+
+     La borne est écrite une fois, ici, et nommée : un nombre glissé dans une
+     comparaison se relève sans qu'on s'en aperçoive, un nombre qui porte un
+     nom se défend. */
+  const CADEAU_MAX = 6;
   const CADEAU_PERMIS = ['type', 'formule', 'jours', 'packs'];
   for (const a of CATALOGUE.filter((x) => x.livraison.type === 'abonnement')) {
-    check(`« ${a.id} » ne livre que l'abonnement et au plus un booster`,
+    check(`« ${a.id} » ne livre que l'abonnement et au plus ${CADEAU_MAX} boosters`,
       Object.keys(a.livraison).every((k) => CADEAU_PERMIS.includes(k))
-      && (a.livraison.packs ?? 0) <= 1
+      && (a.livraison.packs ?? 0) <= CADEAU_MAX
       || (console.log('        il livre :', JSON.stringify(a.livraison)), false));
+  }
+
+  /* **Et le cadeau reste proportionné à l'engagement.** Sans cette ligne, la
+     borne de six s'appliquerait aussi bien au mensuel — six boosters pour
+     3,99 € tous les mois, c'est-à-dire un abonnement à des tirages sous un
+     autre nom. Un booster par tranche de deux mois payés d'avance : la règle
+     se lit, et elle tient toute seule si une formule trimestrielle arrive. */
+  for (const a of CATALOGUE.filter((x) => x.livraison.type === 'abonnement')) {
+    const mois = Math.max(1, Math.round((a.livraison.jours ?? 31) / 30.5));
+    check(`« ${a.id} » : ${a.livraison.packs ?? 0} booster(s) pour ${mois} mois`,
+      (a.livraison.packs ?? 0) <= Math.ceil(mois / 2));
   }
 
   check('aucun article payant ne s’appelle « booster » ou « écharpe »',
