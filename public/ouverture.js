@@ -9,14 +9,20 @@
  *
  * ## La sortie, qui est la partie qui compte
  *
- * L'écran part à la **première** des deux conditions : l'accueil dit qu'il est
- * prêt, ou le temps est écoulé. Le second n'est pas une précaution ajoutée
- * après coup, c'est la règle principale — un écran d'ouverture qui attend le
- * serveur devient un écran d'attente le jour où le serveur est lent, et c'est
- * exactement le jour où il ne faut pas retenir les gens dehors.
+ * L'écran part à la **première** des trois conditions : l'accueil dit qu'il
+ * est prêt, on touche l'écran, ou le temps est écoulé. Le dernier n'est pas
+ * une précaution ajoutée après coup, c'est le filet — un écran d'ouverture
+ * qui attend le serveur devient un écran d'attente le jour où le serveur est
+ * lent, et c'est exactement le jour où il ne faut pas retenir les gens
+ * dehors.
  *
- * Il part aussi au premier geste : quelqu'un qui touche l'écran a fini de
- * regarder.
+ * Les deux premières respectent un **plancher** : l'écran ne clignote pas.
+ * Le plafond, lui, ne se négocie pas — voir `DUREE`.
+ *
+ * Ces sorties ont été retirées une fois, et remises : dix secondes que rien
+ * n'abrège se lisent comme une panne, et un joueur l'a signalé deux fois.
+ * Si l'envie revient de les enlever, relire d'abord le récit du duel plus
+ * bas — c'est le même symptôme.
  *
  * Script classique, pas module : comme tout ce qui vit dans `public/`.
  */
@@ -77,6 +83,16 @@
    */
   const DUREE = 10_000;
 
+  /**
+   * Le temps minimum qu'elle reste, quoi qu'il arrive.
+   *
+   * Sans lui, une page déjà chaude ferait clignoter l'ouverture : elle
+   * paraîtrait et disparaîtrait dans le même souffle, ce qui se lit comme un
+   * défaut d'affichage et non comme une entrée. Mille deux cents
+   * millisecondes, c'est le temps de lire le titre.
+   */
+  const PLANCHER = 1200;
+
   const depart = performance.now();
   let parti = false;
 
@@ -99,10 +115,16 @@
     requestAnimationFrame(suivre);
   }
 
-  function partir() {
+  /**
+   * @param {boolean} plein attendre tout le plafond, ou seulement le plancher.
+   *   Vrai quand c'est la minuterie qui appelle — il ne reste alors rien à
+   *   attendre de toute façon. Faux quand c'est le joueur ou l'accueil.
+   */
+  function partir(plein = false) {
     if (parti) return;
     parti = true;
-    const reste = Math.max(0, DUREE - (performance.now() - depart));
+    const cible = plein ? DUREE : PLANCHER;
+    const reste = Math.max(0, cible - (performance.now() - depart));
     setTimeout(() => {
       ecran.classList.add('partie');
       /* On le retire vraiment, une fois la transition finie. `visibility` le
@@ -141,17 +163,46 @@
     }
   } catch { /* pas de visages : le titre suffit */ }
 
-  /* Les trois sorties. La minuterie est posée en premier : si tout le reste
-     échoue — un script cassé plus haut, un réseau mort — elle part quand même,
-     et c'est elle qui empêche l'écran d'ouverture de devenir une porte close. */
-  /* Une seule sortie : le temps.
-   *
-   * `tbf:pret` et le toucher partaient **avant** la durée — ils faisaient de
-   * 1800 ms un plafond, pas une durée. Maintenant que la durée est voulue, ils
-   * n'ont plus de sens : l'écran tient dix secondes, et `partir` attend de
-   * toute façon ce qu'il reste à tenir.
-   *
-   * Rien ne piège le joueur pour autant : c'est borné, ça avance visiblement,
-   * et le navigateur garde son bouton. */
-  setTimeout(partir, DUREE);
+  /* **Les trois sorties, et pourquoi elles reviennent.**
+
+     Elles avaient été retirées au motif que « maintenant que la durée est
+     voulue, elles n'ont plus de sens ». Le résultat est dix secondes que
+     rien n'abrège — et dix secondes d'un écran fixe ne se distinguent pas
+     d'une panne. C'est mot pour mot ce que l'en-tête de ce fichier raconte
+     déjà : « je quitte un duel, j'arrive sur la page de chargement, et il ne
+     se passe plus rien ». Un joueur l'a signalé une seconde fois.
+
+     Trois choses le disaient encore, et plus rien ne les tenait :
+
+       — l'en-tête de ce fichier : « L'écran part à la **première** des deux
+         conditions… Il part aussi au premier geste » ;
+       — `index.html`, qui émet `tbf:pret` en expliquant que « ouverture.js
+         décide, c'est lui qui connaît le plancher et le plafond » — un
+         plancher qui n'existait pas, et un signal que plus personne
+         n'écoutait ;
+       — et le fait qu'un plafond sans plancher n'est pas une durée : c'est
+         une attente.
+
+     La règle est donc celle que le fichier a toujours décrite. Un plancher,
+     pour ne pas clignoter. Un plafond, pour ne jamais retenir personne. Et
+     entre les deux, l'écran part dès que l'accueil est prêt ou dès qu'on le
+     touche.
+
+     La minuterie est posée **en premier** : si tout le reste échoue — un
+     script cassé plus haut, un réseau mort — elle part quand même, et c'est
+     elle qui empêche l'ouverture de devenir une porte close. */
+  setTimeout(() => partir(true), DUREE);
+
+  /* L'accueil a fini de se monter : le personnage est posé, la collection est
+     lue, il n'y a plus rien à couvrir. */
+  addEventListener('tbf:pret', () => partir(), { once: true });
+
+  /* Et le geste. Quelqu'un qui touche l'écran a fini de regarder — c'est la
+     seule des trois qui vienne du joueur, et c'est celle qui compte le plus :
+     elle transforme une attente subie en une attente qu'on peut couper.
+
+     `pointerdown` et non `click` : le voile part au moment où le doigt se
+     pose, donc le geste suivant atteint la page. Avec `click`, le premier
+     appui était avalé par l'écran qu'il venait de faire disparaître. */
+  ecran.addEventListener('pointerdown', () => partir(), { once: true });
 })();
