@@ -353,13 +353,19 @@
           <div class="corps">
             <div class="vitrine r-${esc(f.rar)}" style="--c:${c}">
               <div class="art" id="fiche-art"></div><div class="ombre"></div>
-              <div class="rar">${marque(f.rar)}</div>
+              <!-- Le pin de rareté **et** les losanges : le pin porte la
+                   matière — étain, argent, or serti — les losanges portent
+                   le compte, et ils survivent à un fichier manquant. -->
+              <div class="rar">${window.TBF_LOGO?.rarete?.(f.rar, 'pinRar') ?? ''}
+                ${marque(f.rar)}</div>
               ${siege(d) >= 0
                 ? `<div class="tag">${siege(d) === 0 ? 'TITULAIRE' : 'REMPLAÇANT'}</div>`
                 : ''}
               <div class="txt">
                 <div class="pastilles">
-                  <span class="pastille" style="--c:${c}"><b>${NOMTYPE[f.type] ?? f.type}</b></span>
+                  <span class="pastille" style="--c:${c}">
+                    ${window.TBF_LOGO?.type?.(f.type, 'pinType') ?? ''}
+                    <b>${NOMTYPE[f.type] ?? f.type}</b></span>
                   ${aMoi
                     ? `<button class="pastille" data-cri style="cursor:pointer">
                         Cri : <b style="color:${c}">${esc(f.cri?.label ?? '—')}</b> ▸</button>`

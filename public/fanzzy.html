@@ -72,8 +72,24 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   background:rgba(16,22,31,.9);box-shadow:0 3px 0 rgba(0,0,0,.55),inset 0 1px 0 rgba(242,238,228,.09);
   opacity:.62;transition:transform .1s,box-shadow .1s,opacity .1s}
 .filt:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,.55)}
+/* Le pin du type, dans son bouton. `vertical-align` plutôt qu'un flex : le
+   bouton est une ligne de texte, et le passer en flex lui ferait perdre le
+   `white-space:nowrap` qui tient la rangée. */
+.filt .pinFiltre{width:16px;height:16px;object-fit:contain;
+  vertical-align:-3px;margin-right:5px}
+@media (max-width:400px){ .filt .pinFiltre{display:none} }
 .filt.on{opacity:1;color:#0B0E13;background:var(--fc,var(--craie));
   box-shadow:0 3px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.45)}
+/* L'en-tête d'une série : l'emblème, le nom, et toute la largeur. Discret —
+   il sépare, il n'annonce pas. Le premier n'a pas de marge haute : une ligne
+   de titre décollée du haut de la grille se lit comme un oubli. */
+.serieTete{grid-column:1/-1;display:flex;align-items:center;gap:8px;
+  margin:14px 0 2px;font-family:var(--banner);font-size:11px;letter-spacing:.16em;
+  opacity:.72}
+.serieTete:first-child{margin-top:4px}
+.serieTete .ecusson{width:22px;height:22px;flex:none;object-fit:contain;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
+.serieTete b{font-weight:400}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px 9px;padding:2px 14px 22px;
   overflow-y:auto;flex:1}
 /* Le socle dur déborde sous la carte : la case lui garde sa place, sinon la
@@ -342,6 +358,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
      s’affichait en silhouette procédurale, comme un Fanzzy sans visage.
      Il sert aussi aux écharpes, dont le dessin est rangé avec les gains. -->
 <script src="/stuff-art.js"></script>
+<script src="/logo-art.js"></script>
 <!-- Et ceux des cartes d’action, qui n’étaient chargés nulle part ici : une
      carte d’action tirée d’un booster tombait donc sur la même silhouette
      grise que les écharpes, et deux cartes très différentes se ressemblaient
@@ -390,9 +407,20 @@ function renderDex() {
   const chips = [['all','Tout', null],
     ...Object.entries(TYPES).map(([k, t]) => [k, t.nom, t.c]),
     ['miss','Manquants', null]];
+  /* **L'emblème du type dans son bouton.**
+
+     Le bouton ne portait que sa couleur, et la couleur seule demande d'avoir
+     appris que le violet est le tifo. Le pin le montre. « Tout » et
+     « Manquants » n'en ont pas : ce ne sont pas des types, et leur en donner
+     un ferait croire qu'ils en sont.
+
+     Il disparaît sous quatre cents pixels — voir la règle plus bas : sur un
+     petit écran la rangée de huit boutons défile déjà, et huit images de
+     plus la feraient défiler deux fois plus longtemps pour la même
+     information. */
   $('filters').innerHTML = chips.map(([k, l, c]) =>
     `<button class="filt ${S.filter === k ? 'on' : ''}" data-f="${k}"
-      ${c ? `style="--fc:${c}"` : ''}>${l}</button>`).join('');
+      ${c ? `style="--fc:${c}"` : ''}>${c ? (window.TBF_LOGO?.type?.(k, 'pinFiltre') ?? '') : ''}${l}</button>`).join('');
 
   /**
    * Le classeur ne range que ce que les saisons ont ouvert.
@@ -506,7 +534,7 @@ function renderDex() {
   if (!Object.keys(S.col).length && S.filter !== 'miss') {
     $('grid').insertAdjacentHTML('afterbegin', '');
   }
-  $('grid').innerHTML = list.length ? list.map((f, i) => {
+  const cases = list.map((f, i) => {
     // Le retard d'entree est plafonne : sans ce plafond, la cent-cinquantieme
     // carte se poserait quatre secondes apres la premiere.
     const retard = ` style="animation-delay:${Math.min(i, 11) * 28}ms"`;
@@ -560,7 +588,31 @@ function renderDex() {
             age precis. */
         S.active === racine && (S.stades?.[racine] ?? 1) === etage
           ? '<div class="active-tag">AVATAR</div>' : ''}</div>`;
-  }).join('') : `<div class="empty">${S.filter === 'miss' ? 'Collection complète.' : 'Rien ici pour l\u2019instant.'}</div>`;
+  });
+
+  /* **Une ligne par série, avec son emblème.**
+
+     Le classeur trie par série depuis septembre 2026, et ne le montrait
+     nulle part : les cartes changeaient de monde au milieu d'une rangée,
+     sans qu'une ligne le dise. Un tri qu'on ne voit pas n'est pas un tri,
+     c'est un ordre mystérieux.
+
+     L'en-tête prend toute la largeur — `grid-column:1/-1` — donc la série
+     suivante repart d'une rangée propre. C'est aussi ce qui rend les
+     légendaires lisibles : elles ferment leur série au lieu de se perdre
+     dans le flux.
+
+     L'emblème peut manquer sans rien casser : `TBF_LOGO` pose un `onerror`
+     qui retire l'image, et il reste le nom — ce qui suffisait hier. */
+  const nomDeSerie = (id) => (SETS_TOUTES.find((x) => x.id === id)?.nom ?? id);
+  const enTete = (id) => `<div class="serieTete">
+    ${window.TBF_LOGO?.serie?.(id, 'ecusson') ?? ''}
+    <b>${esc(nomDeSerie(id))}</b></div>`;
+
+  $('grid').innerHTML = list.length
+    ? cases.map((html, i) => (i === 0 || list[i - 1].set !== list[i].set
+      ? enTete(list[i].set) : '') + html).join('')
+    : `<div class="empty">${S.filter === 'miss' ? 'Collection complète.' : 'Rien ici pour l\u2019instant.'}</div>`;
 }
 $('filters').onclick = (e) => { const b = e.target.closest('[data-f]'); if (b) { S.filter = b.dataset.f; renderDex(); } };
 $('grid').onclick = (e) => {

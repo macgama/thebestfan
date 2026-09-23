@@ -59,6 +59,8 @@
     "actions:invites": "node scripts/action-images.mjs --invites",
     "stuff": "node scripts/stuff-images.mjs",
     "stuff:invites": "node scripts/stuff-images.mjs --invites",
+    "logos": "node scripts/logo-images.mjs",
+    "logos:invites": "node scripts/logo-images.mjs --invites",
     "poses": "node scripts/poses-supporter.mjs",
     "manifeste": "node scripts/fanzzy-manifeste.mjs",
     "veille": "node scripts/fanzzy-veille.mjs",

@@ -376,17 +376,45 @@ check(`la grille affiche un age par case (${grille.cases})`,
     || (console.log('        une lignee est coupee en deux'), false));
   const num = (r) => Number(/\d+/.exec(r)?.[0] ?? 0);
   const serie = (r) => /^[A-Z]+/.exec(r)[0];
-  /* Serie par serie : la grille range TR1, TR2, TR3 dans une serie, puis passe
-     a la suivante. Comparer la liste a plat melangerait deux series et ferait
-     echouer un ordre parfaitement juste — c'est ce qu'a fait le premier jet. */
+
+  /* **Deux blocs par serie, et non un seul.**
+
+     Ce controle lisait une suite numerique croissante par serie. Il avait
+     raison jusqu'au jour ou les legendaires sont passees en fin de serie :
+     TR monte alors jusqu'a 68, puis repart a 12 pour ouvrir le bloc des
+     legendaires. Le test rougissait sur un ordre parfaitement voulu.
+
+     La regle est desormais : les lignees d'abord, dans l'ordre numerique,
+     puis les legendaires, dans l'ordre numerique. On verifie les deux — et
+     surtout qu'aucune lignee ne revient apres une legendaire, qui est la
+     seule chose que l'ancien controle attrapait vraiment.
+
+     Plus strict qu'avant, donc, et pas moins : trois affirmations la ou il
+     n'y en avait qu'une. */
+  const estLegendaire = (r) => PUBLIE.some((f) => racine(f.id) === r && f.rar === 'legendaire');
   const parSerie = new Map();
   for (const g of groupes) {
     if (!parSerie.has(serie(g.r))) parSerie.set(serie(g.r), []);
-    parSerie.get(serie(g.r)).push(num(g.r));
+    parSerie.get(serie(g.r)).push({ n: num(g.r), leg: estLegendaire(g.r) });
   }
-  const fautive = [...parSerie].find(([, ns]) => ns.some((n, i) => i > 0 && n < ns[i - 1]));
+  const croissant = (ns) => ns.every((n, i) => i === 0 || n >= ns[i - 1]);
+
+  const melangee = [...parSerie].find(([, gs]) =>
+    gs.some((g, i) => i > 0 && !g.leg && gs[i - 1].leg));
+  check('aucune lignee ne revient apres une legendaire', !melangee
+    || (console.log('        serie', melangee[0]), false));
+
+  const fautive = [...parSerie].find(([, gs]) =>
+    !croissant(gs.filter((g) => !g.leg).map((g) => g.n)));
   check('et les lignees sont dans l ordre numerique', !fautive
-    || (console.log('        serie', fautive[0], ':', fautive[1].slice(0, 10).join(' ')), false));
+    || (console.log('        serie', fautive[0], ':',
+      fautive[1].filter((g) => !g.leg).map((g) => g.n).slice(0, 10).join(' ')), false));
+
+  const fautiveLeg = [...parSerie].find(([, gs]) =>
+    !croissant(gs.filter((g) => g.leg).map((g) => g.n)));
+  check('et les legendaires aussi, en fin de serie', !fautiveLeg
+    || (console.log('        serie', fautiveLeg[0], ':',
+      fautiveLeg[1].filter((g) => g.leg).map((g) => g.n).join(' ')), false));
 }
 
 /* Le compte possede suit la meme regle que l'affichage : on possede « le

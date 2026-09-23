@@ -207,6 +207,11 @@
 .fiche .pastille{border:0;border-radius:999px;padding:6px 11px;font-size:11px;color:inherit;
   font-family:inherit;background:rgba(4,6,10,.7);box-shadow:inset 0 0 0 1px rgba(242,238,228,.16)}
 .fiche .pastille b{color:var(--c)}
+/* Le pin du type, dans sa pastille. `vertical-align` et non un flex : la
+   pastille est une ligne de texte, et la passer en flex casserait le retour
+   à la ligne de la rangée quand elle déborde. */
+.fiche .pastille .pinType{width:17px;height:17px;object-fit:contain;
+  vertical-align:-4px;margin-right:4px}
 .fiche .tag{position:absolute;top:11px;right:11px;z-index:2;font-family:var(--banner);
   font-size:9.5px;letter-spacing:.14em;border-radius:6px;padding:5px 9px;
   background:var(--projo);color:#0B0E13}
@@ -216,6 +221,12 @@
 .fiche .rar i{width:8px;height:8px;background:var(--rc,#C2CAD6);transform:rotate(45deg);
   border-radius:1px;display:block}
 .fiche .rar b{color:var(--rc,#F5C33B);font-size:13px;line-height:1}
+/* Le pin de rareté, devant les losanges. Il porte la matière — étain,
+   argent, or serti — là où les losanges ne portent que le compte. Il peut
+   manquer sans rien déplacer : `TBF_LOGO` retire l'image, le `flex` se
+   referme, et il reste ce qui existait hier. */
+.fiche .rar .pinRar{width:19px;height:19px;flex:none;object-fit:contain;
+  margin:-1px 1px -1px -2px}
 
 /* ------------------------------------------------------------ les cases
 
