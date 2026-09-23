@@ -118,6 +118,20 @@ const OUVERTURE_MS = (() => {
   return (m ? Number(m[1].replace(/_/g, '')) : 2000) + 4000;
 })();
 
+/**
+ * Le retard de la sortie de secours de l'écran d'ouverture.
+ *
+ * **Lu dans `index.html`**, pour la même raison que `OUVERTURE_MS` juste
+ * au-dessus : un délai recopié dans une suite est un délai qui finit par
+ * mentir, et celui-ci se mesure en dizaines de secondes — le voir dériver
+ * coûterait une minute d'attente par contrôle avant de comprendre.
+ */
+const SECOURS_MS = (() => {
+  const src = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
+  const m = src.match(/animation:ouvTard [\d.]+s ease ([\d.]+)s/);
+  return (m ? Number(m[1]) * 1000 : 12_000) + 5000;
+})();
+
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
 
 /* ------------------------------------------------------------- la base */
@@ -1296,6 +1310,130 @@ await page.close();
     const encore = await p3.evaluate(() => Boolean(document.getElementById("ouverture")));
     check("et ne revient pas au retour suivant", encore === false);
     await p3.close();
+  }
+
+  /* ======================================== quand rien n'arrive que la page
+
+     **C'est la panne, reproduite.** Un joueur a envoyé la capture d'un écran
+     d'ouverture bloqué pour toujours. Elle disait tout : titre pas crème,
+     « .ONLINE » pas doré, police serif de secours, jauge sans remplissage,
+     éventail vide. Ces cinq absences ont une seule cause — `/ui.css` et les
+     scripts ne sont jamais arrivés, alors que le document, lui, était là.
+
+     Et `ouverture.js` non plus n'était pas arrivé. Or les trois sorties de
+     l'écran vivent dedans : le signal de l'accueil, le doigt, la minuterie.
+     **Toutes les clefs étaient restées dehors.**
+
+     On bloque donc les requêtes à la main, ce qu'aucune autre suite ne fait,
+     et pour une raison précise : c'est la seule façon d'éprouver ce qui reste
+     debout quand le reste tombe. Un contrôle qui ne casse rien ne mesure
+     aucun filet. */
+  {
+    const ctx = await (nav.createBrowserContext?.() ?? nav.createIncognitoBrowserContext());
+
+    /* ---- 1. le plancher : la sortie qui ne dépend d'aucun fichier ----
+
+       On ne coupe qu'`ouverture.js`. Le reste arrive, donc la sonde en ligne
+       voit une page saine et ne recharge pas — ce qu'on éprouve ici est la
+       sortie de secours toute seule, sans rien pour l'aider. */
+    const p4 = await ctx.newPage();
+    await p4.setViewport({ width: 400, height: 880 });
+    await p4.setRequestInterception(true);
+    p4.on('request', (r) => {
+      if (/\/ouverture\.js/.test(r.url())) r.abort(); else r.continue();
+    });
+    await p4.goto(base + "/", { waitUntil: "domcontentloaded" });
+
+    /* Sans son script, l'écran reste : c'est l'hypothèse de tout ce bloc, et
+       s'il partait quand même, le contrôle qui suit ne prouverait rien. */
+    await new Promise((r) => setTimeout(r, 1200));
+    const reste = await p4.evaluate(() => Boolean(document.getElementById("ouverture")));
+    check("sans son script, l écran d ouverture n a plus de sortie", reste === true);
+
+    const sorti = await p4.waitForFunction(() => {
+      const s = document.querySelector('.ouverture .secours');
+      return Boolean(s) && getComputedStyle(s).visibility === 'visible';
+    }, { timeout: SECOURS_MS, polling: 400 }).then(() => true).catch(() => false);
+    check("mais la sortie de secours paraît quand même", sorti);
+
+    /* Elle ne sert à rien si on ne peut pas la toucher : c'est le seul
+       élément de tout le jeu dont on sait déjà que la feuille de style peut
+       manquer, donc sa taille est écrite en clair dans la page. */
+    const bouton = await p4.evaluate(() => {
+      const b = document.querySelector('.ouverture .secours button');
+      if (!b) return null;
+      const r = b.getBoundingClientRect();
+      return { h: Math.round(r.height), l: Math.round(r.width),
+        mot: (b.textContent || '').trim() };
+    });
+    check(`et elle se touche (${bouton?.l}×${bouton?.h})`,
+      bouton !== null && bouton.h >= 44 && bouton.l >= 44);
+    check("et elle dit quoi faire", /recharger/i.test(bouton?.mot ?? ''));
+    await p4.close();
+
+    /* ---- 2. la sonde : elle recharge, et elle s'arrête ----
+
+       On coupe la feuille de style, ce qui est exactement l'état de la
+       capture. La sonde doit voir la page vide et la recharger — deux fois
+       au plus. **Le compte est ce qui est éprouvé ici** : une boucle de
+       rechargement sur un téléphone dans un stade est pire que la panne
+       qu'elle essaie de réparer. */
+    const p5 = await ctx.newPage();
+    await p5.setViewport({ width: 400, height: 880 });
+
+    /* **On compte les chargements, pas les requêtes du document.** Le premier
+       jet interceptait la requête de navigation pour la compter : elle ne
+       passe pas par l'interception ici, et le compteur restait à zéro pendant
+       que la page se rechargeait sous les yeux du contrôle. Un zéro qui
+       ressemble à « la sonde ne marche pas » alors qu'elle marchait : la
+       mesure était fausse, pas la chose mesurée. L'événement `load` dit
+       exactement ce qu'on cherche — une page qui a fini de se charger. */
+    let chargements = 0;
+    p5.on('load', () => { chargements += 1; });
+    await p5.setRequestInterception(true);
+    p5.on('request', (r) => {
+      if (/\/ui\.css/.test(r.url())) r.abort().catch(() => {});
+      else r.continue().catch(() => {});
+    });
+    await p5.goto(base + "/", { waitUntil: "load" }).catch(() => {});
+    await new Promise((r) => setTimeout(r, 4000));
+    const apres = chargements;
+    check(`la page vide se recharge d'elle-même (${apres} chargements)`,
+      apres >= 2 && apres <= 3);
+
+    /* **Et elle s'arrête.** C'est le contrôle qui compte vraiment : une
+       boucle de rechargement sur un téléphone dans un stade est pire que la
+       panne qu'elle répare. Le compteur de session le dit sans ambiguïté —
+       deux essais écrits, et plus personne n'y touche. */
+    await new Promise((r) => setTimeout(r, 4000));
+    check("puis elle renonce au lieu de boucler", chargements === apres);
+    const compteur = await p5.evaluate(() => {
+      try { return sessionStorage.getItem('tbf.secours'); } catch { return 'refus'; }
+    });
+    check(`et elle a compté ses essais (${compteur})`, compteur === '2');
+
+    /* **Renoncer en silence était un trou, et c'est ce contrôle qui l'a
+       montré.** On ne coupe ici que la feuille de style : `ouverture.js`
+       arrive donc, fait son travail et lève le rideau — sur une page nue.
+       La sortie de secours était partie avec l'écran qui la portait, et il
+       ne restait rien à l'écran pour dire ce qui s'était passé. */
+    const panne = await p5.evaluate(() => {
+      const d = document.getElementById('tbf-panne');
+      if (!d) return null;
+      const b = d.querySelector('button');
+      const r = b?.getBoundingClientRect();
+      return { mot: (d.textContent || '').trim(),
+        h: Math.round(r?.height ?? 0), l: Math.round(r?.width ?? 0),
+        role: d.getAttribute('role'), z: getComputedStyle(d).zIndex };
+    });
+    check("quand elle renonce, elle le dit", panne !== null);
+    check("et elle dit quoi faire", /réessayer/i.test(panne?.mot ?? ''));
+    check(`et le bouton se touche (${panne?.l}×${panne?.h})`,
+      (panne?.h ?? 0) >= 44 && (panne?.l ?? 0) >= 44);
+    /* Un lecteur d'écran doit l'apprendre sans avoir à fouiller la page. */
+    check("et elle s annonce", panne?.role === 'alert');
+    await p5.close();
+    await ctx.close?.();
   }
   if (process.env.SHOT) {
     const p2 = await ouvrir(400, 880);

@@ -607,7 +607,10 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
      booster passerait quatre fois sur cinq. */
   await pageG.evaluate(() => document.getElementById('oClose')?.click());
   const bilan = await pageG.evaluate(async () => {
-    const vus = { fanzzy: 0, skin: 0, stuff: 0, action: 0 };
+    /* **Les états et les écharpes manquaient à l'appel.** Le compte datait du
+       jour où il y avait quatre sortes ; les deux ajoutées depuis tombaient
+       dans la case « fanzzy », où elles se fondaient dans le nombre. */
+    const vus = { fanzzy: 0, skin: 0, etat: 0, stuff: 0, action: 0, echarpes: 0 };
     const fautes = [];
     /* On ouvre **jusqu'à** avoir vu les quatre sortes, pas un nombre fixe de
        fois. À quatorze boosters, la sorte la plus rare manquait environ une
@@ -615,7 +618,15 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
        hasard du jeu fuyait dans l'assertion, ce qui est le meilleur moyen
        d'apprendre à ignorer les rouges. Le plafond reste : si une sorte ne
        tombe jamais en soixante boosters, ce n'est plus de la malchance. */
-    const complet = () => Object.values(vus).every((n) => n > 0);
+    /* **Quatre sortes exigées, six comptées.** L'état et les écharpes sont
+       entrés dans le compte pour qu'on voie ce qui tombe, pas pour qu'on
+       l'exige : un état demande un âge débloqué dont l'expression manque
+       encore, et c'est une condition que le compte d'épreuve ne contrôle
+       pas. L'exiger remettrait le hasard du jeu dans l'assertion, ce que le
+       paragraphe ci-dessus vient précisément de sortir. Leur dessin, lui,
+       est contrôlé dès qu'il en tombe un. */
+    const EXIGEES = ['fanzzy', 'skin', 'stuff', 'action'];
+    const complet = () => EXIGEES.every((k) => vus[k] > 0);
     for (let i = 0; i < 60 && !complet(); i++) {
       //  : une carte qui fait lever le rendu doit se lire comme un échec
       // nommé, pas faire exploser la suite. C'est exactement ce qui arrivait,
@@ -631,7 +642,42 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
         if (!c) { fautes.push('une carte est arrivée vide'); continue; }
         // Le nom, pas l'identifiant : une tenue s'appelait « prehistorique ».
         if (!c.nom || c.nom === c.id) fautes.push(`« ${c.id} » n’a pas de nom`);
-        vus[c.skin ? 'skin' : c.stuff ? 'stuff' : c.action ? 'action' : 'fanzzy']++;
+        const sorte = c.skin ? 'skin' : c.etat ? 'etat' : c.stuff ? 'stuff'
+          : c.action ? 'action' : c.echarpes ? 'echarpes' : 'fanzzy';
+        vus[sorte]++;
+
+        /* **Le dessin, et pas seulement le nom.**
+
+           Cinq fois la même panne, et cinq fois personne ne l'a vue : `art()`
+           cherche un Fanzzy dont l'identifiant est celui de la carte, ne le
+           trouve pas — « halloween » n'est pas un personnage — et dessine la
+           silhouette grise procédurale. Les écharpes, l'action, l'équipement,
+           l'état, puis la tenue : chaque sorte ajoutée est retombée dedans à
+           son tour, et chacune a été rattrapée séparément, des semaines plus
+           tard, sur une capture d'écran envoyée par quelqu'un qui jouait.
+
+           Ce contrôle-ci ne connaît aucune sorte en particulier : il demande
+           qu'une carte qui n'est pas un Fanzzy montre une **image**. Le jour
+           où une septième sorte arrivera, elle sera couverte avant d'exister.
+
+           Le Fanzzy est à part, et légitimement : tout le catalogue n'est pas
+           illustré, et la silhouette est son dessin prévu.
+
+           **Et un état ou une tenue hérite de cette exception**, parce qu'ils
+           n'ont pas de dessin à eux : ils montrent leur personnage. Le
+           contrôle a trouvé « Le Drapeau Perdu » du premier coup, qui n'est
+           pas illustré — exiger une image de sa tenue serait exiger un dessin
+           qui n'existe pour personne. On pose donc la question à `FZART`,
+           c'est-à-dire au même juge que la page : si le personnage a une
+           adresse, sa carte doit la montrer. */
+        if (sorte !== 'fanzzy') {
+          const dessinable = !c.pour
+            || Boolean(window.FZART?.adresse?.(c.pour, 'buste'));
+          const dessin = window.TBF_CARTES.dessinDeCarte(c);
+          if (dessinable && !/<img[^>]+src="[^"]/.test(dessin)) {
+            fautes.push(`« ${c.nom} » (${sorte}) tombe sur la silhouette`);
+          }
+        }
       }
     }
     return { vus, fautes: [...new Set(fautes)] };
@@ -639,7 +685,11 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
 
   check(`les quatre sortes de cartes sont tombées (${
     Object.entries(bilan.vus).map(([k, n]) => `${k} ${n}`).join(' · ')})`,
-    Object.values(bilan.vus).every((n) => n > 0));
+    ['fanzzy', 'skin', 'stuff', 'action'].every((k) => bilan.vus[k] > 0));
+  /* Le dessin de chacune. La silhouette procédurale est le dessin prévu du
+     Fanzzy non illustré ; pour toutes les autres, c'est une carte ratée. */
+  check('et chacune montre une image, pas une silhouette',
+    !bilan.fautes.some((f) => /silhouette/.test(f)));
   check('et aucune n’a cassé l’ouverture', bilan.fautes.length === 0);
   if (bilan.fautes.length) console.log('       ', bilan.fautes.slice(0, 4));
 

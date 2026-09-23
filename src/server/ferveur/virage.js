@@ -92,6 +92,8 @@ export const RULES = {
   // Sans geste, on ne compte plus dans la foule.
   get idleMs() { return reglage('virage.inactif_sec') * 1000; },
   get realGoalJolt() { return reglage('virage.secousse_but_reel'); },
+  /* Le plancher de partage de la ferveur. Voir `partFerveur`. */
+  get tribuneMin() { return reglage('virage.tribune_min'); },
 
   /* ------------------------------------------------- les cartes d'action
 
@@ -494,7 +496,9 @@ export class VirageRoom {
     // `ferveurBonus` : ce qui compte au classement. Séparé de la corde
     // exprès — un KOP peut vouloir peser sur le match sans peser sur le
     // classement, et l’inverse.
-    this.crediter(m, perCapita, mods);
+    /* Et le partage n'est pas le même des deux côtés : la corde se pousse à
+       l'effectif réel, la ferveur se partage au plancher. Voir `partFerveur`. */
+    this.crediter(m, amount / this.partFerveur(m), mods);
 
     if (Math.abs(this.rope) >= RULES.goalAt) this.scoreGoal(this.rope > 0 ? 1 : 0);
 
@@ -571,6 +575,28 @@ export class VirageRoom {
   }
 
   /**
+   * Par combien la ferveur se partage — et ce n'est pas l'effectif réel.
+   *
+   * **Être seul était l'état le plus rentable du jeu.** `crowdFactor` vaut 1
+   * en dessous de cent personnes, donc ce qu'un supporter touche est sa
+   * poussée divisée par l'effectif : tout entier à un, un cinquantième à
+   * cinquante. Arriver le premier sur un match obscur, pousser une heure sans
+   * personne en face — la corde ne retombant que de 1,4 par seconde, les buts
+   * s'enchaînent — rapportait cinquante fois ce que rapporte la même heure
+   * dans une vraie tribune. Ce n'est pas un détail d'équilibrage : c'est le
+   * classement de ferveur qui récompense le contraire de ce que le jeu
+   * raconte.
+   *
+   * **Le plancher ne touche que la récolte, jamais la corde.** Le diviser
+   * aussi côté corde rendrait un match désert impraticable, et arriver tôt
+   * sur un match est exactement ce qu'on veut encourager. Seul, on joue donc
+   * comme avant ; on ne récolte plus comme si l'on portait une tribune.
+   */
+  partFerveur(m) {
+    return Math.max(RULES.tribuneMin, this.effectif(m));
+  }
+
+  /**
    * Ce qu'une poussée rapporte à celui qui l'a donnée.
    *
    * **Le même nombre part des deux côtés**, et c'est tout l'objet de cette
@@ -588,6 +614,10 @@ export class VirageRoom {
    * Le club part avec, et c'est **celui qu'on a poussé** — pas ceux qu'on suit.
    * Nul pour un neutre : il chante pour une tribune dont il n'est pas, et sa
    * ferveur ne doit rien rapporter ni à ce club ni à un KOP.
+   *
+   * **`perCapita` n'est pas celui de la corde.** Les deux appelants passent
+   * ici la poussée divisée par `partFerveur`, et la corde garde l'effectif
+   * réel : c'est volontaire, et c'est tout le correctif du Virage solitaire.
    */
   crediter(m, perCapita, mods = m.mods) {
     const gagne = Math.round(Math.max(0, perCapita) * (mods.ferveurBonus ?? 1)
@@ -620,7 +650,9 @@ export class VirageRoom {
     const perCapita = amount / n;
     const signed = m.side === 0 ? -perCapita : perCapita;
     this.rope = clamp(this.rope + signed, -RULES.goalAt, RULES.goalAt);
-    this.crediter(m, perCapita);
+    /* Le même plancher qu'au chant : une carte n'échappe à aucune règle,
+       c'est ce que dit le paragraphe ci-dessus, et celle-ci en est une. */
+    this.crediter(m, amount / this.partFerveur(m));
     evenements.push({ t: 'push', side: m.side, valeur: Math.round(perCapita) });
     if (Math.abs(this.rope) >= RULES.goalAt) this.scoreGoal(this.rope > 0 ? 1 : 0);
     return perCapita;

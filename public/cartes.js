@@ -482,7 +482,43 @@ function dessinDeCarte(f) {
       return `<div class="illuwrap">${artFond(f)}
         <img class="illu" src="${src}" alt="" loading="lazy"
              onerror="this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">
-        ${f.etatMot ? `<span class="tbf-etiq-etat">${esc(f.etatMot)}</span>` : ''}</div>`;
+        ${f.etatMot ? `<span class="tbf-etiq">${esc(f.etatMot)}</span>` : ''}</div>`;
+    }
+  }
+  /* **Et la cinquième sorte tombait encore sur la silhouette.**
+   *
+     Le commentaire en tête de cette fonction raconte la même panne pour
+     trois sortes de cartes, celui de la branche précédente pour la
+     quatrième. La tenue faisait la cinquième : `art(f)` cherche un Fanzzy
+     nommé « halloween », n'en trouve évidemment aucun, et dessine le
+     bonhomme gris. Le joueur gagnait un déguisement et voyait une
+     silhouette — c'est-à-dire exactement ce que le déguisement n'est pas.
+
+     Les images existaient : le manifeste de chaque lignée déclare son skin
+     avec son portrait. Personne ne les demandait.
+
+     On montre donc le personnage **habillé comme ça**, à l'âge tiré. Le
+     repli est le même que pour un état, et pour la même raison : le
+     portrait ordinaire dit au moins de qui il s'agit. */
+  if (f.skin && f.pour) {
+    const evo = f.stage ?? 1;
+    /* **Le repos, pas le portrait**, et c'est une question de cadrage : `.illu`
+       pose l'image sur la base de la carte et la déborde de 4 % en hauteur —
+       un réglage fait pour une silhouette entière. Un portrait est déjà un
+       buste ; recadré par-dessus, il ne montre plus qu'un front.
+
+       C'est aussi ce que fait la branche des états quelques lignes plus haut,
+       et deux cartes voisines dans le même butin doivent se ressembler.
+
+       `portrait` reste en second : un skin peut n'avoir qu'un buste. */
+    const r = window.TBF_ETATS?.resoudre?.(f.pour, { evo, skin: f.id, etat: 'neutre' })
+      ?? window.TBF_ETATS?.portrait?.(f.pour, { evo, skin: f.id });
+    const src = r?.src ?? window.FZART?.adresse?.(f.pour, 'buste');
+    if (src) {
+      return `<div class="illuwrap">${artFond(f)}
+        <img class="illu" src="${src}" alt="" loading="lazy"
+             onerror="this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">
+        ${f.skinMot ? `<span class="tbf-etiq">${esc(f.skinMot)}</span>` : ''}</div>`;
     }
   }
   if (f.stuff) return objetHTML(f);
@@ -494,6 +530,20 @@ function dessinDeCarte(f) {
     return `<div class="illuwrap">${artFond(f)}
       ${window.TBF_STUFF.illustrationGain('echarpes', 'illu objet')}</div>`;
   }
+  /* **La silhouette de repli est celle du personnage, pas celle de l'objet.**
+
+     Toutes les lignées ne sont pas dessinées, et celles-là n'ont que le
+     bonhomme procédural — c'est leur dessin, pas un pis-aller. Mais
+     `artProcedural` tire son bonhomme de l'identifiant qu'on lui donne : avec
+     « halloween » ou « depit », il en tirait un inconnu, sans rapport avec
+     celui que le classeur montre pour ce même personnage sur toutes ses
+     autres cartes. Le joueur voyait donc **deux êtres différents** sous le
+     même nom, à deux écrans d'écart.
+
+     `pour` est la racine de lignée, et c'est la graine que le reste du jeu
+     emploie. La carte de la tenue montre alors la même silhouette que la
+     carte du personnage — ce qui est, exactement, ce qu'elle raconte. */
+  if (f.pour) return art({ ...f, id: f.pour });
   return art(f);
 }
 
@@ -587,10 +637,24 @@ function carteDuPaquet(c) {
       type: 'fide', rar: 'rare', stage: c.stade ?? 1,
       etat: true, etatMot: mot, pour: c.pour };
   }
+  /* **Une tenue non plus n'existe pas toute seule.**
+   *
+     La carte annonçait « HALLOWEEN » et rien d'autre : on ouvrait un paquet,
+     on gagnait un déguisement, et on ne savait pas **pour qui**. C'est mot
+     pour mot ce qui avait été corrigé deux branches plus haut pour les
+     états, et la tenue est restée en arrière — les deux cas sont pourtant le
+     même : un objet qui appartient à l'âge d'un personnage précis, et que le
+     serveur envoie avec son `pour` et son `stade` depuis le premier jour.
+
+     `stade` était jeté au passage, remplacé par un 1 en dur. Le serveur
+     habille l'âge qu'il a tiré — il peut très bien donner la tenue du
+     second âge — et la carte annonçait alors « ÉVO 1 » en montrant l'autre. */
   if (c.type === 'skin') {
     const t = TENUES.get(c.id);
-    return { id: c.id, nom: t?.nom ?? c.id, texte: t?.texte, type: 'tifo',
-      rar: t?.rar ?? 'rare', stage: 1, skin: true, pour: c.pour };
+    const perso = BY_ID.get(c.pour);
+    return { id: c.id, nom: perso?.nom ?? t?.nom ?? c.id, texte: t?.texte, type: 'tifo',
+      rar: t?.rar ?? 'rare', stage: c.stade ?? 1, skin: true,
+      skinMot: t?.nom ?? c.id, pour: c.pour };
   }
   if (c.type === 'stuff') {
     const o = STUFFS.get(c.id);

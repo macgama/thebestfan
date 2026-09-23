@@ -17,6 +17,7 @@ import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 import { VirageRoom } from '../src/server/ferveur/virage.js';
+import { poserReglages, reglagesVivants } from '../src/shared/reglages.js';
 import { resoudreGeste, GESTES } from '../src/server/ferveur/gestures.js';
 import { ORDRE } from '../src/shared/duel/chants.js';
 import { EFFETS_CONNUS } from '../src/server/ferveur/virage.js';
@@ -426,6 +427,21 @@ check('le camp adverse pousse dans l\u2019autre sens', C.results[0].push > 0);
 {
   const salle = virage.rooms.get(7001);
   const av = salle.members.get('bbbbbbbb-0000-0000-0000-000000000009');
+
+  /* **Le plancher de partage est mis de c\u00f4t\u00e9 le temps de ce bloc.**
+
+     La ferveur se partage d\u00e9sormais par `max(virage.tribune_min, effectif)`,
+     et cette salle d'\u00e9preuve compte une poign\u00e9e de monde : le plancher y
+     mord, et le rapport entre la pouss\u00e9e et la ferveur n'est plus un demi.
+     Le contr\u00f4le rougissait en annon\u00e7ant \u00ab la ferveur d'un neutre ne vaut
+     pas la moiti\u00e9 \u00bb alors que la r\u00e8gle du neutre \u00e9tait intacte \u2014 il
+     mesurait deux r\u00e8gles \u00e0 la fois et nommait la mauvaise.
+
+     Une r\u00e8gle par contr\u00f4le : celui-ci garde le neutre, le plancher a le
+     sien juste en dessous. */
+  const avantNeutre = reglagesVivants();
+  poserReglages({ ...avantNeutre, 'virage.tribune_min': 1 });
+
   D.socket.emit('virage:chant', { cardId: offrir('roulement'), taps: martelage() });
   const ok = await until(() => D.results.length === 1);
   check('un neutre peut chanter', ok);
@@ -434,6 +450,41 @@ check('le camp adverse pousse dans l\u2019autre sens', C.results[0].push > 0);
     check('mais sa ferveur ne vaut que la moiti\u00e9 de sa pouss\u00e9e',
       Math.abs(av.ferveur - D.results[0].push * 0.5) <= 1
       || (console.log(`        ferveur ${av.ferveur} pour ${D.results[0].push} de pouss\u00e9e`), false));
+  }
+  poserReglages(avantNeutre);
+
+  /* ---------------------------------------- le Virage solitaire
+
+     **\u00catre seul \u00e9tait l'\u00e9tat le plus rentable du jeu.** `crowdFactor`
+     vaut 1 en dessous de cent personnes, donc ce qu'un supporter touche est
+     sa pouss\u00e9e divis\u00e9e par l'effectif : tout entier \u00e0 un, un
+     cinquanti\u00e8me \u00e0 cinquante. Arriver le premier sur un match obscur et
+     pousser une heure sans personne en face \u2014 la corde ne retombant que de
+     1,4 par seconde, les buts s'encha\u00eenent \u2014 rapportait cinquante fois la
+     m\u00eame heure pass\u00e9e dans une vraie tribune. Le classement de ferveur
+     r\u00e9compensait le contraire de ce que le jeu raconte.
+
+     On \u00e9prouve les **deux moiti\u00e9s** de la r\u00e8gle, parce qu'elles se
+     contredisent si on n'y prend pas garde : la corde garde l'effectif r\u00e9el
+     \u2014 un match d\u00e9sert doit rester jouable, et arriver t\u00f4t est ce qu'on
+     veut encourager \u2014 mais la r\u00e9colte se partage au plancher. */
+  {
+    const PLANCHER = 10;
+    poserReglages({ ...avantNeutre, 'virage.tribune_min': PLANCHER });
+    const seul = new VirageRoom({
+      fixture: { id: 9931, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B',
+        leagueId: 1, kickoffAt: new Date() },
+      emit: () => {}, log: { warn() {}, error() {} },
+    });
+    const m = { userId: 'u-seul', side: 1, ferveur: 0, mods: {}, neutre: false,
+      souffle: 100, lastPush: 0, dernierChant: 0 };
+    seul.members.set('u-seul', m);
+    const rendu = seul.pousserDepuisCarte(m, 100, Date.now(), []);
+    check(`seul, la corde re\u00e7oit la pouss\u00e9e enti\u00e8re (${Math.round(rendu)})`,
+      Math.abs(rendu - 100) <= 1);
+    check(`mais la ferveur se partage par ${PLANCHER} (${m.ferveur})`,
+      Math.abs(m.ferveur - 100 / PLANCHER) <= 1);
+    poserReglages(avantNeutre);
   }
 }
 D.socket.disconnect();

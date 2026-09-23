@@ -33,6 +33,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import puppeteer from 'puppeteer';
+import { VERSION_PUBLIQUE, ETIQUETTE } from '../src/shared/version.js';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
@@ -52,6 +53,11 @@ app.get('/api/auth/me', (_q, s) => s.json({ user: { pseudo: 'Momo', role: 'joueu
 app.get('/api/admin/suis-je', (_q, s) => s.json({ admin: estAdmin }));
 app.get('/api/virage/live', (_q, s) => s.json({ matchs: [] }));
 app.get('/api/public/reglages', (_q, s) => s.json({}));
+/* La **vraie** version, et non un objet inventé : ce qu'on éprouve ici est
+   que le tiroir sait l'afficher, pas qu'un banc sait répondre. Le fourre-tout
+   `/api` plus bas rendrait `{}`, et la ligne resterait vide — le contrôle
+   passerait en ne prouvant rien. */
+app.get('/api/version', (_q, s) => s.json(VERSION_PUBLIQUE));
 /* Le reste du jeu, en creux. Une page qui demande son contenu et reçoit un
    objet vide se monte quand même ; une page qui reçoit un 404 en HTML tombe
    sur `r.json()` et le contrôle mesurerait alors une page morte. */
@@ -104,6 +110,7 @@ async function menuDe(chemin) {
       // là où on est déjà.
       marquee: [...t.querySelectorAll('a.on, .tbf-tiroir-ici.on')]
         .map((a) => a.getAttribute('href')),
+      version: t.querySelector('.tbf-version')?.textContent.trim() ?? null,
     };
   });
   return { page, erreurs, ...(ouvert ?? {}) };
@@ -195,6 +202,26 @@ for (const [nom, m] of [['l’accueil', accueil], ['une page de contenu', carnet
 
 const bruit = [accueil, carnet, accueilAdmin, carnetAdmin, adminPage]
   .flatMap((m) => m.erreurs);
+/* -------------------------------------------- la version, sous les yeux
+
+   Un joueur qui signale un défaut décrit ce qu'il voit ; il ne peut pas dire
+   sur quelle version il le voit. Sans ce numéro, chaque retour commence par
+   « as-tu rechargé ? », ce qui fait porter au joueur la charge de notre
+   déploiement.
+
+   On l'éprouve **sur le même tiroir que le reste** : c'est le seul élément
+   présent sur toutes les pages, et c'est déjà pour ça que la marque
+   d'abonnement y vit. Une version affichée sur une seule page n'est pas
+   affichée. */
+check('le tiroir montre la version', accueil.version === ETIQUETTE
+  || (console.log('        vu :', JSON.stringify(accueil.version),
+    '· attendu :', JSON.stringify(ETIQUETTE)), false));
+check('et la même depuis une page de contenu', carnet.version === ETIQUETTE);
+/* Le mot compte autant que le nombre : il prévient que les soldes peuvent
+   bouger et qu'une saison peut être rejouée. */
+check('elle dit que c’est une bêta', /bêta/i.test(ETIQUETTE));
+check('et elle porte un numéro', /\d/.test(ETIQUETTE));
+
 check('aucune erreur de script sur aucune des cinq ouvertures', bruit.length === 0);
 if (bruit.length) console.log('   ', bruit.slice(0, 4));
 

@@ -23,6 +23,7 @@ import { createFanzzy } from './src/server/fanzzy/index.js';
 import { charger as chargerCatalogue, ecartsCatalogue }
   from './src/server/fanzzy/catalogue.js';
 import { chargerReglages, reglagesPublics } from './src/server/reglages/index.js';
+import { VERSION_PUBLIQUE } from './src/shared/version.js';
 import { empreinte, estampiller, releverEmpreintes } from './src/server/empreintes.js';
 import { reglage } from './src/shared/reglages.js';
 import { entetesDeSecurite, debitMaximal } from './src/server/garde/index.js';
@@ -646,6 +647,23 @@ app.use(express.static(path.join(__dirname, 'public'), {
 app.get('/api/public/reglages', (_req, res) => {
   res.set('cache-control', 'no-store');
   res.json(reglagesPublics());
+});
+
+/**
+ * La version que le joueur voit.
+ *
+ * **Ce n'est pas `/healthz`.** Celui-là rend l'empreinte du code en ligne, et
+ * il est fait pour une surveillance : il dit tout, y compris l'état de la
+ * base et le nombre de sockets. Celle-ci ne rend qu'un nom, et elle est
+ * publique — le menu l'affiche à qui ouvre le tiroir.
+ *
+ * Une heure de cache : le numéro ne bouge qu'à une livraison, et un joueur
+ * qui vient de recharger a de toute façon rechargé. Ce n'est pas `no-store`
+ * comme les réglages, parce que rien ici ne dépend du joueur ni de l'instant.
+ */
+app.get('/api/version', (_req, res) => {
+  res.set('cache-control', 'public, max-age=3600');
+  res.json(VERSION_PUBLIQUE);
 });
 
 /**

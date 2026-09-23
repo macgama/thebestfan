@@ -130,6 +130,30 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    * plus haute et le booster revient plus vite. Le contenu d'un booster, lui,
    * est exactement le meme — sans quoi on vendrait de la collection, donc de la
    * puissance par la bande.
+   *
+   * ## Une seule horloge, et c'est celle de Node
+   *
+   * Un joueur a envoyé la capture d'un minuteur à **64:28** sur une cadence de
+   * dix minutes. Le compte n'était pas faux : `packs_at` était daté d'une heure
+   * dans l'avenir, et `cadence - (maintenant - packs_at)` rend alors la cadence
+   * **plus** l'écart.
+   *
+   * Trois endroits écrivaient cette colonne, et pas avec la même horloge : ici
+   * en `NOW(3)` — celle de MySQL —, plus bas à l'ouverture d'un booster en
+   * `NOW(3)` aussi, et une ligne neuve prenait le `CURRENT_TIMESTAMP(3)` par
+   * défaut de la colonne. La lecture, elle, compare à `Date.now()`. Tant que le
+   * fuseau de la session MySQL et celui de Node coïncident, tout va bien — et
+   * c'est le cas sur une machine de développement, ce qui explique que rien
+   * n'ait jamais rougi.
+   *
+   * **L'autre sens de l'écart est bien pire que le minuteur.** Si l'heure de
+   * MySQL est en retard sur celle de Node, `gained` se compte en dizaines : la
+   * réserve se remplit d'un coup, à chaque lecture, pour tout le monde. Des
+   * boosters gratuits à volonté, sans une ligne d'erreur nulle part.
+   *
+   * Donc : **cette colonne ne se date qu'en JavaScript**. Ni `NOW(3)`, ni
+   * `CURRENT_TIMESTAMP`. Une date écrite par le pilote et relue par le pilote
+   * fait l'aller-retour dans le même fuseau, quel qu'il soit.
    */
   async function wallet(userId) {
     const abonne = abonnement ? await abonnement.estAbonne(userId) : false;
@@ -152,12 +176,22 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         w.packs = packs; w.packs_at = at;
       }
     } else {
-      await q(`UPDATE user_wallet SET packs_at = NOW(3) WHERE user_id = ?`, [userId]);
-      w.packs_at = new Date();
+      /* `NOW(3)` était l'heure de **MySQL** ; tout le reste de ce calcul est
+         l'heure de **Node**. Voir le pavé sous `wallet`. */
+      const at = new Date();
+      await q(`UPDATE user_wallet SET packs_at = ? WHERE user_id = ?`, [at, userId]);
+      w.packs_at = at;
     }
 
-    const nextIn = w.packs >= plafond ? null
-      : Math.max(0, cadence - (Date.now() - new Date(w.packs_at).getTime()));
+    /* **L'attente ne peut pas dépasser la cadence.** C'est vrai par
+       définition, et l'écrire coûte un `Math.min` : le jour où une horloge
+       dérive malgré tout — une bascule d'heure d'été pendant une requête, une
+       base restaurée — le joueur voit un minuteur un peu faux au lieu d'un
+       minuteur absurde. Un « 64:28 » sur une cadence de dix minutes ne se lit
+       pas comme une erreur d'horloge : il se lit comme un jeu cassé. */
+    const ecoule = Math.min(cadence,
+      Math.max(0, Date.now() - new Date(w.packs_at).getTime()));
+    const nextIn = w.packs >= plafond ? null : cadence - ecoule;
     return { scarves: w.scarves, billets: w.billets, packs: w.packs,
       nextPackInMs: nextIn, active: w.active_fanzzy,
       /* L’âge auquel le montrer. Nul = l’âge atteint, et c’est ce que lit
@@ -537,10 +571,12 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         `SELECT scarves, packs FROM user_wallet WHERE user_id = ? FOR UPDATE`, [userId]);
 
       if (w.packs > 0) {
+        /* La même horloge qu'à la lecture : voir le pavé de `wallet`. La
+           réserve était pleine, donc le compte à rebours repart maintenant. */
         await conn.query(
           `UPDATE user_wallet SET packs = packs - 1,
-             packs_at = IF(packs = ?, NOW(3), packs_at) WHERE user_id = ?`,
-          [maxPacks(), userId]);
+             packs_at = IF(packs = ?, ?, packs_at) WHERE user_id = ?`,
+          [maxPacks(), new Date(), userId]);
       } else if (buy) {
         const [d] = await conn.query(
           `UPDATE user_wallet SET scarves = scarves - ? WHERE user_id = ? AND scarves >= ?`,

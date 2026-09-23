@@ -757,8 +757,47 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   box-shadow:0 0 8px rgba(245,195,59,.5);
 }
 
+/* ==================================== la sortie de secours de l'écran
+
+   **Toutes les sorties de cet écran vivaient dans un fichier.** `ouverture.js`
+   en offre trois — le signal de l'accueil, le doigt, la minuterie — et elles
+   supposent toutes les trois que le fichier soit arrivé.
+
+   Un joueur a envoyé la capture d'un écran bloqué, et elle dit exactement ce
+   qui s'est passé : le titre n'était pas crème, le « .ONLINE » pas doré, la
+   police était un serif de secours, et la jauge montrait sa glissière sans son
+   remplissage. Ces quatre couleurs viennent de `var(--craie)`, `var(--projo)`
+   et `var(--banner)`, qui ne sont écrites que dans `/ui.css`. Le document était
+   arrivé ; **aucune de ses ressources externes**. Ni la feuille de style, ni
+   `fanzzy-art.js` — l'éventail était vide —, ni `ouverture.js`.
+
+   Le document fait deux cents lignes et voyage en `no-store` ; le reste, c'est
+   une douzaine de requêtes séparées. Sur un réseau qui vacille, la première
+   passe et les suivantes non — et c'est à ce moment-là qu'on est enfermé
+   derrière un rideau dont toutes les clefs sont restées dehors.
+
+   Donc : **une sortie qui ne dépend de rien.** Douze secondes d'animation, du
+   CSS écrit dans le document, et un bouton dont le `onclick` tient en un mot.
+   Si l'écran est encore là à douze secondes, c'est qu'il est cassé — le
+   plafond de `ouverture.js` est à dix — et le dire vaut toujours mieux que de
+   laisser quelqu'un devant un titre immobile.
+
+   Les deux couleurs sont écrites en clair, et c'est **le but** : une sortie de
+   secours qui emprunte `var(--projo)` est une sortie de secours qui s'éteint
+   le jour où la feuille de style manque, c'est-à-dire le seul jour où elle
+   sert. */
+.ouverture .secours{opacity:0;visibility:hidden;
+  animation:ouvTard .45s ease 12s forwards}
+@keyframes ouvTard{to{opacity:1;visibility:visible}}
+.ouverture .secours p{margin:26px 0 0;font-size:12.5px;letter-spacing:.03em;
+  text-transform:none;opacity:.85;color:#F2EEE4;line-height:1.55}
+.ouverture .secours button{margin-top:14px;padding:12px 22px;border-radius:9px;
+  border:1px solid #F5C33B;background:none;color:#F5C33B;font:inherit;
+  font-size:13.5px;letter-spacing:.08em;cursor:pointer;min-height:44px}
+
 /* Qui a demandé moins d'animation n'en reçoit aucune : l'écran reste, lisible
-   et immobile, et s'en va pareil. */
+   et immobile, et s'en va pareil. La sortie de secours n'est pas dans cette
+   liste — son animation n'est pas un ornement, c'est la minuterie. */
 @media (prefers-reduced-motion:reduce){
   .ouverture .fond,.ouverture .jauge i{animation:none}
   .ouverture .bande img{animation:none;opacity:1;transform:none}
@@ -793,9 +832,113 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
     <div class="bande" id="ouvBande" aria-hidden="true"></div>
     <h1>THEBESTFAN<span>.ONLINE</span></h1>
     <p>le jeu de cartes des tribunes</p>
+    <!-- Invisible douze secondes, puis visible. Aucun script ne la montre :
+         c'est une animation CSS écrite dans cette page, et le bouton n'appelle
+         que `location.reload()`. Elle tient donc debout le jour où plus rien
+         d'autre ne tient. -->
+    <div class="secours">
+      <p>Le jeu n’a pas fini de se charger.</p>
+      <button type="button" onclick="location.reload()">Recharger</button>
+    </div>
   </div>
   <div class="jauge" aria-hidden="true"><i></i></div>
 </div>
+<script>
+/**
+ * La page s'est-elle vraiment chargée ?
+ *
+ * Le bouton « Recharger » ci-dessus est le plancher : il tient sans rien, mais
+ * il demande un geste, et douze secondes d'attente avant de le proposer. La
+ * plupart du temps la panne est un hoquet de réseau d'une seconde, et il n'y a
+ * aucune raison de la faire porter à quelqu'un qui n'y peut rien.
+ *
+ * On la regarde donc là où elle se voit. `--craie` n'est écrite que dans
+ * `/ui.css` et `FZART` que dans `/fanzzy-art.js` : si l'une des deux manque,
+ * la feuille de style ou les scripts ne sont pas arrivés, et la page est un
+ * décor vide. Ce n'est pas une heuristique — ce sont exactement les deux
+ * absences que montrait la capture du joueur bloqué.
+ *
+ * **À `load`, et pas sur une minuterie.** Une page lente n'est pas une page
+ * cassée, et la recharger la rend plus lente. `load` ne se déclenche qu'une
+ * fois toutes les requêtes retombées, réussies ou non : c'est le premier
+ * instant où la question a une réponse.
+ *
+ * **Deux essais, pas plus.** Un rechargement qui échoue deux fois n'est plus un
+ * hoquet ; c'est le serveur ou la ligne, et une boucle de rechargement est la
+ * pire chose à faire à un téléphone dans un stade. On s'arrête, et on le dit.
+ * Si le stockage de session refuse d'écrire, on ne recharge pas du tout :
+ * sans compteur, « deux essais » n'existe pas, et une boucle sans compteur
+ * est une boucle sans fin.
+ *
+ * **Renoncer, c'est parler.** Le premier jet renonçait en silence, en comptant
+ * sur la sortie de secours de l'écran d'ouverture. Une épreuve a montré le
+ * trou : quand seule la feuille de style manque, `ouverture.js` arrive, fait
+ * son travail et lève le rideau — sur une page nue, sans un mot. Le message
+ * se fabrique donc ici, dans son propre calque, et il ne dépend ni de l'écran
+ * d'ouverture ni de rien qui vienne du réseau. Ses deux couleurs sont écrites
+ * en clair, comme celles du voile hors ligne de `sw.js`, et pour la même
+ * raison : celui qui les lira n'a justement pas de feuille de style.
+ *
+ * Écrit dans la page, sans `src` et sans `defer` : un filet qui se télécharge
+ * ne couvre pas la panne qui l'empêche de se télécharger.
+ */
+(() => {
+  const CLE = 'tbf.secours';
+  const lire = () => {
+    try { return Number(sessionStorage.getItem(CLE)) || 0; } catch { return -1; }
+  };
+  const debout = () => {
+    try {
+      return getComputedStyle(document.documentElement)
+        .getPropertyValue('--craie').trim() !== '' && !!window.FZART;
+    } catch { return true; }   /* dans le doute, on ne recharge pas */
+  };
+
+  /* Le calque de renoncement. Tout est écrit à la main : ni classe, ni
+     variable, ni police du jeu — il paraît précisément quand rien de tout
+     cela n'est arrivé. */
+  function renoncer() {
+    if (document.getElementById('tbf-panne') || !document.body) return;
+    const d = document.createElement('div');
+    d.id = 'tbf-panne';
+    d.setAttribute('role', 'alert');
+    d.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;'
+      + 'align-items:center;justify-content:center;text-align:center;padding:28px;'
+      + 'background:#05070A;color:#F2EEE4;line-height:1.6;'
+      + 'font-family:system-ui,-apple-system,"Segoe UI",sans-serif';
+    d.innerHTML = '<div style="max-width:340px">'
+      + '<b style="display:block;font-size:18px;letter-spacing:.12em;margin-bottom:14px">'
+      + 'LE JEU N’A PAS PU SE CHARGER</b>'
+      + '<small style="opacity:.6;font-size:13px">La connexion a lâché en cours de '
+      + 'route. Rien n’est perdu : tout est resté sur le serveur.</small>'
+      + '<div><button type="button" style="margin-top:22px;padding:12px 22px;'
+      + 'border-radius:9px;border:1px solid #F5C33B;background:none;color:#F5C33B;'
+      + 'font:inherit;font-size:14px;min-height:44px;cursor:pointer">Réessayer'
+      + '</button></div></div>';
+    /* Le geste vient de quelqu'un : il a droit à ses deux essais, comme une
+       arrivée neuve. Sans cette remise à zéro, « Réessayer » ne ferait qu'un
+       seul essai et reviendrait ici. */
+    d.querySelector('button').addEventListener('click', () => {
+      try { sessionStorage.removeItem(CLE); } catch { /* tant pis */ }
+      location.reload();
+    });
+    document.body.appendChild(d);
+  }
+
+  addEventListener('load', () => {
+    const n = lire();
+    if (debout()) {
+      /* Arrivée saine : le compteur repart de zéro, sinon le hoquet d'hier
+         mangerait l'essai de demain. */
+      if (n > 0) { try { sessionStorage.removeItem(CLE); } catch { /* tant pis */ } }
+      return;
+    }
+    if (n < 0 || n >= 2) { renoncer(); return; }
+    try { sessionStorage.setItem(CLE, String(n + 1)); } catch { renoncer(); return; }
+    location.reload();
+  });
+})();
+</script>
 
 <main id="app">
   <div class="tbf-decor" id="fond"></div><div class="tbf-grad"></div>

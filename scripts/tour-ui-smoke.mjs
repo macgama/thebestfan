@@ -190,6 +190,12 @@ const ECRANS = [
   ['/boosters', 'boosters'],
   ['/deck', 'deck'],
   ['/boutique', 'boutique'],
+  /* Ajoutée au menu en septembre 2026, et restée hors de cette liste : toutes
+     les pages y renvoyaient, et le tour la comptait en impasse — vingt et un
+     rouges pour un seul oubli. Elle n’avait par ailleurs aucune suite
+     d’interface, alors que c’est la seule page du jeu qui prend de l’argent
+     réel. Elle en a une maintenant : celle-ci. */
+  ['/abonnement', 'abonnement'],
   ['/virage', 'Virage'],
   ['/duel-nvn', 'duel'],
   ['/kop', 'KOP'],

@@ -146,6 +146,16 @@ export const REGLAGES = [
       'classements de compétition n’ont plus de chez-soi ; à 0, plus personne ' +
       'n’a de raison d’entrer dans un match qui n’est pas le sien.' },
 
+  { cle: 'virage.tribune_min', section: 'virage', type: 'entier',
+    titre: 'Une tribune partage la ferveur par au moins', unite: 'supporters',
+    min: 1, max: 200, defaut: 10,
+    aide: 'La ferveur d’un supporter est sa poussée divisée par l’effectif de ' +
+      'sa tribune. Seul, il gardait donc tout : à cinquante on touche un ' +
+      'cinquantième, à un on touche tout — **être seul était l’état le plus ' +
+      'rentable du jeu**, sur un match où personne ne retient la corde. Ce ' +
+      'plancher ne change rien à ce qu’on ressent — la corde bouge pareil —, ' +
+      'seulement à ce qu’on récolte. À 1, on revient à l’ancien calcul.' },
+
   { cle: 'virage.secousse_but_reel', section: 'virage', type: 'entier',
     titre: 'Un vrai but secoue la corde de', unite: 'points', min: 0, max: 400, defaut: 90 },
 

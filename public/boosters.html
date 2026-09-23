@@ -372,6 +372,14 @@
    bout — donc le probleme la concerne autant que les autres. */
 /* tbf-degagement */
 body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
+
+/* Le bandeau des refus. Le même qu'aux amis et au carnet, aux durées près :
+   ici les messages nomment un code serveur, on laisse le temps de le lire. */
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h,62px) + 18px);transform:translateX(-50%);
+  background:#171C23;border:1px solid var(--trait);border-radius:9px;padding:11px 16px;
+  font-size:12.5px;z-index:60;display:none;max-width:86%;text-align:center;line-height:1.5}
+.toast.on{display:block;animation:monte .3s}
+@keyframes monte{from{opacity:0;transform:translate(-50%,10px)}}
 </style>
 </head>
 <body>
@@ -468,6 +476,31 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
    d'une carte. On les réalias ici pour que le code du kiosque soit exactement
    celui qu'il était quand il vivait dans la page des Fanzzy. */
 const { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid } = window.TBF_CARTES;
+
+/**
+ * **Le kiosque appelait un `toast` qui n'existait pas.**
+ *
+ * La page avait la case — un `div.toast` au bas du document — et deux appels
+ * pour la remplir : le refus d'ouverture, qui traduit le code du serveur en
+ * français, et la carte inconnue du catalogue. Il manquait la fonction, et
+ * la règle de style qui va avec. Les deux appels levaient donc un
+ * `ReferenceError` — dans `openPack`, hors de toute reprise.
+ *
+ * Le coût n'est pas le message perdu, c'est ce qui le remplace : un refus
+ * propre du serveur (« plus de booster », « pas assez d'écharpes ») devenait
+ * une exception qui arrêtait la page en plein geste, sans rien à l'écran.
+ * Et le commentaire juste au-dessus de l'appel dit « un message vague fait
+ * perdre des heures » : le soin était pris, il ne partait nulle part.
+ *
+ * C'est la suite d'épreuves qui l'a fait sortir, et d'une façon qui vaut
+ * d'être notée : rouge une fois sur dix dans la série complète, verte seule
+ * à chaque essai. On ne voyait pas une page fragile, on voyait un test
+ * capricieux — la lecture la plus coûteuse qu'on puisse faire d'un rouge.
+ */
+function toast(txt) {
+  const t = $('toast'); t.textContent = txt; t.className = 'toast on';
+  clearTimeout(t._t); t._t = setTimeout(() => { t.className = 'toast'; }, 3600);
+}
 
 /* ------------------------------------------------------------ kiosque */
 
@@ -614,8 +647,22 @@ function tickRegen() {
     /* L'offre d'acheter n'a de sens que **quand la réserve est vide** : tant
        qu'il reste un booster gratuit, le serveur le consomme et ne prélève
        rien. L'annoncer plus tôt faisait croire à un choix qui n'existait pas. */
-    el.textContent = `Booster suivant dans ${Math.floor(S.nextIn / 60000)}:` +
-      `${String(Math.floor(S.nextIn % 60000 / 1000)).padStart(2, '0')}` +
+    /* **Au-delà d'une heure, on écrit des heures.** « 64:28 » ne se lit pas
+       comme « une heure et quatre minutes » : les deux points disent
+       minutes-secondes, et un nombre de minutes qui dépasse soixante se lit
+       comme une horloge cassée. La cadence se règle jusqu'à mille quatre
+       cent quarante minutes depuis l'administration — un jour entier —, donc
+       le cas n'a rien d'exceptionnel.
+
+       Les secondes disparaissent avec le passage aux heures, et c'est
+       volontaire : personne n'attend la seconde près à une heure de là, et
+       un chiffre qui bouge chaque seconde attire l'œil vers une attente
+       qu'on ferait mieux d'oublier. */
+    const mm = Math.floor(S.nextIn / 60000);
+    const quand = mm >= 60
+      ? `${Math.floor(mm / 60)} h ${String(mm % 60).padStart(2, '0')}`
+      : `${mm}:${String(Math.floor(S.nextIn % 60000 / 1000)).padStart(2, '0')}`;
+    el.textContent = `Booster suivant dans ${quand}` +
       (S.packs <= 0 && Number(S.scarves ?? 0) >= prix
         ? ` · ou ${prix} écharpes tout de suite` : '');
   }

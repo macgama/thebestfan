@@ -198,16 +198,36 @@ const jour = (d) => new Date(d).toLocaleDateString('fr', {
  * `n` est le nom de la ligne, `sous` la précision qui ne tient pas dans une
  * colonne, et les deux valeurs se lisent côte à côte.
  */
+/**
+ * Ce que l'abonnement ouvre, ligne par ligne.
+ *
+ * **Un nombre absent doit rester absent.** Le tableau se replie déjà sur un
+ * tiret — `esc(p.sans ?? '—')` — mais ce repli ne servait à rien : `String()`
+ * et les gabarits transforment `undefined` en la **chaîne** « undefined »,
+ * qui est vraie, donc le `??` ne se déclenchait jamais.
+ *
+ * Le tour d'interface l'a vu le jour où cette page est entrée dans sa liste :
+ * « undefined undefined » en toutes lettres sur la seule page du jeu qui
+ * prend de l'argent réel. Le garde existait, il était court-circuité deux
+ * lignes plus haut — la faute la plus discrète qui soit, parce qu'on relit le
+ * garde et qu'on le trouve correct.
+ *
+ * `nb` ne rend donc rien quand il n'y a rien, et le tiret reprend sa place.
+ */
 function portes(o, sans) {
+  /* `?? undefined` et non `?? '—'` : le tiret est une décision d'affichage,
+     et il se prend dans le tableau, en un seul endroit. */
+  const nb = (v, suffixe = '', prefixe = '') =>
+    (v === undefined || v === null ? undefined : `${prefixe}${v}${suffixe}`);
   return [
     { n: 'Boosters en réserve', sous: 'de quoi partir en week-end sans rien perdre',
-      sans: String(sans.packMax), avec: String(o.packMax) },
+      sans: nb(sans.packMax), avec: nb(o.packMax) },
     { n: 'Entre deux boosters', sous: 'le temps que met la réserve à se remplir',
-      sans: `${sans.packRegenMin} min`, avec: `${o.packRegenMin} min` },
+      sans: nb(sans.packRegenMin, ' min'), avec: nb(o.packRegenMin, ' min') },
     { n: 'Clubs suivis', sous: 'par-dessus ce que le niveau ouvre déjà',
-      sans: 'ce que le niveau ouvre', avec: `+${o.clubsEnPlus}` },
+      sans: 'ce que le niveau ouvre', avec: nb(o.clubsEnPlus, '', '+') },
     { n: 'Mémoire du parcours', sous: 'tes parties et tes cartes-souvenirs',
-      sans: `${o.parcoursLibre} dernières`, avec: 'tout' },
+      sans: nb(o.parcoursLibre, ' dernières'), avec: 'tout' },
     { n: 'Tenues', sous: 'celles que tu portes te restent dans tous les cas',
       sans: 'celles que tu gagnes', avec: 'toutes les publiées' },
     { n: 'Créer un KOP', sous: 'en rejoindre un reste ouvert à tout le monde',
@@ -280,7 +300,9 @@ function portes(o, sans) {
         <tbody>${portes(o, sans).map((p) => `<tr>
           <th scope="row"><b>${esc(p.n)}</b><small>${esc(p.sous)}</small></th>
           <td>${esc(p.sans ?? '—')}</td>
-          <td class="avec">${esc(p.avec ?? p.quoi)}</td>
+          <!-- « p.quoi » n’existe sur aucune ligne : ce repli-là ne repliait
+               sur rien. Le tiret, comme la colonne d’en face. -->
+          <td class="avec">${esc(p.avec ?? '—')}</td>
         </tr>`).join('')}</tbody>
       </table>
     </div>
