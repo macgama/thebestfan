@@ -305,12 +305,28 @@ const evenement = (sessionId) => ({
     LIVRAISONS_PAYANTES.size === 1 && LIVRAISONS_PAYANTES.has('abonnement')
     || (console.log('        elle contient :', [...LIVRAISONS_PAYANTES].join(', ')), false));
 
-  /* Et l'abonnement ne livre rien d'autre que lui-même : ni écharpes de
-     bienvenue, ni booster offert. Ce serait le chemin le plus naturel pour
-     rouvrir la porte, et le plus facile à défendre en réunion. */
+  /* **L'abonnement livre un booster, et rien d'autre que lui.**
+
+     Ce contrôle disait l'inverse : « ni écharpes de bienvenue, ni booster
+     offert », au motif que ce serait « le chemin le plus naturel pour
+     rouvrir la porte, et le plus facile à défendre en réunion ». La porte
+     est la chaîne euro → tirage.
+
+     Elle a été rouverte d'un cran, sciemment, en septembre 2026 : un
+     paiement qui ne donne rien tout de suite se vit comme un paiement qui
+     n'a pas marché, et l'abonnement n'ouvre que du confort — rien qui se
+     voie dans la seconde qui suit.
+
+     Le contrôle ne disparaît donc pas, il **change de borne**. Ce qu'il
+     interdit toujours, et qui est l'essentiel : de la monnaie, des cartes
+     choisies, ou plus d'un booster. Un jour où quelqu'un écrira
+     `packs: 5` ou `scarves: 500`, cette ligne rougira — et ce sera le
+     moment de reprendre la question, pas de réécrire le nombre. */
+  const CADEAU_PERMIS = ['type', 'formule', 'jours', 'packs'];
   for (const a of CATALOGUE.filter((x) => x.livraison.type === 'abonnement')) {
-    check(`« ${a.id} » ne livre que l'abonnement, sans cadeau de bienvenue`,
-      Object.keys(a.livraison).every((k) => ['type', 'formule', 'jours'].includes(k))
+    check(`« ${a.id} » ne livre que l'abonnement et au plus un booster`,
+      Object.keys(a.livraison).every((k) => CADEAU_PERMIS.includes(k))
+      && (a.livraison.packs ?? 0) <= 1
       || (console.log('        il livre :', JSON.stringify(a.livraison)), false));
   }
 
@@ -320,6 +336,16 @@ const evenement = (sessionId) => ({
   /* Et la règle est tenue **par le moteur**, pas seulement par le catalogue :
      un article fabriqué à la main, qui ne passe par aucune liste, est refusé à
      la livraison. Sans ce contrôle, la règle ne vivrait que dans un tableau. */
+  /* **Un écart, et non un absolu.**
+
+     Ces deux lignes lisaient `packs === 0`. C'était vrai tant que rien ne
+     donnait jamais de booster ; depuis que l'abonnement en offre un, le même
+     joueur en a légitimement un en réserve plus haut dans cette suite, et le
+     contrôle rougissait pour la seule raison qu'il mesurait la mauvaise
+     chose. Ce qu'il veut dire est « **cette action-ci** n'en a crédité
+     aucun », ce qui se mesure avant et après, et reste vrai quoi qu'il
+     arrive ailleurs. */
+  const [[avant5]] = [await q('SELECT packs FROM user_wallet WHERE user_id = ?', [U])];
   let refus = null;
   try {
     await boutique.livrer(pool, U, { livraison: { type: 'packs', n: 5 } });
@@ -329,7 +355,8 @@ const evenement = (sessionId) => ({
     || (console.log('        levé :', refus?.message ?? '(rien)'), false));
 
   const [[w]] = [await q('SELECT packs FROM user_wallet WHERE user_id = ?', [U])];
-  check('et aucun booster n’a été crédité au passage', Number(w.packs) === 0);
+  check('et aucun booster n’a été crédité au passage',
+    Number(w.packs) === Number(avant5.packs));
 }
 
 /* ------------------------------------------------ la vraie course, sans HTTP
@@ -479,6 +506,8 @@ const evenement = (sessionId) => ({
      Refuser **avant** de débiter est la règle ; ce contrôle vérifie qu'on n'a
      pas payé pour un refus. */
   await q('UPDATE user_wallet SET scarves = 9999 WHERE user_id = ?', [U]);
+  // La réserve de boosters avant la dépense : voir la note sur l'écart.
+  const [[avantEtal]] = [await q('SELECT packs FROM user_wallet WHERE user_id = ?', [U])];
   /* On prend une tenue **de l'étal** : nommer un identifiant en dur ici le
      rendrait faux à la prochaine dépublication, et le contrôle mesurerait
      alors « cette tenue n'est plus en vente » au lieu de ce qu'il vise. */
@@ -499,9 +528,13 @@ const evenement = (sessionId) => ({
   check('et elle n’a rien coûté', Number(w4.scarves) === 9999
     || (console.log('        solde :', w4.billets), false));
 
-  /* Et jamais de booster, par aucun chemin : c'est la demande d'origine. */
+  /* **Les écharpes n'achètent jamais de booster**, par aucun chemin : c'est
+     la demande d'origine, et elle tient toujours. L'abonnement en offre un
+     — décision de septembre 2026 — mais il se paie en euros et il est le
+     seul. Une dépense de l'étal ne doit rien changer à la réserve. */
   const [[p]] = [await q('SELECT packs FROM user_wallet WHERE user_id = ?', [U])];
-  check('aucun booster n’a été crédité par la dépense', Number(p.packs) === 0);
+  check('aucun booster n’a été crédité par la dépense',
+    Number(p.packs) === Number(avantEtal.packs));
 }
 
 /* ================================ l'adresse où Stripe ramène le client

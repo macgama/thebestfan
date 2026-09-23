@@ -171,7 +171,19 @@ export function createBoutique({ pool, requireAuth, fanzzy, site, abonnement = n
       await abonnement.accorder(userId, {
         formule: l.formule, jours: l.jours, source: 'stripe', conn,
       });
-      return { abonnement: l.formule };
+      /* **Dans `conn`**, comme l'abonnement lui-même. Un booster crédité
+         hors transaction survivrait au `rollback` de l'achat qui l'a payé,
+         et le rejeu de Stripe en donnerait un second.
+
+         Le plafond de la réserve n'est pas appliqué : c'est un cadeau, et
+         buter sur un plafond le jour où l'on paie serait le plus mauvais
+         moment pour découvrir qu'il existe. */
+      if (l.packs) {
+        await conn.query(
+          'UPDATE user_wallet SET packs = packs + ? WHERE user_id = ?',
+          [l.packs, userId]);
+      }
+      return { abonnement: l.formule, ...(l.packs ? { packs: l.packs } : {}) };
     }
 
     throw new Error('boutique.error.livraison_inconnue');

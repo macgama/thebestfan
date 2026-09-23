@@ -115,6 +115,55 @@ export const INVITES = {
   annexe: 'a small training ground pitch at night, no real stands at all — just a '
     + 'low metal handrail and two shallow rows of dark benches down each side, a '
     + 'few portable floodlight masts, a fence and dark trees beyond',
+
+  /* ------------------------------------------ les cinq de LA REPRISE
+
+     Ils manquaient, et personne ne le savait : `stade-art.js` pose son image
+     avec `onerror="this.remove()"`, donc un lieu sans dessin se joue sur du
+     noir **en silence**. Cinq arènes sur quinze étaient dans ce cas — toutes
+     celles de la seule série en production. Un joueur l'a signalé sous la
+     forme « des fois, il manque les images des stades ».
+
+     Chacun raconte ce que ses `mods` font au jeu, parce qu'un décor qui
+     change les règles sans le montrer donne l'impression que le jeu triche.
+     La pelouse neuve se voit à son herbe, les travaux à leur échafaudage, la
+     canicule à son air qui tremble.
+
+     Deux contraintes du STYLE ci-dessus se rappellent ici parce qu'elles
+     sont faciles à perdre sur ces cinq sujets-là : **les tribunes restent
+     dans l'ombre** — le jeu les allume lui-même en `screen`, une tribune
+     déjà éclairée devient un autocollant — et **la pelouse reste franchement
+     verte**, puisque c'est à sa teinte que `boiteDuTerrain` la reconnaît. Un
+     plan mesuré sur une pelouse grise sort faux sans lever d'erreur.        */
+
+  'rp-pelouse': 'a football ground at night just after the summer re-turfing, '
+    + 'the pitch immaculate and untouched — deep even green with crisp fresh '
+    + 'mowing stripes and brilliant white lines, not a single scar or bald '
+    + 'patch anywhere, a roller and a hose reel left at one corner, ordinary '
+    + 'dark side stands',
+
+  'rp-travaux': 'a football ground at night with one side stand a quarter '
+    + 'closed for building work — scaffolding, stacked materials and a taped-off '
+    + 'dark empty block at one end of it, while the rest of that same stand is '
+    + 'visibly crammed, the crowd texture denser and tighter than opposite',
+
+  'rp-canicule': 'a football ground on a stifling late-August evening, the last '
+    + 'heat of the day still in the air — a low orange sun just gone, the sky '
+    + 'still warm above a deep dusk, heat haze shimmering over the grass, the '
+    + 'pitch dry and bleached in patches yet still green, side stands wholly '
+    + 'open with no roof at all and in deep shadow',
+
+  'rp-bache': 'a football ground at night with an enormous plain tifo tarpaulin '
+    + 'still hanging across one whole side stand, never lowered — a vast blank '
+    + 'sheet of dark fabric sagging over the terracing, completely hiding the '
+    + 'crowd beneath it, its folds catching a little floodlight along the top '
+    + 'edge only',
+
+  'rp-inauguration': 'a brand-new football ground at night on its opening '
+    + 'evening, everything unused — raw pale concrete without a stain, the seats '
+    + 'still in their factory rows, a perfect untouched pitch, brand-new '
+    + 'floodlights burning harder and whiter than they need to, bare ground and '
+    + 'construction access roads still visible all around the outside',
 };
 
 export const inviteDe = (id) => (INVITES[id]

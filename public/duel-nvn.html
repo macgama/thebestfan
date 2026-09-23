@@ -187,10 +187,59 @@ h2 i{font-style:normal;opacity:.7}
 .cote.eux{right:0;background:
   linear-gradient(270deg,rgba(60,130,232,.44),rgba(60,130,232,.12) 62%,transparent)}
 
-/* Le stade en fond d'arène. Les mêmes règles qu'au Virage, et pour la même
-   raison : `object-fit: cover` recadrerait sur la hauteur dès que la zone est
-   plus étroite que le dessin, et c'est justement les deux tribunes, sur les
-   côtés, qu'on perdrait. On impose la largeur, la hauteur déborde.
+/* **Le terrain est couché d'un quart de tour, et seulement ici.**
+
+   Les dessins de stade sont des vues aériennes : le terrain y court de haut
+   en bas, les buts en haut et en bas, les deux tribunes sur les côtés.
+   C'est la bonne orientation au Grand Virage, dont la corde est un rail
+   **vertical** — voir `.track` dans `virage.html`.
+
+   Le duel, lui, tend sa corde de gauche à droite. Le terrain la croisait
+   donc en travers, et pousser vers la droite ne menait vers rien : on
+   poussait vers une ligne de touche. Couché, l'axe du terrain devient celui
+   de la corde, et pousser mène **vers le but d'en face**. C'est la même
+   image qui raconte enfin la même chose que la mécanique.
+
+   On tourne **le calque entier**, pas l'image seule. Les deux nappes de
+   lumière des tribunes sont posées par `stade-art.js` en coordonnées du
+   dessin : tourner l'image seule les aurait laissées sur la pelouse. En
+   tournant le calque, elles suivent sans qu'une seule coordonnée change.
+
+   `100cqh` / `100cqw` : la largeur du calque vaut la hauteur du cadre et
+   inversement, donc une fois tourné il le remplit exactement. C'est la
+   seule façon d'échanger deux dimensions qu'on ne connaît pas en CSS. Le
+   `@supports` laisse les navigateurs sans unités de conteneur avec le
+   décor debout : mal orienté vaut mieux que de travers.
+
+   Conséquence assumée : les deux tribunes éclairées passent des côtés au
+   long du terrain, l'or en bas — celle du joueur, du côté de ses cartes —
+   et le bleu en haut. */
+.stadewrap{position:absolute;inset:0;overflow:hidden;border-radius:14px;
+  pointer-events:none;z-index:0;container-type:size}
+/* **Dans un `@container` et non dans un `@supports`**, et la nuance a déjà
+   coûté un écran : `@supports (width:1cqh)` demande au moteur s'il connaît
+   l'unité, pas s'il sait confiner. Un moteur qui répond oui à la première
+   question et non à la seconde rabat la mesure sur **la fenêtre** — le
+   décor ferait alors plusieurs fois la taille de l'arène. Un bloc
+   `@container`, lui, ne s'applique que là où le confinement fonctionne
+   vraiment. `verif-pages` refuse la première forme, et il a raison.
+
+   Sans confinement, on garde simplement le décor debout : mal orienté vaut
+   mieux que de travers. */
+@container (min-width:0px){
+  .stade{position:absolute;left:50%;top:50%;inset:auto;
+    width:100cqh;height:100cqw;border-radius:0;
+    transform:translate(-50%,-50%) rotate(-90deg)}
+  .stade .tbf-stade-fond{position:absolute;inset:0;left:0;top:0;
+    width:100%;height:100%;object-fit:cover;object-position:50% 50%;
+    transform:none}
+}
+
+/* Le stade en fond d'arène, quand il reste debout. Les mêmes règles qu'au
+   Virage, et pour la même raison : `object-fit: cover` recadrerait sur la
+   hauteur dès que la zone est plus étroite que le dessin, et c'est justement
+   les deux tribunes, sur les côtés, qu'on perdrait. On impose la largeur, la
+   hauteur déborde.
 
    Il était **plus sombre qu'au Virage** — 0,34 contre 0,5 — pour laisser
    passer les deux territoires colorés. Avec trois couches empilées, le stade
@@ -658,7 +707,10 @@ h2 i{font-style:normal;opacity:.7}
            pendant que le Virage montrait son lieu : même mécanique, deux
            décors, et le joueur ne pouvait pas savoir que les deux écrans
            parlaient du même jeu. -->
-      <div class="stade" id="stade"></div>
+      <!-- Le décor est couché d’un quart de tour : voir `.stadewrap`.
+           L’enveloppe existe pour porter la rotation sans la faire subir
+           aux coins arrondis ni au découpage. -->
+      <div class="stadewrap"><div class="stade" id="stade"></div></div>
       <div class="cote moi" id="coteMoi"></div>
       <div class="cote eux" id="coteEux"></div>
       <div class="fil-corde"></div>

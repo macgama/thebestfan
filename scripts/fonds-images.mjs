@@ -53,6 +53,93 @@ const RARETES = ['commune', 'rare', 'epique', 'legendaire'];
 const { SKINS } = await import('../src/shared/fanzzy/inventaire.js');
 const TENUES = new Set(SKINS.map((s) => s.id));
 
+/* ---------------------------------------------------------- les invites
+
+   Ses deux voisins — `action-images` et `stuff-images` — gardent leurs
+   invites dans le code et savent les imprimer. Celui-ci ne le faisait pas,
+   et les quatre plaques de LA REPRISE ont donc été produites sans qu'on
+   garde la recette. Le jour où il en faut une cinquième, ou celles d'une
+   série neuve, il n'y a rien à relire : on recommence à tâtons, et le lot
+   ne ressemble plus au premier.
+
+       node scripts/fonds-images.mjs --invites
+
+   Ce que le format impose, et qui n'est pas négociable :
+
+   1. **Portrait 2:3**, 720×1080 servis. La plaque est recadrée en `cover` —
+      un rendu carré perdrait ses bords gauche et droit.
+
+   2. **Le tiers bas reste vide et calme.** C'est là que le personnage se
+      tient, détouré, par-dessus. Un décor chargé en bas le rend illisible,
+      et c'est le personnage qu'on vient voir.
+
+   3. **Aucun personnage net.** Des silhouettes lointaines, jamais un visage
+      ni une figure au premier plan : deux personnages sur la même carte se
+      disputent le regard.
+
+   4. **Palette sourde.** Le jeu pose par-dessus l'aura de rareté, le motif
+      de famille et la lumière de l'âge. Un décor saturé les écrase, et il
+      ne reste qu'une image bruyante.
+
+   5. Ni texte, ni chiffre, ni écusson — la règle de tout le jeu.           */
+
+const STYLE_FOND = `Style: painterly digital illustration, flat shapes and soft
+gradients, restrained desaturated palette, calm and atmospheric. NOT
+photorealistic, NOT a 3D render, NOT a busy scene.
+
+Composition: vertical portrait 2:3. A football terrace or stand interior seen
+from within it. The LOWER THIRD of the frame must stay simple, open and
+uncluttered — a character will be composited standing there. No figure in the
+foreground; at most a few small distant silhouettes high up.
+
+Strictly forbidden: any text, letters, numbers, club crests, sponsor boards,
+scoreboards, watermark, faces, foreground characters.`;
+
+/**
+ * Le sujet de chaque plaque, par rareté.
+ *
+ * **La rareté est une intensité de lieu, pas une quantité d'or.** Une
+ * commune est un gradin ordinaire, une légendaire est le même gradin à son
+ * heure la plus rare. C'est ce qui permet à une commune de rester belle — et
+ * une collection dont les communes sont laides est une collection qu'on
+ * n'ouvre pas.
+ */
+export const INVITES = {
+  halloween: {
+    commune: 'an empty concrete terrace on the evening of 31 October, dusk '
+      + 'already blue, a few carved pumpkins set along the crush barriers and '
+      + 'lit from inside, thin mist gathering low on the steps',
+    rare: 'an empty terrace at night under an enormous low orange moon, the '
+      + 'concrete steps washed amber, long bare tree branches reaching over the '
+      + 'back of the stand, drifting mist',
+    epique: 'an empty terrace at night lit only by green and violet floodlight '
+      + 'haze, thick fog pouring down the steps, bats crossing high above, the '
+      + 'back of the stand lost in darkness',
+    legendaire: 'an empty terrace at night on All Hallows, a colossal blood-red '
+      + 'moon filling the sky behind the stand, the concrete steps glowing faint '
+      + 'crimson, heavy fog, a single line of guttering candles along the front '
+      + 'barrier',
+  },
+};
+
+export const inviteDe = (cle) => {
+  const [famille, rarete] = String(cle).split('-');
+  const sujet = INVITES[famille]?.[rarete];
+  return sujet ? `Subject: ${sujet}.\n\n${STYLE_FOND}` : null;
+};
+
+if (process.argv.includes('--invites')) {
+  for (const [famille, par] of Object.entries(INVITES)) {
+    for (const rarete of RARETES) {
+      const cle = `${famille}-${rarete}`;
+      console.log(`\n=== ${cle}  →  art/fonds/${cle}.png`);
+      console.log(inviteDe(cle) ?? '(aucune invite)');
+    }
+  }
+  console.log('\nDépose les fichiers dans art/fonds/, puis : npm run fonds');
+  process.exit(0);
+}
+
 let sharp;
 try {
   ({ default: sharp } = await import('sharp'));
