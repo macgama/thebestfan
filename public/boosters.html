@@ -1010,6 +1010,39 @@ async function openPack() {
     console.error('[fanzzy] catalogue de la page en retard sur le serveur :', inconnues);
     toast(`Carte inconnue de cette version : ${inconnues.join(', ')}. Recharge la page.`);
   }
+
+  /* **Ce qu'on vient de gagner, on le possède.**
+
+     `fanzzy-etats.js` ne rend une expression que si le joueur l'a gagnée —
+     c'est la règle décidée quand les états sont devenus des cartes à tirer,
+     et elle est juste : on ne montre pas une joie qu'on n'a pas.
+
+     Mais la table qu'elle consulte vient de `load()`, appelé **une seule
+     fois, au démarrage**. Au moment du butin elle date donc d'avant
+     l'ouverture du paquet, et l'état qu'on vient tout juste de gagner n'y
+     est pas encore. Le jeu filtrait exactement la carte qu'il était en train
+     d'annoncer : l'étiquette disait « ON POUSSE », le dessin montrait le
+     personnage au repos.
+
+     C'est la pire forme de ce défaut, parce que chaque pièce est juste — le
+     dessin existe, la carte est bien formée, le filtre fait son travail — et
+     que le repli est correct. Rien ne rougit, l'image est simplement la
+     mauvaise.
+
+     On inscrit donc le gain **avant** de dessiner quoi que ce soit. Ce n'est
+     pas une supposition optimiste : le serveur vient de l'écrire en base,
+     `res.cards` est sa réponse, et un `load()` le confirmerait à l'identique
+     — pour un aller-retour de plus au moment précis où la page doit rendre.
+
+     Le même geste sert au classeur et au kiosque rendus juste après, qui
+     lisent la même table. */
+  for (const f of pull) {
+    if (!f?.etat || !f.pour) continue;
+    const parAge = (S.etats[f.pour] ??= {});
+    const liste = (parAge[f.stage ?? 1] ??= []);
+    if (!liste.includes(f.id)) liste.push(f.id);
+  }
+  window.TBF_ETATS?.possedes?.(S.etats);
   idx = 0; fresh.clear();
   for (const c of res.cards) {
     if (c.new) fresh.add(c.id);
@@ -1245,6 +1278,25 @@ addEventListener("tbf:bourse", () => { renderKiosque(); tickRegen(); });
 setInterval(tickRegen, 1000);
 
 (async () => {
+  /* **Le manifeste des dessins, avant tout le reste.**
+
+     `TBF_ETATS.resoudre` lit ce manifeste et rend `null` tant qu'il n'est pas
+     arrivé. Cette page ne le chargeait jamais — elle était la seule : la
+     boutique, le deck, la fiche, le classeur et l'accueil l'appellent tous.
+
+     La conséquence se voyait à l'endroit le plus visible du jeu. Une carte
+     d'état sortait d'un paquet avec son étiquette « ON POUSSE », et montrait
+     le personnage **au repos** : `resoudre` rendait `null`, et `dessinDeCarte`
+     repliait sur le buste. Un joueur a décrit exactement ça — « l'état on
+     pousse avec l'image neutre ».
+
+     Le module était bien chargé, la carte bien formée, le dessin bien
+     présent sur le disque : il manquait la seule ligne qui va les chercher.
+     C'est la panne la plus difficile à voir, parce que chaque pièce est
+     juste et que le repli est **correct** — il dit au moins de qui il s'agit.
+
+     Il ne lève jamais : sans manifeste, la page s'affiche comme avant. */
+  await Promise.resolve(window.TBF_ETATS?.charger?.()).catch(() => null);
   await chargerCatalogue();
   await load();
   renderKiosque();

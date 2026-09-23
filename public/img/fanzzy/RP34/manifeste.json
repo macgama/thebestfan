@@ -1,6 +1,6 @@
 {
   "id": "RP34",
-  "rev": 2,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,39 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "5a41fbb0b5fe"
+          "sha": "fdce751a927e"
+        },
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "ba5a3428b69a"
+        }
+      }
+    },
+    "e2": {
+      "skins": {
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "07f1f1f47206"
+        }
+      }
+    },
+    "e3": {
+      "skins": {
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "753351117094"
         }
       }
     }

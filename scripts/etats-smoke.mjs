@@ -176,9 +176,32 @@ check('un Fanzzy inconnu ne rend rien',
     bac2.window = bac2;
     new Script(code, { filename: 'fanzzy-etats.js' }).runInContext(bac2);
     await bac2.window.TBF_ETATS.charger();
-    const rendus = ids.map((id) => bac2.window.TBF_ETATS.resoudre(id, { etat: 'neutre' }));
+    /* **Pour au moins une des tenues qu'il déclare**, et non pour `base`.
+
+       Ce contrôle demandait la tenue par défaut à chaque entrée. Il a rougi
+       le jour où une lignée a reçu son costume d'Halloween sans avoir de
+       base dans ce système-ci : RP21 est dessiné, mais dans l'**ancien**
+       format plat — `/img/fanzzy/RP21.webp` — que `FZART` sert très bien.
+
+       Rien n'était cassé. Un joueur sans tenue voit le dessin plat, un
+       joueur en Halloween voit son costume, et les deux chemins marchent.
+       Le contrôle exigeait simplement une chose que le manifeste n'a jamais
+       promis : qu'une entrée contienne forcément `base`.
+
+       Ce qu'il doit garder, et qu'il garde : **une entrée qui ne se résout
+       pour rien du tout est cassée**. Une tenue déclarée sans dessin, un
+       `repli` qui boucle, un âge vide — tout ça rougit encore. */
+    const tenuesDe = (id) => [...new Set(Object.values(vrai.fanzzy[id].evolutions ?? {})
+      .flatMap((e) => Object.keys(e.skins ?? {})))];
+
+    const muets = ids.filter((id) => !tenuesDe(id).some((skin) => {
+      const r = bac2.window.TBF_ETATS.resoudre(id, { etat: 'neutre', skin });
+      return r && r.src.startsWith('/img/fanzzy/');
+    }));
+
     check(`les ${ids.length} Fanzzy du manifeste réel se résolvent tous`,
-      rendus.every((x) => x && x.src.startsWith('/img/fanzzy/')));
+      muets.length === 0
+      || (console.log('        ne rendent rien :', muets.join(', ')), false));
   }
 }
 

@@ -1,6 +1,6 @@
 {
   "id": "RP18",
-  "rev": 3,
+  "rev": 4,
   "evolutions": {
     "e1": {
       "skins": {
@@ -13,7 +13,39 @@
             "colere"
           ],
           "portrait": true,
-          "sha": "8393cf1b0260"
+          "sha": "52423238f941"
+        },
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "dc7de66ec04a"
+        }
+      }
+    },
+    "e2": {
+      "skins": {
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "d831d75572ee"
+        }
+      }
+    },
+    "e3": {
+      "skins": {
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "9c3aea376aa9"
         }
       }
     }

@@ -1,6 +1,6 @@
 {
   "id": "RP23",
-  "rev": 2,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -14,6 +14,38 @@
           ],
           "portrait": true,
           "sha": "92bbc824d93e"
+        },
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "f800f3f3754c"
+        }
+      }
+    },
+    "e2": {
+      "skins": {
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "4731faae81eb"
+        }
+      }
+    },
+    "e3": {
+      "skins": {
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "3830ed3256d4"
         }
       }
     }

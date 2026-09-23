@@ -1,6 +1,6 @@
 {
   "id": "RP26",
-  "rev": 2,
+  "rev": 3,
   "evolutions": {
     "e1": {
       "skins": {
@@ -14,6 +14,38 @@
           ],
           "portrait": true,
           "sha": "76630dda0bc7"
+        },
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "63f7f24166b8"
+        }
+      }
+    },
+    "e2": {
+      "skins": {
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "2647b6faf49a"
+        }
+      }
+    },
+    "e3": {
+      "skins": {
+        "halloween": {
+          "etats": [
+            "neutre"
+          ],
+          "portrait": true,
+          "repli": "base",
+          "sha": "fb3b69071e41"
         }
       }
     }
