@@ -2117,11 +2117,37 @@ function finir(v) {
    moments : avant, quand tout est possible ; après, quand tout est joué.      */
 
 /** L'adresse du dessin d'un Fanzzy, ou rien s'il n'en a pas. */
-const dessinFz = (id, variante) => window.FZART?.adresse?.(id, variante) ?? null;
+/**
+ * **Sa tenue à soi, et celle de personne d'autre.**
+ *
+ * On ne connaît la tenue portée que du Fanzzy équipé du joueur : le serveur
+ * ne dit pas celle des autres, et il n'y a aucune raison qu'il le fasse — le
+ * duel se joue à armes égales, une tenue ne pousse pas plus fort. Le camp
+ * d'en face garde donc son dessin de base, ce qui est aussi ce qu'il voit de
+ * nous.
+ *
+ * `maTenue` est nul tant que le portefeuille n'a pas répondu : `adresse`
+ * retombe alors sur `base`, c'est-à-dire sur l'image d'avant. Une vignette
+ * qui arrive une seconde trop tôt vaut mieux qu'une vignette qui attend.
+ */
+let maTenue = null;
+let monFanzzy = null;
+fetch('/api/fanzzy/state', { credentials: 'same-origin' })
+  .then((r) => (r.ok ? r.json() : null))
+  .then((j) => { maTenue = j?.wallet?.activeSkin ?? null;
+    monFanzzy = j?.wallet?.active ?? null; })
+  .catch(() => {});
+
+const dessinFz = (id, variante, tenue) =>
+  window.FZART?.adresse?.(id, variante, tenue ? { skin: tenue } : undefined) ?? null;
 
 /** La vignette d'un Fanzzy sur l'affiche, avec son repli. */
 function vignetteFz(f, entre, couleur) {
-  const src = dessinFz(f.id, 'buste');
+  /* La racine, parce que `monFanzzy` est la lignée et `f.id` l'âge : « TR32 »
+     d'un côté, « TR32B » de l'autre pour le même personnage. */
+  const racine = (s) => /^([A-Z]+\d+)/.exec(String(s ?? ''))?.[1] ?? s;
+  const mien = monFanzzy && racine(f.id) === racine(monFanzzy);
+  const src = dessinFz(f.id, 'buste', mien ? maTenue : null);
   return `<div class="fz-aff ${entre ? 'entre' : ''}" style="--ac:${couleur}">
     ${src ? `<img alt="" loading="lazy" src="${src}">` : ''}
     ${entre ? '<span class="tag">ENTRE</span>' : ''}

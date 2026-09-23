@@ -24,8 +24,26 @@
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
 body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
-#app{width:100%;max-width:var(--colonne);height:100dvh;display:flex;flex-direction:column;overflow:hidden;
+/* **Le filet : on ne peut jamais être bloqué.**
+
+   Cet écran ne défile pas, et c'est voulu — il doit tenir d'un coup d'œil.
+   La rangée d'actions vit donc hors du corps qui défile, et la suite la mesure
+   à trois hauteurs de téléphone, nav.js coupé compris. Tout était vert, et un
+   joueur a quand même photographié des boutons hors de l'écran.
+
+   `overflow:hidden` est ce qui transforme un débordement en **impasse** : ce
+   qui dépasse n'est pas repoussé, il est coupé, et rien ne permet d'aller le
+   chercher. `auto` ne change rien tant que tout tient — le corps se rétrécit
+   avant, puisqu'il porte `flex:1;min-height:0` — et rend la main le jour où
+   une cause qu'on n'a pas su reproduire fait déborder la colonne.
+
+   C'est un filet, pas une correction : il ne rend pas la fiche défilante, il
+   empêche qu'elle devienne une porte close. `overscroll-behavior` reste
+   contenu, sinon le geste tiré au-delà du bas rebondit sur la page. */
+#app{width:100%;max-width:var(--colonne);height:100dvh;display:flex;flex-direction:column;
+  overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:none;
   padding-bottom:calc(var(--nav-h,62px) + env(safe-area-inset-bottom))}
+#app::-webkit-scrollbar{display:none}
 #page{flex:1;min-height:0;display:flex;flex-direction:column}
 .spin{width:24px;height:24px;border:3px solid rgba(242,238,228,.18);border-top-color:var(--projo);
   border-radius:50%;animation:sp 1s linear infinite;margin:70px auto}

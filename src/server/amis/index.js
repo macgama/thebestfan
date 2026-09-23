@@ -1,6 +1,7 @@
 import express from 'express';
 import { randomBytes } from 'node:crypto';
 import { racineDe, auStade } from '../fanzzy/catalogue.js';
+import { stadeAffiche } from '../../shared/fanzzy/ages.js';
 
 /**
  * Les amis.
@@ -93,17 +94,10 @@ export function createAmis({ pool, requireAuth, kop = null }) {
     if (!id) return null;
     try {
       const racine = racineDe(id);
-      /* **L'âge choisi passe devant l'âge atteint**, borné par lui. Quelqu'un
-         peut préférer se montrer jeune : l'âge 1 n'est pas une version
-         inférieure du personnage, c'est un autre dessin. Mais la borne reste,
-         sinon une colonne restée sur 3 après une remise à zéro afficherait ici
-         un personnage que son propriétaire n'a pas fait grandir.
-
-         Nul = l'âge atteint, qui est ce que cette fonction rendait avant : tant
-         que personne n'a choisi, la liste d'amis est exactement celle d'hier. */
-      const atteint = Math.max(1, Number(stade) || 1);
-      const n = Math.min(atteint, Math.max(1, Number(choisi) || atteint));
-      return (auStade(racine, n) ?? { id: racine }).id;
+      /* La règle est dans `shared/fanzzy/ages.js`, avec son raisonnement : elle
+         vivait ici, au portefeuille et à l'accueil, et une quatrième copie
+         allait s'écrire pour la tenue portée. */
+      return (auStade(racine, stadeAffiche(stade, choisi)) ?? { id: racine }).id;
     } catch { return id; }
   }
 

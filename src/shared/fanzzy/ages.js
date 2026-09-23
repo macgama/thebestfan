@@ -142,6 +142,29 @@ export function marqueDuGeste(mods, geste, stade) {
  */
 export const puissanceAuStade = (p, stade) => p + (stade === 2 ? 13 : 26);
 
+/**
+ * L'âge auquel quelqu'un se montre.
+ *
+ * **L'âge choisi passe devant l'âge atteint, borné par lui.** Quelqu'un peut
+ * préférer se montrer jeune : le premier âge n'est pas une version inférieure
+ * du personnage, c'est un autre dessin. Mais la borne reste, sinon une
+ * colonne restée sur 3 après une remise à zéro afficherait un personnage que
+ * son propriétaire n'a pas fait grandir.
+ *
+ * **Nul veut dire « le dernier »** : c'est ainsi que le serveur écrit « je
+ * n'ai pas choisi », pour que faire grandir son Fanzzy demain change
+ * l'affichage sans avoir à revenir le dire.
+ *
+ * Cette ligne existait en trois exemplaires — la liste d'amis, le
+ * portefeuille, l'accueil — et un quatrième allait s'écrire pour la tenue
+ * portée. Trois copies d'une règle de jeu, c'est trois occasions qu'elles ne
+ * disent plus la même chose, et ce dépôt en a déjà payé plusieurs.
+ */
+export function stadeAffiche(atteint, choisi) {
+  const a = Math.max(1, Number(atteint) || 1);
+  return Math.min(a, Math.max(1, Number(choisi) || a));
+}
+
 /** L'identifiant d'un âge : `TR1` → `TR1B`, `TR1C`. Court, et il trie à côté. */
 export const idDuStade = (id, stade) => id + (stade === 2 ? 'B' : 'C');
 

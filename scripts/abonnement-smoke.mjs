@@ -558,6 +558,75 @@ const { createOnboarding } = await import('../src/server/onboarding/index.js');
       check('mais il n en prend plus de nouvelles',
         apres === 'onboarding.error.not_owned');
     }
+
+    /* ============ et la tenue choisie arrive jusqu'aux écrans
+
+       **Elle était enregistrée et n'arrivait nulle part.** Tout ce qui
+       précède était vert : la tenue se posait en base, se gardait, se
+       refusait à qui n'y a pas droit. Et l'accueil écrivait `skin: 'base'`
+       en dur, avec un commentaire disant « tant qu'il n'y en a qu'un » — le
+       joueur voyait son déguisement sur la fiche et nulle part ailleurs.
+
+       C'est la panne la plus discrète qu'un test puisse manquer : le geste
+       marche, l'écriture marche, la lecture marche. Il manquait le trajet.
+       On éprouve donc **ce que l'écran reçoit**, pas ce que la base garde. */
+    moi = ABO;
+    await pool.query(
+      `UPDATE user_wallet SET active_fanzzy = 'TR32', active_evo = NULL
+        WHERE user_id = ?`, [ABO]);
+
+    const st = await get('/api/fanzzy/state');
+    check(`le portefeuille annonce la tenue portée (${st.wallet?.activeSkin})`,
+      st.wallet?.activeSkin === tenue.id
+      || (console.log('        il annonce :', JSON.stringify(st.wallet)), false));
+    check(`et l’âge auquel on se montre (${st.wallet?.activeStade})`,
+      st.wallet?.activeStade === 1);
+
+    /* **Une tenue appartient à un âge.** Le Capo n'hérite pas de la
+       garde-robe du gamin, et la requête qui la cherchait ne le savait pas :
+       elle prenait `equipped = 1` sans condition de stade, donc l'une des
+       deux au hasard. Le duel habillait parfois le mauvais âge, et rien ne
+       pouvait le dire — le dessin existe, il est juste celui d'un autre.
+
+       **Le personnage se montre au second âge, et c'est tout le contrôle.**
+       Le premier jet le laissait au premier : la requête fautive rendait
+       alors la bonne réponse par accident, parce que la clé primaire range
+       les stades dans l'ordre et que le bon sortait en tête. Vert des deux
+       côtés — un canari qui ne chante pas.
+
+       Dans ce sens-là, l'accident joue contre : c'est la tenue du premier
+       âge qui sort en tête, et c'est justement celle qu'il ne faut pas. */
+    if (autre) {
+      await pool.query(
+        `UPDATE user_fanzzy SET stage = 2 WHERE user_id = ? AND fanzzy_id = 'TR32'`,
+        [ABO]);
+      await pool.query(
+        `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, stage, skin_id, equipped)
+         VALUES (?, 'TR32', 2, ?, 1)`, [ABO, autre.id]);
+
+      const st2 = await get('/api/fanzzy/state');
+      check(`au second âge, c’est la tenue du second (${st2.wallet?.activeSkin})`,
+        st2.wallet?.activeSkin === autre.id
+        || (console.log('        il annonce :', st2.wallet?.activeSkin,
+          '· attendu', autre.id), false));
+      check(`et l’âge suit (${st2.wallet?.activeStade})`,
+        st2.wallet?.activeStade === 2);
+
+      /* Le duel lit `loadout`, pas le portefeuille : deux chemins pour une
+         seule question, et c'est le second qui était faux. */
+      const lo = await O.loadout(ABO);
+      check(`et le duel reçoit la même (${lo.skin})`, lo.skin === autre.id
+        || (console.log('        il reçoit', lo.skin, '· attendu', autre.id), false));
+
+      /* Et l'âge choisi reprend la main sur l'âge atteint : quelqu'un peut
+         préférer se montrer jeune, et sa tenue de jeunesse revient avec lui. */
+      await pool.query(
+        `UPDATE user_wallet SET active_evo = 1 WHERE user_id = ?`, [ABO]);
+      const st3 = await get('/api/fanzzy/state');
+      check(`en se montrant jeune, la tenue de jeunesse revient (${st3.wallet?.activeSkin})`,
+        st3.wallet?.activeSkin === tenue.id && st3.wallet?.activeStade === 1
+        || (console.log('        il annonce :', JSON.stringify(st3.wallet)), false));
+    }
   }
 }
 

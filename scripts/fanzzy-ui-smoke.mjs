@@ -765,7 +765,11 @@ check('les Fanzzy non possédés portent leur nom',
         const app = document.getElementById('app');
         const ar = app.getBoundingClientRect();
         /* La borne n'est pas l'écran mais **le bas du contenu de `#app`** :
-           c'est lui qui coupe, puisque `#app` est en `overflow:hidden`. */
+           c'est là que la colonne s'arrête. `#app` est passé en
+           `overflow-y:auto` — un bouton qui dépasse n'est donc plus perdu,
+           il se rattrape au doigt. Ce contrôle-ci n'en demande pas moins :
+           il veut le bouton **sans avoir à défiler**, parce qu'un filet
+           qu'on emprunte tous les jours n'est plus un filet. */
         return { trouve: Boolean(r), haut: r ? Math.round(r.top) : null,
           bas: r ? Math.round(r.bottom) : null,
           borne: Math.round(ar.bottom - parseFloat(getComputedStyle(app).paddingBottom)) };
@@ -1671,6 +1675,59 @@ check('et elle explique pourquoi au lieu de rester vide',
  * Trois cent vingt pixels — un iPhone SE — restent le cas dur.
  */
 {
+/* ============================== et si tout ça ne suffisait pas
+
+   Un joueur a photographié une fiche dont les boutons étaient hors de
+   l'écran, alors que les neuf mesures ci-dessus étaient vertes — encoche,
+   barre gestuelle et bandeau d'annonce compris. On n'a pas su reproduire sa
+   cause.
+
+   C'est précisément pour ces cas-là qu'on pose un filet plutôt qu'un
+   correctif de plus : `#app` défile désormais quand il déborde, au lieu de
+   couper. On ne mesure donc plus seulement « le bouton est-il visible », qui
+   suppose de connaître toutes les causes, mais « **peut-on toujours
+   l'atteindre** », qui n'en suppose aucune.
+
+   La hauteur est cruelle exprès. Aucun téléphone ne fait 380 px de haut ; ce
+   qu'on éprouve n'est pas un appareil, c'est que l'écran n'ait **aucune**
+   hauteur où il devienne une porte close. */
+{
+  const court = await nav.newPage();
+  court.on('pageerror', (e) => erreurs.push(e.message));
+  await court.setViewport({ width: 390, height: 380 });
+  await court.setCookie({ name: 'tbf_test', value: U, domain: 'localhost', path: '/' });
+  await court.goto(`${base}/fanzzy/${ILLUSTRE}`, { waitUntil: 'networkidle0' });
+  await court.waitForSelector('.fiche .actions', { timeout: 8000 }).catch(() => null);
+  await dodo(300);
+
+  const m = await court.evaluate(async () => {
+    const app = document.getElementById('app');
+    /* On va au bas de la colonne, comme le ferait un doigt. */
+    app.scrollTop = app.scrollHeight;
+    await new Promise((r) => setTimeout(r, 200));
+    const bt = document.querySelector('.actions .bt')
+      ?? document.querySelector('.actions > *');
+    const r = bt?.getBoundingClientRect();
+    return {
+      trouve: Boolean(r),
+      defile: app.scrollHeight > app.clientHeight + 1,
+      dansLEcran: r ? (r.top >= -1 && r.bottom <= innerHeight + 1) : false,
+      bas: r ? Math.round(r.bottom) : null, ecran: innerHeight,
+    };
+  });
+
+  check('à 390×380, la rangée d’actions existe encore', m.trouve);
+  if (m.trouve) {
+    /* Si rien ne défile à cette hauteur-là, c'est que la colonne tient
+       encore : tant mieux, et le contrôle suivant le dira quand même. */
+    check(`et on peut aller la chercher (${m.defile ? 'la colonne défile' : 'tout tient'})`,
+      m.dansLEcran
+      || (console.log(`        son bas est à ${m.bas} pour un écran de ${m.ecran}, `
+        + 'et le défilement ne la ramène pas'), false));
+  }
+  await court.close();
+}
+
   const petit = await nav.newPage();
   petit.on('pageerror', (e) => erreurs.push(e.message));
   await petit.setViewport({ width: 320, height: 640 });
