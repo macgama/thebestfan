@@ -298,7 +298,12 @@ if (process.env.DATABASE_URL) {
     console.log('decks actifs');
 
     // ---- duel N contre N (tir a la corde en equipe)
-    nvn = createNvN({ pool, io, decks, requireAuth: auth.requireAuth, niveau, kop });
+    /* `abonnement` est monté plus haut, et il le faut : c'est lui qui dit
+       combien de duels classés il reste dans la journée. Reçu à `null`, le
+       duel ne plafonne rien — et personne ne s'en apercevrait, ce qui est
+       exactement la panne que `verif-cablage.mjs` surveille. */
+    nvn = createNvN({ pool, io, decks, requireAuth: auth.requireAuth, niveau, kop,
+      abonnement });
     app.use('/api/nvn', nvn.router);
     console.log('duels NvN actifs');
 
@@ -436,6 +441,9 @@ if (process.env.DATABASE_URL) {
        monde y entre avec sa voix pour seule arme. */
     virage = createVirage({ pool, io, requireAuth: auth.requireAuth,
       souvenirs, fanzzy, kop, couleurs, decks,
+      /* Pour savoir si ce Virage-ci compte au classement. Absent, tout
+         compte : voir le branchement du duel juste au-dessus. */
+      abonnement,
       /* La journée du football, pour la liste « ailleurs en direct ».
          Le télétexte n'est pas encore monté — il l'est plus bas, et il a besoin
          du client API. On passe donc une **fonction** : elle lira `teletext`

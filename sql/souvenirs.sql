@@ -108,3 +108,14 @@ CREATE TABLE IF NOT EXISTS user_wallet (
 -- mieux vaut n'attribuer à personne que d'attribuer au hasard.
 ALTER TABLE virage_presence ADD COLUMN IF NOT EXISTS team_id INT NULL;
 ALTER TABLE virage_presence ADD INDEX IF NOT EXISTS idx_team (team_id);
+
+-- Ce Virage compte-t-il au classement ? Sans abonnement, les premiers de la
+-- journee seulement -- voir `abo.virages_classes_jour`. Le match se joue
+-- entierement dans tous les cas : c'est le compteur qui s'arrete, pas le jeu,
+-- et la ligne reste ecrite pour le parcours et les cartes-souvenirs.
+--
+-- Le defaut est 1, et il doit l'etre : les lignes ecrites avant ce jour
+-- comptaient toutes, et les faire basculer a zero retirerait retroactivement
+-- la ferveur de tout le monde.
+ALTER TABLE virage_presence ADD COLUMN IF NOT EXISTS classe TINYINT(1) NOT NULL DEFAULT 1;
+ALTER TABLE virage_presence ADD INDEX IF NOT EXISTS idx_jour (user_id, joined_at);

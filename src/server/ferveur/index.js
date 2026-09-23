@@ -30,6 +30,10 @@ const MAX_CARTES_PER_10S = 8;
    doit jamais empêcher d'entrer dans une tribune. */
 export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
                                kop = null, couleurs = null, decks = null,
+                               /* Facultatif, comme tout ce qui est optionnel
+                                  ici : sans lui, aucun plafond, et tous les
+                                  Virages comptent. C'est l'état d'avant. */
+                               abonnement = null,
                                /* La journée du football, telle que la page des
                                   matchs la lit — un appel pour le monde entier,
                                   mis en cache. Elle est posée après coup par
@@ -313,8 +317,35 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         console.warn('[virage] deck illisible pour', u.userId, '·', e.message);
       }
 
+      /* **Ce Virage comptera-t-il au classement ?**
+
+         La question se pose ici, une seule fois, à l'entrée : au-delà de
+         `abo.virages_classes_jour`, un joueur sans abonnement entre quand
+         même et joue tout le match — il pousse, il chante, les
+         cartes-souvenirs tombent — mais sa ferveur ne rejoint pas le
+         classement. **Aucune porte ne se ferme**, c'est le compteur qui
+         s'arrête.
+
+         La salle ne recalcule jamais : rejoindre à nouveau reprend la
+         décision déjà posée sur le membre, sinon un match commencé compté
+         cesserait de l'être parce qu'un tunnel a coupé le réseau.
+
+         Une panne de ce compte **ne ferme rien** : on compte au classement,
+         comme avant. Un plafond qui se déclenche sur une erreur de base
+         punirait sans raison et ne se verrait nulle part. */
+      let classe = true;
+      if (abonnement && !room.members.has(u.userId)) {
+        try {
+          const reste = await abonnement.viragesClassesRestants(u.userId);
+          classe = reste === null || reste > 0;
+        } catch (e) {
+          console.warn('[virage] plafond illisible pour', u.userId, '·', e.message);
+        }
+      }
+
       socket.emit('virage:state',
-        room.join(u.userId, { side, name: u.name, mods, neutre, perso, actions }));
+        room.join(u.userId, { side, name: u.name, mods, neutre, perso, actions,
+          classe }));
       io.to(`virage:${room.fixture.id}`).emit('virage:crowd', { crowd: room.crowd() });
     });
 

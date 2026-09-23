@@ -843,14 +843,37 @@ const LABEL_GESTE = window.TBF_GESTE.LABEL;
 const AIDE_GESTE = window.TBF_GESTE.AIDE;
 const COULEUR_GESTE = window.TBF_GESTE.COULEUR;
 
-/** Chaque code du serveur a sa phrase : le joueur doit savoir quoi corriger. */
+/** Chaque code du serveur a sa phrase : le joueur doit savoir quoi corriger.
+ *
+ * **Deux préfixes, et on s'est trompé de l'un pour l'autre.** Les refus du
+ * duel lui-même arrivent en `nvn.error.*` ; ceux de l'entrée en file passent
+ * par `Cheat`, qui préfixe `ferveur.error.*` — c'est la classe du Virage,
+ * réutilisée ici. Trois phrases étaient donc écrites sous le mauvais préfixe
+ * et ne servaient à personne : un joueur sans deck lisait « Refusé par le
+ * serveur : ferveur.error.no_deck », sur le geste le plus courant du jeu.
+ *
+ * Rien ne le signalait. Une entrée de ce tableau qui ne correspond à aucun
+ * code ne rougit nulle part — elle a l'air d'un travail fait. `nvn:smoke`
+ * compare maintenant les deux listes.
+ */
 const MESSAGES = {
   'nvn.error.not_in_duel':        'Tu n\u2019es dans aucun duel.',
   'nvn.error.rate_limited':       'Trop d\u2019actions d\u2019un coup. Respire.',
   'nvn.error.slot_lost':          'Ta place a été reprise : le duel a continué sans toi.',
   'nvn.error.server':             'Le serveur n\u2019a pas pu traiter cette action.',
-  'nvn.error.unknown_format':     'Ce format de duel n\u2019existe pas.',
-  'nvn.error.no_deck':            'Tu n\u2019as pas encore de deck.',
+
+  /* Les six refus de l'entrée en file. Chacun dit **ce qui reste ouvert** :
+     un refus qu'on annonce sans dire par où passer se lit comme une porte
+     close, et aucun de ceux-là n'en est une. */
+  'ferveur.error.unknown_format': 'Ce format de duel n\u2019existe pas.',
+  'ferveur.error.no_deck':        'Tu n\u2019as pas encore de deck. Passe par DECK, il t\u2019en monte un.',
+  'ferveur.error.fixture_unknown':'Ce match n\u2019existe plus. Reviens à la liste.',
+  'ferveur.error.duels_classes_epuises':
+    'Tes duels classés du jour sont joués. Un match d\u2019un autre jour reste ouvert — '
+    + 'il compte pour l\u2019entraînement, pas pour la cote.',
+  'ferveur.error.format_classe_abonne':
+    'Ce format ne se joue pas en classé sans abonnement. Sur un match d\u2019un autre '
+    + 'jour, il reste ouvert à tout le monde.',
   'ferveur.error.unauthenticated':'Session expirée. Reconnecte-toi.',
   'ferveur.error.not_in_duel':    'Tu n\u2019es dans aucun duel.',
   'ferveur.error.duel_over':      'Le duel est terminé.',

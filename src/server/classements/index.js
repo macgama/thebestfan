@@ -84,9 +84,14 @@ export function createClassements({ pool, requireAuth,
      `team_id` nul veut dire neutre : la ligne compte pour le joueur et pour la
      compétition, jamais pour une tribune. La règle s'applique d'elle-même, par
      la condition de jointure, sans avoir à l'écrire deux fois. */
+  /* **Les deux sources se filtrent de la même façon**, et c'est nouveau du
+     côté du Virage : `duel_results` écartait déjà l'entraînement, la présence
+     au Virage prenait tout. Elle porte désormais `classe`, posé à l'entrée
+     dans la tribune — voir `abo.virages_classes_jour`. Les lignes écrites
+     avant valent 1 par défaut : personne ne perd rétroactivement sa ferveur. */
   const FERVEUR = `
     SELECT user_id, team_id, ferveur, fixture_id, last_push_at AS quand
-      FROM virage_presence
+      FROM virage_presence WHERE classe = 1
     UNION ALL
     SELECT user_id, team_id, ferveur, fixture_id, ended_at AS quand
       FROM duel_results WHERE mode = 'classe'`;
@@ -293,11 +298,12 @@ export function createClassements({ pool, requireAuth,
      de compter les duels à part. L'annuaire des tribunes s'en sert — « combien
      de duels se sont joués pour ce club » est une question qu'on pose devant
      une compétition, et à laquelle rien ne répondait. */
+  /* Même filtre qu'à `FERVEUR` ci-dessus, et pour la même raison. */
   const SOURCE = `
     SELECT vp.user_id, vp.team_id, vp.ferveur, 0 AS duel
       FROM virage_presence vp
       JOIN fixtures f ON f.id = vp.fixture_id
-     WHERE f.league_id = ? AND f.season = ?
+     WHERE vp.classe = 1 AND f.league_id = ? AND f.season = ?
     UNION ALL
     SELECT dr.user_id, dr.team_id, dr.ferveur, 1 AS duel
       FROM duel_results dr

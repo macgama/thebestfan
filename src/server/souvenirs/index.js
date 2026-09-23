@@ -34,16 +34,28 @@ export function createSouvenirs({ pool, requireAuth,
    * Enregistre une poussée dans le Grand Virage.
    * Appelée par la couche temps réel à chaque contribution, pas par le client.
    */
-  async function recordPush({ userId, fixtureId, side, teamId = null, fanzzyId, amount }) {
+  /**
+   * @param {boolean} [classe] ce Virage compte-t-il au classement ?
+   *
+   * **Écrit à l'insertion et jamais mis à jour.** La décision se prend une
+   * fois, à l'entrée dans la tribune, et ne doit plus bouger : sans quoi un
+   * match commencé « compté » cesserait de l'être au milieu, parce qu'on a
+   * ouvert un autre onglet entre-temps. C'est la raison pour laquelle
+   * `classe` est absent de la clause `ON DUPLICATE KEY UPDATE`, et c'est
+   * voulu — ce n'est pas un oubli à corriger.
+   */
+  async function recordPush({ userId, fixtureId, side, teamId = null, fanzzyId,
+                              amount, classe = true }) {
     await q(
-      `INSERT INTO virage_presence (user_id, fixture_id, side, team_id, fanzzy_id, ferveur)
-       VALUES (?, ?, ?, ?, ?, ?)
+      `INSERT INTO virage_presence (user_id, fixture_id, side, team_id, fanzzy_id,
+                                    ferveur, classe)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE
          ferveur = ferveur + VALUES(ferveur),
          fanzzy_id = VALUES(fanzzy_id),
          last_push_at = NOW(3)`,
       [userId, fixtureId, side ? 1 : 0, teamId ?? null, fanzzyId ?? null,
-       Math.max(0, Math.round(amount ?? 0))],
+       Math.max(0, Math.round(amount ?? 0)), classe === false ? 0 : 1],
     );
   }
 
