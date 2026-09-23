@@ -334,6 +334,46 @@ clic(T(dom).querySelector('[data-onglet="cartes"]'));
 await jusqua(() => T(dom).querySelector('.grille'));
 check('dix emplacements de cartes', T(dom).querySelectorAll('.emp').length === 10);
 
+/* -------------------------- duel ou Virage : ça doit se voir
+
+   Treize cartes sur trente-neuf ne se jouent pas au Grand Virage, et le
+   serveur les écartait de la main **en silence**. Un joueur pouvait garnir
+   ses dix emplacements sans qu'aucune n'y entre, et ne le découvrir qu'en
+   voyant sa rangée vide au milieu d'un match. Ce n'était pas un cas rare :
+   le paquet de bienvenue contient cinq cartes dont l'Arbitre, garanti, qui
+   ne se joue qu'en duel.
+
+   Trois contrôles, parce que la distinction doit tenir sur trois plans : la
+   donnée la porte, le catalogue l'affiche, et l'écran compte ce que ce deck
+   vaut sur chacun des deux terrains.                                      */
+{
+  clic(T(dom).querySelector('[data-filtre="toutes"]'));
+  await jusqua(() => T(dom).querySelectorAll('.cat .carte').length === ACTIONS.length);
+
+  const marquees = await dom.window.eval('S.catalogue.filter((a) => a.virage === false).length');
+  check('le catalogue dit de chaque carte où elle se joue', marquees === 13);
+
+  /* La Bâche vise la prochaine poussée adverse : au Virage, « la prochaine
+     poussée adverse » n'est pas un événement, c'est du bruit de fond. */
+  const bache = T(dom).querySelector('.cat .carte[data-detail="a-bache"]');
+  const torche = T(dom).querySelector('.cat .carte[data-detail="a-torche"]');
+  check('une carte de duel porte la mention', /DUEL/.test(bache?.textContent ?? ''));
+  check('et une carte qui entre au Virage ne la porte pas',
+    Boolean(torche) && !/DUEL SEULEMENT/.test(torche.textContent));
+
+  /* Le filtre : on doit pouvoir ne voir que ce qui entre au Virage. */
+  clic(T(dom).querySelector('[data-filtre="virage"]'));
+  await jusqua(() => T(dom).querySelector('[data-filtre="virage"]').classList.contains('on'));
+  const restantes = [...T(dom).querySelectorAll('.cat .carte')];
+  check('le filtre « Au Virage » ne laisse que des cartes de Virage',
+    restantes.length > 0 && !restantes.some((c) => /DUEL SEULEMENT/.test(c.textContent)));
+  clic(T(dom).querySelector('[data-filtre="miennes"]'));
+  await jusqua(() => T(dom).querySelector('[data-filtre="miennes"]').classList.contains('on'));
+
+  check('l’écran compte ce que le deck vaut sur les deux terrains',
+    /Grand Virage/.test(T(dom).querySelector('.ouJoue')?.textContent ?? ''));
+}
+
 /* Le catalogue montre les cartes, pas seulement leurs noms.
  *
  * Chaque ligne porte une vignette : le glyphe de sa famille, et le dessin

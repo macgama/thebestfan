@@ -1,5 +1,6 @@
 import express from 'express';
-import { ACTIONS, ACTION_BY_ID, DECK_RULES, validerDeck } from '../../shared/duel/actions.js';
+import { ACTIONS, ACTIONS_MARQUEES, ACTION_BY_ID, DECK_RULES, validerDeck }
+  from '../../shared/duel/actions.js';
 /* Ce que les saisons ont ouvert. Renommé à l’import : `publies` désigne déjà
    le catalogue Fanzzy dans les modules voisins. Voir `possessions`. */
 import { publies as jouables } from '../contenus/index.js';
@@ -77,6 +78,35 @@ export function primeDeFormat(format) {
   return 1 + Math.max(0, taille - 1) * reglage('duel.prime_format');
 }
 const LIVE = ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT'];
+
+/**
+ * Ce que vaut un duel monté sur ce match, en une phrase.
+ *
+ * **Quatre phrases pour trois moments**, et la nuance compte : ce qui décide
+ * est la journée, mais ce que le joueur veut savoir est où en est le match.
+ * « Ce duel comptera » sur une rencontre terminée laisse croire à une
+ * erreur ; « le match est joué » l'explique.
+ *
+ * Elle est une fonction, et plus un ternaire posé dans `matchSupport`, parce
+ * que les deux producteurs de matchs n'en donnaient pas la même version. La
+ * liste n'en donnait aucune : la page en refabriquait une, à deux branches,
+ * et sur le mauvais critère — `enCours` au lieu de la journée. Un match
+ * **terminé aujourd'hui** compte au classement, et elle lui annonçait
+ * « entraînement, sans effet sur le classement ».
+ *
+ * Une phrase qui existe à deux endroits finit toujours par exister en deux
+ * versions, dont une fausse.
+ *
+ * @param {boolean} duJour  la rencontre est-elle du jour de calendrier courant
+ * @param {boolean} enCours le ballon roule-t-il
+ * @param {boolean} termine le coup de sifflet final est-il tombé
+ */
+export function raisonDuMatch(duJour, enCours, termine) {
+  if (!duJour) return 'Match à venir : entraînement, sans effet sur le classement.';
+  if (enCours) return 'Le match est en cours : ce duel comptera au classement.';
+  if (termine) return 'Le match est joué : ce duel compte encore au classement, jusqu’à ce soir.';
+  return 'Le match est aujourd’hui : ce duel comptera au classement.';
+}
 
 /**
  * Le jour de calendrier d'un instant, en `AAAA-MM-JJ`.
@@ -455,6 +485,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
       },
       mode,
       enCours,
+      termine,
       monCamp: campDe(club.teamId, f.home_id, f.away_id),
       neutre: club.neutre,
       // L'explication est renvoyée au client : il ne doit pas avoir à deviner
@@ -463,13 +494,7 @@ export function createDecks({ pool, requireAuth, niveau = null,
          décide est la journée, mais ce que le joueur veut savoir est **où en
          est le match**. « Ce duel comptera » sur une rencontre terminée
          laisserait croire à une erreur ; « le match est joué » l'explique. */
-      raison: jour !== ajd
-        ? 'Match à venir : entraînement, sans effet sur le classement.'
-        : enCours
-          ? 'Le match est en cours : ce duel comptera au classement.'
-          : termine
-            ? 'Le match est joué : ce duel compte encore au classement, jusqu’à ce soir.'
-            : 'Le match est aujourd’hui : ce duel comptera au classement.',
+      raison: raisonDuMatch(jour === ajd, enCours, termine),
       // Ce match met-il en jeu un club suivi ? Le duel rapporte alors le
       // double. `userId` est facultatif : appelé sans lui — depuis la file du
       // NvN, qui ne veut que le support du duel — la question ne se pose pas.
@@ -561,14 +586,15 @@ export function createDecks({ pool, requireAuth, niveau = null,
     const liste = [...parId.values()].map((f) => {
       const club = clubParmi(suivis, f.home_id, f.away_id);
       const enCours = LIVE.includes(f.status_short);
-    // Il ne décide plus de rien — la journée s'en charge — mais il sert encore
-    // à le dire : « le match est joué » et « le match n'a pas commencé » sont
-    // deux phrases différentes pour un joueur, et la même pour la règle.
-    const termine = TERMINE.includes(f.status_short);
+      // Il ne décide plus de rien — la journée s'en charge — mais il sert
+      // encore à le dire : voir `raisonDuMatch`.
+      const termine = TERMINE.includes(f.status_short);
       const duJour = jourDe(f.kickoff_at) === ajd;
       return {
         ...f,
         enCours,
+        termine,
+        raison: raisonDuMatch(duJour, enCours, termine),
         aujourdhui: duJour ? 1 : 0,
         /* **Classé, c'est le jour du match.** Voir `matchSupport`, qui applique
            la même règle — et qui fait autorité, puisque c'est lui qui décide au
@@ -753,7 +779,10 @@ export function createDecks({ pool, requireAuth, niveau = null,
     /* `primes` à côté de `formats` : la page nomme, le serveur compte. Sans
        elles, l'écran devrait refaire le calcul — donc en porter une copie,
        qui divergerait au premier réglage changé depuis /admin. */
-    res.json({ actions: ACTIONS, regles: DECK_RULES, formats: Object.keys(FORMATS),
+    /* `ACTIONS_MARQUEES` et non `ACTIONS` : chaque carte dit où elle se joue.
+       C'est l'écran de construction du deck — c'est exactement là que la
+       question se pose, et le seul endroit où y répondre coûte zéro. */
+    res.json({ actions: ACTIONS_MARQUEES, regles: DECK_RULES, formats: Object.keys(FORMATS),
       primes: Object.fromEntries(Object.keys(FORMATS)
         .map((f) => [f, Number(primeDeFormat(f).toFixed(2))])) });
   });

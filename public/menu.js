@@ -107,6 +107,10 @@
       ['/deck', 'deck', 'Mon deck'],
       ['/boosters', 'pack', 'Mes boosters'],
       ['/boutique', 'boutique', 'La boutique'],
+      /* Juste après la boutique, et pas ailleurs : c'est le même geste — on
+         vient dépenser. Il manquait, et la seule façon d'atteindre l'écran de
+         l'abonnement était de connaître son adresse. */
+      ['/abonnement', 'boutique', 'L’abonnement'],
       /* Dernière de JOUER, et bien dans JOUER : on y va pour jouer, pas parce
          qu'on est perdu. Après les deux écrans qu'elle prépare et jamais avant
          eux — ce n'est pas une étape à franchir pour entrer au Virage, c'est
@@ -170,6 +174,18 @@
          qu'on cherche **parce qu'on est perdu**, et quelqu'un de perdu ne lit
          pas un menu jusqu'au bout. Elle ne rejoint pas les rubriques du
          dessus : elles disent où l'on joue, celle-ci dit comment. */
+      /* **Rien ne disait nulle part qu'on est abonné.**
+       *
+       * On paie, on est débité, et l'application ne change pas d'un pixel :
+       * ce que l'abonnement ouvre est du confort — des réserves plus grandes,
+       * une mémoire plus longue — donc rien qui saute aux yeux. Un joueur
+       * dans ce cas croit que son paiement n'a pas abouti, et il a raison de
+       * le croire : rien ne lui prouve le contraire.
+       *
+       * Le menu est le seul endroit présent sur **toutes** les pages. La
+       * marque s'y pose donc, et elle est remplie après coup : le tiroir ne
+       * doit pas attendre une requête pour s'ouvrir. */
+      + '<div class="tbf-abo" id="tbf-abo" hidden></div>'
       + item('/aide', 'aide', 'Aide et premiers pas', ici('/aide') ? 'on' : '')
       + item('/profil', 'profil', 'Mon profil', ici('/profil') ? 'on' : '')
       + item('/compte', 'compte', 'Mon compte', ici('/compte') ? 'on' : '')
@@ -196,6 +212,29 @@
         }
       });
     };
+    /* L'état de l'abonnement, demandé une fois et sans bloquer.
+       *
+       * Sous garde entière : cette route peut ne pas être montée, la table
+       * peut manquer, le joueur peut ne pas être connecté. Dans tous ces cas
+       * la marque reste cachée — c'est exactement ce qu'elle doit faire, et
+       * un menu ne tombe pas parce qu'un abonnement est injoignable. */
+    void (async () => {
+      try {
+        const r = await fetch('/api/abonnement', { credentials: 'same-origin' });
+        if (!r.ok) return;
+        const a = await r.json();
+        const n = document.getElementById('tbf-abo');
+        if (!n || !a?.abonne) return;
+        const fin = a.fin
+          ? new Date(a.fin).toLocaleDateString('fr-FR',
+            { day: 'numeric', month: 'long', year: 'numeric' })
+          : null;
+        n.innerHTML = '<b>ABONNÉ</b><span>'
+          + (fin ? 'jusqu’au ' + fin : 'sans terme') + '</span>';
+        n.hidden = false;
+      } catch { /* un menu ne tombe pas pour ça */ }
+    })();
+
     bouton.addEventListener('click', () => ouvrir(!tiroir.classList.contains('on')));
     voile.addEventListener('click', () => ouvrir(false));
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ouvrir(false); });

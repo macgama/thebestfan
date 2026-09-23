@@ -52,6 +52,27 @@ import { poserEffet, nettoyerEffets, modsAvecEffets } from '../../shared/duel/ef
  */
 const FIL_MAX = 60;
 
+/**
+ * Les effets que ce moteur sait résoudre.
+ *
+ * **Elle existe pour pouvoir refuser avant de débiter.** `appliquer` lève
+ * `unknown_effect` sur un type inconnu, mais il est appelé tout à la fin de
+ * `jouer` — après le souffle prélevé, la carte retirée de la main et la
+ * recharge armée. Un effet manquant ne faisait donc pas échouer la carte :
+ * il la faisait disparaître en la facturant.
+ *
+ * Elle double le `switch`, et c'est assumé : une liste qu'on oublie de tenir
+ * à jour ferait refuser une carte qui marche, ce qui se voit en une partie.
+ * L'oubli inverse — ajouter un `case` sans l'inscrire ici — est donc le seul
+ * possible, et il est le moins cher des deux. `virage-smoke` vérifie de toute
+ * façon que **toute carte jouable au Virage** a son effet dans cette liste.
+ */
+export const EFFETS_CONNUS = new Set([
+  'push', 'refill', 'team_breath', 'mod_self', 'floor_quality',
+  'rally', 'per_mate', 'sync', 'refill_hand', 'clear_cooldowns',
+  'delayed_push', 'freeze_decay', 'double_next', 'cost_free', 'push_over_time',
+]);
+
 /** La minute où placer un changement de période, faute que l'API en donne une. */
 const MINUTE_DE_PERIODE = { '1H': 0, HT: 45, '2H': 45, ET: 90, BT: 90, P: 120, FT: 90, AET: 120, PEN: 120 };
 
@@ -165,6 +186,7 @@ export class VirageRoom {
     this.members = new Map();         // userId -> état du supporter
     this.rallies = [];                // fenêtres collectives ouvertes, par camp
     this.differes = [];               // poussées armées, qui frapperont plus tard
+    this.geleeJusqua = 0;             // l’Ancre : la corde cesse de retomber
     this.rangChangeA = 0;             // quand le répertoire a tourné pour la dernière fois
     this.seq = 0;
     this.last = Date.now();
@@ -306,10 +328,21 @@ export class VirageRoom {
        réseau qui saute, un onglet rouvert — ne doit pas redistribuer la main :
        ce serait un moyen gratuit de se débarrasser d'un temps de recharge. */
     if (!m.main.length && !m.pioche.length && !m.defausse.length && actions.length) {
-      const jouables = actions.map((a) => (typeof a === 'string' ? a : a?.id))
-        .filter((id) => dansLeVirage(ACTION_BY_ID.get(id)));
+      const ids = actions.map((a) => (typeof a === 'string' ? a : a?.id));
+      const jouables = ids.filter((id) => dansLeVirage(ACTION_BY_ID.get(id)));
       m.pioche = melanger(jouables);
       m.main = m.pioche.splice(0, RULES.mainVisible);
+      /* **Combien sont restées au duel.**
+
+         Le tri se faisait en silence, et c'est ce silence qui a été signalé
+         sous la forme « une carte et quatre cases vides ». Le joueur voyait
+         le résultat du tri sans jamais voir le tri, et il en concluait que
+         ses cartes ne se rechargeaient pas.
+
+         Le **nombre** part avec l'état, et pas une phrase toute faite : la
+         page sait mieux que la salle où et quand le dire, et un serveur qui
+         rédige finit par rédiger dans la mauvaise langue. */
+      m.ecartees = ids.length - jouables.length;
     }
 
     this.members.set(userId, m);
@@ -417,6 +450,22 @@ export class VirageRoom {
       plancher.charges--;
     }
 
+    /* **La Mise** se résout ici, au chant qui suit la carte, et nulle part
+       ailleurs : c’est le seul endroit où l’on sait si le pari est gagné.
+       Un geste au-dessus de la moitié double la poussée ; en dessous, la
+       mise est perdue et coûte le souffle promis.
+
+       Elle se consomme **dans les deux cas** — sinon on la garderait
+       indéfiniment en attendant un bon geste, et ce ne serait plus un pari. */
+    const mise = (m.effets ?? []).find((e) => e.type === 'double_next' && e.fin > now);
+    let facteurMise = 1;
+    if (mise) {
+      const gagne = !backfire && quality >= 0.5;
+      facteurMise = gagne ? 2 : 1;
+      if (!gagne) m.breath = Math.max(0, m.breath - (mise.valeur ?? 20));
+      mise.fin = 0;                     // consommée, gagnée ou perdue
+    }
+
     m.breath -= card.cost;
     m.lastPush = now;
     m.dernierChant = now;
@@ -436,7 +485,7 @@ export class VirageRoom {
     const rally = fenetre ? (fenetre.sync ? RULES.collectifMax : fenetre.bonus) : 1;
 
     const amount = card.power * quality * surge * crowdFactor(Math.max(1, n[m.side]))
-      * (mods.pushMult ?? 1) * rally;
+      * (mods.pushMult ?? 1) * rally * facteurMise;
 
     // Divisée par l'effectif : le nombre aide, il ne décide pas.
     const perCapita = amount / Math.max(1, n[m.side]);
@@ -600,6 +649,26 @@ export class VirageRoom {
        jouables ; ce contrôle attrape le client modifié, et le jour où une
        carte change de portée sans que les mains ouvertes soient refaites. */
     if (!dansLeVirage(carte)) throw new Cheat('card_not_in_virage');
+
+    /* **On refuse avant de débiter, jamais après.**
+     *
+     * `appliquer` finit par un `default` qui lève `unknown_effect`, et ce
+     * `throw` tombait **après** que le souffle ait été prélevé, la carte
+     * retirée de la main, la recharge armée et la défausse remplie. Cinq des
+     * vingt-huit cartes du Virage étaient dans ce cas — les quatre de
+     * septembre et le Coup d’envoi : le joueur payait, perdait sa carte, et
+     * recevait une erreur.
+     *
+     * C’est ce qui produisait les deux défauts signalés : « cette carte
+     * n’est plus dans ta main » au second essai, et « les cartes ne se
+     * rechargent pas » — la main ouverte du client ne voyait jamais le
+     * remplacement, puisque les événements ne partaient pas.
+     *
+     * La leçon est plus générale que ces cinq cartes : **une fonction qui
+     * mute avant de valider ne peut pas échouer proprement.** Le contrôle
+     * remonte donc ici, avec les autres refus, avant la première écriture. */
+    if (!EFFETS_CONNUS.has(carte.effet?.type)) throw new Cheat('unknown_effect');
+
     if ((m.cooldowns[cardId] ?? 0) > now) throw new Cheat('card_on_cooldown');
 
     const c = carte.condition ?? {};
@@ -621,9 +690,20 @@ export class VirageRoom {
     if (c.evolution && !(m.perso?.ages ?? [])[m.perso?.stade ?? 1]) {
       throw new Cheat('evolution_locked');
     }
-    if (m.breath < carte.cost) throw new Cheat('not_enough_breath');
+    /* **La Tournée** paie à la place du joueur, et elle est lue **avant** le
+       contrôle de souffle : c’est tout son intérêt, elle permet de jouer une
+       carte qu’on n’aurait pas les moyens de jouer. Lue après, elle n’aurait
+       fait qu’économiser du souffle déjà possédé — ce que `refill` fait
+       déjà. Même écriture qu’au duel, et pour la même raison. */
+    const tournee = (m.effets ?? []).find((e) => e.type === 'cost_free'
+      && e.fin > now && (e.valeur ?? 0) > 0);
+    const prix = tournee ? 0 : carte.cost;
+    if (m.breath < prix) throw new Cheat('not_enough_breath');
 
-    m.breath -= carte.cost;
+    m.breath -= prix;
+    /* Décomptée ici, une fois la carte réellement jouée : un refus plus haut
+       ne doit pas consommer une gratuité que le joueur n’a pas utilisée. */
+    if (tournee) tournee.valeur--;
     m.cooldowns[cardId] = now + carte.cd * 1000 * RULES.cardCooldownMult;
     m.main = m.main.filter((x) => x !== cardId);
     m.defausse.push(cardId);
@@ -709,14 +789,78 @@ export class VirageRoom {
         evenements.push({ t: 'sync', side: m.side, duree: e.duree, par: m.name });
         break;
 
-      /* Ces deux-là n'ont pas d'objet ici : le Virage ne met qu'un personnage
-         en tribune et n'a pas de banc. On le dit au lieu de les laisser tomber
-         en silence — un cas manquant dans ce `switch` serait une carte qui
-         coûte du souffle et ne fait rien. */
-      case 'swap_fanzzy':
-      case 'evolve':
-        evenements.push({ t: 'effect', type: 'sans_objet', userId });
+      /* ------------------------------------------- les quatre de septembre
+
+         Elles étaient déclarées jouables au Virage — leur portée est `soi` —
+         et ce `switch` ne les connaissait pas. Elles tombaient donc dans le
+         `default`, qui lève, **après** que le souffle ait été débité. Voir le
+         filet posé dans `jouer` : il empêche désormais qu’une carte coûte
+         quelque chose sans rien rendre. Restait à les écrire.
+
+         L’Arbitre et la Relève, elles, ne sont plus acceptées ici du tout :
+         voir `SANS_OBJET_AU_VIRAGE` dans `shared/duel/actions.js`. Un `case`
+         qui ne fait rien est une carte morte, et une carte morte dans un deck
+         de dix est un emplacement volé. */
+
+      /**
+       * **L’Ancre.** La corde cesse de retomber, pour toute la salle.
+       *
+       * Elle ne pousse pas, elle **garde** — et au Virage ce choix pèse plus
+       * qu’au duel : une tribune qui mène voit la décroissance lui manger
+       * 1,4 point par seconde sans que personne n’ait rien fait. Huit
+       * secondes de gel valent une poussée entière, sans avoir eu à réussir
+       * un geste.
+       *
+       * Posée sur la salle et non sur un supporter : la corde est commune aux
+       * deux tribunes, un gel qui ne vaudrait que d’un côté n’aurait aucun
+       * sens physique.
+       */
+      case 'freeze_decay':
+        this.geleeJusqua = Math.max(this.geleeJusqua ?? 0, now + e.duree);
+        evenements.push({ t: 'effect', type: 'freeze_decay', duree: e.duree });
         break;
+
+      /**
+       * **La Mise.** Le prochain chant compte double — et s’il rate, il coûte.
+       *
+       * Elle se pose ici et se résout au chant suivant, dans `chanter` : c’est
+       * le seul endroit où l’on sait si le pari est gagné.
+       */
+      case 'double_next':
+        poserEffet(m, { type: 'double_next', fin: now + e.duree, valeur: e.gage ?? 20 });
+        evenements.push({ t: 'effect', userId, type: 'double_next', duree: e.duree });
+        break;
+
+      /**
+       * **La Tournée.** Les prochaines cartes ne coûtent rien.
+       *
+       * Elle se consomme dans `jouer`, avant le contrôle de souffle. Ici on ne
+       * fait que la poser.
+       */
+      case 'cost_free':
+        poserEffet(m, { type: 'cost_free', fin: now + (e.duree ?? 15000),
+          valeur: e.cartes ?? 2 });
+        evenements.push({ t: 'effect', userId, type: 'cost_free', cartes: e.cartes ?? 2 });
+        break;
+
+      /**
+       * **Le Long Chant**, et le **Coup d’envoi**. Une poussée étalée.
+       *
+       * `delayed_push` frappe une fois, plus tard ; celle-ci frappe un peu, dix
+       * fois, pendant dix secondes. Elle passe par `differes` comme le tifo,
+       * donc chacun de ses coups est divisé par l’effectif : une poussée
+       * étalée n’échappe pas plus à la règle de la foule qu’une poussée sèche.
+       */
+      case 'push_over_time': {
+        const coups = Math.max(1, e.coups ?? 10);
+        const pas = (e.duree ?? 10000) / coups;
+        for (let k = 1; k <= coups; k++) {
+          this.differes.push({ userId, quand: now + k * pas, valeur: e.valeur / coups });
+        }
+        evenements.push({ t: 'arme', userId, side: m.side, delai: pas,
+          cardId: carte.id, par: m.name, coups });
+        break;
+      }
 
       /* Changement de chant : la main repart dans la pioche, on en reprend
          cinq. Ce qu'on défausse revient — la carte ne doit pas vider le deck
@@ -943,7 +1087,10 @@ export class VirageRoom {
     const dt = (now - this.last) / 1000;
     this.last = now;
 
-    const back = RULES.decayPerSec * dt;
+    /* L’Ancre suspend la décroissance, pour toute la salle. La corde est
+       commune aux deux tribunes : un gel qui ne vaudrait que d’un côté
+       n’aurait aucun sens physique. Même règle qu’au duel. */
+    const back = now < this.geleeJusqua ? 0 : RULES.decayPerSec * dt;
     if (this.rope > 0) this.rope = Math.max(0, this.rope - back);
     else if (this.rope < 0) this.rope = Math.min(0, this.rope + back);
 
@@ -1042,6 +1189,10 @@ export class VirageRoom {
            le virage. Le cri vit maintenant avec le reste du personnage, sous
            un seul nom, plutôt qu'en clé isolée qu'on oublie de remplir. */
         fanzzy: m.perso,
+        /* Les cartes du deck qui ne sont pas entrées ici. Voir `join` : ce
+           nombre existe pour que la rangée d'action puisse expliquer ses
+           cases vides au lieu de les laisser passer pour une panne. */
+        ecartees: m.ecartees ?? 0,
         ...this.rankOf(userId),
       } : null,
       // Les cinq chants du moment, pas les douze : voir `repertoire()`.

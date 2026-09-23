@@ -222,6 +222,33 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 .emp .illu{position:absolute;inset:0;width:100%;height:100%;
   object-fit:cover;object-position:center 34%;filter:brightness(.84)}
 
+/* **La mention « duel seulement ».**
+
+   Treize cartes sur trente-neuf ne se jouent pas au Grand Virage : celles
+   qui vont chercher quelqu'un en face, plus l'Arbitre et la Relève, qui
+   n'ont pas d'objet là où l'on ne met qu'un personnage en tribune. Le
+   serveur les écartait de la main en silence, et le joueur pouvait garnir
+   ses dix emplacements sans qu'aucune n'entre au Virage.
+
+   Rouge et non grise : ce n'est pas une carte affaiblie, c'est une carte
+   qui se joue ailleurs. Une mention grise se lit comme « indisponible »,
+   et neuf joueurs sur dix la comprendraient comme un défaut. */
+.duelseul{font-family:var(--banner);font-size:8px;letter-spacing:.14em;
+  color:var(--flare);border:1px solid currentColor;border-radius:4px;
+  padding:2px 4px;line-height:1;white-space:nowrap}
+.emp .duelseul{position:absolute;right:4px;top:5%;z-index:3;
+  background:rgba(4,7,11,.82);font-size:7px;padding:2px 3px}
+.carte .txt b .duelseul{margin-left:6px;display:inline-block;vertical-align:1px}
+
+/* Le compte des deux terrains, sous les dix emplacements. Il répond à la
+   seule question que l'écran ne savait pas poser : « et au Virage, il me
+   reste quoi ? » */
+.ouJoue{margin:2px 14px 10px;padding:9px 11px;border-radius:9px;
+  background:rgba(255,255,255,.04);font-size:11.5px;line-height:1.45;
+  box-shadow:inset 0 0 0 1px rgba(242,238,228,.07)}
+.ouJoue b{font-family:var(--banner);font-size:14px;color:var(--craie);
+  font-variant-numeric:tabular-nums}
+.ouJoue .maigre{display:block;margin-top:5px;color:var(--flare);opacity:.95}
 .filtres{display:flex;gap:6px;padding:0 14px 4px}
 .filtre{background:rgba(16,22,31,.92);border:0;border-radius:9px;color:inherit;
   padding:8px 13px 7px;font-family:var(--banner);font-size:11px;letter-spacing:.08em;
@@ -442,7 +469,7 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
     <a class="tbf-onglet on" href="/deck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h10v13H4zM8 4h10v13"/></svg>DECK</a>
   </nav>
   <div class="top">
-    <h1 class="tbf-titre">MON DECK<small>trois Fanzzy, dix cartes</small></h1>
+    <p class="tbf-sous">Trois Fanzzy, dix cartes</p>
     <div class="etat" id="etat">—</div>
   </div>
 
@@ -926,13 +953,38 @@ function cartesHTML() {
     emp.push(`<div class="emp plein" style="--fc:${fam.c};--fc2:${fam.c2}" data-retirer-carte="${i}">
       <svg class="sceau" viewBox="0 0 24 24"><path d="${fam.ico}"/></svg>
       ${window.TBF_ACTION.illustration(a.id)}
-      <div class="cout">${a.cost}</div><div class="nm">${esc(a.nom)}</div></div>`);
+      <div class="cout">${a.cost}</div>
+      ${a.virage ? '' : '<div class="duelseul">DUEL</div>'}
+      <div class="nm">${esc(a.nom)}</div></div>`);
   }
   out.push(`<div class="grille">${emp.join('')}</div>`);
+
+  /* **Ce que ce deck vaut sur chacun des deux terrains.**
+
+     Un deck sert aux deux, et il ne s'y comporte pas pareil : le Virage
+     écarte les cartes qui visent l'adversaire, puisqu'en face il n'y a pas
+     un adversaire mais une foule. Cette ligne est le seul endroit du jeu qui
+     le dise avant d'entrer sur le terrain.
+
+     Le seuil est quatre, et il se lit sur la mécanique et non au jugé : la
+     main montre cinq cartes à la fois. En dessous de quatre cartes de
+     Virage sur dix, la rangée est incomplète dès le premier remplissage, et
+     c'est exactement l'écran que le joueur a signalé — une carte et quatre
+     cases vides. */
+  const auVirage = posees.filter((a) => a.virage).length;
+  out.push(`<div class="ouJoue">
+    <b>${posees.length}</b> carte(s) au duel de tribunes ·
+    <b>${auVirage}</b> au Grand Virage
+    ${auVirage < 4 && posees.length ? `<span class="maigre">
+      Au Virage tu n\u2019auras que ${auVirage} carte(s) en main sur cinq.
+      Les cartes marquées <b class="duelseul">DUEL</b> visent quelqu\u2019un en face :
+      dans une tribune de trois cents, il n\u2019y a personne à viser.</span>` : ''}
+    </div>`);
 
   out.push(`<h2 id="catalogue">CATALOGUE</h2>`);
   out.push(`<div class="filtres">
     <button class="filtre ${S.filtre === 'miennes' ? 'on' : ''}" data-filtre="miennes">Les miennes</button>
+    <button class="filtre ${S.filtre === 'virage' ? 'on' : ''}" data-filtre="virage">Au Virage</button>
     <button class="filtre ${S.filtre === 'toutes' ? 'on' : ''}" data-filtre="toutes">Toutes</button>
   </div>`);
 
@@ -940,8 +992,12 @@ function cartesHTML() {
   for (const id of S.deck.actions) compte[id] = (compte[id] ?? 0) + 1;
 
   for (const [famId, fam] of Object.entries(FAM)) {
+    /* « Au Virage » est un sous-ensemble des miennes, et non un troisième
+       catalogue : on ne construit pas un deck avec des cartes qu'on n'a pas. */
     const cartes = S.catalogue.filter((a) => a.fam === famId)
-      .filter((a) => S.filtre === 'toutes' || S.possede.actions.includes(a.id));
+      .filter((a) => (S.filtre === 'toutes' ? true
+        : S.filtre === 'virage' ? (a.virage && S.possede.actions.includes(a.id))
+          : S.possede.actions.includes(a.id)));
     if (!cartes.length) continue;
 
     out.push(`<div class="fam" style="--fc:${fam.c}">${fam.nom}<span class="trait"></span></div>`);
@@ -954,7 +1010,9 @@ function cartesHTML() {
         <div class="vig"><svg viewBox="0 0 24 24"><path d="${fam.ico}"/></svg>
           ${window.TBF_ACTION.illustration(a.id)}</div>
         <div class="cout">${a.cost}<small>SOUFFLE</small></div>
-        <div class="txt"><b>${esc(a.nom)}${rangHTML(a.rar)}</b><p>${esc(a.texte)}</p></div>
+        <div class="txt"><b>${esc(a.nom)}${rangHTML(a.rar)}
+          ${a.virage ? '' : '<span class="duelseul">DUEL SEULEMENT</span>'}</b>
+          <p>${esc(a.texte)}</p></div>
         <div class="compte ${n ? 'on' : ''}">${possede ? (S.regles.copiesMax == null ? (n ? `×${n}` : '0') : `${n}/${S.regles.copiesMax}`) : '—'}</div>
       </div>`);
     }

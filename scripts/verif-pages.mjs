@@ -974,6 +974,29 @@ function menePart(chemin, { vues, prefixes }, fichiersPublics) {
     ko(n, 'aucun dégagement en bas — la barre du navigateur mobile couvrira le dernier élément');
   } else ok('le bas des pages', 'chaque page qui défile réserve sa place sous la barre du mobile');
 }
+/* ================================ les stades ont-ils tous leur dessin ?
+
+   `stade-art.js` pose son image avec `onerror="this.remove()"` : un stade
+   sans fichier **disparaît en silence**, et l'arène se joue sur du noir. Cinq
+   des quinze lieux étaient dans ce cas — les cinq de LA REPRISE — et rien ne
+   le disait, ni à l'écran ni dans une suite. C'est ce que le joueur a fini
+   par signaler sous la forme « des fois, il manque les images des stades ».
+
+   Le contrôle ne fabrique pas les dessins et ne rougit pas de leur absence :
+   le chantier d'images est connu et se suit ailleurs. Il écrit le compte, à
+   chaque passage, pour qu'on ne puisse plus en oublier un sans le voir. */
+{
+  const { STADES } = await import('../src/shared/stades.js');
+  let presents = new Set();
+  try {
+    const noms = await readdir(new URL('../public/img/stade/', import.meta.url));
+    presents = new Set(noms.map((f) => f.replace(/\.[a-z0-9]+$/i, '')));
+  } catch { /* dossier absent : tous manquants, et le compte le dira */ }
+  const sans = STADES.filter((s) => !presents.has(s.id));
+  ok('les stades', `${STADES.length - sans.length}/${STADES.length} ont leur dessin`
+    + (sans.length ? ` · sans dessin : ${sans.map((s) => s.id).join(', ')}` : ''));
+}
+
 console.log(fautes
   ? `\n${fautes} faute(s) — ne pas livrer en l\u2019état.`
   : '\nToutes les pages compilent, la barre est partout où elle doit être.');

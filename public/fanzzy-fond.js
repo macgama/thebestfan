@@ -428,10 +428,38 @@
    * serveur sert l'AVIF à qui l'accepte — voir `src/server/images/index.js`.
    */
   function plaque(set, rar, skin) {
-    if (skin && skin !== 'base') return null;
-    const cle = `${set}-${rar ?? 'commune'}`;
-    if (!FONDS.has(cle)) return null;
     const ext = window.TBF_ETATS?.EXT ?? '.webp';
+    const rarete = rar ?? 'commune';
+
+    /* **Sous une tenue, c'est la tenue qui décide du lieu, ou personne.**
+     *
+     * Le commentaire du dessus explique pourquoi une plaque de série ne se
+     * pose pas sous une tenue : elle a été peinte en fin d'été, elle ne
+     * devient pas préhistorique, et la poser sous une tenue qui l'est ferait
+     * mentir la seule chose qu'une tenue rend visible de loin. Cet argument
+     * tient toujours — on ne le contourne pas, on lui donne sa réponse.
+     *
+     * La réponse est qu'une tenue apporte **ses propres** plaques. Une tenue
+     * d'Halloween n'a pas besoin d'emprunter le lieu d'une série : elle est
+     * un lieu, et quatre images suffisent à le dire pour tout le catalogue,
+     * parce qu'elles se rangent par **rareté** et non par série.
+     *
+     * C'est aussi ce qui empêche le décompte d'exploser. Le commentaire du
+     * dessus refusait de multiplier les plaques par les tenues, et il avait
+     * raison : quatre par série fois neuf tenues n'a pas de fin. Quatre par
+     * tenue, en revanche, est un nombre fixe — la série n'entre plus dans la
+     * clé, donc rien ne se multiplie.
+     *
+     * Si la tenue n'a pas de plaques, on rend null comme avant, et le décor
+     * dessiné reprend la main avec la palette de l'époque. C'est le bon
+     * repli : une tenue n'a jamais besoin d'être complète pour sortir. */
+    if (skin && skin !== 'base') {
+      const sien = `${skin}-${rarete}`;
+      return FONDS.has(sien) ? `/img/fonds/${sien}${ext}` : null;
+    }
+
+    const cle = `${set}-${rarete}`;
+    if (!FONDS.has(cle)) return null;
     return `/img/fonds/${cle}${ext}`;
   }
 

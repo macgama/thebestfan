@@ -1953,9 +1953,29 @@ reconnaît à ce que le même geste produise toujours le même effet.
 | `--gouttiere`, sur `#app` | plus aucun texte collé au bord ; les écrans pleine largeur la remettent à zéro |
 | `--r-commune/rare/epique/legendaire` | les raretés étaient redéfinies quatre fois, avec une nuance de décalage |
 | `.tbf-titre` | huit écrans écrivaient leur titre de huit façons ; barre d'accent dorée, lettrage du jeu |
+| `.tbf-sous` | le titre de page disait le mot que la barre du haut disait déjà ; ne reste que la ligne qui apprend quelque chose |
 | `.tbf-chiffre` | un solde, un score : ça se lit d'un coup d'œil ou ça ne sert à rien |
 | `.pan` + filet clair | un panneau cesse d'être un trou dans l'image |
 | `:active` sur tout ce qui se touche | un écran qui ne répond pas au doigt fait appuyer deux fois |
+
+### Un seul titre par écran
+
+La barre du haut nomme l'endroit où l'on est, sur toutes les pages, et elle
+ne défile pas — elle est en `flex:none` en tête de la colonne. Un titre de
+page qui répétait ce mot le disait une deuxième fois, et une troisième quand
+un onglet allumé le portait aussi : « Deck » dans la barre, « DECK » sur
+l'onglet, « MON DECK » en dessous. Trois fois le même mot sur trois
+centimètres, dont deux qui n'apprenaient rien.
+
+La règle est donc : **la barre porte le nom de l'écran, et elle est le `h1`**
+de la page. Ce qui reste sous elle est un `.tbf-sous` — la seule ligne qui
+ajoutait quelque chose, « trois Fanzzy, dix cartes », remontée de neuf
+pixels à douze et demi puisqu'elle n'a plus de titre au-dessus pour la
+porter. Elle garde l'écharpe oblique : c'est elle qu'on reconnaît d'un écran
+à l'autre, pas le mot répété.
+
+`.tbf-titre` reste au catalogue pour les titres de **section**, à l'intérieur
+d'une page. Il n'est plus le titre de la page elle-même.
 
 **Aucune animation permanente n'a été ajoutée.** Ce qui bouge sans arrêt cesse
 d'être remarqué en dix secondes et coûte de la batterie pour ça — la leçon de la

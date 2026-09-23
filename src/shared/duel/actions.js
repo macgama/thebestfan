@@ -407,8 +407,28 @@ const PORTEE = {
  * Le revers compte autant que l'effet : une carte dont la contrepartie viserait
  * l'adversaire serait refusée elle aussi.
  */
+/**
+ * Les effets qui n'ont **pas d'objet** au Virage.
+ *
+ * Ce n'est pas une question de portée — les deux agissent sur soi, et la
+ * table du dessus a donc raison de les dire `soi`. C'est une question de
+ * mobilier : le Virage met **un** personnage en tribune et n'a pas de banc.
+ * Il n'y a personne à faire entrer, et rien à faire grandir en cours de
+ * séance.
+ *
+ * Elles étaient acceptées, et le moteur les traitait en « sans objet » :
+ * la carte quittait la main, coûtait son souffle, et ne faisait rien. Deux
+ * des dix emplacements d'un deck de Virage pouvaient ainsi être morts sans
+ * que rien ne le dise — ni la page, ni le serveur, ni un contrôle.
+ *
+ * Le filtre est ici, à côté de la portée, parce que c'est le même geste :
+ * décider une fois, sur la **sorte d'effet**, ce qui entre au Virage.
+ */
+const SANS_OBJET_AU_VIRAGE = new Set(['swap_fanzzy', 'evolve']);
+
 export function dansLeVirage(a) {
   if (!a?.effet) return false;
+  if (SANS_OBJET_AU_VIRAGE.has(a.effet.type)) return false;
   const portee = (e) => PORTEE[e?.type] ?? 'adverse';
   return portee(a.effet) !== 'adverse'
     && (!a.revers || portee(a.revers) !== 'adverse');
@@ -416,6 +436,28 @@ export function dansLeVirage(a) {
 
 /** Les cartes jouables au Virage, dans l'ordre du catalogue. */
 export const ACTIONS_VIRAGE = ACTIONS.filter(dansLeVirage);
+
+/**
+ * Le catalogue, chaque carte marquée de l'endroit où elle se joue.
+ *
+ * **Le joueur construisait son deck à l'aveugle.** Treize cartes sur
+ * trente-neuf ne se jouent pas au Virage, le serveur les écartait de sa main
+ * en silence, et rien — ni l'écran du deck, ni le catalogue, ni l'ouverture
+ * d'un booster — ne le disait nulle part. On pouvait donc remplir ses dix
+ * emplacements de cartes dont pas une n'entrerait en tribune, et ne le
+ * découvrir qu'en voyant sa rangée vide au milieu d'un match.
+ *
+ * Ce n'est pas un cas rare : un nouveau joueur reçoit cinq cartes, dont
+ * l'Arbitre qui est **garanti** et ne se joue qu'en duel. Mesuré sur deux
+ * cent mille paquets de bienvenue — 9,6 % des débutants n'ont qu'une seule
+ * carte de Virage, et 0,8 % n'en ont aucune.
+ *
+ * La mention est calculée ici et servie par les routes, jamais recalculée
+ * par un écran : `dansLeVirage` lit la **sorte d'effet**, et une page qui
+ * referait ce raisonnement en tiendrait une seconde version, qui
+ * divergerait au premier effet ajouté.
+ */
+export const ACTIONS_MARQUEES = ACTIONS.map((a) => ({ ...a, virage: dansLeVirage(a) }));
 
 /**
  * Règles de construction du deck. Elles vivent ici pour être partagées.

@@ -48,6 +48,11 @@ const HAUTEUR = 1080;
 
 const RARETES = ['commune', 'rare', 'epique', 'legendaire'];
 
+/* Le catalogue des tenues, pour distinguer « halloween-commune » d'une faute
+   de frappe. Il renseigne, il ne refuse jamais : voir `inconnues` plus bas. */
+const { SKINS } = await import('../src/shared/fanzzy/inventaire.js');
+const TENUES = new Set(SKINS.map((s) => s.id));
+
 let sharp;
 try {
   ({ default: sharp } = await import('sharp'));
@@ -70,15 +75,31 @@ if (sharp) {
 
     const faits = [];
     const rejetes = [];
+    /* Une tenue absente du catalogue n'est pas une faute : l'administration en
+       crée sans livraison, et ce script tourne sur un poste qui n'a pas la
+       base. On le **signale** sans rien refuser — une plaque produite pour une
+       tenue pas encore déclarée ne gêne personne, une plaque refusée à tort
+       coûte un aller-retour au dessinateur. */
+    const inconnues = new Set();
 
     for (const fichier of plaques) {
       const code = path.basename(fichier, path.extname(fichier));
 
-      /* Le nom porte la règle : `<SÉRIE>-<rareté>`. On refuse plutôt que de
-         deviner — une plaque mal nommée ne s'afficherait jamais, et chercher
-         pourquoi coûte une heure. */
-      const m = /^([A-Z]{2})-(commune|rare|epique|legendaire)$/.exec(code);
+      /* Le nom porte la règle, et il y en a maintenant **deux** :
+
+           RP-commune          — <SÉRIE> en deux majuscules : plaque de série
+           halloween-commune   — <tenue> en minuscules : plaque de tenue
+
+         Les deux espaces de noms ne peuvent pas se croiser : un identifiant de
+         série est exactement deux majuscules, celui d'une tenue commence par
+         une minuscule. C'est ce qui permet à `plaque()` de choisir sa famille
+         sans avoir à se demander laquelle des deux il regarde.
+
+         On refuse plutôt que de deviner — une plaque mal nommée ne
+         s'afficherait jamais, et chercher pourquoi coûte une heure. */
+      const m = /^([A-Z]{2}|[a-z][a-z0-9]*)-(commune|rare|epique|legendaire)$/.exec(code);
       if (!m) { rejetes.push(code); continue; }
+      if (/^[a-z]/.test(m[1]) && !TENUES.has(m[1])) inconnues.add(m[1]);
 
       const img = sharp(path.join(SOURCE, fichier))
         .resize(LARGEUR, HAUTEUR, { fit: 'cover', position: 'centre' });
@@ -95,9 +116,15 @@ if (sharp) {
     }
 
     if (rejetes.length) {
-      console.error(`\nIgnorées, nom hors règle « <SÉRIE>-<rareté> » : ${rejetes.join(', ')}`);
+      console.error(`\nIgnorées, nom hors règle « <SÉRIE>-<rareté> » ni « <tenue>-<rareté> » : ${rejetes.join(', ')}`);
       console.error(`Raretés acceptées : ${RARETES.join(', ')}`);
       process.exitCode = 1;
+    }
+    if (inconnues.size) {
+      console.log('');
+      console.log(`Tenue(s) hors catalogue, produites quand même : ${[...inconnues].join(', ')}`);
+      console.log('Pour qu’une tenue se porte, ajoute-la à SKINS dans'
+        + ' src/shared/fanzzy/inventaire.js, ou crée-la depuis /admin.');
     }
 
     /* La liste est réécrite dans le module, comme `maj-illustres.mjs` le fait

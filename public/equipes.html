@@ -17,7 +17,6 @@ body{background:radial-gradient(120% 50% at 50% -8%,rgba(245,195,59,.13),transpa
      color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;padding:26px 16px 70px}
 main{width:100%;max-width:var(--colonne)}
 h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em;margin:0 0 4px;text-align:center}
-.sub{text-align:center;font-size:11px;letter-spacing:.2em;opacity:.45;margin-bottom:24px}
 .search{position:relative;margin-bottom:14px}
 input{width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.16);border-radius:8px;
   color:var(--craie);padding:13px 14px;font-size:15px;font-family:inherit}
@@ -103,8 +102,7 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 </head>
 <body>
 <main id="app">
-  <h1 class="tbf-titre" data-t="title">MES ÉQUIPES</h1>
-  <div class="sub" data-t="subtitle"></div>
+  <p class="tbf-sous" data-t="subtitle"></p>
 
   <div class="search">
     <input id="q" autocomplete="off" spellcheck="false">

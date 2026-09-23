@@ -463,12 +463,26 @@ function dessinDeCarte(f) {
    * voir est tout l'intérêt de l'avoir tiré. `resoudre` retombe seul sur le
    * repos si le dessin n'existe pas encore — toutes les lignées ne sont pas
    * dessinées, et une carte sans image serait pire qu'une carte au repos. */
-  if (f.etat && f.pour && window.TBF_ETATS) {
-    const r = window.TBF_ETATS.resoudre(f.pour, { evo: f.stage ?? 1, etat: f.id });
-    if (r?.src) {
+  if (f.etat && f.pour) {
+    /* Le dessin de l'état, s'il existe. Toutes les lignées ne sont pas
+       dessinées dans les quatre expressions, et `resoudre` rend `null`
+       plutôt que d'inventer. */
+    const r = window.TBF_ETATS?.resoudre?.(f.pour, { evo: f.stage ?? 1, etat: f.id });
+    /* **Le repli est le portrait du personnage, pas une silhouette.**
+     *
+     * Sans cette ligne, la carte retombait sur `art(f)`, qui cherche un
+     * Fanzzy nommé « pousse » — un identifiant d'état, pas de personnage — et
+     * dessinait donc le bonhomme gris procédural. C'est la faute que le
+     * commentaire de `dessinDeCarte` raconte pour les trois autres sortes,
+     * et je l'ai refaite en ajoutant la quatrième.
+     *
+     * Montrer le personnage au repos dit au moins **de qui** il s'agit. */
+    const src = r?.src ?? window.FZART?.adresse?.(f.pour, 'buste');
+    if (src) {
       return `<div class="illuwrap">${artFond(f)}
-        <img class="illu" src="${r.src}" alt="" loading="lazy"
-             onerror="this.src=window.TBF_ETATS.secours(this.src,true)||''"></div>`;
+        <img class="illu" src="${src}" alt="" loading="lazy"
+             onerror="this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">
+        ${f.etatMot ? `<span class="tbf-etiq-etat">${esc(f.etatMot)}</span>` : ''}</div>`;
     }
   }
   if (f.stuff) return objetHTML(f);
@@ -558,9 +572,20 @@ function carteDuPaquet(c) {
      confort, jamais de la puissance. `fide` pour sa couleur, celle de la
      fidélité : c'est ce que la case remplie raconte. */
   if (c.type === 'etat') {
-    const [nom, texte] = ETATS_CARTE[c.id] ?? [c.id, ''];
-    return { id: c.id, nom, texte, type: 'fide', rar: 'rare',
-      stage: c.stade ?? 1, etat: true, pour: c.pour };
+    const [mot, texte] = ETATS_CARTE[c.id] ?? [c.id, ''];
+    /* **La carte porte le nom du personnage, pas celui de l'état.**
+     *
+     * Elle affichait « ON POUSSE » et rien d'autre : on ouvrait un paquet, on
+     * gagnait un état, et on ne savait pas **de qui**. Or un état n'existe pas
+     * tout seul — c'est la joie de quelqu'un, et c'est ce quelqu'un qu'on
+     * collectionne. Le mot de l'état reste, en étiquette sur le dessin.
+     *
+     * `pour` est la racine de lignée ; le catalogue la connaît toujours, même
+     * si le joueur n'a pas encore l'âge concerné. */
+    const perso = BY_ID.get(c.pour);
+    return { id: c.id, nom: perso?.nom ?? mot, texte: `${mot} — ${texte}`,
+      type: 'fide', rar: 'rare', stage: c.stade ?? 1,
+      etat: true, etatMot: mot, pour: c.pour };
   }
   if (c.type === 'skin') {
     const t = TENUES.get(c.id);

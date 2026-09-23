@@ -273,6 +273,17 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .card .p{font-family:var(--banner);font-size:20px;color:var(--c);margin-top:auto;line-height:1}
 .card .c{position:absolute;top:6px;right:7px;font-size:10px;opacity:.55;font-family:var(--banner)}
 
+/* Le bandeau qui explique les cases vides de la rangée d'action. Discret :
+   il dit une règle, il n'annonce pas un incident. Il disparaît de lui-même
+   pour qui n'a que des cartes de Virage — c'est-à-dire pour tout joueur qui
+   a lu l'écran du deck une fois. */
+.ecartees{margin:0 10px 5px;padding:6px 9px;border-radius:8px;font-size:10.5px;
+  line-height:1.45;background:rgba(224,64,44,.1);color:var(--craie);
+  box-shadow:inset 0 0 0 1px rgba(224,64,44,.3)}
+.ecartees b{font-family:var(--banner);color:var(--flare)}
+.ecartees a{color:var(--projo);text-decoration:none;white-space:nowrap}
+.ecartees[hidden]{display:none}
+
 /* ------------------------------------------- les cartes d'action
 
    Une rangée basse au-dessus des chants. Le dessin porte la carte, le nom
@@ -471,6 +482,8 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <!-- Les cartes d'action, au-dessus des chants. Petites, et c'est voulu : au
        Virage le verbe principal reste le chant, la carte est ce qu'on ajoute. -->
   <div class="appel" id="appel" hidden></div>
+  <!-- Pourquoi la rangée du dessous a des cases vides. Voir `renderActes`. -->
+  <div class="ecartees" id="ecartees" hidden></div>
   <div class="actes" id="actes" hidden></div>
   <div class="hand" id="hand"></div>
 
@@ -934,6 +947,25 @@ function fail(code) {
        arrive, « Refusé par le serveur » ne dit rien à personne — et c’est
        exactement ce qu’a lu le joueur qui a cru que le bouton ne marchait pas. */
     'ferveur.error.no_fixture':'Ce match n’est pas ouvert pour l’instant',
+
+    /* **Les six refus que la page ne savait pas nommer.**
+     *
+     * Le serveur en lève seize ; cette table en connaissait dix. Les six
+     * autres tombaient sur le repli, et le joueur lisait « Refusé par le
+     * serveur » — la phrase dont le commentaire ci-dessus dit qu'elle « ne
+     * dit rien à personne ». Elle le disait encore, six fois.
+     *
+     * Quatre d'entre eux viennent du contrôle anti-triche des gestes : ils
+     * parlent de la **manière de taper**, pas de la carte, et c'est
+     * précisément ce qu'un joueur ne peut pas deviner. Les deux derniers
+     * sont des désaccords entre la page et le serveur — une page pas
+     * rechargée après un déploiement — et ils doivent dire de recharger. */
+    'ferveur.error.bad_taps':'Ce geste n’a pas été enregistré — recommence',
+    'ferveur.error.too_many_taps':'Trop de frappes pour ce geste',
+    'ferveur.error.tap_out_of_window':'Des frappes sont tombées hors du temps imparti',
+    'ferveur.error.unknown_gesture':'Ce geste est inconnu du serveur — recharge la page',
+    'ferveur.error.unknown_effect':'Cette carte est inconnue du serveur — recharge la page',
+    'ferveur.error.unknown_card':'Cette carte n’existe plus — recharge la page',
   })[code] ?? 'Refusé par le serveur';
   e.className = 'err on';
   clearTimeout(e._t); e._t = setTimeout(() => { e.className = 'err'; }, 2600);
@@ -1062,6 +1094,25 @@ function renderActes() {
   /* Pas de deck, pas de rangée. Quelqu'un qui n'a jamais construit de deck
      entre au Virage avec sa voix, et une rangée de cases vides ne lui
      apprendrait rien d'autre que ce qui lui manque. */
+  /* **Pourquoi il y a des cases vides.**
+
+     Le Virage ne joue que les cartes qui agissent sur soi ou sur sa tribune,
+     et il écarte les autres à l'entrée — sans rien dire. Un joueur dont le
+     deck est fait pour le duel voyait une carte et quatre cases vides, et il
+     l'a signalé comme un défaut de rechargement. Ce n'en était pas un :
+     c'était une règle qui ne s'était jamais annoncée.
+
+     Dans son propre bandeau et non dans la rangée : la rangée est une grille
+     de cinq cartes de largeur fixe, et y glisser une phrase déplacerait tout
+     ce qui se touche au doigt. Le lien vers le deck est là parce qu'une
+     explication sans porte de sortie ne fait qu'agacer. */
+  const banniere = $('ecartees');
+  const ecartees = S?.you?.ecartees ?? 0;
+  if (ecartees && banniere) {
+    banniere.hidden = false;
+    banniere.innerHTML = `<b>${ecartees}</b> carte(s) de ton deck ne se jouent qu\u2019en duel \u2014 elles visent quelqu\u2019un en face, et ici il n\u2019y a personne à viser. <a href="/deck">Changer mon deck</a>`;
+  } else if (banniere) { banniere.hidden = true; }
+
   if (!main.length) { boite.hidden = true; return; }
   boite.hidden = false;
 
