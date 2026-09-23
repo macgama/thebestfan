@@ -813,7 +813,14 @@ async function habiller(perso, age, stade) {
   /* C'est l'écran du personnage : il répond au toucher. Ailleurs la zone
      sert à autre chose, et un saut non demandé s'y lirait comme un défaut. */
   sceneEquipe = window.TBF_SCENE?.creer?.($('tpile'), { fond: 'neutre', reagitAuToucher: true }) ?? null;
-  const vu = await sceneEquipe?.definir({ id: perso.id, age: age.id, evo: stade });
+  /* **L'âge montré et la tenue portée**, tous deux venus du portefeuille.
+
+     `stade` est l'âge **atteint** : cet écran ignorait donc le choix de
+     celui qui préfère se montrer jeune, et il n'habillait personne. C'est
+     l'onglet qui s'appelle « TON AVATAR » — il doit montrer exactement ce
+     que voient l'accueil et les amis. */
+  const vu = await sceneEquipe?.definir({ id: perso.id, age: age.id,
+    evo: S.activeStade ?? stade, skin: S.activeSkin ?? 'base' });
   if (vu) { $('tscene')?.classList.add('entre'); return; }
 
   // Ni états ni illustration : le dessin géométrique, comme dans la grille.
