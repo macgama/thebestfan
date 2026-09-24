@@ -170,6 +170,17 @@
    presque exactement là où le pourcentage la mettait ; sur une petite, elle
    remonte au lieu de s'écraser. Une mesure qui se règle sur son voisin plutôt
    que sur un pourcentage ne peut pas lui rentrer dedans. */
+/* La note d'un choix qui attend son dessin. En haut à gauche, sous la pastille
+   de rareté, là où elle ne couvre ni le visage ni le nom. Discrète, parce
+   qu'elle ne signale pas une erreur : le choix est bon, c'est l'image qui
+   n'est pas encore là. */
+.fiche .art .pas-dessine{position:absolute;left:12px;top:44px;z-index:3;max-width:62%;
+  padding:6px 10px;border-radius:9px;background:rgba(4,6,10,.78);
+  border:1px solid rgba(245,195,59,.32);font-size:11px;line-height:1.35}
+.fiche .art .pas-dessine b{display:block;font-family:var(--banner);letter-spacing:.06em;
+  color:var(--projo);text-transform:uppercase;font-size:10.5px}
+.fiche .art .pas-dessine em{display:block;font-style:normal;opacity:.72;margin-top:2px}
+
 .fiche .art .secret-mot{position:absolute;left:0;right:0;top:0;bottom:112px;z-index:2;
   justify-content:center;
   text-align:center;font-family:var(--banner);font-size:12px;letter-spacing:.22em;
