@@ -132,3 +132,18 @@ ALTER TABLE user_wallet ADD COLUMN IF NOT EXISTS active_fanzzy VARCHAR(12) NULL;
 -- rien dire pour le suivant, et le garder ferait apparaître le nouveau venu à
 -- un âge qu'il n'a peut-être jamais atteint.
 ALTER TABLE user_wallet ADD COLUMN IF NOT EXISTS active_evo TINYINT UNSIGNED NULL;
+
+-- La pose de l'avatar : `joie`, `depit`, `pousse`, `colere` -- ou nul, qui veut
+-- dire le repos. Voir ETATS_DESSINES dans src/shared/fanzzy/rendus.js.
+--
+-- `active_fanzzy` dit qui, `active_evo` a quel age, celle-ci dit **dans quelle
+-- expression**. Les trois se choisissent ensemble sur la fiche du Fanzzy, et
+-- c'est cet ensemble qu'on voit partout : l'accueil, les amis, le duel.
+--
+-- Pas d'ENUM, meme raison que dans user_etats : un cinquieme etat dessine un
+-- jour ne doit pas demander un ALTER TABLE en production.
+--
+-- Elle se remet a nul en meme temps que `active_evo` -- une expression choisie
+-- pour un age ne veut rien dire pour un autre, et le personnage reparaitrait
+-- dans une pose qu'il n'a peut-etre pas gagnee a cet age-la.
+ALTER TABLE user_wallet ADD COLUMN IF NOT EXISTS active_etat VARCHAR(16) NULL;

@@ -168,7 +168,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
        la lecture la plus fréquente du jeu. */
     const w = (await q(
       `SELECT w.scarves, w.billets, w.packs, w.packs_at, w.active_fanzzy, w.active_evo,
-              uf.stage AS atteint
+              w.active_etat, uf.stage AS atteint
          FROM user_wallet w
          LEFT JOIN user_fanzzy uf
            ON uf.user_id = w.user_id AND uf.fanzzy_id = w.active_fanzzy
@@ -235,7 +235,11 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
          préfère se montrer jeune se voyait vieux sur un écran et jeune sur
          l'autre. */
       activeEvo: w.active_evo === null ? null : Number(w.active_evo),
-      activeStade: stade };
+      activeStade: stade,
+      /* **La pose choisie.** Nulle veut dire le repos, et c'est le cas de
+         presque tout le monde : l'écran qui la choisit ne sert qu'à celui qui
+         a gagné une expression et veut la montrer en permanence. */
+      activeEtat: w.active_etat || null };
   }
 
   async function collection(userId) {
@@ -1221,6 +1225,34 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       // plutôt que de laisser croire à une perte.
       skinsAutresAges: skins.filter((x) => Number(x.stage) !== stade)
         .map((x) => ({ id: x.skin_id, stade: Number(x.stage) })),
+
+      /* **Et le tout, âge par âge.**
+
+         `skins` et `etats` ci-dessus ne disent que l'âge **atteint**, et
+         c'était juste tant que la fiche ne montrait que celui-là. Mais sa
+         rangée ÂGES existe pour regarder les trois visages d'une lignée :
+         toucher le deuxième changeait le dessin et laissait les tenues sur
+         celles du troisième.
+
+         Un joueur l'a vu avant nous, et en base : sa tenue d'Halloween
+         n'existe qu'aux âges un et trois, et la fiche la lui montrait aux
+         trois. Le commentaire du clic promettait pourtant que ces rangées
+         « parlent de l'âge qu'on regarde » — elles parlaient de l'autre.
+
+         Trois âges, une vingtaine de tenues : la réponse grossit de
+         quelques centaines d'octets, et la fiche cesse de mentir. */
+      parAge: Object.fromEntries([1, 2, 3].map((n) => [n, {
+        skins: toutesTenues().map((sk) => {
+          const m = skins.find((x) => x.skin_id === sk.id && Number(x.stage) === n);
+          return { ...sk, possede: Boolean(m), porte: Boolean(m?.equipped),
+                   depuis: m?.got_at ?? null };
+        }),
+        etats: ETATS_DESSINES.map((e) => {
+          const m = etats.find((x) => x.etat === e && Number(x.stage) === n);
+          return { id: e, nom: ETAT_NOM[e] ?? e, dessin: ETAT_DESSIN[e] ?? '',
+                   possede: Boolean(m), depuis: m?.got_at ?? null };
+        }),
+      }])),
       /* **Les quatre états de l'âge atteint.** Même règle que les tenues, et
          pour la même raison : un état appartient à un âge. Ils partent tous
          les quatre, gagnés ou non — c'est la case vide qui donne envie

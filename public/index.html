@@ -1442,8 +1442,17 @@ function rendreLaMain(tenir) {
  * `push` pendant que le club joue, `idle` le reste du temps. Sans cette
  * variable, un but pendant le match ramenait le personnage au repos alors que
  * la rencontre continuait.
+ *
+ * **Le repos n'est plus forcément `neutre`.** Celui qui a gagné une expression
+ * peut la choisir sur la fiche de son Fanzzy, et c'est alors celle-là qu'on
+ * voit entre deux moments de match. Les célébrations la couvrent le temps
+ * qu'elles durent, puis on y revient — c'est tout le sens de ce fond.
  */
 let fond = 'neutre';
+/* La pose choisie, telle que le portefeuille la rend. Posée une fois
+   l'équipe connue ; `neutre` tant qu'on ne sait pas, c'est-à-dire l'état
+   d'avant. */
+const reposChoisi = () => equipe?.etat || 'neutre';
 const poserFond = (p) => { fond = p; if (!retour) pose(p); };
 
 /* ------------------------------------------------- qui montrer, tout de suite
@@ -1650,7 +1659,7 @@ async function montrerAge(evo) {
      le même nom d'état et ne redessine rien. Et le rebond, parce qu'un
      changement instantané se lit comme un défaut d'affichage plutôt que comme
      le geste qu'on vient de faire. */
-  await pose(poseActuelle ?? 'neutre', 0, true);
+  await pose(poseActuelle ?? reposChoisi(), 0, true);
   rejouer('change');
   window.FX?.son?.('tic');
   nommer(equipe);
@@ -2209,6 +2218,9 @@ async function jsonp(url, options) {
          gamin. */
       const candidat = { id: actif, evo: choisi, atteint, choisi,
         skin: coll.wallet?.activeSkin ?? 'base',
+        /* La pose choisie sur la fiche. Nulle veut dire le repos, et c'est
+           le cas de presque tout le monde. */
+        etat: coll.wallet?.activeEtat ?? null,
         /* La carte du catalogue de cet âge-là : c'est elle qui porte
            l'illustration, et c'est elle qu'il faut retenir pour que le
            prochain chargement reparte du bon dessin. */
@@ -2259,7 +2271,7 @@ async function jsonp(url, options) {
            qui est exactement ce qui décide du dessin. */
         const affichee = calques[devant]?.getAttribute('src') ?? null;
         equipe = candidat;
-        const memeQuAvant = source(poseActuelle ?? 'neutre') === affichee;
+        const memeQuAvant = source(poseActuelle ?? reposChoisi()) === affichee;
         retenir(candidat);
         precharger();
         /* `force` : l'état ne change pas, le personnage si. Sans lui, `pose`
@@ -2269,7 +2281,7 @@ async function jsonp(url, options) {
            juste. Redessiner ferait alors croiser deux calques portant la même
            image : invisible, mais c'est un travail pour rien à la seconde où
            la page a le plus à faire. */
-        if (!memeQuAvant) await pose(poseActuelle ?? 'neutre', 0, true);
+        if (!memeQuAvant) await pose(poseActuelle ?? reposChoisi(), 0, true);
         const def = (dex.dex ?? []).find((f) => f.id === actif);
         const age = (dex.dex ?? []).find((f) => f.racine === actif
           && f.stade === candidat.evo) ?? def;
@@ -2297,7 +2309,7 @@ async function jsonp(url, options) {
       clearTimeout(filet); filet = null;
       retenir(null);
       nommer(null);          // le supporter générique n'a pas de nom à donner
-      await pose('neutre', 0, true);
+      await pose(reposChoisi(), 0, true);
     }
   } catch { /* collection non montée : l'accueil reste utilisable sans */ }
 
