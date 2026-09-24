@@ -28,6 +28,7 @@ import { ACTIONS, DECK_RULES } from '../../shared/duel/actions.js';
 import { publies as jouables } from '../contenus/index.js';
 import { DEFAUTS, reglage } from '../../shared/reglages.js';
 import { stadeAffiche } from '../../shared/fanzzy/ages.js';
+import { avatarsDe } from './avatar.js';
 import { XP } from '../../shared/niveau.js';
 import { saisonsLancees, saisonEnCours } from './saisons.js';
 import { assurerBourse } from '../bourse.js';
@@ -122,60 +123,10 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
   /* -------------------------------------------------------- portefeuille */
 
   /**
-   * La tenue portée à un âge donné, ou `base`.
-   *
-   * **Une table absente ne fait pas disparaître le personnage.** C'est la
-   * posture de tout ce module — `estAbonne` la tient déjà — et elle n'est pas
-   * théorique : le banc du Grand Virage monte le jeu sans `sql/skins.sql`, et
-   * la première version de cette requête y a fait tomber la salle entière.
-   * Une tenue est du confort ; elle ne doit empêcher personne de pousser.
-   */
-  async function tenuePortee(userId, racine, evo) {
-    try {
-      return (await q(
-        `SELECT skin_id FROM user_skins
-          WHERE user_id = ? AND fanzzy_id = ? AND stage = ? AND equipped = 1 LIMIT 1`,
-        [userId, racine, evo]))[0]?.skin_id ?? 'base';
-    } catch (e) {
-      if (e?.code === 'ER_NO_SUCH_TABLE') return 'base';
-      throw e;
-    }
-  }
-
-  /**
-   * **L'avatar d'un joueur — la seule réponse du jeu à « qui montrer ».**
-   *
-   * ## Pourquoi elle existe
-   *
-   * La question se posait à six endroits : l'accueil, « Mon Fanzzy », la
-   * page des matchs, le duel, le Virage, la liste d'amis. Chacun la résolvait
-   * lui-même, à partir de ce qu'il recevait, et chacun avait appris les
-   * dimensions pour lesquelles on l'avait corrigé — l'âge ici, la tenue là,
-   * l'expression à un seul endroit. Chaque dimension ajoutée devait l'être six
-   * fois, on en oubliait à chaque fois une ou deux, et le joueur l'apprenait
-   * en capture d'écran. Le même défaut a été corrigé écran par écran
-   * pendant une semaine sans jamais disparaître, parce qu'on corrigeait les
-   * copies et jamais le fait qu'il y en ait.
-   *
-   * Ici, la réponse est **calculée une fois, complète**, et les écrans ne font
-   * plus que la dessiner. Ajouter une dimension, c'est l'ajouter ici ; un
-   * écran qui l'ignorerait n'a plus rien à ignorer, il reçoit l'objet entier.
-   *
-   * ## Ce qu'elle rend
-   *
-   * Deux formes du même personnage :
-   *
-   *   - `avatar` — ce qu'on a choisi sur la fiche : l'âge (borné par l'âge
-   *     atteint), la tenue portée à cet âge, l'expression. C'est ce que
-   *     voient l'accueil, « Mon Fanzzy », la page des matchs, les amis.
-   *   - `enJeu` — le même, tel qu'il entre sur le terrain : **premier âge, au
-   *     repos, dans sa tenue du premier âge**. C'est la règle des effets —
-   *     « un deck entre toujours au premier âge » — et le dessin la suit.
-   *     L'expression, en partie, c'est le match qui la décide.
-   *
-   * Chacune porte `id` (la lignée, sous laquelle sont rangés les états) et
-   * `age` (la carte du catalogue, sous laquelle est rangé le plein-pied).
-   * Les confondre a déjà affiché le Choriste sous le nom du Meneur de chant.
+   * **L'avatar d'un joueur**, tel que le rend `avatarsDe` — la règle et
+   * son histoire sont là-bas, dans `avatar.js`. Elle n'est plus ici parce
+   * que la liste d'amis en a besoin pour quarante joueurs à la fois, et
+   * qu'une seconde version « pour une liste » aurait été une septième copie.
    *
    * @param {object} ligne  la ligne du portefeuille, si l'appelant l'a déjà
    *   lue — `active_fanzzy`, `active_evo`, `active_etat`. Relue sinon.
@@ -184,37 +135,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     const w = ligne ?? (await q(
       `SELECT active_fanzzy, active_evo, active_etat FROM user_wallet WHERE user_id = ?`,
       [userId]))[0];
-    if (!w?.active_fanzzy) return { avatar: null, enJeu: null };
-
-    const id = racineDe(w.active_fanzzy);
-    /* L'âge atteint, lu sur la **lignée** et non sur `active_fanzzy` tel
-       quel : une base d'avant le repliage des âges y garde « TR32B », et une
-       jointure sur ce nom-là ne trouve rien. */
-    const r = (await q(
-      `SELECT stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
-      [userId, id]))[0];
-    const atteint = Math.max(1, Number(r?.stage) || 1);
-
-    /* Une forme du personnage à un âge donné. `auStade` peut ne rien
-       rendre — beaucoup de lignées n'ont qu'un âge écrit — et une base qui
-       annonce un stade inexistant ne doit pas faire disparaître le
-       personnage de l'écran. */
-    const forme = async (evo, etat) => {
-      const age = auStade(id, evo) ?? parIdentifiant(id);
-      if (!age) return null;
-      return { id, age: age.id, evo, nom: age.nom,
-        skin: await tenuePortee(userId, id, evo), etat,
-        cri: age.cri?.label ?? null, rar: age.rar ?? null };
-    };
-
-    const evo = stadeAffiche(atteint, w.active_evo);
-    const avatar = await forme(evo, w.active_etat || null);
-    /* Au premier âge, les deux ne diffèrent que par l'expression : on
-       économise la seconde lecture de la tenue, qui serait la même. */
-    const enJeu = evo === 1
-      ? (avatar && { ...avatar, etat: null })
-      : await forme(1, null);
-    return { avatar, enJeu };
+    const r = await avatarsDe(q, [{ ...w, userId }]);
+    return r.get(userId) ?? { avatar: null, enJeu: null };
   }
 
   /**

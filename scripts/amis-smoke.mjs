@@ -144,6 +144,59 @@ const A = createAmis({ pool, requireAuth: (r, _s, n) => n(), kop });
     || (console.log('        elle joue :', trop.get(CLA)?.fanzzy), false));
   await pool.query('UPDATE user_wallet SET active_evo = NULL WHERE user_id = ?', [CLA]);
 
+  /* ------------------------------------ et tel qu'elle s'est habillée
+
+     **L'âge ne suffit pas.** Cette liste avait sa recette à elle, qui ne
+     savait que l'âge : Clara, montrée au premier âge, en tenue d'Halloween
+     et dans la joie, apparaissait ici au repos, habillée comme tous les
+     jours — alors que l'accueil et « Mon Fanzzy » la montraient juste.
+     Le choix est piégé comme celui du tour des écrans : un âge qui n'est
+     pas l'âge atteint, une tenue qui n'est pas `base`, une expression qui
+     n'est pas le repos. Une recette qui en oublie une le trahit. */
+  await pool.query(
+    `INSERT INTO user_skins (user_id, fanzzy_id, stage, skin_id, equipped) VALUES (?, 'TR32', 1, 'halloween', 1)`,
+    [CLA]);
+  await pool.query("UPDATE user_wallet SET active_evo = 1, active_etat = 'joie' WHERE user_id = ?", [CLA]);
+  const habille = (await A.suggestions(ANA)).find((g) => g.id === CLA);
+  const av = habille?.avatar;
+  check('les amis la voient telle qu’elle s’est choisie : âge, tenue, expression',
+    av?.id === 'TR32' && av?.age === 'TR32' && av?.evo === 1
+      && av?.skin === 'halloween' && av?.etat === 'joie'
+    || (console.log('        elle est :', JSON.stringify(av)), false));
+  check('et la carte de son âge suit',
+    habille?.fanzzy === 'TR32' || (console.log('        carte :', habille?.fanzzy), false));
+
+  /* La même réponse que celle que le jeu se donne à lui-même : c'est ce
+     qui empêche la liste de redevenir une copie. */
+  const { avatarsDe } = await import('../src/server/fanzzy/avatar.js');
+  const q = async (sql, p) => (await pool.execute(sql, p))[0];
+  const [[w]] = await pool.query(
+    'SELECT active_fanzzy, active_evo, active_etat FROM user_wallet WHERE user_id = ?', [CLA]);
+  const lui = (await avatarsDe(q, [{ ...w, userId: CLA }])).get(CLA)?.avatar;
+  check('et c’est exactement l’avatar que le jeu lui donne',
+    JSON.stringify(lui) === JSON.stringify(av)
+    || (console.log('        le jeu :', JSON.stringify(lui)), false));
+
+  /* Et pour ceux qui sont déjà amis, et pour celui qui invite. */
+  await pool.query(
+    `INSERT INTO amities (a, b, par, etat) VALUES (?, ?, ?, 'amis')`,
+    [ANA < CLA ? ANA : CLA, ANA < CLA ? CLA : ANA, ANA]);
+  const ami = (await A.tableau(ANA)).amis?.find((g) => g.id === CLA);
+  check('la liste de ses amis aussi',
+    ami?.avatar?.skin === 'halloween' && ami?.avatar?.etat === 'joie'
+    || (console.log('        il y a :', JSON.stringify(ami)), false));
+  await pool.query('DELETE FROM amities WHERE (a = ? AND b = ?) OR (a = ? AND b = ?)',
+    [ANA, CLA, CLA, ANA]);
+  const codeCla = (await A.monInvitation(CLA)).code;
+  const parrain = await A.parrainDe(codeCla);
+  check('et le parrain sur le lien d’invitation',
+    parrain?.avatar?.skin === 'halloween' && parrain?.avatar?.etat === 'joie'
+    || (console.log('        il y a :', JSON.stringify(parrain)), false));
+  await pool.query('DELETE FROM parrainages WHERE par = ?', [CLA]);
+
+  await pool.query('DELETE FROM user_skins WHERE user_id = ?', [CLA]);
+  await pool.query('UPDATE user_wallet SET active_evo = NULL, active_etat = NULL WHERE user_id = ?', [CLA]);
+
   const deDan = await A.suggestions(DAN);
   check('celui qui ne partage rien ne voit personne', deDan.length === 0);
 
@@ -354,7 +407,7 @@ console.log('\n— le lien d’invitation —');
   const vu = await A.parrainDe(un.code);
   check('le lien dit qui invite', vu?.pseudo === 'Ana');
   check('et rien de plus qu’un classement n’en montre',
-    !('email' in (vu ?? {})) && Object.keys(vu ?? {}).sort().join(',') === 'fanzzy,id,pseudo'
+    !('email' in (vu ?? {})) && Object.keys(vu ?? {}).sort().join(',') === 'avatar,fanzzy,id,pseudo'
     || (console.log('        il rend :', Object.keys(vu ?? {}).join(',')), false));
   check('un code inconnu ne mène à personne', (await A.parrainDe('nexistepas')) === null);
 

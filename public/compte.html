@@ -614,6 +614,9 @@ $('formSupprimer').onsubmit = async (e) => {
       venuParUnAmi = true;
       fetch('/api/amis/invitation/' + encodeURIComponent(garde))
         .then((r) => (r.ok ? r.json() : null))
+        /* Le manifeste des dessins d'abord : c'est lui qui sait si le parrain
+           a une tenue et une expression dessinées. Il ne lève jamais. */
+        .then(async (d) => { await window.TBF_ETATS?.charger?.(); return d; })
         .then((d) => {
           if (!d?.parrain?.pseudo) return;
           /* Le pseudo vient du serveur et part dans un `innerHTML` — le bandeau
@@ -622,7 +625,10 @@ $('formSupprimer').onsubmit = async (e) => {
              la règle peut changer, et c'est ici que ça coûterait. */
           const sur = String(d.parrain.pseudo).replace(/[&<>"]/g,
             (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-          const buste = window.FZART?.adresse?.(d.parrain.fanzzy, 'buste');
+          /* Le parrain tel qu'il s'est choisi — âge, tenue, expression — comme
+             partout ailleurs. La carte de l'âge ne sert plus que de repli. */
+          const buste = (d.parrain.avatar && window.FZART?.dessinAvatar?.(d.parrain.avatar, 'buste'))
+            || window.FZART?.adresse?.(d.parrain.fanzzy, 'buste');
           $('invite').innerHTML = (buste ? `<img src="${buste}" alt="">` : '')
             + `<span>${t('invite.par', { pseudo: sur })}</span>`;
           show('invite', true);
@@ -658,8 +664,10 @@ $('formSupprimer').onsubmit = async (e) => {
 </script>
 <!-- Le buste du parrain, et rien d’autre : `fanzzy-art.js` sait rendre une
      adresse d’image sans le catalogue. S’il manque, le bandeau se montre
-     quand même, avec le pseudo seul — c’est lui qui porte le message. -->
+     quand même, avec le pseudo seul — c’est lui qui porte le message.
+     `fanzzy-etats.js` y ajoute la tenue et l’expression du parrain. -->
 <script src="/fanzzy-art.js"></script>
+<script src="/fanzzy-etats.js"></script>
 <script src="/fx.js" defer></script>
 <script src="/pwa.js" defer></script>
 </body>
