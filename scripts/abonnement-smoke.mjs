@@ -365,23 +365,41 @@ check('le retirer le retire vraiment', (await abonnement.estAbonne(LIBRE)) === f
     || (console.log('        il annonce :', JSON.stringify(st.wallet)), false));
   check(`et l’âge avec (${st.wallet?.activeStade})`, st.wallet?.activeStade === 1);
 
-  /* **L'exclusivité, des deux côtés.** Choisir une expression remet la tenue
-     de base : les quatre expressions ne sont dessinées qu'ainsi, et laisser
-     un déguisement en place promettrait une image qui n'existe pas. */
-  check(`et la tenue revient à la base (${st.wallet?.activeSkin})`,
+  /* **Sans tenue demandée, on revient à la base.** C'est le défaut d'un
+     réglage absent, et non une exclusion : `poserAvatar` pose le trio
+     entier, et ce qu'on ne lui donne pas reprend sa valeur de repos. La
+     fiche envoie toujours les trois — c'est elle qui tient le choix. */
+  check(`sans tenue demandée, il revient à la base (${st.wallet?.activeSkin})`,
     st.wallet?.activeSkin === 'base');
 
-  /* ---- et l'inverse ---- */
   if (deguisement) {
     await pool.query(
       `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, stage, skin_id, equipped)
        VALUES (?, 'TR32', 1, ?, 0)`, [ABO, deguisement.id]);
+
+    /* ---- la tenue seule ---- */
     await O2.poserAvatar(ABO, { fanzzyId: 'TR32', stade: 1, skinId: deguisement.id });
     const st2 = await get('/api/fanzzy/state');
     check(`la tenue choisie voyage (${st2.wallet?.activeSkin})`,
       st2.wallet?.activeSkin === deguisement.id
       || (console.log('        il annonce :', JSON.stringify(st2.wallet)), false));
-    check('et la pose revient au repos', st2.wallet?.activeEtat === null);
+    check('et sans expression demandée, il revient au repos',
+      st2.wallet?.activeEtat === null);
+
+    /* ---- **et les deux ensemble** ----
+
+       Elles se sont exclues quelques jours, et c'était une contrainte de
+       dessins : une tenue n'était rendue qu'au repos, les quatre expressions
+       qu'en tenue de base. Le lot complet — chaque âge, chaque tenue, chaque
+       expression — lève la contrainte, et ce contrôle est ce qui empêchera
+       de la remettre sans y penser. */
+    await O2.poserAvatar(ABO,
+      { fanzzyId: 'TR32', stade: 1, skinId: deguisement.id, etat: 'joie' });
+    const st4 = await get('/api/fanzzy/state');
+    check(`une tenue et une expression tiennent ensemble `
+      + `(${st4.wallet?.activeSkin} · ${st4.wallet?.activeEtat})`,
+      st4.wallet?.activeSkin === deguisement.id && st4.wallet?.activeEtat === 'joie'
+      || (console.log('        il annonce :', JSON.stringify(st4.wallet)), false));
   }
 
   /* ---- un âge qu'on n'a pas atteint se borne, il ne lève pas ----

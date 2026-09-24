@@ -273,7 +273,11 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
          dans la tribune, et il est montré **à l'âge atteint** — comme partout
          ailleurs dans le jeu. Une absence n'empêche rien : le virage se joue
          très bien sans Fanzzy équipé, la scène reste simplement vide. */
-      const perso = await fanzzy.personnageActif?.(u.userId) ?? null;
+      /* `enJeu` : au premier âge, au repos, dans sa tenue. C'est déjà la règle
+         des effets — un deck entre toujours au premier âge — et le dessin la
+         suit désormais : on poussait avec les chiffres du gamin sous les traits
+         du Capo, et rien ne le disait. */
+      const perso = await fanzzy.personnageActif?.(u.userId, { enJeu: true }) ?? null;
 
       /* Le bonus du KOP se mêle à ceux du Fanzzy, dans le même objet.
 
