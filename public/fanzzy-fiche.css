@@ -303,7 +303,22 @@
    n'affiche aucun bouton principal — et une rangée qui s'effondre à zéro rend
    quinze pixels à la vitrine, donc fait grandir le personnage d'un coup. La
    place est réservée qu'il y ait un bouton ou non. */
-.fiche .actions{padding:10px 14px 10px;display:flex;gap:9px;flex:none;min-height:74px}
+/* **Retenue** : cette case fait partie de ce qu'on s'apprête à montrer.
+
+   C'est une autre information que « regardée », qui a déjà son cadre : on
+   peut lire une tenue sans la vouloir, et le trio se compose sur trois
+   rangées à la fois. Une pastille dorée au coin, là où l'œil balaie — et pas
+   un second cadre, qui se confondrait avec le premier. */
+.fiche .case.retenue::after{content:'';position:absolute;top:4px;right:4px;
+  width:8px;height:8px;border-radius:50%;background:var(--projo);
+  box-shadow:0 0 0 2px rgba(4,6,10,.75)}
+
+/* Trois boutons tiennent maintenant sur la rangée — la place, l'évolution et
+   l'apparence. Ils se replient plutôt que de se serrer : un libellé tronqué
+   sur un bouton qui engage un choix est pire qu'une rangée sur deux lignes. */
+.fiche .actions{padding:10px 14px 10px;display:flex;gap:9px;flex:none;
+  min-height:74px;flex-wrap:wrap}
+.fiche .actions .bt{flex:1 1 140px}
 /* Hauteur fixe, et ce n'est pas cosmétique : un bouton qui porte un prix tient
    sur deux lignes, un bouton simple sur une seule. La rangée grandissait donc
    de quinze pixels selon la case regardée — et comme la vitrine au-dessus est

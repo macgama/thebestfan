@@ -157,6 +157,39 @@
     let ageVu = null;
     /* Posée par `rendre`, lue par le clic sur un âge. */
     let redessinerRangs = () => {};
+
+    /**
+     * **Ce qu'on veut montrer** : un âge, une tenue, une expression.
+     *
+     * Les trois se décidaient un par un, chacun avec son bouton et son
+     * enregistrement immédiat : on choisissait un âge, on validait, on
+     * choisissait une tenue, on validait, et le résultat des trois ne se
+     * voyait nulle part avant de quitter l'écran.
+     *
+     * Ils se composent maintenant : on touche ce qu'on veut dans les trois
+     * rangées, **la vitrine montre le résultat tout de suite**, et un seul
+     * geste l'enregistre. C'est l'écran où l'on décide de quoi on a l'air ;
+     * il doit se regarder avant de se valider.
+     *
+     * Nul jusqu'au premier rendu, où il prend ce que l'avatar montre
+     * déjà : la fiche s'ouvre sur le choix en cours, pas sur un choix neuf.
+     */
+    let voulu = null;
+
+    /** Ce que l'avatar montre aujourd'hui, pour savoir s'il y a à valider. */
+    const avatarActuel = () => ({
+      stade: d.avatarStade ?? null,
+      skin: d.avatar ? (d.parAge?.[d.avatarStade]?.skins
+        ?? d.skins ?? []).find((s) => s.porte)?.id ?? 'base' : null,
+      etat: d.avatarEtat ?? null,
+    });
+
+    const memeQueLAvatar = () => {
+      const a = avatarActuel();
+      return Boolean(d.avatar) && voulu?.stade === a.stade
+        && (voulu?.skin ?? 'base') === (a.skin ?? 'base')
+        && (voulu?.etat ?? 'neutre') === (a.etat ?? 'neutre');
+    };
     /* L’observateur de largeur de la bande des rangées. Gardé ici pour
        être débranché au rendu suivant : sans ça, chaque rendu en laisse
        un de plus accroché à un élément détaché. */
@@ -258,20 +291,14 @@
             ? 'Elle ne change rien au jeu : elle se voit, c’est tout.'
             : 'Elle se trouve dans les boosters, et seulement pour un Fanzzy que tu as déjà.',
           manque: s.possede ? null : 'à trouver dans un booster',
-          /* **Un seul geste : montrer.**
+          /* **Pas d'action sur la case.** Toucher une tenue la met sur le
+             personnage dans la vitrine ; c'est le bouton du bas qui
+             enregistre, et il enregistre les trois choix ensemble.
 
-             Le bouton disait « PORTER » et ne disait pas qu'il changeait
-             l'avatar. Le choix de l'âge se faisait ailleurs — aux flèches de
-             l'accueil — et celui du titulaire ici. Trois gestes pour une
-             seule intention : « voilà comment je veux qu'on me voie ».
-
-             `stade: vu` : l'âge **regardé**, pas l'âge atteint. C'est ce qui
-             permet de se montrer jeune, en tenue de jeunesse. */
-          action: s.possede
-            ? { quoi: 'montrer', stade: vu, skin: s.id,
-                libelle: s.porte ? 'MONTRER CET ÂGE' : 'ME MONTRER AINSI',
-                sous: s.porte ? 'déjà sa tenue' : s.nom }
-            : null,
+             Il y a eu un bouton par case, et c'était le défaut : trois
+             gestes, trois enregistrements, et le résultat des trois
+             invisible jusqu'à ce qu'on quitte l'écran. */
+          action: null,
         });
       }
 
@@ -298,15 +325,11 @@
             ? `${e.dessin} Il s'affiche tout seul au bon moment du match.`
             : 'Sans lui, ton Fanzzy garde son air de repos — le jeu ne change pas.',
           manque: e.possede ? null : 'à trouver dans un booster',
-          /* Une expression se montre comme une tenue, et **à la place** d'une
-             tenue : les quatre expressions ne sont dessinées qu'en tenue de
-             base, et aucune tenue n'est dessinée autrement qu'au repos.
-             Proposer les deux ensemble promettrait une image qui n'existe
-             pour personne — le serveur applique la même règle. */
-          action: e.possede
-            ? { quoi: 'montrer', stade: vu, etat: e.id,
-                libelle: 'ME MONTRER AINSI', sous: e.nom }
-            : null,
+          /* Comme les tenues : toucher pose l'expression sur le personnage,
+             le bouton du bas enregistre le tout. Les deux se composent —
+             « Halloween, bras levés » est une image comme une autre depuis
+             que le lot complet se dessine. */
+          action: null,
         });
       }
 
@@ -335,6 +358,20 @@
     function rendre() {
       const f = d.fanzzy;
       const c = COUL[f.type] ?? '#F5C33B';
+      /* Au premier rendu, on part de ce que l'avatar montre. S'il montre
+         quelqu'un d'autre, on part de l'âge atteint et de ce qui est porté
+         là — c'est ce que la fiche affichait de toute façon. */
+      if (!voulu) {
+        const a = avatarActuel();
+        const st = a.stade ?? d.stade;
+        voulu = {
+          stade: st,
+          skin: a.skin ?? (d.parAge?.[st]?.skins ?? d.skins ?? [])
+            .find((s) => s.porte)?.id ?? 'base',
+          etat: a.etat ?? 'neutre',
+        };
+        ageVu = st;
+      }
       cases = batir();
       if (!cases.some((x) => x.cle === choisie)) {
         // Par défaut, l'âge qu'il a aujourd'hui : c'est ce qu'on est venu voir.
@@ -493,7 +530,16 @@
          vise, elle n'a pas de visage à révéler, et la flouter ferait une
          garde-robe illisible pour rien. */
       const secret = !x.ok && String(x.cle).startsWith('age:') ? ' secret' : '';
-      return `<button class="case ${x.ok ? 'ok' : 'verrou'}${secret} ${x.cle === choisie ? 'choisie' : ''}"
+      /* **Retenue** : elle fait partie de ce qu'on s'apprête à montrer. C'est
+         une autre information que « regardée » — on peut lire une tenue sans
+         la vouloir — et les deux marques coexistent. */
+      const retenue = voulu && (
+        x.cle === `tenue:${voulu.skin}`
+        || x.cle === `etat:${voulu.etat}`
+        || (String(x.cle).startsWith('age:')
+          && (d.lignee ?? []).find((a) => `age:${a.id}` === x.cle)?.stage === voulu.stade)
+      ) ? ' retenue' : '';
+      return `<button class="case ${x.ok ? 'ok' : 'verrou'}${secret}${retenue} ${x.cle === choisie ? 'choisie' : ''}"
         style="--cc:${x.couleur}" data-case="${esc(x.cle)}" title="${esc(x.titre)}"${mort}>
         <span class="pav"></span>
         <span class="dedans">${dedans}</span>
@@ -565,14 +611,27 @@
           ? `<button class="bt or" data-evoluer>${x.action.libelle}<small>${esc(x.action.cout)}</small></button>`
           : `<button class="bt" data-evoluer disabled>IL TE FAUT<small>${
               x.action.manque} écharpes de plus</small></button>`)
-        : x?.action?.quoi === 'montrer'
-          ? `<button class="bt" data-montrer
-              data-stade="${esc(String(x.action.stade))}"
-              ${x.action.skin ? `data-skin="${esc(x.action.skin)}"` : ''}
-              ${x.action.etat ? `data-etat="${esc(x.action.etat)}"` : ''}
-              >${esc(x.action.libelle)}<small>${esc(x.action.sous ?? '')}</small></button>`
-          : '';
-      n.innerHTML = principal + second;
+        : '';
+
+      /* **Un seul bouton pour les trois choix.**
+
+         Il y en avait un par case : « PORTER » sur une tenue, rien sur une
+         expression, et l'âge se décidait sur un autre écran. Trois gestes,
+         trois enregistrements, et le résultat des trois invisible jusqu'à ce
+         qu'on quitte la page.
+
+         Celui-ci enregistre ce que la vitrine montre déjà. Éteint quand il
+         n'y a rien à changer — un bouton qui réécrit la même chose apprend
+         à douter de ce qu'on voit. */
+      const montrer = !d.possede || !voulu ? ''
+        : memeQueLAvatar()
+          ? '<button class="bt" disabled>C’EST DÉJÀ LUI<small>partout dans le jeu</small></button>'
+          : `<button class="bt or" data-montrer
+              data-stade="${esc(String(voulu.stade))}"
+              data-skin="${esc(voulu.skin ?? 'base')}"
+              data-etat="${esc(voulu.etat ?? 'neutre')}"
+              >ME MONTRER AINSI<small>partout dans le jeu</small></button>`;
+      n.innerHTML = principal + second + montrer;
     }
 
     /**
@@ -612,7 +671,11 @@
 
          `porte` et non la première tenue possédée : c'est celle qui est sur lui,
          et le fond doit dire ce qu'on voit. */
-      const tenue = d.skins?.find((s) => s.porte)?.id ?? 'base';
+      /* **La tenue et l'expression voulues**, et non celles qui sont posées
+         en base : c'est un aperçu, et il doit répondre au doigt avant
+         d'être enregistré. */
+      const tenue = voulu?.skin ?? d.skins?.find((s) => s.porte)?.id ?? 'base';
+      const pose = voulu?.etat ?? 'neutre';
       const decor = window.TBF_FOND?.fond?.({
         id: f.id, set: f.set, type: f.type, stage: etage ?? f.stage, rar: f.rar, skin: tenue,
       });
@@ -626,7 +689,21 @@
          Le joueur voyait donc le décor d'Halloween derrière un personnage en
          tenue ordinaire, sur l'écran même où il venait de choisir son
          déguisement. */
-      const adresse = window.FZART?.adresse?.(f.ageId ?? f.id, 'plein', { skin: tenue });
+      /* **Le trio d'abord, le plein-pied ensuite.** `resoudre` sait rendre
+         l'âge, la tenue et l'expression ensemble ; il sait aussi redescendre
+         d'un âge quand celui qu'on demande n'est pas dessiné, et cette
+         descente-là n'est jamais la bonne réponse ici : le fichier plat de
+         l'âge demandé existe pour deux cents personnages.
+
+         C'est la même règle qu'à la scène et dans `fanzzy-art.js`, et elle a
+         déjà coûté une Bâche Repliée affichée sous le nom de la Bâche
+         Déployée. La tenue et l'expression gardent leur repli : un dessin qui
+         manque encore rend le personnage sans costume ou au repos, ce qui
+         reste le bon personnage. */
+      const r = window.TBF_ETATS?.resoudre?.(d.fanzzy.id,
+        { evo: etage, skin: tenue, etat: pose });
+      const adresse = (r && r.evo === etage) ? r.src
+        : window.FZART?.adresse?.(f.ageId ?? f.id, 'plein', { skin: tenue });
       if (!adresse) {
         /* Pas d'illustration pour ce Fanzzy : le dessin géométrique, comme dans
            la grille. Il porte déjà son propre fond, on ne lui en met pas deux —
@@ -698,7 +775,32 @@
            Les autres rangées — effets, tenues — ne touchent pas à la
            vitrine : elles parlent de l’âge qu’on regarde, elles n’en
            changent pas. */
+        /* **Toucher, c'est choisir.** Les trois rangées qui décrivent une
+           apparence — l'âge, la tenue, l'expression — composent le même
+           choix, et la vitrine le montre tout de suite. La rangée des effets
+           ne décrit rien qu'on puisse porter : elle se regarde, elle ne se
+           choisit pas.
+
+           On n'enregistre pas : c'est un essayage. Le bouton d'en dessous
+           est le seul qui parle au serveur. */
+        const misEnTete = (() => {
+          const x = cases.find((y) => y.cle === choisie);
+          if (!x?.ok || !voulu) return false;
+          const tenue = /^tenue:(.+)$/.exec(choisie)?.[1];
+          if (tenue) { voulu.skin = tenue; return true; }
+          const pose = /^etat:(.+)$/.exec(choisie)?.[1];
+          if (pose) { voulu.etat = pose; return true; }
+          return false;
+        })();
+
         const idAge = /^age:(.+)$/.exec(choisie ?? '')?.[1];
+        if (misEnTete) {
+          const a = (d.lignee ?? []).find((x) => x.stage === (ageVu ?? d.stade));
+          dessiner({ ...d.fanzzy, ageId: a?.id ?? d.fanzzy.ageId,
+            nom: a?.nom ?? d.fanzzy.nom, rar: a?.rar ?? d.fanzzy.rar },
+          ageVu ?? d.stade, true);
+          redessinerRangs();
+        }
         if (idAge) {
           const a = (d.lignee ?? []).find((x) => x.id === idAge);
           if (a) {
@@ -714,6 +816,10 @@
                âge à l'autre, et quinze retouches finissent par en oublier une.
                La case choisie reste la même — c'est un âge, il existe aux
                trois. */
+            /* Un âge qu'on a **atteint** entre dans le choix ; un âge à venir
+               se regarde seulement — on ne se montre pas dans un âge qu'on
+               n'a pas payé, et le serveur le bornerait de toute façon. */
+            if (a.possede && voulu) voulu.stade = Number(a.stage);
             if (Number(a.stage) !== Number(ageVu ?? d.stade)) {
               ageVu = Number(a.stage);
               redessinerRangs();

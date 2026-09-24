@@ -426,16 +426,21 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
    * qui ne disait pas qu'il changeait l'avatar. Trois gestes pour une seule
    * intention, et aucun des trois ne montrait le résultat des deux autres.
    *
-   * ## Une tenue **ou** une expression, jamais les deux
+   * ## Une tenue **et** une expression
    *
-   * Ce n'est pas un choix d'interface, c'est ce que les dessins permettent :
-   * une tenue n'est dessinée qu'au repos — `e1/halloween/neutre` — et les
-   * quatre expressions n'existent qu'en tenue de base. Proposer « Halloween
-   * en colère » serait promettre une image qui n'existe pour personne.
+   * Elles se sont exclues quelques jours, et c'était une contrainte de
+   * dessins et non de règle : une tenue n'était rendue qu'au repos, les
+   * quatre expressions qu'en tenue de base. Proposer « Halloween en colère »
+   * aurait promis une image qui n'existait pour personne.
    *
-   * Choisir une tenue remet donc la pose au repos, et choisir une pose remet
-   * la tenue de base. Le jour où la chaîne d'images dessinera les deux
-   * ensemble, c'est ici que la règle s'ouvrira — et nulle part ailleurs.
+   * Le lot complet est en production — chaque âge, chaque tenue, chaque
+   * expression — et la contrainte tombe avec lui. C'est ici qu'elle
+   * s'annonçait, c'est ici qu'elle disparaît, et nulle part ailleurs : le
+   * commentaire précédent l'avait écrit.
+   *
+   * Un dessin qui manque encore ne casse rien : `resoudre` retombe sur la
+   * tenue de base, puis sur le repos. C'est du confort qui arrive en retard,
+   * jamais un écran vide.
    *
    * ## Ce qu'on vérifie
    *
@@ -462,18 +467,15 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
       pose = etat;
     }
 
-    /* **L'exclusivité, appliquée des deux côtés.** Une pose remet la tenue de
-       base, une tenue remet la pose au repos.
-
-       Revenir à la base, c'est **ne rien porter** — et non porter une tenue
+    /* **Revenir à la base, c'est ne rien porter** — et non porter une tenue
        nommée « base ». La différence compte : `wearSkin` exige de posséder ce
        qu'on enfile, or la tenue de base n'est inscrite qu'au premier âge,
-       celui qui sort du booster. Passer par elle aurait refusé la pose à tout
+       celui qui sort du booster. Passer par elle refuserait la sienne à tout
        personnage ayant grandi — c'est-à-dire à ceux qui ont payé.
 
        C'est déjà ainsi que le portefeuille lit la tenue : pas de ligne
        équipée, donc `base`. On écrit ce que la lecture attend. */
-    if (pose || !skinId || skinId === 'base') {
+    if (!skinId || skinId === 'base') {
       await q(
         `UPDATE user_skins SET equipped = 0
           WHERE user_id = ? AND fanzzy_id = ? AND stage = ?`,

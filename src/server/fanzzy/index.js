@@ -122,6 +122,27 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
   /* -------------------------------------------------------- portefeuille */
 
   /**
+   * La tenue portée à un âge donné, ou `base`.
+   *
+   * **Une table absente ne fait pas disparaître le personnage.** C'est la
+   * posture de tout ce module — `estAbonne` la tient déjà — et elle n'est pas
+   * théorique : le banc du Grand Virage monte le jeu sans `sql/skins.sql`, et
+   * la première version de cette requête y a fait tomber la salle entière.
+   * Une tenue est du confort ; elle ne doit empêcher personne de pousser.
+   */
+  async function tenuePortee(userId, racine, evo) {
+    try {
+      return (await q(
+        `SELECT skin_id FROM user_skins
+          WHERE user_id = ? AND fanzzy_id = ? AND stage = ? AND equipped = 1 LIMIT 1`,
+        [userId, racine, evo]))[0]?.skin_id ?? 'base';
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE') return 'base';
+      throw e;
+    }
+  }
+
+  /**
    * Recharge les boosters au prorata du temps ecoule, puis renvoie l'etat.
    * Le calcul se fait a la lecture plutot qu'avec une tache periodique :
    * pas de minuterie a maintenir, et le resultat est le meme.
@@ -214,10 +235,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
        c'est une lecture sur clé primaire, et elle rend au choix du joueur le
        seul effet qu'on lui avait promis. */
     const stade = stadeAffiche(w.atteint, w.active_evo);
-    const activeSkin = w.active_fanzzy ? ((await q(
-      `SELECT skin_id FROM user_skins
-        WHERE user_id = ? AND fanzzy_id = ? AND stage = ? AND equipped = 1
-        LIMIT 1`, [userId, w.active_fanzzy, stade]))[0]?.skin_id ?? 'base') : 'base';
+    const activeSkin = w.active_fanzzy
+      ? await tenuePortee(userId, w.active_fanzzy, stade) : 'base';
 
     return { scarves: w.scarves, billets: w.billets, packs: w.packs,
       nextPackInMs: nextIn, active: w.active_fanzzy,
@@ -1152,7 +1171,8 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
           WHERE user_id = ? AND fanzzy_id = ?`, [userId, id])
         .catch((e) => { if (e.code === 'ER_NO_SUCH_TABLE') return []; throw e; }),
       q(`SELECT stuff_id, copies, slot FROM user_stuff WHERE user_id = ?`, [userId]),
-      q(`SELECT active_fanzzy, scarves FROM user_wallet WHERE user_id = ?`, [userId]),
+      q(`SELECT active_fanzzy, active_evo, active_etat, scarves
+           FROM user_wallet WHERE user_id = ?`, [userId]),
       /* La tribune du deck, assemblée ici et pas par la page.
          Elle enchaînerait sinon deux requêtes pour afficher une carte, et la
          seconde arriverait après le premier rendu — le bouton changerait de
@@ -1207,6 +1227,15 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
          « DÉJÀ EN DUEL » — sur quelqu'un qui n'était dans aucun deck. Renommé
          pour ce qu'il est ; ce qui concerne le duel est dans `tribune`. */
       avatar: w[0]?.active_fanzzy === id,
+      /* **Ce que l'avatar montre en ce moment**, pour que la fiche s'ouvre
+         sur le choix en cours au lieu d'un choix neuf.
+
+         Sans ces deux champs, l'écran ne pouvait pas marquer l'âge et
+         l'expression retenus : il fallait valider pour savoir ce qu'on
+         avait déjà. La tenue, elle, se lisait déjà dans `porte`. */
+      avatarStade: w[0]?.active_fanzzy === id
+        ? stadeAffiche(stade, w[0]?.active_evo) : null,
+      avatarEtat: w[0]?.active_fanzzy === id ? (w[0]?.active_etat || 'neutre') : null,
       /* Où il est dans la tribune du deck, et quelles places sont ouvertes.
          `null` si le module de deck n'est pas monté. */
       tribune,
@@ -1315,9 +1344,30 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    * afficher le Choriste à quelqu'un qui a payé quatre-vingt-dix écharpes
    * pour ne plus le voir.
    */
-  async function personnageActif(userId) {
+  /**
+   * @param {object} [opt]
+   * @param {boolean} [opt.enJeu] pour le Virage et le duel, où la règle diffère.
+   *
+   * **En jeu, on entre au premier âge, au repos, dans sa tenue.**
+   *
+   * C'est déjà la règle des effets — `deck/index.js` : « un deck entre
+   * toujours au premier âge […] deux tribunes se rencontrent donc au même
+   * niveau, et l'écart se creuse par ce qu'on joue, pas par ce qu'on a payé ».
+   * Le dessin, lui, montrait l'âge choisi : on poussait avec les chiffres du
+   * gamin sous les traits du Capo, et rien ne le disait.
+   *
+   * L'expression ne suit pas non plus : en partie, c'est le **match** qui la
+   * décide — bras levés au but, tête dans les mains à l'encaisse. Une pose
+   * figée par un réglage empêcherait le seul endroit où les douze états
+   * servent à quelque chose.
+   *
+   * La tenue, elle, suit : elle ne change rien au jeu, c'est le seul des
+   * trois réglages qui ne dise rien sur la force de personne.
+   */
+  async function personnageActif(userId, { enJeu = false } = {}) {
     const w = (await q(
-      `SELECT active_fanzzy, active_evo FROM user_wallet WHERE user_id = ?`, [userId]))[0];
+      `SELECT active_fanzzy, active_evo, active_etat FROM user_wallet
+        WHERE user_id = ?`, [userId]))[0];
     if (!w?.active_fanzzy) return null;
     const id = racineDe(w.active_fanzzy);
     const r = (await q(`SELECT stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
@@ -1333,7 +1383,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
 
        Nul = l'âge atteint, ce qui est le comportement d'avant : personne
        n'ayant encore choisi, tout le monde se voit exactement comme hier. */
-    const evo = Math.min(atteint, Math.max(1, Number(w.active_evo) || atteint));
+    const evo = enJeu ? 1 : stadeAffiche(atteint, w.active_evo);
     // `auStade` peut ne rien rendre : cent cinquante-deux personnages n'ont
     // qu'un âge écrit, et une base qui annonce un stade 2 inexistant ne doit
     // pas faire disparaître le personnage de l'écran.
@@ -1344,7 +1394,13 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
        que `age` est la carte du catalogue, sous laquelle est rangée
        l'illustration en pied. Le Meneur de chant, c'est `TR32` avec `evo: 2`
        pour ses états, et `TR32B` pour son dessin. */
-    return { id, age: age.id, evo, nom: age.nom,
+    /* La tenue de l'âge qu'on montre. En jeu c'est celle du premier âge, et
+       c'est la bonne : on y entre au premier âge, donc dans sa garde-robe. */
+    const skin = await tenuePortee(userId, id, evo);
+
+    return { id, age: age.id, evo, nom: age.nom, skin,
+      /* Nulle en jeu : c'est le match qui décide de l'expression. */
+      etat: enJeu ? null : (w.active_etat || null),
       cri: age.cri?.label ?? null, rar: age.rar ?? null };
   }
 

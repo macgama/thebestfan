@@ -594,8 +594,27 @@ check('et le bouton de fermeture aussi',
 
   check('le serveur donne le personnage, pas seulement ses barèmes',
     p.fanzzy?.id === 'TR32');
-  check('à l’âge atteint',
-    p.fanzzy?.evo === 2 && /Meneur/.test(p.fanzzy?.nom ?? '')
+  /* **Au premier âge, et c'était déjà vrai des chiffres.**
+
+     `deck/index.js` le dit depuis longtemps : « un deck entre toujours au
+     premier âge […] deux tribunes se rencontrent donc au même niveau, et
+     l'écart se creuse par ce qu'on joue, pas par ce qu'on a payé ». Les
+     effets employés dans la salle sont ceux du premier âge.
+
+     Le **dessin**, lui, montrait l'âge choisi : on poussait avec les chiffres
+     du Choriste sous les traits du Meneur de chant, et rien ne le disait.
+     Ce contrôle affirmait « à l'âge atteint » sans jamais dire pourquoi — il
+     figeait ce qui était, pas ce qui devait être.
+
+     Ce qui se choisit sur la fiche — l'âge, l'expression — est de
+     l'apparence, et l'apparence s'arrête à la porte du terrain. La tenue,
+     elle, passe : elle ne dit rien sur la force de personne. */
+  check('au premier âge, comme les chiffres qu’il emploie',
+    p.fanzzy?.evo === 1 && /Choriste/.test(p.fanzzy?.nom ?? '')
+    || (console.log('        il envoie :', JSON.stringify(p.fanzzy)), false));
+  /* Et la tenue voyage avec lui : c'est le seul des trois réglages qui
+     traverse, et celui qu'on a choisi doit se voir en tribune. */
+  check('et sa tenue vient avec', typeof p.fanzzy?.skin === 'string'
     || (console.log('        il envoie :', JSON.stringify(p.fanzzy)), false));
   /* Le cri manquait entièrement : la page appelait `S.you.cri`, cette clé
      n'était jamais envoyée, et la vidéo du Cri ne s'est donc jamais jouée
@@ -603,8 +622,12 @@ check('et le bouton de fermeture aussi',
      récompense n'arrive pas. */
   check('et son cri, qui déclenche la vidéo d’un geste parfait',
     Boolean(p.fanzzy?.cri));
-  check('le dessin montré est celui du second âge',
-    /TR32B/.test(p.src) || (console.log('        il montre :', p.src), false));
+  /* Le dessin suit : `TR32` et non `TR32B`. C'est la moitié qui manquait —
+     un serveur qui annonce le bon âge et une page qui en dessine un autre
+     se relisent tous les deux comme corrects. */
+  check('le dessin montré est celui du premier âge',
+    /TR32[.\-/]/.test(p.src) && !/TR32B/.test(p.src)
+    || (console.log('        il montre :', p.src), false));
   check('il respire', p.souffle !== 'none' && p.souffle !== '');
   check('il n’intercepte pas les appuis de la tribune',
     p.sous !== 'le personnage' || (console.log('        sous le doigt :', p.sous), false));
