@@ -462,9 +462,25 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
       pose = etat;
     }
 
-    /* L'exclusivité, appliquée des deux côtés : une pose remet la tenue de
-       base, une tenue remet la pose au repos. */
-    await wearSkin(userId, fanzzyId, pose ? 'base' : (skinId || 'base'), s);
+    /* **L'exclusivité, appliquée des deux côtés.** Une pose remet la tenue de
+       base, une tenue remet la pose au repos.
+
+       Revenir à la base, c'est **ne rien porter** — et non porter une tenue
+       nommée « base ». La différence compte : `wearSkin` exige de posséder ce
+       qu'on enfile, or la tenue de base n'est inscrite qu'au premier âge,
+       celui qui sort du booster. Passer par elle aurait refusé la pose à tout
+       personnage ayant grandi — c'est-à-dire à ceux qui ont payé.
+
+       C'est déjà ainsi que le portefeuille lit la tenue : pas de ligne
+       équipée, donc `base`. On écrit ce que la lecture attend. */
+    if (pose || !skinId || skinId === 'base') {
+      await q(
+        `UPDATE user_skins SET equipped = 0
+          WHERE user_id = ? AND fanzzy_id = ? AND stage = ?`,
+        [userId, fanzzyId, s]);
+    } else {
+      await wearSkin(userId, fanzzyId, skinId, s);
+    }
 
     await q(
       `UPDATE user_wallet SET active_fanzzy = ?, active_evo = ?, active_etat = ?
