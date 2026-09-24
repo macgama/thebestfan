@@ -144,6 +144,19 @@
     let d = null;
     let choisie = null;          // la case regardée
     let cases = [];
+    /* **L'âge qu'on regarde**, qui n'est pas toujours celui qu'on a.
+
+       La rangée ÂGES existe pour regarder les trois visages d'une lignée. Le
+       dessin suivait déjà ; les tenues et les états, non — ils restaient sur
+       l'âge atteint. Un joueur dont la tenue d'Halloween n'existe qu'aux âges
+       un et trois la voyait proposée aux trois, et l'a découvert en lisant sa
+       propre base de données.
+
+       Nul tant qu'on n'a touché aucun âge : c'est l'âge atteint qui répond,
+       et l'arrivée sur la fiche est exactement celle d'avant. */
+    let ageVu = null;
+    /* Posée par `rendre`, lue par le clic sur un âge. */
+    let redessinerRangs = () => {};
     /* L’observateur de largeur de la bande des rangées. Gardé ici pour
        être débranché au rendu suivant : sans ça, chaque rendu en laisse
        un de plus accroché à un élément détaché. */
@@ -229,9 +242,14 @@
         });
       }
 
-      // Les tenues de l'âge atteint. Le Capo n'hérite pas de la garde-robe du
-      // gamin : c'est la règle, et la fiche doit la rendre évidente.
-      for (const s of d.skins) {
+      /* Les tenues de l'âge **regardé**. Le Capo n'hérite pas de la garde-robe
+         du gamin : c'est la règle, et la fiche doit la rendre évidente — y
+         compris quand on regarde le gamin depuis le Capo.
+
+         `d.skins` reste le repli : un serveur d'avant `parAge` rend la fiche
+         d'hier, qui se trompe d'âge mais ne casse rien. */
+      const vu = ageVu ?? d.stade;
+      for (const s of (d.parAge?.[vu]?.skins ?? d.skins)) {
         liste.push({
           cle: `tenue:${s.id}`, rang: 'TENUES', titre: s.nom,
           sorte: s.porte ? 'Tenue portée' : s.possede ? 'Tenue possédée' : 'Tenue à trouver',
@@ -240,8 +258,20 @@
             ? 'Elle ne change rien au jeu : elle se voit, c’est tout.'
             : 'Elle se trouve dans les boosters, et seulement pour un Fanzzy que tu as déjà.',
           manque: s.possede ? null : 'à trouver dans un booster',
-          action: s.possede && !s.porte
-            ? { quoi: 'porter', tenue: s, libelle: 'PORTER' } : null,
+          /* **Un seul geste : montrer.**
+
+             Le bouton disait « PORTER » et ne disait pas qu'il changeait
+             l'avatar. Le choix de l'âge se faisait ailleurs — aux flèches de
+             l'accueil — et celui du titulaire ici. Trois gestes pour une
+             seule intention : « voilà comment je veux qu'on me voie ».
+
+             `stade: vu` : l'âge **regardé**, pas l'âge atteint. C'est ce qui
+             permet de se montrer jeune, en tenue de jeunesse. */
+          action: s.possede
+            ? { quoi: 'montrer', stade: vu, skin: s.id,
+                libelle: s.porte ? 'MONTRER CET ÂGE' : 'ME MONTRER AINSI',
+                sous: s.porte ? 'déjà sa tenue' : s.nom }
+            : null,
         });
       }
 
@@ -256,7 +286,7 @@
        * vide à côté de trois cases pleines est ce qui fait ouvrir le paquet
        * suivant. Sinon le pictogramme seul : montrer l'état qu'on n'a pas
        * serait le donner. */
-      for (const e of (d.etats ?? [])) {
+      for (const e of (d.parAge?.[vu]?.etats ?? d.etats ?? [])) {
         liste.push({
           cle: `etat:${e.id}`, rang: 'ÉTATS', titre: e.nom,
           sorte: e.possede ? 'État gagné' : 'État à trouver',
@@ -268,7 +298,15 @@
             ? `${e.dessin} Il s'affiche tout seul au bon moment du match.`
             : 'Sans lui, ton Fanzzy garde son air de repos — le jeu ne change pas.',
           manque: e.possede ? null : 'à trouver dans un booster',
-          action: null,
+          /* Une expression se montre comme une tenue, et **à la place** d'une
+             tenue : les quatre expressions ne sont dessinées qu'en tenue de
+             base, et aucune tenue n'est dessinée autrement qu'au repos.
+             Proposer les deux ensemble promettrait une image qui n'existe
+             pour personne — le serveur applique la même règle. */
+          action: e.possede
+            ? { quoi: 'montrer', stade: vu, etat: e.id,
+                libelle: 'ME MONTRER AINSI', sous: e.nom }
+            : null,
         });
       }
 
@@ -309,9 +347,27 @@
          elles repoussaient les effets hors de l'écran, où personne ne serait
          allé les chercher. Elles ferment donc la marche : ce sont les seules
          qui ne changent rien au jeu. */
-      const rangs = ['ÂGES', 'EFFETS', 'ÉTATS', 'TENUES']
+      const rangsHTML = () => ['ÂGES', 'EFFETS', 'ÉTATS', 'TENUES']
         .map((r) => [r, cases.filter((x) => x.rang === r)])
-        .filter(([, l]) => l.length);
+        .filter(([, l]) => l.length)
+        .map(([nom, l]) => `<div class="rang"><h4>${nom}</h4>
+          <div class="cases">${l.map(caseHTML).join('')}</div></div>`).join('');
+
+      /* **Refaire la bande sans refaire la fiche.** Changer d'âge change les
+         tenues et les états proposés ; tout re-rendre ferait clignoter le
+         personnage et perdrait le défilement horizontal de la bande, qui est
+         justement ce qu'on vient de faire au doigt. */
+      redessinerRangs = () => {
+        cases = batir();
+        const n = hote.querySelector('.rangs');
+        if (!n) return;
+        const gauche = n.querySelector('.cases')?.scrollLeft ?? 0;
+        n.innerHTML = rangsHTML();
+        hote.querySelectorAll('.case').forEach((x) =>
+          x.classList.toggle('choisie', x.dataset.case === choisie));
+        const c = n.querySelector('.cases');
+        if (c) c.scrollLeft = gauche;
+      };
 
       /* Un Fanzzy qu'on ne possède pas est **éteint**, fiche comprise.
        *
@@ -383,9 +439,7 @@
               </div>
             </div>
 
-            <div class="rangs" ${aMoi ? '' : 'aria-hidden="true"'}>${rangs.map(([nom, l]) => `
-              <div class="rang"><h4>${nom}</h4><div class="cases">${l.map(caseHTML).join('')}</div></div>`).join('')}
-            </div>
+            <div class="rangs" ${aMoi ? '' : 'aria-hidden="true"'}>${rangsHTML()}</div>
 
             <div class="detail" id="fiche-detail"></div>
           </div>
@@ -511,8 +565,12 @@
           ? `<button class="bt or" data-evoluer>${x.action.libelle}<small>${esc(x.action.cout)}</small></button>`
           : `<button class="bt" data-evoluer disabled>IL TE FAUT<small>${
               x.action.manque} écharpes de plus</small></button>`)
-        : x?.action?.quoi === 'porter'
-          ? `<button class="bt" data-porter="${esc(x.action.tenue.id)}">${x.action.libelle}</button>`
+        : x?.action?.quoi === 'montrer'
+          ? `<button class="bt" data-montrer
+              data-stade="${esc(String(x.action.stade))}"
+              ${x.action.skin ? `data-skin="${esc(x.action.skin)}"` : ''}
+              ${x.action.etat ? `data-etat="${esc(x.action.etat)}"` : ''}
+              >${esc(x.action.libelle)}<small>${esc(x.action.sous ?? '')}</small></button>`
           : '';
       n.innerHTML = principal + second;
     }
@@ -646,6 +704,20 @@
           if (a) {
             dessiner({ ...d.fanzzy, ageId: a.id, nom: a.nom, rar: a.rar ?? d.fanzzy.rar },
               a.stage, Boolean(a.possede));
+            /* **Et les rangées suivent.** C'est ce que le paragraphe
+               ci-dessus promettait déjà — « elles parlent de l'âge qu'on
+               regarde » — et qui n'était pas vrai : elles parlaient de l'âge
+               atteint, quel que soit celui qu'on touchait.
+
+               On redessine la bande entière plutôt que de retoucher les cases
+               une par une : elles changent de nombre, d'état et d'action d'un
+               âge à l'autre, et quinze retouches finissent par en oublier une.
+               La case choisie reste la même — c'est un âge, il existe aux
+               trois. */
+            if (Number(a.stage) !== Number(ageVu ?? d.stade)) {
+              ageVu = Number(a.stage);
+              redessinerRangs();
+            }
           }
         }
         rendreDetail();
@@ -660,17 +732,39 @@
       const n = hote.querySelector('#fiche-actions');
       n.querySelector('[data-emmener]')?.addEventListener('click', () => placer());
 
-      n.querySelector('[data-porter]')?.addEventListener('click', async (e) => {
-        const id = e.currentTarget.dataset.porter;
+      /* **Le personnage, son âge et ce qu'il montre, en un seul envoi.**
+
+         Trois réglages qui se décidaient à trois endroits : le titulaire ici,
+         l'âge aux flèches de l'accueil, la tenue sur un bouton « PORTER » qui
+         ne disait pas qu'il changeait l'avatar. Aucun des trois ne montrait
+         le résultat des deux autres, et il fallait passer par l'accueil pour
+         voir ce qu'on venait de choisir.
+
+         Le serveur les pose ensemble et refuse d'un seul bloc : un âge qu'on
+         n'a pas, une expression qu'on n'a pas gagnée à cet âge-là. */
+      n.querySelector('[data-montrer]')?.addEventListener('click', async (e) => {
+        const b = e.currentTarget;
+        b.disabled = true;
         try {
-          await fetch('/api/me/skin', {
+          const r = await fetch('/api/me/avatar', {
             method: 'POST', credentials: 'same-origin',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ fanzzyId: d.fanzzy.id, skinId: id }),
+            body: JSON.stringify({
+              fanzzyId: d.fanzzy.id,
+              stade: Number(b.dataset.stade) || undefined,
+              skinId: b.dataset.skin || undefined,
+              etat: b.dataset.etat || undefined,
+            }),
           });
-          dire('Tenue portée.');
+          if (!r.ok) throw new Error('refus');
+          /* On nomme ce qui vient de changer : « c'est fait » ne dit pas où
+             regarder, et le changement se voit sur un autre écran. */
+          dire('C’est lui qu’on verra partout.');
           await recharger();
-        } catch { dire('Impossible pour le moment.'); }
+        } catch {
+          b.disabled = false;
+          dire('Impossible pour le moment.');
+        }
       });
 
       n.querySelector('[data-evoluer]')?.addEventListener('click', () => demander());

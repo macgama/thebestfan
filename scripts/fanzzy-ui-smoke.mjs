@@ -1816,6 +1816,76 @@ check('et elle explique pourquoi au lieu de rester vide',
  * Trois cent vingt pixels — un iPhone SE — restent le cas dur.
  */
 {
+/* ====================== les tenues suivent l'âge qu'on regarde
+
+   **La rangée ÂGES promettait de montrer les trois visages d'une lignée**, et
+   le commentaire du clic disait en toutes lettres que les autres rangées
+   « parlent de l'âge qu'on regarde ». Elles parlaient de l'âge **atteint**.
+
+   Un joueur l'a trouvé avant nous, et en lisant sa propre base : sa tenue
+   d'Halloween n'existe qu'aux âges un et trois, et la fiche la lui proposait
+   aux trois. Rien ne pouvait le dire — la case est là, elle est allumée, et
+   il faut connaître le contenu de la table pour savoir qu'elle ment.
+
+   On donne donc une tenue **au premier âge seulement**, on met le personnage
+   au second, et on regarde la case changer d'état quand on change d'âge.
+   C'est la panne exacte, dans le sens exact. */
+{
+  const { tenuesPubliees } = await import('../src/server/fanzzy/tenues.js');
+  const tenue = tenuesPubliees().find((x) => x.id !== 'base');
+  if (!tenue) {
+    check('une tenue publiée existe pour ce contrôle', false);
+  } else {
+    await pool.query(
+      'UPDATE user_fanzzy SET stage = 2 WHERE user_id = ? AND fanzzy_id = ?',
+      [U, ILLUSTRE]);
+    await pool.query(
+      `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, stage, skin_id, equipped)
+       VALUES (?, ?, 1, ?, 0)`, [U, ILLUSTRE, tenue.id]);
+
+    const p = await nav.newPage();
+    p.on('pageerror', (e) => erreurs.push(e.message));
+    await p.setViewport({ width: 400, height: 880 });
+    await p.goto(`${base}/fanzzy/${ILLUSTRE}`, { waitUntil: 'networkidle0' });
+    await p.waitForSelector('.fiche .case', { timeout: 8000 }).catch(() => null);
+    await dodo(250);
+
+    const etatCase = (cle) => p.evaluate((k) => {
+      const n = document.querySelector(`[data-case="${k}"]`);
+      return n ? { ok: n.classList.contains('ok') } : null;
+    }, cle);
+
+    const au2 = await etatCase(`tenue:${tenue.id}`);
+    check(`au second âge, la tenue du premier n’est pas proposée (${tenue.id})`,
+      au2 !== null && au2.ok === false
+      || (console.log('        la case dit :', JSON.stringify(au2)), false));
+
+    /* On touche le premier âge. La lignée est rangée par stade : sa première
+       carte porte la racine. */
+    const clic = await p.evaluate((id) => {
+      const n = document.querySelector(`[data-case="age:${id}"]`);
+      if (!n) return false;
+      n.click();
+      return true;
+    }, ILLUSTRE);
+    check('la rangée des âges répond au premier', clic);
+    await dodo(300);
+
+    const au1 = await etatCase(`tenue:${tenue.id}`);
+    check('et au premier âge, elle l’est',
+      au1 !== null && au1.ok === true
+      || (console.log('        la case dit :', JSON.stringify(au1)), false));
+
+    await p.close();
+    await pool.query(
+      'DELETE FROM user_skins WHERE user_id = ? AND fanzzy_id = ? AND skin_id = ?',
+      [U, ILLUSTRE, tenue.id]);
+    await pool.query(
+      'UPDATE user_fanzzy SET stage = 1 WHERE user_id = ? AND fanzzy_id = ?',
+      [U, ILLUSTRE]);
+  }
+}
+
 /* ============================== et si tout ça ne suffisait pas
 
    Un joueur a photographié une fiche dont les boutons étaient hors de

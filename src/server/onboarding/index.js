@@ -419,6 +419,59 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
   }
 
   /**
+   * Choisir son avatar : **le personnage, son âge, et ce qu'on montre de lui.**
+   *
+   * Les trois se décidaient à trois endroits — le titulaire depuis la fiche,
+   * l'âge depuis les flèches de l'accueil, la tenue depuis un bouton « PORTER »
+   * qui ne disait pas qu'il changeait l'avatar. Trois gestes pour une seule
+   * intention, et aucun des trois ne montrait le résultat des deux autres.
+   *
+   * ## Une tenue **ou** une expression, jamais les deux
+   *
+   * Ce n'est pas un choix d'interface, c'est ce que les dessins permettent :
+   * une tenue n'est dessinée qu'au repos — `e1/halloween/neutre` — et les
+   * quatre expressions n'existent qu'en tenue de base. Proposer « Halloween
+   * en colère » serait promettre une image qui n'existe pour personne.
+   *
+   * Choisir une tenue remet donc la pose au repos, et choisir une pose remet
+   * la tenue de base. Le jour où la chaîne d'images dessinera les deux
+   * ensemble, c'est ici que la règle s'ouvrira — et nulle part ailleurs.
+   *
+   * ## Ce qu'on vérifie
+   *
+   * Que le personnage est à lui, que l'âge est **atteint** — on ne se montre
+   * pas dans un âge qu'on n'a pas payé — et que l'expression est gagnée **à cet
+   * âge-là**. La tenue passe par `wearSkin`, qui a déjà sa propre règle.
+   */
+  async function poserAvatar(userId, { fanzzyId, stade, skinId, etat }) {
+    const ligne = (await q(
+      `SELECT stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
+      [userId, fanzzyId]))[0];
+    if (!ligne) throw fail('onboarding.error.not_owned');
+
+    const atteint = Math.max(1, Number(ligne.stage) || 1);
+    const s = stadeAffiche(atteint, stade);
+
+    let pose = null;
+    if (etat && etat !== 'neutre') {
+      const a = await q(
+        `SELECT 1 FROM user_etats
+          WHERE user_id = ? AND fanzzy_id = ? AND stage = ? AND etat = ?`,
+        [userId, fanzzyId, s, etat]);
+      if (!a.length) throw fail('onboarding.error.not_owned');
+      pose = etat;
+    }
+
+    /* L'exclusivité, appliquée des deux côtés : une pose remet la tenue de
+       base, une tenue remet la pose au repos. */
+    await wearSkin(userId, fanzzyId, pose ? 'base' : (skinId || 'base'), s);
+
+    await q(
+      `UPDATE user_wallet SET active_fanzzy = ?, active_evo = ?, active_etat = ?
+        WHERE user_id = ?`, [fanzzyId, s, pose, userId]);
+  }
+
+  /**
    * Les modificateurs réellement en jeu : ceux du Fanzzy équipé, combinés aux
    * deux pièces portées. Le skin n'intervient pas, par construction.
    */
@@ -506,8 +559,18 @@ export function createOnboarding({ pool, requireAuth, football = null, niveau = 
     res.json({ ok: true });
   }));
 
+  router.post('/avatar', requireAuth, safe(async (req, res) => {
+    await poserAvatar(req.user.id, {
+      fanzzyId: String(req.body?.fanzzyId ?? ''),
+      stade: req.body?.stade,
+      skinId: req.body?.skinId ? String(req.body.skinId) : null,
+      etat: req.body?.etat ? String(req.body.etat) : null,
+    });
+    res.json({ ok: true });
+  }));
+
   // `module` porte la référence rebranchée par server.js : c'est le même objet
   // qui est renvoyé, sinon le rebranchement ne toucherait rien.
   return Object.assign(module,
-    { router, state, follow, buySlot, openWelcome, equip, wearSkin, loadout });
+    { router, state, follow, buySlot, openWelcome, equip, wearSkin, poserAvatar, loadout });
 }
