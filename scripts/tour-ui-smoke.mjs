@@ -25,6 +25,9 @@
  *    trop large ne casse rien — il rend la page inutilisable, en silence.
  * 5. **Les liens internes mènent quelque part.** Un `href` vers une route qui
  *    n'existe pas est une impasse qu'on ne découvre qu'en cliquant.
+ * 6. **Le même personnage partout.** Voir le bloc de fin : c'est le seul
+ *    invariant qui compare les écrans **entre eux**, et c'est celui qui a
+ *    le plus coûté de ne pas avoir.
  *
  * ## Ce qu'elle ne contrôle pas
  *
@@ -986,6 +989,150 @@ for (const [route, nom] of tousLesEcrans) {
     await page.evaluate(() => document.getElementById('banc-paquet')?.remove());
   }
   await page.close();
+}
+
+/* ================================================ le même personnage, partout
+
+   **La panne qui a duré une semaine.** Six écrans dessinaient « le
+   personnage du joueur », chacun avec sa recette. L'accueil connaissait
+   l'âge, la tenue et l'expression ; « Mon Fanzzy » et la page des matchs,
+   l'âge et la tenue ; le duel, la tenue seule. Chaque dimension ajoutée
+   devait l'être six fois, et on la corrigeait écran par écran sur capture
+   d'écran, sans que la panne disparaisse jamais — parce qu'on corrigeait
+   les copies, pas le fait qu'il y en ait.
+
+   Il n'y a plus qu'une réponse (`construireAvatar`, côté serveur) et une
+   façon de la dessiner (`FZART.dessinAvatar`). Ce bloc est ce qui les
+   tient : il pose un choix **reconnaissable** et vérifie que chaque écran
+   le montre. Le jour où un écran se remet à recomposer le personnage —
+   ou où une quatrième dimension apparaît et qu'un écran l'ignore — c'est
+   ici que ça rougit, et non dans une capture envoyée un soir.
+
+   **Le choix est piégé exprès.** Le personnage a atteint le second âge et
+   se montre au premier, dans la joie : un écran qui retombe sur l'âge
+   atteint le trahit, un écran qui oublie l'expression aussi. Un avatar
+   « âge atteint, au repos » aurait laissé passer les deux pannes, puisque
+   c'est justement ce qu'un écran fautif affiche par défaut. */
+{
+  const { readdir } = await import('node:fs/promises');
+  const IMG = path.join(RACINE, 'public', 'img', 'fanzzy');
+
+  /* Un personnage dont la joie est dessinée au premier âge, et qui a un
+     second âge au catalogue. Cherché sur le disque plutôt que nommé : un
+     test qui nomme une carte se casse au premier redessin. */
+  let X = null;
+  for (const d of await readdir(IMG, { withFileTypes: true })) {
+    if (!d.isDirectory()) continue;
+    let m = null;
+    try { m = JSON.parse(await readFile(path.join(IMG, d.name, 'manifeste.json'), 'utf8')); }
+    catch { continue; }
+    if (!(m.evolutions?.e1?.skins?.base?.etats ?? []).includes('joie')) continue;
+    const [[n]] = await pool.query(
+      'SELECT COUNT(*) AS n FROM fanzzy WHERE id IN (?, ?) AND publie = 1',
+      [d.name, d.name + 'B']);
+    if (Number(n.n) >= 2) { X = d.name; break; }
+  }
+
+  check('un personnage se prête à l’épreuve de l’avatar', Boolean(X));
+  if (X) {
+    await pool.query(
+      `INSERT INTO user_fanzzy (user_id, fanzzy_id, stage, copies) VALUES (?, ?, 2, 1)
+       ON DUPLICATE KEY UPDATE stage = 2`, [U, X]);
+    /* La joie lui est **donnée**, au premier âge : une expression ne se montre
+       que si on la possède, et la fiche refuse d'en retenir une qu'on n'a pas.
+       La poser en base sans la lui donner décrivait un joueur qui ne peut pas
+       exister — et faisait rougir « Mon Fanzzy » pour avoir eu raison. */
+    await pool.query(
+      `INSERT IGNORE INTO user_etats (user_id, fanzzy_id, stage, etat) VALUES (?, ?, 1, 'joie')`,
+      [U, X]);
+    await pool.query(
+      `UPDATE user_wallet SET active_fanzzy = ?, active_evo = 1, active_etat = 'joie'
+        WHERE user_id = ?`, [X, U]);
+
+    const ouvrir = async (route) => {
+      const pg = await nav.newPage();
+      /* L'écran d'ouverture couvrirait l'accueil pendant ses dix secondes. */
+      await pg.evaluateOnNewDocument(() => {
+        try { sessionStorage.setItem('tbf.ouverture', '1'); } catch { /* rien */ }
+      });
+      await pg.setViewport({ width: 400, height: 880 });
+      await pg.goto(base + route, { waitUntil: 'networkidle0' });
+      return pg;
+    };
+
+    /* ---- la source ---- */
+    const p0 = await ouvrir('/fanzzy');
+    const st = await p0.evaluate(() =>
+      fetch('/api/fanzzy/state', { credentials: 'same-origin' }).then((r) => r.json()));
+    await p0.close();
+    const av = st.wallet?.avatar;
+    const jeu = st.wallet?.avatarEnJeu;
+    check(`le serveur résout l’avatar (${av?.id} · âge ${av?.evo} · ${av?.skin} · ${av?.etat})`,
+      av?.id === X && av?.evo === 1 && av?.skin === 'base' && av?.etat === 'joie'
+      || (console.log('        il rend :', JSON.stringify(av)), false));
+    check(`et sa forme en jeu : âge ${jeu?.evo}, au repos`,
+      jeu?.id === X && jeu?.evo === 1 && jeu?.etat === null
+      || (console.log('        il rend :', JSON.stringify(jeu)), false));
+
+    /* ---- les écrans qui le dessinent ----
+
+       On lit **toutes** les adresses d'image du cadre du personnage, quelle
+       que soit la forme du calque : le contrôle éprouve quel personnage est
+       à l'écran, pas la structure du DOM. */
+    const attendu = new RegExp(`/${X}/e1/base/joie\\.`);
+    const interdit = new RegExp(`/${X}/e[23]/|/img/fanzzy/${X}[BC][-.]`);
+    for (const [route, cadre, nom] of [
+      ['/', '#pile', 'l’accueil'],
+      ['/fanzzy', '#tpile', '« Mon Fanzzy »'],
+    ]) {
+      const pg = await ouvrir(route);
+      await pg.waitForFunction((s) => document.querySelector(`${s} [src]`),
+        { timeout: 8000 }, cadre).catch(() => null);
+      await new Promise((r) => setTimeout(r, 700));
+      const urls = await pg.evaluate((s) => [...document.querySelectorAll(`${s} [src]`)]
+        .map((n) => n.getAttribute('src')), cadre);
+      check(`${nom} montre ${X} au premier âge, dans la joie`,
+        urls.some((u) => attendu.test(u))
+        || (console.log('        il montre :', urls.join(' | ') || 'rien'), false));
+      check(`et jamais l’âge atteint à la place`,
+        !urls.some((u) => interdit.test(u))
+        || (console.log('        il montre :', urls.find((u) => interdit.test(u))), false));
+      await pg.close();
+    }
+
+    /* ---- les écrans qui le reçoivent ----
+
+       La page des matchs et le duel ne le dessinent qu'une fois un match
+       ouvert. On vérifie donc ce qu'ils **tiennent** : c'est là que la
+       recomposition se faisait, et c'est là qu'elle se referait. */
+    const pm = await ouvrir('/matchs');
+    const vuMatchs = await pm.evaluate(async () =>
+      (typeof persoEquipe === 'function' ? await persoEquipe() : null));
+    await pm.close();
+    check('la page des matchs tient le même avatar',
+      vuMatchs?.id === X && vuMatchs?.evo === 1 && vuMatchs?.skin === 'base'
+        && vuMatchs?.etat === 'joie'
+      || (console.log('        elle tient :', JSON.stringify(vuMatchs)), false));
+
+    const pd = await ouvrir('/duel-nvn');
+    await pd.waitForFunction(() => typeof monAvatar !== 'undefined' && monAvatar,
+      { timeout: 6000 }).catch(() => null);
+    const vuDuel = await pd.evaluate(() =>
+      (typeof monAvatar !== 'undefined' ? monAvatar : null));
+    await pd.close();
+    /* Le duel est un écran de jeu : il tient la forme **en jeu**, premier
+       âge et repos. S'il tenait l'avatar d'affichage, on pousserait avec les
+       chiffres du premier âge sous les traits du troisième. */
+    check('et le duel sa forme en jeu',
+      vuDuel?.id === X && vuDuel?.evo === 1 && vuDuel?.etat === null
+      || (console.log('        il tient :', JSON.stringify(vuDuel)), false));
+
+    await pool.query('DELETE FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?', [U, X]);
+    await pool.query('DELETE FROM user_etats WHERE user_id = ? AND fanzzy_id = ?', [U, X]);
+    await pool.query(
+      'UPDATE user_wallet SET active_fanzzy = NULL, active_evo = NULL, active_etat = NULL WHERE user_id = ?',
+      [U]);
+  }
 }
 
 if (process.env.CAPTURE) console.log(`\n   captures dans ${tmpdir()}`);

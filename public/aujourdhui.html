@@ -520,8 +520,11 @@ async function persoEquipe() {
        jeune à l'accueil, et son déguisement ne paraissait ni sur l'un ni sur
        l'autre. Les deux réponses viennent maintenant du portefeuille, qui les
        calcule une fois pour tout le jeu. */
-    monPerso = id ? { id, evo: j.wallet?.activeStade ?? j.stades?.[id] ?? 1,
-      skin: j.wallet?.activeSkin ?? 'base' } : false;
+    /* **L'avatar, pas une recomposition.** Cet écran reconstruisait le
+       personnage à partir de `activeStade` et `activeSkin`, et l'expression
+       n'y figurait pas. Il prend maintenant l'objet que le serveur résout
+       pour tout le jeu — le même que l'accueil. */
+    monPerso = id ? (j.wallet?.avatar ?? { id, evo: j.stades?.[id] ?? 1, skin: 'base' }) : false;
   } catch { monPerso = false; }
   return monPerso;
 }

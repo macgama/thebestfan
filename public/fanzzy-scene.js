@@ -442,6 +442,11 @@
         skin: p.skin || 'base',
         plein: null,
       };
+      /* **L'expression de l'avatar devient le repos de la scène.** Nulle, elle
+         ne touche à rien : le Virage passe l'avatar « en jeu », sans
+         expression, et garde son propre repos — la poussée pendant le match.
+         C'est le match qui décide là-bas ; ici, c'est le joueur. */
+      if (p.etat) fond = p.etat;
       perso.plein = pleinPied({ ...perso, plein: p.plein });
       poseActuelle = null;
 

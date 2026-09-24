@@ -315,7 +315,46 @@
     return artProcedural(f);
   }
 
+  /**
+   * **Le dessin d'un avatar, tel que le serveur le rend.** La seule.
+   *
+   * Six écrans dessinaient « le personnage du joueur », chacun avec sa
+   * propre recette : l'âge ici, la tenue là, l'expression à un seul endroit.
+   * Chaque dimension ajoutée devait l'être six fois, et le joueur voyait
+   * le même personnage sous trois visages selon l'écran.
+   *
+   * Cette fonction ne **décide** rien : l'objet vient de `construireAvatar`,
+   * côté serveur, déjà résolu. Elle le traduit en image, et c'est tout ce
+   * qu'un écran a le droit de faire avec lui.
+   *
+   * @param {object} av         `wallet.avatar` ou `wallet.avatarEnJeu`
+   * @param {string} [variante] `buste` ou `plein`
+   * @param {object} [opt]
+   * @param {string} [opt.etat] une expression à montrer à la place de celle
+   *   de l'avatar — le match qui fait exulter le personnage, par exemple.
+   *
+   * **On n'accepte que l'âge exactement demandé.** `resoudre` sait
+   * redescendre d'un âge, et ce n'est jamais la bonne réponse ici : le
+   * plein-pied de l'âge demandé existe pour deux cents personnages. C'est ce
+   * repli-là qui a affiché une Bâche Repliée sous le nom de la Bâche
+   * Déployée. La tenue et l'expression, elles, gardent le leur.
+   */
+  function dessinAvatar(av, variante = 'buste', opt = {}) {
+    if (!av?.id) return null;
+    const etat = opt.etat || av.etat || 'neutre';
+    const skin = av.skin || 'base';
+    const E = window.TBF_ETATS;
+    if (E?.pret?.()) {
+      const r = variante === 'buste' && etat === 'neutre'
+        ? E.portrait(av.id, { evo: av.evo, skin })
+        : E.resoudre(av.id, { evo: av.evo, skin, etat });
+      if (r && r.evo === av.evo) return r.src;
+    }
+    return adresse(av.age ?? av.id, variante, { skin });
+  }
+
   window.FZART = {
+    dessinAvatar,
     IMG_EXT,
     IMG_EXT_ALPHA,
     secours,

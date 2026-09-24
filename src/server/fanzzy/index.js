@@ -143,6 +143,81 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
   }
 
   /**
+   * **L'avatar d'un joueur — la seule réponse du jeu à « qui montrer ».**
+   *
+   * ## Pourquoi elle existe
+   *
+   * La question se posait à six endroits : l'accueil, « Mon Fanzzy », la
+   * page des matchs, le duel, le Virage, la liste d'amis. Chacun la résolvait
+   * lui-même, à partir de ce qu'il recevait, et chacun avait appris les
+   * dimensions pour lesquelles on l'avait corrigé — l'âge ici, la tenue là,
+   * l'expression à un seul endroit. Chaque dimension ajoutée devait l'être six
+   * fois, on en oubliait à chaque fois une ou deux, et le joueur l'apprenait
+   * en capture d'écran. Le même défaut a été corrigé écran par écran
+   * pendant une semaine sans jamais disparaître, parce qu'on corrigeait les
+   * copies et jamais le fait qu'il y en ait.
+   *
+   * Ici, la réponse est **calculée une fois, complète**, et les écrans ne font
+   * plus que la dessiner. Ajouter une dimension, c'est l'ajouter ici ; un
+   * écran qui l'ignorerait n'a plus rien à ignorer, il reçoit l'objet entier.
+   *
+   * ## Ce qu'elle rend
+   *
+   * Deux formes du même personnage :
+   *
+   *   - `avatar` — ce qu'on a choisi sur la fiche : l'âge (borné par l'âge
+   *     atteint), la tenue portée à cet âge, l'expression. C'est ce que
+   *     voient l'accueil, « Mon Fanzzy », la page des matchs, les amis.
+   *   - `enJeu` — le même, tel qu'il entre sur le terrain : **premier âge, au
+   *     repos, dans sa tenue du premier âge**. C'est la règle des effets —
+   *     « un deck entre toujours au premier âge » — et le dessin la suit.
+   *     L'expression, en partie, c'est le match qui la décide.
+   *
+   * Chacune porte `id` (la lignée, sous laquelle sont rangés les états) et
+   * `age` (la carte du catalogue, sous laquelle est rangé le plein-pied).
+   * Les confondre a déjà affiché le Choriste sous le nom du Meneur de chant.
+   *
+   * @param {object} ligne  la ligne du portefeuille, si l'appelant l'a déjà
+   *   lue — `active_fanzzy`, `active_evo`, `active_etat`. Relue sinon.
+   */
+  async function construireAvatar(userId, ligne = null) {
+    const w = ligne ?? (await q(
+      `SELECT active_fanzzy, active_evo, active_etat FROM user_wallet WHERE user_id = ?`,
+      [userId]))[0];
+    if (!w?.active_fanzzy) return { avatar: null, enJeu: null };
+
+    const id = racineDe(w.active_fanzzy);
+    /* L'âge atteint, lu sur la **lignée** et non sur `active_fanzzy` tel
+       quel : une base d'avant le repliage des âges y garde « TR32B », et une
+       jointure sur ce nom-là ne trouve rien. */
+    const r = (await q(
+      `SELECT stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
+      [userId, id]))[0];
+    const atteint = Math.max(1, Number(r?.stage) || 1);
+
+    /* Une forme du personnage à un âge donné. `auStade` peut ne rien
+       rendre — beaucoup de lignées n'ont qu'un âge écrit — et une base qui
+       annonce un stade inexistant ne doit pas faire disparaître le
+       personnage de l'écran. */
+    const forme = async (evo, etat) => {
+      const age = auStade(id, evo) ?? parIdentifiant(id);
+      if (!age) return null;
+      return { id, age: age.id, evo, nom: age.nom,
+        skin: await tenuePortee(userId, id, evo), etat,
+        cri: age.cri?.label ?? null, rar: age.rar ?? null };
+    };
+
+    const evo = stadeAffiche(atteint, w.active_evo);
+    const avatar = await forme(evo, w.active_etat || null);
+    /* Au premier âge, les deux ne diffèrent que par l'expression : on
+       économise la seconde lecture de la tenue, qui serait la même. */
+    const enJeu = evo === 1
+      ? (avatar && { ...avatar, etat: null })
+      : await forme(1, null);
+    return { avatar, enJeu };
+  }
+
+  /**
    * Recharge les boosters au prorata du temps ecoule, puis renvoie l'etat.
    * Le calcul se fait a la lecture plutot qu'avec une tache periodique :
    * pas de minuterie a maintenir, et le resultat est le meme.
@@ -234,13 +309,17 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
        Une seule requête de plus, et seulement s'il y a quelqu'un d'équipé :
        c'est une lecture sur clé primaire, et elle rend au choix du joueur le
        seul effet qu'on lui avait promis. */
-    const stade = stadeAffiche(w.atteint, w.active_evo);
-    const activeSkin = w.active_fanzzy
-      ? await tenuePortee(userId, w.active_fanzzy, stade) : 'base';
+    /* **L'avatar, d'un seul tenant.** Les trois champs d'en dessous —
+       `activeSkin`, `activeStade`, `activeEtat` — en sont tirés, et non plus
+       calculés à part : ils restent pour les écrans qui les lisent encore,
+       mais ils ne peuvent plus dire autre chose que `avatar`. */
+    const { avatar, enJeu } = await construireAvatar(userId, w);
 
     return { scarves: w.scarves, billets: w.billets, packs: w.packs,
       nextPackInMs: nextIn, active: w.active_fanzzy,
-      activeSkin,
+      avatar,
+      avatarEnJeu: enJeu,
+      activeSkin: avatar?.skin ?? 'base',
       /* **L'âge auquel le montrer, déjà calculé.**
 
          `activeEvo` reste ce qu'il a toujours été : le choix brut, nul quand
@@ -254,11 +333,11 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
          préfère se montrer jeune se voyait vieux sur un écran et jeune sur
          l'autre. */
       activeEvo: w.active_evo === null ? null : Number(w.active_evo),
-      activeStade: stade,
+      activeStade: avatar?.evo ?? 1,
       /* **La pose choisie.** Nulle veut dire le repos, et c'est le cas de
          presque tout le monde : l'écran qui la choisit ne sert qu'à celui qui
          a gagné une expression et veut la montrer en permanence. */
-      activeEtat: w.active_etat || null };
+      activeEtat: avatar?.etat ?? null };
   }
 
   async function collection(userId) {
@@ -1365,43 +1444,12 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    * trois réglages qui ne dise rien sur la force de personne.
    */
   async function personnageActif(userId, { enJeu = false } = {}) {
-    const w = (await q(
-      `SELECT active_fanzzy, active_evo, active_etat FROM user_wallet
-        WHERE user_id = ?`, [userId]))[0];
-    if (!w?.active_fanzzy) return null;
-    const id = racineDe(w.active_fanzzy);
-    const r = (await q(`SELECT stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?`,
-      [userId, id]))[0];
-    const atteint = Math.max(1, Number(r?.stage) || 1);
-    /* **L'âge choisi, borné par l'âge atteint.** Le joueur peut préférer se
-       montrer jeune — c'est son visage, et celui de l'âge 1 n'a rien d'une
-       version inférieure. Mais la borne reste : une colonne qui dirait 3 alors
-       que la collection n'a fait grandir qu'au 2 afficherait aux amis un
-       personnage que son propriétaire n'a pas. Ça arrive sans mauvaise
-       intention — un âge choisi puis une remise à zéro de la collection — et
-       le clamp coûte moins cher que d'y penser à chaque écriture.
-
-       Nul = l'âge atteint, ce qui est le comportement d'avant : personne
-       n'ayant encore choisi, tout le monde se voit exactement comme hier. */
-    const evo = enJeu ? 1 : stadeAffiche(atteint, w.active_evo);
-    // `auStade` peut ne rien rendre : cent cinquante-deux personnages n'ont
-    // qu'un âge écrit, et une base qui annonce un stade 2 inexistant ne doit
-    // pas faire disparaître le personnage de l'écran.
-    const age = auStade(id, evo) ?? parIdentifiant(id);
-    if (!age) return null;
-    /* Deux identifiants, et les confondre donne le mauvais dessin : `id` est
-       la lignée — c'est sous ce nom que sont rangés les douze états — tandis
-       que `age` est la carte du catalogue, sous laquelle est rangée
-       l'illustration en pied. Le Meneur de chant, c'est `TR32` avec `evo: 2`
-       pour ses états, et `TR32B` pour son dessin. */
-    /* La tenue de l'âge qu'on montre. En jeu c'est celle du premier âge, et
-       c'est la bonne : on y entre au premier âge, donc dans sa garde-robe. */
-    const skin = await tenuePortee(userId, id, evo);
-
-    return { id, age: age.id, evo, nom: age.nom, skin,
-      /* Nulle en jeu : c'est le match qui décide de l'expression. */
-      etat: enJeu ? null : (w.active_etat || null),
-      cri: age.cri?.label ?? null, rar: age.rar ?? null };
+    /* Plus rien à résoudre ici : c'est `construireAvatar` qui sait. Cette
+       fonction ne fait que choisir laquelle des deux formes on veut — sans
+       quoi le Virage aurait sa propre copie de la règle, et c'est exactement
+       ce qui a fait diverger les écrans pendant une semaine. */
+    const { avatar, enJeu: surLeTerrain } = await construireAvatar(userId);
+    return enJeu ? surLeTerrain : avatar;
   }
 
   /**
@@ -1531,5 +1579,5 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
   }
 
   return { router, wallet, collection, stades, openPack, evolve, activeFanzzy,
-    personnageActif, fiche, offrir, remettreStuff, remettreTenue };
+    personnageActif, construireAvatar, fiche, offrir, remettreStuff, remettreTenue };
 }
