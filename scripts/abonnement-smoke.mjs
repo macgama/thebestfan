@@ -400,6 +400,19 @@ check('le retirer le retire vraiment', (await abonnement.estAbonne(LIBRE)) === f
       + `(${st4.wallet?.activeSkin} · ${st4.wallet?.activeEtat})`,
       st4.wallet?.activeSkin === deguisement.id && st4.wallet?.activeEtat === 'joie'
       || (console.log('        il annonce :', JSON.stringify(st4.wallet)), false));
+
+    /* **Et le retour au repos, nommé.** La fiche envoie `etat: 'neutre'` en
+       toutes lettres quand on touche la case du repos — elle n'omet pas le
+       champ. C'est donc ce chemin-là qu'il faut éprouver, et non celui d'un
+       champ absent : les deux mènent au même endroit aujourd'hui, rien ne
+       garantit qu'ils le feront demain. */
+    await O2.poserAvatar(ABO,
+      { fanzzyId: 'TR32', stade: 1, skinId: deguisement.id, etat: 'neutre' });
+    const st5 = await get('/api/fanzzy/state');
+    check(`le repos nommé défait l’expression (${st5.wallet?.activeEtat})`,
+      st5.wallet?.activeEtat === null
+      || (console.log('        il annonce :', JSON.stringify(st5.wallet)), false));
+    check('sans toucher à la tenue', st5.wallet?.activeSkin === deguisement.id);
   }
 
   /* ---- un âge qu'on n'a pas atteint se borne, il ne lève pas ----

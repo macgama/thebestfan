@@ -302,7 +302,7 @@
         });
       }
 
-      /* **Les quatre états.**
+      /* **Les quatre états à gagner**, après le repos.
        *
        * Ils étaient donnés avec le personnage et n'apparaissaient nulle part :
        * un joueur pouvait jouer un an sans savoir que son Fanzzy avait quatre
@@ -313,6 +313,32 @@
        * vide à côté de trois cases pleines est ce qui fait ouvrir le paquet
        * suivant. Sinon le pictogramme seul : montrer l'état qu'on n'a pas
        * serait le donner. */
+      /* **Le repos, en tête de la rangée.**
+
+         Il n'y était pas, et ce n'était pas un oubli tant que cette rangée ne
+         servait qu'à **collectionner** : `ETATS_DESSINES` écarte `neutre` exprès,
+         parce que le repos ne se gagne pas — il est là dès le premier
+         booster. Le mettre dans cette liste-là le ferait distribuer comme un
+         lot.
+
+         Mais la rangée sert aussi à **choisir**, depuis qu'on compose son
+         avatar ici. Et sans cette case, une fois une expression retenue, on
+         ne pouvait plus revenir au repos depuis la fiche : les quatre cases
+         proposaient la joie, le dépit, la poussée, la colère — et aucun
+         chemin de retour. Un joueur l'a signalé avant qu'on s'en aperçoive.
+
+         Elle vit donc ici, dans la rangée de choix, et nulle part ailleurs.
+         Toujours possédée : c'est l'état de base de tout le monde. */
+      liste.push({
+        cle: 'etat:neutre', rang: 'ÉTATS', titre: 'Neutre',
+        sorte: 'État de base',
+        ok: true, couleur: '#3FA37A', icone: 'etat',
+        image: window.FZART?.adresse?.(d.fanzzy.ageId ?? d.fanzzy.id, 'buste') ?? null,
+        texte: 'Son air de tous les jours. En partie, le match le fait changer '
+          + 'd\u2019expression tout seul \u2014 au but, \u00e0 l\u2019encaisse \u2014 puis il y revient.',
+        manque: null, action: null,
+      });
+
       for (const e of (d.parAge?.[vu]?.etats ?? d.etats ?? [])) {
         liste.push({
           cle: `etat:${e.id}`, rang: 'ÉTATS', titre: e.nom,
