@@ -1923,6 +1923,18 @@ check('et elle explique pourquoi au lieu de rester vide',
   check('on choisit le premier âge', touche);
   await dodo(250);
 
+  /* **Le repos est dans la rangée, et il y est possédé.** Sans lui, une
+     expression retenue ne se défaisait plus depuis la fiche : il n'y avait
+     aucune case pour revenir en arrière. */
+  const repos = await p.evaluate(() => {
+    const n = document.querySelector('[data-case="etat:neutre"]');
+    return n ? { ok: n.classList.contains('ok'), premier:
+      n === n.closest('.cases')?.querySelector('[data-case^="etat:"]') } : null;
+  });
+  check('le repos figure parmi les états, en tête et possédé',
+    repos?.ok === true && repos?.premier === true
+    || (console.log('        la case dit :', JSON.stringify(repos)), false));
+
   const valide = await p.evaluate(() => {
     const b = document.querySelector('[data-montrer]');
     if (!b || b.disabled) return false; b.click(); return true;
