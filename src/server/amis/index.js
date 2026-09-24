@@ -1,7 +1,6 @@
 import express from 'express';
 import { randomBytes } from 'node:crypto';
-import { racineDe, auStade } from '../fanzzy/catalogue.js';
-import { stadeAffiche } from '../../shared/fanzzy/ages.js';
+import { avatarsDe } from '../fanzzy/avatar.js';
 
 /**
  * Les amis.
@@ -80,25 +79,34 @@ export function createAmis({ pool, requireAuth, kop = null }) {
   const fail = (code, extra) => Object.assign(new Error(code), { code, extra });
 
   /**
-   * Le Fanzzy équipé de quelqu'un, **à l'âge qu'il a atteint**.
+   * **Le personnage de chacun, tel qu'il l'a choisi** — l'âge, la tenue,
+   * l'expression. On se reconnaît à son personnage avant de lire un pseudo :
+   * autant que ce soit le bon.
    *
-   * On se reconnaît à son personnage avant de lire un pseudo : autant que ce
-   * soit le bon. La base garde la lignée dans le portefeuille et le stade dans
-   * la collection ; le catalogue fait le reste.
+   * Cette liste avait sa propre recette, `ageDe`, qui ne savait que l'âge :
+   * un ami qui s'était habillé pour Halloween et montrait sa joie apparaissait
+   * ici au repos, dans sa tenue de tous les jours. Elle passe désormais par
+   * `avatarsDe`, la réponse unique du jeu, en une lecture pour toute la
+   * liste. `fanzzy` reste à côté — la carte de l'âge — pour ce qui ne sait
+   * dessiner qu'une carte.
    *
    * Sous garde, et pas par prudence excessive : le catalogue est chargé au
    * démarrage du serveur, mais une suite de test peut monter ce module sans
-   * lui. Un avatar au premier âge vaut mieux qu'une liste d'amis qui lève.
+   * lui. Un ami sans dessin vaut mieux qu'une liste d'amis qui lève.
+   *
+   * @param {Array} lignes  avec `userId`, `active_fanzzy`, `active_evo`,
+   *   `active_etat` ; chacune reçoit `avatar` et `fanzzy`.
    */
-  function ageDe(id, stade, choisi) {
-    if (!id) return null;
-    try {
-      const racine = racineDe(id);
-      /* La règle est dans `shared/fanzzy/ages.js`, avec son raisonnement : elle
-         vivait ici, au portefeuille et à l'accueil, et une quatrième copie
-         allait s'écrire pour la tenue portée. */
-      return (auStade(racine, stadeAffiche(stade, choisi)) ?? { id: racine }).id;
-    } catch { return id; }
+  async function habiller(lignes) {
+    let av = new Map();
+    try { av = await avatarsDe(q, lignes); } catch (e) {
+      if (!/catalogue/i.test(e?.message ?? '')) throw e;
+    }
+    for (const l of lignes) {
+      l.avatar = av.get(l.userId)?.avatar ?? null;
+      l.fanzzy = l.avatar?.age ?? l.active_fanzzy ?? null;
+    }
+    return lignes;
   }
 
   /** La paire, rangée. Tout passe par ici : deux ordres, ce serait deux lignes. */
@@ -117,20 +125,20 @@ export function createAmis({ pool, requireAuth, kop = null }) {
   async function tableau(userId) {
     const lignes = await q(
       `SELECT am.a, am.b, am.par, am.etat, am.demande_le,
-              u.public_id, u.pseudo, w.active_fanzzy, w.active_evo, uf.stage
+              u.public_id, u.pseudo, w.active_fanzzy, w.active_evo, w.active_etat
          FROM amities am
          JOIN users u ON u.public_id = IF(am.a = ?, am.b, am.a)
          LEFT JOIN user_wallet w ON w.user_id = u.public_id
-         LEFT JOIN user_fanzzy uf ON uf.user_id = u.public_id
-                                 AND uf.fanzzy_id = w.active_fanzzy
         WHERE (am.a = ? OR am.b = ?) AND am.etat IN ('demande','amis')
         ORDER BY am.demande_le DESC`,
       [userId, userId, userId]);
 
+    await habiller(lignes.map((l) => Object.assign(l, { userId: l.public_id })));
     const gens = lignes.map((l) => ({
       id: l.public_id,
       pseudo: l.pseudo,
-      fanzzy: ageDe(l.active_fanzzy, l.stage, l.active_evo),
+      fanzzy: l.fanzzy,
+      avatar: l.avatar,
       etat: l.etat,
       // « à moi de répondre » : la demande vient de l'autre.
       aMoi: l.etat === 'demande' && l.par !== userId,
@@ -184,15 +192,13 @@ export function createAmis({ pool, requireAuth, kop = null }) {
        coïncider le jour où ils changeraient de forme — en ne montrant rien
        d'autre qu'une suggestion qui revient alors qu'on l'a écartée. */
     const lignes = await q(
-      `SELECT u.public_id AS id, u.pseudo, w.active_fanzzy AS fanzzy, w.active_evo AS evo,
-                uf.stage, t.name AS club
+      `SELECT u.public_id AS id, u.pseudo, w.active_fanzzy, w.active_evo, w.active_etat,
+                t.name AS club
          FROM user_follows f
          JOIN user_follows moi ON moi.team_id = f.team_id AND moi.user_id = ?
          JOIN users u ON u.public_id = f.user_id
          LEFT JOIN teams t ON t.id = f.team_id
          LEFT JOIN user_wallet w ON w.user_id = u.public_id
-         LEFT JOIN user_fanzzy uf ON uf.user_id = u.public_id
-                                 AND uf.fanzzy_id = w.active_fanzzy
         WHERE f.user_id <> ?
           AND NOT EXISTS (
             SELECT 1 FROM amities am
@@ -201,10 +207,17 @@ export function createAmis({ pool, requireAuth, kop = null }) {
         ORDER BY u.pseudo`,
       [userId, userId, userId, userId]);
 
+    /* Une ligne par club commun : on habille les gens une fois chacun, pas
+       une fois par club. */
+    const uniques = [...new Map(lignes.map((l) => [l.id, l])).values()]
+      .map((l) => ({ ...l, userId: l.id }));
+    const habits = new Map((await habiller(uniques)).map((l) => [l.id, l]));
     const par = new Map();
     for (const l of lignes) {
+      const h = habits.get(l.id);
       const g = par.get(l.id)
-        ?? { id: l.id, pseudo: l.pseudo, fanzzy: ageDe(l.fanzzy, l.stage, l.evo), clubs: [] };
+        ?? { id: l.id, pseudo: l.pseudo, fanzzy: h?.fanzzy ?? null, avatar: h?.avatar ?? null,
+          clubs: [] };
       if (l.club) g.clubs.push(l.club);
       par.set(l.id, g);
     }
@@ -430,15 +443,14 @@ export function createAmis({ pool, requireAuth, kop = null }) {
   async function parrainDe(code) {
     if (!code) return null;
     const l = (await q(
-      `SELECT u.public_id AS id, u.pseudo, w.active_fanzzy, w.active_evo, uf.stage
+      `SELECT u.public_id AS id, u.pseudo, w.active_fanzzy, w.active_evo, w.active_etat
          FROM parrainages p
          JOIN users u ON u.public_id = p.par
          LEFT JOIN user_wallet w ON w.user_id = u.public_id
-         LEFT JOIN user_fanzzy uf ON uf.user_id = u.public_id
-                                 AND uf.fanzzy_id = w.active_fanzzy
         WHERE p.code = ?`, [String(code)]))[0];
     if (!l) return null;
-    return { id: l.id, pseudo: l.pseudo, fanzzy: ageDe(l.active_fanzzy, l.stage, l.active_evo) };
+    await habiller([Object.assign(l, { userId: l.id })]);
+    return { id: l.id, pseudo: l.pseudo, fanzzy: l.fanzzy, avatar: l.avatar };
   }
 
   /**
@@ -528,7 +540,11 @@ export function createAmis({ pool, requireAuth, kop = null }) {
   router.get('/invitation/:code', safe(async (req, res) => {
     const parrain = await parrainDe(String(req.params.code ?? ''));
     if (!parrain) return res.status(404).json({ error: 'amis.error.invitation_inconnue' });
-    res.json({ parrain: { pseudo: parrain.pseudo, fanzzy: parrain.fanzzy } });
+    /* `avatar` ne dit que le personnage — lignée, âge, tenue, expression :
+       ce qu'un classement montre déjà. L'identifiant du parrain, lui, reste
+       dehors. */
+    res.json({ parrain: { pseudo: parrain.pseudo, fanzzy: parrain.fanzzy,
+      avatar: parrain.avatar } });
   }));
 
   router.post('/parrainage', requireAuth, safe(async (req, res) =>

@@ -119,6 +119,7 @@ h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;ma
 <div class="toast" id="toast"></div>
 
 <script src="/fanzzy-art.js"></script>
+<script src="/fanzzy-etats.js"></script>
 <script src="/fanzzy-fond.js"></script>
 <!-- Classique et non différé : `convier()` lit `TBF_PARTAGE.possible` au
      premier rendu, qui peut arriver avant qu’un script différé s’exécute. -->
@@ -210,6 +211,10 @@ async function charger() {
       // ajouter des amis. On ne fait donc pas tomber la page avec eux.
       fetch('/api/kop/miens', { credentials: 'same-origin' })
         .then((r) => r.json()).catch(() => ({ kops: [] })),
+      /* Le manifeste des dessins, attendu avec le reste : sans lui, le premier
+         rendu retomberait sur la carte de l’âge et perdrait la tenue et
+         l’expression. Il ne lève jamais. */
+      window.TBF_ETATS?.charger?.(),
     ]);
     Object.assign(S, tableau);
     S.gens = suggestions.gens ?? [];
@@ -224,9 +229,19 @@ async function charger() {
 
 /* ------------------------------------------------------------- rendu */
 
-/** L'avatar : le Fanzzy équipé si on le connaît, l'initiale sinon. */
+/**
+ * L'avatar : le personnage de l'ami **tel qu'il l'a choisi** — son âge, sa
+ * tenue, son expression — et l'initiale si on ne le connaît pas.
+ *
+ * Le serveur rend `avatar` complet, et on le dessine avec `dessinAvatar`,
+ * comme l'accueil et « Mon Fanzzy ». Cette page se contentait de la carte
+ * de l'âge (`g.fanzzy`) : un ami en tenue d'Halloween, dans la joie, y
+ * apparaissait au repos, habillé comme tous les jours. `g.fanzzy` reste le
+ * repli d'une réponse ancienne, servie par un serveur pas encore redémarré.
+ */
 function avatar(g) {
-  const buste = window.FZART?.adresse?.(g.fanzzy, 'buste');
+  const buste = (g.avatar && window.FZART?.dessinAvatar?.(g.avatar, 'buste'))
+    || window.FZART?.adresse?.(g.fanzzy, 'buste');
   return buste
     ? `<span class="pastille-nom"><img src="${buste}" alt=""
          onerror="this.closest('.pastille-nom').textContent='${

@@ -22,7 +22,7 @@ import express from 'express';
 import puppeteer from 'puppeteer';
 import { createAmis } from '../src/server/amis/index.js';
 import { createKop } from '../src/server/kop/index.js';
-import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { charger as chargerCatalogue, auStade } from '../src/server/fanzzy/catalogue.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -339,6 +339,53 @@ if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
     || (console.log('        puis :', encore?.url), false));
 
   await p.close();
+}
+
+/* ================================================ l'ami tel qu'il s'est choisi
+
+   **L'âge ne suffit pas.** La page dessinait la carte de l'âge et rien
+   d'autre : un ami qui s'était choisi dans la joie apparaissait ici au
+   repos, alors que l'accueil et « Mon Fanzzy » le montraient juste. Elle
+   dessine désormais l'avatar que rend le serveur, avec `dessinAvatar`,
+   comme eux.
+
+   Le choix est piégé comme dans le tour des écrans : un personnage arrivé
+   au second âge, montré au premier, dans la joie. Une page qui retombe sur
+   l'âge atteint le trahit ; une page qui oublie l'expression aussi. */
+{
+  const { readdir } = await import('node:fs/promises');
+  const IMG = path.join(RACINE, 'public', 'img', 'fanzzy');
+  /* Un personnage dont la joie est dessinée au premier âge, et qui a un
+     second âge au catalogue. Cherché sur le disque plutôt que nommé : un
+     test qui nomme une carte se casse au premier redessin. */
+  let X = null;
+  for (const d of await readdir(IMG, { withFileTypes: true })) {
+    if (!d.isDirectory()) continue;
+    let m = null;
+    try { m = JSON.parse(readFileSync(path.join(IMG, d.name, 'manifeste.json'), 'utf8')); }
+    catch { continue; }
+    if (!(m.evolutions?.e1?.skins?.base?.etats ?? []).includes('joie')) continue;
+    if (auStade(d.name, 2)) { X = d.name; break; }
+  }
+  check('un personnage se prête à l’épreuve de l’avatar', Boolean(X));
+  if (X) {
+    moi = MOI;
+    await pool.query(
+      `INSERT INTO user_fanzzy (user_id, fanzzy_id, copies, stage) VALUES (?, ?, 1, 2)
+       ON DUPLICATE KEY UPDATE stage = 2`, [LUI, X]);
+    await pool.query(
+      `UPDATE user_wallet SET active_fanzzy = ?, active_evo = 1, active_etat = 'joie'
+        WHERE user_id = ?`, [X, LUI]);
+
+    const p = await ouvrir();
+    const src = await p.evaluate(() => [...document.querySelectorAll('#corps .gars')]
+      .find((n) => /Tarek/.test(n.textContent))
+      ?.querySelector('.pastille-nom img')?.getAttribute('src') ?? '');
+    await p.close();
+    check(`un ami est montré tel qu’il s’est choisi : ${X} au premier âge, dans la joie`,
+      new RegExp(`/${X}/e1/base/joie\\.`).test(src)
+      || (console.log('        il montre :', src || 'rien'), false));
+  }
 }
 
 check('aucune erreur de script sur la page des amis',
