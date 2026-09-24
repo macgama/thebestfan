@@ -303,6 +303,115 @@ check('le retirer le retire vraiment', (await abonnement.estAbonne(LIBRE)) === f
   await pool.query('DELETE FROM virage_presence WHERE user_id = ?', [LIBRE]);
 }
 
+/* ======================================== choisir son avatar en un geste
+
+   **Le personnage, son âge et ce qu'il montre se décidaient à trois endroits.**
+   Le titulaire sur la fiche, l'âge aux flèches de l'accueil, la tenue sur un
+   bouton « PORTER » qui ne disait pas qu'il changeait l'avatar. Aucun des
+   trois ne montrait le résultat des deux autres.
+
+   `poserAvatar` les pose ensemble, et refuse d'un seul bloc. Ce bloc éprouve
+   les trois refus et la règle d'exclusivité — une tenue **ou** une
+   expression, jamais les deux, parce qu'aucun dessin ne les montre ensemble. */
+{
+  moi = ABO;
+  /* Import dynamique : ce fichier monte l'inscription plus bas, après les
+     contrôles d'abonnement, et une déclaration `const` ne se lit pas avant sa
+     ligne. Le prendre ici évite de déplacer un bloc qui n'a rien demandé. */
+  const { createOnboarding: monterInscription } =
+    await import('../src/server/onboarding/index.js');
+  const O2 = monterInscription({ pool, requireAuth, abonnement });
+  const { tenuesPubliees } = await import('../src/server/fanzzy/tenues.js');
+  const deguisement = tenuesPubliees().find((x) => x.id !== 'base');
+
+  /* Un personnage à lui, au second âge, avec une expression gagnée au
+     **premier** seulement : c'est ce qui permet d'éprouver la borne d'âge
+     sans inventer un second personnage. */
+  /* Ce bloc passe avant celui des tenues, qui donne TR32 au compte d'essai :
+     on le lui donne ici aussi, et `INSERT IGNORE` rend l'ordre indifférent. */
+  await pool.query(
+    'INSERT IGNORE INTO user_fanzzy (user_id, fanzzy_id, copies, stage) VALUES (?, ?, 1, 2)',
+    [ABO, 'TR32']);
+  await pool.query(
+    `UPDATE user_fanzzy SET stage = 2 WHERE user_id = ? AND fanzzy_id = 'TR32'`, [ABO]);
+  await pool.query(
+    `INSERT IGNORE INTO user_etats (user_id, fanzzy_id, stage, etat) VALUES (?, 'TR32', 1, 'joie')`,
+    [ABO]);
+
+  /* ---- un personnage qui n'est pas à lui ---- */
+  let refus = null;
+  try { await O2.poserAvatar(ABO, { fanzzyId: 'ZZ99', stade: 1 }); }
+  catch (e) { refus = e.code; }
+  check('on ne montre pas un Fanzzy qu’on n’a pas',
+    refus === 'onboarding.error.not_owned');
+
+  /* ---- une expression qu'on n'a pas gagnée à cet âge-là ----
+
+     Elle est gagnée au premier âge, pas au second. C'est la borne la plus
+     facile à oublier : l'expression **existe** dans la collection, elle
+     n'existe simplement pas pour l'âge qu'on demande. */
+  refus = null;
+  try { await O2.poserAvatar(ABO, { fanzzyId: 'TR32', stade: 2, etat: 'joie' }); }
+  catch (e) { refus = e.code; }
+  check('ni une expression gagnée à un autre âge',
+    refus === 'onboarding.error.not_owned'
+    || (console.log('        refus :', refus), false));
+
+  /* ---- l'expression, à l'âge où elle est gagnée ---- */
+  await O2.poserAvatar(ABO, { fanzzyId: 'TR32', stade: 1, etat: 'joie' });
+  const st = await get('/api/fanzzy/state');
+  check(`la pose choisie voyage (${st.wallet?.activeEtat})`,
+    st.wallet?.activeEtat === 'joie'
+    || (console.log('        il annonce :', JSON.stringify(st.wallet)), false));
+  check(`et l’âge avec (${st.wallet?.activeStade})`, st.wallet?.activeStade === 1);
+
+  /* **L'exclusivité, des deux côtés.** Choisir une expression remet la tenue
+     de base : les quatre expressions ne sont dessinées qu'ainsi, et laisser
+     un déguisement en place promettrait une image qui n'existe pas. */
+  check(`et la tenue revient à la base (${st.wallet?.activeSkin})`,
+    st.wallet?.activeSkin === 'base');
+
+  /* ---- et l'inverse ---- */
+  if (deguisement) {
+    await pool.query(
+      `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, stage, skin_id, equipped)
+       VALUES (?, 'TR32', 1, ?, 0)`, [ABO, deguisement.id]);
+    await O2.poserAvatar(ABO, { fanzzyId: 'TR32', stade: 1, skinId: deguisement.id });
+    const st2 = await get('/api/fanzzy/state');
+    check(`la tenue choisie voyage (${st2.wallet?.activeSkin})`,
+      st2.wallet?.activeSkin === deguisement.id
+      || (console.log('        il annonce :', JSON.stringify(st2.wallet)), false));
+    check('et la pose revient au repos', st2.wallet?.activeEtat === null);
+  }
+
+  /* ---- un âge qu'on n'a pas atteint se borne, il ne lève pas ----
+
+     Refuser serait plus strict et moins utile : la fiche peut demander le
+     troisième âge d'un personnage qui vient de gagner le second, et la bonne
+     réponse est « le plus vieux que tu aies », pas une erreur. C'est la règle
+     de `stadeAffiche`, et elle vaut ici comme partout. */
+  await O2.poserAvatar(ABO, { fanzzyId: 'TR32', stade: 3 });
+  const st3 = await get('/api/fanzzy/state');
+  check(`un âge non atteint se borne à celui qu’on a (${st3.wallet?.activeStade})`,
+    st3.wallet?.activeStade === 2);
+
+  /* **On remet le compte d'essai comme on l'a trouvé.** Les blocs suivants
+     comptent sur TR32 au premier âge, et un âge laissé derrière soi fait
+     rougir un contrôle qui n'a rien à voir avec celui-ci. */
+  await pool.query(
+    `UPDATE user_fanzzy SET stage = 1 WHERE user_id = ? AND fanzzy_id = 'TR32'`, [ABO]);
+  await pool.query(
+    'UPDATE user_wallet SET active_evo = NULL, active_etat = NULL WHERE user_id = ?', [ABO]);
+  /* La tenue prêtée repart aussi : le bloc des tenues éprouve qu'un joueur
+     inscrit **ne peut pas** la porter, et la lui laisser en poche rendrait ce
+     refus impossible. */
+  await pool.query(
+    `DELETE FROM user_skins WHERE user_id = ? AND fanzzy_id = 'TR32' AND skin_id <> 'base'`,
+    [ABO]);
+  await pool.query(
+    `DELETE FROM user_etats WHERE user_id = ? AND fanzzy_id = 'TR32'`, [ABO]);
+}
+
 /* --------------------------------------------- ce qu'il n'ouvre PAS
 
    C'est la moitié qui compte. Ces contrôles sont là pour échouer le jour où
