@@ -1886,6 +1886,89 @@ check('et elle explique pourquoi au lieu de rester vide',
   }
 }
 
+/* ====================== après « ME MONTRER AINSI », la vitrine garde le choix
+
+   **Un joueur a choisi le premier âge, validé, et vu la vitrine repartir sur
+   le troisième.** L'accueil et « Mon Fanzzy » montraient le bon ; seule la
+   fiche — l'écran même où il venait de décider — se trompait.
+
+   Le rendu de la fiche se termine par un dessin, et ce dessin prenait l'âge
+   atteint par défaut. Il tourne à l'ouverture — où les deux coïncidaient —
+   et **après chaque enregistrement**, où ils ne coïncident plus du tout.
+
+   Rien d'autre ne mesurait l'après : tous les contrôles de la fiche
+   regardaient l'écran avant qu'on touche au bouton. */
+{
+  await pool.query(
+    'UPDATE user_fanzzy SET stage = 2 WHERE user_id = ? AND fanzzy_id = ?',
+    [U, ILLUSTRE]);
+  await pool.query(
+    'UPDATE user_wallet SET active_fanzzy = ?, active_evo = NULL, active_etat = NULL WHERE user_id = ?',
+    [ILLUSTRE, U]);
+
+  const p = await nav.newPage();
+  p.on('pageerror', (e) => erreurs.push(e.message));
+  await p.setViewport({ width: 400, height: 880 });
+  await p.goto(`${base}/fanzzy/${ILLUSTRE}`, { waitUntil: 'networkidle0' });
+  await p.waitForSelector('.fiche .case', { timeout: 8000 }).catch(() => null);
+  await dodo(250);
+
+  /* Le premier âge d'une lignée porte la racine. */
+  const premierNom = await p.evaluate((id) =>
+    document.querySelector(`[data-case="age:${id}"]`)?.getAttribute('title') ?? null, ILLUSTRE);
+  const touche = await p.evaluate((id) => {
+    const n = document.querySelector(`[data-case="age:${id}"]`);
+    if (!n) return false; n.click(); return true;
+  }, ILLUSTRE);
+  check('on choisit le premier âge', touche);
+  await dodo(250);
+
+  const valide = await p.evaluate(() => {
+    const b = document.querySelector('[data-montrer]');
+    if (!b || b.disabled) return false; b.click(); return true;
+  });
+  check('et on valide', valide);
+
+  /* On attend la relecture : c'est elle qui refait la fiche, et c'est après
+     elle que la vitrine repartait sur l'âge atteint. Le bouton éteint est
+     la preuve qu'elle a eu lieu — il ne s'éteint que si le serveur dit que
+     l'avatar montre déjà ce trio. */
+  await p.waitForFunction(() => {
+    const b = document.querySelector('#fiche-actions .bt[disabled]');
+    return b && /DÉJÀ LUI/.test(b.textContent);
+  }, { timeout: 8000 }).catch(() => null);
+  await dodo(500);
+
+  const vu = await p.evaluate(() => ({
+    src: document.querySelector('#fiche-art img')?.getAttribute('src') ?? null,
+    nom: document.querySelector('.fiche .txt h2')?.textContent?.trim() ?? null,
+    bouton: document.querySelector('#fiche-actions .bt[disabled]')?.textContent
+      ?.replace(/\s+/g, ' ').trim() ?? null,
+  }));
+
+  check(`le serveur a pris le choix (${vu.bouton ?? 'bouton introuvable'})`,
+    /DÉJÀ LUI/.test(vu.bouton ?? ''));
+  if (vu.src) {
+    const second = new RegExp(`/img/fanzzy/${ILLUSTRE}B[-.]|/${ILLUSTRE}/e2/`);
+    check(`et la vitrine reste au premier âge (${vu.src.split('/').slice(-3).join('/')})`,
+      !second.test(vu.src)
+      || (console.log(`        elle montre ${vu.src}, qui est l’âge atteint`), false));
+  }
+  /* **Et le nom avec.** La vitrine écrivait le nom de l'âge atteint sous le
+     dessin de n'importe quel âge — la faute du Choriste sous le nom du
+     Meneur de chant, revenue par l'autre côté. */
+  check(`et le nom est celui du premier âge (${vu.nom})`,
+    Boolean(premierNom) && vu.nom === premierNom
+    || (console.log(`        il écrit ${vu.nom}, attendu ${premierNom}`), false));
+
+  await p.close();
+  await pool.query(
+    'UPDATE user_fanzzy SET stage = 1 WHERE user_id = ? AND fanzzy_id = ?',
+    [U, ILLUSTRE]);
+  await pool.query(
+    'UPDATE user_wallet SET active_evo = NULL, active_etat = NULL WHERE user_id = ?', [U]);
+}
+
 /* ============================== et si tout ça ne suffisait pas
 
    Un joueur a photographié une fiche dont les boutons étaient hors de

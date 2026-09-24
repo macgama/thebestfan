@@ -511,7 +511,22 @@
         largeurs.observe(bande);
         marquer();
       }
-      dessiner(f);
+      /* **L'âge regardé, et non l'âge atteint.**
+
+         C'était `dessiner(f)`, sans âge, donc l'âge atteint par défaut. Tant que
+         la fiche s'ouvrait sur l'âge atteint, les deux coïncidaient. Mais ce
+         rendu tourne aussi **après chaque enregistrement** — `recharger` le
+         rappelle — et un joueur qui venait de choisir le premier âge voyait la
+         vitrine repartir sur le troisième à l'instant où il validait. L'accueil
+         et « Mon Fanzzy » montraient le bon ; seule la fiche, celle où l'on
+         venait de décider, se trompait.
+
+         Le clic sur un âge savait déjà le faire : c'est la même résolution,
+         posée une fois ici plutôt que dans chaque appelant. */
+      const vu = ageVu ?? d.stade;
+      const carte = (d.lignee ?? []).find((a) => Number(a.stage) === Number(vu));
+      dessiner(carte ? { ...f, ageId: carte.id, nom: carte.nom, rar: carte.rar ?? f.rar } : f,
+        vu, carte ? Boolean(carte.possede) : true);
       rendreDetail();
       rendreActions();
       brancher();
@@ -568,8 +583,17 @@
       }
       const x = cases.find((y) => y.cle === choisie);
       if (!x) { n.innerHTML = ''; return; }
+      /* **Toucher une tenue la choisit**, et le détail doit le dire. Il
+         écrivait « TENUE POSSÉDÉE » — vrai, et muet sur ce qui venait de se
+         passer : on touchait une tenue pour la lire et elle était retenue
+         sans qu'un mot l'annonce, sinon une pastille au coin de la case. */
+      const retenue = voulu && (x.cle === `tenue:${voulu.skin}`
+        || x.cle === `etat:${voulu.etat}`
+        || (String(x.cle).startsWith('age:')
+          && (d.lignee ?? []).find((a) => `age:${a.id}` === x.cle)?.stage === voulu.stade));
+      const sorte = retenue && x.ok ? `${x.sorte} · choisie` : x.sorte;
       n.innerHTML = `
-        <div class="t">${esc(x.titre)}<em>${esc(x.sorte)}</em></div>
+        <div class="t">${esc(x.titre)}<em>${esc(sorte)}</em></div>
         <p>${esc(x.texte)}</p>
         ${x.manque ? `<span class="manque">🔒 ${esc(x.manque)}</span>` : ''}`;
     }
@@ -714,7 +738,44 @@
         marquerSecret(art, acquis);
         return;
       }
+      /* **Le nom suit le dessin.** La vitrine écrivait le nom de l'âge atteint
+         sous le dessin de n'importe quel âge : « Bâche Repeinte » au-dessus de
+         la Bâche Repliée. C'est la faute de la fiche d'il y a trois jours —
+         le Choriste sous le nom du Meneur de chant — revenue par l'autre côté :
+         le dessin avait appris à suivre l'âge, pas le texte. */
+      const titre = hote.querySelector('.fiche .txt h2');
+      if (titre && f.nom) titre.textContent = f.nom;
+
       art.innerHTML = decor ?? '';
+      /* **Dire quand on ne montre pas exactement ce qui est choisi.**
+
+         Un joueur a choisi une tenue d'Halloween au premier âge, où elle n'est
+         pas encore dessinée. `resoudre` est retombé sur la tenue de base — le
+         bon réflexe, le personnage reste le bon — et le décor, lui, portait
+         les citrouilles. La vitrine montrait donc un personnage en tenue
+         ordinaire devant un décor d'Halloween, et le joueur a cru avoir choisi
+         la base. Il l'a découvert en validant, quand le troisième âge — lui
+         dessiné — est apparu en costume.
+
+         Le repli reste. Ce qui change, c'est qu'il se **dit** : le choix est
+         bien enregistré, il attend simplement son dessin. */
+      const demande = [
+        tenue !== 'base'
+          ? ((d.parAge?.[etage]?.skins ?? d.skins ?? []).find((s) => s.id === tenue)?.nom
+            ?? tenue) : null,
+        pose !== 'neutre'
+          ? ((d.parAge?.[etage]?.etats ?? d.etats ?? []).find((e) => e.id === pose)?.nom
+            ?? pose) : null,
+      ].filter(Boolean);
+      const exact = !demande.length || Boolean(r && r.evo === etage && r.exact);
+      if (!exact && acquis) {
+        const n = document.createElement('div');
+        n.className = 'pas-dessine';
+        n.innerHTML = `<b>${esc(demande.join(' · '))}</b>`
+          + '<em>pas encore dessiné à cet âge — ton choix est gardé</em>';
+        art.appendChild(n);
+      }
+
       const img = new Image();
       img.onload = () => { art.appendChild(img); };
       // Trois formats à essayer dans l'ordre : un navigateur sans AVIF ne
