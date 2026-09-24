@@ -819,8 +819,12 @@ async function habiller(perso, age, stade) {
      celui qui préfère se montrer jeune, et il n'habillait personne. C'est
      l'onglet qui s'appelle « TON AVATAR » — il doit montrer exactement ce
      que voient l'accueil et les amis. */
-  const vu = await sceneEquipe?.definir({ id: perso.id, age: age.id,
-    evo: S.activeStade ?? stade, skin: S.activeSkin ?? 'base' });
+  /* L'avatar tel que le serveur le résout — âge, tenue **et expression**.
+     Cet écran recevait l'âge et la tenue, pas l'expression : un joueur qui
+     avait choisi la joie se voyait au repos sur l'onglet même qui s'appelle
+     « TON AVATAR ». Il ne recompose plus rien : il passe l'objet. */
+  const vu = await sceneEquipe?.definir(S.avatar?.id === perso.id ? S.avatar
+    : { id: perso.id, age: age.id, evo: stade, skin: 'base' });
   if (vu) { $('tscene')?.classList.add('entre'); return; }
 
   // Ni états ni illustration : le dessin géométrique, comme dans la grille.

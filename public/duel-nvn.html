@@ -793,6 +793,10 @@ h2 i{font-style:normal;opacity:.7}
 
 <script src="/socket.io/socket.io.js"></script>
 <!-- Sans « defer » : le script en ligne ci-dessous lit FZART et TBF_ACTION. -->
+<!-- Le manifeste des états : sans lui, aucune tenue ne se dessine — elles
+     n'existent que dans l'arborescence par âge, jamais dans l'art plat. Le
+     duel ne le chargeait pas, et montrait donc chacun en tenue de base. -->
+<script src="/fanzzy-etats.js"></script>
 <script src="/fanzzy-art.js"></script>
 <script src="/fanzzy-fond.js"></script>
 <script src="/action-art.js"></script>
@@ -2130,12 +2134,14 @@ function finir(v) {
  * retombe alors sur `base`, c'est-à-dire sur l'image d'avant. Une vignette
  * qui arrive une seconde trop tôt vaut mieux qu'une vignette qui attend.
  */
-let maTenue = null;
-let monFanzzy = null;
+/* **L'avatar en jeu**, tel que le serveur le résout : premier âge, repos,
+   tenue du premier âge. C'est la règle des effets — « un deck entre
+   toujours au premier âge » — et le Virage la suit déjà. */
+let monAvatar = null;
+window.TBF_ETATS?.charger?.().catch?.(() => {});
 fetch('/api/fanzzy/state', { credentials: 'same-origin' })
   .then((r) => (r.ok ? r.json() : null))
-  .then((j) => { maTenue = j?.wallet?.activeSkin ?? null;
-    monFanzzy = j?.wallet?.active ?? null; })
+  .then((j) => { monAvatar = j?.wallet?.avatarEnJeu ?? null; })
   .catch(() => {});
 
 const dessinFz = (id, variante, tenue) =>
@@ -2146,8 +2152,14 @@ function vignetteFz(f, entre, couleur) {
   /* La racine, parce que `monFanzzy` est la lignée et `f.id` l'âge : « TR32 »
      d'un côté, « TR32B » de l'autre pour le même personnage. */
   const racine = (s) => /^([A-Z]+\d+)/.exec(String(s ?? ''))?.[1] ?? s;
-  const mien = monFanzzy && racine(f.id) === racine(monFanzzy);
-  const src = dessinFz(f.id, 'buste', mien ? maTenue : null);
+  const mien = monAvatar && racine(f.id) === monAvatar.id;
+  /* Le sien passe par la fonction unique ; ceux d'en face gardent leur
+     dessin de base — le serveur ne dit pas leur tenue, et n'a aucune raison
+     de le faire. L'âge suit la partie : la carte Relève fait grandir en
+     cours de match, et la vignette doit le montrer. */
+  const src = mien
+    ? window.FZART?.dessinAvatar?.({ ...monAvatar, age: f.id, evo: f.stade ?? 1 }, 'buste')
+    : dessinFz(f.id, 'buste');
   return `<div class="fz-aff ${entre ? 'entre' : ''}" style="--ac:${couleur}">
     ${src ? `<img alt="" loading="lazy" src="${src}">` : ''}
     ${entre ? '<span class="tag">ENTRE</span>' : ''}

@@ -2271,6 +2271,11 @@ async function jsonp(url, options) {
            qui est exactement ce qui décide du dessin. */
         const affichee = calques[devant]?.getAttribute('src') ?? null;
         equipe = candidat;
+        /* L'état de fond valait `'neutre'` depuis le chargement, et c'est vers
+           lui que le salut d'arrivée retombe. Tant qu'aucun match ne l'a
+           changé, il prend l'expression de l'avatar — sinon le personnage
+           saluait, puis revenait au repos au lieu de revenir à lui. */
+        if (fond === 'neutre') fond = reposChoisi();
         const memeQuAvant = source(poseActuelle ?? reposChoisi()) === affichee;
         retenir(candidat);
         precharger();
@@ -2509,7 +2514,13 @@ async function alerteDuel() {
         else moment('attente', 'Match nul', 'var(--gris)');
       }
 
-      poserFond('neutre');
+      /* **Hors match, le repos est celui que le joueur a choisi** — et non
+         `'neutre'` écrit en dur. C'est ce qui écrasait l'expression de
+         l'avatar sur l'accueil : l'écran la recevait, la jouait une fraction
+         de seconde, puis la sonde du direct passait par ici et la ramenait
+         au repos. Pendant un match, la poussée reste : c'est le match qui
+         décide, pas le réglage. */
+      poserFond(reposChoisi());
       scoreVu = null;
       planifier(180_000);
       return;

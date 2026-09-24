@@ -306,6 +306,12 @@ async function load() {
      en décide, et ils finissent par ne plus montrer le même personnage. */
   S.activeSkin = st.wallet.activeSkin ?? 'base';
   S.activeStade = st.wallet.activeStade ?? null;
+  /* **L'avatar entier**, tel que le serveur le résout. Les deux champs du
+     dessus en sont tirés côté serveur ; les écrans devraient lire
+     celui-ci et rien d'autre — un objet complet ne peut pas avoir oublié
+     une dimension. */
+  S.avatar = st.wallet.avatar ?? null;
+  S.avatarEnJeu = st.wallet.avatarEnJeu ?? null;
   S.nextIn = st.wallet.nextPackInMs;
   S.packPrice = st.packPrice;
   /* La saison en cours, et celle que ce joueur a déjà vue annoncée.

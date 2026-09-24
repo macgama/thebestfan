@@ -53,6 +53,11 @@
     occasion: 'colere', decision: 'colere',
   };
 
+  /* Les quatre familles elles-mêmes — les expressions qu'on gagne et qu'on
+     choisit. Tirées de la table plutôt qu'écrites à côté : une cinquième
+     famille ajoutée à `FAMILLE` devient demandable sans qu'on y pense. */
+  const FAMILLES = new Set(Object.values(FAMILLE).filter(Boolean));
+
   /**
    * ## Le format des images : on ne le devine plus
    *
@@ -199,7 +204,28 @@
 
     const evoVoulu = Math.min(3, Math.max(1, Number(opt.evo) || 1));
     const skinVoulu = opt.skin || 'base';
-    const etatVoulu = ETATS.includes(opt.etat) ? opt.etat : 'neutre';
+    /* **Un moment, ou une famille.**
+
+       La ligne d'avant n'acceptait que les douze **moments** — un but, une
+       encaisse, une victoire — et ramenait tout le reste au repos. Or les
+       expressions qu'on **gagne** en booster et qu'on **choisit** sur la fiche
+       ne sont pas des moments : ce sont les quatre familles vers lesquelles
+       les moments renvoient — la joie, le dépit, la poussée, la colère.
+
+       Demander « joie » rendait donc « neutre ». Partout, depuis le premier
+       jour, et sans un mot : `exact` annonçait même un succès, puisque
+       l'état résolu égalait l'état voulu — celui qu'on venait de récrire.
+       Seule « la poussée » passait, parce qu'elle est à la fois un moment et
+       une famille. C'est la cause de la semaine où l'expression choisie
+       n'apparaissait sur aucun écran alors que tout ce qui l'entoure était
+       juste : l'avatar, la possession, le dessin, tout y était — sauf le
+       droit de le demander.
+
+       Une famille demandée directement n'a pas de famille à son tour :
+       `FAMILLE['joie']` est indéfini, la chaîne vaut alors « joie, puis
+       neutre », ce qui est exactement ce qu'on veut. */
+    const valide = ETATS.includes(opt.etat) || FAMILLES.has(opt.etat);
+    const etatVoulu = valide ? opt.etat : 'neutre';
     /* La chaîne de repli, dans l'ordre : **l'exact, sa famille, puis neutre**.
      *
      * La famille est l'étage neuf. Douze états par âge et par tenue ne se
