@@ -1307,6 +1307,19 @@ let equipe = null;
 function source(etat) {
   if (equipe) {
     const r = window.TBF_ETATS.resoudre(equipe.id, { evo: equipe.evo, skin: equipe.skin, etat });
+    /* **Un moment qui n'est pas dessiné retombe sur le repos du joueur**, et
+       non sur `neutre`. `resoudre` finit toujours sa chaîne par `neutre` :
+       c'est juste pour lui, qui ne sait pas ce que le joueur a choisi. Mais
+       ici on le sait. Les personnages se dessinent désormais en cinq
+       expressions et plus en douze moments : le salut, l'attente, l'ennui
+       n'ont plus d'image, et le salut d'arrivée montrait donc RP1 au repos
+       pendant deux secondes et demie à quelqu'un qui l'avait choisi dans la
+       joie — le premier regard de la session, sur le mauvais visage. Le
+       geste du salut, lui, se joue quand même : c'est l'animation, pas
+       l'image. */
+    if (r && r.etat === 'neutre' && etat !== 'neutre' && fond !== etat && fond !== 'neutre') {
+      return source(fond);
+    }
     if (r) return r.src;
     /* Pas d'états dessinés pour ce personnage — c'est le cas de tout le
        catalogue sauf un — mais son **plein-pied** existe pour deux cents
@@ -2276,7 +2289,13 @@ async function jsonp(url, options) {
            changé, il prend l'expression de l'avatar — sinon le personnage
            saluait, puis revenait au repos au lieu de revenir à lui. */
         if (fond === 'neutre') fond = reposChoisi();
-        const memeQuAvant = source(poseActuelle ?? reposChoisi()) === affichee;
+        /* Et il arrive **dans** ce repos. `poseActuelle` valait `'neutre'` : c'est
+           la pose d'attente du supporter ou du souvenir, posée avant qu'on
+           sache qui montrer. La reprendre telle quelle posait le personnage
+           au neutre, et il n'en sortait qu'après le salut. Un moment en
+           cours — une poussée, un but — est gardé, lui. */
+        const aPoser = poseActuelle && poseActuelle !== 'neutre' ? poseActuelle : fond;
+        const memeQuAvant = source(aPoser) === affichee;
         retenir(candidat);
         precharger();
         /* `force` : l'état ne change pas, le personnage si. Sans lui, `pose`
@@ -2286,7 +2305,7 @@ async function jsonp(url, options) {
            juste. Redessiner ferait alors croiser deux calques portant la même
            image : invisible, mais c'est un travail pour rien à la seconde où
            la page a le plus à faire. */
-        if (!memeQuAvant) await pose(poseActuelle ?? reposChoisi(), 0, true);
+        if (!memeQuAvant) await pose(aPoser, 0, true);
         const def = (dex.dex ?? []).find((f) => f.id === actif);
         const age = (dex.dex ?? []).find((f) => f.racine === actif
           && f.stade === candidat.evo) ?? def;
