@@ -1266,25 +1266,61 @@ check('les Fanzzy non possédés portent leur nom',
         };
       });
 
-      check('LA REPRISE en tenue de base montre sa plaque peinte',
-        /<image href="\/img\/fonds\/RP-epique\./.test(rendus.peinte)
+      check('LA REPRISE en tenue de base montre une plaque peinte',
+        /<image href="\/img\/fonds\/(RP|base)-epique\./.test(rendus.peinte)
         || (console.log('        ', rendus.peinte.slice(0, 160)), false));
       check('sans tenue nommée, c’est la base, donc la plaque aussi',
-        /<image href="\/img\/fonds\/RP-epique\./.test(rendus.sansTenue));
+        /<image href="\/img\/fonds\/(RP|base)-epique\./.test(rendus.sansTenue));
 
       /* La condition qui compte : une autre époque reprend le décor dessiné,
          dont la palette bascule. C'est aussi la plus facile à perdre au
          prochain remaniement, parce qu'elle ne se voit que sur une tenue. */
-      check('mais une autre tenue reprend le décor dessiné',
-        !/<image href/.test(rendus.autreTenue)
+      check('mais une autre tenue ne prend jamais la plaque de la série',
+        !/<image href="\/img\/fonds\/(RP|base)-/.test(rendus.autreTenue)
         || (console.log('        ', rendus.autreTenue.slice(0, 160)), false));
-      check('et une série sans plaque garde le sien',
-        !/<image href/.test(rendus.sansPlaque));
+      /* Une série sans plaque à elle prend celle de la tenue de base, quand
+         elle est peinte — c'est tout l'objet des plaques `base-*` : le même
+         gradin pour tous les Fanzzy en tenue ordinaire. Tant qu'elle ne l'est
+         pas, le décor dessiné garde la main. */
+      const { existsSync: peinte } = await import('node:fs');
+      const baseEpique = peinte(path.join(RACINE, 'public', 'img', 'fonds', 'base-epique.webp'));
+      check('et une série sans plaque prend celle de la tenue de base',
+        baseEpique ? /<image href="\/img\/fonds\/base-epique\./.test(rendus.sansPlaque)
+          : !/<image href/.test(rendus.sansPlaque));
 
       /* L'aura et la lumière restent posées par-dessus la plaque : c'est ce qui
          garde les deux sortes de cartes dans le même jeu. */
       check('la plaque ne mange ni l’aura de rareté ni la lumière',
         /url\(#au/.test(rendus.peinte) && /<circle cx="50" cy="62"/.test(rendus.peinte));
+
+      /* **Le palier suit l'âge, la tenue choisit la série de plaques.**
+
+         Premier âge commune, deuxième rare, troisième épique, et légendaire
+         pour une légende. On ne nomme pas les fichiers attendus : on les
+         déduit de la règle et de ce qui est publié, pour que le contrôle
+         tienne le jour où les plaques préhistoriques arrivent. */
+      const { existsSync: existe } = await import('node:fs');
+      const publiee = (c) => existe(path.join(RACINE, 'public', 'img', 'fonds', c + '.webp'));
+      const regle = await fiche.evaluate(() => {
+        const cas = [];
+        for (const skin of ['base', 'halloween', 'prehistorique', 'apocalyptique']) {
+          for (const [stage, rar] of [[1, 'commune'], [2, 'commune'], [3, 'rare'], [1, 'legendaire']]) {
+            const svg = window.TBF_FOND.fond({ id: 'RP1', set: 'RP', type: 'tifo', stage, rar, skin });
+            cas.push({ skin, stage, rar, img: /<image href="\/img\/fonds\/([a-zA-Z]+-[a-z]+)\./.exec(svg)?.[1] ?? null });
+          }
+        }
+        return cas;
+      });
+      const fautes = regle.filter((c) => {
+        const palier = c.rar === 'legendaire' ? 'legendaire' : ['commune', 'rare', 'epique'][c.stage - 1];
+        const attendu = publiee(`${c.skin}-${palier}`) ? `${c.skin}-${palier}`
+          : c.skin === 'base' && publiee(`RP-${palier}`) ? `RP-${palier}` : null;
+        return c.img !== attendu;
+      });
+      check(`le décor suit la tenue et l’âge (${regle.length - fautes.length}/${regle.length})`,
+        fautes.length === 0
+        || (console.log('        ', fautes.slice(0, 3).map((c) =>
+          `${c.skin} âge ${c.stage} ${c.rar} → ${c.img}`).join(' | ')), false));
 
       /* Les trois formats, comme partout : `negocierAvif` ne remplace
          l'extension que si le fichier AVIF existe, donc un décor publié en WebP

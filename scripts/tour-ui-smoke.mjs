@@ -1135,6 +1135,63 @@ for (const [route, nom] of tousLesEcrans) {
   }
 }
 
+/* ============================================ le décor suit la tenue portée
+
+   La tenue décide du lieu, l'âge du palier — sur la fiche, dans « Mon
+   Fanzzy » et sur l'accueil. « Mon Fanzzy » posait le décor de la carte à
+   l'âge atteint, en tenue de base, quelle que soit la tenue de l'avatar ;
+   l'accueil n'en posait aucun. On habille donc l'avatar pour Halloween au
+   premier âge et l'on attend `halloween-commune` sur les deux écrans. */
+{
+  const { existsSync } = await import('node:fs');
+  const publiee = existsSync(path.join(RACINE, 'public', 'img', 'fonds', 'halloween-commune.webp'));
+  /* Pas une légende — son palier serait `legendaire` — et pas un personnage
+     que le joueur a déjà : le nettoyage de la fin le lui retirerait. */
+  const [[x]] = await pool.query(
+    `SELECT id FROM fanzzy WHERE publie = 1 AND rar <> 'legendaire'
+       AND id REGEXP '^[A-Z]+[0-9]+$'
+       AND id NOT IN (SELECT fanzzy_id FROM user_fanzzy WHERE user_id = ?)
+     ORDER BY id LIMIT 1`, [U]);
+  check('le décor d’Halloween est publié, et un personnage peut le porter', publiee && Boolean(x?.id));
+  if (publiee && x?.id) {
+    const Z = x.id;
+    await pool.query(
+      `INSERT INTO user_fanzzy (user_id, fanzzy_id, stage, copies) VALUES (?, ?, 1, 1)
+       ON DUPLICATE KEY UPDATE stage = 1`, [U, Z]);
+    await pool.query(
+      `INSERT INTO user_skins (user_id, fanzzy_id, stage, skin_id, equipped) VALUES (?, ?, 1, 'halloween', 1)
+       ON DUPLICATE KEY UPDATE equipped = 1`, [U, Z]);
+    await pool.query(
+      `UPDATE user_wallet SET active_fanzzy = ?, active_evo = 1, active_etat = NULL WHERE user_id = ?`,
+      [Z, U]);
+    for (const [route, cadre, nom] of [
+      ['/', '#decor', 'l’accueil'],
+      ['/fanzzy', '#tscene .fond', '« Mon Fanzzy »'],
+    ]) {
+      const pg = await nav.newPage();
+      await pg.evaluateOnNewDocument(() => {
+        try { sessionStorage.setItem('tbf.ouverture', '1'); } catch { /* rien */ }
+      });
+      await pg.setViewport({ width: 400, height: 880 });
+      await pg.goto(base + route, { waitUntil: 'networkidle0' });
+      const vu = await pg.waitForFunction((s) => {
+        const h = document.querySelector(s)?.innerHTML ?? '';
+        return /fonds\/halloween-commune\./.test(h) ? h.length : false;
+      }, { timeout: 6000 }, cadre).then(() => true).catch(() => false);
+      const trouve = vu ? '' : await pg.evaluate((s) =>
+        /fonds\/([a-zA-Z]+-[a-z]+)\./.exec(document.querySelector(s)?.innerHTML ?? '')?.[1] ?? 'aucun', cadre);
+      await pg.close();
+      check(`${nom} pose le décor de la tenue et de l’âge (halloween-commune)`, vu
+        || (console.log('        il pose :', trouve), false));
+    }
+    await pool.query('DELETE FROM user_skins WHERE user_id = ? AND fanzzy_id = ?', [U, Z]);
+    await pool.query('DELETE FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?', [U, Z]);
+    await pool.query(
+      'UPDATE user_wallet SET active_fanzzy = NULL, active_evo = NULL, active_etat = NULL WHERE user_id = ?',
+      [U]);
+  }
+}
+
 /* ======================================= un âge sans expressions dessinées
 
    **« Chant Retrouvé » sous les traits du premier âge.** RP2 a ses

@@ -733,6 +733,21 @@ function toast(txt) {
  * et le salut de l'accueil. C'est le même personnage aux deux endroits :
  * animé autrement, ce serait deux personnages.
  */
+/**
+ * **Le décor de l'avatar**, pas celui de la carte.
+ *
+ * La vitrine montre l'avatar — l'âge, la tenue et l'expression choisis sur
+ * la fiche — mais son décor était celui de la carte à l'âge atteint, en
+ * tenue de base. Un joueur en tenue préhistorique se tenait donc dans le
+ * gradin de tous les jours. Le décor suit maintenant ce qu'on voit : la
+ * tenue portée et l'âge montré, dont il tire son palier.
+ */
+function decorDe(f, age) {
+  const av = S.avatar?.id === f.id ? S.avatar : null;
+  const vu = (av?.age && BY_ID.get(av.age)) || age;
+  return { ...vu, stage: av?.evo ?? vu.stage, skin: av?.skin ?? 'base' };
+}
+
 function renderTeam() {
   const f = S.active ? BY_ID.get(S.active) : null;
   if (!f || !S.col[f.id]) {
@@ -751,7 +766,7 @@ function renderTeam() {
   $('teamBody').innerHTML = `
     <a class="tscene r-${age.rar ?? 'commune'}" id="tscene" style="--tc:${t.c}"
        href="/fanzzy/${f.id}" aria-label="Ouvrir la fiche de ${esc(age.nom)}">
-      <div class="fond">${artFond(age)}</div>
+      <div class="fond">${artFond(decorDe(f, age))}</div>
       <div class="halo"></div>
       <!-- La scène du personnage est montée par fanzzy-scene.js :
            mêmes calques, même respiration que dans le virage. -->

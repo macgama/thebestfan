@@ -412,59 +412,75 @@
     'RP-epique',
     'RP-legendaire',
     'RP-rare',
+    'apocalyptique-commune',
+    'apocalyptique-epique',
+    'apocalyptique-legendaire',
+    'apocalyptique-rare',
+    'base-commune',
+    'base-epique',
+    'base-legendaire',
+    'base-rare',
     'halloween-commune',
     'halloween-epique',
     'halloween-legendaire',
     'halloween-rare',
+    'prehistorique-commune',
+    'prehistorique-epique',
+    'prehistorique-legendaire',
+    'prehistorique-rare',
   ]);
+
+  /**
+   * **Le palier du décor : l'âge, sauf pour une légende.**
+   *
+   * Premier âge, commune ; deuxième, rare ; troisième, épique. Un Fanzzy
+   * légendaire a la légendaire à tous ses âges. Le décor suivait la rareté
+   * de la carte, et le personnage qu'on faisait grandir restait donc dans le
+   * même lieu du premier au troisième âge : l'évolution changeait le
+   * personnage, jamais l'endroit où il se tient. C'est l'âge qu'on paie ;
+   * c'est lui qui monte le lieu d'un cran.
+   *
+   * L'aura, elle, reste à la rareté : voir `aura`. Les deux se lisent
+   * ensemble — une épique au premier âge garde son aura violette dans le
+   * gradin ordinaire.
+   */
+  function palierDecor(f = {}) {
+    if (f.rar === 'legendaire') return 'legendaire';
+    const n = Math.min(3, Math.max(1, Number(f.stage) || 1));
+    return ['commune', 'rare', 'epique'][n - 1];
+  }
 
   /**
    * L'adresse de la plaque d'une carte, ou `null` s'il faut la dessiner.
    *
-   * **Seulement sur la tenue de base**, et c'est la condition qui compte. Une
-   * tenue fait basculer toute la palette du décor : le même lieu en nocturne,
-   * en ocre préhistorique, en cendre apocalyptique. C'est ce qui rend une tenue
-   * visible de loin, au lieu de se chercher sur le costume. Une plaque peinte
-   * en fin d'été ne devient pas préhistorique — la poser sous une tenue qui
-   * l'est ferait mentir la seule chose qu'on voit.
+   * **Une série de plaques par tenue**, base comprise : `base-commune`,
+   * `prehistorique-rare`, `apocalyptique-epique`… Le Fanzzy en tenue de base
+   * se tient dans le gradin de tous les jours, le préhistorique dans ses
+   * gradins de pierre, l'apocalyptique dans les ruines. Une tenue fait
+   * basculer toute la palette du décor, et c'est ce qui la rend visible de
+   * loin, au lieu de se chercher sur le costume.
+   *
+   * Quatre plaques par tenue, et pas une de plus : la série n'entre pas dans
+   * la clé, donc rien ne se multiplie quand une saison arrive.
+   *
+   * La tenue de base garde un repli : la plaque de sa **série** — LA REPRISE
+   * a les siennes depuis le début — tant que `base-<palier>` n'est pas peint.
+   * Une autre tenue sans plaque rend null, et le décor dessiné reprend la main
+   * avec la palette de son époque : une tenue n'a jamais besoin d'être
+   * complète pour sortir.
    *
    * Le format suit `TBF_ETATS.EXT` comme le reste des images du jeu, et le
    * serveur sert l'AVIF à qui l'accepte — voir `src/server/images/index.js`.
    */
-  function plaque(set, rar, skin) {
+  function plaque(f = {}) {
     const ext = window.TBF_ETATS?.EXT ?? '.webp';
-    const rarete = rar ?? 'commune';
-
-    /* **Sous une tenue, c'est la tenue qui décide du lieu, ou personne.**
-     *
-     * Le commentaire du dessus explique pourquoi une plaque de série ne se
-     * pose pas sous une tenue : elle a été peinte en fin d'été, elle ne
-     * devient pas préhistorique, et la poser sous une tenue qui l'est ferait
-     * mentir la seule chose qu'une tenue rend visible de loin. Cet argument
-     * tient toujours — on ne le contourne pas, on lui donne sa réponse.
-     *
-     * La réponse est qu'une tenue apporte **ses propres** plaques. Une tenue
-     * d'Halloween n'a pas besoin d'emprunter le lieu d'une série : elle est
-     * un lieu, et quatre images suffisent à le dire pour tout le catalogue,
-     * parce qu'elles se rangent par **rareté** et non par série.
-     *
-     * C'est aussi ce qui empêche le décompte d'exploser. Le commentaire du
-     * dessus refusait de multiplier les plaques par les tenues, et il avait
-     * raison : quatre par série fois neuf tenues n'a pas de fin. Quatre par
-     * tenue, en revanche, est un nombre fixe — la série n'entre plus dans la
-     * clé, donc rien ne se multiplie.
-     *
-     * Si la tenue n'a pas de plaques, on rend null comme avant, et le décor
-     * dessiné reprend la main avec la palette de l'époque. C'est le bon
-     * repli : une tenue n'a jamais besoin d'être complète pour sortir. */
-    if (skin && skin !== 'base') {
-      const sien = `${skin}-${rarete}`;
-      return FONDS.has(sien) ? `/img/fonds/${sien}${ext}` : null;
-    }
-
-    const cle = `${set}-${rarete}`;
-    if (!FONDS.has(cle)) return null;
-    return `/img/fonds/${cle}${ext}`;
+    const rarete = palierDecor(f);
+    const skin = f.skin || 'base';
+    const sien = `${skin}-${rarete}`;
+    if (FONDS.has(sien)) return `/img/fonds/${sien}${ext}`;
+    if (skin !== 'base') return null;
+    const cle = `${f.set}-${rarete}`;
+    return FONDS.has(cle) ? `/img/fonds/${cle}${ext}` : null;
   }
 
   const PALIERS = {
@@ -575,7 +591,7 @@
        lumière de l'âge et l'aura de rareté se posent par-dessus comme avant :
        c'est ce qui garde une carte peinte et une carte dessinée dans le même
        jeu, au lieu d'en faire deux collections. */
-    const peint = plaque(f.set, f.rar, f.skin);
+    const peint = plaque(f);
 
     /* **Le cadre est en portrait, et c'est la correction la plus importante du
        module.**
@@ -664,5 +680,5 @@
     n.innerHTML = fond(f);
   }
 
-  window.TBF_FOND = { fond, poser, EPOQUES, FAMILLE, LIEUX };
+  window.TBF_FOND = { fond, poser, plaque, palierDecor, EPOQUES, FAMILLE, LIEUX };
 })();
