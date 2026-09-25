@@ -226,11 +226,23 @@ h2 i{font-style:normal;opacity:.7}
 
    Sans confinement, on garde simplement le décor debout : mal orienté vaut
    mieux que de travers. */
+/* **Préfixées par `.stadewrap`**, pour peser plus lourd que les règles du
+   décor debout, écrites plus bas. Elles avaient la même spécificité, et
+   un bloc `@container` n'a aucune priorité à lui : c'est l'ordre qui
+   tranchait, et l'ordre donnait raison à celles d'en dessous. `inset: 0`
+   annulait le centrage, `height: auto` et `translateY` celui de l'image —
+   et le stade, couché d'un quart de tour autour d'une boîte restée dans
+   le coin, ne se voyait plus que dans une bande à gauche du terrain. Le
+   poids plutôt que l'ordre : on ne déplace pas un bloc que la prochaine
+   retouche remettrait à sa place. */
 @container (min-width:0px){
-  .stade{position:absolute;left:50%;top:50%;inset:auto;
+  /* `inset: auto` **d’abord** : c’est un raccourci des quatre bords, et écrit
+     après `left`/`top` il les remettait à `auto` — la boîte partait du coin,
+     et `translate(-50%,-50%)` la décalait encore d’une demi-taille. */
+  .stadewrap .stade{position:absolute;inset:auto;left:50%;top:50%;
     width:100cqh;height:100cqw;border-radius:0;
     transform:translate(-50%,-50%) rotate(-90deg)}
-  .stade .tbf-stade-fond{position:absolute;inset:0;left:0;top:0;
+  .stadewrap .stade .tbf-stade-fond{position:absolute;inset:0;left:0;top:0;
     width:100%;height:100%;object-fit:cover;object-position:50% 50%;
     transform:none}
 }
@@ -474,13 +486,34 @@ h2 i{font-style:normal;opacity:.7}
 .forme i.draw{background:var(--gris);color:#23211B}
 .forme small{font-size:9.5px;opacity:.45;letter-spacing:.1em;align-self:center;
   font-family:var(--banner)}
-/* Les trois Fanzzy d'un camp, côte à côte. Le premier est celui qui entre. */
-.trois{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+/* Les trois Fanzzy d'un camp, côte à côte. Le premier est celui qui entre.
+
+   **Bornés en hauteur autant qu'en largeur.** Chaque carte prenait un tiers
+   de la colonne, et rien d'autre ne la retenait : sur un écran de bureau,
+   deux rangées de cartes de trois cents pixels de large ne tenaient plus
+   dans la fenêtre, et il fallait faire défiler une affiche qui ne reste
+   que six secondes. La colonne est donc le plus petit de deux :
+   un tiers de la largeur, ou ce que la hauteur laisse aux deux rangées une
+   fois retirés le titre, les noms et le pied — trois cent trente pixels
+   en tout, au ratio 63/80 de la carte. */
+.trois{display:grid;gap:7px;justify-content:center;
+  grid-template-columns:repeat(3,minmax(0,min(calc((100% - 14px) / 3),
+    calc((100vh - 330px) * .39))))}
+@supports (height:100dvh){
+  .trois{grid-template-columns:repeat(3,minmax(0,min(calc((100% - 14px) / 3),
+    calc((100dvh - 330px) * .39))))}
+}
 .fz-aff{position:relative;border-radius:11px;overflow:hidden;background:#0A0E13;
   box-shadow:0 0 0 2px #04070B,inset 0 0 0 1px rgba(242,238,228,.12);
   aspect-ratio:63/80;display:flex;flex-direction:column;justify-content:flex-end}
-.fz-aff img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  object-position:center 22%}
+/* **En pied, et entier.** C'était le buste, carré, recadré en `cover` dans
+   une carte en hauteur : on n'en voyait qu'un visage géant, coupé aux
+   joues, et l'objet d'en face n'était plus qu'un gros plan de métal. Le
+   plein-pied tient dans la carte sans rien perdre, posé sur son bord bas
+   comme sur une scène. */
+.fz-aff{background:radial-gradient(90% 60% at 50% 72%,rgba(242,238,228,.1),transparent 70%),#0A0E13}
+.fz-aff img{position:absolute;inset:4px 4px 0;width:calc(100% - 8px);height:calc(100% - 4px);
+  object-fit:contain;object-position:50% 100%}
 .fz-aff .voile-bas{position:relative;padding:5px 6px;
   background:linear-gradient(180deg,transparent,rgba(4,7,11,.92) 55%)}
 .fz-aff b{display:block;font-family:var(--banner);font-size:9.5px;line-height:1.15;
@@ -2158,8 +2191,8 @@ function vignetteFz(f, entre, couleur) {
      de le faire. L'âge suit la partie : la carte Relève fait grandir en
      cours de match, et la vignette doit le montrer. */
   const src = mien
-    ? window.FZART?.dessinAvatar?.({ ...monAvatar, age: f.id, evo: f.stade ?? 1 }, 'buste')
-    : dessinFz(f.id, 'buste');
+    ? window.FZART?.dessinAvatar?.({ ...monAvatar, age: f.id, evo: f.stade ?? 1 }, 'plein')
+    : dessinFz(f.id, 'plein');
   return `<div class="fz-aff ${entre ? 'entre' : ''}" style="--ac:${couleur}">
     ${src ? `<img alt="" loading="lazy" src="${src}">` : ''}
     ${entre ? '<span class="tag">ENTRE</span>' : ''}

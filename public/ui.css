@@ -1659,6 +1659,9 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
   opacity:0;transform:scale(.4);transition:opacity .12s,transform .12s;
   pointer-events:none}
 .tbf-visee .cible.vue{opacity:.92;transform:scale(1)}
+/* Il vaut moins : il pâlit et se resserre pendant le reste de sa vie. */
+.tbf-visee .cible.vue.passe{opacity:.35;transform:scale(.7);
+  transition:opacity .65s linear,transform .65s linear}
 /* L'éclat marque **où le doigt est tombé**, pas où était la cible : sans lui on
    ne sait pas si l'on a manqué de peu ou de loin, et l'on ne progresse pas. */
 .tbf-visee .eclat{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;

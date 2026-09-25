@@ -766,10 +766,11 @@
             buzz(12);
           };
 
-          /* Chaque cible naît à son instant et s'éteint au bout de sa fenêtre.
-             La durée d'affichage est un peu plus longue que la fenêtre notée :
-             une cible qui disparaît pile quand elle cesse de valoir laisserait
-             croire qu'on l'a eue. */
+          /* Chaque cible naît à son instant, **pâlit** quand elle commence à
+             valoir moins (`fenetre`) et s'éteint quand elle ne vaut plus rien
+             (`vie`). L'affichage durait 1,6 fenêtre alors que la note tombait à
+             zéro à la fenêtre : on touchait un rond bien visible, et il ne
+             valait déjà plus rien. Ce qu'on voit est maintenant ce qui compte. */
           for (const c of cibles) {
             apres(c.t, () => {
               const n = document.createElement('i');
@@ -777,7 +778,9 @@
               n.style.cssText = `left:${c.x * 100}%;top:${c.y * 100}%`;
               pad.appendChild(n);
               requestAnimationFrame(() => n.classList.add('vue'));
-              setTimeout(() => n.remove(), (g.fenetre ?? 520) * 1.6);
+              const fenetre = g.fenetre ?? 450;
+              apres(fenetre, () => n.classList.add('passe'));
+              setTimeout(() => n.remove(), g.vie ?? fenetre * 1.6);
             });
           }
           apres((g.ms ?? 8000) + 400, finir);

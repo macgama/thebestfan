@@ -1050,10 +1050,14 @@ check('les Fanzzy non possédés portent leur nom',
         'SELECT stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?',
         [U, ILLUSTRE]).then(([r]) => Number(r[0]?.stage ?? 0));
 
-      await fiche.evaluate(() => {
+      /* **Depuis la case de l'âge actuel**, et non celle du suivant. C'est là
+         que la fiche s'ouvre, et c'est le chemin du joueur ; partir de la case
+         suivante posait déjà la vitrine sur le nouvel âge, et masquait le
+         défaut qu'on vérifie plus bas — la vitrine revenait sur l'ancien. */
+      await fiche.evaluate((n) => {
         const cases = [...document.querySelectorAll('[data-case^="age:"]')];
-        (cases[1] ?? cases[0])?.click();
-      });
+        (cases[n - 1] ?? cases[0])?.click();
+      }, avantEvo);
       const aBouton = await fiche.evaluate(() => {
         const b = document.querySelector('[data-evoluer]');
         if (!b || b.disabled) return false;
@@ -1088,6 +1092,21 @@ check('les Fanzzy non possédés portent leur nom',
           () => document.querySelector('#fiche-art img, #fiche-art svg') !== null,
           { timeout: 4000 }).then(() => true).catch(() => false);
         check('et la vitrine remontre le personnage après la cérémonie', fini);
+
+        /* **Le personnage qu'on vient d'acheter**, et pas celui d'avant. La
+           vitrine se redessinait sur l'âge regardé avant de payer : le flash
+           révélait le même visage, et l'évolution semblait n'avoir rien fait.
+           Le contrôle du dessus ne pouvait pas le voir — un personnage était
+           bien là, seulement pas le bon. */
+        const lettre = ' BC'[apresEvo - 1]?.trim() ?? '';
+        const nouveau = new RegExp(`/img/fanzzy/${ILLUSTRE}${lettre}[-.]|/${ILLUSTRE}/e${apresEvo}/`);
+        const vuApres = await fiche.waitForFunction((motif) => {
+          const src = document.querySelector('#fiche-art img')?.getAttribute('src') ?? '';
+          return new RegExp(motif).test(src) ? src : false;
+        }, { timeout: 4000 }, nouveau.source).then((h) => h.jsonValue()).catch(() => null);
+        check(`et c’est le nouvel âge qu’elle montre (âge ${apresEvo})`, Boolean(vuApres)
+          || (console.log('        elle montre :', fiche && await fiche.evaluate(() =>
+            document.querySelector('#fiche-art img')?.getAttribute('src'))), false));
         check('sans rien jeter en chemin', erreurs.length === 0
           || (console.log('        ', erreurs.slice(0, 2).join(' | ')), false));
 

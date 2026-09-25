@@ -145,8 +145,22 @@ export const REGLES = {
 
      `rayon` est la tolérance en fraction de cadre, `fenetre` celle du temps.
      Les deux comptent, et elles se multiplient : toucher au bon endroit trop
-     tard ne vaut rien, et toucher à temps n'importe où non plus. */
-  visee: { cibles: 6, ms: 8000, rayon: 0.16, fenetre: 520, apparition: 1150 },
+     tard ne vaut rien, et toucher à temps n'importe où non plus.
+
+     **Réglés sur une main humaine**, et c'est la correction qui compte. La
+     fenêtre valait 520 ms **en tout**, mesurées depuis l'apparition : voir
+     le fumigène puis y porter le doigt en prend cinq à huit cents, et un
+     joueur qui touchait chaque rond pendant qu'il brûlait finissait à zéro,
+     partie après partie. Le contrôle touchait vingt millisecondes après
+     l'apparition, ce que personne ne sait faire.
+
+     Trois temps, désormais : la note est pleine pendant `fenetre`, décroît
+     jusqu'à `vie`, et le rond s'éteint à `vie` — il ne s'affiche plus quand
+     il ne vaut plus rien. De même dans l'espace : pleine note dans le `coeur`,
+     qui est le rond qu'on voit, puis décroissance jusqu'à `rayon`. `vie`
+     reste sous `apparition` : un seul fumigène brûle à la fois. */
+  visee: { cibles: 6, ms: 8000, rayon: 0.16, coeur: 0.08, fenetre: 450, vie: 1100,
+    apparition: 1150 },
 
   /* **La jauge.** La corde monte et descend ; il faut rester dedans.
 
@@ -634,9 +648,17 @@ export function noter(epreuve, consigne, reponse, mods = {}) {
    * somme aurait laissé rattraper l'un par l'autre, et l'on aurait pu marteler
    * le centre de l'écran en rythme.
    *
-   * Chaque touche est appariée à **la cible la plus proche dans le temps**, et
-   * une cible ne se touche qu'une fois. Sans ça, balayer l'écran de touches
-   * rapportait une cible par hasard toutes les demi-secondes.
+   * Chaque touche va au fumigène **allumé à cet instant** — jamais à un
+   * fumigène éteint, jamais à un fumigène pas encore allumé — et un fumigène
+   * ne se touche qu'une fois : c'est la première touche de sa vie qui compte.
+   * Sans ça, balayer l'écran de touches rapportait une cible par hasard toutes
+   * les demi-secondes.
+   *
+   * L'appariement se faisait sur **l'écart le plus court dans le temps**, dans
+   * les deux sens. Les fumigènes arrivent toutes les 1 150 ms : une touche
+   * donnée 600 ms après l'apparition était plus proche du **suivant**, pas
+   * encore allumé et ailleurs sur l'écran, et valait zéro. Avec une fenêtre
+   * de 520 ms, c'était le sort de presque toutes les touches humaines.
    */
   if (epreuve === 'visee') {
     const touches = Array.isArray(r.touches) ? r.touches : [];
@@ -648,22 +670,32 @@ export function noter(epreuve, consigne, reponse, mods = {}) {
         throw new Triche('touche.invalide');
       }
     }
+    /* Les réglages d'avant `vie` et `coeur` restent lisibles : une consigne
+       tirée juste avant un déploiement est notée juste après. */
+    const fenetre = consigne.fenetre ?? 450;
+    const vie = Math.max(fenetre + 1, consigne.vie ?? fenetre * 1.6);
+    const coeur = Math.min(consigne.coeur ?? 0, consigne.rayon * 0.9);
+    /* Une image d'avance : le doigt qui tombe dans la frame où le rond apparaît
+       l'a vu, même si l'horloge dit le contraire d'un cheveu. */
+    const AVANCE = 40;
     const prises = new Set();
     let total = 0;
     for (const p of touches) {
       let rang = -1;
-      let mieux = Infinity;
       for (let i = 0; i < cibles.length; i++) {
         if (prises.has(i)) continue;
-        const dt = Math.abs(p.t - cibles[i].t);
-        if (dt < mieux) { mieux = dt; rang = i; }
+        const dt = p.t - cibles[i].t;
+        if (dt >= -AVANCE && dt < vie) { rang = i; break; }
       }
-      if (rang < 0) break;
+      if (rang < 0) continue;              // aucun fumigène allumé : touche perdue
       prises.add(rang);
       const c = cibles[rang];
+      const dt = Math.max(0, p.t - c.t);
       const loin = Math.hypot(p.x - c.x, p.y - c.y);
-      const place = Math.max(0, 1 - loin / consigne.rayon);
-      const heure = Math.max(0, 1 - mieux / consigne.fenetre);
+      const place = loin <= coeur ? 1
+        : Math.max(0, 1 - (loin - coeur) / (consigne.rayon - coeur));
+      const heure = dt <= fenetre ? 1
+        : Math.max(0, 1 - (dt - fenetre) / (vie - fenetre));
       total += place * heure;
     }
     return Math.max(0, Math.min(1.2,

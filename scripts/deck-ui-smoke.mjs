@@ -727,9 +727,11 @@ check('le bouton se referme après enregistrement',
 await pool.query(`DELETE FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = 'TR33'`, [U]);
 clic(T(dom).querySelector('[data-onglet="tribune"]'));
 await jusqua(() => T(dom).querySelector('.rang'));
-const nom = T(dom).getElementById('nom');
-nom.value = 'Deck refusé';
-nom.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+/* Il faut une modification pour rouvrir l'enregistrement. C'était le
+   champ du nom, retiré de la page : on titularise donc le deuxième Fanzzy.
+   Le deck reste complet, mais il a été touché. */
+clic(T(dom).querySelector('[data-titulariser]'));
+await jusqua(() => !T(dom).getElementById('save').disabled);
 clic(T(dom).getElementById('save'));
 
 const affiche = await jusqua(() =>
