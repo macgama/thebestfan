@@ -1624,12 +1624,13 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
    texte confirme. */
 .tbf-bascule .mot.contre b{color:#E0402C}
 .tbf-bascule .mot.contre span{color:#E0402C;transform:scaleX(-1)}
-.tbf-bascule .cotes{display:flex;gap:8px}
-.tbf-bascule .cote{flex:1;min-height:76px;border-radius:12px;cursor:pointer;
+/* `tbf-cote` : voir `geste.js` — le duel a sa propre `.cote`. */
+.tbf-bascule .tbf-cotes{display:flex;gap:8px}
+.tbf-bascule .tbf-cote{flex:1;min-height:76px;border-radius:12px;cursor:pointer;
   background:rgba(242,238,228,.07);border:1px solid rgba(242,238,228,.16);
   color:var(--craie);font-size:26px;line-height:1;
   transition:transform .08s,background .1s}
-.tbf-bascule .cote.pris{background:rgba(224,64,44,.3);transform:scale(.96)}
+.tbf-bascule .tbf-cote.pris{background:rgba(224,64,44,.3);transform:scale(.96)}
 
 /* **La visée.** Un cadre vide où les fumigènes s'allument.
 

@@ -589,6 +589,32 @@ const ouvert = await A.page.evaluate(() => ({
 
 check('l\u2019horloge démarre à cinq minutes', /^[45]:/.test(ouvert.horloge));
 
+/* **Les boutons de la bascule se touchent, dans le duel.**
+
+   Ils portaient la classe `cote`, que le duel emploie déjà pour les deux
+   moitiés du terrain : ils devenaient deux moitiés d'écran transparentes,
+   et l'épreuve ne se jouait pas. Le contrôle des épreuves ne pouvait pas
+   le voir — il les joue sur une page neutre, sans la feuille du duel. On
+   ouvre donc la bascule **ici**, sur la vraie page, et l'on demande au
+   navigateur ce qu'il y a sous le doigt au centre de chaque bouton. */
+{
+  const sous = await A.page.evaluate(async () => {
+    const signaux = Array.from({ length: 10 }, (_, i) => ({ cote: i % 2, contre: false }));
+    ouvrirGeste('bascule', { bascule: { signaux, pas: 820, fenetre: 640, ms: 10000 } });
+    await new Promise((r) => setTimeout(r, 2500));
+    const out = [...document.querySelectorAll('#miniZone [data-k]')].map((b) => {
+      const r = b.getBoundingClientRect();
+      const dessous = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return { h: Math.round(r.height), w: Math.round(r.width), touche: dessous === b || b.contains(dessous) };
+    });
+    fermerGeste([]);
+    return out;
+  });
+  check(`les deux boutons de la bascule se touchent dans le duel (${sous.map((b) => `${b.w}×${b.h}`).join(', ')})`,
+    sous.length === 2 && sous.every((b) => b.touche && b.h >= 44)
+    || (console.log('        ', JSON.stringify(sous)), false));
+}
+
 /* **Le stade couvre le terrain.** Il est couché d'un quart de tour pour que
    ses tribunes bordent la corde, et les règles qui le couchent perdaient
    contre celles du décor debout, écrites plus bas : l'image ne se voyait
