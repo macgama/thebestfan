@@ -121,6 +121,101 @@
   ]);
 
   /**
+   * L'empreinte de chaque illustration, que porte son adresse.
+   *
+   * **Une carte redessinée restait l'ancienne chez qui l'avait déjà vue.**
+   * Les images sont servies « immuables, un an » et le service worker les
+   * garde sans les redemander : c'est juste tant qu'un dessin ne change pas,
+   * et RP1 a changé de visage le 24 septembre sous la même adresse. Les
+   * états portaient déjà leur révision (`joie.webp?v=6`) ; les cartes, non.
+   * Avec l'empreinte, un nouveau dessin a une nouvelle adresse.
+   *
+   * Réécrite par `scripts/maj-illustres.mjs`, avec ILLUSTRES — ne pas
+   * modifier à la main. Le calcul est dans `scripts/empreinte-illustration.mjs`.
+   */
+  const EMPREINTES = {
+    TR32: 'f976862bf7', TR32B: '4cd7add98f', TR32C: '8ce6354ad8', MS30: 'cc495cf87f',
+    MS30B: '8c203c52db', MS30C: 'dbff0fa4e3', TR33: 'cd23f0e1a9', TR33B: '2c100904a1',
+    TR33C: '677e61bc31', MS31: '73b80e4e92', MS31B: '4afbe967c5', MS31C: '99e8ff525e',
+    TR34: 'f0c92de515', TR34B: 'c623d150e6', TR34C: '6fd443caba', MS32: '1b77de8fa1',
+    MS32B: '56ede9f174', MS32C: 'c7b831d37c', TR35: '9786ebdb5a', TR36: '02508e8d0f',
+    TR37: 'eeab16d1f0', TR38: 'd929f72fc6', TR39: '0c2398585c', TR40: '79022b59c8',
+    GC15: 'b057c91b09', GC16: '79225b4375', TR41: '6ad1fb581e', TR42: '181451ed8d',
+    BG28: '63cd5ec38a', TR43: '30cfc0be89', TR44: '728409cf93', TR45: '97f354c9d9',
+    TR46: 'b8c363407b', GC17: 'e363c49767', TR47: '7ee74a9972', TR48: '6d1dcf1c70',
+    TR49: '1377a1d016', MS34: 'e92987b456', TR50: 'f5e01316c2', TR51: 'e06bf969cb',
+    TR52: 'ff7d6ad9cc', TR53: '00e0eb334c', GD12: '156fd6dde1', GD13: '7405b411c4',
+    MS35: '15270428fc', HC16: 'a6b09c64a6', TR54: 'c90d1a6080', IM1: '2a2a628f91',
+    IM2: 'd2cb42df8b', IM3: '04e8d7158d', IM4: '47ac4b8c5c', IM5: 'b755653ce1',
+    IM6: '3f2a7f93fe', IM7: 'fd33407cb7', IM8: 'cbdb34fc24', IM9: '77ee7dc8bd',
+    IM12: '6b77e37583', IM13: 'cf5bc2e54f', IM14: '943a445722', IM15: '4c9279250b',
+    IM16: '39b7610af9', IM17: 'e3aef3884b', TR1: '062cea48ea', TR2: '33f6488c90',
+    TR3: '3889fb90ca', TR4: '39761f3bb4', TR5: '375ebc1c0c', TR6: 'fc013ad3d5',
+    TR7: 'e6a3d3c459', TR8: '693e68db4f', TR9: '7ebe82a885', TR10: 'f22fd644a3',
+    TR11: '6905710fc9', TR12: '983da3a9ae', TR13: 'f3ce893e89', TR14: '2757d8bc12',
+    TR15: 'ed79e72b8d', TR16: '987c731098', TR17: 'd7b61aeaf7', TR18: 'b65da643d4',
+    TR19: '3dc8708311', TR20: '2fa8f10318', TR21: '59b1e22d57', TR22: '2f60bc0520',
+    TR23: '35364eae5e', TR24: '7e8f5ec763', TR25: '51670de651', TR26: '75647026fb',
+    TR27: '514abc9558', TR60: '93d09d23c4', TR61: '13af417ed1', TR62: '2de8134b29',
+    TR63: '18b00ec881', TR64: '7b3367b254', TR65: '13c5c193ff', TR66: 'e6572e1027',
+    TR67: '5218068b5b', TR68: 'da62413763', MS1: 'e4c754162b', MS2: '44e2b3c9e1',
+    MS3: '3a0cd8c3d8', MS4: '6a839b7cd3', MS5: 'bcd83ed2d5', MS6: '83bd0aa7f1',
+    MS7: 'd731dc414f', MS8: 'd06bafa67a', MS9: '75bcbc4bc7', MS10: '82ac5d3e79',
+    MS11: 'e019e0e7c3', MS12: '8c31de9aa4', MS13: 'eecb9aa478', MS14: '57b2ee3bb3',
+    MS15: 'c13c8af82d', MS16: '79f6be37a6', MS17: '27fd6c6cf8', MS18: '8f1ed37933',
+    MS19: '86ee201ddc', MS20: 'ce9ed8ceb5', MS21: 'e39480d7d8', MS22: '36c8acd348',
+    MS23: '6f413888eb', MS24: 'fdf298ff7b', MS25: '52592c5073', MS26: '5cde135476',
+    BG1: '0d4ee84fd6', BG2: '80c6335603', BG3: '96599ee6fc', BG4: '4950e22cfa',
+    BG5: '735044f6e3', BG6: '2fc2d51d24', BG7: 'fe3d0c519a', BG8: '895062d0ab',
+    BG9: '606da17258', BG10: '0311373a8c', BG11: '2c5958a449', BG12: '0433580256',
+    BG13: '07522d1556', BG14: '6208c6dfd5', BG15: '5152154c76', BG16: 'f0fd6d36fa',
+    BG17: '3b57fa25d7', BG18: '442c6d3988', BG19: '24694c122d', BG20: '7974905645',
+    BG21: 'bc366a7fc3', BG22: '4077abfeb3', BG23: '3644dce9ee', RV1: '93f52a6ca9',
+    RV2: 'a2309dd99b', RV3: '02dc044c0a', RV4: '02da8791e5', RV5: 'cbd2852fd8',
+    RV6: 'eed4fc6528', RV7: '4cd6b951d6', RV8: 'ced59013df', RV9: '0c489d6165',
+    RV10: 'c5b537554a', RV11: '41814a8c1b', RV12: '5158b94dda', RV13: 'ef2fdbb443',
+    RV14: '5c0e1db8b9', RV15: 'b4bf9c7a27', RV16: 'c6095792e6', RV17: '74e1188ecc',
+    RV18: '1862a34e6e', RV19: '9ca6b07730', RV20: 'c6ae94b7c1', RV21: '5b002e4144',
+    OB1: '3f57c9a865', OB2: '519ad77327', OB3: '8e06838c48', OB4: 'a9ab8c8f52',
+    OB5: '1bd2b182e6', OB6: 'd62a4cee2e', OB7: '2838fed583', OB8: '8330f7cc05',
+    OB9: 'a131ac629f', OB10: 'd0fc78a894', OB11: '0e3109d88b', OB12: 'b921557cf4',
+    EP1: '55021262bd', EP2: '90da17304a', EP3: 'a0d20661c2', EP4: 'dbe410e97d',
+    EP5: '150b1c4d3a', EP6: '8b6553f1bb', EP7: 'e5561c5248', EP8: '5de7ac7ac3',
+    EP9: '015129713c', EP10: 'd8e23a0588', EP11: '82b5b842e4', EP12: 'ff264eb246',
+    EP13: '5fedcf0db6', EP14: '8960fad06c', EP15: 'd3cb14e319', EP16: '34cd3ed320',
+    EP17: '53fc9ba534', TR55: '7e3a0de849', TR56: '29252a3e3f', TR57: 'c618da2c53',
+    TR58: 'd90e103ad6', TR59: '796910e11e', TR28: '79a759aa85', TR29: 'e8fd96211b',
+    TR30: '41c0bbc75f', TR31: 'b52bd33437', VP1: 'c0c5cf226a', VP2: '38f3aa2a50',
+    VP3: '11b53dc602', VP4: '5bc33979d6', GC1: '098816b9d2', RP1: '474785273d',
+    RP1B: '559c28d89c', RP1C: 'c89ab35860', RP2: '415407df1c', RP2B: '551f836c5c',
+    RP2C: '2b3aa0e7f8', RP18: '92b77b81c4', RP18B: 'de233c647e', RP18C: '0094ba93ec',
+    RP19: 'fa6b986d26', RP19B: '0f63493358', RP19C: 'b1edb3595c', RP20: 'fa555e08ab',
+    RP20B: '7e15798fce', RP20C: '29f3ab5f82', RP3: '00c0572179', RP3B: '431c5b9585',
+    RP3C: '48711daba2', RP4: '966d7e0fe1', RP4B: '25e46fc880', RP4C: 'c2e5718d7d',
+    RP21: 'a93c90d742', RP21B: 'c1591fcd6a', RP21C: '8b65f65c9b', RP22: '8c7c81d8f7',
+    RP22B: '436eadb3a6', RP22C: 'f1ec82c805', RP23: '3f5de672fa', RP23B: '01b0f55cbf',
+    RP23C: 'fc1e8f26f3', RP5: '5343e0409b', RP5B: '9f18a5b5f4', RP5C: '2046f9ee2d',
+    RP6: '0cef360a76', RP6B: '50a835f143', RP6C: 'f5c1c11e6e', RP24: '373da8945e',
+    RP24B: '841c1ffc1a', RP24C: '3847dec747', RP25: '4895e66aa9', RP25B: 'e91a0c20c1',
+    RP25C: '7daafd8a53', RP26: '59a49f4c9a', RP26B: '657ffe17f3', RP26C: '25a6b434bc',
+    RP7: 'a811af76a5', RP7B: '6cd3b7cb00', RP7C: '072f62353b', RP8: '323cef7f1f',
+    RP8B: 'f36b505058', RP8C: '8be8efb8ea', RP27: '5870ab97e1', RP27B: '72caa3562b',
+    RP27C: 'a85b528e04', RP28: '633944baf3', RP28B: '164f0f6f70', RP28C: '3bb2b95a94',
+    RP29: '307491fe21', RP29B: 'f7deae42fb', RP29C: 'd117defa79', RP9: '4854a4bf18',
+    RP9B: '7cd5160936', RP9C: 'c1df913689', RP10: '04e308618e', RP10B: '5e7eda5da0',
+    RP10C: '0de7108543', RP30: 'ddcb66d121', RP30B: '2a032026b9', RP30C: '048b557d67',
+    RP31: '5f665b03fc', RP31B: 'cd0e12d58a', RP31C: 'c6fcc62ebc', RP32: '8a11d4ca14',
+    RP32B: 'cd3f8373f5', RP32C: '9ec137d16b', RP11: '2977d6fb61', RP11B: 'd7b59e6bb2',
+    RP11C: 'c53dcfd317', RP12: '50d8085640', RP12B: 'b1cb355503', RP12C: '299437ec55',
+    RP33: '71feeef772', RP33B: 'f9e0c478d3', RP33C: '1b6557870a', RP34: '964ab22671',
+    RP34B: '492db4cf76', RP34C: '347674bcb5', RP35: '70259f4e91', RP35B: 'b90ba93943',
+    RP35C: 'b676b15db8', RP13: 'd35bbc3779', RP14: 'c08433e005', RP15: 'b84e68ff74',
+    RP16: 'e8ccc0ab99', RP17: '6e66382798', TR1B: 'b631f5efed', TR1C: '2c36567b61',
+    TR3B: '553f88c22a', TR3C: '017bf8b281', TR23B: '53b5dcb30e', TR23C: 'bc86bd410c',
+    TR50B: 'c416c02c3f', TR50C: '2abca26f16',
+  };
+
+  /**
    * `variante` vaut 'buste' (320×320, pour une carte) ou 'plein' (520×945,
    * pour un affichage en pied). Le repli en PNG couvre les navigateurs qui
    * annoncent l'AVIF sans savoir le décoder — ça existe.
@@ -230,7 +325,9 @@
     }
     const vu = racineIllustree(id);
     if (!vu) return null;
-    return `/img/fanzzy/${vu}${variante === 'buste' ? '-buste' : ''}${IMG_EXT_ALPHA}`;
+    const v = EMPREINTES[vu];
+    return `/img/fanzzy/${vu}${variante === 'buste' ? '-buste' : ''}${IMG_EXT_ALPHA}`
+      + (v ? `?v=${v}` : '');
   };
 
   /**

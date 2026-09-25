@@ -772,7 +772,9 @@ const VUES = {
          soixante-deux tirets là où le joueur, lui, voit un personnage. */
       const dessin = window.FZART?.racineIllustree?.(x.id);
       const vign = dessin
-        ? `<img src="/img/fanzzy/${dessin}-buste.png" alt="" loading="lazy">`
+        /* Par `adresse`, pour l'empreinte : une adresse nue montrerait à
+           l'administration l'ancien dessin d'une carte qu'on vient de refaire. */
+        ? `<img src="${window.FZART.adresse(dessin, 'buste')}" alt="" loading="lazy">`
         : '<div class="sil">—</div>';
       return `<tr class="fzrow ${x.publie ? '' : 'depublie'}" data-id="${x.id}">
         <td>${vign}</td>

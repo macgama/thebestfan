@@ -8,11 +8,18 @@
  * dessiné.
  *
  * À relancer après chaque passage de scripts/fanzzy-images.mjs.
+ *
+ * Il réécrit aussi `EMPREINTES`, l'empreinte que porte l'adresse de chaque
+ * illustration : c'est ce qui fait qu'une carte redessinée arrive chez ceux
+ * qui avaient l'ancienne en cache. Les deux listes vont ensemble — une
+ * illustration sans empreinte serait servie sous une adresse nue, et gardée
+ * un an dans l'état où on l'a vue la première fois.
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEX } from '../src/shared/fanzzy/dex.js';
+import { empreinteIllustration } from './empreinte-illustration.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 const DOSSIER = path.join(RACINE, 'public', 'img', 'fanzzy');
@@ -39,6 +46,20 @@ const j = s.indexOf(FIN, i);
 if (i < 0 || j < 0) throw new Error('bornes de ILLUSTRES introuvables dans fanzzy-art.js');
 
 s = s.slice(0, i) + [DEBUT, ...lignes].join(NL) + NL + s.slice(j);
+
+/* Les empreintes, quatre par ligne. */
+const DEBUT_E = '  const EMPREINTES = {';
+const FIN_E = '  };';
+const ie = s.indexOf(DEBUT_E);
+const je = s.indexOf(FIN_E, ie);
+if (ie < 0 || je < 0) throw new Error('bornes de EMPREINTES introuvables dans fanzzy-art.js');
+const paires = ids.map((id) => `${id}: '${empreinteIllustration(DOSSIER, id)}'`);
+const lignesE = [];
+for (let k = 0; k < paires.length; k += 4) {
+  lignesE.push('    ' + paires.slice(k, k + 4).join(', ') + ',');
+}
+s = s.slice(0, ie) + [DEBUT_E, ...lignesE].join(NL) + NL + s.slice(je);
+
 writeFileSync(F, s, 'utf8');
 
 console.log(`ILLUSTRES : ${ids.length} Fanzzy dessinés sur ${DEX.length}`);

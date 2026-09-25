@@ -60,8 +60,12 @@ await sharp(px, { raw: { width: L, height: H, channels: 3 } })
 
 /* ------------------------------------------------------------ exécution */
 
+/* `--sans-liste` : la chaîne enchaîne sinon `maj-illustres`, qui réécrit le vrai
+   `public/fanzzy-art.js` d'après le vrai dossier d'images. Un test n'a pas à
+   modifier un fichier livré — et celui-là aurait remis les empreintes à jour
+   juste avant le contrôle qui doit dire si elles le sont. */
 const sortie = execFileSync('node', [path.join(REPO, 'scripts/fanzzy-images.mjs'),
-  brut, '--sortie', out], { encoding: 'utf8' });
+  brut, '--sortie', out, '--sans-liste'], { encoding: 'utf8' });
 console.log(sortie.trim());
 
 /* ------------------------------------------------------------ contrôles */
@@ -129,7 +133,7 @@ await mkdir(brut2, { recursive: true });
 }
 
 const sortie2 = execFileSync('node', [path.join(REPO, 'scripts/fanzzy-images.mjs'),
-  brut2, '--sortie', out2], { encoding: 'utf8' });
+  brut2, '--sortie', out2, '--sans-liste'], { encoding: 'utf8' });
 check('la chaîne annonce qu’elle a lu l’alpha du rendu', /alpha du rendu/.test(sortie2));
 
 const dej = await sharp(path.join(out2, 'AA.png')).ensureAlpha()
@@ -278,6 +282,32 @@ console.log(`     ${Math.round(part * 100)} % du cadre est opaque`);
         + 'en connaissance de cause.'), false));
   console.log(`     ${enPropre} dessinées · ${gagnees} par leur premier âge · `
     + `${DEX.length - avec} sans rien`);
+
+  /* ---------------------------------------- une carte redessinée arrive
+
+     Les images sont servies « immuables, un an », et le service worker les
+     garde sans les redemander. **RP1 a changé de visage sous la même
+     adresse**, et qui avait vu l'ancien l'aurait gardé un an. L'adresse
+     porte donc l'empreinte du fichier : ce contrôle la recalcule sur le
+     disque, pour chaque carte dessinée, et la compare à celle que le jeu
+     sert. Il rougit si l'on a remplacé une image sans relancer
+     `maj-illustres` — c'est-à-dire exactement quand l'ancien dessin
+     resterait coincé chez les joueurs. */
+  const { empreinteIllustration } = await import('./empreinte-illustration.mjs');
+  const IMG = path.join(REPO, 'public', 'img', 'fanzzy');
+  const perimees = [];
+  for (const id of ILLUSTRES) {
+    const attendue = empreinteIllustration(IMG, id);
+    for (const variante of ['buste', 'plein']) {
+      const src = adresse(id, variante) ?? '';
+      if (!src.endsWith(`?v=${attendue}`)) perimees.push(`${id} (${variante}) : ${src}`);
+    }
+  }
+  check(`chaque carte dessinée porte l’empreinte de son image (${ILLUSTRES.size})`,
+    perimees.length === 0
+    || (console.log('        ', perimees.slice(0, 4).join(' | ')),
+      console.log('         — une image a changé sans que l’empreinte suive : '
+        + 'lance `node scripts/maj-illustres.mjs`.'), false));
 }
 
 /* ======================================= deux cartes, un seul dessin
