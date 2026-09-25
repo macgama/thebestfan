@@ -1306,7 +1306,19 @@ let equipe = null;
  */
 function source(etat) {
   if (equipe) {
-    const r = window.TBF_ETATS.resoudre(equipe.id, { evo: equipe.evo, skin: equipe.skin, etat });
+    const trouve = window.TBF_ETATS.resoudre(equipe.id, { evo: equipe.evo, skin: equipe.skin, etat });
+    /* **L'âge exact, ou le plein-pied de cet âge.** `resoudre` redescend
+       d'âge quand celui qu'on demande n'a aucune expression dessinée. C'est
+       le cas de RP2 : cinq expressions à l'âge 1, aucune à l'âge 2 dans sa
+       tenue de base — mais une illustration de carte, `RP2B`. L'accueil
+       prenait la réponse telle quelle et montrait « Chant Retrouvé » sous
+       les traits du premier âge, alors que « Mon Fanzzy », la fiche et le
+       duel suivaient déjà la règle de `dessinAvatar` : un autre âge n'est
+       pas un repli, c'est un autre personnage. `dessineA`, plus bas, avait
+       fait le même constat pour la plaque « dessin à venir » ; le dessin
+       lui-même ne l'avait pas suivi. On retombe donc sur le plein-pied de
+       l'âge montré — immobile, mais juste. */
+    const r = trouve?.evo === equipe.evo ? trouve : null;
     /* **Un moment qui n'est pas dessiné retombe sur le repos du joueur**, et
        non sur `neutre`. `resoudre` finit toujours sa chaîne par `neutre` :
        c'est juste pour lui, qui ne sait pas ce que le joueur a choisi. Mais
@@ -2257,7 +2269,9 @@ async function jsonp(url, options) {
       let anime = null;
       try {
         if (await window.TBF_ETATS.charger()) {
-          anime = window.TBF_ETATS.resoudre(candidat.id, candidat);
+          /* Animé seulement si l'âge montré a ses expressions : voir `source`. */
+          const r = window.TBF_ETATS.resoudre(candidat.id, candidat);
+          anime = r?.evo === candidat.evo ? r : null;
         }
       } catch { /* manifeste injoignable : le plein-pied suffit */ }
 

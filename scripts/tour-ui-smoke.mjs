@@ -1135,6 +1135,79 @@ for (const [route, nom] of tousLesEcrans) {
   }
 }
 
+/* ======================================= un âge sans expressions dessinées
+
+   **« Chant Retrouvé » sous les traits du premier âge.** RP2 a ses
+   expressions à l'âge 1 et aucune à l'âge 2 dans sa tenue de base —
+   seulement l'illustration de sa carte, `RP2B`. `resoudre` redescend alors
+   d'un âge, et l'accueil prenait sa réponse : le joueur qui montrait son
+   deuxième âge voyait le premier, alors que « Mon Fanzzy » montrait le
+   bon. Le bloc d'au-dessus ne pouvait pas le voir : son personnage a ses
+   expressions à l'âge qu'il montre.
+
+   On cherche donc un personnage **dans ce cas précis** — expressions au
+   premier âge, aucune au second en tenue de base, carte du second âge
+   illustrée — et on vérifie que chaque écran montre la carte. */
+{
+  const { readdir } = await import('node:fs/promises');
+  const IMG = path.join(RACINE, 'public', 'img', 'fanzzy');
+  let Y = null;
+  for (const d of await readdir(IMG, { withFileTypes: true })) {
+    if (!d.isDirectory()) continue;
+    let m = null;
+    try { m = JSON.parse(await readFile(path.join(IMG, d.name, 'manifeste.json'), 'utf8')); }
+    catch { continue; }
+    if (!(m.evolutions?.e1?.skins?.base?.etats ?? []).length) continue;
+    if ((m.evolutions?.e2?.skins?.base?.etats ?? []).length) continue;
+    try { await readFile(path.join(IMG, `${d.name}B.webp`)); } catch { continue; }
+    const [[n]] = await pool.query(
+      'SELECT COUNT(*) AS n FROM fanzzy WHERE id IN (?, ?) AND publie = 1',
+      [d.name, d.name + 'B']);
+    if (Number(n.n) >= 2) { Y = d.name; break; }
+  }
+
+  check('un personnage se prête à l’épreuve de l’âge sans expressions', Boolean(Y));
+  if (Y) {
+    await pool.query(
+      `INSERT INTO user_fanzzy (user_id, fanzzy_id, stage, copies) VALUES (?, ?, 2, 1)
+       ON DUPLICATE KEY UPDATE stage = 2`, [U, Y]);
+    await pool.query(
+      `UPDATE user_wallet SET active_fanzzy = ?, active_evo = 2, active_etat = NULL
+        WHERE user_id = ?`, [Y, U]);
+
+    const carte = new RegExp(`/img/fanzzy/${Y}B\\.`);
+    const premier = new RegExp(`/${Y}/e1/|/img/fanzzy/${Y}[-.]`);
+    for (const [route, cadre, nom] of [
+      ['/', '#pile', 'l’accueil'],
+      ['/fanzzy', '#tpile', '« Mon Fanzzy »'],
+    ]) {
+      const pg = await nav.newPage();
+      await pg.evaluateOnNewDocument(() => {
+        try { sessionStorage.setItem('tbf.ouverture', '1'); } catch { /* rien */ }
+      });
+      await pg.setViewport({ width: 400, height: 880 });
+      await pg.goto(base + route, { waitUntil: 'networkidle0' });
+      await pg.waitForFunction((s) => document.querySelector(`${s} [src]`),
+        { timeout: 8000 }, cadre).catch(() => null);
+      await new Promise((r) => setTimeout(r, 700));
+      const urls = await pg.evaluate((s) => [...document.querySelectorAll(`${s} [src]`)]
+        .map((n) => n.getAttribute('src')), cadre);
+      await pg.close();
+      check(`${nom} montre ${Y} à son deuxième âge, par la carte de cet âge`,
+        urls.some((u) => carte.test(u))
+        || (console.log('        il montre :', urls.join(' | ') || 'rien'), false));
+      check('et jamais les traits du premier âge à la place',
+        !urls.some((u) => premier.test(u))
+        || (console.log('        il montre :', urls.find((u) => premier.test(u))), false));
+    }
+
+    await pool.query('DELETE FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?', [U, Y]);
+    await pool.query(
+      'UPDATE user_wallet SET active_fanzzy = NULL, active_evo = NULL, active_etat = NULL WHERE user_id = ?',
+      [U]);
+  }
+}
+
 if (process.env.CAPTURE) console.log(`\n   captures dans ${tmpdir()}`);
 
 await nav.close();

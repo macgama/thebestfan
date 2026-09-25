@@ -347,10 +347,12 @@ function vueObjet(o) {
     /* Le repos, et pas une expression : on vend la tenue, pas l'humeur. Et
        `resoudre` descend seul jusqu'à ce qui existe — une tenue non dessinée
        sur ce personnage-là retombe sur sa tenue de base, ce qui montrerait le
-       mauvais vêtement. On n'accepte donc que la réponse exacte. */
+       mauvais vêtement. On n'accepte donc que la réponse exacte — **à l'âge
+       du mannequin aussi** : une tenue dessinée au premier âge seulement ne
+       doit pas se vendre sous les traits d'un âge qu'elle n'habille pas. */
     const r = window.TBF_ETATS.resoudre(mannequin.id,
       { evo: mannequin.evo, skin: o.id, etat: 'neutre' });
-    if (r?.skin === o.id) {
+    if (r?.skin === o.id && r.evo === mannequin.evo) {
       return '<img src="' + r.src + '" alt="" loading="lazy" onerror="this.remove()">';
     }
   }
