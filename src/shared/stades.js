@@ -235,6 +235,44 @@ export const STADES = [
     mods: { pushMult: 1.35, ferveurBonus: 1.2, tempoWindow: 0.78, refundBonus: 0.8 },
     effet: 'Tout le monde pousse comme jamais, et plus personne n’a ses repères.',
   },
+
+  /* ------------------------------------------------------ les trois époques
+
+     Un lieu par époque des tenues — Halloween, la préhistoire, l'après —
+     et la même règle que les quinze d'avant : chacun ouvre une porte et en
+     ferme une, pour les deux tribunes à la fois. Ils n'ont aucun lien avec
+     la tenue portée : un Fanzzy préhistorique ne joue pas mieux à la
+     caverne. Ce serait la première fois qu'une tenue donne de la force. */
+  {
+    id: 'citrouilles',
+    nom: 'La Nuit des Citrouilles',
+    rar: 'rare',
+    texte: 'Le brouillard du 31 recouvre les gradins. On ne voit plus l’autre tribune, on l’entend.',
+    /* La peur rend prudent : on contre tout ce qui vient, et l'on ose moins
+       le geste parfait. */
+    mods: { parryBonus: 1.22, perfectBonus: 0.88 },
+    effet: 'La nuit fait peur : on se contre bien mieux, et les gestes parfaits rapportent moins.',
+  },
+  {
+    id: 'caverne',
+    nom: 'L’Arène des Cavernes',
+    rar: 'rare',
+    texte: 'Des gradins taillés dans la roche. Le moindre chant revient trois fois.',
+    /* La pierre résonne : ce qui se tient porte loin, et la résonance
+       ralentit tout le reste. Un lieu pour les voix longues. */
+    mods: { holdBonus: 1.2, tempoInterval: 70 },
+    effet: 'La pierre résonne : les chants tenus portent plus loin, et le rythme ralentit.',
+  },
+  {
+    id: 'ruines',
+    nom: 'Le Stade d’Après',
+    rar: 'epique',
+    texte: 'Un toit effondré, deux projecteurs qui tiennent encore, et plus rien à perdre.',
+    /* Plus rien à perdre : on pousse plus fort, et rien de ce qu'on dépense
+       ne revient. */
+    mods: { pushMult: 1.15, refundBonus: 0.8 },
+    effet: 'Plus rien à perdre : chaque poussée porte plus loin, et rien ne se récupère.',
+  },
 ];
 
 export const STADE_BY_ID = new Map(STADES.map((s) => [s.id, s]));

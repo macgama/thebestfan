@@ -1185,7 +1185,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
            lorsqu'il y a vraiment quelque chose à proposer. Voir `premiersPas`. -->
       <a class="pas1" id="pas1" href="/aide" hidden></a>
       <div class="duo">
-        <a class="tbf-cadre collec" href="/fanzzy">
+        <a class="tbf-cadre collec" href="/collection">
           <span class="t"><b>COLLECTION</b><span id="collecTxt">—</span></span>
           <span class="jauge"><i id="collecBar"></i></span>
         </a>
@@ -2214,8 +2214,14 @@ async function jsonp(url, options) {
     // peut posséder est le pire message qu'on puisse lui envoyer. Le maximum
     // avec `eus` couvre le cas d'une série refermée après coup : ses cartes
     // restent à lui, donc au numérateur.
-    const eus = Object.keys(coll?.collection ?? {}).length;
-    const total = Math.max(dex.aCollectionner ?? (dex.dex ?? []).length, eus);
+    /* **Tout ce qui se gagne**, et plus seulement les personnages : voir
+       `bibliotheque()` côté serveur. L'ancien compte reste le repli d'un
+       serveur qui ne connaît pas encore la bibliothèque. */
+    const biblio = coll ? await jsonp('/api/fanzzy/bibliotheque',
+      { credentials: 'same-origin' }).catch(() => null) : null;
+    const eus = biblio?.total?.gagnes ?? Object.keys(coll?.collection ?? {}).length;
+    const total = biblio?.total?.possibles
+      ?? Math.max(dex.aCollectionner ?? (dex.dex ?? []).length, eus);
     if (total) {
       $('collecTxt').textContent = `${eus}/${total}`;
       $('collecBar').style.width = `${Math.round((eus / total) * 100)}%`;

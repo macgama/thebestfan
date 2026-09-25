@@ -267,6 +267,60 @@ export const STUFF = [
   { id: 'rp-corde-neuve', nom: 'Corde neuve', rar: 'legendaire',
     texte: 'Elle ne casse pas. Elle ne pardonne aucun temps mort.',
     mods: { holdBonus: 1.55, holdForgive: -2, refundBonus: 0.8, perfectBonus: 1.15 } },
+
+  /* ---------------------------------------------------- les trois époques
+
+     Quatre pièces par époque des tenues, une par rareté, et chacune avec
+     son revers comme toutes les autres. Elles se portent sur n'importe quel
+     Fanzzy, dans n'importe quelle tenue : l'époque est un univers de
+     collection, pas une condition de jeu. */
+  { id: 'hw-bougie', nom: 'Bougie de citrouille', rar: 'commune',
+    texte: 'La flamme vacille en mesure. Elle ne réchauffe personne.',
+    mods: { tempoWindow: 1.16, breathBonus: 0.9 } },
+
+  { id: 'hw-cape', nom: 'Cape de vampire', rar: 'rare',
+    texte: 'On s’y drape, rien ne passe. On s’y prend aussi les bras.',
+    mods: { parryResist: 1.3, mashBonus: 0.86 } },
+
+  { id: 'hw-grimoire', nom: 'Grimoire des chants oubliés', rar: 'epique',
+    texte: 'Des refrains d’avant-guerre, parfaits et interminables.',
+    mods: { perfectBonus: 1.36, tempoInterval: 110 } },
+
+  { id: 'hw-lanterne', nom: 'La Lanterne du 31', rar: 'legendaire',
+    texte: 'On la lève, et la tribune d’en face recule. Elle pèse au bout du bras.',
+    mods: { parryBonus: 1.45, holdBonus: 1.3, breathBonus: 0.84, tempoWindow: 0.88 } },
+
+  { id: 'ph-os', nom: 'Os à frapper', rar: 'commune',
+    texte: 'On tape sur ce qu’on trouve. On ne tient rien longtemps.',
+    mods: { mashBonus: 1.18, holdForgive: -1 } },
+
+  { id: 'ph-peau', nom: 'Peau de bête', rar: 'rare',
+    texte: 'Chaude pour tenir la note. Lourde pour marteler.',
+    mods: { holdBonus: 1.3, mashTime: 450 } },
+
+  { id: 'ph-silex', nom: 'Silex taillé', rar: 'epique',
+    texte: 'Un geste net, sans reprise possible. On ne contre rien avec.',
+    mods: { perfectBonus: 1.34, parryBonus: 0.84 } },
+
+  { id: 'ph-mammouth', nom: 'Corne de mammouth', rar: 'legendaire',
+    texte: 'Soufflée, elle fait trembler la roche. Il faut des bras pour la porter.',
+    mods: { mashBonus: 1.4, breathBonus: 1.2, tempoWindow: 0.84, refundBonus: 0.82 } },
+
+  { id: 'ap-bidon', nom: 'Bidon d’eau recyclée', rar: 'commune',
+    texte: 'On boit, on repart. Le goût gâche le geste parfait.',
+    mods: { breathBonus: 1.18, perfectBonus: 0.88 } },
+
+  { id: 'ap-cle', nom: 'Clé à molette', rar: 'rare',
+    texte: 'On cogne fort et vite. On ne la tient pas longtemps.',
+    mods: { mashBonus: 1.28, mashTime: -400, holdForgive: -1 } },
+
+  { id: 'ap-compteur', nom: 'Compteur Geiger', rar: 'epique',
+    texte: 'Il crépite en rythme. Tout le monde l’entend venir.',
+    mods: { tempoWindow: 1.34, parryResist: 0.82 } },
+
+  { id: 'ap-drapeau', nom: 'Le dernier drapeau', rar: 'legendaire',
+    texte: 'Recousu vingt fois, il tient encore. Rien ne le perce, et il ralentit tout.',
+    mods: { holdBonus: 1.5, parryResist: 1.3, tempoInterval: 130, mashBonus: 0.8 } },
 ];
 
 export const SKIN_BY_ID = new Map(SKINS.map((s) => [s.id, s]));

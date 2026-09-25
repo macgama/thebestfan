@@ -136,6 +136,19 @@ export const INVITES = {
   fumigenes: ['orange', 'a supporter reaching out to set a lit flare down on one exact '
     + 'point of the barrier, arm fully extended and eyes fixed on that spot, thick smoke '
     + 'already pouring from it, the rest of the stand blurred behind him'],
+  /* Les quatre de l'automne 2026. */
+  vague: ['gold', 'a Mexican wave rolling around a packed stadium bowl at night, one '
+    + 'section of the crowd rising with arms up while the next ones wait seated, the '
+    + 'wave clearly travelling around the ring'],
+  renvoi: ['teal', 'a capo on a platform beating two big drums, one on each side, while '
+    + 'the stand opposite answers on its own two drums in mirror image, split symmetric '
+    + 'composition, call and mirrored response'],
+  pluie: ['red', 'supporters throwing long white paper streamer rolls from the terrace '
+    + 'towards the pitch, the ribbons unrolling in wide arcs through the floodlights and '
+    + 'bending in the wind'],
+  canon: ['gold', 'two halves of a terrace singing against each other in a round, left '
+    + 'side and right side each led by its own capo, two waves of raised arms offset in '
+    + 'time'],
   tension: ['cyan', 'a row of supporters hauling on a rope and holding it dead still at '
     + 'one exact level, arms locked and heels dug in, every muscle taut, nothing moving '
     + 'anywhere in the frame'],

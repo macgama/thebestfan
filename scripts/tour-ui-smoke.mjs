@@ -208,6 +208,7 @@ const ECRANS = [
   ['/classement', 'classement'],
   ['/carnet', 'carnet'],
   ['/profil', 'profil'],
+  ['/collection', 'collection'],
   ['/compte', 'compte'],
   ['/teletext', 'télétexte'],
   ['/bienvenue', 'inscription'],
@@ -1321,6 +1322,43 @@ for (const [route, nom] of tousLesEcrans) {
     envoye.type === 'password' && envoye.presse === 'false'
     || (console.log('        il est :', JSON.stringify(envoye)), false));
   await pg.close();
+}
+
+/* ================================================ la bibliothèque de collection
+
+   La carte « Collection » de l'accueil y mène, et elle y compte **tout** ce
+   qui se gagne — plus seulement les personnages. On vérifie que le lien y va,
+   que les cinq types sont rangés, et que l'accueil affiche le même total que
+   la page : deux chiffres pour la même question, et l'un des deux ment. */
+{
+  const pa = await nav.newPage();
+  await pa.evaluateOnNewDocument(() => {
+    try { sessionStorage.setItem('tbf.ouverture', '1'); } catch { /* rien */ }
+  });
+  await pa.setViewport({ width: 400, height: 880 });
+  await pa.goto(base + '/', { waitUntil: 'networkidle0' });
+  const accueil = await pa.evaluate(() => ({
+    lien: document.querySelector('.collec')?.getAttribute('href'),
+    compte: document.getElementById('collecTxt')?.textContent.trim(),
+  }));
+  await pa.close();
+  check('la carte Collection de l’accueil mène à la bibliothèque', accueil.lien === '/collection'
+    || (console.log('        elle mène à :', accueil.lien), false));
+
+  const pc = await nav.newPage();
+  await pc.setViewport({ width: 400, height: 880 });
+  await pc.goto(base + '/collection', { waitUntil: 'networkidle0' });
+  const vue = await pc.evaluate(() => ({
+    types: [...document.querySelectorAll('.type')].map((s) => s.dataset.type),
+    total: document.querySelector('.total .n')?.textContent.replace(/\s+/g, ''),
+    vignettes: document.querySelectorAll('.type[data-type="fanzzy"] .vig').length,
+  }));
+  await pc.close();
+  check(`la bibliothèque range les cinq types (${vue.types.join(', ')})`,
+    ['fanzzy', 'etats', 'tenues', 'stuff', 'actions'].every((k) => vue.types.includes(k)));
+  check('elle montre chaque Fanzzy à gagner, possédé ou en silhouette', vue.vignettes > 0);
+  check(`et l’accueil affiche le même total qu’elle (${accueil.compte} · ${vue.total})`,
+    Boolean(accueil.compte) && accueil.compte.replace(/\s+/g, '') === vue.total);
 }
 
 if (process.env.CAPTURE) console.log(`\n   captures dans ${tmpdir()}`);

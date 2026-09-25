@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ma collection — thebestfan</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui.css">
+<script src="/dialogue.js" defer></script>
+<!--
+  **La bibliothèque : tout ce qui se gagne, et ce qu'on en a.**
+
+  La carte « Collection » de l'accueil ne comptait que les personnages — trente
+  sur trente-cinq, et l'on croyait avoir presque tout. Les états, les tenues,
+  l'équipement et les cartes d'action se gagnent aussi, dans les mêmes
+  boosters, et n'étaient comptés nulle part : un joueur ne pouvait pas savoir
+  ce qui lui restait à trouver, ni même que cela existait.
+
+  Cette page les range par type, avec le même calcul que les boosters — voir
+  `bibliotheque()` dans `src/server/fanzzy/index.js`. Ce qu'elle annonce comme
+  « à gagner » est donc exactement ce qu'un booster peut encore sortir.
+-->
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
+#app{position:relative;width:100%;max-width:var(--colonne);min-height:100dvh;display:flex;
+  flex-direction:column;padding-bottom:40px}
+
+.tete{padding:18px 16px 4px}
+.tete h1{font-family:var(--banner);font-size:26px;letter-spacing:.12em;margin:0}
+
+/* Le total, en grand : c'est la réponse à « où j'en suis ». */
+.total{margin:10px 14px 4px;padding:16px;border-radius:14px;background:#0B0F14;
+  border:1px solid rgba(242,238,228,.12)}
+.total .n{font-family:var(--banner);font-size:34px;line-height:1;color:var(--projo)}
+.total .n small{font-size:16px;opacity:.55;color:var(--craie)}
+.total p{margin:6px 0 10px;font-size:12px;opacity:.6}
+
+.jauge{height:8px;border-radius:5px;background:rgba(242,238,228,.1);overflow:hidden}
+.jauge i{display:block;height:100%;border-radius:5px;width:0;transition:width .7s ease;
+  background:linear-gradient(90deg,#B98A14,var(--projo))}
+
+/* Un type par bloc, repliable : cinq grilles ouvertes à la fois feraient une
+   page qu'on ne parcourt pas. Le premier est ouvert, les autres se touchent. */
+.type{margin:12px 14px 0;border-radius:14px;background:#0B0F14;
+  border:1px solid rgba(242,238,228,.12);overflow:hidden}
+.type>button{all:unset;box-sizing:border-box;width:100%;display:grid;cursor:pointer;
+  grid-template-columns:1fr auto;gap:6px 12px;padding:14px 16px;align-items:center}
+.type>button:focus-visible{outline:2px solid var(--projo);outline-offset:-2px}
+.type h2{margin:0;font-family:var(--banner);font-size:16px;letter-spacing:.08em}
+.type .compte{font-family:var(--banner);font-size:15px;color:var(--projo)}
+.type .compte small{opacity:.55;color:var(--craie)}
+.type .jauge{grid-column:1/-1;height:6px}
+.type .aide{grid-column:1/-1;font-size:11.5px;opacity:.55;line-height:1.45}
+.type .corps{display:none;padding:0 12px 14px}
+.type.ouvert .corps{display:block}
+
+/* Les vignettes. Ce qu'on n'a pas reste visible, en silhouette : on sait ce
+   qu'on cherche, sans qu'on nous le donne. */
+.grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
+.vig{position:relative;border-radius:10px;background:rgba(242,238,228,.05);
+  border:1px solid rgba(242,238,228,.1);aspect-ratio:3/4;display:flex;flex-direction:column;
+  justify-content:flex-end;overflow:hidden}
+.vig img{position:absolute;inset:6px 6px 26px;width:calc(100% - 12px);height:calc(100% - 32px);
+  object-fit:contain}
+.vig b{position:relative;display:block;font-size:9.5px;line-height:1.2;padding:4px 5px;
+  background:linear-gradient(180deg,transparent,rgba(4,6,10,.9));
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vig.non img{filter:brightness(0) opacity(.35)}
+.vig.non b{opacity:.45}
+.vig.oui{border-color:rgba(245,195,59,.45)}
+
+/* Les états et les tenues se comptent par personnage : ils s'y rattachent,
+   et une grille de quatre cents cases ne se lirait pas. */
+.perso{display:grid;grid-template-columns:44px 1fr;gap:4px 10px;align-items:center;
+  padding:8px 4px;border-top:1px solid rgba(242,238,228,.07)}
+.perso img{grid-row:1/3;width:44px;height:44px;border-radius:50%;object-fit:cover;
+  background:rgba(242,238,228,.06)}
+.perso b{font-size:13px}
+.perso .lignes{display:flex;gap:14px;font-size:11px;opacity:.75}
+.perso .lignes span b{font-size:11px;color:var(--projo)}
+.vide{font-size:12px;opacity:.55;padding:6px 4px;line-height:1.5}
+.err{margin:30px 16px;text-align:center;opacity:.7}
+</style>
+</head>
+<body>
+<main id="app">
+  <div class="tete">
+    <h1>COLLECTION</h1>
+    <p class="tbf-sous">Tout ce qui se gagne, et ce que tu en as.</p>
+  </div>
+  <div id="corps"><div class="spin"></div></div>
+</main>
+
+<script src="/fanzzy-art.js"></script>
+<script src="/stuff-art.js"></script>
+<script src="/action-art.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
+  (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const pc = (g, p) => (p ? Math.round((g / p) * 100) : 0);
+
+/** Une vignette : l'image, le nom, possédée ou en silhouette. */
+const vig = (src, nom, possede) => `<div class="vig ${possede ? 'oui' : 'non'}"
+  title="${esc(nom)}${possede ? '' : ' — à gagner'}">
+  ${src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+  <b>${esc(nom)}</b></div>`;
+
+/**
+ * Un bloc par type. `aide` dit **où** ça se gagne : un compteur sans chemin
+ * est un reproche, pas un objectif.
+ */
+function bloc(cle, titre, t, aide, corps, ouvert) {
+  return `<section class="type ${ouvert ? 'ouvert' : ''}" data-type="${cle}">
+    <button type="button" aria-expanded="${ouvert}">
+      <h2>${titre}</h2>
+      <span class="compte">${t.gagnes}<small> / ${t.possibles}</small></span>
+      <span class="jauge"><i style="width:${pc(t.gagnes, t.possibles)}%"></i></span>
+      <span class="aide">${aide}</span>
+    </button>
+    <div class="corps">${corps}</div>
+  </section>`;
+}
+
+function rendre(b) {
+  const T = b.types;
+  const buste = (id) => window.FZART?.adresse?.(id, 'buste') ?? '';
+  const fanzzy = `<div class="grille">${T.fanzzy.items.map((f) =>
+    vig(buste(f.id), f.nom, f.possede)).join('')}</div>`;
+  const stuff = `<div class="grille">${T.stuff.items.map((s) =>
+    vig(window.TBF_STUFF?.adresse?.(s.id), s.nom, s.possede)).join('')}</div>`;
+  const actions = `<div class="grille">${T.actions.items.map((a) =>
+    vig(window.TBF_ACTION?.adresse?.(a.id), a.nom, a.possede)).join('')}</div>`;
+  const parPerso = (quoi) => (b.parFanzzy.length
+    ? b.parFanzzy.map((p) => `<div class="perso">
+        <img src="${esc(buste(p.id))}" alt="" loading="lazy" onerror="this.remove()">
+        <b>${esc(p.nom)}</b>
+        <span class="lignes"><span><b>${p[quoi].gagnes}</b> / ${p[quoi].possibles}</span>
+          <span>${p.stade} âge${p.stade > 1 ? 's' : ''} débloqué${p.stade > 1 ? 's' : ''} sur ${p.ages}</span></span>
+      </div>`).join('')
+    : '<div class="vide">Ouvre un booster : chaque Fanzzy que tu obtiens ouvre ses états et ses tenues.</div>');
+
+  $('corps').innerHTML = `
+    <div class="total">
+      <div class="n">${b.total.gagnes}<small> / ${b.total.possibles}</small></div>
+      <p>${pc(b.total.gagnes, b.total.possibles)} % de tout ce qui se gagne aujourd’hui.</p>
+      <div class="jauge"><i style="width:${pc(b.total.gagnes, b.total.possibles)}%"></i></div>
+    </div>
+    ${bloc('fanzzy', 'FANZZY', T.fanzzy,
+      'Dans les boosters. Chacun a jusqu’à trois âges, qui s’achètent en écharpes.', fanzzy, true)}
+    ${bloc('etats', 'ÉTATS', T.etats,
+      'Dans les boosters, pour un Fanzzy que tu as, à un âge que tu as débloqué : joie, dépit, poussée, colère.',
+      parPerso('etats'))}
+    ${bloc('tenues', 'TENUES', T.tenues,
+      'Dans les boosters et à la boutique, pour un Fanzzy que tu as, âge par âge.',
+      parPerso('tenues'))}
+    ${bloc('stuff', 'ÉQUIPEMENT', T.stuff,
+      'Dans les boosters et à la boutique. Chaque pièce a un bonus et un revers.', stuff)}
+    ${bloc('actions', 'CARTES D’ACTION', T.actions,
+      'Les communes sont à tout le monde ; les autres sortent des boosters.', actions)}`;
+
+  $('corps').addEventListener('click', (e) => {
+    const bouton = e.target.closest('.type>button');
+    if (!bouton) return;
+    const s = bouton.parentElement;
+    s.classList.toggle('ouvert');
+    bouton.setAttribute('aria-expanded', String(s.classList.contains('ouvert')));
+  });
+}
+
+(async () => {
+  try {
+    const r = await fetch('/api/fanzzy/bibliotheque', { credentials: 'same-origin' });
+    if (r.status === 401) { location.href = '/compte'; return; }
+    if (!r.ok) throw new Error(String(r.status));
+    rendre(await r.json());
+  } catch (e) {
+    $('corps').innerHTML = `<div class="err">La collection n’a pas pu être chargée.<br>
+      <small>${esc(e.message)}</small></div>`;
+  }
+})();
+</script>
+<script src="/fx.js" defer></script>
+<script src="/menu.js" defer></script>
+<script src="/nav.js" defer></script>
+<script src="/pwa.js" defer></script>
+</body>
+</html>

@@ -48,8 +48,15 @@ export const FRANGE = 1.2;
  * sangle sortait par la droite.
  *
  * Écrit dans `data` sur place, et rend de quoi juger le résultat.
+ *
+ * **`trous`** : rendre transparent aussi le fond **enfermé** dans l'objet —
+ * l'œil d'une clé à molette, l'anneau de son manche. La propagation depuis
+ * les bords ne l'atteint pas, et c'est voulu en général : un noir intérieur
+ * est une ombre, pas un trou. Mais sur le vert de studio, qu'aucun objet du
+ * jeu ne porte, un vert intérieur ne peut être que du fond. Les équipements
+ * l'activent ; les logos, qui peuvent être verts, non.
  */
-export function detourer({ data, width, height }, reference) {
+export function detourer({ data, width, height }, reference, { trous = false } = {}) {
   const n = width * height;
   const fond = new Uint8Array(n);
   const pile = [];
@@ -84,6 +91,13 @@ export function detourer({ data, width, height }, reference) {
     if (y < height - 1) { const j = i + width; if (!fond[j] && ressemble(j)) { fond[j] = 1; pile.push(j); } }
   }
 
+  /* Seulement sur le vert de studio : les premières pièces ont été rendues sur
+     du **noir**, et sur elles la même passe trouait les ombres intérieures —
+     jusqu’à un quart de la capuche. */
+  const studio = reference[1] > reference[0] + 60 && reference[1] > reference[2] + 60;
+  if (trous && studio) {
+    for (let i = 0; i < n; i++) if (!fond[i] && ressemble(i)) fond[i] = 1;
+  }
   for (let i = 0; i < n; i++) data[i * 4 + 3] = fond[i] ? 0 : 255;
   return { decoupes: fond.reduce((s, v) => s + v, 0), total: n };
 }
@@ -97,10 +111,11 @@ export function detourer({ data, width, height }, reference) {
  * @param entree  le chemin du rendu.
  * @param cote    le côté du carré produit, en pixels.
  * @param nom     l'identifiant, pour que les messages d'erreur le nomment.
+ * @param options `{ trous }` — voir `detourer`.
  * @returns {{png: Buffer, part: number}} l'image détourée, et la part de
  *   l'image qui a été jugée « fond » — voir `partSuspecte`.
  */
-export async function enIcone(sharp, entree, cote, nom) {
+export async function enIcone(sharp, entree, cote, nom, options = {}) {
   const { data, info } = await sharp(entree).ensureAlpha().raw()
     .toBuffer({ resolveWithObject: true });
 
@@ -109,7 +124,7 @@ export async function enIcone(sharp, entree, cote, nom) {
      à l'autre ce n'est pas le même écart. */
   const reference = [data[0], data[1], data[2]];
   const { decoupes, total } = detourer(
-    { data, width: info.width, height: info.height }, reference);
+    { data, width: info.width, height: info.height }, reference, options);
 
   /* On adoucit **le masque seul**, jamais l'image. Un flou posé sur les quatre
      canaux ensemble rendait aussi le dessin flou : la maille d'une écharpe et

@@ -7,7 +7,7 @@ import { DEX, BY_ID, SETS } from '../src/shared/fanzzy/dex.js';
 import { SKINS } from '../src/shared/fanzzy/inventaire.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
-import { chargerTenues } from '../src/server/fanzzy/tenues.js';
+import { chargerTenues, tenuesPubliees } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 
@@ -284,7 +284,22 @@ check('solde exact après achat et doublons',
 r = await call('/api/fanzzy/state');
 const col = r.json.collection;
 check('les doublons sont comptés', Object.values(col).some((n) => n > 1));
-check('les doublons ont rapporté', r.json.wallet.scarves > 500 - PACK_PRICE);
+/* **Un doublon rapporte**, et on le vérifie sur un booster qui en contient
+   un. Le contrôle lisait le solde après un seul achat, en pariant qu'il en
+   sortirait au moins un : le pari tenait tant que l'équipement était court,
+   il a cessé de tenir une fois sur six quand douze pièces sont arrivées — un
+   booster sort plus souvent du neuf, donc moins de doublons. On ouvre donc
+   jusqu'à en voir un, et c'est celui-là qu'on juge. */
+{
+  let avecDoublon = null;
+  for (let i = 0; i < 12 && !avecDoublon; i++) {
+    await pool.query('UPDATE user_wallet SET scarves = 500 WHERE user_id = ?', [U]);
+    const o = await call('/api/fanzzy/open', { method: 'POST', body: { set: 'TR', buy: true } });
+    if ((o.json.cards ?? []).some((c) => c.type === 'fanzzy' && c.new === false)) avecDoublon = o.json;
+  }
+  check('les doublons ont rapporté', Boolean(avecDoublon) && avecDoublon.scarvesGained > 0
+    || (console.log('        booster :', JSON.stringify(avecDoublon?.cards?.map((c) => [c.type, c.new]))), false));
+}
 
 /* --------------------------------------------------------- évolution */
 
@@ -529,6 +544,57 @@ check(`catalogue de l'équipement servi (${STUFF.length})`,
   await pool.execute('DELETE FROM saisons');
   await chargerSaisons(pool);
   await chargerSeries(pool);
+}
+
+/* ============================================================ la bibliothèque
+
+   Tout ce qui se gagne, par type. Deux choses comptent plus que les
+   chiffres eux-mêmes : **chaque gain compte pour un, à sa place**, et **le
+   total possible ne bouge pas quand on progresse**. Une bibliothèque qui
+   ajouterait les âges à l'univers au fur et à mesure qu'on les paie ferait
+   reculer le pourcentage au moment où l'on avance. */
+{
+  const lire = async () => (await call('/api/fanzzy/bibliotheque')).json;
+  const avant = await lire();
+  const types = ['fanzzy', 'etats', 'tenues', 'stuff', 'actions'];
+  check('la bibliothèque range les cinq types',
+    types.every((k) => Number.isFinite(avant.types?.[k]?.possibles))
+    || (console.log('        elle rend :', Object.keys(avant.types ?? {}).join(', ')), false));
+  const somme = types.reduce((s, k) => s + avant.types[k].possibles, 0);
+  check(`et son total est leur somme (${avant.total?.possibles})`, avant.total?.possibles === somme);
+  check('les cartes d’action communes sont à tout le monde dès le début',
+    avant.types.actions.gagnes >= ACTIONS.filter((a) => a.rar === 'commune').length);
+
+  /* Un personnage, une tenue, un état, une pièce : chacun doit compter pour
+     un, dans son type, et nulle part ailleurs. */
+  const X = avant.types.fanzzy.items.find((f) => !f.possede)?.id;
+  const tenue = tenuesPubliees().find((s) => s.id !== 'base')?.id;
+  const piece = avant.types.stuff.items.find((s) => !s.possede)?.id;
+  await pool.execute(`INSERT INTO user_fanzzy (user_id, fanzzy_id, copies, stage) VALUES (?, ?, 1, 1)
+    ON DUPLICATE KEY UPDATE stage = 1`, [U, X]);
+  if (tenue) {
+    await pool.execute(`INSERT IGNORE INTO user_skins (user_id, fanzzy_id, stage, skin_id) VALUES (?, ?, 1, ?)`,
+      [U, X, tenue]);
+  }
+  await pool.execute(`INSERT IGNORE INTO user_etats (user_id, fanzzy_id, stage, etat) VALUES (?, ?, 1, 'joie')`, [U, X]);
+  await pool.execute(`INSERT IGNORE INTO user_stuff (user_id, stuff_id) VALUES (?, ?)`, [U, piece]);
+  const apres = await lire();
+  const plus = (k) => apres.types[k].gagnes - avant.types[k].gagnes;
+  check(`un gain compte pour un, à sa place (${types.map((k) => `${k} +${plus(k)}`).join(' · ')})`,
+    plus('fanzzy') === 1 && plus('etats') === 1 && plus('tenues') === (tenue ? 1 : 0)
+      && plus('stuff') === 1 && plus('actions') === 0);
+  check('et le personnage apparaît avec ses états et ses tenues',
+    apres.parFanzzy.some((p) => p.id === X && p.etats.gagnes === 1));
+
+  await pool.execute('UPDATE user_fanzzy SET stage = 3 WHERE user_id = ? AND fanzzy_id = ?', [U, X]);
+  const evolue = await lire();
+  check(`faire grandir un Fanzzy ne change pas ce qui reste à gagner (${evolue.total.possibles})`,
+    evolue.total.possibles === apres.total.possibles && evolue.total.gagnes === apres.total.gagnes);
+
+  await pool.execute('DELETE FROM user_etats WHERE user_id = ? AND fanzzy_id = ?', [U, X]);
+  await pool.execute('DELETE FROM user_skins WHERE user_id = ? AND fanzzy_id = ?', [U, X]);
+  await pool.execute('DELETE FROM user_stuff WHERE user_id = ? AND stuff_id = ?', [U, piece]);
+  await pool.execute('DELETE FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?', [U, X]);
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);

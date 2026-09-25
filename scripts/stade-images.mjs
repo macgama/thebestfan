@@ -176,6 +176,16 @@ export const INVITES = {
     + 'crowd beneath it, its folds catching a little floodlight along the top '
     + 'edge only',
 
+  /* ------------------------------------------ les trois époques */
+  citrouilles: 'a football ground at night on Halloween, thick low fog drifting over '
+    + 'the dark side stands, rows of carved glowing pumpkins set along the touchlines, '
+    + 'bare twisted trees beyond both ends of the pitch',
+  caverne: 'a prehistoric stadium carved into a canyon at night, the side stands are '
+    + 'rough stone terraces cut into the rock walls, burning torches on wooden poles '
+    + 'along the touchlines, the pitch a lush green meadow',
+  ruines: 'a ruined stadium after the end of the world at night, the side stands cracked '
+    + 'and half collapsed with rusted crush barriers, a broken roof hanging over them, '
+    + 'the pitch still green under two surviving floodlights, drifting dust',
   'rp-inauguration': 'a brand-new football ground at night on its opening '
     + 'evening, everything unused — raw pale concrete without a stain, the seats '
     + 'still in their factory rows, a perfect untouched pitch, brand-new '

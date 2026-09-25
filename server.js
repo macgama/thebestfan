@@ -786,6 +786,7 @@ app.get('/teletext', (_req, res) => page(res, 'teletext.html'));
 app.get('/matchs', (_req, res) => page(res, 'aujourdhui.html'));
 app.get('/bienvenue', (_req, res) => page(res, 'bienvenue.html'));
 app.get('/profil', (_req, res) => page(res, 'profil.html'));
+app.get('/collection', (_req, res) => page(res, 'collection.html'));
 app.get('/classement', (_req, res) => page(res, 'classement.html'));
 app.get('/boutique', (_req, res) => page(res, 'boutique.html'));
 /* L'abonnement a sa page, et non un rayon de la boutique : il ne s'achète pas

@@ -1564,8 +1564,16 @@ await page.close();
      propre mise en scène plutôt que le comportement. */
   const [[{ n: possedes }]] = await pool.query(
     'SELECT COUNT(*) n FROM user_fanzzy WHERE user_id = ?', [U]);
-  check(`la collection est chiffrée (${possedes} possédés)`,
-    new RegExp(`^${possedes}/\\d+$`).test(hud.collec));
+  /* **Tout ce qui se gagne**, depuis que la carte compte la bibliothèque et
+     plus seulement les personnages : le chiffre attendu est celui du serveur,
+     pour la même raison qu'au-dessus. Les personnages possédés y sont, et au
+     moins autant — on ne peut pas en avoir gagné moins que ça. */
+  const biblio = await page.evaluate(() => fetch('/api/fanzzy/bibliotheque',
+    { credentials: 'same-origin' }).then((r) => r.json()).catch(() => null));
+  check(`la collection est chiffrée (${hud.collec}, dont ${possedes} Fanzzy)`,
+    hud.collec === `${biblio?.total?.gagnes}/${biblio?.total?.possibles}`
+      && biblio.types.fanzzy.gagnes >= Number(possedes)
+    || (console.log('        bibliothèque :', JSON.stringify(biblio?.total)), false));
   check('et sa jauge est remplie d’autant', /^[0-9.]+%$/.test(hud.jauge));
   check('le bouton d’entrée mène au duel hors match', hud.entrer === '/duel-nvn');
   await page.close();
