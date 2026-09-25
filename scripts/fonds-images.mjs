@@ -105,6 +105,41 @@ scoreboards, watermark, faces, foreground characters.`;
  * n'ouvre pas.
  */
 export const INVITES = {
+  /* **Une série par tenue, base comprise**, et le palier suit l'âge :
+     `commune` au premier, `rare` au deuxième, `epique` au troisième,
+     `legendaire` pour un Fanzzy légendaire — voir `palierDecor` dans
+     `fanzzy-fond.js`. Le lieu monte d'un cran quand le personnage grandit. */
+  base: {
+    commune: 'an ordinary concrete football terrace on a grey Saturday afternoon, '
+      + 'worn crush barriers, a few scarves knotted on the railings, soft overcast light',
+    rare: 'the same concrete terrace at golden hour before kick-off, a low warm sun '
+      + 'raking across the steps, long shadows of the crush barriers, flags hanging still',
+    epique: 'the terrace under floodlights on a cold night match, a violet-blue haze '
+      + 'of flare smoke drifting over the steps, the floodlight towers glowing through it',
+    legendaire: 'the terrace on the night of a final, gold confetti hanging in the '
+      + 'floodlit air, a huge rolled tifo at the top of the stand, the steps glowing warm gold',
+  },
+  prehistorique: {
+    commune: 'a prehistoric amphitheatre carved into a rocky hillside, rough stone '
+      + 'steps like a terrace, ochre earth, pale morning sky, a few hide banners on wooden poles',
+    rare: 'the same stone terraces at sunset, torches on wooden poles lit along the '
+      + 'steps, warm ochre and amber light, distant volcano smoke on the horizon',
+    epique: 'the rock terraces at night lit by large bonfires, cave-painting hand '
+      + 'prints and animal figures glowing on the rock walls, sparks rising into the dark',
+    legendaire: 'the rock terraces under an enormous comet crossing the night sky, a '
+      + 'mammoth-tusk arch framing the top of the stand, glowing embers, golden firelight',
+  },
+  apocalyptique: {
+    commune: 'a ruined football terrace after the end of the world, cracked concrete '
+      + 'steps, rusted crush barriers, weeds between the steps, dusty beige sky',
+    rare: 'the ruined terrace at dusk under a toxic orange sky, torn flags on bent '
+      + 'poles, drifting ash, broken floodlight towers in silhouette',
+    epique: 'the ruined terrace at night, a single surviving floodlight flickering '
+      + 'green, a thick dust storm rolling over the steps, scrap-metal barricades',
+    legendaire: 'the ruined terrace under a blood-orange sky split by lightning, a '
+      + 'line of burning oil drums along the front barrier, the broken stadium roof '
+      + 'hanging overhead, embers in the wind',
+  },
   halloween: {
     commune: 'an empty concrete terrace on the evening of 31 October, dusk '
       + 'already blue, a few carved pumpkins set along the crush barriers and '

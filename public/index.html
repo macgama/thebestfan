@@ -382,6 +382,21 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .scene{position:relative;height:100%;display:grid;place-items:end center;
   padding:34px 0 10px;
   min-height:0;text-decoration:none;color:inherit}
+/* **Le décor derrière le personnage**, le même que sur la fiche et dans
+   « Mon Fanzzy » : sa tenue décide du lieu, son âge du palier. Il n'y en
+   avait aucun — le personnage se tenait sur le flou de la page, et un
+   costume préhistorique ou apocalyptique ne changeait rien à l'écran qu'on
+   ouvre le plus souvent.
+
+   Une carte debout, à la hauteur de la scène, et **fondue sur ses bords** :
+   l'accueil n'est pas une fiche, et un cadre net au milieu des rails se
+   lirait comme une fenêtre ouverte sur autre chose. */
+.decor{position:absolute;left:50%;top:34px;bottom:10px;aspect-ratio:2/3;max-width:100%;
+  transform:translateX(-50%);pointer-events:none;opacity:0;transition:opacity .5s;
+  -webkit-mask-image:radial-gradient(ellipse 58% 56% at 50% 54%,#000 58%,transparent 100%);
+  mask-image:radial-gradient(ellipse 58% 56% at 50% 54%,#000 58%,transparent 100%)}
+.decor.on{opacity:1}
+.decor svg{display:block;width:100%;height:100%}
 .halo{position:absolute;left:50%;top:47%;width:min(112%,460px);aspect-ratio:1;
   transform:translate(-50%,-50%);pointer-events:none;
   background:radial-gradient(circle,rgba(245,195,59,.28) 0%,rgba(224,64,44,.14) 32%,
@@ -1081,6 +1096,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
       </nav>
 
       <div class="scene" id="scene">
+        <div class="decor" id="decor" aria-hidden="true"></div>
         <div class="halo"></div>
         <div class="sol"></div>
         <!-- Le bandeau d'un moment fort. Il vit dans la scène, au-dessus du
@@ -1534,7 +1550,9 @@ function retenir(p) {
     localStorage.setItem(MEMOIRE, JSON.stringify(
       p ? { id: p.id, evo: p.evo, skin: p.skin, nom: p.nom ?? '', ages: p.ages ?? 1,
             atteint: p.atteint ?? p.evo, choisi: p.choisi ?? p.evo,
-            carte: p.carte ?? p.id }
+            carte: p.carte ?? p.id,
+            /* Le décor se repeint dès le souvenir, avec le visage. */
+            ...infosDecor(p) }
         : { aucun: true }));
   } catch { /* stockage refusé : on repartira de zéro, sans plus */ }
 }
@@ -1573,7 +1591,31 @@ function nommer(p) {
   $('quiEvo').textContent = (p?.ages ?? 1) > 1
     ? `ÉVOLUTION ${p.evo} / ${p.ages}${coche}${promis}` : '';
   $('qui').classList.toggle('on', Boolean(nom));
+  decorer(p);
   commandes();
+}
+
+/** Le lieu, la famille et la rareté de l'âge montré — ce que lit le décor. */
+function infosDecor(p) {
+  const a = lignee.ages.find((x) => x.stade === p?.evo) ?? {};
+  return { set: a.set ?? p?.set, type: a.type ?? p?.type, rar: a.rar ?? p?.rar };
+}
+
+/**
+ * Pose le décor de l'âge et de la tenue montrés, ou l'ôte.
+ *
+ * Appelée par `nommer`, par où passent tous les changements de personnage :
+ * l'arrivée, le souvenir, le défilé des âges. Le supporter générique n'a
+ * pas de décor — il n'a ni tenue ni âge, et lui en prêter un serait lui
+ * donner la carte de quelqu'un d'autre.
+ */
+function decorer(p) {
+  const el = $('decor');
+  if (!el) return;
+  if (!p?.id || !window.TBF_FOND) { el.classList.remove('on'); el.innerHTML = ''; return; }
+  el.innerHTML = window.TBF_FOND.fond({ id: p.carte ?? p.id, ...infosDecor(p),
+    stage: p.evo, skin: p.skin || 'base' });
+  el.classList.add('on');
 }
 
 /* --------------------------------------------------- le défilé des âges
@@ -1761,7 +1803,8 @@ let filet = null;
        lesquelles on voit son Fanzzy sans pouvoir en changer. La réponse
        corrige, elle n'inaugure pas. */
     lignee = { atteint: vu.atteint ?? vu.evo, choisi: vu.choisi ?? vu.evo,
-      ages: [{ stade: vu.evo, id: vu.carte ?? vu.id, nom: vu.nom }] };
+      ages: [{ stade: vu.evo, id: vu.carte ?? vu.id, nom: vu.nom,
+        set: vu.set, type: vu.type, rar: vu.rar }] };
     equipe = { ...vu, plein: pleinDe(vu.id, vu.evo) };
     precharger();
     pose('neutre');
@@ -2222,7 +2265,9 @@ async function jsonp(url, options) {
          que faire grandir son Fanzzy demain change l'affichage sans avoir à
          revenir le dire. */
       const ligne = (dex.dex ?? []).filter((f) => f.racine === actif)
-        .map((f) => ({ stade: f.stade ?? 1, id: f.id, nom: f.nom }))
+        .map((f) => ({ stade: f.stade ?? 1, id: f.id, nom: f.nom,
+          /* Ce que le décor lit : le lieu, la famille, la rareté. */
+          set: f.set, type: f.type, rar: f.rar }))
         .sort((a, b) => a.stade - b.stade);
       const atteint = Math.max(1, Number(coll.stades?.[actif]) || 1);
       const choisi = Math.min(atteint,
