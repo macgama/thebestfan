@@ -683,11 +683,18 @@
           const g = gestes?.bascule ?? {};
           const signaux = g.signaux ?? [];
           rendre = { choix: [], instants: [] };
+          /* **`tbf-cote`, et non `cote`.** Le duel a sa propre `.cote` — les deux
+             moitiés du terrain, en position absolue sur toute la hauteur — et
+             les deux boutons la prenaient : deux moitiés d'écran transparentes,
+             posées dans le coin, pendant que le bandeau prévu pour eux faisait
+             zéro pixel de haut. La bascule marchait au Virage et nulle part
+             dans le duel. Ce fichier sert deux pages qu'il ne connaît pas : ce
+             qu'il pose dans leur DOM porte le préfixe du code partagé. */
           zone.innerHTML = `<div class="tbf-bascule" id="pad">
             <div class="mot" id="mot">—</div>
-            <div class="cotes">
-              <button type="button" class="cote" data-k="0">◀</button>
-              <button type="button" class="cote" data-k="1">▶</button>
+            <div class="tbf-cotes">
+              <button type="button" class="tbf-cote" data-k="0">◀</button>
+              <button type="button" class="tbf-cote" data-k="1">▶</button>
             </div></div>`;
           const mot = $('mot');
           const pad = $('pad');
