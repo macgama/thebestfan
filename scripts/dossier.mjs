@@ -177,6 +177,18 @@ const REGLE_DITE = {
     + `pendant ${n(g.ms / 1000)} s. Elle tient, puis elle saute : ${g.points} positions, `
     + `${g.transition} ms de transition. Mesuré toutes les ${g.echantillon} ms, et il en `
     + `faut au moins ${g.minMesures} pour que la tenue compte.`,
+  ola: (g) => `Une vague fait ${g.tours.length} tours d’un anneau de ${g.secteurs} tribunes, `
+    + `de ${g.tours[0]} à ${g.tours.at(-1)} ms le tour. Toucher quand elle passe devant la `
+    + `sienne : note pleine à ${g.fenetre} ms, nulle à ${g.limite} ms.`,
+  miroir: (g) => `Le capo frappe ${g.manches.map((m) => m.coups.length).join(' puis ')} coups `
+    + `sur deux tambours ; on rejoue le motif **en miroir**. Le côté doit être l’autre, `
+    + `et chaque écart à la première frappe tenir à ${g.tolerance} ms près.`,
+  rouleaux: (g) => `${g.lancers} lancers, un toutes les ${g.parLancer} ms. Le rouleau retombe `
+    + `${g.portee} fois plus loin que le doigt n’a glissé, déporté par un vent de `
+    + `${g.ventMin} à ${g.vent} : note pleine à ${Math.round(g.coeur * 100)} % de la cible.`,
+  deuxvoix: (g) => `Deux cadences, ${g.gauche} et ${g.droite} ms, une par côté ; ${g.notes.length} `
+    + `notes descendent en ${g.approche} ms. Frapper du bon côté : pleine à ${g.fenetre} ms, `
+    + `nulle à ${g.limite} ms.`,
 };
 
 /** Ce que chaque mini-jeu mesure, en un mot. */
@@ -191,6 +203,8 @@ const MESURE = {
   bascule: 'la lecture d’une consigne qui se retourne',
   visee: 'la main et l’instant, ensemble',
   jauge: 'la correction continue',
+  ola: 'l’anticipation', miroir: 'le rythme retourné',
+  rouleaux: 'la visée qui compense', deuxvoix: 'deux rythmes à la fois',
 };
 
 const LABEL = {
@@ -202,6 +216,8 @@ const LABEL = {
   /* Les mêmes mots que `public/geste.js` : le document nomme les gestes comme
      le jeu les nomme, sans quoi on parlerait de deux choses. */
   bascule: 'LA BASCULE', visee: 'LA VISÉE', jauge: 'LA JAUGE',
+  ola: 'LA OLA', miroir: 'L’ÉCHO INVERSÉ', rouleaux: 'LES ROULEAUX',
+  deuxvoix: 'LES DEUX VOIX',
 };
 
 /** Le gras de Markdown, et rien d'autre : les textes en portent, pas de HTML. */

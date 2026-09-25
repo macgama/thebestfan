@@ -38,6 +38,8 @@
     echarpe: 'L’ÉCHARPE', capo: 'LE CAPO',
     tri: 'LE TRI', compte: 'LE COMPTE',
     bascule: 'LA BASCULE', visee: 'LA VISÉE', jauge: 'LA JAUGE',
+    ola: 'LA OLA', miroir: 'L’ÉCHO INVERSÉ', rouleaux: 'LES ROULEAUX',
+    deuxvoix: 'LES DEUX VOIX',
   };
   const AIDE = {
     tempo: 'Tape sur chaque pulsation',
@@ -63,6 +65,12 @@
     bascule: 'Pousse du côté montré — sauf « à contre-courant », où tu vas de l’autre',
     visee: 'Touche chaque fumigène tant qu’il brûle. Le bon endroit **et** le bon moment.',
     jauge: 'Garde le curseur dans la bande. Elle tient, puis elle saute.',
+    /* Les quatre de l'automne. Même règle : la consigne dit le piège avant
+       qu'on tombe dedans — l'accélération, le miroir, le vent. */
+    ola: 'Touche quand la vague passe devant ta tribune. Elle accélère à chaque tour.',
+    miroir: 'Écoute le capo, puis rejoue son motif en miroir : sa gauche est ta droite.',
+    rouleaux: 'Glisse vers la pelouse pour lancer. Vise la cible — et compte avec le vent.',
+    deuxvoix: 'Deux chants, deux côtés : frappe du bon côté quand la note touche la ligne.',
   };
   /* La couleur dit la famille du geste avant qu'on ait lu son nom : or pour le
      rythme, bleu pour la vitesse, craie pour la tenue, vert pour la mesure. */
@@ -83,6 +91,10 @@
     /* Les trois neuves partagent le rouge : ce sont les seules qui demandent
        de **décider vite**, et la couleur le dit avant la consigne. */
     bascule: '#E0402C', visee: '#E0402C', jauge: '#E0402C',
+    /* La ola et les deux voix sont du rythme qu'on **voit venir** : l'or du
+       rythme. L'écho inversé se retient avant de se jouer : le vert d'eau
+       de la mémoire. Les rouleaux se décident au doigt : le rouge. */
+    ola: '#F5C33B', deuxvoix: '#F5C33B', miroir: '#2FB8A6', rouleaux: '#E0402C',
   };
 
   const label = (g) => LABEL[g] ?? String(g ?? '').toUpperCase();
@@ -864,6 +876,239 @@
             rendre.mesures.push({ t: maintenant(), v });
           });
           apres(g.ms ?? 8000, finir);
+          break;
+        }
+
+        /**
+         * **La ola.** Une vague fait le tour de l'anneau ; on touche quand
+         * elle passe devant sa tribune — la case cerclée.
+         *
+         * L'anneau est redessiné à partir des mêmes tours que le serveur :
+         * c'est lui qui a décidé des instants de passage, la page ne fait que
+         * les montrer. Une horloge à elle ferait passer la vague devant la
+         * tribune à un instant que le serveur ne note pas.
+         */
+        case 'ola': {
+          const g = gestes?.ola ?? {};
+          const tours = g.tours ?? [];
+          const depart = g.depart ?? 700;
+          const secteurs = g.secteurs ?? 24;
+          const place = g.place ?? 0;
+          rendre = { frappes: [] };
+          zone.innerHTML = `<div class="tbf-ola" id="pad">
+            <div class="tbf-ola-anneau">${Array.from({ length: secteurs }, (_, i) =>
+              `<i style="--a:${i / secteurs}"${i === place ? ' class="tbf-ola-moi"' : ''}></i>`).join('')}</div>
+            <div class="tbf-ola-mot" id="mot">TA TRIBUNE<br><small>la case entourée</small></div></div>`;
+          const pad = $('pad');
+          const cases = [...pad.querySelectorAll('.tbf-ola-anneau i')];
+          const debuts = [];
+          tours.reduce((d, duree) => { debuts.push(d); return d + duree; }, depart);
+
+          const peindre = () => {
+            const t = maintenant();
+            const k = debuts.findIndex((d, i) => t >= d && t < d + tours[i]);
+            cases.forEach((c) => c.classList.remove('tbf-vague', 'tbf-vague2'));
+            if (k < 0) return;
+            const tete = Math.floor(((t - debuts[k]) / tours[k]) * secteurs);
+            cases[tete % secteurs]?.classList.add('tbf-vague');
+            cases[(tete + secteurs - 1) % secteurs]?.classList.add('tbf-vague2');
+            $('mot').innerHTML = `TOUR ${k + 1} / ${tours.length}`;
+          };
+          peindre();
+          chaque(30, peindre);
+
+          pad.onpointerdown = () => {
+            rendre.frappes.push(maintenant());
+            const moi = pad.querySelector('.tbf-ola-moi');
+            moi?.classList.remove('tbf-debout');
+            void moi?.offsetWidth;
+            moi?.classList.add('tbf-debout');
+            buzz(14);
+          };
+          apres(g.ms ?? 10_000, finir);
+          break;
+        }
+
+        /**
+         * **L'écho inversé.** Le capo frappe sur ses deux tambours ; on
+         * répond sur les nôtres, en miroir.
+         *
+         * Les frappes du joueur partent **toutes**, avec leur instant : c'est
+         * le serveur qui sait quelle fenêtre de réponse est ouverte, et il
+         * trie. Une page qui filtrerait de son côté jugerait à sa place.
+         */
+        case 'miroir': {
+          const g = gestes?.miroir ?? {};
+          const manches = g.manches ?? [];
+          rendre = { frappes: [] };
+          zone.innerHTML = `<div class="tbf-miroir" id="pad">
+            <div class="tbf-miroir-mot" id="mot">ÉCOUTE LE CAPO</div>
+            <div class="tbf-cotes">
+              <button type="button" class="tbf-cote tbf-tambour" data-k="0">◉</button>
+              <button type="button" class="tbf-cote tbf-tambour" data-k="1">◉</button>
+            </div></div>`;
+          const pad = $('pad');
+          const mot = $('mot');
+          const tambours = [...pad.querySelectorAll('[data-k]')];
+          const allumer = (el, classe, ms) => {
+            el.classList.remove(classe);
+            void el.offsetWidth;
+            el.classList.add(classe);
+            apres(ms, () => el.classList.remove(classe));
+          };
+
+          manches.forEach((m, rang) => {
+            apres(m.debut, () => {
+              mot.className = 'tbf-miroir-mot';
+              mot.textContent = `ÉCOUTE LE CAPO · ${rang + 1}/${manches.length}`;
+            });
+            for (const c of m.coups) {
+              apres(m.debut + c.t, () => { allumer(tambours[c.cote], 'tbf-capo', 220); buzz(10); });
+            }
+            apres(m.reponse, () => {
+              mot.className = 'tbf-miroir-mot tbf-a-toi';
+              mot.textContent = 'À TOI — EN MIROIR';
+            });
+          });
+
+          pad.onpointerdown = (e) => {
+            const b = e.target.closest('[data-k]');
+            if (!b) return;
+            rendre.frappes.push({ t: maintenant(), cote: Number(b.dataset.k) });
+            allumer(b, 'pris', 140);
+            buzz(14);
+          };
+          apres(g.ms ?? 12_000, finir);
+          break;
+        }
+
+        /**
+         * **Les rouleaux.** Glisser vers la pelouse lance un rouleau ; il
+         * retombe dans le prolongement du geste, déporté par le vent.
+         *
+         * `chute` est **la même formule** que `pointDeChute` dans
+         * `src/server/ferveur/epreuves.js` — recopiée, parce que ce fichier
+         * est un script de navigateur. Elle ne sert qu'à montrer où tombe le
+         * rouleau : la note est recalculée là-bas à partir du geste, et
+         * `epreuves-ui-smoke` compare les deux.
+         */
+        case 'rouleaux': {
+          const g = gestes?.rouleaux ?? {};
+          const liste = g.liste ?? [];
+          const portee = g.portee ?? 1.3;
+          rendre = { lancers: [] };
+          zone.innerHTML = `<div class="tbf-rouleaux" id="pad">
+            <i class="tbf-rouleaux-cible" id="cible"></i>
+            <div class="tbf-rouleaux-vent" id="vent"></div>
+            <div class="tbf-rouleaux-mot" id="mot">GLISSE VERS LA PELOUSE</div></div>`;
+          const pad = $('pad');
+          const chute = (l, vent) => {
+            const dx = l.x1 - l.x0;
+            const dy = l.y1 - l.y0;
+            const vol = Math.hypot(dx, dy) * portee;
+            return { x: l.x1 + dx * portee + vent * vol, y: l.y1 + dy * portee };
+          };
+          let courant = -1;
+          let lance = true;
+          let depart = null;
+
+          liste.forEach((l, i) => apres(l.t, () => {
+            courant = i;
+            lance = false;
+            const c = $('cible');
+            c.style.cssText = `left:${l.cible.x * 100}%;top:${l.cible.y * 100}%`;
+            c.classList.add('vue');
+            /* Le vent se lit en flèches : leur nombre dit la force, leur sens
+               le côté. Un chiffre se lirait, une flèche se voit. */
+            const n = Math.max(1, Math.round(Math.abs(l.vent) * 8));
+            $('vent').textContent = `VENT ${(l.vent < 0 ? '←' : '→').repeat(n)}`;
+            $('mot').textContent = `LANCER ${i + 1} / ${liste.length}`;
+          }));
+
+          const ici = (e) => {
+            const r = pad.getBoundingClientRect();
+            return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height,
+              t: maintenant() };
+          };
+          pad.onpointerdown = (e) => {
+            depart = ici(e);
+            prendre(pad, e);
+          };
+          pad.onpointerup = (e) => {
+            if (!depart || lance || courant < 0) { depart = null; return; }
+            const fin = ici(e);
+            const geste = { x0: depart.x, y0: depart.y, x1: fin.x, y1: fin.y,
+              t0: depart.t, t1: fin.t };
+            depart = null;
+            /* Un simple appui n'est pas un lancer : il faut avoir glissé. */
+            if (Math.hypot(geste.x1 - geste.x0, geste.y1 - geste.y0) < 0.04) return;
+            lance = true;
+            rendre.lancers.push(geste);
+            const p = chute(geste, liste[courant].vent);
+            const rouleau = document.createElement('i');
+            rouleau.className = 'tbf-rouleau';
+            rouleau.style.cssText = `left:${fin.x * 100}%;top:${fin.y * 100}%`;
+            pad.appendChild(rouleau);
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+              rouleau.style.left = `${p.x * 100}%`;
+              rouleau.style.top = `${p.y * 100}%`;
+              rouleau.classList.add('vole');
+            }));
+            apres(1400, () => rouleau.remove());
+            buzz(16);
+          };
+          apres(g.ms ?? 10_000, finir);
+          break;
+        }
+
+        /**
+         * **Les deux voix.** Deux couloirs, deux cadences ; les notes
+         * descendent, et l'on frappe du bon côté quand elles touchent la
+         * ligne.
+         *
+         * Chaque note naît `approche` millisecondes avant son instant et
+         * descend en ligne droite : elle touche la ligne **exactement** quand
+         * le serveur l'attend. On voit donc venir chaque frappe, et c'est
+         * voulu — la difficulté est d'en suivre deux à la fois, pas d'en
+         * deviner une.
+         */
+        case 'deuxvoix': {
+          const g = gestes?.deuxvoix ?? {};
+          const notes = g.notes ?? [];
+          const approche = g.approche ?? 1100;
+          rendre = { frappes: [] };
+          zone.innerHTML = `<div class="tbf-deuxvoix" id="pad">
+            <div class="tbf-voies"><div class="tbf-voie" data-k="0"></div>
+              <div class="tbf-voie" data-k="1"></div><div class="tbf-ligne"></div></div>
+            <div class="tbf-cotes">
+              <button type="button" class="tbf-cote" data-k="0">◀</button>
+              <button type="button" class="tbf-cote" data-k="1">▶</button>
+            </div></div>`;
+          const pad = $('pad');
+          const voies = [...pad.querySelectorAll('.tbf-voie')];
+          for (const n of notes) {
+            apres(Math.max(0, n.t - approche), () => {
+              const el = document.createElement('i');
+              el.className = 'tbf-note';
+              /* Si l'épreuve a démarré en retard sur la note, elle part déjà
+                 avancée : elle doit toucher la ligne à l'heure, pas plus tard. */
+              const reste = Math.max(60, n.t - maintenant());
+              el.style.animationDuration = `${approche}ms`;
+              el.style.animationDelay = `${reste - approche}ms`;
+              voies[n.cote]?.appendChild(el);
+              apres(reste + 250, () => el.remove());
+            });
+          }
+          pad.onpointerdown = (e) => {
+            const b = e.target.closest('[data-k]');
+            if (!b) return;
+            rendre.frappes.push({ t: maintenant(), cote: Number(b.dataset.k) });
+            const bouton = pad.querySelector(`.tbf-cote[data-k="${b.dataset.k}"]`);
+            bouton?.classList.add('pris');
+            apres(120, () => bouton?.classList.remove('pris'));
+            buzz(12);
+          };
+          apres(g.ms ?? 8600, finir);
           break;
         }
 

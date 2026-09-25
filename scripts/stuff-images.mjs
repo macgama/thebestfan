@@ -264,6 +264,19 @@ export const INVITES = {
   'rp-corde-neuve': 'a coil of brand new thick rope, bright unfrayed fibres, the coil '
     + 'bound at one point with a neat whipping, the cut end heat-sealed, stiff and '
     + 'springy and holding its loops',
+  /* Les douze des trois époques. */
+  'hw-bougie': 'a carved Halloween pumpkin with a short lit candle glowing inside, a friendly jagged grin, orange rind with a curly brown stalk',
+  'hw-cape': 'a folded black vampire cape with a tall stiff collar and a deep red satin lining, a silver clasp at the neck',
+  'hw-grimoire': 'an old leather-bound spell book, half open, thick yellowed pages, a ribbon bookmark, metal corner guards, faint violet glow rising from the pages, no readable writing',
+  'hw-lanterne': 'an ornate antique iron lantern with a pointed top and a ring handle, glowing with an eerie orange and violet flame inside, cobweb on one corner',
+  'ph-os': 'a pair of large knobbly animal bones used as drumsticks, bound together with a leather cord, pale ivory with dark wear marks',
+  'ph-peau': 'a thick folded fur pelt with a striped brown and grey coat, rough leather edges, a bone toggle fastening',
+  'ph-silex': 'a sharp knapped flint blade with a glassy dark grey surface and precise flaked facets, bound to a short wooden handle with sinew',
+  'ph-mammouth': 'a huge curved mammoth tusk carved into a signal horn, a mouthpiece at the narrow end, carved spiral grooves, leather straps wrapped around it',
+  'ap-bidon': 'a dented metal water canteen with a screw cap on a short chain, scratched olive paint, patched with tape',
+  'ap-cle': 'a heavy rusty adjustable wrench, worn grip wrapped in old tape, oil stains, scratched steel jaw',
+  'ap-compteur': 'a battered handheld Geiger counter with a round analogue dial, a coiled cable to a probe wand, yellow casing with chipped paint, no readable text',
+  'ap-drapeau': 'a torn and many-times-patched supporter flag knotted to a bent metal pole, faded stripes, singed edges, no text and no crest',
 };
 
 export const inviteDe = (id) => (INVITES[id]
@@ -316,7 +329,9 @@ for (const FAMILLE of FAMILLES) {
   const src = sources.find((f) => f.replace(/\.[^.]+$/, '') === s.id);
   if (!src) { manquantes.push(s.id); continue; }
 
-  const { png, part } = await enIcone(sharp, path.join(SOURCE, src), COTE, s.id);
+  /* `trous` : le vert enfermé dans un objet est du fond — voir `detourer`. */
+  const { png, part } = await enIcone(sharp, path.join(SOURCE, src), COTE, s.id,
+    { trous: true });
   if (partSuspecte(part)) suspectes.push(`${s.id} (${Math.round(part * 100)} % de fond)`);
   await ecrireLesTrois(sharp, png, CIBLE, s.id);
   faits++;

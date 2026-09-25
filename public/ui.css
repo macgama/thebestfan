@@ -1632,6 +1632,81 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
   transition:transform .08s,background .1s}
 .tbf-bascule .tbf-cote.pris{background:rgba(224,64,44,.3);transform:scale(.96)}
 
+/* Les deux boutons larges servent aussi à l'écho inversé et aux deux voix :
+   même geste — un côté ou l'autre —, même place pour le pouce. */
+.tbf-miroir .tbf-cotes,.tbf-deuxvoix .tbf-cotes{display:flex;gap:8px}
+.tbf-miroir .tbf-cote,.tbf-deuxvoix .tbf-cote{flex:1;min-height:76px;border-radius:12px;
+  cursor:pointer;background:rgba(242,238,228,.07);border:1px solid rgba(242,238,228,.16);
+  color:var(--craie);font-size:26px;line-height:1;transition:transform .08s,background .1s}
+.tbf-miroir .tbf-cote.pris,.tbf-deuxvoix .tbf-cote.pris{background:rgba(224,64,44,.3);
+  transform:scale(.96)}
+
+/* **La ola.** Un anneau de tribunes vu du dessus ; la vague l'allume en
+   passant, et la case du joueur est cerclée. Un carré à lui, comme la visée :
+   `height:100%` d'un parent sans hauteur ferait un anneau de zéro pixel. */
+.tbf-ola{position:relative;width:min(100%,320px);aspect-ratio:1;margin:0 auto;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;cursor:pointer}
+.tbf-ola-anneau i{position:absolute;left:50%;top:50%;width:9%;height:13%;
+  margin:-6.5% 0 0 -4.5%;border-radius:5px;background:rgba(242,238,228,.12);
+  transform:rotate(calc(var(--a) * 1turn)) translateY(-300%) scaleY(var(--s,1));
+  transition:background .12s,transform .12s}
+.tbf-ola-anneau i.tbf-vague{background:#F5C33B;--s:1.45}
+.tbf-ola-anneau i.tbf-vague2{background:rgba(245,195,59,.45);--s:1.2}
+.tbf-ola-anneau i.tbf-ola-moi{box-shadow:0 0 0 2px var(--craie),0 0 14px rgba(60,130,232,.7);
+  background:rgba(60,130,232,.35)}
+.tbf-ola-anneau i.tbf-ola-moi.tbf-vague{background:#F5C33B}
+.tbf-ola-anneau i.tbf-debout{animation:tbfDebout .3s ease-out}
+@keyframes tbfDebout{50%{--s:1.9;background:#fff}}
+.tbf-ola-mot{position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+  font-family:var(--banner);letter-spacing:.12em;font-size:15px;color:var(--craie);
+  pointer-events:none}
+.tbf-ola-mot small{font-family:var(--ui);letter-spacing:.04em;font-size:11px;opacity:.55}
+
+/* **L'écho inversé.** Deux tambours ; celui que frappe le capo s'allume en or,
+   celui que le joueur frappe, en rouge. La consigne change de couleur quand
+   c'est à lui : l'écoute et la réponse ne doivent pas se confondre. */
+.tbf-miroir{display:flex;flex-direction:column;gap:14px;width:100%;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.tbf-miroir-mot{min-height:64px;display:grid;place-items:center;text-align:center;
+  font-family:var(--banner);letter-spacing:.12em;font-size:16px;color:var(--craie)}
+.tbf-miroir-mot.tbf-a-toi{color:#2FB8A6}
+.tbf-miroir .tbf-tambour{min-height:120px;border-radius:50%/40%;font-size:34px}
+.tbf-miroir .tbf-tambour.tbf-capo{background:rgba(245,195,59,.55);
+  box-shadow:0 0 24px rgba(245,195,59,.6)}
+
+/* **Les rouleaux.** La pelouse en haut, la tribune en bas ; la cible est un
+   anneau sur l'herbe, le vent une ligne de flèches. */
+.tbf-rouleaux{position:relative;width:min(100%,340px);aspect-ratio:1;margin:0 auto;
+  overflow:hidden;border-radius:12px;touch-action:none;-webkit-user-select:none;
+  user-select:none;cursor:crosshair;
+  background:linear-gradient(180deg,#1f5a2c 0,#2a7a3a 42%,rgba(4,6,10,.5) 42.5%,rgba(4,6,10,.5) 100%)}
+.tbf-rouleaux-cible{position:absolute;width:22%;aspect-ratio:1;transform:translate(-50%,-50%);
+  border-radius:50%;border:3px solid #F5C33B;box-shadow:inset 0 0 0 7px rgba(245,195,59,.25);
+  opacity:0;pointer-events:none;transition:left .2s,top .2s}
+.tbf-rouleaux-cible.vue{opacity:1}
+.tbf-rouleaux-vent{position:absolute;left:0;right:0;top:46%;text-align:center;
+  font-family:var(--banner);letter-spacing:.14em;font-size:14px;color:#9FD7FF;pointer-events:none}
+.tbf-rouleaux-mot{position:absolute;left:0;right:0;bottom:8%;text-align:center;
+  font-family:var(--banner);letter-spacing:.12em;font-size:13px;opacity:.7;pointer-events:none}
+.tbf-rouleau{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;
+  background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.25);pointer-events:none;
+  transition:left .7s cubic-bezier(.2,.7,.3,1),top .7s cubic-bezier(.2,.7,.3,1),transform .7s}
+.tbf-rouleau.vole{transform:rotate(540deg) scale(.8)}
+
+/* **Les deux voix.** Deux couloirs et une ligne ; une note descend en ligne
+   droite et touche la ligne à l'instant où le serveur l'attend. */
+.tbf-deuxvoix{display:flex;flex-direction:column;gap:10px;width:100%;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.tbf-voies{position:relative;display:flex;gap:8px;height:min(46vh,260px)}
+.tbf-voie{position:relative;flex:1;border-radius:10px;overflow:hidden;cursor:pointer;
+  background:rgba(242,238,228,.05);border:1px solid rgba(242,238,228,.1)}
+.tbf-ligne{position:absolute;left:0;right:0;top:82%;height:3px;background:#F5C33B;
+  box-shadow:0 0 12px rgba(245,195,59,.7);pointer-events:none}
+.tbf-note{position:absolute;left:18%;right:18%;height:16px;margin-top:-8px;border-radius:8px;
+  background:var(--craie);top:0;animation-name:tbfTombe;animation-timing-function:linear;
+  animation-fill-mode:both;pointer-events:none}
+@keyframes tbfTombe{from{top:-4%}to{top:82%}}
+
 /* **La visée.** Un cadre vide où les fumigènes s'allument.
 
    Rien autour : chaque élément de décor serait une cible en trop pour l'œil, et

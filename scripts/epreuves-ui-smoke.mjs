@@ -489,6 +489,139 @@ console.log(`   forme du tifo : ${gestes.tifo.forme} · suite du capo : ${gestes
     || (console.log('        contre suivi :', noteSuivi.toFixed(2)), false));
 }
 
+/* ======================================================== les quatre de l'automne
+
+   Chacune est jouée par la page, avec de vrais événements, **à la vitesse
+   d'une main** et non vingt millisecondes après le signal : la visée a
+   passé ce contrôle-là pendant des semaines en rendant zéro à tous les
+   joueurs. Et chacune a son raté typique, joué aussi : c'est lui qui dit
+   que l'épreuve mesure quelque chose. */
+
+/* Attendre jusqu'à un instant de l'épreuve, depuis l'appel à `jouer`. */
+const JUSQUA = `var jusqua = (t0, t) => new Promise((r) => setTimeout(r, Math.max(0, t - (performance.now() - t0))));`;
+
+/* ---------------------------------------------------------------- la ola */
+{
+  const g = gestes.ola;
+  const jouerOla = (retard) => page.evaluate(async (gestes, retard, aide) => {
+    eval(aide);
+    const p = window.TBF_GESTE.jouer('ola', gestes, { zone: document.getElementById('zone') });
+    const t0 = performance.now();
+    const pad = document.getElementById('pad');
+    const haut = pad.getBoundingClientRect().height;
+    for (const [i, t] of gestes.ola.passages.entries()) {
+      await jusqua(t0, t + retard + (i % 2 ? 25 : -15));
+      pad.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    }
+    return { rendu: await p, haut };
+  }, gestes, retard, JUSQUA);
+
+  const bien = await jouerOla(40);
+  check(`l’anneau de la ola a une taille à lui (${Math.round(bien.haut)} px)`, bien.haut > 100);
+  const note = grade('ola', bien.rendu, {}, { motif: GRAINE });
+  check(`se lever quand la vague passe paie (${note.toFixed(2)})`, note >= 0.8);
+  const tard = await jouerOla(400);
+  const noteTard = grade('ola', tard.rendu, {}, { motif: GRAINE });
+  check(`se lever quand elle est déjà passée ne paie pas (${noteTard.toFixed(2)})`, noteTard <= 0.2);
+}
+
+/* ------------------------------------------------------- l'écho inversé */
+{
+  const jouerMiroir = (inverser) => page.evaluate(async (gestes, inverser, aide) => {
+    eval(aide);
+    const p = window.TBF_GESTE.jouer('miroir', gestes, { zone: document.getElementById('zone') });
+    const t0 = performance.now();
+    for (const m of gestes.miroir.manches) {
+      /* On répond une demi-seconde après le « à toi », au rythme du motif. */
+      for (const [i, c] of m.coups.entries()) {
+        await jusqua(t0, m.reponse + 500 + c.t + (i % 2 ? 30 : -20));
+        const cote = inverser ? c.cote ^ 1 : c.cote;
+        document.querySelector(`#pad [data-k="${cote}"]`)
+          .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      }
+    }
+    return p;
+  }, gestes, inverser, JUSQUA);
+
+  const juste = await jouerMiroir(true);
+  const note = grade('miroir', juste, {}, { motif: GRAINE });
+  check(`rejouer le motif en miroir paie (${note.toFixed(2)})`, note >= 0.8);
+  const pareil = await jouerMiroir(false);
+  const notePareil = grade('miroir', pareil, {}, { motif: GRAINE });
+  check(`le rejouer sans le retourner ne paie pas (${notePareil.toFixed(2)})`, notePareil <= 0.2);
+}
+
+/* ------------------------------------------------------------ les rouleaux */
+{
+  const g = gestes.rouleaux;
+  /* Où glisser pour que le rouleau tombe sur la cible : on part du bas du
+     cadre et l'on résout la formule à l'envers — avec ou sans le vent. */
+  const viser = (l, vent) => {
+    const x0 = 0.5, y0 = 0.88, P = g.portee;
+    const vy = (l.cible.y - y0) / (1 + P);
+    let dx = (l.cible.x - x0) / (1 + P);
+    for (let k = 0; k < 30; k++) dx = (l.cible.x - x0 - vent * Math.hypot(dx, vy) * P) / (1 + P);
+    return { x0, y0, x1: x0 + dx, y1: y0 + vy };
+  };
+  const lancer = (compenser) => page.evaluate(async (gestes, gestesVises, aide) => {
+    eval(aide);
+    const p = window.TBF_GESTE.jouer('rouleaux', gestes, { zone: document.getElementById('zone') });
+    const t0 = performance.now();
+    const pad = document.getElementById('pad');
+    const r = pad.getBoundingClientRect();
+    const ev = (type, x, y) => pad.dispatchEvent(new PointerEvent(type, { bubbles: true,
+      clientX: r.left + x * r.width, clientY: r.top + y * r.height }));
+    for (const [i, l] of gestes.rouleaux.liste.entries()) {
+      const v = gestesVises[i];
+      /* Des écarts de main, pas de métronome : `humain()` refuse les seconds. */
+      await jusqua(t0, l.t + 350 + [0, 140, 30, 210, 90][i % 5]);
+      ev('pointerdown', v.x0, v.y0);
+      await new Promise((res) => setTimeout(res, 150));
+      ev('pointerup', v.x1, v.y1);
+    }
+    return { rendu: await p, haut: r.height };
+  }, gestes, g.liste.map((l) => viser(l, compenser ? l.vent : 0)), JUSQUA);
+
+  const bien = await lancer(true);
+  check(`le cadre des rouleaux a une taille à lui (${Math.round(bien.haut)} px)`, bien.haut > 100);
+  check('un lancer par rouleau', bien.rendu?.lancers?.length === g.liste.length
+    || (console.log('        il rend :', JSON.stringify(bien.rendu).slice(0, 90)), false));
+  const note = grade('rouleaux', bien.rendu, {}, { motif: GRAINE });
+  check(`viser en tenant compte du vent paie (${note.toFixed(2)})`, note >= 0.8);
+  const naif = await lancer(false);
+  const noteNaif = grade('rouleaux', naif.rendu, {}, { motif: GRAINE });
+  check(`viser droit sur la cible, sans le vent, paie bien moins (${noteNaif.toFixed(2)})`,
+    noteNaif <= 0.5 && noteNaif < note - 0.4);
+}
+
+/* ----------------------------------------------------------- les deux voix */
+{
+  const jouerVoix = (inverser) => page.evaluate(async (gestes, inverser, aide) => {
+    eval(aide);
+    const p = window.TBF_GESTE.jouer('deuxvoix', gestes, { zone: document.getElementById('zone') });
+    const t0 = performance.now();
+    let vues = 0;
+    for (const [i, n] of gestes.deuxvoix.notes.entries()) {
+      await jusqua(t0, n.t + (i % 2 ? 30 : -25));
+      /* La note est-elle bien descendue dans son couloir ? */
+      if (document.querySelectorAll('.tbf-voie')[n.cote]?.querySelector('.tbf-note')) vues++;
+      const cote = inverser ? n.cote ^ 1 : n.cote;
+      document.querySelector(`#pad .tbf-cote[data-k="${cote}"]`)
+        .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    }
+    return { rendu: await p, vues, haut: document.querySelector('.tbf-voies')?.getBoundingClientRect().height ?? 0 };
+  }, gestes, inverser, JUSQUA);
+
+  const bien = await jouerVoix(false);
+  const n = gestes.deuxvoix.notes.length;
+  check(`chaque note descend dans son couloir (${bien.vues}/${n})`, bien.vues === n);
+  const note = grade('deuxvoix', bien.rendu, {}, { motif: GRAINE });
+  check(`frapper du bon côté à l’heure paie (${note.toFixed(2)})`, note >= 0.8);
+  const inv = await jouerVoix(true);
+  const noteInv = grade('deuxvoix', inv.rendu, {}, { motif: GRAINE });
+  check(`à l’heure mais du mauvais côté ne paie pas (${noteInv.toFixed(2)})`, noteInv <= 0.1);
+}
+
 check(`aucune erreur de script pendant les ${EPREUVES.length} épreuves`,
   erreurs.length === 0 || (console.log('    ', erreurs.join(' / ')), false));
 

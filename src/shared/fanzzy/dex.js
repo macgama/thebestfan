@@ -39,23 +39,25 @@ const TYPES = {
   // et l'appel du capo — qui est une voix avant d'être un geste.
   voix: { nom:'Voix', c:'#F5C33B', gestes:['tempo', 'contretemps', 'echo', 'capo'],
     ico:'M4 9v6h4l5 4V5L8 9H4zm12.5-1a5 5 0 0 1 0 8' },
-  // Ce qui frappe : vite, de plus en plus vite, ou par rafales.
-  perc: { nom:'Percussion', c:'#3C82E8', gestes:['mash', 'crescendo', 'salves'],
+  // Ce qui frappe : vite, de plus en plus vite, par rafales, ou des deux mains à la fois.
+  perc: { nom:'Percussion', c:'#3C82E8', gestes:['mash', 'crescendo', 'salves', 'deuxvoix'],
     ico:'M12 6c5 0 8 1.5 8 3.5S17 13 12 13 4 11.5 4 9.5 7 6 12 6zm-8 4v5c0 2 3.5 3.5 8 3.5s8-1.5 8-3.5v-5' },
   // Ce qui reste : tenir, tenir sans aller au bout, tenir le compte exact.
   fide: { nom:'Fidélité', c:'#C2CAD6', gestes:['hold', 'tenue', 'retenue', 'jauge'],
     ico:'M12 21s-7-4.4-7-9.5A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 3.5C19 16.6 12 21 12 21z' },
-  // Ce qui se montre : dessiner la forme, allumer la grille, trier les cartons.
-  tifo: { nom:'Tifo', c:'#8257DA', gestes:['tifo', 'mosaique', 'tri'],
+  // Ce qui se montre : dessiner la forme, allumer la grille, trier les cartons,
+  // lever la vague au passage.
+  tifo: { nom:'Tifo', c:'#8257DA', gestes:['tifo', 'mosaique', 'tri', 'ola'],
     ico:'M4 4h16v12l-8-3-8 3V4z' },
   /* Le risque, et c'est une affaire d'**instant** : lâcher pile sur la
      pulsation, tomber juste quand le compte s'est éteint. C'est exactement ce
      qu'est une torche qu'on allume — une seconde trop tôt ou trop tard et ce
      n'est plus le même geste. */
-  pyro: { nom:'Pyro', c:'#E0402C', gestes:['relance', 'compte', 'visee'],
+  pyro: { nom:'Pyro', c:'#E0402C', gestes:['relance', 'compte', 'visee', 'rouleaux'],
     ico:'M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-2-1-3-1-4 2 1 4 3 4 6a6 6 0 0 1-12 0c0-5 6-7 6-11z' },
-  // La route : l'écharpe qu'on fait tourner, les visages qu'on retient.
-  depl: { nom:'Déplacement', c:'#1E9E6A', gestes:['echarpe', 'memoire', 'bascule'],
+  // La route : l'écharpe qu'on fait tourner, les visages qu'on retient, et le
+  // chant qu'on renvoie à l'envers, comme la tribune d'en face.
+  depl: { nom:'Déplacement', c:'#1E9E6A', gestes:['echarpe', 'memoire', 'bascule', 'miroir'],
     ico:'M4 7h16v8H4zM4 15v3h3v-3m10 0v3h3v-3M6 10h12' },
 };
 
@@ -449,7 +451,7 @@ const DEX = [
       + 'le sien. Le virage a arrêté de lui en vouloir : on le cherche des '
       + 'yeux avant de chercher le dessin.',
     mods:{ parryBonus:1.35, perfectBonus:1.1 },
-    cri:{ label:'JE L’AI À L’ENVERS', gest:'mosaique', power:56 } },
+    cri:{ label:'JE L’AI À L’ENVERS', gest:'ola', power:56 } },
 
   { id:'TR49', nom:'L’Homme dans la Mascotte', type:'fide', set:'TR', stage:1, rar:'commune',
     histoire:'Il a la tête sous le bras et vingt minutes pour souffler. Personne '
@@ -461,7 +463,7 @@ const DEX = [
     histoire:'Elle confisque les bouchons depuis six ans. Elle en a une boîte '
       + 'entière chez elle et elle ne sait pas quoi en faire.',
     mods:{ parryBonus:1.5 },
-    cri:{ label:'PAS DE BOUCHON', gest:'tri', power:55 } },
+    cri:{ label:'PAS DE BOUCHON', gest:'ola', power:55 } },
 
   { id:'TR50', nom:'Le Bob du Dimanche', type:'fide', set:'TR', stage:1, rar:'commune',
     histoire:'Même bob, même place, même sandwich. Il a arrêté de compter les '
@@ -536,7 +538,7 @@ const DEX = [
     histoire:'Deux heures de peinture, moins trois degrés, et il ne remettra pas '
       + 'son tee-shirt avant le coup de sifflet final.',
     mods:{ perfectBonus:1.3, breathBonus:0.92 },
-    cri:{ label:'AUX COULEURS', gest:'compte', power:62 } },
+    cri:{ label:'AUX COULEURS', gest:'rouleaux', power:62 } },
 
   /* ========================================= LE VIRAGE IMPOSSIBLE
 

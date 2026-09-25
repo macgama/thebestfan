@@ -63,7 +63,13 @@ export class Triche extends Error {
  * sortes de gens.
  */
 export const EPREUVES = ['tifo', 'memoire', 'mosaique', 'echarpe', 'capo',
-  'tri', 'compte', 'bascule', 'visee', 'jauge'];
+  'tri', 'compte', 'bascule', 'visee', 'jauge',
+  /* Les quatre de l'automne 2026. Chacune mesure une chose qu'aucune autre ne
+     demande : **anticiper** un mouvement qu'on voit venir (la ola), rejouer
+     un rythme **en le retournant** (l'écho inversé), **viser en compensant**
+     une force qu'on ne contrôle pas (les rouleaux), et suivre **deux rythmes
+     à la fois** (les deux voix). */
+  'ola', 'miroir', 'rouleaux', 'deuxvoix'];
 
 export const REGLES = {
   /* Tracer une forme sans quitter le trait. `tolerance` est en fraction du
@@ -172,6 +178,52 @@ export const REGLES = {
      secondes de travail. */
   jauge: { ms: 8000, largeur: 0.15, points: 4, transition: 520,
     echantillon: 100, minMesures: 40 },
+
+  /* **La ola.** Une vague fait le tour du stade, de plus en plus vite ; on se
+     lève quand elle passe devant sa tribune.
+
+     C'est l'inverse du tempo : on **voit venir** l'instant au lieu de le
+     compter. La fenêtre est donc plus étroite que celle d'un battement —
+     anticiper un point qui avance est plus facile que tenir une pulsation —
+     et c'est l'accélération qui fait la difficulté : le dernier tour prend
+     moitié moins de temps que le premier. `fenetre` est la note pleine,
+     `limite` le point où elle tombe à zéro. */
+  ola: { tours: [2400, 2000, 1700, 1400, 1200], depart: 700, secteurs: 24,
+    fenetre: 110, limite: 320 },
+
+  /* **L'écho inversé.** Le capo frappe un motif sur deux tambours ; on le
+     rejoue **en miroir**, gauche pour droite, comme l'écho renvoyé par la
+     tribune d'en face.
+
+     L'écho des dix gestes redit un rythme ; le capo redit une suite de
+     places. Celle-ci demande les deux à la fois, et une opération de plus
+     entre l'oreille et la main. Les écarts se mesurent **entre les frappes**
+     et non depuis un top : on commence quand on veut, on garde le rythme.
+     `pas` sont les intervalles possibles entre deux coups du motif. */
+  miroir: { manches: [4, 5], pas: [320, 460, 600], attente: 800, marge: 1400,
+    tolerance: 190, jeu: 60 },
+
+  /* **Les rouleaux.** Un glissement du doigt lance un rouleau vers la
+     pelouse ; il retombe dans le prolongement du geste, poussé par le vent.
+
+     `portee` allonge le geste : un rouleau vole plus loin que le doigt ne
+     glisse. Le vent déporte **en proportion du vol** — un lancer long
+     dérive plus qu'un lancer court — et c'est ce qui oblige à viser à côté
+     de la cible plutôt que dessus. `coeur` est la zone de note pleine,
+     `rayon` celle où elle tombe à zéro. */
+  rouleaux: { lancers: 5, parLancer: 1800, depart: 500, portee: 1.3, vent: 0.5,
+    ventMin: 0.2, coeur: 0.05, rayon: 0.18, dureeMin: 40 },
+
+  /* **Les deux voix.** Deux chants se répondent, un de chaque côté, à deux
+     cadences qui ne tombent jamais ensemble ; les notes descendent vers la
+     ligne, et l'on frappe du bon côté quand elles l'atteignent.
+
+     `ecartMin` interdit deux notes trop proches : sans lui, les deux cadences
+     finissent par coïncider à dix millisecondes près, et l'épreuve demande
+     un geste qu'aucune main ne sait faire. `approche` est le temps pendant
+     lequel une note se voit arriver. */
+  deuxvoix: { ms: 8600, gauche: 780, droite: 1010, depart: 900, approche: 1100,
+    ecartMin: 170, fenetre: 100, limite: 250, saut: 0.12 },
 };
 
 /* --------------------------------------------------------------- le hasard
@@ -410,8 +462,84 @@ export function consigneDe(epreuve, graine = 0) {
     return { ...REGLES.jauge, sommets };
   }
 
+  if (epreuve === 'ola') {
+    const { tours, depart, secteurs } = REGLES.ola;
+    /* La tribune du joueur, loin du départ de la vague : le premier passage
+       doit se voir venir d'au moins un tiers de tour. */
+    const place = Math.floor(secteurs * (0.35 + rnd() * 0.5));
+    const position = (place + 0.5) / secteurs;
+    const passages = [];
+    let debut = depart;
+    for (const d of tours) {
+      passages.push(Math.round(debut + position * d));
+      debut += d;
+    }
+    return { ...REGLES.ola, place, position, passages, ms: debut + 500 };
+  }
+
+  if (epreuve === 'miroir') {
+    const { manches: longueurs, pas, attente, marge } = REGLES.miroir;
+    const manches = [];
+    let horloge = 500;
+    for (const n of longueurs) {
+      const coups = [];
+      let at = 0;
+      for (let i = 0; i < n; i++) {
+        if (i) at += pas[Math.floor(rnd() * pas.length)];
+        coups.push({ t: at, cote: rnd() < 0.5 ? 0 : 1 });
+      }
+      /* Les deux côtés, toujours : un motif tout à gauche se rejoue tout à
+         droite sans rien retourner, et l'épreuve redevient l'écho. */
+      if (coups.every((c) => c.cote === coups[0].cote)) coups[n - 1].cote ^= 1;
+      const reponse = horloge + at + attente;
+      const fin = reponse + at + marge;
+      manches.push({ debut: horloge, reponse, fin, coups });
+      horloge = fin + 500;
+    }
+    return { ...REGLES.miroir, manches, ms: horloge };
+  }
+
+  if (epreuve === 'rouleaux') {
+    const { lancers, parLancer, depart, vent, ventMin } = REGLES.rouleaux;
+    const liste = Array.from({ length: lancers }, (_, i) => {
+      /* Jamais sans vent : un lancer sans dérive se vise sur la cible, et
+         l'on ne mesure plus que la force. Le sens change d'un lancer à
+         l'autre plus souvent qu'il ne se répète. */
+      const force = ventMin + rnd() * (vent - ventMin);
+      return {
+        t: depart + i * parLancer,
+        cible: { x: 0.25 + rnd() * 0.5, y: 0.1 + rnd() * 0.2 },
+        vent: +(force * (rnd() < 0.5 ? -1 : 1)).toFixed(3),
+      };
+    });
+    return { ...REGLES.rouleaux, liste, ms: depart + lancers * parLancer + 300 };
+  }
+
+  if (epreuve === 'deuxvoix') {
+    const { ms, gauche, droite, depart, ecartMin } = REGLES.deuxvoix;
+    const brut = [];
+    /* Deux cadences décalées, et un coup de temps en temps retiré : sans ces
+       trous, l'épreuve se jouerait sur deux métronomes, les yeux fermés. */
+    for (const [cote, pas, decal] of [[0, gauche, 0], [1, droite, pas2(rnd, droite)]]) {
+      for (let at = depart + decal; at < ms - 500; at += pas) {
+        if (rnd() < 0.18) continue;
+        brut.push({ t: Math.round(at), cote });
+      }
+    }
+    brut.sort((a, b) => a.t - b.t);
+    const notes = [];
+    for (const n of brut) {
+      if (notes.length && n.t - notes[notes.length - 1].t < ecartMin) continue;
+      notes.push(n);
+    }
+    return { ...REGLES.deuxvoix, notes };
+  }
+
   throw new Triche('epreuve.inconnue');
 }
+
+/** Le décalage de la seconde voix : quelque part dans le premier tiers de son pas. */
+const pas2 = (rnd, pas) => Math.round(pas * (0.2 + rnd() * 0.3));
 
 /* ---------------------------------------------------------- les mesures */
 
@@ -756,7 +884,169 @@ export function noter(epreuve, consigne, reponse, mods = {}) {
       (total / mesures.length) * (mods.holdBonus ?? 1)));
   }
 
+  /**
+   * **La ola.** Chaque passage est apparié à la frappe la plus proche, et une
+   * frappe ne sert qu'une fois. Les frappes de trop coûtent : sans ça,
+   * taper sans arrêt finirait par tomber sur chaque passage.
+   */
+  if (epreuve === 'ola') {
+    const frappes = Array.isArray(r.frappes) ? r.frappes : [];
+    const passages = consigne.passages ?? [];
+    if (!passages.length) return 0;
+    if (frappes.length > passages.length * 4) throw new Triche('frappes.trop_nombreuses');
+    if (frappes.some((x) => !Number.isFinite(x))) throw new Triche('frappe.invalide');
+    humain(frappes, { minEcart: 120 });
+    const large = mods.tempoWindow ?? 1;
+    const q = pleineEtLimite(consigne.fenetre * large, consigne.limite * large);
+    const { total, libres } = apparier(passages, frappes, consigne.limite * large, q);
+    return borne((total - libres * 0.5) / passages.length);
+  }
+
+  /**
+   * **L'écho inversé.** Manche par manche : la n-ième frappe de la réponse
+   * face au n-ième coup du motif. Le côté doit être **l'autre**, et l'écart
+   * à la première frappe doit valoir celui du motif à son premier coup —
+   * c'est le rythme qu'on juge, pas l'heure à laquelle on se lance.
+   */
+  if (epreuve === 'miroir') {
+    const frappes = Array.isArray(r.frappes) ? r.frappes : [];
+    const manches = consigne.manches ?? [];
+    if (!manches.length) return 0;
+    for (const f of frappes) {
+      if (!Number.isFinite(f?.t) || (f.cote !== 0 && f.cote !== 1)) {
+        throw new Triche('frappe.invalide');
+      }
+    }
+    humain(frappes.map((f) => f.t), { minEcart: 70 });
+    const tol = consigne.tolerance * (mods.tempoWindow ?? 1);
+    let somme = 0;
+    for (const m of manches) {
+      const siennes = frappes.filter((f) => f.t >= m.reponse - 150 && f.t <= m.fin);
+      let bien = 0;
+      for (let i = 0; i < m.coups.length; i++) {
+        const f = siennes[i];
+        if (!f || f.cote !== (m.coups[i].cote ^ 1)) continue;
+        if (i === 0) { bien += 1; continue; }
+        const ecart = Math.abs((f.t - siennes[0].t) - (m.coups[i].t - m.coups[0].t));
+        bien += Math.max(0, 1 - Math.max(0, ecart - consigne.jeu) / tol);
+      }
+      const deTrop = Math.max(0, siennes.length - m.coups.length);
+      somme += Math.max(0, bien - deTrop * 0.5) / m.coups.length;
+    }
+    return borne(somme / manches.length);
+  }
+
+  /**
+   * **Les rouleaux.** Le point de chute est **recalculé ici** à partir du
+   * geste, jamais lu dans la réponse : la page le calcule pour l'animer, le
+   * serveur pour le juger, et c'est lui qui fait foi. Un lancer par fenêtre,
+   * le premier.
+   */
+  if (epreuve === 'rouleaux') {
+    const gestes = Array.isArray(r.lancers) ? r.lancers : [];
+    const liste = consigne.liste ?? [];
+    if (!liste.length) return 0;
+    if (gestes.length > liste.length * 3) throw new Triche('lancers.trop_nombreux');
+    for (const g of gestes) {
+      if (!['x0', 'y0', 'x1', 'y1', 't0', 't1'].every((k) => Number.isFinite(g?.[k]))) {
+        throw new Triche('lancer.invalide');
+      }
+      if (g.t1 - g.t0 < consigne.dureeMin) throw new Triche('lancer.trop_rapide');
+    }
+    humain(gestes.map((g) => g.t0), { minEcart: 200 });
+    const rayon = consigne.rayon * (mods.traitLarge ?? 1);
+    let total = 0;
+    for (const l of liste) {
+      const g = gestes.find((x) => x.t0 >= l.t && x.t0 < l.t + consigne.parLancer);
+      if (!g) continue;
+      const chute = pointDeChute(g, l.vent, consigne.portee);
+      const loin = Math.hypot(chute.x - l.cible.x, chute.y - l.cible.y);
+      total += loin <= consigne.coeur ? 1
+        : Math.max(0, 1 - (loin - consigne.coeur) / (rayon - consigne.coeur));
+    }
+    return borne(total / liste.length);
+  }
+
+  /**
+   * **Les deux voix.** Chaque note est appariée à la frappe la plus proche
+   * **de son côté**. Une frappe du mauvais côté ne rattrape rien, et elle
+   * compte avec les frappes de trop : taper des deux mains sans regarder
+   * doit coûter, pas rapporter la moitié.
+   */
+  if (epreuve === 'deuxvoix') {
+    const frappes = Array.isArray(r.frappes) ? r.frappes : [];
+    const notes = consigne.notes ?? [];
+    if (!notes.length) return 0;
+    if (frappes.length > notes.length * 3) throw new Triche('frappes.trop_nombreuses');
+    for (const f of frappes) {
+      if (!Number.isFinite(f?.t) || (f.cote !== 0 && f.cote !== 1)) {
+        throw new Triche('frappe.invalide');
+      }
+    }
+    /* Deux mains : deux frappes peuvent tomber très près l'une de l'autre,
+       mais pas du même côté. On juge donc chaque main séparément. */
+    for (const c of [0, 1]) {
+      humain(frappes.filter((f) => f.cote === c).map((f) => f.t), { minEcart: 90 });
+    }
+    const large = mods.tempoWindow ?? 1;
+    const q = pleineEtLimite(consigne.fenetre * large, consigne.limite * large);
+    let total = 0;
+    let libres = 0;
+    for (const c of [0, 1]) {
+      const res = apparier(notes.filter((n) => n.cote === c).map((n) => n.t),
+        frappes.filter((f) => f.cote === c).map((f) => f.t), consigne.limite * large, q);
+      total += res.total;
+      libres += res.libres;
+    }
+    return borne((total - libres * 0.4) / notes.length);
+  }
+
   throw new Triche('epreuve.inconnue');
+}
+
+/** La note d'une même échelle partout : de 0 à 1,2, jamais négative. */
+const borne = (v) => Math.max(0, Math.min(1.2, v));
+
+/** Pleine jusqu'à `pleine` ms d'écart, nulle à `limite`, droite entre les deux. */
+const pleineEtLimite = (pleine, limite) => (dt) => (dt <= pleine ? 1
+  : Math.max(0, 1 - (dt - pleine) / Math.max(1, limite - pleine)));
+
+/**
+ * Apparie des instants attendus à des frappes : chaque attendu prend la frappe
+ * libre la plus proche, dans la limite. Rend la somme des notes et le nombre
+ * de frappes restées sans emploi.
+ */
+function apparier(attendus, frappes, limite, note) {
+  const prises = new Set();
+  let total = 0;
+  for (const a of attendus) {
+    let rang = -1;
+    let mieux = Infinity;
+    for (let i = 0; i < frappes.length; i++) {
+      if (prises.has(i)) continue;
+      const dt = Math.abs(frappes[i] - a);
+      if (dt < mieux) { mieux = dt; rang = i; }
+    }
+    if (rang < 0 || mieux > limite) continue;
+    prises.add(rang);
+    total += note(mieux);
+  }
+  return { total, libres: frappes.length - prises.size };
+}
+
+/**
+ * Où retombe un rouleau. **Recopié à l'identique dans `public/geste.js`**,
+ * qui s'en sert pour l'animer : le jour où l'un change, l'autre doit suivre,
+ * et `epreuves-ui-smoke` les compare sur les mêmes gestes.
+ *
+ * Le rouleau part dans le prolongement du glissement, `portee` fois plus loin
+ * que le doigt n'a glissé ; le vent le déporte en proportion de son vol.
+ */
+export function pointDeChute(g, vent, portee) {
+  const dx = g.x1 - g.x0;
+  const dy = g.y1 - g.y0;
+  const vol = Math.hypot(dx, dy) * portee;
+  return { x: g.x1 + dx * portee + vent * vol, y: g.y1 + dy * portee };
 }
 
 /** Le rang, sur le tracé de consigne, du point le plus proche de `p`. */

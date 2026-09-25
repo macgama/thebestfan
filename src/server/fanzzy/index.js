@@ -978,6 +978,106 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    * `saisonVue` sert à ne montrer l'annonce qu'une fois. Ce joueur-là l'a vue
    * ou non : c'est bien un état de joueur, et sa place est ici.
    */
+  /**
+   * **La bibliothèque : tout ce qui se gagne, par type, et ce qu'on en a.**
+   *
+   * La carte « Collection » de l'accueil ne comptait que les personnages.
+   * Les états, les tenues, l'équipement et les cartes d'action sortent des
+   * mêmes boosters et n'étaient comptés nulle part : on croyait avoir
+   * presque tout avec trente personnages sur trente-cinq.
+   *
+   * **L'univers est celui des boosters, et pas un autre.** Chaque ligne
+   * reprend la règle de `openPack` :
+   *   - les personnages publiés des séries ouvertes (`obtenables`) ;
+   *   - pour chacun, ses âges écrits × les quatre états dessinables ;
+   *   - pour chacun, ses âges × les tenues publiées, la base mise à part —
+   *     elle ne se gagne pas, on l'a ;
+   *   - l'équipement et les cartes d'action que la saison a ouverts.
+   * Un compteur qui promettrait ce qu'aucun booster ne peut sortir serait
+   * une jauge qui n'arrive jamais au bout.
+   *
+   * Les états et les tenues comptent **tout l'univers**, pas seulement les
+   * âges débloqués : sinon le total grandirait à chaque évolution, et l'on
+   * reculerait en progressant. Les stades n'y sont pas : ils ne se gagnent
+   * pas encore (voir `stadeDeLaRencontre`).
+   */
+  async function bibliotheque(userId) {
+    /* Les tables facultatives ne font pas tomber la page : un joueur sans
+       tenue ni pièce a zéro, pas une erreur. */
+    const lire = (sql, p) => q(sql, p).catch((e) => {
+      if (e?.code === 'ER_NO_SUCH_TABLE' || e?.code === 'ER_BAD_FIELD_ERROR') return [];
+      throw e;
+    });
+    const [fz, sk, st, w, etats] = await Promise.all([
+      q(`SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]),
+      lire(`SELECT fanzzy_id, skin_id FROM user_skins WHERE user_id = ?`, [userId]),
+      lire(`SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [userId]),
+      lire(`SELECT action_cards FROM user_wallet WHERE user_id = ?`, [userId]),
+      etatsGagnes(userId).catch(() => null),
+    ]);
+
+    const persos = obtenables();
+    const atteint = new Map(fz.map((r) => [racineDe(r.fanzzy_id), Math.max(1, Number(r.stage) || 1)]));
+    const tenues = new Set(tenuesPubliees().filter((t) => t.id !== 'base').map((t) => t.id));
+    const agesDe = (id) => Math.max(1, lignee(id).length);
+    const tenuesDe = new Map();
+    for (const r of sk) {
+      if (!tenues.has(r.skin_id)) continue;
+      const id = racineDe(r.fanzzy_id);
+      tenuesDe.set(id, (tenuesDe.get(id) ?? 0) + 1);
+    }
+
+    const T = {
+      fanzzy: { gagnes: 0, possibles: persos.length, items: [] },
+      etats: { gagnes: 0, possibles: 0 },
+      tenues: { gagnes: 0, possibles: 0 },
+    };
+    const parFanzzy = [];
+    for (const f of persos) {
+      const ages = agesDe(f.id);
+      const possede = atteint.has(f.id);
+      if (possede) T.fanzzy.gagnes++;
+      T.fanzzy.items.push({ id: f.id, nom: f.nom, rar: f.rar, possede });
+      const eP = ages * ETATS_DESSINES.length;
+      const eG = Object.values(etats?.[f.id] ?? {})
+        .reduce((s, l) => s + l.filter((e) => ETATS_DESSINES.includes(e)).length, 0);
+      const tP = ages * tenues.size;
+      const tG = tenuesDe.get(f.id) ?? 0;
+      T.etats.possibles += eP; T.etats.gagnes += Math.min(eG, eP);
+      T.tenues.possibles += tP; T.tenues.gagnes += Math.min(tG, tP);
+      if (possede) {
+        parFanzzy.push({ id: f.id, nom: f.nom, stade: atteint.get(f.id), ages,
+          etats: { gagnes: Math.min(eG, eP), possibles: eP },
+          tenues: { gagnes: Math.min(tG, tP), possibles: tP } });
+      }
+    }
+
+    const aStuff = new Set(st.map((r) => r.stuff_id));
+    const stuff = jouables('stuff');
+    T.stuff = { possibles: stuff.length,
+      items: stuff.map((s) => ({ id: s.id, nom: s.nom, rar: s.rar, possede: aStuff.has(s.id) })) };
+    T.stuff.gagnes = T.stuff.items.filter((s) => s.possede).length;
+
+    /* Les communes sont à tout le monde — voir `possessions` dans le deck :
+       elles comptent comme gagnées dès le premier jour. */
+    const brut = w[0]?.action_cards;
+    const tirees = new Set(typeof brut === 'string' ? JSON.parse(brut) : (brut ?? []));
+    const actions = jouables('action');
+    T.actions = { possibles: actions.length,
+      items: actions.map((a) => ({ id: a.id, nom: a.nom, rar: a.rar,
+        possede: a.rar === 'commune' || tirees.has(a.id) })) };
+    T.actions.gagnes = T.actions.items.filter((a) => a.possede).length;
+
+    const total = Object.values(T).reduce((s, t) => ({
+      gagnes: s.gagnes + t.gagnes, possibles: s.possibles + t.possibles }),
+    { gagnes: 0, possibles: 0 });
+    parFanzzy.sort((a, b) => a.nom.localeCompare(b.nom));
+    return { total, types: T, parFanzzy };
+  }
+
+  router.get('/bibliotheque', requireAuth, (req, res) =>
+    send(res, bibliotheque(req.user.id)));
+
   router.get('/state', requireAuth, (req, res) =>
     send(res, Promise.all([
       wallet(req.user.id), collection(req.user.id), stades(req.user.id),
@@ -1501,5 +1601,5 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
   }
 
   return { router, wallet, collection, stades, openPack, evolve, activeFanzzy,
-    personnageActif, construireAvatar, fiche, offrir, remettreStuff, remettreTenue };
+    personnageActif, construireAvatar, fiche, offrir, remettreStuff, remettreTenue, bibliotheque };
 }

@@ -70,6 +70,14 @@ export const CHANTS = {
   renverse: { nom: 'Le renversement', gest: 'bascule', cost: 27, power: 42 },
   fumigenes: { nom: 'Les fumigènes',  gest: 'visee',   cost: 25, power: 39 },
   tension:  { nom: 'La tension',      gest: 'jauge',   cost: 29, power: 46 },
+  /* Les quatre de l'automne 2026 — même règle que les trois d'avant : le prix
+     suit la durée et la charge mentale. L'écho inversé dure douze secondes et
+     demande de retenir puis de retourner : il pousse le plus. La ola se voit
+     venir, elle coûte et rend le moins. */
+  vague:    { nom: 'La vague',        gest: 'ola',      cost: 25, power: 40 },
+  renvoi:   { nom: 'Le renvoi',       gest: 'miroir',   cost: 29, power: 48 },
+  pluie:    { nom: 'La pluie de rouleaux', gest: 'rouleaux', cost: 27, power: 44 },
+  canon:    { nom: 'Le canon',        gest: 'deuxvoix', cost: 28, power: 45 },
 };
 
 /**
@@ -87,9 +95,9 @@ export const CHANTS = {
    bout à bout, elles donneraient un quart d'heure sans rien à dessiner, puis un
    quart d'heure sans rien à chanter. Un Virage doit faire passer les deux. */
 export const ORDRE = ['reprise', 'roulement', 'bache', 'repons', 'renverse',
-  'onetaitla', 'damier', 'salves', 'trilage', 'fumigenes', 'contrechant',
-  'moulinet', 'craquage', 'montee', 'tension', 'aupoint', 'rebours', 'tenir',
-  'mur', 'appel', 'relance', 'cadence'];
+  'onetaitla', 'vague', 'damier', 'salves', 'trilage', 'fumigenes', 'contrechant',
+  'renvoi', 'moulinet', 'craquage', 'montee', 'tension', 'aupoint', 'pluie',
+  'rebours', 'tenir', 'mur', 'canon', 'appel', 'relance', 'cadence'];
 
 /** Tous, sous forme de liste — pour qui veut les parcourir. */
 export const LISTE_CHANTS = ORDRE.map((id) => ({ id, ...CHANTS[id] }));
