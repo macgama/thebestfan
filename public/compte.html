@@ -60,6 +60,23 @@ label{display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercas
 input{width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.16);border-radius:6px;
   color:var(--craie);padding:13px 14px;font-size:15px;font-family:inherit}
 input:focus{outline:none;border-color:var(--projo)}
+/* **L'œil du mot de passe.** Dans le champ, à droite, et le champ se pousse
+   pour lui laisser la place : sans la marge, un mot de passe long passait
+   sous le bouton. Quarante-quatre pixels de côté pour le doigt, comme le
+   reste des boutons de la page. */
+.mdp{position:relative}
+.mdp input{padding-right:52px}
+/* Edge pose son propre œil dans les champs `password` : deux yeux côte à côte,
+   dont un qui disparaît dès qu'on a cliqué sur l'autre. On garde le nôtre,
+   le seul qui existe aussi sur Chrome, Firefox et Safari. */
+.mdp input::-ms-reveal,.mdp input::-ms-clear{display:none}
+.oeil{position:absolute;top:0;right:0;width:48px;height:100%;min-height:44px;display:grid;place-items:center;
+  background:none;border:0;color:var(--craie);opacity:.55;cursor:pointer;padding:0}
+.oeil:hover,.oeil:focus-visible{opacity:1}
+.oeil:focus-visible{outline:2px solid var(--projo);outline-offset:-4px;border-radius:6px}
+.oeil svg{width:22px;height:22px}
+.oeil .barre{display:none}
+.oeil[aria-pressed="true"] .barre{display:inline}
 .hint{font-size:11.5px;opacity:.42;margin-top:6px;line-height:1.5}
 /* Se connecter, s'inscrire, envoyer. Une plaque — elle ne garde que sa
    largeur pleine et sa marge de formulaire. */
@@ -221,6 +238,7 @@ const I18N = {
   fr:{ 'tagline':'le jeu de cartes des tribunes',
     'invite.par':'<b>{pseudo}</b> t’invite à prendre ta place. Crée ton compte : vous serez amis tout de suite.','tab.login':'CONNEXION','tab.register':'INSCRIPTION',
     'field.email':'Adresse e-mail','field.password':'Mot de passe','field.newPassword':'Nouveau mot de passe',
+    'pw.show':'Afficher le mot de passe','pw.hide':'Masquer le mot de passe',
     'field.pseudo':'Pseudo','action.login':'ENTRER DANS LA TRIBUNE','action.register':'CRÉER MON COMPTE',
     'action.forgot':'Mot de passe oublié ?','action.send':'ENVOYER LE LIEN','action.back':'Retour à la connexion',
     'action.save':'ENREGISTRER','hint.pseudo':'De 3 à 20 caractères. Il sera visible par tes adversaires.',
@@ -252,6 +270,7 @@ const I18N = {
   en:{ 'tagline':'the terrace card game',
     'invite.par':'<b>{pseudo}</b> is saving you a place. Sign up and you’ll be friends right away.','tab.login':'SIGN IN','tab.register':'SIGN UP',
     'field.email':'Email address','field.password':'Password','field.newPassword':'New password',
+    'pw.show':'Show password','pw.hide':'Hide password',
     'field.pseudo':'Username','action.login':'ENTER THE STAND','action.register':'CREATE MY ACCOUNT',
     'action.forgot':'Forgot your password?','action.send':'SEND THE LINK','action.back':'Back to sign in',
     'action.save':'SAVE','hint.pseudo':'3 to 20 characters. Your opponents will see it.',
@@ -283,6 +302,7 @@ const I18N = {
   de:{ 'tagline':'das Kartenspiel der Kurve',
     'invite.par':'<b>{pseudo}</b> hält dir einen Platz frei. Melde dich an — ihr seid sofort Freunde.','tab.login':'ANMELDEN','tab.register':'REGISTRIEREN',
     'field.email':'E-Mail-Adresse','field.password':'Passwort','field.newPassword':'Neues Passwort',
+    'pw.show':'Passwort anzeigen','pw.hide':'Passwort verbergen',
     'field.pseudo':'Benutzername','action.login':'IN DEN BLOCK','action.register':'KONTO ERSTELLEN',
     'action.forgot':'Passwort vergessen?','action.send':'LINK SENDEN','action.back':'Zurück zur Anmeldung',
     'action.save':'SPEICHERN','hint.pseudo':'3 bis 20 Zeichen. Deine Gegner sehen ihn.',
@@ -314,6 +334,7 @@ const I18N = {
   es:{ 'tagline':'el juego de cartas de la grada',
     'invite.par':'<b>{pseudo}</b> te guarda un sitio. Crea tu cuenta: seréis amigos enseguida.','tab.login':'ENTRAR','tab.register':'REGISTRARSE',
     'field.email':'Correo electrónico','field.password':'Contraseña','field.newPassword':'Nueva contraseña',
+    'pw.show':'Mostrar contraseña','pw.hide':'Ocultar contraseña',
     'field.pseudo':'Nombre','action.login':'ENTRAR EN LA GRADA','action.register':'CREAR MI CUENTA',
     'action.forgot':'¿Olvidaste la contraseña?','action.send':'ENVIAR EL ENLACE','action.back':'Volver a entrar',
     'action.save':'GUARDAR','hint.pseudo':'De 3 a 20 caracteres. Tus rivales lo verán.',
@@ -354,11 +375,69 @@ function t(key, params = {}) {
   return Object.entries(params).reduce((a,[k,v]) => a.replaceAll(`{${k}}`, v), s);
 }
 
+/**
+ * **Voir ce qu'on tape.** Sur un téléphone, un mot de passe de dix caractères
+ * au moins se tape à l'aveugle, et une faute ne se découvre qu'au refus du
+ * serveur — ou pire, à l'inscription, jamais : le compte est créé avec un
+ * mot de passe que personne ne connaît. L'œil le montre, le temps qu'on
+ * le relise.
+ *
+ * Posé sur **tous** les champs de mot de passe de la page — connexion,
+ * inscription, nouveau mot de passe, suppression du compte — plutôt que
+ * sur celui de la capture : un œil sur l'un et pas sur l'autre ferait
+ * chercher le bouton.
+ *
+ * Le mot de passe **se recache à l'envoi**. Les gestionnaires de mots de
+ * passe ne proposent d'enregistrer que ce qu'ils voient partir d'un champ
+ * `password` ; un champ resté en clair leur ferait manquer l'inscription.
+ */
+const OEIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+  + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'
+  + '<path class="barre" d="M4 4l16 16"/></svg>';
+
+function cacher(champ, bouton) {
+  champ.type = 'password';
+  bouton.setAttribute('aria-pressed', 'false');
+}
+
+document.querySelectorAll('input[type="password"]').forEach((champ) => {
+  const boite = document.createElement('div');
+  boite.className = 'mdp';
+  champ.replaceWith(boite);
+  boite.appendChild(champ);
+  const bouton = document.createElement('button');
+  bouton.type = 'button';
+  bouton.className = 'oeil';
+  bouton.setAttribute('aria-pressed', 'false');
+  bouton.setAttribute('aria-controls', champ.id);
+  bouton.innerHTML = OEIL;
+  boite.appendChild(bouton);
+  bouton.onclick = () => {
+    const voir = champ.type === 'password';
+    champ.type = voir ? 'text' : 'password';
+    bouton.setAttribute('aria-pressed', String(voir));
+    etiqueterYeux();
+    /* Le curseur reste où il était : on vient relire, pas recommencer. */
+    champ.focus({ preventScroll: true });
+  };
+  champ.form?.addEventListener('submit', () => cacher(champ, bouton), true);
+});
+
+function etiqueterYeux() {
+  document.querySelectorAll('.oeil').forEach((b) => {
+    const l = t(b.getAttribute('aria-pressed') === 'true' ? 'pw.hide' : 'pw.show');
+    b.setAttribute('aria-label', l);
+    b.title = l;
+  });
+}
+
 function applyLocale() {
   document.documentElement.lang = locale;
   try { localStorage.setItem('tbf_locale', locale); } catch {}
   $('tagline').textContent = t('tagline');
   document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
+  etiqueterYeux();
   $('langs').innerHTML = LOCALES.map(l =>
     `<button data-l="${l}" class="${l===locale?'on':''}">${l.toUpperCase()}</button>`).join('');
 }

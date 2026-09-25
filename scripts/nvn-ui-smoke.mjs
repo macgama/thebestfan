@@ -557,6 +557,11 @@ const ouvert = await A.page.evaluate(() => ({
       return {
         colonne: Math.round(colonne),
         vignette: Math.round(e.querySelector('.fz-aff')?.getBoundingClientRect().width ?? 0),
+        /* La hauteur, que rien ne mesurait : des cartes d'un tiers de la
+           colonne faisaient deux rangées plus hautes que la fenêtre, et
+           l'affiche se lisait en faisant défiler — en six secondes. */
+        defileV: (() => { const c = e.querySelector('.camps');
+          return c ? c.scrollHeight > c.clientHeight + 1 : false; })(),
         debords: debords.length,
         defileH: document.documentElement.scrollWidth > innerWidth + 1,
       };
@@ -569,6 +574,7 @@ const ouvert = await A.page.evaluate(() => ({
       large.vignette > 60 && large.vignette < 340
       || (console.log('        vignette :', large.vignette, 'px'), false));
     check('et rien ne déborde sur le côté', !large.defileH);
+    check('ni en bas : les deux équipes se lisent sans faire défiler', !large.defileV);
     await A.page.setViewport(avant);
   }
   }
@@ -582,6 +588,44 @@ const ouvert = await A.page.evaluate(() => ({
 }
 
 check('l\u2019horloge démarre à cinq minutes', /^[45]:/.test(ouvert.horloge));
+
+/* **Le stade couvre le terrain.** Il est couché d'un quart de tour pour que
+   ses tribunes bordent la corde, et les règles qui le couchent perdaient
+   contre celles du décor debout, écrites plus bas : l'image ne se voyait
+   que dans une bande à gauche. On mesure donc sa boîte, rotation comprise,
+   contre celle de l'arène. */
+{
+  const couvre = await A.page.evaluate(() => {
+    const img = document.querySelector('#stade .tbf-stade-fond');
+    const ar = document.getElementById('arene')?.getBoundingClientRect();
+    if (!img || !ar) return null;
+    const r = img.getBoundingClientRect();
+    return { ok: r.left <= ar.left + 2 && r.right >= ar.right - 2
+      && r.top <= ar.top + 2 && r.bottom >= ar.bottom - 2,
+      img: [r.left, r.top, r.right, r.bottom].map(Math.round),
+      arene: [ar.left, ar.top, ar.right, ar.bottom].map(Math.round) };
+  });
+  check('le stade couvre tout le terrain, pas une bande sur le côté', couvre?.ok === true
+    || (console.log('        image', couvre?.img, 'arène', couvre?.arene), false));
+  /* Et sur un écran large, où l'arène est couchée : c'est là que la bande
+     à gauche a été vue, et le téléphone ne la montrait pas de la même façon. */
+  const avant = A.page.viewport();
+  await A.page.setViewport({ width: 1440, height: 900 });
+  await new Promise((r) => setTimeout(r, 150));
+  const large = await A.page.evaluate(() => {
+    const img = document.querySelector('#stade .tbf-stade-fond');
+    const ar = document.getElementById('arene')?.getBoundingClientRect();
+    if (!img || !ar) return null;
+    const r = img.getBoundingClientRect();
+    return { ok: r.left <= ar.left + 2 && r.right >= ar.right - 2
+      && r.top <= ar.top + 2 && r.bottom >= ar.bottom - 2,
+      img: [r.left, r.top, r.right, r.bottom].map(Math.round),
+      arene: [ar.left, ar.top, ar.right, ar.bottom].map(Math.round) };
+  });
+  await A.page.setViewport(avant);
+  check('et sur un grand écran aussi', large?.ok === true
+    || (console.log('        image', large?.img, 'arène', large?.arene), false));
+}
 check('le duel est marqué classé', ouvert.mode === 'CLASSÉ');
 check('chaque tribune a sa foule', ouvert.fouleMoi === 1 && ouvert.fouleEux === 1);
 

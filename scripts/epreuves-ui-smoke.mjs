@@ -383,6 +383,21 @@ console.log(`   forme du tifo : ${gestes.tifo.forme} · suite du capo : ${gestes
   const notePile = grade('visee', pile, {}, { motif: GRAINE });
   check(`toucher au bon endroit et à l’heure paie (${notePile.toFixed(2)})`, notePile >= 0.8);
 
+  /* **À la vitesse d'une main.** Le contrôle du dessus touche vingt
+     millisecondes après l'apparition, et c'est tout ce qu'on vérifiait :
+     personne ne joue ainsi. Un joueur voit le fumigène, puis y porte le
+     doigt — six cents millisecondes. Il finissait à zéro, à chaque partie,
+     parce que sa touche était donnée au fumigène suivant, pas encore
+     allumé. */
+  const humain = await viser('dessus', 600);
+  const noteHumain = grade('visee', humain, {}, { motif: GRAINE });
+  check(`à la vitesse d’une main, sur chaque rond, ça paie (${noteHumain.toFixed(2)})`,
+    noteHumain >= 0.6);
+  const lent = await viser('dessus', 900);
+  const noteLent = grade('visee', lent, {}, { motif: GRAINE });
+  check(`lentement, un peu moins, mais pas rien (${noteLent.toFixed(2)})`,
+    noteLent > 0.1 && noteLent < noteHumain);
+
   const tard = await viser('dessus', g.fenetre * 2.5);
   const noteTard = grade('visee', tard, {}, { motif: GRAINE });
   check(`au bon endroit mais trop tard ne paie pas (${noteTard.toFixed(2)})`, noteTard <= 0.2);

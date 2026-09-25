@@ -32,18 +32,17 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    lui-même, en plus de celle que nav.js réserve déjà pour la navigation. */
 .corps{flex:1;padding-bottom:calc(var(--barre) + 12px)}
 
-.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 6px}
+/* Le sous-titre « Trois Fanzzy, dix cartes » est parti : les deux onglets
+   juste en dessous disent déjà « TRIBUNE 1/2 » et « CARTES 10/10 », et le
+   dire deux fois poussait le deck sous la ligne de flottaison du téléphone.
+   Reste l'état, rangé à droite. */
+.top{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:14px 16px 6px}
 .top h1{font-family:var(--banner);font-size:20px;letter-spacing:.15em;margin:0}
 .top h1 small{display:block;font-size:8.5px;letter-spacing:.3em;opacity:.5;margin-top:3px;font-family:var(--ui)}
 .etat{font-family:var(--banner);font-size:9.5px;letter-spacing:.14em;border-radius:5px;padding:5px 10px;
   border:1px solid var(--flare);color:var(--flare);white-space:nowrap}
 .etat.ok{border-color:var(--vert);color:var(--vert)}
 
-.nomdeck{margin:8px 16px 0;display:flex;align-items:center;gap:9px;border:1px solid rgba(242,238,228,.12);
-  border-radius:9px;background:var(--panneau);backdrop-filter:blur(10px);padding:9px 12px}
-.nomdeck span{font-size:9px;letter-spacing:.16em;opacity:.4;font-family:var(--banner)}
-.nomdeck input{flex:1;min-width:0;background:none;border:0;color:inherit;font-family:var(--banner);
-  font-size:15px;letter-spacing:.04em;outline:none;min-height:44px}
 
 /* Onglets, filtres, boutons : le même matériau que le classeur. Un socle dur
    qui disparaît à l'appui pendant que le bouton descend. C'est le seul retour
@@ -469,7 +468,6 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
     <a class="tbf-onglet on" href="/deck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h10v13H4zM8 4h10v13"/></svg>DECK</a>
   </nav>
   <div class="top">
-    <p class="tbf-sous">Trois Fanzzy, dix cartes</p>
     <div class="etat" id="etat">—</div>
   </div>
 
@@ -773,8 +771,10 @@ function rendre() {
 
   const corps = [];
 
-  corps.push(`<div class="nomdeck"><span>NOM</span>
-    <input id="nom" maxlength="32" value="${esc(S.deck.nom)}" autocomplete="off"></div>`);
+  /* **Plus de champ « NOM ».** Un joueur n'a qu'un deck : un nom ne le
+     distingue de rien, et le cadre prenait une ligne entière au-dessus de
+     ce qu'on vient composer. Le nom existant reste en base et part tel quel
+     à l'enregistrement — « Mon deck » pour presque tout le monde. */
 
   corps.push(`<div class="tabs tbf-onglets">
     <button class="tab tbf-onglet ${S.onglet === 'tribune' ? 'on' : ''}" data-onglet="tribune">TRIBUNE
@@ -801,7 +801,7 @@ function rendre() {
   $('info').innerHTML = pb.length
     ? esc(pb.join(' · '))
     : (S.sale ? 'Modifications non enregistrées.'
-              : `Deck complet · <b>${esc(S.deck.nom)}</b>`);
+              : 'Deck complet.');
   $('save').disabled = !complet() || !S.sale;
 }
 
@@ -1265,12 +1265,6 @@ async function enregistrer() {
 
 /* ------------------------------------------------------------- gestes */
 
-$('corps').addEventListener('input', (e) => {
-  if (e.target.id !== 'nom') return;
-  S.deck.nom = e.target.value.slice(0, 32);
-  S.sale = true;
-  $('save').disabled = !complet();
-});
 
 $('corps').addEventListener('click', (e) => {
   const el = (a) => e.target.closest(`[data-${a}]`);

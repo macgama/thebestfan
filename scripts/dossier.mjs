@@ -171,7 +171,8 @@ const REGLE_DITE = {
   visee: (g) => `${g.cibles} fumigènes s'allument l'un après l'autre, un toutes les `
     + `${g.apparition} ms. Toucher chacun tant qu'il brûle : le bon endroit `
     + `(rayon ${Math.round(g.rayon * 100)} % de la zone) **et** le bon moment `
-    + `(fenêtre ${g.fenetre} ms).`,
+    + `(note pleine pendant ${g.fenetre} ms, plus rien après ${g.vie ?? g.fenetre} ms, `
+    + `quand le fumigène s'éteint).`,
   jauge: (g) => `Garder le curseur dans une bande de ${Math.round(g.largeur * 100)} % `
     + `pendant ${n(g.ms / 1000)} s. Elle tient, puis elle saute : ${g.points} positions, `
     + `${g.transition} ms de transition. Mesuré toutes les ${g.echantillon} ms, et il en `

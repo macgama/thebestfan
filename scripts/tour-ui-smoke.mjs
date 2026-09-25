@@ -1208,6 +1208,64 @@ for (const [route, nom] of tousLesEcrans) {
   }
 }
 
+/* ================================================= voir son mot de passe
+
+   Un œil dans chaque champ de mot de passe de la page du compte. On
+   vérifie qu'il est partout — un œil sur la connexion et pas sur
+   l'inscription ferait chercher le bouton —, qu'il montre puis recache, que
+   son libellé dit ce qu'il va faire, et que le mot de passe **se recache à
+   l'envoi** : un champ parti en clair ferait manquer l'enregistrement aux
+   gestionnaires de mots de passe.
+
+   La connexion est interceptée avant de partir : on éprouve le formulaire,
+   pas le serveur, et une tentative vide compterait dans le plafond anti-
+   force brute. */
+{
+  const pg = await nav.newPage();
+  await pg.setRequestInterception(true);
+  pg.on('request', (r) => (r.url().includes('/api/auth/login') ? r.abort() : r.continue()));
+  await pg.goto(base + '/compte', { waitUntil: 'networkidle0' });
+  const bilan = await pg.evaluate(() => {
+    const champs = [...document.querySelectorAll('#liPassword, #rgPassword, #rsPassword, #delPassword')];
+    return {
+      n: champs.length,
+      avecOeil: champs.filter((c) => c.parentElement.querySelector('.oeil')).length,
+    };
+  });
+  check(`chaque champ de mot de passe a son œil (${bilan.avecOeil}/${bilan.n})`,
+    bilan.n === 4 && bilan.avecOeil === 4);
+
+  const etat = () => pg.evaluate(() => {
+    const c = document.getElementById('liPassword');
+    const b = c.parentElement.querySelector('.oeil');
+    return { type: c.type, presse: b.getAttribute('aria-pressed'), dit: b.getAttribute('aria-label') };
+  });
+  const cliquer = () => pg.evaluate(() =>
+    document.getElementById('liPassword').parentElement.querySelector('.oeil').click());
+
+  const avant = await etat();
+  check(`caché d’abord, et le bouton propose de l’afficher (« ${avant.dit} »)`,
+    avant.type === 'password' && avant.presse === 'false' && /afficher/i.test(avant.dit ?? ''));
+  await cliquer();
+  const vu = await etat();
+  check(`un clic le montre, et le bouton propose de le masquer (« ${vu.dit} »)`,
+    vu.type === 'text' && vu.presse === 'true' && /masquer/i.test(vu.dit ?? ''));
+  await cliquer();
+  check('un second le recache', (await etat()).type === 'password');
+
+  await cliquer();
+  await pg.evaluate(() => {
+    document.getElementById('liEmail').value = 'x@ex.fr';
+    document.getElementById('liPassword').value = 'unmotdepasse';
+    document.getElementById('formLogin').requestSubmit();
+  });
+  const envoye = await etat();
+  check('il se recache à l’envoi du formulaire',
+    envoye.type === 'password' && envoye.presse === 'false'
+    || (console.log('        il est :', JSON.stringify(envoye)), false));
+  await pg.close();
+}
+
 if (process.env.CAPTURE) console.log(`\n   captures dans ${tmpdir()}`);
 
 await nav.close();

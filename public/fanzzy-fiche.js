@@ -1136,6 +1136,20 @@
             : null;
           const suite = ceremonie ? await ceremonie : null;
 
+          /* **Et c'est le nouveau qui arrive.** La vitrine se redessinait sur
+             l'âge qu'on regardait avant de payer — celui de l'avatar, le plus
+             souvent — et non sur celui qu'on venait d'acheter. Le flash
+             tombait, et révélait… le même personnage : de l'extérieur,
+             l'évolution n'avait eu aucun effet. On pose donc l'âge regardé et
+             l'aperçu sur le nouveau, dans sa tenue de base et au repos.
+
+             L'avatar, lui, ne bouge pas tout seul : s'il suivait l'âge atteint,
+             il est déjà au nouveau ; s'il avait été fixé sur un âge, c'est un
+             choix, et le bouton « ME MONTRER AINSI » est là pour le refaire. */
+          ageVu = vers.stage;
+          voulu = { stade: vers.stage, skin: 'base', etat: 'neutre' };
+          choisie = null;
+
           await recharger();
 
           /* Le dessin arrive par `img.onload` : il n'existe pas encore quand
