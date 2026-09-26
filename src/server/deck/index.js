@@ -255,6 +255,13 @@ export function createDecks({ pool, requireAuth, niveau = null,
           // c'est-à-dire rien du tout.
           stage: i + 1,
           mods: { id: f.id, ...combine(def?.mods ?? {}, stuff) },
+          /* **Les modificateurs du personnage seuls**, avant le sac.
+             `mods` est le total, et c'est lui que le moteur applique — mais un
+             total ne se décompose pas après coup : on ne peut pas dire au joueur
+             « ×1,5 de tempo, dont ×1,2 du Choriste et ×1,25 des Jumelles » à
+             partir de 1,5. Les deux écrans de jeu montrent maintenant cette
+             ventilation, et c'est ici qu'elle se conserve. */
+          modsBase: def?.mods ?? {},
         });
 
         const ages = lignee(f.id);

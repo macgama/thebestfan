@@ -865,6 +865,10 @@ export class DuelNvN {
         f.nom = suivant.nom;
         f.cri = suivant.cri;
         f.mods = suivant.mods;
+        /* Les modificateurs du personnage seuls suivent le total. Sans cette
+           ligne, le panneau « ce que tu portes » continuerait d'attribuer au
+           Choriste les chiffres du Capo qui vient de le remplacer. */
+        f.modsBase = suivant.modsBase;
         f.stage = suivant.stage;
         evenements.push(this.ev('evolve', {
           userId: j.userId, side: j.side, fanzzy: f.id,

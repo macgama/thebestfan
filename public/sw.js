@@ -42,7 +42,7 @@ const CACHE_IMAGES = 'tbf-images-1';
 
 /* Les deux pages servies quand le jeu ne répond pas. Écrites ici plutôt que
    cherchées sur le serveur : celui qui les lira n'a justement pas de serveur. */
-const ECRAN = (titre, mot, phrase, bouton) => `<!DOCTYPE html>
+const ECRAN = (titre, mot, phrase, bouton, extra = '') => `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${titre} — thebestfan</title>
@@ -55,10 +55,13 @@ const ECRAN = (titre, mot, phrase, bouton) => `<!DOCTYPE html>
  small{opacity:.55;font-size:13px}
  button{margin-top:22px;padding:12px 22px;border-radius:9px;border:1px solid #F5C33B;
    background:none;color:#F5C33B;font:inherit;font-size:14px;cursor:pointer}
+ a{display:block;margin-top:16px;font-size:11px;opacity:.4;color:#F2EEE4}
 </style></head><body><div>
  <b>${mot}</b>
  <small>${phrase}</small>
  <button onclick="location.reload()">${bouton}</button>
+ <a href="/?sw-off=1">forcer le rechargement complet</a>
+ ${extra}
 </div></body></html>`;
 
 const HORS_LIGNE = ECRAN('Hors ligne', 'PAS DE RÉSEAU',
@@ -66,27 +69,42 @@ const HORS_LIGNE = ECRAN('Hors ligne', 'PAS DE RÉSEAU',
    Dès qu'elle revient, tout reprend où tu l'avais laissé.`,
   'Réessayer');
 
-/* ## L'écran de redémarrage, et pourquoi il existe
+/* ## L'écran de redémarrage, et la règle qu'il a coûté cher d'apprendre
  *
  * Quand le serveur du jeu n'est pas là — une mise en ligne, un redémarrage —
  * l'hébergeur répond **à sa place** : « This website is currently undergoing
- * maintenance », en anglais, sur un fond bleu, avec son logo à lui. Elle arrive
- * en 200, avec du HTML valide : pour le navigateur, c'est une page comme une
- * autre, et pour le joueur c'est le jeu qui est mort. Il n'a aucune raison de
- * réessayer une minute plus tard, et beaucoup de raisons de ne pas revenir.
+ * maintenance », en anglais, sur un fond bleu, avec son logo à lui. Pour le
+ * joueur, c'est le jeu qui est mort. Il n'a aucune raison de réessayer une
+ * minute plus tard, et beaucoup de raisons de ne pas revenir.
  *
- * On la reconnaît à ce qu'elle **n'a pas** : l'en-tête `x-tbf`, que toutes nos
- * pages portent (voir `page()` dans `server.js`). Une réponse de navigation
- * sans cette signature ne vient pas du jeu, quel que soit son code de statut.
+ * ## La première version a mis le site entier hors service
  *
- * L'écran qui la remplace recharge tout seul : un redémarrage dure quelques
- * secondes, et la seule chose à faire est d'attendre. Le faire à la place du
- * joueur est exactement ce qu'on lui demanderait de faire. */
+ * Elle reconnaissait nos pages à un en-tête `x-tbf` posé par `page()`, et
+ * remplaçait **tout ce qui ne le portait pas**. L'en-tête n'arrive pas jusqu'au
+ * navigateur — un proxy d'hébergement ne fait pas suivre les en-têtes qu'il ne
+ * connaît pas —, donc plus aucune page ne le portait, donc toutes devenaient
+ * cet écran. Le serveur répondait parfaitement ; `/healthz` était vert ; le jeu
+ * était inaccessible, et l'écran d'attente se rechargeait à l'infini, ce qui
+ * retirait au joueur jusqu'au moyen de s'en sortir.
+ *
+ * **Un garde-fou dans un service worker doit échouer ouvert.** Il est le
+ * dernier maillon entre le joueur et le site : s'il se trompe dans le sens
+ * « je bloque », personne ne peut plus rien, et il n'y a pas de bouton pour
+ * l'éteindre. Le doute ne lui appartient pas.
+ *
+ * ## Ce qu'il fait maintenant
+ *
+ * Il ne remplace que les **pannes de passerelle** — 502, 503, 504 — que
+ * l'hébergeur renvoie quand l'application ne répond pas. Une page qui arrive
+ * normalement passe toujours, quoi qu'elle contienne et quels que soient ses
+ * en-têtes. On attrape donc moins de cas qu'avant, et c'est le prix : aucun
+ * réglage de proxy, aucun déploiement à moitié fait, aucune route oubliée ne
+ * peut plus fermer le jeu depuis ici. */
 const REDEMARRE = ECRAN('Le jeu revient', 'LE JEU REDÉMARRE',
   `Ça arrive quand une nouvelle version est mise en ligne.
    Cette page se recharge toute seule dans quelques secondes — rien n'est perdu.`,
-  'Recharger maintenant')
-  + `<script>setTimeout(function(){location.reload()},6000)</script>`;
+  'Recharger maintenant',
+  `<script>setTimeout(function(){location.reload()},6000)</script>`);
 
 /* On prend la main tout de suite, sans attendre que tous les onglets se
    ferment. Le comportement par défaut ferait tourner l'ancien service worker
@@ -130,6 +148,30 @@ self.addEventListener('fetch', (e) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+
+  /* ## La sortie de secours
+   *
+   * `…/?sw-off=1` **désinstalle le service worker** et rend la page telle que
+   * le serveur l'envoie. C'est le bouton qui manquait le jour où ce fichier a
+   * mis le site hors service : un service worker s'installe tout seul, prend la
+   * main sur toutes les navigations, et survit au rechargement — quand il se
+   * trompe, le joueur n'a aucun moyen de s'en défaire depuis l'écran, et
+   * l'ouverture des outils de développement n'est pas une réponse qu'on peut
+   * demander à quelqu'un.
+   *
+   * Posé **avant tout le reste**, y compris avant `estDuDirect` : une porte de
+   * sortie qui dépend du bon fonctionnement de ce qu'elle contourne n'est pas
+   * une porte de sortie. */
+  if (url.searchParams.has('sw-off')) {
+    e.respondWith((async () => {
+      try { await self.registration.unregister(); } catch { /* déjà parti */ }
+      try { return await fetch(request); }
+      catch { return new Response(HORS_LIGNE,
+        { headers: { 'content-type': 'text/html; charset=utf-8' }, status: 503 }); }
+    })());
+    return;
+  }
+
   if (estDuDirect(url)) return;
 
   if (estUneImage(url)) {
@@ -163,25 +205,12 @@ self.addEventListener('fetch', (e) => {
       try { rep = await fetch(request); }
       catch { return html(HORS_LIGNE, 503); }
 
-      /* La signature du jeu, ou rien. Voir `REDEMARRE` : une page d'hébergeur
-         arrive en 200 et a l'air parfaitement valide — c'est son absence de
-         `x-tbf` qui la trahit, et c'est le seul test qui tienne.
-
-         **On ne remplace que deux cas**, et la retenue est le sujet : une page
-         qui a l'air normale (2xx) sans notre signature, et une panne de
-         passerelle (502/503/504) sans notre signature. Tout le reste passe tel
-         quel — un 404 du jeu reste un 404, une erreur du jeu reste son erreur.
-         Annoncer « le jeu redémarre » devant une page introuvable serait
-         remplacer un mensonge par un autre.
-
-         Le doute profite à la page reçue : si l'en-tête n'est pas lisible pour
-         une raison qu'on n'a pas prévue, on montre ce que le serveur a
-         répondu plutôt que de cacher le jeu derrière un écran d'attente. */
-      let signee = true;
-      try { signee = rep.headers.has('x-tbf'); } catch { signee = true; }
-      const impostrice = !signee
-        && (rep.ok || rep.status === 502 || rep.status === 503 || rep.status === 504);
-      return impostrice ? html(REDEMARRE, 503) : rep;
+      /* **Trois codes, et rien d'autre.** Voir `REDEMARRE` : tout test plus
+         fin — un en-tête, une empreinte dans le corps — peut se tromper dans
+         le sens qui ferme le jeu, et celui-là s'est déjà trompé. Une page qui
+         arrive passe, toujours. */
+      const panneDePasserelle = [502, 503, 504].includes(rep.status);
+      return panneDePasserelle ? html(REDEMARRE, 503) : rep;
     })());
   }
 });
