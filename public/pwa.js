@@ -58,6 +58,12 @@
      et le faire pendant que la page se monte retarderait ce que le joueur
      attend vraiment. Elle n'a aucune urgence — elle ne sert qu'à la visite
      suivante. */
+  /* **Le jeu est revenu.** L'écran d'attente de `sw.js` espace ses tentatives —
+     six secondes, douze, vingt-quatre — et compte ses essais ici. Cette page-ci
+     s'est ouverte, donc le serveur répond : le compteur repart de zéro, sinon
+     la prochaine coupure commencerait à une minute d'attente pour rien. */
+  try { sessionStorage.removeItem('tbf-attente'); } catch { /* sans importance */ }
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').then((reg) => {
