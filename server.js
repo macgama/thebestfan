@@ -678,6 +678,51 @@ app.use('/video', express.static(path.join(__dirname, 'public/video'),
 
    Voir `src/server/empreintes.js` pour le calcul et pour les raisons. */
 app.use(express.static(path.join(__dirname, 'public'), {
+  /* ## `index: false`, et c'est la panne la plus coûteuse qu'on ait eue
+   *
+   * `express.static` sert `public/index.html` pour `/` **par défaut**. Il est
+   * monté ici, cent soixante lignes avant `app.get('/')` — qui n'a donc jamais
+   * rien servi. L'accueil était un fichier statique, et lui seul parmi les
+   * vingt-quatre pages du jeu.
+   *
+   * Trois conséquences, et la troisième a rendu le jeu injouable :
+   *
+   *   — **il n'était pas estampillé.** `estampiller()` n'a jamais tourné
+   *     dessus : ses scripts partaient sans `?v=`, donc sans l'empreinte qui
+   *     force le navigateur à retélécharger ce qui a changé. Tout le dispositif
+   *     de `empreintes.js` était contourné sur la page la plus visitée ;
+   *   — **il partait en `no-cache` et non en `no-store`.** La différence est
+   *     écrite dans le commentaire de `page()`, et elle dit exactement ce qui
+   *     est arrivé : « la nuance compte à travers un proxy d'hébergement, qui
+   *     répond volontiers à la place du serveur ». `no-cache` autorise à
+   *     garder, en obligeant à revalider ; `no-store` interdit de garder ;
+   *   — **la flèche de retour mène à `/`.** Depuis n'importe quel écran de jeu,
+   *     sortir veut dire demander la seule adresse du site que le proxy a le
+   *     droit de servir lui-même. D'où « dès que je clique sur la flèche
+   *     retour, le site est down » — alors que le processus n'a jamais
+   *     redémarré une seule fois : mesuré, `uptime_s` monte sans discontinuer
+   *     pendant que la page échoue.
+   *
+   * `app.get('/')` reprend donc son travail, avec l'estampille et `no-store`
+   * comme les vingt-trois autres.
+   */
+  index: false,
+
+  /* ## `redirect: false`
+   *
+   * Un dossier demandé sans barre finale fait répondre à `serve-static` un
+   * **301 vers l'adresse avec barre**, en HTML anglais, avec son propre
+   * `Content-Security-Policy`. C'est exactement la réponse qu'on a capturée sur
+   * `/healthz` — `301`, `location: /healthz/`, `<pre>Redirecting to /healthz/</pre>` —
+   * et un 301 sans `cache-control` est **cacheable pour toujours** : une fois
+   * servi, un navigateur ou un proxy peut le rejouer indéfiniment, sur une
+   * adresse qui n'a jamais eu besoin d'être redirigée.
+   *
+   * Ce dossier ne sert aucun répertoire. La redirection n'a donc rien à
+   * corriger ici, et tout à casser.
+   */
+  redirect: false,
+
   setHeaders(res, fichier, ...reste) {
     typer(res, fichier, ...reste);
     const estampe = /\?v=/.test(res.req?.originalUrl ?? '');
@@ -744,6 +789,13 @@ function catalogueEnBref() {
 }
 
 app.get('/healthz', (_req, res) => {
+  /* **Jamais gardée.** Une sonde dont la réponse peut être servie par un proxy
+     ne mesure plus rien : elle dit l'état du cache, pas celui du serveur. On
+     l'a vue rendre un 301 vieux de plusieurs minutes pendant que le processus
+     répondait parfaitement — et c'est ce qui a fait chercher un plantage qui
+     n'existait pas. La route d'à côté qui dit la version le fait déjà, et le
+     reste du site aussi : celle-ci manquait à l'appel. */
+  res.set('cache-control', 'no-store');
   // `ok` disait vrai tant que le processus respirait — y compris quand plus
   // aucune route /api n'existait. Une surveillance branchée dessus n'avait donc
   // rien vu passer. Il dit maintenant si le site est ouvert, pas s'il est vivant.
