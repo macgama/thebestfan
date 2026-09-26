@@ -100,11 +100,33 @@ const HORS_LIGNE = ECRAN('Hors ligne', 'PAS DE RÉSEAU',
  * en-têtes. On attrape donc moins de cas qu'avant, et c'est le prix : aucun
  * réglage de proxy, aucun déploiement à moitié fait, aucune route oubliée ne
  * peut plus fermer le jeu depuis ici. */
+/* ## Il réessaie de moins en moins souvent, et c'est important
+ *
+ * La première version rechargeait toutes les six secondes, indéfiniment. Sur
+ * une mise en ligne de trente secondes c'est parfait ; sur une panne d'une
+ * heure, chaque onglet ouvert frappe dix fois par minute, et ils frappent tous
+ * **ensemble** au moment exact où le serveur se relève. Le premier écran qu'on
+ * voit au retour est alors celui du limiteur de débit — on a fabriqué la
+ * seconde panne avec l'écran censé adoucir la première.
+ *
+ * Six secondes, puis douze, puis vingt-quatre, plafonné à une minute. Le compte
+ * vit dans `sessionStorage` parce que chaque rechargement rejoue ce script à
+ * partir de rien : sans mémoire, il n'y a pas de « deuxième essai ». Et il est
+ * remis à zéro par `pwa.js` dès qu'une vraie page s'ouvre — c'est la preuve que
+ * le jeu est revenu, et la seule qui vaille.
+ *
+ * `try` partout : en navigation privée, l'accès peut lever. On retombe alors
+ * sur six secondes, c'est-à-dire l'ancien comportement, ce qui est le bon
+ * repli — mieux vaut réessayer trop que ne plus jamais réessayer. */
 const REDEMARRE = ECRAN('Le jeu revient', 'LE JEU REDÉMARRE',
   `Ça arrive quand une nouvelle version est mise en ligne.
-   Cette page se recharge toute seule dans quelques secondes — rien n'est perdu.`,
+   Cette page réessaie toute seule — rien n'est perdu.`,
   'Recharger maintenant',
-  `<script>setTimeout(function(){location.reload()},6000)</script>`);
+  `<script>(function(){var d=6000;try{
+    var n=(+sessionStorage.getItem('tbf-attente')||0)+1;
+    sessionStorage.setItem('tbf-attente',n);
+    d=Math.min(60000,6000*Math.pow(2,n-1));
+  }catch(e){}setTimeout(function(){location.reload()},d)})()</script>`);
 
 /* On prend la main tout de suite, sans attendre que tous les onglets se
    ferment. Le comportement par défaut ferait tourner l'ancien service worker
