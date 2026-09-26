@@ -60,7 +60,21 @@
      suivante. */
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch((e) => {
+      navigator.serviceWorker.register('/sw.js').then((reg) => {
+        /* **On redemande la version d'à côté, à chaque chargement.**
+         *
+         * Le navigateur vérifie déjà de lui-même, mais à son rythme et avec ses
+         * propres règles de fraîcheur. Un service worker fautif, lui, ne se
+         * remplace pas tout seul : il intercepte les navigations, survit au
+         * rechargement, et la seule façon d'en sortir est qu'un nouveau
+         * s'installe. Le jour où celui-ci a mis le site hors service, la
+         * rapidité de ce remplacement était **la** différence entre dix
+         * secondes de panne et une journée.
+         *
+         * Ça ne coûte rien : la réponse fait quelques kilo-octets et n'est
+         * suivie d'une installation que si le fichier a changé. */
+        reg?.update?.().catch(() => { /* le navigateur vérifiera à son tour */ });
+      }).catch((e) => {
         // Un échec n'empêche rien : le jeu marche exactement pareil sans lui,
         // on perd seulement la proposition d'installation sur Android.
         console.warn('[pwa] service worker refusé :', e.message);
