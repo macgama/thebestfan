@@ -30,7 +30,18 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .hud{display:flex;align-items:center;gap:9px;flex:none;z-index:5;
   padding:10px var(--tbf-haut-d,62px) 4px var(--tbf-haut-g,62px)}
 .club{flex:1;min-width:0;display:flex;align-items:center;gap:7px}
-.club.me{flex-direction:row-reverse;text-align:right}
+/* **C'est le camp d'en face qui se retourne, pas le sien.**
+
+   Le bandeau montrait EN FACE à gauche, le score au milieu, TA TRIBUNE à
+   droite — et le score, lui, s'écrivait « toi d'abord », comme partout
+   ailleurs dans le jeu (voir `renderFil`, qui l'écrit noir sur blanc). Les
+   deux se contredisaient à deux centimètres l'un de l'autre : on gagnait la
+   corde quatre fois et on lisait « 4 – 0 » collé au blason de l'adversaire.
+   Un score entre deux blasons se lit par sa position, pas par une convention
+   qu'on ne voit nulle part.
+
+   Le sien passe donc à gauche, du côté de son chiffre. */
+.club.foe{flex-direction:row-reverse;text-align:right}
 .club img{width:26px;height:26px;object-fit:contain;flex:none}
 .club b{font-family:var(--banner);font-size:13px;display:block;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
@@ -462,6 +473,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Le score domine la minute : c'est lui qu'on cherche avant d'entrer. */
 .match .st .sc{font-size:16px;line-height:1;color:var(--craie)}
 .match .st i{font-style:normal;font-size:10.5px;color:var(--flare)}
+/* Le rouge du direct ne convient pas à ce qui est fini : c'est la couleur qui
+   dit « ça se joue maintenant », et l'employer pour un coup de sifflet final
+   ferait exactement le contresens qu'on vient de corriger. */
+.match .st i.fini{color:var(--craie);opacity:.6;letter-spacing:.14em;font-size:9.5px}
 .err{position:absolute;left:50%;bottom:130px;transform:translateX(-50%);z-index:18;
   background:rgba(224,64,44,.92);border-radius:6px;padding:9px 15px;font-size:12.5px;display:none}
 .err.on{display:block}
@@ -486,14 +501,15 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 </head>
 <body>
 <main id="app">
+  <!-- Ta tribune à gauche, dans l'ordre du score. Voir `.club.foe`. -->
   <div class="hud">
-    <div class="club" id="clubFoe"><img alt=""><div><b>—</b>
-      <small data-court="EUX">EN FACE</small></div></div>
+    <div class="club me" id="clubMe"><img alt=""><div><b>—</b>
+      <small data-court="TOI">TA TRIBUNE</small></div></div>
     <div class="score"><span id="score">0 – 0</span><small id="phase">GRAND VIRAGE</small>
       <button class="inviter" id="partager" hidden
         aria-label="Inviter quelqu’un sur ce match"><span>INVITER</span></button></div>
-    <div class="club me" id="clubMe"><img alt=""><div><b>—</b>
-      <small data-court="TOI">TA TRIBUNE</small></div></div>
+    <div class="club foe" id="clubFoe"><img alt=""><div><b>—</b>
+      <small data-court="EUX">EN FACE</small></div></div>
   </div>
 
   <button class="fil" id="fil" hidden aria-haspopup="dialog">
@@ -727,9 +743,14 @@ const ditDetail = (d) => DETAILS[d] ?? (/^Substitution/.test(d ?? '') ? 'Remplac
 function ditLeFil(e) {
   if (e.genre === 'periode') return { titre: PERIODES[e.type] ?? e.type, detail: '' };
   if (e.genre === 'tribune') {
-    const mien = e.side === S?.you?.side;
+    /* **Toi d'abord**, comme le bandeau et comme le score du terrain. La salle
+       range ses buts par côté — domicile, extérieur — et le fil les recopiait
+       tels quels : sous le titre « BUT DE TA TRIBUNE », on lisait « 0 – 4 »,
+       c'est-à-dire son propre but écrit du côté de l'adversaire. */
+    const moi = S?.you?.side ?? 0;
+    const mien = e.side === moi;
     return { titre: mien ? 'BUT DE TA TRIBUNE' : 'LA CORDE A CÉDÉ',
-             detail: `${e.goals?.[0] ?? 0} – ${e.goals?.[1] ?? 0} à la corde` };
+             detail: `${e.goals?.[moi] ?? 0} – ${e.goals?.[moi ^ 1] ?? 0} à la corde` };
   }
   return { titre: e.joueur ?? ditDetail(e.detail ?? e.type),
            detail: [ditDetail(e.detail ?? e.type), e.passeur].filter(Boolean).join(' · ') };
@@ -1610,6 +1631,13 @@ function souvenir(g) {
 
   const carte = (m) => {
     const joue = m.home_goals != null && m.away_goals != null;
+    /* **Une ligne éteinte doit dire pourquoi.** Un match terminé restait gris
+       et muet, avec la minute de son dernier relevé : on le lisait comme un
+       match en cours sur lequel le doigt ne prenait pas. Le mot remplace la
+       minute — c'est la même place, et c'est la même information : où en est
+       cette rencontre. */
+    const etat = m.open ? `<i>${minuteDe(m)}</i>`
+      : m.fini ? '<i class="fini">TERMINÉ</i>' : '';
     return `<div class="match ${m.open ? '' : 'off'} ${m.mien ? '' : 'ailleurs'}"
       data-id="${m.id}" data-mien="${m.mien ? 1 : 0}">
       <img src="${esc(m.home_logo ?? '')}" alt="">
@@ -1618,7 +1646,7 @@ function souvenir(g) {
       <img src="${esc(m.away_logo ?? '')}" alt="">
       <span class="st">
         ${joue ? `<b class="sc">${m.home_goals} – ${m.away_goals}</b>` : ''}
-        ${m.open ? `<i>${minuteDe(m)}</i>` : ''}
+        ${etat}
       </span>
     </div>`;
   };
