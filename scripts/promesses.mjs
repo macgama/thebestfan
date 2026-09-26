@@ -166,6 +166,31 @@ if (orphelines.length) {
   ok('chaque page de public/ est servie par une route, ou l’est volontairement à part');
 }
 
+/* ------------------------------- et que la route serve vraiment, elle
+
+   **`express.static` sert `public/index.html` pour `/` par défaut.** Monté
+   avant `app.get('/')`, il le court-circuite : la route existe, elle est
+   déclarée, le contrôle du dessus la trouve — et elle ne sert rien. L'accueil
+   partait donc sans estampille et en `no-cache`, c'est-à-dire stockable par le
+   proxy de l'hébergeur, seul de toutes les pages du jeu. Le site a paru mort à
+   chaque retour à l'accueil pendant que le serveur, lui, répondait en trente
+   millisecondes.
+
+   Une route déclarée n'est pas une route atteinte. Ce contrôle-ci vérifie la
+   seule chose qui l'empêche : que le dossier statique refuse de servir un
+   index. */
+{
+  const bloc = serveur.match(/app\.use\(express\.static\(path\.join\(__dirname, 'public'\)[\s\S]*?\n\}\)\);/);
+  if (!bloc) {
+    ko('server.js', 'le montage de public/ est introuvable — ce contrôle ne mesure plus rien');
+  } else if (!/index:\s*false/.test(bloc[0])) {
+    ko('server.js', 'express.static sur public/ sans `index: false` : il sert index.html '
+      + 'pour « / » et court-circuite app.get(\'/\'), qui estampille et interdit le cache');
+  } else {
+    ok('le dossier statique ne court-circuite pas la route de l’accueil');
+  }
+}
+
 /* --------------------------------------- les pages sans suite d'interface
 
    Ce n'est pas une faute, c'est une **dette**, et elle mérite d'être dite à
