@@ -808,18 +808,15 @@ function page(res, fichier) {
   const chemin = path.join(__dirname, 'public', fichier);
   try {
     res.set('cache-control', 'no-store');
-    /* **La signature du serveur du jeu**, lue par le service worker.
-     *
-     * Quand le processus n'est pas là — un redémarrage, une mise en ligne —
-     * l'hébergeur répond à sa place : une page « This website is currently
-     * undergoing maintenance », en anglais, bleue, avec son propre logo. Elle
-     * arrive en 200, donc rien ne la distingue d'une vraie page pour un
-     * navigateur, et le joueur y lit que le jeu est mort.
-     *
-     * Cet en-tête est ce qui permet de faire la différence : la réponse qui ne
-     * le porte pas ne vient pas de nous, et `sw.js` la remplace par un écran
-     * qui dit la vérité — ça revient, voilà dans combien de temps. */
-    res.set('x-tbf', String(VERSION_PUBLIQUE.numero ?? '1'));
+    /* Il y a eu ici un en-tête `x-tbf`, posé pour que le service worker
+       reconnaisse nos pages et remplace celles de l'hébergeur. Le proxy ne le
+       faisait pas suivre : plus aucune page n'était reconnue, et `sw.js` les a
+       toutes remplacées par son écran d'attente. Le site répondait, `/healthz`
+       était vert, et le jeu était injoignable.
+
+       Il est parti avec la règle qui le lisait — voir `sw.js`, qui ne se fie
+       plus qu'au code de statut. On ne rajoute pas ici un en-tête que personne
+       ne lit : c'est ce genre de reste qui survit à sa raison d'être. */
     res.type('html').send(estampiller(readFileSync(chemin, 'utf8'),
       path.join(__dirname, 'public')));
   } catch {

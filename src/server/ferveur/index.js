@@ -9,6 +9,9 @@ import { clubSoutenu } from '../football/suivis.js';
 // le Virage ici, le choix du match support dans deck/.
 import { journeeParId } from '../football/journee.js';
 import { ancrerDepuisLaJournee } from '../football/ancrage.js';
+// La ventilation de ce qu'un joueur porte, partagée avec le duel : les deux
+// arènes composent les mêmes modificateurs, elles doivent les nommer pareil.
+import { apportsDe } from '../../shared/apports.js';
 
 /**
  * Couche réseau du Grand Virage.
@@ -306,6 +309,27 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
 
       const hero = await fanzzy.activeFanzzy(u.userId);
       const mods = hero ? { id: hero.id, ...hero.mods } : {};
+      /* **Le sac, et il n'était nulle part.**
+
+         Le Virage composait les modificateurs du Fanzzy et ceux du KOP, et
+         sautait l'équipement : les deux pièces portées ne changeaient
+         strictement rien ici, alors que trois commentaires du moteur
+         supposent le contraire depuis longtemps — `gestures.js` raconte « un
+         joueur portant les Jumelles », `epreuves.js` écrit « les
+         modificateurs du Fanzzy **et de l'équipement** », et le `snapshotFor`
+         d'à côté parle du « porteur d'équipement ». Le duel, lui, les compose
+         depuis toujours via `loadout`. Une pièce qui agit dans une arène et
+         pas dans l'autre est une règle qu'on ne peut pas apprendre.
+
+         **Le sac est celui que le deck attache à ce personnage.** C'est le
+         seul endroit où un Fanzzy porte quelque chose, et c'est celui que le
+         joueur a rempli en connaissance de cause. Un avatar qui n'est dans
+         aucun emplacement du deck entre donc sans sac — comme aujourd'hui,
+         et c'est dit dans le panneau plutôt que laissé à deviner.
+
+         Renseigné plus bas, avec le deck : les deux lectures partagent le même
+         appel, et une seule panne. */
+      let sac = [];
       /* Le personnage, séparément du barème : c'est lui qu'on voit pousser
          dans la tribune, et il est montré **à l'âge atteint** — comme partout
          ailleurs dans le jeu. Une absence n'empêche rien : le virage se joue
@@ -315,6 +339,40 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
          suit désormais : on poussait avec les chiffres du gamin sous les traits
          du Capo, et rien ne le disait. */
       const perso = await fanzzy.personnageActif?.(u.userId, { enJeu: true }) ?? null;
+
+      /* Le deck : ses cartes d'action, et le sac du personnage qui entre.
+       *
+       * `decks` est facultatif, et volontairement : le Virage s'est joué sans
+       * cartes jusqu'ici et doit continuer de s'ouvrir pour quelqu'un qui n'a
+       * jamais construit de deck. Une main vide n'est pas une erreur, c'est
+       * simplement un supporter qui n'a que sa voix.
+       *
+       * Le tri — quelles cartes entrent au Virage — n'est pas fait ici : il
+       * appartient à `dansLeVirage`, et la salle l'applique elle-même. Le
+       * faire des deux côtés donnerait deux réponses le jour où la règle
+       * bouge.
+       *
+       * **Lu avant le KOP**, et l'ordre porte une règle : le groupe amplifie ce
+       * que le supporter porte déjà, sac compris. Composé après, il aurait
+       * multiplié un Fanzzy nu. */
+      let actions = [];
+      try {
+        const l = decks ? await decks.loadout(u.userId) : null;
+        actions = (l?.actions ?? []).map((a) => a.id);
+        const place = hero ? (l?.fanzzy ?? []).find((f) => f.id === hero.id) : null;
+        if (place) {
+          sac = place.stuff ?? [];
+          /* `place.mods` est déjà `combine(mods du Fanzzy, sac)` — le calcul du
+             deck, pas un second ici. Le refaire sur place donnerait deux règles
+             de composition, et c'est exactement ce que `combine` existe pour
+             éviter. `id` est repris du personnage : le barème du Virage suit la
+             racine, quel que soit l'âge que le deck a en tribune. */
+          Object.assign(mods, place.mods, { id: hero.id });
+        }
+      } catch (e) {
+        // Un deck illisible ne doit pas fermer la porte du virage.
+        console.warn('[virage] deck illisible pour', u.userId, '·', e.message);
+      }
 
       /* Le bonus du KOP se mêle à ceux du Fanzzy, dans le même objet.
 
@@ -326,10 +384,11 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
 
          Le côté décide du club : on ne profite pas du KOP d’une équipe pour
          laquelle on ne pousse pas. */
+      let bonusKop = null;
       if (kop) {
         const club = side ? room.fixture.awayId : room.fixture.homeId;
-        const bonus = await kop.modsDe(u.userId, club, room.fixture.id);
-        for (const [cle, v] of Object.entries(bonus)) {
+        bonusKop = await kop.modsDe(u.userId, club, room.fixture.id);
+        for (const [cle, v] of Object.entries(bonusKop)) {
           if (typeof v !== 'number') { mods[cle] = v; continue; }
           mods[cle] = (mods[cle] ?? 1) * v;
         }
@@ -338,25 +397,6 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       socket.join(`virage:${room.fixture.id}`);
       roomOfUser.set(u.userId, room.fixture.id);
       if (process.env.VIRAGE_DEBUG) console.log('[virage] join', u.userId, '->', room.fixture.id);
-      /* Les cartes d'action du deck, s'il en a un.
-       *
-       * `decks` est facultatif, et volontairement : le Virage s'est joué sans
-       * cartes jusqu'ici et doit continuer de s'ouvrir pour quelqu'un qui n'a
-       * jamais construit de deck. Une main vide n'est pas une erreur, c'est
-       * simplement un supporter qui n'a que sa voix.
-       *
-       * Le tri — quelles cartes entrent au Virage — n'est pas fait ici : il
-       * appartient à `dansLeVirage`, et la salle l'applique elle-même. Le
-       * faire des deux côtés donnerait deux réponses le jour où la règle
-       * bouge. */
-      let actions = [];
-      try {
-        const l = decks ? await decks.loadout(u.userId) : null;
-        actions = (l?.actions ?? []).map((a) => a.id);
-      } catch (e) {
-        // Un deck illisible ne doit pas fermer la porte du virage.
-        console.warn('[virage] deck illisible pour', u.userId, '·', e.message);
-      }
 
       /* **Ce Virage comptera-t-il au classement ?**
 
@@ -384,9 +424,20 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         }
       }
 
+      /* **La ventilation de ce qu'il porte**, construite ici parce que c'est le
+         seul endroit où les morceaux existent encore séparément : plus bas, il
+         n'y a que `mods`, le total, dont on ne peut plus rien déduire. Le lieu
+         n'y est pas — il appartient à la salle, qui l'ajoute elle-même : elle
+         seule sait où se joue la rencontre. */
+      const apports = apportsDe({
+        fanzzy: hero ? { nom: perso?.nom ?? hero.nom, mods: hero.mods } : null,
+        stuff: sac,
+        kop: bonusKop,
+      });
+
       socket.emit('virage:state',
         room.join(u.userId, { side, name: u.name, mods, neutre, perso, actions,
-          classe }));
+          classe, apports }));
       io.to(`virage:${room.fixture.id}`).emit('virage:crowd', { crowd: room.crowd() });
     });
 

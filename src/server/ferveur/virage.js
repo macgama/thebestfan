@@ -8,6 +8,9 @@ import { ouverts } from '../contenus/index.js';
 // La composition lieu + Fanzzy vit dans le moteur de duel : une seule règle.
 import { avecLieu } from '../nvn/engine.js';
 import { poserEffet, nettoyerEffets, modsAvecEffets } from '../../shared/duel/effets.js';
+// La ventilation de ce qu'un supporter porte : le lieu s'y ajoute ici, les
+// trois autres sources arrivent avec l'entrée. Partagée avec le duel.
+import { apportsDe, seulsLesMods } from '../../shared/apports.js';
 
 /**
  * Le Grand Virage.
@@ -318,7 +321,7 @@ export class VirageRoom {
    *   cesserait de l'être au milieu.
    */
   join(userId, { side, name, mods = {}, neutre = false, perso = null, actions = [],
-                 classe = true }) {
+                 classe = true, apports = [] }) {
     const m = this.members.get(userId) ?? {
       side: side ? 1 : 0, name, mods, neutre, perso,
       classe,
@@ -332,6 +335,18 @@ export class VirageRoom {
     m.side = side ? 1 : 0;
     m.name = name;
     m.mods = mods;
+    /* **Le lieu, composé une fois pour toutes.**
+
+       Il ne change pas d'un bout à l'autre d'un match — voir `stade()` — et il
+       est lu à chaque tour d'horloge, pour chaque supporter de la salle. Le
+       recomposer dix fois par seconde et par tête dans une tribune de mille
+       serait payer très cher une valeur constante. */
+    m.modsLieu = avecLieu(mods, this.stade());
+    /* D'où viennent ses modificateurs, source par source. Construit à l'entrée
+       — voir `shared/apports.js` — parce que `mods` est un total, et qu'un
+       total ne se décompose pas. Le lieu s'y ajoute au moment de l'envoi : il
+       appartient à la salle, pas au supporter. */
+    m.apports = apports;
     m.perso = perso;
     // `neutre` : il soutient un club qu'il ne suit pas. Sa ferveur vaut moitié.
     m.neutre = neutre;
@@ -397,6 +412,38 @@ export class VirageRoom {
     return this._stade;
   }
 
+  /**
+   * **Les modificateurs en vigueur pour ce supporter, à cet instant.**
+   *
+   * Le Fanzzy, son sac, son KOP, le lieu, et ce que les cartes ont posé. C'est
+   * l'équivalent exact de `modsDe` dans le moteur de duel, et il n'existait
+   * pas ici : chaque site d'appel composait ce dont il se souvenait.
+   *
+   * ## Ce que cette absence coûtait
+   *
+   * `chant` composait tout, et c'est le seul qui le faisait. Partout ailleurs
+   * on lisait `m.mods` — le total **d'avant le lieu et d'avant les effets** :
+   *
+   *   — **le souffle**. `regen` ignorait donc à la fois le stade et les cartes.
+   *     Le Nid d'Aigle, dont `breathBonus: 0.8` est l'unique effet, ne changeait
+   *     rien au Virage ; et le revers du Craquage — « ton souffle revient deux
+   *     fois moins vite pendant 6 s » — ne s'appliquait pas non plus. Une carte
+   *     dont le revers ne coûte rien est la carte que tout le monde joue, ce qui
+   *     est précisément ce que l'en-tête de `actions.js` interdit ;
+   *   — **la poussée d'une carte**, qui sautait le `pushMult` du lieu quand le
+   *     chant, lui, le prenait ;
+   *   — **ce qu'on envoie à la page** : la fenêtre de tempo dessinée n'était pas
+   *     celle contre laquelle le serveur notait. C'est mot pour mot la faute que
+   *     `gestures.js` raconte pour les Jumelles, et qu'il dit avoir réglée.
+   *
+   * `modsLieu` est mémorisé à l'entrée ; seuls les effets, qui changent, se
+   * composent à la volée — et seulement quand il y en a.
+   */
+  modsDe(m, now = Date.now()) {
+    const base = m.modsLieu ?? m.mods ?? {};
+    return m.effets?.length ? modsAvecEffets(base, m.effets, now) : base;
+  }
+
   crowd() {
     const now = Date.now();
     const n = [0, 0];
@@ -439,8 +486,9 @@ export class VirageRoom {
        « le souffle revient bien plus lentement », « un geste parfait paie
        double » — n'étaient appliqués nulle part. Dix lieux décrits, zéro lieu
        qui change quoi que ce soit. La composition est celle du duel, importée
-       et non recopiée. */
-    const mods = modsAvecEffets(avecLieu(m.mods, this.stade()), m.effets, now);
+       et non recopiée — et elle vit maintenant dans `modsDe`, pour que les cinq
+       autres endroits qui en ont besoin ne la réinventent pas chacun à moitié. */
+    const mods = this.modsDe(m, now);
 
     /* La note est calculée ici, à partir des instants de frappe.
 
@@ -629,7 +677,10 @@ export class VirageRoom {
    * ici la poussée divisée par `partFerveur`, et la corde garde l'effectif
    * réel : c'est volontaire, et c'est tout le correctif du Virage solitaire.
    */
-  crediter(m, perCapita, mods = m.mods) {
+  /* `mods` par défaut : ceux du moment, lieu et effets compris. Le repli était
+     `m.mods` — le total d'avant le lieu — et le `ferveurBonus` d'un stade ne
+     comptait donc que sur le chemin du chant. */
+  crediter(m, perCapita, mods = this.modsDe(m)) {
     const gagne = Math.round(Math.max(0, perCapita) * (mods.ferveurBonus ?? 1)
       * (m.neutre ? RULES.ferveurNeutre : 1));
     m.ferveur += gagne;
@@ -660,13 +711,18 @@ export class VirageRoom {
   pousserDepuisCarte(m, valeur, now, evenements) {
     const surge = now < this.surgeUntil ? RULES.surgeFactor : 1;
     const n = this.effectif(m);
-    const amount = valeur * surge * crowdFactor(n) * (m.mods.pushMult ?? 1);
+    /* Le lieu compte ici comme au chant. Il n'y comptait pas : un Fumigène
+       joué au Toit de Tôle poussait comme ailleurs pendant qu'un chant, lui,
+       y gagnait 14 %. « Une carte n'échappe à aucune règle » — celle-ci en
+       est une. */
+    const mods = this.modsDe(m, now);
+    const amount = valeur * surge * crowdFactor(n) * (mods.pushMult ?? 1);
     const perCapita = amount / n;
     const signed = m.side === 0 ? -perCapita : perCapita;
     this.rope = clamp(this.rope + signed, -RULES.goalAt, RULES.goalAt);
     /* Le même plancher qu'au chant : une carte n'échappe à aucune règle,
        c'est ce que dit le paragraphe ci-dessus, et celle-ci en est une. */
-    this.crediter(m, amount / this.partFerveur(m));
+    this.crediter(m, amount / this.partFerveur(m), mods);
     evenements.push({ t: 'push', side: m.side, valeur: Math.round(perCapita) });
     if (Math.abs(this.rope) >= RULES.goalAt) this.scoreGoal(this.rope > 0 ? 1 : 0);
     return perCapita;
@@ -1003,7 +1059,7 @@ export class VirageRoom {
     m.regenAt = now;
     const mult = now < m.fatigueUntil ? 0.35 : 1;
     m.breath = Math.min(RULES.breathMax,
-      m.breath + RULES.breathPerSec * dt * mult * (m.mods.breathBonus ?? 1));
+      m.breath + RULES.breathPerSec * dt * mult * (this.modsDe(m, now).breathBonus ?? 1));
   }
 
   scoreGoal(side) {
@@ -1208,15 +1264,30 @@ export class VirageRoom {
            joueur croyait son souffle bloqué et attendait pour rien. Avec ce
            taux, la page l'anime elle-même entre deux vérités du serveur, et
            chaque `virage:result` la remet d'aplomb. */
-        regen: RULES.breathPerSec * (m.mods.breathBonus ?? 1),
+        regen: RULES.breathPerSec * (this.modsDe(m).breathBonus ?? 1),
         breathMax: RULES.breathMax,
         // Le client doit afficher le geste exactement comme le serveur le
         // note. Sans ça il dessinait la pulsation de base et le porteur
         // d'équipement tapait à côté sans jamais comprendre pourquoi.
         // Le geste tel qu'il sera **vraiment** noté : effets de cartes compris,
         // sinon le Métronome élargirait la fenêtre sans que la page le dessine.
-        gestes: resoudreGeste(modsAvecEffets(m.mods, m.effets, Date.now()),
-          { motif: this.rangRepertoire() }),
+        // **Et le lieu compris** : il manquait ici seul, si bien que le stade
+        // resserrait la fenêtre côté notation sans la resserrer à l'écran —
+        // la même faute, refaite un cran plus bas.
+        gestes: resoudreGeste(this.modsDe(m), { motif: this.rangRepertoire() }),
+
+        /* **Ce qu'il porte, et d'où ça vient.**
+         *
+         * `apports` est la ventilation — Fanzzy, sac, KOP, lieu — et `mods` le
+         * total que le moteur applique vraiment. Les deux partent ensemble et
+         * c'est délibéré : la page pourrait additionner la première pour
+         * obtenir le second, et elle le ferait **mal** le jour où une règle de
+         * composition se nuance. Ici, le total ne se discute pas.
+         *
+         * Sans étiquettes : `id`, `kopNom` et les siennes ne sont pas des
+         * modificateurs, et n'ont rien à faire dans une liste de bonus. */
+        apports: [...(m.apports ?? []), ...apportsDe({ stade: this.stade() })],
+        mods: seulsLesMods(this.modsDe(m)),
 
         /* La main, ses recharges et ce qui est posé sur lui. `reste` est en
            secondes plutôt qu'en instant : la page n'a pas à connaître
