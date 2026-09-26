@@ -4,8 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ma collection — thebestfan</title>
+<!-- Les cinq balises de l'installation. Elles manquaient sur cette page seule :
+     quelqu'un qui installait l'application depuis sa collection — l'écran qu'on
+     revient voir le plus souvent — la rouvrait dans Safari, avec sa barre
+     d'adresse, sur une capture d'écran en guise d'icône. Elles sont les mêmes
+     que sur le classeur, au caractère près : c'est la même application. -->
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<meta name="theme-color" content="#0A0D11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
+<!-- Le dessin d'une carte. La vitrine montre **la carte du jeu**, pas une
+     vignette faite pour cette page : sans cette feuille, `cardHTML` rend sa
+     structure et rien de son cadre, de sa rareté ni de son reflet. -->
+<link rel="stylesheet" href="/cartes.css">
 <script src="/dialogue.js" defer></script>
 <!--
   **La bibliothèque : tout ce qui se gagne, et ce qu'on en a.**
@@ -19,6 +33,25 @@
   Cette page les range par type, avec le même calcul que les boosters — voir
   `bibliotheque()` dans `src/server/fanzzy/index.js`. Ce qu'elle annonce comme
   « à gagner » est donc exactement ce qu'un booster peut encore sortir.
+
+  ## La vitrine
+
+  Et c'était **une page de compteurs**. Cinq jauges, des grilles de vignettes
+  de soixante-dix pixels, et rien à toucher : on y lisait qu'il manquait vingt-
+  trois choses sans jamais pouvoir en regarder une seule. Un classeur de
+  collection qui ne montre pas ce qu'on collectionne fait exactement l'inverse
+  de ce qu'on lui demande — il chiffre un manque au lieu de donner envie.
+
+  Tout ce qui se gagne s'ouvre donc en grand, **dans la carte du jeu** : la
+  même que celle qui sort d'un booster, avec son cadre de rareté, son décor,
+  son reflet et son dessin. Ce n'est pas une copie faite pour cet écran —
+  `cardHTML` et `carteDuPaquet` viennent de `/cartes.js`, que le kiosque et le
+  classeur emploient déjà. Deux dessins de la même carte finissent toujours par
+  diverger, et ce dépôt l'a payé plus d'une fois.
+
+  Ce qu'on n'a pas s'ouvre aussi, **en silhouette et sous cadenas**, avec une
+  seule phrase : où ça se gagne. C'est le seul endroit du jeu où le manque doit
+  se voir en grand.
 -->
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -26,6 +59,12 @@ html,body{margin:0;min-height:100%}
 body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
 #app{position:relative;width:100%;max-width:var(--colonne);min-height:100dvh;display:flex;
   flex-direction:column;padding-bottom:40px}
+
+/* Le tourniquet d'attente. Il était employé dans le balisage sans avoir
+   jamais été défini : la page restait vide et muette pendant le chargement. */
+.spin{width:24px;height:24px;margin:40px auto;border:3px solid rgba(242,238,228,.18);
+  border-top-color:var(--projo);border-radius:50%;animation:tourne .8s linear infinite}
+@keyframes tourne{to{transform:rotate(360deg)}}
 
 .tete{padding:18px 16px 4px}
 .tete h1{font-family:var(--banner);font-size:26px;letter-spacing:.12em;margin:0}
@@ -41,6 +80,16 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .jauge i{display:block;height:100%;border-radius:5px;width:0;transition:width .7s ease;
   background:linear-gradient(90deg,#B98A14,var(--projo))}
 
+/* **Le chemin, à la fin du compte.** La page disait « il t'en manque
+   vingt-trois » et s'arrêtait là, sur une impasse : le seul endroit où ça se
+   gagne est à deux écrans d'ici, et rien ne le disait. Un compteur sans porte
+   de sortie est un reproche. */
+.total .aller{display:block;margin-top:13px;text-align:center;text-decoration:none;
+  font-family:var(--banner);font-size:14px;letter-spacing:.14em;padding:12px;
+  border-radius:11px;color:#1B1405;background:linear-gradient(180deg,var(--projo),#C8991B);
+  box-shadow:0 3px 0 #7A5A0E}
+.total .aller:active{transform:translateY(2px);box-shadow:0 1px 0 #7A5A0E}
+
 /* Un type par bloc, repliable : cinq grilles ouvertes à la fois feraient une
    page qu'on ne parcourt pas. Le premier est ouvert, les autres se touchent. */
 .type{margin:12px 14px 0;border-radius:14px;background:#0B0F14;
@@ -53,15 +102,20 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .type .compte small{opacity:.55;color:var(--craie)}
 .type .jauge{grid-column:1/-1;height:6px}
 .type .aide{grid-column:1/-1;font-size:11.5px;opacity:.55;line-height:1.45}
+.type .aide b{color:var(--projo);opacity:1}
 .type .corps{display:none;padding:0 12px 14px}
 .type.ouvert .corps{display:block}
 
 /* Les vignettes. Ce qu'on n'a pas reste visible, en silhouette : on sait ce
    qu'on cherche, sans qu'on nous le donne. */
 .grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
-.vig{position:relative;border-radius:10px;background:rgba(242,238,228,.05);
-  border:1px solid rgba(242,238,228,.1);aspect-ratio:3/4;display:flex;flex-direction:column;
-  justify-content:flex-end;overflow:hidden}
+.vig{position:relative;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;
+  border-radius:10px;background:rgba(242,238,228,.05);
+  box-shadow:inset 0 0 0 1px rgba(242,238,228,.1);aspect-ratio:3/4;display:flex;
+  flex-direction:column;justify-content:flex-end;overflow:hidden;
+  transition:transform .12s ease}
+.vig:active{transform:scale(.94)}
+.vig:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
 .vig img{position:absolute;inset:6px 6px 26px;width:calc(100% - 12px);height:calc(100% - 32px);
   object-fit:contain}
 .vig b{position:relative;display:block;font-size:9.5px;line-height:1.2;padding:4px 5px;
@@ -69,19 +123,219 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vig.non img{filter:brightness(0) opacity(.35)}
 .vig.non b{opacity:.45}
-.vig.oui{border-color:rgba(245,195,59,.45)}
+/* **La rareté porte le cadre, comme partout ailleurs.** Toutes les vignettes
+   possédées étaient cerclées du même or : une commune et une légendaire se
+   ressemblaient trait pour trait sur la seule page qui sert à les comparer. La
+   rareté est pourtant ce qu'un collectionneur regarde en premier, et le jeu
+   l'écrit déjà en quatre couleurs dans `ui.css`. */
+.vig.oui{box-shadow:inset 0 0 0 1.5px var(--rc,var(--projo)),0 2px 0 var(--rc2,#7A5A0E)}
+.vig.oui.r-legendaire{box-shadow:inset 0 0 0 1.5px var(--rc),0 2px 0 var(--rc2),
+  0 0 12px rgba(245,195,59,.35)}
 
 /* Les états et les tenues se comptent par personnage : ils s'y rattachent,
    et une grille de quatre cents cases ne se lirait pas. */
-.perso{display:grid;grid-template-columns:44px 1fr;gap:4px 10px;align-items:center;
-  padding:8px 4px;border-top:1px solid rgba(242,238,228,.07)}
-.perso img{grid-row:1/3;width:44px;height:44px;border-radius:50%;object-fit:cover;
+.perso{width:100%;border:0;background:none;font:inherit;color:inherit;cursor:pointer;
+  text-align:left;display:grid;grid-template-columns:44px 1fr auto;gap:4px 10px;
+  align-items:center;padding:8px 4px;border-top:1px solid rgba(242,238,228,.07)}
+.perso:focus-visible{outline:2px solid var(--projo);outline-offset:-2px}
+.perso:active{background:rgba(242,238,228,.04)}
+/* Les quatre places sont écrites, pas déduites. Le placement automatique d'une
+   grille où un enfant porte sa propre rangée ne met pas les trois autres où on
+   croit — et le résultat ne se voit qu'à l'écran. */
+.perso img{grid-area:1/1/3/2;width:44px;height:44px;border-radius:50%;object-fit:cover;
   background:rgba(242,238,228,.06)}
-.perso b{font-size:13px}
-.perso .lignes{display:flex;gap:14px;font-size:11px;opacity:.75}
+.perso b{grid-area:1/2/2/3;font-size:13px}
+.perso .lignes{grid-area:2/2/3/3;display:flex;gap:14px;font-size:11px;opacity:.75}
 .perso .lignes span b{font-size:11px;color:var(--projo)}
+/* Le chevron dit que ça s'ouvre. Sans lui, une ligne qui réagit au doigt est
+   une découverte, c'est-à-dire quelque chose que la plupart ne feront pas. */
+.perso .plus{grid-area:1/3/3/4;font-family:var(--banner);font-size:20px;opacity:.35;
+  padding:0 4px}
 .vide{font-size:12px;opacity:.55;padding:6px 4px;line-height:1.5}
 .err{margin:30px 16px;text-align:center;opacity:.7}
+
+/* ==================================================================== la vitrine
+
+   Une carte, en grand, par-dessus la page. Elle ne quitte pas l'écran : on
+   feuillette de l'une à l'autre avec les flèches, le doigt ou le clavier —
+   c'est comme ça qu'on regarde une collection, pas en ouvrant et refermant
+   trente-cinq fois le même panneau.                                        */
+
+.vitr{position:fixed;inset:0;z-index:120;display:none}
+.vitr.on{display:block}
+.vitr-voile{position:absolute;inset:0;background:rgba(2,4,7,.86);
+  -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
+  opacity:0;transition:opacity .2s ease;border:0;width:100%;padding:0}
+.vitr.on .vitr-voile{opacity:1}
+/* Le centrage passe par `margin:auto` sur l'enfant d'un conteneur flexible, et
+   non par `place-items:center` : une carte plus haute que l'écran — un
+   personnage avec son histoire et ses trois âges — se ferait rogner par le
+   haut, du côté où l'on ne peut pas remonter. */
+.vitr-boite{position:absolute;inset:0;display:flex;overflow:auto;
+  overscroll-behavior:contain;cursor:pointer;
+  padding:calc(14px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom))}
+.vitr-carton{position:relative;margin:auto;width:min(420px,100%);cursor:default}
+
+.vitr-x,.vitr-dos{position:absolute;top:0;width:38px;height:38px;border-radius:50%;
+  border:1px solid rgba(242,238,228,.16);background:rgba(11,15,20,.8);color:var(--craie);
+  font-family:var(--banner);font-size:17px;line-height:1;cursor:pointer;z-index:4}
+.vitr-x{right:0}
+.vitr-dos{left:0}
+.vitr-x:focus-visible,.vitr-dos:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
+
+/* ## Le halo de rareté
+
+   Le fond derrière la carte, en `--rc`. C'est ce qui fait qu'une légendaire
+   **arrive** au lieu d'apparaître : la couleur déborde du cadre avant qu'on
+   ait lu le nom. Les rayons ne tournent que pour l'épique et la légendaire —
+   si toutes les raretés rayonnaient, aucune ne rayonnerait. */
+.vitr-scene{position:relative;perspective:900px;margin:44px auto 0;
+  width:min(272px,72vw)}
+.vitr-scene::before{content:"";position:absolute;inset:-26% -30%;z-index:0;pointer-events:none;
+  background:radial-gradient(closest-side,var(--rc,#C2CAD6),transparent 74%);opacity:.3}
+.vitr-scene.rayons::after{content:"";position:absolute;inset:-46%;z-index:0;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg at 50% 50%,
+    var(--rc) 0deg 5deg,transparent 5deg 17deg);
+  opacity:.13;animation:vitr-tourne 34s linear infinite;
+  -webkit-mask:radial-gradient(closest-side,#000 30%,transparent 78%);
+          mask:radial-gradient(closest-side,#000 30%,transparent 78%)}
+@keyframes vitr-tourne{to{rotate:360deg}}
+
+/* L'inclinaison. `--rx` et `--ry` sont posés par le doigt ou la souris : une
+   carte qu'on incline est une carte qu'on tient, et c'est le seul geste qui
+   change une image en objet. */
+.vitr-tilt{position:relative;z-index:1;transform-style:preserve-3d;
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+  transition:transform .14s ease-out;animation:vitr-pose .5s cubic-bezier(.2,1.5,.35,1)}
+@keyframes vitr-pose{from{opacity:0;transform:translateY(26px) scale(.82) rotate(-5deg)}}
+/* Le reflet qui suit le doigt. Il se pose **dans** la carte inclinée, donc il
+   part avec elle : posé par-dessus, il glisserait dessus comme une vitre. */
+.vitr-lustre{position:absolute;inset:0;z-index:5;pointer-events:none;border-radius:11px;
+  background:radial-gradient(circle at var(--lx,50%) var(--ly,42%),
+    rgba(255,255,255,.3),rgba(255,255,255,.06) 34%,transparent 58%);
+  mix-blend-mode:screen;opacity:0;transition:opacity .2s ease}
+.vitr-scene.touche .vitr-lustre{opacity:1}
+/* Ce qu'on n'a pas : la silhouette, comme dans la grille. Le décor reste, donc
+   la carte reste belle — c'est le personnage qui manque, pas la carte. */
+.vitr-scene.verrou .illu{filter:brightness(0) opacity(.5)}
+
+/* Le bandeau de possession. Il est au-dessus du nom parce que c'est la
+   première question qu'on se pose devant une carte de collection. */
+.vitr-etat{margin:16px auto 0;text-align:center;font-family:var(--banner);
+  font-size:11.5px;letter-spacing:.22em;padding:7px 14px;border-radius:99px;
+  display:inline-block;border:1px solid currentColor}
+.vitr-tete{text-align:center}
+.vitr-etat.a-moi{color:var(--projo);background:rgba(245,195,59,.1)}
+.vitr-etat.a-gagner{color:var(--craie);opacity:.55}
+
+.vitr-nom{margin:11px 0 0;font-family:var(--banner);font-size:25px;line-height:1.05;
+  letter-spacing:.04em;text-transform:uppercase;text-align:center}
+.vitr-quoi{margin:5px 0 0;text-align:center;font-family:var(--banner);font-size:11px;
+  letter-spacing:.16em;opacity:.6;display:flex;gap:9px;justify-content:center;
+  flex-wrap:wrap;align-items:center}
+.vitr-quoi .rr{color:var(--rc,var(--craie));opacity:1}
+.vitr-quoi .pt{width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.4}
+
+.vitr-texte{margin:14px 0 0;font-size:13px;line-height:1.6;text-align:center;opacity:.85}
+.vitr-histoire{margin:12px 0 0;font-size:12.5px;line-height:1.7;opacity:.6;
+  font-style:italic;text-align:center}
+
+/* Les effets, ligne à ligne. C'est ce qu'on compare entre deux cartes, donc
+   ça se lit en colonne et pas en phrase. */
+.vitr-mods{margin:15px 0 0;display:flex;flex-direction:column;gap:6px}
+.vitr-mods span{font-size:12px;line-height:1.4;padding:8px 11px;border-radius:9px;
+  background:rgba(242,238,228,.05);border-left:2px solid var(--rc,var(--projo))}
+
+/* Où ça se gagne. Une seule phrase, et le bouton qui y mène. */
+.vitr-ou{margin:16px 0 0;padding:13px;border-radius:12px;text-align:center;
+  background:rgba(242,238,228,.04);border:1px solid rgba(242,238,228,.1)}
+.vitr-ou p{margin:0;font-size:12px;line-height:1.55;opacity:.7}
+.vitr-ou a{display:block;margin-top:11px;text-decoration:none;font-family:var(--banner);
+  font-size:13px;letter-spacing:.14em;padding:11px;border-radius:10px;
+  color:#1B1405;background:linear-gradient(180deg,var(--projo),#C8991B);
+  box-shadow:0 3px 0 #7A5A0E}
+.vitr-ou a.calme{color:var(--craie);background:none;box-shadow:none;
+  border:1px solid rgba(242,238,228,.22)}
+.vitr-ou a:first-child{margin-top:0}
+.vitr-ou a:active{transform:translateY(2px);box-shadow:0 1px 0 #7A5A0E}
+
+/* Les âges d'une lignée, et ce qu'ils coûtent. Toucher un âge change la carte :
+   la rangée existe pour regarder les trois visages, pas pour les énumérer. */
+.vitr-rang{margin:16px 0 0}
+.vitr-rang>b{display:block;font-family:var(--banner);font-size:9.5px;letter-spacing:.24em;
+  opacity:.45;margin-bottom:8px}
+.vitr-ages{display:flex;gap:7px}
+.vitr-age{flex:1;min-width:0;border:1px solid rgba(242,238,228,.14);background:none;
+  color:inherit;font:inherit;cursor:pointer;border-radius:10px;padding:8px 6px;text-align:center}
+.vitr-age small{display:block;font-family:var(--banner);font-size:9px;letter-spacing:.14em;
+  opacity:.45}
+.vitr-age i{display:block;font-size:11px;font-style:normal;line-height:1.25;margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vitr-age.ici{border-color:var(--projo);background:rgba(245,195,59,.1)}
+.vitr-age.pas{opacity:.42}
+
+/* Les deux portes vers ses états et ses tenues. Elles sont la raison d'être du
+   lien entre les blocs : un état n'existe pas tout seul, c'est la joie de
+   quelqu'un — et c'est ce quelqu'un qu'on regarde à cette seconde-là. */
+.vitr-portes{display:flex;gap:8px;margin:12px 0 0}
+.vitr-porte{flex:1;border:1px solid rgba(242,238,228,.16);background:rgba(242,238,228,.03);
+  color:inherit;font-family:var(--banner);font-size:11px;letter-spacing:.12em;
+  cursor:pointer;border-radius:10px;padding:11px 6px}
+.vitr-porte b{display:block;color:var(--projo);font-size:14px;margin-top:3px}
+
+/* Le feuilletage. Il porte le rang parce qu'un collectionneur compte : « 12
+   sur 35 » dit à la fois où on en est et combien il en reste. */
+.vitr-pas{display:flex;align-items:center;gap:12px;margin:18px 0 0}
+.vitr-pas button{width:46px;height:46px;flex:none;border-radius:50%;cursor:pointer;
+  border:1px solid rgba(242,238,228,.16);background:rgba(242,238,228,.04);
+  color:var(--craie);font-family:var(--banner);font-size:22px;line-height:1}
+.vitr-pas button:disabled{opacity:.25;cursor:default}
+.vitr-pas span{flex:1;text-align:center;font-family:var(--banner);font-size:12px;
+  letter-spacing:.16em;opacity:.55}
+
+/* ## La planche
+
+   Les états et les tenues d'un personnage, âge par âge. C'est la seule vue qui
+   ne montre pas une carte mais un manque : quatre cases dont deux vides se
+   lisent d'un coup, là où « 2 / 4 » ne se lit pas du tout.                */
+.vitr-planche{padding-top:46px}
+.vitr-planche .qui{display:flex;align-items:center;gap:11px;margin-bottom:6px}
+.vitr-planche .qui img{width:52px;height:52px;border-radius:50%;object-fit:cover;
+  background:rgba(242,238,228,.06)}
+.vitr-planche .qui h2{margin:0;font-family:var(--banner);font-size:20px;letter-spacing:.05em}
+.vitr-planche .qui small{display:block;font-family:var(--banner);font-size:10px;
+  letter-spacing:.2em;opacity:.5;margin-top:2px}
+.vitr-groupe{margin-top:18px}
+.vitr-groupe>header{display:flex;align-items:baseline;gap:9px;margin-bottom:9px}
+.vitr-groupe h3{margin:0;font-family:var(--banner);font-size:12px;letter-spacing:.16em}
+.vitr-groupe .n{font-family:var(--banner);font-size:12px;color:var(--projo)}
+.vitr-groupe .n small{color:var(--craie);opacity:.5}
+.vitr-groupe .ferme{font-size:10.5px;opacity:.45;margin-left:auto;text-align:right;
+  line-height:1.3}
+.vitr-cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:9px}
+.vitr-case{border:0;padding:0;background:none;color:inherit;font:inherit;cursor:pointer;
+  transition:transform .12s ease}
+.vitr-case:active{transform:scale(.94)}
+.vitr-case>b{display:block;font-size:10px;line-height:1.25;margin-top:5px;text-align:center;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vitr-case.non>b{opacity:.4}
+.vitr-case.non .illu{filter:brightness(0) opacity(.45)}
+
+/* Le repli, quand `/cartes.js` n'a pas pu charger son catalogue. La vitrine
+   s'ouvre quand même, avec le portrait et le nom : une page qui refuserait de
+   montrer quoi que ce soit parce que le décor manque serait un mauvais
+   échange. */
+.vitr-brut{aspect-ratio:63/88;display:grid;place-items:center;border-radius:12px;
+  background:#0B1017;box-shadow:inset 0 0 0 1.5px var(--rc,#C2CAD6)}
+.vitr-brut img{width:78%;height:78%;object-fit:contain}
+
+@media (prefers-reduced-motion:reduce){
+  .vitr-tilt{animation:none;transition:none}
+  .vitr-scene.rayons::after{animation:none}
+}
+/* La page ne défile plus derrière la vitrine : sans ça, le doigt qui feuillette
+   emporte la grille du dessous, et on referme sur une page qui a bougé. */
+html.vitrine-ouverte,html.vitrine-ouverte body{overflow:hidden}
 </style>
 </head>
 <body>
@@ -93,60 +347,114 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <div id="corps"><div class="spin"></div></div>
 </main>
 
+<!-- La vitrine. Hors de `#app` : elle couvre l'écran entier, et la colonne du
+     jeu est bornée à 900 px. -->
+<div class="vitr" id="vitr" role="dialog" aria-modal="true" aria-label="Carte de collection">
+  <button type="button" class="vitr-voile" tabindex="-1" aria-hidden="true" data-fermer></button>
+  <div class="vitr-boite"><div class="vitr-carton" id="vitr-carton"></div></div>
+</div>
+
 <script src="/fanzzy-art.js"></script>
+<!-- Les décors : le lieu où vit le personnage, le même que sur la fiche et dans
+     le kiosque. Sans lui, `artFond` retombe sur son halo teinté — lisible, mais
+     ce n'est plus la carte du jeu. -->
+<script src="/fanzzy-fond.js"></script>
+<!-- Ce que le classeur et les boosters partagent : le catalogue et le dessin
+     d'une carte. **Après** fanzzy-art.js, dont il lit FZART dès sa première
+     ligne — l'ordre n'est pas un détail de mise en page. -->
+<script src="/cartes.js"></script>
 <script src="/stuff-art.js"></script>
 <script src="/action-art.js"></script>
+<!-- Les dessins par âge, par tenue et par expression. C'est lui qui permet de
+     montrer la joie d'un personnage plutôt que son nom : sans lui, une carte
+     d'état retombe sur le portrait au repos. -->
+<script src="/fanzzy-etats.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
   (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const pc = (g, p) => (p ? Math.round((g / p) * 100) : 0);
 
+/* Les aides communes viennent de /cartes.js. On les réalias ici pour qu'aucun
+   site d'appel ne porte de préfixe, et qu'une absence se voie à la première
+   ligne plutôt que dans une branche rare. `$` n'en fait pas partie : celui de
+   cette page lui est antérieur, et les deux sont le même. */
+const V = window.TBF_CARTES ?? {};
+const { BY_ID, DEX, SETS_TOUTES, STUFFS, ACTES, TENUES, TYPES, api,
+  audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, modsText } = V;
+
+/** Le catalogue a-t-il pu être chargé ? Tout le rendu des cartes en dépend. */
+let catalogue = false;
+/** La bibliothèque, telle que le serveur l'a servie. */
+let B = null;
+/* Les trois listes qu'on feuillette. Elles sont construites au rendu et
+   gardées : les flèches de la vitrine ont besoin de l'ordre exact de la
+   grille, sinon « 12 / 35 » ne désigne rien. */
+const LISTES = { fanzzy: [], stuff: [], actions: [] };
+
+const RAR_MOT = { commune: 'COMMUNE', rare: 'RARE', epique: 'ÉPIQUE',
+  legendaire: 'LÉGENDAIRE' };
+
 /** Une vignette : l'image, le nom, possédée ou en silhouette. */
-const vig = (src, nom, possede) => `<div class="vig ${possede ? 'oui' : 'non'}"
-  title="${esc(nom)}${possede ? '' : ' — à gagner'}">
+const vig = (src, o, liste, i) => `<button type="button" class="vig ${
+  o.possede ? 'oui' : 'non'} r-${o.rar ?? 'commune'}"
+  data-liste="${liste}" data-i="${i}"
+  title="${esc(o.nom)}${o.possede ? '' : ' — à gagner'}">
   ${src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
-  <b>${esc(nom)}</b></div>`;
+  <b>${esc(o.nom)}</b></button>`;
 
 /**
  * Un bloc par type. `aide` dit **où** ça se gagne : un compteur sans chemin
- * est un reproche, pas un objectif.
+ * est un reproche, pas un objectif. Et le manque est chiffré en tête de cette
+ * phrase — « il t'en manque douze » se lit, « 23 / 35 » se calcule.
  */
 function bloc(cle, titre, t, aide, corps, ouvert) {
+  const reste = Math.max(0, t.possibles - t.gagnes);
   return `<section class="type ${ouvert ? 'ouvert' : ''}" data-type="${cle}">
     <button type="button" aria-expanded="${ouvert}">
       <h2>${titre}</h2>
       <span class="compte">${t.gagnes}<small> / ${t.possibles}</small></span>
       <span class="jauge"><i style="width:${pc(t.gagnes, t.possibles)}%"></i></span>
-      <span class="aide">${aide}</span>
+      <span class="aide">${reste ? `<b>Il t’en manque ${reste}.</b> ` : ''}${aide}</span>
     </button>
     <div class="corps">${corps}</div>
   </section>`;
 }
 
 function rendre(b) {
+  B = b;
   const T = b.types;
   const buste = (id) => window.FZART?.adresse?.(id, 'buste') ?? '';
-  const fanzzy = `<div class="grille">${T.fanzzy.items.map((f) =>
-    vig(buste(f.id), f.nom, f.possede)).join('')}</div>`;
-  const stuff = `<div class="grille">${T.stuff.items.map((s) =>
-    vig(window.TBF_STUFF?.adresse?.(s.id), s.nom, s.possede)).join('')}</div>`;
-  const actions = `<div class="grille">${T.actions.items.map((a) =>
-    vig(window.TBF_ACTION?.adresse?.(a.id), a.nom, a.possede)).join('')}</div>`;
+
+  LISTES.fanzzy = T.fanzzy.items.map((f) => ({ k: 'fanzzy', id: f.id, ...f }));
+  LISTES.stuff = T.stuff.items.map((s) => ({ k: 'stuff', id: s.id, ...s }));
+  LISTES.actions = T.actions.items.map((a) => ({ k: 'action', id: a.id, ...a }));
+
+  const fanzzy = `<div class="grille">${LISTES.fanzzy.map((f, i) =>
+    vig(buste(f.id), f, 'fanzzy', i)).join('')}</div>`;
+  const stuff = `<div class="grille">${LISTES.stuff.map((s, i) =>
+    vig(window.TBF_STUFF?.adresse?.(s.id), s, 'stuff', i)).join('')}</div>`;
+  const actions = `<div class="grille">${LISTES.actions.map((a, i) =>
+    vig(window.TBF_ACTION?.adresse?.(a.id), a, 'actions', i)).join('')}</div>`;
+
   const parPerso = (quoi) => (b.parFanzzy.length
-    ? b.parFanzzy.map((p) => `<div class="perso">
+    ? b.parFanzzy.map((p) => `<button type="button" class="perso"
+        data-perso="${esc(p.id)}" data-quoi="${quoi}">
         <img src="${esc(buste(p.id))}" alt="" loading="lazy" onerror="this.remove()">
         <b>${esc(p.nom)}</b>
+        <span class="plus">›</span>
         <span class="lignes"><span><b>${p[quoi].gagnes}</b> / ${p[quoi].possibles}</span>
           <span>${p.stade} âge${p.stade > 1 ? 's' : ''} débloqué${p.stade > 1 ? 's' : ''} sur ${p.ages}</span></span>
-      </div>`).join('')
+      </button>`).join('')
     : '<div class="vide">Ouvre un booster : chaque Fanzzy que tu obtiens ouvre ses états et ses tenues.</div>');
 
+  const reste = Math.max(0, b.total.possibles - b.total.gagnes);
   $('corps').innerHTML = `
     <div class="total">
       <div class="n">${b.total.gagnes}<small> / ${b.total.possibles}</small></div>
       <p>${pc(b.total.gagnes, b.total.possibles)} % de tout ce qui se gagne aujourd’hui.</p>
       <div class="jauge"><i style="width:${pc(b.total.gagnes, b.total.possibles)}%"></i></div>
+      ${reste ? `<a class="aller" href="/boosters">OUVRIR UN BOOSTER</a>` : ''}
     </div>
     ${bloc('fanzzy', 'FANZZY', T.fanzzy,
       'Dans les boosters. Chacun a jusqu’à trois âges, qui s’achètent en écharpes.', fanzzy, true)}
@@ -162,6 +470,15 @@ function rendre(b) {
       'Les communes sont à tout le monde ; les autres sortent des boosters.', actions)}`;
 
   $('corps').addEventListener('click', (e) => {
+    const vignette = e.target.closest('.vig');
+    if (vignette) {
+      const liste = LISTES[vignette.dataset.liste];
+      ouvrir({ k: 'carte', liste, i: Number(vignette.dataset.i) });
+      return;
+    }
+    const ligne = e.target.closest('.perso');
+    if (ligne) { ouvrirPlanche(ligne.dataset.perso, ligne.dataset.quoi); return; }
+
     const bouton = e.target.closest('.type>button');
     if (!bouton) return;
     const s = bouton.parentElement;
@@ -170,9 +487,577 @@ function rendre(b) {
   });
 }
 
+/* ==================================================================== la vitrine */
+
+/**
+ * La pile des vues ouvertes.
+ *
+ * Deux vues seulement, et l'une mène à l'autre : la **carte** — un objet en
+ * grand — et la **planche** — les états ou les tenues d'un personnage. On
+ * passe de la carte du Choriste à ses quatre joies, puis de l'une d'elles à
+ * la carte de cette joie-là. Le bouton retour du téléphone et la flèche en
+ * haut à gauche dépilent ; le voile et la croix ferment tout.
+ *
+ * Une pile plutôt qu'un état plat parce que l'aller-retour est le geste : sans
+ * elle, refermer une joie ramenait à la grille et il fallait retrouver le
+ * personnage pour voir la suivante.
+ */
+let pile = [];
+/** Les fiches déjà demandées. Une par personnage, jamais deux fois. */
+const fiches = new Map();
+
+const doux = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+/** La lignée d'un personnage, du premier âge au dernier. */
+const lignee = (racine) => (DEX ?? [])
+  .filter((f) => (f.racine ?? f.id) === racine)
+  .sort((a, b) => (a.stade ?? 1) - (b.stade ?? 1));
+
+/** La série d'où sort une carte, avec son nom et son ouverture. */
+const serie = (code) => (SETS_TOUTES ?? []).find((s) => s.id === code) ?? null;
+
+/**
+ * L'entrée de catalogue d'un objet de collection — celle que `cardHTML` sait
+ * dessiner.
+ *
+ * Tout passe par `carteDuPaquet`, la conversion qu'emploie déjà l'ouverture
+ * d'un booster : une carte d'équipement doit être **exactement** celle qui
+ * sort du paquet, cadre, couleur de type et rareté comprises. Une seconde
+ * conversion écrite ici aurait divergé — c'est la faute que ce fichier-là
+ * raconte pour le catalogue recopié.
+ */
+function carteDe(o) {
+  if (!catalogue) return null;
+  if (o.k === 'fanzzy') return BY_ID.get(o.age ?? o.id) ?? null;
+  if (o.k === 'stuff') return carteDuPaquet({ type: 'stuff', id: o.id });
+  if (o.k === 'action') return carteDuPaquet({ type: 'action', id: o.id });
+  if (o.k === 'etat') return carteDuPaquet({ type: 'etat', id: o.id, pour: o.pour, stade: o.stade });
+  if (o.k === 'skin') return carteDuPaquet({ type: 'skin', id: o.id, pour: o.pour, stade: o.stade });
+  return null;
+}
+
+/**
+ * La rareté d'un objet, qu'on ait le catalogue ou non : elle porte la couleur.
+ *
+ * Le personnage passe **avant** le `rar` que la bibliothèque a envoyé, et c'est
+ * tout l'intérêt : ce champ-là est celui de la lignée — le premier âge, commun
+ * neuf fois sur dix. Quand on regarde le troisième, le cadre doit être celui du
+ * troisième, sinon on achète un épique et la vitrine l'affiche en gris.
+ */
+function rarDe(o) {
+  if (o.k === 'fanzzy') return BY_ID?.get(o.age ?? o.id)?.rar ?? o.rar ?? 'commune';
+  if (o.rar) return o.rar;
+  if (o.k === 'skin') return TENUES?.get(o.id)?.rar ?? 'rare';
+  if (o.k === 'stuff') return STUFFS?.get(o.id)?.rar ?? 'rare';
+  if (o.k === 'action') return ACTES?.get(o.id)?.rar ?? 'rare';
+  return 'rare';
+}
+
+/**
+ * Où ça se gagne, et le chemin pour y aller.
+ *
+ * Une carte manquante sans cette phrase est une frustration sans issue ; un
+ * joueur qui lit « dans les boosters LA TRIBUNE » sait quoi faire de la
+ * minute suivante. `lien` est nul quand il n'y a rien à faire — une commune
+ * qu'on a depuis le premier jour, une série qui attend sa saison.
+ */
+function ou(o) {
+  if (o.k === 'fanzzy') {
+    const f = BY_ID?.get(o.id);
+    const s = f ? serie(f.set) : null;
+    if (s && s.ouverte === false) {
+      return { phrase: `Série ${s.nom} : elle attend sa saison. Personne ne l’a encore.`,
+        lien: null };
+    }
+    return { phrase: s ? `Dans les boosters ${s.nom}.` : 'Dans les boosters.',
+      lien: ['/boosters', 'OUVRIR UN BOOSTER'] };
+  }
+  if (o.k === 'stuff') {
+    return { phrase: 'Dans les boosters, et à la boutique quand elle la propose.',
+      lien: ['/boosters', 'OUVRIR UN BOOSTER'] };
+  }
+  if (o.k === 'action') {
+    if (rarDe(o) === 'commune') {
+      return { phrase: 'Commune : elle est à tout le monde depuis le premier jour.',
+        lien: null };
+    }
+    return { phrase: 'Dans les boosters.', lien: ['/boosters', 'OUVRIR UN BOOSTER'] };
+  }
+  if (o.k === 'etat') {
+    return { phrase: o.ferme
+      ? 'Il te faut d’abord débloquer cet âge : un booster ne donne un état que pour un âge atteint.'
+      : 'Dans les boosters, pour cet âge de ce personnage.',
+    lien: o.ferme ? [`/fanzzy/${encodeURIComponent(o.pour)}`, 'FAIRE GRANDIR'] : ['/boosters', 'OUVRIR UN BOOSTER'] };
+  }
+  if (o.k === 'skin') {
+    return { phrase: o.ferme
+      ? 'Il te faut d’abord débloquer cet âge : une tenue s’habille sur l’âge qui la reçoit.'
+      : 'Dans les boosters et à la boutique, pour cet âge de ce personnage.',
+    lien: o.ferme ? [`/fanzzy/${encodeURIComponent(o.pour)}`, 'FAIRE GRANDIR'] : ['/boutique', 'VOIR LA BOUTIQUE'] };
+  }
+  return { phrase: '', lien: null };
+}
+
+/* -------------------------------------------------------- la carte, en grand */
+
+/** Le dessin de la carte, ou son repli quand le catalogue n'a pas chargé. */
+function dessin(o, c) {
+  if (c) return cardHTML(c, { verrou: !o.possede });
+  const src = o.k === 'fanzzy' ? (window.FZART?.adresse?.(o.id, 'buste') ?? '')
+    : o.k === 'stuff' ? (window.TBF_STUFF?.adresse?.(o.id) ?? '')
+      : o.k === 'action' ? (window.TBF_ACTION?.adresse?.(o.id) ?? '') : '';
+  return `<div class="vitr-brut">${src
+    ? `<img class="illu" src="${esc(src)}" alt="" onerror="this.remove()">` : ''}</div>`;
+}
+
+/** Ce que la carte annonce, sous son nom : la rareté, la famille, la série. */
+function galons(o) {
+  const out = [`<span class="rr">${RAR_MOT[rarDe(o)] ?? ''}</span>`];
+  if (o.k === 'fanzzy') {
+    const f = BY_ID?.get(o.age ?? o.id);
+    if (f && TYPES?.[f.type]) out.push(TYPES[f.type].nom.toUpperCase());
+    const s = f ? serie(f.set) : null;
+    if (s) out.push(esc(s.nom));
+  }
+  if (o.k === 'action') {
+    const a = ACTES?.get(o.id);
+    const fam = window.TBF_ACTION?.famDe?.(a);
+    if (fam?.nom) out.push(fam.nom);
+    if (a?.cost != null) out.push(`${a.cost} DE SOUFFLE`);
+  }
+  if (o.k === 'stuff') out.push('ÉQUIPEMENT');
+  if (o.k === 'etat' || o.k === 'skin') {
+    const perso = BY_ID?.get(o.pour);
+    if (perso) out.push(`${esc(perso.nom.toUpperCase())} · ÂGE ${o.stade}`);
+  }
+  return out.join('<span class="pt"></span>');
+}
+
+/** Le nom qu'on écrit en grand. Une tenue et un état portent le leur, pas celui du personnage. */
+function nomDe(o, c) {
+  if (o.k === 'skin') return TENUES?.get(o.id)?.nom ?? o.nom ?? o.id;
+  if (o.k === 'etat') return o.mot ?? o.nom ?? o.id;
+  return c?.nom ?? o.nom ?? o.id;
+}
+
+/**
+ * La phrase d'une carte, sans le titre qu'elle porte déjà en tête.
+ *
+ * Les états annoncent « La joie — But, victoire, carton pour eux, il exulte » :
+ * c'est juste sur une carte de booster, où le mot n'est écrit nulle part
+ * ailleurs. Ici il est en capitales à trente pixels juste au-dessus, et le lire
+ * deux fois de suite donne l'impression d'un texte mal assemblé.
+ */
+const sansSonTitre = (t, titre) =>
+  (t && titre && t.startsWith(`${titre} — `) ? t.slice(String(titre).length + 3) : t);
+
+function vueCarte(vue) {
+  const o = vue.liste[vue.i];
+  const c = carteDe(o);
+  const rar = rarDe(o);
+  const O = ou(o);
+  const nom = nomDe(o, c);
+  /* La phrase du jeu d'abord, celle de la fiche en repli. Pour un état, la
+     première nomme **le moment** — « la joie » — et la seconde décrit le dessin
+     — « bras levés » : c'est le moment qu'on collectionne, pas la pose. */
+  const texte = sansSonTitre(
+    c?.texte ?? (o.k === 'skin' ? TENUES?.get(o.id)?.texte : o.texte) ?? o.texte ?? '', nom);
+  const mods = c && modsText ? modsText(c) : [];
+  const f = o.k === 'fanzzy' ? BY_ID?.get(o.age ?? o.id) : null;
+
+  /* La rangée des âges. Elle n'apparaît qu'au-delà d'un seul : « ÂGES : 1 »
+     n'apprend rien, et prend la place de ce qui en dit quelque chose. */
+  const ages = o.k === 'fanzzy' ? lignee(o.id) : [];
+  const atteint = o.k === 'fanzzy'
+    ? (B?.parFanzzy?.find((p) => p.id === o.id)?.stade ?? 0) : 0;
+  const rangAges = ages.length > 1 ? `<div class="vitr-rang"><b>SES ÂGES</b>
+    <div class="vitr-ages">${ages.map((a, n) => `<button type="button" class="vitr-age ${
+    (o.age ?? o.id) === a.id ? 'ici' : ''} ${atteint >= n + 1 ? '' : 'pas'}"
+      data-age="${esc(a.id)}"><small>ÂGE ${n + 1}</small><i>${esc(a.nom)}</i></button>`).join('')}
+    </div></div>` : '';
+
+  /* Les deux portes vers ses états et ses tenues. Elles ne s'ouvrent que pour
+     un personnage qu'on a : un booster ne donne ni l'un ni l'autre avant. */
+  const mien = o.k === 'fanzzy' ? B?.parFanzzy?.find((p) => p.id === o.id) : null;
+  const portes = mien ? `<div class="vitr-portes">
+    <button type="button" class="vitr-porte" data-planche="etats">SES ÉTATS
+      <b>${mien.etats.gagnes} / ${mien.etats.possibles}</b></button>
+    <button type="button" class="vitr-porte" data-planche="tenues">SES TENUES
+      <b>${mien.tenues.gagnes} / ${mien.tenues.possibles}</b></button>
+  </div>` : '';
+
+  /* **Le pied ne dit que ce qu'il reste à faire.**
+   *
+   * « Dans les boosters LA TRIBUNE » sous une carte qu'on possède déjà est une
+   * phrase qui ne sert à personne — et un bouton OUVRIR UN BOOSTER sous une
+   * pièce acquise est une invitation à repayer ce qu'on a. Le chemin n'apparaît
+   * donc que pour ce qui manque ; la fiche, elle, reste accessible dans les
+   * deux cas, parce que c'est là qu'on fait grandir un personnage. */
+  const liens = [];
+  if (!o.possede && O.lien) liens.push(`<a href="${O.lien[0]}">${esc(O.lien[1])}</a>`);
+  if (o.k === 'fanzzy') {
+    liens.push(`<a href="/fanzzy/${encodeURIComponent(o.id)}" class="calme">VOIR SA FICHE</a>`);
+  }
+  const phrase = o.possede ? (O.lien ? '' : O.phrase) : O.phrase;
+  const pied = (phrase || liens.length) ? `<div class="vitr-ou">
+      ${phrase ? `<p>${esc(phrase)}</p>` : ''}${liens.join('')}</div>` : '';
+
+  return `
+    <button type="button" class="vitr-x" data-fermer aria-label="Fermer">✕</button>
+    ${pile.length > 1 ? '<button type="button" class="vitr-dos" data-retour aria-label="Retour">‹</button>' : ''}
+    <div class="vitr-scene ${o.possede ? '' : 'verrou'} ${
+    ['epique', 'legendaire'].includes(rar) ? 'rayons' : ''}" id="vitr-scene">
+      <div class="vitr-tilt">${dessin(o, c)}<i class="vitr-lustre"></i></div>
+    </div>
+    <div class="vitr-tete">
+      <span class="vitr-etat ${o.possede ? 'a-moi' : 'a-gagner'}">${
+    o.possede ? '✓ DANS TA COLLECTION' : 'À GAGNER'}</span>
+      <h2 class="vitr-nom">${esc(nom)}</h2>
+      <p class="vitr-quoi">${galons(o)}</p>
+    </div>
+    ${texte ? `<p class="vitr-texte">${esc(texte)}</p>` : ''}
+    ${f?.cri?.label ? `<p class="vitr-texte">Son cri : <b>${esc(f.cri.label)}</b></p>` : ''}
+    ${mods.length ? `<div class="vitr-mods">${mods.map((m) =>
+    `<span>${esc(m)}</span>`).join('')}</div>` : ''}
+    ${f?.histoire ? `<p class="vitr-histoire">${esc(f.histoire)}</p>` : ''}
+    ${rangAges}
+    ${portes}
+    ${pied}
+    <div class="vitr-pas">
+      <button type="button" data-pas="-1" ${vue.i <= 0 ? 'disabled' : ''}
+        aria-label="Précédente">‹</button>
+      <span>${vue.i + 1} / ${vue.liste.length}</span>
+      <button type="button" data-pas="1" ${vue.i >= vue.liste.length - 1 ? 'disabled' : ''}
+        aria-label="Suivante">›</button>
+    </div>`;
+}
+
+/* ----------------------------------------------------------------- la planche */
+
+function vuePlanche(vue) {
+  const d = vue.fiche;
+  const quoi = vue.quoi;
+  const ages = d.lignee ?? [];
+  const portrait = window.FZART?.adresse?.(vue.perso, 'buste') ?? '';
+
+  const groupes = ages.map((a, n) => {
+    const stade = n + 1;
+    const par = d.parAge?.[stade] ?? d.parAge?.[String(stade)] ?? {};
+    /* Les tenues publiées, la base mise à part — elle ne se gagne pas, on
+       l'a. Une tenue dépubliée reste affichée **si on l'a** : sa case est
+       remplie, et la faire disparaître se lirait comme une perte. */
+    const items = quoi === 'tenues'
+      ? (par.skins ?? []).filter((s) => s.id !== 'base' && (s.publie || s.possede))
+        .map((s) => ({ k: 'skin', id: s.id, nom: s.nom, rar: s.rar, texte: s.texte,
+          possede: s.possede, pour: vue.perso, stade, ferme: !a.possede }))
+      : (par.etats ?? []).map((e) => ({ k: 'etat', id: e.id, nom: e.nom, mot: e.nom,
+        texte: e.dessin, possede: e.possede, pour: vue.perso, stade, ferme: !a.possede }));
+    return { stade, nom: a.nom, ouvert: Boolean(a.possede), items };
+  });
+
+  /* La liste qu'on feuillette une fois dans une case : tout, âge après âge.
+     C'est ce que lit un collectionneur — il ne s'arrête pas au bout d'un âge. */
+  const tout = groupes.flatMap((g) => g.items);
+  vue.tout = tout;
+
+  const titre = quoi === 'tenues' ? 'SES TENUES' : 'SES ÉTATS';
+  return `
+    <button type="button" class="vitr-x" data-fermer aria-label="Fermer">✕</button>
+    ${pile.length > 1 ? '<button type="button" class="vitr-dos" data-retour aria-label="Retour">‹</button>' : ''}
+    <div class="vitr-planche">
+      <div class="qui">
+        <img src="${esc(portrait)}" alt="" onerror="this.remove()">
+        <div><small>${titre}</small><h2>${esc(d.fanzzy?.nom ?? vue.perso)}</h2></div>
+      </div>
+      ${groupes.map((g) => `<section class="vitr-groupe">
+        <header>
+          <h3>ÂGE ${g.stade} — ${esc(g.nom)}</h3>
+          <span class="n">${g.items.filter((x) => x.possede).length}<small> / ${g.items.length}</small></span>
+          ${g.ouvert ? '' : '<span class="ferme">âge pas encore débloqué</span>'}
+        </header>
+        <div class="vitr-cases">${g.items.map((x) => {
+    const c = carteDe(x);
+    const i = tout.indexOf(x);
+    return `<button type="button" class="vitr-case ${x.possede ? 'oui' : 'non'}" data-case="${i}">
+            ${c ? cardHTML(c, { mini: true, verrou: !x.possede }) : ''}
+            <b>${esc(nomDe(x, c))}</b></button>`;
+  }).join('')}</div>
+      </section>`).join('')}
+    </div>`;
+}
+
+/* ------------------------------------------------------------- ouvrir, fermer */
+
+function rendreVitrine() {
+  const vue = pile[pile.length - 1];
+  const carton = $('vitr-carton');
+  if (!vue) return;
+  /* La rareté vit **sur le carton**, une seule fois : `--rc` et `--rc2`
+     descendent par héritage sur le halo, le cadre, le trait des effets et le
+     mot de la rareté. Chaque élément qui redéclarerait sa classe finirait par
+     en oublier un — et un seul détail resté or sur une carte bleue se lit comme
+     un défaut d'affichage. */
+  const rar = vue.k === 'carte' ? rarDe(vue.liste[vue.i]) : '';
+  carton.className = `vitr-carton${rar ? ` r-${rar}` : ''}`;
+
+  if (vue.k === 'attente') {
+    carton.innerHTML = `<button type="button" class="vitr-x" data-fermer
+      aria-label="Fermer">✕</button><div class="spin"></div>`;
+    return;
+  }
+  carton.innerHTML = vue.k === 'planche' ? vuePlanche(vue) : vueCarte(vue);
+  $('vitr').querySelector('.vitr-boite').scrollTop = 0;
+
+  if (vue.k === 'carte') {
+    const scene = $('vitr-scene');
+    incliner(scene);
+    fanfare(scene, vue.liste[vue.i]);
+  }
+  /* Les dessins arrivent après le balisage : `fx.js` les fait respirer tout
+     seul par son observateur, mais un appel direct évite l'image immobile de
+     la première fraction de seconde. */
+  window.FX?.animer?.(carton);
+}
+
+/**
+ * Ce qui se passe à l'instant où la carte se pose.
+ *
+ * **Une carte qu'on a et une carte qui manque ne s'ouvrent pas pareil.** La
+ * première éclate dans la couleur de sa rareté, et la légendaire fait sonner
+ * l'accord qu'on entend en sortie de booster : c'est la récompense de l'avoir.
+ * La seconde arrive à peine — un clic. Fêter ce qu'on n'a pas serait la
+ * meilleure façon de ne plus rien fêter du tout.
+ */
+function fanfare(scene, o) {
+  if (!scene) return;
+  const rar = rarDe(o);
+  if (!o.possede) { window.FX?.son?.('tic'); return; }
+  window.FX?.rare?.(rar, scene);
+  if (rar === 'legendaire') { audio?.roar?.(); audio?.chime?.('legendaire'); }
+  else if (rar === 'epique') audio?.chime?.('epique');
+  else window.FX?.son?.('carte');
+}
+
+/** L'inclinaison au doigt. Sans mouvement, la carte reste une image. */
+function incliner(scene) {
+  if (!scene || doux()) return;
+  const suivre = (e) => {
+    const r = scene.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    scene.classList.add('touche');
+    scene.style.setProperty('--ry', `${(x * 17).toFixed(2)}deg`);
+    scene.style.setProperty('--rx', `${(-y * 17).toFixed(2)}deg`);
+    scene.style.setProperty('--lx', `${((x + 0.5) * 100).toFixed(1)}%`);
+    scene.style.setProperty('--ly', `${((y + 0.5) * 100).toFixed(1)}%`);
+  };
+  const reposer = () => {
+    scene.classList.remove('touche');
+    scene.style.setProperty('--ry', '0deg');
+    scene.style.setProperty('--rx', '0deg');
+  };
+  scene.addEventListener('pointermove', suivre);
+  scene.addEventListener('pointerleave', reposer);
+  scene.addEventListener('pointercancel', reposer);
+  scene.addEventListener('pointerup', reposer);
+}
+
+/**
+ * Le retour que nous avons nous-mêmes demandé, et qui n'est pas encore arrivé.
+ *
+ * `history.back()` est **asynchrone**, y compris dans les navigateurs. Fermer une
+ * carte puis en ouvrir une autre du doigt, coup sur coup, laissait donc un
+ * retour en vol : il tombait sur la vitrine suivante, déjà ouverte, et la
+ * refermait toute seule une fraction de seconde après. On ferme, on rouvre, et
+ * l'écran redevient noir sans qu'on ait rien fait.
+ *
+ * Le drapeau dit « celui-là, c'est nous » : on le consomme sans fermer, et on
+ * repose le marqueur si une vitrine s'est rouverte entre-temps — sans quoi le
+ * bouton retour du téléphone quitterait la page au lieu de la refermer.
+ */
+let retourAttendu = false;
+
+function ouvrir(vue) {
+  const neuve = pile.length === 0;
+  pile.push(vue);
+  $('vitr').classList.add('on');
+  document.documentElement.classList.add('vitrine-ouverte');
+  rendreVitrine();
+  /* Une seule entrée d'historique pour toute la vitrine, posée à l'ouverture.
+     Le bouton retour du téléphone la referme donc au lieu de quitter la page —
+     et une pile de six états d'historique pour six cartes feuilletées
+     obligerait à appuyer six fois pour sortir. */
+  if (neuve && !history.state?.vitrine) {
+    history.pushState({ vitrine: 1 }, '', location.pathname + location.search);
+  }
+  if (neuve) setTimeout(() => $('vitr').querySelector('.vitr-x')?.focus({ preventScroll: true }), 40);
+}
+
+/** Remplace la vue du dessus : feuilleter n'empile pas. */
+function remplacer(vue) { pile[pile.length - 1] = vue; rendreVitrine(); }
+
+function retour() {
+  if (pile.length > 1) { pile.pop(); rendreVitrine(); return; }
+  fermer();
+}
+
+/** Range la vitrine, sans toucher à l'historique. */
+function vider() {
+  pile = [];
+  $('vitr').classList.remove('on');
+  $('vitr-carton').innerHTML = '';
+  document.documentElement.classList.remove('vitrine-ouverte');
+}
+
+/** @param {boolean} [parRetour] Vrai quand c'est l'historique qui ferme. */
+function fermer(parRetour = false) {
+  if (!pile.length) return;
+  vider();
+  if (!parRetour && history.state?.vitrine) { retourAttendu = true; history.back(); }
+}
+
+/** Feuillette la liste en cours. Borné aux deux bouts : on ne boucle pas. */
+function pas(n) {
+  const vue = pile[pile.length - 1];
+  if (vue?.k !== 'carte') return;
+  const i = vue.i + n;
+  if (i < 0 || i >= vue.liste.length) return;
+  audio?.flip?.();
+  remplacer({ ...vue, i });
+}
+
+/**
+ * La planche d'un personnage : ses états ou ses tenues, âge par âge.
+ *
+ * Elle lit `/fiche/<id>`, la route que la fiche emploie déjà. La page pourrait
+ * demander au serveur d'ajouter le détail à la bibliothèque — trois âges et
+ * vingt tenues pour trente-cinq personnages, soit deux mille lignes servies à
+ * chaque ouverture de l'écran pour qu'on en regarde une. On demande donc à la
+ * demande, et une fois par personnage.
+ */
+async function ouvrirPlanche(perso, quoi) {
+  const vue = { k: 'planche', perso, quoi, fiche: null };
+  if (!fiches.has(perso)) fiches.set(perso, api('/fiche/' + encodeURIComponent(perso)));
+  const attendue = fiches.get(perso);
+
+  /* Une attente visible plutôt qu'un écran qui ne réagit pas : la fiche arrive
+     du réseau, et un doigt sans retour est un doigt qui appuie deux fois. */
+  ouvrir({ k: 'attente' });
+  let d = null;
+  try { d = await attendue; } catch { fiches.delete(perso); }
+  if (!pile.length) return;              // refermée pendant l'attente
+  if (!d) {
+    $('vitr-carton').innerHTML = `<button type="button" class="vitr-x" data-fermer
+      aria-label="Fermer">✕</button><p class="vitr-texte">Ce personnage n’a pas pu être lu.</p>`;
+    return;
+  }
+  vue.fiche = d;
+  remplacer(vue);
+}
+
+/* ----------------------------------------------------------------- les gestes */
+
+$('vitr').addEventListener('click', (e) => {
+  if (e.target.closest('[data-fermer]')) { fermer(); return; }
+  if (e.target.closest('[data-retour]')) { retour(); return; }
+  /* Le vide autour de la carte ferme, mais **seulement le vide** : la boîte
+     qui défile couvre le voile sur toute sa surface, et sans cette ligne les
+     deux tiers de l'écran noir ne répondaient à rien. */
+  if (e.target === e.currentTarget.querySelector('.vitr-boite')) { fermer(); return; }
+
+  const p = e.target.closest('[data-pas]');
+  if (p) { pas(Number(p.dataset.pas)); return; }
+
+  /* Un autre âge du même personnage. On remplace la carte sans empiler : les
+     trois âges sont le même individu, et revenir en arrière doit ramener à la
+     grille, pas au visage précédent. */
+  const age = e.target.closest('[data-age]');
+  if (age) {
+    const vue = pile[pile.length - 1];
+    if (vue?.k !== 'carte') return;
+    const liste = vue.liste.slice();
+    liste[vue.i] = { ...liste[vue.i], age: age.dataset.age };
+    audio?.flip?.();
+    remplacer({ ...vue, liste });
+    return;
+  }
+
+  const porte = e.target.closest('[data-planche]');
+  if (porte) {
+    const vue = pile[pile.length - 1];
+    ouvrirPlanche(vue.liste[vue.i].id, porte.dataset.planche);
+    return;
+  }
+
+  const cas = e.target.closest('[data-case]');
+  if (cas) {
+    const vue = pile[pile.length - 1];
+    ouvrir({ k: 'carte', liste: vue.tout, i: Number(cas.dataset.case) });
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (!pile.length) return;
+  if (e.key === 'Escape') { e.preventDefault(); retour(); return; }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); pas(-1); return; }
+  if (e.key === 'ArrowRight') { e.preventDefault(); pas(1); return; }
+  if (e.key !== 'Tab') return;
+  /* Le piège à focus. Sans lui, la tabulation emmène sur les vignettes de la
+     grille, qu'on ne voit plus — et un lecteur d'écran continue de lire la
+     page derrière la vitrine. */
+  const cibles = [...$('vitr').querySelectorAll(
+    'button:not([disabled]):not([tabindex="-1"]),[href]')];
+  if (!cibles.length) return;
+  const premier = cibles[0];
+  const dernier = cibles[cibles.length - 1];
+  if (e.shiftKey && document.activeElement === premier) { e.preventDefault(); dernier.focus(); }
+  else if (!e.shiftKey && document.activeElement === dernier) { e.preventDefault(); premier.focus(); }
+}, true);
+
+/* Le balayage. C'est le geste d'un classeur sur téléphone, et il vaut mieux que
+   deux flèches de quarante-six pixels. Le seuil vertical écarte le défilement :
+   un doigt qui descend la fiche d'un personnage ne doit pas changer de carte. */
+let tx = 0; let ty = 0;
+$('vitr').addEventListener('touchstart', (e) => {
+  tx = e.touches[0].clientX; ty = e.touches[0].clientY;
+}, { passive: true });
+$('vitr').addEventListener('touchend', (e) => {
+  const dx = e.changedTouches[0].clientX - tx;
+  const dy = e.changedTouches[0].clientY - ty;
+  if (Math.abs(dx) < 56 || Math.abs(dy) > 48) return;
+  pas(dx < 0 ? 1 : -1);
+  buzz?.(8);
+}, { passive: true });
+
+window.addEventListener('popstate', () => {
+  if (retourAttendu) {
+    retourAttendu = false;
+    /* Une vitrine a pu se rouvrir entre-temps : le retour qu'on avait demandé
+       emporte alors son marqueur. On le repose, sinon le bouton retour du
+       téléphone quitterait la page au lieu de refermer la carte ouverte. */
+    if (pile.length) history.pushState({ vitrine: 1 }, '', location.pathname + location.search);
+    return;
+  }
+  fermer(true);
+});
+
+/* ------------------------------------------------------------------ chargement */
+
 (async () => {
+  /* Les trois chargements partent ensemble. Le catalogue et le manifeste des
+     dessins **ne font pas tomber la page** : sans eux la vitrine s'ouvre en
+     repli — portrait et nom — et les compteurs, qui sont le cœur de cet
+     écran, restent justes. Une collection illisible parce qu'un décor manque
+     serait un mauvais échange. */
+  const [biblio] = await Promise.allSettled([
+    fetch('/api/fanzzy/bibliotheque', { credentials: 'same-origin' }),
+    chargerCatalogue ? chargerCatalogue().then(() => { catalogue = true; }) : null,
+    window.TBF_ETATS?.charger?.(),
+  ]);
+
   try {
-    const r = await fetch('/api/fanzzy/bibliotheque', { credentials: 'same-origin' });
+    if (biblio.status === 'rejected') throw biblio.reason;
+    const r = biblio.value;
     if (r.status === 401) { location.href = '/compte'; return; }
     if (!r.ok) throw new Error(String(r.status));
     rendre(await r.json());

@@ -37,6 +37,7 @@
     "accueil:ui": "node scripts/accueil-ui-smoke.mjs",
     "profil:ui": "node scripts/profil-ui-smoke.mjs",
     "vitrine:smoke": "node scripts/vitrine-smoke.mjs",
+    "collection:smoke": "node scripts/collection-smoke.mjs",
     "nvn:ui": "node scripts/nvn-ui-smoke.mjs",
     "aide:ui": "node scripts/aide-ui-smoke.mjs",
     "repetition:ui": "node scripts/repetition-ui-smoke.mjs",
