@@ -724,6 +724,41 @@ check('la foule compte les deux tribunes', crowd[0] === 2 && crowd[1] === 1);
   check('et il est ouvert, puisqu’il se joue', autre?.open === true);
   check('mais ce n’est pas chez moi', autre?.mien === false);
 
+  /* ------------------------ une rencontre finie n'est plus une tribune
+
+     `open` disait « le coup d'envoi est dans moins de trente minutes », écrit
+     `coup d'envoi − maintenant < 30 min`. Sans plancher, c'est vrai aussi — et
+     toujours — pour un match commencé il y a deux heures, où la différence est
+     **négative**. Toute rencontre de la fenêtre de trois heures était donc
+     ouverte, coup de sifflet final compris : celle d'un club suivi restait dans
+     TES CLUBS avec la minute de son dernier relevé, sans jamais en sortir. Vu
+     du joueur, la page du Grand Virage ne se mettait plus à jour.
+
+     Les deux bornes se vérifient ensemble, et il faut les deux : un contrôle
+     qui n'éprouverait que le match fini repasserait au vert le jour où
+     quelqu'un supprime la condition au lieu de la corriger. */
+  await pool.query(
+    `INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,
+                           home_goals,away_goals,elapsed,kickoff_at)
+     VALUES (7002,207,2026,85,91,'FT',0,3,90,UTC_TIMESTAMP() - INTERVAL 2 HOUR),
+            (7003,207,2026,85,91,'NS',NULL,NULL,NULL,
+             UTC_TIMESTAMP() + INTERVAL 20 MINUTE)`);
+
+  const apres = await fetch(`${url}/api/virage/live`).then((x) => x.json());
+  const parApres = (id) => (apres.matchs ?? []).find((m) => Number(m.id) === id);
+  const fini = parApres(7002);
+  const bientot = parApres(7003);
+
+  check('un match terminé d’un club suivi paraît encore', Boolean(fini));
+  check('mais sa tribune est fermée', fini?.open === false
+    || (console.log('        il dit open :', fini?.open), false));
+  check('et l’écran peut dire pourquoi plutôt que de griser sans raison',
+    fini?.fini === true);
+  check('un match qui commence dans vingt minutes, lui, ouvre sa tribune',
+    bientot?.open === true
+    || (console.log('        il dit open :', bientot?.open), false));
+  check('et il n’est pas annoncé comme terminé', bientot?.fini === false);
+
 
   /* ------------------------ entrer dans un match que la base ignore
 

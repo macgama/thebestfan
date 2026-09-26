@@ -109,6 +109,49 @@ const io = new Server(http, {
 const started = Date.now();
 let sockets = 0;
 
+/* ------------------------------------------------ le filet du processus
+
+   **Une promesse rejetée tuait le site entier.**
+
+   Node termine le processus sur une `unhandledRejection` depuis la version 15.
+   Or un serveur de jeu est plein d'appels qu'on lance sans les attendre — une
+   présence écrite en base pendant qu'on chante, un `async` accroché à un
+   événement de socket — et il suffit qu'un seul reparte en erreur pour que
+   l'hébergeur voie le port se fermer. Le joueur, lui, voit la page de
+   maintenance de l'hébergeur : il en conclut que le jeu est cassé, et il part.
+
+   Le coût de la panne est donc **mille fois** celui de la faute. Un supporter
+   dont la poussée n'a pas été enregistrée doit perdre sa poussée, pas sortir
+   tout le monde du stade.
+
+   ## Pourquoi on ne sort pas, même sur `uncaughtException`
+
+   La règle prudente — « l'état du processus n'est plus sûr, il faut sortir » —
+   vaut pour un programme qui possède quelque chose. Ici tout l'état durable est
+   en base, et ce qui vit en mémoire est reconstruit à la reconnexion : les
+   salles du Virage se rouvrent, les files se refont. Redémarrer ne répare donc
+   rien que la reconnexion ne répare déjà, et coûte une coupure à tous les
+   présents.
+
+   **Ce qui ne doit pas arriver, c'est que la faute reste invisible.** Elle part
+   donc dans le journal avec sa pile entière, et les cinq dernières sont
+   rendues par `/healthz` — l'adresse qu'on regarde justement quand le site a
+   eu l'air de tomber. Sans ça, on cherche une panne qui n'a laissé aucune
+   trace, ce qui est exactement la situation d'où vient ce bloc. */
+const incidents = [];
+
+function noter(genre, e) {
+  const quand = new Date().toISOString();
+  const quoi = e instanceof Error ? (e.stack ?? e.message) : String(e);
+  console.error(`[${genre}] ${quand}\n${quoi}`);
+  incidents.push({ quand, genre, quoi: quoi.split('\n').slice(0, 3).join(' · ') });
+  // Cinq : de quoi voir une rafale et sa cause, sans garder une fuite mémoire.
+  if (incidents.length > 5) incidents.shift();
+}
+
+process.on('unhandledRejection', (raison) => noter('promesse non tenue', raison));
+process.on('uncaughtException', (e) => noter('erreur non rattrapée', e));
+
 /**
  * Le code qui tourne réellement, en une ligne.
  *
@@ -711,8 +754,13 @@ app.get('/healthz', (_req, res) => {
     // déclarer terminé. Voir `VERSION` plus haut.
     version: VERSION,
     node: process.version,
+    /* **Le premier chiffre à regarder quand le site a eu l'air de tomber.**
+       Quelques secondes de fonctionnement veut dire que le processus vient de
+       redémarrer : ce n'est pas la page qui était cassée, c'est le serveur qui
+       n'était plus là. `incidents` dit alors pourquoi. */
     uptime_s: Math.round((Date.now() - started) / 1000),
     sockets,
+    ...(incidents.length ? { incidents } : {}),
     db: pool ? 'connectée' : process.env.DATABASE_URL ? 'injoignable' : 'absente',
     auth: auth ? 'active' : 'désactivée',
     football: football ? 'actif' : 'désactivé',
@@ -760,6 +808,18 @@ function page(res, fichier) {
   const chemin = path.join(__dirname, 'public', fichier);
   try {
     res.set('cache-control', 'no-store');
+    /* **La signature du serveur du jeu**, lue par le service worker.
+     *
+     * Quand le processus n'est pas là — un redémarrage, une mise en ligne —
+     * l'hébergeur répond à sa place : une page « This website is currently
+     * undergoing maintenance », en anglais, bleue, avec son propre logo. Elle
+     * arrive en 200, donc rien ne la distingue d'une vraie page pour un
+     * navigateur, et le joueur y lit que le jeu est mort.
+     *
+     * Cet en-tête est ce qui permet de faire la différence : la réponse qui ne
+     * le porte pas ne vient pas de nous, et `sw.js` la remplace par un écran
+     * qui dit la vérité — ça revient, voilà dans combien de temps. */
+    res.set('x-tbf', String(VERSION_PUBLIQUE.numero ?? '1'));
     res.type('html').send(estampiller(readFileSync(chemin, 'utf8'),
       path.join(__dirname, 'public')));
   } catch {
@@ -819,7 +879,17 @@ app.get('/repetition', (_req, res) => page(res, 'repetition.html'));
 // Le diagnostic et le suivi des équipes fonctionnent sans compte ; seul le
 // duel exige une identité, et il la vérifie lui-même à l'entrée en file.
 io.use(async (socket, next) => {
-  if (socketAuth) socket.data.user = await socketAuth(socket.handshake.auth?.token, socket);
+  /* `next()` part **quoi qu'il arrive**, et l'identité peut rester nulle.
+     Sans ce `try`, une base qui bronche pendant la lecture de session laissait
+     le rejet s'échapper : la poignée de main n'aboutissait jamais — le client
+     attend, réessaie, attend — et le processus y passait avec elle. Les écrans
+     qui exigent un compte le vérifient eux-mêmes à l'entrée ; un visiteur sans
+     identité est un cas prévu, pas une panne. */
+  try {
+    if (socketAuth) socket.data.user = await socketAuth(socket.handshake.auth?.token, socket);
+  } catch (e) {
+    console.error('[socket] identité illisible :', e.message);
+  }
   next();
 });
 

@@ -144,6 +144,20 @@ for (const m of serveur.matchAll(/sendFile\([^)]*'(?:public\/)?([\w-]+\.html)'/g
 for (const m of serveur.matchAll(/sendFile\(path\.join\(__dirname, 'public', '([\w-]+\.html)'\)\)/g)) {
   servies.add(m[1]);
 }
+/* **Et `page(res, '…')`, qui est la forme employée aujourd'hui.**
+
+   Les deux motifs du dessus ne connaissent que `sendFile`. Le serveur sert ses
+   pages par l'aide `page()` depuis qu'elles sont estampillées et jamais mises
+   en cache — plus une seule route ne correspond, et ce contrôle annonçait donc
+   **les vingt-deux pages du dossier** comme orphelines, à chaque exécution.
+
+   Un rouge permanent ne dit plus rien : il apprend à lire « 1 promesse non
+   tenue » et à passer. C'est exactement ce qu'un contrôle ne doit pas devenir,
+   et c'est pour ça qu'on le répare au lieu de le retirer — le jour où une page
+   ne sera vraiment servie par rien, il faut qu'on le voie. */
+for (const m of serveur.matchAll(/\bpage\(res,\s*'([\w-]+\.html)'\)/g)) {
+  servies.add(m[1]);
+}
 
 const orphelines = pages.filter((p) => !servies.has(p) && !SERVIES_A_PART.has(p));
 if (orphelines.length) {

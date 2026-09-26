@@ -40,11 +40,12 @@
    image a été gardée à tort. */
 const CACHE_IMAGES = 'tbf-images-1';
 
-/* La page servie quand le réseau ne répond pas. Écrite ici plutôt que cherchée
-   sur le serveur : celui qui la lira n'a justement pas de serveur. */
-const HORS_LIGNE = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+/* Les deux pages servies quand le jeu ne répond pas. Écrites ici plutôt que
+   cherchées sur le serveur : celui qui les lira n'a justement pas de serveur. */
+const ECRAN = (titre, mot, phrase, bouton) => `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Hors ligne — thebestfan</title>
+<title>${titre} — thebestfan</title>
 <style>
  html,body{margin:0;height:100%;background:#05070A;color:#F2EEE4;
    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -55,11 +56,37 @@ const HORS_LIGNE = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
  button{margin-top:22px;padding:12px 22px;border-radius:9px;border:1px solid #F5C33B;
    background:none;color:#F5C33B;font:inherit;font-size:14px;cursor:pointer}
 </style></head><body><div>
- <b>PAS DE RÉSEAU</b>
- <small>Le jeu se joue en direct : il lui faut une connexion.
- Dès qu'elle revient, tout reprend où tu l'avais laissé.</small>
- <button onclick="location.reload()">Réessayer</button>
+ <b>${mot}</b>
+ <small>${phrase}</small>
+ <button onclick="location.reload()">${bouton}</button>
 </div></body></html>`;
+
+const HORS_LIGNE = ECRAN('Hors ligne', 'PAS DE RÉSEAU',
+  `Le jeu se joue en direct : il lui faut une connexion.
+   Dès qu'elle revient, tout reprend où tu l'avais laissé.`,
+  'Réessayer');
+
+/* ## L'écran de redémarrage, et pourquoi il existe
+ *
+ * Quand le serveur du jeu n'est pas là — une mise en ligne, un redémarrage —
+ * l'hébergeur répond **à sa place** : « This website is currently undergoing
+ * maintenance », en anglais, sur un fond bleu, avec son logo à lui. Elle arrive
+ * en 200, avec du HTML valide : pour le navigateur, c'est une page comme une
+ * autre, et pour le joueur c'est le jeu qui est mort. Il n'a aucune raison de
+ * réessayer une minute plus tard, et beaucoup de raisons de ne pas revenir.
+ *
+ * On la reconnaît à ce qu'elle **n'a pas** : l'en-tête `x-tbf`, que toutes nos
+ * pages portent (voir `page()` dans `server.js`). Une réponse de navigation
+ * sans cette signature ne vient pas du jeu, quel que soit son code de statut.
+ *
+ * L'écran qui la remplace recharge tout seul : un redémarrage dure quelques
+ * secondes, et la seule chose à faire est d'attendre. Le faire à la place du
+ * joueur est exactement ce qu'on lui demanderait de faire. */
+const REDEMARRE = ECRAN('Le jeu revient', 'LE JEU REDÉMARRE',
+  `Ça arrive quand une nouvelle version est mise en ligne.
+   Cette page se recharge toute seule dans quelques secondes — rien n'est perdu.`,
+  'Recharger maintenant')
+  + `<script>setTimeout(function(){location.reload()},6000)</script>`;
 
 /* On prend la main tout de suite, sans attendre que tous les onglets se
    ferment. Le comportement par défaut ferait tourner l'ancien service worker
@@ -130,11 +157,31 @@ self.addEventListener('fetch', (e) => {
      seulement pour dire pourquoi. */
   if (request.mode === 'navigate') {
     e.respondWith((async () => {
-      try { return await fetch(request); }
-      catch {
-        return new Response(HORS_LIGNE,
-          { headers: { 'content-type': 'text/html; charset=utf-8' }, status: 503 });
-      }
+      const html = (corps, status) => new Response(corps,
+        { headers: { 'content-type': 'text/html; charset=utf-8' }, status });
+      let rep;
+      try { rep = await fetch(request); }
+      catch { return html(HORS_LIGNE, 503); }
+
+      /* La signature du jeu, ou rien. Voir `REDEMARRE` : une page d'hébergeur
+         arrive en 200 et a l'air parfaitement valide — c'est son absence de
+         `x-tbf` qui la trahit, et c'est le seul test qui tienne.
+
+         **On ne remplace que deux cas**, et la retenue est le sujet : une page
+         qui a l'air normale (2xx) sans notre signature, et une panne de
+         passerelle (502/503/504) sans notre signature. Tout le reste passe tel
+         quel — un 404 du jeu reste un 404, une erreur du jeu reste son erreur.
+         Annoncer « le jeu redémarre » devant une page introuvable serait
+         remplacer un mensonge par un autre.
+
+         Le doute profite à la page reçue : si l'en-tête n'est pas lisible pour
+         une raison qu'on n'a pas prévue, on montre ce que le serveur a
+         répondu plutôt que de cacher le jeu derrière un écran d'attente. */
+      let signee = true;
+      try { signee = rep.headers.has('x-tbf'); } catch { signee = true; }
+      const impostrice = !signee
+        && (rep.ok || rep.status === 502 || rep.status === 503 || rep.status === 504);
+      return impostrice ? html(REDEMARRE, 503) : rep;
     })());
   }
 });

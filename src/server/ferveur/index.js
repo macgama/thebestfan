@@ -183,7 +183,20 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         homeGoals: f.home_goals, awayGoals: f.away_goals,
       },
       emit: (event, payload) => io.to(`virage:${fixtureId}`).emit(event, payload),
-      onPush: (p) => souvenirs.recordPush(p),
+      /* **Le `catch` n'est pas de la politesse.**
+
+         La salle appelle ce crochet à chaque chant et ne l'attend pas : c'est
+         une écriture en base posée à côté du jeu, pour que la corde ne ralentisse
+         pas au rythme de MySQL. Mais une promesse lancée sans `catch` qui part
+         en erreur est une `unhandledRejection`, et Node ferme le processus
+         dessus — une table pleine, une connexion coupée, un verrou, et c'est
+         **tout le site** qui tombe pendant qu'un joueur chante.
+
+         La présence sert aux cartes-souvenirs et au classement : la perdre coûte
+         une ligne de ferveur à un supporter. La perdre en sortant tout le monde
+         du stade coûte le reste. */
+      onPush: (p) => souvenirs.recordPush(p)
+        .catch((e) => console.error(`[virage ${fixtureId}] présence non écrite :`, e.message)),
     });
   }
 
@@ -240,7 +253,31 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
   io.on('connection', (socket) => {
     const me = () => socket.data?.user ?? null;
 
-    socket.on('virage:join', async ({ fixtureId, camp } = {}) => {
+    /**
+     * Un gestionnaire qui ne peut pas emporter le processus avec lui.
+     *
+     * **C'est la panne la plus chère qu'on ait eue, et elle ne laissait aucune
+     * trace.** `socket.on('x', async …)` rend une promesse que socket.io ne
+     * regarde pas : si elle part en erreur, c'est une `unhandledRejection`, et
+     * Node ferme le processus dessus depuis la version 15. Une base qui bronche
+     * pendant qu'un seul joueur entre dans une tribune fermait donc le port —
+     * et tous les autres tombaient sur la page de maintenance de l'hébergeur,
+     * qui se lit comme « le jeu ne marche plus ».
+     *
+     * Le gain n'est pas d'avaler l'erreur : `virage:chant` et `virage:jouer`
+     * l'attrapaient déjà à l'intérieur, et pourtant le risque restait entier
+     * pour tout ce qui se passe **avant** leur `try`. Le filet est ici, à
+     * l'endroit où l'on ne peut pas l'oublier, et il répond au joueur au lieu
+     * de le laisser devant un écran qui ne réagit pas.
+     */
+    const sur = (nom, fn) => socket.on(nom, (...args) => {
+      Promise.resolve().then(() => fn(...args)).catch((e) => {
+        console.error(`[virage] ${nom}`, e);
+        socket.emit('virage:error', { code: 'ferveur.error.server' });
+      });
+    });
+
+    sur('virage:join', async ({ fixtureId, camp } = {}) => {
       const u = me();
       if (!u) return socket.emit('virage:error', { code: 'auth.error.unauthenticated' });
 
@@ -353,7 +390,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
       io.to(`virage:${room.fixture.id}`).emit('virage:crowd', { crowd: room.crowd() });
     });
 
-    socket.on('virage:chant', async ({ cardId, taps } = {}) => {
+    sur('virage:chant', async ({ cardId, taps } = {}) => {
       const u = me();
       if (!u) return;
       const fixtureId = roomOfUser.get(u.userId);
@@ -396,7 +433,7 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
      * l'intérêt de la chose — un Appel du capo qui n'est vu de personne
      * n'appelle personne.
      */
-    socket.on('virage:jouer', async ({ cardId } = {}) => {
+    sur('virage:jouer', async ({ cardId } = {}) => {
       const u = me();
       if (!u) return;
       const fixtureId = roomOfUser.get(u.userId);
@@ -571,10 +608,19 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
        l'écran : `journeeParId` rend alors une liste vide et l'on retombe sur
        la base — incomplète, mais jamais rien.
 
-       On ne garde que ce qui se joue : le Virage est un tir à la corde pendant
-       un vrai match, et une rencontre terminée n'a pas de tribune. */
+       **Et elle se superpose aussi quand le match est fini.** La ligne d'avant
+       écartait tout ce qui ne se jouait plus — « une rencontre terminée n'a pas
+       de tribune » — mais elle n'écartait que la **nouvelle** : la vieille ligne
+       de base restait en place, avec le statut du dernier relevé. Un match d'un
+       club suivi gardait donc « 2H, 90' » pendant les trois heures que dure la
+       fenêtre ci-dessus, longtemps après le coup de sifflet, et la liste avait
+       l'air de ne plus se mettre à jour du tout.
+
+       La règle se déplace donc d'un cran : la journée corrige **tout ce qu'on
+       connaît déjà**, et n'ajoute que ce qui se joue. Ce qui est fini sort par
+       `open`, plus bas, là où cette décision se prend. */
     for (const [id, m] of await journeeParId(jourDuFoot)) {
-      if (!m.live) continue;
+      if (!m.live && !parId.has(id)) continue;
       parId.set(id, {
         ...parId.get(id),
         id,
@@ -598,6 +644,21 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
        la ferveur compte plein ; ailleurs, on choisit son camp et elle compte
        moitié. Écrit une fois, lu par le tri et par la réponse. */
     const estMien = (m) => suivis.has(m.home_id) || suivis.has(m.away_id);
+
+    /**
+     * Dans combien de temps le coup d'envoi — zéro si c'est déjà commencé.
+     *
+     * Le zéro pour le passé est tout l'intérêt : une soustraction de dates rend
+     * un nombre **négatif** pour un match commencé, et un négatif est toujours
+     * plus petit qu'une demi-heure. Voir `open`, plus bas.
+     *
+     * Une date illisible rend `NaN`, donc zéro : une ligne sans coup d'envoi
+     * n'ouvre pas de tribune par accident.
+     */
+    const avantLeCoupDEnvoi = (m) => {
+      const dans = new Date(m.kickoff_at) - Date.now();
+      return dans > 0 && dans <= 30 * 60_000 ? dans : 0;
+    };
 
     /* L'ordre, maintenant que la liste couvre le monde entier.
        Un samedi soir, c'est trente rencontres : triées par heure de coup
@@ -641,8 +702,26 @@ export function createVirage({ pool, io, requireAuth, souvenirs, fanzzy,
         awayColors: teintes.get(f.away_id) ?? [],
         crowd: rooms.get(Number(f.id))?.crowd() ?? [0, 0],
         mien: estMien(f),
+        /* **Une tribune est ouverte pendant le match, et dans la demi-heure
+           qui le précède.**
+
+           La seconde moitié de cette condition n'avait pas de plancher :
+           `coup d'envoi − maintenant < 30 min` est vrai pour un match à venir
+           dans vingt minutes, et **tout aussi vrai** pour un match commencé il
+           y a deux heures, où la différence est négative. Toute rencontre de la
+           fenêtre de trois heures était donc « ouverte », coup de sifflet final
+           compris : on la voyait dans TES CLUBS avec sa minute, on pouvait
+           encore appuyer dessus, et elle n'en sortait jamais. C'est ce qui
+           faisait croire que la page ne se mettait plus à jour.
+
+           `fini` reste dans la réponse : la page dit « TERMINÉ » plutôt que de
+           griser une ligne sans expliquer pourquoi. Il ne porte que les trois
+           fins de match réelles — un report ou une annulation n'est pas un coup
+           de sifflet final, et l'écrire ainsi serait mentir pour remplir une
+           case. Ces lignes-là restent simplement éteintes. */
+        fini: ['FT', 'AET', 'PEN'].includes(f.status_short),
         open: ['1H', 'HT', '2H', 'ET', 'P', 'LIVE'].includes(f.status_short)
-          || new Date(f.kickoff_at) - Date.now() < 30 * 60_000,
+          || avantLeCoupDEnvoi(f) > 0,
       })),
       ferveurNeutre: RULES.ferveurNeutre,
     });

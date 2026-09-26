@@ -350,6 +350,26 @@ const bande = () => page.evaluate(() => ({
   check('le score de la tribune reste distinct, en haut',
     (await page.$eval('#score', (n) => n.textContent.trim())) === '0 – 0');
 
+  /* **Le score est lu par sa position, pas par une convention.**
+   *
+   * Le bandeau montrait EN FACE à gauche, le score au milieu, TA TRIBUNE à
+   * droite — et le score s'écrivait « toi d'abord », comme le reste du jeu. Un
+   * joueur qui gagnait la corde quatre fois lisait donc « 4 – 0 » collé au
+   * blason de l'adversaire, et en concluait qu'il perdait 4–0. La bande juste
+   * en dessous disait l'inverse à deux centimètres de là.
+   *
+   * On mesure les abscisses plutôt que l'ordre du document : c'est ce que voit
+   * le joueur, et un `row-reverse` mal placé ne se verrait pas autrement. */
+  check('le bandeau range ta tribune du côté de son chiffre',
+    await page.evaluate(() => {
+      const x = (sel) => {
+        const r = document.querySelector(sel)?.getBoundingClientRect();
+        return r && r.width ? r.left + r.width / 2 : null;
+      };
+      const [moi, score, eux] = [x('#clubMe'), x('#score'), x('#clubFoe')];
+      return moi != null && eux != null && moi < score && score < eux;
+    }));
+
   // Le débordement est le défaut classique d'une bande ajoutée à un écran plein.
   check('l’écran du virage ne défile toujours pas', await page.evaluate(() =>
     document.documentElement.scrollHeight <= document.documentElement.clientHeight + 1
