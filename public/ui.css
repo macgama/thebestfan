@@ -1015,45 +1015,25 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
   display:flex;align-items:center;gap:8px;flex:none;
   padding:calc(env(safe-area-inset-top) + 10px) 10px 0;
 }
-.tbf-moi{
-  display:flex;align-items:center;gap:9px;padding:6px 14px 6px 6px;
-  min-width:0;text-decoration:none;
-}
-.tbf-pastille{
-  width:38px;height:38px;flex:none;border-radius:11px;
-  display:grid;place-items:center;
-  font-family:var(--banner);font-size:19px;line-height:1;color:#1A0C04;
-  background:linear-gradient(150deg,var(--projo),#B8860B);
-}
-.tbf-moi b{
-  font-size:15px;font-weight:700;display:block;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:32vw;
-}
-.tbf-moi small{
-  display:block;font-size:11px;opacity:.55;margin-top:1px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:32vw;
-}
-/* Le petit  des jetons : il dit qu'on peut en avoir plus, sans ajouter
-   un bouton de plus dans une barre qui en compte déjà trois. Discret par
-   construction — s'il se lisait comme une action, il ferait concurrence au
-   nombre, qui est l'information principale. */
-.tbf-plus{font-family:var(--banner);font-size:12px;line-height:1;opacity:.45;
-  margin-left:1px;font-weight:400}
-.tbf-jeton{text-decoration:none;color:inherit}
-.tbf-jeton:active .tbf-plus{opacity:1;color:var(--projo)}
-
-/* L'identité cède la place, parce qu'elle est la seule qui le puisse : la
-   flèche, les jetons et le menu ont des tailles fixes et des rôles qu'on ne
-   peut pas réduire. Sans `min-width:0`, un enfant de flex refuse de descendre
-   sous sa taille minimale de contenu — c'est le même piège que `1fr` en
-   grille — et il pousse les autres dehors au lieu de se tronquer. */
-.tbf-moi{min-width:0;overflow:hidden}
-.tbf-moi > span{min-width:0;display:block}
-.tbf-moi b,.tbf-moi small{display:block;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;max-width:100%}
-/* Sous quatre cents pixels, la ligne du club s'efface. Un nom de club coupé
-   après trois lettres n'informe personne et occupe la place du pseudo. */
-@media (max-width:400px){ .tbf-moi small{display:none} }
+/* ## L'avatar et les deux jetons ne sont plus ici
+ *
+ * Cette barre a porté l'identité — pastille, pseudo, nom du club — et deux
+ * compteurs de monnaie. `nav.js` explique pourquoi ils sont partis : « sur
+ * trois cent soixante pixels, les cinq se disputaient la place […] et rien de
+ * tout ça ne disait **où l'on est**, qui est la seule chose qu'on demande à une
+ * barre ». Elle ne pose plus que la flèche, le titre et le menu.
+ *
+ * Leurs règles, elles, sont restées — une soixantaine de lignes décrivant un
+ * objet que plus aucune page ne construit. Du style mort n'est pas neutre dans
+ * une feuille partagée : il se lit comme du vocabulaire disponible, on le
+ * réemploie, et l'on hérite de contraintes écrites pour autre chose. Cette
+ * feuille en a déjà fait deux fois les frais — voir `.tbf-ep-jauge`, et le
+ * commentaire du jeton juste en dessous, qui raconte `.pack` gagnant contre
+ * lui et l'étalant sur trois cents pixels de haut.
+ *
+ * L'accueil garde les siennes, sans préfixe et chez lui : c'est le seul écran
+ * qui affiche encore une pastille et des jetons, et il les dessine à sa
+ * mesure. */
 
 /* Le nom de l'écran. Poussé à droite, il pousse le menu au bord et devient
    le centre de gravité de la barre — au lieu d'être un élément de plus dans
@@ -1067,24 +1047,12 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
   padding-right:2px}
 
-.tbf-bourse{display:flex;gap:6px;margin-left:auto;align-items:center}
-.tbf-jeton{
-  display:flex;align-items:center;gap:6px;padding:8px 11px;
-  font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;cursor:default;
-}
-.tbf-jeton i{width:15px;height:15px;flex:none;font-style:normal}
-/* Ciblés par attribut et non par classe : `.pack` est déjà, dans le
-   kiosque, la vignette d'un booster — et sa règle gagnait contre celle-ci,
-   ce qui étalait le jeton sur trois cents pixels de haut. Un attribut ne
-   risque pas d'être réutilisé par une page pour autre chose. */
-.tbf-jeton[data-jeton=ech] i{
-  border-radius:3px;
-  background:repeating-linear-gradient(45deg,var(--projo) 0 4px,var(--craie) 4px 8px);
-}
-.tbf-jeton[data-jeton=pack] i{
-  border-radius:50%;
-  background:radial-gradient(circle at 32% 30%,#FFB9AC,var(--flare) 55%,#8E1D12);
-}
+/* La bourse et ses deux jetons sont partis avec l'identité — voir plus haut.
+   La leçon qu'ils laissent, elle, est recopiée là où elle sert encore : leurs
+   pastilles étaient ciblées **par attribut** et non par classe, parce que
+   `.pack` désigne déjà la vignette d'un booster dans le kiosque et gagnait
+   contre elles, étalant le jeton sur trois cents pixels de haut. Un nom court
+   dans une feuille partagée finit toujours par appartenir à quelqu'un d'autre. */
 
 /* --------------------------------------------------------------- le menu */
 
@@ -1648,7 +1616,13 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
   touch-action:manipulation;-webkit-user-select:none;user-select:none;cursor:pointer}
 .tbf-ola-anneau i{position:absolute;left:50%;top:50%;width:9%;height:13%;
   margin:-6.5% 0 0 -4.5%;border-radius:5px;background:rgba(242,238,228,.12);
-  transform:rotate(calc(var(--a) * 1turn)) translateY(-300%) scaleY(var(--s,1));
+  /* `var(--a, 0)` : c'est la seule des dix variables posées par du code qui
+     n'avait pas de repli. `--a` est écrite en ligne par `geste.js` sur chaque
+     secteur ; le jour où un secteur se dessine sans elle, la propriété entière
+     devient invalide — donc plus de rotation **et** plus de `translateY`, et
+     les vingt-quatre secteurs de l'ola s'empilent au centre. Un anneau qui
+     s'effondre sur lui-même pour une variable absente, sans un mot. */
+  transform:rotate(calc(var(--a, 0) * 1turn)) translateY(-300%) scaleY(var(--s,1));
   transition:background .12s,transform .12s}
 .tbf-ola-anneau i.tbf-vague{background:#F5C33B;--s:1.45}
 .tbf-ola-anneau i.tbf-vague2{background:rgba(245,195,59,.45);--s:1.2}
@@ -1702,7 +1676,11 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
   background:rgba(242,238,228,.05);border:1px solid rgba(242,238,228,.1)}
 .tbf-ligne{position:absolute;left:0;right:0;top:82%;height:3px;background:#F5C33B;
   box-shadow:0 0 12px rgba(245,195,59,.7);pointer-events:none}
-.tbf-note{position:absolute;left:18%;right:18%;height:16px;margin-top:-8px;border-radius:8px;
+/* **`tbf-ep-note` et non `tbf-note`.** Même collision que pour la jauge : la
+   brique partagée du même nom est la petite ligne grise en pied de liste, et
+   celle-ci l'écrasait — une note de bas de page serait devenue une barre crème
+   de seize pixels qui tombe à travers l'écran. Voir `.tbf-ep-jauge`. */
+.tbf-ep-note{position:absolute;left:18%;right:18%;height:16px;margin-top:-8px;border-radius:8px;
   background:var(--craie);top:0;animation-name:tbfTombe;animation-timing-function:linear;
   animation-fill-mode:both;pointer-events:none}
 @keyframes tbfTombe{from{top:-4%}to{top:82%}}
@@ -1749,20 +1727,36 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
 /* Même défaut, même cause : la bande de la jauge est en position absolue,
    donc la boîte n'a pas de contenu dans le flux pour se dimensionner. Une
    hauteur à elle, plutôt qu'un pourcentage qui retombe sur `auto`. */
-.tbf-jauge{position:relative;width:min(70%,220px);height:min(58vh,320px);margin:0 auto;
+/* **`tbf-ep-jauge` et non `tbf-jauge`.**
+
+   Elle s'appelait `tbf-jauge`, comme la barre d'avancement des « petites
+   briques » quatre cent cinquante lignes plus haut — celle de la collection, de
+   la saison, du remplissage d'un deck. Deux composants sans aucun rapport sous
+   un seul nom, et c'est celui-ci qui gagnait, étant le dernier : **toute barre
+   d'avancement qui aurait employé la brique partagée serait devenue une colonne
+   de trois cent vingt pixels de haut.**
+
+   Personne ne s'en est aperçu parce que personne n'a pu s'en servir : sept
+   pages se sont réécrit leur propre jauge et leur propre tourniquet, ce qui est
+   exactement la duplication que la section des briques disait faire cesser.
+   La brique était là, elle était juste inutilisable.
+
+   C'est l'épreuve qu'on renomme et non la brique : la brique est le vocabulaire
+   commun, l'épreuve n'a que deux points d'appel dans `geste.js`. */
+.tbf-ep-jauge{position:relative;width:min(70%,220px);height:min(58vh,320px);margin:0 auto;
   border-radius:12px;background:rgba(242,238,228,.05);
   border:1px solid rgba(242,238,228,.14);overflow:hidden;
   touch-action:none;-webkit-user-select:none;user-select:none;cursor:ns-resize}
-.tbf-jauge .bande{position:absolute;left:0;right:0;background:rgba(30,158,106,.24);
+.tbf-ep-jauge .bande{position:absolute;left:0;right:0;background:rgba(30,158,106,.24);
   border-top:1px solid rgba(30,158,106,.7);border-bottom:1px solid rgba(30,158,106,.7);
   /* Sans transition : la bande **saute**, c'est le geste. Une transition la
      ferait glisser et rendrait le saut rattrapable en anticipant. */
   pointer-events:none}
-.tbf-jauge .curseur{position:absolute;left:8%;right:8%;height:5px;margin-bottom:-2.5px;
+.tbf-ep-jauge .curseur{position:absolute;left:8%;right:8%;height:5px;margin-bottom:-2.5px;
   border-radius:3px;background:var(--craie);box-shadow:0 0 12px rgba(0,0,0,.7);
   pointer-events:none;transition:background .1s}
-.tbf-jauge .curseur.dedans{background:#1E9E6A;box-shadow:0 0 16px rgba(30,158,106,.7)}
-.tbf-jauge .s{position:absolute;left:0;right:0;bottom:6px;text-align:center;
+.tbf-ep-jauge .curseur.dedans{background:#1E9E6A;box-shadow:0 0 16px rgba(30,158,106,.7)}
+.tbf-ep-jauge .s{position:absolute;left:0;right:0;bottom:6px;text-align:center;
   font-size:10px;letter-spacing:.1em;opacity:.45;pointer-events:none}
 
 
@@ -1775,7 +1769,13 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
    question porte sur quelque chose qui se voit derrière — un Fanzzy, un deck,
    un KOP — et l'écran doit reculer sans disparaître. */
 .tbf-dial-fond{position:fixed;inset:0;z-index:160;display:grid;place-items:center;
-  padding:20px;background:rgba(5,8,12,.72);backdrop-filter:blur(7px);
+  /* Le préfixe Safari manquait ici et sur la montée de niveau — les deux seuls
+     flous de la feuille à ne pas l'avoir. Sur iPhone, le voile de la boîte de
+     confirmation restait donc net : on demande « es-tu sûr ? » par-dessus une
+     page parfaitement lisible, et c'est précisément ce que le flou est là pour
+     empêcher — il dit que la page d'en dessous attend. */
+  padding:20px;background:rgba(5,8,12,.72);
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
   opacity:0;transition:opacity .18s ease}
 .tbf-dial-fond.on{opacity:1}
 
@@ -1869,7 +1869,10 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
    `z-index` au-dessus du dialogue : une montée tombe à la fin d'un booster ou
    d'un duel, et rien de ce qui pourrait traîner ne doit passer devant. */
 .tbf-niv-fond{position:fixed;inset:0;z-index:170;display:grid;place-items:center;
-  padding:20px;background:rgba(4,6,10,.88);backdrop-filter:blur(9px);
+  /* Voir `.tbf-dial-fond` : le préfixe Safari, sans lequel iPhone n'a pas de
+     flou du tout. */
+  padding:20px;background:rgba(4,6,10,.88);
+  backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
   opacity:0;transition:opacity .2s ease}
 .tbf-niv-fond.on{opacity:1}
 
