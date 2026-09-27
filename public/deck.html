@@ -587,6 +587,11 @@ const MESSAGES = {
                                 + 'ne servira pas en duel.',
   'deck.warn.useless_evolution_card': '« Relève » ne sert à rien tant qu’aucun de tes '
                                 + 'Fanzzy n’a d’âge débloqué. Elle occupe un emplacement pour rien.',
+  /* Le serveur n'envoie jamais ce code : c'est la page qui le lève quand la
+     réponse n'est pas du JSON. Il a sa phrase ici pour la même raison que les
+     autres — « Serveur injoignable » est vrai mais n'aide personne, alors que
+     « réessaie dans un instant » dit quoi faire. */
+  'deck.error.illisible': 'Le serveur n’a pas répondu correctement. Réessaie dans un instant.',
 };
 
 const api = async (path, { method = 'GET', body } = {}) => {
@@ -597,7 +602,21 @@ const api = async (path, { method = 'GET', body } = {}) => {
     body: body ? JSON.stringify(body) : undefined,
   });
   if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
-  const j = await r.json().catch(() => ({}));
+  /* **Le corps du refus compte**, et c'est pourquoi on le lit quel que soit le
+     code : le serveur répond `{ error: … }` sur un deck invalide, et ce sont ces
+     phrases-là que `MESSAGES` traduit.
+
+     Mais une réponse qui n'est **pas du JSON** — une page d'erreur de
+     l'hébergeur, un proxy qui répond à la place du serveur — donnait un objet
+     vide. `charger` enchaînait alors sur `mien.possede.stades` et levait une
+     `TypeError` : le joueur lisait bien « Impossible de charger ton deck », mais
+     par accident, et la console ne disait rien de la vraie cause. On échoue
+     donc en le nommant. */
+  const j = await r.json().catch(() => null);
+  if (!j) {
+    console.warn(`[deck] ${path} : ${r.status}, et ce n’est pas du JSON`);
+    throw Object.assign(new Error('reponse illisible'), { code: 'deck.error.illisible' });
+  }
   if (j.error) throw Object.assign(new Error(j.error), { code: j.error, detail: j.detail });
   return j;
 };
