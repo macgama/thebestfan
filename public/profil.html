@@ -359,7 +359,16 @@ async function api(base, path, body, method) {
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
-  const j = await r.json().catch(() => ({}));
+  /* Le corps du refus se lit quel que soit le code — c'est lui qui porte
+     `error`. Mais une réponse qui n'est **pas du JSON** rendait un objet vide,
+     et le profil affichait alors des compteurs à zéro et des listes vides au
+     lieu de dire que le serveur ne répond pas. Voir `cartes.js`, où le même
+     défaut laissait la fiche d'un Fanzzy entièrement blanche. */
+  const j = await r.json().catch(() => null);
+  if (!j) {
+    console.warn(`[profil] ${base}${path} : ${r.status}, et ce n’est pas du JSON`);
+    throw Object.assign(new Error('reponse illisible'), { code: 'app.error.illisible' });
+  }
   if (j.error) throw Object.assign(new Error(j.error), { code: j.error });
   return j;
 }
