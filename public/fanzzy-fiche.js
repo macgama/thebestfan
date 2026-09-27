@@ -60,7 +60,23 @@
       body: corps === undefined ? undefined : JSON.stringify(corps),
     });
     if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
-    const j = await r.json().catch(() => ({}));
+    /* **La copie de `cartes.js` est voulue** : cette fiche s'affiche aussi à
+       l'adresse `/fanzzy/<id>`, qui ne charge pas les quatre-vingts kilo-octets
+       du classeur. Mais son *comportement* doit être le même, et il ne l'était
+       pas.
+
+       Une réponse qui n'est pas du JSON rendait `{}` : `ouvrir` recevait un
+       objet vide au lieu de lever, son `catch` — celui qui sait dire « Ce
+       Fanzzy est introuvable » — n'était jamais atteint, et `rendre()` levait
+       trois lignes plus loin sur `d.fanzzy.type`. **La page restait blanche**
+       alors que le message existait, écrit, juste à côté.
+
+       Vu en ouvrant `/fanzzy/TR32` dans un vrai navigateur, serveur muet. */
+    const j = await r.json().catch(() => null);
+    if (!j) {
+      console.warn(`[fiche] ${chemin} : ${r.status}, et ce n’est pas du JSON`);
+      throw Object.assign(new Error('reponse illisible'), { code: 'app.error.illisible' });
+    }
     if (j.error) throw Object.assign(new Error(j.error), { code: j.error });
     return j;
   };
