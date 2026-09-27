@@ -362,33 +362,52 @@
        sans ouvrir, sur la ligne du Virage pour qu'on sache où elle mène.
 
        `mien` : la liste couvre tous les matchs en direct, et une pastille
-       allumée en permanence ne prévient plus de rien. */
-    void pastille('tbf-pip-virage', '/api/virage/live',
-      (d) => d?.matchs?.some((m) => m.open && m.mien)).then((on) => {
-      if (!on) return;
-      bouton.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
-      tiroir.querySelector('a[href="/virage"]')
-        ?.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
-    });
+       allumée en permanence ne prévient plus de rien.
+
+       **Sauf sur les deux écrans qui montrent déjà le match.** L'accueil
+       affiche la rencontre en cours dans sa bande du bas, le Grand Virage en
+       donne la liste entière : une pastille y dit, en six pixels et sans le
+       nommer, ce que l'écran raconte en toutes lettres juste à côté. Et elle le
+       dit au prix de `/api/virage/live`, la route la plus chère du jeu —
+       demandée une seconde fois sur ces deux pages, puisque toutes deux
+       l'appellent déjà pour leur propre compte. Une pastille redondante n'est
+       pas neutre : elle coûte un aller-retour, et elle apprend à ne plus
+       regarder les pastilles. */
+    if (!['/', '/virage'].includes(chemin)) {
+      void pastille('tbf-pip-virage', '/api/virage/live',
+        (d) => d?.matchs?.some((m) => m.open && m.mien)).then((on) => {
+        if (!on) return;
+        bouton.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
+        tiroir.querySelector('a[href="/virage"]')
+          ?.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
+      });
+    }
 
     /* Et la même pastille quand quelqu'un attend un duel. Une file ne vit que
        deux minutes, le temps qu'un joueur est devant son écran : quand elle
        existe, c'est que quelqu'un attend **maintenant**, et le dire est la
        seule chance qu'il trouve du monde. Deux pastilles au plus, jamais
-       allumées pour rien. */
-    void pastille('tbf-pip-duel', '/api/nvn/attentes',
-      (d) => ((d?.alerte?.camps?.[0] ?? 0) + (d?.alerte?.camps?.[1] ?? 0)) > 0)
-      .then((on) => {
-        if (!on) return;
-        const duel = tiroir.querySelector('a[href="/duel-nvn"]');
-        if (!duel) return;
-        duel.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
-        // Sur le bouton aussi, s'il n'y en a pas déjà une : on prévient d'une
-        // chose à faire, pas de laquelle.
-        if (!bouton.querySelector('.pip')) {
-          bouton.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
-        }
-      });
+       allumées pour rien.
+
+       Même retenue qu'au-dessus, et pour les deux mêmes raisons : l'accueil
+       nomme déjà le club qui manque sur son bouton d'entrée — « il manque 2
+       supporters de Vissel Kobe », ce qu'un point rouge ne dira jamais — et sur
+       l'écran du duel, on y est. */
+    if (!['/', '/duel-nvn'].includes(chemin)) {
+      void pastille('tbf-pip-duel', '/api/nvn/attentes',
+        (d) => ((d?.alerte?.camps?.[0] ?? 0) + (d?.alerte?.camps?.[1] ?? 0)) > 0)
+        .then((on) => {
+          if (!on) return;
+          const duel = tiroir.querySelector('a[href="/duel-nvn"]');
+          if (!duel) return;
+          duel.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
+          // Sur le bouton aussi, s'il n'y en a pas déjà une : on prévient d'une
+          // chose à faire, pas de laquelle.
+          if (!bouton.querySelector('.pip')) {
+            bouton.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
+          }
+        });
+    }
 
     return { tiroir, voile, ouvrir };
   }

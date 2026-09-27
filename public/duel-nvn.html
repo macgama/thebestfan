@@ -2435,9 +2435,34 @@ function fermerGeste(taps) {
  * Ce qui reste à cette page, c'est son balisage : elle dit où poser le titre
  * et la zone de jeu, le fichier partagé dit ce qui s'y passe.
  */
+/*
+ * ## Et il rend la main, quoi qu'il arrive
+ *
+ * `jouer` ne rejette jamais de lui-même — son `switch` a une branche par
+ * défaut — mais son exécuteur peut **lever**, et il n'y avait aucun
+ * rattrapage : la promesse partait en erreur, `ouvrirGeste` ne se dénouait
+ * jamais, et le `await` du gestionnaire de chants attendait pour toujours.
+ *
+ * Ce qu'un joueur voyait : **le panneau de l'épreuve figé sur l'écran**, la
+ * corde cachée dessous, `S.occupe` resté vrai — donc plus un seul chant pour
+ * le reste du duel. Et un duel a un adversaire et un chronomètre : rester
+ * bloqué, c'est perdre. Même défaut au Grand Virage, corrigé de la même façon.
+ */
 function lancer(kind, cfg, resolve) {
-  window.TBF_GESTE.jouer(kind, cfg, { zone: $('miniZone') })
-    .then((taps) => resolve(fermerGeste(taps)));
+  const rate = (e) => {
+    console.error('[duel] le geste a levé :', e);
+    resolve(fermerGeste(null));
+  };
+  try {
+    window.TBF_GESTE.jouer(kind, cfg, { zone: $('miniZone') })
+      .then((taps) => resolve(fermerGeste(taps)))
+      .catch(rate);
+  } catch (e) {
+    /* Une levée **synchrone**, avant que la promesse existe : le `catch`
+       ci-dessus ne la verrait pas, elle remonterait dans le `setTimeout` du
+       compte à rebours, hors de toute reprise. */
+    rate(e);
+  }
 }
 
 /* ------------------------------------------------------------ gestes UI */
@@ -2490,11 +2515,18 @@ $('chants').addEventListener('click', async (e) => {
   if (!cfg) return toast('Le serveur n\u2019a pas envoyé le barème du geste.');
 
   S.occupe = true;
-  /* Le geste vient de **la carte**, comme au Virage. C'est ce que le serveur
-     notera : lui envoyer autre chose ne changerait rien, il relit la carte. */
-  const taps = await ouvrirGeste(carte.gest, cfg);
-  socket.emit('nvn:chant', { cardId: carte.id, taps });
-  S.occupe = false;
+  try {
+    /* Le geste vient de **la carte**, comme au Virage. C'est ce que le serveur
+       notera : lui envoyer autre chose ne changerait rien, il relit la carte. */
+    const taps = await ouvrirGeste(carte.gest, cfg);
+    if (taps) socket.emit('nvn:chant', { cardId: carte.id, taps });
+    else toast('Ce geste n’a pas été enregistré — recommence.');
+  } finally {
+    /* **Dans un `finally`.** Il était après l'envoi, donc sauté dès que quoi
+       que ce soit levait au-dessus — et `S.occupe` resté vrai éteint les chants
+       pour le reste du duel, pendant que l'adversaire continue. */
+    S.occupe = false;
+  }
 });
 
 $('mainCartes').addEventListener('click', (e) => {

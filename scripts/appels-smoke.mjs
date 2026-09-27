@@ -368,5 +368,64 @@ console.log('\n— les refus');
     orphelines.length === 0);
 }
 
+/* =============================== et les refus du Virage, qui manquaient ici
+ *
+ * **Le contrôle du dessus ne regardait que le duel**, et il le disait : « le
+ * Virage a sa page ». Personne ne regardait celle-là. Dix-sept refus y
+ * tombaient sur « Refusé par le serveur » — tout le contrôle anti-triche des
+ * quatorze mini-jeux.
+ *
+ * Deux raisons, et chacune suffisait :
+ *
+ *   — le motif ne connaissait que `new Cheat`, jamais `new Triche`, qui est la
+ *     classe des épreuves ;
+ *   — et il cherchait `([a-z_]+)`, **sans le point**. Les codes d'épreuve
+ *     s'écrivent `trace.trop_longue`, `reponse.trop_reguliere` : aucun ne
+ *     pouvait correspondre, même en visant le bon fichier.
+ *
+ * Un contrôle qui ne peut structurellement rien trouver est pire qu'absent : il
+ * compte dans le vert et laisse croire que la question est traitée.
+ *
+ * ## Les familles
+ *
+ * La page ne nomme pas les dix-sept un par un — elle répond à la **raison** du
+ * refus, qui se répète d'une épreuve à l'autre : `.trop_rapide`, `.invalide`,
+ * `.hors_delai`… Voir `familleDuRefus` dans `virage.html`, et le commentaire
+ * qui explique pourquoi dix-sept lignes écrites à la main redeviendraient
+ * incomplètes à la prochaine épreuve.
+ *
+ * Les suffixes sont donc recopiés ici, et c'est assumé : un contrôle qui lirait
+ * sa référence dans le fichier qu'il contrôle serait d'accord avec lui par
+ * construction. Le jour où une famille change de nom d'un seul côté, celui-ci
+ * rougit — et c'est exactement ce qu'on lui demande.
+ */
+console.log('\n— les refus du Virage');
+{
+  const src = (f) => readFileSync(path.join(PUB, '..', f), 'utf8');
+  const serveur = ['virage.js', 'gestures.js', 'epreuves.js', 'index.js']
+    .map((f) => blanchir(src(`src/server/ferveur/${f}`), { chaines: false })).join('\n');
+
+  /* `Cheat` **et** `Triche`, et le point dans le nom. */
+  const emis = new Set([...serveur.matchAll(/new (?:Cheat|Triche)\('([a-z_.]+)'\)/g)]
+    .map((m) => `ferveur.error.${m[1]}`));
+  /* Les deux que la couche réseau envoie sans passer par une exception. */
+  for (const c of [...serveur.matchAll(/code:\s*'([a-z]+\.error\.[a-z_.]+)'/g)]) {
+    emis.add(c[1]);
+  }
+
+  const page = src('public/virage.html');
+  const nommes = new Set([...page.matchAll(/'([a-z]+\.error\.[a-z_.]+)'\s*:/g)].map((m) => m[1]));
+  const FAMILLES = [/\.trop_rapide$/, /\.trop_reguliere$/, /\.trop_juste$/, /\.hors_delai$/,
+    /\.(?:trop_nombreuses|trop_nombreux|trop_longue)$/, /\.invalide$/,
+    /^ferveur\.error\.(?:epreuve|consigne)\./];
+
+  check(`le Virage peut refuser de ${emis.size} façons`, emis.size >= 20);
+  const muets = [...emis]
+    .filter((c) => !nommes.has(c) && !FAMILLES.some((f) => f.test(c)));
+  check(muets.length
+    ? `${muets.length} refus s’affichent en code brut : ${muets.join(', ')}`
+    : 'et chacun a sa phrase, nommément ou par famille', muets.length === 0);
+}
+
 console.log(fautes ? `\n${fautes} faute(s)` : '\ntout est vert');
 process.exit(fautes ? 1 : 0);

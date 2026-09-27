@@ -1033,9 +1033,62 @@ function fail(code) {
     'ferveur.error.unknown_gesture':'Ce geste est inconnu du serveur — recharge la page',
     'ferveur.error.unknown_effect':'Cette carte est inconnue du serveur — recharge la page',
     'ferveur.error.unknown_card':'Cette carte n’existe plus — recharge la page',
-  })[code] ?? 'Refusé par le serveur';
+
+    /* **Les deux refus qui ne viennent pas du jeu.** Le premier arrive quand la
+       session a expiré pendant qu'on poussait — le plus déroutant de tous, car
+       rien à l'écran n'a changé et tout est soudain refusé. Le second est le
+       refus générique du serveur, celui qu'il rend quand quelque chose a cassé
+       chez lui : le joueur n'y peut rien, mais il a droit à savoir que ce n'est
+       pas son geste qui était mauvais. */
+    'auth.error.unauthenticated':'Ta session a expiré — reconnecte-toi',
+    'ferveur.error.server':'Le serveur n’a pas pu traiter ça — réessaie',
+  })[code] ?? familleDuRefus(code) ?? 'Refusé par le serveur';
   e.className = 'err on';
   clearTimeout(e._t); e._t = setTimeout(() => { e.className = 'err'; }, 2600);
+}
+
+/**
+ * Ce qu'on dit d'un refus d'épreuve que la table ne nomme pas un par un.
+ *
+ * ## Dix-sept refus tombaient sur le repli
+ *
+ * Le contrôle anti-triche des quatorze mini-jeux — `Triche` dans
+ * `epreuves.js` — lève des codes en `ferveur.error.<quoi>.<pourquoi>` :
+ * `trace.trop_longue`, `reponse.trop_reguliere`, `lancer.trop_rapide`… La table
+ * du dessus n'en connaissait aucun, et le joueur lisait « Refusé par le
+ * serveur » — la phrase dont le commentaire d'à côté dit qu'elle « ne dit rien
+ * à personne ». Elle le disait dix-sept fois de plus.
+ *
+ * Et ce sont les pires à ne pas nommer : ils parlent de **la manière de faire
+ * le geste**, jamais de la carte. Quelqu'un dont le tracé part trop vite n'a
+ * aucun moyen de deviner ce qu'on lui reproche, donc aucun moyen de corriger —
+ * il conclut que l'épreuve est cassée, et il a raison de le croire.
+ *
+ * ## Pourquoi des familles et non dix-sept lignes de plus
+ *
+ * Parce que dix-sept lignes écrites à la main redeviendraient dix-sept lignes
+ * incomplètes à la prochaine épreuve ajoutée — c'est très exactement ce qui
+ * vient d'arriver à la table. La seconde moitié du code dit **pourquoi** c'est
+ * refusé, et cette moitié-là se répète d'une épreuve à l'autre : un tracé trop
+ * long et trop de frappes sont le même reproche. On répond donc à la raison,
+ * qui est ce que le joueur a besoin d'entendre, et une épreuve neuve est
+ * couverte le jour où elle arrive.
+ */
+function familleDuRefus(code) {
+  const c = String(code ?? '');
+  if (/\.trop_rapide$/.test(c)) return 'Trop vite : le geste n’a pas pu être mesuré';
+  if (/\.trop_reguliere$/.test(c)) return 'Trop régulier pour une main — va à ton rythme';
+  if (/\.trop_juste$/.test(c)) return 'Répondu avant d’avoir pu lire la consigne';
+  if (/\.hors_delai$/.test(c)) return 'Trop tard : l’épreuve était déjà finie';
+  if (/\.(trop_nombreuses|trop_nombreux|trop_longue)$/.test(c)) return 'Trop de gestes d’un coup';
+  if (/\.invalide$/.test(c)) return 'Ce geste n’a pas été compris — recommence';
+  /* Un désaccord entre la page et le serveur, pas une faute du joueur : la page
+     n'a pas été rechargée depuis une mise en ligne. Même conseil que pour les
+     trois « inconnu du serveur » de la table. */
+  if (/^ferveur\.error\.(epreuve|consigne)\./.test(c)) {
+    return 'Cette épreuve est inconnue du serveur — recharge la page';
+  }
+  return null;
 }
 
 
@@ -1083,20 +1136,67 @@ function closeMini(taps) {
  * porteur. Les avoir écrites en dur a déjà coûté cher : un joueur équipé
  * tapait juste sur ce qu'on lui montrait et récoltait 0,36 au lieu de 0,99.
  */
+/*
+ * ## Et il rend la main, quoi qu'il arrive
+ *
+ * `jouer` ne rejette jamais de lui-même, et son `switch` a une branche par
+ * défaut : un geste inconnu retombe sur le martelage et se termine. Mais son
+ * exécuteur peut **lever** — une zone absente, un élément que la page n'a pas
+ * encore posé — et il n'y avait aucun rattrapage : la promesse partait en
+ * erreur, `openMini` ne se dénouait ni dans un sens ni dans l'autre, et le
+ * `await` en dessous attendait pour toujours.
+ *
+ * Ce qu'un joueur voyait alors : **le panneau de l'épreuve figé sur l'écran**,
+ * la corde cachée dessous, et plus aucun chant possible pour le reste du match.
+ * `busy` restait vrai, donc même en refermant on ne pouvait plus rien. La seule
+ * issue était de recharger — c'est-à-dire de passer outre l'avertissement que
+ * `nav.js` affiche justement pour dire que recharger coûte quelque chose.
+ *
+ * Une exception dans mille lignes de moteur de gestes ne doit pas coûter le
+ * match. On rend `null`, la main se referme, et le joueur lit qu'il faut
+ * recommencer.
+ */
 function run(card, resolve) {
-  window.TBF_GESTE.jouer(card.gest, S?.you?.gestes, { zone: $('miniZone') })
-    .then((taps) => resolve(closeMini(taps)));
+  const rate = (e) => {
+    console.error('[virage] le geste a levé :', e);
+    resolve(closeMini(null));
+  };
+  try {
+    window.TBF_GESTE.jouer(card.gest, S?.you?.gestes, { zone: $('miniZone') })
+      .then((taps) => resolve(closeMini(taps)))
+      .catch(rate);
+  } catch (e) {
+    /* Une levée **synchrone**, avant même que la promesse existe. Le `catch`
+       ci-dessus ne la verrait pas : elle remonterait dans le `setTimeout` du
+       compte à rebours, hors de toute reprise. */
+    rate(e);
+  }
 }
 
 $('hand').addEventListener('pointerdown', async (e) => {
   const el = e.target.closest('[data-card]');
   if (!el || busy || !S) return;
   const card = S.cards.find((c) => c.id === el.dataset.card);
+  /* **La carte peut avoir disparu de la main.** Le répertoire tourne toutes les
+     dix minutes de match — voir `virage:repertoire` — et le doigt peut tomber
+     pendant l'échange. `card.cost` sur un indéfini levait dans un gestionnaire
+     d'événement : rien ne s'affichait, et le chant suivant marchait comme si de
+     rien n'était, ce qui est le plus sûr moyen de ne jamais comprendre. */
+  if (!card) return;
   if (souffleCourant() < card.cost) return fail('ferveur.error.not_enough_breath');
   busy = true; render();
-  const taps = await openMini(card);
-  socket.emit('virage:chant', { cardId: card.id, taps });
-  busy = false;
+  try {
+    const taps = await openMini(card);
+    if (taps) socket.emit('virage:chant', { cardId: card.id, taps });
+    else fail('ferveur.error.bad_taps');
+  } finally {
+    /* **Dans un `finally`.** Il était après l'envoi, donc sauté dès que
+       quoi que ce soit levait au-dessus — et `busy` resté vrai éteint la main
+       pour le reste du match. Le second `render` était absent aussi : les
+       cartes restaient grises jusqu'au battement d'horloge suivant. */
+    busy = false;
+    render();
+  }
 });
 
 /* ----------------------------------------------------- le stade
