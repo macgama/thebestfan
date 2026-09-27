@@ -825,7 +825,7 @@
           const sommets = g.sommets ?? [];
           const largeur = g.largeur ?? 0.15;
           rendre = { mesures: [] };
-          zone.innerHTML = `<div class="tbf-jauge" id="pad">
+          zone.innerHTML = `<div class="tbf-ep-jauge" id="pad">
             <div class="bande" id="bande"></div>
             <div class="curseur" id="cur"></div>
             <div class="s" id="s">GLISSE LE DOIGT — RESTE DANS LA BANDE</div></div>`;
@@ -1089,7 +1089,7 @@
           for (const n of notes) {
             apres(Math.max(0, n.t - approche), () => {
               const el = document.createElement('i');
-              el.className = 'tbf-note';
+              el.className = 'tbf-ep-note';
               /* Si l'épreuve a démarré en retard sur la note, elle part déjà
                  avancée : elle doit toucher la ligne à l'heure, pas plus tard. */
               const reste = Math.max(60, n.t - maintenant());
