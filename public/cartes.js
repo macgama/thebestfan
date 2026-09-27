@@ -157,7 +157,29 @@ const api = async (path, body, method) => {   // eslint-disable-line no-unused-v
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (res.status === 401) { location.href = '/compte'; throw new Error('auth'); }
-  const json = await res.json().catch(() => ({}));
+  /* **Le corps du refus se lit quel que soit le code**, parce que c'est lui qui
+     porte `error` — le kiosque en tire « Plus de booster », « Pas assez
+     d'écharpes ». Mais une réponse qui n'est **pas du JSON** rendait un objet
+     vide, et c'est la faute la plus chère de ce fichier :
+
+       — la fiche d'un Fanzzy recevait `{}`, donc `d.fanzzy` indéfini, et
+         `rendre()` levait sur `f.type`. La page restait blanche alors que son
+         `catch` savait dire « Ce Fanzzy est introuvable » — il n'était jamais
+         atteint, puisque rien n'avait été jeté ;
+       — le kiosque recevait `{}` pour son catalogue, `chargerCatalogue` levait
+         « catalogue incomplet » depuis son propre contrôle, et le démarrage
+         mourait sans un mot.
+
+     Les deux se sont vus le jour où les pages ont été ouvertes dans un vrai
+     navigateur avec un serveur muet — jamais avant, parce qu'un serveur qui
+     répond ne produit jamais ce cas. On échoue donc en le nommant, et les
+     `catch` déjà écrits partout font enfin leur travail. */
+  const json = await res.json().catch(() => null);
+  if (!json) {
+    console.warn(`[cartes] ${path} : ${res.status}, et ce n’est pas du JSON`);
+    throw Object.assign(new Error('reponse illisible'),
+      { code: 'app.error.illisible' });
+  }
   if (json.error) {
     throw Object.assign(new Error(json.error), { code: json.error, detail: json.detail });
   }

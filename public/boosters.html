@@ -1344,8 +1344,30 @@ setInterval(tickRegen, 1000);
 
      Il ne lève jamais : sans manifeste, la page s'affiche comme avant. */
   await Promise.resolve(window.TBF_ETATS?.charger?.()).catch(() => null);
-  await chargerCatalogue();
-  await load();
+  try {
+    await chargerCatalogue();
+    await load();
+  } catch (e) {
+    /* **Le démarrage n'avait aucun rattrapage.** Une erreur ici — catalogue
+       incomplet, serveur muet, session expirée — tuait la fonction anonyme en
+       silence : le kiosque restait sur son balisage d'origine, sans paquet,
+       sans message et sans rien qui dise pourquoi. Le joueur voit un écran qui
+       ne répond pas, et c'est tout ce qu'il peut en dire.
+
+       `auth` sort sans rien afficher : `api` est déjà en train de rediriger
+       vers la page de connexion, et un message qui s'affiche pendant qu'on
+       change de page ne fait que clignoter. */
+    if (e.message === 'auth') return;
+    console.error('[kiosque] démarrage', e);
+    const a = document.getElementById('annonce');
+    if (a) {
+      a.textContent = e.code === 'app.error.illisible'
+        ? 'Le serveur n’a pas répondu correctement. Réessaie dans un instant.'
+        : 'Le kiosque n’a pas pu se charger. Recharge la page.';
+      a.hidden = false;
+    }
+    return;
+  }
   renderKiosque();
   buildCarousel();
   tickRegen();
