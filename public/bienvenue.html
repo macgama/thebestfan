@@ -238,6 +238,9 @@ input:focus{outline:none;border-color:var(--projo)}
       <input id="q" placeholder="Cherche ton club ou ton pays…" autocomplete="off" spellcheck="false">
       <div class="res" id="res"></div>
       <button class="go tbf-plaque" data-ton="flare" id="b2" disabled>C'EST MON CLUB</button>
+      <!-- Le refus, s'il y en a un. Vide et sans place tant qu'il n'y a rien à
+           dire : voir `.sub:empty` dans la feuille de cette page. -->
+      <p class="sub" id="msg2" style="margin-top:10px;color:var(--flare)"></p>
     </div>
   </section>
 
@@ -402,21 +405,38 @@ $('res').onclick = (e) => {
 
 $('b2').onclick = async () => {
   $('b2').disabled = true;
+  $('msg2').textContent = '';
   try {
     const r = await fetch('/api/me/welcome', {
       method:'POST', credentials:'same-origin',
       headers:{ 'content-type':'application/json' },
       body: JSON.stringify({ teamId: club.id }),
     });
-    const j = await r.json();
+    /* `?? {}` : une réponse qui n'est pas du JSON — page d'erreur de
+       l'hébergeur, proxy qui répond à la place du serveur — faisait lever
+       `r.json()` avec une `SyntaxError` dont le message parle d'un chevron
+       inattendu. On tombait alors dans le refus générique, ce qui était juste,
+       mais par accident. */
+    const j = await r.json().catch(() => ({}));
     if (j.error) throw new Error(j.error);
+    if (!r.ok) throw new Error('onboarding.error.serveur');
     cartes = j.cartes;
     scene(3);
     preparerPaquet();
   } catch (e) {
+    /* **C'était un `alert()`.** La boîte grise du navigateur, en police
+       système, précédée de « thebestfan.online indique » — sur le tout premier
+       écran du jeu, à la seconde où l'on vient de choisir son club. C'est
+       exactement ce que `dialogue.js` existe pour bannir : « elle sort de
+       l'univers du jeu à l'instant précis où l'on demande au joueur de
+       s'engager ».
+       La page savait déjà dire une panne dans son propre style — « Recherche
+       indisponible », sous le champ de recherche. On dit celle-ci pareil. */
     $('b2').disabled = false;
-    alert(e.message === 'onboarding.error.already_done'
-      ? 'Ton paquet de bienvenue a déjà été ouvert.' : 'Impossible pour le moment.');
+    $('msg2').textContent = {
+      'onboarding.error.already_done': 'Ton paquet de bienvenue a déjà été ouvert.',
+      'onboarding.error.serveur': 'Le serveur n’a pas répondu. Réessaie dans un instant.',
+    }[e.message] ?? 'Impossible pour le moment. Réessaie dans un instant.';
   }
 };
 

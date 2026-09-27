@@ -26,11 +26,29 @@
  * d'arrivée, et l'accueil qui porte sa propre navigation dans ses deux rails.
  */
 (() => {
-  // Écrans sans habillage : la connexion et la cérémonie d'arrivée sont des
-  // parcours dont on ne sort pas au milieu. L'accueil est un écran de jeu
-  // plein cadre : ses deux rails portent la navigation, et la barre du bas
-  // passerait sous le bouton d'entrée.
-  const SANS_BARRE = ['/', '/compte', '/bienvenue'];
+  /* Écrans sans habillage : la cérémonie d'arrivée est un parcours dont on ne
+     sort pas au milieu. L'accueil est un écran de jeu plein cadre : ses deux
+     rails portent la navigation.
+
+     **`/compte` en est sorti, et c'est une correction.** Elle y était au nom de
+     la même règle — « un parcours dont on ne sort pas » —, ce qui est vrai du
+     visiteur qui se connecte et faux de tous les autres : cette adresse est
+     aussi « Mon compte » dans le tiroir, donc une destination ordinaire pour
+     quelqu'un de connecté. Il y arrivait par le menu et s'y retrouvait **sans
+     barre, sans titre, sans flèche et sans menu** — c'est-à-dire sans aucun
+     moyen de revenir, hors du bouton du navigateur.
+
+     C'est mot pour mot ce que raconte le commentaire de la flèche, plus bas,
+     à propos des visiteurs envoyés sur la page des matchs : « ils s'y
+     retrouvaient sans aucun moyen de revenir […] la dernière chose à faire à
+     quelqu'un qu'on est en train de convaincre. » On l'a refait ici, sur
+     l'écran où l'on gère son compte. */
+  const SANS_BARRE = ['/', '/bienvenue'];
+
+  /* Le décor, lui, reste à la porte de la connexion. La barre répare un défaut
+     de navigation ; poser en plus la photo de tribune changerait l'allure d'un
+     écran qui a été dessiné sans elle, et ce n'est pas ce qu'on vient corriger. */
+  const SANS_DECOR = ['/compte'];
 
   // Écrans de jeu : la barre du bas est là, mais elle s'efface dès qu'on joue
   // et revient au moindre arrêt. Sans elle, le Virage était un cul-de-sac ;
@@ -192,15 +210,15 @@
    */
   const EXT = '.webp';
 
-  const decor = document.createElement('div');
-  decor.className = 'tbf-decor';
-  const voile = document.createElement('div');
-  // `dense`: sur une page de contenu, le voile doit gagner. Le réglage de
-  // l'accueil est fait pour un écran où un personnage occupe le centre ; sur
-  // une liste, la même transparence met la foule en concurrence avec le texte.
-  voile.className = 'tbf-grad dense';
-  document.body.prepend(decor, voile);
-  {
+  if (!SANS_DECOR.includes(chemin)) {
+    const decor = document.createElement('div');
+    decor.className = 'tbf-decor';
+    const voile = document.createElement('div');
+    // `dense`: sur une page de contenu, le voile doit gagner. Le réglage de
+    // l'accueil est fait pour un écran où un personnage occupe le centre ; sur
+    // une liste, la même transparence met la foule en concurrence avec le texte.
+    voile.className = 'tbf-grad dense';
+    document.body.prepend(decor, voile);
     const img = new Image();
     img.onload = () => { decor.style.backgroundImage = `url("${img.src}")`; decor.classList.add('on'); };
     /* Deux replis, dans cet ordre : le décor d'avant, puis le JPEG. Une mise en

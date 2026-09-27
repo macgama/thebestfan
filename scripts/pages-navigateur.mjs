@@ -150,6 +150,28 @@ for (const chemin of ECRANS) {
     leves.push(`navigation : ${e.message}`);
   }
 
+  /* **Y a-t-il un moyen de revenir ?**
+   *
+   * Signalé par le propriétaire du jeu sur `/compte` : on y arrivait par le
+   * tiroir — « Mon compte » — et l'on s'y retrouvait sans barre, sans titre et
+   * sans flèche. Le seul chemin de sortie était le bouton du navigateur.
+   *
+   * La règle vaut pour tous les écrans sauf deux, et les deux exceptions sont
+   * justifiées : l'accueil porte sa navigation dans ses deux rails, et la
+   * cérémonie d'arrivée est un parcours qu'on ne quitte pas au milieu.
+   *
+   * On mesure la **présence** de la flèche et non sa destination : `nav.js`
+   * décide d'aller en arrière ou de remonter au parent selon l'historique, et
+   * ce contrôle-ci n'a pas à connaître cette règle-là.
+   */
+  const sortie = await page.$('.tbf-retour').catch(() => null);
+  /* **L'adresse où l'on a vraiment atterri.** Sans base, le profil et
+     l'administration renvoient vers la connexion : le contrôle mesurait alors
+     `/compte` en croyant mesurer `/profil`, et rapportait trois écrans en faute
+     là où il y en avait un. Une redirection doit se voir, pas se confondre avec
+     la page qu'on avait demandée. */
+  const arrivee = page.url().replace(base, '') || '/';
+
   if (dossier) {
     const nom = (chemin === '/' ? 'accueil' : chemin.slice(1).replace(/\//g, '-'));
     await page.screenshot({ path: path.join(dossier, `${nom}.png`), fullPage: false })
@@ -157,7 +179,7 @@ for (const chemin of ECRANS) {
   }
   await page.close();
 
-  bilan.push({ chemin, leves, rejets, consoleErreurs });
+  bilan.push({ chemin, arrivee, leves, rejets, consoleErreurs, sortie: Boolean(sortie) });
 }
 
 await navigateur.close();
@@ -171,6 +193,28 @@ for (const b of bilan) {
   check(`${b.chemin.padEnd(16)} s’ouvre sans lever   (${detail})`, casse === 0);
   for (const l of b.leves) console.log(`          ↳ exception : ${l}`);
   for (const r of b.rejets) console.log(`          ↳ rejet non tenu : ${r}`);
+}
+
+/* Les deux écrans qui se passent de flèche, et pourquoi — voir `SANS_BARRE`
+   dans `nav.js`. La liste est écrite ici plutôt que relue : un contrôle qui
+   tire sa référence du fichier qu'il contrôle est d'accord avec lui par
+   construction, et laisserait passer un écran qu'on y aurait ajouté. */
+const SANS_FLECHE = new Set(['/', '/bienvenue']);
+console.log('\n— la sortie');
+/* On juge sur l'écran **où l'on a atterri**, redirection comprise : c'est celui
+   que le joueur a sous les yeux, et c'est de celui-là qu'il doit pouvoir
+   sortir. */
+const enferme = bilan.filter((b) => !SANS_FLECHE.has(b.arrivee) && !b.sortie);
+check(enferme.length
+  ? `${enferme.length} écran(s) sans aucun moyen de revenir : ${
+    enferme.map((b) => (b.arrivee === b.chemin ? b.chemin : `${b.chemin} → ${b.arrivee}`)).join(', ')}`
+  : 'chaque écran porte sa flèche de retour, sauf les deux qui s’en passent',
+enferme.length === 0);
+
+const redirigees = bilan.filter((b) => b.arrivee !== b.chemin);
+if (redirigees.length) {
+  console.log(`   (sans base, ${redirigees.length} écran(s) renvoient ailleurs : ${
+    redirigees.map((b) => `${b.chemin} → ${b.arrivee}`).join(', ')})`);
 }
 
 if (dossier) console.log(`\n   captures : ${dossier}`);
