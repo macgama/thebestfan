@@ -102,7 +102,18 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .bullets{display:flex;gap:8px;padding:clamp(8px,1.9vh,20px) 18px 0}
 .bullet{flex:1;border:1px solid var(--trait);border-radius:11px;
   padding:clamp(6px,1.15vh,11px) 9px;
-  background:var(--panneau);backdrop-filter:blur(10px);backdrop-filter:blur(5px);text-align:center}
+  /* Un seul flou, et la déclinaison Safari avec lui.
+
+     Il y en avait deux sur cette ligne — `blur(10px)` puis `blur(5px)`. La
+     seconde gagne, la première était morte, et rien ne disait laquelle des deux
+     était la bonne : on ne pouvait plus retoucher ce flou sans deviner. On
+     garde celle qui s'appliquait, donc l'apparence ne change pas d'un pixel.
+
+     `-webkit-backdrop-filter` manquait : sans lui, ces trois promesses n'ont
+     aucun flou sur iPhone — c'est-à-dire sur la moitié des appareils d'un jeu
+     qui se joue au stade. C'est la forme employée partout dans `ui.css`. */
+  background:var(--panneau);backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);text-align:center}
 .bullet b{display:block;font-family:var(--banner);font-size:11.5px;letter-spacing:.05em;color:var(--projo)}
 .bullet span{font-size:10px;opacity:.55;line-height:1.35;display:block;margin-top:4px}
 /* La plaque d'entrée de l'écran non connecté. Elle ne garde que sa marge : sa
@@ -1750,16 +1761,20 @@ async function validerAge() {
   const ok = $('ageValider');
   ok.disabled = true; ok.textContent = 'Un instant…';
   try {
-    const r = await jsonp('/api/fanzzy/active', {
+    const r = await lire('/api/fanzzy/active', {
       method: 'POST', credentials: 'same-origin',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ id: equipe.id, evo: equipe.evo }),
     });
-    /* `jsonp` ne regarde pas le code HTTP : un refus revient donc ici comme
-       un objet ordinaire portant `error`, et sans ce contrôle il se lisait
-       comme une réussite dont l'âge serait « le dernier ». Le joueur voyait le
-       bouton disparaître et croyait que c'était fait. */
-    if (r?.error) throw new Error(r.error);
+    /* `lire` rend le corps du refus tel quel — c'est délibéré, et c'est ce
+       contrôle-ci qui en dépend : sans lui, un refus se lisait comme une
+       réussite dont l'âge serait « le dernier », le bouton disparaissait et le
+       joueur croyait que c'était fait.
+
+       `!r` couvre le cas nouveau : une réponse qui n'est pas du JSON — une page
+       d'erreur de l'hébergeur, un proxy qui répond à la place du serveur — rend
+       `null`, et un geste qui n'a pas abouti doit se redire. */
+    if (!r || r.error) throw new Error(r?.error ?? 'reponse illisible');
     /* `activeEvo` nul veut dire « l'âge atteint » : c'est ainsi que le serveur
        écrit « le dernier », pour que faire grandir son Fanzzy demain change
        l'affichage sans avoir à revenir ici. On le relit donc comme tel. */
@@ -1912,7 +1927,10 @@ function preciserMoment(cle, sous) {
  */
 async function buteurDe(fixtureId, teamId) {
   try {
-    const { events = [] } = await jsonp(`/api/football/fixture/${fixtureId}/events`);
+    /* `?? {}` : `lire` peut rendre `null` — une page d'erreur au lieu du JSON —
+       et déstructurer `null` lève, ce qui emporterait le fil du match entier
+       pour une réponse manquée. */
+    const { events = [] } = (await lire(`/api/football/fixture/${fixtureId}/events`)) ?? {};
     const buts = events.filter((e) => e.type === 'Goal' && e.team_id === teamId);
     const dernier = buts[buts.length - 1];
     if (!dernier?.player) return '';
@@ -2117,9 +2135,48 @@ async function garnirVitrine() {
 
 /* ------------------------------------------------------------ le hub */
 
-async function jsonp(url, options) {
+/**
+ * Une lecture d'API, et ce qu'elle rend quand le serveur ne répond pas ce
+ * qu'on attend.
+ *
+ * ## Elle s'appelait `jsonp`
+ *
+ * Le JSONP est une technique précise et abandonnée — on injecte une balise
+ * `script` pour contourner la politique d'origine. Ceci n'en est pas : c'est
+ * un `fetch` suivi d'un `json()`. Un nom qui désigne autre chose que ce que
+ * fait la fonction coûte une relecture entière à qui la croise pour la première
+ * fois, et fait chercher une faille de sécurité qui n'existe pas.
+ *
+ * ## Et elle ne regardait pas le code de réponse
+ *
+ * Un 401, un 500, une page d'erreur en HTML : `r.json()` levait une
+ * `SyntaxError` sur le premier `<`, que les `catch` appelants avalaient avec le
+ * commentaire « module non monté ». **Une panne du serveur était donc
+ * indistinguable d'une fonctionnalité absente** — sur l'écran le plus visité du
+ * jeu, et sans une ligne dans le journal du navigateur.
+ *
+ * ## Ce qu'elle rend, et pourquoi le code HTTP ne suffit pas à décider
+ *
+ * **Un refus du serveur reste une réponse.** `validerAge` compte dessus : le
+ * serveur répond `{ error: … }` avec un code d'échec, et c'est ce corps-là qui
+ * fait dire « Réessayer » au bouton. Rendre `null` sur tout ce qui n'est pas un
+ * 200 aurait fait disparaître le bouton comme sur une réussite — précisément le
+ * mensonge poli que le commentaire de cette fonction-là raconte avoir corrigé.
+ *
+ * Le partage se fait donc sur **le type**, pas sur le code : du JSON revient
+ * tel quel, quel que soit son code, et l'appelant décide ; tout le reste — une
+ * page d'erreur en HTML, une réponse vide — rend `null` au lieu de lever une
+ * `SyntaxError` sur le premier chevron. Les appelants testent déjà leur
+ * résultat : ils se taisent comme avant, et la console dit enfin pourquoi.
+ */
+async function lire(url, options) {
   const r = await fetch(url, options);
-  return r.json();
+  if (!(r.headers.get('content-type') ?? '').includes('json')) {
+    console.warn(`[accueil] ${url} : ${r.status}, et ce n’est pas du JSON`);
+    return null;
+  }
+  if (!r.ok) console.warn(`[accueil] ${url} répond ${r.status}`);
+  return r.json().catch(() => null);
 }
 
 (async () => {
@@ -2149,10 +2206,39 @@ async function jsonp(url, options) {
      serveur : deux réponses possibles à la même question. menu.js ne garde que
      la seconde, qui est celle qui fait autorité. */
 
+  /* ------------------------------------ tout part en même temps
+   *
+   * **Six lectures indépendantes s'attendaient les unes les autres.** Le
+   * portefeuille, puis le niveau, puis les premiers pas, puis le catalogue,
+   * puis la collection, puis la bibliothèque : chacune sous son `await`, donc
+   * chacune après que la précédente soit revenue. Six allers-retours en file
+   * indienne, sur l'écran que tout le monde ouvre en premier et depuis un
+   * téléphone — à cent cinquante millisecondes de latence, c'est presque une
+   * seconde d'attente qui ne servait qu'à attendre.
+   *
+   * Aucune ne dépend d'une autre. Elles partent donc ensemble, et on les
+   * consomme dans l'ordre où l'écran se remplit : le temps total devient celui
+   * de la plus lente, pas la somme des six.
+   *
+   * **Le `catch` est posé tout de suite**, sur chaque promesse. Une promesse
+   * lancée sans être attendue et qui part en erreur est un rejet non tenu ;
+   * posé au moment du `await`, le rattrapage arriverait trop tard pour les cinq
+   * qui patientent. Chacune rend `null` en cas d'échec, et les blocs qui
+   * suivent testaient déjà leur résultat — ils se taisent comme avant.
+   */
+  const P = {
+    etat: lire('/api/me/state', { credentials: 'same-origin' }).catch(() => null),
+    niveau: lire('/api/niveau', { credentials: 'same-origin' }).catch(() => null),
+    parcours: lire('/api/aide/parcours', { credentials: 'same-origin' }).catch(() => null),
+    dex: lire('/api/fanzzy/dex').catch(() => null),
+    coll: lire('/api/fanzzy/state', { credentials: 'same-origin' }).catch(() => null),
+    biblio: lire('/api/fanzzy/bibliotheque', { credentials: 'same-origin' }).catch(() => null),
+  };
+
   // Les clubs suivis : à savoir de quel côté du score se réjouir.
   const mesClubs = new Set();
   try {
-    const st = await jsonp('/api/me/state', { credentials:'same-origin' });
+    const st = await P.etat;
     // Inscrit mais jamais passé par la cérémonie : on l'y emmène.
     if (st && st.onboarded === false) { location.href = '/bienvenue'; return; }
     $('scarves').textContent = st.scarves ?? 0;
@@ -2172,7 +2258,7 @@ async function jsonp(url, options) {
      posée par défaut mentirait pendant la seconde du chargement, et c'est
      précisément le moment où on la regarde. */
   try {
-    const niv = await jsonp('/api/niveau', { credentials: 'same-origin' });
+    const niv = await P.niveau;
     if (niv?.niveau) {
       $('nivPastille').textContent = niv.niveau;
       $('nivPastille').hidden = false;
@@ -2192,7 +2278,7 @@ async function jsonp(url, options) {
    * muet. Un rappel qui s'affiche vide vaut moins que pas de rappel — il
    * occupe la place de l'appel principal en ne disant rien. */
   try {
-    const p = await jsonp('/api/aide/parcours', { credentials: 'same-origin' });
+    const p = await P.parcours;
     const reste = (p?.etapes ?? []).find((e) => !e.fait);
     if (reste && p.faites < p.total) {
       $('pas1').innerHTML = `<span class="n">${p.faites}<small>/${p.total}</small></span>
@@ -2205,10 +2291,7 @@ async function jsonp(url, options) {
   // L'avancement de la collection, et le Fanzzy équipé : une seule lecture
   // pour les deux, puisque `/api/fanzzy/state` porte déjà les deux réponses.
   try {
-    const [dex, coll] = await Promise.all([
-      jsonp('/api/fanzzy/dex'),
-      jsonp('/api/fanzzy/state', { credentials:'same-origin' }).catch(() => null),
-    ]);
+    const [dex, coll] = await Promise.all([P.dex, P.coll]);
     // `aCollectionner` et non tout le catalogue : il ne compte que les séries
     // ouvertes. Afficher « 31/166 » à quelqu'un qui possède déjà tout ce qu'il
     // peut posséder est le pire message qu'on puisse lui envoyer. Le maximum
@@ -2217,11 +2300,14 @@ async function jsonp(url, options) {
     /* **Tout ce qui se gagne**, et plus seulement les personnages : voir
        `bibliotheque()` côté serveur. L'ancien compte reste le repli d'un
        serveur qui ne connaît pas encore la bibliothèque. */
-    const biblio = coll ? await jsonp('/api/fanzzy/bibliotheque',
-      { credentials: 'same-origin' }).catch(() => null) : null;
+    const biblio = coll ? await P.biblio : null;
     const eus = biblio?.total?.gagnes ?? Object.keys(coll?.collection ?? {}).length;
+    /* `dex?.` : le catalogue peut désormais rendre `null` — `lire` ne laisse
+       plus passer une réponse qui n'est pas du JSON. Sans le point
+       d'interrogation, une panne de cette route emporterait aussi le compteur
+       de la collection et la pastille du kiosque, qui n'en dépendent pas. */
     const total = biblio?.total?.possibles
-      ?? Math.max(dex.aCollectionner ?? (dex.dex ?? []).length, eus);
+      ?? Math.max(dex?.aCollectionner ?? (dex?.dex ?? []).length, eus);
     if (total) {
       $('collecTxt').textContent = `${eus}/${total}`;
       $('collecBar').style.width = `${Math.round((eus / total) * 100)}%`;
@@ -2511,7 +2597,7 @@ inviterInstallation();
 async function alerteDuel() {
   let a = null;
   try {
-    const r = await jsonp('/api/nvn/attentes', { credentials: 'same-origin' });
+    const r = await lire('/api/nvn/attentes', { credentials: 'same-origin' });
     a = r?.alerte ?? null;
   } catch { return; }              // duels non montés : le bouton ne change pas
   if (!a?.clubs?.length) return;
@@ -2557,7 +2643,12 @@ async function alerteDuel() {
     let m = null;
     let liste = [];
     try {
-      const { matchs = [] } = await jsonp('/api/virage/live', { credentials:'same-origin' });
+      /* `?? {}` : même raison qu'au fil du match — une réponse qui n'est pas du
+         JSON rend `null`, et le `catch` d'en dessous prendrait une erreur de
+         déstructuration pour « suivi non actif », donc espacerait à trois
+         minutes au lieu de réessayer. */
+      const { matchs = [] } = (await lire('/api/virage/live',
+        { credentials: 'same-origin' })) ?? {};
       liste = matchs;
       /* `mien` : **un de mes clubs**. La liste porte désormais tous les
          matchs en direct du monde, parce que le Virage s'ouvre sur tous ;
