@@ -748,6 +748,26 @@ $('formSupprimer').onsubmit = async (e) => {
 <script src="/fanzzy-art.js"></script>
 <script src="/fanzzy-etats.js"></script>
 <script src="/fx.js" defer></script>
+<!-- **La barre du haut manquait ici, et elle seule y manquait.**
+
+     Cette page n'a jamais chargé `nav.js`. C'était défendable tant qu'elle
+     n'était que la connexion — un parcours dont on ne sort pas au milieu. Mais
+     `/compte` est aussi « Mon compte » dans le tiroir : un joueur connecté y
+     arrive par le menu et s'y retrouvait **sans barre, sans titre, sans flèche
+     et sans menu**. Plus aucun moyen de revenir, hors du bouton du navigateur.
+
+     Et c'est là qu'aboutissent les redirections : le profil et l'administration
+     y renvoient dès que la session a expiré. On y était donc jeté, et enfermé.
+
+     `menu.js` **avant** `nav.js` : la barre lit `window.TBF_MENU` dès sa
+     première ligne pour ses titres et ses pictogrammes. Les deux sont en
+     `defer`, donc exécutés dans l'ordre du document — l'ordre n'est pas une
+     préférence de mise en page.
+
+     Le décor, lui, reste à la porte : voir `SANS_DECOR` dans `nav.js`. On
+     répare une navigation, on ne redessine pas l'écran de connexion. -->
+<script src="/menu.js" defer></script>
+<script src="/nav.js" defer></script>
 <script src="/pwa.js" defer></script>
 </body>
 </html>
