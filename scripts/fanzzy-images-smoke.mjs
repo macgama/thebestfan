@@ -16,7 +16,18 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import sharp from 'sharp';
 
-const REPO = 'C:/Users/gaelm/Documents/GitHub/thebestfan';
+/* **Le dépôt se déduit, il ne s'écrit pas.**
+
+   Il y avait ici `C:/Users/gaelm/Documents/GitHub/thebestfan`, en dur. Un
+   chemin absolu qui nomme une machine, un utilisateur et un dossier : cette
+   suite ne pouvait passer que sur l'ordinateur qui l'a écrite, et elle a cessé
+   d'y passer le jour où le dépôt est descendu sous `OneDrive`. Ailleurs — en
+   intégration continue, sur une autre machine — elle échouait sur un « Cannot
+   find module » qui parle d'un fichier que personne n'a jamais eu.
+
+   `import.meta.url` dit où ce fichier se trouve vraiment, et c'est la forme
+   employée par toutes les autres suites du dossier. */
+const REPO = fileURLToPath(new URL('..', import.meta.url));
 const tmp = path.join(process.env.TEMP, 'fz-test');
 const brut = path.join(tmp, 'brut');
 const out = path.join(tmp, 'out');

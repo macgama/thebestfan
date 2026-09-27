@@ -1054,7 +1054,14 @@ async function confirmerForfait() {
 }
 
 document.addEventListener('click', async (e) => {
-  const sortie = e.target.closest('.tbf-retour, .tbf-menu a, [data-quitter-duel]');
+  /* Voir `virage.html`, même correction et même cause : `.tbf-menu` n'existe
+     nulle part — le tiroir de `menu.js` s'appelle `.tbf-tiroir`. Quitter un duel
+     par le menu échappait donc au forfait et à sa confirmation, alors que c'est
+     la sortie la plus naturelle une fois qu'on a décidé de partir.
+
+     `a[href^="/"]` écarte la déconnexion, qui porte `href="#"` et demande déjà
+     la sienne. */
+  const sortie = e.target.closest('.tbf-retour, .tbf-tiroir a[href^="/"], [data-quitter-duel]');
   if (!sortie || !enDuel()) return;
   e.preventDefault();
   e.stopPropagation();

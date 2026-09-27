@@ -52,6 +52,11 @@
     '/profil': 'Profil', '/compte': 'Compte', '/aide': 'Aide',
     '/repetition': 'Répétition', '/admin': 'Administration',
     '/diagnostic': 'Diagnostic',
+    /* Ces deux-là manquaient, et le manque se voyait : `nav.js` lit cette table
+       pour écrire le titre de la barre, et une route absente n'affiche **rien**.
+       La collection et l'abonnement s'ouvraient donc sur une barre muette,
+       alors que les vingt autres écrans se nomment. */
+    '/collection': 'Collection', '/abonnement': 'Abonnement',
   };
 
   const ICONES = {
@@ -59,6 +64,11 @@
     duel: 'M4 4l7 7M20 4l-7 7M12 13v7M8 20h8',
     fanzzy: 'M4 4h13l3 3v13H4zM8 8h6M8 12h8M8 16h5',
     carnet: 'M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2zM5 18h14M9 8h6',
+    /* Une grille de quatre cases : ce qu'on voit en ouvrant un classeur de
+       collection, et ce qu'aucune autre icône du menu ne dit. Elle empruntait
+       celle du carnet, juste au-dessus d'elle dans la même rubrique — deux
+       lignes voisines avec le même dessin ne se distinguent plus. */
+    collection: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
     classement: 'M6 21V9M12 21V4M18 21v-7M3 21h18',
     accueil: 'M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
     deck: 'M4 7h10v13H4zM8 4h10v13',
@@ -118,6 +128,17 @@
       ['/repetition', 'repetition', 'La répétition'],
     ] },
     { titre: 'MA COLLECTION', liens: [
+      /* **Elle n'était dans aucun menu.** L'en-tête de ce fichier promet « la
+         seule liste des destinations du jeu », et `menu-smoke.mjs` le redit :
+         « ce qui n'y est pas n'existe pas ». La collection n'y était pas. On
+         ne pouvait l'atteindre que par une carte de l'accueil — donc jamais
+         depuis les vingt-trois autres écrans, et jamais du tout pour qui ne
+         l'avait pas remarquée là.
+
+         En tête de la rubrique parce qu'elle la résume : elle compte tout ce
+         qui se gagne, Fanzzy compris, quand les trois autres entrées n'en
+         montrent chacune qu'une part. */
+      ['/collection', 'collection', 'Ma collection'],
       ['/fanzzy', 'fanzzy', 'Mes Fanzzy'],
       ['/carnet', 'carnet', 'Mon carnet'],
       ['/amis', 'amis', 'Mes amis'],
@@ -295,31 +316,70 @@
           item('/admin', 'admin', 'Administration', ici('/admin') ? 'on' : ''));
     });
 
-    /* Pastille rouge quand un match des clubs suivis est en cours : sur le
-       bouton pour qu'on la voie sans ouvrir, sur la ligne du Virage pour
-       qu'on sache où elle mène. */
-    fetch('/api/virage/live', { credentials: 'same-origin' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        // `mien` : la liste couvre maintenant tous les matchs en direct, et
-        // une pastille allumée en permanence ne prévient plus de rien.
-        if (!d?.matchs?.some((m) => m.open && m.mien)) return;
-        bouton.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
-        tiroir.querySelector('a[href="/virage"]')
-          ?.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
-      })
-      .catch(() => {});
+    /* Les pastilles, et ce qu'elles coûtaient.
+     *
+     * **`/api/virage/live` est la route la plus chère du jeu** : une requête
+     * qui joint quatre tables, la journée entière du football par-dessus, le
+     * tri de trente rencontres et la mise en file des couleurs de club à
+     * extraire. Le menu l'appelait **à chaque chargement de chaque page** —
+     * vingt-quatre écrans, cinq appels de menu par page avec elle — pour
+     * décider d'un point rouge de six pixels.
+     *
+     * C'est cher pour le serveur, et ça compte double : le garde de débit
+     * autorise deux cent quarante lectures par minute et par adresse, et ces
+     * appels-là y entrent comme les autres. Quelqu'un qui navigue vite, ou une
+     * famille derrière la même connexion, s'y heurtait sans rien faire
+     * d'anormal.
+     *
+     * La réponse tient donc **trente secondes dans l'onglet**. Une pastille
+     * dit « il se passe quelque chose », pas « il se passe quelque chose à
+     * cette seconde précise » : un match en cours le reste un quart d'heure, et
+     * une file d'attente vit deux minutes. Une demi-minute de retard sur un
+     * point rouge n'a jamais fait manquer un match à personne.
+     *
+     * Le stockage peut lever — navigation privée, site bloqué — et on redemande
+     * alors au serveur, c'est-à-dire qu'on retombe exactement sur le
+     * comportement d'avant. Un menu ne tombe pas parce qu'un cache est fermé.
+     */
+    const DUREE_PASTILLE = 30_000;
+    async function pastille(cle, url, decide) {
+      try {
+        const vu = JSON.parse(sessionStorage.getItem(cle) || 'null');
+        if (vu && Date.now() - vu.t < DUREE_PASTILLE) return vu.on;
+      } catch { /* pas de mémoire ici : on demande, comme avant */ }
+      let on = false;
+      try {
+        const r = await fetch(url, { credentials: 'same-origin' });
+        if (!r.ok) return false;
+        on = Boolean(decide(await r.json()));
+      } catch { return false; }
+      try { sessionStorage.setItem(cle, JSON.stringify({ t: Date.now(), on })); }
+      catch { /* tant pis : on redemandera */ }
+      return on;
+    }
+
+    /* Un match des clubs suivis est en cours : sur le bouton pour qu'on la voie
+       sans ouvrir, sur la ligne du Virage pour qu'on sache où elle mène.
+
+       `mien` : la liste couvre tous les matchs en direct, et une pastille
+       allumée en permanence ne prévient plus de rien. */
+    void pastille('tbf-pip-virage', '/api/virage/live',
+      (d) => d?.matchs?.some((m) => m.open && m.mien)).then((on) => {
+      if (!on) return;
+      bouton.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
+      tiroir.querySelector('a[href="/virage"]')
+        ?.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
+    });
 
     /* Et la même pastille quand quelqu'un attend un duel. Une file ne vit que
        deux minutes, le temps qu'un joueur est devant son écran : quand elle
        existe, c'est que quelqu'un attend **maintenant**, et le dire est la
        seule chance qu'il trouve du monde. Deux pastilles au plus, jamais
        allumées pour rien. */
-    fetch('/api/nvn/attentes', { credentials: 'same-origin' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        const a = d?.alerte;
-        if (!a || !((a.camps?.[0] ?? 0) + (a.camps?.[1] ?? 0))) return;
+    void pastille('tbf-pip-duel', '/api/nvn/attentes',
+      (d) => ((d?.alerte?.camps?.[0] ?? 0) + (d?.alerte?.camps?.[1] ?? 0)) > 0)
+      .then((on) => {
+        if (!on) return;
         const duel = tiroir.querySelector('a[href="/duel-nvn"]');
         if (!duel) return;
         duel.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
@@ -328,8 +388,7 @@
         if (!bouton.querySelector('.pip')) {
           bouton.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
         }
-      })
-      .catch(() => {});
+      });
 
     return { tiroir, voile, ouvrir };
   }
