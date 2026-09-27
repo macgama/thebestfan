@@ -171,6 +171,10 @@ const MESSAGES = {
   'kop.error.vote_inconnu':   'Ce vote n’existe plus.',
   'kop.error.vote_clos':      'Le vote est clos. Trois minutes, c’est court.',
   'kop.error.server':         'Le serveur n’a pas pu traiter la demande.',
+  /* Hors du préfixe `kop.error.` : le serveur ne l'envoie jamais, c'est `api`
+     qui le lève quand la réponse n'est pas du JSON. Sans cette ligne, le joueur
+     lisait le code brut — ce que la table entière existe pour éviter. */
+  'app.error.illisible':      'Le serveur n’a pas répondu correctement. Réessaie dans un instant.',
 };
 
 const S = {
@@ -189,7 +193,23 @@ async function api(path, { method = 'GET', body } = {}) {
     headers: { 'content-type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const json = await r.json().catch(() => ({}));
+  /* **La session expirée n'était pas traitée.** Toutes les autres pages du jeu
+     renvoient vers la connexion sur un 401 ; celle-ci était la seule à ne pas
+     le faire. Le refus revenait alors comme un objet vide, et l'écran
+     annonçait tranquillement qu'on n'a pas de KOP — à quelqu'un qui en a un.
+     Perdre son groupe est la chose la plus inquiétante que ce jeu puisse
+     afficher, et c'était la traduction d'un simple « reconnecte-toi ». */
+  if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
+  /* Et le corps du refus se lit quel que soit le code, parce que c'est lui qui
+     porte `error`. Mais une réponse qui n'est **pas du JSON** — page d'erreur
+     de l'hébergeur, proxy qui répond à la place du serveur — rendait elle
+     aussi un objet vide, donc la même fausse nouvelle. Voir `cartes.js`, où le
+     même défaut laissait la fiche d'un Fanzzy blanche. */
+  const json = await r.json().catch(() => null);
+  if (!json) {
+    console.warn(`[kop] ${path} : ${r.status}, et ce n’est pas du JSON`);
+    throw Object.assign(new Error('reponse illisible'), { code: 'app.error.illisible' });
+  }
   if (json?.error) throw Object.assign(new Error(json.error), { code: json.error });
   return json;
 }

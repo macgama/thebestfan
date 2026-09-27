@@ -442,8 +442,20 @@ $('etal').addEventListener('click', async (e) => {
     $('avEch').textContent = echarpes;
     await monterEtal();
   } catch {
-    dire('err', 'Le serveur n’a pas répondu. Rien n’a été débité.');
-    b.disabled = false;
+    /* **« Rien n'a été débité » était une promesse qu'on ne pouvait pas tenir.**
+     *
+     * `fetch` part en erreur sur une coupure réseau — et une coupure peut
+     * survenir **après** que le serveur a reçu et traité l'achat, en lisant sa
+     * réponse. Le débit a très bien pu passer. Affirmer le contraire est la
+     * seule chose qu'on n'a pas le droit de faire quand il s'agit du solde de
+     * quelqu'un : un joueur rassuré rachète, et se retrouve débité deux fois.
+     *
+     * On dit donc ce qui est vrai, et on relit le solde pour qu'il puisse en
+     * juger lui-même. Le bouton reste fermé jusqu'à ce que l'étal soit revenu :
+     * rouvrir tout de suite, c'est inviter au second achat qu'on redoute. */
+    dire('err', 'Le serveur n’a pas répondu — on ne sait pas si l’achat est passé. '
+      + 'Vérifie ton solde avant de réessayer.');
+    await monterEtal().catch(() => { b.disabled = false; });
   }
 });
 
