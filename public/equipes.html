@@ -128,22 +128,26 @@ const I18N = {
     next:'à venir',last:'derniers résultats',live:'EN DIRECT',today:"aujourd'hui",tomorrow:'demain',
     empty:'Tu ne suis aucun club. Cherche-le ci-dessus pour voir ses résultats et recevoir ses buts en direct.',
     login:'Connecte-toi pour suivre tes clubs.',goal:'BUT DE {team} — {player} {minute}\u2032',
-    nothing:'Aucun club trouvé.',main:'PRINCIPAL',plein:'Tu suis déjà {n} clubs sur {t}. Retire-en un, ou achète un emplacement depuis ton profil.'},
+    nothing:'Aucun club trouvé.',main:'PRINCIPAL',plein:'Tu suis déjà {n} clubs sur {t}. Retire-en un, ou achète un emplacement depuis ton profil.',
+    panne:'Le serveur ne répond pas. Tes clubs sont toujours là — la page se remet à jour toute seule.'},
   en:{title:'MY TEAMS',subtitle:'results, fixtures, live',search:'Search for a club…',
     next:'upcoming',last:'latest results',live:'LIVE',today:'today',tomorrow:'tomorrow',
     empty:'You follow no club yet. Search above to see its results and get its goals live.',
     login:'Sign in to follow your clubs.',goal:'{team} SCORES — {player} {minute}\u2032',
-    nothing:'No club found.',main:'MAIN',plein:'You already follow {n} clubs out of {t}. Remove one, or buy a slot from your profile.'},
+    nothing:'No club found.',main:'MAIN',plein:'You already follow {n} clubs out of {t}. Remove one, or buy a slot from your profile.',
+    panne:'The server is not responding. Your clubs are still there — this page refreshes itself.'},
   de:{title:'MEINE TEAMS',subtitle:'Ergebnisse, Spielplan, live',search:'Verein suchen…',
     next:'kommende Spiele',last:'letzte Ergebnisse',live:'LIVE',today:'heute',tomorrow:'morgen',
     empty:'Du folgst noch keinem Verein. Suche oben, um Ergebnisse und Tore live zu bekommen.',
     login:'Melde dich an, um Vereinen zu folgen.',goal:'TOR FÜR {team} — {player} {minute}\u2032',
-    nothing:'Kein Verein gefunden.',main:'HAUPT',plein:'Du folgst bereits {n} von {t} Vereinen. Entferne einen oder kaufe einen Platz im Profil.'},
+    nothing:'Kein Verein gefunden.',main:'HAUPT',plein:'Du folgst bereits {n} von {t} Vereinen. Entferne einen oder kaufe einen Platz im Profil.',
+    panne:'Der Server antwortet nicht. Deine Vereine sind noch da — die Seite aktualisiert sich von selbst.'},
   es:{title:'MIS EQUIPOS',subtitle:'resultados, calendario, directo',search:'Buscar un club…',
     next:'próximos',last:'últimos resultados',live:'EN DIRECTO',today:'hoy',tomorrow:'mañana',
     empty:'No sigues ningún club. Búscalo arriba para ver resultados y recibir sus goles en directo.',
     login:'Entra para seguir a tus clubes.',goal:'GOL DE {team} — {player} {minute}\u2032',
-    nothing:'No se encontró ningún club.',main:'PRINCIPAL',plein:'Ya sigues {n} clubes de {t}. Quita uno o compra una plaza desde tu perfil.'},
+    nothing:'No se encontró ningún club.',main:'PRINCIPAL',plein:'Ya sigues {n} clubes de {t}. Quita uno o compra una plaza desde tu perfil.',
+    panne:'El servidor no responde. Tus clubes siguen ahí — la página se actualiza sola.'},
 };
 const LOCALES = ['fr','en','de','es'];
 let locale = LOCALES.find(l => navigator.language.toLowerCase().startsWith(l)) || 'fr';
@@ -155,6 +159,8 @@ let feed = [];
    que d'en interdire un par excès de prudence. */
 let slots = null;
 let authed = true;
+/** Le serveur a-t-il refusé de répondre ? Distinct de « la liste est vide ». */
+let panne = false;
 let watched = [];
 let socket = null;
 
@@ -268,6 +274,21 @@ function render(){
   applyLocale();
   if (!authed) {
     $('feed').innerHTML = `<div class="empty">${t('login')}<br><br><a href="/compte">/compte</a></div>`;
+    return;
+  }
+  /* **« Tu ne suis aucun club » était ce qu'on affichait quand le serveur ne
+     répondait plus.** La liste retombait sur un tableau vide, et rien ne
+     distinguait une panne d'une collection vide : quelqu'un qui suit trois
+     clubs lisait qu'il n'en suit aucun, et était invité à les rechercher.
+
+     C'est la faute la plus répandue de ce dépôt, et la plus cruelle ici :
+     l'écran ne se contente pas de cacher ce qu'on a, il propose de le refaire.
+
+     Le compte à rebours du rafraîchissement continue — toutes les
+     quarante-cinq secondes — donc la page se répare toute seule dès que le
+     serveur revient, sans que personne ait à recharger. */
+  if (panne) {
+    $('feed').innerHTML = `<div class="empty">${t('panne')}</div>`;
     return;
   }
   if (!feed.length) { $('feed').innerHTML = `<div class="empty">${t('empty')}</div>`; return; }
@@ -397,9 +418,14 @@ function onGoal(g){
 /* -------------------------------------------------------- chargement */
 
 async function load(){
-  const r = await api('/feed');
+  const r = await api('/feed').catch(() => ({ status: 0, json: {} }));
   if (r.status === 401) { authed = false; render(); return; }
   authed = true;
+  /* Tout ce qui n'est pas un succès est une panne, et se dit comme telle. Le
+     statut voyage à côté du corps — c'est tout l'intérêt de la forme que rend
+     `api` — donc on n'a pas à deviner en regardant un objet vide. */
+  panne = !(r.status >= 200 && r.status < 300);
+  if (panne) { render(); return; }
   feed = r.json.feed ?? [];
   /* Combien de clubs on a le droit de suivre. C'est le **même écran** qui
      propose d'en ajouter et qui connaît la limite : ne pas la lire ici, c'est

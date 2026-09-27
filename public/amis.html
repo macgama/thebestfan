@@ -182,7 +182,23 @@ async function api(chemin, { method = 'GET', body } = {}) {
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
-  const json = await r.json().catch(() => ({}));
+  /* **Le message d'erreur existait, et n'était jamais atteint.**
+   *
+   * `charger` a une branche qui dit « Les amis n'ont pas pu être chargés » —
+   * parfaitement écrite, et morte : une réponse qui n'est pas du JSON rendait
+   * un objet vide au lieu de lever, `Object.assign(S, {})` ne changeait rien,
+   * et la page affichait tranquillement **« Tu n'as encore personne »** à
+   * quelqu'un qui a douze amis.
+   *
+   * Vu en ouvrant les écrans dans un navigateur, serveur muet : c'est le seul
+   * moyen de trouver ça, puisqu'un serveur qui répond ne produit jamais ce cas.
+   * Le corps du refus, lui, continue de passer tel quel — c'est lui qui porte
+   * `error`, et les gestes d'invitation en dépendent. */
+  const json = await r.json().catch(() => null);
+  if (!json) {
+    console.warn(`[amis] ${chemin} : ${r.status}, et ce n’est pas du JSON`);
+    throw Object.assign(new Error('reponse illisible'), { code: 'app.error.illisible' });
+  }
   if (json?.error) throw Object.assign(new Error(json.error), { code: json.error, ...json });
   return json;
 }
@@ -222,8 +238,16 @@ async function charger() {
     rendre();
   } catch (e) {
     if (e.message === 'auth') return;
+    /* La seconde ligne affichait le code brut. « Un code d'erreur sous les yeux
+       d'un joueur est un aveu qu'on n'a pas prévu son cas » — c'est écrit dans
+       la boutique, et ça vaut ici. Les codes qu'on sait nommer le sont ; les
+       autres gardent leur forme brute, qui reste utile dans un signalement. */
+    const dit = {
+      'app.error.illisible': 'Le serveur n’a pas répondu correctement. Réessaie dans un instant.',
+      'amis.error.server': 'Le serveur n’a pas pu traiter la demande.',
+    }[e.code];
     $('corps').innerHTML = `<div class="err">Les amis n’ont pas pu être chargés.<br>
-      <span style="opacity:.7">${esc(e.code ?? e.message)}</span></div>`;
+      <span style="opacity:.7">${esc(dit ?? e.code ?? e.message)}</span></div>`;
   }
 }
 
