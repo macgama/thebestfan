@@ -140,9 +140,14 @@ check('les rubriques y sont aussi',
    La liste est écrite ici en toutes lettres plutôt que relue depuis menu.js —
    un contrôle qui lit sa référence dans le fichier qu'il contrôle est d'accord
    avec lui par construction, et laisserait passer une entrée supprimée. */
+/* `/collection` et `/abonnement` manquaient **ici aussi**, et c'est pourquoi
+   le trou ne s'est jamais vu : la liste de référence est écrite à la main, et
+   celui qui l'a écrite avait le même angle mort que le menu. Un contrôle ne
+   vaut que ce que vaut sa référence — deux écrans complets, servis par le
+   serveur et liés depuis l'accueil, n'étaient réclamés par personne. */
 const ATTENDUS = ['/', '/virage', '/duel-nvn', '/kop', '/deck', '/boosters', '/boutique',
-  '/fanzzy', '/carnet', '/amis', '/matchs', '/equipes', '/teletext', '/classement',
-  '/profil', '/compte', '/aide', '/repetition'];
+  '/abonnement', '/collection', '/fanzzy', '/carnet', '/amis', '/matchs', '/equipes',
+  '/teletext', '/classement', '/profil', '/compte', '/aide', '/repetition'];
 const manquants = ATTENDUS.filter((h) => !accueil.liens.includes(h));
 check('toutes les destinations du jeu y sont', manquants.length === 0);
 if (manquants.length) console.log('    manquent :', manquants.join(' '));

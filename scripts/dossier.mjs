@@ -180,15 +180,26 @@ const REGLE_DITE = {
   ola: (g) => `Une vague fait ${g.tours.length} tours d’un anneau de ${g.secteurs} tribunes, `
     + `de ${g.tours[0]} à ${g.tours.at(-1)} ms le tour. Toucher quand elle passe devant la `
     + `sienne : note pleine à ${g.fenetre} ms, nulle à ${g.limite} ms.`,
-  miroir: (g) => `Le capo frappe ${g.manches.map((m) => m.coups.length).join(' puis ')} coups `
+  /* `manches` est un tableau de **nombres** — `[4, 5]`, le compte de coups de
+     chaque manche — et non d'objets. On lisait `m.coups.length` dessus, donc
+     `undefined.length` sur un entier : le dossier ne se générait plus du tout
+     depuis que l'écho inversé est entré dans le répertoire. Une page qui dit
+     « où en est le jeu » et qui refuse de se construire ne prévient personne —
+     elle cesse simplement d'être régénérée, et on lit celle d'avant. */
+  miroir: (g) => `Le capo frappe ${g.manches.join(' puis ')} coups `
     + `sur deux tambours ; on rejoue le motif **en miroir**. Le côté doit être l’autre, `
     + `et chaque écart à la première frappe tenir à ${g.tolerance} ms près.`,
   rouleaux: (g) => `${g.lancers} lancers, un toutes les ${g.parLancer} ms. Le rouleau retombe `
     + `${g.portee} fois plus loin que le doigt n’a glissé, déporté par un vent de `
     + `${g.ventMin} à ${g.vent} : note pleine à ${Math.round(g.coeur * 100)} % de la cible.`,
-  deuxvoix: (g) => `Deux cadences, ${g.gauche} et ${g.droite} ms, une par côté ; ${g.notes.length} `
-    + `notes descendent en ${g.approche} ms. Frapper du bon côté : pleine à ${g.fenetre} ms, `
-    + `nulle à ${g.limite} ms.`,
+  /* Il n'y a pas de `notes` dans le réglage : le compte se déduit de la durée
+     et des deux cadences, au tirage. On décrit donc ce que le réglage dit
+     vraiment, plutôt que de recalculer ici un nombre que le moteur pourrait
+     tirer autrement demain — c'est toute la raison d'être de ce fichier. */
+  deuxvoix: (g) => `Deux cadences, ${g.gauche} et ${g.droite} ms, une par côté, pendant `
+    + `${n(g.ms / 1000)} s. Chaque note se voit venir ${g.approche} ms à l’avance, et jamais `
+    + `deux à moins de ${g.ecartMin} ms l’une de l’autre. Frapper du bon côté : pleine à `
+    + `${g.fenetre} ms, nulle à ${g.limite} ms.`,
 };
 
 /** Ce que chaque mini-jeu mesure, en un mot. */

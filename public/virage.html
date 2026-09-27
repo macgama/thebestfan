@@ -1324,7 +1324,20 @@ async function quitterLaTribune() {
 }
 
 document.addEventListener('click', async (e) => {
-  const sortie = e.target.closest('.tbf-retour, .tbf-menu a, [data-quitter-virage]');
+  /* **`.tbf-menu` n'existe nulle part**, et n'a jamais existé : le tiroir monté
+     par `menu.js` s'appelle `.tbf-tiroir`. Ce sélecteur ne désignait donc que la
+     flèche, et le commentaire au-dessus — « on intercepte la flèche et le menu,
+     qui sont les deux sorties » — ne décrivait qu'une moitié de lui-même.
+
+     Conséquence : sortir d'une tribune **par le menu** ne demandait rien et
+     n'émettait pas `virage:leave`. La salle gardait un supporter parti, compté
+     dans la foule et dans son classement, jusqu'à ce que la coupure de socket
+     soit constatée — exactement le défaut que ce bloc dit réparer.
+
+     `a[href^="/"]` et non `a` : la déconnexion porte `href="#"` et a déjà sa
+     propre confirmation. L'attraper ici la ferait demander deux fois, puis
+     naviguer vers `#`, c'est-à-dire nulle part. */
+  const sortie = e.target.closest('.tbf-retour, .tbf-tiroir a[href^="/"], [data-quitter-virage]');
   if (!sortie || !dansLaTribune()) return;
   e.preventDefault();
   e.stopPropagation();

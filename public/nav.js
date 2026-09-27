@@ -41,6 +41,41 @@
   const chemin = location.pathname.replace(/\/$/, '') || '/';
   if (SANS_BARRE.includes(chemin)) return;
 
+  /* ------------------------------------------------- d'où l'on revient
+
+     **Le repli de la flèche, et rien d'autre.** Le geste ordinaire est
+     `history.back()` — on revient là où l'on était, quel que soit le chemin
+     pris. Cette table ne sert qu'au cas où il n'y a nulle part où revenir :
+     un lien partagé ouvert dans un onglet neuf, l'application lancée depuis
+     l'écran d'accueil du téléphone, un favori.
+
+     Elle reste **courte et sûre**. Deux rattachements seulement, parce que
+     deux seulement sont évidents : la fiche d'un Fanzzy appartient au
+     classeur, le kiosque aussi — on y va pour remplir celui-là. Tout le reste
+     rentre à l'accueil, qui est le bon repli faute de mieux. Inventer une
+     hiérarchie là où le jeu n'en a pas donnerait une flèche qui emmène
+     ailleurs qu'on ne l'attend, c'est-à-dire le défaut qu'on répare. */
+  const parentDe = (ou) => (/^\/fanzzy\/.+/.test(ou) ? '/fanzzy'
+    : ({ '/boosters': '/fanzzy', '/abonnement': '/boutique' })[ou] ?? '/');
+
+  /** Une adresse de chez nous ? Une adresse illisible n'en est pas une. */
+  const memeSite = (u) => {
+    try { return new URL(u, location.href).origin === location.origin; }
+    catch { return false; }
+  };
+
+  /**
+   * Y a-t-il un « avant » dans cet onglet, et est-il à nous ?
+   *
+   * Les deux conditions comptent. `history.length` seul vaut au moins 1 sur un
+   * onglet neuf et monte dès qu'une page pousse un état — la vitrine de la
+   * collection le fait, la fiche du classeur aussi — donc il ne prouve rien à
+   * lui seul. Le référent dit **d'où l'on vient vraiment** ; s'il est vide ou
+   * étranger, revenir en arrière ferait sortir du jeu, ce qu'une flèche
+   * intérieure ne doit jamais faire.
+   */
+  const peutRevenir = () => history.length > 1 && memeSite(document.referrer);
+
   /**
    * Le menu vient de menu.js, et de nulle part ailleurs.
    *
@@ -230,14 +265,28 @@
     /* La flèche de retour, en haut à gauche.
      *
      * Le menu est devenu la seule navigation quand la barre du bas est partie,
-     * et revenir à l'accueil demandait deux gestes — ouvrir le tiroir, puis
-     * viser la première ligne. C'est deux de trop pour le mouvement le plus
-     * fréquent du jeu.
+     * et revenir demandait deux gestes — ouvrir le tiroir, puis viser la
+     * première ligne. C'est deux de trop pour le mouvement le plus fréquent du
+     * jeu.
      *
      * Elle ne paraît pas sur l'accueil : un bouton qui mène là où l'on est
-     * déjà fait douter de l'endroit où l'on se trouve. */
+     * déjà fait douter de l'endroit où l'on se trouve.
+     *
+     * ## Elle ne revenait pas
+     *
+     * C'était `href="/"`, étiqueté « Revenir à l'accueil », **sous une icône de
+     * flèche arrière**. Depuis la fiche d'un Fanzzy elle ne remontait pas au
+     * classeur ; depuis un booster elle ne remontait pas au kiosque : elle
+     * rentrait à la maison, toujours, et il fallait refaire tout le chemin. Une
+     * icône qui promet une chose et en fait une autre se lit comme une panne —
+     * et c'est ainsi qu'elle a été rapportée.
+     *
+     * Elle revient donc **d'où l'on vient**, et l'adresse du lien devient ce
+     * qu'elle n'était pas : un **repli**, pour qui arrive directement sur un
+     * écran profond — un lien partagé, l'application installée, un favori. */
+    const parent = parentDe(chemin);
     const retourHTML = chemin === '/' ? '' :
-      `<a class="pan tbf-retour" href="/" aria-label="Revenir à l’accueil"
+      `<a class="pan tbf-retour" href="${parent}" aria-label="Revenir"
           ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES.retour}"/></svg></a>`;
 
     /* Une flèche, un titre, un menu.
@@ -280,6 +329,28 @@
        valeur-là est sûre », c'est ainsi qu'on finit par en faire une mauvaise. */
     haut.querySelector('.tbf-ou').textContent = titre;
     app.prepend(haut);
+
+    /* **Le retour, quand il y a quelque chose où revenir.**
+     *
+     * Posé sur l'élément, donc en phase de bulle : les deux écrans de jeu
+     * interceptent déjà `.tbf-retour` en phase de **capture** pour demander
+     * confirmation avant de quitter une tribune, et ils arrêtent la
+     * propagation. Leur geste passe donc avant celui-ci et reste inchangé —
+     * ils lisent l'adresse du lien, qui est toujours là.
+     *
+     * On laisse le navigateur faire dans trois cas, et chacun compte : un clic
+     * déjà traité par quelqu'un d'autre, un clic avec un modificateur — on
+     * ouvre volontairement dans un onglet, et `history.back()` y serait absurde
+     * — et l'absence d'un « avant » qui soit à nous. Dans ce dernier cas le
+     * lien fait exactement ce pour quoi il est écrit : remonter au parent.
+     */
+    haut.querySelector('.tbf-retour')?.addEventListener('click', (e) => {
+      if (e.defaultPrevented || e.button !== 0) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if (!peutRevenir()) return;
+      e.preventDefault();
+      history.back();
+    });
 
     /* ------------------------------------------- recharger pendant une partie
 
