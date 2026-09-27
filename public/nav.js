@@ -64,17 +64,34 @@
     catch { return false; }
   };
 
+  /* La pile d'historique telle qu'elle était en arrivant. Tout ce qui s'y
+     ajoute ensuite a été poussé **par cette page** — voir ci-dessous. */
+  const pileAuDepart = history.length;
+
   /**
-   * Y a-t-il un « avant » dans cet onglet, et est-il à nous ?
+   * Y a-t-il un « avant » où revenir, et est-il à nous ?
    *
-   * Les deux conditions comptent. `history.length` seul vaut au moins 1 sur un
-   * onglet neuf et monte dès qu'une page pousse un état — la vitrine de la
-   * collection le fait, la fiche du classeur aussi — donc il ne prouve rien à
-   * lui seul. Le référent dit **d'où l'on vient vraiment** ; s'il est vide ou
+   * Deux cas, et il faut les deux.
+   *
+   * **On vient d'une page du jeu.** Le référent le dit ; s'il est vide ou
    * étranger, revenir en arrière ferait sortir du jeu, ce qu'une flèche
-   * intérieure ne doit jamais faire.
+   * intérieure ne doit jamais faire. `history.length` ne suffit pas à le
+   * prouver : il vaut au moins 1 sur un onglet neuf.
+   *
+   * **Ou la page a elle-même empilé quelque chose.** Le classeur pousse une
+   * adresse en ouvrant la fiche d'un Fanzzy, la collection en ouvrant une
+   * carte : il y a alors un panneau ouvert par-dessus l'écran, et la flèche
+   * doit le refermer — c'est ce que le joueur attend, et c'est exactement ce
+   * que fait déjà le bouton retour du téléphone.
+   *
+   * Sur le seul référent, ce cas-là était manqué dès qu'on arrivait par un
+   * favori, une adresse tapée ou l'application installée : le référent est vide
+   * dans les trois, et la flèche quittait le classeur au lieu de refermer la
+   * fiche posée dessus. La comparaison avec la pile d'arrivée le rattrape, sans
+   * que cette barre ait à connaître les panneaux de qui que ce soit.
    */
-  const peutRevenir = () => history.length > 1 && memeSite(document.referrer);
+  const peutRevenir = () => history.length > pileAuDepart
+    || (history.length > 1 && memeSite(document.referrer));
 
   /**
    * Le menu vient de menu.js, et de nulle part ailleurs.
