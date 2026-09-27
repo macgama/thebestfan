@@ -898,6 +898,12 @@ const MESSAGES = {
   'nvn.error.rate_limited':       'Trop d\u2019actions d\u2019un coup. Respire.',
   'nvn.error.slot_lost':          'Ta place a été reprise : le duel a continué sans toi.',
   'nvn.error.server':             'Le serveur n\u2019a pas pu traiter cette action.',
+  /* Hors du pr\u00e9fixe `nvn.error.`, et c'est voulu : le serveur n'envoie jamais
+     ce code, c'est `api` qui le l\u00e8ve quand la r\u00e9ponse n'est pas du JSON. Le
+     contr\u00f4le de `appels:test` v\u00e9rifie qu'aucune phrase en `nvn.error.` n'attend
+     un code que personne n'envoie \u2014 celle-ci n'a donc rien \u00e0 faire dans ce
+     pr\u00e9fixe-l\u00e0. */
+  'app.error.illisible':          'Le serveur n\u2019a pas r\u00e9pondu correctement. R\u00e9essaie dans un instant.',
 
   /* Les six refus de l'entrée en file. Chacun dit **ce qui reste ouvert** :
      un refus qu'on annonce sans dire par où passer se lit comme une porte
@@ -955,7 +961,24 @@ function vignette(f) {
 const api = async (p) => {
   const r = await fetch(p, { credentials:'same-origin' });
   if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
-  const j = await r.json().catch(() => ({}));
+  /* **Le corps du refus se lit quel que soit le code** : le serveur répond
+     `{ error: … }` et ce sont ces phrases-là que `MESSAGES` traduit.
+
+     Mais une réponse qui n'est **pas du JSON** — une page d'erreur de
+     l'hébergeur, un proxy qui répond à sa place — rendait un objet vide. Le
+     chargement enchaînait alors sur `cat.actions ?? []` et `matchs.matchs ?? []`
+     sans rien remarquer : l'écran annonçait **« aucun match à jouer »** là où le
+     serveur était en panne. Le joueur repart en concluant qu'il n'y a personne
+     ce soir, ce qui est la pire lecture possible d'une panne.
+
+     On échoue donc, et le `catch` du chargement affiche « Impossible de
+     préparer le duel » — qui est vrai, lui. Les appels secondaires gardent
+     leur propre `catch` et dégradent comme avant. */
+  const j = await r.json().catch(() => null);
+  if (!j) {
+    console.warn(`[duel] ${p} : ${r.status}, et ce n’est pas du JSON`);
+    throw Object.assign(new Error('reponse illisible'), { code: 'app.error.illisible' });
+  }
   if (j.error) throw Object.assign(new Error(j.error), { code:j.error });
   return j;
 };

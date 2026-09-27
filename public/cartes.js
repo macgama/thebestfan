@@ -558,8 +558,31 @@ function dessinDeCarte(f) {
   return art(f);
 }
 
+/**
+ * La famille d'une carte, et son repli.
+ *
+ * **Une famille inconnue vidait toutes les grilles du jeu.** `TYPES[f.type]`
+ * était lu sans garde et déréférencé trois fois — la couleur de la pastille,
+ * son pictogramme, le nom de la famille. Un type absent du catalogue rendait
+ * donc `undefined`, `t.c` levait, et le `map(...).join('')` qui l'entoure
+ * s'interrompait **au complet** : pas une carte abîmée, une grille vide. Sur le
+ * classeur, le kiosque, la collection et l'écran de bienvenue à la fois,
+ * puisque tous les quatre dessinent par ici.
+ *
+ * Et ça n'a rien d'hypothétique : `chargerCatalogue` vérifie que `types` n'est
+ * pas vide, jamais que chaque carte a le sien. Une famille ajoutée à une carte
+ * et oubliée dans la table, un catalogue servi à moitié, et c'est l'écran
+ * entier qui disparaît.
+ *
+ * Le repli est celui de `famDe` dans `action-art.js`, au mot près : « une
+ * famille inconnue ne doit pas vider une carte ». La craie plutôt que le
+ * violet — ici c'est la rareté qui porte la couleur, et le gris neutre est
+ * celui d'une commune.
+ */
+const typeDe = (f) => TYPES[f?.type] ?? { nom: '', c: '#C2CAD6', ico: '' };
+
 function cardHTML(f, opts = {}) {
-  const t = TYPES[f.type];
+  const t = typeDe(f);
   const holo = !opts.verrou && ['epique','legendaire'].includes(f.rar) ? ' holo' : '';
   const rc = ` r-${f.rar ?? 'commune'}`;
   return `<div class="fz${rc}${holo}" style="--tc:${t.c}" data-id="${f.id}">
