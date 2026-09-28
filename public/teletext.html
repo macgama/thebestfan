@@ -315,9 +315,28 @@ async function sommaire() {
   $('tnom').textContent = 'TOUTES LES COMPÉTITIONS';
   $('tsous').textContent = (terme || paysFiltre || filtreFavoris)
     ? 'résultat de la recherche' : 'ce qui se joue en ce moment';
-  $('head').innerHTML = `
-    <div class="search"><input id="q" placeholder="Chercher une compétition ou un pays…" value="${esc(terme)}"></div>
-    <div class="chips" id="pays"></div>`;
+  /* **Le champ de recherche survit au rafraîchissement.**
+
+     On réécrivait `#head` à chaque passage, ce qui détruisait l'`input` — or
+     c'est cet `input` qui appelle `sommaire()`. Taper « esp », s'arrêter trois
+     dixièmes de seconde, et le champ dans lequel on écrivait était remplacé
+     par un autre : le focus partait sur le corps du document, le curseur
+     revenait à zéro, et sur téléphone le clavier se refermait. Il fallait
+     retoucher le champ entre chaque bout de mot, sur l'écran qui sert à
+     retrouver une compétition parmi neuf cent cinquante.
+
+     On ne construit donc l'en-tête que s'il n'est pas déjà là — c'est le cas
+     au retour d'une compétition, où `#head` porte les onglets. Le `oninput` est
+     attaché au même endroit : une seule fois, donc une seule fermeture
+     retardée, là où le réattacher à chaque tour en laissait une autre armée
+     derrière. Et on ne récrit pas la valeur : celle que le joueur tape est la
+     bonne, pas celle qu'on a lue avant lui. */
+  if (!$('q')) {
+    $('head').innerHTML = `
+      <div class="search"><input id="q" placeholder="Chercher une compétition ou un pays…" value="${esc(terme)}"></div>
+      <div class="chips" id="pays"></div>`;
+    $('q').oninput = debounce(() => { terme = $('q').value.trim(); sommaire(); }, 320);
+  }
   $('list').innerHTML = '<div class="spin"></div>';
 
   if (favoris === null) await chargerFavoris();
@@ -361,7 +380,8 @@ async function sommaire() {
     </div>`).join('')
     : '<div class="empty">Aucune compétition trouvée.</div>';
 
-  $('q').oninput = debounce(() => { terme = $('q').value.trim(); sommaire(); }, 320);
+  // `#pays` voit son contenu réécrit à chaque tour, mais c'est le même nœud :
+  // réaffecter `onclick` est sans effet de bord, contrairement à `oninput`.
   $('pays').onclick = (e) => {
     const m = e.target.closest('[data-mien]');
     if (m) { filtreFavoris = !filtreFavoris; paysFiltre = ''; return sommaire(); }
@@ -370,8 +390,16 @@ async function sommaire() {
   };
 }
 
-let t = null;
-function debounce(fn, ms) { return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+/* La minuterie vit **dans** la fermeture, une par fonction retardée.
+   Elle était déclarée à côté, partagée par toutes : avec un seul appel à
+   `debounce` cela ne se voyait pas, mais le deuxième aurait annulé le premier —
+   taper dans la recherche aurait éteint l'autre attente, et l'un des deux
+   gestes serait resté sans effet une fois sur deux. Un utilitaire qui porte un
+   nom générique doit se comporter comme son nom le promet. */
+function debounce(fn, ms) {
+  let t = null;
+  return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+}
 
 /* ---------------------------------------------------------- une ligue */
 
@@ -578,6 +606,10 @@ function veiller(live) {
 
 /** La minute, recalculée sur place à partir du relevé déjà reçu. */
 setInterval(() => {
+  // Onglet caché : on n'écrit pas dans un écran que personne ne lit. La minute
+  // se recalcule depuis `luA`, donc elle sera juste au premier tour de retour —
+  // il n'y a rien à rattraper.
+  if (document.hidden) return;
   if (!RES || vue !== 'ligue' || onglet !== 'resultats') return;
   for (const m of RES.matchs) {
     if (!m.live) continue;
@@ -585,6 +617,23 @@ setInterval(() => {
     if (n) n.textContent = minuteDe(m, RES.luA) ?? '—';
   }
 }, 10_000);
+
+/* **Au retour sur l'onglet, on redemande tout de suite.**
+
+   Cette page n'avait pas de réveil, là où sa sœur `aujourdhui.html` en a un.
+   Or `veiller` se rendort pendant que l'onglet est caché : en revenant sur des
+   résultats en direct après dix minutes ailleurs, on retrouvait les scores
+   d'avant, pour jusqu'à trente secondes de plus — et la minute, elle,
+   continuait de courir. Un score figé sous une minute qui avance est plus
+   trompeur qu'un écran franchement vieux : la minute affirme la fraîcheur que
+   le score n'a pas.
+
+   `charger` repasse par `rendreResultats`, qui rappelle `veiller` : la
+   minuterie est remplacée, pas doublée. */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  if (vue === 'ligue' && onglet === 'resultats' && RES?.matchs?.some((m) => m.live)) charger();
+});
 
 function rendreJoueurs(d) {
   if (!d.players.length) return $('list').innerHTML = '<div class="empty">Classement indisponible.</div>';

@@ -604,7 +604,12 @@ const JUSQUA = `var jusqua = (t0, t) => new Promise((r) => setTimeout(r, Math.ma
     for (const [i, n] of gestes.deuxvoix.notes.entries()) {
       await jusqua(t0, n.t + (i % 2 ? 30 : -25));
       /* La note est-elle bien descendue dans son couloir ? */
-      if (document.querySelectorAll('.tbf-voie')[n.cote]?.querySelector('.tbf-note')) vues++;
+      /* `tbf-ep-note`, et non `tbf-note` : la note de l'épreuve a été renommée
+         parce qu'elle écrasait la classe du même nom des « petites briques »
+         partagées. Ce contrôle est resté sur l'ancien nom et annonçait 0/13 —
+         il ne disait pas que les notes ne descendaient plus, il disait qu'il
+         ne savait plus où regarder. Voir `.tbf-ep-note` dans ui.css. */
+      if (document.querySelectorAll('.tbf-voie')[n.cote]?.querySelector('.tbf-ep-note')) vues++;
       const cote = inverser ? n.cote ^ 1 : n.cote;
       document.querySelector(`#pad .tbf-cote[data-k="${cote}"]`)
         .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));

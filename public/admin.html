@@ -233,12 +233,25 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 <!-- Le menu du jeu, ici aussi. Cette page n'avait qu'un lien « retour au jeu » :
      un administrateur qui veut le classeur ou le kiosque devait repasser par
      l'accueil. Le menu est le même qu'ailleurs — c'est tout l'intérêt. -->
-<header><h1>ADMINISTRATION</h1><span class="who" id="who"></span>
-  <!-- La zone de touche est écrite ici plutôt que dans la feuille : ce lien
-       n'a pas de classe, et lui en inventer une pour trois propriétés
-       coûterait plus cher à relire que de les voir sur place. -->
-  <a href="/" style="color:var(--projo);font-size:12px;display:inline-flex;
-     align-items:center;min-height:44px">retour au jeu</a>
+<!-- **La flèche de retour, la même que partout.**
+
+     Cet en-tête n'avait qu'un lien « retour au jeu » écrit en petit à droite,
+     entre le pseudo et le bouton de menu. Il ramenait bien à l'accueil, mais il
+     ne ressemblait à rien de ce que le joueur connaît : sur les vingt-trois
+     autres écrans, on sort par une flèche en haut à gauche.
+
+     Elle est écrite ici, dans le balisage de la page, et non posée par
+     `nav.js` : la barre commune s'ajoute **dans** la colonne, et la première
+     vue de l'administration réécrit cette colonne en entier — la barre
+     apparaissait puis disparaissait, flèche comprise. Voir `SANS_HAUT` dans
+     `nav.js`, qui ne la monte plus ici pour cette raison.
+
+     Le comportement, lui, reste celui de `nav.js` : sa poignée est posée sur le
+     document et reconnaît toute flèche portant cette classe. Revenir d'où l'on
+     vient quand il y a un « avant » à nous, et retomber sur l'adresse du lien
+     sinon. -->
+<header><a class="pan tbf-retour" id="retour" href="/" aria-label="Revenir"></a>
+  <h1>ADMINISTRATION</h1><span class="who" id="who"></span>
   <button class="pan tbf-burger" id="burger" aria-label="Menu"
     ><span></span><span></span><span></span></button></header>
 <nav id="nav"></nav>
@@ -300,6 +313,40 @@ function recu(texte, rate = false) {
 /** Le refus du serveur, dit en français, dans le reçu. */
 const recuRate = (e) => recu(MSG_FANZZY[e.code] ?? e.raison ?? e.code
   ?? 'le serveur n’a pas dit pourquoi.', true);
+
+/**
+ * Redessine une vue sans faire perdre la main au champ qui l'a déclenchée.
+ *
+ * Chaque vue de cette page se refait en réécrivant `#main` en entier — y
+ * compris le champ de recherche qui vient d'en demander le redessin. Le champ
+ * détruit, le focus retombe sur le corps du document et le curseur revient à
+ * zéro : il fallait retoucher le champ après chaque recherche de joueur ou de
+ * compétition, et dans le catalogue, où la recherche est retardée de 250 ms,
+ * après chaque bout de mot. Sur un portable, le clavier se refermait à chaque
+ * fois.
+ *
+ * On note donc qui tenait la main et où en était son curseur, on laisse la vue
+ * se refaire, puis on rend la main au champ qui porte le même identifiant.
+ * C'est le même parce que c'est le même gabarit : l'élément est neuf, sa place
+ * ne l'est pas.
+ *
+ * @param {() => (void | Promise<void>)} redessiner ce qui refait la vue.
+ */
+async function sansPerdreLaMain(redessiner) {
+  const a = document.activeElement;
+  const garde = a?.id && ['INPUT', 'TEXTAREA', 'SELECT'].includes(a.tagName)
+    ? { id: a.id, debut: a.selectionStart, fin: a.selectionEnd } : null;
+  await redessiner();
+  const n = garde && $(garde.id);
+  if (!n) return;
+  n.focus();
+  /* `setSelectionRange` n'existe pas sur une liste déroulante, et lève sur un
+     `input type=number` — d'où le garde-fou plutôt qu'un test de type, qui
+     serait à rallonger au premier champ d'un autre genre. */
+  if (garde.debut != null) {
+    try { n.setSelectionRange(garde.debut, garde.fin); } catch { /* sans curseur */ }
+  }
+}
 
 /** Une option de liste déroulante, avec la sélection déjà posée. */
 const optSel = (v, t, sel) =>
@@ -491,13 +538,31 @@ const VUES = {
           <button class="mini" id="purge">Purger le cache</button>
           <button class="mini" id="mail">Envoi de contrôle</button></td></tr>
       </tbody></table></div>`;
+    /* **Le reçu, pas `alert`.**
+
+       Ces deux outils étaient les derniers à passer par `alert` : une boîte
+       modale du navigateur, qu'il faut fermer, et qui n'a pas la forme du
+       reste de la page. Le reçu existe juste au-dessus et sert partout
+       ailleurs — voir `recu()`.
+
+       Surtout, aucun des deux ne rattrapait le refus. `api` lève sur une
+       réponse non-2xx : purger un cache pendant une panne ne faisait
+       strictement rien de visible, l'exception partant se perdre dans la
+       console. Un bouton d'exploitation qui ne dit pas s'il a agi est un
+       bouton qu'on presse deux fois. */
     $('purge').onclick = async () => {
-      const r = await api('/cache/purge', {});
-      alert(`${r.purge} entrées purgées`); rendre();
+      try {
+        const r = await api('/cache/purge', {});
+        recu(`${r.purge} entrée(s) purgée(s).`);
+        rendre();
+      } catch (e) { recuRate(e); }
     };
     $('mail').onclick = async () => {
-      const r = await api('/mail-test', {});
-      alert(r.delivered ? 'Mail envoyé.' : 'Non envoyé : ' + (r.erreur ?? 'voir la console'));
+      try {
+        const r = await api('/mail-test', {});
+        if (r.delivered) recu('Mail de contrôle envoyé.');
+        else recu('Mail non envoyé : ' + (r.erreur ?? 'raison inconnue'), true);
+      } catch (e) { recuRate(e); }
     };
   },
 
@@ -812,7 +877,28 @@ const VUES = {
           saison</b> — onglet SAISONS.</p>
       </div>
       <div class="bar">
-        <select id="f-set">${optSel('', 'toutes les séries', flt.set)}${
+        <!-- **« f-serie » et non « f-set ».**
+
+             Ce filtre s'appelait « f-set », comme le champ SÉRIE du formulaire
+             d'édition plus bas. Les deux vivent en même temps — le formulaire
+             s'insère dans le tableau, sous la barre de filtres — et
+             getElementById rend le premier du document, c'est-à-dire toujours
+             celui-ci.
+
+             Conséquences, toutes silencieuses : ouvrir une carte à modifier
+             déplaçait ce filtre sur la série de la carte ; changer la SÉRIE
+             dans le formulaire n'avait aucun effet, puisque l'enregistrement
+             relisait ce filtre ; et toute carte créée recevait la première
+             série du catalogue, quel que soit le choix fait à l'écran.
+
+             Les voisins échappaient au piège par leurs noms : le filtre des
+             familles est « f-fam » quand le formulaire dit « f-type », celui
+             des raretés « f-rr » quand le formulaire dit « f-rar ». Seule la
+             série avait gardé le même nom des deux côtés.
+
+             Pas d'accent grave ici : ce balisage vit dans un gabarit de chaîne
+             JavaScript, et le premier accent grave referme la chaîne. -->
+        <select id="f-serie">${optSel('', 'toutes les séries', flt.set)}${
           d.sets.map((x) => optSel(x.id, x.nom, flt.set)).join('')}</select>
         <select id="f-fam">${optSel('', 'toutes les familles', flt.type)}${
           Object.entries(d.types).map(([k, t]) => optSel(k, t.nom, flt.type)).join('')}</select>
@@ -831,10 +917,10 @@ const VUES = {
       <div class="tbl"><table><thead><tr><th></th><th>NOM</th><th>TYPE</th><th>SÉRIE</th><th>RARETÉ</th><th></th></tr></thead>
       <tbody id="corps">${liste.map(ligne).join('') || '<tr><td colspan="6" class="vide">Rien ne correspond.</td></tr>'}</tbody></table></div>`);
 
-    const relireFz = () => VUES.fanzzy({
-      set: $('f-set').value, type: $('f-fam').value, rar: $('f-rr').value,
-      etat: $('f-et').value, q: $('q').value });
-    for (const id of ['f-set', 'f-fam', 'f-rr', 'f-et']) $(id).onchange = relireFz;
+    const relireFz = () => sansPerdreLaMain(() => VUES.fanzzy({
+      set: $('f-serie').value, type: $('f-fam').value, rar: $('f-rr').value,
+      etat: $('f-et').value, q: $('q').value }));
+    for (const id of ['f-serie', 'f-fam', 'f-rr', 'f-et']) $(id).onchange = relireFz;
     $('q').oninput = () => { clearTimeout($('q')._t);
       $('q')._t = setTimeout(relireFz, 250); };
 
@@ -928,7 +1014,13 @@ const VUES = {
 
       if (pub) {
         const x = d.fanzzy.find((y) => y.id === pub.dataset.publier);
-        await api('/fanzzy/' + encodeURIComponent(x.id), { publie: !x.publie }, 'PATCH');
+        /* `api` lève sur tout refus, et ce bouton n'attrapait rien : publier
+           une carte pendant une panne ne produisait **aucun** signe — ni reçu,
+           ni rafraîchissement, ni message. L'exploitant ne peut pas distinguer
+           ça d'un clic qui n'a pas pris, alors il reclique. */
+        try {
+          await api('/fanzzy/' + encodeURIComponent(x.id), { publie: !x.publie }, 'PATCH');
+        } catch (err) { return recuRate(err); }
         recu(x.nom + (x.publie ? ' dépublié.' : ' publié.'));
         return VUES.fanzzy(filtre);
       }
@@ -1159,7 +1251,10 @@ const VUES = {
       const pub = e.target.closest('[data-publier]');
       if (pub) {
         const x = d.tenues.find((y) => y.id === pub.dataset.publier);
-        await api('/tenues/' + encodeURIComponent(x.id), { publie: !x.publie }, 'PATCH');
+        // Même silence que sur le bouton jumeau du catalogue, même correction.
+        try {
+          await api('/tenues/' + encodeURIComponent(x.id), { publie: !x.publie }, 'PATCH');
+        } catch (err) { return recuRate(err); }
         recu(x.nom + (x.publie ? ' dépublié.' : ' publié.'));
         return VUES.tenues();
       }
@@ -1216,8 +1311,9 @@ const VUES = {
                <button class="mini" data-a="abo_mois">+1 mois</button>`}
         </td></tr>`).join('')}</tbody></table></div>`;
 
-    $('go').onclick = () => VUES.joueurs($('q').value.trim());
-    $('q').onkeydown = (e) => { if (e.key === 'Enter') VUES.joueurs($('q').value.trim()); };
+    const chercher = () => sansPerdreLaMain(() => VUES.joueurs($('q').value.trim()));
+    $('go').onclick = chercher;
+    $('q').onkeydown = (e) => { if (e.key === 'Enter') chercher(); };
     $('main').onclick = async (e) => {
       const b = e.target.closest('[data-a]'); if (!b) return;
       const id = b.closest('[data-id]').dataset.id;
@@ -1278,7 +1374,13 @@ const VUES = {
           <td class="act"><button class="mini ${c.enabled?'rouge':'vert'}" data-a="toggle"
             data-on="${c.enabled}">${c.enabled?'Désactiver':'Activer'}</button></td>
         </tr>`).join('')}</tbody></table></div>`;
-    $('go').onclick = () => VUES.competitions($('q').value.trim());
+    /* La touche Entrée aussi. Les deux écrans de recherche de cette page sont
+       jumeaux, et seul celui des joueurs y répondait : ici, taper un nom et
+       valider ne faisait rien, il fallait viser le bouton. Rien ne justifiait
+       la différence — c'était un oubli, pas un choix. */
+    const chercher = () => sansPerdreLaMain(() => VUES.competitions($('q').value.trim()));
+    $('go').onclick = chercher;
+    $('q').onkeydown = (e) => { if (e.key === 'Enter') chercher(); };
     const maj = async (tr, corps) => {
       await api(`/competition/${tr.dataset.id}/${tr.dataset.s}`, corps, 'PATCH');
       recu('compétition ' + tr.dataset.id + ' : ' + Object.keys(corps).join(', ') + '.');
@@ -1384,7 +1486,12 @@ const VUES = {
       }
       const rd = e.target.closest('[data-rendre]');
       if (rd) {
-        await api('/reglage/' + encodeURIComponent(rd.dataset.rendre), undefined, 'DELETE');
+        /* Sans ce rattrapage, un refus laissait la page annoncer « rendu au
+           défaut » pour un réglage qui n'avait pas bougé — pire que le silence
+           des deux autres boutons, puisque celui-ci affirmait. */
+        try {
+          await api('/reglage/' + encodeURIComponent(rd.dataset.rendre), undefined, 'DELETE');
+        } catch (err) { return recuRate(err); }
         $('quoi').textContent = `${rd.dataset.rendre} rendu au défaut.`;
         recu(`${rd.dataset.rendre} rendu à sa valeur par défaut.`);
         return VUES.reglages();
@@ -1405,11 +1512,41 @@ const VUES = {
   },
 };
 
+/* Le dessin de la flèche vient de `menu.js`, qui tient les icônes du jeu : le
+   recopier ici en donnerait une seconde à corriger le jour où elle change.
+   `menu.js` est chargé sans `defer`, donc `TBF_MENU` est là avant cette ligne. */
+$('retour').innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+  + `<path d="${window.TBF_MENU.ICONES.retour}"/></svg>`;
+
 window.TBF_MENU.monter($('burger'));
 
+/* **Trois issues, et pas deux.**
+
+   Tout ce qui ratait menait à `/compte`. « Pas connecté » y mène à bon droit —
+   c'est là qu'on prend sa place. Mais « la passerelle répond 502 » y menait
+   aussi, et « le téléphone n'a plus de réseau » également : l'exploitant se
+   retrouvait sur l'écran de connexion au milieu d'une panne, à se demander
+   pourquoi sa session avait sauté. C'est précisément l'écran depuis lequel on
+   diagnostique une panne, et il accusait l'utilisateur de la panne.
+
+   On sépare donc les deux. Seul un refus d'authentification renvoie au compte ;
+   tout le reste s'affiche ici, avec de quoi réessayer. Le contrôle d'accès ne
+   change pas : il n'a jamais été ici. Chaque route `/api/admin` vérifie le
+   droit côté serveur, et cette page ne fait que choisir quoi montrer. */
 (async () => {
+  const dehors = (msg) => {
+    // `mini` : c'est la seule classe de bouton que cette feuille habille
+    // (`button.mini`). Un `btn` emprunté ailleurs sortirait nu.
+    $('main').innerHTML = `<div class="vide">${esc(msg)}<br><br>
+      <button class="mini" id="reessayer">RÉESSAYER</button></div>`;
+    $('nav').style.display = 'none';
+    $('reessayer').onclick = () => location.reload();
+  };
   try {
-    const me = await fetch('/api/auth/me', { credentials:'same-origin' }).then((r)=>r.json());
+    // `r.ok` avant `r.json()` : une page d'erreur de la passerelle n'est pas du
+    // JSON, et sans ce test la lecture lève sur un corps qu'on n'a pas demandé.
+    const r = await fetch('/api/auth/me', { credentials:'same-origin' });
+    const me = r.ok ? await r.json().catch(() => ({})) : {};
     $('who').textContent = me.user?.pseudo ?? '';
     const s = await api('/suis-je');
     if (!s.admin) {
@@ -1418,8 +1555,16 @@ window.TBF_MENU.monter($('burger'));
       return;
     }
     rendre();
-  } catch {
-    location.href = '/compte';
+  } catch (e) {
+    /* 401 seulement. `/suis-je` n'exige que d'être connecté — un compte sans
+       droits reçoit 200 et `{ admin: false }`, traité juste au-dessus. Un 403
+       ici voudrait donc dire quelque chose d'inattendu, et mieux vaut l'écrire
+       à l'écran que le déguiser en « reconnecte-toi ». */
+    if (e.status === 401) { location.href = '/compte'; return; }
+    console.error('[admin] la porte a levé :', e);
+    dehors(e.status
+      ? `Le serveur a répondu ${e.status}. L’administration est momentanément illisible.`
+      : 'Serveur injoignable. Rien n’a été lu, rien n’a été écrit.');
   }
 })();
 </script>

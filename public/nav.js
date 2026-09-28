@@ -50,6 +50,24 @@
      écran qui a été dessiné sans elle, et ce n'est pas ce qu'on vient corriger. */
   const SANS_DECOR = ['/compte'];
 
+  /* Écrans qui portent **leur propre** barre du haut.
+   *
+   * L'administration a la sienne, taillée pour une colonne de mille cent
+   * pixels : un titre, le compte qui agit, et son menu. Ce fichier lui en
+   * posait une seconde par-dessus, avec le même titre — « Administration »
+   * figure dans `TITRES` — et un second bouton de menu.
+   *
+   * Personne ne l'avait vu, parce qu'elle ne durait pas : la barre est
+   * ajoutée **dans** la colonne, et la première vue de l'administration
+   * réécrit cette colonne en entier. La barre commune apparaissait puis
+   * disparaissait, emportant sa flèche de retour avec elle.
+   *
+   * On ne la monte donc plus là. Le décor, lui, reste : il est déjà à l'écran
+   * aujourd'hui, et ce n'est pas ce qu'on vient corriger. La flèche de cette
+   * page est écrite dans son propre en-tête, et la poignée ci-dessous la
+   * reconnaît comme les autres. */
+  const SANS_HAUT = ['/admin'];
+
   // Écrans de jeu : la barre du bas est là, mais elle s'efface dès qu'on joue
   // et revient au moindre arrêt. Sans elle, le Virage était un cul-de-sac ;
   // toujours affichée, elle mangerait la place et provoquerait des sorties
@@ -110,6 +128,34 @@
    */
   const peutRevenir = () => history.length > pileAuDepart
     || (history.length > 1 && memeSite(document.referrer));
+
+  /* **Le retour, quand il y a quelque chose où revenir.**
+   *
+   * Posé sur le document, et non sur la flèche : une page peut écrire la sienne
+   * dans son propre en-tête — l'administration le fait — et une poignée
+   * attachée à l'élément que ce fichier fabrique ne l'aurait jamais vue. La
+   * règle du retour est la même partout ; elle appartient donc au document, pas
+   * à un bouton en particulier.
+   *
+   * En phase de bulle, donc en dernier. Les deux écrans de jeu interceptent
+   * déjà `.tbf-retour` en phase de **capture**, pour demander confirmation
+   * avant de quitter une tribune, et ils arrêtent la propagation : leur geste
+   * passe avant celui-ci et n'arrive jamais jusqu'ici. Inchangé.
+   *
+   * On laisse le navigateur faire dans trois cas, et chacun compte : un clic
+   * déjà traité par quelqu'un d'autre, un clic avec un modificateur — on ouvre
+   * volontairement dans un onglet, et `history.back()` y serait absurde — et
+   * l'absence d'un « avant » qui soit à nous. Dans ce dernier cas le lien fait
+   * exactement ce pour quoi il est écrit : remonter au parent.
+   */
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest?.('.tbf-retour')) return;
+    if (e.defaultPrevented || e.button !== 0) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (!peutRevenir()) return;
+    e.preventDefault();
+    history.back();
+  });
 
   /**
    * Le menu vient de menu.js, et de nulle part ailleurs.
@@ -245,6 +291,11 @@
    * seulement qu'il lui manque quelque chose, sans dire quoi.
    */
   async function barreDuHaut() {
+    // Les écrans qui ont déjà la leur : voir `SANS_HAUT`. Le décor est posé,
+    // la poignée de la flèche est posée, il ne reste qu'à ne pas doubler la
+    // barre.
+    if (SANS_HAUT.includes(chemin)) return;
+
     // Toutes les pages n'ont pas d'#app : deux d'entre elles avaient un <main>
     // nu, et la barre n'y apparaissait pas — sans erreur, sans rien. Un repli
     // vaut mieux qu'une page qui perd son bandeau en silence.
@@ -365,27 +416,9 @@
     haut.querySelector('.tbf-ou').textContent = titre;
     app.prepend(haut);
 
-    /* **Le retour, quand il y a quelque chose où revenir.**
-     *
-     * Posé sur l'élément, donc en phase de bulle : les deux écrans de jeu
-     * interceptent déjà `.tbf-retour` en phase de **capture** pour demander
-     * confirmation avant de quitter une tribune, et ils arrêtent la
-     * propagation. Leur geste passe donc avant celui-ci et reste inchangé —
-     * ils lisent l'adresse du lien, qui est toujours là.
-     *
-     * On laisse le navigateur faire dans trois cas, et chacun compte : un clic
-     * déjà traité par quelqu'un d'autre, un clic avec un modificateur — on
-     * ouvre volontairement dans un onglet, et `history.back()` y serait absurde
-     * — et l'absence d'un « avant » qui soit à nous. Dans ce dernier cas le
-     * lien fait exactement ce pour quoi il est écrit : remonter au parent.
-     */
-    haut.querySelector('.tbf-retour')?.addEventListener('click', (e) => {
-      if (e.defaultPrevented || e.button !== 0) return;
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      if (!peutRevenir()) return;
-      e.preventDefault();
-      history.back();
-    });
+    /* La poignée de la flèche est posée une fois pour toutes sur le document,
+       tout en haut de ce fichier : elle vaut aussi pour les pages qui écrivent
+       leur propre flèche. */
 
     /* ------------------------------------------- recharger pendant une partie
 
