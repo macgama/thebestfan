@@ -419,6 +419,82 @@ for (const [type, sel] of [['fanzzy', '.type[data-type="fanzzy"] .vig'],
 check(`les ${ouvertes} cartes des trois grilles se dessinent toutes (${dessinees})`,
   dessinees === ouvertes);
 
+/* ============================ 9. un âge non atteint ne se fait pas passer pour à soi
+
+   **Signalé par le propriétaire du jeu, et en deux endroits d'une seule phrase :**
+   « je vois l'image suivante même si je ne l'ai pas encore découvert dans un PACK
+   et qu'elle ne fait pas partie de ma collection. »
+
+   Ici, la rangée ÂGES remplaçait l'âge affiché sans toucher à `possede`, qui
+   restait celui de la lignée. Un joueur qui possède son personnage voyait donc
+   n'importe lequel de ses âges **en pleine couleur, sans cadenas, sous le bandeau
+   « ✓ DANS TA COLLECTION »**. Ce n'était pas seulement montrer l'image : c'était
+   l'affirmer à lui en mots.
+
+   La rangée reste cliquable, et c'est voulu — cette vitrine existe pour montrer
+   ce qui se gagne, et elle le montre partout ailleurs sous cadenas. Ce qui
+   manquait n'était pas le verrou du bouton, c'était celui de la carte qu'il
+   ouvre.
+
+   Le stub donne `stade: 1` à tout ce qui est possédé : n'importe quel âge
+   au-dessus du premier est donc non atteint, ce qui est exactement le cas à
+   éprouver. */
+
+console.log('\n  un âge qu’on n’a pas');
+{
+  /* Un personnage possédé **et** doté d'une lignée : sans le second, la rangée
+     des âges ne paraît pas — « ÂGES : 1 » n'apprend rien — et le contrôle
+     passerait sans rien avoir regardé.
+
+     On le repère par son **nom** : la vignette ne porte que `data-liste` et
+     `data-i`, et reconstruire son index depuis la liste servie serait recopier
+     ici la façon dont la page la range. Le nom, lui, est écrit dedans. */
+  const candidat = persos.find((f) => MIENS.has(f.id) && agesDe(f.id) > 1);
+  const avecAges = candidat
+    ? [...D.querySelectorAll('.type[data-type="fanzzy"] .vig.oui')]
+      .find((v) => v.querySelector('b')?.textContent.trim() === candidat.nom)
+    : null;
+
+  if (!avecAges) {
+    check('un personnage possédé a une lignée à parcourir', false);
+  } else {
+    clic(avecAges);
+    await jusqua(() => D.getElementById('vitr').classList.contains('on'));
+
+    const boutons = [...D.querySelectorAll('.vitr-age')];
+    check(`la rangée des âges est là (${boutons.length} âges)`, boutons.length > 1);
+    check('le premier âge est celui qu’on regarde', boutons[0]?.classList.contains('ici'));
+    check('et les suivants sont marqués non atteints',
+      boutons.slice(1).every((b) => b.classList.contains('pas')));
+
+    clic(boutons[boutons.length - 1]);
+    await attendre(40);
+
+    const scene = D.getElementById('vitr-scene');
+    check('l’âge non atteint s’ouvre en silhouette', scene?.classList.contains('verrou'));
+    check('la carte porte son cadenas', Boolean(D.querySelector('#vitr .cadenas')));
+    check('le bandeau ne dit plus qu’elle est à soi', !/DANS TA COLLECTION/.test(texte()));
+    check('il dit ce qu’elle est', /ÂGE À DÉBLOQUER/.test(texte()));
+    /* Un âge ne se trouve pas dans un booster — il se paie. Envoyer ouvrir des
+       paquets serait envoyer chercher ce qu'aucun paquet ne contient. */
+    check('et il n’envoie pas ouvrir un booster pour ça',
+      /se paie en écharpes/.test(texte())
+      && !D.querySelector('.vitr-ou a[href="/boosters"]'));
+
+    /* On relit la rangée : `remplacer` a réécrit la vitrine, et `boutons` ne
+       désigne plus que des nœuds détachés. Un clic sur l'un d'eux ne remonte
+       nulle part — le contrôle échouait sans qu'il y ait de défaut. */
+    clic(D.querySelectorAll('.vitr-age')[0]);
+    await attendre(40);
+    check('revenir au premier âge le rend à sa collection',
+      /DANS TA COLLECTION/.test(texte())
+      && !D.getElementById('vitr-scene')?.classList.contains('verrou'));
+
+    const x = D.querySelector('.vitr-x');
+    if (x) clic(x);
+  }
+}
+
 console.log(fautes ? `\n${fautes} faute(s) — ne pas livrer en l’état.`
   : '\nLa collection s’ouvre, se feuillette et dit où trouver ce qui manque.');
 process.exitCode = fautes ? 1 : 0;

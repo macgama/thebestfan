@@ -39,6 +39,11 @@ import { stadeAffiche } from '../../shared/fanzzy/ages.js';
  *     repos, dans sa tenue du premier âge**. C'est la règle des effets —
  *     « un deck entre toujours au premier âge » — et le dessin la suit.
  *     L'expression, en partie, c'est le match qui la décide.
+ *   - `tenuesParAge` — la tenue portée à **chaque** âge atteint, `{ 1: 'base',
+ *     2: 'carnaval' }`, les âges sans tenue étant absents. Seul l'accueil en a
+ *     besoin, parce qu'il est le seul écran qui fasse défiler les âges avant
+ *     d'en valider un : sans elle il gardait la tenue de l'âge affiché et
+ *     habillait le Capo avec le déguisement du gamin. Voir plus bas.
  *
  * Chacune porte `id` (la lignée, sous laquelle sont rangés les états) et
  * `age` (la carte du catalogue, sous laquelle est rangé le plein-pied).
@@ -47,8 +52,10 @@ import { stadeAffiche } from '../../shared/fanzzy/ages.js';
  * @param {Function} q  `(sql, params) => rows`, celui du module appelant.
  * @param {Array<{userId, active_fanzzy, active_evo, active_etat}>} lignes
  *   les lignes de portefeuille, déjà lues par l'appelant.
- * @returns {Promise<Map<string, {avatar, enJeu}>>} une entrée par joueur qui a
- *   un personnage ; les autres n'y sont pas.
+ * @returns {Promise<Map<string, {avatar, enJeu, tenuesParAge}>>} une entrée par
+ *   joueur qui a un personnage ; les autres n'y sont pas. La liste d'amis ne lit
+ *   que `avatar` — une clé de plus ne la dérange pas, c'est tout l'intérêt de
+ *   rendre l'objet entier.
  */
 export async function avatarsDe(q, lignes) {
   const qui = [];
@@ -112,7 +119,37 @@ export async function avatarsDe(q, lignes) {
     const avatar = forme(evo, l.active_etat || null);
     /* Au premier âge, les deux ne diffèrent que par l'expression. */
     const enJeu = evo === 1 ? (avatar && { ...avatar, etat: null }) : forme(1, null);
-    res.set(l.userId, { avatar, enJeu });
+
+    /* **La tenue de chaque âge, et pas seulement de celui qu'on montre.**
+     *
+     * L'accueil laisse faire défiler les âges de son Fanzzy avant d'en valider
+     * un — c'est un aperçu, rien n'est écrit. Il gardait la tenue de l'âge
+     * affiché en changeant d'âge, et montrait donc le Capo dans le déguisement
+     * du gamin : **une tenue que le joueur ne possède pas à cet âge-là.** Signalé
+     * comme tel — « je vois l'image suivante même si elle ne fait pas partie de
+     * ma collection ».
+     *
+     * La faute n'était pas dans le défilé mais dans ce qu'il avait sous la main :
+     * le portefeuille n'envoyait qu'`activeSkin`, la tenue d'**un** âge, et une
+     * page qui n'a qu'une valeur pour trois âges finit par la réemployer pour
+     * les trois. On envoie donc les trois.
+     *
+     * La clé de `user_skins` est `(joueur, personnage, stade, tenue)` depuis
+     * `sql/skins.sql` — « le Capo n'hérite pas de la garde-robe du gamin » — et
+     * un booster ne peut offrir une tenue que pour un âge déjà débloqué. Les
+     * trous sont donc normaux : un âge sans tenue portée n'a pas d'entrée, et
+     * l'écran retombe sur `base`, exactement comme `forme` juste au-dessus.
+     *
+     * Bornée à l'âge atteint : proposer la garde-robe d'un âge qu'on n'a pas
+     * payé serait le montrer en aperçu, et c'est précisément ce que le défilé
+     * refuse de faire pour les âges eux-mêmes. */
+    const tenuesParAge = {};
+    for (let n = 1; n <= atteint; n += 1) {
+      const t = tenues.get(cle(l.userId, l.id, n));
+      if (t) tenuesParAge[n] = t;
+    }
+
+    res.set(l.userId, { avatar, enJeu, tenuesParAge });
   }
   return res;
 }

@@ -136,7 +136,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       `SELECT active_fanzzy, active_evo, active_etat FROM user_wallet WHERE user_id = ?`,
       [userId]))[0];
     const r = await avatarsDe(q, [{ ...w, userId }]);
-    return r.get(userId) ?? { avatar: null, enJeu: null };
+    return r.get(userId) ?? { avatar: null, enJeu: null, tenuesParAge: {} };
   }
 
   /**
@@ -235,13 +235,19 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
        `activeSkin`, `activeStade`, `activeEtat` — en sont tirés, et non plus
        calculés à part : ils restent pour les écrans qui les lisent encore,
        mais ils ne peuvent plus dire autre chose que `avatar`. */
-    const { avatar, enJeu } = await construireAvatar(userId, w);
+    const { avatar, enJeu, tenuesParAge } = await construireAvatar(userId, w);
 
     return { scarves: w.scarves, billets: w.billets, packs: w.packs,
       nextPackInMs: nextIn, active: w.active_fanzzy,
       avatar,
       avatarEnJeu: enJeu,
       activeSkin: avatar?.skin ?? 'base',
+      /* **La tenue de chaque âge, pas seulement celle qu'on montre.**
+         L'accueil fait défiler les âges avant d'en valider un ; avec la seule
+         `activeSkin` il réemployait la tenue de l'âge affiché pour les autres,
+         et montrait donc une tenue que le joueur ne possède pas à cet âge-là.
+         La règle de possession est par âge depuis `sql/skins.sql`. */
+      tenuesParAge: tenuesParAge ?? {},
       /* **L'âge auquel le montrer, déjà calculé.**
 
          `activeEvo` reste ce qu'il a toujours été : le choix brut, nul quand
