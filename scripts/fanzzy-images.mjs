@@ -6,8 +6,14 @@
  * illustration repartait à la main, et les mêmes pièges revenaient. Ce script
  * l'exécute, et il sera relancé cent fois.
  *
- *   npm install --no-save sharp
  *   node scripts/fanzzy-images.mjs <dossier-des-rendus> [--sortie public/img/fanzzy]
+ *
+ * Plus besoin d'installer `sharp` à la main : il était employé sans être déclaré,
+ * ce qui le faisait disparaître à chaque `npm ci` — d'où la ligne
+ * `npm install --no-save sharp` qui figurait ici. Il est maintenant une
+ * dépendance de développement du dépôt, donc présent après un simple
+ * `npm install`. Le serveur, lui, s'installe avec `--omit=dev` et ne le reçoit
+ * pas : il n'en a pas l'usage, et `npm run cablage` le vérifie.
  *
  * Chaque fichier du dossier nommé `<ID>.png` — `GC15.png`, `GC16.png`… — produit
  * les six fichiers attendus : `GC15.{avif,webp,png}` en 520×945 et

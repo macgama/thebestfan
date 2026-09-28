@@ -56,6 +56,61 @@ Le dos montré à l'ouverture est celui du **sachet**, jamais celui de la carte 
 une carte dont le dos annonce sa série n'a plus rien à révéler quand on la
 retourne.
 
+## De l'atelier à l'écran
+
+Rien de ce qui est dans `art/` n'est servi au joueur. C'est l'atelier : les
+rendus d'origine, en 2K, tels que le générateur les a produits. Un script les
+détoure, les réduit à la taille où ils sont réellement affichés, et en écrit
+**trois formats** dans `public/img/` — AVIF, WebP et PNG, dans cet ordre de
+préférence. Le serveur choisit ensuite lequel envoyer d'après l'en-tête `Accept`
+du navigateur.
+
+| Ce qu'on dessine | On dépose dans | La commande | Ce qui est servi |
+|---|---|---|---|
+| Fanzzy | `art/neuves/`, `art/TR1/` | `npm run art` | `public/img/fanzzy/` |
+| Cartes d'action | `art/action/<id>.png` | `npm run actions` | `public/img/action/` |
+| Équipement | `art/stuff/<id>.png` | `npm run stuff` | `public/img/stuff/` |
+| Chants | `art/chant/<id>.png` | `npm run chants` | `public/img/chant/` |
+| Stades | `art/stade/<id>.png` | `npm run stades` | `public/img/stade/` |
+| Emblèmes de série | `art/logo/<CODE>.png` | `npm run logos` | `public/img/logo/` |
+| Dos de carte | `art/dos/<CODE>.png` | `npm run dos` | `public/img/dos/` |
+| Décors de série | `art/fonds/<id>.png` | `npm run fonds` | `public/img/fonds/` |
+
+Quatre de ces commandes acceptent `--invites` (`actions`, `stuff`, `chants`,
+`logos`) : elles écrivent alors les **invites** à donner au générateur, la
+formule de ce fichier déjà collée en fin de texte, au lieu de traiter des
+dessins. C'est le bon point de départ pour une nouvelle fournée.
+
+`npm run manifeste` recolle les `manifeste.json` de chaque Fanzzy en un seul
+`index.json` — l'agrégat que les pages lisent. Il est régénéré à la fin de chaque
+passage de `npm run art`, et ne s'écrit jamais à la main.
+
+## Où la règle est tenue
+
+Ce fichier énonce ; deux commandes vérifient.
+
+`npm run pages` compte, pour chaque famille, les dessins annoncés par le code et
+les fichiers réellement présents en trois formats. Une carte déclarée sans dessin
+ou un dessin sans ses trois formats sort en rouge. C'est ce contrôle qui empêche
+une page de demander une image qui n'existe pas — le défaut qui avait vidé
+l'écran d'accueil sur tout ce qui n'était pas Chrome.
+
+`npm run catalogue` écrit `catalogue.html` à la racine : tout le catalogue rangé
+par famille, avec pour chaque personnage sa lignée, ses âges, ses douze états et
+ses tenues, et ce qui manque. Au dernier passage : sept cent soixante-cinq
+cartes, deux cent quatre-vingt-onze personnages dont deux cent deux dessinés.
+Cette comptabilité ne tient dans aucune tête, et cette page dit **lesquels**
+manquent — ce qu'aucun contrôle rouge ne sait faire. Les images y sont incluses
+dans le fichier, pour qu'elle s'ouvre sur une machine qui n'a pas le dépôt.
+
+Les deux pages générées sont complémentaires, et il vaut mieux savoir laquelle
+ouvrir : `npm run dossier` écrit `dossier.html`, qui dit **où en est le jeu** —
+règles, barèmes, coûts, chiffres, sans une seule image. `catalogue.html` répond à
+l'autre question : **ce qui est dessiné et ce qui manque**.
+
+Aucune des deux ne peut juger d'une marque, d'un écusson ou d'un mot dans une
+image. **Ça, c'est à l'œil, avant d'intégrer** — voir la section ci-dessus.
+
 ## Une distinction à ne pas confondre
 
 Cette règle concerne les visuels **que nous fabriquons**.

@@ -58,9 +58,30 @@ echo "→ commit    : $COMMIT — $(git log -1 --pretty=%s)"
 # `npm ci` et non `npm install` : il installe exactement ce que
 # package-lock.json décrit, et il échoue si le verrou et le manifeste ne
 # s'accordent pas — au lieu de réécrire le verrou en silence sur le serveur.
+#
+# `--omit=dev`, et ce n'est pas une économie de confort.
+#
+# Les suites d'interface se sont mises à piloter un vrai navigateur, et
+# `puppeteer` est donc devenu une dépendance déclarée. Son script d'installation
+# **télécharge Chromium** : environ deux cents mégaoctets au transfert, sept
+# cents une fois dépliés. Sur un hébergement mutualisé, c'est du quota, du
+# temps de construction, et surtout une étape de plus qui peut échouer — et un
+# `npm ci` qui échoue arrête tout le déploiement, pour un navigateur dont ce
+# serveur n'a aucun usage.
+#
+# Le serveur n'a besoin de rien de tout ça. Ses dépendances de production sont
+# au nombre de cinq — express, mysql2, nodemailer, socket.io, socket.io-client —
+# et ni `server.js`, ni `build.mjs`, ni `src/`, ni `schema:appliquer` n'importent
+# `puppeteer`, `sharp` ou `jsdom` : ces trois-là ne servent qu'aux `scripts/`,
+# qui ne tournent jamais ici. Le contrôle `npm run cablage` le vérifie, pour que
+# la règle ne tienne pas à ce commentaire.
+#
+# **La commande du Manager Infomaniak doit recevoir la même correction** —
+# `git pull && npm ci --omit=dev && node build.mjs` — sinon la mise en ligne à
+# la main garde le défaut que celle-ci vient de perdre. Voir A-DEPLOYER.md.
 
-echo "→ npm ci"
-npm ci --no-audit --no-fund
+echo "→ npm ci --omit=dev"
+npm ci --omit=dev --no-audit --no-fund
 
 echo "→ build"
 node build.mjs

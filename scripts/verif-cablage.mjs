@@ -151,6 +151,64 @@ check('server.js branche le fil du match sur le virage',
     appels.includes('onFinished') || (console.log('        appels :', appels.join(', ')), false));
 }
 
+/* ---------------------------- le serveur n'emporte que ses cinq paquets
+
+   **La panne que ce contrôle empêche n'arrive qu'en production.**
+
+   Le serveur s'installe désormais sans les dépendances de développement —
+   `npm ci --omit=dev`, voir `scripts/deployer.sh`. La raison est `puppeteer` :
+   son installation télécharge Chromium, deux cents mégaoctets sur un
+   hébergement mutualisé, pour un navigateur dont ce serveur n'a aucun usage.
+
+   La contrepartie est qu'un `import` de trop devient invisible ici et fatal
+   là-bas. `sharp` dans un module d'images, `jsdom` dans un rendu côté serveur :
+   la machine de développement les a, tous les tests passent, et la mise en
+   ligne casse au démarrage avec « Cannot find package » — c'est-à-dire toutes
+   les routes `/api` d'un coup, connexion comprise. Exactement la famille de
+   pannes que ce fichier surveille : rien ne la signale avant qu'il soit trop
+   tard.
+
+   On lit donc ce que charge le serveur — lui-même, tout `src/`, `build.mjs` et
+   le chemin du schéma — et on refuse tout paquet déclaré en développement.   */
+{
+  const fs = await import('node:fs/promises');
+  const path = await import('node:path');
+
+  const manifeste = JSON.parse(await fs.readFile('package.json', 'utf8'));
+  const dev = Object.keys(manifeste.devDependencies ?? {});
+
+  /** Tous les fichiers chargés par le serveur, directement ou en cascade. */
+  const aLire = ['server.js', 'build.mjs', 'scripts/appliquer-schema.mjs',
+    'scripts/ordre-schema.mjs'];
+  const parcourir = async (dossier) => {
+    for (const e of await fs.readdir(dossier, { withFileTypes: true })) {
+      const ou = path.join(dossier, e.name);
+      if (e.isDirectory()) await parcourir(ou);
+      else if (/\.m?js$/.test(e.name)) aLire.push(ou);
+    }
+  };
+  await parcourir('src');
+
+  const coupables = [];
+  for (const fichier of aLire) {
+    const code = await fs.readFile(fichier, 'utf8').catch(() => '');
+    for (const paquet of dev) {
+      /* Le nom exact ou un de ses sous-chemins — `sharp` et `sharp/lib/…` sont
+         le même paquet absent. On ne lit que les imports de paquet : un chemin
+         relatif qui contiendrait le mot ne compte pas. */
+      const motif = new RegExp(
+        `(?:from|import|require\\()\\s*['"]${paquet}(?:/[^'"]*)?['"]`);
+      if (motif.test(code)) coupables.push(`${fichier} → ${paquet}`);
+    }
+  }
+
+  check(coupables.length
+    ? `le serveur importe un paquet absent en production : ${coupables.join(', ')}`
+    : `le serveur ne charge que ses ${
+      Object.keys(manifeste.dependencies ?? {}).length} paquets de production`,
+  coupables.length === 0);
+}
+
 console.log(fautes
   ? `\n${fautes} faute(s) — ne pas livrer en l’état.`
   : '\nLe câblage des modules est correct.');

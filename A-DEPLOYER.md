@@ -1,169 +1,164 @@
 # À déposer sur Infomaniak
 
-**Session « le format d'image, puis le catalogue ».** Quatre commits de code
-sur `claude/dreamy-lovelace-mjqpea`, plus les mises à jour de ce fichier :
+**Session « la revue des vingt-quatre écrans ».** Une relecture page par page et
+script par script, demandée parce que l'application faisait peur à lancer : bugs
+d'affichage, flèche de retour qui ne revenait pas, crainte d'un plantage.
 
-```
-622eaa7  L'accueil sans personnage : le format d'image n'est plus deviné
-d027bc3  L'AVIF revient, négocié par le serveur
-a69b5b8  Le catalogue dit tout seul quand il a dérivé du code
-8fce760  Le code redescend dans la base, sans écraser personne
-```
+Il n'y a **aucun changement de schéma** dans ce lot : rien à appliquer, rien à
+migrer, aucune colonne, aucune table. Le retour arrière est un `git revert` des
+commits, sans autre manœuvre.
 
-**Une colonne s'ajoute** — `fanzzy.amorce` — et elle est déclarée dans
-`sql/fanzzy.sql`, qui est rejoué à chaque passage de schéma. Aucune table
-nouvelle, aucune donnée déplacée, **aucune dépendance nouvelle**
-(`package-lock.json` n'a pas bougé, `npm ci` passe tel quel). Sans la colonne,
-le jeu tourne exactement comme avant et le démarrage dit quoi appliquer : rien
-ne s'éteint si le schéma est oublié.
-
-Le retour arrière est un `git revert` des commits de code. La colonne peut
-rester : plus personne ne la lit.
+Il y a en revanche **une chose à changer dans le Manager avant de déployer**, et
+elle est décrite juste en dessous. Si tu ne lis qu'un paragraphe de ce fichier,
+lis celui-là.
 
 ---
 
-## Ce que ça corrige — 1. l'accueil sans personnage
+## Avant tout : la commande de construction doit changer
 
-L'écran d'accueil n'avait **plus de personnage au centre** sur Firefox et sur
-téléphone, avec le nom du Fanzzy écrit juste en dessous, pendant que Chrome
-allait très bien et que la fiche « Mon Fanzzy » montrait le même dessin sans
-broncher.
-
-La page choisissait le format des images en demandant à un canvas
-`toDataURL('image/avif')` puis `toDataURL('image/webp')` — c'est-à-dire ce
-qu'il sait **écrire**, qui ne dit rien de ce que le navigateur sait
-**afficher**. Personne n'encode l'AVIF, pas même Chrome ; Safari n'encode pas le
-WebP. Tout ce qui n'était pas Chrome repartait donc avec `.jpg`, et **aucun
-Fanzzy n'est publié en JPEG** — ils sont détourés, rangés en AVIF, WebP et PNG.
-L'accueil demandait `/img/fanzzy/TR57.jpg`, recevait un 404, et son rattrapage
-ne connaissait que `.avif` et `.webp` : le `.jpg` passait au travers, les deux
-calques restaient éteints, et le cadre restait vide sans un mot dans la console.
-
-Le choix est passé côté serveur, où la question a une réponse exacte : l'en-tête
-`Accept` dit ce que le navigateur sait lire. La page demande le WebP — lu
-partout depuis 2020 — et le serveur remplace par le jumeau `.avif` quand, et
-seulement quand, le navigateur l'a annoncé. **28,7 Mo de WebP deviennent
-18,3 Mo d'AVIF** pour qui sait les lire, soit 36 % de moins ; c'est la première
-fois que l'AVIF du dépôt sert à quelque chose.
-
-## Ce que ça corrige — 2. le catalogue qui dérivait en silence
-
-Le catalogue vit en base et s'amorce depuis `dex.js` en `INSERT IGNORE` : on
-ajoute ce qui manque, on n'écrase jamais ce qui existe — sans quoi chaque
-redémarrage effacerait les corrections faites à l'écran. La contrepartie n'était
-tenue par rien : **changer une carte déjà en base dans le code ne changeait
-rien.** Quatre fichiers de `sql/` n'existent que pour rattraper ça à la main.
-
-Deux pièces, désormais. Le **constat** compare les deux catalogues à chaque
-démarrage et nomme au journal les trois écarts qu'aucune manœuvre normale ne
-produit. La **réconciliation** fait redescendre le code dans les cartes déjà
-posées, champ par champ, en s'arrêtant devant tout ce qui a été corrigé à
-l'écran — la colonne `fanzzy.amorce` garde ce que le code disait la dernière
-fois, ce qui permet de savoir *qui* a bougé au lieu de le supposer.
-
----
-
-## Les fichiers qui ont changé
-
-Si tu préfères ne téléverser que le delta plutôt que tout remplacer.
-
-### Nouveaux fichiers
-
-```
-src/server/images/index.js          la négociation de format : Accept → AVIF
-scripts/images-smoke.mjs            sa suite de tests — npm run images:smoke
-src/server/fanzzy/ecarts.js         le constat d'écart code / base
-scripts/ecarts-smoke.mjs            npm run ecarts:test
-src/server/fanzzy/reconciliation.js la fusion à trois points du catalogue
-scripts/reconciliation-smoke.mjs    npm run reconciliation:test
-```
-
-### Fichiers remplacés
-
-```
-server.js                           négociation /img ; l'écart du catalogue
-                                    dans /healthz
-package.json                        les trois nouvelles suites
-sql/fanzzy.sql                      colonne `amorce` : ce que le code disait
-                                    la dernière fois qu'il a écrit la carte
-src/server/fanzzy/catalogue.js      amorçage, réconciliation, constat d'écart
-scripts/fanzzy-ecarts.mjs           la loupe, sur le module partagé
-scripts/appliquer-schema.mjs        historique.sql manquait à la liste
-public/fanzzy-etats.js              plus de détection ; EXT, REPLI et secours()
-public/fanzzy-art.js                deux extensions au lieu d'une : un Fanzzy
-                                    détouré ne peut plus être demandé en .jpg
-public/index.html                   l'accueil retombe par secours() ; le décor
-                                    a un second repli
-public/fanzzy-scene.js              même rattrapage pour les quatre écrans
-                                    qui montrent un Fanzzy en pied : le Virage,
-                                    le classeur, les boosters, le jour
-public/nav.js                       le décor commun ne devine plus son format
-public/sw.js                        commentaire seulement : pourquoi le cache
-                                    d'images tient malgré « Vary: Accept »
-scripts/verif-pages.mjs             contrôle neuf : l'adresse que la page
-                                    demande doit désigner un fichier présent
-scripts/etats-smoke.mjs             attentes mises à jour + secours() éprouvé
-ETAT.md                             § 6, Pièges connus : l'entrée complète
-```
-
-### Images retirées
-
-```
-public/img/fanzzy/TR1/e2/base/     dix états sur douze — il reste neutre
-public/img/fanzzy/TR1/e3/base/     onze états sur douze — il reste neutre
-```
-
-Soixante-trois fichiers, seize mégaoctets. Ils portaient des écussons de club et
-les mots « CAPO » et « TICKET » : ils avaient été produits par l'invite d'âge
-d'avant, qui ne portait pas la formule de `VISUELS.md`. Le repli du jeu est
-écrit pour ce cas — un état absent retombe sur `neutre` — et `index.json` est
-régénéré en conséquence. **Rien à faire de plus au déploiement** : le manifeste
-est servi avec une heure de cache, les joueurs déjà en ligne cessent de demander
-ces états dans l'heure, et d'ici là un état manquant ne casse rien, il ne change
-simplement pas la pose.
-
-Le reste de `public/img/` n'a pas changé : les AVIF étaient déjà tous là, ils
-n'étaient simplement jamais servis.
-
----
-
-## Les étapes, dans l'ordre
-
-### 1. Amener les deux commits sur `main`
-
-Ils sont sur `claude/dreamy-lovelace-mjqpea`. Rien ne part en ligne depuis une
-branche : `scripts/deployer.sh` fait `git reset --hard origin/main`, et la
-construction du Manager tire la branche par défaut. Fusionner d'abord, donc.
-
-### 2. Déployer
-
-Par le workflow, si les secrets SSH sont posés — `deploiement.yml` lance
-`scripts/deployer.sh`, qui applique le schéma avant de redémarrer et n'a rien à
-appliquer ici. Sinon, **à la main dans l'onglet Node.js du Manager** :
+Dans l'onglet Node.js du Manager, la commande de construction est aujourd'hui :
 
 ```
 git pull && npm ci && node build.mjs
 ```
 
-`npm ci` et non `npm install` : c'est ce qui a déjà bloqué une livraison
-entière — `npm install` réécrit `package-lock.json` sur le serveur, le dépôt
-devient sale et le `git pull` suivant refuse de fusionner sans le dire.
-`node build.mjs` ne fabrique rien, mais la commande l'appelle encore.
+Elle doit devenir :
 
-Attendre la fin de la construction **avant** de redémarrer : `npm start` ne
-fait jamais de `git pull`.
-
-### 3. Passer le schéma
-
-Le workflow le fait avant de redémarrer. À la main :
-
-```bash
-cd ~/sites/thebestfan.online && npm run schema:appliquer
+```
+git pull && npm ci --omit=dev && node build.mjs
 ```
 
-Il ajoute `fanzzy.amorce` et ne touche à rien d'autre. Si tu l'oublies, le jeu
-tourne quand même : le démarrage écrit « colonne `amorce` absente,
-réconciliation désactivée » et `/healthz` nomme le fichier.
+**Pourquoi c'est urgent et pas cosmétique.** Les suites d'interface pilotent un
+vrai navigateur, et `puppeteer` est donc devenu une dépendance déclarée du
+dépôt. Son script d'installation **télécharge Chromium** : environ deux cents
+mégaoctets au transfert, sept cents une fois dépliés. `npm ci` installe les
+dépendances de développement par défaut, donc la prochaine construction va
+tenter ce téléchargement sur l'hébergement mutualisé — du quota, du temps, et
+surtout une étape de plus qui peut échouer. **Un `npm ci` qui échoue arrête tout
+le déploiement**, pour un navigateur dont le serveur n'a aucun usage.
+
+Le serveur n'a besoin que de cinq paquets : `express`, `mysql2`, `nodemailer`,
+`socket.io`, `socket.io-client`. Ni `server.js`, ni `build.mjs`, ni `src/`, ni
+`npm run schema:appliquer` n'importent `puppeteer`, `sharp` ou `jsdom` — ces
+trois-là ne servent qu'aux `scripts/`, qui ne tournent jamais sur le serveur.
+C'est vérifié par un contrôle, `npm run cablage`, pour que la règle ne tienne pas
+à la mémoire de quelqu'un.
+
+`scripts/deployer.sh` a déjà reçu la correction : le déploiement par le workflow
+est donc à l'abri. Seule la mise en ligne à la main, par le Manager, garde le
+défaut — d'où ce paragraphe.
+
+---
+
+## Ce que ça corrige
+
+### Les données : une carte dont on ne pouvait pas changer la série
+
+Dans `/admin`, le filtre des séries et le champ SÉRIE du formulaire d'édition
+portaient **le même identifiant** (`f-set`), et les deux sont à l'écran en même
+temps — le formulaire s'insère dans le tableau, sous la barre de filtres.
+`getElementById` rendant le premier du document, tout le code qui croyait lire ou
+écrire le formulaire lisait et écrivait le filtre.
+
+Trois conséquences, aucune visible :
+
+- changer la série d'un Fanzzy dans le formulaire **n'avait aucun effet** ;
+- toute carte créée recevait **la première série du catalogue**, quel que soit le
+  choix fait à l'écran ;
+- ouvrir une carte à modifier déplaçait discrètement le filtre de la liste.
+
+C'est le seul défaut de ce lot qui ait pu écrire de fausses données. Un contrôle
+neuf refuse désormais tout identifiant écrit deux fois dans une page
+(`npm run pages`), avec une liste de tolérances documentée pour les quatre noms
+que l'administration réemploie légitimement d'un onglet à l'autre.
+
+### La navigation : la flèche de retour
+
+- **`/admin` n'en avait aucune.** `nav.js` pose sa barre *dans* la colonne, et la
+  première vue de l'administration réécrit cette colonne en entier : la barre
+  apparaissait puis disparaissait, flèche comprise. La flèche est maintenant
+  écrite dans l'en-tête propre de la page, `nav.js` ne double plus la barre, et
+  sa poignée est déléguée au document — donc n'importe quelle flèche portant la
+  classe se comporte comme les autres.
+- **Sur `/matchs`, la porte « GRAND VIRAGE » éteinte portait `href="#"`.**
+  `pointer-events:none` arrête le doigt mais pas la touche Entrée : un clic
+  clavier empilait une entrée d'historique, et la flèche demandait ensuite deux
+  pressions dont la première ne faisait rien de visible.
+
+### Les dates : un jour de décalage aux abords de minuit
+
+Le ruban de jours de `/matchs` tirait son adresse de `toISOString()` — donc un
+jour **UTC**, ce qui est juste : la route appelle l'API avec `timezone: 'UTC'` et
+met sa réponse en cache sous cette clé. Mais il s'étiquetait en **heure locale**.
+
+À 00 h 30 à Zurich le 28, le bouton affichait « AUJOURD'HUI · 28 sept. » et
+rapportait les matchs du 27 ; à 20 h à Montréal, il annonçait le jour en cours et
+rapportait ceux du lendemain. « HIER » montrait alors des matchs à venir. La
+liste n'était pas fausse — elle répondait à une autre question que celle imprimée
+sur le bouton.
+
+### Les champs de recherche, détruits pendant qu'on tape
+
+Sur `/teletext` et dans les trois recherches de `/admin`, le rafraîchissement
+réécrivait le conteneur qui porte le champ de saisie. Mesuré au navigateur : nœud
+différent, focus perdu, curseur revenu à zéro. Sur téléphone, le clavier se
+refermait — après chaque bout de mot dans le télétexte, qui sert justement à
+trouver une compétition parmi neuf cent cinquante.
+
+### Les boutons qui se taisaient quand le serveur refusait
+
+Sept endroits appelaient le serveur sans rattraper le refus : l'écran ne montrait
+alors **rien du tout**, ce qui ne se distingue pas d'un clic qui n'a pas pris —
+donc on reclique. Dans `/admin` : purger le cache, l'envoi de contrôle, les deux
+boutons de publication, et la remise d'un réglage au défaut, celui-ci affirmant
+même « rendu au défaut » sans avoir rien rendu. Dans `/equipes` : le retrait d'un
+club jetait sa réponse, et `api()` pouvait échouer sur une coupure réseau sans
+que les trois gestionnaires n'attrapent quoi que ce soit.
+
+### La porte d'entrée de l'administration
+
+Elle confondait « pas connecté » et « serveur injoignable » : les deux
+renvoyaient sur `/compte`. L'exploitant se retrouvait donc sur l'écran de
+connexion au milieu d'une panne, à se demander pourquoi sa session avait sauté —
+depuis l'écran qui sert justement à diagnostiquer les pannes. Seul un refus
+d'authentification y renvoie désormais ; le reste s'affiche sur place, avec de
+quoi réessayer. Le contrôle d'accès n'a pas bougé : il n'a jamais été là, chaque
+route `/api/admin` vérifie le droit côté serveur.
+
+### Le direct, qui pouvait se figer pour de bon
+
+Sur la fiche d'un match, une exception en dessinant emportait la replanification
+avec elle : plus de relecture, plus de chrono, un score arrêté à la minute de
+l'incident **pour le reste de la visite**. Le dessin est maintenant isolé et la
+minuterie se replanifie dans tous les cas. Deux écrans ne se rafraîchissaient pas
+non plus au retour sur l'onglet, et l'horodatage « Mis à jour à 21:34 » restait
+affiché à 21:50.
+
+---
+
+## Les étapes, dans l'ordre
+
+### 1. Changer la commande de construction
+
+Voir le paragraphe du haut. C'est la seule action de configuration de ce lot.
+
+### 2. Déployer
+
+Par le workflow si les secrets SSH sont posés — `deploiement.yml` lance
+`scripts/deployer.sh`, qui est déjà corrigé. Sinon, à la main dans le Manager,
+avec la commande ci-dessus.
+
+`npm ci` et non `npm install` : `npm install` réécrit `package-lock.json` sur le
+serveur, le dépôt devient sale, et le `git pull` suivant refuse de fusionner sans
+le dire. C'est ce qui a déjà bloqué une livraison entière.
+
+Attendre la fin de la construction **avant** de redémarrer : `npm start` ne fait
+jamais de `git pull`.
+
+### 3. Pas de schéma à passer
+
+Rien dans ce lot ne touche à la base. Le lancer ne fait pas de mal — il est
+idempotent — mais il n'a rien à faire.
 
 ### 4. Vérifier que c'est bien le nouveau code qui tourne
 
@@ -172,103 +167,65 @@ curl -s https://thebestfan.online/healthz
 ```
 
 `version` doit annoncer le commit qu'on vient de pousser, et `ok` doit être
-`true`. S'il annonce l'ancien commit, le redémarrage n'a pas eu lieu — le site
-répond, en servant le code d'avant, et tout ce qui suit serait vérifié pour
-rien.
+`true`. S'il annonce l'ancien, le redémarrage n'a pas eu lieu : le site répond en
+servant le code d'avant, et tout ce qui suit serait vérifié pour rien.
 
-### 5. Vérifier la négociation — deux commandes
+### 5. Les six contrôles à l'œil
 
-C'est le seul contrôle qui ne se fait pas à l'œil, et c'est le cœur de la
-livraison. **La même adresse** doit rendre deux fichiers différents :
+Dans cet ordre, du plus grave au plus cosmétique.
 
-```bash
-# Un navigateur qui sait lire l'AVIF → doit répondre « image/avif »
-curl -sI -H 'accept: image/avif,image/webp,*/*' \
-  https://thebestfan.online/img/fanzzy/TR57.webp | grep -iE 'content-type|vary'
+1. **La série d'une carte s'enregistre.** `/admin`, onglet catalogue : ouvrir un
+   Fanzzy, changer sa SÉRIE, enregistrer, rouvrir. La nouvelle série doit être
+   là. Puis créer une carte en choisissant une série qui **n'est pas** la
+   première de la liste, et vérifier qu'elle la garde. C'est le seul contrôle de
+   ce lot qui porte sur des données.
+2. **La flèche de `/admin`.** Elle doit être en haut à gauche, et y rester après
+   avoir changé d'onglet — c'est précisément ce qui ne tenait pas.
+3. **La recherche du télétexte.** `/teletext`, taper trois lettres, s'arrêter une
+   seconde, continuer à taper **sans retoucher le champ**. Le texte doit
+   continuer d'arriver. Sur téléphone, le clavier doit rester ouvert.
+4. **Le ruban de jours de `/matchs`.** La date écrite sous « AUJOURD'HUI » doit
+   correspondre aux matchs affichés. Le décalage ne se voyait qu'entre minuit
+   local et minuit UTC ; hors de cette fenêtre, ce contrôle ne peut que confirmer
+   que rien n'a été cassé.
+5. **Un bouton d'administration qui refuse.** Le plus simple : « Envoi de
+   contrôle » sans SMTP configuré. Un reçu rouge doit apparaître en haut. Avant,
+   il ne se passait rien.
+6. **Retirer un club.** `/equipes`, retirer un club suivi : il doit disparaître,
+   ou un message doit dire pourquoi il reste.
 
-# Safari 15, qui ne sait pas → doit répondre « image/webp »
-curl -sI -H 'accept: image/webp,image/png,image/*;q=0.8' \
-  https://thebestfan.online/img/fanzzy/TR57.webp | grep -iE 'content-type|vary'
-```
+### 6. Et une fois : jouer
 
-Attendu, dans cet ordre : `image/avif` puis `image/webp`, et **`Vary: Accept`
-dans les deux cas**. Si le `Vary` manque, ne laisse pas courir : c'est lui qui
-empêche un cache intermédiaire de servir l'AVIF de l'un au navigateur de
-l'autre, et la panne qu'on vient de corriger reviendrait un cran plus loin,
-chez les seuls joueurs qui passent par ce cache.
-
-Si les deux réponses sont identiques, le middleware n'est pas monté (code non
-tiré par le `git pull`) ou quelque chose en amont réécrit `Accept`.
-
-### 6. Vérifier l'accueil, là où ça se voyait
-
-**Sur Firefox et sur un iPhone**, pas sur Chrome — c'est Chrome qui allait bien.
-
-1. `/` connecté : le Fanzzy équipé doit être **au centre de l'écran**, pas
-   seulement nommé sous les rails.
-2. Toucher le personnage : il saute. C'est le signe que l'image est là et pas
-   qu'un calque vide occupe la place.
-3. `/fanzzy` puis retour à `/` : le personnage doit revenir **tout de suite**,
-   depuis le souvenir local.
-
-Si l'accueil est encore vide sur un appareil : vider le cache du site. Le
-service worker garde les images en cache-first, et un `.jpg` en 404 n'a rien
-mis en cache — mais une page HTML d'avant, si.
-
-### 7. Lire ce que le démarrage dit du catalogue
-
-C'est la première mise en ligne où le code redescend dans la table `fanzzy`.
-Les lignes à chercher dans le journal, dans cet ordre d'importance :
-
-```
-catalogue : N carte(s) d’avant la réconciliation prises en charge …
-catalogue : N carte(s) reprise(s) du code — TR2 (nom) …
-catalogue : N carte(s) que le code voulait changer et qui ont été corrigées à l’écran …
-```
-
-La première n'arrive **qu'une fois**, au premier démarrage sur cette base :
-c'est l'adoption des lignes d'avant le mécanisme. Le compte attendu est proche
-du nombre de cartes, moins celles que tu as corrigées depuis `/admin` — elles
-restent hors de portée, et le journal les compte à part.
-
-La deuxième liste ce que le code vient de reprendre. Sur cette base, ce sont les
-écarts que `sql/identites.sql` rattrapait à la main : ils devraient disparaître
-d'eux-mêmes.
-
-La troisième est la seule qui demande une décision, et elle n'est pas urgente :
-le code voulait changer une carte que tu avais corrigée à l'écran. La base garde
-**ta** version. `npm run ecarts` dit laquelle, champ par champ.
-
-Si le journal annonce à la place « N cartes seraient reprises du code, au-delà
-des 60 admises — rien n'a été écrit », **ne relève pas le plafond par réflexe** :
-c'est le disjoncteur, et une fournée de contenu ne réécrit pas soixante cartes.
-Regarde d'abord `npm run ecarts`.
-
-Puis, une fois : `curl -s https://thebestfan.online/healthz` doit montrer
-`catalogue: { cartes: …, aCollectionner: … }` **sans clé `ecarts`**. Une clé
-`ecarts` qui reste après ce déploiement est une faute réelle, pas un reliquat.
+Entrer dans un Virage pendant un match, chanter, en sortir par la flèche. C'est
+le parcours qui avait été rapporté cassé, et c'est celui qu'aucun contrôle
+automatique ne couvre de bout en bout.
 
 ---
 
-## Une chose à décider
+## Ce que les contrôles ne prouvent pas
 
-**Les joueurs déjà installés garderont leur WebP un moment.** `public/sw.js`
-met les images en cache-first sous `tbf-images-1` : les dessins qu'ils ont déjà
-vus continueront de sortir de ce cache, en WebP, et ne profiteront pas des 36 %
-tant qu'il n'est pas vidé. Les nouvelles visites et les images jamais vues
-partent en AVIF dès maintenant.
+**Trente-six suites sur cinquante-huit demandent MySQL**, et elles n'ont pas pu
+tourner pendant cette revue : la machine de développement n'a ni `.env`, ni
+Docker, ni `mysqld`. Elles échouent toutes sur `ECONNREFUSED 127.0.0.1:3307`, y
+compris `admin:ui` et `equipes:ui` — c'est-à-dire les suites dédiées aux deux
+écrans les plus modifiés de ce lot.
 
-Passer la constante à `tbf-images-2` efface l'ancien cache au prochain
-démarrage et fait tout re-télécharger — en AVIF, donc plus léger ensuite, mais
-une fois plein tarif. C'est un arbitrage, pas une correction : à décider, pas à
-faire par réflexe.
+Ces deux écrans sont couverts par les contrôles statiques (`npm run pages`,
+`npm run cablage`, `npm run promesses`) et par le balayage navigateur
+(`npm run pages:navigateur`, qui ouvre les vingt-quatre écrans sans base et
+vérifie qu'aucun ne lève et que chacun porte sa flèche). Ce n'est pas la même
+chose que leur suite dédiée.
+
+**Lance `npm test` là où la base répond avant de considérer ce lot vérifié.**
+Vingt-deux suites sont vertes ici ; les trente-six autres attendent une base.
 
 ---
 
 ## Ce qui reste en attente côté serveur
 
-Rien de neuf dans cette livraison. La liste à jour est en `ETAT.md` § 7 bis, et
-le point 0 est celui qui compte : **cinq migrations ne sont peut-être pas
-appliquées en production** — `minutes`, `couleurs`, `amis`, `boutique`,
-`billets`. Le démarrage les contrôle et `/healthz` répond `ok: false` en les
-nommant. C'est la vérification de l'étape 4, et c'est pour ça qu'elle est là.
+Rien de neuf dans cette livraison. La liste est en `ETAT.md`, section « À faire
+sur le serveur », et le premier point est celui qui compte : **cinq migrations
+ne sont peut-être pas appliquées en production** — `minutes`, `couleurs`,
+`amis`, `boutique`, `billets`. Le démarrage les contrôle et `/healthz` répond
+`ok: false` en les nommant. C'est la vérification de l'étape 4, et c'est pour ça
+qu'elle est là.
