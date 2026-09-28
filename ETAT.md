@@ -968,18 +968,44 @@ simulateur.
 | `/bienvenue` | cérémonie d'arrivée : club, paquet de bienvenue |
 | `/fanzzy` | kiosque, classeur, Fanzzy équipé |
 | `/fanzzy/:id` | fiche d'un Fanzzy : histoire, effets, tenues, lignée |
+| `/collection` | la collection en vitrine : Fanzzy, équipement, tenues, et où trouver ce qui manque |
+| `/boosters` | l'ouverture d'un paquet, déchiré à la main |
 | `/deck` | construction de deck : jusqu'à trois Fanzzy, équipement, dix cartes |
 | `/kop` | le KOP : caisse commune, votes de dépense, bonus de virage |
 | `/carnet` | souvenirs vécus et vignettes à récupérer |
-| `/virage` | Grand Virage : tir à la corde pendant un vrai match, le fil du terrain, et **les cartes d'action de sa tribune** |
+| `/virage` | Grand Virage : tir à la corde pendant un vrai match, le fil du terrain, **les cartes d'action de sa tribune** et le panneau « ce que tu portes » |
 | `/amis` | amis : qui suit les mêmes clubs, demandes, invitations en KOP |
-| `/duel-nvn` | **le duel** : tir à la corde, 1v1 à 5v5, adossé à un vrai match |
+| `/equipes` | les clubs suivis, et la recherche pour en ajouter |
+| `/duel-nvn` | **le duel** : tir à la corde, 1v1 à 5v5, adossé à un vrai match, même panneau de bonus |
 | `/matchs` | matchs du jour, en direct, avec fiche détaillée |
 | `/teletext` | tous les championnats : classements, buteurs, cartons |
 | `/classement` | supporters, tribunes, duellistes |
+| `/boutique` | écharpes et paquets, payés par Stripe |
+| `/abonnement` | l'abonnement, ses droits et sa résiliation |
 | `/profil` | identité, clubs, inventaire, langue, déconnexion |
+| `/repetition` | la répétition : apprendre les gestes hors match |
+| `/aide` | comment on joue, et ce que veut dire chaque carte |
 | `/admin` | **catalogue Fanzzy**, séries ouvertes, joueurs, compétitions, journal |
 | `/diagnostic`, `/healthz` | état du service |
+
+Vingt-quatre écrans, et c'est le compte que tient `npm run pages:navigateur` : il
+les ouvre tous dans un vrai navigateur, serveur muet compris, et vérifie
+qu'aucun ne lève et que chacun porte sa flèche de retour.
+
+### Ce qu'on porte, et comment on le sait
+
+Les modificateurs des Fanzzy, de l'équipement, du KOP et du stade sont composés
+par le serveur depuis longtemps — et jusqu'ici **rien ne les montrait au
+joueur**. Les deux arènes ont maintenant une ligne sous la jauge de souffle,
+« CE QUE TU PORTES · n bonus · n malus », et un panneau qui s'ouvre au toucher :
+une source par bloc, ses effets signés et colorés, puis le total que le moteur
+applique vraiment — affiché à part et jamais recalculé depuis les blocs.
+
+Deux modules partagés le rendent possible, et il vaut mieux savoir lequel fait
+quoi : `src/shared/apports.js` construit la **ventilation** côté serveur, là où
+les morceaux existent encore séparément — un total ne se décompose pas après
+coup. `public/mods.js` met les **mots** dessus, et c'est le seul endroit du
+navigateur qui le fasse : voir § 6 pour ce que coûtaient les cinq copies d'avant.
 
 ### Les suites de contrôle
 
@@ -1233,6 +1259,55 @@ déduire ; ce serait la première chose que le fil affirme sans l'avoir vue.
 ---
 
 ## 6. Pièges connus
+
+**Un signe en dur devant un nombre calculé.** La phrase qui décrivait un effet
+sur une carte s'écrivait comme ceci :
+
+```js
+`Souffle +${Math.round((m.breathBonus - 1) * 100)} %`
+```
+
+Pour un `breathBonus: 0.85`, la carte affichait **« Souffle +-15 % »**. Compté
+sur le catalogue réel : **377 occurrences, sur dix clés** — c'est-à-dire la
+majorité des malus du jeu. La même table écrivait « Tempo plus tolérant (×0.9) »,
+où le mot dit l'inverse du nombre, et « Martelage 0,5 s plus court » pour une
+valeur qui l'allonge.
+
+Deux leçons, et la seconde est la vraie.
+
+La première : **le signe appartient au nombre**, jamais au gabarit. Un helper qui
+rend « +20 % » ou « −15 % » supprime la faute par construction.
+
+La seconde : **le contrôle était vert.** Il lisait le fichier à l'expression
+régulière et vérifiait qu'une clé était *mentionnée* — or `breathBonus` était
+bien mentionné, dans une phrase fausse. Un garde-fou qui vérifie la présence d'un
+nom ne vérifie rien du contenu. Il **exécute** maintenant la table dans un bac à
+sable de dix lignes — `node:vm`, aucune dépendance — et éprouve ses phrases sur
+les **517 valeurs** réellement portées par le catalogue, l'équipement et les
+stades. C'est ce qui rend la faute impossible à reproduire, et non le fait de
+l'avoir corrigée.
+
+**Et le sens d'un modificateur ne se déduit pas de son signe.** C'est ce qui a
+fait diverger les copies : un `tempoInterval` positif est un **malus** — il
+écarte les pulsations, donc le chant dure plus longtemps et on en place moins. Ce
+qui tranche n'est pas une lecture du moteur, qui se contente d'additionner : ce
+sont les textes de `inventaire.js`. Les Jumelles portent `tempoInterval: 70` et
+disent « tu vois venir le rythme, **mais tu chantes plus lentement** » ; le
+sifflet porte `-55` et dit « le contretemps **devient lisible** ». Le sens est
+donc déclaré clé par clé dans `public/mods.js`, avec la raison écrite à côté.
+
+**La même table en cinq copies.** Celle-ci vivait dans `cartes.js`, `deck.html`,
+`fanzzy-fiche.js`, `scripts/catalogue.mjs` et `scripts/dossier.mjs`. Trois
+étaient fausses, chacune autrement, et `deck.html` portait le commentaire
+« vocabulaire commun avec la fiche Fanzzy : les mêmes mots partout » alors que le
+même effet s'y écrivait « Tempo +20 % » contre « Tempo plus tolérant (×1.2) »
+ailleurs. La fiche du Fanzzy, elle, ne nommait ni `parryResist` — 103 cartes — ni
+`costPenalty` — 17 : exactement le défaut que `cartes.js` disait avoir corrigé
+chez lui. **Un commentaire qui affirme une unité ne la crée pas**, et c'est le
+troisième de ce dépôt à avoir été pris en flagrant délit — voir les « petites
+briques » de `ui.css`. Les quatre écrans renvoient maintenant à
+`public/mods.js` ; les deux documents générés gardent leur copie, côté Node, et
+`catalogue:test` les rapproche.
 
 **`getElementById` rend le premier, et ne dit jamais qu'il y en avait deux.**
 Dans `/admin`, le filtre des séries et le champ SÉRIE du formulaire d'édition

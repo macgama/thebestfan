@@ -300,12 +300,43 @@ console.log('\nLes noms et les cris');
 
 console.log('\nLes effets');
 
-{
+/* **La table est maintenant exécutée, plus devinée.**
+
+   Ce contrôle lisait `public/cartes.js` à l'expression régulière, en découpant
+   entre deux noms de fonction et en ramassant les `m.<clé>`. C'était le prix à
+   payer pour interroger un script de navigateur, et ça ne prouvait qu'une
+   chose : que la clé était *mentionnée*. Une clé mentionnée dans une phrase
+   fausse passait — et c'est précisément ce qui est arrivé, à grande échelle :
+
+     `Souffle +${Math.round((m.breathBonus - 1) * 100)} %`
+
+   Le signe est calculé, le « + » est en dur devant, et pour `breathBonus: 0.85`
+   la carte affichait **« Souffle +-15 % »**. Trois cent soixante-dix-sept
+   occurrences sur dix clés, sous un contrôle vert, parce que `breathBonus` était
+   bien là.
+
+   La table vit désormais seule dans `public/mods.js`, qui ne dépend de rien et
+   pose `window.TBF_MODS`. On l'**exécute** donc dans un bac à sable — dix lignes
+   de `node:vm`, pas de jsdom — et on éprouve ses phrases sur les valeurs
+   réellement portées par le catalogue. Le contrôle ne demande plus « cette clé
+   est-elle citée ? » mais « cette valeur-là produit-elle une phrase lisible ? ».
+
+   C'est aussi ce qui permet de garder une seule table : un script de navigateur
+   n'exporte rien, mais rien n'empêche de le faire tourner. */
+const TBF_MODS = await (async () => {
   const { readFileSync } = await import('node:fs');
-  const source = readFileSync(new URL('../public/cartes.js', import.meta.url), 'utf8');
-  const corps = source.slice(source.indexOf('function modsText'),
-    source.indexOf('function rarMark'));
-  const nommees = new Set([...corps.matchAll(/\bm\.([A-Za-z]+)/g)].map((x) => x[1]));
+  const vm = await import('node:vm');
+  const source = readFileSync(new URL('../public/mods.js', import.meta.url), 'utf8');
+  const bac = { window: {} };
+  vm.createContext(bac);
+  new vm.Script(source, { filename: 'public/mods.js' }).runInContext(bac);
+  return bac.window.TBF_MODS;
+})();
+
+{
+  check('public/mods.js pose bien sa table', Boolean(TBF_MODS?.NOMS && TBF_MODS?.phrase));
+
+  const nommees = new Set(Object.keys(TBF_MODS?.NOMS ?? {}));
 
   const employees = new Set();
   const ramasser = (o) => { for (const k of Object.keys(o?.mods ?? {})) employees.add(k); };
@@ -318,10 +349,115 @@ console.log('\nLes effets');
     || (console.log('        sans phrase :', orphelines.join(', ')), false));
 
   /* Et l'inverse : une phrase pour un effet que plus rien ne porte décrit un
-     jeu qui n'existe plus. Moins grave, mais c'est la même dérive. */
-  const mortes = [...nommees].filter((k) => !employees.has(k));
+     jeu qui n'existe plus. Moins grave, mais c'est la même dérive.
+
+     Les clés des stades et des KOP sont écartées : elles sont dans la table
+     parce que le panneau de bonus des deux écrans de jeu les affiche, et nulle
+     carte ne les porte. Les compter ici ferait rougir le contrôle pour
+     `pushMult` — un garde-fou qui se plaint de ce qui va bien est un garde-fou
+     qu'on désactive. */
+  const AILLEURS = new Set(['pushMult', 'ferveurBonus', 'scarvesBonus']);
+  const mortes = [...nommees].filter((k) => !employees.has(k) && !AILLEURS.has(k));
   check('et aucune phrase ne décrit un effet disparu', mortes.length === 0
     || (console.log('        sans porteur :', mortes.join(', ')), false));
+
+  /* ---------------------------------------- et les phrases se tiennent debout
+
+     Sur **toutes** les valeurs réellement portées, pas sur un échantillon : la
+     faute du « +-15 % » ne se voyait que pour les facteurs sous 1, qui sont la
+     moitié du catalogue et aucun des exemples qu'on écrit à la main en relisant. */
+  const suspects = [];
+  const valeurs = new Map();
+  for (const o of [...DEX, ...STUFF, ...STADES]) {
+    for (const [k, v] of Object.entries(o?.mods ?? {})) {
+      if (!valeurs.has(k)) valeurs.set(k, new Set());
+      valeurs.get(k).add(v);
+    }
+  }
+  for (const [cle, vs] of valeurs) {
+    for (const v of vs) {
+      const p = TBF_MODS.phrase(cle, v);
+      if (p == null) continue;              // valeur neutre : pas de ligne, c'est voulu
+      if (/\+-|--|NaN|undefined|Infinity/.test(p)) suspects.push(`${cle}=${v} → « ${p} »`);
+    }
+  }
+  check(`les ${[...valeurs.values()].reduce((n, s) => n + s.size, 0)} valeurs portées se disent proprement`,
+    suspects.length === 0
+    || (console.log('        ', suspects.slice(0, 6).join(' · ')), false));
+
+  /* Le sens, et non seulement les mots. Un malus annoncé comme un bonus est
+     pire qu'un malus caché : le joueur choisit **contre** lui-même en croyant
+     bien faire. On vérifie sur les deux clés dont le signe trompe — c'est là
+     que deux des cinq copies s'étaient trompées. */
+  check('un `tempoInterval` positif est un malus — les Jumelles ralentissent',
+    TBF_MODS.sensDe('tempoInterval', 70) === 'moins');
+  check('et un négatif est un bonus — le sifflet rend le contretemps lisible',
+    TBF_MODS.sensDe('tempoInterval', -55) === 'plus');
+  check('des chants plus chers sont un malus', TBF_MODS.sensDe('costPenalty', 1.1) === 'moins');
+  check('un martelage plus court est un bonus', TBF_MODS.sensDe('mashTime', -600) === 'plus');
+  check('un facteur sous 1 est un malus', TBF_MODS.sensDe('breathBonus', 0.85) === 'moins');
+  check('et il se dit avec un seul signe',
+    TBF_MODS.phrase('breathBonus', 0.85) === 'Souffle −15 %'
+    || (console.log('        il dit :', TBF_MODS.phrase('breathBonus', 0.85)), false));
+}
+
+/* ======================================== le panneau « ce que tu portes »
+
+   Il est monté par `mods.js` pour les deux arènes, et il assemble du HTML à
+   partir de **deux sources d'entrée** : le nom d'un Fanzzy, qui vient du
+   catalogue, et le nom d'un KOP, que des joueurs choisissent. Le second est de
+   la saisie utilisateur qui finit dans un `innerHTML`, et c'est exactement le
+   chemin qu'on ne prend jamais sans échapper.
+
+   Aucune suite ne touchait `apports` — ni celle du Virage, qui l'envoie depuis
+   une session, ni celle du duel, qui vient de s'y mettre. Ces contrôles sont
+   donc les premiers, et le plus important est le dernier. */
+
+console.log('\nCe que tu portes');
+
+{
+  const APPORTS = [
+    { quoi: 'fanzzy', nom: 'Le Choriste', mods: { tempoWindow: 1.2, breathBonus: 0.9 } },
+    { quoi: 'stuff', nom: 'Jumelles', mods: { tempoWindow: 1.25, tempoInterval: 70 } },
+    { quoi: 'lieu', nom: 'Le Chaudron', texte: 'Le vent tourne au dernier quart.',
+      mods: { pushMult: 1.14, tempoWindow: 0.86 } },
+  ];
+
+  const r = TBF_MODS.resume(APPORTS);
+  check(`la ligne compte les deux sens (${r.texte})`, r.plus === 3 && r.moins === 3);
+
+  check('rien à porter : la ligne ne dit rien plutôt que « 0 bonus »',
+    TBF_MODS.resume([]).texte === '');
+
+  const html = TBF_MODS.panneauHTML(APPORTS, { tempoWindow: 1.29, pushMult: 1.14 });
+  check('le panneau nomme chaque source', ['Le Choriste', 'Jumelles', 'Le Chaudron']
+    .every((n) => html.includes(n)));
+  check('il rend la phrase du lieu', html.includes('Le vent tourne au dernier quart.'));
+  check('il colore les bonus et les malus séparément',
+    html.includes('class="plus"') && html.includes('class="moins"'));
+  check('et il montre le total à part, sans le recalculer',
+    html.includes('ce que le serveur applique') && html.includes('Poussée +14 %'));
+
+  check('sans rien à montrer, il le dit en une phrase',
+    TBF_MODS.panneauHTML([], null).includes('Rien ne modifie tes gestes'));
+
+  /* **Le nom d'un KOP est de la saisie.** Il est choisi par des joueurs, il
+     voyage jusqu'ici dans `apports`, et il est posé dans un `innerHTML`. Un
+     KOP nommé `<img onerror=…>` exécuterait son script chez tous ses membres,
+     au milieu d'un match. */
+  const mechant = [{ quoi: 'kop', nom: '<img src=x onerror="alert(1)">',
+    mods: { pushMult: 1.15 } }];
+  const sorti = TBF_MODS.panneauHTML(mechant, null);
+  check('un nom de KOP hostile est échappé, pas exécuté',
+    !sorti.includes('<img') && sorti.includes('&lt;img')
+    || (console.log('        il sort :', sorti.slice(0, 160)), false));
+
+  /* Et la phrase d'un stade, qui vient du code mais passe par le même chemin :
+     l'échapper aussi coûte un appel et supprime la question. */
+  const lieuMechant = [{ quoi: 'lieu', nom: 'X', texte: '<b>gras</b>',
+    mods: { pushMult: 1.1 } }];
+  check('la phrase du lieu est échappée elle aussi',
+    !TBF_MODS.panneauHTML(lieuMechant, null).includes('<b>gras</b>'));
 }
 
 console.log(ko ? `\n${ko} échec(s)\n` : '\ntout est vert\n');

@@ -52,6 +52,71 @@ défaut — d'où ce paragraphe.
 
 ## Ce que ça corrige
 
+### Les effets : un dictionnaire, et 377 malus annoncés comme des bonus
+
+**La question posée était : « est-ce que les attributs des Fanzzy, des stuff et
+des stades sont pris en considération durant les duels et le Virage ? »** Ils
+l'étaient — le serveur les compose depuis toujours. Rien ne le montrait, et en
+allant câbler l'affichage on a trouvé pire que l'absence.
+
+La table qui met des mots français sur les effets existait en **cinq copies** :
+les cartes, le deck, la fiche d'un Fanzzy, et les deux documents générés. Trois
+d'entre elles étaient fausses.
+
+Celle des cartes calculait le signe et en écrivait un second en dur devant :
+
+```js
+`Souffle +${Math.round((m.breathBonus - 1) * 100)} %`   // breathBonus: 0.85
+```
+
+Ce qui donne à l'écran **« Souffle +-15 % »**. Mesuré sur le catalogue réel :
+**377 occurrences, sur dix clés différentes** — c'est la majorité des malus du
+jeu. Elle écrivait aussi « Tempo plus tolérant (×0.9) », où le mot dit l'inverse
+du nombre, et « Martelage 0,5 s plus court » pour une valeur qui l'allonge.
+
+Celle de la fiche d'un Fanzzy ne nommait ni `parryResist` — **103 cartes** — ni
+`costPenalty` — 17. C'est mot pour mot le défaut que les cartes disaient avoir
+corrigé chez elles, et qui vivait toujours là.
+
+Et le même effet ne portait pas le même nom : `costPenalty` était « Chants plus
+chers » sur une carte, « Coût des cartes » sur le deck, « prix des cartes » dans
+le dossier. Un joueur qui lit sa carte puis son deck pouvait croire qu'il avait
+deux effets.
+
+Il n'y a plus qu'une table, dans `public/mods.js`, et les quatre écrans y
+renvoient. Le sens de chaque clé y est déclaré, parce qu'il **ne se déduit pas du
+signe** : un `tempoInterval` positif est un malus — les Jumelles portent `+70` et
+leur texte dit « tu vois venir le rythme, *mais tu chantes plus lentement* » — et
+un `costPenalty` plus grand aussi. Deux des cinq copies s'y étaient trompées.
+
+Le contrôle a changé de nature avec. Il lisait le fichier à l'expression
+régulière et vérifiait qu'une clé était *mentionnée* : une clé mentionnée dans
+une phrase fausse passait, et c'est ce qui est arrivé 377 fois sous un contrôle
+vert. Il **exécute** maintenant la table dans un bac à sable et éprouve ses
+phrases sur les **517 valeurs** réellement portées par le catalogue,
+l'équipement et les stades.
+
+### Le panneau « ce que tu portes »
+
+C'est ce qui était demandé, et il n'existait dans aucune des deux arènes. Une
+ligne repliée sous le souffle — « CE QUE TU PORTES · 3 bonus · 2 malus » — et un
+panneau qui s'ouvre au toucher : une source par bloc, avec son nom, ses effets
+colorés et signés, puis le total que le serveur applique vraiment.
+
+Le total est affiché **à part et jamais recalculé** depuis les blocs. La page
+pourrait les additionner, et elle le ferait mal le jour où une règle de
+composition se nuance.
+
+Côté serveur, le Virage envoyait déjà la ventilation ; **le duel ne l'envoyait
+pas**, alors que c'est la seule arène où le joueur a choisi ce qu'il porte. Il
+l'envoie maintenant, par le même module partagé, pour que les deux écrans ne
+nomment pas les mêmes choses autrement.
+
+Un contrôle neuf vérifie que le nom d'un KOP est échappé avant d'entrer dans le
+panneau : ce nom est choisi par des joueurs, il voyage jusqu'à un `innerHTML`, et
+un KOP nommé `<img onerror=…>` aurait exécuté son script chez tous ses membres au
+milieu d'un match.
+
 ### Les données : une carte dont on ne pouvait pas changer la série
 
 Dans `/admin`, le filtre des séries et le champ SÉRIE du formulaire d'édition
@@ -170,28 +235,38 @@ curl -s https://thebestfan.online/healthz
 `true`. S'il annonce l'ancien, le redémarrage n'a pas eu lieu : le site répond en
 servant le code d'avant, et tout ce qui suit serait vérifié pour rien.
 
-### 5. Les six contrôles à l'œil
+### 5. Les huit contrôles à l'œil
 
 Dans cet ordre, du plus grave au plus cosmétique.
 
-1. **La série d'une carte s'enregistre.** `/admin`, onglet catalogue : ouvrir un
+1. **Un malus se lit comme un malus.** N'importe quelle carte qui en porte un —
+   la plupart en ont — dans le classeur ou la collection. On doit lire
+   « Souffle −15 % », avec **un seul signe**. Si tu vois « +-15 % », le nouveau
+   `mods.js` n'est pas servi : vide le cache du site.
+2. **Le panneau des bonus.** Entre dans un Virage ou un duel : sous la jauge de
+   souffle, une ligne « CE QUE TU PORTES · n bonus · n malus ». Elle s'ouvre au
+   toucher, montre une source par bloc — ton Fanzzy, chaque pièce de ton sac,
+   ton KOP, le stade — et finit par le total. Un second toucher la referme.
+   Dans le **duel**, vérifie qu'elle est là : c'est le côté serveur qui vient
+   d'être branché, et c'est le seul de ce lot.
+3. **La série d'une carte s'enregistre.** `/admin`, onglet catalogue : ouvrir un
    Fanzzy, changer sa SÉRIE, enregistrer, rouvrir. La nouvelle série doit être
    là. Puis créer une carte en choisissant une série qui **n'est pas** la
    première de la liste, et vérifier qu'elle la garde. C'est le seul contrôle de
    ce lot qui porte sur des données.
-2. **La flèche de `/admin`.** Elle doit être en haut à gauche, et y rester après
+4. **La flèche de `/admin`.** Elle doit être en haut à gauche, et y rester après
    avoir changé d'onglet — c'est précisément ce qui ne tenait pas.
-3. **La recherche du télétexte.** `/teletext`, taper trois lettres, s'arrêter une
+5. **La recherche du télétexte.** `/teletext`, taper trois lettres, s'arrêter une
    seconde, continuer à taper **sans retoucher le champ**. Le texte doit
    continuer d'arriver. Sur téléphone, le clavier doit rester ouvert.
-4. **Le ruban de jours de `/matchs`.** La date écrite sous « AUJOURD'HUI » doit
+6. **Le ruban de jours de `/matchs`.** La date écrite sous « AUJOURD'HUI » doit
    correspondre aux matchs affichés. Le décalage ne se voyait qu'entre minuit
    local et minuit UTC ; hors de cette fenêtre, ce contrôle ne peut que confirmer
    que rien n'a été cassé.
-5. **Un bouton d'administration qui refuse.** Le plus simple : « Envoi de
+7. **Un bouton d'administration qui refuse.** Le plus simple : « Envoi de
    contrôle » sans SMTP configuré. Un reçu rouge doit apparaître en haut. Avant,
    il ne se passait rien.
-6. **Retirer un club.** `/equipes`, retirer un club suivi : il doit disparaître,
+8. **Retirer un club.** `/equipes`, retirer un club suivi : il doit disparaître,
    ou un message doit dire pourquoi il reste.
 
 ### 6. Et une fois : jouer

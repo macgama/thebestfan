@@ -541,6 +541,20 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
     <div class="b"><i id="breathBar"></i></div>
   </div>
   <div class="rank" id="rank"></div>
+  <!-- **Ce que tu portes.** Une ligne, et le détail au toucher.
+
+       La question a été posée telle quelle : « est-ce que les attributs des
+       Fanzzy, des stuff et des stades sont pris en considération ? » Ils
+       l'étaient — le serveur les compose depuis toujours — et rien ne le
+       montrait. Un joueur qui équipe des Jumelles pour élargir sa fenêtre de
+       tempo n'avait aucun moyen de vérifier qu'elles servaient, ni de voir que
+       leur revers ralentit sa cadence.
+
+       Le contenu vient de `mods.js`, partagé avec le duel : deux panneaux
+       écrits séparément nommeraient les mêmes effets autrement. -->
+  <button class="tbf-apports-l" id="apportsL" hidden
+    aria-expanded="false" aria-controls="apportsP"></button>
+  <div class="tbf-apports-p" id="apportsP" hidden></div>
   <!-- Les cartes d'action, au-dessus des chants. Petites, et c'est voulu : au
        Virage le verbe principal reste le chant, la carte est ce qu'on ajoute. -->
   <div class="appel" id="appel" hidden></div>
@@ -603,6 +617,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <!-- Partager un lien vers ce match : la feuille du téléphone, WhatsApp, un
      message. Un virage se pousse à plusieurs. -->
 <script src="/partage.js"></script>
+<!-- Le dictionnaire des effets, avant tout ce qui en affiche. Il ne depend
+     de rien et ne charge rien : voir son en-tete. -->
+<script src="/mods.js"></script>
 <script src="/fanzzy-art.js"></script>
 <!-- Les familles de cartes, leurs dessins, et la carte qu'on voit partir. La
      même que le classeur et le duel : le Virage n'a pas sa propre idée d'une
@@ -692,6 +709,7 @@ function render() {
   $('breathBar').style.width = `${souffle}%`;
   $('breathVal').textContent = souffle;
   if (S.you.rank) $('rank').innerHTML = `<b>${S.you.rank}<sup>e</sup></b> sur ${S.you.of} · ${S.you.ferveur} de ferveur`;
+  renderApports();
   for (const el of $('hand').children) {
     const c = S.cards.find((x) => x.id === el.dataset.card);
     el.classList.toggle('dim', souffle < c.cost || busy);
@@ -705,6 +723,65 @@ function render() {
   monterStade();
   eclairerStade();
 }
+
+/* ------------------------------------------------------- ce que je porte
+
+   Deux pièces : la ligne, toujours à l'écran quand il y a quelque chose à
+   dire, et le panneau, replié par défaut.
+
+   **Le panneau ouvert ne se redessine pas à chaque tour d'horloge.** `render`
+   passe très souvent — à chaque message de corde, donc plusieurs fois par
+   seconde ; réécrire son `innerHTML` à ce rythme remplacerait les nœuds sous le
+   doigt qui défile, et le panneau sauterait sans cesse. Il n'est donc monté
+   qu'à l'ouverture et
+   quand ce qu'on porte change vraiment — ce qui arrive à l'entrée, et à la pose
+   ou à l'expiration d'un effet de carte.
+
+   L'empreinte est la comparaison la plus simple qui soit juste ici : les deux
+   objets viennent du serveur, ils sont petits, et `JSON.stringify` en donne une
+   forme stable puisque l'ordre des clés est celui de la construction. Comparer
+   les références ne servirait à rien — le socket en fabrique de neuves à chaque
+   message. */
+let apportsVus = null;
+
+function renderApports() {
+  const M = window.TBF_MODS;
+  const ligne = $('apportsL'), panneau = $('apportsP');
+  /* Sans `mods.js`, on ne montre rien plutôt que d'afficher des clés brutes.
+     C'est un supplément d'information, pas une pièce du jeu : son absence ne
+     doit pas se voir, et surtout pas lever au milieu d'un chant. */
+  if (!M || !ligne || !panneau) return;
+
+  const apports = S.you?.apports ?? [];
+  const { plus, moins, texte } = M.resume(apports);
+
+  if (!texte) {
+    ligne.hidden = true;
+    panneau.hidden = true;
+    return;
+  }
+  ligne.hidden = false;
+
+  const empreinte = JSON.stringify([apports, S.you?.mods ?? null]);
+  if (empreinte !== apportsVus) {
+    apportsVus = empreinte;
+    ligne.innerHTML = '<span class="tbf-ap-n">Ce que tu portes</span>'
+      + (plus ? `<span class="plus">${plus} bonus</span>` : '')
+      + (moins ? `<span class="moins">${moins} malus</span>` : '')
+      + '<span class="tbf-ap-fl" aria-hidden="true">⌄</span>';
+    if (!panneau.hidden) panneau.innerHTML = M.panneauHTML(apports, S.you?.mods);
+  }
+}
+
+$('apportsL').onclick = () => {
+  const panneau = $('apportsP'), ligne = $('apportsL');
+  const ouvre = panneau.hidden;
+  if (ouvre) {
+    panneau.innerHTML = window.TBF_MODS.panneauHTML(S.you?.apports ?? [], S.you?.mods);
+  }
+  panneau.hidden = !ouvre;
+  ligne.setAttribute('aria-expanded', String(ouvre));
+};
 
 /* ------------------------------------------------------------- le fil
 

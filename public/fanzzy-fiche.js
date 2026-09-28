@@ -104,24 +104,26 @@
    *
    * On traduit les modificateurs plutôt que de montrer du JSON : `tempoWindow`
    * ne dit rien à personne, « fenêtre du tempo, +20 % » se lit.
+   *
+   * **La table est dans `/mods.js`**, et cette fiche est la cinquième à
+   * l'avoir recopiée. La sienne était la plus incomplète des cinq : il lui
+   * manquait `parryResist` — **cent trois cartes** — et `costPenalty` —
+   * dix-sept. C'est mot pour mot le défaut que `cartes.js` raconte avoir
+   * corrigé chez lui, et qui vivait toujours ici : la fiche d'un personnage
+   * affichait ses effets sans celui-là, et une liste incomplète a exactement
+   * l'air d'une liste.
+   *
+   * Elle montrait aussi « Durée du martelage · 0,5 s » sans dire si la demie
+   * seconde était gagnée ou perdue, là où la valeur porte maintenant son sens.
+   *
+   * La forme reste celle des tuiles — nom, valeur, pictogramme — parce que
+   * c'est ainsi que cet écran les range. C'est `paires()` qui la rend, et le
+   * nom du trait vient de la même table : un effet neuf apparaît donc ici sans
+   * qu'on ait à y penser, au lieu de manquer en silence.
    */
   function lireMods(m = {}) {
-    const out = [];
-    const pct = (v) => `${v > 1 ? '+' : ''}${Math.round((v - 1) * 100)} %`;
-    if (m.tempoWindow) out.push(['Fenêtre du tempo', pct(m.tempoWindow), 'tempo']);
-    if (m.tempoInterval) {
-      out.push(['Cadence', `${m.tempoInterval > 0 ? '+' : ''}${Math.round(m.tempoInterval)} ms`, 'tempo']);
-    }
-    if (m.mashTime) out.push(['Durée du martelage', `${Math.round(m.mashTime / 100) / 10} s`, 'poing']);
-    if (m.mashBonus) out.push(['Martelage', pct(m.mashBonus), 'poing']);
-    if (m.holdBonus) out.push(['Endurance', pct(m.holdBonus), 'coeur']);
-    if (m.holdForgive) out.push(['Relâchements permis', String(m.holdForgive), 'coeur']);
-    if (m.perfectBonus) out.push(['Geste parfait', `×${m.perfectBonus.toFixed(2)}`, 'etoile']);
-    if (m.backfire) out.push(['Geste raté', 'se retourne contre toi', 'alerte']);
-    if (m.parryBonus) out.push(['Contre', pct(m.parryBonus), 'bouclier']);
-    if (m.breathBonus) out.push(['Souffle', pct(m.breathBonus), 'souffle']);
-    if (m.refundBonus) out.push(['Reprise', `×${m.refundBonus.toFixed(2)}`, 'reprise']);
-    return out;
+    return (window.TBF_MODS?.paires(m) ?? [])
+      .map((d) => [d.nom, d.valeur, d.icone]);
   }
 
   /** Les pictogrammes des cases. Des traits, pas des émojis : ils se teintent. */

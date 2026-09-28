@@ -253,7 +253,16 @@ function modHTML(mods = {}) {
     }
     if (FACTEURS.has(k)) {
       const pct = Math.round((v - 1) * 100);
-      return `<li class="${pct >= 0 ? 'plus' : 'moins'}">${esc(nom)} ${pct >= 0 ? '+' : ''}${pct} %</li>`;
+      /* **`costPenalty` s'inverse, et c'est le seul.** Un facteur plus grand est
+         presque toujours un bonus — sauf celui-là, qui est le prix d'un chant :
+         `costPenalty: 1.3` rend les chants trente pour cent plus chers, et ce
+         document l'affichait en vert. C'est la même faute que `public/mods.js`
+         raconte pour ses cinq copies de cette table, sous une autre forme : le
+         signe ne dit pas le sens. Voir `SENS` là-bas, qui le déclare clé par
+         clé — et voir aussi l'en-tête de cette table, qui dit pourquoi celle-ci
+         reste recopiée plutôt que partagée. */
+      const bon = k === 'costPenalty' ? pct < 0 : pct >= 0;
+      return `<li class="${bon ? 'plus' : 'moins'}">${esc(nom)} ${pct >= 0 ? '+' : ''}${pct} %</li>`;
     }
     /* Les décalages : un temps de martelage *plus court* est un bonus, une
        cadence *plus longue* est un malus. Le signe seul ne suffit pas. */

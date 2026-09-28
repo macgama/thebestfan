@@ -488,6 +488,9 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
      rendu de la tribune, pour y poser le visage des Fanzzy illustrés. C'est le
      même module que le classeur — une seule définition de « comment on dessine
      un Fanzzy », et le deck n'a pas sa propre idée du sujet. -->
+<!-- Le dictionnaire des effets, avant tout ce qui en affiche. Il ne depend
+     de rien et ne charge rien : voir son en-tete. -->
+<script src="/mods.js"></script>
 <script src="/fanzzy-art.js"></script>
 <!-- Le manifeste des etats : il porte les dessins des ages superieurs, rangee
      par evolution. Sans lui, un Fanzzy grandi garde le visage de son premier
@@ -670,26 +673,23 @@ function combiner(base = {}, pieces = []) {
   return out;
 }
 
-const pc = (v) => `${v > 1 ? '+' : '−'}${Math.abs(Math.round((v - 1) * 100))} %`;
-
-/** Vocabulaire commun avec la fiche Fanzzy : les mêmes mots partout. */
-function modsTexte(m) {
-  const out = [];
-  if (m.tempoWindow) out.push(`Tempo ${pc(m.tempoWindow)}`);
-  if (m.tempoInterval) out.push(`Cadence ${m.tempoInterval > 0 ? 'ralentie' : 'accélérée'} de ${Math.abs(m.tempoInterval)} ms`);
-  if (m.mashTime) out.push(`Martelage ${Math.abs(m.mashTime) / 1000} s ${m.mashTime < 0 ? 'plus court' : 'plus long'}`);
-  if (m.mashBonus) out.push(`Martelage ${pc(m.mashBonus)}`);
-  if (m.holdBonus) out.push(`Endurance ${pc(m.holdBonus)}`);
-  if (m.holdForgive) out.push(`Peut lâcher ${m.holdForgive} fois`);
-  if (m.perfectBonus) out.push(`Geste parfait ${pc(m.perfectBonus)}`);
-  if (m.backfire) out.push('Geste raté : retour de flamme');
-  if (m.parryBonus) out.push(`Contre ${pc(m.parryBonus)}`);
-  if (m.parryResist) out.push(`Résistance au contre ${pc(m.parryResist)}`);
-  if (m.breathBonus) out.push(`Souffle ${pc(m.breathBonus)}`);
-  if (m.refundBonus) out.push(`Reprise ${pc(m.refundBonus)}`);
-  if (m.costPenalty) out.push(`Coût des cartes ${pc(m.costPenalty)}`);
-  return out;
-}
+/**
+ * Les effets, en français.
+ *
+ * **Cette fonction était une seconde table**, sous un commentaire qui disait
+ * « vocabulaire commun avec la fiche Fanzzy : les mêmes mots partout ». Ce
+ * n'était pas vrai : le même effet s'écrivait ici « Tempo +20 % » et là-bas
+ * « Tempo plus tolérant (×1.2) », ici « Coût des cartes » et là-bas « Chants
+ * plus chers ». Deux écrans, deux descriptions du même effet.
+ *
+ * Celle d'ici était la bonne des deux — elle portait le signe et elle regardait
+ * le sens des décalages. C'est donc elle qui a servi de base à la table unique,
+ * partie dans `/mods.js` avec les seize clés du jeu, y compris les trois que ni
+ * l'une ni l'autre ne nommait : `pushMult`, `ferveurBonus` et `scarvesBonus`,
+ * portées par les stades et les KOP. Cet écran ne les reçoit pas, les deux
+ * écrans de jeu si.
+ */
+const modsTexte = (m) => window.TBF_MODS?.lignes(m) ?? [];
 
 /**
  * La rareté chiffrée.

@@ -197,9 +197,15 @@ const dom = new JSDOM(html, {
       dispatchEvent() { return false; } });
     /* `resources: 'usable'` n'est pas activé : on injecte les vraies
        bibliothèques, dans l'ordre de la page. `cartes.js` lit `FZART` dès sa
-       première ligne — l'ordre n'est pas un détail. */
-    for (const f of ['fanzzy-art.js', 'fanzzy-fond.js', 'cartes.js', 'stuff-art.js',
-      'action-art.js', 'fanzzy-etats.js']) {
+       première ligne — l'ordre n'est pas un détail.
+
+       `mods.js` est en tête parce qu'il ne dépend de rien, et parce que
+       `cartes.js` l'appelle pour nommer les effets d'une carte : sans lui, la
+       vitrine affiche la carte mais sa liste d'effets reste vide. Cette liste
+       étant **écrite en dur**, elle est une seconde vérité à côté de la page —
+       et elle a déjà vieilli d'un fichier. */
+    for (const f of ['mods.js', 'fanzzy-art.js', 'fanzzy-fond.js', 'cartes.js',
+      'stuff-art.js', 'action-art.js', 'fanzzy-etats.js']) {
       window.eval(readFileSync(path.join(RACINE, 'public', f), 'utf8'));
     }
   },
