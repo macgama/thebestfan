@@ -386,37 +386,42 @@ function packArt(set) {
 
 /* --------------------------------------------------------- rendu carte */
 
+/**
+ * Les effets d'une carte, en français.
+ *
+ * **La table est partie dans `/mods.js`, et ce n'est pas un rangement.**
+ *
+ * Elle vivait ici en entier, et elle mentait sur la majorité des malus du jeu.
+ * Trois fautes, toutes mesurées sur le catalogue réel :
+ *
+ *   — le signe était en dur devant un nombre calculé, d'où « Souffle +-15 % »
+ *     pour un `breathBonus: 0.85`. **377 occurrences**, dix clés ;
+ *   — « Tempo plus tolérant (×0.9) » disait l'inverse de son nombre, et c'est
+ *     le mot qu'on lit ;
+ *   — « Martelage 0.5 s plus court » pour un `mashTime: 500`, qui l'allonge.
+ *
+ * `deck.html` en avait une seconde copie, correcte celle-là, sous un
+ * commentaire qui affirmait « les mêmes mots partout » — alors que le même
+ * effet s'y écrivait « +20 % » là où la carte écrivait « ×1.2 », et « Coût des
+ * cartes » là où la carte disait « Chants plus chers ». Les deux écrans
+ * décrivaient le même effet de deux façons, et le joueur pouvait croire qu'il
+ * en avait deux.
+ *
+ * Il n'y a donc plus qu'une table, dans un fichier qui ne dépend de rien — les
+ * deux écrans de jeu l'emploient aussi, pour leur panneau de bonus. Ce qui
+ * reste ici est le seul garde-fou qui appartienne aux cartes :
+ *
+ * `?? {}` et non `f.mods` : seuls un supporter et une pièce d'équipement portent
+ * des effets. Une tenue n'en a jamais eu, une carte d'action porte un `effet` et
+ * non des `mods` — et c'est en butant ici que l'ouverture d'un booster
+ * s'interrompait sans un mot, le paquet débité et l'écran vide.
+ *
+ * Le repli sur un tableau vide quand `/mods.js` n'a pas chargé est du même
+ * esprit : une carte sans sa ligne d'effets reste une carte, une exception ici
+ * arrête la boucle qui monte les cinq.
+ */
 function modsText(f) {
-  // `?? {}` et non `f.mods` : seuls un supporter et une pièce
-  // d’équipement portent des effets. Une tenue n’en a jamais eu, une
-  // carte d’action porte un `effet` et non des `mods` — et c’est en
-  // butant ici que l’ouverture d’un booster s’interrompait sans un mot,
-  // le paquet débité et l’écran vide.
-  const m = f.mods ?? {}, out = [];
-  if (m.tempoWindow) out.push(`Tempo plus tolérant (×${m.tempoWindow})`);
-  if (m.tempoInterval) out.push(`Cadence ralentie de ${m.tempoInterval} ms`);
-  if (m.mashTime) out.push(`Martelage ${Math.abs(m.mashTime) / 1000} s plus court`);
-  if (m.mashBonus) out.push(`Martelage +${Math.round((m.mashBonus - 1) * 100)} %`);
-  if (m.holdBonus) out.push(`Endurance +${Math.round((m.holdBonus - 1) * 100)} %`);
-  if (m.holdForgive) out.push(`Peut lâcher ${m.holdForgive} fois`);
-  if (m.perfectBonus) out.push(`Geste parfait ×${m.perfectBonus}`);
-  if (m.backfire) out.push('Geste raté : retour de flamme');
-  if (m.parryBonus) out.push(`Contre ×${m.parryBonus}`);
-  if (m.breathBonus) out.push(`Souffle +${Math.round((m.breathBonus - 1) * 100)} %`);
-  if (m.refundBonus) out.push(`Reprise ×${m.refundBonus}`);
-  /* Ces deux-là manquaient, et ce n'est pas un détail : **cent trois cartes**
-     portent `parryResist` et dix-sept portent `costPenalty`. Sur toutes, la
-     fiche affichait la liste des effets sans celui-là — un effet qui agit dans
-     le duel et que le joueur ne pouvait lire nulle part.
-
-     La faute est invisible par construction : la liste n'était pas vide, elle
-     était juste incomplète, et une carte qui montre deux effets sur trois a
-     exactement l'air d'une carte qui en a deux. Trouvée en écrivant le
-     catalogue illustré, qui compare cette table à toutes les clés employées ;
-     `catalogue:test` refuse désormais qu'une clé reste sans phrase. */
-  if (m.parryResist) out.push(`Résiste au contre ×${m.parryResist}`);
-  if (m.costPenalty) out.push(`Chants plus chers ×${m.costPenalty}`);
-  return out;
+  return window.TBF_MODS?.lignes(f.mods ?? {}) ?? [];
 }
 
 /**

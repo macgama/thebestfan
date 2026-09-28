@@ -9,6 +9,10 @@ import { poserEffet, nettoyerEffets, aEffet, modsAvecEffets } from '../../shared
 // Le lieu de la rencontre, et sa règle : voir le constructeur.
 import { stadeDeLaRencontre } from '../../shared/stades.js';
 import { ouverts } from '../contenus/index.js';
+/* La ventilation de ce qu'un joueur porte, partagée avec le Grand Virage : les
+   deux arènes composent les mêmes modificateurs, elles doivent les nommer
+   pareil. Voir `src/shared/apports.js`. */
+import { apportsDe, seulsLesMods } from '../../shared/apports.js';
 
 /**
  * Moteur de duel N contre N.
@@ -1079,6 +1083,35 @@ export class DuelNvN {
         cooldowns: Object.fromEntries(Object.entries(moi.cooldowns)
           .filter(([, fin]) => fin > t).map(([k, fin]) => [k, Math.round((fin - t) / 100) / 10])),
         effets: moi.effets.map((e) => ({ type: e.type, reste: e.fin ? e.fin - t : null })),
+
+        /* **Ce qu'il porte, et d'où ça vient.**
+         *
+         * Le Virage envoyait déjà les deux ; le duel ne les envoyait pas, et son
+         * panneau de bonus n'avait donc rien à montrer — alors que c'est
+         * l'arène où l'on choisit son deck, c'est-à-dire la seule où le joueur a
+         * décidé de ce qu'il porte.
+         *
+         * `apports` est la ventilation — le personnage, son sac, le lieu — et
+         * `mods` le total que le moteur applique vraiment. Les deux partent
+         * ensemble, et c'est délibéré : la page pourrait additionner la première
+         * pour obtenir le second, et elle le ferait **mal** le jour où une règle
+         * de composition se nuance. Ici, le total ne se discute pas.
+         *
+         * Pas de KOP : il n'entre pas dans le duel. `apportsDe` l'omet sans
+         * qu'on ait à le dire, et une ligne vide ne paraît pas.
+         *
+         * `modsBase` et non `mods` pour le personnage : le second est déjà le
+         * total avec le sac, et l'afficher ferait compter l'équipement deux
+         * fois — une fois dans sa propre ligne, une fois dans celle du Fanzzy.
+         * C'est exactement pour ce panneau que `loadout` garde les deux. */
+        apports: apportsDe({
+          fanzzy: moi.fanzzy[moi.actif]
+            ? { nom: moi.fanzzy[moi.actif].nom, mods: moi.fanzzy[moi.actif].modsBase }
+            : null,
+          stuff: moi.fanzzy[moi.actif]?.stuff ?? [],
+          stade: this.stade,
+        }),
+        mods: seulsLesMods(modsDe(moi, t, this.stade)),
       } : null,
     };
   }

@@ -1237,6 +1237,74 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
   .tbf-jauge i{transition:none}
 }
 
+/* ------------------------------------------------ ce que je porte, à l'écran
+
+   Le panneau des bonus et des malus, commun au Grand Virage et au duel. Son
+   contenu est monté par `mods.js`, qui tient le seul dictionnaire des effets ;
+   il n'y a ici que la matière.
+
+   **Une ligne, et le détail au toucher.** Pendant un match, personne ne lit un
+   tableau : la ligne repliée tient sur une hauteur de texte et dit seulement
+   combien. Le panneau s'ouvre entre deux chants, quand on se demande pourquoi
+   la fenêtre du tempo est si large — et il se referme d'un second toucher.
+
+   La ligne est un `button` et non un `div` : c'est une commande, elle doit
+   répondre à l'Entrée et s'annoncer comme dépliable. Un `div` cliquable est la
+   faute que la porte éteinte de `/matchs` a fait payer dans l'autre sens. */
+.tbf-apports-l{
+  display:flex;align-items:center;gap:8px;width:100%;
+  /* 44px de hauteur de touche : c'est la règle des deux boutons flottants, et
+     elle vaut autant pour une ligne qu'on vise entre deux chants. */
+  min-height:44px;padding:6px 14px;margin:0;
+  background:none;border:0;border-top:1px solid rgba(242,238,228,.1);
+  color:var(--craie);font-family:var(--ui);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;cursor:pointer;text-align:left;
+}
+.tbf-apports-l .tbf-ap-n{opacity:.5;flex:1}
+.tbf-apports-l .tbf-ap-fl{
+  opacity:.55;font-size:13px;transition:transform .18s ease;flex:none;
+}
+.tbf-apports-l[aria-expanded="true"] .tbf-ap-fl{transform:rotate(180deg)}
+/* Les deux compteurs de la ligne : un chiffre se lit d'un coup d'œil, un mot
+   non. La couleur double l'information, elle ne la remplace pas — le texte dit
+   « bonus » et « malus » pour qui ne distingue pas le vert du rouge. */
+.tbf-apports-l .plus{color:#1E9E6A}
+.tbf-apports-l .moins{color:var(--flare)}
+
+.tbf-apports-p{
+  padding:2px 14px 12px;font-family:var(--ui);
+  /* Il peut être plus haut que la place disponible sur un téléphone : on le
+     laisse défiler seul plutôt que de pousser la main de cartes hors de
+     l'écran. `overscroll-behavior` empêche le geste de continuer sur la page
+     derrière, qui est un écran de jeu où un défilement parasite se paie. */
+  max-height:38vh;overflow-y:auto;overscroll-behavior:contain;
+}
+.tbf-ap-bloc{padding:8px 0;border-top:1px solid rgba(242,238,228,.07)}
+.tbf-ap-bloc:first-child{border-top:0}
+.tbf-ap-qui{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.tbf-ap-ou{
+  font-size:9px;letter-spacing:.14em;text-transform:uppercase;opacity:.4;
+  flex:none;
+}
+.tbf-ap-qui b{font-size:12.5px;font-weight:600}
+/* La phrase d'un stade — « le vent tourne au troisième quart » — quand il en a
+   une. Elle explique ce que les chiffres ne disent pas. */
+.tbf-ap-dit{margin:3px 0 0;font-size:11px;opacity:.55;line-height:1.5;font-style:italic}
+.tbf-ap-liste{margin:5px 0 0;padding:0;list-style:none;
+  display:flex;flex-wrap:wrap;gap:4px 6px}
+.tbf-ap-liste li{
+  font-size:11px;line-height:1.35;padding:3px 8px;border-radius:6px;
+  background:rgba(242,238,228,.06);
+}
+/* Le signe est dans le texte — « −15 % » — et la couleur le confirme. Aucune
+   des deux ne porte seule l'information : c'est ce qui fait qu'un malus reste
+   lisible en plein soleil comme pour un œil qui confond les deux teintes. */
+.tbf-ap-liste li.plus{background:rgba(30,158,106,.16);color:#7BD9AE}
+.tbf-ap-liste li.moins{background:rgba(224,64,44,.14);color:#F2A196}
+.tbf-ap-total{border-top:1px solid rgba(242,238,228,.18);margin-top:4px}
+.tbf-ap-total .tbf-ap-ou{opacity:.6;color:var(--projo)}
+.tbf-ap-vide{margin:8px 0;font-size:11.5px;opacity:.45;line-height:1.6}
+
 /* -------------------------------------------------- la carte qu'on joue
 
    Le seul moment où une carte d'action se voit en grand. Elle arrive du camp
