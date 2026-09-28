@@ -1260,6 +1260,42 @@ déduire ; ce serait la première chose que le fil affirme sans l'avoir vue.
 
 ## 6. Pièges connus
 
+**Un aperçu qui hérite d'un attribut qu'il n'a pas le droit de garder.** Deux
+écrans laissent regarder un autre âge de son Fanzzy avant d'en valider un :
+l'accueil, par ses flèches, et la collection, par sa rangée SES ÂGES. Les deux
+remplaçaient l'âge et **gardaient le reste** — la tenue pour l'un, la possession
+pour l'autre.
+
+Résultat sur l'accueil : le Capo portait le déguisement gagné pour le gamin,
+c'est-à-dire une tenue que le joueur ne possède pas à cet âge-là ; la clé de
+`user_skins` est `(joueur, personnage, stade, tenue)` depuis `sql/skins.sql`, et
+un booster ne peut en offrir une que pour un âge déjà débloqué. Résultat dans la
+collection, plus grave : n'importe quel âge s'ouvrait en pleine couleur, sans
+cadenas, **sous le bandeau « ✓ DANS TA COLLECTION »**. L'écran ne se contentait
+pas de montrer l'image, il l'affirmait à soi en mots.
+
+Trois leçons, dans l'ordre de leur utilité.
+
+**Un `{ ...objet, unSeulChamp }` est un piège quand les champs se tiennent.**
+L'âge décide de la tenue et de la possession ; changer l'âge seul laisse deux
+mensonges derrière. Le remède n'est pas de recopier plus de champs à la main,
+c'est de **dériver** ce qui dépend de l'âge au moment du rendu — ce que fait
+maintenant `possede` dans la vitrine.
+
+**Une page ne peut être juste que si on lui donne de quoi l'être.** La faute de
+l'accueil n'était pas dans son défilé : le portefeuille n'envoyait qu'**une**
+tenue, celle de l'âge montré, et une page qui n'a qu'une valeur pour trois âges
+finit par la réemployer pour les trois. C'est `tenuesParAge` qui manquait.
+`avatar.js` se dit « l'autorité unique sur qui montrer » et ajoute que « ajouter
+une dimension, c'est l'ajouter ici » : la dimension manquait, et l'écran a
+improvisé.
+
+**Montrer et affirmer ne se valent pas.** Cette vitrine montre volontairement des
+cartes qu'on n'a pas — c'est sa raison d'être, « donner envie de collectionner ».
+Ce qui n'est pas admissible est le bandeau qui dit qu'elles sont à soi. Le défaut
+n'était donc pas dans l'image, il était dans la phrase — et un écran qui montre
+sous cadenas ce qu'il ne possède pas reste honnête.
+
 **Un signe en dur devant un nombre calculé.** La phrase qui décrivait un effet
 sur une carte s'écrivait comme ceci :
 

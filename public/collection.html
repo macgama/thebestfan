@@ -673,6 +673,29 @@ function vueCarte(vue) {
   const ages = o.k === 'fanzzy' ? lignee(o.id) : [];
   const atteint = o.k === 'fanzzy'
     ? (B?.parFanzzy?.find((p) => p.id === o.id)?.stade ?? 0) : 0;
+
+  /* **La possession se lit sur l'âge montré, pas sur la lignée.**
+   *
+   * Changer d'âge ne remplaçait que `age` dans l'objet — voir le gestionnaire de
+   * `data-age` — et `possede` restait celui de la racine. Un joueur qui possède
+   * son personnage et a payé le deuxième âge voyait donc le **troisième** en
+   * pleine couleur, sans cadenas, sous le bandeau « ✓ DANS TA COLLECTION ».
+   *
+   * C'est pire que la silhouette qu'on lui devait : l'écran ne se contentait pas
+   * de montrer l'image, il **affirmait en mots** qu'elle était à lui. Le même
+   * défaut existait sur l'accueil, où le défilé des âges gardait la tenue de
+   * l'âge précédent ; les deux ont été signalés d'une seule phrase — « je vois
+   * l'image suivante même si elle ne fait pas partie de ma collection ».
+   *
+   * La rangée des âges, elle, reste cliquable sur un âge non atteint, et c'est
+   * voulu : cette vitrine existe pour montrer ce qui se gagne, et elle le montre
+   * partout ailleurs sous cadenas. Ce qui manquait n'était pas le verrou du
+   * bouton, c'était celui de la carte qu'il ouvre. */
+  const rangVu = o.k === 'fanzzy' && o.age
+    ? (ages.findIndex((a) => a.id === o.age) + 1) : 1;
+  const possede = o.k === 'fanzzy' && ages.length > 1 && rangVu > 0
+    ? o.possede && atteint >= rangVu
+    : o.possede;
   const rangAges = ages.length > 1 ? `<div class="vitr-rang"><b>SES ÂGES</b>
     <div class="vitr-ages">${ages.map((a, n) => `<button type="button" class="vitr-age ${
     (o.age ?? o.id) === a.id ? 'ici' : ''} ${atteint >= n + 1 ? '' : 'pas'}"
@@ -696,25 +719,39 @@ function vueCarte(vue) {
    * pièce acquise est une invitation à repayer ce qu'on a. Le chemin n'apparaît
    * donc que pour ce qui manque ; la fiche, elle, reste accessible dans les
    * deux cas, parce que c'est là qu'on fait grandir un personnage. */
+  /* **Un âge ne se trouve pas dans un booster, il se paie.** C'est la boucle
+     entière du jeu — les boosters donnent les personnages, les doublons donnent
+     les écharpes, les écharpes font grandir. Envoyer ouvrir des paquets pour un
+     âge non atteint enverrait chercher quelque chose qu'aucun paquet ne
+     contient. La fiche, elle, est le bon endroit : c'est là qu'on fait grandir
+     un personnage, et son lien est ajouté juste en dessous. */
+  const ageAPayer = o.possede && !possede;
+
   const liens = [];
-  if (!o.possede && O.lien) liens.push(`<a href="${O.lien[0]}">${esc(O.lien[1])}</a>`);
+  if (!possede && !ageAPayer && O.lien) {
+    liens.push(`<a href="${O.lien[0]}">${esc(O.lien[1])}</a>`);
+  }
   if (o.k === 'fanzzy') {
     liens.push(`<a href="/fanzzy/${encodeURIComponent(o.id)}" class="calme">VOIR SA FICHE</a>`);
   }
-  const phrase = o.possede ? (O.lien ? '' : O.phrase) : O.phrase;
+  const phrase = ageAPayer
+    ? 'Cet âge n’est pas encore débloqué. Il ne se trouve pas dans un booster : '
+      + 'il se paie en écharpes, depuis sa fiche.'
+    : possede ? (O.lien ? '' : O.phrase) : O.phrase;
   const pied = (phrase || liens.length) ? `<div class="vitr-ou">
       ${phrase ? `<p>${esc(phrase)}</p>` : ''}${liens.join('')}</div>` : '';
 
   return `
     <button type="button" class="vitr-x" data-fermer aria-label="Fermer">✕</button>
     ${pile.length > 1 ? '<button type="button" class="vitr-dos" data-retour aria-label="Retour">‹</button>' : ''}
-    <div class="vitr-scene ${o.possede ? '' : 'verrou'} ${
+    <div class="vitr-scene ${possede ? '' : 'verrou'} ${
     ['epique', 'legendaire'].includes(rar) ? 'rayons' : ''}" id="vitr-scene">
-      <div class="vitr-tilt">${dessin(o, c)}<i class="vitr-lustre"></i></div>
+      <div class="vitr-tilt">${dessin({ ...o, possede }, c)}<i class="vitr-lustre"></i></div>
     </div>
     <div class="vitr-tete">
-      <span class="vitr-etat ${o.possede ? 'a-moi' : 'a-gagner'}">${
-    o.possede ? '✓ DANS TA COLLECTION' : 'À GAGNER'}</span>
+      <span class="vitr-etat ${possede ? 'a-moi' : 'a-gagner'}">${
+    possede ? '✓ DANS TA COLLECTION'
+      : ageAPayer ? 'ÂGE À DÉBLOQUER' : 'À GAGNER'}</span>
       <h2 class="vitr-nom">${esc(nom)}</h2>
       <p class="vitr-quoi">${galons(o)}</p>
     </div>

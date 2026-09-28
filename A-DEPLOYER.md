@@ -52,6 +52,42 @@ défaut — d'où ce paragraphe.
 
 ## Ce que ça corrige
 
+### Deux écrans qui montraient une carte qu'on ne possède pas
+
+**Signalé ainsi :** « sur la page HOME, si j'ai pris un Fanzzy avec un skin et que
+je clique sur la flèche pour voir l'évolution suivante, je vois l'image suivante
+même si elle ne fait pas partie de ma collection. »
+
+Le défilé des âges, lui, était juste : il ne montre que ce qui a été **payé**, et
+un booster ne donne jamais qu'une carte de premier âge. Ce qui fuyait était
+ailleurs, et à deux endroits.
+
+**Sur l'accueil, c'était la tenue.** La clé de `user_skins` est
+`(joueur, personnage, stade, tenue)` depuis `sql/skins.sql` — « le Capo n'hérite
+pas de la garde-robe du gamin » — et un booster ne peut offrir une tenue que pour
+un âge déjà débloqué. Or le défilé changeait d'âge en gardant la tenue de l'âge
+précédent : on voyait donc le Capo déguisé avec ce qu'on avait gagné pour le
+gamin.
+
+La faute n'était pas dans le défilé. Le portefeuille n'envoyait qu'**une** tenue
+— celle de l'âge montré — et une page qui n'a qu'une valeur pour trois âges finit
+par la réemployer pour les trois. `avatar.js`, qui est l'autorité unique sur « qui
+montrer » et le dit en toutes lettres, rend maintenant `tenuesParAge`, bornée à
+l'âge atteint. Le repli sur `base` est le même des deux côtés.
+
+**Dans la collection, c'était pire.** La rangée ÂGES remplaçait l'âge affiché sans
+toucher à `possede`, qui restait celui de la lignée : n'importe quel âge
+s'ouvrait en pleine couleur, sans cadenas, **sous le bandeau « ✓ DANS TA
+COLLECTION »**. L'écran ne se contentait pas de montrer l'image, il affirmait en
+mots qu'elle était à soi. La possession se lit maintenant sur l'âge montré : un
+âge non atteint s'ouvre en silhouette et sous cadenas, comme tout ce qu'on ne
+possède pas sur cet écran, avec le bandeau « ÂGE À DÉBLOQUER » et la phrase qui
+dit la vérité — un âge ne se trouve pas dans un booster, il se paie en écharpes.
+La rangée reste cliquable : cette vitrine existe pour montrer ce qui se gagne.
+
+La fiche d'un Fanzzy faisait déjà bien : elle lit les tenues de l'âge regardé et
+met un cadenas sur ce qui manque.
+
 ### Les effets : un dictionnaire, et 377 malus annoncés comme des bonus
 
 **La question posée était : « est-ce que les attributs des Fanzzy, des stuff et
@@ -235,38 +271,45 @@ curl -s https://thebestfan.online/healthz
 `true`. S'il annonce l'ancien, le redémarrage n'a pas eu lieu : le site répond en
 servant le code d'avant, et tout ce qui suit serait vérifié pour rien.
 
-### 5. Les huit contrôles à l'œil
+### 5. Les neuf contrôles à l'œil
 
 Dans cet ordre, du plus grave au plus cosmétique.
 
-1. **Un malus se lit comme un malus.** N'importe quelle carte qui en porte un —
+1. **Un âge qu'on n'a pas se voit comme tel.** Sur `/collection`, ouvrir un
+   personnage dont tu possèdes au moins deux âges, puis toucher un âge **non
+   débloqué** dans la rangée SES ÂGES : la carte doit s'ouvrir en silhouette,
+   sous cadenas, avec le bandeau « ÂGE À DÉBLOQUER ». Si tu lis « ✓ DANS TA
+   COLLECTION », le nouveau code n'est pas servi. Puis sur `/` : fais défiler les
+   âges d'un Fanzzy pour lequel tu as gagné une tenue à un seul âge — il doit la
+   porter à cet âge-là et être en tenue de base aux autres.
+2. **Un malus se lit comme un malus.** N'importe quelle carte qui en porte un —
    la plupart en ont — dans le classeur ou la collection. On doit lire
    « Souffle −15 % », avec **un seul signe**. Si tu vois « +-15 % », le nouveau
    `mods.js` n'est pas servi : vide le cache du site.
-2. **Le panneau des bonus.** Entre dans un Virage ou un duel : sous la jauge de
+3. **Le panneau des bonus.** Entre dans un Virage ou un duel : sous la jauge de
    souffle, une ligne « CE QUE TU PORTES · n bonus · n malus ». Elle s'ouvre au
    toucher, montre une source par bloc — ton Fanzzy, chaque pièce de ton sac,
    ton KOP, le stade — et finit par le total. Un second toucher la referme.
    Dans le **duel**, vérifie qu'elle est là : c'est le côté serveur qui vient
    d'être branché, et c'est le seul de ce lot.
-3. **La série d'une carte s'enregistre.** `/admin`, onglet catalogue : ouvrir un
+4. **La série d'une carte s'enregistre.** `/admin`, onglet catalogue : ouvrir un
    Fanzzy, changer sa SÉRIE, enregistrer, rouvrir. La nouvelle série doit être
    là. Puis créer une carte en choisissant une série qui **n'est pas** la
    première de la liste, et vérifier qu'elle la garde. C'est le seul contrôle de
    ce lot qui porte sur des données.
-4. **La flèche de `/admin`.** Elle doit être en haut à gauche, et y rester après
+5. **La flèche de `/admin`.** Elle doit être en haut à gauche, et y rester après
    avoir changé d'onglet — c'est précisément ce qui ne tenait pas.
-5. **La recherche du télétexte.** `/teletext`, taper trois lettres, s'arrêter une
+6. **La recherche du télétexte.** `/teletext`, taper trois lettres, s'arrêter une
    seconde, continuer à taper **sans retoucher le champ**. Le texte doit
    continuer d'arriver. Sur téléphone, le clavier doit rester ouvert.
-6. **Le ruban de jours de `/matchs`.** La date écrite sous « AUJOURD'HUI » doit
+7. **Le ruban de jours de `/matchs`.** La date écrite sous « AUJOURD'HUI » doit
    correspondre aux matchs affichés. Le décalage ne se voyait qu'entre minuit
    local et minuit UTC ; hors de cette fenêtre, ce contrôle ne peut que confirmer
    que rien n'a été cassé.
-7. **Un bouton d'administration qui refuse.** Le plus simple : « Envoi de
+8. **Un bouton d'administration qui refuse.** Le plus simple : « Envoi de
    contrôle » sans SMTP configuré. Un reçu rouge doit apparaître en haut. Avant,
    il ne se passait rien.
-8. **Retirer un club.** `/equipes`, retirer un club suivi : il doit disparaître,
+9. **Retirer un club.** `/equipes`, retirer un club suivi : il doit disparaître,
    ou un message doit dire pourquoi il reste.
 
 ### 6. Et une fois : jouer

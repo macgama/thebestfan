@@ -361,6 +361,53 @@ check('le stade atteint est annoncé au client', r.json.stades?.[base1.id] === 2
     lignes.some((l) => Number(l.stage) === 1 && l.skin_id === 'base' && l.equipped === 1));
 }
 
+/* ==================== la garde-robe part au client, âge par âge
+
+   **Ce contrôle existe à cause d'un défaut visible à l'écran.**
+
+   L'accueil laisse faire défiler les âges de son Fanzzy avant d'en valider un.
+   Il gardait la tenue de l'âge affiché en changeant d'âge, et montrait donc le
+   Capo dans le déguisement du gamin — **une tenue que le joueur ne possède pas à
+   cet âge-là**. Rapporté en ces termes : « je vois l'image suivante même si elle
+   ne fait pas partie de ma collection ».
+
+   La faute n'était pas dans le défilé. Le portefeuille n'envoyait qu'une seule
+   tenue — `activeSkin`, celle de l'âge montré — et une page qui n'a qu'une
+   valeur pour trois âges finit par la réemployer pour les trois. C'est
+   `tenuesParAge` qui manquait, et c'est elle qu'on vérifie ici : le client ne
+   peut être juste que si on lui donne de quoi l'être.
+
+   La règle est celle de `sql/skins.sql` — clé `(joueur, personnage, stade,
+   tenue)`, « le Capo n'hérite pas de la garde-robe du gamin ». */
+{
+  // Une tenue autre que `base`, gagnée au **premier âge seulement**.
+  const autre = tenuesPubliees().find((t) => t.id !== 'base');
+  if (autre) {
+    await pool.query(
+      `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, stage, skin_id, equipped)
+       VALUES (?, ?, 1, ?, 1)`, [U, base1.id, autre.id]);
+    /* On la **porte** au premier âge, à la place de `base` : `tenuesParAge` ne
+       rend que ce qui est porté, et deux tenues portées au même âge seraient une
+       base incohérente que ce contrôle n'a pas à fabriquer. */
+    await pool.query(
+      `UPDATE user_skins SET equipped = IF(skin_id = ?, 1, 0)
+        WHERE user_id = ? AND fanzzy_id = ? AND stage = 1`, [autre.id, U, base1.id]);
+
+    r = await call('/api/fanzzy/state');
+    const t = r.json.wallet?.tenuesParAge ?? {};
+    check(`la tenue du premier âge part au client (${autre.id})`, t['1'] === autre.id
+      || (console.log('        la table dit :', JSON.stringify(t)), false));
+    check('celle du deuxième est la sienne, et non celle du premier',
+      t['2'] === 'base'
+      || (console.log('        la table dit :', JSON.stringify(t)), false));
+    /* Le troisième âge n'est pas encore atteint à ce point du scénario : il ne
+       doit pas figurer. Proposer la garde-robe d'un âge qu'on n'a pas payé
+       serait le montrer en aperçu, et c'est ce que le défilé refuse de faire
+       pour les âges eux-mêmes. */
+    check('et l’âge non atteint n’a pas d’entrée', t['3'] === undefined);
+  }
+}
+
 // Deuxième cran, puis le mur : une lignée n'a que trois âges écrits.
 r = await call('/api/fanzzy/evolve', { method: 'POST', body: { id: base1.id } });
 check('deuxième évolution acceptée', r.json.stade === 3);

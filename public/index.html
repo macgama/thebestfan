@@ -1724,13 +1724,33 @@ function commandes() {
   ok.textContent = 'C’est lui, partout';
 }
 
-/** Montre un autre âge — **à l'écran seulement**. Rien n'est écrit. */
+/**
+ * Montre un autre âge — **à l'écran seulement**. Rien n'est écrit.
+ *
+ * **La tenue change avec l'âge**, et c'est une correction.
+ *
+ * Elle ne changeait pas : le défilé gardait `equipe.skin`, si bien qu'un joueur
+ * qui avait gagné un déguisement pour son premier âge voyait le Capo le porter
+ * aussi. Or une tenue **appartient à un âge** — la clé de `user_skins` est
+ * `(joueur, personnage, stade, tenue)` depuis `sql/skins.sql`, « le Capo
+ * n'hérite pas de la garde-robe du gamin », et un booster ne peut en offrir une
+ * que pour un âge déjà débloqué. L'aperçu montrait donc une image que le joueur
+ * ne possède pas, ce qui a été signalé en ces termes : « je vois l'image
+ * suivante même si elle ne fait pas partie de ma collection ».
+ *
+ * `tenuesParAge` vient du portefeuille et ne contient que les âges où une tenue
+ * est réellement portée ; l'absence retombe sur `base`, exactement comme le fait
+ * le serveur dans `avatar.js`. Le repli est donc le même des deux côtés, et
+ * c'était le point : ce défilé s'était mis à répondre tout seul à une question
+ * dont la réponse vit ailleurs.
+ */
 async function montrerAge(evo) {
   if (!equipe) return;
   const n = Math.min(lignee.atteint, Math.max(1, evo));
   if (n === equipe.evo) return;
   const carte = lignee.ages.find((a) => a.stade === n);
   equipe = { ...equipe, evo: n, plein: pleinDe(equipe.id, n),
+    skin: lignee.tenues?.[n] ?? 'base',
     nom: carte?.nom ?? equipe.nom, carte: carte?.id ?? equipe.id };
   precharger();
   /* `force` : l'état ne change pas, le personnage si — sans lui, `pose` voit
@@ -1817,7 +1837,14 @@ let filet = null;
        faire attendre la réponse du serveur donnerait trois secondes pendant
        lesquelles on voit son Fanzzy sans pouvoir en changer. La réponse
        corrige, elle n'inaugure pas. */
+    /* **La garde-robe du souvenir ne connaît qu'un âge**, celui qu'on regardait
+       en partant. Les autres retombent donc sur `base` jusqu'à la réponse du
+       serveur, et c'est le bon sens du repli : on ne montre pas une tenue faute
+       de savoir, on montre celle de tout le monde. Sans cette ligne, revenir à
+       l'âge qu'on regardait aurait perdu sa tenue — le souvenir la porte, mais
+       `montrerAge` lit cette table et non `equipe`. */
     lignee = { atteint: vu.atteint ?? vu.evo, choisi: vu.choisi ?? vu.evo,
+      tenues: vu.skin ? { [vu.evo]: vu.skin } : {},
       ages: [{ stade: vu.evo, id: vu.carte ?? vu.id, nom: vu.nom,
         set: vu.set, type: vu.type, rar: vu.rar }] };
     equipe = { ...vu, plein: pleinDe(vu.id, vu.evo) };
@@ -2364,8 +2391,12 @@ async function lire(url, options) {
       const atteint = Math.max(1, Number(coll.stades?.[actif]) || 1);
       const choisi = Math.min(atteint,
         Math.max(1, Number(coll.wallet?.activeEvo) || atteint));
-      lignee = { atteint, choisi, ages: ligne.length ? ligne
-        : [{ stade: 1, id: actif, nom: '' }] };
+      /* **La garde-robe, âge par âge.** Le défilé en a besoin : une tenue
+         appartient à un âge, et sans cette table il gardait celle de l'âge
+         affiché en changeant d'âge — voir `montrerAge`. Les âges absents n'ont
+         pas de tenue portée, et retombent sur `base`. */
+      lignee = { atteint, choisi, tenues: coll.wallet?.tenuesParAge ?? {},
+        ages: ligne.length ? ligne : [{ stade: 1, id: actif, nom: '' }] };
 
       /* **La tenue portée, et non plus « base » en dur.**
 
