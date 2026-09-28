@@ -50,9 +50,16 @@ node_modules/
 
 ## Étape 2 — Le schéma
 
-Les neuf fichiers, **dans cet ordre** : chacun s'appuie sur les tables du
-précédent. Ils sont tous idempotents — les rejouer sur une base déjà à jour ne
+Les **trente-deux** fichiers, **dans cet ordre** : chacun s'appuie sur les tables
+du précédent. Ils sont tous idempotents — les rejouer sur une base déjà à jour ne
 casse rien.
+
+Ce document disait « les neuf fichiers » longtemps après qu'ils étaient trente et
+quelques. L'ordre lui-même n'est plus recopié ici : il vit dans
+`scripts/ordre-schema.mjs`, que `npm run schema:appliquer` **et** `schema:smoke`
+lisent tous les deux. Ils avaient chacun leur liste, et les deux ont divergé deux
+fois. `sql/rattrapage.sql` est délibérément hors de cette liste : il corrige
+d'anciennes bases, ne déclare aucune table, et s'applique à la main.
 
 **À refaire à chaque livraison qui ajoute une table.** La construction du
 Manager pousse le code, jamais le schéma. Une table absente n'éteint pas
@@ -355,9 +362,26 @@ Onglet Node.js du site :
 |---|---|
 | Version de Node.js | 22 |
 | Dossier d'exécution | `./` |
-| Commande de build | `git pull && npm ci && node build.mjs` |
+| Commande de build | `git pull && npm ci --omit=dev && node build.mjs` |
 | Commande de lancement | `npm start` |
 | Port | celui affiché par le Manager |
+
+**`--omit=dev`, et ce n'est pas une économie de confort.**
+
+Les suites d'interface pilotent un vrai navigateur, donc `puppeteer` est une
+dépendance déclarée du dépôt. Son script d'installation **télécharge Chromium** :
+environ deux cents mégaoctets au transfert, sept cents une fois dépliés. Sans ce
+drapeau, chaque construction tente ce téléchargement sur un hébergement
+mutualisé — du quota, du temps, et une étape de plus qui peut échouer. **Un
+`npm ci` qui échoue arrête tout le déploiement**, pour un navigateur dont ce
+serveur n'a aucun usage.
+
+Le serveur n'a besoin que de cinq paquets : `express`, `mysql2`, `nodemailer`,
+`socket.io`, `socket.io-client`. Ni `server.js`, ni `build.mjs`, ni `src/`, ni
+`npm run schema:appliquer` n'importent `puppeteer`, `sharp` ou `jsdom` — ces
+trois-là ne servent qu'aux `scripts/`, qui ne tournent jamais ici.
+`npm run cablage` le vérifie fichier par fichier, pour que la règle ne tienne pas
+à ce paragraphe.
 
 **`npm ci` et non `npm install`.** `npm install` réécrit `package-lock.json`
 sur le serveur — versions de npm différentes, paquets à binaire propre à la
@@ -385,7 +409,8 @@ seul vrai apport :
 1. `git reset --hard origin/main` — **le dépôt fait foi**, on n'essaie pas de
    fusionner. Une modification faite à la main sur le serveur est perdue ;
    `.env`, `node_modules` et `VERSION` ne sont pas suivis par git et survivent ;
-2. `npm ci`, puis `node build.mjs` ;
+2. `npm ci --omit=dev`, puis `node build.mjs` — voir plus haut pourquoi le
+   drapeau compte ;
 3. **`npm run schema:appliquer`**, avant le redémarrage. Tous les fichiers de
    `sql/`, dans l'ordre, à chaque fois. Ils sont idempotents : les rejouer sur
    une base à jour ne change rien. C'est ce qui met fin à la panne la plus

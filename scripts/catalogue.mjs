@@ -7,10 +7,15 @@
  * chiffres. Il ne montre pas une seule image, et c'est très bien — il se lit.
  *
  * Celui-ci est sa suite, et il répond à l'autre question : **qu'est-ce qu'on a
- * dessiné, et qu'est-ce qui manque**. Six cent quarante-trois cartes, deux cent
- * quatre illustrations, douze états par âge et trois âges par personnage : cette
- * comptabilité-là ne tient dans aucune tête, et jusqu'ici elle n'existait nulle
- * part. On savait « il manque des dessins ». On ne savait pas lesquels.
+ * dessiné, et qu'est-ce qui manque**. Sept cent soixante-cinq cartes, deux cent
+ * quatre-vingt-onze personnages, douze états par âge et trois âges par
+ * personnage : cette comptabilité-là ne tient dans aucune tête, et jusqu'ici elle
+ * n'existait nulle part. On savait « il manque des dessins ». On ne savait pas
+ * lesquels.
+ *
+ * Les chiffres de ce paragraphe vieillissent — ils disaient « six cent
+ * quarante-trois cartes, deux cent quatre illustrations » deux fournées plus
+ * tôt. Ceux qui comptent sont ceux que la commande imprime en finissant.
  *
  * La page range donc le catalogue **par famille** — voix, percussion, tifo,
  * pyro, déplacement, fidélité — parce que c'est ainsi que le jeu l'emploie, et

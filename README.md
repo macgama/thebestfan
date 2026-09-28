@@ -6,12 +6,29 @@ joue, et repart avec une carte-souvenir par but vécu.
 
 **Commence par `ETAT.md`.** Ce fichier-ci décrit la forme du dépôt ; `ETAT.md`
 décrit où en est le projet, ce qui marche, ce qui reste à faire et les pièges
-qui ont déjà coûté des séances.
+qui ont déjà coûté des séances. Il a une table d'entrée en tête, qui dit quelle
+section ouvrir selon la question qu'on se pose — le lire en entier n'est pas
+prévu.
 
-`IDEES.md` prend la suite : ce qui n'est pas encore écrit, rangé par valeur, et
-pour chaque entrée ce qui ne va pas aujourd'hui plutôt qu'un souhait. Il sort
-d'un contrôle général de l'application et se relit avant de choisir sur quoi
-travailler.
+Les documents, et lequel ouvrir :
+
+| Fichier | Ce qu'il répond |
+|---|---|
+| `ETAT.md` | où en est le projet, et quels pièges sont connus |
+| `HISTORIQUE.md` | **pourquoi** le code est écrit ainsi — quarante sessions, à consulter, jamais à lire d'affilée |
+| `IDEES.md` | ce qui n'est pas encore écrit, rangé par valeur |
+| `DEPLOIEMENT.md` | comment mettre en ligne, et les pièges de l'hébergeur |
+| `A-DEPLOYER.md` | le lot en attente de mise en ligne, et comment le vérifier |
+| `VISUELS.md` | les règles de toute image produite, et qui les fait respecter |
+| `JURIDIQUE.md` | le dossier à donner à un juriste |
+
+Deux pages se **génèrent** et ne s'écrivent jamais à la main. `npm run dossier`
+écrit `dossier.html` : où en est le jeu, règles, barèmes et chiffres, lus dans les
+mêmes modules que le jeu. `npm run catalogue` écrit `catalogue.html` : ce qui est
+dessiné et ce qui manque, carte par carte, images incluses dans le fichier.
+**Quand un nombre de ce dépôt contredit ces deux pages, ce sont elles qui ont
+raison** — un chiffre écrit à la main est faux le jour où l'on ajoute une carte,
+et personne ne le sait.
 
 `JURIDIQUE.md` est le dossier à donner à un juriste : ce qui est vendu, ce
 qui est tiré au sort, et où passe la frontière. Ce n’est pas un avis de droit
@@ -41,9 +58,13 @@ public/                 les pages, une par écran, script en ligne
 public/fanzzy-art.js    le dessin des Fanzzy — source unique, partagée
 public/nav.js           la barre commune
 public/fx.js            les effets et les personnages vivants
-sql/                    le schéma, neuf fichiers, 27 tables
-scripts/                les tests, un par module
+sql/                    le schéma, 32 fichiers appliqués dans l'ordre, 43 tables
+scripts/                les tests, un par module — et les chaînes de production
 ```
+
+L'ordre d'application du schéma vit dans `scripts/ordre-schema.mjs`, lu à la fois
+par `npm run schema:appliquer` et par sa suite de contrôle : les deux avaient leur
+propre liste, et elles ont divergé deux fois.
 
 ## Le jeu
 
@@ -62,19 +83,40 @@ voit exactement la pulsation sur laquelle il est noté.
 
 ## Les tests
 
-Chaque module a sa suite dans `scripts/*-smoke.mjs`. Elles montent un vrai
-serveur sur une vraie base — locale, sur le port 3307. Deux contrôles ne
-demandent ni base ni réseau et passent avant chaque livraison :
+`npm test` lance les **cinquante-huit** suites. Elles se divisent en deux
+groupes, et il faut le savoir avant de s'alarmer :
+
+- **vingt-deux ne demandent rien** et tournent tout de suite, sur n'importe
+  quelle machine ;
+- **trente-six demandent MySQL** — une base *locale*, sur le port 3307, jamais
+  celle de production : elles effacent les tables au démarrage. Sans base, elles
+  ne rougissent pas, elles s'arrêtent, et `npm test` les compte comme « la suite
+  s'est arrêtée ».
+
+**Un premier `npm test` sur une machine sans base affiche donc trente-six
+échecs, et c'est normal.** Voir `ETAT.md` § 2 pour la base attendue et § 4 pour
+le détail des deux groupes.
+
+Quatre contrôles ne demandent aucune base et passent avant chaque livraison :
 
 ```bash
-node scripts/verif-pages.mjs      # les pages compilent, la barre est là
-node scripts/verif-cablage.mjs    # aucun module n'a une dépendance restée nulle
+npm run pages             # les pages compilent, la barre est là, aucun id en double
+npm run cablage           # les modules sont branchés, et le serveur n'emporte
+                          # aucun paquet de développement
+npm run promesses         # chaque adresse appelée par une page est servie
+npm run pages:navigateur  # les 24 écrans s'ouvrent sans lever, serveur muet compris
 ```
-
-Les détails, les prérequis et les pièges rencontrés sont dans `ETAT.md`.
 
 ## Déploiement
 
 Pousser sur GitHub ne met rien en ligne : Infomaniak ne va chercher le dépôt
 que lorsqu'on lance la construction dans le Manager. Voir `DEPLOIEMENT.md`, et
 le piège correspondant au § 6 de `ETAT.md`.
+
+**Le serveur s'installe sans les dépendances de développement** —
+`npm ci --omit=dev`. `puppeteer` est déclaré parce que les suites d'interface
+pilotent un vrai navigateur, et son installation télécharge Chromium : deux cents
+mégaoctets dont ce serveur n'a aucun usage, et une étape de plus qui peut faire
+échouer tout le déploiement. Les cinq paquets de production sont `express`,
+`mysql2`, `nodemailer`, `socket.io` et `socket.io-client` ; `npm run cablage`
+vérifie que rien de ce que charge le serveur n'en demande d'autres.
