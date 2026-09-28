@@ -187,13 +187,32 @@ function applyLocale(){
 }
 
 
+/**
+ * Un appel qui rend toujours un état, et ne lève jamais.
+ *
+ * La forme `{ status, json }` est celle de `compte.html`, mais la protection
+ * manquait : `fetch` lui-même rejette quand il n'y a pas de réseau — tunnel,
+ * avion, coupure de wifi — et là aucun des trois gestionnaires de cette page
+ * n'attrapait quoi que ce soit. Suivre un club hors ligne ne produisait rien du
+ * tout : pas de club ajouté, pas de message, pas même une erreur visible.
+ *
+ * `status: 0` n'est pas un code HTTP, et c'est voulu : tout le code de cette
+ * page juge sur « est-ce entre 200 et 299 », donc zéro se range du côté des
+ * pannes sans qu'aucun appelant n'ait à connaître ce cas de plus. La phrase
+ * « panne » existe déjà dans les quatre langues, et elle dit exactement ce
+ * qu'il faut — les clubs sont toujours là, c'est la page qui n'a pas pu lire.
+ */
 const api = async (path, opts = {}) => {
-  const res = await fetch('/api/football' + path, {
-    method: opts.method ?? 'GET', credentials: 'same-origin',
-    headers: { 'content-type': 'application/json' },
-    body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
-  });
-  return { status: res.status, json: await res.json().catch(() => ({})) };
+  try {
+    const res = await fetch('/api/football' + path, {
+      method: opts.method ?? 'GET', credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
+    });
+    return { status: res.status, json: await res.json().catch(() => ({})) };
+  } catch {
+    return { status: 0, json: {} };
+  }
 };
 
 /* ------------------------------------------------------------ rendu */
@@ -310,7 +329,15 @@ function render(){
 $('feed').onclick = async e => {
   const b = e.target.closest('[data-unfollow]');
   if (!b) return;
-  await api('/follows/' + b.dataset.unfollow, { method: 'DELETE' });
+  const r = await api('/follows/' + b.dataset.unfollow, { method: 'DELETE' });
+  /* **Le retrait aussi doit dire quand il rate.**
+     La réponse était jetée. Un refus — session expirée, serveur muet — laissait
+     donc le club en place après le rechargement, sans un mot : on clique, le
+     club reste, on reclique. C'est mot pour mot le défaut que le commentaire du
+     bouton « suivre », plus bas, dit avoir corrigé ; il n'avait été corrigé que
+     d'un côté. */
+  if (r.status === 401) { authed = false; render(); return; }
+  if (!(r.status >= 200 && r.status < 300)) { dire(t('panne')); return; }
   await load();
 };
 
@@ -323,6 +350,14 @@ $('q').oninput = () => {
   if (term.length < 3) { $('results').classList.remove('on'); return; }
   timer = setTimeout(async () => {
     const r = await api('/search?q=' + encodeURIComponent(term));
+    /* Une recherche qui n'aboutit pas n'est pas une recherche sans résultat :
+       afficher « Aucun club trouvé » alors que le serveur n'a pas répondu
+       apprend au joueur que son club n'existe pas. */
+    if (!(r.status >= 200 && r.status < 300)) {
+      $('results').classList.remove('on');
+      dire(t('panne'));
+      return;
+    }
     const list = r.json.teams ?? [];
     // Plus de place : on le dit **avant** le clic, et les résultats restent
     // visibles — on peut vouloir regarder sans suivre.
@@ -354,6 +389,10 @@ $('results').onclick = async e => {
     dire(t('plein', { n: r.json.suivis ?? '?', t: r.json.slots ?? '?' }));
     return;
   }
+  /* Une panne réseau n'a pas de code à montrer : `dire(r.json.error)` plus bas
+     écrirait « undefined » à l'écran, et le joueur croirait avoir cassé quelque
+     chose. On la nomme avant d'arriver là. */
+  if (r.status === 0) { dire(t('panne')); return; }
   if (r.json?.error) { dire(r.json.error); return; }
   await load();
 };

@@ -974,6 +974,61 @@ function menePart(chemin, { vues, prefixes }, fichiersPublics) {
     ko(n, 'aucun dégagement en bas — la barre du navigateur mobile couvrira le dernier élément');
   } else ok('le bas des pages', 'chaque page qui défile réserve sa place sous la barre du mobile');
 }
+/* ======================== deux fois le même identifiant dans une page
+
+   `getElementById` rend **le premier** élément du document, sans rien dire du
+   second. Deux champs qui portent le même nom ne provoquent donc aucune erreur :
+   l'un des deux devient simplement inatteignable, et le code qui croit l'écrire
+   écrit dans l'autre.
+
+   Ce contrôle existe parce que c'est arrivé. Le filtre des séries de
+   l'administration s'appelait `f-set`, comme le champ SÉRIE du formulaire
+   d'édition, et les deux vivaient en même temps. Résultat, tout en silence :
+   changer la série d'une carte n'avait aucun effet, et toute carte créée
+   recevait la première série du catalogue. Rien ne levait, rien ne s'affichait
+   de travers ; seule la base finissait fausse. Aucune suite de navigateur ne
+   pouvait l'attraper — l'écran se comporte normalement.
+
+   Les identifiants sont relevés partout, balisage statique **et** gabarits de
+   chaîne, parce que la collision vient précisément de ce que les seconds
+   s'insèrent dans le premier.
+
+   La tolérance ci-dessous liste les noms réemployés d'une vue à l'autre dans
+   l'administration : ses onglets se remplacent dans `#main`, donc un seul
+   existe à la fois. C'est une liste courte et nommée, pas un réglage : y
+   ajouter une ligne demande d'avoir vérifié que les deux porteurs ne peuvent
+   pas être affichés ensemble. */
+{
+  /** Page → identifiants dont le doublon est voulu, avec la raison. */
+  const TOLERES = {
+    'admin.html': new Set([
+      'q',        // un champ de recherche par onglet — fanzzy, joueurs, compétitions
+      'go',       // le bouton qui lance la recherche, dans deux de ces onglets
+      'corps',    // le corps du tableau, un par onglet
+      'nouveau',  // « nouveau », dans les deux onglets de catalogue
+    ]),
+  };
+  const fautifs = [];
+  for (const nom of fichiers.filter((f) => f.endsWith('.html')).sort()) {
+    const html = await readFile(path.join(DOSSIER, nom), 'utf8');
+    const vus = new Map();
+    for (const m of html.matchAll(/id="([A-Za-z][\w-]*)"/g)) {
+      vus.set(m[1], (vus.get(m[1]) ?? 0) + 1);
+    }
+    const tolere = TOLERES[nom] ?? new Set();
+    const doubles = [...vus].filter(([id, n]) => n > 1 && !tolere.has(id))
+      .map(([id, n]) => `${id} (${n}×)`);
+    if (doubles.length) fautifs.push([nom, doubles]);
+  }
+  if (fautifs.length) {
+    for (const [nom, doubles] of fautifs) {
+      ko(nom, `identifiant(s) écrits deux fois : ${doubles.join(', ')}. `
+        + 'getElementById ne rendra que le premier, et l’autre sera piloté sans '
+        + 'qu’on s’en aperçoive — renommer, ou ajouter à TOLERES en disant pourquoi '
+        + 'les deux ne peuvent pas coexister.');
+    }
+  } else ok('les identifiants', 'aucune page n’écrit deux fois le même, hors doublons documentés');
+}
 /* ================================ les stades ont-ils tous leur dessin ?
 
    `stade-art.js` pose son image avec `onerror="this.remove()"` : un stade

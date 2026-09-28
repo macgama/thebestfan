@@ -1195,9 +1195,24 @@ a.pan:active,button.pan:active,.pan[role="button"]:active{
   stroke-linecap:round;stroke-linejoin:round;
 }
 
-/* ------------------------------------------------------- petites briques */
+/* ------------------------------------------------------- petites briques
 
-/* La jauge d'avancement : collection, saison, remplissage d'un deck. */
+   **Attention : ces briques ont été extraites, jamais adoptées.**
+
+   Le commentaire ci-dessous disait que l'attente et le vide « étaient réécrits
+   sur chaque écran », au passé, comme si ces quatre classes avaient réglé la
+   question. Au comptage : `tbf-jauge`, `tbf-vide` et `tbf-note` ne sont
+   employées nulle part, `tbf-spin` quatre fois — et treize pages définissent
+   toujours leurs propres `.spin` et `.vide`, chacune avec ses marges.
+
+   La remarque vaut pour qui arrive ici : ne pas croire que changer ces règles
+   changera l'attente des listes, et ne pas les supprimer en croyant nettoyer
+   du mort sans avoir d'abord migré les treize pages. Elles restent parce que
+   la migration est un vrai chantier — chaque `.vide` local porte son propre
+   rembourrage, parfois en attribut `style` — et pas parce qu'elles servent. */
+
+/* La jauge d'avancement : collection, saison, remplissage d'un deck.
+   Personne ne s'en sert encore. */
 .tbf-jauge{height:7px;border-radius:4px;background:rgba(242,238,228,.12);overflow:hidden}
 .tbf-jauge i{
   display:block;height:100%;width:0;border-radius:4px;

@@ -285,16 +285,36 @@ let filtre = 'tous', terme = '', data = null, minuterie = null;
 const api = (p) => fetch('/api/tt' + p, { credentials:'same-origin' }).then((r) => r.json());
 
 /* Sept jours autour d'aujourd'hui : hier pour les résultats, demain pour
-   préparer sa soirée. Au-delà, personne ne regarde. */
+   préparer sa soirée. Au-delà, personne ne regarde.
+
+   **Le ruban raisonne en UTC, d'un bout à l'autre.**
+
+   Une journée de football, ici, est une journée UTC : la route appelle l'API
+   avec `timezone: 'UTC'` et met sa réponse en cache sous cette clé (voir
+   `src/server/teletext/index.js`). Le bouton demandait bien un jour UTC — son
+   `iso` venait de `toISOString()` — mais s'étiquetait en heure locale.
+
+   Les deux ne disent pas la même chose aux abords de minuit. À 00 h 30 à
+   Zurich le 28, le bouton affichait « AUJOURD'HUI · 28 sept. » et rapportait
+   les matchs du 27 ; à 20 h à Montréal, il annonçait le jour en cours et
+   rapportait ceux du lendemain. La liste n'était pas fausse, elle répondait à
+   une autre question que celle imprimée dessus — et « HIER » montrait alors
+   des matchs à venir.
+
+   `Date.UTC` place le repère à minuit UTC, ce qui rend l'arithmétique des
+   jours exacte — `setDate` sur l'heure courante pouvait basculer de jour au
+   moment de convertir — et `timeZone: 'UTC'` fait lire les étiquettes sur ce
+   même repère. Le libellé et le contenu parlent enfin du même jour. */
 function joursDispo() {
   const out = [];
+  const maintenant = new Date();
   for (let d = -2; d <= 4; d++) {
-    const j = new Date();
-    j.setDate(j.getDate() + d);
+    const j = new Date(Date.UTC(maintenant.getUTCFullYear(), maintenant.getUTCMonth(),
+      maintenant.getUTCDate() + d));
     out.push({ iso: j.toISOString().slice(0, 10), d,
       label: d === 0 ? "AUJOURD'HUI" : d === -1 ? 'HIER' : d === 1 ? 'DEMAIN'
-        : j.toLocaleDateString('fr', { weekday:'short' }).toUpperCase(),
-      sous: j.toLocaleDateString('fr', { day:'numeric', month:'short' }) });
+        : j.toLocaleDateString('fr', { weekday:'short', timeZone:'UTC' }).toUpperCase(),
+      sous: j.toLocaleDateString('fr', { day:'numeric', month:'short', timeZone:'UTC' }) });
   }
   return out;
 }
@@ -322,26 +342,16 @@ $('q').oninput = () => {
 };
 
 /**
- * Minute affichée : le serveur donne la minute et l'instant où il l'a lue.
- * Le chrono défile donc localement, sans redemander quoi que ce soit —
- * c'est ce qui manquait, et ça ne coûte pas un appel de plus.
- */
-/**
- * Minute affichée.
- *
- * Le serveur donne la minute lue chez l'API et l'instant de cette lecture. On
- * ajoute le temps écoulé depuis, ce qui fait défiler le chrono sans un seul
- * appel réseau.
- *
- * Le plafond dépend de la période : à la mi-temps le chrono s'arrête, en
- * première période il ne dépasse pas 45, et au-delà on affiche « 45+ » plutôt
- * qu'un nombre faux — le temps additionnel n'est pas connu.
- */
-/**
  * La minute affichée. Le calcul vit dans `/horloge.js`, partagé avec le
  * Grand Virage et la fiche du match : il était écrit trois fois, avec déjà
  * trois listes de périodes différentes. Ce qui reste ici est le vocabulaire
  * de cette page — « MT », « PROL. » — et lui seul.
+ *
+ * Deux blocs de documentation d'avant le déménagement traînaient au-dessus de
+ * celui-ci. Ils décrivaient le plafond par période — « à la mi-temps le chrono
+ * s'arrête », « en première période il ne dépasse pas 45 » — qui n'est plus
+ * dans ce fichier depuis que le calcul est partagé. Quelqu'un venant réparer
+ * ce plafond l'aurait cherché ici, et il ne l'aurait pas trouvé.
  */
 function minute(m) {
   if (!m.live) return null;
@@ -448,14 +458,42 @@ function planifier() {
   const delai = data?.enDirect ? 45_000 : 10 * 60_000;
   minuterie = setTimeout(async () => {
     if (document.hidden) return planifier();
-    try { data = await api('/jour?date=' + date); rendre(); } catch {}
+    try { data = await api('/jour?date=' + date); rendre(); } catch {
+      /* **Le rattrapage était muet, et la page mentait par omission.**
+
+         `rendre` ne s'exécute pas quand la lecture échoue : les scores
+         affichés restent ceux d'avant — c'est voulu, mieux vaut un score d'il
+         y a deux minutes qu'un écran vide — mais la ligne du bas continuait
+         d'annoncer « Mis à jour à 21:34 » à 21:50. Quelqu'un qui regarde un
+         match en direct lit cette heure-là pour savoir s'il peut se fier au
+         score, et elle lui disait oui.
+
+         On garde donc les scores et on retire la promesse de fraîcheur. Le
+         prochain tour se replanifie juste en dessous : dès que le serveur
+         revient, l'heure repart. */
+      const maj = $('maj');
+      if (maj) maj.textContent = 'Le service ne répond plus — ces scores datent '
+        + 'de la dernière mise à jour.';
+    }
     planifier();
   }, delai);
 }
 // Le chrono défile toutes les dix secondes, sans appel réseau : c'est assez
 // fréquent pour qu'un changement de minute se voie presque tout de suite.
 setInterval(() => { if (data?.enDirect && !document.hidden) rendre(); }, 10_000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) charger(); });
+/* **Et la fiche ouverte se relit aussi.**
+
+   On ne rechargeait que la liste. Or si une fiche est ouverte, c'est elle qu'on
+   regarde — la liste est derrière, cachée par la fiche. Les deux relectures du
+   direct se mettent en pause quand l'onglet passe à l'arrière-plan (voir
+   `planifierFiche`), si bien qu'en revenant sur le match on retrouvait le score
+   d'avant pour jusqu'à trente secondes, sur le seul écran où l'on compte les
+   secondes. `relire` replanifie la suite, donc aucune minuterie ne double. */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  charger();
+  if (FICHE.id) relire();
+});
 
 /* ---------------------------------------------------------- fiche match */
 
@@ -579,13 +617,38 @@ async function relire({ premier = false } = {}) {
   }
   if (FICHE.id !== id) return;                  // refermée entre-temps
   if (d.error) {
-    if (premier) $('fcorps').innerHTML = '<div class="vide">Match indisponible.</div>';
-    return;
+    /* Au premier coup, on le dit et on s'arrête : un match qui n'existe pas
+       n'existera pas davantage dans trente secondes.
+
+       En cours de route, non — on garde à l'écran ce qu'on avait et on
+       retentera. Ce chemin ne replanifiait rien, si bien qu'un seul refus du
+       relevé en amont figeait la fiche d'un match en cours **pour le reste de
+       la visite**, sans que rien ne le montre. Le `catch` juste au-dessus,
+       lui, retentait déjà : il n'y avait aucune raison que les deux façons
+       d'échouer ne se traitent pas de la même manière. */
+    if (premier) {
+      $('fcorps').innerHTML = '<div class="vide">Match indisponible.</div>';
+      return;
+    }
+    return planifierFiche();
   }
   FICHE.d = d;
-  dessinerFiche();
-  reagir(d);
-  planifierFiche();
+  /* **Dessiner peut lever, et la relance ne doit pas en dépendre.**
+
+     `dessinerFiche` et `reagir` lisent une trentaine de champs du relevé. Il
+     suffisait qu'un seul manque — une ligue sans nom, un match sans fil — pour
+     que l'exception emporte `planifierFiche` avec elle : plus de relecture,
+     plus de chrono, une fiche arrêtée à la minute de l'incident et un joueur
+     qui regarde un score qui ne bougera plus. La minuterie se replanifie donc
+     dans tous les cas, et l'incident part en console pour être réparable. */
+  try {
+    dessinerFiche();
+    reagir(d);
+  } catch (e) {
+    console.error('[matchs] la fiche a levé en se dessinant :', e);
+  } finally {
+    planifierFiche();
+  }
 }
 
 /* Tant que le match est en cours, on relit toutes les trente secondes : c'est
@@ -738,8 +801,27 @@ function dessinerFiche() {
       ${f.arbitre ? `<span>M. ${esc(f.arbitre)}</span>` : ''}
     </div>
     <div class="allers">
+      <!-- **Éteinte, la porte n'a pas d'adresse du tout.**
+
+           Elle portait « href="#" », et « pointer-events:none » retenait le
+           doigt — mais pas la touche Entrée : un lien reste dans l'ordre de
+           tabulation, et l'Entrée y déclenche un clic que le CSS ne voit pas
+           passer. Le navigateur suivait alors « # », ce qui **empile une
+           entrée d'historique** sans rien changer à l'écran. La flèche de
+           retour demandait ensuite deux pressions pour quitter les matchs, et
+           la première ne faisait rien de visible : exactement ce qu'on décrit
+           comme « la flèche retour ne marche pas ».
+
+           Sans « href », la balise « a » n'est plus un lien : elle sort de la
+           tabulation, et il n'y a plus d'adresse à suivre. « aria-disabled »
+           dit aux lectures d'écran ce que l'opacité dit à l'œil.
+
+           Pas d'accent grave dans ce commentaire : il vit dans un gabarit de
+           chaîne JavaScript, et le premier accent grave referme la chaîne.
+           C'est la faute que verif-pages guette, et je viens de la faire — le
+           commentaire d'à côté prévenait déjà, trois lignes plus bas. -->
       <a class="aller ${virageOuvert ? '' : 'eteint'}" data-porte="virage"
-         href="${virageOuvert ? `/virage?match=${f.id}` : '#'}">GRAND VIRAGE
+         ${virageOuvert ? `href="/virage?match=${f.id}"` : 'aria-disabled="true"'}>GRAND VIRAGE
         <small>${virageOuvert ? 'pousser avec la tribune' : 'pendant le match seulement'}</small></a>
       <!-- **Le match voyage avec le lien.** Le bouton menait à « /duel-nvn »
            tout court : on arrivait sur la liste de tous les matchs jouables,
@@ -774,9 +856,12 @@ function dessinerFiche() {
 
 function dessinerVolet() {
   const d = FICHE.d;
+  // Le fil peut manquer là où les statistiques et les compositions se
+  // contentent d'être vides ; `reagir` le lit déjà avec la même précaution.
+  const fil = d.evenements ?? [];
   const VOLETS = {
-    fil: () => d.evenements.length ? `
-      ${d.evenements.map((ev) => {
+    fil: () => fil.length ? `
+      ${fil.map((ev) => {
         const droite = ev.equipe === d.equipes.away.id;
         const ic = ev.type === 'Card'
           ? `<span style="color:${/Red/i.test(ev.detail) ? 'var(--flare)' : 'var(--projo)'}">▮</span>`
@@ -919,7 +1004,9 @@ function inviter(quelle) {
    chaque relevé du direct, et un écouteur posé sur les boutons repartirait
    avec eux toutes les trente secondes. */
 $('fcorps').addEventListener('click', (e) => {
-  const lien = e.target.closest('.aller');
+  // `[href]` et pas `.aller` seul : une porte éteinte n'a plus d'adresse, et
+  // c'est son adresse qu'on s'apprête à suivre à la main.
+  const lien = e.target.closest('.aller[href]');
   if (!lien || connu) return;          // connecté : le lien fait son travail
 
   /* On retient le geste **avant** de savoir. Si la réponse n'est pas encore
