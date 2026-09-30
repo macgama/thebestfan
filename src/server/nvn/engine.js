@@ -603,7 +603,14 @@ export class DuelNvN {
        consommer une gratuité que le joueur n'a pas utilisée. */
     if (tournee) tournee.valeur--;
     j.cooldowns[cardId] = t + carte.cd * 1000;
-    j.main = j.main.filter((x) => x !== cardId);
+    /* **Un exemplaire, pas tous.** C'était `filter`, qui retirait de la main
+       toutes les cartes du même nom quand une seule part à la défausse. Un
+       deck accepte plusieurs exemplaires d'une carte — c'est même le deck de
+       tout débutant, qui en possède peu — et jouer un Fumigène sur deux en
+       main faisait disparaître l'autre de la partie : ni en main, ni en
+       pioche, ni en défausse. Le deck fondait de coup en coup, et les joueurs
+       voyaient leurs cartes « ne jamais revenir ». */
+    j.main.splice(j.main.indexOf(cardId), 1);
     j.defausse.push(cardId);
     // La carte suivante n'arrive pas tout de suite : jouer coûte aussi du choix.
     j.remplirA = t + RULES.refillMs;
