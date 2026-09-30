@@ -668,5 +668,38 @@ check('un entraînement ne compte pas',
     || (console.log('        ', buts, 'buts en cinq minutes'), false));
 }
 
+/* ============================================== un deck qui ne fond pas
+
+   **Jouer un exemplaire faisait disparaître les autres.** La main retirait
+   toutes les cartes du même nom, et une seule partait à la défausse. Le deck
+   d'un débutant — peu de cartes, donc des doublons — perdait trois cartes sur
+   dix en quatre coups, et les joueurs voyaient leurs cartes « ne jamais
+   revenir ». On joue donc un deck plein de doublons bien au-delà d'un tour de
+   pioche, et l'on compte ce qui circule. */
+{
+  const DOUBLONS = ['a-fumigene', 'a-fumigene', 'a-fumigene', 'a-torche', 'a-torche',
+    'a-torche', 'a-bache', 'a-bache', 'a-thermos', 'a-thermos'];
+  let tD = 3_000_000;
+  const eqD = (side) => [{ userId: `${side}-0`, nom: `J${side}`,
+    loadout: loadout(['TR32', 'MS30', 'TR33'], DOUBLONS) }];
+  const dD = new DuelNvN({ id: 'dD', equipes: [eqD(0), eqD(1)], mode: 'entrainement',
+    now: tD, fixture: { id: 7001, elapsed: 20 } });
+  const jD = dD.joueurs.get('0-0');
+  const circule = () => jD.main.length + jD.pioche.length + jD.defausse.length;
+  let minimum = circule();
+  for (let k = 0; k < 14; k++) {
+    jD.breath = 100;
+    jD.cooldowns = {};
+    dD.jouer('0-0', jD.main[0], tD);
+    minimum = Math.min(minimum, circule());
+    tD += RULES.refillMs + 100;
+    dD.tick(tD);
+  }
+  check(`un deck à doublons garde ses ${DOUBLONS.length} cartes en circulation (au plus bas : ${minimum})`,
+    minimum === DOUBLONS.length);
+  check('et la main se remplit de nouveau', jD.main.length >= RULES.mainVisible - 1
+    || (console.log('        main :', jD.main.length), false));
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 process.exit(failures ? 1 : 0);

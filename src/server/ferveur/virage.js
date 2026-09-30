@@ -807,7 +807,9 @@ export class VirageRoom {
        ne doit pas consommer une gratuité que le joueur n’a pas utilisée. */
     if (tournee) tournee.valeur--;
     m.cooldowns[cardId] = now + carte.cd * 1000 * RULES.cardCooldownMult;
-    m.main = m.main.filter((x) => x !== cardId);
+    /* Un exemplaire, pas tous : voir le même correctif dans `nvn/engine.js`.
+       Deux Fumigènes en main, un joué, et l'autre disparaissait du Virage. */
+    m.main.splice(m.main.indexOf(cardId), 1);
     m.defausse.push(cardId);
     m.remplirA = now + RULES.refillMs;
     m.lastPush = now;          // jouer, c'est être présent dans la foule
