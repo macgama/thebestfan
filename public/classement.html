@@ -10,11 +10,19 @@
 <style>
 /* **Quatre onglets, et le quatrième est long.** `ui.css` dimensionne la barre
    pour trois étiquettes de dix caractères ; « ENTRAÎNEMENT » en fait douze et
-   se coupait en « ENTRAÎNE… », qui se devine au lieu de se lire. On réduit le
-   corps ici, sur cette page seule, plutôt que de toucher au composant partagé
-   — les dix-huit autres pages n'ont pas ce problème, et une barre d'onglets
-   plus petite partout pour une page serait le mauvais échange. */
-.tabs .tbf-onglet{font-size:clamp(9px,2.7vw,12px);letter-spacing:.04em}
+   se coupait en « ENTRAÎNE… », qui se devine au lieu de se lire. On le règle
+   ici, sur cette page seule, plutôt que de toucher au composant partagé — les
+   dix-huit autres pages n'ont pas ce problème, et une barre d'onglets plus
+   petite partout pour une page serait le mauvais échange.
+
+   Le remède n'est plus de rétrécir le corps : il descendait à neuf pixels et
+   sept dixièmes sur un téléphone de 360, sous les onze qu'on s'impose, et
+   « ENTRAÎNEMENT » restait coupé. Les quatre onglets prennent maintenant
+   **la largeur de leur mot** (`flex:1 1 auto`) au lieu d'un quart chacun :
+   « DUELS » cède la place que « ENTRAÎNEMENT » réclame, et les quatre tiennent
+   entiers à onze pixels dès 360. */
+.tabs .tbf-onglet{flex:1 1 auto;font-size:clamp(11px,3vw,12px);letter-spacing:.04em;
+  padding-left:4px;padding-right:4px}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
@@ -22,31 +30,49 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 #app{width:100%;max-width:var(--colonne);min-height:100dvh;display:flex;flex-direction:column}
 h1{font-family:var(--banner);font-size:20px;letter-spacing:.15em;margin:0;padding:16px 16px 4px}
 h1 small{display:block;font-size:9px;letter-spacing:.3em;opacity:.45;margin-top:4px;font-family:var(--ui)}
+/* **Aucun texte à même la photo de tribune.** La carte « ma place » était
+   dorée à 13 % sur sa moitié gauche, c'est-à-dire transparente : la foule
+   passait sous la phrase. Elle garde sa lueur d'or, posée sur le panneau
+   opaque commun plutôt que sur rien. */
 .moi{margin:12px 14px 0;border:1px solid rgba(245,195,59,.4);border-radius:12px;padding:13px 15px;
-  background:linear-gradient(140deg,rgba(245,195,59,.13),rgba(8,11,16,.75));display:flex;
-  align-items:center;gap:12px}
+  background:linear-gradient(140deg,rgba(245,195,59,.13),rgba(245,195,59,0) 70%),var(--panneau);
+  display:flex;align-items:center;gap:12px}
 .moi .r{font-family:var(--banner);font-size:30px;color:var(--projo);line-height:1}
 .moi .r sup{font-size:13px}
-.moi .d{flex:1;min-width:0;font-size:12px;opacity:.72;line-height:1.5}
-.moi .d b{color:var(--craie);opacity:1}
-.list{flex:1;padding:0 14px 20px}
+.moi .d{flex:1;min-width:0;font-size:12px;opacity:.9;line-height:1.5}
+.moi .d b{color:var(--craie)}
+/* La liste est un panneau, pour la même raison : les rangs, les noms et la
+   note du bas étaient posés directement sur la photo. Il ne s'étire plus
+   jusqu'au bas de l'écran (`flex:1`) — un panneau vide de trois cents pixels
+   sous un classement de quatre lignes ne dit rien. */
+.list{margin:12px 14px 20px;padding:2px 12px;border:1px solid var(--trait);
+  border-radius:var(--r);background:var(--panneau)}
 .row{display:flex;align-items:center;gap:11px;padding:11px 4px;font-size:13px;
   border-top:1px solid rgba(242,238,228,.07)}
-.row .rk{font-family:var(--banner);font-size:15px;min-width:26px;opacity:.5}
+.row:first-child{border-top:0}
+.row .rk{font-family:var(--banner);font-size:15px;min-width:26px;opacity:.88}
 .row.p1 .rk{color:#F5C33B;opacity:1}.row.p2 .rk{color:#D8DCE4;opacity:1}.row.p3 .rk{color:#C08552;opacity:1}
 .row img{width:22px;height:22px;object-fit:contain}
 .row .n{flex:1;min-width:0}
 .row .n b{display:block;font-family:var(--banner);font-size:13.5px;letter-spacing:.02em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row .n small{font-size:10.5px;opacity:.45}
+.row .n small{font-size:11px;opacity:.88}
 .row .v{font-family:var(--banner);font-size:16px;color:var(--c,var(--projo))}
-.row .v small{display:block;font-size:8.5px;opacity:.45;letter-spacing:.1em;font-family:var(--ui);
+/* En Oswald : « PAR TÊTE » à onze pixels prend moins de place dans la
+   condensée du jeu que dans la police du système, et c'est le nom qui cède. */
+.row .v small{display:block;font-size:11px;opacity:.88;letter-spacing:.06em;font-family:var(--banner);
   color:var(--craie);text-align:right}
-.note{font-size:11px;opacity:.42;text-align:center;padding:16px 22px;line-height:1.7}
-.empty{text-align:center;padding:46px 22px;opacity:.5;font-size:13px;line-height:1.7}
+.note{font-size:11px;opacity:.88;text-align:center;padding:16px 22px;line-height:1.7;
+  border-top:1px solid rgba(242,238,228,.07)}
+.empty{text-align:center;padding:46px 22px;opacity:.9;font-size:13px;line-height:1.7}
 .spin{width:24px;height:24px;border:3px solid rgba(242,238,228,.18);border-top-color:var(--projo);
   border-radius:50%;animation:sp 1s linear infinite;margin:50px auto}
 @keyframes sp{to{transform:rotate(1turn)}}
+/* Le tourniquet dit « ça charge » : sous moins de mouvement — le système, ou
+   le mode calme du tiroir (contrat C4) — il ralentit sans s'arrêter, comme
+   `.tbf-spin` de ui.css. */
+@media (prefers-reduced-motion:reduce){ .spin{animation-duration:3s} }
+html[data-calme~="animations"] .spin{animation-duration:3s}
 
 /* **Le bas de la page, et la barre du navigateur mobile.**
 
@@ -76,23 +102,13 @@ h1 small{display:block;font-size:9px;letter-spacing:.3em;opacity:.45;margin-top:
 <meta name="theme-color" content="#0A0D11">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<style>
-/* **Quatre onglets, et le quatrième est long.** `ui.css` dimensionne la barre
-   pour trois étiquettes de dix caractères ; « ENTRAÎNEMENT » en fait douze et
-   se coupait en « ENTRAÎNE… », qui se devine au lieu de se lire. On réduit le
-   corps ici, sur cette page seule, plutôt que de toucher au composant partagé
-   — les dix-huit autres pages n'ont pas ce problème, et une barre d'onglets
-   plus petite partout pour une page serait le mauvais échange. */
-.tabs .tbf-onglet{font-size:clamp(9px,2.7vw,12px);letter-spacing:.04em}
-/* Les boutons de cette barre n'ont pas de classe : ils sont les seuls enfants
-   du rail, et lui seul les désigne. */
-</style>
 </head>
 <body>
 <main id="app">
   <p class="tbf-sous">Qui fait le plus de bruit</p>
   <div class="moi" id="moi" style="display:none"></div>
-  <div class="tabs tbf-onglets">
+  <!-- Le rail au vert du foot, le ton de cet écran sur l'accueil. -->
+  <div class="tabs tbf-onglets" data-ton="vert">
     <button data-t="supporters" class="tbf-onglet on">SUPPORTERS</button>
     <button data-t="tribunes" class="tbf-onglet">TRIBUNES</button>
     <button data-t="duellistes" class="tbf-onglet">DUELS</button>
@@ -160,13 +176,17 @@ async function charger() {
   }
 
   const rang = (i) => `<span class="rk">${i + 1}</span>`;
+  /* La ligne du dessous, sans séparateur orphelin : un joueur sans club
+     s'affichait « · 12 matchs · 3 vécus », un point qui annonçait une donnée
+     absente. Ce qui manque se retire, avec son séparateur. */
+  const sous = (...bouts) => bouts.filter(Boolean).map(esc).join(' · ');
   const lignes = {
     supporters: (x, i) => `<div class="row ${i < 3 ? 'p' + (i + 1) : ''}">${rang(i)}
-      <span class="n"><b>${esc(x.pseudo)}</b><small>${esc(x.club ?? '')} · ${x.matchs} matchs · ${x.vecus} vécus</small></span>
+      <span class="n"><b>${esc(x.pseudo)}</b><small>${sous(x.club, `${x.matchs} matchs`, `${x.vecus} vécus`)}</small></span>
       <span class="v" style="--c:var(--projo)">${Number(x.ferveur).toLocaleString('fr')}<small>FERVEUR</small></span></div>`,
     tribunes: (x, i) => `<div class="row ${i < 3 ? 'p' + (i + 1) : ''}">${rang(i)}
       <img src="${esc(x.logo)}" alt="">
-      <span class="n"><b>${esc(x.name)}</b><small>${esc(x.country ?? '')} · ${x.supporters} supporters</small></span>
+      <span class="n"><b>${esc(x.name)}</b><small>${sous(x.country, `${x.supporters} supporters`)}</small></span>
       <span class="v" style="--c:var(--bleu)">${Number(x.moyenne).toLocaleString('fr')}<small>PAR TÊTE</small></span></div>`,
     /* Le grand chiffre est **la cote**, sur laquelle on est classé ; les
        victoires et le taux passent en dessous. L'inverse ferait lire un
@@ -214,8 +234,12 @@ document.querySelector('.tabs').onclick = (e) => {
  */
 let place = null;
 
+/* Le rang, en grand à gauche de la carte. **Sans rang, rien du tout** : un
+   tiret doré de trente pixels à la place d'un chiffre se lit comme un rang
+   illisible, pas comme une absence. La phrase occupe alors toute la carte, et
+   c'est elle qui dit pourquoi on n'est pas classé. */
 const RANG = (n) => `<span class="r">${n}<sup>e</sup></span>`;
-const VIDE = '<span class="r">\u2014</span>';
+const VIDE = '';
 
 function maPlace() {
   const m = place;

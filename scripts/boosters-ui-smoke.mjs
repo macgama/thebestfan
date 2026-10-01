@@ -876,7 +876,8 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
    Il ne lit pas `--u` : une valeur de variable ne dit pas si la carte est juste,
    et la prochaine réécriture de la feuille pourrait très bien s'en passer. Il
    mesure **le comportement** — la même carte à deux largeurs doit dessiner son
-   nom à deux tailles proportionnelles. C'est la promesse du fichier, écrite en
+   nom à deux tailles proportionnelles, tant qu'elle reste au-dessus du
+   plancher de onze pixels. C'est la promesse du fichier, écrite en
    toutes lettres dans son en-tête : « juste en vignette comme en grand ». */
 {
   const p3 = await ouvrir();
@@ -898,23 +899,45 @@ if (ouverture.length) console.log('    inconnues :', ouverture);
         carte: hote.querySelector('.fz').getBoundingClientRect().width,
       };
     };
+    /* Quatre largeurs et non plus deux : voir « le plancher » plus bas.
+       Soixante pixels, la moitié de la petite carte : un nom proportionnel y
+       tomberait à 3,6 px, c'est là que le plancher a le plus à tenir. */
+    const minuscule = lire(60);
     const petit = lire(120);
+    const moyen = lire(200);
     const grand = lire(360);
     hote.remove();
-    return { petit, grand };
+    return { minuscule, petit, moyen, grand };
   });
   await p3.close();
 
-  const { petit, grand } = mesures;
+  const { minuscule, petit, moyen, grand } = mesures;
   check(`la carte suit la largeur qu'on lui donne (${Math.round(petit.carte)} / ${Math.round(grand.carte)})`,
     Math.round(grand.carte) === 3 * Math.round(petit.carte));
 
-  /* Trois fois plus large, donc un nom trois fois plus grand — à un dixième
-     près, parce qu'un navigateur arrondit les tailles de police. */
-  const rapport = petit.nom ? grand.nom / petit.nom : 0;
-  check(`et son nom grandit avec elle (${petit.nom.toFixed(1)} → ${grand.nom.toFixed(1)} px)`,
-    Math.abs(rapport - 3) < 0.3
-    || (console.log('        rapport :', rapport.toFixed(2)), false));
+  /* **Le nom a un plancher de onze pixels** (lot 0, chantier 1 : aucun texte
+     qui informe sous onze pixels). `cartes.css` l'écrit
+     `max(11px, calc(6 * var(--u)))` : six centièmes de la carte, sauf sous
+     cent quatre-vingt-trois pixels de carte, où le nom s'arrête à onze.
+
+     Le contrôle comparait une carte de 120 px à une de 360 px et attendait
+     un rapport de trois — 7,2 px contre 21,6. Le plancher rend ce rapport
+     impossible, et c'est voulu. On garde donc ce qu'il protégeait — le nom
+     suit la carte, la règle du conteneur n'est pas retombée au repli fixe —
+     en le mesurant **au-dessus du plancher**, de 200 à 360 px ; et on vérifie
+     à part que le plancher tient, jusqu'à la plus étroite des cartes.
+
+     Rapport attendu : celui des largeurs, à un dixième près, parce qu'un
+     navigateur arrondit les tailles de police. Un `--u` resté au repli de
+     1,3 px donnerait 11 px aux deux tailles, soit un rapport de un. */
+  const attendu = moyen.carte ? grand.carte / moyen.carte : 0;
+  const rapport = moyen.nom ? grand.nom / moyen.nom : 0;
+  check(`et son nom grandit avec elle (${moyen.nom.toFixed(1)} → ${grand.nom.toFixed(1)} px)`,
+    attendu > 1.5 && Math.abs(rapport - attendu) < attendu * 0.1
+    || (console.log('        rapport :', rapport.toFixed(2), '· attendu :', attendu.toFixed(2)), false));
+  check(`sans jamais passer sous onze pixels (${minuscule.nom.toFixed(1)} et ${petit.nom.toFixed(1)} px)`,
+    minuscule.nom >= 10.95 && petit.nom >= 10.95 && moyen.nom >= 10.95
+    || (console.log('        à 60 / 120 / 200 px :', minuscule.nom, petit.nom, moyen.nom), false));
 
   /* La pastille de famille aussi : si seule la police suivait, ce serait une
      règle recopiée à un endroit et oubliée aux autres. */

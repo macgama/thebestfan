@@ -427,11 +427,16 @@
          horizontalement, et les tenues sont nombreuses — placées au milieu,
          elles repoussaient les effets hors de l'écran, où personne ne serait
          allé les chercher. Elles ferment donc la marche : ce sont les seules
-         qui ne changent rien au jeu. */
+         qui ne changent rien au jeu.
+
+         Le nom de chaque rangée est un titre cousu (C2, ui.css) : il était à
+         neuf pixels et 42 %, le texte le plus pâle de la fiche. La place reste
+         réglée par fanzzy-fiche.css, la lettre et le fil viennent de la brique
+         commune. */
       const rangsHTML = () => ['ÂGES', 'EFFETS', 'ÉTATS', 'TENUES']
         .map((r) => [r, cases.filter((x) => x.rang === r)])
         .filter(([, l]) => l.length)
-        .map(([nom, l]) => `<div class="rang"><h4>${nom}</h4>
+        .map(([nom, l]) => `<div class="rang"><h4 class="tbf-cousu">${nom}</h4>
           <div class="cases">${l.map(caseHTML).join('')}</div></div>`).join('');
 
       /* **Refaire la bande sans refaire la fiche.** Changer d'âge change les
@@ -463,13 +468,22 @@
        * l'obtient. Le reste s'ouvre avec la carte. */
       const aMoi = Boolean(d.possede);
 
+      /* **Ce qu'on ne sait pas ne s'écrit pas** — ni tiret, ni « undefined ».
+         La famille et le cri manquent rarement, mais quand ils manquent, la
+         fiche écrivait « undefined · Commune » sous le nom, ou « Cri : — »
+         dans une pastille qu'on pouvait toucher pour crier un tiret. La
+         pastille, la ligne ou le morceau de ligne se retire. */
+      const nomType = NOMTYPE[f.type] ?? f.type ?? '';
+      const galon = [nomType, NOMRAR[f.rar] ?? f.rar ?? ''].filter(Boolean).join(' · ');
+      const cri = f.cri?.label ? esc(f.cri.label) : '';
+
       hote.innerHTML = `
         <div class="fiche${aMoi ? '' : ' pas-a-moi'}">
           <div class="head">
             ${opts.fermer
               ? '<button class="rond" data-fermer aria-label="Fermer">✕</button>'
               : '<a class="rond" href="/fanzzy" aria-label="Retour au classeur">‹</a>'}
-            <h1>${esc(f.nom)}<small>${NOMTYPE[f.type] ?? f.type} · ${NOMRAR[f.rar] ?? f.rar}</small></h1>
+            <h1>${esc(f.nom)}${galon ? `<small>${esc(galon)}</small>` : ''}</h1>
           </div>
 
           <!-- **Ce qui cède quand le téléphone ne donne pas la place.**
@@ -500,17 +514,17 @@
                 : ''}
               <div class="txt">
                 <div class="pastilles">
-                  <span class="pastille" style="--c:${c}">
+                  ${nomType ? `<span class="pastille" style="--c:${c}">
                     ${window.TBF_LOGO?.type?.(f.type, 'pinType') ?? ''}
-                    <b>${NOMTYPE[f.type] ?? f.type}</b></span>
-                  ${aMoi
+                    <b>${esc(nomType)}</b></span>` : ''}
+                  ${!cri ? ''
+                    : aMoi
                     ? `<button class="pastille" data-cri style="cursor:pointer">
-                        Cri : <b style="color:${c}">${esc(f.cri?.label ?? '—')}</b> ▸</button>`
+                        Cri : <b style="color:${c}">${cri}</b> ▸</button>`
                     /* Le cri se **crie** quand on touche la pastille. Sur un
                        Fanzzy qu'on n'a pas, c'est le seul élément qui répondait
                        encore — une carte éteinte qui pousse un cri. */
-                    : `<span class="pastille">Cri : <b style="color:${c}">${
-                      esc(f.cri?.label ?? '—')}</b></span>`}
+                    : `<span class="pastille">Cri : <b style="color:${c}">${cri}</b></span>`}
                 </div>
                 <h2>${esc(f.nom)}</h2>
                 <div class="sous">${d.possede
@@ -598,11 +612,18 @@
         || (String(x.cle).startsWith('age:')
           && (d.lignee ?? []).find((a) => `age:${a.id}` === x.cle)?.stage === voulu.stade)
       ) ? ' retenue' : '';
+      /* **Le cadenas est l'icône au trait du jeu** (C1, ui.css), plus l'émoji :
+         « 🔒 » se dessinait en couleur chez l'un, en trait chez l'autre, et
+         toujours à côté des pictogrammes au trait de la case. L'icône est
+         muette pour un lecteur d'écran — la case le dit donc en mots, dans son
+         nom accessible, puisqu'elle n'a pas d'autre texte. */
+      const nomAccessible = x.ok ? x.titre : `${x.titre} (verrouillé)`;
       return `<button class="case ${x.ok ? 'ok' : 'verrou'}${secret}${retenue} ${x.cle === choisie ? 'choisie' : ''}"
-        style="--cc:${x.couleur}" data-case="${esc(x.cle)}" title="${esc(x.titre)}"${mort}>
+        style="--cc:${x.couleur}" data-case="${esc(x.cle)}" title="${esc(x.titre)}"
+        aria-label="${esc(nomAccessible)}"${mort}>
         <span class="pav"></span>
         <span class="dedans">${dedans}</span>
-        ${x.ok ? '' : '<span class="cadenas">🔒</span>'}
+        ${x.ok ? '' : '<span class="cadenas"><i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i></span>'}
         ${x.porte ? '<span class="porte"></span>' : ''}
       </button>`;
     }
@@ -636,10 +657,13 @@
         || (String(x.cle).startsWith('age:')
           && (d.lignee ?? []).find((a) => `age:${a.id}` === x.cle)?.stage === voulu.stade));
       const sorte = retenue && x.ok ? `${x.sorte} · choisie` : x.sorte;
+      /* Ce qui manque, derrière le même cadenas que la case (C1). Le texte
+         suit l'icône : c'est lui qui dit « quatre-vingt-dix écharpes ». */
       n.innerHTML = `
         <div class="t">${esc(x.titre)}<em>${esc(sorte)}</em></div>
         <p>${esc(x.texte)}</p>
-        ${x.manque ? `<span class="manque">🔒 ${esc(x.manque)}</span>` : ''}`;
+        ${x.manque ? `<span class="manque"><i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i>${
+          esc(x.manque)}</span>` : ''}`;
     }
 
     /**
@@ -655,20 +679,27 @@
      * en remplaçant, et c'est le seul écran d'où on peut le faire en regardant
      * la carte.
      */
+    /* **Les boutons de la fiche sont des plaques** (`.tbf-plaque`, ui.css), au
+       ton de ce qu'ils font : jouer est rouge (`flare`), dépenser des écharpes
+       est or, choisir de quoi l'on a l'air — c'est à soi — est bleu, et ce qui
+       ne fait que déplacer ou refuser reste en béton. Leurs anciennes classes
+       restent : `bt` est ce que la suite de la fiche mesure, `primaire` et `or`
+       disaient déjà l'intention. La peinture, elle, ne vient plus que de
+       ui.css. */
     function rendreActions() {
       const x = cases.find((y) => y.cle === choisie);
       const n = hote.querySelector('#fiche-actions');
       const place = siege(d);
       const principal = !d.possede
-        ? '<button class="bt" disabled>PAS ENCORE À TOI<small>ouvre des boosters</small></button>'
+        ? '<button class="bt tbf-plaque" disabled>PAS ENCORE À TOI<small>ouvre des boosters</small></button>'
         /* Sans module de deck monté, pas de bouton. Mieux vaut rien qu'une
            promesse que le serveur ne peut pas tenir. */
         : !d.tribune
           ? ''
           : place >= 0
-            ? `<button class="bt" data-emmener>CHANGER DE PLACE<small>${
+            ? `<button class="bt tbf-plaque" data-emmener>CHANGER DE PLACE<small>${
               place === 0 ? 'titulaire' : `remplaçant ${place}`}</small></button>`
-            : '<button class="bt primaire" data-emmener>EMMENER EN DUEL</button>';
+            : '<button class="bt primaire tbf-plaque" data-ton="flare" data-emmener>EMMENER EN DUEL</button>';
 
       /* Fermé et **nommé** : « rien ne se passe » et « il te manque quarante
          écharpes » n'appellent pas le même geste, et un seul des deux se
@@ -676,8 +707,9 @@
          que ce Fanzzy ne grandit pas. */
       const second = x?.action?.quoi === 'evoluer'
         ? (x.action.payable
-          ? `<button class="bt or" data-evoluer>${x.action.libelle}<small>${esc(x.action.cout)}</small></button>`
-          : `<button class="bt" data-evoluer disabled>IL TE FAUT<small>${
+          ? `<button class="bt or tbf-plaque" data-ton="or" data-evoluer>${x.action.libelle}<small>${
+            esc(x.action.cout)}</small></button>`
+          : `<button class="bt tbf-plaque" data-evoluer disabled>IL TE FAUT<small>${
               x.action.manque} écharpes de plus</small></button>`)
         : '';
 
@@ -691,10 +723,13 @@
          Celui-ci enregistre ce que la vitrine montre déjà. Éteint quand il
          n'y a rien à changer — un bouton qui réécrit la même chose apprend
          à douter de ce qu'on voit. */
+      /* En bleu et non plus en or : il ne coûte rien, et deux plaques d'or
+         côte à côte — celle-ci et ÉVOLUER — laissaient croire que se montrer
+         se payait aussi. */
       const montrer = !d.possede || !voulu ? ''
         : memeQueLAvatar()
-          ? '<button class="bt" disabled>C’EST DÉJÀ LUI<small>partout dans le jeu</small></button>'
-          : `<button class="bt or" data-montrer
+          ? '<button class="bt tbf-plaque" disabled>C’EST DÉJÀ LUI<small>partout dans le jeu</small></button>'
+          : `<button class="bt tbf-plaque" data-ton="bleu" data-montrer
               data-stade="${esc(String(voulu.stade))}"
               data-skin="${esc(voulu.skin ?? 'base')}"
               data-etat="${esc(voulu.etat ?? 'neutre')}"
@@ -1095,12 +1130,16 @@
       const x = cases.find((y) => y.cle === choisie);
       const vers = x?.action?.vers;
       if (!vers) return;
+      /* Un effet que l'âge d'avant n'avait pas n'a **pas de valeur d'avant** :
+         la colonne barrée reste vide au lieu d'afficher un tiret barré, qui se
+         lisait comme une valeur qu'on perd. La ligne reste — le gain, lui,
+         existe. */
       const avant = new Map(lireMods(d.fanzzy.mods).map(([n, v]) => [n, v]));
       const apres = lireMods(vers.mods);
-      const lignes = apres.map(([n, v]) => ({ n, av: avant.get(n) ?? '—', ap: v }))
+      const lignes = apres.map(([n, v]) => ({ n, av: avant.get(n) ?? '', ap: v }))
         .filter((l) => l.av !== l.ap);
       if (vers.cri?.label && vers.cri.label !== d.fanzzy.cri?.label) {
-        lignes.push({ n: 'Cri', av: d.fanzzy.cri?.label ?? '—', ap: vers.cri.label });
+        lignes.push({ n: 'Cri', av: d.fanzzy.cri?.label ?? '', ap: vers.cri.label });
       }
 
       const image = (id) => window.FZART?.adresse?.(id, 'buste') ?? '';
@@ -1117,11 +1156,11 @@
         </div>
         ${lignes.length ? `<div class="gains">${lignes.map((l) => `
           <div class="gain"><span class="n">${esc(l.n)}</span>
-            <span class="av">${esc(l.av)}</span><span class="ap">${esc(l.ap)}</span></div>`).join('')}
+            ${l.av ? `<span class="av">${esc(l.av)}</span>` : ''}<span class="ap">${esc(l.ap)}</span></div>`).join('')}
         </div>` : ''}
         <div class="quoi">
-          <button class="bt" data-non>ANNULER</button>
-          <button class="bt or" data-oui>ÉVOLUER<small>${vers.cout} écharpes</small></button>
+          <button class="bt tbf-plaque" data-non>ANNULER</button>
+          <button class="bt or tbf-plaque" data-ton="or" data-oui>ÉVOLUER<small>${vers.cout} écharpes</small></button>
         </div>`;
       hote.querySelector('.fiche').appendChild(panneau);
 
@@ -1131,6 +1170,15 @@
         try {
           await api('/evolve', { id: d.fanzzy.id });
           panneau.remove();
+
+          /* **Pas de `FX.compter` ici, et c'est voulu.** Le lot 0 fait compter
+             les soldes qui changent sous les yeux ; la fiche n'en affiche
+             aucun. `d.echarpes` n'y sert qu'à dire si l'évolution est payable
+             et combien il manque, et la barre du haut ne porte plus la bourse
+             (voir nav.js). Le prix payé part avec ce panneau, et `recharger`
+             pose l'âge suivant avec son propre prix : aucun chiffre ne
+             descend, il n'y a rien à faire compter. Si la fiche affiche un
+             jour la bourse, c'est ici qu'elle comptera. */
 
           /* ------------------------------------------ la cérémonie
 

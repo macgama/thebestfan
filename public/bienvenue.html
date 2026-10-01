@@ -24,6 +24,10 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 #bg{position:absolute;inset:-4%;background-size:cover;background-position:center;opacity:0;
   transition:opacity 2s ease;z-index:0;transform:scale(1.06)}
 #bg.on{opacity:.5}
+/* Le voile s'ouvre au centre, là où est la place vide : c'est elle que la
+   photo montre. Il ne porte aucun texte — chaque mot de la cérémonie est sur
+   un panneau, voir « Les panneaux de la cérémonie » plus bas. Un voile assez
+   épais pour faire office de panneau aurait éteint la place avec. */
 #vig{position:absolute;inset:0;z-index:0;pointer-events:none;
   background:radial-gradient(110% 55% at 50% 42%,transparent,rgba(4,6,10,.72) 60%,#04060A)}
 
@@ -33,30 +37,96 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   opacity:0;pointer-events:none;transition:opacity .6s}
 .scene.on{opacity:1;pointer-events:auto}
 
+/* ------------------------------------------ les panneaux de la cérémonie
+
+   **Aucun mot n'est posé à même la photo.** Le titre, la phrase, la
+   recherche du club, le récapitulatif du paquet et les deux liens de la fin
+   s'écrivaient sur la tribune, que seul un voile séparait des lettres ; sur le
+   bois clair du siège, au soleil, on lisait le bois. Ni un voile plus épais
+   ni une ombre sous les lettres n'y changent rien : c'est l'image qu'on ne
+   maîtrise pas.
+
+   Chaque scène qui écrit pose donc tout ce qu'elle dit sur **un** panneau
+   `.pan` de `ui.css` — la surface commune du jeu, opaque, sans flou. Les
+   liens de texte y sont avec le reste : une phrase sur son panneau et,
+   dessous, deux liens sur la photo, ce serait refaire la faute un étage plus
+   bas. Une plaque, elle, est sa propre surface ; elle peut le quitter, et le
+   premier bouton le fait (voir `#s1`).
+
+   Le panneau garde la photo autour de lui et ne l'éteint pas : le voile peut
+   rester ouvert au centre. La scène du paquet est l'exception — le paquet et
+   les cartes sont opaques d'eux-mêmes, et ses trois lignes de texte ont
+   chacune leur pastille (`.prog`, `.hint`, `.newtag`).
+
+   Une colonne centrée, comme la scène qu'il remplace : un bouton garde sa
+   largeur et ne s'étire pas d'un bord à l'autre. `max-height` et le
+   défilement sont le dernier recours d'un écran trop court : un panneau qui
+   déborde de la scène poserait sa fin sur la photo. */
+.scene > .pan{width:100%;max-width:360px;padding:22px 18px 24px;
+  display:flex;flex-direction:column;align-items:center;
+  max-height:100%;overflow-y:auto;overscroll-behavior:contain}
+
+/* **La place vide reste visible.** Le premier écran ne dit qu'une chose —
+   tu n'as pas encore de place — et la photo la montre : un siège vide, dans
+   le bas de l'image, sous un ciel de nuit. Un panneau au centre l'aurait
+   couverte exactement. Le texte monte donc dans le ciel, le bouton descend
+   sous le siège, et la place reste entre les deux. */
+#s1{justify-content:space-between}
+#s1 .go{margin-top:0}
+
 .title{font-family:var(--banner);font-size:31px;letter-spacing:.09em;line-height:1.15;margin:0}
 .title .em{color:var(--projo)}
-.sub{font-size:13.5px;opacity:.62;line-height:1.7;margin:14px 0 0;max-width:330px}
+/* Pleine craie : la phrase est la seule qui dise ce qu'on vient faire ici.
+   Elle était à 0,62, puis 0,9 — et sur le panneau, une craie à 0,9 tombe
+   encore sous 4,5:1 au plein jour. */
+.sub{font-size:13.5px;line-height:1.7;margin:14px 0 0;max-width:330px}
+/* Un paragraphe vide ne prend pas de place : le refus sous « C'EST MON CLUB »
+   n'en réserve aucune tant qu'il n'y a rien à dire. */
+.sub:empty{display:none}
+/* **Le refus s'écrit en rouge clair.** Le panneau garde la teinte de
+   `--panneau` tant que l'hypothèse H4 tient (`ui.css`, à `.pan`) : le flare
+   plein n'y fait que 4,4:1 environ, sous le seuil de 4,5, et descendrait à
+   3,5 sur le parpaing que la direction prévoit. `--flare-clair` est le rouge
+   d'un texte d'erreur sur le parpaing (amendement 17) : 8,2:1 sur le panneau
+   d'aujourd'hui, 6,4 sur le parpaing, juste dans les deux cas. L'audit ne le
+   voit pas, le refus étant vide quand il passe. */
+#msg2{color:var(--flare-clair)}
 .up{animation:up .8s cubic-bezier(.2,.8,.25,1) backwards}
 .up.d1{animation-delay:.15s}.up.d2{animation-delay:.35s}.up.d3{animation-delay:.6s}
 @keyframes up{from{opacity:0;transform:translateY(18px)}}
 
 /* Le bouton qui ouvre le jeu. Une plaque — il ne garde que sa marge et sa
-   largeur, qui sont celles d'un écran d'accueil et non d'un formulaire. */
+   largeur, qui sont celles d'un écran d'accueil et non d'un formulaire. Les
+   trois le sont, y compris le premier, qui s'affichait au style du navigateur
+   parce qu'on avait oublié de le lui dire. */
 .go{margin-top:26px;padding:15px 40px;font-size:17px;letter-spacing:.1em}
-.ghost{margin-top:14px;background:none;border:0;color:var(--projo);font-size:12.5px;cursor:pointer;
-  text-decoration:underline;text-underline-offset:3px;font-family:inherit}
+/* Les deux liens sous ENTRER restent des liens de texte — discrets, jamais un
+   passage obligé —, mais ils se touchent : quarante-quatre pixels de haut.
+   Ils en faisaient dix-huit, et l'audit les a relevés à chaque format. */
+.ghost{margin-top:4px;background:none;border:0;color:var(--projo);font-size:12.5px;cursor:pointer;
+  text-decoration:underline;text-underline-offset:3px;font-family:inherit;
+  display:inline-flex;align-items:center;min-height:44px;padding:0 10px}
 
 /* ------------------------------------------------------ choix du club */
-.pick{width:100%;max-width:360px;display:flex;flex-direction:column;height:100%;justify-content:center}
+/* Le panneau du choix : voir `.scene > .pan`. La scène le centre ; lui
+   étire la recherche et la liste sur toute sa largeur. Quand l'écran est
+   trop court, c'est la liste qui cède — elle défile déjà, donc elle peut
+   rétrécir (`min-height:0`) —, et le bouton reste sous les yeux. */
+.scene > .pick{align-items:stretch}
+.pick .res{min-height:0}
 input{width:100%;background:rgba(0,0,0,.5);border:1px solid rgba(242,238,228,.18);border-radius:9px;
   color:var(--craie);padding:14px 15px;font-size:15.5px;font-family:inherit;margin-top:20px}
 input:focus{outline:none;border-color:var(--projo)}
 .res{margin-top:10px;max-height:44vh;overflow-y:auto;display:flex;flex-direction:column;gap:5px;
   /* Panneau opaque : la liste se lisait sur une photo claire, et les noms
      disparaissaient dans le décor. Un fond translucide n'est jamais lisible
-     au-dessus d'une image dont on ne maîtrise pas la luminosité. */
+     au-dessus d'une image dont on ne maîtrise pas la luminosité.
+
+     Le flou qu'il portait en plus est parti : à 0,92, il n'y a plus rien
+     derrière à flouter, et il se recalculait à chaque image pendant qu'on
+     fait défiler la liste — sur le téléphone de quelqu'un qui s'inscrit. */
   background:rgba(6,9,13,.92);border:1px solid rgba(242,238,228,.14);border-radius:11px;
-  padding:5px;backdrop-filter:blur(10px)}
+  padding:5px}
 .res:empty{display:none}
 /* Une sélection nationale se distingue d'un club : « France » et « Stade
    Français » se ressemblent dans une liste, et ce ne sont pas du tout les
@@ -134,8 +204,21 @@ input:focus{outline:none;border-color:var(--projo)}
   border-radius:50%;background:radial-gradient(circle,rgba(245,195,59,.26),transparent 65%);
   filter:blur(16px);pointer-events:none;opacity:.6;animation:breathe 4s ease-in-out infinite}
 @keyframes breathe{0%,100%{opacity:.4}50%{opacity:.95}}
-.hint{margin-top:20px;font-family:var(--banner);font-size:13px;letter-spacing:.18em;opacity:.7}
+/* **Les trois lignes de la scène du paquet ont leur pastille** : la consigne,
+   le compte des cartes et « NOUVEAU ». Pas de grand panneau ici — le paquet et
+   les cartes se posent eux-mêmes sur la tribune, et un cadre autour d'eux
+   éteindrait le seul moment où le décor bouge. Une pastille `--panneau` par
+   ligne, taillée au mot, et pleine opacité : à 0,9, le fond hérité tombait
+   sous les 0,88 d'un panneau et la craie sous 4,5:1 au plein jour. */
+.hint,.prog,.newtag{background:var(--panneau);box-shadow:inset 0 0 0 1px var(--trait)}
+.hint{margin-top:20px;font-family:var(--banner);font-size:13px;letter-spacing:.18em;
+  padding:9px 16px;border-radius:14px}
 .hint b{color:var(--projo)}
+/* Le recours au clavier, après deux essais manqués. Sur sa propre ligne et à
+   douze pixels : un `<small>` nu se collait au mot d'avant et tombait sous le
+   plancher de lecture du socle. */
+.hint small{display:block;margin-top:8px;font-family:var(--ui);font-size:12px;
+  letter-spacing:.04em}
 
 /* ------------------------------------------------------ révélation */
 .reveal{position:absolute;width:min(70%,250px);transition:transform .45s cubic-bezier(.2,.8,.25,1),opacity .3s}
@@ -173,9 +256,9 @@ input:focus{outline:none;border-color:var(--projo)}
    Les quatre autres ne heurtaient rien : `k`, `t`, `d` et `big` n'existent que
    dans le repli. Elles sont rescopées quand même — la prochaine classe ajoutée
    à `cardHTML` n'aura pas à deviner laquelle des deux moitiés la concerne. */
-.face.front.repli .k{font-family:var(--banner);font-size:10px;letter-spacing:.22em;color:var(--c)}
+.face.front.repli .k{font-family:var(--banner);font-size:11px;letter-spacing:.22em;color:var(--c)}
 .face.front.repli .t{font-family:var(--banner);font-size:20px;line-height:1.15}
-.face.front.repli .d{font-size:11.5px;opacity:.6;line-height:1.5}
+.face.front.repli .d{font-size:11.5px;opacity:.9;line-height:1.5}
 .face.front.repli .big{font-family:var(--banner);font-size:42px;color:var(--c)}
 /* L'objet d'une pièce d'équipement. Détouré : il n'a pas de cadre à lui, il
    pose juste son ombre sur la carte. */
@@ -188,8 +271,11 @@ input:focus{outline:none;border-color:var(--projo)}
    et c'est la première fois qu'on le voit. */
 .face.front.repli .illu{width:150px;height:150px;object-fit:contain;border-radius:10px;
   filter:drop-shadow(0 6px 14px rgba(0,0,0,.75))}
-.newtag{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-family:var(--banner);
-  font-size:11px;letter-spacing:.2em;color:var(--projo)}
+/* Sa pastille : voir `.hint`. Quatre pixels plus haut qu'avant, pour que
+   le rembourrage ne vienne pas toucher le bord de la carte. */
+.newtag{position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-family:var(--banner);
+  font-size:11px;letter-spacing:.2em;color:var(--projo);padding:3px 10px;border-radius:999px;
+  white-space:nowrap}
 .burst{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:9}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:8}
 #flash.go{animation:fl .55s ease-out}
@@ -197,15 +283,46 @@ input:focus{outline:none;border-color:var(--projo)}
 #burstvid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;mix-blend-mode:screen;
   opacity:0;transition:opacity .4s;pointer-events:none;z-index:7}
 #burstvid.on{opacity:1}
-.prog{position:absolute;top:22px;left:0;right:0;text-align:center;font-size:11px;opacity:.45;
-  letter-spacing:.12em}
-.recap{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%;max-width:360px;margin-top:16px}
-.recap .c{border:1px solid rgba(242,238,228,.16);border-radius:7px;padding:8px 4px;text-align:center;
-  font-size:9px;line-height:1.3;opacity:.85}
-.recap .c b{display:block;font-family:var(--banner);font-size:11px;margin-bottom:2px}
+/* Centrée par ses marges et taillée au texte : sa pastille (voir `.hint`)
+   ne court pas d'un bord à l'autre. Vide avant le premier retournement, et
+   alors sans pastille du tout. */
+.prog{position:absolute;top:22px;left:0;right:0;width:max-content;margin:0 auto;
+  text-align:center;font-size:11px;letter-spacing:.12em;padding:4px 12px;border-radius:999px}
+.prog:empty{display:none}
+/* Le récapitulatif du paquet : ce qu'on vient d'ouvrir, **par son nom**. Il
+   montrait l'identifiant interne à neuf pixels — « a-fumigene », « TR57 » —
+   c'est-à-dire un mot que personne n'a vu sur une carte, écrit trop petit
+   pour être lu.
+
+   **Trois colonnes et non cinq.** À onze pixels, « ÉQUIPEMENT » ne tient pas
+   dans le cinquième d'un téléphone : il se coupait en « ÉQUIPEME / NT ». Le
+   paquet compte neuf cartes — deux Fanzzy, une pièce, cinq actions, les
+   écharpes —, ce qui faisait de toute façon deux rangées bancales de cinq et
+   de quatre. Trois rangées de trois prennent un peu plus de hauteur, et cette
+   scène en a de reste. Un nom long passe à la ligne, la case grandit. */
+.recap{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%;max-width:360px;margin-top:16px}
+.recap .c{border:1px solid rgba(242,238,228,.16);border-radius:7px;padding:7px 4px;text-align:center;
+  font-size:11px;line-height:1.3;overflow-wrap:break-word;background:rgba(6,9,13,.6)}
+.recap .c b{display:block;font-family:var(--banner);font-size:11px;letter-spacing:.04em;margin-bottom:2px}
 #app.quake{animation:quake .7s}
 @keyframes quake{0%,100%{transform:translate(0,0)}14%{transform:translate(-7px,4px)}
   38%{transform:translate(6px,-5px)}62%{transform:translate(-4px,-2px)}86%{transform:translate(3px,3px)}}
+
+/* **Moins de mouvement, la même cérémonie.** Qui a demandé moins d'animation
+   au système — ou coupé les « animations » dans le mode calme du jeu, que
+   fx.js recopie sur `<html>` — garde tout ce qui dit quelque chose : le
+   paquet, la bande qui se déchire sous le doigt, les cartes qui se
+   retournent. Il perd ce qui décore : l'entrée des textes, le halo qui
+   respire, la languette qui frétille, le tremblement, l'éclair et la gerbe.
+   Les étincelles, elles, sont retenues dans le script (`sansMouvement`). */
+@media (prefers-reduced-motion:reduce){
+  .up,.glowring,.pack .grip{animation:none}
+  #app.quake,#flash.go{animation:none}
+  #burstvid{display:none}
+}
+html[data-calme~="animations"] :is(.up,.glowring,.pack .grip){animation:none}
+html[data-calme~="animations"] :is(#app.quake,#flash.go){animation:none}
+html[data-calme~="animations"] #burstvid{display:none}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -223,24 +340,29 @@ input:focus{outline:none;border-color:var(--projo)}
 
   <!-- 1 -->
   <section class="scene on" id="s1">
-    <img class="up" src="/img/logo.avif" alt="" style="width:78px;margin-bottom:20px"
-      onerror="this.onerror=null;this.src='/img/logo.png'">
-    <h1 class="title up d1">TU N'AS PAS<br>ENCORE DE <span class="em">PLACE</span></h1>
-    <p class="sub up d1">Une tribune, ce n'est pas un compte. C'est un club, des gens autour, et des soirs qu'on n'oublie pas.</p>
-    <button class="go up d2" id="b1">PRENDRE MA PLACE</button>
+    <!-- Le texte en haut sur son panneau, le bouton en bas, la place vide
+         entre les deux : voir `#s1` dans la feuille de cette page. -->
+    <div class="pan up">
+      <img src="/img/logo.avif" alt="" style="width:78px;margin-bottom:18px"
+        onerror="this.onerror=null;this.src='/img/logo.png'">
+      <h1 class="title up d1">TU N'AS PAS<br>ENCORE DE <span class="em">PLACE</span></h1>
+      <p class="sub up d1">Une tribune, ce n'est pas un compte. C'est un club, des gens autour, et des soirs qu'on n'oublie pas.</p>
+    </div>
+    <button class="go up d2 tbf-plaque" data-ton="flare" id="b1">PRENDRE MA PLACE</button>
   </section>
 
   <!-- 2 -->
   <section class="scene" id="s2">
-    <div class="pick">
+    <div class="pick pan">
       <h1 class="title" style="font-size:24px">TON CLUB</h1>
       <p class="sub" style="margin-top:9px">Ton club ou ton équipe nationale : celui pour qui tu chanteras. Tu pourras en suivre un second tout de suite après.</p>
       <input id="q" placeholder="Cherche ton club ou ton pays…" autocomplete="off" spellcheck="false">
       <div class="res" id="res"></div>
       <button class="go tbf-plaque" data-ton="flare" id="b2" disabled>C'EST MON CLUB</button>
       <!-- Le refus, s'il y en a un. Vide et sans place tant qu'il n'y a rien à
-           dire : voir `.sub:empty` dans la feuille de cette page. -->
-      <p class="sub" id="msg2" style="margin-top:10px;color:var(--flare)"></p>
+           dire : voir `.sub:empty` dans la feuille de cette page, et `#msg2`
+           pour sa couleur. -->
+      <p class="sub" id="msg2" style="margin-top:10px"></p>
     </div>
   </section>
 
@@ -263,16 +385,19 @@ input:focus{outline:none;border-color:var(--projo)}
 
   <!-- 4 -->
   <section class="scene" id="s4">
-    <h1 class="title" style="font-size:26px">BIENVENUE<br>DANS LA <span class="em">TRIBUNE</span></h1>
-    <div class="recap" id="recap"></div>
-    <p class="sub" id="final"></p>
-    <button class="go tbf-plaque" data-ton="flare" id="b4">ENTRER</button>
-    <!-- Le seul endroit où proposer le guide ait une chance d’être lu : le
-         joueur vient d’ouvrir cinq cartes et ne sait pas encore quoi en faire.
-         Discret, sous ENTRER, et jamais un passage obligé — on ne fait pas
-         traverser un tutoriel à quelqu’un qui veut jouer. -->
-    <button class="ghost" id="b4c">Par où commencer ?</button>
-    <button class="ghost" id="b4b">Suivre un second club</button>
+    <!-- Tout sur un panneau, les deux liens compris : ce sont des mots. -->
+    <div class="pan">
+      <h1 class="title" style="font-size:26px">BIENVENUE<br>DANS LA <span class="em">TRIBUNE</span></h1>
+      <div class="recap" id="recap"></div>
+      <p class="sub" id="final"></p>
+      <button class="go tbf-plaque" data-ton="flare" id="b4">ENTRER</button>
+      <!-- Le seul endroit où proposer le guide ait une chance d’être lu : le
+           joueur vient d’ouvrir cinq cartes et ne sait pas encore quoi en faire.
+           Discret, sous ENTRER, et jamais un passage obligé — on ne fait pas
+           traverser un tutoriel à quelqu’un qui veut jouer. -->
+      <button class="ghost" id="b4c">Par où commencer ?</button>
+      <button class="ghost" id="b4b">Suivre un second club</button>
+    </div>
   </section>
 </main>
 
@@ -285,11 +410,65 @@ input:focus{outline:none;border-color:var(--projo)}
    ======================================================================= */
 
 const $ = (id) => document.getElementById(id);
-const buzz = (p) => { try { navigator.vibrate?.(p); } catch {} };
+/* **Le mode calme du tiroir vaut ici aussi.** Cette page ne charge pas le
+   menu, mais elle charge fx.js, qui lit le réglage du joueur : les vibrations
+   se taisent si elles sont coupées, et les étincelles, l'éclair et le
+   tremblement si les animations le sont — ou si le système a demandé moins de
+   mouvement. `FX` arrive en différé : sans lui, rien n'est coupé, c'est-à-dire
+   le comportement d'avant. */
+const calme = (facette) => window.FX?.calme?.(facette) === true;
+const sansMouvement = () => calme('animations')
+  || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+const buzz = (p) => {
+  if (calme('vibrations')) return;
+  try { navigator.vibrate?.(p); } catch {}
+};
 const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
   (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
-const COUL = { fanzzy:'#F5C33B', stuff:'#8257DA', action:'#E0402C', scarves:'#1E9E6A' };
 const NOM = { fanzzy:'FANZZY', stuff:'ÉQUIPEMENT', action:'CARTE D\u2019ACTION', scarves:'ÉCHARPES' };
+
+/* Le même mot, en une ligne de case : le récapitulatif range les cartes trois
+   par trois, et « CARTE D'ACTION », qu'on y tronquait à huit lettres, y
+   devenait « CARTE D' ». */
+const COURT = { fanzzy:'FANZZY', stuff:'ÉQUIPEMENT', action:'ACTION', scarves:'ÉCHARPES' };
+
+/* ------------------------------------------------ la couleur d'une carte
+
+   **La couleur d'une carte est celle de sa rareté**, comme partout dans le
+   jeu, ou la craie quand elle n'en a pas. Cette page avait sa propre table,
+   par sorte de carte : l'or pour un Fanzzy, le violet pour l'équipement, le
+   rouge pour l'action, le vert pour les écharpes. Or l'or veut dire
+   **légendaire** et le violet **épique** sur tous les autres écrans — le
+   premier paquet d'un joueur lui apprenait donc un code que la suite du jeu
+   contredit, et lui faisait prendre sa première commune pour une légendaire.
+
+   La rareté vient de la carte telle que le jeu la montre (`carteDuPaquet`,
+   dans `cartes.js`) dès que le catalogue est là ; sinon du paquet lui-même —
+   le serveur la joint aux Fanzzy — ou du catalogue d'équipement et d'actions
+   chargé au démarrage. Une poignée d'écharpes n'a de rareté que dans la
+   carte du jeu, qui la tire de sa taille : sans elle, c'est la craie. */
+const RARETE = { commune: 'var(--r-commune)', rare: 'var(--r-rare)',
+  epique: 'var(--r-epique)', legendaire: 'var(--r-legendaire)' };
+
+function rareteDe(c) {
+  if (pret && window.TBF_CARTES) {
+    try { const r = window.TBF_CARTES.carteDuPaquet(c)?.rar; if (r) return r; }
+    catch { /* carte inconnue de ce catalogue : on cherche ailleurs */ }
+  }
+  if (c.rar) return c.rar;
+  if (c.type === 'stuff') return catalogue?.stuff?.find((x) => x.id === c.id)?.rar ?? null;
+  if (c.type === 'action') return catalogue?.actions?.find((x) => x.id === c.id)?.rar ?? null;
+  return null;
+}
+const couleurDe = (c) => RARETE[rareteDe(c)] ?? 'var(--craie)';
+
+/** Le nom d'une carte du paquet, tel qu'il s'écrit sur elle — jamais son identifiant. */
+function nomDe(c) {
+  if (c.type === 'scarves') return `+${c.amount}`;
+  if (c.type === 'fanzzy') return c.nom ?? c.id;
+  const liste = c.type === 'stuff' ? catalogue?.stuff : catalogue?.actions;
+  return liste?.find((x) => x.id === c.id)?.nom ?? c.id;
+}
 
 let club = null, cartes = [], idx = 0, catalogue = null;
 /* **Le catalogue des cartes, chargé en fond dès l'arrivée.**
@@ -612,7 +791,7 @@ function faceCarte(c) {
     return `<div class="face front">${V.cardHTML(V.carteDuPaquet(c))}</div>`;
   }
 
-  const coul = COUL[c.type];
+  const coul = couleurDe(c);
   const info = {
     // Le nom vient du paquet lui-même : le serveur le joint depuis son
     // catalogue, la page n'a rien à aller chercher.
@@ -680,7 +859,7 @@ function suivante() {
     cur.classList.add('flipped');
     const c = cartes[idx];
     buzz(14);
-    etincelles(COUL[c.type], c.type === 'fanzzy' ? 26 : 16);
+    etincelles(couleurDe(c), c.type === 'fanzzy' ? 26 : 16);
     if (c.type === 'fanzzy') {
       const tag = document.createElement('div');
       tag.className = 'newtag'; tag.textContent = 'NOUVEAU';
@@ -702,6 +881,8 @@ function suivante() {
 }
 
 function etincelles(couleur, n) {
+  // Des particules qui décorent : elles se taisent sous le calme. Voir `calme`.
+  if (sansMouvement()) return;
   const s = $('s3'), r = s.getBoundingClientRect();
   for (let i = 0; i < n; i++) {
     const p = document.createElement('div');
@@ -718,6 +899,10 @@ function etincelles(couleur, n) {
 }
 
 function video() {
+  /* La gerbe ne se charge même pas quand elle ne doit pas se voir : la
+     feuille la cache, et une vidéo cachée qu'on télécharge quand même coûte
+     des données à quelqu'un qui n'en veut pas. */
+  if (sansMouvement()) return;
   const v = $('burstvid');
   if (!v.src) { v.src = 'video/gerbe.mp4'; v.load(); }
   v.currentTime = 0; v.classList.add('on');
@@ -728,8 +913,8 @@ function video() {
 
 function final() {
   scene(4);
-  $('recap').innerHTML = cartes.map((c) => `<div class="c" style="color:${COUL[c.type]}">
-    <b>${NOM[c.type].slice(0, 8)}</b>${c.type === 'scarves' ? '+' + c.amount : esc(c.id)}</div>`).join('');
+  $('recap').innerHTML = cartes.map((c) => `<div class="c" style="color:${couleurDe(c)}">
+    <b>${COURT[c.type]}</b>${esc(nomDe(c))}</div>`).join('');
   $('final').innerHTML = `Ta place est à <b>${esc(club.nom)}</b>.<br>
     Il te reste un emplacement pour suivre un second club.`;
   buzz([40, 60, 40, 60, 120]);

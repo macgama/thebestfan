@@ -12,16 +12,26 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
 body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
-#app{width:100%;max-width:var(--colonne);min-height:100dvh;display:flex;flex-direction:column;
-  background:linear-gradient(180deg,#141A21,#0A0D11 40%,#0A0D11)}
+/* **La colonne n'a plus de fond : le décor revient.**
+
+   Elle portait un dégradé opaque qui recouvrait la photo de tribune que
+   `nav.js` pose sous chaque écran — la seule page de la famille du foot à se
+   lire dans une pièce sans fenêtre. Ce qui se lit y porte désormais son
+   propre panneau : chaque compétition du sommaire, la feuille d'une
+   compétition ouverte (`.feuille`), les messages. */
+#app{width:100%;max-width:var(--colonne);min-height:100dvh;display:flex;flex-direction:column}
 
 .top{display:flex;align-items:center;gap:10px;padding:13px 15px 8px;flex:none}
-.back{background:none;border:1px solid rgba(242,238,228,.2);border-radius:6px;color:inherit;
-  width:32px;height:32px;cursor:pointer;font-size:16px;display:none}
-.back.on{display:block}
+/* Le retour au sommaire est une plaque carrée de quarante-quatre pixels,
+   comme la flèche de la barre du haut. C'était un carré tracé de trente-deux,
+   au style de cette page seule. */
+.back{width:44px;height:44px;min-height:44px;padding:0;font-size:20px;flex:none;display:none}
+.back.on{display:flex}
 .top h1{font-family:var(--banner);font-size:19px;letter-spacing:.14em;margin:0;flex:1;min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.top h1 small{display:block;font-size:9px;letter-spacing:.24em;opacity:.5;margin-top:3px;font-family:var(--ui)}
+/* Le sous-titre dit ce que la liste montre — « Suisse · saison 2026 ». Il
+   était à neuf pixels et 50 %, espacé de près d'un quart de cadratin. */
+.top h1 small{display:block;font-size:11px;letter-spacing:.1em;opacity:.88;margin-top:3px;font-family:var(--ui)}
 /* **Un lien de quinze pixels de haut se rate.** Celui-ci ouvre les matchs du
    jour depuis le kiosque : c'est la sortie la plus empruntée de la page, et
    c'était la plus petite. On lui donne les quarante-quatre pixels
@@ -48,42 +58,76 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    Le sous-titre, lui, reste : il dit ce que la liste montre, ce qu'aucune
    barre ne dira. */
 body:has(.tbf-haut) .top h1.page>span{display:none}
-body:has(.tbf-haut) .top h1.page>small{margin-top:0;font-size:10px}
+body:has(.tbf-haut) .top h1.page>small{margin-top:0;font-size:11px}
 
 .search{padding:0 15px 10px}
-input{width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.16);border-radius:7px;
+/* Le champ se pose sur la photo : le panneau opaque commun, sans quoi la
+   foule passait sous ce qu'on tape. */
+input{width:100%;background:var(--panneau);border:1px solid rgba(242,238,228,.16);border-radius:7px;
   color:var(--craie);padding:11px 13px;font-size:14.5px;font-family:inherit}
 input:focus{outline:none;border-color:var(--projo)}
-.chips{display:flex;gap:6px;overflow-x:auto;padding:0 15px 10px;scrollbar-width:none}
+/* **Les pastilles de pays sont un rail d'onglets.** Un choix exclusif — un pays,
+   ou tous, ou mes compétitions — qui avait sa propre forme de gélule, son
+   blanc pour l'actif et ses 60 % pour les autres. Le rail commun
+   (`.tbf-onglets`, au vert du foot) dit la même chose, s'enfonce comme les
+   autres onglets et tient ses quarante-quatre pixels ; il défile quand les
+   vingt-cinq pays ne tiennent pas, et chaque pays garde son nom entier.
+
+   La classe « chip » reste sur chaque onglet : les suites la lisent, et les
+   échelles de la ferveur la partagent. */
+.chips{overflow-x:auto;scrollbar-width:none;margin:0 15px 10px}
 .chips::-webkit-scrollbar{display:none}
-/* Quarante-quatre pixels : la pulpe d'un doigt, et le minimum des deux
-   plateformes. L'audit d'interface les a tous comptés d'un coup — ce n'est
-   jamais une faute de conception, c'est une hauteur qu'on ne mesure pas en
-   regardant. */
-.chip{white-space:nowrap;font-size:11px;padding:6px 14px;min-height:44px;border-radius:999px;cursor:pointer;
-  display:inline-flex;align-items:center;justify-content:center;
-  border:1px solid rgba(242,238,228,.16);background:rgba(0,0,0,.25);color:inherit;opacity:.6;font-family:inherit}
-.chip.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1;font-weight:600}
-.chip.mien{border-color:var(--projo);color:var(--projo);opacity:1}
-.chip.mien.on{background:var(--projo);color:#0B0E13}
+.chip{flex:1 0 auto;padding-left:13px;padding-right:13px}
+/* Mes compétitions se distinguent à l'or tant qu'elles ne sont pas choisies ;
+   choisies, elles prennent le vert de l'onglet actif comme les autres. */
+.chip.mien:not(.on){color:var(--projo)}
 
 .list{flex:1;padding:0 12px 26px}
+/* **La feuille d'une compétition ouverte.** Le classement, les résultats et
+   les buteurs étaient posés sur la colonne opaque ; la colonne rendue au
+   décor, ils sont posés sur un panneau — un seul pour toute la feuille, et
+   non un par ligne, parce qu'un tableau se lit d'une traite. Le sommaire, lui,
+   garde une carte par compétition. La classe est posée par « ouvrir » et
+   retirée par « sommaire ».
+
+   Des marges serrées, et c'est compté : le classement a huit colonnes, et
+   une feuille aux marges du sommaire lui prenait vingt-deux pixels — le
+   tableau débordait de l'écran sur un téléphone de 320. Ainsi, il garde la
+   largeur qu'il avait avant d'être posé sur un panneau. */
+.list.feuille{flex:none;margin:0 4px 26px;padding:6px 6px 10px;border:1px solid var(--trait);
+  border-radius:var(--r);background:var(--panneau)}
 .lg{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;cursor:pointer;
-  border:1px solid rgba(242,238,228,.09);background:rgba(0,0,0,.22);margin-bottom:6px}
+  border:1px solid var(--trait);background:var(--panneau);margin-bottom:6px}
 .lg .n{flex:1;min-width:0}
 .lg b{font-family:var(--banner);font-size:13.5px;display:block;letter-spacing:.02em}
-.lg small{font-size:10.5px;opacity:.45}
-.lg .t{font-family:var(--banner);font-size:9px;letter-spacing:.1em;border-radius:3px;padding:2px 6px;
-  border:1px solid rgba(242,238,228,.2);opacity:.55}
+.lg small{font-size:11px;opacity:.88}
+.lg .t{font-family:var(--banner);font-size:11px;letter-spacing:.08em;border-radius:3px;padding:2px 6px;
+  border:1px solid rgba(242,238,228,.2);opacity:.88}
 .lg .t.t1{border-color:var(--projo);color:var(--projo);opacity:1}
 /* « En cours » se lit d'un coup d'œil et ne se confond pas avec le palier :
    l'un dit ce qui se joue, l'autre ce qui compte. */
-.lg .enc{font-family:var(--banner);font-size:8.5px;letter-spacing:.1em;color:var(--vert);
+.lg .enc{font-family:var(--banner);font-size:11px;letter-spacing:.08em;color:var(--vert);
   border:1px solid rgba(74,222,128,.4);border-radius:3px;padding:2px 5px;flex:none}
-.lg .fav{background:none;border:0;padding:0;margin:-4px 0 -4px -2px;cursor:pointer;font-size:18px;
+/* L'étoile est un bouton-icône, et il fait quarante-quatre pixels comme tout
+   ce qui se touche. Elle en faisait dix-huit, posée dans une ligne entièrement
+   cliquable : un appui un peu à côté ouvrait la compétition au lieu de la
+   suivre. Les marges négatives rendent à la ligne la place prise, et la ligne
+   ne grandit pas ; l'étoile dessinée garde sa taille. */
+.lg .fav{background:none;border:0;padding:0;margin:-8px -10px -8px -10px;cursor:pointer;font-size:18px;
+  min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;
   line-height:1;color:rgba(242,238,228,.22);flex:none;transition:color .15s,transform .12s}
 .lg .fav.on{color:var(--projo)}
 .lg .fav:active{transform:scale(1.3)}
+/* Moins de mouvement, demandé au système ou dans le tiroir (le mode calme,
+   contrat C4 — un sélecteur d'attribut n'entre pas dans une requête @media,
+   d'où le double, règle pour règle) : l'étoile change de couleur sans
+   grossir sous le doigt, et c'est la couleur qui dit qu'on suit. */
+@media (prefers-reduced-motion:reduce){
+  .lg .fav{transition:none}
+  .lg .fav:active{transform:none}
+}
+html[data-calme~="animations"] .lg .fav{transition:none}
+html[data-calme~="animations"] .lg .fav:active{transform:none}
 
 /* ------------------------------------------------------- les journées */
 .journees{display:flex;align-items:center;gap:7px;padding:10px 4px 4px}
@@ -92,12 +136,14 @@ input:focus{outline:none;border-color:var(--projo)}
   font-family:var(--banner);letter-spacing:.06em}
 .journees select:focus{outline:none;border-color:var(--projo)}
 .journees option{background:#10151B;color:var(--craie)}
-.journees button{background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.16);border-radius:7px;
-  color:inherit;width:34px;height:36px;cursor:pointer;font-size:15px;flex:none;font-family:inherit}
-.journees button:disabled{opacity:.25;cursor:default}
+/* Les deux flèches qui encadrent le menu sont des plaques carrées de
+   quarante-quatre pixels : elles en faisaient trente-quatre sur trente-six,
+   au style de cette page seule, et c'est le geste qu'on répète vingt fois.
+   L'état éteint — première ou dernière journée — est celui de la plaque. */
+.journees .tbf-plaque{width:44px;height:44px;min-height:44px;padding:0;font-size:18px;flex:none}
 
 table{width:100%;border-collapse:collapse;font-size:12.5px}
-th{font-family:var(--banner);font-size:9.5px;letter-spacing:.13em;opacity:.42;text-align:right;
+th{font-family:var(--banner);font-size:11px;letter-spacing:.08em;opacity:.88;text-align:right;
   padding:6px 4px;font-weight:500}
 th:nth-child(2){text-align:left}
 td{padding:8px 4px;text-align:right;border-top:1px solid rgba(242,238,228,.07)}
@@ -105,7 +151,15 @@ td:nth-child(2){text-align:left}
 td.club{display:flex;align-items:center;gap:7px;min-width:0}
 td.club img{width:17px;height:17px;object-fit:contain;flex:none}
 td.club span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Le club d'un buteur, d'un supporter ou d'un KOP, sous son nom. Un « small »
+   dans une cellule de douze pixels et demi tombait à dix et demi. */
+td.club small{font-size:11px;opacity:.88}
 tr.top3 td:first-child{color:var(--vert);font-weight:700}
+/* Une tribune à prendre : un club que personne n'a encore poussé. Il reste
+   dans le plateau, sans rang, et en retrait d'un cran seulement — à 42 %
+   d'opacité on ne lisait plus le nom du club qu'on venait y chercher. */
+tr.a-prendre{opacity:.88}
+tr.a-prendre td.club span{font-style:italic}
 tr.bottom td:first-child{color:var(--flare)}
 td.pts{font-family:var(--banner);font-size:15px}
 .form{display:flex;gap:2px;justify-content:flex-end}
@@ -120,9 +174,14 @@ td.pts{font-family:var(--banner);font-size:15px}
 .m .s span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .m img{width:17px;height:17px;object-fit:contain;flex:none}
 .m .sc{font-family:var(--banner);font-size:15px;min-width:46px;text-align:center}
-.m .when{font-size:10.5px;opacity:.45;min-width:46px;text-align:center;line-height:1.3}
-.m .live{color:var(--flare);font-weight:600;font-size:10.5px}
-.round{font-family:var(--banner);font-size:9.5px;letter-spacing:.14em;opacity:.4;padding:14px 6px 2px}
+.m .when{font-size:11px;opacity:.88;min-width:46px;text-align:center;line-height:1.3}
+/* Le point rouge dit « en direct » à lui seul : quand l'horloge se tait —
+   plus de nouvelles du relevé depuis un quart d'heure —, il reste sans
+   minute plutôt qu'à côté d'un tiret. */
+.m .live{color:var(--flare);font-weight:600;font-size:11px}
+.m .live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--flare);margin-right:4px;vertical-align:1px}
+.round{font-family:var(--banner);font-size:11px;letter-spacing:.12em;opacity:.88;padding:14px 6px 2px}
 
 /* ------------------------------------------------------- la ferveur
 
@@ -137,17 +196,31 @@ td.pts{font-family:var(--banner);font-size:15px}
 .tabs.tbf-onglets::-webkit-scrollbar{display:none}
 .tabs .tbf-onglet{flex:1 0 auto;padding-left:13px;padding-right:13px}
 
-.chips.ech{padding:12px 3px 10px}
-.maplace{font-size:12px;padding:2px 6px 12px;opacity:.75;line-height:1.6}
+.chips.ech{margin:8px 0 10px}
+.maplace{font-size:12px;padding:2px 6px 12px;opacity:.9;line-height:1.6}
 .maplace b{font-family:var(--banner);font-size:14px;color:var(--projo)}
-.maplace.vide{opacity:.45}
+.maplace.vide{opacity:.88}
 
-.note{font-size:11px;opacity:.45;text-align:center;padding:14px 20px;line-height:1.6}
-.note.stale{color:var(--projo);opacity:.75}
-.empty{text-align:center;padding:44px 20px;opacity:.5;font-size:13px;line-height:1.7}
+.note{font-size:11px;opacity:.88;text-align:center;padding:14px 20px;line-height:1.6}
+.note.stale{color:var(--projo);opacity:.9}
+/* Un message — rien trouvé, service muet — porte son panneau quand il se
+   pose sur la photo, et s'en passe dans la feuille, qui en a déjà un. */
+.empty{text-align:center;padding:44px 20px;opacity:.9;font-size:13px;line-height:1.7;
+  background:var(--panneau);border:1px solid var(--trait);border-radius:var(--r)}
+.feuille .empty{background:none;border:0}
+.empty small{font-size:11px}
 .spin{width:26px;height:26px;border:3px solid rgba(242,238,228,.18);border-top-color:var(--projo);
   border-radius:50%;animation:sp 1s linear infinite;margin:44px auto}
 @keyframes sp{to{transform:rotate(1turn)}}
+/* Moins de mouvement (système, ou mode calme du tiroir) : le rail des onglets
+   saute à l'onglet choisi au lieu d'y glisser, et le tourniquet — qui dit
+   « ça charge » — ralentit sans s'arrêter, comme `.tbf-spin` de ui.css. */
+@media (prefers-reduced-motion:reduce){
+  .tabs.tbf-onglets{scroll-behavior:auto}
+  .spin{animation-duration:3s}
+}
+html[data-calme~="animations"] .tabs.tbf-onglets{scroll-behavior:auto}
+html[data-calme~="animations"] .spin{animation-duration:3s}
 
 /* **Le bas de la page, et la barre du navigateur mobile.**
 
@@ -177,15 +250,11 @@ td.pts{font-family:var(--banner);font-size:15px}
 <meta name="theme-color" content="#0A0D11">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<style>
-/* Les boutons de cette barre n'ont pas de classe : ils sont les seuls enfants
-   du rail, et lui seul les désigne. */
-</style>
 </head>
 <body>
 <main id="app">
   <div class="top">
-    <button class="back" id="back">‹</button>
+    <button class="back tbf-plaque" id="back" aria-label="Revenir à toutes les compétitions">‹</button>
     <h1 id="titre" class="page"><span id="tnom">TOUTES LES COMPÉTITIONS</span
       ><small id="tsous">ce qui se joue en ce moment</small></h1>
     <a class="jour" href="/matchs">matchs du jour ›</a>
@@ -215,6 +284,12 @@ const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
 const LANGUE = window.TBF_PAYS.locale;
 /** Le pays d'une compétition, dans la langue du lecteur. */
 const nomPays = (l) => window.TBF_PAYS.nom(l.country, l.country_code);
+/** Le pays et la saison d'une compétition, sans séparateur orphelin : sans
+    pays — l'API n'en donne pas toujours — la ligne commençait par
+    « · saison 2025 », et sans saison elle finissait par « saison undefined ».
+    Ce qui manque se tait ; s'il ne reste rien, la ligne disparaît. */
+const sousLigue = (l) => [nomPays(l), l.season ? `saison ${l.season}` : '']
+  .filter(Boolean).join(' · ');
 
 /**
  * Qui regarde — ou personne.
@@ -254,9 +329,11 @@ function panne(e) {
   const msg = e.name === 'TimeoutError' ? 'Le serveur met trop de temps à répondre.'
     : e.code === 'teletext.error.schema'
       ? 'Base de données incomplète.' : 'Service indisponible.';
+  /* « RÉESSAYER » est une action, donc une plaque : c'était une pastille de
+     filtre allumée, la forme d'un choix et non d'un geste. */
   $('list').innerHTML = `<div class="empty">${msg}<br>
-    ${e.detail ? `<small style="opacity:.6">${esc(e.detail)}</small><br>` : ''}<br>
-    <button class="chip on" id="retry">RÉESSAYER</button></div>`;
+    ${e.detail ? `<small>${esc(e.detail)}</small><br>` : ''}<br>
+    <button class="tbf-plaque" id="retry" style="display:inline-flex">RÉESSAYER</button></div>`;
   $('retry').onclick = () => (vue === 'sommaire' ? sommaire() : charger());
 }
 
@@ -296,12 +373,16 @@ async function basculer(id, bouton) {
   /* On peint d'abord, on demande ensuite. Une étoile qui attend le serveur
      pour s'allumer donne l'impression que le clic n'a pas pris — et le geste
      se répète, ce qui est exactement ce qu'on ne veut pas. */
-  bouton.classList.toggle('on', !suivi);
+  const peindre = (on) => {
+    bouton.classList.toggle('on', on);
+    bouton.setAttribute('aria-pressed', String(on));
+  };
+  peindre(!suivi);
   try {
     const r = await api(`/favoris/${id}`, { method: suivi ? 'DELETE' : 'POST' });
     favoris = new Set(r.leagues);
   } catch {
-    bouton.classList.toggle('on', suivi);   // refus du serveur : on rend la main
+    peindre(suivi);   // refus du serveur : on rend la main
   }
 }
 
@@ -311,10 +392,13 @@ async function sommaire() {
   vue = 'sommaire';
   veiller(null);
   $('back').classList.remove('on');
+  // Une carte par compétition : la liste elle-même n'est plus une feuille.
+  $('list').classList.remove('feuille');
   $('titre').className = 'page';
   $('tnom').textContent = 'TOUTES LES COMPÉTITIONS';
   $('tsous').textContent = (terme || paysFiltre || filtreFavoris)
     ? 'résultat de la recherche' : 'ce qui se joue en ce moment';
+  $('tsous').hidden = false;   // une compétition sans pays ni saison l'a peut-être caché
   /* **Le champ de recherche survit au rafraîchissement.**
 
      On réécrivait `#head` à chaque passage, ce qui détruisait l'`input` — or
@@ -330,11 +414,17 @@ async function sommaire() {
      attaché au même endroit : une seule fois, donc une seule fermeture
      retardée, là où le réattacher à chaque tour en laissait une autre armée
      derrière. Et on ne récrit pas la valeur : celle que le joueur tape est la
-     bonne, pas celle qu'on a lue avant lui. */
+     bonne, pas celle qu'on a lue avant lui.
+
+     Le rail des pays naît caché, et ne paraît qu'une fois ses onglets
+     écrits. Il est posé avant que `/countries` réponde, et le rail commun
+     porte son propre fond : vide, il faisait une barre noire sous le champ
+     pendant le chargement — et pour de bon si le service tombait. Une rangée
+     sans donnée disparaît. */
   if (!$('q')) {
     $('head').innerHTML = `
       <div class="search"><input id="q" placeholder="Chercher une compétition ou un pays…" value="${esc(terme)}"></div>
-      <div class="chips" id="pays"></div>`;
+      <div class="chips tbf-onglets" data-ton="vert" id="pays" hidden></div>`;
     $('q').oninput = debounce(() => { terme = $('q').value.trim(); sommaire(); }, 320);
   }
   $('list').innerHTML = '<div class="spin"></div>';
@@ -361,23 +451,36 @@ async function sommaire() {
   } catch (e) { return panne(e); }
 
   const mien = connu
-    ? `<button class="chip mien ${filtreFavoris ? 'on' : ''}" data-mien="1">★ MES COMPÉTITIONS</button>`
+    ? `<button class="chip tbf-onglet mien ${filtreFavoris ? 'on' : ''}" data-mien="1">★ MES COMPÉTITIONS</button>`
     : '';
   $('pays').innerHTML = mien
-    + `<button class="chip ${paysFiltre ? '' : 'on'}" data-p="">TOUT</button>`
+    + `<button class="chip tbf-onglet ${paysFiltre ? '' : 'on'}" data-p="">TOUT</button>`
     + countries.slice(0, 24).map((c) =>
-      `<button class="chip ${paysFiltre === c.country ? 'on' : ''}" data-p="${esc(c.country)}"
+      `<button class="chip tbf-onglet ${paysFiltre === c.country ? 'on' : ''}" data-p="${esc(c.country)}"
         >${esc(window.TBF_PAYS.nom(c.country, c.code))}</button>`).join('');
+  // Il a désormais au moins « TOUT » : le rail peut paraître.
+  $('pays').hidden = false;
 
-  $('list').innerHTML = leagues.length ? leagues.map((l) => `
+  /* Le palier ne s'écrit que s'il existe : une compétition ni majeure ni
+     suivie portait une étiquette tracée **vide**, un cadre qui annonçait une
+     donnée absente. */
+  const palier = { 1: 'MAJEURE', 2: 'SUIVIE' };
+  /* L'étoile est un interrupteur : son nom reste le même et `aria-pressed`
+     dit si la compétition est suivie — la couleur seule ne le disait qu'à
+     qui la voit. Le nom de la compétition est dans le libellé : une liste de
+     trente « Suivre cette compétition » ne dit pas laquelle. */
+  $('list').innerHTML = leagues.length ? leagues.map((l) => {
+    const suivie = Boolean(connu && favoris?.has(l.league_id));
+    const sous = sousLigue(l);
+    return `
     <div class="lg" data-l="${l.league_id}">
-      ${connu ? `<button class="fav ${favoris.has(l.league_id) ? 'on' : ''}" data-fav="${l.league_id}"
-        aria-label="Suivre cette compétition">★</button>` : ''}
-      <div class="n"><b>${esc(l.name)}</b><small>${esc(nomPays(l))} · saison ${l.season}</small></div>
+      ${connu ? `<button class="fav ${suivie ? 'on' : ''}" data-fav="${l.league_id}"
+        aria-pressed="${suivie}" aria-label="Suivre ${esc(l.name)}">★</button>` : ''}
+      <div class="n"><b>${esc(l.name)}</b>${sous ? `<small>${esc(sous)}</small>` : ''}</div>
       ${l.en_cours ? '<span class="enc">EN COURS</span>' : ''}
-      <span class="t ${l.tier === 1 ? 't1' : ''}">${
-        l.tier === 1 ? 'MAJEURE' : l.tier === 2 ? 'SUIVIE' : ''}</span>
-    </div>`).join('')
+      ${palier[l.tier] ? `<span class="t ${l.tier === 1 ? 't1' : ''}">${palier[l.tier]}</span>` : ''}
+    </div>`;
+  }).join('')
     : '<div class="empty">Aucune compétition trouvée.</div>';
 
   // `#pays` voit son contenu réécrit à chaque tour, mais c'est le même nœud :
@@ -410,8 +513,11 @@ async function ouvrir(id) {
      le temps d'un aller-retour au serveur. */
   SAISON = null; FERVEUR = null; echelle = 'joueurs';
   $('back').classList.add('on');
+  // La feuille : un seul panneau sous le tableau, la colonne étant rendue au décor.
+  $('list').classList.add('feuille');
   $('titre').className = '';
-  $('head').innerHTML = `<div class="tabs tbf-onglets" id="tabs">
+  // Le rail au vert du foot, le ton de cet écran sur l'accueil.
+  $('head').innerHTML = `<div class="tabs tbf-onglets" data-ton="vert" id="tabs">
     <button data-t="classement" class="tbf-onglet on">CLASSEMENT</button>
     <button data-t="resultats" class="tbf-onglet">RÉSULTATS</button>
     <button data-t="scorers" class="tbf-onglet">BUTEURS</button>
@@ -452,7 +558,8 @@ async function charger() {
   if (quelle !== ligue || vue !== 'ligue') return;   // on a changé d'avis pendant l'attente
 
   $('tnom').textContent = d.league.name;
-  $('tsous').textContent = `${nomPays(d.league)} · saison ${d.league.season}`;
+  $('tsous').textContent = sousLigue(d.league);
+  $('tsous').hidden = !$('tsous').textContent;
   /* La saison que le télétexte a retenue sur les dates de la compétition. Le
      classement la reprend telle quelle plutôt que de la recalculer : une
      seule règle, un seul endroit. */
@@ -503,9 +610,11 @@ function rendreClassement(d) {
  * qu'une liste qui ne l'est pas.
  */
 const MOT_JOURNEE = { fr: 'Journée', en: 'Matchday', de: 'Spieltag', es: 'Jornada' };
+/* Sans nom de journée, une chaîne vide — jamais un tiret, qui se lit comme un
+   nom illisible — et l'intitulé qui la porterait ne s'écrit pas. */
 function titreJournee(round) {
   const m = /^Regular Season\s*-\s*(\d+)$/i.exec(round ?? '');
-  return m ? `${MOT_JOURNEE[LANGUE] ?? MOT_JOURNEE.fr} ${m[1]}` : (round || '—');
+  return m ? `${MOT_JOURNEE[LANGUE] ?? MOT_JOURNEE.fr} ${m[1]}` : (round ?? '');
 }
 
 /**
@@ -524,7 +633,7 @@ function ligneMatch(m, luA) {
   const joue = m.home.goals !== null && m.home.goals !== undefined;
   const d2 = new Date(m.date);
   const quand = m.live
-    ? `<span class="live" data-live="${m.id}">${esc(minuteDe(m, luA) ?? '—')}</span>`
+    ? `<span class="live" data-live="${m.id}">${esc(minuteDe(m, luA) ?? '')}</span>`
     : d2.toLocaleDateString(LANGUE, { day:'numeric', month:'short' }) + '<br>' +
       d2.toLocaleTimeString(LANGUE, { hour:'2-digit', minute:'2-digit' });
   return `<div class="m" data-m="${m.id}">
@@ -556,16 +665,17 @@ function rendreResultats(d) {
 
   const menu = js.length > 1 ? `
     <div class="journees">
-      <button id="jprec" ${rang <= 0 ? 'disabled' : ''} aria-label="Journée précédente">‹</button>
+      <button class="tbf-plaque" id="jprec" ${rang <= 0 ? 'disabled' : ''} aria-label="Journée précédente">‹</button>
       <select id="jsel" aria-label="Choisir une journée">${js.map((j) =>
         `<option value="${esc(j.round)}"${j.round === d.journee ? ' selected' : ''}
           >${esc(titreJournee(j.round))}</option>`).join('')}</select>
-      <button id="jsuiv" ${rang < 0 || rang >= js.length - 1 ? 'disabled' : ''}
+      <button class="tbf-plaque" id="jsuiv" ${rang < 0 || rang >= js.length - 1 ? 'disabled' : ''}
         aria-label="Journée suivante">›</button>
     </div>` : '';
 
+  const intitule = js.length > 1 ? '' : titreJournee(d.journee);
   const corps = d.matchs.length
-    ? (js.length > 1 ? '' : `<div class="round">${esc(titreJournee(d.journee))}</div>`)
+    ? (intitule ? `<div class="round">${esc(intitule)}</div>` : '')
       + d.matchs.map((m) => ligneMatch(m, d.luA)).join('')
     : '<div class="empty">Aucun match sur cette journée.</div>';
 
@@ -614,7 +724,7 @@ setInterval(() => {
   for (const m of RES.matchs) {
     if (!m.live) continue;
     const n = document.querySelector(`[data-live="${m.id}"]`);
-    if (n) n.textContent = minuteDe(m, RES.luA) ?? '—';
+    if (n) n.textContent = minuteDe(m, RES.luA) ?? '';
   }
 }, 10_000);
 
@@ -646,7 +756,7 @@ function rendreJoueurs(d) {
       <tr class="${i < 3 ? 'top3' : ''}">
         <td>${i + 1}</td>
         <td class="club"><img src="${esc(p.teamLogo)}" alt="">
-          <span>${esc(p.name)}<br><small style="opacity:.45">${esc(p.team ?? '')}</small></span></td>
+          <span>${esc(p.name)}${p.team ? `<br><small>${esc(p.team)}</small>` : ''}</span></td>
         <td>${p.played}</td>
         <td class="pts">${col[1](p)}</td>
       </tr>`).join('')}</tbody></table>`;
@@ -691,8 +801,9 @@ function rendreFerveur() {
   const d = FERVEUR;
   if (!d) return;
 
-  const chips = `<div class="chips ech">${ECHELLES.map(([cle, titre]) =>
-    `<button class="chip ${echelle === cle ? 'on' : ''}" data-e="${cle}">${titre}</button>`
+  // Les trois échelles : un rail d'onglets au vert de l'écran, comme les pays.
+  const chips = `<div class="chips ech tbf-onglets" data-ton="vert">${ECHELLES.map(([cle, titre]) =>
+    `<button class="chip tbf-onglet ${echelle === cle ? 'on' : ''}" data-e="${cle}">${titre}</button>`
   ).join('')}</div>`;
 
   /* La ligne du lecteur, au-dessus de la liste. Un classement de cinquante n'a
@@ -762,8 +873,8 @@ function tableFerveur(liste) {
       <tbody>${liste.map((p, i) => `
         <tr class="${i < 3 ? 'top3' : ''}">
           <td>${i + 1}</td>
-          <td class="club"><span>${esc(p.pseudo)}<br>
-            <small style="opacity:.45">${esc(p.club ?? '')}</small></span></td>
+          <td class="club"><span>${esc(p.pseudo)}${p.club ? `<br>
+            <small>${esc(p.club)}</small>` : ''}</span></td>
           <td>${p.seances}</td>
           <td class="pts">${p.ferveur}</td>
         </tr>`).join('')}</tbody></table>`;
@@ -777,14 +888,15 @@ function tableFerveur(liste) {
        disait s'il était mal classé ou absent du jeu.
 
        Les clubs à zéro sont donc là, en retrait — c'est une tribune à prendre,
-       pas une ligne vide. Et les duels sont comptés à part de la ferveur : ils
-       ne demandent ni le même temps ni le même geste que le virage. */
+       pas une ligne vide. Ils n'ont pas de rang, et leur case reste vide : un
+       tiret à sa place se lisait comme un rang illisible. Et les duels sont
+       comptés à part de la ferveur : ils ne demandent ni le même temps ni le
+       même geste que le virage. */
     return `<table>
       <thead><tr><th>#</th><th>CLUB</th><th>SUPP.</th><th>DUELS</th><th>MOYENNE</th></tr></thead>
       <tbody>${liste.map((t, i) => `
-        <tr class="${i < 3 && t.moyenne > 0 ? 'top3' : ''}"${
-            t.ferveur > 0 ? '' : ' style="opacity:.42"'}>
-          <td>${t.ferveur > 0 ? i + 1 : '–'}</td>
+        <tr class="${i < 3 && t.moyenne > 0 ? 'top3' : ''}${t.ferveur > 0 ? '' : ' a-prendre'}">
+          <td>${t.ferveur > 0 ? i + 1 : ''}</td>
           <td class="club"><img src="${esc(t.logo)}" alt=""><span>${esc(t.name)}</span></td>
           <td>${t.supporters}</td>
           <td>${t.duels ?? 0}</td>
@@ -796,8 +908,8 @@ function tableFerveur(liste) {
     <tbody>${liste.map((k, i) => `
       <tr class="${i < 3 ? 'top3' : ''}">
         <td>${i + 1}</td>
-        <td class="club"><img src="${esc(k.logo)}" alt=""><span>${esc(k.nom)}<br>
-          <small style="opacity:.45">${esc(k.club ?? '')}</small></span></td>
+        <td class="club"><img src="${esc(k.logo)}" alt=""><span>${esc(k.nom)}${k.club ? `<br>
+          <small>${esc(k.club)}</small>` : ''}</span></td>
         <td>${k.membres}</td>
         <td class="pts">${k.moyenne}</td>
       </tr>`).join('')}</tbody></table>`;

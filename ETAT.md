@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « la revue des vingt-quatre écrans », 28 septembre
-2026.
+Dernière mise à jour : session « le socle FAIT MAIN » (lot 0 de la refonte),
+1er octobre 2026.
 
 ## Par où entrer, selon ce qu'on cherche
 
@@ -104,6 +104,18 @@ Le projet suit une méthode constante, à conserver :
   CSS écrit en gabarit de chaîne, que chaque page charge la barre commune,
   qu'aucun catalogue n'est réécrit en dur, et qu'aucun module serveur n'a
   atterri dans `public/` — tout ce dossier est téléchargeable.
+
+  Depuis le lot 0 de la refonte FAIT MAIN, il tient aussi **les garde-fous du
+  socle**, lus dans chaque `.html`, `.js` et `.css` de `public/` débarrassé de
+  ses commentaires (lignes conservées, numéros justes) : aucun
+  `backdrop-filter` ; aucun émoji 🔒 ✓ ✔ ✅, écritures détournées comprises
+  (`&#10003;`, `\2713`, `\u2713`…) — les icônes sont `.tbf-ico-cadenas`,
+  `.tbf-ico-coche`, `.tbf-ico-lien` ; aucun `.calc(` ; un `data-ton` sur chaque
+  rail `.tbf-onglets`, gabarits compris, et un rail posé par `classList` est
+  refusé. Un cinquième contrôle vérifie que le code sans ses commentaires compile
+  comme l'original : sinon, c'est le lecteur de commentaires qu'il faut
+  reprendre, pas la page. Le workflow de déploiement lance ce script et **refuse
+  de mettre en ligne** s'il échoue.
 - **`node scripts/verif-cablage.mjs` avant chaque livraison serveur.** Il monte
   les modules sur un faux pool, sans base ni réseau, et vérifie qu'aucune
   dépendance construite trop tard dans `server.js` n'est restée à `null`. Ce
@@ -182,6 +194,20 @@ le relevé du direct l'écrit avec `NOW(3)`. Deux colonnes de la même table ne
 suivent pas le même fuseau ; semer autrement, c'est éprouver une donnée qui
 n'existe pas.
 
+La deuxième fois, le 1er octobre 2026 : `abo:smoke` sème ses parties et ses
+présences « du jour » avec `new Date()` à travers le pool en `timezone: 'Z'`,
+donc à l'heure UTC, alors que le serveur les écrit avec `NOW(3)` et les compte
+avec `>= CURDATE()` — deux fonctions qui suivent le fuseau de MySQL, `SYSTEM`,
+c'est-à-dire Europe/Zurich. Entre minuit et deux heures en été (une heure en
+hiver), les lignes de la suite datent d'hier pour la base, et trois contrôles de
+quota rougissent : « les duels classés du jour épuisent le quota », « les Virages
+comptés du jour épuisent le quota », « un Virage hors classement ne compte pas
+contre le quota ». Le serveur n'y est pour rien — il écrit et compte dans le même
+fuseau. **La suite n'est pas encore corrigée** : un rouge de ces trois-là entre
+minuit et deux heures se relance après deux heures avant de se lire. Le 1er
+octobre, relancée seule, elle rougissait encore à une heure et demie et passait
+au vert à deux heures pile, 77 contrôles : c'est bien l'heure.
+
 **Une mutation doit être fidèle, ou elle ment.** Remettre `new Date(polled_at)`
 sans remettre `polled_at` dans le SELECT a laissé la suite verte : la colonne
 valait `undefined`, le repli prenait la main, et la régression passait pour
@@ -190,8 +216,17 @@ rien — ni dans un sens ni dans l'autre.
 
 **Mesurer une boîte n'est pas mesurer un texte.** Le nom d'un chant courait sous
 son coût ; la réservation par `padding-right` a corrigé le défaut, mais le
-rectangle du `<b>`, qui inclut le remplissage, se chevauchait toujours. Il faut
-retrancher le `padding-right` calculé pour savoir où le texte s'arrête vraiment.
+rectangle du `<b>`, qui inclut le remplissage, se chevauchait toujours. Il
+fallait retrancher le `padding-right` calculé pour savoir où le texte s'arrêtait.
+
+Depuis le lot 0, la réservation n'est plus un `padding-right` sur toutes les
+lignes mais un flottant d'une ligne de haut (`.card b::before`) : le geste est
+passé à onze pixels, et la rangée ne pouvait pas grandir sans le prendre à la
+corde. La boîte du `<b>` va donc jusqu'au bord de la carte, et l'ancienne
+soustraction signalait les cinq cartes. `virage-ui-smoke.mjs` lit maintenant
+**les lignes du texte** (un `Range` sur le nom) : seules celles dont le milieu
+est en face du coût doivent s'arrêter avant lui, et un nom dont aucune ligne ne
+se mesure est signalé — sinon la mesure deviendrait aveugle sans le dire.
 
 **`getClientRects().length` dit si un texte est passé à la ligne, pas sa
 hauteur en pixels.** Un seuil en pixels dépend de la police et rougit sur une
@@ -290,6 +325,13 @@ jsdom — `deck-ui-smoke.mjs` — injectent les modules à la main dans
 injection donne un `TypeError: Cannot read properties of undefined`, et il
 tombe au premier rendu, donc loin du vrai coupable. La liste est à tenir :
 `fanzzy-art.js`, `action-art.js`, `stuff-art.js`.
+
+**Elle ne l'est plus.** `deck.html` charge aussi `mods.js`, que la suite
+n'injecte pas : sans `window.TBF_MODS`, la ligne « Effet · … » ne s'écrit pas, et
+`deck:ui` rougit sur « l'effet combiné est affiché ». Ce rouge était là avant le
+lot 0 et y est resté ; c'est la suite qu'il faut corriger, pas la page. Ici, pas
+de `TypeError` : un module absent peut aussi faire taire une ligne sans rien
+lever.
 
 **`clearTimeout` laisse un identifiant vrai derrière lui.** Rappelée ici parce
 qu'elle a été refaite une quatrième fois, dans la fenêtre du capo au Virage. La
@@ -1027,10 +1069,64 @@ avant tout :
 
 | Commande | Ce qu'elle garantit |
 |---|---|
-| `npm run pages` | les pages compilent ; la barre est là ; chaque dessin déclaré a ses trois formats ; aucun identifiant n'est écrit deux fois dans une page |
+| `npm run pages` | les pages compilent ; la barre est là ; chaque dessin déclaré a ses trois formats ; aucun identifiant n'est écrit deux fois dans une page ; **les garde-fous du socle FAIT MAIN** — aucun `backdrop-filter`, aucun émoji cadenas ou coche, aucun `.calc(`, un `data-ton` sur chaque rail d'onglets (voir § 2) |
 | `npm run cablage` | les modules sont branchés entre eux, **et le serveur n'importe aucun paquet de développement** |
 | `npm run promesses` | chaque adresse appelée par une page est servie ; chaque page a une route |
 | `npm run pages:navigateur` | les vingt-quatre écrans s'ouvrent sans lever, serveur muet compris, et chacun porte sa flèche de retour |
+
+**L'audit d'interface**, `npm run audit:ui`, est à part : il demande une base et
+Chrome, et il **ne rougit jamais** — il mesure, il ne juge pas. Il monte le vrai
+`server.js` sur la base de test, prend le verrou des suites (jamais en même temps
+que l'une d'elles) et visite chaque écran dans un contexte de navigateur neuf —
+cookies, stockage et cache — et avec sa propre adresse : les vingt-trois routes
+de page, `/fanzzy/RP1` pour la fiche, la vitrine sans compte, et `/bienvenue` vu
+par un nouveau venu. Trois formats : 360 × 640, 400 × 800, 768 × 1024. Compter
+six minutes.
+
+Depuis le lot 0 de la refonte FAIT MAIN, il porte les seuils du socle :
+
+| Relevé | Seuil |
+|---|---|
+| petit texte, à sa taille **rendue** (`scale` compris) | 11 px |
+| opacité effective — les `opacity` de l'élément et de ses ancêtres, multipliées par l'alpha de sa couleur | 0,85 ; 0,55 pour une mention légale (`.legal`, `[data-legal]`, et rien d'autre) |
+| `backdrop-filter`, pseudo-éléments compris | aucun |
+| contraste au jour (`--jour`) : le contraste recalculé sous un voile blanc de 40 % | 4,5:1 ; 3:1 en grand texte |
+
+Et, comme avant : débordement, élément hors cadre, texte coupé, cible sous 44 px,
+image sans `alt` ou cassée, bloc sous le décor, erreur de script — plus les refus
+429 pendant la visite, parce qu'une mesure prise sous un refus n'en est pas une.
+
+```bash
+node scripts/audit-ui.mjs --jour --json avant.json --captures avant/   # la référence
+node scripts/audit-ui.mjs --largeur 360          # un seul format
+MSYS_NO_PATHCONV=1 node scripts/audit-ui.mjs /virage   # une page, sous Git Bash
+```
+
+Sous Git Bash, `/virage` arrive à Node réécrit en chemin Windows : d'où
+`MSYS_NO_PATHCONV=1`, ou PowerShell.
+
+Relevé du 1er octobre 2026, sur les vingt-trois écrans du lot : **zéro** texte
+sous 11 px, zéro sous 0,85, zéro flou, zéro cible sous 44 px, zéro texte coupé,
+aux trois formats. **73 textes perdent encore leur contraste au soleil** à
+360 × 640 : `/profil` 34, `/aide` 20, la vitrine 6, trois au plus ailleurs. Le
+dernier passage, après la reprise des constats de relecture, redonne ces
+chiffres relevé par relevé.
+
+Ce qu'il ne mesure pas, et qui se regarde sur les captures : un texte posé sur un
+dégradé (compté « sur dégradé », y compris les panneaux teintés en
+`linear-gradient(…), var(--panneau)`, qui sont pourtant opaques) ; un texte
+assombri par `filter: brightness()` — seuls `opacity` et `filter: opacity()`
+entrent dans l'opacité effective ; un texte posé à même la photo, dont le fond
+retombe sur la couleur de la page ; la hauteur des jauges.
+
+L'onglet actif d'un rail est dans le premier cas, et il a donc été mesuré à part
+(`HISTORIQUE.md`, 4 quadragies). Pour les tons à encre claire — flare, vert,
+bleu, violet —, `ui.css` fonce sa face, une règle par ton : de 8,3 à 10,6:1 à
+l'intérieur, de 3,2 à 3,5 au soleil, où 4,5 est hors d'atteinte pour une face qui
+garde sa couleur. **Un ton nouveau à encre claire doit avoir sa règle**, sinon
+son onglet actif retombe vers 2:1 au soleil sans que l'audit le dise. Les plaques
+de ces quatre tons n'ont pas reçu le même traitement : entre 3,3 et 4,5:1 à
+l'intérieur, vers 2 au soleil — une décision de palette, en attente de Gaël.
 
 ### Le catalogue
 
@@ -1649,6 +1745,104 @@ soixante minutes et peut tirer une carte que sa page ne connaît pas.
 L'ouverture de booster le dit désormais au lieu de planter (« Carte inconnue de
 cette version »), mais la vraie correction reste à faire : un numéro de version
 dans l'URL du catalogue, pour casser le cache à chaque déploiement.
+
+**Une déclaration CSS invalide ne lève rien : elle manque.** `0 .calc(4 * var(--u))`
+n'est pas une petite longueur, c'est une valeur invalide, et le navigateur jette
+la déclaration entière sans un mot en console — l'ombre, l'écart ou l'arrondi
+disparaît, et la carte s'affiche presque comme prévu. `cartes.css` en a porté
+cinq d'un coup, `fanzzy.html` un sixième. `npm run pages` refuse désormais tout
+`.calc(` ; les autres fautes de valeur ne sont gardées par rien.
+
+**Une déclaration sans sélecteur mange la règle d'après.** En retirant un bloc,
+`amis.html` avait gardé sa dernière ligne, un `box-shadow:…}` orphelin. Le
+navigateur l'a lue comme le début d'un sélecteur courant jusqu'à l'accolade
+suivante, et a jeté avec elle la règle de la pastille des demandes : la pastille
+n'a jamais été peinte, l'onglet affichait « DEMANDES1 ». Aucun contrôle ne voit
+cette forme. Après avoir retiré une règle, relire la ligne d'avant et la ligne
+d'après.
+
+**Un nom de brique commune peut déjà appartenir à une épreuve.** L'éclat d'un
+compteur qui vient de changer s'appelle `.tbf-compte` (contrat de `FX.compter`).
+C'était le nom de l'épreuve du compte, dont les règles de mise en page auraient
+saisi chaque solde le temps de son éclat. Les épreuves portent le préfixe
+`tbf-ep-` — `tbf-ep-compte`, `tbf-ep-jauge`, `tbf-ep-note` —, et **aucune règle
+de mise en page ne doit revenir sur `.tbf-compte`** tout court. Avant de donner un
+nom à une brique, le chercher dans tout `public/`.
+
+**Dans une arène, pas d'`innerHTML` sur un conteneur rendu à chaque vue.**
+`render` et `renderActes()` au Virage, `rendreDuel()` au duel passent jusqu'à dix
+fois par seconde. Réécrire un conteneur à ce rythme recrée ses nœuds : une
+animation n'y dépasse jamais sa première image, un doigt posé sur une carte
+relâche sur sa remplaçante, un dessin absent se redemande au réseau à chaque vue.
+Passer par `accorder()` — la même dans les deux pages : créer une fois, retrouver
+par clé, modifier en place — et n'écrire un texte que s'il a changé (`ecrire`,
+`poser`).
+
+**Chaque bloc `prefers-reduced-motion` a son double sous
+`html[data-calme~="animations"]`.** Un sélecteur d'attribut n'entre pas dans une
+requête `@media` : la préférence du système et le mode calme du tiroir s'écrivent
+donc deux fois, règle pour règle, dans `ui.css`, dans les feuilles de `fx.js` et
+dans les pages. Une animation coupée par l'un et oubliée par l'autre, c'est un
+joueur qui a demandé le calme et voit encore son personnage sauter. Les sons et
+les vibrations **qui ne passent pas par `fx.js`** lisent eux-mêmes
+`data-calme` — `cartes.js`, `geste.js`, `niveau-fete.js`, `bienvenue.html`,
+`virage.html` — et un nouveau `navigator.vibrate` ou un nouveau contexte audio
+doit en faire autant. La lecture de la clé `tbf-calme`, enfin, existe en deux
+copies, dans `fx.js` et `menu.js`, qui doivent rester identiques.
+
+**Éteindre par un filtre assombrit aussi le texte, et l'audit ne le voit pas.**
+Un état hors service s'éteint désormais par `filter: grayscale() brightness()`
+plutôt que par l'opacité : il garde sa forme et son libellé. Mais un
+`brightness(.62)` posé sur une ligne entière assombrit sa craie comme une opacité
+de 62 %, et l'audit ne compte que `opacity` et `filter: opacity()`. Au Virage,
+`.match.off` ne garde qu'un gris sur la ligne et n'éteint que ses blasons — son
+« TERMINÉ » retombait sous le seuil —, et `.acte.hs` épargne le compte à rebours,
+qui dit quand la carte revient. D'autres états l'appliquent encore à tout
+l'élément, libellé compris : `.card.dim` au Virage (`brightness(.55)`), le nom et
+le coût d'un `.acte.hs`, `.tbf-dial-bt[disabled]` (`.6`) ; aucune mesure ne dit
+s'ils se lisent.
+
+**Un mot éteint par une police de zéro pixel est un texte illisible.** Pour
+montrer une forme courte d'un libellé et garder la longue aux lecteurs d'écran —
+« TOI » et « TA TRIBUNE » au Virage —, les deux s'écrivent dans le balisage, et la
+longue quitte l'écran sans quitter le document : `position:absolute`, une boîte
+d'un pixel, `overflow:hidden`, `clip-path:inset(50%)`. `tour:ui` reconnaît ce
+motif-là, et lui seul, comme masqué plutôt que coupé ; une police à zéro, l'audit
+la relève comme un texte de zéro pixel.
+
+**Relever un plancher de taille déplace ce qu'aucune règle ne nomme.**
+« CLASSEMENT » tient à onze pixels dans une tuile parce que la tuile n'a ni marge
+latérale ni espacement, et le rail de l'accueil ne descend plus sous
+soixante-quatre pixels pour lui laisser de l'air : toucher l'une de ces valeurs,
+c'est remesurer le rail — `ui.css` et `index.html` le disent chacun. Dans les
+arènes, chaque pixel gagné par un texte est pris à la corde, seule partie
+élastique de l'écran : la main du Virage est montée à 138 pixels avant d'être
+ramenée à 115. Mesurer à 360 × 640, pas à 800 de haut.
+
+Sur une carte, le plancher de onze pixels fait passer le nom sur deux lignes, et
+l'étiquette d'état ou de tenue (`.tbf-etiq`), calée sur une ligne de nom, s'est
+posée sur la seconde. `ui.css` la remonte d'une ligne (`--lignes-nom`) sur une
+carte de 140 pixels ou moins, par une requête `@container` sur `.fz` : c'est un
+pis-aller, parce qu'une largeur ne dit pas combien de lignes prend un nom. Un nom
+de trois lignes sous 100 pixels, ou de deux lignes entre 141 et 182, est encore
+recouvert. La correction juste est dans `cartes.js` : poser l'étiquette dans le
+bandeau du nom, `.top`, dont la hauteur suit le vrai nombre de lignes, puis
+retirer la variable et la requête.
+
+**Un constat aiguillé sur un libellé libre se perd sans un bruit.** Le lot 0 de
+la refonte a été fait par plusieurs sessions en parallèle, chacune sur ses
+fichiers, puis relu périmètre par périmètre, et un script remettait chaque
+constat au correcteur du périmètre que la relecture nommait. Deux relecteurs ont
+écrit ce nom suivi de la liste de ses fichiers entre parenthèses ; le script
+cherchait le nom exact, ne l'a pas trouvé, et n'a rien remis ni rien signalé.
+Leurs constats, dont une régression du lot, sont restés sans correcteur jusqu'à
+la fin du lot, et les vérifications sont restées vertes : une vérification
+éprouve ce qui a été corrigé, pas ce qui ne l'a pas été. Pour tout travail partagé ainsi :
+**aiguiller sur une clé fermée** — le nom du périmètre pris dans la liste qui a
+servi à le distribuer, ou le chemin d'un fichier —, jamais sur le texte qu'écrit
+un relecteur ; et **compter à la sortie** : autant de constats remis qu'il en
+est entré, et un constat que rien ne reconnaît arrête l'aiguillage au lieu de
+tomber.
 
 ---
 

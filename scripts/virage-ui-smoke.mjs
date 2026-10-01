@@ -238,13 +238,35 @@ if (process.env.SHOT) {
       genants,
       /* La *boîte* du nom va jusqu'au bord de la carte, réservation comprise :
          ce qu'on mesure, c'est là où le texte s'arrête vraiment. Comparer les
-         rectangles bruts déclarerait une collision même après correction. */
+         rectangles bruts déclarerait une collision même après correction.
+
+         La réservation n'est plus un `padding-right` sur toutes les lignes
+         mais un flottant d'une ligne de haut (lot 0 : le geste a pris trois
+         pixels, et dans l'arène le budget de hauteur passe d'abord). La boîte
+         n'a donc plus de marge intérieure à retrancher, et sa droite est le
+         bord de la carte : l'ancienne soustraction signalait les cinq cartes.
+         On prend désormais les lignes du texte elles-mêmes (un Range sur le
+         nom), et seules celles qui sont en face du coût — leur milieu tombe
+         dans la hauteur de `.c` — doivent s'arrêter avant lui. Les suivantes
+         passent dessous et ont droit à toute la largeur. Le milieu, et pas le
+         simple croisement : la boîte de texte d'une ligne déborde son
+         interligne serré, et la deuxième effleure le bas du coût sans que
+         ses lettres le touchent. Un nom dont on ne mesure aucune ligne est
+         signalé aussi : sinon la mesure deviendrait aveugle sans le dire. */
       cartesCollees: [...document.querySelectorAll('.card')]
         .filter((el) => {
           const b = el.querySelector('b'), c = el.querySelector('.c');
-          const droiteDuTexte = b.getBoundingClientRect().right
-            - parseFloat(getComputedStyle(b).paddingRight);
-          return droiteDuTexte > c.getBoundingClientRect().left + 0.5;
+          const cb = c.getBoundingClientRect();
+          const rg = document.createRange();
+          rg.selectNodeContents(b);
+          const lignes = [...rg.getClientRects()].filter((x) => x.width > 0);
+          if (!lignes.length) return true;
+          const enFace = lignes.filter((x) => {
+            const milieu = (x.top + x.bottom) / 2;
+            return milieu >= cb.top && milieu <= cb.bottom;
+          });
+          return enFace.length > 0
+            && Math.max(...enFace.map((x) => x.right)) > cb.left + 0.5;
         })
         .map((el) => el.querySelector('b').textContent.trim()),
       /* Une hauteur en pixels dépendrait de la police ; le nombre de boîtes de

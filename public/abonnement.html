@@ -59,33 +59,53 @@ body{background:radial-gradient(120% 55% at 50% -8%,rgba(245,195,59,.15),transpa
    exactement ce qu'on veut. */
 main{width:100%;max-width:var(--colonne);position:relative;z-index:1}
 
-.chapeau{text-align:center;margin:8px 0 22px}
+/* **Rien ne se pose à même la photo de tribune.** Le chapeau, le tableau et le
+   mot de la fin étaient écrits directement sur le décor, et les blocs qui
+   avaient un fond le tenaient d'un voile à 4 ou 7 % : au soleil, la tribune
+   passait à travers le texte. Chaque bloc a maintenant son panneau
+   (`--panneau`, opaque), et les voiles de couleur se posent **dessus**.
+
+   Et tout ce qui renseigne se lit : onze pixels au moins, 88 % au moins. La
+   hiérarchie tient par la taille, la police et la couleur — une précision à
+   45 % sur un panneau sombre, c'est une précision qu'on ne lit pas. */
+.chapeau{text-align:center;margin:8px 0 22px;padding:14px 16px 15px;border-radius:14px;
+  background:var(--panneau);border:1px solid rgba(242,238,228,.1)}
 .chapeau h1{font-family:var(--banner);font-size:clamp(22px,6.2vw,30px);letter-spacing:.1em;
   margin:0 0 6px}
-.chapeau p{margin:0;font-size:12.5px;opacity:.55;line-height:1.55}
+.chapeau p{margin:0;font-size:12.5px;opacity:.88;line-height:1.55}
 
 /* L'état, quand on est déjà abonné. Une plaque et pas un bandeau : c'est une
    réponse à une question qu'on est venu poser, pas une alerte. */
 .etat{display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:13px;
-  background:rgba(94,223,166,.1);border:1px solid rgba(94,223,166,.3);margin-bottom:20px}
+  background:linear-gradient(rgba(94,223,166,.1),rgba(94,223,166,.1)),var(--panneau);
+  border:1px solid rgba(94,223,166,.3);margin-bottom:20px}
 .etat b{font-family:var(--banner);font-size:15px;letter-spacing:.06em}
-.etat span{font-size:11.5px;opacity:.6;display:block;margin-top:2px}
+.etat span{font-size:11.5px;opacity:.88;display:block;margin-top:2px}
 
 /* **Ce qui reste libre** — le bloc le plus haut et le plus lisible de l'écran.
    Il porte la promesse du jeu, et il doit tenir sans qu'on fasse défiler. */
 .libre{padding:15px 16px;border-radius:14px;margin-bottom:22px;
-  background:linear-gradient(168deg,rgba(255,255,255,.07),rgba(0,0,0,.3));
+  background:linear-gradient(168deg,rgba(255,255,255,.07),rgba(0,0,0,.3)),var(--panneau);
   border:1px solid rgba(242,238,228,.14)}
-.libre h2{font-family:var(--banner);font-size:13px;letter-spacing:.14em;margin:0 0 10px;
-  text-transform:uppercase;opacity:.75}
+/* Les deux titres de rubrique sont cousus (`.tbf-cousu`, dans ui.css) : craie
+   pleine et fil pointillé. Ils étaient à 75 %, la seule chose de l'écran
+   qu'on avait éteinte exprès. Il ne reste ici que leur place. */
+.libre h2{margin:0 0 10px}
 .libre ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
 .libre li{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.4}
-.libre li::before{content:"✓";color:var(--vert,#5FDFA6);font-weight:700;flex:none}
-.libre p{margin:11px 0 0;font-size:11.5px;opacity:.5;line-height:1.5}
+/* **La coche est l'icône commune** (`.tbf-ico-coche`, ui.css), et non plus le
+   caractère « ✓ » : un caractère se dessine avec la police du téléphone — en
+   couleur chez l'un, au trait chez l'autre, jamais à la taille du texte — et
+   jurait avec les icônes au trait du jeu. Celle-ci prend la couleur qu'on lui
+   donne. Décorative : chaque ligne se lit sans elle. */
+.libre li .tbf-ico{flex:none;margin-top:.2em;color:var(--vert)}
+.libre p{margin:11px 0 0;font-size:11.5px;opacity:.88;line-height:1.5}
 
-.ouvre h2{font-family:var(--banner);font-size:13px;letter-spacing:.14em;margin:0 0 10px;
-  text-transform:uppercase;opacity:.75}
-.ouvre ul{margin:0 0 20px;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.ouvre h2{margin:0 0 10px}
+/* Le tableau sur son panneau. Il est dans une boîte et non peint lui-même :
+   un tableau à bordures fusionnées ignore ses coins arrondis. */
+.tableau{margin:0 0 18px;border-radius:12px;overflow:hidden;background:var(--panneau);
+  border:1px solid rgba(242,238,228,.1)}
 
 /* **Le tableau comparatif.**
 
@@ -96,19 +116,21 @@ main{width:100%;max-width:var(--colonne);position:relative;z-index:1}
    Les intitulés sont des `<th scope="row">` : un lecteur d'écran annonce
    alors « Boosters en réserve, avec : 24 » au lieu de lire vingt-quatre tout
    seul au milieu de nulle part. */
-.compare{width:100%;border-collapse:collapse;margin:0 0 18px;font-size:13px}
-.compare thead th{font-family:var(--banner);font-size:9.5px;letter-spacing:.16em;
-  text-transform:uppercase;opacity:.5;padding:0 10px 8px;text-align:center;font-weight:400}
-.compare thead th.avec{color:var(--projo);opacity:.95}
+.compare{width:100%;border-collapse:collapse;margin:0;font-size:13px}
+.compare thead th{font-family:var(--banner);font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;opacity:.88;padding:10px 10px 8px;text-align:center;font-weight:400}
+.compare thead th.avec{color:var(--projo);opacity:1}
 .compare tbody tr{border-top:1px solid rgba(242,238,228,.1)}
-.compare tbody th{text-align:left;font-weight:400;padding:11px 10px 11px 0;
+.compare tbody th{text-align:left;font-weight:400;padding:11px 10px 11px 12px;
   vertical-align:top;min-width:0}
 .compare tbody th b{display:block;font-family:var(--banner);font-size:12.5px;
   letter-spacing:.03em;line-height:1.25}
-.compare tbody th small{display:block;font-size:10.5px;opacity:.45;margin-top:3px;
+.compare tbody th small{display:block;font-size:11px;opacity:.88;margin-top:3px;
   line-height:1.4}
+/* La colonne « sans » reste en craie, un cran sous la colonne payante : elle
+   ne doit pas devenir illisible, sinon il n'y a plus rien à comparer. */
 .compare tbody td{padding:11px 10px;text-align:center;vertical-align:middle;
-  white-space:nowrap;opacity:.65}
+  white-space:nowrap;opacity:.88}
 /* La colonne payante : fond, couleur, et un poids de plus. Elle doit se
    détacher sans que l'autre devienne illisible. */
 .compare tbody td.avec{opacity:1;color:var(--projo);font-family:var(--banner);
@@ -130,7 +152,8 @@ main{width:100%;max-width:var(--colonne);position:relative;z-index:1}
   .compare tbody th small{display:none}
   .compare{font-size:12px}
   .compare tbody td{padding:11px 6px}
-  .compare thead th{padding:0 6px 8px}
+  .compare tbody th{padding-left:10px}
+  .compare thead th{padding:10px 6px 8px}
 }
 
 /* Le mot sous les deux boutons : ce qu'on gagne tout de suite, et ce qui se
@@ -151,11 +174,12 @@ main{width:100%;max-width:var(--colonne);position:relative;z-index:1}
    écrit. */
 .prendre{display:flex;flex-direction:column;gap:11px;margin-top:4px}
 .formule{display:flex;flex-direction:column;gap:9px;padding:14px 15px 15px;
-  border-radius:14px;background:rgba(255,255,255,.04);
+  border-radius:14px;background:var(--panneau);
   border:1px solid rgba(242,238,228,.13)}
 /* Celle qu'on recommande porte la couleur, et **une seule** : deux accents
    ne recommandent rien du tout. */
-.formule.mise{background:rgba(245,195,59,.07);border-color:rgba(245,195,59,.34)}
+.formule.mise{background:linear-gradient(rgba(245,195,59,.07),rgba(245,195,59,.07)),var(--panneau);
+  border-color:rgba(245,195,59,.34)}
 .formule .tete{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
 .formule .tete b{font-family:var(--banner);font-size:15px;letter-spacing:.07em}
 .formule .tete .prix{margin-left:auto;font-family:var(--banner);font-size:17px;
@@ -163,27 +187,25 @@ main{width:100%;max-width:var(--colonne);position:relative;z-index:1}
 /* Le prix ramené au mois, sous le prix affiché. En craie et non en or : c'est
    une aide à la lecture, pas une seconde offre. */
 .formule .tete .prix em{display:block;font-style:normal;font-family:var(--ui);
-  font-size:10.5px;letter-spacing:.02em;color:var(--craie);opacity:.55;
+  font-size:11px;letter-spacing:.02em;color:var(--craie);opacity:.88;
   margin-top:2px}
 /* Le ruban « deux mois offerts » : il vient du catalogue, comme le prix. */
-.formule .marque{font-family:var(--banner);font-size:9px;letter-spacing:.14em;
+.formule .marque{font-family:var(--banner);font-size:11px;letter-spacing:.12em;
   text-transform:uppercase;padding:3px 8px;border-radius:20px;
   background:rgba(245,195,59,.16);color:var(--projo)}
 .formule .offert{display:flex;align-items:center;gap:9px;font-size:12.5px;
   line-height:1.45}
 .formule .offert b{font-family:var(--banner);color:var(--projo);font-size:14px;
   letter-spacing:.04em;flex:none}
-.formule .offert span{opacity:.72}
-.fin-mot{margin:14px 2px 0;font-size:11px;line-height:1.55;opacity:.55;text-align:center}
+.formule .offert span{opacity:.88}
+/* Ce qui se passe si l'on arrête : c'est une condition de l'offre, pas une
+   note de bas de page, et elle se lit comme le reste. */
+.fin-mot{margin:14px 0 0;padding:10px 13px;border-radius:10px;background:var(--panneau);
+  font-size:11.5px;line-height:1.55;text-align:center}
 
-.ouvre li{display:flex;gap:11px;align-items:flex-start;padding:11px 13px;border-radius:11px;
-  background:rgba(255,255,255,.045);border:1px solid rgba(242,238,228,.11);
-  font-size:13px;line-height:1.4}
-.ouvre li b{font-family:var(--banner);color:var(--projo);font-size:15px;flex:none;
-  min-width:44px;text-align:right}
-.ouvre li span{opacity:.72}
-.ouvre li small{display:block;opacity:.5;font-size:11px;margin-top:2px}
-.vide{opacity:.5;font-size:13px;text-align:center;padding:26px 0}
+.vide{font-size:13px;text-align:center;padding:26px 16px;border-radius:14px;
+  background:var(--panneau)}
+.vide a{color:var(--projo)}
 
 /* **Le bas de la page, et la barre du navigateur mobile.**
 
@@ -270,11 +292,18 @@ const jour = (d) => new Date(d).toLocaleDateString('fr', {
  * lignes plus haut — la faute la plus discrète qui soit, parce qu'on relit le
  * garde et qu'on le trouve correct.
  *
- * `nb` ne rend donc rien quand il n'y a rien, et le tiret reprend sa place.
+ * `nb` ne rend donc rien quand il n'y a rien.
+ *
+ * **Et une ligne à qui il manque une valeur disparaît** — c'est la règle de
+ * tout le jeu : une ligne sans donnée se retire, elle ne s'écrit jamais avec
+ * un tiret. Le tiret reprenait la place d'« undefined », et disait « rien »
+ * là où la vérité est « le serveur ne l'a pas dit ». Sur un tableau qu'on lit
+ * pour comparer, une case vide d'un côté ne compare rien : la ligne entière
+ * part, au dernier moment, ici.
  */
 function portes(o, sans) {
-  /* `?? undefined` et non `?? '—'` : le tiret est une décision d'affichage,
-     et il se prend dans le tableau, en un seul endroit. */
+  /* `?? undefined` et non `?? '—'` : ce qui manque doit rester reconnaissable
+     comme manquant, pour que la ligne puisse partir au lieu de s'écrire. */
   const nb = (v, suffixe = '', prefixe = '') =>
     (v === undefined || v === null ? undefined : `${prefixe}${v}${suffixe}`);
   return [
@@ -320,7 +349,7 @@ function portes(o, sans) {
       sous: 'le 2v2 et au-dessus se jouent à tout le monde, en entraînement',
       sans: nb(sans.tailleClassee, `v${sans.tailleClassee}`),
       avec: 'tous les formats' }] : []),
-  ];
+  ].filter((p) => p.sans != null && p.avec != null);
 }
 
 (async () => {
@@ -346,14 +375,17 @@ function portes(o, sans) {
   const o = d.ouvre ?? {};
   const sans = d.sans ?? {};
 
-  const libre = (d.libre ?? []).map((x) => `<li>${esc(x)}</li>`).join('');
+  const libre = (d.libre ?? []).map((x) => `<li><i class="tbf-ico tbf-ico-coche"
+    aria-hidden="true"></i><span>${esc(x)}</span></li>`).join('');
 
+  /* La formule et l'échéance, **ce qu'on en sait**. Une formule absente
+     laissait la ligne commencer par « · jusqu'au… » : le séparateur d'une
+     valeur qui n'est pas là. On ne garde que les morceaux présents. */
   const etat = d.abonne
     ? `<div class="etat"><div>
          <b>TU ES ABONNÉ</b>
-         <span>${esc(d.formule ?? '')}${d.fin
-           ? ` · jusqu’au ${jour(d.fin)}`
-           : ' · sans terme'}</span>
+         <span>${esc([d.formule, d.fin ? `jusqu’au ${jour(d.fin)}` : 'sans terme']
+           .filter(Boolean).join(' · '))}</span>
        </div></div>`
     : '';
 
@@ -364,7 +396,7 @@ function portes(o, sans) {
   $('corps').innerHTML = `
     ${etat}
     <div class="libre">
-      <h2>Ce que tu gardes sans payer</h2>
+      <h2 class="tbf-cousu">Ce que tu gardes sans payer</h2>
       <ul>${libre}</ul>
       <!-- Cette phrase est le cœur de la page, et elle passe avant le prix.
            Quelqu'un qui arrive ici se demande d'abord ce qu'on lui retire
@@ -377,7 +409,7 @@ function portes(o, sans) {
     </div>
 
     <div class="ouvre">
-      <h2>Ce que l’abonnement élargit</h2>
+      <h2 class="tbf-cousu">Ce que l’abonnement élargit</h2>
       <!-- « Ouvre » laissait entendre qu'il y a des portes fermées. Il n'y en
            a pas — c'est toute la promesse du bloc au-dessus. Ce que
            l'abonnement fait, c'est élargir ce qui est déjà là. -->
@@ -391,16 +423,17 @@ function portes(o, sans) {
            Les deux colonnes viennent du serveur — « ouvre » et « sans » — et
            non d'un barème recopié ici. La page l'avait déjà fait une fois et
            annonçait « au lieu de 10 » quand le réglage en disait douze. -->
-      <table class="compare">
+      <div class="tableau"><table class="compare">
         <thead><tr><th></th><th>Sans</th><th class="avec">Avec</th></tr></thead>
+        <!-- Chaque ligne qui arrive ici a ses deux valeurs : « portes » retire
+             celles à qui il en manque une. Il n'y a donc plus de repli à
+             écrire dans les cellules — ni tiret, ni « undefined ». -->
         <tbody>${portes(o, sans).map((p) => `<tr>
           <th scope="row"><b>${esc(p.n)}</b><small>${esc(p.sous)}</small></th>
-          <td>${esc(p.sans ?? '—')}</td>
-          <!-- « p.quoi » n’existe sur aucune ligne : ce repli-là ne repliait
-               sur rien. Le tiret, comme la colonne d’en face. -->
-          <td class="avec">${esc(p.avec ?? '—')}</td>
+          <td>${esc(p.sans)}</td>
+          <td class="avec">${esc(p.avec)}</td>
         </tr>`).join('')}</tbody>
-      </table>
+      </table></div>
     </div>
 
     ${d.abonne ? '' : `<div class="prendre">

@@ -16,7 +16,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 .top{padding:14px 16px 4px}
 .top h1{font-family:var(--banner);font-size:20px;letter-spacing:.14em;margin:0}
-.top h1 small{display:block;font-size:9px;letter-spacing:.28em;opacity:.45;margin-top:4px;font-family:var(--ui)}
+/* Onze pixels et 0,88 : c'est la seule ligne qui dit ce que la liste montre
+   — « 42 MATCHS · 3 EN DIRECT » —, et elle était à neuf pixels et 45 %. */
+.top h1 small{display:block;font-size:11px;letter-spacing:.16em;opacity:.88;margin-top:4px;font-family:var(--ui)}
 
 /* **« LES MATCHS » était écrit deux fois**, l'un sous l'autre et dans la même
    police : une fois par la barre du haut, une fois ici. Même règle qu'au
@@ -28,38 +30,49 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    Le sous-titre reste : il dit quelle compétition la liste montre, ce
    qu'aucune barre ne dira. */
 body:has(.tbf-haut) .top h1>span{display:none}
-body:has(.tbf-haut) .top h1>small{margin-top:0;font-size:10px}
-.jours{display:flex;gap:6px;overflow-x:auto;padding:12px 16px;scrollbar-width:none}
+body:has(.tbf-haut) .top h1>small{margin-top:0;font-size:11px}
+
+/* **Les jours et les filtres sont des rails d'onglets.**
+
+   Deux rangées de boutons maison, chacune avec son dépoli, son blanc pour
+   l'actif et son 55 % pour les autres — le flou recalculé à chaque image, et
+   des étiquettes illisibles au soleil. Ce sont deux choix exclusifs : le rail
+   commun (`.tbf-onglets`, au vert du foot, le ton de cet écran sur l'accueil)
+   dit exactement ça, s'enfonce comme les autres et tient ses quarante-quatre
+   pixels. Il ne reste ici que ce qui est propre à ces deux rangées.
+
+   Les jours sont sept et ne tiennent pas sur un téléphone : le rail défile,
+   et chaque jour garde son mot entier (`flex:1 0 auto`) plutôt que de se
+   couper en « AUJOURD'… ». La date passe sous le mot, dans la police du
+   système — sans opacité à elle, qui se multiplierait avec celle de
+   l'onglet éteint. */
+.jours{overflow-x:auto;scrollbar-width:none;margin:12px 16px}
 .jours::-webkit-scrollbar{display:none}
-.jour{white-space:nowrap;border:1px solid rgba(242,238,228,.15);background:var(--panneau);backdrop-filter:blur(10px);
-  border-radius:8px;color:inherit;padding:8px 13px;cursor:pointer;font-family:var(--banner);
-  font-size:12px;letter-spacing:.05em;opacity:.55;line-height:1.3;text-align:center}
-.jour small{display:block;font-family:var(--ui);font-size:9px;letter-spacing:.1em;opacity:.6}
-.jour.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
-.filtres{display:flex;gap:6px;padding:0 16px 10px}
-/* Quarante-quatre pixels : la pulpe d'un doigt, et le minimum des deux
-   plateformes. L'audit d'interface les a tous comptés d'un coup — ce n'est
-   jamais une faute de conception, c'est une hauteur qu'on ne mesure pas en
-   regardant. */
-.filtres button{flex:1;background:var(--panneau);backdrop-filter:blur(10px);border:1px solid rgba(242,238,228,.13);
-  border-radius:7px;color:inherit;padding:8px;min-height:44px;font-family:var(--banner);font-size:11px;
-  letter-spacing:.06em;cursor:pointer;opacity:.55}
-.filtres button.on{background:var(--craie);color:#0B0E13;opacity:1}
-.filtres .direct.on{background:var(--flare);color:#fff;border-color:var(--flare)}
+.jour{flex:1 0 auto;padding:6px 13px;line-height:18px}
+.jour small{display:block;font-family:var(--ui);font-size:11px;letter-spacing:.04em;line-height:15px}
+.filtres{margin:0 16px 10px}
 
 .rech{padding:0 16px 10px}
-input{width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.16);border-radius:8px;
+/* Le champ se pose sur la photo : le panneau opaque commun, sans quoi la
+   foule passait sous ce qu'on tape. */
+input{width:100%;background:var(--panneau);border:1px solid rgba(242,238,228,.16);border-radius:8px;
   color:inherit;padding:11px 13px;font-size:14.5px;font-family:inherit}
 input:focus{outline:none;border-color:var(--projo)}
 
 .liste{flex:1;padding:0 12px 24px}
-.ligue{margin-top:14px}
+/* **Chaque compétition est un panneau.** Les en-têtes et les matchs étaient
+   posés à même la photo de tribune : un nom d'équipe en blanc sur une foule
+   éclairée aux projecteurs ne se lit qu'une fois sur deux. */
+.ligue{margin-top:14px;padding:4px 4px 6px;border:1px solid var(--trait);border-radius:12px;
+  background:var(--panneau)}
 /* L’en-tête est un lien vers la page de la compétition. Il en a l’air : un
    chevron à droite, et il s’enfonce à l’appui — sans quoi personne ne
-   devine qu’on peut le toucher. */
+   devine qu’on peut le toucher. Le nom est à pleine encre : c'est lui qu'on
+   cherche en faisant défiler, et le pays qui le suit ne s'efface plus que
+   d'un cran — deux opacités imbriquées le posaient à 27 %. */
 .ligue .t{display:flex;align-items:center;gap:8px;padding:6px 6px 8px;font-family:var(--banner);
-  font-size:11.5px;letter-spacing:.13em;opacity:.55}
-.ligue .t .pays{opacity:.5;font-size:10px;letter-spacing:.06em;font-family:var(--ui)}
+  font-size:11.5px;letter-spacing:.13em}
+.ligue .t .pays{opacity:.88;font-size:11px;letter-spacing:.06em;font-family:var(--ui)}
 .ligue .t .sep{flex:1;height:1px;background:rgba(242,238,228,.1)}
 .ligue .t{text-decoration:none;color:inherit;cursor:pointer}
 .ligue .t:active{transform:translateY(1px)}
@@ -71,59 +84,93 @@ input:focus{outline:none;border-color:var(--projo)}
 .m:active{background:rgba(255,255,255,.04)}
 .m.mien{border-color:rgba(245,195,59,.28);background:rgba(245,195,59,.05)}
 .m .h{width:52px;text-align:center;flex:none}
-.m .h .heure{font-family:var(--banner);font-size:13px;opacity:.6}
+.m .h .heure{font-family:var(--banner);font-size:13px;opacity:.9}
 .m .h .live{font-family:var(--banner);font-size:13px;color:var(--flare)}
 .m .h .live::after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;
   background:var(--flare);margin-left:4px;vertical-align:middle;animation:bl 1.2s infinite}
 @keyframes bl{0%,100%{opacity:1}50%{opacity:.2}}
-.m .h .fin{font-size:10px;opacity:.4;letter-spacing:.1em}
+/* En Oswald : « TERMINÉ » à onze pixels ne tient dans les cinquante-deux
+   pixels de la colonne que dans la condensée du jeu. */
+.m .h .fin{font-family:var(--banner);font-size:11px;opacity:.88;letter-spacing:.06em}
 .m .eq{flex:1;min-width:0}
 .m .r{display:flex;align-items:center;gap:7px;padding:1.5px 0}
 .m .r img{width:18px;height:18px;object-fit:contain;flex:none}
 .m .r span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
 .m .r b{font-family:var(--banner);font-size:15px;min-width:16px;text-align:right}
-.m .r.perd span,.m .r.perd b{opacity:.45}
+/* Le perdant se dit par la couleur — le gris froid de la palette contre la
+   craie chaude du vainqueur —, plus par une opacité de 45 % qui rendait son
+   nom et son score illisibles au soleil. */
+.m .r.perd span,.m .r.perd b{color:var(--gris)}
 
-.vide{text-align:center;padding:50px 24px;opacity:.5;font-size:13px;line-height:1.8}
+.vide{text-align:center;padding:50px 24px;opacity:.9;font-size:13px;line-height:1.8}
+/* Hors de toute compétition, le message se pose sur la photo : il prend son
+   panneau. Dans la fiche, il est déjà sur le fond opaque de celle-ci. */
+.liste>.vide{background:var(--panneau);border:1px solid var(--trait);border-radius:12px;margin-top:14px}
 .spin{width:24px;height:24px;border:3px solid rgba(242,238,228,.18);border-top-color:var(--projo);
   border-radius:50%;animation:sp 1s linear infinite;margin:60px auto}
 @keyframes sp{to{transform:rotate(1turn)}}
-.maj{text-align:center;font-size:10.5px;opacity:.35;padding:14px}
+/* Moins de mouvement, demandé au système ou dans le tiroir (le mode calme,
+   contrat C4 — un sélecteur d'attribut n'entre pas dans une requête @media,
+   d'où le double, règle pour règle). Le point du direct cesse de clignoter
+   et reste allumé : c'est lui qui dit « en cours », pas son clignement. Le
+   tourniquet dit « ça charge » : il ralentit sans s'arrêter, comme
+   `.tbf-spin` de ui.css. */
+@media (prefers-reduced-motion:reduce){
+  .m .h .live::after{animation:none}
+  .spin{animation-duration:3s}
+}
+html[data-calme~="animations"] .m .h .live::after{animation:none}
+html[data-calme~="animations"] .spin{animation-duration:3s}
+/* L'heure de la dernière mise à jour : c'est elle qu'on lit pour savoir si
+   l'on peut se fier au score. Onze pixels, 0,88, et une pastille de panneau
+   plutôt que la foule dessous. */
+.maj{display:table;margin:0 auto 14px;text-align:center;font-size:11px;opacity:.88;padding:6px 12px;
+  border-radius:999px;background:var(--panneau)}
+.maj:empty{display:none}
 
-#fiche{position:fixed;inset:0;z-index:80;background:rgba(4,6,10,.96);backdrop-filter:blur(6px);
+/* **Le fond de la fiche est plein.** Il était à 96 %, sous un flou d'arrière-
+   plan qui brouillait ce qu'il laissait passer. Le flou retiré — il se
+   recalculait à chaque image, sur tout l'écran, et coûtait cher sur un
+   téléphone modeste —, ces 4 % laissaient voir la liste en net, en fantôme
+   sous le fil du match : des noms d'équipes sous d'autres noms d'équipes. La
+   fiche est un écran à part entière ; elle se peint comme tel. */
+#fiche{position:fixed;inset:0;z-index:80;background:#04060A;
   display:none;justify-content:center;overflow-y:auto}
 #fiche.on{display:flex}
 .f{width:100%;max-width:480px;padding:16px}
-.f .fermer{background:none;border:1px solid rgba(242,238,228,.2);border-radius:6px;color:inherit;
-  width:32px;height:32px;cursor:pointer;font-size:16px}
+/* La flèche qui referme la fiche : une plaque carrée de quarante-quatre
+   pixels, comme la flèche de retour de la barre du haut. Elle faisait
+   trente-deux pixels, dans un coin qu'on vise du pouce. */
+.f .fermer{width:44px;height:44px;min-height:44px;padding:0;font-size:20px}
 .f .aff{text-align:center;padding:18px 0 10px}
-.f .aff .lg{font-size:10.5px;letter-spacing:.16em;opacity:.45;font-family:var(--banner)}
+.f .aff .lg{font-size:11px;letter-spacing:.14em;opacity:.88;font-family:var(--banner)}
 .f .aff .sc{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:14px}
 .f .aff .sc img{width:46px;height:46px;object-fit:contain}
 .f .aff .sc .n{font-family:var(--banner);font-size:38px;letter-spacing:.02em}
-.f .aff .nom{display:flex;justify-content:space-between;margin-top:10px;font-size:12.5px;opacity:.75}
+.f .aff .nom{display:flex;justify-content:space-between;margin-top:10px;font-size:12.5px;opacity:.9}
 .f .etat{text-align:center;font-family:var(--banner);font-size:13px;letter-spacing:.1em;
   margin-top:6px;color:var(--flare)}
-.f .etat.calme{color:inherit;opacity:.5}
+.f .etat.calme{color:inherit;opacity:.88}
 /* Les deux portes du jeu, depuis un match : la tribune et le duel. Elles
    manquaient — on regardait un match en direct sans qu’aucun chemin ne mène
-   à l’écran fait pour le vivre. */
+   à l’écran fait pour le vivre.
+
+   Ce sont des plaques rouges (`.tbf-plaque`, jouer = flare) : elles avaient
+   leur propre relief, leur propre enfoncement et leur propre extinction, qui
+   ne réagissaient pas comme le reste du jeu. Il ne reste ici que leur mise en
+   page — côte à côte, le mot sur sa phrase. */
 .f .allers{display:flex;gap:9px;margin:16px 0 4px}
-.f .aller{flex:1;border-radius:12px;padding:11px 10px 10px;text-align:center;
-  text-decoration:none;color:inherit;font-family:var(--banner);font-size:13px;
-  letter-spacing:.07em;background:rgba(16,22,31,.95);
-  box-shadow:0 4px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(242,238,228,.12);
-  transition:transform .1s,box-shadow .1s}
-.f .aller:active{transform:translateY(4px);box-shadow:none}
-.f .aller small{display:block;font-family:var(--ui);font-size:9.5px;letter-spacing:.04em;
-  opacity:.6;margin-top:4px}
+.f .aller{flex:1;flex-direction:column;gap:3px;padding:11px 10px 10px;font-size:13px}
+.f .aller small{display:block;font-family:var(--ui);font-size:11px;letter-spacing:.02em;
+  text-transform:none;font-weight:400}
 /* Éteint plutôt qu’absent : un bouton qui disparaît laisse croire qu’on a mal
-   vu, un bouton éteint qui dit « pendant le match seulement » se comprend. */
-.f .aller.eteint{opacity:.4;pointer-events:none}
+   vu, un bouton éteint qui dit « pendant le match seulement » se comprend.
+   L'extinction est celle de la plaque, portée par « aria-disabled » — voir
+   ui.css ; la classe « eteint » reste pour qui la lit. */
 /* L’invitation posée sur les deux portes quand personne n’est connecté.
    Le lien vit dans le `corps` de la boîte de dialogue, qui est fait pour
    ça — voir `dialogue.js`. */
-.tbf-dial .deja{margin-top:13px;font-size:12px;opacity:.7}
+.tbf-dial .deja{margin-top:13px;font-size:12px;opacity:.88}
 .tbf-dial .deja a{color:var(--projo);font-weight:600}
 
 /* Le nom de la compétition mène à sa page, ici aussi. */
@@ -140,9 +187,10 @@ input:focus{outline:none;border-color:var(--projo)}
    des événements — posé en travers d'une ligne, sans plus rien d'un coin. Vu
    du joueur, une image égarée par-dessus le match.
 
-   #fiche porte un backdrop-filter, ce qui en fait le bloc de référence des
-   descendants fixes : « fixed » se règle donc sur le panneau lui-même, qui
-   couvre l'écran. Le personnage reste dans son coin, le fil passe dessous. */
+   #fiche portait un backdrop-filter, ce qui en faisait le bloc de référence
+   des descendants fixes. Il n'en porte plus : « fixed » se règle donc sur
+   l'écran, que #fiche couvre de toute façon en entier (« inset:0 ») — le
+   coin est le même. Le personnage reste dans son coin, le fil passe dessous. */
 #fwatch{position:fixed;left:6px;bottom:calc(var(--nav-h,62px) + 6px);
   width:96px;height:150px;z-index:3;pointer-events:none}
 /* Sur un écran étroit, cent pixels de personnage au-dessus d'une liste pleine
@@ -150,16 +198,16 @@ input:focus{outline:none;border-color:var(--projo)}
 @media (max-width:430px){#fwatch{width:74px;height:116px}}
 #fwatch[hidden]{display:none}
 
-.f .infos{display:flex;gap:8px;margin-top:16px;font-size:11px;opacity:.55;justify-content:center;
+.f .infos{display:flex;gap:8px;margin-top:16px;font-size:11px;opacity:.88;justify-content:center;
   flex-wrap:wrap}
 .f .infos span{border:1px solid rgba(242,238,228,.12);border-radius:999px;padding:4px 10px}
-.f h4{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.4;margin:22px 0 8px}
+.f h4{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.88;margin:22px 0 8px}
 .ev{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid rgba(242,238,228,.07);
   font-size:12.5px}
-.ev .min{font-family:var(--banner);font-size:13px;width:34px;opacity:.6;flex:none}
+.ev .min{font-family:var(--banner);font-size:13px;width:34px;opacity:.88;flex:none}
 .ev .ic{width:20px;text-align:center;flex:none}
 .ev .txt{flex:1;min-width:0}
-.ev .txt small{display:block;opacity:.45;font-size:10.5px}
+.ev .txt small{display:block;opacity:.88;font-size:11px}
 .ev.droite{flex-direction:row-reverse;text-align:right}
 .ev.droite .txt{text-align:right}
 
@@ -167,8 +215,13 @@ input:focus{outline:none;border-color:var(--projo)}
 .st{padding:9px 4px}
 .st .l{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
 .st .l b{font-family:var(--banner);font-size:13.5px}
-.st .l span{opacity:.5;font-size:10.5px;letter-spacing:.1em;align-self:center}
-.st .b{display:flex;height:5px;border-radius:3px;overflow:hidden;background:rgba(242,238,228,.09)}
+.st .l span{opacity:.88;font-size:11px;letter-spacing:.08em;align-self:center}
+/* La barre partagée : la part de chaque équipe (possession, tirs…). Ce n'est
+   pas une progression, mais c'est elle qu'on lit d'un regard avant les
+   chiffres ; à cinq pixels, au soleil, les deux couleurs se confondaient en un
+   trait. Dix pixels, comme toute jauge du jeu : la fiche défile, la place ne
+   manque pas. */
+.st .b{display:flex;height:10px;border-radius:5px;overflow:hidden;background:rgba(242,238,228,.09)}
 .st .b i{display:block;height:100%}
 .st .b i:first-child{background:var(--projo)}
 .st .b i:last-child{background:var(--bleu)}
@@ -179,19 +232,17 @@ input:focus{outline:none;border-color:var(--projo)}
 .compo .eq{font-family:var(--banner);font-size:12px;letter-spacing:.06em;padding-bottom:7px;
   border-bottom:1px solid rgba(242,238,228,.1);margin-bottom:7px;display:flex;
   justify-content:space-between;align-items:baseline;gap:6px}
-.compo .eq small{font-size:10px;opacity:.5;font-family:var(--ui);letter-spacing:.04em}
+.compo .eq small{font-size:11px;opacity:.88;font-family:var(--ui);letter-spacing:.04em}
 .compo .j{display:flex;gap:7px;padding:4px 0;font-size:12px;align-items:baseline}
-.compo .j .n{width:19px;text-align:right;opacity:.4;font-family:var(--banner);font-size:11px;flex:none}
+.compo .j .n{width:19px;text-align:right;opacity:.88;font-family:var(--banner);font-size:11px;flex:none}
 .compo .j .p{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.compo .j .po{font-size:9.5px;opacity:.35;flex:none}
-.compo .banc{margin-top:10px;font-size:10px;letter-spacing:.14em;opacity:.4;
+.compo .j .po{font-size:11px;opacity:.88;flex:none}
+.compo .banc{margin-top:10px;font-size:11px;letter-spacing:.12em;opacity:.88;
   font-family:var(--banner)}
-.compo .coach{margin-top:9px;font-size:11px;opacity:.5;font-style:italic}
-.souspage{display:flex;gap:5px;padding:14px 0 4px}
-.souspage button{flex:1;background:var(--panneau);backdrop-filter:blur(10px);border:1px solid rgba(242,238,228,.13);
-  border-radius:7px;color:inherit;padding:8px 4px;font-family:var(--banner);font-size:10.5px;
-  letter-spacing:.07em;cursor:pointer;opacity:.55}
-.souspage button.on{background:var(--craie);color:#0B0E13;opacity:1}
+.compo .coach{margin-top:9px;font-size:11px;opacity:.88;font-style:italic}
+/* Le fil, les statistiques, les compositions : un troisième rail d'onglets
+   au vert de l'écran, pour la même raison que les jours et les filtres. */
+.souspage{margin:14px 0 4px}
 
 /* **Le bas de la page, et la barre du navigateur mobile.**
 
@@ -228,14 +279,15 @@ input:focus{outline:none;border-color:var(--projo)}
        quand la barre du haut le dit déjà. Le sous-titre reste — il nomme la
        compétition qu'on regarde, ce qu'aucune barre ne dira. -->
   <div class="top"><h1><span>LES MATCHS</span><small id="sous">TOUTES COMPÉTITIONS</small></h1></div>
-  <div class="jours" id="jours"></div>
-  <div class="filtres">
-    <button data-f="tous" class="on">TOUS</button>
+  <!-- Deux rails d'onglets au vert du foot, le ton de cet écran sur l'accueil. -->
+  <div class="jours tbf-onglets" data-ton="vert" id="jours"></div>
+  <div class="filtres tbf-onglets" data-ton="vert">
+    <button data-f="tous" class="tbf-onglet on">TOUS</button>
     <!-- Caché par défaut : il ne paraît que pour qui suit des clubs. Voir
          `moi()` plus bas — un filtre qui ne peut rien filtrer est un
          bouton qui ment. -->
-    <button data-f="mien" id="fMien" hidden>MES CLUBS</button>
-    <button data-f="live" class="direct">EN DIRECT</button>
+    <button data-f="mien" id="fMien" class="tbf-onglet" hidden>MES CLUBS</button>
+    <button data-f="live" class="tbf-onglet direct">EN DIRECT</button>
   </div>
   <div class="rech"><input id="q" placeholder="Chercher une équipe ou une compétition…"></div>
   <div class="liste" id="liste"><div class="spin"></div></div>
@@ -320,7 +372,7 @@ function joursDispo() {
 }
 
 $('jours').innerHTML = joursDispo().map((j) =>
-  `<button class="jour ${j.iso === date ? 'on' : ''}" data-j="${j.iso}">
+  `<button class="jour tbf-onglet ${j.iso === date ? 'on' : ''}" data-j="${j.iso}">
     ${j.label}<small>${j.sous}</small></button>`).join('');
 $('jours').onclick = (e) => {
   const b = e.target.closest('[data-j]'); if (!b) return;
@@ -422,8 +474,11 @@ function rendre() {
         <span class="sep"></span><span class="fl">›</span></a>
       ${g.matchs.map((m) => {
         const min = minute(m);
+        /* Sans minute — l'horloge se tait quand le relevé n'a plus rien dit
+           depuis un quart d'heure —, le point rouge qui bat reste seul : il
+           dit « en direct », et un tiret à sa place disait « rien ». */
         return `<div class="m ${m.mien ? 'mien' : ''}" data-m="${m.id}">
-          <div class="h">${m.live ? `<div class="live">${min ?? '—'}</div>`
+          <div class="h">${m.live ? `<div class="live">${min ?? ''}</div>`
             : m.fini ? `<div class="fin">TERMINÉ</div>`
             : `<div class="heure">${heure(m.date)}</div>`}</div>
           <div class="eq">
@@ -775,11 +830,21 @@ function dessinerFiche() {
   const versCoupDEnvoi = quand.getTime() - Date.now();
   const virageOuvert = f.live || (versCoupDEnvoi > 0 && versCoupDEnvoi < 30 * 60_000);
 
+  /* La compétition et sa journée, sans séparateur orphelin : sans nom de
+     compétition, la ligne commençait par « · Journée 5 ». Sans l'un ni
+     l'autre, la ligne disparaît — il n'en restait que la flèche « › », un
+     lien vers rien de nommé. Et sans identifiant de compétition, le nom se
+     lit sans mener nulle part plutôt que vers « ?ligue=undefined ». */
+  const competition = [d.ligue.nom, d.ligue.journee].filter(Boolean).map(esc).join(' · ');
+  const ligneCompetition = !competition ? ''
+    : d.ligue.id != null
+      ? `<a class="lg" href="/teletext?ligue=${encodeURIComponent(d.ligue.id)}">${competition} ›</a>`
+      : `<span class="lg">${competition}</span>`;
+
   $('fcorps').innerHTML = `
-    <button class="fermer" id="ferme">‹</button>
+    <button class="fermer tbf-plaque" id="ferme" aria-label="Fermer la fiche">‹</button>
     <div class="aff">
-      <a class="lg" href="/teletext?ligue=${d.ligue.id}">${esc(d.ligue.nom ?? '')}
-        ${d.ligue.journee ? '· ' + esc(d.ligue.journee) : ''} ›</a>
+      ${ligneCompetition}
       <div class="sc">
         <img src="${esc(e.home.logo)}" alt="">
         <span class="n">${f.fini || f.live ? `${e.home.goals ?? 0} – ${e.away.goals ?? 0}`
@@ -820,7 +885,7 @@ function dessinerFiche() {
            chaîne JavaScript, et le premier accent grave referme la chaîne.
            C'est la faute que verif-pages guette, et je viens de la faire — le
            commentaire d'à côté prévenait déjà, trois lignes plus bas. -->
-      <a class="aller ${virageOuvert ? '' : 'eteint'}" data-porte="virage"
+      <a class="aller tbf-plaque ${virageOuvert ? '' : 'eteint'}" data-ton="flare" data-porte="virage"
          ${virageOuvert ? `href="/virage?match=${f.id}"` : 'aria-disabled="true"'}>GRAND VIRAGE
         <small>${virageOuvert ? 'pousser avec la tribune' : 'pendant le match seulement'}</small></a>
       <!-- **Le match voyage avec le lien.** Le bouton menait à « /duel-nvn »
@@ -832,12 +897,12 @@ function dessinerFiche() {
            Pas d’accent grave ici : ce balisage vit dans un gabarit de chaîne
            JavaScript, et un accent grave le referme. C’est la faute que
            verif-pages guette, et elle vient de se produire. -->
-      <a class="aller" data-porte="duel" href="/duel-nvn?match=${f.id}">DUEL<small>tribune contre tribune</small></a>
+      <a class="aller tbf-plaque" data-ton="flare" data-porte="duel" href="/duel-nvn?match=${f.id}">DUEL<small>tribune contre tribune</small></a>
     </div>
-    <div class="souspage" id="souspage">
-      <button data-s="fil" class="${FICHE.volet === 'fil' ? 'on' : ''}">LE FIL</button>
-      <button data-s="stats" class="${FICHE.volet === 'stats' ? 'on' : ''}">STATISTIQUES</button>
-      <button data-s="compo" class="${FICHE.volet === 'compo' ? 'on' : ''}">COMPOSITIONS</button>
+    <div class="souspage tbf-onglets" data-ton="vert" id="souspage">
+      <button data-s="fil" class="tbf-onglet ${FICHE.volet === 'fil' ? 'on' : ''}">LE FIL</button>
+      <button data-s="stats" class="tbf-onglet ${FICHE.volet === 'stats' ? 'on' : ''}">STATISTIQUES</button>
+      <button data-s="compo" class="tbf-onglet ${FICHE.volet === 'compo' ? 'on' : ''}">COMPOSITIONS</button>
     </div>
     <div id="souscontenu"></div>`;
 
@@ -866,8 +931,10 @@ function dessinerVolet() {
         const ic = ev.type === 'Card'
           ? `<span style="color:${/Red/i.test(ev.detail) ? 'var(--flare)' : 'var(--projo)'}">▮</span>`
           : (ICONES[ev.type] ?? '•');
+        // Sans minute, la case reste vide : une apostrophe seule n'en est pas une.
+        const quand = ev.minute == null ? '' : `${ev.minute}${ev.extra ? '+' + ev.extra : ''}'`;
         return `<div class="ev ${droite ? 'droite' : ''}">
-          <span class="min">${ev.minute ?? ''}${ev.extra ? '+' + ev.extra : ''}'</span>
+          <span class="min">${quand}</span>
           <span class="ic">${ic}</span>
           <span class="txt">${esc(ev.joueur ?? '')}
             <small>${esc(ev.detail ?? ev.type)}${ev.passeur ? ' · ' + esc(ev.passeur) : ''}</small>
@@ -904,7 +971,7 @@ function dessinerVolet() {
             <span class="p">${esc(j.nom ?? '')}</span>
             <span class="po">${esc(j.poste ?? '')}</span></div>`).join('')}
           ${co.remplacants.length ? `<div class="banc">REMPLAÇANTS</div>
-            ${co.remplacants.map((j) => `<div class="j" style="opacity:.6">
+            ${co.remplacants.map((j) => `<div class="j" style="color:var(--gris)">
               <span class="n">${j.numero ?? ''}</span>
               <span class="p">${esc(j.nom ?? '')}</span></div>`).join('')}` : ''}
           ${co.entraineur ? `<div class="coach">${esc(co.entraineur)}</div>` : ''}

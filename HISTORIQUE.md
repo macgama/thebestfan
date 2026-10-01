@@ -3182,3 +3182,436 @@ Vingt-sept cartes avec leurs âges, et la dette d'illustrations passe de 217 à
 c'est la seule autre raison admissible de relever ce cliquet.
 
 ---
+
+## 4 quadragies. Le socle FAIT MAIN — tout se lit en plein jour
+
+Le 30 septembre 2026, Gaël a choisi la direction de la refonte parmi trois
+maquettées : **FAIT MAIN** — la bâche, le marqueur et le scotch —, NUIT DE MATCH
+— projecteurs, fumigènes et tableau d'affichage — et LA CARTE EN MAIN — la carte
+de collection au centre de chaque écran. FAIT MAIN fait de chaque écran un pan de
+mur du kop : des bâches tendues, des stickers, des tampons, des tickets, et
+l'écharpe comme seul dessin de jauge.
+
+Rien de tout cela n'est dans cette session, et c'est voulu. Les trois directions
+réclamaient le même préalable, le **lot 0** : un socle sans aucune matière
+nouvelle — ni bâche, ni sticker, ni police. Il rend les vingt-quatre écrans
+lisibles au soleil et homogènes au toucher, et il pose les outils dont les lots
+suivants ont besoin. Ce qui se voit à la fin tient en trois phrases : tout se lit
+en plein jour, tous les boutons réagissent pareil, les soldes comptent quand ils
+changent.
+
+### Pourquoi le socle passe avant la matière
+
+Le hub était déjà un écran de jeu. Les vingt-trois autres étaient des listes
+posées sur une photo de tribune : du texte gris entre 42 et 62 % d'opacité, des
+panneaux translucides et floutés, et sur chaque page des boutons maison sans
+cerne ni tranche. Poser une bâche sur un texte qu'on ne lit pas dehors, c'est
+décorer un écran illisible — et c'est dehors, au stade, que ce jeu se joue.
+
+La mesure a été prise **avant** de toucher une page, sur les vingt-trois visites
+du lot et à trois formats. Au plus petit : 571 textes sous onze pixels, 689 sous
+0,85 d'opacité effective, 103 éléments floutés, 204 textes qui perdaient leur
+contraste au soleil. Deux briques communes en portaient une bonne part — le nom de
+l'écran dans la barre (`h1.tbf-ou`) à 0,82 sur dix-huit écrans, la ligne
+`.tbf-sous` à 0,62 sur neuf —, et trois écrans l'essentiel du petit texte : le
+classeur de `/collection` (291, le nom des cartes à 9,5 px), `/boutique` (113) et
+`/repetition` (51).
+
+### Mesurer d'abord : l'audit étendu
+
+Une promesse de lisibilité qu'on ne mesure pas se juge à l'œil, sur l'écran de
+celui qui corrige — un écran d'intérieur, luminosité au maximum.
+`scripts/audit-ui.mjs` a donc reçu quatre relevés :
+
+| Relevé | Ce qu'il compte | Seuil |
+|---|---|---|
+| petit texte | tout texte visible, à sa taille **rendue** : une carte réduite par `scale` écrit plus petit que sa police | 11 px |
+| opacité effective | le produit des `opacity` de l'élément et de tous ses ancêtres, multiplié par l'alpha de sa couleur | 0,85 ; 0,55 pour une mention légale |
+| `backdrop-filter` | tout élément, pseudo-éléments compris, dont la valeur calculée n'est pas `none` | aucun |
+| contraste au jour (`--jour`) | le contraste ordinaire, recalculé sous un voile blanc de 40 % — ce que fait le soleil à un écran | 4,5:1, 3:1 en grand texte |
+
+La couleur seule ne disait rien : le jeu écrivait en craie pleine dans des blocs à
+`.6`. Les mentions légales, et elles seules, ont droit à moins — `.legal` et
+`[data-legal]`, une liste courte exprès : une tolérance qu'on étend pour faire
+taire une alerte transforme un texte illisible en texte autorisé.
+
+Le téléphone étroit est aussi un téléphone court. Il était mesuré à 800 pixels de
+haut, c'est-à-dire avec cent soixante pixels qu'aucun téléphone modeste n'a — et
+c'est dans ceux-là que tombent le bouton principal et la dernière rangée d'une
+arène. Il l'est maintenant à 640 : les trois formats sont 360 × 640, 400 × 800
+et 768 × 1024.
+
+L'audit écrit tout en JSON (`--json`) et prend une capture par page et par format
+(`--captures`). Il ne rougit jamais : il mesure, il ne juge pas.
+
+### Cinq garde-fous qui se lisent dans le texte
+
+Ce qui se lit sans navigateur est tenu par `npm run pages`, parce qu'une règle
+qu'une seule passe de correction a fait respecter revient au premier écran qu'on
+ajoute. Aucun `backdrop-filter` — la déclaration, la propriété de script, le nom
+passé à `setProperty`. Aucun émoji cadenas ou coche, **écritures détournées
+comprises** : `&#10003;`, `\2713` en CSS, `\u2713` en script, parce que c'est la
+forme que prend l'émoji chassé qui revient, et `/aide` l'écrivait déjà ainsi.
+Aucun `.calc(`. Un `data-ton` sur chaque rail d'onglets, ceux des gabarits de
+chaîne compris.
+
+Chaque fichier est lu **débarrassé de ses commentaires**, lignes conservées pour
+que le numéro annoncé soit le bon. Chaque faute corrigée est expliquée dans un
+commentaire qui la cite, et un contrôle qui se déclenche sur sa propre
+documentation apprend surtout à ne plus l'écrire. Une expression régulière n'y
+suffit pas — deux barres obliques vivent aussi dans une adresse, et un gabarit
+peut en contenir un autre —, d'où un petit lecteur qui avance caractère par
+caractère. Un cinquième contrôle garde les quatre autres : le code sans ses
+commentaires doit compiler exactement comme l'original, script par script. Si le
+lecteur se trompait sur une barre oblique, il blanchirait du vrai code, et les
+quatre contrôles deviendraient verts sur ce qu'ils ne lisent plus.
+
+Posés avant les corrections, ils relevaient **29 fautes sur 54 lignes** — la
+preuve qu'ils voient ce qu'ils doivent voir. Ils sont à zéro à la fin.
+
+### Ce qui a changé
+
+**Rien sous onze pixels, rien sous 0,85.** Le nom de l'écran passe à la craie
+pleine ; `.tbf-sous` à 0,94, avec son propre panneau peint en `::after` dans son
+rembourrage — la ligne tombait là où le voile redescend vers 54 %, c'est-à-dire à
+même la tribune. Les rubriques du tiroir passent de 8,5 px à 42 % à 11 px à 88 %,
+l'étiquette des tuiles de 7,6 à 11 px. Le numéro de version, « discret au point de
+ne se lire que si on le cherche », se lit : ceux qui le cherchent sont justement
+ceux à qui l'on demande « quelle version as-tu ? ». La mention légale de la
+vitrine remonte de 0,32 à 0,6. La jauge commune (`.tbf-jauge`) et celle du
+souffle au Virage font dix pixels de haut.
+
+**Aucun panneau flouté.** `--panneau` passe de 72 % translucide et flou à 94 %
+opaque. Le flou se recalculait à chaque image sous tout ce qui défile — un écran
+de liste en portait des dizaines — et au soleil il ne protégeait rien. Les voiles
+qui comptaient sur lui foncent pour faire le même travail : 88 % sous le menu et
+sous la boîte de confirmation, 94 % sous la fête de niveau, 88 % dans le creux des
+onglets ; et le haut du voile de page tient 88 % jusqu'au treizième de l'écran,
+là où vivent le nom, le sous-titre et le rail. **Aucun mot n'est plus posé à même
+la photo** : `/bienvenue` pose chaque mot de la cérémonie sur un panneau ou une
+pastille, `/classement` sa carte « ma place » et sa liste.
+
+**Une seule façon d'être un bouton.** Les boutons maison — `.gros`, `.buy`,
+`.dbtn`, `.bt`, `.filt`, `.vitr-*`, ceux restés au style du navigateur — prennent
+`.tbf-plaque` et un `data-ton`. Les anciennes classes restent dans le balisage
+quand le script les interroge ; seules leurs règles de peinture sont parties. Les
+commandes de jeu gardent leur géométrie : le pavé, les cartes jouables, les
+épreuves. `#b1`, le tout premier bouton de `/bienvenue`, n'avait ni l'un ni
+l'autre et s'affichait au style du navigateur.
+
+**Les onglets au ton de l'écran.** Tous les onglets actifs étaient dorés, alors
+que l'or veut dire acheter et légendaire, et que le hub donne déjà sa couleur à
+chaque porte. Les seize rails portent le ton de leur écran — flare pour jouer,
+bleu pour posséder, vert pour le foot, violet pour les gens, or pour acheter,
+craie pour soi —, et l'onglet actif le prend par héritage, la face foncée pour
+les quatre tons à encre claire (voir plus bas). L'or ne reste que comme filet de
+sécurité. Sur `/fanzzy`, DECK quitte le rail : un onglet qui emmène sur
+une autre page ment sur ce qu'il fait. Il devient une plaque à côté du rail, avec
+la flèche qui sort.
+
+**Des icônes au trait au lieu d'émojis.** Le cadenas, la coche et la flèche sont
+des masques de `ui.css` (`.tbf-ico-*`) qui prennent la couleur du texte et
+mesurent un cadratin. Un émoji se dessine avec la police du téléphone — en couleur
+ici, en noir là — et jamais au trait comme le reste du jeu.
+
+**La couleur d'une carte est celle de sa rareté.** `/bienvenue` avait sa propre
+table, par sorte : l'or pour un Fanzzy, le violet pour l'équipement. Le premier
+paquet apprenait donc un code que tout le reste du jeu contredit, et faisait
+prendre sa première commune pour une légendaire. Son récapitulatif montrait en
+outre l'identifiant interne à neuf pixels — `a-fumigene`, `TR57` — ; il montre le
+nom.
+
+**Le décor revient sur `/carnet` et `/teletext`**, dont la colonne portait un
+dégradé opaque par-dessus la photo. Ce qui s'y lit a reçu son panneau.
+
+**« Installer l'application » passe dans le tiroir.** Sur l'accueil, elle prenait
+une ligne à chaque visite pour un geste qu'on ne fait qu'une fois, et poussait le
+bouton d'entrée les jours où elle paraissait. Les trois cas sont gardés : le
+bouton quand le navigateur sait installer, la consigne sur iPhone, rien dans une
+application déjà installée.
+
+**Les soldes comptent.** `FX.compter` fait défiler un chiffre jusqu'à sa nouvelle
+valeur et finit par un bref éclat ; `FX.voler` fait partir un gain de sa source
+vers son compteur. Un chiffre qui saute de 120 à 75 se lit comme une erreur
+d'affichage, un chiffre qui descend se lit comme une dépense. Ils sont branchés
+sur la bourse du hub — qui se souvient, par compte, de ce qu'elle affichait —, le
+solde de la boutique après un achat, la bourse du kiosque, les écharpes des
+doublons qui volent de chaque carte vers leur compteur, le pot d'un KOP et
+l'emplacement acheté sur le profil. Pas sur la fiche d'un Fanzzy, et c'est écrit
+là-bas : elle n'affiche aucun solde. Deux règles tiennent le contrat : un second
+appel sur le même élément arrête le premier — deux boucles qui écrivent le même
+chiffre se le disputeraient —, et tout finit par une minuterie, jamais par la
+seule fin d'une animation, qu'un onglet caché gèle.
+
+**Des nœuds qui durent.** Le Virage et le duel réécrivaient en `innerHTML`, à
+chaque message — jusqu'à dix fois par seconde —, la rangée des cartes, les effets,
+l'équipe et la main. Rien ne pouvait vivre dedans : un portrait remplacé tous les
+dixièmes de seconde ne respirait jamais, un doigt posé sur une carte relâchait sur
+sa remplaçante, et un dessin absent se redemandait au réseau à chaque vue.
+`accorder()`, écrite de la même façon dans les deux pages, crée chaque élément une
+fois, le retrouve par sa clé et le modifie en place. Même rendu, mêmes classes,
+mêmes identifiants.
+
+**Le mode calme.** Trois interrupteurs au bas du tiroir — couper les sons, les
+vibrations, les animations décoratives —, parce que les raisons ne sont pas les
+mêmes : le son dans le train, les vibrations la nuit, les animations quand elles
+fatiguent. La clé `tbf-calme` est recopiée sur `<html data-calme>` par `fx.js`
+**et** par `menu.js`, deux copies qui doivent rester identiques : `/bienvenue`
+charge le premier sans le second, et le menu, chargé tout de suite, pose la
+marque avant que `fx.js`, différé, n'arrive — les braises de `nav.js` la relisent
+à chaque étincelle sans l'attendre. L'ancienne clé du bouton de son du duel est
+reprise une fois, puis retirée — qui avait coupé le son ne doit pas l'entendre
+revenir parce que la préférence a changé de nom. Les barres de temps et les
+chiffres restent : ce sont des informations.
+
+**Une donnée absente retire sa ligne, jamais un tiret.** Un « — » se lit comme un
+nom illisible ou comme une panne ; les tirets de repli sont partis, du score du
+fil au Virage au compte de la collection sur le hub. Et quatre petites dettes :
+`/compte` annonçait encore « Le kiosque et les duels arrivent bientôt » ;
+`classement.html` avait deux blocs `<style>` identiques, `teletext.html` un bloc
+qui ne contenait qu'un commentaire, et `amis.html` une ligne orpheline — voir
+plus bas.
+
+### Les pièges du lot
+
+**Un point devant `calc`, et le navigateur se tait.** `0 .calc(4 * var(--u))`
+n'est pas une petite longueur, c'est une valeur invalide : la déclaration entière
+est jetée, sans un mot en console. `cartes.css` en portait cinq, reste d'une
+conversion qui avait mangé le zéro de tête — le nom des cartes n'avait aucune
+ombre, la pastille non plus, l'anneau de rareté du pied n'existait pas, et les
+losanges n'avaient ni écart ni arrondi. La carte s'affichait presque comme prévu.
+Le garde-fou en a trouvé **un sixième** que personne n'avait cité, dans
+`fanzzy.html` : le cadenas du classeur flottait sans relief.
+
+**Une ligne orpheline a mangé la règle d'en dessous.** Dans `amis.html`, l'ancien
+habillage des onglets avait été retiré en laissant sa dernière ligne, un
+`box-shadow` sans sélecteur. Le navigateur l'a lue comme le début d'un sélecteur
+qui courait jusqu'à l'accolade suivante — celle de la pastille des demandes — et a
+jeté le tout. La pastille n'a jamais été peinte ; l'onglet affichait
+« DEMANDES1 ». Aucun contrôle ne voit cette forme-là.
+
+**Le nom promis était déjà pris.** Le contrat appelait `.tbf-compte` l'éclat d'un
+compteur. C'était le nom de l'épreuve du compte : ses règles, écrites sur la même
+classe, auraient passé chaque solde de la boutique en grille pleine largeur le
+temps d'un éclat, et gonflé son chiffre à soixante pixels. C'est l'épreuve qui se
+renomme, `tbf-ep-compte`, comme ses sœurs `tbf-ep-jauge` et `tbf-ep-note` — même
+collision, même remède.
+
+**Onze pixels se paient ailleurs.** Relever un plancher déplace des choses
+qu'aucune règle ne nomme :
+
+- à onze pixels, « CLASSEMENT » ne tenait plus dans une tuile de cinquante-huit :
+  la tuile a rendu sa marge et son espacement, et le rail de l'accueil ne descend
+  plus sous soixante-quatre. Les deux valeurs se tiennent, et `ui.css` comme
+  `index.html` le disent ;
+- l'étiquette posée sur une carte, passée de huit à onze pixels, débordait des
+  deux côtés d'une vignette : elle a le droit de passer à la ligne, et n'est plus
+  centrée par `left:50%` ;
+- au Virage, le geste de chaque carte à onze pixels faisait monter la rangée de la
+  main de 104 à 138 pixels, tous pris à la corde, seule partie élastique de
+  l'écran. Un nom qui ne s'écarte du coût que sur sa première ligne — un flottant
+  d'une ligne de haut au lieu d'un `padding-right` sur toutes —, des interlignes
+  serrés, et elle retombe à 115 à 360 × 640 ;
+- un libellé trop long pour un téléphone s'écrit en deux formes, « TA TRIBUNE »
+  et « TOI », « TOUT COMPTE DOUBLE » et « TOUT ×2 », et la longue reste pour les
+  lecteurs d'écran. Elle était éteinte par une police de zéro pixel, que l'audit
+  mesurait — à raison — comme un texte illisible.
+
+Trois contrôles ont dû suivre, et chacun protège toujours ce qu'il protégeait.
+`virage:ui` retranchait le `padding-right` pour savoir où s'arrête le nom d'un
+chant, et a rougi sur les cinq cartes : il lit maintenant les lignes du texte, et
+seules celles qui sont en face du coût doivent s'arrêter avant lui.
+`boosters:ui` attendait qu'une carte trois fois plus large ait un nom trois fois
+plus grand, ce que le plancher rend impossible : il mesure au-dessus du plancher,
+et vérifie le plancher à part. `tour:ui` comptait comme coupés les libellés
+masqués à l'œil : il écarte ce motif-là, et lui seul.
+
+**Éteindre sans pâlir, mais pas n'importe comment.** Les états hors service
+passent de l'opacité à `filter: grayscale() brightness()` : une carte éteinte
+garde son prix, qui est la raison pour laquelle elle est éteinte. Mais un
+`brightness(.62)` sur toute une ligne assombrit sa craie comme une opacité de
+62 % : au Virage, « TERMINÉ » retombait sous le seuil, et le filtre a quitté le
+texte pour les blasons et le cadre. **L'audit ne voit pas ce cas** : il compte
+`opacity` et `filter: opacity()`, pas `brightness()`.
+
+**L'audit se trompait de visite.** Son premier passage mesurait `/bienvenue`
+comme le hub — le joueur d'essai, déjà installé, y était renvoyé à l'accueil —, la
+vitrine avec le cookie de session de la page d'avant, et soixante-quinze écrans
+depuis une seule adresse, que le garde de débit du serveur voit comme un seul
+joueur. Chaque visite a maintenant son propre contexte de navigateur et sa
+propre adresse (`X-Forwarded-For`), et `/bienvenue` est vu par un nouveau venu. Deux pièges
+d'outil en chemin : sous Git Bash, `/virage` arrive à Node réécrit en chemin
+Windows (`MSYS_NO_PATHCONV=1`) ; et `--captures /tmp/avant`, qui commence par une
+barre oblique, était pris pour une page à visiter. Le genre « sous le décor »,
+enfin, était relevé depuis toujours et jamais imprimé.
+
+**Une suite rouge à cause de l'heure.** Le dernier passage des suites a eu lieu
+entre minuit et deux heures, et `abo:smoke` a rougi trois fois, sur les quotas du
+jour. Aucun fichier du lot n'y est pour rien : la suite sème ses lignes avec
+`new Date()` à travers un pool en `timezone: 'Z'`, donc en UTC, alors que le
+serveur écrit `NOW(3)` et compte `>= CURDATE()` dans le fuseau de MySQL, celui de
+Zurich. Entre minuit et deux heures en été — une heure en hiver —, les lignes « du
+jour » de la suite sont d'hier pour la base. C'est le piège « semer comme le
+serveur écrit » d'`ETAT.md` § 2, une deuxième fois ; la correction est dans la
+suite, hors de ce lot. La preuve est venue d'elle-même : relancée seule à une
+heure et demie, elle rougit encore sur les trois mêmes ; à deux heures pile —
+minuit en UTC, quand les deux horloges retombent sur le même jour —, elle est
+verte, 77 contrôles.
+
+### La relecture qui n'était pas arrivée
+
+Chaque périmètre du lot a été relu par quelqu'un qui ne l'avait pas écrit, et un
+script remettait les constats de chaque relecture au correcteur de son périmètre.
+Deux relectures ne sont jamais arrivées : celle du socle CSS (`ui.css`,
+`cartes.css`, `fanzzy-fiche.css`) et celle de `fx.js` et `menu.js`. Leurs
+relecteurs avaient écrit le nom du périmètre suivi de la liste de ses fichiers
+entre parenthèses ; le script cherchait le nom seul, ne l'a pas reconnu, et n'a
+rien dit. Les vérifications qui ont suivi sont restées vertes, et c'était
+attendu : elles éprouvaient ce qui avait été corrigé, pas ce qui ne l'avait pas
+été. L'écart s'est vu après coup, et une reprise a traité ces constats sur le
+lot déjà vérifié. Le piège est en `ETAT.md` § 6.
+
+**L'étiquette d'une carte tombait sur son nom.** C'était une régression du lot.
+Le plancher de onze pixels fait passer le nom d'une vignette sur deux lignes, et
+l'étiquette d'état ou de tenue (`.tbf-etiq`), calée sur une ligne de nom, se
+posait sur la seconde : 9,8 pixels de recouvrement sur une carte de 86, 8,5 sur
+une carte de 151. Les 753 noms du catalogue ont été mesurés en Oswald, avec les
+vraies feuilles : à 86 pixels, 72 % tiennent sur deux lignes, 44 % à 105, 9 % à
+140, 4 % à 150. L'étiquette remonte maintenant d'une ligne de nom
+(`--lignes-nom`) sur une carte de 140 pixels ou moins, par une requête
+`@container` sur `.fz`, et laisse deux à trois pixels d'air au-dessus d'un nom de
+deux lignes.
+
+Ce n'est qu'un pis-aller, parce qu'aucune largeur ne dit combien de lignes prend
+un nom. Il reste deux cas recouverts : trois lignes sous 100 pixels (3,5 % des
+noms à 86), deux lignes entre 141 et 182 (moins de 9 % à 141, 1,2 % à 165). La
+correction juste est dans `cartes.js` : poser l'étiquette dans le bandeau du nom,
+`.top`, dont la hauteur suit le vrai nombre de lignes. La variable et la requête
+partiront avec.
+
+**L'onglet actif ne se lisait plus au soleil.** Prendre le ton de l'écran, c'était
+aussi prendre la face vive et l'encre claire des plaques de ce ton, avec un
+libellé de onze à douze pixels et demi. Le ton est gardé, mais la face fonce,
+jusqu'à la tranche de la plaque ou presque. Il y a une règle par ton à encre
+claire, et un ton nouveau de ce genre devra avoir la sienne. L'audit range ce
+fond parmi les dégradés, qu'il ne mesure pas : l'onglet a donc été mesuré à
+part, à la formule de l'audit et aux pixels d'une capture, qui concordent à un
+dixième près.
+
+| Onglet actif, sur l'aplat, avant → après la reprise | à l'intérieur | au soleil |
+|---|---|---|
+| flare | 3,91 → 8,28 | 2,31 → 3,32 |
+| vert | 3,31 → 8,84 | 2,00 → 3,19 |
+| bleu | 3,55 → 9,90 | 2,05 → 3,33 |
+| violet | 4,48 → 10,55 | 2,29 → 3,46 |
+
+L'or d'avant le lot faisait 11,17 et 3,56. Au soleil, 4,5:1 est hors d'atteinte
+pour une face qui garde sa couleur : même du blanc sur du noir n'y fait que 5,74,
+et 3,5 est le plafond pratique. Les plaques elles-mêmes, aux quatre mêmes tons,
+ont la même faiblesse, entre 3,3 et 4,5:1 à l'intérieur et vers 2:1 au soleil.
+Les corriger, ce serait changer la table des tons de toutes les plaques du jeu.
+C'est une décision de palette, laissée à Gaël.
+
+**Sur `/deck`, l'or n'achetait rien.** ENREGISTRER et AJOUTER AU DECK étaient
+restées dorées, alors que rien ne s'achète sur cet écran et que composer son
+deck, c'est posséder. Elles passent au bleu, et leur libellé de treize pixels y
+perd : 3,55:1 sur la face, 2,05 au soleil, contre 11,17 en or. C'est la même
+décision de palette qu'au-dessus. Trois ors restent
+en attente d'arbitrage, parce qu'aucun n'est une plaque d'action : le halo de la
+colonne de `/deck`, repris du classeur voisin ; l'encart du prochain emplacement
+de deck ; et, sur `/boosters`, la plaque de la série choisie, un sélecteur au ton
+d'un écran doré.
+
+**Le reste, plus petit, et tout mesuré :**
+
+- le symbole de rareté passe au plancher, `max(11px, …)` : il faisait 5,4 pixels
+  sur une carte de 151 ;
+- et il réapparaît. Une règle de `cartes.css` qui cachait le dernier `span` du
+  pied cachait aussi la dernière marque de rareté : la commune n'avait aucun
+  losange, la rare un sur deux, l'épique et la légendaire une pastille vide. La
+  règle est partie, et un commentaire dit pourquoi aucune ne doit plus viser ce
+  `span` ;
+- la jauge du pavé passe de cinq à dix pixels. En pleine largeur, elle coupait le
+  bas du pavé rond : elle devient une corde sous le texte, à 18 % des bords et
+  13 % du bas, où le cercle garde 67 % de sa largeur ;
+- la rangée d'actions de la fiche réserve sa vraie hauteur, 81 pixels — la plaque
+  de deux lignes, sa tranche, ses marges — au lieu de 74. Elle en mesurait 74, 79
+  ou 81 selon ses boutons, et la scène au-dessus bougeait d'autant ;
+- les liens du tiroir passent de 39 à 44 pixels, comme ses interrupteurs, et les
+  boutons de la boîte de confirmation aussi, qui tombaient à 39 ou 40 avec la
+  police de repli ;
+- « Installer l'application », quand elle paraissait, ouvrait le pied du tiroir à
+  la place de l'Aide, qui doit l'ouvrir : quelqu'un de perdu ne lit pas le menu
+  jusqu'au bout. Elle passe après. Et quand elle se cache, sur Android, après
+  l'installation, le focus qu'elle tenait va à « Mon profil » au lieu de retomber
+  sur la page, tiroir ouvert ;
+- « Couper les animations » promettait plus que ce que coupe la facette : les
+  barres de temps restent, un solde se pose sur sa valeur au lieu de défiler. Le
+  libellé devient « Couper les animations décoratives », sur deux lignes à
+  360 pixels, dans une ligne de 55 ;
+- deux gardes de `cartes.css` sur l'éclat de la barre de progression ne faisaient
+  rien : la barre n'existe que sur `/fanzzy`, qui la garde lui-même et l'emporte à
+  spécificité égale. Elles sont parties ;
+- la documentation de `TBF_BARRE` dans `nav.js` décrivait une bourse partie avec
+  les jetons ; elle dit ce qui reste.
+
+Deux commentaires, hors du périmètre des correcteurs, disent encore le contraire
+du code : celui de `cardHTML`, dans `cartes.js`, cite la règle du dernier `span`
+qui n'existe plus ; celui de `fanzzy.html`, vers la ligne 74, renvoie à la garde
+de `cartes.css` qui vient de partir.
+
+### Ce que la mesure dit après
+
+| Relevé, vingt-trois visites (360 × 640 / 400 × 800 / 768 × 1024) | avant | après |
+|---|---|---|
+| texte sous 11 px | 571 / 571 / 586 | 0 / 0 / 0 |
+| opacité effective sous 0,85 | 689 / 689 / 710 | 0 / 0 / 0 |
+| `backdrop-filter` | 103 / 103 / 103 | 0 / 0 / 0 |
+| cible sous 44 px | 25 / 29 / 29 | 0 / 0 / 0 |
+| texte coupé | 188 / 107 / 221 | 0 / 0 / 0 |
+| contraste perdu au soleil | 204 / 204 / 207 | 73 / 73 / 72 |
+
+Débordement, élément hors cadre, erreur de script, image cassée ou sans `alt`,
+refus 429 : zéro avant, zéro après. `/admin` et `/diagnostic`, hors lot, n'ont
+plus de flou non plus.
+
+Le soleil n'est pas fini. `/repetition` passe de 58 à zéro, mais `/profil` en
+garde 34 et `/aide` 20, la vitrine 6, puis trois au plus par écran. Deux hausses
+apparentes ne sont pas des reculs. Sur `/teletext` et `/carnet`, des textes posés
+à 50 % d'opacité sur le dégradé opaque de la colonne — que l'audit ne sait pas
+mesurer — le sont maintenant sur le décor, à 88–90 % : leur contraste réel a
+monté, et il est enfin mesuré. Et un panneau légèrement teinté — un
+`linear-gradient` posé sur `var(--panneau)` — est compté « sur dégradé » et non
+mesuré : c'est un angle mort de l'audit, pas une baisse de lisibilité.
+
+### Éprouvé
+
+Les quatre contrôles de livraison sont verts, garde-fous compris. Le dernier
+passage de `tout-tester`, après la reprise, compte cinquante-huit suites — l'audit
+y est entré — et 3 309 contrôles en dix-huit minutes, dont cinq d'audit, contre
+3 302 au départ. Aucune suite n'en a perdu : `accueil:ui` en a gagné pour
+l'installation, `menu:smoke` pour le mode calme, `boosters:ui` pour le plancher
+du nom. `abo:smoke` y a rougi pour l'heure, ci-dessus, et repasse au vert,
+relancée seule, à deux heures. Trois restent rouges, qui l'étaient déjà au
+départ, à l'identique : `deck:ui` (jsdom n'injecte pas `mods.js`), `nvn:ui` (la
+flèche de retour du duel dans un contexte neuf) et `fanzzy:smoke`
+(`tenuesParAge`). La reprise n'a fait rougir aucun contrôle, et aucun ne lit le
+ton des plaques de `/deck`.
+
+L'audit étendu a chargé ses vingt-cinq visites au premier essai, à trois formats
+chacune, sans un refus. Après la reprise, il redonne le tableau ci-dessus relevé
+par relevé, sans un sélecteur apparu ni disparu. Le tiroir a été vérifié à part,
+à 320, 360 et 400 pixels de large : ses vingt et un liens font au moins 44
+pixels, il défile sur un petit écran, l'Aide ouvre son pied, et le focus passe
+bien à « Mon profil » quand l'installation se retire.
+
+Les captures à 360 × 640 de l'accueil, de la vitrine, de `/bienvenue`,
+`/boosters`, `/fanzzy`, `/virage`, `/teletext` et `/carnet` ont été regardées :
+aucun texte qui informe à même la photo, aucun débordement.
+
+**Hors de ce lot, et c'est la suite :** les bâches, les stickers, les tampons, les
+tickets, Permanent Marker, la jauge-écharpe, les tuiles à états, la bulle du
+Fanzzy, le moment fort unifié, le tunnel, le HUD de match, et toute route serveur
+nouvelle.
+
+---

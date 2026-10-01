@@ -53,9 +53,31 @@
    *  devient un tic. */
   const REPOS = ['vie1', 'vie1', 'vie2', 'vie2', 'vie2', 'vie3'];
 
-  /** Le joueur a demandé moins de mouvement : on ne lui en fabrique pas. */
-  const CALME = typeof matchMedia === 'function'
-    && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /**
+   * Le joueur a demandé moins de mouvement : on ne lui en fabrique pas.
+   *
+   * Il peut le demander à deux endroits — à son système
+   * (`prefers-reduced-motion`), ou dans le tiroir du jeu (le mode calme, clé
+   * `tbf-calme`, contrat C4). Les gestes de repos sont exactement ce que le
+   * mode calme coupe ; la feuille les éteint, mais la minuterie qui les tire
+   * continuait de réveiller la scène toutes les cinq à douze secondes pour
+   * poser une classe qui ne jouait plus rien.
+   *
+   * Lu **à la création** d'une scène et non au chargement du fichier : ce
+   * script passe avant `fx.js` et `menu.js`, qui recopient la clé sur la
+   * racine du document. `FX.calme` quand il est là, sinon la marque de la
+   * racine, sinon la clé elle-même — dans un `try`, comme toute lecture du
+   * stockage : un navigateur en navigation privée peut la refuser.
+   */
+  function calme() {
+    if (typeof matchMedia === 'function'
+      && matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+    if (typeof window.FX?.calme === 'function') return Boolean(window.FX.calme('animations'));
+    const marque = document.documentElement.dataset.calme;
+    if (marque !== undefined) return /(^|\s)animations(\s|$)/.test(marque);
+    try { return /(^|\s)animations(\s|$)/.test(localStorage.getItem('tbf-calme') ?? ''); }
+    catch { return false; }
+  }
 
   /** Les états qu'une page peut vouloir sans délai : ils arrivent au pire moment. */
   const CHAUDS = ['neutre', 'pousse', 'but', 'encaisse'];
@@ -77,6 +99,13 @@
     if (!hote) {
       throw new Error('TBF_SCENE.creer : aucune boîte où poser le personnage');
     }
+
+    /* Lu une fois par scène. Si le réglage change pendant la visite, la scène
+       garde ce qu'elle a trouvé jusqu'au prochain écran : au pire une
+       minuterie qui tourne pour rien, ou des gestes de repos qui ne reviennent
+       qu'au chargement suivant. Ce que la feuille anime seule — la
+       respiration — suit le réglage tout de suite. */
+    const CALME = calme();
 
     const el = document.createElement('div');
     el.className = 'tbf-scene';

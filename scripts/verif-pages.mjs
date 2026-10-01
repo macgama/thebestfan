@@ -26,6 +26,11 @@
  *      import statement outside a module » — un message qui décrit le symptôme
  *      et cache la fuite.
  *
+ *   5. **Les règles du socle FAIT MAIN** qui se lisent dans le texte : aucun
+ *      backdrop-filter, aucun émoji cadenas ou coche, aucun « .calc( », et un
+ *      data-ton sur chaque rail d'onglets. Voir leur section, en fin de
+ *      fichier ; ce qui demande un rendu est mesuré par audit-ui.mjs.
+ *
  * Usage : node scripts/verif-pages.mjs
  * Sortie : 0 si tout va bien, 1 sinon — utilisable tel quel avant un déploiement.
  */
@@ -1072,6 +1077,320 @@ function menePart(chemin, { vues, prefixes }, fichiersPublics) {
   const sans = EMBLEMES.filter((e) => !FORMATS.every((x) => presents.has(e.cle + x)));
   ok('les emblèmes', `${EMBLEMES.length - sans.length}/${EMBLEMES.length} ont leurs trois formats`
     + (sans.length ? ` · incomplets : ${sans.map((e) => e.cle).join(', ')}` : ''));
+}
+
+/* ====================================== les garde-fous du socle FAIT MAIN
+
+   Le lot 0 de la refonte rend les écrans lisibles en plein jour et
+   homogènes au toucher. Quatre de ses règles se lisent dans le texte des
+   fichiers, sans navigateur : elles sont tenues ici, parce qu'une règle que
+   seule une passe de correction a fait respecter revient au premier écran
+   qu'on ajoute. Celles qui demandent un rendu — la taille réelle du texte,
+   son opacité effective, le contraste au soleil — sont mesurées par
+   `audit-ui.mjs`, qui a besoin d'un serveur et d'un Chrome.
+
+   **Les commentaires ne comptent pas.** Chacune de ces fautes sera expliquée
+   dans un commentaire qui la cite, à l'endroit même où elle a été corrigée :
+   un contrôle qui se déclenche sur sa propre documentation apprend surtout à
+   ne plus l'écrire — c'est déjà la leçon de `uniteDeConteneurSansGarde`, plus
+   haut. Chaque fichier est donc lu débarrassé de ses commentaires, **lignes
+   conservées**, pour que le numéro annoncé soit celui qu'on ouvre. */
+
+/** Tout sauf les retours à la ligne : le numéro de ligne survit au retrait. */
+const blanchir = (s) => s.replace(/[^\n]/g, ' ');
+
+/* Les mots après lesquels une barre oblique ouvre une expression régulière
+   plutôt qu'une division : « return /x/.test(s) ». */
+const AVANT_REGEX = new Set(['return', 'typeof', 'case', 'do', 'else', 'in', 'of',
+  'new', 'delete', 'void', 'throw', 'yield', 'await', 'instanceof']);
+
+/**
+ * Du JavaScript sans ses commentaires.
+ *
+ * **Une expression régulière n'y suffit pas**, et c'est tout le problème : deux
+ * barres obliques vivent aussi dans une adresse (`'https://…'`), une barre
+ * suivie d'une étoile dans une expression régulière qui cherche justement des
+ * commentaires, et un gabarit de chaîne peut en contenir un autre dans son
+ * `${…}`. On avance donc caractère par caractère en sachant où l'on est —
+ * code, chaîne, gabarit ou expression régulière.
+ *
+ * La barre oblique reste ambiguë (division ou expression régulière ?) et se
+ * tranche sur ce qui la précède, comme le font les coloreurs de code. Ça suffit
+ * pour les scripts de public/ ; le jour où ça ne suffira plus, le contrôle
+ * « le code sans commentaires compile encore », plus bas, le dira.
+ */
+function sansCommentairesJs(src) {
+  const morceaux = [];
+  let i = 0;
+  const garder = (a, b) => { if (b > a) morceaux.push(src.slice(a, b)); };
+  const effacer = (a, b) => { if (b > a) morceaux.push(blanchir(src.slice(a, b))); };
+
+  const regexPermise = (prec, pos) => {
+    if (prec === '' || /[(,=:[!&|?{};+\-*%<>~^]/.test(prec)) return true;
+    if (!/[\w$]/.test(prec)) return false;
+    const mot = /([\w$]+)\s*$/.exec(src.slice(Math.max(0, pos - 24), pos))?.[1];
+    return AVANT_REGEX.has(mot);
+  };
+  // Une chaîne entre guillemets : jusqu'au guillemet fermant, ou à la fin de
+  // la ligne pour ne pas avaler le fichier sur une chaîne mal fermée.
+  const chaine = (q) => {
+    const a = i++;
+    while (i < src.length && src[i] !== q && src[i] !== '\n') i += src[i] === '\\' ? 2 : 1;
+    i = Math.min(i + 1, src.length);
+    garder(a, i);
+  };
+  // Une expression régulière : une barre dans une classe « [/] » ne la ferme pas.
+  const regex = () => {
+    const a = i++;
+    let classe = false;
+    while (i < src.length && src[i] !== '\n') {
+      const c = src[i];
+      if (c === '\\') { i += 2; continue; }
+      i++;
+      if (c === '[') classe = true;
+      else if (c === ']') classe = false;
+      else if (c === '/' && !classe) break;
+    }
+    while (i < src.length && /[a-z]/i.test(src[i])) i++;
+    garder(a, i);
+  };
+  let code;
+  const gabarit = () => {
+    let a = i++;
+    while (i < src.length) {
+      const c = src[i];
+      if (c === '\\') { i += 2; continue; }
+      if (c === '`') { i++; break; }
+      if (c === '$' && src[i + 1] === '{') {
+        i += 2;
+        garder(a, i);
+        code(true);
+        a = i;
+        continue;
+      }
+      i++;
+    }
+    garder(a, Math.min(i, src.length));
+  };
+  /* Le code proprement dit. Dans un `${…}`, il s'arrête à l'accolade qui le
+     referme, et à celle-là seulement : d'où le compte des profondeurs. */
+  code = (dansGabarit) => {
+    let a = i, profondeur = 0, prec = '';
+    while (i < src.length) {
+      const c = src[i], d = src[i + 1];
+      if (c === '/' && (d === '/' || d === '*')) {
+        garder(a, i);
+        const fin = d === '/' ? src.indexOf('\n', i) : src.indexOf('*/', i + 2);
+        const f = fin < 0 ? src.length : fin + (d === '*' ? 2 : 0);
+        effacer(i, f);
+        i = f; a = i;
+        continue;
+      }
+      if (c === '"' || c === '\'' || c === '`' || (c === '/' && regexPermise(prec, i))) {
+        garder(a, i);
+        if (c === '`') gabarit(); else if (c === '/') regex(); else chaine(c);
+        a = i; prec = 'x';
+        continue;
+      }
+      if (c === '{') profondeur++;
+      else if (c === '}') {
+        if (dansGabarit && profondeur === 0) { i++; garder(a, i); return; }
+        profondeur--;
+      }
+      if (!/\s/.test(c)) prec = c;
+      i++;
+    }
+    garder(a, i);
+  };
+  code(false);
+  return morceaux.join('');
+}
+
+/* Le CSS écrit **dans** un gabarit de chaîne (les blocs de fx.js, nav.js,
+   menu.js) garde ses commentaires après le passage ci-dessus : pour le
+   JavaScript, ce sont des chaînes. La seconde passe les retire, ainsi que
+   les commentaires HTML des gabarits de balisage. */
+const neutreCss = (css) => css.replace(/\/\*[\s\S]*?\*\//g, blanchir);
+const neutreJs = (js) => sansCommentairesJs(js).replace(/\/\*[\s\S]*?\*\/|<!--[\s\S]*?-->/g, blanchir);
+const neutreHtml = (html) => html.replace(
+  /(<script\b[^>]*>)([\s\S]*?)(<\/script>)|(<style\b[^>]*>)([\s\S]*?)(<\/style>)|<!--[\s\S]*?-->/gi,
+  (m, so, sc, sf, to, tc, tf) => {
+    if (so) return so + neutreJs(sc) + sf;
+    if (to) return to + neutreCss(tc) + tf;
+    return blanchir(m);
+  });
+const ligneDe = (texte, index) => texte.slice(0, index).split('\n').length;
+
+{
+  const sources = [];
+  for (const nom of [...fichiers].sort()) {
+    // Le paquet d'esbuild n'est pas relu, pour la même raison qu'au-dessus ;
+    // et les dossiers d'images ne se lisent pas comme du texte.
+    if (nom.endsWith('.bundle.js') || !/\.(html|js|css)$/.test(nom)) continue;
+    const brut = await readFile(path.join(DOSSIER, nom), 'utf8');
+    if (nom.endsWith('.html')) sources.push({ nom, brut, net: neutreHtml(brut), sorte: 'html' });
+    else if (nom.endsWith('.js')) sources.push({ nom, brut, net: neutreJs(brut), sorte: 'js' });
+    else if (nom.endsWith('.css')) sources.push({ nom, brut, net: neutreCss(brut), sorte: 'css' });
+  }
+
+  /* **Le retrait des commentaires ne doit rien manger d'autre.** S'il se
+     trompait sur une barre oblique, il blanchirait du vrai code jusqu'à la
+     fin de la ligne — ou du fichier — et les quatre contrôles ci-dessous
+     deviendraient verts sur ce qu'ils ne lisent plus. Du code dont on n'a
+     retiré que des commentaires compile exactement comme avant : on le
+     vérifie, script par script, et on nomme le fichier sinon. */
+  let abime = 0;
+  for (const s of sources) {
+    const paires = s.sorte === 'js' ? [[s.brut, neutreJs(s.brut)]]
+      : s.sorte === 'html'
+        ? [...s.brut.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/g)]
+          .filter((m) => !/\bsrc\s*=/.test(m[1])).map((m) => [m[2], neutreJs(m[2])])
+        : [];
+    for (const [avant, apres] of paires) {
+      if (compile(avant, s.nom) || !compile(apres, s.nom)) continue;
+      abime++;
+      ko(s.nom, `le retrait des commentaires a abîmé le code (${compile(apres, s.nom)}) : `
+        + 'les garde-fous FAIT MAIN ne lisent plus ce fichier tel qu’il est — '
+        + 'c’est sansCommentairesJs qu’il faut reprendre, pas la page');
+    }
+  }
+  if (!abime) ok('les commentaires', 'retirés sans toucher au code (chaque script compile encore)');
+
+  /** Rassemble les trouvailles d'un motif, fichier par fichier. */
+  const releve = (motif, filtre = () => true) => {
+    const parFichier = new Map();
+    for (const s of sources) {
+      if (!filtre(s)) continue;
+      for (const m of s.net.matchAll(motif)) {
+        if (!parFichier.has(s.nom)) parFichier.set(s.nom, []);
+        parFichier.get(s.nom).push({ ligne: ligneDe(s.net, m.index), texte: m[0] });
+      }
+    }
+    return parFichier;
+  };
+  const lignes = (l) => {
+    const n = [...new Set(l.map((x) => x.ligne))];
+    return `ligne${n.length > 1 ? 's' : ''} ${n.join(', ')}`;
+  };
+
+  /* --- aucun backdrop-filter
+
+     Le flou d'arrière-plan recalcule, à chaque image, tout ce qui passe
+     derrière la surface qui le porte. Sur un téléphone modeste, c'est ce qui
+     fait saccader le défilement ; en plein soleil, un panneau translucide et
+     flou laisse la tribune se mélanger au texte. Le socle le remplace par un
+     fond opaque (alpha ≥ 0,88), et les lots suivants comptent dessus.
+
+     Trois formes : la déclaration CSS, préfixée ou non ; la propriété de
+     script (« style.backdropFilter ») ; le nom passé en chaîne à
+     « setProperty ». Une seule suffirait à le faire revenir. */
+  {
+    const vus = releve(/(?<![\w-])(?:-webkit-)?backdrop-filter\s*:|\b(?:webkit|Webkit)?[bB]ackdropFilter\b|['"](?:-webkit-)?backdrop-filter['"]/g);
+    for (const [nom, l] of vus) {
+      ko(nom, `backdrop-filter déclaré (${lignes(l)}) : le flou d’arrière-plan se `
+        + 'recalcule à chaque image — cher sur un téléphone modeste, illisible au '
+        + 'soleil. Un fond opaque à la place (alpha ≥ 0,88).');
+    }
+    if (!vus.size) ok('backdrop-filter', 'aucune déclaration dans public/');
+  }
+
+  /* --- aucun émoji cadenas ni coche dans l'interface
+
+     🔒 ✓ ✔ ✅ se dessinent avec la police d'émojis du téléphone : en couleur
+     chez l'un, en trait chez l'autre, à une taille qui n'est pas celle du
+     texte, et toujours à côté des icônes au trait du jeu. Le socle les
+     remplace par les icônes en masque de ui.css, qui prennent la couleur du
+     texte (« tbf-ico tbf-ico-cadenas », « tbf-ico tbf-ico-coche »).
+
+     On cherche aussi leurs **écritures détournées** — « ✓ » en script,
+     « \2713 » en CSS, « &#10003; » ou « &check; » en HTML — parce que c'est
+     exactement la forme que prend l'émoji chassé qui revient : la page qui
+     écrivait déjà « &#10003; » le montrait. */
+  {
+    const vus = releve(new RegExp([
+      '🔒', '✓', '✔', '✅',
+      '\\\\u\\{?(?:2713|2714|2705|1F512)\\}?', '\\\\uD83D\\\\uDD12',
+      '\\\\(?:2713|2714|2705|1F512)(?![0-9a-f])',
+      '&#(?:10003|10004|9989|128274);', '&#x0*(?:2713|2714|2705|1F512);', '&(?:check|checkmark);',
+    ].join('|'), 'giu'));
+    for (const [nom, l] of vus) {
+      const quoi = [...new Set(l.map((x) => x.texte))].join(' ');
+      ko(nom, `émoji ${quoi} dans l’interface (${lignes(l)}) : il se dessine autrement `
+        + 'd’un téléphone à l’autre et jure avec les icônes au trait. À la place : '
+        + '<i class="tbf-ico tbf-ico-cadenas"> ou tbf-ico-coche, avec un texte accessible.');
+    }
+    if (!vus.size) ok('les émojis', 'aucun cadenas ni coche en émoji dans public/');
+  }
+
+  /* --- aucun « .calc( »
+
+     Un point devant « calc » ne fait pas une petite valeur : il fait une
+     valeur **invalide**, et le navigateur jette la déclaration entière sans
+     un mot en console. L'ombre, l'écart ou l'arrondi disparaît, la carte
+     s'affiche presque comme prévu, et rien ne le signale — cartes.css en a
+     porté cinq d'un coup.
+
+     La barre de recherche ignore « objet.calc( » en script : précédé d'un
+     nom, d'une parenthèse ou d'un crochet, c'est un appel de méthode. */
+  {
+    const vus = releve(/(?<![\w$)\]])\.calc\(/g);
+    for (const [nom, l] of vus) {
+      ko(nom, `« .calc( » (${lignes(l)}) : le point devant calc rend la valeur `
+        + 'invalide, et le navigateur jette la déclaration entière sans rien dire.');
+    }
+    if (!vus.size) ok('.calc(', 'aucune valeur invalide par un point devant calc');
+  }
+
+  /* --- chaque rail d'onglets porte son ton
+
+     Le rail « .tbf-onglets » prend le ton de sa destination sur le hub
+     (flare pour jouer, bleu pour posséder, vert pour le foot, violet pour les
+     gens, or pour acheter, craie pour soi), et l'onglet actif en prend la
+     couleur. Sans « data-ton », ui.css le peint en or par défaut : l'écran
+     des amis aurait l'onglet de la boutique, sans que rien ne casse.
+
+     Le balisage **et** les gabarits de chaîne : deux rails sur neuf sont
+     écrits par le script de leur page (deck, télétexte). Un rail posé par
+     « classList.add » ne se relit pas ici ; il est refusé plutôt que laissé
+     passer sans vérification. */
+  {
+    const sansTon = new Map();
+    const noter = (nom, texte, index, raison) => {
+      if (!sansTon.has(nom)) sansTon.set(nom, []);
+      sansTon.get(nom).push({ ligne: ligneDe(texte, index), raison });
+    };
+    let rails = 0;
+    for (const s of sources.filter((x) => x.sorte !== 'css')) {
+      const balises = /<[a-z][\w-]*\b[^>]*?\bclass\s*=\s*(["'])((?:(?!\1)[\s\S])*?)\1[^>]*>/gi;
+      for (const m of s.net.matchAll(balises)) {
+        if (!/(?<![\w-])tbf-onglets(?![\w-])/.test(m[2])) continue;
+        rails++;
+        if (!/\bdata-ton\s*=/.test(m[0])) noter(s.nom, s.net, m.index, 'sans data-ton');
+      }
+      for (const m of s.net.matchAll(/(?:classList\.(?:add|toggle)\([^)]*|className\s*=[^;\n]*)(?<![\w-])tbf-onglets(?![\w-])/g)) {
+        rails++;
+        noter(s.nom, s.net, m.index, 'posé par script');
+      }
+    }
+    for (const [nom, l] of sansTon) {
+      const parScript = l.filter((x) => x.raison === 'posé par script');
+      const nus = l.filter((x) => x.raison === 'sans data-ton');
+      if (nus.length) {
+        ko(nom, `rail .tbf-onglets sans data-ton (${lignes(nus)}) : l’onglet actif `
+          + 'prend l’or par défaut au lieu du ton de l’écran — flare, bleu, vert, '
+          + 'violet, or ou craie selon sa destination sur le hub.');
+      }
+      if (parScript.length) {
+        ko(nom, `rail .tbf-onglets posé par script (${lignes(parScript)}) : son data-ton `
+          + 'ne se vérifie pas ici. Écris le rail dans le balisage ou un gabarit.');
+      }
+    }
+    /* Zéro rail trouvé est une panne du contrôle, pas une bonne nouvelle :
+       neuf écrans en portent un. Un motif qui ne reconnaît plus la balise
+       rendrait ce contrôle vert pour toujours. */
+    if (!rails) ko('les onglets', 'aucun rail .tbf-onglets trouvé : le motif ne reconnaît plus la balise');
+    else if (!sansTon.size) ok('les onglets', `${rails} rail(s), tous au ton de leur écran`);
+  }
 }
 
 console.log(fautes

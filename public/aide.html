@@ -28,20 +28,26 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    revenant. Une barre de progression qui se remplit toute seule pendant qu'on
    joue est la moitié de la promesse de cet écran — l'autre moitié est qu'on
    n'a rien eu à cliquer pour ça. */
+/* Sa lueur d'or se pose sur le panneau opaque commun : elle était dorée à
+   12 % sur son bord gauche, c'est-à-dire transparente, et la foule de la
+   photo passait sous le compte. Même traitement pour les étapes faites et
+   pour la plaque de fin, plus bas. */
 .entete{margin:12px 14px 0;padding:14px 16px 15px;border-radius:14px;
   border:1px solid rgba(245,195,59,.34);
-  background:linear-gradient(140deg,rgba(245,195,59,.12),rgba(8,11,16,.8))}
+  background:linear-gradient(140deg,rgba(245,195,59,.12),rgba(245,195,59,0) 70%),var(--panneau)}
 .entete .haut{display:flex;align-items:baseline;gap:10px}
 .entete .compte{font-family:var(--banner);font-size:28px;line-height:1;color:var(--projo)}
-.entete .compte small{font-size:13px;opacity:.5}
-.entete .quoi{flex:1;min-width:0;font-size:11px;letter-spacing:.16em;opacity:.55;
+.entete .compte small{font-size:13px;opacity:.88}
+.entete .quoi{flex:1;min-width:0;font-size:11px;letter-spacing:.16em;opacity:.88;
   text-transform:uppercase;text-align:right}
-.rail{margin-top:11px;height:9px;border-radius:99px;background:rgba(255,255,255,.08);
+/* Dix pixels : la jauge est la première chose qu'on regarde en arrivant, et
+   neuf pixels se perdent au soleil. */
+.rail{margin-top:11px;height:10px;border-radius:99px;background:rgba(255,255,255,.08);
   overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
 .rail i{display:block;height:100%;width:0;border-radius:99px;
   background:linear-gradient(90deg,var(--flare),var(--projo));
   transition:width .9s cubic-bezier(.16,1,.3,1)}
-.entete .phrase{margin-top:10px;font-size:12.5px;line-height:1.55;opacity:.78}
+.entete .phrase{margin-top:10px;font-size:12.5px;line-height:1.55;opacity:.9}
 
 /* ================================================== une étape du parcours */
 .pas{margin:12px 14px 0;border-radius:14px;overflow:hidden;position:relative;
@@ -49,19 +55,22 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* **Faite : la plaque s'allume.** C'est le seul endroit de la page où la
    couleur veut dire quelque chose, donc elle ne sert qu'à ça. */
 .pas.ok{border-color:rgba(30,158,106,.5);
-  background:linear-gradient(140deg,rgba(30,158,106,.13),rgba(8,11,16,.72))}
+  background:linear-gradient(140deg,rgba(30,158,106,.13),rgba(30,158,106,0) 70%),var(--panneau)}
 .pas .tete{display:flex;align-items:center;gap:12px;padding:13px 15px}
 .pas .num{width:30px;height:30px;flex:none;border-radius:50%;display:grid;place-items:center;
   font-family:var(--banner);font-size:14px;border:1.5px solid rgba(255,255,255,.22);
-  color:rgba(255,255,255,.5)}
-.pas.ok .num{border-color:var(--vert);color:#04060A;background:var(--vert)}
+  color:rgba(255,255,255,.88)}
+/* Faite, la pastille porte la coche au trait du jeu (icône commune, qui prend
+   la couleur du texte) : l'émoji qu'elle portait se dessinait autrement d'un
+   téléphone à l'autre. « FAIT », juste à côté, dit la même chose en mots. */
+.pas.ok .num{border-color:var(--vert);color:#04060A;background:var(--vert);font-size:16px}
 .pas .nom{flex:1;min-width:0;font-family:var(--banner);font-size:15px;letter-spacing:.06em}
-.pas .etat{font-size:9.5px;letter-spacing:.22em;opacity:.45}
-.pas.ok .etat{opacity:.9;color:var(--vert)}
+.pas .etat{font-size:11px;letter-spacing:.16em;opacity:.88}
+.pas.ok .etat{opacity:1;color:var(--vert)}
 .pas .corps{padding:0 15px 14px;display:grid;grid-template-columns:96px 1fr;gap:13px;
   align-items:start}
 .pas .texte p{margin:0 0 8px;font-size:12.5px;line-height:1.6}
-.pas .texte p.pourquoi{opacity:.62;margin-bottom:0}
+.pas .texte p.pourquoi{opacity:.88;margin-bottom:0}
 /* Le bouton n'existe que sur une étape qui reste à faire, et il n'est pas
    seulement caché : une plaque en `display:none` reste dans le document, et la
    tentation serait de la rallumer un jour « pour ceux qui veulent y retourner ».
@@ -75,7 +84,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    quarante-quatre, les marges rendent la hauteur, le lien ne change pas
    d'allure. */
 .pas .repet{display:flex;align-items:center;margin:-20px 15px 0;font-size:11px;
-  letter-spacing:.06em;color:var(--projo);opacity:.72;text-decoration:none;
+  letter-spacing:.06em;color:var(--projo);opacity:.9;text-decoration:none;
   min-height:44px}
 
 /* Le visuel de gauche. Carré, pour qu'une carte, un dos de booster et un
@@ -89,8 +98,11 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* La carte du joueur, réduite. `--u` vient de cartes.css et pilote toute
    l'échelle du dessin ; on ne touche donc à rien d'autre. */
 .vign .fz{width:100%;height:100%}
+/* « PAS ENCORE », sur le bas de la vignette. Huit pixels à 60 % : à onze, il
+   tient dans les quatre-vingt-seize de la vignette si l'espacement des
+   capitales se resserre. */
 .vign .cadenas{position:absolute;inset:auto 0 0;padding:4px 0 5px;text-align:center;
-  font-size:8px;letter-spacing:.2em;background:rgba(4,6,10,.82);opacity:.6}
+  font-size:11px;letter-spacing:.08em;background:rgba(4,6,10,.88);color:rgba(242,238,228,.9)}
 
 /* **L'allumage.** Une étape franchie depuis la dernière visite ne se contente
    pas d'être verte : elle s'allume, une par une, avec un temps entre chaque.
@@ -106,11 +118,18 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   .pas.neuf{animation:none;outline:2px solid var(--vert);outline-offset:2px}
   .rail i{transition:none}
 }
+/* Le même partage sous le mode calme du tiroir (contrat C4) : un sélecteur
+   d'attribut n'entre pas dans une requête @media, d'où le double, règle pour
+   règle. L'étape neuve se cerne de vert au lieu de s'allumer — elle reste
+   repérable, sans bouger. */
+html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--vert);outline-offset:2px}
+html[data-calme~="animations"] .rail i{transition:none}
 
 /* ============================================================== la FAQ */
 .rub{margin:16px 14px 0}
-.rub h2{font-family:var(--banner);font-size:11px;letter-spacing:.26em;opacity:.45;
-  margin:0 0 8px;padding-left:2px}
+/* Le titre de rubrique est cousu (`.tbf-cousu`, dans ui.css) : il ne reste
+   ici que sa place. */
+.rub h2{margin:0 0 8px;padding-left:2px}
 .qa{border:1px solid var(--trait);border-radius:12px;background:var(--panneau);
   margin-bottom:8px;overflow:hidden}
 .qa summary{padding:12px 14px;font-size:13px;line-height:1.45;cursor:pointer;
@@ -120,16 +139,18 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   opacity:.4;line-height:1;flex:none}
 .qa[open] summary::after{content:'–'}
 .qa[open] summary{background:rgba(255,255,255,.03)}
-.qa .r{padding:0 14px 14px;font-size:12.5px;line-height:1.65;opacity:.75}
+.qa .r{padding:0 14px 14px;font-size:12.5px;line-height:1.65;opacity:.9}
 
 .tabs{margin-top:14px}
-.vide{margin:24px 14px;text-align:center;font-size:12.5px;line-height:1.6;opacity:.55}
+/* Posé sur la photo quand personne n'est connecté : il a son panneau. */
+.vide{margin:24px 14px;padding:18px 16px;text-align:center;font-size:12.5px;line-height:1.6;opacity:.9;
+  background:var(--panneau);border:1px solid var(--trait);border-radius:14px}
 .fini{margin:12px 14px 0;padding:16px;border-radius:14px;text-align:center;
   border:1px solid rgba(30,158,106,.45);
-  background:linear-gradient(140deg,rgba(30,158,106,.16),rgba(8,11,16,.8))}
+  background:linear-gradient(140deg,rgba(30,158,106,.16),rgba(30,158,106,0) 70%),var(--panneau)}
 .fini b{display:block;font-family:var(--banner);font-size:17px;letter-spacing:.1em;
   margin-bottom:6px}
-.fini p{margin:0;font-size:12.5px;line-height:1.55;opacity:.78}
+.fini p{margin:0;font-size:12.5px;line-height:1.55;opacity:.9}
 
 /* **Le bas de la page, et la barre du navigateur mobile.**
 
@@ -157,7 +178,8 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <main id="app">
   <p class="tbf-sous">Ce qu’il y a à faire, et pourquoi</p>
 
-  <div class="tabs tbf-onglets">
+  <!-- Le rail à la craie de ce qui te concerne, le ton de cet écran sur l'accueil. -->
+  <div class="tabs tbf-onglets" data-ton="craie">
     <button data-t="pas" class="tbf-onglet on">PREMIERS PAS</button>
     <button data-t="faq" class="tbf-onglet">QUESTIONS</button>
   </div>
@@ -255,7 +277,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
   const PAS = (e, i) => `<article class="pas${e.fait ? ' ok' : ''}" data-cle="${esc(e.cle)}">
       <div class="tete">
-        <span class="num">${e.fait ? '&#10003;' : i + 1}</span>
+        <span class="num">${e.fait ? '<i class="tbf-ico tbf-ico-coche" aria-hidden="true"></i>' : i + 1}</span>
         <span class="nom">${esc(e.titre).toUpperCase()}</span>
         <span class="etat">${e.fait ? 'FAIT' : 'À FAIRE'}</span>
       </div>
@@ -302,7 +324,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   function vueFaq() {
     if (!laFaq) return '<div class="tbf-spin"></div>';
     return laFaq.map((r) => `<section class="rub">
-        <h2>${esc(r.titre).toUpperCase()}</h2>
+        <h2 class="tbf-cousu">${esc(r.titre).toUpperCase()}</h2>
         ${r.questions.map((x) => `<details class="qa">
             <summary>${esc(x.q)}</summary>
             <div class="r">${esc(x.r)}</div>

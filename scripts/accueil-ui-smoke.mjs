@@ -1687,48 +1687,121 @@ if (process.env.CAPTURE) {
        puisque aucun autre chemin ne mène à l'icône ;
      — rien des deux : **on ne propose rien du tout**. Une invitation qui ne
        mène nulle part est pire qu'une absence d'invitation, et c'est le cas
-       qu'on ne voit jamais en essayant sur son propre téléphone. */
+       qu'on ne voit jamais en essayant sur son propre téléphone.
+
+   **L'invitation a quitté l'accueil pour le tiroir** (lot 0, chantier 10).
+   Elle vivait dans le pied du hub (`#installe`), l'endroit le plus serré du
+   jeu, où une ligne qui paraît certains jours et pas d'autres faisait monter
+   et descendre le bouton d'entrée. Elle est maintenant l'entrée
+   `#tbf-installer` du tiroir de `menu.js`, présent sur tous les écrans, avec
+   sa consigne `#tbf-installer-ios` pour l'iPhone.
+
+   Les contrôles la suivent là où elle est, et gardent ce qu'ils protégeaient :
+   les trois cas. Relire `#installe`, qui n'existe plus, les aurait laissés
+   passer sans rien vérifier — ou rougir sur un défaut qui n'en est pas un.
+   Et l'accueil est tenu de **ne pas la reprendre** : c'est la moitié du
+   déménagement qui se perd le plus facilement. */
 
 {
   const page = await ouvrir();
   await new Promise((r) => setTimeout(r, 400));
 
-  const visible = () => page.evaluate(() => {
-    const z = document.getElementById('installe');
-    return Boolean(z) && !z.hidden
-      && getComputedStyle(z).display !== 'none' ? z.textContent.trim() : null;
+  /* Ce que le hub montre d'une invitation à installer, tiroir fermé.
+     `innerText` ne rend que le texte dessiné : le tiroir replié (`hidden`) et
+     les commentaires n'y sont pas, une ligne réellement affichée y est. */
+  const auHub = () => page.evaluate(() => {
+    const t = document.body.innerText.replace(/\s+/g, ' ');
+    const m = t.match(/[^.]{0,20}(Installer l|écran d’accueil)[^.]{0,20}/i);
+    return m ? m[0].trim() : null;
+  });
+  /* L'entrée du tiroir, telle que le code la laisse : née cachée, elle ne
+     paraît que si elle a quelque chose à faire. Absente, elle rend
+     `undefined`, et les contrôles qui l'attendent rougissent. */
+  const entree = () => page.evaluate(() => {
+    const b = document.getElementById('tbf-installer');
+    return b ? { cachee: b.hidden, facon: b.dataset.facon ?? '' } : undefined;
   });
 
-  check('sans rien à proposer, on ne propose rien', await visible() === null);
+  check('sans rien à proposer, on ne propose rien',
+    await auHub() === null && (await entree())?.cachee === true
+    || (console.log('        l’accueil dit :', await auHub(),
+      '· le tiroir :', JSON.stringify(await entree())), false));
 
   /* La proposition du navigateur. On la simule telle qu'elle arrive : un
-     événement annulable, que `pwa.js` retient. */
+     événement annulable, que `pwa.js` retient et annonce par « tbf-pwa ». */
   await page.evaluate(() => window.dispatchEvent(
     new Event('beforeinstallprompt', { cancelable: true })));
   await new Promise((r) => setTimeout(r, 150));
-  check('quand le navigateur sait installer, le bouton paraît',
-    /Installer/.test(await visible() ?? '')
-    || (console.log('        il dit :', await visible()), false));
+
+  /* Le hub ne bouge pas d'une ligne : c'est la raison du déménagement. */
+  check('et l’accueil ne la reprend pas quand elle arrive', await auHub() === null
+    || (console.log('        l’accueil dit :', await auHub()), false));
+
+  /* On ouvre le tiroir comme un joueur, et on lit ce qu'il voit : un bouton
+     dessiné, qui propose d'installer. */
+  await page.click('#burger');
+  await new Promise((r) => setTimeout(r, 300));
+  const vu = await page.evaluate(() => {
+    const b = document.getElementById('tbf-installer');
+    if (!b) return null;
+    const r = b.getBoundingClientRect();
+    return {
+      texte: r.width > 0 && r.height > 0 ? b.textContent.trim() : null,
+      facon: b.dataset.facon ?? '',
+    };
+  });
+  check('quand le navigateur sait installer, le bouton paraît dans le tiroir',
+    /Installer/.test(vu?.texte ?? '') && vu.facon === 'proposer'
+    || (console.log('        il dit :', JSON.stringify(vu)), false));
   await page.close();
 }
 
 {
-  /* Un iPhone. `pwa.js` le reconnaît à la signature du navigateur, et la page
-     explique le geste au lieu d'offrir un bouton qui ne ferait rien. */
+  /* Un iPhone. `pwa.js` le reconnaît à la signature du navigateur, et
+     l'entrée du tiroir explique le geste au lieu d'offrir un bouton qui ne
+     ferait rien. */
   const page = await ouvrir();
   await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) '
     + 'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1');
   await page.reload({ waitUntil: 'networkidle0' });
+  /* L'écran d'ouverture ne revient qu'une fois par session, mais tant qu'il
+     est là il prend le clic du bouton de menu : voir `ouvrir()`. */
+  await page.waitForFunction(() => !document.getElementById('ouverture'),
+    { timeout: OUVERTURE_MS }).catch(() => {});
   await new Promise((r) => setTimeout(r, 400));
 
-  const texte = await page.evaluate(() => {
-    const z = document.getElementById('installe');
-    return z && !z.hidden ? z.textContent.replace(/\s+/g, ' ').trim() : null;
+  /* Le geste du joueur : ouvrir le tiroir, toucher l'entrée. Sur iPhone elle
+     ne lance rien — Safari n'a rien à lancer —, elle déplie la consigne. */
+  await page.click('#burger');
+  await new Promise((r) => setTimeout(r, 300));
+  const avant = await page.evaluate(() => {
+    const b = document.getElementById('tbf-installer');
+    return b ? { cachee: b.hidden, facon: b.dataset.facon ?? '' } : null;
   });
-  check('sur iPhone, on explique le geste', /écran d’accueil/.test(texte ?? '')
-    || (console.log('        il dit :', texte), false));
+  if (avant && !avant.cachee) await page.click('#tbf-installer');
+  await new Promise((r) => setTimeout(r, 150));
+  const apres = await page.evaluate(() => {
+    const b = document.getElementById('tbf-installer');
+    const c = document.getElementById('tbf-installer-ios');
+    const r = c?.getBoundingClientRect();
+    return {
+      texte: c && !c.hidden && r.height > 0 ? c.textContent.replace(/\s+/g, ' ').trim() : null,
+      deplie: b?.getAttribute('aria-expanded') ?? null,
+      relie: b?.getAttribute('aria-controls') ?? null,
+    };
+  });
+  check('sur iPhone, on explique le geste', /écran d’accueil/.test(apres.texte ?? '')
+    || (console.log('        il dit :', apres.texte, '· l’entrée :', JSON.stringify(avant)), false));
+  /* Ce que protégeait « pas de bouton qui ne ferait rien » : l'ancien
+     `#poser` appelait `TBF_PWA.installer()`, qui ne fait rien sur Safari.
+     L'entrée du tiroir est un bouton, donc on vérifie qu'elle ne propose
+     **pas** d'installer (`proposer`) mais d'expliquer, et que la toucher
+     fait quelque chose de visible — la consigne se déplie, et un lecteur
+     d'écran l'entend (`aria-expanded`, `aria-controls`). */
   check('et on ne montre pas de bouton qui ne ferait rien',
-    await page.evaluate(() => !document.getElementById('poser')));
+    avant?.facon === 'expliquer' && apres.deplie === 'true'
+    && apres.relie === 'tbf-installer-ios'
+    || (console.log('        l’entrée :', JSON.stringify(avant), JSON.stringify(apres)), false));
   await page.close();
 }
 
@@ -1758,9 +1831,22 @@ if (process.env.CAPTURE) {
   const lire = () => page.evaluate(() => {
     const b = (id) => document.getElementById(id);
     const vis = (e) => Boolean(e) && !e.hidden && e.getBoundingClientRect().width > 0;
+    /* **La coche est une icône, plus un caractère** (lot 0, chantier 6). Le
+       « ✓ » accolé à « ÉVOLUTION n / m » se dessinait différemment d'un
+       téléphone à l'autre et jurait avec les icônes au trait du jeu ; c'est
+       maintenant `<i class="tbf-ico tbf-ico-coche">`, un masque sans texte.
+       Chercher « ✓ » dans `textContent` ne la trouve donc plus — et « la
+       coche a quitté la plaque » passait sans rien vérifier. On lit l'icône
+       elle-même : présente, dessinée (un masque sans règle ne mesure rien),
+       et nommée, puisque sans texte c'est son `aria-label` qui dit à un
+       lecteur d'écran ce que la coche veut dire (contrat C1). */
+    const coche = b('quiEvo')?.querySelector('.tbf-ico-coche') ?? null;
     return {
       src: document.querySelector('#pile .pose.on')?.getAttribute('src') ?? '',
       plaque: b('quiEvo')?.textContent.trim() ?? '',
+      coche: Boolean(coche),
+      cocheVue: Boolean(coche) && coche.getBoundingClientRect().width > 0,
+      cocheDit: coche?.getAttribute('aria-label')?.trim() ?? '',
       avant: vis(b('ageAvant')), apres: vis(b('ageApres')),
       avantMort: b('ageAvant')?.disabled ?? null,
       apresMort: b('ageApres')?.disabled ?? null,
@@ -1778,8 +1864,16 @@ if (process.env.CAPTURE) {
      disparaît déplace la plaque sous le doigt entre deux appuis. */
   check('et celle du dernier âge est inerte, pas absente', v.apresMort === true && v.apres);
   check('rien à valider tant qu’on regarde ce qu’on montre déjà', v.valider === false);
+  /* L'icône, et non plus « ✓ » : voir `lire()`. */
   check('et la plaque porte la coche de ce qu’on montre',
-    /✓/.test(v.plaque) || (console.log('        elle dit :', v.plaque), false));
+    v.coche && v.cocheVue && v.cocheDit !== ''
+    || (console.log('        elle dit :', v.plaque, '· coche :', v.coche,
+      '· dessinée :', v.cocheVue, '· nommée :', JSON.stringify(v.cocheDit)), false));
+  /* Et l'émoji ne revient pas à côté d'elle : deux coches, dont une qui
+     change d'allure selon le téléphone, c'est le défaut que le chantier 6
+     a retiré. */
+  check('et c’est l’icône du jeu, pas un émoji', !/[✓✔✅]/.test(v.plaque)
+    || (console.log('        elle dit :', v.plaque), false));
 
   /* On remonte la lignée jusqu'au premier âge. Trois dessins distincts : c'est
      le contrôle qui prouve que le défilé montre autre chose et pas la même
@@ -1807,7 +1901,10 @@ if (process.env.CAPTURE) {
   /* Le bouton n'est là **que** maintenant : ce qu'on regarde n'est plus ce
      qu'on montre. */
   check('et c’est là que le bouton se propose', v.valider === true);
-  check('la coche a quitté la plaque', /✓/.test(v.plaque) === false);
+  /* L'icône a quitté la plaque, et pas seulement un caractère qui n'y est
+     plus depuis le chantier 6 : chercher « ✓ » passait ici quoi qu'il arrive. */
+  check('la coche a quitté la plaque', v.coche === false
+    || (console.log('        elle dit :', v.plaque, '· coche encore là'), false));
 
   await page.click('#ageValider');
   await page.waitForFunction(
@@ -1819,8 +1916,10 @@ if (process.env.CAPTURE) {
     || (console.log('        la base dit :', apresChoix), false));
   v = await lire();
   check('le bouton s’efface, il n’y a plus rien à décider', v.valider === false);
-  check('et la coche revient sur la plaque', /✓/.test(v.plaque)
-    || (console.log('        elle dit :', v.plaque), false));
+  /* L'icône, dessinée et nommée, comme au premier contrôle : voir `lire()`. */
+  check('et la coche revient sur la plaque', v.coche && v.cocheVue && v.cocheDit !== ''
+    || (console.log('        elle dit :', v.plaque, '· coche :', v.coche,
+      '· dessinée :', v.cocheVue, '· nommée :', JSON.stringify(v.cocheDit)), false));
 
   /* ------------------------------ et au retour, dans le **même** navigateur
 

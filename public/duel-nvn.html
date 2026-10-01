@@ -35,25 +35,43 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .top{display:flex;align-items:center;justify-content:space-between;
   padding:14px var(--tbf-haut-d,62px) 6px var(--tbf-haut-g,62px)}
 .top h1{font-family:var(--banner);font-size:20px;letter-spacing:.15em;margin:0}
-.top h1 small{display:block;font-size:8.5px;letter-spacing:.3em;opacity:.5;margin-top:3px;font-family:var(--ui)}
-h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;margin:20px 16px 9px}
-h2 i{font-style:normal;opacity:.7}
+/* **Onze pixels et 88 %, au-dessus du plancher de tout texte qui informe.**
+   Le sous-titre était à 8,5 px et à moitié éteint : une devise, peut-être,
+   mais écrite pour ne pas être lue. L'interlettrage recule pour que la ligne
+   tienne entre les deux boutons flottants. */
+.top h1 small{display:block;font-size:11px;letter-spacing:.16em;opacity:.88;margin-top:3px;font-family:var(--ui)}
+/* Les titres de rubrique sont des titres cousus (`.tbf-cousu`, dans ui.css) :
+   la page ne garde que leur place. Ils étaient à 42 % d'opacité — un intertitre
+   qu'on devine au lieu de le lire. La précision entre parenthèses reste plus
+   petite que le titre, jamais sous le plancher. */
+h2{margin:20px 16px 9px}
+h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
+  text-transform:none;opacity:.88}
 
-.formats{display:flex;gap:6px;padding:0 14px}
+/* **Deux rails, au ton de l'écran.** Le format et la portée sont des choix
+   exclusifs — un seul vaut à la fois — et c'est exactement ce que dit le rail
+   `.tbf-onglets` partout ailleurs. Ils avaient chacun leurs boutons à eux, un
+   jaune, un blanc, deux façons d'écrire « choisi » sur le même écran. Le rail
+   porte le ton flare, celui des arènes sur l'accueil. La page ne garde que la
+   place des rails ; la matière est celle de ui.css. */
+.formats{margin:0 14px}
 /* Les deux tribunes. Deux boutons larges et de même poids : aucun des deux
    n'est le choix par défaut, et c'est le propos — on vient tenir l'une ou
    l'autre. */
+/* Ce sont des plaques (`.tbf-plaque`) : la tribune choisie prend le ton flare,
+   l'autre reste en béton. La page ne garde que la mise en page — deux colonnes
+   de même poids, le nom au-dessus du compte. Le nom passe à la ligne plutôt
+   que de s'abréger : « Borussia Mön… » ne dit plus pour qui l'on chante. */
 .tribunes{display:flex;gap:8px;padding:0 14px}
-.trib{flex:1;min-width:0;padding:11px 8px;border-radius:9px;cursor:pointer;
-  border:1px solid rgba(242,238,228,.18);background:rgba(0,0,0,.28);color:inherit;
-  font-family:var(--banner);font-size:12.5px;letter-spacing:.04em;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.trib.on{background:var(--craie);color:#0B0E13;border-color:var(--craie)}
+.trib{flex:1;min-width:0;padding:11px 8px;flex-direction:column;gap:3px;
+  overflow-wrap:anywhere}
 .raison.chezmoi b{color:var(--projo)}
-.fmt{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.14);border-radius:9px;
-  color:inherit;padding:12px 4px;font-family:var(--banner);font-size:13px;letter-spacing:.05em;cursor:pointer;
-  opacity:.5}
-.fmt.on{opacity:1;border-color:var(--projo);background:rgba(245,195,59,.12);color:var(--projo)}
+/* L'onglet de format porte sa prime sur une seconde ligne : sur la même, à
+   trois cent soixante pixels, « 2V2 +15 % » ne tenait pas dans un cinquième
+   de rail et s'abrégeait. La colonne centre les deux lignes, et l'onglet sans
+   prime avec elles. */
+.fmt{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.fmt small{display:block;font-size:11px;line-height:14px;letter-spacing:.02em}
 
 /* La portée de la liste des matchs. Elle imite les onglets de format juste
    au-dessus : même geste, même endroit, donc rien de neuf à comprendre. */
@@ -61,36 +79,42 @@ h2 i{font-style:normal;opacity:.7}
 /* « Peu importe le format » : une case, sous les formats. Elle n’est pas un
    format de plus — cocher « tous » à côté de cinq choix exclusifs se lirait
    comme un sixième. D’où la forme d’un interrupteur, et sa place en dessous. */
-.souple{display:flex;align-items:center;gap:10px;width:calc(100% - 28px);margin:8px 14px 0;
-  background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.13);border-radius:9px;
-  padding:9px 11px;min-height:44px;color:inherit;cursor:pointer;text-align:left;
-  font-family:var(--banner);font-size:11px;letter-spacing:.06em;opacity:.65}
-.souple.on{opacity:1;border-color:var(--projo);background:rgba(245,195,59,.1);color:var(--projo)}
+/* Une plaque, comme tout ce qui se touche : en béton tant qu'elle est levée,
+   au ton flare une fois cochée. La page garde la mise en page — la case à
+   gauche, le texte aligné à gauche sur deux lignes — et la matière vient de
+   ui.css. La coche est l'icône commune (`tbf-ico-coche`) : l'émoji se
+   dessinait autrement d'un téléphone à l'autre, et `aria-pressed` dit l'état
+   à qui ne voit pas la case. */
+.souple{gap:10px;width:calc(100% - 28px);margin:8px 14px 0;
+  padding:9px 11px;min-height:44px;text-align:left;justify-content:flex-start}
+.souple .t{flex:1;min-width:0}
 .souple .case{flex:none;width:17px;height:17px;border-radius:5px;display:grid;place-items:center;
-  border:1px solid currentColor;font-size:11px;line-height:1}
-.souple small{display:block;font-family:var(--ui);font-size:9.5px;letter-spacing:.02em;
-  opacity:.6;margin-top:3px;color:var(--craie)}
-.portee{display:flex;gap:6px;padding:0 14px 8px}
-/* Quarante-quatre pixels : la pulpe d'un doigt, et le minimum des deux
-   plateformes. L'audit d'interface les a tous comptés d'un coup — ce n'est
-   jamais une faute de conception, c'est une hauteur qu'on ne mesure pas en
-   regardant. */
-.pt{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.13);border-radius:999px;
-  color:inherit;padding:8px;min-height:44px;font-size:10px;letter-spacing:.1em;cursor:pointer;opacity:.5;
-  font-family:var(--banner)}
-.pt.on{opacity:1;border-color:var(--craie)}
+  border:1px solid currentColor;font-size:13px;line-height:1}
+.souple small{display:block;font-family:var(--ui);font-size:11px;letter-spacing:.02em;
+  text-transform:none;margin-top:3px}
+.portee{margin:0 14px 8px}
 
 .matchs{padding:0 14px 8px;display:flex;flex-direction:column;gap:7px}
-.mt{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;
-  border:1px solid rgba(242,238,228,.11);background:var(--panneau);backdrop-filter:blur(10px);cursor:pointer}
-.mt.on{border-color:var(--projo);background:rgba(245,195,59,.09)}
+/* **Un fond, et plus de flou.** La ligne se posait sur un panneau dépoli :
+   le flou se recalculait à chaque image pendant qu'on fait défiler soixante
+   matchs, et au soleil le dépoli se lit comme du gris sale. `--panneau` est
+   opaque désormais ; la ligne choisie pose sa teinte d'or **par-dessus** au
+   lieu de le remplacer, sinon elle redevenait transparente.
+
+   **Et le nom ne s'abrège plus.** Quatre pastilles à onze pixels ne laissent
+   plus de place au nom sur un téléphone : elles passent à la ligne sous lui
+   plutôt que de réduire « FC Sion – FC Bâle » à « FC Sion –… ». */
+.mt{display:flex;flex-wrap:wrap;align-items:center;gap:7px 10px;padding:11px 12px;border-radius:10px;
+  border:1px solid rgba(242,238,228,.11);background:var(--panneau);cursor:pointer}
+.mt.on{border-color:var(--projo);
+  background:linear-gradient(rgba(245,195,59,.09),rgba(245,195,59,.09)),var(--panneau)}
 .mt img{width:22px;height:22px;object-fit:contain;flex:none}
-.mt .n{flex:1;min-width:0;font-family:var(--banner);font-size:13px;letter-spacing:.02em;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mt .q{font-size:9px;letter-spacing:.11em;font-family:var(--banner);border-radius:4px;padding:3px 6px;
+.mt .n{flex:1 1 130px;min-width:0;font-family:var(--banner);font-size:13px;letter-spacing:.02em;
+  overflow-wrap:anywhere}
+.mt .q{font-size:11px;letter-spacing:.08em;font-family:var(--banner);border-radius:4px;padding:2px 6px;
   border:1px solid currentColor;flex:none}
 .mt .q.classe{color:var(--projo)}
-.mt .q.entrainement{color:var(--gris);opacity:.7}
+.mt .q.entrainement{color:var(--gris)}
 /* Le doublement pour son club. En vert, la couleur du gain — et non celle du
    mode de duel, pour qu’on ne confonde pas les deux informations. */
 .mt .q.mien{color:var(--vert)}
@@ -98,40 +122,38 @@ h2 i{font-style:normal;opacity:.7}
    c'est une troisième information, et la confondre avec l'une des deux ferait
    lire « classé » là où il y a « du monde ». */
 .mt .q.attente{color:var(--bleu, #7FB2FF);border-color:currentColor}
-/* Le score : craie, et sa minute en plus petit. Le `i` n'est pas un
+/* Le score : craie, et sa minute en second niveau. Le `i` n'est pas un
    italique — il ne l'est nulle part dans ce jeu — c'est la balise la plus
-   courte pour un second niveau dans une pastille de neuf pixels. */
+   courte pour un second niveau dans une pastille. Second niveau par le poids,
+   plus par la taille ni par l'effacement : à huit pixels et à moitié
+   transparente, la minute ne se lisait pas. */
 .mt .q.sc{color:var(--craie);border-color:rgba(242,238,228,.22);
   font-variant-numeric:tabular-nums;white-space:nowrap}
-.mt .q.sc i{font-style:normal;opacity:.5;margin-left:4px;font-size:8px}
+.mt .q.sc i{font-style:normal;opacity:.88;margin-left:4px;font-weight:500}
 .mt .q.sc.live{color:var(--flare);border-color:currentColor}
 .raison.attend{opacity:.9}
 .raison.attend b{color:var(--projo);font-family:var(--banner);font-size:13px}
-/* Inviter, depuis la file. Posé dans le texte du voile, donc en ligne. */
-.inviter{display:inline-block;margin-top:12px;background:none;color:var(--projo);
-  border:1px solid var(--projo);border-radius:8px;font:inherit;font-size:13px;
-  padding:9px 16px;cursor:pointer}
-.inviter:hover{background:rgba(245,195,59,.12)}
-.trib small{display:block;font-family:var(--ui);font-size:9.5px;letter-spacing:.06em;
-  opacity:.55;margin-top:3px;font-weight:400}
+/* Inviter, depuis la file. Une plaque au ton violet — celui des gens — posée
+   au centre de la salle, à sa largeur. */
+.inviter{margin-top:12px;align-self:center}
+.trib small{display:block;font-family:var(--ui);font-size:11px;letter-spacing:.04em;
+  text-transform:none;font-weight:400}
 /* Ce qui se déplie sous le match choisi. Rattaché à lui par la bordure et le
    décalage : sans ça, on lirait une section de page posée au milieu d'une
    liste, et non la suite du geste qu'on vient de faire. */
 .souscarte{margin:-2px 0 4px 10px;padding:10px 0 4px 12px;
   border-left:2px solid var(--projo);display:flex;flex-direction:column;gap:2px}
-.souscarte h3{font-family:var(--banner);font-size:10px;letter-spacing:.18em;
-  opacity:.45;margin:8px 4px 6px;font-weight:500}
-.souscarte h3 i{font-style:normal;opacity:.7}
+/* « TA TRIBUNE » est un titre cousu, comme les rubriques du dessus. */
+.souscarte h3{margin:8px 4px 6px}
 .souscarte .raison{margin:0 4px 6px}
 .souscarte .tribunes{padding:0}
 .souscarte .gros{margin:8px 0 2px}
-.raison{margin:0 16px 10px;font-size:11px;opacity:.6;line-height:1.6}
+.raison{margin:0 16px 10px;font-size:11px;opacity:.88;line-height:1.6}
 
-.gros{margin:12px 14px;background:linear-gradient(180deg,var(--flare),#B32A1D);border:0;color:#fff;
-  border-radius:10px;padding:15px;font-family:var(--banner);font-size:15px;letter-spacing:.1em;cursor:pointer;
-  width:calc(100% - 28px)}
-.gros:disabled{filter:grayscale(.85);opacity:.45;cursor:default}
-.gros.calme{background:none;border:1px solid rgba(242,238,228,.2);color:inherit}
+/* « ENTRER EN FILE » est une plaque pleine largeur au ton flare — jouer. La
+   page garde sa place ; la matière, l'enfoncement et l'état fermé (gris,
+   intouchable) viennent de ui.css. */
+.gros{margin:12px 14px;width:calc(100% - 28px)}
 .avert{margin:0 14px 10px;border:1px solid rgba(245,195,59,.35);border-radius:10px;padding:12px 14px;
   background:rgba(245,195,59,.07);font-size:12px;line-height:1.65}
 .avert b{display:block;font-family:var(--banner);font-size:12.5px;letter-spacing:.06em;margin-bottom:5px;
@@ -139,7 +161,7 @@ h2 i{font-style:normal;opacity:.7}
 .avert a{color:var(--projo)}
 /* Le renvoi vers la répétition. Discret exprès — il ne se met pas sur le
    chemin de quelqu'un qui vient chercher un duel. */
-.repet{margin:0 14px 12px;font-size:11.5px;line-height:1.5;opacity:.62}
+.repet{margin:0 14px 12px;font-size:11.5px;line-height:1.5;opacity:.88}
 .repet a{color:var(--projo);text-decoration:none}
 .repet a b{font-weight:600}
 
@@ -152,19 +174,44 @@ h2 i{font-style:normal;opacity:.7}
 .score{display:flex;align-items:center;gap:10px;flex:none;
   padding:12px var(--tbf-haut-d,62px) 8px var(--tbf-haut-g,62px)}
 .score .camp{flex:1;min-width:0;text-align:center}
-.score .camp .nom{font-size:9px;letter-spacing:.16em;opacity:.5;font-family:var(--banner)}
+/* **Les mentions du bandeau : onze pixels et 88 %.** « TA TRIBUNE » et
+   « CLASSÉ » étaient à huit et neuf pixels, à moitié éteints — le genre de
+   mention qu'on ne lit qu'à l'arrêt, c'est-à-dire jamais pendant un duel.
+   L'interlettrage recule pour que « TA TRIBUNE » tienne entre l'horloge et le
+   bouton de retour à trois cent soixante pixels ; la hiérarchie tient par la
+   taille des chiffres, pas par l'effacement des mots. */
+.score .camp .nom{font-size:11px;letter-spacing:.1em;opacity:.88;font-family:var(--banner)}
 .score .camp .b{font-family:var(--banner);font-size:27px;line-height:1.05}
 .score .camp.moi .b{color:var(--projo)}
-.score .horloge{font-family:var(--banner);font-size:16px;letter-spacing:.06em;opacity:.75;flex:none}
-.score .horloge small{display:block;font-size:8px;letter-spacing:.14em;opacity:.5;text-align:center;
+.score .horloge{font-family:var(--banner);font-size:16px;letter-spacing:.06em;opacity:.9;flex:none}
+.score .horloge small{display:block;font-size:11px;letter-spacing:.08em;text-align:center;
   font-family:var(--ui);margin-top:2px}
 /* Le son se coupe d'un toucher, et le choix survit d'une page à l'autre.
    Un jeu qui sonne sans qu'on puisse l'arrêter se joue en silence, onglet
-   fermé. */
-.son{position:absolute;top:10px;right:10px;z-index:6;width:30px;height:30px;border-radius:50%;
-  border:1px solid rgba(242,238,228,.16);background:var(--panneau);backdrop-filter:blur(10px);color:var(--craie);
-  cursor:pointer;opacity:.55;font-size:13px;line-height:1;padding:0}
-.son.coupe{opacity:.3}
+   fermé. Fond opaque et sans flou : voir `.mt`.
+
+   **Dans le coin de l'arène, et non plus dans celui de l'écran.** Il était
+   posé à dix pixels du bord droit, en haut — exactement sous le bouton de
+   menu, qui le recouvrait tout entier : sur un téléphone, le bouton n'existait
+   pas. L'en-tête n'a pas de place à lui donner (« TA TRIBUNE » y tient déjà
+   tout juste) ; le coin haut de l'arène est le seul endroit libre, loin de
+   l'écart au centre et des tribunes en bas.
+
+   **Quarante-quatre pixels sous le doigt, trente à l'œil.** La zone de touche
+   est le bouton entier, transparent ; le disque visible est son `::before`.
+
+   **L'état se dit par le dessin, plus par l'effacement.** Le glyphe était à
+   55 %, et à 30 % une fois coupé : l'état n'était lisible qu'en comparant
+   deux gris. Le haut-parleur est maintenant en craie pleine, avec ses ondes
+   ou barré, et l'`aria-label` dit l'action. Au trait, en SVG : la note barrée
+   par un caractère combinant se rendait différemment d'un téléphone à
+   l'autre, comme les émojis que le socle a retirés. */
+.son{position:absolute;top:2px;right:2px;z-index:6;width:44px;height:44px;padding:0;border:0;
+  background:none;color:var(--craie);cursor:pointer;display:grid;place-items:center;isolation:isolate}
+.son::before{content:'';position:absolute;inset:7px;border-radius:50%;z-index:-1;
+  background:var(--panneau);border:1px solid rgba(242,238,228,.24)}
+.son svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
 
 /* ------------------------------------------------------------- l'arène
 
@@ -266,10 +313,14 @@ h2 i{font-style:normal;opacity:.7}
 /* Le nom du lieu et ce qu'il change. Un stade qui modifie les règles sans le
    dire donne l'impression que le jeu triche : la phrase est courte, en bas de
    l'arène, et elle ne bouge plus. */
+/* Onze pixels et 90 %, et une ombre dure en plus de la floue : la phrase est
+   posée sur le dessin du stade, et c'est elle qui dit pourquoi le souffle
+   revient plus vite ici. À neuf pixels et demi et à moitié éteinte, on
+   devinait un nom de stade et rien de ce qu'il change. */
 .lieu{position:absolute;left:10px;right:10px;bottom:7px;z-index:4;text-align:center;
-  font-size:9.5px;letter-spacing:.08em;line-height:1.35;opacity:.55;pointer-events:none;
-  text-shadow:0 1px 6px rgba(0,0,0,.9)}
-.lieu b{font-family:var(--banner);letter-spacing:.14em;color:var(--projo);opacity:.9}
+  font-size:11px;letter-spacing:.04em;line-height:1.3;opacity:.9;pointer-events:none;
+  text-shadow:0 1px 0 rgba(0,0,0,.9),0 1px 6px rgba(0,0,0,.9)}
+.lieu b{font-family:var(--banner);letter-spacing:.1em;color:var(--projo)}
 .lieu:empty{display:none}
 
 /* La corde elle-même, tendue en travers de l'arène. */
@@ -285,7 +336,7 @@ h2 i{font-style:normal;opacity:.7}
 .ecart{position:absolute;left:0;right:0;top:14px;text-align:center;font-family:var(--banner);
   font-size:34px;line-height:1;letter-spacing:.02em;pointer-events:none;
   text-shadow:0 3px 20px rgba(0,0,0,.85);transition:color .25s}
-.ecart small{display:block;font-size:8.5px;letter-spacing:.22em;opacity:.5;margin-top:5px}
+.ecart small{display:block;font-size:11px;letter-spacing:.14em;opacity:.88;margin-top:5px}
 
 /* La foule : un point par joueur, qui s'allume quand il chante. Ça remplace
    le fil de texte — on voit qui pousse, on ne le lit plus. */
@@ -299,29 +350,52 @@ h2 i{font-style:normal;opacity:.7}
 .tete.chante{transform:translateY(-7px) scale(1.35)}
 .foule .tete.parti{opacity:.25}
 
-.effets{display:flex;gap:5px;flex-wrap:wrap;padding:8px 14px 0;flex:none;min-height:0}
-.eff{font-family:var(--banner);font-size:8.5px;letter-spacing:.1em;border-radius:4px;padding:3px 7px;
+/* Les effets en cours. Onze pixels : un joueur réduit au silence doit lire
+   « Silence radio » d'un coup d'œil, pas le déchiffrer à huit pixels et demi
+   pendant que le chronomètre tourne. */
+.effets{display:flex;gap:5px;flex-wrap:wrap;padding:6px 14px 0;flex:none;min-height:0}
+.eff{font-family:var(--banner);font-size:11px;letter-spacing:.04em;border-radius:4px;padding:2px 7px;
   border:1px solid currentColor}
 
-.moi{padding:8px 14px 0;flex:none}
-.souffle{display:flex;align-items:center;gap:9px;margin-bottom:8px}
-.souffle .bar{flex:1;height:9px;border-radius:5px;background:rgba(242,238,228,.12);overflow:hidden}
+/* **`.jeu > .moi`, et non `.moi`.** La classe sert aussi à dire « mon camp »
+   ailleurs dans la page — le chiffre du bandeau, la foule, le territoire,
+   l'affiche — et la règle du bloc du joueur s'y appliquait en entier : huit
+   pixels de haut et quatorze de côté sur le chiffre de sa tribune, qui
+   tombait donc plus bas que celui d'en face, et sur son bloc de l'affiche, qui
+   se décalait vers la droite. Le bandeau y gagne ses huit pixels, et l'arène
+   avec lui. */
+.jeu > .moi{padding:8px 14px 0;flex:none}
+/* Les marges du bloc ont maigri de deux pixels chacune : c'est le prix des
+   mentions à onze pixels, payé ici plutôt que par l'arène. */
+.souffle{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+/* La jauge fait dix pixels : le plancher d'une barre qu'on lit pendant qu'on
+   joue. */
+.souffle .bar{flex:1;height:10px;border-radius:5px;background:rgba(242,238,228,.12);overflow:hidden}
 .souffle .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--bleu),#7FB4FF);
   transition:width .2s linear}
 .souffle b{font-family:var(--banner);font-size:12px;min-width:34px;text-align:right}
-.souffle span{font-size:8.5px;letter-spacing:.12em;opacity:.45;font-family:var(--banner)}
+.souffle span{font-size:11px;letter-spacing:.1em;opacity:.88;font-family:var(--banner)}
 
 /* Compact : trois portraits en ligne, le nom dessous. Ils prenaient un quart
-   de l'écran en carré ; c'est l'arène qui a besoin de cette place. */
-.equipe{display:flex;gap:6px;margin-bottom:8px}
+   de l'écran en carré ; c'est l'arène qui a besoin de cette place.
+
+   Fond opaque, sans flou : voir `.mt`. La tuile active pose son or par-dessus
+   le panneau au lieu de le remplacer. */
+.equipe{display:flex;gap:6px;margin-bottom:6px}
 .fz{flex:1;border:1px solid rgba(242,238,228,.13);border-radius:8px;padding:5px;text-align:center;
-  background:var(--panneau);backdrop-filter:blur(10px);cursor:default;min-width:0;display:flex;align-items:center;gap:6px}
-.fz.actif{border-color:var(--projo);background:rgba(245,195,59,.1)}
+  background:var(--panneau);cursor:default;min-width:0;display:flex;align-items:center;gap:6px}
+.fz.actif{border-color:var(--projo);
+  background:linear-gradient(rgba(245,195,59,.1),rgba(245,195,59,.1)),var(--panneau)}
 .fz.dispo{cursor:pointer;border-style:dashed;border-color:var(--vert)}
 .fz .txt{flex:1;min-width:0;text-align:left}
-.fz b{display:block;font-family:var(--banner);font-size:9.5px;letter-spacing:.02em;
+/* Le nom à onze pixels, en graisse moyenne et sans interlettrage : c'est ce
+   qui fait tenir « La Reprise » entier dans un tiers de téléphone. Les noms
+   longs — « Le Porteur de Banderole » — restent abrégés comme ils l'étaient
+   déjà : sur deux ou trois lignes, ils prendraient à l'arène la hauteur
+   qu'elle n'a pas, et le portrait dit déjà qui c'est. */
+.fz b{display:block;font-family:var(--banner);font-size:11px;font-weight:500;letter-spacing:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fz span{font-size:7.5px;opacity:.5;letter-spacing:.08em}
+.fz span{font-size:11px;opacity:.88;letter-spacing:.06em}
 /* La vignette du Fanzzy. Un nom seul ne dit pas qui est en jeu ; le visage,
    oui. fx.js la fait respirer toute seule — même en duel, un personnage figé
    a l'air d'un autocollant. */
@@ -333,7 +407,7 @@ h2 i{font-style:normal;opacity:.7}
   object-fit:cover;object-position:top center}
 .fz:not(.actif) .vig{filter:grayscale(.55);opacity:.7}
 
-.main{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:9px}
+.main{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:6px}
 /* Coût et nom en bas, pas au centre : depuis que la carte porte un dessin, un
    texte centré se pose en plein milieu du sujet — sur le visage du capo, sur
    la flamme du fumigène. En bas, il tombe sur la partie déjà sombre. */
@@ -349,15 +423,34 @@ h2 i{font-style:normal;opacity:.7}
   fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 .ct .illu{position:absolute;inset:0;width:100%;height:100%;
   object-fit:cover;object-position:center 34%;filter:brightness(.62)}
-/* Le voile qui rend le nom lisible sur le dessin : sept pixels de craie sur
-   une tribune éclairée ne se lisent pas sans lui. */
+/* Le voile qui rend le nom lisible sur le dessin : de la craie sur une
+   tribune éclairée ne se lit pas sans lui. */
 .ct::after{content:'';position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(4,6,10,.45),transparent 42%,rgba(4,6,10,.9))}
 .ct .co{position:relative;z-index:2;font-family:var(--banner);font-size:11px;
   color:var(--craie);line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.9)}
-.ct .nm{position:relative;z-index:2;font-size:7px;line-height:1.1;text-align:center;
-  opacity:.92;text-shadow:0 1px 3px rgba(0,0,0,.9)}
-.ct.hs{opacity:.35;cursor:default}
+/* **Le nom à onze pixels, en lettrage de banderole.** Il était à sept : « le
+   dessin porte la carte », et c'est vrai tant qu'on connaît le dessin. Un
+   joueur qui hésite entre deux cartes de la même famille lit le nom, et sept
+   pixels ne se lisent pas. L'Oswald étroit le fait tenir sur deux lignes dans
+   une carte de soixante pixels, sur la partie déjà sombre du dessin. */
+.ct .nm{position:relative;z-index:2;font-family:var(--banner);font-size:11px;line-height:1.05;
+  letter-spacing:.01em;text-align:center;
+  text-shadow:0 1px 0 rgba(0,0,0,.9),0 1px 3px rgba(0,0,0,.9)}
+/* **Hors service, elle s'éteint au lieu de pâlir.** Un tiers d'opacité
+   emportait le coût, le nom et le compte à rebours avec le dessin : tout ce
+   qu'il faut lire pour savoir quand la carte reviendra. La plaque de ui.css a
+   déjà la bonne réponse — elle garde sa forme et perd sa couleur — et la carte
+   la prend.
+
+   **Sauf le compte à rebours.** Posée sur la carte, l'extinction valait pour
+   tout ce qu'elle contient, et le chiffre qui dit quand elle reviendra
+   tombait à 60 % de sa lumière. Elle est donc posée sur chaque enfant sauf
+   lui ; le cadre perd sa couleur à part, et le dessin garde l'assombrissement
+   qu'il recevait deux fois (le sien, puis celui de la carte). */
+.ct.hs{border-color:rgba(242,238,228,.22);cursor:default}
+.ct.hs>:not(.cd){filter:grayscale(.85) brightness(.6)}
+.ct.hs>.illu{filter:grayscale(.85) brightness(.37)}
 /* Le compte à rebours passe devant le voile : sans `z-index`, le pseudo-élément
    le peignait par-dessus et le chiffre s'assombrissait en haut de la carte. */
 .ct .cd{position:absolute;inset:0;z-index:3;background:rgba(4,6,10,.72);
@@ -383,25 +476,62 @@ h2 i{font-style:normal;opacity:.7}
    les deux modes qui tombe. Les règles sont reprises telles quelles : le dessin
    porte la carte, le coût en haut à droite, la poussée en gros en bas.
 
-   `padding-right` sur le nom : le coût est posé en absolu dans le coin, et
-   « À perdre haleine » passait dessous. */
+   Le coût est posé en absolu dans le coin, et « À perdre haleine » passait
+   dessous. La place lui est gardée **sur la première ligne du nom
+   seulement** — voir `.chant b` — et non plus par un `padding-right` qui
+   rognait toutes les lignes. Interlignes et marges intérieures serrés comme
+   au Virage : chaque pixel de la rangée est pris à l'arène. */
 .chants{display:flex;gap:5px;
-  margin-bottom:calc(12px + var(--nav-h,62px) * .45 + env(safe-area-inset-bottom))}
-.chant{flex:1;min-width:0;border-radius:9px;padding:8px 7px;position:relative;overflow:hidden;
+  margin-bottom:calc(10px + var(--nav-h,62px) * .45 + env(safe-area-inset-bottom))}
+.chant{flex:1;min-width:0;border-radius:9px;padding:6px 5px;position:relative;overflow:hidden;
   background:rgba(0,0,0,.34);cursor:pointer;
   border:1px solid rgba(242,238,228,.14);border-top:3px solid var(--c);
-  display:flex;flex-direction:column;gap:3px}
+  display:flex;flex-direction:column;gap:2px}
 .chant:active{transform:translateY(3px) scale(.98)}
-/* Trop cher : on le montre grisé plutôt que de le retirer. Une main qui
-   rétrécit quand on manque de souffle cache justement ce qu'on vise. */
-.chant.dim{opacity:.32;pointer-events:none}
-.chant .illu{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3}
-.chant b{position:relative;font-family:var(--banner);font-size:11.5px;line-height:1.1;
-  padding-right:15px}
-.chant .g{position:relative;font-size:8px;letter-spacing:.12em;opacity:.55;text-transform:uppercase}
+/* Trop cher : on le montre éteint plutôt que de le retirer. Une main qui
+   rétrécit quand on manque de souffle cache justement ce qu'on vise — et une
+   carte à un tiers d'opacité cache son prix, qui est justement ce qu'on
+   regarde. Elle s'éteint donc comme une plaque hors service : la forme et
+   les chiffres restent, la couleur part. */
+.chant.dim{filter:grayscale(.85) brightness(.55);pointer-events:none}
+/* **Le dessin en fond, et non en tête.** `chant-art.js` le pose avec la
+   classe `fond`, et cette page stylait `.illu` : l'image entrait donc dans le
+   flux, en bandeau de trente pixels au-dessus du nom, et poussait chaque carte
+   d'autant vers le bas — trente pixels pris à l'arène sur un téléphone, pour
+   un dessin qu'on ne voyait qu'à moitié. Le Virage, lui, stylait bien
+   `.fond`. `.illu` n'est pas le bon nom de toute façon : fx.js fait respirer
+   tout ce qui le porte, et un chant n'est pas un personnage. */
+.chant .fond{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3}
+/* **Le retrait du coût ne vaut que pour la première ligne.** Pris sur toutes
+   par un `padding-right`, il ôtait un quart de la largeur à chaque ligne
+   d'une carte de soixante pixels : « Le compte à rebours » s'écrivait sur
+   quatre, et « Le roulement » sortait de la carte, coupé net. Un flottant
+   d'une ligne de haut garde la place du coût sur la première seulement ; un
+   mot trop long pour une ligne entière se coupe à la syllabe, comme le geste
+   en dessous. Même réglage qu'au Virage. */
+.chant b{position:relative;font-family:var(--banner);font-size:11.5px;line-height:1.05;
+  -webkit-hyphens:auto;hyphens:auto;overflow-wrap:anywhere}
+.chant b::before{content:'';float:right;width:14px;height:1em}
+/* Le geste, à onze pixels et en lettrage étroit : c'est lui qui dit quelle
+   épreuve va s'ouvrir, et il était à huit pixels et à moitié éteint. Une carte
+   de soixante pixels ne loge pas « CONTRETEMPS » sur une ligne à cette
+   taille : le mot se coupe à la syllabe là où le téléphone sait le faire, et
+   n'importe où plutôt que de sortir de la carte. */
+.chant .g{position:relative;font-family:var(--banner);font-size:11px;line-height:1.05;
+  letter-spacing:.02em;opacity:.88;text-transform:uppercase;
+  -webkit-hyphens:auto;hyphens:auto;overflow-wrap:anywhere}
 .chant .p{position:relative;font-family:var(--banner);font-size:20px;color:var(--c);
   margin-top:auto;line-height:1}
-.chant .c{position:absolute;top:6px;right:7px;font-size:10px;opacity:.7;font-family:var(--banner)}
+/* `line-height:1` : le coût tient dans la hauteur de la première ligne du nom,
+   et le flottant qui lui garde la place n'a pas à mordre sur la seconde. */
+.chant .c{position:absolute;top:6px;right:5px;font-size:11px;line-height:1;opacity:.88;font-family:var(--banner)}
+/* Sous 350 px, il ne reste que quarante pixels de texte par carte : on prend
+   l'écart entre les cartes plutôt que d'ajouter une ligne au nom. */
+@media (max-width:350px){
+  .chants{gap:4px}
+  .chant{padding-left:4px;padding-right:4px}
+  .chant .c{right:4px}
+}
 
 /* ------------------------------------------------------ mini-jeu */
 
@@ -413,11 +543,12 @@ h2 i{font-style:normal;opacity:.7}
   flex-direction:column;align-items:center;justify-content:center;gap:14px}
 .mini.on{display:flex}
 .mini h3{font-family:var(--banner);font-size:19px;letter-spacing:.16em;margin:0;color:var(--c,var(--projo))}
-.mini p{margin:0;font-size:12.5px;opacity:.6}
+/* La consigne du geste : la seule chose à lire avant de jouer, donc à 88 %. */
+.mini p{margin:0;font-size:12.5px;opacity:.88}
 /* Le pavé rond, son anneau et ses deux lignes de texte vivent dans ui.css :
    c’est le même composant que le Virage et la salle de répétition dessinent.
    Cette page en avait la bonne version ; elle est désormais la seule. */
-.compte{position:absolute;font-family:var(--banner);font-size:74px;opacity:.85;
+.compte{position:absolute;font-family:var(--banner);font-size:74px;opacity:.88;
   animation:fade .55s ease-out forwards}
 @keyframes fade{to{opacity:0;transform:scale(1.5)}}
 
@@ -455,14 +586,17 @@ h2 i{font-style:normal;opacity:.7}
 .grand-haut{flex:none;display:grid;justify-items:center;gap:7px;padding:0 16px 12px}
 .grand-haut h2{margin:0;font-family:var(--banner);font-size:clamp(24px,7.4vw,34px);
   letter-spacing:.16em;line-height:1}
-.lieu-nom{font-size:10.5px;letter-spacing:.14em;opacity:.5;font-family:var(--banner);
+.lieu-nom{font-size:11px;letter-spacing:.12em;opacity:.88;font-family:var(--banner);
   text-align:center;line-height:1.5}
 .lieu-nom:empty{display:none}
 /* Le corps défile, la barre du bas jamais : le bouton de sortie doit rester
    sous le pouce quel que soit le nombre de lignes de statistiques. */
 .bilan-corps,.camps{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 14px 10px}
 .grand-bas{flex:none;padding:10px 16px 0}
-.attente{text-align:center;font-size:11.5px;letter-spacing:.1em;opacity:.5;
+/* Les petites lignes de l'affiche et du bilan passent toutes à onze pixels et
+   88 % : « Doublé : tu poussais pour ton club » est une information, et elle
+   était écrite comme une note de bas de page. */
+.attente{text-align:center;font-size:11.5px;letter-spacing:.1em;opacity:.88;
   font-family:var(--banner)}
 
 /* ------------------------------------------------------------ l'affiche */
@@ -471,20 +605,20 @@ h2 i{font-style:normal;opacity:.7}
 .camp-bloc .qui{display:flex;align-items:center;gap:9px;margin-bottom:7px}
 .camp-bloc .qui b{font-family:var(--banner);font-size:16px;letter-spacing:.06em;
   min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.camp-bloc .qui .camp-tag{font-size:9px;letter-spacing:.13em;font-family:var(--banner);
-  padding:3px 7px;border-radius:5px;flex:none}
+.camp-bloc .qui .camp-tag{font-size:11px;letter-spacing:.08em;font-family:var(--banner);
+  padding:2px 7px;border-radius:5px;flex:none}
 .camp-bloc.moi .qui .camp-tag{background:var(--projo);color:#1B1305}
 .camp-bloc.eux .qui .camp-tag{background:var(--bleu);color:#F4F8FF}
 /* La forme récente : cinq pastilles, la plus récente à gauche. Elles se lisent
    d'un coup d'œil, sans lire un chiffre — c'est tout leur intérêt. */
 .forme{display:flex;gap:3px;margin-left:auto;flex:none}
-.forme i{width:15px;height:15px;border-radius:4px;display:grid;place-items:center;
-  font-style:normal;font-family:var(--banner);font-size:9px;line-height:1;
+.forme i{width:17px;height:17px;border-radius:4px;display:grid;place-items:center;
+  font-style:normal;font-family:var(--banner);font-size:11px;line-height:1;
   box-shadow:0 0 0 1px rgba(4,7,11,.8)}
 .forme i.win{background:var(--vert);color:#032116}
 .forme i.loss{background:var(--flare);color:#2A0904}
 .forme i.draw{background:var(--gris);color:#23211B}
-.forme small{font-size:9.5px;opacity:.45;letter-spacing:.1em;align-self:center;
+.forme small{font-size:11px;opacity:.88;letter-spacing:.06em;align-self:center;
   font-family:var(--banner)}
 /* Les trois Fanzzy d'un camp, côte à côte. Le premier est celui qui entre.
 
@@ -516,16 +650,16 @@ h2 i{font-style:normal;opacity:.7}
   object-fit:contain;object-position:50% 100%}
 .fz-aff .voile-bas{position:relative;padding:5px 6px;
   background:linear-gradient(180deg,transparent,rgba(4,7,11,.92) 55%)}
-.fz-aff b{display:block;font-family:var(--banner);font-size:9.5px;line-height:1.15;
+.fz-aff b{display:block;font-family:var(--banner);font-size:11px;line-height:1.15;
   letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fz-aff small{display:block;font-size:8px;opacity:.55;letter-spacing:.08em}
+.fz-aff small{display:block;font-size:11px;opacity:.88;letter-spacing:.04em}
 /* Celui qui entre au coup d'envoi porte la couleur de son camp. */
 .fz-aff.entre{box-shadow:0 0 0 2px var(--ac,var(--projo)),0 0 18px rgba(245,195,59,.3)}
-.fz-aff .tag{position:absolute;top:5px;left:5px;font-size:7.5px;letter-spacing:.11em;
+.fz-aff .tag{position:absolute;top:5px;left:5px;font-size:11px;letter-spacing:.06em;
   font-family:var(--banner);background:var(--ac,var(--projo));color:#1B1305;
-  padding:2px 5px;border-radius:4px}
+  padding:1px 5px;border-radius:4px}
 .versus{text-align:center;font-family:var(--banner);font-size:13px;letter-spacing:.3em;
-  opacity:.35;margin:4px 0 10px}
+  opacity:.88;margin:4px 0 10px}
 
 /* -------------------------------------------------------------- le bilan */
 
@@ -549,11 +683,12 @@ h2 i{font-style:normal;opacity:.7}
   box-shadow:0 0 0 2px #04070B,inset 0 1px 0 rgba(255,255,255,.1)}
 .gain b{display:block;font-family:var(--banner);font-size:19px;line-height:1;
   color:var(--projo);font-variant-numeric:tabular-nums}
-.gain small{display:block;font-size:8.5px;letter-spacing:.12em;opacity:.5;margin-top:4px}
+.gain small{display:block;font-size:11px;letter-spacing:.08em;opacity:.88;margin-top:4px}
 .gain.kop b{color:var(--vert)}
 .gain.xp b{color:var(--bleu)}
-.bilan-titre{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;
-  opacity:.42;margin:14px 0 7px}
+/* Les deux intertitres du bilan sont des titres cousus : la page ne garde que
+   leur place. */
+.bilan-titre{margin:14px 0 7px}
 /* Une ligne de statistique par camp, les deux côte à côte : c'est la
    comparaison qui intéresse, pas le chiffre isolé. */
 .stat{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;
@@ -574,10 +709,14 @@ h2 i{font-style:normal;opacity:.7}
    que « toi contre lui » n'a besoin d'aucune teinte. La colonne de gauche
    est la tienne, et elle est simplement **plus claire** que celle d'en
    face. C'est la hiérarchie qu'on veut sur son propre écran de résultat,
-   et elle se lit sans avoir appris de code couleur. */
+   et elle se lit sans avoir appris de code couleur.
+
+   Plus claire par la teinte, et non plus par la transparence : le gris
+   d'en face était encore effacé à 72 %, sous le plancher de lecture. La
+   craie contre le gris suffit à la hiérarchie. */
 .stat .g{text-align:right;color:var(--craie)}
-.stat .d{text-align:left;color:var(--gris);opacity:.72}
-.stat .quoi{font-size:9px;letter-spacing:.11em;opacity:.45;font-family:var(--banner);
+.stat .d{text-align:left;color:var(--gris)}
+.stat .quoi{font-size:11px;letter-spacing:.08em;opacity:.88;font-family:var(--banner);
   text-align:center;white-space:nowrap}
 .pref{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:10px;
   background:rgba(255,255,255,.04);margin-bottom:6px}
@@ -585,7 +724,7 @@ h2 i{font-style:normal;opacity:.7}
   box-shadow:0 0 0 1px rgba(4,7,11,.8)}
 .pref .t{flex:1;min-width:0}
 .pref .t b{display:block;font-family:var(--banner);font-size:13px}
-.pref .t small{display:block;font-size:10px;opacity:.5;margin-top:2px}
+.pref .t small{display:block;font-size:11px;opacity:.88;margin-top:2px}
 
 
 /* ------------------------------------------------ la salle d'attente
@@ -600,9 +739,13 @@ h2 i{font-style:normal;opacity:.7}
    regarder se remplir. */
 .salle{width:100%;max-width:var(--colonne);display:flex;flex-direction:column;gap:12px;
   text-align:left}
-.tribune-att h4{margin:0 0 7px;font-family:var(--banner);font-size:10px;letter-spacing:.16em;
-  opacity:.55;display:flex;align-items:center;gap:8px}
-.tribune-att h4 em{font-style:normal;margin-left:auto;opacity:.75;color:var(--c,var(--projo))}
+/* Tout ce qui s'écrit dans la salle est à onze pixels au moins et en craie
+   pleine : on y attend deux minutes, c'est l'écran qu'on lit le plus longtemps
+   de tout le duel, et le voile est d'un noir sur lequel une craie à 88 %
+   décroche au plein jour. Le compte « 1/3 » garde sa couleur de camp. */
+.tribune-att h4{margin:0 0 7px;font-family:var(--banner);font-size:11px;letter-spacing:.12em;
+  display:flex;align-items:center;gap:8px}
+.tribune-att h4 em{font-style:normal;margin-left:auto;color:var(--c,var(--projo))}
 .places-att{display:flex;gap:7px}
 .place-att{flex:1;min-width:0;max-width:112px;aspect-ratio:63/84;border-radius:10px;position:relative;
   overflow:hidden;background:rgba(255,255,255,.03);
@@ -613,41 +756,50 @@ h2 i{font-style:normal;opacity:.7}
   object-position:center 20%}
 .place-att .qui{position:relative;padding:5px 6px;
   background:linear-gradient(180deg,transparent,rgba(4,7,11,.94) 58%)}
-.place-att .qui b{display:block;font-family:var(--banner);font-size:9.5px;line-height:1.15;
+.place-att .qui b{display:block;font-family:var(--banner);font-size:11px;line-height:1.15;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.place-att .qui small{display:block;font-size:7.5px;opacity:.5;letter-spacing:.06em;
+.place-att .qui small{display:block;font-size:11px;opacity:.88;letter-spacing:.02em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* Une place vide n'est pas un trou : elle dit ce qu'elle attend. C'est elle
    qui donne envie d'appuyer sur « inviter ». */
 .place-att.libre{border:1px dashed rgba(242,238,228,.16);box-shadow:none;
   align-items:center;justify-content:center}
-.place-att.libre span{font-family:var(--banner);font-size:8.5px;letter-spacing:.11em;
-  opacity:.4;text-align:center;padding:0 6px;line-height:1.4}
+.place-att.libre span{font-family:var(--banner);font-size:11px;letter-spacing:.08em;
+  text-align:center;padding:0 6px;line-height:1.3}
 .place-att.libre::after{content:"";position:absolute;inset:0;
   background:radial-gradient(60% 50% at 50% 50%,rgba(242,238,228,.07),transparent 70%);
   animation:respire 2.4s ease-in-out infinite}
 @keyframes respire{0%,100%{opacity:.35}50%{opacity:1}}
 /* Le rebours avant les bots. Un chiffre qui descend dit « ça avance » ; une
    phrase figée disait « c'est bloqué ». */
-.rebours{font-family:var(--banner);font-size:11px;letter-spacing:.1em;opacity:.55;
+.rebours{font-family:var(--banner);font-size:11px;letter-spacing:.1em;
   text-align:center}
 .rebours b{color:var(--projo);font-variant-numeric:tabular-nums}
 
 /* Même règle que `.grand` : le voile couvre l’écran, son contenu tient dans
    la colonne. */
 .voile>*{max-width:var(--colonne)}
-.voile{position:fixed;inset:0;z-index:70;background:rgba(4,6,10,.9);display:none;
+/* Opaque, comme le voile du Virage : à 90 %, la préparation transparaissait
+   sous la salle d'attente — « TOUS LES MATCHS » et les pastilles des matchs
+   se lisaient entre les places, et l'écran paraissait sale. */
+.voile{position:fixed;inset:0;z-index:70;background:#04060A;display:none;
   flex-direction:column;align-items:center;justify-content:safe center;gap:12px;
   overflow-y:auto;text-align:center;height:100vh;height:100dvh;
   padding:calc(env(safe-area-inset-top) + 28px) 28px calc(env(safe-area-inset-bottom) + 28px)}
 .voile.on{display:flex}
 .voile h2{font-family:var(--banner);font-size:23px;letter-spacing:.1em;margin:0;opacity:1}
-.voile p{margin:0;font-size:13px;opacity:.65;line-height:1.7;max-width:300px}
+/* **À pleine intensité, et c'est une question d'arithmétique.** Le texte du
+   voile porte aussi la salle d'attente entière (voir `rendreSalle`), et
+   l'opacité se multiplie en descendant : à 65 % ici, les places, les noms et
+   le rebours ne pouvaient pas dépasser 65 % quoi qu'ils déclarent. La
+   hiérarchie avec le titre tient par la taille. */
+.voile p{margin:0;font-size:13px;line-height:1.7;max-width:300px}
 .spin{width:26px;height:26px;border:2px solid rgba(242,238,228,.2);border-top-color:var(--projo);
   border-radius:50%;animation:t .8s linear infinite}
 @keyframes t{to{transform:rotate(360deg)}}
-.lien{background:none;border:0;color:var(--projo);font-size:13px;cursor:pointer;text-decoration:underline;
-  font-family:inherit}
+/* La seule commande du voile — « Quitter la file », « Revenir » — est une
+   plaque en béton (`#voileBtn`) : c'était un lien souligné, la seule action
+   d'un écran plein dessinée comme une note en marge. */
 /* Le message se pose au-dessus de toute la zone d'action, jamais dessus.
 
    Il était ancré à 96 px du bas, une valeur qui tombait en plein sur le
@@ -687,8 +839,8 @@ h2 i{font-style:normal;opacity:.7}
   border-right:1px solid rgba(242,238,228,.14)}
 .fil-match .sc b{display:block;font-family:var(--banner);font-size:17px;letter-spacing:.03em;
   font-variant-numeric:tabular-nums}
-.fil-match .sc small{display:block;font-size:9px;letter-spacing:.14em;opacity:.8;
-  margin-top:3px;color:var(--projo)}
+.fil-match .sc small{display:block;font-size:11px;letter-spacing:.1em;opacity:.9;
+  margin-top:2px;color:var(--projo)}
 .fil-match .min{flex:none;font-family:var(--banner);font-size:14px;color:var(--flare);
   letter-spacing:.04em;display:flex;align-items:center;gap:5px;
   font-variant-numeric:tabular-nums}
@@ -698,10 +850,23 @@ h2 i{font-style:normal;opacity:.7}
 .fil-match .min.arret{color:var(--gris)}
 @keyframes ping{0%{box-shadow:0 0 0 0 rgba(224,64,44,.6)}
   70%{box-shadow:0 0 0 7px rgba(224,64,44,0)}100%{box-shadow:0 0 0 0 rgba(224,64,44,0)}}
-.fil-match .qui{flex:1;min-width:0;font-size:11.5px;opacity:.85;
+.fil-match .qui{flex:1;min-width:0;font-size:11.5px;opacity:.88;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
-.vide{padding:30px 20px;text-align:center;opacity:.5;font-size:12.5px;line-height:1.8}
+.vide{padding:30px 20px;text-align:center;opacity:.88;font-size:12.5px;line-height:1.8}
 .vide a{color:var(--projo)}
+
+/* **Le mouvement part, l'information reste.** Sous `prefers-reduced-motion`
+   comme sous le mode calme « animations » (voir ui.css), les deux battements
+   décoratifs de l'écran s'arrêtent : le point du direct sur la bande du
+   terrain, et la lueur des places libres de la salle d'attente. Le point
+   rouge et la place pointillée, eux, restent. En fin de feuille : ces règles
+   ont le poids de celles qui posent les animations, et seul l'ordre les
+   départage. */
+@media (prefers-reduced-motion:reduce){
+  .fil-match .min::before,.place-att.libre::after{animation:none}
+}
+html[data-calme~="animations"] .fil-match .min::before,
+html[data-calme~="animations"] .place-att.libre::after{animation:none}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -733,8 +898,6 @@ h2 i{font-style:normal;opacity:.7}
       <span class="qui" id="filMatchQui"></span>
     </div>
 
-    <button class="son" id="son" type="button" aria-label="Couper le son">♪</button>
-
     <div class="arene" id="arene">
       <!-- Le stade, sous tout le reste. Le duel se jouait sur un fond noir uni
            pendant que le Virage montrait son lieu : même mécanique, deux
@@ -752,6 +915,9 @@ h2 i{font-style:normal;opacity:.7}
       <div class="foule moi" id="fouleMoi"></div>
       <div class="foule eux" id="fouleEux"></div>
       <div class="lieu" id="lieu"></div>
+      <!-- Le son, dans le coin de l'arène : voir `.son`. Le dessin est posé
+           par `reglerBoutonSon`, selon l'état retenu par fx.js. -->
+      <button class="son" id="son" type="button" aria-label="Couper le son"></button>
     </div>
 
     <div class="effets" id="effets"></div>
@@ -834,7 +1000,7 @@ h2 i{font-style:normal;opacity:.7}
   <div class="spin" id="voileSpin"></div>
   <h2 id="voileTitre"></h2>
   <p id="voileTexte"></p>
-  <button class="lien" id="voileBtn" style="display:none"></button>
+  <button class="tbf-plaque" id="voileBtn" style="display:none"></button>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -1137,9 +1303,11 @@ function placeAttente(joueur, club) {
     return `<div class="place-att libre"><span>PLACE<br>LIBRE</span></div>`;
   }
   const img = joueur.fanzzy?.id ? FZART.illustration({ id: joueur.fanzzy.id }, 'buste') : '';
+  // Sans nom connu, la ligne du nom se retire : la place reste prise, et le
+  // Fanzzy ou le club en dessous dit qui l'occupe. Jamais un « — ».
   return `<div class="place-att pris">
     ${img}
-    <span class="qui"><b>${esc(joueur.nom ?? '—')}</b>
+    <span class="qui">${joueur.nom ? `<b>${esc(joueur.nom)}</b>` : ''}
       <small>${esc(joueur.fanzzy?.nom ?? club ?? '')}</small></span>
   </div>`;
 }
@@ -1159,9 +1327,12 @@ function rendreSalle(p) {
 
   /* La mienne en haut : « en haut, c'est moi » est la convention de tous les
      écrans du jeu, et le serveur construit déjà le payload de ce point de vue. */
-  corps.push(tribuneAttente(`MA TRIBUNE · ${p.club?.name ?? ''}`,
+  // Le club après le point médian, seulement s'il est connu : sans lui, le
+  // titre s'arrêtait sur un séparateur qui n'annonçait rien.
+  const avecClub = (titre, club) => (club ? `${titre} · ${club}` : titre);
+  corps.push(tribuneAttente(avecClub('MA TRIBUNE', p.club?.name),
     t.moi, p.attendus, p.club?.name, 'var(--projo)'));
-  corps.push(tribuneAttente(`EN FACE · ${p.enFaceClub?.name ?? ''}`,
+  corps.push(tribuneAttente(avecClub('EN FACE', p.enFaceClub?.name),
     t.eux, p.attendus, p.enFaceClub?.name, 'var(--bleu)'));
 
   if (p.renfort > 1) {
@@ -1172,7 +1343,9 @@ function rendreSalle(p) {
      la durée : une durée envoyée une fois est fausse une seconde plus tard. */
   corps.push('<div class="rebours" id="rebours"></div>');
   if (window.TBF_PARTAGE?.possible) {
-    corps.push('<button class="inviter" id="inviter">Inviter quelqu’un</button>');
+    /* Une plaque au ton violet : celui des gens, comme partout ailleurs. */
+    corps.push('<button class="inviter tbf-plaque" data-ton="violet" id="inviter">'
+      + 'Inviter quelqu’un</button>');
   }
 
   voile('LA SALLE D’ATTENTE', `<div class="salle">${corps.join('')}</div>`,
@@ -1317,16 +1490,21 @@ function rendrePrepa(sansDeck, formats) {
   out.push(`<p class="repet"><a href="/repetition">Un geste te résiste ?
     <b>Va le répéter</b></a> — rien n'y compte, et rien n'y aide non plus.</p>`);
 
-  out.push(`<h2>LE FORMAT <i>· la file est par format et par match</i></h2>`);
+  out.push(`<h2 class="tbf-cousu">LE FORMAT <i>· la file est par format et par match</i></h2>`);
   /* **La prime du format, annoncée au moment du choix.** Un 2v2 demande de
      réunir quatre personnes au lieu de deux : il paie donc un peu plus, et
      le dire ici est la seule façon que ça pèse dans la décision. Le taux
      vient du serveur — il se règle depuis /admin, et la page n’en porte pas
-     de copie. */
-  out.push(`<div class="formats">${formats.map((f) => {
+     de copie.
+
+     Le rail est celui de ui.css, au ton flare des arènes : voir `.formats`.
+     `.fmt` et `.on` restent, c'est par eux que la page et ses contrôles
+     savent quel format est coché. */
+  out.push(`<div class="formats tbf-onglets" data-ton="flare">${formats.map((f) => {
     const p = S.primes?.[f] ?? 1;
     const prime = p > 1 ? `<small>+${Math.round((p - 1) * 100)} %</small>` : '';
-    return `<button class="fmt ${f === S.format ? 'on' : ''}" data-fmt="${f}">${f}${prime}</button>`;
+    return `<button class="fmt tbf-onglet ${f === S.format ? 'on' : ''}" data-fmt="${f}"
+      aria-pressed="${f === S.format}">${f}${prime}</button>`;
   }).join('')}</div>`);
   /* **« Peu importe le format ».**
 
@@ -1337,22 +1515,32 @@ function rendrePrepa(sansDeck, formats) {
      des bots.
 
      Cocher ceci, c’est accepter de jouer avec tous les autres, quel que
-     soit le format qu’ils ont choisi. */
-  out.push(`<button class="souple ${S.souple ? 'on' : ''}" data-souple>
-    <span class="case">${S.souple ? '✓' : ''}</span>
-    Peu importe le format<small>joue avec tous ceux qui attendent sur ce match</small>
+     soit le format qu’ils ont choisi.
+
+     Une plaque : béton levée, flare cochée. La coche est l'icône commune, et
+     `aria-pressed` dit l'état à qui ne voit pas la case — la coche seule ne
+     s'entend pas. */
+  out.push(`<button class="souple tbf-plaque ${S.souple ? 'on' : ''}"
+    ${S.souple ? 'data-ton="flare"' : ''} aria-pressed="${Boolean(S.souple)}" data-souple>
+    <span class="case">${S.souple ? '<i class="tbf-ico tbf-ico-coche" aria-hidden="true"></i>' : ''}</span>
+    <span class="t">Peu importe le format<small>joue avec tous ceux qui attendent sur ce match</small></span>
   </button>`);
 
-  out.push(`<h2>LE MATCH SUPPORT</h2>`);
+  out.push(`<h2 class="tbf-cousu">LE MATCH SUPPORT</h2>`);
   /* La portée de la liste.
 
      Jouer pour un match qui n'est pas celui de son club est permis — sans quoi
      il n'y aurait personne en file un mardi de trêve — mais ça rapporte moitié
      moins. Le badge ×2 le rappelle carte par carte ; ce bouton, lui, existait
-     côté serveur depuis longtemps et aucune page ne l'appelait. */
-  out.push(`<div class="portee">
-    <button class="pt ${S.tousLesMatchs ? '' : 'on'}" data-portee="miens">MES CLUBS</button>
-    <button class="pt ${S.tousLesMatchs ? 'on' : ''}" data-portee="tous">TOUS LES MATCHS</button>
+     côté serveur depuis longtemps et aucune page ne l'appelait.
+
+     Le même rail flare que le format, juste au-dessus : même geste, même
+     objet. */
+  out.push(`<div class="portee tbf-onglets" data-ton="flare">
+    <button class="pt tbf-onglet ${S.tousLesMatchs ? '' : 'on'}" data-portee="miens"
+      aria-pressed="${!S.tousLesMatchs}">MES CLUBS</button>
+    <button class="pt tbf-onglet ${S.tousLesMatchs ? 'on' : ''}" data-portee="tous"
+      aria-pressed="${S.tousLesMatchs}">TOUS LES MATCHS</button>
   </div>`);
 
   if (!S.matchs.length) {
@@ -1463,16 +1651,20 @@ function souLeMatch(choisi, sansDeck) {
      visiteur ne se remplirait jamais. */
   if (choisi.monCamp !== null && choisi.monCamp !== undefined) {
     const clubs = [choisi.home_name, choisi.away_name];
-    out.push(`<h3>TA TRIBUNE</h3>`);
+    out.push(`<h3 class="tbf-cousu">TA TRIBUNE</h3>`);
     out.push(`<div class="raison chezmoi">Tu es chez toi :
       <b>${esc(clubs[choisi.monCamp])}</b>. Le camp ne se choisit pas —
       on ne pousse pas contre son club.</div>`);
   } else {
-    out.push(`<h3>TA TRIBUNE <i>· pour qui viens-tu chanter ?</i></h3>`);
+    out.push(`<h3 class="tbf-cousu">TA TRIBUNE <i>· pour qui viens-tu chanter ?</i></h3>`);
     /* Le compte sur chaque bouton : le joueur voit d'un coup d'œil quelle
-       tribune manque de monde, et c'est celle-là qui paie le double. */
+       tribune manque de monde, et c'est celle-là qui paie le double.
+
+       Deux plaques : la tribune choisie prend le ton flare, l'autre reste en
+       béton. `.on` reste la marque du choix pour la page et ses contrôles. */
     out.push(`<div class="tribunes">${[choisi.home_name, choisi.away_name]
-      .map((nom, i) => `<button class="trib ${S.camp === i ? 'on' : ''}"
+      .map((nom, i) => `<button class="trib tbf-plaque ${S.camp === i ? 'on' : ''}"
+        ${S.camp === i ? 'data-ton="flare"' : ''} aria-pressed="${S.camp === i}"
         data-camp="${i}">${esc(nom)}${att
           ? `<small>${att.camps[i]} en file</small>` : ''}</button>`).join('')}</div>`);
     out.push(`<div class="raison">Aucun de tes clubs ne joue : tu viens tenir
@@ -1484,7 +1676,7 @@ function souLeMatch(choisi, sansDeck) {
      sans choix irait par défaut du côté du domicile, et le camp visiteur ne se
      remplirait jamais. */
   const sansCamp = choisi.monCamp == null && S.camp === null;
-  out.push(`<button class="gros" id="entrer"
+  out.push(`<button class="gros tbf-plaque tbf-bloc" data-ton="flare" id="entrer"
     ${sansDeck || sansCamp ? 'disabled' : ''}>ENTRER EN FILE</button>`);
   out.push(`<div class="raison">Si personne ne se présente, des bots complètent
     les places et le duel devient un entraînement.</div>`);
@@ -1799,14 +1991,14 @@ function rendreFilMatch(v, mon) {
   bande.classList.toggle('on', Boolean(commence));
   if (!commence) return;
 
-  $('filMatchScore').textContent = `${sc[mon] ?? 0} – ${sc[mon ^ 1] ?? 0}`;
+  ecrire($('filMatchScore'), `${sc[mon] ?? 0} – ${sc[mon ^ 1] ?? 0}`);
 
   const enJeu = EN_JEU.includes(statut);
   const min = $('filMatchMin');
-  min.textContent = minuteTerrain(v.minuteReelle, enJeu);
+  ecrire(min, minuteTerrain(v.minuteReelle, enJeu));
   min.classList.toggle('arret', !enJeu);
 
-  $('filMatchQui').textContent = PHASE_REELLE[statut] ?? '';
+  ecrire($('filMatchQui'), PHASE_REELLE[statut] ?? '');
 }
 
 /**
@@ -1886,6 +2078,87 @@ $('apportsL').onclick = () => {
   ligne.setAttribute('aria-expanded', String(ouvre));
 };
 
+/* ----------------------------------------------- des nœuds qui durent
+
+   **Un conteneur réécrit dix fois par seconde ne garde rien de vivant.**
+
+   `rendreDuel` passe à chaque vue du serveur, c'est-à-dire dix fois par
+   seconde, et réécrivait en `innerHTML` les effets, l'équipe et la main.
+   Chaque vue jetait donc les cinq cartes et les trois portraits pour en
+   poser des neufs, identiques à l'œil. Trois choses en mouraient sans bruit :
+
+     — **les animations.** fx.js fait respirer chaque portrait ; un portrait
+       remplacé tous les dixièmes de seconde repartait de zéro à chaque vue,
+       c'est-à-dire ne respirait jamais ;
+     — **le focus et l'appui.** Un doigt posé sur une carte la voyait
+       remplacée entre l'appui et le relâchement, et le clic tombait sur un
+       nœud qui n'était plus dans la page ;
+     — **le réseau.** Un dessin absent se retire de lui-même (`onerror`) : il
+       revenait à la vue suivante, et se redemandait dix fois par seconde.
+
+   Chaque élément est donc **créé une fois, retrouvé par sa clé, modifié en
+   place**, et retiré seulement quand sa clé disparaît. Le rendu est le même
+   à l'écran — mêmes classes, mêmes attributs, même ordre — mais les nœuds
+   restent. Le Grand Virage a le même besoin pour sa rangée d'actions : voir
+   `accorder` dans virage.html, écrite de la même façon.
+
+   La clé est une propriété du nœud (`_cle`) et non un attribut : elle ne se
+   voit pas dans la page, et un nœud retiré par ailleurs emporte la sienne,
+   si bien que le rendu suivant ne peut pas se tromper sur ce qui est là. */
+
+/**
+ * Accorde les enfants de `boite` à une liste de clés, dans cet ordre.
+ *
+ * `creer(cle, i)` fabrique le nœud d'une clé neuve ; `maj(el, cle, i)` le met
+ * à jour en place, à chaque passage — il ne doit écrire que ce qui change.
+ * Un nœud n'est déplacé que s'il n'est pas à sa place : déplacer un élément
+ * lui fait perdre le focus, et c'est justement ce qu'on protège.
+ */
+function accorder(boite, cles, creer, maj) {
+  const gardes = new Map();
+  for (const el of [...boite.children]) {
+    if (el._cle != null && cles.includes(el._cle) && !gardes.has(el._cle)) gardes.set(el._cle, el);
+    else el.remove();
+  }
+  cles.forEach((cle, i) => {
+    let el = gardes.get(cle);
+    if (!el) { el = creer(cle, i); el._cle = cle; }
+    maj(el, cle, i);
+    if (boite.children[i] !== el) boite.insertBefore(el, boite.children[i] ?? null);
+  });
+}
+
+/** Un nœud depuis son balisage : les gabarits de la page restent lisibles.
+    « fabriquer » et non « noeud » : la page a un élément #noeud, et une
+    fonction globale du même nom masquerait son accès par window. */
+function fabriquer(html) {
+  const t = document.createElement('template');
+  t.innerHTML = html.trim();
+  return t.content.firstElementChild;
+}
+
+/**
+ * Des clés uniques pour une liste qui peut se répéter.
+ *
+ * Un deck peut porter deux fois la même carte — le deck de test porte deux
+ * Arbitres — et une main peut donc les avoir ensemble. « a-arbitre#0 » et
+ * « a-arbitre#1 » restent deux cartes, chacune avec son nœud.
+ */
+function clesDe(ids) {
+  const vus = new Map();
+  return ids.map((id) => {
+    const n = vus.get(id) ?? 0;
+    vus.set(id, n + 1);
+    return `${id}#${n}`;
+  });
+}
+
+/** N'écrit un texte que s'il a changé : réécrire le même texte recrée le nœud. */
+function ecrire(el, texte) {
+  const t = String(texte);
+  if (el && el.textContent !== t) el.textContent = t;
+}
+
 function rendreDuel() {
   const v = S.vue;
   if (!v) return;
@@ -1893,12 +2166,14 @@ function rendreDuel() {
   const mon = moi?.side ?? 0;
   const eux = mon ^ 1;
 
-  $('butsMoi').textContent = v.goals?.[mon] ?? 0;
-  $('butsEux').textContent = v.goals?.[eux] ?? 0;
+  /* Chaque vue arrive dix fois par seconde : on n'écrit que ce qui a changé.
+     Voir « des nœuds qui durent », juste au-dessus. */
+  ecrire($('butsMoi'), v.goals?.[mon] ?? 0);
+  ecrire($('butsEux'), v.goals?.[eux] ?? 0);
   rendreFilMatch(v, mon);
   const s = Math.max(0, Math.round((v.resteMs ?? 0) / 1000));
-  $('horloge').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-  $('modeTag').textContent = v.mode === 'classe' ? 'CLASSÉ' : 'ENTRAÎNEMENT';
+  ecrire($('horloge'), `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`);
+  ecrire($('modeTag'), v.mode === 'classe' ? 'CLASSÉ' : 'ENTRAÎNEMENT');
 
   monterStade();
   rendreApports(moi);
@@ -1918,9 +2193,9 @@ function rendreDuel() {
   // L'écart en clair. Le chiffre se lit plus vite que la position.
   const avance = Math.round(Math.abs(v.rope ?? 0));
   const ec = $('ecart');
-  ec.firstChild.textContent = avance === 0 ? '0' : `${part > 0 ? '+' : '−'}${avance}`;
-  ec.querySelector('small').textContent = avance === 0 ? 'ÉGALITÉ'
-    : part > 0 ? 'TU MÈNES LA CORDE' : 'ILS TIRENT PLUS FORT';
+  ecrire(ec.firstChild, avance === 0 ? '0' : `${part > 0 ? '+' : '−'}${avance}`);
+  ecrire(ec.querySelector('small'), avance === 0 ? 'ÉGALITÉ'
+    : part > 0 ? 'TU MÈNES LA CORDE' : 'ILS TIRENT PLUS FORT');
   ec.style.color = avance === 0 ? 'var(--craie)' : part > 0 ? 'var(--projo)' : 'var(--bleu)';
 
   dessinerFoule('fouleMoi', v.equipes?.[mon] ?? []);
@@ -1929,7 +2204,7 @@ function rendreDuel() {
   if (!moi) return;
 
   $('souffleBar').style.width = `${Math.max(0, Math.min(100, moi.breath))}%`;
-  $('souffleVal').textContent = moi.breath;
+  ecrire($('souffleVal'), moi.breath);
 
   // Les effets en cours, nommés : sans ça, un joueur silencié croit à un bug.
   const NOMS = {
@@ -1939,59 +2214,107 @@ function rendreDuel() {
     mod_foe:['Vent de face','var(--violet)'], breath_mult:['Souffle ralenti','var(--flare)'],
     floor_quality:['Second souffle','var(--projo)'], peut_changer:['Changement possible','var(--vert)'],
   };
-  $('effets').innerHTML = (moi.effets ?? []).map((e) => {
-    const [nom, c] = NOMS[e.type] ?? [e.type, 'var(--gris)'];
-    const reste = e.reste ? ` ${Math.ceil(e.reste / 1000)}s` : '';
-    return `<span class="eff" style="color:${c}">${esc(nom)}${reste}</span>`;
-  }).join('');
+  /* Les trois rangées qui suivent passent par `accorder` : voir « des nœuds
+     qui durent », juste au-dessus. Même balisage qu'avant, mais posé une fois
+     et retouché en place. */
+  const effets = moi.effets ?? [];
+  accorder($('effets'), clesDe(effets.map((e) => e.type)),
+    () => fabriquer('<span class="eff"></span>'),
+    (el, _cle, i) => {
+      const e = effets[i];
+      const [nom, c] = NOMS[e.type] ?? [e.type, 'var(--gris)'];
+      const reste = e.reste ? ` ${Math.ceil(e.reste / 1000)}s` : '';
+      if (el._c !== c) { el._c = c; el.style.color = c; }
+      ecrire(el, `${nom}${reste}`);
+    });
 
-  const peutChanger = (moi.effets ?? []).some((e) => e.type === 'peut_changer');
-  $('equipe').innerHTML = (moi.fanzzy ?? []).map((f, i) => `
-    <div class="fz ${f.actif ? 'actif' : peutChanger ? 'dispo' : ''}"
-      ${!f.actif && peutChanger ? `data-entrer="${i}"` : ''}>
-      <div class="vig">${vignette(f)}</div>
-      <div class="txt">
-        <b>${esc(f.nom ?? f.id)}</b>
-        <span>${f.actif ? 'EN JEU' : peutChanger ? 'ENTRER' : 'BANC'}</span>
-      </div>
-    </div>`).join('');
+  const peutChanger = effets.some((e) => e.type === 'peut_changer');
+  const fanzzy = moi.fanzzy ?? [];
+  // Par place et non par personnage : une Relève change l'âge — donc
+  // l'identifiant — du Fanzzy en jeu, pas sa place dans l'équipe.
+  accorder($('equipe'), fanzzy.map((_, i) => `place#${i}`),
+    () => fabriquer(`<div class="fz"><div class="vig"></div>
+      <div class="txt"><b></b><span></span></div></div>`),
+    (el, _cle, i) => {
+      const f = fanzzy[i];
+      const entre = !f.actif && peutChanger;
+      el.classList.toggle('actif', Boolean(f.actif));
+      el.classList.toggle('dispo', entre);
+      if (entre) { if (el.dataset.entrer !== String(i)) el.dataset.entrer = i; }
+      else if (el.hasAttribute('data-entrer')) el.removeAttribute('data-entrer');
+      /* Le portrait n'est reposé que si son dessin change — une Relève. C'est
+         ce qui le laisse respirer : fx.js l'anime une fois pour toutes. */
+      const dessin = vignette(f);
+      if (el._dessin !== dessin) { el._dessin = dessin; el.querySelector('.vig').innerHTML = dessin; }
+      ecrire(el.querySelector('b'), f.nom ?? f.id);
+      ecrire(el.querySelector('span'), f.actif ? 'EN JEU' : peutChanger ? 'ENTRER' : 'BANC');
+    });
 
+  /* Sous le Brouillard, la main est cachée : cinq cases vides marquées d'un
+     « ? », qui prennent la place des cartes le temps de l'effet. Leurs clés
+     sont à part, pour qu'aucune carte ne se retrouve déguisée en case vide.
+
+     Le « ? » est en craie pleine. Il était à 40 % pour rester discret, mais
+     c'est tout ce que dit la rangée — la main est cachée — et un texte qui
+     informe ne descend pas sous 85 %. La discrétion tient au cadre en
+     pointillé de `.ct.vide`, pas à l'effacement. */
+  const main = moi.main ?? [];
   const cd = moi.cooldowns ?? {};
-  const cases = [];
-  for (let i = 0; i < 5; i++) {
-    const id = (moi.main ?? [])[i];
-    if (!id) {
-      cases.push(`<div class="ct vide"></div>`);
-      continue;
-    }
-    const a = carteDef(id);
-    const fam = famDe(a);
-    const reste = cd[id];
-    // La Relève ne sert à rien si le Fanzzy en tribune est déjà à son dernier
-    // âge débloqué. On la grise plutôt que de la laisser jouer pour rien : le
-    // serveur la refuserait, mais après le geste — donc après l'espoir.
-    const enJeu = (moi.fanzzy ?? []).find((f) => f.actif);
-    const sansRelève = a?.condition?.evolution
-      && !(enJeu?.ages ?? [])[enJeu?.stade ?? 1];
-    const injouable = !a || moi.breath < a.cost || reste || sansRelève
-      || (moi.effets ?? []).some((e) => e.type === 'lock_actions');
-    // Glyphe de famille en fond, dessin par-dessus : une carte dont le fichier
-    // manque garde son repère au lieu d'un carré vide.
-    cases.push(`<div class="ct ${injouable ? 'hs' : ''}" style="--fc:${fam.c}"
-      ${injouable ? '' : `data-jouer="${id}"`}>
-      <svg class="sceau" viewBox="0 0 24 24"><path d="${fam.ico}"/></svg>
-      ${a ? window.TBF_ACTION.illustration(a.id) : ''}
-      <div class="co">${a?.cost ?? '?'}</div>
-      <div class="nm">${esc(a?.nom ?? id)}</div>
-      ${reste ? `<div class="cd">${Math.ceil(reste)}</div>` : ''}
-    </div>`);
-  }
-  $('mainCartes').innerHTML = cases.join('');
-
-  if (moi.aveugle) {
-    $('mainCartes').innerHTML = Array.from({ length:5 },
-      () => `<div class="ct vide"><div class="nm" style="opacity:.4">?</div></div>`).join('');
-  }
+  const enJeu = fanzzy.find((f) => f.actif);
+  const verrou = effets.some((e) => e.type === 'lock_actions');
+  const places = Array.from({ length: 5 }, (_, i) => main[i] ?? null);
+  const cartesCles = clesDe(places.map((id, i) => id ?? `vide@${i}`));
+  accorder($('mainCartes'),
+    moi.aveugle ? places.map((_, i) => `aveugle#${i}`) : cartesCles,
+    (cle, i) => {
+      if (moi.aveugle) {
+        return fabriquer('<div class="ct vide"><div class="nm">?</div></div>');
+      }
+      if (!places[i]) return fabriquer('<div class="ct vide"></div>');
+      // Glyphe de famille en fond, dessin par-dessus : une carte dont le fichier
+      // manque garde son repère au lieu d'un carré vide.
+      return fabriquer(`<div class="ct">
+        <svg class="sceau" viewBox="0 0 24 24"><path d=""/></svg>
+        <div class="co"></div>
+        <div class="nm"></div>
+      </div>`);
+    },
+    (el, _cle, i) => {
+      const id = places[i];
+      if (moi.aveugle || !id) return;
+      const a = carteDef(id);
+      const fam = famDe(a);
+      const reste = cd[id];
+      // La Relève ne sert à rien si le Fanzzy en tribune est déjà à son dernier
+      // âge débloqué. On la grise plutôt que de la laisser jouer pour rien : le
+      // serveur la refuserait, mais après le geste — donc après l'espoir.
+      const sansRelève = a?.condition?.evolution
+        && !(enJeu?.ages ?? [])[enJeu?.stade ?? 1];
+      const injouable = Boolean(!a || moi.breath < a.cost || reste || sansRelève || verrou);
+      el.classList.toggle('hs', injouable);
+      if (injouable) { if (el.hasAttribute('data-jouer')) el.removeAttribute('data-jouer'); }
+      else if (el.dataset.jouer !== id) el.dataset.jouer = id;
+      if (el._fc !== fam.c) { el._fc = fam.c; el.style.setProperty('--fc', fam.c); }
+      const trace = el.querySelector('.sceau path');
+      if (trace.getAttribute('d') !== fam.ico) trace.setAttribute('d', fam.ico);
+      /* Le dessin est posé une seule fois, dès que la carte est connue. S'il
+         manque, il se retire lui-même et ne revient pas : la carte garde son
+         glyphe, et le fichier absent n'est plus redemandé à chaque vue. */
+      if (a && !el._dessin) {
+        el._dessin = true;
+        el.querySelector('.sceau').insertAdjacentHTML('afterend', window.TBF_ACTION.illustration(a.id));
+      }
+      ecrire(el.querySelector('.co'), a?.cost ?? '?');
+      ecrire(el.querySelector('.nm'), a?.nom ?? id);
+      let rebours = el.querySelector('.cd');
+      if (reste) {
+        if (!rebours) {
+          rebours = fabriquer('<div class="cd"></div>');
+          el.appendChild(rebours);
+        }
+        ecrire(rebours, Math.ceil(reste));
+      } else if (rebours) rebours.remove();
+    });
 
   rendreChants(v);
 
@@ -2050,13 +2373,20 @@ const nomDe = (userId) => {
 };
 const mien = (side) => side === S.vue?.moi?.side;
 
-/** Le bouton de son. L'état vient de fx.js, qui le retient d'une page à l'autre. */
+/** Le bouton de son. L'état vient de fx.js, qui le retient d'une page à l'autre.
+ *  Un haut-parleur au trait : avec ses ondes quand le son joue, barré quand il
+ *  est coupé. Voir `.son` pour la raison du dessin. */
+const HAUT_PARLEUR = '<path d="M4 9.5v5h3.5L12 18V6L7.5 9.5z"/>';
+const DESSIN_SON = {
+  joue: `<svg viewBox="0 0 24 24" aria-hidden="true">${HAUT_PARLEUR}<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/></svg>`,
+  coupe: `<svg viewBox="0 0 24 24" aria-hidden="true">${HAUT_PARLEUR}<path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>`,
+};
 function reglerBoutonSon() {
   const b = $('son');
   if (!b) return;
   const coupe = window.FX?.sonEstCoupe?.() ?? true;
-  b.classList.toggle('coupe', coupe);
-  b.textContent = coupe ? '♪̸' : '♪';
+  const etat = coupe ? 'coupe' : 'joue';
+  if (b.dataset.etat !== etat) { b.dataset.etat = etat; b.innerHTML = DESSIN_SON[etat]; }
   b.setAttribute('aria-label', coupe ? 'Rétablir le son' : 'Couper le son');
 }
 
@@ -2424,20 +2754,26 @@ function montrerBilan(b) {
     <span class="g"><b>${a}</b></span><span class="quoi">${quoi}</span>
     <span class="d"><b>${c}</b></span></div>`;
 
-  const fzListe = (j) => (j?.fanzzy ?? []).map((f) => esc(f.nom)).join(', ') || '—';
+  /* Les Fanzzy de chaque camp. Un camp qui n'en a pas laisse sa case vide, et
+     la rubrique entière se retire quand aucun des deux n'en a : une donnée
+     absente retire sa ligne, elle ne s'écrit pas « — ». Même règle pour le
+     nom de l'adversaire dans le titre. */
+  const fzListe = (j) => (j?.fanzzy ?? []).map((f) => esc(f.nom)).join(', ');
+  const fzMoi = fzListe(moi), fzLui = fzListe(lui);
+  const contre = lui?.nom ? ` · TOI CONTRE ${esc(String(lui.nom).toUpperCase())}` : '';
 
   $('bilanCorps').innerHTML = gains
     + pref(moi)
-    + `<div class="bilan-titre">LE MATCH · TOI CONTRE ${esc((lui?.nom ?? '').toUpperCase())}</div>`
+    + `<div class="bilan-titre tbf-cousu">LE MATCH${contre}</div>`
     + ligne('CHANTS', moi?.chants ?? 0, lui?.chants ?? 0)
     + ligne('CARTES JOUÉES', moi?.cartes ?? 0, lui?.cartes ?? 0)
     + ligne('CHANGEMENTS', moi?.changements ?? 0, lui?.changements ?? 0)
     + ligne('RELÈVES', moi?.releves ?? 0, lui?.releves ?? 0)
     + ligne('FERVEUR', moi?.ferveur ?? 0, lui?.ferveur ?? 0)
-    + `<div class="bilan-titre">QUI A POUSSÉ</div>`
-    + `<div class="stat"><span class="g" style="font-size:11px">${fzListe(moi)}</span>
+    + (fzMoi || fzLui ? `<div class="bilan-titre tbf-cousu">QUI A POUSSÉ</div>`
+      + `<div class="stat"><span class="g" style="font-size:11px">${fzMoi}</span>
         <span class="quoi">TRIBUNE</span>
-        <span class="d" style="font-size:11px">${fzListe(lui)}</span></div>`;
+        <span class="d" style="font-size:11px">${fzLui}</span></div>` : '');
 
   /* **Et on le baisse.**
 
@@ -2563,32 +2899,38 @@ function lancer(kind, cfg, resolve) {
  * coût est en haut à droite, la poussée en gros en bas — et choisir devient une
  * décision de souffle, ce qui était toute la différence entre les deux modes.
  *
- * On ne redessine que si le répertoire, le souffle ou l'état ont changé :
- * l'état arrive dix fois par seconde, et reconstruire cinq cartes à chaque fois
- * effacerait l'appui en cours.
+ * **Chaque carte est posée une fois, et seul son état change.** La rangée se
+ * reconstruisait dès que le souffle gagnait un point — plusieurs fois par
+ * seconde pendant qu'il remonte — et un appui commencé sur une carte finissait
+ * sur sa remplaçante. Elle passe maintenant par `accorder` : une carte par
+ * chant du répertoire, retrouvée par son identifiant, et grisée ou rallumée
+ * en place. Seul un changement de répertoire pose des cartes neuves.
  */
 function rendreChants(v) {
   const moi = v.moi;
   const chants = v.chants ?? [];
   const souffle = Math.floor(moi?.breath ?? 0);
   const muet = (moi?.effets ?? []).some((e) => e.type === 'silence');
-  const cle = `${chants.map((c) => c.id).join('|')}:${souffle}:${muet}:${v.termine}`;
-  const el = $('chants');
-  if (el.dataset.cle === cle) return;
-  el.dataset.cle = cle;
 
-  el.innerHTML = chants.map((c) => {
-    /* Trop cher, réduit au silence, ou partie finie : la carte se grise au lieu
-       de disparaître. Une main qui rétrécit quand on manque de souffle cache
-       exactement ce qu'on est en train de viser. */
-    const hors = muet || v.termine || souffle < c.cost;
-    return `<div class="chant ${hors ? 'dim' : ''}" data-chant="${esc(c.id)}"
-      style="--c:${COULEUR_GESTE[c.gest] ?? '#F5C33B'}">
-      ${window.TBF_CHANT ? window.TBF_CHANT.illustration(c.id) : ''}
-      <span class="c">${c.cost}</span><b>${esc(c.nom ?? c.id)}</b>
-      <span class="g">${esc(LABEL_GESTE[c.gest] ?? c.gest)}</span>
-      <span class="p">${c.power}</span></div>`;
-  }).join('');
+  accorder($('chants'), clesDe(chants.map((c) => c.id)),
+    (_cle, i) => {
+      const c = chants[i];
+      return fabriquer(`<div class="chant" data-chant="${esc(c.id)}"
+        style="--c:${COULEUR_GESTE[c.gest] ?? '#F5C33B'}">
+        ${window.TBF_CHANT ? window.TBF_CHANT.illustration(c.id) : ''}
+        <span class="c"></span><b></b><span class="g"></span><span class="p"></span></div>`);
+    },
+    (el, _cle, i) => {
+      const c = chants[i];
+      /* Trop cher, réduit au silence, ou partie finie : la carte se grise au
+         lieu de disparaître. Une main qui rétrécit quand on manque de souffle
+         cache exactement ce qu'on est en train de viser. */
+      el.classList.toggle('dim', Boolean(muet || v.termine || souffle < c.cost));
+      ecrire(el.querySelector('.c'), c.cost);
+      ecrire(el.querySelector('b'), c.nom ?? c.id);
+      ecrire(el.querySelector('.g'), LABEL_GESTE[c.gest] ?? c.gest);
+      ecrire(el.querySelector('.p'), c.power);
+    });
 }
 
 $('chants').addEventListener('click', async (e) => {
@@ -2638,6 +2980,14 @@ addEventListener('load', () => {
     const coupe = window.FX?.sonCoupe?.(!window.FX.sonEstCoupe());
     reglerBoutonSon();
     if (!coupe) window.FX?.son?.('tic');   // on entend tout de suite que c'est revenu
+  });
+  /* Le son se coupe aussi depuis le mode calme du tiroir, ou depuis un autre
+     onglet : le bouton suit, sans quoi il afficherait l'ancien état jusqu'au
+     prochain clic. Posés ici, après fx.js, pour que son propre écouteur de
+     `storage` ait déjà recopié la clé sur la racine quand on la relit. */
+  addEventListener('tbf-calme', reglerBoutonSon);
+  addEventListener('storage', (e) => {
+    if (e.key === 'tbf-calme' || e.key === null) reglerBoutonSon();
   });
 });
 

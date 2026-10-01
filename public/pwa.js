@@ -26,8 +26,9 @@
  *
  *   3. **Il retient la proposition d'installation.** Le navigateur ne la fait
  *      qu'une fois, très tôt, et l'enterre ensuite dans un menu que personne
- *      n'ouvre. On la garde pour que la page puisse la reproposer au bon
- *      moment, par `TBF_PWA.installer()`.
+ *      n'ouvre. On la garde pour que le jeu puisse la reproposer au bon
+ *      moment, par `TBF_PWA.installer()` : c'est l'entrée « Installer
+ *      l'application » du tiroir, dans `menu.js`, qui s'en sert.
  */
 (() => {
   /* Ce que la page peut demander. Posé tout de suite, même si rien n'est

@@ -50,8 +50,26 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    `min-width:0` sur le conteneur du texte, sinon un bloc flex refuse de
    descendre sous la largeur de son contenu et l'ellipse ne sert à rien. */
 .club>div{min-width:0}
-.club small{font-size:9.5px;opacity:.5;letter-spacing:.1em;display:block;
+/* **Onze pixels et 88 %.** L'étiquette était à neuf et demi, à moitié éteinte :
+   elle dit de quel côté est le joueur, et c'est la seule chose qu'elle dit. */
+.club small{font-size:11px;opacity:.88;letter-spacing:.08em;display:block;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.club small .court{display:none}
+.score{font-family:var(--banner);font-size:24px;flex:none;min-width:64px;text-align:center;line-height:1}
+/* La phase sous le score : « GRAND VIRAGE », ou « TOUT COMPTE DOUBLE » pendant
+   la minute qui compte. Onze pixels et 88 %, en lettrage étroit pour tenir
+   entre les deux clubs : c'est la seule mention de l'écran qui dit que la
+   minute double est ouverte, et elle était la plus effacée.
+
+   **Sur un téléphone, la minute double s'écrit « TOUT ×2 ».** À onze pixels,
+   « TOUT COMPTE DOUBLE » prend cent quinze pixels au milieu du bandeau, et les
+   deux clubs tombaient à « FC … » pendant toute la minute — c'est-à-dire au
+   moment où l'on veut savoir qui pousse. Même procédé que « TOI » et « EUX » :
+   les deux formes sont écrites, la longue reste pour les lecteurs d'écran.
+   La forme courte vaut jusqu'à 500 px : voir les reprises juste en dessous. */
+.score small{display:block;font-size:11px;letter-spacing:.08em;opacity:.88;font-family:var(--banner);
+  font-weight:500;margin-top:3px;white-space:nowrap}
+.score small .court{display:none}
 /* **Une étiquette coupée ne dit plus rien.** « TA TRIB… » et « EN F… » ne
    distinguent plus les deux camps, ce qui est précisément leur seul travail.
    Sur les écrans étroits, l'interlettrage part le premier : il est là pour
@@ -69,31 +87,53 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    le blason passait sous le bouton de menu. On reprend les pixels là où ils
    ne servent qu'à respirer : l'interlettrage de la phase, les écarts, le
    blason. Aucune de ces quatre reprises ne suffirait seule. */
-@media (max-width:420px){
+/* Les reprises ne touchent plus au corps du texte : sous onze pixels, une
+   mention cesse d'informer, et c'est ce que le socle interdit désormais. Elles
+   prennent l'interlettrage et les écarts, et c'est tout.
+
+   **Écrites après les règles qu'elles reprennent, et jusqu'à 500 px.** Le
+   bloc se trouvait au-dessus de `.score` et de `.score small` : à sélecteur
+   égal, c'est la règle écrite plus bas qui gagne, et deux des quatre
+   reprises — la largeur minimale du score, l'interlettrage de la phase —
+   n'avaient jamais pris effet. Et il s'arrêtait à 420 px, alors que
+   l'étiquette longue ne tient sans elles qu'à partir de 450 px environ, et
+   pendant la minute double vers 490 : un grand iPhone, à 430 px, lisait
+   « TA TRIB… » en temps normal comme pendant la minute. */
+@media (max-width:500px){
   .hud{gap:6px}
   .club{gap:5px}
   .club img{width:22px;height:22px}
-  .club small{font-size:9px;letter-spacing:0}
+  .club small{letter-spacing:0}
   .score{min-width:0}
-  .score small{font-size:7.5px;letter-spacing:.05em}
+  .score small{letter-spacing:.04em}
+  .score small .court{display:inline}
+  .score small .long{position:absolute;width:1px;height:1px;overflow:hidden;
+    clip-path:inset(50%);white-space:nowrap}
 }
-/* **Sous 380 px, « TA TRIBUNE » ne rentre pas, alors on écrit « TOI ».**
+/* **Sous 390 px, « TA TRIBUNE » ne rentre pas, alors on écrit « TOI ».**
 
-   Les quatre reprises du dessus ont rendu treize des quinze pixels manquants.
-   Les deux derniers n'existent pas : il n'y a plus rien à gratter qui ne se
-   paie pas ailleurs, et gagner deux pixels par un demi-point de police, c'est
-   se remettre dans la même situation à la première police qui change.
+   Les reprises du dessus ne suffisent pas en dessous : il manque encore
+   quelques pixels, et il n'y a plus rien à gratter qui ne se paie pas
+   ailleurs — gagner deux pixels par un demi-point de police, c'est se
+   remettre dans la même situation à la première police qui change. Le seuil
+   était à 380 px, et l'étiquette se coupait encore juste au-dessus : il
+   laisse maintenant quelques pixels de marge.
 
    Alors on arrête de rétrécir le mot et on en change. « TOI » et « EUX »
    disent exactement ce que disaient « TA TRIBUNE » et « EN FACE » — c'est
    déjà ce qu'on lit, en plus court. Le texte long reste dans le document
-   pour les lecteurs d'écran, qui n'ont pas de problème de largeur. */
-@media (max-width:380px){
-  .club small{font-size:0}
-  .club small::before{content:attr(data-court);font-size:9px;letter-spacing:.08em}
+   pour les lecteurs d'écran, qui n'ont pas de problème de largeur.
+
+   **Deux mots écrits, et non un mot mis à zéro.** Le long était éteint par
+   une police de zéro pixel, le court peint en `::before` : l'audit mesurait
+   donc un texte de zéro pixel — un texte qu'on ne peut pas lire, par
+   construction. Les deux sont maintenant dans le balisage ; le court se
+   montre ici, et le long se retire de l'écran sans quitter le document. */
+@media (max-width:390px){
+  .club small .court{display:inline}
+  .club small .long{position:absolute;width:1px;height:1px;overflow:hidden;
+    clip-path:inset(50%);white-space:nowrap}
 }
-.score{font-family:var(--banner);font-size:24px;flex:none;min-width:64px;text-align:center;line-height:1}
-.score small{display:block;font-size:8.5px;letter-spacing:.16em;opacity:.5;font-family:var(--ui);margin-top:3px}
 .score.surge{color:var(--projo);animation:pulse 1s infinite}
 /* Inviter quelqu'un. Sous le score, minuscule : c'est une chose qu'on fait une
    fois en entrant, pas toutes les trente secondes — et la place au-dessus
@@ -103,17 +143,25 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    la visait trois fois. Mais la grossir, c'était lui donner l'importance
    qu'on vient de lui refuser. Alors le bouton et la pastille sont devenus
    deux choses : le `button` est une zone de touche transparente de 44 px,
-   le `span` à l'intérieur garde le trait fin et les huit pixels de texte.
-   Les marges négatives rendent au bandeau la hauteur que la zone a prise —
-   elle déborde sur ce qu'il y a dessus et dessous, où il n'y a rien à
-   toucher. */
+   le `span` à l'intérieur garde le trait fin. Les marges négatives rendent
+   au bandeau la hauteur que la zone a prise — elle déborde sur ce qu'il y a
+   dessus et dessous, où il n'y a rien à toucher.
+
+   **Discrète par le trait, plus par l'effacement.** Le mot était à huit
+   pixels et à 55 % : discret au point de ne pas se lire. Il passe à onze
+   pixels et 88 %, en lettrage étroit pour garder la pastille courte ; c'est
+   le trait fin et l'absence de fond qui la laissent au second plan. */
 .inviter{display:flex;align-items:center;justify-content:center;min-height:44px;
-  margin:-9px auto -12px;background:none;border:0;padding:0;cursor:pointer}
+  margin:-11px auto -13px;background:none;border:0;padding:0;cursor:pointer}
 .inviter span{border:1px solid rgba(242,238,228,.22);border-radius:5px;
-  color:var(--craie);font-family:var(--ui);font-size:8px;letter-spacing:.14em;
-  padding:3px 7px;opacity:.55}
+  color:var(--craie);font-family:var(--banner);font-size:11px;letter-spacing:.08em;
+  line-height:1.2;padding:2px 7px;opacity:.88}
 .inviter:hover span{opacity:1;border-color:var(--projo);color:var(--projo)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+/* La minute double bat par la lumière et non par l'effacement : à mi-course,
+   le score tombait à 55 % — le chiffre qu'on regarde le plus, illisible une
+   demi-seconde sur deux au moment où il compte double. */
+@keyframes pulse{0%,100%{text-shadow:0 0 0 rgba(245,195,59,0)}
+  50%{text-shadow:0 0 14px rgba(245,195,59,.9)}}
 
 /* ------------------------------------------------------------- le fil
 
@@ -149,8 +197,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   font-variant-numeric:tabular-nums;color:var(--craie)}
 /* Ce libellé porte tout le sens de la bande : sans lui, deux scores se
    suivent à l'écran sans qu'on sache lequel est le match. À 8 px et 45 %
-   d'opacité il ne se lisait pas — autant l'enlever. */
-.fil .sc small{display:block;font-size:9px;letter-spacing:.14em;opacity:.85;margin-top:4px;
+   d'opacité il ne se lisait pas — autant l'enlever. À neuf, il se devinait ;
+   il passe à onze, le plancher de tout ce qui informe, et reprend deux pixels
+   de marge pour que la bande ne grandisse presque pas. */
+.fil .sc small{display:block;font-size:11px;letter-spacing:.1em;opacity:.88;margin-top:2px;
   color:var(--projo)}
 /* **Un score ne dit rien sans ses deux camps.**
  *
@@ -161,10 +211,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
  *
  * Trois lettres par club, sous les chiffres, dans l'ordre de la bande : le
  * doute disparaît sans qu'on ait à relire l'entête. */
-.fil .qui{display:flex;gap:6px;font-family:var(--banner);font-size:8.5px;
-  letter-spacing:.1em;opacity:.55;margin-top:3px}
+.fil .qui{display:flex;gap:6px;font-family:var(--banner);font-size:11px;
+  letter-spacing:.06em;opacity:.88;margin-top:2px}
 .fil .qui i{font-style:normal}
-.fil .qui .moi{color:var(--projo);opacity:.9}
+.fil .qui .moi{color:var(--projo)}
 /* La minute du match. Elle défile localement entre deux relevés — sans quoi
    elle restait figée sur celle de l'entrée, parfois une demi-heure durant, et
    le joueur poussait en croyant le match arrêté. Le point rouge dit que ça
@@ -186,10 +236,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    droite — une bande à moitié pleine se lit comme une bande en panne. */
 .fil .der{flex:1;min-width:0;display:flex;align-items:baseline;gap:7px;
   overflow:hidden;white-space:nowrap}
-.fil .der .m{font-family:var(--banner);font-size:11.5px;opacity:.7;flex:none;
+.fil .der .m{font-family:var(--banner);font-size:11.5px;opacity:.88;flex:none;
   font-variant-numeric:tabular-nums}
 .fil .der .t{overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
-.fil .der .t small{opacity:.55}
+.fil .der .t small{font-size:11px;opacity:.88}
 /* **Ce que la bande ouvre, écrit dessus.**
  *
  * Elle donne accès à la feuille de match — tous les buts, tous les cartons,
@@ -201,10 +251,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
  * Le vide porte donc l'invitation. Elle disparaît sous cinq cent soixante
  * pixels, où il n'y a plus de vide à remplir et où la place appartient à la
  * dernière action. */
-.fil .voir{flex:none;display:none;font-family:var(--banner);font-size:9.5px;
-  letter-spacing:.14em;opacity:.45;margin-left:auto}
+.fil .voir{flex:none;display:none;font-family:var(--banner);font-size:11px;
+  letter-spacing:.12em;opacity:.88;margin-left:auto}
 @media (min-width:560px){ .fil .voir{display:block} }
-.fil:hover .voir{opacity:.75}
+.fil:hover .voir{opacity:1}
 .fil .plus{flex:none;opacity:.5;font-size:16px;font-family:var(--banner)}
 /* Une entrée neuve se signale une seconde et demie, puis se tait. Un fil qui
    clignote en permanence cesse d'être lu au bout de deux minutes. */
@@ -225,26 +275,39 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .feuille.on{display:flex}
 .feuille .tete{flex:none;display:flex;align-items:center;gap:10px;padding:14px 15px 10px}
 .feuille .tete b{font-family:var(--banner);font-size:15px;letter-spacing:.1em;flex:1}
-.feuille .tete #feuilleScore{opacity:.6;font-size:12px;font-variant-numeric:tabular-nums}
-.feuille .tete .x{width:34px;height:34px;border-radius:9px;border:1px solid rgba(242,238,228,.16);
+/* La feuille se lit en craie pleine : la minute, le score et le détail sous
+   chaque ligne étaient entre 45 et 60 %, c'est-à-dire illisibles au soleil
+   sur l'écran qu'on ouvre justement pour lire. Pleine et non simplement
+   au-dessus du plancher : sous le voile blanc du plein jour, une craie à 88 %
+   sur ce noir tombe à 4,3:1, sous les 4,5 d'un texte courant. La hiérarchie
+   passe par la taille. La croix de fermeture passe à quarante-quatre pixels,
+   la cible d'un pouce. */
+.feuille .tete #feuilleScore{font-size:12px;font-variant-numeric:tabular-nums}
+.feuille .tete .x{width:44px;height:44px;border-radius:9px;border:1px solid rgba(242,238,228,.16);
   background:rgba(0,0,0,.3);color:inherit;font-size:17px;cursor:pointer;flex:none}
 .feuille .corps{flex:1;min-height:0;overflow-y:auto;padding:0 15px 18px}
 .ev{display:flex;align-items:center;gap:10px;padding:9px 4px;
   border-top:1px solid rgba(242,238,228,.07)}
-.ev .min{font-family:var(--banner);font-size:13px;width:38px;opacity:.6;flex:none}
+.ev .min{font-family:var(--banner);font-size:13px;width:38px;flex:none}
 .ev .ic{width:20px;text-align:center;flex:none}
 .ev .txt{flex:1;min-width:0}
-.ev .txt small{display:block;opacity:.45;font-size:10.5px}
+.ev .txt small{display:block;font-size:11px}
 .ev.droite{flex-direction:row-reverse;text-align:right}
 .ev.droite .txt{text-align:right}
 /* Le virage a sa propre voix dans le fil : ce qu'a fait la tribune est en
    couleur, le terrain reste en craie. Sans cette distinction, « BUT » se lit
-   comme un but du match et le joueur croit que son club vient de marquer. */
+   comme un but du match et le joueur croit que son club vient de marquer.
+
+   **Le titre en or, la minute et le détail en craie.** Toute la ligne était
+   en or, et l'or à treize et onze pixels ne tient pas au soleil : 4:1 sous
+   le voile du plein jour, contre les 4,5 d'un texte courant. Le titre et
+   l'icône suffisent à dire que c'est la tribune. */
 .ev.tribune{color:var(--projo)}
-.ev.periode{opacity:.55;justify-content:center;font-family:var(--banner);
+.ev.tribune .min,.ev.tribune .txt small{color:var(--craie)}
+.ev.periode{justify-content:center;font-family:var(--banner);
   font-size:11px;letter-spacing:.16em}
 .ev.periode .min,.ev.periode .ic{display:none}
-.feuille .vide{text-align:center;opacity:.45;font-size:12px;padding:40px 20px;line-height:1.7}
+.feuille .vide{text-align:center;font-size:12px;padding:40px 20px;line-height:1.7}
 
 .rope{flex:1;position:relative;min-height:0}
 /* Le stade en fond de corde.
@@ -270,9 +333,11 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   transition:top .12s linear;z-index:2;font-family:var(--banner);font-size:16px}
 .mid{position:absolute;left:50%;top:50%;width:56px;height:1px;transform:translate(-50%,-50%);
   background:rgba(242,238,228,.2)}
-.crowd{position:absolute;left:0;right:0;text-align:center;font-size:9.5px;letter-spacing:.16em;opacity:.5}
+/* Combien poussent de chaque côté. Onze pixels et 88 %, avec une ombre dure :
+   la mention est posée à même le dessin du stade, et à 50 % elle s'y fondait. */
+.crowd{position:absolute;left:0;right:0;text-align:center;font-size:11px;letter-spacing:.12em;opacity:.88;
+  text-shadow:0 1px 0 rgba(0,0,0,.9),0 1px 5px rgba(0,0,0,.8)}
 .crowd.top{top:6px}.crowd.bot{bottom:6px}
-.crowd b{opacity:.95}
 /* Le Fanzzy, dans le bas de la tribune — du côté du joueur, puisque la corde
    se pousse vers le haut, chez l'adversaire. À gauche du nœud et non derrière :
    pendant un geste, le nombre qui bouge est la seule chose qu'on lit, et un
@@ -289,20 +354,55 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   animation:drift 1.2s ease-out forwards}
 @keyframes drift{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-42px)}}
 
-.me-bar{flex:none;padding:0 13px 6px}
-.me-bar .l{display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.14em;opacity:.45;margin-bottom:4px}
-.me-bar .b{height:7px;border-radius:4px;background:rgba(242,238,228,.1);overflow:hidden}
+/* Le souffle : la mention à onze pixels et 88 %, la jauge à dix pixels — le
+   plancher d'une barre qu'on lit en jouant.
+
+   **Sur une seule ligne : « SOUFFLE », la jauge, le chiffre.** La jauge était
+   posée sous sa mention, et chaque pixel qu'elle gagnait était pris à la
+   corde, seule élastique de l'écran : passée de sept à dix pixels, elle
+   coûtait trois pixels à la corde, et la mention au-dessus lui ajoutait une
+   ligne entière. Couchée entre le mot et le chiffre — comme au duel, qui le fait
+   depuis toujours —, la rangée ne mesure plus que sa ligne de texte, et la
+   jauge a ses dix pixels sans rien prendre à personne.
+
+   `display:contents` sur `.l` : le mot et le chiffre deviennent des éléments
+   de la rangée sans toucher au balisage que le script et les tests lisent.
+   L'opacité est donc posée sur eux — une boîte qui n'existe plus ne peut pas
+   la porter. */
+.me-bar{flex:none;display:flex;align-items:center;gap:9px;padding:0 13px 6px}
+.me-bar .l{display:contents;font-size:11px;letter-spacing:.12em;line-height:1.1}
+.me-bar .l span{opacity:.88}
+.me-bar .l span:last-child{order:2;min-width:22px;text-align:right}
+.me-bar .b{order:1;flex:1;height:10px;border-radius:5px;background:rgba(242,238,228,.1);overflow:hidden}
 .me-bar .b i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--vert),var(--projo));
   transition:width .3s}
-.rank{text-align:center;font-size:11px;opacity:.6;padding-bottom:6px}
+/* Le rang, sur une ligne serrée : le chiffre à quatorze pixels et son « e »
+   en exposant ouvraient une ligne de vingt-quatre pixels pour un texte de
+   onze. `line-height:0` sur l'exposant, sinon il la rouvre à lui seul. */
+.rank{text-align:center;font-size:11px;opacity:.88;line-height:1.2;padding-bottom:4px}
 .rank b{color:var(--projo);font-family:var(--banner);font-size:14px}
+.rank sup{line-height:0}
 
 /* Même règle que sur les autres écrans de jeu : nav.js n'en réserve que 55 %,
    la page complète les 45 % manquants. En marge et non en marge intérieure,
-   parce que la hauteur des cartes est fixe et qu'une marge intérieure les
-   écraserait au lieu de les remonter. */
+   parce qu'une marge intérieure écraserait les cartes au lieu de les remonter.
+
+   **Cent quatre pixels au moins, et plus s'il le faut.** La rangée avait une
+   hauteur fixe, calculée pour des noms courts et un geste écrit à huit pixels.
+   Avec le geste à onze pixels — le plancher de lecture — « Le compte à
+   rebours » sur quatre lignes et « CONTRETEMPS » sur deux ne tenaient plus :
+   la poussée, qui est le chiffre qui décide du choix, sortait par le bas de
+   la carte. La rangée grandit donc avec la carte la plus haute.
+
+   **Et la carte se resserre de l'intérieur.** Chaque pixel que prend la
+   rangée, c'est la corde, seule élastique de l'écran, qui le rend. La
+   première version montait à 138 px, trente-quatre de plus que l'ancienne
+   rangée fixe, tous pris à la corde ; le nom qui ne se retire plus que sur
+   sa première ligne (voir `.card b`), des interlignes et des marges
+   intérieures plus serrés la ramènent à 115 px à 360 × 640, sans rien
+   couper. */
 .hand{flex:none;display:flex;gap:6px;padding:4px 11px calc(12px + env(safe-area-inset-bottom));
-  height:104px;margin-bottom:calc(var(--nav-h,62px) * .45)}
+  min-height:104px;margin-bottom:calc(var(--nav-h,62px) * .45)}
 /* Le dessin du chant, en fond. Il dit **le geste** — un supporter qui tape en
    rythme, un autre qui retient son souffle — parce que c'est ce que le joueur
    va devoir faire dans les quatre secondes qui suivent. La rangée était douze
@@ -316,23 +416,53 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .card::after{content:'';position:absolute;inset:0;border-radius:9px;z-index:1;
   background:linear-gradient(175deg,rgba(5,7,10,.82),rgba(5,7,10,.45) 55%,rgba(5,7,10,.86))}
 .card>*{position:relative;z-index:2}
-.card{flex:1;border-radius:9px;padding:8px 7px;background:rgba(0,0,0,.34);position:relative;cursor:pointer;overflow:hidden;
-  border:1px solid rgba(242,238,228,.14);border-top:3px solid var(--c);display:flex;flex-direction:column;gap:3px}
+.card{flex:1;min-width:0;border-radius:9px;padding:6px 5px;background:rgba(0,0,0,.34);position:relative;cursor:pointer;overflow:hidden;
+  border:1px solid rgba(242,238,228,.14);border-top:3px solid var(--c);display:flex;flex-direction:column;gap:2px}
 .card:active{transform:translateY(3px) scale(.98)}
-.card.dim{opacity:.32}
+/* Trop cher : la carte s'éteint comme une plaque hors service — elle garde sa
+   forme et ses chiffres, elle perd sa couleur. À un tiers d'opacité, elle
+   perdait aussi son prix, c'est-à-dire la raison pour laquelle elle est
+   éteinte. */
+.card.dim{filter:grayscale(.85) brightness(.55)}
 /* `padding-right` : le coût est posé en absolu dans le coin, et le nom courait
    dessous. Tant que les cartes portaient leur clé — « mur », « reprise » — le
-   texte était trop court pour y arriver ; « À perdre haleine » l'a montré. */
-.card b{font-family:var(--banner);font-size:11.5px;line-height:1.1;padding-right:15px}
-.card .g{font-size:8px;letter-spacing:.12em;opacity:.5;text-transform:uppercase}
+   texte était trop court pour y arriver ; « À perdre haleine » l'a montré.
+
+   **Le retrait ne vaut que pour la première ligne.** Le coût n'occupe que le
+   coin, et le `padding-right` se prenait sur toutes les lignes : sur une
+   carte de soixante pixels, un quart de la largeur perdu à chaque ligne —
+   « Le compte à rebours » s'écrivait sur quatre, et « Le roulement » sortait
+   de la carte, coupé net. Un flottant d'une ligne de haut réserve la place du
+   coût sur la première seulement. Un mot trop long pour une ligne entière se
+   coupe à la syllabe, comme le geste en dessous. */
+.card b{font-family:var(--banner);font-size:11.5px;line-height:1.05;
+  -webkit-hyphens:auto;hyphens:auto;overflow-wrap:anywhere}
+.card b::before{content:'';float:right;width:14px;height:1em}
+/* Le geste, à onze pixels : c'est lui qui dit quelle épreuve va s'ouvrir, et
+   il était à huit, à moitié éteint. Une carte de soixante pixels ne loge pas
+   « CONTRETEMPS » sur une ligne à cette taille : le mot se coupe à la syllabe
+   là où le téléphone sait le faire, et n'importe où plutôt que de sortir de
+   la carte. Le même réglage qu'au duel. */
+.card .g{font-family:var(--banner);font-size:11px;line-height:1.05;letter-spacing:.02em;
+  opacity:.88;text-transform:uppercase;-webkit-hyphens:auto;hyphens:auto;overflow-wrap:anywhere}
 .card .p{font-family:var(--banner);font-size:20px;color:var(--c);margin-top:auto;line-height:1}
-.card .c{position:absolute;top:6px;right:7px;font-size:10px;opacity:.55;font-family:var(--banner)}
+/* `line-height:1` : le coût tient dans la hauteur de la première ligne du nom,
+   et le flottant qui lui garde la place n'a pas à mordre sur la seconde. */
+.card .c{position:absolute;top:6px;right:5px;font-size:11px;line-height:1;opacity:.88;font-family:var(--banner)}
+/* Sous 350 px, il ne reste que quarante pixels de texte par carte : on prend
+   l'écart entre les cartes et les bords de la rangée plutôt que d'ajouter une
+   ligne au nom, qui se paierait sur la corde. */
+@media (max-width:350px){
+  .hand{gap:4px;padding-left:8px;padding-right:8px}
+  .card{padding-left:4px;padding-right:4px}
+  .card .c{right:4px}
+}
 
 /* Le bandeau qui explique les cases vides de la rangée d'action. Discret :
    il dit une règle, il n'annonce pas un incident. Il disparaît de lui-même
    pour qui n'a que des cartes de Virage — c'est-à-dire pour tout joueur qui
    a lu l'écran du deck une fois. */
-.ecartees{margin:0 10px 5px;padding:6px 9px;border-radius:8px;font-size:10.5px;
+.ecartees{margin:0 10px 5px;padding:6px 9px;border-radius:8px;font-size:11px;
   line-height:1.45;background:rgba(224,64,44,.1);color:var(--craie);
   box-shadow:inset 0 0 0 1px rgba(224,64,44,.3)}
 .ecartees b{font-family:var(--banner);color:var(--flare)}
@@ -358,11 +488,25 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   object-fit:cover;object-position:center 34%;filter:brightness(.6)}
 .acte::after{content:'';position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(4,6,10,.45),transparent 42%,rgba(4,6,10,.92))}
-.acte .co{position:relative;z-index:2;font-family:var(--banner);font-size:10.5px;
+/* Le coût et le nom à onze pixels, le nom en lettrage étroit : à six pixels et
+   demi, « le nom n'est qu'un rappel » voulait dire qu'on ne le lisait pas. Deux
+   cartes de la même famille se ressemblent, et c'est le nom qui les sépare. */
+.acte .co{position:relative;z-index:2;font-family:var(--banner);font-size:11px;
   color:var(--craie);line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.9)}
-.acte .nm{position:relative;z-index:2;font-size:6.5px;line-height:1.1;text-align:center;
-  opacity:.9;text-shadow:0 1px 3px rgba(0,0,0,.9);padding:0 2px}
-.acte.hs{opacity:.34;cursor:default}
+.acte .nm{position:relative;z-index:2;font-family:var(--banner);font-size:11px;line-height:1.05;
+  letter-spacing:.01em;text-align:center;
+  text-shadow:0 1px 0 rgba(0,0,0,.9),0 1px 3px rgba(0,0,0,.9);padding:0 2px}
+/* Hors service, elle s'éteint au lieu de pâlir : voir `.card.dim`. Le compte à
+   rebours, lui, reste lisible — c'est lui qui dit quand elle reviendra.
+
+   L'extinction est donc posée sur chaque enfant **sauf** le compte à rebours,
+   et non sur la carte : un filtre sur la carte vaut pour tout ce qu'elle
+   contient, et le chiffre tombait à 60 % de sa lumière avec le dessin. Le
+   cadre perd sa couleur à part, et le dessin garde l'assombrissement qu'il
+   recevait deux fois (le sien, puis celui de la carte). */
+.acte.hs{border-color:rgba(242,238,228,.22);cursor:default}
+.acte.hs>:not(.cd){filter:grayscale(.85) brightness(.6)}
+.acte.hs>.illu{filter:grayscale(.85) brightness(.36)}
 /* Le compte à rebours passe devant le voile, sinon le chiffre s'assombrit. */
 .acte .cd{position:absolute;inset:0;z-index:3;background:rgba(4,6,10,.72);
   display:flex;align-items:center;justify-content:center;
@@ -377,7 +521,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   font-family:var(--banner);font-size:11.5px;letter-spacing:.12em;
   color:#0B0E13;background:linear-gradient(180deg,#8FE3B8,var(--vert));
   box-shadow:0 3px 0 #0D4F35;animation:appelBat .8s ease-in-out infinite}
-.appel small{display:block;font-family:var(--ui);font-size:9px;letter-spacing:.04em;opacity:.72}
+.appel small{display:block;font-family:var(--ui);font-size:11px;letter-spacing:.02em;opacity:.88}
 @keyframes appelBat{50%{transform:scale(1.025)}}
 
 .mini{position:absolute;inset:0;background:rgba(5,7,10,.94);z-index:20;display:none;
@@ -392,7 +536,8 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    le duel — les deux pages étaient fautives, chacune à sa manière. */
 #miniZone{width:min(100%,var(--colonne))}
 .mini h3{font-family:var(--banner);font-size:22px;letter-spacing:.1em;margin:0;color:var(--c)}
-.mini p{margin:0;font-size:12px;opacity:.6}
+/* La consigne du geste : la seule chose à lire avant de jouer, donc à 88 %. */
+.mini p{margin:0;font-size:12px;opacity:.88}
 /* Le pavé rond, son anneau et ses deux lignes de texte vivent dans ui.css :
    c'est le même composant que le duel et la salle de répétition dessinent, et
    il était écrit ici **sans `touch-action` ni `user-select`**. Voir la note de
@@ -425,7 +570,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   display:flex;flex-direction:column;align-items:center;gap:7px;
   padding:4px 22px calc(env(safe-area-inset-bottom) + 24px)}
 .veil h1{font-family:var(--banner);font-size:24px;letter-spacing:.1em;margin:0}
-.veil p{font-size:12.5px;opacity:.62;line-height:1.6;margin:10px auto 0;max-width:320px}
+/* L'écran de choix se lit en craie pleine : c'est la première chose qu'on
+   voit en arrivant au Virage, et à 62 % sa phrase d'accueil décrochait au
+   soleil (voir la feuille du fil, même raison). */
+.veil p{font-size:12.5px;line-height:1.6;margin:10px auto 0;max-width:320px}
 /* Le champ de recherche, comme sur la page des matchs et celle des
    compétitions : même geste, même promesse — une équipe, une compétition, ou
    un pays dans sa langue. */
@@ -434,11 +582,21 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   border:1px solid rgba(242,238,228,.16);color:var(--craie);
   padding:10px 12px;font-size:14px;font-family:inherit}
 .veil .rech input:focus{outline:none;border-color:var(--projo)}
-.veil .vide{font-size:12px;opacity:.45;padding:26px 10px;line-height:1.7}
+.veil .vide{font-size:12px;padding:26px 10px;line-height:1.7}
 .match{width:100%;max-width:340px;border:1px solid rgba(242,238,228,.16);border-radius:10px;
   background:rgba(0,0,0,.3);padding:12px;cursor:pointer;display:flex;align-items:center;
   gap:9px;flex-wrap:wrap}
-.match.off{opacity:.4;pointer-events:none}
+/* Éteinte, et non effacée : « TERMINÉ » est justement ce que la ligne a à
+   dire, et à 40 % d'opacité on ne le lisait pas.
+
+   **Le texte ne s'éteint pas avec elle.** Un `brightness(.62)` sur la ligne
+   entière assombrissait la craie comme une opacité de 62 % : le mot qu'on
+   venait de sauver retombait sous le seuil de lecture, et les noms des clubs
+   avec lui. Ce sont les blasons et le cadre qui s'éteignent ; le gris de la
+   ligne suffit à dire qu'elle ne se joue plus, et « TERMINÉ » dit pourquoi. */
+.match.off{filter:grayscale(1);pointer-events:none;border-color:rgba(242,238,228,.08);
+  background:transparent}
+.match.off img{opacity:.4}
 /* Le match qu'on vient chercher par un lien. Il est amené sous les yeux et
    marqué : arriver depuis la fiche d'un match sur une liste de trente
    rencontres, sans rien qui désigne la sienne, se lit comme un menu et non
@@ -448,35 +606,53 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .match img{width:24px;height:24px;object-fit:contain}
 .match .n{flex:1;min-width:0;text-align:left}
 .match .n b{font-family:var(--banner);font-size:13px;display:block}
-.match .n small{font-size:10px;opacity:.5}
+.match .n small{font-size:11px}
 /* Deux sections dans l'écran de choix : chez soi, puis ailleurs. La seconde
    dit tout de suite ce qu'elle coûte — une règle qu'on découvre au classement
-   est une règle qu'on prend pour un bug. */
-.rubrique{width:100%;max-width:340px;text-align:left;font-family:var(--banner);
-  font-size:10px;letter-spacing:.2em;opacity:.45;margin:14px 0 2px}
-.rubrique small{display:block;font-family:var(--ui);font-size:9.5px;letter-spacing:.06em;
-  opacity:.8;margin-top:3px;text-transform:none}
+   est une règle qu'on prend pour un bug.
+
+   Le titre est un titre cousu (`.tbf-cousu`, dans ui.css) : la page ne garde
+   que sa place. Ce qu'il coûte s'écrit **sous** lui, dans `.rubrique-sous`, et
+   non plus dedans : le fil du titre cousu court jusqu'au bout de la ligne, et
+   une précision glissée à l'intérieur l'aurait coupé en deux. */
+.rubrique{width:100%;max-width:340px;text-align:left;margin:14px 0 2px}
+.rubrique-sous{width:100%;max-width:340px;text-align:left;font-size:11px;letter-spacing:.04em;
+  margin:-2px 0 2px}
+/* L'alerte « pas de direct » n'est pas une rubrique : c'est un avertissement,
+   en rouge, avec sa porte de sortie. */
+.rubrique.alerte{font-family:var(--banner);font-size:11px;letter-spacing:.14em;color:var(--flare)}
+.rubrique.alerte small{display:block;font-family:var(--ui);font-size:11px;letter-spacing:.04em;
+  margin-top:3px;text-transform:none;color:var(--craie)}
 .match.ailleurs{border-style:dashed}
 /* Le choix du camp, déplié sous la carte. Demander après coup, une fois
-   dedans, serait pire : on aurait déjà poussé du mauvais côté. */
+   dedans, serait pire : on aurait déjà poussé du mauvais côté.
+
+   Les deux clubs sont des plaques au ton flare — jouer — et la page ne garde
+   que leur place : la question sur sa ligne, puis deux colonnes de même
+   poids. En lettrage de plaque, la question et les deux clubs ne tiennent
+   plus sur une seule ligne, et le second club passait seul en dessous. */
 .camps{flex-basis:100%;display:flex;align-items:center;gap:7px;flex-wrap:wrap;
   padding-top:10px;margin-top:2px;border-top:1px solid rgba(242,238,228,.12)}
-.camps span{font-size:10.5px;opacity:.55;flex:none}
-.camps button{flex:1;min-width:96px;border:0;border-radius:9px;color:inherit;cursor:pointer;
-  padding:9px 8px 8px;font-family:var(--banner);font-size:11.5px;letter-spacing:.06em;
-  background:rgba(16,22,31,.95);
-  box-shadow:0 3px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(242,238,228,.11)}
-.camps button:active{transform:translateY(3px);box-shadow:none}
+.camps span{font-size:11px;flex:1 0 100%;text-align:left}
+.camps button{flex:1;min-width:96px;padding:9px 8px 8px;overflow-wrap:anywhere}
 
 .match .st{font-family:var(--banner);flex:none;display:flex;flex-direction:column;
   align-items:flex-end;gap:2px;letter-spacing:.08em}
 /* Le score domine la minute : c'est lui qu'on cherche avant d'entrer. */
 .match .st .sc{font-size:16px;line-height:1;color:var(--craie)}
-.match .st i{font-style:normal;font-size:10.5px;color:var(--flare)}
+/* **La minute en craie, le direct en point rouge.** Écrite en rouge à onze
+   pixels, la minute tombait à 2,3:1 au soleil — le rouge du fumigène est une
+   couleur de signal, pas d'écriture. Le point devant elle garde le signal :
+   c'est le même qu'au fil du match, et il dit « ça se joue maintenant ». */
+.match .st i{font-style:normal;font-size:11px;color:var(--craie);
+  display:inline-flex;align-items:center;gap:4px}
+.match .st i::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--flare)}
 /* Le rouge du direct ne convient pas à ce qui est fini : c'est la couleur qui
    dit « ça se joue maintenant », et l'employer pour un coup de sifflet final
-   ferait exactement le contresens qu'on vient de corriger. */
-.match .st i.fini{color:var(--craie);opacity:.6;letter-spacing:.14em;font-size:9.5px}
+   ferait exactement le contresens qu'on vient de corriger. Le mot fini n'a
+   donc pas de point. */
+.match .st i.fini{color:var(--craie);letter-spacing:.1em;font-size:11px}
+.match .st i.fini::before{display:none}
 .err{position:absolute;left:50%;bottom:130px;transform:translateX(-50%);z-index:18;
   background:rgba(224,64,44,.92);border-radius:6px;padding:9px 15px;font-size:12.5px;display:none}
 .err.on{display:block}
@@ -489,7 +665,22 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 @keyframes pop{from{opacity:0;transform:translate(-50%,-46%) scale(.8)}}
 .souvenir .t{font-family:var(--banner);font-size:11px;letter-spacing:.2em;color:var(--projo)}
 .souvenir .m{font-family:var(--banner);font-size:22px;margin:8px 0 4px}
-.souvenir .d{font-size:11.5px;opacity:.6}
+.souvenir .d{font-size:11.5px}
+
+/* **Le mouvement part, l'information reste.** Sous `prefers-reduced-motion`
+   comme sous le mode calme « animations » (voir ui.css), les battements
+   décoratifs de l'écran s'arrêtent : le point du direct, le score qui luit,
+   l'appel du capo qui bat, la secousse, l'éclair d'une entrée neuve. La
+   couleur du score, le point rouge et le bandeau vert, eux, restent.
+
+   En fin de feuille, et c'est nécessaire : ces règles ont le même poids que
+   celles qui posent les animations, et seul l'ordre les départage. */
+@media (prefers-reduced-motion:reduce){
+  .fil .min::before,.fil.neuf,.score.surge,.appel,#app.quake{animation:none}
+}
+html[data-calme~="animations"] .fil .min::before,html[data-calme~="animations"] .fil.neuf,
+html[data-calme~="animations"] .score.surge,html[data-calme~="animations"] .appel,
+html[data-calme~="animations"] #app.quake{animation:none}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/img/logo.png" type="image/png">
@@ -503,13 +694,19 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <main id="app">
   <!-- Ta tribune à gauche, dans l'ordre du score. Voir `.club.foe`. -->
   <div class="hud">
+    <!-- Le mot long et le mot court, tous deux écrits : voir la note sous
+         390 px, dans la feuille. Le court est tu aux lecteurs d'écran, qui
+         lisent le long. -->
     <div class="club me" id="clubMe"><img alt=""><div><b>—</b>
-      <small data-court="TOI">TA TRIBUNE</small></div></div>
-    <div class="score"><span id="score">0 – 0</span><small id="phase">GRAND VIRAGE</small>
+      <small><span class="long">TA TRIBUNE</span><span class="court"
+        aria-hidden="true">TOI</span></small></div></div>
+    <div class="score"><span id="score">0 – 0</span><small id="phase"><span
+      class="long">GRAND VIRAGE</span><span class="court" aria-hidden="true">GRAND VIRAGE</span></small>
       <button class="inviter" id="partager" hidden
         aria-label="Inviter quelqu’un sur ce match"><span>INVITER</span></button></div>
     <div class="club foe" id="clubFoe"><img alt=""><div><b>—</b>
-      <small data-court="EUX">EN FACE</small></div></div>
+      <small><span class="long">EN FACE</span><span class="court"
+        aria-hidden="true">EUX</span></small></div></div>
   </div>
 
   <button class="fil" id="fil" hidden aria-haspopup="dialog">
@@ -646,7 +843,16 @@ const $ = (id) => document.getElementById(id);
    avant d'entrer dans la page. Même forme que sur les autres écrans. */
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
   (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
-const buzz = (p) => { try { navigator.vibrate?.(p); } catch {} };
+/* Les vibrations se taisent sous le calme « vibrations » du tiroir, relu à
+   chaque appel : le joueur peut le changer en pleine tribune. `FX.calme`
+   répond quand fx.js est chargé ; sinon l'attribut de la racine, posé aussi
+   par menu.js, dit la même chose. */
+const buzz = (p) => {
+  const calme = window.FX?.calme?.('vibrations')
+    ?? (document.documentElement.dataset.calme ?? '').split(' ').includes('vibrations');
+  if (calme) return;
+  try { navigator.vibrate?.(p); } catch {}
+};
 /* Les noms, les aides et les couleurs des dix gestes viennent de `/geste.js`,
    avec leur déroulé. Ils étaient écrits ici **et** dans le duel : trois gestes,
    deux tables, et deux occasions de n'en corriger qu'une. */
@@ -661,6 +867,89 @@ let socket = null, S = null, busy = false;
 let FERVEUR_NEUTRE = 0.5;
 
 /* ------------------------------------------------------------ affichage */
+
+/* ----------------------------------------------- des nœuds qui durent
+
+   **Un conteneur réécrit dix fois par seconde ne garde rien de vivant.**
+
+   `render` passe à chaque message de corde et à chaque seconde, et réécrivait
+   en `innerHTML` la rangée des cartes d'action, son bandeau d'explication, la
+   foule et le rang. Chaque passage jetait donc les nœuds pour en poser des
+   neufs, identiques à l'œil. Trois choses en mouraient sans bruit : les
+   animations (fx.js fait respirer les dessins, et un dessin remplacé tous les
+   dixièmes de seconde repart de zéro), l'appui et le focus (le lien « Changer
+   mon deck » du bandeau était remplacé entre l'appui et le relâchement), et
+   le réseau (un dessin absent se retire de lui-même, puis revenait à la vue
+   suivante et se redemandait).
+
+   Chaque élément est donc **créé une fois, retrouvé par sa clé, modifié en
+   place**, et retiré seulement quand sa clé disparaît. Même rendu à l'écran —
+   mêmes classes, mêmes attributs, même ordre — mais des nœuds qui restent.
+   C'est le jumeau de ce que fait le duel : voir « des nœuds qui durent » dans
+   duel-nvn.html, écrit de la même façon.
+
+   La clé est une propriété du nœud (`_cle`) et non un attribut : elle ne se
+   voit pas dans la page, et un nœud retiré par ailleurs emporte la sienne. */
+
+/**
+ * Accorde les enfants de `boite` à une liste de clés, dans cet ordre.
+ *
+ * `creer(cle, i)` fabrique le nœud d'une clé neuve ; `maj(el, cle, i)` le met
+ * à jour en place, à chaque passage — il ne doit écrire que ce qui change.
+ * Un nœud n'est déplacé que s'il n'est pas à sa place : déplacer un élément
+ * lui fait perdre le focus, et c'est justement ce qu'on protège.
+ */
+function accorder(boite, cles, creer, maj) {
+  const gardes = new Map();
+  for (const el of [...boite.children]) {
+    if (el._cle != null && cles.includes(el._cle) && !gardes.has(el._cle)) gardes.set(el._cle, el);
+    else el.remove();
+  }
+  cles.forEach((cle, i) => {
+    let el = gardes.get(cle);
+    if (!el) { el = creer(cle, i); el._cle = cle; }
+    maj(el, cle, i);
+    if (boite.children[i] !== el) boite.insertBefore(el, boite.children[i] ?? null);
+  });
+}
+
+/** Un nœud depuis son balisage : les gabarits de la page restent lisibles. */
+function fabriquer(html) {
+  const t = document.createElement('template');
+  t.innerHTML = html.trim();
+  return t.content.firstElementChild;
+}
+
+/**
+ * Des clés uniques pour une liste qui peut se répéter : un deck peut porter
+ * deux fois la même carte, et la main les avoir ensemble.
+ */
+function clesDe(ids) {
+  const vus = new Map();
+  return ids.map((id) => {
+    const n = vus.get(id) ?? 0;
+    vus.set(id, n + 1);
+    return `${id}#${n}`;
+  });
+}
+
+/** N'écrit un texte que s'il a changé : réécrire le même texte recrée le nœud. */
+function ecrire(el, texte) {
+  const t = String(texte);
+  if (el && el.textContent !== t) el.textContent = t;
+}
+
+/** Même règle pour les rares endroits qui posent du balisage : on retient ce
+    qu'on a posé, et on ne le repose que s'il a changé. */
+function poser(el, html) {
+  if (el && el._html !== html) { el._html = html; el.innerHTML = html; }
+}
+
+/** « 12 AVEC TOI » : le chiffre change, la mention reste. */
+function compteDeTribune(el, n, texte) {
+  if (!el.firstElementChild) el.innerHTML = `<b></b> ${texte}`;
+  ecrire(el.firstElementChild, n);
+}
 
 function renderStatic() {
   const f = S.fixture, mine = S.you.side;
@@ -696,19 +985,33 @@ function render() {
   // pousser vers le haut veuille toujours dire pousser chez l'adversaire.
   const vers = mine === 0 ? -S.rope : S.rope;
   const pct = Math.max(-1, Math.min(1, vers / GOAL_AT));
+  /* **Rien n'est réécrit en entier ici.** `render` passe à chaque message de
+     corde — dix fois par seconde quand la tribune chante — et chaque ligne
+     ci-dessous ne touche que le texte ou le style qui a changé. Réécrire un
+     `innerHTML` à ce rythme recrée les nœuds, et plus rien ne peut vivre
+     dedans : ni une animation, ni un focus. Voir `renderActes`. */
   $('knot').style.top = `${h / 2 - pct * (h / 2 - 38)}px`;
-  $('knot').textContent = Math.abs(Math.round(vers));
-  $('score').textContent = `${S.goals[mine]} – ${S.goals[mine ^ 1]}`;
-  $('score').className = 'score' + (S.surge ? ' surge' : '');
-  $('phase').textContent = S.surge ? 'TOUT COMPTE DOUBLE' : 'GRAND VIRAGE';
-  $('crowdMe').innerHTML = `<b>${S.crowd[mine]}</b> AVEC TOI`;
-  $('crowdFoe').innerHTML = `<b>${S.crowd[mine ^ 1]}</b> EN FACE`;
+  ecrire($('knot'), Math.abs(Math.round(vers)));
+  ecrire($('score'), `${S.goals[mine]} – ${S.goals[mine ^ 1]}`);
+  // `score` sur le chiffre lui-même : c'est `.score.surge` qui le fait battre.
+  const classeScore = S.surge ? 'score surge' : 'score';
+  if ($('score').className !== classeScore) $('score').className = classeScore;
+  // Deux formes, comme les étiquettes des clubs : voir `.score small`.
+  ecrire($('phase').querySelector('.long'), S.surge ? 'TOUT COMPTE DOUBLE' : 'GRAND VIRAGE');
+  ecrire($('phase').querySelector('.court'), S.surge ? 'TOUT ×2' : 'GRAND VIRAGE');
+  compteDeTribune($('crowdMe'), S.crowd[mine], 'AVEC TOI');
+  compteDeTribune($('crowdFoe'), S.crowd[mine ^ 1], 'EN FACE');
   // Le souffle affiché est celui du serveur **plus le regain écoulé depuis** :
   // la jauge monte donc en continu au lieu de sauter d'un chant à l'autre.
   const souffle = Math.round(souffleCourant());
   $('breathBar').style.width = `${souffle}%`;
-  $('breathVal').textContent = souffle;
-  if (S.you.rank) $('rank').innerHTML = `<b>${S.you.rank}<sup>e</sup></b> sur ${S.you.of} · ${S.you.ferveur} de ferveur`;
+  ecrire($('breathVal'), souffle);
+  if (S.you.rank) {
+    const r = $('rank');
+    if (!r.firstChild) r.innerHTML = '<b><span></span><sup>e</sup></b><span></span>';
+    ecrire(r.querySelector('b span'), S.you.rank);
+    ecrire(r.lastChild, ` sur ${S.you.of} · ${S.you.ferveur} de ferveur`);
+  }
   renderApports();
   for (const el of $('hand').children) {
     const c = S.cards.find((x) => x.id === el.dataset.card);
@@ -845,9 +1148,11 @@ function iconeDuFil(e) {
 const minuteDuFil = (e) =>
   e.minute == null ? '' : `${e.minute}${e.extra ? '+' + e.extra : ''}'`;
 
-/** Le score du vrai match, du point de vue du joueur — comme partout ailleurs. */
+/** Le score du vrai match, du point de vue du joueur — comme partout ailleurs.
+ *  Vide quand on ne le connaît pas : une donnée absente retire sa place, elle
+ *  ne s'écrit pas « — ». Voir `renderFil` et `renderFeuille`. */
 function scoreTerrain() {
-  if (!S?.scoreReel) return '—';
+  if (!S?.scoreReel) return '';
   const mine = S.you.side;
   return `${S.scoreReel[mine]} – ${S.scoreReel[mine ^ 1]}`;
 }
@@ -896,14 +1201,21 @@ function souffleCourant() {
 }
 
 /* Trois lettres pour un club : assez pour le reconnaître quand son nom est
-   juste au-dessus, assez court pour tenir sous deux chiffres. */
+   juste au-dessus, assez court pour tenir sous deux chiffres. Rien quand le
+   nom manque : le sigle se retire au lieu de s'écrire « — ». */
 const troisLettres = (nom) => String(nom ?? '')
-  .replace(/[^A-Za-zÀ-ÿ]/g, '').slice(0, 3).toUpperCase() || '—';
+  .replace(/[^A-Za-zÀ-ÿ]/g, '').slice(0, 3).toUpperCase();
 
 function renderFil({ neuf = false } = {}) {
   if (!S) return;
   $('fil').hidden = false;
-  $('filScore').textContent = scoreTerrain();
+  /* Sans score connu, le bloc du terrain se retire en entier — le chiffre,
+     « TERRAIN » et les sigles : un « TERRAIN » sous un tiret disait qu'il y
+     avait quelque chose à lire, et il n'y avait rien. La minute et le dernier
+     fait restent, ils ont leur propre source. */
+  const score = scoreTerrain();
+  $('filScore').textContent = score;
+  $('filScore').parentElement.hidden = !score;
 
   /* Les deux camps sous le score, **dans l'ordre du score** : le sien à
      gauche, comme partout ailleurs dans le jeu. */
@@ -915,20 +1227,20 @@ function renderFil({ neuf = false } = {}) {
     const fx = S.fixture;
     const me = { n: S.you.side === 0 ? fx?.homeName : fx?.awayName };
     const foe = { n: S.you.side === 0 ? fx?.awayName : fx?.homeName };
-    qui.innerHTML = (me.n || foe.n)
-      ? `<i class="moi">${esc(troisLettres(me?.n))}</i><i>${esc(troisLettres(foe?.n))}</i>`
-      : '';
+    const sigles = [['moi', troisLettres(me.n)], ['', troisLettres(foe.n)]];
+    poser(qui, sigles.map(([classe, s]) =>
+      (s ? `<i${classe ? ` class="${classe}"` : ''}>${esc(s)}</i>` : '')).join(''));
   }
 
   const min = minuteCourante();
-  $('filMinute').textContent = minuteTexte();
+  ecrire($('filMinute'), minuteTexte());
   $('filMinute').classList.toggle('arret', Boolean(min?.arret));
 
   const der = S.fil?.[S.fil.length - 1];
-  $('filDer').innerHTML = der
+  poser($('filDer'), der
     ? `<span class="m">${minuteDuFil(der)}</span><span class="t">${iconeDuFil(der)}
        ${esc(ditLeFil(der).titre)}</span>`
-    : `<span class="t"><small>Rien à signaler pour l’instant</small></span>`;
+    : `<span class="t"><small>Rien à signaler pour l’instant</small></span>`);
 
   if (neuf) {
     const b = $('fil');
@@ -938,13 +1250,14 @@ function renderFil({ neuf = false } = {}) {
 }
 
 function renderFeuille() {
-  const minF = minuteTexte();
-  $('feuilleScore').textContent = minF
-    ? `${scoreTerrain()} · ${minF}` : scoreTerrain();
+  // Le score et la minute, chacun seulement s'il est connu.
+  $('feuilleScore').textContent = [scoreTerrain(), minuteTexte()].filter(Boolean).join(' · ');
   const fil = S?.fil ?? [];
   // Le plus récent en tête : on ouvre le fil pour savoir ce qu'on vient de
-  // manquer, pas pour relire le coup d'envoi.
-  $('feuilleCorps').innerHTML = fil.length
+  // manquer, pas pour relire le coup d'envoi. Réécrite seulement quand le fil
+  // a changé : la feuille ouverte se relit toutes les quinze secondes, et
+  // c'est une liste qu'on fait défiler du doigt.
+  poser($('feuilleCorps'), fil.length
     ? fil.slice().reverse().map((e) => {
       const { titre, detail } = ditLeFil(e);
       if (e.genre === 'periode') return `<div class="ev periode">${esc(titre)}</div>`;
@@ -956,7 +1269,7 @@ function renderFeuille() {
       </div>`;
     }).join('')
     : `<div class="vide">Rien n’est encore arrivé sur le terrain.<br>
-        Les cartons et les remplacements arrivent pendant que tu es dans le virage.</div>`;
+        Les cartons et les remplacements arrivent pendant que tu es dans le virage.</div>`);
 }
 
 const ouvrirFeuille = (oui) => {
@@ -1350,36 +1663,63 @@ function renderActes() {
      de cinq cartes de largeur fixe, et y glisser une phrase déplacerait tout
      ce qui se touche au doigt. Le lien vers le deck est là parce qu'une
      explication sans porte de sortie ne fait qu'agacer. */
+  /* Le bandeau n'est réécrit que quand le compte change : il porte un lien,
+     et un lien remplacé dix fois par seconde ne se touche pas — l'appui tombe
+     sur un nœud, le relâchement sur son remplaçant, et le clic se perd. */
   const banniere = $('ecartees');
   const ecartees = S?.you?.ecartees ?? 0;
   if (ecartees && banniere) {
     banniere.hidden = false;
-    banniere.innerHTML = `<b>${ecartees}</b> carte(s) de ton deck ne se jouent qu\u2019en duel \u2014 elles visent quelqu\u2019un en face, et ici il n\u2019y a personne à viser. <a href="/deck">Changer mon deck</a>`;
+    if (banniere._n !== ecartees) {
+      banniere._n = ecartees;
+      banniere.innerHTML = `<b>${ecartees}</b> carte(s) de ton deck ne se jouent qu\u2019en duel \u2014 elles visent quelqu\u2019un en face, et ici il n\u2019y a personne à viser. <a href="/deck">Changer mon deck</a>`;
+    }
   } else if (banniere) { banniere.hidden = true; }
 
   if (!main.length) { boite.hidden = true; return; }
   boite.hidden = false;
 
+  /* La rangée passe par `accorder` : voir « des nœuds qui durent ». Une case
+     par place de la main — la carte retrouvée par son identifiant, la case
+     vide par sa position — posée une fois et retouchée en place. */
   const souffle = souffleCourant();
   const cd = S?.you?.cooldowns ?? {};
-  const cases = [];
-  for (let i = 0; i < (S.you.mainVisible ?? 5); i++) {
-    const id = main[i];
-    if (!id) { cases.push('<div class="acte vide"></div>'); continue; }
-    const a = acteDe(id);
-    const fam = window.TBF_ACTION.famDe(a);
-    const reste = cd[id];
-    const injouable = !a || souffle < a.cost || reste || busy;
-    cases.push(`<div class="acte ${injouable ? 'hs' : ''}" style="--fc:${fam.c}"
-      ${injouable ? '' : `data-acte="${id}"`}>
-      <svg class="sceau" viewBox="0 0 24 24"><path d="${fam.ico}"/></svg>
-      ${window.TBF_ACTION.illustration(id)}
-      <div class="co">${a?.cost ?? '?'}</div>
-      <div class="nm">${esc(a?.nom ?? id)}</div>
-      ${reste ? `<div class="cd">${Math.ceil(reste)}</div>` : ''}
-    </div>`);
-  }
-  boite.innerHTML = cases.join('');
+  const places = Array.from({ length: S.you.mainVisible ?? 5 }, (_, i) => main[i] ?? null);
+  accorder(boite, clesDe(places.map((id, i) => id ?? `vide@${i}`)),
+    (_cle, i) => {
+      const id = places[i];
+      if (!id) return fabriquer('<div class="acte vide"></div>');
+      return fabriquer(`<div class="acte">
+        <svg class="sceau" viewBox="0 0 24 24"><path d=""/></svg>
+        ${window.TBF_ACTION.illustration(id)}
+        <div class="co"></div>
+        <div class="nm"></div>
+      </div>`);
+    },
+    (el, _cle, i) => {
+      const id = places[i];
+      if (!id) return;
+      const a = acteDe(id);
+      const fam = window.TBF_ACTION.famDe(a);
+      const reste = cd[id];
+      const injouable = Boolean(!a || souffle < a.cost || reste || busy);
+      el.classList.toggle('hs', injouable);
+      if (injouable) { if (el.hasAttribute('data-acte')) el.removeAttribute('data-acte'); }
+      else if (el.dataset.acte !== id) el.dataset.acte = id;
+      if (el._fc !== fam.c) { el._fc = fam.c; el.style.setProperty('--fc', fam.c); }
+      const trace = el.querySelector('.sceau path');
+      if (trace.getAttribute('d') !== fam.ico) trace.setAttribute('d', fam.ico);
+      ecrire(el.querySelector('.co'), a?.cost ?? '?');
+      ecrire(el.querySelector('.nm'), a?.nom ?? id);
+      let rebours = el.querySelector('.cd');
+      if (reste) {
+        if (!rebours) {
+          rebours = fabriquer('<div class="cd"></div>');
+          el.appendChild(rebours);
+        }
+        ecrire(rebours, Math.ceil(reste));
+      } else if (rebours) rebours.remove();
+    });
 }
 
 /**
@@ -1857,16 +2197,18 @@ function souvenir(g) {
     /* **Sans direct, on le dit au-dessus de la liste.** Pousser dans un
        virage demande une connexion permanente ; la liste, non. On montre donc
        ce qui se joue, et on prévient que l'entrée ne marchera pas. */
-    const avertir = sansDirect ? `<div class="rubrique" style="color:var(--flare)">
+    const avertir = sansDirect ? `<div class="rubrique alerte">
       PAS DE CONNEXION EN DIRECT
       <small>tu peux voir les matchs, pas entrer dans le virage ·
       <a href="/diagnostic" style="color:var(--projo)">voir pourquoi</a></small>
       </div>` : '';
 
+    /* Les deux titres sont cousus (voir `.rubrique`) ; ce que coûte « ailleurs »
+       s'écrit sur la ligne d'en dessous, hors du titre. */
     $('matchs').innerHTML = avertir + ((vus.length ? [
-      miens.length ? `<div class="rubrique">TES CLUBS</div>${miens.map(carte).join('')}` : '',
-      autres.length ? `<div class="rubrique">AILLEURS EN DIRECT
-        <small>tu choisis ton camp · ferveur à ${part} %</small></div>${autres.map(carte).join('')}` : '',
+      miens.length ? `<div class="rubrique tbf-cousu">TES CLUBS</div>${miens.map(carte).join('')}` : '',
+      autres.length ? `<div class="rubrique tbf-cousu">AILLEURS EN DIRECT</div>
+        <div class="rubrique-sous">tu choisis ton camp · ferveur à ${part} %</div>${autres.map(carte).join('')}` : '',
     ].join('') : '')
       || (terme
         ? `<div class="vide">Aucun match ne répond à « ${esc(terme)} ».<br>
@@ -1984,10 +2326,13 @@ function souvenir(g) {
     if (m.querySelector('.camps')) { m.querySelector('.camps').remove(); return; }
     const info = matchs.find((x) => String(x.id) === m.dataset.id) ?? {};
     document.querySelectorAll('#matchs .camps').forEach((n) => n.remove());
+    /* Deux plaques au ton flare : choisir son camp, c'est entrer jouer. */
     m.insertAdjacentHTML('beforeend', `<div class="camps">
       <span>Tu pousses pour&nbsp;:</span>
-      <button data-camp="domicile">${esc(info.home_name ?? 'Domicile')}</button>
-      <button data-camp="exterieur">${esc(info.away_name ?? 'Extérieur')}</button>
+      <button class="tbf-plaque" data-ton="flare"
+        data-camp="domicile">${esc(info.home_name ?? 'Domicile')}</button>
+      <button class="tbf-plaque" data-ton="flare"
+        data-camp="exterieur">${esc(info.away_name ?? 'Extérieur')}</button>
     </div>`);
   };
 })();

@@ -106,6 +106,19 @@ async function menuDe(chemin) {
       liens: [...t.querySelectorAll('a')].map((a) => a.getAttribute('href')),
       libelles: [...t.querySelectorAll('a')].map((a) => a.textContent.trim()),
       rubriques: [...t.querySelectorAll('.tbf-rubrique')].map((d) => d.textContent.trim()),
+      /* Les interrupteurs du mode calme (lot 0, chantier 13, contrat C4).
+         Des boutons et non des liens : ils ne mènent nulle part, ils changent
+         le comportement du jeu ici, et un lecteur d'écran doit les annoncer
+         comme des interrupteurs (`role="switch"`, `aria-checked`). On relève
+         aussi s'ils disent vrai : un interrupteur qui contredit l'état du jeu
+         (`data-calme` sur la racine) est pire que pas d'interrupteur. */
+      interrupteurs: [...t.querySelectorAll('[role="switch"]')].map((b) => ({
+        facette: b.dataset.facette ?? '',
+        coche: b.getAttribute('aria-checked'),
+        juste: b.getAttribute('aria-checked') === String((document.documentElement
+          .dataset.calme ?? '').split(' ').includes(b.dataset.facette)),
+        dansLeGroupe: Boolean(b.closest('[role="group"][aria-labelledby="tbf-calme-titre"]')),
+      })),
       // La page où l'on est doit se marquer : sans ça le menu propose d'aller
       // là où on est déjà.
       marquee: [...t.querySelectorAll('a.on, .tbf-tiroir-ici.on')]
@@ -133,8 +146,68 @@ check('les deux mènent exactement aux mêmes endroits',
       console.log('    carnet  :', carnet.liens), false));
 check('et les libellés sont les mêmes, mot pour mot',
   JSON.stringify(accueil.libelles) === JSON.stringify(carnet.libelles));
+/* « MODE CALME » ferme la liste (lot 0, chantier 13) : ce n'est pas un
+   endroit où aller, c'est la façon dont le jeu se comporte partout, d'où sa
+   place après les trois rubriques de destinations. La liste reste écrite en
+   toutes lettres, pour la même raison que `ATTENDUS` plus bas. */
 check('les rubriques y sont aussi',
-  JSON.stringify(accueil.rubriques) === JSON.stringify(['JOUER', 'MA COLLECTION', 'LE FOOTBALL']));
+  JSON.stringify(accueil.rubriques)
+    === JSON.stringify(['JOUER', 'MA COLLECTION', 'LE FOOTBALL', 'MODE CALME'])
+  || (console.log('    rubriques :', accueil.rubriques), false));
+check('et la page de contenu a les mêmes',
+  JSON.stringify(carnet.rubriques) === JSON.stringify(accueil.rubriques));
+
+/* ------------------------------------------------------- le mode calme
+
+   Trois interrupteurs, un par facette du contrat C4 — les sons, les
+   vibrations, les animations décoratives —, dans cette rubrique et sur toutes
+   les pages. Celui des vibrations peut être **caché** sur un appareil qui ne
+   sait pas vibrer : il doit exister quand même, c'est pourquoi on compte les
+   éléments et non ce qui est affiché. */
+const FACETTES = ['sons', 'vibrations', 'animations'];
+for (const [nom, m] of [['l’accueil', accueil], ['une page de contenu', carnet]]) {
+  const inter = m.interrupteurs ?? [];
+  check(`le mode calme a ses trois interrupteurs depuis ${nom}`,
+    JSON.stringify(inter.map((i) => i.facette)) === JSON.stringify(FACETTES)
+    && inter.every((i) => i.dansLeGroupe && (i.coche === 'true' || i.coche === 'false'))
+    || (console.log('    vus :', JSON.stringify(inter)), false));
+  check(`et chacun dit l’état réel du jeu depuis ${nom}`,
+    inter.length === FACETTES.length && inter.every((i) => i.juste));
+}
+
+/* Un interrupteur se prouve en le touchant : il bascule, la racine du
+   document le reflète (c'est là que les feuilles et `FX.calme()` le lisent),
+   et la clé `tbf-calme` le retient pour la visite suivante. On le remet
+   ensuite comme on l'a trouvé : le navigateur est partagé par toutes les
+   ouvertures de cette suite. « animations » et non « sons » : rétablir le son
+   joue un « tic », sans rapport avec ce qu'on éprouve ici. */
+{
+  const bascule = await accueil.page.evaluate(async () => {
+    const b = document.querySelector('.tbf-tiroir [role="switch"][data-facette="animations"]');
+    if (!b) return null;
+    const lire = () => ({
+      coche: b.getAttribute('aria-checked'),
+      racine: (document.documentElement.dataset.calme ?? '').split(' ').includes('animations'),
+      retenu: (() => {
+        try { return (localStorage.getItem('tbf-calme') ?? '').split(' ').includes('animations'); }
+        catch { return null; }
+      })(),
+    });
+    const avant = lire();
+    b.click();
+    await new Promise((r) => setTimeout(r, 50));
+    const allume = lire();
+    b.click();
+    await new Promise((r) => setTimeout(r, 50));
+    return { avant, allume, eteint: lire() };
+  });
+  check('toucher un interrupteur coupe la facette, et le jeu le retient',
+    bascule?.avant.coche === 'false'
+    && bascule.allume.coche === 'true' && bascule.allume.racine && bascule.allume.retenu
+    || (console.log('    vu :', JSON.stringify(bascule)), false));
+  check('le toucher de nouveau la rétablit',
+    bascule?.eteint.coche === 'false' && !bascule.eteint.racine && !bascule.eteint.retenu);
+}
 
 /* Le menu est la seule navigation du jeu : ce qui n'y est pas n'existe pas.
    La liste est écrite ici en toutes lettres plutôt que relue depuis menu.js —

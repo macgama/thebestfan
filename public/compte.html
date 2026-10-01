@@ -15,9 +15,13 @@
    couleur d'alerte — une alerte attire l'œil, et on ne cherche pas à attirer
    l'œil ici. La couleur arrive au moment où l'on confirme, quand elle sert. */
 .fin{margin-top:40px;padding-top:18px;border-top:1px solid rgba(242,238,228,.12)}
-.fin .link{opacity:.45;font-size:12px}
-.fin .link:hover{opacity:.8}
-.prevenu{font-size:12.5px;line-height:1.6;opacity:.75;margin:10px 0 14px}
+/* **Discret par la couleur, plus par la pâleur.** Le lien était à 0,45 : au
+   soleil, un droit qu'on ne peut pas lire ne s'exerce pas mieux qu'un droit
+   qu'aucune page n'appelle. Il perd l'or des autres liens et garde la craie —
+   c'est ce qui le range en retrait, sans rien retirer à la lecture. */
+.fin .link{color:var(--craie);opacity:.9;font-size:12px}
+.fin .link:hover{opacity:1}
+.prevenu{font-size:12.5px;line-height:1.6;opacity:.9;margin:10px 0 14px}
 
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100dvh}
@@ -25,17 +29,20 @@ body{background:radial-gradient(120% 55% at 50% -8%,rgba(245,195,59,.15),transpa
      color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;padding:34px 18px 60px}
 main{width:100%;max-width:var(--colonne)}
 .wordmark{font-family:var(--banner);font-weight:600;font-size:26px;letter-spacing:.2em;text-align:center}
-.wordmark small{display:block;font-size:9.5px;letter-spacing:.34em;opacity:.5;margin-top:6px;font-family:var(--ui)}
-.langs{display:flex;gap:6px;justify-content:center;margin:22px 0 26px}
-/* La pastille reste une pastille — c'est sa forme qui dit « choix rapide » —
-   mais elle occupe les quarante-quatre pixels du doigt. Elle en faisait
-   vingt-sept, sur l'écran d'un joueur qui vient justement de se tromper de
-   langue et cherche à revenir. */
-.langs button{background:none;border:1px solid rgba(242,238,228,.16);color:inherit;border-radius:999px;
-  padding:5px 14px;min-height:44px;min-width:44px;display:inline-flex;align-items:center;
-  justify-content:center;font-size:11px;letter-spacing:.08em;cursor:pointer;opacity:.55;
-  font-family:inherit}
-.langs button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1;font-weight:600}
+/* Onze pixels et 0,9 : le plancher du socle. Le sous-titre était à neuf et
+   demi et à moitié effacé — la première ligne qu'on lit en arrivant. */
+.wordmark small{display:block;font-size:11px;letter-spacing:.34em;opacity:.9;margin-top:6px;font-family:var(--ui)}
+.langs{display:flex;gap:10px;justify-content:center;margin:22px 0 26px}
+/* **Les langues sont des plaques**, comme tout ce qui se touche : elles
+   s'enfoncent sous le doigt, et celle qui est choisie prend la craie — le ton
+   de cet écran. Les autres restent en béton, **à pleine lecture** : elles
+   s'éteignaient à 0,55 pour dire « pas choisie », et c'est justement celle
+   qu'on cherche quand on s'est trompé de langue qu'on ne lisait plus.
+
+   Il ne reste ici que leur taille : quarante-quatre pixels, la pulpe du doigt,
+   et une largeur de pastille plutôt que de bouton de formulaire. */
+.langs .tbf-plaque{--epaisseur:3px;min-height:44px;min-width:48px;padding:0 12px;
+  font-size:12px;letter-spacing:.08em}
 
 /* Le mot de celui qui t’a invité.
 
@@ -56,7 +63,7 @@ main{width:100%;max-width:var(--colonne)}
    est dans `ui.css`. Elle a été recopiée ici un temps, sous prétexte que ces
    boutons n'ont pas de classe — et cette copie a gardé un défaut que la
    commune, elle, a perdu. */
-label{display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.55;margin:16px 0 7px}
+label{display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.9;margin:16px 0 7px}
 input{width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.16);border-radius:6px;
   color:var(--craie);padding:13px 14px;font-size:15px;font-family:inherit}
 input:focus{outline:none;border-color:var(--projo)}
@@ -77,11 +84,15 @@ input:focus{outline:none;border-color:var(--projo)}
 .oeil svg{width:22px;height:22px}
 .oeil .barre{display:none}
 .oeil[aria-pressed="true"] .barre{display:inline}
-.hint{font-size:11.5px;opacity:.42;margin-top:6px;line-height:1.5}
+/* Les consignes sous les champs : ce sont elles qui disent pourquoi un mot de
+   passe est refusé avant qu'il le soit. À 0,42, on les découvrait après. */
+.hint{font-size:11.5px;opacity:.9;margin-top:6px;line-height:1.5}
 /* Se connecter, s'inscrire, envoyer. Une plaque — elle ne garde que sa
-   largeur pleine et sa marge de formulaire. */
+   largeur pleine et sa marge de formulaire. Son état « occupé » est celui de
+   toutes les plaques (`ui.css`) : elle reste en place, grise, et ne répond
+   plus. Il en avait un à lui, à demi transparent, qui la faisait passer pour
+   absente. */
 button.go{width:100%;margin-top:24px;padding:14px;font-size:16px;letter-spacing:.1em}
-button.go[disabled]{filter:grayscale(.85);opacity:.5;pointer-events:none}
 /* **Le bouton qui supprime un compte doit s'atteindre, pas se deviner.** Il
    mesurait 126×16. On ne le grossit pas à l'œil — il n'a rien à réclamer —
    mais sa zone monte à quarante-quatre pixels, et la marge du dessus se
@@ -95,11 +106,15 @@ button.go[disabled]{filter:grayscale(.85);opacity:.5;pointer-events:none}
 .msg.ok{background:rgba(30,158,106,.14);border:1px solid rgba(30,158,106,.4)}
 .card{border:1px solid rgba(242,238,228,.13);border-radius:10px;padding:22px;background:rgba(0,0,0,.25)}
 .card h2{font-family:var(--banner);font-size:19px;letter-spacing:.06em;margin:0 0 6px}
-.card p{font-size:13.5px;line-height:1.6;opacity:.7;margin:0 0 16px}
+.card p{font-size:13.5px;line-height:1.6;opacity:.9;margin:0 0 16px}
 .row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:11px 0;
   border-top:1px solid rgba(242,238,228,.09)}
 .row:first-of-type{border-top:0}
-.row span{opacity:.6}.row b{font-weight:600}
+/* L'étiquette se distingue de la valeur par le poids, plus par la pâleur : à
+   0,6, « Adresse vérifiée » s'effaçait au soleil et laissait un « oui » seul. */
+.row span{opacity:.9}.row b{font-weight:600}
+/* Une ligne sans valeur disparaît entière — `hidden`, que `ui.css` fait
+   respecter : pas de tiret, pas d'étiquette suivie de rien. Voir `ligne`. */
 .hide{display:none}
 
 /* **Le bas de la page, et la barre du navigateur mobile.**
@@ -174,7 +189,10 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
   <!-- déconnecté -->
   <section id="gate">
     <div id="invite" class="invite hide"></div>
-    <div class="tabs tbf-onglets">
+    <!-- `data-ton="craie"` : le ton de cet écran sur le hub (le compte se range
+         avec le profil et l'aide), que l'onglet actif prend au lieu de l'or
+         par défaut. -->
+    <div class="tabs tbf-onglets" data-ton="craie">
       <button id="tabLogin" class="tbf-onglet on" data-t="tab.login"></button>
       <button id="tabRegister" class="tbf-onglet" data-t="tab.register"></button>
     </div>
@@ -201,7 +219,7 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
     </form>
 
     <form id="formForgot" class="hide">
-      <div class="hint" style="opacity:.7;margin-bottom:4px" data-t="hint.forgot"></div>
+      <div class="hint" style="margin-bottom:4px" data-t="hint.forgot"></div>
       <label data-t="field.email"></label>
       <input type="email" id="fgEmail" autocomplete="email" required>
       <button class="go tbf-plaque" data-ton="flare" type="submit" data-t="action.send"></button>
@@ -209,17 +227,22 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
     </form>
 
     <form id="formReset" class="hide">
-      <div class="hint" style="opacity:.7;margin-bottom:4px" data-t="hint.reset"></div>
+      <div class="hint" style="margin-bottom:4px" data-t="hint.reset"></div>
       <label data-t="field.newPassword"></label>
       <input type="password" id="rsPassword" autocomplete="new-password" minlength="10" required>
       <button class="go tbf-plaque" data-ton="flare" type="submit" data-t="action.save"></button>
     </form>
 
+    <!-- Le « OU » se lit à 0,9 ; ce sont ses deux filets qui s'effacent. Il
+         était à 0,35 avec eux, et un mot qu'on ne lit pas ne sépare rien. Le
+         bouton Google, lui, n'est pas une plaque et ne le devient pas : il
+         garde le blanc et les couleurs de la marque, qu'on ne repeint pas aux
+         nôtres. -->
     <div id="googleBox" style="display:none;margin-top:20px">
-      <div style="display:flex;align-items:center;gap:10px;opacity:.35;font-size:11px;
+      <div style="display:flex;align-items:center;gap:10px;opacity:.9;font-size:11px;
         letter-spacing:.14em;margin-bottom:14px">
-        <span style="flex:1;height:1px;background:currentColor"></span>OU
-        <span style="flex:1;height:1px;background:currentColor"></span>
+        <span style="flex:1;height:1px;background:rgba(242,238,228,.3)"></span>OU
+        <span style="flex:1;height:1px;background:rgba(242,238,228,.3)"></span>
       </div>
       <a href="/api/auth/google/start" style="display:flex;align-items:center;justify-content:center;
         gap:10px;background:#fff;color:#1F1F1F;border-radius:6px;padding:13px;text-decoration:none;
@@ -251,7 +274,7 @@ const I18N = {
     'delete.warn':'Ton pseudo et ton adresse seront effacés, et tu ne pourras plus te connecter. Les parties déjà jouées restent dans l’historique de tes adversaires, sans ton nom — les effacer reviendrait à réécrire leurs soirées. C’est définitif.',
     'delete.confirm':'SUPPRIMER DÉFINITIVEMENT',
     'delete.done':'Ton compte est supprimé. Merci d’être passé.',
-    'account.hello':'Salut {pseudo}','account.text':'Ton compte est actif. Le kiosque et les duels arrivent bientôt.',
+    'account.hello':'Salut {pseudo}','account.text':'Ton compte est actif. Ta collection, tes boosters et tes duels t’attendent dans la tribune.',
     'yes':'oui','no':'non','sent.verify':'Mail de vérification renvoyé.','sent.reset':'Si un compte existe, le lien vient de partir.',
     'ok.verified':'Adresse confirmée. Bienvenue dans la tribune.','ok.reset':'Mot de passe enregistré. Tu peux te connecter.',
     'auth.error.email_invalid':"Cette adresse e-mail n'est pas valide.",
@@ -283,7 +306,7 @@ const I18N = {
     'delete.warn':'Your nickname and address will be erased, and you will no longer be able to sign in. Games already played stay in your opponents’ history, without your name — erasing them would rewrite their evenings. This cannot be undone.',
     'delete.confirm':'DELETE PERMANENTLY',
     'delete.done':'Your account has been deleted. Thanks for stopping by.',
-    'account.hello':'Hi {pseudo}','account.text':'Your account is active. The kiosk and duels are coming soon.',
+    'account.hello':'Hi {pseudo}','account.text':'Your account is active. Your collection, boosters and duels are waiting for you in the stand.',
     'yes':'yes','no':'no','sent.verify':'Verification email sent again.','sent.reset':'If an account exists, the link is on its way.',
     'ok.verified':'Address confirmed. Welcome to the stand.','ok.reset':'Password saved. You can sign in.',
     'auth.error.email_invalid':'That email address is not valid.',
@@ -315,7 +338,7 @@ const I18N = {
     'delete.warn':'Dein Name und deine Adresse werden gelöscht, und du kannst dich nicht mehr anmelden. Bereits gespielte Partien bleiben ohne deinen Namen im Verlauf deiner Gegner. Das lässt sich nicht rückgängig machen.',
     'delete.confirm':'ENDGÜLTIG LÖSCHEN',
     'delete.done':'Dein Konto wurde gelöscht. Danke fürs Vorbeischauen.',
-    'account.hello':'Hallo {pseudo}','account.text':'Dein Konto ist aktiv. Kiosk und Duelle kommen bald.',
+    'account.hello':'Hallo {pseudo}','account.text':'Dein Konto ist aktiv. Deine Sammlung, deine Booster und deine Duelle warten im Block auf dich.',
     'yes':'ja','no':'nein','sent.verify':'Bestätigungsmail erneut gesendet.','sent.reset':'Wenn ein Konto existiert, ist der Link unterwegs.',
     'ok.verified':'Adresse bestätigt. Willkommen im Block.','ok.reset':'Passwort gespeichert. Du kannst dich anmelden.',
     'auth.error.email_invalid':'Diese E-Mail-Adresse ist ungültig.',
@@ -347,7 +370,7 @@ const I18N = {
     'delete.warn':'Tu apodo y tu dirección se borrarán, y ya no podrás iniciar sesión. Las partidas ya jugadas permanecen en el historial de tus rivales, sin tu nombre. Es definitivo.',
     'delete.confirm':'ELIMINAR DEFINITIVAMENTE',
     'delete.done':'Tu cuenta ha sido eliminada. Gracias por pasar.',
-    'account.hello':'Hola {pseudo}','account.text':'Tu cuenta está activa. El quiosco y los duelos llegan pronto.',
+    'account.hello':'Hola {pseudo}','account.text':'Tu cuenta está activa. Tu colección, tus sobres y tus duelos te esperan en la grada.',
     'yes':'sí','no':'no','sent.verify':'Correo de verificación reenviado.','sent.reset':'Si existe una cuenta, el enlace ya va en camino.',
     'ok.verified':'Dirección confirmada. Bienvenido a la grada.','ok.reset':'Contraseña guardada. Ya puedes entrar.',
     'auth.error.email_invalid':'Esta dirección no es válida.',
@@ -438,8 +461,14 @@ function applyLocale() {
   $('tagline').textContent = t('tagline');
   document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
   etiqueterYeux();
-  $('langs').innerHTML = LOCALES.map(l =>
-    `<button data-l="${l}" class="${l===locale?'on':''}">${l.toUpperCase()}</button>`).join('');
+  /* Des plaques : la langue choisie prend la craie, le ton de cet écran, et
+     le dit aussi aux lecteurs d'écran (`aria-pressed`) ; la classe `on` reste
+     pour qui la cherche. */
+  $('langs').innerHTML = LOCALES.map((l) => {
+    const choisie = l === locale;
+    return `<button type="button" data-l="${l}" class="tbf-plaque${choisie ? ' on' : ''}"`
+      + `${choisie ? ' data-ton="craie"' : ''} aria-pressed="${choisie}">${l.toUpperCase()}</button>`;
+  }).join('');
 }
 $('langs').onclick = e => {
   const b = e.target.closest('[data-l]');
@@ -472,15 +501,29 @@ async function api(path, body, method = 'POST') {
 let user = null;
 const show = (id, on) => $(id).classList.toggle('hide', !on);
 
+/**
+ * Écrit une ligne de la fiche, ou la retire entière.
+ *
+ * **Une ligne sans donnée disparaît, jamais un tiret** — ni une étiquette
+ * suivie de rien. Une valeur que le serveur n'a pas rendue laissait
+ * « Adresse », puis le vide : une ligne qui dit « il y a quelque chose ici et
+ * on ne te le montre pas ».
+ */
+function ligne(id, valeur) {
+  const v = valeur == null ? '' : String(valeur).trim();
+  $(id).textContent = v;
+  $(id).closest('.row').hidden = !v;
+}
+
 function render() {
   show('account', Boolean(user));
   show('gate', !user);
   if (user) {
     $('helloTitle').textContent = t('account.hello', { pseudo: user.pseudo });
     $('helloText').textContent = t('account.text');
-    $('acPseudo').textContent = user.pseudo;
-    $('acEmail').textContent = user.email;
-    $('acStatus').textContent = user.verified ? t('yes') : t('no');
+    ligne('acPseudo', user.pseudo);
+    ligne('acEmail', user.email);
+    ligne('acStatus', user.verified ? t('yes') : t('no'));
     show('btnResend', !user.verified);
   }
 }

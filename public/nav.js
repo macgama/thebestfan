@@ -488,13 +488,14 @@
        le kiosque et le carnet les montrent dans leur propre page. */
 
     /**
-     * De quoi tenir la bourse à jour depuis une page.
+     * Ce qu'une page peut encore dire à la barre : qu'une partie tourne.
      *
-     * Ouvrir un booster, acheter une évolution, faire évoluer un Fanzzy :
-     * toutes ces actions changent le solde, et la barre du haut est le seul
-     * endroit où il s'affiche désormais. Sans cette poignée, elle resterait
-     * sur le chiffre du chargement — un joueur qui vient de dépenser
-     * quarante-cinq écharpes les verrait toujours à l'écran.
+     * Cette poignée tenait aussi la bourse à jour — `bourse()`, qu'appelaient
+     * les boosters et le carnet quand leur solde changeait, pour que la barre
+     * ne reste pas sur le chiffre du chargement. Elle est partie avec les
+     * jetons, comme la requête du dessus : la barre n'affiche plus aucun
+     * solde. Une page qui en montre un le tient à jour elle-même, et le fait
+     * compter sous les yeux quand il change (`FX.compter`, dans fx.js).
      */
     window.TBF_BARRE = {
       /**
@@ -533,10 +534,17 @@
      variable vaut mieux que neuf modifications et neuf occasions d'en oublier
      une. */
 
-  /* Braises discrètes : le décor doit vivre sans distraire de la page. */
+  /* Braises discrètes : le décor doit vivre sans distraire de la page.
+
+     Elles sont la définition même d'une animation décorative : le calme
+     « animations » du tiroir les éteint. Relu à chaque braise et non au
+     chargement, pour que l'interrupteur agisse sous les yeux de qui le
+     touche — l'attribut est posé par menu.js, chargé avant ce fichier. */
+  const decorCalme = () =>
+    (document.documentElement.dataset.calme ?? '').split(' ').includes('animations');
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     setInterval(() => {
-      if (document.hidden) return;
+      if (document.hidden || decorCalme()) return;
       const s = document.createElement('div');
       s.className = 'tbf-spark';
       s.style.left = (8 + Math.random() * 84) + '%';

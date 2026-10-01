@@ -33,43 +33,83 @@
 .carousel{position:relative;width:100%;height:320px;perspective:1100px;touch-action:pan-y;
   overflow-x:clip}
 
+/* **Rien ne se pose à même la photo de tribune.** Le nom de la série, sa
+   ligne, la consigne, le compte à rebours et ce qui vient étaient écrits
+   directement sur le décor, entre 42 et 70 % d'opacité : au soleil, la
+   tribune passait à travers. Chacun a maintenant son panneau (`--panneau`,
+   opaque) à sa mesure, et se lit en entier — onze pixels au moins, 88 % au
+   moins. Discrets par leur taille et leur place, plus par leur transparence. */
+
+/* La bourse : ce qu'on a en poche, là où l'on décide de le dépenser. La page
+   le promettait (« le kiosque affiche son solde lui-même ») depuis que la
+   barre du haut ne le porte plus — et ne l'affichait nulle part : on payait
+   quarante-cinq écharpes sans voir combien il en restait. Deux étiquettes
+   (`.tbf-etiquette`), les dessins de l'accueil : un même objet dessiné de
+   deux façons, c'est deux objets à apprendre.
+
+   **Sous le bouton, pas au-dessus du paquet.** Posée en tête du kiosque, elle
+   ajoutait sa rangée à celles du cartouche et de la consigne, et le bouton
+   OUVRIR passait sous le bas d'un écran de 360 × 640 — le compte à rebours
+   avec lui. Elle partage maintenant la ligne du compte à rebours (`.reserve`) :
+   c'est la même question, « qu'est-ce que j'ai, et quand j'en aurai plus »,
+   et le prix qu'elle éclaire est écrit sur le bouton juste au-dessus.
+
+   **Les dessins à l'encre de leur couleur.** Une étiquette est un sticker
+   craie, son nombre est à l'encre, et c'est le dessin seul qui dit ce qu'on
+   compte. Sur la craie, un ton s'écrit dans sa version encre, comme le
+   tampon plein de la feuille commune : l'or vif de l'accueil (posé, lui, sur
+   le panneau sombre) n'y tenait qu'à 1,4:1, `--or-encre` tient 4,6:1 ; le
+   flare passait de justesse (3,7:1) et criait plus fort que l'or éteint à
+   côté de lui, `--rouge-fonce` les remet au même rang. L'étiquette de
+   l'écran d'ouverture (`.obourse`) est la même, sur le même fond. */
+.reserve{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;
+  gap:6px 8px;margin:0 0 6px;min-height:32px}
+.bourse{display:flex;justify-content:center;align-items:center;gap:8px}
+.bourse .tbf-etiquette,.obourse{gap:7px;padding:6px 11px;font-size:15px}
+.bourse svg,.obourse svg{width:20px;height:20px;flex:none;fill:none;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round}
+.bourse .monnaie-ech svg,.obourse svg{stroke:var(--or-encre)}
+.bourse .monnaie-pack svg{stroke:var(--rouge-fonce)}
+
 /* Les séries ouvertes, en pastilles. Seules celles qu'on peut ouvrir y
-   figurent : les autres se disent en une ligne, plus bas. */
+   figurent : les autres se disent en une ligne, plus bas.
+
+   Ce sont des plaques (`.tbf-plaque`) : béton au repos, l'or du kiosque sur
+   celle qui est choisie — comme l'onglet actif d'un rail. Elles étaient en
+   verre à 5 %, posées sur la photo, et les douze non choisies à 62 %. Il ne
+   reste ici que leur mise en page, plus petite qu'une action. */
 .series{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:0 12px 8px}
 /* Quarante-quatre pixels : la pulpe d'un doigt, et le minimum des deux
    plateformes. L'audit d'interface les a tous comptés d'un coup — ce n'est
    jamais une faute de conception, c'est une hauteur qu'on ne mesure pas en
    regardant. */
-.series button{background:rgba(255,255,255,.05);border:1px solid rgba(242,238,228,.16);
-  border-radius:22px;color:inherit;font-family:var(--banner);font-size:10.5px;
-  letter-spacing:.1em;padding:5px 14px;min-height:44px;cursor:pointer;opacity:.62;
-  display:inline-flex;align-items:center;justify-content:center;
-  transition:transform .1s ease,opacity .16s ease}
-.series button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
-.series button:active{transform:translateY(2px)}
+.series button{font-size:11.5px;letter-spacing:.1em;padding:5px 14px;min-height:44px}
 
 /* Ce qui vient. Discret par construction : c'est une promesse, pas une offre. */
-.avenir{text-align:center;font-size:11px;opacity:.42;padding:6px 16px 0;line-height:1.5}
-.avenir b{color:var(--projo);font-family:var(--banner);letter-spacing:.08em;opacity:.9}
+.avenir{text-align:center;font-size:11.5px;margin:8px 16px 0;padding:8px 12px;
+  border-radius:10px;background:var(--panneau);line-height:1.5}
+.avenir b{color:var(--projo);font-family:var(--banner);font-weight:400;letter-spacing:.08em}
 
 /* L'annonce de la saison. Elle a la bande d'écharpe de la boîte de
    confirmation : c'est le même geste — le jeu qui s'adresse au joueur — et deux
    façons de le faire seraient deux choses à apprendre. */
 .saison{position:relative;margin:10px 14px 0;padding:13px 15px 14px;border-radius:12px;
-  border:1px solid rgba(245,195,59,.3);background:rgba(245,195,59,.07);text-align:left}
+  border:1px solid rgba(245,195,59,.3);
+  background:linear-gradient(rgba(245,195,59,.07),rgba(245,195,59,.07)),var(--panneau);
+  text-align:left}
 .saison::before{content:"";position:absolute;left:15px;right:15px;top:6px;height:3px;
   border-radius:2px;
   background:repeating-linear-gradient(115deg,var(--projo) 0 8px,transparent 8px 16px)}
-.saison-n{margin:6px 0 0;font-family:var(--banner);font-size:10px;letter-spacing:.2em;
+.saison-n{margin:6px 0 0;font-family:var(--banner);font-size:11px;letter-spacing:.2em;
   color:var(--projo)}
 .saison h3{margin:4px 0 0;font-family:var(--banner);font-size:17px;letter-spacing:.04em;
   line-height:1.15;text-wrap:balance}
-.saison-t{margin:6px 0 0;font-size:12px;line-height:1.6;opacity:.72}
+.saison-t{margin:6px 0 0;font-size:12px;line-height:1.6;opacity:.88}
 .saison-t:empty{display:none}
 .saison-x{position:absolute;top:2px;right:2px;background:none;border:0;color:inherit;
-  opacity:.4;font-size:14px;line-height:1;cursor:pointer;
+  opacity:.75;font-size:14px;line-height:1;cursor:pointer;
   width:44px;height:44px;display:grid;place-items:center}
-.saison-x:hover,.saison-x:focus-visible{opacity:.9}
+.saison-x:hover,.saison-x:focus-visible{opacity:1}
 .slide{position:absolute;left:50%;top:50%;width:186px;aspect-ratio:.62;margin:0;cursor:grab;
   transform-style:preserve-3d;transition:transform .55s cubic-bezier(.22,.9,.28,1),opacity .45s,filter .45s;
   border-radius:11px;overflow:hidden;border:1px solid rgba(0,0,0,.6);
@@ -89,7 +129,12 @@
 .shadow{position:absolute;left:50%;bottom:6px;width:150px;height:16px;transform:translateX(-50%);
   background:radial-gradient(ellipse,rgba(0,0,0,.75),transparent 70%);filter:blur(5px)}
 
-.tearhint{font-size:10.5px;letter-spacing:.2em;opacity:.45;margin-top:6px;text-align:center}
+/* La consigne, sur son panneau — et sur une ligne dès 320 px : à 0,16 em
+   d'espacement elle passait à la ligne, et son panneau prenait deux fois la
+   hauteur qu'il faut au bouton OUVRIR, juste en dessous. */
+.tearhint{font-size:11px;letter-spacing:.05em;margin:6px auto 0;padding:5px 10px;
+  width:fit-content;max-width:100%;border-radius:9px;background:var(--panneau);
+  text-align:center;line-height:1.35}
 
 /* Une série verrouillée se regarde sans se toucher : le paquet s'éteint, mais
    il reste visible. C'est ce qui donne envie d'y arriver. */
@@ -121,9 +166,13 @@
   align-items:center;justify-content:center;background:rgba(5,7,10,.94)}
 .tearzone.on{display:flex}
 
+/* « Plus tard » est la sortie du plein écran : elle se lit et se touche. Elle
+   était à 45 %, sur trente-trois pixels de haut. Un lien de texte et non une
+   plaque — c'est une issue, pas une action. */
 .tearquit{position:absolute;top:14px;right:14px;background:none;border:0;color:inherit;
-  font-size:11.5px;letter-spacing:.14em;opacity:.45;cursor:pointer;padding:8px 10px}
-.tearquit:hover,.tearquit:focus-visible{opacity:.85}
+  font-size:12px;letter-spacing:.14em;opacity:.88;cursor:pointer;padding:8px 12px;
+  min-height:44px;text-decoration:underline;text-underline-offset:3px}
+.tearquit:hover,.tearquit:focus-visible{opacity:1}
 
 /* `--bande` : où passe la déchirure, en hauteur de vignette. Elle ne vaut pas
    zéro parce que le dessin d’un booster laisse une marge sombre au-dessus du
@@ -166,11 +215,11 @@
   border-bottom:2px solid #05070A;transform:rotate(45deg) translate(1px,-1px)}
 @keyframes tirette{0%,100%{transform:translateX(0)}50%{transform:translateX(-7px)}}
 
-.tearlbl{margin-top:20px;font-family:var(--banner);font-size:14px;letter-spacing:.2em;opacity:.7;
+.tearlbl{margin-top:20px;font-family:var(--banner);font-size:14px;letter-spacing:.2em;
   text-align:center;line-height:1.6;max-width:280px}
 .tearlbl b{color:var(--projo)}
-.tearlbl small{display:block;font-family:var(--ui);font-size:11px;letter-spacing:.08em;
-  opacity:.55;margin-top:8px}
+.tearlbl small{display:block;font-family:var(--ui);font-size:11.5px;letter-spacing:.06em;
+  opacity:.88;margin-top:8px}
 
 #burst{position:absolute;inset:0;z-index:23;pointer-events:none;object-fit:cover;width:100%;height:100%;
   mix-blend-mode:screen;opacity:0;transition:opacity .4s}
@@ -183,8 +232,14 @@
   55%{transform:translate(-4px,-2px)}75%{transform:translate(3px,3px)}}
 @keyframes flash{0%{opacity:.85}100%{opacity:0}}
 .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
-.setname{font-family:var(--banner);font-size:12px;letter-spacing:.28em;opacity:.7}
-.setline{font-size:10.5px;opacity:.42;margin:4px 0 18px}
+/* Le cartouche de la série : son nom et sa ligne, sur un panneau à leur
+   mesure, au-dessus des paquets. Ses marges sont comptées : chaque pixel pris
+   ici descend le bouton OUVRIR, qui doit tenir dans un écran de 640. */
+.cartouche{display:flex;flex-direction:column;align-items:center;gap:3px;
+  width:fit-content;max-width:calc(100% - 32px);margin:0 auto 8px;padding:6px 12px;
+  border-radius:11px;background:var(--panneau);text-align:center;line-height:1.3}
+.setname{font-family:var(--banner);font-size:13px;letter-spacing:.24em}
+.setline{font-size:11.5px;opacity:.88}
 .packwrap{position:relative}
 .packglow{position:absolute;width:230px;height:230px;border-radius:50%;left:50%;top:50%;
   transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(245,195,59,.26),transparent 65%);
@@ -194,9 +249,9 @@
   border:1px solid rgba(0,0,0,.6);box-shadow:0 24px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.22);
   transform:rotate(-2deg);transition:transform .2s;display:block;background:none;padding:0}
 .pack:active{transform:rotate(-2deg) scale(.97)}
-.packnav{display:flex;align-items:center;gap:16px;margin-top:18px}
+.packnav{display:flex;align-items:center;gap:16px;margin-top:10px}
 .packnav button{width:44px;height:44px;border-radius:50%;
-  border:1px solid rgba(242,238,228,.18);background:rgba(0,0,0,.3);color:inherit;cursor:pointer;
+  border:1px solid rgba(242,238,228,.18);background:var(--panneau);color:inherit;cursor:pointer;
   display:grid;place-items:center;font-size:17px;line-height:1}
 .dots{display:flex;gap:5px}
 .dots i{width:6px;height:6px;border-radius:50%;background:rgba(242,238,228,.22);display:block}
@@ -204,15 +259,23 @@
 /* Ouvrir un booster : l'action principale de l'écran, donc une plaque de
    pleine taille. Sa largeur limitée lui reste propre — au milieu d'un kiosque,
    un bouton d'un bord à l'autre écraserait le carrousel. */
-.cta{margin:16px auto 6px;width:min(300px,82%);font-size:16px;letter-spacing:.1em}
-.regen{text-align:center;font-size:10.5px;opacity:.45;min-height:15px;padding-bottom:4px}
+.cta{margin:12px auto 8px;width:min(300px,82%);font-size:16px;letter-spacing:.1em}
+/* Le compte à rebours, sur son panneau, dans la ligne de la bourse. Caché et
+   non replié tant qu'il est vide : la place reste réservée, et rien ne saute
+   quand il arrive. */
+.regen{max-width:100%;padding:5px 12px;
+  border-radius:9px;background:var(--panneau);text-align:center;font-size:11.5px;
+  line-height:1.4;min-height:26px}
+.regen:empty{visibility:hidden}
 
 
 /* Le mot d accueil, quand on arrive ici parce qu on a des boosters qui
    attendent. Il est en haut et il est bref : sa seule tâche est de dire
-   pourquoi on est là plutôt que sur l accueil. */
-.annonce{margin:0 16px 10px;padding:11px 14px;border-radius:10px;
-  background:linear-gradient(150deg,rgba(245,195,59,.2),rgba(245,195,59,.07));
+   pourquoi on est là plutôt que sur l accueil. Et il est mince : il vient
+   s ajouter au-dessus du paquet précisément quand le bouton OUVRIR est ce
+   qu on est venu toucher, et ce bouton doit rester dans l écran. */
+.annonce{margin:0 16px 6px;padding:8px 14px;border-radius:10px;
+  background:linear-gradient(150deg,rgba(245,195,59,.2),rgba(245,195,59,.07)),var(--panneau);
   border:1px solid rgba(245,195,59,.42);color:var(--projo);
   font-family:var(--banner);font-size:14px;letter-spacing:.05em;text-align:center}
 .titre{font-family:var(--banner);font-size:20px;letter-spacing:.14em;
@@ -262,8 +325,13 @@
    butin, le pied — parce qu'une cérémonie dont les quatre bandes ne sont pas
    alignées se lit comme quatre morceaux posés l'un sous l'autre. */
 #opener > *{width:100%;max-width:min(var(--colonne), 560px);margin-inline:auto}
-.ohead{display:flex;justify-content:space-between;align-items:center;padding:15px 18px;font-size:11.5px;opacity:.6}
-.ohead button{background:none;border:0;color:inherit;font-size:12px;cursor:pointer;text-decoration:underline}
+/* La tête de la cérémonie : où l'on en est, les écharpes, et la sortie. Elle
+   était à 60 % — la sortie comprise. Le compteur d'écharpes est celui vers
+   lequel volent les doublons à la fin du paquet (voir `crediterDoublons`). */
+.ohead{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:8px 18px;font-size:12px}
+.ohead button{background:none;border:0;color:inherit;font-size:12.5px;cursor:pointer;
+  text-decoration:underline;text-underline-offset:3px;min-height:44px;padding:0 4px}
 .ostage{flex:1;display:grid;place-items:center;position:relative;padding:0 34px}
 .reveal{width:min(70%,250px);position:absolute;transition:transform .42s cubic-bezier(.2,.8,.25,1),opacity .3s;cursor:pointer}
 .reveal .flip{position:relative;width:100%;aspect-ratio:63/88;transform-style:preserve-3d;
@@ -283,9 +351,11 @@
   font-size:11px;letter-spacing:.2em;color:var(--projo)}
 .ofoot{flex:none;padding:14px 18px 20px;display:flex;flex-direction:column;gap:9px;
   align-items:center}
-.hint{font-size:11.5px;opacity:.5}
-.ghost{border:1px solid rgba(242,238,228,.28);border-radius:6px;padding:9px 18px;font-size:12.5px;
-  background:none;color:inherit;cursor:pointer;font-family:inherit}
+.hint{font-size:11.5px;opacity:.88;text-align:center}
+/* « Tout révéler », puis « Terminer » : une plaque (`.tbf-plaque`), en béton —
+   c'est une commande de la cérémonie, pas un achat. Il ne reste ici que sa
+   taille, sous celle d'une action d'écran. */
+.ghost{padding:9px 18px;font-size:13px;min-height:44px}
 /* Le pin de rareté, posé en coin de la carte révélée. `pointer-events:none`
    parce que la tuile entière ouvre la fiche : un pin qui avale le clic
    ferait un trou dans la seule zone qu'on a envie de toucher.
@@ -350,18 +420,37 @@
   /* À gauche, et non au centre : l'âge de la carte — « ÉVO 1 »,
      « LÉGENDAIRE » — occupe le coin droit depuis qu'il a été ajouté, et deux
      étiquettes qui se recouvrent n'en font lire aucune. */
-  content:"NOUVEAU";position:absolute;top:-7px;left:6px;
-  font-family:var(--banner);font-size:8.5px;letter-spacing:.16em;
-  background:var(--projo);color:#0B0E13;border-radius:20px;padding:2px 7px;
+  content:"NOUVEAU";position:absolute;top:-8px;left:6px;
+  font-family:var(--banner);font-size:11px;letter-spacing:.1em;line-height:1.2;
+  background:var(--projo);color:#0B0E13;border-radius:20px;padding:1px 7px;
   z-index:6;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.6);
 }
 
 /* Le titre du butin. Il dit ce qu'on a eu avant qu'on ait compté. */
 .butintitre{text-align:center;font-family:var(--banner);letter-spacing:.18em;
-  font-size:13px;opacity:.75;padding:6px 0 2px}
+  font-size:13px;padding:6px 0 2px}
 .butintitre b{color:var(--projo)}
 
-@media (prefers-reduced-motion:reduce){ .summary > *{animation:none} }
+/* **Le mouvement part, l'information reste** — sous `prefers-reduced-motion`
+   comme sous le mode calme du tiroir (« animations », que fx.js et menu.js
+   recopient sur la racine). Seule la cascade du butin s'y pliait : le reflet,
+   le flottement et la lueur des paquets tournaient en boucle, la languette
+   battait, l'écran tremblait sur une légendaire et flashait à chaque
+   déchirure. Tout cela est décor ; ce qui reste dit la même chose — la
+   languette est toujours là, le butin arrive posé, et la déchirure garde son
+   bruit. La bande qui revient quand on lâche n'est pas coupée : elle montre
+   ce qu'on a perdu. */
+@media (prefers-reduced-motion:reduce){
+  .summary > *,.slide.center,.slide.center .foil,.packglow,.tearpack .grip{animation:none}
+  #app.quake,.flash.go{animation:none}
+}
+html[data-calme~="animations"] .summary > *,
+html[data-calme~="animations"] .slide.center,
+html[data-calme~="animations"] .slide.center .foil,
+html[data-calme~="animations"] .packglow,
+html[data-calme~="animations"] .tearpack .grip,
+html[data-calme~="animations"] #app.quake,
+html[data-calme~="animations"] .flash.go{animation:none}
 
 
 /* **Le bas de la page, et la barre du navigateur mobile.**
@@ -390,30 +479,50 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
       <!-- Les séries ouvertes. Cachée tant qu'il n'y en a qu'une : un
            sélecteur à un seul choix n'est pas un choix, c'est un bandeau. -->
       <div class="series" id="series" hidden></div>
-      <div class="setname" id="setName"></div>
-      <div class="setline" id="setLine"></div>
+      <div class="cartouche">
+        <div class="setname" id="setName"></div>
+        <div class="setline" id="setLine"></div>
+      </div>
       <div class="carousel" id="carousel"><div class="packglow"></div><div class="shadow"></div></div>
       <div class="packnav">
         <button id="prevSet">‹</button><div class="dots" id="setDots"></div><button id="nextSet">›</button>
       </div>
       <div class="tearhint" id="tearhint">GLISSE POUR CHANGER · TOUCHE POUR OUVRIR</div>
-      <!-- Ce qui vient, en une ligne. Le kiosque montrait les huit séries
-           verrouillées dans le carrousel : on glissait au milieu de ce qu'on ne
-           peut pas ouvrir pour retrouver ce qu'on peut. Un jeu montre ce qui
-           l'attend, il ne le met pas sur le chemin. -->
-      <div class="avenir" id="avenir" hidden></div>
-      <!-- L'annonce de la saison. Elle ne s'affiche qu'une fois par joueur :
-           une annonce qu'on ne peut pas faire taire est une annonce qu'on
-           apprend à ne plus lire, et la suivante ne le sera pas non plus. -->
-      <div class="saison" id="saison" hidden>
-        <button class="saison-x" id="saisonVu" aria-label="J’ai vu">✕</button>
-        <p class="saison-n" id="saisonNum"></p>
-        <h3 id="saisonNom"></h3>
-        <p class="saison-t" id="saisonTxt"></p>
-      </div>
     </div>
     <button class="cta tbf-plaque tbf-bloc" data-ton="flare" id="openBtn">OUVRIR LE BOOSTER</button>
-    <div class="regen" id="regenTxt"></div>
+    <div class="reserve">
+      <!-- La bourse : cachée jusqu'à ce que l'état soit arrivé, pour ne jamais
+           afficher un zéro qui n'est pas le vrai solde. Elle compte quand elle
+           change — un booster ouvert la fait descendre au retour de la
+           cérémonie. -->
+      <div class="bourse" id="bourse" hidden>
+        <span class="tbf-etiquette monnaie-ech"><svg viewBox="0 0 24 24" role="img" aria-label="Écharpes"><rect
+          x="2.5" y="8.5" width="19" height="7" rx="3.5"/><path d="M8 8.5 6 15.5M13 8.5l-2 7M18 8.5l-2 7"/></svg><b
+          id="kEch">0</b></span>
+        <span class="tbf-etiquette monnaie-pack"><svg viewBox="0 0 24 24" role="img" aria-label="Boosters"><path
+          d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg><b id="kPack">0</b></span>
+      </div>
+      <div class="regen" id="regenTxt"></div>
+    </div>
+    <!-- **Sous le bouton, les nouvelles des saisons.** L'annonce et « ce qui
+         vient » se posaient entre le paquet et le bouton OUVRIR : au
+         lancement — une série ouverte, douze en attente —, la liste des douze
+         noms suffisait à pousser le bouton sous le bas d'un écran de 640.
+         L'action d'abord ; ce qui l'entoure se lit en descendant. -->
+    <!-- L'annonce de la saison. Elle ne s'affiche qu'une fois par joueur :
+         une annonce qu'on ne peut pas faire taire est une annonce qu'on
+         apprend à ne plus lire, et la suivante ne le sera pas non plus. -->
+    <div class="saison" id="saison" hidden>
+      <button class="saison-x" id="saisonVu" aria-label="J’ai vu">✕</button>
+      <p class="saison-n" id="saisonNum"></p>
+      <h3 id="saisonNom"></h3>
+      <p class="saison-t" id="saisonTxt"></p>
+    </div>
+    <!-- Ce qui vient, en une ligne. Le kiosque montrait les huit séries
+         verrouillées dans le carrousel : on glissait au milieu de ce qu'on ne
+         peut pas ouvrir pour retrouver ce qu'on peut. Un jeu montre ce qui
+         l'attend, il ne le met pas sur le chemin. -->
+    <div class="avenir" id="avenir" hidden></div>
   </section>
 
   <div class="tearzone" id="tearzone">
@@ -432,11 +541,15 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
   <div id="opener">
     <video id="burst" muted playsinline preload="none"></video>
     <div class="flash" id="flash"></div>
-    <div class="ohead"><span id="oProg">1 / 5</span><button id="oClose">Fermer</button></div>
+    <div class="ohead"><span id="oProg">1 / 5</span>
+      <span class="tbf-etiquette obourse" id="oBourse" hidden><svg viewBox="0 0 24 24" role="img"
+        aria-label="Écharpes"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5"/><path
+        d="M8 8.5 6 15.5M13 8.5l-2 7M18 8.5l-2 7"/></svg><b id="oEch">0</b></span>
+      <button id="oClose">Fermer</button></div>
     <div class="ostage" id="ostage"></div>
     <div class="butintitre" id="butinTitre" hidden></div>
     <div class="summary" id="summary"></div>
-    <div class="ofoot"><div class="hint" id="oHint"></div><button class="ghost" id="oAction" style="display:none"></button></div>
+    <div class="ofoot"><div class="hint" id="oHint"></div><button class="ghost tbf-plaque" id="oAction" style="display:none"></button></div>
   </div>
 
   <!-- La fiche d'un Fanzzy, montée par fanzzy-fiche.js par-dessus la grille. -->
@@ -503,6 +616,54 @@ const { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSO
 function toast(txt) {
   const t = $('toast'); t.textContent = txt; t.className = 'toast on';
   clearTimeout(t._t); t._t = setTimeout(() => { t.className = 'toast'; }, 3600);
+}
+
+/**
+ * Pose un solde affiché — et le fait **compter** s'il change sous les yeux.
+ *
+ * Un chiffre qui saute ne dit rien de ce qui s'est passé ; un chiffre qui
+ * descend dit « tu viens de payer », un chiffre qui monte dit « tu viens de
+ * gagner » (`FX.compter`, dans fx.js, appelé gardé : sans lui, le chiffre
+ * saute, et il est juste quand même).
+ *
+ * `data-v` retient la valeur affichée — ou celle vers laquelle un compte est
+ * en route —, d'où l'on compte. La même valeur ne réécrit rien : elle
+ * couperait un compte en cours, qui sauterait à la fin. La première pose ne
+ * compte pas, et `compter: false` non plus : un solde qui défilerait depuis
+ * zéro à l'arrivée raconterait une dépense qui n'a pas eu lieu. Cette pose
+ * sèche **arrête** un compte en cours sur le chiffre (fx.js le fait pour tout
+ * nouveau compte sur le même élément) : sans ça, il continuerait d'écrire
+ * par-dessus la valeur qu'on vient de poser.
+ *
+ * @returns {Promise<void>} résolue quand le chiffre final est affiché
+ */
+function poserSolde(el, valeur, { compter = true } = {}) {
+  const apres = Number(valeur) || 0;
+  const avant = el.dataset.v === undefined ? null : Number(el.dataset.v);
+  el.dataset.v = String(apres);
+  if (compter && avant === apres) return Promise.resolve();
+  if (compter && avant !== null && window.FX?.compter) {
+    return window.FX.compter(el, avant, apres);
+  }
+  if (window.FX?.compter) return window.FX.compter(el, apres, apres);
+  el.textContent = String(apres);
+  return Promise.resolve();
+}
+
+/**
+ * La bourse du kiosque.
+ *
+ * Elle ne bouge pas pendant la cérémonie : l'écran d'ouverture la recouvre, et
+ * un compte qui se jouerait dessous serait fini avant qu'on le voie. Elle se
+ * met à jour au retour — `renderKiosque` est rappelé à chaque fermeture — et
+ * c'est là que le booster ouvert la fait descendre, sous les yeux.
+ */
+function rendreBourse() {
+  if (S.scarves == null && S.packs == null) return;
+  if ($('opener').classList.contains('on')) return;
+  $('bourse').hidden = false;
+  poserSolde($('kEch'), S.scarves ?? 0);
+  poserSolde($('kPack'), S.packs ?? 0);
 }
 
 /* ------------------------------------------------------------ kiosque */
@@ -625,7 +786,7 @@ function tickRegen() {
   // bouger : sans cette poussée, un joueur qui vient de dépenser quarante-cinq
   // écharpes les verrait encore affichées.
   /* La barre ne porte plus la bourse : le kiosque affiche son solde lui-même,
-     dans la page où il sert à décider. */
+     dans la page où il sert à décider — voir `rendreBourse`. */
   // Deux raisons de fermer le bouton, et elles ne se disent pas pareil : plus
   // de booster, ou série pas encore débloquée. Le libellé est posé par
   // `renderKiosque`, qui seul connaît la série affichée.
@@ -727,10 +888,15 @@ function renderKiosque() {
 
   /* Les pastilles de série. Cachées tant qu'il n'y en a qu'une : un sélecteur
      à un seul choix n'est pas un choix, c'est un bandeau. */
+  /* Des plaques, et l'or du kiosque sur la série choisie. `on` reste posé à
+     côté du ton : c'est l'état, le ton n'en est que la couleur. */
   const rangee = $('series');
   rangee.hidden = ouvertes.length < 2;
-  rangee.innerHTML = ouvertes.map((o) => `<button data-serie="${esc(o.id)}"
-    class="${o.id === s.id ? 'on' : ''}">${esc(o.nom)}</button>`).join('');
+  rangee.innerHTML = ouvertes.map((o) => {
+    const choisie = o.id === s.id;
+    return `<button data-serie="${esc(o.id)}" class="tbf-plaque${choisie ? ' on' : ''}"
+      ${choisie ? 'data-ton="or" ' : ''}aria-pressed="${choisie}">${esc(o.nom)}</button>`;
+  }).join('');
 
   /* Ce qui vient. Une ligne, discrète : c'est une promesse, pas une offre.
 
@@ -777,6 +943,7 @@ function renderKiosque() {
   $('setDots').innerHTML = Array.from({ length: PAQUETS_AU_CHOIX },
     (_, i) => `<i class="${i === (S.paquet ?? 0) ? 'on' : ''}"></i>`).join('');
   placeCarousel(0);
+  rendreBourse();
   tickRegen();
 }
 
@@ -1007,8 +1174,24 @@ function doOpen() {
 
 let pull = [], idx = 0, fresh = new Set();
 
+/* Pour chaque carte du paquet, dans l'ordre de `pull` : a-t-elle rapporté des
+   écharpes ? C'est **d'où** partent celles qui volent vers le compteur à la
+   fin ; **combien**, seul le total du serveur le dit (`scarvesGained`).
+
+   La règle est celle du serveur, à l'ouverture : un Fanzzy ou une pièce qu'on
+   avait déjà se change en écharpes, une poignée d'écharpes est une carte à
+   part, et le reste ne rapporte rien. */
+let rapportent = [];
+/* Vrai entre l'ouverture d'un paquet et le versement de ses doublons au
+   compteur — voir `crediterDoublons`, qui le consomme. */
+let doublonsAVerser = false;
+const rapporte = (c) => c?.type === 'echarpes' || c?.type === 'scarves'
+  || ((c?.type === 'fanzzy' || c?.type === 'stuff') && c.new === false);
+
 async function openPack() {
   const setId = SETS[S.set].id;
+  /* Le solde d'avant, que le compteur de la cérémonie montre en premier. */
+  const echAvant = Number(S.scarves ?? 0);
   let res;
   try {
     // `buy` autorise le serveur à prélever des écharpes s'il ne reste aucun
@@ -1042,6 +1225,8 @@ async function openPack() {
      même conversion auraient divergé, et c'est exactement ce qui est arrivé au
      catalogue recopié. */
   pull = res.cards.map(carteDuPaquet);
+  rapportent = res.cards.map(rapporte);
+  doublonsAVerser = true;
 
   // Une carte que le serveur tire mais que cette page ne connaît pas arrivait
   // ici comme `undefined`, et cassait l'ouverture sans rien dire — c'est ce
@@ -1056,6 +1241,8 @@ async function openPack() {
     .filter((c, i) => c.type === 'fanzzy' && !pull[i])
     .map((c) => c.id);
   if (inconnues.length) {
+    // Les deux listes vont ensemble : on retire les mêmes rangs des deux.
+    rapportent = rapportent.filter((_, i) => Boolean(pull[i]));
     pull = pull.filter(Boolean);
     console.error('[fanzzy] catalogue de la page en retard sur le serveur :', inconnues);
     toast(`Carte inconnue de cette version : ${inconnues.join(', ')}. Recharge la page.`);
@@ -1142,7 +1329,15 @@ async function openPack() {
   $('oAction').style.display = 'none';
   $('oHint').textContent = 'Touche la carte pour la retourner';
   $('oProg').textContent = `1 / ${pull.length}`;
+  /* Le compteur de la cérémonie part du solde d'avant, puis **descend** si le
+     paquet s'est payé en écharpes : c'est la dépense, et elle se voit à
+     l'instant où on la fait. Les doublons le feront remonter à la fin (voir
+     `crediterDoublons`) — d'où le solde « avant les doublons » ici. */
+  const oEch = $('oEch');
+  poserSolde(oEch, echAvant, { compter: false });
+  $('oBourse').hidden = false;
   $('opener').classList.add('on');
+  poserSolde(oEch, Number(S.scarves ?? 0) - Number(S.lastGain ?? 0));
 }
 
 $('ostage').onclick = () => {
@@ -1170,7 +1365,9 @@ $('ostage').onclick = () => {
         setTimeout(() => document.getElementById('app').classList.remove('quake'), 700); }
     }
     $('oHint').textContent = idx < 4 ? 'Touche encore pour la suivante' : 'Touche pour le récapitulatif';
-    $('oAction').style.display = idx < 4 ? 'block' : 'none';
+    // `''` et non `block` : rendre la main à la feuille, qui fait de la
+    // plaque une boîte flexible — son libellé s'y centre.
+    $('oAction').style.display = idx < 4 ? '' : 'none';
     $('oAction').textContent = 'Tout révéler';
   } else {
     cur.style.transform = 'translateX(-130%) rotate(-14deg)';
@@ -1242,20 +1439,26 @@ function finishPack() {
     renderKiosque();
     ouvrirFicheDuButin(pull[+d.dataset.i].id);
   };
+  /* Les écharpes des doublons partent des cartes vers le compteur. */
+  const credit = crediterDoublons();
+
   /* **La fête, une fois le butin posé.**
 
      Une seconde après, pas tout de suite : le récapitulatif arrive en
      cascade — voir `--n` plus haut — et la fête posée dessus couperait
-     l’arrivée des cartes en deux. On la consomme, aussi : rouvrir l’écran
-     du paquet précédent ne doit pas rejouer une montée déjà célébrée. */
+     l’arrivée des cartes en deux. Et pas avant que les écharpes soient
+     arrivées : elle couvre l’écran, et couperait le compte au milieu. On la
+     consomme, aussi : rouvrir l’écran du paquet précédent ne doit pas
+     rejouer une montée déjà célébrée. */
   if (S.montee?.monte) {
     const montee = S.montee;
     S.montee = null;
-    setTimeout(() => { window.TBF_NIVEAU?.feter?.(montee); }, 1000);
+    Promise.all([credit, new Promise((r) => setTimeout(r, 1000))])
+      .then(() => { window.TBF_NIVEAU?.feter?.(montee); });
   }
 
   const a = $('oAction');
-  a.style.display = 'block'; a.textContent = 'Terminer';
+  a.style.display = ''; a.textContent = 'Terminer';
   a.onclick = () => {
     $('opener').classList.remove('on');
     a.onclick = () => finishPack();
@@ -1266,6 +1469,49 @@ function finishPack() {
      levait ici, donc `tickRegen` n'était jamais atteint et le kiosque restait
      sur ses valeurs d'avant l'ouverture. */
   renderKiosque();
+}
+
+/* Le temps que la cascade du butin se pose : cinq cartes échelonnées de
+   90 ms, chacune arrivée en 420 ms — voir `.summary > *`. */
+const POSE_DU_BUTIN_MS = 800;
+
+/**
+ * Les écharpes des doublons, **de la carte au compteur**.
+ *
+ * Le butin disait « +12 écharpes en doublons » en bas de l'écran, et c'était
+ * tout : un nombre à lire, sans rien qui dise d'où il venait ni où il allait.
+ * Or c'est le seul gain du paquet qui ne se voit pas sur une carte — un
+ * doublon a l'air d'une carte comme les autres.
+ *
+ * Une fois les cartes posées, une poignée d'écharpes s'envole de chaque carte
+ * qui en a rapporté (`FX.voler`) jusqu'au compteur de la tête, puis le
+ * compteur monte (`FX.compter`) jusqu'au solde que le serveur a rendu. Le vol
+ * dit d'où ça vient, le compte dit combien. Sans fx.js, ou sans mouvement, le
+ * compteur prend simplement sa valeur — il est juste dans tous les cas.
+ *
+ * Une fois par paquet : `finishPack` peut être rappelé, et un vol rejoué
+ * ferait croire à un second gain.
+ *
+ * @returns {Promise<void>} résolue quand le compteur affiche le solde final
+ */
+function crediterDoublons() {
+  const cible = $('oEch');
+  const fin = Number(S.scarves ?? 0);
+  if (!doublonsAVerser || !Number(S.lastGain ?? 0)) {
+    doublonsAVerser = false;
+    return poserSolde(cible, fin);
+  }
+  doublonsAVerser = false;
+  const sources = [...$('summary').children]
+    .filter((n) => rapportent[Number(n.dataset.i)]);
+  // La poignée d'écharpes est le dessin de la carte « écharpes » elle-même :
+  // c'est ce qu'on vient de gagner, et c'est ce qui vole.
+  const image = window.TBF_STUFF?.gain?.('echarpes');
+  const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
+  return attendre(POSE_DU_BUTIN_MS)
+    .then(() => Promise.all(sources.map((n, k) => attendre(k * 110).then(() =>
+      (window.FX?.voler ? window.FX.voler(n, cible, image ? { image } : {}) : null)))))
+    .then(() => poserSolde(cible, fin));
 }
 
 /**
@@ -1292,10 +1538,17 @@ function ouvrirFicheDuButin(id) {
   });
 }
 
+/* Sans mouvement décoratif : la préférence du système, ou le calme
+   « animations » du tiroir. Les étincelles et la gerbe filmée d'une carte rare
+   sont du décor — la rareté, elle, reste écrite sur la carte, et le son la
+   dit encore. */
+const sansMouvement = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  || (document.documentElement.dataset.calme ?? '').split(' ').includes('animations');
+
 /** Superpose la gerbe d'étincelles en mode « screen » : seul ce qui brille apparaît. */
 function playBurstVideo(long) {
   const v = $('burst');
-  if (!ART.burst) return;
+  if (!ART.burst || sansMouvement()) return;
   if (!v.src) { v.src = ART.burst; v.load(); }
   v.currentTime = 0;
   v.classList.add('on');
@@ -1305,6 +1558,7 @@ function playBurstVideo(long) {
 }
 
 function burst(color, n) {
+  if (sansMouvement()) return;
   const st = $('ostage'), r = st.getBoundingClientRect();
   for (let i = 0; i < n; i++) {
     const p = document.createElement('div');

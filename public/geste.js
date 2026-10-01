@@ -29,16 +29,25 @@
  * Script classique, pas module : comme tout ce qui vit dans `public/`.
  */
 (() => {
-  /** Ce qu'on annonce au joueur avant chaque geste. */
+  /** Ce qu'on annonce au joueur avant chaque geste.
+   *
+   * **Les mots longs portent leur coupure** (`\u00AD`, le trait d'union
+   * conditionnel, invisible tant que le mot tient sur sa ligne). Sur la carte
+   * d'un chant, le geste s'écrit à onze pixels dans quarante-cinq de large : à
+   * cette taille « CONTRETEMPS » en demande soixante-quatre. Sans coupure
+   * écrite, le mot se cassait n'importe où — « CONTRET/EMPS » — sur tous les
+   * navigateurs qui ne savent pas couper le français d'eux-mêmes. La coupure
+   * est posée ici, une fois, à la syllabe ; les écrans larges ne la voient
+   * jamais. */
   const LABEL = {
-    tempo: 'TEMPO', mash: 'MARTELAGE', hold: 'ENDURANCE',
-    contretemps: 'CONTRETEMPS', echo: 'ÉCHO', crescendo: 'CRESCENDO',
+    tempo: 'TEMPO', mash: 'MARTE\u00ADLAGE', hold: 'ENDU\u00ADRANCE',
+    contretemps: 'CONTRE\u00ADTEMPS', echo: 'ÉCHO', crescendo: 'CRES\u00ADCENDO',
     relance: 'RELANCE', salves: 'SALVES', tenue: 'SANG-FROID', retenue: 'MESURE',
-    tifo: 'TIFO', memoire: 'LES VISAGES', mosaique: 'MOSAÏQUE',
-    echarpe: 'L’ÉCHARPE', capo: 'LE CAPO',
+    tifo: 'TIFO', memoire: 'LES VISAGES', mosaique: 'MOSA\u00ADÏQUE',
+    echarpe: 'L’ÉCHAR\u00ADPE', capo: 'LE CAPO',
     tri: 'LE TRI', compte: 'LE COMPTE',
     bascule: 'LA BASCULE', visee: 'LA VISÉE', jauge: 'LA JAUGE',
-    ola: 'LA OLA', miroir: 'L’ÉCHO INVERSÉ', rouleaux: 'LES ROULEAUX',
+    ola: 'LA OLA', miroir: 'L’ÉCHO INVERSÉ', rouleaux: 'LES ROU\u00ADLEAUX',
     deuxvoix: 'LES DEUX VOIX',
   };
   const AIDE = {
@@ -101,7 +110,18 @@
   const aide = (g) => AIDE[g] ?? '';
   const couleur = (g) => COULEUR[g] ?? '#F5C33B';
 
-  const buzz = (ms) => { try { navigator.vibrate?.(ms); } catch { /* tant pis */ } };
+  /* **Les vibrations se taisent sous le calme « vibrations »** du tiroir.
+     La question se pose à chaque appel, jamais une fois pour toutes : le
+     joueur peut changer d'avis en pleine partie. `FX.calme` répond quand
+     fx.js est là ; sinon l'attribut de la racine, que menu.js pose lui
+     aussi, dit la même chose — un fx.js qui manque ne doit pas rallumer
+     les vibrations. */
+  const calmeVibrations = () => window.FX?.calme?.('vibrations')
+    ?? (document.documentElement.dataset.calme ?? '').split(' ').includes('vibrations');
+  const buzz = (ms) => {
+    if (calmeVibrations()) return;
+    try { navigator.vibrate?.(ms); } catch { /* tant pis */ }
+  };
 
   /* Les éléments que ce fichier vient de poser lui-même dans la zone. Il ne
      cherche jamais rien d autre dans la page : les deux écrans n ont pas le
@@ -649,8 +669,17 @@
           const visible = g.visible ?? 3000;
           const depart = maintenant();
           rendre = { ecoule: 0, instants: [] };
-          zone.innerHTML = `<div class="tbf-compte" id="pad">
-            <b id="cpt">—</b><small id="s">TOUCHE À ZÉRO</small></div>`;
+          /* **tbf-ep-compte, et non tbf-compte.** Ce second nom appartient
+             désormais à l'éclat d'un compteur qui vient de changer (voir
+             ui.css et FX.compter) : l'épreuve prend le préfixe de ses
+             sœurs, comme tbf-ep-note et tbf-ep-jauge, et ne clignote plus
+             à son ouverture.
+
+             Le rebours s'écrit dès l'ouverture, à sa valeur de départ : la
+             case affichait « — » le temps du premier dixième, un tiret à la
+             place d'un chiffre qu'on connaissait déjà. */
+          zone.innerHTML = `<div class="tbf-ep-compte" id="pad">
+            <b id="cpt">${(cible / 1000).toFixed(1)}</b><small id="s">TOUCHE À ZÉRO</small></div>`;
           const cpt = $('cpt');
           /* Le rebours ne se rafraîchit qu'au dixième : à la milliseconde, le
              joueur lirait le chiffre au lieu de compter, et l'épreuve
@@ -670,7 +699,12 @@
             rendre.ecoule = maintenant() - depart;
             clearInterval(tic);
             cpt.classList.remove('noir');
-            cpt.textContent = '✓';
+            /* La coche est l'icône commune et non l'émoji : celui-ci se
+               dessinait autrement d'un téléphone à l'autre, et jurait avec les
+               formes au trait de l'épreuve. L'icône mesure un em, donc elle
+               prend la taille du chiffre qu'elle remplace ; son nom dit
+               « touché » à qui n'a que la lecture d'écran. */
+            cpt.innerHTML = '<i class="tbf-ico tbf-ico-coche" role="img" aria-label="Touché"></i>';
             buzz(14);
             finir();
           };
@@ -904,6 +938,11 @@
           const debuts = [];
           tours.reduce((d, duree) => { debuts.push(d); return d + duree; }, depart);
 
+          /* Le mot du tour n'est réécrit que quand le tour change. Il l'était
+             trente fois par seconde, en `innerHTML` : le nœud de texte était
+             refait à chaque image pour dire la même chose, pendant l'épreuve
+             qui demande justement de regarder l'anneau et rien d'autre. */
+          const mot = $('mot');
           const peindre = () => {
             const t = maintenant();
             const k = debuts.findIndex((d, i) => t >= d && t < d + tours[i]);
@@ -912,7 +951,8 @@
             const tete = Math.floor(((t - debuts[k]) / tours[k]) * secteurs);
             cases[tete % secteurs]?.classList.add('tbf-vague');
             cases[(tete + secteurs - 1) % secteurs]?.classList.add('tbf-vague2');
-            $('mot').innerHTML = `TOUR ${k + 1} / ${tours.length}`;
+            const dit = `TOUR ${k + 1} / ${tours.length}`;
+            if (mot && mot.textContent !== dit) mot.textContent = dit;
           };
           peindre();
           chaque(30, peindre);

@@ -69,26 +69,45 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .tete{padding:18px 16px 4px}
 .tete h1{font-family:var(--banner);font-size:26px;letter-spacing:.12em;margin:0}
 
-/* Le total, en grand : c'est la réponse à « où j'en suis ». */
+/* Le total, en grand : c'est la réponse à « où j'en suis ».
+
+   **Tout ce qui se lit ici est à pleine encre.** Le dénominateur, la phrase du
+   pourcentage, le reste des blocs étaient à 55 ou 60 % : c'était la hiérarchie
+   de la page, et c'est ce qui disparaît en premier au soleil. La hiérarchie
+   passe maintenant par la taille et la couleur — l'or pour ce qu'on a, la
+   craie pour le reste — jamais par la transparence. */
 .total{margin:10px 14px 4px;padding:16px;border-radius:14px;background:#0B0F14;
   border:1px solid rgba(242,238,228,.12)}
 .total .n{font-family:var(--banner);font-size:34px;line-height:1;color:var(--projo)}
-.total .n small{font-size:16px;opacity:.55;color:var(--craie)}
-.total p{margin:6px 0 10px;font-size:12px;opacity:.6}
+.total .n small{font-size:16px;color:var(--craie)}
+.total p{margin:6px 0 10px;font-size:12px}
 
-.jauge{height:8px;border-radius:5px;background:rgba(242,238,228,.1);overflow:hidden}
-.jauge i{display:block;height:100%;border-radius:5px;width:0;transition:width .7s ease;
-  background:linear-gradient(90deg,#B98A14,var(--projo))}
+/* **La jauge est l'écharpe du jeu** (`.tbf-jauge`, ui.css), et plus un rail à
+   cette page. Elle peignait le sien — dix pixels de gris, un dégradé d'or —,
+   si bien que l'écharpe nouée, la seule jauge du jeu, n'apparaissait sur
+   aucun écran, et pas même sur celui qui ne parle que d'avancement.
+
+   Aucune règle locale ne la touche, et c'est voulu : un `overflow:hidden`
+   couperait le nœud, et un fond écrit ici, chargé après ui.css, écraserait le
+   tricot. Il ne reste à la page que la place autour : le nœud et ses franges
+   débordent du rail — de cinq pixels au-dessus, de dix dessous — sans rien
+   pousser, et c'est à elle de leur laisser cet air. Voir `.total .aller` et
+   `.type .tbf-jauge`. */
 
 /* **Le chemin, à la fin du compte.** La page disait « il t'en manque
    vingt-trois » et s'arrêtait là, sur une impasse : le seul endroit où ça se
    gagne est à deux écrans d'ici, et rien ne le disait. Un compteur sans porte
-   de sortie est un reproche. */
-.total .aller{display:block;margin-top:13px;text-align:center;text-decoration:none;
-  font-family:var(--banner);font-size:14px;letter-spacing:.14em;padding:12px;
-  border-radius:11px;color:#1B1405;background:linear-gradient(180deg,var(--projo),#C8991B);
-  box-shadow:0 3px 0 #7A5A0E}
-.total .aller:active{transform:translateY(2px);box-shadow:0 1px 0 #7A5A0E}
+   de sortie est un reproche.
+
+   Une plaque d'or (`.tbf-plaque`, ui.css) : ouvrir un booster, c'est acheter,
+   et l'or est la couleur de l'achat partout dans le jeu. Il ne reste ici que sa
+   place — la peinture maison, un socle de trois pixels et quarante de haut,
+   est partie avec l'ancienne règle.
+
+   Seize pixels au-dessus, et non plus treize : les franges de la jauge
+   descendent de dix pixels sous son rail, et le cerne de la bâche monte de
+   deux et demi au-dessus de sa boîte. À treize, les deux se toucheraient. */
+.total .aller{margin-top:16px}
 
 /* Un type par bloc, repliable : cinq grilles ouvertes à la fois feraient une
    page qu'on ne parcourt pas. Le premier est ouvert, les autres se touchent. */
@@ -99,10 +118,19 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .type>button:focus-visible{outline:2px solid var(--projo);outline-offset:-2px}
 .type h2{margin:0;font-family:var(--banner);font-size:16px;letter-spacing:.08em}
 .type .compte{font-family:var(--banner);font-size:15px;color:var(--projo)}
-.type .compte small{opacity:.55;color:var(--craie)}
-.type .jauge{grid-column:1/-1;height:6px}
-.type .aide{grid-column:1/-1;font-size:11.5px;opacity:.55;line-height:1.45}
-.type .aide b{color:var(--projo);opacity:1}
+.type .compte small{color:var(--craie)}
+/* Six pixels sous la jauge, en plus des six de la grille : la place de ses
+   franges, qui pendent de dix pixels et tomberaient sur la première ligne de
+   l'aide quand le nœud est au départ. Au-dessus, le nœud ne monte que de
+   cinq, et l'écart de la grille lui suffit. */
+.type .tbf-jauge{grid-column:1/-1;margin-bottom:6px}
+.type .aide{grid-column:1/-1;font-size:12px;line-height:1.45}
+/* « Il t'en manque N » se détache par la graisse, en craie pleine, et plus en
+   jaune. Au soleil, le voile blanc que mesure l'audit (`--jour`) laisse au
+   jaune projecteur 3,7:1 sur ce panneau, sous les 4,5 qu'il faut à un texte de
+   cette taille, et aucun jaune de la palette ne les atteint ; la craie garde
+   4,6. C'est la phrase qui dit quoi faire : elle doit se lire dehors. */
+.type .aide b{color:var(--craie)}
 .type .corps{display:none;padding:0 12px 14px}
 .type.ouvert .corps{display:block}
 
@@ -118,11 +146,32 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .vig:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
 .vig img{position:absolute;inset:6px 6px 26px;width:calc(100% - 12px);height:calc(100% - 32px);
   object-fit:contain}
-.vig b{position:relative;display:block;font-size:9.5px;line-height:1.2;padding:4px 5px;
-  background:linear-gradient(180deg,transparent,rgba(4,6,10,.9));
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* **Le nom, sur deux lignes et à onze pixels.** Il était à neuf et demi, sur
+   une ligne coupée par des points de suspension : « Gamin au tamb… » sur la
+   seule page qui sert à savoir ce qu'on a. Deux lignes au plus ; ce qui
+   dépasse encore finit par « … » après le dernier mot qui tient, et le nom
+   entier reste dans le `title` et sur la fiche qui s'ouvre au toucher.
+
+   **Deux boîtes, parce que la coupe et le rembourrage ne vont pas
+   ensemble.** Un élément rogne au bord de son rembourrage, pas de son
+   contenu : quand `b` portait à la fois `line-clamp` et `padding`, le haut
+   de la troisième ligne se lisait dans les quatre pixels du bas, en bouts de
+   lettres. `b` garde le rembourrage et le dégradé ; le `span`, sans aucun
+   rembourrage, coupe à deux lignes exactement.
+
+   **Calé au début de ligne, pas centré.** Chrome pose les points de
+   suspension de `line-clamp` après une ligne déjà centrée, donc jusqu'à cinq
+   pixels hors de la boîte, où ils étaient rognés : la coupure ne se voyait
+   plus. Et un mot plus large que la vignette passe à la ligne au lieu de
+   déborder (`overflow-wrap`) — la grille descend à 78 px.
+
+   Et **à pleine encre, possédé ou non** : le nom de ce qui manque est
+   précisément ce qu'on cherche. La silhouette dit déjà « pas à toi ». */
+.vig b{position:relative;display:block;font-size:11px;line-height:1.2;padding:4px 5px;
+  text-align:start;background:linear-gradient(180deg,transparent,rgba(4,6,10,.9))}
+.vig b span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  overflow:hidden;overflow-wrap:anywhere}
 .vig.non img{filter:brightness(0) opacity(.35)}
-.vig.non b{opacity:.45}
 /* **La rareté porte le cadre, comme partout ailleurs.** Toutes les vignettes
    possédées étaient cerclées du même or : une commune et une légendaire se
    ressemblaient trait pour trait sur la seule page qui sert à les comparer. La
@@ -145,14 +194,21 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .perso img{grid-area:1/1/3/2;width:44px;height:44px;border-radius:50%;object-fit:cover;
   background:rgba(242,238,228,.06)}
 .perso b{grid-area:1/2/2/3;font-size:13px}
-.perso .lignes{grid-area:2/2/3/3;display:flex;gap:14px;font-size:11px;opacity:.75}
-.perso .lignes span b{font-size:11px;color:var(--projo)}
+.perso .lignes{grid-area:2/2/3/3;display:flex;gap:14px;font-size:11px}
+/* Le compte gagné, en craie grasse pour la même raison que l'aide des blocs :
+   à onze pixels, le jaune ne tient pas au soleil. */
+.perso .lignes span b{font-size:11px;color:var(--craie)}
 /* Le chevron dit que ça s'ouvre. Sans lui, une ligne qui réagit au doigt est
-   une découverte, c'est-à-dire quelque chose que la plupart ne feront pas. */
-.perso .plus{grid-area:1/3/3/4;font-family:var(--banner);font-size:20px;opacity:.35;
+   une découverte, c'est-à-dire quelque chose que la plupart ne feront pas.
+   Il informe, donc il se lit : à 35 % d'opacité, il disparaissait dehors, et
+   la ligne redevenait une découverte. */
+.perso .plus{grid-area:1/3/3/4;font-family:var(--banner);font-size:20px;opacity:.85;
   padding:0 4px}
-.vide{font-size:12px;opacity:.55;padding:6px 4px;line-height:1.5}
-.err{margin:30px 16px;text-align:center;opacity:.7}
+.vide{font-size:12px;padding:6px 4px;line-height:1.5}
+/* L'échec du chargement a son panneau : il était écrit à même la photo, et
+   c'est la seule phrase de la page qu'il faut pouvoir recopier. */
+.err{margin:30px 14px;padding:22px 16px;text-align:center;border-radius:14px;
+  background:#0B0F14;border:1px solid rgba(242,238,228,.12)}
 
 /* ==================================================================== la vitrine
 
@@ -163,8 +219,16 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 .vitr{position:fixed;inset:0;z-index:120;display:none}
 .vitr.on{display:block}
-.vitr-voile{position:absolute;inset:0;background:rgba(2,4,7,.86);
-  -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
+/* **Un voile opaque, sans flou.** Le flou d'arrière-plan recalculait toute la
+   grille à chaque image, pendant qu'on incline la carte au doigt — c'est-à-dire
+   exactement quand le téléphone a autre chose à faire.
+
+   **Plein, et non à 88 ou 96 %.** Sans le flou, ce qui passe à travers reste
+   **net** : même à 98 %, « COLLECTION » et « OUVRIR UN BOOSTER » se lisaient
+   encore en fantôme derrière l'histoire du personnage — deux textes l'un sur
+   l'autre, vu au navigateur. Le flou était ce qui rendait la transparence
+   supportable ; parti le flou, la transparence n'a plus rien à offrir. */
+.vitr-voile{position:absolute;inset:0;background:#020407;
   opacity:0;transition:opacity .2s ease;border:0;width:100%;padding:0}
 .vitr.on .vitr-voile{opacity:1}
 /* Le centrage passe par `margin:auto` sur l'enfant d'un conteneur flexible, et
@@ -176,9 +240,12 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   padding:calc(14px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom))}
 .vitr-carton{position:relative;margin:auto;width:min(420px,100%);cursor:default}
 
-.vitr-x,.vitr-dos{position:absolute;top:0;width:38px;height:38px;border-radius:50%;
-  border:1px solid rgba(242,238,228,.16);background:rgba(11,15,20,.8);color:var(--craie);
-  font-family:var(--banner);font-size:17px;line-height:1;cursor:pointer;z-index:4}
+/* Quarante-quatre pixels, comme toute cible de doigt : à trente-huit, la croix
+   et la flèche de retour étaient les deux plus petites commandes de l'écran,
+   et les deux qu'on cherche sans regarder. */
+.vitr-x,.vitr-dos{position:absolute;top:0;width:44px;height:44px;border-radius:50%;
+  border:1px solid rgba(242,238,228,.16);background:rgba(11,15,20,.94);color:var(--craie);
+  font-family:var(--banner);font-size:18px;line-height:1;cursor:pointer;z-index:4}
 .vitr-x{right:0}
 .vitr-dos{left:0}
 .vitr-x:focus-visible,.vitr-dos:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
@@ -224,20 +291,28 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .vitr-etat{margin:16px auto 0;text-align:center;font-family:var(--banner);
   font-size:11.5px;letter-spacing:.22em;padding:7px 14px;border-radius:99px;
   display:inline-block;border:1px solid currentColor}
+/* La coche est l'icône au trait du jeu (C1, ui.css), plus un émoji : « ✓ » se
+   dessinait en vert vif chez l'un, en trait fin chez l'autre. */
+.vitr-etat .tbf-ico{margin-right:.5em}
 .vitr-tete{text-align:center}
+/* Possédé en or, à gagner en craie : la différence est une couleur, et plus
+   une demi-transparence qui rendait le second illisible dehors. */
 .vitr-etat.a-moi{color:var(--projo);background:rgba(245,195,59,.1)}
-.vitr-etat.a-gagner{color:var(--craie);opacity:.55}
+.vitr-etat.a-gagner{color:var(--craie)}
 
 .vitr-nom{margin:11px 0 0;font-family:var(--banner);font-size:25px;line-height:1.05;
   letter-spacing:.04em;text-transform:uppercase;text-align:center}
+/* Les galons, le texte, l'histoire : à pleine encre. Ils étaient à 60, 85 et
+   60 % — la hiérarchie de la carte tenait à la transparence, et au soleil il
+   ne restait que le nom. L'italique suffit à dire « histoire ». */
 .vitr-quoi{margin:5px 0 0;text-align:center;font-family:var(--banner);font-size:11px;
-  letter-spacing:.16em;opacity:.6;display:flex;gap:9px;justify-content:center;
+  letter-spacing:.16em;display:flex;gap:9px;justify-content:center;
   flex-wrap:wrap;align-items:center}
-.vitr-quoi .rr{color:var(--rc,var(--craie));opacity:1}
+.vitr-quoi .rr{color:var(--rc,var(--craie))}
 .vitr-quoi .pt{width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.4}
 
-.vitr-texte{margin:14px 0 0;font-size:13px;line-height:1.6;text-align:center;opacity:.85}
-.vitr-histoire{margin:12px 0 0;font-size:12.5px;line-height:1.7;opacity:.6;
+.vitr-texte{margin:14px 0 0;font-size:13px;line-height:1.6;text-align:center}
+.vitr-histoire{margin:12px 0 0;font-size:12.5px;line-height:1.7;
   font-style:italic;text-align:center}
 
 /* Les effets, ligne à ligne. C'est ce qu'on compare entre deux cartes, donc
@@ -246,52 +321,61 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .vitr-mods span{font-size:12px;line-height:1.4;padding:8px 11px;border-radius:9px;
   background:rgba(242,238,228,.05);border-left:2px solid var(--rc,var(--projo))}
 
-/* Où ça se gagne. Une seule phrase, et le bouton qui y mène. */
+/* Où ça se gagne. Une seule phrase, et le bouton qui y mène.
+
+   Les boutons sont des plaques (`.tbf-plaque`, ui.css) : l'or pour le chemin —
+   ouvrir un booster, passer à la boutique, faire grandir, c'est toujours
+   payer —, le béton pour « voir sa fiche », qui ne coûte rien et reste en
+   retrait. Ici, seule leur place. */
 .vitr-ou{margin:16px 0 0;padding:13px;border-radius:12px;text-align:center;
   background:rgba(242,238,228,.04);border:1px solid rgba(242,238,228,.1)}
-.vitr-ou p{margin:0;font-size:12px;line-height:1.55;opacity:.7}
-.vitr-ou a{display:block;margin-top:11px;text-decoration:none;font-family:var(--banner);
-  font-size:13px;letter-spacing:.14em;padding:11px;border-radius:10px;
-  color:#1B1405;background:linear-gradient(180deg,var(--projo),#C8991B);
-  box-shadow:0 3px 0 #7A5A0E}
-.vitr-ou a.calme{color:var(--craie);background:none;box-shadow:none;
-  border:1px solid rgba(242,238,228,.22)}
+.vitr-ou p{margin:0;font-size:12px;line-height:1.55}
+.vitr-ou a{margin-top:11px}
 .vitr-ou a:first-child{margin-top:0}
-.vitr-ou a:active{transform:translateY(2px);box-shadow:0 1px 0 #7A5A0E}
 
 /* Les âges d'une lignée, et ce qu'ils coûtent. Toucher un âge change la carte :
-   la rangée existe pour regarder les trois visages, pas pour les énumérer. */
+   la rangée existe pour regarder les trois visages, pas pour les énumérer.
+
+   Le titre de la rangée est un titre cousu (C2, ui.css) : il était à neuf
+   pixels et demi et 45 %, c'est-à-dire l'intertitre qu'on ne lit pas. */
 .vitr-rang{margin:16px 0 0}
-.vitr-rang>b{display:block;font-family:var(--banner);font-size:9.5px;letter-spacing:.24em;
-  opacity:.45;margin-bottom:8px}
+.vitr-rang>h3{margin:0 0 8px}
 .vitr-ages{display:flex;gap:7px}
-.vitr-age{flex:1;min-width:0;border:1px solid rgba(242,238,228,.14);background:none;
-  color:inherit;font:inherit;cursor:pointer;border-radius:10px;padding:8px 6px;text-align:center}
-.vitr-age small{display:block;font-family:var(--banner);font-size:9px;letter-spacing:.14em;
-  opacity:.45}
-.vitr-age i{display:block;font-size:11px;font-style:normal;line-height:1.25;margin-top:3px;
+/* **Trois plaques**, et l'âge regardé s'allume au ton de l'écran. Un âge pas
+   encore atteint n'est plus à 42 % d'opacité — son nom se lisait à peine, sur
+   la rangée qui sert justement à le découvrir — : il porte le cadenas du jeu
+   devant son numéro, et reste à pleine encre. */
+.vitr-age{flex:1;min-width:0;flex-direction:column;gap:3px;padding:8px 6px;text-align:center}
+.vitr-age small{display:flex;align-items:center;gap:4px;font-size:11px;letter-spacing:.14em}
+/* Le nom garde sa casse et la police du texte : en capitales de banderole,
+   « GOSIER ROUIL… » se coupait sur un téléphone, là où « Gosier Rouillé »
+   tient entier. Le numéro d'âge, au-dessus, porte le lettrage de la plaque. */
+.vitr-age>i{display:block;max-width:100%;font-family:var(--ui);font-size:12px;font-style:normal;
+  font-weight:600;text-transform:none;letter-spacing:0;line-height:1.25;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.vitr-age.ici{border-color:var(--projo);background:rgba(245,195,59,.1)}
-.vitr-age.pas{opacity:.42}
 
 /* Les deux portes vers ses états et ses tenues. Elles sont la raison d'être du
    lien entre les blocs : un état n'existe pas tout seul, c'est la joie de
-   quelqu'un — et c'est ce quelqu'un qu'on regarde à cette seconde-là. */
+   quelqu'un — et c'est ce quelqu'un qu'on regarde à cette seconde-là.
+
+   Des plaques en béton, le compte dessous : ce sont des portes, pas des
+   achats. */
 .vitr-portes{display:flex;gap:8px;margin:12px 0 0}
-.vitr-porte{flex:1;border:1px solid rgba(242,238,228,.16);background:rgba(242,238,228,.03);
-  color:inherit;font-family:var(--banner);font-size:11px;letter-spacing:.12em;
-  cursor:pointer;border-radius:10px;padding:11px 6px}
-.vitr-porte b{display:block;color:var(--projo);font-size:14px;margin-top:3px}
+.vitr-porte{flex:1;flex-direction:column;gap:3px;font-size:11.5px;letter-spacing:.12em;
+  padding:9px 6px}
+.vitr-porte b{display:block;color:var(--projo);font-size:14px}
 
 /* Le feuilletage. Il porte le rang parce qu'un collectionneur compte : « 12
-   sur 35 » dit à la fois où on en est et combien il en reste. */
+   sur 35 » dit à la fois où on en est et combien il en reste. Le rang se lit
+   à pleine encre ; les deux flèches rondes gardent leur dessin — ce sont des
+   boutons-icônes de quarante-six pixels, pas des actions. */
 .vitr-pas{display:flex;align-items:center;gap:12px;margin:18px 0 0}
 .vitr-pas button{width:46px;height:46px;flex:none;border-radius:50%;cursor:pointer;
   border:1px solid rgba(242,238,228,.16);background:rgba(242,238,228,.04);
   color:var(--craie);font-family:var(--banner);font-size:22px;line-height:1}
 .vitr-pas button:disabled{opacity:.25;cursor:default}
 .vitr-pas span{flex:1;text-align:center;font-family:var(--banner);font-size:12px;
-  letter-spacing:.16em;opacity:.55}
+  letter-spacing:.16em}
 
 /* ## La planche
 
@@ -303,22 +387,25 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .vitr-planche .qui img{width:52px;height:52px;border-radius:50%;object-fit:cover;
   background:rgba(242,238,228,.06)}
 .vitr-planche .qui h2{margin:0;font-family:var(--banner);font-size:20px;letter-spacing:.05em}
-.vitr-planche .qui small{display:block;font-family:var(--banner);font-size:10px;
-  letter-spacing:.2em;opacity:.5;margin-top:2px}
+/* Onze pixels et pleine encre pour tout ce qui se lit sur la planche : le
+   « SES ÉTATS » au-dessus du nom, le compte, « âge pas encore débloqué », le
+   nom de chaque case. Ce qui manque se voit à la silhouette noire de la
+   carte ; l'écrire en pâle en plus le rendait simplement illisible. */
+.vitr-planche .qui small{display:block;font-family:var(--banner);font-size:11px;
+  letter-spacing:.2em;margin-top:2px}
 .vitr-groupe{margin-top:18px}
 .vitr-groupe>header{display:flex;align-items:baseline;gap:9px;margin-bottom:9px}
 .vitr-groupe h3{margin:0;font-family:var(--banner);font-size:12px;letter-spacing:.16em}
 .vitr-groupe .n{font-family:var(--banner);font-size:12px;color:var(--projo)}
-.vitr-groupe .n small{color:var(--craie);opacity:.5}
-.vitr-groupe .ferme{font-size:10.5px;opacity:.45;margin-left:auto;text-align:right;
+.vitr-groupe .n small{color:var(--craie)}
+.vitr-groupe .ferme{font-size:11px;margin-left:auto;text-align:right;
   line-height:1.3}
 .vitr-cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:9px}
 .vitr-case{border:0;padding:0;background:none;color:inherit;font:inherit;cursor:pointer;
   transition:transform .12s ease}
 .vitr-case:active{transform:scale(.94)}
-.vitr-case>b{display:block;font-size:10px;line-height:1.25;margin-top:5px;text-align:center;
+.vitr-case>b{display:block;font-size:11px;line-height:1.25;margin-top:5px;text-align:center;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.vitr-case.non>b{opacity:.4}
 .vitr-case.non .illu{filter:brightness(0) opacity(.45)}
 
 /* Le repli, quand `/cartes.js` n'a pas pu charger son catalogue. La vitrine
@@ -333,6 +420,10 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   .vitr-tilt{animation:none;transition:none}
   .vitr-scene.rayons::after{animation:none}
 }
+/* Le mode calme du tiroir (contrat C4) coupe les mêmes ornements, et rien de
+   plus : la carte se pose sans rebond, les rayons ne tournent plus. */
+html[data-calme~="animations"] .vitr-tilt{animation:none;transition:none}
+html[data-calme~="animations"] .vitr-scene.rayons::after{animation:none}
 /* La page ne défile plus derrière la vitrine : sans ça, le doigt qui feuillette
    emporte la grille du dessous, et on referme sur une page qui a bougé. */
 html.vitrine-ouverte,html.vitrine-ouverte body{overflow:hidden}
@@ -398,13 +489,15 @@ const LISTES = { fanzzy: [], stuff: [], actions: [] };
 const RAR_MOT = { commune: 'COMMUNE', rare: 'RARE', epique: 'ÉPIQUE',
   legendaire: 'LÉGENDAIRE' };
 
-/** Une vignette : l'image, le nom, possédée ou en silhouette. */
+/** Une vignette : l'image, le nom, possédée ou en silhouette. Le nom vit
+ *  dans un `span` sous le `b` : l'un porte le rembourrage, l'autre la coupe à
+ *  deux lignes (voir la règle `.vig b`). */
 const vig = (src, o, liste, i) => `<button type="button" class="vig ${
   o.possede ? 'oui' : 'non'} r-${o.rar ?? 'commune'}"
   data-liste="${liste}" data-i="${i}"
   title="${esc(o.nom)}${o.possede ? '' : ' — à gagner'}">
   ${src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
-  <b>${esc(o.nom)}</b></button>`;
+  <b><span>${esc(o.nom)}</span></b></button>`;
 
 /**
  * Un bloc par type. `aide` dit **où** ça se gagne : un compteur sans chemin
@@ -417,7 +510,7 @@ function bloc(cle, titre, t, aide, corps, ouvert) {
     <button type="button" aria-expanded="${ouvert}">
       <h2>${titre}</h2>
       <span class="compte">${t.gagnes}<small> / ${t.possibles}</small></span>
-      <span class="jauge"><i style="width:${pc(t.gagnes, t.possibles)}%"></i></span>
+      <span class="tbf-jauge"><i style="width:${pc(t.gagnes, t.possibles)}%"></i></span>
       <span class="aide">${reste ? `<b>Il t’en manque ${reste}.</b> ` : ''}${aide}</span>
     </button>
     <div class="corps">${corps}</div>
@@ -456,8 +549,8 @@ function rendre(b) {
     <div class="total">
       <div class="n">${b.total.gagnes}<small> / ${b.total.possibles}</small></div>
       <p>${pc(b.total.gagnes, b.total.possibles)} % de tout ce qui se gagne aujourd’hui.</p>
-      <div class="jauge"><i style="width:${pc(b.total.gagnes, b.total.possibles)}%"></i></div>
-      ${reste ? `<a class="aller" href="/boosters">OUVRIR UN BOOSTER</a>` : ''}
+      <div class="tbf-jauge"><i style="width:${pc(b.total.gagnes, b.total.possibles)}%"></i></div>
+      ${reste ? `<a class="aller tbf-plaque tbf-bloc" data-ton="or" href="/boosters">OUVRIR UN BOOSTER</a>` : ''}
     </div>
     ${bloc('fanzzy', 'FANZZY', T.fanzzy,
       'Dans les boosters. Chacun a jusqu’à trois âges, qui s’achètent en écharpes.', fanzzy, true)}
@@ -509,7 +602,12 @@ let pile = [];
 /** Les fiches déjà demandées. Une par personnage, jamais deux fois. */
 const fiches = new Map();
 
-const doux = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+/* Moins de mouvement : demandé au système, ou dans le tiroir (le mode calme,
+   contrat C4). `FX.calme` quand fx.js est là ; sinon la marque qu'il pose sur
+   la racine du document, qui dit la même chose. */
+const doux = () => Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  || (window.FX?.calme ? window.FX.calme('animations')
+    : /(^|\s)animations(\s|$)/.test(document.documentElement.dataset.calme ?? '')));
 
 /** La lignée d'un personnage, du premier âge au dernier. */
 const lignee = (racine) => (DEX ?? [])
@@ -613,9 +711,16 @@ function dessin(o, c) {
     ? `<img class="illu" src="${esc(src)}" alt="" onerror="this.remove()">` : ''}</div>`;
 }
 
-/** Ce que la carte annonce, sous son nom : la rareté, la famille, la série. */
+/**
+ * Ce que la carte annonce, sous son nom : la rareté, la famille, la série.
+ *
+ * Un galon qu'on ne sait pas écrire ne s'écrit pas : une rareté inconnue
+ * laissait une case vide suivie de son point de séparation, et la ligne
+ * commençait par un « · » orphelin.
+ */
 function galons(o) {
-  const out = [`<span class="rr">${RAR_MOT[rarDe(o)] ?? ''}</span>`];
+  const mot = RAR_MOT[rarDe(o)];
+  const out = mot ? [`<span class="rr">${mot}</span>`] : [];
   if (o.k === 'fanzzy') {
     const f = BY_ID?.get(o.age ?? o.id);
     if (f && TYPES?.[f.type]) out.push(TYPES[f.type].nom.toUpperCase());
@@ -696,19 +801,31 @@ function vueCarte(vue) {
   const possede = o.k === 'fanzzy' && ages.length > 1 && rangVu > 0
     ? o.possede && atteint >= rangVu
     : o.possede;
-  const rangAges = ages.length > 1 ? `<div class="vitr-rang"><b>SES ÂGES</b>
-    <div class="vitr-ages">${ages.map((a, n) => `<button type="button" class="vitr-age ${
-    (o.age ?? o.id) === a.id ? 'ici' : ''} ${atteint >= n + 1 ? '' : 'pas'}"
-      data-age="${esc(a.id)}"><small>ÂGE ${n + 1}</small><i>${esc(a.nom)}</i></button>`).join('')}
+  /* Des plaques (`.tbf-plaque`) : `ici` et `pas` restent, parce que la suite
+     de la collection les lit pour savoir lequel on regarde et lesquels ne sont
+     pas atteints. L'âge regardé s'allume en bleu, le ton de ce qu'on possède ;
+     un âge non atteint porte le cadenas du jeu (C1), et le dit aussi en mots
+     à qui ne voit pas l'icône. */
+  const rangAges = ages.length > 1 ? `<div class="vitr-rang"><h3 class="tbf-cousu">SES ÂGES</h3>
+    <div class="vitr-ages">${ages.map((a, n) => {
+    const ici = (o.age ?? o.id) === a.id;
+    const pas = atteint < n + 1;
+    return `<button type="button" class="vitr-age tbf-plaque ${ici ? 'ici' : ''} ${pas ? 'pas' : ''}"
+      ${ici ? 'data-ton="bleu" aria-current="true"' : ''}
+      aria-label="Âge ${n + 1} : ${esc(a.nom)}${pas ? ', pas encore débloqué' : ''}"
+      data-age="${esc(a.id)}"><small>${pas
+      ? '<i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i>' : ''}ÂGE ${n + 1}</small><i>${
+      esc(a.nom)}</i></button>`;
+  }).join('')}
     </div></div>` : '';
 
   /* Les deux portes vers ses états et ses tenues. Elles ne s'ouvrent que pour
      un personnage qu'on a : un booster ne donne ni l'un ni l'autre avant. */
   const mien = o.k === 'fanzzy' ? B?.parFanzzy?.find((p) => p.id === o.id) : null;
   const portes = mien ? `<div class="vitr-portes">
-    <button type="button" class="vitr-porte" data-planche="etats">SES ÉTATS
+    <button type="button" class="vitr-porte tbf-plaque" data-planche="etats">SES ÉTATS
       <b>${mien.etats.gagnes} / ${mien.etats.possibles}</b></button>
-    <button type="button" class="vitr-porte" data-planche="tenues">SES TENUES
+    <button type="button" class="vitr-porte tbf-plaque" data-planche="tenues">SES TENUES
       <b>${mien.tenues.gagnes} / ${mien.tenues.possibles}</b></button>
   </div>` : '';
 
@@ -729,10 +846,10 @@ function vueCarte(vue) {
 
   const liens = [];
   if (!possede && !ageAPayer && O.lien) {
-    liens.push(`<a href="${O.lien[0]}">${esc(O.lien[1])}</a>`);
+    liens.push(`<a class="tbf-plaque" data-ton="or" href="${O.lien[0]}">${esc(O.lien[1])}</a>`);
   }
   if (o.k === 'fanzzy') {
-    liens.push(`<a href="/fanzzy/${encodeURIComponent(o.id)}" class="calme">VOIR SA FICHE</a>`);
+    liens.push(`<a href="/fanzzy/${encodeURIComponent(o.id)}" class="tbf-plaque">VOIR SA FICHE</a>`);
   }
   const phrase = ageAPayer
     ? 'Cet âge n’est pas encore débloqué. Il ne se trouve pas dans un booster : '
@@ -750,7 +867,7 @@ function vueCarte(vue) {
     </div>
     <div class="vitr-tete">
       <span class="vitr-etat ${possede ? 'a-moi' : 'a-gagner'}">${
-    possede ? '✓ DANS TA COLLECTION'
+    possede ? '<i class="tbf-ico tbf-ico-coche" aria-hidden="true"></i>DANS TA COLLECTION'
       : ageAPayer ? 'ÂGE À DÉBLOQUER' : 'À GAGNER'}</span>
       <h2 class="vitr-nom">${esc(nom)}</h2>
       <p class="vitr-quoi">${galons(o)}</p>

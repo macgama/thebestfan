@@ -136,7 +136,10 @@
 
     /* La fête, avec le vocabulaire de la maison. `FX` est chargé en différé sur
        plusieurs pages : tout est optionnel, et une montée sans effets reste une
-       montée qui s'annonce. */
+       montée qui s'annonce. Chacun de ces effets obéit au mode calme dans
+       fx.js — flash, secousse, onde et particules se taisent sous
+       « animations », le son sous « sons » — sans que ce fichier ait à le
+       demander. */
     const F = window.FX;
     const x = innerWidth / 2;
     const y = innerHeight * 0.38;
@@ -146,7 +149,14 @@
     F?.particules?.({ x, y, n: 64, distance: 250, taille: 6, duree: 1250,
       couleurs: [F.couleurs?.or, F.couleurs?.feu, '#FFF3D0'] });
     F?.son?.('but');
-    try { navigator.vibrate?.([30, 50, 30, 50, 110]); } catch { /* pas de moteur */ }
+    /* La vibration passe hors de fx.js : elle obéit donc elle-même au mode
+       calme. L'attribut est posé par fx.js et par menu.js — lu ici plutôt que
+       par « FX.calme », qui peut manquer sur une page où fx.js arrive tard. */
+    const sansVibrer = (document.documentElement.dataset.calme ?? '')
+      .split(' ').includes('vibrations');
+    if (!sansVibrer) {
+      try { navigator.vibrate?.([30, 50, 30, 50, 110]); } catch { /* pas de moteur */ }
+    }
 
     return new Promise((resoudre) => {
       const avant = document.activeElement;
