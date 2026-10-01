@@ -22,22 +22,38 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   background:linear-gradient(180deg,rgba(4,6,10,.15),rgba(4,6,10,.9))}
 .carte .txt{position:relative;z-index:2}
 .carte h1{font-family:var(--banner);font-size:27px;letter-spacing:.05em;margin:0;line-height:1}
-.carte .club{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:12.5px;opacity:.78}
+/* **Onze pixels et 0,85 d'opacité, au moins, pour tout ce qui informe.**
+
+   Cette page descendait à sept pixels (« NIVEAU » sous le rond) et à 0,22
+   d'opacité effective (« choisir un club », dans une ligne elle-même à 0,4).
+   Au soleil, un téléphone ne montre plus rien sous ces valeurs : la
+   hiérarchie passe par la taille, la graisse et la police, plus par
+   l'effacement. Les chiffres de l'audit sont dans le lot 0 de FAIT MAIN. */
+.carte .club{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:12.5px;opacity:.9}
 .carte .club img{width:22px;height:22px;object-fit:contain}
-.carte .depuis{font-size:10.5px;opacity:.5;margin-top:6px;letter-spacing:.04em}
-.badge{position:absolute;top:14px;right:14px;z-index:2;font-family:var(--banner);font-size:9.5px;
+.carte .depuis{font-size:11px;opacity:.88;margin-top:6px;letter-spacing:.04em}
+.badge{position:absolute;top:14px;right:14px;z-index:2;font-family:var(--banner);font-size:11px;
   letter-spacing:.14em;border-radius:5px;padding:4px 9px;border:1px solid var(--projo);color:var(--projo)}
 .badge.warn{border-color:var(--flare);color:var(--flare)}
 
+/* Plus de flou d'arrière-plan : `--panneau` est opaque, et un flou recalculé
+   à chaque image coûtait cher sur un téléphone modeste pour un texte qu'il
+   rendait moins lisible au soleil. */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:12px 14px 0}
 .stat{border:1px solid rgba(242,238,228,.11);border-radius:10px;padding:10px 5px;text-align:center;
-  background:var(--panneau);backdrop-filter:blur(10px)}
+  background:var(--panneau)}
 .stat b{display:block;font-family:var(--banner);font-size:19px;color:var(--c,var(--projo));line-height:1}
-.stat span{font-size:9px;opacity:.5;letter-spacing:.08em;display:block;margin-top:5px}
+/* En Oswald : « SOUVENIRS » à onze pixels ne tient pas dans le quart d'un
+   téléphone de 360 dans la police du système, et il y tient dans la
+   condensée du jeu. */
+.stat span{font-family:var(--banner);font-size:11px;letter-spacing:.08em;opacity:.88;
+  display:block;margin-top:5px}
 
-h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;margin:22px 16px 9px}
+/* Le titre de rubrique est cousu (`.tbf-cousu`, dans ui.css) : il ne reste
+   ici que sa place. */
+h2{margin:22px 16px 9px}
 .bloc{margin:0 14px;border:1px solid rgba(242,238,228,.11);border-radius:12px;overflow:hidden;
-  background:var(--panneau);backdrop-filter:blur(10px)}
+  background:var(--panneau)}
 .ligne{display:flex;align-items:center;gap:11px;padding:13px 14px;
   border-top:1px solid rgba(242,238,228,.07);font-size:13.5px}
 .ligne:first-child{border-top:0}
@@ -56,14 +72,14 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
    deux un peu est pire que d'en descendre un. */
 .ligne .n{flex:1 0 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap}
-.ligne .v{opacity:.55;font-size:12.5px;min-width:0;overflow:hidden;
+.ligne .v{opacity:.88;font-size:12.5px;min-width:0;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:440px){
   .ligne{flex-wrap:wrap;row-gap:2px}
   .ligne .n{flex:1 1 100%}
   .ligne .v{flex:1 1 auto}
 }
-.ligne .main{font-family:var(--banner);font-size:9px;letter-spacing:.12em;color:var(--projo);
+.ligne .main{font-family:var(--banner);font-size:11px;letter-spacing:.12em;color:var(--projo);
   border:1px solid rgba(245,195,59,.45);border-radius:4px;padding:2px 6px}
 /* **Quarante-quatre pixels, parce que c'est la largeur d'un doigt.**
 
@@ -81,13 +97,30 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
    `.ligne .v` battait en spécificité — la règle existait, ne s'appliquait
    pas, et l'audit continuait de mesurer vingt pixels. Deux règles qui se
    contredisent dans le même fichier sont plus difficiles à voir qu'une règle
-   absente. */
-.ligne a.v,.ligne button.v{display:inline-flex;align-items:center;
+   absente.
+
+   Le bouton d'achat est depuis devenu une plaque, qui porte sa propre
+   hauteur : la règle ne vise plus que le lien. */
+.ligne a.v{display:inline-flex;align-items:center;
   min-height:44px;margin:-12px 0}
 .btn.danger,button.link{min-height:44px}
-.ligne button{background:none;border:0;color:inherit;opacity:.35;cursor:pointer;font-size:17px;
-  min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
-.vide{padding:18px 14px;font-size:12.5px;opacity:.45;text-align:center;line-height:1.6}
+/* La croix qui retire un club : un bouton-icône de quarante-quatre pixels,
+   pas une plaque. La règle visait « .ligne button » tout court, et battait
+   donc en spécificité toute plaque posée dans une ligne — l'achat
+   d'emplacement y perdait son fond. Elle ne vise plus que la croix. */
+.ligne button[data-unfollow]{background:none;border:0;color:inherit;opacity:.7;cursor:pointer;
+  font-size:17px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;
+  justify-content:center}
+/* L'achat d'un emplacement est une plaque d'or (acheter = or), compacte pour
+   tenir dans sa ligne. Sous 440 px la ligne se replie, et la plaque passe
+   sous son libellé comme le fait déjà une valeur. */
+.ligne #buyslot{flex:none;padding:9px 14px;min-height:44px;font-size:13px}
+/* L'emplacement libre se dit **en creux** par un trait tireté, et non plus
+   par une ligne entière à 40 % d'opacité : le lien qu'elle porte y tombait
+   à 0,22, c'est-à-dire invisible au soleil. */
+.ligne.libre{border-top-style:dashed}
+.ligne.libre .n{font-style:italic;opacity:.88}
+.vide{padding:18px 14px;font-size:12.5px;opacity:.88;text-align:center;line-height:1.6}
 .vide a{color:var(--projo)}
 
 
@@ -101,16 +134,21 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
    Le chemin montre **où l'on est et ce qui vient** : la marche en cours, sa
    jauge, puis les suivantes avec ce que chacune ouvre. */
 .niv-tete{display:flex;align-items:center;gap:12px;padding:13px 14px 10px}
-.niv-rond{flex:none;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
+.niv-rond{flex:none;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;
   font-family:var(--banner);font-size:22px;line-height:1;color:var(--projo);
   background:radial-gradient(circle,rgba(245,195,59,.18),transparent 70%);
   box-shadow:inset 0 0 0 2px var(--projo),0 0 22px -6px rgba(245,195,59,.7)}
-.niv-rond small{display:block;font-size:7px;letter-spacing:.16em;opacity:.55;
-  color:var(--craie);margin-top:2px}
+/* « NIVEAU » était à sept pixels sous le chiffre. À onze, il ne tient dans la
+   corde du rond que si le rond gagne six pixels et que l'espacement des
+   capitales se resserre. */
+.niv-rond small{display:block;font-size:11px;letter-spacing:.04em;opacity:.88;
+  color:var(--craie);margin-top:1px}
 .niv-txt{flex:1;min-width:0}
 .niv-txt b{display:block;font-family:var(--banner);font-size:14px;letter-spacing:.04em}
-.niv-txt span{display:block;font-size:10.5px;opacity:.5;margin-top:3px}
-.niv-jauge{height:8px;border-radius:5px;background:rgba(242,238,228,.1);overflow:hidden;
+.niv-txt span{display:block;font-size:12px;opacity:.88;margin-top:3px}
+/* Dix pixels : c'est la jauge de l'écran, elle doit se voir d'un coup d'œil
+   et se lire en plein jour. Elle en faisait huit. */
+.niv-jauge{height:10px;border-radius:5px;background:rgba(242,238,228,.1);overflow:hidden;
   margin:7px 14px 0;position:relative}
 .niv-jauge i{display:block;height:100%;border-radius:5px;
   background:linear-gradient(90deg,#B98A14,var(--projo));
@@ -121,6 +159,17 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
   background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.35) 50%,transparent 58%);
   background-size:260% 100%;animation:jauge 3.4s ease-in-out infinite}
 @keyframes jauge{0%{background-position:150% 0}60%,100%{background-position:-60% 0}}
+/* Moins de mouvement, demandé au système ou dans le tiroir (le mode calme,
+   contrat C4 — un sélecteur d'attribut n'entre pas dans une requête @media,
+   d'où le double, règle pour règle) : le reflet qui balaie la jauge se tait
+   et la jauge se pose sans pousser. Sa longueur, qui est l'information,
+   reste. */
+@media (prefers-reduced-motion:reduce){
+  .niv-jauge::after{animation:none;opacity:0}
+  .niv-jauge i{transition:none}
+}
+html[data-calme~="animations"] .niv-jauge::after{animation:none;opacity:0}
+html[data-calme~="animations"] .niv-jauge i{transition:none}
 
 /* Les marches. Elles défilent horizontalement : le chemin continue au-delà de
    l'écran, et c'est exactement ce qu'on veut faire sentir. */
@@ -130,12 +179,12 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
   border:1px solid rgba(242,238,228,.1);background:rgba(0,0,0,.24)}
 .marche.faite{opacity:.42}
 .marche.ici{border-color:var(--projo);background:rgba(245,195,59,.08)}
-.marche .r{font-family:var(--banner);font-size:9px;letter-spacing:.14em;opacity:.5}
+.marche .r{font-family:var(--banner);font-size:11px;letter-spacing:.12em;opacity:.88}
 .marche.ici .r{color:var(--projo);opacity:1}
 .marche .n{font-family:var(--banner);font-size:17px;line-height:1.1;margin-top:3px}
 .marche ul{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
-.marche li{font-size:10px;opacity:.72;line-height:1.35;padding-left:11px;position:relative}
-.marche li::before{content:"";position:absolute;left:0;top:5px;width:5px;height:5px;
+.marche li{font-size:11px;opacity:.9;line-height:1.35;padding-left:11px;position:relative}
+.marche li::before{content:"";position:absolute;left:0;top:6px;width:5px;height:5px;
   border-radius:50%;background:var(--projo);opacity:.7}
 /* Un palier qui ouvre vraiment quelque chose se distingue d'une marche
    ordinaire : sinon le chemin n'est qu'une suite de chiffres. */
@@ -153,11 +202,11 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
 .sortes{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;padding:12px}
 .sorte{border:1px solid rgba(242,238,228,.1);border-radius:10px;padding:10px 11px;
   background:rgba(0,0,0,.22)}
-.sorte .q{font-family:var(--banner);font-size:9.5px;letter-spacing:.12em;
+.sorte .q{font-family:var(--banner);font-size:11px;letter-spacing:.08em;
   color:var(--c,var(--projo))}
 .sorte .n{font-family:var(--banner);font-size:20px;line-height:1.1;margin-top:5px}
-.sorte .n small{font-family:var(--ui);font-size:10px;opacity:.45;letter-spacing:.06em}
-.sorte .d{font-size:10.5px;opacity:.55;margin-top:5px;line-height:1.45}
+.sorte .n small{font-family:var(--ui);font-size:11px;opacity:.88;letter-spacing:.06em}
+.sorte .d{font-size:11px;opacity:.88;margin-top:5px;line-height:1.45}
 /* La ferveur : c'est le nombre que le joueur vient chercher, il est donc à part
    et il ne se confond pas avec un compte de parties. */
 .sorte .f{font-family:var(--banner);font-size:11.5px;color:var(--projo);margin-top:6px}
@@ -169,25 +218,27 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
 /* La pastille dit d'un coup lequel des deux jeux c'était : or pour le virage,
    violet pour le duel — les couleurs que ces deux écrans portent déjà. */
 .part .jeu{flex:none;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;
-  font-family:var(--banner);font-size:8px;letter-spacing:.06em;
+  font-family:var(--banner);font-size:11px;letter-spacing:.02em;
   border:1px solid var(--c,var(--projo));color:var(--c,var(--projo))}
 .part .qui{flex:1;min-width:0}
 .part .qui b{display:block;font-size:12.5px;font-weight:400;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.part .qui span{display:block;font-size:10px;opacity:.5;margin-top:3px;letter-spacing:.03em}
+.part .qui span{display:block;font-size:11px;opacity:.88;margin-top:3px;letter-spacing:.02em}
 .part .gain{flex:none;text-align:right}
 .part .gain b{display:block;font-family:var(--banner);font-size:14px;color:var(--projo);line-height:1}
-.part .gain span{display:block;font-size:9px;opacity:.45;letter-spacing:.1em;margin-top:3px}
+.part .gain span{display:block;font-family:var(--banner);font-size:11px;opacity:.88;
+  letter-spacing:.06em;margin-top:3px}
 /* L'issue d'un duel se lit à la couleur avant de se lire au mot. */
-.part .issue{font-family:var(--banner);font-size:9px;letter-spacing:.1em;
+.part .issue{font-family:var(--banner);font-size:11px;letter-spacing:.08em;
   border-radius:4px;padding:2px 6px;border:1px solid currentColor}
 .part .issue.win{color:var(--vert)}
 .part .issue.loss{color:var(--flare)}
 .part .issue.draw{color:var(--gris,#C2CAD6)}
-.encore{width:100%;background:none;border:0;border-top:1px solid rgba(242,238,228,.07);
-  color:var(--projo);padding:13px;font-family:var(--banner);font-size:10.5px;
-  letter-spacing:.14em;cursor:pointer}
-.encore:disabled{opacity:.35;cursor:default}
+/* « VOIR PLUS » est une plaque, comme tout ce qui se touche : elle ne garde
+   ici que sa place, en retrait du bord du bloc pour que son cerne ne soit pas
+   rogné par l'`overflow:hidden` du panneau. L'état « UN INSTANT… » passe par
+   le `disabled` de la plaque, que ui.css éteint. */
+.encore{width:calc(100% - 24px);margin:10px 12px 12px}
 
 /* **Les deux emplacements ont disparu, et le sac reste.**
 
@@ -211,14 +262,16 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
 .obj .vignette{width:20px;height:20px;object-fit:contain;flex:none;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
 
-.langues{display:flex;gap:6px;padding:12px}
 /* Quarante-quatre pixels de haut : ce sont quatre cibles côte à côte sur un
    téléphone, et elles faisaient vingt-sept. Changer de langue par erreur remet
    l'écran dans une langue qu'on ne lit pas — la faute la plus pénible à
-   défaire, puisque le bouton pour revenir est lui aussi traduit. */
-.langues button{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.16);border-radius:8px;
-  color:inherit;padding:9px;min-height:44px;font-family:var(--banner);font-size:12px;cursor:pointer;opacity:.55}
-.langues button.on{background:var(--craie);color:#0B0E13;border-color:var(--craie);opacity:1}
+   défaire, puisque le bouton pour revenir est lui aussi traduit.
+
+   C'est un choix exclusif, donc un rail d'onglets (`.tbf-onglets`, au ton
+   craie du profil) : la langue choisie est un objet, les autres des trous, et
+   les quarante-quatre pixels viennent de l'onglet commun. Il ne reste ici que
+   la marge qui l'écarte du bord du bloc. */
+.langues{margin:12px}
 
 .actions{padding:22px 14px 30px;display:flex;flex-direction:column;gap:9px}
 .btn{padding:14px;font-size:14px;letter-spacing:.08em;width:100%}
@@ -238,6 +291,10 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
 .spin{width:24px;height:24px;border:3px solid rgba(242,238,228,.18);border-top-color:var(--projo);
   border-radius:50%;animation:sp 1s linear infinite;margin:60px auto}
 @keyframes sp{to{transform:rotate(1turn)}}
+/* Le tourniquet dit « ça charge » : sous moins de mouvement il ralentit sans
+   s'arrêter, comme `.tbf-spin` de ui.css. */
+@media (prefers-reduced-motion:reduce){ .spin{animation-duration:3s} }
+html[data-calme~="animations"] .spin{animation-duration:3s}
 
 /* **Le bas de la page, et la barre du navigateur mobile.**
 
@@ -275,7 +332,10 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
     <div class="fond" id="fond"></div><div class="ombre"></div>
     <div class="badge" id="badge" style="display:none"></div>
     <div class="txt">
-      <h1 id="pseudo">—</h1>
+      <!-- Vide, jamais un tiret : si le serveur ne répond pas, la carte
+           s'affiche sans pseudo plutôt qu'avec un « — » qui a l'air d'en être
+           un. -->
+      <h1 id="pseudo"></h1>
       <div class="club" id="clubline"></div>
       <div class="depuis" id="depuis"></div>
     </div>
@@ -283,25 +343,25 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
 
   <div class="stats" id="stats"></div>
 
-  <h2>MES CLUBS</h2>
+  <h2 class="tbf-cousu">MES CLUBS</h2>
   <div class="bloc" id="clubs"></div>
 
-  <h2>MON NIVEAU</h2>
+  <h2 class="tbf-cousu">MON NIVEAU</h2>
   <div class="bloc" id="niveau">
     <div class="vide">chargement…</div>
   </div>
 
-  <h2>MON PARCOURS</h2>
+  <h2 class="tbf-cousu">MON PARCOURS</h2>
   <div class="bloc" id="parcours">
     <div class="vide">chargement…</div>
   </div>
 
-  <h2>MON FANZZY</h2>
+  <h2 class="tbf-cousu">MON FANZZY</h2>
   <div class="bloc" id="fanzzy"></div>
 
   <!-- Ce qu’on possède, et où l’on s’en sert. Les deux emplacements qui
        étaient ici ne décidaient de rien : voir la note sur `.sac` plus haut. -->
-  <h2>ÉQUIPEMENT</h2>
+  <h2 class="tbf-cousu">ÉQUIPEMENT</h2>
   <div class="bloc">
     <div class="sac" id="sac"></div>
     <a class="ligne" href="/deck" style="color:inherit;text-decoration:none">
@@ -310,7 +370,7 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
       <span style="opacity:.3;font-size:17px">›</span></a>
   </div>
 
-  <h2>DUEL</h2>
+  <h2 class="tbf-cousu">DUEL</h2>
   <div class="bloc">
     <a class="ligne" href="/deck" style="color:inherit;text-decoration:none">
       <span class="n">Mon deck</span>
@@ -318,10 +378,10 @@ h2{font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.42;marg
       <span style="opacity:.3;font-size:17px">›</span></a>
   </div>
 
-  <h2>LANGUE</h2>
-  <div class="bloc"><div class="langues" id="langues"></div></div>
+  <h2 class="tbf-cousu">LANGUE</h2>
+  <div class="bloc"><div class="langues tbf-onglets" data-ton="craie" id="langues"></div></div>
 
-  <h2>COMPTE</h2>
+  <h2 class="tbf-cousu">COMPTE</h2>
   <div class="bloc">
     <div class="ligne"><span class="n">Adresse</span><span class="v" id="email"></span></div>
     <div class="ligne"><span class="n">Adresse vérifiée</span><span class="v" id="verif"></span></div>
@@ -619,7 +679,7 @@ function rendreParcours(p, { ajouter = false } = {}) {
     hote.innerHTML = `
       <div class="sortes">${sortes}</div>
       <div class="parcours" id="parcoursListe">${lignes}</div>
-      <button class="encore" id="encore">VOIR PLUS</button>`;
+      <button class="encore tbf-plaque" id="encore">VOIR PLUS</button>`;
   }
 
   /* Le bouton porte le curseur de la page suivante, et disparaît quand il n'y
@@ -655,6 +715,22 @@ document.addEventListener('click', (e) => {
 
 /* ------------------------------------------------------------- rendu */
 
+/* Le prix de l'emplacement suivant, relu à chaque rendu.
+
+   Il était calculé une fois, au démarrage, et rangé dans `etat` — que la
+   réponse du serveur remplace entièrement après un achat ou un retrait de
+   club. Dès le rendu suivant, la plaque affichait « ? écharpes », et un prix
+   gardé de côté n'aurait de toute façon plus suivi l'emplacement suivant.
+
+   La table est celle du catalogue, c'est-à-dire celle que le serveur applique
+   à l'achat : une seule règle, un seul endroit. Sans elle, la plaque dit
+   « ACHETER » sans chiffre plutôt qu'un chiffre deviné — le serveur annonce
+   de toute façon le refus s'il manque des écharpes. */
+function prixSlot() {
+  const p = catalogue?.prixSlots?.[etat.slots.total];
+  return typeof p === 'number' && Number.isFinite(p) ? p : null;
+}
+
 function rendre() {
   $('pseudo').textContent = user.pseudo;
   $('email').textContent = user.email;
@@ -669,17 +745,19 @@ function rendre() {
   const principal = etat.follows?.find((f) => f.is_main) ?? etat.follows?.[0];
   $('clubline').innerHTML = principal
     ? `<img src="${esc(principal.logo)}" alt=""><span>${esc(principal.name)}</span>`
-    : '<span style="opacity:.6">aucun club principal</span>';
+    : '<span style="font-style:italic">aucun club principal</span>';
 
   const vecus = souvenirs.filter((s) => s.kind === 'presence').length;
+  // `data-solde` : l'achat d'un emplacement fait compter ce chiffre (voir plus bas).
   $('stats').innerHTML = `
-    <div class="stat" style="--c:var(--projo)"><b>${etat.scarves}</b><span>ÉCHARPES</span></div>
+    <div class="stat" style="--c:var(--projo)"><b data-solde="echarpes">${etat.scarves}</b><span>ÉCHARPES</span></div>
     <div class="stat" style="--c:var(--flare)"><b>${etat.packs}</b><span>BOOSTERS</span></div>
     <div class="stat" style="--c:var(--vert)"><b>${vecus}</b><span>VÉCUS</span></div>
     <div class="stat" style="--c:var(--violet)"><b>${souvenirs.length}</b><span>SOUVENIRS</span></div>`;
 
   // Clubs suivis, avec les emplacements libres montrés en creux.
   const libres = Math.max(0, etat.slots.total - etat.slots.used);
+  const prix = prixSlot();
   $('clubs').innerHTML =
     (etat.follows ?? []).map((f) => `
       <div class="ligne">
@@ -689,18 +767,21 @@ function rendre() {
         <button data-unfollow="${f.team_id}" title="Ne plus suivre">✕</button>
       </div>`).join('')
     + Array.from({ length: libres }, () => `
-      <div class="ligne" style="opacity:.4"><span class="n">emplacement libre</span>
-        <a class="v" href="/equipes" style="color:var(--projo)">choisir un club</a></div>`).join('')
+      <div class="ligne libre"><span class="n">emplacement libre</span>
+        <a class="v" href="/equipes" style="color:var(--projo);opacity:1">choisir un club</a></div>`).join('')
     + (etat.slots.total < etat.slots.max ? `
       <div class="ligne"><span class="n">Emplacement supplémentaire</span>
-        <button class="v" id="buyslot" style="color:var(--projo);opacity:1;font-size:12.5px">
-          ${etat.prixSlot ?? '?'} écharpes</button></div>` : '');
+        <button class="tbf-plaque" data-ton="or" id="buyslot">
+          ${prix === null ? 'ACHETER' : `${prix} écharpes`}</button></div>` : '');
 
-  // Fanzzy équipé.
+  /* Le Fanzzy équipé. La ligne du cri ne paraît que si le cri a un nom :
+     « Cri : » suivi de rien se lit comme une donnée perdue, et une ligne sans
+     donnée disparaît plutôt que de s'afficher vide. */
+  const cri = loadout?.fanzzy?.cri?.label;
   $('fanzzy').innerHTML = loadout?.fanzzy
     ? `<div class="ligne"><span class="n"><b style="font-family:var(--banner)">${esc(loadout.fanzzy.nom)}</b>
-         <br><span style="font-size:11px;opacity:.5">Cri : ${esc(loadout.fanzzy.cri?.label ?? '')}</span></span>
-         <a class="v" href="/fanzzy" style="color:var(--projo)">changer</a></div>`
+         ${cri ? `<br><span style="font-size:11px;opacity:.88">Cri : ${esc(cri)}</span>` : ''}</span>
+         <a class="v" href="/fanzzy" style="color:var(--projo);opacity:1">changer</a></div>`
     : `<div class="vide">Aucun Fanzzy équipé.<br><a href="/fanzzy">Ouvre un booster</a></div>`;
 
   /* Le sac : ce qu'on possède, sans rien à y faire. Équiper se passe dans le
@@ -713,10 +794,11 @@ function rendre() {
           ${def ? window.TBF_STUFF.illustration(def.id, 'vignette') : ''}
           ${esc(def?.nom ?? s.stuff_id)}${s.copies > 1 ? ` ×${s.copies}` : ''}</span>`;
       }).join('')
-    : '<span style="font-size:11.5px;opacity:.45;padding:4px">Ton sac est vide.</span>';
+    : '<span style="font-size:11.5px;opacity:.88;padding:4px">Ton sac est vide.</span>';
 
+  // Des onglets du rail commun : `.on` est l'état que ui.css peint.
   $('langues').innerHTML = ['fr','en','de','es'].map((l) =>
-    `<button data-lang="${l}" class="${user.locale === l ? 'on' : ''}">${l.toUpperCase()}</button>`).join('');
+    `<button data-lang="${l}" class="tbf-onglet ${user.locale === l ? 'on' : ''}">${l.toUpperCase()}</button>`).join('');
 }
 
 /* ---------------------------------------------------------- actions */
@@ -728,12 +810,23 @@ $('clubs').addEventListener('click', async (e) => {
     catch { toast('Impossible pour le moment'); }
     return;
   }
-  if (e.target.id === 'buyslot') {
+  // `closest` : la plaque peut un jour porter une icône, et le clic tomberait
+  // alors sur elle plutôt que sur le bouton.
+  if (e.target.closest('#buyslot')) {
     try {
+      const avant = etat.scarves;
       await me('/slot', {});
       etat = await me('/state');
       toast('Emplacement débloqué');
       rendre();
+      /* La dépense se voit : le solde descend de ce qu'il était au prix payé,
+         au lieu de sauter d'un chiffre à l'autre — un solde qui saute se lit
+         comme une erreur d'affichage. `rendre` vient d'écrire la valeur
+         finale — c'est ce qui reste si fx.js manque ; `compter` la réécrit
+         aussitôt à son départ, avant la prochaine image, et l'amène à
+         l'arrivée. */
+      const solde = $('stats').querySelector('[data-solde="echarpes"]');
+      if (window.FX?.compter) FX.compter(solde, avant, etat.scarves);
     } catch (err) {
       // « Impossible pour le moment » laissait le joueur deviner. Le plafond
       // d'emplacements est un état normal, atteint en jouant : il doit se
@@ -840,9 +933,6 @@ $('supprimer').onclick = async () => {
        arrive, à sa place, qui est déjà dessinée. */
     chargerParcours();
     chargerNiveau();
-
-    const prix = [0, 0, 120, 220, 380, 600, 900, 1300];
-    etat.prixSlot = prix[etat.slots.total] ?? 1300;
 
     const d = new Date(user.createdAt ?? Date.now());
     $('depuis').textContent = 'dans la tribune depuis le ' +

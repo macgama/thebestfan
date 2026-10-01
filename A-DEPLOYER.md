@@ -1,260 +1,110 @@
 # À déposer sur Infomaniak
 
-**Session « la revue des vingt-quatre écrans ».** Une relecture page par page et
-script par script, demandée parce que l'application faisait peur à lancer : bugs
-d'affichage, flèche de retour qui ne revenait pas, crainte d'un plantage.
+**Session « le socle FAIT MAIN » — le lot 0 de la refonte.** Gaël a choisi le
+30 septembre 2026 la direction FAIT MAIN ; ce lot en pose le socle commun, sans
+aucune matière nouvelle. Il rend les vingt-quatre écrans lisibles au soleil et
+homogènes au toucher : tout se lit en plein jour, tous les boutons réagissent
+pareil, les soldes comptent quand ils changent. Le récit est dans
+`HISTORIQUE.md`, section 4 quadragies.
 
-Il n'y a **aucun changement de schéma** dans ce lot : rien à appliquer, rien à
-migrer, aucune colonne, aucune table. Le retour arrière est un `git revert` des
-commits, sans autre manœuvre.
-
-Il y a en revanche **une chose à changer dans le Manager avant de déployer**, et
-elle est décrite juste en dessous. Si tu ne lis qu'un paragraphe de ce fichier,
-lis celui-là.
-
----
-
-## Avant tout : la commande de construction doit changer
-
-Dans l'onglet Node.js du Manager, la commande de construction est aujourd'hui :
-
-```
-git pull && npm ci && node build.mjs
-```
-
-Elle doit devenir :
-
-```
-git pull && npm ci --omit=dev && node build.mjs
-```
-
-**Pourquoi c'est urgent et pas cosmétique.** Les suites d'interface pilotent un
-vrai navigateur, et `puppeteer` est donc devenu une dépendance déclarée du
-dépôt. Son script d'installation **télécharge Chromium** : environ deux cents
-mégaoctets au transfert, sept cents une fois dépliés. `npm ci` installe les
-dépendances de développement par défaut, donc la prochaine construction va
-tenter ce téléchargement sur l'hébergement mutualisé — du quota, du temps, et
-surtout une étape de plus qui peut échouer. **Un `npm ci` qui échoue arrête tout
-le déploiement**, pour un navigateur dont le serveur n'a aucun usage.
-
-Le serveur n'a besoin que de cinq paquets : `express`, `mysql2`, `nodemailer`,
-`socket.io`, `socket.io-client`. Ni `server.js`, ni `build.mjs`, ni `src/`, ni
-`npm run schema:appliquer` n'importent `puppeteer`, `sharp` ou `jsdom` — ces
-trois-là ne servent qu'aux `scripts/`, qui ne tournent jamais sur le serveur.
-C'est vérifié par un contrôle, `npm run cablage`, pour que la règle ne tienne pas
-à la mémoire de quelqu'un.
-
-`scripts/deployer.sh` a déjà reçu la correction : le déploiement par le workflow
-est donc à l'abri. Seule la mise en ligne à la main, par le Manager, garde le
-défaut — d'où ce paragraphe.
+**Rien n'est commité à l'écriture de ce fichier.** Quarante fichiers de code
+modifiés — trente-trois dans `public/`, sept dans `scripts/` —, plus
+`HISTORIQUE.md`, `ETAT.md` et ce fichier. Aucun changement de schéma,
+aucune route serveur, aucune dépendance — `package.json` et `package-lock.json`
+n'ont pas bougé. Le retour arrière est un `git revert`, sans autre manœuvre.
 
 ---
 
-## Ce que ça corrige
+## Avant tout : tout part ensemble
 
-### Deux écrans qui montraient une carte qu'on ne possède pas
+`scripts/verif-pages.mjs` porte maintenant les garde-fous du socle — aucun
+`backdrop-filter`, aucun émoji cadenas ou coche, aucun `.calc(`, un `data-ton`
+sur chaque rail d'onglets. Posés sur les pages d'avant, ils relevaient
+**29 fautes sur 54 lignes**. Et `.github/workflows/deploiement.yml` lance ce
+script **avant** de déployer, et refuse de partir s'il échoue.
 
-**Signalé ainsi :** « sur la page HOME, si j'ai pris un Fanzzy avec un skin et que
-je clique sur la flèche pour voir l'évolution suivante, je vois l'image suivante
-même si elle ne fait pas partie de ma collection. »
+Pousser `scripts/verif-pages.mjs` sans les pages corrigées bloquerait donc toute
+mise en ligne. Les quarante fichiers partent dans le même envoi — un commit, ou
+plusieurs poussés ensemble. Avant de pousser :
 
-Le défilé des âges, lui, était juste : il ne montre que ce qui a été **payé**, et
-un booster ne donne jamais qu'une carte de premier âge. Ce qui fuyait était
-ailleurs, et à deux endroits.
-
-**Sur l'accueil, c'était la tenue.** La clé de `user_skins` est
-`(joueur, personnage, stade, tenue)` depuis `sql/skins.sql` — « le Capo n'hérite
-pas de la garde-robe du gamin » — et un booster ne peut offrir une tenue que pour
-un âge déjà débloqué. Or le défilé changeait d'âge en gardant la tenue de l'âge
-précédent : on voyait donc le Capo déguisé avec ce qu'on avait gagné pour le
-gamin.
-
-La faute n'était pas dans le défilé. Le portefeuille n'envoyait qu'**une** tenue
-— celle de l'âge montré — et une page qui n'a qu'une valeur pour trois âges finit
-par la réemployer pour les trois. `avatar.js`, qui est l'autorité unique sur « qui
-montrer » et le dit en toutes lettres, rend maintenant `tenuesParAge`, bornée à
-l'âge atteint. Le repli sur `base` est le même des deux côtés.
-
-**Dans la collection, c'était pire.** La rangée ÂGES remplaçait l'âge affiché sans
-toucher à `possede`, qui restait celui de la lignée : n'importe quel âge
-s'ouvrait en pleine couleur, sans cadenas, **sous le bandeau « ✓ DANS TA
-COLLECTION »**. L'écran ne se contentait pas de montrer l'image, il affirmait en
-mots qu'elle était à soi. La possession se lit maintenant sur l'âge montré : un
-âge non atteint s'ouvre en silhouette et sous cadenas, comme tout ce qu'on ne
-possède pas sur cet écran, avec le bandeau « ÂGE À DÉBLOQUER » et la phrase qui
-dit la vérité — un âge ne se trouve pas dans un booster, il se paie en écharpes.
-La rangée reste cliquable : cette vitrine existe pour montrer ce qui se gagne.
-
-La fiche d'un Fanzzy faisait déjà bien : elle lit les tenues de l'âge regardé et
-met un cadenas sur ce qui manque.
-
-### Les effets : un dictionnaire, et 377 malus annoncés comme des bonus
-
-**La question posée était : « est-ce que les attributs des Fanzzy, des stuff et
-des stades sont pris en considération durant les duels et le Virage ? »** Ils
-l'étaient — le serveur les compose depuis toujours. Rien ne le montrait, et en
-allant câbler l'affichage on a trouvé pire que l'absence.
-
-La table qui met des mots français sur les effets existait en **cinq copies** :
-les cartes, le deck, la fiche d'un Fanzzy, et les deux documents générés. Trois
-d'entre elles étaient fausses.
-
-Celle des cartes calculait le signe et en écrivait un second en dur devant :
-
-```js
-`Souffle +${Math.round((m.breathBonus - 1) * 100)} %`   // breathBonus: 0.85
+```bash
+npm run pages      # doit finir sur « Toutes les pages compilent » ; c'est ce que lance le workflow
 ```
 
-Ce qui donne à l'écran **« Souffle +-15 % »**. Mesuré sur le catalogue réel :
-**377 occurrences, sur dix clés différentes** — c'est la majorité des malus du
-jeu. Elle écrivait aussi « Tempo plus tolérant (×0.9) », où le mot dit l'inverse
-du nombre, et « Martelage 0,5 s plus court » pour une valeur qui l'allonge.
+---
 
-Celle de la fiche d'un Fanzzy ne nommait ni `parryResist` — **103 cartes** — ni
-`costPenalty` — 17. C'est mot pour mot le défaut que les cartes disaient avoir
-corrigé chez elles, et qui vivait toujours là.
+## Où en est la production
 
-Et le même effet ne portait pas le même nom : `costPenalty` était « Chants plus
-chers » sur une carte, « Coût des cartes » sur le deck, « prix des cartes » dans
-le dossier. Un joueur qui lit sa carte puis son deck pouvait croire qu'il avait
-deux effets.
+Relevé le 1er octobre 2026 vers 0 h 30 :
 
-Il n'y a plus qu'une table, dans `public/mods.js`, et les quatre écrans y
-renvoient. Le sens de chaque clé y est déclaré, parce qu'il **ne se déduit pas du
-signe** : un `tempoInterval` positif est un malus — les Jumelles portent `+70` et
-leur texte dit « tu vois venir le rythme, *mais tu chantes plus lentement* » — et
-un `costPenalty` plus grand aussi. Deux des cinq copies s'y étaient trompées.
+- **Le lot précédent, « la revue des vingt-quatre écrans », est en ligne.**
+  `/mods.js`, qu'il a créé, est servi à l'identique du dépôt. Son texte de
+  déploiement n'est plus ici ; il reste dans l'historique de ce fichier
+  (commit `c05d935`).
+- **`/healthz` répond `"version": null`.** Seul `scripts/deployer.sh` — le
+  déploiement par le workflow — écrit le fichier `VERSION` ; une mise en ligne
+  par le Manager n'en écrit pas. La dernière est donc vraisemblablement passée
+  par le Manager, et l'étape 4 plus bas donne un autre moyen de vérifier.
+- **Le dernier commit, `23b7992` (« Maj V30092026.1726 »), n'est pas en ligne.**
+  `uptime_s` dit que le serveur tourne sans redémarrage depuis le 29 septembre
+  en fin de matinée, et ce commit date du 30 à 17 h 26. Il part avec ce lot. Il
+  ne touche que le serveur : jouer une carte d'action retirait de la main
+  **tous** ses exemplaires, au duel (`nvn/engine.js`) comme au Virage
+  (`ferveur/virage.js`) — deux Fumigènes en main, un joué, et l'autre
+  disparaissait de la partie. `nvn-smoke.mjs` le couvre pour le duel.
 
-Le contrôle a changé de nature avec. Il lisait le fichier à l'expression
-régulière et vérifiait qu'une clé était *mentionnée* : une clé mentionnée dans
-une phrase fausse passait, et c'est ce qui est arrivé 377 fois sous un contrôle
-vert. Il **exécute** maintenant la table dans un bac à sable et éprouve ses
-phrases sur les **517 valeurs** réellement portées par le catalogue,
-l'équipement et les stades.
+Si la construction passe par le Manager, vérifier une fois qu'elle est bien
+`git pull && npm ci --omit=dev && node build.mjs` : c'était l'avertissement du
+lot précédent — sans `--omit=dev`, `npm ci` tente de télécharger Chromium sur
+l'hébergement —, et rien ne dit ici s'il a été suivi.
 
-### Le panneau « ce que tu portes »
+---
 
-C'est ce qui était demandé, et il n'existait dans aucune des deux arènes. Une
-ligne repliée sous le souffle — « CE QUE TU PORTES · 3 bonus · 2 malus » — et un
-panneau qui s'ouvre au toucher : une source par bloc, avec son nom, ses effets
-colorés et signés, puis le total que le serveur applique vraiment.
+## Ce que ça change à l'écran
 
-Le total est affiché **à part et jamais recalculé** depuis les blocs. La page
-pourrait les additionner, et elle le ferait mal le jour où une règle de
-composition se nuance.
-
-Côté serveur, le Virage envoyait déjà la ventilation ; **le duel ne l'envoyait
-pas**, alors que c'est la seule arène où le joueur a choisi ce qu'il porte. Il
-l'envoie maintenant, par le même module partagé, pour que les deux écrans ne
-nomment pas les mêmes choses autrement.
-
-Un contrôle neuf vérifie que le nom d'un KOP est échappé avant d'entrer dans le
-panneau : ce nom est choisi par des joueurs, il voyage jusqu'à un `innerHTML`, et
-un KOP nommé `<img onerror=…>` aurait exécuté son script chez tous ses membres au
-milieu d'un match.
-
-### Les données : une carte dont on ne pouvait pas changer la série
-
-Dans `/admin`, le filtre des séries et le champ SÉRIE du formulaire d'édition
-portaient **le même identifiant** (`f-set`), et les deux sont à l'écran en même
-temps — le formulaire s'insère dans le tableau, sous la barre de filtres.
-`getElementById` rendant le premier du document, tout le code qui croyait lire ou
-écrire le formulaire lisait et écrivait le filtre.
-
-Trois conséquences, aucune visible :
-
-- changer la série d'un Fanzzy dans le formulaire **n'avait aucun effet** ;
-- toute carte créée recevait **la première série du catalogue**, quel que soit le
-  choix fait à l'écran ;
-- ouvrir une carte à modifier déplaçait discrètement le filtre de la liste.
-
-C'est le seul défaut de ce lot qui ait pu écrire de fausses données. Un contrôle
-neuf refuse désormais tout identifiant écrit deux fois dans une page
-(`npm run pages`), avec une liste de tolérances documentée pour les quatre noms
-que l'administration réemploie légitimement d'un onglet à l'autre.
-
-### La navigation : la flèche de retour
-
-- **`/admin` n'en avait aucune.** `nav.js` pose sa barre *dans* la colonne, et la
-  première vue de l'administration réécrit cette colonne en entier : la barre
-  apparaissait puis disparaissait, flèche comprise. La flèche est maintenant
-  écrite dans l'en-tête propre de la page, `nav.js` ne double plus la barre, et
-  sa poignée est déléguée au document — donc n'importe quelle flèche portant la
-  classe se comporte comme les autres.
-- **Sur `/matchs`, la porte « GRAND VIRAGE » éteinte portait `href="#"`.**
-  `pointer-events:none` arrête le doigt mais pas la touche Entrée : un clic
-  clavier empilait une entrée d'historique, et la flèche demandait ensuite deux
-  pressions dont la première ne faisait rien de visible.
-
-### Les dates : un jour de décalage aux abords de minuit
-
-Le ruban de jours de `/matchs` tirait son adresse de `toISOString()` — donc un
-jour **UTC**, ce qui est juste : la route appelle l'API avec `timezone: 'UTC'` et
-met sa réponse en cache sous cette clé. Mais il s'étiquetait en **heure locale**.
-
-À 00 h 30 à Zurich le 28, le bouton affichait « AUJOURD'HUI · 28 sept. » et
-rapportait les matchs du 27 ; à 20 h à Montréal, il annonçait le jour en cours et
-rapportait ceux du lendemain. « HIER » montrait alors des matchs à venir. La
-liste n'était pas fausse — elle répondait à une autre question que celle imprimée
-sur le bouton.
-
-### Les champs de recherche, détruits pendant qu'on tape
-
-Sur `/teletext` et dans les trois recherches de `/admin`, le rafraîchissement
-réécrivait le conteneur qui porte le champ de saisie. Mesuré au navigateur : nœud
-différent, focus perdu, curseur revenu à zéro. Sur téléphone, le clavier se
-refermait — après chaque bout de mot dans le télétexte, qui sert justement à
-trouver une compétition parmi neuf cent cinquante.
-
-### Les boutons qui se taisaient quand le serveur refusait
-
-Sept endroits appelaient le serveur sans rattraper le refus : l'écran ne montrait
-alors **rien du tout**, ce qui ne se distingue pas d'un clic qui n'a pas pris —
-donc on reclique. Dans `/admin` : purger le cache, l'envoi de contrôle, les deux
-boutons de publication, et la remise d'un réglage au défaut, celui-ci affirmant
-même « rendu au défaut » sans avoir rien rendu. Dans `/equipes` : le retrait d'un
-club jetait sa réponse, et `api()` pouvait échouer sur une coupure réseau sans
-que les trois gestionnaires n'attrapent quoi que ce soit.
-
-### La porte d'entrée de l'administration
-
-Elle confondait « pas connecté » et « serveur injoignable » : les deux
-renvoyaient sur `/compte`. L'exploitant se retrouvait donc sur l'écran de
-connexion au milieu d'une panne, à se demander pourquoi sa session avait sauté —
-depuis l'écran qui sert justement à diagnostiquer les pannes. Seul un refus
-d'authentification y renvoie désormais ; le reste s'affiche sur place, avec de
-quoi réessayer. Le contrôle d'accès n'a pas bougé : il n'a jamais été là, chaque
-route `/api/admin` vérifie le droit côté serveur.
-
-### Le direct, qui pouvait se figer pour de bon
-
-Sur la fiche d'un match, une exception en dessinant emportait la replanification
-avec elle : plus de relecture, plus de chrono, un score arrêté à la minute de
-l'incident **pour le reste de la visite**. Le dessin est maintenant isolé et la
-minuterie se replanifie dans tous les cas. Deux écrans ne se rafraîchissaient pas
-non plus au retour sur l'onglet, et l'horodatage « Mis à jour à 21:34 » restait
-affiché à 21:50.
+- **Tout se lit.** Aucun texte sous onze pixels ni sous 0,85 d'opacité sur les
+  vingt-trois écrans du lot ; le nom de l'écran en haut passe à la craie pleine.
+- **Plus aucun flou.** Les panneaux sont opaques à 94 %, et aucun mot n'est posé
+  à même la photo de tribune.
+- **Les boutons des pages sont des plaques**, qui s'enfoncent pareil partout.
+- **L'onglet allumé prend la couleur de l'écran** — bleu sur le classeur, vert
+  sur les matchs, violet chez les amis —, au lieu de l'or partout. Une couleur
+  foncée, pour que son libellé se lise encore au soleil.
+- **Sur `/deck`, ENREGISTRER et AJOUTER AU DECK passent de l'or au bleu** : rien
+  ne s'y achète.
+- **Les cartes retrouvent leurs marques de rareté** au pied — les losanges,
+  l'étoile de l'épique, la couronne de la légendaire —, et l'étiquette d'état
+  ne tombe plus sur un nom de deux lignes dans les petites vignettes, celles de
+  la collection et du butin d'un booster.
+- **Sur `/fanzzy`, DECK sort du rail** : une plaque à côté, avec une flèche ↗.
+- **Des icônes au trait** à la place des émojis cadenas et coche.
+- **`/bienvenue`** : chaque mot sur un panneau, le premier bouton enfin dessiné,
+  les cartes du premier paquet à la couleur de leur rareté et par leur nom.
+- **La photo revient derrière `/carnet` et `/teletext`.**
+- **Le tiroir** porte « Installer l'application » (elle quitte l'accueil) et le
+  **MODE CALME** : couper les sons, les vibrations, les animations décoratives.
+  Ses lignes font toutes 44 pixels.
+- **Les soldes comptent** : la bourse de l'accueil et celle du kiosque, le solde
+  de la boutique, le pot d'un KOP. Les écharpes des doublons volent des cartes
+  jusqu'au compteur.
+- **Dans les arènes**, les cartes de la main ne sont plus reconstruites dix fois
+  par seconde : elles répondent au doigt du premier coup.
 
 ---
 
 ## Les étapes, dans l'ordre
 
-### 1. Changer la commande de construction
+### 1. Commiter et pousser, tout ensemble
 
-Voir le paragraphe du haut. C'est la seule action de configuration de ce lot.
+Voir plus haut. `npm run pages` vert avant de pousser.
 
 ### 2. Déployer
 
-Par le workflow si les secrets SSH sont posés — `deploiement.yml` lance
-`scripts/deployer.sh`, qui est déjà corrigé. Sinon, à la main dans le Manager,
-avec la commande ci-dessus.
-
-`npm ci` et non `npm install` : `npm install` réécrit `package-lock.json` sur le
-serveur, le dépôt devient sale, et le `git pull` suivant refuse de fusionner sans
-le dire. C'est ce qui a déjà bloqué une livraison entière.
-
-Attendre la fin de la construction **avant** de redémarrer : `npm start` ne fait
-jamais de `git pull`.
+Par le workflow si les secrets SSH sont posés : Actions → Déploiement → *Run
+workflow*. Il vérifie les pages et le câblage, lance `scripts/deployer.sh`, et
+attend que `/healthz` annonce le commit. Sinon, à la main dans le Manager :
+lancer la construction, **attendre qu'elle finisse**, puis redémarrer —
+`npm start` ne fait jamais de `git pull`.
 
 ### 3. Pas de schéma à passer
 
@@ -263,87 +113,125 @@ idempotent — mais il n'a rien à faire.
 
 ### 4. Vérifier que c'est bien le nouveau code qui tourne
 
+Par le workflow, `/healthz` doit annoncer le commit poussé :
+
 ```bash
 curl -s https://thebestfan.online/healthz
 ```
 
-`version` doit annoncer le commit qu'on vient de pousser, et `ok` doit être
-`true`. S'il annonce l'ancien, le redémarrage n'a pas eu lieu : le site répond en
-servant le code d'avant, et tout ce qui suit serait vérifié pour rien.
+Par le Manager, `version` reste `null` et ne prouve rien. Deux fichiers servis
+le disent à sa place — le `?v=` contourne tout cache en chemin :
 
-### 5. Les neuf contrôles à l'œil
+```bash
+curl -s "https://thebestfan.online/ui.css?v=$(date +%s)"  | grep -c tbf-ico-cadenas   # 2 attendu
+curl -s "https://thebestfan.online/menu.js?v=$(date +%s)" | grep -c "MODE CALME"       # 1 attendu
+```
 
-Dans cet ordre, du plus grave au plus cosmétique.
+Le 1er octobre, les deux répondent `0` : c'est l'ancien code. Et `uptime_s` doit
+être revenu à quelques minutes, sinon le serveur n'a pas redémarré, et le
+correctif de `23b7992` n'est pas en ligne.
 
-1. **Un âge qu'on n'a pas se voit comme tel.** Sur `/collection`, ouvrir un
-   personnage dont tu possèdes au moins deux âges, puis toucher un âge **non
-   débloqué** dans la rangée SES ÂGES : la carte doit s'ouvrir en silhouette,
-   sous cadenas, avec le bandeau « ÂGE À DÉBLOQUER ». Si tu lis « ✓ DANS TA
-   COLLECTION », le nouveau code n'est pas servi. Puis sur `/` : fais défiler les
-   âges d'un Fanzzy pour lequel tu as gagné une tenue à un seul âge — il doit la
-   porter à cet âge-là et être en tenue de base aux autres.
-2. **Un malus se lit comme un malus.** N'importe quelle carte qui en porte un —
-   la plupart en ont — dans le classeur ou la collection. On doit lire
-   « Souffle −15 % », avec **un seul signe**. Si tu vois « +-15 % », le nouveau
-   `mods.js` n'est pas servi : vide le cache du site.
-3. **Le panneau des bonus.** Entre dans un Virage ou un duel : sous la jauge de
-   souffle, une ligne « CE QUE TU PORTES · n bonus · n malus ». Elle s'ouvre au
-   toucher, montre une source par bloc — ton Fanzzy, chaque pièce de ton sac,
-   ton KOP, le stade — et finit par le total. Un second toucher la referme.
-   Dans le **duel**, vérifie qu'elle est là : c'est le côté serveur qui vient
-   d'être branché, et c'est le seul de ce lot.
-4. **La série d'une carte s'enregistre.** `/admin`, onglet catalogue : ouvrir un
-   Fanzzy, changer sa SÉRIE, enregistrer, rouvrir. La nouvelle série doit être
-   là. Puis créer une carte en choisissant une série qui **n'est pas** la
-   première de la liste, et vérifier qu'elle la garde. C'est le seul contrôle de
-   ce lot qui porte sur des données.
-5. **La flèche de `/admin`.** Elle doit être en haut à gauche, et y rester après
-   avoir changé d'onglet — c'est précisément ce qui ne tenait pas.
-6. **La recherche du télétexte.** `/teletext`, taper trois lettres, s'arrêter une
-   seconde, continuer à taper **sans retoucher le champ**. Le texte doit
-   continuer d'arriver. Sur téléphone, le clavier doit rester ouvert.
-7. **Le ruban de jours de `/matchs`.** La date écrite sous « AUJOURD'HUI » doit
-   correspondre aux matchs affichés. Le décalage ne se voyait qu'entre minuit
-   local et minuit UTC ; hors de cette fenêtre, ce contrôle ne peut que confirmer
-   que rien n'a été cassé.
-8. **Un bouton d'administration qui refuse.** Le plus simple : « Envoi de
-   contrôle » sans SMTP configuré. Un reçu rouge doit apparaître en haut. Avant,
-   il ne se passait rien.
-9. **Retirer un club.** `/equipes`, retirer un club suivi : il doit disparaître,
-   ou un message doit dire pourquoi il reste.
+Côté navigateur, un rechargement suffit : les pages estampillent leurs scripts et
+leurs feuilles (`?v=`), et le service worker ne garde que les images.
+
+### 5. Les contrôles à l'œil
+
+Sur un téléphone, du plus parlant au plus discret.
+
+1. **Dehors, en plein jour.** Ouvrir `/profil`, `/aide`, `/matchs` et `/virage`.
+   Tout doit se lire sans chercher l'ombre. C'est la promesse du lot, et aucun
+   script ne la tient à la place d'un œil : l'audit simule le soleil par un voile
+   blanc de 40 %.
+2. **Le mode calme.** Ouvrir le menu : une rubrique MODE CALME, trois
+   interrupteurs — deux sur iPhone, qui ne sait pas vibrer. Allumer « Couper les
+   animations décoratives » : sur l'accueil, le personnage cesse de flotter et de
+   respirer ;
+   sur `/matchs`, les braises qui montent du bas de l'écran cessent d'apparaître.
+   Recharger : l'interrupteur est resté allumé. Allumer
+   « Couper les sons », puis ouvrir un duel : le bouton de son de l'arène doit
+   être barré — c'est le même réglage. Tout rallumer à la fin.
+3. **Installer l'application.** Dans le menu, sur Android et dans Chrome, si le
+   jeu n'est pas déjà installé : l'entrée « Installer l'application », juste
+   après l'Aide. Sur
+   iPhone, elle déplie la consigne « Partager, puis Sur l'écran d'accueil ».
+   Dans le jeu déjà installé : aucune entrée. Et plus rien de tel sur l'accueil.
+4. **Un solde qui compte.** Ouvrir un booster depuis `/boosters`, s'il y en a un
+   en poche. En tête de l'ouverture, un compteur d'écharpes ; si le paquet donne
+   des doublons, des écharpes volent des cartes jusqu'à lui, et il monte. Au
+   retour au kiosque, le nombre de boosters **descend** sous les yeux au lieu de
+   sauter. Puis revenir sur l'accueil : les écharpes comptent depuis la valeur de
+   la dernière visite jusqu'à la nouvelle.
+5. **Les onglets.** `/fanzzy` : MON FANZZY et CLASSEUR dans un rail bleu, et DECK
+   à côté, une plaque avec sa flèche, qui ouvre `/deck`. `/amis` : l'onglet
+   allumé est violet. `/classement` : vert. `/aide` : craie. `/deck` :
+   ENREGISTRER, en bas, est une plaque bleue.
+6. **Le décor.** `/carnet` et `/teletext` : la photo de tribune derrière les
+   panneaux, et non plus un fond gris uni.
+7. **Les icônes.** Sur la fiche d'un Fanzzy, les cases verrouillées — un âge pas
+   encore atteint, une tenue pas gagnée — portent un cadenas au trait, de la
+   couleur du texte, et non l'émoji du téléphone. Sur `/aide`, une étape faite
+   porte une coche au trait.
+8. **La main, sous le doigt.** Dans un Virage pendant que la tribune chante,
+   poser le doigt sur une carte de la main, attendre une seconde, relâcher : la
+   carte se joue du premier coup. Avant, le relâchement tombait parfois sur une
+   carte déjà remplacée, et le toucher se perdait. Dans un duel, les portraits de
+   l'équipe respirent.
 
 ### 6. Et une fois : jouer
 
-Entrer dans un Virage pendant un match, chanter, en sortir par la flèche. C'est
-le parcours qui avait été rapporté cassé, et c'est celui qu'aucun contrôle
-automatique ne couvre de bout en bout.
+Un duel ou un Virage avec **deux exemplaires de la même carte d'action** dans le
+deck. Quand les deux sont en main, en jouer un : l'autre doit rester dans la
+main. C'est le correctif de `23b7992`, et c'est le seul point de ce déploiement
+qui touche aux règles.
 
 ---
 
 ## Ce que les contrôles ne prouvent pas
 
-**Trente-six suites sur cinquante-huit demandent MySQL**, et elles n'ont pas pu
-tourner pendant cette revue : la machine de développement n'a ni `.env`, ni
-Docker, ni `mysqld`. Elles échouent toutes sur `ECONNREFUSED 127.0.0.1:3307`, y
-compris `admin:ui` et `equipes:ui` — c'est-à-dire les suites dédiées aux deux
-écrans les plus modifiés de ce lot.
+**Trois suites restent rouges, et toutes l'étaient avant le lot, à
+l'identique.** Le dernier passage, après la reprise des constats de relecture :
+cinquante-huit suites, l'audit compris, 3 309 contrôles.
 
-Ces deux écrans sont couverts par les contrôles statiques (`npm run pages`,
-`npm run cablage`, `npm run promesses`) et par le balayage navigateur
-(`npm run pages:navigateur`, qui ouvre les vingt-quatre écrans sans base et
-vérifie qu'aucun ne lève et que chacun porte sa flèche). Ce n'est pas la même
-chose que leur suite dédiée.
+- `deck:ui` (un rouge), `nvn:ui` (trois) et `fanzzy:smoke` (deux). Leurs causes
+  sont dans `ETAT.md` et dans `HISTORIQUE.md`, section 4 quadragies ;
+- `abo:smoke` a rougi trois fois dans le passage complet, lancé à une heure du
+  matin, **à cause de l'heure** : la suite sème ses lignes « du jour » en UTC
+  quand MySQL compte le jour à l'heure de Zurich (voir `ETAT.md` § 2, « semer
+  comme le serveur écrit »). Relancée seule, elle rougissait encore à une heure
+  et demie, et elle est **verte à deux heures**, 77 contrôles. La suite n'est
+  pas corrigée : un rouge de ces trois contrôles entre minuit et deux heures se
+  relance avant de se lire.
 
-**Lance `npm test` là où la base répond avant de considérer ce lot vérifié.**
-Vingt-deux suites sont vertes ici ; les trente-six autres attendent une base.
+**L'audit a des angles morts**, écrits en `ETAT.md` § 4 : un texte sur un
+dégradé, un texte assombri par `brightness()`, un texte posé sur la photo. Les
+captures à 360 × 640 ont été regardées pour ça, pas au soleil.
+
+**Soixante-treize textes perdent encore leur contraste au soleil** à 360 × 640,
+dont trente-quatre sur `/profil` et vingt sur `/aide`. Ils étaient deux cent
+quatre. Ce n'est pas une régression, c'est ce qui reste.
+
+**Les couleurs vives restent sous 4,5:1 au soleil.** L'onglet allumé des tons
+flare, vert, bleu et violet a été foncé : de 8,3 à 10,6:1 à l'intérieur, de 3,2 à
+3,5 au soleil, contre 2 à 2,3 avant. Au soleil, 4,5 est hors d'atteinte pour une
+face qui garde sa couleur. Les plaques de ces quatre tons n'ont pas changé :
+entre 3,3 et 4,5:1 à l'intérieur, vers 2 au soleil, et les deux plaques bleues de
+`/deck` en sont (3,55, et 2,05 au soleil). L'audit ne mesure aucun de ces fonds,
+qui sont des dégradés ; ces chiffres viennent d'un banc à part. Les foncer à leur
+tour est une décision de palette, en attente de Gaël.
+
+**L'étiquette d'une carte recouvre encore son nom dans deux cas** : un nom de
+trois lignes sur une carte de moins de 100 pixels, un nom de deux lignes sur une
+carte de 141 à 182. Quelques pour cent des noms, jusqu'à 9 % selon la largeur. La
+correction juste demande `cartes.js` (`ETAT.md` § 6) ; elle n'est pas dans ce
+lot.
+
+**Le gain de fluidité n'est pas mesuré.** Le flou d'arrière-plan est parti de
+tous les écrans, et c'est le calcul le plus cher qu'on demandait à un téléphone
+modeste ; mais aucun chiffre ne l'a encore chiffré sur un appareil réel.
 
 ---
 
 ## Ce qui reste en attente côté serveur
 
 Rien de neuf dans cette livraison. La liste est en `ETAT.md`, section « À faire
-sur le serveur », et le premier point est celui qui compte : **cinq migrations
-ne sont peut-être pas appliquées en production** — `minutes`, `couleurs`,
-`amis`, `boutique`, `billets`. Le démarrage les contrôle et `/healthz` répond
-`ok: false` en les nommant. C'est la vérification de l'étape 4, et c'est pour ça
-qu'elle est là.
+sur le serveur ».

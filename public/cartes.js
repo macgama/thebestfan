@@ -61,22 +61,44 @@ const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
 /**
+ * Le mode calme du tiroir (contrat C4) vaut aussi ici. Ce fichier a son
+ * propre contexte audio et son propre vibreur, que `FX.son` ne couvre pas :
+ * sans ce garde, la cérémonie du booster continuait de sonner et de vibrer
+ * pour un joueur qui avait tout coupé.
+ *
+ * Lu sur la racine du document (`data-calme`), où `fx.js` et `menu.js`
+ * recopient la clé `tbf-calme` — donc sans toucher au stockage. Et lu **au
+ * moment du geste**, pas au chargement : ce script passe avant eux, et un
+ * interrupteur basculé dans le tiroir doit valoir tout de suite.
+ */
+function calme(facette) {
+  return (document.documentElement.dataset.calme ?? '').split(' ').includes(facette);
+}
+
+/**
  * Vibration. Enveloppée dans un try : tous les navigateurs n'exposent pas
  * l'API, et Safari iOS l'ignore silencieusement. Une animation ne doit jamais
- * tomber parce que le retour haptique n'est pas disponible.
+ * tomber parce que le retour haptique n'est pas disponible. Muette sous le
+ * calme « vibrations » : voir `calme`.
  */
 function buzz(pattern) {
+  if (calme('vibrations')) return;
   try { navigator.vibrate?.(pattern); } catch { /* sans importance */ }
 }
 
 /* ------------------------------------------------------------------ son
    Aucun fichier audio : tout est synthétisé au moment du geste. Zéro octet
    téléchargé, et le son colle exactement à l'action. Le contexte n'est créé
-   qu'au premier toucher, comme l'exigent les navigateurs. */
+   qu'au premier toucher, comme l'exigent les navigateurs.
+
+   Sous le calme « sons », `ready` ne rend rien : chaque son s'arrête sur son
+   `if (!ac) return`, et le contexte n'est même pas créé — les pages qui
+   l'appellent seul, pour le déverrouiller au toucher, n'ont rien à changer. */
 
 let AC = null;
 const audio = {
   ready() {
+    if (calme('sons')) return null;
     if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch {} }
     if (AC?.state === 'suspended') AC.resume();
     return AC;
@@ -612,6 +634,19 @@ function cardHTML(f, opts = {}) {
   const t = typeDe(f);
   const holo = !opts.verrou && ['epique','legendaire'].includes(f.rar) ? ' holo' : '';
   const rc = ` r-${f.rar ?? 'commune'}`;
+  /* **Le pied ne porte que la rareté.** Il écrivait aussi « famille · ét. N »
+     derrière un séparateur, que cartes.css masquait toujours : la pastille dit
+     la famille, et le badge `.age` dit l'âge en clair. Resté dans le balisage,
+     ce texte mort commençait par un « · » seul dès que la famille manquait au
+     catalogue (`typeDe` rend alors un nom vide) — une ligne sans donnée, qui
+     doit partir entière, et elle part.
+
+     `.rar` reste un `div`, et plus aucune règle de cartes.css ne vise le
+     dernier `span` du pied. Il y en avait une, écrite pour cacher ce texte :
+     elle attrapait aussi la dernière marque de rareté (les losanges et
+     l'étoile sont des `span`), si bien que la commune n'avait aucun losange et
+     que l'épique et la légendaire montraient une pastille vide. Elle est partie
+     avec le texte qu'elle cachait. */
   return `<div class="fz${rc}${holo}" style="--tc:${t.c}" data-id="${f.id}">
     <div class="body">
       <div class="top">
@@ -624,8 +659,7 @@ function cardHTML(f, opts = {}) {
         <rect x="4" y="10" width="16" height="11" rx="2.5"/>
         <path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>` : ''}
       ${opts.mini ? '' : `<div class="mods">${modsText(f).slice(0, 2).join('<br>')}</div>`}
-      <div class="foot"><span class="rar">${rarMark(f.rar)}</span><span class="sep"></span>
-        <span>${t.nom} · ét. ${f.stage}</span></div>
+      <div class="foot"><div class="rar">${rarMark(f.rar)}</div></div>
       ${opts.verrou ? '' : `<div class="age a${f.stage}">${
         f.rar === 'legendaire' ? 'LÉGENDAIRE' : `ÉVO ${f.stage}`}</div>`}
     </div>

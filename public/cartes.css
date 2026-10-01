@@ -117,11 +117,31 @@
    partout, donc elle s'apprend en une carte. */
 .fz .top::before{content:"";position:absolute;left:0;right:0;bottom:0;height:62%;
   background:linear-gradient(180deg,transparent,var(--rc));opacity:.2;pointer-events:none}
-.fz .nm{position:relative;font-family:var(--banner);font-size:calc(6 * var(--u));line-height:1.05;
+/* **Le nom ne descend pas sous onze pixels.**
+
+   Six `--u`, c'est six centièmes de la carte : un nom juste sur une carte de
+   deux cent cinquante pixels, et de six pixels sur une vignette du classeur,
+   qui en fait cent. Il se voyait sans se lire. Le plancher est celui de tout
+   le jeu pour un texte qui informe, et le nom d'un personnage qu'on
+   collectionne en est un. Au-dessus de cent quatre-vingt-trois pixels de
+   carte, il suit de nouveau la largeur comme avant.
+
+   Sur une vignette étroite, un nom long passe sur deux lignes : il monte sur
+   le dégradé du bandeau, qui est fait pour ça. `.tbf-etiq` (dans `ui.css`)
+   refait le même calcul pour se poser au-dessus, et compte deux lignes de
+   nom sur une vignette de 140 px au plus. */
+/* **Les cinq `.calc(` de ce fichier.** Un point s'était glissé devant `calc`
+   — reste d'une conversion de `.4cqw` en `calc(4 * var(--u))` qui avait mangé
+   le zéro de tête. `0 .calc(…)` n'est pas une longueur : le navigateur jetait
+   la déclaration entière, sans un mot. Le nom n'avait donc aucune ombre, la
+   pastille non plus, l'anneau de rareté du pied n'existait pas, et les
+   losanges n'avaient ni écart ni arrondi. Les valeurs rétablies sont celles
+   que la conversion visait : quatre dixièmes, trois dixièmes, sept dixièmes. */
+.fz .nm{position:relative;font-family:var(--banner);font-size:max(11px, calc(6 * var(--u)));line-height:1.05;
   text-transform:uppercase;flex:1;letter-spacing:.01em;
-  text-shadow:0 .calc(4 * var(--u)) calc(1.6 * var(--u)) rgba(0,0,0,.95)}
+  text-shadow:0 calc(.4 * var(--u)) calc(1.6 * var(--u)) rgba(0,0,0,.95)}
 .fz .pip{width:calc(6 * var(--u));height:calc(6 * var(--u));border-radius:50%;background:var(--tc);flex:none;display:grid;
-  place-items:center;box-shadow:0 .calc(3 * var(--u)) calc(1.2 * var(--u)) rgba(0,0,0,.6)}
+  place-items:center;box-shadow:0 calc(.3 * var(--u)) calc(1.2 * var(--u)) rgba(0,0,0,.6)}
 .fz .pip svg{width:calc(3.8 * var(--u));height:calc(3.8 * var(--u))}
 
 /* Deux pièges se cumulent ici.
@@ -156,22 +176,34 @@
 .fz .mods{display:none}
 
 /* La rareté, en pastille sombre : lisible quelle que soit l’image dessous. */
-/* La rareté chiffrée, dans le coin : un à trois losanges, une couronne pour
-   la légendaire. Elle redit ce que le cadre annonce — et c'est voulu, un
-   collectionneur veut pouvoir compter. */
+/* La rareté chiffrée, dans le coin : un losange pour la commune, deux pour la
+   rare, une étoile pour l'épique, une couronne pour la légendaire. Elle redit
+   ce que le cadre annonce — et c'est voulu, un collectionneur veut pouvoir
+   compter. */
 /* La rareté descend sous l âge : les deux vivent dans le coin en haut à
    droite, et l âge passe devant parce qu il se lit, quand la rareté se
    compte. */
 .fz .foot{position:absolute;top:calc(2.6 * var(--u) + 15px);right:calc(2.6 * var(--u));z-index:3;display:flex;align-items:center;
   gap:calc(1 * var(--u));padding:calc(1.1 * var(--u)) calc(2.2 * var(--u));border-radius:calc(99 * var(--u));background:rgba(4,6,10,.7);
-  box-shadow:inset 0 0 0 .calc(4 * var(--u)) var(--rc);font-size:calc(2.6 * var(--u));color:#E4DFD2}
-.fz .rar{display:flex;gap:.calc(7 * var(--u));align-items:center}
+  box-shadow:inset 0 0 0 calc(.4 * var(--u)) var(--rc);font-size:calc(2.6 * var(--u));color:#E4DFD2}
+.fz .rar{display:flex;gap:calc(.7 * var(--u));align-items:center}
 .fz .rar .d{width:calc(2.4 * var(--u));height:calc(2.4 * var(--u));background:var(--rc);transform:rotate(45deg);
-  border-radius:.calc(3 * var(--u));box-shadow:0 0 calc(1.4 * var(--u)) var(--rc)}
-.fz .rar .s{font-size:calc(3.6 * var(--u));color:var(--rc);line-height:1;
+  border-radius:calc(.3 * var(--u));box-shadow:0 0 calc(1.4 * var(--u)) var(--rc)}
+/* L'étoile et la couronne sont des caractères : onze pixels au moins, comme
+   tout ce qui se lit. En `--u` seul, elles faisaient cinq pixels et demi sur
+   la plus petite carte qui montre la pastille — cent cinquante et un — et
+   il fallait une carte de trois cent six pixels pour qu'elles atteignent le
+   plancher. La pastille grandit d'autant vers le bas, sous le badge d'âge,
+   et tient dans le coin dès cent cinquante et un pixels. Les losanges sont
+   des formes et gardent leur échelle. */
+.fz .rar .s{font-size:max(11px, calc(3.6 * var(--u)));color:var(--rc);line-height:1;
   text-shadow:0 0 calc(1.6 * var(--u)) var(--rc)}
-/* Le type est déjà dit par la pastille de couleur : inutile de le réécrire. */
-.fz .sep,.fz .foot span:last-child{display:none}
+/* **Plus aucune règle ne masque le dernier `span` du pied.** Elle visait le
+   texte « famille · ét. N » qui suivait la rareté ; `cardHTML` ne l'écrit
+   plus. Restée seule, elle ne touchait plus que les marques : le dernier
+   losange et l'étoile sont des `span`, chacun `:last-child` dans `.rar`. La
+   commune n'affichait aucun losange, la rare un sur deux, l'épique et la
+   légendaire une pastille vide. */
 /* En dessous d'une certaine largeur, la pastille de rareté n'est plus lisible :
    elle devient une tache claire dans le coin, qu'on lit comme un défaut
    d'affichage. La carte la retire donc d'elle-même — c'est à ça que sert le
@@ -199,11 +231,19 @@
    voir sa collection. */
 .grid .slot{animation:poser .34s cubic-bezier(.2,1.5,.4,1) backwards}
 @keyframes poser{from{opacity:0;transform:translateY(12px) scale(.88)}}
+/* L'éclat de la barre de progression n'est plus gardé ici : la barre vit dans
+   `fanzzy.html`, qui la garde lui-même juste sous sa règle. La garde d'ici ne
+   pouvait pas l'emporter — même spécificité, feuille chargée avant — et son
+   double du mode calme ne faisait que répéter celui de la page. */
 @media (prefers-reduced-motion:reduce){
   .grid .slot{animation:none}
-  .progress .bar::after{animation:none}
   .fz.holo::after{animation:none}
 }
+/* Le même bloc pour le mode calme du tiroir : voir `ui.css`, qui explique
+   pourquoi chaque bloc `prefers-reduced-motion` a son double, règle pour
+   règle. */
+html[data-calme~="animations"] .grid .slot{animation:none}
+html[data-calme~="animations"] .fz.holo::after{animation:none}
 
 
 /* L'âge, écrit sur la carte.
@@ -220,9 +260,13 @@
    cent cinquante pixels de large — voir la requête de conteneur en fin de
    fichier — c est-à-dire exactement sur la grille du classeur, là où l âge
    sert le plus. Écrit en --u, il faisait cinq pixels de haut : lisible pour
-   personne. Il garde donc sa taille quelle que soit celle de la carte. */
+   personne. Il garde donc sa taille quelle que soit celle de la carte.
+
+   Le plancher était à huit pixels, et c'est lui qui s'appliquait sur toutes
+   les vignettes : 3,1 `--u` n'atteignent huit qu'au-delà de deux cent
+   soixante pixels de carte. Il monte à onze, le plancher du jeu. */
 .fz .age{position:absolute;top:3px;right:3px;z-index:5;padding:1px 5px;border-radius:20px;
-  font-family:var(--banner);font-size:clamp(8px, calc(3.1 * var(--u)), 13px);letter-spacing:.1em;
+  font-family:var(--banner);font-size:clamp(11px, calc(3.1 * var(--u)), 13px);letter-spacing:.1em;
   line-height:1;white-space:nowrap;
   background:rgba(11,14,19,.72);border:1px solid currentColor}
 .fz .age.a1{color:#C2CAD6}

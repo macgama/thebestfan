@@ -75,6 +75,31 @@ du navigateur.
 | Emblèmes de série | `art/logo/<CODE>.png` | `npm run logos` | `public/img/logo/` |
 | Dos de carte | `art/dos/<CODE>.png` | `npm run dos` | `public/img/dos/` |
 | Décors de série | `art/fonds/<id>.png` | `npm run fonds` | `public/img/fonds/` |
+| Grain des matières | rien : il est calculé | `npm run grain` | `public/img/grain/` |
+
+Le grain fait exception, sur deux points. **Il ne se dessine pas** : aucun
+générateur ne rend une tuile qui se raccorde à elle-même, et une couture se
+verrait en grille sur tout l'écran. Ses trois tuiles de 256 px — `beton` pour le
+mur et le panneau calme, `toile` pour la bâche, `papier` pour le kraft des
+tickets — sont donc calculées par `scripts/grain-images.mjs`, sans couture, et
+identiques d'un passage à l'autre. Ce sont des voiles presque transparents,
+une teinte par famille de grain (le sable clair et les creux noirs du béton,
+le creux de la toile, la fibre brune du papier), posés par-dessus la couleur
+de la feuille de style. Le béton existe aussi en 512 px (`beton@2x`) : la
+même recette tirée deux fois plus fin, que la feuille de style sert aux
+écrans denses par `image-set`. Agrandie deux à trois fois par un téléphone, la
+tuile de 256 faisait de chaque grain une tache floue ; la toile, dont le relief
+est déjà doux, n'en a pas besoin.
+**Et son AVIF n'est écrit que s'il gagne** : le WebP et le PNG sans perte sont
+toujours là, l'AVIF seulement s'il ne pèse pas plus que le WebP et ne change
+pas l'image. Sans perte, l'AV1 paie un grain le double du WebP, ou plus ; avec
+perte, il l'efface par blocs, et le bloc abîmé revient à chaque tuile. Comme
+le serveur préfère l'AVIF dès qu'il existe, un AVIF perdant serait envoyé à
+presque tout le monde. Au dernier passage, seul le papier en a un, et c'est
+voulu : le béton (aux deux tailles) et la toile n'en ont pas.
+Une recette changée change aussi l'adresse dans `ui.css` (`?v=…`, sur les
+deux tailles du béton) : `/img` est servi pour un an, sans retour possible
+chez qui l'a déjà.
 
 Quatre de ces commandes acceptent `--invites` (`actions`, `stuff`, `chants`,
 `logos`) : elles écrivent alors les **invites** à donner au générateur, la

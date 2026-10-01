@@ -15,13 +15,87 @@
  *     joueur voit toujours qu'un but a été marqué, sans que l'écran tremble.
  *   — tout est fait en CSS et en SVG. Zéro fichier téléchargé, donc aucun
  *     effet ne dépend du réseau au moment précis où il doit se déclencher.
+ *
+ * Et une quatrième, qui vient du joueur plutôt que du navigateur : le **mode
+ * calme** du tiroir (voir plus bas). Il coupe séparément les sons, les
+ * vibrations et les animations décoratives, et chaque effet de ce fichier le
+ * consulte au moment de partir — pas au chargement : un réglage changé dans
+ * le menu vaut pour le prochain but, sans recharger la page.
  */
 (() => {
   if (window.FX) return;
 
-  const doux = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* ------------------------------------------------------ le mode calme
+
+     La préférence vit dans localStorage sous « tbf-calme » : des jetons
+     séparés par des espaces, parmi sons, vibrations et animations. Elle est
+     recopiée sur la racine du document (data-calme) à chaque chargement, pour
+     que les feuilles de style s'y accrochent comme elles s'accrochent déjà à
+     prefers-reduced-motion — html[data-calme~="animations"].
+
+     **menu.js fait exactement la même recopie**, et c'est voulu : /bienvenue
+     charge ce fichier sans le menu, /boutique le menu sans ce fichier. Les
+     deux copies écrivent la même chose au même endroit ; la seconde qui passe
+     ne change rien. Qui modifie l'une modifie l'autre.
+
+     Ce qui fait foi pendant la visite est l'attribut, pas le stockage : le
+     tiroir le réécrit à chaque interrupteur, et un stockage fermé (navigation
+     privée) ne doit pas empêcher le réglage de valoir au moins pour la page. */
+  const FACETTES = ['sons', 'vibrations', 'animations'];
+  const normaliser = (brut) => {
+    const jetons = String(brut ?? '').split(/\s+/);
+    return FACETTES.filter((f) => jetons.includes(f)).join(' ');
+  };
+  const poserCalme = (v) => {
+    if (v) document.documentElement.dataset.calme = v;
+    else delete document.documentElement.dataset.calme;
+  };
+  function lireCalme() {
+    let brut = '';
+    try {
+      brut = localStorage.getItem('tbf-calme') ?? '';
+      /* L'ancienne clé du bouton de son du duel. Elle disait « coupé » à sa
+         façon, et un joueur qui avait coupé le son ne doit pas l'entendre
+         revenir parce que la préférence a changé de nom. Relue une fois,
+         versée dans la nouvelle, puis retirée. */
+      const ancien = localStorage.getItem('tbf-son');
+      if (ancien !== null) {
+        if (ancien === 'coupe') brut += ' sons';
+        brut = normaliser(brut);
+        localStorage.setItem('tbf-calme', brut);
+        localStorage.removeItem('tbf-son');
+      }
+    } catch { /* pas de stockage : rien de calmé, comme avant */ }
+    return normaliser(brut);
+  }
+  /** Le joueur a-t-il calmé cette facette ? Lu à chaque appel, jamais retenu. */
+  const calme = (facette) =>
+    (document.documentElement.dataset.calme ?? '').split(' ').includes(facette);
+  /** Calme ou rétablit une facette, et le retient. */
+  function reglerCalme(facette, oui) {
+    const jetons = new Set((document.documentElement.dataset.calme ?? '').split(' '));
+    if (oui) jetons.add(facette); else jetons.delete(facette);
+    const v = normaliser([...jetons].join(' '));
+    try { localStorage.setItem('tbf-calme', v); } catch { /* vaut pour la page */ }
+    poserCalme(v);
+    window.dispatchEvent(new CustomEvent('tbf-calme', { detail: v }));
+  }
+  poserCalme(lireCalme());
+  // Un réglage changé dans un autre onglet vaut aussi dans celui-ci.
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'tbf-calme' || e.key === null) poserCalme(lireCalme());
+  });
+
+  /* « Doux » réunit les deux raisons de ne pas bouger : celle que le système
+     déclare pour tout l'appareil, et celle que le joueur a choisie dans le
+     jeu. Les effets de ce fichier n'ont pas à savoir laquelle joue. */
+  const doux = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    || calme('animations');
   const racine = () => document.getElementById('app') ?? document.body;
-  const buzz = (p) => { try { navigator.vibrate?.(p); } catch {} };
+  const buzz = (p) => {
+    if (calme('vibrations')) return;
+    try { navigator.vibrate?.(p); } catch {}
+  };
 
   const COULEURS = {
     or: '#F5C33B', feu: '#E0402C', vert: '#1E9E6A',
@@ -121,8 +195,11 @@
     16%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}
     26%{transform:translate(-50%,-50%) scale(1)}
     78%{opacity:1}100%{opacity:0;transform:translate(-50%,-62%) scale(.98)}}
+  /* Le sous-titre se lit, il ne se devine pas : 0,9 et non plus 0,75. Le
+     socle demande 0,85 au moins à tout texte qui informe, et celui-ci dit le
+     score ou le buteur. */
   .fx-sous{display:block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;
-    letter-spacing:.18em;opacity:.75;margin-top:9px;font-weight:400}
+    letter-spacing:.18em;opacity:.9;margin-top:9px;font-weight:400}
   .fx-nombre{position:fixed;z-index:92;font-family:"Oswald","Arial Narrow",Impact,sans-serif;
     font-size:22px;pointer-events:none;text-shadow:0 3px 14px rgba(0,0,0,.9)}
   /* Le gain qu'on vient de faire soi-même. Le halo double l'ombre portée : le
@@ -132,8 +209,10 @@
     filter:drop-shadow(0 0 16px currentColor)}
   .fx-points b{display:block;font-family:"Oswald","Arial Narrow",Impact,sans-serif;
     font-size:46px;line-height:1;font-weight:700;text-shadow:0 4px 18px rgba(0,0,0,.95)}
-  .fx-points span{display:block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:10px;
-    letter-spacing:.24em;font-weight:600;margin-top:3px;opacity:.85;
+  /* Onze pixels : le plancher du socle pour un texte qui informe, et ce mot
+     dit de quoi est fait le gain. */
+  .fx-points span{display:block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;
+    letter-spacing:.22em;font-weight:600;margin-top:3px;opacity:.9;
     text-shadow:0 2px 8px rgba(0,0,0,.95)}
   .fx-onde{position:fixed;border-radius:50%;pointer-events:none;z-index:89;border:2px solid;
     opacity:0}
@@ -154,11 +233,46 @@
   .fx-bandeau.go{animation:fxbandeau 3s cubic-bezier(.2,.9,.3,1)}
   @keyframes fxbandeau{0%{transform:translateY(-100%)}10%{transform:translateY(0)}
     88%{transform:translateY(0)}100%{transform:translateY(-100%)}}
+  /* Le gain qui vole vers son compteur : une image ou un texte, posé au
+     centre de sa source. Le centrage passe par la propriété translate, pas
+     par transform : c'est transform que l'animation réécrit, et elle y porte
+     le trajet en pixels. */
+  .fx-vol{position:fixed;left:0;top:0;z-index:94;pointer-events:none;translate:-50% -50%;
+    will-change:transform,opacity}
+  img.fx-vol{width:44px;height:44px;object-fit:contain;
+    filter:drop-shadow(0 4px 10px rgba(0,0,0,.7))}
+  div.fx-vol{font-family:"Oswald","Arial Narrow",Impact,sans-serif;font-size:20px;font-weight:700;
+    line-height:1;white-space:nowrap;color:#F5C33B;text-shadow:0 2px 10px rgba(0,0,0,.95)}
+  div.fx-vol:empty{width:14px;height:14px;border-radius:50%;background:#F5C33B;
+    box-shadow:0 0 12px rgba(245,195,59,.8)}
+
+  /* Sans mouvement : la préférence du système, ou le mode calme du joueur
+     (html[data-calme~="animations"], posé par ce fichier et par menu.js). Les
+     deux listes sont identiques, et doivent le rester.
+
+     Le mouvement part, l'information reste. Le titre, le bandeau, le carton et
+     l'évolution disent quelque chose — un but, une minute double, un rouge, un
+     Fanzzy qui a grandi : ils apparaissent et s'effacent en fondu, sur place.
+     La secousse et la respiration ne disent rien : elles s'arrêtent. */
+  @keyframes fxdoux{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}
+  @keyframes fxbandeaudoux{0%{transform:none;opacity:0}8%{opacity:1}
+    90%{opacity:1}100%{transform:none;opacity:0}}
+  @keyframes fxchargedoux{to{opacity:.3}}
+  @keyframes fxarrivedoux{from{opacity:0}}
   @media (prefers-reduced-motion:reduce){
     .fx-shake{animation:none}
     .fx-titre.go{animation:fxdoux 1.6s ease}
-    @keyframes fxdoux{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}
-  }`;
+    .fx-carton.go{animation:fxdoux 1.5s ease}
+    .fx-bandeau.go{animation:fxbandeaudoux 3s ease}
+    .fx-charge{animation:fxchargedoux 1s ease forwards}
+    .fx-arrive{animation:fxarrivedoux .5s ease backwards}
+  }
+  html[data-calme~="animations"] .fx-shake{animation:none}
+  html[data-calme~="animations"] .fx-titre.go{animation:fxdoux 1.6s ease}
+  html[data-calme~="animations"] .fx-carton.go{animation:fxdoux 1.5s ease}
+  html[data-calme~="animations"] .fx-bandeau.go{animation:fxbandeaudoux 3s ease}
+  html[data-calme~="animations"] .fx-charge{animation:fxchargedoux 1s ease forwards}
+  html[data-calme~="animations"] .fx-arrive{animation:fxarrivedoux .5s ease backwards}`;
 
   /* ------------------------------------------------- personnages vivants
      Un Fanzzy figé sur une carte a l'air d'un autocollant. Trois animations
@@ -185,7 +299,9 @@
     78%{transform:scale(1.02,.98) translateY(0)}
     100%{transform:scale(1) translateY(0)}}
   @media (prefers-reduced-motion:reduce){
-    .fz-vivant,.fz-vivant.fz-reagit{animation:none}}`;
+    .fz-vivant,.fz-vivant.fz-reagit{animation:none}}
+  html[data-calme~="animations"] .fz-vivant,
+  html[data-calme~="animations"] .fz-vivant.fz-reagit{animation:none}`;
 
   const style = document.createElement('style');
   style.textContent = css + cssVie;
@@ -276,11 +392,20 @@
     n.style.cssText = `left:${x}px;top:${y}px;color:${couleur}`;
     n.textContent = (signe && valeur > 0 ? '+' : '') + valeur;
     document.body.appendChild(n);
-    n.animate([
+    /* Sans mouvement, le nombre reste : c'est une information. Il apparaît
+       sur place et s'efface, au lieu de monter. */
+    const images = doux() ? [
+      { transform: 'translate(-50%,-50%)', opacity: 0 },
+      { transform: 'translate(-50%,-50%)', opacity: 1, offset: .2 },
+      { transform: 'translate(-50%,-50%)', opacity: 1, offset: .75 },
+      { transform: 'translate(-50%,-50%)', opacity: 0 },
+    ] : [
       { transform: 'translate(-50%,-50%) scale(.7)', opacity: 0 },
       { transform: 'translate(-50%,-90%) scale(1.1)', opacity: 1, offset: .25 },
       { transform: 'translate(-50%,-180%) scale(1)', opacity: 0 },
-    ], { duration: 1100, easing: 'cubic-bezier(.2,.8,.3,1)' }).onfinish = () => n.remove();
+    ];
+    n.animate(images, { duration: 1100, easing: 'cubic-bezier(.2,.8,.3,1)' })
+      .onfinish = () => n.remove();
   }
 
   const centre = (el) => {
@@ -350,14 +475,17 @@
 
      Le navigateur interdit de produire du son avant un geste de
      l'utilisateur. Le contexte n'est donc créé qu'au premier toucher, et le
-     joueur peut couper : la préférence survit d'une page à l'autre. */
+     joueur peut couper : la préférence survit d'une page à l'autre.
+
+     Couper le son, c'est calmer la facette « sons » du mode calme — le
+     bouton du duel et l'interrupteur du tiroir disent la même chose, et un
+     seul réglage les tient tous les deux. Tant qu'elle est calmée, le
+     contexte audio n'est même pas créé. */
 
   let audio = null;
-  let sonCoupe = false;
-  try { sonCoupe = localStorage.getItem('tbf-son') === 'coupe'; } catch { /* pas de stockage */ }
 
   function contexte() {
-    if (sonCoupe) return null;
+    if (calme('sons')) return null;
     if (!audio) {
       const C = window.AudioContext ?? window.webkitAudioContext;
       if (!C) return null;
@@ -438,7 +566,176 @@
     butReel: () => { SONS.but(); bruit({ duree: 1.4, freq: 420, vol: .08, delai: .15 }); },
   };
 
-  const son = (nom) => { try { SONS[nom]?.(); } catch { /* le son ne doit jamais casser le jeu */ } };
+  const son = (nom) => {
+    if (calme('sons')) return;
+    try { SONS[nom]?.(); } catch { /* le son ne doit jamais casser le jeu */ }
+  };
+
+  /* ------------------------------------------------- compteurs et vols
+
+     Un solde qui change sous les yeux ne doit pas simplement **être**
+     différent : il doit changer. Un chiffre qui saute de 120 à 75 se lit
+     comme une erreur d'affichage ; un chiffre qui descend se lit comme une
+     dépense, et un gain qui arrive de l'endroit où on l'a gagné dit d'où il
+     vient. Les pages appellent ces deux fonctions toujours gardées :
+
+       if (window.FX?.compter) FX.compter(el, avant, apres);
+       else el.textContent = apres;
+
+     Toutes deux s'effacent sans mouvement — la valeur finale tout de suite,
+     aucun vol — sous prefers-reduced-motion et sous le calme « animations ».
+     Et toutes deux finissent par une minuterie, jamais par la seule fin d'une
+     animation : un onglet caché gèle les animations, et un solde resté à
+     mi-chemin serait un solde faux.
+
+     Et une promesse de compter que les pages tiennent pour acquise : **un
+     nouvel appel sur le même élément arrête le compte qui y court encore**,
+     même quand ce nouvel appel ne compte pas lui-même. C'est ce qui permet à
+     une page de poser un chiffre sans défilement, FX.compter(el, v, v), sur
+     un compteur peut-être encore en route, sans qu'un compte plus ancien
+     vienne le réécrire à sa dernière image — le solde des boosters s'y
+     appuie. Qui change compter garde cette règle. */
+
+  const comptes = new WeakMap();   // l'élément → de quoi arrêter son compte en cours
+  const eclats = new WeakMap();    // l'élément → la minuterie de son éclat
+
+  /** Le bref éclat de fin de compte. Sa peinture vit dans ui.css. */
+  function eclater(el) {
+    clearTimeout(eclats.get(el));
+    el.classList.remove('tbf-compte');
+    void el.offsetWidth;
+    el.classList.add('tbf-compte');
+    eclats.set(el, setTimeout(() => el.classList.remove('tbf-compte'), 160));
+  }
+
+  /**
+   * Fait compter un nombre affiché, de sa valeur d'avant à la nouvelle.
+   *
+   * **Un second appel sur le même élément arrête le premier**, et c'est une
+   * règle du contrat, pas un détail : deux boucles qui écrivent le même texte
+   * à chaque image se disputeraient le chiffre, et celle qui finirait la
+   * dernière écrirait le sien, fût-il périmé. Le compte interrompu pose sa
+   * valeur finale sans éclat et sa promesse se résout aussitôt ; le nouvel
+   * appel l'écrase dans la foulée, avant toute image. Cela vaut aussi pour un
+   * appel qui ne compte pas — de égal à a, valeur qui n'est pas un nombre,
+   * mouvement coupé, onglet caché : c'est la façon sûre de poser un chiffre
+   * sur un compteur qui court peut-être encore (voir `poserSolde` dans
+   * `boosters.html`).
+   *
+   * @param {Element} el     l'élément dont le texte est le nombre
+   * @param {number}  de     la valeur affichée jusqu'ici
+   * @param {number}  a      la valeur à atteindre
+   * @param {object}  [o]
+   * @param {number}  [o.ms=600]  la durée du compte
+   * @param {(n:number)=>string} [o.format]  l'écriture d'une valeur
+   * @returns {Promise<void>} résolue quand le chiffre final est affiché, ou
+   *   dès qu'un appel plus récent sur le même élément l'interrompt
+   */
+  function compter(el, de, a, { ms = 600, format = (n) => String(Math.round(n)) } = {}) {
+    if (!el) return Promise.resolve();
+    comptes.get(el)?.();
+    el.style.fontVariantNumeric = 'tabular-nums';
+    const depart = Number(de);
+    const fin = Number(a);
+    /* Une valeur qui n'est pas un nombre ne se compte pas : on l'écrit telle
+       quelle, et rien ne s'anime sur une donnée qu'on ne comprend pas. */
+    if (a === null || a === undefined || a === '' || !Number.isFinite(fin)) {
+      el.textContent = a == null ? '' : String(a);
+      return Promise.resolve();
+    }
+    if (!Number.isFinite(depart) || depart === fin || !(ms > 0) || doux() || document.hidden) {
+      el.textContent = format(fin);
+      return Promise.resolve();
+    }
+    return new Promise((resoudre) => {
+      const t0 = performance.now();
+      let image = 0;
+      let filet = 0;
+      let fini = false;
+      const finir = (eclat) => {
+        if (fini) return;
+        fini = true;
+        cancelAnimationFrame(image);
+        clearTimeout(filet);
+        comptes.delete(el);
+        el.textContent = format(fin);
+        if (eclat) eclater(el);
+        resoudre();
+      };
+      const pas = (t) => {
+        const p = Math.min(1, (t - t0) / ms);
+        if (p >= 1) { finir(true); return; }
+        // Rapide d'abord, lent à l'arrivée : l'œil lit le chiffre qui se pose.
+        const e = 1 - (1 - p) ** 3;
+        el.textContent = format(depart + (fin - depart) * e);
+        image = requestAnimationFrame(pas);
+      };
+      // Le filet : si les images ne viennent plus, la valeur finale vient quand même.
+      filet = setTimeout(() => finir(true), ms + 250);
+      comptes.set(el, () => finir(false));
+      el.textContent = format(depart);
+      image = requestAnimationFrame(pas);
+    });
+  }
+
+  /* Le centre d'un élément réellement dessiné. À la différence de « centre »,
+     plus haut, il ne se rabat pas sur le milieu de l'écran : un élément absent
+     ou replié ne donne pas de point du tout. */
+  const centreVisible = (el) => {
+    const r = el?.getBoundingClientRect?.();
+    return r && (r.width || r.height)
+      ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+  };
+
+  /**
+   * Fait voler un gain de l'endroit où il est né jusqu'à son compteur.
+   *
+   * Un nœud posé sur le corps du document — hors de la colonne, qui est un
+   * contexte d'empilement (voir ETAT.md) — part du centre de la source et
+   * arrive au centre de la cible en 700 ms, puis disparaît. L'appelant fait
+   * ensuite compter la cible : le vol dit d'où ça vient, le compte dit combien.
+   *
+   * Sans source ou sans cible à l'écran, rien ne vole : un gain qui partirait
+   * du coin de l'écran mentirait sur son origine.
+   *
+   * @param {Element} source
+   * @param {Element} cible
+   * @param {object} [o]
+   * @param {string} [o.image]  l'adresse d'une image à faire voler
+   * @param {string} [o.texte]  sinon, un texte (« +40 ») ; sinon, un point d'or
+   * @returns {Promise<void>} résolue à l'arrivée, tout de suite sans vol
+   */
+  function voler(source, cible, { image, texte } = {}) {
+    const a = centreVisible(source);
+    const b = centreVisible(cible);
+    if (!a || !b || doux() || document.hidden) return Promise.resolve();
+    const n = document.createElement(image ? 'img' : 'div');
+    n.className = 'fx-vol';
+    if (image) { n.src = image; n.alt = ''; n.decoding = 'async'; }
+    else if (texte != null) n.textContent = String(texte);
+    n.style.left = `${a.x}px`;
+    n.style.top = `${a.y}px`;
+    document.body.appendChild(n);
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    try {
+      n.animate([
+        { transform: 'translate(0,0) scale(.7)', opacity: 0 },
+        /* Un petit bond au départ, vers le haut : un trajet en ligne droite se
+           lit comme un glissement, un trajet qui s'élève comme un envol. */
+        { transform: `translate(${dx * 0.12}px,${dy * 0.12 - 34}px) scale(1.15)`,
+          opacity: 1, offset: .24 },
+        { transform: `translate(${dx}px,${dy}px) scale(.55)`, opacity: .45 },
+      ], { duration: 700, easing: 'cubic-bezier(.45,0,.25,1)', fill: 'forwards' });
+    } catch {
+      // Un navigateur sans animations de script : rien ne vole, rien ne reste.
+      n.remove();
+      return Promise.resolve();
+    }
+    return new Promise((resoudre) => {
+      setTimeout(() => { n.remove(); resoudre(); }, 700);
+    });
+  }
 
   const FX = {
     couleurs: COULEURS,
@@ -466,13 +763,21 @@
 
     /** Joue un son de la banque. Sans effet si le joueur a coupé. */
     son,
-    /** Coupe ou rétablit le son, et retient le choix. */
+    /** Coupe ou rétablit le son, et retient le choix — dans le mode calme. */
     sonCoupe(v) {
-      sonCoupe = Boolean(v);
-      try { localStorage.setItem('tbf-son', sonCoupe ? 'coupe' : 'on'); } catch { /* tant pis */ }
-      return sonCoupe;
+      reglerCalme('sons', Boolean(v));
+      return calme('sons');
     },
-    sonEstCoupe: () => sonCoupe,
+    sonEstCoupe: () => calme('sons'),
+
+    /**
+     * Le joueur a-t-il calmé cette facette ? « sons », « vibrations » ou
+     * « animations ». C'est son réglage à lui, lu à l'instant : la préférence
+     * du système (prefers-reduced-motion) se consulte à part.
+     */
+    calme,
+
+    compter, voler,
 
     /* Une carte jouée se voit dans `action-art.js`, avec son dessin et sa
        famille. Il y avait ici une version pâle — une onde et le nom en
@@ -573,12 +878,20 @@
       n.innerHTML = `<b>${signe && v > 0 ? '+' : ''}${v}</b>`
         + (quoi ? `<span>${String(quoi).replace(/[<>&]/g, '')}</span>` : '');
       document.body.appendChild(n);
-      n.animate([
+      // Même règle que « nombre » : sans mouvement, il reste en place.
+      const images = doux() ? [
+        { transform: 'translate(-50%,-50%)', opacity: 0 },
+        { transform: 'translate(-50%,-50%)', opacity: 1, offset: .15 },
+        { transform: 'translate(-50%,-50%)', opacity: 1, offset: .8 },
+        { transform: 'translate(-50%,-50%)', opacity: 0 },
+      ] : [
         { transform: 'translate(-50%,-50%) scale(.6)', opacity: 0 },
         { transform: 'translate(-50%,-85%) scale(1.15)', opacity: 1, offset: .22 },
         { transform: 'translate(-50%,-105%) scale(1)', opacity: 1, offset: .68 },
         { transform: 'translate(-50%,-165%) scale(.96)', opacity: 0 },
-      ], { duration: 1650, easing: 'cubic-bezier(.16,.9,.25,1)' }).onfinish = () => n.remove();
+      ];
+      n.animate(images, { duration: 1650, easing: 'cubic-bezier(.16,.9,.25,1)' })
+        .onfinish = () => n.remove();
       /* Le seuil est celui de `poussee`, et il est volontairement le même : une
          grosse poussée fait des étincelles, qu'elle soit à soi ou pas. */
       if (Math.abs(v) > 40) {

@@ -19,7 +19,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    classeur le laisse passer — son `#app` ne porte qu’un halo translucide —
    tandis que le deck posait par-dessus un **aplat opaque**
    (`linear-gradient(180deg,#141A21,#0A0D11…)`) qui le masquait entièrement.
-   Deux onglets voisins, le même geste pour passer de l’un à l’autre, et le
+   Deux écrans voisins, une touche pour passer de l’un à l’autre, et le
    fond changeait : on ne lisait pas « une autre section », on lisait « une
    autre application ».
 
@@ -32,16 +32,36 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    lui-même, en plus de celle que nav.js réserve déjà pour la navigation. */
 .corps{flex:1;padding-bottom:calc(var(--barre) + 12px)}
 
+/* **Deux portes, et plus de rail.** Le haut de l'écran reprenait le rail du
+   classeur — MON FANZZY, CLASSEUR, DECK —, DECK allumé. Sur /fanzzy, DECK
+   n'est plus un onglet mais une porte posée à côté du rail, avec la flèche ↗ :
+   un onglet qui emmène ailleurs ment sur ce qu'il fait. Ici, ce sont les deux
+   autres qui mentaient, puisque tous deux quittent la page. Ils deviennent
+   donc deux portes, avec la même flèche (`.tbf-ico-lien`, ui.css), et le rail
+   s'en va : un rail d'un seul onglet, allumé, ne dirait que le nom de l'écran,
+   et la barre du haut le dit déjà. Les onglets de cette page sont ceux qui
+   restent ici — TRIBUNE et CARTES, juste dessous.
+
+   En béton, comme la porte du deck sur /fanzzy : le rail TRIBUNE / CARTES
+   allume déjà une plaque bleue, et une porte bleue à côté laisserait croire
+   qu'elle aussi est « ici ». Côte à côte à parts égales, avec moins de marge
+   intérieure que la plaque commune : « MON FANZZY » doit tenir entier dans sa
+   moitié de colonne sur un téléphone de 320 px. */
+.portes{display:flex;gap:8px}
+.portes .tbf-plaque{flex:1 1 0;min-width:0;padding-inline:12px;white-space:nowrap}
+
 /* Le sous-titre « Trois Fanzzy, dix cartes » est parti : les deux onglets
    juste en dessous disent déjà « TRIBUNE 1/2 » et « CARTES 10/10 », et le
    dire deux fois poussait le deck sous la ligne de flottaison du téléphone.
    Reste l'état, rangé à droite. */
 .top{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:14px 16px 6px}
-.top h1{font-family:var(--banner);font-size:20px;letter-spacing:.15em;margin:0}
-.top h1 small{display:block;font-size:8.5px;letter-spacing:.3em;opacity:.5;margin-top:3px;font-family:var(--ui)}
-.etat{font-family:var(--banner);font-size:9.5px;letter-spacing:.14em;border-radius:5px;padding:5px 10px;
-  border:1px solid var(--flare);color:var(--flare);white-space:nowrap}
-.etat.ok{border-color:var(--vert);color:var(--vert)}
+/* L'état du deck, en étiquette (`.tbf-etiquette`, dans ui.css) : c'est une
+   valeur et non une action, donc la matière du jeu sans tranche ni
+   enfoncement. Il était écrit en neuf pixels et demi, en couleur à même la
+   photo de tribune, sans rien derrière — illisible au soleil. Le ton dit
+   l'état : vert quand le deck est prêt, rouge tant qu'il manque quelque
+   chose. Il est posé par `rendre`, qui seul sait lequel. */
+.etat{letter-spacing:.12em}
 
 
 /* Onglets, filtres, boutons : le même matériau que le classeur. Un socle dur
@@ -49,14 +69,24 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    tactile dont dispose une page web, et il fait toute la différence entre une
    liste de réglages et un écran de jeu. */
 
-h2{font-family:var(--banner);font-size:10.5px;letter-spacing:.2em;opacity:.42;margin:20px 16px 9px;
-  display:flex;align-items:baseline;gap:8px}
-h2 i{font-style:normal;opacity:.7;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap}
+/* **Les titres de rubrique sont cousus** (`.tbf-cousu`, dans ui.css) : craie
+   pleine, capitales espacées, et le fil pointillé qui court jusqu'au bord. Ils
+   étaient à 42 % d'opacité et en dix pixels et demi — les titres les plus
+   pâles de l'écran, sur l'écran où l'on compose. Il ne reste ici que leur
+   place. */
+h2{margin:20px 16px 9px}
+/* **Ce que le titre précisait passe dessous**, sur un panneau : « le premier
+   entre au coup d'envoi », « cinq visibles à la fois », le souffle moyen. Un
+   fil qui remplit la ligne ne laisse plus de place à côté du titre, et un
+   texte posé à même la photo de tribune ne se lit pas au soleil. */
+.chapo{display:flex;align-items:baseline;gap:10px;margin:0 14px 10px;padding:8px 11px;
+  border-radius:9px;background:var(--panneau);font-size:11.5px;line-height:1.45;
+  box-shadow:inset 0 0 0 1px rgba(242,238,228,.07)}
+.chapo span{flex:1;min-width:0;opacity:.88}
 /* Le souffle moyen : la seule mesure de la page, donc la seule chose qui a le
-   droit d'être en couleur dans un titre de section. */
-h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo);
-  opacity:1;flex:none;white-space:nowrap}
+   droit d'être en couleur sous un titre de section. */
+.chapo b{flex:none;font-family:var(--banner);font-weight:400;font-size:12px;
+  letter-spacing:.1em;color:var(--projo);white-space:nowrap}
 
 /* ------------------------------------------------------------- tribune */
 
@@ -69,7 +99,10 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
    petit cartouche. */
 .rang.titulaire{box-shadow:inset 0 0 0 2px rgba(245,195,59,.55),0 4px 0 #6B4E0A,
   0 0 22px rgba(245,195,59,.14),0 7px 14px rgba(0,0,0,.4)}
-.rang.vide{background:var(--panneau);backdrop-filter:blur(10px);
+/* Le panneau seul, sans flou d'arrière-plan : `--panneau` est opaque, et le
+   flou recalculait la photo à chaque image pour un texte qu'il ne rendait pas
+   plus lisible. */
+.rang.vide{background:var(--panneau);
   box-shadow:inset 0 0 0 2px rgba(242,238,228,.14),0 4px 0 rgba(0,0,0,.4)}
 .rang .tete{display:flex;align-items:center;gap:11px;padding:12px 13px;cursor:pointer;position:relative}
 .rang .tete::before{content:"";position:absolute;inset:0;opacity:.16;pointer-events:none;
@@ -131,10 +164,13 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 .rang .id{flex:1;min-width:0;position:relative}
 .rang .id b{display:block;font-family:var(--banner);font-size:15px;letter-spacing:.03em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rang .id .sous{font-size:10px;opacity:.55;margin-top:3px;letter-spacing:.03em}
-.rang .id .cri{font-size:9.5px;letter-spacing:.12em;color:var(--tc,#8257DA);margin-top:5px;
+/* Onze pixels au moins, et 88 % : tout ce qui renseigne se lit en plein jour.
+   La hiérarchie tient par la taille et la police, plus par la transparence —
+   une précision à 55 % sur un panneau sombre disparaît au soleil. */
+.rang .id .sous{font-size:11px;opacity:.88;margin-top:3px;letter-spacing:.03em}
+.rang .id .cri{font-size:11px;letter-spacing:.1em;color:var(--tc,#8257DA);margin-top:5px;
   font-family:var(--banner)}
-.rang .marque{position:relative;font-family:var(--banner);font-size:8.5px;letter-spacing:.13em;
+.rang .marque{position:relative;font-family:var(--banner);font-size:11px;letter-spacing:.1em;
   border:1px solid var(--projo);color:var(--projo);border-radius:4px;padding:3px 6px;white-space:nowrap}
 .rang .chevron{position:relative;opacity:.3;font-size:18px;flex:none}
 
@@ -154,23 +190,23 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 .piece .tbf-piece{width:40px;height:40px;border-radius:10px}
 .piece .txt{min-width:0}
 .piece b{font-family:var(--banner);font-size:11.5px;letter-spacing:.03em;display:block}
-.piece span{font-size:9px;opacity:.5;line-height:1.35;display:block}
+/* `.txt span` et non `span` : la règle prenait aussi la boîte du texte et la
+   pastille de l'objet, qui sont des `span` elles aussi — la phrase tombait à
+   la moitié de la moitié, et le dessin de la pièce à 50 %. */
+.piece .txt span{font-size:11px;opacity:.88;line-height:1.35;display:block}
 /* L'emplacement vide garde le même gabarit que l'emplacement plein : sans ce
    creux, les deux boutons d'un même Fanzzy n'avaient pas la même hauteur. */
 .piece .creux{width:40px;height:40px;flex:none;border-radius:10px;font-size:19px;
   display:flex;align-items:center;justify-content:center;opacity:.3;
   box-shadow:inset 0 0 0 1.5px rgba(242,238,228,.16)}
-.rang .effet{padding:0 13px 12px;font-size:10.5px;opacity:.62;line-height:1.65}
+.rang .effet{padding:0 13px 12px;font-size:11px;opacity:.88;line-height:1.65}
 .rang .effet em{font-style:normal;color:var(--projo)}
 .rang .actions{display:flex;gap:7px;padding:0 12px 12px}
-.mini{flex:1;background:rgba(16,22,31,.92);border:0;border-radius:9px;
-  color:inherit;padding:10px 8px 9px;font-family:var(--banner);font-size:10.5px;
-  letter-spacing:.1em;cursor:pointer;
-  box-shadow:0 3px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(242,238,228,.11);
-  transition:transform .1s,box-shadow .1s}
-.mini:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,.6)}
-.mini.danger{color:#F0846F;box-shadow:0 3px 0 rgba(90,20,12,.9),inset 0 1px 0 rgba(242,238,228,.09)}
-.mini.danger:active{box-shadow:0 0 0 rgba(90,20,12,.9)}
+/* TITULARISER et RETIRER sont des plaques (`.tbf-plaque`) : la même matière
+   et le même enfoncement que tous les boutons du jeu. Il ne reste ici que leur
+   mise en page — deux plaques qui se partagent la largeur du rang, plus
+   basses qu'une action d'écran. RETIRER est au rouge, comme aux amis. */
+.mini{flex:1;padding:10px 8px;min-height:44px;font-size:12px;letter-spacing:.1em}
 
 /* --------------------------------------------------------------- cartes */
 
@@ -184,13 +220,36 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
    en cadre et en couleur, le nom sur un bandeau en bas, et le glyphe de la
    famille en grand derrière. Le coût est ce qu'on compare d'un coup d'œil
    quand on monte une main — il passe donc devant tout le reste. */
-.grille{display:grid;grid-template-columns:repeat(5,1fr);gap:12px 7px;padding:0 14px 4px}
-.emp{aspect-ratio:.72;border-radius:9px;display:flex;flex-direction:column;
-  align-items:center;justify-content:flex-end;padding:0;cursor:pointer;position:relative;
+/* **La carte grandit plutôt que de se recouvrir.** Sur un téléphone de
+   320 px, une carte fait quarante-sept pixels de large, donc soixante-cinq de
+   haut au format d'une carte à jouer — et il lui en faut près de quatre-vingts
+   pour empiler la goutte, la mention DUEL et un nom sur deux lignes. Ils se
+   recouvraient : la mention cachait les chiffres du coût.
+
+   Le format devient donc un **minimum** et non plus une hauteur. La carte est
+   une grille d'une case où se superposent deux choses : une cale vide, haute
+   de sa largeur divisée par 0,72 (un rembourrage en pourcentage se mesure sur
+   la largeur), et la pile de ce qu'elle affiche (`.pile`). La case prend la
+   plus haute des deux. `aspect-ratio` ne savait pas le dire : une carte qui
+   déborde garde sa hauteur de format, et le surplus passait par-dessus la
+   goutte. Pas d'unité de conteneur non plus : là où le confinement ne prend
+   pas, elle se rabat sur la fenêtre (voir scripts/verif-pages.mjs).
+
+   `1fr` sur les rangées garde les dix cartes à la même taille : une rangée de
+   cartes DUEL plus haute que sa voisine se lirait comme deux sortes de
+   cartes. Dès que la carte a la place — vers 370 px —, la cale l'emporte et
+   rien ne change. */
+.grille{display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:1fr;
+  gap:12px 7px;padding:0 14px 4px}
+.emp{display:grid;grid-template-columns:minmax(0,1fr);border-radius:9px;
+  padding:0;cursor:pointer;position:relative;
   overflow:hidden;background:#0B1017;border:0;
   box-shadow:inset 0 0 0 2px rgba(242,238,228,.13),0 4px 0 rgba(242,238,228,.06),
              0 6px 10px rgba(0,0,0,.5);
   transition:transform .1s,box-shadow .1s}
+.emp::before{content:"";grid-area:1/1;padding-top:calc(100% / .72)}
+.emp .pile{grid-area:1/1;position:relative;z-index:2;min-width:0;
+  display:flex;flex-direction:column;align-items:center}
 .emp:active{transform:translateY(4px);box-shadow:inset 0 0 0 2px rgba(242,238,228,.13)}
 .emp.plein{background:linear-gradient(180deg,#161D27,#080C11);
   box-shadow:inset 0 0 0 2px var(--fc,#8257DA),0 4px 0 var(--fc2,#3E2870),
@@ -202,16 +261,42 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
   transform:translate(-50%,-50%);opacity:.22;color:var(--fc,#8257DA);
   fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
 /* La goutte de souffle. Le coût se lit avant le nom : c'est lui qu'on compare
-   quand on monte une main. */
-.emp .cout{position:absolute;left:50%;top:7%;transform:translateX(-50%);z-index:2;
+   quand on monte une main.
+
+   **Dans la colonne, et non plus posée par-dessus.** En position absolue, elle
+   ne comptait pour rien dans la hauteur de la carte, et ce qui montait du bas
+   — la mention DUEL, le nom — passait dessus sans que rien ne l'empêche. Sa
+   marge basse `auto` la tient en haut et pousse le reste en bas. */
+.emp .cout{position:relative;flex:none;margin:6px 0 auto;z-index:2;
   min-width:23px;padding:2px 5px 3px;border-radius:11px 11px 10px 10px;
   background:linear-gradient(180deg,#F4F1E8,#B9B4A6);color:#12161C;
   font-family:var(--banner);font-size:13px;line-height:1.1;text-align:center;
   box-shadow:0 2px 0 rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.8)}
-.emp .nm{position:relative;z-index:2;width:100%;padding:4px 3px 5px;
-  font-family:var(--banner);font-size:8.5px;line-height:1.1;text-align:center;
-  letter-spacing:.02em;background:linear-gradient(180deg,transparent,rgba(4,6,10,.95) 45%);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Le nom, en onze pixels et sur deux lignes au plus. Il était en huit et
+   demi sur une seule, coupé d'une ellipse : c'est la main du joueur, ce qu'il
+   regarde le plus longtemps sur cet écran, et il la devinait.
+
+   **Un mot trop long se coupe à la française**, et non au milieu d'une
+   syllabe. `overflow-wrap` seul coupait où la place manquait — « Brouillar /
+   d », « Fumigèn / e » — et la dernière lettre tombait seule à la ligne.
+   `hyphens: auto` coupe selon la langue du document (`lang="fr"`), avec son
+   trait d'union : « Brouil- / lard ». `overflow-wrap` reste en dernier
+   recours, pour un navigateur sans dictionnaire, plutôt qu'un mot qui sort
+   de la carte. L'espacement tombe à zéro et le retrait à deux pixels : c'est
+   ce qui fait tenir « Fumigène » et « Craquage » entiers sur une carte de
+   quarante-sept pixels.
+
+   Le retrait du bas est une **bordure transparente**, pas un rembourrage :
+   `overflow: hidden` rogne au bord du rembourrage, et le haut de la troisième
+   ligne — celle que `line-clamp` écarte — se montrait dans ces cinq pixels.
+   Le dégradé part de la bordure (`background-origin`) pour la couvrir aussi. */
+.emp .nm{position:relative;z-index:2;flex:none;width:100%;padding:4px 2px 0;
+  border-bottom:5px solid transparent;
+  font-family:var(--banner);font-size:11px;line-height:1.1;text-align:center;
+  letter-spacing:0;background:linear-gradient(180deg,transparent,rgba(4,6,10,.95) 30%)
+    border-box;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+  -webkit-hyphens:auto;hyphens:auto;overflow-wrap:break-word}
 .emp .plus{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   font-size:22px;opacity:.3;font-family:var(--banner)}
 /* Le dessin recouvre le glyphe. Cadré un peu haut : ces illustrations ont leur
@@ -232,54 +317,77 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
    Rouge et non grise : ce n'est pas une carte affaiblie, c'est une carte
    qui se joue ailleurs. Une mention grise se lit comme « indisponible »,
    et neuf joueurs sur dix la comprendraient comme un défaut. */
-.duelseul{font-family:var(--banner);font-size:8px;letter-spacing:.14em;
+/* Onze pixels, comme tout ce qui renseigne : en sept, la mention se voyait
+   comme une tache rouge et ne se lisait pas. */
+.duelseul{font-family:var(--banner);font-size:11px;letter-spacing:.08em;
   color:var(--flare);border:1px solid currentColor;border-radius:4px;
   padding:2px 4px;line-height:1;white-space:nowrap}
-.emp .duelseul{position:absolute;right:4px;top:5%;z-index:3;
-  background:rgba(4,7,11,.82);font-size:7px;padding:2px 3px}
+/* Sur la carte posée, la mention se range **au-dessus du nom**, dans la
+   colonne, et non plus dans le coin haut, où elle recouvrait la goutte du
+   coût — qui est ce qu'on compare d'un coup d'œil. Dans la colonne, elle ne
+   peut plus la toucher : la goutte y est aussi, et la carte grandit s'il
+   manque de la place (voir `.grille`). */
+.emp .duelseul{position:relative;z-index:3;flex:none;margin:3px 0 2px;
+  background:rgba(4,7,11,.9);letter-spacing:.06em;padding:2px 3px}
 .carte .txt b .duelseul{margin-left:6px;display:inline-block;vertical-align:1px}
 
 /* Le compte des deux terrains, sous les dix emplacements. Il répond à la
    seule question que l'écran ne savait pas poser : « et au Virage, il me
    reste quoi ? » */
+/* Sur un panneau, et non plus sur un voile à 4 % : c'était du texte posé à
+   même la photo de tribune. */
 .ouJoue{margin:2px 14px 10px;padding:9px 11px;border-radius:9px;
-  background:rgba(255,255,255,.04);font-size:11.5px;line-height:1.45;
+  background:var(--panneau);font-size:11.5px;line-height:1.45;
   box-shadow:inset 0 0 0 1px rgba(242,238,228,.07)}
 .ouJoue b{font-family:var(--banner);font-size:14px;color:var(--craie);
   font-variant-numeric:tabular-nums}
-.ouJoue .maigre{display:block;margin-top:5px;color:var(--flare);opacity:.95}
+.ouJoue .maigre{display:block;margin-top:5px;color:var(--flare)}
+/* Les filtres sont des plaques (`.tbf-plaque`) : béton au repos, bleu — le ton
+   du deck — pour celui qui est choisi. Leur peinture locale est partie ; il
+   reste leur taille, plus petite qu'une action. */
 .filtres{display:flex;gap:6px;padding:0 14px 4px}
-.filtre{background:rgba(16,22,31,.92);border:0;border-radius:9px;color:inherit;
-  padding:8px 13px 7px;font-family:var(--banner);font-size:11px;letter-spacing:.08em;
-  cursor:pointer;opacity:.62;
-  box-shadow:0 3px 0 rgba(0,0,0,.55),inset 0 1px 0 rgba(242,238,228,.09);
-  transition:transform .1s,box-shadow .1s,opacity .1s}
-.filtre:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,.55)}
-.filtre.on{opacity:1;background:var(--craie);color:#0B0E13;
-  box-shadow:0 3px 0 #6E6A61,inset 0 1px 0 rgba(255,255,255,.45)}
+.filtre{padding:8px 13px;min-height:44px;font-size:12px;letter-spacing:.08em}
 
 /* Le jalon : combien d'emplacements, et quand le suivant s'ouvre. En or,
    parce que c'est une promesse et pas un refus. */
+/* Le voile d'or est posé **sur** le panneau, et non plus sur la photo : seul,
+   à 10 %, il laissait la tribune passer derrière le texte. */
 .jalon{display:flex;align-items:baseline;gap:9px;margin:0 14px 8px;padding:9px 12px 8px;
-  border-radius:10px;background:rgba(245,195,59,.1);
+  border-radius:10px;
+  background:linear-gradient(rgba(245,195,59,.1),rgba(245,195,59,.1)),var(--panneau);
   box-shadow:inset 0 0 0 1px rgba(245,195,59,.28)}
 .jalon b{font-family:var(--banner);font-size:12.5px;letter-spacing:.06em;color:var(--projo)}
-.jalon span{font-size:10.5px;opacity:.72;line-height:1.45}
-.jalon sup{font-size:7.5px}
+.jalon span{font-size:11px;opacity:.88;line-height:1.45}
 /* La note de règle : discrète, mais toujours là. Elle répond à une question
    qui revient, et une réponse qu'il faut aller chercher n'est pas une
-   réponse. */
-.note{margin:0 14px 10px;font-size:10.5px;line-height:1.6;opacity:.6}
-.note b{opacity:.95}
+   réponse. Discrète par sa place, plus par sa transparence : à 60 % sur la
+   photo, elle ne se lisait qu'à l'ombre. */
+.note{margin:0 14px 10px;padding:9px 11px;border-radius:9px;background:var(--panneau);
+  font-size:11.5px;line-height:1.6;box-shadow:inset 0 0 0 1px rgba(242,238,228,.07)}
 
-.fam{margin:14px 16px 7px;font-family:var(--banner);font-size:10px;letter-spacing:.18em;
-  color:var(--fc,#8257DA);display:flex;align-items:center;gap:8px}
-.fam .trait{flex:1;height:1px;background:currentColor;opacity:.25}
+/* L'intitulé de famille du catalogue. Il était écrit **dans la couleur de la
+   famille, à même la photo de tribune** : sur les lumières floues du stade, le
+   violet d'ENTRAVE disparaissait, et même sur le noir du voile il n'atteint
+   pas 4,5:1 en onze pixels. Le nom passe donc en craie, sur son panneau, et la
+   couleur reste là où elle ne porte pas de lettres : le liseré à gauche — le
+   même que celui des cartes juste en dessous — et le fil qui court jusqu'au
+   bord. */
+.fam{margin:14px 14px 7px;display:flex;align-items:center;gap:8px}
+.fam .nom{flex:none;padding:5px 10px 5px 11px;border-radius:8px;
+  background:var(--panneau);box-shadow:inset 3px 0 0 var(--fc,#8257DA);
+  font-family:var(--banner);font-size:11px;letter-spacing:.18em;line-height:1.2;
+  color:var(--craie)}
+.fam .trait{flex:1;height:2px;border-radius:1px;background:var(--fc,#8257DA);opacity:.5}
 .cat{margin:0 14px}
 .carte{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;
-  border:1px solid rgba(242,238,228,.1);background:var(--panneau);backdrop-filter:blur(10px);margin-bottom:6px;
+  border:1px solid rgba(242,238,228,.1);background:var(--panneau);margin-bottom:6px;
   cursor:pointer;border-left:3px solid var(--fc,#8257DA)}
-.carte.absente{opacity:.4}
+/* **Une carte qu'on n'a pas s'éteint par son dessin, pas par son texte.**
+   Toute la rangée tombait à 40 % : on voyait qu'elle n'était pas à soi, et on
+   ne pouvait plus lire ce qu'elle fait — c'est pourtant la question qu'on se
+   pose en la regardant. La vignette passe en gris, le cadenas dit pourquoi
+   dans la case du compte, et le texte reste entier. */
+.carte.absente .vig{opacity:.45;filter:grayscale(1)}
 /* La vignette du catalogue. Elle porte le glyphe de famille en fond et le
    dessin par-dessus : une carte sans fichier garde donc son repère. */
 .carte .vig{position:relative;width:38px;height:52px;flex:none;border-radius:7px;
@@ -291,17 +399,23 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
   object-fit:cover;object-position:center 34%}
 .carte .txt{flex:1;min-width:0}
 .carte .txt b{display:block;font-family:var(--banner);font-size:13.5px;letter-spacing:.03em}
-.carte .txt p{margin:4px 0 0;font-size:10.5px;opacity:.6;line-height:1.5}
+.carte .txt p{margin:4px 0 0;font-size:11px;opacity:.88;line-height:1.5}
 .carte .cout{font-family:var(--banner);font-size:15px;color:var(--fc,#8257DA);text-align:center;flex:none;
   min-width:34px}
-.carte .cout small{display:block;font-size:8px;opacity:.45;letter-spacing:.08em;color:var(--craie);
+.carte .cout small{display:block;font-size:11px;opacity:.88;letter-spacing:.03em;color:var(--craie);
   font-family:var(--ui);margin-top:2px}
 .compte{flex:none;font-family:var(--banner);font-size:11px;border:1px solid rgba(242,238,228,.18);
-  border-radius:6px;padding:5px 8px;min-width:34px;text-align:center;opacity:.45}
+  border-radius:6px;padding:5px 8px;min-width:34px;text-align:center;opacity:.88}
 .compte.on{opacity:1;border-color:var(--projo);color:var(--projo)}
+/* Le cadenas d'une carte qu'on n'a pas (icône commune, voir ui.css). Il
+   remplace un tiret : un tiret dit « rien », le cadenas dit « pas encore à
+   toi », et c'est la seconde phrase qui est vraie. */
+.compte .tbf-ico,.gcChiffres .tbf-ico{vertical-align:-.12em}
 .dots{display:inline-flex;gap:2px;vertical-align:middle;margin-left:6px}
 .dots i{width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.55;display:block}
-.dots .s{font-style:normal;font-size:9px;line-height:1;opacity:.9}
+/* L'étoile de l'épique et la couronne du légendaire disent la rareté : c'est
+   un texte qui renseigne, en onze pixels comme le reste, et non plus en neuf. */
+.dots .s{font-style:normal;font-size:11px;line-height:1;opacity:.9}
 
 /* --------------------------------------------------------- barre du bas */
 
@@ -310,16 +424,24 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 .barre .in{width:100%;max-width:var(--colonne);display:flex;align-items:center;gap:10px;padding:10px 14px;
   background:linear-gradient(180deg,rgba(4,6,10,.4),rgba(4,6,10,.94) 45%);pointer-events:auto;
   border-top:1px solid rgba(242,238,228,.08)}
-.barre .info{flex:1;min-width:0;font-size:10.5px;opacity:.6;line-height:1.45}
+.barre .info{flex:1;min-width:0;font-size:11.5px;opacity:.88;line-height:1.45}
 .barre .info b{color:var(--projo)}
-.barre .info.pb{color:var(--flare);opacity:.95}
-/* Le bouton d'enregistrement est l'action principale de l'écran : c'est le
-   seul qui a droit à la couleur pleine et au socle le plus épais. */
-/* Enregistrer le deck. Une plaque dorée : c'est l'action qui valide tout
-   l'écran. Elle ne garde que son `flex:none`, qui l'empêche de s'étirer dans
-   la barre du bas. */
+.barre .info.pb{color:var(--flare);opacity:1}
+/* Enregistrer le deck, l'action qui valide tout l'écran. Une plaque
+   **bleue** : une plaque d'action prend le ton de ce qu'elle fait, et
+   composer son deck, c'est posséder. Elle était dorée, or FAIT MAIN réserve
+   l'or à trois sens — acheter, une récompense prête, le légendaire — et rien
+   ne se paie sur cet écran : l'or y faisait lire un achat. AJOUTER AU DECK,
+   au pied du panneau d'une carte, suit la même règle.
+
+   Il ne reste ici que sa mise en page : `flex:none`, qui l'empêche de
+   s'étirer dans la barre du bas, et sa taille.
+
+   Fermée, elle s'éteint comme toute plaque hors service (ui.css) : elle perd
+   sa couleur et garde son texte. Une seconde règle ici la passait en plus à
+   45 % d'opacité, et ENREGISTRER ne se lisait plus du tout — on ne savait pas
+   quel bouton attendait. */
 .btn{flex:none;padding:13px 18px;font-size:13px;letter-spacing:.1em}
-.btn:disabled{filter:grayscale(.85);opacity:.45;cursor:default;pointer-events:none}
 
 /* ------------------------------------------------------------- panneaux */
 
@@ -342,8 +464,10 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 .panneau .ph{flex:none;background:#10151C;padding:15px 16px 11px;z-index:2;
   display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(242,238,228,.08)}
 .panneau .ph h3{flex:1;margin:0;font-family:var(--banner);font-size:15px;letter-spacing:.09em}
-.panneau .ph button{background:none;border:0;color:inherit;opacity:.45;font-size:22px;cursor:pointer;
-  line-height:1;padding:0 4px}
+/* La croix : quarante-quatre pixels, la pulpe d'un doigt, comme toute cible
+   du jeu. Elle en faisait trente sur vingt-deux. */
+.panneau .ph button{background:none;border:0;color:inherit;opacity:.85;font-size:22px;cursor:pointer;
+  line-height:1;padding:0;min-width:44px;min-height:44px;margin:-10px -8px -10px 0}
 .panneau .pc{padding:12px 14px 4px}
 /* Le pied du panneau : ce qui décide, tenu hors du corps qui défile.
    `flex:none` pour qu'il ne se comprime jamais, et un filet au-dessus pour
@@ -351,25 +475,42 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 .panneau .pp{flex:none;padding:8px 14px 0;border-top:1px solid rgba(242,238,228,.08);
   background:#10151C}
 .choix{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;
-  border:1px solid rgba(242,238,228,.1);background:var(--panneau);backdrop-filter:blur(10px);margin-bottom:7px;cursor:pointer}
-.choix.pris{opacity:.35}
+  border:1px solid rgba(242,238,228,.1);background:var(--panneau);margin-bottom:7px;cursor:pointer}
+/* Ce qui est déjà pris s'éteint par son dessin, et l'étiquette dit pourquoi
+   — « DÉJÀ PRIS », « TOUS PORTÉS ». La ligne entière à 35 % rendait
+   illisible justement la raison du refus. */
+.choix.pris{cursor:default}
+.choix.pris .pip,.choix.pris .tbf-piece{opacity:.4;filter:grayscale(1)}
 .choix .txt{flex:1;min-width:0}
 .choix .txt b{display:block;font-family:var(--banner);font-size:13.5px;letter-spacing:.03em}
-.choix .txt p{margin:4px 0 0;font-size:10.5px;opacity:.6;line-height:1.5}
-.choix .tag{font-size:9px;letter-spacing:.1em;opacity:.5;font-family:var(--banner);flex:none}
+.choix .txt p{margin:4px 0 0;font-size:11px;opacity:.88;line-height:1.5}
+.choix .tag{font-size:11px;letter-spacing:.08em;opacity:.88;font-family:var(--banner);flex:none}
 
+/* Les voiles de couleur sont posés **sur** le panneau : seuls, à 9 %, ils
+   laissaient la photo de tribune derrière l'avertissement. */
 .avert{margin:0 14px 10px;border:1px solid rgba(224,64,44,.4);border-radius:10px;padding:12px 14px;
-  background:rgba(224,64,44,.09);font-size:12px;line-height:1.65}
+  background:linear-gradient(rgba(224,64,44,.09),rgba(224,64,44,.09)),var(--panneau);
+  font-size:12px;line-height:1.65}
 .avert b{display:block;font-family:var(--banner);font-size:12.5px;letter-spacing:.06em;margin-bottom:5px;
   color:var(--flare)}
 .avert a{color:var(--projo)}
 .avert ul{margin:6px 0 0;padding-left:17px}
 .avert li{margin-top:3px}
-.avert.doux{border-color:rgba(245,195,59,.35);background:rgba(245,195,59,.07)}
+.avert.doux{border-color:rgba(245,195,59,.35);
+  background:linear-gradient(rgba(245,195,59,.07),rgba(245,195,59,.07)),var(--panneau)}
 .avert.doux b{color:var(--projo)}
 
-.vide{padding:34px 24px;text-align:center;opacity:.5;font-size:12.5px;line-height:1.8}
+/* **`:not(.rang)`, parce que deux choses s'appellent « vide » ici.** Le
+   message d'un panneau sans rien à proposer, et le rang de tribune encore
+   libre (`.rang.vide`). Cette règle-ci les prenait tous les deux : le rang
+   libre héritait de trente-quatre pixels de marge intérieure et de la moitié
+   de son opacité, et « Emplacement libre » tombait à 28 % — deux atténuations
+   écrites séparément, qui se multipliaient sans que personne l'ait décidé. */
+.vide:not(.rang){padding:34px 24px;text-align:center;opacity:.88;font-size:12.5px;line-height:1.8}
 .vide a{color:var(--projo)}
+/* Le message qui remplace tout l'écran (un deck qui ne charge pas) est posé
+   sur la photo : il lui faut son panneau. */
+#corps > .vide{margin:14px;border-radius:12px;background:var(--panneau)}
 .spin{width:22px;height:22px;border:2px solid rgba(242,238,228,.2);border-top-color:var(--projo);
   border-radius:50%;margin:60px auto;animation:t .8s linear infinite}
 @keyframes t{to{transform:rotate(360deg)}}
@@ -419,7 +560,7 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 .gcArt .gcIllu{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
   object-position:50% 42%}
 
-.gcRang{display:flex;align-items:center;gap:8px;font-size:10.5px;letter-spacing:.14em;
+.gcRang{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.14em;
   text-transform:uppercase}
 .gcFam{color:var(--fc,#8257DA);font-weight:700}
 .gcRar{margin-left:auto;padding:3px 9px;border-radius:20px;border:1px solid currentColor;
@@ -439,7 +580,7 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 .gcChiffres div{padding:9px 6px;border-radius:9px;text-align:center;
   background:rgba(0,0,0,.3);border:1px solid rgba(242,238,228,.11)}
 .gcChiffres b{display:block;font-family:var(--banner);font-size:17px;color:var(--fc,#8257DA)}
-.gcChiffres small{display:block;margin-top:3px;font-size:8px;letter-spacing:.1em;opacity:.5}
+.gcChiffres small{display:block;margin-top:3px;font-size:11px;letter-spacing:.06em;opacity:.88}
 
 .gcCond{padding:10px 12px;border-radius:9px;font-size:12px;line-height:1.55;
   background:rgba(245,195,59,.09);border:1px solid rgba(245,195,59,.3)}
@@ -462,13 +603,17 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 </head>
 <body>
 <main id="app">
-  <nav class="nav tbf-onglets">
-    <a class="tbf-onglet" href="/fanzzy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>MON FANZZY</a>
-    <a class="tbf-onglet" href="/fanzzy?ecran=dex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18M4 8h4M4 13h4"/></svg>CLASSEUR</a>
-    <a class="tbf-onglet on" href="/deck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h10v13H4zM8 4h10v13"/></svg>DECK</a>
+  <!-- Les deux écrans voisins, et chacun change de page : des portes avec
+       leur flèche, pas des onglets. Voir la règle « .portes » plus haut. Le
+       classeur s'ouvre par « ?ecran=dex », que fanzzy.html lit à l'arrivée. -->
+  <nav class="portes" aria-label="Mes Fanzzy">
+    <a class="tbf-plaque" href="/fanzzy">MON FANZZY<i class="tbf-ico tbf-ico-lien" aria-hidden="true"></i></a>
+    <a class="tbf-plaque" href="/fanzzy?ecran=dex">CLASSEUR<i class="tbf-ico tbf-ico-lien" aria-hidden="true"></i></a>
   </nav>
   <div class="top">
-    <div class="etat" id="etat">—</div>
+    <!-- Vide et caché jusqu'au premier rendu : il affichait un tiret en
+         attendant, et un tiret n'est pas un état. -->
+    <div class="etat tbf-etiquette" id="etat" hidden></div>
   </div>
 
   <div class="corps" id="corps"><div class="spin"></div></div>
@@ -477,7 +622,7 @@ h2 u{text-decoration:none;font-size:10px;letter-spacing:.12em;color:var(--projo)
 <div class="barre" id="barre" style="display:none">
   <div class="in">
     <div class="info" id="info"></div>
-    <button class="btn tbf-plaque" data-ton="or" id="save" disabled>ENREGISTRER</button>
+    <button class="btn tbf-plaque" data-ton="bleu" id="save" disabled>ENREGISTRER</button>
   </div>
 </div>
 
@@ -539,7 +684,15 @@ const FAM = window.TBF_ACTION.FAM;
 
 const RANG = { commune:1, rare:2, epique:3, legendaire:4 };
 
+/* **Une carte qu'on n'a pas se dit par un cadenas, pas par un tiret.** La
+   case du compte et le chiffre « dans ton deck » écrivaient « — » : un tiret
+   dit qu'il n'y a rien à dire, alors qu'il y a quelque chose — la carte n'est
+   pas encore à toi. L'icône est celle de ui.css (au trait, à la couleur du
+   texte), et elle garde son texte pour qui ne la voit pas. */
+const CADENAS = '<i class="tbf-ico tbf-ico-cadenas" role="img" aria-label="pas encore à toi"></i>';
+
 const CHIFFRES = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq'];
+const ORDINAUX = ['', 'premier', 'deuxième', 'troisième', 'quatrième', 'cinquième'];
 
 /**
  * Le message d'un refus, avec les nombres que le serveur y a joints.
@@ -787,6 +940,8 @@ function rendre() {
 
   $('etat').textContent = complet() ? 'PRÊT' : 'INCOMPLET';
   $('etat').classList.toggle('ok', complet());
+  $('etat').dataset.ton = complet() ? 'vert' : 'flare';
+  $('etat').hidden = false;
 
   const corps = [];
 
@@ -795,7 +950,7 @@ function rendre() {
      ce qu'on vient composer. Le nom existant reste en base et part tel quel
      à l'enregistrement — « Mon deck » pour presque tout le monde. */
 
-  corps.push(`<div class="tabs tbf-onglets">
+  corps.push(`<div class="tabs tbf-onglets" data-ton="bleu">
     <button class="tab tbf-onglet ${S.onglet === 'tribune' ? 'on' : ''}" data-onglet="tribune">TRIBUNE
       <b>${S.deck.fanzzy.length}/${placesFanzzy()}</b></button>
     <button class="tab tbf-onglet ${S.onglet === 'cartes' ? 'on' : ''}" data-onglet="cartes">CARTES
@@ -825,7 +980,8 @@ function rendre() {
 }
 
 function tribuneHTML() {
-  const out = [`<h2>LA TRIBUNE <i>· le premier entre au coup d\u2019envoi</i></h2>`];
+  const out = [`<h2 class="tbf-cousu">LA TRIBUNE</h2>
+    <p class="chapo"><span>Le premier entre au coup d\u2019envoi.</span></p>`];
 
   /* Pourquoi il n'y a que deux rangs.
    *
@@ -839,9 +995,12 @@ function tribuneHTML() {
    * n'a pas sa propre idée de quand le troisième rang s'ouvre. */
   const prochain = S.possede?.fanzzyProchain;
   if (prochain && placesFanzzy() < S.regles.fanzzy) {
+    /* L'ordinal en toutes lettres. Il s'écrivait « trois » suivi d'un « e »
+       en exposant de sept pixels et demi : au soleil on lisait « Le trois
+       s'ouvre », qui ne veut rien dire. */
     out.push(`<div class="jalon">
       <b>${placesFanzzy()} emplacements</b>
-      <span>Le ${CHIFFRES[prochain.places] ?? prochain.places}<sup>e</sup>
+      <span>Le ${ORDINAUX[prochain.places] ?? `${prochain.places}ᵉ`}
         s\u2019ouvre au niveau ${prochain.niveau}.</span></div>`);
   }
 
@@ -861,7 +1020,7 @@ function tribuneHTML() {
     if (!slot) {
       out.push(`<div class="rang vide"><div class="tete" data-choisir-fanzzy="${i}">
         <div class="pip" style="--tc:#2A323C"><span style="opacity:.5;font-size:20px">+</span></div>
-        <div class="id"><b style="opacity:.55">Emplacement libre</b>
+        <div class="id"><b>Emplacement libre</b>
           <div class="sous">${i === 0 ? 'Titulaire : il entre au coup d\u2019envoi' : 'Remplaçant'}</div></div>
         <div class="chevron">›</div></div></div>`);
       continue;
@@ -882,7 +1041,7 @@ function tribuneHTML() {
         ${s ? `${window.TBF_STUFF.pastille(s)}
                <span class="txt"><b>${esc(s.nom)}</b><span>${esc(s.texte)}</span></span>`
             : `<span class="creux">+</span>
-               <span class="txt"><b style="opacity:.4">Vide</b>
+               <span class="txt"><b>Vide</b>
                <span>Ajouter une pièce</span></span>`}</button>`);
     }
 
@@ -916,8 +1075,8 @@ function tribuneHTML() {
       <div class="pieces">${pieces.join('')}</div>
       ${mods.length ? `<div class="effet"><em>Effet</em> · ${esc(mods.join(' · '))}</div>` : ''}
       <div class="actions">
-        ${i > 0 ? `<button class="mini" data-titulariser="${i}">TITULARISER</button>` : ''}
-        <button class="mini danger" data-retirer-fanzzy="${i}">RETIRER</button>
+        ${i > 0 ? `<button class="mini tbf-plaque" data-titulariser="${i}">TITULARISER</button>` : ''}
+        <button class="mini danger tbf-plaque" data-ton="flare" data-retirer-fanzzy="${i}">RETIRER</button>
       </div>
     </div>`);
   }
@@ -959,8 +1118,9 @@ function cartesHTML() {
   const moyen = posees.length
     ? (posees.reduce((s, a) => s + (a.cost ?? 0), 0) / posees.length) : 0;
 
-  const out = [`<h2>LES DIX CARTES <i>· cinq visibles à la fois</i>${
-    posees.length ? `<u>souffle moyen ${moyen.toFixed(1)}</u>` : ''}</h2>`];
+  const out = [`<h2 class="tbf-cousu">LES DIX CARTES</h2>
+    <p class="chapo"><span>Cinq visibles à la fois.</span>${
+    posees.length ? `<b>souffle moyen ${moyen.toFixed(1)}</b>` : ''}</p>`];
 
   const emp = [];
   for (let i = 0; i < S.regles.actions; i++) {
@@ -972,9 +1132,9 @@ function cartesHTML() {
     emp.push(`<div class="emp plein" style="--fc:${fam.c};--fc2:${fam.c2}" data-retirer-carte="${i}">
       <svg class="sceau" viewBox="0 0 24 24"><path d="${fam.ico}"/></svg>
       ${window.TBF_ACTION.illustration(a.id)}
-      <div class="cout">${a.cost}</div>
-      ${a.virage ? '' : '<div class="duelseul">DUEL</div>'}
-      <div class="nm">${esc(a.nom)}</div></div>`);
+      <div class="pile"><div class="cout">${a.cost}</div>
+        ${a.virage ? '' : '<div class="duelseul">DUEL</div>'}
+        <div class="nm">${esc(a.nom)}</div></div></div>`);
   }
   out.push(`<div class="grille">${emp.join('')}</div>`);
 
@@ -1000,12 +1160,15 @@ function cartesHTML() {
       dans une tribune de trois cents, il n\u2019y a personne à viser.</span>` : ''}
     </div>`);
 
-  out.push(`<h2 id="catalogue">CATALOGUE</h2>`);
-  out.push(`<div class="filtres">
-    <button class="filtre ${S.filtre === 'miennes' ? 'on' : ''}" data-filtre="miennes">Les miennes</button>
-    <button class="filtre ${S.filtre === 'virage' ? 'on' : ''}" data-filtre="virage">Au Virage</button>
-    <button class="filtre ${S.filtre === 'toutes' ? 'on' : ''}" data-filtre="toutes">Toutes</button>
-  </div>`);
+  out.push(`<h2 class="tbf-cousu" id="catalogue">CATALOGUE</h2>`);
+  /* Des plaques : béton au repos, et le bleu du deck sur celle qui est
+     choisie. `on` reste posé — c'est lui que la page et ses tests lisent —
+     et le ton en découle. */
+  const filtre = (id, mot) => `<button class="filtre tbf-plaque${S.filtre === id ? ' on' : ''}"${
+    S.filtre === id ? ' data-ton="bleu" aria-pressed="true"' : ' aria-pressed="false"'}
+    data-filtre="${id}">${mot}</button>`;
+  out.push(`<div class="filtres">${filtre('miennes', 'Les miennes')}${
+    filtre('virage', 'Au Virage')}${filtre('toutes', 'Toutes')}</div>`);
 
   const compte = {};
   for (const id of S.deck.actions) compte[id] = (compte[id] ?? 0) + 1;
@@ -1019,7 +1182,7 @@ function cartesHTML() {
           : S.possede.actions.includes(a.id)));
     if (!cartes.length) continue;
 
-    out.push(`<div class="fam" style="--fc:${fam.c}">${fam.nom}<span class="trait"></span></div>`);
+    out.push(`<div class="fam" style="--fc:${fam.c}"><span class="nom">${fam.nom}</span><span class="trait"></span></div>`);
     out.push('<div class="cat">');
     for (const a of cartes) {
       const possede = S.possede.actions.includes(a.id);
@@ -1032,7 +1195,7 @@ function cartesHTML() {
         <div class="txt"><b>${esc(a.nom)}${rangHTML(a.rar)}
           ${a.virage ? '' : '<span class="duelseul">DUEL SEULEMENT</span>'}</b>
           <p>${esc(a.texte)}</p></div>
-        <div class="compte ${n ? 'on' : ''}">${possede ? (S.regles.copiesMax == null ? (n ? `×${n}` : '0') : `${n}/${S.regles.copiesMax}`) : '—'}</div>
+        <div class="compte ${n ? 'on' : ''}">${possede ? (S.regles.copiesMax == null ? (n ? `×${n}` : '0') : `${n}/${S.regles.copiesMax}`) : CADENAS}</div>
       </div>`);
     }
     out.push('</div>');
@@ -1062,7 +1225,7 @@ function cartesHTML() {
  */
 function ouvrir(titre, contenu, pied = '') {
   $('panneau').innerHTML = `<div class="ph"><h3>${esc(titre)}</h3>
-    <button data-fermer="1">×</button></div><div class="pc">${contenu}</div>`
+    <button data-fermer="1" aria-label="Fermer">×</button></div><div class="pc">${contenu}</div>`
     + (pied ? `<div class="pp">${pied}</div>` : '');
   $('voile').classList.add('on');
 }
@@ -1181,7 +1344,7 @@ function panneauPiece(index, place) {
 
   const vider = surCeFanzzy[place]
     ? `<div class="choix" data-vider-piece="${index}:${place}">
-        <div class="txt"><b style="opacity:.6">Laisser vide</b>
+        <div class="txt"><b>Laisser vide</b>
         <p>Retirer la pièce de cet emplacement.</p></div></div>` : '';
 
   ouvrir('Équipement', vider + lignes.join(''));
@@ -1215,7 +1378,7 @@ function panneauCarte(id) {
     <div class="gcChiffres">
       <div><b>${a.cost}</b><small>SOUFFLE</small></div>
       <div><b>${a.cd}s</b><small>RECHARGE</small></div>
-      <div><b>${possede ? (S.regles.copiesMax == null ? `×${n}` : `${n}/${S.regles.copiesMax}`) : '—'}</b><small>DANS TON DECK</small></div>
+      <div><b>${possede ? (S.regles.copiesMax == null ? `×${n}` : `${n}/${S.regles.copiesMax}`) : CADENAS}</b><small>DANS TON DECK</small></div>
     </div>
 
     ${cond ? `<div class="gcCond"><b>Pour la jouer</b>${
@@ -1237,7 +1400,7 @@ function panneauCarte(id) {
     bas = `<div class="vide" style="padding:18px 10px">Tes ${S.regles.actions} emplacements sont pris.<br>
       Retire une carte pour faire de la place.</div>`;
   } else {
-    bas = `<div style="padding:6px 0 10px"><button class="btn tbf-plaque" data-ton="or" style="width:100%"
+    bas = `<div style="padding:6px 0 10px"><button class="btn tbf-plaque" data-ton="bleu" style="width:100%"
       data-ajouter="${a.id}">AJOUTER AU DECK${n ? ` (${S.regles.copiesMax == null ? `déjà ×${n}` : `${n}/${S.regles.copiesMax}`})` : ''}</button></div>`;
   }
 

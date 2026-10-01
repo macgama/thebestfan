@@ -436,6 +436,25 @@ for (const [route, nom] of tousLesEcrans) {
         const st = getComputedStyle(el);
         if (st.overflowX !== 'hidden' && st.overflowX !== 'clip') return false;
         if (st.textOverflow === 'ellipsis') return false;
+        /* **Masqué à l'œil, lu par les lecteurs d'écran : rien n'est coupé.**
+           Le Virage écrit ses libellés sous deux formes (lot 0, chantier 1) :
+           la longue (« TA TRIBUNE », « GRAND VIRAGE », « EN FACE ») et la
+           courte que l'écran montre sous 380 ou 420 px. La longue se retire
+           alors de l'écran sans quitter le document — une boîte d'un pixel,
+           `overflow:hidden`, `clip-path:inset(50%)` — et déborde forcément
+           de ce pixel, sans que personne en voie une lettre. Avant, elle
+           était éteinte par une police de zéro pixel, que l'audit lisait
+           comme un texte illisible. On écarte donc ce motif-là et lui seul :
+           sorti du flux (`position:absolute`), avec une boîte d'un pixel ou
+           moins, ou un découpage qui ne laisse rien paraître. Un `clip-path`
+           partiel (une révélation, un biseau) laisse voir du texte, et une
+           coupe y reste une coupe ; un libellé écrasé à zéro par sa rangée
+           reste dans le flux, et il reste signalé. */
+        const r = el.getBoundingClientRect();
+        const horsDeLEcran = st.position === 'absolute' && (r.width <= 1 || r.height <= 1
+          || /^inset\(50%\)$/.test(st.clipPath)
+          || /^rect\(0(px)?,? 0(px)?,? 0(px)?,? 0(px)?\)$/.test(st.clip));
+        if (horsDeLEcran) return false;
         return true;
       }).slice(0, 4).map((el) => (el.textContent ?? '').trim().slice(0, 24)),
 

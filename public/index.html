@@ -18,8 +18,19 @@
  *
  * Le plafond est à **88 px**. Il a été à 104, posé au jugé : à l'écran les
  * tuiles écrasaient le personnage et le jeu ressemblait à une télécommande.
- * Une tuile d'accueil est un point de départ, pas la chose qu'on regarde. */
-:root{--rail:clamp(58px,calc(var(--colonne) * .155),88px)}
+ * Une tuile d'accueil est un point de départ, pas la chose qu'on regarde.
+ *
+ * Le plancher est à **64 px**, et c'est le plus long libellé qui le fixe.
+ * Il était à 58 : les libellés y tenaient parce qu'ils étaient écrits à sept
+ * pixels et demi, c'est-à-dire illisibles. La tuile de `ui.css` leur donne
+ * maintenant onze pixels au moins, et « CLASSEMENT » y mesure 56 px en
+ * Oswald : dans 58, il ne restait rien pour un rembourrage, et `accueil:ui`
+ * rougit au premier libellé rogné, à 320 px de large. Six pixels de rail de
+ * plus de chaque côté au pire, pris à la colonne du milieu — et le personnage
+ * n'y perd rien : c'est la hauteur de sa bande qui le borne, pas sa largeur.
+ * Mesuré à 320, 390 et 400 px de large, avant et après : un pixel de haut
+ * d'écart au plus. */
+:root{--rail:clamp(64px,calc(var(--colonne) * .155),88px)}
 /* L'accueil est un écran **plein cadre** : ses deux rails touchent les bords
    par construction, et la scène occupe tout ce qui reste. La gouttière commune
    de `ui.css` — quatorze pixels de chaque côté — y rétrécissait la grille au
@@ -70,52 +81,86 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    forcé par le système, il vaudra toujours mieux faire défiler que rogner la
    mention légale au ciseau.                                                 */
 .wrap{position:relative;z-index:3;flex:1;display:flex;flex-direction:column;overflow-y:auto}
-.pitch{margin-top:auto;padding:clamp(6px,1.8vh,22px) 22px 0;text-align:center}
+/* ## Chaque ligne de la vitrine a son panneau
+
+   Le socle ne laisse aucun texte à même la photo de tribune. La vitrine en
+   posait une dizaine : le nom du jeu, sa ligne, la version, l'accroche,
+   l'argumentaire, « Déjà une place ? », et les titres des matchs et des
+   visages. Rien ne les séparait de la foule que le voile du décor, ouvert au
+   milieu de l'écran, et une ombre portée sous les lettres ; sur une tribune
+   éclairée, au soleil, c'est la foule qu'on lisait.
+
+   Chaque bloc de texte est donc posé sur un panneau `.pan` de `ui.css` — la
+   même surface que les trois promesses, les matchs et les visages, qui en
+   avaient déjà une. La photo reste visible autour et entre eux : c'est le
+   décor qui respire, pas le texte.
+
+   L'enseigne — l'emblème, le nom du jeu, la version, l'accroche,
+   l'argumentaire — est **un seul** panneau, `.pitch` lui-même. Les ombres
+   portées sous les lettres sont parties avec la photo qu'elles combattaient.
+
+   **Un panneau se paie en hauteur, et la vitrine n'en a pas de reste** : avec
+   un match du jour, il lui restait une vingtaine de pixels à 640 de haut. Le
+   rembourrage des panneaux est donc repris sur les écarts qu'ils rendent
+   inutiles. L'ancien retrait de `.pitch` rentre dans le panneau et se
+   resserre, l'accroche se rapproche du nom — le bord du panneau les sépare
+   déjà du reste —, et d'un panneau à l'autre l'écart retombe vers les huit
+   pixels qui séparent les trois promesses entre elles : une seule mesure
+   pour tous les joints de la page. */
+.pitch{margin:auto 18px 0;padding:clamp(6px,1vh,16px) 12px clamp(6px,1vh,14px);
+  text-align:center}
 .embleme{width:clamp(44px,8.4vh,94px);height:auto;display:block;
   margin:0 auto clamp(5px,1.4vh,14px);
   filter:drop-shadow(0 8px 30px rgba(245,195,59,.35));animation:flotte 5s ease-in-out infinite}
 @keyframes flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+/* Le mode calme du tiroir (`tbf-calme`, recopié sur `<html>` par fx.js et
+   menu.js) coupe exactement ce que coupe la préférence du système : les
+   mouvements qui décorent. Chaque règle de mouvement réduit de cette page a
+   donc sa jumelle au crochet `data-calme`, juste à côté d'elle. */
 @media (prefers-reduced-motion:reduce){.embleme{animation:none}}
+html[data-calme~="animations"] .embleme{animation:none}
 .logo{font-family:var(--banner);font-weight:700;font-size:clamp(24px,4.1vh,40px);
-  letter-spacing:.1em;line-height:.95;
-  text-shadow:0 4px 34px rgba(0,0,0,.95)}
+  letter-spacing:.1em;line-height:.95}
 .logo em{font-style:normal;color:var(--projo)}
-.logo small{display:block;font-family:var(--ui);font-size:clamp(8px,1.05vh,10px);
-  letter-spacing:.32em;opacity:.6;margin-top:clamp(4px,1.1vh,11px);font-weight:400}
+/* **Onze pixels et pleine craie, jamais moins** — c'est le plancher du socle
+   pour tout texte qui informe. La ligne descendait à huit pixels et 0,6 sur
+   un écran court : au soleil, le sous-titre du jeu devenait une rayure grise.
+   La discrétion tient à l'espacement des capitales, pas à la pâleur — et sur
+   le panneau, une craie à 0,9 retombe sous 4,5:1 au plein jour. */
+.logo small{display:block;font-family:var(--ui);font-size:11px;
+  letter-spacing:.32em;margin-top:clamp(4px,1.1vh,11px);font-weight:400}
 /* La mention de version, entre le logo et l'accroche. Assez présente pour
    qu'on la lise, assez discrète pour ne pas prendre le pas sur le nom du
    jeu : un liseré et rien d'autre, sans fond plein — une pastille pleine
    se lirait comme un étiquetage promotionnel, et c'est l'inverse de ce
-   qu'elle dit. */
-.beta{margin:7px 0 0;font-family:var(--banner);font-size:9.5px;
+   qu'elle dit. Pleine opacité : le liseré suffit à la discrétion, et un
+   numéro qu'on cite dans un signalement doit se lire du premier coup. */
+.beta{margin:7px 0 0;font-family:var(--banner);font-size:11px;
   letter-spacing:.18em;text-transform:uppercase;color:var(--projo);
-  opacity:.8;display:inline-block;padding:4px 10px;border-radius:20px;
+  display:inline-block;padding:3px 10px;border-radius:20px;
   border:1px solid rgba(245,195,59,.34)}
 .beta:empty{display:none}
 .claim{font-family:var(--banner);font-size:clamp(14px,2vh,19px);line-height:1.3;
-  margin:clamp(8px,2.1vh,22px) 0 0;
-  text-shadow:0 2px 18px rgba(0,0,0,.9)}
+  margin:clamp(6px,1.2vh,16px) 0 0}
 .claim b{color:var(--projo)}
-.sell{font-size:clamp(10.5px,1.35vh,13px);opacity:.68;line-height:1.55;
-  margin:clamp(5px,1.2vh,12px) auto 0;max-width:330px;
-  text-shadow:0 2px 14px rgba(0,0,0,.9)}
-.bullets{display:flex;gap:8px;padding:clamp(8px,1.9vh,20px) 18px 0}
+/* Pleine craie, pour la même raison que la ligne du logo. */
+.sell{font-size:clamp(11px,1.35vh,13px);line-height:1.55;
+  margin:clamp(5px,1.2vh,12px) auto 0;max-width:330px}
+.bullets{display:flex;gap:8px;padding:clamp(6px,1.2vh,12px) 18px 0}
 .bullet{flex:1;border:1px solid var(--trait);border-radius:11px;
   padding:clamp(6px,1.15vh,11px) 9px;
-  /* Un seul flou, et la déclinaison Safari avec lui.
+  /* **Plus de flou du tout**, et c'est le fond qui en tient lieu.
 
-     Il y en avait deux sur cette ligne — `blur(10px)` puis `blur(5px)`. La
-     seconde gagne, la première était morte, et rien ne disait laquelle des deux
-     était la bonne : on ne pouvait plus retoucher ce flou sans deviner. On
-     garde celle qui s'appliquait, donc l'apparence ne change pas d'un pixel.
-
-     `-webkit-backdrop-filter` manquait : sans lui, ces trois promesses n'ont
-     aucun flou sur iPhone — c'est-à-dire sur la moitié des appareils d'un jeu
-     qui se joue au stade. C'est la forme employée partout dans `ui.css`. */
-  background:var(--panneau);backdrop-filter:blur(5px);
-  -webkit-backdrop-filter:blur(5px);text-align:center}
+     Il y en a eu deux sur cette ligne, puis un seul avec sa déclinaison
+     Safari. Le socle les retire tous : un flou d'arrière-plan se recalcule à
+     chaque image — cher sur un téléphone modeste — et il ne rend pas un texte
+     lisible au soleil, il rend seulement la photo floue derrière lui. Ce qui
+     fait lire les trois promesses est `--panneau`, devenu opaque dans
+     `ui.css` : c'est lui qu'on garde, et la seule chose qui compte ici. */
+  background:var(--panneau);text-align:center}
 .bullet b{display:block;font-family:var(--banner);font-size:11.5px;letter-spacing:.05em;color:var(--projo)}
-.bullet span{font-size:10px;opacity:.55;line-height:1.35;display:block;margin-top:4px}
+/* Pleine craie : sur `--panneau`, une craie à 0,9 tombe à 4,1:1 au plein jour. */
+.bullet span{font-size:11px;line-height:1.35;display:block;margin-top:4px}
 /* La plaque d'entrée de l'écran non connecté. Elle ne garde que sa marge : sa
    matière est celle de `ui.css`, comme partout ailleurs.
 
@@ -131,26 +176,51 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    La règle reste ici plutôt que dans `ui.css` : `.tbf-bloc` est juste, c'est de
    lui donner des marges latérales qui ne l'était pas. */
 .cta{margin:clamp(10px,2.1vh,22px) 18px clamp(3px,1vh,10px);width:auto}
-.second{display:block;text-align:center;padding:clamp(6px,1.25vh,12px);color:var(--craie);
-  opacity:.6;font-size:13px;text-decoration:none}
+/* « Déjà une place ? » est un lien de texte, et il le reste : une seconde
+   plaque sous le bouton d'entrée ferait deux portes pour une. Mais il se
+   touche, donc il fait **quarante-quatre pixels** — il en faisait trente-trois,
+   et l'audit l'a relevé à chaque format.
+
+   La hauteur est prise sur les marges et non ajoutée : six pixels de
+   rembourrage en plus de chaque côté, huit de marge en moins. La zone qui
+   répond au doigt grandit, la place qu'il occupe dans la vitrine ne bouge pas
+   — et c'est elle qui décide si le bouton tient au-dessus du pli. Ce qu'il
+   chevauche en haut est la tranche du bouton d'entrée, qui mène au même
+   endroit.
+
+   **Une ligne de vingt pixels, écrite, et non celle de la police.** Les
+   quarante-quatre pixels tenaient sur une hauteur de ligne `normal`, qui
+   vaut quinze pixels en Roboto et dix-sept en Segoe : selon le téléphone et
+   la hauteur d'écran, le lien mesurait entre quarante et un et quarante-trois
+   pixels, malgré ce que promettait ce commentaire. Vingt pixels de ligne plus
+   deux fois douze de rembourrage au moins font quarante-quatre partout ; les
+   deux pixels de marge rendus en plus de chaque côté compensent la ligne plus
+   haute, à un pixel près selon la police.
+
+   **Et il a son panneau**, taillé à la phrase : une pastille `--panneau` sur
+   le `<span>` intérieur, pas sur le lien. Posé sur le lien, le fond aurait
+   couvert toute la rangée et mordu, par la marge négative, sur la tranche du
+   bouton d'entrée ; sur une boîte en ligne, son rembourrage vertical déborde
+   sans pousser la ligne, et reste dans les douze pixels au moins que le lien
+   garde au-dessus et au-dessous — la vitrine ne bouge pas d'un pixel. Pleine
+   opacité : le panneau hérite de celle du lien, et à 0,9 il retombait sous
+   les 0,88 d'un panneau. */
+.second{display:block;text-align:center;
+  padding:calc(clamp(6px,1.25vh,12px) + 6px) 12px;margin:-8px 0;
+  color:var(--craie);font-size:13px;line-height:20px;text-decoration:none}
+.second span{padding:6px 14px;border-radius:999px;background:var(--panneau);
+  box-shadow:inset 0 0 0 1px var(--trait);
+  -webkit-box-decoration-break:clone;box-decoration-break:clone}
 .second b{color:var(--projo)}
 /* `margin:0` : c'est un paragraphe, et les vingt et un pixels que le
    navigateur lui donnait tout seul au-dessus et en dessous étaient le plus
-   gros poste de la vitrine après le logo. */
-/* L'invitation à installer. Discrète : elle s'adresse à quelqu'un qui est
-   déjà là et qui joue — ce n'est pas elle qu'il est venu chercher. */
-.installe{text-align:center;padding:10px 20px 0}
-/* Quarante-quatre pixels : la pulpe d'un doigt, et le minimum des deux
-   plateformes. L'audit d'interface les a tous comptés d'un coup — ce n'est
-   jamais une faute de conception, c'est une hauteur qu'on ne mesure pas en
-   regardant. */
-.installe button{background:none;border:1px solid rgba(242,238,228,.25);border-radius:8px;
-  color:var(--craie);font:inherit;font-size:12.5px;padding:9px 16px;min-height:44px;
-  cursor:pointer;opacity:.75}
-.installe button:hover{opacity:1;border-color:var(--projo);color:var(--projo)}
-.installe small{font-size:11.5px;opacity:.5;line-height:1.7}
-.installe b{color:var(--craie);opacity:.85}
-.legal{text-align:center;font-size:10.5px;opacity:.32;margin:0;
+   gros poste de la vitrine après le logo.
+
+   **Le seul texte qui ait le droit d'être pâle**, et il ne l'est plus qu'à
+   0,6 : c'est une mention légale, et le socle lui laisse ce plancher-là
+   (0,55) quand tout le reste doit tenir 0,85. Il était à 0,32 — ce qu'une
+   mention qu'on est tenu d'afficher ne peut pas être au soleil. */
+.legal{text-align:center;font-size:10.5px;opacity:.6;margin:0;
   padding:clamp(7px,1.3vh,13px) 24px clamp(8px,2.1vh,22px);line-height:1.6}
 .legal a{color:inherit}
 
@@ -175,29 +245,44 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    Sur la place : le direct est **au-dessus** du bouton, là où il se lit, et
    les visages en dessous. `.pitch` porte un `margin-top:auto`, donc ce qu'on
    insère au milieu repousse le haut et non le bas — le bouton ne descend
-   pas.                                                                     */
-.preuve{padding:clamp(8px,1.9vh,20px) 18px 0}
-.preuve h3{display:flex;align-items:center;gap:9px;margin:0 0 clamp(5px,.95vh,9px);
-  font-family:var(--banner);font-weight:600;font-size:11px;letter-spacing:.2em;
-  text-transform:uppercase;opacity:.5}
-.preuve h3::after{content:"";flex:1;height:1px;background:var(--trait)}
+   pas.
+
+   **Chacun est un panneau `.pan`**, titre compris. Les lignes de match et les
+   visages avaient déjà le leur, mais le titre cousu, « Tous les matchs » et
+   le compte des supporters se posaient entre eux, à même la foule. L'écart
+   qui les séparait de ce qui précède devient la marge du panneau, resserrée
+   comme celle des trois promesses pour payer son rembourrage — voir « Un
+   panneau se paie en hauteur », plus haut. */
+.preuve{margin:clamp(6px,1.2vh,12px) 18px 0;padding:clamp(4px,.7vh,9px) 10px}
+/* Les deux titres de rubrique sont des **titres cousus** (`.tbf-cousu`, dans
+   `ui.css`) : la police, les capitales, la craie pleine et le fil qui remplit
+   la ligne viennent de là. Ils se peignaient ici, à 0,5 d'opacité et avec
+   leur propre filet — la moitié d'un titre, sur l'écran qui décide si l'on
+   crée un compte. Il ne reste que l'écart avec ce qu'ils annoncent.
+
+   Le point et le libellé sont rangés **dans un seul** `<span>` : le titre
+   cousu n'a alors qu'un enfant et son fil, quelle que soit la façon dont il
+   les aligne. */
+.preuve h3{margin:0 0 clamp(5px,.95vh,9px)}
 /* Le point rouge ne décore pas : il n'est posé que lorsqu'un match est
    vraiment en cours, et c'est la seule chose de la vitrine qui bouge pour une
    raison. */
-.preuve h3 i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--flare);
+.preuve h3 i{display:inline-block;vertical-align:middle;margin:-2px 9px 0 0;
+  width:7px;height:7px;border-radius:50%;background:var(--flare);
   box-shadow:0 0 0 0 rgba(224,64,44,.55);animation:pouls 1.8s ease-out infinite}
 @keyframes pouls{70%,100%{box-shadow:0 0 0 7px rgba(224,64,44,0)}}
 @media (prefers-reduced-motion:reduce){.preuve h3 i{animation:none}}
+html[data-calme~="animations"] .preuve h3 i{animation:none}
 
 /* Les matchs se lisent comme sur la page des matchs — l'heure ou la minute à
    gauche, les deux clubs empilés à droite. Le lien « tous les matchs » y mène :
    y arriver et trouver une seconde mise en page serait arriver ailleurs. */
 .scores{display:flex;flex-direction:column;gap:clamp(4px,.65vh,6px)}
+/* Le fond opaque de `--panneau`, sans flou : voir `.bullet`, plus haut. */
 .sc{display:flex;align-items:center;gap:10px;padding:clamp(4px,.85vh,8px) 11px;
-  border:1px solid var(--trait);border-radius:11px;background:var(--panneau);
-  backdrop-filter:blur(5px)}
+  border:1px solid var(--trait);border-radius:11px;background:var(--panneau)}
 .sc .quand{flex:none;width:42px;text-align:center;font-family:var(--banner);
-  font-size:11px;letter-spacing:.04em;opacity:.5}
+  font-size:11px;letter-spacing:.04em;opacity:.9}
 .sc.live .quand{color:var(--flare);opacity:1}
 .sc .eq{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .sc .r{display:flex;align-items:center;gap:7px;line-height:1.25;
@@ -205,12 +290,25 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .sc .r img{width:15px;height:15px;flex:none;object-fit:contain}
 .sc .r span{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .sc .r b{flex:none;font-family:var(--banner);font-size:14px;min-width:11px;text-align:right}
-/* Le perdant s'efface : le score se lit alors d'un coup, sans le relire. */
-.sc .r.perd{opacity:.42}
-.preuve .plus{display:block;text-align:center;padding:clamp(5px,.95vh,9px) 0 0;
+/* Le perdant s'efface : le score se lit alors d'un coup, sans le relire.
+
+   **Il s'efface par la teinte, plus par la transparence.** À 0,42 d'opacité,
+   le nom du club battu et son score cessaient d'être lisibles au soleil —
+   or c'est encore une information, la moitié du résultat. Un gris plein garde
+   l'écart avec la craie du vainqueur sans rien retirer à la lecture. */
+.sc .r.perd{color:#9AA4B2}
+/* « Tous les matchs » se touche : il fait donc **quarante-quatre pixels au
+   moins**, et il en faisait vingt-quatre. Comme « Déjà une place ? », la hauteur est prise
+   sur les marges et non ajoutée — huit pixels de plus au-dessus, seize
+   au-dessous, autant de marge négative. Le panneau garde exactement sa
+   taille ; la zone qui répond au doigt déborde un peu sous son bord, dans
+   l'écart qui le sépare du bouton d'entrée, qui en fait dix au moins. La ligne
+   est écrite, pour que le compte ne dépende pas de la police. */
+.preuve .plus{display:block;text-align:center;line-height:16px;
+  padding:calc(clamp(5px,.95vh,9px) + 8px) 0 16px;margin:-8px 0 -16px;
   text-decoration:none;
   font-family:var(--banner);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--projo);opacity:.75}
+  color:var(--projo)}
 
 /* Les visages. Des bustes et non des pleins-pieds : à cette taille un
    personnage en entier n'est plus qu'une silhouette, et ce qu'on montre ici
@@ -232,7 +330,8 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   .eventail{grid-template-columns:repeat(5,1fr)}
   .eventail i:nth-child(n+6){display:none}
 }
-.combien{text-align:center;font-size:clamp(10px,1.2vh,11px);opacity:.4;
+/* Pleine craie sur son panneau : à 0,9, elle tombait à 4,1:1 au plein jour. */
+.combien{text-align:center;font-size:11px;
   margin:clamp(5px,.95vh,9px) 0 0;line-height:1.5}
 
 /* ## L'ordre dans lequel on retire
@@ -245,7 +344,18 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    Ne partent jamais, à aucune hauteur : le logo, la promesse, le bouton
    d'entrée, la ligne « déjà une place ? » et la mention légale. Le reste est
    de l'argumentaire, et un argumentaire qu'on ne peut pas lire d'un coup
-   d'œil n'argumente pas.                                                   */
+   d'œil n'argumente pas.
+
+   **Les paliers ont été remesurés quand chaque texte a reçu son panneau**
+   (voir « Un panneau se paie en hauteur »), avec trois matchs du jour — le
+   cas le plus haut —, de 360 à 412 pixels de large et à 768, de dix en dix
+   pixels de haut, de cinq en cinq entre 620 et 660. Quatre ont monté : les
+   sous-titres des promesses de 960 à 1000, le troisième match de 900 à 960,
+   le deuxième de 740 à 780, les promesses entières de 620 à 630. Sur une
+   tablette, les visages grandissent avec la hauteur, et c'est elle qui
+   débordait la première ; sur un téléphone, c'était le deuxième match, à 750
+   et 760, puis les promesses à 625 sur 375 de large. Seule la légende du
+   compte tenait encore.                                                    */
 
 /* 1. La légende du compte : la rangée de visages dit déjà « il y en a
       beaucoup », et elle le dit mieux qu'une phrase. */
@@ -253,20 +363,20 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* 2. Les sous-titres des trois promesses. Les trois mots en or se lisent
       seuls — et les blocs qui suivent montrent ce que les sous-titres
       expliquaient. */
-@media (max-height:960px){.bullet span{display:none}}
+@media (max-height:1000px){.bullet span{display:none}}
 /* 3. Le troisième match. Le tri met le plus vivant en premier, donc ce qui
       part est toujours le moins intéressant des trois. */
-@media (max-height:900px){.sc:nth-child(3){display:none}}
+@media (max-height:960px){.sc:nth-child(3){display:none}}
 /* 4. Le lien « tous les matchs », puis le deuxième match. Un match en direct
       et le bouton d'entrée, c'est encore la page qu'on voulait montrer. */
-@media (max-height:740px){
+@media (max-height:780px){
   .preuve .plus{display:none}
   .sc:nth-child(2){display:none}
 }
 /* 5. Les trois promesses en entier, et l'argumentaire sous le titre. À cette
       hauteur il ne reste que le nom, la phrase d'accroche, un match et la
       porte — et c'est encore une page qui se tient. */
-@media (max-height:620px){
+@media (max-height:630px){
   .bullets{display:none}
   .sell{display:none}
 }
@@ -296,10 +406,13 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .moi{display:flex;align-items:center;text-decoration:none;flex:none}
 /* Le niveau se pose sur l’avatar plutôt que de prendre une ligne : la barre du
    haut est déjà pleine, et c’est désormais le seul endroit où il s’affiche. */
+/* Onze pixels, le plancher du socle : le chiffre du niveau est le seul endroit
+   où il s'affiche, il ne peut pas être le plus petit texte de l'écran. Le
+   badge grandit d'un pixel avec lui, et reste posé sur le coin. */
 .pastille{position:relative}
-.pastille .niv{position:absolute;right:-4px;bottom:-4px;min-width:17px;height:17px;
+.pastille .niv{position:absolute;right:-4px;bottom:-4px;min-width:18px;height:18px;
   border-radius:9px;background:#0B0E13;border:1px solid var(--projo);color:var(--projo);
-  font-style:normal;font-family:var(--banner);font-size:10px;line-height:15px;
+  font-style:normal;font-family:var(--banner);font-size:11px;line-height:16px;
   text-align:center;padding:0 3px}
 /* La pastille dorée, seule. Elle fait la hauteur de la rangée — c'est ce que
    « même hauteur que les boutons de droite » veut dire, et ça se règle ici une
@@ -317,10 +430,26 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* ## Les deux jetons, sans plaque
    Une plaque dorée autour d'un compteur doré disait deux fois la même chose, et
    criait plus fort que les dix destinations du jeu. Il reste le dessin et le
-   nombre : c'est une **lecture**, pas un bouton — même s'il se touche. */
-.jeton{display:flex;align-items:center;gap:7px;text-decoration:none;color:var(--craie);
-  height:var(--haut-h);padding:0 4px;font-family:var(--banner);font-size:17px;
+   nombre : c'est une **lecture**, pas un bouton — même s'il se touche.
+
+   **Mais pas à même la photo.** Le dessin et le nombre se posaient sur le
+   haut de la tribune, où le voile du décor ne vaut plus que 0,7 : au soleil,
+   c'est la foule qu'on lisait entre les chiffres. Chaque jeton a donc une
+   pastille `--panneau` — sombre, plate, sans tranche ni couleur : un fond
+   pour lire, pas une plaque pour appuyer, et la note ci-dessus reste vraie.
+
+   Elle est peinte par un pseudo-élément **plus bas que le lien**, sept pixels
+   en retrait en haut et en bas : le doigt garde ses quarante-quatre pixels,
+   l'œil voit une pastille de trente, à l'échelle des chiffres qu'elle porte
+   et non du bouton du menu d'à côté. Le rembourrage latéral, qui ne valait
+   jusqu'ici que sur un écran court, vaut partout : c'est lui qui écarte le
+   dessin et le « + » du bord de la pastille. */
+.jeton{position:relative;isolation:isolate;
+  display:flex;align-items:center;gap:7px;text-decoration:none;color:var(--craie);
+  height:var(--haut-h);padding:0 10px;font-family:var(--banner);font-size:17px;
   letter-spacing:.02em;font-variant-numeric:tabular-nums;line-height:1}
+.jeton::before{content:"";position:absolute;inset:7px 0;z-index:-1;border-radius:999px;
+  background:var(--panneau);box-shadow:inset 0 0 0 1px var(--trait)}
 .jeton svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;
   stroke-linecap:round;stroke-linejoin:round}
 /* Le dessin prend la couleur de ce qu'il compte ; le nombre reste en craie.
@@ -475,13 +604,39 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    mérite mieux qu'un dessin qu'on doit reconnaître.
 
    Posé au pied du personnage, dans la scène : c'est là que le regard est déjà,
-   et cela ne prend aucune place aux rails. */
-.qui{position:relative;flex:none;text-align:center;padding:0 12px 6px;pointer-events:none}
-.qui b{display:block;font-family:var(--banner);font-size:clamp(15px,4.4vw,19px);
-  letter-spacing:.06em;text-shadow:0 2px 14px rgba(0,0,0,.95);
+   et cela ne prend aucune place aux rails.
+
+   ## Deux pastilles, taillées au texte
+
+   Le nom et l'âge se posaient à même la photo de tribune, protégés par une
+   ombre sous les lettres et par le voile du décor — qui ne vaut qu'entre
+   0,54 et 0,61 à cette hauteur. Sur une tribune éclairée, l'or de l'âge à
+   onze pixels tombait vers 3:1 : c'est exactement ce que le socle interdit.
+
+   Chacun reçoit donc sa pastille `--panneau`, à la largeur de ce qu'elle
+   porte — la même matière que « Déjà une place ? » sur la vitrine. Pas un
+   panneau pleine largeur : sous les rails, une bande sombre de bord à bord
+   se confondrait avec le duo du bas, et c'est le personnage qu'on
+   doit voir au-dessus, pas une barre. Les ombres portées sont parties avec
+   la photo qu'elles combattaient.
+
+   **Elles ne coûtent rien en hauteur.** Le nom garde sa ligne telle quelle —
+   la pastille en épouse la boîte, qu'Oswald fait déjà haute de vingt-quatre
+   pixels. Celle de l'âge prend trois pixels de rembourrage en haut et en bas,
+   repris sur les six pixels de pied de `.qui` ; les quatre qui la séparent du
+   nom restent quatre, écrits une fois sur la rangée au lieu de deux fois
+   deux. Le bloc mesure toujours ses quarante-neuf pixels, et le personnage ne
+   perd rien de la place que `accueil:ui` lui défend. */
+.qui{position:relative;flex:none;text-align:center;padding:0 12px;pointer-events:none}
+.qui b{display:block;width:fit-content;max-width:100%;margin:0 auto;padding:0 12px;
+  border-radius:999px;background:var(--panneau);box-shadow:inset 0 0 0 1px var(--trait);
+  font-family:var(--banner);font-size:clamp(15px,4.4vw,19px);letter-spacing:.06em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.qui small{display:block;font-size:10px;letter-spacing:.16em;margin-top:2px;
-  color:var(--projo);opacity:.9;text-shadow:0 2px 10px rgba(0,0,0,.9)}
+/* Pleine opacité : sur la pastille, l'or n'a plus de photo à traverser, et à
+   0,9 il n'aurait rien gagné qu'un peu de gris. */
+.qui small{display:block;font-size:11px;letter-spacing:.16em;padding:3px 10px;
+  border-radius:999px;background:var(--panneau);box-shadow:inset 0 0 0 1px var(--trait);
+  color:var(--projo)}
 .qui small:empty{display:none}
 /* Le défilé des âges. `.qui` coupe les gestes — c'était une plaque à lire —
    et on les rend ici, aux seuls éléments qui en ont besoin : deux flèches et
@@ -494,21 +649,45 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    d'autre, et la ligne garde exactement la hauteur du texte qu'elle portait
    déjà. */
 .ages{position:relative;display:flex;align-items:center;justify-content:center;
-  gap:10px;margin-top:2px;min-height:0}
+  gap:10px;margin-top:4px;min-height:0}
 .ages .fl[hidden]{display:none}
+/* Le disque a son propre fond `--panneau` : le chevron est un caractère
+   blanc, et sur le blanc à 0,12 d'avant il se posait sur la foule comme le
+   texte d'à côté. Le survol éclaire le liseré plutôt que le fond. */
 .ages .fl{position:absolute;top:50%;transform:translateY(-50%);
   pointer-events:auto;appearance:none;border:0;cursor:pointer;
   width:24px;height:24px;border-radius:999px;font:700 16px/1 system-ui;
-  color:#fff;background:rgba(255,255,255,.12);
-  display:grid;place-items:center;transition:background .15s,opacity .15s}
-/* Aux bords de la plaque, pas collées au texte : la lignée se lit au milieu,
-   les deux sens de lecture l'encadrent. */
-#ageAvant{right:calc(50% + 62px)}
-#ageApres{left:calc(50% + 62px)}
-.ages .fl:hover{background:rgba(255,255,255,.22)}
+  color:#fff;background:var(--panneau);box-shadow:inset 0 0 0 1px var(--trait);
+  display:grid;place-items:center;transition:box-shadow .15s,opacity .15s}
+/* Pas collées au texte : la lignée se lit au milieu, les deux sens de lecture
+   l'encadrent.
+
+   **À une place fixe, et au-delà de la plus longue pastille.** Fixe, parce
+   qu'une flèche qui suivrait la largeur du texte bougerait sous le doigt d'un
+   appui à l'autre : l'âge suivant n'a pas la même phrase. Au-delà de la plus
+   longue, parce qu'elles recouvraient le texte : elles étaient à soixante-deux
+   pixels du centre, réglées sur « ÉVOLUTION 2 / 3 » à dix pixels, quand la
+   coche amène la phrase à cent vingt-six pixels et « dessin à venir » à deux
+   cent trente — les deux disques tombaient au milieu des lettres.
+
+   La pastille la plus longue — coche et mention ensemble — fait deux cent
+   cinquante pixels avec son rembourrage : les flèches commencent six pixels
+   plus loin, à cent trente et un du centre, et la pastille est bornée à cette
+   largeur. Une police plus large que celle de la mesure la fait passer sur
+   deux lignes au lieu de glisser sous les disques. À 320 px de large, les
+   flèches tiennent encore dans l'écran, en mordant de cinq pixels sur la
+   marge du hub. */
+#ageAvant{right:calc(50% + 131px)}
+#ageApres{left:calc(50% + 131px)}
+#quiEvo{max-width:250px}
+/* **Le doigt vise quarante-quatre pixels**, l'œil en voit vingt-quatre. Le
+   disque garde sa taille — c'est lui qui ne prend aucune hauteur à la rangée
+   — et une zone invisible autour de lui porte le reste de la cible. */
+.ages .fl::after{content:"";position:absolute;inset:-10px}
+.ages .fl:not(:disabled):hover{box-shadow:inset 0 0 0 1px rgba(242,238,228,.4)}
 /* Au bout de la lignée : estompée et inerte, plutôt que retirée. Une flèche qui
    disparaît déplace la plaque sous le doigt entre deux appuis. */
-.ages .fl:disabled{opacity:.22;cursor:default;background:rgba(255,255,255,.08)}
+.ages .fl:disabled{opacity:.22;cursor:default}
 /* Il ne paraît **que** lorsque l'âge regardé n'est pas encore celui qu'on
    montre : un bouton toujours là finirait par se lire comme une décoration, et
    c'est justement le seul geste de cet écran qui écrit quelque chose. */
@@ -516,18 +695,25 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    lorsque l'âge regardé n'est pas celui qu'on montre, et une rangée qui
    apparaît et disparaît ferait sauter le personnage de trente pixels à chaque
    coup de flèche. Posé au-dessus de la plaque, sur le bas de la scène, il est
-   là où le regard vient de passer. */
-.cestlui{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
-  margin-bottom:8px;white-space:nowrap;
-  pointer-events:auto;appearance:none;cursor:pointer;display:block;
-  border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:5px 14px;
-  font:700 10px/1 var(--banner,system-ui);letter-spacing:.16em;text-transform:uppercase;
-  color:#0c0c0c;background:var(--projo,#ffb703);
-  box-shadow:0 4px 16px rgba(0,0,0,.5);animation:cestluiIn .22s ease both}
+   là où le regard vient de passer.
+
+   **C'est une plaque d'or**, comme tout ce qui se touche : elle s'enfonce sous
+   le doigt et s'éteint quand elle attend le serveur, avec les règles de
+   `ui.css`. Il ne reste ici que sa place et sa taille. Centrée par ses marges
+   et non par `translateX(-50%)` : la plaque descend de son épaisseur au doigt
+   en réécrivant `transform`, ce qui aurait jeté le bouton d'une demi-largeur
+   vers la droite à chaque appui. */
+.cestlui{position:absolute;bottom:100%;left:0;right:0;width:max-content;
+  margin:0 auto 8px;white-space:nowrap;pointer-events:auto;
+  --epaisseur:3px;min-height:44px;padding:0 16px;
+  font-size:12px;letter-spacing:.12em;
+  animation:cestluiIn .22s ease backwards}
 .cestlui[hidden]{display:none}
-.cestlui:disabled{opacity:.6;cursor:default}
-@keyframes cestluiIn{from{opacity:0;transform:translateX(-50%) translateY(5px)}
-  to{opacity:1;transform:translateX(-50%)}}
+/* `backwards` et non `both` : une animation qui garde sa dernière image
+   continue d'écrire `transform`, et la plaque ne s'enfoncerait plus. */
+@keyframes cestluiIn{from{opacity:0;transform:translateY(5px)}}
+@media (prefers-reduced-motion:reduce){.cestlui{animation:none}}
+html[data-calme~="animations"] .cestlui{animation:none}
 /* Vide tant que le serveur n'a pas répondu : un cadre qui se remplit après
    coup fait sauter la scène, un cadre absent ne fait rien du tout. */
 .qui:not(.on){display:none}
@@ -596,27 +782,100 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    Au-dessus du duo et non dedans : le duo dit où l'on en est, celui-ci dit ce
    qui reste à découvrir. Mélanger les deux ferait une rangée de trois où l'œil
    ne saurait plus lequel est l'appel. */
+/* Le reflet doré est posé **sur** le panneau opaque, et non plus fondu dans
+   un noir à 0,7 : la photo de la tribune passait au travers, et la consigne
+   se lisait sur le décor au lieu de se lire sur sa plaque. */
 .pas1{display:flex;align-items:center;gap:11px;padding:9px 13px;border-radius:12px;
   text-decoration:none;color:inherit;border:1px solid rgba(245,195,59,.34);
-  background:linear-gradient(120deg,rgba(245,195,59,.13),rgba(8,11,16,.7))}
+  background:linear-gradient(120deg,rgba(245,195,59,.13),rgba(245,195,59,0) 70%),var(--panneau)}
 .pas1 .n{font-family:var(--banner);font-size:17px;color:var(--projo);line-height:1;flex:none}
-.pas1 .n small{font-size:10px;opacity:.5}
+.pas1 .n small{font-size:11px;opacity:.9}
 .pas1 .q{flex:1;min-width:0}
 .pas1 .q b{display:block;font-family:var(--banner);font-size:12px;letter-spacing:.14em}
-.pas1 .q span{display:block;font-size:10.5px;opacity:.62;margin-top:2px;
+.pas1 .q span{display:block;font-size:11px;opacity:.9;margin-top:2px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pas1 .fl{opacity:.45;font-size:15px;flex:none}
 .duo{display:grid;grid-template-columns:.85fr 1.3fr;gap:9px}
-.collec{padding:10px 13px;text-align:left;display:grid;gap:7px;text-decoration:none}
-.collec .t{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.collec .t b{font-family:var(--banner);font-size:14px;letter-spacing:.04em}
-.collec .t span{font-size:12px;opacity:.55;font-variant-numeric:tabular-nums}
-.jauge{height:7px;border-radius:4px;background:rgba(242,238,228,.12);overflow:hidden}
-.jauge i{display:block;height:100%;border-radius:4px;width:0;transition:width .6s ease;
-  background:linear-gradient(90deg,var(--flare),var(--projo))}
+/* **Un seul cadre dans le duo : AUJOURD'HUI.** Le cadre est la grande bâche
+   d'un écran, celle qu'on regarde en arrivant (`.tbf-cadre`, dans `ui.css`).
+   Les deux cases du duo l'étaient, au même poids, et sur leur toile sombre ni
+   le cerne ni l'ombre d'encre ne se voient : on lisait deux panneaux au coin
+   corné, et rien ne disait lequel regarder. La maquette ne met l'écharpe en
+   tête que sur la case de droite — la mission du jour chez elle, le match du
+   jour ici — et pose COLLECTION en panneau calme, que son écharpe-jauge
+   suffit à signaler. AUJOURD'HUI reste donc le cadre, et le seul, avec sa
+   bande d'écharpe (`data-echarpe`) peinte dans son rembourrage du haut : rien
+   ne bouge ; COLLECTION devient un `.pan`.
+
+   **Le panneau prend la place exacte du cadre.** `.pan` pose un filet d'un
+   pixel tout autour, quand le cadre dessinait son cerne sans prendre un pixel
+   à la boîte : le rembourrage lui cède ce pixel de chaque côté, et la boîte
+   garde la taille qu'elle avait. Sans cela, ses deux pixels de bordure le
+   porteraient à 73,7 px, plus haut que la rangée, et le hub, qui ne défile
+   pas, les reprendrait à ses tuiles.
+
+   **Le compte passe sous le titre quand il ne tient pas à côté.** À 360 px,
+   COLLECTION offre cent deux pixels de contenu ; « COLLECTION » et
+   « 10/5510 » en demandent cent trente, et un peu plus à chaque chiffre que le
+   joueur gagne. La colonne de la grille était `auto`, donc large de tout ce
+   texte. Tant que la case rognait, le compte s'y coupait en « 10/55 » sans
+   que rien le dise ; depuis qu'elle ne rogne plus — ni le cadre qu'elle a
+   été, ni le panneau qu'elle est —, le compte traversait son bord et passait
+   sous AUJOURD'HUI, et la jauge, prise dans la même colonne, débordait avec
+   lui.
+
+   `minmax(0,1fr)` tient la colonne à la largeur de la case, la jauge avec
+   elle, et `flex-wrap` envoie le compte à la ligne quand il le faut : à côté
+   du titre sur un écran large, dessous sur un téléphone. Pas de points de
+   suspension : « 10/55… » ne dit pas plus que « 10/55 » ce qu'on possède.
+
+   **La deuxième ligne ne grandit pas le duo.** C'est le cadre AUJOURD'HUI,
+   avec ses trois lignes, qui fixe la hauteur de la rangée (73,6 px mesurés à
+   360 × 640). Le titre quitte l'interligne par défaut d'Oswald (près de
+   1,5) pour 1,2, et les deux lignes se touchent : le contenu de COLLECTION
+   descend alors à 71,7 px, sous la hauteur de son voisin. Avec l'interligne
+   d'origine, il la dépassait de quatre dixièmes, et le hub, qui ne défile pas,
+   l'aurait repris à ses tuiles. */
+.collec{padding:9px 12px;text-align:left;display:grid;grid-template-columns:minmax(0,1fr);
+  gap:5px;text-decoration:none}
+.collec .t{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;
+  gap:0 8px}
+.collec .t b{font-family:var(--banner);font-size:14px;letter-spacing:.04em;line-height:1.2}
+/* **Sans valeur, rien** : ni tiret, ni jauge vide. Le compte et sa jauge
+   naissent vides et cachés, et ne paraissent qu'une fois la collection lue.
+   Un « — » dit « il y a une valeur et je ne la connais pas » ; une jauge à
+   zéro dit « tu n'as rien » — deux affirmations que l'écran n'a pas les moyens
+   de faire quand le serveur n'a pas répondu. Le panneau reste : c'est une
+   porte vers la collection, et elle mène quelque part même sans chiffre. */
+.collec .t span{font-size:12px;opacity:.9;font-variant-numeric:tabular-nums}
+.collec .t span:empty{display:none}
+/* **La jauge est l'écharpe nouée** de `ui.css` (`.tbf-jauge`), la seule
+   jauge du jeu, telle quelle : cette page ne lui écrit ni taille ni couleur.
+   Elle était un rail gris à elle, dessiné ici, et c'est sur ce panneau que la
+   direction pose l'écharpe. Les identifiants restent : le script les
+   remplit, et `accueil:ui` lit la largeur de `#collecBar`. À 10 sur 5 510,
+   l'arrondi donne 0 %, et le nœud de craie se pose au départ du rail : c'est
+   vrai, et c'est ce qu'il dit (« j'en suis là »).
+
+   **L'écart sous le compte cède deux pixels au rail**, qui en fait douze et
+   non plus dix : avec l'écart de sept d'avant, COLLECTION aurait mesuré
+   73,7 px, un dixième de plus que la rangée que fixe AUJOURD'HUI, et le hub
+   l'aurait repris à ses tuiles. Avec cinq, le panneau garde ses 71,7 px. Le
+   nœud, trois pixels au-dessus du rail, et les franges, dix en dessous,
+   débordent sans rien pousser : ils tombent dans l'écart et dans le
+   rembourrage du panneau. */
 .direct{padding:10px 13px;text-align:left;display:grid;gap:3px;align-content:center;
   text-decoration:none}
-.direct .tag{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--flare);
+/* **Le libellé rouge prend le rouge clair.** La toile neutre du cadre a la
+   teinte de `--panneau` tant que l'hypothèse H4 tient (`ui.css`, à `.pan`) :
+   le flare plein n'y fait que 4,45:1, sous les 4,5 qu'il faut à onze pixels,
+   et 2,0 au soleil — « AUJOURD'HUI » et « 67′ EN DIRECT » se lisaient mal.
+   `--flare-clair`, que l'amendement 17 donne au texte rouge posé sur le
+   parpaing, y tient 8,2:1, et 3,0 au soleil. Il reste juste si H4 tombe :
+   sur le parpaing, le flare plein descend à 3,5:1, le clair tient 6,4.
+   Le point, lui, garde le flare : ce n'est pas du texte, et il tient ses
+   3:1 de signal. */
+.direct .tag{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--flare-clair);
   font-weight:700;font-family:var(--banner);letter-spacing:.1em}
 .pt{width:7px;height:7px;border-radius:50%;background:var(--flare);animation:ping 1.8s ease-out infinite}
 @keyframes ping{0%{box-shadow:0 0 0 0 rgba(224,64,44,.55)}
@@ -627,7 +886,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    existe pour donner. Une affiche coupée ne dit pas qui joue. */
 .direct b{font-size:13px;font-weight:700;line-height:1.28;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.direct small{font-size:11px;opacity:.55;font-variant-numeric:tabular-nums}
+.direct small{font-size:11px;opacity:.9;font-variant-numeric:tabular-nums}
 /* Le bouton d'entrée est une plaque, comme tout le reste. Il avait déjà la
    tranche et l'enfoncement — c'est lui qui a donné l'idée de la plaque — mais
    il les avait pour lui seul, avec ses propres valeurs. Il ne lui reste ici que
@@ -636,12 +895,20 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .entrer{font-size:21px;letter-spacing:.06em}
 
 /* Écran court : le personnage rétrécit plutôt que de pousser le bouton
-   d'entrée sous le pli. C'est la seule bande qui peut céder. */
+   d'entrée sous le pli. C'est la seule bande qui peut céder.
+
+   **La pastille du profil n'y rétrécit plus.** Elle passait ici à trente-quatre
+   pixels, une règle d'avant `--haut-h` : la rangée du haut fait de toute façon
+   quarante-quatre pixels — le menu et les jetons la tiennent —, donc la
+   pastille n'y gagnait pas un pixel de hauteur. Elle y perdait la seule
+   chose qui compte pour un lien : sur la plupart des téléphones, barre du
+   navigateur ouverte, le profil devenait une cible de trente-quatre pixels à
+   côté de voisins de quarante-quatre. Elle garde donc la hauteur de la
+   rangée, comme le dit sa règle plus haut. */
 @media (max-height:700px){
   .hub{gap:7px}
   .entrer{padding:13px 18px;font-size:19px}
-  .jeton{padding:7px 10px;font-size:13px}
-  .pastille{width:34px;height:34px;font-size:17px}
+  .jeton{font-size:13px}
 }
 @media (min-aspect-ratio:1/1){
   .duo{grid-template-columns:1fr 1fr}
@@ -690,6 +957,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   .flotte,.pile,.bascule,.salut,.sol,.halo,.pt{animation:none !important}
   .pose{transition:none}
 }
+html[data-calme~="animations"] :is(.flotte,.pile,.bascule,.salut,.sol,.halo,.pt){
+  animation:none !important}
+html[data-calme~="animations"] .pose{transition:none}
 
 /* ================================================== l'écran d'ouverture
 
@@ -735,7 +1005,28 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   background:radial-gradient(ellipse at 50% 42%,rgba(5,7,10,.2),rgba(5,7,10,.88) 72%);
 }
 
-.ouverture .dedans{position:relative;z-index:2;text-align:center;padding:0 22px}
+.ouverture .dedans{position:relative;z-index:2;text-align:center;padding:0 16px}
+
+/* ## Le nom du jeu a son panneau
+
+   Le titre et sa ligne se posaient sur la photo de la tribune, que seuls le
+   voile et une ombre sous les lettres tenaient à distance — et le voile est
+   **le plus clair au centre**, exactement là où ils sont : 0,2, sur une photo
+   déjà à 0,55. Au soleil, la ligne de onze pixels se lisait sur la fumée des
+   fumigènes. Le socle ne laisse aucun texte à même la photo : les deux sont
+   rangés dans un panneau, le même que l'enseigne de la vitrine qui suit, et
+   les ombres sont parties avec ce qu'elles combattaient. La photo reste
+   visible tout autour ; c'est elle qui fait l'ouverture, pas le fond du titre.
+
+   Les couleurs ont leur repli écrit en clair : cet écran doit tenir quand
+   `/ui.css` n'arrive pas — voir la sortie de secours, plus bas —, et un
+   panneau qui s'efface avec la feuille de style rendrait le titre à la photo
+   le seul jour où tout le reste manque aussi. La gouttière passe de vingt-deux
+   à seize pixels pour que le panneau tienne autour du titre à 320 px de
+   large. */
+.ouverture .enseigne{padding:clamp(10px,2vh,16px) 14px;border-radius:14px;
+  background:var(--panneau,rgba(12,17,24,.94));
+  box-shadow:inset 0 0 0 1px var(--trait,rgba(242,238,228,.1))}
 
 /* L'éventail de Fanzzy. Ils se chevauchent exprès : une rangée bien alignée
    ferait un catalogue, un éventail fait une bande. */
@@ -762,22 +1053,26 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .ouverture h1{
   font-family:var(--banner);margin:0;line-height:.92;
   font-size:clamp(30px,9.4vw,46px);letter-spacing:.02em;
-  text-shadow:0 0 30px rgba(0,0,0,.9),0 4px 0 rgba(0,0,0,.5);
 }
 /* `.online` en or : le nom se lit en deux temps, et c'est le second qui dit
    que ça se joue à plusieurs. */
 .ouverture h1 span{color:var(--projo)}
+/* Pleine craie sur son panneau, comme la ligne du logo de la vitrine : à 0,9,
+   une craie retombe sous 4,5:1 au plein jour. */
 .ouverture p{
   margin:10px 0 0;font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;
-  opacity:.5;
 }
 
-/* La barre du bas : elle ne mesure rien — elle occupe. Feindre un pourcentage
-   qu'on ne connaît pas est un mensonge de plus, et il se voit quand la barre
-   saute de trente à cent. */
+/* La barre du bas. Elle ne feint pas un pourcentage de chargement qu'on ne
+   connaît pas — ce mensonge-là se voit quand la barre saute de trente à cent :
+   elle suit le temps, qu'on connaît. Voir plus bas.
+
+   Dix pixels de haut, le plancher du socle pour une jauge : à quatre, on
+   voyait un fil, pas une barre qui avance — et c'est l'avancée qui dit que
+   rien n'est bloqué. */
 .ouverture .jauge{
   position:absolute;left:50%;bottom:12%;transform:translateX(-50%);
-  width:min(210px,52vw);height:4px;border-radius:3px;overflow:hidden;
+  width:min(210px,52vw);height:10px;border-radius:5px;overflow:hidden;
   background:rgba(242,238,228,.14);
 }
 /* Elle **avance**, elle ne glisse plus en boucle. Un ruban qui va et vient est
@@ -788,7 +1083,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    La largeur est poussée par `ouverture.js`, à chaque cadre. La transition
    lisse les à-coups si un cadre saute, sans jamais la faire reculer. */
 .ouverture .jauge i{
-  display:block;height:100%;width:0;border-radius:2px;background:var(--projo);
+  display:block;height:100%;width:0;border-radius:5px;background:var(--projo);
   transition:width .18s linear;
   box-shadow:0 0 8px rgba(245,195,59,.5);
 }
@@ -822,11 +1117,17 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    secours qui emprunte `var(--projo)` est une sortie de secours qui s'éteint
    le jour où la feuille de style manque, c'est-à-dire le seul jour où elle
    sert. */
+/* Elle a son panneau, elle aussi, et pour la même raison que le titre : sa
+   phrase se posait sur la photo. Couleur écrite en clair, comme le reste de
+   la sortie. Le panneau est caché avec elle — `visibility` emporte le fond —
+   et il paraît donc en même temps que la phrase qu'il porte. */
 .ouverture .secours{opacity:0;visibility:hidden;
+  margin-top:18px;padding:14px 16px 16px;border-radius:14px;
+  background:rgba(12,17,24,.94);box-shadow:inset 0 0 0 1px rgba(242,238,228,.1);
   animation:ouvTard .45s ease 12s forwards}
 @keyframes ouvTard{to{opacity:1;visibility:visible}}
-.ouverture .secours p{margin:26px 0 0;font-size:12.5px;letter-spacing:.03em;
-  text-transform:none;opacity:.85;color:#F2EEE4;line-height:1.55}
+.ouverture .secours p{margin:0;font-size:12.5px;letter-spacing:.03em;
+  text-transform:none;color:#F2EEE4;line-height:1.55}
 .ouverture .secours button{margin-top:14px;padding:12px 22px;border-radius:9px;
   border:1px solid #F5C33B;background:none;color:#F5C33B;font:inherit;
   font-size:13.5px;letter-spacing:.08em;cursor:pointer;min-height:44px}
@@ -838,6 +1139,8 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   .ouverture .fond,.ouverture .jauge i{animation:none}
   .ouverture .bande img{animation:none;opacity:1;transform:none}
 }
+html[data-calme~="animations"] :is(.ouverture .fond,.ouverture .jauge i){animation:none}
+html[data-calme~="animations"] .ouverture .bande img{animation:none;opacity:1;transform:none}
 
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -866,8 +1169,12 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   </picture>
   <div class="dedans">
     <div class="bande" id="ouvBande" aria-hidden="true"></div>
-    <h1>THEBESTFAN<span>.ONLINE</span></h1>
-    <p>le jeu de cartes des tribunes</p>
+    <!-- Le titre et sa ligne, sur leur panneau : voir « Le nom du jeu a son
+         panneau », dans la feuille de cette page. -->
+    <div class="enseigne">
+      <h1>THEBESTFAN<span>.ONLINE</span></h1>
+      <p>le jeu de cartes des tribunes</p>
+    </div>
     <!-- Invisible douze secondes, puis visible. Aucun script ne la montre :
          c'est une animation CSS écrite dans cette page, et le bouton n'appelle
          que `location.reload()`. Elle tient donc debout le jour où plus rien
@@ -945,7 +1252,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
     d.innerHTML = '<div style="max-width:340px">'
       + '<b style="display:block;font-size:18px;letter-spacing:.12em;margin-bottom:14px">'
       + 'LE JEU N’A PAS PU SE CHARGER</b>'
-      + '<small style="opacity:.6;font-size:13px">La connexion a lâché en cours de '
+      + '<small style="opacity:.9;font-size:13px">La connexion a lâché en cours de '
       + 'route. Rien n’est perdu : tout est resté sur le serveur.</small>'
       + '<div><button type="button" style="margin-top:22px;padding:12px 22px;'
       + 'border-radius:9px;border:1px solid #F5C33B;background:none;color:#F5C33B;'
@@ -980,7 +1287,10 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   <div class="tbf-decor" id="fond"></div><div class="tbf-grad"></div>
 
   <div class="wrap" id="vitrine">
-    <div class="pitch">
+    <!-- L'enseigne : un seul panneau pour tout ce qui se lit avant les trois
+         promesses. Voir « Chaque ligne de la vitrine a son panneau », dans la
+         feuille de style. -->
+    <div class="pitch pan">
       <img class="embleme" src="/img/logo.avif" alt=""
         onerror="this.onerror=null;this.src='/img/logo.png'">
       <div class="logo">THE<em>BEST</em>FAN<small>LE JEU DES TRIBUNES</small></div>
@@ -1009,21 +1319,23 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
          promesse — « la ferveur suit le vrai match » — n'est pas une phrase.
          Rempli et ouvert par `garnirVitrine()` ; voir la note de `.preuve`
          dans la feuille de style pour le pourquoi de la place et du silence. -->
-    <section class="preuve" id="vDirect" hidden>
-      <h3><i id="vPoint" hidden></i><span id="vTitre">Les matchs du jour</span></h3>
+    <section class="preuve pan" id="vDirect" hidden>
+      <h3 class="tbf-cousu"><span><i id="vPoint" hidden></i><span
+        id="vTitre">Les matchs du jour</span></span></h3>
       <div class="scores" id="vScores"></div>
       <a class="plus" href="/matchs">Tous les matchs ›</a>
     </section>
 
     <a class="cta tbf-plaque tbf-bloc tbf-grande" data-ton="flare"
       href="/compte">PRENDRE MA PLACE</a>
-    <a class="second" href="/compte">Déjà une place ? <b>Se connecter</b></a>
+    <!-- Le `<span>` porte le panneau de la phrase : voir `.second`. -->
+    <a class="second" href="/compte"><span>Déjà une place ? <b>Se connecter</b></span></a>
 
     <!-- Les visages, sous le bouton : ils ne décident personne, ils
          rassurent. Tirés au hasard à chaque visite — la vitrine ne montre pas
          huit cartes, elle montre qu'il y en a beaucoup. -->
-    <section class="preuve" id="vGalerie" hidden>
-      <h3><span>Les supporters à collectionner</span></h3>
+    <section class="preuve pan" id="vGalerie" hidden>
+      <h3 class="tbf-cousu"><span>Les supporters à collectionner</span></h3>
       <div class="eventail" id="vEventail"></div>
       <p class="combien" id="vCombien"></p>
     </section>
@@ -1052,7 +1364,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
          de deux façons, c'est deux objets à apprendre. -->
     <header class="haut">
       <a class="moi" href="/profil" aria-label="Mon profil">
-        <span class="pastille"><span id="initiale">—</span>
+        <span class="pastille"><span id="initiale"></span>
           <i class="niv" id="nivPastille" hidden></i></span>
       </a>
       <div class="bourse">
@@ -1070,11 +1382,11 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
                jeu dessine une écharpe partout ailleurs (`.tbf-echarpe`), et à
                cette taille il ne reste de toute façon que la silhouette. -->
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5"/><path d="M8 8.5 6 15.5M13 8.5l-2 7M18 8.5l-2 7"/></svg>
-          <span id="scarves">0</span><b class="plus" aria-hidden="true">+</b></a>
+          <span id="scarves"></span><b class="plus" aria-hidden="true">+</b></a>
         <a class="jeton pack" href="/boutique"
            aria-label="Mes boosters — aller à la boutique">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg>
-          <span id="packs">0</span><b class="plus" aria-hidden="true">+</b></a>
+          <span id="packs"></span><b class="plus" aria-hidden="true">+</b></a>
         <button class="tbf-plaque burger tbf-burger" id="burger" aria-label="Menu"
           ><span></span><span></span><span></span></button>
       </div>
@@ -1188,19 +1500,23 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
         <small id="quiEvo" aria-live="polite"></small>
         <button type="button" class="fl" id="ageApres" aria-label="L’âge suivant" hidden>›</button>
       </div>
-      <button type="button" class="cestlui" id="ageValider" hidden>C’est lui, partout</button>
+      <button type="button" class="cestlui tbf-plaque" data-ton="or" id="ageValider"
+        hidden>C’est lui, partout</button>
     </div>
 
     <footer class="bas">
-      <!-- Caché par défaut, comme l'invite d'installation : il ne paraît que
-           lorsqu'il y a vraiment quelque chose à proposer. Voir `premiersPas`. -->
+      <!-- Caché par défaut : il ne paraît que lorsqu'il y a vraiment quelque
+           chose à proposer. Voir « les premiers pas », plus bas. -->
       <a class="pas1" id="pas1" href="/aide" hidden></a>
       <div class="duo">
-        <a class="tbf-cadre collec" href="/collection">
-          <span class="t"><b>COLLECTION</b><span id="collecTxt">—</span></span>
-          <span class="jauge"><i id="collecBar"></i></span>
+        <!-- Le compte et la jauge naissent vides : voir « Sans valeur, rien »
+             dans la feuille de cette page. Un panneau calme à gauche, le seul
+             cadre de l'écran à droite : voir « Un seul cadre dans le duo ». -->
+        <a class="pan collec" href="/collection">
+          <span class="t"><b>COLLECTION</b><span id="collecTxt"></span></span>
+          <span class="tbf-jauge" id="collecJauge" hidden><i id="collecBar"></i></span>
         </a>
-        <a class="tbf-cadre direct" id="direct" href="/matchs">
+        <a class="tbf-cadre direct" id="direct" href="/matchs" data-echarpe>
           <span class="tag"><span class="pt"></span><span id="directTag">AUJOURD’HUI</span></span>
           <b id="directNom">Aucun match en cours</b>
           <small id="directSous">Tes clubs ne jouent pas maintenant</small>
@@ -1208,10 +1524,11 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
       </div>
       <a class="entrer tbf-plaque tbf-bloc tbf-grande" data-ton="flare"
         id="entrer" href="/duel-nvn">Prendre ma place</a>
-      <!-- Installer le jeu sur l'appareil. Caché par défaut : il ne paraît que
-           lorsqu'il y a vraiment quelque chose à proposer — voir
-           `inviterInstallation`. -->
-      <div class="installe" id="installe" hidden></div>
+      <!-- « Installer l'application » n'est plus ici : elle est passée dans le
+           tiroir (menu.js), où tout joueur connecté la retrouve depuis
+           n'importe quel écran. Sur l'accueil, elle poussait le bouton
+           d'entrée vers le haut les jours où elle paraissait, et le reprenait
+           les jours où elle ne paraissait pas. -->
     </footer>
 
   </div>
@@ -1585,8 +1902,14 @@ function nommer(p) {
   $('quiNom').textContent = nom;
   /* La coche dit « c'est celui-là qu'on voit de toi ». Elle tient lieu d'état
      au repos du bouton, qui n'est pas là : deux signes pour la même chose — un
-     bouton grisé *et* une coche — feraient hésiter sur lequel lire. */
-  const coche = nom && p.evo === lignee.choisi && lignee.atteint > 1 ? ' ✓' : '';
+     bouton grisé *et* une coche — feraient hésiter sur lequel lire.
+
+     **Une icône au trait, plus un caractère.** Le « ✓ » se dessinait avec la
+     police d'émojis du téléphone — en couleur sur l'un, en gras sur l'autre —
+     à côté des icônes au trait du jeu. La coche de `ui.css` prend l'or de la
+     plaque ; son nom reste lisible par un lecteur d'écran, puisqu'elle est
+     seule à dire cet état. */
+  const coche = Boolean(nom) && p.evo === lignee.choisi && lignee.atteint > 1;
   /* **Et la plaque ne promet pas un dessin qui n'existe pas.**
 
      Cent trente-six lignées sur deux cent cinquante-six ont leur carte du
@@ -1599,8 +1922,17 @@ function nommer(p) {
      Le repli reste : un dessin un peu plus jeune vaut mieux qu'un cadre vide.
      C'est la phrase qui change. */
   const promis = nom && (p?.ages ?? 1) > 1 && !dessineA(p.evo) ? ' · dessin à venir' : '';
-  $('quiEvo').textContent = (p?.ages ?? 1) > 1
-    ? `ÉVOLUTION ${p.evo} / ${p.ages}${coche}${promis}` : '';
+  const evo = $('quiEvo');
+  evo.replaceChildren();
+  if ((p?.ages ?? 1) > 1) {
+    evo.append(`ÉVOLUTION ${p.evo} / ${p.ages}`);
+    if (coche) {
+      evo.append(' ');
+      evo.insertAdjacentHTML('beforeend', '<i class="tbf-ico tbf-ico-coche" role="img"'
+        + ' aria-label="c’est lui que les autres voient"></i>');
+    }
+    if (promis) evo.append(promis);
+  }
   $('qui').classList.toggle('on', Boolean(nom));
   decorer(p);
   commandes();
@@ -2162,6 +2494,57 @@ async function garnirVitrine() {
 
 /* ------------------------------------------------------------ le hub */
 
+/* ---------------------------------------------------- la bourse qui compte
+
+   Les écharpes et les boosters sont les deux nombres que le joueur surveille,
+   et ils changent **ailleurs** : on dépense à la boutique, on ouvre au kiosque,
+   puis on revient ici. L'accueil sautait alors d'un chiffre à l'autre — ou de
+   zéro au bon chiffre — sans rien montrer de ce qui s'était passé.
+
+   On retient donc d'une visite à l'autre ce que la bourse affichait, **pour ce
+   compte-là** — deux joueurs sur un même téléphone ne se prêtent pas leurs
+   soldes —, et on le repeint dès que le hub s'ouvre. Quand le serveur répond
+   autre chose, le chiffre **compte** jusqu'à la vérité : il descend après une
+   dépense, il monte après un gain. `FX.compter` est appelé gardé, comme
+   partout : fx.js arrive en différé et peut manquer, le chiffre se pose alors
+   sans compter.
+
+   Sans souvenir, ou sous le rideau de l'ouverture, il se pose aussi sans
+   compter. Un compteur qui monterait de zéro à chaque première visite dirait
+   « tu viens de gagner tout ça » ; un compte joué derrière un rideau n'est vu
+   de personne.
+
+   Et tant que rien n'est connu, rien ne s'affiche : le « 0 » écrit dans la
+   page mentait pendant tout le chargement, et pour toujours si le serveur ne
+   répondait pas. */
+const BOURSE = 'tbf.bourse';
+const SOLDES = ['scarves', 'packs'];
+
+/** Repeint la bourse de la dernière visite, avant que le serveur ait parlé. */
+function reprendreBourse(qui) {
+  let b = null;
+  try { b = JSON.parse(localStorage.getItem(BOURSE) ?? 'null'); } catch { return; }
+  if (!b || b.qui !== qui) return;
+  for (const id of SOLDES) if (Number.isFinite(b[id])) $(id).textContent = String(b[id]);
+}
+
+/** Pose la bourse lue au serveur, en comptant depuis ce qui est à l'écran. */
+function poserBourse(qui, soldes) {
+  const rideau = Boolean(document.getElementById('ouverture'));
+  const retenue = { qui };
+  for (const id of SOLDES) {
+    const el = $(id);
+    const apres = Number(soldes[id]) || 0;
+    const avant = el.textContent.trim() === '' ? NaN : Number(el.textContent);
+    retenue[id] = apres;
+    if (!Number.isFinite(avant) || avant === apres || rideau) el.textContent = String(apres);
+    else if (window.FX?.compter) window.FX.compter(el, avant, apres);
+    else el.textContent = String(apres);
+  }
+  try { localStorage.setItem(BOURSE, JSON.stringify(retenue)); }
+  catch { /* stockage refusé : la prochaine visite repartira sans souvenir */ }
+}
+
 /**
  * Une lecture d'API, et ce qu'elle rend quand le serveur ne répond pas ce
  * qu'on attend.
@@ -2228,6 +2611,8 @@ async function lire(url, options) {
      sont vides, et il ne restait qu'un rectangle noir sous la pastille. Les
      deux se lisent au profil, qui est à un doigt d'ici. */
   $('initiale').textContent = (user.pseudo ?? '?').trim().charAt(0).toLowerCase() || '?';
+  // La bourse de la dernière visite, en attendant celle du serveur.
+  reprendreBourse(user.id);
   /* L'entrée d'administration n'est plus décidée ici. Elle se lisait sur
      `user.role`, pendant que les autres pages interrogeaient `estAdmin` côté
      serveur : deux réponses possibles à la même question. menu.js ne garde que
@@ -2268,10 +2653,22 @@ async function lire(url, options) {
     const st = await P.etat;
     // Inscrit mais jamais passé par la cérémonie : on l'y emmène.
     if (st && st.onboarded === false) { location.href = '/bienvenue'; return; }
-    $('scarves').textContent = st.scarves ?? 0;
-    $('packs').textContent = st.packs ?? 0;
+    /* Un refus du serveur arrive lui aussi en JSON — voir `lire` —, sans
+       solde dedans. On ne le traduit plus en « 0 » : la bourse garde ce
+       qu'elle affichait, ou reste vide. */
+    if (st?.scarves !== undefined) poserBourse(user.id, st);
     for (const f of st.follows ?? []) mesClubs.add(f.team_id ?? f.id);
   } catch { /* module non monté */ }
+
+  /* Revenir par la flèche du navigateur peut rendre l'accueil tel qu'on l'avait
+     quitté, sans le recharger : c'est le cache de navigation arrière. La
+     bourse y serait restée d'avant l'achat. On la relit donc, et elle compte
+     depuis ce qu'elle montrait. */
+  addEventListener('pageshow', async (e) => {
+    if (!e.persisted) return;
+    const st = await lire('/api/me/state', { credentials: 'same-origin' }).catch(() => null);
+    if (st?.scarves !== undefined) poserBourse(user.id, st);
+  });
 
   /* ------------------------------------------------------- le niveau
 
@@ -2337,6 +2734,11 @@ async function lire(url, options) {
       ?? Math.max(dex?.aCollectionner ?? (dex?.dex ?? []).length, eus);
     if (total) {
       $('collecTxt').textContent = `${eus}/${total}`;
+      /* La jauge sort de sa cachette **avant** d'être remplie, et on laisse le
+         navigateur la mesurer vide : sans ce temps, elle naîtrait déjà pleine
+         et la transition qui la fait monter ne se jouerait pas. */
+      $('collecJauge').hidden = false;
+      void $('collecJauge').offsetWidth;
       $('collecBar').style.width = `${Math.round((eus / total) * 100)}%`;
       const reste = Math.max(0, total - eus);
       if (reste) $('caseFanzzy').dataset.pastille = reste;
@@ -2567,50 +2969,15 @@ async function lire(url, options) {
 
 /* ------------------------------------------- installer le jeu sur l'appareil
 
-   Le navigateur propose l'installation **une fois**, très tôt, puis l'enterre
-   dans un menu que personne n'ouvre. `pwa.js` retient cette proposition ; il
-   ne reste qu'à offrir un endroit où la reprendre.
+   L'invitation vivait ici, dans le pied de l'accueil, et elle en est partie :
+   elle est **dans le tiroir** (menu.js), avec ses trois cas — le navigateur
+   sait installer, c'est un iPhone qu'il faut guider, le jeu est déjà
+   installé et on ne propose rien. Le tiroir s'ouvre depuis tous les écrans ;
+   le pied de l'accueil, lui, était l'endroit le plus serré du jeu, et une
+   ligne qui paraît certains jours et pas d'autres y faisait monter et
+   descendre le bouton d'entrée. `pwa.js` reste chargé plus bas : c'est lui qui
+   retient la proposition du navigateur, pour le tiroir. */
 
-   Trois cas, et le troisième est celui qu'on oublie toujours :
-
-     — le navigateur sait installer : un bouton, et le geste est fait ;
-     — c'est un iPhone : Safari ne sait pas installer tout seul et n'envoie
-       aucun événement. On ne peut qu'expliquer le geste — et ne rien dire
-       serait pire, puisque aucun autre chemin ne mène à l'icône ;
-     — le jeu tourne **déjà** comme une application : on ne propose rien. Un
-       bouton « installer » dans une application installée est la meilleure
-       façon de faire douter quelqu'un de ce qu'il a sous les yeux.
-
-   La ligne ne s'affiche donc jamais pour rien. */
-function inviterInstallation() {
-  const zone = $('installe');
-  if (!zone) return;
-  const p = window.TBF_PWA;
-
-  if (!p || p.installe) { zone.hidden = true; return; }
-
-  if (p.possible) {
-    zone.hidden = false;
-    zone.innerHTML = '<button id="poser">Installer l’application</button>';
-    $('poser').onclick = () => p.installer();
-    return;
-  }
-
-  if (p.ios) {
-    zone.hidden = false;
-    zone.innerHTML = '<small>Pour l’avoir en plein écran : '
-      + '<b>Partager</b>, puis <b>Sur l’écran d’accueil</b>.</small>';
-    return;
-  }
-
-  zone.hidden = true;
-}
-
-/* `pwa.js` est chargé en `defer` : il peut arriver après ce script, et la
-   proposition du navigateur plus tard encore. On écoute donc, au lieu de
-   regarder une fois. */
-window.addEventListener('tbf-pwa', inviterInstallation);
-inviterInstallation();
 /* ------------------------------------------- quelqu'un attend un duel
 
    Une file de duel ne vit que deux minutes, le temps qu'un joueur est devant

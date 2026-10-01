@@ -18,7 +18,9 @@ body{background:radial-gradient(120% 50% at 50% -8%,rgba(245,195,59,.13),transpa
 main{width:100%;max-width:var(--colonne)}
 h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em;margin:0 0 4px;text-align:center}
 .search{position:relative;margin-bottom:14px}
-input{width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.16);border-radius:8px;
+/* Le champ se pose sur la photo de tribune : il prend le panneau opaque
+   commun, sans quoi la foule passait sous ce qu'on tape. */
+input{width:100%;background:var(--panneau);border:1px solid rgba(242,238,228,.16);border-radius:8px;
   color:var(--craie);padding:13px 14px;font-size:15px;font-family:inherit}
 input:focus{outline:none;border-color:var(--projo)}
 .results{position:absolute;top:100%;left:0;right:0;margin-top:6px;background:#171C23;z-index:5;
@@ -30,15 +32,23 @@ input:focus{outline:none;border-color:var(--projo)}
 .results button:first-child{border-top:0}
 .results button:hover{background:rgba(242,238,228,.06)}
 .results img,.club img{width:22px;height:22px;object-fit:contain;flex:none}
-.results small{opacity:.45;font-size:11.5px}
-.team{border:1px solid rgba(242,238,228,.13);border-radius:10px;background:rgba(0,0,0,.25);
+.results small{opacity:.88;font-size:11.5px}
+/* La carte d'un club est un panneau opaque : les résultats et le calendrier
+   étaient posés sur un voile noir à 25 %, c'est-à-dire sur la foule. */
+.team{border:1px solid rgba(242,238,228,.13);border-radius:10px;background:var(--panneau);
   margin-bottom:12px;overflow:hidden}
 .club{display:flex;align-items:center;gap:11px;padding:14px;border-bottom:1px solid rgba(242,238,228,.09)}
 .club img{width:28px;height:28px}
 .club b{font-family:var(--banner);font-size:16px;letter-spacing:.03em;flex:1}
-.club .main{font-size:9.5px;letter-spacing:.14em;color:var(--projo);border:1px solid rgba(245,195,59,.4);
+.club .main{font-size:11px;letter-spacing:.12em;color:var(--projo);border:1px solid rgba(245,195,59,.4);
   border-radius:3px;padding:2px 6px}
-.club button{background:none;border:0;color:inherit;opacity:.35;cursor:pointer;font-size:18px;padding:0 2px}
+/* La croix qui retire un club : un bouton-icône, et il fait quarante-quatre
+   pixels comme tout ce qui se touche. Il en faisait vingt-deux, à côté du nom
+   du club qu'on vient voir — la marge négative rend la hauteur prise à la
+   ligne, qui ne grandit pas. */
+.club button{background:none;border:0;color:inherit;opacity:.7;cursor:pointer;font-size:18px;padding:0;
+  min-width:44px;min-height:44px;margin:-10px -8px -10px 0;
+  display:inline-flex;align-items:center;justify-content:center}
 .match{display:flex;align-items:center;gap:10px;padding:11px 14px;font-size:13.5px;
   border-top:1px solid rgba(242,238,228,.07)}
 .match .side{flex:1;display:flex;align-items:center;gap:7px;min-width:0}
@@ -46,16 +56,19 @@ input:focus{outline:none;border-color:var(--projo)}
 .match .side span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .match img{width:18px;height:18px;object-fit:contain;flex:none}
 .score{font-family:var(--banner);font-size:17px;letter-spacing:.06em;min-width:52px;text-align:center}
-.when{font-size:11px;opacity:.45;min-width:52px;text-align:center;line-height:1.3}
+.when{font-size:11px;opacity:.88;min-width:52px;text-align:center;line-height:1.3}
 .live{color:var(--flare);font-weight:600;font-size:11px;letter-spacing:.06em}
 /* La minute, sous le score, pour qu’un match en cours ne ressemble pas à un
    match terminé. */
-.score .live{display:block;font-size:10px;margin-top:3px;font-family:var(--ui)}
+.score .live{display:block;font-size:11px;margin-top:3px;font-family:var(--ui)}
 .live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
   background:var(--flare);margin-right:5px;animation:pulse 1.4s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
-.section{font-size:10px;letter-spacing:.18em;opacity:.4;padding:10px 14px 2px;text-transform:uppercase}
-.empty{text-align:center;padding:44px 20px;opacity:.5;font-size:13.5px;line-height:1.7}
+.section{font-size:11px;letter-spacing:.14em;opacity:.88;padding:10px 14px 2px;text-transform:uppercase}
+/* Le message d'une liste vide — ou d'un serveur muet — se posait à même la
+   photo. Il a son panneau, comme le reste de la page. */
+.empty{text-align:center;padding:44px 20px;opacity:.9;font-size:13.5px;line-height:1.7;
+  background:var(--panneau);border:1px solid var(--trait);border-radius:var(--r)}
 .empty a{color:var(--projo)}
 .flash{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;background:#171C23;
   border:1px solid var(--flare);border-radius:8px;padding:13px 18px;font-size:13.5px;z-index:20;
@@ -67,9 +80,27 @@ input:focus{outline:none;border-color:var(--projo)}
    sortir. Dans le flux de la page et non en bandeau flottant — il répond à un
    geste qu'on vient de faire juste au-dessus, et il doit rester lisible le
    temps de choisir quel club retirer. */
-.mot{display:none;border:1px solid rgba(245,195,59,.45);background:rgba(245,195,59,.09);
+.mot{display:none;border:1px solid rgba(245,195,59,.45);
+  background:linear-gradient(rgba(245,195,59,.09),rgba(245,195,59,.09)),var(--panneau);
   border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.6;margin-bottom:14px}
-.mot.on{display:block;animation:rise .3s cubic-bezier(.2,.8,.3,1)}
+/* Sa propre montée, pas celle du bandeau : `rise` porte le `translate(-50%)`
+   qui centre un bandeau fixe, et le mot, qui est dans le flux, glissait d'une
+   demi-largeur vers la gauche avant de sauter à sa place. */
+.mot.on{display:block;animation:riseMot .3s cubic-bezier(.2,.8,.3,1)}
+@keyframes riseMot{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* Moins de mouvement, demandé au système ou dans le tiroir (le mode calme,
+   contrat C4 — un sélecteur d'attribut n'entre pas dans une requête @media,
+   d'où le double, règle pour règle). Le point du direct cesse de battre et
+   reste allumé : c'est lui qui dit « en cours », pas son battement. Le
+   bandeau d'un but et le mot du serveur paraissent à leur place, sans
+   monter. */
+@media (prefers-reduced-motion:reduce){
+  .live::before,.flash.on,.mot.on{animation:none}
+}
+html[data-calme~="animations"] .live::before,
+html[data-calme~="animations"] .flash.on,
+html[data-calme~="animations"] .mot.on{animation:none}
 
 /* **Le bas de la page, et la barre du navigateur mobile.**
 
@@ -127,26 +158,30 @@ const I18N = {
   fr:{title:'MES ÉQUIPES',subtitle:'résultats, calendrier, direct',search:'Chercher un club…',
     next:'à venir',last:'derniers résultats',live:'EN DIRECT',today:"aujourd'hui",tomorrow:'demain',
     empty:'Tu ne suis aucun club. Cherche-le ci-dessus pour voir ses résultats et recevoir ses buts en direct.',
-    login:'Connecte-toi pour suivre tes clubs.',goal:'BUT DE {team} — {player} {minute}\u2032',
+    login:'Connecte-toi pour suivre tes clubs.',goal:'BUT DE {team}',goalSeul:'BUT !',
     nothing:'Aucun club trouvé.',main:'PRINCIPAL',plein:'Tu suis déjà {n} clubs sur {t}. Retire-en un, ou achète un emplacement depuis ton profil.',
+    pleinSans:'Tu n’as plus d’emplacement libre. Retire un club, ou achète un emplacement depuis ton profil.',
     panne:'Le serveur ne répond pas. Tes clubs sont toujours là — la page se remet à jour toute seule.'},
   en:{title:'MY TEAMS',subtitle:'results, fixtures, live',search:'Search for a club…',
     next:'upcoming',last:'latest results',live:'LIVE',today:'today',tomorrow:'tomorrow',
     empty:'You follow no club yet. Search above to see its results and get its goals live.',
-    login:'Sign in to follow your clubs.',goal:'{team} SCORES — {player} {minute}\u2032',
+    login:'Sign in to follow your clubs.',goal:'{team} SCORES',goalSeul:'GOAL!',
     nothing:'No club found.',main:'MAIN',plein:'You already follow {n} clubs out of {t}. Remove one, or buy a slot from your profile.',
+    pleinSans:'You have no free slot left. Remove a club, or buy a slot from your profile.',
     panne:'The server is not responding. Your clubs are still there — this page refreshes itself.'},
   de:{title:'MEINE TEAMS',subtitle:'Ergebnisse, Spielplan, live',search:'Verein suchen…',
     next:'kommende Spiele',last:'letzte Ergebnisse',live:'LIVE',today:'heute',tomorrow:'morgen',
     empty:'Du folgst noch keinem Verein. Suche oben, um Ergebnisse und Tore live zu bekommen.',
-    login:'Melde dich an, um Vereinen zu folgen.',goal:'TOR FÜR {team} — {player} {minute}\u2032',
+    login:'Melde dich an, um Vereinen zu folgen.',goal:'TOR FÜR {team}',goalSeul:'TOR!',
     nothing:'Kein Verein gefunden.',main:'HAUPT',plein:'Du folgst bereits {n} von {t} Vereinen. Entferne einen oder kaufe einen Platz im Profil.',
+    pleinSans:'Du hast keinen freien Platz mehr. Entferne einen Verein oder kaufe einen Platz im Profil.',
     panne:'Der Server antwortet nicht. Deine Vereine sind noch da — die Seite aktualisiert sich von selbst.'},
   es:{title:'MIS EQUIPOS',subtitle:'resultados, calendario, directo',search:'Buscar un club…',
     next:'próximos',last:'últimos resultados',live:'EN DIRECTO',today:'hoy',tomorrow:'mañana',
     empty:'No sigues ningún club. Búscalo arriba para ver resultados y recibir sus goles en directo.',
-    login:'Entra para seguir a tus clubes.',goal:'GOL DE {team} — {player} {minute}\u2032',
+    login:'Entra para seguir a tus clubes.',goal:'GOL DE {team}',goalSeul:'¡GOL!',
     nothing:'No se encontró ningún club.',main:'PRINCIPAL',plein:'Ya sigues {n} clubes de {t}. Quita uno o compra una plaza desde tu perfil.',
+    pleinSans:'Ya no te queda ninguna plaza libre. Quita un club o compra una plaza desde tu perfil.',
     panne:'El servidor no responde. Tus clubes siguen ahí — la página se actualiza sola.'},
 };
 const LOCALES = ['fr','en','de','es'];
@@ -260,7 +295,8 @@ function when(f){
   const min = enCours(f);
   if (min) return `<span class="live">${min}</span>`;
   const d = toDate(f.kickoff_at);
-  if (!d) return '—';
+  // Sans date, rien : un tiret entre deux équipes se lit comme un score.
+  if (!d) return '';
   const days = Math.round((d - new Date().setHours(0,0,0,0)) / 864e5);
   const hm = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   if (days === 0) return `${t('today')}<br>${hm}`;
@@ -369,7 +405,7 @@ $('q').oninput = () => {
           ${plein && !feed.some((row) => row.team.id === x.id) ? 'disabled' : ''}>
           <img src="${esc(x.logo)}" alt="">
           <span>${esc(x.name)}</span> <small>${esc(x.country ?? '')}</small></button>`).join('')
-      : `<button disabled style="opacity:.5">${t('nothing')}</button>`;
+      : `<button disabled style="opacity:.88">${t('nothing')}</button>`;
     $('results').classList.add('on');
   }, 320);
 };
@@ -385,8 +421,13 @@ $('results').onclick = async e => {
      cliquait, rien ne se passait, et le club n'apparaissait pas — ce qui se
      lit comme une panne et fait recommencer. Le serveur envoie le compte et
      le plafond ; on les écrit. */
+  /* Sans le compte ou le plafond, la phrase se dit sans chiffres : « Tu suis
+     déjà ? clubs sur ? » affichait deux points d'interrogation à la place de
+     deux nombres, ce qui se lit comme une panne et non comme une règle. */
   if (r.json?.error === 'onboarding.error.no_slot') {
-    dire(t('plein', { n: r.json.suivis ?? '?', t: r.json.slots ?? '?' }));
+    const n = r.json.suivis ?? feed.length;
+    const plafond = r.json.slots ?? slots;
+    dire(plafond ? t('plein', { n, t: plafond }) : t('pleinSans'));
     return;
   }
   /* Une panne réseau n'a pas de code à montrer : `dire(r.json.error)` plus bas
@@ -445,9 +486,16 @@ function onGoal(g){
   const mine = feed.some(r => r.team.id === g.teamId);
   const team = g.teamId === g.home?.id ? g.home?.name : g.away?.name;
   const el = $('flash');
-  el.innerHTML = (mine ? '<b>' : '') + t('goal', {
-    team: esc(team ?? ''), player: esc(g.player ?? ''), minute: g.minute ?? '',
-  }) + (mine ? '</b>' : '');
+  /* Le buteur et la minute ne s'écrivent que s'ils sont connus. Ils étaient
+     dans la phrase traduite : sans eux, le bandeau finissait par « — ′ », un
+     tiret et un signe de minute autour de rien, ce qui se lit comme une
+     donnée perdue. Sans équipe, il dit le but, et c'est tout. */
+  const qui = [
+    g.player ? esc(g.player) : '',
+    g.minute != null && g.minute !== '' ? `${esc(g.minute)}′` : '',
+  ].filter(Boolean).join(' ');
+  const tete = team ? t('goal', { team: esc(team) }) : t('goalSeul');
+  el.innerHTML = (mine ? '<b>' : '') + tete + (qui ? ` — ${qui}` : '') + (mine ? '</b>' : '');
   el.className = 'flash on';
   clearTimeout(el._t);
   el._t = setTimeout(() => { el.className = 'flash'; }, 6000);
