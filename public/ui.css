@@ -145,14 +145,15 @@
 
   /* **Le grain.** Trois tuiles de 256 px, fabriquées par `sharp` et servies
      comme toute image du jeu : le serveur choisit l'AVIF ou le WebP d'après
-     `Accept`, sous l'adresse du WebP, quand un AVIF existe — celui de la
-     toile n'existe pas, il pèserait le double du WebP (voir
-     `scripts/grain-images.mjs`). Le béton pour le mur et le panneau calme, la
-     toile pour les bâches, le papier pour le kraft. Une image et non un
-     filtre SVG de bruit : `feTurbulence` se recalcule à chaque peinture, sur
-     chaque surface, et c'est le calcul qu'un téléphone modeste paie le plus
-     cher ; une tuile se décode une fois. Si elle manque, la surface reste
-     unie — le grain est une nuance, pas une information.
+     `Accept`, sous l'adresse du WebP, quand un AVIF existe — seul le papier
+     en a un ; ceux du béton et de la toile pèseraient le double du WebP, et
+     ils ne sont pas écrits (voir `scripts/grain-images.mjs`). Le béton pour
+     le mur et le panneau calme, la toile pour les bâches, le papier pour le
+     kraft. Une image et non un filtre SVG de bruit : `feTurbulence` se
+     recalcule à chaque peinture, sur chaque surface, et c'est le calcul
+     qu'un téléphone modeste paie le plus cher ; une tuile se décode une
+     fois. Si elle manque, la surface reste unie — le grain est une nuance,
+     pas une information.
 
      Chaque tuile est un voile transparent d'une seule teinte, qui se pose
      par-dessus la couleur de la surface (`url 0 0/256px 256px repeat`, puis
@@ -160,10 +161,25 @@
      le papier. **Une recette qui change change l'adresse** : `?v=2` sur les
      trois, car `/img` est servi « immutable » pendant un an et le service
      worker le garde en cache d'abord — une tuile refaite sous la même
-     adresse n'arriverait chez personne. */
-  --grain-beton:url("/img/grain/beton.webp");
-  --grain-toile:url("/img/grain/toile.webp");
-  --grain-papier:url("/img/grain/papier.webp");
+     adresse n'arriverait chez personne. Les adresses nues ont porté
+     plusieurs recettes pendant le lot 1, la dernière reprise le 1er octobre
+     à 18 h 37 sous la même adresse : qui en a gardé une plus ancienne la
+     garderait un an. `?v=2` est une adresse qu'aucune recette d'avant n'a
+     portée ; la prochaine recette prend `?v=3` — sur les deux tailles, si
+     c'est le béton.
+
+     **Le béton a deux tailles.** Agrandie deux à trois fois par un écran
+     dense, la tuile de 256 fait de chaque grain une tache floue ; `beton@2x`,
+     la même recette tirée en 512, garde le grain net, et le navigateur
+     choisit par `image-set`. `--grain-beton` ne vaut ici que la première
+     taille : c'est le repli de qui ne connaît pas `image-set`, et les deux
+     règles qui suivent `:root` le remplacent par les deux tailles. Chaque
+     adresse n'est écrite qu'une fois, dans `--grain-beton-1x` et `-2x`. */
+  --grain-beton-1x:url("/img/grain/beton.webp?v=2");
+  --grain-beton-2x:url("/img/grain/beton@2x.webp?v=2");
+  --grain-beton:var(--grain-beton-1x);
+  --grain-toile:url("/img/grain/toile.webp?v=2");
+  --grain-papier:url("/img/grain/papier.webp?v=2");
 
   /* **Les trois tracés du marqueur**, le cerne de toute bâche (voir « La
      bâche », plus bas). Un carré de quarante unités, découpé en neuf
@@ -244,6 +260,25 @@
    * Une page qui écrit sa largeur en dur redevient une exception qu'il faudra
    * retrouver. */
   --colonne:min(100vw, 900px);
+}
+
+/* **Le béton aux écrans denses** : les deux tailles de la tuile, et le
+   navigateur prend celle de son écran (voir « Le grain », dans `:root`).
+
+   Derrière `@supports`, et pas en repli de cascade. `--grain-beton` entre
+   dans des listes de fonds qui portent aussi le reste de la surface : un
+   navigateur qui ne lirait pas `image-set` trouverait, une fois la variable
+   remplacée, une déclaration invalide, et le mur perdrait son voile, le
+   panneau calme sa couleur, avec leur grain. Une variable ne se rattrape
+   pas par une seconde déclaration — elle n'est jugée qu'à l'usage. D'où la
+   question posée avant : la forme préfixée pour les Safari et les Chrome qui
+   ne connaissent qu'elle, la forme normale ensuite, qui l'emporte quand les
+   deux passent. */
+@supports (background-image:-webkit-image-set(url("/x") 1x)){
+  :root{--grain-beton:-webkit-image-set(var(--grain-beton-1x) 1x,var(--grain-beton-2x) 2x)}
+}
+@supports (background-image:image-set(url("/x") 1x)){
+  :root{--grain-beton:image-set(var(--grain-beton-1x) 1x,var(--grain-beton-2x) 2x)}
 }
 
 /* ------------------------------------------------------------- la rareté
@@ -1047,7 +1082,7 @@ html[data-calme~="animations"] .tbf-compte{animation:none}
    Le tampon et le pochoir ont chacun leur courte table, plus bas dans le
    vocabulaire : ils n'ont pas de face, ils écrivent leur ton dans sa version
    claire sur le mur — et le tampon dans sa version foncée sur la craie et le
-   kraft.
+   kraft, comme l'étiquette d'un état (voir « l'étiquette »).
    `--cerne` reste déclaré, égal à l'encre, parce qu'une page s'en sert pour
    cerner un point de couleur posé sur une bâche (les filtres de `/fanzzy`).
 
@@ -1366,10 +1401,24 @@ html[data-calme~="animations"] .tbf-case:active{transform:none;filter:brightness
    qui passe le seuil dehors.
 
    Une étiquette peut porter un ton (`data-ton`) : l'état du deck est vert
-   quand il est prêt, rouge tant qu'il manque quelque chose. Elle prend alors
-   la face et le lettrage de la table des tons de la bâche — une seule table,
-   et H1 s'y applique : la craie y tient de 4,96 à 6,01:1 —, et une ombre dure
-   d'encre sous la craie, comme le lettrage d'une bâche.
+   quand il est prêt, rouge tant qu'il manque quelque chose.
+
+   **Un état s'écrit comme un tampon plein** (amendement 16 : un verdict
+   sous 16 px) : la craie reste, et le mot prend la version foncée du ton,
+   `--rouge-fonce` ou `--vert-fonce`. Il prenait la face du ton, foncée par
+   H1 (#B8321F, #197450), lettrée en craie : 5,16 et 4,96:1 à l'intérieur,
+   mais 2,61 et 2,39 au soleil — et l'audit le relevait sur /deck, depuis que
+   cette face n'est plus le dégradé qu'il ne savait pas mesurer (au lot 0, le
+   rouge vif du dégradé donnait 3,91 et 2,3). Sur la craie, les lettres
+   foncées tiennent 6,82 et 6,75:1, et 3,04 et 2,77 au soleil. Le relevé
+   reste, et c'est su : dehors, seule l'encre passe le seuil (4,86), et un
+   état à l'encre ne dirait plus son ton que par son mot. Mais c'est celui
+   d'un mot qui se lit mieux qu'avant, dedans comme dehors.
+
+   Les autres tons — or, bleu, violet — prennent la face et le lettrage de
+   la table des tons de la bâche, comme le sticker (l'or garde sa face et
+   son encre, H2), et une ombre dure d'encre sous la craie, comme le
+   lettrage d'une bâche. Aucune page n'en pose encore sur une étiquette.
 
    **Mate, comme le sticker de la maquette.** Elle portait un reflet de
    vinyle : une bande de craie à 16 % en travers, du tiers à la moitié de sa
@@ -1387,12 +1436,19 @@ html[data-calme~="animations"] .tbf-case:active{transform:none;filter:brightness
 
    **Sa matière est écrite avec celle du sticker**, dans le vocabulaire plus
    bas : le bord, le cerne, l'ombre, le corps, la craie par défaut et la
-   lecture des tons sont les mêmes au pixel près, et les mêmes règles les
-   portent pour les deux. Ne restent ici que son rembourrage, ses rotations
-   et l'ombre de son lettrage sur un ton. */
+   lecture des tons (`--face`, `--lettre`) sont les mêmes au pixel près, et
+   les mêmes règles les portent pour les deux. Ne restent ici que son
+   rembourrage, ses rotations, l'écriture d'un état et l'ombre de son
+   lettrage sur un ton. */
 .tbf-etiquette{--rot:-2deg;gap:5px;padding:4px 9px}
 .tbf-etiquette:nth-child(even){--rot:1.5deg}
-.tbf-etiquette[data-ton]:not([data-ton=or]):not([data-ton=craie]){
+/* L'état : la craie, et le mot dans le ton foncé du tampon plein. Le poids
+   de deux classes : ces règles passent devant la table des tons, qui n'a
+   que celui d'une, où qu'elle soit écrite. */
+.tbf-etiquette:is([data-ton=flare],[data-ton=vert]){--face:var(--craie)}
+.tbf-etiquette[data-ton=flare]{--lettre:var(--rouge-fonce)}
+.tbf-etiquette[data-ton=vert]{--lettre:var(--vert-fonce)}
+.tbf-etiquette:is([data-ton=bleu],[data-ton=violet]){
   text-shadow:0 1px 0 var(--encre);
 }
 
@@ -2084,9 +2140,11 @@ html[data-calme~="animations"] .pan:is(.tbf-burger,.tbf-retour):active{transform
 
    Le commentaire ci-dessous disait que l'attente et le vide « étaient réécrits
    sur chaque écran », au passé, comme si ces quatre classes avaient réglé la
-   question. Au comptage : `tbf-jauge`, `tbf-vide` et `tbf-note` ne sont
-   employées nulle part, `tbf-spin` quatre fois — et treize pages définissent
-   toujours leurs propres `.spin` et `.vide`, chacune avec ses marges.
+   question. Au comptage : `tbf-vide` et `tbf-note` ne sont employées nulle
+   part, `tbf-spin` quatre fois — et treize pages définissent toujours leurs
+   propres `.spin` et `.vide`, chacune avec ses marges. `tbf-jauge` est sortie
+   du lot au lot 1 : l'écharpe nouée est la seule jauge du jeu, et l'accueil,
+   la collection et le classeur la posent telle quelle.
 
    La remarque vaut pour qui arrive ici : ne pas croire que changer ces règles
    changera l'attente des listes, et ne pas les supprimer en croyant nettoyer
@@ -2096,9 +2154,10 @@ html[data-calme~="animations"] .pan:is(.tbf-burger,.tbf-retour):active{transform
 
 /* ## La jauge d'avancement est une écharpe nouée
  *
- * Collection, saison, remplissage d'un deck. Personne ne s'en sert encore — les
- * pages ont chacune la leur —, mais c'est désormais **le seul dessin de jauge
- * du jeu** : une écharpe qu'on déroule le long d'un rail.
+ * Collection, saison, remplissage d'un deck. C'est **le seul dessin de jauge
+ * du jeu** : une écharpe qu'on déroule le long d'un rail. L'accueil (la
+ * collection du hub), la collection et le classeur l'ont adoptée telle
+ * quelle, sans une règle de dessin à eux — chacun ne lui écrit que sa place.
  *
  *   — **Le rail** : une rainure de parpaing de douze pixels, cernée d'encre.
  *     Dix étaient le plancher du jeu pour une barre de progression ; douze
@@ -2119,10 +2178,11 @@ html[data-calme~="animations"] .pan:is(.tbf-burger,.tbf-retour):active{transform
  *
  * Le nœud et ses franges sont les deux pseudo-éléments du remplissage, les
  * crans celui du rail : aucun élément de plus à poser. Ils débordent du rail —
- * le nœud de trois pixels en haut et de neuf au bout, les franges de dix en
- * bas, les crans de cinq — sans rien pousser : une page qui pose une jauge lui
- * laisse cet air autour. Le rail ne rogne donc plus son contenu, et le
- * remplissage tient lui-même son arrondi de gauche.
+ * le nœud de trois pixels en haut et de neuf au bout, les franges de neuf en
+ * bas (les pages leur en réservent dix), les crans de cinq — sans rien
+ * pousser : une page qui pose une jauge lui laisse cet air autour. Le rail
+ * ne rogne donc plus son contenu, et le remplissage tient lui-même son
+ * arrondi de gauche.
  *
  * Les couleurs sont lues avec un repli (`var(--e1, …)`) et non déclarées sur
  * la jauge : un écran qui peint ses écharpes à ses couleurs en posant `--e1`
@@ -2153,15 +2213,40 @@ html[data-calme~="animations"] .pan:is(.tbf-burger,.tbf-retour):active{transform
     var(--craie);
   box-shadow:0 0 0 2px var(--encre),1px 2px 0 2px var(--encre);
 }
-/* Les deux franges, en un seul calque : deux brins rayés qui s'écartent sous
-   le nœud, découpés dans une même tuile par un polygone en « Λ ». Le haut du
-   polygone est caché sous le nœud, qui se peint par-dessus. */
+/* Les deux franges, en un seul calque : deux brins rayés de 5 × 9, cernés
+   d'encre, qui partent du bas du nœud et pendent en s'écartant (18° et −12°).
+
+   **Peintes par-dessus le nœud**, et c'est ce qui les fait voir. Elles
+   étaient dessous, au même plan que lui et avant lui dans l'ordre : le rond
+   et son ombre les couvraient jusqu'à dix-neuf pixels sous le haut du rail,
+   et il n'en restait que deux tirets de trois pixels — une frange qu'on ne
+   voit pas ne dit pas « nœud ». Comme sur la maquette, elles couvrent le
+   bas du rond et dépassent de lui, et elles pendent de neuf pixels sous le
+   rail, dans les dix que les pages leur réservent.
+
+   Deux brins inclinés différemment dans un seul pseudo-élément : chacun a
+   sa moitié de la boîte et son propre dégradé de rayures, tourné de son
+   angle (198° et 168° : les rayures restent en travers du brin). Le
+   masque découpe les deux silhouettes ; le cerne est une image posée
+   par-dessus, un anneau d'encre de 1,5 px autour de chaque brin. Encre en
+   dur (`%2307090C`), comme le cerne des bâches : une image en data-URI ne
+   lit pas les variables, et les rayures, elles, restent aux couleurs de
+   l'écran. L'anneau est dessiné un demi-pixel plus large que le masque, qui
+   le rogne : au bord adouci du masque, c'est l'encre qui reste, et pas un
+   liseré de rayure. Les brins ne se recouvrent qu'à leurs cernes, encre sur
+   encre : aucune rayure d'un brin ne passe sur l'autre. Les deux images ont
+   la géométrie de la boîte, 22 × 16 : l'une ne change pas sans l'autre. */
 .tbf-jauge i::before{
-  content:"";position:absolute;z-index:2;right:-8px;top:calc(50% + 3px);
-  width:16px;height:13px;
-  background:repeating-linear-gradient(180deg,var(--e1,var(--projo)) 0 2px,var(--encre) 2px 3px,
-    var(--e2,var(--flare)) 3px 5px,var(--encre) 5px 6px);
-  clip-path:polygon(3px 0,13px 0,16px 13px,11px 13px,8.5px 3px,7.5px 3px,5px 13px,0 13px);
+  content:"";position:absolute;z-index:3;right:-11px;top:50%;
+  width:22px;height:16px;pointer-events:none;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='16'%3E%3Cg fill='%2307090C' fill-rule='evenodd'%3E%3Cpath transform='translate(6 8.5) rotate(18)' d='M-4.5-6.5H4.5V3.5A3 3 0 0 1 1.5 6.5H-1.5A3 3 0 0 1-4.5 3.5ZM-2.5-4.5H2.5V3.5A1 1 0 0 1 1.5 4.5H-1.5A1 1 0 0 1-2.5 3.5Z'/%3E%3Cpath transform='translate(16 8.5) rotate(-12)' d='M-4.5-6.5H4.5V3.5A3 3 0 0 1 1.5 6.5H-1.5A3 3 0 0 1-4.5 3.5ZM-2.5-4.5H2.5V3.5A1 1 0 0 1 1.5 4.5H-1.5A1 1 0 0 1-2.5 3.5Z'/%3E%3C/g%3E%3C/svg%3E") 0 0/100% 100% no-repeat,
+    repeating-linear-gradient(198deg,var(--e1,var(--projo)) 0 2px,var(--encre) 2px 3px,
+      var(--e2,var(--flare)) 3px 5px,var(--encre) 5px 6px) 0 0/50% 100% no-repeat,
+    repeating-linear-gradient(168deg,var(--e1,var(--projo)) 0 2px,var(--encre) 2px 3px,
+      var(--e2,var(--flare)) 3px 5px,var(--encre) 5px 6px) 100% 0/50% 100% no-repeat;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='16'%3E%3Cpath transform='translate(6 8.5) rotate(18)' d='M-4-6H4V3.5A2.5 2.5 0 0 1 1.5 6H-1.5A2.5 2.5 0 0 1-4 3.5Z'/%3E%3Cpath transform='translate(16 8.5) rotate(-12)' d='M-4-6H4V3.5A2.5 2.5 0 0 1 1.5 6H-1.5A2.5 2.5 0 0 1-4 3.5Z'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='16'%3E%3Cpath transform='translate(6 8.5) rotate(18)' d='M-4-6H4V3.5A2.5 2.5 0 0 1 1.5 6H-1.5A2.5 2.5 0 0 1-4 3.5Z'/%3E%3Cpath transform='translate(16 8.5) rotate(-12)' d='M-4-6H4V3.5A2.5 2.5 0 0 1 1.5 6H-1.5A2.5 2.5 0 0 1-4 3.5Z'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;
 }
 /* Les crans. Un trait de craie de deux pixels, cerné d'encre, au bout de
    chaque palier : la tuile fait un palier de large et porte son trait sur son
@@ -2409,11 +2494,12 @@ html[data-calme~="animations"] .tbf-colle{animation:none}
 
    **C'est la matière de `.tbf-etiquette`** (une valeur posée sur une page,
    plus haut) au pixel près — même bord, même cerne, même ombre, même corps,
-   mêmes tons —, et elle est écrite une fois pour les deux, dans les deux
-   règles qui suivent : deux copies d'un même sticker finiraient par ne plus
-   se ressembler. L'étiquette garde à elle son rembourrage, ses deux rotations
-   et l'ombre de son lettrage sur un ton ; tous deux sont du papier mat, comme
-   sur la maquette. */
+   mêmes tons, sauf l'état rouge ou vert, que l'étiquette écrit en lettres
+   foncées sur la craie —, et elle est écrite une fois pour les deux, dans
+   les deux règles qui suivent : deux copies d'un même sticker finiraient par
+   ne plus se ressembler. L'étiquette garde à elle son rembourrage, ses deux
+   rotations, l'écriture d'un état et l'ombre de son lettrage sur un ton ;
+   tous deux sont du papier mat, comme sur la maquette. */
 .tbf-etiquette,.tbf-sticker{
   display:inline-flex;align-items:center;
   border-radius:5px;white-space:nowrap;
@@ -2426,12 +2512,14 @@ html[data-calme~="animations"] .tbf-colle{animation:none}
 }
 /* **Les tons** — or, flare, vert, bleu, violet, craie — sont ceux de la
    table de la bâche, lus sur l'élément même : `--face` pour le fond,
-   `--lettre` pour le mot. La craie tient 4,5:1 sur les quatre tons foncés
-   par H1, l'or garde sa face (H2) avec l'encre dessus. Sans ton, la craie et
-   l'encre sont posées sur l'objet même, pour qu'il n'hérite pas la toile de
-   la bâche qui le porte. Un ton absent de la table ne se pose pas : il
-   hériterait la face de son parent, et le repli de la règle commune sur la
-   craie et l'encre ne sert que s'il n'y en a aucune. */
+   `--lettre` pour le mot (l'étiquette d'un état, rouge ou vert, les
+   reprend à son compte : voir « l'étiquette »). La craie tient 4,5:1 sur
+   les quatre tons foncés par H1, l'or garde sa face (H2) avec l'encre
+   dessus. Sans ton, la craie et l'encre sont posées sur l'objet même, pour
+   qu'il n'hérite pas la toile de la bâche qui le porte. Un ton absent de la
+   table ne se pose pas : il hériterait la face de son parent, et le repli
+   de la règle commune sur la craie et l'encre ne sert que s'il n'y en a
+   aucune. */
 :is(.tbf-etiquette,.tbf-sticker):not([data-ton]){--face:var(--craie);--lettre:var(--encre)}
 /* Ce qui n'est qu'au sticker : une hauteur fixe, le mot centré, gras et en
    capitales. L'étiquette, elle, suit le texte que la page y pose. */

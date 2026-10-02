@@ -5,7 +5,7 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « le socle FAIT MAIN » (lot 0 de la refonte),
+Dernière mise à jour : session « la matière FAIT MAIN » (lot 1 de la refonte),
 1er octobre 2026.
 
 ## Par où entrer, selon ce qu'on cherche
@@ -19,6 +19,7 @@ quelqu'un qui arrive sur ce dépôt, l'ordre utile est celui-ci.
 | Comment on travaille ici, et pourquoi ainsi | § 2 — **la plus importante** |
 | Qu'est-ce qu'il ne faut surtout pas « simplifier » ? | § 3 |
 | Qu'est-ce qui existe et marche ? | § 4 |
+| Quelles briques d'interface, et quelles hypothèses attendent un arbitrage ? | § 4, « La feuille commune », puis l'en-tête de `public/ui.css` |
 | Qu'est-ce qui reste ? | § 5 |
 | Ce piège, je vais m'y jeter ? | § 6 — à lire avant de toucher au front |
 | Comment on met en ligne ? | `DEPLOIEMENT.md`, et `A-DEPLOYER.md` pour le lot en attente |
@@ -1049,6 +1050,72 @@ les morceaux existent encore séparément — un total ne se décompose pas apr�
 coup. `public/mods.js` met les **mots** dessus, et c'est le seul endroit du
 navigateur qui le fasse : voir § 6 pour ce que coûtaient les cinq copies d'avant.
 
+### La feuille commune, et la matière FAIT MAIN
+
+`public/ui.css` porte, depuis le lot 1 de la refonte (`HISTORIQUE.md`,
+4 quadragies semel), la matière de tout ce qui est commun aux écrans. Les écrans
+eux-mêmes n'ont pas encore été refaits — ce sont les lots 2 à 6 — : ils ont
+changé de matière par leurs briques, sans changer de mise en page. Son en-tête
+dit ce qu'elle porte ; ce qu'il faut savoir avant d'y toucher tient ici.
+
+| Brique | Ce qu'elle est | Ce qui la tient |
+|---|---|---|
+| le mur (`.tbf-grad`) | du béton grainé, la photo de tribune derrière : 75 % sur les pages de contenu, 60 % sur le hub | le grain n'est jamais posé sur `body`, qui reste `#04060A` (§ 6) |
+| le panneau calme (`.pan`) | la teinte de `--panneau`, la tuile du béton, huit pixels d'arrondi | ni cerne, ni ombre, ni rotation : **il reste calme**, c'est une décision du dépôt |
+| la bâche (`.tbf-plaque`, `.tbf-case`, `.tbf-bloc`) | la toile du ton, un cerne au marqueur hors de la boîte, une ombre dure d'encre, un coin déchiré peint | `--epaisseur`, seule mesure de l'ombre, de l'enfoncement et de la place réservée dessous |
+| la bâche principale (`.tbf-grande`) | l'écharpe en tête, deux scotchs, −0,8° | une par écran ; ses scotchs montent de sept pixels, et sous une autre bâche elle demande quatorze pixels d'écart |
+| le cadre (`.tbf-cadre`) | une grande bâche neutre, l'écharpe en tête sur `data-echarpe` | un par écran, deux au plus ; le hub n'en a plus qu'un, AUJOURD'HUI |
+| l'onglet actif | une petite bâche du ton de l'écran, −1° | le rail reste un creux noir |
+| l'étiquette (`.tbf-etiquette`) | un sticker craie, le chiffre à l'encre ; un état s'y écrit en tampon plein | sa matière est celle de `.tbf-sticker`, écrite une fois pour les deux |
+| la jauge (`.tbf-jauge`) | l'écharpe nouée : rail de parpaing, tricot, nœud de craie, deux franges, crans facultatifs (`data-crans`) | la **seule** jauge du jeu, même balisage qu'avant ; le nœud et les franges débordent sans rien pousser, et la page leur laisse l'air |
+| l'anneau (`.tbf-anneau`) | l'anneau d'XP, rempli à `--p` | aucune page ne le pose encore |
+| « collé » (`.tbf-colle`) | l'arrivée d'un objet fabriqué, 220 ms, vers sa rotation de repos | ses doubles, animations réduites et calme |
+
+Le menu et la flèche de la barre, montés par `nav.js` en `.pan`, sont des bâches
+de parpaing : ils se touchent.
+
+**Le vocabulaire des lots suivants est écrit, et aucune page ne l'emploie
+encore** : section « LE VOCABULAIRE FAIT MAIN » de la même feuille. Le sticker
+(`.tbf-sticker`), le tampon (`.tbf-tampon` : en contour sur un fond sombre à
+partir de 16 px, plein en dessous et toujours sur le kraft), le ticket kraft et
+la déchirure (`.tbf-ticket`, `.tbf-dechire`), le scotch, le marqueur, la bulle,
+la nappe de fumée et la bouffée (`.tbf-fumee`, `.tbf-bouffee`), le pochoir, la
+forme de rareté (`.tbf-forme[data-rar]`), et les mouvements `.tbf-glisse`,
+`.tbf-clac`, `.tbf-vibre`, `.tbf-respire`. Chaque bloc donne son balisage exact.
+
+Les règles qui tiennent l'ensemble :
+
+- **Une seule table des faces**, « les tons » : `--face` et `--lettre` par
+  `data-ton`. `--encre` est l'encre et rien d'autre ; le lettrage d'une surface
+  s'appelle `--lettre`. Bâches, onglets, étiquettes et stickers lisent la même
+  table.
+- **Les teintes** : les huit couleurs, les raretés, et les jetons du lot 1 —
+  `--parpaing`, `--encre`, `--kraft`, `--scotch` et les huit dérivés de
+  l'amendement 17 (`--vert-encre`, `--vert-fonce`, `--rouge-fonce`,
+  `--or-encre`, `--gris-encre` sur la craie et le kraft ; `--flare-clair`,
+  `--bleu-clair`, `--vert-clair` sur le parpaing). Une teinte absente de cette
+  liste ne se mélange pas à la main dans une page.
+- **La hiérarchie** : par écran, au plus une bâche grande, trois stickers hors des
+  listes, un ticket, une bulle, une nappe de fumée ; deux pseudo-éléments par
+  objet, `::after` gardé aux pastilles et aux états ; trois animations infinies,
+  toutes comptées.
+- **La rotation de repos** passe par `--rot` et la propriété `rotate`, jamais par
+  `transform` : elle se compose avec l'enfoncement et les entrées.
+- **Le grain** : trois tuiles — béton, toile, papier — calculées par
+  `scripts/grain-images.mjs` (`npm run grain`), des voiles posés sur la couleur
+  de la surface, servis comme toute image (`VISUELS.md`) ; le béton en deux
+  tailles, par `image-set` sous `@supports`. Une recette changée change
+  l'adresse : le `?v=` des jetons `--grain-*`.
+- **`--marqueur` est déclaré, Permanent Marker n'est chargée nulle part.**
+
+**Neuf hypothèses attendent Gaël**, H1 à H9, listées en tête de `ui.css` avec la
+section qui porte chacune : les faces vives foncées (H1), l'or qui ne bouge pas
+(H2), la police du marqueur (H3), le panneau calme et le cadre restés sur
+`--panneau` au lieu du parpaing (H4), le creux noir des onglets (H5), le voile des
+arènes (H6), les scotchs réservés à la bâche principale (H7), la fumée fixe au
+calme (H8), la bande noire du haut du mur (H9). Chacune dit pourquoi, et comment
+la défaire en un bloc.
+
 ### Les suites de contrôle
 
 **Cinquante-huit suites**, lancées ensemble par `npm test`. Elles se divisent en
@@ -1105,28 +1172,36 @@ MSYS_NO_PATHCONV=1 node scripts/audit-ui.mjs /virage   # une page, sous Git Bash
 Sous Git Bash, `/virage` arrive à Node réécrit en chemin Windows : d'où
 `MSYS_NO_PATHCONV=1`, ou PowerShell.
 
-Relevé du 1er octobre 2026, sur les vingt-trois écrans du lot : **zéro** texte
-sous 11 px, zéro sous 0,85, zéro flou, zéro cible sous 44 px, zéro texte coupé,
-aux trois formats. **73 textes perdent encore leur contraste au soleil** à
-360 × 640 : `/profil` 34, `/aide` 20, la vitrine 6, trois au plus ailleurs. Le
-dernier passage, après la reprise des constats de relecture, redonne ces
-chiffres relevé par relevé.
+Relevé du 1er octobre 2026, à la fin du lot 1, sur les vingt-trois écrans de
+l'audit : **zéro** texte sous 11 px, zéro sous 0,85, zéro flou, zéro cible sous
+44 px, zéro texte coupé, aux trois formats. **72 textes perdent encore leur
+contraste au soleil** à 360 × 640 (73 à la fin du lot 0) : `/profil` 34, `/aide`
+20, la vitrine 4, trois au plus ailleurs. Ce compte-là ne voit plus tout : voir
+le paragraphe suivant, et le grain.
 
 Ce qu'il ne mesure pas, et qui se regarde sur les captures : un texte posé sur un
 dégradé (compté « sur dégradé », y compris les panneaux teintés en
 `linear-gradient(…), var(--panneau)`, qui sont pourtant opaques) ; un texte
 assombri par `filter: brightness()` — seuls `opacity` et `filter: opacity()`
 entrent dans l'opacité effective ; un texte posé à même la photo, dont le fond
-retombe sur la couleur de la page ; la hauteur des jauges.
+retombe sur la couleur de la page ; la hauteur des jauges. Et, depuis le lot 1,
+**un texte posé sur une tuile de grain** — toute bâche, tout onglet actif, tout
+`.pan` : `fond()` range tout `background-image` parmi les dégradés. « Sur
+dégradé » est passé de 644 à 725 textes à 360 × 640, et une copie de l'audit qui
+remplace chaque tuile par son voile moyen trouve **123** textes sous le seuil au
+soleil, et non 72 : surtout du lettrage de bâche, qui était au lot 0 sur les
+dégradés des plaques, non mesurés eux non plus (`HISTORIQUE.md`, 4 quadragies
+semel). Porter cette règle dans `scripts/audit-ui.mjs` reste à faire.
 
 L'onglet actif d'un rail est dans le premier cas, et il a donc été mesuré à part
 (`HISTORIQUE.md`, 4 quadragies). Pour les tons à encre claire — flare, vert,
-bleu, violet —, `ui.css` fonce sa face, une règle par ton : de 8,3 à 10,6:1 à
-l'intérieur, de 3,2 à 3,5 au soleil, où 4,5 est hors d'atteinte pour une face qui
-garde sa couleur. **Un ton nouveau à encre claire doit avoir sa règle**, sinon
-son onglet actif retombe vers 2:1 au soleil sans que l'audit le dise. Les plaques
-de ces quatre tons n'ont pas reçu le même traitement : entre 3,3 et 4,5:1 à
-l'intérieur, vers 2 au soleil — une décision de palette, en attente de Gaël.
+bleu, violet —, `ui.css` fonce sa face, une règle par ton : à travers la toile du
+lot 1, de 7,9 à 10,0:1 à l'intérieur, de 3,0 à 3,35 au soleil, où 4,5 est hors
+d'atteinte pour une face qui garde sa couleur. **Un ton nouveau à encre claire
+doit avoir sa règle**, sinon son onglet actif retombe sur la face de la bâche
+sans que l'audit le dise. Les bâches de ces quatre tons foncent elles aussi
+depuis le lot 1, d'un pas de moins (hypothèse H1) : la craie y tient de 4,96 à
+6,01:1 à l'intérieur, de 2,4 à 2,6 au soleil.
 
 ### Le catalogue
 
@@ -1800,7 +1875,9 @@ de 62 %, et l'audit ne compte que `opacity` et `filter: opacity()`. Au Virage,
 qui dit quand la carte revient. D'autres états l'appliquent encore à tout
 l'élément, libellé compris : `.card.dim` au Virage (`brightness(.55)`), le nom et
 le coût d'un `.acte.hs`, `.tbf-dial-bt[disabled]` (`.6`) ; aucune mesure ne dit
-s'ils se lisent.
+s'ils se lisent. La bâche hors service, elle, ne s'assombrit plus depuis le
+lot 1 : elle passe au parpaing sous une trame d'encre, ne garde du filtre que le
+gris, et son lettrage reste à la craie pleine.
 
 **Un mot éteint par une police de zéro pixel est un texte illisible.** Pour
 montrer une forme courte d'un libellé et garder la longue aux lecteurs d'écran —
@@ -1843,6 +1920,95 @@ servi à le distribuer, ou le chemin d'un fichier —, jamais sur le texte qu'é
 un relecteur ; et **compter à la sortie** : autant de constats remis qu'il en
 est entré, et un constat que rien ne reconnaît arrête l'aiguillage au lieu de
 tomber.
+
+Le lot 1 a trouvé l'autre moitié du piège : un constat bien aiguillé, vers un
+périmètre dont la consigne interdisait justement le fichier en cause.
+L'aveuglement de l'audit au grain est parti aux suites, à qui l'on avait retiré
+`scripts/audit-ui.mjs` ; il n'a pas été traité, et rien ne l'a dit. **Vérifier,
+pour chaque clé, que le fichier visé est dans les mains de qui la reçoit.**
+
+**Une image de fond rend un texte non mesurable, et l'audit compte alors un
+progrès.** `scripts/audit-ui.mjs` range tout `background-image` parmi les
+dégradés : un texte posé dessus sort du compte au soleil. Depuis le lot 1, toute
+bâche, tout onglet actif et tout `.pan` portent une tuile de grain. Au premier
+passage du lot, le compte au soleil a **baissé**, de 73 à 71, pendant que
+soixante et onze textes de `/repetition`, sur un `.pan` passé au parpaing,
+tombaient sous le seuil sans être comptés (hypothèse H4). Règle : un
+compte au soleil ne se lit qu'à côté du compte « sur dégradé » ; quand le second
+monte, le premier ne prouve rien.
+
+**L'audit compose sur `body`, l'œil voit le mur.** Pour un texte translucide,
+l'audit remonte les fonds des ancêtres, puis celui de `body` ; le voile du mur
+(`.tbf-grad`), calque fixe posé à côté de la colonne, n'en fait pas partie. Un
+texte posé sans panneau n'est donc mesuré juste que là où le mur a la couleur de
+`body`. C'est pourquoi `body` reste `#04060A` et ne porte aucun grain, et
+pourquoi la bande du haut des pages de contenu garde ce noir (hypothèse H9) :
+sous le béton, le nom d'écran perdait au soleil ce que l'audit ne pouvait pas
+voir.
+
+**Une table de variables posée sur un attribut ne vaut que pour qui le porte.**
+La table des tons commençait par `[data-ton]{…}` : une bâche sans ton n'avait
+ni face ni lettrage, ses couleurs étaient des variables vides, son fond une
+déclaration invalide — et le bouton de menu de l'accueil, transparent, avait
+disparu sans une erreur. Les valeurs par défaut se posent sur la classe de
+l'objet ; la table ne fait que les remplacer.
+
+**Un nom de variable peut déjà avoir un sens.** Les plaques appelaient
+`--encre` leur propre lettrage — de la craie sur une plaque rouge — quand
+FAIT MAIN appelle encre le trait du marqueur. Le lettrage est devenu `--lettre`,
+et une page qui lisait l'ancien sens (les barres du menu de l'accueil) a perdu
+sa couleur. Le sticker a pris `--taille` et non `--s`, que la ola du Virage
+emploie déjà et qui s'hériterait. Comme pour une classe : avant de donner un
+sens à un nom, le chercher dans tout `public/`.
+
+**Retirer `overflow:hidden` change la taille minimale d'un élément.** Dans une
+grille ou une rangée flex, un élément qui rogne peut descendre à une largeur
+nulle ; un élément qui ne rogne pas ne descend pas sous la largeur de son
+contenu. Le cadre a cessé de rogner pour laisser son coin déchiré mordre sur le
+cerne, et le duo du hub s'est redistribué : un sous-titre passé sur deux lignes,
+et sa hauteur reprise aux tuiles.
+`min-width:0` et `min-height:0` rendent la mise en page d'avant.
+
+**Une valeur qu'un navigateur ne comprend pas, passée par une variable, invalide
+toute la déclaration.** `var()` n'a de repli que pour une variable absente, pas
+pour une valeur incomprise : `image-set()` dans `--grain-beton` aurait fait
+perdre au mur son voile et au panneau sa couleur, sur les navigateurs qui ne le
+connaissent pas sans préfixe. La valeur se pose donc sous `@supports`, et les
+faces se recopient en clair plutôt que par `color-mix`.
+
+**Une image servie « immutable » ne change pas de contenu sous la même
+adresse.** `/img` part avec un an de cache, et le service worker garde les
+images en cache d'abord. Une tuile de grain refaite prend un `?v=` nouveau
+(`?v=2` à la fin du lot 1, `?v=3` ensuite, sur les deux tailles du béton) ; la
+même adresse la laisserait chez chacun pour un an.
+
+**Fabriquer une image n'est pas la servir — la deuxième fois.** Le béton de 512
+pixels a été produit, et dit servi par le script et `VISUELS.md`, pendant
+qu'aucune adresse de `ui.css` ne le demandait. C'est la règle des Fanzzy, plus
+haut : un contrôle de fichiers présents ne vaut rien sans un contrôle de
+l'adresse demandée. `npm run grain` nomme maintenant les tuiles qu'aucune
+adresse de la feuille ne demande.
+
+**Une animation n'écrit que son départ, et pèse moins que ce qui l'éteint.** Une
+image d'arrivée écrase l'état de repos de l'objet : `tbf-colle` finissait sur
+`opacity:1`, et un tampon posé à 0,92 sautait à la dernière image. Et une
+variante d'entrée écrite à deux classes (`.tbf-grande.tbf-colle`) l'emportait
+sur la règle à une classe qui coupe l'entrée à animations réduites. Les entrées
+n'ont qu'un `from`, et la variante pèse une classe (`:where`).
+
+**Ce qui déborde de sa boîte sans rien pousser demande de l'air à la page.** Le
+nœud de la jauge monte de trois pixels, ses franges pendent de neuf ; les
+scotchs de la grande bâche montent de sept ; le bord et l'ombre d'un sticker ne
+comptent pas dans sa boîte. Rien ne leur réserve de place, et c'est ce qui garde
+la mise en page — mais une page qui les pose doit la laisser, et la mesurer sans
+la police de titre : sur le hub, les franges de COLLECTION ne tenaient au-dessus
+du filet que parce qu'Oswald étirait le panneau de deux pixels.
+
+**Une brique commune n'existe pour le joueur que posée.** `.tbf-jauge` était
+juste, et n'apparaissait sur aucun écran : le hub, la collection et le classeur
+peignaient la leur — l'aide et le profil le font encore —, et un fond local,
+chargé après `ui.css`, écrase celui de la brique. Avant de compter sur une brique, chercher qui l'emploie ; pour
+l'adopter, retirer la règle locale, pas l'empiler.
 
 ---
 

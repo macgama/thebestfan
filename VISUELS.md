@@ -86,10 +86,16 @@ identiques d'un passage à l'autre. Ce sont des voiles presque transparents,
 une teinte par famille de grain (le sable clair et les creux noirs du béton,
 le creux de la toile, la fibre brune du papier), posés par-dessus la couleur
 de la feuille de style. Le béton existe aussi en 512 px (`beton@2x`) : la
-même recette tirée deux fois plus fin, que la feuille de style sert aux
-écrans denses par `image-set`. Agrandie deux à trois fois par un téléphone, la
-tuile de 256 faisait de chaque grain une tache floue ; la toile, dont le relief
-est déjà doux, n'en a pas besoin.
+même recette tirée deux fois plus fin, pour les écrans denses. Agrandie deux à
+trois fois par un téléphone, la tuile de 256 fait de chaque grain une tache
+floue ; la toile, dont le relief est déjà doux, n'en a pas besoin.
+Mais fabriquer le 512 ne le sert pas : c'est `ui.css` qui nomme les adresses, et
+une tuile qu'elle ne nomme pas n'arrive chez personne — le 512 a passé ainsi
+une partie du lot 1 décrit comme servi, sans l'être. Depuis la fin de ce lot,
+la feuille le sert : un `image-set` 1x/2x posé sous `@supports`, la tuile de
+256 restant la valeur de base (`ui.css` dit pourquoi, juste sous `:root`).
+`npm run grain` nomme en fin de passage chaque tuile qu'aucune adresse de
+`ui.css` ne demande.
 **Et son AVIF n'est écrit que s'il gagne** : le WebP et le PNG sans perte sont
 toujours là, l'AVIF seulement s'il ne pèse pas plus que le WebP et ne change
 pas l'image. Sans perte, l'AV1 paie un grain le double du WebP, ou plus ; avec
@@ -97,8 +103,9 @@ perte, il l'efface par blocs, et le bloc abîmé revient à chaque tuile. Comme
 le serveur préfère l'AVIF dès qu'il existe, un AVIF perdant serait envoyé à
 presque tout le monde. Au dernier passage, seul le papier en a un, et c'est
 voulu : le béton (aux deux tailles) et la toile n'en ont pas.
-Une recette changée change aussi l'adresse dans `ui.css` (`?v=…`, sur les
-deux tailles du béton) : `/img` est servi pour un an, sans retour possible
+Une recette changée change aussi l'adresse que `ui.css` demande — un `?v=`
+ajouté, ou augmenté, sur chaque adresse de la tuile refaite (`?v=2` sur les
+quatre, à la fin du lot 1) : `/img` est servi pour un an, sans retour possible
 chez qui l'a déjà.
 
 Quatre de ces commandes acceptent `--invites` (`actions`, `stuff`, `chants`,

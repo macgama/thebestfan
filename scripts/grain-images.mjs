@@ -89,7 +89,8 @@
  *
  * Ce qui reste, c'est la place de chaque grain, et elle ne se comprime pas :
  * le béton de 512 pèse donc quatre fois celui de 256, une trentaine de
- * kilo-octets. C'est le prix d'un grain net sur un écran dense ; il n'est payé
+ * kilo-octets. C'est le prix d'un grain net sur un écran dense ; servi par un
+ * `image-set`, qui ne télécharge que la tuile qu'il choisit, il ne serait payé
  * que par ces écrans-là, une fois par an.
  *
  * ## Deux résolutions pour le béton
@@ -109,8 +110,23 @@
  * les mêmes opacités. Un grain y vaut un pixel de l'écran à DPR 2, une fois
  * et demie à DPR 3 — net, ou presque. Les deux tuiles portent le même voile
  * moyen : un panneau ne change pas de teinte en changeant d'écran, ni ses
- * contrastes. La feuille de style les sert ensemble (`image-set`, 1x et 2x)
- * et le navigateur choisit.
+ * contrastes.
+ *
+ * **Ce script fabrique le 512, il ne le sert pas.** C'est la feuille de style
+ * qui nomme les adresses, et tant que `--grain-beton` n'y nomme que la tuile
+ * de 256, tous les écrans reçoivent celle-là et le 512 n'arrive chez
+ * personne. Ce fichier et `VISUELS.md` l'ont dit servi pendant tout un lot,
+ * alors qu'aucune page ne le demandait : le script le vérifie donc à chaque
+ * passage (voir `nonDemandees`), plutôt que de compter sur une phrase.
+ *
+ * Le jour où `ui.css` le servira, ce sera par un `image-set` (1x, 2x), et
+ * **sous `@supports`**, la tuile de 256 restant la valeur de base du jeton.
+ * Le jeton entre dans des `background` à plusieurs couches : le mur avec son
+ * dégradé, le panneau calme avec sa couleur. Un navigateur qui ne connaît pas
+ * `image-set()` sans préfixe (Chrome avant 113, Safari avant 17) rendrait la
+ * déclaration entière invalide au moment du calcul, et perdrait avec le grain
+ * le dégradé du mur ou le fond du panneau — un `var()` n'a de repli que pour
+ * un jeton absent, pas pour un jeton incompris.
  *
  * ## Les formats, et l'AVIF qui n'a le droit d'exister que s'il gagne
  *
@@ -139,9 +155,9 @@
  * les mêmes octets, tant que `sharp` ne change pas de version. Une tuile n'a
  * donc jamais de différence fantôme dans le dépôt, et son adresse
  * reste bonne pour l'année de cache que lui donnent le serveur et le service
- * worker. Le jour où une recette change, l'adresse doit changer avec elle
- * (le `?v=` de son jeton `--grain-*` dans la feuille de style, sur ses deux
- * résolutions s'il en a deux) : une image servie « immutable » ne se
+ * worker. Le jour où une recette change, l'adresse doit changer avec elle :
+ * un `?v=` ajouté, ou augmenté, sur chaque adresse de la tuile refaite que
+ * la feuille de style demande — une image servie « immutable » ne se
  * remplace pas autrement chez qui l'a déjà.
  *
  *   node scripts/grain-images.mjs
@@ -167,12 +183,13 @@ const CIBLE = path.join(RACINE, 'public', 'img', 'grain');
  */
 export const COTE = 256;
 
-/** Ce qui est produit : `/img/grain/<nom>.webp` pour la feuille de style. */
+/** Ce qui est produit : `/img/grain/<nom>.webp`, l'adresse que la feuille de style nomme. */
 export const TUILES = ['beton', 'toile', 'papier'];
 
 /**
  * Les résolutions de chaque tuile : `1` écrit `<nom>.webp`, `2` écrit
- * `<nom>@2x.webp`, de côté 512, pour l'`image-set` de la feuille de style.
+ * `<nom>@2x.webp`, de côté 512, pour les écrans denses — à condition que la
+ * feuille de style le demande (voir « Deux résolutions pour le béton »).
  * Seul le béton en a deux : c'est le seul grain fait de pixels isolés, que
  * l'agrandissement d'un écran dense transforme en taches.
  */
@@ -626,6 +643,23 @@ async function avifQuiGagne(sharp, brut, cote, poidsWebp) {
   return null;
 }
 
+/**
+ * Les tuiles fabriquées qu'aucune adresse de la feuille de style ne demande.
+ *
+ * Ce script ne sert rien : c'est `public/ui.css` qui nomme les adresses, et
+ * une tuile qu'elle ne nomme pas n'arrive chez personne. On cherche donc
+ * `/img/grain/<fichier>.` dans la feuille **privée de ses commentaires** :
+ * un commentaire qui cite une adresse ne la sert pas, et c'est précisément
+ * la confusion qu'on veut voir. Le point final empêche `beton` de se
+ * reconnaître dans `beton@2x`, et un `?v=` derrière l'extension ne gêne pas.
+ *
+ * Pure, et exportée : un contrôle peut l'appeler sans réécrire les tuiles.
+ */
+export function nonDemandees(feuille, fichiers) {
+  const regles = String(feuille).replace(/\/\*[\s\S]*?\*\//g, '');
+  return fichiers.filter((fichier) => !regles.includes(`/img/grain/${fichier}.`));
+}
+
 /* ================================================================ l'exécution
 
    Seulement quand on lance le script à la main, comme `logo-images.mjs` : un
@@ -650,7 +684,7 @@ if (lanceALaMain) {
     fs.mkdirSync(CIBLE, { recursive: true });
     const ko = (octets) => `${(octets / 1024).toFixed(1)} ko`;
 
-    let ecrites = 0;
+    const ecrites = [];
     for (const nom of TUILES) {
       for (const echelle of ECHELLES[nom]) {
         const cote = COTE * echelle;
@@ -681,11 +715,27 @@ if (lanceALaMain) {
           avif = 'pas d’avif : aucun ne bat le WebP sans abîmer le grain';
         }
         console.log(`  ok   ${nomFichier.padEnd(9)} ${cote}×${cote} · webp ${ko(webp.length)} · png ${ko(png.length)} · ${avif}`);
-        ecrites++;
+        ecrites.push(nomFichier);
       }
     }
 
-    console.log(`\n${ecrites} tuiles écrites dans public/img/grain.`);
-    console.log('Une recette changée ? Change aussi l’adresse dans la feuille de style (?v=…).');
+    console.log(`\n${ecrites.length} tuiles écrites dans public/img/grain.`);
+
+    /* Fabriquer n'est pas servir (voir « Deux résolutions pour le béton »).
+       Une feuille illisible ne demande rien : tout est alors signalé, ce qui
+       est la bonne panne pour un avertissement. */
+    let feuille = '';
+    try {
+      feuille = fs.readFileSync(path.join(RACINE, 'public', 'ui.css'), 'utf8');
+    } catch { /* signalé plus bas, tuile par tuile */ }
+    const oubliees = nonDemandees(feuille, ecrites);
+    if (oubliees.length) {
+      const une = oubliees.length === 1;
+      console.log(`Aucune adresse de public/ui.css ne demande : ${oubliees.join(', ')}.`);
+      console.log(une
+        ? 'Cette tuile n’arrive chez personne tant que la feuille de style ne la nomme pas.'
+        : 'Ces tuiles n’arrivent chez personne tant que la feuille de style ne les nomme pas.');
+    }
+    console.log('Une recette changée ? Ajoute ou augmente le ?v= de ses adresses dans la feuille de style.');
   }
 }
