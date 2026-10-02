@@ -49,6 +49,30 @@ await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invi
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'tenues.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
+/* Les colonnes des chants, **prises dans `sql/quotidien.sql`** et non
+   réécrites ici : la suite éprouve le schéma qu'on déploie.
+
+   Seulement ses trois `ALTER TABLE virage_presence`, et c'est voulu. Le
+   fichier complète aussi `saisons` ; l'appliquer en entier demanderait
+   `saisons.sql`, dont la saison d'amorce change les séries ouvertes que lit
+   le catalogue, donc le Virage que tout ce qui suit éprouve. `souvenirs-smoke`
+   applique le fichier entier, lui, et éprouve le repli quand il manque.
+
+   Le tri se fait au motif : le contrôle juste en dessous exige les trois
+   colonnes en base, pour qu'un fichier qui changerait de forme fasse rougir
+   la suite au lieu de la laisser compter sur rien. */
+const CHANTS_SQL = readFileSync(new URL('../sql/quotidien.sql', import.meta.url), 'utf8')
+  .split('\n').map((l) => l.trim()).filter((l) => /^ALTER TABLE virage_presence ADD COLUMN/i.test(l));
+for (const instruction of CHANTS_SQL) await raw.query(instruction);
+{
+  const [cols] = await raw.query(
+    `SELECT column_name AS c FROM information_schema.columns
+      WHERE table_schema = DATABASE() AND table_name = 'virage_presence'
+        AND column_name IN ('chants', 'chants_mt1', 'chants_mt2')`);
+  check('sql/quotidien.sql pose les trois colonnes des chants',
+    CHANTS_SQL.length === 3 && cols.length === 3
+    || (console.log(`        ${CHANTS_SQL.length} instruction(s), ${cols.length} colonne(s)`), false));
+}
 const U = ['bbbbbbbb-0000-0000-0000-00000000000' + 1,
            'bbbbbbbb-0000-0000-0000-00000000000' + 2,
            'bbbbbbbb-0000-0000-0000-00000000000' + 3];
@@ -808,6 +832,76 @@ check('la foule compte les deux tribunes', crowd[0] === 2 && crowd[1] === 1);
   journee = null;
 }
 
+/* ---------------------------------------- les chants, jusqu'en base
+
+ * Les missions du Virage comptent les chants et les mi-temps dans
+ * `virage_presence`. Ce bloc passe par le vrai chemin : la socket, la salle,
+ * le crochet de présence de `ferveur/index.js`, l'upsert de `souvenirs`. Un
+ * maillon qui oublierait de transporter `chant` ou `mt` laisserait les
+ * missions à zéro sans une erreur nulle part.
+ *
+ * La mi-temps se lit sur le statut du vrai match que tient la salle : on le
+ * pose à la main avant chaque chant, sans passer par le relevé, pour que
+ * rien d'autre ne bouge entre deux lectures. */
+{
+  const salle = virage.rooms.get(7001);
+  const moi = salle.members.get(U[0]);
+  const lire = async () => (await pool.query(
+    `SELECT ferveur, chants, chants_mt1, chants_mt2 FROM virage_presence
+      WHERE user_id = ? AND fixture_id = 7001`, [U[0]]))[0][0];
+  /* La présence s'écrit à côté du jeu, sans être attendue : on relit la base
+     jusqu'à ce que la ligne ait bougé. */
+  const quandLaLigne = async (fn, ms = 3000) => {
+    const t0 = Date.now();
+    let l = await lire();
+    while (!(l && fn(l)) && Date.now() - t0 < ms) { await wait(25); l = await lire(); }
+    return l;
+  };
+  const chanter = async (statut) => {
+    salle.statut = statut;
+    moi.breath = 100;
+    const avant = await lire();
+    const n = A.results.length;
+    A.socket.emit('virage:chant', { cardId: offrir('reprise'), taps: tempoParfait() });
+    const accepte = await until(() => A.results.length > n);
+    const apres = await quandLaLigne((l) => l.chants !== avant?.chants);
+    return { accepte, avant, apres,
+      d: (k) => Number(apres?.[k] ?? NaN) - Number(avant?.[k] ?? NaN) };
+  };
+
+  let c = await chanter('1H');
+  check('un chant en première mi-temps : chants + 1, première + 1, seconde inchangée',
+    c.accepte && c.d('chants') === 1 && c.d('chants_mt1') === 1 && c.d('chants_mt2') === 0
+    || (console.log('        avant', JSON.stringify(c.avant), '· après', JSON.stringify(c.apres)), false));
+
+  c = await chanter('2H');
+  check('un chant en seconde mi-temps : chants + 1, seconde + 1, première inchangée',
+    c.accepte && c.d('chants') === 1 && c.d('chants_mt2') === 1 && c.d('chants_mt1') === 0
+    || (console.log('        avant', JSON.stringify(c.avant), '· après', JSON.stringify(c.apres)), false));
+
+  c = await chanter('HT');
+  check('un chant à la pause compte, mais dans aucune mi-temps',
+    c.accepte && c.d('chants') === 1 && c.d('chants_mt1') === 0 && c.d('chants_mt2') === 0
+    || (console.log('        avant', JSON.stringify(c.avant), '· après', JSON.stringify(c.apres)), false));
+
+  /* Une carte d'action pousse et rapporte de la ferveur comme avant : le même
+     nombre dans la salle et en base. Mais elle ne chante pas, et une mission
+     « chante 10 fois » ne doit pas se remplir à coups de Fumigène. */
+  salle.statut = '1H';
+  moi.main = ['a-fumigene']; moi.breath = 100; moi.cooldowns = {};
+  const avant = await lire();
+  const f0 = moi.ferveur;
+  salle.jouer(U[0], 'a-fumigene');
+  const gagne = moi.ferveur - f0;
+  const apres = await quandLaLigne((l) => l.ferveur !== avant.ferveur);
+  check(`une carte jouée crédite en base la ferveur de la salle (${gagne})`,
+    gagne > 0 && apres.ferveur === avant.ferveur + gagne
+    || (console.log(`        salle +${gagne} · base ${avant.ferveur} → ${apres?.ferveur}`), false));
+  check('mais ne compte ni comme un chant ni dans une mi-temps',
+    apres.chants === avant.chants && apres.chants_mt1 === avant.chants_mt1
+    && apres.chants_mt2 === avant.chants_mt2);
+}
+
 for (const m of room.members.values()) m.lastPush = Date.now() - 120_000;
 check('après 90 s sans chanter, on ne compte plus dans la foule',
   room.crowd()[0] === 0 && room.crowd()[1] === 0);
@@ -1210,7 +1304,71 @@ check('la vue donne le barème du geste au client', Boolean(vueA.you?.gestes?.te
   }
 }
 
+/* =============================== ce que la salle transporte à la présence
+
+   Le bloc « jusqu'en base » éprouve le chemin entier sur trois statuts. Ici,
+   la salle seule, sans base ni socket : chaque statut du vrai match qui peut
+   arriver, et chaque façon de pousser — un chant, une carte, un tifo qui se
+   déplie plus tard. Une poussée doit produire **un** appel au crochet de
+   présence, jamais deux : c'est ce qui garde une instruction par poussée. */
+{
+  const recues = [];
+  const salle = new VirageRoom({
+    fixture: { id: 9010, homeId: 1, awayId: 2, homeName: 'A', awayName: 'B' },
+    emit: () => {}, onPush: (p) => { recues.push(p); }, log: { warn() {}, error() {} },
+  });
+  salle.join('k1', { side: 0, name: 'Un', actions: ['a-fumigene', 'a-tifo'] });
+  const k = salle.members.get('k1');
+
+  /* La minute est nulle : le répertoire est celui du rang 0, qui offre
+     « reprise » — voir le Capo plus haut, qui chante de la même façon. */
+  const chanter = (statut) => {
+    salle.statut = statut;
+    k.breath = 100;
+    const g = resoudreGeste(k.mods).tempo;
+    const taps = Array.from({ length: g.beats }, (_, i) => Math.round(i * g.interval));
+    recues.length = 0;
+    salle.chant('k1', { cardId: 'reprise', taps });
+    return recues.slice();
+  };
+
+  const MI_TEMPS = [['1H', 1], ['2H', 2], ['HT', 0], ['ET', 0], ['P', 0], ['LIVE', 0],
+    ['NS', 0], [null, 0]];
+  const fautes = [];
+  for (const [statut, attendu] of MI_TEMPS) {
+    const r = chanter(statut);
+    if (r.length !== 1 || r[0].chant !== 1 || r[0].mt !== attendu) {
+      fautes.push(`${statut} → ${JSON.stringify(r.map((p) => ({ chant: p.chant, mt: p.mt })))}`);
+    }
+  }
+  check('un chant part une fois, marqué chant, avec la mi-temps du statut du match',
+    fautes.length === 0 || (console.log('        ' + fautes.join('\n        ')), false));
+
+  salle.statut = '1H';
+  k.main = ['a-fumigene']; k.breath = 100; k.cooldowns = {};
+  recues.length = 0;
+  salle.jouer('k1', 'a-fumigene');
+  check('une carte qui pousse part une fois, et pas comme un chant',
+    recues.length === 1 && recues[0].chant === 0 && recues[0].amount >= 0
+    || (console.log('        reçu :', JSON.stringify(recues)), false));
+
+  k.main = ['a-tifo']; k.breath = 100; k.cooldowns = {};
+  salle.differes = [];
+  recues.length = 0;
+  salle.jouer('k1', 'a-tifo');
+  const pose = recues.length;
+  salle.entretenirCartes(Date.now() + 9000);
+  check('un tifo qui se déplie n’est pas un chant non plus',
+    pose === 0 && recues.length === 1 && recues[0].chant === 0
+    || (console.log(`        à la pose ${pose} · au dépli`, JSON.stringify(recues)), false));
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 for (const p of [B, C]) p.socket.disconnect();
-virage.stop(); io.close(); http.close(); await pool.end();
-process.exit(failures ? 1 : 0);
+virage.stop(); io.close();
+/* `exitCode` et non `process.exit()` : sous Windows, couper la boucle pendant
+   que le pool rend ses sockets fait échouer la suite une fois sur cinq quand
+   elle tourne à la file (ETAT.md, § 2). */
+await pool.end();
+await new Promise((r) => http.close(r));
+process.exitCode = failures ? 1 : 0;

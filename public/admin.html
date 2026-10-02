@@ -208,6 +208,15 @@ input,select{background:rgba(0,0,0,.4);border:1px solid rgba(242,238,228,.18);bo
   background:rgba(0,0,0,.25)}
 .sai-k:has(input:checked){border-color:#1E9E6A;background:rgba(30,158,106,.14)}
 .sai-k input{margin:0;accent-color:#1E9E6A}
+/* La saison datée. Le carnet se lit palier par palier : une ligne de JSON par
+   palier, en chasse fixe, pour que les seuils s'alignent et que l'on voie d'un
+   coup d'œil qu'ils montent. */
+.sai-edit textarea.sai-carnet{width:100%;font-family:ui-monospace,monospace;font-size:12px;
+  line-height:1.55;min-height:150px;white-space:pre;overflow-x:auto}
+.sai-edit textarea.sai-carnet[readonly]{opacity:.6}
+.sai-note{margin:5px 0 0;font-size:11px;line-height:1.55;opacity:.55}
+.sai-note b{opacity:1;color:var(--projo)}
+.sai-c dd.fige{color:var(--projo)}
 .depot{background:rgba(30,158,106,.12);border:1px solid rgba(30,158,106,.4);border-radius:8px;padding:11px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.6}
 .depot code{background:rgba(0,0,0,.4);padding:1px 5px;border-radius:4px}
 .compte{font-size:11.5px;opacity:.5;margin-bottom:10px}
@@ -604,6 +613,37 @@ const VUES = {
     const fmt = (v) => (v ? new Date(v).toLocaleDateString('fr-CH',
       { day: 'numeric', month: 'long', year: 'numeric' }) : '');
 
+    /* Un jour de jeu (AAAA-MM-JJ) dit en français, découpé à la main. Passé à
+       « new Date », un jour sans heure devient minuit UTC, et s'affiche la
+       veille à l'ouest de Greenwich : l'étiquette et la date ne sortiraient
+       plus du même repère. */
+    const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet',
+      'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    const jourFr = (j) => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(j ?? '');
+      return m ? `${Number(m[3])} ${MOIS[Number(m[2]) - 1]} ${m[1]}` : '';
+    };
+    const figes = new Set(d.carnetsFiges ?? []);
+    const DEFAUT = d.carnetDefaut ?? [];
+    const L = d.limitesCarnet ?? {};
+    /* Le carnet dans la zone de texte : une ligne par palier, que l'on relit
+       et que l'on corrige sans compter les accolades. */
+    const carnetTexte = (c) => '[\n' + c.map((p) => '  ' + JSON.stringify(p)).join(',\n') + '\n]';
+
+    /* Ce que la fin d'une saison dit, à l'instant où l'on regarde. */
+    const finTexte = (s) => {
+      if (!s.fin) return 'pas encore saisie';
+      if (s.finie) return `finie — dernier jour le ${jourFr(s.fin)}`;
+      return `dernier jour le ${jourFr(s.fin)} — ${s.joursRestants} jour${
+        s.joursRestants > 1 ? 's' : ''} de jeu restant${s.joursRestants > 1 ? 's' : ''}`;
+    };
+    const carnetResume = (s) => {
+      const propre = Array.isArray(s.carnet);
+      const n = propre ? s.carnet.length : DEFAUT.length;
+      return `${propre ? 'propre à la saison' : 'par défaut'} — ${n} paliers`
+        + (figes.has(s.id) ? ' · figé : un palier a déjà été versé' : '');
+    };
+
     /* Les noms plutôt que les identifiants. Un administrateur qui relit une
        saison avant de la lancer doit lire « LES VIP », pas « VP ». */
     const noms = (ids, source) => ids
@@ -622,6 +662,10 @@ const VUES = {
           <dt>Équipement</dt><dd>${esc(noms(s.stuff, 'stuff')) || '—'}</dd>
           <dt>Cartes</dt><dd>${esc(noms(s.actions, 'actions')) || '—'}</dd>
           <dt>Stades</dt><dd>${esc(noms(s.stades ?? [], 'stades')) || '—'}</dd>
+          <dt>Fin</dt><dd>${esc(finTexte(s))}</dd>
+          ${s.lancee ? '' : `<dt>Ouverture</dt><dd>${s.ouvre
+            ? `annoncée aux joueurs pour le ${esc(jourFr(s.ouvre))}` : 'pas annoncée'}</dd>`}
+          <dt>Carnet</dt><dd class="${figes.has(s.id) ? 'fige' : ''}">${esc(carnetResume(s))}</dd>
         </dl>
         <div class="sai-a">
           <button class="mini" data-editer-saison="${s.id}">Modifier</button>
@@ -636,8 +680,18 @@ const VUES = {
     $('main').innerHTML = `
       <div class="series">
         <p class="series-t">SAISON EN COURS
-          <span>${enCours ? `Saison ${enCours.numero} — ${esc(enCours.nom)}`
+          <span>${enCours ? `Saison ${enCours.numero} — ${esc(enCours.nom)} · fin : ${
+            esc(finTexte(enCours))}`
             : 'aucune saison lancée — toutes les séries restent ouvertes'}</span></p>
+        <!-- L'annonce, telle que les joueurs la voient au kiosque. Poser un jour
+             d'ouverture sur un brouillon, c'est l'annoncer : l'écran le montre
+             ici pour qu'on ne le découvre pas chez les joueurs. -->
+        <p class="series-t">ANNONCÉE AUX JOUEURS
+          <span>${d.prochaine ? `Saison ${d.prochaine.numero} — ${esc(d.prochaine.nom)}, `
+            + `ouverture le ${esc(jourFr(d.prochaine.ouvre))}${d.prochaine.joursAvant
+              ? ` (dans ${d.prochaine.joursAvant} jour${d.prochaine.joursAvant > 1 ? 's' : ''})`
+              : ' (aujourd’hui)'}`
+            : 'rien — aucun brouillon ne porte de jour d’ouverture'}</span></p>
         <!-- Ce que le jeu applique **en ce moment**, et non ce que les cartes
              annoncent. Une saison lancée qui n'ouvre aucune série laisse le jeu
              toutes séries ouvertes — c'était le cas de la saison 1 reprise, et
@@ -671,6 +725,11 @@ const VUES = {
     function formulaire(s) {
       const v = s ?? { numero: '', nom: '', texte: '',
         series: [], tenues: [], stuff: [], actions: [], stades: [] };
+      /* Un carnet figé se montre sans se modifier, et ne repart pas au serveur :
+         il n'y a rien à y décider, et un champ qu'on peut taper mais qui sera
+         refusé est un piège. */
+      const fige = Boolean(s && figes.has(s.id));
+      const carnet = Array.isArray(v.carnet) ? v.carnet : DEFAUT;
       $('sai-form').innerHTML = `
         <div class="sai sai-edit">
           <div class="grille">
@@ -683,7 +742,32 @@ const VUES = {
             <div class="large"><label>L’ANNONCE FAITE AUX JOUEURS</label>
               <textarea id="s-txt" maxlength="500"
                 placeholder="Cinq séries neuves, des tenues, et de quoi refaire le tour du stade.">${esc(v.texte ?? '')}</textarea></div>
+            <div><label for="s-fin">DERNIER JOUR DE JEU</label>
+              <input id="s-fin" type="date" value="${esc(v.fin ?? '')}">
+              <p class="sai-note">La saison se clôt à la fin de ce jour de jeu : son
+                carnet, ses divisions et son classement s’arrêtent. Rien ne se
+                referme. Vide : elle court jusqu’au lancement de la suivante.</p></div>
+            <div><label for="s-ouvre">OUVERTURE ANNONCÉE</label>
+              <input id="s-ouvre" type="date" value="${esc(v.ouvre ?? '')}">
+              <p class="sai-note">Pour un brouillon. <b>La poser, c’est l’annoncer</b> :
+                « SAISON ${esc(v.numero || 'N')} » apparaît au kiosque avec ce jour,
+                jusqu’à la fin de ce jour-là. Vide : rien n’est annoncé.</p></div>
           </div>
+          <div class="sai-l"><p class="sai-lt">CARNET DE TAMPONS — ${fige
+            ? 'figé, un palier en a déjà été versé' : 'un palier par ligne'}</p>
+            <textarea id="s-carnet" class="sai-carnet" spellcheck="false"
+              aria-label="Carnet de tampons de la saison"${fige ? ' readonly' : ''}
+              >${esc(carnetTexte(carnet))}</textarea>
+            <p class="sai-note">${fige
+              ? 'Un seuil relevé ou un gain baissé reprendrait une promesse déjà tenue : '
+                + 'le carnet se recale avant le premier palier versé, jamais après.'
+              : `De ${esc(L.paliersMin ?? 1)} à ${esc(L.paliersMax ?? 8)} paliers. « tampons » : `
+                + 'le seuil, strictement croissant ; « nom » : '
+                + `${esc(L.nomMax ?? 40)} caractères au plus ; « echarpes » : `
+                + `${esc(L.echarpesMax ?? 2000)} au plus ; « packs » : les boosters, `
+                + `${esc(L.packsMax ?? 10)} au plus ; au besoin « insigne » (lisere ou `
+                + 'tampon) et « titre » (true : le nom devient un titre). Laissé tel '
+                + 'quel ou vidé : le carnet par défaut. Il se fige au premier palier versé.'}</p></div>
           <div class="sai-l"><p class="sai-lt">SÉRIES — elles s’ouvrent</p>
             <div class="sai-ks" id="s-series">${cases('series', v.series)}</div></div>
           <div class="sai-l"><p class="sai-lt">TENUES — elles se publient</p>
@@ -711,6 +795,11 @@ const VUES = {
           series: coches('s-series'), tenues: coches('s-tenues'),
           stuff: coches('s-stuff'), actions: coches('s-actions'),
           stades: coches('s-stades'),
+          /* Vides, les deux jours partent vides : le serveur les efface. Le
+             carnet part tel qu'il est tapé, et c'est le serveur qui le juge —
+             son refus nomme le palier fautif. */
+          fin_le: $('s-fin').value, ouvre_le: $('s-ouvre').value,
+          ...(fige ? {} : { carnet: $('s-carnet').value }),
         };
         try {
           /* api(chemin, corps, methode) — trois arguments, et le deuxième est
@@ -745,6 +834,7 @@ const VUES = {
           s.series.length ? `${s.series.length} série(s) : ${noms(s.series, 'series')}` : null,
           s.tenues.length ? `${s.tenues.length} tenue(s) : ${noms(s.tenues, 'tenues')}` : null,
         ].filter(Boolean).join('\n');
+        const finDite = s.fin ? `\n\nDernier jour de jeu : ${jourFr(s.fin)}.` : '';
         const ok = await window.TBF_DIALOGUE?.confirmer(s.lancee ? {
           titre: `REMETTRE LA SAISON ${s.numero} EN BROUILLON ?`,
           texte: 'Ses séries se referment pour tout le monde. Personne ne perd ce '
@@ -754,7 +844,7 @@ const VUES = {
         } : {
           titre: `LANCER LA SAISON ${s.numero} ?`,
           texte: `« ${s.nom} » s’ouvre pour tous les joueurs, maintenant.\n\n`
-            + (ouvre || 'Elle n’ouvre aucun contenu — elle ne fera qu’annoncer.'),
+            + (ouvre || 'Elle n’ouvre aucun contenu — elle ne fera qu’annoncer.') + finDite,
           oui: 'LANCER', ton: 'vert',
         });
         if (!ok) return;

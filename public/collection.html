@@ -117,7 +117,10 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   grid-template-columns:1fr auto;gap:6px 12px;padding:14px 16px;align-items:center}
 .type>button:focus-visible{outline:2px solid var(--projo);outline-offset:-2px}
 .type h2{margin:0;font-family:var(--banner);font-size:16px;letter-spacing:.08em}
-.type .compte{font-family:var(--banner);font-size:15px;color:var(--projo)}
+/* Le compte d'un bloc, en craie grasse : en or et en quinze pixels, il ne
+   tenait pas au soleil (arbitrage du 2 octobre 2026). Le grand total, plus
+   haut, garde son or : trente-quatre pixels, c'est du grand texte. */
+.type .compte{font-family:var(--banner);font-size:15px;font-weight:700;color:var(--craie)}
 .type .compte small{color:var(--craie)}
 /* Six pixels sous la jauge, en plus des six de la grille : la place de ses
    franges, qui pendent de dix pixels et tomberaient sur la première ligne de
@@ -238,7 +241,16 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .vitr-boite{position:absolute;inset:0;display:flex;overflow:auto;
   overscroll-behavior:contain;cursor:pointer;
   padding:calc(14px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom))}
-.vitr-carton{position:relative;margin:auto;width:min(420px,100%);cursor:default}
+/* **La craie, posée sur le carton.** La rareté y vit en classe (`r-rare`,
+   `r-legendaire`… voir `rendreVitrine`) pour `--rc` et `--rc2` — mais la
+   même classe porte aussi, dans ui.css, la **couleur du texte** de la
+   rareté, et tout ce qui n'en déclarait pas une en héritait : le texte,
+   l'histoire, les effets, le compte du feuilletage s'écrivaient en or sur
+   une légendaire, en bleu sur une rare. Personne ne l'avait voulu, et l'or
+   ne s'écrit plus qu'en grand (arbitrage du 2 octobre 2026). La couleur de
+   la rareté reste là où elle est demandée : le halo, le cadre, le trait des
+   effets et le mot de la rareté. */
+.vitr-carton{position:relative;margin:auto;width:min(420px,100%);cursor:default;color:var(--craie)}
 
 /* Quarante-quatre pixels, comme toute cible de doigt : à trente-huit, la croix
    et la flèche de retour étaient les deux plus petites commandes de l'écran,
@@ -295,9 +307,12 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    dessinait en vert vif chez l'un, en trait fin chez l'autre. */
 .vitr-etat .tbf-ico{margin-right:.5em}
 .vitr-tete{text-align:center}
-/* Possédé en or, à gagner en craie : la différence est une couleur, et plus
-   une demi-transparence qui rendait le second illisible dehors. */
-.vitr-etat.a-moi{color:var(--projo);background:rgba(245,195,59,.1)}
+/* Possédé en craie pleine, encre dessus ; à gagner, au trait de craie : la
+   différence est une matière, et plus une demi-transparence qui rendait le
+   second illisible dehors. Le possédé était écrit en or sur un voile d'or —
+   en onze pixels et demi, l'or ne tient pas au soleil (arbitrage du
+   2 octobre 2026). Plein, il se lit comme le sticker craie du jeu. */
+.vitr-etat.a-moi{color:var(--encre);background:var(--craie);border-color:var(--craie);font-weight:700}
 .vitr-etat.a-gagner{color:var(--craie)}
 
 .vitr-nom{margin:11px 0 0;font-family:var(--banner);font-size:25px;line-height:1.05;
@@ -309,6 +324,11 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   letter-spacing:.16em;display:flex;gap:9px;justify-content:center;
   flex-wrap:wrap;align-items:center}
 .vitr-quoi .rr{color:var(--rc,var(--craie))}
+/* La légendaire : une face d'or, l'encre dessus. En onze pixels, son mot
+   écrit en or ne tenait pas au soleil, et l'or reste une face pour le
+   légendaire (arbitrage du 2 octobre 2026). */
+.r-legendaire .vitr-quoi .rr{color:var(--encre);background:var(--rc);font-weight:700;
+  padding:2px 6px;border-radius:4px}
 .vitr-quoi .pt{width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.4}
 
 .vitr-texte{margin:14px 0 0;font-size:13px;line-height:1.6;text-align:center}
@@ -363,7 +383,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .vitr-portes{display:flex;gap:8px;margin:12px 0 0}
 .vitr-porte{flex:1;flex-direction:column;gap:3px;font-size:11.5px;letter-spacing:.12em;
   padding:9px 6px}
-.vitr-porte b{display:block;color:var(--projo);font-size:14px}
+/* Le compte, en craie grasse : il était en or, et en quatorze pixels l'or
+   ne tient pas au soleil (arbitrage du 2 octobre 2026). */
+.vitr-porte b{display:block;color:var(--craie);font-weight:700;font-size:14px}
 
 /* Le feuilletage. Il porte le rang parce qu'un collectionneur compte : « 12
    sur 35 » dit à la fois où on en est et combien il en reste. Le rang se lit
@@ -396,7 +418,8 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .vitr-groupe{margin-top:18px}
 .vitr-groupe>header{display:flex;align-items:baseline;gap:9px;margin-bottom:9px}
 .vitr-groupe h3{margin:0;font-family:var(--banner);font-size:12px;letter-spacing:.16em}
-.vitr-groupe .n{font-family:var(--banner);font-size:12px;color:var(--projo)}
+/* En craie grasse, pour la même raison que le compte des portes. */
+.vitr-groupe .n{font-family:var(--banner);font-size:12px;font-weight:700;color:var(--craie)}
 .vitr-groupe .n small{color:var(--craie)}
 .vitr-groupe .ferme{font-size:11px;margin-left:auto;text-align:right;
   line-height:1.3}

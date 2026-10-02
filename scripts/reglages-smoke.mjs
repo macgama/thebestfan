@@ -90,6 +90,147 @@ check('les réglages chiffrés portent tous une unité',
   REGLAGES.filter((r) => r.type === 'entier' || r.type === 'decimal')
     .every((r) => typeof r.unite === 'string' && r.unite.length > 0));
 
+/* ------------------------------------------------- le registre du quotidien
+
+   Le chantier du quotidien pose toutes ses clés d'un coup, et les huit
+   périmètres qui les lisent codent contre elles. Une clé absente ne casse
+   rien : `reglage()` rend `undefined`, et un montant `undefined` devient
+   `NaN`, que rien ne signale. D'où la table ci-dessous, recopiée du plan
+   (`PLAN.md`, § 4) : nom, section, type, bornes et valeur de départ. Elle
+   est écrite ici en toutes lettres exprès — c'est elle qui juge le registre,
+   pas l'inverse. */
+
+console.log('\n— le registre du quotidien —');
+
+for (const id of ['quotidien', 'missions', 'saison']) {
+  check(`la section « ${id} » existe`, SECTIONS.some((s) => s.id === id));
+}
+
+const PLAN = [
+  ['bonus.actif', 'quotidien', 'booleen', null, null, true],
+  ['bonus.base', 'quotidien', 'entier', 0, 200, 20],
+  ['bonus.pas', 'quotidien', 'entier', 0, 50, 5],
+  ['bonus.j7_packs', 'quotidien', 'entier', 0, 3, 1],
+  ['missions.actif', 'quotidien', 'booleen', null, null, true],
+  ['missions.relances', 'quotidien', 'entier', 0, 3, 1],
+  ['missions.facile_echarpes', 'quotidien', 'entier', 0, 300, 30],
+  ['missions.facile_xp', 'quotidien', 'entier', 0, 200, 20],
+  ['missions.moyenne_echarpes', 'quotidien', 'entier', 0, 400, 60],
+  ['missions.moyenne_xp', 'quotidien', 'entier', 0, 300, 40],
+  ['missions.difficile_echarpes', 'quotidien', 'entier', 0, 600, 100],
+  ['missions.difficile_xp', 'quotidien', 'entier', 0, 400, 60],
+  ['missions.sachet_packs', 'quotidien', 'entier', 0, 3, 1],
+  ['quotidien.retour_heures', 'quotidien', 'entier', 1, 48, 3],
+  ['recompenses.plafond_echarpes_jour', 'quotidien', 'entier', 100, 20000, 2500],
+  ['recompenses.plafond_packs_jour', 'quotidien', 'entier', 1, 50, 15],
+  ['saison.carnet_actif', 'saison', 'booleen', null, null, true],
+  ['saison.tampons_facile', 'saison', 'entier', 0, 10, 1],
+  ['saison.tampons_moyenne', 'saison', 'entier', 0, 10, 1],
+  ['saison.tampons_difficile', 'saison', 'entier', 0, 10, 2],
+  ['saison.tampons_sachet', 'saison', 'entier', 0, 10, 1],
+  ['saison.relais_packs', 'saison', 'entier', 0, 5, 2],
+  ['saison.relais_seuil', 'saison', 'entier', 0, 1000, 10],
+  ['collection.actif', 'saison', 'booleen', null, null, true],
+  ['collection.cran', 'saison', 'entier', 5, 200, 25],
+  ['collection.cran_echarpes', 'saison', 'entier', 0, 300, 25],
+  ['collection.cran_booster_tous', 'saison', 'entier', 0, 20, 4],
+  ['collection.serie_echarpes', 'saison', 'entier', 0, 1000, 100],
+  ['collection.serie_packs', 'saison', 'entier', 0, 5, 1],
+  ['rang.actif', 'saison', 'booleen', null, null, true],
+  ['rang.habitue', 'saison', 'entier', 0, 100000000, 5000],
+  ['rang.fervent', 'saison', 'entier', 0, 100000000, 30000],
+  ['rang.ultra', 'saison', 'entier', 0, 100000000, 100000],
+  ['rang.capo', 'saison', 'entier', 0, 100000000, 300000],
+];
+{
+  const ecarts = [];
+  for (const [cle, section, type, min, max, defaut] of PLAN) {
+    const r = PAR_CLE.get(cle);
+    if (!r) { ecarts.push(`${cle} absente`); continue; }
+    if (r.section !== section) ecarts.push(`${cle} : section ${r.section}`);
+    if (r.type !== type) ecarts.push(`${cle} : type ${r.type}`);
+    if (r.defaut !== defaut) ecarts.push(`${cle} : défaut ${r.defaut}, le plan dit ${defaut}`);
+    if (min !== null && (r.min !== min || r.max !== max)) {
+      ecarts.push(`${cle} : bornes ${r.min}–${r.max}, le plan dit ${min}–${max}`);
+    }
+  }
+  check(`les ${PLAN.length} clés du plan sont là, avec leur section, leurs bornes et leur valeur de départ`,
+    ecarts.length === 0 || (console.log('        écarts :', ecarts.join(' · ')), false));
+}
+
+/* Les treize bascules de mission : une par identifiant du catalogue, la liste
+   fermée du contrat (`CONTRATS.md`, § 6.1). Une mission sans bascule ne
+   pourrait pas être sortie du tirage un samedi soir. */
+{
+  const MISSIONS = ['boosters', 'duel', 'virage', 'grandir', 'tribune', 'victoire', 'classes',
+    'club_virage', 'club_duel', 'victoires', 'endurance', 'mitemps', 'ailleurs'];
+  const bascules = REGLAGES.filter((r) => r.section === 'missions');
+  check('treize bascules de mission, une par identifiant du catalogue',
+    bascules.length === MISSIONS.length
+      && MISSIONS.every((id) => PAR_CLE.get(`mission.${id}`)?.section === 'missions')
+    || (console.log('        vues :', bascules.map((r) => r.cle).join(', ')), false));
+  check('toutes en bascule, toutes allumées au départ',
+    bascules.every((r) => r.type === 'booleen' && r.defaut === true));
+  check('et chacune porte l’intitulé de sa mission, pas sa clé',
+    bascules.every((r) => r.titre && !r.titre.includes('.') && r.titre.length > 8));
+}
+
+/* Un interrupteur par source de gain : c'est le disjoncteur qu'on actionne
+   sans livraison. La liste des sources est celle du grand livre lui-même :
+   une source qu'on lui ajouterait sans interrupteur ferait rougir ceci. */
+{
+  const { SOURCES } = await import('../src/server/recompenses.js');
+  const INTERRUPTEURS = {
+    bonus: 'bonus.actif', mission: 'missions.actif', sachet: 'missions.actif',
+    carnet: 'saison.carnet_actif', relais: 'saison.carnet_actif',
+    cran: 'collection.actif', serie: 'collection.actif', division: 'rang.actif',
+  };
+  const sans = SOURCES.filter((s) => {
+    const r = PAR_CLE.get(INTERRUPTEURS[s]);
+    return !r || r.type !== 'booleen';
+  });
+  check(`chaque source du grand livre a son interrupteur (${SOURCES.length})`,
+    sans.length === 0 || (console.log('        sans interrupteur :', sans.join(', ')), false));
+}
+
+/* Les types que l'écran sait dessiner. `admin.html` dessine un type inconnu en
+   champ numérique : une liste y serait inéditable, d'où une bascule par
+   mission plutôt qu'une liste à cocher. */
+check('aucun réglage de type liste au registre',
+  !REGLAGES.some((r) => r.type === 'liste')
+  || (console.log('        listes :', REGLAGES.filter((r) => r.type === 'liste').map((r) => r.cle).join(', ')), false));
+
+/* **Les divisions ne paient que l'honneur.** La ferveur classée n'a pas de
+   plafond pour un abonné : une division qui verserait des écharpes ou des
+   boosters s'achèterait en partie (`SERVEUR.md`, § 6). Un réglage qui
+   permettrait de leur en rendre rouvrirait d'un geste ce que la règle
+   ferme. */
+check('aucune clé rang.* n’a d’unité en écharpes ou en boosters',
+  !REGLAGES.some((r) => r.cle.startsWith('rang.') && /écharpe|echarpe|booster|pack/i.test(r.unite ?? ''))
+  || (console.log('        fautives :', REGLAGES.filter((r) => r.cle.startsWith('rang.')
+    && /écharpe|echarpe|booster|pack/i.test(r.unite ?? '')).map((r) => r.cle).join(', ')), false));
+
+/* Les billets n'existent plus : l'étal se paie en écharpes. Une étiquette qui
+   nomme une autre monnaie que celle qu'on débite fait lire un prix faux. */
+check('aucune unité « billets » au registre',
+  !REGLAGES.some((r) => /billet/i.test(r.unite ?? ''))
+  || (console.log('        fautives :', REGLAGES.filter((r) => /billet/i.test(r.unite ?? ''))
+    .map((r) => r.cle).join(', ')), false));
+
+/* Ce que l'écran d'administration doit dire au moment de changer un montant :
+   les missions sont copiées au tirage (le lendemain), le bonus se calcule à la
+   réclamation (tout de suite), et une XP de duel à zéro sort des missions du
+   tirage. Sans ces phrases, on change un montant à midi et l'on croit que
+   rien ne s'est passé — ou l'inverse. */
+check('les montants du bonus disent qu’ils valent tout de suite',
+  ['bonus.base', 'bonus.pas', 'bonus.j7_packs'].every((c) => /tout de suite/.test(PAR_CLE.get(c)?.aide ?? '')));
+check('les montants des missions disent qu’ils valent pour le lendemain',
+  ['missions.facile_echarpes', 'missions.facile_xp', 'missions.moyenne_echarpes', 'missions.moyenne_xp',
+    'missions.difficile_echarpes', 'missions.difficile_xp', 'missions.sachet_packs']
+    .every((c) => /lendemain/.test(PAR_CLE.get(c)?.aide ?? '')));
+check('une XP de duel à zéro dit qu’elle sort des missions du tirage',
+  ['xp.duel_entrainement', 'xp.duel_classe'].every((c) => /tirage/.test(PAR_CLE.get(c)?.aide ?? '')));
+
 /* ------------------------------------------------------ la validation */
 
 console.log('\n— la validation —');
@@ -287,6 +428,11 @@ check('avec son ton', d.annonce?.ton === DEFAUTS['annonce.ton']);
 const brut = JSON.stringify(d);
 check('la route ne publie pas l’équilibrage du jeu',
   !/virage\.|duel\.|deck\.|xp\.|pack\./.test(brut)
+  || (console.log('        rendu :', brut), false));
+/* Ni l'économie du quotidien : les montants, les seuils de division et le
+   disjoncteur sont le mode d'emploi de ce qu'il faudrait exploiter. */
+check('ni les montants du quotidien, ni le disjoncteur',
+  !/bonus\.|missions?\.|quotidien\.|saison\.|collection\.|rang\.|recompenses\./.test(brut)
   || (console.log('        rendu :', brut), false));
 
 await ecrireReglage(pool, 'maintenance.actif', true, null);

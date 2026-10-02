@@ -6,7 +6,7 @@
 <title>Mes équipes — thebestfan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
 <style>
@@ -15,6 +15,13 @@
 html,body{margin:0;min-height:100dvh}
 body{background:radial-gradient(120% 50% at 50% -8%,rgba(245,195,59,.13),transparent 60%),var(--beton);
      color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;padding:26px 16px 70px}
+/* **Sous la barre, l'air d'une page, pas celui d'un bord d'écran.** La
+   barre du haut (nav.js) remonte au bord de l'écran et laisse sous elle
+   l'écart que la page avait au-dessus : vingt-six pixels, plus les huit
+   dont le panneau du sous-titre (`.tbf-sous`) rentre dans sa boîte —
+   trente-quatre de vide. Quand elle est là, six suffisent : quatorze
+   pixels à l'œil entre la barre et le panneau. */
+body:has(.tbf-haut){padding-top:6px}
 main{width:100%;max-width:var(--colonne)}
 h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em;margin:0 0 4px;text-align:center}
 .search{position:relative;margin-bottom:14px}
@@ -40,8 +47,12 @@ input:focus{outline:none;border-color:var(--projo)}
 .club{display:flex;align-items:center;gap:11px;padding:14px;border-bottom:1px solid rgba(242,238,228,.09)}
 .club img{width:28px;height:28px}
 .club b{font-family:var(--banner);font-size:16px;letter-spacing:.03em;flex:1}
-.club .main{font-size:11px;letter-spacing:.12em;color:var(--projo);border:1px solid rgba(245,195,59,.4);
-  border-radius:3px;padding:2px 6px}
+/* PRINCIPAL est un sticker craie (`.tbf-sticker`, ui.css), comme AVATAR et
+   CAPO : il était écrit en or, en onze pixels, cerné d'or, et l'or ne
+   s'écrit plus qu'en grand (arbitrage du 2 octobre 2026). Il ne garde ici
+   que l'air que sa boîte ne compte pas — six pixels à droite pour le bord et
+   l'ombre, avant la croix. */
+.club .main{margin-right:6px}
 /* La croix qui retire un club : un bouton-icône, et il fait quarante-quatre
    pixels comme tout ce qui se touche. Il en faisait vingt-deux, à côté du nom
    du club qu'on vient voir — la marge négative rend la hauteur prise à la
@@ -69,13 +80,16 @@ input:focus{outline:none;border-color:var(--projo)}
    photo. Il a son panneau, comme le reste de la page. */
 .empty{text-align:center;padding:44px 20px;opacity:.9;font-size:13.5px;line-height:1.7;
   background:var(--panneau);border:1px solid var(--trait);border-radius:var(--r)}
-.empty a{color:var(--projo)}
+/* Les liens et le mot en gras du bandeau, en craie grasse : en or, sous
+   quatorze pixels, ils ne tenaient pas au soleil (arbitrage du 2 octobre
+   2026). */
+.empty a{color:var(--craie);font-weight:700}
 .flash{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;background:#171C23;
   border:1px solid var(--flare);border-radius:8px;padding:13px 18px;font-size:13.5px;z-index:20;
   box-shadow:0 12px 30px rgba(0,0,0,.6);max-width:90vw;display:none}
 .flash.on{display:block;animation:rise .35s cubic-bezier(.2,.8,.3,1)}
 @keyframes rise{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
-.flash b{color:var(--projo)}
+.flash b{color:var(--craie);font-weight:700}
 /* Le mot du serveur : un refus d'emplacement, et ce qu'il faut faire pour en
    sortir. Dans le flux de la page et non en bandeau flottant — il répond à un
    geste qu'on vient de faire juste au-dessus, et il doit rester lisible le
@@ -353,7 +367,7 @@ function render(){
       <div class="club">
         <img src="${esc(row.team.logo)}" alt="">
         <b>${esc(row.team.name)}</b>
-        ${row.team.is_main ? `<span class="main">${t('main')}</span>` : ''}
+        ${row.team.is_main ? `<span class="main tbf-sticker">${t('main')}</span>` : ''}
         <button data-unfollow="${row.team.id}" title="✕">✕</button>
       </div>
       ${row.live.length ? row.live.map(matchRow).join('') : ''}

@@ -38,6 +38,8 @@ import { createNiveau } from './src/server/niveau/index.js';
 import { createAbonnement } from './src/server/abonnement/index.js';
 import { createContenus } from './src/server/contenus/index.js';
 import { createAide } from './src/server/aide/index.js';
+import { createQuotidien, sonderJourDeJeu, phraseJourDeJeu }
+  from './src/server/quotidien/index.js';
 import { createRepetition } from './src/server/repetition/index.js';
 import { createKop } from './src/server/kop/index.js';
 import { createAmis } from './src/server/amis/index.js';
@@ -200,6 +202,10 @@ let admin = null;
 let boutique = null;
 let nvn = null;
 let google = null;
+let quotidien = null;
+/* Ce que la sonde du jour de jeu a lu au démarrage : l'heure de Zurich à
+   laquelle le jour de la base change. Voir le montage du quotidien. */
+let jourDeJeu = null;
 
 if (process.env.DATABASE_URL) {
   try {
@@ -470,6 +476,40 @@ if (process.env.DATABASE_URL) {
     const aide = createAide({ pool, requireAuth: auth.requireAuth });
     app.use('/api/aide', aide.router);
     console.log('aide et premiers pas actifs');
+
+    /* ---- le quotidien : missions du jour, sachet, carte de présence,
+       carnet de la saison, relais, « depuis ta dernière visite »
+
+       Monté après l'aide, et après les deux modules dont il a besoin pour
+       verser : `niveau` (l'XP d'une mission entre dans la transaction du
+       versement, par `gagnerDans`) et `fanzzy` (la recharge due se compte
+       avant un booster offert, par `recharger`). Construit avant eux, il les
+       garderait à `null` — la panne que `verif-cablage.mjs` surveille.
+
+       **Ni `abonnement`, ni `kop`, ni `amis`**, exprès : abonné et
+       non-abonné reçoivent les mêmes missions et les mêmes montants, et le
+       plus sûr est que ce module ne puisse pas savoir qui est abonné.
+
+       La journée du football est une **fonction**, comme pour le Virage et
+       les decks : le télétexte est monté plus bas, elle le lira au moment de
+       l'appel. Aucun appel nouveau à l'API : c'est le cache de `/matchs`. */
+    quotidien = createQuotidien({ pool, requireAuth: auth.requireAuth, niveau, fanzzy,
+      jourDuFoot: () => teletext?.jour('') ?? null });
+    app.use('/api/quotidien', quotidien.router);
+    console.log('quotidien actif');
+
+    /* **La sonde du jour de jeu.** Le jour change au minuit de la base, celui
+       des quotas gratuits : si la base n'est pas à l'heure de Zurich, missions
+       et quotas basculent ensemble à une ou deux heures du matin. Ce n'est pas
+       une panne, c'est un réglage à décider (`SERVEUR.md`, § 2) — encore
+       faut-il pouvoir le lire, ici et dans `/healthz`. Une sonde illisible ne
+       ferme rien. */
+    try {
+      jourDeJeu = await sonderJourDeJeu(pool);
+      console.log(phraseJourDeJeu(jourDeJeu));
+    } catch (e) {
+      console.error('[quotidien] sonde du jour de jeu illisible :', e.message);
+    }
 
     /* ---- les couleurs des clubs
        Extraites du blason, une fois par club, hors quota — c'est le CDN de
@@ -838,6 +878,11 @@ app.get('/healthz', (_req, res) => {
     decks: decks ? 'actifs' : 'désactivés',
     admin: admin ? 'actif' : 'désactivé',
     nvn: nvn ? { salles: nvn.salles.size, files: nvn.files.size } : 'désactivé',
+    quotidien: quotidien ? 'actif' : 'désactivé',
+    /* L'heure de Zurich à laquelle le jour de jeu change, lue au démarrage.
+       Elle ne touche pas à `ok` : un minuit décalé est un réglage à décider,
+       pas un site fermé. */
+    ...(jourDeJeu ? { jourDeJeu } : {}),
     google: google?.actif ? 'active' : 'désactivée',
     mail: globalThis.mailer?.status ?? { etat: 'console' },
     origin: ORIGIN,

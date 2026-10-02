@@ -42,12 +42,15 @@ await raw.query(`DROP TABLE IF EXISTS parrainages, contenus, abonnements, achats
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users,
-  admin_audit, reglages`);
+  admin_audit, reglages, recompenses, missions_jour, compteurs_jour, user_nouveautes`);
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql',
                  'inventaire.sql', 'skins.sql', 'etats.sql', 'tenues.sql', 'deck.sql', 'admin.sql',
                  // Sans elle, l'onglet SAISONS se monte sur une table absente et
                  // le contrôle mesurerait un écran vide plutôt que l'écran.
-                 'saisons.sql','contenus.sql']) {
+                 'saisons.sql','contenus.sql',
+                 // Les jours et le carnet d'une saison, et le grand livre qui
+                 // dit si un carnet est figé. En dernier, comme dans ORDRE.
+                 'quotidien.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 /* On repart d'un catalogue propre : les essais précédents laissent des ZZ.
@@ -556,6 +559,106 @@ check('un brouillon se supprime', await jusqua(async () => {
   const [r] = await pool.query('SELECT id FROM saisons WHERE id = ?', [brouillon.id]);
   return r.length === 0;
 }));
+
+/* ------------------------------------------------------- la saison datée
+
+   Deux jours et un carnet, saisis à l'écran et relus **en base** : c'est là
+   que « le formulaire s'est refermé » et « c'est enregistré » se distinguent.
+   Les jours sont en 2030 : ils doivent rester à venir quel que soit le jour où
+   l'on lance la suite, sinon l'annonce disparaîtrait d'elle-même. */
+
+/* La page tourne à Montréal pour cette section : un jour AAAA-MM-JJ passé à
+   « new Date » y devient minuit UTC, donc la veille au soir, et l'écran
+   afficherait le 29 mai pour le 30. À Zurich, la même faute ne se voit pas. */
+await page.emulateTimezone('America/Montreal');
+
+const ligneSaison = async (nom) => (await pool.query(
+  `SELECT id, DATE_FORMAT(fin_le, '%Y-%m-%d') AS fin, DATE_FORMAT(ouvre_le, '%Y-%m-%d') AS ouvre,
+          carnet FROM saisons WHERE nom = ?`, [nom]))[0][0];
+const carnetLu = (v) => (v == null ? null : (typeof v === 'string' ? JSON.parse(v) : v));
+
+await page.evaluate(() => document.getElementById('nouvelle-saison').click());
+await jusqua(async () => await page.$('#s-carnet') !== null);
+const prerempli = await page.evaluate(() => ({
+  fin: document.getElementById('s-fin')?.type,
+  ouvre: document.getElementById('s-ouvre')?.type,
+  carnet: document.getElementById('s-carnet')?.value,
+}));
+let carnetEcran = null;
+try { carnetEcran = JSON.parse(prerempli.carnet); } catch { /* vérifié juste dessous */ }
+check('le formulaire porte deux champs date et le carnet, prérempli du carnet par défaut',
+  prerempli.fin === 'date' && prerempli.ouvre === 'date' && Array.isArray(carnetEcran)
+  && carnetEcran.map((p) => p.tampons).join() === '10,40,100,180,260'
+  || (console.log('        lu :', JSON.stringify(prerempli).slice(0, 200)), false));
+
+await page.evaluate(() => {
+  document.getElementById('s-nom').value = 'Saison datée';
+  document.getElementById('s-fin').value = '2030-05-30';
+  document.getElementById('s-ouvre').value = '2030-05-31';
+  /* Le premier palier passe de 100 à 120 écharpes : un carnet propre. */
+  const c = JSON.parse(document.getElementById('s-carnet').value);
+  c[0].echarpes = 120;
+  document.getElementById('s-carnet').value = JSON.stringify(c, null, 2);
+  document.getElementById('s-ok').click();
+});
+check('les deux jours et le carnet saisis arrivent en base', await jusqua(async () => {
+  const l = await ligneSaison('Saison datée');
+  return l?.fin === '2030-05-30' && l?.ouvre === '2030-05-31'
+    && carnetLu(l.carnet)?.[0]?.echarpes === 120;
+}));
+const datee = await ligneSaison('Saison datée');
+
+check('la carte de la saison les dit en français, sans décalage de jour',
+  await jusqua(async () => page.evaluate((id) => {
+    const b = document.querySelector(`[data-editer-saison="${id}"]`)?.closest('.sai');
+    const t = b?.textContent ?? '';
+    return /dernier jour le 30 mai 2030/.test(t) && /annoncée aux joueurs pour le 31 mai 2030/.test(t)
+      && /propre à la saison — 5 paliers/.test(t);
+  }, datee?.id)));
+check('et l’en-tête montre ce que les joueurs voient annoncé',
+  await page.evaluate(() => /ANNONCÉE AUX JOUEURS[\s\S]*Saison datée, ouverture le 31 mai 2030/
+    .test(document.querySelector('.series')?.textContent ?? '')));
+
+/* Un carnet fautif : le refus du serveur nomme le palier, en français. */
+await page.evaluate((id) => document.querySelector(`[data-editer-saison="${id}"]`).click(), datee.id);
+await jusqua(async () => await page.$('#s-carnet') !== null);
+await page.evaluate(() => {
+  document.getElementById('s-carnet').value = JSON.stringify([
+    { tampons: 40, nom: 'Haut', echarpes: 10 }, { tampons: 10, nom: 'Bas', echarpes: 10 }]);
+  document.getElementById('s-ok').click();
+});
+check('un carnet fautif est refusé à l’écran, palier nommé, pas en code brut',
+  await jusqua(async () => page.evaluate(() => {
+    const r = document.querySelector('.recu.on.rate');
+    return Boolean(r) && /palier 2/.test(r.textContent) && !/admin\.error/.test(r.textContent);
+  }), 4000));
+check('et la base garde le carnet d’avant',
+  carnetLu((await ligneSaison('Saison datée')).carnet)?.[0]?.echarpes === 120);
+
+/* Un palier versé fige le carnet : l'écran le montre sans le laisser taper, et
+   les autres champs s'enregistrent toujours. */
+await pool.query(
+  `INSERT INTO recompenses (user_id, source, cle, saison_id, echarpes, packs, xp, tampons)
+   VALUES (?, 'carnet', ?, ?, 120, 0, 0, 0)`, [U, `S${datee.id}:1`, datee.id]);
+await page.evaluate(() => [...document.querySelectorAll('#nav button')]
+  .find((b) => /SAISONS/.test(b.textContent))?.click());
+await jusqua(async () => page.evaluate((id) =>
+  document.querySelector(`[data-editer-saison="${id}"]`) !== null, datee.id));
+await page.evaluate((id) => document.querySelector(`[data-editer-saison="${id}"]`).click(), datee.id);
+await jusqua(async () => await page.$('#s-carnet') !== null);
+check('un carnet figé se montre en lecture seule, et dit pourquoi', await page.evaluate(() =>
+  document.getElementById('s-carnet').readOnly
+  && /figé/.test(document.getElementById('s-carnet').closest('.sai-l')?.textContent ?? '')));
+await page.evaluate(() => {
+  document.getElementById('s-fin').value = '2030-06-15';
+  document.getElementById('s-ok').click();
+});
+check('et la date de fin se corrige quand même', await jusqua(async () =>
+  (await ligneSaison('Saison datée'))?.fin === '2030-06-15'));
+
+await pool.query('DELETE FROM recompenses WHERE user_id = ?', [U]);
+await pool.query('DELETE FROM saisons WHERE id = ?', [datee.id]);
+await page.emulateTimezone();
 
 
 check('aucune erreur de script pendant toute la session', erreurs.length === 0);

@@ -40,7 +40,10 @@ const ART = {
   RV: 'img/pack-les-revenants',
   EP: 'img/pack-les-epoques',
   IM: 'img/pack-virage-impossible',
-  burst: 'video/gerbe.mp4',
+  /* La gerbe filmée (`video/gerbe.mp4`) n'est plus ici : elle ne servait
+     qu'à la révélation d'une légendaire au kiosque, qui passe maintenant par
+     l'échelle commune de cérémonie (`FX.reveler`, dans fx.js). La bienvenue
+     la charge encore par son adresse. */
 };
 
 // Choix du format d'image et dessin des Fanzzy : voir /fanzzy-art.js. L'accueil
@@ -61,10 +64,11 @@ const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
 /**
- * Le mode calme du tiroir (contrat C4) vaut aussi ici. Ce fichier a son
- * propre contexte audio et son propre vibreur, que `FX.son` ne couvre pas :
- * sans ce garde, la cérémonie du booster continuait de sonner et de vibrer
- * pour un joueur qui avait tout coupé.
+ * Le mode calme du tiroir (contrat C4) vaut aussi ici, pour la seule chose
+ * que ce fichier fait encore lui-même : **vibrer**. Sans ce garde, la
+ * déchirure du booster continuait de vibrer pour un joueur qui avait tout
+ * coupé. Le son ne passe plus par ici (voir plus bas) : le moteur commun lit
+ * le calme seul.
  *
  * Lu sur la racine du document (`data-calme`), où `fx.js` et `menu.js`
  * recopient la clé `tbf-calme` — donc sans toucher au stockage. Et lu **au
@@ -87,78 +91,32 @@ function buzz(pattern) {
 }
 
 /* ------------------------------------------------------------------ son
-   Aucun fichier audio : tout est synthétisé au moment du geste. Zéro octet
-   téléchargé, et le son colle exactement à l'action. Le contexte n'est créé
-   qu'au premier toucher, comme l'exigent les navigateurs.
+   **Un seul moteur pour tout le jeu** : `son.js`, que fx.js charge sur
+   chaque page qui charge ce fichier. Celui-ci avait son propre contexte audio
+   et sa propre synthèse, branchée droit sur la sortie : un second fil de
+   rendu audio sur un téléphone, des volumes réglés à l'oreille hors du
+   mixage, et aucun limiteur quand la déchirure tombait sur un autre son. Il
+   ne garde que la façade, sous les mêmes noms et les mêmes signatures, et la
+   confie au moteur (`TBF_SON.audio`) : la déchirure y devient « dechirure »
+   (avec son intensité), le retournement « retournement », l'accord
+   « accord-epique » ou « accord-legendaire », le grondement « grondement ».
+   Le moteur tient le calme, le volume et le mixage.
 
-   Sous le calme « sons », `ready` ne rend rien : chaque son s'arrête sur son
-   `if (!ac) return`, et le contexte n'est même pas créé — les pages qui
-   l'appellent seul, pour le déverrouiller au toucher, n'ont rien à changer. */
+   Lu **au moment du geste** : ce script passe avant fx.js, et le moteur
+   n'existe pas encore quand il s'exécute. Sans moteur (une page qui ne
+   chargerait pas fx.js, un geste plus rapide que son chargement), le son se
+   tait et rien ne lève — le son ne porte jamais seul une information.
 
-let AC = null;
+   `AC` reste exporté, à `null` : le kiosque et le classeur le déstructurent
+   encore. Il valait déjà `null` pour eux — l'export recopiait la valeur au
+   chargement, avant tout contexte. */
+const AC = null;
 const audio = {
-  ready() {
-    if (calme('sons')) return null;
-    if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch {} }
-    if (AC?.state === 'suspended') AC.resume();
-    return AC;
-  },
-  /** Bruit filtré : le papier alu qu'on déchire. */
-  rip(intensity = 1) {
-    const ac = this.ready(); if (!ac) return;
-    const dur = 0.28 * intensity;
-    const buf = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 1.6;
-    const src = ac.createBufferSource(); src.buffer = buf;
-    const f = ac.createBiquadFilter(); f.type = 'bandpass';
-    f.frequency.setValueAtTime(1400, ac.currentTime);
-    f.frequency.exponentialRampToValueAtTime(4200, ac.currentTime + dur);
-    f.Q.value = 0.8;
-    const g = ac.createGain(); g.gain.value = 0.22 * intensity;
-    src.connect(f).connect(g).connect(ac.destination); src.start();
-  },
-  /** Claquement sec : la carte qui se retourne. */
-  flip() {
-    const ac = this.ready(); if (!ac) return;
-    const o = ac.createOscillator(), g = ac.createGain();
-    o.type = 'triangle';
-    o.frequency.setValueAtTime(620, ac.currentTime);
-    o.frequency.exponentialRampToValueAtTime(180, ac.currentTime + 0.09);
-    g.gain.setValueAtTime(0.14, ac.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.11);
-    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.12);
-  },
-  /** Accord montant : plus la carte est rare, plus l'accord est riche. */
-  chime(rar) {
-    const ac = this.ready(); if (!ac) return;
-    const notes = { epique:[523,659], legendaire:[523,659,784,1047,1319] }[rar];
-    if (!notes) return;
-    notes.forEach((hz, i) => {
-      const o = ac.createOscillator(), g = ac.createGain();
-      o.type = 'sine'; o.frequency.value = hz;
-      const t = ac.currentTime + i * 0.07;
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(0.16, t + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.001, t + 1.1);
-      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + 1.2);
-    });
-  },
-  /** Grondement de tribune pour une couronne. */
-  roar() {
-    const ac = this.ready(); if (!ac) return;
-    const dur = 1.8;
-    const buf = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) {
-      const t = i / d.length;
-      d[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * t) * 0.9;
-    }
-    const src = ac.createBufferSource(); src.buffer = buf;
-    const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 700;
-    const g = ac.createGain(); g.gain.value = 0.3;
-    src.connect(f).connect(g).connect(ac.destination); src.start();
-  },
+  ready: () => window.TBF_SON?.audio?.ready() ?? null,
+  rip: (intensite) => window.TBF_SON?.audio?.rip(intensite),
+  flip: () => window.TBF_SON?.audio?.flip(),
+  chime: (rar) => window.TBF_SON?.audio?.chime(rar),
+  roar: () => window.TBF_SON?.audio?.roar(),
 };
 
 /* ------------------------------------------------------------ stockage */
@@ -357,6 +315,12 @@ async function load() {
   S.avatar = st.wallet.avatar ?? null;
   S.avatarEnJeu = st.wallet.avatarEnJeu ?? null;
   S.nextIn = st.wallet.nextPackInMs;
+  /* **La durée d'une recharge**, pour l'anneau de la réserve du kiosque :
+     lue si le serveur la sert, et rien sinon — le kiosque prend alors un
+     repli (voir `cadence`, dans boosters.html). Une durée inventée ici
+     serait une copie du réglage, qui mentirait au premier changement depuis
+     l'administration. */
+  S.cadenceMs = Number(st.wallet.cadenceMs) > 0 ? Number(st.wallet.cadenceMs) : null;
   S.packPrice = st.packPrice;
   /* La saison en cours, et celle que ce joueur a déjà vue annoncée.
      `S.series` — les séries que ce joueur-là avait débloquées, tirées de son

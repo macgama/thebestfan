@@ -20,8 +20,117 @@
    Ils vivaient dans la page des Fanzzy, entre le classeur et le personnage
    équipé. Ce n'était pas la même chose : on va au classeur pour **regarder ce
    qu'on a**, on vient ici pour **en avoir plus**. Deux intentions, deux
-   écrans. */
-/* -------------------------------------------------------------- kiosque */
+   écrans.
+
+   **Lot 3 de la refonte FAIT MAIN (octobre 2026).** Le kiosque devient un
+   étal sous les projecteurs : la réserve en fentes de sachets sous la barre,
+   la banderole de la saison, le sachet choisi sur son socle dans la fumée de
+   sa couleur, la minuterie devenue un objet, les séries fermées en rail sous
+   scotch. L'ouverture compte ses cartes en dos qui se vident et révèle chaque
+   carte par l'échelle commune de cérémonie (`FX.reveler`, dans fx.js) ; le
+   butin se colle sur une page d'album. **Toutes les pièces sont des briques
+   de `ui.css`** (lots 3 et 5, « les pièces des lots 3 et 5 ») : cette feuille
+   ne leur écrit que leur place et leur taille, jamais leur dessin. La
+   déchirure, elle, n'a pas bougé d'un caractère. */
+
+/* ------------------------------------------------------------ la réserve
+
+   La brique `.tbf-reserve` : les fentes de sachets, le compte à rebours du
+   prochain, le solde. Collée sous la barre, d'un bord à l'autre de l'écran
+   (`.tbf-pleine-largeur`), hors de tout ce que la page réécrit, et relue à
+   chaque `tbf:bourse`.
+
+   **Sans avatar.** La direction l'y pose ; la barre du haut porte déjà le
+   même sticker, avec le même anneau d'XP, cinquante pixels plus haut (le HUD
+   replié de `nav.js`, sur tous les écrans). Le même visage deux fois l'un
+   sous l'autre ne dit rien de plus, et prend la place du solde à 360 px.
+
+   **Au-delà de cinq fentes, le compte.** La réserve tient douze boosters
+   (vingt-quatre pour un abonné), et sept fentes ne tiennent plus avec le
+   compte à rebours et le solde sur un écran de 360 : le sachet seul, son
+   nombre en sticker rond sur le coin. L'anneau de recharge sort alors de la
+   fente et se pose devant « PROCHAIN » (`#recharge`). */
+#reserve{margin-bottom:8px}
+#fentes.kq-compte{margin-right:12px}
+#fentes .tbf-sticker--rond{position:absolute;z-index:2;right:-13px;bottom:-7px;
+  --taille:22px;font-size:12px}
+
+/* Les séries ouvertes, en pastilles. Seules celles qu'on peut ouvrir y
+   figurent : les autres se disent plus bas, dans leur rail.
+
+   Ce sont des plaques (`.tbf-plaque`) : béton au repos, **l'or du kiosque
+   sur celle qui est choisie** — comme l'onglet actif d'un rail ; c'est ici
+   qu'on achète, l'or y reste (arbitrage du 2 octobre 2026).
+
+   **Un rail qui défile, et non des rangées qui s'empilent.** En production
+   une seule série est ouverte, et la rangée ne se montre pas ; la base de
+   test les ouvre toutes les treize, et treize pastilles repliées sur quatre
+   lignes poussaient le sachet et le bouton OUVRIR sous le bas de l'écran. La
+   rangée défile donc de côté, la série choisie ramenée au milieu, et elle
+   reprend la gouttière pour aller d'un bord à l'autre. Le rembourrage du bas
+   garde l'ombre dure des bâches : un défilement rogne aussi ce qui dépasse
+   en hauteur. */
+.series{display:flex;gap:8px;overflow-x:auto;position:relative;
+  margin:2px calc(-1 * var(--gouttiere)) 0;padding:4px var(--gouttiere) 12px;
+  scroll-snap-type:x proximity;scrollbar-width:none}
+.series::-webkit-scrollbar{display:none}
+/* Centrées tant qu'elles tiennent, alignées au bord dès qu'elles défilent :
+   des marges automatiques, et non `justify-content:center`, qui rognerait
+   la première pastille d'un rail plus large que l'écran. */
+.series>:first-child{margin-left:auto}
+.series>:last-child{margin-right:auto}
+/* Quarante-quatre pixels : la pulpe d'un doigt, et le minimum des deux
+   plateformes. */
+.series button{flex:none;scroll-snap-align:center;font-size:11.5px;letter-spacing:.1em;
+  padding:5px 14px;min-height:44px}
+
+/* La banderole de la saison : une bâche craie de travers, tenue par deux
+   scotchs, l'écharpe en tête, et le compte de ce qu'on a collecté dans la
+   saison en sticker au coin. Ce n'est pas une brique (voir BRIQUES.md,
+   « les projecteurs, le socle ») : la composition d'un cadre craie, de deux
+   scotchs et d'un sticker, dont la page écrit la place.
+
+   Elle remplace l'annonce de la saison, qui disait la même chose en bas de
+   page, une seule fois : la banderole est toujours là, et le texte de
+   l'annonce s'y pose tant que le joueur ne l'a pas fermé. Les jours qui
+   restent ne s'écrivent que si le serveur les compte (`joursRestants`).
+
+   Son sticker pend sous elle, sur le haut de la scène : il y mord sur les
+   cônes de lumière, au-dessus du sachet, et ne réserve pas de rangée à lui —
+   chaque pixel pris ici descend le bouton OUVRIR, qui doit tenir dans un
+   écran de 640. Son fond de craie est le sien : la lumière dessous ne touche
+   pas la lettre. */
+.kq-saison{display:block;margin:10px 8px 14px;padding:19px 14px 14px;rotate:-1.5deg;
+  --e2:var(--craie);
+  font-family:var(--banner);font-weight:700;font-size:17px;line-height:1.15;
+  letter-spacing:.1em;text-transform:uppercase}
+.kq-saison.avec-x>b{padding-right:30px}
+.kq-saison>b{display:block;font-weight:700}
+.kq-saison>small{display:block;margin-top:6px;font-size:12px;font-weight:600;letter-spacing:.1em}
+.kq-saison>p{margin:8px 0 2px;font-family:var(--ui);font-weight:500;font-size:13px;line-height:1.45;
+  letter-spacing:0;text-transform:none}
+.kq-saison>.saison-x{position:absolute;z-index:2;top:8px;right:2px;width:44px;height:44px;
+  display:grid;place-items:center;padding:0;border:0;background:none;color:inherit;
+  font-size:15px;line-height:1;cursor:pointer}
+.kq-saison>.saison-x:focus-visible{outline:3px solid var(--projo);outline-offset:-3px}
+.kq-saison>.tbf-sticker{position:absolute;z-index:3;right:-6px;bottom:-20px;--rot:4deg}
+
+/* ------------------------------------------------------------ la scène
+
+   Le sachet choisi sur son socle de béton, sous deux cônes de projecteur,
+   dans la fumée de la couleur de sa série ; son nom en sticker collé dessous.
+   Trois sachets au plus : celui du milieu, et un de chaque côté, éteints.
+
+   La scène reprend la gouttière : les sachets de côté vont jusqu'au bord de
+   l'écran. Les calques, du fond vers l'avant : les projecteurs et la fumée
+   (1), le socle (2), le carrousel (3), le sticker du nom (4).
+
+   **Le sachet ne flotte plus** : il est posé. Le flottement faisait aussi la
+   troisième animation sans fin de l'écran, avec le reflet et la fumée — et
+   la minuterie prête en demande une quand elle pulse. */
+.kscene{position:relative;height:252px;margin:0 calc(-1 * var(--gouttiere));overflow-x:clip}
+.kscene>.tbf-socle{position:absolute;z-index:2;left:50%;top:194px;translate:-50% 0;width:168px}
+.kscene>.tbf-fumee{bottom:18px}
 
 /* `overflow-x: clip` et non `hidden` : `clip` rogne sans fabriquer un
    conteneur défilable, donc aucune barre parasite ne s'ajoute. Sans lui, les
@@ -30,90 +139,11 @@
    soixante, et toute la page se met à glisser horizontalement. Rien ne casse,
    la page devient simplement pénible — et on ne le voit jamais depuis un
    écran large. */
-.carousel{position:relative;width:100%;height:320px;perspective:1100px;touch-action:pan-y;
-  overflow-x:clip}
-
-/* **Rien ne se pose à même la photo de tribune.** Le nom de la série, sa
-   ligne, la consigne, le compte à rebours et ce qui vient étaient écrits
-   directement sur le décor, entre 42 et 70 % d'opacité : au soleil, la
-   tribune passait à travers. Chacun a maintenant son panneau (`--panneau`,
-   opaque) à sa mesure, et se lit en entier — onze pixels au moins, 88 % au
-   moins. Discrets par leur taille et leur place, plus par leur transparence. */
-
-/* La bourse : ce qu'on a en poche, là où l'on décide de le dépenser. La page
-   le promettait (« le kiosque affiche son solde lui-même ») depuis que la
-   barre du haut ne le porte plus — et ne l'affichait nulle part : on payait
-   quarante-cinq écharpes sans voir combien il en restait. Deux étiquettes
-   (`.tbf-etiquette`), les dessins de l'accueil : un même objet dessiné de
-   deux façons, c'est deux objets à apprendre.
-
-   **Sous le bouton, pas au-dessus du paquet.** Posée en tête du kiosque, elle
-   ajoutait sa rangée à celles du cartouche et de la consigne, et le bouton
-   OUVRIR passait sous le bas d'un écran de 360 × 640 — le compte à rebours
-   avec lui. Elle partage maintenant la ligne du compte à rebours (`.reserve`) :
-   c'est la même question, « qu'est-ce que j'ai, et quand j'en aurai plus »,
-   et le prix qu'elle éclaire est écrit sur le bouton juste au-dessus.
-
-   **Les dessins à l'encre de leur couleur.** Une étiquette est un sticker
-   craie, son nombre est à l'encre, et c'est le dessin seul qui dit ce qu'on
-   compte. Sur la craie, un ton s'écrit dans sa version encre, comme le
-   tampon plein de la feuille commune : l'or vif de l'accueil (posé, lui, sur
-   le panneau sombre) n'y tenait qu'à 1,4:1, `--or-encre` tient 4,6:1 ; le
-   flare passait de justesse (3,7:1) et criait plus fort que l'or éteint à
-   côté de lui, `--rouge-fonce` les remet au même rang. L'étiquette de
-   l'écran d'ouverture (`.obourse`) est la même, sur le même fond. */
-.reserve{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;
-  gap:6px 8px;margin:0 0 6px;min-height:32px}
-.bourse{display:flex;justify-content:center;align-items:center;gap:8px}
-.bourse .tbf-etiquette,.obourse{gap:7px;padding:6px 11px;font-size:15px}
-.bourse svg,.obourse svg{width:20px;height:20px;flex:none;fill:none;stroke-width:1.9;
-  stroke-linecap:round;stroke-linejoin:round}
-.bourse .monnaie-ech svg,.obourse svg{stroke:var(--or-encre)}
-.bourse .monnaie-pack svg{stroke:var(--rouge-fonce)}
-
-/* Les séries ouvertes, en pastilles. Seules celles qu'on peut ouvrir y
-   figurent : les autres se disent en une ligne, plus bas.
-
-   Ce sont des plaques (`.tbf-plaque`) : béton au repos, l'or du kiosque sur
-   celle qui est choisie — comme l'onglet actif d'un rail. Elles étaient en
-   verre à 5 %, posées sur la photo, et les douze non choisies à 62 %. Il ne
-   reste ici que leur mise en page, plus petite qu'une action. */
-.series{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:0 12px 8px}
-/* Quarante-quatre pixels : la pulpe d'un doigt, et le minimum des deux
-   plateformes. L'audit d'interface les a tous comptés d'un coup — ce n'est
-   jamais une faute de conception, c'est une hauteur qu'on ne mesure pas en
-   regardant. */
-.series button{font-size:11.5px;letter-spacing:.1em;padding:5px 14px;min-height:44px}
-
-/* Ce qui vient. Discret par construction : c'est une promesse, pas une offre. */
-.avenir{text-align:center;font-size:11.5px;margin:8px 16px 0;padding:8px 12px;
-  border-radius:10px;background:var(--panneau);line-height:1.5}
-.avenir b{color:var(--projo);font-family:var(--banner);font-weight:400;letter-spacing:.08em}
-
-/* L'annonce de la saison. Elle a la bande d'écharpe de la boîte de
-   confirmation : c'est le même geste — le jeu qui s'adresse au joueur — et deux
-   façons de le faire seraient deux choses à apprendre. */
-.saison{position:relative;margin:10px 14px 0;padding:13px 15px 14px;border-radius:12px;
-  border:1px solid rgba(245,195,59,.3);
-  background:linear-gradient(rgba(245,195,59,.07),rgba(245,195,59,.07)),var(--panneau);
-  text-align:left}
-.saison::before{content:"";position:absolute;left:15px;right:15px;top:6px;height:3px;
-  border-radius:2px;
-  background:repeating-linear-gradient(115deg,var(--projo) 0 8px,transparent 8px 16px)}
-.saison-n{margin:6px 0 0;font-family:var(--banner);font-size:11px;letter-spacing:.2em;
-  color:var(--projo)}
-.saison h3{margin:4px 0 0;font-family:var(--banner);font-size:17px;letter-spacing:.04em;
-  line-height:1.15;text-wrap:balance}
-.saison-t{margin:6px 0 0;font-size:12px;line-height:1.6;opacity:.88}
-.saison-t:empty{display:none}
-.saison-x{position:absolute;top:2px;right:2px;background:none;border:0;color:inherit;
-  opacity:.75;font-size:14px;line-height:1;cursor:pointer;
-  width:44px;height:44px;display:grid;place-items:center}
-.saison-x:hover,.saison-x:focus-visible{opacity:1}
-.slide{position:absolute;left:50%;top:50%;width:186px;aspect-ratio:.62;margin:0;cursor:grab;
+.carousel{position:absolute;inset:0;z-index:3;perspective:1100px;touch-action:pan-y;overflow-x:clip}
+.slide{position:absolute;left:50%;top:6px;width:124px;aspect-ratio:.62;margin:0;cursor:grab;
   transform-style:preserve-3d;transition:transform .55s cubic-bezier(.22,.9,.28,1),opacity .45s,filter .45s;
-  border-radius:11px;overflow:hidden;border:1px solid rgba(0,0,0,.6);
-  box-shadow:0 26px 46px rgba(0,0,0,.66),inset 0 1px 0 rgba(255,255,255,.2)}
+  border-radius:9px;overflow:hidden;border:1px solid rgba(0,0,0,.6);
+  box-shadow:0 18px 30px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.2)}
 .slide img{width:100%;height:100%;object-fit:cover;display:block}
 .slide svg{width:100%;height:100%;display:block}
 .slide .foil{position:absolute;inset:0;pointer-events:none;
@@ -122,31 +152,93 @@
   background-size:260% 260%;background-position:120% 0;mix-blend-mode:screen}
 .slide.center .foil{animation:foil 4.5s ease-in-out infinite}
 @keyframes foil{0%{background-position:130% 0}55%{background-position:-40% 0}100%{background-position:-40% 0}}
-.slide.center{animation:float 5.5s ease-in-out infinite}
-@keyframes float{0%,100%{margin-top:0}50%{margin-top:-9px}}
 .slide.side{filter:brightness(.42) saturate(.65)}
 .slide.hidden{opacity:0;pointer-events:none}
-.shadow{position:absolute;left:50%;bottom:6px;width:150px;height:16px;transform:translateX(-50%);
-  background:radial-gradient(ellipse,rgba(0,0,0,.75),transparent 70%);filter:blur(5px)}
+/* Le nom de la série, en sticker collé sous le sachet, à cheval sur le pied
+   du socle. Son fond de craie est le sien : la fumée qui passe dessous ne
+   touche pas la lettre. */
+#setLine{position:absolute;z-index:4;left:50%;bottom:2px;translate:-50% 0;max-width:calc(100% - 24px)}
+#setLine b{font-weight:700}
 
-/* La consigne, sur son panneau — et sur une ligne dès 320 px : à 0,16 em
-   d'espacement elle passait à la ligne, et son panneau prenait deux fois la
-   hauteur qu'il faut au bouton OUVRIR, juste en dessous. */
-.tearhint{font-size:11px;letter-spacing:.05em;margin:6px auto 0;padding:5px 10px;
-  width:fit-content;max-width:100%;border-radius:9px;background:var(--panneau);
-  text-align:center;line-height:1.35}
+/* Un écran plus large : le sachet grandit avec la scène, le socle avec lui. */
+@media (min-width:600px){
+  .kscene{height:300px}
+  .slide{width:150px}
+  .kscene>.tbf-socle{top:236px;width:196px}
+}
 
 /* Une série verrouillée se regarde sans se toucher : le paquet s'éteint, mais
    il reste visible. C'est ce qui donne envie d'y arriver. */
 .carousel.verrou .slide.center{filter:grayscale(.85) brightness(.5)}
 .carousel.verrou .slide.center .foil{display:none}
-/* Le cadenas est dans la ligne, pas sur le paquet : `.carousel` porte une
-   `perspective`, donc ses enfants se rangent par leur profondeur en 3D et non
-   par `z-index`. Un cadenas posé là passait derrière les paquets — avec la
-   bonne taille, le bon calque et la bonne image, mais invisible. */
-.setline .verrou{display:inline-flex;align-items:center;gap:5px}
-.setline .verrou svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;
-  stroke-linecap:round;flex:none}
+
+/* **Les flèches sont dans la scène**, sur les sachets de côté — les plaques
+   rondes du lot 2 (`.tbf-plaque--rond`). Elles avaient leur rangée sous le
+   carrousel, avec un point par paquet et une consigne en dessous : deux
+   rangées de plus entre le sachet et le bouton OUVRIR, qui passait sous le
+   bas d'un écran de 640 dès que la saison avait quelque chose à dire. Trois
+   paquets se comptent sans points, et le sachet du milieu, sur son socle, se
+   touche comme le bouton qui l'ouvre. */
+.kscene>.tbf-plaque--rond{position:absolute;z-index:5;top:80px}
+#prevSet{left:8px}
+#nextSet{right:8px}
+/* Plus large, elles suivent les sachets de côté au lieu de partir aux bords. */
+@media (min-width:600px){
+  .kscene>.tbf-plaque--rond{top:104px}
+  #prevSet{left:calc(50% - 292px)}
+  #nextSet{right:calc(50% - 292px)}
+}
+
+/* La minuterie et l'achat immédiat : deux bâches côte à côte (la brique
+   `.tbf-minuterie`), au lieu d'une ligne de texte sous le bouton. La page
+   n'écrit que leur rangée. **Seulement quand la réserve est vide** : tant
+   qu'il reste un booster gratuit, le serveur le consomme et ne prélève rien
+   — proposer d'acheter ferait croire à un choix qui n'existe pas, et le
+   prochain booster se lit déjà dans la réserve, juste sous la barre. */
+/* Chacune prend la largeur de ce qu'elle porte, et elles se partagent le
+   reste : à parts égales, l'achat repliait « TOUT DE SUITE » sur deux lignes
+   et son prix mordait « +1 BOOSTER », pendant que la minuterie gardait du
+   vide. Seule, la minuterie prend toute la rangée. */
+.minut{display:flex;gap:12px;margin:14px 0 0}
+.minut>*{flex:1 1 auto;min-width:0}
+
+/* Ouvrir un booster : l'action principale de l'écran, la bâche grande
+   (`.tbf-grande`), en flare — le rouge d'un acte de jeu. Quatorze pixels au
+   moins au-dessus d'elle : ses deux scotchs montent de sept, et une bâche
+   posée juste au-dessus garde sept pixels d'ombre.
+
+   **Il dit ce qu'il reste** : sous « OUVRIR LE BOOSTER », le nombre en
+   réserve, comme le sous-libellé de la bâche principale de l'accueil — la
+   craie pleine et non à 88 %, pour la même raison qu'elle (sur la face rouge
+   foncée, 88 % tombe sous 4,5:1 à douze pixels). */
+.cta{flex-direction:column;gap:2px;min-height:60px;margin:18px 0 10px;padding:13px 18px 9px;
+  font-size:20px;line-height:1;letter-spacing:.06em}
+.cta small{display:block;font-family:var(--banner);font-weight:500;font-size:12px;line-height:14px;
+  letter-spacing:.04em;text-transform:none;text-shadow:0 1px 0 var(--encre)}
+
+/* Les séries fermées, en rail : leurs sachets en gris sous un scotch en
+   croix, et la raison en sticker — « SAISON 2 » quand le serveur annonce la
+   saison qui les ouvrira (`sets[].prochaine`), « FERMÉE » sinon : on
+   n'annonce jamais une date qu'on n'a pas. Un rail par raison.
+
+   **Un rail de sachets plutôt qu'une liste de noms.** Au lancement, douze
+   séries attendent : leurs douze noms en une ligne faisaient un paragraphe.
+   Les sachets disent la même chose d'un coup d'œil, et leur nom reste à
+   l'écoute (`aria-label` de chacun). Sur un panneau (`.pan`) : rien ne
+   s'écrit à même la photo de la tribune. */
+.fermees{margin:16px 0 8px;padding:12px 12px 14px}
+.fermees-lab{margin:0;font-family:var(--banner);font-weight:600;font-size:11px;line-height:1.3;
+  letter-spacing:.1em;text-transform:uppercase;text-align:center}
+/* Les sachets d'un rail se chevauchent, comme une pile qu'on étale : douze
+   tiennent sur une ligne de 360 px, et le scotch en croix ne couvre qu'eux
+   — tendu sur toute la largeur du panneau, il barrait du vide. */
+.fermees-rang{position:relative;display:flex;justify-content:center;width:fit-content;max-width:100%;
+  margin:20px auto 0;padding:8px 16px}
+.fermees-s{position:relative;flex:none;width:28px;height:44px;border-radius:3px;overflow:hidden;
+  background:var(--encre) center/cover no-repeat;filter:grayscale(1) brightness(.6);
+  box-shadow:0 0 0 1.5px rgba(242,238,228,.4),2px 0 4px rgba(7,9,12,.55)}
+.fermees-s+.fermees-s{margin-left:-9px}
+.fermees-rang>.tbf-sticker{position:absolute;z-index:5;right:-10px;top:-14px;--rot:5deg}
 
 /* --------------------------------------------------- geste d'ouverture
 
@@ -217,70 +309,39 @@
 
 .tearlbl{margin-top:20px;font-family:var(--banner);font-size:14px;letter-spacing:.2em;
   text-align:center;line-height:1.6;max-width:280px}
-.tearlbl b{color:var(--projo)}
+/* Le geste à faire, en gras et en craie. Il était en or, à 14 px : du petit
+   texte, et l'or ne s'écrit plus qu'en grand (arbitrage du 2 octobre 2026).
+   La languette dorée, juste au-dessus, garde l'or — c'est une face. */
+.tearlbl b{font-weight:700}
 .tearlbl small{display:block;font-family:var(--ui);font-size:11.5px;letter-spacing:.06em;
   opacity:.88;margin-top:8px}
 
-#burst{position:absolute;inset:0;z-index:23;pointer-events:none;object-fit:cover;width:100%;height:100%;
-  mix-blend-mode:screen;opacity:0;transition:opacity .4s}
-#burst.on{opacity:1}
+/* **La déchirure passe devant la barre**, et c'est tout ce qui la touche
+   ici : son geste, son dessin et ses règles, juste au-dessus, sont ceux
+   d'avant. Elle est à 24 dans la colonne (`#app`), et le HUD de la barre,
+   arrivé au lot 2, à 30 : son sticker se posait sur « Plus tard », la sortie
+   du plein écran. Trente-deux, au-dessus de l'écran d'ouverture (31), qui ne
+   paraît qu'une fois elle refermée. */
+#tearzone{z-index:32}
 .flash{position:absolute;inset:0;z-index:25;background:#fff;opacity:0;pointer-events:none}
 .flash.go{animation:flash .5s ease-out}
-#app.quake{animation:quake .6s}
-@keyframes quake{0%,100%{transform:translate(0,0)}
-  15%{transform:translate(-6px,3px)}35%{transform:translate(5px,-4px)}
-  55%{transform:translate(-4px,-2px)}75%{transform:translate(3px,3px)}}
 @keyframes flash{0%{opacity:.85}100%{opacity:0}}
-.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
-/* Le cartouche de la série : son nom et sa ligne, sur un panneau à leur
-   mesure, au-dessus des paquets. Ses marges sont comptées : chaque pixel pris
-   ici descend le bouton OUVRIR, qui doit tenir dans un écran de 640. */
-.cartouche{display:flex;flex-direction:column;align-items:center;gap:3px;
-  width:fit-content;max-width:calc(100% - 32px);margin:0 auto 8px;padding:6px 12px;
-  border-radius:11px;background:var(--panneau);text-align:center;line-height:1.3}
-.setname{font-family:var(--banner);font-size:13px;letter-spacing:.24em}
-.setline{font-size:11.5px;opacity:.88}
-.packwrap{position:relative}
-.packglow{position:absolute;width:230px;height:230px;border-radius:50%;left:50%;top:50%;
-  transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(245,195,59,.26),transparent 65%);
-  filter:blur(14px);animation:breathe 5s ease-in-out infinite;pointer-events:none}
-@keyframes breathe{0%,100%{opacity:.5}50%{opacity:1}}
-.pack{width:178px;aspect-ratio:.62;border-radius:9px;overflow:hidden;position:relative;cursor:pointer;
-  border:1px solid rgba(0,0,0,.6);box-shadow:0 24px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.22);
-  transform:rotate(-2deg);transition:transform .2s;display:block;background:none;padding:0}
-.pack:active{transform:rotate(-2deg) scale(.97)}
-.packnav{display:flex;align-items:center;gap:16px;margin-top:10px}
-.packnav button{width:44px;height:44px;border-radius:50%;
-  border:1px solid rgba(242,238,228,.18);background:var(--panneau);color:inherit;cursor:pointer;
-  display:grid;place-items:center;font-size:17px;line-height:1}
-.dots{display:flex;gap:5px}
-.dots i{width:6px;height:6px;border-radius:50%;background:rgba(242,238,228,.22);display:block}
-.dots i.on{background:var(--projo)}
-/* Ouvrir un booster : l'action principale de l'écran, donc une plaque de
-   pleine taille. Sa largeur limitée lui reste propre — au milieu d'un kiosque,
-   un bouton d'un bord à l'autre écraserait le carrousel. */
-.cta{margin:12px auto 8px;width:min(300px,82%);font-size:16px;letter-spacing:.1em}
-/* Le compte à rebours, sur son panneau, dans la ligne de la bourse. Caché et
-   non replié tant qu'il est vide : la place reste réservée, et rien ne saute
-   quand il arrive. */
-.regen{max-width:100%;padding:5px 12px;
-  border-radius:9px;background:var(--panneau);text-align:center;font-size:11.5px;
-  line-height:1.4;min-height:26px}
-.regen:empty{visibility:hidden}
-
+.stage{display:flex;flex-direction:column;position:relative}
 
 /* Le mot d accueil, quand on arrive ici parce qu on a des boosters qui
    attendent. Il est en haut et il est bref : sa seule tâche est de dire
    pourquoi on est là plutôt que sur l accueil. Et il est mince : il vient
    s ajouter au-dessus du paquet précisément quand le bouton OUVRIR est ce
-   qu on est venu toucher, et ce bouton doit rester dans l écran. */
-.annonce{margin:0 16px 6px;padding:8px 14px;border-radius:10px;
+   qu on est venu toucher, et ce bouton doit rester dans l écran.
+
+   Le cadre garde son or, le mot passe à la craie : quatorze pixels, c'est du
+   petit texte, et l'or ne s'écrit plus qu'en grand (arbitrage du 2 octobre
+   2026). L'accent tient à la graisse — et au cadre, qui le portait déjà. */
+.annonce{margin:0 2px 6px;padding:8px 14px;border-radius:10px;
   background:linear-gradient(150deg,rgba(245,195,59,.2),rgba(245,195,59,.07)),var(--panneau);
-  border:1px solid rgba(245,195,59,.42);color:var(--projo);
+  border:1px solid rgba(245,195,59,.42);color:var(--craie);font-weight:600;
   font-family:var(--banner);font-size:14px;letter-spacing:.05em;text-align:center}
-.titre{font-family:var(--banner);font-size:20px;letter-spacing:.14em;
-  margin:0 0 10px;padding:0 16px}
-/* --------------------------------------------- la révélation, en plein écran
+/* ---------------------------------------------------------- ouverture
 
    Elle vivait dans la page des Fanzzy, où son balisage n’est plus. Ici, il
    n’y avait **aucune règle** : or la première est `display:none`. Le panneau
@@ -289,23 +350,17 @@
 
    Troisième fois que cette faute se produit : du balisage qu’on déplace, une
    feuille qu’on oublie. Rien ne lève, et le symptôme ne dit pas sa cause. */
-/* ---------------------------------------------------------- ouverture */
-#opener{position:fixed;inset:0;z-index:22;display:none;flex-direction:column;
+/* **Trente et un, au-dessus de la barre.** Il était à 22 ; depuis le lot 2,
+   le HUD de la barre (`.tbf-hud`, l'avatar et sa bande) est posé à 30 dans
+   la même colonne (`#app`, un contexte d'empilement), et son sticker se
+   collait par-dessus FERMER, en plein écran d'ouverture. Rien sur le corps
+   du document n'est touché : la cérémonie (96), la pile (93), la fête (170)
+   et le tiroir (49) restent au-dessus de toute la colonne. */
+#opener{position:fixed;inset:0;z-index:31;display:none;flex-direction:column;
   background:radial-gradient(120% 70% at 50% 20%,#1D242D,#05070A 70%);
   height:100vh;height:100dvh;
   padding-bottom:calc(env(safe-area-inset-bottom) + 10px)}
 #opener.on{display:flex}
-/* **Le fond est à l'écran, le paquet est dans la colonne.**
-
-   `inset: 0` est juste pour le fond — on ne doit pas voir le kiosque derrière
-   ses propres cartes. Mais les enfants en héritaient : sur un écran de bureau
-   de mille neuf cents pixels, le butin s'étalait sur toute la largeur et ses
-   trois cartes du haut faisaient six cent vingt pixels chacune. Des cartes à
-   jouer de la taille d'une affiche, avec « 5 / 5 » collé à un bord et
-   « Fermer » à l'autre.
-
-   C'est la règle de `.grand` dans le duel, mot pour mot, et pour la faute
-   exacte qu'elle avait déjà corrigée là-bas. Elle manquait ici. */
 /* **Le fond est à l'écran, le paquet est dans sa colonne.**
 
    `inset: 0` est juste pour le fond — on ne doit pas voir le kiosque derrière
@@ -323,16 +378,27 @@
    deux fois et demie sa taille sur un téléphone, où cette mise en page a été
    dessinée. Une seule largeur pour tout l'écran — la tête, le titre, le
    butin, le pied — parce qu'une cérémonie dont les quatre bandes ne sont pas
-   alignées se lit comme quatre morceaux posés l'un sous l'autre. */
+   alignées se lit comme quatre morceaux posés l'un sous l'autre.
+
+   Les projecteurs, eux, couvrent tout l'écran : ce sont la lumière de la
+   salle, pas une bande de la colonne. Ils ne vont qu'à la révélation — au
+   butin, le titre et la page d'album passeraient dessous, et ils ne se
+   posent jamais sous un texte. */
 #opener > *{width:100%;max-width:min(var(--colonne), 560px);margin-inline:auto}
-/* La tête de la cérémonie : où l'on en est, les écharpes, et la sortie. Elle
-   était à 60 % — la sortie comprise. Le compteur d'écharpes est celui vers
-   lequel volent les doublons à la fin du paquet (voir `crediterDoublons`). */
-.ohead{display:flex;justify-content:space-between;align-items:center;gap:10px;
-  padding:8px 18px;font-size:12px}
-.ohead button{background:none;border:0;color:inherit;font-size:12.5px;cursor:pointer;
-  text-decoration:underline;text-underline-offset:3px;min-height:44px;padding:0 4px}
-.ostage{flex:1;display:grid;place-items:center;position:relative;padding:0 34px}
+#opener > .tbf-projecteurs{max-width:none;margin:0}
+/* La tête de la cérémonie. À la révélation : les cinq fentes de dos de carte,
+   qui se vident une à une — elles remplacent le « 1 / 5 » —, et FERMER. Au
+   butin : le compteur d'écharpes vers lequel volent les doublons (voir
+   `crediterDoublons`), l'anneau d'XP si le serveur a compté l'XP, et FERMER.
+   Le bas de la tête laisse dix pixels aux barres de rareté qui pendent sous
+   les fentes. */
+.ohead{position:relative;z-index:3;display:flex;align-items:center;gap:12px;
+  min-height:68px;padding:10px 16px 14px}
+.ohead>#oClose{margin-left:auto;min-height:44px;padding:10px 15px;font-size:13px}
+.obourse{gap:7px;padding:6px 11px;font-size:15px}
+.obourse img{width:20px;height:20px;flex:none;object-fit:contain}
+#oNiv{cursor:default}
+.ostage{flex:1;display:grid;place-items:center;position:relative;z-index:2;padding:30px 34px 0}
 .reveal{width:min(70%,250px);position:absolute;transition:transform .42s cubic-bezier(.2,.8,.25,1),opacity .3s;cursor:pointer}
 .reveal .flip{position:relative;width:100%;aspect-ratio:63/88;transform-style:preserve-3d;
   transition:transform .55s cubic-bezier(.3,.9,.3,1)}
@@ -346,18 +412,30 @@
   box-shadow:0 18px 36px rgba(0,0,0,.6)}
 .face.back.dessine>svg{display:none}
 .face.front{transform:rotateY(180deg)}
-.burst{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:30}
-.newtag{position:absolute;top:-24px;left:50%;transform:translateX(-50%);font-family:var(--banner);
-  font-size:11px;letter-spacing:.2em;color:var(--projo)}
-.ofoot{flex:none;padding:14px 18px 20px;display:flex;flex-direction:column;gap:9px;
-  align-items:center}
-.hint{font-size:11.5px;opacity:.88;text-align:center}
-/* « Tout révéler », puis « Terminer » : une plaque (`.tbf-plaque`), en béton —
-   c'est une commande de la cérémonie, pas un achat. Il ne reste ici que sa
-   taille, sous celle d'une action d'écran. */
-.ghost{padding:9px 18px;font-size:13px;min-height:44px}
-/* Le pin de rareté, posé en coin de la carte révélée. `pointer-events:none`
-   parce que la tuile entière ouvre la fiche : un pin qui avale le clic
+/* **La rareté, collée au-dessus de la carte** à l'instant où elle se
+   retourne : le sticker en forme (`.tbf-forme`, 34 px comme dans une
+   vitrine), le mot dedans ou en travers. Sans mouvement, la cérémonie ne joue
+   plus : c'est lui qui porte la rareté, par la forme, la couleur et le mot.
+
+   **« NOUVEAU » en tampon, sur la carte** : l'ouverture tamponne, le butin
+   colle. Le tampon plein — fond craie, lettres rouge foncé —, parce qu'il se
+   pose sur un dessin dont on ne connaît pas la couleur : la forme en contour
+   n'y serait lisible qu'une fois sur deux. Seize pixels, sur le côté gauche
+   de l'illustration, loin du nom et de l'âge de la carte. */
+.reveal>.tbf-forme{position:absolute;z-index:3;left:50%;top:-44px;translate:-50% 0;
+  --taille:34px;--rot:-4deg}
+.reveal>.kq-nouveau{position:absolute;z-index:4;left:-10px;top:40%;font-size:16px}
+.ofoot{position:relative;z-index:3;flex:none;padding:14px 16px 18px;display:flex;flex-direction:column;
+  gap:10px;align-items:center}
+/* La consigne de la révélation : Oswald 12 en craie pleine, espacée — elle se
+   lit comme une indication de la salle, pas comme un bouton. */
+.hint{font-family:var(--banner);font-weight:600;font-size:12px;line-height:1.3;letter-spacing:.18em;
+  text-transform:uppercase;text-align:center}
+/* « TOUT RÉVÉLER » : une bâche craie — une commande de la cérémonie, pas un
+   achat ni un acte de jeu. Il ne reste ici que sa taille. */
+#oAction{min-height:44px;padding:10px 18px;font-size:13px}
+/* Le pin de rareté, posé en coin de la carte du butin. `pointer-events:none`
+   parce que la carte entière ouvre la fiche : un pin qui avale le clic
    ferait un trou dans la seule zone qu'on a envie de toucher.
 
    **`pinButin` et non `pinRar`** : la fiche du personnage se monte sur
@@ -365,92 +443,90 @@
    différents, un seul nom, et le pin de la fiche serait parti se coller
    dans un coin. Ce dépôt a payé exactement cette faute la semaine passée
    avec une classe `ok` qui rendait invisible tout ce qu'on possédait. */
-.summary > * { position:relative }
-.pinButin{position:absolute;right:-5px;top:-5px;width:30px;height:30px;z-index:3;
+.pinButin{position:absolute;right:-7px;top:-7px;width:28px;height:28px;z-index:6;
   object-fit:contain;pointer-events:none;
-  filter:drop-shadow(0 2px 5px rgba(0,0,0,.75))}
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
 
 /* ------------------------------------------------------------- le butin
 
-   Cinq vignettes collées au bas d'un écran aux trois quarts vide : c'était le
-   dernier moment de la cérémonie, traité comme un pied de page. La scène
-   vidée gardait six cents pixels de noir au-dessus.
+   Les cartes collées de travers sur une page d'album kraft (la brique
+   `.tbf-ticket.tbf-album`), chacune sous son scotch, et la ligne vivante de
+   la série dessous. La page d'album ne règle que ses marges ; la scène vidée
+   se replie, et le butin prend la place — s'il ne tient pas (un écran court,
+   une série en plus), il défile seul, la tête et les bâches du bas restent.
 
-   Les cartes prennent maintenant la place — trois en haut, deux en bas,
-   centrées — et la scène s'efface quand le butin paraît. */
-.summary{display:none;width:100%;flex:1 1 auto;min-height:0;
-  align-content:center;justify-content:center;
-  /* **Six** colonnes pour trois cartes par rangée : c'est ce qui permet de
-     centrer la seconde rangée, incomplète, sans marge négative. Ma première
-     version décalait les deux dernières à la main — et les éjectait du cadre,
-     laissant une pastille « NOUVEAU » flotter seule sous la grille. */
-  grid-template-columns:repeat(6,minmax(0,1fr));
-  overflow-y:auto;
-  gap:14px 10px;padding:4px 12px}
-.summary.on{display:grid}
-.summary > *{grid-column:span 2}
-.summary > :nth-child(4){grid-column:2 / span 2}
-.summary > :nth-child(5){grid-column:4 / span 2}
+   **Ce qui est neuf** porte le sticker NOUVEAU au coin haut-gauche ; **ce qui
+   a rapporté des écharpes** (un doublon, une poignée d'écharpes), son prix
+   en sticker. Le coin haut-droit est celui de la rareté. */
+.summary{display:none;flex:1 1 auto;min-height:0;overflow-y:auto;position:relative;z-index:2;
+  padding:6px 14px 10px}
+/* La page d'album se centre dans la hauteur qu'elle a : sur une tablette, collée en
+   haut, elle laissait cinq cents pixels de noir avant la fin du butin. Des
+   marges automatiques et non un centrage : si elle déborde, elles tombent à
+   zéro, et le haut de la page reste lisible au lieu d'être rogné. */
+.summary.on{display:flex;flex-direction:column}
+.summary>.tbf-album{margin-block:auto}
+.tbf-album-pied>.tbf-tampon{grid-column:1/-1;justify-self:end;margin-top:2px}
 
-/* L'arrivée en cascade. Elle ne dure que l'arrivée : une fois posées, les
-   cartes ne bougent plus. Ce qui clignote en permanence cesse d'être remarqué
-   en dix secondes — la leçon du personnage qui respirait derrière un onglet
-   caché — et coûte de la batterie pour ça. */
-.summary > *{
-  animation:butin .42s cubic-bezier(.2,1.3,.4,1) backwards;
-  animation-delay:calc(var(--n, 0) * 90ms);
-}
-@keyframes butin{
-  from{opacity:0;transform:translateY(22px) scale(.88)}
-  to{opacity:1;transform:none}
-}
+/* **Une carte qu'on ne lit pas ne bouge pas.** La carte (`cardHTML`, lot 4)
+   respire, se balance et fait briller son holo, sans fin : cinq cartes
+   empilées face cachée et cinq cartes d'album en faisaient douze animations
+   à la fois sur l'écran de l'ouverture, pour trois au plus. On les fige là
+   où elles ne se regardent pas : de dos, écartées, et sur la page d'album —
+   une grille, où la direction veut la carte statique. La carte qu'on vient
+   de retourner, elle, vit. Le dessin de la carte n'est pas touché, seulement
+   son mouvement ici. */
+.kq-fige .fz,.kq-fige .fz::before,.kq-fige .fz::after,
+.kq-fige .fz *,.kq-fige .fz *::before,.kq-fige .fz *::after{animation:none}
 
-/* La lueur, **et seulement sur ce qui la mérite**. Une légendaire qui brille
-   au milieu de quatre communes se voit ; cinq cartes qui brillent ensemble ne
-   disent plus rien. */
-.summary > .rare .fz{box-shadow:0 0 16px rgba(95,168,255,.28)}
-.summary > .epique .fz{box-shadow:0 0 20px rgba(185,140,255,.34)}
-.summary > .legendaire .fz{box-shadow:0 0 26px rgba(245,195,59,.45)}
+/* Le titre du butin. Il dit ce qu'on a eu avant qu'on ait compté.
 
-/* Ce qu'on n'avait pas encore. C'est l'information que le joueur cherche en
-   premier, et elle n'était nulle part : cinq cartes rangées, sans savoir
-   lesquelles étaient neuves. */
-.summary > .neuf{position:relative}
-.summary > .neuf::after{
-  /* À gauche, et non au centre : l'âge de la carte — « ÉVO 1 »,
-     « LÉGENDAIRE » — occupe le coin droit depuis qu'il a été ajouté, et deux
-     étiquettes qui se recouvrent n'en font lire aucune. */
-  content:"NOUVEAU";position:absolute;top:-8px;left:6px;
-  font-family:var(--banner);font-size:11px;letter-spacing:.1em;line-height:1.2;
-  background:var(--projo);color:#0B0E13;border-radius:20px;padding:1px 7px;
-  z-index:6;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.6);
-}
+   Le compte des nouvelles était en or, à 13 px : du petit texte, et l'or ne
+   s'écrit plus qu'en grand (arbitrage du 2 octobre 2026). Il reste en craie,
+   et c'est la graisse qui le détache de la phrase. */
+.butintitre{position:relative;z-index:2;text-align:center;font-family:var(--banner);letter-spacing:.18em;
+  font-size:13px;padding:2px 0 8px}
+.butintitre b{font-weight:700}
 
-/* Le titre du butin. Il dit ce qu'on a eu avant qu'on ait compté. */
-.butintitre{text-align:center;font-family:var(--banner);letter-spacing:.18em;
-  font-size:13px;padding:6px 0 2px}
-.butintitre b{color:var(--projo)}
+/* La fin du butin en trois bâches : ENCORE UN, en flare, si la réserve ou le
+   solde le permettent ; LE CLASSEUR et MON DECK, en bleu — ce qu'on possède.
+   Elle remplace « Terminer » : on ne termine pas une ouverture, on va
+   quelque part. FERMER, en tête, ramène au kiosque. */
+.kq-fin{display:flex;flex-direction:column;gap:12px;width:100%}
+.kq-fin-deux{display:flex;gap:12px}
+.kq-fin-deux>*{flex:1 1 0;min-width:0;min-height:46px;padding:11px 8px;font-size:13.5px}
+#oEncore{min-height:52px}
 
 /* **Le mouvement part, l'information reste** — sous `prefers-reduced-motion`
    comme sous le mode calme du tiroir (« animations », que fx.js et menu.js
-   recopient sur la racine). Seule la cascade du butin s'y pliait : le reflet,
-   le flottement et la lueur des paquets tournaient en boucle, la languette
-   battait, l'écran tremblait sur une légendaire et flashait à chaque
-   déchirure. Tout cela est décor ; ce qui reste dit la même chose — la
-   languette est toujours là, le butin arrive posé, et la déchirure garde son
-   bruit. La bande qui revient quand on lâche n'est pas coupée : elle montre
-   ce qu'on a perdu. */
+   recopient sur la racine). Le reflet du sachet et la languette de la
+   déchirure s'arrêtent, le flash de la déchirure ne part plus ; la bande qui
+   revient quand on lâche n'est pas coupée : elle montre ce qu'on a perdu.
+   Les sachets changent de place sans glisser, la carte se retourne d'un coup
+   et s'écarte sans voler : la rareté se lit sur le sticker collé au-dessus,
+   la cérémonie ne joue plus (fx.js). Les briques (fentes, collés, tampons,
+   jauge, fumée) ont leurs doubles dans `ui.css`. */
 @media (prefers-reduced-motion:reduce){
-  .summary > *,.slide.center,.slide.center .foil,.packglow,.tearpack .grip{animation:none}
-  #app.quake,.flash.go{animation:none}
+  .slide.center .foil,.tearpack .grip{animation:none}
+  .flash.go{animation:none}
+  .slide,.reveal,.reveal .flip{transition:none}
 }
-html[data-calme~="animations"] .summary > *,
-html[data-calme~="animations"] .slide.center,
 html[data-calme~="animations"] .slide.center .foil,
-html[data-calme~="animations"] .packglow,
 html[data-calme~="animations"] .tearpack .grip,
-html[data-calme~="animations"] #app.quake,
 html[data-calme~="animations"] .flash.go{animation:none}
+html[data-calme~="animations"] .slide,
+html[data-calme~="animations"] .reveal,
+html[data-calme~="animations"] .reveal .flip{transition:none}
+
+/* **Le kiosque se tait derrière la cérémonie.** L'écran d'ouverture le
+   couvre entièrement ; son reflet et sa fumée tournaient dessous pour
+   personne, et comptaient dans le budget de trois animations sans fin de
+   l'écran qu'on regarde. La minuterie prête aussi : elle est la troisième
+   boucle du kiosque (avec le reflet et la fumée), et une réponse lente du
+   serveur peut la laisser battre sous les cartes. */
+#app:has(#opener.on) .slide.center .foil,
+#app:has(#opener.on) .kscene>.tbf-fumee::before,
+#app:has(#opener.on) .tbf-minuterie[data-etat=pret]{animation-play-state:paused}
 
 
 /* **Le bas de la page, et la barre du navigateur mobile.**
@@ -461,68 +537,55 @@ html[data-calme~="animations"] .flash.go{animation:none}
    bout — donc le probleme la concerne autant que les autres. */
 /* tbf-degagement */
 body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
-
-/* Le bandeau des refus. Le même qu'aux amis et au carnet, aux durées près :
-   ici les messages nomment un code serveur, on laisse le temps de le lire. */
-.toast{position:fixed;left:50%;bottom:calc(var(--nav-h,62px) + 18px);transform:translateX(-50%);
-  background:#171C23;border:1px solid var(--trait);border-radius:9px;padding:11px 16px;
-  font-size:12.5px;z-index:60;display:none;max-width:86%;text-align:center;line-height:1.5}
-.toast.on{display:block;animation:monte .3s}
-@keyframes monte{from{opacity:0;transform:translate(-50%,10px)}}
 </style>
 </head>
 <body>
 <main id="app">
+  <!-- La réserve : sous la barre (que nav.js pose en tête de la colonne),
+       hors de tout conteneur réécrit. Cachée jusqu'à ce que l'état soit
+       arrivé, pour ne jamais afficher un zéro qui n'est pas le vrai solde. -->
+  <div class="tbf-reserve tbf-pleine-largeur" id="reserve" hidden>
+    <div class="tbf-fentes" id="fentes" role="img" aria-label="Boosters en réserve"></div>
+    <span class="tbf-recharge" id="recharge" aria-hidden="true" hidden></span>
+    <span class="tbf-reserve-prochain" id="prochain" hidden>PROCHAIN<b id="prochainT"></b></span>
+    <a class="tbf-monnaie" id="monnaie" href="/boutique" aria-label="Écharpes — où en gagner"><img
+      src="/img/gains/echarpes.webp" alt=""><b id="kEch">0</b><i class="tbf-monnaie-plus" aria-hidden="true">+</i></a>
+  </div>
   <div class="annonce" id="annonce" hidden></div>
   <section class="screen" id="s-kiosque">
     <div class="stage">
+      <!-- La saison, en banderole : absente sans saison lancée. -->
+      <div class="tbf-cadre kq-saison" data-ton="craie" data-echarpe id="saison" hidden>
+        <span class="tbf-scotch" aria-hidden="true"></span><span class="tbf-scotch tbf-scotch--droite" aria-hidden="true"></span>
+        <b id="saisonNom"></b>
+        <small id="saisonJours" hidden></small>
+        <p id="saisonTxt" hidden></p>
+        <button type="button" class="saison-x" id="saisonVu" aria-label="J’ai vu" hidden>✕</button>
+        <span class="tbf-sticker" id="saisonCompte" hidden></span>
+      </div>
       <!-- Les séries ouvertes. Cachée tant qu'il n'y en a qu'une : un
            sélecteur à un seul choix n'est pas un choix, c'est un bandeau. -->
       <div class="series" id="series" hidden></div>
-      <div class="cartouche">
-        <div class="setname" id="setName"></div>
-        <div class="setline" id="setLine"></div>
+      <div class="kscene" id="kscene">
+        <div class="tbf-projecteurs" aria-hidden="true"></div>
+        <div class="tbf-fumee" id="kfumee" aria-hidden="true"></div>
+        <div class="tbf-socle" aria-hidden="true"></div>
+        <div class="carousel" id="carousel" aria-hidden="true"></div>
+        <button type="button" class="tbf-plaque tbf-plaque--rond" id="prevSet" aria-label="Le paquet d’avant"><svg
+          viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button type="button" class="tbf-plaque tbf-plaque--rond" id="nextSet" aria-label="Le paquet d’après"><svg
+          viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        <span class="tbf-sticker" id="setLine"><b id="setName"></b><span id="setCompte"></span></span>
       </div>
-      <div class="carousel" id="carousel"><div class="packglow"></div><div class="shadow"></div></div>
-      <div class="packnav">
-        <button id="prevSet">‹</button><div class="dots" id="setDots"></div><button id="nextSet">›</button>
-      </div>
-      <div class="tearhint" id="tearhint">GLISSE POUR CHANGER · TOUCHE POUR OUVRIR</div>
     </div>
-    <button class="cta tbf-plaque tbf-bloc" data-ton="flare" id="openBtn">OUVRIR LE BOOSTER</button>
-    <div class="reserve">
-      <!-- La bourse : cachée jusqu'à ce que l'état soit arrivé, pour ne jamais
-           afficher un zéro qui n'est pas le vrai solde. Elle compte quand elle
-           change — un booster ouvert la fait descendre au retour de la
-           cérémonie. -->
-      <div class="bourse" id="bourse" hidden>
-        <span class="tbf-etiquette monnaie-ech"><svg viewBox="0 0 24 24" role="img" aria-label="Écharpes"><rect
-          x="2.5" y="8.5" width="19" height="7" rx="3.5"/><path d="M8 8.5 6 15.5M13 8.5l-2 7M18 8.5l-2 7"/></svg><b
-          id="kEch">0</b></span>
-        <span class="tbf-etiquette monnaie-pack"><svg viewBox="0 0 24 24" role="img" aria-label="Boosters"><path
-          d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg><b id="kPack">0</b></span>
-      </div>
-      <div class="regen" id="regenTxt"></div>
-    </div>
-    <!-- **Sous le bouton, les nouvelles des saisons.** L'annonce et « ce qui
-         vient » se posaient entre le paquet et le bouton OUVRIR : au
-         lancement — une série ouverte, douze en attente —, la liste des douze
-         noms suffisait à pousser le bouton sous le bas d'un écran de 640.
-         L'action d'abord ; ce qui l'entoure se lit en descendant. -->
-    <!-- L'annonce de la saison. Elle ne s'affiche qu'une fois par joueur :
-         une annonce qu'on ne peut pas faire taire est une annonce qu'on
-         apprend à ne plus lire, et la suivante ne le sera pas non plus. -->
-    <div class="saison" id="saison" hidden>
-      <button class="saison-x" id="saisonVu" aria-label="J’ai vu">✕</button>
-      <p class="saison-n" id="saisonNum"></p>
-      <h3 id="saisonNom"></h3>
-      <p class="saison-t" id="saisonTxt"></p>
-    </div>
-    <!-- Ce qui vient, en une ligne. Le kiosque montrait les huit séries
-         verrouillées dans le carrousel : on glissait au milieu de ce qu'on ne
-         peut pas ouvrir pour retrouver ce qu'on peut. Un jeu montre ce qui
-         l'attend, il ne le met pas sur le chemin. -->
-    <div class="avenir" id="avenir" hidden></div>
+    <!-- La minuterie et l'achat immédiat, quand la réserve est vide. -->
+    <div class="minut" id="minut" hidden></div>
+    <button class="cta tbf-plaque tbf-bloc tbf-grande" data-ton="flare" id="openBtn">OUVRIR LE BOOSTER</button>
+    <!-- Ce qui vient : les séries fermées, en rail. Le kiosque montrait les
+         huit séries verrouillées dans le carrousel : on glissait au milieu de
+         ce qu'on ne peut pas ouvrir pour retrouver ce qu'on peut. Un jeu
+         montre ce qui l'attend, il ne le met pas sur le chemin. -->
+    <section class="pan fermees" id="avenir" aria-label="Les séries à venir" hidden></section>
   </section>
 
   <div class="tearzone" id="tearzone">
@@ -539,22 +602,32 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
   </div>
 
   <div id="opener">
-    <video id="burst" muted playsinline preload="none"></video>
+    <div class="tbf-projecteurs" id="oProj" aria-hidden="true"></div>
     <div class="flash" id="flash"></div>
-    <div class="ohead"><span id="oProg">1 / 5</span>
-      <span class="tbf-etiquette obourse" id="oBourse" hidden><svg viewBox="0 0 24 24" role="img"
-        aria-label="Écharpes"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5"/><path
-        d="M8 8.5 6 15.5M13 8.5l-2 7M18 8.5l-2 7"/></svg><b id="oEch">0</b></span>
-      <button id="oClose">Fermer</button></div>
+    <div class="ohead">
+      <div class="tbf-fentes tbf-fentes--cartes" id="oFentes" role="img" aria-label="Carte 1 sur 5"></div>
+      <span class="tbf-etiquette obourse" id="oBourse" hidden><img src="/img/gains/echarpes.webp"
+        alt="Écharpes"><b id="oEch">0</b></span>
+      <span class="tbf-avatar tbf-avatar--barre" id="oNiv" role="img" hidden><span
+        class="tbf-anneau"></span><b class="tbf-sticker tbf-sticker--rond tbf-avatar-niv"></b></span>
+      <button type="button" class="tbf-plaque" id="oClose">FERMER</button></div>
     <div class="ostage" id="ostage"></div>
     <div class="butintitre" id="butinTitre" hidden></div>
     <div class="summary" id="summary"></div>
-    <div class="ofoot"><div class="hint" id="oHint"></div><button class="ghost tbf-plaque" id="oAction" style="display:none"></button></div>
+    <div class="ofoot"><div class="hint" id="oHint"></div>
+      <button type="button" class="tbf-plaque" data-ton="craie" id="oAction" hidden>TOUT RÉVÉLER</button>
+      <div class="kq-fin" id="oFin" hidden>
+        <button type="button" class="tbf-plaque tbf-bloc" data-ton="flare" id="oEncore">ENCORE UN</button>
+        <div class="kq-fin-deux">
+          <a class="tbf-plaque" data-ton="bleu" href="/fanzzy?ecran=dex">LE CLASSEUR</a>
+          <a class="tbf-plaque" data-ton="bleu" href="/deck">MON DECK</a>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- La fiche d'un Fanzzy, montée par fanzzy-fiche.js par-dessus la grille. -->
   <div id="detail"></div>
-  <div class="toast" id="toast"></div>
 </main>
 
 <!-- Le dictionnaire des effets, avant tout ce qui en affiche. Il ne depend
@@ -593,6 +666,32 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
    celui qu'il était quand il vivait dans la page des Fanzzy. */
 const { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, esc, illustration, load, modsText, objetHTML, packArt, rarMark, save, seeded, src, uid } = window.TBF_CARTES;
 
+/** Le jeton des écharpes : le même dessin dans la réserve, sur les prix, les
+    tickets et ce qui vole vers le compteur. Une monnaie dessinée de deux
+    façons se lit comme deux monnaies. */
+const JETON = window.TBF_STUFF?.gain?.('echarpes') ?? '/img/gains/echarpes.webp';
+
+const pluriel = (n, un, plusieurs) => `${n} ${Number(n) > 1 ? plusieurs : un}`;
+
+/* ------------------------------------------------- les toasts et les tickets
+
+   **Une erreur n'est jamais un ticket.** Le kiosque avait son propre bandeau
+   (`.toast`) pour tout dire, un refus comme un gain. Il passe aux pièces
+   communes (lot 2, lots 3 et 5) : un refus est un toast de parpaing qui
+   secoue (`.tbf-toast--erreur`), un gain ou une dépense un ticket kraft qui
+   monte (`.tbf-ticket--gain`) — un gain ne ressemble jamais à une erreur. Les
+   deux vont dans la pile commune, sur `body` : `#app` est un contexte
+   d'empilement, et l'écran d'ouverture la couvrirait. */
+function pile() {
+  let p = document.querySelector('body > .tbf-pile');
+  if (!p) {
+    p = document.createElement('div');
+    p.className = 'tbf-pile';
+    document.body.append(p);
+  }
+  return p;
+}
+
 /**
  * **Le kiosque appelait un `toast` qui n'existait pas.**
  *
@@ -605,17 +704,49 @@ const { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSO
  * Le coût n'est pas le message perdu, c'est ce qui le remplace : un refus
  * propre du serveur (« plus de booster », « pas assez d'écharpes ») devenait
  * une exception qui arrêtait la page en plein geste, sans rien à l'écran.
- * Et le commentaire juste au-dessus de l'appel dit « un message vague fait
- * perdre des heures » : le soin était pris, il ne partait nulle part.
  *
- * C'est la suite d'épreuves qui l'a fait sortir, et d'une façon qui vaut
- * d'être notée : rouge une fois sur dix dans la série complète, verte seule
- * à chaque essai. On ne voyait pas une page fragile, on voyait un test
- * capricieux — la lecture la plus coûteuse qu'on puisse faire d'un rouge.
+ * Les deux appels sont des refus : c'est le toast d'erreur de la pile.
  */
 function toast(txt) {
-  const t = $('toast'); t.textContent = txt; t.className = 'toast on';
-  clearTimeout(t._t); t._t = setTimeout(() => { t.className = 'toast'; }, 3600);
+  const t = document.createElement('div');
+  t.className = 'tbf-toast tbf-toast--erreur';
+  t.setAttribute('role', 'alert');
+  t.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/>'
+    + '<path d="M12 7.5v5.5M12 16.5v.5"/></svg>';
+  t.append(document.createTextNode(txt));
+  pile().append(t);
+  setTimeout(() => t.remove(), 3600);
+}
+
+/**
+ * Un ticket de gain (ou de dépense), trois secondes dans la pile.
+ *
+ * Il se lit, il ne se touche pas : il laisse passer le doigt vers les bâches
+ * qu'il couvre le temps qu'il est là — la fin du butin est juste dessous.
+ */
+function ticket({ montant, nom, origine = '', jeton = true }) {
+  const t = document.createElement('div');
+  t.className = 'tbf-ticket tbf-ticket--gain tbf-glisse';
+  t.setAttribute('role', 'status');
+  t.style.pointerEvents = 'none';
+  t.innerHTML = `${jeton ? `<img src="${esc(JETON)}" alt="">` : ''}<b>${esc(montant)}</b>`
+    + `<span>${esc(nom)}${origine ? `<small>${esc(origine)}</small>` : ''}</span>`;
+  t.addEventListener('animationend', (e) => {
+    if (e.animationName === 'tbf-glisse') t.classList.remove('tbf-glisse');
+  });
+  pile().append(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+/** Retire une classe de mouvement à la fin de son animation, et d'elle
+    seule : laissée, elle empêcherait la suivante de partir (ETAT.md, § 6). */
+function aLaFin(el, classe, animation) {
+  const fin = (e) => {
+    if (e.target !== el || e.animationName !== animation) return;
+    el.classList.remove(classe);
+    el.removeEventListener('animationend', fin);
+  };
+  el.addEventListener('animationend', fin);
 }
 
 /**
@@ -650,23 +781,174 @@ function poserSolde(el, valeur, { compter = true } = {}) {
   return Promise.resolve();
 }
 
+/* ------------------------------------------------- le temps de la recharge
+
+   **La durée vient du serveur, le décompte de la page** (règle R3 du
+   contrat). Le kiosque retirait une seconde à `S.nextIn` à chaque tour de
+   minuterie : une minuterie de navigateur glisse, et elle s'endort dans un
+   onglet caché — revenu dix minutes plus tard, le compte affichait encore ce
+   qu'il affichait en partant. On retient maintenant la valeur servie et
+   l'instant de sa lecture (`performance.now()`, que l'heure du téléphone ne
+   déplace pas), et le reste se calcule à chaque affichage. À zéro, la page
+   relit le serveur au lieu de conclure seule ; au retour d'un onglet caché
+   plus d'une minute, aussi. */
+let lu = { ms: null, t: 0 };
+let plusLongueAttente = 0;
+function noterRecharge(ms) {
+  const v = ms == null || !Number.isFinite(Number(ms)) ? null : Math.max(0, Number(ms));
+  lu = { ms: v, t: performance.now() };
+  if (v != null) plusLongueAttente = Math.max(plusLongueAttente, v);
+}
+/** Ce qui reste avant le prochain booster gratuit, ou `null` : la réserve est pleine. */
+const restantMs = () => (lu.ms == null ? null : Math.max(0, lu.ms - (performance.now() - lu.t)));
+
+/* **La durée d'une recharge**, pour l'anneau : la part écoulée est
+   `1 − reste ⁄ durée`. Le serveur la sert dans le portefeuille
+   (`wallet.cadenceMs`, de `/state` et de `/open`) : c'est celle de ce
+   joueur — un abonné recharge plus vite —, et un réglage changé depuis
+   l'administration y vaut tout de suite. Un serveur d'avant ne la sert pas ;
+   l'anneau prend alors la cadence par défaut du réglage `pack.regen_min`,
+   dix minutes, et jamais moins que la plus longue attente annoncée depuis
+   l'arrivée — il est approché, mais il finit toujours plein à zéro. Le temps
+   exact est écrit à côté. */
+const DIX_MINUTES = 10 * 60 * 1000;
+const cadence = () => (Number(S.cadenceMs) > 0 ? Number(S.cadenceMs)
+  : Math.max(DIX_MINUTES, plusLongueAttente));
+
+/** « 9:55 », ou « 1 h 04 » au-delà d'une heure. */
+function quand(ms) {
+  /* **Au-delà d'une heure, on écrit des heures.** « 64:28 » ne se lit pas
+     comme « une heure et quatre minutes » : les deux points disent
+     minutes-secondes, et un nombre de minutes qui dépasse soixante se lit
+     comme une horloge cassée. La cadence se règle jusqu'à mille quatre
+     cent quarante minutes depuis l'administration — un jour entier —, donc
+     le cas n'a rien d'exceptionnel.
+
+     Les secondes sont arrondies au-dessus : « 0:01 » jusqu'au bout, et
+     jamais un « 0:00 » qui attend une seconde de plus. */
+  const s = Math.ceil(ms / 1000);
+  const mm = Math.floor(s / 60);
+  return mm >= 60 ? `${Math.floor(mm / 60)} h ${String(mm % 60).padStart(2, '0')}`
+    : `${mm}:${String(s % 60).padStart(2, '0')}`;
+}
+/** La même durée, en mots, pour qui écoute l'écran. */
+function enMots(ms) {
+  const mm = Math.ceil(ms / 60000);
+  if (mm <= 1) return 'moins d’une minute';
+  if (mm < 60) return `${mm} minutes`;
+  return `${Math.floor(mm / 60)} h ${String(mm % 60).padStart(2, '0')}`;
+}
+
+/** La relecture de l'état, une seule à la fois et pas deux fois en dix
+    secondes : un serveur qui répond « zéro » à nouveau ne doit pas se faire
+    relire à chaque seconde. Elle annonce `tbf:bourse`, qui redessine. */
+let relecture = null;
+let derniereRelecture = -Infinity;
+function relire() {
+  if (relecture) return relecture;
+  if (performance.now() - derniereRelecture < 10_000) return Promise.resolve();
+  derniereRelecture = performance.now();
+  relecture = load().catch(() => {}).finally(() => { relecture = null; });
+  return relecture;
+}
+
+/* ------------------------------------------------------------ la réserve */
+
+/** Combien de fentes la réserve montre avant de passer au compte. */
+const FENTES = 5;
+let signatureFentes = '';
+
 /**
- * La bourse du kiosque.
+ * La réserve, sous la barre : les fentes de sachets, le prochain, le solde.
  *
- * Elle ne bouge pas pendant la cérémonie : l'écran d'ouverture la recouvre, et
- * un compte qui se jouerait dessous serait fini avant qu'on le voie. Elle se
- * met à jour au retour — `renderKiosque` est rappelé à chaque fermeture — et
- * c'est là que le booster ouvert la fait descendre, sous les yeux.
+ * Les fentes ne se reconstruisent que si ce qu'elles montrent change — le
+ * nombre, la recharge, la série — : chaque seconde, seuls l'anneau et le
+ * compte à rebours bougent (`tickReserve`).
+ *
+ * **Le solde ne bouge pas pendant la cérémonie** : l'écran d'ouverture le
+ * recouvre, et un compte qui se jouerait dessous serait fini avant qu'on le
+ * voie. Il se met à jour au retour — `renderKiosque` est rappelé à chaque
+ * fermeture — et c'est là que le booster ouvert le fait descendre, sous les
+ * yeux.
  */
-function rendreBourse() {
-  if (S.scarves == null && S.packs == null) return;
-  if ($('opener').classList.contains('on')) return;
-  $('bourse').hidden = false;
-  poserSolde($('kEch'), S.scarves ?? 0);
-  poserSolde($('kPack'), S.packs ?? 0);
+function rendreReserve() {
+  /* `avatar` n'est posé que par `load()` : avant, l'état porte des valeurs de
+     départ — zéro écharpe, la réserve pleine — qui ne sont pas celles du
+     joueur (voir nav.js, « l'état que cartes.js tient pour la page »). */
+  if (!('avatar' in S)) return;
+  $('reserve').hidden = false;
+  const n = Math.max(0, Math.floor(Number(S.packs) || 0));
+  const reste = restantMs();
+  const recharge = reste != null;
+  const set = SETS[S.set];
+  const sachet = set && ART[set.id] ? `url("/${src(ART[set.id])}")` : '';
+  const enFentes = n + (recharge ? 1 : 0) <= FENTES;
+  const sig = [n, recharge, sachet, enFentes].join('|');
+  const f = $('fentes');
+  if (sig !== signatureFentes) {
+    signatureFentes = sig;
+    if (sachet) f.style.setProperty('--sachet', sachet);
+    else f.style.removeProperty('--sachet');
+    f.classList.toggle('kq-compte', !enFentes);
+    f.innerHTML = enFentes
+      ? Array.from({ length: Math.max(FENTES, n + (recharge ? 1 : 0)) }, (_, i) =>
+        (i < n ? '<span class="tbf-fente"></span>'
+          : i === n && recharge
+            ? '<span class="tbf-fente tbf-fente--vide"><span class="tbf-recharge" aria-hidden="true"></span></span>'
+            : '<span class="tbf-fente tbf-fente--vide"></span>')).join('')
+      : `<span class="tbf-fente"><b class="tbf-sticker tbf-sticker--rond" aria-hidden="true">${n}</b></span>`;
+    $('recharge').hidden = enFentes || !recharge;
+    f.dataset.mots = '';
+  }
+  if (!$('opener').classList.contains('on')) poserSolde($('kEch'), S.scarves ?? 0);
+  const ech = Number(S.scarves ?? 0);
+  $('monnaie').setAttribute('aria-label', `${pluriel(ech, 'écharpe', 'écharpes')} — où en gagner`);
+  /* Le solde dit qu'il manque, là où il manque : la réserve est vide et il
+     ne paie pas le booster. Le chiffre passe au rouge foncé (la brique). */
+  $('monnaie').classList.toggle('tbf-monnaie--manque', n <= 0 && ech < Number(S.packPrice ?? 45));
+  tickReserve();
+}
+
+/** Chaque seconde : l'anneau, le compte à rebours, et ce qu'on en dit. */
+function tickReserve() {
+  if ($('reserve').hidden) return;
+  const reste = restantMs();
+  $('prochain').hidden = reste == null;
+  if (reste != null) $('prochainT').textContent = quand(reste);
+  const part = reste == null ? 1 : clamp(1 - reste / cadence(), 0, 1);
+  for (const a of $('reserve').querySelectorAll('.tbf-recharge')) a.style.setProperty('--part', part.toFixed(3));
+  /* L'étiquette des fentes ne change qu'à la minute : elle est lue par qui
+     l'écoute, et une phrase qui change chaque seconde ne se lit jamais. */
+  const n = Math.max(0, Math.floor(Number(S.packs) || 0));
+  const mots = `${pluriel(n, 'booster', 'boosters')} en réserve`
+    + (reste == null ? ' — la réserve est pleine' : ` — le prochain dans ${enMots(reste)}`);
+  const f = $('fentes');
+  if (f.dataset.mots !== mots) { f.dataset.mots = mots; f.setAttribute('aria-label', mots); }
 }
 
 /* ------------------------------------------------------------ kiosque */
+
+/**
+ * Combien de paquets on présente au choix.
+ *
+ * Trois : celui du milieu, sur son socle, et un de chaque côté. Ils étaient
+ * dix, « comme sur un présentoir » — on n'en voyait jamais que trois à la
+ * fois, et sept points sous le carrousel comptaient des paquets qu'on ne
+ * regardait pas. **Le paquet choisi ne change rien au tirage** : les cartes
+ * sont tirées par le serveur à l'ouverture, et le numéro du paquet ne lui est
+ * même pas envoyé. Le geste est là pour le geste — ouvrir un booster est une
+ * cérémonie, et une cérémonie sans choix n'en est pas une.
+ *
+ * Le jour où ce choix influencerait le contenu, les joueurs s'en apercevraient
+ * en quelques heures, un « paquet qui donne les légendaires » circulerait, et
+ * il faudrait honorer une superstition qu'on aurait fabriquée soi-même.
+ */
+const PAQUETS_AU_CHOIX = 3;
+/** On arrive sur celui du milieu : un voisin de chaque côté. */
+const MILIEU = Math.floor(PAQUETS_AU_CHOIX / 2);
+
+/** Les séries que ce joueur peut ouvrir, dans l'ordre du catalogue. */
+const seriesOuvertes = () => SETS.filter(serieDebloquee);
 
 /**
  * Carrousel en perspective.
@@ -674,26 +956,6 @@ function rendreBourse() {
  * Les paquets existent en permanence dans le DOM et ne font que se replacer :
  * on peut donc les faire glisser au doigt, avec la position qui suit le geste
  * en temps réel plutôt que de sauter d'une série à l'autre.
- */
-/**
- * Combien de paquets on présente au choix.
- *
- * Dix, comme sur un présentoir. **Le paquet choisi ne change rien au tirage** :
- * les cartes sont tirées par le serveur à l'ouverture, et le numéro du paquet
- * ne lui est même pas envoyé. Le geste est là pour le geste — ouvrir un
- * booster est une cérémonie, et une cérémonie sans choix n'en est pas une.
- *
- * Le jour où ce choix influencerait le contenu, les joueurs s'en apercevraient
- * en quelques heures, un « paquet qui donne les légendaires » circulerait, et
- * il faudrait honorer une superstition qu'on aurait fabriquée soi-même.
- */
-const PAQUETS_AU_CHOIX = 10;
-
-/** Les séries que ce joueur peut ouvrir, dans l'ordre du catalogue. */
-const seriesOuvertes = () => SETS.filter(serieDebloquee);
-
-/**
- * L'éventail : dix paquets de la série choisie.
  *
  * Il présentait les neuf séries, dont huit verrouillées pour qui commence : on
  * glissait longuement au milieu de ce qu'on ne peut pas ouvrir. La série se
@@ -726,15 +988,20 @@ function buildCarousel() {
   placeCarousel(0);
 }
 
+/** L'écart entre deux paquets : un peu plus que la largeur d'un sachet, qui
+    grandit avec l'écran (voir la feuille). */
+const ecartDesPaquets = () =>
+  ($('carousel').querySelector('.slide')?.offsetWidth || 124) * 1.2;
+
 function placeCarousel(drag = 0) {
-  const w = 210;
+  const w = ecartDesPaquets();
   for (let i = 0; i < PAQUETS_AU_CHOIX; i++) {
     const el = $('carousel').querySelector(`.slide[data-i="${i}"]`);
     if (!el) continue;
-    const off = i - (S.paquet ?? 0) - drag;
+    const off = i - (S.paquet ?? MILIEU) - drag;
     const abs = Math.abs(off);
     el.style.transform =
-      `translate(-50%,-50%) translateX(${off * w}px) translateZ(${-abs * 190}px) ` +
+      `translateX(-50%) translateX(${off * w}px) translateZ(${-abs * 190}px) ` +
       `rotateY(${off * -26}deg) scale(${1 - abs * 0.06})`;
     el.style.zIndex = String(10 - Math.round(abs * 10));
     el.classList.toggle('center', abs < 0.5);
@@ -771,105 +1038,216 @@ const serieDebloquee = (s) => s?.ouverte !== false;
  * appuyait — et **rien ne se passait**. Ni refus, ni message, ni animation. Le
  * pire des états : l'écran promettait, acceptait le geste, et l'avalait.
  *
- * La règle vit donc ici, une fois, et les deux endroits l'appellent. C'est la
- * faute que ce dépôt a déjà payée cinq fois sous le même nom — une règle écrite
+ * La règle vit donc ici, une fois, et les endroits qui ouvrent l'appellent —
+ * le bouton, l'achat immédiat, la minuterie prête, ENCORE UN. C'est la faute
+ * que ce dépôt a déjà payée cinq fois sous le même nom — une règle écrite
  * à deux endroits finit par ne plus dire la même chose — et c'est la seule
  * façon connue de ne pas la repayer.
  */
 const peutOuvrir = () => serieDebloquee(SETS[S.set] ?? {})
   && (S.packs > 0 || Number(S.scarves ?? 0) >= Number(S.packPrice ?? 45));
 
+/**
+ * Chaque seconde : le bouton, la réserve, la minuterie — et la relecture à
+ * zéro.
+ *
+ * **L'achat aux écharpes était inatteignable.**
+ *
+ * Le bouton se fermait dès `packs <= 0`, et le client n'envoie `buy` que
+ * dans ce cas précis : la seule situation où l'on paie était donc la seule
+ * où le bouton ne répondait pas. Le serveur, lui, savait acheter depuis le
+ * premier jour. Il n'a jamais reçu la demande.
+ */
 function tickRegen() {
-  if (S.nextIn != null) S.nextIn = Math.max(0, S.nextIn - 1000);
-  // La bourse vit dans la barre du haut (nav.js) depuis que toutes les pages
-  // partagent le même bandeau. Le kiosque est l'écran qui la fait le plus
-  // bouger : sans cette poussée, un joueur qui vient de dépenser quarante-cinq
-  // écharpes les verrait encore affichées.
-  /* La barre ne porte plus la bourse : le kiosque affiche son solde lui-même,
-     dans la page où il sert à décider — voir `rendreBourse`. */
-  // Deux raisons de fermer le bouton, et elles ne se disent pas pareil : plus
-  // de booster, ou série pas encore débloquée. Le libellé est posé par
-  // `renderKiosque`, qui seul connaît la série affichée.
-  /**
-   * **L'achat aux écharpes était inatteignable.**
-   *
-   * Le bouton se fermait dès `packs <= 0`, et le client n'envoie `buy` que
-   * dans ce cas précis : la seule situation où l'on paie était donc la seule
-   * où le bouton ne répondait pas. L'écran proposait « ou 45 écharpes » pendant
-   * qu'il restait des boosters gratuits — où le serveur consomme la réserve et
-   * ne prélève rien — et se verrouillait à l'instant où payer aurait servi.
-   *
-   * Le serveur, lui, savait acheter depuis le premier jour. Il n'a jamais reçu
-   * la demande.
-   */
-  const prix = Number(S.packPrice ?? 45);
   $('openBtn').disabled = !peutOuvrir();
-  const el = $('regenTxt');
-  if (S.packs >= MAXP || S.nextIn == null) el.textContent = 'Réserve pleine';
-  else if (S.nextIn <= 0) { el.textContent = 'Booster prêt'; load().catch(() => {}); }
-  else {
-    /* L'offre d'acheter n'a de sens que **quand la réserve est vide** : tant
-       qu'il reste un booster gratuit, le serveur le consomme et ne prélève
-       rien. L'annoncer plus tôt faisait croire à un choix qui n'existait pas. */
-    /* **Au-delà d'une heure, on écrit des heures.** « 64:28 » ne se lit pas
-       comme « une heure et quatre minutes » : les deux points disent
-       minutes-secondes, et un nombre de minutes qui dépasse soixante se lit
-       comme une horloge cassée. La cadence se règle jusqu'à mille quatre
-       cent quarante minutes depuis l'administration — un jour entier —, donc
-       le cas n'a rien d'exceptionnel.
-
-       Les secondes disparaissent avec le passage aux heures, et c'est
-       volontaire : personne n'attend la seconde près à une heure de là, et
-       un chiffre qui bouge chaque seconde attire l'œil vers une attente
-       qu'on ferait mieux d'oublier. */
-    const mm = Math.floor(S.nextIn / 60000);
-    const quand = mm >= 60
-      ? `${Math.floor(mm / 60)} h ${String(mm % 60).padStart(2, '0')}`
-      : `${mm}:${String(Math.floor(S.nextIn % 60000 / 1000)).padStart(2, '0')}`;
-    el.textContent = `Booster suivant dans ${quand}` +
-      (S.packs <= 0 && Number(S.scarves ?? 0) >= prix
-        ? ` · ou ${prix} écharpes tout de suite` : '');
-  }
+  tickReserve();
+  rendreMinuterie();
+  if (restantMs() === 0) relire();
 }
 
 /**
- * L'annonce de la saison en cours.
+ * La minuterie et l'achat immédiat, quand la réserve est vide.
+ *
+ * Deux objets : la bâche de parpaing « PRÊT DANS 9:55 », qui se lit et ne se
+ * touche pas (un `div`), et à côté la bâche or « TOUT DE SUITE · +1 BOOSTER »
+ * avec son prix — l'or dit « acheter ». Le temps écoulé, la minuterie devient
+ * une bâche or qui pulse, « PRÊT », et un bouton : elle ouvre le booster qui
+ * vient d'arriver (la page relit d'abord l'état, qui le contient).
+ *
+ * L'achat ne se propose que s'il se paie : sans les écharpes, le bouton
+ * OUVRIR dit déjà ce qui manque, et la minuterie reste seule.
+ *
+ * Elle ne se reconstruit que si son état change : chaque seconde, seuls le
+ * compte et l'anneau bougent — un bouton recréé sous le doigt perdrait le
+ * toucher, et le focus du clavier avec lui.
+ */
+function rendreMinuterie() {
+  const row = $('minut');
+  const ouvrable = serieDebloquee(SETS[S.set] ?? {});
+  const reste = restantMs();
+  const montrer = 'avatar' in S && ouvrable && Number(S.packs) <= 0 && reste != null;
+  row.hidden = !montrer;
+  if (!montrer) { row.dataset.mode = ''; return; }
+  const prix = Number(S.packPrice ?? 45);
+  const paie = Number(S.scarves ?? 0) >= prix;
+  const pret = reste === 0;
+  const mode = `${pret ? 'pret' : 'attente'}|${paie}|${prix}`;
+  if (row.dataset.mode !== mode) {
+    row.dataset.mode = mode;
+    row.innerHTML = (pret
+      ? `<button type="button" class="tbf-plaque tbf-minuterie" data-etat="pret" id="minuteriePrete"
+          aria-label="Un booster est prêt : l’ouvrir"><span class="tbf-recharge" style="--taille:28px;--part:1"
+          aria-hidden="true"></span><span class="tbf-lib2"><b>PRÊT</b></span></button>`
+      : `<div class="tbf-plaque tbf-minuterie" id="minuterie" role="timer"><span class="tbf-recharge"
+          style="--taille:28px" aria-hidden="true"></span><span class="tbf-lib2"><small>PRÊT DANS</small><b
+          id="minuterieT"></b></span></div>`)
+      + (paie
+        ? `<button type="button" class="tbf-plaque tbf-minuterie" data-ton="or" id="achat"
+            aria-label="Acheter un booster tout de suite : ${prix} écharpes"><span class="tbf-lib2"><small>TOUT DE
+            SUITE</small><b>+1 BOOSTER</b></span><span class="tbf-sticker tbf-sticker--prix"><img
+            src="${esc(JETON)}" alt="">${prix}</span></button>`
+        : '');
+  }
+  if (!pret) {
+    $('minuterieT').textContent = quand(reste);
+    const m = $('minuterie');
+    const mots = `Prochain booster gratuit dans ${enMots(reste)}`;
+    if (m.getAttribute('aria-label') !== mots) m.setAttribute('aria-label', mots);
+    m.querySelector('.tbf-recharge').style.setProperty('--part', clamp(1 - reste / cadence(), 0, 1).toFixed(3));
+  }
+}
+$('minut').onclick = (e) => {
+  if (e.target.closest('#achat')) { startTear(); return; }
+  if (e.target.closest('#minuteriePrete')) relire().then(() => startTear());
+};
+
+/**
+ * La banderole de la saison.
  *
  * ## Pourquoi elle existe
  *
- * Les séries s'ouvraient au niveau du joueur : chacun découvrait le jeu seul, à
- * son rythme, et le jour où une série arrivait n'existait pour personne d'autre.
- * Il n'y avait donc rien à annoncer — seulement quelqu'un qui rattrape.
+ * Une saison ouvre pour tout le monde le même jour : c'est ce qui se dit, et
+ * c'est ici qu'on le dit, sur l'écran où l'on vient chercher des cartes. Elle
+ * porte le numéro et le nom de la saison, les jours qui restent quand le
+ * serveur les compte, et ce qu'on en a collecté — les personnages des séries
+ * de la saison qu'on possède, sur ceux qu'on peut y gagner (calcul de la
+ * page, sur le catalogue qu'elle a déjà).
  *
- * Une saison ouvre pour tout le monde le même jour. C'est ce qui se dit, et
- * c'est ici qu'on le dit : sur l'écran où l'on vient chercher des cartes.
- *
- * ## Et pourquoi elle se ferme
+ * ## Et pourquoi son texte se ferme
  *
  * Une annonce qu'on ne peut pas faire taire est une annonce qu'on apprend à ne
  * plus lire — et la suivante ne le sera pas non plus. Le serveur retient donc la
- * dernière saison vue par ce joueur : la croix la ferme pour de bon, et elle ne
- * revient qu'au lancement de la suivante.
+ * dernière saison vue par ce joueur : la croix ferme le texte pour de bon, et il
+ * ne revient qu'au lancement de la suivante. La banderole, elle, reste : elle
+ * dit où l'on est, pas ce qui vient d'arriver.
  */
 function rendreSaison() {
   const n = $('saison');
   const s = S.saison;
-  // Rien à annoncer, ou ce joueur l'a déjà vue.
-  if (!s || S.saisonVue === s.id) { n.hidden = true; return; }
+  if (!s || !s.nom) { n.hidden = true; return; }
   n.hidden = false;
-  $('saisonNum').textContent = `SAISON ${s.numero}`;
-  $('saisonNom').textContent = s.nom;
-  $('saisonTxt').textContent = s.texte ?? '';
+  $('saisonNom').textContent = `Saison ${s.numero} — ${s.nom}`;
+  /* Les jours, seulement s'ils sont servis, et jamais une fois la date
+     passée : aucune page ne compte une fin de saison sur l'horloge du
+     téléphone (R3). */
+  const j = Number(s.joursRestants);
+  const jours = s.finie || !Number.isInteger(j) || j < 1 ? ''
+    : j === 1 ? 'Dernier jour' : `Encore ${j} jours`;
+  $('saisonJours').textContent = jours;
+  $('saisonJours').hidden = !jours;
+  const nouvelle = S.saisonVue !== s.id && Boolean(s.texte);
+  $('saisonTxt').textContent = nouvelle ? s.texte : '';
+  $('saisonTxt').hidden = !nouvelle;
+  $('saisonVu').hidden = !nouvelle;
+  n.classList.toggle('avec-x', nouvelle);
+  /* Les séries de la saison : la liste du serveur, ou celles du catalogue qui
+     disent être arrivées par elle. L'écharpe prend la couleur de la
+     première. */
+  const ids = Array.isArray(s.series) && s.series.length ? s.series
+    : SETS_TOUTES.filter((x) => x.saison && (x.saison.id === s.id || x.saison.numero === s.numero))
+      .map((x) => x.id);
+  const premiere = SETS_TOUTES.find((x) => x.id === ids[0]);
+  if (premiere?.c1) n.style.setProperty('--e1', premiere.c1);
+  else n.style.removeProperty('--e1');
+  const lignees = PERSOS.filter((f) => ids.includes(f.set));
+  const c = $('saisonCompte');
+  c.hidden = !lignees.length;
+  if (lignees.length) {
+    c.textContent = `${lignees.filter((f) => S.col?.[f.id]).length} / ${lignees.length} collectés`;
+  }
 }
 
 $('saisonVu').onclick = async () => {
   /* On cache **avant** d'appeler. Le geste est sans conséquence — au pire
-     l'annonce reviendra au prochain chargement — et le faire attendre le
-     serveur donnerait une croix qui ne répond pas tout de suite. */
-  $('saison').hidden = true;
+     le texte reviendra au prochain chargement — et le faire attendre le
+     serveur donnerait une croix qui ne répond pas tout de suite. La croix
+     part avec le texte : le focus revient à la banderole. */
   S.saisonVue = S.saison?.id ?? null;
-  try { await api('/saison-vue', {}); } catch { /* elle reviendra, sans plus */ }
+  rendreSaison();
+  $('saison').setAttribute('tabindex', '-1');
+  $('saison').focus({ preventScroll: true });
+  try { await api('/saison-vue', {}); } catch { /* il reviendra, sans plus */ }
 };
+
+/** Le petit sachet gris d'une série fermée, dans son rail. Sans dessin, un
+    sachet de ses deux couleurs, et non le paquet composé de `packArt` : son
+    nom y serait écrit à deux pixels — un texte que personne ne lit, et que
+    l'audit compterait sous onze. Le nom est à l'écoute (`aria-label`). */
+const sachetFerme = (x) => (ART[x.id]
+  ? `<span class="fermees-s" role="img" aria-label="${esc(x.nom)}"
+      style="background-image:url('/${esc(src(ART[x.id]))}')"></span>`
+  : `<span class="fermees-s" role="img" aria-label="${esc(x.nom)}"
+      style="background-image:linear-gradient(160deg,${esc(x.c2 ?? '#1A1F27')} 0 32%,${esc(x.c1 ?? '#C2CAD6')} 58%,${esc(x.c2 ?? '#1A1F27')})"></span>`);
+
+/**
+ * Ce qui vient : les séries fermées, en rails de sachets gris sous scotch.
+ *
+ * Elle disait « au niveau 12 ». Elle ne le dit plus, et pas seulement parce
+ * que le niveau n'ouvre plus rien : **on ne connaît pas toujours la date**.
+ * Une saison se lance quand l'administration la lance ; le serveur ne dit
+ * quelle saison ouvrira une série que si elle a été annoncée
+ * (`sets[].prochaine`, contrat § 7.2), et annoncer une échéance qu'on ne
+ * tiendra peut-être pas est pire que de n'en annoncer aucune. Un rail par
+ * raison : « SAISON 2 » pour les séries annoncées, « FERMÉE » pour les
+ * autres.
+ */
+function rendreFermees() {
+  const fermees = SETS_TOUTES.filter((x) => !serieDebloquee(x));
+  const av = $('avenir');
+  if (!fermees.length) { av.hidden = true; av.innerHTML = ''; return; }
+  av.hidden = false;
+  const raisons = new Map();
+  for (const x of fermees) {
+    const k = Number.isInteger(x.prochaine) && x.prochaine > 0 ? x.prochaine : 0;
+    if (!raisons.has(k)) raisons.set(k, []);
+    raisons.get(k).push(x);
+  }
+  // Les saisons annoncées d'abord, de la plus proche à la plus lointaine.
+  const ordre = [...raisons.keys()].sort((a, b) => (a || Infinity) - (b || Infinity));
+  const n = fermees.length;
+  av.innerHTML = `<p class="fermees-lab">${n} série${n > 1 ? 's attendent' : ' attend'} une saison</p>`
+    + ordre.map((k) => `<div class="fermees-rang">${raisons.get(k).map(sachetFerme).join('')}
+        <span class="tbf-scotch tbf-scotch--croix" aria-hidden="true"></span>
+        <span class="tbf-sticker">${k ? `SAISON ${k}` : 'FERMÉE'}</span></div>`).join('');
+}
+
+/** Les pastilles des séries ouvertes, la choisie ramenée au milieu du rail. */
+function rendreSeries(ouvertes, s) {
+  const rangee = $('series');
+  rangee.hidden = ouvertes.length < 2;
+  if (rangee.hidden) { rangee.innerHTML = ''; return; }
+  /* Des plaques, et l'or du kiosque sur la série choisie. `on` reste posé à
+     côté du ton : c'est l'état, le ton n'en est que la couleur. */
+  rangee.innerHTML = ouvertes.map((o) => {
+    const choisie = o.id === s.id;
+    return `<button data-serie="${esc(o.id)}" class="tbf-plaque${choisie ? ' on' : ''}"
+      ${choisie ? 'data-ton="or" ' : ''}aria-pressed="${choisie}">${esc(o.nom)}</button>`;
+  }).join('');
+  const b = rangee.querySelector('.on');
+  if (b && rangee.scrollWidth > rangee.clientWidth) {
+    rangee.scrollLeft = Math.max(0, b.offsetLeft - (rangee.clientWidth - b.offsetWidth) / 2);
+  }
+}
 
 function renderKiosque() {
   /* La série affichée est toujours ouverte : le kiosque ne présente plus que
@@ -878,7 +1256,7 @@ function renderKiosque() {
   const ouvertes = seriesOuvertes();
   if (ouvertes.length && !serieDebloquee(SETS[S.set] ?? {})) {
     S.set = SETS.indexOf(ouvertes[0]);
-    S.paquet = 0;
+    S.paquet = MILIEU;
     buildCarousel();
   }
 
@@ -886,86 +1264,60 @@ function renderKiosque() {
   if (!s) return;
   const ouvrable = serieDebloquee(s);
 
-  /* Les pastilles de série. Cachées tant qu'il n'y en a qu'une : un sélecteur
-     à un seul choix n'est pas un choix, c'est un bandeau. */
-  /* Des plaques, et l'or du kiosque sur la série choisie. `on` reste posé à
-     côté du ton : c'est l'état, le ton n'en est que la couleur. */
-  const rangee = $('series');
-  rangee.hidden = ouvertes.length < 2;
-  rangee.innerHTML = ouvertes.map((o) => {
-    const choisie = o.id === s.id;
-    return `<button data-serie="${esc(o.id)}" class="tbf-plaque${choisie ? ' on' : ''}"
-      ${choisie ? 'data-ton="or" ' : ''}aria-pressed="${choisie}">${esc(o.nom)}</button>`;
-  }).join('');
-
-  /* Ce qui vient. Une ligne, discrète : c'est une promesse, pas une offre.
-
-     Elle disait « au niveau 12 ». Elle ne le dit plus, et pas seulement parce
-     que le niveau n'ouvre plus rien : **on ne connaît pas la date**. Une saison
-     se lance quand l'administration la lance, et annoncer une échéance qu'on ne
-     tiendra peut-être pas est pire que de n'en annoncer aucune. */
-  const fermees = SETS_TOUTES.filter((x) => !serieDebloquee(x));
-  const av = $('avenir');
-  if (fermees.length) {
-    av.hidden = false;
-    av.innerHTML = `${fermees.length} série${fermees.length > 1 ? 's' : ''} `
-      + `en attente d'une saison : <b>${esc(fermees.map((x) => x.nom).join(' · '))}</b>`;
-  } else av.hidden = true;
-
+  rendreSeries(ouvertes, s);
+  rendreFermees();
   rendreSaison();
 
+  /* Le nom de la série, en sticker sous son sachet, et ce qu'elle contient :
+     ses personnages, ceux que la collection compte. Une série fermée se
+     montre **verrouillée** : le kiosque les proposait toutes sans
+     distinction, le joueur en choisissait une, appuyait, et découvrait le
+     refus après coup — sous la forme d'un code. Un jeu ne cache pas ce qui
+     vient, il le montre verrouillé. */
+  const lignees = PERSOS.filter((f) => f.set === s.id).length;
   $('setName').textContent = s.nom;
-  /* Une série fermée se montre **verrouillée**, avec ce qu'elle attend. Le
-     kiosque les proposait toutes sans distinction : le joueur en choisissait
-     une, appuyait, et découvrait le refus après coup — sous la forme d'un code,
-     « Ouverture impossible (fanzzy.error.set_locked) ». Un jeu ne cache pas ce
-     qui vient, il le montre verrouillé.
-
-     Une série ouverte dit **par quelle saison** elle est arrivée. C'est une
-     petite chose et c'est tout le propos du changement : elle date l'entrée
-     d'une série dans le jeu, et cette date est la même pour tout le monde. */
-  $('setLine').innerHTML = ouvrable
-    ? esc(`${DEX.filter((f) => f.set === s.id).length} Fanzzy · ${s.ligne}`
-      + (s.saison ? ` · saison ${s.saison.numero}` : ''))
-    : `<span class="verrou"><svg viewBox="0 0 24 24">
-        <rect x="4" y="10" width="16" height="11" rx="2.5"/>
-        <path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Ouverte par une prochaine saison</span>`;
+  $('setCompte').textContent = !ouvrable ? ' · pas encore ouverte'
+    : lignees ? ` · ${lignees} Fanzzy` : '';
   $('carousel').classList.toggle('verrou', !ouvrable);
+  /* La fumée de la série : sa couleur, éclaircie pour qu'elle se voie sur le
+     béton (la fumée éclaire ce qui est derrière elle, une couleur sombre n'y
+     ferait rien). */
+  const f = $('kfumee');
+  f.style.setProperty('--e1', s.c1 ?? '');
+  f.style.setProperty('--e2', window.FX?.lisible?.(s.c1) ?? s.c1 ?? '');
+
   /* Le prix est **sur le bouton**, pas à côté : c'est au moment d'appuyer qu'on
      décide de dépenser, et une ligne d'aide sous le pouce ne se lit pas. */
   const px = Number(S.packPrice ?? 45);
-  $('openBtn').textContent = !ouvrable ? 'PAS ENCORE OUVERTE'
-    : S.packs > 0 ? 'OUVRIR LE BOOSTER'
+  const n = Math.max(0, Math.floor(Number(S.packs) || 0));
+  $('openBtn').innerHTML = !ouvrable ? 'PAS ENCORE OUVERTE'
+    : n > 0 ? `OUVRIR LE BOOSTER<small>${n} en réserve</small>`
     : Number(S.scarves ?? 0) >= px ? `OUVRIR · ${px} ÉCHARPES`
     : `IL TE FAUT ${px} ÉCHARPES`;
-  $('tearhint').textContent = 'CHOISIS TON PAQUET · TOUCHE POUR OUVRIR';
-  /* Un point par paquet, pas par série : c'est le paquet qu'on choisit ici. */
-  $('setDots').innerHTML = Array.from({ length: PAQUETS_AU_CHOIX },
-    (_, i) => `<i class="${i === (S.paquet ?? 0) ? 'on' : ''}"></i>`).join('');
   placeCarousel(0);
-  rendreBourse();
+  rendreReserve();
   tickRegen();
 }
 
 /** Passer d'un paquet à l'autre. Le contenu ne change pas — voir la note de
     `PAQUETS_AU_CHOIX` — mais le geste, lui, est la moitié du plaisir. */
 function goPaquet(delta) {
-  S.paquet = ((S.paquet ?? 0) + delta + PAQUETS_AU_CHOIX) % PAQUETS_AU_CHOIX;
+  S.paquet = ((S.paquet ?? MILIEU) + delta + PAQUETS_AU_CHOIX) % PAQUETS_AU_CHOIX;
   audio.flip();
   renderKiosque();
 }
 $('prevSet').onclick = () => goPaquet(-1);
 $('nextSet').onclick = () => goPaquet(1);
 
-/** Changer de série depuis les pastilles. Le choix du paquet repart à zéro :
-    ce sont d'autres paquets, il serait étrange de garder le neuvième. */
+/** Changer de série depuis les pastilles. Le choix du paquet revient au
+    milieu : ce sont d'autres paquets. */
 $('series').onclick = (e) => {
   const b = e.target.closest('[data-serie]');
   if (!b) return;
   const i = SETS.findIndex((x) => x.id === b.dataset.serie);
   if (i < 0 || i === S.set) return;
   S.set = i;
-  S.paquet = 0;
+  S.paquet = MILIEU;
   audio.flip();
   buildCarousel();
   renderKiosque();
@@ -978,13 +1330,13 @@ $('series').onclick = (e) => {
   c.addEventListener('pointerdown', (e) => { x0 = e.clientX; dragging = false; c.setPointerCapture(e.pointerId); });
   c.addEventListener('pointermove', (e) => {
     if (x0 === null) return;
-    const d = (e.clientX - x0) / 190;
+    const d = (e.clientX - x0) / ecartDesPaquets();
     if (Math.abs(d) > 0.04) dragging = true;
     placeCarousel(-d);
   });
   const end = (e) => {
     if (x0 === null) return;
-    const d = (e.clientX - x0) / 190;
+    const d = (e.clientX - x0) / ecartDesPaquets();
     x0 = null;
     if (d < -0.28) goPaquet(1);
     else if (d > 0.28) goPaquet(-1);
@@ -1182,16 +1534,71 @@ let pull = [], idx = 0, fresh = new Set();
    avait déjà se change en écharpes, une poignée d'écharpes est une carte à
    part, et le reste ne rapporte rien. */
 let rapportent = [];
+/* Et combien chacune, pour le sticker de prix de sa case d'album. La page le
+   recompte avec le barème du catalogue (`SCARVES`) ; elle ne l'écrit que si
+   son compte retombe exactement sur le total du serveur — un doublon dont on
+   se tromperait d'une écharpe raconterait un gain qui n'a pas eu lieu. */
+let montants = [];
+let montantsSurs = false;
 /* Vrai entre l'ouverture d'un paquet et le versement de ses doublons au
    compteur — voir `crediterDoublons`, qui le consomme. */
 let doublonsAVerser = false;
 const rapporte = (c) => c?.type === 'echarpes' || c?.type === 'scarves'
   || ((c?.type === 'fanzzy' || c?.type === 'stuff') && c.new === false);
+function montantDe(c) {
+  if (c?.type === 'echarpes' || c?.type === 'scarves') return Number(c.montant ?? c.amount) || 0;
+  if (c?.new !== false) return 0;
+  if (c.type === 'fanzzy') return Number(SCARVES[BY_ID.get(c.id)?.rar]) || 0;
+  // Le serveur rend une écharpe pour une pièce dont la rareté lui échappe.
+  if (c.type === 'stuff') return Number(SCARVES[STUFFS.get(c.id)?.rar]) || 1;
+  return 0;
+}
+
+/** Les quatre raretés, et leur mot sur le sticker en forme. */
+const MOT = { commune: 'COMMUNE', rare: 'RARE', epique: 'ÉPIQUE', legendaire: 'LÉGENDAIRE' };
+const rareteDe = (f) => (MOT[f?.rar] ? f.rar : 'commune');
+
+/**
+ * La ligne vivante de la série touchée par ce booster : « LA REPRISE 4 → 6 /
+ * 11 ».
+ *
+ * Celle du serveur d'abord (`series`, contrat § 2.3) : il compte les lignées
+ * obtenables, comme la jauge de la collection. `[]` : le booster n'avait pas
+ * de personnage, pas de ligne. Absente (un serveur d'avant, ou un calcul qui
+ * a échoué), la page la compte elle-même sur son catalogue et la collection
+ * d'avant l'ouverture. Une série nommée est celle du sachet, sinon la
+ * première touchée.
+ */
+function ligneDeSerie(res, setId, colAvant) {
+  if (Array.isArray(res.series)) {
+    if (!res.series.length) return null;
+    const s = res.series.find((x) => x.id === setId) ?? res.series[0];
+    const total = Number(s.total), avant = Number(s.avant), apres = Number(s.apres);
+    if (!(total > 0) || !Number.isFinite(avant) || !Number.isFinite(apres)) return null;
+    return { id: s.id, avant, apres, total, complete: s.complete === true };
+  }
+  const touchees = new Set(res.cards.filter((c) => c.type === 'fanzzy')
+    .map((c) => BY_ID.get(c.id)?.set).filter(Boolean));
+  if (!touchees.size) return null;
+  const id = touchees.has(setId) ? setId : [...touchees][0];
+  const lignees = PERSOS.filter((f) => f.set === id);
+  if (!lignees.length) return null;
+  const compte = (col) => lignees.filter((f) => col?.[f.id]).length;
+  const avant = compte(colAvant), apres = compte(S.col), total = lignees.length;
+  return { id, avant, apres, total, complete: avant < total && apres === total };
+}
+
+/* La cérémonie en cours : une à la fois (voir `$('ostage').onclick`). Le
+   numéro du paquet invalide ce qui arriverait d'un paquet précédent. */
+let enCeremonie = false;
+let paquet = 0;
 
 async function openPack() {
   const setId = SETS[S.set].id;
-  /* Le solde d'avant, que le compteur de la cérémonie montre en premier. */
+  /* Le solde et la collection d'avant : la dépense se lit sur l'écart, et la
+     ligne de série se compte depuis là. */
   const echAvant = Number(S.scarves ?? 0);
+  const colAvant = { ...S.col };
   let res;
   try {
     // `buy` autorise le serveur à prélever des écharpes s'il ne reste aucun
@@ -1202,7 +1609,7 @@ async function openPack() {
     // on le dit.
     toast(({
       'fanzzy.error.no_packs': 'Plus de booster',
-      'fanzzy.error.not_enough_scarves': 'Pas assez d\u2019écharpes',
+      'fanzzy.error.not_enough_scarves': 'Pas assez d’écharpes',
       'fanzzy.error.unknown_set': 'Série inconnue',
       // Le filet de sécurité : le kiosque n'est plus censé proposer une série
       // hors de portée, mais un onglet resté ouvert depuis avant une fermeture
@@ -1226,6 +1633,7 @@ async function openPack() {
      catalogue recopié. */
   pull = res.cards.map(carteDuPaquet);
   rapportent = res.cards.map(rapporte);
+  montants = res.cards.map(montantDe);
   doublonsAVerser = true;
 
   // Une carte que le serveur tire mais que cette page ne connaît pas arrivait
@@ -1241,8 +1649,9 @@ async function openPack() {
     .filter((c, i) => c.type === 'fanzzy' && !pull[i])
     .map((c) => c.id);
   if (inconnues.length) {
-    // Les deux listes vont ensemble : on retire les mêmes rangs des deux.
+    // Les listes vont ensemble : on retire les mêmes rangs de toutes.
     rapportent = rapportent.filter((_, i) => Boolean(pull[i]));
+    montants = montants.filter((_, i) => Boolean(pull[i]));
     pull = pull.filter(Boolean);
     console.error('[fanzzy] catalogue de la page en retard sur le serveur :', inconnues);
     toast(`Carte inconnue de cette version : ${inconnues.join(', ')}. Recharge la page.`);
@@ -1260,11 +1669,6 @@ async function openPack() {
      est pas encore. Le jeu filtrait exactement la carte qu'il était en train
      d'annoncer : l'étiquette disait « ON POUSSE », le dessin montrait le
      personnage au repos.
-
-     C'est la pire forme de ce défaut, parce que chaque pièce est juste — le
-     dessin existe, la carte est bien formée, le filtre fait son travail — et
-     que le repli est correct. Rien ne rougit, l'image est simplement la
-     mauvaise.
 
      On inscrit donc le gain **avant** de dessiner quoi que ce soit. Ce n'est
      pas une supposition optimiste : le serveur vient de l'écrire en base,
@@ -1293,7 +1697,14 @@ async function openPack() {
   S.scarves = res.wallet.scarves;
   S.packs = res.wallet.packs;
   S.nextIn = res.wallet.nextPackInMs;
-  S.lastGain = res.scarvesGained;
+  if (Number(res.wallet.cadenceMs) > 0) S.cadenceMs = Number(res.wallet.cadenceMs);
+  noterRecharge(S.nextIn);
+  /* Le portefeuille rendu porte l'avatar : au tout premier paquet, le serveur
+     équipe d'office le premier Fanzzy tiré, et la fête de niveau comme
+     l'anneau du butin le montrent. Une clé absente n'est pas une réponse. */
+  if ('avatar' in res.wallet) S.avatar = res.wallet.avatar ?? null;
+  S.lastGain = Number(res.scarvesGained) || 0;
+  montantsSurs = montants.reduce((a, b) => a + b, 0) === S.lastGain;
   /* **La montée de niveau, gardée pour la fin du paquet.**
 
      Le serveur la renvoie depuis toujours avec les cartes — ouvrir un
@@ -1303,8 +1714,21 @@ async function openPack() {
      avant qu’il les ait retournées serait lui voler les deux moments.
      Voir `finishPack`, qui la sort quand le paquet est fini. */
   S.montee = res.niveau ?? null;
-  tickRegen();
+  /* L'XP du booster, pour l'anneau du butin (contrat § 1) : il n'avance que
+     si le serveur l'a comptée. Les écharpes d'un palier franchi sont déjà
+     dans le solde rendu ; le compteur du butin ne les montre qu'après la
+     fête qui les annonce. */
+  S.niveauButin = res.niveau ?? null;
+  S.ecarpesPalier = res.niveau?.monte ? Number(res.niveau.ecarpes) || 0 : 0;
+  S.serie = ligneDeSerie(res, setId, colAvant);
 
+  /* Le solde d'après la dépense, avant les doublons et les paliers. L'écart
+     avec celui d'avant est ce que le booster a coûté. */
+  const base = Number(S.scarves ?? 0) - S.lastGain - S.ecarpesPalier;
+  const paye = Math.max(0, echAvant - base);
+
+  paquet += 1;
+  enCeremonie = false;
   const st = $('ostage'); st.innerHTML = '';
   /* **Le dos, c'est celui du sachet — pas celui de la carte.** La nuance
      compte : montrer la série de la carte qu'on tient renseignerait sur elle
@@ -1314,7 +1738,7 @@ async function openPack() {
   const dosDuSachet = window.FZART?.dos?.((SETS[S.set] ?? {}).id);
   pull.forEach((f, i) => {
     const el = document.createElement('div');
-    el.className = 'reveal'; el.style.zIndex = 20 - i;
+    el.className = 'reveal kq-fige'; el.style.zIndex = 20 - i;
     el.style.transform = `translateY(${i * 7}px) scale(${1 - i * .03})`;
     el.innerHTML = `<div class="flip">
       <div class="face back${dosDuSachet ? ' dessine' : ''}"${dosDuSachet
@@ -1322,22 +1746,79 @@ async function openPack() {
       <div class="face front">${cardHTML(f)}</div></div>`;
     st.appendChild(el);
   });
+  /* Les cinq fentes : un dos de carte par carte à révéler — le même dos que
+     celui des cartes —, la première qui sort. */
+  const fentes = $('oFentes');
+  if (dosDuSachet) fentes.style.setProperty('--dos', `url("${dosDuSachet}")`);
+  else fentes.style.removeProperty('--dos');
+  fentes.innerHTML = pull.map((_, i) =>
+    `<span class="tbf-fente${i === 0 ? ' tbf-fente--sort' : ''}"></span>`).join('');
+  fentes.setAttribute('aria-label', `Carte 1 sur ${pull.length}`);
   $('summary').classList.remove('on');
-  $('butinTitre').hidden = true;
+  $('summary').innerHTML = '';
+  phase('revele');
   // La scène était repliée par le récapitulatif du paquet précédent.
   $('ostage').style.display = '';
-  $('oAction').style.display = 'none';
+  $('oAction').hidden = true;
   $('oHint').textContent = 'Touche la carte pour la retourner';
-  $('oProg').textContent = `1 / ${pull.length}`;
-  /* Le compteur de la cérémonie part du solde d'avant, puis **descend** si le
-     paquet s'est payé en écharpes : c'est la dépense, et elle se voit à
-     l'instant où on la fait. Les doublons le feront remonter à la fin (voir
-     `crediterDoublons`) — d'où le solde « avant les doublons » ici. */
-  const oEch = $('oEch');
-  poserSolde(oEch, echAvant, { compter: false });
-  $('oBourse').hidden = false;
+  /* Le compteur du butin part du solde d'après la dépense : les doublons le
+     feront monter (voir `crediterDoublons`). */
+  poserSolde($('oEch'), base, { compter: false });
   $('opener').classList.add('on');
-  poserSolde(oEch, Number(S.scarves ?? 0) - Number(S.lastGain ?? 0));
+  /* Ce que le booster a coûté, s'il s'est payé : un ticket « −45 », comme à
+     l'étal de la boutique. Le kiosque, couvert, ne le compte qu'au retour. */
+  if (paye > 0) ticket({ montant: `−${paye}`, nom: 'ÉCHARPES', origine: 'le booster acheté' });
+  /* La barre et le tiroir ont leur bourse : la réponse du serveur leur est
+     relayée (R6), **après** que l'écran d'ouverture couvre le kiosque — qui
+     écoute la même annonce et ne doit pas compter dessous. */
+  dispatchEvent(new CustomEvent('tbf:bourse', { detail: {
+    wallet: res.wallet, ...(res.niveau ? { niveau: res.niveau } : {}) } }));
+}
+
+/** La tête et le pied de la cérémonie, selon le moment : la révélation ou le
+    butin. */
+function phase(p) {
+  const butin = p === 'butin';
+  $('oFentes').hidden = butin;
+  $('oProj').hidden = butin;
+  $('oBourse').hidden = !butin;
+  $('oNiv').hidden = true;
+  $('oFin').hidden = !butin;
+  $('butinTitre').hidden = !butin;
+  $('oHint').hidden = butin;
+}
+
+/** Le sticker de rareté, collé au-dessus de la carte qui se retourne. */
+function collerRarete(carte, rar) {
+  const s = document.createElement('span');
+  s.className = 'tbf-forme tbf-colle';
+  s.dataset.rar = rar;
+  s.innerHTML = `<i></i><b>${MOT[rar]}</b>`;
+  aLaFin(s, 'tbf-colle', 'tbf-colle');
+  carte.append(s);
+}
+
+/** « NOUVEAU », tamponné sur la carte. */
+function tamponner(carte) {
+  const t = document.createElement('span');
+  t.className = 'tbf-tampon tbf-tampon--plein tbf-clac kq-nouveau';
+  t.dataset.ton = 'flare';
+  t.textContent = 'NOUVEAU';
+  aLaFin(t, 'tbf-clac', 'tbf-clac');
+  carte.append(t);
+}
+
+/** La fente de la carte révélée se vide et prend la barre de sa rareté ; la
+    suivante sort. */
+function marquerFente(i, rar) {
+  const fs = [...$('oFentes').children];
+  if (fs[i]) {
+    fs[i].classList.remove('tbf-fente--sort');
+    fs[i].classList.add('tbf-fente--vide');
+    fs[i].style.setProperty('--rc', `var(--r-${rar})`);
+  }
+  fs[i + 1]?.classList.add('tbf-fente--sort');
+  $('oFentes').setAttribute('aria-label', `Carte ${i + 1} sur ${pull.length} : ${MOT[rar].toLowerCase()}`);
 }
 
 $('ostage').onclick = () => {
@@ -1346,59 +1827,70 @@ $('ostage').onclick = () => {
   if (!cur) return;
   if (!cur.classList.contains('flipped')) {
     cur.classList.add('flipped');
+    cur.classList.remove('kq-fige');
     const f = pull[idx];
-    if (fresh.has(f.id)) {
-      const tag = document.createElement('div');
-      tag.className = 'newtag'; tag.textContent = 'NOUVEAU';
-      cur.appendChild(tag);
-    }
+    const rar = rareteDe(f);
+    /* Le son du retournement reste à la page ; tout le reste — le reflet de
+       la rare, la nappe et le carillon de l'épique, le flash, les rayons, la
+       secousse et le rugissement de la légendaire, les vibrations — est
+       l'échelle commune de cérémonie (`FX.reveler`), la même qu'à l'étal de
+       la boutique. Les étincelles, la gerbe filmée, l'accord et le
+       tremblement que cette page écrivait à la main sont partis avec elle :
+       une rare n'avait pas le même poids d'un écran à l'autre. */
     audio.flip();
-    buzz(12);
-    if (['epique','legendaire'].includes(f.rar)) {
-      window.FX?.rare(f.rar, cur);
-      burst(TYPES[f.type].c, f.rar === 'legendaire' ? 34 : 22);
-      audio.chime(f.rar);
-      // La vidéo n'est chargée qu'ici, à la première carte rare de la session :
-      // une gerbe d'étincelles ne doit pas peser sur le premier affichage.
-      if (f.rar === 'legendaire') playBurstVideo(true);
-      if (f.rar === 'legendaire') { audio.roar(); document.getElementById('app').classList.add('quake'); 
-        setTimeout(() => document.getElementById('app').classList.remove('quake'), 700); }
-    }
-    $('oHint').textContent = idx < 4 ? 'Touche encore pour la suivante' : 'Touche pour le récapitulatif';
-    // `''` et non `block` : rendre la main à la feuille, qui fait de la
-    // plaque une boîte flexible — son libellé s'y centre.
-    $('oAction').style.display = idx < 4 ? '' : 'none';
-    $('oAction').textContent = 'Tout révéler';
+    collerRarete(cur, rar);
+    if (fresh.has(f.id)) tamponner(cur);
+    marquerFente(idx, rar);
+    /* **Une cérémonie à la fois** : la suivante ne part qu'une fois finie
+       celle-ci (fx.js le demande — cinq légendaires lancées ensemble feraient
+       cinq flashs). Le toucher qui écarterait la carte attend donc sa fin ;
+       « TOUT RÉVÉLER » l'interrompt, la carte quittant l'écran. */
+    const moi = paquet;
+    enCeremonie = true;
+    Promise.resolve(window.FX?.reveler?.(rar, cur)).catch(() => {})
+      .then(() => { if (moi === paquet) enCeremonie = false; });
+    const derniere = idx >= pull.length - 1;
+    $('oHint').textContent = derniere ? 'Touche pour le récapitulatif' : 'Touche encore pour la suivante';
+    $('oAction').hidden = derniere;
   } else {
+    if (enCeremonie) return;
+    // Partie de côté, elle ne se lit plus : elle se fige (voir .kq-fige).
+    cur.classList.add('kq-fige');
     cur.style.transform = 'translateX(-130%) rotate(-14deg)';
     cur.style.opacity = '0';
-    if (++idx >= 5) return finishPack();
-    $('oProg').textContent = `${idx + 1} / ${pull.length}`;
+    if (++idx >= pull.length) return finishPack();
     cards.forEach((el, i) => { if (i >= idx) el.style.transform = `translateY(${(i - idx) * 7}px) scale(${1 - (i - idx) * .03})`; });
     $('oHint').textContent = 'Touche la carte pour la retourner';
   }
 };
 $('oAction').onclick = () => finishPack();
-$('oClose').onclick = () => { $('opener').classList.remove('on'); renderKiosque(); };
+
+/** Revenir au kiosque : il redessine ce qui vient de changer, et le solde y
+    descend sous les yeux. */
+function fermerOpener() {
+  $('opener').classList.remove('on');
+  renderKiosque();
+}
+$('oClose').onclick = () => fermerOpener();
+/* ENCORE UN : le kiosque, et tout de suite la déchirure du suivant — la même
+   règle que le bouton (`peutOuvrir`, dans `startTear`). */
+$('oEncore').onclick = () => { fermerOpener(); startTear(); };
 
 function finishPack() {
+  enCeremonie = false;
   $('ostage').innerHTML = '';
   /* La scène vidée gardait six cents pixels de noir au-dessus du butin. On la
-     replie : la grille prend la place, et c'est elle qu'on est venu voir. */
+     replie : la page d'album prend la place, et c'est elle qu'on est venu voir. */
   $('ostage').style.display = 'none';
-  $('oProg').textContent = `${pull.length} / ${pull.length}`;
-  const gained = S.lastGain ?? 0;
-  $('oHint').textContent = gained
-    ? `Rangées dans le classeur · +${gained} écharpes en doublons`
-    : 'Rangées dans le classeur';
-  $('burst').classList.remove('on');
+  phase('butin');
+  $('oAction').hidden = true;
+  $('oHint').textContent = '';
 
   /* Ce qu'on n'avait pas encore. C'est ce que le joueur cherche en premier, et
      ce n'était écrit nulle part : cinq cartes rangées, sans savoir lesquelles
-     étaient neuves. `fresh` est rempli à la révélation, carte par carte. */
+     étaient neuves. `fresh` est rempli à l'ouverture, carte par carte. */
   const neuves = pull.filter((f) => fresh.has(f.id)).length;
   const t = $('butinTitre');
-  t.hidden = false;
   /* Quatre cas, quatre phrases. Coller un « TOUT » invariable devant un accord
      au féminin pluriel donnait « TOUT NOUVELLES DANS LE CLASSEUR » — et une
      phrase bancale sur l'écran le plus regardé du jeu se remarque tout de
@@ -1409,25 +1901,30 @@ function finishPack() {
         : neuves === 1 ? `<b>1</b> NOUVELLE SUR ${pull.length}`
           : `<b>${neuves}</b> NOUVELLES SUR ${pull.length}`;
 
+  /* **La page d'album.** Chaque carte collée de travers sous son scotch, une
+     à une (`.tbf-colle`, soixante millisecondes d'écart) ; NOUVEAU en sticker
+     sur ce qui est neuf, le prix en écharpes sur ce qui en a rapporté, et
+     l'emblème de rareté en coin, là où l'œil arrive.
+
+     L'emblème ne remplace pas le losange de la carte : celui-ci ne peut pas
+     manquer, l'emblème si — `TBF_LOGO` retire son image, et il reste ce qu'il
+     y avait hier. */
+  const cases = pull.map((f, i) => {
+    const rar = rareteDe(f);
+    const m = montantsSurs && rapportent[i] ? montants[i] : 0;
+    return `<div class="tbf-album-case tbf-colle ${rar}" data-i="${i}" style="--d:${i * 60}ms">`
+      + cardHTML(f, { mini: true })
+      + (window.TBF_LOGO?.rarete?.(rar, 'pinButin') ?? '')
+      + (fresh.has(f.id) ? '<span class="tbf-sticker" data-ton="flare">NOUVEAU</span>' : '')
+      + (m > 0 ? `<span class="tbf-sticker tbf-sticker--prix"><img src="${esc(JETON)}" alt="">+${m}</span>` : '')
+      + '</div>';
+  }).join('');
   const sum = $('summary');
-  /* `--n` porte le rang : c'est lui qui échelonne l'arrivée. Le faire en CSS
-     plutôt qu'avec cinq minuteries évite qu'une carte reste invisible si la
-     page se fige une demi-seconde au mauvais moment. */
-  /* **L'emblème de rareté, sur la carte qui vient de sortir.**
-
-     C'est le seul moment du jeu où la rareté est l'information qu'on
-     attend : on déchire un paquet pour savoir ce qu'on a eu. La carte le
-     disait déjà — un losange, deux, trois, une couronne — mais en six
-     pixels dans son pied, au même endroit que le nom du type.
-
-     Le pin se pose **en coin**, par-dessus, là où l'œil arrive. Il ne
-     remplace pas le losange : celui-ci ne peut pas manquer, le pin si —
-     `TBF_LOGO` retire son image et il reste ce qu'il y avait hier. */
-  sum.innerHTML = pull.map((f, i) =>
-    `<div data-i="${i}" style="--n:${i}" class="${esc(f.rar ?? '')}${
-      fresh.has(f.id) ? ' neuf' : ''}">${cardHTML(f, { mini:true })}
-      ${window.TBF_LOGO?.rarete?.(f.rar ?? 'commune', 'pinButin') ?? ''}</div>`).join('');
+  sum.innerHTML = `<div class="tbf-ticket tbf-album kq-fige"><div class="tbf-album-cartes">${cases}</div>${piedDeSerie()}</div>`;
+  for (const c of sum.querySelectorAll('.tbf-album-case')) aLaFin(c, 'tbf-colle', 'tbf-colle');
   sum.classList.add('on');
+  sum.scrollTop = 0;
+  avancerSerie();
   sum.onclick = (e) => {
     const d = e.target.closest('[data-i]');
     // On ferme l'écran d'ouverture d'abord : la fiche se pose par-dessus la
@@ -1439,40 +1936,87 @@ function finishPack() {
     renderKiosque();
     ouvrirFicheDuButin(pull[+d.dataset.i].id);
   };
-  /* Les écharpes des doublons partent des cartes vers le compteur. */
+
+  /* La fin : ENCORE UN si la réserve ou le solde le permettent, et ce qu'il
+     coûte s'il se paie. */
+  const px = Number(S.packPrice ?? 45);
+  $('oEncore').hidden = !peutOuvrir();
+  $('oEncore').textContent = S.packs > 0 ? 'ENCORE UN' : `ENCORE UN · ${px} ÉCHARPES`;
+
+  /* Les écharpes des doublons partent des cartes vers le compteur, l'anneau
+     d'XP avance à côté ; puis le ticket du gain. */
+  const moi = paquet;
   const credit = crediterDoublons();
+  const xp = avancerNiveau();
+  credit.then(() => {
+    if (moi !== paquet || !$('opener').classList.contains('on')) return;
+    ticketDuButin();
+  });
 
   /* **La fête, une fois le butin posé.**
 
-     Une seconde après, pas tout de suite : le récapitulatif arrive en
-     cascade — voir `--n` plus haut — et la fête posée dessus couperait
-     l’arrivée des cartes en deux. Et pas avant que les écharpes soient
-     arrivées : elle couvre l’écran, et couperait le compte au milieu. On la
-     consomme, aussi : rouvrir l’écran du paquet précédent ne doit pas
-     rejouer une montée déjà célébrée. */
+     Une seconde après, pas tout de suite : les cartes arrivent une à une, et
+     la fête posée dessus couperait leur arrivée. Et pas avant que les
+     écharpes et l'XP soient arrivées : elle couvre l’écran, et couperait le
+     compte au milieu. On la consomme, aussi : rouvrir l’écran du paquet
+     précédent ne doit pas rejouer une montée déjà célébrée. Une fois
+     refermée, le compteur prend les écharpes du palier qu'elle a annoncées. */
   if (S.montee?.monte) {
     const montee = S.montee;
     S.montee = null;
-    Promise.all([credit, new Promise((r) => setTimeout(r, 1000))])
-      .then(() => { window.TBF_NIVEAU?.feter?.(montee); });
+    Promise.all([credit, xp, new Promise((r) => setTimeout(r, 1000))])
+      .then(() => window.TBF_NIVEAU?.feter?.(montee))
+      .then(() => poserSolde($('oEch'), S.scarves ?? 0));
   }
 
-  const a = $('oAction');
-  a.style.display = ''; a.textContent = 'Terminer';
-  a.onclick = () => {
-    $('opener').classList.remove('on');
-    a.onclick = () => finishPack();
-    renderKiosque();
-  };
   /* `renderKiosque` redessine le compte de boosters, l'état du bouton et le
-     compte à rebours — tout ce qui vient de changer. L'ancien `renderDex`
-     levait ici, donc `tickRegen` n'était jamais atteint et le kiosque restait
-     sur ses valeurs d'avant l'ouverture. */
+     compte à rebours — tout ce qui vient de changer. */
   renderKiosque();
 }
 
+/** Le pied de la page d'album : la ligne vivante de la série, ou rien. */
+function piedDeSerie() {
+  const l = S.serie;
+  if (!l) return '';
+  const nom = SETS_TOUTES.find((x) => x.id === l.id)?.nom ?? l.id;
+  const pc = (v) => Math.round(clamp(v / l.total, 0, 1) * 1000) / 10;
+  return `<div class="tbf-album-pied"><b>${esc(nom)}</b>`
+    + `<span>${l.avant !== l.apres ? `${l.avant} → ${l.apres}` : l.apres} / ${l.total}</span>`
+    + `<div class="tbf-jauge" aria-hidden="true" data-apres="${pc(l.apres)}"><i style="width:${pc(l.avant)}%"></i></div>`
+    + (l.complete ? '<span class="tbf-tampon" data-ton="vert">COMPLET</span>' : '')
+    + '</div>';
+}
+
+/** La jauge de la série va de l'ancien compte au nouveau, une fois les
+    cartes collées. Au calme, elle saute (la brique coupe sa transition). */
+function avancerSerie() {
+  const j = $('summary').querySelector('.tbf-album-pied .tbf-jauge');
+  if (!j) return;
+  const moi = paquet;
+  setTimeout(() => {
+    if (moi !== paquet || !j.isConnected) return;
+    const i = j.querySelector('i');
+    void i.offsetWidth;
+    i.style.width = `${j.dataset.apres}%`;
+  }, 450);
+}
+
+/** Le ticket du butin : les écharpes gagnées en doublons, et l'XP s'il y en a.
+    Rien ne s'écrit à zéro (R5). */
+function ticketDuButin() {
+  const ech = Number(S.lastGain ?? 0);
+  const xp = Number(S.xpButin ?? 0);
+  if (ech > 0) {
+    ticket({ montant: `+${ech}`, nom: 'ÉCHARPES',
+      origine: xp > 0 ? `en doublons · +${xp} XP` : 'en doublons' });
+  } else if (xp > 0) {
+    ticket({ montant: `+${xp}`, nom: 'XP', origine: 'le booster ouvert', jeton: false });
+  }
+}
+
 /* Le temps que la cascade du butin se pose : cinq cartes échelonnées de
-   90 ms, chacune arrivée en 420 ms — voir `.summary > *`. */
+   60 ms, chacune collée en 220 ms — voir `.tbf-colle`. Avec de la marge :
+   les écharpes partent de cartes posées, pas de cartes encore en l'air. */
 const POSE_DU_BUTIN_MS = 800;
 
 /**
@@ -1484,26 +2028,29 @@ const POSE_DU_BUTIN_MS = 800;
  * doublon a l'air d'une carte comme les autres.
  *
  * Une fois les cartes posées, une poignée d'écharpes s'envole de chaque carte
- * qui en a rapporté (`FX.voler`) jusqu'au compteur de la tête, puis le
- * compteur monte (`FX.compter`) jusqu'au solde que le serveur a rendu. Le vol
- * dit d'où ça vient, le compte dit combien. Sans fx.js, ou sans mouvement, le
- * compteur prend simplement sa valeur — il est juste dans tous les cas.
+ * qui en a rapporté (`FX.voler`) — de son sticker de prix quand elle en a un —
+ * jusqu'au compteur de la tête, puis le compteur monte (`FX.compter`)
+ * jusqu'au solde. Le vol dit d'où ça vient, le compte dit combien. Sans fx.js,
+ * ou sans mouvement, le compteur prend simplement sa valeur — il est juste
+ * dans tous les cas.
  *
  * Une fois par paquet : `finishPack` peut être rappelé, et un vol rejoué
  * ferait croire à un second gain.
  *
- * @returns {Promise<void>} résolue quand le compteur affiche le solde final
+ * @returns {Promise<void>} résolue quand le compteur affiche le solde, hors
+ *   écharpes d'un palier de niveau (la fête les annonce, puis il les compte)
  */
 function crediterDoublons() {
   const cible = $('oEch');
-  const fin = Number(S.scarves ?? 0);
+  const fin = Number(S.scarves ?? 0) - Number(S.ecarpesPalier ?? 0);
   if (!doublonsAVerser || !Number(S.lastGain ?? 0)) {
     doublonsAVerser = false;
     return poserSolde(cible, fin);
   }
   doublonsAVerser = false;
-  const sources = [...$('summary').children]
-    .filter((n) => rapportent[Number(n.dataset.i)]);
+  const sources = [...$('summary').querySelectorAll('[data-i]')]
+    .filter((n) => rapportent[Number(n.dataset.i)])
+    .map((n) => n.querySelector('.tbf-sticker--prix') ?? n);
   // La poignée d'écharpes est le dessin de la carte « écharpes » elle-même :
   // c'est ce qu'on vient de gagner, et c'est ce qui vole.
   const image = window.TBF_STUFF?.gain?.('echarpes');
@@ -1512,6 +2059,89 @@ function crediterDoublons() {
     .then(() => Promise.all(sources.map((n, k) => attendre(k * 110).then(() =>
       (window.FX?.voler ? window.FX.voler(n, cible, image ? { image } : {}) : null)))))
     .then(() => poserSolde(cible, fin));
+}
+
+/* Sans mouvement décoratif : la préférence du système, ou le calme
+   « animations » du tiroir. */
+const sansMouvement = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  || (document.documentElement.dataset.calme ?? '').split(' ').includes('animations');
+
+/**
+ * **L'anneau d'XP du butin**, à côté du compteur : le Fanzzy du joueur dans
+ * son anneau, qui avance de la jauge d'avant le booster à celle d'après.
+ *
+ * Seulement si le serveur a compté l'XP **et** dit d'où partait la jauge
+ * (`niveau.depart`, contrat § 1) : sans elle, rien ne bouge, et rien ne
+ * s'affiche — un anneau posé sans savoir où il en était mentirait. S'il y a
+ * montée, il fait le tour jusqu'au bout, son niveau change, et il repart de
+ * zéro ; la fête de niveau prend la main ensuite. Sans mouvement, il est posé
+ * à sa valeur.
+ *
+ * @returns {Promise<void>} résolue quand l'anneau est arrivé
+ */
+function avancerNiveau() {
+  const niv = S.niveauButin;
+  S.niveauButin = null;
+  /* L'XP gagnée, pour le ticket : elle se dit dès que le serveur la compte ;
+     l'anneau, lui, demande aussi d'où il part. */
+  S.xpButin = Number(niv?.gain) > 0 ? Number(niv.gain) : 0;
+  const el = $('oNiv');
+  el.hidden = true;
+  if (!niv || !(Number(niv.niveau) > 0) || !niv.depart || !S.xpButin) {
+    return Promise.resolve();
+  }
+  const p = (x) => clamp(Number(x) || 0, 0, 1);
+  const de = niv.depart.max ? 1 : p(niv.depart.part);
+  const a = niv.max ? 1 : p(niv.part);
+  const nivAvant = Number(niv.depart.niveau ?? niv.avant ?? niv.niveau);
+  const monte = Number(niv.niveau) > nivAvant;
+
+  /* Le visage : celui de l'avatar équipé (le portefeuille de la réponse),
+     ou la silhouette d'un sticker qu'on n'a pas encore collé. */
+  const anneau = el.querySelector('.tbf-anneau');
+  const pastille = el.querySelector('.tbf-avatar-niv');
+  const av = S.avatar;
+  const adresse = av ? window.FZART?.dessinAvatar?.(av, 'buste') : null;
+  el.classList.toggle('tbf-avatar--vide', !av);
+  const craie = () => { const s = document.createElement('span'); s.className = 'tbf-avatar-buste'; return s; };
+  if (adresse) {
+    const img = document.createElement('img');
+    img.className = 'tbf-avatar-buste';
+    img.alt = '';
+    img.onerror = () => { img.onerror = null; img.replaceWith(craie()); };
+    img.src = adresse;
+    anneau.replaceChildren(img);
+  } else anneau.replaceChildren(craie());
+  el.setAttribute('aria-label', `Niveau ${niv.niveau} — +${niv.gain} XP`);
+  el.hidden = false;
+
+  const poser = (x) => anneau.style.setProperty('--p', `${(x * 100).toFixed(1)}%`);
+  poser(de);
+  pastille.textContent = String(nivAvant);
+  const finir = () => { poser(a); pastille.textContent = String(niv.niveau); };
+  if (sansMouvement() || document.hidden) { finir(); return Promise.resolve(); }
+
+  /* Un pas, de x0 à x1, en 650 ms ; une minuterie de secours le finit si les
+     images ne viennent plus (un onglet caché les gèle, pas les minuteries). */
+  const pas = (x0, x1) => new Promise((resoudre) => {
+    let fini = false;
+    const t0 = performance.now();
+    const arriver = () => { if (fini) return; fini = true; poser(x1); resoudre(); };
+    const image = (t) => {
+      if (fini) return;
+      const k = Math.min(1, (t - t0) / 650);
+      poser(x0 + (x1 - x0) * (1 - (1 - k) ** 3));
+      if (k < 1) requestAnimationFrame(image); else arriver();
+    };
+    requestAnimationFrame(image);
+    setTimeout(arriver, 900);
+  });
+  const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
+  return attendre(POSE_DU_BUTIN_MS)
+    .then(() => (monte
+      ? pas(de, 1).then(() => { pastille.textContent = String(niv.niveau); return pas(0, a); })
+      : pas(de, a)))
+    .then(finir);
 }
 
 /**
@@ -1538,48 +2168,26 @@ function ouvrirFicheDuButin(id) {
   });
 }
 
-/* Sans mouvement décoratif : la préférence du système, ou le calme
-   « animations » du tiroir. Les étincelles et la gerbe filmée d'une carte rare
-   sont du décor — la rareté, elle, reste écrite sur la carte, et le son la
-   dit encore. */
-const sansMouvement = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  || (document.documentElement.dataset.calme ?? '').split(' ').includes('animations');
-
-/** Superpose la gerbe d'étincelles en mode « screen » : seul ce qui brille apparaît. */
-function playBurstVideo(long) {
-  const v = $('burst');
-  if (!ART.burst || sansMouvement()) return;
-  if (!v.src) { v.src = ART.burst; v.load(); }
-  v.currentTime = 0;
-  v.classList.add('on');
-  v.play?.().catch(() => {});
-  clearTimeout(v._t);
-  v._t = setTimeout(() => { v.classList.remove('on'); v.pause?.(); }, long ? 3200 : 2000);
-}
-
-function burst(color, n) {
-  if (sansMouvement()) return;
-  const st = $('ostage'), r = st.getBoundingClientRect();
-  for (let i = 0; i < n; i++) {
-    const p = document.createElement('div');
-    p.className = 'burst';
-    p.style.background = i % 3 ? color : '#FFF3D0';
-    p.style.left = r.width / 2 + 'px'; p.style.top = r.height / 2 + 'px';
-    st.appendChild(p);
-    const a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 130;
-    p.animate([{ transform:'translate(-50%,-50%) scale(1)', opacity:1 },
-               { transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) scale(0)`, opacity:0 }],
-      { duration:700 + Math.random() * 500, easing:'cubic-bezier(.15,.7,.3,1)' }).onfinish = () => p.remove();
-  }
-}
-
 
 /* ---------------------------------------------------------------- init */
 
-/* Le kiosque se redessine quand la bourse change — c est  qui le dit,
-   sans savoir qui écoute. */
-addEventListener("tbf:bourse", () => { renderKiosque(); tickRegen(); });
+/* Le kiosque se redessine quand la bourse change — c est `load()` qui le
+   dit, sans savoir qui écoute. Une annonce sans détail est celle de `load()` :
+   le temps de recharge vient d'être lu, et c'est de là que la page décompte. */
+addEventListener('tbf:bourse', (e) => {
+  if (!e.detail) noterRecharge(S.nextIn);
+  renderKiosque();
+});
 setInterval(tickRegen, 1000);
+/* Revenu d'un onglet caché plus d'une minute : la réserve a pu se remplir
+   côté serveur (R3). Le décompte, lui, reprend juste — il ne dépend que de
+   l'instant de la lecture. */
+let cacheDepuis = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { cacheDepuis = performance.now(); return; }
+  if (cacheDepuis && performance.now() - cacheDepuis > 60_000) relire();
+  tickRegen();
+});
 
 (async () => {
   /* **Le manifeste des dessins, avant tout le reste.**
@@ -1594,11 +2202,6 @@ setInterval(tickRegen, 1000);
      repliait sur le buste. Un joueur a décrit exactement ça — « l'état on
      pousse avec l'image neutre ».
 
-     Le module était bien chargé, la carte bien formée, le dessin bien
-     présent sur le disque : il manquait la seule ligne qui va les chercher.
-     C'est la panne la plus difficile à voir, parce que chaque pièce est
-     juste et que le repli est **correct** — il dit au moins de qui il s'agit.
-
      Il ne lève jamais : sans manifeste, la page s'affiche comme avant. */
   await Promise.resolve(window.TBF_ETATS?.charger?.()).catch(() => null);
   try {
@@ -1608,8 +2211,7 @@ setInterval(tickRegen, 1000);
     /* **Le démarrage n'avait aucun rattrapage.** Une erreur ici — catalogue
        incomplet, serveur muet, session expirée — tuait la fonction anonyme en
        silence : le kiosque restait sur son balisage d'origine, sans paquet,
-       sans message et sans rien qui dise pourquoi. Le joueur voit un écran qui
-       ne répond pas, et c'est tout ce qu'il peut en dire.
+       sans message et sans rien qui dise pourquoi.
 
        `auth` sort sans rien afficher : `api` est déjà en train de rediriger
        vers la page de connexion, et un message qui s'affiche pendant qu'on
@@ -1625,6 +2227,7 @@ setInterval(tickRegen, 1000);
     }
     return;
   }
+  S.paquet ??= MILIEU;
   renderKiosque();
   buildCarousel();
   tickRegen();

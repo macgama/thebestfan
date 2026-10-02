@@ -476,6 +476,15 @@
       const nomType = NOMTYPE[f.type] ?? f.type ?? '';
       const galon = [nomType, NOMRAR[f.rar] ?? f.rar ?? ''].filter(Boolean).join(' · ');
       const cri = f.cri?.label ? esc(f.cri.label) : '';
+      /* **Le nom du cri n'est plus peint en ligne.** Il portait un `style`
+         à la couleur du type, et celle de la Voix est l'or (#F5C33B) : onze
+         pixels d'or, là où la règle de l'or (décidée par Gaël le 2 octobre
+         2026, « les tons » dans `ui.css`) n'écrit plus qu'un grand texte. Et
+         un `style` en ligne l'emporte sur toute feuille : `fanzzy-fiche.css`
+         ne pouvait pas le corriger. La couleur des deux noms des pastilles —
+         la famille, le cri — se décide donc à un seul endroit, la règle
+         `.fiche .pastille b` de cette feuille ; le type, lui, se dit par son
+         pin, et `--c` reste posé pour qui voudrait en tirer un filet. */
 
       hote.innerHTML = `
         <div class="fiche${aMoi ? '' : ' pas-a-moi'}">
@@ -520,11 +529,11 @@
                   ${!cri ? ''
                     : aMoi
                     ? `<button class="pastille" data-cri style="cursor:pointer">
-                        Cri : <b style="color:${c}">${cri}</b> ▸</button>`
+                        Cri : <b>${cri}</b> ▸</button>`
                     /* Le cri se **crie** quand on touche la pastille. Sur un
                        Fanzzy qu'on n'a pas, c'est le seul élément qui répondait
                        encore — une carte éteinte qui pousse un cri. */
-                    : `<span class="pastille">Cri : <b style="color:${c}">${cri}</b></span>`}
+                    : `<span class="pastille">Cri : <b>${cri}</b></span>`}
                 </div>
                 <h2>${esc(f.nom)}</h2>
                 <div class="sous">${d.possede

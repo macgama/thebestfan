@@ -29,7 +29,10 @@ import puppeteer from 'puppeteer';
 import { createClassements } from '../src/server/classements/index.js';
 import { createOnboarding } from '../src/server/onboarding/index.js';
 import { createNiveau } from '../src/server/niveau/index.js';
-import { seuil } from '../src/shared/niveau.js';
+/* `palier` et `ecarpesDuPalier` : la table du jeu, celle que le serveur sert
+   au chemin. Le contrôle compare ce que chaque nœud annonce à elle, et non à
+   un libellé recopié qui vieillirait avec la table. */
+import { seuil, palier, ecarpesDuPalier } from '../src/shared/niveau.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
@@ -155,13 +158,27 @@ const vu = await page.evaluate(() => ({
     n: s.querySelector('.n')?.textContent.replace(/\s+/g, ' ').trim(),
     f: s.querySelector('.f')?.textContent.trim(),
   })),
-  lignes: [...document.querySelectorAll('#parcours .part')].map((p) => ({
-    jeu: p.querySelector('.jeu')?.textContent.trim(),
-    qui: p.querySelector('.qui b')?.textContent.trim(),
-    sous: p.querySelector('.qui span')?.textContent.trim(),
-    issue: p.querySelector('.issue')?.textContent.trim() ?? null,
-    gain: p.querySelector('.gain b')?.textContent.trim(),
-  })),
+  /* Depuis le lot 5, MON PARCOURS est une feuille de match : un ticket kraft
+     par partie (`.tbf-partie`, qui garde la classe `part`), le sujet en titre
+     et une seule ligne de précision dessous (`.tbf-partie-q b` / `small`),
+     le score à part (`.tbf-partie-score`), l'issue en tampon (`.tbf-tampon`)
+     et le gain en sticker. La pastille « VIR » / « 1v1 » a disparu : la sorte
+     ouvre désormais la ligne de précision (« Grand Virage », « Classé
+     1v1 »), et c'est là qu'on la lit. */
+  lignes: [...document.querySelectorAll('#parcours .part')].map((p) => {
+    const sous = p.querySelector('.tbf-partie-q small')?.textContent.trim() ?? null;
+    const sticker = p.querySelector(':scope > .tbf-sticker');
+    return {
+      sorte: sous ? sous.split(' · ')[0] : null,
+      qui: p.querySelector('.tbf-partie-q b')?.textContent.trim(),
+      sous,
+      issue: p.querySelector('.tbf-tampon')?.textContent.trim() ?? null,
+      /* Le chiffre **visible** du sticker : ses nœuds de texte propres, sans
+         le « de ferveur » réservé aux lecteurs d'écran (`.vh`). */
+      gain: sticker ? [...sticker.childNodes].filter((n) => n.nodeType === 3)
+        .map((n) => n.textContent).join('').trim() : null,
+    };
+  }),
   encore: Boolean(document.getElementById('encore')),
 }));
 
@@ -186,7 +203,9 @@ check('le virage dit ce qu’il a rapporté', virage?.f === '240 ferveur'
 check('la liste montre les parties', vu.lignes.length >= 5
   || (console.log('        lignes :', vu.lignes.length), false));
 check('elle mêle le duel et le virage',
-  vu.lignes.some((l) => l.jeu === 'VIR') && vu.lignes.some((l) => l.jeu === '1v1'));
+  vu.lignes.some((l) => l.sorte === 'Grand Virage')
+  && vu.lignes.some((l) => /^(Classé|Entraînement) 1v1$/.test(l.sorte ?? ''))
+  || (console.log('        sortes :', vu.lignes.map((l) => l.sorte).join(' | ')), false));
 check('chaque ligne nomme le match', vu.lignes[0]?.qui === 'FC Sion – FC Bale'
   || (console.log('        première :', JSON.stringify(vu.lignes[0])), false));
 check('et dit pour qui on poussait', /pour FC Sion/.test(vu.lignes[0]?.sous ?? '')
@@ -222,61 +241,129 @@ if (vu.encore) {
  * arrivait comme une surprise chez ceux qui le remarquaient.
  *
  * Le compte du banc est au niveau 4, à mi-palier : c'est ce qui permet de voir
- * à la fois que la jauge se remplit vraiment et qu'un palier déjà franchi se
- * distingue de ceux qui viennent.
+ * à la fois que l'XP du palier se dessine vraiment et qu'un palier déjà
+ * franchi se distingue de ceux qui viennent.
+ *
+ * **Depuis le lot 5, le chemin est une corde à nœuds** (`.tbf-chemin`) posée
+ * sur un ticket kraft : un nœud par palier (`.tbf-noeud`) — le passé coché
+ * (`data-etat="fait"`, « NIV. 3 »), le courant en bâche or (`data-etat="ici"`,
+ * son chiffre et « TU Y ES »), les suivants en pointillé avec ce qu'ils
+ * ouvrent, en un seul sticker. Le niveau est passé sur le coin déchiré de la
+ * carte (`#nivCoin`), l'XP dans le titre de la rubrique (`#nivXp`), et la
+ * jauge est devenue l'écharpe tricotée qui avance sur la corde, du nœud
+ * courant vers le suivant (`--p`, la part du palier faite) — le même `--p`
+ * que l'anneau du buste. On éprouve la même chose qu'avant sur ce dessin-là,
+ * et l'on compare ce que chaque nœud annonce à la table du jeu.
  */
 {
   const arrive = await jusqua(async () =>
-    page.evaluate(() => document.querySelectorAll('#niveau .marche').length > 0));
+    page.evaluate(() => document.querySelectorAll('#niveau .tbf-noeud').length > 0));
   check('le chemin du niveau arrive', arrive);
 
   if (arrive) {
-    /* La jauge se remplit **après** le rendu : posée d'emblée à sa largeur
-       finale, elle se lirait comme un trait et non comme un progrès. On la
-       laisse donc arriver au lieu de la lire tout de suite. */
-    const remplie = await jusqua(async () => page.evaluate(() => {
-      const i = document.querySelector('#niveau .niv-jauge i');
-      return i && parseFloat(i.style.width) > 0;
-    }));
-    check('et sa jauge se remplit sous les yeux', remplie);
+    /* L'XP posée en base : `seuil(4)` plus la moitié du palier. C'est d'elle
+       que l'écran doit tirer ce qu'il dessine et ce qu'il écrit. */
+    const POUR = seuil(5) - seuil(4);
+    const DANS = Math.round(POUR / 2);
+    const PART = `${Math.round((DANS / POUR) * 100)}%`;
+    /* Les nombres comme la page les écrit (`nombre`), l'espace fine des
+       milliers ramenée à une espace simple comme les textes lus plus bas. */
+    const fr = (n) => Number(n).toLocaleString('fr').replace(/\s+/g, ' ');
 
-    const niv = await page.evaluate(() => ({
-      rond: document.querySelector('#niveau .niv-rond')?.textContent.replace(/\s+/g, ' ').trim(),
-      titre: document.querySelector('#niveau .niv-txt b')?.textContent.trim(),
-      sous: document.querySelector('#niveau .niv-txt span')?.textContent.trim(),
-      marches: [...document.querySelectorAll('#niveau .marche')].map((m) => ({
-        n: m.querySelector('.n')?.textContent.trim(),
-        ici: m.classList.contains('ici'),
-        cle: m.classList.contains('cle'),
-        ouvre: [...m.querySelectorAll('li')].map((li) => li.textContent.trim()),
-      })),
-      large: Math.round(document.getElementById('niveau').getBoundingClientRect().width),
-      colonne: Math.round(document.getElementById('app').getBoundingClientRect().width),
-    }));
+    const niv = await page.evaluate(() => {
+      const ici = document.querySelector('#niveau .tbf-noeud[data-etat="ici"]');
+      const coin = document.getElementById('nivCoin');
+      return {
+        coin: coin && !coin.hidden ? coin.textContent.trim() : null,
+        coinNom: coin?.getAttribute('aria-label') ?? null,
+        xp: document.getElementById('nivXp')?.textContent.replace(/\s+/g, ' ').trim() ?? '',
+        part: ici?.style.getPropertyValue('--p').trim() ?? null,
+        /* L'écharpe est le `::after` du nœud courant : sa largeur calculée dit
+           qu'elle est vraiment dessinée, et pas seulement déclarée. */
+        corde: ici ? parseFloat(getComputedStyle(ici, '::after').width) || 0 : 0,
+        anneau: document.querySelector('#buste .tbf-anneau')?.style.getPropertyValue('--p').trim() ?? null,
+        noeuds: [...document.querySelectorAll('#niveau .tbf-noeud')].map((m) => {
+          const etat = m.dataset.etat ?? null;
+          const k = m.querySelector('.tbf-noeud-k')?.textContent.trim() ?? '';
+          const l = m.querySelector('.tbf-noeud-l')?.textContent.trim() ?? '';
+          /* Un nœud à venir ne montre pas son numéro : il le dit aux lecteurs
+             d'écran (« Niveau 5 : »), et c'est là qu'on le lit. */
+          const nom = m.querySelector(':scope > .vh')?.textContent.trim() ?? '';
+          const n = etat === 'ici' ? k
+            : etat === 'fait' ? (l.match(/NIV\. (\d+)/)?.[1] ?? null)
+            : (nom.match(/Niveau (\d+)/)?.[1] ?? null);
+          return {
+            n: n == null ? null : Number(n), etat, l,
+            verrou: m.hasAttribute('data-verrou'),
+            sticker: m.querySelector(':scope > .tbf-sticker')?.textContent.replace(/\s+/g, ' ').trim() ?? null,
+          };
+        }),
+        large: Math.round(document.getElementById('niveau').getBoundingClientRect().width),
+        colonne: Math.round(document.getElementById('app').getBoundingClientRect().width),
+      };
+    });
+    const aVenir = niv.noeuds.filter((m) => !m.etat);
+    const icis = niv.noeuds.filter((m) => m.etat === 'ici');
 
-    check('il dit le niveau atteint', /^4/.test(niv.rond ?? '')
-      || (console.log('        rond :', niv.rond), false));
-    check('et ce qui reste avant le suivant', /XP/.test(niv.sous ?? '')
-      || (console.log('        sous :', niv.sous), false));
+    /* La jauge ne « pousse » plus après le rendu : l'écharpe est posée à sa
+       part dès que le chemin s'écrit. L'ancien contrôle attendait d'ailleurs
+       seulement qu'elle finisse non vide. Ce qu'on exige maintenant est plus
+       précis : qu'elle dise la vraie part du palier — la moitié, ici — et
+       qu'elle se voie. */
+    check('et l’écharpe de l’XP avance sur la corde, à la part faite',
+      niv.part === PART && niv.corde > 0
+      || (console.log('        --p :', niv.part, '· attendu', PART, '· largeur', niv.corde), false));
+    check('et l’anneau du buste dit la même part', niv.anneau === PART
+      || (console.log('        anneau :', niv.anneau), false));
+
+    check('il dit le niveau atteint', niv.coin === '4' && niv.coinNom === 'Niveau 4'
+      || (console.log('        coin :', niv.coin, '·', niv.coinNom), false));
+    check('et ce qui reste avant le suivant',
+      /XP/.test(niv.xp) && niv.xp.includes(`encore ${fr(POUR - DANS)}`)
+      || (console.log('        il dit :', niv.xp), false));
 
     /* **Ce qui vient**, et non seulement où l'on est. C'est toute la différence
        entre un compteur et un chemin : on doit pouvoir lire, sans chercher, ce
        que le prochain palier ouvre. */
-    check('il montre les marches à venir', niv.marches.length >= 3
-      || (console.log('        marches :', niv.marches.length), false));
-    check('la marche du moment est marquée', niv.marches.filter((m) => m.ici).length === 1);
-    check('et c’est celle où l’on est', niv.marches.find((m) => m.ici)?.n === '4');
+    check('il montre les paliers à venir', aVenir.length >= 3
+      || (console.log('        à venir :', aVenir.length), false));
+    check('le palier du moment est marqué', icis.length === 1
+      || (console.log('        nœuds courants :', icis.length), false));
+    check('et c’est celui où l’on est', icis[0]?.n === 4 && icis[0]?.l === 'TU Y ES'
+      || (console.log('        il dit :', JSON.stringify(icis[0])), false));
+    /* Ce que le compte à mi-palier 4 permet de voir : le passé coché, et lui
+       seulement derrière soi ; ce qui vient, et lui seulement devant. */
+    const faits = niv.noeuds.filter((m) => m.etat === 'fait');
+    check('un palier franchi se distingue de ceux qui viennent',
+      faits.length >= 1 && faits.every((m) => m.n < 4) && aVenir.every((m) => m.n > 4)
+      || (console.log('        nœuds :', JSON.stringify(niv.noeuds)), false));
+
     /* Le niveau 5 ouvre le troisième Fanzzy au deck : c'est le palier que ce
-       compte a devant lui, et il doit être **nommé**, pas laissé à deviner. */
-    const cinq = niv.marches.find((m) => m.n === '5');
-    check('un palier qui ouvre quelque chose se distingue', cinq?.cle === true);
-    check('et il dit en toutes lettres ce qu’il ouvre',
-      (cinq?.ouvre ?? []).some((x) => /Fanzzy au deck/.test(x))
-      || (console.log('        il dit :', JSON.stringify(cinq?.ouvre)), false));
+       compte a devant lui, et il doit être **nommé**, pas laissé à deviner.
+       Le cadenas (`data-verrou`) ne marque que les nœuds qui ouvrent quelque
+       chose selon la table, et tous ceux-là. */
+    const ouvre = (k) => Boolean(palier(k)?.slots || palier(k)?.deckFanzzy);
+    const cinq = aVenir.find((m) => m.n === 5);
+    check('un palier qui ouvre quelque chose se distingue',
+      cinq?.verrou === true && aVenir.every((m) => m.verrou === ouvre(m.n))
+      || (console.log('        nœuds :', JSON.stringify(aVenir)), false));
+    /* Le libellé est celui de la maquette — un sticker « 3ᵉ FANZZY », comme
+       « 4ᵉ CLUB » —, et non plus la phrase « 3ᵉ Fanzzy au deck » : un nœud
+       porte un sticker, pas une ligne de texte sur le kraft. Le chiffre, lui,
+       doit être celui de la table. */
+    check('et il dit ce qu’il ouvre',
+      cinq?.sticker === `${palier(5)?.deckFanzzy}ᵉ FANZZY`
+      || (console.log('        il dit :', cinq?.sticker), false));
     /* Chaque niveau verse des écharpes. Elles tombaient sans que rien ne les
-       ait annoncées ; le chemin les annonce. */
-    check('chaque marche annonce ses écharpes',
-      niv.marches.every((m) => m.ouvre.some((x) => /écharpes/.test(x))));
+       ait annoncées ; le chemin les annonce, au montant de la table. Un nœud
+       qui ouvre quelque chose ne porte que ce qu'il ouvre (un sticker par
+       nœud, comme sur la maquette) : l'exigence vaut donc pour tous les
+       autres paliers à venir, et il doit y en avoir au moins un. */
+    const simples = aVenir.filter((m) => !ouvre(m.n));
+    check('chaque palier qui n’ouvre rien annonce ses écharpes',
+      simples.length >= 1
+      && simples.every((m) => m.sticker === `+${fr(ecarpesDuPalier(m.n))} écharpes`)
+      || (console.log('        il dit :', JSON.stringify(simples.map((m) => [m.n, m.sticker]))), false));
 
     check('et le bloc tient dans la colonne', niv.large <= niv.colonne + 1);
   }
@@ -317,13 +404,17 @@ check('aucune erreur de script sur le profil', erreurs.length === 0
   await jusqua(async () =>
     page.evaluate(() => document.querySelectorAll('#parcours .part').length > 0));
 
+  /* Sur la feuille de match, la sorte ouvre la ligne de précision (« Classé
+     2v2 · … ») et l'issue est le tampon du ticket. Le score a sa place à lui
+     (`.tbf-partie-score`), et l'XP est passée dans la ligne de précision,
+     juste après la sorte et la durée. */
   const l = await page.evaluate(() => {
     const p2 = [...document.querySelectorAll('#parcours .part')]
-      .find((x) => /2v2/.test(x.querySelector('.jeu')?.textContent ?? '')
-                && /PERDU/.test(x.querySelector('.issue')?.textContent ?? ''));
+      .find((x) => /2v2$/.test((x.querySelector('.tbf-partie-q small')?.textContent ?? '').split(' · ')[0])
+                && /PERDU/.test(x.querySelector('.tbf-tampon')?.textContent ?? ''));
     return p2 ? {
-      sous: p2.querySelector('.qui span')?.textContent.replace(/\s+/g, ' ').trim(),
-      gain: p2.querySelector('.gain span')?.textContent.trim(),
+      sous: p2.querySelector('.tbf-partie-q small')?.textContent.replace(/\s+/g, ' ').trim(),
+      score: p2.querySelector('.tbf-partie-score')?.textContent.replace(/\s+/g, ' ').trim() ?? null,
     } : null;
   });
   check('la ligne du 2v2 classé se retrouve', Boolean(l)
@@ -341,24 +432,28 @@ check('aucune erreur de script sur le profil', erreurs.length === 0
   check('et combien de temps ça a duré', /5 min/.test(l?.sous ?? '')
     || (console.log('        elle dit :', l?.sous), false));
   /* L'XP à côté du score : c'est ce qu'on regarde en premier après une partie,
-     et le parcours n'en montrait rien. */
-  check('l’XP est annoncée avec le score', /\+24 XP/.test(l?.gain ?? '')
-    || (console.log('        elle dit :', l?.gain), false));
+     et le parcours n'en montrait rien. Le score et l'XP ne sont plus dans le
+     même élément : on exige donc les deux sur le même ticket — le score de
+     la partie (0 – 2) et son XP. */
+  check('l’XP est annoncée avec le score',
+    /\+24 XP/.test(l?.sous ?? '') && /^0 – 2$/.test(l?.score ?? '')
+    || (console.log('        elle dit :', l?.sous, '· score :', l?.score), false));
 
   /* Et les parties d'avant la migration n'inventent rien : pas de « +0 XP »,
      pas de « 0 s ». Zéro serait un mensonge là où la vérité est « on ne sait
-     pas ». */
+     pas ». L'XP pouvant désormais s'écrire dans la ligne de précision, c'est
+     tout le ticket qu'on lit, et non plus le seul coin du gain. */
   const vieille = await page.evaluate(() => {
     const p1 = [...document.querySelectorAll('#parcours .part')]
-      .find((x) => /GAGNÉ/.test(x.querySelector('.issue')?.textContent ?? '')
-                && /1v1/.test(x.querySelector('.jeu')?.textContent ?? ''));
+      .find((x) => /GAGNÉ/.test(x.querySelector('.tbf-tampon')?.textContent ?? '')
+                && /1v1$/.test((x.querySelector('.tbf-partie-q small')?.textContent ?? '').split(' · ')[0]));
     return p1 ? {
-      sous: p1.querySelector('.qui span')?.textContent.replace(/\s+/g, ' ').trim(),
-      gain: p1.querySelector('.gain span')?.textContent.trim(),
+      sous: p1.querySelector('.tbf-partie-q small')?.textContent.replace(/\s+/g, ' ').trim(),
+      texte: p1.textContent.replace(/\s+/g, ' ').trim(),
     } : null;
   });
   check('une partie d’avant ces colonnes n’invente pas de chiffres',
-    Boolean(vieille) && !/XP/.test(vieille.gain ?? '') && !/ 0 s/.test(vieille.sous ?? '')
+    Boolean(vieille) && !/XP/.test(vieille.texte) && !/(^|\s)0 s\b/.test(vieille.sous ?? '')
     || (console.log('        elle dit :', JSON.stringify(vieille)), false));
 }
 

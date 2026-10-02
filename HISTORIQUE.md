@@ -4108,3 +4108,557 @@ H1. Puis, relevé par la critique et la relecture, et laissé en l'état :
 arènes.
 
 ---
+
+## 4 quadragies bis. L'accueil FAIT MAIN — le hub, le rideau, la barre et le tiroir
+
+Le lot 2 de la refonte refait, le 2 octobre 2026, les écrans que tout joueur voit
+à chaque visite : l'accueil connecté — le hub —, l'écran d'ouverture qui le couvre
+le temps qu'il se monte, la barre du haut des vingt-deux autres écrans et le
+tiroir du menu. Il **emploie** la matière et le vocabulaire que le lot 1 a posés
+dans `public/ui.css` ; il ne les réinvente pas. Ce qui se voit à la fin tient en
+quatre phrases : les tuiles du hub disent ce qui les attend, le personnage
+reprend 60 % de l'écran, on entre par un tunnel, et le menu est une bâche qu'on
+déroule.
+
+Le travail a été partagé comme aux lots 0 et 1, sur des clés de périmètre
+fermées. La mesure d'abord, seule au travail avec la base ; puis les briques
+communes dans `ui.css`, avec leur banc ; puis les écrans — le hub, puis le rideau
+dans le même fichier, pendant que la barre et le tiroir avançaient à côté. Six
+tours de vérification ont suivi, chacun avec l'audit étendu, et des corrections
+par périmètre entre eux ; entre le quatrième et le cinquième, une critique
+visuelle des captures, notée 7 sur 10, dont les constats importants ont été
+corrigés. Les fautes du sixième tour ne l'ont pas été (voir « Ce qui reste »).
+
+### Mesurer d'abord, cette fois sous le grain
+
+Le lot 1 laissait l'audit aveugle à sa propre matière : toute bâche, tout onglet
+actif, tout `.pan` porte une tuile de grain, donc une image de fond, et
+`scripts/audit-ui.mjs` rangeait tout texte posé sur une image parmi les « sur
+dégradé », hors de tout compte. Avant qu'on touche un écran, l'audit a appris à
+lire à travers la tuile.
+
+**Une tuile n'est pas une image comme les autres.** C'est un voile presque
+transparent, d'une seule teinte, sans motif ni tache : sa moyenne est le fond
+qu'on lit sous une lettre de onze pixels. La couche est donc remplacée par son
+**voile moyen**, lu dans la page sur la tuile réellement servie — décodée, peinte
+sur un canevas, moyennée pixel par pixel, la teinte pondérée par l'opacité —, et
+la remontée continue jusqu'à la couleur posée dessous : la face de la bâche, le
+panneau, le fond de la page. Le béton en `image-set` prend la tuile que le
+navigateur choisit pour la densité de l'écran. Voiles relevés : la toile, 1,82 %
+de noir ; le béton, 1,21 % de gris 124 ; celui de 512 pixels, 1,23 % de gris 121.
+
+**Les vrais dégradés et les photos restent non mesurables** : leur couleur change
+sous la lettre. Une seule exception, géométrique : une couche de dégradé posée
+une fois, dans la boîte de remplissage, en pixels ou en pour cent, et dont le
+rectangle ne touche pas la boîte du texte, n'est pas **sous** le texte — c'est
+l'écharpe peinte au bord haut de PRENDRE MA PLACE et des cadres. La boîte du
+texte est prise en pixels de mise en page (`offsetTop`), donc juste aussi sur une
+bâche tournée. Tout ce qui ne se calcule pas à coup sûr — une position en
+`calc`, un fond fixé, un texte qu'on ne situe pas — reste non mesurable : une
+mesure fausse est pire que pas de mesure.
+
+**Compté à part**, pour qu'un relevé d'avant se compare encore : `surGrain`,
+`palesGrain`, `jourSurGrain` et `jourGrain`. « Sur dégradé » ne compte plus que
+ce qui reste non mesurable — l'ancien vaut le nouveau plus `surGrain` —, et le
+JSON passe au schéma `audit-ui/2`. La mesure s'est contrôlée elle-même sur
+l'état de départ : mêmes textes sur les vingt-cinq visites et les trois formats,
+ancien « sur dégradé » égal au nouveau plus `surGrain` page par page, comptes
+sur fond uni inchangés. Elle n'a changé que l'angle mort.
+
+Ce qu'elle a révélé, à 360 × 640 et hors `/admin` et `/diagnostic` : **142
+textes deviennent mesurables** (725 non mesurables → 583), aucun ne manque son
+seuil à l'intérieur, et **56 le manquent au soleil**. Le compte au soleil passe
+de 72 à **128**. Par fond : vingt en craie sur le parpaing (3,7:1), huit sur le
+rouge de H1 (2,6), six à l'encre sur l'or (3,8), quatre sur le violet (2,6), deux
+sur le bleu et deux sur le vert (2,4), et les onglets actifs foncés, de 3,0 à
+3,4. C'est l'hypothèse H1 chiffrée, et H2 à 3,8. Le hub en portait quatorze —
+ses dix libellés de tuiles, PRENDRE MA PLACE, « 10/5510 », le cadre du direct —,
+`/boosters` autant, ses treize séries en craie sur le parpaing. `/repetition`,
+revenue sur `--panneau` à la fin du lot 1, a ses soixante et onze textes
+au-dessus du seuil.
+
+**Trois écrans qu'aucune route ne montrait.** L'audit attend que l'ouverture soit
+partie avant de mesurer, et n'ouvre jamais le tiroir : deux des écrans les plus
+vus, ceux que ce lot refait, n'avaient ni capture ni relevé. `--etats` leur donne
+une visite neuve chacun : l'ouverture photographiée vers une demi-seconde, puis
+photographiée et mesurée vers deux secondes — `tbf:pret` est retenu pour cette
+seule visite, comme le retiendrait un serveur lent —, et le tiroir de
+`/classement`, ouvert par son bouton, trouvé par `aria-controls`. Chaque état est
+mesuré sous sa **portée** (`#ouverture`, `#tbf-tiroir`) et rangé à part dans le
+JSON. Au départ : le rideau, trois textes sans défaut ; le tiroir, vingt-neuf
+textes, dont cinq pâles au soleil — les intitulés de rubrique et la version, sur
+le fond sombre de l'ancien menu.
+
+`scripts/verif-pages.mjs` y gagne un garde-fou sans navigateur : chaque tuile
+`/img/grain/…` que `ui.css` demande hors commentaires existe en WebP et en PNG,
+et une feuille où le motif ne trouve plus aucune tuile fait rougir le contrôle.
+Une tuile manquante laisserait la bâche unie, sans un message.
+
+En cours de lot, l'audit a encore appris quatre choses, chacune venue d'un défaut
+qu'il ne voyait pas : la police réellement employée (voir les pièges) ; la coupe
+à la ligne de `line-clamp`, relevée à part sous « coupé (lignes) » et gardée par
+un témoin qui vérifie, à chaque passage, que Chrome met encore en page les lignes
+qu'il cache ; ce qu'un écran fixé pousse hors de la fenêtre (« hors fenêtre ») ;
+et l'ouverture aussi à 320 × 568. Il sait enfin placer une couche peinte par un
+élément non positionné : la feuille avait dû poser `position:relative` sur les
+rubriques du tiroir pour lui seul. C'est à la mesure de suivre la page.
+
+### Ce qui a changé
+
+#### Le hub
+
+**Le personnage reprend l'écran.** Le budget de l'amendement 14 lui donne 60 % de
+la hauteur à 360 × 640 ; il en avait 312 pixels, 48,8 %. La bande du haut flotte
+désormais au-dessus de la scène, et la réserve des gestes passe sous elle ; les
+rails sont rangés par le bas et descendent de part et d'autre du nom ; les tuiles
+sont plafonnées à 9,1 % de la fenêtre, 58 pixels à 640 ; la bande du bas tient
+en 88 pixels et le bouton en 60. Mesuré au banc : 388 pixels, **60,6 %**, 67,5 %
+pour un joueur sans Fanzzy, 75,4 % à 768 × 1024, et rien ne défile, de 320 × 568
+à 768 × 1024.
+
+**La bande du haut** est faite des briques communes. L'avatar-sticker de 44
+pixels : le buste du Fanzzy qu'on montre aux autres, par `FZART.dessinAvatar`,
+dans l'anneau d'XP rempli à `dans / pour` de `/api/niveau`, et le niveau collé en
+bas (`#nivPastille` est gardé) ; sans Fanzzy, une silhouette, un « ? » et un lien
+vers `/fanzzy`. La pastille dorée à l'initiale du pseudo est partie. Les deux
+soldes deviennent des compteurs-stickers craie, qui comptent puis frémissent
+quand ils changent.
+
+**Les tuiles disent ce qui les attend**, par `data-etat`, trois au plus et dans
+cet ordre : LIVE rouge sur VIRAGE quand le match d'un club suivi a commencé ; le
+nombre en or, qui respire, sur BOOSTERS quand la réserve en a ; « +N » en craie
+sur FANZZY pour les cartes arrivées depuis le dernier passage au classeur. Le
+« 5496 » de FANZZY a disparu. Les cartes vues sont retenues par appareil
+(`tbf.vus`, dans `localStorage`) : toucher FANZZY ou la bulle qui en parle, ou
+ouvrir le classeur, les marque. La porte verrouillée — parpaing, icône éteinte
+sous une croix de scotch, « NIV. N » à la place du nom, une secousse au toucher —
+est écrite, mais ne paraît pas : aucun palier de `src/shared/niveau.js` n'ouvre
+encore une page.
+
+**Le bouton du menu porte l'état le plus urgent** du tiroir : le hub y pose le
+direct, la réserve et le duel qui attend par `TBF_MENU.poser`, et `menu.js` en
+tire le sticker — rouge, or ou violet.
+
+**Le Fanzzy parle.** Une bulle au marqueur, à côté de sa tête, tirée de ce que la
+page sait déjà : « Allez Sion ! », « Tes boosters t'attendent », « Choisis ton
+Fanzzy »… C'est un lien vers ce dont elle parle. Le script tient les règles de
+l'amendement 6 — pas un chiffre, pas plus de quatre mots, sinon une phrase de
+repli plus courte. La bulle attend que le rideau se lève, se replie au bout de
+six secondes en un sticker « ! » de 44 pixels qui la rouvre, et ne redit pas ce
+que dit déjà la bâche du jour. Permanent Marker est chargée par l'accueil seul,
+dans la même ligne qu'Oswald : c'est la fin de l'hypothèse H3.
+
+**Le soir de match**, une bâche aux deux couleurs du club se tend derrière la
+tête — les couleurs du blason, que le direct apporte ; sans elles, rien —, et la
+nappe de fumée monte dans le quart bas de la scène.
+
+**La bâche du jour** remplace AUJOURD'HUI : un cadre en kraft déchiré, l'écharpe
+en tête, qui dit la seule chose à faire aujourd'hui, la première qui a ses
+données — le match en direct ; le prochain coup d'envoi d'un club suivi, avec son
+compte à rebours ; l'étape suivante des premiers pas, avec ce qu'elle rapporte ;
+sinon « Répéter un geste ». Le prochain coup d'envoi vient de
+`/api/football/feed`, une lecture en base, sans appel à l'API sportive, gardée
+dix minutes dans l'onglet. Le rappel des premiers pas, qui paraissait au-dessus
+du duo et le poussait d'autant, est entré dans le ticket : la bande du bas a
+toujours la même hauteur.
+
+**Le bouton principal dit ce qu'il fait** : « PRENDRE MA PLACE », et dessous
+« Duel de tribunes » ; un soir de match, « ENTRER DANS LE VIRAGE » et le monde
+dans les tribunes ; quand quelqu'un attend un duel, « 2 T'ATTENDENT », en violet
+— il restait en or, la couleur de l'achat.
+
+**Le « GOAL ! »** quitte le lettrage nu posé sur le personnage pour la case de BD
+commune, celle du Virage et du duel, avec sa bouffée de fumigène, ses confettis
+et son scotch qui se décolle. `FX.but` n'est plus appelé : il écrivait un second
+« BUT ! » par-dessus la case, avec quatre-vingt-dix particules.
+
+**La collection** affiche le palier en cours, « 14 / 25 », et non plus le total,
+qui se lit comme un mur ; le total est dans l'étiquette du lien (amendement 22).
+
+**Le rideau se lève après le premier tour de veille**, attendu huit cents
+millisecondes au plus, et le signal part quoi qu'il arrive. Sans le direct, la
+bâche du jour et la bulle se seraient peintes sur leur repli, puis auraient
+changé sous les yeux du joueur.
+
+#### L'ouverture
+
+Le rideau qu'on voit en arrivant de dehors est devenu **le tunnel qui mène à la
+tribune** : quatre pans de béton en perspective, dessinés en CSS — l'image
+`tunnel.webp` reste à produire —, deux bâches unies aux murs, la photo du stade au
+bout, et la lumière des projecteurs qui grandit pendant tout le plafond, par
+l'échelle d'un pseudo-élément et jamais par un dégradé animé. Le titre est peint
+à l'encre sur la bâche principale de la feuille commune, en craie, tournée de
+−2°, avec son écharpe et ses deux scotchs ; « .ONLINE » en or sur un ruban
+d'encre. Cinq Fanzzy montent les marches, et le dernier salue.
+
+La jauge est l'écharpe commune, à trois crans, avec trois libellés par tiers du
+plafond — ON OUVRE LES GRILLES, LES TRIBUNES SE REMPLISSENT, COUP D'ENVOI — et
+sans pourcentage : elle suit le temps, pas un chargement. « TOUCHE POUR ENTRER »
+paraît au plancher, à 1,2 s, et ce sont ses deux flèches qui clignotent, pas les
+mots. Une astuce du jour, sur un ticket kraft, est tirée d'une table de douze
+écrite en dur, sans un nombre réglable. Pas de marqueur sur le rideau.
+
+**Les règles de sortie n'ont pas bougé** — une fois par session, le plancher, le
+plafond de dix secondes, le toucher pour entrer —, et chaque morceau de décor est
+dans son `try`. Le rideau est toujours peint avant qu'un seul script ne tourne :
+en médiane sur cinq passages, scripts retenus, premier affichage à 228 ms avant
+le lot et à 244 ms après. Sans `/ui.css`, il garde ses mots : chaque couleur qui
+porte un texte a son repli écrit en clair, sous `:where()`.
+
+#### La barre et le tiroir
+
+**Le nom de l'écran est écrit à la craie sur un bout de gaffer**, un ruban toilé
+noir déchiré aux deux bouts, à −1,5°, collé juste après la flèche ; il pousse à
+droite le HUD et le menu.
+
+**Le HUD replié** : pour un joueur connecté, hors des deux écrans de jeu, un
+sticker rond de 36 pixels dans une zone de 44 — le buste, l'anneau d'XP, le
+niveau. Au toucher, une bande kraft se déplie sous la barre avec les deux soldes,
+trois secondes, et ne se replie ni sous le doigt ni sous le focus. À partir de
+560 pixels, les soldes sont dans la barre à demeure — sauf sur `/boutique` et
+`/boosters`, qui ont déjà leur bourse —, et le sticker mène au profil. Les
+valeurs viennent de `/api/fanzzy/state`, la seule réponse qui porte le personnage
+résolu par le serveur, et de `/api/niveau`. Elles sont gardées trente secondes
+dans l'onglet, au nom du joueur, et le HUD prend ce qu'une page annonce par
+`tbf:bourse` au lieu de relire derrière elle. Le hub y écrit ce qu'il a déjà lu :
+le premier écran ouvert depuis l'accueil ne redemande rien.
+
+**Le tiroir est une bâche de parpaing qu'on déroule depuis le haut**, en 240 ms,
+en fondu au calme : plein écran sur un téléphone, six cents pixels au plus
+au-delà. Il couvre la barre, donc il porte sa propre tête : le retour à
+l'accueil, le mot MENU sur son gaffer, et une croix de 44 pixels qui reçoit le
+focus à l'ouverture et le rend au menu en se rangeant ; la tabulation reste
+dedans. Puis trois rubriques au pochoir, chacune soulignée de l'écharpe de son
+ton, et sous elles des grilles de tuiles de 88 pixels avec leurs stickers d'état
+— LIVE sur le Grand Virage, « 2 » violet sur le duel, « 4 » or sur les boosters ;
+la page où l'on est porte un pointillé. Le pied — aide, installation, profil,
+compte, administration, sortie, mode calme, version — est une liste calme, à
+l'encre sur un ticket kraft. Les seize destinations, leurs adresses, leur ordre
+et leurs libellés n'ont pas bougé, ni les identifiants que lisent les suites.
+Sur `/virage` et `/duel-nvn`, rien ne change dans ce lot : leur bouton garde son
+point rouge.
+
+Les matchs du jour et l'abonnement ont reçu leur icône : ils empruntaient celles
+du télétexte et de la boutique, et la grille les mettait côte à côte.
+
+#### Les briques
+
+Écrites une fois dans `ui.css`, chacune avec son balisage exact et ses doubles
+`prefers-reduced-motion` et calme : les cinq états d'une tuile ; le sticker
+d'urgence du menu ; l'avatar-sticker ; le compteur de monnaie, 44 pixels au doigt
+et 32 à l'œil ; le HUD ; le cadre en kraft ; la case de BD unifiée ; la plaque
+ronde — une zone de 44 et une face de 32 —, pour les flèches d'âge du hub ; la
+banderole d'un nom ; la bâche du club ; la jauge qui suit le temps
+(`data-suit`) ; la secousse d'un refus (`.tbf-secoue`) ; et le ticket de retour
+et le toast, prêts mais posés par aucune page — aucune route ne nourrit encore le
+retour. Les quatre faces vives sont devenues des jetons (`--face-flare`…) : un
+sticker peint en pseudo-élément ne porte pas d'attribut, et la table de H1
+aurait été écrite deux fois. `fx.js` gagne le refus d'une porte fermée, un tic
+sourd et un buzz de huit millisecondes.
+
+#### Les hypothèses
+
+H3 est levée. Une **H10** est née et morte dans le lot : le titre de la barre sur
+un scotch clair, qui tombait à 3,0:1 au soleil (voir les pièges). Une **H11** est
+venue : le « ? » de l'avatar sans Fanzzy est au marqueur, comme l'écrit la
+direction, alors que l'amendement 6 ne compte pas ce signe parmi les six
+emplois. Et une question de palette s'ajoute à H1 : **le kraft ne porte aucune
+encre à 4,5:1 au soleil**.
+
+### Les pièges du lot
+
+**L'audit mesurait tout dans la police de secours.** C'est la critique visuelle
+qui l'a vu, sur les captures « après » : PRENDRE MA PLACE trop large, la bulle en
+Segoe Print. Depuis le lot 0, chaque visite de l'audit envoie sa propre adresse
+(`X-Forwarded-For`) ; posée par `setExtraHTTPHeaders`, elle partait aussi vers
+Google Fonts. Un en-tête que CORS ne range pas parmi les simples fait précéder
+chaque fichier de police d'une requête de contrôle, que Google refuse : Oswald et
+Permanent Marker tombaient en échec sans un message. Et `document.fonts.status`
+disait « loaded » quand même — il dit que plus rien ne charge, pas que tout a
+chargé. Les largeurs, les retours à la ligne et les coupes de tous les relevés
+d'avant ont donc été pris dans une autre police que celle du joueur, et le tiroir
+a été mesuré tronqué là où le joueur le lit entier. L'adresse ne part plus que
+vers notre serveur, la mesure attend les polices, et elle compte les textes lus
+dans une police de secours (« police de repli »). Le service worker est contourné
+pour une raison voisine : il refait ses requêtes lui-même, et elles seraient
+toutes parties sous une seule adresse.
+
+**Le soleil a tranché trois fois contre la maquette.** Le scotch clair du titre
+de la barre, la craie à 26 %, éclaircissait le fond sous la lettre : 3,0:1 au
+soleil, 2,5 pour le mot MENU sur le parpaing, quand le nom de l'écran tenait 5,1
+à même le noir avant le lot ; aucun scotch clair ne fait mieux, il en faudrait
+un à 5 % de craie qu'on ne verrait plus. Les rubriques du tiroir, dans leur ton,
+tombaient de 1,7 à 2,6:1 — JOUER était le texte le plus pâle de tout l'audit. Et
+les seize noms des tuiles du tiroir, sur les faces de H1, tombaient à 2,4–2,6:1,
+quand ils tenaient 4,6 sur le fond sombre de l'ancien menu. La direction le dit
+elle-même : « la lisibilité plein jour commande ». Le titre et les noms passent
+sur un gaffer noir, 4,9:1 au soleil et 17 dedans ; les rubriques reviennent à la
+craie, 3,7:1, et le ton passe à leur écharpe. Le ruban se voit par ses bords —
+un reflet, un fil, une frange de trame aux deux bouts —, chacun posé hors de la
+boîte du texte : l'audit lit l'encre seule sous la lettre. Les tuiles du hub
+n'ont pas ce gaffer : à 58 pixels, elles n'ont pas les dix de rembourrage qu'il
+prend.
+
+**Le kraft ne se lit pas au soleil, et aucune encre n'y change rien.** Le papier
+de la direction porte l'encre à 8,7:1 dedans, à 3,3 sous le voile blanc de
+l'audit ; le noir pur n'y ferait que 3,6. Pour 4,5, il faudrait un papier aux
+quatre cinquièmes vers la craie, `#ECE0CB`, à 1,13:1 de la craie : il n'y aurait
+plus de kraft, et le sticker craie et le tampon plein qu'on y pose ne s'en
+détacheraient plus que par leur cerne. Ce qu'on y écrit se pèse donc écran par
+écran : en 700 à partir de 19 pixels, ou à partir de 24, un texte y passe le
+seuil du grand texte ; une ligne courante, non. Le lot en pose trois que l'audit
+lit : la bâche du jour, l'astuce du rideau et le pied du tiroir. La teinte du
+papier attend Gaël.
+
+**La case de BD rayait le mot qu'elle encadre.** Tournée de −1,6°, la vignette
+est un contexte d'empilement : ses rayons, un `::before` en `z-index:-1`, se
+peignaient par-dessus son propre fond, sous la lettre. Un masque les évide à
+l'emplacement de la case.
+
+**Le « GOAL ! » du hub passait par-dessus le menu.** La case commune est fixée sur
+le document à 95, et tient quinze secondes ; un joueur qui ouvrait le menu
+pendant ce temps la voyait couvrir la deuxième rangée de JOUER — qu'il touchait
+sans la voir, puisque la case laisse passer le doigt. Le hub la pose juste sous
+le voile du menu.
+
+**Un geste qui tourne autour des pieds en enfonce un.** Le budget de 60 % a pris
+les dix pixels qui restaient sous le personnage. Le coucou tournait autour du
+milieu des pieds : une rotation abaisse l'un des deux bords de la demi-largeur
+fois le sinus de l'angle, six à neuf pixels sur un téléphone, et la semelle
+passait sous la bande. Il penche désormais (`skewX`), sans déplacer un point du
+sol ; le rebond s'écrase sur place ; le saut s'étire depuis les pieds — étiré
+depuis le milieu, il les abaissait au moment même où il décollait, de sept
+pixels sur une tablette, de vingt sur une grande.
+
+**Cinq animations infinies sur un écran qui en permet trois.** Le halo qui
+pulsait, l'ombre au sol, le point du direct, le flottement et la respiration
+tournaient chacun pour soi. Le halo et l'ombre ne bougent plus, le point est
+parti avec le rouge qui ne tenait pas sur le kraft, et le flottement est entré
+dans la respiration, en une seule animation : il reste le personnage, la fumée
+et le sticker qui respire — la liste de la direction.
+
+**Un sticker qui déborde se fait couper par le premier cadre qui coupe.** Celui
+d'une tuile déborde de huit pixels, treize avec son bord et son ombre :
+`.centre`, en `overflow:hidden` contre le rail de droite, les aurait rognés, et
+rognait déjà le cerne et l'ombre des tuiles de ce rail. La bande déborde
+maintenant de la marge du hub. Celui du bouton de menu tombait contre le bord de
+l'écran : la rangée du haut s'en écarte de quinze pixels en haut et de quatorze à
+droite.
+
+**Le compte avait été fait à 360 pixels.** À 320, le titre de la barre perdait sa
+place : « COMPÉTITIONS » et « ABONNEMENT » se coupaient, et « DIAGNOSTIC », dont
+la page ajoute sa propre gouttière, alors qu'il tenait avant le lot — le HUD et
+la bande, arrivés ensemble, lui avaient pris la place. La barre se serre une fois
+sous 400 pixels et une seconde sous 340, sans toucher aux cibles. Le pied du
+tiroir passe sur une colonne sous 350 pixels : « ADMINISTRATION » y débordait de
+onze. Et le titre est en Oswald 600 et non 700 : quatre pages ne chargent pas la
+graisse 700, que le navigateur aurait fabriquée en épaississant l'autre.
+
+**Une coupe à la ligne réglée sur une seule police.** Les noms des tuiles du
+tiroir étaient tenus à deux lignes, la limite d'Oswald. Mais à la première
+ouverture, tant que la police n'est pas arrivée, et hors ligne — le service
+worker ne garde pas les polices de Google —, la tuile prend le repli, plus large,
+et « CLASSEMENT DES SUPPORTERS » se lisait « CLASSEMENT DES… ». Le nom n'est plus
+coupé : la tuile a la place de trois lignes, et garde ses 88 pixels avec toutes
+les polices essayées. L'audit ne voyait que l'ellipse sur une ligne ; il relève
+maintenant la coupe à la ligne.
+
+**Un contrôle qui vérifie une absence passe quand la page est partie.**
+`accueil:ui` refermait le tiroir en touchant le voile en bas à gauche. Le tiroir
+du lot 2 couvre tout l'écran d'un téléphone : le clic tombait sur une tuile, la
+page partait vers `/classement`, et le contrôle, ne trouvant plus de tiroir
+ouvert, passait. Il referme maintenant par la croix, puis par Échap, en vérifiant
+chaque fois qu'on est resté à la même adresse, et ne touche le voile qu'à 1 024
+pixels de large, après avoir prouvé par `elementFromPoint` que le point visé est
+bien lui.
+
+**La même chose dite deux fois, à vingt pixels.** Un soir de match, le ticket
+écrivait « EN DIRECT · 47′ … 312 dans les tribunes » et le bouton, juste dessous,
+« 47′ · 312 supporters » ; la bulle disait « Match ce soir » au-dessus de
+« PROCHAIN COUP D'ENVOI ». La minute est au ticket, le monde au bouton, et la
+bulle cède la phrase dont le ticket parle déjà. L'affiche du prochain coup
+d'envoi, mise à la suite du compte à rebours sur une seule ligne, perdait le club
+adverse en points de suspension : elle est dans le titre, qui a deux lignes.
+
+**Un même endroit, deux couleurs.** Le tiroir peignait chaque destination au ton
+de sa rubrique : le KOP et les amis, violets sur le hub, y passaient au rouge et
+au bleu ; les boosters, la boutique et l'abonnement, or sur le hub, au rouge.
+Une destination peut maintenant porter son ton, le même que sur le hub, et le
+deck passe au bleu, parce qu'on le possède.
+
+**Un match reporté garde sa date.** Le fil n'écarte que les matchs finis ou
+annulés ; un match reporté, suspendu, arrêté ou gagné sur tapis vert allumait la
+bâche du club, la fumée, « joue ce soir » et un compte à rebours. Ceux-là
+quittent la liste, et une rencontre à l'heure provisoire (`TBD`, souvent minuit)
+n'est jamais annoncée. Une réponse vide n'est gardée que quatre-vingt-dix
+secondes, et non dix minutes (`ETAT.md` § 6).
+
+**L'écharpe du rideau ne se nouait jamais.** Elle suit le plafond de dix
+secondes, et l'écran part dès que l'accueil est prêt, entre une seconde et demie
+et trois : on quittait le rideau sur une écharpe remplie au cinquième, et sur
+« ON OUVRE LES GRILLES ». Quand l'écran part, elle finit désormais sa course en
+trois cents millisecondes, sur « COUP D'ENVOI » — sauf au doigt, qui ne se fait
+pas retenir. Sa transition d'une demi-seconde, faite pour un palier qui saute,
+traînait derrière une largeur poussée à chaque image : d'où `data-suit`.
+
+**Le HUD doublait la lecture la plus lourde du joueur.** `/api/fanzzy/state` lit
+le portefeuille, la collection, les âges et la saison, et écrit en base quand la
+réserve est pleine. Le kiosque et le classeur la font déjà en arrivant ; le HUD
+la refaisait derrière eux. Il prend maintenant ce que la page annonce, et ne
+relit que le niveau. Une page qui change le portefeuille sans l'annoncer laisse
+le HUD en retard trente secondes : c'est à elle de relayer.
+
+**Des noms déjà pris, encore.** Le compteur de monnaie s'appelle `.tbf-monnaie`
+parce que `fanzzy:ui` interdit tout `.tbf-jeton` dans la barre. Le rideau vit
+dans la même page que le hub, qui tient déjà `.scene` et `.entrer` : ses classes
+sont `.troupe` et `.consigne`. Et son dernier Fanzzy salue par l'image clé
+commune `tbf-coucou`, non par `coucou`, que `accueil:ui` compte pour savoir si
+le hub a salué.
+
+**Une fonction faite pour une page qui ne l'appelle pas.** Relevé en écrivant
+cette trace. Pour rendre au but du hub sa secousse et sa vibration sans le second
+titre, `fx.js` a reçu `FX.but({ vignette: true })`, et son commentaire dit
+qu'`index.html` l'appelle. Il ne l'appelle pas : le but du hub n'a plus que sa
+corne. C'est le piège de la jauge du lot 1, avec une fonction : la brique
+existe, personne ne la pose.
+
+### Ce que la mesure dit après
+
+L'état de départ est celui du commit `4acf953`, mesuré le matin avec la lecture
+sous le grain ; la fin, le sixième tour, sur les fichiers mêmes qui sont en
+ligne.
+
+| Relevé, hors `/admin` et `/diagnostic` (360 × 640 / 400 × 800 / 768 × 1024) | départ du lot 2 | fin du lot 2 |
+|---|---|---|
+| texte sous 11 px, opacité sous 0,85, flou, débordement, hors écran, cible sous 44 px, coupé | 0 / 0 / 0 | 0 / 0 / 0 |
+| pâle à l'intérieur, sur fond uni et sous le grain | 0 / 0 / 0 | 0 / 0 / 0 |
+| pâle au soleil, sur fond uni | 72 / 72 / 72 | 74 / 74 / 74 |
+| pâle au soleil, sous le grain | 56 / 56 / 55 | 53 / 53 / 52 |
+| textes lus sous le grain | 142 / 142 / 143 | 139 / 139 / 140 |
+| textes encore non mesurables | 583 / 581 / 589 | 574 / 572 / 580 |
+| textes | 1 052 / 1 050 / 1 073 | 1 067 / 1 065 / 1 120 |
+| coupé (lignes), relevé nouveau | — | 15 / 3 / 45 |
+| police de repli, relevé nouveau | — | 1 / 1 / 1 |
+
+Le fond uni gagne deux relevés, la bâche du jour du hub sur son kraft, à 3,3:1 :
+« PREMIERS PAS · 0/6 » et « Ton premier Fanzzy ». Les textes en plus sont le
+niveau du HUD sur chaque page de contenu, et à 768 pixels ses deux soldes, dans
+la barre — un seul de plus sur `/boutique` et `/boosters`, qui gardent les leurs
+dans la page. Les quarante-cinq coupes à la ligne sont toutes sur `/collection`,
+que le lot ne touche pas : le nom des vignettes y est tenu à deux lignes, et le
+nom entier est dans leur `title`. La police de repli est un faux positif, plus
+bas.
+
+**Le hub** passe de vingt-quatre textes à vingt et un, de deux non mesurables à
+zéro, et au soleil de 0 + 14 à 2 + 11. **Le vrai compte reste à quatorze** :
+PRENDRE MA PLACE, à 2,6:1, n'est pas corrigé, il n'est plus mesuré. L'audit ne
+lit le contraste que sur un élément sans enfant, et le bouton porte maintenant
+son sous-libellé dans un `<small>`. Les dix libellés de tuiles restent entre 2,4
+et 3,8:1 (H1, H2).
+
+**Les états.** Le rideau à deux secondes passe de trois textes à huit, aux trois
+formats et à 320 × 568 : rien hors de la fenêtre, rien qui déborde, rien de
+coupé, et deux textes pâles au soleil, ceux du ticket de l'astuce, à 3,3:1 sur le
+kraft. Le tiroir de `/classement` passe de vingt-neuf textes à trente, dont trois
+sous le grain, et de cinq pâles au soleil à deux : MODE CALME et la version, sur
+le kraft du pied. « CLASSEMENT DES SUPPORTERS » s'y lit en entier.
+
+Tout cela est mesuré en Oswald et en Permanent Marker, pour la première fois :
+les relevés de départ, comme ceux des lots 0 et 1, l'avaient été dans la police
+de secours.
+
+Au banc, sans base, ce que l'audit ne dit pas. Le hub ne défile pas à
+360 × 640, dans six scénarios simulés, ni à animations réduites ni au calme ; au
+plus trois animations infinies, aucune au calme ; au plus trois tuiles en état. Sur les vingt-deux écrans et à quatre largeurs, aucun titre de barre coupé
+ni recouvert. Le tiroir tient l'écran à 360 × 640 et défile en lui-même : il fait
+1 283 pixels de haut. Le rideau part à 1 640 ms quand l'accueil est prêt, au
+plancher quand on le touche à 300 ms, à 10 122 ms quand rien ne le congédie, et
+ne revient ni au rechargement dans la même session ni en arrivant d'une autre
+page du jeu.
+
+### Éprouvé
+
+Les quatre contrôles de livraison sont verts : `npm run pages` (soixante-dix-sept
+contrôles, quatre tuiles de grain en WebP et en PNG), `npm run cablage`,
+`npm run promesses` (avec son avertissement connu, six pages sans suite
+d'interface) et `npm run pages:navigateur`. Le dernier passage de `tout-tester`,
+le 2 octobre de 18 h 07 à 18 h 27, compte cinquante-huit suites et 3 376
+contrôles, contre 3 312 à la fin du lot 1, sans un rouge nouveau ni une
+intermittence. Trois restent rouges, qui l'étaient avant le lot 0, à
+l'identique : `deck:ui` (un), `nvn:ui` (trois), `fanzzy:smoke` (deux).
+`abo:smoke` est vert, lancé à 18 h 08. `accueil:ui` compte 211 contrôles.
+
+Quatre suites ont suivi un comportement voulu par le lot, et chacune garde son
+sens. `accueil:ui` : les états des tuiles — « aucun bouton d'état » vise
+désormais tout `data-etat` qui ne serait pas un état de tuile lu dans `ui.css` —,
+la bulle, la bâche du jour, le rideau, l'avatar, le tiroir qu'on referme.
+`fanzzy:ui` : le HUD, de 320 à 768 pixels. `tour:ui` : le total de la collection,
+qui ne s'affiche plus mais se dit, dans l'étiquette du lien. `virage:ui` : le but,
+dont la couleur du club borde la case et dont le mot est à la craie.
+
+### En ligne
+
+Le lot 2 est dans deux commits de Gaël, `4c07044` (« Maj V02102026.1638 ») et
+`7dc5464` (« Maj V02102026.1828 »), poussés. La production sert le second depuis
+18 h 29 environ : relevé à 18 h 48, `ui.css`, `nav.js`, `menu.js`,
+`ouverture.js`, `fx.js` et `fanzzy.html` sont ceux du commit, octet pour octet, et
+l'accueil aussi, aux estampilles `?v=` près. Le commit a été pris pendant le
+sixième tour de vérification, mais après la dernière modification des fichiers
+du lot, à 18 h 00 : ce tour a vérifié exactement ce qui est en ligne. Seuls les
+trois documents ne sont pas commités.
+
+### Ce qui reste
+
+Les arbitrages d'abord : **H1, H2, H4 à H9 et H11**, et la teinte du kraft. Puis
+les quatre fautes du dernier tour, relevées et non corrigées :
+
+- `scripts/audit-ui.mjs` ne mesure le contraste que sur les éléments sans
+  enfant : PRENDRE MA PLACE et ENTRER DANS LE VIRAGE, 2,6:1 au soleil, sortent du
+  compte depuis qu'ils portent un sous-libellé. Il faudrait mesurer ce qui porte
+  un texte à soi, comme le font déjà le petit texte et l'opacité ;
+- son relevé « police de repli » se trompe dès qu'un texte contient Œ ou œ
+  (voir `ETAT.md` § 6) : « LE COUP D'ŒIL », sur `/repetition` ;
+- à 320 × 568, la bulle du hub couvre la tuile DUEL pendant ses six secondes, et
+  un toucher sur DUEL ouvre la destination de la bulle ;
+- à 320 pixels, la bâche du jour coupe « PROCHAIN COUP D'ENVOI » et souvent sa
+  ligne du moment ; le raccourcissement a été réglé sur 360.
+
+Puis :
+
+- `index.html` : appeler `FX.but({ pour: true, vignette: true })` à côté du
+  moment du but, ou retirer la variante et son commentaire ;
+- la vitrine n'émet pas `tbf:pret` : un visiteur garde le rideau dix secondes s'il
+  ne le touche pas. C'était déjà vrai avant le lot, et la vitrine en était hors ;
+- les constats de détail de la critique, laissés en l'état : le sticker du direct
+  sur le bouton de menu, un rond rouge sans le mot LIVE ; le booster dessiné de
+  deux façons, et son compteur qui mène à `/boutique` sur le hub et à `/boosters`
+  dans la barre ; le gaffer sur chaque nom du tiroir, qui charge les tuiles ; le
+  tiroir haut de deux écrans à 360 pixels ; les cinq crans de la jauge de
+  collection, qui sont des graduations et non des paliers ; le budget de trois
+  états, qui ne compte pas une tuile verrouillée ; la fumée du rideau, deux
+  rectangles à 768 pixels ; l'anneau d'XP, qui se lit mal à cette taille ; la
+  barre qui n'est pas à la même place sur `/kop`, `/equipes`, `/diagnostic` et
+  `/compte`, défaut d'avant le lot qui se voit davantage ; l'âge du Fanzzy en or
+  sous son nom (H2) ;
+- ce que le lot a laissé faute de données ou hors de ses fichiers : un champ
+  `page` dans les paliers de niveau, sans lequel rien ne se verrouille ; la
+  récompense d'un palier de collection ; la durée d'un duel, que la page ne reçoit
+  pas (le bouton dit « Duel de tribunes ») ; une route pour le ticket de retour ;
+  le toast, qu'aucune page ne pose ; le sticker d'urgence sur les deux écrans de
+  jeu, au lot 6 ; `tunnel.webp` ;
+- deux écarts à trancher : l'ordre des états de la bâche du jour, celui du brief
+  — un nouveau joueur dont le club a un match au calendrier ne voit plus ses
+  premiers pas sur le hub ; et les soldes du HUD, lus sur `/api/fanzzy/state` et
+  non sur `/api/me/state`, que nomme la direction, parce que seul le premier
+  porte le personnage ;
+- des commentaires de `ui.css` devenus faux : ceux du fond de `body`, du mur, du
+  panneau et du cadre, qui disent encore que l'audit ne lit pas le grain, et
+  celui de la rubrique du tiroir, dont le `position:relative` n'est plus là
+  « pour l'audit » ;
+- restés du lot 1 : `data-economie` sous `saveData`, que ni `fx.js` ni `menu.js`
+  ne posent encore ; les jauges plates de `/aide` et de `/profil`.
+
+**Hors de ce lot, et c'est la suite :** le kiosque, la boutique, la collection, la
+fiche, le profil, le classement, le KOP et les arènes — les lots 3 à 6.
+
+---

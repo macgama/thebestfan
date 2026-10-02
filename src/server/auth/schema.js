@@ -76,6 +76,83 @@ function colonnesDeclarees(sql) {
   return out;
 }
 
+/* ------------------------------------------------ les clés qui font foi
+
+   **Une table présente peut être fausse.** `CREATE TABLE IF NOT EXISTS` ne
+   touche jamais à une table qui existe : si `recompenses` a été créée un jour
+   sans sa clé primaire — à la main, par une version d'essai du fichier —, le
+   rejouer ne la pose pas, et le contrôle des tables la déclare à jour.
+
+   Or cette clé-là n'est pas un index comme un autre : c'est **l'idempotence**
+   du grand livre. C'est elle qui fait qu'un double clic, deux onglets ou un
+   réseau qui rejoue ne versent qu'une fois. Sans elle, le jeu paierait deux
+   fois la même mission sans une erreur nulle part.
+
+   Les quatre tables de `sql/quotidien.sql` sont donc contrôlées clé comprise.
+   La liste est écrite ici, et non relue dans les `CREATE` : d'autres fichiers
+   changent la clé d'une table après coup (`skins.sql` élargit celle de
+   `user_skins`), et la relire dans le CREATE crierait au défaut sur une base
+   juste. Une table dont la clé change un jour doit changer ici aussi. */
+export const CLES_PRIMAIRES = [
+  { fichier: 'quotidien.sql', table: 'recompenses', cle: ['user_id', 'source', 'cle'] },
+  { fichier: 'quotidien.sql', table: 'missions_jour', cle: ['user_id', 'jour', 'rang'] },
+  { fichier: 'quotidien.sql', table: 'compteurs_jour', cle: ['user_id', 'jour', 'cle'] },
+  { fichier: 'quotidien.sql', table: 'user_nouveautes', cle: ['user_id', 'cle'] },
+];
+
+/* **Le grand livre fermé.** Quand le contrôle a vu `recompenses` avec une
+   autre clé que la sienne, il ne se contente pas de le dire : il ferme les
+   versements, et `src/server/recompenses.js` refuse tout (`schema`) tant que
+   le processus n'a pas été relancé sur une base corrigée. Verser sans
+   idempotence, c'est payer deux fois ; ne rien verser, c'est différer.
+
+   `null` : ouvert. Ouvert aussi quand le contrôle n'a pas pu lire les index
+   (un serveur qui refuse `information_schema`) ou n'a jamais tourné (une
+   suite qui monte un module sans `server.js`) : on ferme sur une faute vue,
+   jamais sur une incertitude — la clé du CREATE reste la première garantie. */
+let fermeture = null;
+
+/** La raison qui ferme le grand livre, ou `null` s'il est ouvert. */
+export function grandLivreFerme() {
+  return fermeture;
+}
+
+/**
+ * Compare la clé primaire des tables qui en dépendent à celle attendue.
+ *
+ * Rend les fautes vues, `{ fichier, table, attendue, vue }`, et une liste
+ * vide si tout est juste ou si les index ne se lisent pas.
+ */
+async function controlerCles(pool, presentes) {
+  const visees = CLES_PRIMAIRES.filter((c) => presentes.has(c.table));
+  if (!visees.length) return [];
+  let lignes;
+  try {
+    /* Les quatre noms toujours, en paramètres : une liste de `?` fabriquée à
+       la longueur de `visees` serait une interpolation de plus à justifier
+       devant `npm run securite`, pour économiser trois lignes d'index. */
+    [lignes] = await pool.query(
+      `SELECT table_name AS t, column_name AS c, seq_in_index AS n
+         FROM information_schema.statistics
+        WHERE table_schema = DATABASE() AND index_name = 'PRIMARY'
+          AND table_name IN (?, ?, ?, ?)
+        ORDER BY table_name, seq_in_index`,
+      CLES_PRIMAIRES.map((c) => c.table));
+  } catch {
+    return [];
+  }
+  const vues = new Map();
+  for (const l of lignes) {
+    const t = String(l.t).toLowerCase();
+    if (!vues.has(t)) vues.set(t, []);
+    vues.get(t).push(String(l.c).toLowerCase());
+  }
+  return visees
+    .filter((c) => (vues.get(c.table) ?? []).join(',') !== c.cle.join(','))
+    .map((c) => ({ fichier: c.fichier, table: c.table, attendue: c.cle,
+      vue: vues.get(c.table) ?? [] }));
+}
+
 /**
  * Lit `sql/` et renvoie `{ fichier -> [tables] }`.
  *
@@ -121,6 +198,22 @@ export async function verifierSchema(pool, dossier) {
     if (absentes.length) manques.set(fichier, { fichier, tables: absentes });
   }
 
+  /* Les clés primaires qui font foi, puis la fermeture du grand livre. Elle
+     se recalcule à chaque contrôle : c'est le démarrage suivant, sur une base
+     corrigée, qui la rouvre. */
+  const fautes = await controlerCles(pool, presentes);
+  for (const f of fautes) {
+    const deja = manques.get(f.fichier) ?? { fichier: f.fichier, tables: [] };
+    manques.set(f.fichier, { ...deja, cles: [...(deja.cles ?? []),
+      `${f.table} (${f.attendue.join(', ')}), vue : `
+        + (f.vue.length ? `(${f.vue.join(', ')})` : 'aucune')] });
+  }
+  const livre = fautes.find((f) => f.table === 'recompenses');
+  fermeture = livre
+    ? `la table recompenses n’a pas sa clé primaire (${livre.attendue.join(', ')}) — `
+      + 'sans elle, un même versement pourrait passer deux fois'
+    : null;
+
   /* Les colonnes, ensuite.
    *
    * On ne les cherche que dans les tables **présentes** : réclamer une colonne
@@ -163,16 +256,31 @@ export async function verifierSchema(pool, dossier) {
  */
 export function messageDeManque(manques) {
   if (!manques.length) return null;
-  const lignes = manques.map(({ fichier, tables = [], colonnes = [] }) => {
+  const lignes = manques.map(({ fichier, tables = [], colonnes = [], cles = [] }) => {
     const quoi = [
       tables.length ? `table(s) absente(s) : ${tables.join(', ')}` : null,
       colonnes.length ? `colonne(s) absente(s) : ${colonnes.join(', ')}` : null,
+      cles.length ? `clé(s) primaire(s) fausse(s) : ${cles.join(' ; ')}` : null,
     ].filter(Boolean).join(' · ');
     return `    sql/${fichier} — ${quoi}`;
   });
+  /* Une clé fausse ne se répare pas comme une table absente, et le dire évite
+     de rejouer dix fois un fichier qui ne peut pas la poser. */
+  const fausses = manques.flatMap((m) => m.cles ?? []);
+  const cles = fausses.length
+    ? '\n  Une clé primaire fausse ne se corrige PAS en rejouant le fichier : '
+      + 'CREATE TABLE IF NOT EXISTS ne touche pas à une table qui existe. Il faut '
+      + 'poser la clé à la main (ALTER TABLE … ADD PRIMARY KEY, après avoir retiré '
+      + 'les doublons), puis redémarrer.'
+      + (fausses.some((c) => c.startsWith('recompenses '))
+        ? ' D’ici là, le grand livre refuse tout versement plutôt que de payer '
+          + 'deux fois.'
+        : '')
+    : '';
   return 'SCHÉMA INCOMPLET : la base ne contient pas tout ce que le code attend.\n'
     + lignes.join('\n')
     + '\n  À appliquer dans phpMyAdmin, onglet SQL, dans cet ordre. Ces fichiers '
     + 'sont écrits en CREATE TABLE IF NOT EXISTS et ADD COLUMN IF NOT EXISTS : '
-    + 'les rejouer sur une base déjà à jour ne casse rien.';
+    + 'les rejouer sur une base déjà à jour ne casse rien.'
+    + cles;
 }

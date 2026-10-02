@@ -92,8 +92,15 @@
   const doux = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
     || calme('animations');
   const racine = () => document.getElementById('app') ?? document.body;
+  /* Une vibration avant le premier toucher du joueur sur la page, Chrome la
+     refuse et l'écrit en erreur dans la console (« Blocked call to
+     navigator.vibrate ») : un but reçu par le réseau, un vote qui s'ouvre au
+     KOP, une fête posée au chargement. Elle ne se serait pas sentie de toute
+     façon ; on ne la demande donc qu'une fois la page touchée. Sans l'API qui
+     le dit (un navigateur plus ancien), on essaie, comme avant. */
   const buzz = (p) => {
     if (calme('vibrations')) return;
+    if (navigator.userActivation?.hasBeenActive === false) return;
     try { navigator.vibrate?.(p); } catch {}
   };
 
@@ -101,6 +108,22 @@
     or: '#F5C33B', feu: '#E0402C', vert: '#1E9E6A',
     bleu: '#3C82E8', violet: '#8257DA', craie: '#F2EEE4',
   };
+
+  /* **L'or ne s'écrit plus qu'en grand** (arbitrage tranché par Gaël le
+     2 octobre 2026) : 24 px, ou 18,66 px en gras. Sur la plaque sombre d'un
+     titre, il tient 11:1 à l'intérieur mais 3,5:1 au soleil — assez pour un
+     grand texte (3:1), pas pour un petit (4,5:1). L'or reste une face (le
+     bandeau, le carton jaune, le point qui vole) et la couleur des grands
+     chiffres ; le petit texte d'un effet s'écrit à la craie (le sous-titre,
+     le mot sous un gain : voir la feuille plus bas).
+
+     Les titres et les nombres prennent la couleur que l'appelant leur donne.
+     Un appelant qui demande de l'or sous 24 px reçoit donc du gras, et jamais
+     moins de 19 px : la règle tient ici, et la prochaine page n'a pas à la
+     connaître. Les deux écritures de l'or que les pages passent sont
+     reconnues — la palette d'ici et la variable de ui.css. */
+  const DORES = new Set([COULEURS.or.toLowerCase(), 'var(--projo)']);
+  const dore = (c) => DORES.has(String(c ?? '').replace(/\s+/g, '').toLowerCase());
 
   /**
    * Une couleur de club, rendue lisible sur le fond sombre du jeu.
@@ -195,24 +218,35 @@
     16%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}
     26%{transform:translate(-50%,-50%) scale(1)}
     78%{opacity:1}100%{opacity:0;transform:translate(-50%,-62%) scale(.98)}}
-  /* Le sous-titre se lit, il ne se devine pas : 0,9 et non plus 0,75. Le
-     socle demande 0,85 au moins à tout texte qui informe, et celui-ci dit le
-     score ou le buteur. */
+  /* Le sous-titre se lit, il ne se devine pas : il dit le score ou le
+     buteur. **À la craie pleine, quelle que soit la couleur du titre**
+     (arbitrage du 2 octobre 2026 : le petit texte en or passe en craie) : il
+     héritait de la couleur du titre, donc de l'or dans douze pixels — 3,5:1
+     au soleil sur la plaque, quand un petit texte en demande 4,5. La craie
+     pleine y tient 15,7:1 à l'intérieur, et à 0,9 elle perdait un demi-point
+     au soleil, comme la ligne du buteur de la case de BD. L'accent du camp
+     reste au titre et au liseré de la plaque ; le sous-titre le garde par la
+     graisse. */
   .fx-sous{display:block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;
-    letter-spacing:.18em;opacity:.9;margin-top:9px;font-weight:400}
+    letter-spacing:.18em;margin-top:9px;font-weight:600;color:#F2EEE4}
   .fx-nombre{position:fixed;z-index:92;font-family:"Oswald","Arial Narrow",Impact,sans-serif;
     font-size:22px;pointer-events:none;text-shadow:0 3px 14px rgba(0,0,0,.9)}
   /* Le gain qu'on vient de faire soi-même. Le halo double l'ombre portée : le
      nombre passe par-dessus une corde qui bouge et une foule qui s'anime, et
-     une ombre seule ne l'en détache pas. */
-  .fx-points{position:fixed;z-index:93;pointer-events:none;text-align:center;
-    filter:drop-shadow(0 0 16px currentColor)}
+     une ombre seule ne l'en détache pas. Le halo est posé sur le nombre et
+     non sur le bloc : sous le mot, passé à la craie, une lueur dorée
+     éclaircirait le fond derrière une lettre claire. */
+  .fx-points{position:fixed;z-index:93;pointer-events:none;text-align:center}
   .fx-points b{display:block;font-family:"Oswald","Arial Narrow",Impact,sans-serif;
-    font-size:46px;line-height:1;font-weight:700;text-shadow:0 4px 18px rgba(0,0,0,.95)}
+    font-size:46px;line-height:1;font-weight:700;text-shadow:0 4px 18px rgba(0,0,0,.95);
+    filter:drop-shadow(0 0 16px currentColor)}
   /* Onze pixels : le plancher du socle pour un texte qui informe, et ce mot
-     dit de quoi est fait le gain. */
+     dit de quoi est fait le gain. **À la craie pleine** (arbitrage du
+     2 octobre 2026) : il prenait la couleur du gain, de l'or dans onze
+     pixels, et l'or ne s'écrit plus qu'en grand. La couleur reste au nombre,
+     quarante-six pixels gras ; le mot garde l'accent par la graisse. */
   .fx-points span{display:block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;
-    letter-spacing:.22em;font-weight:600;margin-top:3px;opacity:.9;
+    letter-spacing:.22em;font-weight:700;margin-top:3px;color:#F2EEE4;
     text-shadow:0 2px 8px rgba(0,0,0,.95)}
   .fx-onde{position:fixed;border-radius:50%;pointer-events:none;z-index:89;border:2px solid;
     opacity:0}
@@ -241,10 +275,95 @@
     will-change:transform,opacity}
   img.fx-vol{width:44px;height:44px;object-fit:contain;
     filter:drop-shadow(0 4px 10px rgba(0,0,0,.7))}
+  /* Vingt pixels en gras : un grand texte (18,66 px gras au moins), le seul
+     où l'or s'écrit encore. Qui l'amincit ou le rapetisse le passe en craie. */
   div.fx-vol{font-family:"Oswald","Arial Narrow",Impact,sans-serif;font-size:20px;font-weight:700;
     line-height:1;white-space:nowrap;color:#F5C33B;text-shadow:0 2px 10px rgba(0,0,0,.95)}
   div.fx-vol:empty{width:14px;height:14px;border-radius:50%;background:#F5C33B;
     box-shadow:0 0 12px rgba(245,195,59,.8)}
+  /* Un confetti de papier : six pixels sur dix, un coin à peine arrondi, et
+     l'ombre d'encre des confettis du moment fort de ui.css. */
+  .fx-papier{position:absolute;width:6px;height:10px;margin:-5px 0 0 -3px;border-radius:1px;
+    box-shadow:1px 1px 0 rgba(7,9,12,.45);pointer-events:none;will-change:transform,opacity}
+
+  /* ------------------------------------------------- la cérémonie
+
+     Le calque où se joue « FX.reveler », posé sur le document : au-dessus du
+     moment fort (95), sous la boîte de confirmation (160) et sous la fête de
+     niveau (170). Un calque de page qui veut sa cérémonie par-dessus lui
+     reste donc sous 96. Il ne prend jamais le doigt.
+
+     Rien de ce qui suit ne se pose sur l'objet révélé lui-même : la page en
+     reste maîtresse — sa classe, ses enfants, sa rotation. La boîte qui suit
+     l'objet (« .fx-rev ») est réécrite par le script à chaque image, à sa
+     place et à sa taille ; elle ne s'anime jamais elle-même. */
+  .fx-ceremonie{position:fixed;inset:0;z-index:96;pointer-events:none;overflow:hidden}
+  .fx-rev{position:absolute;left:0;top:0;width:0;height:0}
+  /* Le liseré : un anneau de la couleur de la rareté qui s'allume et
+     s'éteint autour de l'objet. C'est une information et non un décor : il
+     reste sans mouvement, en fondu sur place (voir plus bas). */
+  .fx-rev-lisere{position:absolute;inset:-4px;border-radius:inherit;opacity:0;
+    box-shadow:0 0 0 3px var(--fx-rar),0 0 22px 3px var(--fx-rar);
+    animation:fxlisere 600ms ease-out var(--fx-d,0ms) both}
+  @keyframes fxlisere{0%{opacity:0}22%{opacity:1}100%{opacity:0}}
+  /* Rare : le balayage plastifié. Un reflet de craie traverse l'objet une
+     fois, de gauche à droite, en 400 ms. Épique : la nappe holographique,
+     plus large et plus lente, 700 ms, aux couleurs de la feuille épique
+     (violet, bleu, craie). Le reflet est un pseudo-élément qui se déplace par
+     transform : jamais un dégradé animé (amendement 9). */
+  .fx-rev-plastique,.fx-rev-nappe{position:absolute;inset:0;overflow:hidden;border-radius:inherit}
+  .fx-rev-plastique::before,.fx-rev-nappe::before{content:"";position:absolute;
+    top:-30%;bottom:-30%;left:0;transform:translateX(-120%) skewX(-16deg)}
+  .fx-rev-plastique::before{width:50%;
+    background:linear-gradient(90deg,transparent,rgba(242,238,228,.16) 30%,
+      rgba(255,255,255,.74) 50%,rgba(242,238,228,.16) 70%,transparent);
+    animation:fxbalaye 400ms cubic-bezier(.45,.05,.3,1) var(--fx-d,0ms) both}
+  .fx-rev-nappe::before{width:80%;
+    background:linear-gradient(90deg,transparent,rgba(185,140,255,.46) 22%,
+      rgba(95,168,255,.42) 40%,rgba(242,238,228,.62) 52%,rgba(185,140,255,.46) 70%,transparent);
+    animation:fxbalaye 700ms cubic-bezier(.4,.1,.3,1) var(--fx-d,0ms) both}
+  @keyframes fxbalaye{from{transform:translateX(-120%) skewX(-16deg)}
+    to{transform:translateX(220%) skewX(-16deg)}}
+  /* La bouffée violette de l'épique, autour de l'objet et jamais dessus :
+     une ombre portée hors de la boîte ne se peint pas sous elle. */
+  .fx-rev-halo{position:absolute;inset:0;border-radius:inherit;opacity:0;
+    box-shadow:0 0 30px 12px rgba(185,140,255,.7),0 0 72px 30px rgba(130,87,218,.42);
+    animation:fxhalo 700ms ease-out var(--fx-d,0ms) both}
+  @keyframes fxhalo{0%{opacity:0;scale:.94}30%{opacity:1;scale:1.03}100%{opacity:0;scale:1.08}}
+  /* Légendaire : le flash d'or pâle, 200 ms, sur tout l'écran. En avant
+     seulement : avant son départ il est invisible, et non posé à sa première
+     image (la cérémonie peut attendre la fin d'un retournement). */
+  .fx-rev-flash{position:absolute;inset:0;background:#FFF3D0;opacity:0;
+    animation:fxrevflash 200ms ease-out var(--fx-d,0ms) forwards}
+  @keyframes fxrevflash{0%{opacity:.88}100%{opacity:0}}
+  /* Les rayons au pochoir de la case de BD, d'or, qui partent de derrière
+     l'objet et tournent un peu en s'ouvrant. Le masque évide la place de
+     l'objet : les rayons l'entourent, ils ne le rayent pas. Le porteur du
+     masque ne tourne pas — c'est son pseudo-élément qui tourne —, sans quoi
+     le trou tournerait avec lui. */
+  .fx-rev-rayons{position:absolute;left:50%;top:50%;width:var(--fx-s,320px);height:var(--fx-s,320px);
+    translate:-50% -50%;
+    -webkit-mask:radial-gradient(closest-side,#000 30%,transparent 80%) center/100% 100% no-repeat,
+      linear-gradient(#000,#000) center/var(--fx-w,0px) var(--fx-h,0px) no-repeat;
+    -webkit-mask-composite:source-out;
+    mask:radial-gradient(closest-side,#000 30%,transparent 80%) center/100% 100% no-repeat subtract,
+      linear-gradient(#000,#000) center/var(--fx-w,0px) var(--fx-h,0px) no-repeat}
+  .fx-rev-rayons::before{content:"";position:absolute;inset:-21%;opacity:0;
+    background:repeating-conic-gradient(from 0deg at 50% 50%,
+      #F5C33B 0 5deg,transparent 5deg 12deg,#F5C33B 12deg 15deg,transparent 15deg 24deg);
+    animation:fxrayons 1500ms cubic-bezier(.2,.7,.3,1) var(--fx-d,0ms) forwards}
+  @keyframes fxrayons{0%{opacity:0;transform:rotate(-10deg) scale(.55)}
+    16%{opacity:.62}70%{opacity:.5}100%{opacity:0;transform:rotate(16deg) scale(1)}}
+  /* Le tampon « LÉGENDAIRE » : la brique de ui.css en contour d'or, en grand
+     (26 px en 700 : un grand texte, le seul où l'or s'écrit), sur une plaque
+     d'encre — il tombe sur une illustration, et rien ne garantit qu'elle soit
+     sombre. Il claque avec « .tbf-clac » de ui.css, cent quatre-vingts
+     millisecondes après le flash ; son porteur le retire en fondu à la fin. */
+  .fx-rev-sceau{position:absolute;left:50%;top:34%;z-index:2;translate:-50% -50%;
+    animation:fxsceau var(--fx-t,1500ms) linear var(--fx-d,0ms) both}
+  .fx-rev-sceau .tbf-tampon{font-size:26px;background:rgba(7,9,12,.86);
+    --d:calc(var(--fx-d,0ms) + 180ms)}
+  @keyframes fxsceau{0%,86%{opacity:1}100%{opacity:0}}
 
   /* Sans mouvement : la préférence du système, ou le mode calme du joueur
      (html[data-calme~="animations"], posé par ce fichier et par menu.js). Les
@@ -253,7 +372,13 @@
      Le mouvement part, l'information reste. Le titre, le bandeau, le carton et
      l'évolution disent quelque chose — un but, une minute double, un rouge, un
      Fanzzy qui a grandi : ils apparaissent et s'effacent en fondu, sur place.
-     La secousse et la respiration ne disent rien : elles s'arrêtent. */
+     La secousse et la respiration ne disent rien : elles s'arrêtent.
+
+     La cérémonie garde son liseré et son tampon, en fondu sur place : ils
+     disent la rareté. Le reflet, la nappe, la bouffée, le flash et les rayons
+     ne disent rien que la forme, la couleur et le mot ne disent déjà ; ils
+     partent. Le script ne les pose même pas (voir « reveler ») : ces règles-ci
+     tiennent pour un réglage changé pendant qu'une cérémonie se joue. */
   @keyframes fxdoux{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}
   @keyframes fxbandeaudoux{0%{transform:none;opacity:0}8%{opacity:1}
     90%{opacity:1}100%{transform:none;opacity:0}}
@@ -266,13 +391,17 @@
     .fx-bandeau.go{animation:fxbandeaudoux 3s ease}
     .fx-charge{animation:fxchargedoux 1s ease forwards}
     .fx-arrive{animation:fxarrivedoux .5s ease backwards}
+    .fx-rev-plastique,.fx-rev-nappe,.fx-rev-halo,.fx-rev-flash,.fx-rev-rayons{display:none}
   }
   html[data-calme~="animations"] .fx-shake{animation:none}
   html[data-calme~="animations"] .fx-titre.go{animation:fxdoux 1.6s ease}
   html[data-calme~="animations"] .fx-carton.go{animation:fxdoux 1.5s ease}
   html[data-calme~="animations"] .fx-bandeau.go{animation:fxbandeaudoux 3s ease}
   html[data-calme~="animations"] .fx-charge{animation:fxchargedoux 1s ease forwards}
-  html[data-calme~="animations"] .fx-arrive{animation:fxarrivedoux .5s ease backwards}`;
+  html[data-calme~="animations"] .fx-arrive{animation:fxarrivedoux .5s ease backwards}
+  html[data-calme~="animations"] .fx-rev-plastique,html[data-calme~="animations"] .fx-rev-nappe,
+  html[data-calme~="animations"] .fx-rev-halo,html[data-calme~="animations"] .fx-rev-flash,
+  html[data-calme~="animations"] .fx-rev-rayons{display:none}`;
 
   /* ------------------------------------------------- personnages vivants
      Un Fanzzy figé sur une carte a l'air d'un autocollant. Trois animations
@@ -319,11 +448,26 @@
 
   /* --------------------------------------------------------- primitives */
 
-  /** Gerbe de particules. Plafonnée : au-delà, on ne voit pas mieux, on rame. */
+  /**
+   * Gerbe de particules. Plafonnée : au-delà, on ne voit pas mieux, on rame.
+   *
+   * **`papier: true`** lance des confettis de papier au lieu des points : des
+   * rectangles de 6 × 10 qui tournent, s'écartent puis retombent un peu,
+   * chacun avec son ombre d'encre. C'est la fête de la maison (amendement 1 :
+   * le kop n'a pas de peinture, il a du papier), et la même matière que les
+   * confettis du moment fort de ui.css. Quatre-vingt-dix au plus.
+   *
+   * **`dans`** pose la gerbe dans un autre conteneur que le calque commun :
+   * le calque de la cérémonie, qui passe au-dessus d'un calque de page, ou
+   * une boîte positionnée qui la rogne. `x` et `y` se comptent alors depuis
+   * le coin de ce conteneur.
+   */
   function particules({ x, y, n = 24, couleurs = [COULEURS.or, COULEURS.feu],
-                        distance = 150, taille = 5, duree = 900 } = {}) {
+                        distance = 150, taille = 5, duree = 900,
+                        papier = false, dans = null } = {}) {
     if (doux()) return;
-    const l = layer();
+    const l = dans ?? layer();
+    if (papier) { confettis(l, { x, y, n, couleurs, distance, duree }); return; }
     const total = Math.min(n, 120);
     for (let i = 0; i < total; i++) {
       const p = document.createElement('div');
@@ -340,6 +484,40 @@
           opacity: 0 },
       ], { duration: duree * (0.7 + Math.random() * 0.6),
            easing: 'cubic-bezier(.15,.7,.3,1)' }).onfinish = () => p.remove();
+    }
+  }
+
+  /* Les confettis de papier (voir « particules »). Le trajet est écrit en
+     pixels et le centrage par une marge négative : la transformation ne
+     porte que le vol, la rotation et la retombée. Chaque morceau a un filet
+     qui le retire, comme le reste de ce fichier : un onglet caché ne finit
+     pas ses animations, et un confetti oublié resterait collé à l'écran. */
+  function confettis(l, { x, y, n, couleurs, distance, duree }) {
+    const total = Math.min(n, 90);
+    for (let i = 0; i < total; i++) {
+      const p = document.createElement('i');
+      p.className = 'fx-papier';
+      p.style.cssText = `left:${x}px;top:${y}px;background:${couleurs[i % couleurs.length]}`;
+      l.appendChild(p);
+      const a = Math.random() * Math.PI * 2;
+      const d = distance * (0.45 + Math.random() * 0.75);
+      const dx = Math.cos(a) * d;
+      const dy = Math.sin(a) * d;
+      const r0 = Math.random() * 360;
+      const tour = (Math.random() < 0.5 ? -1 : 1) * (160 + Math.random() * 320);
+      const ms = duree * (0.75 + Math.random() * 0.5);
+      const filet = setTimeout(() => p.remove(), ms + 200);
+      try {
+        p.animate([
+          { transform: `translate(0,0) rotate(${r0}deg) scale(.5)`, opacity: 1 },
+          { transform: `translate(${dx * 0.75}px,${dy * 0.75}px) rotate(${r0 + tour * 0.5}deg) scale(1)`,
+            opacity: 1, offset: 0.4 },
+          // La retombée : un morceau de papier ne s'envole pas, il plane et tombe.
+          { transform: `translate(${dx}px,${dy + d * 0.5}px) rotate(${r0 + tour}deg) scale(.9)`,
+            opacity: 0 },
+        ], { duration: ms, easing: 'cubic-bezier(.2,.75,.35,1)' })
+          .onfinish = () => { clearTimeout(filet); p.remove(); };
+      } catch { clearTimeout(filet); p.remove(); }
     }
   }
 
@@ -378,7 +556,10 @@
     const t = document.createElement('div');
     t.className = 'fx-titre';
     t.style.color = couleur;
-    t.style.fontSize = `${taille}px`;
+    // L'or sous 24 px ne reste un grand texte qu'en gras (voir « dore »).
+    const petitOr = dore(couleur) && taille < 24;
+    t.style.fontSize = `${petitOr ? Math.max(taille, 19) : taille}px`;
+    if (petitOr) t.style.fontWeight = '700';
     t.innerHTML = `${texte}${sous ? `<span class="fx-sous">${sous}</span>` : ''}`;
     document.body.appendChild(t);
     requestAnimationFrame(() => t.classList.add('go'));
@@ -390,6 +571,10 @@
     const n = document.createElement('div');
     n.className = 'fx-nombre';
     n.style.cssText = `left:${x}px;top:${y}px;color:${couleur}`;
+    /* Vingt-deux pixels : en or, ce n'est un grand texte qu'en gras (voir
+       « dore »). La poussée d'en face, en bleu ou en gris, garde sa graisse :
+       elle doit se voir sans prendre l'écran. */
+    if (dore(couleur)) n.style.fontWeight = '700';
     n.textContent = (signe && valeur > 0 ? '+' : '') + valeur;
     document.body.appendChild(n);
     /* Sans mouvement, le nombre reste : c'est une information. Il apparaît
@@ -458,123 +643,50 @@
       document.addEventListener('DOMContentLoaded', lancer);
     } else lancer();
 
+    /* Le contexte audio ne s'ouvre plus ici : son.js écoute lui-même le
+       premier geste, en capture, avant tout gestionnaire de la page. */
     document.addEventListener('pointerdown', (e) => {
-      // Le navigateur n'autorise le son qu'après un geste : on ouvre le
-      // contexte au premier toucher, pour que le premier vrai son ne soit pas
-      // avalé.
-      contexte();
       const p = e.target.closest?.('.fz-vivant');
       if (p) reagir(p);
     }, { passive: true });
   }
 
   /* ----------------------------------------------------------------- son
-     Aucun fichier audio : tout est synthétisé à la volée.
-     Un jeu qui télécharge ses sons les joue en retard la première fois —
-     exactement au moment où ils comptent. Ici le son part avec l'image.
+     Aucun fichier audio : tout est synthétisé à la volée. Un jeu qui
+     télécharge ses sons les joue en retard la première fois — exactement au
+     moment où ils comptent. Ici le son part avec l'image.
 
-     Le navigateur interdit de produire du son avant un geste de
-     l'utilisateur. Le contexte n'est donc créé qu'au premier toucher, et le
-     joueur peut couper : la préférence survit d'une page à l'autre.
+     **Le son vit dans son.js**, le moteur commun : un seul contexte audio
+     pour tout le jeu (il y en avait deux, celui d'ici et celui de
+     cartes.js), trois bus, un limiteur, un mixage mesuré, l'ambiance de
+     tribune et les chants. La banque qui était ici y est passée, sons et
+     noms inchangés, mixés.
 
-     Couper le son, c'est calmer la facette « sons » du mode calme — le
-     bouton du duel et l'interrupteur du tiroir disent la même chose, et un
-     seul réglage les tient tous les deux. Tant qu'elle est calmée, le
-     contexte audio n'est même pas créé. */
+     **Ce fichier le charge**, pour que chaque page qui a les effets ait le
+     son sans poser de balise de plus. C'est sûr : rien ne sonne avant le
+     premier geste du joueur — le moteur ne crée son contexte qu'à ce
+     moment-là, comme l'exigent les navigateurs —, et fx.js part en différé,
+     après l'analyse de la page, bien avant le premier toucher. Une page qui
+     poserait sa propre balise ne le chargerait pas deux fois (le moteur se
+     garde, et on regarde ici si la balise est déjà là). S'il manque — le
+     réseau, une suite qui n'injecte que ce fichier —, les sons se taisent et
+     rien d'autre ne change : aucun son ne porte seul une information.
 
-  let audio = null;
-
-  function contexte() {
-    if (calme('sons')) return null;
-    if (!audio) {
-      const C = window.AudioContext ?? window.webkitAudioContext;
-      if (!C) return null;
-      try { audio = new C(); } catch { return null; }
-    }
-    if (audio.state === 'suspended') audio.resume().catch(() => {});
-    return audio;
+     `FX.son(nom)` garde son nom et sa signature : il passe la main au
+     moteur. Couper le son, c'est toujours calmer la facette « sons » du mode
+     calme — le bouton du duel et l'interrupteur du tiroir disent la même
+     chose. Le moteur la lit à chaque son, et l'observe pour couper aussi ce
+     qui joue déjà, l'ambiance comprise. */
+  if (!window.TBF_SON && !document.querySelector('script[src="/son.js"]')) {
+    const moteur = document.createElement('script');
+    moteur.src = '/son.js';
+    (document.head ?? document.documentElement).appendChild(moteur);
   }
 
-  /** Une note, avec une hauteur qui peut glisser. */
-  function ton({ freq = 220, vers = null, duree = .18, type = 'sine', vol = .16, delai = 0 }) {
-    const c = contexte(); if (!c) return;
-    const t0 = c.currentTime + delai;
-    const o = c.createOscillator();
-    const g = c.createGain();
-    o.type = type;
-    o.frequency.setValueAtTime(freq, t0);
-    if (vers) o.frequency.exponentialRampToValueAtTime(Math.max(20, vers), t0 + duree);
-    // Attaque courte puis extinction : sans elle, chaque son claque.
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.linearRampToValueAtTime(vol, t0 + .012);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
-    o.connect(g).connect(c.destination);
-    o.start(t0); o.stop(t0 + duree + .03);
-  }
-
-  /** Du bruit filtré : tout ce qui est souffle, foule ou frottement. */
-  function bruit({ duree = .3, freq = 800, vol = .1, delai = 0 }) {
-    const c = contexte(); if (!c) return;
-    const t0 = c.currentTime + delai;
-    const n = Math.floor(c.sampleRate * duree);
-    const buf = c.createBuffer(1, n, c.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
-    const src = c.createBufferSource(); src.buffer = buf;
-    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 1.2;
-    const g = c.createGain();
-    g.gain.setValueAtTime(vol, t0);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
-    src.connect(f).connect(g).connect(c.destination);
-    src.start(t0); src.stop(t0 + duree);
-  }
-
-  /**
-   * La banque de sons. Chacun tient en une ou deux lignes, et c'est voulu :
-   * un son de jeu doit être court et reconnaissable, pas joli.
-   */
-  const SONS = {
-    pousse:  () => ton({ freq: 190, vers: 62, duree: .15, type: 'triangle', vol: .15 }),
-    contre:  () => ton({ freq: 130, vers: 55, duree: .18, type: 'triangle', vol: .1 }),
-    chant:   () => { bruit({ duree: .26, freq: 750, vol: .09 });
-                     ton({ freq: 300, vers: 520, duree: .2, vol: .09 }); },
-    parfait: () => { bruit({ duree: .3, freq: 1100, vol: .1 });
-                     [523, 659, 784].forEach((f, i) =>
-                       ton({ freq: f, duree: .3, type: 'sine', vol: .09, delai: i * .05 })); },
-    carte:   () => ton({ freq: 880, vers: 400, duree: .08, type: 'square', vol: .06 }),
-    bache:   () => ton({ freq: 115, vers: 70, duree: .22, type: 'sine', vol: .13 }),
-    tic:     () => ton({ freq: 1200, duree: .03, type: 'square', vol: .05 }),
-    /* Le tic sourd : une porte fermée qu'on touche (voir « refus »). Plus bas
-       et plus mat que le tic d'une bâche, avec un frottement dessous : on
-       doit entendre, sans regarder, que le geste n'a pas pris. Le tic clair
-       dirait le contraire — c'est le son d'une bâche qui s'ouvre. */
-    sourd:   () => { ton({ freq: 220, vers: 110, duree: .07, type: 'triangle', vol: .12 });
-                     bruit({ duree: .05, freq: 360, vol: .06 }); },
-    // La corne de but : trois notes tenues, comme un klaxon de tribune.
-    but:     () => { [392, 494, 587].forEach((f, i) =>
-                       ton({ freq: f, duree: .55, type: 'sawtooth', vol: .09, delai: i * .12 }));
-                     bruit({ duree: .9, freq: 300, vol: .07, delai: .1 }); },
-    encaisse: () => ton({ freq: 210, vers: 85, duree: .7, type: 'sawtooth', vol: .09 }),
-    /* L'évolution, en deux sons parce qu'elle est en deux temps.
-
-       La charge monte pendant une seconde — c'est exactement la durée de
-       l'animation, et les deux doivent finir ensemble : un son qui s'arrête
-       avant la lumière fait retomber le geste au moment où il culmine.
-
-       Le second est un accord qui se pose. Trois notes, comme le but, mais
-       tenues plus longtemps et sans le bruit de foule : on ne fête pas la même
-       chose. */
-    charge:  () => { ton({ freq: 140, vers: 720, duree: 1, type: 'sawtooth', vol: .07 });
-                     bruit({ duree: 1, freq: 900, vol: .05 }); },
-    evolue:  () => { [523, 659, 784, 1047].forEach((f, i) =>
-                       ton({ freq: f, duree: .85, type: 'sine', vol: .085, delai: i * .06 }));
-                     bruit({ duree: .35, freq: 1400, vol: .07 }); },
-    butReel: () => { SONS.but(); bruit({ duree: 1.4, freq: 420, vol: .08, delai: .15 }); },
-  };
-
-  const son = (nom) => {
-    if (calme('sons')) return;
-    try { SONS[nom]?.(); } catch { /* le son ne doit jamais casser le jeu */ }
+  /* Le calme n'est pas regardé ici : le moteur le garde, à un seul endroit
+     (deux gardes au même endroit rendent chacune inéprouvable seule). */
+  const son = (nom, options) => {
+    try { window.TBF_SON?.jouer?.(nom, options); } catch { /* le son ne doit jamais casser le jeu */ }
   };
 
   /* ------------------------------------------------- compteurs et vols
@@ -743,6 +855,308 @@
     });
   }
 
+  /* ======================================================== la cérémonie
+
+     **Une seule échelle pour tout ce qui se révèle.** L'ouverture d'un
+     booster, l'achat à l'étal, demain la collection et l'évolution : chaque
+     écran inventait sa fête — `FX.rare` ici, une gerbe, une vidéo et un
+     tremblement écrits à la main dans la page là. Une rare n'avait pas le
+     même poids d'un écran à l'autre, et le joueur ne pouvait pas apprendre à
+     reconnaître une légendaire avant de l'avoir lue. Quatre degrés, qui se
+     jouent pareil partout (l'échelle de la Vitrine, greffée par l'amendement
+     13, contrat écrit dans le brief des lots 3 et 5) :
+
+       commune     le retournement simple, et rien d'autre ;
+       rare        un balayage plastifié de 400 ms et le tic ;
+       épique      une nappe holographique de 700 ms, une bouffée violette
+                   autour de l'objet, des confettis, le carillon, 14 ms de
+                   vibration ;
+       légendaire  un flash de 200 ms, les rayons, la secousse, le
+                   rugissement, le tampon « LÉGENDAIRE » et la vibration
+                   [40, 30, 90].
+
+     Chaque degré au-dessus de la commune allume aussi un liseré de sa couleur
+     autour de l'objet.
+
+     **Le calme et le mouvement réduit.** Les sons, les vibrations et les
+     animations suivent chacun leur facette du mode calme, comme tout ce
+     fichier. Sans mouvement, l'information reste : la rareté se lit par la
+     forme, la couleur et le mot — la forme et le mot sont sur l'objet (le
+     sticker de rareté que la page y colle), la couleur dans le liseré, qui
+     s'allume et s'éteint sur place, et le mot de la légendaire dans son
+     tampon, posé sans claquer. */
+
+  const ECHELLE = ['commune', 'rare', 'epique', 'legendaire'];
+  /* La couleur de chaque rareté : les jetons « --r-* » de ui.css, avec leur
+     valeur en repli pour une page qui ne chargerait pas la feuille. */
+  const TEINTE = {
+    commune: 'var(--r-commune,#C2CAD6)', rare: 'var(--r-rare,#5FA8FF)',
+    epique: 'var(--r-epique,#B98CFF)', legendaire: 'var(--r-legendaire,#F5C33B)',
+  };
+  /* Ce que dure chaque degré, de son départ à son dernier objet retiré — la
+     promesse se résout là. Sans mouvement, il ne reste que le liseré et le
+     tampon : plus court, sauf le tampon, qui doit se lire. */
+  const DUREE = {
+    vif: { rare: 600, epique: 1200, legendaire: 1600 },
+    doux: { rare: 600, epique: 600, legendaire: 1400 },
+  };
+  /** Le retournement simple, quand la cérémonie le fait elle-même. */
+  const RETOURNE = 300;
+  /** Ce qu'on attend, au plus, la fin du geste que la page a lancé. */
+  const ATTENTE_MAX = 900;
+
+  /** Le degré d'une rareté telle que les pages l'ont en main. */
+  function degre(rarete) {
+    const r = String(rarete ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .trim().toLowerCase();
+    if (r === 'crown') return 'legendaire';   // le nom que lisait FX.rare
+    return ECHELLE.includes(r) ? r : 'commune';
+  }
+
+  let estradeEl = null;
+  /** Le calque de la cérémonie (« .fx-ceremonie »), créé à la première. */
+  const estrade = () => {
+    if (!estradeEl || !estradeEl.isConnected) {
+      estradeEl = document.createElement('div');
+      estradeEl.className = 'fx-ceremonie';
+      estradeEl.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(estradeEl);
+    }
+    return estradeEl;
+  };
+
+  /** La boîte d'un élément à l'écran, ou rien s'il n'y occupe aucune place. */
+  const boite = (el) => {
+    const r = el?.isConnected ? el.getBoundingClientRect?.() : null;
+    return r && r.width > 0 && r.height > 0 ? r : null;
+  };
+
+  /* **Parti** n'est pas **plat**. Un objet a quitté l'écran quand il n'est
+     plus dans le document, ou qu'il n'y a plus de boîte du tout
+     (« display:none » sur lui ou sur un parent : aucun rectangle). Un objet
+     de largeur nulle est encore là : c'est la première image du
+     retournement, où la propriété « scale » le tient à « 0 1 ». Les
+     confondre arrêtait toute cérémonie avec « retourner » à sa première
+     image, sans rien jouer (mesuré au banc de la boutique : une légendaire
+     résolue en 52 ms au lieu de 1 900). */
+  const parti = (el) => !el?.isConnected || !el.getClientRects?.().length;
+
+  /* L'arrondi de l'objet, pour que le reflet ne déborde pas de ses coins. Une
+     carte est souvent enveloppée : la page passe le porteur (la carte qui se
+     retourne), et l'arrondi est sur la face, deux étages plus bas. On descend
+     donc par le premier enfant tant qu'il a la taille de l'objet. */
+  function arrondi(el) {
+    const ref = el.getBoundingClientRect();
+    let n = el;
+    for (let i = 0; i < 4 && n; i++) {
+      const cs = getComputedStyle(n);
+      if (parseFloat(cs.borderTopLeftRadius) > 0) return cs.borderRadius;
+      n = n.firstElementChild;
+      const r = n?.getBoundingClientRect?.();
+      if (!r || Math.abs(r.width - ref.width) > 3 || Math.abs(r.height - ref.height) > 3) break;
+    }
+    return '0px';
+  }
+
+  /* **La cérémonie attend que la page ait fini son geste.** La carte du
+     booster se retourne seule, en une demi-seconde, et la page appelle
+     FX.reveler dans la foulée du retournement : un reflet posé tout de suite
+     balaierait une carte encore vue de profil. On attend donc la fin des
+     animations finies qui courent sur l'objet et dans ses enfants — une
+     transition, une entrée —, jamais celle d'une animation sans fin (la
+     respiration d'un personnage), et jamais plus de neuf cents
+     millisecondes. « getAnimations » remet le style à jour avant de
+     répondre : la transition que la page vient de déclencher en posant sa
+     classe est déjà comptée. */
+  function attendrePose(el) {
+    let enCours = [];
+    try {
+      enCours = (el?.getAnimations?.({ subtree: true }) ?? []).filter((a) => {
+        const t = a.effect?.getComputedTiming?.();
+        return a.playState === 'running' && t && Number.isFinite(t.endTime);
+      });
+    } catch { /* un navigateur sans getAnimations : on n'attend pas */ }
+    if (!enCours.length) return Promise.resolve();
+    return Promise.race([
+      Promise.all(enCours.map((a) => a.finished.catch(() => {}))),
+      new Promise((r) => setTimeout(r, ATTENTE_MAX)),
+    ]);
+  }
+
+  /**
+   * Révèle un objet selon sa rareté : la cérémonie commune.
+   *
+   * Voir l'échelle juste au-dessus. Elle se joue **sur un calque à elle**
+   * (« .fx-ceremonie », z 96, sur le document) qui suit l'objet image après
+   * image : rien n'est posé dans l'objet ni dans son conteneur, qu'une page
+   * peut réécrire à tout moment. Si l'objet quitte l'écran en cours de route
+   * — la page a tout révélé d'un coup, ou redessiné sa grille —, la cérémonie
+   * s'arrête avec lui et la promesse se résout.
+   *
+   * @param {string}  rarete  « commune », « rare », « epique » ou
+   *   « legendaire » (les accents sont admis) ; tout autre nom vaut commune
+   * @param {Element} [el]    l'objet révélé, à l'écran : la carte qu'on vient
+   *   de retourner, l'objet acheté posé au centre. Sans lui, ce qui se passe
+   *   autour d'un objet (liseré, reflet, nappe, confettis) ne se joue pas ; le
+   *   tampon et les rayons se posent au milieu de l'écran.
+   * @param {object}  [o]
+   * @param {boolean} [o.son=true]  « false » : la page joue ses propres sons,
+   *   la cérémonie se tait (les vibrations restent)
+   * @param {boolean} [o.retourner=false]  « true » : la cérémonie retourne
+   *   l'objet elle-même avant le reste — pour un objet qui n'a pas de
+   *   retournement à lui (l'objet de l'étal). La carte du booster a le sien :
+   *   la page l'appelle sans, et la cérémonie attend qu'il ait fini.
+   * @returns {Promise<void>} résolue quand la cérémonie est finie — tout de
+   *   suite pour une commune sans retournement, ou dans un onglet caché
+   */
+  function reveler(rarete, el, { son: sonore = true, retourner = false } = {}) {
+    const d = degre(rarete);
+    if (document.hidden) return Promise.resolve();
+    return (retourner ? Promise.resolve() : attendrePose(el))
+      .then(() => ceremonie(d, el, sonore, retourner));
+  }
+
+  function ceremonie(d, el, sonore, retourner) {
+    /* Un onglet caché ne joue rien : ses animations seraient gelées, et la
+       fête partirait d'un coup au retour, sur un écran passé à autre chose. */
+    if (document.hidden) return Promise.resolve();
+    const sans = doux();
+    const cible = el?.isConnected ? el : null;
+    const r0 = boite(cible);
+    const jouerSon = (nom) => { if (sonore) son(nom); };
+    /* L'arrondi se lit avant le retournement : pendant, l'objet et ses
+       enfants n'ont pas encore de largeur, et la descente vers la face
+       arrondie (voir « arrondi ») comparerait des boîtes plates. */
+    const rayon = r0 && d !== 'commune' ? arrondi(cible) : null;
+
+    /* Le retournement simple : l'objet s'ouvre comme une carte qu'on tourne
+       vue de loin, sa largeur passant de rien à la sienne. La propriété
+       « scale » et non « transform » : elle se compose avec la pose que la
+       page a donnée à l'objet au lieu de l'écraser. Sans mouvement, l'objet
+       est simplement là, et le son du geste reste. */
+    let decal = 0;
+    if (retourner && r0) {
+      jouerSon('carte');
+      if (!sans) {
+        try {
+          cible.animate([{ scale: '0 1' }, { scale: '1.06 1', offset: 0.7 }, { scale: '1 1' }],
+            { duration: RETOURNE, easing: 'cubic-bezier(.3,.9,.3,1)' });
+          decal = RETOURNE;
+        } catch { /* sans animations de script : l'objet est déjà là */ }
+      }
+    }
+    if (d === 'commune') return new Promise((r) => setTimeout(r, decal));
+
+    const total = decal + DUREE[sans ? 'doux' : 'vif'][d];
+    const calque = estrade();
+    const g = document.createElement('div');
+    g.className = 'fx-rev';
+    g.style.setProperty('--fx-rar', TEINTE[d]);
+    // Tout part après le retournement : un seul délai, lu par chaque pièce.
+    g.style.setProperty('--fx-d', `${decal}ms`);
+    g.style.setProperty('--fx-t', `${total - decal}ms`);
+    if (rayon) g.style.borderRadius = rayon;
+    /* Les pièces, de la plus basse à la plus haute. Sans mouvement, ni
+       rayons, ni reflet, ni nappe, ni bouffée : la feuille les éteindrait,
+       mais une pièce qui ne joue rien n'a pas à être posée. */
+    let pieces = '';
+    if (d === 'legendaire' && !sans) pieces += '<i class="fx-rev-rayons"></i>';
+    if (r0) {
+      pieces += '<i class="fx-rev-lisere"></i>';
+      if (!sans && d === 'rare') pieces += '<i class="fx-rev-plastique"></i>';
+      if (!sans && d === 'epique') pieces += '<i class="fx-rev-halo"></i><i class="fx-rev-nappe"></i>';
+    }
+    if (d === 'legendaire') {
+      pieces += '<b class="fx-rev-sceau"><span class="tbf-tampon tbf-clac" data-ton="or">'
+        + 'LÉGENDAIRE</span></b>';
+    }
+    g.innerHTML = pieces;
+
+    // Sans objet à l'écran, la boîte est un point au milieu de l'écran.
+    let b = r0 ?? { left: innerWidth / 2, top: innerHeight * 0.42, width: 0, height: 0 };
+    const placer = (x) => {
+      g.style.transform = `translate(${x.left}px,${x.top}px)`;
+      g.style.width = `${x.width}px`;
+      g.style.height = `${x.height}px`;
+      g.style.setProperty('--fx-w', `${x.width}px`);
+      g.style.setProperty('--fx-h', `${x.height}px`);
+      g.style.setProperty('--fx-s',
+        `${Math.round(Math.min(900, Math.max(280, Math.max(x.width, x.height) * 2.6)))}px`);
+    };
+    placer(b);
+    calque.appendChild(g);
+
+    /* Le flash couvre tout l'écran : il vit sur le calque, pas dans la boîte.
+       Posé sous elle, pour ne pas blanchir le tampon qui tombe juste après. */
+    let eclair = null;
+    if (d === 'legendaire' && !sans) {
+      eclair = document.createElement('i');
+      eclair.className = 'fx-rev-flash';
+      eclair.style.setProperty('--fx-d', `${decal}ms`);
+      calque.insertBefore(eclair, g);
+    }
+
+    const minuteries = [];
+    const plusTard = (ms, f) => { if (ms > 0) minuteries.push(setTimeout(f, ms)); else f(); };
+    plusTard(decal, () => {
+      if (d === 'rare') jouerSon('tic');
+      if (d === 'epique') {
+        jouerSon('carillon');
+        buzz(14);
+        const c = b;
+        particules({ x: c.left + c.width / 2, y: c.top + c.height / 2, n: 24, papier: true,
+          couleurs: ['#B98CFF', COULEURS.craie, COULEURS.violet],
+          distance: Math.max(130, Math.max(c.width, c.height) * 0.8), duree: 900, dans: calque });
+      }
+      if (d === 'legendaire') {
+        jouerSon('rugissement');
+        buzz([40, 30, 90]);
+        secousse(1.2);
+      }
+    });
+    // Le clac du tampon, quand il touche l'objet.
+    if (d === 'legendaire') plusTard(decal + 180, () => jouerSon('bache'));
+
+    return new Promise((resoudre) => {
+      let fini = false;
+      let image = 0;
+      const finir = () => {
+        if (fini) return;
+        fini = true;
+        cancelAnimationFrame(image);
+        minuteries.forEach(clearTimeout);
+        g.remove();
+        eclair?.remove();
+        resoudre();
+      };
+      /* La boîte suit l'objet : la secousse le fait trembler, la page peut le
+         faire glisser. Une lecture de position par image, le temps de la
+         cérémonie, et une écriture seulement quand elle a changé. La
+         cérémonie s'arrête quand l'objet est parti (voir « parti ») ; une
+         boîte plate — le retournement à ses premières images — garde la
+         place d'avant, et rien ne se voit encore : chaque pièce attend la
+         fin du retournement. */
+      const suivi = r0 ? cible : null;
+      const suivre = () => {
+        if (fini) return;
+        if (suivi) {
+          if (parti(suivi)) { finir(); return; }
+          const c = boite(suivi);
+          if (c && (c.left !== b.left || c.top !== b.top || c.width !== b.width
+            || c.height !== b.height)) {
+            b = c;
+            placer(c);
+          }
+        }
+        image = requestAnimationFrame(suivre);
+      };
+      /* La fin vient d'une minuterie, jamais de la fin d'une animation : un
+         onglet passé en arrière-plan gèle les animations, pas les minuteries. */
+      minuteries.push(setTimeout(finir, total));
+      image = requestAnimationFrame(suivre);
+    });
+  }
+
   const FX = {
     couleurs: COULEURS,
 
@@ -767,7 +1181,13 @@
 
     particules, onde, flash, secousse, titre, nombre, animer, reagir,
 
-    /** Joue un son de la banque. Sans effet si le joueur a coupé. */
+    /**
+     * Joue un son de la banque — celle du moteur commun, `son.js`
+     * (`TBF_SON.jouer`). Sans effet si le joueur a coupé, avant son premier
+     * geste, dans un onglet caché, ou si le moteur n'est pas chargé.
+     * L'ambiance et les chants se demandent au moteur directement :
+     * `TBF_SON.ambiance(niveau)`, `TBF_SON.chant(type, { tempo })`.
+     */
     son,
     /** Coupe ou rétablit le son, et retient le choix — dans le mode calme. */
     sonCoupe(v) {
@@ -784,6 +1204,9 @@
     calme,
 
     compter, voler,
+
+    /** La cérémonie commune d'un objet révélé, selon sa rareté. */
+    reveler,
 
     /**
      * Une porte fermée qu'on touche : la tuile verrouillée du hub, demain la
@@ -834,8 +1257,9 @@
     /**
      * Un but dans le jeu. Le plus gros effet dont on dispose.
      *
-     * **`vignette: true`** est la forme du hub : `index.html` l'appelle à
-     * côté de `moment('but', …)`, quand un club suivi marque. La page montre
+     * **`vignette: true`** est la forme du hub : `index.html` l'appelle avec
+     * `{ pour: true, vignette: true }` à côté de `moment('but', …)`, quand un
+     * club suivi marque — le but encaissé n'y passe pas. La page montre
      * déjà le but dans la case de BD unifiée (`.tbf-moment`, dans `ui.css`),
      * qui porte son mot, sa bouffée de fumigène et ses confettis. Le « BUT ! »
      * d'ici s'écrivait alors par-dessus la case — deux titres pour un but —,
@@ -975,7 +1399,15 @@
       }
     },
 
-    /** Une carte rare sort d'un booster. */
+    /**
+     * Une carte rare qui se pose.
+     *
+     * **Remplacée par « reveler »**, l'échelle commune de cérémonie. Le
+     * kiosque y est passé et ne l'appelle plus ; il reste un appelant, la
+     * fiche de carte de la collection (`fanfare`, dans `collection.html`),
+     * qui passera à « reveler » avec elle (hors des lots 3 et 5). Elle partira
+     * alors. Ne pas l'employer ailleurs.
+     */
     rare(rarete = 'd3', element) {
       const { x, y } = centre(element);
       const palette = { epique: [COULEURS.bleu, COULEURS.craie],

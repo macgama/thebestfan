@@ -18,6 +18,11 @@
  *      rien, ne lèverait rien, et se retrouverait dans le cache du navigateur
  *      de tout le monde.
  *
+ * Et, depuis le chantier serveur de la refonte (`CONTRATS.md`, § 3) : **le
+ * niveau de chacun**, sous son buste, lu dans les requêtes qui existent déjà ;
+ * absent quand il n'est pas sûr, et jamais pour un compte effacé, qui perd
+ * aussi son personnage.
+ *
  * Usage : node scripts/amis-smoke.mjs
  */
 import { readFileSync } from 'node:fs';
@@ -26,6 +31,8 @@ import { fileURLToPath } from 'node:url';
 import { createAmis, DELAI_APRES_REFUS_MS, FENETRE_PARRAINAGE_MS } from '../src/server/amis/index.js';
 import { createKop } from '../src/server/kop/index.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { createStore } from '../src/server/auth/store.js';
+import { seuil } from '../src/shared/niveau.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
@@ -47,8 +54,10 @@ await raw.query(`DROP TABLE IF EXISTS abonnements, achats, parrainages, kop_invi
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
+// `niveau.sql` pose `user_wallet.xp`, d'où se déduit le niveau de chacun.
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql',
-                 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'etats.sql', 'stades.sql', 'kop.sql', 'amis.sql']) {
+                 'fanzzy.sql', 'inventaire.sql', 'skins.sql', 'etats.sql', 'stades.sql', 'kop.sql', 'amis.sql',
+                 'niveau.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
@@ -466,6 +475,74 @@ console.log('\n— le lien d’invitation —');
     [VIEUX, ANA, ANA, VIEUX]))[0].length);
 }
 
+/* ============================================================ le niveau
+
+   Le niveau sous le buste (`CONTRATS.md`, § 3), dans les quatre listes de la
+   page : amis, demandes reçues, demandes envoyées, suggestions. Il se lit
+   dans la requête qui existe déjà — aucune de plus — et il est **absent**
+   quand il n'est pas sûr : jamais « NIV. 1 » par défaut, qui mentirait sur
+   quelqu'un qui est peut-être niveau 20.
+
+   Les XP sont choisies au bord des seuils : un niveau compté avec un point
+   de trop ou de moins se verrait.                                           */
+console.log('\n— le niveau de chacun —');
+{
+  const [[{ public_id: NEO }]] = await pool.query(
+    `SELECT public_id FROM users WHERE pseudo = 'Neo'`);
+  await pool.query('UPDATE user_wallet SET xp = ? WHERE user_id = ?', [seuil(7) + 5, CLA]);
+  await pool.query('UPDATE user_wallet SET xp = ? WHERE user_id = ?', [seuil(12), NEO]);
+  await pool.query('UPDATE user_wallet SET xp = ? WHERE user_id = ?', [seuil(4) - 1, ANA]);
+  // Bob n'a jamais rien gagné : xp = 0, niveau 1 — un vrai niveau 1.
+
+  await A.demander(BOB, ANA);
+  const chezAna = await A.tableau(ANA);
+  const amisAna = new Map(chezAna.amis.map((g) => [g.id, g]));
+  check('le niveau de chaque ami est le sien',
+    (amisAna.get(CLA)?.niveau === 7 && amisAna.get(NEO)?.niveau === 12)
+    || (console.log('        Clara :', amisAna.get(CLA)?.niveau, '· Neo :', amisAna.get(NEO)?.niveau), false));
+  check('celui d’une demande reçue aussi',
+    chezAna.recues.find((g) => g.id === BOB)?.niveau === 1
+    || (console.log('        reçue :', JSON.stringify(chezAna.recues)), false));
+  check('et celui d’une demande envoyée',
+    (await A.tableau(BOB)).envoyees.find((g) => g.id === ANA)?.niveau === 3);
+  const suggere = (await A.suggestions(BOB)).find((g) => g.id === CLA);
+  check('et celui d’une suggestion',
+    suggere?.niveau === 7 || (console.log('        suggestion :', JSON.stringify(suggere)), false));
+
+  /* Un compte supprimé est anonymisé, pas effacé : l'amitié survit, sous un
+     pseudo anonyme. Son personnage ne doit jamais réapparaître, ni son
+     niveau — la règle des membres d'un KOP vaut ici aussi. Neo a d'abord un
+     visage, pour que sa disparition prouve quelque chose. */
+  await pool.query(`UPDATE user_wallet SET active_fanzzy = 'TR32' WHERE user_id = ?`, [NEO]);
+  check('avant la suppression, Neo a un visage',
+    (await A.tableau(ANA)).amis.find((g) => g.id === NEO)?.avatar?.id === 'TR32');
+  const [[{ id: interne }]] = await pool.query('SELECT id FROM users WHERE public_id = ?', [NEO]);
+  await createStore(pool).deleteUser(interne);
+  const efface = (await A.tableau(ANA)).amis.find((g) => g.id === NEO);
+  check('un ami au compte supprimé garde sa ligne', Boolean(efface));
+  check('mais plus son personnage, ni son niveau',
+    (efface?.avatar === null && efface?.fanzzy === null && !('niveau' in (efface ?? {})))
+    || (console.log('        il porte :', JSON.stringify(efface)), false));
+
+  /* Sans la colonne (`sql/niveau.sql` pas passé), la page se lit quand même,
+     sans aucun niveau : un chiffre d'affichage ne fait pas tomber la liste. */
+  await pool.query('ALTER TABLE user_wallet DROP COLUMN xp');
+  let sansXp = null;
+  const code = await refus(async () => {
+    sansXp = { tableau: await A.tableau(ANA), suggestions: await A.suggestions(BOB) };
+  });
+  check('sans la colonne xp, la liste d’amis se lit',
+    code === '' || (console.log('        elle tombe :', code), false));
+  const tous = sansXp ? [...sansXp.tableau.amis, ...sansXp.tableau.recues,
+    ...sansXp.tableau.envoyees, ...sansXp.suggestions] : [];
+  check('sans aucun niveau, plutôt qu’un niveau inventé',
+    tous.length > 0 && tous.every((g) => !('niveau' in g)));
+  await pool.query('ALTER TABLE user_wallet ADD COLUMN IF NOT EXISTS xp INT UNSIGNED NOT NULL DEFAULT 0');
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end();
-process.exit(failures ? 1 : 0);
+/* `process.exitCode` et non `process.exit()` : sous Windows, couper la boucle
+   avant que le pool ait rendu ses sockets fait échouer la suite au hasard
+   (`ETAT.md`, § 2). */
+process.exitCode = failures ? 1 : 0;

@@ -245,6 +245,32 @@
 html[data-calme~="animations"] .grid .slot{animation:none}
 html[data-calme~="animations"] .fz.holo::after{animation:none}
 
+/* **Une carte qu'on ne regarde pas ne bouge pas** (lots 3 et 5).
+
+   La carte vit sans fin : son personnage respire et se balance (`fzsouffle`
+   et `fzbalance`, posés par `fx.js` sur `.fz-vivant`), son holo brille
+   (`sheen`, juste au-dessus) — et cela face cachée comme en grille. Cinq
+   cartes empilées de dos et cinq cartes sur la page d'album faisaient douze
+   animations infinies à la fois sur l'écran de l'ouverture, pour trois au
+   plus. La direction veut la carte statique en grille.
+
+   **`.fz-fige`** les arrête, sur la carte ou sur n'importe lequel de ses
+   conteneurs : une pile de dos, une carte écartée qu'on ne lit plus. Et la
+   **page d'album** (`.tbf-album`, `ui.css`) fige d'elle-même les cartes
+   qu'elle porte : c'est une grille. La carte qu'on vient de retourner, elle,
+   vit. Rien du dessin ne change, seulement son mouvement ; une animation
+   finie qui part d'un geste (la réaction au toucher, `fx.js`) passe encore,
+   parce que sa règle vient après celle-ci au même poids.
+
+       <div class="reveal fz-fige">…cardHTML…</div>
+
+   Le kiosque les figeait lui-même (`.kq-fige`, une règle provisoire de sa
+   page) : celle-ci la remplace, au sélecteur près. */
+:is(.fz-fige,.tbf-album) .fz,:is(.fz-fige,.tbf-album) .fz::before,:is(.fz-fige,.tbf-album) .fz::after,
+:is(.fz-fige,.tbf-album) .fz *,:is(.fz-fige,.tbf-album) .fz *::before,:is(.fz-fige,.tbf-album) .fz *::after,
+.fz.fz-fige,.fz.fz-fige::before,.fz.fz-fige::after,
+.fz.fz-fige *,.fz.fz-fige *::before,.fz.fz-fige *::after{animation:none}
+
 
 /* L'âge, écrit sur la carte.
  *
@@ -255,7 +281,14 @@ html[data-calme~="animations"] .fz.holo::after{animation:none}
  *
  * Trois couleurs, et une quatrième pour les légendaires : craie au premier âge,
  * argent au deuxième, or au troisième. La progression se lit sans légende,
- * parce que c'est celle des médailles. */
+ * parce que c'est celle des médailles.
+ *
+ * **L'or du troisième âge est au cerne, plus à la lettre** (la règle de l'or,
+ * décidée par Gaël le 2 octobre 2026, voir « les tons » dans `ui.css`) : un
+ * badge de onze à treize pixels n'est pas un grand texte, et l'or ne s'y
+ * écrit plus. Le mot passe à la craie ; le cerne épais et le halo restent
+ * d'or, et ce sont eux qui disent la médaille. La légendaire garde son or
+ * pâle, mot compris : le légendaire est l'un des sens de l'or. */
 /* En pixels, avec un plancher, et **hors du pied** : le pied disparaît sous
    cent cinquante pixels de large — voir la requête de conteneur en fin de
    fichier — c est-à-dire exactement sur la grille du classeur, là où l âge
@@ -271,9 +304,9 @@ html[data-calme~="animations"] .fz.holo::after{animation:none}
   background:rgba(11,14,19,.72);border:1px solid currentColor}
 .fz .age.a1{color:#C2CAD6}
 .fz .age.a2{color:#E8EDF5;border-width:calc(.4 * var(--u))}
-.fz .age.a3{color:#F5C33B;border-width:calc(.4 * var(--u));
+.fz .age.a3{color:#F2EEE4;border-color:#F5C33B;border-width:calc(.4 * var(--u));
   box-shadow:0 0 calc(4 * var(--u)) rgba(245,195,59,.4)}
 /* La légendaire porte son nom plutôt que son rang : c'est ce qu'on retient
    d'elle, et elle n'a qu'un seul âge à ce jour. */
-.fz.r-legendaire .age{color:#FFE08A;background:rgba(40,24,4,.82);
+.fz.r-legendaire .age{color:#FFE08A;border-color:currentColor;background:rgba(40,24,4,.82);
   box-shadow:0 0 calc(5 * var(--u)) rgba(255,224,138,.45)}

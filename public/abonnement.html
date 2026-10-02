@@ -11,6 +11,9 @@
 <title>L’abonnement — TheBestFan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- La police des banderoles, que la page ne chargeait pas : ses titres et le
+     PASS retombaient sur la police étroite du téléphone. -->
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
 <style>
@@ -37,9 +40,18 @@
 
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100dvh}
+/* **Aucune marge sur le `body`.** Il posait dix-huit pixels en haut et seize
+   sur les côtés, du temps où la colonne commençait par le chapeau. Elle
+   commence maintenant par la barre du haut, que `nav.js` monte en tête de
+   `main` : les dix-huit pixels du haut tombaient sous la barre (elle remonte
+   d'elle-même, mais laisse sa place), et sur un grand écran la barre se
+   rangeait à la gouttière de la colonne commune — quatorze pixels — que
+   cette colonne-ci n'avait pas : le tableau débordait la barre de quatorze
+   pixels de chaque côté. La gouttière est donc posée sur `main`, comme sur
+   `#app`, et la barre tombe à sa place sans qu'on la recale. */
 body{background:radial-gradient(120% 55% at 50% -8%,rgba(245,195,59,.15),transparent 62%),var(--beton);
      color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
-     padding:18px 16px 90px}
+     padding:0}
 /* **Le décor passait devant le texte.**
 
    `nav.js` pose deux calques — la photo de tribune et son voile — en frères
@@ -54,10 +66,14 @@ body{background:radial-gradient(120% 55% at 50% -8%,rgba(245,195,59,.15),transpa
    tableau et toute la colonne « avec » se lisaient à travers une tribune.
 
    On ne renomme pas en `#app` : la règle de `ui.css` apporte aussi une
-   gouttière et une hauteur minimale que cette page-ci règle elle-même, et
-   les deux se cumuleraient. Deux propriétés suffisent, et elles disent
-   exactement ce qu'on veut. */
-main{width:100%;max-width:var(--colonne);position:relative;z-index:1}
+   hauteur minimale d'un écran, qui s'ajouterait au dégagement du bas que le
+   `body` pose déjà (la page défilerait toujours de quarante pixels), et une
+   colonne en boîte flexible dont celle-ci n'a pas l'usage. On en prend ce
+   qu'il faut : l'empilement, et la gouttière, la même que celle de `#app`
+   (voir le `body`, juste au-dessus) — `nav.js` lit `--gouttiere` sur la
+   colonne pour y ranger la barre. */
+main{width:100%;max-width:var(--colonne);position:relative;z-index:1;
+  --gouttiere:14px;padding-inline:var(--gouttiere)}
 
 /* **Rien ne se pose à même la photo de tribune.** Le chapeau, le tableau et le
    mot de la fin étaient écrits directement sur le décor, et les blocs qui
@@ -74,13 +90,53 @@ main{width:100%;max-width:var(--colonne);position:relative;z-index:1}
   margin:0 0 6px}
 .chapeau p{margin:0;font-size:12.5px;opacity:.88;line-height:1.55}
 
-/* L'état, quand on est déjà abonné. Une plaque et pas un bandeau : c'est une
-   réponse à une question qu'on est venu poser, pas une alerte. */
-.etat{display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:13px;
-  background:linear-gradient(rgba(94,223,166,.1),rgba(94,223,166,.1)),var(--panneau);
-  border:1px solid rgba(94,223,166,.3);margin-bottom:20px}
-.etat b{font-family:var(--banner);font-size:15px;letter-spacing:.06em}
-.etat span{font-size:11.5px;opacity:.88;display:block;margin-top:2px}
+/* La règle `[hidden]` du navigateur pèse moins qu'une classe qui pose un
+   `display`. */
+main [hidden]{display:none}
+
+/* ------------------------------------------------ le PASS DE TRIBUNE
+
+   L'offre, en une bâche or à écharpe — l'or dit « on achète » (la règle de
+   l'or : une face, jamais un petit texte) — tenue au mur par deux scotchs :
+   son nom en grand, et le cadeau du jour du paiement avec ses sachets.
+   Dessous, les formules en bâches côte à côte : la mensuelle en parpaing,
+   celle que le catalogue met en avant en or, son ruban en sticker.
+
+   **Il ne promet rien que le serveur ne fasse.** Le nombre de boosters est
+   celui que les formules portent (`formules[].packs`), le prix celui du
+   catalogue, la période celle du champ `mois` ; une donnée absente retire sa
+   ligne. « JUSQU'À » quand les formules n'en donnent pas toutes autant. En
+   vitrine (le paiement n'est pas branché, `ouvert` du catalogue), les
+   bâches sont hors service et le sticker BIENTÔT le dit d'avance, au lieu
+   d'une boîte d'excuse après le geste.
+
+   Abonné, la même bâche porte le tampon ABONNÉ et l'échéance, en tête de
+   page : c'est la réponse à la question qu'on est venu poser.
+
+   La boutique monte la même composition dans son rayon : une composition et
+   non une brique (un seul écran la pose), écrite des deux côtés. */
+.pass{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:10px;
+  margin:6px 0 28px;padding:22px 16px 16px;rotate:-.6deg}
+.pass-titre{font-family:var(--banner);font-weight:700;font-size:26px;line-height:1;
+  letter-spacing:.08em;text-transform:uppercase}
+.pass-cadeau{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.pass-cadeau>span:last-child{display:flex;flex-direction:column;gap:3px}
+.pass-cadeau b{font-family:var(--banner);font-weight:700;font-size:21px;line-height:1;
+  letter-spacing:.04em;text-transform:uppercase}
+.pass-cadeau small,.pass-etat small{font-family:var(--banner);font-weight:600;font-size:12px;
+  letter-spacing:.08em;text-transform:uppercase}
+.pass-etat{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.pass-bientot{position:absolute;top:16px;right:14px;--rot:5deg}
+.pass-formules{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:16px 12px;margin:0 0 6px}
+.pass-formule.tbf-plaque{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:5px;
+  min-height:98px;padding:14px 14px 13px;text-align:left}
+.pass-formule small{font-size:11px;font-weight:600;letter-spacing:.08em;line-height:1.2}
+.pass-formule b{font-size:20px;font-weight:700;letter-spacing:.03em;line-height:1;font-variant-numeric:tabular-nums}
+/* Le ruban de la formule mise en avant, collé à cheval sur son bord haut :
+   il ne mord pas sur le nom de la formule. */
+.pass-formule>.tbf-sticker{position:absolute;top:-19px;right:-6px;--rot:5deg}
+.pass-beta{margin:10px 0 0;padding:10px 13px;border-radius:8px;background:var(--panneau);
+  font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.35;letter-spacing:.04em}
 
 /* **Ce qui reste libre** — le bloc le plus haut et le plus lisible de l'écran.
    Il porte la promesse du jeu, et il doit tenir sans qu'on fasse défiler. */
@@ -119,7 +175,12 @@ main{width:100%;max-width:var(--colonne);position:relative;z-index:1}
 .compare{width:100%;border-collapse:collapse;margin:0;font-size:13px}
 .compare thead th{font-family:var(--banner);font-size:11px;letter-spacing:.16em;
   text-transform:uppercase;opacity:.88;padding:10px 10px 8px;text-align:center;font-weight:400}
-.compare thead th.avec{color:var(--projo);opacity:1}
+/* **La colonne payante ne s'écrit plus en or.** L'or ne s'écrit qu'en grand
+   texte (arbitrage de Gaël, 2 octobre 2026) : ses intitulés et ses valeurs, à
+   onze et quatorze pixels, passent en craie et prennent la graisse. Elle se
+   détache toujours par son voile et son liseré d'or — la colonne est la face,
+   pas les lettres. */
+.compare thead th.avec{color:var(--craie);opacity:1;font-weight:700}
 .compare tbody tr{border-top:1px solid rgba(242,238,228,.1)}
 .compare tbody th{text-align:left;font-weight:400;padding:11px 10px 11px 12px;
   vertical-align:top;min-width:0}
@@ -131,10 +192,10 @@ main{width:100%;max-width:var(--colonne);position:relative;z-index:1}
    ne doit pas devenir illisible, sinon il n'y a plus rien à comparer. */
 .compare tbody td{padding:11px 10px;text-align:center;vertical-align:middle;
   white-space:nowrap;opacity:.88}
-/* La colonne payante : fond, couleur, et un poids de plus. Elle doit se
-   détacher sans que l'autre devienne illisible. */
-.compare tbody td.avec{opacity:1;color:var(--projo);font-family:var(--banner);
-  font-size:14px;background:rgba(245,195,59,.07);
+/* La colonne payante : son voile et son liseré d'or, la craie pleine et la
+   graisse. Elle doit se détacher sans que l'autre devienne illisible. */
+.compare tbody td.avec{opacity:1;color:var(--craie);font-family:var(--banner);
+  font-size:14px;font-weight:700;background:rgba(245,195,59,.07);
   box-shadow:inset 1px 0 0 rgba(245,195,59,.22),inset -1px 0 0 rgba(245,195,59,.22)}
 .compare tbody tr:last-child td.avec{box-shadow:inset 1px 0 0 rgba(245,195,59,.22),
   inset -1px 0 0 rgba(245,195,59,.22),inset 0 -1px 0 rgba(245,195,59,.22)}
@@ -155,57 +216,34 @@ main{width:100%;max-width:var(--colonne);position:relative;z-index:1}
   .compare tbody th{padding-left:10px}
   .compare thead th{padding:10px 6px 8px}
 }
+/* **Sous 380 px, les valeurs reviennent à la ligne.** Tenues sur une ligne,
+   « ce que le niveau ouvre » et « toutes les publiées » réclamaient 318 px à
+   320 de large, dans une boîte de 286 : le cadre arrondi coupait la colonne
+   payante d'une trentaine de pixels. Et la graisse qu'elle a prise à la place
+   de l'or l'élargit encore — à 360 px, l'intitulé « Virages comptés au
+   classement » passait sur quatre lignes. Revenir à la ligne rend la place
+   aux intitulés : mesuré, le tableau passe de 519 à 460 px de haut à 360, et
+   ne déborde plus à 320. Au-dessus, tout tient sur une ligne et rien ne
+   bouge. */
+@media (max-width:379px){
+  .compare tbody td{white-space:normal}
+}
 
-/* Le mot sous les deux boutons : ce qu'on gagne tout de suite, et ce qui se
-   passe si l'on arrête. Les deux questions qu'on se pose la main sur la
-   carte bancaire. */
-/* **Les deux formules, et ce qu'elles donnent le jour même.**
-
-   Une phrase unique les couvrait toutes les deux — « un booster offert, dans
-   les deux formules » — parce qu'elles donnaient la même chose. Elles ne la
-   donnent plus : un au mois, six à l'année. Le cadeau est donc descendu
-   **dans** chaque formule, là où il aide à choisir, au lieu de flotter
-   au-dessus des deux où il n'aidait qu'à payer.
-
-   Et c'est la seule chose de tout cet écran qui se voie dans la seconde qui
-   suit le paiement : le reste est du confort, qui se découvre en jouant. Un
-   paiement qui ne donne rien tout de suite se vit comme un paiement qui n'a
-   pas marché, et c'est pour ça que ce bloc est dessiné et pas seulement
-   écrit. */
-.prendre{display:flex;flex-direction:column;gap:11px;margin-top:4px}
-.formule{display:flex;flex-direction:column;gap:9px;padding:14px 15px 15px;
-  border-radius:14px;background:var(--panneau);
-  border:1px solid rgba(242,238,228,.13)}
-/* Celle qu'on recommande porte la couleur, et **une seule** : deux accents
-   ne recommandent rien du tout. */
-.formule.mise{background:linear-gradient(rgba(245,195,59,.07),rgba(245,195,59,.07)),var(--panneau);
-  border-color:rgba(245,195,59,.34)}
-.formule .tete{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
-.formule .tete b{font-family:var(--banner);font-size:15px;letter-spacing:.07em}
-.formule .tete .prix{margin-left:auto;font-family:var(--banner);font-size:17px;
-  color:var(--projo);white-space:nowrap;text-align:right}
-/* Le prix ramené au mois, sous le prix affiché. En craie et non en or : c'est
-   une aide à la lecture, pas une seconde offre. */
-.formule .tete .prix em{display:block;font-style:normal;font-family:var(--ui);
-  font-size:11px;letter-spacing:.02em;color:var(--craie);opacity:.88;
-  margin-top:2px}
-/* Le ruban « deux mois offerts » : il vient du catalogue, comme le prix. */
-.formule .marque{font-family:var(--banner);font-size:11px;letter-spacing:.12em;
-  text-transform:uppercase;padding:3px 8px;border-radius:20px;
-  background:rgba(245,195,59,.16);color:var(--projo)}
-.formule .offert{display:flex;align-items:center;gap:9px;font-size:12.5px;
-  line-height:1.45}
-.formule .offert b{font-family:var(--banner);color:var(--projo);font-size:14px;
-  letter-spacing:.04em;flex:none}
-.formule .offert span{opacity:.88}
 /* Ce qui se passe si l'on arrête : c'est une condition de l'offre, pas une
-   note de bas de page, et elle se lit comme le reste. */
+   note de bas de page, et elle se lit comme le reste. Elle suit les
+   formules : ce sont les deux questions qu'on se pose la main sur la carte
+   bancaire — ce qu'on gagne tout de suite (le PASS le dit), et ce qui se
+   passe si l'on arrête. */
 .fin-mot{margin:14px 0 0;padding:10px 13px;border-radius:10px;background:var(--panneau);
   font-size:11.5px;line-height:1.55;text-align:center}
 
 .vide{font-size:13px;text-align:center;padding:26px 16px;border-radius:14px;
   background:var(--panneau)}
-.vide a{color:var(--projo)}
+/* Le lien en craie, souligné et en gras : il était en or à treize pixels
+   (arbitrage du 2 octobre 2026). Et il se touche : dix-sept pixels de haut
+   pour le seul geste de l'écran déconnecté, c'était la moitié d'un doigt. */
+.vide a{display:inline-block;min-height:44px;padding:13px 8px 0;box-sizing:border-box;
+  color:var(--craie);font-weight:700}
 
 /* **Le bas de la page, et la barre du navigateur mobile.**
 
@@ -352,14 +390,101 @@ function portes(o, sans) {
   ].filter((p) => p.sans != null && p.avec != null);
 }
 
+/* --------------------------------------------- la pile, et ce qu'on y dit
+
+   Un refus du paiement se dit dans la pile commune (`.tbf-pile`, sur
+   `body`), en toast d'erreur (`.tbf-toast--erreur`) : il passait par une
+   boîte `TBF_DIALOGUE.ouvrir` qui n'a jamais existé — `dialogue.js` ne sait
+   que `confirmer` —, donc par l'`alert()` du navigateur, grise et en police
+   système, sur la seule page du jeu qui prend de l'argent. */
+function toast(texte) {
+  let p = document.querySelector('body > .tbf-pile');
+  if (!p) {
+    p = document.createElement('div');
+    p.className = 'tbf-pile';
+    document.body.appendChild(p);
+  }
+  const t = document.createElement('div');
+  t.className = 'tbf-toast tbf-toast--erreur';
+  t.setAttribute('role', 'alert');
+  t.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 16.5v.5"/>'
+    + '<circle cx="12" cy="12" r="9"/></svg>' + esc(texte);
+  p.appendChild(t);
+  setTimeout(() => t.remove(), 6000);
+}
+
+const pluriel = (n, un, plusieurs) => `${n} ${n > 1 ? plusieurs : un}`;
+
+/**
+ * Le PASS DE TRIBUNE : la bâche or, et — pour qui n'est pas abonné — les
+ * formules en bâches dessous. Voir la feuille, « le PASS DE TRIBUNE ».
+ *
+ * `ouvert` vient du catalogue de la boutique : `false` veut dire « vitrine »
+ * (le paiement n'est pas branché), `undefined` qu'on ne sait pas — et alors
+ * les bâches restent actives, le serveur dira non s'il le faut.
+ */
+function passHTML(d, { ouvert } = {}) {
+  const formules = d.formules ?? [];
+  const vitrine = ouvert === false;
+  if (d.abonne) {
+    /* La formule et l'échéance, **ce qu'on en sait**. Une formule absente
+       laissait la ligne commencer par « · jusqu'au… » : le séparateur d'une
+       valeur qui n'est pas là. On ne garde que les morceaux présents. */
+    const ligne = [d.formule, d.fin ? `jusqu’au ${jour(d.fin)}` : 'sans terme'].filter(Boolean).join(' · ');
+    return `<div class="tbf-cadre pass" data-ton="or" data-echarpe>
+      <span class="tbf-scotch" aria-hidden="true"></span><span class="tbf-scotch tbf-scotch--droite" aria-hidden="true"></span>
+      <b class="pass-titre">PASS DE TRIBUNE</b>
+      <span class="pass-etat"><span class="tbf-tampon tbf-tampon--plein" data-ton="vert">ABONNÉ</span>
+        <small>${esc(ligne)}</small></span>
+    </div>`;
+  }
+  if (!formules.length) return '';
+  /* Le cadeau du jour du paiement : le plus grand nombre de boosters qu'une
+     formule donne, « jusqu'à » s'ils ne sont pas tous égaux. Sans booster
+     dans aucune formule, pas de ligne. */
+  const nombres = formules.map((f) => Number(f.packs) || 0);
+  const max = Math.max(0, ...nombres);
+  const cadeau = max > 0 ? `<span class="pass-cadeau">
+      ${max <= 7 ? `<span class="tbf-fentes" aria-hidden="true">${'<span class="tbf-fente"></span>'.repeat(max)}</span>` : ''}
+      <span><b>${esc(`${nombres.every((n) => n === max) ? '' : 'JUSQU’À '}${pluriel(max, 'BOOSTER', 'BOOSTERS')}`)}</b>
+      <small>DÈS LE PAIEMENT</small></span></span>` : '';
+  const bache = (f) => {
+    const mois = Number(f.mois) || null;
+    const periode = mois === 1 ? ' / MOIS' : mois === 12 ? ' / AN' : mois ? ` / ${mois} MOIS` : '';
+    const packs = Number(f.packs) || 0;
+    return `<button type="button" class="tbf-plaque pass-formule" data-article="${esc(f.id)}"${
+      f.marque && !vitrine ? ' data-ton="or"' : ''}${vitrine ? ' disabled' : ''}
+      aria-label="${esc(`M’abonner — ${f.nom}, ${f.prixTexte}${periode.toLowerCase()}`)}">
+      <small>${esc(f.nom)}</small><b>${esc(f.prixTexte)}${periode}</b>
+      ${f.parMois && mois > 1 ? `<small>${esc(`soit ${f.parMois} par mois`)}</small>` : ''}
+      ${packs ? `<small>${esc(`+${pluriel(packs, 'booster', 'boosters')} au paiement`)}</small>` : ''}
+      ${f.marque ? `<span class="tbf-sticker">${esc(f.marque)}</span>` : ''}</button>`;
+  };
+  return `<div class="tbf-cadre pass" data-ton="or" data-echarpe>
+      <span class="tbf-scotch" aria-hidden="true"></span><span class="tbf-scotch tbf-scotch--droite" aria-hidden="true"></span>
+      <b class="pass-titre">PASS DE TRIBUNE</b>
+      ${cadeau}
+      ${vitrine ? '<span class="tbf-sticker pass-bientot">BIENTÔT</span>' : ''}
+    </div>
+    <div class="pass-formules">${formules.map(bache).join('')}</div>
+    ${vitrine ? '<p class="pass-beta">Pendant la bêta, l’abonnement s’offre depuis l’administration : demande-le.</p>' : ''}`;
+}
+
 (async () => {
+  /* L'état de l'abonnement, et le catalogue de la boutique pour une seule
+     chose : savoir si le paiement est branché (`ouvert`). Le catalogue est
+     public et sans base ; une panne de sa part ne coûte que le sticker
+     BIENTÔT. */
   let d;
+  const catalogue = fetch('/api/boutique/catalogue')
+    .then((r) => (r.ok ? r.json() : null)).catch(() => null);
   try {
     d = await fetch('/api/abonnement', { credentials: 'same-origin' }).then((r) => r.json());
   } catch {
     $('corps').innerHTML = '<div class="vide">Serveur injoignable.</div>';
     return;
   }
+  const ouvert = (await catalogue)?.ouvert;
   if (d.error) {
     $('corps').innerHTML = d.error === 'auth.error.unauthenticated'
       ? '<div class="vide">Connecte-toi pour voir ton abonnement.<br><a href="/compte">Se connecter</a></div>'
@@ -378,16 +503,9 @@ function portes(o, sans) {
   const libre = (d.libre ?? []).map((x) => `<li><i class="tbf-ico tbf-ico-coche"
     aria-hidden="true"></i><span>${esc(x)}</span></li>`).join('');
 
-  /* La formule et l'échéance, **ce qu'on en sait**. Une formule absente
-     laissait la ligne commencer par « · jusqu'au… » : le séparateur d'une
-     valeur qui n'est pas là. On ne garde que les morceaux présents. */
-  const etat = d.abonne
-    ? `<div class="etat"><div>
-         <b>TU ES ABONNÉ</b>
-         <span>${esc([d.formule, d.fin ? `jusqu’au ${jour(d.fin)}` : 'sans terme']
-           .filter(Boolean).join(' · '))}</span>
-       </div></div>`
-    : '';
+  /* Abonné : le PASS porte le tampon et l'échéance, en tête — c'est la
+     réponse à la question qu'on vient poser. */
+  const etat = d.abonne ? passHTML(d) : '';
 
   /* **Ce qui reste libre, avant ce qui s'ouvre.** Un joueur qui arrive ici se
      demande d'abord ce qu'on lui retire s'il ne paie pas. Tant qu'il n'a pas la
@@ -436,63 +554,20 @@ function portes(o, sans) {
       </table></div>
     </div>
 
-    ${d.abonne ? '' : `<div class="prendre">
-      <!-- Les deux formules, côte à côte. Une seule mènerait au mensuel sans
-           jamais dire que l'annuel existe — or c'est lui qui est avantageux,
-           et le taire n'aide personne. -->
-      <!-- **Ce qui arrive tout de suite.**
-
-           Tout ce que l'abonnement élargit est du confort : des réserves plus
-           grandes, une mémoire plus longue, une attente plus courte. Rien de
-           tout cela ne se voit dans la seconde qui suit le paiement, et un
-           paiement qui ne donne rien tout de suite se vit comme un paiement
-           qui n'a pas marché.
-
-           Les boosters, eux, se voient. Ils sont annoncés **avant** le bouton
-           et non découverts après : une bonne surprise qu'on n'a pas promise
-           ne décide personne à payer, et c'est pourtant là qu'elle doit
-           peser.
-
-           **Tout vient du serveur** — le nom, le prix, le ruban, le nombre de
-           boosters. La page écrivait « 3,99 € », « 39,90 € », « deux mois
-           offerts » et « un booster » en dur, quatre nombres recopiés à côté
-           du seul endroit qui les décide. Le jour où le cadeau annuel est
-           passé à six, elle aurait continué d'en promettre un — sur l'écran
-           qui prend l'argent. Une troisième formule paraîtrait ici sans qu'on
-           touche à ce fichier. -->
-      ${(d.formules ?? []).map((f) => `<div class="formule${f.marque ? ' mise' : ''}">
-        <div class="tete"><b>${esc(f.nom)}</b>${f.marque
-          ? `<span class="marque">${esc(f.marque)}</span>` : ''}
-          <!-- **Ce que ça fait par mois**, pour la formule qui n'est pas
-               mensuelle. C'est la seule comparaison que quelqu'un puisse
-               faire de tête entre 3,99 et 39,90, et la lui laisser faire
-               c'est la perdre. Le serveur la calcule — la page ne divise
-               pas des centimes, elle ne les a même pas. -->
-          <span class="prix">${esc(f.prixTexte)}${f.parMois && f.mois > 1
-            ? `<em>soit ${esc(f.parMois)} par mois</em>` : ''}</span></div>
-        ${f.packs ? `<div class="offert"><b>${f.packs} booster${
-          f.packs > 1 ? 's' : ''}</b><span>${f.packs > 1
-            ? 'dès l’ouverture — de quoi déplier une série entière le soir même'
-            : 'dès l’ouverture'}</span></div>` : ''}
-        <!-- **Les deux boutons disaient la même chose.** « M'abonner » et
-             « M'abonner » : le prix était en haut de la carte, l'un au-dessus
-             de l'autre, et rien dans le geste lui-même ne disait lequel des
-             deux on était en train de choisir. Sur deux boutons voisins de
-             même taille, c'est le libellé qu'on lit, pas la carte autour.
-
-             La durée vient du champ « mois », donc du catalogue : une formule
-             trimestrielle écrirait « / 3 mois » sans qu'on touche à rien. -->
-        <button class="tbf-plaque tbf-bloc${f.marque ? ' tbf-grande' : ''}"
-          ${f.marque ? 'data-ton="or"' : ''} data-article="${esc(f.id)}"
-          style="width:100%">M’abonner — ${esc(f.prixTexte)}
-          ${f.mois === 1 ? 'par mois' : f.mois === 12 ? 'par an'
-            : `pour ${f.mois} mois`}</button>
-      </div>`).join('')}
+    ${d.abonne ? '' : `<div class="prendre" id="prendre">
+      <!-- Le PASS DE TRIBUNE et ses formules, en dernier : ce qui reste libre
+           et ce qui s'élargit sont réglés, on peut proposer. Les formules sont
+           côte à côte — une seule mènerait au mensuel sans jamais dire que
+           l'annuel existe. Chaque bâche porte sa durée, son prix ramené au
+           mois et ses boosters du jour du paiement : sur deux boutons voisins,
+           c'est ce qu'on lit qui dit lequel on choisit. Tout vient du serveur,
+           le nom, le prix, le ruban, la durée et le nombre de boosters. -->
+      ${passHTML(d, { ouvert })}
       <!-- Un serveur d'avant cette route ne rend pas « formules ». Plutôt que
            de recopier ici les prix qu'on vient d'en sortir, on envoie là où
            ils vivent : la boutique vend les mêmes articles. -->
       ${(d.formules ?? []).length ? '' : `<a class="tbf-plaque tbf-bloc tbf-grande"
-        data-ton="or" href="/boutique" style="width:100%">Voir les formules
+        data-ton="or" href="/boutique#abonnement" style="width:100%">Voir les formules
         à la boutique</a>`}
       <p class="fin-mot">Résiliable quand tu veux, depuis ton compte :
         l’échéance déjà payée court jusqu’au bout, tu gardes les tenues que tu
@@ -524,21 +599,24 @@ function portes(o, sans) {
       if (r.status === 401) { location.href = '/compte'; return; }
       if (!r.ok || !j.url) {
         /* Le cas de la vitrine : la boutique se monte sans clé Stripe et
-           refuse alors la commande. On le dit avec ses mots plutôt que de
-           laisser un bouton qui ne fait rien. */
+           refuse alors la commande. Si le catalogue ne l'avait pas dit, le
+           refus le dit : le PASS passe en vitrine — bâches hors service,
+           sticker BIENTÔT, la phrase de la bêta —, plutôt que de laisser un
+           bouton qui ne fait rien. Toute autre panne se dit dans la pile. */
+        if (j.error === 'boutique.error.non_configuree' && !d.abonne) {
+          const p = document.getElementById('prendre');
+          const garde = p?.querySelector('.fin-mot')?.outerHTML ?? '';
+          if (p) p.innerHTML = passHTML(d, { ouvert: false }) + garde;
+          return;
+        }
         bouton.disabled = false;
-        window.TBF_DIALOGUE?.ouvrir?.({
-          titre: 'Pas encore',
-          texte: 'Le paiement n’est pas disponible pour le moment.\n\n'
-            + 'Pendant la bêta, l’abonnement peut s’offrir depuis '
-            + 'l’administration : demande-le.',
-          oui: 'Compris',
-        }) ?? alert('Le paiement n’est pas disponible pour le moment.');
+        toast('Le paiement n’est pas disponible pour le moment.');
         return;
       }
       location.href = j.url;
     } catch {
       bouton.disabled = false;
+      toast('Le paiement n’a pas pu partir. Réessaie dans un instant.');
     }
   }
 
@@ -549,7 +627,7 @@ function portes(o, sans) {
      tout a l'air normal. */
   $('corps').addEventListener('click', (e) => {
     const b = e.target.closest('[data-article]');
-    if (b) commander(b.dataset.article, b);
+    if (b && !b.disabled) commander(b.dataset.article, b);
   });
 })();
 </script>

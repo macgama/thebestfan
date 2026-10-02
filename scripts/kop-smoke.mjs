@@ -18,21 +18,51 @@
  * rafraîchit trois fois brûle trois matchs de bonus, et personne ne comprend
  * où ils sont passés.
  *
+ * Et, depuis le chantier serveur de la refonte (`PLAN.md`, § 6.7) :
+ *
+ *   - **un vote échu ne s'applique qu'une fois**, même lu par dix regards à la
+ *     fois (E4) ;
+ *   - **la clôture se juge à l'horloge de la base** : le chrono rendu et la
+ *     garde du vote (E5) ;
+ *   - **un bonus de saison s'éteint avec sa saison** (C6) ;
+ *   - **les membres ont un visage et un niveau**, et un compte effacé n'en a
+ *     plus (`CONTRATS.md`, § 3) ; sans catalogue, ils n'ont pas de visage du
+ *     tout, plutôt qu'un visage « nul » qui dirait « pas de Fanzzy » ;
+ *   - **mes KOP portent les couleurs de leur club** (`couleurs`), pour la
+ *     bâche de la page, et rien quand elles ne sont pas connues.
+ *
+ * La suite tourne aussi sous un autre fuseau que celui de la base. Sous
+ * Windows, depuis PowerShell — Git Bash ne transmet pas `TZ` à Node, et la
+ * suite tournerait alors à l'heure de Zurich sans le dire :
+ *
+ *     $env:TZ = 'America/Montreal'; node scripts/kop-smoke.mjs
+ *
  * Usage : node scripts/kop-smoke.mjs
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createKop } from '../src/server/kop/index.js';
+import express from 'express';
+import { createKop, couleursDuClub } from '../src/server/kop/index.js';
 import { BONUS_PAR_ID, VOIX_CREATEUR, depouiller, nomValide, DUREE_VOTE_MS }
   from '../src/shared/kop.js';
-import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
+import { seuil } from '../src/shared/niveau.js';
+import { AVATAR_PUBLIC } from '../src/server/fanzzy/avatar.js';
+import { charger as chargerCatalogue, oublier as oublierCatalogue }
+  from '../src/server/fanzzy/catalogue.js';
+import { createStore } from '../src/server/auth/store.js';
+import { baseDeTest, OPTIONS_BASE, figerHorloge, enParallele } from './base-de-test.mjs';
 
 const DB = baseDeTest();
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
 
 let failures = 0;
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
+
+/** Le code d'un refus attendu, ou '' si l'appel a réussi. */
+async function refus(fn) {
+  try { await fn(); return ''; } catch (e) { return e.code ?? e.message; }
+}
 
 /* ======================================================= le dépouillement
 
@@ -70,22 +100,48 @@ check('un nom trop long aussi', nomValide('x'.repeat(41)) === null);
 check('le balisage est refusé', nomValide('<b>KOP</b>') === null);
 check('un nom normal est nettoyé', nomValide('  Le   Virage  Nord ') === 'Le Virage Nord');
 
+/* Les couleurs d'un club, telles que la page les pose dans une propriété CSS :
+   une teinte qui n'en est pas une ne part pas, la casse est ramenée aux
+   minuscules, et deux teintes égales n'en font qu'une. */
+const memes = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+check('deux teintes partent, en minuscules, la principale d’abord',
+  memes(couleursDuClub('#D7141A', '#ffffff'), ['#d7141a', '#ffffff']));
+check('une seule si le blason n’en a donné qu’une',
+  memes(couleursDuClub('#0047ab', null), ['#0047ab']));
+check('la seconde seule si la première est illisible',
+  memes(couleursDuClub('rouge', '#0047AB'), ['#0047ab'])
+  && memes(couleursDuClub('#12345', '#0047ab'), ['#0047ab'])
+  && memes(couleursDuClub('#0047ab;}', null), []));
+check('deux teintes égales n’en font qu’une',
+  memes(couleursDuClub('#FFFFFF', '#ffffff'), ['#ffffff']));
+check('et aucune quand le club n’en a pas', memes(couleursDuClub(null, null), []));
+
 /* ============================================================== en base */
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
+/* `saisons` et ce que pose `sql/quotidien.sql` sont vidés aussi : un bonus
+   de saison se juge contre les saisons lancées, et une saison laissée là par
+   une autre suite changerait ce que ce fichier éprouve. */
 await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops,
   user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
   souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
   duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
-  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
+  leagues, api_quota, login_attempts, auth_tokens, sessions, users,
+  saisons, reglages, admin_audit, recompenses, missions_jour, compteurs_jour, user_nouveautes`);
+/* `niveau.sql` pour l'XP des membres, `admin.sql` pour `reglages`, que lit la
+   reprise de `saisons.sql`, et `quotidien.sql` pour la date de fin d'une
+   saison (`saisons.fin_le`). */
 for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql',
-                 'inventaire.sql', 'skins.sql', 'etats.sql', 'kop.sql']) {
+                 'inventaire.sql', 'skins.sql', 'etats.sql', 'stades.sql', 'kop.sql', 'niveau.sql',
+                 'admin.sql', 'saisons.sql', 'quotidien.sql']) {
   await raw.query(readFileSync(path.join(RACINE, 'sql', f), 'utf8'));
 }
 
-const U = ['1', '2', '3', '4'].map((i) => `kkkkkkkk-0000-0000-0000-00000000000${i}`);
+/* Le cinquième n'est membre de rien : c'est le curieux qui lit la page d'un
+   KOP où il n'est pas. */
+const U = ['1', '2', '3', '4', '5'].map((i) => `kkkkkkkk-0000-0000-0000-00000000000${i}`);
 for (const [i, id] of U.entries()) {
   await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
     [id, `k${i}@ex.fr`, `Kopiste${i}`]);
@@ -97,9 +153,25 @@ for (const id of U) {
   await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1)`, [id]);
 }
 await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,91,0)`, [U[0]]);
+
+/* Des visages et des niveaux qui se distinguent. Le premier et le troisième
+   jouent le Choriste, au premier âge ; le deuxième n'a pas de Fanzzy. Le
+   premier est niveau 7 (cinq points au-dessus du seuil, pour qu'un niveau
+   compté au seuil près se voie), le troisième au niveau maximum. */
+for (const id of [U[0], U[2]]) {
+  await raw.query(`UPDATE user_wallet SET active_fanzzy = 'TR32' WHERE user_id = ?`, [id]);
+  await raw.query(`INSERT INTO user_fanzzy (user_id,fanzzy_id,copies,stage) VALUES (?,'TR32',1,1)`,
+    [id]);
+}
+await raw.query(`UPDATE user_wallet SET xp = ? WHERE user_id = ?`, [seuil(7) + 5, U[0]]);
+await raw.query(`UPDATE user_wallet SET xp = ? WHERE user_id = ?`, [seuil(30) + 100, U[2]]);
+await raw.query(`UPDATE user_wallet SET xp = ? WHERE user_id = ?`, [seuil(3), U[4]]);
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
+/* Le catalogue : sans lui, on ne sait pas dessiner un Fanzzy, et les membres
+   seraient servis sans avatar. Chargé comme le fait server.js. */
+await chargerCatalogue(pool);
 const K = createKop({ pool, requireAuth: (r, _s, n) => n() });
 
 /* ----------------------------------------------------- créer, rejoindre */
@@ -135,6 +207,66 @@ let etat = await K.etat(kop.id, U[0]);
 check('les quatre sont membres', etat.membres.length === 4);
 check('le créateur est marqué',
   etat.membres.find((m) => m.id === U[0])?.createur === true && etat.jeSuisCreateur);
+
+/* ------------------------------------------------- les couleurs du club
+
+   La page du KOP peint sa bâche, son écharpe et son pot aux couleurs du club
+   que `GET /api/kop/miens` lui sert (`couleurs`), et retombe sur le violet
+   des gens quand le champ manque. Le premier joueur a deux KOP : Sion, dont
+   on connaît le blason (en majuscules, comme une saisie à la main), et Bâle,
+   dont on ne sait rien encore. Lu par la vraie route, pour que le nom du
+   champ soit éprouvé là où la page le lit.                                  */
+
+console.log('\n— les couleurs du club —');
+{
+  await pool.query(`UPDATE teams SET color1 = '#D7141A', color2 = '#FFFFFF' WHERE id = 85`);
+
+  const app = express();
+  app.use((req, _res, next) => { req.user = { id: U[0] }; next(); });
+  app.use('/api/kop', K.router);
+  const serveur = app.listen(0);
+  await new Promise((ok) => serveur.once('listening', ok));
+  const lireMiens = async () => {
+    const r = await fetch(`http://127.0.0.1:${serveur.address().port}/api/kop/miens`);
+    return r.ok ? (await r.json()).kops : { statut: r.status, corps: await r.text() };
+  };
+
+  try {
+    let kops = await lireMiens();
+    const sion = Array.isArray(kops) ? kops.find((k) => k.team_id === 85) : null;
+    const bale = Array.isArray(kops) ? kops.find((k) => k.team_id === 91) : null;
+    check('le KOP de Sion porte les deux couleurs du club, en minuscules',
+      memes(sion?.couleurs, ['#d7141a', '#ffffff'])
+      || (console.log('        il porte :', JSON.stringify(sion ?? kops)), false));
+    check('celui de Bâle, sans couleur connue, n’a pas de champ couleurs',
+      (Boolean(bale) && !('couleurs' in bale))
+      || (console.log('        il porte :', JSON.stringify(bale ?? kops)), false));
+    const enTrop = (Array.isArray(kops) ? kops : [])
+      .flatMap((k) => Object.keys(k).filter((c) => /^(couleur[12]|color[12])$/.test(c)));
+    check('les colonnes de travail ne partent pas dans la réponse',
+      enTrop.length === 0 || (console.log('        en trop :', enTrop.join(',')), false));
+
+    /* Une colonne de sept caractères accepte ce qu'on y pose : une valeur qui
+       n'est pas une teinte ne part pas, l'autre reste. */
+    await pool.query(`UPDATE teams SET color1 = 'rouge', color2 = '#0047AB' WHERE id = 91`);
+    kops = await lireMiens();
+    check('une teinte illisible ne part pas, la lisible reste',
+      memes(kops?.find?.((k) => k.team_id === 91)?.couleurs, ['#0047ab'])
+      || (console.log('        il porte :', JSON.stringify(kops)), false));
+
+    /* Sans `sql/couleurs.sql`, la page du KOP se lit encore : sans couleurs,
+       pas sans KOP. */
+    await pool.query('ALTER TABLE teams DROP COLUMN color2');
+    kops = await lireMiens();
+    check('sans les colonnes de couleur, mes KOP se lisent quand même',
+      (Array.isArray(kops) && kops.length === 2 && kops.every((k) => !('couleurs' in k)))
+      || (console.log('        elle répond :', JSON.stringify(kops)), false));
+    await pool.query('ALTER TABLE teams ADD COLUMN IF NOT EXISTS color2 CHAR(7) NULL AFTER color1');
+    await pool.query(`UPDATE teams SET color1 = NULL, color2 = NULL WHERE id = 91`);
+  } finally {
+    await new Promise((ok) => serveur.close(ok));
+  }
+}
 
 /* -------------------------------------------------------------- le pot */
 
@@ -246,6 +378,18 @@ check('et il est bien épuisé, pas supprimé',
   (await pool.query('SELECT COUNT(*) n FROM kop_bonus WHERE kop_id = ?',
     [kop.id]))[0][0].n === 1);
 
+/* L'instant de l'épuisement suit l'horloge de la base, comme `achete` à côté.
+   Un `Date` de Node passé au pool l'écrivait en UTC : deux heures avant
+   l'heure de la base à Zurich, ce que l'écart lu ici montrerait. */
+{
+  const [[e]] = await pool.query(
+    `SELECT TIMESTAMPDIFF(SECOND, epuise, NOW(3)) AS d FROM kop_bonus WHERE kop_id = ?`,
+    [kop.id]);
+  check('l’épuisement est daté à l’heure de la base',
+    (e?.d !== null && Number(e?.d) >= 0 && Number(e?.d) < 60)
+    || (console.log('        écart en secondes :', e?.d), false));
+}
+
 mods = await K.modsDe(U[1], 85);
 check('épuisé, il n’apporte plus rien', mods.pushMult === undefined);
 
@@ -266,6 +410,278 @@ check('un vote adopté sur un pot vide est rejeté',
   faits2[0].issue === 'rejete' && faits2[0].potInsuffisant === true);
 check('et le pot ne devient jamais négatif',
   (await K.etat(kop.id, U[0])).pot === 0);
+
+/* ============================================== la clôture se juge en base
+
+   `ferme` est écrit par `NOW(3)`, à l'heure de la session MySQL. Relu par le
+   pilote, qui lit en UTC, il partait deux heures dans le futur sur une base à
+   l'heure de Zurich : le chrono affiché après un rechargement durait deux
+   heures et trois minutes, et la garde de `voter()` laissait voter pendant
+   ces deux heures. C'est le décalage de la base sur UTC qui rend la faute
+   visible : sur une base réglée en UTC, ces contrôles ne pourraient pas
+   rougir, et la suite le dit plutôt que de passer au vert sans rien
+   prouver.                                                                  */
+
+console.log('\n— la clôture du vote —');
+{
+  const [[{ d }]] = await pool.query(
+    'SELECT TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), NOW()) AS d');
+  if (Number(d) === 0) {
+    console.log('  (base réglée en UTC : les contrôles de clôture ne peuvent pas rougir ici)');
+  }
+}
+await pool.query('UPDATE kops SET pot = ? WHERE id = ?', [CORDE.prix * 10, kop.id]);
+const v3 = await K.proposer(U[1], kop.id, 'corde');
+{
+  const ms = (await K.etat(kop.id, U[1])).vote?.fermeDansMs;
+  check('relu juste après l’ouverture, le chrono dit trois minutes, pas plus',
+    (Number.isInteger(ms) && ms > 170_000 && ms <= 180_000)
+    || (console.log('        il dit :', ms), false));
+}
+
+/* L'échéance est passée et personne n'a encore regardé : le vote est
+   toujours « en cours » en base. C'est exactement la fenêtre où l'ancienne
+   garde laissait voter. */
+await pool.query('UPDATE kop_votes SET ferme = NOW(3) - INTERVAL 1 SECOND WHERE id = ?', [v3.id]);
+{
+  const code = await refus(() => K.voter(U[2], v3.id, false));
+  check('un vote échu, même pas encore dépouillé, refuse les bulletins',
+    code === 'kop.error.vote_clos' || (console.log('        il répond :', code || 'accepté'), false));
+  const [[{ n }]] = await pool.query(
+    'SELECT COUNT(*) n FROM kop_bulletins WHERE vote_id = ? AND user_id = ?', [v3.id, U[2]]);
+  check('et rien ne s’est écrit', n === 0);
+}
+
+/* ================================================== un seul dépouillement
+
+   Le vote ci-dessus est échu et adopté (une voix pour, aucune contre), et le
+   pot couvre dix fois son prix : un dépouillement appliqué deux fois se
+   verrait à l'écharpe près. Dix regards à la fois — cinq pages du KOP, cinq
+   entrées au Virage — comme au coup d'envoi. Le pot était débité autant de
+   fois qu'il y avait de regards, avec autant de lignes de bonus.            */
+
+console.log('\n— dix regards sur un vote échu —');
+{
+  const emis = [];
+  const fauxIo = { on() {}, to: (salle) => ({ emit: (ev, data) => emis.push({ salle, ev, data }) }) };
+  const Kio = createKop({ pool, requireAuth: (r, _s, n) => n(), io: fauxIo });
+  const compter = async () => (await pool.query(
+    'SELECT COUNT(*) n FROM kop_bonus WHERE kop_id = ?', [kop.id]))[0][0].n;
+  const avant = await compter();
+
+  let erreur = null;
+  try {
+    await enParallele(10, (i) => (i % 2
+      ? Kio.etat(kop.id, U[i % 4])
+      : Kio.modsDe(U[1 + (i % 3)], 85)));
+  } catch (e) { erreur = e; }
+  check('les dix lectures passent',
+    erreur === null || (console.log('        ', erreur?.code, erreur?.message), false));
+
+  const [[k]] = await pool.query('SELECT pot FROM kops WHERE id = ?', [kop.id]);
+  check('le pot n’est débité qu’une fois',
+    k.pot === CORDE.prix * 9 || (console.log('        pot :', k.pot, '· attendu', CORDE.prix * 9), false));
+  const apres = await compter();
+  check('une seule ligne de bonus est inscrite',
+    apres - avant === 1 || (console.log('        lignes :', apres - avant), false));
+  const [[v]] = await pool.query('SELECT issue FROM kop_votes WHERE id = ?', [v3.id]);
+  check('le vote est adopté', v.issue === 'adopte');
+  const annonces = emis.filter((x) => x.ev === 'kop:votes');
+  check('et annoncé une seule fois aux membres',
+    (annonces.length === 1 && annonces[0].data.length === 1
+      && annonces[0].salle === `kop:${kop.id}`)
+    || (console.log('        annonces :', annonces.length), false));
+}
+
+/* ====================================== un bonus de saison finit avec elle
+
+   « Le virage debout » promet d'agir jusqu'à la fin de la saison, et rien ne
+   l'éteignait : une saison n'avait pas de fin. Il agit désormais tant que la
+   saison pendant laquelle il a été acheté court encore — jusqu'à la fin de
+   son jour `fin_le`, ou jusqu'au lancement de la suivante.
+
+   L'horloge de la base est figée : le dernier jour se joue à la seconde, et
+   c'est le serveur lui-même qui date l'achat, par le vrai chemin d'un vote.
+   Les saisons sont semées en heure murale de la base, comme
+   l'administration les écrit par `NOW(3)`.                                  */
+
+console.log('\n— le bonus de saison —');
+{
+  const SAISON = BONUS_PAR_ID.get('saison');
+  const [[{ id: bale }]] = await pool.query('SELECT id FROM kops WHERE team_id = 91');
+  await pool.query('UPDATE kops SET pot = ? WHERE id = ?', [SAISON.prix * 4, bale]);
+
+  await pool.query('DELETE FROM saisons');
+  await pool.query(`INSERT INTO saisons (numero, nom, series, tenues, lancee_a, fin_le)
+    VALUES (1, 'La reprise', JSON_ARRAY(), JSON_ARRAY(), '2026-10-01 12:00:00', '2026-11-10')`);
+
+  /* Le contrôle du contrôle : l'horloge figée l'est sur deux connexions
+     différentes du pool, pas seulement sur celle qui a posé la valeur. */
+  await figerHorloge(pool, '2026-10-05 10:00:00');
+  {
+    const c1 = await pool.getConnection();
+    const c2 = await pool.getConnection();
+    const heure = async (c) =>
+      (await c.query(`SELECT DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s') AS t`))[0][0].t;
+    const [t1, t2] = [await heure(c1), await heure(c2)];
+    c1.release(); c2.release();
+    check('l’horloge de la base est figée sur deux connexions',
+      (t1 === '2026-10-05 10:00:00' && t2 === t1) || (console.log('        elles disent :', t1, t2), false));
+  }
+
+  const acheter = async (instant) => {
+    await figerHorloge(pool, instant);
+    const v = await K.proposer(U[0], bale, 'saison');
+    await pool.query('UPDATE kop_votes SET ferme = NOW(3) - INTERVAL 1 SECOND WHERE id = ?', [v.id]);
+    return (await K.depouillerEchus(bale))[0]?.issue;
+  };
+  const agit = async (instant) => {
+    await figerHorloge(pool, instant);
+    return (await K.modsDe(U[0], 91)).breathBonus === SAISON.mods.breathBonus;
+  };
+  const affiches = async () =>
+    (await K.etat(bale, U[0])).bonus.filter((b) => b.bonusId === 'saison').length;
+
+  check('le bonus de saison s’achète le 5 octobre', await acheter('2026-10-05 10:00:00') === 'adopte');
+  const [[b]] = await pool.query(
+    `SELECT DATE_FORMAT(achete, '%Y-%m-%d %H:%i:%s') AS a FROM kop_bonus
+      WHERE kop_id = ? AND bonus_id = 'saison'`, [bale]);
+  check('daté par l’horloge de la base', b?.a === '2026-10-05 10:00:00'
+    || (console.log('        acheté le :', b?.a), false));
+
+  check('il agit pendant la saison', await agit('2026-10-20 12:00:00'));
+  check('jusqu’à la dernière seconde de son dernier jour', await agit('2026-11-10 23:59:59'));
+  check('et plus le lendemain de sa fin', !(await agit('2026-11-11 00:00:01')));
+  check('la page du KOP ne le compte plus parmi les bonus actifs', await affiches() === 0);
+
+  /* Acheté avant le lancement de la saison en cours : il appartenait à une
+     autre. La borne se joue à l'instant près. */
+  await pool.query(`UPDATE saisons SET lancee_a = '2026-10-05 10:00:00.001', fin_le = NULL`);
+  check('un bonus acheté avant le lancement de la saison en cours n’agit pas',
+    !(await agit('2026-10-20 12:00:00')));
+  await pool.query(`UPDATE saisons SET lancee_a = '2026-10-05 10:00:00'`);
+  check('acheté à l’instant du lancement, il agit', await agit('2026-10-20 12:00:00'));
+
+  /* La saison suivante lancée, sans qu'aucune date de fin n'ait été saisie :
+     la fenêtre de la première s'arrête au lancement de la seconde. */
+  await pool.query(`INSERT INTO saisons (numero, nom, series, tenues, lancee_a)
+    VALUES (2, 'La trêve', JSON_ARRAY(), JSON_ARRAY(), '2026-10-15 12:00:00')`);
+  check('le lancement de la saison suivante éteint le bonus de la précédente',
+    !(await agit('2026-10-20 12:00:00')));
+  check('un bonus acheté sous la nouvelle saison agit',
+    await acheter('2026-10-20 12:00:00') === 'adopte' && await agit('2026-10-20 12:30:00'));
+  await pool.query(`INSERT INTO saisons (numero, nom, series, tenues)
+    VALUES (3, 'Le printemps', JSON_ARRAY(), JSON_ARRAY())`);
+  check('une saison en brouillon n’éteint rien', await agit('2026-10-20 12:30:00'));
+  check('la page du KOP montre le seul bonus de la saison qui court', await affiches() === 1);
+
+  /* Les replis : sur une base où sql/quotidien.sql n'est pas passé, sans
+     saison lancée, ou sans la table des saisons, les bonus de saison agissent
+     comme avant. Un bonus qui ne s'éteint pas vaut mieux qu'un Virage où l'on
+     n'entre plus. */
+  await pool.query('ALTER TABLE saisons DROP COLUMN fin_le');
+  check('sans la colonne fin_le, les deux bonus agissent comme avant', await affiches() === 2);
+  check('et le Virage les reçoit', await agit('2026-10-20 12:30:00'));
+  await pool.query('ALTER TABLE saisons ADD COLUMN IF NOT EXISTS fin_le DATE NULL');
+  await pool.query('UPDATE saisons SET lancee_a = NULL');
+  check('sans aucune saison lancée, ils agissent aussi', await affiches() === 2);
+  await pool.query('RENAME TABLE saisons TO saisons_cachees');
+  check('et sans la table des saisons, la page du KOP se lit', await affiches() === 2);
+  await pool.query('RENAME TABLE saisons_cachees TO saisons');
+  await figerHorloge(pool, null);
+  /* Les saisons de ce banc ne restent pas derrière lui : une table vide est
+     l'état d'une base neuve, que la suite suivante sait reprendre. */
+  await pool.query('DELETE FROM saisons');
+}
+
+/* ==================================================== les visages des membres
+
+   La tribune de la page du KOP montre chaque membre par son personnage et
+   son niveau (`CONTRATS.md`, § 3), en liste blanche : ce qu'un classement
+   montre déjà, rien de plus. La page se lit par tout compte connecté, membre
+   ou non ; elle ne dit donc rien de plus à l'un qu'à l'autre.               */
+
+console.log('\n— les visages des membres —');
+{
+  // Une instance neuve : sa mémoire des visages est vide.
+  const Kv = createKop({ pool, requireAuth: (r, _s, n) => n() });
+  const e = await Kv.etat(kop.id, U[0]);
+  const par = new Map(e.membres.map((m) => [m.id, m]));
+  const premier = par.get(U[0]);
+  check('un membre porte son Fanzzy et son niveau',
+    (premier?.avatar?.id === 'TR32' && premier?.avatar?.age === 'TR32'
+      && premier?.avatar?.evo === 1 && premier?.niveau === 7)
+    || (console.log('        il porte :', JSON.stringify(premier)), false));
+  check('l’avatar ne porte que sa liste blanche',
+    Object.keys(premier?.avatar ?? {}).sort().join(',') === [...AVATAR_PUBLIC].sort().join(',')
+    || (console.log('        clés :', Object.keys(premier?.avatar ?? {}).join(',')), false));
+  check('un membre sans Fanzzy a un avatar nul, et son niveau',
+    (par.get(U[1])?.avatar === null && par.get(U[1])?.niveau === 1)
+    || (console.log('        il porte :', JSON.stringify(par.get(U[1]))), false));
+  check('le niveau s’arrête au maximum', par.get(U[2])?.niveau === 30);
+
+  const CLES = new Set(['id', 'pseudo', 'verse', 'depuis', 'createur', 'avatar', 'niveau']);
+  const vu = await Kv.etat(kop.id, U[4]);
+  const enTrop = vu.membres.flatMap((m) => Object.keys(m).filter((c) => !CLES.has(c)));
+  check('un non-membre lit la tribune sans aucun champ de plus',
+    (vu.membres.length === e.membres.length && enTrop.length === 0 && vu.jeSuisCreateur === false)
+    || (console.log('        en trop :', enTrop.join(',')), false));
+
+  /* La mémoire d'une minute. La page relit l'état toutes les trente
+     secondes, pour chaque membre qui la regarde : sans elle, chaque relecture
+     coûterait trois requêtes de plus. On compte la lecture des âges
+     atteints, que fait l'habillage dès qu'un membre a un Fanzzy. */
+  let lectures = 0;
+  const comptant = {
+    execute: (sql, p) => { if (/FROM user_fanzzy/.test(sql)) lectures += 1; return pool.execute(sql, p); },
+    query: (...a) => pool.query(...a),
+    getConnection: () => pool.getConnection(),
+  };
+  const Kc = createKop({ pool: comptant, requireAuth: (r, _s, n) => n() });
+  await Kc.etat(kop.id, U[0]);
+  await Kc.etat(kop.id, U[1]);
+  check('deux relectures de la page n’habillent les membres qu’une fois',
+    lectures === 1 || (console.log('        habillages :', lectures), false));
+  await Kc.rejoindre(U[4], kop.id);
+  const arrive = (await Kc.etat(kop.id, U[4])).membres.find((m) => m.id === U[4]);
+  check('un arrivant a son visage tout de suite, sans attendre la minute',
+    (lectures === 2 && arrive?.niveau === 3)
+    || (console.log('        habillages :', lectures, '· il porte :', JSON.stringify(arrive)), false));
+  await Kc.quitter(U[4], kop.id);
+
+  /* Un compte supprimé par la vraie fonction, qui anonymise sans effacer :
+     sa ligne de membre reste — son versement au pot a eu lieu — mais son
+     personnage ne doit jamais réapparaître. */
+  check('avant la suppression, le troisième avait un visage', par.get(U[2])?.avatar?.id === 'TR32');
+  const [[{ id: interne }]] = await pool.query('SELECT id FROM users WHERE public_id = ?', [U[2]]);
+  await createStore(pool).deleteUser(interne);
+  const Kd = createKop({ pool, requireAuth: (r, _s, n) => n() });
+  const apres = await Kd.etat(kop.id, U[0]);
+  const efface = apres.membres.find((m) => m.id === U[2]);
+  check('un membre au compte supprimé garde sa ligne',
+    apres.membres.length === e.membres.length && Boolean(efface));
+  check('mais plus son personnage, ni son niveau',
+    (efface?.avatar === null && !('niveau' in (efface ?? {})))
+    || (console.log('        il porte :', JSON.stringify(efface)), false));
+
+  /* Sans catalogue — une suite qui monte le module sans lui, un démarrage où
+     il n'a pas pu se charger —, on ne sait pas dessiner un Fanzzy : l'avatar
+     est alors **absent**, pas nul. Nul dirait « pas de Fanzzy » d'un joueur
+     qui en a un, et la page poserait l'initiale comme une certitude
+     (`habillerJoueurs`, `ECARTS.md`, classement § 8). Le niveau ne doit
+     rien au catalogue, il reste ; et un compte effacé, lui, est sans visage
+     de toute façon. En dernier : le catalogue ne revient pas. */
+  oublierCatalogue();
+  const Ks = createKop({ pool, requireAuth: (r, _s, n) => n() });
+  const sans = new Map((await Ks.etat(kop.id, U[0])).membres.map((m) => [m.id, m]));
+  check('sans catalogue, un membre n’a pas de champ avatar, mais garde son niveau',
+    (!('avatar' in (sans.get(U[0]) ?? { avatar: 1 })) && sans.get(U[0])?.niveau === 7
+      && !('avatar' in (sans.get(U[1]) ?? { avatar: 1 })) && sans.get(U[1])?.niveau === 1)
+    || (console.log('        ils portent :', JSON.stringify([...sans.values()])), false));
+  check('et le compte effacé reste sans visage ni niveau',
+    (sans.get(U[2])?.avatar === null && !('niveau' in (sans.get(U[2]) ?? {})))
+    || (console.log('        il porte :', JSON.stringify(sans.get(U[2]))), false));
+}
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 await pool.end();

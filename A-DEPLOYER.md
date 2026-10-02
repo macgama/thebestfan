@@ -1,318 +1,287 @@
 # À déposer sur Infomaniak
 
-**Sessions « le socle FAIT MAIN » et « la matière FAIT MAIN » — les lots 0 et 1
-de la refonte, qui partent ensemble.** Gaël a choisi le 30 septembre 2026 la
-direction FAIT MAIN. Le lot 0 en pose le socle, sans aucune matière nouvelle :
-tout se lit en plein jour, tous les boutons réagissent pareil, les soldes
-comptent quand ils changent. Le lot 1 pose la matière sur les briques communes :
-le mur de béton grainé, la bâche à la place de la plaque, l'écharpe nouée comme
-seule jauge, et le vocabulaire des lots suivants, qu'aucune page n'emploie
-encore. Les récits sont dans `HISTORIQUE.md`, sections 4 quadragies et
-4 quadragies semel.
+**Session « l'accueil FAIT MAIN » — le lot 2 de la refonte.** Il refait les
+écrans que tout joueur voit à chaque visite : l'accueil connecté (le hub),
+l'écran d'ouverture, la barre du haut des vingt-deux autres écrans et le tiroir
+du menu. Les lots 0 et 1 — le socle et la matière — sont déjà en ligne. Le récit
+est dans `HISTORIQUE.md`, section 4 quadragies bis.
 
 Aucun changement de schéma, aucune route serveur, aucune dépendance :
-`package.json` n'a gagné que la commande `grain`, et `package-lock.json` n'a pas
-bougé. Le retour arrière est un `git revert`, sans autre manœuvre.
+`package.json` et `package-lock.json` n'ont pas bougé. Le lot ne touche que
+`public/` et `scripts/`. Le retour arrière est un `git revert`, sans autre
+manœuvre.
+
+---
+
+## En préparation, pas encore à déposer : le schéma du quotidien
+
+*Note du socle du chantier serveur, 2 octobre 2026. La trace complète de la
+livraison sera écrite par l'atelier qui la clôt ; ceci ne dit que ce qui touche
+la base.*
+
+La prochaine livraison serveur apporte **un fichier de schéma neuf,
+`sql/quotidien.sql`** : le grand livre des récompenses (`recompenses`), les
+missions du jour, les compteurs du jour, les nouveautés, et neuf colonnes sur
+`saisons`, `user_wallet` et `virage_presence`. Il est additif et rejouable, et
+il vient en dernier dans l'ordre d'application (`scripts/ordre-schema.mjs`).
+
+**La manœuvre, si la livraison passe par le Manager** (qui pousse le code et
+jamais le schéma) :
+
+```bash
+cd ~/sites/thebestfan.online
+npm run schema:appliquer      # applique sql/ dans l'ordre, puis vérifie
+```
+
+**puis redémarrer** depuis l'onglet Node.js. Le redémarrage n'est pas une
+politesse : le processus lancé avant le schéma a pris ses replis, et le
+contrôle de démarrage — celui qui vérifie la clé primaire du grand livre et
+ferme les versements s'il ne la trouve pas — ne se relit qu'au lancement.
+Après le redémarrage, `/healthz` doit répondre `ok: true`. Par le workflow
+GitHub, le schéma est appliqué avant le redémarrage : rien de plus à faire.
+
+Sans ce fichier, rien ne casse : les missions n'apparaissent pas, le reste du
+jeu tourne comme avant, et le démarrage nomme `sql/quotidien.sql`.
+
+**Le journal dit aussi le schéma qui manque au Virage.** La ligne
+« [souvenirs] chants du Virage non comptés : … appliquer sql/quotidien.sql »
+signifie que la présence s'écrit, mais sans ses chants : les missions du Virage
+restent à zéro. Après `npm run schema:appliquer`, même sans redémarrage, le
+comptage reprend seul en dix minutes au plus, et la ligne « les chants du
+Virage se comptent de nouveau » le confirme. Le redémarrage reste dû pour le
+contrôle de démarrage.
+
+**Après cette livraison, à faire par Gaël** (le détail est dans
+`DEPLOIEMENT.md`, étape 5) :
+
+1. Lire au journal de démarrage la ligne « jour de jeu : le jour change à
+   HH:MM, heure de Zurich (fuseau de la base : …) », ou dans `/healthz`,
+   `jourDeJeu.changeA`. Si elle ne dit pas 00:00, ce n'est pas une panne :
+   missions, bonus et quotas gratuits changent de jour ensemble au minuit de
+   la base. Un minuit exact à Zurich se décide alors, pour les quotas et les
+   missions à la fois.
+2. Dans `/admin`, RÉGLAGES : les trois sections LE QUOTIDIEN, LES MISSIONS DU
+   JOUR et LA SAISON ET SES PALIERS sont là.
+3. Vérifier sur `/matchs` le dernier week-end de championnat avant la trêve,
+   puis saisir la fin de la saison 1 dans l'onglet Saisons (proposée :
+   2026-12-20).
+4. Si les missions arrivent après le 19 octobre : saisir le carnet de la
+   saison 1, seuils × (jours restants / 63), **avant** le premier palier
+   versé — il se fige ensuite.
+5. Recaler les quatre seuils de division sur la ferveur réelle des joueurs
+   **sans abonnement** (la requête, en lecture seule, est dans
+   `DEPLOIEMENT.md`).
 
 ---
 
 ## Où en sont le dépôt et la production
 
-Relevé le 1er octobre 2026 à 20 h 18.
+Relevé le 2 octobre 2026 à 18 h 48.
 
-- **Le commit `9e90c90` (« Maj V01102026.1917 ») est poussé, et il est en
-  ligne.** Il porte le lot 0 entier et le lot 1 tel qu'il était à 19 h 17 :
-  après la critique visuelle et la relecture du code, avant la dernière série
-  de corrections. La production le sert : son `/ui.css` est celui du commit,
-  octet pour octet, `/img/grain/` répond, `uptime_s` dit un redémarrage vers
-  19 h 21, et `"version": null` dit que la mise en ligne est passée par le
-  Manager. Le correctif de `23b7992` — jouer une carte d'action retirait de la
-  main tous ses exemplaires —, ancêtre de ce commit, est donc en ligne aussi.
-- **La fin du lot 1 n'est pas commitée** : `public/ui.css`, `public/index.html`,
-  `scripts/grain-images.mjs` et `VISUELS.md`, plus `HISTORIQUE.md`, `ETAT.md` et
-  ce fichier. Les deux lots ne sont complets que dans la copie de travail.
+- **Le lot 2 est commité, poussé, et il est en ligne.** Il est dans deux commits
+  de Gaël, `4c07044` (« Maj V02102026.1638 ») et `7dc5464` (« Maj
+  V02102026.1828 »), sur `main` et sur `origin/main`. La production sert le
+  second : `/ui.css`, `/nav.js`, `/menu.js`, `/ouverture.js`, `/fx.js` et
+  `/fanzzy.html` sont ceux du commit, octet pour octet, et l'accueil aussi, aux
+  estampilles `?v=` près ; `uptime_s` dit un redémarrage vers 18 h 29, et
+  `"version": null` dit que la mise en ligne est passée par le Manager. Le commit
+  `4acf953`, la fin du lot 1, est son ancêtre : il est en ligne avec lui.
+- **Ce qui est en ligne a été vérifié tel quel.** Le commit a été pris pendant
+  le dernier tour de vérification, mais après la dernière modification des
+  fichiers du lot (18 h 00) : les suites, l'audit et les bancs de ce tour ont
+  éprouvé exactement ces fichiers.
+- **Seuls les trois documents ne sont pas commités** : `HISTORIQUE.md`, `ETAT.md`
+  et ce fichier. Ils ne changent rien à ce que sert le serveur.
 
-Ce que ces fichiers apportent, et qui manque en ligne :
-
-- **les adresses `?v=2` des trois tuiles de grain**, et le béton de 512 pixels
-  servi aux écrans denses par `image-set`. La tuile `beton@2x` est déjà sur le
-  serveur, mais aucune adresse ne la demande : en ligne, un téléphone agrandit
-  la tuile de 256, et chaque grain y devient une tache floue ;
-- **l'état du deck** (« INCOMPLET », « PRÊT ») écrit en tampon plein : la craie,
-  et le mot en rouge ou en vert foncés. En ligne, il est encore lettré en craie
-  sur la face foncée, à 2,6:1 au soleil ;
-- **les franges de la jauge-écharpe peintes par-dessus le nœud**, cernées
-  d'encre. En ligne, le nœud les couvre, et il n'en reste que deux tirets ;
-- **sur l'accueil, le rembourrage du panneau COLLECTION** (sept pixels en haut,
-  onze en bas), qui fait tomber les franges dans le vide et non sur le filet du
-  bas ;
-- `npm run grain`, qui signale une tuile qu'aucune adresse ne demande, et la
-  documentation du grain.
+Il ne reste donc rien à mettre en ligne pour que le lot 2 tourne. Il reste à le
+**regarder sur un téléphone** (plus bas), et à commiter ces documents.
 
 ---
 
-## Avant tout : tout part ensemble
+## Avant tout : commiter les documents
 
-Les quatre fichiers et les trois documents partent dans le même envoi — un
-commit, ou plusieurs poussés ensemble. Rien ne casse si l'un arrive sans l'autre,
-mais chacun suppose les autres : `index.html` donne aux franges la place que
-`ui.css` leur dessine, et `VISUELS.md` décrit ce que la feuille sert.
-
-`.github/workflows/deploiement.yml` lance `scripts/verif-pages.mjs` avant de
-déployer, et refuse de partir s'il échoue ; ses garde-fous du lot 0 — aucun
-`backdrop-filter`, aucun émoji cadenas ou coche, aucun `.calc(`, un `data-ton`
-sur chaque rail d'onglets — tiennent toujours. Avant de pousser :
+Un commit avec les trois documents, poussé. `.github/workflows/deploiement.yml`
+lance `scripts/verif-pages.mjs` avant de déployer et refuse de partir s'il
+échoue ; il tient maintenant un contrôle de plus — chaque tuile de grain que
+`ui.css` demande existe en WebP et en PNG.
 
 ```bash
 npm run pages      # doit finir sur « Toutes les pages compilent » ; c'est ce que lance le workflow
 ```
 
+Le redéployer n'est pas nécessaire : rien de ce que lit le serveur ne change. Le
+prochain déploiement les emportera.
+
 ---
 
 ## Ce que ça change à l'écran
 
-Le lot 0, déjà en ligne :
-
-- **Tout se lit.** Aucun texte sous onze pixels ni sous 0,85 d'opacité ; le nom
-  de l'écran en haut passe à la craie pleine.
-- **Plus aucun flou.** Les panneaux sont opaques, et aucun mot n'est posé à même
-  la photo de tribune.
-- **Les boutons des pages sont des plaques** — des bâches depuis le lot 1 —, qui
-  s'enfoncent pareil partout.
-- **L'onglet allumé prend la couleur de l'écran** — bleu sur le classeur, vert
-  sur les matchs, violet chez les amis —, au lieu de l'or partout.
-- **Sur `/deck`, ENREGISTRER et AJOUTER AU DECK passent de l'or au bleu** : rien
-  ne s'y achète.
-- **Les cartes retrouvent leurs marques de rareté** au pied, et l'étiquette
-  d'état ne tombe plus sur un nom de deux lignes dans les petites vignettes.
-- **Sur `/fanzzy`, DECK sort du rail**, avec une flèche ↗.
-- **Des icônes au trait** à la place des émojis cadenas et coche.
-- **`/bienvenue`** : chaque mot sur un panneau, le premier bouton dessiné, les
-  cartes du premier paquet à la couleur de leur rareté et par leur nom.
-- **La photo revient derrière `/carnet` et `/teletext`.**
-- **Le tiroir** porte « Installer l'application » et le **MODE CALME**.
-- **Les soldes comptent**, et les écharpes des doublons volent jusqu'au
-  compteur.
-- **Dans les arènes**, les cartes de la main répondent au doigt du premier coup.
-
-Le lot 1, en ligne en partie, complet après ce dépôt :
-
-- **Un mur.** Derrière chaque écran, du béton grainé, la tribune vue à travers
-  lui : très sombre sur les pages de contenu, plus vive sur le hub.
-- **Des bâches.** Chaque bouton est une toile de la couleur de sa destination,
-  cernée au marqueur, avec une ombre noire nette et un coin déchiré. Les rouges,
-  verts, bleus et violets sont plus sombres qu'avant : c'est ce qui rend leur
-  libellé lisible (hypothèse H1, en attente de Gaël).
-- **« Prendre ma place »**, sur le hub et la vitrine, porte une écharpe en tête,
-  deux bouts de scotch et un léger biais.
-- **Le hub n'a plus qu'un cadre** : AUJOURD'HUI, avec son écharpe. COLLECTION
-  est un panneau calme, avec sa jauge.
-- **La jauge est une écharpe nouée** — tricot, nœud de craie, deux franges — sur
-  le hub, sur `/collection` et sur le classeur de `/fanzzy`.
-- **Le menu et la flèche de retour** sont deux petites bâches sombres sur tous
-  les écrans, arènes comprises.
-- **Les soldes de `/boutique` et de `/boosters`**, et l'état du deck, sont des
-  stickers de craie, collés un peu de travers.
-- **L'onglet allumé** est une petite bâche, d'un degré de travers, posée dans
-  son rail noir.
-- **Les panneaux de texte** gardent leur teinte, prennent le grain du mur et des
-  coins plus serrés.
+- **L'ouverture est un tunnel.** Un couloir de béton, la tribune au bout, sa
+  lumière qui grandit ; le nom du jeu peint sur une bâche scotchée ; cinq Fanzzy
+  qui montent les marches ; une écharpe qui se noue sur « COUP D'ENVOI » ;
+  « TOUCHE POUR ENTRER » ; une astuce du jour sur un ticket kraft. Elle part
+  toujours selon les mêmes règles.
+- **Le hub laisse 60 % de l'écran au personnage**, sans défiler. En haut,
+  l'avatar — le buste de son Fanzzy dans l'anneau d'XP, son niveau — et deux
+  stickers pour les écharpes et les boosters.
+- **Les tuiles disent ce qui les attend** : LIVE sur VIRAGE quand un club suivi
+  joue, le nombre de boosters en or sur BOOSTERS, « +N » sur FANZZY quand des
+  cartes sont arrivées. Le bouton du menu porte le plus urgent.
+- **Le Fanzzy parle**, dans une bulle au marqueur qui mène où elle dit, puis se
+  replie en « ! ».
+- **Un soir de match**, une bâche aux couleurs du club derrière lui, et de la
+  fumée à ses pieds.
+- **La bâche du jour**, un ticket kraft : le match en direct, le prochain coup
+  d'envoi et son compte à rebours, l'étape des premiers pas, ou « Répéter un
+  geste ».
+- **Le bouton principal dit ce qu'il fait** : « Duel de tribunes », le monde dans
+  les tribunes un soir de match, « 2 T'ATTENDENT » en violet.
+- **Le « GOAL ! »** du hub est la case de BD du Virage, avec ses confettis.
+- **La collection** montre le palier en cours, « 14 / 25 ».
+- **Sur les autres écrans**, le nom de l'écran est écrit sur un gaffer noir, et un
+  petit sticker rond — son Fanzzy et son niveau — déplie ses soldes au toucher ;
+  sur une tablette, ils sont dans la barre.
+- **Le menu est une bâche qu'on déroule depuis le haut**, avec une croix pour la
+  refermer : des tuiles par rubrique, avec leurs stickers, et en bas, sur un
+  ticket kraft, l'aide, le profil, le compte, la sortie et le mode calme.
+- **Rien ne change sur `/virage` ni sur `/duel-nvn`.**
 
 ---
 
 ## Les étapes, dans l'ordre
 
-### 1. Commiter et pousser, tout ensemble
+### 1. Commiter et pousser les documents
 
-Voir plus haut. `npm run pages` vert avant de pousser.
+Voir plus haut.
 
-### 2. Déployer
+### 2. Vérifier que c'est bien le code du lot 2 qui tourne
 
-Par le workflow si les secrets SSH sont posés : Actions → Déploiement → *Run
-workflow*. Il vérifie les pages et le câblage, lance `scripts/deployer.sh`, et
-attend que `/healthz` annonce le commit. Sinon, à la main dans le Manager :
-lancer la construction, **attendre qu'elle finisse**, puis redémarrer —
-`npm start` ne fait jamais de `git pull`. Vérifier une fois que la construction
-est bien `git pull && npm ci --omit=dev && node build.mjs` : sans `--omit=dev`,
-`npm ci` tente de télécharger Chromium sur l'hébergement.
+Par le Manager, `version` reste `null` et ne prouve rien. Les fichiers servis le
+disent à sa place — le `?v=` contourne tout cache en chemin :
 
-Le redémarrage compte aussi pour les images : le serveur relève **au démarrage**
-les jumeaux `.avif` qu'il a le droit d'envoyer.
+```bash
+T=$(date +%s)
+curl -s "https://thebestfan.online/ui.css?v=$T"       | grep -c tbf-bache-club    # 4 attendu
+curl -s "https://thebestfan.online/nav.js?v=$T"       | grep -c BOURSE_EN_PAGE    # 4 attendu
+curl -s "https://thebestfan.online/ouverture.js?v=$T" | grep -c "function nouer"  # 1 attendu
+curl -s "https://thebestfan.online/?v=$T"             | grep -c "Permanent+Marker" # 1 attendu
+```
+
+Le 2 octobre à 18 h 48 : 4, 4, 1 et 1. Après un futur déploiement, `uptime_s`
+de `/healthz` doit être revenu à quelques minutes, sinon le serveur n'a pas
+redémarré.
+
+Côté navigateur, un rechargement suffit : les pages estampillent leurs scripts
+et leurs feuilles (`?v=`), et le service worker ne garde que les images.
 
 ### 3. Pas de schéma à passer
 
-Rien dans ces deux lots ne touche à la base. Le lancer ne fait pas de mal — il
-est idempotent — mais il n'a rien à faire.
+Rien dans ce lot ne touche à la base.
 
-### 4. Vérifier que c'est bien le nouveau code qui tourne
+### 4. Les contrôles à l'œil
 
-Par le workflow, `/healthz` doit annoncer le commit poussé :
+Sur un téléphone, connecté, du plus parlant au plus discret.
 
-```bash
-curl -s https://thebestfan.online/healthz
-```
+1. **L'ouverture.** Dans un onglet neuf (ou une navigation privée, connecté),
+   ouvrir l'accueil : le tunnel, la lumière qui grandit au fond, le titre sur sa
+   bâche, les Fanzzy qui montent, l'écharpe et « ON OUVRE LES GRILLES ». À 1,2 s,
+   « TOUCHE POUR ENTRER », dont seules les flèches clignotent, et l'astuce sur
+   son ticket. En partant, l'écharpe se remplit d'un coup sur
+   « COUP D'ENVOI ». Toucher l'écran le fait partir. Recharger dans le même
+   onglet : pas de rideau.
+2. **Le hub, à 360 pixels de large.** Il ne défile pas, le personnage occupe la
+   plus grande part de l'écran, et rien ne recouvre son nom. L'avatar montre le
+   buste de son Fanzzy et son niveau ; les deux stickers, les soldes.
+3. **Les tuiles.** Avec un booster en réserve : son nombre en or sur BOOSTERS, qui
+   respire lentement, et le même sur le bouton du menu. Un soir de match d'un
+   club suivi : LIVE sur VIRAGE et sur le menu. Après avoir reçu des cartes :
+   « +N » sur FANZZY, qui s'éteint une fois le classeur ouvert.
+4. **La bulle.** Elle paraît une fois le rideau levé, au marqueur — sans chiffre,
+   en quatre mots au plus —, se replie en « ! » au bout de six secondes, se rouvre
+   au toucher du « ! », et mène où elle dit.
+5. **La bâche du jour et le bouton.** Le ticket kraft dit une seule chose, à
+   l'encre ; le bouton porte son sous-libellé. Avec un match à venir d'un club
+   suivi : « PROCHAIN COUP D'ENVOI », l'affiche entière sur deux lignes au plus,
+   le jour et l'heure.
+6. **Un soir de match**, la bâche aux couleurs du club derrière la tête, et la
+   fumée en bas de la scène. Si un but tombe : la case de BD, ses confettis, un
+   seul titre.
+7. **La barre**, sur `/classement`, `/fanzzy` et `/aide` : le nom de l'écran sur
+   son gaffer, entier ; le sticker rond à droite ; au toucher, la bande kraft et
+   les deux soldes, qui se replient seuls après trois secondes. Sur une tablette
+   en largeur, les soldes sont dans la barre, sauf sur `/boutique` et
+   `/boosters`.
+8. **Le tiroir.** Il se déroule depuis le haut et couvre l'écran ; la croix le
+   referme. Le KOP et les amis sont violets, les boosters, la boutique et
+   l'abonnement or, le deck bleu ; la page où l'on est porte un pointillé. En
+   bas, sur le kraft : l'aide, le profil, le compte, la sortie, le mode calme et
+   la version. « Se déconnecter » demande confirmation.
+9. **Le mode calme.** Allumer « Couper les animations décoratives » : le tiroir
+   paraît en fondu au lieu de se dérouler, le sticker des boosters ne respire
+   plus, le personnage ne flotte plus. Tout rallumer à la fin.
+10. **`/virage` et `/duel-nvn`** : la barre de jeu est celle d'avant, et son menu
+    garde le point rouge d'avant quand un état est allumé.
+11. **Sur un petit téléphone** (320 pixels de large, un iPhone SE de première
+    génération), deux défauts connus, plus bas : la bulle couvre la tuile DUEL
+    pendant six secondes, et la bâche du jour coupe « PROCHAIN COUP D'ENVOI ».
 
-Par le Manager, `version` reste `null` et ne prouve rien. La feuille servie le
-dit à sa place — le `?v=` contourne tout cache en chemin :
-
-```bash
-curl -s "https://thebestfan.online/ui.css?v=$(date +%s)" | grep -c "beton@2x.webp?v=2"   # 1 attendu
-curl -s "https://thebestfan.online/ui.css?v=$(date +%s)" | grep -c tbf-ico-cadenas       # 2 attendu
-```
-
-Le 1er octobre à 20 h 18, la première répond `0` — la fin du lot 1 n'est pas en
-ligne — et la seconde `2` — le lot 0 l'est. Et `uptime_s` doit être revenu à
-quelques minutes, sinon le serveur n'a pas redémarré.
-
-Côté navigateur, un rechargement suffit : les pages estampillent leurs scripts et
-leurs feuilles (`?v=`), et le service worker ne garde que les images.
-
-### 5. Les tuiles de grain, servies en AVIF ou en WebP
-
-Trois tuiles, quatre adresses, toutes demandées sous `?v=2`. Le serveur choisit
-le format d'après `Accept`, **sous l'adresse du WebP**, et seulement quand un
-jumeau `.avif` existe : seul le papier en a un, et c'est voulu — l'AVIF du béton
-et de la toile pèserait plus que leur WebP, ou effacerait le grain (`VISUELS.md`).
-
-```bash
-H='Accept: image/avif,image/webp,*/*'
-for t in papier beton beton@2x toile; do
-  echo "== $t"
-  curl -sI -H "$H" "https://thebestfan.online/img/grain/$t.webp?v=2" \
-    | grep -iE '^(HTTP|content-type|content-length|vary|cache-control)'
-done
-```
-
-Attendu, sur les quatre : `200`, `vary: Accept`, `cache-control: public,
-max-age=31536000, immutable`. Et :
-
-| Tuile | `content-type` | `content-length` |
-|---|---|---|
-| `papier` | `image/avif` | 6225 |
-| `beton` | `image/webp` | 8420 |
-| `beton@2x` | `image/webp` | 33580 |
-| `toile` | `image/webp` | 5682 |
-
-Puis le papier pour un navigateur qui ne sait pas lire l'AVIF : avec
-`-H 'Accept: image/webp,*/*'`, il doit partir en `image/webp`, 6308 octets. Un
-AVIF envoyé à ce navigateur serait une surface sans grain chez lui, et c'est
-`Vary: Accept` qui empêche un cache partagé de le lui resservir.
-
-Le 1er octobre à 20 h 18, c'était déjà vrai pour les tuiles en ligne : le papier
-partait en AVIF de 6225 octets à qui l'annonce, le béton en WebP de 8420. Le
-`?v=` ne change rien au fichier servi ; il change l'adresse, donc le cache. Au
-premier passage après la mise en ligne, chaque téléphone retélécharge le béton
-et la toile une fois, une quarantaine de kilo-octets au plus (le papier n'est
-demandé par aucune page) : c'est voulu.
-
-Enfin, dans un navigateur de bureau, l'émulation d'un téléphone (densité 2 ou
-3) et l'onglet Réseau ouverts sur une page de contenu : la requête doit porter
-sur `beton@2x.webp?v=2`, et non sur `beton.webp?v=2`.
-
-### 6. Les contrôles à l'œil
-
-Sur un téléphone, du plus parlant au plus discret. Ceux du lot 0 d'abord, s'ils
-n'ont pas été faits depuis sa mise en ligne :
-
-1. **Dehors, en plein jour.** Ouvrir `/profil`, `/aide`, `/matchs` et `/virage`.
-   Tout doit se lire sans chercher l'ombre. C'est la promesse du socle, et aucun
-   script ne la tient à la place d'un œil : l'audit simule le soleil par un voile
-   blanc de 40 %, et il ne voit pas les textes posés sur le grain.
-2. **Le mode calme.** Ouvrir le menu : une rubrique MODE CALME, trois
-   interrupteurs — deux sur iPhone, qui ne sait pas vibrer. Allumer « Couper les
-   animations décoratives » : sur l'accueil, le personnage cesse de flotter et de
-   respirer ; sur `/matchs`, les braises cessent d'apparaître ; une bâche qu'on
-   touche s'assombrit au lieu de s'enfoncer. Recharger : l'interrupteur est
-   resté allumé. Allumer « Couper les sons », puis ouvrir un duel : le bouton de
-   son de l'arène doit être barré. Tout rallumer à la fin.
-3. **Installer l'application.** Dans le menu, sur Android et dans Chrome, si le
-   jeu n'est pas déjà installé : l'entrée « Installer l'application », juste
-   après l'Aide. Sur iPhone, elle déplie la consigne « Partager, puis Sur l'écran
-   d'accueil ». Dans le jeu déjà installé : aucune entrée.
-4. **Un solde qui compte.** Ouvrir un booster depuis `/boosters`, s'il y en a un
-   en poche : un compteur d'écharpes en tête de l'ouverture, des écharpes qui
-   volent des doublons jusqu'à lui ; au retour, le nombre de boosters descend
-   sous les yeux.
-5. **Les onglets.** `/fanzzy` : MON FANZZY et CLASSEUR dans un rail bleu, DECK à
-   côté, avec sa flèche. `/amis` : l'onglet allumé est violet. `/classement` :
-   vert. `/aide` : craie.
-6. **Les icônes.** Sur la fiche d'un Fanzzy, les cases verrouillées portent un
-   cadenas au trait ; sur `/aide`, une étape faite porte une coche au trait.
-7. **La main, sous le doigt.** Dans un Virage pendant que la tribune chante,
-   poser le doigt sur une carte, attendre une seconde, relâcher : la carte se
-   joue du premier coup.
-
-Puis ceux du lot 1 :
-
-8. **Le hub, à 360 pixels de large.** Il ne défile pas. Les tuiles sont des
-   bâches — cerne irrégulier, ombre noire nette, coin bas-droit déchiré —, et
-   deux voisines ne tremblent pas pareil. « Prendre ma place » porte son écharpe
-   et ses deux scotchs, qui tombent dans l'écart sous AUJOURD'HUI sans couvrir
-   son coin.
-9. **La jauge de COLLECTION**, en bas du hub : un rail sombre, le tricot, un nœud
-   de craie au bout du remplissage — au départ du rail si la collection est
-   petite —, et deux franges rayées qui pendent **devant** le nœud, sans toucher
-   le filet du bas du panneau. La même sur `/collection` et sur le classeur de
-   `/fanzzy` : les franges ne touchent ni le bouton d'or ni le texte d'aide.
-10. **`/deck` incomplet** : l'état est un sticker de craie, le mot en rouge
-    foncé, un peu de travers.
-11. **Le menu et la flèche** sur `/fanzzy`, `/classement` et dans une arène :
-    deux petites bâches sombres au coin déchiré, et non deux carrés mouchetés.
-12. **Un bouton hors service** — ENREGISTRER sur un deck incomplet, « PAS ENCORE
-    À TOI » sur la fiche d'un Fanzzy non possédé : gris, rayé, et son libellé se
-    lit.
-13. **Une tablette en largeur**, sur `/teletext` : le rail d'onglets ne prend
-    pas d'ascenseur vertical, et aucun écran ne défile de côté.
-
-### 7. Et une fois : jouer
-
-Si ce n'est pas déjà fait depuis la mise en ligne de `9e90c90` : un duel ou un
-Virage avec **deux exemplaires de la même carte d'action** dans le deck. Quand
-les deux sont en main, en jouer un : l'autre doit rester dans la main. C'est le
-correctif de `23b7992`, et le seul point de ces deux lots qui touche aux règles.
+Les contrôles à l'œil des lots 0 et 1, s'ils n'ont pas été faits depuis leur mise
+en ligne, sont dans la version précédente de ce fichier :
+`git show 4acf953:A-DEPLOYER.md`, étape 6.
 
 ---
 
 ## Ce que les contrôles ne prouvent pas
 
 **Trois suites restent rouges, et toutes l'étaient avant le lot 0, à
-l'identique.** Le dernier passage, sur la copie de travail complète :
-cinquante-huit suites, l'audit compris, 3 312 contrôles. `deck:ui` (un rouge),
+l'identique.** Le dernier passage, le 2 octobre de 18 h 07 à 18 h 27, sur les
+fichiers en ligne : cinquante-huit suites, 3 376 contrôles. `deck:ui` (un rouge),
 `nvn:ui` (trois) et `fanzzy:smoke` (deux) ; leurs causes sont dans `ETAT.md` et
 dans `HISTORIQUE.md`, section 4 quadragies. `abo:smoke` rougit entre minuit et
-deux heures du matin, à cause de son fuseau (`ETAT.md` § 2) : un rouge de ses
-trois contrôles de quota à cette heure-là se relance avant de se lire. Lancée à
-19 h 39, elle était verte.
+deux heures du matin à cause de son fuseau (`ETAT.md` § 2) ; lancée à 18 h 08,
+elle était verte.
 
-**Le compte au soleil ne dit plus tout.** Soixante-douze textes perdent leur
-contraste au soleil à 360 × 640, contre soixante-treize à la fin du lot 0. Mais
-l'audit ne mesure pas un texte posé sur une tuile de grain — toute bâche, tout
-`.pan` —, et une copie de l'audit qui les mesure en trouve cent vingt-trois :
-surtout le lettrage des bâches de couleur, de 2,4 à 2,6:1 au soleil, qui était
-déjà au lot 0 sur des dégradés que l'audit ne mesurait pas. Au soleil, 4,5 est
-hors d'atteinte pour une face qui garde sa couleur. L'audit n'a pas encore appris
-à voir sous le grain (`ETAT.md` § 4).
+**Quatre défauts relevés au dernier tour n'ont pas été corrigés** :
 
-**Neuf hypothèses attendent Gaël**, H1 à H9, listées en tête de `public/ui.css`
-et dans `HISTORIQUE.md`, 4 quadragies semel. Chacune se défait en un bloc. Elles
-ne bloquent pas la mise en ligne : ce sont des choix de lecture qu'on peut
-revenir.
+- à 320 × 568, la bulle du hub couvre la tuile DUEL pendant ses six secondes, et
+  un toucher sur DUEL ouvre la destination de la bulle ;
+- à 320 pixels de large, la bâche du jour coupe « PROCHAIN COUP D'ENVOI » et
+  souvent la ligne du moment (« CE SOIR 20:00 · dans 12 h ») ;
+- l'audit ne mesure le contraste que sur un élément sans enfant : PRENDRE MA
+  PLACE et ENTRER DANS LE VIRAGE, 2,6:1 au soleil, ne sont plus comptés depuis
+  qu'ils portent un sous-libellé — ils ne sont pas corrigés pour autant ;
+- son relevé « police de repli » signale à tort tout texte qui contient Œ ou œ
+  (« LE COUP D'ŒIL », sur `/repetition`).
 
-**L'étiquette d'une carte recouvre encore son nom dans deux cas** : un nom de
-trois lignes sur une carte de moins de 100 pixels, un nom de deux lignes sur une
-carte de 141 à 182. La correction juste demande `cartes.js` (`ETAT.md` § 6).
+**Le but du hub n'a plus ni secousse ni vibration.** `fx.js` en a la forme
+(`FX.but({ vignette: true })`), et `index.html` ne l'appelle pas (`ETAT.md`
+§ 6). Le son de la corne reste.
 
-**Le coût sur un téléphone modeste n'est pas mesuré.** Le lot 0 a retiré tous
-les flous ; le lot 1 ajoute des tuiles de grain répétées, décodées une fois, et
-aucune animation infinie — le classeur en perd même une. Aucun chiffre ne l'a
-encore vérifié sur un appareil réel.
+**Au soleil, le kraft et les faces vives ne tiennent pas le seuil.** L'encre sur
+le kraft tient 3,3:1 sous le voile de l'audit — la bâche du jour, l'astuce du
+rideau, le pied du tiroir —, et aucune encre n'y atteint 4,5. La craie sur les
+faces rouge, bleue, verte et violette tient 2,4 à 2,6:1, l'encre sur l'or 3,8 :
+les dix libellés des tuiles du hub en sont. Ce sont des décisions de palette : **H1, H2, H4 à H9,
+H11 et la teinte du kraft attendent Gaël**, listées en tête de `public/ui.css`.
+Elles ne bloquent rien : ce sont des choix de lecture qu'on peut revenir.
 
-**Permanent Marker n'est chargée nulle part** (hypothèse H3) : aucune page
-n'écrit encore au marqueur, et rien ne doit en avoir l'air.
+**Un visiteur garde le rideau dix secondes** s'il ne le touche pas : la vitrine
+ne dit pas à l'écran d'ouverture qu'elle est prête. C'était déjà vrai avant le
+lot.
+
+**Le coût sur un téléphone modeste n'est pas mesuré.** Le lot ajoute, pour un
+joueur connecté, deux lectures par page de contenu pour le HUD —
+`/api/fanzzy/state` et `/api/niveau`, au plus une fois par trente secondes et par
+onglet, et aucune derrière le kiosque ou le classeur, qui les font déjà —, et
+sur le hub la lecture du calendrier, gardée dix minutes, qui ne coûte aucun
+appel à l'API sportive. Le hub tient trois animations infinies au plus, aucune
+au calme. Aucun chiffre ne l'a vérifié sur un appareil réel.
 
 ---
 
 ## Ce qui reste en attente côté serveur
 
 Rien de neuf dans cette livraison. La liste est en `ETAT.md`, section « À faire
-sur le serveur ».
+sur le serveur ». Le lot laisse une question qui touche le serveur sans rien y
+mettre : les tuiles verrouillées du hub n'apparaîtront que si un palier de
+`src/shared/niveau.js` nomme une page (`page`), et si `/api/niveau` la transmet.

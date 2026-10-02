@@ -1,14 +1,19 @@
 /** Test de la collection Fanzzy côté serveur. */
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
+import { randomUUID } from 'node:crypto';
 import express from 'express';
-import { createFanzzy, MAX_PACKS, PACKS_DEPART, PACK_PRICE } from '../src/server/fanzzy/index.js';
+import { createFanzzy, MAX_PACKS, PACKS_DEPART, PACK_PRICE, CHEMINS_NOUVEAUTES,
+  SORTES_NOUVEAUTE, cleDeCarte } from '../src/server/fanzzy/index.js';
 import { DEX, BY_ID, SETS } from '../src/shared/fanzzy/dex.js';
 import { SKINS } from '../src/shared/fanzzy/inventaire.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
-import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
+import { charger as chargerCatalogue, obtenables, chargerSeries } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues, tenuesPubliees } from '../src/server/fanzzy/tenues.js';
-import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
+import * as moduleSaisons from '../src/server/fanzzy/saisons.js';
+import { verser } from '../src/server/recompenses.js';
+import { reglage, poserReglages } from '../src/shared/reglages.js';
+import { baseDeTest, OPTIONS_BASE, figerHorloge, enParallele } from './base-de-test.mjs';
 import { STUFF } from '../src/shared/fanzzy/inventaire.js';
 
 const DB = baseDeTest();
@@ -16,35 +21,47 @@ let failures = 0;
 const check = (l, c) => { console.log(`${c ? '  ok  ' : ' FAIL '} ${l}`); if (!c) failures++; };
 
 const mysql = await import('mysql2/promise');
+
+/** Applique des fichiers de `sql/`, dans l'ordre donné, comme le déploiement. */
+async function appliquer(...fichiers) {
+  const c = await mysql.createConnection({ uri: DB, multipleStatements: true });
+  try {
+    for (const f of fichiers) {
+      await c.query(readFileSync(new URL(`../sql/${f}.sql`, import.meta.url), 'utf8'));
+    }
+  } finally {
+    await c.end();
+  }
+}
+
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
+/* Les quatre tables de `sql/quotidien.sql` partent avec le reste : elles n'ont
+   pas de clé étrangère (ECARTS.md, socle § 1), donc rien ne les vide si on ne
+   les nomme pas. `saisons` aussi : la suite la rebâtit par son vrai fichier, que
+   `quotidien.sql` complète. */
 await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
-                 leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-// admin.sql pour la table `reglages` : c'est elle qui porte les séries
-// ouvertes, et la suite en éprouve la fermeture plus bas.
-for (const f of ['auth.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inventaire.sql',
-                 'skins.sql', 'etats.sql', 'tenues.sql', 'admin.sql']) {
-  await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
-}
-/* La table des saisons est partagée par les suites, et c'est elle qui décide
-   des séries ouvertes. Une saison laissée par un passage précédent — ou par
-   cette suite interrompue en plein milieu — fermerait des séries et ferait
-   échouer tout ce qui ouvre un booster, très loin d'ici et sans rapport
-   apparent. On repart donc de « aucune saison », c'est-à-dire tout ouvert. */
-await raw.query(`CREATE TABLE IF NOT EXISTS saisons (
-  id INT UNSIGNED NOT NULL AUTO_INCREMENT, numero SMALLINT NOT NULL,
-  nom VARCHAR(64) NOT NULL, texte VARCHAR(500) NULL, series JSON NULL,
-  tenues JSON NULL, stuff JSON NULL, actions JSON NULL, lancee_a DATETIME(3) NULL,
-  cree_a DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  maj_a DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
-await raw.query('DELETE FROM saisons');
-const U = '11111111-2222-3333-4444-555555555555';
-await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
-  [U, 'f@ex.fr', 'Fan']);
+                 leagues, api_quota, login_attempts, auth_tokens, sessions,
+                 recompenses, missions_jour, compteurs_jour, user_nouveautes, saisons, users`);
 await raw.end();
+/* admin.sql pour la table `reglages` : c'est elle qui porte les séries
+   ouvertes, et `saisons.sql` la lit. `saisons.sql` avant `quotidien.sql`, qui
+   lui ajoute ses colonnes datées : c'est l'ordre de `scripts/ordre-schema.mjs`. */
+await appliquer('auth', 'souvenirs', 'billets', 'fanzzy', 'inventaire', 'skins', 'etats', 'tenues',
+  'admin', 'saisons', 'quotidien');
+
+const raw2 = await mysql.createConnection({ uri: DB, multipleStatements: true });
+/* La table des saisons est partagée par les suites, et c'est elle qui décide
+   des séries ouvertes. `saisons.sql` vient d'y reposer sa saison 1 de reprise :
+   on repart de « aucune saison », c'est-à-dire tout ouvert. La fin de la suite
+   éprouve, elle, le monde de la production — LA REPRISE seule. */
+await raw2.query('DELETE FROM saisons');
+const U = '11111111-2222-3333-4444-555555555555';
+await raw2.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
+  [U, 'f@ex.fr', 'Fan']);
+await raw2.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 // Le catalogue vit en base depuis qu il se gère par l administration :
@@ -52,13 +69,17 @@ const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
 // sur un catalogue vide.
 await chargerCatalogue(pool);
 await chargerTenues(pool);
-const F = createFanzzy({ pool, requireAuth: (req, _r, next) => { req.user = { id: U }; next(); } });
+/* Le joueur de la requête : `U` par défaut, un autre quand l'en-tête le nomme.
+   Les contrôles du chantier serveur partent chacun d'un joueur neuf, pour ne
+   pas hériter de ce que les blocs d'avant ont ouvert. */
+const authentifier = (req, _r, next) => { req.user = { id: req.get('x-joueur') || U }; next(); };
+const F = createFanzzy({ pool, requireAuth: authentifier });
 const app = express(); app.use('/api/fanzzy', F.router);
 const http = createServer(app); await new Promise((r) => http.listen(0, r));
 const base = `http://localhost:${http.address().port}`;
 const call = async (p, o = {}) => {
   const r = await fetch(base + p, { method: o.method ?? 'GET',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...(o.qui ? { 'x-joueur': o.qui } : {}) },
     body: o.body === undefined ? undefined : JSON.stringify(o.body) });
   return { status: r.status, json: await r.json().catch(() => ({})) };
 };
@@ -382,6 +403,15 @@ check('le stade atteint est annoncé au client', r.json.stades?.[base1.id] === 2
 {
   // Une tenue autre que `base`, gagnée au **premier âge seulement**.
   const autre = tenuesPubliees().find((t) => t.id !== 'base');
+  /* **Le personnage regardé doit être celui qu'on porte.** `tenuesParAge` est
+     la garde-robe du Fanzzy équipé, et ce bloc habille `base1` sans l'avoir
+     jamais équipé : le premier booster en avait équipé un autre, tiré au
+     hasard. Ces deux contrôles étaient rouges depuis avant le lot 0 (« les
+     trois rouges connus ») pour cette seule raison — c'était le scénario qui
+     était faux, pas le portefeuille. On l'équipe donc, comme le ferait le
+     classeur, au dernier âge atteint. */
+  await pool.query('UPDATE user_wallet SET active_fanzzy = ?, active_evo = NULL WHERE user_id = ?',
+    [base1.id, U]);
   if (autre) {
     await pool.query(
       `INSERT IGNORE INTO user_skins (user_id, fanzzy_id, stage, skin_id, equipped)
@@ -644,6 +674,821 @@ check(`catalogue de l'équipement servi (${STUFF.length})`,
   await pool.execute('DELETE FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?', [U, X]);
 }
 
+/* ==================================================================
+   LE CHANTIER SERVEUR, VAGUE 1 (PLAN.md, § 6.4)
+
+   La recharge qui n'écrase plus un débit, les nouveautés, les compteurs du
+   jour, la progression des séries dans la réponse du booster, les paliers de
+   collection et la saison annoncée. Chaque contrôle part d'un joueur neuf,
+   et compare **à la valeur exacte** : « plus que zéro » est ce qui avait
+   caché le forfait payé deux fois.
+   ================================================================== */
+
+let numero = 0;
+/** Un joueur neuf, sa bourse ouverte comme le ferait sa première page. */
+async function joueur(nom) {
+  const id = randomUUID();
+  numero++;
+  await pool.execute(`INSERT INTO users (public_id, email, pseudo, password_hash) VALUES (?, ?, ?, 'x')`,
+    [id, `essai${numero}@test.invalid`, `${nom}${numero}`]);
+  await call('/api/fanzzy/state', { qui: id });
+  return id;
+}
+const cadence = () => reglage('pack.regen_min') * 60_000;
+async function bourse(id) {
+  const [[w]] = await pool.execute('SELECT scarves, packs, packs_at FROM user_wallet WHERE user_id = ?', [id]);
+  return { scarves: Number(w.scarves), packs: Number(w.packs), packsAt: new Date(w.packs_at) };
+}
+/* `packs_at` se date comme le serveur la date : en JavaScript, par le pilote
+   (voir le pavé de `wallet`). */
+const poserReserve = (id, packs, ilYaMs) => pool.execute(
+  'UPDATE user_wallet SET packs = ?, packs_at = ? WHERE user_id = ?',
+  [packs, new Date(Date.now() - ilYaMs), id]);
+const ouvrir = (qui, set = 'TR') => call('/api/fanzzy/open', { method: 'POST', body: { set }, qui });
+const lignesNouveautes = async (id) =>
+  (await pool.execute('SELECT cle, sorte FROM user_nouveautes WHERE user_id = ?', [id]))[0];
+const eteindre = (qui, body) => call('/api/fanzzy/vu', { method: 'POST', body, qui });
+const compteur = async (id, cle) => Number((await pool.execute(
+  `SELECT n FROM compteurs_jour WHERE user_id = ? AND jour = CURDATE() AND cle = ?`, [id, cle]))[0][0]?.n ?? 0);
+
+/* ------------------------------------------------------- la recharge (E3)
+
+   La recharge écrivait une valeur absolue calculée sur une lecture d'avant :
+   un débit passé entre les deux était effacé, et le booster gratuit. */
+console.log('\n  la recharge ne peut plus écraser un débit');
+check('le module livre recharger(conn, userId)',
+  typeof F.recharger === 'function' && F.recharger.length === 2);
+{
+  /* Le contrôle de base, d'abord : l'écriture conditionnelle compare une date
+     relue à une date écrite. Si l'aller-retour par le pilote perdait une
+     milliseconde, la condition ne serait jamais vraie, et plus personne ne
+     rechargerait — sans un message. */
+  const A = await joueur('Recharge');
+  await poserReserve(A, 0, 2 * cadence() + 1000);
+  const r = await call('/api/fanzzy/state', { qui: A });
+  check('deux cadences écoulées : la lecture recharge deux boosters',
+    r.json.wallet?.packs === 2 && (await bourse(A)).packs === 2
+    || (console.log('        lu :', r.json.wallet?.packs, '· en base :', (await bourse(A)).packs), false));
+  check('et le compte à rebours repart d’où il en était, pas de zéro',
+    r.json.wallet.nextPackInMs <= cadence() - 1000 && r.json.wallet.nextPackInMs > cadence() - 6000);
+  await poserReserve(A, reglage('pack.max'), 3 * cadence());
+  const p = await call('/api/fanzzy/state', { qui: A });
+  check('réserve pleine : pas de minuterie, et elle repartira de maintenant',
+    p.json.wallet.nextPackInMs === null && p.json.wallet.packs === reglage('pack.max')
+    && Math.abs(Date.now() - (await bourse(A)).packsAt.getTime()) < 5000);
+}
+{
+  /* `RISQUES.md`, E3, mot pour mot : réserve à zéro, une recharge due, dix
+     ouvertures ensemble. */
+  const B = await joueur('Dix');
+  await poserReserve(B, 0, cadence() + 1000);
+  const rep = await enParallele(10, () => ouvrir(B));
+  const passees = rep.filter((x) => Array.isArray(x.json.cards)).length;
+  const refus = rep.filter((x) => x.json.error === 'fanzzy.error.no_packs').length;
+  check(`dix ouvertures sur une recharge due : une seule passe (${passees}), neuf refus (${refus})`,
+    passees === 1 && refus === 9);
+  check('et la réserve finit à zéro', (await bourse(B)).packs === 0);
+}
+{
+  /* **La course placée exactement là où elle fait mal**, et non espérée : une
+     lecture de l'état (`wallet()`, donc la barre de n'importe quelle page) lit
+     la réserve, s'arrête avant d'écrire, une ouverture passe et débite, puis
+     la lecture reprend. L'ancienne écriture absolue remettait le booster
+     débité ; la conditionnelle voit que la ligne a bougé et relit. */
+  const V = await joueur('Course');
+  await poserReserve(V, 0, cadence() + 1000);
+  let relacher;
+  const porte = new Promise((r) => { relacher = r; });
+  let signaler;
+  const arrivee = new Promise((r) => { signaler = r; });
+  let premiere = true;
+  const F2 = createFanzzy({ pool, requireAuth: authentifier, crochets: {
+    apresLectureRecharge: async (qui) => {
+      if (qui !== V || !premiere) return;
+      premiere = false;
+      signaler();
+      await porte;
+    },
+  } });
+  const lecture = F2.wallet(V);
+  await arrivee;
+  const o = await ouvrir(V);
+  relacher();
+  const w = await lecture;
+  check('pendant la lecture suspendue, l’ouverture passe (recharge due)', o.json.cards?.length === 5);
+  check(`la lecture reprise ne rend pas le booster débité (elle dit ${w.packs})`, w.packs === 0);
+  check('ni en base', (await bourse(V)).packs === 0);
+  check('et une seconde ouverture est refusée', (await ouvrir(V)).json.error === 'fanzzy.error.no_packs');
+}
+{
+  const C = await joueur('Annule');
+  await poserReserve(C, 0, cadence() + 1000);
+  const avant = await bourse(C);
+  const conn = await pool.getConnection();
+  let vu = null;
+  try {
+    await conn.beginTransaction();
+    vu = await F.recharger(conn, C);
+    await conn.rollback();
+  } finally {
+    conn.release();
+  }
+  const apres = await bourse(C);
+  check('dans une transaction, recharger recharge sur sa connexion', vu?.packs === 1);
+  check('et une annulation la défait entièrement',
+    apres.packs === 0 && apres.packsAt.getTime() === avant.packsAt.getTime());
+}
+{
+  /* Le même contrôle que le grand livre (`recompenses-smoke`), mais avec la
+     vraie fonction : 11 sur 12, une recharge due, un booster offert → 13. */
+  const D = await joueur('Cadeau');
+  const max = reglage('pack.max');
+  await poserReserve(D, max - 1, cadence() + 1000);
+  const r = await verser(pool, { userId: D, source: 'sachet', cle: 'essai-recharge', saisonId: null,
+    gain: { packs: 1 }, recharger: F.recharger });
+  check(`à ${max - 1} sur ${max} avec une recharge due, un booster offert donne ${max + 1}`,
+    r.verse === true && r.wallet.packs === max + 1 && (await bourse(D)).packs === max + 1
+    || (console.log('        rendu :', JSON.stringify(r)), false));
+}
+
+/* ----------------------------------------- la durée d'une recharge (cadenceMs)
+
+   L'anneau du kiosque tire sa part écoulée de `1 − reste ⁄ durée`. La durée
+   est **celle de ce joueur** : un abonné recharge plus vite, et un réglage
+   changé depuis l'administration vaut tout de suite. Une page qui l'approche
+   avec dix minutes ment aux deux. */
+console.log('\n  la durée d’une recharge, dans le portefeuille');
+{
+  const A = await joueur('Cadence');
+  const s = await call('/api/fanzzy/state', { qui: A });
+  check(`/state la sert, en millisecondes (${s.json.wallet?.cadenceMs})`,
+    s.json.wallet?.cadenceMs === cadence());
+  const o = await ouvrir(A);
+  check('/open aussi, dans le portefeuille de sa réponse',
+    Array.isArray(o.json.cards) && o.json.wallet?.cadenceMs === cadence()
+    || (console.log('        rendu :', JSON.stringify(o.json.wallet)), false));
+  await poserReserve(A, reglage('pack.max'), 0);
+  const plein = await call('/api/fanzzy/state', { qui: A });
+  check('réserve pleine : pas de minuterie, mais la durée reste — la même forme pour tous',
+    plein.json.wallet?.nextPackInMs === null && plein.json.wallet?.cadenceMs === cadence());
+  try {
+    poserReglages({ 'pack.regen_min': 7 });
+    const r = await call('/api/fanzzy/state', { qui: A });
+    check('un réglage changé depuis l’administration vaut tout de suite',
+      r.json.wallet?.cadenceMs === 7 * 60_000);
+  } finally {
+    poserReglages({});
+  }
+
+  /* L'abonné, par le **vrai** module d'abonnement : une doublure qui dirait la
+     règle à sa façon ne prouverait rien sur celle du jeu. */
+  await appliquer('abonnement');
+  const { createAbonnement } = await import('../src/server/abonnement/index.js');
+  const abonnement = createAbonnement({ pool, requireAuth: authentifier });
+  const FA = createFanzzy({ pool, requireAuth: authentifier, abonnement });
+  const ABO = await joueur('Abonne');
+  await abonnement.accorder(ABO);
+  const wAbo = await FA.wallet(ABO);
+  const wLibre = await FA.wallet(A);
+  const attendue = reglage('abo.pack_regen_min') * 60_000;
+  check(`un abonné reçoit sa cadence à lui (${wAbo.cadenceMs} contre ${wLibre.cadenceMs})`,
+    attendue !== cadence() && wAbo.cadenceMs === attendue && wLibre.cadenceMs === cadence());
+}
+
+/* ------------------------------------------------------- les nouveautés (§ 2) */
+console.log('\n  les nouveautés');
+const W = await joueur('Neuf');
+{
+  const r = await call('/api/fanzzy/state', { qui: W });
+  check('un joueur neuf : « rien de nouveau », et non « je ne sais pas »',
+    Array.isArray(r.json.nouveautes) && r.json.nouveautes.length === 0);
+}
+await pool.execute('UPDATE user_wallet SET packs = 200 WHERE user_id = ?', [W]);
+const FORMES = { fanzzy: /^fanzzy:[^:]+$/, etat: /^etat:[^:]+:[1-3]:[^:]+$/,
+  skin: /^skin:[^:]+:[1-3]:[^:]+$/, stuff: /^stuff:[^:]+$/, action: /^action:[^:]+$/ };
+const sortesDuBooster = new Set();
+{
+  let clesJustes = true;
+  let lignesJustes = true;
+  for (let i = 0; i < 20; i++) {
+    const avant = (await lignesNouveautes(W)).length;
+    const cartes = (await ouvrir(W, i % 2 ? 'MS' : 'TR')).json.cards ?? [];
+    for (const c of cartes) {
+      if (c.type === 'echarpes') { if (c.cle !== undefined) clesJustes = false; continue; }
+      if (!FORMES[c.type]?.test(c.cle ?? '') || c.cle !== cleDeCarte(c)) clesJustes = false;
+    }
+    const neuves = cartes.filter((c) => c.new).map((c) => c.cle);
+    const enBase = new Map((await lignesNouveautes(W)).map((l) => [l.cle, l.sorte]));
+    if (enBase.size - avant !== neuves.length) lignesJustes = false;
+    for (const k of neuves) {
+      if (enBase.get(k) !== k.split(':')[0]) lignesJustes = false;
+      else sortesDuBooster.add(k.split(':')[0]);
+    }
+  }
+  check('chaque carte porte sa clé, au format du contrat — sauf les écharpes', clesJustes);
+  check('une nouveauté en base par carte neuve, de la bonne sorte, et pas une de plus', lignesJustes);
+}
+{
+  /* Un doublon n'est pas nouveau. On éteint tout, puis on ouvre jusqu'à
+     tomber sur un personnage déjà possédé — en écartant le cas où le même
+     booster le donne deux fois, la première neuve. */
+  await eteindre(W, { tout: true });
+  let vu = null;
+  for (let i = 0; i < 30 && !vu; i++) {
+    const cartes = (await ouvrir(W)).json.cards ?? [];
+    const neuves = new Set(cartes.filter((c) => c.new).map((c) => c.cle));
+    const doublon = cartes.find((c) => c.type === 'fanzzy' && !c.new && !neuves.has(c.cle));
+    if (doublon) vu = { doublon, lignes: new Set((await lignesNouveautes(W)).map((l) => l.cle)) };
+    else await eteindre(W, { tout: true });
+  }
+  check('un doublon n’écrit aucune nouveauté', Boolean(vu) && !vu.lignes.has(vu.doublon.cle));
+}
+{
+  const r = await call('/api/fanzzy/state', { qui: W });
+  const nv = r.json.nouveautes ?? [];
+  const avecAge = ['etat', 'skin', 'age'];
+  const avecPour = ['etat', 'skin'];
+  check(`l’état sert les nouveautés au format du contrat (${nv.length})`, nv.length > 0
+    && nv.every((n) => SORTES_NOUVEAUTE.includes(n.sorte) && typeof n.id === 'string' && n.id
+      && n.cle.startsWith(`${n.sorte}:`)
+      && (avecAge.includes(n.sorte) ? Number.isInteger(n.stade) : n.stade === undefined)
+      && (avecPour.includes(n.sorte) ? typeof n.pour === 'string' : n.pour === undefined))
+    || (console.log('        servi :', JSON.stringify(nv.slice(0, 3))), false));
+}
+{
+  /* Éteindre, sous les trois formes, et seulement chez soi. */
+  await eteindre(W, { tout: true });
+  const W2 = await joueur('Voisin');
+  const poser = (id, cles) => pool.execute(
+    `INSERT INTO user_nouveautes (user_id, cle, sorte) VALUES ${cles.map(() => '(?, ?, ?)').join(', ')}`,
+    cles.flatMap((k) => [id, k, k.split(':')[0]]));
+  await poser(W, ['stuff:essai-a', 'stuff:essai-b', 'etat:XX1:1:joie', 'etat:XX1:2:depit', 'action:essai-c']);
+  await poser(W2, ['stuff:essai-a']);
+  let v = await eteindre(W, { cles: ['stuff:essai-a', 'action:essai-c', 'stuff:jamais-vue'] });
+  check('par clés : il en reste trois', v.status === 200 && v.json.restantes === 3);
+  v = await eteindre(W, { sorte: 'etat' });
+  check('par sorte : il en reste une', v.json.restantes === 1
+    && (await lignesNouveautes(W)).map((l) => l.cle).join() === 'stuff:essai-b');
+  v = await eteindre(W, { tout: true });
+  check('tout : zéro', v.json.restantes === 0 && (await lignesNouveautes(W)).length === 0);
+  check('et celles d’un autre joueur sont intactes', (await lignesNouveautes(W2)).length === 1);
+
+  const invalides = [{}, [], { cles: 'stuff:a' }, { sorte: 'tenue' }, { tout: false }, { tout: 'oui' },
+    { cles: Array.from({ length: 201 }, (_, i) => `stuff:x${i}`) }, { cles: ['stuff:a'], tout: true },
+    { cles: [42] }, { cles: [''] }];
+  const rendus = [];
+  for (const b of invalides) rendus.push(await eteindre(W, b));
+  check(`un corps invalide : 400 nommé, sous ses ${invalides.length} formes`,
+    rendus.every((x) => x.status === 400 && x.json.error === 'fanzzy.error.vu_invalide')
+    || (console.log('        rendus :', rendus.map((x) => `${x.status}:${x.json.error}`).join(' ')), false));
+  check('deux cents clés passent encore', (await eteindre(W, {
+    cles: Array.from({ length: 200 }, (_, i) => `stuff:x${i}`) })).status === 200);
+}
+{
+  /* Deux cents au plus, les plus récentes d'abord, et la purge à soixante
+     jours. Semé en SQL, comme le serveur date ses lignes. */
+  const n = 230;
+  const k = Array.from({ length: n }, (_, i) => i);
+  await pool.execute(
+    `INSERT INTO user_nouveautes (user_id, cle, sorte, got_at) VALUES ${
+      k.map(() => '(?, ?, \'stuff\', NOW(3) - INTERVAL ? SECOND)').join(', ')}`,
+    k.flatMap((i) => [W, `stuff:pile-${i}`, i]));
+  await pool.execute(
+    `INSERT INTO user_nouveautes (user_id, cle, sorte, got_at) VALUES
+       (?, 'stuff:vieille-1', 'stuff', NOW(3) - INTERVAL 61 DAY),
+       (?, 'stuff:vieille-2', 'stuff', NOW(3) - INTERVAL 61 DAY),
+       (?, 'stuff:presque', 'stuff', NOW(3) - INTERVAL 59 DAY)`, [W, W, W]);
+  const nv = (await call('/api/fanzzy/state', { qui: W })).json.nouveautes ?? [];
+  check(`deux cents au plus (${nv.length})`, nv.length === 200);
+  check('les plus récentes d’abord', nv[0]?.cle === 'stuff:pile-0' && nv[199]?.cle === 'stuff:pile-199'
+    && nv.every((x, i) => x.cle === `stuff:pile-${i}`));
+  const reste = new Set((await lignesNouveautes(W)).map((l) => l.cle));
+  check('au-delà de soixante jours, la lecture les purge',
+    !reste.has('stuff:vieille-1') && !reste.has('stuff:vieille-2'));
+  check('en deçà, elles restent, même hors de la liste servie',
+    reste.has('stuff:presque') && reste.has('stuff:pile-229'));
+  check('« restantes » compte comme la liste sert : deux cents au plus',
+    (await eteindre(W, { cles: [] })).json.restantes === 200);
+  await eteindre(W, { tout: true });
+}
+
+/* ------------------------------------- chaque chemin de la liste exportée
+
+   La liste vient du module, pas d'un motif lu dans son source. Chaque chemin
+   qui s'y déclare est éprouvé pour de vrai ; un chemin que la suite ne sait
+   pas éprouver la fait rougir au lieu de passer en silence. */
+console.log('\n  les chemins qui écrivent une nouveauté');
+const base1W = DEX.find((f) => f.stage === 1 && f.evo);
+{
+  const nouvelles = async (id, faire) => {
+    const avant = new Set((await lignesNouveautes(id)).map((l) => l.cle));
+    await faire();
+    return (await lignesNouveautes(id)).filter((l) => !avant.has(l.cle));
+  };
+  const dansUneTransaction = async (fn) => {
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      await fn(conn);
+      await conn.commit();
+    } catch (e) {
+      await conn.rollback();
+      throw e;
+    } finally {
+      conn.release();
+    }
+  };
+  const E = await joueur('Chemins');
+  await pool.execute('UPDATE user_wallet SET packs = 200, scarves = 1000 WHERE user_id = ?', [E]);
+  const EPREUVES = {
+    /* Les cinq sortes ne tombent pas toutes au premier booster : on ouvre
+       jusqu'à les avoir vues, en partant de ce que les vingt d'en haut ont
+       déjà montré. */
+    openPack: async (sortes) => {
+      const vues = new Set(sortesDuBooster);
+      for (let i = 0; i < 80 && sortes.some((s) => !vues.has(s)); i++) {
+        for (const l of await nouvelles(E, () => ouvrir(E, i % 2 ? 'MS' : 'TR'))) vues.add(l.sorte);
+      }
+      return vues;
+    },
+    evolve: async () => {
+      await pool.execute(`INSERT INTO user_fanzzy (user_id, fanzzy_id, copies, stage) VALUES (?, ?, 1, 1)
+        ON DUPLICATE KEY UPDATE stage = 1`, [E, base1W.id]);
+      const l = await nouvelles(E, () => call('/api/fanzzy/evolve', {
+        method: 'POST', body: { id: base1W.id }, qui: E }));
+      return new Set(l.filter((x) => x.cle === `age:${base1W.id}:2`).map((x) => x.sorte));
+    },
+    remettreStuff: async () => {
+      const [ont] = await pool.execute('SELECT stuff_id FROM user_stuff WHERE user_id = ?', [E]);
+      const piece = STUFF.find((s) => !ont.some((o) => o.stuff_id === s.id));
+      const l = await nouvelles(E, () => dansUneTransaction((c) => F.remettreStuff(c, E, piece.id)));
+      /* Et un exemplaire de plus n'est pas une nouveauté : on éteint, puis
+         on remet la même pièce. */
+      await eteindre(E, { cles: [`stuff:${piece.id}`] });
+      const doublon = await nouvelles(E, () => dansUneTransaction((c) => F.remettreStuff(c, E, piece.id)));
+      check('un exemplaire de plus d’une pièce déjà à soi n’est pas nouveau', doublon.length === 0);
+      return new Set(l.filter((x) => x.cle === `stuff:${piece.id}`).map((x) => x.sorte));
+    },
+    remettreTenue: async () => {
+      const [[f]] = await pool.execute('SELECT stage FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?',
+        [E, base1W.id]);
+      const [ont] = await pool.execute(
+        'SELECT skin_id FROM user_skins WHERE user_id = ? AND fanzzy_id = ? AND stage = ?',
+        [E, base1W.id, f.stage]);
+      const tenue = tenuesPubliees().find((t) => t.id !== 'base' && !ont.some((o) => o.skin_id === t.id));
+      if (!tenue) return new Set();
+      const l = await nouvelles(E, () => dansUneTransaction((c) => F.remettreTenue(c, E,
+        { tenue: tenue.id, fanzzy: base1W.id, stage: f.stage })));
+      return new Set(l.filter((x) => x.cle === `skin:${base1W.id}:${f.stage}:${tenue.id}`)
+        .map((x) => x.sorte));
+    },
+  };
+  for (const [chemin, sortes] of Object.entries(CHEMINS_NOUVEAUTES.ecrivent)) {
+    if (!EPREUVES[chemin]) {
+      check(`« ${chemin} » se déclare, et la suite ne sait pas l’éprouver`, false);
+      continue;
+    }
+    const vues = await EPREUVES[chemin](sortes);
+    check(`« ${chemin} » écrit ${sortes.join(', ')}`, sortes.every((s) => vues.has(s))
+      || (console.log('        vu :', [...vues].join(', ') || 'rien'), false));
+  }
+  check('ceux qui n’en écrivent pas disent pourquoi',
+    Object.values(CHEMINS_NOUVEAUTES.nEcriventPas).every((r) => typeof r === 'string' && r.length > 10));
+  const nv = (await call('/api/fanzzy/state', { qui: E })).json.nouveautes ?? [];
+  check('l’âge gagné est servi avec son stade',
+    nv.some((x) => x.sorte === 'age' && x.id === base1W.id && x.stade === 2 && x.pour === undefined));
+}
+
+/* -------------------------------------------------- les compteurs du jour */
+console.log('\n  les compteurs du jour');
+{
+  const G = await joueur('Compte');
+  await pool.execute('UPDATE user_wallet SET packs = 10, scarves = 1000 WHERE user_id = ?', [G]);
+  await ouvrir(G);
+  await ouvrir(G);
+  check('deux ouvertures : booster = 2', await compteur(G, 'booster') === 2);
+  await pool.execute(`INSERT INTO user_fanzzy (user_id, fanzzy_id, copies, stage) VALUES (?, ?, 1, 1)
+    ON DUPLICATE KEY UPDATE stage = 1`, [G, base1W.id]);
+  const ev = await call('/api/fanzzy/evolve', { method: 'POST', body: { id: base1W.id }, qui: G });
+  check('une évolution : evolution = 1', ev.json.stade === 2 && await compteur(G, 'evolution') === 1);
+  const refus = await call('/api/fanzzy/evolve', { method: 'POST', body: { id: 'X-INEXISTANT' }, qui: G });
+  check('une évolution refusée ne compte pas', refus.json.error && await compteur(G, 'evolution') === 1);
+
+  /* Le jour est celui de la base, `CURDATE()`, jamais un jour fabriqué en
+     JavaScript : on fige l'horloge de la base sur une autre date que celle
+     de Node, et la ligne doit porter la date de la base. */
+  const H = await joueur('Minuit');
+  await figerHorloge(pool, '2026-10-25 00:30:00');
+  try {
+    const [[t]] = await pool.query(`SELECT DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS j`);
+    check('contrôle du contrôle : la base est au 25 octobre', t.j === '2026-10-25');
+    await ouvrir(H);
+    const [l] = await pool.query(
+      `SELECT DATE_FORMAT(jour, '%Y-%m-%d') AS j, n FROM compteurs_jour WHERE user_id = ? AND cle = 'booster'`, [H]);
+    check('le booster compte au jour de la base, pas à celui de Node',
+      l.length === 1 && l[0].j === '2026-10-25' && Number(l[0].n) === 1
+      || (console.log('        lignes :', JSON.stringify(l)), false));
+  } finally {
+    await figerHorloge(pool, null);
+  }
+}
+
+/* ---------------------------------------- sans les tables du quotidien
+
+   Une écriture annexe ne fait jamais échouer l'action, et elle le dit. */
+console.log('\n  sans sql/quotidien.sql');
+{
+  const J = await joueur('Sans');
+  await pool.execute('UPDATE user_wallet SET packs = 10, scarves = 1000 WHERE user_id = ?', [J]);
+  const journal = [];
+  const erreur = console.error;
+  console.error = (...a) => { journal.push(a.map(String).join(' ')); };
+  try {
+    await pool.query('DROP TABLE user_nouveautes');
+    await pool.query('DROP TABLE compteurs_jour');
+    const o = await ouvrir(J);
+    check('le booster s’ouvre quand même', o.json.cards?.length === 5);
+    await pool.execute(`INSERT INTO user_fanzzy (user_id, fanzzy_id, copies, stage) VALUES (?, ?, 1, 1)
+      ON DUPLICATE KEY UPDATE stage = 1`, [J, base1W.id]);
+    const ev = await call('/api/fanzzy/evolve', { method: 'POST', body: { id: base1W.id }, qui: J });
+    check('l’évolution aussi', ev.json.stade === 2);
+    const s = await call('/api/fanzzy/state', { qui: J });
+    check('l’état ne dit rien des nouveautés : il ne sait pas',
+      s.status === 200 && !('nouveautes' in s.json) && Boolean(s.json.wallet));
+    const v = await eteindre(J, { tout: true });
+    check('éteindre ne lève pas', v.status === 200 && v.json.restantes === 0);
+  } finally {
+    console.error = erreur;
+  }
+  const nomme = (table) => journal.some((l) => l.includes(table) && l.includes('sql/quotidien.sql'));
+  check('le journal nomme le fichier, pour le compteur et pour les nouveautés',
+    nomme('compteurs_jour') && nomme('user_nouveautes')
+    || (console.log('        journal :', journal.join(' | ')), false));
+  check('et ne le répète pas à chaque booster',
+    journal.filter((l) => l.includes('compteurs_jour')).length === 1);
+  await appliquer('quotidien');
+}
+
+/* ===================== le monde de la production : LA REPRISE seule
+
+   Sans saison, le code tourne tout ouvert, et la collection paraît sans fin.
+   La production n'a qu'une série ouverte : c'est là que les crans et la série
+   complète se lisent comme le joueur les verra. */
+console.log('\n  LA REPRISE seule, comme en production');
+await pool.execute(`INSERT INTO saisons (numero, nom, series, lancee_a) VALUES (1, 'La reprise', ?, NOW(3))`,
+  [JSON.stringify(['RP'])]);
+await moduleSaisons.chargerSaisons(pool);
+await chargerSeries(pool);
+const RP = obtenables().filter((f) => f.set === 'RP');
+check(`seule LA REPRISE est ouverte (${RP.length} personnages)`,
+  RP.length > 1 && obtenables().every((f) => f.set === 'RP'));
+
+/* ------------------------------------- la progression des séries (§ 2.3) */
+console.log('\n  la ligne de la série, dans la réponse du booster');
+{
+  const X = await joueur('Serie');
+  await pool.execute('UPDATE user_wallet SET packs = 50 WHERE user_id = ?', [X]);
+  let precedent = 0;
+  let justes = true;
+  for (let i = 0; i < 6; i++) {
+    const s = (await ouvrir(X, 'RP')).json.series;
+    const [poss] = await pool.execute('SELECT fanzzy_id FROM user_fanzzy WHERE user_id = ?', [X]);
+    const enBase = RP.filter((f) => poss.some((p) => p.fanzzy_id === f.id)).length;
+    if (!Array.isArray(s) || s.length !== 1 || s[0].id !== 'RP' || s[0].total !== RP.length
+      || s[0].avant !== precedent || s[0].apres !== enBase || s[0].complete !== false) {
+      justes = false;
+      console.log('        series :', JSON.stringify(s), '· en base :', enBase, '· avant attendu :', precedent);
+    }
+    precedent = s?.[0]?.apres ?? precedent;
+  }
+  check('avant, après et total exacts, booster après booster', justes);
+}
+{
+  /* La série complétée : tout sauf une commune, puis on ouvre jusqu'à ce
+     qu'elle tombe. Une chance sur vingt environ par booster ; trois cents
+     essais laissent une probabilité d'échec de l'ordre de 1e-7. */
+  const Y = await joueur('Complete');
+  const manquant = RP.find((f) => f.rar === 'commune');
+  for (const f of RP) {
+    if (f.id !== manquant.id) {
+      await pool.execute('INSERT INTO user_fanzzy (user_id, fanzzy_id, copies) VALUES (?, ?, 1)', [Y, f.id]);
+    }
+  }
+  await pool.execute('UPDATE user_wallet SET packs = 400 WHERE user_id = ?', [Y]);
+  const completes = [];
+  let suivant = null;
+  for (let i = 0; i < 300 && !suivant; i++) {
+    const s = (await ouvrir(Y, 'RP')).json.series?.[0];
+    if (completes.length) suivant = s;
+    else if (s?.complete) completes.push(s);
+  }
+  check(`le booster qui complète le dit (${RP.length - 1} → ${RP.length} sur ${RP.length})`,
+    completes.length === 1 && completes[0].avant === RP.length - 1
+    && completes[0].apres === RP.length && completes[0].total === RP.length
+    || (console.log('        vu :', JSON.stringify(completes)), false));
+  check('et celui d’après ne le redit pas',
+    suivant?.complete === false && suivant.avant === RP.length && suivant.apres === RP.length);
+}
+
+/* --------------------------------------- les paliers de collection (§ 5.1) */
+console.log('\n  les paliers de collection');
+const GAIN = (echarpes, packs) => ({ echarpes, packs, xp: 0, tampons: 0 });
+const memeGain = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const palier = (qui, body) => call('/api/fanzzy/palier', { method: 'POST', body, qui });
+const biblio = async (qui) => (await call('/api/fanzzy/bibliotheque', { qui })).json;
+const crans = async (id) => (await pool.execute(
+  `SELECT cle FROM recompenses WHERE user_id = ? AND source = 'cran'`, [id]))[0]
+  .map((l) => l.cle).sort((a, b) => Number(a) - Number(b));
+
+/**
+ * Amène un joueur à exactement `n` objets gagnés : des pièces, puis des
+ * personnages de LA REPRISE — **tous sauf le dernier**, pour que la série
+ * complète ne vienne pas se mêler aux crans qu'on éprouve —, puis des états
+ * de ces personnages. Écrit comme le jeu écrit, et vérifié par la
+ * bibliothèque elle-même : c'est son compte qui fait foi.
+ */
+async function atteindre(id, n) {
+  const b = await F.bibliotheque(id);
+  let g = b.total.gagnes;
+  if (g > n) throw new Error(`atteindre : ${g} objets déjà, plus que ${n}`);
+  const ajouter = async (sql, params) => {
+    if (g >= n) return;
+    const [r] = await pool.execute(sql, params);
+    if (r.affectedRows) g++;
+  };
+  for (const s of b.types.stuff.items.filter((x) => !x.possede)) {
+    await ajouter('INSERT IGNORE INTO user_stuff (user_id, stuff_id, copies) VALUES (?, ?, 1)', [id, s.id]);
+  }
+  for (const f of RP.slice(0, -1)) {
+    await ajouter('INSERT IGNORE INTO user_fanzzy (user_id, fanzzy_id, copies) VALUES (?, ?, 1)', [id, f.id]);
+  }
+  const [miens] = await pool.execute('SELECT fanzzy_id FROM user_fanzzy WHERE user_id = ?', [id]);
+  for (const f of RP.filter((x) => miens.some((m) => m.fanzzy_id === x.id))) {
+    for (const e of ['joie', 'depit', 'pousse', 'colere']) {
+      await ajouter('INSERT IGNORE INTO user_etats (user_id, fanzzy_id, stage, etat) VALUES (?, ?, 1, ?)',
+        [id, f.id, e]);
+    }
+  }
+  const fin = (await F.bibliotheque(id)).total.gagnes;
+  if (fin !== n) throw new Error(`atteindre : ${fin} objets au lieu de ${n}`);
+}
+
+const P = await joueur('Cran');
+{
+  const b = await biblio(P);
+  const p = b.paliers;
+  check('la bibliothèque sert ses paliers', Boolean(p));
+  check('« gagnes » est le total de la même réponse', p?.gagnes === b.total?.gagnes);
+  check('un cran tous les 25 objets', p?.cran === 25);
+  check(`rien à réclamer à ${b.total?.gagnes} objets`, Array.isArray(p?.aReclamer) && p.aReclamer.length === 0);
+  check('le prochain cran est chiffré, avec son gain',
+    p?.prochain?.a === 25 && p.prochain.manque === 25 - b.total.gagnes
+    && memeGain(p.prochain.gain, GAIN(25, 0))
+    || (console.log('        prochain :', JSON.stringify(p?.prochain)), false));
+  check('une entrée par série ouverte, et une seule',
+    p?.series?.length === 1 && p.series[0].id === 'RP' && p.series[0].total === RP.length
+    && p.series[0].possedes === 0 && p.series[0].etat === 'a_venir'
+    && memeGain(p.series[0].gain, GAIN(100, 1))
+    || (console.log('        séries :', JSON.stringify(p?.series)), false));
+}
+await atteindre(P, 63);
+await pool.execute(`INSERT INTO recompenses (user_id, source, cle, echarpes) VALUES (?, 'cran', '25', 25),
+  (?, 'cran', '50', 25)`, [P, P]);
+{
+  const p = (await biblio(P)).paliers;
+  check('63 objets, 25 et 50 payés : rien à réclamer', p?.gagnes === 63 && p.aReclamer.length === 0
+    || (console.log('        à réclamer :', JSON.stringify(p?.aReclamer)), false));
+  check('le prochain est 75, à 12 objets', p?.prochain?.a === 75 && p.prochain.manque === 12);
+}
+poserReglages({ 'collection.cran': 20 });
+try {
+  const p = (await biblio(P)).paliers;
+  check('le cran passe à 20 : seul 60 est payable',
+    JSON.stringify(p?.aReclamer?.map((x) => x.cle)) === '["60"]'
+    || (console.log('        à réclamer :', JSON.stringify(p?.aReclamer?.map((x) => x.cle))), false));
+  check('le prochain est 80, le quatrième cran, avec son booster',
+    p?.prochain?.a === 80 && p.prochain.manque === 17 && memeGain(p.prochain.gain, GAIN(25, 1)));
+  const avant = await bourse(P);
+  const r40 = await palier(P, { sorte: 'cran', cle: '40' });
+  check('40, couvert par le 50 payé, ne se paie pas', r40.json.verse === false && r40.json.raison === 'inconnu'
+    || (console.log('        rendu :', JSON.stringify(r40.json)), false));
+  const r = await palier(P, { sorte: 'cran', cle: '60' });
+  check('60 se paie, au montant du réglage', r.json.verse === true && memeGain(r.json.gain, GAIN(25, 0))
+    && r.json.wallet?.scarves === avant.scarves + 25 && (await bourse(P)).scarves === avant.scarves + 25
+    || (console.log('        rendu :', JSON.stringify(r.json)), false));
+  check('la réponse porte les paliers à jour',
+    Array.isArray(r.json.paliers?.aReclamer) && !r.json.paliers.aReclamer.some((x) => x.sorte === 'cran'));
+  check('sans niveau quand le gain ne porte pas d’XP', !('niveau' in r.json));
+  const re = await palier(P, { sorte: 'cran', cle: '60' });
+  check('une seconde fois : déjà récupéré', re.json.verse === false && re.json.raison === 'deja'
+    && (await bourse(P)).scarves === avant.scarves + 25);
+} finally {
+  poserReglages({});
+}
+{
+  /* Le compte baisse — huit pièces retirées : rien n'est repris, et le
+     prochain cran est au-dessus du plus haut payé (60), pas du compte. */
+  const [st] = await pool.execute('SELECT stuff_id FROM user_stuff WHERE user_id = ? ORDER BY stuff_id LIMIT 8',
+    [P]);
+  for (const s of st) await pool.execute('DELETE FROM user_stuff WHERE user_id = ? AND stuff_id = ?', [P, s.stuff_id]);
+  const avant = await bourse(P);
+  const b = await biblio(P);
+  check(`le compte baisse (${b.total.gagnes}) : rien n’est repris`, b.total.gagnes === 55
+    && (await crans(P)).join() === '25,50,60' && (await bourse(P)).scarves === avant.scarves);
+  check('et rien n’est dû : le prochain cran passe le plus haut payé',
+    b.paliers.aReclamer.length === 0 && b.paliers.prochain?.a === 75 && b.paliers.prochain.manque === 20);
+}
+{
+  const Q = await joueur('Deux');
+  await atteindre(Q, 30);
+  const avant = await bourse(Q);
+  const deux = await enParallele(2, () => palier(Q, { sorte: 'cran', cle: '25' }));
+  check('deux réclamations simultanées : un versement, un « déjà »',
+    deux.filter((x) => x.json.verse === true).length === 1
+    && deux.filter((x) => x.json.raison === 'deja').length === 1
+    || (console.log('        rendus :', deux.map((x) => JSON.stringify(x.json)).join(' | ')), false));
+  check('crédité une fois, exactement', (await bourse(Q)).scarves === avant.scarves + 25);
+  await atteindre(Q, 80);
+  const avant2 = await bourse(Q);
+  const dix = await enParallele(10, () => palier(Q, { tout: true }));
+  check('dix « tout récupérer » simultanés : 50 et 75, une fois chacun',
+    (await crans(Q)).join() === '25,50,75' && (await bourse(Q)).scarves === avant2.scarves + 50
+    || (console.log('        crans :', (await crans(Q)).join(), '·', (await bourse(Q)).scarves - avant2.scarves), false));
+  check('et aucune réponse n’est une erreur', dix.every((x) => x.status === 200));
+}
+{
+  const R = await joueur('Ordre');
+  await atteindre(R, 55);
+  const r = await palier(R, { sorte: 'cran', cle: '50' });
+  check('récupérer 50 avant 25 verse les deux, dans l’ordre',
+    r.json.verse === true && memeGain(r.json.gain, GAIN(50, 0)) && (await crans(R)).join() === '25,50'
+    || (console.log('        rendu :', JSON.stringify(r.json), '· crans :', (await crans(R)).join()), false));
+  const loin = await palier(R, { sorte: 'cran', cle: '100' });
+  check('un cran pas encore atteint : « incomplet », et rien d’autre de versé',
+    loin.json.verse === false && loin.json.raison === 'incomplet' && (await crans(R)).join() === '25,50');
+}
+{
+  const S = await joueur('Quatre');
+  await atteindre(S, 100);
+  const max = reglage('pack.max');
+  await poserReserve(S, max - 1, cadence() + 1000);
+  /* Le cran 100 seul : il verse aussi les trois d'en dessous, et c'est lui
+     qui porte le booster. */
+  const r = await palier(S, { sorte: 'cran', cle: '100' });
+  check('récupérer 100 : quatre crans, dont un booster',
+    r.json.verse === true && memeGain(r.json.gain, GAIN(100, 1)) && (await crans(S)).join() === '25,50,75,100'
+    || (console.log('        rendu :', JSON.stringify(r.json)), false));
+  check(`la recharge due passe avant le booster offert : ${max - 1} → ${max + 1}`,
+    r.json.wallet?.packs === max + 1 && (await bourse(S)).packs === max + 1);
+}
+{
+  const T = await joueur('Pleine');
+  for (const f of RP) {
+    await pool.execute('INSERT INTO user_fanzzy (user_id, fanzzy_id, copies) VALUES (?, ?, 1)', [T, f.id]);
+  }
+  const b = await biblio(T);
+  const s = b.paliers?.series?.[0];
+  check('toute la série possédée : prête', s?.etat === 'pret' && s.possedes === RP.length
+    && b.paliers.aReclamer.some((x) => x.sorte === 'serie' && x.cle === 'RP' && memeGain(x.gain, GAIN(100, 1))));
+  const avant = await bourse(T);
+  const r = await palier(T, { sorte: 'serie', cle: 'RP' });
+  check('la série complète se paie : 100 écharpes et un booster',
+    r.json.verse === true && memeGain(r.json.gain, GAIN(100, 1))
+    && r.json.wallet?.scarves === avant.scarves + 100 && r.json.wallet.packs === avant.packs + 1
+    || (console.log('        rendu :', JSON.stringify(r.json)), false));
+  check('puis réclamée', r.json.paliers?.series?.[0]?.etat === 'reclame'
+    && !r.json.paliers.aReclamer.some((x) => x.sorte === 'serie'));
+  check('une seconde fois : déjà', (await palier(T, { sorte: 'serie', cle: 'RP' })).json.raison === 'deja');
+  check('une série fermée, ou qui n’existe pas : inconnue',
+    (await palier(T, { sorte: 'serie', cle: 'TR' })).json.raison === 'inconnu'
+    && (await palier(T, { sorte: 'serie', cle: 'ZZ' })).json.raison === 'inconnu');
+  const X2 = await joueur('Partiel');
+  await pool.execute('INSERT INTO user_fanzzy (user_id, fanzzy_id, copies) VALUES (?, ?, 1)', [X2, RP[0].id]);
+  check('une série incomplète : pas encore', (await palier(X2, { sorte: 'serie', cle: 'RP' })).json.raison === 'incomplet');
+
+  /* Le montant ne vient jamais du corps : un client qui en glisse un reçoit
+     celui du réglage (T1). */
+  const avantT = await bourse(T);
+  const t1 = await palier(T, { sorte: 'cran', cle: '25', echarpes: 9999, gain: { echarpes: 9999 } });
+  check('un montant glissé dans le corps est ignoré', t1.json.verse === true
+    && memeGain(t1.json.gain, GAIN(25, 0)) && (await bourse(T)).scarves === avantT.scarves + 25);
+
+  /* L'interrupteur, avec quelque chose de dû : sans cela, « rien versé » ne
+     dirait rien. */
+  await atteindre(T, 50);
+  check('le cran 50 est dû', (await biblio(T)).paliers?.aReclamer?.some((x) => x.cle === '50'));
+  poserReglages({ 'collection.actif': false });
+  try {
+    const [[n0]] = await pool.execute('SELECT COUNT(*) AS n FROM recompenses WHERE user_id = ?', [T]);
+    const coupe = await biblio(T);
+    const refus = await palier(T, { tout: true });
+    const [[n1]] = await pool.execute('SELECT COUNT(*) AS n FROM recompenses WHERE user_id = ?', [T]);
+    check('interrupteur coupé : pas de paliers servis', coupe.total && !('paliers' in coupe));
+    check('et toute réclamation refuse, sans rien verser',
+      refus.json.verse === false && refus.json.raison === 'inactif' && Number(n1.n) === Number(n0.n));
+  } finally {
+    poserReglages({});
+  }
+
+  const invalides = [{}, [], { sorte: 'cran' }, { sorte: 'cran', cle: 'abc' }, { sorte: 'cran', cle: 25 },
+    { sorte: 'cran', cle: '0' }, { sorte: 'autre', cle: '1' }, { tout: 1 },
+    { tout: true, sorte: 'cran', cle: '25' }, { sorte: 'serie', cle: 'R P' }];
+  const rendus = [];
+  for (const b2 of invalides) rendus.push(await palier(T, b2));
+  check(`un corps invalide : 400 nommé, sous ses ${invalides.length} formes`,
+    rendus.every((x) => x.status === 400 && x.json.error === 'fanzzy.error.palier_requete')
+    || (console.log('        rendus :', rendus.map((x) => `${x.status}:${x.json.error}`).join(' ')), false));
+}
+
+/* ----------------------------------------- la saison en cours, servie (§ 7.1)
+
+   `/dex` et `/state` servent la saison en cours avec sa fin datée, et rien
+   de plus : le carnet propre que `saisonEnCours()` porte pour le quotidien
+   n'a rien à faire dans une réponse publique mise en cache. */
+console.log('\n  la saison en cours, telle que /dex et /state la servent');
+{
+  const { CARNET_DEFAUT } = await import('../src/shared/saison.js');
+  await pool.execute(
+    `UPDATE saisons SET carnet = ?, fin_le = CURDATE() + INTERVAL 9 DAY WHERE numero = 1`,
+    [JSON.stringify(CARNET_DEFAUT)]);
+  await moduleSaisons.chargerSaisons(pool);
+  try {
+    /* Le contrôle du contrôle : sans carnet dans la saison du module, « pas
+       de carnet servi » passerait sans rien prouver. */
+    check('le module des saisons porte bien le carnet propre de la saison',
+      Array.isArray(moduleSaisons.saisonEnCours()?.carnet));
+    const servies = [['/dex', (await call('/api/fanzzy/dex')).json.saison],
+      ['/state', (await call('/api/fanzzy/state')).json.saison]];
+    for (const [route, s] of servies) {
+      check(`${route} : la saison en cours, sans son carnet`,
+        s?.numero === 1 && s.nom === 'La reprise' && !('carnet' in s)
+        || (console.log('        saison :', JSON.stringify(s)), false));
+      /* Neuf jours après aujourd'hui : dix jours de jeu, aujourd'hui compris
+         (`CONTRATS.md`, § 7.1). La durée, elle, compte jusqu'à la fin du
+         dernier jour : entre neuf et dix jours, à une heure près pour un
+         changement d'heure. */
+      check(`${route} : avec la fin du contrat (${s?.fin} · ${s?.joursRestants} jours)`,
+        /^\d{4}-\d{2}-\d{2}$/.test(s?.fin ?? '') && s.joursRestants === 10 && s.finie === false
+        && Number.isInteger(s.finDansMs) && s.finDansMs > 9 * 86_400_000 - 3_600_000
+        && s.finDansMs <= 10 * 86_400_000 + 3_600_000);
+    }
+  } finally {
+    await pool.execute('UPDATE saisons SET carnet = NULL, fin_le = NULL WHERE numero = 1');
+    await moduleSaisons.chargerSaisons(pool);
+  }
+  const sansDate = (await call('/api/fanzzy/dex')).json.saison;
+  check('sans date de fin : ni fin, ni durée, ni jours, et pas finie',
+    sansDate?.finie === false && !('fin' in sansDate) && !('finDansMs' in sansDate)
+    && !('joursRestants' in sansDate));
+}
+
+/* --------------------------------------------- la saison annoncée (§ 7.2) */
+console.log('\n  la saison annoncée');
+{
+  const d = (await call('/api/fanzzy/dex')).json;
+  check('sans annonce : ni « prochaine », ni série marquée',
+    !('prochaine' in d) && d.sets.every((s) => !('prochaine' in s)));
+  /* Livrée par le périmètre des saisons : son absence n'est plus une étape
+     du chantier, c'est une régression — et un contrôle qui se saute en
+     silence rétrécit sans que personne le voie. */
+  check('saisonProchaine() et seriesAnnoncees() sont livrées par le module des saisons',
+    typeof moduleSaisons.saisonProchaine === 'function'
+    && typeof moduleSaisons.seriesAnnoncees === 'function');
+  if (typeof moduleSaisons.saisonProchaine === 'function') {
+    /* LA REPRISE y figure aussi : déjà ouverte, elle ne « s'ouvre » pas à la
+       saison 2, et ne doit pas porter son numéro. C'est la règle du périmètre
+       des saisons (`seriesAnnoncees`), que ce module emploie sans la refaire. */
+    await pool.execute(`INSERT INTO saisons (numero, nom, series, ouvre_le)
+      VALUES (2, 'La trêve', ?, CURDATE() + INTERVAL 3 DAY)`, [JSON.stringify(['HC', 'RP'])]);
+    await moduleSaisons.chargerSaisons(pool);
+    const a = (await call('/api/fanzzy/dex')).json;
+    check('une saison dont l’ouverture est posée est annoncée',
+      a.prochaine?.numero === 2 && a.prochaine.nom === 'La trêve' && /^\d{4}-\d{2}-\d{2}$/.test(a.prochaine.ouvre ?? '')
+      || (console.log('        prochaine :', JSON.stringify(a.prochaine)), false));
+    check('avec les seuls champs du contrat', Object.keys(a.prochaine ?? {})
+      .every((k) => ['id', 'numero', 'nom', 'ouvre', 'ouvreDansMs', 'joursAvant'].includes(k)));
+    check('et ses séries portent son numéro, elles seules',
+      a.sets.find((s) => s.id === 'HC')?.prochaine === 2 && a.sets.filter((s) => 'prochaine' in s).length === 1);
+    await pool.execute(`UPDATE saisons SET ouvre_le = NULL WHERE numero = 2`);
+    await moduleSaisons.chargerSaisons(pool);
+    const b = (await call('/api/fanzzy/dex')).json;
+    check('sans date posée, plus rien n’est promis', !('prochaine' in b) && b.sets.every((s) => !('prochaine' in s)));
+  } else {
+    console.log('  --   saisonProchaine() manque au module des saisons : '
+      + 'l’annonce elle-même ne peut pas être éprouvée');
+  }
+}
+
+/* On rouvre tout : les autres suites partagent cette base. */
+await pool.execute('DELETE FROM saisons');
+await moduleSaisons.chargerSaisons(pool);
+await chargerSeries(pool);
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
-await pool.end(); http.close();
-process.exit(failures ? 1 : 0);
+await pool.end();
+/* `process.exitCode` et non `process.exit()` : la sortie forcée coupe les
+   fermetures du pool en vol et fait échouer la suite au hasard sous Windows
+   (`ETAT.md`, § 2). */
+http.closeAllConnections?.();
+await new Promise((r) => http.close(r));
+process.exitCode = failures ? 1 : 0;

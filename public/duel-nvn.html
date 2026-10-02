@@ -65,7 +65,9 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .tribunes{display:flex;gap:8px;padding:0 14px}
 .trib{flex:1;min-width:0;padding:11px 8px;flex-direction:column;gap:3px;
   overflow-wrap:anywhere}
-.raison.chezmoi b{color:var(--projo)}
+/* Les mots en gras des raisons, en craie grasse : en or et en onze pixels,
+   ils ne tenaient pas au soleil (arbitrage du 2 octobre 2026). */
+.raison.chezmoi b{color:var(--craie);font-weight:700}
 /* L'onglet de format porte sa prime sur une seconde ligne : sur la même, à
    trois cent soixante pixels, « 2V2 +15 % » ne tenait pas dans un cinquième
    de rail et s'abrégeait. La colonne centre les deux lignes, et l'onglet sans
@@ -113,7 +115,10 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
   overflow-wrap:anywhere}
 .mt .q{font-size:11px;letter-spacing:.08em;font-family:var(--banner);border-radius:4px;padding:2px 6px;
   border:1px solid currentColor;flex:none}
-.mt .q.classe{color:var(--projo)}
+/* CLASSÉ est la seule pastille pleine : craie, l'encre dessus. Elle était au
+   trait d'or, et en onze pixels l'or ne tient pas au soleil (arbitrage du
+   2 octobre 2026) ; au trait de craie, elle se confondrait avec le score. */
+.mt .q.classe{color:var(--encre);background:var(--craie);border-color:var(--craie);font-weight:700}
 .mt .q.entrainement{color:var(--gris)}
 /* Le doublement pour son club. En vert, la couleur du gain — et non celle du
    mode de duel, pour qu’on ne confonde pas les deux informations. */
@@ -132,7 +137,7 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .mt .q.sc i{font-style:normal;opacity:.88;margin-left:4px;font-weight:500}
 .mt .q.sc.live{color:var(--flare);border-color:currentColor}
 .raison.attend{opacity:.9}
-.raison.attend b{color:var(--projo);font-family:var(--banner);font-size:13px}
+.raison.attend b{color:var(--craie);font-weight:700;font-family:var(--banner);font-size:13px}
 /* Inviter, depuis la file. Une plaque au ton violet — celui des gens — posée
    au centre de la salle, à sa largeur. */
 .inviter{margin-top:12px;align-self:center}
@@ -156,13 +161,17 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .gros{margin:12px 14px;width:calc(100% - 28px)}
 .avert{margin:0 14px 10px;border:1px solid rgba(245,195,59,.35);border-radius:10px;padding:12px 14px;
   background:rgba(245,195,59,.07);font-size:12px;line-height:1.65}
+/* Le titre et le lien de l'avertissement, en craie grasse : en or et sous
+   treize pixels, ils ne tenaient pas au soleil (arbitrage du 2 octobre
+   2026). Le voile et le cadre d'or, qui ne portent pas de lettres, restent. */
 .avert b{display:block;font-family:var(--banner);font-size:12.5px;letter-spacing:.06em;margin-bottom:5px;
-  color:var(--projo)}
-.avert a{color:var(--projo)}
+  color:var(--craie);font-weight:700}
+.avert a{color:var(--craie);font-weight:700}
 /* Le renvoi vers la répétition. Discret exprès — il ne se met pas sur le
-   chemin de quelqu'un qui vient chercher un duel. */
+   chemin de quelqu'un qui vient chercher un duel. Le lien était en or, sans
+   soulignement : en craie, c'est le soulignement qui dit qu'il se touche. */
 .repet{margin:0 14px 12px;font-size:11.5px;line-height:1.5;opacity:.88}
-.repet a{color:var(--projo);text-decoration:none}
+.repet a{color:var(--craie);text-decoration:underline;text-underline-offset:3px}
 .repet a b{font-weight:600}
 
 /* --------------------------------------------------------- le duel */
@@ -320,7 +329,9 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .lieu{position:absolute;left:10px;right:10px;bottom:7px;z-index:4;text-align:center;
   font-size:11px;letter-spacing:.04em;line-height:1.3;opacity:.9;pointer-events:none;
   text-shadow:0 1px 0 rgba(0,0,0,.9),0 1px 6px rgba(0,0,0,.9)}
-.lieu b{font-family:var(--banner);letter-spacing:.1em;color:var(--projo)}
+/* Le nom du stade, en craie grasse : en or et en onze pixels, il ne tenait
+   pas au soleil (arbitrage du 2 octobre 2026). */
+.lieu b{font-family:var(--banner);letter-spacing:.1em;font-weight:700;color:var(--craie)}
 .lieu:empty{display:none}
 
 /* La corde elle-même, tendue en travers de l'arène. */
@@ -336,7 +347,12 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .ecart{position:absolute;left:0;right:0;top:14px;text-align:center;font-family:var(--banner);
   font-size:34px;line-height:1;letter-spacing:.02em;pointer-events:none;
   text-shadow:0 3px 20px rgba(0,0,0,.85);transition:color .25s}
-.ecart small{display:block;font-size:11px;letter-spacing:.14em;opacity:.88;margin-top:5px}
+/* La phrase sous l'écart reste en craie, quelle que soit la couleur du
+   chiffre : elle en héritait, et quand je mène, c'était de l'or en onze
+   pixels — l'or ne s'écrit plus qu'en grand (arbitrage du 2 octobre 2026).
+   Le chiffre, trente-quatre pixels, garde la couleur du camp. */
+.ecart small{display:block;font-size:11px;letter-spacing:.14em;opacity:.88;margin-top:5px;
+  color:var(--craie)}
 
 /* La foule : un point par joueur, qui s'allume quand il chante. Ça remplace
    le fil de texte — on voit qui pousse, on ne le lit plus. */
@@ -520,7 +536,10 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .chant .g{position:relative;font-family:var(--banner);font-size:11px;line-height:1.05;
   letter-spacing:.02em;opacity:.88;text-transform:uppercase;
   -webkit-hyphens:auto;hyphens:auto;overflow-wrap:anywhere}
-.chant .p{position:relative;font-family:var(--banner);font-size:20px;color:var(--c);
+/* La puissance, dans la couleur du geste : en gras, voir `.card .p` du
+   Virage — vingt pixels gras sont du grand texte, le seul où l'or s'écrit
+   encore (arbitrage du 2 octobre 2026). */
+.chant .p{position:relative;font-family:var(--banner);font-size:20px;font-weight:700;color:var(--c);
   margin-top:auto;line-height:1}
 /* `line-height:1` : le coût tient dans la hauteur de la première ligne du nom,
    et le flottant qui lui garde la place n'a pas à mordre sur la seconde. */
@@ -742,10 +761,14 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 /* Tout ce qui s'écrit dans la salle est à onze pixels au moins et en craie
    pleine : on y attend deux minutes, c'est l'écran qu'on lit le plus longtemps
    de tout le duel, et le voile est d'un noir sur lequel une craie à 88 %
-   décroche au plein jour. Le compte « 1/3 » garde sa couleur de camp. */
+   décroche au plein jour. Le compte « 1/3 » aussi : voir plus bas. */
 .tribune-att h4{margin:0 0 7px;font-family:var(--banner);font-size:11px;letter-spacing:.12em;
   display:flex;align-items:center;gap:8px}
-.tribune-att h4 em{font-style:normal;margin-left:auto;color:var(--c,var(--projo))}
+/* Le compte « 1/3 » en craie grasse. Il prenait la couleur de son camp, et
+   l'or du sien, en onze pixels, ne tenait pas au soleil (arbitrage du
+   2 octobre 2026). Le camp se lit toujours à son titre — MA TRIBUNE, EN
+   FACE — et aux places prises, cernées de sa couleur juste dessous. */
+.tribune-att h4 em{font-style:normal;margin-left:auto;font-weight:700;color:var(--craie)}
 .places-att{display:flex;gap:7px}
 .place-att{flex:1;min-width:0;max-width:112px;aspect-ratio:63/84;border-radius:10px;position:relative;
   overflow:hidden;background:rgba(255,255,255,.03);
@@ -774,7 +797,9 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
    phrase figée disait « c'est bloqué ». */
 .rebours{font-family:var(--banner);font-size:11px;letter-spacing:.1em;
   text-align:center}
-.rebours b{color:var(--projo);font-variant-numeric:tabular-nums}
+/* Le chiffre, en craie grasse : en or et en onze pixels, il ne tenait pas
+   au soleil (arbitrage du 2 octobre 2026). */
+.rebours b{color:var(--craie);font-weight:700;font-variant-numeric:tabular-nums}
 
 /* Même règle que `.grand` : le voile couvre l’écran, son contenu tient dans
    la colonne. */
@@ -839,8 +864,10 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
   border-right:1px solid rgba(242,238,228,.14)}
 .fil-match .sc b{display:block;font-family:var(--banner);font-size:17px;letter-spacing:.03em;
   font-variant-numeric:tabular-nums}
+/* La mention sous le score, en craie grasse : en or et en onze pixels, elle
+   ne tenait pas au soleil (arbitrage du 2 octobre 2026). */
 .fil-match .sc small{display:block;font-size:11px;letter-spacing:.1em;opacity:.9;
-  margin-top:2px;color:var(--projo)}
+  margin-top:2px;font-weight:700;color:var(--craie)}
 .fil-match .min{flex:none;font-family:var(--banner);font-size:14px;color:var(--flare);
   letter-spacing:.04em;display:flex;align-items:center;gap:5px;
   font-variant-numeric:tabular-nums}
@@ -853,7 +880,7 @@ h2 i,.souscarte h3 i{font-style:normal;font-size:11px;letter-spacing:.04em;
 .fil-match .qui{flex:1;min-width:0;font-size:11.5px;opacity:.88;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
 .vide{padding:30px 20px;text-align:center;opacity:.88;font-size:12.5px;line-height:1.8}
-.vide a{color:var(--projo)}
+.vide a{color:var(--craie);font-weight:700}
 
 /* **Le mouvement part, l'information reste.** Sous `prefers-reduced-motion`
    comme sous le mode calme « animations » (voir ui.css), les deux battements
@@ -2161,6 +2188,16 @@ function ecrire(el, texte) {
 
 function rendreDuel() {
   const v = S.vue;
+  /* **La rumeur de la tribune** (le moteur commun, `son.js`) : là tant que
+     le duel se joue, partie quand il est fini. La commande se répète sans
+     rien déranger — dix fois par seconde, elle ne change rien tant que le
+     niveau ne change pas —, ce qui couvre le coup d'envoi, la reprise après
+     une coupure et un moteur arrivé après la première vue (`fx.js` le charge
+     en différé). Une poussée ou un but courent par-dessus sans être effacés.
+     Sans moteur, sous le calme ou avant le premier toucher, rien ne joue ;
+     le bouton de son du duel calme la facette « sons », et le moteur coupe
+     alors la rumeur avec le reste. */
+  window.TBF_SON?.ambiance?.(v && !v.termine ? 1 : 0);
   if (!v) return;
   const moi = v.moi;
   const mon = moi?.side ?? 0;
@@ -2207,12 +2244,14 @@ function rendreDuel() {
   ecrire($('souffleVal'), moi.breath);
 
   // Les effets en cours, nommés : sans ça, un joueur silencié croit à un bug.
+  // Les deux qui étaient en or passent à la craie : la pastille fait onze
+  // pixels, et l'or ne s'écrit plus qu'en grand (arbitrage du 2 octobre 2026).
   const NOMS = {
     silence:['Silence radio','var(--flare)'], blind:['Brouillard','var(--violet)'],
     lock_actions:['Parcage fermé','var(--flare)'], shield:['Bâche','var(--gris)'],
-    reflect:['Renvoi armé','var(--vert)'], mod_self:['Modificateur','var(--projo)'],
+    reflect:['Renvoi armé','var(--vert)'], mod_self:['Modificateur','var(--craie)'],
     mod_foe:['Vent de face','var(--violet)'], breath_mult:['Souffle ralenti','var(--flare)'],
-    floor_quality:['Second souffle','var(--projo)'], peut_changer:['Changement possible','var(--vert)'],
+    floor_quality:['Second souffle','var(--craie)'], peut_changer:['Changement possible','var(--vert)'],
   };
   /* Les trois rangées qui suivent passent par `accorder` : voir « des nœuds
      qui durent », juste au-dessus. Même balisage qu'avant, mais posé une fois
@@ -2409,6 +2448,8 @@ function raconter(e) {
       teteSaute(e.userId);
       if (e.backfire) { FX?.son?.('contre'); break; }
       FX?.son?.(q > 90 ? 'parfait' : 'chant');
+      // Un bon chant de son camp fait pousser sa tribune, quatre secondes.
+      if (pour && q > 70) window.TBF_SON?.ambiance?.(2, { pendant: 4000 });
       // Un geste parfait mérite d'être vu de loin, même chez l'adversaire.
       if (q > 90) {
         const p = pointCorde();
@@ -2437,6 +2478,8 @@ function raconter(e) {
       const p = pointCorde();
       if (pour) {
         FX?.points?.(e.valeur, p, { couleur: OR, quoi: 'POUSSÉE' });
+        // Sa tribune pousse avec la corde (voir « chant », juste au-dessus).
+        window.TBF_SON?.ambiance?.(2, { pendant: 4000 });
       } else {
         FX?.nombre?.(`+${e.valeur}`, { x: p.x - 26, y: p.y, couleur: BLEU, signe: false });
       }
@@ -2518,6 +2561,10 @@ function raconter(e) {
       const nous = mon === 0 ? a : b;
       const eux = mon === 0 ? b : a;
       if (!nous && !eux) break;
+      /* L'ovation de sa tribune (neuf secondes au plus, puis la rumeur
+         revient seule) quand le but est le sien, ou celui des deux camps.
+         Un but encaissé ne la fait pas lever. */
+      if (nous) window.TBF_SON?.ambiance?.(3);
       if (nous && eux) {
         FX?.titre?.('LES DEUX TRIBUNES', e.joueur ?? null, 'var(--craie)', 34);
         FX?.son?.('but');
@@ -2529,6 +2576,8 @@ function raconter(e) {
 
     case 'goal':
       FX?.but?.({ pour, score: e.goals });
+      // L'ovation, pour la corde que sa tribune fait céder : voir « but_reel ».
+      if (pour) window.TBF_SON?.ambiance?.(3);
       break;
 
     case 'swap':
@@ -2557,6 +2606,8 @@ function raconter(e) {
  * résultat sec qu'un écran de jeu figé dont on ne sort pas.
  */
 function finir(v) {
+  // Le coup de sifflet vide la tribune, bilan ou pas.
+  window.TBF_SON?.ambiance?.(0);
   if (S.bilanVu) return;
   S.bilanVu = true;
   /* Le repli est un écran de fin comme l'autre : il propose « Revenir », donc
@@ -2691,6 +2742,8 @@ function montrerAffiche(a) {
  */
 function montrerBilan(b) {
   S.bilanVu = true;
+  // Le bilan se lit dans une tribune vide : la rumeur s'éteint en fondu.
+  window.TBF_SON?.ambiance?.(0);
   fermerVoile();
   /* Les messages du jeu s'effacent. Une infobulle de refus — « il te faut
      l'Arbitre pour changer de Fanzzy » — posée sur l'écran de résultat parle
@@ -2801,8 +2854,14 @@ function montrerBilan(b) {
      le temps qu’il ait lu — puis elle rend le bilan, qui est resté dessous.
 
      Le serveur ne met `montee` que s’il y a eu palier ; `feter` résout tout
-     de suite sinon, donc rien ici n’a besoin de le vérifier deux fois. */
-  setTimeout(() => { window.TBF_NIVEAU?.feter?.(b.gains?.montee); }, 1400);
+     de suite sinon, donc rien ici n’a besoin de le vérifier deux fois.
+
+     Le Fanzzy qui fait la pose victoire derrière la rosette est celui que
+     le joueur vient d’emmener sur le terrain (`monAvatar`, l’avatar en jeu
+     à la forme du serveur, lu une fois au chargement pour l’affiche) — le
+     même que le Virage donne à sa fête. Tant qu’il n’est pas lu, ou sans
+     Fanzzy équipé, il vaut `null` : la rosette seule, comme avant. */
+  setTimeout(() => { window.TBF_NIVEAU?.feter?.(b.gains?.montee, { avatar: monAvatar }); }, 1400);
 }
 
 /* ----------------------------------------------------- les gestes */

@@ -17,18 +17,53 @@ export const MARKET_DAYS = 15;
 /** Prix d'une vignette, en écharpes. Une finale vaut plus qu'un match de poule. */
 const PRICE = { championnat: 60, coupe: 90, international: 140, amical: 30 };
 
+/**
+ * Combien de temps la présence s'écrit sans les chants, après avoir trouvé
+ * leurs colonnes absentes. Voir `recordPush`.
+ */
+export const REPLI_CHANTS_MS = 10 * 60_000;
+
 export function createSouvenirs({ pool, requireAuth,
   /* L'abonnement ouvre la **mémoire longue** : un joueur inscrit voit ses
      vingt dernières cartes, un abonné les voit toutes. Rien n’est effacé —
      c’est la lecture qui s’arrête, et elle rouvre entièrement dès
      l’abonnement. Voir `abonnement/index.js`. */
-  abonnement = null }) {
+  abonnement = null,
+  /* L'horloge du repli des chants, et elle seule. Une suite l'avance de dix
+     minutes pour éprouver la reprise sans attendre dix minutes ni remonter
+     le module — c'est précisément ce que la production ne fait pas. */
+  horloge = Date.now }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
   };
 
   /* ------------------------------------------------------- présence */
+
+  /* Les deux formes de l'écriture de présence. La seconde est celle d'avant
+     `sql/quotidien.sql`, mot pour mot : c'est elle que le repli rejoue. */
+  const PRESENCE = `INSERT INTO virage_presence (user_id, fixture_id, side, team_id, fanzzy_id,
+                                    ferveur, classe, chants, chants_mt1, chants_mt2)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         ferveur = ferveur + VALUES(ferveur),
+         fanzzy_id = VALUES(fanzzy_id),
+         chants = chants + VALUES(chants),
+         chants_mt1 = chants_mt1 + VALUES(chants_mt1),
+         chants_mt2 = chants_mt2 + VALUES(chants_mt2),
+         last_push_at = NOW(3)`;
+  const PRESENCE_SANS_CHANTS = `INSERT INTO virage_presence (user_id, fixture_id, side, team_id, fanzzy_id,
+                                    ferveur, classe)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         ferveur = ferveur + VALUES(ferveur),
+         fanzzy_id = VALUES(fanzzy_id),
+         last_push_at = NOW(3)`;
+
+  /* L'état du repli : jusqu'à quand écrire sans les chants (0 : on ne s'est
+     jamais replié, ou on en est revenu), et si le journal l'a déjà dit. */
+  let repliJusqua = 0;
+  let repliDit = false;
 
   /**
    * Enregistre une poussée dans le Grand Virage.
@@ -43,20 +78,64 @@ export function createSouvenirs({ pool, requireAuth,
    * ouvert un autre onglet entre-temps. C'est la raison pour laquelle
    * `classe` est absent de la clause `ON DUPLICATE KEY UPDATE`, et c'est
    * voulu — ce n'est pas un oubli à corriger.
+   *
+   * @param {number} [chant] 1 si la poussée est un chant, 0 pour une carte.
+   * @param {number} [mt] la mi-temps du vrai match : 1, 2, ou 0 hors des deux.
+   *
+   * ## Les chants, dans l'écriture qui existe
+   *
+   * Les missions du Virage comptent des chants (`chants`), et la mission « dans
+   * chaque mi-temps » les compte par moitié (`chants_mt1`, `chants_mt2`). Ils
+   * s'ajoutent **dans le même upsert** que la présence : une poussée reste une
+   * instruction, et une tribune de mille ne paie pas une écriture de plus à
+   * chaque chant. Une ligne par match, comme avant : c'est le module des
+   * missions qui la rattache au jour de jeu du coup d'envoi, pas celui-ci.
+   *
+   * ## Le repli, et pourquoi il expire
+   *
+   * Les colonnes viennent de `sql/quotidien.sql`. Sur une base qui ne l'a pas
+   * encore, l'instruction complète lève `ER_BAD_FIELD_ERROR` : **la présence
+   * ne doit jamais se perdre pour un compteur** — elle porte les
+   * cartes-souvenirs et le classement de ferveur. On rejoue donc aussitôt
+   * l'instruction d'avant, on le dit une fois au journal, et l'on écrit sans
+   * les chants pendant dix minutes.
+   *
+   * Dix minutes, et non la vie du processus. Après un passage par le Manager,
+   * on applique le schéma (`npm run schema:appliquer`) sur un processus déjà
+   * démarré : un repli définitif ne compterait alors plus jamais un chant
+   * jusqu'au prochain redémarrage, et les missions du Virage resteraient à
+   * zéro sans un mot. Au pire, une instruction en échec toutes les dix
+   * minutes ; jamais deux par poussée.
    */
   async function recordPush({ userId, fixtureId, side, teamId = null, fanzzyId,
-                              amount, classe = true }) {
-    await q(
-      `INSERT INTO virage_presence (user_id, fixture_id, side, team_id, fanzzy_id,
-                                    ferveur, classe)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE
-         ferveur = ferveur + VALUES(ferveur),
-         fanzzy_id = VALUES(fanzzy_id),
-         last_push_at = NOW(3)`,
-      [userId, fixtureId, side ? 1 : 0, teamId ?? null, fanzzyId ?? null,
-       Math.max(0, Math.round(amount ?? 0)), classe === false ? 0 : 1],
-    );
+                              amount, classe = true, chant = 0, mt = 0 }) {
+    const presence = [userId, fixtureId, side ? 1 : 0, teamId ?? null, fanzzyId ?? null,
+      Math.max(0, Math.round(amount ?? 0)), classe === false ? 0 : 1];
+
+    if (horloge() >= repliJusqua) {
+      /* Une carte n'est pas un chant, et une mi-temps ne se compte que pour
+         un chant : la salle transporte la mi-temps de toute poussée. */
+      const c = chant ? 1 : 0;
+      try {
+        await q(PRESENCE, [...presence, c, c && mt === 1 ? 1 : 0, c && mt === 2 ? 1 : 0]);
+        if (repliJusqua) {
+          repliJusqua = 0;
+          console.warn('[souvenirs] les chants du Virage se comptent de nouveau '
+            + '(colonnes de sql/quotidien.sql trouvées)');
+        }
+        return;
+      } catch (e) {
+        if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+        repliJusqua = horloge() + REPLI_CHANTS_MS;
+        if (!repliDit) {
+          repliDit = true;
+          console.warn(`[souvenirs] chants du Virage non comptés : ${e.message} `
+            + '— appliquer sql/quotidien.sql (npm run schema:appliquer). '
+            + 'La présence s’écrit sans eux, et le comptage se retente toutes les dix minutes.');
+        }
+      }
+    }
+    await q(PRESENCE_SANS_CHANTS, presence);
   }
 
   /* ---------------------------------------------------------- frappe */

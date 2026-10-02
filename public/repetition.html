@@ -24,7 +24,10 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .dit{margin:10px 14px 0;padding:11px 14px;border-radius:12px;font-size:12.5px;line-height:1.55;
   border:1px solid rgba(245,195,59,.3);
   background:linear-gradient(140deg,rgba(245,195,59,.1),rgba(8,11,16,.7))}
-.dit b{color:var(--projo)}
+/* Le mot qui compte, en craie grasse : en or et en douze pixels et demi, il
+   ne tenait pas au soleil (arbitrage du 2 octobre 2026). Le voile et le
+   cadre d'or du bandeau, qui ne portent pas de lettres, restent. */
+.dit b{color:var(--craie);font-weight:700}
 
 .fam{margin:16px 14px 0}
 /* Le nom de la famille est un titre cousu (`.tbf-cousu`, dans ui.css) : la
@@ -51,8 +54,15 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    sous les 4,5 d'un texte courant ; pleine, elle tient. La hiérarchie avec le
    nom du geste passe par la taille et le lettrage. */
 .g span{display:block;font-size:11px;line-height:1.45;margin-top:3px}
+/* Le meilleur score, en craie grasse. Il prenait la couleur du geste, et
+   celle des six gestes de rythme est l'or du jeu (#F5C33B, `geste.js`) : de
+   l'or en onze pixels, qu'une recherche de couleurs écrites en dur ne voit
+   pas, et qui ne tient pas au soleil — l'or ne s'écrit plus qu'en grand
+   (arbitrage du 2 octobre 2026). La couleur du geste reste sur la barre de
+   la tuile, juste à gauche ; « déjà essayé » se lit à la graisse, et
+   « JAMAIS ESSAYÉ », dessous, garde la craie maigre. */
 .g .best{display:block;margin-top:6px;font-family:var(--banner);font-size:11px;
-  letter-spacing:.12em;color:var(--c)}
+  letter-spacing:.12em;color:var(--craie);font-weight:700}
 /* **Le plus pâle était celui que tout le monde lit en premier.** « JAMAIS
    ESSAYÉ » portait un `opacity:.35` écrit à la main dans le gabarit : la
    couleur du jeu, fondue au tiers, tombait à 2,2:1 — moitié moins que le
@@ -68,7 +78,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
    Et la craie pleine, pas à 55 % : le signal est l'absence de couleur, pas
    l'effacement. Un « rien encore » qu'on ne lit pas redevient un « rien ici ». */
-.g .best.jamais{color:var(--craie)}
+.g .best.jamais{color:var(--craie);font-weight:400}
 .g:focus-visible{outline:2px solid var(--projo);outline-offset:2px}
 
 /* ============================================================ la salle */
@@ -77,14 +87,21 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   calc(env(safe-area-inset-bottom) + 14px)}
 .salle.on{display:flex}
 .salle .tete{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+/* Le nom du geste, en craie : il prenait la couleur du geste, de l'or pour
+   les gestes de rythme, et dix-sept pixels ne sont pas du grand texte — l'or
+   ne s'écrit plus qu'en grand (arbitrage du 2 octobre 2026). La couleur
+   passe sur une barre à sa gauche, celle de la tuile qu'on vient de
+   toucher ; la note, en quarante-six pixels, la garde. */
 .salle .tete b{flex:1;min-width:0;font-family:var(--banner);font-size:17px;letter-spacing:.1em;
-  color:var(--c)}
+  color:var(--craie);padding-left:10px;box-shadow:inset 4px 0 0 var(--c)}
 /* La salle se lit en craie pleine : la consigne, le mot du résultat et la
    ligne qui l'explique sont ce qu'on vient chercher entre deux essais, et ils
    étaient entre 45 et 78 %. Pleine plutôt que simplement au-dessus du
    plancher, pour la même raison que la consigne des tuiles : le plein jour. */
 .salle .consigne{font-size:12.5px;line-height:1.55;margin:0 0 12px;min-height:38px}
-.salle .consigne em{font-style:normal;color:var(--projo)}
+/* Les mots en gras de la consigne se détachent par la graisse, plus par
+   l'or : l'or ne s'écrit plus qu'en grand (arbitrage du 2 octobre 2026). */
+.salle .consigne em{font-style:normal;font-weight:700;color:var(--craie)}
 /* La zone que `geste.js` remplit. Il y pose ses propres formes — on ne lui
    donne qu'une surface et on ne touche à rien de ce qu'il y met. */
 #zone{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
@@ -94,8 +111,11 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .note .n small{font-size:15px}
 .note .q{font-size:12px;letter-spacing:.18em;margin-top:5px}
 .note .r{font-size:11.5px;line-height:1.5;margin-top:7px}
-.note .record{color:var(--projo);font-family:var(--banner);letter-spacing:.14em;font-size:11px;
-  margin-top:6px}
+/* « TON MEILLEUR » est un sticker craie (`.tbf-sticker`, ui.css) : il était
+   écrit en or, en onze pixels, et l'or ne s'écrit plus qu'en grand
+   (arbitrage du 2 octobre 2026). Le sticker garde l'accent d'un record ; la
+   ligne lui laisse l'air de son bord et de son ombre. */
+.note .record{margin-top:9px;padding-bottom:4px}
 .apres{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .attend{text-align:center;font-size:12px;letter-spacing:.18em;padding:10px 0}
 
@@ -266,13 +286,43 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
     }
     config = { ...config, gestes: d.gestes, motif: d.motif };
 
+    /* **La tribune frappe avec le geste** (le moteur commun, `son.js`) : les
+       quatre gestes de rythme ont leur chant, du tambour et des claps calés
+       sur la pulsation que `geste.js` dessine. Sur les durées du serveur,
+       jamais les nôtres — la règle de cette salle (voir plus haut).
+
+       `debut` vaut un temps : `geste.js` bat sa première pulsation au bout
+       d'un intervalle, pas à l'ouverture. Le contretemps compte un temps de
+       plus que ses frappes, comme le geste. Pour l'écho, les frappes ne
+       jouent que pendant la démonstration : le joueur refait le motif en
+       silence, c'est le geste. Le calme ou le son coupé ne changent rien à
+       l'écran : la pulsation reste dessinée, le son ne porte jamais seul
+       l'information. Sans moteur, `chant` est nul et rien ne joue ; une
+       poignée qui n'a rien joué s'arrête sans rien faire.
+
+       `window.TBF_SON` écrit en toutes lettres à chaque appel, sans alias :
+       `son:smoke` lit les pages et vérifie que chaque chant appelé existe
+       dans la banque — un alias le lui cacherait. */
+    const cfg = d.gestes?.[g] ?? {};
+    const chant = g === 'tempo'
+      ? window.TBF_SON?.chant?.('tempo', { tempo: cfg.interval, temps: cfg.beats, debut: cfg.interval })
+      : g === 'contretemps'
+        ? window.TBF_SON?.chant?.('contretemps',
+          { tempo: cfg.interval, temps: cfg.beats + 1, debut: cfg.interval })
+        : (g === 'echo' || g === 'crescendo')
+          ? window.TBF_SON?.chant?.('frappes', { instants: cfg.instants })
+          : null;
+
     let rendu;
     try {
       rendu = await G.jouer(g, d.gestes, { zone: $('zone') });
     } catch {
+      chant?.arreter();
       occupe = false;
       return;
     }
+    // Le geste est fini (ou abandonné) : la tribune se tait avec lui.
+    chant?.arreter();
     /* Sorti en cours de geste : la promesse se résout quand même, et noter un
        geste que personne n'a fini afficherait un zéro à quelqu'un qui n'a rien
        raté. */
@@ -321,7 +371,7 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
       <div class="q">${mot}</div>
       ${refuse ? '<div class="r">Le moteur n’a pas accepté ce geste : trop rapide, '
         + 'ou trop régulier pour une main. En partie, il ne compterait pas non plus.</div>' : ''}
-      ${record ? '<div class="record">★ TON MEILLEUR</div>'
+      ${record ? '<div class="record"><span class="tbf-sticker">★ TON MEILLEUR</span></div>'
         : avant != null ? `<div class="r">Ton meilleur : ${Number(avant).toFixed(2)}</div>` : ''}`;
     $('apres').style.display = 'grid';
     $('encore').focus();
@@ -335,6 +385,8 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   }
 
   function sortir() {
+    // Sortir en plein geste coupe aussi le chant qui battait avec lui.
+    window.TBF_SON?.arreterChant?.();
     $('salle').classList.remove('on');
     $('zone').innerHTML = '';
     courant = null;

@@ -19,14 +19,15 @@
  *
  * La liste, les icônes, la construction du tiroir, la confirmation de sortie,
  * l'entrée d'administration et les états des destinations (le direct, le duel
- * qui attend, les boosters à ouvrir) vivent donc ici, et nulle part ailleurs.
+ * qui attend, les boosters à ouvrir, les missions à récupérer) vivent donc
+ * ici, et nulle part ailleurs.
  * `nav.js` l'appelle pour les pages de contenu ; l'accueil l'appelle pour
  * lui-même. Le jour où une entrée change, elle change une fois.
  *
- * Deux réglages y vivent aussi, pour la même raison — le tiroir est le seul
+ * Trois réglages y vivent aussi, pour la même raison — le tiroir est le seul
  * endroit présent sur toutes les pages d'un joueur connecté : **le mode
- * calme** (sons, vibrations, animations décoratives) et **l'installation**
- * de l'application sur l'appareil.
+ * calme** (sons, vibrations, animations décoratives), **le volume** des sons
+ * et **l'installation** de l'application sur l'appareil.
  *
  * ## Ce que ce fichier ne fait pas
  *
@@ -39,8 +40,9 @@
  * L'apparence vit dans `ui.css` (`.tbf-tiroir`, `.tbf-tiroir-tete`,
  * `.tbf-rubrique`, `.tbf-tiroir-grille`, `.tbf-case`, `.tbf-tiroir-pied`,
  * `.tbf-voile`).
- * Seuls les interrupteurs et l'entrée d'installation, qui n'existent qu'ici,
- * ont leur feuille à eux, posée par ce fichier — voir `CSS_REGLAGES`.
+ * Seuls les interrupteurs, le curseur du volume, l'entrée d'installation et
+ * le sticker d'une entrée du pied, qui n'existent qu'ici, ont leur feuille à
+ * eux, posée par ce fichier — voir `CSS_REGLAGES`.
  */
 (() => {
   const chemin = location.pathname.replace(/\/$/, '') || '/';
@@ -114,7 +116,11 @@
     '/boutique': 'Boutique', '/virage': 'Virage', '/duel-nvn': 'Duel',
     '/kop': 'KOP', '/amis': 'Amis', '/equipes': 'Clubs', '/matchs': 'Matchs',
     '/teletext': 'Compétitions', '/classement': 'Classement', '/carnet': 'Carnet',
-    '/profil': 'Profil', '/compte': 'Compte', '/aide': 'Aide',
+    /* `/aide` est devenu l'écran des MISSIONS (lot 5) : on y vient chercher
+       ce qui se gagne aujourd'hui, et il garde les premiers pas et les
+       questions dans ses rails. L'adresse ne change pas — des liens partagés
+       et le tunnel d'arrivée y mènent —, seul son nom change. */
+    '/profil': 'Profil', '/compte': 'Compte', '/aide': 'Missions',
     '/repetition': 'Répétition', '/admin': 'Administration',
     '/diagnostic': 'Diagnostic',
     /* Ces deux-là manquaient, et le manque se voyait : `nav.js` lit cette table
@@ -165,10 +171,12 @@
     // Une flèche vers la gauche, pour rentrer. Volontairement pas un chevron
     // seul : à quarante pixels, un chevron se confond avec un bouton de repli.
     retour: 'M15 5l-7 7 7 7',
-    // Un point d'interrogation dans un cercle. Le plus banal des pictogrammes,
-    // et c'est exactement la raison de le garder : celui-là doit se reconnaître
-    // sans apprentissage, par quelqu'un qui cherche déjà quelque chose.
-    aide: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M9.4 9.3a2.6 2.6 0 1 1 3.2 2.5c-.7.2-1.1.8-1.1 1.5v.6M12 17.2h.01',
+    /* Une case cochée, celle de la maquette (écran 2, « le tiroir ») : les
+       MISSIONS sont une liste de choses à faire, qu'on coche. Elles
+       remplacent l'entrée de l'aide, et son point d'interrogation avec elle —
+       il promettait une page d'explications, et l'on y trouve d'abord ce qui
+       se gagne aujourd'hui. */
+    missions: 'M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9',
     // Un métronome : le socle, la tige, le poids. Le seul objet du jeu qui ne
     // serve qu'à s'exercer — et il dit le rythme, qui est ce que la moitié des
     // gestes demandent.
@@ -208,7 +216,24 @@
      passaient au rouge. Le code couleur ne tenait plus d'un écran à
      l'autre. Le deck suit la même règle : bleu, parce qu'on le possède
      (amendement 18), même rangé parmi ce qu'on joue. La rubrique garde son
-     écharpe, son ordre et ses autres tuiles. */
+     écharpe, son ordre et ses autres tuiles.
+
+     **Des rangées pleines : six, six et quatre** (reliquat du lot 2). Le
+     tiroir faisait deux écrans de haut à 360 px — 1 284 px pour 640 —, et
+     la grille en prenait l'essentiel : huit, quatre et quatre tuiles, soit
+     sept rangées de trois, dont trois incomplètes. Seize tuiles en
+     demandent six au moins ; avec huit, quatre et quatre, il en fallait
+     sept, et huit à 320 px, où la grille passe à deux colonnes. Six, six et
+     quatre en font six à trois colonnes et huit à deux : la rangée gagnée à
+     360 ne se reperd pas à 320, ce que neuf, trois et quatre aurait fait.
+
+     Quatre portes ont donc changé de rubrique, et chacune y gagne un sens :
+     les amis rejoignent le KOP (« les gens », violets tous les deux : ce
+     qu'on fait à plusieurs), et les trois portes or — les boosters, la
+     boutique, l'abonnement — passent sous MA COLLECTION, en une rangée or
+     sous la rangée bleue : ce qu'on possède, puis de quoi le remplir. La
+     maquette range déjà les boosters là (écran 2, « le tiroir »), et le
+     kiosque est rattaché au classeur (`parentDe`, dans nav.js). */
   const MENU = [
     { titre: 'JOUER', ton: 'flare', liens: [
       ['/virage', 'virage', 'Le Grand Virage'],
@@ -216,13 +241,9 @@
       // Le KOP est au centre du jeu : il ouvre la rubrique de ce qu'on fait à
       // plusieurs, et il n'est plus derrière un second menu.
       ['/kop', 'kop', 'Mon KOP', 'violet'],
+      // Juste après le KOP : les deux portes violettes, celles des gens.
+      ['/amis', 'amis', 'Mes amis', 'violet'],
       ['/deck', 'deck', 'Mon deck', 'bleu'],
-      ['/boosters', 'pack', 'Mes boosters', 'or'],
-      ['/boutique', 'boutique', 'La boutique', 'or'],
-      /* Juste après la boutique, et pas ailleurs : c'est le même geste — on
-         vient dépenser. Il manquait, et la seule façon d'atteindre l'écran de
-         l'abonnement était de connaître son adresse. */
-      ['/abonnement', 'abonnement', 'L’abonnement', 'or'],
       /* Dernière de JOUER, et bien dans JOUER : on y va pour jouer, pas parce
          qu'on est perdu. Après les deux écrans qu'elle prépare et jamais avant
          eux — ce n'est pas une étape à franchir pour entrer au Virage, c'est
@@ -238,12 +259,18 @@
          l'avait pas remarquée là.
 
          En tête de la rubrique parce qu'elle la résume : elle compte tout ce
-         qui se gagne, Fanzzy compris, quand les trois autres entrées n'en
-         montrent chacune qu'une part. */
+         qui se gagne, Fanzzy compris, quand les autres entrées n'en montrent
+         chacune qu'une part. */
       ['/collection', 'collection', 'Ma collection'],
       ['/fanzzy', 'fanzzy', 'Mes Fanzzy'],
       ['/carnet', 'carnet', 'Mon carnet'],
-      ['/amis', 'amis', 'Mes amis', 'violet'],
+      // La rangée or : de quoi remplir ce qui précède (voir plus haut).
+      ['/boosters', 'pack', 'Mes boosters', 'or'],
+      ['/boutique', 'boutique', 'La boutique', 'or'],
+      /* Juste après la boutique, et pas ailleurs : c'est le même geste — on
+         vient dépenser. Il manquait, et la seule façon d'atteindre l'écran de
+         l'abonnement était de connaître son adresse. */
+      ['/abonnement', 'abonnement', 'L’abonnement', 'or'],
     ] },
     { titre: 'LE FOOTBALL', ton: 'vert', liens: [
       ['/matchs', 'matchs', 'Les matchs du jour'],
@@ -283,26 +310,36 @@
      laisse les barres de temps, qui sont des informations ; un solde qui
      change se pose sur sa nouvelle valeur au lieu de défiler, il ne
      disparaît pas. « Couper les animations » tout court ferait croire à une
-     panne au premier compte à rebours qui file encore. Le libellé passe
-     alors sur deux lignes dans un tiroir de téléphone : la ligne grandit,
-     elle ne descend jamais sous ses quarante-quatre pixels. */
+     panne au premier compte à rebours qui file encore.
+
+     **Le nom entier est celui de l'interrupteur, le mot seul est à l'œil**
+     (reliquat du lot 2). Les trois lignes empilées prenaient cent
+     trente-deux pixels du pied ; elles sont devenues la rangée de trois
+     interrupteurs de la maquette (écran 2, « le tiroir »), sous MODE
+     CALME : l'icône et la piste, et dessous le mot seul — SONS,
+     VIBRATIONS, ANIMATIONS —, que le titre de la rubrique éclaire. La
+     phrase ci-dessus reste le nom que lit un lecteur d'écran
+     (`aria-label`), et elle contient le mot affiché : celui qui dit
+     « animations » à sa commande vocale touche le bon. */
   const REGLAGES = [
-    ['sons', 'Couper les sons'],
-    ['vibrations', 'Couper les vibrations'],
-    ['animations', 'Couper les animations décoratives'],
+    ['sons', 'Couper les sons', 'Sons'],
+    ['vibrations', 'Couper les vibrations', 'Vibrations'],
+    ['animations', 'Couper les animations décoratives', 'Animations'],
   ];
 
-  const interrupteur = ([facette, texte]) =>
+  const interrupteur = ([facette, nom, mot]) =>
     `<button type="button" class="tbf-tiroir-bt" role="switch" aria-checked="false"
-      data-facette="${facette}"><svg viewBox="0 0 24 24" aria-hidden="true"><path
-      d="${ICONES[facette]}"/></svg>${texte}<span class="tbf-inter" aria-hidden="true"></span></button>`;
+      aria-label="${nom}" data-facette="${facette}"><svg viewBox="0 0 24 24" aria-hidden="true"><path
+      d="${ICONES[facette]}"/></svg><span class="tbf-inter" aria-hidden="true"></span><span
+      class="lib">${mot}</span></button>`;
 
   /* ------------------------------------------- la feuille des réglages
 
-     Ce qui manque à ui.css pour les deux réglages du tiroir, et seulement
+     Ce qui manque à ui.css pour ce que seul le tiroir porte, et seulement
      ça : la ligne-bouton reprend exactement la ligne-lien (.tbf-tiroir a),
-     qu'un sélecteur de lien ne peut pas atteindre, et l'interrupteur n'existe
-     nulle part ailleurs. Posée une fois, par le premier tiroir monté.
+     qu'un sélecteur de lien ne peut pas atteindre ; l'interrupteur, le
+     curseur du volume et le sticker d'une entrée du pied n'existent nulle
+     part ailleurs. Posée une fois, par le premier tiroir monté.
 
      Quarante-quatre pixels de haut : la pulpe d'un doigt, et le plancher du
      socle pour toute cible. Les liens du tiroir en font autant (ui.css), et
@@ -319,23 +356,105 @@
     stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.7}
   /* L'interrupteur : une piste et un palet. Allumé, il prend le vert de ce
      qui est acquis dans le jeu, et le palet passe à droite — deux signes au
-     lieu d'un, pour qui ne distingue pas les couleurs. */
+     lieu d'un, pour qui ne distingue pas les couleurs.
+
+     **Le vert foncé, sur le kraft éclairci** (arbitrage du 2 octobre 2026).
+     L'interrupteur ne vit plus que sur le ticket du pied, et le papier y est
+     passé à #E4D3B5 : le vert vif n'y tenait plus que 2,3:1, sous les 3:1
+     qu'on doit à un composant ; le vert foncé en tient 5,3, et c'est l'encre
+     des tampons pleins posés sur le même papier. La piste éteinte, presque
+     noire, en tient 8,8. */
   .tbf-inter{position:relative;flex:none;margin-left:auto;width:36px;height:22px;
     border-radius:11px;background:#2A323D;box-shadow:inset 0 0 0 1px rgba(242,238,228,.3);
     transition:background .15s ease}
   .tbf-inter::after{content:"";position:absolute;top:4px;left:4px;width:14px;height:14px;
     border-radius:50%;background:var(--craie);transition:transform .15s ease}
-  .tbf-tiroir-bt[aria-checked="true"] .tbf-inter{background:var(--vert);box-shadow:none}
+  .tbf-tiroir-bt[aria-checked="true"] .tbf-inter{background:var(--vert-fonce);box-shadow:none}
   .tbf-tiroir-bt[aria-checked="true"] .tbf-inter::after{transform:translateX(14px)}
+  /* **La rangée du mode calme** (reliquat du lot 2) : trois cases côte à côte
+     au lieu de trois lignes empilées, l'icône et la piste en haut, le mot
+     dessous — les « interrupteurs en rangée » de la maquette. Chaque case
+     prend le tiers du ticket, quatre-vingt-seize pixels à 360 et
+     quatre-vingt-trois à 320, quand « ANIMATIONS », le plus long, en demande
+     soixante et onze en Oswald ; elle garde ses quarante-quatre pixels de
+     haut au moins, et en fait cinquante-cinq. Sur un téléphone qui ne vibre
+     pas, deux cases se partagent la rangée. Trois classes, pour passer
+     devant la ligne-bouton du pied, que ui.css écrit à deux.
+
+     **Sous 350 px, le mot se serre** : douze pixels, sans espacement. Une
+     police de repli aussi large qu'Arial — Roboto sur Android, tant
+     qu'Oswald n'est pas arrivée — écrit « ANIMATIONS » sur quatre-vingt-huit
+     pixels en treize, et déborderait de sa case de quatre-vingt-trois ; en
+     douze et serré, sur soixante-quinze : il tient. Un mot ne se coupe pas. */
+  .tbf-calme{display:flex;gap:6px}
+  .tbf-tiroir .tbf-calme .tbf-tiroir-bt{flex:1 1 0;width:auto;min-width:0;flex-wrap:wrap;
+    justify-content:center;align-content:center;gap:4px 6px;padding:6px 2px 7px;text-align:center}
+  .tbf-calme .tbf-inter{margin-left:0}
+  .tbf-calme .lib{flex:0 0 100%}
+  @media (max-width:349px){.tbf-calme .lib{font-size:12px;letter-spacing:0}}
   @media (prefers-reduced-motion:reduce){.tbf-inter,.tbf-inter::after{transition:none}}
   html[data-calme~="animations"] .tbf-inter,
   html[data-calme~="animations"] .tbf-inter::after{transition:none}
+  /* **Le volume** (chantier du son, 2 octobre 2026) : sur sa ligne, juste
+     sous les trois interrupteurs du calme, et hors de leur groupe — ce n'est
+     pas un interrupteur, et la rubrique n'en compte que trois. Le mot a la
+     taille et la graisse de ceux des interrupteurs, et le noir du kraft qu'il
+     hérite du ticket : cette feuille ne lui donne aucune couleur.
+
+     Le curseur est dessiné ici, et pas laissé au navigateur : sa piste grise
+     ne se voit pas sur le kraft. Une piste de huit pixels cernée d'encre,
+     remplie d'encre jusqu'au niveau (--v, que menu.js tient à jour), et un
+     palet craie cerné d'encre, celui des interrupteurs : c'est l'encre qui
+     porte les 3:1 d'un composant, sur le papier comme autour du palet.
+     Quarante-quatre pixels de haut : le doigt l'attrape sans viser la piste.
+
+     Quand les sons sont calmés, il s'éteint à 45 % et ne se touche plus ; le
+     mot reste plein. Un réglage inactif n'a pas de contraste à tenir, un mot
+     qu'on lit, si. */
+  .tbf-volume{display:flex;align-items:center;gap:12px;min-height:44px;margin:4px 0 0;
+    font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.2;
+    letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+  .tbf-volume input{--v:100%;flex:1 1 auto;min-width:0;height:44px;margin:0;padding:0;
+    background:none;-webkit-appearance:none;appearance:none;cursor:pointer}
+  .tbf-volume input::-webkit-slider-runnable-track{height:8px;border-radius:4px;
+    background:linear-gradient(90deg,var(--encre-kraft,#000) var(--v),transparent var(--v));
+    box-shadow:inset 0 0 0 1.5px var(--encre-kraft,#000)}
+  .tbf-volume input::-moz-range-track{height:8px;border-radius:4px;
+    background:linear-gradient(90deg,var(--encre-kraft,#000) var(--v),transparent var(--v));
+    box-shadow:inset 0 0 0 1.5px var(--encre-kraft,#000)}
+  .tbf-volume input::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:22px;height:22px;margin-top:-7px;border:0;border-radius:50%;background:var(--craie);
+    box-shadow:0 0 0 2px var(--encre-kraft,#000),1px 2px 0 2px rgba(7,9,12,.45)}
+  .tbf-volume input::-moz-range-thumb{width:22px;height:22px;border:0;border-radius:50%;
+    background:var(--craie);box-shadow:0 0 0 2px var(--encre-kraft,#000),1px 2px 0 2px rgba(7,9,12,.45)}
+  .tbf-volume input:focus-visible{outline:3px solid var(--encre-kraft,#000);outline-offset:2px}
+  .tbf-volume input:disabled{opacity:.45;cursor:not-allowed}
+  /* **Le sticker d'une entrée du pied** : la pastille des MISSIONS (contrat
+     du serveur, R10). Le sticker des tuiles et du bouton de menu — son
+     chiffre, sa face, son bord craie cerné d'encre —, rangé au bout de la
+     ligne au lieu de mordre sur un coin : une ligne calme n'a pas de coin à
+     déborder, et il couvrirait le pointillé de la ligne du dessus. Il ne
+     respire pas, comme tout sticker du tiroir. menu.js le pose comme sur une
+     tuile, par data-etat et data-pastille (voir poser). L'or est une face,
+     celle d'une récompense prête, l'encre dessus : 11,7:1. */
+  .tbf-tiroir-pied a[data-etat]::after,
+  .tbf-tiroir-pied a[data-pastille]::after{
+    content:attr(data-pastille);flex:none;margin:0 4px 0 auto;
+    box-sizing:border-box;min-width:22px;height:22px;padding:0 5px;border-radius:5px;
+    background:var(--pf,var(--craie));color:var(--pl,var(--encre));
+    font-family:var(--banner);font-size:13px;font-weight:700;line-height:22px;
+    text-align:center;letter-spacing:.02em;font-variant-numeric:tabular-nums;white-space:nowrap;
+    box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),2px 2px 0 3.5px rgba(7,9,12,.6);
+    rotate:4deg;pointer-events:none}
+  .tbf-tiroir-pied a[data-etat=pret]::after{--pf:var(--projo);--pl:var(--encre)}
   /* La consigne de l'iPhone, sous son entrée. Un texte qu'on lit pour agir :
      treize pixels. Elle vit sur le ticket kraft du pied depuis le lot 2, et
-     y est peinte à l'encre par ui.css : cette feuille ne lui donne plus de
-     couleur. Elle la peignait en craie, pour le fond sombre d'avant — la
-     craie sur le kraft ne se lit pas, et seule la règle plus lourde de
-     ui.css l'en empêchait. */
+     y est peinte par ui.css, au noir pur du kraft éclairci (arbitrage du
+     2 octobre 2026), comme tout ce que porte ce ticket — les mots des
+     interrupteurs compris : cette feuille ne leur donne aucune couleur.
+     Elle la peignait en craie, pour le fond sombre d'avant — la craie sur
+     le kraft ne se lit pas, et seule la règle plus lourde de ui.css l'en
+     empêchait. */
   .tbf-installer-ios{margin:0 10px 6px 39px;font-size:13px;line-height:1.5}
   .tbf-installer-ios b{font-weight:700}`;
 
@@ -354,16 +473,70 @@
     return promesseAdmin;
   };
 
+  /* ------------------------------------------ la pastille des MISSIONS
+
+     **Le tiroir ne demande jamais le quotidien au serveur** (contrat R10).
+     Le hub et l'écran des MISSIONS le lisent déjà, et retiennent dans
+     l'onglet ce qu'un RÉCUPÉRER verserait : `{ qui, t, aReclamer }` sous
+     « tbf-quotidien ». Le tiroir le relit — même joueur, moins d'une minute
+     —, et sans clé valide il ne pose rien. Une lecture de plus par page pour
+     un sticker serait le défaut que `pastille`, plus bas, a déjà corrigé
+     pour le direct.
+
+     `qui` peut avoir été écrit en nombre par une page et en texte par une
+     autre : les deux se comparent en texte, comme le HUD de nav.js. Rend le
+     nombre à afficher, zéro pour rien. */
+  const CLE_MISSIONS = 'tbf-quotidien';
+  const DUREE_MISSIONS = 60_000;
+  function missionsDe(brut, qui) {
+    let d = null;
+    try { d = JSON.parse(brut || 'null'); } catch { return 0; }
+    if (!d || typeof d !== 'object' || d.qui == null || String(d.qui) !== qui) return 0;
+    const age = Date.now() - Number(d.t);
+    if (!(age >= 0 && age < DUREE_MISSIONS)) return 0;
+    const n = Math.floor(Number(d.aReclamer));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+
+  /* --------------------------------------------------------- le volume
+
+     Le réglage du joueur, de 0 à 1, sous « tbf-volume » : un nombre écrit
+     en texte. Il appartient au moteur du son (son.js, TBF_SON.volume) ; une
+     page qui ne le charge pas — la boutique, qui n'a pas fx.js — écrit la
+     clé elle-même, sous la même forme, et le moteur la relira au prochain
+     écran. Une valeur illisible vaut le volume plein, comme dans son.js. */
+  const CLE_VOLUME = 'tbf-volume';
+  const borner = (v) => Math.min(1, Math.max(0, v));
+  function volumeRetenu() {
+    const lu = window.TBF_SON?.volume?.();
+    if (typeof lu === 'number' && Number.isFinite(lu)) return borner(lu);
+    try {
+      const brut = localStorage.getItem(CLE_VOLUME);
+      if (brut !== null && brut.trim() !== '' && Number.isFinite(Number(brut))) return borner(Number(brut));
+    } catch { /* stockage fermé : le volume plein, comme le moteur */ }
+    return 1;
+  }
+  /* Un appareil sans Web Audio n'a pas de son du tout : un curseur qui ne
+     change rien ferait douter des réglages voisins (même règle que les
+     vibrations, plus bas). */
+  const sonPossible = () =>
+    typeof (window.AudioContext ?? window.webkitAudioContext) === 'function';
+
   /**
    * Monte le tiroir et le branche sur un bouton déjà dessiné par la page.
    *
    * @param {HTMLElement} bouton le bouton « menu » de la page.
+   * @param {{qui?: (string|number|null)}} [options] `qui` : l'identifiant du
+   *   joueur, celui que nav.js passe au HUD (`user.id ?? user.pseudo`). Il
+   *   signe la clé de la pastille des MISSIONS : sans lui, le tiroir ne la
+   *   lit pas, et c'est la page qui pose l'état (le hub le fait).
    * @returns {{tiroir: HTMLElement, voile: HTMLElement, ouvrir: (oui:boolean)=>void,
    *   poser: (href:string, etat:?string, pastille?:(string|number)) => void}}
-   *   `poser` : l'état d'une destination (`direct`, `pret`, `attend`, `nouveau`,
-   *   ou rien pour l'éteindre), et le bouton prend le plus urgent.
+   *   `poser` : l'état d'une destination — une tuile, ou une entrée du pied
+   *   comme `/aide` — (`direct`, `pret`, `attend`, `nouveau`, ou rien pour
+   *   l'éteindre), et le bouton prend le plus urgent.
    */
-  function monter(bouton) {
+  function monter(bouton, { qui = null } = {}) {
     if (!document.getElementById('tbf-menu-css')) {
       const feuille = document.createElement('style');
       feuille.id = 'tbf-menu-css';
@@ -424,21 +597,40 @@
 
        Il a rejoint le pied (lot 2), après la déconnexion : sur le ticket
        kraft, avec tout ce qui ne se joue pas. Il reste la dernière rubrique,
-       comme avant. */
+       comme avant — ses trois interrupteurs en une rangée (`.tbf-calme`,
+       voir `CSS_REGLAGES`). */
     const calmeHTML = '<div class="tbf-rubrique" id="tbf-calme-titre">MODE CALME</div>'
-      + '<div role="group" aria-labelledby="tbf-calme-titre">'
+      + '<div class="tbf-calme" role="group" aria-labelledby="tbf-calme-titre">'
       + REGLAGES.map(interrupteur).join('') + '</div>';
+
+    /* **Le volume** (chantier du son), sur sa ligne, juste sous les
+       interrupteurs — et hors de leur groupe : ce n'est pas un interrupteur,
+       et `menu-smoke` compte ceux du calme par leur rôle. Un curseur de 0 à
+       100 par pas de 5 : vingt crans, assez fins pour l'oreille et assez
+       gros pour le doigt. Le nom que lit un lecteur d'écran dit ce qu'il
+       règle ; le mot à l'œil suffit sous MODE CALME. Il naît sans valeur :
+       elle est relue au montage (voir `reglerVolume`). */
+    const volumeHTML = '<label class="tbf-volume">Volume'
+      + '<input type="range" min="0" max="100" step="5" aria-label="Volume des sons"></label>';
 
     /* **Le pied, sur un ticket kraft** (lot 2) : une liste calme, en deux
        colonnes, pour ce qu'on vient chercher en sachant ce qu'on cherche — et
        qui n'est pas un endroit où jouer. Les liens gardent leur balisage et
-       leur ordre ; seul le papier change, et la feuille les passe à l'encre. */
+       leur ordre ; seul le papier change, et ui.css les passe au noir du
+       kraft (`--encre-kraft`, arbitrage du 2 octobre 2026). */
     tiroir.innerHTML = tete + rubriques
       + '<div class="tbf-ticket tbf-tiroir-pied">'
-      /* En tête du pied, avant le profil et le compte : c'est la seule entrée
-         qu'on cherche **parce qu'on est perdu**, et quelqu'un de perdu ne lit
-         pas un menu jusqu'au bout. Elle ne rejoint pas les rubriques du
-         dessus : elles disent où l'on joue, celle-ci dit comment. */
+      /* En tête du pied, avant le profil et le compte, pour deux raisons. Les
+         MISSIONS sont l'entrée qu'on cherche **parce qu'on est perdu** — les
+         premiers pas et les questions y sont restés, et quelqu'un de perdu
+         ne lit pas un menu jusqu'au bout. Et c'est là qu'une récompense
+         attend : son sticker (`poser`, et la clé R10 plus bas) se voit en
+         ouvrant, sans descendre. Elle ne rejoint pas les rubriques du
+         dessus, qui disent où l'on joue — la maquette la garde dans le pied
+         (écran 2, « le tiroir »).
+
+         C'était « Aide et premiers pas » ; l'écran est devenu MISSIONS au
+         lot 5, et l'adresse reste `/aide`. */
       /* **Rien ne disait nulle part qu'on est abonné.**
        *
        * On paie, on est débité, et l'application ne change pas d'un pixel :
@@ -451,7 +643,7 @@
        * marque s'y pose donc, et elle est remplie après coup : le tiroir ne
        * doit pas attendre une requête pour s'ouvrir. */
       + '<div class="tbf-abo" id="tbf-abo" hidden></div>'
-      + item('/aide', 'aide', 'Aide et premiers pas', ici('/aide') ? 'on' : '')
+      + item('/aide', 'missions', 'Missions', ici('/aide') ? 'on' : '')
       /* **Installer l'application.** Elle était sur l'accueil, en bas de
          l'écran de jeu, où elle prenait une ligne à chaque visite pour un geste
          qu'on ne fait qu'une fois. Ici elle est à portée sur toutes les pages,
@@ -460,9 +652,10 @@
          Née cachée, et elle ne paraît que si elle a quelque chose à faire :
          voir « proposerInstallation », plus bas.
 
-         **Après l'Aide, jamais avant.** Posée au-dessus, c'est elle qui
+         **Après les MISSIONS, jamais avant.** Posée au-dessus, c'est elle qui
          ouvrirait le pied du tiroir les jours où elle paraît, et cette place
-         revient à l'Aide : voir le commentaire en tête du pied, plus haut. */
+         revient aux MISSIONS : voir le commentaire en tête du pied, plus
+         haut. */
       + '<button type="button" class="tbf-tiroir-bt" id="tbf-installer" hidden>'
       + `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES.installer}"/></svg>`
       + 'Installer l’application</button>'
@@ -472,6 +665,7 @@
       + item('/compte', 'compte', 'Mon compte', ici('/compte') ? 'on' : '')
       + item('#', 'sortie', 'Se déconnecter', 'sortie')
       + calmeHTML
+      + volumeHTML
       /* **La version, tout en bas, et sur toutes les pages.**
 
          Un joueur qui signale un défaut décrit ce qu'il voit ; il ne peut pas
@@ -540,6 +734,50 @@
     window.addEventListener('tbf-calme', majInterrupteurs);
     window.addEventListener('storage', majInterrupteurs);
     majInterrupteurs();
+
+    /* ------------------------------------------------------- le volume
+
+       Relu comme les interrupteurs, jamais retenu ici : à chaque ouverture,
+       quand le moteur l'annonce (« tbf-volume »), quand un autre onglet
+       l'écrit (« storage »), et quand le calme des sons change
+       (« tbf-calme ») — un curseur actif sous le calme ferait croire que le
+       son revient si on le pousse, alors il s'éteint. */
+    const ligneVolume = tiroir.querySelector('.tbf-volume');
+    const curseur = ligneVolume.querySelector('input');
+    const peindreVolume = () => curseur.style.setProperty('--v', `${curseur.value}%`);
+    const reglerVolume = () => {
+      const v = String(Math.round(volumeRetenu() * 100));
+      if (curseur.value !== v) curseur.value = v;
+      peindreVolume();
+      const coupe = calme('sons');
+      curseur.disabled = coupe;
+      if (coupe) curseur.setAttribute('aria-disabled', 'true');
+      else curseur.removeAttribute('aria-disabled');
+    };
+    if (!sonPossible()) ligneVolume.hidden = true;
+    curseur.addEventListener('input', () => {
+      const v = Number(curseur.value) / 100;
+      peindreVolume();
+      if (typeof window.TBF_SON?.volume === 'function') window.TBF_SON.volume(v);
+      else {
+        try { localStorage.setItem(CLE_VOLUME, String(v)); }
+        catch { /* stockage fermé : sans moteur sur cette page, rien d'autre à régler */ }
+      }
+    });
+    /* Le niveau choisi s'entend une fois, au lâcher : un tic à chaque cran
+       crépiterait pendant qu'on glisse. */
+    curseur.addEventListener('change', () => window.FX?.son?.('tic'));
+    window.addEventListener('tbf-volume', reglerVolume);
+    window.addEventListener('tbf-calme', reglerVolume);
+    /* Un autre onglet a écrit la clé : le moteur de cette page la relit sur
+       le même événement, et son écoute peut passer après celle-ci — il est
+       chargé par fx.js, parfois après le tiroir. On relit donc une fois que
+       tout le monde a entendu, sans quoi le curseur prendrait l'ancien
+       volume du moteur. */
+    window.addEventListener('storage', (e) => {
+      if (e.key === CLE_VOLUME || e.key === 'tbf-calme' || e.key === null) setTimeout(reglerVolume, 0);
+    });
+    reglerVolume();
 
     /* --------------------------------------- installer l'application
 
@@ -636,6 +874,7 @@
       if (oui) {
         tiroir.hidden = false;
         majInterrupteurs();
+        reglerVolume();
         proposerInstallation();
         void tiroir.offsetWidth;
         tiroir.classList.add('on');
@@ -728,10 +967,14 @@
       try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); }
       catch { /* hors ligne : on recharge quand même, la session locale ne sert plus */ }
       /* Ce que l'onglet retenait de ce joueur part avec lui : les états du
-         tiroir (ses clubs en direct, le duel qu'on lui propose) et le HUD de
-         la barre. Quelqu'un d'autre peut se connecter dans la minute. */
+         tiroir (ses clubs en direct, le duel qu'on lui propose, ses missions
+         à récupérer) et le HUD de la barre. Quelqu'un d'autre peut se
+         connecter dans la minute — la clé des missions est signée, mais une
+         clé qu'on n'a plus à lire n'a pas à rester. */
       try {
-        for (const cle of ['tbf-hud', 'tbf-etat-virage', 'tbf-etat-duel']) sessionStorage.removeItem(cle);
+        for (const cle of ['tbf-hud', 'tbf-etat-virage', 'tbf-etat-duel', CLE_MISSIONS]) {
+          sessionStorage.removeItem(cle);
+        }
       } catch { /* stockage fermé : il n'y avait rien de retenu */ }
       location.href = '/';
     });
@@ -813,9 +1056,15 @@
        attribut, le bouton est recalculé depuis les tuiles. Un état sans donnée
        ne se pose pas — l'attribut est retiré, jamais un tiret.
 
+       **Une entrée du pied aussi** (lot 5) : les MISSIONS restent une ligne
+       calme du ticket kraft (la maquette, écran 2), et leur sticker or s'y
+       pose par le même chemin, au bout de la ligne (voir `CSS_REGLAGES`).
+
        `poser` est rendue à l'appelant : `nav.js` y pose les boosters, qu'il
        connaît par le HUD de la barre, et l'accueil peut y poser ce qu'il sait
-       déjà (ce fichier n'y demande rien, voir plus bas). */
+       déjà (ce fichier n'y demande rien, voir plus bas) — les missions
+       comprises : le hub monte le tiroir avant que le quotidien lui
+       réponde, et lui pose `aReclamer` à chaque recomposition. */
     const URGENCES = ['direct', 'pret', 'attend'];
     /* **Sur les deux écrans de jeu, le point d'avant.** Le Grand Virage et le
        duel ne changent pas dans ce lot : leur barre flotte à huit pixels du
@@ -824,8 +1073,15 @@
        bouton, tel qu'il était — jusqu'au HUD de match, qui accueillera ces
        deux boutons. */
     const enJeu = Boolean(bouton.closest('.tbf-haut-jeu'));
+    /* Les porteurs d'état : les entrées du pied **d'abord**, puis les tuiles.
+       Pour deux récompenses prêtes, le bouton prend donc les MISSIONS avant
+       les boosters : une mission prête ne se récupère que jusqu'à la fin du
+       jour suivant, quand un booster attend dans la réserve — et la réserve
+       se lit déjà dans le HUD de la barre, pas les missions. */
+    const porteurs = () => [...tiroir.querySelectorAll('.tbf-tiroir-pied a[data-etat]'),
+      ...tiroir.querySelectorAll('.tbf-case[data-etat]')];
     function urgence() {
-      const etats = [...tiroir.querySelectorAll('.tbf-case[data-etat]')];
+      const etats = porteurs();
       if (enJeu) {
         const allume = etats.some((n) => URGENCES.includes(n.dataset.etat));
         const pip = bouton.querySelector('.pip');
@@ -837,7 +1093,16 @@
         const t = etats.find((n) => n.dataset.etat === u);
         if (!t) continue;
         bouton.dataset.urgence = u;
-        if (t.dataset.pastille) bouton.dataset.pastille = t.dataset.pastille;
+        /* **Le direct dit LIVE** (reliquat du lot 2). Sans chiffre, le bouton
+           ne portait qu'un rond rouge à point de craie : un code qu'il faut
+           connaître pour le lire. Le mot est celui du sticker de la tuile du
+           Virage, et il s'écrit par le même chemin que les chiffres — la
+           feuille pose `data-pastille` sur la face rouge du direct, la craie
+           dessus (5,2:1). Trente-trois pixels de large au lieu de vingt-deux :
+           il mord sur le bout du premier trait du bouton, que les deux autres
+           suffisent à faire lire comme un menu. */
+        const texte = t.dataset.pastille || (u === 'direct' ? 'LIVE' : '');
+        if (texte) bouton.dataset.pastille = texte;
         else delete bouton.dataset.pastille;
         return;
       }
@@ -845,7 +1110,7 @@
       delete bouton.dataset.pastille;
     }
     function poser(href, etat, pastilleTexte) {
-      const t = tiroir.querySelector(`.tbf-case[href="${href}"]`);
+      const t = tiroir.querySelector(`.tbf-case[href="${href}"], .tbf-tiroir-pied a[href="${href}"]`);
       if (!t) return;
       if (etat) t.dataset.etat = etat; else delete t.dataset.etat;
       if (etat && pastilleTexte != null && pastilleTexte !== '') {
@@ -892,6 +1157,40 @@
       }).then((n) => {
         if (n) poser('/duel-nvn', 'attend', n);
       });
+    }
+
+    /* Les missions à récupérer, lues dans la clé que le hub et l'écran des
+       MISSIONS retiennent (contrat R10, voir `missionsDe`) : au montage ;
+       après chaque annonce `tbf:bourse` — une réclamation réécrit la clé,
+       puis l'annonce, et le sticker suit sans attendre l'écran suivant ; et
+       au retour par la flèche du navigateur, qui peut rendre la page telle
+       qu'on l'avait quittée, d'avant une réclamation faite ailleurs.
+
+       **Seulement quand la clé a été réécrite.** Le kiosque annonce son état
+       chaque seconde le temps que la réserve se recharge ; relire alors une
+       clé inchangée retirerait, passé la minute, le sticker qu'on a vu fermé
+       sur le bouton et qu'on vient chercher en ouvrant. Pour la même raison,
+       l'ouverture du tiroir ne relit rien : rien d'autre qu'une annonce ne
+       réécrit la clé pendant qu'une page est ouverte.
+
+       **Pas sur l'écran des MISSIONS**, qui les montre toutes, en grand,
+       chacune avec son geste : la même retenue que pour le kiosque (nav.js)
+       et pour le direct sur le Virage. Et pas sans joueur connu (`qui`) :
+       sur le hub, c'est la page qui pose l'état (voir `poser`, plus haut). */
+    const quiMissions = qui == null || qui === '' ? null : String(qui);
+    if (quiMissions !== null && chemin !== '/aide') {
+      let lu;
+      const relireMissions = () => {
+        let brut = null;
+        try { brut = sessionStorage.getItem(CLE_MISSIONS); } catch { /* fermé : rien de retenu */ }
+        if (brut === lu) return;
+        lu = brut;
+        const n = missionsDe(brut, quiMissions);
+        poser('/aide', n > 0 ? 'pret' : null, n);
+      };
+      relireMissions();
+      window.addEventListener('tbf:bourse', relireMissions);
+      window.addEventListener('pageshow', (e) => { if (e.persisted) relireMissions(); });
     }
 
     monte = { tiroir, voile, ouvrir, poser };

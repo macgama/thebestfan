@@ -113,7 +113,22 @@ const biblio = (() => {
   const total = Object.values(T).reduce((s, t) => ({
     gagnes: s.gagnes + t.gagnes, possibles: s.possibles + t.possibles }),
   { gagnes: 0, possibles: 0 });
-  return { total, types: T, parFanzzy };
+  /* **Les paliers, tels que la route les sert depuis le chantier serveur**
+     (`CONTRATS.md`, § 5.1). La vitrine ne les lit pas encore — c'est le lot 4
+     —, mais elle doit se monter sur la réponse réelle, champ nouveau compris :
+     une page qui lèverait sur une clé qu'elle ne connaît pas casserait le jour
+     où le serveur la sert. Un cran dû, un à venir, une série en cours. */
+  const gain = (echarpes, packs) => ({ echarpes, packs, xp: 0, tampons: 0 });
+  const cran = 25;
+  const prochain = (Math.floor(total.gagnes / cran) + 1) * cran;
+  const paliers = {
+    cran, gagnes: total.gagnes,
+    prochain: { a: prochain, manque: prochain - total.gagnes, gain: gain(25, 0) },
+    aReclamer: total.gagnes >= cran ? [{ sorte: 'cran', cle: String(cran), gain: gain(25, 0) }] : [],
+    series: [{ id: SETS[0].id, possedes: MIENS.size, total: persos.length, etat: 'a_venir',
+      gain: gain(100, 1) }],
+  };
+  return { total, types: T, parFanzzy, paliers };
 })();
 
 const dexPayload = {

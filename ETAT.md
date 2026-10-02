@@ -5,8 +5,8 @@ précédente s'est arrêtée. **Dépose l'archive complète du projet et ce fich
 au début de chaque nouvelle session**, et dis simplement sur quoi tu veux
 travailler.
 
-Dernière mise à jour : session « la matière FAIT MAIN » (lot 1 de la refonte),
-1er octobre 2026.
+Dernière mise à jour : session « l'accueil FAIT MAIN » (lot 2 de la refonte),
+2 octobre 2026.
 
 ## Par où entrer, selon ce qu'on cherche
 
@@ -115,8 +115,12 @@ Le projet suit une méthode constante, à conserver :
   rail `.tbf-onglets`, gabarits compris, et un rail posé par `classList` est
   refusé. Un cinquième contrôle vérifie que le code sans ses commentaires compile
   comme l'original : sinon, c'est le lecteur de commentaires qu'il faut
-  reprendre, pas la page. Le workflow de déploiement lance ce script et **refuse
-  de mettre en ligne** s'il échoue.
+  reprendre, pas la page. Depuis le lot 2, il vérifie aussi que chaque tuile de
+  grain que `ui.css` demande (`/img/grain/<nom>.webp`, hors commentaires) existe
+  en WebP et en PNG : une tuile absente laisse la surface unie sans un message,
+  et une feuille où le motif ne trouve plus aucune tuile fait rougir le
+  contrôle. Le workflow de déploiement lance ce script et **refuse de mettre en
+  ligne** s'il échoue.
 - **`node scripts/verif-cablage.mjs` avant chaque livraison serveur.** Il monte
   les modules sur un faux pool, sans base ni réseau, et vérifie qu'aucune
   dépendance construite trop tard dans `server.js` n'est restée à `null`. Ce
@@ -1053,10 +1057,12 @@ navigateur qui le fasse : voir § 6 pour ce que coûtaient les cinq copies d'ava
 ### La feuille commune, et la matière FAIT MAIN
 
 `public/ui.css` porte, depuis le lot 1 de la refonte (`HISTORIQUE.md`,
-4 quadragies semel), la matière de tout ce qui est commun aux écrans. Les écrans
-eux-mêmes n'ont pas encore été refaits — ce sont les lots 2 à 6 — : ils ont
-changé de matière par leurs briques, sans changer de mise en page. Son en-tête
-dit ce qu'elle porte ; ce qu'il faut savoir avant d'y toucher tient ici.
+4 quadragies semel), la matière de tout ce qui est commun aux écrans. Le lot 2
+(4 quadragies bis) a refait l'accueil connecté, l'écran d'ouverture, la barre du
+haut et le tiroir, et ajouté leurs briques à la même feuille ; les autres écrans
+— ce sont les lots 3 à 6 — ont changé de matière par leurs briques, sans changer
+de mise en page. Son en-tête dit ce qu'elle porte ; ce qu'il faut savoir avant
+d'y toucher tient ici.
 
 | Brique | Ce qu'elle est | Ce qui la tient |
 |---|---|---|
@@ -1064,31 +1070,60 @@ dit ce qu'elle porte ; ce qu'il faut savoir avant d'y toucher tient ici.
 | le panneau calme (`.pan`) | la teinte de `--panneau`, la tuile du béton, huit pixels d'arrondi | ni cerne, ni ombre, ni rotation : **il reste calme**, c'est une décision du dépôt |
 | la bâche (`.tbf-plaque`, `.tbf-case`, `.tbf-bloc`) | la toile du ton, un cerne au marqueur hors de la boîte, une ombre dure d'encre, un coin déchiré peint | `--epaisseur`, seule mesure de l'ombre, de l'enfoncement et de la place réservée dessous |
 | la bâche principale (`.tbf-grande`) | l'écharpe en tête, deux scotchs, −0,8° | une par écran ; ses scotchs montent de sept pixels, et sous une autre bâche elle demande quatorze pixels d'écart |
-| le cadre (`.tbf-cadre`) | une grande bâche neutre, l'écharpe en tête sur `data-echarpe` | un par écran, deux au plus ; le hub n'en a plus qu'un, AUJOURD'HUI |
+| le cadre (`.tbf-cadre`) | une grande bâche neutre, l'écharpe en tête sur `data-echarpe` ; en kraft déchiré avec `.tbf-cadre--ticket` (la bâche du jour du hub) | un par écran, deux au plus ; le kraft est posé **sur l'élément**, et pas seulement sur son `::after`, pour que l'audit lise l'encre dessus |
 | l'onglet actif | une petite bâche du ton de l'écran, −1° | le rail reste un creux noir |
 | l'étiquette (`.tbf-etiquette`) | un sticker craie, le chiffre à l'encre ; un état s'y écrit en tampon plein | sa matière est celle de `.tbf-sticker`, écrite une fois pour les deux |
 | la jauge (`.tbf-jauge`) | l'écharpe nouée : rail de parpaing, tricot, nœud de craie, deux franges, crans facultatifs (`data-crans`) | la **seule** jauge du jeu, même balisage qu'avant ; le nœud et les franges débordent sans rien pousser, et la page leur laisse l'air |
-| l'anneau (`.tbf-anneau`) | l'anneau d'XP, rempli à `--p` | aucune page ne le pose encore |
+| l'anneau (`.tbf-anneau`) | l'anneau d'XP, rempli à `--p` | posé autour de l'avatar, sur le hub et dans le HUD de la barre |
 | « collé » (`.tbf-colle`) | l'arrivée d'un objet fabriqué, 220 ms, vers sa rotation de repos | ses doubles, animations réduites et calme |
+
+**Les briques du lot 2**, dans la même feuille, chacune avec son balisage exact
+en commentaire :
+
+| Brique | Ce qu'elle est | Ce qui la tient |
+|---|---|---|
+| les états d'une tuile (`.tbf-case[data-etat]`) | `direct` (LIVE rouge), `pret` (or, qui respire), `nouveau` (craie), `attend` (violet), `verrouille` (parpaing, croix de scotch sur l'icône, libellé net) ; le texte vient de `data-pastille` | un état par tuile, **trois tuiles au plus par écran**, une seule qui respire ; le sticker est le `::after` et déborde de huit pixels, que le conteneur ne doit pas rogner |
+| le sticker d'urgence du menu (`.tbf-burger[data-urgence]`) | l'état le plus urgent du tiroir, sur le bouton : direct, puis prêt, puis attend | posé par `menu.js` seul, depuis ses tuiles ; une page passe par `TBF_MENU.poser(href, état, pastille)` |
+| l'avatar-sticker (`.tbf-avatar`, `--barre` en 36 px) | le buste du Fanzzy, l'anneau, le niveau en sticker rond ; `--vide` sans Fanzzy (silhouette, « ? ») | la zone de touche fait toujours 44 px |
+| le compteur de monnaie (`.tbf-monnaie`) | un sticker craie de 32 px à l'œil, 44 au doigt, le « + » or | la craie est le fond de l'élément (`background-clip:content-box`), pour l'audit ; le nom `.tbf-jeton` est interdit dans la barre par `fanzzy:ui` |
+| le HUD replié (`.tbf-hud`, `.tbf-hud-bande`) | l'avatar dans la barre, et une bande kraft qui déplie les deux soldes trois secondes (`.ouverte`) | à partir de 560 px, la bande est une rangée de la barre |
+| le titre de la barre (`.tbf-ou`, et le mot MENU du tiroir) | la craie sur un gaffer noir, −1,5° | les couches du ruban sont posées hors de la boîte du texte ; la barre se serre sous 400 et sous 340 px pour lui garder sa place |
+| le tiroir (`.tbf-tiroir` et ses parties) | une bâche de parpaing déroulée depuis le haut, plein écran sur un téléphone ; rubriques au pochoir à la craie, l'écharpe du ton dessous ; tuiles de 88 px, le nom sur un gaffer ; pied à l'encre sur un ticket kraft | `menu.js` pose `hidden` 240 ms après le retrait de `.on`, et un calcul forcé avant `.on` ; la croix (`.tbf-tiroir-fermer`) est obligatoire |
+| la case de BD (`.tbf-moment`, `.tbf-vignette`) | le mot à la craie, la couleur du camp au liseré, aux rayons et à la bouffée ; confettis ; le temps en scotch qui se décolle | `data-ton` (club, flare, or, vert, rouge, gris), `--mc` en ligne l'emporte ; elle est fixée à z 95 : la page qui ouvre un tiroir par-dessus la redescend |
+| la plaque ronde (`.tbf-plaque--rond`) | une zone de 44 px, une face de 32 | la bordure et le rembourrage ne sont pas à la page |
+| la banderole (`.tbf-banderole`), la bâche du club (`.tbf-bache-club`) | un nom sur une bande craie ; les couleurs d'un club (`--e1`, `--e2`) en rayures | la page n'écrit que leur place |
+| la jauge qui suit le temps (`.tbf-jauge[data-suit]`) | la même écharpe, un lissage court et linéaire | pour une largeur poussée à chaque image |
+| le ticket de retour, le toast et la pile (`.tbf-ticket--retour`, `.tbf-toast`, `.tbf-pile`), la secousse (`.tbf-secoue`) | un gain sur kraft qui monte ; une information sur parpaing, statique ; un refus qui dit non de la tête | le ticket et le toast ne sont posés par aucune page |
 
 Le menu et la flèche de la barre, montés par `nav.js` en `.pan`, sont des bâches
 de parpaing : ils se touchent.
 
-**Le vocabulaire des lots suivants est écrit, et aucune page ne l'emploie
-encore** : section « LE VOCABULAIRE FAIT MAIN » de la même feuille. Le sticker
-(`.tbf-sticker`), le tampon (`.tbf-tampon` : en contour sur un fond sombre à
-partir de 16 px, plein en dessous et toujours sur le kraft), le ticket kraft et
-la déchirure (`.tbf-ticket`, `.tbf-dechire`), le scotch, le marqueur, la bulle,
-la nappe de fumée et la bouffée (`.tbf-fumee`, `.tbf-bouffee`), le pochoir, la
-forme de rareté (`.tbf-forme[data-rar]`), et les mouvements `.tbf-glisse`,
-`.tbf-clac`, `.tbf-vibre`, `.tbf-respire`. Chaque bloc donne son balisage exact.
+**Le vocabulaire du lot 1 est en partie employé** : section « LE VOCABULAIRE
+FAIT MAIN » de la même feuille. L'accueil, la barre et le tiroir posent le
+sticker, le ticket kraft, la bulle, la fumée, le pochoir, `.tbf-glisse`,
+`.tbf-vibre` et `.tbf-colle`. Aucune page ne pose encore le tampon
+(`.tbf-tampon` : en contour sur un fond sombre à partir de 16 px, plein en
+dessous et toujours sur le kraft), la déchirure seule (`.tbf-dechire`), le
+scotch, la classe du marqueur, la bouffée, la forme de rareté
+(`.tbf-forme[data-rar]`) ni `.tbf-clac`. Chaque bloc donne son balisage exact.
 
 Les règles qui tiennent l'ensemble :
 
 - **Une seule table des faces**, « les tons » : `--face` et `--lettre` par
   `data-ton`. `--encre` est l'encre et rien d'autre ; le lettrage d'une surface
   s'appelle `--lettre`. Bâches, onglets, étiquettes et stickers lisent la même
-  table.
+  table. Les quatre faces vives de H1 sont des jetons (`--face-flare`,
+  `--face-vert`, `--face-bleu`, `--face-violet`) depuis le lot 2 : un sticker
+  peint en pseudo-élément ne porte pas d'attribut, et il les lit là au lieu de
+  les recopier.
+- **Au soleil, seules la craie sur l'encre et l'encre sur la craie tiennent le
+  texte courant** (4,9:1 pour la première sous le voile de l'audit, sur le gaffer
+  de la barre). La craie tombe à 2,4–2,6:1 sur les faces de H1, à 3,7 sur
+  le parpaing grainé ; un ton (flare, bleu clair, vert clair) sur le parpaing,
+  de 1,7 à 2,6 ; l'encre sur le kraft, à 3,3, et aucune encre n'y atteint 4,5
+  (le noir pur, 3,6). C'est ce qui a mis le titre de la barre et les noms du
+  tiroir sur un gaffer noir, et les rubriques du tiroir à la craie. Le kraft ne
+  porte donc qu'un texte bref ou grand, et sa teinte attend Gaël.
 - **Les teintes** : les huit couleurs, les raretés, et les jetons du lot 1 —
   `--parpaing`, `--encre`, `--kraft`, `--scotch` et les huit dérivés de
   l'amendement 17 (`--vert-encre`, `--vert-fonce`, `--rouge-fonce`,
@@ -1106,15 +1141,25 @@ Les règles qui tiennent l'ensemble :
   de la surface, servis comme toute image (`VISUELS.md`) ; le béton en deux
   tailles, par `image-set` sous `@supports`. Une recette changée change
   l'adresse : le `?v=` des jetons `--grain-*`.
-- **`--marqueur` est déclaré, Permanent Marker n'est chargée nulle part.**
+- **Permanent Marker est chargée par la page qui l'emploie**, dans la même ligne
+  Google Fonts qu'Oswald : aujourd'hui l'accueil seul, pour la bulle du Fanzzy.
+  Ailleurs, `--marqueur` retombe sur l'écriture manuscrite du système. Ses règles
+  (amendement 6) : jamais sous 15 px, jamais un chiffre, jamais plus de quatre
+  mots, jamais sur le rideau ni dans un panneau calme — le hub les vérifie dans
+  son script avant d'écrire.
+- **Un grain passe par une adresse `/img/grain/…`** (jetons `--grain-*`) : c'est
+  le motif que l'audit et `verif-pages` reconnaissent ; une autre adresse
+  rendrait la surface non mesurable.
 
-**Neuf hypothèses attendent Gaël**, H1 à H9, listées en tête de `ui.css` avec la
-section qui porte chacune : les faces vives foncées (H1), l'or qui ne bouge pas
-(H2), la police du marqueur (H3), le panneau calme et le cadre restés sur
-`--panneau` au lieu du parpaing (H4), le creux noir des onglets (H5), le voile des
-arènes (H6), les scotchs réservés à la bâche principale (H7), la fumée fixe au
-calme (H8), la bande noire du haut du mur (H9). Chacune dit pourquoi, et comment
-la défaire en un bloc.
+**Neuf hypothèses attendent Gaël**, listées en tête de `ui.css` avec la section
+qui porte chacune : les faces vives foncées (H1), l'or qui ne bouge pas (H2), le
+panneau calme et le cadre restés sur `--panneau` au lieu du parpaing (H4), le
+creux noir des onglets (H5), le voile des arènes (H6), les scotchs réservés à la
+bâche principale (H7), la fumée fixe au calme (H8), la bande noire du haut du mur
+(H9), et le « ? » de l'avatar sans Fanzzy laissé au marqueur (H11). Chacune dit
+pourquoi, et comment la défaire en un bloc. H3, la police du marqueur, est levée
+au lot 2 ; H10, le titre de la barre sur un scotch clair, y est née et défaite.
+S'y ajoute la teinte du kraft, plus haut.
 
 ### Les suites de contrôle
 
@@ -1136,7 +1181,7 @@ avant tout :
 
 | Commande | Ce qu'elle garantit |
 |---|---|
-| `npm run pages` | les pages compilent ; la barre est là ; chaque dessin déclaré a ses trois formats ; aucun identifiant n'est écrit deux fois dans une page ; **les garde-fous du socle FAIT MAIN** — aucun `backdrop-filter`, aucun émoji cadenas ou coche, aucun `.calc(`, un `data-ton` sur chaque rail d'onglets (voir § 2) |
+| `npm run pages` | les pages compilent ; la barre est là ; chaque dessin déclaré a ses trois formats ; aucun identifiant n'est écrit deux fois dans une page ; **les garde-fous du socle FAIT MAIN** — aucun `backdrop-filter`, aucun émoji cadenas ou coche, aucun `.calc(`, un `data-ton` sur chaque rail d'onglets — et chaque tuile de grain demandée par `ui.css`, en WebP et en PNG (voir § 2) |
 | `npm run cablage` | les modules sont branchés entre eux, **et le serveur n'importe aucun paquet de développement** |
 | `npm run promesses` | chaque adresse appelée par une page est servie ; chaque page a une route |
 | `npm run pages:navigateur` | les vingt-quatre écrans s'ouvrent sans lever, serveur muet compris, et chacun porte sa flèche de retour |
@@ -1148,7 +1193,20 @@ que l'une d'elles) et visite chaque écran dans un contexte de navigateur neuf �
 cookies, stockage et cache — et avec sa propre adresse : les vingt-trois routes
 de page, `/fanzzy/RP1` pour la fiche, la vitrine sans compte, et `/bienvenue` vu
 par un nouveau venu. Trois formats : 360 × 640, 400 × 800, 768 × 1024. Compter
-six minutes.
+six minutes. L'adresse propre à chaque visite (`X-Forwarded-For`) ne part que
+vers notre serveur, jamais vers Google Fonts, et le service worker est contourné ;
+chaque mesure attend les polices, cinq secondes au plus (§ 6 : jusqu'au lot 2,
+tout l'audit était mesuré dans la police de secours).
+
+Avec `--etats`, il regarde aussi trois écrans qu'aucune route ne montre, chacun
+dans une visite neuve et rangé à part dans le JSON (`etats`) : l'ouverture du hub
+photographiée vers 0,5 s, puis photographiée et mesurée vers 2 s — `tbf:pret`
+est retenu pour cette visite, et `ouverture.js` doit en rester le seul écouteur,
+sans quoi l'autre serait retenu avec lui — aux trois formats et à 320 × 568 ; et
+le tiroir de `/classement`, ouvert par le bouton qui porte
+`aria-controls="tbf-tiroir"`, attendu jusqu'à `aria-expanded="true"`, et mesuré
+dans `#tbf-tiroir`. Si l'un de ces points d'appui change, le genre « état » le
+dit, et l'état n'est plus mesuré.
 
 Depuis le lot 0 de la refonte FAIT MAIN, il porte les seuils du socle :
 
@@ -1162,39 +1220,62 @@ Depuis le lot 0 de la refonte FAIT MAIN, il porte les seuils du socle :
 Et, comme avant : débordement, élément hors cadre, texte coupé, cible sous 44 px,
 image sans `alt` ou cassée, bloc sous le décor, erreur de script — plus les refus
 429 pendant la visite, parce qu'une mesure prise sous un refus n'en est pas une.
+Depuis le lot 2 : la coupe à la ligne de `line-clamp` (« coupé (lignes) », gardée
+par un témoin qui vérifie à chaque passage que Chrome met encore en page les
+lignes cachées), les textes lus dans une police de secours (« police de
+repli »), et, sous un état fixé à la fenêtre, ce qu'il pousse hors de l'écran
+(« hors fenêtre »).
+
+**Le contraste se lit à travers le grain** depuis le lot 2 (`HISTORIQUE.md`,
+4 quadragies bis). Chaque couche `/img/grain/…` est remplacée par son voile
+moyen, lu dans la page sur la tuile réellement servie, et la remontée continue
+jusqu'à la couleur posée dessous ; le béton en `image-set` prend la tuile que le
+navigateur choisit. Ces textes sont **comptés à part** — `surGrain`,
+`palesGrain`, `jourSurGrain`, `jourGrain`, colonnes « grain » et « soleil g » —,
+et « sur dégradé » ne compte plus que ce qui reste non mesurable : **l'ancien
+vaut le nouveau plus `surGrain`**, d'où le schéma `audit-ui/2`. Toute
+comparaison avec un relevé `/1` additionne les deux. La ligne « Sous le grain »
+de chaque format est à lire avant le compte au soleil.
 
 ```bash
-node scripts/audit-ui.mjs --jour --json avant.json --captures avant/   # la référence
-node scripts/audit-ui.mjs --largeur 360          # un seul format
+node scripts/audit-ui.mjs --jour --etats --json avant.json --captures avant/   # la référence
+node scripts/audit-ui.mjs --largeur 360          # un seul format (320 : 320 × 568)
 MSYS_NO_PATHCONV=1 node scripts/audit-ui.mjs /virage   # une page, sous Git Bash
 ```
 
 Sous Git Bash, `/virage` arrive à Node réécrit en chemin Windows : d'où
 `MSYS_NO_PATHCONV=1`, ou PowerShell.
 
-Relevé du 1er octobre 2026, à la fin du lot 1, sur les vingt-trois écrans de
-l'audit : **zéro** texte sous 11 px, zéro sous 0,85, zéro flou, zéro cible sous
-44 px, zéro texte coupé, aux trois formats. **72 textes perdent encore leur
-contraste au soleil** à 360 × 640 (73 à la fin du lot 0) : `/profil` 34, `/aide`
-20, la vitrine 4, trois au plus ailleurs. Ce compte-là ne voit plus tout : voir
-le paragraphe suivant, et le grain.
+Relevé du 2 octobre 2026, à la fin du lot 2, sur les vingt-trois écrans de
+l'audit, `/admin` et `/diagnostic` à part : **zéro** texte sous 11 px, zéro sous
+0,85, zéro flou, zéro cible sous 44 px, zéro texte coupé d'une ellipse, zéro
+texte pâle à l'intérieur, aux trois formats. **Au soleil, 74 textes sur fond uni
+et 53 sous le grain** manquent leur seuil à 360 × 640 (72 et 56 au départ du lot,
+la fin du lot 1 relue sous le grain) : `/profil` 34 et `/aide` 20 sur fond uni ;
+sous le grain, surtout le lettrage de bâche — la craie sur les faces de H1, de
+2,4 à 2,6:1, sur le parpaing, 3,7, l'encre sur l'or, 3,8 —, dont les dix tuiles
+du hub et les séries de `/boosters`. 139 textes sont lus sous le grain, 574
+restent non mesurables. Les quinze « coupé (lignes) » sont sur `/collection`, où
+le nom des vignettes est tenu à deux lignes exprès ; la « police de repli » de
+`/repetition` est un faux positif (§ 6, Œ). États : le rideau, huit textes, deux
+pâles au soleil sur le kraft ; le tiroir, trente textes, deux pâles au soleil sur
+le kraft.
 
 Ce qu'il ne mesure pas, et qui se regarde sur les captures : un texte posé sur un
-dégradé (compté « sur dégradé », y compris les panneaux teintés en
-`linear-gradient(…), var(--panneau)`, qui sont pourtant opaques) ; un texte
-assombri par `filter: brightness()` — seuls `opacity` et `filter: opacity()`
-entrent dans l'opacité effective ; un texte posé à même la photo, dont le fond
-retombe sur la couleur de la page ; la hauteur des jauges. Et, depuis le lot 1,
-**un texte posé sur une tuile de grain** — toute bâche, tout onglet actif, tout
-`.pan` : `fond()` range tout `background-image` parmi les dégradés. « Sur
-dégradé » est passé de 644 à 725 textes à 360 × 640, et une copie de l'audit qui
-remplace chaque tuile par son voile moyen trouve **123** textes sous le seuil au
-soleil, et non 72 : surtout du lettrage de bâche, qui était au lot 0 sur les
-dégradés des plaques, non mesurés eux non plus (`HISTORIQUE.md`, 4 quadragies
-semel). Porter cette règle dans `scripts/audit-ui.mjs` reste à faire.
+vrai dégradé ou une photo (compté « sur dégradé », y compris les panneaux teintés
+en `linear-gradient(…), var(--panneau)`, qui sont pourtant opaques — sauf une
+couche posée une fois dont le rectangle ne touche pas la boîte du texte, comme
+l'écharpe d'une bâche) ; un texte assombri par `filter: brightness()` — seuls
+`opacity` et `filter: opacity()` entrent dans l'opacité effective ; un fond peint
+par un pseudo-élément (le kraft d'un ticket est donc posé aussi sur l'élément) ;
+le voile du mur, qui n'est pas un ancêtre ; la hauteur des jauges. Et **le
+contraste n'est lu que sur un élément sans enfant** : un bouton qui porte son
+libellé et un `<small>` sort du compte — PRENDRE MA PLACE, à 2,6:1 au soleil, y
+a échappé au lot 2 (§ 6).
 
-L'onglet actif d'un rail est dans le premier cas, et il a donc été mesuré à part
-(`HISTORIQUE.md`, 4 quadragies). Pour les tons à encre claire — flare, vert,
+L'onglet actif d'un rail était dans le premier cas jusqu'au lot 2, et il a donc
+été mesuré à part (`HISTORIQUE.md`, 4 quadragies) ; l'audit le lit maintenant à
+travers sa toile. Pour les tons à encre claire — flare, vert,
 bleu, violet —, `ui.css` fonce sa face, une règle par ton : à travers la toile du
 lot 1, de 7,9 à 10,0:1 à l'intérieur, de 3,0 à 3,35 au soleil, où 4,5 est hors
 d'atteinte pour une face qui garde sa couleur. **Un ton nouveau à encre claire
@@ -1937,6 +2018,11 @@ tombaient sous le seuil sans être comptés (hypothèse H4). Règle : un
 compte au soleil ne se lit qu'à côté du compte « sur dégradé » ; quand le second
 monte, le premier ne prouve rien.
 
+Depuis le lot 2, l'audit lit à travers une tuile `/img/grain/…` (son voile moyen)
+et compte ces textes à part ; il a ouvert l'angle mort d'un coup — 142 textes
+lus, 56 de plus sous le seuil au soleil à 360 × 640. La règle tient pour tout le
+reste : un vrai dégradé, une photo, un grain servi sous une autre adresse.
+
 **L'audit compose sur `body`, l'œil voit le mur.** Pour un texte translucide,
 l'audit remonte les fonds des ancêtres, puis celui de `body` ; le voile du mur
 (`.tbf-grad`), calque fixe posé à côté de la colonne, n'en fait pas partie. Un
@@ -2004,11 +2090,97 @@ la mise en page — mais une page qui les pose doit la laisser, et la mesurer sa
 la police de titre : sur le hub, les franges de COLLECTION ne tenaient au-dessus
 du filet que parce qu'Oswald étirait le panneau de deux pixels.
 
+Le lot 2 l'a retrouvé **au bord de ce qui coupe** : le sticker d'état d'une tuile
+déborde de huit pixels, treize avec son bord et son ombre, et `.centre`, en
+`overflow:hidden` contre le rail de droite du hub, l'aurait rogné — il rognait
+déjà le cerne et l'ombre de ces tuiles ; le sticker du bouton de menu tombait
+contre le bord de l'écran. Un objet qui déborde demande de l'air à son premier
+ancêtre qui coupe, et à l'écran lui-même.
+
 **Une brique commune n'existe pour le joueur que posée.** `.tbf-jauge` était
 juste, et n'apparaissait sur aucun écran : le hub, la collection et le classeur
 peignaient la leur — l'aide et le profil le font encore —, et un fond local,
 chargé après `ui.css`, écrase celui de la brique. Avant de compter sur une brique, chercher qui l'emploie ; pour
 l'adopter, retirer la règle locale, pas l'empiler.
+
+Le lot 2 l'a refait avec une fonction. `fx.js` a reçu `FX.but({ vignette: true })`
+pour rendre au but du hub sa secousse et sa vibration sans un second titre, et
+son commentaire dit qu'`index.html` l'appelle : il ne l'appelle pas, et le but du
+hub n'a plus que sa corne. Une brique faite à la demande d'une autre page se
+vérifie dans cette page, par un `grep`, pas dans son propre commentaire.
+
+**Un en-tête ajouté à toutes les requêtes peut couper les polices de Google, sans
+un message.** L'audit donnait à chaque visite sa propre adresse par
+`setExtraHTTPHeaders`, donc aussi aux requêtes vers Google Fonts. Un en-tête que
+CORS ne range pas parmi les simples (`X-Forwarded-For`) fait précéder chaque
+fichier de police d'une requête de contrôle, que Google refuse : Oswald et
+Permanent Marker tombaient en échec, et du lot 0 au lot 2 tout l'audit — ses
+largeurs, ses retours à la ligne, ses coupes, ses captures — a été pris dans la
+police de secours. **`document.fonts.status` vaut « loaded » après un échec** :
+il dit que plus rien ne charge, pas que tout est arrivé. Pour savoir, lire
+l'état de chaque `FontFace` (`status === 'error'`), et ne poser un en-tête que
+sur les requêtes de son propre serveur (`setRequestInterception`).
+
+**`document.fonts.check()` exige toutes les faces qui couvrent un caractère.**
+Google déclare deux faces d'Oswald qui couvrent Œ et œ, `latin` et `latin-ext` ;
+tant que la seconde n'est pas chargée, `check(…, 'LE COUP D’ŒIL')` rend `false`
+alors que le texte est bel et bien dessiné en Oswald. Le relevé « police de
+repli » de l'audit s'y trompe sur tout mot en œ ; la bonne question est « une
+face chargée de la famille couvre-t-elle chaque caractère ? », ou la police
+réellement employée.
+
+**Un relevé qui ne lit que les feuilles perd un texte dès qu'on lui ajoute un
+enfant.** L'audit ne mesure le contraste que sur un élément sans enfant. Au lot 2,
+PRENDRE MA PLACE a reçu son sous-libellé dans un `<small>` : son libellé, à
+2,6:1 au soleil, est sorti du compte sans être corrigé, et le compte au soleil
+du hub a baissé d'autant. C'est le piège du grain, sous une autre forme : un
+compte qui baisse peut être une disparition.
+
+**Un contrôle qui vérifie une absence passe quand la page est partie.**
+`accueil:ui` vérifiait qu'un clic sur le voile referme le tiroir. Le tiroir du
+lot 2 couvre tout l'écran d'un téléphone : le clic tombait sur une tuile, la page
+partait vers `/classement`, et « plus de tiroir ouvert » était vrai sur la page
+d'arrivée. Un contrôle d'absence vérifie aussi qu'on est resté sur le même
+document, et un clic à un point précis vérifie d'abord ce qu'il y a sous ce point
+(`elementFromPoint`).
+
+**Un élément tourné est un contexte d'empilement.** Son pseudo-élément en
+`z-index:-1` ne passe plus derrière lui, mais derrière ses seuls enfants, donc
+**par-dessus son propre fond**. La case de BD, tournée de −1,6°, peignait ainsi
+ses rayons sous le mot qu'elle encadre ; un masque les évide maintenant à
+l'emplacement de la case.
+
+**Une couche fixe qui laisse passer le doigt doit passer sous ce qu'on peut
+ouvrir pendant qu'elle est là.** La case du « GOAL ! » est fixée à z 95 et tient
+quinze secondes ; le tiroir est à 49. Ouvert pendant un but, il avait sa
+deuxième rangée cachée — et on la touchait sans la voir, puisque la case ne
+prend pas le doigt. Le hub la pose juste sous le voile du menu.
+
+**Un geste qui tourne autour des pieds en enfonce un.** Une rotation de θ autour
+du milieu des pieds abaisse l'un des deux bords de `l/2 · sin θ` — six à neuf
+pixels pour le personnage du hub sur un téléphone. Sans réserve sous le sol, la
+semelle sort de sa bande. Pencher (`skewX`) ne déplace aucun point du sol ; un
+étirement se fait depuis les pieds (`transform-origin:50% 100%`).
+
+**Une coupe à la ligne ne se règle pas sur une seule police.** Deux lignes
+suffisaient en Oswald aux noms des tuiles du tiroir ; à la première ouverture,
+avant la police, et hors ligne — le service worker ne garde pas les polices de
+Google —, la police de repli en demandait trois, et « CLASSEMENT DES
+SUPPORTERS » se lisait « CLASSEMENT DES… ». Un libellé qu'on lit pour agir ne se
+coupe pas ; sa boîte a la place de la police la plus large qu'on lui connaisse.
+
+**Un match du fil garde sa date quand il est reporté.** `/api/football/feed`
+n'écarte que les matchs finis ou annulés : un match reporté, suspendu, arrêté ou
+gagné sur tapis vert (`PST`, `SUSP`, `ABD`, `AWD`, `WO`) y reste à son heure, et
+une rencontre sans heure fixée (`TBD`) y porte une heure provisoire, souvent
+minuit. Le hub allumait pour eux la bâche du club, la fumée et un compte à
+rebours. Une page qui annonce un coup d'envoi filtre ces statuts.
+
+**Une valeur retenue dans l'onglet porte le nom du joueur.** L'onglet survit à une
+déconnexion : le HUD de la barre, gardé trente secondes dans `sessionStorage`
+(`tbf-hud`), aurait montré les soldes et le visage du compte précédent à qui se
+reconnecte sous un autre. Il est signé de l'identifiant du joueur, et la
+déconnexion efface `tbf-hud` et les états du tiroir (`tbf-etat-*`).
 
 ---
 

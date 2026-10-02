@@ -284,10 +284,10 @@
 
      Ce que je possède, sur les écrans qui ont la barre du haut, sans lui
      reprendre sa place : à droite, avant le menu, un sticker rond de 36 px
-     (zone de touche de 44) — le buste de mon Fanzzy, l'anneau d'XP autour,
-     mon niveau collé en bas à droite. Au toucher, une bande kraft se déplie
-     sous la barre avec les deux jetons, écharpes et boosters, trois
-     secondes, puis se replie. À partir de 560 px, la bande est une rangée de
+     dont le bord craie remplit sa zone de touche de 44 (ui.css, « l'anneau »)
+     — le buste de mon Fanzzy, l'anneau d'XP autour, mon niveau collé en bas
+     à droite. Au toucher, une bande kraft se déplie sous la barre avec les
+     deux jetons, écharpes et boosters, trois secondes, puis se replie. À partir de 560 px, la bande est une rangée de
      la barre, toujours visible (ui.css, « le HUD replié de la barre ») —
      sauf sur les écrans qui ont déjà leur bourse (`BOURSE_EN_PAGE`).
 
@@ -313,7 +313,18 @@
      ça, il se dessine quand même avec la valeur retenue, puis se relit et
      fait compter ce qui a changé. Sans rien de retenu, il attend la réponse :
      un « niveau 1 » posé par défaut mentirait pendant la seconde du
-     chargement, qui est celle où on le regarde. */
+     chargement, qui est celle où on le regarde.
+
+     **Cette clé est lue ailleurs, et sa forme est donc un contrat** (lot 5).
+     Le hub l'écrit sous la même forme (`retenirHud`, index.html) ; le profil
+     et le classement y lisent, sans l'écrire, le visage du joueur tant que
+     `/api/rank/moi` ne le sert pas : `qui` (texte), `avatar` (`{ id, age,
+     evo, skin, rar }`, ou `null` sans Fanzzy) et `portrait` (l'adresse qui a
+     répondu, `false` si aucune, `null` si on ne sait pas encore). Ni la clé
+     ni ces champs ne se renomment sans eux. Chaque écriture est aussi
+     annoncée — `tbf:hud`, la valeur écrite en `detail` — pour qu'un écran
+     arrivé avant la première lecture puisse se redessiner sans relire la
+     clé à l'aveugle. */
   const CLE_HUD = 'tbf-hud';
   const DUREE_HUD = 30_000;
 
@@ -349,14 +360,23 @@
   const retenirHud = (d) => {
     try { sessionStorage.setItem(CLE_HUD, JSON.stringify(d)); }
     catch { /* stockage fermé : on relira au prochain écran, comme avant */ }
+    /* Annoncée même quand le stockage est fermé : c'est alors le seul
+       chemin par lequel le profil apprend le visage du joueur. Une copie,
+       pour qu'un écouteur ne modifie pas ce que le HUD garde. */
+    window.dispatchEvent(new CustomEvent('tbf:hud', { detail: JSON.parse(JSON.stringify(d)) }));
   };
 
   const memeAvatar = (a, b) => Boolean(a && b)
     && a.id === b.id && a.evo === b.evo && a.skin === b.skin;
 
-  /** L'avatar résolu par le serveur, ramené à ce que le HUD dessine. */
+  /** L'avatar résolu par le serveur, ramené à ce que le HUD dessine — et
+      sa rareté, que le HUD ne dessine pas mais que le profil lit dans la
+      clé (voir `CLE_HUD`) : sans elle, la plaque d'une légendaire y
+      retomberait sur celle de son âge. Hors de la liste fermée : `null`. */
+  const RARETES = ['commune', 'rare', 'epique', 'legendaire'];
   const avatarDe = (a) => (a?.id ? { id: String(a.id), age: String(a.age ?? a.id),
-    evo: Number(a.evo) || 1, skin: String(a.skin || 'base') } : null);
+    evo: Number(a.evo) || 1, skin: String(a.skin || 'base'),
+    rar: RARETES.includes(a.rar) ? a.rar : null } : null);
 
   /** Le niveau, ou `null` sans réponse lisible : jamais un « niveau 1 » par défaut. */
   const niveauDe = (niv) => (Number(niv?.niveau) > 0 ? { niveau: Number(niv.niveau),
@@ -415,15 +435,26 @@
 
      L'écoute est posée **dès ce script**, et non avec le HUD : celui-ci
      attend la réponse de « qui es-tu ? », et l'annonce du chargement peut
-     arriver avant lui. Elle est gardée, et il la prend en se montant. */
+     arriver avant lui. Elle est gardée, et il la prend en se montant.
+
+     **Le niveau, quand l'annonce le porte** (contrat du serveur, § 1) : une
+     réclamation qui verse de l'XP, un booster ouvert, rendent l'objet
+     `niveau` avec le portefeuille, et la page le relaie en `detail.niveau`.
+     C'est la jauge d'après le gain, celle que `/api/niveau` rendrait : le
+     HUD la prend telle quelle au lieu de la redemander. Absente — un gain
+     sans XP, un achat —, il relit le niveau comme avant. */
   let annonce = null;
+  let annonceNiveau = null;
   let changeSansDonnee = false;
   let surBourse = null;
   window.addEventListener('tbf:bourse', (e) => {
     const w = portefeuilleDe(e.detail?.wallet ?? e.detail) ?? etatDeLaPage();
-    if (surBourse) surBourse(w);
-    else if (w) annonce = { ...annonce, ...w };
-    else changeSansDonnee = true;
+    const niv = niveauDe(e.detail?.niveau);
+    if (surBourse) surBourse(w, niv);
+    else if (w) {
+      annonce = { ...annonce, ...w };
+      if (niv) annonceNiveau = niv;
+    } else changeSansDonnee = true;
   });
 
   /** Une valeur du HUD, prête à retenir. Le portrait déjà trouvé suit tant
@@ -711,8 +742,9 @@
       chargerHud().then((d) => { if (d && n === tour) afficher(d); });
     };
 
-    /** Une annonce de la page : le portefeuille, tel qu'elle vient de le recevoir. */
-    function recevoir(w) {
+    /** Une annonce de la page : le portefeuille, tel qu'elle vient de le
+        recevoir, et le niveau quand le serveur l'a rendu avec (`niv`). */
+    function recevoir(w, niv = null) {
       clearTimeout(repli);
       const n = ++tour;
       const avant = vu ?? lireHud();
@@ -722,6 +754,17 @@
          solde ne se devine pas. */
       if (scarves === undefined || packs === undefined) { relire(); return; }
       const avatar = 'avatar' in w ? w.avatar : (avant?.avatar ?? null);
+      /* Les soldes et le niveau, tous deux tels que le serveur vient de les
+         rendre : la lecture est complète, rien à redemander. Une relecture
+         du niveau déjà en attente n'a plus d'objet. */
+      if (niv) {
+        clearTimeout(attenteNiveau);
+        niveauEnRoute = null;
+        const f = composer({ scarves, packs, avatar }, niv, Date.now());
+        retenirHud(f);
+        afficher(f);
+        return;
+      }
       const change = !avant || avant.scarves !== scarves || avant.packs !== packs
         || ((Boolean(avant.avatar) || Boolean(avatar)) && !memeAvatar(avant.avatar, avatar));
       const perime = !avant || Date.now() - avant.t >= DUREE_HUD;
@@ -758,16 +801,18 @@
 
     /* Une annonce sans donnée : on relit tout, une fois par rafale. */
     let relecture = 0;
-    surBourse = (w) => {
-      if (w) { recevoir(w); return; }
+    surBourse = (w, niv) => {
+      if (w) { recevoir(w, niv); return; }
       clearTimeout(relecture);
       relecture = setTimeout(relire, 300);
     };
     const retenu = lireHud();
     if (retenu) afficher(retenu);
     const deja = annonce ?? etatDeLaPage();
+    const dejaNiveau = annonce ? annonceNiveau : null;
     annonce = null;
-    if (deja) recevoir(deja);
+    annonceNiveau = null;
+    if (deja) recevoir(deja, dejaNiveau);
     else if (changeSansDonnee || !retenu || Date.now() - retenu.t >= DUREE_HUD) {
       if (ANNONCENT_LEUR_ETAT.includes(chemin)) {
         niveauEnRoute = lireNiveau();
@@ -789,6 +834,60 @@
 
   /* --------------------------------------------------- la barre du haut */
 
+  /**
+   * La barre au même endroit sur toutes les pages (reliquat du lot 2).
+   *
+   * Elle se monte en tête de la colonne de la page, et elle héritait donc de
+   * tout ce qui écarte cette colonne du bord de l'écran. Cinq pages posent
+   * leur marge sur le `body` et non sur la colonne : le compte (34 px en
+   * haut, 18 sur les côtés), l'abonnement (18 et 16), les clubs et le KOP
+   * (26 et 16, plus la gouttière de `#app`), le diagnostic (28 et 18, plus
+   * la gouttière). À 360 px, leur flèche descendait de dix-huit à
+   * trente-quatre pixels et rentrait de deux à dix-huit, le menu avec elle :
+   * le pouce ne les retrouvait plus au même endroit d'un écran à l'autre.
+   *
+   * Plutôt que de faire déplacer leur marge à cinq pages — et d'y refaire
+   * leur mise en page —, la barre se place elle-même où la met la colonne
+   * commune (`#app`, ui.css) : en haut du document ; à la gouttière du bord
+   * de l'écran tant que l'écran borne la colonne, à la gouttière du bord de
+   * la colonne au-delà — le compte et l'abonnement n'en ont pas, leur `body`
+   * en tenait lieu, et leur barre débordait de quatorze pixels sur un grand
+   * écran. Sur les autres pages le calcul tombe à zéro, et rien n'est posé.
+   *
+   * **Le contenu de la page ne bouge pas.** La barre remonte par
+   * `position:relative`, qui laisse sa place où elle était : la page garde
+   * sous la barre l'écart qu'elle avait au-dessus, à elle d'en décider. Elle
+   * s'élargit par des marges négatives, qui ne poussent rien. Et elle ne
+   * remonte que de ce que le `body` et la colonne ajoutent en haut : ce
+   * qu'une page poserait au-dessus de sa colonne ne serait pas recouvert.
+   */
+  function caler(haut, colonne) {
+    const s = haut.style;
+    s.marginLeft = s.marginRight = s.position = s.top = '';
+    const b = haut.getBoundingClientRect();
+    const hs = getComputedStyle(haut);
+    const cs = getComputedStyle(colonne);
+    const bs = getComputedStyle(document.body);
+    const px = (v) => parseFloat(v) || 0;
+    // La gouttière de la colonne commune, ou celle que la colonne se donne.
+    const g = Number.isFinite(parseFloat(cs.getPropertyValue('--gouttiere')))
+      ? parseFloat(cs.getPropertyValue('--gouttiere')) : 14;
+    const max = parseFloat(cs.maxWidth);
+    // Plus étroite que sa largeur maximale : c'est l'écran qui la borne.
+    const bornee = !(max > 0) || px(cs.width) < max - 0.5;
+    const r = colonne.getBoundingClientRect();
+    const dg = Math.round((bornee ? 0 : r.left) + g - b.left);
+    const dd = Math.round((bornee ? document.documentElement.clientWidth : r.right) - g - b.right);
+    if (dg) s.marginLeft = `${px(hs.marginLeft) + dg}px`;
+    if (dd) s.marginRight = `${px(hs.marginRight) - dd}px`;
+    const y = Math.round(b.top + window.scrollY);
+    const ajoute = Math.max(0, px(bs.marginTop)) + px(bs.borderTopWidth) + px(bs.paddingTop)
+      + Math.max(0, px(cs.marginTop)) + px(cs.borderTopWidth) + px(cs.paddingTop);
+    if (y > 0 && y <= ajoute + 0.5) {
+      s.position = 'relative';
+      s.top = `${-y}px`;
+    }
+  }
 
   /**
    * Monte la barre du haut, si le joueur est connecté.
@@ -891,9 +990,10 @@
        barre. Le pseudo et le club vivent sur le profil, qui est fait pour eux.
 
        Les soldes et le niveau reviennent au lot 2, mais **repliés** : un
-       sticker rond de trente-six pixels, le buste de son Fanzzy dans l'anneau
-       d'XP, qui déplie les deux jetons au toucher. Il prend la place d'un
-       bouton, pas celle du titre — voir `monterHud`, plus haut.
+       sticker rond de trente-six pixels, dont le bord craie remplit les
+       quarante-quatre de sa zone de touche, le buste de son Fanzzy dans
+       l'anneau d'XP, qui déplie les deux jetons au toucher. Il prend la place
+       d'un bouton, pas celle du titre — voir `monterHud`, plus haut.
 
        Le titre se range à gauche, juste après la flèche, et pousse à droite ce
        qui le suit — le HUD et le menu (ui.css, « le nom de l'écran, sur son
@@ -926,6 +1026,14 @@
        valeur-là est sûre », c'est ainsi qu'on finit par en faire une mauvaise. */
     haut.querySelector('.tbf-ou').textContent = titre;
     app.prepend(haut);
+    if (!enJeu) {
+      caler(haut, app);
+      let image = 0;
+      window.addEventListener('resize', () => {
+        cancelAnimationFrame(image);
+        image = requestAnimationFrame(() => caler(haut, app));
+      });
+    }
 
     /* La poignée de la flèche est posée une fois pour toutes sur le document,
        tout en haut de ce fichier : elle vaut aussi pour les pages qui écrivent
@@ -985,13 +1093,18 @@
        `null` ne lèverait pas — elle se contente de ne rien faire — mais un
        appel qui ne fait rien se relit dix fois avant qu'on comprenne
        pourquoi. */
-    const menu = user ? window.TBF_MENU.monter(haut.querySelector('.tbf-burger')) : null;
+    /* Le joueur signe ce que l'onglet retient pour lui : le HUD, ici, et la
+       pastille des MISSIONS, que le tiroir lit dans la clé du quotidien
+       (contrat R10). La même valeur pour les deux, et pour les pages qui
+       écrivent ces clés. */
+    const qui = user ? (user.id ?? user.pseudo) : null;
+    const menu = user ? window.TBF_MENU.monter(haut.querySelector('.tbf-burger'), { qui }) : null;
 
     /* **Le HUD replié**, pour un joueur connecté, hors des deux écrans de jeu :
        pendant un duel, son solde d'écharpes n'intéresse personne (le HUD de
        match est l'affaire d'un autre lot). Un visiteur n'a ni niveau ni
        solde : rien à replier. */
-    if (user && !enJeu) monterHud(haut, menu, user.id ?? user.pseudo);
+    if (user && !enJeu) monterHud(haut, menu, qui);
 
     /**
      * Ce qu'une page peut encore dire à la barre : qu'une partie tourne.

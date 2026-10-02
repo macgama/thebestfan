@@ -27,12 +27,19 @@ const check = (label, cond) => {
 
 const mysql = await import('mysql2/promise');
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
-await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invites, amities,
+await raw.query(`DROP TABLE IF EXISTS recompenses, missions_jour, compteurs_jour, user_nouveautes,
+  parrainages, abonnements, achats, kop_invites, amities,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, user_decks, user_stuff, user_etats, user_skins, user_fanzzy, user_souvenirs, virage_presence,
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-await raw.query(readFileSync(new URL('../sql/auth.sql', import.meta.url), 'utf8'));
+/* Au-delà d'auth.sql, ce que la suppression d'un compte doit vider : les
+   tables du quotidien et les colonnes qu'il pose sur la bourse. `admin.sql`
+   pour `reglages`, que `saisons.sql` lit ; `saisons.sql` parce que
+   `quotidien.sql` complète sa table. */
+for (const f of ['auth', 'admin', 'souvenirs', 'saisons', 'quotidien']) {
+  await raw.query(readFileSync(new URL(`../sql/${f}.sql`, import.meta.url), 'utf8'));
+}
 await raw.end();
 
 const pool = mysql.createPool({ uri: DB, connectionLimit: 8, ...OPTIONS_BASE });
@@ -264,6 +271,51 @@ check('handshake refusé sans identité valable', viaRien === null);
 
 /* ------------------------------------------------ suppression compte */
 
+/* Ce que le quotidien garde d'un joueur, semé comme le serveur l'écrit :
+   sous son **identifiant public**, jours et instants en SQL. La route de
+   suppression, elle, passe l'identifiant **interne** (`users.id`) : c'est
+   tout le piège, et c'est pourquoi on passe par elle et non par
+   `deleteUser` appelé à la main avec le bon identifiant.
+
+   Un témoin, Bob, reçoit les mêmes lignes : la suppression d'Alice ne doit
+   rien emporter d'autre. */
+const [[{ public_id: ALICE }]] = await pool.query(
+  `SELECT public_id FROM users WHERE email = 'alice@exemple.fr'`);
+const BOB = '00000000-0000-4000-8000-00000000b0b0';
+await pool.query(`INSERT INTO users (public_id, email, pseudo, password_hash) VALUES (?, ?, ?, 'x')`,
+  [BOB, 'bob-temoin@exemple.fr', 'TemoinBob']);
+for (const qui of [ALICE, BOB]) {
+  await pool.query(`INSERT INTO user_wallet (user_id, packs, packs_at, rangs_vus, visite_a, instantane)
+    VALUES (?, 3, ?, JSON_OBJECT('ref', JSON_OBJECT('jour', '2026-10-01')), NOW(3), JSON_OBJECT('k', 1))`,
+  [qui, new Date()]);
+  await pool.query(`INSERT INTO missions_jour (user_id, jour, rang, mission, cible, echarpes, xp, tampons)
+    VALUES (?, CURDATE(), 0, 'boosters', 3, 30, 20, 1), (?, CURDATE(), 3, 'sachet', 3, 0, 0, 1)`, [qui, qui]);
+  await pool.query(`INSERT INTO compteurs_jour (user_id, jour, cle, n) VALUES (?, CURDATE(), 'booster', 2)`,
+    [qui]);
+  await pool.query(`INSERT INTO user_nouveautes (user_id, cle, sorte) VALUES (?, 'fanzzy:RP4', 'fanzzy')`,
+    [qui]);
+  await pool.query(`INSERT INTO recompenses (user_id, source, cle, echarpes, xp, tampons)
+    VALUES (?, 'mission', DATE_FORMAT(CURDATE(), '%Y-%m-%d:0'), 30, 20, 1)`, [qui]);
+}
+const lignesDe = async (qui) => {
+  const compte = async (t) => Number((await pool.query(
+    `SELECT COUNT(*) AS n FROM ${t} WHERE user_id = ?`, [qui]))[0][0].n);
+  const [[w]] = await pool.query(
+    'SELECT rangs_vus, visite_a, instantane FROM user_wallet WHERE user_id = ?', [qui]);
+  return {
+    nouveautes: await compte('user_nouveautes'),
+    missions: await compte('missions_jour'),
+    compteurs: await compte('compteurs_jour'),
+    grandLivre: await compte('recompenses'),
+    bourse: w ? [w.rangs_vus, w.visite_a, w.instantane].filter((x) => x !== null).length : -1,
+  };
+};
+const avantSuppression = await lignesDe(ALICE);
+check('les lignes du quotidien d’Alice sont bien semées avant la suppression',
+  JSON.stringify(avantSuppression)
+    === JSON.stringify({ nouveautes: 1, missions: 2, compteurs: 1, grandLivre: 1, bourse: 3 })
+  || (console.log('        semées :', JSON.stringify(avantSuppression)), false));
+
 r = await alice.call('/api/auth/me', { method: 'DELETE', body: { password: 'mauvais' } });
 check('suppression refusée sans le bon mot de passe', r.status === 403);
 
@@ -315,6 +367,20 @@ check('ticket inutilisable après suppression du compte', apresSuppression === n
   const [[jet]] = await pool.query(
     'SELECT COUNT(*) AS n FROM auth_tokens WHERE user_id = ?', [ligne.id]);
   check('plus aucun jeton en attente', Number(jet.n) === 0);
+
+  /* Le quotidien : `CONFIDENTIALITE.md` promet que l'activité du jour, les
+     missions tirées, les nouveautés, la dernière visite et les rangs vus
+     partent avec le compte, et que le grand livre reste, anonyme. */
+  const apres = await lignesDe(ALICE);
+  check('ses nouveautés, ses missions tirées et son activité du jour sont effacées',
+    apres.nouveautes === 0 && apres.missions === 0 && apres.compteurs === 0
+    || (console.log('        restent :', JSON.stringify(apres)), false));
+  check('sa dernière visite, ses rangs vus et l’état des pots sont oubliés', apres.bourse === 0
+    || (console.log('        restent :', apres.bourse, 'colonne(s)'), false));
+  check('le grand livre garde sa ligne : la trace comptable ne nomme personne', apres.grandLivre === 1);
+  check('et rien n’est pris au témoin',
+    JSON.stringify(await lignesDe(BOB))
+      === JSON.stringify({ nouveautes: 1, missions: 2, compteurs: 1, grandLivre: 1, bourse: 3 }));
 }
 
 /* --------------------------------------------------- vie privée en base */

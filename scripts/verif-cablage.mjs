@@ -151,6 +151,77 @@ check('server.js branche le fil du match sur le virage',
     appels.includes('onFinished') || (console.log('        appels :', appels.join(', ')), false));
 }
 
+/* ------------------------------ le quotidien : ses portes, et rien d'autre
+
+   **Deux pannes muettes possibles, et une règle.**
+
+   Le quotidien verse par le grand livre, et deux de ses versements ont besoin
+   d'un autre module : l'XP d'une mission entre dans la transaction par
+   `niveau.gagnerDans`, et un booster offert (le sachet, la septième case, un
+   palier du carnet, le relais) compte d'abord la recharge due par
+   `fanzzy.recharger`. Construit avant eux dans `server.js`, il les garderait à
+   `null` : la première réclamation lèverait, ou — pire — on finirait par
+   écrire un repli qui verse sans eux. Et la journée du football doit rester
+   une **fonction** : le télétexte est monté plus bas, une valeur lue au
+   montage vaudrait `null` pour toujours, et aucune mission du Virage ne
+   serait jamais proposée, sans un mot.
+
+   La règle : le quotidien ne reçoit **ni l'abonnement, ni le KOP, ni les
+   amis**. Abonné et non-abonné reçoivent les mêmes missions et les mêmes
+   montants (`SERVEUR.md`, § 9), et le plus sûr est qu'il ne puisse pas savoir
+   qui est abonné. On le vérifie des deux côtés : ce que le module **lit** de
+   ses options (un `Proxy` note chaque clé demandée — une signature qui ne
+   nomme pas une option ne la lit pas), et ce que `server.js` lui **passe**. */
+{
+  const { createQuotidien } = await import('../src/server/quotidien/index.js');
+
+  const lues = new Set();
+  let journeeLue = 0;
+  const fournies = {
+    pool: { execute: async () => [[]], query: async () => [[]] },
+    requireAuth: (_r, _s, n) => n(),
+    niveau: { gagnerDans: async () => ({}) },
+    fanzzy: { recharger: async () => {} },
+    jourDuFoot: () => { journeeLue++; return null; },
+    abonnement: { estAbonne: async () => true },
+    kop: {},
+    amis: {},
+  };
+  const options = new Proxy(fournies, {
+    get(cible, cle) { lues.add(cle); return cible[cle]; },
+  });
+  const module = createQuotidien(options);
+
+  check('le quotidien se monte et rend son routeur', typeof module?.router === 'function');
+  check('il lit niveau, fanzzy et la journée du football',
+    ['niveau', 'fanzzy', 'jourDuFoot'].every((k) => lues.has(k))
+    || (console.log('        lues :', [...lues].join(', ')), false));
+  check('il ne lit ni l’abonnement, ni le KOP, ni les amis',
+    !['abonnement', 'kop', 'amis'].some((k) => lues.has(k))
+    || (console.log('        lues :', [...lues].join(', ')), false));
+  check('la journée du football n’est pas lue au montage (le télétexte vient après)',
+    journeeLue === 0);
+
+  /* Ce que `server.js` lui passe, lu dans l'appel lui-même. */
+  const debut = serveur.indexOf('createQuotidien({');
+  const fin = debut < 0 ? -1 : serveur.indexOf('})', debut);
+  const appel = debut < 0 || fin < 0 ? '' : serveur.slice(debut, fin);
+  const nomme = (mot) => new RegExp(`\\b${mot}\\b`).test(appel);
+  check('server.js construit le quotidien', appel.length > 0);
+  check('server.js lui passe niveau et fanzzy', nomme('niveau') && nomme('fanzzy'));
+  check('server.js lui passe la journée comme une fonction, lue à l’appel',
+    /jourDuFoot:\s*\(\)\s*=>\s*teletext\?\.jour\(/.test(appel));
+  check('server.js ne lui passe ni l’abonnement, ni le KOP, ni les amis',
+    !nomme('abonnement') && !nomme('kop') && !nomme('amis'));
+  check('niveau et fanzzy sont construits avant lui dans server.js',
+    debut > serveur.indexOf('niveau = createNiveau(') && serveur.indexOf('niveau = createNiveau(') > 0
+    && debut > serveur.indexOf('fanzzy = createFanzzy(') && serveur.indexOf('fanzzy = createFanzzy(') > 0);
+  check('server.js monte ses routes sur /api/quotidien',
+    /app\.use\(\s*'\/api\/quotidien'\s*,\s*quotidien\.router\s*\)/.test(serveur));
+  check('server.js lance la sonde du jour de jeu et la rend dans /healthz',
+    /sonderJourDeJeu\(pool\)/.test(serveur) && /\.\.\.\(jourDeJeu \? \{ jourDeJeu \} : \{\}\)/.test(serveur));
+}
+
 /* ---------------------------- le serveur n'emporte que ses cinq paquets
 
    **La panne que ce contrôle empêche n'arrive qu'en production.**

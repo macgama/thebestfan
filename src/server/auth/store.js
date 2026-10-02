@@ -111,6 +111,48 @@ export function createStore(pool) {
       );
       await q(`DELETE FROM sessions WHERE user_id = ?`, [userId]);
       await q(`DELETE FROM auth_tokens WHERE user_id = ?`, [userId]);
+
+      /* **Ce que le quotidien garde du joueur** (`sql/quotidien.sql`) : ce
+         qu'il n'a pas encore regardé, ses missions tirées, son activité du
+         jour (boosters ouverts, évolutions), la photo de ses rangs, la marque
+         de sa dernière visite et l'état des pots de ses KOP à cette marque.
+         Tout cela décrit **une personne**, et part avec elle.
+
+         **L'identifiant n'est pas le même.** `userId` est `users.id`, le
+         numéro interne que la session porte ; ces tables-là sont clées sur
+         `users.public_id`, comme tout le jeu. Supprimer `WHERE user_id = ?`
+         avec le numéro interne ne trouverait jamais rien — en silence sur une
+         base tolérante, et la politique de confidentialité mentirait ; sur
+         une base stricte, la comparaison d'un nombre à un identifiant lève,
+         et c'est la suppression du compte qui tombe (`auth:smoke` a vu les
+         deux). La sous-requête traduit, et elle traduit toujours :
+         l'anonymisation ci-dessus ne touche pas `public_id`.
+
+         **Le grand livre reste** (`recompenses`) : c'est la trace comptable
+         du jeu, et il ne porte ni nom, ni adresse, ni pseudo — un
+         identifiant que plus rien ne relie à personne. Les parties restent
+         pour la même raison.
+
+         Chaque instruction se tolère absente : une base où `quotidien.sql`
+         n'est pas encore passé doit pouvoir supprimer un compte. Elle n'a
+         alors rien de tout cela à effacer. */
+      const quotidien = [
+        `DELETE FROM user_nouveautes
+          WHERE user_id = (SELECT public_id FROM users WHERE id = ?)`,
+        `DELETE FROM missions_jour
+          WHERE user_id = (SELECT public_id FROM users WHERE id = ?)`,
+        `DELETE FROM compteurs_jour
+          WHERE user_id = (SELECT public_id FROM users WHERE id = ?)`,
+        `UPDATE user_wallet SET rangs_vus = NULL, visite_a = NULL, instantane = NULL
+          WHERE user_id = (SELECT public_id FROM users WHERE id = ?)`,
+      ];
+      for (const sql of quotidien) {
+        try {
+          await q(sql, [userId]);
+        } catch (e) {
+          if (e?.code !== 'ER_NO_SUCH_TABLE' && e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+        }
+      }
     },
 
     /* --------------------------------------------------------- sessions */

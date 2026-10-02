@@ -86,4 +86,11 @@ export const ORDRE = ['auth', 'football', 'minutes', 'couleurs', 'duel', 'souven
   /* L'aide. Deux colonnes sur `user_wallet`, donc après souvenirs.sql et nulle
      part ailleurs : elle ne déclare aucune table, et le parcours des premiers
      pas lit tout le reste de ce qui existe déjà. */
-  'aide'];
+  'aide',
+  /* Le quotidien et le grand livre des récompenses. Il ajoute des colonnes à
+     `user_wallet` et à `virage_presence` (souvenirs.sql) et à `saisons`
+     (saisons.sql), et ses tables sont clées sur `users.public_id` (auth.sql) :
+     il vient donc après les trois. En dernier plutôt que juste après
+     saisons.sql, parce qu'il ne fait rien dont un autre fichier dépende — le
+     dernier rang est celui qui ne peut gêner personne. */
+  'quotidien'];

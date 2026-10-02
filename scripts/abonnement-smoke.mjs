@@ -468,9 +468,20 @@ check('tous les formats de duel restent ouverts à tous',
   const abo = REGLAGES.filter((r) => r.cle.startsWith('abo.'));
   check(`les réglages d’abonnement sont dans leur section (${abo.length})`,
     abo.length > 0 && abo.every((r) => r.section === 'abonnement'));
-  const interdits = ['duel.', 'deck.', 'ferveur.', 'virage.'];
-  check('et aucun ne gouverne le duel, le deck ou le virage',
+  /* Les récompenses du quotidien en font partie depuis le chantier serveur
+     (L1) : abonné et non-abonné reçoivent exactement la même chose, et aucun
+     réglage d'abonnement ne doit pouvoir y toucher — ni missions, ni bonus,
+     ni carnet, ni crans, ni divisions, ni disjoncteur. */
+  const interdits = ['duel.', 'deck.', 'ferveur.', 'virage.', 'quotidien.', 'missions.',
+    'mission.', 'bonus.', 'saison.', 'collection.', 'rang.', 'recompenses.'];
+  check('et aucun ne gouverne le duel, le deck, le virage ni les récompenses du quotidien',
     !abo.some((r) => interdits.some((p) => r.cle.replace('abo.', '').startsWith(p))));
+  /* L'autre sens : aucun réglage du quotidien ne vit dans la section de
+     l'abonnement, ni ne porte un montant « pour l'abonné ». */
+  const quotidien = REGLAGES.filter((r) => interdits.slice(4).some((p) => r.cle.startsWith(p)));
+  check(`et aucun réglage du quotidien ne dépend de l’abonnement (${quotidien.length})`,
+    quotidien.length > 0
+      && quotidien.every((r) => r.section !== 'abonnement' && !/abo|abonn/i.test(r.cle)));
 }
 
 /* Le module d'abonnement n'expose **aucune** porte vers le jeu lui-même. Si

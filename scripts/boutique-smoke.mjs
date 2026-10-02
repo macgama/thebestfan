@@ -44,7 +44,7 @@ const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
    référence encore — et il a raison. */
 await raw.query('SET FOREIGN_KEY_CHECKS = 0');
 await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, tenues, user_stuff, user_etats, user_skins, user_fanzzy,
-  user_souvenirs, user_decks, virage_presence, user_wallet, users`);
+  user_souvenirs, user_decks, virage_presence, user_nouveautes, user_wallet, users`);
 await raw.query('SET FOREIGN_KEY_CHECKS = 1');
 const { readFile } = await import('node:fs/promises');
 /* L ordre compte : souvenirs.sql crée la bourse, et fanzzy.sql lui ajoute une
@@ -54,6 +54,19 @@ for (const f of ['auth.sql', 'souvenirs.sql', 'billets.sql', 'fanzzy.sql', 'inve
   'skins.sql', 'etats.sql', 'tenues.sql', 'boutique.sql', 'abonnement.sql']) {
   await raw.query(await readFile(`sql/${f}`, 'utf8'));
 }
+/* **La table des nouveautés, et elle seule**, prise telle quelle dans
+   `sql/quotidien.sql` : l'étal y écrit l'objet qu'il vient de remettre. Le
+   fichier entier demanderait la table des saisons, qu'il complète — une table
+   partagée par les suites, que celle-ci n'a pas à toucher. Si l'instruction ne
+   se trouve plus dans le fichier, la suite le dit au lieu d'éprouver une table
+   qui n'existe nulle part. */
+const TABLE_NOUVEAUTES = (await readFile('sql/quotidien.sql', 'utf8'))
+  .match(/CREATE TABLE IF NOT EXISTS user_nouveautes \([\s\S]*?\)[^;]*;/)?.[0];
+if (!TABLE_NOUVEAUTES) {
+  throw new Error('sql/quotidien.sql ne déclare plus user_nouveautes : la suite de la boutique '
+    + 'ne sait plus où prendre la table que l’étal remplit');
+}
+await raw.query(TABLE_NOUVEAUTES);
 await raw.query(
   `INSERT INTO users (email, pseudo, password_hash, status, public_id)
    VALUES ('a@b.c','Un','x','active', UUID())`);
@@ -565,6 +578,82 @@ const evenement = (sessionId) => ({
     Number(p.packs) === Number(avantEtal.packs));
 }
 
+/* ------------------------------------------- ce que l'étal remet est « nouveau »
+
+   L'achat à l'étal est l'un des trois moments où le serveur écrit une
+   nouveauté (`CONTRATS.md`, § 2.1), et il l'écrit **dans** la transaction de
+   l'achat : si le débit échoue, l'objet n'arrive pas, et la nouveauté non
+   plus. Une pastille « NOUVEAU » sur un objet qu'on n'a pas eu serait une
+   promesse fausse. */
+{
+  const depenser = (corps) => fetch(base + '/api/boutique/depenser', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(corps),
+  }).then(async (r) => ({ code: r.status, json: await r.json().catch(() => ({})) }));
+  const nouveautes = async () => (await q(
+    'SELECT cle, sorte FROM user_nouveautes WHERE user_id = ? ORDER BY cle', [U]))
+    .map((l) => `${l.sorte}|${l.cle}`);
+  const etal = await fetch(base + '/api/boutique/etal').then((r) => r.json());
+
+  /* Une pièce neuve. */
+  await q('DELETE FROM user_nouveautes WHERE user_id = ?', [U]);
+  const [ont] = [await q('SELECT stuff_id FROM user_stuff WHERE user_id = ?', [U])];
+  const neuve = (etal.stuff ?? []).find((o) => !ont.some((x) => x.stuff_id === o.id));
+  await q('UPDATE user_wallet SET scarves = ? WHERE user_id = ?', [neuve.prix, U]);
+  const a = await depenser({ type: 'stuff', id: neuve.id });
+  check('une pièce achetée à l’étal est une nouveauté', a.code === 200
+    && JSON.stringify(await nouveautes()) === JSON.stringify([`stuff|stuff:${neuve.id}`])
+    || (console.log('        ', a.code, JSON.stringify(await nouveautes())), false));
+
+  /* La même, une seconde fois : un exemplaire de plus n'est pas nouveau. */
+  await q('DELETE FROM user_nouveautes WHERE user_id = ?', [U]);
+  await q('UPDATE user_wallet SET scarves = ? WHERE user_id = ?', [neuve.prix, U]);
+  const b = await depenser({ type: 'stuff', id: neuve.id });
+  const [[copies]] = [await q('SELECT copies FROM user_stuff WHERE user_id = ? AND stuff_id = ?',
+    [U, neuve.id])];
+  check('un exemplaire de plus d’une pièce déjà à soi ne l’est pas',
+    b.code === 200 && Number(copies.copies) === 2 && (await nouveautes()).length === 0);
+
+  /* Une tenue, sur un Fanzzy qu'on possède : d'abord sans les écharpes. */
+  const fid = (await q('SELECT id FROM fanzzy WHERE stage = 1 AND publie = 1 ORDER BY id LIMIT 1'))[0]?.id;
+  await q(`INSERT IGNORE INTO user_fanzzy (user_id, fanzzy_id, copies) VALUES (?, ?, 1)`, [U, fid]);
+  const tenue = (etal.tenues ?? [])[0];
+  const cle = `skin:${fid}:1:${tenue?.id}`;
+  await q('UPDATE user_wallet SET scarves = 0 WHERE user_id = ?', [U]);
+  const c = await depenser({ type: 'tenue', id: tenue?.id, fanzzy: fid, stage: 1 });
+  const [posee] = [await q(
+    'SELECT 1 FROM user_skins WHERE user_id = ? AND fanzzy_id = ? AND stage = 1 AND skin_id = ?',
+    [U, fid, tenue?.id])];
+  check('sans écharpes : ni tenue, ni nouveauté',
+    c.code === 400 && c.json.error === 'boutique.error.echarpes_insuffisantes'
+    && posee.length === 0 && (await nouveautes()).length === 0
+    || (console.log('        ', c.code, JSON.stringify(c.json), JSON.stringify(await nouveautes())), false));
+
+  await q('UPDATE user_wallet SET scarves = ? WHERE user_id = ?', [tenue?.prix ?? 0, U]);
+  const d = await depenser({ type: 'tenue', id: tenue?.id, fanzzy: fid, stage: 1 });
+  check('avec : la tenue arrive, nouvelle, à son âge',
+    d.code === 200 && JSON.stringify(await nouveautes()) === JSON.stringify([`skin|${cle}`])
+    || (console.log('        ', d.code, JSON.stringify(d.json), JSON.stringify(await nouveautes())), false));
+
+  /* Sans la table : l'achat se fait, sans sa nouveauté. Perdre une vente pour
+     une pastille serait absurde, et l'erreur avalée est seulement celle-là. */
+  await q('DROP TABLE user_nouveautes');
+  const autre = (etal.stuff ?? []).find((o) => o.id !== neuve.id
+    && !ont.some((x) => x.stuff_id === o.id));
+  await q('UPDATE user_wallet SET scarves = ? WHERE user_id = ?', [autre.prix, U]);
+  const erreur = console.error;
+  console.error = () => {};
+  let e;
+  try {
+    e = await depenser({ type: 'stuff', id: autre.id });
+  } finally {
+    console.error = erreur;
+  }
+  const [recu] = [await q('SELECT 1 FROM user_stuff WHERE user_id = ? AND stuff_id = ?', [U, autre.id])];
+  check('sans la table des nouveautés, l’achat passe quand même', e.code === 200 && recu.length === 1);
+  await q(TABLE_NOUVEAUTES);
+}
+
 /* ================================ l'adresse où Stripe ramène le client
 
    **Deux noms pour la même chose finissent toujours par se contredire.**
@@ -594,6 +683,10 @@ const evenement = (sessionId) => ({
 }
 
 console.log(`\n${rates ? `${rates} échec(s)` : 'tout est vert'}`);
-http.close();
+/* `process.exitCode` et non `process.exit()` : la sortie forcée coupe les
+   fermetures du pool en vol et fait échouer la suite au hasard sous Windows,
+   quand elle tourne à la file derrière une autre (`ETAT.md`, § 2). */
+http.closeAllConnections?.();
+await new Promise((r) => http.close(r));
 await pool.end();
-process.exit(rates ? 1 : 0);
+process.exitCode = rates ? 1 : 0;

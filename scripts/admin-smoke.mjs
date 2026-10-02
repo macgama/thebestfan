@@ -7,7 +7,7 @@ import { SETS } from '../src/shared/fanzzy/dex.js';
 import { charger as chargerCatalogue, parIdentifiant, publies }
   from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
-import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
+import { baseDeTest, OPTIONS_BASE, figerHorloge } from './base-de-test.mjs';
 
 const DB = baseDeTest();
 let failures = 0;
@@ -20,13 +20,20 @@ const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
    elle est vide. Une saison laissée par un passage précédent — ou par une suite
    voisine — fermerait des séries que celle-ci croit ouvertes, et les contrôles
    parleraient d'un état que personne n'a voulu. */
+/* Les quatre tables de `sql/quotidien.sql` aussi : la saison datée lit le grand
+   livre pour savoir si un carnet est figé, et une ligne laissée par un passage
+   précédent figerait un carnet que cette suite croit libre. */
 await raw.query(`DROP TABLE IF EXISTS parrainages, contenus, abonnements, achats, kop_invites, amities, saisons,
   kop_bulletins, kop_votes, kop_bonus, kop_membres, kops, reglages, admin_audit, user_decks, user_stuff, user_etats, user_skins,
   user_fanzzy, user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache,
   souvenir_leagues, duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings,
-  fixtures, team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
+  fixtures, team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users,
+  recompenses, missions_jour, compteurs_jour, user_nouveautes`);
+/* `quotidien.sql` en dernier, comme dans `ORDRE` : il ajoute à `saisons` les
+   colonnes de la saison datée (`fin_le`, `ouvre_le`, `carnet`). */
 for (const f of ['auth.sql','football.sql', 'minutes.sql', 'couleurs.sql','souvenirs.sql', 'billets.sql','fanzzy.sql','inventaire.sql', 'skins.sql', 'etats.sql', 'tenues.sql',
-                 'teletext.sql','admin.sql','saisons.sql','contenus.sql','abonnement.sql']) {
+                 'teletext.sql','admin.sql','saisons.sql','contenus.sql','abonnement.sql',
+                 'quotidien.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 // La table `fanzzy` n'est pas dans le DROP ci-dessus, et c'est voulu : elle
@@ -688,6 +695,443 @@ console.log('\n— les contenus —');
     || (console.log('        choix :', Object.keys(d.choix ?? {}).join(' ')), false));
   check('et chaque stade y porte un nom',
     (d.choix.stades ?? []).every((x) => x.id && x.nom));
+}
+
+/* ====================================================== la saison datée
+
+   Une saison finit à la fin d'un **jour de jeu**, celui de la base. Ce qui se
+   vérifie ici, c'est que personne n'y fabrique de date : ni l'écran, ni Node,
+   ni le pilote. Deux pièges l'ont déjà prouvé ailleurs dans ce dépôt — un jour
+   relu en objet `Date` à travers un pool en `timezone: 'Z'` recule d'un jour à
+   l'ouest de Greenwich, et `TIMESTAMPDIFF` compte l'heure murale, donc se
+   trompe d'une heure les deux dimanches de changement d'heure.
+
+   D'où l'horloge de la base **figée** aux instants qui piègent (le 25 octobre
+   2026 à 00:30, le dimanche de 25 heures ; le 28 mars 2027, celui de 23), et
+   les mêmes contrôles rejoués sous `TZ=America/Montreal`. Les durées se
+   mesurent au chargement des saisons : chaque changement d'heure est donc
+   suivi d'une relecture, par une écriture d'administration ou explicitement.
+
+   Rien ici n'écrit de saison de production : ce sont des saisons d'essai,
+   effacées à la fin. La fin de la saison 1 et l'ouverture d'une saison 2 sont
+   des décisions de Gaël, prises dans l'onglet Saisons. */
+console.log('\n— la saison datée —');
+{
+  const { chargerSaisons, saisonEnCours, saisonProchaine, seriesAnnoncees } =
+    await import('../src/server/fanzzy/saisons.js');
+  const SH = await import('../src/shared/saison.js');
+  const { poserReglages, reglagesVivants } = await import('../src/shared/reglages.js');
+  const { chargerSeries } = await import('../src/server/fanzzy/catalogue.js');
+  /* `/dex` est la route qui sert la saison en cours à toutes les pages : on la
+     monte telle que le serveur la monte, pour vérifier les noms de champ du
+     contrat là où les écrans les lisent. */
+  const { createFanzzy } = await import('../src/server/fanzzy/index.js');
+  app.use('/api/fanzzy', createFanzzy({ pool, requireAuth: (_r, _s, n) => n() }).router);
+
+  const lire = async () => (await call('/api/admin/saisons')).json;
+  const dire = (x) => JSON.stringify(x);
+  const montre = (l, x) => (console.log(`        ${l} :`, dire(x)?.slice(0, 220)), false);
+  /* À la seconde près : la durée est mesurée par la base, puis décomptée par
+     Node pendant les quelques millisecondes du contrôle. */
+  const aPeuPres = (v, attendu) => Number.isInteger(v) && Math.abs(v - attendu) <= 1000;
+  const aLHeure = async (instant) => { await figerHorloge(pool, instant); await chargerSaisons(pool); };
+  /* Une modification renvoie tout le contenu, comme l'écran : la route remplace
+     les listes absentes par des listes vides. */
+  const patch = (s, champs) => call(`/api/admin/saison/${s.id}`, { method: 'PATCH',
+    body: { nom: s.nom, numero: s.numero, texte: s.texte, series: s.series, tenues: s.tenues,
+      stuff: s.stuff, actions: s.actions, stades: s.stades, ...champs } });
+  const ligne = async (id) => (await pool.query(
+    `SELECT DATE_FORMAT(fin_le, '%Y-%m-%d') AS fin, DATE_FORMAT(ouvre_le, '%Y-%m-%d') AS ouvre,
+            carnet FROM saisons WHERE id = ?`, [id]))[0][0];
+  const carnetLu = (v) => (v == null ? null : (typeof v === 'string' ? JSON.parse(v) : v));
+
+  /* ------------------------------------------- le contrôle du contrôle */
+  await figerHorloge(pool, '2026-10-25 00:30:00');
+  {
+    const c1 = await pool.getConnection();
+    const c2 = await pool.getConnection();
+    try {
+      const sql = `SELECT DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s') AS n, CONNECTION_ID() AS id`;
+      const [[a]] = await c1.query(sql);
+      const [[b]] = await c2.query(sql);
+      check('contrôle du contrôle : NOW() rend l’instant figé, sur deux connexions du pool',
+        (a.n === '2026-10-25 00:30:00' && b.n === a.n && a.id !== b.id) || montre('lu', [a, b]));
+    } finally { c1.release(); c2.release(); }
+  }
+
+  /* ------------------------------------------------- les règles pures */
+  {
+    const c = SH.carnetDe(null);
+    check('le carnet par défaut est celui de la saison 1 : 10, 40, 100, 180, 260 tampons',
+      c.map((p) => p.tampons).join() === '10,40,100,180,260' || montre('carnet', c));
+    check('chaque palier a la forme du contrat (n, tampons, nom, gain à quatre clés)',
+      c.every((p, i) => p.n === i + 1 && typeof p.nom === 'string'
+        && dire(Object.keys(p.gain)) === dire(['echarpes', 'packs', 'xp', 'tampons'])
+        && p.gain.xp === 0 && p.gain.tampons === 0));
+    check('les gains sont ceux de SERVEUR.md : 100, 150 + 1, 250 + 2, 400 + 3, 600 + 4',
+      c.map((p) => `${p.gain.echarpes}+${p.gain.packs}`).join() === '100+0,150+1,250+2,400+3,600+4');
+    check('le liseré au palier 2, le tampon au 3, le titre au 5 — et nulle part ailleurs',
+      c.map((p) => p.insigne ?? '-').join() === '-,lisere,tampon,-,-'
+      && c.map((p) => p.titre ?? '-').join() === '-,-,-,-,Revenu pour de bon');
+
+    const refus = (carnet) => { try { SH.validerCarnet(carnet); return null; } catch (e) { return e.raison ?? e.message; } };
+    const P = (o) => ({ tampons: 10, nom: 'Un', echarpes: 10, ...o });
+    check('le carnet par défaut passe sa propre validation', refus(SH.CARNET_DEFAUT) === null);
+    check('neuf paliers sont refusés',
+      /de 1 à 8 paliers/.test(refus(Array.from({ length: 9 }, (_, i) => P({ tampons: i + 1 })))));
+    check('2 001 écharpes, onze boosters, un nom de 41 lettres sont refusés',
+      /echarpes/.test(refus([P({ echarpes: 2001 })])) && /packs/.test(refus([P({ packs: 11 })]))
+      && /nom/.test(refus([P({ nom: 'x'.repeat(41) })])));
+    check('une insigne inventée, un titre écrit en texte, un seuil en chaîne sont refusés',
+      /insigne/.test(refus([P({ insigne: 'or' })])) && /titre/.test(refus([P({ titre: 'Capo' })]))
+      && /tampons/.test(refus([P({ tampons: '10' })])));
+
+    /* Les seuils de division ne sont pas contrôlés entre eux par le registre :
+       le module les rend monotones avant de s'en servir. */
+    const avant = reglagesVivants();
+    poserReglages({ 'rang.habitue': 5000, 'rang.fervent': 1000, 'rang.ultra': 100000, 'rang.capo': 50 });
+    const s = SH.seuilsDivisions();
+    check('des seuils de division non monotones sont rendus monotones',
+      s.map((d) => d.seuil).join() === '1,5000,5000,100000,100000' || montre('seuils', s));
+    check('deux seuils égaux se franchissent ensemble, et la suivante est une division qu’on n’a pas',
+      SH.divisionPour(5000, s)?.id === 'fervent' && SH.divisionSuivante(5000, s)?.id === 'ultra');
+    poserReglages(avant);
+    check('pas de division sans ferveur ; Sympathisant dès la première',
+      SH.divisionPour(0) === null && SH.divisionPour(1)?.id === 'sympathisant');
+    check('Habitué au seuil exact, pas un point avant',
+      SH.divisionPour(5000)?.id === 'habitue' && SH.divisionPour(4999)?.id === 'sympathisant');
+    check('la division a exactement la forme du contrat, la suivante dit ce qui manque',
+      dire(SH.divisionPour(41250)) === dire({ n: 3, id: 'fervent', nom: 'FERVENT' })
+      && dire(SH.divisionSuivante(41250))
+        === dire({ n: 4, id: 'ultra', nom: 'ULTRA', seuil: 100000, manque: 58750 }));
+    check('pas de suivante à Capo ; seul Capo donne un titre',
+      SH.divisionSuivante(300000) === null && SH.titreDivision(5, 1) === 'Capo de la saison 1'
+      && SH.titreDivision(4, 1) === null);
+  }
+
+  /* ------------------------------------------ les refus de l'administration */
+  r = await call('/api/admin/saisons', { body: { nom: 'Datée', fin_le: '2026-02-30' } });
+  check('un jour impossible (30 février) est refusé, et le refus le nomme',
+    (r.status === 400 && r.json.error === 'admin.error.date_invalide'
+      && String(r.json.raison).includes('2026-02-30')) || montre('rendu', r.json));
+  r = await call('/api/admin/saisons', { body: { nom: 'Datée', fin_le: '20/12/2026' } });
+  check('un jour mal formé aussi',
+    r.json.error === 'admin.error.date_invalide' && String(r.json.raison).includes('20/12/2026'));
+  r = await call('/api/admin/saisons', { body: { nom: 'Datée', ouvre_le: '2026-13-01' } });
+  check('et une ouverture annoncée au treizième mois, nommée comme telle',
+    r.json.error === 'admin.error.date_invalide' && /Ouverture/.test(r.json.raison));
+  r = await call('/api/admin/saisons', { body: { nom: 'Carnetée', carnet: JSON.stringify([
+    { tampons: 40, nom: 'Haut', echarpes: 10 }, { tampons: 10, nom: 'Bas', echarpes: 10 }]) } });
+  check('un carnet aux seuils décroissants est refusé, palier nommé',
+    (r.status === 400 && r.json.error === 'admin.error.carnet_invalide'
+      && /palier 2/.test(r.json.raison)) || montre('rendu', r.json));
+  r = await call('/api/admin/saisons', { body: { nom: 'Carnetée',
+    carnet: JSON.stringify([{ tampons: 10, nom: 'X', echarpe: 300 }]) } });
+  check('une clé mal orthographiée est refusée, pas versée à zéro',
+    r.json.error === 'admin.error.carnet_invalide' && /echarpe/.test(r.json.raison));
+  check('et aucun refus n’a laissé de saison derrière lui',
+    !(await lire()).saisons.some((x) => ['Datée', 'Carnetée'].includes(x.nom)));
+
+  /* L'onglet préremplit la zone de texte avec le carnet par défaut : renvoyé tel
+     quel, il ne doit pas devenir un « carnet propre » qui ne suivrait plus le
+     code. */
+  r = await call('/api/admin/saisons', { body: { nom: 'Défaut tapé',
+    carnet: JSON.stringify(SH.CARNET_DEFAUT, null, 2) } });
+  {
+    const t = r.json.saisons?.find((x) => x.nom === 'Défaut tapé');
+    check('un carnet identique au défaut s’enregistre comme « défaut »',
+      (Boolean(t) && (await ligne(t.id)).carnet === null && !('carnet' in t))
+      || montre('rendu', t));
+    if (t) await call(`/api/admin/saison/${t.id}`, { method: 'DELETE' });
+  }
+
+  /* ---------------------------------------------- les saisons d'essai
+     Une saison lancée qui ouvre une série, pour que d'autres soient fermées ;
+     un brouillon qui annoncera une série fermée et une ouverte.
+
+     La saison 1 reprise par `sql/saisons.sql` est lancée à l'heure réelle du
+     passage de la suite. On la date du 19 septembre 2026, comme en production,
+     pour que l'ordre des lancements ne dépende pas du jour où l'on lance la
+     suite : lancée un 3 novembre, elle passerait sinon après la saison d'essai
+     et deviendrait la saison en cours. Écrit en heure murale, comme `NOW(3)`
+     l'aurait écrit ce jour-là. */
+  await pool.query(`UPDATE saisons SET lancee_a = '2026-09-19 10:00:00'
+                     WHERE numero = 1 AND lancee_a IS NOT NULL`);
+  await chargerSaisons(pool);
+  const autre = publies().find((f) => f.stage === 1 && f.set !== uneSerie)?.set;
+  check('une seconde série tirable existe pour l’annonce', Boolean(autre));
+  r = await call('/api/admin/saisons', { body: { nom: 'Essai daté', numero: 90,
+    series: [uneSerie], fin_le: '2026-10-25' } });
+  const datee = r.json.saisons?.find((x) => x.nom === 'Essai daté');
+  check('une saison se crée avec son dernier jour, rendu tel quel',
+    (datee?.fin === '2026-10-25' && (await ligne(datee.id)).fin === '2026-10-25')
+    || montre('rendu', r.json));
+  r = await call(`/api/admin/saison/${datee.id}/lancer`, { body: { lancer: true } });
+  check('et se lance le jour même de sa fin', r.status === 200 || montre('rendu', r.json));
+  r = await call('/api/admin/saisons', { body: { nom: 'Saison annoncée', numero: 91,
+    series: [uneSerie, autre], ouvre_le: '2027-04-02' } });
+  const annoncee = r.json.saisons?.find((x) => x.nom === 'Saison annoncée');
+  check('un brouillon se crée avec son jour d’ouverture', annoncee?.ouvre === '2027-04-02'
+    || montre('rendu', r.json));
+
+  /* ------------------------------------------- la fin, mesurée par la base */
+  async function eprouverLesDates(ou) {
+    const ici = (l) => `${l} [${ou}]`;
+
+    await figerHorloge(pool, '2026-10-25 00:30:00');
+    r = await patch(datee, { fin_le: '2026-10-25' });
+    let s = saisonEnCours();
+    check(ici('le dimanche de 25 h à 00:30, fin le jour même : finDansMs = 88 200 000'),
+      (s?.id === datee.id && aPeuPres(s.finDansMs, 88_200_000)) || montre('saison', s));
+    check(ici('le dernier jour : 1 jour restant, pas finie'),
+      s?.joursRestants === 1 && s?.finie === false);
+    check(ici('le dernier jour part en texte, tel qu’il a été saisi'), s?.fin === '2026-10-25'
+      || montre('fin', s?.fin));
+    const dex = await (await fetch(base + '/api/fanzzy/dex')).json();
+    check(ici('/dex sert fin, finDansMs, joursRestants et finie sur la saison en cours'),
+      (dex.saison?.fin === '2026-10-25' && aPeuPres(dex.saison.finDansMs, 88_200_000)
+        && dex.saison.joursRestants === 1 && dex.saison.finie === false)
+      || montre('saison', dex.saison));
+
+    await aLHeure('2026-10-26 00:30:00');
+    s = saisonEnCours();
+    check(ici('le lendemain : finie, 0 jour, 0 ms, et toujours la saison en cours'),
+      (s?.id === datee.id && s.finie === true && s.joursRestants === 0 && s.finDansMs === 0
+        && s.fin === '2026-10-25') || montre('saison', s));
+
+    await figerHorloge(pool, '2026-11-01 12:00:00');
+    await patch(datee, { fin_le: '2026-12-20' });
+    s = saisonEnCours();
+    check(ici('le 1er novembre à midi, fin le 20 décembre : 50 jours, 49 jours et demi'),
+      (s?.joursRestants === 50 && aPeuPres(s.finDansMs, 49.5 * 86_400_000) && s.finie === false)
+      || montre('saison', s));
+
+    await figerHorloge(pool, '2027-03-28 00:30:00');
+    await patch(datee, { fin_le: '2027-03-28' });
+    s = saisonEnCours();
+    check(ici('le dimanche de 23 h à 00:30, fin le jour même : finDansMs = 81 000 000'),
+      (aPeuPres(s?.finDansMs, 81_000_000) && s.joursRestants === 1) || montre('saison', s));
+
+    await patch(datee, { fin_le: '' });
+    s = saisonEnCours();
+    check(ici('une fin effacée : ni fin, ni finDansMs, ni joursRestants, et pas finie'),
+      (Boolean(s) && !('fin' in s) && !('finDansMs' in s) && !('joursRestants' in s)
+        && s.finie === false && (await ligne(datee.id)).fin === null) || montre('saison', s));
+    await patch(datee, { fin_le: '2027-03-28' });
+
+    /* L'annonce : présente jusqu'à la fin du jour annoncé, absente le lendemain. */
+    await figerHorloge(pool, '2027-03-30 12:00:00');
+    await patch(annoncee, { ouvre_le: '2027-04-02' });
+    let p = saisonProchaine();
+    check(ici('annoncée pour le 2 avril, le 30 mars à midi : 3 jours, 60 heures'),
+      (p?.id === annoncee.id && p.numero === 91 && p.nom === 'Saison annoncée'
+        && p.ouvre === '2027-04-02' && p.joursAvant === 3
+        && aPeuPres(p.ouvreDansMs, 60 * 3_600_000)) || montre('prochaine', p));
+    check(ici('elle a exactement les champs du contrat'),
+      dire(Object.keys(p ?? {}).sort())
+        === dire(['id', 'joursAvant', 'nom', 'numero', 'ouvre', 'ouvreDansMs']));
+    check(ici('seules ses séries encore fermées porteront « prochaine »'),
+      dire(seriesAnnoncees()) === dire({ [autre]: 91 }) || montre('séries', seriesAnnoncees()));
+    check(ici('l’onglet Saisons montre ce qui est annoncé'),
+      (await lire()).prochaine?.id === annoncee.id);
+
+    await aLHeure('2027-04-02 23:59:00');
+    p = saisonProchaine();
+    check(ici('le jour annoncé, jusqu’à sa dernière minute : 0 jour, 0 ms (AUJOURD’HUI)'),
+      (p?.id === annoncee.id && p.joursAvant === 0 && p.ouvreDansMs === 0) || montre('prochaine', p));
+
+    await aLHeure('2027-04-03 00:00:30');
+    check(ici('le lendemain, une annonce restée en brouillon disparaît'),
+      (saisonProchaine() === null && dire(seriesAnnoncees()) === '{}')
+      || montre('prochaine', saisonProchaine()));
+  }
+
+  await eprouverLesDates(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  /* Le même passage à l'ouest de Greenwich : un jour relu par le pilote en
+     objet `Date` y reculerait d'un jour, et seul ce passage le voit. */
+  {
+    const tz = process.env.TZ;
+    process.env.TZ = 'America/Montreal';
+    try {
+      await eprouverLesDates('TZ=America/Montreal');
+    } finally {
+      if (tz === undefined) delete process.env.TZ; else process.env.TZ = tz;
+    }
+  }
+
+  /* ------------------------------------------- la fenêtre d'une saison
+     Une seule borne, écrite en SQL, que le classement, les divisions, la
+     saison passée et les missions lisent tous. */
+  await aLHeure('2027-04-03 12:00:00');
+  {
+    const premiere = (await lire()).saisons.find((x) => x.numero === 1 && x.lancee);
+    const fenetre = async (id) => (await pool.query(
+      `SELECT DATE_FORMAT(${SH.finDeFenetre('s')}, '%Y-%m-%d %H:%i:%s') AS fin
+         FROM saisons s WHERE s.id = ?`, [id]))[0][0]?.fin;
+    const dedans = async (id, quand) => Number((await pool.query(
+      `SELECT ${SH.dansLaFenetre('x.quand', 's')} AS d
+         FROM saisons s JOIN (SELECT TIMESTAMP(?) AS quand) x WHERE s.id = ?`,
+      [quand, id]))[0][0]?.d) === 1;
+
+    check('la saison 1 reprise est là, lancée, sans date de fin',
+      Boolean(premiere) && !premiere.fin);
+    let f = await fenetre(premiere.id);
+    check('une saison sans fin s’arrête au lancement de la suivante',
+      f === '2026-10-25 00:30:00' || montre('fin de fenêtre', f));
+    f = await fenetre(datee.id);
+    check('la dernière lancée court jusqu’à la fin de son dernier jour',
+      f === '2027-03-29 00:00:00' || montre('fin de fenêtre', f));
+
+    r = await patch(premiere, { fin_le: '2026-10-10' });
+    f = await fenetre(premiere.id);
+    check('une fin saisie avant le lancement suivant l’emporte',
+      (r.status === 200 && f === '2026-10-11 00:00:00') || montre('fin de fenêtre', [r.json.error, f]));
+    check('le dernier jour compte jusqu’à sa dernière seconde, le lendemain non',
+      await dedans(premiere.id, '2026-10-10 23:59:59')
+      && !(await dedans(premiere.id, '2026-10-11 00:00:00')));
+    check('et rien ne compte avant le lancement',
+      !(await dedans(premiere.id, '2026-01-01 00:00:00')));
+
+    r = await patch(datee, { fin_le: '2026-10-24' });
+    check('une fin avant le jour du lancement est refusée, en le disant',
+      (r.json.error === 'admin.error.fin_avant_lancement' && /2026-10-24/.test(r.json.raison))
+      || montre('rendu', r.json));
+    r = await call('/api/admin/saisons', { body: { nom: 'Close d’avance', fin_le: '2027-01-01' } });
+    const close = r.json.saisons?.find((x) => x.nom === 'Close d’avance');
+    r = await call(`/api/admin/saison/${close?.id}/lancer`, { body: { lancer: true } });
+    check('une saison dont le dernier jour est passé ne se lance pas',
+      r.json.error === 'admin.error.fin_passee' || montre('rendu', r.json));
+    if (close) await call(`/api/admin/saison/${close.id}`, { method: 'DELETE' });
+  }
+
+  /* ------------------------------------ le carnet se fige au premier palier */
+  {
+    const A = [{ tampons: 5, nom: 'Premier', echarpes: 50 },
+      { tampons: 20, nom: 'Second', echarpes: 80, packs: 1, insigne: 'lisere' }];
+    const Bc = [{ tampons: 8, nom: 'Premier', echarpes: 50 },
+      { tampons: 30, nom: 'Second', echarpes: 80, packs: 1, titre: true }];
+    /* La base garde la forme normalisée : `packs: 0` écrit, clés dans l'ordre. */
+    const nA = SH.validerCarnet(A);
+    const nB = SH.validerCarnet(Bc);
+
+    r = await patch(datee, { carnet: JSON.stringify(A) });
+    check('avant tout palier versé, un carnet propre s’enregistre, normalisé',
+      (r.status === 200 && dire(carnetLu((await ligne(datee.id)).carnet)) === dire(nA))
+      || montre('rendu', [r.json.error, (await ligne(datee.id)).carnet]));
+    check('et la saison en cours le porte, pour carnetDe',
+      dire(SH.carnetDe(saisonEnCours()).map((p) => p.tampons)) === '[5,20]');
+    r = await patch(datee, { carnet: JSON.stringify(Bc) });
+    check('il se modifie encore tant que rien n’est versé',
+      r.status === 200 && dire(carnetLu((await ligne(datee.id)).carnet)) === dire(nB));
+
+    /* Un palier versé, inscrit comme le grand livre l'inscrit. */
+    await pool.query(
+      `INSERT INTO recompenses (user_id, source, cle, saison_id, echarpes, packs, xp, tampons)
+       VALUES (?, 'carnet', ?, ?, 50, 0, 0, 0)`, [B, `S${datee.id}:1`, datee.id]);
+
+    r = await patch(datee, { carnet: JSON.stringify(A) });
+    check('après un palier versé, un carnet changé est refusé, et le refus dit pourquoi',
+      (r.status === 409 && r.json.error === 'admin.error.carnet_fige' && /figé/.test(r.json.raison))
+      || montre('rendu', [r.status, r.json]));
+    check('et la base garde le carnet promis',
+      dire(carnetLu((await ligne(datee.id)).carnet)) === dire(nB));
+    r = await patch(datee, { carnet: '' });
+    check('revenir au carnet par défaut est aussi un changement',
+      r.json.error === 'admin.error.carnet_fige');
+    r = await patch(datee, { carnet: JSON.stringify(Bc, null, 2), fin_le: '2027-04-30' });
+    check('le même carnet renvoyé ne bloque pas une autre modification',
+      (r.status === 200 && (await ligne(datee.id)).fin === '2027-04-30') || montre('rendu', r.json));
+    check('l’onglet sait quels carnets sont figés',
+      (await lire()).carnetsFiges?.includes(datee.id));
+
+    const j = (await call('/api/admin/journal')).json.journal ?? [];
+    const modifs = j.filter((l) => l.action === 'saison.modifiee' && l.cible === String(datee.id));
+    const detail = (l) => (typeof l.detail === 'string' ? JSON.parse(l.detail) : l.detail) ?? {};
+    check('le journal inscrit le jour de fin et le carnet saisis',
+      modifs.some((l) => detail(l).fin_le === '2027-04-30')
+      && modifs.some((l) => dire(detail(l).carnet) === dire(nB)));
+  }
+
+  /* ------------------------------------------- une base sans les colonnes
+     Le code part avant le schéma, parfois : le jeu doit tourner comme avant. */
+  {
+    await pool.query('ALTER TABLE saisons DROP COLUMN fin_le, DROP COLUMN ouvre_le, DROP COLUMN carnet');
+    await chargerSaisons(pool);
+    const s = saisonEnCours();
+    check('sans sql/quotidien.sql, la saison est servie sans date et rien n’est annoncé',
+      (Boolean(s) && !('fin' in s) && !('carnet' in s) && s.finie === false
+        && saisonProchaine() === null) || montre('saison', s));
+    r = await call('/api/admin/saisons', { body: { nom: 'Sans date' } });
+    check('une saison sans date se crée comme avant',
+      r.status === 200 && r.json.saisons?.some((x) => x.nom === 'Sans date'));
+    r = await call('/api/admin/saisons', { body: { nom: 'Avec date', fin_le: '2027-05-01' } });
+    check('une saison avec une date est refusée en nommant le fichier à appliquer',
+      (r.status === 503 && r.json.error === 'admin.error.saison_colonnes'
+        && /quotidien\.sql/.test(r.json.raison)) || montre('rendu', [r.status, r.json]));
+    const raw2 = await mysql.createConnection({ uri: DB, multipleStatements: true });
+    await raw2.query(readFileSync(new URL('../sql/quotidien.sql', import.meta.url), 'utf8'));
+    await raw2.end();
+    await chargerSaisons(pool);
+    check('le fichier rejoué rend les colonnes', (await ligne(datee.id))?.fin === null);
+  }
+
+  /* ------------------ deux lectures croisées, et la relecture de minuit
+
+     Sur un faux pool dont on règle l'ordre des réponses : la course est
+     certaine, pas probable. Les colonnes calculées arrivent en chaînes, comme
+     un DECIMAL du pilote. */
+  {
+    const dodo = (ms) => new Promise((ok) => setTimeout(ok, ms));
+    const fausse = (o) => ({ id: 900, numero: 9, nom: 'Fausse', texte: null, series: '[]',
+      tenues: '[]', stuff: '[]', actions: '[]', stades: '[]',
+      lancee_a: new Date(Date.UTC(2026, 9, 1)), carnet: null,
+      fin_jour: null, fin_jours: null, fin_ms: null, ouvre_jour: null, ouvre_jours: null,
+      ouvre_ms: null, ouvre_fin_ms: null, minuit_ms: '3600000', ...o });
+    const faux = (suite, ms) => ({ appels: 0, execute() {
+      const rows = suite[Math.min(this.appels++, suite.length - 1)];
+      return new Promise((ok) => setTimeout(() => ok([[rows]]), ms));
+    } });
+
+    /* L'administration écrit et relit pendant qu'une relecture partie avant
+       l'écriture est encore en route ; celle-ci revient la dernière. */
+    const lente = faux([fausse({ nom: 'Ancienne' })], 120);
+    const rapide = faux([fausse({ nom: 'Nouvelle' })], 10);
+    await Promise.all([chargerSaisons(lente), chargerSaisons(rapide)]);
+    check('une relecture partie avant une écriture et revenue après ne remet pas l’ancienne liste',
+      saisonEnCours()?.nom === 'Nouvelle' || montre('en cours', saisonEnCours()?.nom));
+
+    /* Le minuit de la base tombe 40 ms après la lecture : le dernier jour de
+       la saison s'achève, et la table doit être relue une fois, en
+       arrière-plan, sans qu'aucun appel n'attende. */
+    const minuit = faux([
+      fausse({ nom: 'Avant minuit', fin_jour: '2026-10-25', fin_jours: '0', fin_ms: '40',
+        minuit_ms: '40' }),
+      fausse({ nom: 'Après minuit', fin_jour: '2026-10-25', fin_jours: '-1', fin_ms: '-30',
+        minuit_ms: '86399970' }),
+    ], 5);
+    await chargerSaisons(minuit);
+    let s = saisonEnCours();
+    check('avant le minuit de la base : le dernier jour, pas finie',
+      (s?.nom === 'Avant minuit' && s.joursRestants === 1 && s.finie === false) || montre('saison', s));
+    await dodo(90);
+    const vues = Array.from({ length: 5 }, () => saisonEnCours());
+    check('passé ce minuit, la saison se dit finie tout de suite, sans attendre la relecture',
+      vues.every((v) => v.finie === true && v.joursRestants === 0 && v.finDansMs === 0)
+      || montre('vues', vues.map((v) => [v.nom, v.finie, v.joursRestants])));
+    await dodo(60);
+    s = saisonEnCours();
+    check('et la table est relue une seule fois, pas une fois par appel',
+      (minuit.appels === 2 && s?.nom === 'Après minuit' && s.finie === true)
+      || montre('relue', [minuit.appels, s?.nom]));
+    await chargerSaisons(pool);
+  }
+
+  /* Le ménage : l'horloge repart, les saisons d'essai s'effacent. */
+  await figerHorloge(pool, null);
+  await pool.query(`DELETE FROM saisons WHERE nom IN ('Essai daté', 'Saison annoncée', 'Sans date')`);
+  await pool.query(`UPDATE saisons SET fin_le = NULL WHERE numero = 1`);
+  await chargerSaisons(pool);
+  await chargerSeries(pool);
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);

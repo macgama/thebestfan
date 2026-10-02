@@ -134,7 +134,12 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   .club small .long{position:absolute;width:1px;height:1px;overflow:hidden;
     clip-path:inset(50%);white-space:nowrap}
 }
+/* Pendant la minute double, le score passe à l'or : vingt-quatre pixels,
+   c'est du grand texte. La mention dessous, elle, en héritait — de l'or en
+   onze pixels, qui ne tient pas au soleil (arbitrage du 2 octobre 2026) :
+   elle reste en craie, et la graisse dit que la minute compte double. */
 .score.surge{color:var(--projo);animation:pulse 1s infinite}
+.score.surge small{color:var(--craie);font-weight:700}
 /* Inviter quelqu'un. Sous le score, minuscule : c'est une chose qu'on fait une
    fois en entrant, pas toutes les trente secondes — et la place au-dessus
    appartient au match.
@@ -156,7 +161,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .inviter span{border:1px solid rgba(242,238,228,.22);border-radius:5px;
   color:var(--craie);font-family:var(--banner);font-size:11px;letter-spacing:.08em;
   line-height:1.2;padding:2px 7px;opacity:.88}
-.inviter:hover span{opacity:1;border-color:var(--projo);color:var(--projo)}
+/* Au survol, le trait et le mot passent à la craie pleine ; ils passaient
+   à l'or, et en onze pixels l'or ne tient pas (arbitrage du 2 octobre 2026). */
+.inviter:hover span{opacity:1;border-color:var(--craie)}
 /* La minute double bat par la lumière et non par l'effacement : à mi-course,
    le score tombait à 55 % — le chiffre qu'on regarde le plus, illisible une
    demi-seconde sur deux au moment où il compte double. */
@@ -200,8 +207,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    d'opacité il ne se lisait pas — autant l'enlever. À neuf, il se devinait ;
    il passe à onze, le plancher de tout ce qui informe, et reprend deux pixels
    de marge pour que la bande ne grandisse presque pas. */
+/* « TERRAIN » en craie grasse : il était en or, et en onze pixels l'or ne
+   tient pas au soleil (arbitrage du 2 octobre 2026). */
 .fil .sc small{display:block;font-size:11px;letter-spacing:.1em;opacity:.88;margin-top:2px;
-  color:var(--projo)}
+  font-weight:700;color:var(--craie)}
 /* **Un score ne dit rien sans ses deux camps.**
  *
  * « 1 – 0 » au-dessus de « TERRAIN » laissait deviner qui menait. Les deux
@@ -214,7 +223,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .fil .qui{display:flex;gap:6px;font-family:var(--banner);font-size:11px;
   letter-spacing:.06em;opacity:.88;margin-top:2px}
 .fil .qui i{font-style:normal}
-.fil .qui .moi{color:var(--projo)}
+/* Le sien d'abord, et en gras : il était en or, et l'or ne s'écrit plus en
+   onze pixels (arbitrage du 2 octobre 2026). */
+.fil .qui .moi{font-weight:700;color:var(--craie)}
 /* La minute du match. Elle défile localement entre deux relevés — sans quoi
    elle restait figée sur celle de l'entrée, parfois une demi-heure durant, et
    le joueur poussait en croyant le match arrêté. Le point rouge dit que ça
@@ -298,12 +309,15 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    couleur, le terrain reste en craie. Sans cette distinction, « BUT » se lit
    comme un but du match et le joueur croit que son club vient de marquer.
 
-   **Le titre en or, la minute et le détail en craie.** Toute la ligne était
-   en or, et l'or à treize et onze pixels ne tient pas au soleil : 4:1 sous
-   le voile du plein jour, contre les 4,5 d'un texte courant. Le titre et
-   l'icône suffisent à dire que c'est la tribune. */
-.ev.tribune{color:var(--projo)}
-.ev.tribune .min,.ev.tribune .txt small{color:var(--craie)}
+   **L'icône en or, le titre en craie grasse, la minute et le détail en
+   craie.** Toute la ligne était en or, et l'or à treize et onze pixels ne
+   tient pas au soleil : 4:1 sous le voile du plein jour, contre les 4,5 d'un
+   texte courant. Le titre l'est resté un temps ; depuis l'arbitrage du
+   2 octobre 2026, l'or ne s'écrit plus qu'en grand, et c'est la graisse qui
+   le détache. L'icône, qui n'est pas un mot, garde l'or (voir
+   `iconeDuFil`) : elle suffit à dire que c'est la tribune. */
+.ev.tribune .txt{font-weight:700}
+.ev.tribune .txt small{font-weight:400}
 .ev.periode{justify-content:center;font-family:var(--banner);
   font-size:11px;letter-spacing:.16em}
 .ev.periode .min,.ev.periode .ic{display:none}
@@ -347,8 +361,11 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    pavé du geste. Un personnage qui intercepterait un appui coûterait un chant. */
 .fzs{position:absolute;left:1%;bottom:0;width:41%;height:56%;z-index:1;pointer-events:none}
 
+/* L'annonce sur la corde, en craie grasse : en or et en quinze pixels, elle
+   ne tenait pas au soleil (arbitrage du 2 octobre 2026). */
 .banner{position:absolute;left:0;right:0;top:36%;text-align:center;font-family:var(--banner);
-  font-size:15px;letter-spacing:.18em;opacity:0;transition:opacity .3s;z-index:4;color:var(--projo)}
+  font-size:15px;font-weight:700;letter-spacing:.18em;opacity:0;transition:opacity .3s;z-index:4;
+  color:var(--craie)}
 .banner.on{opacity:1}
 .float{position:absolute;font-family:var(--banner);font-size:17px;pointer-events:none;z-index:6;
   animation:drift 1.2s ease-out forwards}
@@ -380,7 +397,9 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    en exposant ouvraient une ligne de vingt-quatre pixels pour un texte de
    onze. `line-height:0` sur l'exposant, sinon il la rouvre à lui seul. */
 .rank{text-align:center;font-size:11px;opacity:.88;line-height:1.2;padding-bottom:4px}
-.rank b{color:var(--projo);font-family:var(--banner);font-size:14px}
+/* Le rang, en craie grasse : en or et en quatorze pixels, il ne tenait pas
+   au soleil (arbitrage du 2 octobre 2026). */
+.rank b{color:var(--craie);font-weight:700;font-family:var(--banner);font-size:14px}
 .rank sup{line-height:0}
 
 /* Même règle que sur les autres écrans de jeu : nav.js n'en réserve que 55 %,
@@ -445,7 +464,11 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
    la carte. Le même réglage qu'au duel. */
 .card .g{font-family:var(--banner);font-size:11px;line-height:1.05;letter-spacing:.02em;
   opacity:.88;text-transform:uppercase;-webkit-hyphens:auto;hyphens:auto;overflow-wrap:anywhere}
-.card .p{font-family:var(--banner);font-size:20px;color:var(--c);margin-top:auto;line-height:1}
+/* La puissance, dans la couleur du geste — l'or du jeu pour les six gestes
+   de rythme (`geste.js`). En gras : vingt pixels gras sont du grand texte,
+   le seul où l'or s'écrit encore (arbitrage du 2 octobre 2026) ; vingt
+   pixels maigres n'en sont pas, et l'or y tombait sous le seuil au soleil. */
+.card .p{font-family:var(--banner);font-size:20px;font-weight:700;color:var(--c);margin-top:auto;line-height:1}
 /* `line-height:1` : le coût tient dans la hauteur de la première ligne du nom,
    et le flottant qui lui garde la place n'a pas à mordre sur la seconde. */
 .card .c{position:absolute;top:6px;right:5px;font-size:11px;line-height:1;opacity:.88;font-family:var(--banner)}
@@ -466,7 +489,11 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   line-height:1.45;background:rgba(224,64,44,.1);color:var(--craie);
   box-shadow:inset 0 0 0 1px rgba(224,64,44,.3)}
 .ecartees b{font-family:var(--banner);color:var(--flare)}
-.ecartees a{color:var(--projo);text-decoration:none;white-space:nowrap}
+/* Le lien, en craie grasse et souligné : il était en or, sans trait, et en
+   onze pixels l'or ne tient pas au soleil (arbitrage du 2 octobre 2026). En
+   craie, c'est le soulignement qui dit qu'il se touche. */
+.ecartees a{color:var(--craie);font-weight:700;text-decoration:underline;text-underline-offset:2px;
+  white-space:nowrap}
 .ecartees[hidden]{display:none}
 
 /* ------------------------------------------- les cartes d'action
@@ -663,7 +690,10 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   display:none;box-shadow:0 20px 60px rgba(0,0,0,.8)}
 .souvenir.on{display:block;animation:pop .5s cubic-bezier(.2,.9,.3,1)}
 @keyframes pop{from{opacity:0;transform:translate(-50%,-46%) scale(.8)}}
-.souvenir .t{font-family:var(--banner);font-size:11px;letter-spacing:.2em;color:var(--projo)}
+/* « CARTE-SOUVENIR » en craie grasse : en or et en onze pixels, il ne
+   tenait pas au soleil (arbitrage du 2 octobre 2026). Le cadre d'or, qui
+   annonce un gain et ne porte pas de lettres, reste. */
+.souvenir .t{font-family:var(--banner);font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--craie)}
 .souvenir .m{font-family:var(--banner);font-size:22px;margin:8px 0 4px}
 .souvenir .d{font-size:11.5px}
 
@@ -865,6 +895,24 @@ let socket = null, S = null, busy = false;
 // La part de ferveur d'un neutre. Le serveur la donne avec la liste des
 // matchs ; cette valeur n'est qu'un repli pour le premier rendu.
 let FERVEUR_NEUTRE = 0.5;
+// La fête de niveau « depuis ta dernière visite » : une fois par visite (voir
+// « virage:state »).
+let feteDemandee = false;
+
+/* **La rumeur de la tribune suit le match** (le moteur commun, `son.js`).
+   Une seule commande, qu'on peut répéter sans rien déranger : 1 la rumeur
+   pendant le match, 2 quand tout compte double (`S.surge`, que pose
+   « virage:tick »), 0 au coup de sifflet final. Elle est rappelée chaque
+   seconde, ce qui rattrape un moteur arrivé après le premier état — il est
+   chargé par `fx.js`, en différé. Un niveau passager (une poussée, un but)
+   court par-dessus sans être effacé. Sans moteur, sous le calme ou avant le
+   premier toucher du joueur, rien ne joue : la tribune ne démarre jamais
+   seule, et l'écran dit tout ce que le son dit. */
+const FINS_DE_MATCH = ['FT', 'AET', 'PEN'];
+function ambianceDuMatch() {
+  if (!S) return;
+  window.TBF_SON?.ambiance?.(FINS_DE_MATCH.includes(S.statut) ? 0 : S.surge ? 2 : 1);
+}
 
 /* ------------------------------------------------------------ affichage */
 
@@ -1864,8 +1912,16 @@ document.addEventListener('click', async (e) => {
      l’entendre : une navigation immédiate couperait la socket, et la tribune
      garderait le fantôme jusqu’à ce que la coupure soit constatée. */
   socket?.emit('virage:leave');
+  // La tribune se vide avec lui : la rumeur ne doit pas le suivre dans le
+  // couloir pendant les cent quatre-vingts millisecondes du départ.
+  window.TBF_SON?.ambiance?.(0);
   setTimeout(() => { location.href = ou; }, 180);
 }, true);
+/* La page quittée autrement — l'onglet fermé, le retour du navigateur, une
+   page gardée en cache — vide aussi la tribune : une page restaurée depuis
+   le cache repart du silence, et la seconde suivante la rallume (voir
+   `ambianceDuMatch`). */
+addEventListener('pagehide', () => { window.TBF_SON?.ambiance?.(0); });
 /* -------------------------------------------------------------- réseau */
 
 function connect() {
@@ -1887,6 +1943,19 @@ function connect() {
     // s'est passé avant, pas un écran vide.
     renderFil();
     banner('TU ES DANS LE VIRAGE');
+    ambianceDuMatch();
+    /* **Le niveau a monté depuis la dernière visite ?** La fête le dit, une
+       fois, à l'entrée : avant le coup d'envoi plutôt qu'au premier but — la
+       fête (170) passerait devant le moment fort (95). Elle lit `/api/niveau`
+       elle-même, une seule fois ; la page ne la lit pas. Le Fanzzy est celui
+       que le serveur vient de donner, à la forme de l'avatar, pour la pose
+       victoire ; sans lui, la rosette seule. Rien à fêter, rien ne s'ouvre.
+       Le drapeau ne se lève qu'une fois la fête chargée (elle part en
+       différé) : un état reçu avant elle laisse la question au suivant. */
+    if (!feteDemandee && window.TBF_NIVEAU?.depuisVisite) {
+      feteDemandee = true;
+      window.TBF_NIVEAU.depuisVisite(null, { avatar: S.you?.fanzzy ?? undefined });
+    }
   });
 
   /* Le fil du match. Le serveur n'envoie que le neuf ; la page tient la liste,
@@ -1920,7 +1989,7 @@ function connect() {
      minute, eux, avancent quand même — et sans ces deux battements, la jauge
      restait bloquée jusqu'au chant suivant et la minute jusqu'au prochain
      relevé. Le joueur en concluait, à raison, que rien ne se passait. */
-  setInterval(() => { if (S && !document.hidden) render(); }, 1000);
+  setInterval(() => { if (S && !document.hidden) { render(); ambianceDuMatch(); } }, 1000);
   setInterval(() => { if (S && !document.hidden) renderFil(); }, 15000);
 
   socket.on('virage:result', (r) => {
@@ -1959,6 +2028,9 @@ function connect() {
     // le fait pousser aussi : c'est l'effort qui se voit, pas le résultat.
     scene?.pose('pousse', 2600);
     buzz(r.quality > 0.9 ? [20, 30, 40] : 12);
+    // La tribune pousse après son chant, cinq secondes, puis retombe seule
+    // au niveau du match.
+    window.TBF_SON?.ambiance?.(2, { pendant: 5000 });
     render();
   });
 
@@ -1969,6 +2041,12 @@ function connect() {
     // Les effets viennent de la couche commune : une seule définition du
     // « but » pour tout le jeu, duel compris.
     window.FX?.but({ pour: mien, score: [S.goals[S.you.side], S.goals[S.you.side ^ 1]] });
+    /* L'ovation de sa tribune (neuf secondes au plus, puis la rumeur revient
+       seule), quand c'est elle qui fait céder la corde. Pas quand c'est celle
+       d'en face : ce qu'on entend est sa propre tribune, et elle ne fête pas
+       un but encaissé — le duel fait de même. `FX.but` garde ses deux sons,
+       la corne pour soi, « encaisse » pour l'autre camp. */
+    if (mien) window.TBF_SON?.ambiance?.(3);
     /* Le personnage porte l'annonce, quinze secondes. La bande du milieu ne
        sert plus que de repli : deux fois la même phrase à deux endroits de
        l'écran, ce serait du bruit. */
@@ -1989,6 +2067,8 @@ function connect() {
     // relevé : c'est la seconde où le joueur le regarde.
     if (g.scoreReel) { S.scoreReel = g.scoreReel; renderFil(); }
     window.FX?.butReel({ pour: mien, buteur: g.player, minute: g.minute });
+    // L'ovation, pour un but de son club seulement : voir « virage:goal ».
+    if (mien) window.TBF_SON?.ambiance?.(3);
     /* « GOAL ! » sur le personnage, avec le buteur et la minute — ils arrivent
        déjà dans l'événement, aucun appel de plus. Quinze secondes : le temps
        de sortir le téléphone de sa poche, un but de deux secondes et demie
@@ -2196,11 +2276,15 @@ function souvenir(g) {
 
     /* **Sans direct, on le dit au-dessus de la liste.** Pousser dans un
        virage demande une connexion permanente ; la liste, non. On montre donc
-       ce qui se joue, et on prévient que l'entrée ne marchera pas. */
+       ce qui se joue, et on prévient que l'entrée ne marchera pas.
+
+       Les liens de texte de cette liste sont en craie grasse : ils étaient
+       en or, et sous quatorze pixels l'or ne tient pas au soleil (arbitrage
+       du 2 octobre 2026). */
     const avertir = sansDirect ? `<div class="rubrique alerte">
       PAS DE CONNEXION EN DIRECT
       <small>tu peux voir les matchs, pas entrer dans le virage ·
-      <a href="/diagnostic" style="color:var(--projo)">voir pourquoi</a></small>
+      <a href="/diagnostic" style="color:var(--craie);font-weight:700">voir pourquoi</a></small>
       </div>` : '';
 
     /* Les deux titres sont cousus (voir `.rubrique`) ; ce que coûte « ailleurs »
@@ -2214,7 +2298,7 @@ function souvenir(g) {
         ? `<div class="vide">Aucun match ne répond à « ${esc(terme)} ».<br>
             Essaie un club, une compétition, ou un pays.</div>`
         : `<p>Aucun match en direct pour l’instant.<br>
-            <a href="/equipes" style="color:var(--projo)">Suis un club</a>
+            <a href="/equipes" style="color:var(--craie);font-weight:700">Suis un club</a>
             pour être prévenu quand le tien joue.</p>`));
   };
   peindre();
@@ -2338,6 +2422,9 @@ function souvenir(g) {
 })();
 </script>
 <script src="/fx.js" defer></script>
+<!-- La fête de niveau, après fx.js dont elle emploie les compteurs.
+     fanzzy-art.js et fanzzy-etats.js, plus haut, lui donnent le personnage. -->
+<script src="/niveau-fete.js" defer></script>
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>
 <script src="/pwa.js" defer></script>

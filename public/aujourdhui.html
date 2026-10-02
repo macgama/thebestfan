@@ -77,7 +77,10 @@ input:focus{outline:none;border-color:var(--projo)}
 .ligue .t{text-decoration:none;color:inherit;cursor:pointer}
 .ligue .t:active{transform:translateY(1px)}
 .ligue .t .fl{opacity:.55;font-size:13px;flex:none}
-.ligue.mien .t{opacity:1;color:var(--projo)}
+/* Les compétitions de mes clubs se détachent par la graisse : elles étaient
+   en or, et en onze pixels et demi l'or ne tient pas au soleil (arbitrage
+   du 2 octobre 2026). Leurs matchs gardent leur cadre d'or, juste dessous. */
+.ligue.mien .t{opacity:1;font-weight:700}
 
 .m{display:flex;align-items:center;gap:9px;padding:11px 8px;border-radius:9px;cursor:pointer;
   border:1px solid transparent}
@@ -171,7 +174,9 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
    Le lien vit dans le `corps` de la boîte de dialogue, qui est fait pour
    ça — voir `dialogue.js`. */
 .tbf-dial .deja{margin-top:13px;font-size:12px;opacity:.88}
-.tbf-dial .deja a{color:var(--projo);font-weight:600}
+/* Le lien, en craie soulignée et grasse : il était en or, et en douze
+   pixels l'or ne tient pas au soleil (arbitrage du 2 octobre 2026). */
+.tbf-dial .deja a{color:var(--craie);font-weight:700}
 
 /* Le nom de la compétition mène à sa page, ici aussi. */
 .f .aff .lg{text-decoration:none;color:inherit;display:inline-block}
@@ -492,7 +497,7 @@ function rendre() {
       }).join('')}
     </div>`).join('')
     : `<div class="vide">${filtre === 'mien'
-        ? 'Aucun match de tes clubs ce jour-là.<br><a href="/equipes" style="color:var(--projo)">suivre un club</a>'
+        ? 'Aucun match de tes clubs ce jour-là.<br><a href="/equipes" style="color:var(--craie);font-weight:700">suivre un club</a>'
         : filtre === 'live' ? 'Aucun match en cours.' : 'Aucun match ce jour-là.'}</div>`;
 
   $('maj').textContent = data.stale

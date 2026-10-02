@@ -98,6 +98,43 @@
  * `line-clamp` arrête à sa dernière ligne permise lui échappait. Il est
  * relevé à part (`coupesLignes`), pour que `coupes` se compare encore.
  *
+ * ## Un texte à soi, Œ, et quatre états de plus (lots 3 et 5)
+ *
+ * **Le contraste ne regardait que les feuilles.** Le bouton principal du hub
+ * porte son libellé et un enfant (« Prendre ma place » puis un `small`) : il
+ * n'était ni pâle ni non mesurable, il n'existait pas. Le contraste se mesure
+ * maintenant sur tout ce qui porte un texte à soi, comme le petit texte et
+ * l'opacité — et, pour qu'un relevé d'avant se compare encore, ce que l'ancienne
+ * règle ne voyait pas est compté à part (`horsFeuille`) et marqué dans chaque
+ * trouvaille. Ce qui échappe encore — un mot posé par un pseudo-élément, la
+ * valeur d'un champ — est relevé sans être mesuré (`horsContraste`).
+ *
+ * **Œ et œ passaient pour une police de repli** : voir `enRepli`. Et la face
+ * cachée d'une carte à retourner se comptait comme un texte qu'on lit : voir
+ * « Tourné de dos ».
+ *
+ * Et `--etats` regarde quatre écrans de plus, que ces lots refont et qu'aucune
+ * visite ordinaire ne montre : la bande du HUD dépliée, une carte révélée à
+ * l'ouverture d'un booster, son butin, et le classement d'un joueur classé.
+ * Voir « Les états ».
+ *
+ * ## Le petit or, la barre, et ce qui couvre un écran (lots 3 et 5, suite)
+ *
+ * **Le petit or** (`petitOr`). L'arbitrage du 2 octobre 2026 n'écrit plus
+ * l'or qu'en grand texte : tout texte à soi d'encre dorée sous 24 px (18,66
+ * en gras), pseudo-élément compris, est relevé. C'est la garde qui empêche
+ * l'arbitrage de revenir en arrière une page à la fois. Voir `DORE`.
+ *
+ * **La barre** : la flèche et le menu de la barre commune sont relevés page
+ * par page, et une page qui les pose ailleurs que les autres est nommée
+ * (« barre décalée ») — le lot 2 en avait laissé quatre décalées sans que
+ * rien ne le dise. Et le tiroir ouvert dit combien d'écrans il fait de haut.
+ *
+ * **Ce qui couvre un écran à l'arrivée** : le ticket du bonus du jour sur le
+ * hub, le ticket d'un gain, une fête de niveau, la cérémonie d'une carte. La
+ * visite les range, les attend ou les ferme avant de mesurer, et le dit ;
+ * le ticket du bonus et celui du butin sont mesurés à part, comme des états.
+ *
  * Usage :
  *   node scripts/audit-ui.mjs                  toutes les pages, trois formats
  *   node scripts/audit-ui.mjs /virage          une seule page
@@ -107,7 +144,9 @@
  *   node scripts/audit-ui.mjs --json a.json    tous les relevés, pour une machine
  *   node scripts/audit-ui.mjs --captures dos   une capture par page et par format
  *   node scripts/audit-ui.mjs --pleine         captures de la page entière
- *   node scripts/audit-ui.mjs --etats          et l'ouverture, le tiroir ouvert
+ *   node scripts/audit-ui.mjs --etats          et l'ouverture, le tiroir ouvert, la
+ *                                              bande du HUD, le bonus du jour, un
+ *                                              booster et son ticket, un classement
  *
  * (Sous Git Bash, « /virage » est réécrit en chemin Windows avant d'arriver
  * ici : préfixer la commande de MSYS_NO_PATHCONV=1, ou la lancer depuis
@@ -188,6 +227,12 @@ const SEUILS = {
   opacite: 0.85,       // opacité effective minimale d'un texte qui informe
   opaciteLegal: 0.55,  // … et d'une mention légale
   voileJour: 0.4,      // la part de blanc que le soleil pose sur l'écran
+  /* La hauteur du tiroir ouvert, en écrans : au-delà d'un et demi, la moitié
+     des destinations se cherche au doigt (le lot 2 l'avait laissé à deux). */
+  tiroirEcrans: 1.5,
+  /* Un pixel d'écart d'une page à l'autre, pour la barre : la règle du
+     « hors écran », pour la même raison (un arrondi n'est pas un défaut). */
+  barrePx: 1,
 };
 
 /* **Les mentions légales, et elles seules, ont droit à moins.**
@@ -332,14 +377,21 @@ await raw.end();
 /* --------------------------------------------------------- le vrai serveur */
 
 const port = 3999;
-const serveur = spawn(process.execPath, ['server.js'], {
-  cwd: RACINE,
-  env: { ...process.env, DATABASE_URL: DB, PORT: String(port), NODE_ENV: 'test' },
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
 let journal = '';
-serveur.stdout.on('data', (d) => { journal += d; });
-serveur.stderr.on('data', (d) => { journal += d; });
+/* Lancé par une fonction : le classement d'un joueur classé (voir « Les
+   états ») demande un serveur neuf, dont la mémoire de classement n'a pas
+   encore retenu la liste vide des visites. */
+const lancerServeur = () => {
+  const s = spawn(process.execPath, ['server.js'], {
+    cwd: RACINE,
+    env: { ...process.env, DATABASE_URL: DB, PORT: String(port), NODE_ENV: 'test' },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  s.stdout.on('data', (d) => { journal += d; });
+  s.stderr.on('data', (d) => { journal += d; });
+  return s;
+};
+let serveur = lancerServeur();
 
 const base = `http://localhost:${port}`;
 const debout = async () => {
@@ -421,6 +473,29 @@ const VOILES = `(async () => {
   window.__auditVoiles = voiles;
   return voiles;
 })()`;
+
+/* **L'or, et ce qui en fait un petit texte** (arbitrage 3 du 2 octobre 2026).
+   L'or reste une face — une bâche, un prix, une récompense prête, le
+   légendaire — et ne s'écrit plus qu'en grand texte, où 3:1 suffit : au
+   moins 24 px, ou 18,66 px en gras. Une encre est dorée quand sa teinte va
+   de 33 à 58° (de l'ambre au jaune), que sa saturation passe 0,45 et sa
+   luminosité 0,3 : l'or du jeu (#F5C33B, 43°) en est, la craie (saturation
+   0,35) non. C'est le critère du banc de la boutique qui a vérifié
+   l'arbitrage, repris tel quel : l'audit et le banc disent la même chose. Une
+   encre à moins de 30 % n'écrit plus rien qu'on lise en or.
+
+   **La légendaire garde son or, mot compris** : c'est ce que l'arbitrage a
+   décidé pour la carte (cartes.css, « le légendaire est l'un des sens de
+   l'or »), dont le nom et l'âge s'écrivent en or pâle. Un texte posé dans un
+   objet légendaire (`legendaire`) n'est donc pas relevé comme petit or — il
+   est **compté à part** (`orLegendaire`), comme les mentions légales
+   tolérées, pour qu'une exception qui grandirait se voie quand même.
+
+   Ici, entre VOILES et MESURE, et non dans SEUILS : les bancs des lots 2 à 5
+   tirent ce morceau du fichier et l'évaluent avec leurs propres seuils, qui
+   ne connaissent pas l'or. */
+const DORE = { teinte: [33, 58], saturation: 0.45, luminosite: 0.3, alpha: 0.3,
+  legendaire: '.r-legendaire, .legendaire, [data-rar="legendaire"]' };
 
 /** Le contraste d'un texte sur son fond, selon la formule WCAG.
  *
@@ -700,10 +775,61 @@ const mesure = (portee = null) => `(() => {
     if (o < 1) r = 1 + (r - 1) * o;
     return r;
   };
+  /* **Tourné de dos.** Une carte qu'on retourne porte ses deux faces l'une
+     contre l'autre, et celle qui regarde le fond de l'écran est cachée par
+     « backface-visibility: hidden » — sans « display », sans « visibility »,
+     avec une boîte de la bonne taille. À l'ouverture d'un booster, les
+     quatre cartes encore à retourner portaient ainsi leur face cachée, et
+     l'audit relevait leurs « ÉVO 1 » sous 11 px : quatre textes que personne
+     ne peut voir.
+
+     Une face est de dos quand la normale de son plan, portée par les
+     transformations de son contexte 3D (elle-même, puis chaque parent tant
+     que son propre parent garde la 3D), pointe vers le fond : la troisième
+     composante de la matrice composée est négative. Les translations et
+     l'origine ne tournent rien et sont ignorées ; « rotate », posée à part
+     de « transform », est composée avec elle. */
+  const memoDos = new Map();
+  const matriceDe = (s) => {
+    let m = new DOMMatrix();
+    const r = s.rotate;
+    if (r && r !== 'none') {
+      const v = r.trim().split(/\\s+/);
+      const angle = parseFloat(v[v.length - 1]) * (/rad$/.test(v[v.length - 1]) ? 180 / Math.PI
+        : /turn$/.test(v[v.length - 1]) ? 360 : 1);
+      const axe = v.length === 1 ? [0, 0, 1] : v.length === 2 ? { x: [1, 0, 0], y: [0, 1, 0], z: [0, 0, 1] }[v[0]]
+        : v.slice(0, 3).map(Number);
+      if (axe) m = m.rotateAxisAngle(axe[0], axe[1], axe[2], angle);
+    }
+    if (s.transform && s.transform !== 'none') m = m.multiply(new DOMMatrix(s.transform));
+    return m;
+  };
+  const faceDeDos = (f) => {
+    if (memoDos.has(f)) return memoDos.get(f);
+    let m = new DOMMatrix();
+    for (let n = f; n; n = n.parentElement) {
+      m = matriceDe(getComputedStyle(n)).multiply(m);
+      const p = n.parentElement;
+      if (!p || getComputedStyle(p).transformStyle !== 'preserve-3d') break;
+    }
+    const r = m.m33 < 0;
+    memoDos.set(f, r);
+    return r;
+  };
+  /* Lui ou un ancêtre : mémorisé, comme l'opacité, puisque tout le
+     document passe par ici. */
+  const memoDeDos = new Map();
+  const deDos = (el) => {
+    if (!el || el.nodeType !== 1 || el === document.documentElement) return false;
+    if (memoDeDos.has(el)) return memoDeDos.get(el);
+    const r = (getComputedStyle(el).backfaceVisibility === 'hidden' && faceDeDos(el)) || deDos(el.parentElement);
+    memoDeDos.set(el, r);
+    return r;
+  };
   const visible = (el) => {
     const r = el.getBoundingClientRect();
     const s = getComputedStyle(el);
-    return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none';
+    return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && !deDos(el);
   };
   /* Le conteneur qui défile au-dessus d'un élément, s'il y en a un. Ce qui sort
      d'un carrousel n'est pas « hors écran » : il est **plus loin dans le
@@ -848,18 +974,93 @@ const mesure = (portee = null) => `(() => {
 
      Une famille que la page ne déclare pas n'est pas jugée : police du
      système ou police oubliée, la page ne permet pas de les distinguer
-     d'ici, et une alerte qu'on ne sait pas justifier ne se corrige pas. */
-  const FAMILLES = new Set([...(document.fonts ?? [])]
-    .map((f) => f.family.replace(/^["']|["']$/g, '')));
+     d'ici, et une alerte qu'on ne sait pas justifier ne se corrige pas.
+
+     **Œ et œ, relevés à tort.** « document.fonts.check » répond non dès
+     qu'une face déclarée pour l'un des caractères n'est pas chargée — même
+     quand une autre face chargée de la même police le couvre et le dessine.
+     Google découpe Oswald en tranches : la latine, chargée, couvre Œ et œ ;
+     la latin-ext les couvre aussi, et le navigateur ne la demande jamais
+     puisque la latine suffit. « LE COUP D'ŒIL » de /repetition était donc
+     relevé en police de secours. Vu au banc avec ce Chrome : check() faux
+     sur ce titre, vrai sur « LE COUP D'OEIL », et la police réellement
+     employée, lue par le protocole de débogage, « Oswald-SemiBold » pour
+     chacun de ses treize glyphes.
+
+     Quand check() dit non, on juge donc caractère par caractère : un
+     caractère est en repli quand la police déclare au moins une face de ce
+     poids et de ce style pour lui, et qu'aucune n'est chargée. Un caractère
+     qu'aucune face ne couvre n'est pas jugé — le navigateur le prend dans la
+     police suivante, c'est prévu (une flèche que la tranche latine n'a pas),
+     et check() ne le jugeait pas non plus. Quand check() dit oui, rien ne
+     change : le relevé ne peut que perdre des alertes fausses. */
+  const FACES = [...(document.fonts ?? [])];
+  const nomFamille = (f) => f.family.replace(/^["']|["']$/g, '');
+  const FAMILLES = new Set(FACES.map(nomFamille));
+  /* « 500 », « 200 700 » (une police variable), « normal », « bold ». */
+  const poidsDe = (v) => {
+    const n = String(v).trim().split(/\\s+/)
+      .map((x) => (x === 'normal' ? 400 : x === 'bold' ? 700 : Number(x)));
+    return [n[0], n[1] ?? n[0]];
+  };
+  /* Les faces que le navigateur retient pour ce poids et ce style : le
+     poids demandé s'il est déclaré, sinon le plus proche dans l'ordre de la
+     règle CSS — vers le gras au-dessus de 500, vers le maigre sous 400, et
+     entre les deux d'abord jusqu'à 500. Le style demandé s'il existe, sinon
+     tous : le navigateur penche alors une face droite. */
+  const memoFaces = new Map();
+  const facesRetenues = (fam, poids, style) => {
+    const cle = fam + '|' + poids + '|' + style;
+    if (memoFaces.has(cle)) return memoFaces.get(cle);
+    const genre = (v) => (/^oblique/.test(v) ? 'oblique' : v);
+    const famille = FACES.filter((f) => nomFamille(f) === fam);
+    const memeStyle = famille.filter((f) => genre(f.style) === genre(style));
+    const faces = memeStyle.length ? memeStyle : famille;
+    const w = Number(poids) || 400;
+    const plages = faces.map((f) => poidsDe(f.weight));
+    let retenu;
+    if (plages.some(([a, b]) => a <= w && w <= b)) retenu = w;
+    else {
+      const dessus = plages.map(([a]) => a).filter((a) => a > w).sort((x, y) => x - y);
+      const dessous = plages.map(([, b]) => b).filter((b) => b < w).sort((x, y) => y - x);
+      retenu = w >= 400 && w <= 500 ? (dessus.find((a) => a <= 500) ?? dessous[0] ?? dessus[0])
+        : w < 400 ? (dessous[0] ?? dessus[0]) : (dessus[0] ?? dessous[0]);
+    }
+    const r = retenu === undefined ? []
+      : faces.filter((f) => { const [a, b] = poidsDe(f.weight); return a <= retenu && retenu <= b; });
+    memoFaces.set(cle, r);
+    return r;
+  };
+  /* « U+0-FF, U+131, U+152-153 », et les jokers « U+4?? ». Sans plage
+     déclarée, une face couvre tout. */
+  const memoPlages = new Map();
+  const couvre = (f, cp) => {
+    if (!memoPlages.has(f)) {
+      memoPlages.set(f, (f.unicodeRange || 'U+0-10FFFF').split(',').map((p) => {
+        const v = p.trim().replace(/^U\\+/i, '');
+        if (v.includes('?')) return [parseInt(v.replace(/\\?/g, '0'), 16), parseInt(v.replace(/\\?/g, 'F'), 16)];
+        const [a, b] = v.split('-');
+        return [parseInt(a, 16), parseInt(b ?? a, 16)];
+      }));
+    }
+    return memoPlages.get(f).some(([a, b]) => cp >= a && cp <= b);
+  };
   const enRepli = (el, s) => {
     const fam = s.fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, '');
     if (!FAMILLES.has(fam)) return null;
     let t = '';
     for (const n of el.childNodes) if (n.nodeType === 3) t += n.nodeValue;
     try {
-      return document.fonts.check(s.fontStyle + ' ' + s.fontWeight + ' 16px "' + fam + '"', t.trim())
-        ? null : fam + ' ' + s.fontWeight;
+      if (document.fonts.check(s.fontStyle + ' ' + s.fontWeight + ' 16px "' + fam + '"', t.trim())) return null;
     } catch { return null; }
+    const faces = facesRetenues(fam, s.fontWeight, s.fontStyle);
+    for (const ch of new Set(t)) {
+      if (/\\s/.test(ch)) continue;
+      const cp = ch.codePointAt(0);
+      const pour = faces.filter((f) => couvre(f, cp));
+      if (pour.length && !pour.some((f) => f.status === 'loaded')) return fam + ' ' + s.fontWeight;
+    }
+    return null;
   };
 
   /* Les lignes d'un texte, comptées sur les boîtes de ses fragments : une
@@ -880,6 +1081,31 @@ const mesure = (portee = null) => `(() => {
     return n;
   };
 
+  /* **Le petit or** : une encre dorée sous la taille du grand texte (voir
+     DORE, au-dessus de ce gabarit dans le fichier). La teinte, la saturation
+     et la luminosité se lisent sur la couleur calculée, comme le banc de la
+     boutique les lit ; « color(srgb …) » passe par lire, comme partout. Le
+     grand texte est celui du seuil de contraste à 3:1, plus bas : c'est là,
+     et là seulement, que l'or s'écrit encore. */
+  const DORE = ${JSON.stringify(DORE)};
+  const dore = (c) => {
+    const [r, g, b, a] = lire(c);
+    if (a < DORE.alpha) return false;
+    const R = r / 255, G = g / 255, B = b / 255;
+    const M = Math.max(R, G, B), m = Math.min(R, G, B), l = (M + m) / 2;
+    if (M === m) return false;
+    const d = M - m;
+    const sat = l > 0.5 ? d / (2 - M - m) : d / (M + m);
+    const h = 60 * (M === R ? (G - B) / d + (G < B ? 6 : 0) : M === G ? (B - R) / d + 2 : (R - G) / d + 4);
+    return h >= DORE.teinte[0] && h <= DORE.teinte[1] && sat > DORE.saturation && l > DORE.luminosite;
+  };
+  const grandTexte = (s) => {
+    const t = parseFloat(s.fontSize);
+    return t >= 24 || (t >= 18.66 && Number(s.fontWeight) >= 700);
+  };
+  /* Le relevé où ranger un petit or : l'exception de la légendaire à part. */
+  const ouRangerOr = (el) => (el.closest(DORE.legendaire) ? out.orLegendaire : out.petitOr);
+
   /* Les textes lus à travers une tuile de grain sont **comptés à part** :
      surGrain et palesGrain, jourSurGrain et jourGrain. Le compte « pâle au
      jour » de la fin du lot 1 ne les voyait pas ; les y verser d'un coup
@@ -896,6 +1122,11 @@ const mesure = (portee = null) => `(() => {
     jour: [], jourSurDegrade: 0,
     surGrain: 0, palesGrain: [], jourSurGrain: 0, jourGrain: [],
     coupesLignes: [], enRepli: [],
+    /* Voir « Le contraste, sur ce qui porte un texte à soi », plus bas. */
+    horsFeuille: { textes: 0, surDegrade: 0, surGrain: 0, jourSurDegrade: 0, jourSurGrain: 0 },
+    horsContraste: [],
+    /* Voir « Le petit or », plus haut. */
+    petitOr: [], orLegendaire: [],
     ...(FIXE ? { horsFenetre: [] } : {}) };
 
   /* **Le décor peut passer devant le texte, et rien ne le disait.**
@@ -1052,11 +1283,28 @@ const mesure = (portee = null) => `(() => {
       out.petits.push({ q: nom(el), l: Math.round(r.width), h: Math.round(r.height) });
     }
 
-    /* Le contraste, sur le texte seul — et seulement sur les feuilles, sinon
-       chaque conteneur répète le défaut de son enfant. */
-    if (el.children.length === 0 && (el.textContent ?? '').trim().length > 2) {
+    /* **Le contraste, sur ce qui porte un texte à soi.** Il ne regardait que
+       les feuilles, pour que chaque conteneur ne répète pas le défaut de son
+       enfant. Mais un conteneur qui porte **ses propres mots** n'a pas
+       d'enfant pour les dire : le bouton principal du hub écrit « Prendre ma
+       place » puis pose un « small », et son libellé sortait de tout relevé —
+       ni pâle, ni non mesurable. Le contraste suit donc la règle du petit
+       texte et de l'opacité (texteDirect), qui ne mesure que les mots de
+       l'élément, à sa couleur et à sa taille : l'enfant a son propre relevé,
+       rien ne se répète.
+
+       **Les feuilles d'avant restent mesurées**, même sans lettre ni chiffre
+       (« ★★★ » sur une ligne) : le relevé d'un lot d'avant reste ainsi un
+       sous-ensemble exact du nouveau. Ce que seule la nouvelle règle voit est
+       compté à part (horsFeuille) et marqué dans ses trouvailles, pour que
+       l'ancien compte se retrouve en soustrayant. */
+    const feuille = el.children.length === 0 && (el.textContent ?? '').trim().length > 2;
+    const aSoi = feuille || texteDirect(el);
+    const neuf = aSoi && !feuille;
+    if (neuf) out.horsFeuille.textes += 1;
+    if (aSoi) {
       const c = contraste(el);
-      if (c === null) { out.surDegrade += 1; }
+      if (c === null) { out.surDegrade += 1; if (neuf) out.horsFeuille.surDegrade += 1; }
       else {
         const taille = parseFloat(getComputedStyle(el).fontSize);
         const gras = Number(getComputedStyle(el).fontWeight) >= 700;
@@ -1065,12 +1313,12 @@ const mesure = (portee = null) => `(() => {
         /* Lu à travers une tuile ? Alors compté à part, et la tuile nommée :
            « toile » dit une bâche, « beton » un panneau calme. */
         const grains = fondDetaille(el).grains;
-        if (grains.length) out.surGrain += 1;
+        if (grains.length) { out.surGrain += 1; if (neuf) out.horsFeuille.surGrain += 1; }
         /* Le fond est rappelé dans la trouvaille. « 4.3:1 » sans dire sur quoi
            ne se corrige pas : on ne sait pas laquelle des deux couleurs bouger. */
         if (c < seuil) {
           const t = { q: nom(el), c: c.toFixed(1), seuil, px: Math.round(taille),
-            sur: fond(el), encre: getComputedStyle(el).color };
+            sur: fond(el), encre: getComputedStyle(el).color, ...(neuf ? { horsFeuille: true } : {}) };
           if (grains.length) out.palesGrain.push({ ...t, grain: grains.join(' + ') });
           else out.pales.push(t);
         }
@@ -1080,18 +1328,19 @@ const mesure = (portee = null) => `(() => {
     /* Le même texte au soleil, avec le même seuil : c'est la même personne
        qui lit, simplement dehors. Relevé à part, et seulement quand on le
        demande — il ne remplace pas le contraste d'intérieur. */
-    if (JOUR && el.children.length === 0 && (el.textContent ?? '').trim().length > 2) {
+    if (JOUR && aSoi) {
       const cj = contrasteJour(el);
-      if (cj === null) out.jourSurDegrade += 1;
+      if (cj === null) { out.jourSurDegrade += 1; if (neuf) out.horsFeuille.jourSurDegrade += 1; }
       else if (cj !== undefined) {
         const s = getComputedStyle(el);
         const taille = parseFloat(s.fontSize);
         const seuil = (taille >= 24 || (taille >= 18.66 && Number(s.fontWeight) >= 700)) ? 3 : 4.5;
         const grains = fondDetaille(el).grains;
-        if (grains.length) out.jourSurGrain += 1;
+        if (grains.length) { out.jourSurGrain += 1; if (neuf) out.horsFeuille.jourSurGrain += 1; }
         if (cj < seuil) {
           const t = { q: nom(el), c: cj.toFixed(1), seuil, px: Math.round(taille),
-            sur: fond(el), encre: s.color, legal: Boolean(el.closest(LEGAL)) };
+            sur: fond(el), encre: s.color, legal: Boolean(el.closest(LEGAL)),
+            ...(neuf ? { horsFeuille: true } : {}) };
           if (grains.length) out.jourGrain.push({ ...t, grain: grains.join(' + ') });
           else out.jour.push(t);
         }
@@ -1118,6 +1367,48 @@ const mesure = (portee = null) => `(() => {
         }
         const seuilO = legal ? SEUILS.opaciteLegal : SEUILS.opacite;
         if (oe < seuilO) out.opacite.push({ q: nom(el), o: Math.round(oe * 100) / 100, seuil: seuilO, legal });
+        /* Le petit or : sur ce que l'on compte comme un texte, et sur rien
+           d'autre — un texte caché ou éteint n'écrit en or pour personne. */
+        if (dore(s.color) && !grandTexte(s)) {
+          ouRangerOr(el).push({ q: nom(el), px: css, poids: s.fontWeight, encre: s.color });
+        }
+      }
+    }
+
+    /* **Ce qui échappe encore au contraste** : des mots que la page affiche
+       sans les poser dans un nœud texte — un pseudo-élément qui écrit (une
+       chaîne, un compteur, un attribut), la valeur ou l'indication d'un
+       champ, l'option choisie d'une liste. Ils ne sont pas mesurés : leur
+       encre et leur fond ne se lisent pas comme ceux d'un élément, et une
+       mesure fausse est pire que pas de mesure. Ils sont relevés, pour qu'un
+       angle mort qui grandit se voie au lieu de passer pour un progrès. */
+    if (!cache(el)) {
+      for (const pseudo of ['::before', '::after']) {
+        const p = getComputedStyle(el, pseudo);
+        if (p.content === 'none' || p.content === 'normal' || p.display === 'none'
+            || p.visibility === 'hidden') continue;
+        let t = '';
+        for (const m of p.content.matchAll(/"((?:[^"\\\\]|\\\\.)*)"|attr\\(\\s*([\\w-]+)\\s*\\)|counters?\\(/g)) {
+          t += m[1] ?? (m[2] ? (el.getAttribute(m[2]) ?? '') : '0');
+        }
+        if (!/[\\p{L}\\p{N}]/u.test(t)) continue;
+        out.horsContraste.push({ q: nom(el), ou: pseudo, texte: t.trim().slice(0, 30) });
+        /* Le petit or vaut aussi pour un mot posé par un pseudo-élément : sa
+           couleur et sa taille se lisent, même si son fond ne se lit pas. Un
+           « NOUVEAU » doré en ::after est exactement ce que l'arbitrage
+           retire. */
+        if (opacites(el) * lire(p.color)[3] >= 0.02 && dore(p.color) && !grandTexte(p)) {
+          ouRangerOr(el).push({ q: nom(el), ou: pseudo, texte: t.trim().slice(0, 30),
+            px: parseFloat(p.fontSize), poids: p.fontWeight, encre: p.color });
+        }
+      }
+      const tag = el.tagName.toLowerCase();
+      const champ = tag === 'select' ? (el.selectedOptions?.[0]?.textContent ?? '')
+        : tag === 'textarea' || (tag === 'input' && !/^(checkbox|radio|range|color|file|hidden|image)$/.test(el.type))
+          ? (el.value || el.placeholder || '') : null;
+      if (champ !== null && /[\\p{L}\\p{N}]/u.test(champ)) {
+        out.horsContraste.push({ q: nom(el), ou: tag === 'select' ? 'option choisie' : el.value ? 'valeur' : 'indication',
+          texte: champ.trim().slice(0, 30) });
       }
     }
   }
@@ -1159,14 +1450,30 @@ const git = (...a) => {
 /* **audit-ui/2** : « surDegrade » ne compte plus les textes lus à travers une
    tuile de grain, qui ont leurs propres relevés (voir l'en-tête). Une machine
    qui comparerait un relevé /1 et un relevé /2 champ par champ croirait que
-   cent textes sont devenus mesurables par miracle : le numéro le lui dit. */
+   cent textes sont devenus mesurables par miracle : le numéro le lui dit.
+
+   **audit-ui/3** (lots 3 et 5) : le contraste se mesure sur tout texte à
+   soi, plus seulement sur les feuilles. « pales », « jour », « surGrain »,
+   « surDegrade » et les autres comptes de contraste y gagnent les textes que
+   `releves.horsFeuille` détaille — un relevé /2 vaut le /3 moins eux, et
+   chaque trouvaille qu'ils ajoutent porte « horsFeuille ». « enRepli » perd
+   ses alertes fausses (Œ), tout relevé perd les faces tournées de dos, et
+   `horsContraste` est nouveau.
+
+   Ajouts du même lot, sans rien changer au sens des champs d'avant :
+   `petitOr` et `orLegendaire` dans chaque relevé, `barre` dans chaque page et la synthèse
+   `rapport.barre`, la hauteur du tiroir ouvert (`tiroir`) dans son état, deux
+   états (`bonus@/`, `booster@ticket`), et ce qu'une visite a rangé ou fermé
+   avant de mesurer (`pile`, `fete`). */
 const rapport = {
-  schema: 'audit-ui/2',
+  schema: 'audit-ui/3',
   date: new Date().toISOString(),
   commit: git('rev-parse', '--short', 'HEAD'),
   publicModifie: Boolean(git('status', '--porcelain', '--', 'public')),
   options: { jour, pleine, etats, seule: seule ?? null },
   seuils: SEUILS,
+  /* Ce qu'est une encre dorée pour le relevé du petit or. */
+  dore: DORE,
   legal: LEGAL,
   formats: FORMATS.map(cleFormat),
   horsLot: [...HORS_LOT],
@@ -1357,6 +1664,10 @@ function noterReleves(cle, largeur, m, erreurs) {
   for (const x of m.opacite.slice(0, 4)) {
     note(cle, largeur, 'opacité', `${x.q} — ${x.o} (il en faut ${x.seuil})`);
   }
+  for (const x of m.petitOr.slice(0, 4)) {
+    note(cle, largeur, 'petit or', `${x.q}${x.ou ? ` ${x.ou} « ${x.texte} »` : ''} — ${x.encre} à ${x.px} px ${
+      x.poids} : l’or ne s’écrit qu’à 24 px, ou 18,66 px en gras`);
+  }
   for (const x of m.backdrop.slice(0, 4)) {
     note(cle, largeur, 'backdrop-filter',
       `${x.q}${x.pseudo ? ` ${x.pseudo}` : ''} — ${x.v}${x.visible ? '' : ' (replié)'}`);
@@ -1378,7 +1689,10 @@ function noterReleves(cle, largeur, m, erreurs) {
    n'y figure que s'il a été mesuré — un zéro qu'on n'a pas mesuré se
    lirait comme un bon résultat. */
 function compter(m, erreurs, refus) {
-  if (!jour) { delete m.jour; delete m.jourSurDegrade; delete m.jourSurGrain; delete m.jourGrain; }
+  if (!jour) {
+    delete m.jour; delete m.jourSurDegrade; delete m.jourSurGrain; delete m.jourGrain;
+    delete m.horsFeuille.jourSurDegrade; delete m.horsFeuille.jourSurGrain;
+  }
   /* Même règle pour la coupe à la ligne quand son témoin a échoué. */
   if (!coupeLignesMesurable) delete m.coupesLignes;
   return {
@@ -1394,6 +1708,17 @@ function compter(m, erreurs, refus) {
       jourSurGrain: m.jourSurGrain, jourGrain: m.jourGrain.length } : {}),
     ...(m.coupesLignes ? { coupesLignes: m.coupesLignes.length } : {}),
     enRepli: m.enRepli.length,
+    /* Les textes dont seule la règle des lots 3 et 5 mesure le contraste
+       (le détail par relevé est dans `releves.horsFeuille`), et ce qui
+       échappe encore à toute mesure de contraste. Ni l'un ni l'autre n'est
+       un défaut : ils disent jusqu'où la mesure voit. */
+    horsFeuille: m.horsFeuille.textes,
+    horsContraste: m.horsContraste.length,
+    /* Un défaut, lui : l'arbitrage de l'or qui recule (voir DORE). Et, à
+       part, l'or que l'arbitrage laisse à la légendaire : pas un défaut, un
+       compte qui doit rester petit. */
+    petitOr: m.petitOr.length,
+    orLegendaire: m.orLegendaire.length,
   };
 }
 
@@ -1404,13 +1729,138 @@ const total = (m, erreurs, refus) => m.deborde + m.horsEcran.length + (m.horsFen
   + m.coupes.length + (m.coupesLignes?.length ?? 0) + (m.enRepli.length ? 1 : 0) + m.petits.length
   + m.pales.length + m.palesGrain.length + m.cassees.length + m.sousDecor.length
   + erreurs.length + refus.length + m.petitTexte.length + m.opacite.length + m.backdrop.length
-  + (jour ? m.jour.length + m.jourGrain.length : 0);
+  + m.petitOr.length + (jour ? m.jour.length + m.jourGrain.length : 0);
+
+/** Attend, dans la page, qu'une condition devienne vraie ; faux au-delà de `ms`. */
+const ATTENDRE = `async (condition, ms) => {
+  const depart = performance.now();
+  while (!condition()) {
+    if (performance.now() - depart > ms) return false;
+    await new Promise((r) => setTimeout(r, 30));
+  }
+  return true;
+}`;
+
+/* **La barre, d'une page à l'autre.** Le lot 2 a laissé la barre décalée
+   sur quatre pages, et rien ne le disait : chaque page se mesure seule, et
+   une flèche posée dix pixels plus bas n'est ni coupée, ni pâle, ni trop
+   petite. Seule la comparaison la voit. On relève donc la place de la
+   flèche et du menu de la barre commune (celle de nav.js, `.tbf-haut`) sur
+   chaque page, et chaque format compare ses pages à la majorité — voir
+   « La barre, page contre page », après les visites.
+
+   Pas la barre d'un écran de jeu (`.tbf-haut-jeu`), qui flotte au-dessus du
+   jeu à sa propre place, ni l'en-tête du hub ou de l'administration, qui
+   ne sont pas cette barre. La place dans le document, défilement retiré :
+   une page qui défilerait d'elle-même ne doit pas passer pour décalée. */
+const BARRE = () => {
+  const haut = document.querySelector('.tbf-haut:not(.tbf-haut-jeu)');
+  if (!haut) return null;
+  const place = (sel) => {
+    const n = haut.querySelector(sel);
+    const r = n?.getBoundingClientRect();
+    return r && r.width > 0 && r.height > 0
+      ? [Math.round(r.left + window.scrollX), Math.round(r.top + window.scrollY)] : null;
+  };
+  return { retour: place('.tbf-retour'), burger: place('.tbf-burger') };
+};
+
+/* **Une fête de niveau posée sur l'écran à l'arrivée.** /profil et /virage
+   fêtent le niveau gagné depuis la dernière visite (niveau-fete.js,
+   `depuisVisite`) ; le butin d'un booster fête celui qu'il fait gagner. Le
+   panneau (z 170) couvre tout : mesurer sous lui, c'est mesurer la fête en
+   croyant mesurer la page, et la capture ne montre qu'elle. Chaque visite
+   part d'un navigateur neuf, donc d'une première visite, qui ne fête
+   jamais : il ne devrait pas venir. S'il vient, on le dit, puis on le
+   ferme par son bouton, comme un joueur. */
+async function fermerLaFete(page, cle, largeur) {
+  const vue = await page.evaluate(`(async () => {
+    const attendre = ${ATTENDRE};
+    const f = document.querySelector('.tbf-niv-fond');
+    if (!f) return null;
+    f.querySelector('[data-fermer]')?.click();
+    return attendre(() => !document.querySelector('.tbf-niv-fond'), 2000);
+  })()`).catch(() => null);
+  if (vue === null) return null;
+  note(cle, largeur, 'fête de niveau', vue
+    ? 'une fête de niveau couvrait l’écran : notée, puis fermée avant la mesure'
+    : 'une fête de niveau couvre l’écran et ne s’est pas fermée : la capture la montre');
+  return vue ? 'fermée' : 'restée';
+}
+
+/* **Le bonus du jour, sur le hub.** À la première arrivée du jour, le hub
+   pose dans la pile (`.tbf-pile`, en bas de l'écran) le ticket du bonus,
+   qui passe par-dessus le bouton d'entrée tant qu'on ne l'a ni pris ni
+   rangé — et chaque visite de l'audit est une première arrivée. Mesurer le
+   hub avec lui, c'est mesurer un ticket posé sur un hub caché. Le ticket a
+   donc son état (`bonus@/`), et la visite du hub le **range** d'abord, par
+   Échap, comme un joueur qui ne le prend pas : le prendre écrirait en base
+   et changerait le solde de toutes les pages suivantes.
+
+   Il monte une demi-seconde après le rideau, ou après le ticket de retour
+   (trois secondes et demie) : on ne l'attend que si le serveur l'a servi
+   prêt (`bonus.pret` de GET /api/quotidien, lu au passage), sinon on
+   attendrait pour rien. Le ticket de retour, lui, ne vient qu'après trois
+   heures d'absence (contrat § 8) — jamais pendant un audit ; s'il vient,
+   on attend qu'il parte, comme le ticket d'un gain. */
+const BONUS_MAX = 6000;
+function guetterQuotidien(page) {
+  const q = { lu: false, bonusPret: false };
+  page.on('response', (r) => {
+    let chemin = '';
+    try { chemin = new URL(r.url()).pathname; } catch { return; }
+    if (r.request().method() !== 'GET' || chemin !== '/api/quotidien') return;
+    r.json().then((j) => { q.lu = true; q.bonusPret ||= j?.bonus?.pret === true; })
+      .catch(() => { q.lu = true; });
+  });
+  return q;
+}
+const BONUS_MONTE = `() => Boolean(document.querySelector('.tbf-pile .tbf-bonus'))`;
+const TICKETS_QUI_PASSENT = '.tbf-pile > .tbf-ticket--retour, .tbf-pile > .tbf-ticket--gain';
+
+/** Range le ticket du bonus et attend ceux qui passent. Rend ce qui a été fait. */
+async function rangerLaPile(page, q, cle, largeur) {
+  const fait = [];
+  if (q?.bonusPret) {
+    const monte = await page.evaluate(`(async () => (${ATTENDRE})(${BONUS_MONTE}, ${BONUS_MAX}))()`)
+      .catch(() => false);
+    if (!monte) {
+      note(cle, largeur, 'bonus du jour', `le serveur sert un bonus prêt, et son ticket n’est pas monté en ${
+        BONUS_MAX / 1000} s`);
+      fait.push('bonus attendu, pas monté');
+    } else {
+      await page.keyboard.press('Escape');
+      const range = await page.evaluate(`(async () => {
+        const monte = ${BONUS_MONTE};
+        return (${ATTENDRE})(() => !monte(), 1500);
+      })()`).catch(() => false);
+      if (!range) note(cle, largeur, 'bonus du jour', 'le ticket du bonus n’est pas parti à Échap : la mesure le voit');
+      fait.push(range ? 'bonus rangé' : 'bonus resté');
+    }
+  }
+  const passes = await page.evaluate(`(async () => {
+    const sel = ${JSON.stringify(TICKETS_QUI_PASSENT)};
+    const vus = [...document.querySelectorAll(sel)].map((t) => t.className.replace(/\\s+/g, '.'));
+    if (!vus.length) return null;
+    return { vus, partis: await (${ATTENDRE})(() => !document.querySelector(sel), 4000) };
+  })()`).catch(() => null);
+  if (passes) {
+    if (!passes.partis) note(cle, largeur, 'ticket resté', `un ticket qui passe est resté dans la pile : ${passes.vus[0]}`);
+    fait.push(...passes.vus.map((v) => `${v} ${passes.partis ? 'parti' : 'resté'}`));
+  }
+  /* Ce qui vient d'être rangé laisse sa place à ce qui la reprend — la
+     bulle du Fanzzy rappelle le bonus : on la laisse finir d'entrer. */
+  if (fait.length) await finDesMouvements(page, 'body', 1500);
+  return fait;
+}
 
 for (const { chemin, cle, qui, nom: nomCapture } of VISITES) {
   rapport.pages[cle] = {};
   for (const format of FORMATS) {
     const { largeur, hauteur } = format;
     const { contexte, page, erreurs, refus } = await nouvelleVisite(format, qui);
+    /* Le hub d'un joueur : son bonus du jour (voir « Le bonus du jour »). */
+    const quotidien = chemin === '/' && qui ? guetterQuotidien(page) : null;
     /* **Une seconde chance, et une seule.** La vitrine, visitée sans compte et
        sans cache, n'a pas trouvé son calme réseau en vingt secondes une fois
        sur six pendant la mesure « avant » — et une case vide dans un tableau
@@ -1446,8 +1896,15 @@ for (const { chemin, cle, qui, nom: nomCapture } of VISITES) {
     await page.waitForFunction(() => !document.getElementById('ouverture'), { timeout: 12_000 })
       .catch(() => note(cle, largeur, 'chargement', 'l’écran d’ouverture était encore là après 12 s'));
     await new Promise((r) => setTimeout(r, 1800));
+    /* Ce qui couvre l'écran à l'arrivée, fermé ou rangé avant la mesure, et
+       écrit dans le relevé : voir « Une fête de niveau » et « Le bonus du
+       jour ». La fête d'abord : elle passe devant la pile. */
+    const fete = await fermerLaFete(page, cle, largeur);
+    const pile = quotidien ? await rangerLaPile(page, quotidien, cle, largeur) : [];
 
     const m = await mesurer(page);
+    /* La place de la barre, comparée aux autres pages après les visites. */
+    const barre = await page.evaluate(BARRE).catch(() => null);
 
     /* La capture après la mesure : la mesure ne touche à rien, et l'image
        montre donc exactement l'écran qui a été mesuré. Celle de l'écran seul
@@ -1479,6 +1936,7 @@ for (const { chemin, cle, qui, nom: nomCapture } of VISITES) {
 
     rapport.pages[cle][cleFormat(format)] = {
       largeur, hauteur, charge: true, essais, capture, qui: qui ?? 'sans compte', arrivee,
+      barre, ...(fete ? { fete } : {}), ...(pile.length ? { pile } : {}),
       compte: compter(m, erreurs, refus),
       releves: { ...m, scripts: erreurs, refus },
     };
@@ -1488,6 +1946,48 @@ for (const { chemin, cle, qui, nom: nomCapture } of VISITES) {
       n === 0 ? 'rien à signaler' : `${n} chose(s)`}${HORS_LOT.has(cle) ? '   (hors lot)' : ''}${
       arrivee !== new URL(base + chemin).pathname ? `   → ${arrivee}` : ''}`);
     await contexte.close();
+  }
+}
+
+/* ------------------------------------------- la barre, page contre page
+
+   Voir `BARRE`. Pour chaque format et chaque pièce (la flèche, le menu), la
+   place que **la plupart** des pages lui donnent, à un pixel près
+   (`SEUILS.barrePx`), et chaque page qui la pose ailleurs. Une majorité,
+   c'est plus de la moitié des pages qui ont la pièce, et trois pages au
+   moins : une page auditée seule n'a personne à qui se comparer, et deux
+   pages qui divergent ne disent pas laquelle a tort. Sans majorité, on le
+   dit, plutôt que de désigner un coupable au hasard. Mesuré le 2 octobre
+   2026 : à 360 px, la flèche en [24, 10] et le menu en [292, 10] partout. */
+const PIECES_BARRE = [['retour', 'la flèche de retour'], ['burger', 'le bouton du menu']];
+const proches = (a, b) => Math.abs(a[0] - b[0]) <= SEUILS.barrePx && Math.abs(a[1] - b[1]) <= SEUILS.barrePx;
+rapport.barre = {};
+for (const f of FORMATS) {
+  const k = cleFormat(f);
+  rapport.barre[k] = {};
+  for (const [piece, dite] of PIECES_BARRE) {
+    const vues = VISITES.map(({ cle }) => ({ cle, pos: rapport.pages[cle]?.[k]?.barre?.[piece] }))
+      .filter((x) => Array.isArray(x.pos));
+    if (!vues.length) continue;
+    /* La place qui rassemble le plus de pages, à un pixel près : deux
+       arrondis voisins ne coupent pas une majorité en deux. */
+    let majorite = null, sur = 0;
+    for (const { pos } of vues) {
+      const n = vues.filter((x) => proches(x.pos, pos)).length;
+      if (n > sur) { majorite = pos; sur = n; }
+    }
+    const juge = vues.length >= 3 && sur * 2 > vues.length;
+    const ecarts = juge ? vues.filter((x) => !proches(x.pos, majorite)) : [];
+    rapport.barre[k][piece] = { majorite: juge ? majorite : null, sur, pages: vues.length,
+      ecarts: ecarts.map(({ cle, pos }) => ({ cle, pos })) };
+    for (const x of ecarts) {
+      note(x.cle, f.largeur, 'barre décalée',
+        `${dite} en [${x.pos.join(', ')}], quand ${sur} page(s) sur ${vues.length} la posent en [${majorite.join(', ')}]`);
+    }
+    if (vues.length >= 3 && !juge) {
+      note('(la barre)', f.largeur, 'barre décalée', `${dite} n’a pas de place majoritaire : ${
+        [...new Set(vues.map((x) => `[${x.pos.join(', ')}]`))].join(' ')}`);
+    }
   }
 }
 
@@ -1582,8 +2082,10 @@ async function finDesMouvements(page, selecteur, plafond) {
   }, selecteur, plafond).catch(() => {});
 }
 
-/** Range un état dans le JSON et le dit en console, comme une page. */
-function rangerEtat(cle, chemin, format, donnees, m = null, erreurs = [], refus = []) {
+/** Range un état dans le JSON et le dit en console, comme une page.
+    `autres` : ce que l'état a relevé hors de la mesure (le tiroir trop
+    haut), compté dans la ligne de console comme le reste. */
+function rangerEtat(cle, chemin, format, donnees, m = null, erreurs = [], refus = [], autres = 0) {
   rapport.etats[cle] ??= { chemin };
   const entree = { largeur: format.largeur, hauteur: format.hauteur, ...donnees, mesure: Boolean(m) };
   if (m) {
@@ -1595,12 +2097,13 @@ function rangerEtat(cle, chemin, format, donnees, m = null, erreurs = [], refus 
     entree.releves = { ...m, scripts: erreurs, refus };
   }
   rapport.etats[cle][cleFormat(format)] = entree;
-  const n = m ? total(m, erreurs, refus) : null;
+  const n = m ? total(m, erreurs, refus) + autres : null;
   console.log(`  ${cle.padEnd(22)} ${`${format.largeur}×${format.hauteur}`.padStart(9)}   ${
     n === null ? (entree.capture ? 'photographié' : 'rien à montrer')
       : n === 0 ? 'rien à signaler' : `${n} chose(s)`}${
     entree.instant !== undefined ? `   (à ${entree.instant} ms${
-      entree.instantMesure ? `, mesuré à ${entree.instantMesure}` : ''})` : ''}`);
+      entree.instantMesure ? `, mesuré à ${entree.instantMesure}` : ''})` : ''}${
+    entree.tiroir ? `   (${String(entree.tiroir.ecrans).replace('.', ',')} écran(s) de haut)` : ''}`);
 }
 
 async function etatOuverture(format) {
@@ -1701,7 +2204,464 @@ async function etatTiroir(format) {
     const m = await mesurer(page, '#tbf-tiroir');
     const polices = await page.evaluate(POLICES);
     const capture = await photographier(page, `tiroir-${nomDeRoute(PAGE_TIROIR)}`, format, cle);
+    /* **Combien d'écrans de haut.** Le tiroir défile en lui-même : ce qu'il
+       pousse sous le bord n'est ni coupé ni hors fenêtre, il est plus bas —
+       et le lot 2 l'a laissé à deux écrans au téléphone étroit, la moitié
+       des destinations hors de vue. Sa hauteur à défiler sur celle de la
+       fenêtre ; au-delà de `SEUILS.tiroirEcrans`, c'est relevé. */
+    const tiroir = await page.evaluate(() => {
+      const t = document.getElementById('tbf-tiroir');
+      return { defile: t.scrollHeight, fenetre: window.innerHeight };
+    });
+    tiroir.ecrans = Math.round((tiroir.defile / tiroir.fenetre) * 100) / 100;
+    const tropHaut = tiroir.ecrans > SEUILS.tiroirEcrans;
+    if (tropHaut) {
+      note(cle, format.largeur, 'tiroir trop haut', `${String(tiroir.ecrans).replace('.', ',')} écrans de haut (${
+        tiroir.defile} px pour ${tiroir.fenetre}) : il en faut ${String(SEUILS.tiroirEcrans).replace('.', ',')} au plus`);
+    }
+    rangerEtat(cle, PAGE_TIROIR, format, { ...polices, capture, tiroir }, m, erreurs, refus, tropHaut ? 1 : 0);
+  } finally {
+    await contexte.close();
+  }
+}
+
+/* ---------------------------------------- les écrans de plus (lots 3 et 5)
+
+   Les lots 3 et 5 refont des écrans qu'une visite ordinaire ne montre pas :
+   elle arrive, attend, mesure, et ne touche à rien.
+
+     — **la bande du HUD dépliée** (`hud@/classement`) : le sticker de la
+       barre, touché sur une page ordinaire. Sous 560 px seulement : au-delà,
+       la bande est une rangée de la barre, toujours visible, et la visite de
+       la page la mesure déjà. Mesurée sous sa portée.
+     — **le bonus du jour** (`bonus@/`) : le ticket que le hub pose dans la
+       pile à la première arrivée du jour, et que la visite du hub range
+       avant de mesurer (voir « Le bonus du jour »). Mesuré sous la portée
+       de la pile, fixée à la fenêtre.
+     — **l'ouverture d'un booster**, à trois moments : une carte révélée
+       (`booster@carte`), le ticket du gain qui passe trois secondes dans la
+       pile (`booster@ticket`), puis le butin (`booster@butin`). Mesurés sous
+       la portée de l'écran d'ouverture, ou de la pile pour le ticket.
+     — **le classement d'un joueur classé** (`classement@classé`) : la visite
+       de /classement le voit vide, faute de ferveur en base. Mesuré comme une
+       page, puisque c'en est une — avec d'autres données.
+
+   **Rien de ce qu'ils sèment ne touche aux relevés d'avant.** Ils passent
+   après les pages, l'ouverture et le tiroir, et chacun sème au moment où il
+   passe : le kiosque, un joueur neuf par format ; le classement, sa ferveur,
+   à la toute fin. Le bonus ne sème rien : il est rangé, jamais pris. Le
+   relevé des pages et des trois premiers états se compare donc tel quel à
+   celui d'un audit qui ne les avait pas. */
+/* nav.js et ui.css : à partir de 560 px, la bande ne se déplie plus. */
+const BANDE_EN_RANGEE = 560;
+const FORMATS_HUD = FORMATS.filter((f) => f.largeur < BANDE_EN_RANGEE);
+const PAGE_KIOSQUE = '/boosters';
+const PAGE_CLASSEMENT = '/classement';
+
+/* **La bande du HUD.** Touchée comme le tiroir : par le bouton qui la
+   commande (« aria-controls », le lien que nav.js pose entre les deux), et
+   « aria-expanded » plutôt qu'une classe pour savoir qu'elle est dépliée.
+
+   **Trois secondes.** La bande se replie d'elle-même trois secondes après le
+   toucher, sauf sous le doigt ou le focus. Les y retenir changerait l'écran
+   (un jeton survolé, un anneau de focus) : la mesure se fait donc dans les
+   trois secondes — une demi-seconde suffit ici —, et l'audit vérifie
+   ensuite que la bande était encore dépliée. Sinon, le relevé est écarté et
+   le genre « état » le dit. */
+async function etatHud(format) {
+  const cle = `hud@${PAGE_TIROIR}`;
+  const { contexte, page, erreurs, refus } = await nouvelleVisite(format, 'joueur');
+  try {
+    try {
+      await page.goto(base + PAGE_TIROIR, { waitUntil: 'networkidle0', timeout: 20_000 });
+    } catch {
+      note(cle, format.largeur, 'chargement', 'la page n’a pas fini de charger en 20 s');
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 1800));
+    /* Le HUD ne se construit qu'à sa première donnée : on lui laisse cinq
+       secondes de plus, puis on le touche. */
+    const faute = await page.evaluate(`(async () => {
+      const attendre = ${ATTENDRE};
+      const sel = '[aria-controls="tbf-hud-bande"]';
+      if (!await attendre(() => document.querySelector(sel), 5000)) {
+        return 'aucun sticker ne commande la bande du HUD (aria-controls="tbf-hud-bande")';
+      }
+      const b = document.querySelector(sel);
+      b.click();
+      if (!await attendre(() => b.getAttribute('aria-expanded') === 'true', 3000)) {
+        return 'la bande du HUD ne s’est pas dépliée en 3 s';
+      }
+      return document.getElementById('tbf-hud-bande') ? null
+        : 'le sticker dit la bande dépliée, et il n’y a pas de #tbf-hud-bande';
+    })()`);
+    if (faute) {
+      note(cle, format.largeur, 'état', faute);
+      rangerEtat(cle, PAGE_TIROIR, format, { capture: null });
+      return;
+    }
+    await finDesMouvements(page, '#tbf-hud-bande', 600);
+    const m = await mesurer(page, '#tbf-hud-bande');
+    const polices = await page.evaluate(POLICES);
+    const capture = await photographier(page, `hud-${nomDeRoute(PAGE_TIROIR)}`, format, cle);
+    const encore = await page.evaluate(() => document.querySelector('[aria-controls="tbf-hud-bande"]')
+      ?.getAttribute('aria-expanded') === 'true');
+    if (!encore) {
+      note(cle, format.largeur, 'état', 'la bande s’est repliée avant la fin de la mesure : relevé écarté');
+      rangerEtat(cle, PAGE_TIROIR, format, { ...polices, capture: null });
+      return;
+    }
     rangerEtat(cle, PAGE_TIROIR, format, { ...polices, capture }, m, erreurs, refus);
+  } finally {
+    await contexte.close();
+  }
+}
+
+/* **Le bonus du jour** (`bonus@/`) : le ticket kraft que le hub monte dans
+   la pile à la première arrivée du jour — l'arbitrage du kraft s'y lit (le
+   noir pur sur le kraft éclairci), et la visite du hub, qui le range, ne le
+   mesure pas. Le même joueur que les pages : il n'a rien pris de la journée,
+   et chaque contexte neuf est une première arrivée (la mémoire « déjà
+   proposé » est dans l'onglet). Mesuré sous la portée de la pile, une fois
+   fini son glissement d'entrée ; jamais touché — le prendre écrirait en
+   base. Sans bonus prêt servi par le serveur, il n'y a rien à mesurer, et
+   on le dit. */
+async function etatBonus(format) {
+  const cle = 'bonus@/';
+  const { contexte, page, erreurs, refus } = await nouvelleVisite(format, 'joueur');
+  const quotidien = guetterQuotidien(page);
+  try {
+    try {
+      await page.goto(`${base}/`, { waitUntil: 'networkidle0', timeout: 20_000 });
+    } catch {
+      note(cle, format.largeur, 'chargement', 'l’accueil n’a pas fini de charger en 20 s');
+      return;
+    }
+    await page.waitForFunction(() => !document.getElementById('ouverture'), { timeout: 12_000 })
+      .catch(() => {});
+    const faute = !quotidien.lu ? 'le hub n’a pas lu /api/quotidien : pas de bonus à mesurer'
+      : !quotidien.bonusPret ? 'le serveur ne sert pas de bonus prêt (bonus.pret) : rien à mesurer'
+        : !await page.evaluate(`(async () => (${ATTENDRE})(${BONUS_MONTE}, ${BONUS_MAX}))()`).catch(() => false)
+          ? `le serveur sert un bonus prêt, et son ticket n’est pas monté en ${BONUS_MAX / 1000} s` : null;
+    if (faute) {
+      note(cle, format.largeur, 'état', faute);
+      rangerEtat(cle, '/', format, { capture: null });
+      return;
+    }
+    await finDesMouvements(page, '.tbf-pile', 1000);
+    await new Promise((r) => setTimeout(r, 200));
+    const m = await mesurer(page, '.tbf-pile');
+    const polices = await page.evaluate(POLICES);
+    const capture = await photographier(page, 'bonus-accueil', format, cle);
+    rangerEtat(cle, '/', format, { ...polices, capture }, m, erreurs, refus);
+  } finally {
+    await contexte.close();
+  }
+}
+
+/* **Un joueur neuf par format, pour le kiosque.** Ouvrir un booster écrit en
+   base : avec le joueur de l'audit, le deuxième format aurait ouvert un
+   booster de moins, sur une collection déjà commencée, et le tiroir ou le
+   HUD d'après auraient compté autrement. Chacun part donc du même point —
+   la bourse du joueur de l'audit, son club, aucune carte —, ce qui rend les
+   formats comparables entre eux, et un audit comparable au suivant.
+
+   Le niveau est celui du joueur de l'audit (400 XP, niveau 4, le 5 à 480) :
+   un booster en rapporte cinq, et une fête de niveau ne vient pas couvrir
+   le butin qu'on photographie. */
+async function joueurDuKiosque(format) {
+  const qui = `kiosque-${cleFormat(format)}`;
+  const id = `aud00000-0000-0000-0001-${String(format.largeur).padStart(4, '0')}${
+    String(format.hauteur).padStart(8, '0')}`;
+  await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash,status,email_verified_at)
+                    VALUES (?,?,?,'x','active',NOW(3))`, [id, `${qui}@ex.fr`, `Kiosque${format.largeur}`]);
+  await pool.query(`INSERT INTO user_wallet (user_id,scarves,packs,xp,onboarded_at)
+                    VALUES (?,500,6,400,NOW(3))`, [id]);
+  await pool.query('INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1)', [id]);
+  const j = `audit-session-${qui}`.padEnd(44, '0');
+  await pool.query(
+    `INSERT INTO sessions (token_hash, user_id, expires_at)
+     SELECT ?, id, NOW(3) + INTERVAL 1 DAY FROM users WHERE public_id = ?`,
+    [createHash('sha256').update(j).digest('hex'), id]);
+  SESSIONS[qui] = j;
+  return qui;
+}
+
+/* Touche la carte du dessus, là où le doigt la touche : l'élément au centre
+   de la scène, ramené à la carte qui le porte. Les cartes déjà vues sont
+   parties de côté, celles d'après sont dessous ; la première de la scène
+   sert de repli si autre chose couvre le centre. Un « click » sur la carte
+   elle-même, qui remonte jusqu'à la scène : ni survol ni pointeur laissés
+   sur l'écran qu'on photographie. */
+const TOUCHER_LA_CARTE = () => {
+  const scene = document.getElementById('ostage');
+  if (!scene) return false;
+  const r = scene.getBoundingClientRect();
+  const sous = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+  const carte = sous?.closest('#ostage > *') ?? scene.firstElementChild;
+  if (!carte) return false;
+  carte.click();
+  return true;
+};
+
+/* **L'ouverture d'un booster.** Par les identifiants que lisent aussi
+   boosters-ui-smoke.mjs et tour-ui-smoke.mjs : le bouton d'ouverture
+   (#openBtn), puis **Entrée** sur le sachet (#tearpack) — l'accès clavier
+   que la page garde à côté de la déchirure, et que la suite éprouve. Le
+   geste au doigt dépend des images que rend la machine ; Entrée ouvre le
+   même booster, par le même chemin, à coup sûr. Puis la première carte
+   touchée (`booster@carte`), le ticket du gain (`booster@ticket`) et le
+   butin (`booster@butin`) : « Tout révéler » (#oAction) s'il est là, sinon
+   carte après carte, jusqu'au récapitulatif (#summary.on). Chaque moment
+   attend la fin de ses
+   mouvements — la cérémonie d'une légendaire, les écharpes qui volent —,
+   pas celle des boucles.
+
+   **Le tirage est au hasard**, comme pour un joueur : le serveur ne prend
+   pas de graine, et lui en imposer une (ou répondre à sa place) mesurerait
+   une reconstitution. Il est donc **relevé** avec l'état (`tirage` : sorte,
+   identifiant, nouveauté), pour qu'un écart entre deux audits se lise — une
+   légendaire n'a pas la cérémonie d'une commune. */
+/* La cérémonie la plus longue (une légendaire, 1,6 s) avec de la marge ;
+   et le ticket du gain, qui part des écharpes arrivées au compteur. */
+const CEREMONIE_MAX = 2500;
+const TICKET_MAX = 5000;
+async function etatBooster(format) {
+  const cles = { carte: 'booster@carte', ticket: 'booster@ticket', butin: 'booster@butin' };
+  const qui = await joueurDuKiosque(format);
+  const { contexte, page, erreurs, refus } = await nouvelleVisite(format, qui);
+  let tirage = null;
+  page.on('response', (r) => {
+    if (r.request().method() !== 'POST' || new URL(r.url()).pathname !== '/api/fanzzy/open') return;
+    r.json().then((j) => {
+      tirage = { statut: r.status(), ...(j.error ? { erreur: j.error } : {}),
+        cartes: (j.cards ?? []).map((c) => ({ sorte: c.type, id: c.id,
+          ...(typeof c.new === 'boolean' ? { neuve: c.new } : {}) })) };
+    }).catch(() => { tirage = { statut: r.status() }; });
+  });
+  const echec = (cle, quoi) => {
+    note(cle, format.largeur, 'état', quoi);
+    rangerEtat(cle, PAGE_KIOSQUE, format, { capture: null, tirage });
+  };
+  /* Le moment en cours, pour nommer celui où une étape lève : un
+     sélecteur disparu ne doit pas arrêter un audit de huit minutes, il doit
+     se lire dans son rapport. */
+  let moment = cles.carte;
+  try {
+    try {
+      await page.goto(base + PAGE_KIOSQUE, { waitUntil: 'networkidle0', timeout: 20_000 });
+    } catch {
+      note(cles.carte, format.largeur, 'chargement', 'le kiosque n’a pas fini de charger en 20 s');
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 1800));
+    await ouvrirUnBooster();
+  } catch (e) {
+    echec(moment, `l’étape a levé : ${String(e?.message ?? e).slice(0, 80)}`);
+  } finally {
+    await contexte.close();
+  }
+
+  async function ouvrirUnBooster() {
+    const faute = await page.evaluate(`(async () => {
+      const attendre = ${ATTENDRE};
+      const b = document.getElementById('openBtn');
+      if (!b) return 'pas de bouton d’ouverture (#openBtn)';
+      if (b.disabled) return 'le bouton d’ouverture est éteint';
+      b.click();
+      return await attendre(() => document.getElementById('tearzone')?.classList.contains('on'), 3000)
+        ? null : 'le sachet à déchirer n’est pas venu en 3 s (#tearzone.on)';
+    })()`);
+    if (faute) { echec(cles.carte, faute); return; }
+    await page.focus('#tearpack');
+    await page.keyboard.press('Enter');
+    const ouvert = await page.waitForFunction(() => document.getElementById('opener')?.classList.contains('on')
+      && document.querySelectorAll('#ostage > *').length > 0, { timeout: 10_000 }).then(() => true, () => false);
+    if (!ouvert) {
+      echec(cles.carte, `le booster ne s’est pas ouvert en 10 s${tirage?.erreur ? ` (${tirage.erreur})` : ''}`);
+      return;
+    }
+    await finDesMouvements(page, 'body', 2000);
+
+    /* Une carte révélée. **Après sa cérémonie** (`FX.reveler`, fx.js) : elle
+       se joue sur un calque à elle, `.fx-ceremonie` (z 96, hors de
+       l'écran d'ouverture), qui reste dans le document et se vide quand
+       c'est fini — 1,6 s au plus, pour une légendaire, après le
+       retournement. Mesurée pendant, la carte tremble sous la secousse et
+       la capture montre le flash et le tampon LÉGENDAIRE au lieu de la
+       carte. La fin des mouvements attend d'abord le retournement, que la
+       cérémonie attend elle aussi : à ce moment-là, elle a posé ses
+       pièces. */
+    await page.evaluate(TOUCHER_LA_CARTE);
+    await finDesMouvements(page, 'body', 3000);
+    const ceremonieFinie = await page.evaluate(`(async () =>
+      (${ATTENDRE})(() => !document.querySelector('.fx-ceremonie > *'), ${CEREMONIE_MAX}))()`).catch(() => false);
+    if (!ceremonieFinie) {
+      note(cles.carte, format.largeur, 'état', `la cérémonie de la carte jouait encore après ${
+        CEREMONIE_MAX / 1000} s : la capture la montre`);
+    }
+    await finDesMouvements(page, 'body', 1500);
+    await new Promise((r) => setTimeout(r, 300));
+    const m1 = await mesurer(page, '#opener');
+    const polices1 = await page.evaluate(POLICES);
+    const capture1 = await photographier(page, 'booster-carte', format, cles.carte);
+    rangerEtat(cles.carte, PAGE_KIOSQUE, format, { ...polices1, capture: capture1, tirage, ceremonieFinie },
+      m1, erreurs, refus);
+    moment = cles.butin;
+
+    /* Le butin. Douze touchers au plus : cinq cartes, retournées puis
+       écartées, et « Tout révéler » quand il paraît. */
+    const recap = () => page.evaluate(() => document.getElementById('summary')?.classList.contains('on') === true);
+    for (let i = 0; i < 12 && !await recap(); i += 1) {
+      const tout = await page.evaluate(() => {
+        const a = document.getElementById('oAction');
+        if (!a || !a.getClientRects().length || getComputedStyle(a).visibility === 'hidden') return false;
+        a.click();
+        return true;
+      });
+      if (!tout) await page.evaluate(TOUCHER_LA_CARTE);
+      await finDesMouvements(page, 'body', 1500);
+    }
+    if (!await recap()) { echec(cles.butin, 'le butin n’est pas venu (#summary.on) après douze touchers'); return; }
+
+    /* **Le ticket du gain.** Une fois les cartes collées et les écharpes
+       des doublons arrivées au compteur (deux secondes et demie environ),
+       le butin pose dans la pile un ticket kraft — les écharpes et l'XP du
+       booster — pour trois secondes. Mesuré à part, sous la portée de la
+       pile : il passe sur le butin, et l'arbitrage du kraft s'y lit. Sans
+       doublon ni XP dans la réponse, il ne vient pas : ce n'est pas un
+       défaut, et l'état le dit sans le compter. */
+    moment = cles.ticket;
+    const ticketVenu = await page.evaluate(`(async () =>
+      (${ATTENDRE})(() => document.querySelector('.tbf-pile > .tbf-ticket--gain'), ${TICKET_MAX}))()`)
+      .catch(() => false);
+    if (ticketVenu) {
+      await finDesMouvements(page, '.tbf-pile', 800);
+      const m0 = await mesurer(page, '.tbf-pile');
+      const polices0 = await page.evaluate(POLICES);
+      const capture0 = await photographier(page, 'booster-ticket', format, cles.ticket);
+      rangerEtat(cles.ticket, PAGE_KIOSQUE, format, { ...polices0, capture: capture0, tirage }, m0, erreurs, refus);
+      /* Puis il part, et le butin se mesure sans lui. */
+      await page.evaluate(`(async () =>
+        (${ATTENDRE})(() => !document.querySelector('.tbf-pile > .tbf-ticket--gain'), 4000))()`).catch(() => {});
+    } else {
+      rangerEtat(cles.ticket, PAGE_KIOSQUE, format, { capture: null, tirage,
+        absent: `aucun ticket en ${TICKET_MAX / 1000} s : ni écharpes de doublons ni XP à dire` });
+    }
+
+    /* **Le butin**, une fois tout posé : les cartes, le compte de la série,
+       les compteurs, le ticket parti. Une fête de niveau n'y vient pas (voir
+       joueurDuKiosque) ; si elle vient, elle est notée et fermée, comme sur
+       une page (voir « Une fête de niveau »). */
+    moment = cles.butin;
+    const fete = await fermerLaFete(page, cles.butin, format.largeur);
+    await finDesMouvements(page, 'body', 3000);
+    await new Promise((r) => setTimeout(r, 300));
+    const m2 = await mesurer(page, '#opener');
+    const polices2 = await page.evaluate(POLICES);
+    const capture2 = await photographier(page, 'booster-butin', format, cles.butin);
+    rangerEtat(cles.butin, PAGE_KIOSQUE, format, { ...polices2, capture: capture2, tirage, ...(fete ? { fete } : {}) },
+      m2, erreurs, refus);
+  }
+}
+
+/* **Le classement d'un joueur classé.** Treize supporters et le joueur de
+   l'audit, classé neuvième : assez pour remplir l'écran au téléphone
+   étroit, pour que sa propre ligne soit sous le pli — c'est là que la
+   ligne épinglée sert —, et pour un podium. Des pseudos de longueurs
+   variées (dix-huit lettres pour le plus long), deux clubs et un neutre,
+   des niveaux, et un Fanzzy équipé pour sept d'entre eux : les six autres
+   montrent le repli à l'initiale.
+
+   La ferveur vient du Grand Virage (`virage_presence`, classée), datée de
+   l'instant : elle tombe dans toutes les fenêtres — le mois, la saison
+   lancée au début de l'audit, depuis toujours. Semée **après** tous les
+   autres relevés : la visite de /classement, le tiroir et la bande du HUD
+   l'ont vu vide, et le relevé d'avant ces lots aussi. */
+const CLASSES = [
+  { pseudo: 'CapoDuKop', ferveur: 48210, matchs: 12, club: 85, xp: 2400, fanzzy: 'RP1', age: 2 },
+  { pseudo: 'Tambour_Nord', ferveur: 41900, matchs: 11, club: 91, xp: 1990, fanzzy: 'RP2', age: 1 },
+  { pseudo: 'LaVoixDuVirage', ferveur: 35400, matchs: 10, club: 85, xp: 1700 },
+  { pseudo: 'Fumigène', ferveur: 27800, matchs: 9, club: 85, xp: 1320, fanzzy: 'RP3', age: 1 },
+  { pseudo: 'Bâche-Haute', ferveur: 22150, matchs: 8, club: 91, xp: 990 },
+  { pseudo: 'Écharpe94', ferveur: 18700, matchs: 7, club: 85, xp: 760, fanzzy: 'RP4', age: 1 },
+  { pseudo: 'Mégaphone', ferveur: 15320, matchs: 6, club: null, xp: 540 },
+  { pseudo: 'TribuneEst', ferveur: 12040, matchs: 5, club: 91, xp: 500, fanzzy: 'RP5', age: 1 },
+  { moi: true, ferveur: 9860, matchs: 5, club: 85 },
+  { pseudo: 'Sifflet', ferveur: 7410, matchs: 4, club: 85, xp: 310 },
+  { pseudo: 'LeGrandDéplacement', ferveur: 5230, matchs: 3, club: 91, xp: 200, fanzzy: 'RP6', age: 1 },
+  { pseudo: 'Banderole', ferveur: 3980, matchs: 3, club: 85, xp: 120 },
+  { pseudo: 'Kop_Junior', ferveur: 2210, matchs: 2, club: 85, xp: 70, fanzzy: 'RP1', age: 1 },
+  { pseudo: 'Novice', ferveur: 940, matchs: 1, club: 91, xp: 0 },
+];
+async function semerClassement() {
+  for (const [i, c] of CLASSES.entries()) {
+    let id = U;
+    if (!c.moi) {
+      id = `aud00000-0000-0000-0002-${String(i + 1).padStart(12, '0')}`;
+      await pool.query(`INSERT INTO users (public_id,email,pseudo,password_hash,status,email_verified_at)
+                        VALUES (?,?,?,'x','active',NOW(3))`, [id, `classe-${i + 1}@ex.fr`, c.pseudo]);
+      await pool.query(`INSERT INTO user_wallet (user_id,scarves,packs,xp,onboarded_at,active_fanzzy)
+                        VALUES (?,0,3,?,NOW(3),?)`, [id, c.xp, c.fanzzy ?? null]);
+      if (c.fanzzy) {
+        await pool.query('INSERT INTO user_fanzzy (user_id,fanzzy_id,copies,stage) VALUES (?,?,1,?)',
+          [id, c.fanzzy, c.age]);
+      }
+      if (c.club) await pool.query('INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,?,1)', [id, c.club]);
+    }
+    /* La ferveur, répartie sur ses matchs : « 12 matchs » se lit sous le
+       pseudo, et les mêmes rencontres servent à tout le monde. */
+    for (let k = 0; k < c.matchs; k += 1) {
+      const part = Math.floor(c.ferveur / c.matchs) + (k === 0 ? c.ferveur % c.matchs : 0);
+      await pool.query(`INSERT INTO virage_presence (user_id,fixture_id,side,ferveur,team_id,classe)
+                        VALUES (?,?,0,?,?,1)`, [id, 990001 + k, part, c.club]);
+    }
+  }
+  return { classes: CLASSES.length, rangDuJoueur: CLASSES.findIndex((c) => c.moi) + 1 };
+}
+
+/* **Un serveur neuf pour le classement.** Le serveur garde une liste de
+   classement cinq minutes en mémoire, et la visite de /classement, le
+   tiroir et la bande du HUD viennent de la lire vide : semée sans cela, la
+   ferveur n'aurait paru qu'au hasard du minutage. Le redémarrage ne vide
+   que cette mémoire-là ; la base, les sessions et les joueurs restent. */
+async function redemarrer() {
+  const ancien = serveur;
+  if (ancien.exitCode === null && ancien.signalCode === null) {
+    await new Promise((r) => { ancien.once('exit', r); ancien.kill(); });
+  }
+  serveur = lancerServeur();
+  return debout();
+}
+
+async function etatClassement(format) {
+  const cle = 'classement@classé';
+  const { contexte, page, erreurs, refus } = await nouvelleVisite(format, 'joueur');
+  try {
+    try {
+      await page.goto(base + PAGE_CLASSEMENT, { waitUntil: 'networkidle0', timeout: 20_000 });
+    } catch {
+      note(cle, format.largeur, 'chargement', 'la page n’a pas fini de charger en 20 s');
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 1800));
+    /* Les classés sont-ils à l'écran ? Leurs pseudos, cherchés dans le texte
+       rendu (« text-transform » compris, d'où les capitales), sans rien
+       supposer du balisage que le lot 5 refait. Moins de la moitié : la
+       ferveur semée ne tombe pas dans la liste affichée, et ce n'est plus
+       l'état qu'on croit mesurer. */
+    const vus = await page.evaluate((pseudos) => {
+      const t = document.body.innerText.toLocaleUpperCase('fr');
+      return pseudos.filter((p) => t.includes(p.toLocaleUpperCase('fr'))).length;
+    }, CLASSES.filter((c) => !c.moi).map((c) => c.pseudo));
+    const attendus = CLASSES.length - 1;
+    if (vus * 2 < attendus) {
+      note(cle, format.largeur, 'état', `le classement ne montre que ${vus} des ${attendus} supporters semés`);
+    }
+    const m = await mesurer(page);
+    const polices = await page.evaluate(POLICES);
+    const capture = await photographier(page, 'classement-classe', format, cle);
+    rangerEtat(cle, PAGE_CLASSEMENT, format, { ...polices, capture, classesVus: vus }, m, erreurs, refus);
   } finally {
     await contexte.close();
   }
@@ -1711,10 +2671,24 @@ if (etats) {
   console.log('');
   /* Les formats de chaque état, dans le JSON : celui de 320 n'est pas dans
      « formats », qui reste la liste des pages. */
-  rapport.formatsEtats = { ouverture: FORMATS_OUVERTURE.map(cleFormat), tiroir: FORMATS.map(cleFormat) };
+  rapport.formatsEtats = { ouverture: FORMATS_OUVERTURE.map(cleFormat), tiroir: FORMATS.map(cleFormat),
+    hud: FORMATS_HUD.map(cleFormat), bonus: FORMATS.map(cleFormat), booster: FORMATS.map(cleFormat),
+    classement: FORMATS.map(cleFormat) };
   for (const format of FORMATS_OUVERTURE) {
     await etatOuverture(format);
     if (FORMATS.includes(format)) await etatTiroir(format);
+  }
+  /* Les états des lots 3 et 5, après : voir « les écrans de plus ». */
+  for (const format of FORMATS_HUD) await etatHud(format);
+  for (const format of FORMATS) await etatBonus(format);
+  for (const format of FORMATS) await etatBooster(format);
+  rapport.classementSeme = await semerClassement();
+  if (await redemarrer()) {
+    for (const format of FORMATS) await etatClassement(format);
+  } else {
+    for (const format of FORMATS) {
+      note('classement@classé', format.largeur, 'état', 'le serveur n’a pas redémarré : classement non mesuré');
+    }
   }
 }
 
@@ -1750,8 +2724,9 @@ if (!trouvailles.length) {
      dans cet ordre, et **tous les autres à leur suite** : un relevé ajouté
      demain se verra même si personne ne pense à cette ligne. */
   const ORDRE_GENRES = ['script', 'image cassée', 'chargement', 'police de repli', 'état', 'refusé (429)',
-    'renvoyée', 'déborde', 'hors écran', 'hors fenêtre',
-    'coupé', 'coupé (lignes)', 'trop petit', 'pâle', 'pâle sur grain', 'sous le décor', 'petit texte', 'opacité',
+    'renvoyée', 'fête de niveau', 'bonus du jour', 'ticket resté', 'déborde', 'hors écran', 'hors fenêtre',
+    'barre décalée', 'tiroir trop haut', 'coupé', 'coupé (lignes)', 'trop petit', 'pâle', 'pâle sur grain', 'sous le décor',
+    'petit texte', 'opacité', 'petit or',
     'backdrop-filter', 'pâle au jour', 'pâle au jour sur grain', 'sans alt', 'capture'];
   const genres = [...ORDRE_GENRES, ...[...parGenre.keys()].filter((g) => !ORDRE_GENRES.includes(g))];
 
@@ -1806,6 +2781,7 @@ if (!trouvailles.length) {
    le relevé qui n'existe que pour eux. */
 const tableau = (titre, lignes, formats = FORMATS, enPlus = []) => {
   const colonnes = [['<11 px', 'petitTexte'], ['<0,85', 'opacite'], ['flou', 'backdrop'],
+    ['petit or', 'petitOr'],
     ['grain', 'palesGrain'], ...(jour ? [['soleil', 'jour'], ['soleil g', 'jourGrain']] : []),
     ['déborde', 'deborde'], ...enPlus];
   /* Au moins la place du titre : avec un seul format, « soleil g » et
@@ -1841,6 +2817,36 @@ for (const f of FORMATS) {
   console.log(`  Sous le grain, ${f.largeur}×${f.hauteur} : ${somme('surGrain')} texte(s) lu(s), ${
     somme('palesGrain')} pâle(s)${jour ? `, ${somme('jourGrain')} pâle(s) au jour` : ''} ; non mesurables : ${
     somme('surDegrade')}`);
+}
+/* **Ce que la règle du texte à soi a ajouté au contraste**, et ce qui lui
+   échappe encore : la ligne à lire avant de comparer un compte de
+   contraste à celui d'un relevé d'avant les lots 3 et 5 (audit-ui/2). */
+for (const f of FORMATS) {
+  const lus = { textes: 0, pales: 0, jour: 0 };
+  let hors = 0;
+  for (const par of Object.values(rapport.pages)) {
+    const r = par[cleFormat(f)]?.releves;
+    if (!r) continue;
+    lus.textes += r.horsFeuille.textes;
+    lus.pales += [...r.pales, ...r.palesGrain].filter((x) => x.horsFeuille).length;
+    lus.jour += [...(r.jour ?? []), ...(r.jourGrain ?? [])].filter((x) => x.horsFeuille).length;
+    hors += r.horsContraste.length;
+  }
+  console.log(`  Texte à soi, ${f.largeur}×${f.hauteur} : ${lus.textes} texte(s) hors des feuilles, ${
+    lus.pales} pâle(s)${jour ? `, ${lus.jour} pâle(s) au jour` : ''} ; hors de tout contraste : ${hors}`);
+}
+/* **La barre, page contre page** : où la majorité pose la flèche et le
+   menu, sur combien de pages, et combien la posent ailleurs (nommées dans
+   « barre décalée », plus haut). */
+for (const f of FORMATS) {
+  const b = rapport.barre?.[cleFormat(f)] ?? {};
+  const dit = PIECES_BARRE.filter(([p]) => b[p]).map(([p]) => {
+    const x = b[p];
+    return `${p === 'retour' ? 'flèche' : 'menu'} ${x.majorite ? `[${x.majorite.join(', ')}] sur ${x.sur}/${x.pages} page(s)`
+      : x.pages < 3 ? `non comparé (${x.pages} page${x.pages > 1 ? 's' : ''})` : `sans majorité sur ${x.pages} pages`}${
+      x.ecarts.length ? `, ${x.ecarts.length} ailleurs` : ''}`;
+  });
+  if (dit.length) console.log(`  La barre, ${f.largeur}×${f.hauteur} : ${dit.join(' ; ')}`);
 }
 console.log('');
 

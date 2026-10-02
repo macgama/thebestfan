@@ -291,8 +291,15 @@ check('le kiosque annonce le bon nombre de Fanzzy par set',
  * qu'il suffisait de glisser.
  *
  * Le carrousel ne porte donc plus que des paquets ouvrables, et il en porte
- * dix : on choisit le sien. **Ce choix ne change rien au tirage** — voir la
+ * trois : on choisit le sien. **Ce choix ne change rien au tirage** — voir la
  * note de `PAQUETS_AU_CHOIX` — c'est un geste de cérémonie.
+ *
+ * Ils étaient dix. Le lot 3 (le kiosque) les a ramenés à trois au plus :
+ * celui du milieu sur son socle, un voisin de chaque côté. On n'en voyait de
+ * toute façon que trois à la fois, et les sept autres n'étaient que des
+ * points sous le carrousel qu'on ne regardait pas. Le contrôle suit donc la
+ * règle nouvelle — trois, tous visibles, et l'on arrive sur celui du
+ * milieu — et pas seulement un nouveau chiffre.
  *
  * Mais un jeu ne cache pas ce qui vient : ce qui suit s'annonce en une ligne,
  * à côté du choix au lieu d'être dedans. Le compte de test est au niveau 1,
@@ -306,8 +313,12 @@ check('le kiosque annonce le bon nombre de Fanzzy par set',
        toutes, avec leur champ `ouverte`. */
     serieOuverte: SETS[S.set]?.ouverte !== false,
     nom: document.getElementById('setName')?.textContent ?? '',
-    /* Dix paquets au choix, tous de cette série. */
+    /* Trois paquets au choix, tous de cette série. */
     paquets: document.querySelectorAll('#carousel .slide').length,
+    /* Lequel est devant (`.center`), et lesquels le carrousel range hors de
+       la vue (`.hidden`, au-delà de 1,8 place du centre). */
+    devant: [...document.querySelectorAll('#carousel .slide.center')].map((s) => s.dataset.i),
+    caches: document.querySelectorAll('#carousel .slide.hidden').length,
     /* Ce qui vient, annoncé sans être sur le chemin. */
     avenir: document.getElementById('avenir')?.hidden === false
       ? document.getElementById('avenir').textContent : null,
@@ -322,7 +333,17 @@ check('le kiosque annonce le bon nombre de Fanzzy par set',
 
   check('le kiosque ne présente qu\u2019une série ouvrable', vu.serieOuverte === true
     || (console.log('        présentée :', vu.nom), false));
-  check(`dix paquets au choix (${vu.paquets})`, vu.paquets === 10);
+  check(`trois paquets au choix (${vu.paquets})`, vu.paquets === 3);
+  /* Trois, c'est ce que l'œil embrasse : aucun n'est rangé hors de la vue,
+     sinon on aurait refait le présentoir de dix en plus court. Et l'on
+     arrive sur celui du milieu — `MILIEU`, l'indice 1 —, un voisin de chaque
+     côté pour que le glissement ait un sens dans les deux directions. Aucun
+     contrôle de cette suite ne fait tourner le carrousel avant celui-ci. */
+  check('tous les trois se voient', vu.caches === 0
+    || (console.log('        rangés hors de la vue :', vu.caches), false));
+  check('et l’on arrive sur celui du milieu',
+    vu.devant.length === 1 && vu.devant[0] === '1'
+    || (console.log('        devant :', JSON.stringify(vu.devant)), false));
   check('le bouton ne réclame plus un niveau',
     !/niveau \d+/i.test(vu.bouton)
     || (console.log('        bouton :', vu.bouton), false));

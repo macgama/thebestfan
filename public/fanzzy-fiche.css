@@ -192,8 +192,11 @@
 .fiche .art .pas-dessine{position:absolute;left:12px;top:44px;z-index:3;max-width:62%;
   padding:6px 10px;border-radius:9px;background:rgba(4,6,10,.9);
   border:1px solid rgba(245,195,59,.32);font-size:11px;line-height:1.35}
+/* Le titre de la note à la craie, l'or au filet : onze pixels ne sont pas
+   un grand texte, et la règle de l'or (décidée par Gaël le 2 octobre 2026,
+   voir « les tons » dans `ui.css`) n'écrit plus un petit texte en or. */
 .fiche .art .pas-dessine b{display:block;font-family:var(--banner);letter-spacing:.06em;
-  color:var(--projo);text-transform:uppercase;font-size:11px}
+  color:var(--craie);text-transform:uppercase;font-size:11px}
 .fiche .art .pas-dessine em{display:block;font-style:normal;opacity:.9;margin-top:2px}
 
 /* Posée sur le dessin flouté, sans panneau : c'est l'ombre portée qui la
@@ -388,7 +391,10 @@
 .fiche .detail .t em{font-style:normal;font-family:var(--ui);font-size:11px;
   letter-spacing:.1em;opacity:.88;text-transform:uppercase}
 .fiche .detail p{margin:6px 0 0;font-size:12px;line-height:1.6;opacity:.92}
-.fiche .detail .cle{color:var(--projo)}
+/* Le mot-clé d'un détail : il se détache par la graisse, plus par l'or —
+   douze pixels ne sont pas un grand texte (la règle de l'or, « les tons »
+   dans `ui.css`). */
+.fiche .detail .cle{color:var(--craie);font-weight:700}
 .fiche .detail .manque{display:inline-flex;align-items:center;gap:6px;margin-top:7px;
   font-size:11.5px;padding:5px 10px;border-radius:999px;
   background:rgba(4,6,10,.55);box-shadow:inset 0 0 0 1px rgba(242,238,228,.14)}
@@ -518,4 +524,6 @@
 @keyframes fiche-fondu{from{opacity:0}}
 
 .fiche .vide{text-align:center;padding:50px 22px;opacity:.9;font-size:13px;line-height:1.8}
-.fiche .vide a{color:var(--projo)}
+/* Le lien de retour se dit par son soulignement, à la craie : treize pixels
+   ne sont pas un grand texte (la règle de l'or, « les tons » dans `ui.css`). */
+.fiche .vide a{color:var(--craie);text-decoration:underline;text-underline-offset:3px}

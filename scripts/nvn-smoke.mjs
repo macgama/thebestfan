@@ -702,4 +702,6 @@ check('un entraînement ne compte pas',
 }
 
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
-process.exit(failures ? 1 : 0);
+/* `process.exitCode` et non `process.exit()` (PLAN.md § 2, règle 13) : rien
+   ne reste ouvert ici, et Node part de lui-même. */
+process.exitCode = failures ? 1 : 0;
