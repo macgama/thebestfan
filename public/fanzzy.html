@@ -962,6 +962,38 @@ document.querySelectorAll('.nav button').forEach((b) => {
   };
 });
 
+/* ------------------------------------------------------ les cartes vues
+
+   Le « +N » de la tuile FANZZY, sur l'accueil, compte les cartes arrivées
+   depuis la dernière fois qu'on a regardé sa collection. L'accueil ne
+   l'éteignait qu'au toucher de sa tuile ou de la bulle : on arrivait ici par
+   le tiroir, on voyait tout, et l'accueil continuait d'annoncer « +3 » pour
+   des cartes déjà vues. Être sur cette page, c'est les avoir vues.
+
+   **La même clé et la même forme que l'accueil** (`tbf.vus` :
+   `{ qui, ids }`, voir `nouveautes` dans index.html) : `qui` est l'id de
+   `/api/auth/me`, `ids` les clés de `collection` de `/api/fanzzy/state` —
+   la route que `load()` vient de lire. Deux formes différentes feraient
+   repartir l'accueil de zéro à chaque passage.
+
+   « Qui es-tu ? » passe par `window.TBF_MOI`, la promesse que `nav.js` pose
+   sous ce nom : une seule question au serveur pour toute la page. Sans id,
+   on n'écrit rien : l'accueil prendrait une clé sans propriétaire pour celle
+   d'un autre joueur, et repartirait de zéro. */
+function marquerVues() {
+  const ids = Object.keys(S.col ?? {});
+  (window.TBF_MOI ??= fetch('/api/auth/me', { credentials: 'same-origin' })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => j?.user ?? null)
+    .catch(() => null))
+    .then((u) => {
+      if (u?.id === undefined || u?.id === null) return;
+      try { localStorage.setItem('tbf.vus', JSON.stringify({ qui: u.id, ids })); }
+      catch { /* stockage refusé : l'accueil gardera son « +N », sans plus */ }
+    })
+    .catch(() => {});
+}
+
 /* ---------------------------------------------------------------- init */
 
 /* Le décor est posé par nav.js, comme sur toutes les autres pages : même
@@ -999,6 +1031,7 @@ document.querySelectorAll('.nav button').forEach((b) => {
   /* Le carrousel et le kiosque ont leur écran à eux — voir /boosters. Cette
      page dessine le classeur et le personnage équipé, et rien d autre. */
   renderDex(); renderTeam();
+  marquerVues();
 
   /* ================== et elle se redessine quand l'état change
 
@@ -1023,6 +1056,8 @@ document.querySelectorAll('.nav button').forEach((b) => {
   addEventListener('tbf:bourse', () => {
     try { renderDex(); renderTeam(); }
     catch (e) { console.error('[classeur] redessin', e); }
+    /* Une carte arrivée pendant qu'on est ici est vue, elle aussi. */
+    marquerVues();
   });
 })();
 </script>

@@ -18,9 +18,10 @@
  * les autres pages déconnectaient sans demander.
  *
  * La liste, les icônes, la construction du tiroir, la confirmation de sortie,
- * l'entrée d'administration et la pastille du direct vivent donc ici, et nulle
- * part ailleurs. `nav.js` l'appelle pour les pages de contenu ; l'accueil
- * l'appelle pour lui-même. Le jour où une entrée change, elle change une fois.
+ * l'entrée d'administration et les états des destinations (le direct, le duel
+ * qui attend, les boosters à ouvrir) vivent donc ici, et nulle part ailleurs.
+ * `nav.js` l'appelle pour les pages de contenu ; l'accueil l'appelle pour
+ * lui-même. Le jour où une entrée change, elle change une fois.
  *
  * Deux réglages y vivent aussi, pour la même raison — le tiroir est le seul
  * endroit présent sur toutes les pages d'un joueur connecté : **le mode
@@ -32,9 +33,12 @@
  * Il ne pose pas de barre du haut, pas de décor, pas de bouton. Il reçoit le
  * bouton que la page a déjà dessiné — chaque page a le sien, et celui de
  * l'accueil est une plaque qui suit la hauteur de sa rangée. Ce fichier
- * branche l'ouverture, remplit le tiroir et gère la sortie.
+ * branche l'ouverture, remplit le tiroir et gère la sortie ; sur le bouton,
+ * il ne pose que l'état le plus urgent (`data-urgence`).
  *
- * L'apparence vit dans `ui.css` (`.tbf-tiroir`, `.tbf-rubrique`, `.tbf-voile`).
+ * L'apparence vit dans `ui.css` (`.tbf-tiroir`, `.tbf-tiroir-tete`,
+ * `.tbf-rubrique`, `.tbf-tiroir-grille`, `.tbf-case`, `.tbf-tiroir-pied`,
+ * `.tbf-voile`).
  * Seuls les interrupteurs et l'entrée d'installation, qui n'existent qu'ici,
  * ont leur feuille à eux, posée par ce fichier — voir `CSS_REGLAGES`.
  */
@@ -140,9 +144,20 @@
     // Deux silhouettes côte à côte, et un plus : on en ajoute une.
     amis: 'M9 11a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4M2 20a7 7 0 0 1 14 0M18 8v6M15 11h6',
     teletext: 'M3 4h18v16H3zM7 9h10M7 13h6',
+    /* Les matchs du jour : une grille d'horaires, la même que sur la tuile
+       MATCHS du hub. Ils empruntaient l'écran du télétexte, et depuis que le
+       tiroir est une grille de tuiles (lot 2), les deux se tenaient côte à
+       côte sur la même rangée avec le même dessin : deux portes qu'on ne
+       distingue qu'en lisant. */
+    matchs: 'M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM3 9h18M8 9v10',
+    /* L'abonnement : une carte d'abonné, sa bande et son nom. Il prenait le
+       panier de la boutique, sa voisine de rubrique — même raison. */
+    abonnement: 'M3 6h18v12H3zM3 10h18M7 14h5',
     compte: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6M12 3v3M12 18v3M3 12h3M18 12h3',
     admin: 'M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6zM9 12l2 2 4-4',
     sortie: 'M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 8l-4 4 4 4M6 12h9',
+    // Une croix : ce qui referme le tiroir (lot 2), là où était le menu.
+    fermer: 'M6 6l12 12M18 6L6 18',
     // Un panier : deux roues et une anse. Reconnaissable à vingt pixels.
     boutique: 'M6 6h15l-1.5 9h-12zM6 6L5 3H2M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2',
     // Un paquet fermé, avec sa bande à déchirer en haut.
@@ -176,27 +191,45 @@
    * sans lire les autres. L'ordre à l'intérieur d'une rubrique est celui de
    * la fréquence, pas de l'alphabet.
    */
+  /* `ton` : la couleur de la rubrique, et de chacune de ses tuiles (lot 2).
+     Chaque ton ne dit qu'une chose dans tout le jeu — rouge on joue, bleu on
+     possède, vert on regarde, violet les gens, or on achète —, et le tiroir
+     le redit au lieu d'en inventer un sixième. La table des tons de `ui.css`
+     ne s'applique qu'à l'élément qui porte l'attribut : il est donc posé sur
+     le titre **et** sur chaque tuile, la rubrique ne le transmet pas.
+
+     **Une destination peut porter le sien**, en quatrième case. Le ton de la
+     rubrique dit pourquoi on vient ; celui d'une destination dit ce qu'on y
+     trouve, et c'est lui que le hub montre. Peintes au ton de leur rubrique,
+     les mêmes portes changeaient de couleur entre le hub et le tiroir : le
+     KOP et les amis, violets sur le hub (« le violet reste les gens »,
+     amendement 4), passaient au rouge et au bleu ; les boosters et la
+     boutique, or sur le hub (« l'or : acheter », amendements 3 et 18),
+     passaient au rouge. Le code couleur ne tenait plus d'un écran à
+     l'autre. Le deck suit la même règle : bleu, parce qu'on le possède
+     (amendement 18), même rangé parmi ce qu'on joue. La rubrique garde son
+     écharpe, son ordre et ses autres tuiles. */
   const MENU = [
-    { titre: 'JOUER', liens: [
+    { titre: 'JOUER', ton: 'flare', liens: [
       ['/virage', 'virage', 'Le Grand Virage'],
       ['/duel-nvn', 'duel', 'Duel de tribunes'],
       // Le KOP est au centre du jeu : il ouvre la rubrique de ce qu'on fait à
       // plusieurs, et il n'est plus derrière un second menu.
-      ['/kop', 'kop', 'Mon KOP'],
-      ['/deck', 'deck', 'Mon deck'],
-      ['/boosters', 'pack', 'Mes boosters'],
-      ['/boutique', 'boutique', 'La boutique'],
+      ['/kop', 'kop', 'Mon KOP', 'violet'],
+      ['/deck', 'deck', 'Mon deck', 'bleu'],
+      ['/boosters', 'pack', 'Mes boosters', 'or'],
+      ['/boutique', 'boutique', 'La boutique', 'or'],
       /* Juste après la boutique, et pas ailleurs : c'est le même geste — on
          vient dépenser. Il manquait, et la seule façon d'atteindre l'écran de
          l'abonnement était de connaître son adresse. */
-      ['/abonnement', 'boutique', 'L’abonnement'],
+      ['/abonnement', 'abonnement', 'L’abonnement', 'or'],
       /* Dernière de JOUER, et bien dans JOUER : on y va pour jouer, pas parce
          qu'on est perdu. Après les deux écrans qu'elle prépare et jamais avant
          eux — ce n'est pas une étape à franchir pour entrer au Virage, c'est
          un endroit où revenir quand un geste résiste. */
       ['/repetition', 'repetition', 'La répétition'],
     ] },
-    { titre: 'MA COLLECTION', liens: [
+    { titre: 'MA COLLECTION', ton: 'bleu', liens: [
       /* **Elle n'était dans aucun menu.** L'en-tête de ce fichier promet « la
          seule liste des destinations du jeu », et `menu-smoke.mjs` le redit :
          « ce qui n'y est pas n'existe pas ». La collection n'y était pas. On
@@ -210,10 +243,10 @@
       ['/collection', 'collection', 'Ma collection'],
       ['/fanzzy', 'fanzzy', 'Mes Fanzzy'],
       ['/carnet', 'carnet', 'Mon carnet'],
-      ['/amis', 'amis', 'Mes amis'],
+      ['/amis', 'amis', 'Mes amis', 'violet'],
     ] },
-    { titre: 'LE FOOTBALL', liens: [
-      ['/matchs', 'teletext', 'Les matchs du jour'],
+    { titre: 'LE FOOTBALL', ton: 'vert', liens: [
+      ['/matchs', 'matchs', 'Les matchs du jour'],
       ['/equipes', 'clubs', 'Mes clubs'],
       ['/teletext', 'teletext', 'Toutes les compétitions'],
       ['/classement', 'classement', 'Classement des supporters'],
@@ -222,6 +255,23 @@
 
   const item = (href, cle, texte, classe = '') =>
     `<a href="${href}" class="${classe}"><svg viewBox="0 0 24 24"><path d="${ICONES[cle]}"/></svg>${texte}</a>`;
+
+  /* **La tuile du tiroir** (lot 2) : une bâche de la grille, la même que
+     celles du hub, au ton de sa rubrique — ou au sien, quand la destination
+     en porte un (voir `MENU`) : le même que sur le hub. Le libellé est dans
+     `.lib` et nulle part ailleurs : la tuile est une grille, et un texte nu
+     y deviendrait un élément anonyme que la feuille ne sait pas placer. Il a
+     le droit de passer sur deux lignes (« DUEL DE TRIBUNES ») ; une
+     troisième serait coupée, c'est au libellé d'être court.
+
+     Le texte du lien reste le libellé, mot pour mot : `menu-smoke` compare
+     les libellés du tiroir d'une page à l'autre, et l'état d'une tuile —
+     LIVE, « 4 », « 2 » — n'en fait pas partie, puisque c'est la feuille qui
+     l'écrit (`::after`, à partir de `data-etat` et `data-pastille`). */
+  const tuile = (href, cle, texte, ton, ici) =>
+    `<a class="tbf-case${ici ? ' on' : ''}" data-ton="${ton}" href="${href}"`
+    + `${ici ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path`
+    + ` d="${ICONES[cle]}"/></svg><span class="lib">${texte}</span></a>`;
 
   /* Les trois facettes du mode calme, dans l'ordre du tiroir. Le libellé dit
      ce que fait l'interrupteur quand on l'allume : il **coupe**. Un
@@ -281,16 +331,21 @@
   html[data-calme~="animations"] .tbf-inter,
   html[data-calme~="animations"] .tbf-inter::after{transition:none}
   /* La consigne de l'iPhone, sous son entrée. Un texte qu'on lit pour agir :
-     treize pixels, et presque la craie pleine. */
-  .tbf-installer-ios{margin:0 10px 6px 39px;font-size:13px;line-height:1.5;
-    color:rgba(242,238,228,.92)}
-  .tbf-installer-ios b{color:var(--craie);font-weight:700}`;
+     treize pixels. Elle vit sur le ticket kraft du pied depuis le lot 2, et
+     y est peinte à l'encre par ui.css : cette feuille ne lui donne plus de
+     couleur. Elle la peignait en craie, pour le fond sombre d'avant — la
+     craie sur le kraft ne se lit pas, et seule la règle plus lourde de
+     ui.css l'en empêchait. */
+  .tbf-installer-ios{margin:0 10px 6px 39px;font-size:13px;line-height:1.5}
+  .tbf-installer-ios b{font-weight:700}`;
 
   /* Une seule interrogation du serveur pour toute la page, quel que soit le
      nombre d'appelants. L'accueil demandait `role` à `/api/auth/me` pendant
      que `nav.js` demandait `/api/admin/suis-je` : deux sources pour la même
      question, et `estAdmin` est celle qui fait foi côté serveur. */
   let promesseAdmin = null;
+  /** Le tiroir monté sur cette page, s'il l'est : voir `poser`, tout en bas. */
+  let monte = null;
   const suisJeAdmin = () => {
     promesseAdmin ??= fetch('/api/admin/suis-je', { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : { admin: false }))
@@ -303,7 +358,10 @@
    * Monte le tiroir et le branche sur un bouton déjà dessiné par la page.
    *
    * @param {HTMLElement} bouton le bouton « menu » de la page.
-   * @returns {{tiroir: HTMLElement, voile: HTMLElement, ouvrir: (oui:boolean)=>void}}
+   * @returns {{tiroir: HTMLElement, voile: HTMLElement, ouvrir: (oui:boolean)=>void,
+   *   poser: (href:string, etat:?string, pastille?:(string|number)) => void}}
+   *   `poser` : l'état d'une destination (`direct`, `pret`, `attend`, `nouveau`,
+   *   ou rien pour l'éteindre), et le bouton prend le plus urgent.
    */
   function monter(bouton) {
     if (!document.getElementById('tbf-menu-css')) {
@@ -324,24 +382,59 @@
        moyen de faire douter quelqu'un de l'endroit où il se trouve. */
     const ici = (href) => chemin === href;
 
-    tiroir.innerHTML = `<a class="tbf-tiroir-ici${chemin === '/' ? ' on' : ''}" href="/"
-        ><svg viewBox="0 0 24 24"><path d="${ICONES.accueil}"/></svg>L’accueil</a>`
-      + MENU.map((r) => `<div class="tbf-rubrique">${r.titre}</div>`
-        + r.liens.map(([href, cle, texte]) =>
-          item(href, cle, texte, ici(href) ? 'on' : '')).join('')).join('')
-      /* **Le mode calme**, en dernière rubrique : ce n'est pas un endroit où
-         aller, c'est la façon dont le jeu se comporte partout. Des boutons et
-         non des liens : un lien mène quelque part, un interrupteur change
-         quelque chose ici, et un lecteur d'écran doit pouvoir le dire.
+    /* **La tête** (lot 2). Le tiroir est une bâche qu'on déroule depuis le
+       haut, et elle couvre la barre — sur un téléphone, tout l'écran : le
+       bouton de menu qui l'a ouverte est dessous. Elle porte donc elle-même
+       de quoi se refermer, une bâche « × » de 44 px là où était le menu, et
+       le retour à l'accueil là où était la flèche. Sans ce bouton, à 360 px,
+       on ne pouvait plus refermer le menu qu'avec Échap — c'est-à-dire pas
+       du tout sur un téléphone.
 
-         Trois facettes séparées, parce que les raisons ne sont pas les mêmes :
-         on coupe le son dans le train, les vibrations la nuit, les animations
-         parce qu'elles fatiguent ou qu'elles donnent le mal de mer. Les
-         barres de temps et les chiffres restent : ce sont des informations. */
-      + '<div class="tbf-rubrique" id="tbf-calme-titre">MODE CALME</div>'
+       Le mot MENU, sur son scotch, est pour l'œil seul : le tiroir s'annonce
+       déjà par son `aria-label`. */
+    const tete = '<div class="tbf-tiroir-tete">'
+      + `<a class="tbf-tiroir-ici${chemin === '/' ? ' on' : ''}" href="/"`
+      + `${chemin === '/' ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path`
+      + ` d="${ICONES.accueil}"/></svg>L’accueil</a>`
+      + '<span class="tbf-tiroir-titre" aria-hidden="true">Menu</span>'
+      + '<button type="button" class="tbf-tiroir-fermer" aria-label="Fermer le menu">'
+      + `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES.fermer}"/></svg></button>`
+      + '</div>';
+
+    /* **Les trois rubriques, en grilles de bâches-tuiles** (lot 2). C'étaient
+       seize lignes de texte à plat, la seule surface du jeu sans matière ; ce
+       sont maintenant les tuiles du hub, aux mêmes tons que sur le hub, avec
+       les mêmes stickers d'état. Le titre est un vrai titre de section — un `h2`
+       au pochoir —, et son texte reste le mot seul : `menu-smoke` le lit. */
+    const rubriques = MENU.map((r) => '<section class="tbf-tiroir-rub">'
+      + `<h2 class="tbf-rubrique" data-ton="${r.ton}"><span class="tbf-pochoir">${r.titre}</span></h2>`
+      + '<div class="tbf-tiroir-grille">'
+      + r.liens.map(([href, cle, texte, ton]) => tuile(href, cle, texte, ton ?? r.ton, ici(href))).join('')
+      + '</div></section>').join('');
+
+    /* **Le mode calme**, en dernière rubrique : ce n'est pas un endroit où
+       aller, c'est la façon dont le jeu se comporte partout. Des boutons et
+       non des liens : un lien mène quelque part, un interrupteur change
+       quelque chose ici, et un lecteur d'écran doit pouvoir le dire.
+
+       Trois facettes séparées, parce que les raisons ne sont pas les mêmes :
+       on coupe le son dans le train, les vibrations la nuit, les animations
+       parce qu'elles fatiguent ou qu'elles donnent le mal de mer. Les
+       barres de temps et les chiffres restent : ce sont des informations.
+
+       Il a rejoint le pied (lot 2), après la déconnexion : sur le ticket
+       kraft, avec tout ce qui ne se joue pas. Il reste la dernière rubrique,
+       comme avant. */
+    const calmeHTML = '<div class="tbf-rubrique" id="tbf-calme-titre">MODE CALME</div>'
       + '<div role="group" aria-labelledby="tbf-calme-titre">'
-      + REGLAGES.map(interrupteur).join('') + '</div>'
-      + '<hr>'
+      + REGLAGES.map(interrupteur).join('') + '</div>';
+
+    /* **Le pied, sur un ticket kraft** (lot 2) : une liste calme, en deux
+       colonnes, pour ce qu'on vient chercher en sachant ce qu'on cherche — et
+       qui n'est pas un endroit où jouer. Les liens gardent leur balisage et
+       leur ordre ; seul le papier change, et la feuille les passe à l'encre. */
+    tiroir.innerHTML = tete + rubriques
+      + '<div class="tbf-ticket tbf-tiroir-pied">'
       /* En tête du pied, avant le profil et le compte : c'est la seule entrée
          qu'on cherche **parce qu'on est perdu**, et quelqu'un de perdu ne lit
          pas un menu jusqu'au bout. Elle ne rejoint pas les rubriques du
@@ -369,7 +462,7 @@
 
          **Après l'Aide, jamais avant.** Posée au-dessus, c'est elle qui
          ouvrirait le pied du tiroir les jours où elle paraît, et cette place
-         revient à l'Aide : voir le commentaire posé sous le trait, plus haut. */
+         revient à l'Aide : voir le commentaire en tête du pied, plus haut. */
       + '<button type="button" class="tbf-tiroir-bt" id="tbf-installer" hidden>'
       + `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES.installer}"/></svg>`
       + 'Installer l’application</button>'
@@ -378,6 +471,7 @@
       + item('/profil', 'profil', 'Mon profil', ici('/profil') ? 'on' : '')
       + item('/compte', 'compte', 'Mon compte', ici('/compte') ? 'on' : '')
       + item('#', 'sortie', 'Se déconnecter', 'sortie')
+      + calmeHTML
       /* **La version, tout en bas, et sur toutes les pages.**
 
          Un joueur qui signale un défaut décrit ce qu'il voit ; il ne peut pas
@@ -395,11 +489,13 @@
          **Pas de data-legal**, et c'est voulu : ce numéro n'est pas une
          mention qu'on a le droit de lire mal, c'est le texte qu'un joueur doit
          pouvoir recopier dehors, pressé, quand on lui demande « quelle version
-         as-tu ? ». ui.css le pose à onze pixels et 0,86 — il tient le plancher
-         des textes qui informent (0,85), et l'audit doit continuer à l'y tenir
-         plutôt que de le laisser redescendre sous la tolérance des mentions
-         légales (0,55) sans que rien ne le signale. */
-      + '<div class="tbf-version" id="tbf-version"></div>';
+         as-tu ? ». ui.css le pose à onze pixels, à l'encre pleine sur le
+         kraft du pied — au-dessus du plancher des textes qui informent
+         (0,85), où l'audit doit continuer à le tenir plutôt que de le laisser
+         redescendre sous la tolérance des mentions légales (0,55) sans que
+         rien ne le signale. */
+      + '<div class="tbf-version" id="tbf-version"></div>'
+      + '</div>';
 
     const voile = document.createElement('div');
     voile.className = 'tbf-voile';
@@ -510,24 +606,69 @@
     window.addEventListener('tbf-pwa', proposerInstallation);
     proposerInstallation();
 
+    /* ---------------------------------------- dérouler, et ranger
+
+       `hidden` et la classe : la classe anime, l'attribut sort vraiment le
+       menu de l'ordre de tabulation. Sans lui, la tabulation traverse un
+       menu invisible.
+
+       **Un calcul forcé entre les deux** (`offsetWidth`), et non plus une
+       image d'attente : la bâche part de son état replié, posé par la feuille,
+       et le navigateur doit l'avoir calculé avant qu'on lui donne `.on` — sans
+       quoi il saute directement à l'état final, sans dérouler. Les navigateurs
+       qui connaissent `@starting-style` s'en passeraient ; les autres, non.
+
+       **Deux cent quarante millisecondes avant de la cacher**, la durée du
+       déroulé (ui.css). Elle en attendait deux cents, réglées sur l'ancienne
+       boîte : la fin de la bâche qui remonte aurait été coupée net.
+
+       **Le focus suit la bâche.** Elle couvre la barre, et sur un téléphone
+       tout l'écran : le bouton qui l'a ouverte est dessous. Le focus entre
+       donc sur le bouton qui la ferme, et revient au bouton de menu quand
+       elle se range — seulement s'il était resté dedans : un joueur qui a
+       touché le voile a déjà le doigt ailleurs. */
+    const fermer = tiroir.querySelector('.tbf-tiroir-fermer');
+    let rangement = 0;
+    const ouvert = () => tiroir.classList.contains('on');
     const ouvrir = (oui) => {
-      // `hidden` et la classe : la classe anime, l'attribut sort vraiment le
-      // menu de l'ordre de tabulation. Sans lui, la tabulation traverse un
-      // menu invisible.
+      if (oui === ouvert()) return;
+      clearTimeout(rangement);
       if (oui) {
         tiroir.hidden = false;
         majInterrupteurs();
         proposerInstallation();
+        void tiroir.offsetWidth;
+        tiroir.classList.add('on');
+        voile.classList.add('on');
+        bouton.setAttribute('aria-expanded', 'true');
+        fermer.focus({ preventScroll: true });
+        return;
       }
-      requestAnimationFrame(() => {
-        tiroir.classList.toggle('on', oui);
-        voile.classList.toggle('on', oui);
-        bouton.setAttribute('aria-expanded', String(oui));
-        if (!oui) {
-          setTimeout(() => { if (!tiroir.classList.contains('on')) tiroir.hidden = true; }, 200);
-        }
-      });
+      const avaitLeFocus = tiroir.contains(document.activeElement);
+      tiroir.classList.remove('on');
+      voile.classList.remove('on');
+      bouton.setAttribute('aria-expanded', 'false');
+      rangement = setTimeout(() => { if (!ouvert()) tiroir.hidden = true; }, 240);
+      if (avaitLeFocus) bouton.focus({ preventScroll: true });
     };
+
+    /* Le focus ne sort pas d'une bâche qui couvre l'écran : au bout de la
+       liste, la tabulation repart du début au lieu de filer sur la page
+       cachée derrière le voile — où elle se poserait sur des liens qu'on ne
+       voit pas. Même règle que la boîte de confirmation (dialogue.js). */
+    tiroir.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab' || !ouvert()) return;
+      const cibles = [...tiroir.querySelectorAll('a[href], button')]
+        .filter((n) => !n.closest('[hidden]') && n.getClientRects().length);
+      if (!cibles.length) return;
+      const premier = cibles[0];
+      const dernier = cibles[cibles.length - 1];
+      if (e.shiftKey && document.activeElement === premier) {
+        e.preventDefault(); dernier.focus();
+      } else if (!e.shiftKey && document.activeElement === dernier) {
+        e.preventDefault(); premier.focus();
+      }
+    });
     /* L'état de l'abonnement, demandé une fois et sans bloquer.
        *
        * Sous garde entière : cette route peut ne pas être montée, la table
@@ -564,9 +705,15 @@
       } catch { /* un menu ne tombe pas pour ça */ }
     })();
 
-    bouton.addEventListener('click', () => ouvrir(!tiroir.classList.contains('on')));
+    bouton.addEventListener('click', () => ouvrir(!ouvert()));
+    fermer.addEventListener('click', () => ouvrir(false));
     voile.addEventListener('click', () => ouvrir(false));
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ouvrir(false); });
+    /* Échap ferme toujours — sauf quand quelqu'un l'a déjà pris : la boîte de
+       confirmation de sortie s'ouvre par-dessus le tiroir, et son Échap
+       répond « non » à sa question ; il ne doit pas ranger le menu avec. */
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !e.defaultPrevented && ouvert()) ouvrir(false);
+    });
 
     /* La déconnexion se demande — partout, et non sur le seul écran d'accueil.
        Ce bouton est le dernier d'un tiroir qu'on ouvre pour aller ailleurs :
@@ -580,6 +727,12 @@
       }))) return;
       try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); }
       catch { /* hors ligne : on recharge quand même, la session locale ne sert plus */ }
+      /* Ce que l'onglet retenait de ce joueur part avec lui : les états du
+         tiroir (ses clubs en direct, le duel qu'on lui propose) et le HUD de
+         la barre. Quelqu'un d'autre peut se connecter dans la minute. */
+      try {
+        for (const cle of ['tbf-hud', 'tbf-etat-virage', 'tbf-etat-duel']) sessionStorage.removeItem(cle);
+      } catch { /* stockage fermé : il n'y avait rien de retenu */ }
       location.href = '/';
     });
 
@@ -623,75 +776,133 @@
      * comportement d'avant. Un menu ne tombe pas parce qu'un cache est fermé.
      */
     const DUREE_PASTILLE = 30_000;
+    /* La valeur retenue est désormais **ce qu'on sait**, et non plus un
+       oui ou non : le duel dit combien de supporters attendent (« 2 »), et le
+       sticker l'écrit. Nouvelles clés, `tbf-etat-*` : une ancienne entrée
+       `tbf-pip-*` restée dans l'onglet porte un booléen sans chiffre ;
+       personne ne la relit plus, et l'onglet l'oublie en se fermant. */
     async function pastille(cle, url, decide) {
       try {
         const vu = JSON.parse(sessionStorage.getItem(cle) || 'null');
-        if (vu && Date.now() - vu.t < DUREE_PASTILLE) return vu.on;
+        if (vu && Date.now() - vu.t < DUREE_PASTILLE) return vu.v;
       } catch { /* pas de mémoire ici : on demande, comme avant */ }
-      let on = false;
+      let v = null;
       try {
         const r = await fetch(url, { credentials: 'same-origin' });
-        if (!r.ok) return false;
-        on = Boolean(decide(await r.json()));
-      } catch { return false; }
-      try { sessionStorage.setItem(cle, JSON.stringify({ t: Date.now(), on })); }
+        if (!r.ok) return null;
+        v = decide(await r.json()) ?? null;
+      } catch { return null; }
+      try { sessionStorage.setItem(cle, JSON.stringify({ t: Date.now(), v })); }
       catch { /* tant pis : on redemandera */ }
-      return on;
+      return v;
     }
 
-    /* Un match des clubs suivis est en cours : sur le bouton pour qu'on la voie
-       sans ouvrir, sur la ligne du Virage pour qu'on sache où elle mène.
+    /* ------------------------------------------- les états, et l'urgence
 
-       `mien` : la liste couvre tous les matchs en direct, et une pastille
-       allumée en permanence ne prévient plus de rien.
+       **Le point rouge aveugle est parti** (lot 2). Le bouton de menu avait
+       une pastille de six pixels quand un match était en direct ou qu'un duel
+       attendait : elle ne disait ni quoi ni combien, et rien pour des boosters
+       à ouvrir. Chaque destination porte maintenant **le sticker de son
+       état** sur sa tuile — LIVE rouge sur le Grand Virage, « 2 » violet sur
+       le duel quand deux supporters attendent, « 4 » or sur les boosters
+       quand la réserve en a quatre — et le bouton porte **celui de l'état le
+       plus urgent** : le direct, puis la récompense prête, puis le duel. On
+       retrouve en ouvrant le sticker qu'on a vu fermé.
+
+       Tout passe par `poser`, et par rien d'autre : la tuile reçoit son
+       attribut, le bouton est recalculé depuis les tuiles. Un état sans donnée
+       ne se pose pas — l'attribut est retiré, jamais un tiret.
+
+       `poser` est rendue à l'appelant : `nav.js` y pose les boosters, qu'il
+       connaît par le HUD de la barre, et l'accueil peut y poser ce qu'il sait
+       déjà (ce fichier n'y demande rien, voir plus bas). */
+    const URGENCES = ['direct', 'pret', 'attend'];
+    /* **Sur les deux écrans de jeu, le point d'avant.** Le Grand Virage et le
+       duel ne changent pas dans ce lot : leur barre flotte à huit pixels du
+       bord, et le sticker, qui déborde de neuf au-dessus du bouton, y serait
+       rogné par le haut de l'écran. Le point rouge reste donc là, dans le
+       bouton, tel qu'il était — jusqu'au HUD de match, qui accueillera ces
+       deux boutons. */
+    const enJeu = Boolean(bouton.closest('.tbf-haut-jeu'));
+    function urgence() {
+      const etats = [...tiroir.querySelectorAll('.tbf-case[data-etat]')];
+      if (enJeu) {
+        const allume = etats.some((n) => URGENCES.includes(n.dataset.etat));
+        const pip = bouton.querySelector('.pip');
+        if (allume && !pip) bouton.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
+        if (!allume) pip?.remove();
+        return;
+      }
+      for (const u of URGENCES) {
+        const t = etats.find((n) => n.dataset.etat === u);
+        if (!t) continue;
+        bouton.dataset.urgence = u;
+        if (t.dataset.pastille) bouton.dataset.pastille = t.dataset.pastille;
+        else delete bouton.dataset.pastille;
+        return;
+      }
+      delete bouton.dataset.urgence;
+      delete bouton.dataset.pastille;
+    }
+    function poser(href, etat, pastilleTexte) {
+      const t = tiroir.querySelector(`.tbf-case[href="${href}"]`);
+      if (!t) return;
+      if (etat) t.dataset.etat = etat; else delete t.dataset.etat;
+      if (etat && pastilleTexte != null && pastilleTexte !== '') {
+        t.dataset.pastille = String(pastilleTexte);
+      } else delete t.dataset.pastille;
+      urgence();
+    }
+
+    /* Un match des clubs suivis est en cours : sur le bouton pour qu'on le
+       voie sans ouvrir, sur la tuile du Virage pour qu'on sache où il mène.
+
+       `mien` : la liste couvre tous les matchs en direct, et un sticker
+       allumé en permanence ne prévient plus de rien.
 
        **Sauf sur les deux écrans qui montrent déjà le match.** L'accueil
        affiche la rencontre en cours dans sa bande du bas, le Grand Virage en
-       donne la liste entière : une pastille y dit, en six pixels et sans le
-       nommer, ce que l'écran raconte en toutes lettres juste à côté. Et elle le
-       dit au prix de `/api/virage/live`, la route la plus chère du jeu —
-       demandée une seconde fois sur ces deux pages, puisque toutes deux
-       l'appellent déjà pour leur propre compte. Une pastille redondante n'est
-       pas neutre : elle coûte un aller-retour, et elle apprend à ne plus
-       regarder les pastilles. */
+       donne la liste entière : un sticker y dit, sans le nommer, ce que
+       l'écran raconte en toutes lettres juste à côté. Et il le dit au prix de
+       `/api/virage/live`, la route la plus chère du jeu — demandée une
+       seconde fois sur ces deux pages, puisque toutes deux l'appellent déjà
+       pour leur propre compte. Un état redondant n'est pas neutre : il coûte
+       un aller-retour, et il apprend à ne plus regarder les stickers. */
     if (!['/', '/virage'].includes(chemin)) {
-      void pastille('tbf-pip-virage', '/api/virage/live',
-        (d) => d?.matchs?.some((m) => m.open && m.mien)).then((on) => {
-        if (!on) return;
-        bouton.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
-        tiroir.querySelector('a[href="/virage"]')
-          ?.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
+      void pastille('tbf-etat-virage', '/api/virage/live',
+        (d) => Boolean(d?.matchs?.some((m) => m.open && m.mien))).then((direct) => {
+        if (direct) poser('/virage', 'direct');
       });
     }
 
-    /* Et la même pastille quand quelqu'un attend un duel. Une file ne vit que
-       deux minutes, le temps qu'un joueur est devant son écran : quand elle
-       existe, c'est que quelqu'un attend **maintenant**, et le dire est la
-       seule chance qu'il trouve du monde. Deux pastilles au plus, jamais
-       allumées pour rien.
+    /* Et quand quelqu'un attend un duel. Une file ne vit que deux minutes, le
+       temps qu'un joueur est devant son écran : quand elle existe, c'est que
+       quelqu'un attend **maintenant**, et le dire est la seule chance qu'il
+       trouve du monde. Le sticker dit combien — `presents`, les deux camps de
+       la file que le serveur juge la plus pertinente pour ce joueur.
 
        Même retenue qu'au-dessus, et pour les deux mêmes raisons : l'accueil
        nomme déjà le club qui manque sur son bouton d'entrée — « il manque 2
-       supporters de Vissel Kobe », ce qu'un point rouge ne dira jamais — et sur
+       supporters de Vissel Kobe », ce qu'un sticker ne dira jamais — et sur
        l'écran du duel, on y est. */
     if (!['/', '/duel-nvn'].includes(chemin)) {
-      void pastille('tbf-pip-duel', '/api/nvn/attentes',
-        (d) => ((d?.alerte?.camps?.[0] ?? 0) + (d?.alerte?.camps?.[1] ?? 0)) > 0)
-        .then((on) => {
-          if (!on) return;
-          const duel = tiroir.querySelector('a[href="/duel-nvn"]');
-          if (!duel) return;
-          duel.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
-          // Sur le bouton aussi, s'il n'y en a pas déjà une : on prévient d'une
-          // chose à faire, pas de laquelle.
-          if (!bouton.querySelector('.pip')) {
-            bouton.insertAdjacentHTML('beforeend', '<span class="pip"></span>');
-          }
-        });
+      void pastille('tbf-etat-duel', '/api/nvn/attentes', (d) => {
+        const n = (d?.alerte?.camps?.[0] ?? 0) + (d?.alerte?.camps?.[1] ?? 0);
+        return n > 0 ? n : null;
+      }).then((n) => {
+        if (n) poser('/duel-nvn', 'attend', n);
+      });
     }
 
-    return { tiroir, voile, ouvrir };
+    monte = { tiroir, voile, ouvrir, poser };
+    return monte;
   }
 
-  window.TBF_MENU = { chemin, TITRES, ICONES, MENU, item, monter, suisJeAdmin };
+  /* **Poser un état sans garder le tiroir sous la main.** Une page ne monte
+     qu'un tiroir, et l'accueil appelle `monter` sans retenir ce qu'elle rend :
+     `TBF_MENU.poser('/boosters', 'pret', 4)` vaut l'appel sur le tiroir monté,
+     et ne fait rien tant qu'aucun ne l'est. Voir `poser`, dans `monter`. */
+  const poser = (href, etat, pastilleTexte) => monte?.poser(href, etat, pastilleTexte);
+
+  window.TBF_MENU = { chemin, TITRES, ICONES, MENU, item, monter, poser, suisJeAdmin };
 })();

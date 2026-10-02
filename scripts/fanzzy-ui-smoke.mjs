@@ -213,6 +213,12 @@ app.use('/api/fanzzy', (q, s, n) => {
   n();
 }, fanzzy.router);
 app.use('/api/deck', decks.router);
+/* La route du niveau, montée comme le fait server.js. Depuis le lot 2, le HUD
+   de la barre (nav.js) y lit l'anneau d'XP et le chiffre du niveau ; sans
+   elle, il les retire — c'est sa règle, une ligne sans donnée disparaît — et
+   la suite ne verrait jamais l'anneau qu'elle doit éprouver. Aucune autre
+   page servie ici ne la lit. */
+app.use('/api/niveau', niveau.router);
 app.get('/fanzzy', (_q, s) => s.sendFile(path.join(RACINE, 'public', 'fanzzy.html')));
 // La fiche d'un Fanzzy, servie comme `server.js` le fait : c'est la page que
 // la grille ouvre quand on touche une carte.
@@ -2113,7 +2119,40 @@ check('et elle explique pourquoi au lieu de rester vide',
       href: liens.map((a) => a.getAttribute('href')),
       debordePage: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       sortDeLEcran: r.left < 0 || r.right > innerWidth + 1,
-      rognes: liens.filter((a) => a.scrollWidth > a.clientWidth + 1).map((a) => a.textContent.trim()),
+      /* **Une tuile se mesure à son libellé, les autres liens à eux-mêmes.**
+
+         Depuis le lot 2, les destinations du tiroir sont des bâches-tuiles
+         (`a.tbf-case`), et une tuile déborde **par dessin** : le coin déchiré
+         en `::before`, le sticker d'état en `::after`. Mesurées telles
+         quelles, les seize passaient pour rognées alors qu'aucune lettre ne
+         l'était. Ce qui se coupe dans une tuile, c'est son `.lib` — c'est
+         déjà ce que mesure l'accueil sur ses rails.
+
+         Et il se coupe de deux façons : en largeur, comme un lien ; et en
+         hauteur, parce qu'il a droit à deux lignes (`line-clamp`) et que la
+         troisième disparaît sans un signe — un libellé de onze pixels trop
+         long ne déborde plus, il perd sa fin. On compte donc ses lignes, au
+         lieu de comparer ses hauteurs : la boîte de la police, plus haute
+         que l'interligne serré de la tuile, fait dépasser `scrollHeight` d'un
+         libellé d'une seule ligne. Une tuile sans `.lib` est mesurée entière,
+         comme avant : rien n'échappe à la mesure. */
+      rognes: liens.filter((a) => {
+        const lib = a.classList.contains('tbf-case') ? a.querySelector('.lib') : null;
+        if (!lib) return a.scrollWidth > a.clientWidth + 1;
+        if (lib.scrollWidth > lib.clientWidth + 1) return true;
+        const max = parseInt(getComputedStyle(lib).webkitLineClamp, 10);
+        if (!(max > 0)) return false;
+        const plage = document.createRange();
+        plage.selectNodeContents(lib);
+        const pas = parseFloat(getComputedStyle(lib).lineHeight) || 12;
+        let lignes = 0;
+        let haut = -Infinity;
+        for (const y of [...plage.getClientRects()].filter((b) => b.width > 0)
+          .map((b) => b.top).sort((x, z) => x - z)) {
+          if (y - haut > pas / 2) { lignes++; haut = y; }
+        }
+        return lignes > max;
+      }).map((a) => a.textContent.trim()),
     };
   });
 
@@ -2187,35 +2226,234 @@ check('et elle explique pourquoi au lieu de rester vide',
  * jetons de la barre commune étaient des div inertes.
  */
 {
-  /* La barre porte trois choses : de quoi sortir, le nom de l'écran, le menu.
+  /* La barre porte de quoi sortir, le nom de l'écran, le menu — et, replié,
+     ce que je possède.
 
-     Elle en portait cinq — l'avatar avec le pseudo et le club, deux jetons de
-     monnaie — qui se disputaient trois cent soixante pixels sans jamais dire
-     **où l'on est**, qui est la seule chose qu'on demande à une barre.
+     Elle a porté l'avatar avec le pseudo et le club, et deux jetons inertes,
+     qui se disputaient trois cent soixante pixels sans jamais dire **où l'on
+     est**, qui est la seule chose qu'on demande à une barre. Le pseudo et le
+     club sont partis vivre sur le profil, et n'en reviennent pas.
 
-     Les contrôles des jetons ne sont pas effacés, ils sont remplacés par ce qui
-     les remplace : ce qu'ils défendaient n'était pas « il y a deux jetons »,
-     c'était « la boutique est atteignable ». Elle l'est par la tuile de
-     l'accueil et par le menu. */
+     Les soldes, eux, sont revenus au lot 2, mais **repliés** dans le HUD :
+     c'est le bloc suivant. Ce contrôle-ci ne dit donc plus « aucun jeton dans
+     la barre », qui contredirait le HUD ; il dit « rien de ce qui en est
+     parti » : ni `.tbf-moi`, ni le jeton inerte `.tbf-jeton` — ui.css a
+     laissé ce nom libre pour qu'on puisse le guetter ici —, ni le pseudo,
+     cherché par son texte et non par une classe. Une classe se renomme ; un
+     pseudo affiché, lui, se voit, jusque dans un `aria-label`. */
   const barre = await page.evaluate(() => {
     const h = document.querySelector('.tbf-haut');
     if (!h) return null;
+    const textes = [h.textContent,
+      ...[...h.querySelectorAll('[aria-label]')].map((n) => n.getAttribute('aria-label'))];
     return {
       retour: Boolean(h.querySelector('.tbf-retour')),
       ou: h.querySelector('.tbf-ou')?.textContent.trim() ?? '',
       menu: Boolean(h.querySelector('.tbf-burger')),
       // Ce qui n'a plus rien à y faire.
       restes: ['.tbf-jeton', '.tbf-moi'].filter((sel) => h.querySelector(sel)),
+      /* Les deux pseudos du compte d'essai : celui que le banc sert à
+         « qui es-tu ? » (`/api/auth/me`), et celui de la base. */
+      pseudo: textes.some((t) => /Testeur|Classeuse/.test(t ?? '')),
     };
   });
 
-  check('la barre dit ou l\u2019on est', barre?.ou === 'Fanzzy'
+  check('la barre dit ou l’on est', barre?.ou === 'Fanzzy'
     || (console.log('        titre vu :', JSON.stringify(barre?.ou)), false));
   check('et elle offre de sortir', barre?.retour === true);
   check('le menu reste atteignable', barre?.menu === true);
-  check('ni pseudo ni jeton n\u2019encombrent plus la barre',
-    (barre?.restes.length ?? 1) === 0
-    || (console.log('        restes :', barre.restes.join(', ')), false));
+  check('ni pseudo ni jeton d’avant n’y reviennent',
+    ((barre?.restes.length ?? 1) === 0 && barre?.pseudo === false)
+    || (console.log('        restes :', barre?.restes.join(', ') || 'aucun',
+      barre?.pseudo ? '· le pseudo est affiché' : ''), false));
+}
+
+/* ------------------------------------------- ce que je possède, replié
+
+ * Le HUD de la barre (lot 2, nav.js « le HUD replié ») : à droite, avant le
+ * menu, un sticker rond de 36 px — le buste du Fanzzy équipé, l'anneau d'XP,
+ * le niveau. Au toucher, une bande kraft se déplie sous la barre avec les
+ * deux jetons, trois secondes, puis se replie. À partir de 560 px, les jetons
+ * sont dans la barre, à demeure.
+ *
+ * C'est ce qui tient la promesse du bloc d'au-dessus : la boutique est
+ * atteignable **par la monnaie**, le geste qu'on essaie en premier. On éprouve
+ * donc que les jetons mènent quelque part, qu'ils disent **les soldes du
+ * serveur** — un HUD qui afficherait 0, ou le solde d'il y a dix minutes,
+ * ferait pire que pas de HUD —, qu'on peut les toucher, et qu'ils ne volent
+ * pas sa place au titre.
+ *
+ * Sur un onglet neuf, et non sur `page` : le HUD retient ses valeurs trente
+ * secondes dans l'onglet (`sessionStorage`), et les blocs d'au-dessus ont
+ * changé le portefeuille par la base, dans le dos de la page. Un onglet neuf
+ * n'a rien retenu : il lit le serveur, et c'est au serveur qu'on le compare.
+ */
+{
+  const hud = await nav.newPage();
+  hud.on('pageerror', (e) => erreurs.push(e.message));
+  /* 320 px : la barre la plus serrée, celle où ui.css compte la place du
+     titre. Si le HUD y tient sans le pousser, il tient partout. */
+  await hud.setViewport({ width: 320, height: 640 });
+  await hud.goto(base + '/fanzzy', { waitUntil: 'networkidle0' });
+  await hud.waitForSelector('.tbf-haut .tbf-hud .tbf-monnaie', { timeout: 8000 }).catch(() => {});
+  /* Le buste se pose au bout de sa chaîne de replis (nav.js, `portraits`) :
+     on attend qu'elle ait abouti — une image chargée, ou la craie au bout.
+     `complete` seul ne suffit pas : une adresse refusée est « complète »
+     jusqu'à ce que la page passe à la suivante, et on lirait un maillon. */
+  await jusqua(() => hud.evaluate(() => {
+    const b = document.querySelector('.tbf-hud .tbf-avatar-buste');
+    return Boolean(b) && (b.tagName !== 'IMG' || (b.complete && b.naturalWidth > 0));
+  }), 5000);
+
+  /** Le HUD tel qu'il est, et ce que le serveur dit au même moment. */
+  const lire = () => hud.evaluate(async () => {
+    const h = document.querySelector('.tbf-haut');
+    const boite = h?.querySelector('.tbf-hud');
+    if (!boite) return null;
+    const boiteDe = (el) => {
+      const b = el.getBoundingClientRect();
+      return { l: b.left, r: b.right, t: b.top, b: b.bottom, w: b.width, h: b.height };
+    };
+    const ou = h.querySelector('.tbf-ou');
+    const burger = h.querySelector('.tbf-burger');
+    const avatar = boite.querySelector('.tbf-avatar');
+    const bande = boite.querySelector('.tbf-hud-bande');
+    const buste = avatar?.querySelector('.tbf-avatar-buste');
+    const suit = (a, b) => Boolean(a && b
+      && (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING));
+    const jetons = [...(bande?.querySelectorAll('.tbf-monnaie') ?? [])].map((a) => {
+      const b = a.getBoundingClientRect();
+      /* Ce que le doigt touche au milieu du jeton : lui, ou ce qui le
+         recouvre. Une bande dépliée sous un onglet de la page serait
+         visible à la capture et morte au toucher. */
+      const dessus = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+      return { href: a.getAttribute('href'), chiffre: a.querySelector('b')?.textContent.trim() ?? '',
+        ...boiteDe(a), touchable: Boolean(dessus && a.contains(dessus)) };
+    });
+    const json = (u) => fetch(u, { credentials: 'same-origin' })
+      .then((x) => (x.ok ? x.json() : null)).catch(() => null);
+    const [etat, niv] = await Promise.all([json('/api/fanzzy/state'), json('/api/niveau')]);
+    return {
+      ordre: suit(ou, boite) && suit(boite, burger),
+      /* Ce que la barre montre, et non sa largeur de défilement : celle-ci
+         compte aussi le sticker d'état du menu, qui mord de deux pixels sur
+         la marge à 320 px sans rien cacher. Ce qui casserait la barre, c'est
+         un bouton poussé hors de l'écran par le sticker de plus. */
+      barre: { ...boiteDe(h), sort: [h.querySelector('.tbf-retour'), ou, boite, burger]
+        .filter(Boolean).map(boiteDe).some((b) => b.l < 0 || b.r > innerWidth) },
+      hud: boiteDe(boite),
+      titre: ou ? { ...boiteDe(ou), coupe: ou.scrollWidth > ou.clientWidth + 1 } : null,
+      avatar: avatar ? {
+        ...boiteDe(avatar),
+        bouton: avatar.tagName === 'BUTTON',
+        barre: avatar.classList.contains('tbf-avatar--barre'),
+        vide: avatar.classList.contains('tbf-avatar--vide'),
+        deplie: avatar.getAttribute('aria-expanded'),
+        sticker: boiteDe(avatar.querySelector('.tbf-anneau')),
+      } : null,
+      casse: buste?.tagName === 'IMG' && !(buste.complete && buste.naturalWidth > 0),
+      niveau: avatar?.querySelector('.tbf-avatar-niv')?.textContent.trim() ?? null,
+      anneau: avatar?.querySelector('.tbf-anneau')?.style.getPropertyValue('--p').trim() ?? '',
+      bande: bande ? { ouverte: bande.classList.contains('ouverte'),
+        visible: getComputedStyle(bande).visibility === 'visible' } : null,
+      jetons,
+      ecran: innerWidth,
+      serveur: {
+        scarves: etat?.wallet?.scarves ?? null,
+        packs: etat?.wallet?.packs ?? null,
+        fanzzy: Boolean(etat?.wallet?.avatar?.id),
+        niveau: niv?.niveau ?? null, dans: niv?.dans ?? null, pour: niv?.pour ?? null,
+        max: niv?.max ?? null,
+      },
+    };
+  });
+
+  const s = await lire();
+  check('la barre porte le HUD, entre le titre et le menu', s?.ordre === true);
+  check('à 320 px, le titre garde sa place : entier, et rien ne le recouvre',
+    (Boolean(s?.titre) && !s.titre.coupe && s.titre.r <= s.hud.l + 1)
+    || (console.log('        titre', JSON.stringify(s?.titre), 'HUD', JSON.stringify(s?.hud)), false));
+  check('et rien de la barre ne sort de l’écran', s?.barre.sort === false);
+  check('le HUD est un sticker de 36 px dans une zone de touche de 44',
+    (s?.avatar?.bouton === true && s.avatar.barre
+      && s.avatar.w >= 44 && s.avatar.h >= 44 && Math.abs(s.avatar.sticker.w - 36) <= 1)
+    || (console.log('        avatar', JSON.stringify(s?.avatar)), false));
+  /* Le compte d'essai a un Fanzzy équipé : la silhouette « choisis ton
+     Fanzzy » serait ici un mensonge, et dirait que l'avatar servi par
+     `/api/fanzzy/state` n'est pas lu. */
+  check('il montre le Fanzzy équipé, pas la silhouette d’un compte sans Fanzzy',
+    s?.serveur.fanzzy === true && s.avatar?.vide === false);
+  check('et jamais une image cassée', s?.casse === false);
+  check('il porte le niveau du serveur',
+    (s?.serveur.niveau != null && s.niveau === String(s.serveur.niveau))
+    || (console.log(`        il dit ${s?.niveau}, le serveur ${s?.serveur.niveau}`), false));
+  /* La règle de la direction, `niv.dans / niv.pour`, plein au dernier
+     niveau. Recalculée ici depuis la réponse du serveur, et non relue dans
+     nav.js : c'est la donnée qu'on compare, pas la recette à elle-même. */
+  {
+    const n = s?.serveur;
+    const attendu = n?.max ? '100%'
+      : `${Math.round(Math.min(1, (n?.dans ?? 0) / (n?.pour || 1)) * 100)}%`;
+    check('et l’anneau en est rempli d’autant', s?.anneau === attendu
+      || (console.log(`        anneau à ${s?.anneau}, attendu ${attendu}`), false));
+  }
+  check('replié au repos : la bande des jetons est cachée',
+    s?.bande?.ouverte === false && s.bande.visible === false && s.avatar?.deplie === 'false');
+  check('les deux jetons mènent à la boutique et au kiosque',
+    JSON.stringify(s?.jetons.map((j) => j.href)) === JSON.stringify(['/boutique', '/boosters'])
+    || (console.log('        liens :', s?.jetons.map((j) => j.href).join(', ')), false));
+  check('et ils disent les soldes du serveur',
+    (s?.serveur.scarves != null
+      && JSON.stringify(s.jetons.map((j) => j.chiffre))
+        === JSON.stringify([String(s.serveur.scarves), String(s.serveur.packs)]))
+    || (console.log(`        HUD ${s?.jetons.map((j) => j.chiffre).join(' / ')}, `
+      + `serveur ${s?.serveur.scarves} / ${s?.serveur.packs}`), false));
+
+  /* Au toucher : la bande se déplie, sous la barre, dans l'écran, et ses
+     jetons se touchent. Le dépliage prend 240 ms ; on en laisse 400. */
+  const t0 = Date.now();
+  await hud.click('.tbf-hud .tbf-avatar');
+  await dodo(400);
+  const o = await lire();
+  check('au toucher, la bande se déplie',
+    o?.bande?.ouverte === true && o.bande.visible === true && o.avatar?.deplie === 'true');
+  check('sous la barre, et entière dans l’écran',
+    (o?.jetons.length === 2
+      && o.jetons.every((j) => j.t >= o.barre.b - 1 && j.l >= 0 && j.r <= o.ecran))
+    || (console.log('        jetons', JSON.stringify(o?.jetons), 'barre', JSON.stringify(o?.barre)), false));
+  check('et ses deux jetons se touchent, rien ne les recouvre',
+    o?.jetons.length === 2 && o.jetons.every((j) => j.touchable));
+  /* Trois secondes, puis elle se replie seule : elle ne reste pas sur
+     l'écran qu'on est venu voir. La souris est restée sur le sticker et non
+     sur la bande, le focus aussi : rien ne la retient. */
+  const replie = await jusqua(() => hud.evaluate(() =>
+    !document.querySelector('.tbf-hud-bande')?.classList.contains('ouverte')), 6000);
+  const duree = Date.now() - t0;
+  check('puis se replie seule, après ses trois secondes',
+    (replie && duree >= 2800)
+    || (console.log(`        ${replie ? 'repliée' : 'toujours dépliée'} après ${duree} ms`), false));
+  await dodo(400);
+  const r = await lire();
+  check('et redevient invisible', r?.bande?.visible === false && r.avatar?.deplie === 'false');
+
+  /* À partir de 560 px, rien ne se déplie : les jetons sont dans la barre,
+     toujours visibles, et le sticker mène au profil. La même page, élargie :
+     c'est aussi le passage d'une largeur à l'autre qu'on éprouve
+     (`matchMedia`, `regler` dans nav.js). */
+  await hud.setViewport({ width: 768, height: 1024 });
+  await dodo(400);
+  const l = await lire();
+  check('à 768 px, les deux jetons sont dans la barre, à demeure',
+    (l?.bande?.visible === true && l.jetons.length === 2
+      && l.jetons.every((j) => (j.t + j.b) / 2 > l.barre.t && (j.t + j.b) / 2 < l.barre.b
+        && j.touchable))
+    || (console.log('        jetons', JSON.stringify(l?.jetons), 'barre', JSON.stringify(l?.barre)), false));
+  check('sans rien à déplier', l?.bande?.ouverte === false && l.avatar?.deplie === null);
+  check('et le titre garde encore sa place',
+    (Boolean(l?.titre) && !l.titre.coupe
+      && l.jetons.every((j) => l.titre.r <= j.l + 1) && l.barre.sort === false)
+    || (console.log('        titre', JSON.stringify(l?.titre), 'jetons', JSON.stringify(l?.jetons)), false));
+  await hud.close();
 }
 
 /* ------------------------------------------- le personnage est vivant

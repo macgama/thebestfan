@@ -227,6 +227,22 @@ app.get('/api/nvn/attentes', (_q, s) => s.json({ attentes: attente ? [attente] :
 let evenements = [];
 app.get('/api/football/fixture/:id/events', (_q, s) => s.json({ events: evenements }));
 
+/* Le calendrier des clubs suivis et les premiers pas (lot 2). La bâche du
+   jour y lit le prochain coup d'envoi, puis l'étape suivante du parcours :
+   ce banc ne servait ni l'un ni l'autre, si bien que la bâche n'y montrait
+   jamais que son repli et que rien ne vérifiait le reste.
+
+   `null` : la route se tait comme avant (404, la page s'en passe), et les
+   blocs qui ne parlent pas de la bâche voient l'accueil qu'ils ont toujours
+   vu. `calendrier` est la liste `next` d'un club suivi, telle que
+   `/api/football/feed` la sert ; `parcours`, la réponse de
+   `/api/aide/parcours`. */
+let calendrier = null;
+app.get('/api/football/feed', (_q, s, n) => (calendrier === null ? n()
+  : s.json({ feed: [{ team: { id: 85, name: 'Sion' }, live: [], next: calendrier, last: [] }] })));
+let parcours = null;
+app.get('/api/aide/parcours', (_q, s, n) => (parcours === null ? n() : s.json(parcours)));
+
 /* Le Fanzzy équipé n'est pas simulé : il vit dans `user_wallet.active_fanzzy`
    et le vrai module fanzzy le sert. On l’équipe donc en base, comme le ferait
    le joueur depuis son classeur — c’est précisément le chemin qui était faux,
@@ -432,25 +448,93 @@ check('la page ne déborde pas en largeur', await page.evaluate(() =>
   check('et fait le geste du salut, même sans ce dessin', gestes.includes('coucou'));
   check('sans dessin de salut, il reste sur le sien',
     /\/img\/supporter\/idle\./.test((await scene(page)).src ?? ''));
-  check('aucun bouton d’état sur l’écran',
-    await page.evaluate(() => document.querySelectorAll('[data-etat]').length) === 0);
+  /* **Aucun bouton d'état du personnage**, et non plus « aucun `data-etat` ».
+
+     Ce contrôle visait les boutons qui déclencheraient à la main un des douze
+     états du personnage — ceux de la fiche portent `data-etat`. Depuis le
+     lot 2, les tuiles du hub et du tiroir portent aussi `data-etat`, et c'est
+     voulu : le direct, la récompense prête, la nouveauté, la porte fermée,
+     c'est-à-dire ce qui attend derrière la tuile, posé par le jeu. Compter
+     les `data-etat` faisait donc rougir le contrôle pour une chose qu'il ne
+     visait pas.
+
+     Il garde son sens : tout `data-etat` de l'écran doit être une tuile
+     (un lien `.tbf-case`, jamais un bouton), et porter un état de tuile.
+     Ces états sont **lus dans `ui.css`**, et non recopiés : ce sont ceux que
+     la feuille sait dessiner sur une tuile. Une feuille où on ne les trouve
+     plus laisse la liste vide, et le contrôle rougit au lieu de tout
+     laisser passer. */
+  const ETATS_TUILE = [...readFileSync(new URL('../public/ui.css', import.meta.url), 'utf8')
+    .matchAll(/\.tbf-case\[data-etat="?([a-z]+)"?\]/g)].map((m) => m[1]);
+  const marques = await page.evaluate(() => [...document.querySelectorAll('[data-etat]')]
+    .map((n) => ({ tuile: n.matches('a.tbf-case[href]'), etat: n.dataset.etat,
+      quoi: `${n.tagName.toLowerCase()}${n.id ? '#' + n.id : ''}`
+        + `[${n.getAttribute('class') ?? ''}]=${n.dataset.etat}` })));
+  const intrus = marques.filter((m) => !m.tuile || !ETATS_TUILE.includes(m.etat));
+  check('aucun bouton d’état sur l’écran', intrus.length === 0
+    || (console.log('        ', intrus.map((m) => m.quoi).join(' · '),
+      '— états de tuile lus :', ETATS_TUILE.join(', ') || 'aucun'), false));
 
   /* Un geste fini rend la main à ce qui tournait en boucle.
-     La classe qui le porte remplace la respiration ou le flottement : laissée
-     en place, elle fige le personnage sur la dernière image d'un geste
-     terminé. Rien ne casse, rien ne se voit — le mouvement manque, c'est
-     tout. Le petit saut avait ce défaut depuis toujours. */
+     La classe qui le porte prend son calque : laissée en place, elle fige le
+     personnage sur la dernière image d'un geste terminé. Rien ne casse, rien
+     ne se voit — le mouvement manque, c'est tout. Le petit saut avait ce
+     défaut depuis toujours : il prenait `.flotte`, où tournait le flottement.
+
+     **Depuis le lot 2, `.flotte` ne tourne plus en boucle**, et c'est voulu.
+     Le flottement et la respiration sont une seule animation, `souffle`, sur
+     la pile : le hub tient ainsi son budget de trois animations infinies, et
+     les deux mouvements restent en phase. Chercher le nom `flotteur` sur
+     `.flotte` faisait rougir le contrôle pour une boucle qui a seulement
+     changé de calque.
+
+     Il garde ses deux moitiés. Le calque des gestes est rendu : une fois le
+     saut joué, `.flotte` ne porte plus aucune animation — un saut ou une
+     arrivée restés accrochés y figeraient tous les sauts suivants. Et la
+     boucle qui tourne encore sur la pile flotte toujours : sa règle
+     `@keyframes`, **lue dans les feuilles de la page** et non recopiée, doit
+     déplacer le personnage en hauteur (un `translateY` non nul) et tourner
+     sans fin. Une respiration qui aurait perdu son flottement en route — ou
+     une règle introuvable — laisse ce contrôle rouge. */
   await page.evaluate(() => TBF.pose('but'));
   await page.evaluate(() => document.getElementById('scene').dispatchEvent(
     new PointerEvent('pointerdown', { bubbles: true })));
   await new Promise((r) => setTimeout(r, 1800));
-  const boucles = await page.evaluate(() => ({
-    pile: getComputedStyle(document.getElementById('pile')).animationName,
-    flotte: getComputedStyle(document.querySelector('.flotte')).animationName,
-    classes: [...document.getElementById('scene').classList],
-  }));
+  const boucles = await page.evaluate(() => {
+    const pile = getComputedStyle(document.getElementById('pile'));
+    const noms = pile.animationName.split(',').map((n) => n.trim());
+    // Les pas des règles @keyframes de la pile, dans toutes les feuilles de la
+    // page. Une feuille d'une autre origine (Google Fonts) refuse qu'on lise
+    // ses règles : on la saute, elle ne porte aucune animation.
+    const pas = [];
+    const parcourir = (regles) => {
+      for (const r of regles) {
+        if (r instanceof CSSKeyframesRule) {
+          if (noms.includes(r.name)) pas.push(...[...r.cssRules].map((k) => k.style.transform));
+        } else if (r.cssRules) parcourir(r.cssRules);
+      }
+    };
+    for (const f of document.styleSheets) {
+      let regles;
+      try { regles = f.cssRules; } catch { continue; }
+      parcourir(regles);
+    }
+    return {
+      pile: pile.animationName,
+      tours: pile.animationIterationCount,
+      pas,
+      flotte: getComputedStyle(document.querySelector('.flotte')).animationName,
+      classes: [...document.getElementById('scene').classList],
+    };
+  });
   check('après un saut et un coucou, il respire encore', /souffle/.test(boucles.pile));
-  check('et il flotte encore', /flotteur/.test(boucles.flotte));
+  check('le saut a rendu son calque', boucles.flotte === 'none'
+    || (console.log('        .flotte porte encore', boucles.flotte), false));
+  const monte = boucles.pas.some((t) => [...(t ?? '').matchAll(/translateY\(\s*([-\d.]+)/g)]
+    .some((m) => Number.parseFloat(m[1]) !== 0));
+  check('et il flotte encore', monte && /infinite/.test(boucles.tours)
+    || (console.log('        boucle', boucles.pile, boucles.tours, '· pas :',
+      boucles.pas.join(' | ') || 'aucune règle lue'), false));
   check('aucune classe de geste ne reste accrochée',
     !boucles.classes.some((c) => ['arrive', 'coucou', 'saute', 'change'].includes(c))
     || (console.log('        il reste', boucles.classes.join(' ')), false));
@@ -1001,27 +1085,70 @@ await page.close();
   check('le bouton l’ouvre', apres.ouvert && apres.deplie === 'true');
   check('et il tient dans l’écran', apres.dansLEcran);
 
-  /* En bas à gauche, et non `page.click('.tbf-voile')`.
+  /* **Le refermer, sur un téléphone : la croix, puis Échap.**
 
-     Puppeteer clique le **centre** de l'élément visé, et le voile occupe tout
-     l'écran : son centre est le centre de la fenêtre. Sur un téléphone étroit,
-     le tiroir commun — 268 px ancrés à droite — recouvre ce centre, si bien
-     que le clic atterrissait sur un lien du menu et partait vers la boutique.
-     Le contrôle mesurait alors un document qui n'existait plus.
+     Ce contrôle cliquait le voile en bas à gauche, en (20, bas − 20), pour ne
+     pas viser son centre : Puppeteer clique le centre de l'élément visé, et
+     l'ancien tiroir — 268 px ancrés à droite — couvrait celui du voile. Le
+     tiroir du lot 2 est une bâche qui prend toute la largeur jusqu'à six
+     cents pixels, et la hauteur de l'écran : à 400 × 880, elle couvre la
+     fenêtre entière, et il n'y a plus de voile à côté d'elle. Le clic tombait
+     sur une tuile, la page partait vers /classement, et le contrôle, ne
+     trouvant plus de tiroir ouvert sur la page d'arrivée, passait à tort —
+     la panne même que décrivait ce commentaire.
 
-     On vise donc un point qui est vraiment à côté. Le geste reste celui d'un
-     joueur : un vrai clic sur le voile, pas un `.click()` provoqué en script —
-     un voile qui ne recevrait pas les clics laisserait la page manipulable
-     derrière lui. */
-  const dehors = await page.evaluate(() => {
-    const t = document.querySelector('.tbf-tiroir').getBoundingClientRect();
-    return t.left > 60 ? [20, Math.round(innerHeight / 2)] : [20, innerHeight - 20];
-  });
-  await page.mouse.click(dehors[0], dehors[1]);
+     Sur un téléphone, on referme donc comme un joueur le peut : par la croix
+     de la tête de la bâche, puis par Échap. Et chaque fois, on vérifie qu'on
+     est resté sur la même page : un tiroir « refermé » sur un autre document
+     ne prouve rien. */
+  const ici = page.url();
+  const ouvert = () => page.evaluate(() =>
+    document.querySelector('.tbf-tiroir')?.classList.contains('on') === true);
+  await page.click('.tbf-tiroir-fermer');
   await new Promise((r) => setTimeout(r, 300));
-  check('cliquer à côté le referme', await page.evaluate(() =>
-    !document.querySelector('.tbf-tiroir')?.classList.contains('on')));
+  check('sa croix le referme', !(await ouvert()) && page.url() === ici
+    || (console.log('        adresse :', page.url()), false));
+  await page.click('#burger');
+  await new Promise((r) => setTimeout(r, 300));
+  const rouvert = await ouvert();
+  await page.keyboard.press('Escape');
+  await new Promise((r) => setTimeout(r, 300));
+  check('Échap le referme aussi', rouvert && !(await ouvert()) && page.url() === ici
+    || (console.log('        rouvert :', rouvert, '· adresse :', page.url()), false));
   await page.close();
+
+  /* **Le voile, là où il se voit.** Au-delà de six cent quarante pixels, la
+     bâche s'arrête à six cents et le voile paraît à côté d'elle : c'est là,
+     et là seulement, qu'un joueur peut toucher « à côté ». On l'éprouve à
+     1024 × 768, sur un point pris au milieu de la plus grande marge, et on
+     prouve d'abord que ce point est bien le voile (`elementFromPoint`) : sans
+     cette preuve, un clic qui atterrit sur autre chose passe pour une
+     fermeture — c'est exactement ce qui était arrivé. Le geste reste celui
+     d'un joueur : un vrai clic, et non un `.click()` provoqué en script — un
+     voile qui ne recevrait pas les clics laisserait la page manipulable
+     derrière lui. */
+  const large = await ouvrir(1024, 768);
+  const adresse = large.url();
+  await large.click('#burger');
+  await new Promise((r) => setTimeout(r, 300));
+  const dehors = await large.evaluate(() => {
+    const t = document.querySelector('.tbf-tiroir').getBoundingClientRect();
+    const marges = [
+      [t.left, [t.left / 2, innerHeight / 2]],
+      [innerWidth - t.right, [(t.right + innerWidth) / 2, innerHeight / 2]],
+      [innerHeight - t.bottom, [innerWidth / 2, (t.bottom + innerHeight) / 2]],
+    ].sort((a, b) => b[0] - a[0]);
+    const [x, y] = marges[0][1].map(Math.round);
+    return { x, y, voile: document.elementFromPoint(x, y)?.classList.contains('tbf-voile') === true };
+  });
+  await large.mouse.click(dehors.x, dehors.y);
+  await new Promise((r) => setTimeout(r, 300));
+  check('cliquer à côté le referme', dehors.voile
+    && !(await large.evaluate(() => document.querySelector('.tbf-tiroir')?.classList.contains('on')))
+    && large.url() === adresse
+    || (console.log(`        point (${dehors.x}, ${dehors.y})`,
+      dehors.voile ? 'sur le voile' : 'hors du voile', '· adresse :', large.url()), false));
+  await large.close();
 }
 
 /* --------------------------------------------- le match, et ce qu'il fait */
@@ -1503,8 +1630,35 @@ await page.close();
 /* ------------------------------------------- ce que le hub doit annoncer */
 {
   const page = await ouvrir();
+  /* **L'avatar n'est plus une initiale** (lot 2) : c'est le buste du Fanzzy
+     équipé, en sticker, sous l'anneau d'XP — on se reconnaît à son
+     personnage, pas à une lettre. Le contrôle lisait `#initiale`, qui n'existe
+     plus : l'évaluation levait une erreur et la suite s'arrêtait là, sans
+     jouer la soixantaine de contrôles qui suivent.
+
+     Le compte porte ILLUSTRE depuis le bloc des 320 px, et son buste est sur
+     le disque : l'avatar doit le montrer, **chargé**. La silhouette de repli
+     (`.tbf-avatar--vide`) ou une image cassée diraient toutes deux qu'il ne
+     l'a pas trouvé. Le buste est posé après les lectures du serveur : on
+     l'attend, sans en faire une condition — c'est le contrôle qui juge. */
+  await page.waitForFunction(() => {
+    const i = document.querySelector('#moi img.tbf-avatar-buste');
+    return Boolean(i?.complete && i.naturalWidth > 0);
+  }, { timeout: 4000 }).catch(() => {});
   const hud = await page.evaluate(() => ({
-    initiale: document.getElementById('initiale').textContent,
+    avatar: (() => {
+      const a = document.getElementById('moi');
+      const i = a?.querySelector('img.tbf-avatar-buste');
+      return {
+        sticker: Boolean(a?.classList.contains('tbf-avatar')),
+        vide: a?.classList.contains('tbf-avatar--vide') ?? true,
+        src: i?.getAttribute('src') ?? null,
+        charge: Boolean(i?.complete && i.naturalWidth > 0),
+      };
+    })(),
+    /* Partie du document, et pas seulement cachée : même raison que le
+       pseudo et le club juste en dessous. */
+    initialePartie: document.getElementById('initiale') === null,
     /* Le pseudo et le nom du club ne sont plus dans l'en-tête : ils vivaient
        dans un cadre sombre autour de l'avatar, et sur un compte neuf ces deux
        lignes sont vides — il ne restait qu'un rectangle noir sous la pastille.
@@ -1516,10 +1670,16 @@ await page.close();
     ecarpes: document.getElementById('scarves').textContent,
     boosters: document.getElementById('packs').textContent,
     collec: document.getElementById('collecTxt').textContent,
+    // Le total, que la carte ne montre plus : voir le contrôle plus bas.
+    collecDit: document.getElementById('collec')?.getAttribute('aria-label') ?? '',
     jauge: document.getElementById('collecBar').style.width,
     entrer: document.getElementById('entrer').getAttribute('href'),
   }));
-  check('l’initiale est posée sur l’avatar', hud.initiale === 'm');
+  check('le buste du Fanzzy équipé est posé sur l’avatar',
+    hud.avatar.sticker && !hud.avatar.vide && hud.avatar.charge
+      && new RegExp(`/img/fanzzy/${ILLUSTRE}[-/.]`).test(hud.avatar.src ?? '')
+    || (console.log('        avatar :', JSON.stringify(hud.avatar)), false));
+  check('et l’initiale du pseudo a quitté l’avatar', hud.initialePartie);
   check('le pseudo et le club ont quitté l’en-tête',
     hud.pseudoParti && hud.clubParti);
   /* Le niveau : un chiffre sur l’avatar, et c'est désormais le seul endroit. La
@@ -1570,10 +1730,34 @@ await page.close();
      moins autant — on ne peut pas en avoir gagné moins que ça. */
   const biblio = await page.evaluate(() => fetch('/api/fanzzy/bibliotheque',
     { credentials: 'same-origin' }).then((r) => r.json()).catch(() => null));
+  /* **Le palier en cours, et non plus le total** (lot 2, amendement 22) :
+     la carte dit « 14 / 25 », puis « 37 / 50 » — un total de cinq mille
+     cinq cents ne bougeait pas d'une visite à l'autre, et on avait cessé de
+     le lire. Le total n'a pas disparu : il est dit aux lecteurs d'écran, dans
+     l'étiquette du lien.
+
+     Les deux exigences restent, chacune là où elle vit désormais : ce qui
+     s'affiche est le compte du serveur sur le palier que l'accueil donne à
+     ce compte, et l'étiquette porte le compte et le total du serveur. La
+     table des paliers est **lue dans `index.html`**, comme les délais en tête
+     de cette suite : recopiée ici, elle finirait par mentir. Introuvable,
+     elle fait rougir le contrôle au lieu de le laisser passer. */
+  const PALIERS = (() => {
+    const src = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
+    const m = src.match(/const PALIERS = \[([\d\s,_]+)\]/);
+    return m ? m[1].split(',').map((x) => Number(x.replace(/[\s_]/g, ''))) : null;
+  })();
+  const gagnes = biblio?.total?.gagnes;
+  const possibles = biblio?.total?.possibles;
+  const palier = PALIERS ? (PALIERS.find((p) => p > gagnes && p < possibles) ?? possibles) : null;
+  const ditNombres = (hud.collecDit.match(/\d+/g) ?? []).map(Number);
   check(`la collection est chiffrée (${hud.collec}, dont ${possedes} Fanzzy)`,
-    hud.collec === `${biblio?.total?.gagnes}/${biblio?.total?.possibles}`
+    palier !== null && hud.collec === `${gagnes} / ${palier}`
+      && ditNombres.includes(gagnes) && ditNombres.includes(possibles)
       && biblio.types.fanzzy.gagnes >= Number(possedes)
-    || (console.log('        bibliothèque :', JSON.stringify(biblio?.total)), false));
+    || (console.log('        bibliothèque :', JSON.stringify(biblio?.total),
+      '· étiquette :', hud.collecDit,
+      '· paliers :', PALIERS ? PALIERS.join(' ') : 'introuvables dans index.html'), false));
   check('et sa jauge est remplie d’autant', /^[0-9.]+%$/.test(hud.jauge));
   check('le bouton d’entrée mène au duel hors match', hud.entrer === '/duel-nvn');
   await page.close();
@@ -1631,9 +1815,29 @@ if (process.env.CAPTURE) {
   attente = null;
   let page = await ouvrir();
   await new Promise((r) => setTimeout(r, 700));
+  /* Le bouton porte, depuis le lot 2, un sous-libellé qui dit ce qu'il fait
+     (« Duel de tribunes ») : son texte entier n'est plus son titre seul, et
+     le comparer à « Prendre ma place » rougissait pour une précision voulue.
+     On lit donc le titre — le premier nœud de texte, comme `bouton()` le
+     pose — et on vérifie que rien d'autre ne promet personne : ni le
+     sous-libellé (« t'attend », « il manque »), ni le ton, puisque le violet
+     dit que des gens attendent (amendement 18), ni un troisième morceau : le
+     bouton ne porte que ces deux-là, comme le texte entier le dit. */
+  const repos = await page.evaluate(() => {
+    const e = document.getElementById('entrer');
+    const t = e.firstChild;
+    return {
+      titre: t?.nodeType === Node.TEXT_NODE ? t.textContent.trim() : '',
+      sous: e.querySelector('small')?.textContent.trim() ?? '',
+      entier: e.textContent.replace(/\s+/g, ''),
+      ton: e.dataset.ton ?? '',
+    };
+  });
   check('sans personne en file, le bouton ne promet rien',
-    (await page.evaluate(() => document.getElementById('entrer').textContent.trim()))
-      === 'Prendre ma place');
+    repos.titre === 'Prendre ma place' && repos.sous !== ''
+      && !/attend|manque/i.test(repos.sous) && repos.ton !== 'violet'
+      && repos.entier === (repos.titre + repos.sous).replace(/\s+/g, '')
+    || (console.log('        il dit :', JSON.stringify(repos)), false));
 
   attente = {
     fixtureId: 1, format: '1v1', attendus: 1, camps: [1, 0], mode: 'classe',
@@ -1675,6 +1879,641 @@ if (process.env.CAPTURE) {
   }
   attente = null;
 }
+
+/* ======================================== ce que le hub dit sans qu'on l'ouvre
+
+   Le lot 2 a donné la parole au hub : chaque tuile porte l'état de ce qui
+   l'attend (`data-etat` : direct, prêt, nouveau), le bouton du menu celui
+   du plus urgent (`data-urgence`), le Fanzzy parle dans sa bulle, la bâche
+   du jour donne le prochain rendez-vous, et le rideau d'ouverture a ses
+   libellés, sa consigne et son astuce. **Aucune suite ne les lisait** : seuls
+   `directTag` et `directNom` l'étaient, pour le match en direct. Une
+   nouveauté sans contrôle peut repartir sans que personne le voie — et la
+   première panne de ces états (une réserve rechargée que la tuile ignorait)
+   est passée sous tous les contrôles existants.
+
+   Ce qui se lit dans les sources plutôt que de se recopier, comme les délais
+   en tête de cette suite : le délai de repli de la bulle, les jours de la
+   bâche, la durée, le plancher et les libellés du rideau. Un repère
+   introuvable fait rougir le premier contrôle ; la suite continue sur une
+   valeur de secours, pour que le reste dise encore quelque chose. */
+const SRC_ACCUEIL = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
+const SRC_OUV = readFileSync(new URL('../public/ouverture.js', import.meta.url), 'utf8');
+const nombreLu = (src, re) => {
+  const m = src.match(re);
+  return m ? Number(m[1].replace(/_/g, '')) : null;
+};
+const chainesLues = (src, re) => {
+  const m = src.match(re);
+  return m ? [...m[1].matchAll(/'([^']*)'/g)].map((x) => x[1]) : null;
+};
+const REPLI_LU = nombreLu(SRC_ACCUEIL, /setTimeout\(replierBulle,\s*([\d_]+)\)/);
+const JOURS_LUS = chainesLues(SRC_ACCUEIL, /const JOURS = \[([^\]]*)\]/);
+const DUREE_LUE = nombreLu(SRC_OUV, /const DUREE = ([\d_]+)/);
+const PLANCHER_LU = nombreLu(SRC_OUV, /const PLANCHER = ([\d_]+)/);
+const MOTS_LUS = chainesLues(SRC_OUV, /const MOTS = \[([^\]]*)\]/);
+check('les repères du hub et du rideau se lisent dans leurs sources',
+  REPLI_LU > 0 && JOURS_LUS?.length === 7 && DUREE_LUE > 0 && PLANCHER_LU > 0
+    && MOTS_LUS?.length === 3
+  || (console.log('        repli :', REPLI_LU, '· jours :', JOURS_LUS, '· durée :', DUREE_LUE,
+    '· plancher :', PLANCHER_LU, '· libellés :', MOTS_LUS), false));
+const REPLI_BULLE = REPLI_LU ?? 6000;
+const DUREE_OUV = DUREE_LUE ?? 10_000;
+const PLANCHER_OUV = PLANCHER_LU ?? 1200;
+const MOTS_OUV = MOTS_LUS ?? [];
+
+/* Les erreurs de script de ces blocs-ci : le contrôle général est posé plus
+   haut, avant eux, et ne les verrait pas. */
+const erreursAvantLot2 = erreurs.length;
+
+/* Un match d'un club suivi, commencé, et une file de duel qui attend un
+   supporter : les deux autres sources d'urgence du hub. */
+const LIVE = {
+  id: 12, open: true, elapsed: 12, status_short: '1H', mien: true,
+  home_id: 85, away_id: 91, home_name: 'Sion', away_name: 'Bâle',
+  home_goals: 0, away_goals: 0, crowd: [5, 3],
+};
+const FILE = {
+  fixtureId: 1, format: '1v1', attendus: 1, camps: [1, 0], mode: 'classe',
+  clubs: [{ id: 85, name: 'Sion' }, { id: 91, name: 'Bâle' }],
+  mien: true, presents: 1, campQuiManque: 1, manque: 1,
+};
+
+/**
+ * Les états que le hub affiche : ceux des tuiles du rail et du tiroir, celui
+ * du bouton de menu, et le jeton des boosters.
+ *
+ * Chaque sticker est lu **tel qu'il est dessiné** — son état, son chiffre, et
+ * la couleur de son `::after` — et pas seulement par ses attributs : le bouton
+ * du menu doit porter « le chiffre et la couleur » de l'état le plus urgent,
+ * c'est-à-dire le même sticker que la tuile qu'il annonce dans le tiroir. On
+ * compare donc les deux couleurs calculées, sans recopier aucune teinte ici.
+ */
+const lireEtats = (page) => page.evaluate(() => {
+  const sticker = (n) => {
+    if (!n) return null;
+    const s = getComputedStyle(n, '::after');
+    return { etat: n.dataset.etat ?? null, pastille: n.dataset.pastille ?? null,
+      fond: s.backgroundColor, dessine: !['none', 'normal'].includes(s.content) };
+  };
+  const tuiles = (ou, liste) => Object.fromEntries(liste.map((h) =>
+    [h, sticker(document.querySelector(`${ou} .tbf-case[href="${h}"]`))]));
+  const b = document.getElementById('burger');
+  const m = sticker(b);
+  return {
+    rail: tuiles('.rail', ['/virage', '/fanzzy', '/boosters', '/duel-nvn']),
+    tiroir: tuiles('.tbf-tiroir', ['/virage', '/boosters', '/duel-nvn']),
+    // Les tuiles du rail en état, la porte fermée mise à part : le plafond
+    // de trois (amendement 7) ne compte que ce qui attend derrière la tuile.
+    enEtat: [...document.querySelectorAll('.rail .tbf-case[data-etat]')]
+      .filter((n) => n.dataset.etat !== 'verrouille')
+      .map((n) => `${n.getAttribute('href')}=${n.dataset.etat}`).sort(),
+    menu: { urgence: b?.dataset.urgence ?? null, pastille: b?.dataset.pastille ?? null,
+      fond: m?.fond ?? null, dessine: m?.dessine ?? false },
+    jeton: document.getElementById('packs')?.textContent.trim() ?? '',
+  };
+});
+
+/**
+ * La bulle du Fanzzy et son « ! ».
+ *
+ * `police` : demander d'abord la police du marqueur, pour de bon. Le statut
+ * de `document.fonts` dit seulement que plus rien n'est en attente, pas que
+ * la police est arrivée — les captures de l'audit l'ont montré, prises en
+ * Segoe Print sous un relevé « loaded ». Un nombre de lignes mesuré sur la
+ * police de repli ne dirait rien de la bulle qu'un joueur voit. La demande
+ * est bornée à une seconde et demie : la bulle se replie en six, et une
+ * police qui traîne ne doit pas la laisser se replier pendant qu'on mesure.
+ * Sans réseau, elle échoue, et le relevé le dit (`marqueur`).
+ */
+const lireBulle = (page, police = false) => page.evaluate(async (attendre) => {
+  if (attendre && document.fonts?.load) {
+    await Promise.race([
+      document.fonts.load('16px "Permanent Marker"').catch(() => {}),
+      new Promise((r) => { setTimeout(r, 1500); }),
+    ]);
+  }
+  const b = document.getElementById('bulle');
+  const p = document.getElementById('bullePli');
+  const s = getComputedStyle(b);
+  const r = b.getBoundingClientRect();
+  const lh = Number.parseFloat(s.lineHeight);
+  // `offsetHeight` et non le rectangle : la bulle est tournée, et le
+  // rectangle d'un élément tourné est plus haut que lui.
+  const dedans = b.offsetHeight - Number.parseFloat(s.paddingTop) - Number.parseFloat(s.paddingBottom)
+    - Number.parseFloat(s.borderTopWidth) - Number.parseFloat(s.borderBottomWidth);
+  return {
+    vue: !b.hidden && r.width > 0 && r.height > 0,
+    pli: !p.hidden && p.getBoundingClientRect().width > 0,
+    pliDit: p.textContent.trim(),
+    texte: b.textContent.trim(),
+    href: b.getAttribute('href'),
+    police: s.fontFamily,
+    taille: Number.parseFloat(s.fontSize),
+    lignes: lh > 0 ? Math.round(dedans / lh) : null,
+    dansLEcran: r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1,
+    marqueur: document.fonts?.check?.('16px "Permanent Marker"') ?? null,
+  };
+}, police);
+/** Les mots de la règle du marqueur : ceux qui portent une lettre (« › » n'en est pas un). */
+const motsDe = (t) => t.split(/\s+/).filter((m) => /\p{L}/u.test(m)).length;
+/** La bulle s'est repliée : elle est cachée, et le « ! » paraît à sa place. */
+const bulleRepliee = (page) => page.evaluate(() =>
+  document.getElementById('bulle').hidden && !document.getElementById('bullePli').hidden);
+
+/* Les couleurs des trois urgences, relevées sur le bouton du menu au fil des
+   blocs : elles doivent être trois, et non une teinte pour tout. */
+const couleurs = {};
+
+/* ---- la réserve rechargée : BOOSTERS dit le chiffre du portefeuille ----
+
+   La réserve des boosters se recharge **à la lecture** (`wallet()`, dans le
+   module fanzzy) : la base peut dire zéro pendant que trois boosters
+   attendent, simplement parce que personne ne l'a encore demandé.
+   `/api/me/state` lit la colonne telle quelle, `/api/fanzzy/state` recharge
+   d'abord. La tuile BOOSTERS, le jeton et le tiroir doivent dire le second
+   chiffre : un joueur à qui l'on montre « 0 » n'ouvre pas les trois boosters
+   qu'il a — c'est le constat bloquant de la relecture du lot 2.
+
+   La mise en scène est un retour après une absence : zéro en base, recharge
+   datée de trente-cinq minutes (trois boosters à la cadence par défaut : ni
+   zéro, ni le plafond, ni les douze du départ de cette suite). La date est
+   écrite en JavaScript, comme le module l'exige (voir le pavé sous
+   `wallet`). Et le module fanzzy répond avec un retard de téléphone : sur
+   une machine locale, la lecture qui recharge peut passer en base avant
+   l'autre, et le défaut ne se montrerait qu'une fois sur deux. Le retard
+   fixe l'ordre qu'un joueur a sous les yeux.
+
+   Le chiffre attendu est **celui de la base après la visite** : c'est la
+   page elle-même qui a rechargé la réserve, on ne recopie pas la cadence. */
+{
+  direct = null;
+  attente = null;
+  await pool.query('UPDATE user_wallet SET packs = 0, packs_at = ? WHERE user_id = ?',
+    [new Date(Date.now() - 35 * 60_000), U]);
+  retardFanzzy = 400;
+  const page = await ouvrir();
+  retardFanzzy = 0;
+  const [[{ packs: recharges }]] = await pool.query(
+    'SELECT packs FROM user_wallet WHERE user_id = ?', [U]);
+  const attendu = String(recharges);
+  // Le jeton compte jusqu'à son chiffre (`FX.compter`) : on le laisse arriver.
+  await jusqua(async () => {
+    const e = await lireEtats(page);
+    return e.rail['/boosters']?.pastille === attendu && e.jeton === attendu;
+  });
+  const e = await lireEtats(page);
+  check(`la visite a rechargé la réserve (${recharges} en base)`, recharges > 0);
+  check('BOOSTERS dit « prêt », au chiffre du portefeuille rechargé',
+    recharges > 0 && e.rail['/boosters']?.etat === 'pret' && e.rail['/boosters'].pastille === attendu
+    || (console.log('        tuile :', JSON.stringify(e.rail['/boosters']),
+      '· portefeuille :', recharges), false));
+  check('le jeton des boosters dit le même chiffre', recharges > 0 && e.jeton === attendu
+    || (console.log('        jeton :', JSON.stringify(e.jeton), '· portefeuille :', recharges), false));
+  check('et la tuile du tiroir aussi', recharges > 0
+    && e.tiroir['/boosters']?.etat === 'pret' && e.tiroir['/boosters'].pastille === attendu
+    || (console.log('        tiroir :', JSON.stringify(e.tiroir['/boosters'])), false));
+  await page.close();
+}
+
+/* ---- le menu porte l'urgence, et le Fanzzy parle ----
+
+   Une réserve à jour en base (deux boosters, datés de maintenant) : ici on
+   éprouve le bouton du menu et la bulle, pas la recharge, qui a son bloc.
+   Le sticker du bouton est celui de l'état le plus urgent — le direct, puis
+   la récompense prête, puis le duel qui attend —, à la couleur de la tuile
+   qu'il annonce : on retrouve en ouvrant le sticker qu'on a vu fermé. */
+{
+  await pool.query('UPDATE user_wallet SET packs = 2, packs_at = ? WHERE user_id = ?',
+    [new Date(), U]);
+  direct = null;
+  attente = null;
+  const page = await ouvrir();
+  await jusqua(async () => (await lireEtats(page)).menu.urgence === 'pret', 3000);
+  let e = await lireEtats(page);
+  check('le menu porte la récompense prête, avec son chiffre',
+    e.menu.urgence === 'pret' && e.menu.pastille === '2' && e.menu.dessine
+      && e.rail['/boosters']?.etat === 'pret' && e.rail['/boosters'].pastille === '2'
+    || (console.log('        menu :', JSON.stringify(e.menu), '· tuile :',
+      JSON.stringify(e.rail['/boosters'])), false));
+  check('à la couleur du sticker qu’il annonce dans le tiroir',
+    e.tiroir['/boosters']?.etat === 'pret' && e.menu.fond === e.tiroir['/boosters'].fond
+    || (console.log('        menu', e.menu.fond, '· tiroir', JSON.stringify(e.tiroir['/boosters'])), false));
+  couleurs.pret = e.menu.fond;
+
+  /* **La bulle**, posée au lever du rideau : elle parle de ce que la page
+     sait déjà, ici des boosters, et mène là où elle dit. Les règles du
+     marqueur (amendement 6) se vérifient sur ce qui est écrit : jamais un
+     chiffre, jamais plus de quatre mots, jamais sous quinze pixels. */
+  let b = await lireBulle(page);
+  check('le Fanzzy parle : sa bulle mène aux boosters qui attendent',
+    b.vue && !b.pli && b.href === '/boosters' && b.texte !== ''
+    || (console.log('        bulle :', JSON.stringify(b)), false));
+  check('au marqueur, sans chiffre et en quatre mots au plus (amendement 6)',
+    /Permanent Marker/i.test(b.police) && b.taille >= 15
+      && !/\d/.test(b.texte) && motsDe(b.texte) <= 4
+    || (console.log('        elle dit', JSON.stringify(b.texte), 'en', b.police, b.taille, 'px'), false));
+  const phrase = b.texte;
+
+  /* Elle se replie en « ! » au bout de son délai, et le « ! » la rouvre. Le
+     premier repli prouve qu'elle se replie ; la réouverture, faite à un
+     instant connu, prouve qu'elle tient son délai — ni repliée aussitôt, ni
+     restée ouverte. On touche le « ! » comme un joueur, d'un vrai clic, après
+     avoir prouvé qu'il est bien sous le doigt : un clic qui tomberait sur la
+     bulle partirait vers les boosters. */
+  const replie = await jusqua(() => bulleRepliee(page), REPLI_BULLE + 2000);
+  b = await lireBulle(page);
+  check('elle se replie en « ! »', replie && !b.vue && b.pli && b.pliDit === '!'
+    || (console.log('        bulle :', JSON.stringify(b)), false));
+  const sousLeDoigt = await page.evaluate(() => {
+    const p = document.getElementById('bullePli');
+    const r = p.getBoundingClientRect();
+    return p.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2));
+  });
+  const t0 = Date.now();
+  await page.click('#bullePli');
+  // Le temps que son entrée (`tbf-colle`, deux dixièmes) finisse : mesurée
+  // pendant, la bulle est encore agrandie et penchée.
+  await new Promise((r) => setTimeout(r, 400));
+  b = await lireBulle(page, true);
+  check('le « ! » la rouvre, sur la même phrase',
+    sousLeDoigt && b.vue && !b.pli && b.texte === phrase && page.url() === `${base}/`
+    || (console.log('        sous le doigt :', sousLeDoigt, '· bulle :', JSON.stringify(b),
+      '· adresse :', page.url()), false));
+  check('sur deux lignes au plus, et dans l’écran',
+    b.lignes >= 1 && b.lignes <= 2 && b.dansLEcran
+    || (console.log('        lignes :', b.lignes, '· dans l’écran :', b.dansLEcran,
+      '· marqueur chargé :', b.marqueur), false));
+  const repliee = await jusqua(() => bulleRepliee(page), REPLI_BULLE + 2500);
+  const tenue = Date.now() - t0;
+  check(`et elle tient ses ${REPLI_BULLE / 1000} s avant de se replier (${(tenue / 1000).toFixed(1)} s)`,
+    repliee && tenue >= REPLI_BULLE - 700 && tenue <= REPLI_BULLE + 1800);
+
+  /* **Un club suivi joue** : le direct passe devant la récompense, sur le
+     bouton du menu comme dans la bulle, qui parle d'abord du match. */
+  direct = { ...LIVE };
+  await page.evaluate(() => TBF.veiller());
+  await jusqua(async () => (await lireEtats(page)).menu.urgence === 'direct', 3000);
+  e = await lireEtats(page);
+  b = await lireBulle(page);
+  check('un club suivi joue : le direct passe devant la récompense',
+    e.menu.urgence === 'direct' && e.menu.dessine && e.rail['/virage']?.etat === 'direct'
+      && e.rail['/boosters']?.etat === 'pret'
+    || (console.log('        menu :', JSON.stringify(e.menu), '· rail :', e.enEtat.join(' ')), false));
+  check('à la couleur du LIVE du tiroir',
+    e.tiroir['/virage']?.etat === 'direct' && e.menu.fond === e.tiroir['/virage'].fond
+    || (console.log('        menu', e.menu.fond, '· tiroir', JSON.stringify(e.tiroir['/virage'])), false));
+  couleurs.direct = e.menu.fond;
+  check('et la bulle parle d’abord du match', b.vue && b.href === '/virage'
+    || (console.log('        bulle :', JSON.stringify(b)), false));
+
+  /* Le match fini, quelqu'un attend en duel : le tiroir le dit sur sa
+     tuile, mais la récompense prête reste devant sur le bouton — le duel
+     vient en dernier dans l'ordre d'urgence. */
+  direct = null;
+  attente = { ...FILE };
+  await page.evaluate(() => TBF.veiller());
+  await jusqua(async () => (await lireEtats(page)).tiroir['/duel-nvn']?.etat === 'attend', 3000);
+  e = await lireEtats(page);
+  check('quelqu’un attend en duel : le tiroir le dit, la récompense reste devant',
+    e.tiroir['/duel-nvn']?.etat === 'attend' && e.tiroir['/duel-nvn'].pastille === '1'
+      && e.menu.urgence === 'pret' && e.menu.pastille === '2' && e.rail['/virage']?.etat === null
+    || (console.log('        menu :', JSON.stringify(e.menu), '· duel :',
+      JSON.stringify(e.tiroir['/duel-nvn']), '· rail :', e.enEtat.join(' ')), false));
+  attente = null;
+  await page.close();
+}
+
+/* ---- sans réserve : le duel qui attend, puis plus rien ; puis les trois états ---- */
+{
+  await pool.query('UPDATE user_wallet SET packs = 0, packs_at = ? WHERE user_id = ?',
+    [new Date(), U]);
+  direct = null;
+  attente = { ...FILE };
+  const page = await ouvrir();
+  await jusqua(async () => (await lireEtats(page)).menu.urgence === 'attend', 3000);
+  let e = await lireEtats(page);
+  check('sans réserve, le menu annonce le duel qui attend, et combien',
+    e.menu.urgence === 'attend' && e.menu.pastille === '1' && e.menu.dessine
+      && e.tiroir['/duel-nvn']?.etat === 'attend' && e.menu.fond === e.tiroir['/duel-nvn'].fond
+    || (console.log('        menu :', JSON.stringify(e.menu), '· duel :',
+      JSON.stringify(e.tiroir['/duel-nvn'])), false));
+  couleurs.attend = e.menu.fond;
+  check('et BOOSTERS ne promet rien qu’il n’a pas',
+    e.rail['/boosters']?.etat === null && e.rail['/boosters'].pastille === null && e.jeton === '0'
+    || (console.log('        tuile :', JSON.stringify(e.rail['/boosters']), '· jeton :', e.jeton), false));
+  /* Rien à dire — pas de match, pas de réserve, pas de nouvelle carte, un
+     Fanzzy équipé : pas de bulle, et pas de « ! » qui rouvrirait du vide. */
+  const b = await lireBulle(page);
+  check('rien à dire : ni bulle, ni « ! »', !b.vue && !b.pli
+    || (console.log('        bulle :', JSON.stringify(b)), false));
+
+  /* La file partie, le bouton redevient muet : un état sans donnée ne se
+     pose pas, et une pastille permanente cesse d'être une alerte. */
+  attente = null;
+  await page.evaluate(() => TBF.veiller());
+  await jusqua(async () => (await lireEtats(page)).menu.urgence === null, 3000);
+  e = await lireEtats(page);
+  check('la file partie, le menu se tait',
+    e.menu.urgence === null && e.menu.pastille === null && !e.menu.dessine
+    || (console.log('        menu :', JSON.stringify(e.menu)), false));
+  const teintes = [couleurs.direct, couleurs.pret, couleurs.attend];
+  check('trois urgences, trois couleurs', teintes.every(Boolean) && new Set(teintes).size === 3
+    || (console.log('        direct', couleurs.direct, '· prêt', couleurs.pret,
+      '· attend', couleurs.attend), false));
+
+  /* **« +N » sur FANZZY** : les cartes arrivées depuis la dernière visite
+     sur cet appareil (`localStorage`, `tbf.vus`). La première visite n'en
+     montre aucune — tout ce qu'on possède n'est pas nouveau — et vient de
+     tout marquer comme vu ; on ajoute donc une carte, et on revient **dans
+     le même navigateur**, là où ce souvenir vit. Une carte que le compte n'a
+     pas encore, choisie dans le catalogue publié : écrite en dur, elle
+     finirait par être déjà possédée. */
+  const [lignes] = await pool.query('SELECT fanzzy_id FROM user_fanzzy WHERE user_id = ?', [U]);
+  const deja = new Set(lignes.map((l) => l.fanzzy_id));
+  const NEUVE = PUB.find((f) => !AGE_SUP.has(f.id) && !deja.has(f.id))?.id;
+  await pool.query('INSERT INTO user_fanzzy (user_id, fanzzy_id, copies) VALUES (?, ?, 1)', [U, NEUVE]);
+  await pool.query('UPDATE user_wallet SET packs = 2, packs_at = ? WHERE user_id = ?',
+    [new Date(), U]);
+  const revenir = async () => {
+    await page.goto(`${base}/`, { waitUntil: 'networkidle0' });
+    await page.waitForFunction(() => typeof window.TBF?.veiller === 'function',
+      { timeout: 8000 }).catch(() => {});
+    // BOOSTERS en « prêt » dit que les états ont été posés, avec ou sans « +N ».
+    await jusqua(async () => (await lireEtats(page)).rail['/boosters']?.etat === 'pret');
+  };
+  await revenir();
+  e = await lireEtats(page);
+  check('une carte arrivée depuis la visite d’avant : FANZZY dit « +1 »',
+    e.rail['/fanzzy']?.etat === 'nouveau' && e.rail['/fanzzy'].pastille === '+1'
+    || (console.log('        carte', NEUVE, '· FANZZY :', JSON.stringify(e.rail['/fanzzy'])), false));
+
+  /* Le direct, la récompense et la nouveauté ensemble : les trois tuiles
+     les portent, chacune à sa place, et rien d'autre n'est en état. C'est
+     le plafond de l'amendement 7 tenu à son maximum. */
+  direct = { ...LIVE };
+  await page.evaluate(() => TBF.veiller());
+  await jusqua(async () => (await lireEtats(page)).rail['/virage']?.etat === 'direct', 3000);
+  e = await lireEtats(page);
+  check('direct, prêt et nouveau tiennent ensemble, et rien de plus',
+    e.enEtat.join(' ') === ['/boosters=pret', '/fanzzy=nouveau', '/virage=direct'].sort().join(' ')
+      && e.rail['/boosters'].pastille === '2' && e.rail['/fanzzy'].pastille === '+1'
+    || (console.log('        en état :', e.enEtat.join(' ')), false));
+  direct = null;
+  await page.evaluate(() => TBF.veiller());
+
+  /* Toucher FANZZY marque tout comme vu : au retour, le « +1 » ne revient
+     pas. Un vrai clic, et on vérifie qu'il est bien parti vers le classeur —
+     sans quoi on éprouverait un clic tombé ailleurs. On guette **la demande
+     de navigation**, et non l'adresse d'arrivée : ce banc ne sert pas le
+     classeur, et une page d'erreur du navigateur n'aurait pas d'adresse à
+     lire. */
+  const versClasseur = page.waitForRequest((r) => r.isNavigationRequest()
+    && new URL(r.url()).pathname === '/fanzzy', { timeout: 4000 }).then(() => true, () => false);
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 4000 }).catch(() => {}),
+    page.click('#caseFanzzy'),
+  ]);
+  const parti = await versClasseur;
+  await revenir();
+  e = await lireEtats(page);
+  check('toucher FANZZY marque tout comme vu : le « +1 » ne revient pas',
+    parti && e.rail['/fanzzy']?.etat === null && e.rail['/boosters']?.etat === 'pret'
+    || (console.log('        parti vers le classeur :', parti, '· FANZZY :',
+      JSON.stringify(e.rail['/fanzzy'])), false));
+  await page.close();
+  await pool.query('DELETE FROM user_fanzzy WHERE user_id = ? AND fanzzy_id = ?', [U, NEUVE]);
+}
+
+/* ---- la bâche du jour : le prochain rendez-vous, sinon la suite du parcours ----
+
+   Le ticket kraft du bas a quatre façons de se remplir, et la première qui
+   a ses données l'emporte : le direct (éprouvé plus haut, avec le match),
+   le prochain coup d'envoi d'un club suivi, l'étape suivante des premiers
+   pas, et « Répéter un geste », qui ne dépend de rien.
+
+   **NS contre TBD.** Le calendrier sert aussi des rencontres « TBD » : la
+   date est posée, l'heure ne l'est pas, et `kickoff_at` porte une heure de
+   remplissage — souvent minuit. L'annoncer serait donner rendez-vous à une
+   heure que personne n'a fixée, avec un compte à rebours vers rien : « un
+   état sans donnée ne s'affiche pas ». Deux exigences, donc : l'heure
+   provisoire n'est jamais annoncée ; et, comme `prochain()` l'écrit dans
+   `index.html`, une « TBD » qui vient la première suspend l'annonce — ni
+   son heure fausse, ni le match d'après, qui n'est pas le prochain.
+
+   La disposition du ticket a bougé pendant le lot (l'affiche dans le titre,
+   le moment dessous) : les contrôles lisent le ticket entier, et pas une
+   ligne précise, pour juger de ce qu'il dit et non de l'endroit où il le
+   range.
+
+   Les dates sont prises dans le fuseau du navigateur, qui est celui de ce
+   poste : trois jours plus tard à 20:45 pour la rencontre programmée (le
+   jour s'écrit alors en abrégé, lu dans `JOURS`), demain à minuit pour
+   l'autre, et dans cinq heures pour celle dont on compte les heures. */
+{
+  const aLHeure = (jours, h, m) => {
+    const d = new Date();
+    d.setDate(d.getDate() + jours);
+    d.setHours(h, m, 0, 0);
+    return d;
+  };
+  const NS = { id: 501, status_short: 'NS', kickoff_at: aLHeure(3, 20, 45).toISOString(),
+    home_id: 85, away_id: 92, home_name: 'Sion', away_name: 'Lausanne' };
+  const TBD = { id: 502, status_short: 'TBD', kickoff_at: aLHeure(1, 0, 0).toISOString(),
+    home_id: 93, away_id: 85, home_name: 'Servette', away_name: 'Sion' };
+  const jourNS = (JOURS_LUS ?? [])[new Date(NS.kickoff_at).getDay()] ?? '(jours introuvables)';
+  /* Les premiers pas : deux étapes faites sur six, la troisième mène au
+     deck, et le parcours rapporte un booster tant qu'il n'est pas payé. */
+  const PARCOURS = {
+    etapes: [
+      { cle: 'fanzzy', titre: 'Ton premier Fanzzy', ou: '/fanzzy', fait: true },
+      { cle: 'booster', titre: 'Ouvre un booster', ou: '/boosters', fait: true },
+      { cle: 'deck', titre: 'Compose ton deck', ou: '/deck', fait: false },
+      { cle: 'virage', titre: 'Pousse dans le Grand Virage', ou: '/virage', fait: false },
+      { cle: 'duel', titre: 'Joue un duel', ou: '/duel-nvn', fait: false },
+      { cle: 'evolution', titre: 'Fais grandir un Fanzzy', ou: '/fanzzy', fait: false },
+    ],
+    faites: 2, total: 6, recompense: 1, paye: false,
+  };
+  /* Dans cinq heures : à moins d'un jour, le ticket compte les heures. */
+  const PROCHE = { id: 503, status_short: 'NS', kickoff_at: new Date(Date.now() + 5 * 3_600_000).toISOString(),
+    home_id: 85, away_id: 94, home_name: 'Sion', away_name: 'Lugano' };
+  const lireBache = (page) => page.evaluate(() => {
+    const t = (id) => document.getElementById(id)?.textContent.trim() ?? '';
+    const rang = document.getElementById('directRang')?.hidden === false;
+    const g = document.getElementById('directGain');
+    const v = {
+      href: document.getElementById('direct').getAttribute('href'),
+      tag: t('directTag'), nom: t('directNom'), sous: t('directSous'),
+      aria: document.getElementById('direct').getAttribute('aria-label') ?? '',
+      rang,
+      v: t('directV'),
+      // Le gain vit dans la rangée des premiers pas : caché avec elle, il ne dit rien.
+      gain: rang && g && !g.hidden ? t('directGainN') : null,
+    };
+    // Tout ce que le ticket dit, à l'œil comme à l'oreille.
+    v.tout = [v.tag, v.nom, v.sous, v.v, v.aria].join(' ');
+    return v;
+  });
+  /** Une visite neuve sur ce calendrier et ce parcours : la bâche se lit au chargement. */
+  const visite = async (cal, parc) => {
+    calendrier = cal;
+    parcours = parc;
+    const page = await ouvrir();
+    const v = await lireBache(page);
+    await page.close();
+    return v;
+  };
+  direct = null;
+  attente = null;
+  /** Le ticket annonce cette rencontre-là : son affiche, son jour et son heure. */
+  const annonceNS = (v) => v.href === '/matchs' && /PROCHAIN COUP D.ENVOI/i.test(v.tag)
+    && [jourNS, '20:45', 'Sion', 'Lausanne'].every((x) => `${v.tag} ${v.nom} ${v.sous}`.includes(x));
+  /** Rien de la rencontre sans heure n'est dit : ni son adversaire, ni son minuit. */
+  const taitTBD = (v) => !v.tout.includes('Servette') && !v.tout.includes('00:00');
+
+  let v = await visite([NS], PARCOURS);
+  check(`la bâche du jour annonce le prochain coup d’envoi (${jourNS} 20:45)`, annonceNS(v)
+    || (console.log('        bâche :', JSON.stringify(v)), false));
+
+  v = await visite([PROCHE], PARCOURS);
+  check('à moins d’un jour, elle compte les heures jusqu’au coup d’envoi',
+    v.href === '/matchs' && /PROCHAIN COUP D.ENVOI/i.test(v.tag) && v.tout.includes('Lugano')
+      && /dans \d+ h/.test(`${v.nom} ${v.sous}`)
+    || (console.log('        bâche :', JSON.stringify(v)), false));
+
+  v = await visite([TBD, NS], PARCOURS);
+  check('l’heure provisoire d’une rencontre « TBD » n’est jamais annoncée', taitTBD(v)
+    || (console.log('        bâche :', JSON.stringify(v)), false));
+  check('et venue la première, elle suspend l’annonce : ni elle, ni le match d’après',
+    !/PROCHAIN/i.test(v.tag) && !v.tout.includes('Lausanne') && v.href === '/deck'
+    || (console.log('        bâche :', JSON.stringify(v)), false));
+
+  v = await visite([], PARCOURS);
+  check('sans rencontre à venir, elle montre l’étape suivante des premiers pas',
+    v.href === '/deck' && v.nom === 'Compose ton deck' && v.rang
+      && `${v.tag} ${v.v}`.replace(/\s/g, '').includes('2/6')
+    || (console.log('        bâche :', JSON.stringify(v)), false));
+  check('et ce que le parcours rapporte, tant qu’il ne l’a pas rapporté',
+    (v.gain ?? '').replace(/\D/g, '') === '1'
+    || (console.log('        gain :', JSON.stringify(v.gain)), false));
+
+  /* Une « TBD » seule, et plus de premiers pas : rien à annoncer, la case
+     retombe sur ce qui ne dépend de rien — sans ligne vide ni tiret. */
+  v = await visite([TBD], null);
+  check('une rencontre sans heure, seule, ne s’annonce pas non plus',
+    !/PROCHAIN/i.test(v.tag) && taitTBD(v)
+    || (console.log('        bâche :', JSON.stringify(v)), false));
+  check('et la bâche retombe sur « Répéter un geste », sans ligne vide ni tiret',
+    v.href === '/repetition' && /répéter un geste/i.test(v.nom) && v.tag === '' && v.sous === '' && !v.rang
+    || (console.log('        bâche :', JSON.stringify(v)), false));
+  calendrier = null;
+  parcours = null;
+}
+
+/* ---- le rideau : ses libellés par tiers, sa consigne, son astuce ----
+
+   L'écran d'ouverture du lot 2 parle pendant qu'il couvre : trois libellés
+   qui changent par tiers de sa durée, « TOUCHE POUR ENTRER » au bout du
+   plancher, l'astuce du jour sur un ticket — et **pas de marqueur** sur le
+   rideau (amendement 6). Rien de cela n'était lu.
+
+   Pour les voir, il faut que le rideau reste : il part dès que l'accueil est
+   prêt, en un peu plus d'une seconde sur ce banc. On retient donc le module
+   fanzzy un peu moins longtemps que la durée du rideau — l'accueil n'est pas
+   prêt avant —, et les trois libellés ont le temps de passer. Les instants
+   sont relevés **dans la page** (`performance.now()`, au changement même),
+   et non devinés depuis ici : c'est ce qui permet de dire « par tiers » sans
+   une attente réglée à la main. Puis on laisse le rideau partir avant de
+   fermer : les réponses retenues ne doivent pas tomber pendant le bloc
+   suivant. */
+{
+  retardFanzzy = Math.round(DUREE_OUV * 0.85);
+  const ctx = await (nav.createBrowserContext?.() ?? nav.createIncognitoBrowserContext());
+  const p = await ctx.newPage();
+  p.on('pageerror', (er) => erreurs.push(er.message));
+  await p.setViewport({ width: 360, height: 640 });
+  /* Au premier plan : la jauge et ses libellés avancent au rythme des
+     images (`requestAnimationFrame`), et un onglet de fond peut en recevoir
+     moins — les pages ouvertes plus haut ne sont pas toutes fermées. */
+  await p.bringToFront();
+  await p.goto(`${base}/`, { waitUntil: 'domcontentloaded' });
+  const debut = await p.evaluate(() => {
+    const e = document.getElementById('ouverture');
+    if (!e) return null;
+    const mot = document.getElementById('ouvMot');
+    window.__rideau = [];
+    const noter = () => window.__rideau.push({ t: performance.now(),
+      mot: mot?.textContent.trim() ?? '', entrable: e.classList.contains('entrable') });
+    new MutationObserver(noter).observe(e, { attributes: true, attributeFilter: ['class'] });
+    if (mot) new MutationObserver(noter).observe(mot, { childList: true, characterData: true, subtree: true });
+    const a = document.getElementById('ouvAstuce');
+    return {
+      t: performance.now(),
+      mot: mot?.textContent.trim() ?? null,
+      entrable: e.classList.contains('entrable'),
+      marqueur: [...e.querySelectorAll('*')]
+        .filter((n) => /Permanent Marker/i.test(getComputedStyle(n).fontFamily))
+        .map((n) => n.id || n.getAttribute('class') || n.tagName),
+      astuce: a && !a.hidden ? { texte: a.querySelector('p')?.textContent.trim() ?? '',
+        cle: a.querySelector('p b')?.textContent.trim() ?? '',
+        titre: a.querySelector('.k')?.textContent.trim() ?? '' } : null,
+    };
+  });
+  const dernier = await p.waitForFunction((m) =>
+    document.getElementById('ouvMot')?.textContent.trim() === m,
+  { timeout: DUREE_OUV + 2000 }, MOTS_OUV[2] ?? '').then(() => true).catch(() => false);
+  retardFanzzy = 0;
+  const fin = await p.evaluate(() => {
+    const c = document.querySelector('.ouverture .consigne');
+    const s = c ? getComputedStyle(c) : null;
+    return { journal: window.__rideau ?? [],
+      consigne: c ? { texte: c.textContent.trim(), vue: s.visibility === 'visible' && s.opacity === '1' } : null };
+  });
+
+  check('le rideau couvre l’arrivée, sur son premier libellé',
+    debut !== null && debut.mot === MOTS_OUV[0]
+    || (console.log('        rideau :', JSON.stringify(debut)), false));
+  /* Chaque libellé arrive au tiers qui est le sien : pas avant (le compte
+     part au plus tôt avec la page), et pas une seconde trop tard. */
+  const quand = (m) => fin.journal.find((x) => x.mot === m)?.t ?? null;
+  const t1 = quand(MOTS_OUV[1]);
+  const t2 = quand(MOTS_OUV[2]);
+  const auTiers = (t, k) => t !== null && t >= (DUREE_OUV * k) / 3 - 50 && t <= (DUREE_OUV * k) / 3 + 2000;
+  check('puis ses deux autres libellés, chacun à son tiers',
+    dernier && auTiers(t1, 1) && auTiers(t2, 2)
+    || (console.log('        libellés :', JSON.stringify(fin.journal.map((x) => [Math.round(x.t), x.mot]))), false));
+  /* La consigne paraît au bout du plancher, et pas avant : c'est à partir
+     de là que toucher fait partir l'écran. Déjà là à la première lecture,
+     elle n'est jugeable que si cette lecture venait après le plancher. */
+  const tEntrable = debut?.entrable ? (debut.t >= PLANCHER_OUV - 50 ? debut.t : -1)
+    : (fin.journal.find((x) => x.entrable)?.t ?? null);
+  check('« TOUCHE POUR ENTRER » paraît au bout du plancher',
+    tEntrable !== null && tEntrable >= PLANCHER_OUV - 50 && tEntrable <= PLANCHER_OUV + 2000
+      && fin.consigne?.vue === true && /TOUCHE POUR ENTRER/i.test(fin.consigne.texte)
+    || (console.log('        entrable à', tEntrable, '· consigne :', JSON.stringify(fin.consigne)), false));
+  /* L'astuce du jour : un ticket, son mot-clé mis en valeur, et aucun
+     nombre — un nombre réglable depuis l'administration ment toujours en
+     premier (voir `ASTUCES`, dans `ouverture.js`). */
+  check('l’astuce du jour est posée, avec son mot-clé et sans aucun nombre',
+    debut?.astuce !== null && debut?.astuce !== undefined && debut.astuce.cle !== ''
+      && debut.astuce.texte.includes(debut.astuce.cle) && !/\d/.test(debut.astuce.texte)
+      && debut.astuce.titre !== ''
+    || (console.log('        astuce :', JSON.stringify(debut?.astuce)), false));
+  check('et pas de marqueur sur le rideau (amendement 6)', debut !== null && debut.marqueur.length === 0
+    || (console.log('        au marqueur :', debut?.marqueur.join(' · ')), false));
+
+  await p.waitForFunction(() => !document.getElementById('ouverture'),
+    { timeout: OUVERTURE_MS }).catch(() => {});
+  await p.close();
+  await ctx.close?.();
+}
+
+/* La réserve de départ, rendue : les blocs qui suivent ne la lisent pas,
+   mais une suite qu'on relit doit retrouver le compte qu'elle a posé. */
+await pool.query('UPDATE user_wallet SET packs = 12, packs_at = ? WHERE user_id = ?', [new Date(), U]);
+check('aucune erreur de script pendant ces contrôles du hub', erreurs.length === erreursAvantLot2
+  || (console.log('   ', erreurs.slice(erreursAvantLot2, erreursAvantLot2 + 3)), false));
 
 
 /* ============================ installer le jeu sur l'appareil

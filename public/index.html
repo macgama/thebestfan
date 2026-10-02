@@ -4,7 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>thebestfan — le jeu des tribunes</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<!-- **Permanent Marker, dans la même ligne qu'Oswald** (lot 2, fin de
+     l'hypothèse H3). L'accueil est la seule page de ce lot qui l'emploie, et
+     pour une seule chose : la bulle du Fanzzy sur le hub. Une police d'appoint
+     ne se télécharge que si un texte la demande : la vitrine et l'écran
+     d'ouverture, qui ne l'emploient pas, ne paient que ces quelques lignes de
+     feuille. Jamais sur le rideau (amendement 6) : il s'affiche avant qu'elle
+     soit garantie là. -->
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
 <style>
@@ -385,93 +392,89 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
 
    Un écran de jeu, pas une page. Trois bandes : les compteurs en haut, le
    personnage au centre entre deux rails de navigation, l'action en bas.
-   Rien ne défile — tout ce qui compte est visible d'un coup d'œil.        */
+   Rien ne défile — tout ce qui compte est visible d'un coup d'œil.
+
+   ## Le budget de hauteur (lot 2, amendement 14)
+
+   À 360 × 640, le personnage doit tenir **60 % de la hauteur** — 384 px — et
+   il n'en tenait que 312 (48,8 %, mesuré au banc avant le lot) : la bande du
+   haut, la plaque du nom et la bande du bas lui prenaient tout. Trois choses
+   lui rendent la place, comme sur la maquette :
+
+     — **la bande du haut flotte au-dessus de la scène** (`.haut` en absolu) :
+       la réserve des gestes, en haut de la scène, passe sous l'avatar, les
+       compteurs et le menu au lieu de s'ajouter à eux. Le dessin a de l'air
+       au-dessus de la tête ; c'est cet air qui passe dessous ;
+     — **les rails descendent jusqu'au pied de la scène**, de part et d'autre
+       du nom, et non plus au-dessus de lui ; ils sont rangés par le bas, et
+       ce qui reste au-dessus d'eux, à côté de la tête, est la place de la
+       bulle ;
+     — **les tuiles font 58 px de haut** sur un écran court (voir `.rail`).
+
+   Le reste est le budget de la direction : bande du bas de 88, bouton de 60.
+   Mesuré au banc : 388 px à 360 × 640, soit 60,6 %. */
 
 .hub{position:relative;z-index:3;display:none;flex-direction:column;height:100%;
-  padding:calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 10px);
-  gap:9px}
+  padding:env(safe-area-inset-top) 10px calc(env(safe-area-inset-bottom) + 4px);
+  gap:8px;
+  /* La rangée du haut : sa distance au bord de l'écran, sa hauteur, et ce
+     qu'il faut laisser sous elle — c'est là que commencent les rails, la
+     bulle et son « ! ». Voir « bande du haut » pour ces quinze pixels. */
+  --haut-y:15px;
+  --haut-h:44px;
+  --sous-haut:calc(env(safe-area-inset-top) + var(--haut-y) + var(--haut-h) + 10px)}
 .hub.on{display:flex}
 
 
 /* ------------------------------------------------------- bande du haut */
-/* La barre du haut est faite des mêmes plaques que le reste. Trois réglages
-   seulement : une tranche plus fine, parce qu'un objet de trente-huit pixels
-   n'a pas la même épaisseur qu'un bouton de cinquante-huit ; et l'alignement
-   par le haut, la tranche occupant les derniers pixels. */
 /* Tout ce qui est dans la barre du haut a **la même hauteur**. C'est la seule
    chose qui fasse une rangée : trois objets de trente-huit, quarante-quatre et
-   cinquante-deux pixels alignés côte à côte se lisent comme trois accidents. */
-.haut{display:flex;align-items:center;gap:8px;flex:none;--haut-h:44px}
+   cinquante-deux pixels alignés côte à côte se lisent comme trois accidents.
+
+   **Elle flotte au-dessus de la scène** (lot 2) : voir « Le budget de
+   hauteur », plus haut. Elle ne prend pas le doigt entre ses objets — la
+   scène, dessous, garde le petit saut qu'on tape sur le personnage —, chacun
+   de ses enfants le reprend pour lui.
+
+   **Quinze pixels en haut, quatorze à droite, dix à gauche.** Le sticker de
+   l'état le plus urgent, sur le bouton du menu, déborde du coin de neuf
+   pixels en haut et de huit à droite (`ui.css`) — et de près de quatorze
+   avec son anneau de craie et d'encre, sa rotation et son ombre. À huit et
+   dix pixels du bord, l'écran lui coupait l'anneau en haut et à droite :
+   le « 4 » des boosters, sur le bouton le plus regardé du hub, paraissait
+   rogné. La rangée lui laisse cet air — en haut, quinze et non quatorze :
+   le bouton, centré avec son ombre de trois pixels, monte d'un et demi.
+   L'avatar, à gauche, reste aligné sur le rail. Elle flotte : la descendre
+   ne prend rien au personnage. */
+.haut{position:absolute;z-index:10;top:calc(env(safe-area-inset-top) + var(--haut-y));left:10px;right:14px;
+  height:var(--haut-h);display:flex;align-items:center;justify-content:space-between;gap:8px;
+  pointer-events:none}
+.haut>*{pointer-events:auto}
 .haut .tbf-plaque{--epaisseur:3px}
-.moi{display:flex;align-items:center;text-decoration:none;flex:none}
-/* Le niveau se pose sur l’avatar plutôt que de prendre une ligne : la barre du
-   haut est déjà pleine, et c’est désormais le seul endroit où il s’affiche. */
-/* Onze pixels, le plancher du socle : le chiffre du niveau est le seul endroit
-   où il s'affiche, il ne peut pas être le plus petit texte de l'écran. Le
-   badge grandit d'un pixel avec lui, et reste posé sur le coin. */
-.pastille{position:relative}
-.pastille .niv{position:absolute;right:-4px;bottom:-4px;min-width:18px;height:18px;
-  border-radius:9px;background:#0B0E13;border:1px solid var(--projo);color:var(--projo);
-  font-style:normal;font-family:var(--banner);font-size:11px;line-height:16px;
-  text-align:center;padding:0 3px}
-/* La pastille dorée, seule. Elle fait la hauteur de la rangée — c'est ce que
-   « même hauteur que les boutons de droite » veut dire, et ça se règle ici une
-   fois plutôt qu'en trois endroits. */
-.pastille{width:var(--haut-h);height:var(--haut-h);flex:none;border-radius:13px;
-  display:grid;place-items:center;
-  font-family:var(--banner);font-size:21px;line-height:1;color:#1A0C04;
-  background:linear-gradient(150deg,var(--projo),#B8860B);
-  box-shadow:0 3px 0 #6B4E0A,inset 0 1px 0 rgba(255,255,255,.45)}
-.moi:active .pastille{transform:translateY(3px);box-shadow:0 0 0 #6B4E0A}
-/* L’initiale occupe toute la pastille : c’est elle que la page réécrit, et
-   le badge du niveau doit rester en dehors de ce qu’elle efface. */
-.pastille>#initiale{grid-area:1/1;display:grid;place-items:center;width:100%;height:100%}
+/* L'avatar et les deux compteurs sont les briques de `ui.css` (`.tbf-avatar`,
+   `.tbf-monnaie`) : cette page ne leur écrit que leur place. Ils remplacent la
+   pastille dorée à l'initiale et les deux jetons sur `--panneau` qu'elle
+   peignait ici. Les jetons gardent leur ancienne classe (`.jeton`, `.plus`)
+   dans le balisage, sans une règle : `accueil:ui` les lit encore.
 
-/* ## Les deux jetons, sans plaque
-   Une plaque dorée autour d'un compteur doré disait deux fois la même chose, et
-   criait plus fort que les dix destinations du jeu. Il reste le dessin et le
-   nombre : c'est une **lecture**, pas un bouton — même s'il se touche.
-
-   **Mais pas à même la photo.** Le dessin et le nombre se posaient sur le
-   haut de la tribune, où le voile du décor ne vaut plus que 0,7 : au soleil,
-   c'est la foule qu'on lisait entre les chiffres. Chaque jeton a donc une
-   pastille `--panneau` — sombre, plate, sans tranche ni couleur : un fond
-   pour lire, pas une plaque pour appuyer, et la note ci-dessus reste vraie.
-
-   Elle est peinte par un pseudo-élément **plus bas que le lien**, sept pixels
-   en retrait en haut et en bas : le doigt garde ses quarante-quatre pixels,
-   l'œil voit une pastille de trente, à l'échelle des chiffres qu'elle porte
-   et non du bouton du menu d'à côté. Le rembourrage latéral, qui ne valait
-   jusqu'ici que sur un écran court, vaut partout : c'est lui qui écarte le
-   dessin et le « + » du bord de la pastille. */
-.jeton{position:relative;isolation:isolate;
-  display:flex;align-items:center;gap:7px;text-decoration:none;color:var(--craie);
-  height:var(--haut-h);padding:0 10px;font-family:var(--banner);font-size:17px;
-  letter-spacing:.02em;font-variant-numeric:tabular-nums;line-height:1}
-.jeton::before{content:"";position:absolute;inset:7px 0;z-index:-1;border-radius:999px;
-  background:var(--panneau);box-shadow:inset 0 0 0 1px var(--trait)}
-.jeton svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;
-  stroke-linecap:round;stroke-linejoin:round}
-/* Le dessin prend la couleur de ce qu'il compte ; le nombre reste en craie.
-   L'inverse — un nombre coloré — se lit comme une alerte. */
-.jeton.ech svg{stroke:var(--projo)}
-.jeton.pack svg{stroke:var(--flare)}
-.jeton:active{transform:translateY(2px)}
-/* Le « + ». Discret par construction : s'il se lisait comme un bouton, il
-   ferait concurrence au nombre, qui est l'information. */
-.jeton .plus{font-size:13px;line-height:1;opacity:.4;font-weight:400}
-.jeton:active .plus{opacity:1;color:var(--projo)}
-
-.bourse{display:flex;gap:10px;margin-left:auto;align-items:center}
+   L'écart entre les compteurs vient de leur « + » : un petit sticker or qui
+   chevauche le bord droit de neuf pixels. */
+.bourse{display:flex;align-items:center;gap:16px}
 
 /* Le bouton du menu. L'accueil ne charge pas la barre commune — ses deux rails
    la remplacent — mais il charge le **menu** commun : sans lui, tout ce qui n'a
    pas sa tuile serait injoignable depuis l'écran principal, et il l'était à
-   moitié tant que cette page s'écrivait le sien. */
+   moitié tant que cette page s'écrivait le sien.
+
+   Le sticker de l'état le plus urgent (`data-urgence`) est son `::after`,
+   dans `ui.css` ; c'est `menu.js` qui le pose, d'après ce que l'accueil lui
+   dit (voir `etatsDuHub`). Les barres prennent le lettrage de la bâche
+   (`ui.css`) : cette page les peignait en `var(--encre)`, qui ne voulait
+   plus dire le lettrage depuis le lot 1. */
 /* Les trois barres s'empilent : la plaque, elle, range ses enfants en ligne. */
 .burger{display:flex;width:var(--haut-h);height:var(--haut-h);min-height:0;flex-direction:column;gap:4px;
   padding:12px 10px;flex:none}
-.burger span{display:block;height:2.5px;width:100%;background:var(--encre);border-radius:2px;
+.burger span{display:block;height:2.5px;width:100%;border-radius:2px;
   box-shadow:0 1px 0 rgba(0,0,0,.25)}
 /* Le tiroir, son voile et ses rubriques vivent dans ui.css (.tbf-tiroir).
    Ils étaient recopiés ici, à une largeur et une élévation près : deux menus
@@ -488,8 +491,18 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    `overflow:hidden` les rognait en silence. Cinq destinations sur neuf étaient
    amputées — le duel, les matchs, le classement, les amis, la boutique — et
    aucune mesure de débordement ne pouvait le voir. */
-.centre{display:grid;grid-template-columns:var(--rail) minmax(0,1fr) var(--rail);
-  align-items:center;flex:1 1 auto;min-height:0;overflow:hidden}
+/* **Deux rangées** (lot 2) : la scène, puis le nom du Fanzzy, au milieu ; les
+   rails occupent les deux, de part et d'autre. Et la bande **déborde de la
+   marge du hub** (`margin-inline` négatif, rendu en `padding-inline`) : la
+   clôture tombe au bord de l'écran et non au bord des rails. Collée au rail
+   de droite, elle coupait le cerne et l'ombre dure de ses tuiles — et elle
+   aurait coupé le sticker d'état qui déborde de huit pixels du coin d'une
+   tuile. */
+.centre{position:relative;display:grid;
+  grid-template-columns:var(--rail) minmax(0,1fr) var(--rail);
+  grid-template-rows:minmax(0,1fr) auto;
+  flex:1 1 auto;min-height:0;overflow:hidden;
+  margin-inline:-10px;padding-inline:10px}
 /* Cinq tuiles, et `.centre` est en `overflow:hidden` : sans plafond, la
    cinquième sort de l'écran sur un téléphone court et se fait couper sans que
    rien ne le signale. Le rail tient dans la hauteur qu'on lui donne ; les
@@ -501,10 +514,23 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    `gap` à 4 et non 8 : la plaque porte une tranche de quatre pixels sous elle,
    qui compte dans l'espacement. Sans cet ajustement, les cinq tuiles gagnaient
    vingt pixels de haut — et `.centre` étant en `overflow:hidden`, la cinquième
-   se serait fait couper en silence sur un téléphone court. */
-.rail{display:flex;flex-direction:column;gap:4px;z-index:3;
-  max-height:100%;min-height:0}
-.rail .tbf-case{min-height:0;flex:0 1 auto;--epaisseur:4px}
+   se serait fait couper en silence sur un téléphone court.
+
+   **Rangé par le bas, sous la bande du haut** (lot 2) : le rail commence où
+   la bande du haut s'arrête (`--sous-haut`), et ses tuiles se posent au pied
+   de la scène, à côté du nom. Ce qui reste au-dessus d'elles, à hauteur de
+   tête, est la place de la bulle — sur la maquette, les rails commencent à
+   146 px. */
+.rail{display:flex;flex-direction:column;justify-content:flex-end;gap:4px;z-index:3;
+  grid-row:1 / 3;align-self:stretch;min-height:0;padding-top:var(--sous-haut)}
+.centre>nav.rail:first-of-type{grid-column:1}
+.centre>nav.rail:last-of-type{grid-column:3}
+/* **Cinquante-huit pixels de haut sur un écran court** (amendement 14), et
+   carrée dès que la hauteur le permet. La tuile reste aussi large que le
+   rail — c'est la largeur qui fait tenir « CLASSEMENT » à onze pixels, voir
+   `--rail` —, seule sa hauteur cède : 9,1 % de la fenêtre font 58 px à 640.
+   Son icône, son libellé et leur écart en demandent cinquante-trois. */
+.rail .tbf-case{min-height:0;flex:0 1 auto;--epaisseur:4px;max-height:9.1vh;max-height:9.1dvh}
 /* `CLASSEMENT` fait dix caractères : à 56 px de rail il ne tenait pas, et les
    points de suspension transformaient une destination en devinette. La
    correction tient au rail un peu plus large et à une taille qui suit la
@@ -518,9 +544,23 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
 
    En pixels et non en pourcentage : c'est l'amplitude d'une animation, elle
    ne change pas avec la taille de l'écran. Le `2%` d'avant, lui, se résolvait
-   contre la **largeur** de la bande, ce qui ne voulait rien dire ici. */
-.scene{position:relative;height:100%;display:grid;place-items:end center;
-  padding:34px 0 10px;
+   contre la **largeur** de la bande, ce qui ne voulait rien dire ici.
+
+   Depuis le lot 2, cette réserve passe sous la bande du haut, qui flotte.
+
+   **En bas, aucune réserve : aucun geste ne passe sous le sol.** Le budget
+   de 60 % a pris les dix pixels qui restaient sous les pieds, et le nom suit
+   sa rangée juste dessous. Le personnage y est donc posé, et chacun de ses
+   gestes part de ses pieds sans jamais les enfoncer : le coucou penche au
+   lieu de tourner, le rebond s'écrase sur place, le saut s'étire depuis les
+   pieds (voir leurs images clés). Le coucou tournait autour du milieu des
+   pieds ; une rotation enfonce l'un des deux bords de `w/2 · sin θ` — six à
+   neuf pixels sur un téléphone, onze sur une tablette — et la semelle se faisait
+   rogner par la bande, ou mordait sur le nom. Rendre une réserve aurait
+   coûté au personnage les pixels du budget ; c'était le geste qui était
+   faux. Seule l'arrivée monte d'en dessous : c'est une entrée. */
+.scene{grid-row:1;grid-column:2;position:relative;height:100%;display:grid;place-items:end center;
+  padding:34px 0 0;
   min-height:0;text-decoration:none;color:inherit}
 /* **Le décor derrière le personnage**, le même que sur la fiche et dans
    « Mon Fanzzy » : sa tenue décide du lieu, son âge du palier. Il n'y en
@@ -531,29 +571,64 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    Une carte debout, à la hauteur de la scène, et **fondue sur ses bords** :
    l'accueil n'est pas une fiche, et un cadre net au milieu des rails se
    lirait comme une fenêtre ouverte sur autre chose. */
-.decor{position:absolute;left:50%;top:34px;bottom:10px;aspect-ratio:2/3;max-width:100%;
+.decor{position:absolute;left:50%;top:34px;bottom:0;aspect-ratio:2/3;max-width:100%;
   transform:translateX(-50%);pointer-events:none;opacity:0;transition:opacity .5s;
   -webkit-mask-image:radial-gradient(ellipse 58% 56% at 50% 54%,#000 58%,transparent 100%);
   mask-image:radial-gradient(ellipse 58% 56% at 50% 54%,#000 58%,transparent 100%)}
 .decor.on{opacity:1}
 .decor svg{display:block;width:100%;height:100%}
+/* Le halo et l'ombre au sol ne bougent plus (lot 2). **Trois animations
+   infinies au plus par écran** : sur le hub, ce sont le flottement du
+   personnage, la fumée des soirs de match et le sticker des boosters qui
+   respire — la liste de la direction, mot pour mot. Le halo qui pulsait,
+   l'ombre qui suivait le flottement et le point du direct en faisaient
+   cinq ; la respiration, qui tournait à part du flottement, en faisait
+   encore quatre les soirs de match. Elle est entrée dans le flottement :
+   une seule animation, sur la pile (voir `.pile`). */
 .halo{position:absolute;left:50%;top:47%;width:min(112%,460px);aspect-ratio:1;
   transform:translate(-50%,-50%);pointer-events:none;
   background:radial-gradient(circle,rgba(245,195,59,.28) 0%,rgba(224,64,44,.14) 32%,
-    rgba(60,130,232,.06) 54%,rgba(4,6,10,0) 70%);
-  animation:halo 6s ease-in-out infinite}
-.sol{position:absolute;left:50%;bottom:9%;width:min(44%,180px);height:24px;
+    rgba(60,130,232,.06) 54%,rgba(4,6,10,0) 70%)}
+.sol{position:absolute;left:50%;bottom:calc(9% - 10px);width:min(44%,180px);height:24px;
   transform:translateX(-50%);border-radius:50%;pointer-events:none;
-  background:radial-gradient(ellipse at center,rgba(0,0,0,.6),rgba(0,0,0,0) 70%);
-  animation:sol 3.6s ease-in-out infinite}
+  background:radial-gradient(ellipse at center,rgba(0,0,0,.6),rgba(0,0,0,0) 70%)}
+
+/* ## Le soir de match, derrière le personnage (lot 2)
+
+   Quand un club suivi joue — en direct, ou dans les deux heures —, une bâche
+   à ses deux couleurs se tend sur le mur derrière la tête et les épaules, et
+   la nappe de fumée (`.tbf-fumee`, `ui.css`) monte du sol, dans le quart bas
+   de la scène et nulle part ailleurs (amendement 7). Les couleurs sont
+   celles que le serveur a lues sur le blason, posées en ligne sur `.soir`
+   (`--e1`, `--e2`) : la bâche et la fumée les lisent, et les écharpes du
+   reste de l'écran gardent les leurs. Sans couleur connue, rien ne se pose.
+
+   `.soir` est un calque de la scène, sous le personnage (`.flotte` passe
+   devant, z-index 2) : la fumée le baigne par le bas sans jamais le couvrir.
+
+   **La bâche est la brique de `ui.css`** (`.tbf-bache-club`) : rayures,
+   voile d'encre, cerne, ombre, coin déchiré, les deux scotchs et la
+   rotation sont à elle. Cette page n'écrit que sa place et sa taille, à
+   hauteur de la tête et des épaules. Ses scotchs débordent de huit pixels
+   de chaque côté et de sept au-dessus : la largeur leur laisse ces seize
+   pixels, sans quoi ils passeraient sous les rails. */
+.soir{position:absolute;inset:0;z-index:1;pointer-events:none}
+.soir .tbf-bache-club{position:absolute;left:50%;top:calc(34px + 13%);
+  width:min(100% - 16px,60vw);height:22%;translate:-50% 0}
 /* Les calques de gestes prennent toute la hauteur de la scène. Sans ça, une
    hauteur en pourcentage sur la pile se résout contre un parent de hauteur
    automatique — c'est-à-dire contre rien — et retombe silencieusement sur
    `auto`. La règle ne casse pas : elle ne s'applique simplement pas. */
 .flotte,.bascule,.salut{height:100%;display:grid;place-items:end center}
-.flotte{animation:flotteur 3.6s ease-in-out infinite}
+/* Devant la bâche du club et la fumée : elles sont des calques positionnés,
+   et un calque positionné passe devant ce qui ne l'est pas.
+
+   Ce calque ne tourne plus en boucle : il porte l'arrivée et le saut, et
+   rien d'autre. Le flottement est passé sur la pile, dans la respiration
+   (voir `.pile`). */
+.flotte{position:relative;z-index:2}
 /* La bascule vit sur son propre calque : elle n'entre pas en conflit avec le
-   flottement du parent ni avec la respiration de la pile. */
+   saut ni avec le flottement de la pile. */
 .bascule{transform-origin:50% 100%}
 .scene.change .bascule{animation:bascule .42s cubic-bezier(.33,1,.68,1)}
 /* La taille du personnage. Il tient le centre de l'écran, donc il a le droit
@@ -563,7 +638,16 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    sans risque : la bande centrale est close par `overflow:hidden`, donc un
    personnage trop haut pour elle n'était pas réduit, il était décapité. Une
    tête coupée se lit comme une image cassée, jamais comme un cadrage serré.
-   Avec cette borne, l'écran trop court le rétrécit au lieu de le rogner. */
+   Avec cette borne, l'écran trop court le rétrécit au lieu de le rogner.
+
+   **Il flotte et il respire d'une seule animation** (`souffle`). Les deux
+   avaient la même durée et la même courbe, l'œil n'y voyait qu'un
+   mouvement ; ils tournaient pourtant à part, le flottement sur `.flotte`,
+   et cela faisait une animation infinie de trop au budget de l'écran. Les
+   réunir les tient aussi en phase : l'inclinaison de la respiration
+   (un demi-degré, qui abaisse un coin des pieds) ne joue plus que pendant
+   que le flottement les soulève — un saut relançait le flottement depuis
+   zéro et les déphasait. */
 .pile{position:relative;height:100%;max-width:100%;aspect-ratio:448/900;
   transform-origin:50% 100%;
   animation:souffle 3.6s ease-in-out infinite;will-change:transform}
@@ -573,27 +657,36 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
   transition:opacity .24s ease;
   filter:drop-shadow(0 0 22px rgba(245,195,59,.26)) drop-shadow(0 14px 26px rgba(0,0,0,.55))}
 .pose.on{opacity:1}
-.scene.saute .flotte{animation:saut .5s cubic-bezier(.34,1.56,.64,1)}
+/* Le saut s'étire depuis les pieds (voir `saut`) : étiré depuis le milieu du
+   personnage, il abaissait ses pieds de 4 % de sa hauteur au moment même où
+   il décollait de vingt-six pixels. Passé 650 pixels de personnage,
+   l'étirement l'emportait : sept pixels sous le sol sur une tablette, vingt
+   sur une grande. */
+.scene.saute .flotte{transform-origin:50% 100%;animation:saut .5s cubic-bezier(.34,1.56,.64,1)}
 
 /* ------------------------------------------------- le moment fort
 
-   « GOAL ! » au-dessus du personnage, et il reste là aussi longtemps que la
-   pose. Un but qui passe en deux secondes et demie ne laisse aucune trace :
-   le temps de sortir le téléphone de sa poche, tout est fini. */
-.moment{position:absolute;left:0;right:0;top:9%;z-index:6;text-align:center;
-  pointer-events:none;color:var(--mc,var(--projo));opacity:0}
-.moment b{display:block;font-family:var(--banner);font-size:clamp(30px,11vw,52px);
-  line-height:.95;letter-spacing:.04em;text-transform:uppercase;
-  text-shadow:0 0 26px rgba(0,0,0,.95),0 5px 0 rgba(0,0,0,.55);
-  -webkit-text-stroke:1.5px rgba(4,6,10,.75)}
-/* Le buteur et la minute. Ils viennent de la base, jamais de l'API : le
-   relevé du direct les y a déjà écrits, et les redemander coûterait un appel
-   par but. */
-.moment small{display:block;font-family:var(--banner);font-size:clamp(12px,3.6vw,16px);
-  letter-spacing:.12em;margin-top:5px;color:var(--craie);opacity:.85;
-  text-shadow:0 2px 12px rgba(0,0,0,.95)}
-.moment small:empty{display:none}
-.moment.on{opacity:1;animation:momentIn .6s cubic-bezier(.2,1.6,.35,1)}
+   « GOAL ! », et il reste là aussi longtemps que la pose. Un but qui passe en
+   deux secondes et demie ne laisse aucune trace : le temps de sortir le
+   téléphone de sa poche, tout est fini.
+
+   **C'est la case de BD unifiée** (lot 2) : `.tbf-moment` et `.tbf-vignette`,
+   dans `ui.css`, celle que `fanzzy-scene.js` pose au Virage et au duel, avec
+   sa bouffée de fumigène, ses confettis et son scotch qui se décolle. Le hub
+   avait gardé son lettrage nu, posé sur le personnage. La case est posée sur
+   le document, comme partout : au centre de l'écran, plus bas que le milieu
+   du personnage, elle laisse voir sa tête et ses bras levés. Voir `moment()`
+   dans le script.
+
+   **Une seule règle à lui : sa couche, sous le tiroir.** La brique la pose à
+   95, au-dessus des effets de `fx.js` ; elle tient quinze secondes, et un
+   joueur qui ouvrait le menu pendant ce temps voyait la case et son voile
+   passer par-dessus le tiroir (49) et cacher sa deuxième rangée — qu'on
+   touchait sans la voir, puisque la case laisse passer le doigt. Le hub ne
+   joue plus aucun effet de `fx.js` pendant un but : la case descend donc
+   juste sous le voile du menu (48). Elle reste au-dessus de tout le hub, et
+   ce qu'il en reste quand on referme le menu se voit encore. */
+#moment{z-index:47}
 
 /* ------------------------------------------- qui est à l'écran
 
@@ -603,91 +696,81 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    l'évolution est ce qu'on paie quatre-vingt-dix écharpes pour obtenir — elle
    mérite mieux qu'un dessin qu'on doit reconnaître.
 
-   Posé au pied du personnage, dans la scène : c'est là que le regard est déjà,
-   et cela ne prend aucune place aux rails.
+   **Au pied du personnage, entre les deux rails** (lot 2) : une rangée de
+   quarante-quatre pixels, la seconde de la bande centrale, à la hauteur des
+   deux dernières tuiles. Le personnage s'arrête au-dessus d'elle — rien ne
+   la recouvre, `accueil:ui` le vérifie.
 
-   ## Deux pastilles, taillées au texte
-
-   Le nom et l'âge se posaient à même la photo de tribune, protégés par une
-   ombre sous les lettres et par le voile du décor — qui ne vaut qu'entre
-   0,54 et 0,61 à cette hauteur. Sur une tribune éclairée, l'or de l'âge à
-   onze pixels tombait vers 3:1 : c'est exactement ce que le socle interdit.
-
-   Chacun reçoit donc sa pastille `--panneau`, à la largeur de ce qu'elle
-   porte — la même matière que « Déjà une place ? » sur la vitrine. Pas un
-   panneau pleine largeur : sous les rails, une bande sombre de bord à bord
-   se confondrait avec le duo du bas, et c'est le personnage qu'on
-   doit voir au-dessus, pas une barre. Les ombres portées sont parties avec
-   la photo qu'elles combattaient.
-
-   **Elles ne coûtent rien en hauteur.** Le nom garde sa ligne telle quelle —
-   la pastille en épouse la boîte, qu'Oswald fait déjà haute de vingt-quatre
-   pixels. Celle de l'âge prend trois pixels de rembourrage en haut et en bas,
-   repris sur les six pixels de pied de `.qui` ; les quatre qui la séparent du
-   nom restent quatre, écrits une fois sur la rangée au lieu de deux fois
-   deux. Le bloc mesure toujours ses quarante-neuf pixels, et le personnage ne
-   perd rien de la place que `accueil:ui` lui défend. */
-.qui{position:relative;flex:none;text-align:center;padding:0 12px;pointer-events:none}
-.qui b{display:block;width:fit-content;max-width:100%;margin:0 auto;padding:0 12px;
-  border-radius:999px;background:var(--panneau);box-shadow:inset 0 0 0 1px var(--trait);
-  font-family:var(--banner);font-size:clamp(15px,4.4vw,19px);letter-spacing:.06em;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+   **Le nom en banderole** (`.tbf-banderole`, `ui.css`), comme sur la
+   maquette : une bande craie de travers collée sous le personnage, à
+   l'encre (17:1). La page ne lui écrit que sa largeur. **L'âge** garde sa
+   pastille `--panneau` : l'or à onze pixels n'a pas de photo à traverser. */
+/* Trois cent vingt pixels au plus : sur une tablette, la colonne du milieu en
+   fait près de six cents, et les flèches, posées à ses deux bouts, partaient
+   rejoindre les tuiles loin du nom qu'elles font défiler. */
+.qui{grid-row:2;grid-column:2;justify-self:center;width:min(100%,320px);
+  position:relative;z-index:4;min-width:0;min-height:44px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  text-align:center;pointer-events:none}
+.qui .tbf-banderole{max-width:100%}
+/* Les flèches prennent les deux bouts de la rangée : le nom et l'âge leur
+   laissent leur place quand elles sont là, `--fl-place` de chaque côté
+   (voir `.ages .fl`). */
+.qui.fleches .tbf-banderole{max-width:calc(100% - 2 * var(--fl-place))}
 /* Pleine opacité : sur la pastille, l'or n'a plus de photo à traverser, et à
-   0,9 il n'aurait rien gagné qu'un peu de gris. */
-.qui small{display:block;font-size:11px;letter-spacing:.16em;padding:3px 10px;
-  border-radius:999px;background:var(--panneau);box-shadow:inset 0 0 0 1px var(--trait);
+   0,9 il n'aurait rien gagné qu'un peu de gris. En Oswald, comme sur la
+   maquette, et non plus dans la police du système : étroite, elle fait tenir
+   « ÉVOLUTION 2 / 3 » et sa coche entre les deux flèches, dans les
+   deux cent douze pixels d'un téléphone de 360. */
+.qui small{display:block;max-width:100%;font-family:var(--banner);font-weight:600;
+  font-size:11px;line-height:13px;letter-spacing:.1em;
+  padding:2px 8px;border-radius:999px;background:var(--panneau);box-shadow:inset 0 0 0 1px var(--trait);
   color:var(--projo)}
 .qui small:empty{display:none}
+.qui.fleches small{max-width:calc(100% - 2 * var(--fl-place))}
 /* Le défilé des âges. `.qui` coupe les gestes — c'était une plaque à lire —
    et on les rend ici, aux seuls éléments qui en ont besoin : deux flèches et
    un bouton. Les rendre à tout le bloc reprendrait au personnage le petit saut
    qu'on lui tape dessus, qui passe derrière. */
-/* **La rangée ne coûte rien en hauteur.** Le personnage est le sujet de cet
-   écran, et `accueil:ui` défend qu'il occupe au moins 60 % de la page sur un
-   téléphone court. Ajoutée en flux, cette rangée lui reprenait une trentaine de
-   pixels ; les flèches sont donc posées **par-dessus** la plaque, de part et
-   d'autre, et la ligne garde exactement la hauteur du texte qu'elle portait
-   déjà. */
-.ages{position:relative;display:flex;align-items:center;justify-content:center;
-  gap:10px;margin-top:4px;min-height:0}
+/* **La rangée ne coûte rien en hauteur.** Les flèches sont posées
+   **par-dessus** la rangée, à ses deux bouts, et ne la grandissent pas. */
+/* Toute la largeur de la rangée, et non celle de son texte : la borne de la
+   pastille de l'âge (`max-width` en pour cent) se calcule sur elle, et sur
+   une boîte taillée au texte elle se retranchait d'elle-même — l'âge passait
+   sur deux lignes et montait sous le nom. */
+.ages{display:flex;align-items:center;justify-content:center;min-height:0;align-self:stretch}
+/* La plaque ronde est une bâche, donc en `flex` : sans cette règle, elle
+   l'emporterait sur `hidden`. */
 .ages .fl[hidden]{display:none}
-/* Le disque a son propre fond `--panneau` : le chevron est un caractère
-   blanc, et sur le blanc à 0,12 d'avant il se posait sur la foule comme le
-   texte d'à côté. Le survol éclaire le liseré plutôt que le fond. */
-.ages .fl{position:absolute;top:50%;transform:translateY(-50%);
-  pointer-events:auto;appearance:none;border:0;cursor:pointer;
-  width:24px;height:24px;border-radius:999px;font:700 16px/1 system-ui;
-  color:#fff;background:var(--panneau);box-shadow:inset 0 0 0 1px var(--trait);
-  display:grid;place-items:center;transition:box-shadow .15s,opacity .15s}
-/* Pas collées au texte : la lignée se lit au milieu, les deux sens de lecture
-   l'encadrent.
+/* **Deux plaques rondes** (`.tbf-plaque--rond`, `ui.css`, lot 2) : une zone
+   de quarante-quatre pixels pour le doigt, une face de parpaing de
+   trente-deux au milieu, cernée d'encre, qui s'enfonce. Elles ont été des
+   disques de vingt-quatre pixels prolongés par une zone invisible — l'audit
+   mesure la boîte, et comptait deux cibles trop petites —, puis une face
+   dessinée ici en attendant la brique. Cette page ne leur écrit plus que
+   leur place. Au bout de la lignée, la flèche est hors service (la trame de
+   la brique), inerte plutôt que retirée : une flèche qui disparaît déplace
+   la plaque sous le doigt entre deux appuis.
 
-   **À une place fixe, et au-delà de la plus longue pastille.** Fixe, parce
-   qu'une flèche qui suivrait la largeur du texte bougerait sous le doigt d'un
-   appui à l'autre : l'âge suivant n'a pas la même phrase. Au-delà de la plus
-   longue, parce qu'elles recouvraient le texte : elles étaient à soixante-deux
-   pixels du centre, réglées sur « ÉVOLUTION 2 / 3 » à dix pixels, quand la
-   coche amène la phrase à cent vingt-six pixels et « dessin à venir » à deux
-   cent trente — les deux disques tombaient au milieu des lettres.
+   **À une place fixe** : aux deux bouts de la rangée, et non contre le texte.
+   Une flèche qui suivrait la largeur du texte bougerait sous le doigt d'un
+   appui à l'autre — l'âge suivant n'a pas la même phrase.
 
-   La pastille la plus longue — coche et mention ensemble — fait deux cent
-   cinquante pixels avec son rembourrage : les flèches commencent six pixels
-   plus loin, à cent trente et un du centre, et la pastille est bornée à cette
-   largeur. Une police plus large que celle de la mesure la fait passer sur
-   deux lignes au lieu de glisser sous les disques. À 320 px de large, les
-   flèches tiennent encore dans l'écran, en mordant de cinq pixels sur la
-   marge du hub. */
-#ageAvant{right:calc(50% + 131px)}
-#ageApres{left:calc(50% + 131px)}
-#quiEvo{max-width:250px}
-/* **Le doigt vise quarante-quatre pixels**, l'œil en voit vingt-quatre. Le
-   disque garde sa taille — c'est lui qui ne prend aucune hauteur à la rangée
-   — et une zone invisible autour de lui porte le reste de la cible. */
-.ages .fl::after{content:"";position:absolute;inset:-10px}
-.ages .fl:not(:disabled):hover{box-shadow:inset 0 0 0 1px rgba(242,238,228,.4)}
-/* Au bout de la lignée : estompée et inerte, plutôt que retirée. Une flèche qui
-   disparaît déplace la plaque sous le doigt entre deux appuis. */
-.ages .fl:disabled{opacity:.22;cursor:default}
+   **La face au ras du bout de la rangée**, comme la brique le prévoit : la
+   zone du doigt recule de six pixels vers l'extérieur. Laissée dans la
+   rangée, la face aurait pris douze pixels de plus au nom, et « GOSIER
+   RODÉ » ne tenait plus à 320 px de large (mesuré au banc) — à 360, un nom
+   de quatorze lettres non plus. La zone mord donc de six pixels sur le bord
+   intérieur de la tuile voisine, à hauteur de la rangée ; la flèche, posée
+   plus haut (`.qui`, z 4), prend le doigt sur ce liseré, qui touche sa
+   face. Le nom et l'âge laissent à chaque flèche `--fl-place` : sa face et
+   son cerne, la borne de la face provisoire qu'elle remplace. L'ombre dure
+   de la flèche de gauche, deux pixels plus loin, peut effleurer un nom à
+   sa plus grande largeur ; la compter coupait « GOSIER RODÉ » à 320 px. */
+.qui{--fl-place:34px}
+.ages .fl{position:absolute;top:0;pointer-events:auto}
+#ageAvant{left:-6px}
+#ageApres{right:-6px}
 /* Il ne paraît **que** lorsque l'âge regardé n'est pas encore celui qu'on
    montre : un bouton toujours là finirait par se lire comme une décoration, et
    c'est justement le seul geste de cet écran qui écrit quelque chose. */
@@ -717,24 +800,51 @@ html[data-calme~="animations"] .cestlui{animation:none}
 /* Vide tant que le serveur n'a pas répondu : un cadre qui se remplit après
    coup fait sauter la scène, un cadre absent ne fait rien du tout. */
 .qui:not(.on){display:none}
-/* Il respire lentement pendant qu'il tient : immobile quinze secondes, il
-   passerait pour un élément d'interface plutôt que pour un événement. */
-.moment.on::after{content:"";display:block;height:3px;width:44%;margin:9px auto 0;
-  border-radius:2px;background:currentColor;opacity:.8;
-  animation:momentBarre var(--mt,15s) linear forwards}
-@keyframes momentIn{0%{opacity:0;transform:scale(.4) rotate(-7deg)}
-  55%{opacity:1;transform:scale(1.14) rotate(2deg)}
-  100%{opacity:1;transform:scale(1) rotate(0)}}
-/* La barre se vide : elle dit combien de temps le moment tient encore. */
-@keyframes momentBarre{from{width:44%}to{width:0}}
+
+/* ------------------------------------------- la bulle du Fanzzy (lot 2)
+
+   Le Fanzzy parle, d'après ce que la page sait déjà : « Allez Sion ! »,
+   « Tes boosters t'attendent », « Choisis ton Fanzzy ». Une case de BD
+   craie (`.tbf-bulle`, `ui.css`), au marqueur, qui mène où elle dit ; au
+   bout de six secondes elle se replie en un sticker « ! » qui la rouvre.
+
+   **À côté de la tête, au-dessus du rail de droite** : c'est la place que
+   les rails rangés par le bas laissent libre (voir `.rail`), et la queue,
+   à gauche du bas de la bulle, tombe vers la bouche. Le « ! » se colle de
+   l'autre côté de la tête, au-dessus du rail de gauche.
+
+   Le marqueur, et lui seul sur cet écran (amendement 6) : jamais un
+   chiffre, jamais plus de quatre mots — le script le vérifie avant d'écrire
+   (`direBulle`) —, seize pixels, deux lignes au plus ; sa hauteur de ligne
+   est fixe dans la brique, et le repli manuscrit du système ne fait rien
+   sauter le temps que la police arrive. Elle n'est pas dans un panneau
+   calme : elle est posée sur le mur. */
+.bulle{position:absolute;z-index:7;top:var(--sous-haut);left:calc(50% + 26px);
+  max-width:min(140px,calc(50% - 34px));text-decoration:none;text-wrap:balance}
+/* Le « ! » : un bouton de quarante-quatre pixels, le sticker rond centré
+   dedans — un sticker ne se touche jamais seul. */
+.bulle-pli{position:absolute;z-index:7;top:calc(var(--sous-haut) - 4px);
+  left:calc(10px + var(--rail) + 2px);width:44px;height:44px;padding:0;border:0;
+  background:none;display:grid;place-items:center;cursor:pointer}
+.bulle-pli .tbf-sticker{--taille:30px;--rot:-6deg;font-size:18px}
 
 /* L'entrée : le personnage monte dans le cadre au lieu d'y être déjà. C'est
    ce qui fait de l'accueil une arrivée et non un écran qui s'affiche. */
 .scene.arrive .flotte{animation:arrivee .66s cubic-bezier(.34,1.4,.64,1)}
 /* Le coucou : deux temps, depuis les pieds. Il a son propre calque, parce que
-   la respiration occupe déjà la pile et le rebond de pose déjà la bascule —
-   deux animations sur le même élément et l'une efface l'autre, ici la
-   respiration, définitivement.
+   le flottement et la respiration occupent déjà la pile et le rebond de pose
+   déjà la bascule — deux animations sur le même élément et l'une efface
+   l'autre, ici la respiration, définitivement.
+
+   **Il penche, il ne tourne pas** (lot 2). `skewX`, depuis les pieds, pousse
+   la tête de côté exactement comme la rotation qu'il remplace — `skewX(3.4deg)`
+   la porte à gauche comme `rotate(-3.4deg)` — mais ne déplace aucun point du
+   sol : les deux pieds restent posés, le corps se balance au-dessus d'eux.
+   La rotation, elle, enfonçait le pied du côté où il penchait, de la
+   demi-largeur du personnage fois le sinus de l'angle : la semelle sortait
+   de la bande, qui n'a plus de réserve en bas (voir `.scene`). À trois
+   degrés et demi, le cisaillement ne se voit pas comme tel ; les épaules
+   restent d'aplomb, c'est tout.
 
    Il est joué même quand la pose de salut n'est pas dessinée : le supporter
    générique n'en a pas, la plupart des Fanzzy non plus, et un accueil qui ne
@@ -744,9 +854,9 @@ html[data-calme~="animations"] .cestlui{animation:none}
 
 @keyframes arrivee{0%{opacity:0;transform:translateY(52px) scale(.93)}
   55%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes coucou{0%,100%{transform:rotate(0deg)}
-  16%{transform:rotate(-3.4deg)}40%{transform:rotate(2.8deg)}
-  64%{transform:rotate(-2.2deg)}84%{transform:rotate(1.1deg)}}
+@keyframes coucou{0%,100%{transform:skewX(0deg)}
+  16%{transform:skewX(3.4deg)}40%{transform:skewX(-2.8deg)}
+  64%{transform:skewX(2.2deg)}84%{transform:skewX(-1.1deg)}}
 /* Le rebond d'un changement de pose : il s'écrase, puis il s'étire.
 
    L'étirement est passé de sept pour cent à trois, et ce n'est pas une
@@ -755,174 +865,196 @@ html[data-calme~="animations"] .cestlui{animation:none}
    quarante pixels de tête au-dessus du cadre — et la bande est close par
    `overflow:hidden`. Le personnage se faisait donc décapiter pendant les
    quatre dixièmes de seconde du rebond, à chaque but, à chaque changement
-   d'état. Trois pour cent se voient encore et tiennent dans la réserve. */
+   d'état. Trois pour cent se voient encore et tiennent dans la réserve.
+
+   **Il s'écrase sur place** (lot 2) : l'écrasement ne descend plus de cinq
+   pixels. Depuis les pieds, `scale(1.03,.96)` abaisse déjà la tête ; les
+   cinq pixels de plus enfonçaient les pieds sous le sol, et il n'y a plus
+   de réserve en bas pour les cacher (voir `.scene`). */
 @keyframes bascule{0%{transform:translateY(0) scale(1,1)}
-  22%{transform:translateY(5px) scale(1.03,.96)}
+  22%{transform:translateY(0) scale(1.03,.96)}
   58%{transform:translateY(-7px) scale(.98,1.03)}
   100%{transform:translateY(0) scale(1,1)}}
-@keyframes flotteur{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
-@keyframes souffle{0%,100%{transform:scale(1,1) rotate(0deg)}
-  50%{transform:scale(1.012,.988) rotate(.5deg)}}
-@keyframes sol{0%,100%{transform:translateX(-50%) scale(1);opacity:.85}
-  50%{transform:translateX(-50%) scale(.9);opacity:.6}}
-@keyframes halo{0%,100%{opacity:.85;transform:translate(-50%,-50%) scale(1)}
-  50%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}}
+/* Le flottement (neuf pixels) et la respiration, d'une seule animation :
+   voir `.pile`. La translation vient en tête de la liste, donc en dernier :
+   la pile respire depuis ses pieds, puis le tout monte. */
+@keyframes souffle{0%,100%{transform:translateY(0) scale(1,1) rotate(0deg)}
+  50%{transform:translateY(-9px) scale(1.012,.988) rotate(.5deg)}}
+/* Le saut, **étiré depuis les pieds** (`transform-origin` du calque) : les
+   pieds décollent de vingt-six pixels, et l'atterrissage s'écrase au sol au
+   lieu de s'écraser en l'air. L'étirement passe de 8 % à 4 %, l'écrasement
+   de 6 % à 3 % — la même règle que le rebond : depuis les pieds, 8 % de la
+   hauteur du personnage seraient allés tout entiers à la tête, deux fois les
+   4 % qu'elle prenait étirée depuis le milieu, et au-delà de la réserve du
+   haut ; à 4 %, elle monte exactement d'autant qu'avant.
+
+   La chute est en `ease-in`, la pesanteur, et non dans la courbe à rebond
+   du décollage : depuis les pieds, ce rebond-là les aurait fait passer sous
+   le sol de deux pixels et demi juste avant l'écrasement. */
 @keyframes saut{0%{transform:translateY(0) scale(1,1)}
-  35%{transform:translateY(-26px) scale(.94,1.08)}
-  70%{transform:translateY(0) scale(1.06,.94)}
+  35%{transform:translateY(-26px) scale(.97,1.04);animation-timing-function:ease-in}
+  70%{transform:translateY(0) scale(1.03,.97)}
   100%{transform:translateY(0) scale(1,1)}}
 
 /* ------------------------------------------------------- bande du bas */
-.bas{display:grid;gap:9px;flex:none}
-/* Le rappel des premiers pas. **Il n'est là que tant qu'il sert** : le
-   parcours fini, il disparaît et ne laisse rien — pas une case grise, pas un
-   « terminé » de plus à regarder tous les jours. Un accueil se juge autant à ce
-   qu'il finit par retirer qu'à ce qu'il montre.
-
-   Au-dessus du duo et non dedans : le duo dit où l'on en est, celui-ci dit ce
-   qui reste à découvrir. Mélanger les deux ferait une rangée de trois où l'œil
-   ne saurait plus lequel est l'appel. */
-/* Le reflet doré est posé **sur** le panneau opaque, et non plus fondu dans
-   un noir à 0,7 : la photo de la tribune passait au travers, et la consigne
-   se lisait sur le décor au lieu de se lire sur sa plaque. */
-.pas1{display:flex;align-items:center;gap:11px;padding:9px 13px;border-radius:12px;
-  text-decoration:none;color:inherit;border:1px solid rgba(245,195,59,.34);
-  background:linear-gradient(120deg,rgba(245,195,59,.13),rgba(245,195,59,0) 70%),var(--panneau)}
-.pas1 .n{font-family:var(--banner);font-size:17px;color:var(--projo);line-height:1;flex:none}
-.pas1 .n small{font-size:11px;opacity:.9}
-.pas1 .q{flex:1;min-width:0}
-.pas1 .q b{display:block;font-family:var(--banner);font-size:12px;letter-spacing:.14em}
-.pas1 .q span{display:block;font-size:11px;opacity:.9;margin-top:2px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pas1 .fl{opacity:.45;font-size:15px;flex:none}
-.duo{display:grid;grid-template-columns:.85fr 1.3fr;gap:9px}
-/* **Un seul cadre dans le duo : AUJOURD'HUI.** Le cadre est la grande bâche
-   d'un écran, celle qu'on regarde en arrivant (`.tbf-cadre`, dans `ui.css`).
-   Les deux cases du duo l'étaient, au même poids, et sur leur toile sombre ni
-   le cerne ni l'ombre d'encre ne se voient : on lisait deux panneaux au coin
-   corné, et rien ne disait lequel regarder. La maquette ne met l'écharpe en
-   tête que sur la case de droite — la mission du jour chez elle, le match du
-   jour ici — et pose COLLECTION en panneau calme, que son écharpe-jauge
-   suffit à signaler. AUJOURD'HUI reste donc le cadre, et le seul, avec sa
-   bande d'écharpe (`data-echarpe`) peinte dans son rembourrage du haut : rien
-   ne bouge ; COLLECTION devient un `.pan`.
-
-   **Le panneau prend la place exacte du cadre.** `.pan` pose un filet d'un
-   pixel tout autour, quand le cadre dessinait son cerne sans prendre un pixel
-   à la boîte : le rembourrage lui cède ce pixel de chaque côté, et la boîte
-   garde la taille qu'elle avait. Sans cela, ses deux pixels de bordure le
-   porteraient à 73,7 px, plus haut que la rangée, et le hub, qui ne défile
-   pas, les reprendrait à ses tuiles. En hauteur, les dix-huit pixels qui
-   restent ne se partagent pas à parts égales : voir « Les franges tombent
-   dans le rembourrage », plus bas.
+/* **Quatre-vingt-huit pixels pour le duo, soixante pour le bouton**
+   (amendement 14). Le rappel des premiers pas, qui paraissait au-dessus du
+   duo les jours où il restait une étape et le faisait monter d'autant, est
+   entré dans la bâche du jour : la bande du bas a désormais toujours la même
+   hauteur. */
+.bas{display:grid;gap:8px;flex:none}
+.duo{display:grid;grid-template-columns:.94fr 1.06fr;gap:10px;height:88px}
+/* **Un seul cadre dans le duo : la bâche du jour.** Le cadre est la grande
+   bâche d'un écran, celle qu'on regarde en arrivant (`.tbf-cadre`, dans
+   `ui.css`). COLLECTION est un panneau calme (`.pan`), que son écharpe-jauge
+   suffit à signaler ; la case de droite est le cadre, en kraft depuis le
+   lot 2 (`.tbf-cadre--ticket`), avec son écharpe en tête (`data-echarpe`).
 
    **Le compte passe sous le titre quand il ne tient pas à côté.** À 360 px,
-   COLLECTION offre cent deux pixels de contenu ; « COLLECTION » et
-   « 10/5510 » en demandent cent trente, et un peu plus à chaque chiffre que le
-   joueur gagne. La colonne de la grille était `auto`, donc large de tout ce
-   texte. Tant que la case rognait, le compte s'y coupait en « 10/55 » sans
-   que rien le dise ; depuis qu'elle ne rogne plus — ni le cadre qu'elle a
-   été, ni le panneau qu'elle est —, le compte traversait son bord et passait
-   sous AUJOURD'HUI, et la jauge, prise dans la même colonne, débordait avec
-   lui.
-
-   `minmax(0,1fr)` tient la colonne à la largeur de la case, la jauge avec
-   elle, et `flex-wrap` envoie le compte à la ligne quand il le faut : à côté
-   du titre sur un écran large, dessous sur un téléphone. Pas de points de
-   suspension : « 10/55… » ne dit pas plus que « 10/55 » ce qu'on possède.
-
-   **La deuxième ligne ne grandit pas le duo.** C'est le cadre AUJOURD'HUI,
-   avec ses trois lignes, qui fixe la hauteur de la rangée (73,6 px mesurés à
-   360 × 640). Le titre quitte l'interligne par défaut d'Oswald (près de
-   1,5) pour 1,2, et les deux lignes se touchent : le contenu de COLLECTION
-   descend alors à 71,7 px, sous la hauteur de son voisin. Avec l'interligne
-   d'origine, il la dépassait de quatre dixièmes, et le hub, qui ne défile pas,
-   l'aurait repris à ses tuiles. */
-.collec{padding:7px 12px 11px;text-align:left;display:grid;grid-template-columns:minmax(0,1fr);
-  gap:5px;text-decoration:none}
+   COLLECTION offre cent trente pixels de contenu ; le titre et « 137 / 250 »
+   en demandent plus. `minmax(0,1fr)` tient la colonne à la largeur de la
+   case, la jauge avec elle, et `flex-wrap` envoie le compte à la ligne quand
+   il le faut. Pas de points de suspension : « 137 / 2… » ne dit pas ce qu'on
+   possède. */
+.collec{padding:9px 12px 12px;text-align:left;display:grid;grid-template-columns:minmax(0,1fr);
+  align-content:center;gap:9px;min-width:0;text-decoration:none}
 .collec .t{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;
   gap:0 8px}
-.collec .t b{font-family:var(--banner);font-size:14px;letter-spacing:.04em;line-height:1.2}
+.collec .t b{font-family:var(--banner);font-weight:600;font-size:12px;letter-spacing:.08em;line-height:1.2}
 /* **Sans valeur, rien** : ni tiret, ni jauge vide. Le compte et sa jauge
    naissent vides et cachés, et ne paraissent qu'une fois la collection lue.
    Un « — » dit « il y a une valeur et je ne la connais pas » ; une jauge à
    zéro dit « tu n'as rien » — deux affirmations que l'écran n'a pas les moyens
    de faire quand le serveur n'a pas répondu. Le panneau reste : c'est une
-   porte vers la collection, et elle mène quelque part même sans chiffre. */
-.collec .t span{font-size:12px;opacity:.9;font-variant-numeric:tabular-nums}
+   porte vers la collection, et elle mène quelque part même sans chiffre.
+
+   **Le palier en cours, pas le total** (amendement 22) : « 14 / 25 ». Le
+   total — cinq mille cinq cents choses à gagner — ne se lit pas comme un but,
+   il se lit comme un mur ; le palier suivant, si. Voir `palierDe`. */
+.collec .t span{font-family:var(--banner);font-weight:700;font-size:16px;line-height:1.2;
+  font-variant-numeric:tabular-nums}
 .collec .t span:empty{display:none}
 /* **La jauge est l'écharpe nouée** de `ui.css` (`.tbf-jauge`), la seule
    jauge du jeu, telle quelle : cette page ne lui écrit ni taille ni couleur.
-   Elle était un rail gris à elle, dessiné ici, et c'est sur ce panneau que la
-   direction pose l'écharpe. Les identifiants restent : le script les
-   remplit, et `accueil:ui` lit la largeur de `#collecBar`. À 10 sur 5 510,
-   l'arrondi donne 0 %, et le nœud de craie se pose au départ du rail : c'est
-   vrai, et c'est ce qu'il dit (« j'en suis là »).
+   Les identifiants restent : le script les remplit, et `accueil:ui` lit la
+   largeur de `#collecBar`. **À crans** (`data-crans`, cinq) : le dernier est
+   le palier ; aucun ne porte de récompense, parce qu'aucune donnée n'en
+   promet une — « le cran est nu » plutôt qu'une récompense inventée.
 
-   **L'écart sous le compte cède deux pixels au rail**, qui en fait douze et
-   non plus dix : avec l'écart de sept d'avant, COLLECTION aurait mesuré
-   73,7 px, un dixième de plus que la rangée que fixe AUJOURD'HUI, et le hub
-   l'aurait repris à ses tuiles. Avec cinq, le panneau garde ses 71,7 px. Le
-   nœud, trois pixels au-dessus du rail (cinq avec son cerne), et les
-   franges, dix en dessous, débordent sans rien pousser : le nœud tombe dans
-   l'écart, les franges dans le rembourrage du bas.
+   Le nœud dépasse du bout du remplissage de neuf pixels, et les franges
+   pendent de dix sous le rail : la marge de droite et le rembourrage du bas
+   leur gardent cette place, sans rien pousser. */
+.collec .tbf-jauge{margin-right:9px}
 
-   **Les franges tombent dans le rembourrage**, et pas sur le filet. Neuf
-   pixels de rembourrage en haut et en bas, c'était un de moins que leurs
-   dix : quand le panneau a sa hauteur à lui, les franges touchaient le
-   filet du bas, et leur dernière rayure d'or se peignait dessus. C'est le
-   cas dès qu'Oswald n'est pas là (repli, réseau lent) : COLLECTION fait
-   alors la rangée, à 69,8 px, sans un pixel de jeu sous le rail. Avec
-   Oswald, AUJOURD'HUI l'étire de deux pixels, que la grille partage entre
-   ses deux lignes, et les franges passaient à 0,9 px du filet — par chance,
-   pas par construction. Le bas prend donc onze pixels, dix pour les franges
-   et un d'air, et le haut en garde sept, où rien ne déborde : la somme, et
-   la hauteur du panneau avec elle, ne bouge pas. */
-.direct{padding:10px 13px;text-align:left;display:grid;gap:3px;align-content:center;
-  text-decoration:none}
-/* **Le libellé rouge prend le rouge clair.** La toile neutre du cadre a la
-   teinte de `--panneau` tant que l'hypothèse H4 tient (`ui.css`, à `.pan`) :
-   le flare plein n'y fait que 4,45:1, sous les 4,5 qu'il faut à onze pixels,
-   et 2,0 au soleil — « AUJOURD'HUI » et « 67′ EN DIRECT » se lisaient mal.
-   `--flare-clair`, que l'amendement 17 donne au texte rouge posé sur le
-   parpaing, y tient 8,2:1, et 3,0 au soleil. Il reste juste si H4 tombe :
-   sur le parpaing, le flare plein descend à 3,5:1, le clair tient 6,4.
-   Le point, lui, garde le flare : ce n'est pas du texte, et il tient ses
-   3:1 de signal. */
-.direct .tag{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--flare-clair);
-  font-weight:700;font-family:var(--banner);letter-spacing:.1em}
-.pt{width:7px;height:7px;border-radius:50%;background:var(--flare);animation:ping 1.8s ease-out infinite}
-@keyframes ping{0%{box-shadow:0 0 0 0 rgba(224,64,44,.55)}
-  70%{box-shadow:0 0 0 8px rgba(224,64,44,0)}100%{box-shadow:0 0 0 0 rgba(224,64,44,0)}}
+/* ## La bâche du jour (lot 2)
+
+   Le cadre de droite : **un ticket kraft** (`.tbf-cadre--ticket`, `ui.css`)
+   qui dit la seule chose à faire aujourd'hui, la première qui existe dans cet
+   ordre — le match d'un club suivi en direct (l'affiche aux couleurs des
+   deux clubs, le score, la minute ; le monde dans les tribunes est au
+   bouton, juste dessous), son prochain coup d'envoi avec le compte à
+   rebours, l'étape suivante des premiers pas, et sinon « RÉPÉTER UN
+   GESTE ». Un état sans donnée ne s'affiche pas : il cède au suivant. Voir
+   `bacheDuJour`.
+
+   Tout y est à l'encre (8,7:1 sur le kraft), aucun ton clair (amendement
+   15) : le rouge du direct est parti avec le point qui clignotait — il ne
+   tenait pas sur le papier, et c'était une quatrième animation infinie.
+   Dix-neuf pixels en haut pour l'écharpe, qui en prend douze et demi.
+
+   **Soixante-deux pixels de contenu, et pas un de plus** : la case fait la
+   hauteur du duo, quatre-vingt-huit. Une ligne au-dessus, l'affiche ou
+   l'étape en deux lignes au plus, une ligne dessous — 13 + 2 + 32 + 2 + 14.
+
+   **L'affiche est toujours dans le titre**, qui a deux lignes, et jamais
+   dans la ligne du dessous, qui n'en a qu'une : pour le prochain coup
+   d'envoi, elle y était à la suite du compte à rebours, et c'est le club
+   adverse qui partait en points de suspension (« dans 5 h 00 · Paris
+   Saint-Ge… »). La ligne du dessous ne porte plus que le moment — « SAM
+   20:45 », et le compte à rebours à moins d'un jour seulement : deux jours
+   à l'avance, « dans 2 j 4 h » redisait « SAM ». */
+.direct{padding:19px 12px 7px;text-align:left;display:flex;flex-direction:column;
+  justify-content:center;gap:2px;min-width:0;text-decoration:none}
+.direct .sur{font-family:var(--banner);font-weight:600;font-size:11px;line-height:13px;
+  letter-spacing:.12em;text-transform:uppercase;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.direct .sur:empty{display:none}
 /* Deux lignes, pas des points de suspension.
    « Bayern München 0 – 0 Bodø/Gli… » : c'est le nom du club adverse qui
    disparaissait, c'est-à-dire la moitié de l'information que cette carte
    existe pour donner. Une affiche coupée ne dit pas qui joue. */
-.direct b{font-size:13px;font-weight:700;line-height:1.28;
+.direct b{font-family:var(--banner);font-weight:700;font-size:15px;line-height:16px;
+  letter-spacing:.04em;text-transform:uppercase;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.direct small{font-size:11px;opacity:.9;font-variant-numeric:tabular-nums}
+.direct small{font-family:var(--banner);font-weight:600;font-size:12px;line-height:14px;
+  letter-spacing:.03em;font-variant-numeric:tabular-nums;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.direct small:empty{display:none}
+/* Les premiers pas : « PREMIERS PAS · 2/6 » au-dessus, l'étape à faire, et
+   l'écharpe qui mène au bout du parcours, avec ce qu'il rapporte **posé sur
+   son cran final** (la jauge de la direction : le cran porte ce qu'il
+   ouvre) — tant qu'il ne l'a pas encore rapporté.
+
+   **Un seul cran, au bout.** Six traits dans cinquante pixels faisaient un
+   code-barres, et le compte est déjà écrit au-dessus. `data-crans="1"` n'a
+   pas de valeur dans la brique (elle va de 2 à 10) : la page la pose.
+
+   **Le nœud reste sur le papier** : il est centré sur le bout du
+   remplissage, donc à cheval sur le bord gauche à 0 % — la marge de gauche
+   lui garde ses neuf pixels.
+
+   **La rangée a la hauteur du rail**, douze pixels : le sticker est posé
+   par-dessus le bout du rail, pas à côté, et ses dix-huit pixels en
+   débordent de trois en haut et en bas sans rien pousser. C'est ce qui
+   fait tenir le sur-titre, une étape sur deux lignes et l'écharpe dans les
+   soixante-deux pixels — 13 + 2 + 32 + 2 + 12. Le sticker rapetisse à la
+   taille de celui de la maquette (18 px, Oswald 11) : à vingt-quatre, il
+   aurait mordu sur le titre. Il recouvre les dix derniers pixels du rail,
+   et le nœud ne passe sous lui qu'à la dernière étape.
+
+   **L'air va entre les lignes**, pas autour du bloc (`space-evenly`) : une
+   étape sur une ligne laisse dix-sept pixels, et centrés, ils allaient
+   au-dessus du sur-titre et sous l'écharpe — le nœud, qui dépasse du rail
+   de trois pixels, touchait le titre. Une étape sur deux lignes les serre
+   d'un pixel chacune (des capitales, sans jambage), et le sur-titre monte
+   de deux pixels vers l'écharpe, qui en garde quatre et demi : ces quatre
+   pixels vont au nœud. */
+.direct[data-quoi="pas"]{justify-content:space-evenly;padding-top:17px}
+.direct[data-quoi="pas"] b{line-height:15px}
+.direct .rang{display:flex;align-items:center;height:12px;margin:0 0 0 9px}
+.direct .rang .tbf-jauge{--crans:1;flex:1;min-width:0}
+.direct .rang .tbf-sticker{--rot:-3deg;z-index:3;height:18px;margin-left:-10px;
+  padding:0 5px;gap:3px;font-size:11px}
+.direct .rang .tbf-sticker svg{width:12px;height:12px}
+
 /* Le bouton d'entrée est une plaque, comme tout le reste. Il avait déjà la
    tranche et l'enfoncement — c'est lui qui a donné l'idée de la plaque — mais
    il les avait pour lui seul, avec ses propres valeurs. Il ne lui reste ici que
    ce qui lui est propre : sa taille, qui est celle de l'action principale d'un
-   écran de jeu et non celle d'un bouton de formulaire. */
-.entrer{font-size:21px;letter-spacing:.06em}
+   écran de jeu et non celle d'un bouton de formulaire.
+
+   **Il dit ce qu'il fait** (lot 2) : sous « PRENDRE MA PLACE », un
+   sous-libellé — « Duel de tribunes », le monde dans les tribunes du match
+   en cours (sa minute est au ticket, juste au-dessus), la place à tenir
+   quand quelqu'un attend. Soixante pixels pour les
+   deux lignes (amendement 14) : treize en haut pour l'écharpe, qui en prend
+   huit et demi.
+
+   Le sous-libellé est en craie **pleine**, et non à 88 % comme le veut
+   l'amendement 6 : sur la face rouge de H1, la craie à 88 % ne tient que
+   4,3:1 à douze pixels, sous le seuil de 4,5 ; pleine, elle en tient 5,2.
+   Sans capitales : il se lit comme une précision, pas comme un second
+   bouton. */
+.entrer{flex-direction:column;gap:2px;min-height:60px;padding:13px 18px 9px;
+  font-size:21px;line-height:1;letter-spacing:.06em}
+.entrer small{display:block;font-family:var(--banner);font-weight:500;font-size:12px;line-height:14px;
+  letter-spacing:.04em;text-transform:none;text-shadow:0 1px 0 var(--encre)}
 
 /* Écran court : le personnage rétrécit plutôt que de pousser le bouton
-   d'entrée sous le pli. C'est la seule bande qui peut céder.
-
-   **La pastille du profil n'y rétrécit plus.** Elle passait ici à trente-quatre
-   pixels, une règle d'avant `--haut-h` : la rangée du haut fait de toute façon
-   quarante-quatre pixels — le menu et les jetons la tiennent —, donc la
-   pastille n'y gagnait pas un pixel de hauteur. Elle y perdait la seule
-   chose qui compte pour un lien : sur la plupart des téléphones, barre du
-   navigateur ouverte, le profil devenait une cible de trente-quatre pixels à
-   côté de voisins de quarante-quatre. Elle garde donc la hauteur de la
-   rangée, comme le dit sa règle plus haut. */
+   d'entrée sous le pli. C'est la seule bande qui peut céder. Le libellé du
+   bouton y perd deux pixels, sa hauteur rien. */
 @media (max-height:700px){
-  .hub{gap:7px}
-  .entrer{padding:13px 18px;font-size:19px}
-  .jeton{font-size:13px}
+  .entrer{font-size:19px}
 }
 @media (min-aspect-ratio:1/1){
   .duo{grid-template-columns:1fr 1fr}
@@ -949,157 +1081,410 @@ html[data-calme~="animations"] .cestlui{animation:none}
  *
  * Le premier jet forçait ici un rail de 104 px, des icônes de 30 et des
  * libellés de 12. À l'écran, les tuiles écrasaient le personnage. Elles sont
- * revenues à ce que les `clamp` communs donnent ; il ne reste que la barre du
- * haut, un peu plus épaisse parce qu'elle porte des nombres qu'on lit de loin.
+ * revenues à ce que les `clamp` communs donnent. La barre du haut, qui
+ * s'épaississait ici, garde ses quarante-quatre pixels depuis le lot 2 :
+ * l'avatar et les compteurs de `ui.css` ont cette taille partout.
  */
 @media (min-width:700px){
-  .haut{ --haut-h:48px }
-  .jeton{ font-size:18px }
-  .jeton svg{ width:24px;height:24px }
   .rail{ gap:6px }
   /* Le personnage a plus de place : il la prend. Sans ça, la colonne du milieu
      s'élargit et lui reste à sa taille, seul au centre d'un vide. */
   .pile{ max-width:min(100%,420px) }
-  /* Et on lui rend les pixels que la barre du haut vient de prendre : il est
-     mesuré en part de la hauteur d'écran, et il les perdait tous. La réserve du
-     haut ne bouge pas — c'est l'amplitude du saut, elle ne dépend pas de
-     l'écran — donc c'est la marge du bas qui cède. */
-  .scene{ padding-bottom:2px }
-  .hub{ gap:6px }
 }
 @media (prefers-reduced-motion:reduce){
-  .flotte,.pile,.bascule,.salut,.sol,.halo,.pt{animation:none !important}
+  .flotte,.pile,.bascule,.salut{animation:none !important}
   .pose{transition:none}
 }
-html[data-calme~="animations"] :is(.flotte,.pile,.bascule,.salut,.sol,.halo,.pt){
+html[data-calme~="animations"] :is(.flotte,.pile,.bascule,.salut){
   animation:none !important}
 html[data-calme~="animations"] .pose{transition:none}
 
 /* ================================================== l'écran d'ouverture
 
-   Ce qu'on voit en arrivant : la tribune en fusion, une poignée de Fanzzy
-   déployés en éventail, et le nom du jeu.
+   Ce qu'on voit en arrivant de dehors : le tunnel qui mène à la tribune. Un
+   couloir de béton, la lumière du stade au bout, qui grandit pendant qu'on
+   attend ; la fumée rouge et or au sol ; une poignée de Fanzzy qui montent
+   les marches ; et le nom du jeu peint sur une bâche scotchée au mur (lot 2).
 
    ## Pourquoi il est dans la page et non après elle
 
    Il est **écrit dans le HTML**, visible avant que la moindre ligne de script
    ne tourne, et c'est tout l'intérêt : un écran d'ouverture qu'il faut charger
-   pour voir arrive après ce qu'il était censé couvrir. Le fond est une image,
-   le reste est du texte ; rien ici n'attend le réseau pour exister.
+   pour voir arrive après ce qu'il était censé couvrir. Le tunnel est du CSS,
+   le titre et la jauge du texte et des boîtes, la photo du stade une image
+   qui arrive quand elle peut ; rien ici n'attend le réseau pour exister. Ce
+   que `ouverture.js` ajoute — les visages, les libellés qui changent par
+   tiers, « TOUCHE POUR ENTRER », l'astuce du jour — vient en plus, jamais
+   comme condition de l'écran.
 
    ## Et pourquoi il s'en va tout seul
 
-   Deux conditions, la première des deux qui arrive : l'accueil a reçu ce qu'il
-   lui faut, ou le temps est écoulé. La seconde n'est pas un filet de sécurité
+   Trois sorties, la première qui arrive : l'accueil est prêt, on touche
+   l'écran, ou le temps est écoulé. La dernière n'est pas un filet de sécurité
    qu'on ajoute par prudence — c'est la règle principale. Un écran d'ouverture
    qui attend le serveur devient un écran d'attente le jour où le serveur est
    lent, et c'est précisément le jour où il ne faut pas retenir les gens
-   dehors. */
+   dehors. Les règles et leurs raisons vivent dans `ouverture.js`.
+
+   ## Il tient debout sans `/ui.css`
+
+   La matière vient de la feuille commune — la bâche, l'écharpe-jauge, le
+   ticket, la fumée —, et ce n'est pas une imprudence : chaque couleur qui
+   porte un texte a ici son repli écrit en clair. Les replis qui doublent une
+   brique sont posés sous `:where()`, à poids nul : la brique l'emporte quand
+   elle est là, le repli tient le jour où elle manque (voir la sortie de
+   secours, plus bas). Le jour où la feuille manque, l'écran perd sa matière,
+   pas ses mots.
+
+   ## Pas de marqueur ici
+
+   Permanent Marker n'est jamais sur le rideau (amendement 6) : il s'affiche
+   avant que la police soit garantie là, et un mot écrit à la main qui saute
+   d'une police à l'autre sous les yeux se lit comme une panne. Le mot-clé de
+   l'astuce, que la maquette mettait au marqueur, est en Oswald gras. */
 
 .ouverture{
-  position:fixed;inset:0;z-index:120;display:grid;place-items:center;
-  background:#05070A;overflow:hidden;
+  position:fixed;inset:0;z-index:120;overflow:hidden;
+  /* Opaque, et une couleur seule : `accueil-ui` vérifie qu'on ne voit pas
+     l'accueil au travers, et l'audit lit ce fond sous chaque texte — une
+     image ici rendrait tous les textes du rideau « non mesurables ». */
+  background:#05070A;
+  color:var(--craie,#F2EEE4);font-family:var(--ui,system-ui,sans-serif);
   transition:opacity .5s ease,visibility .5s ease;
+  /* La durée du plafond, reprise par la lumière du tunnel. `ouverture.js`
+     la réécrit depuis `DUREE` dès qu'il arrive : la lumière finit de grandir
+     quand l'écran s'en va, et changer la constante suffit. */
+  --duree:10s;
 }
 .ouverture.partie{opacity:0;visibility:hidden;pointer-events:none}
+/* **Le doigt ne touche que l'écran entier.** Tout ce qu'il contient est du
+   décor ou du texte : le toucher n'a qu'un effet, faire entrer, et c'est
+   l'écran qui l'écoute. `accueil-ui` vérifie aussi que l'élément trouvé en
+   haut de l'écran est l'ouverture elle-même, et non un de ses calques. Seul
+   le bouton de la sortie de secours reprend le doigt. */
+.ouverture > *{pointer-events:none}
 
-.ouverture .fond{
-  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  opacity:.55;
-  /* Une respiration très lente. Une image fixe derrière un titre a l'air d'une
-     capture d'écran ; trois pour cent de zoom suffisent à la rendre vivante
-     sans qu'on sache pourquoi. */
-  animation:ouvSouffle 9s ease-in-out infinite alternate;
+/* ------------------------------------------------------------ le tunnel
+
+   Le substitut de `tunnel.webp`, qui est à produire : quatre pans de béton en
+   perspective autour d'une ouverture, comme sur la maquette. Les coins de
+   l'ouverture sont des variables, lues par les quatre pans **et** par la
+   sortie, pour qu'ils ne se désaccordent jamais. Ils sont en pour cent de
+   l'écran : le tunnel se déforme avec lui, sans palier.
+
+   Quatre pans, quatre pseudo-éléments sur deux boîtes : le plafond et le sol
+   sur le tunnel, les deux murs sur `.murs`. Les murs passent après le
+   plafond, les bâches et la sortie après les murs ; le sol est peint en
+   dernier, mais il ne touche ni les bâches ni la sortie. */
+.ouverture .tunnel{
+  position:absolute;inset:0;
+  --tg:34%;--td:66%;--th:31%;--tb:60%;
+  background:#0B0D10;
 }
-@keyframes ouvSouffle{from{transform:scale(1.03)}to{transform:scale(1.1)}}
+.ouverture .murs{position:absolute;inset:0}
+.ouverture .tunnel::before,.ouverture .tunnel::after,
+.ouverture .murs::before,.ouverture .murs::after{content:"";position:absolute;inset:0}
+/* Le plafond, et ses poutres. */
+.ouverture .tunnel::before{
+  clip-path:polygon(0 0,100% 0,var(--td) var(--th),var(--tg) var(--th));
+  background:repeating-linear-gradient(180deg,transparent 0 22px,rgba(242,238,228,.06) 22px 24px),
+    linear-gradient(180deg,#0A0C0F,#1E2328);
+}
+/* Le sol : des marches. On monte vers la tribune. */
+.ouverture .tunnel::after{
+  clip-path:polygon(0 100%,var(--tg) var(--tb),var(--td) var(--tb),100% 100%);
+  background:linear-gradient(180deg,rgba(242,238,228,.1) 0 1px,transparent 1px) 0 0/100% 7px,
+    linear-gradient(180deg,rgba(7,9,12,.6) 0 2px,transparent 2px) 0 0/100% 12px,
+    linear-gradient(180deg,#2A2F35,#121519);
+}
+/* Les murs : du béton, avec ses joints. Le grain est celui des panneaux du
+   jeu ; le repli `none` garde le mur peint le jour où la feuille manque (une
+   variable absente dans une liste de fonds invaliderait toute la liste). */
+.ouverture .murs::before{
+  clip-path:polygon(0 0,var(--tg) var(--th),var(--tg) var(--tb),0 100%);
+  background:repeating-linear-gradient(90deg,transparent 0 30px,rgba(7,9,12,.45) 30px 32px),
+    var(--grain-beton,none) 0 0/256px 256px repeat,
+    linear-gradient(90deg,#15191D,#2B3137);
+}
+.ouverture .murs::after{
+  clip-path:polygon(100% 0,var(--td) var(--th),var(--td) var(--tb),100% 100%);
+  background:repeating-linear-gradient(90deg,rgba(7,9,12,.45) 0 2px,transparent 2px 32px),
+    var(--grain-beton,none) 0 0/256px 256px repeat,
+    linear-gradient(270deg,#15191D,#2B3137);
+}
+/* Les bâches unies tendues aux murs, rouge à gauche, or à droite : les deux
+   couleurs de la fumée. Sans texte — on est encore dans le couloir. La
+   perspective est en `vw` pour tourner pareil sur un téléphone et sur une
+   tablette, où la bâche est deux fois plus large. */
+.ouverture .bache{
+  position:absolute;top:33%;height:16%;width:12.2%;
+  border:2px solid #07090C;
+  background:repeating-linear-gradient(0deg,rgba(7,9,12,.1) 0 1px,transparent 1px 3px),var(--c);
+}
+.ouverture .bache.g{left:12.8%;--c:var(--flare,#E0402C);transform:perspective(83vw) rotateY(38deg)}
+.ouverture .bache.d{right:12.8%;--c:var(--projo,#F5C33B);transform:perspective(83vw) rotateY(-38deg)}
 
-/* Le voile : le fond est chargé, le titre doit rester lisible dessus. */
-.ouverture::after{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse at 50% 42%,rgba(5,7,10,.2),rgba(5,7,10,.88) 72%);
+/* ## La sortie, et la lumière qui grandit
+
+   Au bout du couloir, la tribune : la photo du stade, voilée, vue par
+   l'ouverture — c'est sa place, ce qu'on aperçoit derrière le mur
+   (amendement 8). Devant elle, la lumière des projecteurs **grandit pendant
+   toute la durée de l'écran** : on avance vers elle. C'est un pseudo-élément
+   qui change d'échelle, jamais un dégradé animé — un dégradé animé se
+   repeint à chaque image ; une échelle se compose, sans repeindre.
+
+   Elle part de 30 % et finit à sa taille quand le plafond tombe ; si
+   l'écran part avant, elle s'arrête où elle en était. Sans mouvement, elle
+   est simplement à sa taille. Le halo autour de l'ouverture est une ombre
+   portée, fixe. */
+.ouverture .sortie{
+  position:absolute;overflow:hidden;
+  left:var(--tg);right:calc(100% - var(--td));top:var(--th);bottom:calc(100% - var(--tb));
+  background:#0F1216;
+  box-shadow:0 0 0 2px #07090C,0 0 70px 18px rgba(255,226,160,.14);
+}
+.ouverture .sortie img{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:50% 35%}
+.ouverture .sortie::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(15,18,22,.25),rgba(15,18,22,.55))}
+.ouverture .sortie::before{
+  content:"";position:absolute;z-index:1;left:50%;top:40%;width:330%;aspect-ratio:1;
+  translate:-50% -50%;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(255,246,220,.95),rgba(255,226,160,.45) 45%,transparent 75%);
+  animation:ouvLumiere var(--duree) cubic-bezier(.2,.6,.3,1) backwards;
+}
+@keyframes ouvLumiere{from{scale:.3}}
+
+/* ------------------------------------------------------------ dedans
+
+   Une colonne qui tient dans la fenêtre : la bâche du titre en haut, la
+   bande du bas (jauge, consigne, astuce) en bas, et la scène des Fanzzy
+   prend ce qui reste. Rien ne défile, rien ne sort : c'est la scène qui
+   rétrécit, et elle seule — les textes gardent leur corps. */
+.ouverture .dedans{
+  position:absolute;inset:0;z-index:2;
+  max-width:460px;margin:0 auto;
+  display:flex;flex-direction:column;align-items:center;
+  padding:calc(env(safe-area-inset-top,0px) + clamp(18px,6.5vh,64px)) 16px
+    calc(env(safe-area-inset-bottom,0px) + 10px);
+  padding-top:calc(env(safe-area-inset-top,0px) + clamp(18px,6.5dvh,64px));
 }
 
-.ouverture .dedans{position:relative;z-index:2;text-align:center;padding:0 16px}
+/* ## Le nom du jeu, peint sur une bâche
 
-/* ## Le nom du jeu a son panneau
+   La bâche principale de la feuille commune, à la craie (`.tbf-plaque
+   .tbf-grande`, `data-ton="craie"`) : l'écharpe en tête, deux scotchs aux
+   coins hauts, le cerne, l'ombre dure et le coin déchiré, sans une règle de
+   dessin ici. Cette page n'écrit que sa place, sa colonne et sa rotation
+   (−2°, celle de la maquette, contre −0,8° pour une bâche qu'on touche).
+   Elle arrive collée (`.tbf-colle`) : posée au mur en se plaquant.
 
-   Le titre et sa ligne se posaient sur la photo de la tribune, que seuls le
-   voile et une ombre sous les lettres tenaient à distance — et le voile est
-   **le plus clair au centre**, exactement là où ils sont : 0,2, sur une photo
-   déjà à 0,55. Au soleil, la ligne de onze pixels se lisait sur la fumée des
-   fumigènes. Le socle ne laisse aucun texte à même la photo : les deux sont
-   rangés dans un panneau, le même que l'enseigne de la vitrine qui suit, et
-   les ombres sont parties avec ce qu'elles combattaient. La photo reste
-   visible tout autour ; c'est elle qui fait l'ouverture, pas le fond du titre.
+   Elle n'est pas un bouton — aucun lien, aucun rôle — et le doigt la
+   traverse (voir plus haut) : on la touche pour entrer, comme tout l'écran.
 
-   Les couleurs ont leur repli écrit en clair : cet écran doit tenir quand
-   `/ui.css` n'arrive pas — voir la sortie de secours, plus bas —, et un
-   panneau qui s'efface avec la feuille de style rendrait le titre à la photo
-   le seul jour où tout le reste manque aussi. La gouttière passe de vingt-deux
-   à seize pixels pour que le panneau tienne autour du titre à 320 px de
-   large. */
-.ouverture .enseigne{padding:clamp(10px,2vh,16px) 14px;border-radius:14px;
-  background:var(--panneau,rgba(12,17,24,.94));
-  box-shadow:inset 0 0 0 1px var(--trait,rgba(242,238,228,.1))}
+   Le titre est à l'encre sur la craie (17:1) ; « .ONLINE » en or sur un
+   ruban d'encre tourné de 1,5°, avec la double impression flare et bleu de
+   la direction (un pixel et demi de chaque côté, à 40 %). Avant, le titre et
+   sa ligne étaient sur un panneau sombre posé sur la photo : la bâche fait
+   le même travail — aucun texte à même le décor — et c'est l'objet du jeu. */
+.ouverture .enseigne{
+  --rot:-2deg;
+  flex:none;flex-direction:column;align-items:center;gap:0;
+  width:min(100% - 16px,340px);
+  padding:19px 12px 13px;
+  cursor:default;text-align:center;
+}
+/* Les replis, à poids nul : la brique les recouvre quand la feuille est là. */
+:where(.ouverture .enseigne){display:flex;border-radius:5px;background:#F2EEE4;color:#07090C}
+.ouverture .enseigne h1{
+  display:flex;flex-direction:column;align-items:center;
+  margin:0;color:inherit;
+  font-family:var(--banner,"Oswald","Arial Narrow",Impact,sans-serif);font-weight:700;
+  font-size:clamp(34px,12.2vw,46px);line-height:1;letter-spacing:.03em;
+}
+.ouverture .enseigne h1 span{
+  display:inline-block;margin-top:6px;padding:4px 12px 3px;rotate:1.5deg;
+  background:var(--encre,#07090C);color:var(--projo,#F5C33B);
+  font-size:.55em;letter-spacing:.2em;
+  text-shadow:1.5px 0 rgba(224,64,44,.4),-1.5px 0 rgba(60,130,232,.4);
+}
+/* La ligne qui dit ce qu'est le jeu. Le rideau ne paraît qu'à ceux qui
+   arrivent de dehors : c'est la seule phrase qu'ils liront avant d'entrer.
+   Encre sur craie, 17:1. */
+.ouverture .enseigne p{
+  margin:9px 0 0;
+  font-family:var(--banner,"Oswald","Arial Narrow",Impact,sans-serif);font-weight:600;
+  font-size:12px;line-height:1.2;letter-spacing:.2em;text-transform:uppercase;
+}
 
-/* L'éventail de Fanzzy. Ils se chevauchent exprès : une rangée bien alignée
-   ferait un catalogue, un éventail fait une bande. */
+/* ## La scène : les Fanzzy montent les marches
+
+   Cinq visages tirés au hasard par `ouverture.js`, du plus loin au plus
+   près : petits sous la lumière, grands devant nous ; le dernier salue. Leurs
+   places sont celles de la maquette, en pour cent d'une boîte aux
+   proportions de la maquette (360 × 290), posée au fond de la scène et
+   centrée — pour que la troupe ne s'étire pas sur une tablette ni ne se
+   tasse sur un petit téléphone. La boîte se mesure aux unités de conteneur,
+   **dans un bloc `@container`** : là où le confinement ne prend pas, ces
+   unités se rabattraient sans bruit sur la fenêtre (le piège que
+   `verif-pages` garde), et la troupe garde alors la scène entière, déclarée
+   hors du bloc.
+
+   La place est un attribut (`data-place`) et non un rang : un visage dont
+   l'image manque s'en va, et les autres ne sautent pas d'une marche.
+
+   La fumée (`.tbf-fumee`, la brique commune) est au pied de la troupe, dans
+   le quart bas de la scène — jamais sous la jauge ni sous un texte. Ses deux
+   nappes prennent le rouge et l'or des bâches du couloir. */
+.ouverture .troupe{
+  position:relative;flex:1 1 0;min-height:0;width:100%;
+  container:ouv-troupe / size;
+  --e1:var(--flare,#E0402C);--e2:var(--projo,#F5C33B);
+}
 .ouverture .bande{
-  display:flex;justify-content:center;align-items:flex-end;
-  margin-bottom:18px;min-height:132px;
+  position:absolute;z-index:2;left:50%;bottom:0;translate:-50% 0;
+  width:100%;height:100%;
 }
-.ouverture .bande img{
-  width:84px;height:126px;object-fit:contain;object-position:bottom;
-  margin:0 -17px;filter:drop-shadow(0 8px 18px rgba(0,0,0,.75));
-  opacity:0;transform:translateY(16px);
-  animation:ouvMonte .55s cubic-bezier(.2,1.5,.35,1) forwards;
+@container ouv-troupe (min-width:0px){
+  .ouverture .bande{width:min(100cqw,124cqh);height:min(100cqh,80.6cqw)}
 }
-/* Chacun arrive après le précédent : c'est une tribune qui se remplit, pas un
-   bloc qui apparaît. Les retards sont écrits ici plutôt que calculés dans le
-   script — cinq valeurs valent mieux qu'une boucle qui touche au style. */
-.ouverture .bande img:nth-child(1){animation-delay:.05s}
-.ouverture .bande img:nth-child(2){animation-delay:.14s}
-.ouverture .bande img:nth-child(3){animation-delay:.23s;width:96px;height:144px;z-index:2}
-.ouverture .bande img:nth-child(4){animation-delay:.32s}
-.ouverture .bande img:nth-child(5){animation-delay:.41s}
-@keyframes ouvMonte{to{opacity:1;transform:translateY(0)}}
+.ouverture .fz{position:absolute;isolation:isolate;aspect-ratio:520/945;translate:-50% 0}
+.ouverture .fz img{
+  display:block;width:100%;height:100%;object-fit:contain;object-position:50% 100%;
+  filter:drop-shadow(0 6px 6px rgba(0,0,0,.6));
+  transform-origin:50% 100%;
+  animation:ouvMarche .42s cubic-bezier(.2,1.3,.35,1) var(--d,0ms) backwards;
+}
+/* L'ombre au sol, sous les pieds : sans elle, une silhouette détourée flotte. */
+.ouverture .fz::before{
+  content:"";position:absolute;z-index:-1;left:6%;right:6%;bottom:-3%;height:7%;
+  border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.75),transparent);
+}
+.ouverture .fz[data-place="1"]{left:56%;bottom:39%;height:24%;--d:100ms}
+.ouverture .fz[data-place="2"]{left:38%;bottom:30%;height:32%;--d:220ms}
+.ouverture .fz[data-place="3"]{left:64%;bottom:20%;height:41%;--d:340ms}
+.ouverture .fz[data-place="4"]{left:18%;bottom:11%;height:49%;--d:460ms}
+.ouverture .fz[data-place="5"]{left:71%;bottom:3%;height:61%;--d:600ms}
+/* Le dernier arrivé salue : le balancement du personnage, une fois, quand
+   il a fini de monter. Il se balance (`transform`) pendant que la montée
+   glisse (`translate`) : deux propriétés, deux animations qui ne s'écrasent
+   pas.
 
-.ouverture h1{
-  font-family:var(--banner);margin:0;line-height:.92;
-  font-size:clamp(30px,9.4vw,46px);letter-spacing:.02em;
+   Par l'image clé commune, `tbf-coucou` (`ui.css`), et non par `coucou`,
+   celle du hub : `accueil:ui` compte les `coucou` qui démarrent pour savoir
+   si le hub a salué, et le rideau lui en aurait fourni un. Le coucou du hub
+   penche (`skewX`) au lieu de tourner depuis le lot 2, pour garder les pieds
+   au sol ; la brique commune tourne encore, et les deux ne se ressemblent
+   de nouveau que lorsqu'elle aura suivi. */
+.ouverture .fz[data-place="5"] img{
+  animation:ouvMarche .42s cubic-bezier(.2,1.3,.35,1) var(--d,0ms) backwards,
+    tbf-coucou 1.5s ease-in-out 1.15s;
 }
-/* `.online` en or : le nom se lit en deux temps, et c'est le second qui dit
-   que ça se joue à plusieurs. */
-.ouverture h1 span{color:var(--projo)}
-/* Pleine craie sur son panneau, comme la ligne du logo de la vitrine : à 0,9,
-   une craie retombe sous 4,5:1 au plein jour. */
-.ouverture p{
-  margin:10px 0 0;font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;
+@keyframes ouvMarche{from{opacity:0;translate:0 22px}}
+
+/* ## La jauge est une écharpe qui se noue
+
+   L'écharpe-jauge de la feuille commune (`.tbf-jauge`), à trois crans : un
+   par libellé. Elle ne feint pas un pourcentage de chargement qu'on ne
+   connaît pas — ce mensonge-là se voit quand la barre saute de trente à
+   cent : elle suit le temps, qu'on connaît, et c'est pour ça qu'aucun
+   chiffre n'est écrit à côté. Les trois libellés disent où l'on en est, par
+   tiers du plafond : « ON OUVRE LES GRILLES », « LES TRIBUNES SE
+   REMPLISSENT », « COUP D'ENVOI ». Le premier est écrit ici, les deux
+   autres viennent d'`ouverture.js`, qui pousse aussi la largeur à chaque
+   image — et qui, quand l'écran part avant le plafond, noue l'écharpe :
+   le dernier libellé, et la jauge au bout en trois cents millisecondes.
+
+   Elle **avance**, elle ne glisse plus en boucle : une jauge indéterminée
+   pendant dix secondes se lit comme une panne — on recharge, et l'on repart
+   pour dix secondes. La transition ordinaire de la brique (une
+   demi-seconde, faite pour un palier qui saute) traînerait derrière le
+   temps réel : la jauge porte donc `data-suit`, la variante de `ui.css`
+   pour une jauge qui suit le temps — un lissage court, qui efface une image
+   sautée sans retarder le nœud, et rien au calme.
+
+   Le nœud dépasse du rail et ses franges pendent de neuf pixels : la marge
+   du bas leur garde dix pixels. Les libellés sont en Oswald 11 craie, comme
+   la maquette, avec l'ombre d'encre des lettres posées sur le béton. */
+.ouverture .charge{flex:none;width:min(100% - 40px,300px);margin:10px 0 10px}
+.ouverture .mot{
+  margin:0 0 9px;text-align:center;
+  font-family:var(--banner,"Oswald","Arial Narrow",Impact,sans-serif);font-weight:600;
+  font-size:11px;line-height:1;letter-spacing:.14em;
+  color:var(--craie,#F2EEE4);text-shadow:0 1px 0 #07090C;
+}
+:where(.ouverture .jauge){height:12px;border-radius:7px;background:#232930}
+:where(.ouverture .jauge i){display:block;height:100%;width:0;border-radius:6px 0 0 6px;background:#F5C33B}
+
+/* ## « TOUCHE POUR ENTRER »
+
+   Oswald 12 craie, sous la jauge. Il ne paraît qu'avec la classe
+   `entrable`, que pose `ouverture.js` au bout du plancher (1,2 s) : sans le
+   script, toucher ne fait rien, et une consigne qu'on ne peut pas suivre est
+   un mensonge. Sa place est gardée dès le départ — rien ne bouge quand il
+   arrive.
+
+   **Ce sont les deux flèches qui clignotent, pas les mots.** Un texte qui
+   s'éteint une demi-seconde sur deux est un texte qu'on lit mal une fois
+   sur deux, et que l'audit compterait pâle à l'instant où il le mesure. Les
+   flèches portent le clignotement de la maquette ; les mots restent pleins.
+   C'est la seconde animation infinie du rideau, avec la fumée. */
+.ouverture .consigne{
+  flex:none;margin:0 0 10px;
+  font-family:var(--banner,"Oswald","Arial Narrow",Impact,sans-serif);font-weight:600;
+  font-size:12px;line-height:14px;letter-spacing:.24em;
+  color:var(--craie,#F2EEE4);text-shadow:0 1px 0 #07090C;
+  opacity:0;visibility:hidden;transition:opacity .2s ease,visibility .2s ease;
+}
+.ouverture.entrable .consigne{opacity:1;visibility:visible}
+.ouverture .consigne::before,.ouverture .consigne::after{
+  content:"";display:inline-block;width:0;height:0;vertical-align:0;
+  border:5px solid transparent;
+  animation:ouvClign 1.1s steps(1) infinite;
+}
+.ouverture .consigne::before{border-left-color:currentColor;border-right-width:0;margin-right:9px}
+/* La dernière lettre porte son espacement à droite : la flèche s'en
+   rapproche d'autant, pour rester à neuf pixels des deux côtés. */
+.ouverture .consigne::after{border-right-color:currentColor;border-left-width:0;margin-left:calc(9px - .24em)}
+@keyframes ouvClign{0%,55%{opacity:1}56%,100%{opacity:.25}}
+
+/* ## L'astuce du jour
+
+   Un ticket kraft (`.tbf-ticket`, la brique commune) : un papier qu'on lit,
+   c'est sa place (amendement 2). La table est écrite en dur dans
+   `ouverture.js`, qui choisit celle du jour, la remplit et la fait monter
+   (`.tbf-glisse`). Sans le script, le ticket ne paraît pas : un ticket vide
+   ne s'affiche pas. Sa place est gardée (`.pied`), pour que son arrivée ne
+   fasse pas rétrécir la scène sous les yeux du joueur.
+
+   Deux lignes au plus : les astuces sont écrites pour tenir à 320 px de
+   large, et le ticket a la hauteur de deux lignes. Le mot-clé est en Oswald
+   gras, pas au marqueur (voir plus haut). Encre sur kraft : 8,7:1. */
+.ouverture .pied{flex:none;width:100%;height:80px}
+.ouverture .astuce{
+  height:100%;padding:11px 14px 10px;
+  display:flex;flex-direction:column;justify-content:center;gap:5px;
+}
+:where(.ouverture .astuce){background:#C9A66B;color:#07090C}
+.ouverture .astuce .k{
+  font-family:var(--banner,"Oswald","Arial Narrow",Impact,sans-serif);font-weight:600;
+  font-size:11px;line-height:1;letter-spacing:.16em;
+}
+.ouverture .astuce p{
+  margin:0;font-family:var(--ui,system-ui,sans-serif);font-weight:500;
+  font-size:14px;line-height:20px;letter-spacing:0;
+}
+.ouverture .astuce p b{
+  font-family:var(--banner,"Oswald","Arial Narrow",Impact,sans-serif);font-weight:700;
+  font-size:15px;letter-spacing:.03em;text-transform:uppercase;
 }
 
-/* La barre du bas. Elle ne feint pas un pourcentage de chargement qu'on ne
-   connaît pas — ce mensonge-là se voit quand la barre saute de trente à cent :
-   elle suit le temps, qu'on connaît. Voir plus bas.
-
-   Dix pixels de haut, le plancher du socle pour une jauge : à quatre, on
-   voyait un fil, pas une barre qui avance — et c'est l'avancée qui dit que
-   rien n'est bloqué. */
-.ouverture .jauge{
-  position:absolute;left:50%;bottom:12%;transform:translateX(-50%);
-  width:min(210px,52vw);height:10px;border-radius:5px;overflow:hidden;
-  background:rgba(242,238,228,.14);
-}
-/* Elle **avance**, elle ne glisse plus en boucle. Un ruban qui va et vient est
-   ce qu'on met quand on ignore le temps restant ; ici on le sait, et une jauge
-   indéterminée pendant dix secondes se lit comme une panne — on recharge, et
-   l'on repart pour dix secondes.
-
-   La largeur est poussée par `ouverture.js`, à chaque cadre. La transition
-   lisse les à-coups si un cadre saute, sans jamais la faire reculer. */
-.ouverture .jauge i{
-  display:block;height:100%;width:0;border-radius:5px;background:var(--projo);
-  transition:width .18s linear;
-  box-shadow:0 0 8px rgba(245,195,59,.5);
+/* Un écran très bas — un téléphone couché — n'a pas la place de tout : la
+   ligne du titre et l'astuce s'en vont, la scène garde de quoi montrer la
+   troupe. Le titre, la jauge et la consigne restent. */
+@media (max-height:520px){
+  .ouverture .enseigne p,.ouverture .pied{display:none}
+  .ouverture .dedans{padding-top:calc(env(safe-area-inset-top,0px) + 14px)}
 }
 
 /* ==================================== la sortie de secours de l'écran
@@ -1131,12 +1516,18 @@ html[data-calme~="animations"] .pose{transition:none}
    secours qui emprunte `var(--projo)` est une sortie de secours qui s'éteint
    le jour où la feuille de style manque, c'est-à-dire le seul jour où elle
    sert. */
-/* Elle a son panneau, elle aussi, et pour la même raison que le titre : sa
-   phrase se posait sur la photo. Couleur écrite en clair, comme le reste de
-   la sortie. Le panneau est caché avec elle — `visibility` emporte le fond —
-   et il paraît donc en même temps que la phrase qu'il porte. */
+/* Elle a son panneau, et pour la même raison que le titre a sa bâche : sa
+   phrase ne se pose pas à même le décor. Couleur écrite en clair, comme le
+   reste de la sortie. Le panneau est caché avec elle — `visibility` emporte
+   le fond — et il paraît donc en même temps que la phrase qu'il porte.
+
+   Au lot 2, elle se pose **par-dessus** la scène, au milieu de l'écran, au
+   lieu de prendre une place sous le titre : invisible, elle aurait volé cent
+   pixels à la troupe pendant les douze secondes où elle ne sert à rien. */
 .ouverture .secours{opacity:0;visibility:hidden;
-  margin-top:18px;padding:14px 16px 16px;border-radius:14px;
+  position:absolute;z-index:5;left:50%;top:50%;translate:-50% -50%;
+  width:min(100% - 32px,320px);text-align:center;
+  padding:14px 16px 16px;border-radius:14px;
   background:rgba(12,17,24,.94);box-shadow:inset 0 0 0 1px rgba(242,238,228,.1);
   animation:ouvTard .45s ease 12s forwards}
 @keyframes ouvTard{to{opacity:1;visibility:visible}}
@@ -1144,17 +1535,24 @@ html[data-calme~="animations"] .pose{transition:none}
   text-transform:none;color:#F2EEE4;line-height:1.55}
 .ouverture .secours button{margin-top:14px;padding:12px 22px;border-radius:9px;
   border:1px solid #F5C33B;background:none;color:#F5C33B;font:inherit;
-  font-size:13.5px;letter-spacing:.08em;cursor:pointer;min-height:44px}
+  font-size:13.5px;letter-spacing:.08em;cursor:pointer;min-height:44px;
+  pointer-events:auto}
 
 /* Qui a demandé moins d'animation n'en reçoit aucune : l'écran reste, lisible
-   et immobile, et s'en va pareil. La sortie de secours n'est pas dans cette
-   liste — son animation n'est pas un ornement, c'est la minuterie. */
+   et immobile, et s'en va pareil. La lumière est à sa taille, la troupe est
+   en place, les flèches ne clignotent pas. La bâche, la fumée et le ticket
+   se taisent d'eux-mêmes : leurs doubles sont dans la feuille commune. La
+   jauge avance toujours — c'est une information, pas un ornement —, et la
+   sortie de secours n'est pas dans cette liste : son animation est la
+   minuterie. */
 @media (prefers-reduced-motion:reduce){
-  .ouverture .fond,.ouverture .jauge i{animation:none}
-  .ouverture .bande img{animation:none;opacity:1;transform:none}
+  .ouverture .sortie::before,.ouverture .consigne::before,.ouverture .consigne::after{animation:none}
+  .ouverture .fz img,.ouverture .fz[data-place="5"] img{animation:none}
 }
-html[data-calme~="animations"] :is(.ouverture .fond,.ouverture .jauge i){animation:none}
-html[data-calme~="animations"] .ouverture .bande img{animation:none;opacity:1;transform:none}
+html[data-calme~="animations"] .ouverture .sortie::before,
+html[data-calme~="animations"] .ouverture .consigne::before,
+html[data-calme~="animations"] .ouverture .consigne::after{animation:none}
+html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place="5"] img){animation:none}
 
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -1170,35 +1568,59 @@ html[data-calme~="animations"] .ouverture .bande img{animation:none;opacity:1;tr
 <!-- ================================================ l ouverture
 
      Écrit dans la page, pas monté par un script : il doit être là avant que
-     quoi que ce soit ne tourne. Le fond est servi en trois formats, comme le
-     reste du jeu ; <picture> choisit, et le JPEG couvre ce qui reste.
+     quoi que ce soit ne tourne. Le tunnel est du CSS ; la photo du stade, au
+     bout du couloir, est servie en trois formats comme le reste du jeu —
+     <picture> choisit, et le JPEG couvre ce qui reste.
 
-     Les Fanzzy de l éventail sont posés par ouverture.js dès qu il se
-     charge — ils sont facultatifs, et l écran tient sans eux. -->
+     Les Fanzzy de la scène, les deux libellés suivants de la jauge, la
+     consigne et l astuce du jour sont posés par ouverture.js dès qu il se
+     charge : ils sont en plus, et l écran tient sans eux. -->
 <div class="ouverture" id="ouverture" role="status" aria-label="Chargement">
-  <picture>
-    <source srcset="/img/ecran/tribune.avif" type="image/avif">
-    <source srcset="/img/ecran/tribune.webp" type="image/webp">
-    <img class="fond" src="/img/ecran/tribune.jpg" alt="" aria-hidden="true">
-  </picture>
+  <div class="tunnel" aria-hidden="true">
+    <div class="murs"></div>
+    <span class="bache g"></span><span class="bache d"></span>
+    <div class="sortie">
+      <picture>
+        <source srcset="/img/ecran/tribune.avif" type="image/avif">
+        <source srcset="/img/ecran/tribune.webp" type="image/webp">
+        <img src="/img/ecran/tribune.jpg" alt="">
+      </picture>
+    </div>
+  </div>
   <div class="dedans">
-    <div class="bande" id="ouvBande" aria-hidden="true"></div>
-    <!-- Le titre et sa ligne, sur leur panneau : voir « Le nom du jeu a son
-         panneau », dans la feuille de cette page. -->
-    <div class="enseigne">
+    <!-- Le nom du jeu, peint sur la bâche principale à la craie : voir « Le
+         nom du jeu, peint sur une bâche », dans la feuille de cette page. -->
+    <div class="enseigne tbf-plaque tbf-grande tbf-colle" data-ton="craie">
       <h1>THEBESTFAN<span>.ONLINE</span></h1>
       <p>le jeu de cartes des tribunes</p>
     </div>
-    <!-- Invisible douze secondes, puis visible. Aucun script ne la montre :
-         c'est une animation CSS écrite dans cette page, et le bouton n'appelle
-         que `location.reload()`. Elle tient donc debout le jour où plus rien
-         d'autre ne tient. -->
-    <div class="secours">
-      <p>Le jeu n’a pas fini de se charger.</p>
-      <button type="button" onclick="location.reload()">Recharger</button>
+    <div class="troupe" aria-hidden="true">
+      <div class="bande" id="ouvBande"></div>
+      <div class="tbf-fumee"></div>
+    </div>
+    <!-- Les libellés et la consigne sont cachés aux lecteurs d écran : l écran
+         est une zone d état qui s annonce « Chargement », et un libellé qui
+         change tous les tiers la ferait parler trois fois pour rien. -->
+    <div class="charge" aria-hidden="true">
+      <p class="mot" id="ouvMot">ON OUVRE LES GRILLES</p>
+      <div class="tbf-jauge jauge" data-suit data-crans="3"><i></i></div>
+    </div>
+    <p class="consigne" aria-hidden="true">TOUCHE POUR ENTRER</p>
+    <div class="pied">
+      <div class="tbf-ticket astuce" id="ouvAstuce" hidden>
+        <span class="k">ASTUCE DU JOUR</span>
+        <p></p>
+      </div>
     </div>
   </div>
-  <div class="jauge" aria-hidden="true"><i></i></div>
+  <!-- Invisible douze secondes, puis visible. Aucun script ne la montre :
+       c'est une animation CSS écrite dans cette page, et le bouton n'appelle
+       que `location.reload()`. Elle tient donc debout le jour où plus rien
+       d'autre ne tient. -->
+  <div class="secours">
+    <p>Le jeu n’a pas fini de se charger.</p>
+    <button type="button" onclick="location.reload()">Recharger</button>
+  </div>
 </div>
 <script>
 /**
@@ -1360,47 +1782,38 @@ html[data-calme~="animations"] .ouverture .bande img{animation:none;opacity:1;tr
 
   <div class="hub" id="hub">
 
-    <!-- ## L'en-tête, et les trois cadres qu'il a perdus
+    <!-- ## L'en-tête : un sticker, deux compteurs, le menu (lot 2)
 
-         **L'avatar n'a plus de cadre.** Il en avait un — une plaque sombre
-         autour de la pastille dorée — qui portait le pseudo et le nom du club à
-         côté. Sur un compte neuf ces deux lignes sont vides : il ne restait
-         qu'un rectangle noir pendant sous la pastille, plus haut que tous les
-         boutons de la rangée, sans rien dedans. Le pseudo se lit au profil, qui
-         est à un doigt d'ici.
+         **L'avatar est un sticker** : le buste du Fanzzy équipé, découpé en
+         rond, l'anneau d'XP autour et le niveau collé en bas à droite
+         (`.tbf-avatar`, `ui.css`). Il remplace la pastille dorée qui portait
+         l'initiale du pseudo : on se reconnaît à son personnage, pas à une
+         lettre. Sans Fanzzy, la silhouette et le « ? » de la brique, et le
+         lien mène au classeur. Le pseudo se lit au profil, à un doigt d'ici.
 
-         **Les deux jetons non plus.** Une plaque dorée autour d'un compteur
-         doré et une plaque rouge autour d'un compteur rouge, c'était deux fois
-         la même information et deux boutons qui criaient plus fort que les dix
-         destinations du jeu. Il reste le dessin et le nombre — et le dessin est
-         maintenant le **même** que celui de la destination correspondante :
-         l'écharpe de la boutique, le sachet des boosters. Un même objet dessiné
-         de deux façons, c'est deux objets à apprendre. -->
+         **Les compteurs sont des stickers craie** (`.tbf-monnaie`) : le
+         jeton dessiné, le chiffre à l'encre qui compte quand il change, et le
+         « + » or qui dit qu'on peut en obtenir. Ils gardent leurs anciennes
+         classes (`jeton`, `plus`), sans une règle derrière : la suite de
+         l'accueil les lit. -->
     <header class="haut">
-      <a class="moi" href="/profil" aria-label="Mon profil">
-        <span class="pastille"><span id="initiale"></span>
-          <i class="niv" id="nivPastille" hidden></i></span>
+      <a class="tbf-avatar tbf-avatar--vide moi" id="moi" href="/profil" aria-label="Mon profil">
+        <span class="tbf-anneau" id="anneau" style="--p:0%"><span class="tbf-avatar-buste"></span></span>
+        <b class="tbf-sticker tbf-sticker--rond tbf-avatar-niv" id="nivPastille" hidden></b>
       </a>
       <div class="bourse">
         <!-- Toucher sa monnaie mène à la boutique : c'est le geste que tout
              joueur essaie en premier, et il ne menait nulle part. La boutique
              existait pourtant, rangée dans le menu au milieu de treize autres
              entrées — c'est-à-dire nulle part. -->
-        <a class="jeton ech" href="/boutique"
+        <a class="tbf-monnaie jeton ech" href="/boutique"
            aria-label="Mes écharpes — aller à la boutique">
-          <!-- L'écharpe : une bande rayée, et pas une écharpe « portée ».
-               Quatre autres tracés ont été essayés et regardés à vingt-deux
-               pixels — la boucle nouée donne un verre à pied, les deux pans
-               donnent un pantalon, la bande pendue donne une cravate. Ce qui se
-               lit, c'est la bande à rayures obliques : c'est déjà ainsi que le
-               jeu dessine une écharpe partout ailleurs (`.tbf-echarpe`), et à
-               cette taille il ne reste de toute façon que la silhouette. -->
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5"/><path d="M8 8.5 6 15.5M13 8.5l-2 7M18 8.5l-2 7"/></svg>
-          <span id="scarves"></span><b class="plus" aria-hidden="true">+</b></a>
-        <a class="jeton pack" href="/boutique"
+          <img src="/img/gains/echarpes.webp" alt=""><b id="scarves"></b><i class="tbf-monnaie-plus plus" aria-hidden="true">+</i></a>
+        <!-- Le sachet est celui de la tuile BOOSTERS : un même objet dessiné de
+             deux façons, c'est deux objets à apprendre. -->
+        <a class="tbf-monnaie jeton pack" href="/boutique"
            aria-label="Mes boosters — aller à la boutique">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg>
-          <span id="packs"></span><b class="plus" aria-hidden="true">+</b></a>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg><b id="packs"></b><i class="tbf-monnaie-plus plus" aria-hidden="true">+</i></a>
         <button class="tbf-plaque burger tbf-burger" id="burger" aria-label="Menu"
           ><span></span><span></span><span></span></button>
       </div>
@@ -1411,6 +1824,12 @@ html[data-calme~="animations"] .ouverture .bande img{animation:none;opacity:1;tr
          cinq destinations quand le menu commun en portait onze. -->
 
     <div class="centre">
+      <!-- ## Les états des tuiles (lot 2)
+           Une tuile dit ce qui l'attend sans qu'on l'ouvre : LIVE rouge sur le
+           VIRAGE quand un club suivi joue, le nombre de boosters en or sur
+           BOOSTERS, « +N » craie sur FANZZY quand des cartes sont arrivées, et
+           « NIV. N » sous scotch quand une porte n'est pas encore ouverte. Trois
+           au plus à la fois ; c'est `etatsDuHub` qui les pose. -->
       <nav class="rail" aria-label="Le jeu">
         <a class="tbf-case" data-ton="flare" href="/virage">
           <svg viewBox="0 0 24 24"><path d="M3 20l9-16 9 16zM7 20l5-9 5 9"/></svg><span class="lib">VIRAGE</span></a>
@@ -1426,7 +1845,7 @@ html[data-calme~="animations"] .ouverture .bande img{animation:none;opacity:1;tr
           <svg viewBox="0 0 24 24"><path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20a7 7 0 0 1 14 0M17 20a5 5 0 0 0-3-4.6M16 11a3 3 0 0 0 0-6"/></svg><span class="lib">KOP</span></a>
         <!-- Le kiosque. Il avait son onglet sur la page des Fanzzy ; quand
              celle-ci est passée à trois onglets, il n'est resté que le menu
-             accordéon — c'est-à-dire nulle part. Un sachet, et sa pastille :
+             accordéon — c'est-à-dire nulle part. Un sachet, et son sticker :
              un booster non ouvert ne se rappelle à personne. -->
         <a class="tbf-case" data-ton="or" href="/boosters" id="caseBoosters">
           <svg viewBox="0 0 24 24"><path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg><span class="lib">BOOSTERS</span></a>
@@ -1435,16 +1854,16 @@ html[data-calme~="animations"] .ouverture .bande img{animation:none;opacity:1;tr
       <div class="scene" id="scene">
         <div class="decor" id="decor" aria-hidden="true"></div>
         <div class="halo"></div>
+        <!-- Le soir de match : la bâche du club et la fumée. Né caché, montré
+             seulement quand les couleurs du club sont connues. -->
+        <div class="soir" id="soir" aria-hidden="true" hidden>
+          <div class="tbf-bache-club"></div><div class="tbf-fumee"></div></div>
         <div class="sol"></div>
-        <!-- Le bandeau d'un moment fort. Il vit dans la scène, au-dessus du
-             personnage : c'est là que le regard est déjà. -->
-        <div class="moment" id="moment" aria-live="polite">
-          <b id="momentTitre"></b><small id="momentSous"></small></div>
         <div class="flotte">
           <div class="bascule">
-            <!-- Un calque par geste : le flottement, le rebond de pose, le
-                 coucou, la respiration. Deux animations sur un même élément et
-                 l'une efface l'autre. -->
+            <!-- Un calque par geste : l'arrivée et le saut, le rebond de pose,
+                 le coucou ; la pile, elle, flotte et respire. Deux animations
+                 sur un même élément et l'une efface l'autre. -->
             <div class="salut">
               <div class="pile" id="pile">
                 <!-- Deux calques superposés : on croise leurs opacités pour
@@ -1488,56 +1907,70 @@ html[data-calme~="animations"] .ouverture .bande img{animation:none;opacity:1;tr
         <a class="tbf-case" data-ton="or" href="/boutique">
           <svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12zM6 6L5 3H2M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/></svg><span class="lib">BOUTIQUE</span></a>
       </nav>
-    </div>
 
-    <!-- Qui est à l'écran : le nom du Fanzzy équipé et l'âge qu'il a atteint.
-         Dans le flux, sous les rails — posée dans la scène, elle passait sous
-         le personnage, qui occupe toute sa hauteur. -->
-    <div class="qui" id="qui">
-      <b id="quiNom"></b>
-      <!-- Le défilé des âges. Trois pièces et pas une de plus : une flèche de
-           chaque côté pour passer d'un âge à l'autre, la plaque qui dit lequel,
-           et un bouton qui n'apparaît **que** lorsque ce qu'on regarde n'est pas
-           encore ce que les autres voient.
+      <!-- Qui est à l'écran : le nom du Fanzzy équipé et l'âge qu'il a atteint.
+           Au pied du personnage, entre les deux dernières tuiles — posée dans
+           la scène, elle passait sous le personnage, qui occupe toute sa
+           hauteur ; elle a maintenant sa rangée à elle. -->
+      <div class="qui" id="qui">
+        <b class="tbf-banderole" id="quiNom"></b>
+        <!-- Le défilé des âges. Trois pièces et pas une de plus : une flèche de
+             chaque côté pour passer d'un âge à l'autre, la plaque qui dit lequel,
+             et un bouton qui n'apparaît **que** lorsque ce qu'on regarde n'est pas
+             encore ce que les autres voient.
 
-           Il vit dans le flux et non dans la scène : posé sur le personnage, il
-           tomberait au milieu d'un dessin qui occupe toute la hauteur — et sur
-           un téléphone, sous le pouce plutôt qu'à portée de lui.
+             Il vit sous la scène et non sur elle : posé sur le personnage, il
+             tomberait au milieu d'un dessin qui occupe toute la hauteur.
 
-           Ce sont **les flèches** qui se cachent quand il n'y a qu'un âge, et
-           non la rangée : la plaque, elle, se peint dès la première ligne
-           depuis le souvenir de la dernière visite, et la faire attendre la
-           réponse du serveur redonnerait le visage sans nom qu'on a mis du
-           temps à corriger. -->
-      <div class="ages" id="ages">
-        <button type="button" class="fl" id="ageAvant" aria-label="L’âge précédent" hidden>‹</button>
-        <small id="quiEvo" aria-live="polite"></small>
-        <button type="button" class="fl" id="ageApres" aria-label="L’âge suivant" hidden>›</button>
+             Ce sont **les flèches** qui se cachent quand il n'y a qu'un âge, et
+             non la rangée : la plaque, elle, se peint dès la première ligne
+             depuis le souvenir de la dernière visite, et la faire attendre la
+             réponse du serveur redonnerait le visage sans nom qu'on a mis du
+             temps à corriger. -->
+        <div class="ages" id="ages">
+          <button type="button" class="fl tbf-plaque tbf-plaque--rond" id="ageAvant"
+            aria-label="L’âge précédent" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <small id="quiEvo" aria-live="polite"></small>
+          <button type="button" class="fl tbf-plaque tbf-plaque--rond" id="ageApres"
+            aria-label="L’âge suivant" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        </div>
+        <button type="button" class="cestlui tbf-plaque" data-ton="or" id="ageValider"
+          hidden>C’est lui, partout</button>
       </div>
-      <button type="button" class="cestlui tbf-plaque" data-ton="or" id="ageValider"
-        hidden>C’est lui, partout</button>
+
+      <!-- La bulle du Fanzzy, et le « ! » qui la rouvre une fois repliée. Nées
+           cachées : c'est `direBulle` qui les montre, d'après ce que la page
+           sait déjà, et rien ne s'affiche quand il n'y a rien à dire. -->
+      <a class="tbf-bulle bulle" id="bulle" href="/" hidden></a>
+      <button type="button" class="bulle-pli" id="bullePli" aria-label="Rouvrir la bulle du Fanzzy"
+        hidden><b class="tbf-sticker tbf-sticker--rond">!</b></button>
     </div>
 
     <footer class="bas">
-      <!-- Caché par défaut : il ne paraît que lorsqu'il y a vraiment quelque
-           chose à proposer. Voir « les premiers pas », plus bas. -->
-      <a class="pas1" id="pas1" href="/aide" hidden></a>
       <div class="duo">
         <!-- Le compte et la jauge naissent vides : voir « Sans valeur, rien »
              dans la feuille de cette page. Un panneau calme à gauche, le seul
              cadre de l'écran à droite : voir « Un seul cadre dans le duo ». -->
-        <a class="pan collec" href="/collection">
+        <a class="pan collec" id="collec" href="/collection" aria-label="Ma collection">
           <span class="t"><b>COLLECTION</b><span id="collecTxt"></span></span>
-          <span class="tbf-jauge" id="collecJauge" hidden><i id="collecBar"></i></span>
+          <span class="tbf-jauge" id="collecJauge" data-crans="5" hidden><i id="collecBar"></i></span>
         </a>
-        <a class="tbf-cadre direct" id="direct" href="/matchs" data-echarpe>
-          <span class="tag"><span class="pt"></span><span id="directTag">AUJOURD’HUI</span></span>
-          <b id="directNom">Aucun match en cours</b>
-          <small id="directSous">Tes clubs ne jouent pas maintenant</small>
+        <!-- La bâche du jour : le ticket kraft. Il naît sur son dernier état,
+             « RÉPÉTER UN GESTE », qui ne dépend d'aucune donnée : la case a sa
+             place et son sens dès la première image, et les données la
+             précisent quand elles arrivent. Voir `bacheDuJour`. -->
+        <a class="tbf-cadre tbf-cadre--ticket direct" id="direct" href="/repetition" data-echarpe>
+          <span class="sur" id="directTag"></span>
+          <b id="directNom">Répéter un geste ›</b>
+          <small id="directSous"></small>
+          <span class="rang" id="directRang" hidden>
+            <span class="tbf-jauge" id="directJauge" data-crans="1"><i id="directBar"></i></span>
+            <span class="tbf-sticker" id="directGain" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg><span id="directGainN"></span></span>
+          </span>
         </a>
       </div>
       <a class="entrer tbf-plaque tbf-bloc tbf-grande" data-ton="flare"
-        id="entrer" href="/duel-nvn">Prendre ma place</a>
+        id="entrer" href="/duel-nvn">Prendre ma place<small>Duel de tribunes</small></a>
       <!-- « Installer l'application » n'est plus ici : elle est passée dans le
            tiroir (menu.js), où tout joueur connecté la retrouve depuis
            n'importe quel écran. Sur l'accueil, elle poussait le bouton
@@ -1547,6 +1980,14 @@ html[data-calme~="animations"] .ouverture .bande img{animation:none;opacity:1;tr
 
   </div>
 </main>
+
+<!-- Le moment fort du hub : la case de BD unifiée de `ui.css`, posée sur le
+     document comme `fanzzy-scene.js` la pose au Virage et au duel — hors de la
+     colonne, dont le contexte d'empilement la ferait passer sous les effets de
+     `fx.js`. Invisible tant qu'elle ne porte pas `.on`, et elle ne prend jamais
+     le doigt. Voir `moment()`. -->
+<div class="tbf-moment" id="moment" data-ton="club" aria-live="polite"><div class="tbf-vignette"
+  ><b class="tbf-vignette-mot" id="momentTitre"></b><small id="momentSous"></small></div></div>
 
 <!-- fanzzy-art.js n'est pas chargé ici : l'accueil ne dessine aucun Fanzzy en
      géométrie, il affiche des illustrations. La bibliothèque reste utilisée par
@@ -1620,6 +2061,574 @@ const { EXT, EXT_ALPHA } = window.TBF_ETATS;
   img.src = '/img/accueil' + EXT;
 }
 
+
+/* ============================================ les états du hub (lot 2)
+
+   Ce que le hub sait, rangé en un endroit, et ce qu'il en montre : les états
+   des tuiles, le sticker du menu, la bulle du Fanzzy, la bâche du jour, la
+   bâche du club et sa fumée. Chaque lecture du serveur écrit ici ce qu'elle a
+   appris, puis appelle `montrer()`, qui recompose tout depuis cet état : un
+   seul chemin, et aucun ordre d'arrivée des réponses ne laisse l'écran à
+   moitié d'accord avec lui-même. Ce qu'on ne sait pas vaut `null` — et ne
+   s'affiche pas. */
+const H = {
+  live: null,        // le match d'un club suivi, tribune ouverte (`open`)
+  soir: null,        // un match d'un club suivi, pas fini, dans la fenêtre du direct
+  clubs: new Map(),  // les clubs suivis : id → nom
+  packs: null,       // les boosters en réserve
+  nouveaux: 0,       // les cartes arrivées depuis le dernier passage au classeur
+  sansFanzzy: null,  // vrai quand le portefeuille dit « aucun Fanzzy équipé »
+  attente: 0,        // les supporters qui attendent un duel
+  parcours: null,    // la prochaine étape des premiers pas
+  prochains: [],     // les coups d'envoi à venir des clubs suivis (voir `prochain`)
+};
+
+/** Le match a-t-il commencé ? Une tribune s'ouvre une demi-heure avant. */
+const commence = (m) => Boolean(m?.elapsed)
+  || ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE', 'INT'].includes(m?.status_short);
+
+/** Le match se jouera-t-il à l'heure dite ? Ni reporté, annulé, arrêté,
+    suspendu, gagné sur tapis vert (`SANS_COUP`), ni à l'heure provisoire
+    (TBD). Le direct ouvre une tribune à tout match de la demi-heure, et ne
+    regarde pas son statut : un match reporté allumait la bâche du club, la
+    fumée, « joue ce soir » et « BIENTÔT ». */
+const aSonCoup = (m) => !['TBD', ...SANS_COUP].includes(m?.status_short);
+
+/** Le nom de mon club dans ce match, d'après les clubs suivis. */
+const nomDeMonClub = (m) => (H.clubs.has(m.home_id) ? m.home_name : m.away_name) ?? '';
+
+/**
+ * Les états des tuiles, et ceux du tiroir.
+ *
+ * **Trois tuiles au plus** (amendement 7), par ordre d'urgence : le direct,
+ * la récompense prête, la nouveauté. Le hub n'en a que trois à poser, mais la
+ * règle est écrite : une quatrième source ne passera pas devant sans qu'on
+ * l'ait décidé. Une tuile verrouillée garde son état — la porte n'est pas
+ * ouverte, rien d'autre ne compte.
+ *
+ * Le tiroir reçoit ce que `menu.js` sait afficher : LIVE sur le Grand Virage,
+ * les boosters, le duel qui attend. Le bouton du menu en prend le plus urgent.
+ */
+function etatsDuHub() {
+  const voulus = [];
+  if (H.live && commence(H.live)) voulus.push(['/virage', 'direct', null]);
+  if (H.packs > 0) voulus.push(['/boosters', 'pret', String(H.packs)]);
+  if (H.nouveaux > 0) voulus.push(['/fanzzy', 'nouveau', `+${H.nouveaux}`]);
+  const gardes = new Map(voulus.slice(0, 3).map(([h, e, p]) => [h, [e, p]]));
+  for (const a of document.querySelectorAll('.rail .tbf-case')) {
+    if (a.dataset.etat === 'verrouille') continue;
+    const v = gardes.get(a.getAttribute('href'));
+    if (v) {
+      a.dataset.etat = v[0];
+      if (v[1]) a.dataset.pastille = v[1]; else delete a.dataset.pastille;
+    } else {
+      delete a.dataset.etat;
+      delete a.dataset.pastille;
+    }
+  }
+  /* Le tiroir n'a que ce que le hub lui pose : sur l'accueil, `menu.js` ne
+     demande ni le direct ni les duels qui attendent. Le sticker du bouton
+     de menu, lui, est recalculé par `menu.js` depuis ces tuiles — le hub ne
+     l'écrit jamais lui-même, sans quoi deux mains poseraient le même
+     attribut. */
+  MENU?.poser?.('/virage', H.live && commence(H.live) ? 'direct' : null);
+  MENU?.poser?.('/boosters', H.packs > 0 ? 'pret' : null, H.packs);
+  MENU?.poser?.('/duel-nvn', H.attente > 0 ? 'attend' : null, H.attente);
+}
+
+/**
+ * Les portes que le niveau n'a pas encore ouvertes.
+ *
+ * Les paliers viennent du serveur (`/api/niveau`, `paliers`), qui les tient de
+ * `src/shared/niveau.js` : une page qui porterait sa copie de la table
+ * finirait par fermer une porte que le serveur ouvre. Un palier qui ouvre une
+ * destination le dit par `page` ; **aujourd'hui, aucun ne le dit** — le
+ * niveau n'ouvre que des emplacements —, et aucune tuile ne se verrouille.
+ * Le jour où un palier nommera une page, sa tuile passera au parpaing, sous
+ * scotch, avec « NIV. N » à la place de son nom (amendement 19 : le scotch
+ * sur l'icône, jamais sur le libellé).
+ */
+function verrouiller(niv) {
+  for (const p of niv?.paliers ?? []) {
+    if (typeof p?.page !== 'string' || !(p.niveau > niv.niveau)) continue;
+    const a = document.querySelector(`.rail .tbf-case[href="${CSS.escape(p.page)}"]`);
+    const lib = a?.querySelector('.lib');
+    if (!lib) continue;
+    a.dataset.nom ??= lib.textContent;
+    a.dataset.etat = 'verrouille';
+    delete a.dataset.pastille;
+    lib.textContent = `NIV. ${p.niveau}`;
+    a.setAttribute('aria-label', `${a.dataset.nom} — s’ouvre au niveau ${p.niveau}`);
+  }
+}
+/* Toucher une porte fermée : elle dit non de la tête (`.tbf-secoue`), et on
+   reste là. Le son et la vibration du refus sont l'affaire de `fx.js`. */
+document.querySelector('.centre').addEventListener('click', (e) => {
+  const a = e.target.closest('.rail .tbf-case[data-etat="verrouille"]');
+  if (!a) return;
+  e.preventDefault();
+  a.classList.remove('tbf-secoue');
+  void a.offsetWidth;
+  a.classList.add('tbf-secoue');
+  if (typeof window.FX?.refus === 'function') window.FX.refus(a);
+  else window.FX?.son?.('tic');
+});
+document.querySelector('.centre').addEventListener('animationend', (e) => {
+  if (e.animationName === 'tbf-secoue') e.target.classList.remove('tbf-secoue');
+});
+
+/* ------------------------------------------- les cartes vues
+
+   « +N » sur FANZZY : les cartes arrivées depuis la dernière fois qu'on a
+   regardé sa collection. **Par appareil**, dans `localStorage` : il n'existe
+   pas encore de « vu » côté serveur. La première visite sur un appareil ne
+   montre rien — tout ce qu'on possède n'est pas nouveau —, et toucher FANZZY,
+   ou la bulle qui en parle, marque tout comme vu. Le classeur pourra en
+   faire autant avec la même clé. */
+const VUS = 'tbf.vus';
+let idsCollection = [];
+
+function nouveautes(qui, ids) {
+  idsCollection = ids;
+  let vu = null;
+  try { vu = JSON.parse(localStorage.getItem(VUS) ?? 'null'); } catch { return 0; }
+  if (!vu || vu.qui !== qui || !Array.isArray(vu.ids)) {
+    marquerVues(qui);
+    return 0;
+  }
+  const deja = new Set(vu.ids);
+  return ids.filter((id) => !deja.has(id)).length;
+}
+function marquerVues(qui) {
+  try { localStorage.setItem(VUS, JSON.stringify({ qui, ids: idsCollection })); }
+  catch { /* stockage refusé : la nouveauté ne s'affichera pas, sans plus */ }
+}
+
+/* ------------------------------------------- la collection, au palier
+
+   **Le palier en cours, pas le total** (amendement 22) : « 14 / 25 », puis
+   « 37 / 50 ». Les paliers sont des nombres ronds qui s'espacent — 10, 25,
+   50, 100, 250, 500, 1 000, 2 500, 5 000 —, puis le total : aucune donnée du
+   serveur n'en définit, ce sont des repères de lecture, et ils ne promettent
+   donc aucune récompense. */
+const PALIERS = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000];
+function palierDe(eus, total) {
+  return PALIERS.find((p) => p > eus && p < total) ?? total;
+}
+
+/* ------------------------------------------- le prochain coup d'envoi
+
+   Le calendrier des clubs suivis est déjà servi (`/api/football/feed` : pour
+   chaque club suivi, le direct, les deux prochains, les derniers) : une
+   lecture en base, sans appel à API-Football, et aucune route nouvelle. Le
+   hub en garde **les rencontres à venir, dans l'ordre, dix minutes dans
+   l'onglet** — un coup d'envoi ne bouge pas d'une visite à l'autre, et
+   l'accueil est l'écran qu'on rouvre le plus. Une réponse vide, ou dont tout
+   est passé, ne tient que quatre-vingt-dix secondes : un calendrier qui se
+   charge ne doit pas rester vide une heure (ETAT.md § 6).
+
+   **La liste, et non la seule première** : le choix se fait au moment de
+   l'afficher (`prochain`). Le hub gardait la rencontre la plus proche, lue
+   une fois : resté ouvert, il passait le coup d'envoi avec ce seul souvenir,
+   et la bulle disait encore « Sion joue ce soir » après le coup de sifflet.
+   La veille la relit (voir `veiller`), et le cache décide s'il faut
+   vraiment redemander.
+
+   **Seulement ce qui se jouera à l'heure dite.** Le fil n'écarte que les
+   matchs finis ou annulés : un match reporté, suspendu, arrêté ou gagné sur
+   tapis vert y garde sa date, et le ticket lançait un compte à rebours vers
+   lui. Ceux-là quittent la liste. Un match dont l'heure n'est pas fixée
+   (TBD : une heure provisoire, souvent minuit) y garde sa place : s'il vient
+   le premier, il n'y a pas de coup d'envoi à annoncer — plutôt qu'une heure
+   fausse, ou que le match d'après. */
+const PROCHAINS = 'tbf.prochains';
+/** Ne se jouera pas à l'heure dite : reporté, annulé, arrêté, suspendu, sur tapis vert. */
+const SANS_COUP = ['PST', 'CANC', 'ABD', 'SUSP', 'AWD', 'WO'];
+async function prochainsCoups(qui) {
+  const maintenant = Date.now();
+  try {
+    const c = JSON.parse(sessionStorage.getItem(PROCHAINS) ?? 'null');
+    const aVenir = Array.isArray(c?.v) && c.v.some((x) => Date.parse(x.kickoff_at) > maintenant);
+    if (c?.qui === qui && Array.isArray(c.v)
+      && maintenant - c.t < (aVenir ? 600_000 : 90_000)) return c.v;
+  } catch { /* pas de mémoire : on demande */ }
+  const d = await lire('/api/football/feed', { credentials: 'same-origin' }).catch(() => null);
+  if (!Array.isArray(d?.feed)) return null;           // panne : on ne retient rien
+  const v = d.feed.flatMap((x) => x.next ?? [])
+    .filter((x) => Date.parse(x.kickoff_at) > maintenant && !SANS_COUP.includes(x.status_short))
+    .sort((a, b) => Date.parse(a.kickoff_at) - Date.parse(b.kickoff_at))
+    .map((f) => ({ kickoff_at: f.kickoff_at, statut: f.status_short ?? null,
+      home_id: f.home_id, away_id: f.away_id, home_name: f.home_name, away_name: f.away_name }));
+  try { sessionStorage.setItem(PROCHAINS, JSON.stringify({ t: maintenant, qui, v })); }
+  catch { /* tant pis : on redemandera */ }
+  return v;
+}
+
+/** Le coup d'envoi à annoncer maintenant : le premier à venir, s'il a son heure (`NS`). */
+function prochain() {
+  const p = H.prochains.find((x) => Date.parse(x.kickoff_at) > Date.now());
+  return p?.statut === 'NS' ? p : null;
+}
+
+const JOURS = ['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM'];
+const deux = (n) => String(n).padStart(2, '0');
+const heure = (d) => `${deux(d.getHours())}:${deux(d.getMinutes())}`;
+const memeJour = (a, b) => a.toDateString() === b.toDateString();
+
+/** « CE SOIR 20:45 », « DEMAIN 20:45 », « SAM 20:45 », « SAM 12/10 20:45 ». */
+function quand(iso) {
+  const d = new Date(iso);
+  const auj = new Date();
+  const demain = new Date(auj); demain.setDate(auj.getDate() + 1);
+  if (memeJour(d, auj)) return `${d.getHours() >= 17 ? 'CE SOIR' : 'AUJOURD’HUI'} ${heure(d)}`;
+  if (memeJour(d, demain)) return `DEMAIN ${heure(d)}`;
+  if (d - auj < 6 * 86_400_000) return `${JOURS[d.getDay()]} ${heure(d)}`;
+  return `${JOURS[d.getDay()]} ${deux(d.getDate())}/${deux(d.getMonth() + 1)} ${heure(d)}`;
+}
+
+/** Le compte à rebours : « dans 2 j 4 h », « dans 3 h 12 », « dans 8 min ». */
+function rebours(iso) {
+  const min = Math.max(0, Math.ceil((Date.parse(iso) - Date.now()) / 60_000));
+  if (min >= 1440) return `dans ${Math.floor(min / 1440)} j ${Math.floor((min % 1440) / 60)} h`;
+  if (min >= 60) return `dans ${Math.floor(min / 60)} h ${deux(min % 60)}`;
+  return `dans ${min} min`;
+}
+
+/* ------------------------------------------- la bâche du jour
+
+   Un ticket, quatre façons de le remplir, et la première qui a ses données
+   l'emporte — dans l'ordre du brief : le match en direct (ou sa tribune
+   ouverte), le prochain coup d'envoi, l'étape suivante des premiers pas,
+   « RÉPÉTER UN GESTE ». Le dernier ne dépend de rien : la case n'est jamais
+   vide, et jamais un tiret.
+
+   **Une chose dite une fois.** Le ticket, le bouton et la bulle sont les
+   trois voix du hub, à vingt pixels l'une de l'autre :
+     — en direct, le ticket dit l'affiche, le score et la minute ; le monde
+       dans les tribunes est au bouton, qui mène à elles (voir `veiller`).
+       Les deux disaient « 47′ » et « 312 » ;
+     — ce que le ticket montre, la bulle ne le redit pas : `ticket` le
+       retient pour `phraseDuFanzzy`. */
+let reboursMinuteur = null;
+/** Ce que dit le ticket : `quoi` (direct, prochain, pas, geste), son lien, son match. */
+let ticket = { quoi: 'geste', href: '/repetition', match: null };
+
+/** « SAM 20:45 », et le compte à rebours à moins d'un jour : « CE SOIR 21:13 · dans 5 h 00 ». */
+const momentDuCoup = (iso) => quand(iso)
+  + (Date.parse(iso) - Date.now() < 86_400_000 ? ` · ${rebours(iso)}` : '');
+
+function bacheDuJour() {
+  const d = $('direct');
+  clearInterval(reboursMinuteur); reboursMinuteur = null;
+  const m = H.live;
+  const p = prochain();
+  let e;
+  if (m) {
+    const joue = m.home_goals !== null && m.home_goals !== undefined;
+    e = { quoi: 'direct', match: m, href: '/virage',
+      sur: m.elapsed ? `EN DIRECT · ${m.elapsed}′`
+        : commence(m) ? 'EN DIRECT' : `BIENTÔT · ${heure(new Date(m.kickoff_at ?? Date.now()))}`,
+      nom: `${m.home_name} ${joue ? `${m.home_goals} – ${m.away_goals}` : '–'} ${m.away_name}`,
+      /* L'affiche aux couleurs des deux clubs : l'écharpe en tête prend la
+         première de chacun. Sans couleur connue, celle du jeu. */
+      e1: m.homeColors?.[0] ?? null, e2: m.awayColors?.[0] ?? null };
+  } else if (p) {
+    /* L'affiche dans le titre, qui passe sur deux lignes ; le moment dessous. */
+    e = { quoi: 'prochain', match: p, href: '/matchs', sur: 'PROCHAIN COUP D’ENVOI',
+      nom: `${p.home_name} – ${p.away_name}`, sous: momentDuCoup(p.kickoff_at), tic: p };
+  } else if (H.parcours) {
+    /* Le sur-titre dit ce qu'est cette étape et où l'on en est : sans lui,
+       « TON PREMIER FANZZY » suivi de six crans se lisait « six actions pour
+       ton premier Fanzzy », et le booster du bout ne se rattachait à rien. */
+    const r = H.parcours;
+    e = { quoi: 'pas', href: r.ou || '/aide', sur: `PREMIERS PAS · ${r.faites}/${r.total}`,
+      nom: r.titre, rang: r };
+  } else {
+    e = { quoi: 'geste', href: '/repetition', sur: '', nom: 'Répéter un geste ›' };
+  }
+  ticket = { quoi: e.quoi, href: e.href, match: e.match ?? null };
+  d.dataset.quoi = e.quoi;
+  d.href = e.href;
+  $('directTag').textContent = e.sur;
+  $('directNom').textContent = e.nom;
+  $('directSous').textContent = e.sous ?? '';
+  if (e.e1) d.style.setProperty('--e1', e.e1); else d.style.removeProperty('--e1');
+  if (e.e2) d.style.setProperty('--e2', e.e2); else d.style.removeProperty('--e2');
+  /* Les premiers pas : l'écharpe jusqu'au bout du parcours, et ce que le
+     parcours entier rapporte, posé sur son cran final, tant qu'il ne l'a pas
+     rapporté. */
+  const r = e.rang;
+  $('directRang').hidden = !r;
+  if (r) {
+    const gain = r.recompense > 0 && !r.paye;
+    $('directBar').style.width = `${Math.round((r.faites / r.total) * 100)}%`;
+    $('directGain').hidden = !gain;
+    $('directGainN').textContent = `+${r.recompense}`;
+    e.aria = `Premiers pas, ${r.faites} sur ${r.total} : ${r.titre}`
+      + (gain ? `, ${r.recompense} booster${r.recompense > 1 ? 's' : ''} au bout` : '');
+  }
+  const dire = () => {
+    if (e.tic) e.aria = `Prochain coup d’envoi, ${e.nom}, ${quand(e.tic.kickoff_at).toLowerCase()}, ${rebours(e.tic.kickoff_at)}`;
+    if (e.aria) d.setAttribute('aria-label', e.aria); else d.removeAttribute('aria-label');
+  };
+  dire();
+  /* Le moment se réécrit tant qu'il est affiché — le compte à rebours y
+     entre la veille, « DEMAIN » devient « CE SOIR » à minuit. Passé le coup
+     d'envoi, la case se recompose : le direct, ou le match d'après. */
+  if (e.tic) {
+    reboursMinuteur = setInterval(() => {
+      if (Date.parse(e.tic.kickoff_at) <= Date.now()) { montrer(); return; }
+      $('directSous').textContent = momentDuCoup(e.tic.kickoff_at);
+      dire();
+    }, 30_000);
+  }
+}
+
+/* ------------------------------------------- le soir de match
+
+   La bâche du club derrière le personnage, et la fumée à ses pieds, les
+   soirs où un club suivi joue : de l'ouverture de sa tribune au coup de
+   sifflet. Aux couleurs du blason, que le direct apporte ; sans elles, rien
+   — une bâche aux couleurs du jeu ne serait celle d'aucun club. */
+function soirDeMatch() {
+  const s = H.live ?? H.soir;
+  const c = s ? (H.clubs.has(s.home_id) ? s.homeColors : s.awayColors) ?? [] : [];
+  const el = $('soir');
+  el.hidden = !c[0];
+  if (!c[0]) return;
+  el.style.setProperty('--e1', c[0]);
+  el.style.setProperty('--e2', c[1] ?? 'var(--craie)');
+}
+
+/* ------------------------------------------- la bulle du Fanzzy
+
+   Il parle de ce que la page sait déjà, et d'une seule chose : le match en
+   cours, le match de ce soir, le Fanzzy à choisir, les boosters qui
+   attendent, les cartes arrivées. Rien d'autre à dire : pas de bulle.
+
+   **Les règles du marqueur sont vérifiées ici** (amendement 6) : jamais un
+   chiffre, jamais plus de quatre mots. Une phrase qui les enfreindrait — un
+   nom de club en trois mots, par exemple — cède à la suivante, plus courte.
+
+   **Il ne redit pas le ticket**, posé juste avant lui (`montrer`) : « Match
+   ce soir › » au-dessus de « PROCHAIN COUP D'ENVOI · CE SOIR 21:13 », ou
+   « Choisis ton Fanzzy › » au-dessus de « TON PREMIER FANZZY », c'étaient
+   deux voix sur trois pour une seule chose. La phrase dont le ticket parle
+   déjà cède à la suivante. Le cri du direct (« Allez Sion ! ») reste : il ne
+   redit rien, il pousse.
+
+   **Ce soir, c'est un coup d'envoi à venir** : le prochain match n'était
+   pas relu à l'heure, et la bulle disait encore « Sion joue ce soir » après
+   le coup de sifflet. */
+const mots = (s) => s.split(/\s+/).filter((m) => /\p{L}/u.test(m)).length;
+const ecrivable = (s) => s && mots(s) <= 4 && !/\d/.test(s);
+const premiere = (...phrases) => phrases.find(ecrivable) ?? null;
+/** Le même match : les deux mêmes clubs, le même jour. Les deux sources (le
+    direct et le fil) n'écrivent pas l'heure du coup d'envoi de la même façon. */
+const memeMatch = (a, b) => Boolean(a && b) && a.home_id === b.home_id
+  && a.away_id === b.away_id && memeJour(new Date(a.kickoff_at), new Date(b.kickoff_at));
+
+function phraseDuFanzzy() {
+  if (H.live && commence(H.live)) {
+    return [premiere(`Allez ${nomDeMonClub(H.live)} ! ›`, 'On pousse ! ›'), '/virage'];
+  }
+  const ceSoir = [H.live, H.soir, prochain()].find((m) => m && !commence(m)
+    && memeJour(new Date(m.kickoff_at ?? Date.now()), new Date()));
+  if (ceSoir && !memeMatch(ceSoir, ticket.match)) {
+    const club = nomDeMonClub(ceSoir);
+    const moment = new Date(ceSoir.kickoff_at ?? Date.now()).getHours() >= 17 ? 'ce soir' : 'aujourd’hui';
+    return [premiere(`${club} joue ${moment} ›`, `Match ${moment} ›`), '/matchs'];
+  }
+  /* L'étape des premiers pas que le ticket affiche, s'il en affiche une. */
+  const etape = ticket.quoi === 'pas' ? H.parcours?.cle : null;
+  if (H.sansFanzzy && etape !== 'fanzzy') return ['Choisis ton Fanzzy ›', '/fanzzy'];
+  if (H.packs > 0 && etape !== 'booster') {
+    return [H.packs > 1 ? 'Tes boosters t’attendent ›' : 'Ton booster t’attend ›', '/boosters'];
+  }
+  if (H.nouveaux > 0) return ['Tes nouvelles cartes ›', '/fanzzy'];
+  return [null, null];
+}
+
+let bulleMinuteur = null;
+/* **La bulle attend le premier relevé du direct** (`veiller` la libère) :
+   elle parle d'abord du match, et posée avant lui, elle aurait dit « tes
+   boosters » une fraction de seconde avant « Allez Sion ! ». Le reste du hub
+   se compose sans l'attendre. */
+let bulleAttend = true;
+/** Pose la bulle si elle a changé, et la replie six secondes plus tard. */
+function direBulle() {
+  if (bulleAttend) return;
+  const [texte, href] = phraseDuFanzzy();
+  const b = $('bulle'); const pli = $('bullePli');
+  if (!texte) {
+    clearTimeout(bulleMinuteur); bulleMinuteur = null;
+    b.hidden = true; pli.hidden = true; delete b.dataset.texte;
+    return;
+  }
+  b.href = href;
+  if (b.dataset.texte === texte) return;     // déjà dite : on ne la rejoue pas
+  b.dataset.texte = texte;
+  b.textContent = texte;
+  /* Elle attend que le rideau se lève : six secondes passées derrière lui
+     seraient six secondes que personne n'a lues. */
+  if (document.getElementById('ouverture')) {
+    b.hidden = true; pli.hidden = true;
+    addEventListener('tbf:ouverture-finie', ouvrirBulle, { once: true });
+  } else ouvrirBulle();
+}
+function ouvrirBulle() {
+  const b = $('bulle'); const pli = $('bullePli');
+  if (!b.dataset.texte) return;
+  clearTimeout(bulleMinuteur);
+  pli.hidden = true;
+  b.hidden = false;
+  rejouerSur(b, 'tbf-colle');
+  bulleMinuteur = setTimeout(replierBulle, 6000);
+}
+function replierBulle() {
+  bulleMinuteur = null;
+  $('bulle').hidden = true;
+  const pli = $('bullePli');
+  pli.hidden = false;
+  rejouerSur(pli.firstElementChild, 'tbf-vibre');
+}
+/**
+ * Une classe de mouvement de `ui.css`, rejouée du début et retirée à sa fin.
+ *
+ * Retirée à `animationend` (ETAT.md § 6 : une classe d'animation qu'on ne
+ * retire pas empêche la suivante de partir). Au calme, l'animation n'a pas
+ * lieu et la fin ne vient jamais : l'écouteur d'avant est donc retiré à
+ * chaque reprise, au lieu de s'empiler sur l'élément.
+ */
+function rejouerSur(el, classe) {
+  if (el._fin) el.removeEventListener('animationend', el._fin);
+  el.classList.remove(classe);
+  void el.offsetWidth;
+  el.classList.add(classe);
+  el._fin = (e) => {
+    if (e.target !== el) return;
+    el.classList.remove(classe);
+    el.removeEventListener('animationend', el._fin);
+    el._fin = null;
+  };
+  el.addEventListener('animationend', el._fin);
+}
+$('bullePli').addEventListener('click', ouvrirBulle);
+
+/* ------------------------------------------- l'avatar
+
+   Le buste du Fanzzy **qu'on montre aux autres** — l'âge validé, pas celui
+   qu'on regarde en faisant défiler —, par `FZART.dessinAvatar`, comme le
+   profil et les amis. Sans Fanzzy, ou sans dessin, la silhouette et le « ? »
+   de la brique. */
+function poserAvatar() {
+  const a = $('moi');
+  const anneau = $('anneau');
+  let src = null;
+  if (equipe) {
+    const evo = lignee.choisi ?? equipe.evo;
+    const carte = lignee.ages.find((x) => x.stade === evo)?.id ?? equipe.carte ?? equipe.id;
+    const skin = lignee.tenues?.[evo] ?? (evo === equipe.evo ? equipe.skin : 'base');
+    src = window.FZART?.dessinAvatar?.({ id: equipe.id, evo, skin, age: carte }, 'buste') ?? null;
+  }
+  /* Un dessin qui n'est pas venu : la silhouette, plutôt qu'une image cassée
+     dans un sticker — jusqu'à ce qu'on demande un autre dessin. */
+  const vide = !src || src === bustePerdu;
+  const actuel = anneau.querySelector('.tbf-avatar-buste');
+  if (vide) {
+    if (actuel.tagName === 'IMG') {
+      const s = document.createElement('span');
+      s.className = 'tbf-avatar-buste';
+      actuel.replaceWith(s);
+    }
+  } else {
+    let img = actuel;
+    if (img.tagName !== 'IMG') {
+      img = document.createElement('img');
+      img.className = 'tbf-avatar-buste';
+      img.alt = '';
+      img.addEventListener('error', () => { bustePerdu = img.getAttribute('src'); poserAvatar(); });
+      actuel.replaceWith(img);
+    }
+    if (img.getAttribute('src') !== src) img.src = src;
+  }
+  a.classList.toggle('tbf-avatar--vide', vide);
+  a.href = H.sansFanzzy ? '/fanzzy' : '/profil';
+  const niv = $('nivPastille');
+  const n = niv.hidden ? '' : `, niveau ${niv.textContent}`;
+  a.setAttribute('aria-label', H.sansFanzzy ? `Choisis ton Fanzzy${n}` : `Mon profil${n}${niv.dataset.xp ?? ''}`);
+}
+let bustePerdu = null;
+
+/* ------------------------------------------- le HUD des autres écrans
+
+   La barre des autres écrans (`nav.js`) replie l'avatar, l'anneau d'XP et
+   les deux soldes dans son HUD, et les retient trente secondes dans
+   l'onglet (`tbf-hud`) pour ne pas clignoter d'un écran à l'autre. Le hub a
+   déjà tout lu — le portefeuille de `/api/fanzzy/state`, le niveau — : il
+   le retient au même endroit, et le premier écran ouvert d'ici dessine son
+   HUD sans rien redemander.
+
+   **Le format est celui de `chargerHud`, dans `nav.js`**, champ pour champ,
+   et l'avatar est tiré du portefeuille par la même recette : le hub montre
+   au centre l'âge qu'on fait défiler, le HUD montre celui que voient les
+   autres. Qui change l'un change l'autre. `qui` est une chaîne, comme celle
+   que `nav.js` compare. Le portrait déjà trouvé par la barre est gardé tant
+   que c'est le même personnage : sans lui, elle repasserait par ses refus. */
+const CLE_HUD = 'tbf-hud';
+function retenirHud(qui, w, niv) {
+  if (!w || !Number.isFinite(Number(w.scarves))) return;
+  const a = w.avatar;
+  const avatar = a?.id ? { id: String(a.id), age: String(a.age ?? a.id),
+    evo: Number(a.evo) || 1, skin: String(a.skin || 'base') } : null;
+  let avant = null;
+  try { avant = JSON.parse(sessionStorage.getItem(CLE_HUD) || 'null'); } catch { /* illisible : on repart de rien */ }
+  const meme = avant?.qui === qui && Boolean(avant.avatar && avatar)
+    && avant.avatar.id === avatar.id && avant.avatar.evo === avatar.evo && avant.avatar.skin === avatar.skin;
+  try {
+    sessionStorage.setItem(CLE_HUD, JSON.stringify({
+      qui,
+      t: Date.now(),
+      scarves: Number(w.scarves) || 0,
+      packs: Number(w.packs) || 0,
+      avatar,
+      portrait: meme ? (avant.portrait ?? null) : null,
+      niveau: Number(niv?.niveau) > 0 ? { niveau: Number(niv.niveau),
+        dans: Number(niv.dans) || 0, pour: Number(niv.pour) || 0, max: Boolean(niv.max) } : null,
+    }));
+  } catch { /* stockage fermé : l'écran suivant relira, comme avant */ }
+}
+/* Le personnage qu'on montre aux autres vient de changer (« C'est lui,
+   partout ») : ce qui est retenu le montrerait encore trente secondes sur
+   l'écran suivant. On l'oublie, et la barre relira. */
+function oublierHud() {
+  try { sessionStorage.removeItem(CLE_HUD); } catch { /* rien à oublier */ }
+}
+
+/* ------------------------------------------- le bouton principal
+
+   « PRENDRE MA PLACE », et dessous ce qu'il fait : le duel, le match en
+   cours, la place à tenir. Le ton suit : rouge pour jouer, violet quand ce
+   sont des gens qui attendent (amendement 18). */
+function bouton(href, titre, sous, ton = 'flare') {
+  const e = $('entrer');
+  e.href = href;
+  e.dataset.ton = ton;
+  e.replaceChildren(titre);
+  if (sous) {
+    const s = document.createElement('small');
+    s.textContent = sous;
+    e.append(s);
+  }
+}
+
+/** Tout recomposer depuis `H`. */
+function montrer() {
+  etatsDuHub();
+  bacheDuJour();
+  soirDeMatch();
+  direBulle();
+}
 
 /* --------------------------------------------------- le personnage
 
@@ -1728,12 +2737,14 @@ const ANIM = { arrive: 'arrivee', coucou: 'coucou', saute: 'saut', change: 'basc
  * Joue un geste de la scène, du début, et **retire la classe quand il est
  * fini**.
  *
- * La retirer n'est pas une politesse. Ces gestes remplacent des animations qui
- * tournent en boucle — le flottement pour le saut, la respiration pour le
- * coucou. Une classe laissée en place fige donc le personnage sur la dernière
- * image d'un geste terminé : il cesse de respirer, définitivement. Le petit
- * saut le faisait déjà, et personne ne l'avait vu parce que rien ne s'arrête
- * visiblement — le mouvement manque, il ne casse pas.
+ * La retirer n'est pas une politesse. Une classe laissée en place garde
+ * l'animation finie accrochée à son calque, où elle prend la place de toute
+ * autre : l'arrivée et le saut se partagent `.flotte`, et une arrivée restée
+ * accrochée y éteindrait tous les sauts suivants. C'était pire tant que le
+ * flottement tournait sur ce même calque : le petit saut le figeait,
+ * définitivement, et personne ne l'avait vu parce que rien ne s'arrête
+ * visiblement — le mouvement manque, il ne casse pas. Le flottement et la
+ * respiration vivent désormais ensemble sur la pile, qu'aucun geste ne prend.
  */
 function rejouer(classe) {
   const s = $('scene');
@@ -1950,6 +2961,8 @@ function nommer(p) {
   $('qui').classList.toggle('on', Boolean(nom));
   decorer(p);
   commandes();
+  /* L'avatar suit : tout changement de personnage passe par ici. */
+  poserAvatar();
 }
 
 /** Le lieu, la famille et la rareté de l'âge montré — ce que lit le décor. */
@@ -2063,6 +3076,8 @@ function commandes() {
      une flèche qui disparaît déplace la plaque sous le doigt entre deux
      appuis, et on valide alors sans l'avoir voulu. */
   av.hidden = !plusieurs; ap.hidden = !plusieurs;
+  // Le nom et l'âge laissent aux flèches les deux bouts de la rangée.
+  $('qui').classList.toggle('fleches', plusieurs);
   av.disabled = vu <= 1;
   ap.disabled = vu >= lignee.atteint;
   ok.hidden = !plusieurs || vu === lignee.choisi;
@@ -2148,6 +3163,7 @@ async function validerAge() {
       Math.max(1, Number(r?.activeEvo) || lignee.atteint));
     equipe = { ...equipe, choisi: lignee.choisi, atteint: lignee.atteint };
     retenir(equipe);
+    oublierHud();
     nommer(equipe);
     rejouer('coucou');
     window.FX?.son?.('ok');
@@ -2199,6 +3215,10 @@ let filet = null;
     nommer(vu);              // son nom arrive avec son visage, pas après
   } else if (vu?.aucun) {
     pose('neutre');
+    /* « Aucun Fanzzy » est une réponse : l'avatar le dit tout de suite, et
+       mène au classeur. Le serveur corrige s'il a changé. */
+    H.sansFanzzy = true;
+    poserAvatar();
   } else {
     filet = setTimeout(() => { filet = null; pose('neutre'); }, 1500);
   }
@@ -2259,13 +3279,23 @@ function couleurDuClub(m, domicile, defaut = 'var(--projo)') {
   return c[0] ? (window.FX?.lisible?.(c[0]) ?? c[0]) : defaut;
 }
 
-function moment(etat, texte, couleur = 'var(--projo)', sous = '') {
+/* **La case de BD unifiée** (lot 2) : le balisage et la mécanique de
+   `fanzzy-scene.js`, sans la scène — l'accueil a la sienne. Le ton dit de quoi
+   il s'agit (`club` pour un but, `flare` pour un but encaissé ou refusé,
+   `vert`, `rouge`, `gris` pour la fin du match) ; `--mc`, posé en ligne, donne
+   au but la couleur de **ce** club et l'emporte sur le ton, comme au Virage ;
+   `--mc2` donne sa seconde couleur à la bouffée. Retirer puis reposer `.on`,
+   avec un calcul forcé entre les deux, rejoue la chute, la bouffée et les
+   confettis : c'est la feuille qui les dessine, rien n'est à poser ici. */
+function moment(etat, texte, ton = 'or', { mc = null, mc2 = null, sous = '' } = {}) {
   const ms = window.FX?.MOMENT ?? 15000;
   if (etat) pose(etat, ms);
   const b = $('moment');
   $('momentTitre').textContent = texte;
   $('momentSous').textContent = sous;
-  b.style.setProperty('--mc', couleur);
+  b.dataset.ton = ton;
+  if (mc) b.style.setProperty('--mc', mc); else b.style.removeProperty('--mc');
+  if (mc2) b.style.setProperty('--mc2', mc2); else b.style.removeProperty('--mc2');
   b.style.setProperty('--mt', `${ms}ms`);
   b.classList.remove('on');
   void b.offsetWidth;
@@ -2334,8 +3364,13 @@ function saluer() {
 
 /* Le tiroir vient de menu.js — la même liste, les mêmes rubriques et la même
    confirmation de sortie que partout ailleurs. Cette page montait le sien :
-   cinq destinations au lieu de onze, et aucune entrée d’administration. */
-window.TBF_MENU.monter($('burger'));
+   cinq destinations au lieu de onze, et aucune entrée d’administration.
+
+   `menu.js` rend de quoi poser l'état d'une destination (`poser`) : sur
+   l'accueil, il ne demande rien au serveur — le hub sait déjà —, et c'est le
+   hub qui lui dit le direct, les boosters et le duel qui attend. Le bouton du
+   menu en tire son sticker le plus urgent. */
+const MENU = window.TBF_MENU.monter($('burger'));
 
 /* -------------------------------------- la vitrine : le direct et les visages
 
@@ -2552,11 +3587,23 @@ function poserBourse(qui, soldes) {
     const avant = el.textContent.trim() === '' ? NaN : Number(el.textContent);
     retenue[id] = apres;
     if (!Number.isFinite(avant) || avant === apres || rideau) el.textContent = String(apres);
-    else if (window.FX?.compter) window.FX.compter(el, avant, apres);
-    else el.textContent = String(apres);
+    else {
+      if (window.FX?.compter) window.FX.compter(el, avant, apres);
+      else el.textContent = String(apres);
+      /* Et le sticker frémit autour de sa rotation de repos (`.tbf-vibre`,
+         `ui.css`) : le chiffre dit combien, le frémissement dit « ça a
+         bougé ». Rien au calme, la feuille s'en charge. */
+      const s = el.closest('.tbf-monnaie');
+      if (s) rejouerSur(s, 'tbf-vibre');
+    }
   }
   try { localStorage.setItem(BOURSE, JSON.stringify(retenue)); }
   catch { /* stockage refusé : la prochaine visite repartira sans souvenir */ }
+  /* Les boosters en réserve font l'état de leur tuile, du menu et de la
+     bulle. Ils valent ce que dit **la dernière bourse posée** — et c'est le
+     portefeuille qui doit l'être en dernier : voir « les boosters qui
+     attendent », plus bas. */
+  H.packs = Number(soldes.packs) || 0;
 }
 
 /**
@@ -2620,11 +3667,9 @@ async function lire(url, options) {
   // Une image de délai avant l'entrée : le hub vient de passer de `display:none`
   // à visible, et une animation lancée dans la même image ne se joue pas.
   requestAnimationFrame(entrer);
-  /* L'initiale, et rien d'autre. Le pseudo et le nom du club s'écrivaient à
-     côté, dans un cadre qui n'existe plus : sur un compte neuf ces deux lignes
-     sont vides, et il ne restait qu'un rectangle noir sous la pastille. Les
-     deux se lisent au profil, qui est à un doigt d'ici. */
-  $('initiale').textContent = (user.pseudo ?? '?').trim().charAt(0).toLowerCase() || '?';
+  /* L'initiale du pseudo, sur une pastille dorée, a laissé la place au buste
+     du Fanzzy équipé (lot 2) : voir `poserAvatar`. Le pseudo se lit au profil,
+     qui est à un doigt d'ici. */
   // La bourse de la dernière visite, en attendant celle du serveur.
   reprendreBourse(user.id);
   /* L'entrée d'administration n'est plus décidée ici. Elle se lisait sur
@@ -2659,7 +3704,16 @@ async function lire(url, options) {
     dex: lire('/api/fanzzy/dex').catch(() => null),
     coll: lire('/api/fanzzy/state', { credentials: 'same-origin' }).catch(() => null),
     biblio: lire('/api/fanzzy/bibliotheque', { credentials: 'same-origin' }).catch(() => null),
+    /* Deux de plus au lot 2, pour la bâche du jour : le direct, qui était lu
+       après tout le reste — la case se serait d'abord peinte sans lui, puis
+       corrigée sous les yeux du joueur —, et les prochains coups d'envoi,
+       gardés dix minutes dans l'onglet (voir `prochainsCoups`). */
+    live: lire('/api/virage/live', { credentials: 'same-origin' }).catch(() => null),
+    prochains: prochainsCoups(user.id).catch(() => null),
   };
+  /* Une bourse qu'on peut poser : un solde d'écharpes lisible. Un refus du
+     serveur arrive lui aussi en JSON — voir `lire` —, sans solde dedans. */
+  const bourseLisible = (s) => s?.scarves != null && Number.isFinite(Number(s.scarves));
 
   // Les clubs suivis : à savoir de quel côté du score se réjouir.
   const mesClubs = new Set();
@@ -2671,30 +3725,39 @@ async function lire(url, options) {
        solde dedans. On ne le traduit plus en « 0 » : la bourse garde ce
        qu'elle affichait, ou reste vide. */
     if (st?.scarves !== undefined) poserBourse(user.id, st);
-    for (const f of st.follows ?? []) mesClubs.add(f.team_id ?? f.id);
+    for (const f of st.follows ?? []) {
+      mesClubs.add(f.team_id ?? f.id);
+      H.clubs.set(f.team_id ?? f.id, f.name ?? '');
+    }
   } catch { /* module non monté */ }
 
   /* Revenir par la flèche du navigateur peut rendre l'accueil tel qu'on l'avait
      quitté, sans le recharger : c'est le cache de navigation arrière. La
      bourse y serait restée d'avant l'achat. On la relit donc, et elle compte
-     depuis ce qu'elle montrait. */
+     depuis ce qu'elle montrait — et les boosters disent leur nouvel état.
+     **Au portefeuille**, comme au chargement (voir « les boosters qui
+     attendent ») : c'est lui qui recharge la réserve. L'état du compte n'est
+     que le repli d'un serveur sans module Fanzzy. */
   addEventListener('pageshow', async (e) => {
     if (!e.persisted) return;
-    const st = await lire('/api/me/state', { credentials: 'same-origin' }).catch(() => null);
-    if (st?.scarves !== undefined) poserBourse(user.id, st);
+    const c = await lire('/api/fanzzy/state', { credentials: 'same-origin' }).catch(() => null);
+    const st = bourseLisible(c?.wallet) ? c.wallet
+      : await lire('/api/me/state', { credentials: 'same-origin' }).catch(() => null);
+    if (bourseLisible(st)) { poserBourse(user.id, st); montrer(); }
   });
 
   /* ------------------------------------------------------- le niveau
 
-     Un chiffre sur l'avatar. Il y avait aussi une jauge de deux pixels sous le
-     pseudo — elle n'avait pas à se lire, elle avait à se remplir, et c'est en
-     la voyant bouger après un booster qu'on comprenait qu'ouvrir fait
-     progresser. Elle est partie avec le cadre qui la portait ; le chiffre, lui,
-     reste, et il est ce qu'on regarde.
+     Un chiffre sur l'avatar, et **l'anneau d'XP autour** (lot 2) : il y
+     avait eu une jauge de deux pixels sous le pseudo, partie avec le cadre
+     qui la portait — elle n'avait pas à se lire, elle avait à se remplir, et
+     c'est en la voyant bouger après un booster qu'on comprenait qu'ouvrir fait
+     progresser. L'anneau la rend, enroulée autour du buste : `--p`, la part
+     du palier (`dans / pour`), pleine au dernier niveau.
 
      Rien ne s'affiche tant que le module n'a pas répondu : une pastille « 1 »
      posée par défaut mentirait pendant la seconde du chargement, et c'est
-     précisément le moment où on la regarde. */
+     précisément le moment où on la regarde. L'anneau reste vide jusque-là. */
   try {
     const niv = await P.niveau;
     if (niv?.niveau) {
@@ -2703,6 +3766,11 @@ async function lire(url, options) {
       $('nivPastille').title = niv.max
         ? `Niveau ${niv.niveau}, le dernier`
         : `Niveau ${niv.niveau} · ${niv.dans}/${niv.pour} XP`;
+      $('nivPastille').dataset.xp = niv.max ? '' : `, ${niv.dans} XP sur ${niv.pour}`;
+      const part = niv.max ? 1 : Math.min(1, Math.max(0, niv.dans / niv.pour || 0));
+      $('anneau').style.setProperty('--p', `${Math.round(part * 100)}%`);
+      poserAvatar();
+      verrouiller(niv);
     }
   } catch { /* progression non montée : l’accueil s’en passe */ }
 
@@ -2714,15 +3782,18 @@ async function lire(url, options) {
    *
    * Et il se tait dans trois cas : parcours fini, route absente, ou serveur
    * muet. Un rappel qui s'affiche vide vaut moins que pas de rappel — il
-   * occupe la place de l'appel principal en ne disant rien. */
+   * occupe la place de l'appel principal en ne disant rien.
+   *
+   * **Il vit dans la bâche du jour** depuis le lot 2 : sa rangée à lui, au
+   * dessus du duo, faisait monter le bouton d'entrée les jours où elle
+   * paraissait. L'étape mène là où elle se fait (`ou`). */
   try {
     const p = await P.parcours;
     const reste = (p?.etapes ?? []).find((e) => !e.fait);
     if (reste && p.faites < p.total) {
-      $('pas1').innerHTML = `<span class="n">${p.faites}<small>/${p.total}</small></span>
-        <span class="q"><b>PREMIERS PAS</b><span>${esc(reste.titre)}</span></span>
-        <span class="fl">›</span>`;
-      $('pas1').hidden = false;
+      H.parcours = { cle: reste.cle ?? null, titre: reste.titre, ou: reste.ou,
+        faites: p.faites, total: p.total,
+        recompense: Number(p.recompense) || 0, paye: Boolean(p.paye) };
     }
   } catch { /* l'aide n'est pas montée : l'accueil s'en passe aussi */ }
 
@@ -2747,27 +3818,44 @@ async function lire(url, options) {
     const total = biblio?.total?.possibles
       ?? Math.max(dex?.aCollectionner ?? (dex?.dex ?? []).length, eus);
     if (total) {
-      $('collecTxt').textContent = `${eus}/${total}`;
+      /* Le palier en cours, et non le total (amendement 22) : voir
+         `palierDe`. Le total reste dit, mais aux lecteurs d'écran seulement. */
+      const palier = palierDe(eus, total);
+      $('collecTxt').textContent = `${eus} / ${palier}`;
+      $('collec').setAttribute('aria-label',
+        `Ma collection : ${eus} sur ${palier}, ${total} à trouver en tout`);
       /* La jauge sort de sa cachette **avant** d'être remplie, et on laisse le
          navigateur la mesurer vide : sans ce temps, elle naîtrait déjà pleine
          et la transition qui la fait monter ne se jouerait pas. */
       $('collecJauge').hidden = false;
       void $('collecJauge').offsetWidth;
-      $('collecBar').style.width = `${Math.round((eus / total) * 100)}%`;
-      const reste = Math.max(0, total - eus);
-      if (reste) $('caseFanzzy').dataset.pastille = reste;
-      else delete $('caseFanzzy').dataset.pastille;
+      $('collecBar').style.width = `${Math.round((Math.min(eus, palier) / palier) * 100)}%`;
+      /* **Le « 5496 » est parti.** FANZZY portait le nombre de choses qui
+         restaient à gagner — un compte qui ne baissait jamais d'une visite à
+         l'autre, et qu'on avait cessé de lire. Il porte maintenant ce qui est
+         arrivé depuis qu'on a regardé (« +3 »), ou rien. */
     }
+    H.nouveaux = nouveautes(user.id, Object.keys(coll?.collection ?? {}));
+    H.sansFanzzy = Boolean(coll?.wallet) && !coll.wallet.active;
 
     /* Les boosters qui attendent. Un sachet non ouvert ne se rappelle à
        personne : sans ce chiffre on découvre trois semaines plus tard qu'on en
        avait douze, et douze boosters ouverts d'affilée, c'est soixante cartes
-       vues sans en regarder une seule. */
-    {
-      const n = Number(coll?.wallet?.packs ?? 0);
-      const t = $('caseBoosters');
-      if (t) { if (n) t.dataset.pastille = n; else delete t.dataset.pastille; }
-    }
+       vues sans en regarder une seule.
+
+       **Le portefeuille fait foi, et la bourse est reposée avec lui.** La
+       réserve se recharge avec le temps, et seule la lecture du portefeuille
+       (`/api/fanzzy/state`) écrit la recharge ; l'état du compte
+       (`/api/me/state`), parti en même temps et revenu plus tôt, lit la
+       colonne telle qu'elle était. Un joueur qui revenait après une nuit
+       avait donc 0 à l'écran et 12 en réalité : ni sticker sur BOOSTERS, ni
+       bulle, ni sticker au menu — pendant que le HUD retenu pour l'écran
+       suivant, lui, disait 12. La bourse de l'état du compte n'est plus que
+       la première image ; celle-ci compte depuis elle. */
+    if (bourseLisible(coll?.wallet)) poserBourse(user.id, coll.wallet);
+    /* Ce que le HUD des autres écrans aurait relu : le portefeuille et le
+       niveau, déjà là (voir `retenirHud`). */
+    retenirHud(String(user.id ?? user.pseudo), coll?.wallet, await P.niveau);
     /* ------------------------------------------- le Fanzzy au centre
 
        C'est **le Fanzzy équipé** — `active_fanzzy`, celui que le joueur choisit
@@ -2935,6 +4023,31 @@ async function lire(url, options) {
     }
   } catch { /* collection non montée : l'accueil reste utilisable sans */ }
 
+  /* Les cartes « vues » : toucher FANZZY, ou la bulle qui mène au classeur,
+     marque toute la collection comme vue. Voir `nouveautes`. */
+  $('caseFanzzy').addEventListener('click', () => marquerVues(user.id));
+  $('bulle').addEventListener('click', () => {
+    if ($('bulle').getAttribute('href') === '/fanzzy') marquerVues(user.id);
+  });
+  /* Une première composition avec ce qu'on sait : les tuiles, la bâche du
+     jour, la bâche du club. Le direct la complète au premier tour de veille,
+     et la bulle attend ce tour-là (voir `bulleAttend`).
+
+     **Les prochains coups d'envoi ne sont pas attendus.** Ils l'étaient, et
+     `/api/football/feed` n'a pas de délai : la première composition, puis le
+     signal qui lève le rideau, restaient derrière lui — au premier passage
+     de la session, justement, celui qui a le rideau et pas encore de cache.
+     Ils prennent leur place quand ils arrivent, et la veille les relit
+     (`poserProchains`) : le cache décide s'il faut redemander. */
+  const poserProchains = (v) => {
+    if (!Array.isArray(v)) return;             // panne : on garde ce qu'on avait
+    if (JSON.stringify(v) === JSON.stringify(H.prochains)) return;
+    H.prochains = v;
+    montrer();
+  };
+  montrer();
+  void P.prochains.then(poserProchains);
+
   /* Le personnage est là — celui du joueur s'il en a un, le supporter sinon.
      Mais il ne salue pas encore : l'écran d'ouverture couvre tout, et un salut
      joué derrière un rideau est un salut perdu. Il attend que le rideau se
@@ -2949,13 +4062,6 @@ async function lire(url, options) {
   } else {
     saluer();
   }
-
-  /* L écran d ouverture peut partir : le personnage est posé, la collection
-     est lue, il n y a plus rien à couvrir. On ne l efface pas d ici — on dit
-     seulement qu on est prêt, et ouverture.js décide. C est lui qui connaît
-     le plancher et le plafond de durée, et deux endroits qui décideraient de
-     la même chose finiraient par se contredire. */
-  dispatchEvent(new Event("tbf:pret"));
 
   /* ------------------------------------------------- le match, en direct
 
@@ -2974,6 +4080,13 @@ async function lire(url, options) {
   // rejouerait la victoire tant que le match reste dans la fenêtre des trois heures.
   let finVue = null;
   let minuteur;
+  /* La première lecture du direct est partie avec les autres (`P.live`) : le
+     premier tour de veille la prend au lieu de la redemander — **s'il est
+     visible**. Un onglet caché au chargement (ouvert en arrière-plan)
+     repoussait le tour sans la jeter, et le premier tour visible, des minutes
+     ou des heures plus tard, prenait ce relevé périmé : score et minute faux,
+     et au tour suivant un but ancien célébré comme s'il tombait. */
+  let premierLive = P.live;
 
   const planifier = (ms) => {
     clearTimeout(minuteur);
@@ -2999,23 +4112,28 @@ async function lire(url, options) {
    existe, **quelqu'un attend maintenant**, et le dire ici est la seule chance
    qu'il trouve quelqu'un.
 
-   On ne change que le bouton, et seulement quand il y a lieu. Une pastille
-   permanente cesse d'être une alerte — on vient de l'apprendre avec celle du
-   Virage, allumée tous les soirs pour ne rien dire.
+   On ne change que le bouton, et seulement quand il y a lieu — plus, depuis
+   le lot 2, le sticker violet du duel dans le tiroir et sur le bouton du
+   menu. Une pastille permanente cesse d'être une alerte — on vient de
+   l'apprendre avec celle du Virage, allumée tous les soirs pour ne rien dire.
 
    Le texte est écrit ici et non au serveur, comme partout ailleurs : le
    serveur envoie des nombres et des noms de clubs, la page sait dans quelle
    langue elle est. */
 async function alerteDuel() {
+  H.attente = 0;
   let a = null;
   try {
     const r = await lire('/api/nvn/attentes', { credentials: 'same-origin' });
     a = r?.alerte ?? null;
   } catch { return; }              // duels non montés : le bouton ne change pas
-  if (!a?.clubs?.length) return;
+  /* Un match du joueur a commencé pendant qu'on attendait la réponse : le
+     Virage passe avant, voir plus bas. */
+  if (H.live) return;
+  if (!a?.clubs?.length) { montrer(); return; }
 
   const combien = (a.camps?.[0] ?? 0) + (a.camps?.[1] ?? 0);
-  if (!combien) return;
+  if (!combien) { montrer(); return; }
 
   const affiche = `${a.clubs[0]?.name ?? ''} – ${a.clubs[1]?.name ?? ''}`;
 
@@ -3029,7 +4147,6 @@ async function alerteDuel() {
   const q = new URLSearchParams({ match: String(a.fixtureId) });
   if (a.format) q.set('format', a.format);
   if (a.campQuiManque === 0 || a.campQuiManque === 1) q.set('camp', String(a.campQuiManque));
-  $('entrer').href = `/duel-nvn?${q}`;
 
   /* **Le camp qui manque, nommé.** Le serveur le calcule depuis longtemps —
      `campQuiManque` et `manque` — et rien ne les affichait. Or « 2 t'attendent »
@@ -3041,13 +4158,37 @@ async function alerteDuel() {
     ? `il manque ${manque} ${manque > 1 ? 'supporters' : 'supporter'} de ${club}`
     : affiche;
 
-  $('entrer').innerHTML = `${combien > 1 ? `${combien} t’attendent` : 'Quelqu’un t’attend'}`
-    + `<small>${a.format ? `${a.format} · ` : ''}${esc(ou)}</small>`;
-  $('entrer').dataset.ton = 'or';
+  /* En violet : ce sont des gens qui attendent (amendement 18), et l'or ne dit
+     plus qu'acheter, récompense prête et légendaire. */
+  bouton(`/duel-nvn?${q}`, combien > 1 ? `${combien} t’attendent` : 'Quelqu’un t’attend',
+    `${a.format ? `${a.format} · ` : ''}${ou}`, 'violet');
+  H.attente = combien;
+  montrer();
 }
 
+  /**
+   * Un tour de veille, qui ne lève jamais.
+   *
+   * Seule la lecture du direct était sous `try` : une faute plus loin — dans
+   * le bouton, le moment, le fond, la recomposition — rejetait la promesse.
+   * Deux conséquences : la veille ne se replanifiait plus, et le signal
+   * « accueil prêt », qui attend le premier tour, ne partait jamais — le
+   * rideau tenait ses dix secondes de plafond. La faute est dite dans la
+   * console, et le tour suivant est posé quand même.
+   */
   async function veiller() {
-    if (document.hidden) { planifier(30_000); return; }
+    try { await unTour(); }
+    catch (e) {
+      console.warn('[accueil] veille du direct :', e);
+      planifier(H.live ? 25_000 : 180_000);
+    }
+  }
+
+  async function unTour() {
+    if (document.hidden) { premierLive = null; planifier(30_000); return; }
+    /* Le calendrier des clubs suivis, relu à chaque tour visible ; le cache
+       ne laisse passer qu'une demande toutes les dix minutes. */
+    void prochainsCoups(user.id).then(poserProchains, () => {});
 
     // `liste` est déclarée dehors : le coup de sifflet final la relit plus bas
     // pour y trouver le match qui vient de se terminer, et il ne figure plus
@@ -3059,24 +4200,37 @@ async function alerteDuel() {
          JSON rend `null`, et le `catch` d'en dessous prendrait une erreur de
          déstructuration pour « suivi non actif », donc espacerait à trois
          minutes au lieu de réessayer. */
-      const { matchs = [] } = (await lire('/api/virage/live',
-        { credentials: 'same-origin' })) ?? {};
+      const lu = premierLive ?? lire('/api/virage/live', { credentials: 'same-origin' });
+      premierLive = null;
+      const { matchs = [] } = (await lu) ?? {};
       liste = matchs;
       /* `mien` : **un de mes clubs**. La liste porte désormais tous les
          matchs en direct du monde, parce que le Virage s'ouvre sur tous ;
          l'accueil, lui, raconte le match du joueur. Sans cette condition, le
          supporter se serait mis à pousser pour une rencontre indonésienne en
-         annonçant « ton club joue ». */
-      m = matchs.find((x) => x.open && x.mien) ?? null;
-    } catch { planifier(180_000); return; }   // suivi non actif
+         annonçant « ton club joue ». Et **un match qui se jouera** : la
+         tribune s'ouvre à tout match de la demi-heure, reporté compris (voir
+         `aSonCoup`). */
+      m = matchs.find((x) => x.open && x.mien && aSonCoup(x)) ?? null;
+    } catch {                                 // suivi non actif
+      // La bulle n'attend plus le direct : elle dit ce qu'on sait sans lui.
+      bulleAttend = false;
+      montrer();
+      planifier(180_000);
+      return;
+    }
+    bulleAttend = false;
+
+    H.live = m;
+    /* Un match du joueur qui n'a pas encore ouvert sa tribune, mais qui est
+       dans la fenêtre du direct (deux heures avant) : le soir de match a
+       commencé — la bâche du club se tend, la bulle l'annonce. Pas pour un
+       match reporté, annulé ou à l'heure provisoire. */
+    H.soir = m ? null : liste.find((x) => x.mien && !x.fini && !x.open && aSonCoup(x)
+      && Date.parse(x.kickoff_at) > Date.now()) ?? null;
 
     if (!m) {
-      $('directTag').textContent = 'AUJOURD’HUI';
-      $('directNom').textContent = 'Aucun match en cours';
-      $('directSous').textContent = 'Tes clubs ne jouent pas maintenant';
-      $('direct').href = '/matchs';
-      $('entrer').href = '/duel-nvn';
-      $('entrer').textContent = 'Prendre ma place';
+      bouton('/duel-nvn', 'Prendre ma place', 'Duel de tribunes');
       // Et si quelqu'un attend vraiment, on le dit à sa place.
       void alerteDuel();
 
@@ -3096,9 +4250,9 @@ async function alerteDuel() {
         const chezMoi = mesClubs.has(fini.home_id);
         const mien = chezMoi ? fini.home_goals : fini.away_goals;
         const eux = chezMoi ? fini.away_goals : fini.home_goals;
-        if (mien > eux) moment('victoire', 'Victoire !', 'var(--vert)');
-        else if (mien < eux) moment('defaite', 'Défaite', 'var(--flare)');
-        else moment('attente', 'Match nul', 'var(--gris)');
+        if (mien > eux) moment('victoire', 'Victoire !', 'vert');
+        else if (mien < eux) moment('defaite', 'Défaite', 'rouge');
+        else moment('attente', 'Match nul', 'gris');
       }
 
       /* **Hors match, le repos est celui que le joueur a choisi** — et non
@@ -3109,28 +4263,30 @@ async function alerteDuel() {
          décide, pas le réglage. */
       poserFond(reposChoisi());
       scoreVu = null;
+      montrer();
       planifier(180_000);
       return;
     }
 
-    const joue = m.home_goals !== null && m.home_goals !== undefined;
-    $('directTag').textContent = m.elapsed ? `${m.elapsed}′ EN DIRECT` : 'BIENTÔT';
-    $('directNom').textContent =
-      `${m.home_name} ${joue ? `${m.home_goals} – ${m.away_goals}` : 'vs'} ${m.away_name}`;
-    $('directSous').textContent =
-      `${(m.crowd?.[0] ?? 0) + (m.crowd?.[1] ?? 0)} supporters dans les tribunes`;
-    $('direct').href = '/virage';
-    $('entrer').href = '/virage';
-    $('entrer').textContent = 'Entrer dans le virage';
+    /* Le bouton dit où il mène et qui s'y trouve : le monde dans les
+       tribunes. **La minute et l'heure sont au ticket**, juste au-dessus
+       (« EN DIRECT · 47′ », « BIENTÔT · 20:45 ») : les deux disaient « 47′ »
+       et « 312 » à vingt pixels d'écart. Personne encore dans les tribunes :
+       pas de sous-libellé — une ligne sans donnée disparaît. */
+    const monde = (m.crowd?.[0] ?? 0) + (m.crowd?.[1] ?? 0);
+    bouton('/virage', 'Entrer dans le virage',
+      monde ? `${monde} supporter${monde > 1 ? 's' : ''}` : '');
     /* Pas d’alerte de duel ici, et c’est voulu : quand un club du joueur
        joue, le virage passe avant. Le bouton est le seul endroit où l’alerte
        peut s’écrire, et le lui prendre ce soir-là remplacerait l’essentiel
-       par l’accessoire. */
+       par l’accessoire. Le sticker du duel s'éteint avec. */
+    H.attente = 0;
 
     // Le match est lancé : le supporter pousse. C'est son état de fond tant
     // que la rencontre dure, pas une célébration passagère.
     poserFond('pousse');
 
+    const joue = m.home_goals !== null && m.home_goals !== undefined;
     if (joue) {
       const cle = `${m.id}:${m.home_goals}-${m.away_goals}`;
       // Au premier passage on enregistre le score sans réagir : sinon ouvrir
@@ -3147,14 +4303,21 @@ async function alerteDuel() {
           /* Le buteur arrive après coup : le score bouge dès le relevé
              suivant, le nom quelques secondes plus tard. On annonce donc le
              but tout de suite et on complète — plutôt que d'attendre un nom
-             qui ne viendra peut-être jamais. */
-          const cle = moment('but', 'Goal !', couleurDuClub(m, jeSuisDomicile));
+             qui ne viendra peut-être jamais.
+
+             **La case de BD, et elle seule** (lot 2) : `FX.but` n'est plus
+             appelé ici. Il écrivait son propre « BUT ! » en lettrage nu, avec
+             un éclair et quatre-vingt-dix particules, par-dessus la case et
+             ses confettis — deux titres pour un but. Le son de la corne
+             reste. */
+          const cle = moment('but', 'Goal !', 'club', {
+            mc: couleurDuClub(m, jeSuisDomicile),
+            mc2: (jeSuisDomicile ? m.homeColors : m.awayColors)?.[1] ?? null });
           buteurDe(m.id, monClub).then((qui) => preciserMoment(cle, qui));
           sauter();
           window.FX?.son?.('butReel');
-          window.FX?.but?.({ pour: true });
         } else if (contreMoi > 0) {
-          const cle = moment('encaisse', 'On encaisse', 'var(--flare)');
+          const cle = moment('encaisse', 'On encaisse', 'flare');
           buteurDe(m.id, leurClub).then((qui) => preciserMoment(cle, qui));
           window.FX?.son?.('encaisse');
         } else if (pourMoi < 0) {
@@ -3170,18 +4333,19 @@ async function alerteDuel() {
              pour un but qui venait d'être annulé, ce qui est pire que tout.
              Le repos d'abord, la déception ensuite si elle existe. */
           pose(fond);
-          moment('decision', 'But refusé', 'var(--flare)', 'Décision de l’arbitrage vidéo');
+          moment('decision', 'But refusé', 'flare', { sous: 'Décision de l’arbitrage vidéo' });
           window.FX?.son?.('encaisse');
         } else if (contreMoi < 0) {
           /* Leur but est refusé. Aucun état ne dit le soulagement — et on ne
              va pas en détourner un qui veut dire autre chose. Le bandeau
              suffit, le personnage garde sa pose. */
-          moment(null, 'Leur but est refusé', 'var(--vert)', 'Décision de l’arbitrage vidéo');
+          moment(null, 'Leur but est refusé', 'vert', { sous: 'Décision de l’arbitrage vidéo' });
         }
       }
       scoreVu = cle;
     }
 
+    montrer();
     planifier(25_000);
   }
 
@@ -3200,7 +4364,27 @@ async function alerteDuel() {
    */
   window.TBF = { pose, veiller, saluer, etatDeFond: () => fond };
 
-  veiller();
+  /* L écran d ouverture peut partir : le personnage est posé, la collection
+     est lue, il n y a plus rien à couvrir. On ne l efface pas d ici — on dit
+     seulement qu on est prêt, et ouverture.js décide. C est lui qui connaît
+     le plancher et le plafond de durée, et deux endroits qui décideraient de
+     la même chose finiraient par se contredire.
+
+     **Après le premier tour de veille**, depuis le lot 2 : la bâche du jour
+     et la bulle disent le match en cours, et sans lui elles se peindraient
+     d'abord sur leur repli, puis changeraient sous les yeux du joueur. Le
+     direct est déjà parti avec les autres lectures ; on ne l'attend pas plus
+     de huit cents millisecondes — c'est la route la plus chère du jeu, et le
+     rideau ne doit pas devenir un écran d'attente le jour où elle traîne.
+
+     **Et le signal part quoi qu'il arrive** (`finally`) : `veiller` ne lève
+     plus, mais un signal qui dépend de ce qu'aucune faute n'arrive est un
+     rideau qui tient son plafond le jour où l'une arrive. */
+  try {
+    await Promise.race([veiller(), new Promise((r) => { setTimeout(r, 800); })]);
+  } finally {
+    dispatchEvent(new Event("tbf:pret"));
+  }
 })();
 </script>
 <script src="/fx.js" defer></script>

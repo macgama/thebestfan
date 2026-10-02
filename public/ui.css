@@ -20,7 +20,16 @@
  *   — le vocabulaire FAIT MAIN que les écrans poseront au fil des lots : le
  *     sticker, le tampon, le ticket, le scotch, la bulle, la fumée, le
  *     pochoir et la forme de rareté ;
- *   — la barre du haut et son menu, montées par `nav.js` ;
+ *   — la barre du haut et son menu, montées par `nav.js`, et le tiroir de
+ *     `menu.js` — la bâche qu'on déroule depuis le haut ;
+ *   — les pièces communes du lot 2 : les quatre états d'une tuile
+ *     (`.tbf-case[data-etat]`), l'avatar-sticker (`.tbf-avatar`), le compteur
+ *     de monnaie (`.tbf-monnaie`), le HUD replié de la barre (`.tbf-hud`), la
+ *     bâche du jour (`.tbf-cadre--ticket`), le ticket de retour
+ *     (`.tbf-ticket--retour`), le toast d'information ou d'erreur
+ *     (`.tbf-toast`), la plaque ronde (`.tbf-plaque--rond`), la banderole
+ *     d'un nom (`.tbf-banderole`), la bâche du club (`.tbf-bache-club`) et
+ *     la jauge qui suit le temps (`.tbf-jauge[data-suit]`) ;
  *   — les icônes `.tbf-ico-*`, le titre cousu `.tbf-cousu`, l'éclat d'un
  *     compteur `.tbf-compte` et les crochets du mode calme
  *     (`html[data-calme~="animations"]`), dont les pages et `fx.js` ont
@@ -49,7 +58,26 @@
  *   H6  les arènes gardent le voile à 75 %, pas à 60 — « Le mur » ;
  *   H7  les scotchs ne vont qu'à la bâche principale — « La bâche principale » ;
  *   H8  au calme, la fumée reste, fixe, à 20 % — « la fumée » ;
- *   H9  la bande du haut du mur reste noire — « Le mur ».
+ *   H9  la bande du haut du mur reste noire — « Le mur » ;
+ *   H11 le « ? » de l'avatar sans Fanzzy reste au marqueur — « l'avatar-sticker ».
+ *
+ * H3 (Permanent Marker non chargée) est levée au lot 2 : les pages qui
+ * emploient le marqueur la chargent par Google Fonts, comme Oswald. Il n'y a
+ * plus de H10 : le titre de la barre perdait au soleil ce que son scotch
+ * clair lui donnait à l'intérieur ; le scotch est devenu un gaffer noir, et
+ * le titre tient 4,9:1 dehors (« le nom de l'écran, sur son scotch »). Les
+ * rubriques au pochoir du tiroir, qui tombaient de 1,7 à 2,6:1 au soleil
+ * dans le ton de leur rubrique, sont revenues à la craie, le ton passé à
+ * leur écharpe (« les rubriques au pochoir »). Les noms de ses tuiles, à
+ * 2,4–2,6:1 au soleil sur les faces de H1 (et moins sans elle), sont écrits
+ * sur un bout de gaffer, 4,9:1 (« le nom, sur un bout de gaffer »). Dans les
+ * trois cas, c'est la direction qui tranche : « la lisibilité plein jour
+ * commande ».
+ *
+ * **Et ce que la direction coûte elle-même au soleil**, sans s'écarter de
+ * rien — mesuré, suivi, et à trancher avec H1 : l'encre sur le kraft tient
+ * 3,3:1 sous le voile blanc de l'audit, et aucune encre n'y atteint 4,5
+ * (« le ticket »).
  */
 
 :root{
@@ -134,10 +162,12 @@
 
   --banner:"Oswald","Arial Narrow",Impact,sans-serif;
   --ui:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  /* **La main qui écrit au marqueur — déclarée, pas chargée.** Aucune page ne
-     charge Permanent Marker à ce jour (hypothèse H3 du lot 1) : la pile
-     existe pour que les lots suivants l'emploient par son nom, et d'ici là
-     elle retombe sur l'écriture manuscrite du système. Ses règles d'emploi
+  /* **La main qui écrit au marqueur — chargée par qui l'emploie.** Au lot 1,
+     aucune page ne chargeait Permanent Marker (hypothèse H3) ; depuis le
+     lot 2, les pages qui l'emploient la demandent à Google Fonts dans la
+     même ligne qu'Oswald, et les autres ne la paient pas. Là où elle n'est
+     pas chargée — la barre commune, un écran qui ne la demande pas —, la
+     pile retombe sur l'écriture manuscrite du système. Ses règles d'emploi
      sont dures — jamais sous 15 px, jamais un chiffre, jamais plus de quatre
      mots, jamais dans un panneau calme —, parce qu'une police d'appoint qui
      arrive en retard fait sauter la ligne où elle se pose. */
@@ -395,60 +425,165 @@
    côté.
 
    `--mc` porte la couleur du camp. Elle est posée par la page ou par la scène,
-   et c'est la seule chose qui change d'une vignette à l'autre. */
+   et c'est la seule chose qui change d'une vignette à l'autre.
+
+   ## La case unifiée (lot 2)
+
+   Une seule case pour tous les moments forts du jeu : le GOAL ! du Virage, du
+   duel, de la fiche d'un match **et du hub**, qui avait gardé son lettrage nu
+   posé sur le personnage. Le balisage est celui que `fanzzy-scene.js` pose
+   déjà, et rien d'autre n'est demandé :
+
+       <div class="tbf-moment" data-ton="club">
+         <div class="tbf-vignette">
+           <b class="tbf-vignette-mot">GOAL !</b><small>Kabashi · 71′</small>
+         </div>
+       </div>
+
+   Ce que la case gagne, sans un élément de plus :
+     — **le lettrage passe à la craie**, avec une ombre d'encre de quatre
+       pixels et la double impression du titre d'ouverture (un pixel et demi
+       de flare d'un côté, de bleu de l'autre, à 40 %) : la couleur du camp
+       n'est plus dans la lettre, où un bleu marine de blason disparaissait
+       sur le noir, mais dans le liseré, les rayons et la fumée — la lettre,
+       elle, se lit toujours (16:1) ;
+     — **les rayons au pochoir**, des traits irréguliers à 35 % qui partent de
+       derrière la case, et ne passent plus sous la lettre (voir plus bas) ;
+     — **une bouffée de fumigène** de la couleur du camp, qui gonfle derrière
+       la case et se dissipe (`.tbf-moment::before`) ;
+     — **des confettis de papier** devant elle, qui tombent et s'en vont
+       (`.tbf-moment::after`) — le kop n'a pas de peinture, il a du papier
+       (amendement 1) ;
+     — **la barre de temps devient un scotch** collé sous la case, qui se
+       décolle à mesure que le moment s'achève.
+
+   **Les variantes** se posent par `data-ton`, sur le moment ou sur une
+   vignette seule (le bilan du duel) : `club` (les couleurs de l'écran,
+   `--e1` puis `--e2`, pour GOAL !), `flare` (ON ENCAISSE, CARTON ROUGE),
+   `or` (MINUTE DOUBLE, LA CORDE CÈDE !), `vert`, `rouge` et `gris`
+   (VICTOIRE, DÉFAITE, NUL). Le rouge est le flare du jeu sous un nom de
+   verdict. Un `--mc` posé en ligne par la page ou la scène l'emporte sur
+   eux : `fanzzy-scene.js` y écrit la couleur du club qui marque, et elle
+   reste la vérité. `--mc2` donne une seconde couleur à la fumée.
+
+   `.tbf-moment--dans` le pose dans la boîte de son parent positionné au lieu
+   de tout l'écran — pour le hub, s'il veut garder son moment dans la scène.
+
+   Le trait d'encre, épais et noir, fait la case ; le liseré du camp et un
+   second trait d'encre l'entourent. Le fond est uni et grainé, et non plus un
+   dégradé : l'audit lit maintenant la lettre sur la case. */
 .tbf-vignette{position:relative;text-align:center;
   padding:20px 26px 18px;
-  background:linear-gradient(178deg,#12171F 0%,#080B0F 100%);
-  /* Le trait d'encre, épais et noir : c'est lui qui fait la case. Le liseré de
-     couleur par-dessus dit de quel camp vient le moment. */
-  border:3px solid #04070B;border-radius:4px;
-  box-shadow:0 0 0 2px var(--mc,var(--projo)),0 26px 60px rgba(0,0,0,.8),
-    inset 0 0 0 1px rgba(255,255,255,.06);
+  background:var(--grain-toile) 0 0/256px 256px repeat,rgb(12,17,24);
+  border:3px solid var(--encre);border-radius:4px;
+  box-shadow:0 0 0 3px var(--mc,var(--projo)),0 0 0 5px var(--encre),0 22px 52px rgba(0,0,0,.78);
   /* Légèrement de travers, comme une vignette collée à la main. */
   transform:rotate(-1.6deg)}
+:is(.tbf-moment,.tbf-vignette)[data-ton=club]{--mc:var(--e1,var(--projo));--mc2:var(--e2,var(--flare))}
+:is(.tbf-moment,.tbf-vignette):is([data-ton=flare],[data-ton=rouge]){--mc:var(--flare)}
+:is(.tbf-moment,.tbf-vignette)[data-ton=or]{--mc:var(--projo)}
+:is(.tbf-moment,.tbf-vignette)[data-ton=vert]{--mc:var(--vert)}
+:is(.tbf-moment,.tbf-vignette)[data-ton=gris]{--mc:var(--gris)}
 /* Les rayons. Ils partent de derrière la case, en éventail : le signe le plus
-   ancien de la bande dessinée pour dire « ici, maintenant, fort ».
-   `z-index:-1` sur un enfant d'un élément **non positionné dans un contexte
-   d'empilement** passerait derrière la page ; `.tbf-vignette` est en
-   `position:relative`, ce qui le retient derrière son seul parent. */
-.tbf-vignette::before{content:"";position:absolute;inset:-42%;z-index:-1;
+   ancien de la bande dessinée pour dire « ici, maintenant, fort ». Des traits
+   irréguliers — cinq degrés, un vide, trois degrés, un vide plus long —
+   comme passés au pochoir, à 35 %.
+
+   **Ils ne passent plus sous la lettre.** La case porte une rotation, donc
+   elle est un contexte d'empilement : son `::before` en `z-index:-1` se
+   peint par-dessus son propre fond, et les rayons rayaient l'intérieur de la
+   case, sous le mot. Un masque les évide donc à l'emplacement de la case —
+   le calque déborde de 42 % de chaque côté, la case en occupe le milieu,
+   54,35 %, plus seize pixels pour le trait, le liseré et le second trait —,
+   et ne garde que l'éventail autour. */
+.tbf-vignette::before{content:"";position:absolute;inset:-42%;z-index:-1;pointer-events:none;
   background:repeating-conic-gradient(from 0deg at 50% 50%,
-    var(--mc,var(--projo)) 0deg 6deg,transparent 6deg 18deg);
-  opacity:.16;-webkit-mask:radial-gradient(closest-side,#000 38%,transparent 82%);
-          mask:radial-gradient(closest-side,#000 38%,transparent 82%)}
-/* Le lettrage de vignette : gras, capitales, ombre franche sous le trait
-   plutôt que floue. Une ombre floue fait « texte posé sur une image » ; une
-   ombre nette fait « lettrage dessiné ». */
-.tbf-vignette-mot{display:block;font-family:var(--banner);
+    var(--mc,var(--projo)) 0 5deg,transparent 5deg 12deg,
+    var(--mc,var(--projo)) 12deg 15deg,transparent 15deg 24deg);
+  opacity:.35;
+  -webkit-mask:radial-gradient(closest-side,#000 34%,transparent 84%) center/100% 100% no-repeat,
+    linear-gradient(#000,#000) center/calc(54.35% + 16px) calc(54.35% + 16px) no-repeat;
+  -webkit-mask-composite:source-out;
+  mask:radial-gradient(closest-side,#000 34%,transparent 84%) center/100% 100% no-repeat subtract,
+    linear-gradient(#000,#000) center/calc(54.35% + 16px) calc(54.35% + 16px) no-repeat}
+/* Le lettrage de vignette : gras, capitales, à la craie, ombre franche sous
+   le trait plutôt que floue. Une ombre floue fait « texte posé sur une
+   image » ; une ombre nette fait « lettrage dessiné ». La double impression
+   ne bouge que d'un pixel et demi : assez pour qu'on la voie, pas assez pour
+   brouiller la lettre. */
+.tbf-vignette-mot{display:block;font-family:var(--banner);font-weight:700;
   font-size:clamp(30px,11vw,54px);line-height:.94;letter-spacing:.03em;
-  text-transform:uppercase;color:var(--mc,var(--projo));
-  text-shadow:0 4px 0 rgba(4,7,11,.9);-webkit-text-stroke:1px rgba(4,6,10,.6);
+  text-transform:uppercase;color:var(--craie);
+  text-shadow:1.5px 0 rgba(224,64,44,.4),-1.5px 0 rgba(60,130,232,.4),0 4px 0 var(--encre);
   text-wrap:balance}
 
 .tbf-moment{position:fixed;inset:0;z-index:95;display:grid;place-items:center;
   padding:18px;pointer-events:none;color:var(--mc,var(--projo));opacity:0;
+  /* La fumée et les confettis débordent de l'écran : rognés au bord, ils ne
+     le font pas défiler. */
+  overflow:hidden;
   /* Le voile. Assez pour que la case décolle, assez peu pour qu'on continue de
      voir le match derrière : c'est ce qu'on est en train de regarder. */
   background:radial-gradient(58% 42% at 50% 50%,rgba(4,6,10,.62),rgba(4,6,10,.12) 76%,
     transparent)}
+.tbf-moment--dans{position:absolute;z-index:6}
 .tbf-moment .tbf-vignette{max-width:min(420px,100%)}
 .tbf-moment b{display:block}
 /* Le buteur et la minute. Ils viennent de la base, jamais de l'API : le
-   relevé du direct les y a déjà écrits. */
+   relevé du direct les y a déjà écrits. À la craie pleine : la case est
+   désormais mesurée (un fond uni, plus un dégradé), et à 92 % la ligne ne
+   tenait au soleil que 4,1:1 ; pleine, 4,7. */
 .tbf-moment small{display:block;font-family:var(--banner);font-size:clamp(11px,3.4vw,15px);
-  letter-spacing:.14em;margin-top:8px;color:var(--craie);opacity:.92}
+  letter-spacing:.14em;margin-top:8px;color:var(--craie);opacity:1}
 .tbf-moment small:empty{display:none}
 .tbf-moment.on{opacity:1;animation:tbf-momentVoile .28s ease}
 .tbf-moment.on .tbf-vignette{animation:tbf-momentIn .6s cubic-bezier(.2,1.6,.35,1)}
-/* La barre se vide : elle dit combien de temps le moment tient encore. Sans
-   elle, quinze secondes d'immobilité passeraient pour un élément d'interface
-   plutôt que pour un événement. */
-.tbf-moment.on .tbf-vignette::after{content:"";display:block;height:3px;width:52%;
-  margin:13px auto 0;border-radius:2px;background:currentColor;opacity:.8;
-  animation:tbf-momentBarre var(--mt,15s) linear forwards}
+/* **La bouffée**, derrière la case : deux nappes rondes de la couleur du camp
+   (`--mc`, puis `--mc2`), qui gonflent en 240 ms en dépassant leur taille,
+   puis se dissipent en 600 ms — la `.tbf-bouffee` du vocabulaire, au centre
+   de l'écran. Le premier enfant du moment, donc peinte avant la case. Une
+   fois dissipée, elle ne revient qu'au moment suivant (la scène retire et
+   repose `.on`). Sans fondu d'écran : sur le voile sombre, une couleur pleine
+   à 62 % suffit, et le mélange `screen` reste à la fumée du sol. */
+.tbf-moment::before{content:"";position:absolute;left:50%;top:50%;z-index:0;pointer-events:none;
+  width:min(150vw,640px);height:min(96vw,420px);translate:-50% -50%;border-radius:50%;opacity:0;
+  background:
+    radial-gradient(closest-side,var(--mc,var(--projo)) 0,transparent 72%),
+    radial-gradient(closest-side at 68% 62%,var(--mc2,var(--mc,var(--projo))) 0,transparent 70%)}
+.tbf-moment.on::before{animation:tbf-gonfle 240ms cubic-bezier(.2,1.6,.35,1) both,
+  tbf-dissipe 600ms ease-out 240ms forwards}
+/* **Les confettis**, devant la case : quatorze rectangles de papier de 6 × 10,
+   craie, kraft et or, chacun avec son ombre d'encre, dessinés une fois dans
+   une image et répartis sur le pourtour — jamais sur le mot. Ils tombent de
+   cinquante pixels en se posant, tiennent une seconde, puis glissent et
+   s'effacent : un moment de quinze secondes ne garde pas ses confettis en
+   l'air. Une image et non quatorze éléments : la case n'a pas d'élément à
+   leur donner, et `fanzzy-scene.js` n'en pose aucun. Couleurs écrites en clair
+   (`%23F2EEE4`, `%23C9A66B`, `%23F5C33B`) : une image ne lit pas les jetons. */
+.tbf-moment::after{content:"";position:absolute;left:50%;top:50%;z-index:2;pointer-events:none;
+  width:min(100vw,460px);height:300px;translate:-50% -50%;opacity:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 460 300'%3E%3Cdefs%3E%3Cg id='c'%3E%3Crect x='-2' y='-4' width='6' height='10' fill='%2307090C' fill-opacity='.5'/%3E%3Crect x='-3' y='-5' width='6' height='10'/%3E%3C/g%3E%3C/defs%3E%3Cuse href='%23c' fill='%23F2EEE4' transform='translate(26 40) rotate(24)'/%3E%3Cuse href='%23c' fill='%23C9A66B' transform='translate(70 22) rotate(-40)'/%3E%3Cuse href='%23c' fill='%23F5C33B' transform='translate(122 52) rotate(65)'/%3E%3Cuse href='%23c' fill='%23F2EEE4' transform='translate(318 30) rotate(-20)'/%3E%3Cuse href='%23c' fill='%23C9A66B' transform='translate(380 58) rotate(48)'/%3E%3Cuse href='%23c' fill='%23F2EEE4' transform='translate(432 26) rotate(-70)'/%3E%3Cuse href='%23c' fill='%23F5C33B' transform='translate(14 150) rotate(12)'/%3E%3Cuse href='%23c' fill='%23F2EEE4' transform='translate(444 140) rotate(-35)'/%3E%3Cuse href='%23c' fill='%23C9A66B' transform='translate(36 238) rotate(-55)'/%3E%3Cuse href='%23c' fill='%23F2EEE4' transform='translate(96 270) rotate(30)'/%3E%3Cuse href='%23c' fill='%23F5C33B' transform='translate(176 284) rotate(-15)'/%3E%3Cuse href='%23c' fill='%23F2EEE4' transform='translate(300 276) rotate(70)'/%3E%3Cuse href='%23c' fill='%23C9A66B' transform='translate(372 250) rotate(-28)'/%3E%3Cuse href='%23c' fill='%23F2EEE4' transform='translate(430 222) rotate(40)'/%3E%3C/svg%3E") center/contain no-repeat}
+.tbf-moment.on::after{animation:tbf-confettis 1.7s cubic-bezier(.2,.8,.4,1) 120ms both}
+/* **Le scotch qui se décolle.** La barre se vidait : elle disait combien de
+   temps le moment tient encore, et sans elle quinze secondes d'immobilité
+   passeraient pour un élément d'interface plutôt que pour un événement. Elle
+   devient un ruban de scotch collé à cheval sur le bas de la case, qui se
+   retire depuis son bout droit en se soulevant, sur la durée du moment
+   (`--mt`). Les mêmes dents et la même craie à 42 % que `.tbf-scotch`. */
+.tbf-moment.on .tbf-vignette::after{content:"";position:absolute;z-index:2;left:18%;bottom:-11px;
+  width:54%;height:14px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(242,238,228,.34) 0 1px,var(--scotch) 1px);
+  clip-path:polygon(0 10%,5% 0,12% 8%,20% 0,100% 6%,97% 30%,100% 55%,96% 80%,100% 100%,20% 94%,
+    12% 100%,5% 92%,0 100%,3% 70%,0 50%,3% 30%);
+  transform-origin:0 50%;rotate:1.5deg;
+  animation:tbf-decolle var(--mt,15s) linear forwards}
 
 @keyframes tbf-souffle{0%,100%{transform:scale(1,1) rotate(0deg)}
   50%{transform:scale(1.012,.988) rotate(.5deg)}}
+/* **Ce nom est lu ailleurs** : le rideau d'ouverture (`index.html`) emprunte
+   `tbf-coucou` pour le salut du dernier Fanzzy qui monte les marches, composé
+   sur la même image avec sa montée — une classe ne s'y prêterait pas, une
+   seule propriété `animation` porte les deux. Ne pas le renommer. */
 @keyframes tbf-coucou{0%,100%{transform:rotate(0deg)}
   16%{transform:rotate(-3.4deg)}40%{transform:rotate(2.8deg)}
   64%{transform:rotate(-2.2deg)}84%{transform:rotate(1.1deg)}}
@@ -487,13 +622,27 @@
   55%{opacity:1;transform:scale(1.12) rotate(2deg)}
   100%{opacity:1;transform:scale(1) rotate(-1.6deg)}}
 @keyframes tbf-momentVoile{from{opacity:0}to{opacity:1}}
-@keyframes tbf-momentBarre{from{width:52%}to{width:0}}
+/* Le scotch se retire vers son départ et son bout se soulève : la largeur
+   par `scale`, le soulèvement par `rotate`, deux propriétés composées par le
+   navigateur sans recalcul de mise en page. */
+@keyframes tbf-decolle{from{scale:1 1;rotate:1.5deg}to{scale:0 1;rotate:7deg}}
+/* Les confettis tombent de cinquante pixels, se posent, puis glissent de
+   vingt en s'effaçant. `translate` porte aussi le centrage : chaque image le
+   réécrit. */
+@keyframes tbf-confettis{
+  0%{opacity:0;translate:-50% calc(-50% - 50px)}
+  14%{opacity:1}
+  62%{opacity:1;translate:-50% -50%}
+  100%{opacity:0;translate:-50% calc(-50% + 20px)}
+}
 
 @media (prefers-reduced-motion:reduce){
   .tbf-souffle,.tbf-salut,.tbf-monte,.tbf-saut,.tbf-change,.tbf-vie{animation:none !important}
-  /* La case apparaît sans tomber ni tourner. La barre du temps reste : elle
-     n'est pas du mouvement décoratif, elle dit combien de temps il reste. */
+  /* La case apparaît sans tomber ni tourner. Le scotch du temps reste et se
+     retire : il n'est pas du mouvement décoratif, il dit combien de temps il
+     reste. Ni bouffée ni confettis : la case seule, à −1,6°. */
   .tbf-moment.on .tbf-vignette{animation:none;transform:rotate(-1.6deg)}
+  .tbf-moment::before,.tbf-moment::after{content:none}
 }
 /* ## Le mode calme, et pourquoi il recopie chaque bloc au lieu de s'y ajouter
  *
@@ -507,12 +656,15 @@
  * qui a demandé le calme et qui voit encore son personnage sauter.
  *
  * Même partage que pour le réglage du système : le décor se tait,
- * l'information reste. La barre du moment fort n'est dans aucun des deux. */
+ * l'information reste. Le scotch du temps du moment fort n'est dans aucun
+ * des deux. */
 html[data-calme~="animations"] .tbf-souffle,html[data-calme~="animations"] .tbf-salut,
 html[data-calme~="animations"] .tbf-monte,html[data-calme~="animations"] .tbf-saut,
 html[data-calme~="animations"] .tbf-change,
 html[data-calme~="animations"] .tbf-vie{animation:none !important}
 html[data-calme~="animations"] .tbf-moment.on .tbf-vignette{animation:none;transform:rotate(-1.6deg)}
+html[data-calme~="animations"] .tbf-moment::before,
+html[data-calme~="animations"] .tbf-moment::after{content:none}
 
 /* ------------------------------------------------------ le bandeau d'annonce
 
@@ -1121,12 +1273,20 @@ html[data-calme~="animations"] .tbf-compte{animation:none}
    onglets au lot 0.
 
    **Pour la défaire, ce bloc seul** : remettre `var(--flare)`, `var(--vert)`,
-   `var(--bleu)` et `var(--violet)` à la place des quatre faces. Rien d'autre
-   n'en dépend. */
-[data-ton=flare] {--face:#B8321F;--lettre:var(--craie)}
-[data-ton=vert]  {--face:#197450;--lettre:var(--craie)}
-[data-ton=bleu]  {--face:#2F63B4;--lettre:var(--craie)}
-[data-ton=violet]{--face:#6545AE;--lettre:var(--craie)}
+   `var(--bleu)` et `var(--violet)` à la place des quatre faces, dans les
+   quatre jetons ci-dessous. Rien d'autre n'en dépend.
+
+   **Les quatre faces sont des jetons depuis le lot 2**, et c'est pour que ce
+   bloc reste le seul. Les stickers d'état d'une tuile et du bouton de menu
+   (LIVE rouge, « 2 » violet) sont peints sur un pseudo-élément, qui ne peut
+   pas porter `data-ton` : ils liraient la face écrite en clair une seconde
+   fois, ailleurs, et défaire H1 ici les aurait oubliés. Ils lisent ces
+   jetons-ci. */
+:root{--face-flare:#B8321F;--face-vert:#197450;--face-bleu:#2F63B4;--face-violet:#6545AE}
+[data-ton=flare] {--face:var(--face-flare);--lettre:var(--craie)}
+[data-ton=vert]  {--face:var(--face-vert);--lettre:var(--craie)}
+[data-ton=bleu]  {--face:var(--face-bleu);--lettre:var(--craie)}
+[data-ton=violet]{--face:var(--face-violet);--lettre:var(--craie)}
 
 /* ------------------------------------------------------ la bâche même
 
@@ -1323,6 +1483,79 @@ html[data-calme~="animations"] .tbf-case:active{transform:none;filter:brightness
     var(--ruban-d) right 0 top 1px/58px 24px no-repeat;
 }
 
+/* ## La plaque ronde (lot 2)
+ *
+ * Les petits boutons ronds — les flèches ‹ › qui font défiler les âges sous
+ * le personnage du hub, un « + », un « ✕ » — sont **des plaques, pas des
+ * stickers** : on les touche, elles s'enfoncent. La direction les nomme
+ * `.tbf-plaque--rond` : une zone de 44 px pour le doigt, une face ronde de
+ * trente-deux au milieu.
+ *
+ *     <button type="button" class="tbf-plaque tbf-plaque--rond" aria-label="L’âge précédent">
+ *       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+ *
+ * **La face est le fond de l'élément, peint en deçà d'une bordure
+ * transparente** de quatre pixels (`background-clip:padding-box`) :
+ * l'arrondi de la boîte de 44, rogné de la bordure, en fait un disque de 36
+ * — la face de trente-deux et son cerne d'encre de deux pixels, peint
+ * dedans par une ombre intérieure, comme l'arête de la toile. Parce que la
+ * face est le fond de l'élément, l'audit lit le chevron sur elle, et non
+ * sur ce qu'il y a derrière ; parce que le cerne est son ombre, il en a une
+ * (`tour-ui-smoke` tient pour fantôme une plaque sans fond ou sans ombre).
+ * Le cerne au marqueur de la bâche est le tracé d'un rectangle, qu'un rond
+ * ne peut pas suivre : le trait d'encre le remplace. **L'ombre dure est le
+ * `::before`**, posé exactement sur le disque : une ombre portée par la
+ * boîte de 44 ne se peindrait que hors d'elle. Le coin déchiré n'a pas de
+ * coin où se poser — la maquette n'en met pas à ses plaques rondes —, et le
+ * `::before` est libre pour ce travail. `::after` reste à la pastille.
+ *
+ * **Tout tient dans les 44 px** : l'ombre descend de trois pixels
+ * (`--epaisseur`) et part de deux à droite, moins que les quatre de la
+ * bordure. Rien n'est réservé dessous, au contraire de la bâche : une rangée
+ * qui pose une plaque ronde ne grandit pas. Elle s'enfonce de ses trois
+ * pixels et l'ombre se plaque contre elle ; à animations réduites et au
+ * calme, elle s'assombrit sans bouger (les règles de la bâche, plus haut,
+ * valent pour elle).
+ *
+ * Elle prend le ton de `data-ton` comme toute plaque, le parpaing sans ton.
+ * La face est au centre de la zone : une page qui la veut au ras du bout
+ * d'une rangée déplace la zone de quatre pixels — c'est sa place. **La
+ * bordure et le rembourrage ne sont pas à la page** : les changer
+ * déformerait le disque, et l'ombre ne le suivrait plus. Un chevron en SVG
+ * plutôt qu'un caractère : « ‹ » change de hauteur d'une police de repli à
+ * l'autre. */
+.tbf-plaque.tbf-plaque--rond{
+  --epaisseur:3px;
+  isolation:isolate;flex:none;
+  width:44px;height:44px;min-height:0;padding:0;margin:0;
+  border:4px solid transparent;border-image:none;border-radius:50%;
+  background:var(--grain-toile) 0 0/256px 256px repeat,var(--face);
+  background-clip:padding-box;
+  box-shadow:inset 0 0 0 2px var(--encre),inset 0 3px 0 rgba(242,238,228,.35);
+}
+/* `z-index:-1` dans le contexte que pose `isolation` : rien de ce calque ne
+   passe sur le chevron. Il n'a pas de fond ; son ombre est hors du disque,
+   là où une ombre extérieure se peint seule. */
+.tbf-plaque.tbf-plaque--rond::before{
+  inset:0;width:auto;height:auto;z-index:-1;border-radius:50%;
+  background:none;
+  box-shadow:2px var(--epaisseur) 0 var(--encre);
+}
+.tbf-plaque.tbf-plaque--rond:active{
+  box-shadow:inset 0 0 0 2px var(--encre),inset 0 3px 0 rgba(242,238,228,.35);
+}
+.tbf-plaque.tbf-plaque--rond:active::before{box-shadow:2px 0 0 var(--encre)}
+.tbf-plaque.tbf-plaque--rond:focus-visible{outline-offset:-1px}
+.tbf-plaque--rond svg{width:18px;height:18px;stroke-width:2.4}
+/* Hors service : la trame de la bâche éteinte, sur la face seule et non sur
+   toute la zone du doigt. */
+.tbf-plaque.tbf-plaque--rond:is([disabled],[aria-disabled=true]){
+  background:
+    repeating-linear-gradient(45deg,rgba(7,9,12,.42) 0 2px,transparent 2px 5px),
+    var(--grain-toile) 0 0/256px 256px repeat,var(--face);
+  background-clip:padding-box;
+}
+
 /* ------------------------------------------------------------ la tuile
 
    La brique des deux rails de l'accueil : une bâche carrée, l'icône au-dessus
@@ -1355,35 +1588,156 @@ html[data-calme~="animations"] .tbf-case:active{transform:none;filter:brightness
    l'une de ces trois valeurs, c'est remesurer le rail de l'accueil.
 
    Le cerne de la bâche n'y change rien : il est posé hors de la boîte. */
+/* `--ico` porte la taille de l'icône, et non la règle de l'icône seule : le
+   scotch en croix d'une tuile verrouillée se taille sur elle (voir « Les
+   états d'une tuile », plus bas), et le tiroir, qui pose des tuiles de 88 px,
+   la change en un endroit. */
 .tbf-case{
+  --ico:clamp(18px,5.4vw,23px);
   flex-direction:column;gap:5px;
   aspect-ratio:1;width:100%;
   padding:6px 0;
   font-size:clamp(11px,2.4vw,12.5px);
   font-weight:600;letter-spacing:0;
 }
-.tbf-case svg{width:clamp(18px,5.4vw,23px);height:clamp(18px,5.4vw,23px)}
+.tbf-case svg{width:var(--ico);height:var(--ico)}
 .tbf-case .lib{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* **La pastille** est un sticker : fond du ton, bord de craie découpé autour,
-   cerne d'encre, ombre dure, un peu de travers — collé à la main sur le coin.
-   Elle est posée sur le cerne et non dedans : un compteur qui chevauche le
-   coin dit « il y a quelque chose là-dedans » mieux qu'un nombre rangé à
-   l'intérieur, qui se lit comme une légende. Le blanc pur et non la craie
-   pour son chiffre : sur la face vive du rouge, c'est ce qu'il faut à un
-   chiffre gras de onze pixels pour se détacher. */
-.tbf-plaque[data-pastille]::after,.tbf-case[data-pastille]::after{
-  content:attr(data-pastille);position:absolute;top:-7px;right:-7px;
-  min-width:20px;height:20px;padding:0 5px;border-radius:5px;
-  background:var(--flare);color:#fff;
-  font-family:var(--banner);font-size:11px;font-weight:700;line-height:20px;
-  text-align:center;letter-spacing:0;text-shadow:none;
-  box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),2px 2px 0 3.5px rgba(7,9,12,.55);
-  transform:rotate(4deg);
+/* ## Les états d'une tuile (lot 2)
+ *
+ * Une tuile du hub ou du tiroir dit, sans qu'on l'ouvre, ce qui l'attend
+ * derrière : un match en direct au Virage, des boosters à ouvrir, des cartes
+ * arrivées depuis la dernière visite, ou une porte qui n'est pas encore
+ * ouverte au niveau du joueur. Cinq états, **un seul à la fois** par tuile,
+ * posés par la page dans `data-etat` :
+ *
+ *     <a class="tbf-case" data-ton="flare" href="/virage" data-etat="direct">
+ *       <svg …/><span class="lib">VIRAGE</span></a>                  LIVE rouge
+ *     <a class="tbf-case" data-ton="or" href="/boosters"
+ *        data-etat="pret" data-pastille="4">…</a>                    « 4 » or, qui respire
+ *     <a class="tbf-case" data-ton="bleu" href="/fanzzy"
+ *        data-etat="nouveau" data-pastille="+12">…</a>               « +12 » craie
+ *     <a class="tbf-case" data-ton="flare" href="/duel-nvn"
+ *        data-etat="attend" data-pastille="2">…</a>                  « 2 » violet (le tiroir)
+ *     <a class="tbf-case" data-ton="violet" href="/kop"
+ *        data-etat="verrouille" aria-label="KOP — ouvert au niveau 3">
+ *       <svg …/><span class="lib">NIV. 3</span></a>                  parpaing, croix sur l'icône
+ *
+ * **Le sticker est le `::after` de la tuile**, comme la pastille qu'il
+ * remplace : le budget de deux pseudo-éléments tient (`::before` est le coin
+ * déchiré), et `menu.js`, qui réécrit le tiroir en `innerHTML`, n'a qu'un
+ * attribut à poser. Ce qu'il écrit vient de `data-pastille` — « 4 »,
+ * « +12 », « 2 » : c'est la page qui compose le texte, la feuille ne lui
+ * ajoute rien, pas même le « + ». Seul LIVE est écrit ici, parce qu'il ne
+ * dépend d'aucune donnée.
+ *
+ * **`data-pastille` seul marche toujours**, tel qu'il marchait : un sticker
+ * rouge, or sur une bâche déjà rouge. C'était la pastille du lot 1, posée
+ * par l'accueil sur FANZZY et BOOSTERS. Elle prend la matière des états — le
+ * même bord, le même cerne, le même corps —, et sa face rouge devient celle
+ * de H1 : la craie y tient 5,16:1, quand le blanc pur sur le rouge vif d'avant
+ * ne tenait que 3,9 sous un chiffre de onze pixels.
+ *
+ * Les couleurs disent l'urgence, et chacune ne dit qu'une chose (amendement
+ * 3) : le rouge, le direct ; l'or, une récompense prête ; la craie, une
+ * nouveauté — elle ne crie pas, elle signale ; le violet, quelqu'un qui
+ * attend (« les gens »). Le texte du sticker est en treize pixels gras sur
+ * vingt-deux de haut, l'encre ou la craie sur sa face : de 5,2 à 17:1.
+ *
+ * **Au plus trois tuiles en état sur un écran** (amendement 7, priorité
+ * direct > prêt > nouveau) : c'est la page qui choisit lesquelles. Un sticker
+ * de plus n'attire plus l'œil, il en retire aux autres.
+ *
+ * Le sticker déborde du coin de huit pixels en haut et à droite, et de cinq de
+ * plus avec son bord et son ombre : le conteneur de la tuile ne doit pas le
+ * rogner. C'est l'ancienne place de la pastille, à un pixel près. */
+.tbf-plaque[data-pastille]::after,
+.tbf-case[data-pastille]::after,
+.tbf-case[data-etat]::after{
+  content:attr(data-pastille);position:absolute;z-index:3;top:-8px;right:-8px;
+  box-sizing:border-box;min-width:22px;height:22px;padding:0 5px;border-radius:5px;
+  background:var(--pf,var(--face-flare));color:var(--pl,var(--craie));
+  font-family:var(--banner);font-size:13px;font-weight:700;line-height:22px;
+  text-align:center;letter-spacing:.02em;text-transform:uppercase;text-shadow:none;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+  box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),2px 2px 0 3.5px rgba(7,9,12,.6);
+  rotate:var(--pr,4deg);pointer-events:none;
 }
-/* Sur une bâche déjà rouge, la pastille rouge disparaîtrait. */
-.tbf-plaque[data-ton=flare][data-pastille]::after,
-.tbf-case[data-ton=flare][data-pastille]::after{background:var(--projo);color:var(--encre)}
+/* Sur une bâche déjà rouge, la pastille rouge disparaîtrait : l'ancienne
+   règle, gardée pour qui pose `data-pastille` sans état. */
+.tbf-plaque[data-ton=flare][data-pastille]:not([data-etat])::after,
+.tbf-case[data-ton=flare][data-pastille]:not([data-etat])::after{--pf:var(--projo);--pl:var(--encre)}
+
+/* **Direct** : LIVE, écrit ici, et un point de craie devant le mot. Le point
+   est un dégradé dans la face et non un caractère : « ● » n'est pas dans
+   Oswald, et la police de repli le dessinait plus haut que le mot. Il ne
+   clignote pas — le hub a déjà ses trois animations infinies. Rouge sur une
+   tuile rouge (le Virage) : le bord craie de deux pixels l'en détache. */
+.tbf-case[data-etat=direct]::after{
+  content:"LIVE";padding-left:15px;
+  background:radial-gradient(circle at 8.5px 50%,var(--craie) 0 3px,transparent 3.6px),var(--face-flare);
+}
+/* **Prêt** : la récompense qui attend, en or — l'un des trois sens de l'or.
+   Il respire (`tbf-respire`, quatre secondes, `scale` qui se compose avec la
+   rotation) : c'est la seule chose du hub qui demande qu'on vienne. */
+.tbf-case[data-etat=pret]::after{--pf:var(--projo);--pl:var(--encre);
+  animation:tbf-respire 4s ease-in-out infinite}
+/* **Nouveau** : la craie, l'encre dessus, penché de l'autre côté. */
+.tbf-case[data-etat=nouveau]::after{--pf:var(--craie);--pl:var(--encre);--pr:-4deg}
+/* **Attend** : quelqu'un t'attend en duel, en violet. Le tiroir seul le pose
+   (sur DUEL DE TRIBUNES) ; le hub n'a pas ce cinquième état dans son budget. */
+.tbf-case[data-etat=attend]::after{--pf:var(--face-violet);--pl:var(--craie);--pr:-3deg}
+
+/* **Une seule respiration à la fois** (amendement 7). Le tiroir s'ouvre
+   par-dessus un écran dont le budget est déjà pris — sur le hub, le sticker
+   de BOOSTERS respire déjà : celui du tiroir reste immobile. Sur un même
+   écran, c'est à la page de ne poser `pret` que sur une tuile. */
+.tbf-tiroir .tbf-case[data-etat=pret]::after{animation:none}
+
+/* **Verrouillé** : la porte existe, elle n'est pas encore ouverte. La bâche
+   redevient du parpaing, l'icône s'éteint à 40 %, deux rubans de scotch la
+   barrent en croix — et le libellé reste net, à la craie pleine : c'est lui
+   qui dit comment l'ouvrir (« NIV. 3 », amendement 19). La page le récrit
+   dans `.lib` ; la feuille ne peut pas le deviner.
+
+   La croix est le `::after`, rendu au flux : la tuile verrouillée passe en
+   grille, l'icône et la croix partagent la première case, le libellé la
+   seconde. C'est ce qui pose la croix **sur l'icône** quelle que soit la
+   taille de la tuile — 58 px sur le hub, 88 dans le tiroir — sans qu'aucun
+   décalage ne soit écrit en dur. La grille reproduit au pixel la colonne
+   flexible des autres tuiles (même écart, même centrage) : une tuile qui se
+   verrouille ne bouge pas. Ses marges négatives la laissent déborder de
+   l'icône de quatre pixels en haut et en bas sans grandir la case. Le
+   libellé doit être dans `.lib` : un texte nu deviendrait un élément de
+   grille anonyme. */
+.tbf-case[data-etat=verrouille]{
+  --face:var(--parpaing);--lettre:var(--craie);
+  display:grid;grid-template-columns:minmax(0,1fr);align-content:center;justify-items:center;
+  text-shadow:0 1px 0 var(--encre);
+}
+.tbf-case[data-etat=verrouille]>svg{grid-area:1/1;opacity:.4}
+.tbf-case[data-etat=verrouille]>.lib{grid-area:2/1}
+.tbf-case[data-etat=verrouille]::after{
+  --ruban:7px;
+  content:"";grid-area:1/1;position:relative;top:auto;right:auto;z-index:1;
+  width:calc(var(--ico) + 14px);height:calc(var(--ico) + 8px);min-width:0;margin:-4px 0;
+  padding:0;border-radius:0;box-shadow:none;rotate:0deg;animation:none;
+  background:
+    linear-gradient(to top right,transparent calc(50% - var(--ruban) / 2 - 1px),
+      rgba(242,238,228,.3) calc(50% - var(--ruban) / 2 - 1px) calc(50% - var(--ruban) / 2),
+      var(--scotch) calc(50% - var(--ruban) / 2) calc(50% + var(--ruban) / 2),
+      transparent calc(50% + var(--ruban) / 2)),
+    linear-gradient(to bottom right,transparent calc(50% - var(--ruban) / 2 - 1px),
+      rgba(242,238,228,.3) calc(50% - var(--ruban) / 2 - 1px) calc(50% - var(--ruban) / 2),
+      var(--scotch) calc(50% - var(--ruban) / 2) calc(50% + var(--ruban) / 2),
+      transparent calc(50% + var(--ruban) / 2));
+}
+
+/* Au calme, le sticker prêt ne respire plus : il reste, posé. */
+@media (prefers-reduced-motion:reduce){
+  .tbf-case[data-etat=pret]::after{animation:none}
+}
+html[data-calme~="animations"] .tbf-case[data-etat=pret]::after{animation:none}
 
 /* --------------------------------------------------------- l'étiquette
 
@@ -1857,46 +2211,186 @@ html[data-calme~="animations"] .pan[role="button"]:active{transform:none}
   display:flex;align-items:center;gap:8px;flex:none;
   padding:calc(env(safe-area-inset-top) + 10px) 10px 0;
 }
-/* ## L'avatar et les deux jetons ne sont plus ici
+/* ## Ce que je possède, replié (lot 2)
  *
  * Cette barre a porté l'identité — pastille, pseudo, nom du club — et deux
- * compteurs de monnaie. `nav.js` explique pourquoi ils sont partis : « sur
- * trois cent soixante pixels, les cinq se disputaient la place […] et rien de
- * tout ça ne disait **où l'on est**, qui est la seule chose qu'on demande à une
- * barre ». Elle ne pose plus que la flèche, le titre et le menu.
+ * jetons de monnaie, à plat sur la même ligne. `nav.js` explique pourquoi ils
+ * sont partis : « sur trois cent soixante pixels, les cinq se disputaient la
+ * place […] et rien de tout ça ne disait **où l'on est**, qui est la seule
+ * chose qu'on demande à une barre ». Le pseudo et le club vivent depuis sur
+ * le profil, et n'en reviennent pas.
  *
- * Leurs règles, elles, sont restées — une soixantaine de lignes décrivant un
- * objet que plus aucune page ne construit. Du style mort n'est pas neutre dans
- * une feuille partagée : il se lit comme du vocabulaire disponible, on le
- * réemploie, et l'on hérite de contraintes écrites pour autre chose. Cette
- * feuille en a déjà fait deux fois les frais — voir `.tbf-ep-jauge`, et le
- * commentaire du jeton juste en dessous, qui raconte `.pack` gagnant contre
- * lui et l'étalant sur trois cents pixels de haut.
+ * Le niveau et les deux soldes, eux, sont revenus au lot 2, mais **repliés** :
+ * c'est le HUD replié de la barre (voir « le HUD replié de la barre », dans
+ * les pièces d'écran). Un sticker rond de 36 px qui prend la place d'un
+ * bouton, pas celle du titre (voir « sa place, comptée à 320 px », plus bas),
+ * et qui déplie les deux compteurs sous la barre au toucher.
  *
- * L'accueil garde les siennes, sans préfixe et chez lui : c'est le seul écran
- * qui affiche encore une pastille et des jetons, et il les dessine à sa
- * mesure. */
+ * Les règles des anciens jetons ne sont pas revenues avec lui. Elles étaient
+ * restées après leur départ — une soixantaine de lignes décrivant un objet
+ * que plus aucune page ne construisait —, et elles ont été retirées : du
+ * style mort n'est pas neutre dans une feuille partagée ; il se lit comme du
+ * vocabulaire disponible, on le réemploie, et l'on hérite de contraintes
+ * écrites pour autre chose. Cette feuille en a déjà fait deux fois les
+ * frais — voir `.tbf-ep-jauge`, et la leçon de `.pack`, juste avant « le
+ * menu ».
+ *
+ * Le HUD est fait des pièces que le hub emploie aussi, écrites une seule
+ * fois dans cette feuille : l'avatar-sticker (`.tbf-avatar`, en 36 px avec
+ * `.tbf-avatar--barre`) et le compteur de monnaie (`.tbf-monnaie`). L'accueil
+ * ne dessine plus sa pastille ni ses jetons à sa mesure : il ne leur écrit
+ * que leur place (`index.html`, `.haut` et `.bourse`). */
 
-/* Le nom de l'écran. Poussé à droite, il pousse le menu au bord et devient
-   le centre de gravité de la barre — au lieu d'être un élément de plus dans
-   une file de cinq qui se disputaient trois cent soixante pixels. */
-/* `margin:0` et `font-weight:inherit` parce que c'est un `h1` depuis que les
-   pages ont cessé de répéter leur nom : sans ça le navigateur lui donne ses
-   propres marges de titre et disloque la barre. Voir `nav.js`. */
-/* Pleine craie. Il était à 82 % sur dix-huit écrans, soit 4:1 au soleil — le
-   nom de l'endroit où l'on est, un peu moins lisible que tout le reste. */
-.tbf-ou{margin:0 0 0 auto;font-family:var(--banner);letter-spacing:.16em;
-  text-transform:uppercase;font-size:clamp(13px,3.9vw,16px);opacity:1;
-  font-weight:inherit;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
-  padding-right:2px}
+/* ## Le nom de l'écran, sur son scotch (lot 2)
+ *
+ * Il dit où l'on est, et c'est la seule chose qu'on demande à une barre. Il
+ * est désormais **peint à la craie sur une bande de scotch**, tournée de
+ * −1,5° et déchirée aux deux bouts, collée juste après la flèche : la
+ * maquette le pose là, et c'est ce qui le fait lire comme un objet du mur et
+ * non comme une ligne d'interface.
+ *
+ *     <header class="tbf-haut">
+ *       <a class="pan tbf-retour" …>…</a>
+ *       <h1 class="tbf-ou">CLASSEMENT</h1>
+ *       <div class="tbf-hud">…</div>                  (voir « le HUD replié »)
+ *       <button class="pan tbf-burger" …>…</button>
+ *     </header>
+ *
+ * Il ne pousse plus le menu au bord en se poussant à droite : il se range à
+ * gauche (`margin-right:auto`) et pousse à droite ce qui le suit, le HUD et
+ * le menu.
+ *
+ * ## Sa place, comptée à 320 px et pas seulement à 360
+ *
+ * La barre est dans la colonne, qui garde sa gouttière de 14 px de chaque
+ * côté ; la barre se rembourre encore de dix. Flèche, HUD et menu prennent
+ * 132 px — le HUD est une zone de 44, sa bande dépliée ne prend pas de place
+ * tant qu'elle est sous la barre —, leurs trois écarts et la marge du titre
+ * 30. À 360 px, il restait 151 px au titre ; mais à 320, il n'en restait que
+ * 111, sous les 120 que la direction lui garantit, et « COMPÉTITIONS », le
+ * plus long, en demandait 123 avec sa bande : il se coupait, comme
+ * « ABONNEMENT ». Le HUD (44 px et un écart) et le scotch (douze pixels de
+ * bande de chaque côté) étaient arrivés ensemble au lot 2, et le compte
+ * n'avait été fait qu'à 360.
+ *
+ * **Sous 400 px, la barre se serre** (règle juste après celle du titre) : six
+ * pixels d'écart au lieu de huit, deux de marge devant le titre au lieu de
+ * six, neuf pixels de bande de chaque côté de la lettre au lieu de douze, et
+ * un espacement des capitales de .1em au lieu de .14em — celui des rubriques
+ * et du retour à l'accueil du tiroir. Les cibles ne bougent pas : la flèche,
+ * le sticker et le menu gardent leurs 44 px, et le sticker de 36 garde ses
+ * quatre pixels d'air dans sa zone. À 320 px, le titre a alors 121 px, et
+ * « COMPÉTITIONS » en demande 110 (131 pour 102 avec la seconde règle, plus
+ * bas) ; à 360, 161 pour 118. Au-delà de 400 px,
+ * rien ne change : la place y est (191 pour 142).
+ *
+ * **Une colonne plus étroite que la colonne commune réduit d'autant la
+ * barre** : `/diagnostic` ajoute dix-huit pixels de chaque côté à la
+ * gouttière (le `padding` de son `body`). Serrée sous 400 px, sa barre tient
+ * « DIAGNOSTIC » à 360 px (125 px pour 104) ; à 320, il ne lui en restait
+ * que 85 pour 98, et le mot se coupait — sur la seule page dont le titre ne
+ * tenait pas, alors qu'il tenait avant le lot (89 pour 89) : c'est la bande
+ * et le HUD, arrivés au lot 2, qui lui ont pris la place. La page n'est pas
+ * à reprendre pour ça. **Sous 340 px, la barre se serre une seconde fois**
+ * (deuxième règle après celle du titre), sans toucher aux cibles ni à la
+ * taille de la lettre : six pixels de rembourrage de chaque côté de la barre
+ * au lieu de dix — le bouton reste à vingt pixels du bord de l'écran —, plus
+ * de marge devant le titre, sept pixels de bande de chaque côté de la lettre,
+ * et un espacement des capitales de .07em. Le titre gagne dix pixels et en
+ * demande huit de moins : « DIAGNOSTIC » tient avec quatre pixels de reste
+ * (94 pour 90), « COMPÉTITIONS » avec vingt-huit sur les autres pages.
+ *
+ * ## Le scotch est un gaffer : noir, et la craie tient au soleil
+ *
+ * **La bande est un ruban toilé noir**, le gaffer des régies et des
+ * tribunes, celui qu'on déchire à la main pour tenir une bâche ; on écrit
+ * dessus au feutre blanc. Le fond sous la lettre est l'encre, opaque : la
+ * craie y tient 17:1 à l'intérieur et **4,9:1 sous le voile blanc du plein
+ * jour**, sur toutes les pages, que le fond de la page soit uni ou en
+ * dégradé — le fond de la page ne passe plus sous le nom.
+ *
+ * C'était un scotch clair, la craie à 26 % comme le ruban de la maquette :
+ * il éclaircissait le fond sous la lettre, et le nom de l'écran tombait à
+ * 3,0:1 au soleil (2,5 pour le mot MENU, sur le parpaing du tiroir), quand il
+ * tenait 5,1 à même le noir avant le lot. Aucun scotch clair ne fait mieux :
+ * sous le voile de l'audit, il en faudrait un à 5 % de craie au plus, qu'on
+ * ne voit plus. La direction tranche — « la lisibilité plein jour
+ * commande » —, et le brief demande une bande de scotch, pas sa couleur :
+ * c'est l'adhésif qui a changé, pas la bande.
+ *
+ * **Le ruban se voit par ses bords, jamais sous la lettre.** Un reflet
+ * satiné le long du bord haut (un trait de craie à 42 % qui s'éteint en
+ * quatre pixels), un fil de lumière au bord bas, et aux deux bouts déchirés
+ * les fils de la trame qui dépassent — une frange de fils d'un pixel, inégaux,
+ * tous les trois ou quatre pixels, décalée d'un bout à l'autre pour que la
+ * bande ne se lise pas comme une pellicule. Chacun est une couche de dégradé
+ * posée une fois dans le rembourrage (cinq pixels en haut, quatre en bas,
+ * sept au moins sur les côtés pour une frange de quatre) : aucune ne touche
+ * la boîte du texte, et l'audit lit le fond sous la lettre — l'encre seule. Les bouts déchirés restent un `clip-path` : la
+ * bande n'a ni ombre portée ni cerne à couper. Sur le parpaing du tiroir, le
+ * ruban noir se détache franchement ; sur le noir de la barre, ce sont ses
+ * bords qui le dessinent, comme un vrai gaffer sur un mur sombre.
+ *
+ * Plus d'ombre d'encre sous la lettre : elle la gardait lisible sur un
+ * scotch clair, et ne se verrait plus sur l'encre.
+ *
+ * `margin:0` à droite et `font-weight` écrits parce que c'est un `h1` :
+ * sans eux le navigateur lui donne ses marges de titre et disloque la barre.
+ * Oswald 600 et non 700 : quatre pages ne chargent pas la graisse 700, et le
+ * navigateur la fabriquerait en épaississant la 600. */
+.tbf-ou,.tbf-tiroir-titre{
+  --rot:-1.5deg;
+  margin:0 auto 0 6px;flex:0 1 auto;min-width:0;
+  padding:5px 12px 4px;
+  font-family:var(--banner);font-weight:600;letter-spacing:.14em;line-height:1.15;
+  text-transform:uppercase;font-size:clamp(13px,3.9vw,16px);
+  color:var(--craie);opacity:1;
+  /* Dans l'ordre : le reflet du bord haut, le fil du bord bas, la frange des
+     deux bouts, puis le ruban. Tailles et places en px et en %, posées une
+     fois : c'est ce qui permet à l'audit de voir qu'elles évitent la lettre. */
+  background:
+    linear-gradient(rgba(242,238,228,.42) 0 1px,rgba(242,238,228,.1) 1px,transparent) 0 0/100% 5px no-repeat,
+    linear-gradient(rgba(242,238,228,.16),rgba(242,238,228,.16)) 0 100%/100% 1px no-repeat,
+    repeating-linear-gradient(rgba(242,238,228,.36) 0 1px,transparent 1px 3px,
+      rgba(242,238,228,.2) 3px 4px,transparent 4px 7px) 0 0/4px 100% no-repeat,
+    repeating-linear-gradient(rgba(242,238,228,.2) 0 1px,transparent 1px 4px,
+      rgba(242,238,228,.36) 4px 5px,transparent 5px 7px) 100% 0/3px 100% no-repeat,
+    var(--encre);
+  clip-path:polygon(0 8%,4% 0,97% 5%,100% 0,98% 50%,100% 100%,95% 94%,4% 100%,0 92%,2% 50%);
+  rotate:var(--rot);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* Sans titre (un écran qui se nomme lui-même), pas de bande vide. */
+.tbf-ou:empty{visibility:hidden;padding:0}
+/* Sous 400 px, la barre se serre pour que le titre garde ses 120 px — le
+   compte est plus haut, « sa place, comptée à 320 px ». Le mot MENU du tiroir
+   suit la même bande, pour que les deux scotchs restent le même ruban. */
+@media (max-width:399px){
+  .tbf-haut{gap:6px}
+  .tbf-ou{margin-left:2px}
+  .tbf-ou,.tbf-tiroir-titre{padding-right:9px;padding-left:9px;letter-spacing:.1em}
+}
+/* Sous 340 px, une seconde fois, pour la colonne réduite de /diagnostic — le
+   compte est plus haut. La frange des bouts (quatre pixels) tient encore
+   dans les sept de bande. */
+@media (max-width:339px){
+  .tbf-haut{padding-right:6px;padding-left:6px}
+  .tbf-ou{margin-left:0}
+  .tbf-ou,.tbf-tiroir-titre{padding-right:7px;padding-left:7px;letter-spacing:.07em}
+}
 
-/* La bourse et ses deux jetons sont partis avec l'identité — voir plus haut.
-   La leçon qu'ils laissent, elle, est recopiée là où elle sert encore : leurs
-   pastilles étaient ciblées **par attribut** et non par classe, parce que
-   `.pack` désigne déjà la vignette d'un booster dans le kiosque et gagnait
-   contre elles, étalant le jeton sur trois cents pixels de haut. Un nom court
-   dans une feuille partagée finit toujours par appartenir à quelqu'un d'autre. */
+/* La leçon de `.pack`, que l'ancienne bourse a laissée et qui sert encore aux
+   compteurs du HUD replié (voir plus haut). Ses pastilles étaient ciblées
+   **par attribut** et non par classe, parce que `.pack` désigne déjà la
+   vignette d'un booster dans le kiosque (`boosters.html`) et gagnait contre
+   elles, étalant le jeton sur trois cents pixels de haut. Un nom court dans
+   une feuille partagée finit toujours par appartenir à quelqu'un d'autre.
+
+   Le HUD se monte aussi sur le kiosque. Ses compteurs ne portent donc que
+   `tbf-monnaie`, et toutes leurs règles partent de ce nom préfixé (voir
+   « le compteur de monnaie »). Les noms courts que le hub garde sur les
+   siens — `jeton` et `plus`, que `accueil:ui` lit encore, `ech` et
+   `pack` — n'ont pas une règle derrière, et ne doivent pas en avoir. */
 
 /* --------------------------------------------------------------- le menu */
 
@@ -1914,6 +2408,44 @@ html[data-calme~="animations"] .pan[role="button"]:active{transform:none}
 }
 .tbf-burger span{display:block;height:2px;width:100%;background:var(--craie);border-radius:2px}
 
+/* ## Le menu porte l'état le plus urgent (lot 2)
+ *
+ * Le bouton de menu avait un point rouge (`.pip`) quand un match était en
+ * direct : un point aveugle, qui ne disait ni quoi ni combien, et rien pour
+ * des boosters à ouvrir ou un duel qui attend. Il porte maintenant **le
+ * sticker de l'état le plus urgent** du tiroir, à sa couleur et avec son
+ * chiffre — rouge le direct, or une récompense prête, violet quelqu'un qui
+ * attend, dans cet ordre de priorité. C'est le même sticker que sur la tuile
+ * du tiroir qu'il annonce : on le retrouve en ouvrant.
+ *
+ *     <button class="pan tbf-burger" data-urgence="pret" data-pastille="4" …>
+ *     <button class="pan tbf-burger" data-urgence="attend" data-pastille="2" …>
+ *     <button class="pan tbf-burger" data-urgence="direct" …>       un point seul
+ *
+ * Le direct n'a pas de chiffre : un rond rouge et son point de craie (LIVE
+ * ne tient pas sur un bouton de 44 px sans en couvrir la moitié). Un
+ * `data-pastille` posé avec lui l'écrit quand même. Sans `data-urgence`, rien.
+ * C'est le `::after` du bouton, libre sur la barre (`::before` y est le coin
+ * déchiré) comme sur le hub, où le bouton est une `.tbf-plaque` : la règle
+ * l'emporte sur la pastille de la plaque, écrite plus haut. Le sticker
+ * déborde de huit pixels à droite, dans les dix de la marge de la barre. */
+.tbf-burger[data-urgence]::after{
+  content:attr(data-pastille);position:absolute;z-index:3;top:-9px;right:-8px;
+  box-sizing:border-box;min-width:22px;height:22px;padding:0 5px;border-radius:5px;
+  background:var(--pf,var(--face-flare));color:var(--pl,var(--craie));
+  font-family:var(--banner);font-size:13px;font-weight:700;line-height:22px;
+  text-align:center;letter-spacing:.02em;text-shadow:none;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+  box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),2px 2px 0 3.5px rgba(7,9,12,.6);
+  rotate:6deg;pointer-events:none;
+}
+.tbf-burger[data-urgence=pret]::after{--pf:var(--projo);--pl:var(--encre)}
+.tbf-burger[data-urgence=attend]::after{--pf:var(--face-violet);--pl:var(--craie)}
+.tbf-burger[data-urgence=direct]:not([data-pastille])::after{
+  content:"";width:22px;padding:0;border-radius:50%;
+  background:radial-gradient(circle,var(--craie) 0 3.5px,transparent 4.1px),var(--face-flare);
+}
+
 /* Le voile sous le menu. Il était à 72 % et flouté ; sans le flou, la page
    derrière redevient nette et dispute l'œil au menu, donc il fonce à 88 %. On
    devine encore l'écran qu'on va retrouver, on ne le lit plus. */
@@ -1923,84 +2455,424 @@ html[data-calme~="animations"] .pan[role="button"]:active{transform:none}
 }
 .tbf-voile.on{opacity:1;pointer-events:auto}
 
-/* `fixed` et non `absolute` : la barre du haut défile avec une page longue,
-   et un menu ancré à elle s'en irait par le haut au premier mouvement. */
+/* ## Le tiroir : la bâche qu'on déroule (lot 2)
+ *
+ * Le menu du jeu, le même sur toutes les pages : `menu.js` le monte et le
+ * réécrit en `innerHTML`. C'était une petite boîte sombre qui grandissait
+ * depuis le bouton — dix-sept lignes de texte à plat, la seule surface du jeu
+ * sans aucune matière. C'est maintenant **une bâche de parpaing qu'on déroule
+ * depuis le haut** : trois rubriques au pochoir, soulignées d'une écharpe de
+ * leur ton ; sous chacune, des tuiles-bâches de 88 px au ton de la rubrique,
+ * les mêmes que celles du hub, avec les mêmes stickers d'état ; et un pied de
+ * liste calme sur un ticket kraft, pour ce qui ne se joue pas.
+ *
+ *     <nav id="tbf-tiroir" class="tbf-tiroir" aria-label="Le reste du jeu" hidden>
+ *       <div class="tbf-tiroir-tete">
+ *         <a class="tbf-tiroir-ici" href="/"><svg …/>L’accueil</a>
+ *         <span class="tbf-tiroir-titre" aria-hidden="true">MENU</span>     facultatif
+ *         <a class="tbf-avatar tbf-avatar--barre" href="/profil" …>…</a>    facultatif
+ *         <button type="button" class="tbf-tiroir-fermer"
+ *                 aria-label="Fermer le menu"><svg …/></button>
+ *       </div>
+ *       <section class="tbf-tiroir-rub">
+ *         <h2 class="tbf-rubrique" data-ton="flare"><span class="tbf-pochoir">JOUER</span></h2>
+ *         <div class="tbf-tiroir-grille">
+ *           <a class="tbf-case" data-ton="flare" href="/virage" data-etat="direct">
+ *             <svg …/><span class="lib">Le Grand Virage</span></a>
+ *           …
+ *         </div>
+ *       </section>
+ *       …  MA COLLECTION (data-ton="bleu"), LE FOOTBALL (data-ton="vert")
+ *       <div class="tbf-ticket tbf-tiroir-pied">
+ *         <div class="tbf-abo" id="tbf-abo" hidden></div>
+ *         <a href="/aide"><svg …/>Aide et premiers pas</a>
+ *         <button type="button" class="tbf-tiroir-bt" id="tbf-installer" hidden>…</button>
+ *         <p class="tbf-installer-ios" id="tbf-installer-ios" hidden>…</p>
+ *         <a href="/profil">…</a>  <a href="/compte">…</a>  <a href="#" class="sortie">…</a>
+ *         <div class="tbf-rubrique" id="tbf-calme-titre">MODE CALME</div>
+ *         <div role="group" aria-labelledby="tbf-calme-titre">…</div>
+ *         <div class="tbf-version" id="tbf-version"></div>
+ *       </div>
+ *     </nav>
+ *     <div class="tbf-voile"></div>
+ *
+ * **Le déroulé** : la bâche descend de toute sa hauteur en 240 ms, vite puis
+ * en freinant — une toile lâchée qui se tend. Sans rebond : en dépassant, son
+ * bord du haut se décollerait de l'écran et laisserait voir la page derrière.
+ * À animations réduites et au calme, elle paraît en fondu, sans bouger. Ce
+ * que `menu.js` doit faire :
+ * `hidden` à faux, un calcul forcé (`tiroir.offsetWidth`), puis `.on` sur le
+ * tiroir et le voile ; à la fermeture, `.on` retiré, puis `hidden` **240 ms**
+ * plus tard. Un navigateur qui connaît `@starting-style` déroule même sans le
+ * calcul forcé.
+ *
+ * **Plein écran sur un téléphone, une bâche de 600 px au-delà.** Ancrée en
+ * haut et au bord droit de la colonne de la page — le bord du bouton qui l'a
+ * ouverte —, elle en prend toute la largeur jusqu'à 600 px : sur une
+ * tablette, trois tuiles de deux cent cinquante pixels ne seraient plus des
+ * tuiles. Sa hauteur est celle de son contenu, l'écran au plus, et elle
+ * défile seule (`overscroll-behavior` : le geste ne fait pas défiler la page
+ * derrière). Elle couvre la barre du haut : c'est pourquoi elle a sa propre
+ * tête, avec le retour à l'accueil et le bouton qui la ferme.
+ *
+ * **Le fond est le parpaing grainé**, opaque : la tribune ne passe jamais sous
+ * une destination. Le cerne au marqueur est posé dedans, comme sur les
+ * boutons de la barre, et le bas de la bâche est un ourlet d'encre avec son
+ * ombre dure. */
 .tbf-tiroir{
-  position:fixed;z-index:49;
-  top:calc(env(safe-area-inset-top) + 58px);
+  position:fixed;z-index:49;top:0;
   /* La colonne de **cette** page, mesurée par nav.js. `--colonne` est la
      largeur commune : sur une page plus large, le menu se serait ancré à
      trente pixels du bord qu' il vise. */
-  right:max(10px,calc(50vw - var(--tbf-colonne,var(--colonne)) / 2 + 10px));
-  width:min(230px,72vw);padding:6px;display:grid;gap:1px;
-  background:rgba(12,17,24,.96);border:1px solid var(--trait);border-radius:var(--r);
-  box-shadow:0 24px 60px rgba(0,0,0,.7);
-  transform-origin:100% 0;transform:scale(.9);opacity:0;pointer-events:none;
-  transition:opacity .16s ease,transform .16s ease;
+  right:max(0px,calc(50vw - var(--tbf-colonne,var(--colonne)) / 2));
+  width:min(100vw,var(--tbf-colonne,var(--colonne)),600px);
+  max-height:100vh;overflow:auto;overscroll-behavior:contain;
+  padding:calc(env(safe-area-inset-top) + 8px) 14px calc(env(safe-area-inset-bottom) + 16px);
+  background:var(--grain-beton) 0 0/256px 256px repeat,var(--parpaing);
+  color:var(--craie);
+  border-image:var(--trace-c) 9 / 9px stretch;
+  border-radius:0 0 6px 6px;
+  box-shadow:0 4px 0 var(--encre),0 26px 60px rgba(0,0,0,.7);
+  translate:0 calc(-100% - 14px);pointer-events:none;
+  transition:translate .24s cubic-bezier(.22,1,.36,1);
 }
-.tbf-tiroir.on{transform:scale(1);opacity:1;pointer-events:auto}
-/* **Quarante-quatre, comme les interrupteurs.** La ligne faisait trente-neuf
+.tbf-tiroir{max-height:100dvh}
+.tbf-tiroir.on{translate:0 0;pointer-events:auto}
+@starting-style{
+  .tbf-tiroir.on{translate:0 calc(-100% - 14px);opacity:0}
+  .tbf-voile.on{opacity:0}
+}
+
+/* **La tête** : le retour à l'accueil et le bouton qui ferme, deux bâches de
+   parpaing de 44 px comme la flèche et le menu de la barre qu'elle recouvre ;
+   entre les deux, facultatifs, le mot MENU sur son scotch et l'avatar. Le
+   premier élément qui n'est pas suivi d'un titre pousse le reste à droite. */
+.tbf-tiroir-tete{display:flex;align-items:center;gap:10px;min-height:44px;margin:0 0 18px}
+.tbf-tiroir-tete>.tbf-tiroir-ici:not(:has(+ .tbf-tiroir-titre)){margin-right:auto}
+.tbf-tiroir-tete>.tbf-tiroir-titre{margin:0 auto 0 4px}
+.tbf-tiroir-tete>.tbf-tiroir-ici,.tbf-tiroir-fermer{
+  --epaisseur:3px;
+  position:relative;flex:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-width:44px;height:44px;padding:0 13px 0 11px;margin:0 0 var(--epaisseur);
+  background:var(--grain-toile) 0 0/256px 256px repeat,var(--parpaing);
+  border:0;border-image:var(--trace-a) 9 / 9px stretch;border-radius:5px;
+  box-shadow:inset 0 1px 0 rgba(242,238,228,.35),2px var(--epaisseur) 0 var(--encre);
+  color:var(--craie);font-family:var(--banner);font-weight:600;font-size:13px;line-height:1;
+  letter-spacing:.1em;text-transform:uppercase;text-decoration:none;
+  text-shadow:0 1px 0 var(--encre);cursor:pointer;
+  transition:translate .08s ease,box-shadow .08s ease;
+}
+.tbf-tiroir-fermer{width:44px;padding:0;border-image-source:var(--trace-c)}
+.tbf-tiroir-tete>.tbf-tiroir-ici::before,.tbf-tiroir-fermer::before{
+  content:"";position:absolute;right:-1px;bottom:-1px;width:12px;height:12px;pointer-events:none;
+  background:linear-gradient(135deg,transparent 0 calc(50% - 1px),
+    var(--encre) calc(50% - 1px) calc(50% + .8px),var(--parpaing) calc(50% + .8px));
+}
+.tbf-tiroir-tete>.tbf-tiroir-ici svg,.tbf-tiroir-fermer svg{
+  width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round;opacity:1;
+}
+.tbf-tiroir-tete>.tbf-tiroir-ici:active,.tbf-tiroir-fermer:active{
+  translate:0 var(--epaisseur);
+  box-shadow:inset 0 1px 0 rgba(242,238,228,.35),2px 0 0 var(--encre);
+}
+.tbf-tiroir-tete>.tbf-tiroir-ici:focus-visible,.tbf-tiroir-fermer:focus-visible{
+  outline:3px solid var(--projo);outline-offset:2px;
+}
+/* Sur l'accueil, l'entrée de l'accueil est l'endroit où l'on est : elle
+   passe à la toile craie, l'encre dessus — marquée, sans proposer d'y aller. */
+.tbf-tiroir-tete>.tbf-tiroir-ici.on{
+  background:var(--grain-toile) 0 0/256px 256px repeat,var(--craie);
+  color:var(--encre);text-shadow:none;
+}
+
+/* **La liste calme**, pour tout lien du tiroir qui n'est pas une tuile : le
+   pied (recoloré plus bas, sur son kraft), et le balisage d'avant le lot 2,
+   des lignes à plat sous chaque rubrique, qui reste lisible tel quel sur la
+   bâche. Sous `:where`, au poids d'une classe : le pied et la tête
+   l'emportent sans surenchère.
+
+   **Quarante-quatre, comme les interrupteurs.** La ligne faisait trente-neuf
    pixels — son rembourrage et une ligne de quatorze —, et le tiroir mêlait
-   donc des interrupteurs de 44 (`menu.js`) et des liens de 39 : la même
-   ligne au regard, deux cibles au doigt. `min-height` et non un rembourrage
-   plus gros, parce que le contenu se centre déjà en flex ; il vaut aussi pour
-   `.tbf-tiroir-ici`, qui est un lien du tiroir. */
-.tbf-tiroir a{
-  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
+   des interrupteurs de 44 (`menu.js`) et des liens de 39 : la même ligne au
+   regard, deux cibles au doigt. `min-height` et non un rembourrage plus gros,
+   parce que le contenu se centre déjà en flex. */
+.tbf-tiroir :where(a:not(.tbf-case)){
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;
   min-height:44px;
-  color:inherit;text-decoration:none;font-size:14px;
+  color:var(--craie);text-decoration:none;font-size:14px;
 }
-.tbf-tiroir a:hover,.tbf-tiroir a:focus-visible{background:rgba(242,238,228,.08)}
-.tbf-tiroir a svg{
+.tbf-tiroir :where(a:not(.tbf-case):hover,a:not(.tbf-case):focus-visible){
+  background:rgba(242,238,228,.08)}
+.tbf-tiroir :where(a:not(.tbf-case)) svg{
   width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;
   stroke-linecap:round;stroke-linejoin:round;opacity:.7;
 }
 .tbf-tiroir hr{border:0;border-top:1px solid var(--trait);margin:4px 8px}
-.tbf-tiroir a.sortie{color:#F0846F}
+.tbf-tiroir :where(a.sortie){color:var(--flare-clair)}
 
-/* Le menu est désormais la seule navigation du jeu : il porte onze
-   destinations au lieu de six, et il lui faut donc de la place et des
-   rubriques. Sans elles, onze lignes à plat forment un mur qu'on ne lit pas. */
 /* La hauteur disponible, et pourquoi `dvh`.
  *
- * Le menu porte dix-sept lignes depuis que l'entrée d'administration y arrive
- * vraiment — elle ne s'y posait plus, et personne ne l'avait vu. Sur un écran
- * de neuf cents pixels, la dernière ligne tombait sous le bord : c'est-à-dire
- * « Se déconnecter », celle qu'on vient chercher.
+ * Le menu porte dix-sept destinations depuis que l'entrée d'administration y
+ * arrive vraiment. Sur un écran court, la dernière tombait sous le bord :
+ * c'est-à-dire « Se déconnecter », celle qu'on vient chercher. La bâche
+ * défile donc seule, et sa hauteur est plafonnée à l'écran (règle du tiroir,
+ * plus haut).
  *
  * `100vh` ment sur un téléphone. Il vaut la **plus grande** hauteur possible,
  * barre d'adresse repliée ; tant qu'elle est dépliée, un menu calculé dessus
  * dépasse de sa hauteur à elle. `dvh` suit la fenêtre réellement visible.
  * `vh` reste écrit au-dessus en repli : un navigateur qui ignore `dvh` ignore
  * la ligne entière, il ne tombe pas sur zéro. */
-.tbf-tiroir{width:min(268px,80vw);max-height:calc(100vh - 70px);overflow:auto}
-.tbf-tiroir{max-height:calc(100dvh - 70px)}
-/* Onze pixels à 88 %, et non huit et demi à 42 % : une rubrique qu'on ne lit
-   pas ne range rien, et le menu redevient le mur de lignes qu'elle devait
-   découper. Elle reste plus petite et plus pâle que les lignes qu'elle
-   annonce — c'est ce qui la fait lire comme un titre et non comme une ligne
-   de plus. */
+
+/* **Les rubriques au pochoir.** Vingt pixels, le seuil du pochoir
+   (amendement 6). **La lettre est à la craie, le ton est dans l'écharpe**
+   qui la souligne — flare pour JOUER, `--bleu-clair` pour MA COLLECTION,
+   `--vert-clair` pour LE FOOTBALL —, peinte dans le rembourrage du bas en
+   couche de fond posée une fois : elle ne touche pas la boîte du texte, et
+   l'audit lit encore le contraste. Le ton y occupe six pixels sur onze, la
+   craie et l'encre se partagent le reste : c'est lui qu'on voit d'abord,
+   rubrique par rubrique, et les tuiles juste dessous le reprennent en face
+   pleine.
+
+   **Pourquoi pas la lettre dans le ton**, comme la maquette : au soleil,
+   aucun ton n'y tient. Sous le voile blanc de l'audit, le parpaing grainé
+   s'éclaircit tant que le rouge de JOUER tombait à 1,7:1, le bleu clair à
+   2,6, le vert clair à 2,5, pour les 3:1 du grand texte — JOUER était le
+   texte le plus pâle de tout l'audit, et le rouge n'y tenait que 3,4 même à
+   l'intérieur. La version claire du rouge n'y ferait que 2,4, l'or 3,0 ;
+   seule la craie passe : 3,7 au soleil, 12,5 à l'intérieur. Avant le lot,
+   ces trois intitulés étaient à la craie, et à 3,9:1 au soleil. La
+   direction le tranche elle-même — « la lisibilité plein jour commande » —,
+   et le brief garde ses trois rubriques au pochoir « soulignées d'une
+   écharpe du ton ».
+
+   Le pont du pochoir est sur le `span.tbf-pochoir` qu'elle contient, pas sur
+   elle : le masque couperait aussi l'écharpe, et se placerait à 56 % d'une
+   boîte qui porte un rembourrage. Sans le `span`, le titre reste plein, et se
+   lit aussi bien. Le `span` ne porte pas de `data-ton` : il prend la couleur
+   de la rubrique, la craie. `menu-smoke` lit le texte de chaque
+   `.tbf-rubrique` : il reste le mot seul.
+
+   Elle était en onze pixels à 88 % — une rubrique qu'on ne lit pas ne range
+   rien. Dans le pied kraft, MODE CALME redevient un titre cousu à l'encre
+   (plus bas).
+
+   `position:relative` pour l'audit : il ne sait dire qu'une couche de fond
+   laisse le texte à découvert que si le texte se situe dans la boîte qui la
+   peint, et il remonte pour cela les parents positionnés. Sans elle, le mot
+   du pochoir se plaçait dans le tiroir, et la rubrique était comptée parmi
+   les textes non mesurables. */
 .tbf-rubrique{
-  font-family:var(--banner);font-size:11px;letter-spacing:.2em;opacity:.88;
-  padding:9px 12px 3px;
+  --c:var(--craie);
+  position:relative;display:inline-block;margin:0 0 12px;padding:0 0 10px;
+  font-family:var(--banner);font-weight:700;font-size:20px;line-height:1;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--craie);opacity:1;
+  background:repeating-linear-gradient(115deg,var(--c) 0 6px,var(--encre) 6px 7px,
+    var(--craie) 7px 10px,var(--encre) 10px 11px) 0 100%/100% 5px no-repeat;
 }
-.tbf-rubrique:first-child{padding-top:4px}
-/* La page où l'on est : marquée, et volontairement pas cliquable au regard —
+.tbf-rubrique[data-ton=flare]{--c:var(--flare)}
+.tbf-rubrique[data-ton=bleu]{--c:var(--bleu-clair)}
+.tbf-rubrique[data-ton=vert]{--c:var(--vert-clair)}
+.tbf-rubrique>.tbf-pochoir{font-size:1em}
+.tbf-tiroir-rub{margin:0 0 18px}
+
+/* **La grille de bâches-tuiles**, au ton de la rubrique : chaque tuile porte
+   son `data-ton` (la table des tons s'applique à l'élément qui le porte, pas
+   à ses enfants). Trois colonnes sur un téléphone — cent pixels au moins, et
+   l'écran de 360 en fait trois de cent deux —, davantage sur la bâche de
+   600. Douze pixels d'écart : cinq vont à l'ombre dure de la tuile du
+   dessus, sept restent pour le sticker d'état qui déborde de celle du
+   dessous.
+
+   **Cent et non quatre-vingt-seize** depuis que les libellés sont écrits
+   sur un bout de gaffer (voir « le nom, sur un bout de gaffer », juste
+   après) : le ruban prend dix pixels de large, et « CLASSEMENT DES », la
+   plus longue ligne, en demande soixante-seize. Une tuile de cent les lui
+   laisse, avec ses six de rembourrage ; une de quatre-vingt-seize le
+   coupait en trois lignes, dont la dernière disparaît. Les trois colonnes
+   tiennent dès 352 px d'écran ; en dessous, deux, comme à 320. */
+.tbf-tiroir-grille{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px;
+  padding-top:4px;
+}
+/* La tuile du tiroir : 88 px de haut sur la largeur de sa colonne, une icône
+   de vingt-quatre, et un libellé de onze pixels qui a le droit de passer sur
+   deux lignes — « DUEL DE TRIBUNES » ne tient pas sur une. Trois lignes ne
+   tiendraient pas sous l'icône : la troisième est coupée, et c'est au libellé
+   d'être court. */
+.tbf-tiroir .tbf-case{
+  --ico:24px;
+  aspect-ratio:auto;height:88px;gap:8px;padding:6px 6px 4px;
+  font-size:11px;line-height:1.12;letter-spacing:.04em;
+}
+.tbf-tiroir .tbf-case .lib{
+  white-space:normal;text-overflow:clip;text-align:center;text-wrap:balance;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;
+  overflow:hidden;
+}
+/* **Le nom, sur un bout de gaffer.** La tuile garde la face de sa rubrique,
+   son icône et son sticker ; son nom est écrit à la craie sur un ruban toilé
+   noir collé en travers, le gaffer du titre de la barre (« le scotch est un
+   gaffer », plus haut) : le même reflet au bord haut, la même frange de fils
+   aux deux bouts déchirés, à sa taille.
+
+   **Pourquoi pas sur la face, comme la maquette** : au soleil, aucune face
+   qui garde sa couleur ne porte la craie. Sous le voile blanc de l'audit, la
+   craie tombe à 2,6:1 sur le rouge de H1, 2,4 sur son bleu et son vert — et
+   la défaire n'y changerait rien, les faces vives d'avant H1 la tiendraient
+   moins encore (2,2 sur le rouge). Pour 4,5, il faudrait une face presque
+   noire, qui ne dirait plus sa rubrique. Avant le lot, ces seize noms
+   étaient à la craie sur le fond sombre du menu, 4,6:1 au soleil ; la bâche
+   au ton les faisait tomber à 2,5. Sur l'encre, la craie tient **4,9:1 au
+   soleil** et 17:1 dedans, et cela quel que soit l'arbitrage de H1 : le ton
+   reste dans la face, la lettre est sur ce qui la porte. C'est le partage
+   déjà fait pour les rubriques (la craie, le ton à l'écharpe) et pour le
+   titre de la barre — « la lisibilité plein jour commande ».
+
+   Les couches du ruban sont posées une fois, en pixels et en pour cent,
+   dans le rembourrage (trois pixels en haut, cinq sur les côtés pour une
+   frange de trois) : aucune ne touche la boîte du texte, et l'audit lit le
+   fond sous la lettre, l'encre seule. Le ruban fait la largeur du nom, et
+   celle de la tuile quand le nom passe sur deux lignes. Il penche d'un
+   degré, d'un côté puis de l'autre d'une tuile à la suivante — moins de
+   deux, la règle de ce qui vit en grille. Les bouts déchirés sont un
+   `clip-path`, qui ne mord que dans la frange ; pas d'ombre d'encre sous la
+   lettre, elle ne se verrait pas sur l'encre. La craie est écrite ici et non
+   prise au lettrage de la tuile : sur une tuile or ou craie, le lettrage
+   est l'encre, et il disparaîtrait sur le ruban.
+
+   **Les capitales s'y serrent**, sans espacement, comme sur les tuiles du
+   hub : le ruban prend dix pixels à la ligne, l'espacement de la tuile
+   (.04em) en prenait six de plus à « CLASSEMENT DES », et le nom passait
+   sur trois lignes à 360 px. Voir aussi la grille, juste avant.
+
+   **Pour revenir au nom peint sur la face**, ce bloc seul (et la grille à
+   quatre-vingt-seize) : les seize noms redeviennent des textes sous le
+   grain, à 2,4–2,6:1 au soleil. Le hub n'en a pas : ses tuiles de
+   cinquante-huit pixels n'ont pas les dix de rembourrage que le ruban prend
+   en largeur — c'est son rail qui en déciderait (« la tuile », plus
+   haut). */
+.tbf-tiroir .tbf-case .lib{
+  box-sizing:border-box;padding:3px 5px 2px;
+  letter-spacing:0;color:var(--craie);text-shadow:none;
+  background:
+    linear-gradient(rgba(242,238,228,.42) 0 1px,rgba(242,238,228,.1) 1px,transparent) 0 0/100% 3px no-repeat,
+    repeating-linear-gradient(rgba(242,238,228,.36) 0 1px,transparent 1px 3px,
+      rgba(242,238,228,.2) 3px 4px,transparent 4px 7px) 0 0/3px 100% no-repeat,
+    repeating-linear-gradient(rgba(242,238,228,.2) 0 1px,transparent 1px 4px,
+      rgba(242,238,228,.36) 4px 5px,transparent 5px 7px) 100% 0/3px 100% no-repeat,
+    var(--encre);
+  clip-path:polygon(0 8%,4% 0,97% 5%,100% 0,98% 50%,100% 100%,95% 94%,4% 100%,0 92%,2% 50%);
+  rotate:-1deg;
+}
+.tbf-tiroir .tbf-case:nth-child(2n) .lib{rotate:1deg}
+/* La page où l'on est : la tuile garde son ton et prend un pointillé de son
+   lettrage, à l'intérieur — la découpe d'un « tu es ici », sans proposer
+   d'y aller ni éteindre la porte.
+
+   **Le trait se pose dans le rembourrage, jamais sur le libellé.** Un
+   contour décalé de −8 px occupait la bande de six à huit pixels sous le
+   bord, alors que le rembourrage n'en fait que six : un libellé qui remplit
+   sa ligne (« DUEL DE TRIBUNES », « LES MATCHS DU JOUR ») arrivait à sept
+   pixels du bord, et les tirets passaient sur ses lettres. À −5, le trait
+   tient de trois à cinq pixels, un pixel avant le contenu. Il frôle le coin
+   déchiré sans le couvrir.
+
+   **Le focus passe devant.** Les deux sont des contours : sans
+   `:not(:focus-visible)`, cette règle, plus lourde que celle du focus de la
+   bâche, gardait les tirets sur la tuile atteinte au clavier, et rien ne
+   disait où était le focus. Atteinte, la tuile prend l'anneau or comme les
+   autres ; `aria-current` dit toujours « tu es ici ». */
+.tbf-tiroir .tbf-case.on:not(:focus-visible){outline:2px dashed var(--lettre);outline-offset:-5px}
+
+/* **Le pied, sur son ticket kraft** : l'aide, l'installation, le profil, le
+   compte, l'administration, la sortie, le mode calme et la version. Une
+   liste calme et non des tuiles : on y vient en sachant ce qu'on cherche, et
+   ce ne sont pas des endroits où jouer. Le ticket (`.tbf-ticket`, plus bas
+   dans le vocabulaire) porte le papier, sa déchirure et son cerne ; cette
+   règle n'en décide que la grille — deux colonnes de liens, et ce qui n'est
+   pas un lien sur toute la largeur.
+
+   **Tout y est à l'encre** (amendement 15 : aucun ton clair sur le kraft) :
+   8,7:1. La sortie garde son rouge sur l'icône seule, en `--rouge-fonce` — le
+   mot en rouge foncé ne tiendrait que 3,4:1 sur le papier. La marque
+   d'abonné devient un tampon plein, vert foncé sur craie. La consigne de
+   l'iPhone, que `menu.js` peint en craie pour le fond sombre d'avant, passe
+   à l'encre : ces règles pèsent deux classes, et l'emportent sur la feuille
+   que `menu.js` injecte après celle-ci. La grille pèse deux classes : le
+   ticket, écrit plus bas dans cette feuille, pose son `display:block` et son
+   rembourrage au poids d'une. */
+.tbf-tiroir .tbf-tiroir-pied{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;
+  margin:6px 0 0;padding:14px 16px 12px;
+}
+/* **Une seule colonne sous 350 px.** À 320, la bâche fait 320, moins ses
+   quatorze pixels de marge de chaque côté, les seize du ticket et l'écart :
+   cent vingt-trois par colonne. « ADMINISTRATION », un seul mot qu'on ne
+   coupe pas, en demande cent trente-quatre avec son icône, et débordait de
+   onze. Deux colonnes tiennent à partir de 342 px ; la borne en garde
+   quelques-uns pour une police de repli plus large. Le pied y prend une
+   ligne par lien, et le tiroir défile déjà seul. */
+@media (max-width:349px){
+  .tbf-tiroir .tbf-tiroir-pied{grid-template-columns:minmax(0,1fr)}
+}
+.tbf-tiroir-pied>*{grid-column:1/-1}
+.tbf-tiroir-pied>a,.tbf-tiroir-pied>.tbf-tiroir-bt{grid-column:auto}
+.tbf-tiroir-pied a{
+  min-height:44px;padding:6px 2px;gap:9px;border-radius:0;
+  border-bottom:1.5px dashed rgba(7,9,12,.38);
+  color:var(--encre);font-family:var(--banner);font-weight:600;font-size:14px;line-height:1.1;
+  letter-spacing:.05em;text-transform:uppercase;
+}
+.tbf-tiroir-pied a:hover,.tbf-tiroir-pied a:focus-visible{background:rgba(7,9,12,.07)}
+.tbf-tiroir-pied a svg{width:18px;height:18px;opacity:1;stroke-width:2.2}
+.tbf-tiroir-pied a.on{background:none;color:var(--encre);
+  text-decoration:underline 2px;text-underline-offset:4px}
+.tbf-tiroir-pied a.sortie{color:var(--encre)}
+.tbf-tiroir-pied a.sortie svg{color:var(--rouge-fonce)}
+.tbf-tiroir-pied hr{border:0;border-top:1.5px dashed rgba(7,9,12,.38);margin:6px 0}
+.tbf-tiroir-pied .tbf-tiroir-bt{
+  color:var(--encre);border-radius:0;padding:6px 2px;gap:9px;
+  font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.2;
+  letter-spacing:.05em;text-transform:uppercase;
+}
+.tbf-tiroir-pied>.tbf-tiroir-bt{border-bottom:1.5px dashed rgba(7,9,12,.38)}
+.tbf-tiroir-pied .tbf-tiroir-bt:hover,
+.tbf-tiroir-pied .tbf-tiroir-bt:focus-visible{background:rgba(7,9,12,.07)}
+.tbf-tiroir-pied .tbf-tiroir-bt svg{opacity:1}
+.tbf-tiroir-pied .tbf-installer-ios{margin:2px 0 8px;color:var(--encre)}
+.tbf-tiroir-pied .tbf-installer-ios b{color:var(--encre)}
+.tbf-tiroir-pied .tbf-abo{margin:0 0 8px;border:0;border-radius:4px;background:var(--craie);
+  box-shadow:0 0 0 1.5px var(--encre),1px 2px 0 1.5px rgba(7,9,12,.45)}
+.tbf-tiroir-pied .tbf-abo b{color:var(--vert-fonce)}
+.tbf-tiroir-pied .tbf-abo span{color:var(--encre);opacity:1}
+/* La version à l'encre pleine : à 86 % sur le kraft, elle perdait au soleil
+   ce que le papier lui laisse déjà à peine (2,7:1 au lieu de 3,3). */
+.tbf-tiroir-pied .tbf-version{padding:10px 0 0;color:var(--encre);opacity:1}
+/* MODE CALME, dans le pied : un titre cousu à l'encre, avec son bout
+   d'écharpe devant — moins de vingt pixels, donc pas de pochoir. */
+.tbf-tiroir-pied .tbf-rubrique{
+  display:flex;align-items:center;gap:8px;margin:0;padding:14px 0 4px;
+  font-weight:600;font-size:13px;line-height:1.2;letter-spacing:.14em;
+  color:var(--encre);background:none;
+}
+.tbf-tiroir-pied .tbf-rubrique::before{
+  content:"";flex:none;width:14px;height:6px;border-radius:1px;
+  box-shadow:0 0 0 1px var(--encre);
+  background:repeating-linear-gradient(115deg,var(--projo) 0 3px,var(--encre) 3px 4px,
+    var(--flare) 4px 7px,var(--encre) 7px 8px);
+}
+
+/* La page où l'on est, dans une liste calme sur la bâche (le balisage
+   d'avant le lot 2) : marquée, et volontairement pas cliquable au regard —
    proposer d'aller là où on est déjà fait douter de l'endroit où on se trouve. */
-.tbf-tiroir a.on{background:rgba(245,195,59,.12);color:var(--projo)}
-.tbf-tiroir a.on svg{opacity:1}
-/* L'accueil, en tête et sans rubrique : c'est la sortie de secours. */
-.tbf-tiroir-ici{
-  display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;
-  color:inherit;text-decoration:none;font-size:14px;
-}
-.tbf-tiroir-ici svg{
-  width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;
-  stroke-linecap:round;stroke-linejoin:round;opacity:.7;
-}
-.tbf-tiroir-ici:hover,.tbf-tiroir-ici:focus-visible{background:rgba(242,238,228,.08)}
+.tbf-tiroir :where(a:not(.tbf-case).on){background:rgba(245,195,59,.12);color:var(--projo)}
+.tbf-tiroir :where(a:not(.tbf-case).on) svg{opacity:1}
 /* La pastille du direct, reprise de la barre du bas : sur le bouton pour
-   qu'on la voie sans ouvrir, sur la ligne du Virage pour qu'on sache où. */
+   qu'on la voie sans ouvrir, sur la ligne du Virage pour qu'on sache où.
+   Le lot 2 la remplace par les stickers d'état (`data-urgence` sur le bouton,
+   `data-etat` sur la tuile) ; elle reste pour qui la pose encore. */
 .tbf-tiroir .pip,.tbf-burger .pip{
   width:7px;height:7px;border-radius:50%;background:#E0402C;
   box-shadow:0 0 8px #E0402C;animation:tbf-clignote 1.3s infinite;
@@ -2011,10 +2883,12 @@ html[data-calme~="animations"] .pan[role="button"]:active{transform:none}
 
 /* **Le tiroir et la pastille, au calme.**
 
-   Le tiroir et son voile s'ouvrent en fondu, le tiroir en grandissant depuis
-   le bouton : à animation réduite, ils apparaissent d'un coup, comme la boîte
-   de confirmation. `menu.js` retire le tiroir par une minuterie et non sur la
-   fin de la transition, donc rien n'attend une transition qui n'a plus lieu.
+   La bâche ne se déroule plus : elle paraît en place, en fondu de 160 ms, et
+   son voile avec elle. Un fondu n'est pas un mouvement — rien ne se déplace
+   sous l'œil —, et il dit qu'un calque arrive, ce qu'une apparition sèche ne
+   dit pas. `menu.js` retire le tiroir par une minuterie et non sur la fin de
+   la transition, donc rien n'attend une transition qui n'a plus lieu. Les
+   deux bâches de la tête ne s'enfoncent plus : elles s'assombrissent.
 
    La pastille du direct est un signal d'état, et c'est sa **présence** qui le
    porte : un point rouge allumé sur le bouton dit « il y a un match en
@@ -2022,10 +2896,20 @@ html[data-calme~="animations"] .pan[role="button"]:active{transform:none}
    clignotement qui ne s'arrête jamais est justement ce qu'on doit pouvoir
    couper. Il cesse donc ; la pastille reste allumée, à pleine lumière. */
 @media (prefers-reduced-motion:reduce){
-  .tbf-voile,.tbf-tiroir{transition:none}
+  .tbf-voile{transition:opacity .16s ease}
+  .tbf-tiroir{translate:none;opacity:0;transition:opacity .16s ease}
+  .tbf-tiroir.on{opacity:1}
+  .tbf-tiroir-tete>.tbf-tiroir-ici,.tbf-tiroir-fermer{transition:none}
+  .tbf-tiroir-tete>.tbf-tiroir-ici:active,.tbf-tiroir-fermer:active{translate:none;filter:brightness(.88)}
   .tbf-tiroir .pip,.tbf-burger .pip{animation:none}
 }
-html[data-calme~="animations"] .tbf-voile,html[data-calme~="animations"] .tbf-tiroir{transition:none}
+html[data-calme~="animations"] .tbf-voile{transition:opacity .16s ease}
+html[data-calme~="animations"] .tbf-tiroir{translate:none;opacity:0;transition:opacity .16s ease}
+html[data-calme~="animations"] .tbf-tiroir.on{opacity:1}
+html[data-calme~="animations"] .tbf-tiroir-tete>.tbf-tiroir-ici,
+html[data-calme~="animations"] .tbf-tiroir-fermer{transition:none}
+html[data-calme~="animations"] .tbf-tiroir-tete>.tbf-tiroir-ici:active,
+html[data-calme~="animations"] .tbf-tiroir-fermer:active{translate:none;filter:brightness(.88)}
 html[data-calme~="animations"] .tbf-tiroir .pip,
 html[data-calme~="animations"] .tbf-burger .pip{animation:none}
 
@@ -2267,6 +3151,19 @@ html[data-calme~="animations"] .pan:is(.tbf-burger,.tbf-retour):active{transform
 .tbf-jauge[data-crans="8"]{--crans:8}  .tbf-jauge[data-crans="9"]{--crans:9}
 .tbf-jauge[data-crans="10"]{--crans:10}
 
+/* **La jauge qui suit le temps** (`data-suit`, lot 2). Le remplissage prend
+   une demi-seconde d'amorti : c'est fait pour un palier qui saute, une
+   collection qui passe de 14 à 15. Une page qui pousse la largeur à chaque
+   image — le rideau d'ouverture, qui règle son écharpe sur le temps écoulé
+   — le verrait traîner derrière l'horloge, et le nœud arriver au bout
+   après la fin. Elle prend un lissage court et linéaire, qui n'efface
+   qu'une image sautée.
+
+       <div class="tbf-jauge" data-suit data-crans="3"><i></i></div>
+
+   Au calme, comme toute jauge, elle saute à sa valeur (plus bas). */
+.tbf-jauge[data-suit] i{transition:width .18s linear}
+
 /* ## L'anneau d'XP
  *
  * Un cercle d'écharpe autour d'un avatar, rempli à `--p` (de 0 % à 100 %,
@@ -2360,7 +3257,7 @@ html[data-calme~="animations"] .pan:is(.tbf-burger,.tbf-retour):active{transform
 @media (prefers-reduced-motion:reduce){
   .tbf-decor{transition:none}
   .tbf-spin{animation-duration:3s}
-  .tbf-jauge i{transition:none}
+  .tbf-jauge i,.tbf-jauge[data-suit] i{transition:none}
   .tbf-colle{animation:none}
 }
 html[data-calme~="animations"] .tbf-decor{transition:none}
@@ -2557,6 +3454,43 @@ html[data-calme~="animations"] .tbf-colle{animation:none}
   border-radius:50%;background:currentColor}
 
 
+/* ------------------------------------------------------------ la banderole
+
+   Un nom collé sous ce qu'il nomme : le Fanzzy sous le personnage du hub,
+   et demain le nom d'une carte (la direction le veut « en banderole sur une
+   bande craie »). Une bande de craie de travers, le nom en Oswald 700 à
+   l'encre (17:1), un cerne d'encre et une ombre dure pleine.
+
+       <b class="tbf-banderole">Gosier Rodé</b>
+
+   **Pourquoi pas le sticker** : il fait vingt-quatre pixels de haut en
+   treize, et un nom se lit en quatorze ou quinze ; son bord de craie
+   découpé autour le détache d'un fond chargé, et une bande posée sur le mur
+   sombre n'en a pas besoin — le cerne d'un pixel et demi suffit, l'ombre
+   pleine la décolle. Vingt-deux pixels de haut en quatorze (dix-sept de
+   ligne, trois et deux de rembourrage) : la hauteur que le hub a mesurée
+   dans sa rangée de quarante-quatre, avec l'âge dessous. Une page qui veut
+   le quinze de la maquette écrit `font-size:15px;line-height:18px`. Jamais
+   le marqueur : un nom n'est pas l'un des six emplois (amendement 6).
+
+   Un nom trop long pour sa place finit en points de suspension : la page
+   borne la largeur (`max-width`), la bande ne passe jamais à la ligne. Le
+   cerne et l'ombre sont des `box-shadow`, que `overflow` ne coupe pas. La
+   rotation de repos est dans `--rot` (−1°), comme celle de tout objet
+   collé. Elle ne se touche pas. */
+.tbf-banderole{
+  --rot:-1deg;
+  display:inline-block;box-sizing:border-box;max-width:100%;vertical-align:middle;
+  padding:3px 9px 2px;
+  background:var(--craie);color:var(--encre);
+  box-shadow:0 0 0 1.5px var(--encre),2px 2px 0 1.5px var(--encre);
+  font-family:var(--banner);font-weight:700;font-size:14px;line-height:17px;letter-spacing:.05em;
+  text-transform:uppercase;text-shadow:none;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  rotate:var(--rot);
+}
+
+
 /* -------------------------------------------------------------- le tampon
 
    Le verdict, ou l'acquis : PARFAIT, RATÉ, GAGNÉ, PERDU, FAIT, DÉJÀ À TOI,
@@ -2619,20 +3553,20 @@ html[data-calme~="animations"] .tbf-colle{animation:none}
 
 /* Le tampon plein. `:is()` prend le poids de son argument le plus lourd :
    la règle passe devant celles du tampon en contour sans `!important`. */
-:is(.tbf-tampon--plein,.tbf-ticket .tbf-tampon,.tbf-dechire .tbf-tampon){
+:is(.tbf-tampon--plein,.tbf-ticket .tbf-tampon,.tbf-dechire .tbf-tampon,.tbf-cadre--ticket .tbf-tampon){
   --teinte:var(--vert-fonce);
   padding:4px 7px 3px;border:0;background:var(--craie);
   font-size:13px;opacity:1;
   box-shadow:0 0 0 1.5px var(--encre),1px 2px 0 1.5px rgba(7,9,12,.45);
   -webkit-mask-image:none;mask-image:none;
 }
-:is(.tbf-tampon--plein,.tbf-ticket .tbf-tampon,.tbf-dechire .tbf-tampon)[data-ton=vert]{--teinte:var(--vert-fonce)}
-:is(.tbf-tampon--plein,.tbf-ticket .tbf-tampon,.tbf-dechire .tbf-tampon)[data-ton=flare]{--teinte:var(--rouge-fonce)}
-:is(.tbf-tampon--plein,.tbf-ticket .tbf-tampon,.tbf-dechire .tbf-tampon)[data-ton=gris]{--teinte:var(--gris-encre)}
-:is(.tbf-tampon--plein,.tbf-ticket .tbf-tampon,.tbf-dechire .tbf-tampon)[data-ton=or]{--teinte:var(--or-encre)}
+:is(.tbf-tampon--plein,.tbf-ticket .tbf-tampon,.tbf-dechire .tbf-tampon,.tbf-cadre--ticket .tbf-tampon)[data-ton=vert]{--teinte:var(--vert-fonce)}
+:is(.tbf-tampon--plein,.tbf-ticket .tbf-tampon,.tbf-dechire .tbf-tampon,.tbf-cadre--ticket .tbf-tampon)[data-ton=flare]{--teinte:var(--rouge-fonce)}
+:is(.tbf-tampon--plein,.tbf-ticket .tbf-tampon,.tbf-dechire .tbf-tampon,.tbf-cadre--ticket .tbf-tampon)[data-ton=gris]{--teinte:var(--gris-encre)}
+:is(.tbf-tampon--plein,.tbf-ticket .tbf-tampon,.tbf-dechire .tbf-tampon,.tbf-cadre--ticket .tbf-tampon)[data-ton=or]{--teinte:var(--or-encre)}
 /* Le bleu et la craie n'ont pas de version foncée parmi les jetons : leur
    tampon plein s'écrit à l'encre, qui se lit toujours. */
-:is(.tbf-tampon--plein,.tbf-ticket .tbf-tampon,.tbf-dechire .tbf-tampon):is([data-ton=bleu],[data-ton=craie]){--teinte:var(--encre)}
+:is(.tbf-tampon--plein,.tbf-ticket .tbf-tampon,.tbf-dechire .tbf-tampon,.tbf-cadre--ticket .tbf-tampon):is([data-ton=bleu],[data-ton=craie]){--teinte:var(--encre)}
 
 
 /* -------------------------------------------------------------- le ticket
@@ -2650,6 +3584,30 @@ html[data-calme~="animations"] .tbf-colle{animation:none}
    sur la craie : l'audit le relèvera au premier écran qui posera un ticket,
    et cette fois à raison — le kraft se lit moins bien dehors, et il faudra
    le peser écran par écran.
+
+   **Le lot 2 en pose trois que l'audit lit** : la bâche du jour du hub (le
+   titre de l'étape et son « 0/6 »), l'astuce du rideau, le pied du tiroir
+   (MODE CALME, la version) — chaque fois 3,3:1 au soleil, sous les 4,5 du
+   texte courant. **Aucune encre n'y suffit** : le noir pur n'y tiendrait que
+   3,6. Pour 4,5, il faudrait un papier éclairci aux quatre cinquièmes vers
+   la craie (#EAE0CC) — une crème, plus du kraft. Ce n'est donc pas
+   `--kraft` qu'on retouche ici ; ce qui se pèse écran par écran, c'est ce
+   qu'on écrit dessus : en 700 à partir de 19 px, ou à partir de 24, un texte
+   y passe (le seuil du grand texte, 3:1) ; une ligne courante, non. La
+   teinte du papier, et le choix entre le kraft et ses 4,5:1 dehors,
+   attendent Gaël (voir l'en-tête de la feuille).
+
+   **Ce que coûterait le papier clair** : le kraft le plus foncé qui porte
+   l'encre à 4,5:1 au soleil, à la teinte du nôtre, est #ECE0CB, à 1,13:1
+   de la craie. Le sticker craie et le tampon plein, que la direction pose
+   sur le ticket, ne s'en détacheraient plus que par leur cerne : il n'y
+   aurait plus de kraft, seulement de la craie un peu jaune. Et le compte
+   de l'audit sous-estime le prix du kraft tel qu'il est : il ne lit que
+   les textes sans enfant. Les liens du pied du tiroir (leur icône) et la
+   phrase de l'astuce (son mot-clé en gras) sont au même 3,3:1 sans être
+   comptés. Dans le pied, MODE CALME et la version étaient déjà sous le
+   seuil avant le lot (3,9 et 3,8 sur le fond sombre du menu) ; les vrais
+   nouveaux sont la bâche du jour et l'astuce.
 
    **Le cerne d'encre suit la déchirure.** L'élément est découpé par la
    déchirure ; son encre est un `::before` plein, que cette découpe arrête
@@ -2678,7 +3636,7 @@ html[data-calme~="animations"] .tbf-colle{animation:none}
    papier de ressembler à un aplat beige. Le repli `none` n'est pas une
    politesse : une variable absente dans une liste de fonds rend toute la
    déclaration invalide, et le ticket perdait alors son kraft avec son grain. */
-.tbf-ticket,.tbf-dechire{
+.tbf-ticket,.tbf-dechire,.tbf-cadre--ticket{
   /* Quinze dents en haut, quinze en bas, de zéro à quatre pixels : assez
      pour se lire « déchiré à la main », trop peu pour mordre le texte. */
   --dechire:polygon(0 3px,5% 0,11% 4px,17% 1px,24% 4px,30% 0,37% 3px,44% 1px,
@@ -2709,6 +3667,108 @@ html[data-calme~="animations"] .tbf-colle{animation:none}
   inset:2px;
   clip-path:var(--dechire);
   background:var(--grain-papier,none) 0 0/256px 256px repeat,
+    repeating-linear-gradient(97deg,rgba(7,9,12,.06) 0 1px,transparent 1px 6px),
+    repeating-linear-gradient(8deg,rgba(242,238,228,.08) 0 1px,transparent 1px 9px),
+    var(--kraft);
+}
+
+/* ## Le ticket de retour (lot 2)
+
+   « Depuis hier : +2 souvenirs · +120 écharpes · Lucas t'a rejoint. » Ce qui
+   s'est passé pendant qu'on n'était pas là, sur le hub, au retour d'une
+   visite : un ticket kraft de 88 px qui monte du bas, reste trois secondes et
+   s'en va. Trois lignes au plus — le mot de la main au marqueur, puis les
+   gains en Oswald, qui passent à la ligne entre eux et jamais au milieu
+   d'un gain.
+
+       <div class="tbf-ticket tbf-ticket--retour tbf-glisse" role="status">
+         <span class="tbf-marqueur">Depuis hier</span>
+         <ul><li>+2 SOUVENIRS</li><li>+120 ÉCHARPES</li><li>LUCAS T'A REJOINT</li></ul>
+       </div>
+
+   **Il ne paraît pas au lot 2** : aucune route serveur ne le nourrit encore,
+   et un ticket sans donnée ne s'affiche pas. La brique est prête pour le jour
+   où elle existera. La page le pose dans la pile des toasts (`.tbf-pile`,
+   voir « le toast »), avec `.tbf-glisse` pour la montée, et le retire après
+   trois secondes. « Depuis hier » est l'un des six emplois du marqueur
+   (« les mots d'un ticket ») : la page qui le pose charge Permanent Marker.
+   Les gains sont des chiffres : jamais au marqueur.
+
+   Tout y est à l'encre sur le kraft, 8,7:1. Pas de tampon ici : un retour
+   n'est pas un verdict. */
+.tbf-ticket--retour{
+  display:flex;flex-direction:column;justify-content:center;gap:6px;
+  min-height:88px;padding:12px 16px;
+}
+.tbf-ticket--retour .tbf-marqueur{font-size:17px;line-height:20px}
+.tbf-ticket--retour ul{
+  margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:4px 14px;
+  font-weight:700;font-size:13px;line-height:1.25;letter-spacing:.05em;text-transform:uppercase;
+}
+.tbf-ticket--retour li{white-space:nowrap}
+
+/* ## La bâche du jour : le cadre en kraft (lot 2)
+
+   Le panneau principal du hub, à droite de la collection : ce qu'il y a à
+   faire aujourd'hui — le match en direct, le prochain coup d'envoi d'un club
+   suivi, l'étape suivante des premiers pas, ou « RÉPÉTER UN GESTE ». C'est un
+   **cadre** (`.tbf-cadre`, un par écran, celui qu'on regarde en arrivant),
+   mais en papier kraft : on le lit, comme une feuille de match collée au
+   mur. Les bords haut et bas sont déchirés, l'encre suit la déchirure, et
+   l'écharpe s'imprime en tête quand on la demande.
+
+       <a class="tbf-cadre tbf-cadre--ticket" id="direct" href="/matchs" data-echarpe>
+         <span class="sur">PROCHAIN COUP D'ENVOI</span>
+         <b>SAM 20:45</b>
+         …
+       </a>
+
+   La mécanique est celle du ticket : l'élément est découpé par la
+   déchirure, son `::before` est l'encre pleine, son `::after` le papier, deux
+   pixels plus petit et découpé par la même — le coin déchiré du cadre n'a
+   plus de sens sur un bord tout déchiré, il cède son calque à l'encre. Et le
+   **fond de l'élément est le kraft**, pour l'audit : il lit l'encre sur le
+   kraft, 8,7:1, et non sur le noir de la page.
+
+   **Aucun ton clair sur le kraft** (amendement 15) : la lettre est à l'encre,
+   un verdict y devient un tampon plein de lui-même (voir le tampon), un
+   sticker y reste craie, une jauge y garde son rail de parpaing cerné
+   d'encre. Une couleur de club ou un point rouge que la page y pose sont à
+   elle de les tenir dans ce que le kraft supporte : sur ce papier, le rouge
+   foncé ne tient que 3,4:1, le vert foncé autant — assez pour un signe, pas pour
+   un mot.
+
+   **Le rembourrage est à la page**, comme pour tout cadre ; avec l'écharpe, il
+   faut dix-huit pixels au moins en haut : l'écharpe occupe le papier de cinq
+   à douze pixels et demi sous ses dents. Sans `data-echarpe`, douze suffisent.
+   Pas d'ombre dure : le `clip-path` la couperait, et un papier collé à plat
+   n'en a pas. Il ne s'enfonce pas : on le touche pour y aller, comme un
+   lien. */
+.tbf-cadre.tbf-cadre--ticket{
+  --face:var(--kraft);--lettre:var(--encre);
+  isolation:isolate;
+  background:var(--kraft);
+  border-image:none;border-radius:0;box-shadow:none;
+  clip-path:var(--dechire);
+  color:var(--encre);text-shadow:none;
+}
+.tbf-cadre.tbf-cadre--ticket::before{
+  top:0;right:0;bottom:0;left:0;width:auto;height:auto;z-index:-1;background:var(--encre);
+}
+.tbf-cadre--ticket::after{
+  content:"";position:absolute;inset:2px;z-index:-1;pointer-events:none;
+  clip-path:var(--dechire);
+  background:var(--grain-papier,none) 0 0/256px 256px repeat,
+    repeating-linear-gradient(97deg,rgba(7,9,12,.06) 0 1px,transparent 1px 6px),
+    repeating-linear-gradient(8deg,rgba(242,238,228,.08) 0 1px,transparent 1px 9px),
+    var(--kraft);
+}
+.tbf-cadre--ticket[data-echarpe]::after{
+  background:
+    repeating-linear-gradient(115deg,var(--e1,var(--projo)) 0 7px,var(--encre) 7px 8px,
+      var(--e2,var(--flare)) 8px 15px,var(--encre) 15px 16px) 0 5px/100% 6px no-repeat,
+    linear-gradient(var(--encre),var(--encre)) 0 11px/100% 1.5px no-repeat,
+    var(--grain-papier,none) 0 0/256px 256px repeat,
     repeating-linear-gradient(97deg,rgba(7,9,12,.06) 0 1px,transparent 1px 6px),
     repeating-linear-gradient(8deg,rgba(242,238,228,.08) 0 1px,transparent 1px 9px),
     var(--kraft);
@@ -2922,6 +3982,65 @@ html[data-economie] .tbf-fumee{display:none}
 @media (prefers-reduced-data:reduce){ .tbf-fumee{display:none} }
 
 
+/* ------------------------------------------------------- la bâche du club
+
+   Les couleurs d'un club tendues sur le mur, sans un mot : on reconnaît un
+   club à ses couleurs avant de lire son nom. Sur le hub, les soirs où un
+   club suivi joue, derrière la tête et les épaules du personnage — avec la
+   nappe de fumée, c'est tout le décor du soir de match (amendement 7) ; la
+   direction la tend aussi au KOP, aux couleurs de son club.
+
+       <div class="tbf-bache-club" aria-hidden="true"></div>
+
+   **Les couleurs sont `--e1` et `--e2`**, lues avec le repli de l'écharpe :
+   la page les pose sur un parent — sur le hub, le calque du soir les reçoit
+   du blason —, et la bâche, la fumée et les jauges du même conteneur les
+   partagent. Sans couleur connue, la page ne la pose pas.
+
+   **La matière est celle de la bâche, sans ce qui sert au doigt** : la toile
+   grainée, le cerne au marqueur hors de la boîte, l'ombre dure de quatre
+   pixels, le coin déchiré ; ni enfoncement ni curseur, elle ne se touche
+   pas (`pointer-events` coupé). Les rayures sont verticales et larges de
+   dix-huit pixels, et un voile d'encre de 20 % les assourdit : une couleur
+   de club est souvent vive, et derrière le personnage elle ne doit pas
+   disputer l'œil à son visage (la maquette la tient « à 80 % »). De travers
+   de −1,5° (`--rot`).
+
+   **Deux scotchs la tiennent au mur**, aux coins hauts, comme sur la
+   maquette du hub et dans la description du KOP : ce sont les rubans de la
+   bâche principale, peints avec le coin déchiré dans le même `::before`
+   (`::after` reste libre). H7 réserve les scotchs à la bâche principale
+   parmi les **boutons** — trois `.tbf-bloc` à la file feraient un mur de
+   rubans ; cette bâche-ci n'est pas un bouton, et il n'y en a qu'une par
+   écran. Ils débordent de huit pixels de chaque côté et de sept au-dessus :
+   la page lui laisse cet air.
+
+   **La page n'écrit que sa place et sa taille** (position, largeur,
+   hauteur, un `translate` de centrage). Aucune animation : elle ne compte
+   pas dans le budget de l'écran. */
+.tbf-bache-club{
+  --rot:-1.5deg;
+  position:relative;box-sizing:border-box;pointer-events:none;
+  border-radius:4px;
+  background:
+    linear-gradient(rgba(7,9,12,.2),rgba(7,9,12,.2)),
+    var(--grain-toile) 0 0/256px 256px repeat,
+    repeating-linear-gradient(90deg,var(--e1,var(--projo)) 0 18px,var(--e2,var(--flare)) 18px 36px);
+  border-image:var(--trace-c) 9 / 9px / 2.5px stretch;
+  box-shadow:2px 4px 0 2px var(--encre);
+  rotate:var(--rot);
+}
+.tbf-bache-club::before{
+  content:"";position:absolute;left:-8px;right:-8px;top:-7px;bottom:-2.5px;pointer-events:none;
+  background:
+    linear-gradient(135deg,transparent 0 calc(50% - 1px),
+      var(--encre) calc(50% - 1px) calc(50% + .8px),var(--parpaing) calc(50% + .8px))
+      right 5.5px bottom 0/12px 12px no-repeat,
+    var(--ruban-g) left 0 top 0/58px 24px no-repeat,
+    var(--ruban-d) right 0 top 1px/58px 24px no-repeat;
+}
+
+
 /* ------------------------------------------------------------- la bouffée
 
    La fête, au lieu du splat de peinture (amendement 1) : une bouffée de
@@ -2983,8 +4102,15 @@ html[data-economie] .tbf-fumee{display:none}
 
    Les tons sur fond sombre sont ceux des rubriques de la maquette : flare,
    `--bleu-clair` et `--vert-clair` (amendement 17) — en grand texte gras,
-   tous passent 3:1 sur le parpaing. Sans `data-ton`, la couleur est celle du
-   texte autour. */
+   tous passent 3:1 sur le parpaing **à l'intérieur** (de 3,4 à 6,8:1).
+   **Au soleil, pas sur le parpaing** : sous le voile blanc de l'audit, le
+   parpaing grainé ne laisse 3:1 qu'à la craie (3,7) — flare 1,7, bleu clair
+   2,6, vert clair 2,5, l'or 3,0. Sur l'encre, le bleu clair (3,4), le vert
+   clair (3,3) et l'or (3,9) tiennent ; le flare jamais, sur aucun fond
+   sombre (2,2 sur l'encre). Un pochoir qu'on lit dehors sur le parpaing
+   s'écrit donc à la craie, et porte son ton à côté de la lettre — c'est ce
+   que font les rubriques du tiroir, avec leur écharpe. Sans `data-ton`, la
+   couleur est celle du texte autour. */
 .tbf-pochoir{
   display:inline-block;
   font-family:var(--banner);font-weight:700;font-size:max(20px,1em);line-height:1;
@@ -3158,11 +4284,19 @@ html[data-economie] .tbf-fumee{display:none}
    — `.tbf-vibre` : le sticker dont la valeur change frémit de ±2,5° autour
      de sa rotation de repos ;
    — `.tbf-respire` : le sticker d'une récompense prête respire, sans fin —
-     une seule par écran, et elle compte dans le budget. */
+     une seule par écran, et elle compte dans le budget ;
+   — `.tbf-secoue` (lot 2) : un refus — la tuile verrouillée qu'on touche,
+     le toast d'erreur qui arrive — secoue de trois pixels, de côté, en
+     260 ms. Un refus ne ressemble jamais à un gain : il ne monte pas, il ne
+     colle pas, il dit non de la tête. `translate`, qui se compose avec
+     l'enfoncement de la bâche. */
 .tbf-glisse{animation:tbf-glisse 320ms cubic-bezier(.2,1.2,.35,1) var(--d,0ms) backwards}
 .tbf-clac{animation:tbf-clac 260ms cubic-bezier(.2,1.4,.35,1) var(--d,0ms) backwards}
 .tbf-vibre{animation:tbf-vibre 180ms ease-in-out}
 .tbf-respire{animation:tbf-respire 4s ease-in-out infinite}
+.tbf-secoue{animation:tbf-secoue 260ms ease-in-out}
+@keyframes tbf-secoue{0%,100%{translate:0 0}20%{translate:-3px 0}40%{translate:3px 0}
+  60%{translate:-3px 0}80%{translate:2px 0}}
 @keyframes tbf-glisse{from{opacity:0;translate:0 40px}}
 /* Le dernier temps ne nomme pas l'opacité : il revient à celle de l'objet,
    0,92 pour un tampon en contour, 1 pour un plein. */
@@ -3182,7 +4316,7 @@ html[data-economie] .tbf-fumee{display:none}
    bouffée n'a pas lieu (la case du moment fort suffit). Rien de ce qui
    informe ne disparaît. */
 @media (prefers-reduced-motion:reduce){
-  .tbf-glisse,.tbf-clac,.tbf-vibre,.tbf-respire{animation:none}
+  .tbf-glisse,.tbf-clac,.tbf-vibre,.tbf-respire,.tbf-secoue{animation:none}
   .tbf-fumee{opacity:.2}
   .tbf-fumee::before{animation:none}
   .tbf-forme--tourne[data-rar=legendaire]>i::before{animation:none}
@@ -3191,8 +4325,8 @@ html[data-economie] .tbf-fumee{display:none}
 /* Le double du mode calme, règle pour règle (voir « Le mode calme », plus
    haut dans cette feuille). */
 html[data-calme~="animations"] .tbf-glisse,html[data-calme~="animations"] .tbf-clac,
-html[data-calme~="animations"] .tbf-vibre,
-html[data-calme~="animations"] .tbf-respire{animation:none}
+html[data-calme~="animations"] .tbf-vibre,html[data-calme~="animations"] .tbf-respire,
+html[data-calme~="animations"] .tbf-secoue{animation:none}
 html[data-calme~="animations"] .tbf-fumee{opacity:.2}
 html[data-calme~="animations"] .tbf-fumee::before{animation:none}
 html[data-calme~="animations"] .tbf-forme--tourne[data-rar=legendaire]>i::before{animation:none}
@@ -3202,8 +4336,298 @@ html[data-calme~="animations"] .tbf-bouffee:not(.tbf-bouffee--fixe){display:none
 /* ==================================================== les pièces d'écran
 
    Ici s'arrête le vocabulaire. Ce qui suit n'est plus une matière, mais des
-   pièces que plusieurs écrans montent à l'identique : le panneau des bonus,
+   pièces que plusieurs écrans montent à l'identique : l'avatar, le compteur
+   de monnaie, le HUD de la barre et le toast (lot 2), le panneau des bonus,
    la carte qu'on joue, une pièce d'équipement, le stade, les épreuves.     */
+
+/* ------------------------------------------------ l'avatar-sticker (lot 2)
+
+   Le joueur, en un objet : le buste de son Fanzzy équipé, découpé en rond
+   comme un sticker, l'anneau d'XP autour et son niveau collé en bas à
+   droite. Sur le hub (44 px, en tête de la bande du haut), dans le HUD replié
+   de la barre (36 px dans une zone de 44), dans la tête du tiroir.
+
+       <a class="tbf-avatar" href="/profil" aria-label="Mon profil — niveau 7, 180 XP sur 300">
+         <span class="tbf-anneau" style="--p:60%">
+           <img class="tbf-avatar-buste" src="/img/fanzzy/RP1/e2/base/portrait.webp" alt="">
+         </span>
+         <b class="tbf-sticker tbf-sticker--rond tbf-avatar-niv">7</b>
+       </a>
+       <button type="button" class="tbf-avatar tbf-avatar--barre" …>…</button>     36 px
+       <a class="tbf-avatar tbf-avatar--vide" aria-label="Choisis ton Fanzzy" …>   sans Fanzzy
+         <span class="tbf-anneau" style="--p:0%"><span class="tbf-avatar-buste"></span></span>
+         <b class="tbf-sticker tbf-sticker--rond tbf-avatar-niv">1</b>
+       </a>
+
+   **L'anneau est celui du lot 1** (`.tbf-anneau`, rempli à `--p` de 0 à
+   100 % — `niv.dans / niv.pour` de `/api/niveau`) : le tricot de l'écharpe
+   enroulé, aux couleurs de l'écran. Il prend un dixième du diamètre, 4,4 px
+   sur le hub et 3,6 dans la barre, et le buste ce qui reste.
+
+   **Le sticker**, du dehors vers le dedans : le cerne d'encre de l'anneau,
+   l'anneau, son second cerne, le bord craie de deux pixels du buste — la
+   découpe aux ciseaux —, puis le buste. L'ombre dure de 2 × 2 à 60 % le
+   décolle du mur, comme tout sticker. Le portrait est cadré sur le haut du
+   visage : c'est la tête qu'on reconnaît à trente pixels, pas le foulard.
+
+   **La zone de touche fait toujours 44 px** : l'élément est la zone, le
+   sticker est centré dedans, quelle que soit sa taille. Le niveau est un
+   sticker rond de 18 px (16 dans la barre) en onze pixels, l'encre sur la
+   craie (17:1), qui chevauche le bord du sticker en bas à droite.
+
+   **Sans Fanzzy** (`.tbf-avatar--vide`) : une silhouette au pochoir gris sur
+   le parpaing, un « ? » à la main, et le bord en pointillé — un sticker qu'on
+   n'a pas encore collé. Le buste est un `span` vide : la feuille dessine la
+   silhouette et écrit le « ? » ; l'`aria-label` dit où aller.
+
+   **Portrait introuvable** (lot 2) : un Fanzzy est équipé, mais aucune image
+   ne répond, et la page pose un `span.tbf-avatar-buste` à la place de
+   l'image, **sans** `--vide` (`nav.js` le fait quand toutes ses adresses ont
+   échoué). Le `span` restait un disque de craie nu ; sans niveau connu,
+   l'anneau vide, en parpaing, disparaissait sur le noir de la barre, et il
+   ne restait qu'un rond blanc qui ne disait rien. Il prend la silhouette au
+   pochoir sur le parpaing, le bord craie plein — le sticker d'un joueur dont
+   on n'a pas la photo. Ni pointillé ni « ? » : ceux-là disent « pas encore
+   de Fanzzy, viens en choisir un », et c'est `--vide` qui les ajoute.
+
+   ## H11 — le « ? » reste au marqueur (hypothèse, à arbitrer par Gaël)
+
+   La direction l'écrit ainsi (« silhouette pochoir gris + « ? » au
+   marqueur »), et c'est elle qui est suivie ; l'amendement 6, lui, compte
+   six emplois du marqueur, et le « ? » n'en est pas. Il tient les autres
+   règles : un signe et non un chiffre, seize pixels au moins (`max()`),
+   dans une boîte de taille fixe — que la police arrive tard ou jamais, rien
+   ne saute. Le hub charge Permanent Marker et l'y montre ; la barre ne la
+   charge pas, et c'est la main du système qui l'écrit. **Pour la défaire** :
+   `font-family:var(--banner);font-weight:700` à la place du marqueur dans
+   la règle de `--vide` ci-dessous — un « ? » d'Oswald, le même partout. */
+.tbf-avatar{
+  --taille:44px;--niv:18px;
+  --marge:calc((max(44px,var(--taille)) - var(--taille)) / 2);
+  position:relative;flex:none;display:inline-grid;place-items:center;
+  width:max(44px,var(--taille));height:max(44px,var(--taille));
+  margin:0;padding:0;border:0;border-radius:50%;background:none;color:inherit;font:inherit;
+  text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.tbf-avatar--barre{--taille:36px;--niv:16px}
+.tbf-avatar>.tbf-anneau{
+  --anneau:calc(var(--taille) * .1);
+  width:var(--taille);height:var(--taille);
+  box-shadow:2px 2px 0 2px rgba(7,9,12,.6);
+  transition:scale .08s ease;
+}
+.tbf-avatar-buste{
+  display:block;box-sizing:border-box;
+  width:calc(var(--taille) - 2 * var(--anneau));height:calc(var(--taille) - 2 * var(--anneau));
+  border:2px solid var(--craie);border-radius:50%;
+  object-fit:cover;object-position:50% 14%;background:var(--craie);
+}
+.tbf-avatar-niv{
+  --taille:var(--niv);--rot:5deg;
+  position:absolute;z-index:2;right:calc(var(--marge) - 5px);bottom:calc(var(--marge) - 5px);
+  font-size:11px;letter-spacing:0;
+}
+/* La silhouette, pour les deux cas où il n'y a pas de portrait : le `span`
+   posé à la place d'une image qui ne répond pas, et l'avatar sans Fanzzy. */
+:is(.tbf-avatar-buste:not(img),.tbf-avatar--vide .tbf-avatar-buste){
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath fill='%23C2CAD6' fill-opacity='.45' d='M20 7a8 8 0 1 1 0 16 8 8 0 0 1 0-16zM3 41c1-10 8-16 17-16s16 6 17 16z'/%3E%3C/svg%3E") 50% 100%/86% no-repeat,
+    var(--parpaing);
+}
+.tbf-avatar--vide .tbf-avatar-buste{
+  display:grid;place-items:center;
+  border-style:dashed;border-color:rgba(242,238,228,.8);
+  color:var(--craie);font-family:var(--marqueur);font-weight:400;line-height:1;
+  font-size:max(16px,calc(var(--taille) * .46));text-shadow:0 1px 0 var(--encre);
+}
+.tbf-avatar--vide .tbf-avatar-buste::after{content:"?"}
+.tbf-avatar:active>.tbf-anneau{scale:.94}
+.tbf-avatar:focus-visible{outline:3px solid var(--projo);outline-offset:1px}
+
+/* ------------------------------------------- le compteur de monnaie (lot 2)
+
+   Les écharpes et les boosters du joueur : sur le hub, en haut, et dans la
+   bande du HUD de la barre. Le jeton dessiné collé sur un **sticker craie**
+   de 32 px, tourné de +2°, le chiffre en Oswald 17 à l'encre, et un petit
+   sticker rond or « + » qui chevauche le bord droit — on touche le compteur
+   pour aller en gagner ou en acheter (amendement 2 : un jeton est un sticker
+   craie, jamais du kraft).
+
+       <a class="tbf-monnaie" href="/boutique" aria-label="900 écharpes — où en gagner">
+         <img src="/img/gains/echarpes.webp" alt=""><b>900</b><i class="tbf-monnaie-plus" aria-hidden="true">+</i>
+       </a>
+       <a class="tbf-monnaie" href="/boosters" aria-label="4 boosters">
+         <svg viewBox="0 0 24 24" aria-hidden="true">…le sachet…</svg><b>4</b><i class="tbf-monnaie-plus" aria-hidden="true">+</i>
+       </a>
+
+   **44 px au doigt, 32 à l'œil, et la craie sous le chiffre pour l'audit.**
+   L'élément fait 44 px de haut — c'est lui que l'audit et le doigt mesurent
+   —, et sa craie n'est peinte que dans sa boîte de contenu
+   (`background-clip:content-box`), les six pixels de rembourrage du haut et
+   du bas restant transparents : le sticker visible fait 32 px. Son bord
+   craie, son cerne et son ombre sont le `::before`, posé sur ce même
+   rectangle. L'audit lit la couleur de fond de l'élément, la craie, sous le
+   chiffre à l'encre (17:1). Les deux autres façons échouaient chacune une
+   mesure : un sticker de 32 px de haut avec une zone de touche en
+   pseudo-élément était compté sous les 44 px ; un sticker peint en
+   pseudo-élément sur une boîte de 44 laissait l'audit lire l'encre du
+   chiffre sur le noir de la page, à 1:1.
+
+   L'espacement intérieur est porté par les enfants (le jeton à six pixels du
+   bord, le chiffre à dix-sept de l'autre, pour le « + ») et non par le
+   rembourrage latéral : l'arrondi de la craie se calcule sur la boîte de
+   contenu, et il ne la suit que si elle touche les bords.
+
+   Le chiffre est tabulaire et ne descend jamais sous deux chasses : un solde
+   qui compte (`FX.compter`, qui pose aussi `.tbf-compte`) ne fait pas danser
+   le sticker. Quand il change, la page pose `.tbf-vibre` : il frémit autour
+   de sa rotation de repos, qui est dans `--rot`. **Insuffisant** pour ce
+   qu'on vient de toucher : `.tbf-monnaie--manque`, le chiffre passe au rouge
+   foncé (6,8:1 sur la craie) et la page le secoue (`.tbf-secoue`).
+
+   Le sachet des boosters est un tracé au trait rouge, comme sur sa tuile :
+   un même objet dessiné de deux façons, c'est deux objets à apprendre. Le
+   nom `tbf-jeton` n'est pas pris : `fanzzy-ui-smoke` vérifie qu'aucun
+   `.tbf-jeton` ne revient dans la barre. */
+.tbf-monnaie{
+  --rot:2deg;
+  position:relative;flex:none;display:inline-flex;align-items:center;gap:5px;
+  box-sizing:border-box;height:44px;padding:6px 0;border-radius:6px/12px;
+  background:var(--craie);background-clip:content-box;color:var(--encre);
+  font-family:var(--banner);font-weight:700;font-size:17px;line-height:1;letter-spacing:.02em;
+  font-variant-numeric:tabular-nums;text-decoration:none;text-shadow:none;white-space:nowrap;
+  rotate:var(--rot);cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.tbf-monnaie:where(:nth-child(even)){--rot:-2deg}
+/* Le bord craie, le cerne et l'ombre, sur le rectangle de la craie. La
+   rotation fait de l'élément un contexte d'empilement : ce calque en
+   `z-index:-1` passe au-dessus de son fond et sous le chiffre. */
+.tbf-monnaie::before{content:"";position:absolute;z-index:-1;inset:6px 0;border-radius:6px;
+  pointer-events:none;
+  box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),2px 2px 0 3.5px rgba(7,9,12,.6)}
+.tbf-monnaie>:first-child{margin-left:6px}
+.tbf-monnaie img{width:22px;height:22px;flex:none;object-fit:contain}
+.tbf-monnaie svg{width:20px;height:20px;flex:none;fill:none;stroke:var(--flare);stroke-width:2.4;
+  stroke-linecap:round;stroke-linejoin:round}
+.tbf-monnaie b{min-width:2ch;margin-right:17px;font:inherit;text-align:right}
+.tbf-monnaie-plus{
+  position:absolute;right:-9px;top:50%;margin-top:-9px;width:18px;height:18px;border-radius:50%;
+  display:grid;place-items:center;background:var(--projo);color:var(--encre);
+  font-family:var(--banner);font-weight:700;font-size:15px;line-height:1;font-style:normal;
+  box-shadow:0 0 0 1.5px var(--encre);
+}
+.tbf-monnaie--manque b{color:var(--rouge-fonce)}
+.tbf-monnaie:focus-visible{outline:3px solid var(--projo);outline-offset:4px}
+
+/* ------------------------------------------- le HUD replié de la barre (lot 2)
+
+   Ce qu'on possède, sur les vingt-deux écrans qui ont la barre du haut, sans
+   lui reprendre sa place : à droite, avant le menu, l'avatar-sticker de
+   36 px. Au toucher, **une bande kraft se déplie sous la barre** avec les deux
+   compteurs, trois secondes, puis se replie.
+
+       <div class="tbf-hud">
+         <button type="button" class="tbf-avatar tbf-avatar--barre"
+                 aria-expanded="false" aria-controls="tbf-hud-bande"
+                 aria-label="Niveau 7 — mes écharpes et mes boosters">…</button>
+         <div class="tbf-ticket tbf-hud-bande" id="tbf-hud-bande">
+           <a class="tbf-monnaie" href="/boutique" …>…</a>
+           <a class="tbf-monnaie" href="/boosters" …>…</a>
+         </div>
+       </div>
+
+   **La classe d'état est `.ouverte`, sur la bande** : la page la pose au
+   toucher de l'avatar, la retire trois secondes plus tard (ou au toucher
+   suivant), et tient `aria-expanded` à jour. Le dépliage prend 240 ms, depuis
+   le haut, avec un léger dépassement ; le repli aussi, et la bande n'est
+   cachée (`visibility`) qu'une fois repliée — elle sort alors de l'ordre de
+   tabulation sans `hidden`. À animations réduites et au calme, elle paraît
+   et disparaît sans bouger.
+
+   La bande est un ticket (`.tbf-ticket`) : le kraft qu'on lit, la
+   déchirure, l'encre qui la suit ; les compteurs sont des stickers craie
+   posés dessus, jamais du kraft (amendement 2). Elle pend sous l'avatar, à
+   six pixels du bord droit de la zone, et s'étend vers la gauche.
+
+   **À partir de 560 px, rien ne se déplie** : la bande devient une rangée de
+   la barre, avant l'avatar, et les compteurs y sont toujours visibles. La
+   direction écrit « sous 400 px, seul le sticker reste » ; mais à 400 px, les
+   deux compteurs et leurs écarts — près de deux cents pixels avec un solde à
+   quatre chiffres — ne laisseraient plus rien au titre, à qui elle en
+   garantit cent vingt. C'est à 560 que tout tient. La page n'a rien à
+   changer : la même bande, la même classe, qui n'a plus d'effet au-delà. */
+.tbf-hud{position:relative;z-index:30;flex:none;display:flex;align-items:center;gap:16px}
+.tbf-hud-bande{
+  position:absolute;top:calc(100% + 8px);right:-6px;
+  display:flex;align-items:center;gap:22px;
+  padding:12px 26px 12px 16px;white-space:nowrap;
+  transform-origin:50% 0;scale:1 0;visibility:hidden;
+  transition:scale .24s cubic-bezier(.2,1.3,.35,1),visibility 0s linear .24s;
+}
+.tbf-hud-bande.ouverte{scale:1 1;visibility:visible;
+  transition:scale .24s cubic-bezier(.2,1.3,.35,1),visibility 0s}
+@media (min-width:560px){
+  .tbf-hud-bande{position:static;order:-1;scale:none;visibility:visible;transition:none;
+    padding:0 8px 0 0;background:none;clip-path:none}
+  .tbf-hud-bande::before,.tbf-hud-bande::after{content:none}
+}
+
+/* ------------------------------------------------ le toast et la pile (lot 2)
+
+   Une information (« Deck enregistré. ») ou une erreur (« PAS ASSEZ DE
+   SOUFFLE · IL MANQUE 4 ») qui passe sans qu'on l'ait demandée. **Un toast
+   n'est jamais un gain** : un gain arrive sur un ticket kraft qui monte
+   (`.tbf-ticket` et `.tbf-glisse`) ; une information est une bande de
+   parpaing de 44 px, **statique**, qui paraît en fondu de 120 ms sans glisser.
+   Une erreur y écrit son texte au rouge clair du marqueur — la couleur, pas
+   la police — et secoue de trois pixels en arrivant : elle dit non, elle ne
+   fête rien.
+
+       <div class="tbf-pile">                              sur body, une seule
+         <div class="tbf-toast" role="status"><svg …/>Deck enregistré.</div>
+         <div class="tbf-toast tbf-toast--erreur" role="alert"><svg …/>PAS ASSEZ DE SOUFFLE · IL MANQUE 4</div>
+         <div class="tbf-ticket tbf-ticket--retour tbf-glisse" role="status">…</div>
+       </div>
+
+   **La pile** tient les toasts et les tickets en bas de l'écran, au-dessus de
+   tout sauf du moment fort et des boîtes (z-index 93), empilés à huit pixels
+   d'écart. Elle est posée sur `body`, hors des conteneurs que les pages
+   réécrivent, et ne prend pas le doigt — ce qu'elle porte, si. La page
+   retire chaque toast après son temps.
+
+   La craie sur le parpaing tient 12:1, le rouge clair 6,4:1. */
+.tbf-pile{
+  position:fixed;z-index:93;left:50%;translate:-50% 0;
+  bottom:calc(env(safe-area-inset-bottom) + 16px);width:min(420px,calc(100vw - 28px));
+  display:flex;flex-direction:column;gap:8px;pointer-events:none;
+}
+.tbf-pile>*{pointer-events:auto}
+.tbf-toast{
+  display:flex;align-items:center;gap:10px;box-sizing:border-box;min-height:44px;padding:9px 14px;
+  border-radius:6px;background:var(--parpaing);color:var(--craie);
+  box-shadow:0 0 0 1px rgba(242,238,228,.14),0 12px 28px rgba(0,0,0,.55);
+  font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.3;letter-spacing:.06em;
+  animation:tbf-fondu .12s ease-out both;
+}
+.tbf-toast svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round}
+.tbf-toast--erreur{color:var(--flare-clair);
+  animation:tbf-fondu .12s ease-out both,tbf-secoue .26s ease-in-out .12s}
+@keyframes tbf-fondu{from{opacity:0}}
+
+/* Au calme : l'avatar ne s'enfonce plus, la bande du HUD paraît sans se
+   déplier, l'erreur arrive sans secousse — le fondu reste, il ne déplace
+   rien. */
+@media (prefers-reduced-motion:reduce){
+  .tbf-avatar>.tbf-anneau{transition:none}
+  .tbf-avatar:active>.tbf-anneau{scale:none}
+  .tbf-hud-bande,.tbf-hud-bande.ouverte{transition:none}
+  .tbf-toast--erreur{animation:tbf-fondu .12s ease-out both}
+}
+html[data-calme~="animations"] .tbf-avatar>.tbf-anneau{transition:none}
+html[data-calme~="animations"] .tbf-avatar:active>.tbf-anneau{scale:none}
+html[data-calme~="animations"] .tbf-hud-bande,
+html[data-calme~="animations"] .tbf-hud-bande.ouverte{transition:none}
+html[data-calme~="animations"] .tbf-toast--erreur{animation:tbf-fondu .12s ease-out both}
 
 /* ------------------------------------------------ ce que je porte, à l'écran
 
