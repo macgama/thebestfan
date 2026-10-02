@@ -25,7 +25,8 @@
  *   — **ce qui sort de l'écran.** Un bouton hors cadre est un bouton qui
  *     n'existe pas.
  *   — **les textes coupés.** `text-overflow: ellipsis` tronque sans rien dire :
- *     une destination devinée n'est pas une destination lue.
+ *     une destination devinée n'est pas une destination lue. `line-clamp`
+ *     aussi, à la dernière ligne permise (« coupé (lignes) », relevé à part).
  *   — **les zones de touche sous 44 px.** C'est la taille d'un doigt, et c'est
  *     la recommandation des deux plateformes.
  *   — **le contraste du petit texte.** Le jeu est sombre et emploie beaucoup
@@ -77,6 +78,25 @@
  * l'ouverture du hub au début et vers deux secondes, et le tiroir ouvert.
  * L'ouverture aussi à 320 × 568, le plus petit téléphone, où l'on cherche
  * ce qu'elle pousse sous son bord (« hors fenêtre »). Voir « Les états ».
+ *
+ * ## Les polices du joueur, et la coupe à la ligne (lot 2)
+ *
+ * **L'audit mesurait tout en police de secours.** L'adresse propre à chaque
+ * visite (voir « Un navigateur neuf par visite ») partait sur **toutes** les
+ * requêtes, Google Fonts compris : un en-tête que CORS ne range pas parmi
+ * les simples fait précéder chaque fichier de police d'une requête de
+ * contrôle, que Google refuse. Oswald et Permanent Marker tombaient en échec
+ * sans un message, et `document.fonts.status` disait « loaded » quand même —
+ * il dit que plus rien ne charge, pas que tout a chargé. Les largeurs, les
+ * retours à la ligne et les coupes de tout relevé d'avant ce correctif ont
+ * donc été pris dans une autre police que celle du joueur : un relevé sans
+ * champ `enRepli` en est un. L'adresse ne part plus que vers notre serveur,
+ * et chaque mesure attend les polices puis compte les textes qu'elle a dû
+ * lire dans une police de secours (`enRepli`, genre « police de repli »).
+ *
+ * Et « coupé » ne voyait que l'ellipse sur une ligne : un libellé que
+ * `line-clamp` arrête à sa dernière ligne permise lui échappait. Il est
+ * relevé à part (`coupesLignes`), pour que `coupes` se compare encore.
  *
  * Usage :
  *   node scripts/audit-ui.mjs                  toutes les pages, trois formats
@@ -817,6 +837,49 @@ const mesure = (portee = null) => `(() => {
     return (Math.max(lt, ld) + 0.05) / (Math.min(lt, ld) + 0.05);
   };
 
+  /* **La police du joueur, ou celle de secours ?** Une police que la page
+     déclare (Google Fonts compris) et qui n'a pas chargé laisse le
+     navigateur dessiner le texte dans la suivante de la liste : d'autres
+     largeurs, d'autres retours à la ligne, d'autres coupes. Le relevé était
+     pris quand même, et rien ne le disait — c'est ainsi que le tiroir a été
+     mesuré tronqué là où le joueur le lit entier. On compte donc les textes
+     dont la première famille est une police déclarée que la page n'a pas
+     pour ces lettres-là : en échec, ou encore en route.
+
+     Une famille que la page ne déclare pas n'est pas jugée : police du
+     système ou police oubliée, la page ne permet pas de les distinguer
+     d'ici, et une alerte qu'on ne sait pas justifier ne se corrige pas. */
+  const FAMILLES = new Set([...(document.fonts ?? [])]
+    .map((f) => f.family.replace(/^["']|["']$/g, '')));
+  const enRepli = (el, s) => {
+    const fam = s.fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, '');
+    if (!FAMILLES.has(fam)) return null;
+    let t = '';
+    for (const n of el.childNodes) if (n.nodeType === 3) t += n.nodeValue;
+    try {
+      return document.fonts.check(s.fontStyle + ' ' + s.fontWeight + ' 16px "' + fam + '"', t.trim())
+        ? null : fam + ' ' + s.fontWeight;
+    } catch { return null; }
+  };
+
+  /* Les lignes d'un texte, comptées sur les boîtes de ses fragments : une
+     par hauteur, à une demi-police près, pour qu'un mot plus haut que ses
+     voisins ne fasse pas une ligne de plus. Chrome met en page les lignes
+     qu'une coupe à la ligne cache, et leurs boîtes répondent : c'est ce qui
+     permet de dire « trois lignes pour deux » sans toucher à la page — ni
+     copie à mesurer, ni style posé puis retiré. Voir « Coupé à la ligne »,
+     plus bas. */
+  const lignesDe = (el) => {
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    const hauts = [...r.getClientRects()].filter((x) => x.width > 0.5 && x.height > 0.5)
+      .map((x) => x.top).sort((a, b) => a - b);
+    const pas = parseFloat(getComputedStyle(el).fontSize) / 2;
+    let n = 0, dernier = -Infinity;
+    for (const h of hauts) if (h - dernier > pas) { n += 1; dernier = h; }
+    return n;
+  };
+
   /* Les textes lus à travers une tuile de grain sont **comptés à part** :
      surGrain et palesGrain, jourSurGrain et jourGrain. Le compte « pâle au
      jour » de la fin du lot 1 ne les voyait pas ; les y verser d'un coup
@@ -832,6 +895,7 @@ const mesure = (portee = null) => `(() => {
     textes: 0, petitTexte: [], opacite: [], toleres: [], backdrop: [],
     jour: [], jourSurDegrade: 0,
     surGrain: 0, palesGrain: [], jourSurGrain: 0, jourGrain: [],
+    coupesLignes: [], enRepli: [],
     ...(FIXE ? { horsFenetre: [] } : {}) };
 
   /* **Le décor peut passer devant le texte, et rien ne le disait.**
@@ -939,11 +1003,41 @@ const mesure = (portee = null) => `(() => {
        travail ; une phrase coupee par « text-overflow: ellipsis » ment sans le
        dire, et c est celle-la qu on cherche. Restreindre la mesure a l ellipse
        enleve d un coup les faux positifs des conteneurs a overflow:hidden sans
-       perdre une seule vraie troncature — elles portent toutes la propriete. */
+       perdre une seule vraie troncature sur une ligne — elles portent toutes
+       la propriete. Pas celles de « line-clamp », qui ont leurs points de
+       suspension sans elle : elles ont leur relevé, juste en dessous. */
+    const sc = getComputedStyle(el);
     if (el.scrollWidth > el.clientWidth + 1
-        && getComputedStyle(el).textOverflow === 'ellipsis'
+        && sc.textOverflow === 'ellipsis'
         && (el.textContent ?? '').trim().length > 2) {
       out.coupes.push({ q: nom(el), de: el.scrollWidth - el.clientWidth });
+    } else {
+      /* **Coupé à la ligne.** « line-clamp » arrête un texte à sa dernière
+         ligne permise et pose ses points de suspension sans changer ni le
+         texte ni la largeur : la mesure d'au-dessus ne le voyait pas, et le
+         tiroir à 768 px relevait zéro coupe sous une capture qui montrait
+         « CLASSEMENT DES… ». Chrome met pourtant en page les lignes cachées :
+         leurs boîtes se comptent (lignesDe), et la hauteur à faire défiler
+         les contient.
+
+         **Les deux à la fois.** Plus de lignes que la limite, seules : une
+         règle de coupe que la mise en page n'applique pas (sur une boîte qui
+         n'est pas « -webkit-box ») ne coupe rien, et ses quatre lignes se
+         lisent. Une hauteur qui dépasse, seule : une police haute sur une
+         interligne serrée (Oswald à 15 px sur 16) déborde de trois pixels
+         sous une seule ligne entière — vu au banc sur la bâche du jour du
+         hub, dès qu'Oswald a vraiment chargé. Relevé **à part** des
+         ellipses, pour que « coupes » se compare encore à un relevé d'avant ;
+         le témoin, plus bas dans ce fichier, vérifie à chaque audit que le
+         navigateur se comporte toujours ainsi. */
+      const limite = [sc.webkitLineClamp, sc.lineClamp].map((v) => parseInt(v, 10)).find((v) => v > 0);
+      if (limite && el.scrollHeight > el.clientHeight + 1
+          && (el.textContent ?? '').trim().length > 2) {
+        const lignes = lignesDe(el);
+        if (lignes > limite) {
+          out.coupesLignes.push({ q: nom(el), limite, lignes, de: el.scrollHeight - el.clientHeight });
+        }
+      }
     }
 
     /* Une zone de touche. On ne regarde que ce qui se touche vraiment. */
@@ -1013,6 +1107,8 @@ const mesure = (portee = null) => `(() => {
       const oe = opacites(el) * lire(s.color)[3];
       if (oe >= 0.02) {
         out.textes += 1;
+        const repli = enRepli(el, s);
+        if (repli) out.enRepli.push({ q: nom(el), police: repli });
         const legal = Boolean(el.closest(LEGAL));
         const css = parseFloat(s.fontSize);
         const px = Math.round(css * echelle(el) * 10) / 10;
@@ -1081,6 +1177,10 @@ const rapport = {
   /* Le voile moyen de chaque tuile, par adresse : un relevé « sur grain »
      dit ainsi contre quoi il a été pris. */
   voiles: {},
+  /* Ce que les témoins ont vérifié avant les visites : un relevé dont le
+     témoin a échoué n'est pas dans ce JSON (voir « Le témoin de la coupe à
+     la ligne »). */
+  temoins: {},
   pages: {},
   ...(etats ? { etats: {} } : {}),
 };
@@ -1110,7 +1210,25 @@ console.log(`\nAUDIT D’INTERFACE — ${VISITES.length} page(s), ${
    une mesure prise sous un refus n'est pas une mesure de la page. La
    première mesure étendue a vu la boutique à 768 px sans son catalogue, et
    rien ne permettait de dire pourquoi ; c'est ce silence-là que le relevé
-   supprime. */
+   supprime.
+
+   **L'adresse ne va qu'à notre serveur.** Posée par « setExtraHTTPHeaders »,
+   elle partait aussi vers Google Fonts. Un en-tête que CORS ne range pas
+   parmi les simples oblige le navigateur à demander la permission avant
+   chaque fichier de police ; Google refuse, la police tombe en échec, et
+   tout l'audit — pages, rideau, tiroir — se mesurait dans la police de
+   secours sans que rien ne le dise. Vu au banc avec ce Chrome : Oswald
+   « error » avec l'en-tête, « loaded » sans. Chaque requête passe donc par
+   l'audit, qui n'ajoute l'adresse qu'à celles de notre origine ; les autres
+   partent telles que la page les a faites.
+
+   **Et sans le service worker.** sw.js prend la main sur la page après son
+   « load » et refait lui-même ses requêtes : celles-là ne passent plus par
+   la page, donc plus par l'audit, et seraient toutes arrivées sous la même
+   adresse — un seul joueur pour six minutes d'audit, et ses 429. L'en-tête
+   global les couvrait ; le contournement les ramène à la page. Il ne
+   change rien à ce qu'on mesure : sw.js va au réseau d'abord, et le cache
+   d'une visite neuve est vide. */
 let visite = 0;
 
 /** Un contexte neuf, une adresse à lui, un format, et qui regarde. */
@@ -1122,8 +1240,19 @@ async function nouvelleVisite({ largeur, hauteur }, qui) {
   page.on('pageerror', (e) => erreurs.push(e.message));
   page.on('response', (r) => { if (r.status() === 429) refus.push(r.url().replace(base, '')); });
   visite += 1;
-  await page.setExtraHTTPHeaders({
-    'X-Forwarded-For': `10.77.${Math.floor(visite / 250)}.${(visite % 250) + 1}` });
+  const adresse = `10.77.${Math.floor(visite / 250)}.${(visite % 250) + 1}`;
+  const origine = new URL(base).origin;
+  await page.setBypassServiceWorker(true);
+  await page.setRequestInterception(true);
+  page.on('request', (r) => {
+    if (r.isInterceptResolutionHandled()) return;
+    let notre = false;
+    try { notre = new URL(r.url()).origin === origine; } catch { /* adresse illisible : telle quelle */ }
+    /* Une page fermée pendant qu'une requête attend : il n'y a plus rien à
+       continuer, et ce n'est pas une faute de la page mesurée. */
+    r.continue(notre ? { headers: { ...r.headers(), 'x-forwarded-for': adresse } } : undefined)
+      .catch(() => {});
+  });
   await page.setViewport({ width: largeur, height: hauteur });
   if (qui) {
     await page.setCookie({ name: 'tbf_session', value: SESSIONS[qui], domain: 'localhost', path: '/' });
@@ -1131,8 +1260,18 @@ async function nouvelleVisite({ largeur, hauteur }, qui) {
   return { contexte, page, erreurs, refus };
 }
 
-/** Les voiles d'abord (MESURE ne peut pas attendre une image), puis la mesure. */
+/** Les polices, les voiles (MESURE ne peut attendre ni l'une ni l'autre),
+    puis la mesure.
+
+    **Les polices d'abord, et bornées.** Une police n'est demandée que quand
+    un texte l'emploie : le tiroir, qui s'ouvre après le chargement de la
+    page, réclame les siennes à l'ouverture — et il était mesuré, puis
+    photographié, sans qu'on les attende. Cinq secondes au plus : une police
+    qui n'arrive pas ne doit pas arrêter l'audit, et la mesure dit alors
+    quels textes elle a lus dans la police de secours (« enRepli »). */
 async function mesurer(page, portee = null) {
+  await page.evaluate(() => Promise.race([document.fonts?.ready.then(() => true),
+    new Promise((r) => { setTimeout(() => r(false), 5000); })])).catch(() => {});
   const voiles = await page.evaluate(VOILES).catch(() => null);
   for (const [adresse, v] of Object.entries(voiles ?? {})) {
     if (adresse in rapport.voiles) continue;
@@ -1145,6 +1284,41 @@ async function mesurer(page, portee = null) {
   return page.evaluate(mesure(portee));
 }
 
+/* **Le témoin de la coupe à la ligne.** « coupé (lignes) » repose sur un
+   comportement de Chrome, vu au banc du lot 2 avec le Chrome de puppeteer :
+   les lignes qu'une coupe cache restent mises en page — leurs boîtes se
+   comptent, et la hauteur à faire défiler les contient. Un Chrome qui
+   cesserait de les mettre en page ferait
+   tomber ce relevé à zéro sur toutes les pages, et un zéro se lit comme un
+   bon résultat. On le vérifie donc à chaque audit, avec le code même de la
+   mesure, sur deux textes dont on sait la réponse : l'un trop long pour ses
+   deux lignes, l'autre court. Si le témoin ne répond pas ce qu'on attend,
+   le relevé quitte le JSON, le rapport et la ligne de console, et l'audit
+   le dit en finissant. */
+const COUPE_A_DEUX = 'width:90px;font:11px/1.2 sans-serif;display:-webkit-box;'
+  + '-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden';
+const TEMOIN_COUPE = '<!doctype html><body style="margin:0;background:#0A0D11;color:#F2EEE4">'
+  + `<p id="coupe" style="${COUPE_A_DEUX}">une phrase bien trop longue pour tenir sur deux lignes de quatre-vingt-dix pixels</p>`
+  + `<p style="${COUPE_A_DEUX}">courte</p></body>`;
+async function temoinCoupeLignes() {
+  const page = await nav.newPage();
+  try {
+    await page.setContent(TEMOIN_COUPE);
+    const m = await page.evaluate(mesure());
+    return m.coupesLignes.length === 1 && m.coupesLignes[0].q.startsWith('p#coupe');
+  } catch {
+    return false;
+  } finally {
+    await page.close().catch(() => {});
+  }
+}
+const coupeLignesMesurable = await temoinCoupeLignes();
+rapport.temoins.coupesLignes = coupeLignesMesurable;
+if (!coupeLignesMesurable) {
+  console.warn('  Témoin : ce Chrome ne laisse pas voir ce que « line-clamp » coupe — '
+    + 'le relevé « coupé (lignes) » est retiré de cet audit.\n');
+}
+
 /** Les trouvailles d'une mesure, coupées à quatre par genre pour le rapport. */
 function noterReleves(cle, largeur, m, erreurs) {
   if (m.deborde > 0) note(cle, largeur, 'déborde', `${m.deborde} px de large en trop`);
@@ -1154,6 +1328,15 @@ function noterReleves(cle, largeur, m, erreurs) {
     note(cle, largeur, 'hors fenêtre', `${x.q} — ${x.de} px hors de l’écran, qui ne défile pas`);
   }
   for (const x of m.coupes.slice(0, 4)) note(cle, largeur, 'coupé', `${x.q} — ${x.de} px tronqués`);
+  for (const x of (coupeLignesMesurable ? m.coupesLignes : []).slice(0, 4)) {
+    note(cle, largeur, 'coupé (lignes)', `${x.q} — ${x.lignes} lignes pour ${x.limite}, ${x.de} px cachés`);
+  }
+  /* Une ligne par police, pas par texte : c'est la police qu'il faut faire
+     venir, et le JSON garde chaque texte. */
+  if (m.enRepli.length) {
+    note(cle, largeur, 'police de repli', `${[...new Set(m.enRepli.map((x) => x.police))].sort().join(', ')
+    } pas chargée(s) : ses textes ont été mesurés dans la police de secours`);
+  }
   for (const x of m.petits.slice(0, 4)) note(cle, largeur, 'trop petit', `${x.q} — ${x.l}×${x.h}`);
   for (const x of m.pales.slice(0, 4)) note(cle, largeur, 'pâle', `${x.q} — ${x.c}:1 (il en faut ${x.seuil}) — ${x.encre} sur ${x.sur}`);
   /* Le fond rappelé est celui qu'on lit, voile moyen compris ; la tuile est
@@ -1196,6 +1379,8 @@ function noterReleves(cle, largeur, m, erreurs) {
    lirait comme un bon résultat. */
 function compter(m, erreurs, refus) {
   if (!jour) { delete m.jour; delete m.jourSurDegrade; delete m.jourSurGrain; delete m.jourGrain; }
+  /* Même règle pour la coupe à la ligne quand son témoin a échoué. */
+  if (!coupeLignesMesurable) delete m.coupesLignes;
   return {
     deborde: m.deborde, horsEcran: m.horsEcran.length, coupes: m.coupes.length,
     petits: m.petits.length, pales: m.pales.length, surDegrade: m.surDegrade,
@@ -1207,12 +1392,16 @@ function compter(m, erreurs, refus) {
     surGrain: m.surGrain, palesGrain: m.palesGrain.length,
     ...(jour ? { jour: m.jour.length, jourSurDegrade: m.jourSurDegrade,
       jourSurGrain: m.jourSurGrain, jourGrain: m.jourGrain.length } : {}),
+    ...(m.coupesLignes ? { coupesLignes: m.coupesLignes.length } : {}),
+    enRepli: m.enRepli.length,
   };
 }
 
-/** Le nombre de choses à dire sur une mesure : la ligne de la console. */
+/** Le nombre de choses à dire sur une mesure : la ligne de la console. Une
+    police de repli compte pour une — c'est une ligne du rapport, pas une
+    par texte. */
 const total = (m, erreurs, refus) => m.deborde + m.horsEcran.length + (m.horsFenetre?.length ?? 0)
-  + m.coupes.length + m.petits.length
+  + m.coupes.length + (m.coupesLignes?.length ?? 0) + (m.enRepli.length ? 1 : 0) + m.petits.length
   + m.pales.length + m.palesGrain.length + m.cassees.length + m.sousDecor.length
   + erreurs.length + refus.length + m.petitTexte.length + m.opacite.length + m.backdrop.length
   + (jour ? m.jour.length + m.jourGrain.length : 0);
@@ -1351,6 +1540,17 @@ const PAGE_TIROIR = '/classement';
    Avec `--largeur`, on s'en tient au format demandé. */
 const FORMATS_OUVERTURE = opt('--largeur') ? FORMATS : [...FORMATS, PETIT];
 
+/* **Les polices d'un état**, rangées avec lui. « document.fonts.status » ne
+   dit que si quelque chose charge encore : il vaut « loaded » après un échec
+   — c'est ce qu'il disait du rideau pendant que tout l'audit tombait dans la
+   police de secours. D'où la liste des polices en échec à côté, et, pour un
+   état mesuré, le compte « enRepli » de sa mesure. */
+const POLICES = () => ({
+  polices: document.fonts?.status ?? null,
+  policesEnEchec: [...new Set([...(document.fonts ?? [])].filter((f) => f.status === 'error')
+    .map((f) => `${f.family.replace(/["']/g, '')} ${f.weight}`))],
+});
+
 async function photographier(page, nomEtat, format, cle) {
   if (!dossierCaptures) return null;
   const fichier = `etat-${nomEtat}-${cleFormat(format)}.png`;
@@ -1422,15 +1622,16 @@ async function etatOuverture(format) {
       /* L'instant réel est relevé : si la page a mis plus d'une demi-seconde
          à répondre, la capture « du début » n'en est pas une, et il faut le
          savoir. Les polices aussi — une capture prise avant Oswald montre le
-         rideau dans une police de secours. */
+         rideau dans une police de secours (voir POLICES). */
       const ici = await page.evaluate(() => {
         const o = document.getElementById('ouverture');
-        return { instant: Math.round(performance.now()), polices: document.fonts?.status ?? null,
+        return { instant: Math.round(performance.now()),
           la: Boolean(o) && !o.classList.contains('partie') };
       });
+      const polices = await page.evaluate(POLICES);
       if (!ici.la) {
         note(cle, format.largeur, 'état', `l’écran d’ouverture n’était plus là à ${ici.instant} ms`);
-        rangerEtat(cle, '/', format, { instant: ici.instant, polices: ici.polices, capture: null });
+        rangerEtat(cle, '/', format, { instant: ici.instant, ...polices, capture: null });
         continue;
       }
       /* La capture d'abord, ici : c'est elle qui tient à l'instant. La
@@ -1449,7 +1650,7 @@ async function etatOuverture(format) {
         m = await mesurer(page, '#ouverture');
       }
       rangerEtat(cle, '/', format, { instant: ici.instant, ...(m ? { instantMesure } : {}),
-        polices: ici.polices, capture }, m, erreurs, refus);
+        ...polices, capture }, m, erreurs, refus);
     }
   } finally {
     await contexte.close();
@@ -1493,9 +1694,14 @@ async function etatTiroir(format) {
     }
     await finDesMouvements(page, '#tbf-tiroir, .tbf-voile', 2500);
     await new Promise((r) => setTimeout(r, 300));
+    /* La mesure attend les polices que le tiroir vient de réclamer (voir
+       mesurer) ; la capture, prise après, les montre donc aussi. Leur état
+       est rangé avec celui de l'ouverture : le tiroir avait été mesuré en
+       police de secours sans que son relevé le dise. */
     const m = await mesurer(page, '#tbf-tiroir');
+    const polices = await page.evaluate(POLICES);
     const capture = await photographier(page, `tiroir-${nomDeRoute(PAGE_TIROIR)}`, format, cle);
-    rangerEtat(cle, PAGE_TIROIR, format, { capture }, m, erreurs, refus);
+    rangerEtat(cle, PAGE_TIROIR, format, { ...polices, capture }, m, erreurs, refus);
   } finally {
     await contexte.close();
   }
@@ -1543,9 +1749,9 @@ if (!trouvailles.length) {
      parce qu'on avait oublié de l'y inscrire. Les genres de la liste passent
      dans cet ordre, et **tous les autres à leur suite** : un relevé ajouté
      demain se verra même si personne ne pense à cette ligne. */
-  const ORDRE_GENRES = ['script', 'image cassée', 'chargement', 'état', 'refusé (429)', 'renvoyée',
-    'déborde', 'hors écran', 'hors fenêtre',
-    'coupé', 'trop petit', 'pâle', 'pâle sur grain', 'sous le décor', 'petit texte', 'opacité',
+  const ORDRE_GENRES = ['script', 'image cassée', 'chargement', 'police de repli', 'état', 'refusé (429)',
+    'renvoyée', 'déborde', 'hors écran', 'hors fenêtre',
+    'coupé', 'coupé (lignes)', 'trop petit', 'pâle', 'pâle sur grain', 'sous le décor', 'petit texte', 'opacité',
     'backdrop-filter', 'pâle au jour', 'pâle au jour sur grain', 'sans alt', 'capture'];
   const genres = [...ORDRE_GENRES, ...[...parGenre.keys()].filter((g) => !ORDRE_GENRES.includes(g))];
 
@@ -1640,6 +1846,9 @@ console.log('');
 
 if (SANS_EXEMPLE.length) {
   console.log(`  Non auditée(s), faute d’exemple dans EXEMPLES : ${SANS_EXEMPLE.join(', ')}\n`);
+}
+if (!coupeLignesMesurable) {
+  console.log('  Non mesuré : « coupé (lignes) », son témoin a échoué (voir « Le témoin de la coupe à la ligne »).\n');
 }
 if (sortieJson) console.log(`  Relevés complets : ${sortieJson}`);
 if (dossierCaptures) console.log(`  Captures : ${dossierCaptures}`);

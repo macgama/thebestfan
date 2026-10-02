@@ -2690,26 +2690,55 @@ html[data-calme~="animations"] .pan[role="button"]:active{transform:none}
    après) : le ruban prend dix pixels de large, et « CLASSEMENT DES », la
    plus longue ligne, en demande soixante-seize. Une tuile de cent les lui
    laisse, avec ses six de rembourrage ; une de quatre-vingt-seize le
-   coupait en trois lignes, dont la dernière disparaît. Les trois colonnes
-   tiennent dès 352 px d'écran ; en dessous, deux, comme à 320. */
+   passait en Oswald sur trois lignes — la troisième est la marge des
+   polices de repli, pas celle d'Oswald (voir la tuile, juste après). Les
+   trois colonnes tiennent dès 352 px d'écran ; en dessous, deux, comme à
+   320. */
 .tbf-tiroir-grille{
   display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px;
   padding-top:4px;
 }
 /* La tuile du tiroir : 88 px de haut sur la largeur de sa colonne, une icône
-   de vingt-quatre, et un libellé de onze pixels qui a le droit de passer sur
-   deux lignes — « DUEL DE TRIBUNES » ne tient pas sur une. Trois lignes ne
-   tiendraient pas sous l'icône : la troisième est coupée, et c'est au libellé
-   d'être court. */
+   de vingt-quatre, et un libellé de onze pixels qui passe à la ligne autant
+   qu'il le faut. En Oswald, aucun n'en prend plus de deux — « DUEL DE
+   TRIBUNES » ne tient pas sur une —, et c'est toujours au libellé d'être
+   court.
+
+   **Il n'est jamais coupé, quelle que soit la police.** Il était tenu à deux
+   lignes (`line-clamp`), une limite mesurée sur Oswald seule. Or la tuile ne
+   l'a pas toujours : à la première ouverture du tiroir, tant que sa graisse
+   n'est pas arrivée, et hors ligne dès que le cache du navigateur l'a
+   perdue (le service worker ne garde que ce qui vient du jeu, pas les
+   polices de Google), elle prend le repli de `--banner`, plus large —
+   Arial Narrow sur un ordinateur, Roboto sur Android, la police du système
+   sur un iPhone. « CLASSEMENT DES SUPPORTERS » y demande trois lignes, à
+   360 px comme à 768, et se lisait « CLASSEMENT DES… » ; la liste d'avant
+   le lot le montrait entier, quelle que soit la police.
+
+   Trois lignes tiennent dans les 88 : six de rembourrage en haut, l'icône
+   et son écart (trente-deux), trois lignes sur leur ruban (quarante-deux),
+   quatre en bas — quatre-vingt-quatre. L'icône remonte de six pixels, le
+   ruban descend d'autant, et il reste un pixel entre lui et le pointillé de
+   la page où l'on est. La hauteur n'est donc plus qu'un plancher : la tuile
+   reste à 88 avec toutes les polices essayées (Oswald, Arial Narrow, Roboto,
+   Arial, Impact, de 320 à 1280 px), et si un libellé en demandait un jour
+   davantage, sa rangée grandirait — la grille étire ses voisines à la même
+   hauteur — au lieu de lui retirer une ligne.
+
+   **Pas de coupure dans un mot.** Un seul mot plus large que la ligne
+   (« L'ABONNEMENT » en Roboto à 360 px, d'un pixel) mord sur la frange du
+   ruban, où il se lit encore. `overflow-wrap:break-word` l'aurait cassé en
+   « L'ABONNEMEN / T » : pire que le pixel qu'il empiète. Ce qui resterait
+   rogné — une police aussi large qu'Arial, sur un écran de 352 à 360 px, y
+   perd deux à cinq pixels de son « T » —, c'est la pile de `--banner` qui
+   le réglerait, pas la tuile. */
 .tbf-tiroir .tbf-case{
   --ico:24px;
-  aspect-ratio:auto;height:88px;gap:8px;padding:6px 6px 4px;
+  aspect-ratio:auto;min-height:88px;gap:8px;padding:6px 6px 4px;
   font-size:11px;line-height:1.12;letter-spacing:.04em;
 }
 .tbf-tiroir .tbf-case .lib{
   white-space:normal;text-overflow:clip;text-align:center;text-wrap:balance;
-  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;
-  overflow:hidden;
 }
 /* **Le nom, sur un bout de gaffer.** La tuile garde la face de sa rubrique,
    son icône et son sticker ; son nom est écrit à la craie sur un ruban toilé
