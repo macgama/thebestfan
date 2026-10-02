@@ -1017,11 +1017,11 @@ html[data-calme~="animations"] .cestlui{animation:none}
    au-dessus du sur-titre et sous l'écharpe — le nœud, qui dépasse du rail
    de trois pixels, touchait le titre. Une étape sur deux lignes les serre
    d'un pixel chacune (des capitales, sans jambage), et le sur-titre monte
-   de deux pixels vers l'écharpe, qui en garde quatre et demi : ces quatre
-   pixels vont au nœud. */
-.direct[data-quoi="pas"]{justify-content:space-evenly;padding-top:17px}
+   d'un pixel vers l'écharpe, jusqu'aux dix-huit que la brique lui demande :
+   ces trois pixels vont au nœud, en marge au-dessus du rail. */
+.direct[data-quoi="pas"]{justify-content:space-evenly;padding-top:18px}
 .direct[data-quoi="pas"] b{line-height:15px}
-.direct .rang{display:flex;align-items:center;height:12px;margin:0 0 0 9px}
+.direct .rang{display:flex;align-items:center;height:12px;margin:3px 0 0 9px}
 .direct .rang .tbf-jauge{--crans:1;flex:1;min-width:0}
 .direct .rang .tbf-sticker{--rot:-3deg;z-index:3;height:18px;margin-left:-10px;
   padding:0 5px;gap:3px;font-size:11px}
@@ -2286,10 +2286,13 @@ function quand(iso) {
   return `${JOURS[d.getDay()]} ${deux(d.getDate())}/${deux(d.getMonth() + 1)} ${heure(d)}`;
 }
 
-/** Le compte à rebours : « dans 2 j 4 h », « dans 3 h 12 », « dans 8 min ». */
+/** Le compte à rebours : « dans 2 j 4 h », « dans 14 h », « dans 3 h 12 », « dans 8 min ».
+    Les minutes à moins de dix heures seulement : « DEMAIN 20:45 · dans 23 h 59 »
+    tenait à trois pixels près dans le ticket d'un téléphone de 360. */
 function rebours(iso) {
   const min = Math.max(0, Math.ceil((Date.parse(iso) - Date.now()) / 60_000));
   if (min >= 1440) return `dans ${Math.floor(min / 1440)} j ${Math.floor((min % 1440) / 60)} h`;
+  if (min >= 600) return `dans ${Math.floor(min / 60)} h`;
   if (min >= 60) return `dans ${Math.floor(min / 60)} h ${deux(min % 60)}`;
   return `dans ${min} min`;
 }
@@ -2313,9 +2316,15 @@ let reboursMinuteur = null;
 /** Ce que dit le ticket : `quoi` (direct, prochain, pas, geste), son lien, son match. */
 let ticket = { quoi: 'geste', href: '/repetition', match: null };
 
-/** « SAM 20:45 », et le compte à rebours à moins d'un jour : « CE SOIR 21:13 · dans 5 h 00 ». */
-const momentDuCoup = (iso) => quand(iso)
-  + (Date.parse(iso) - Date.now() < 86_400_000 ? ` · ${rebours(iso)}` : '');
+/** « SAM 20:45 », et le compte à rebours à moins d'un jour : « CE SOIR 21:13 · dans 5 h 00 ».
+    Avec lui, « AUJOURD'HUI » devient « À » : il ne tenait pas sur la ligne
+    (« AUJOURD'HUI 16:45 · dans 8 h 45 », 169 px pour 151), et le compte à
+    rebours dit déjà que c'est aujourd'hui. */
+function momentDuCoup(iso) {
+  if (Date.parse(iso) - Date.now() >= 86_400_000) return quand(iso);
+  const q = quand(iso);
+  return `${q.startsWith('AUJOURD') ? `À ${heure(new Date(iso))}` : q} · ${rebours(iso)}`;
+}
 
 function bacheDuJour() {
   const d = $('direct');
@@ -2373,7 +2382,8 @@ function bacheDuJour() {
   };
   dire();
   /* Le moment se réécrit tant qu'il est affiché — le compte à rebours y
-     entre la veille, « DEMAIN » devient « CE SOIR » à minuit. Passé le coup
+     entre à un jour du coup d'envoi, « DEMAIN » devient « CE SOIR » à
+     minuit. Passé le coup
      d'envoi, la case se recompose : le direct, ou le match d'après. */
   if (e.tic) {
     reboursMinuteur = setInterval(() => {
@@ -4038,15 +4048,23 @@ async function lire(url, options) {
      signal qui lève le rideau, restaient derrière lui — au premier passage
      de la session, justement, celui qui a le rideau et pas encore de cache.
      Ils prennent leur place quand ils arrivent, et la veille les relit
-     (`poserProchains`) : le cache décide s'il faut redemander. */
+     (`relireProchains`) : le cache décide s'il faut redemander, et une
+     lecture encore en route n'en lance pas une seconde — le premier tour de
+     veille part avant que la première soit revenue. */
   const poserProchains = (v) => {
     if (!Array.isArray(v)) return;             // panne : on garde ce qu'on avait
     if (JSON.stringify(v) === JSON.stringify(H.prochains)) return;
     H.prochains = v;
     montrer();
   };
+  let prochainsEnRoute = null;
+  const relireProchains = (lecture = null) => {
+    if (prochainsEnRoute) return;
+    prochainsEnRoute = (lecture ?? prochainsCoups(user.id)).then(poserProchains, () => {})
+      .finally(() => { prochainsEnRoute = null; });
+  };
   montrer();
-  void P.prochains.then(poserProchains);
+  relireProchains(P.prochains);
 
   /* Le personnage est là — celui du joueur s'il en a un, le supporter sinon.
      Mais il ne salue pas encore : l'écran d'ouverture couvre tout, et un salut
@@ -4188,7 +4206,7 @@ async function alerteDuel() {
     if (document.hidden) { premierLive = null; planifier(30_000); return; }
     /* Le calendrier des clubs suivis, relu à chaque tour visible ; le cache
        ne laisse passer qu'une demande toutes les dix minutes. */
-    void prochainsCoups(user.id).then(poserProchains, () => {});
+    relireProchains();
 
     // `liste` est déclarée dehors : le coup de sifflet final la relit plus bas
     // pour y trouver le match qui vient de se terminer, et il ne figure plus

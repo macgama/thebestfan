@@ -289,8 +289,12 @@
 
      La minuterie est posée **en premier** : si tout le reste échoue — un
      script cassé plus haut, un réseau mort — elle part quand même, et c'est
-     elle qui empêche l'ouverture de devenir une porte close. */
-  setTimeout(() => partir(true), DUREE);
+     elle qui empêche l'ouverture de devenir une porte close.
+
+     Le nœud ne la repousse pas : si l'accueil a congédié l'écran juste
+     avant elle, et que l'écharpe est encore en train de se nouer, l'écran
+     part à l'heure dite et le nœud finit dans le fondu. */
+  setTimeout(() => { if (parti) { nouer(); lever(); } else partir(true); }, DUREE);
 
   /* L'accueil a fini de se monter : le personnage est posé, la collection est
      lue, il n'y a plus rien à couvrir. */
