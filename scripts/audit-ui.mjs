@@ -60,6 +60,24 @@
  * pour qu'aucune ne dépende de celles d'avant : voir « Un navigateur neuf par
  * visite ».
  *
+ * ## Le grain, et les écrans qu'aucune route ne montre (lot 2)
+ *
+ * Depuis le lot 1, toute bâche, tout onglet actif et tout `.pan` portent une
+ * tuile de grain, donc une image de fond — et l'audit rangeait tout texte
+ * posé sur une image parmi les « non mesurables ». Le compte au soleil
+ * **baissait** pendant que la lecture baissait : un angle mort qui se lit
+ * comme un progrès. Il lit maintenant à travers la tuile, jusqu'à la couleur
+ * posée dessous (voir « Le grain n'est pas un dégradé », dans `MESURE`), et
+ * compte ces textes **à part** — `surGrain`, `palesGrain`, `jourSurGrain`,
+ * `jourGrain` — pour qu'un relevé d'avant se compare encore : l'ancien « sur
+ * dégradé » vaut le nouveau plus `surGrain`. D'où le schéma `audit-ui/2`.
+ *
+ * Et `--etats` regarde trois écrans que le parcours des routes ne voit
+ * jamais, parce qu'il attend qu'ils soient partis ou ne les ouvre pas :
+ * l'ouverture du hub au début et vers deux secondes, et le tiroir ouvert.
+ * L'ouverture aussi à 320 × 568, le plus petit téléphone, où l'on cherche
+ * ce qu'elle pousse sous son bord (« hors fenêtre »). Voir « Les états ».
+ *
  * Usage :
  *   node scripts/audit-ui.mjs                  toutes les pages, trois formats
  *   node scripts/audit-ui.mjs /virage          une seule page
@@ -69,6 +87,7 @@
  *   node scripts/audit-ui.mjs --json a.json    tous les relevés, pour une machine
  *   node scripts/audit-ui.mjs --captures dos   une capture par page et par format
  *   node scripts/audit-ui.mjs --pleine         captures de la page entière
+ *   node scripts/audit-ui.mjs --etats          et l'ouverture, le tiroir ouvert
  *
  * (Sous Git Bash, « /virage » est réécrit en chemin Windows avant d'arriver
  * ici : préfixer la commande de MSYS_NO_PATHCONV=1, ou la lancer depuis
@@ -97,6 +116,7 @@ const seule = args.find((a, i) => a.startsWith('/') && !A_VALEUR.has(args[i - 1]
 const tout = args.includes('--tout');
 const jour = args.includes('--jour');
 const pleine = args.includes('--pleine');
+const etats = args.includes('--etats');
 
 /* Une option à valeur sans sa valeur est refusée **avant** de vider la base
    et de démarrer un Chrome : découvrir au bout de six minutes que le JSON
@@ -129,8 +149,13 @@ const FORMATS_BASE = [
   { largeur: 400, hauteur: 800 },
   { largeur: 768, hauteur: 1024 },
 ];
+/* Le plus petit téléphone qu'on promet de tenir, pour le seul écran
+   d'ouverture (voir « Les états ») : il n'entre pas dans le socle. Mais
+   « --largeur 320 » le désigne, pour toutes les visites : un téléphone de
+   320 px de large a aussi 568 px de haut, pas 800. */
+const PETIT = { largeur: 320, hauteur: 568 };
 const FORMATS = opt('--largeur')
-  ? [FORMATS_BASE.find((f) => f.largeur === Number(opt('--largeur')))
+  ? [[...FORMATS_BASE, PETIT].find((f) => f.largeur === Number(opt('--largeur')))
     ?? { largeur: Number(opt('--largeur')), hauteur: Number(opt('--largeur')) >= 768 ? 1024 : 800 }]
   : FORMATS_BASE;
 const cleFormat = (f) => `${f.largeur}x${f.hauteur}`;
@@ -331,11 +356,75 @@ const trouvailles = [];
 const note = (page, largeur, genre, quoi) =>
   trouvailles.push({ page, largeur, genre, quoi });
 
-/** Le contraste d'un texte sur son fond, selon la formule WCAG. */
-const MESURE = `(() => {
+/* **Le voile moyen de chaque tuile de grain**, lu sur la tuile que la page a
+   vraiment reçue : décodée dans la page, peinte sur un canevas, moyennée
+   pixel par pixel. La teinte moyenne pondérée par l'opacité, et l'opacité
+   moyenne — posée sur une couleur, cette couche unie donne exactement la
+   moyenne de ce que la tuile donne pixel par pixel sur la même couleur.
+
+   Dans la page et non dans ce script : le serveur choisit le format selon
+   ce que le navigateur annonce (un AVIF peut remplacer le WebP demandé), et
+   c'est la tuile décodée qu'on veut moyenner, pas la recette. Le résultat
+   est rangé sur la page pour MESURE, qui ne peut pas attendre une image, et
+   rendu pour le JSON. Une tuile qui n'a pas chargé vaut « null » : la
+   surface est alors peinte unie, et MESURE la lit ainsi. */
+const VOILES = `(async () => {
+  const adresses = new Set();
+  for (const el of document.querySelectorAll('*')) {
+    const v = getComputedStyle(el).backgroundImage;
+    if (!v || !v.includes('/img/grain/')) continue;
+    for (const m of v.matchAll(/url\\(\\s*["']?([^"')]+)["']?\\s*\\)/g)) {
+      if (m[1].includes('/img/grain/')) adresses.add(m[1]);
+    }
+  }
+  const voiles = {};
+  for (const adresse of adresses) {
+    try {
+      const img = new Image();
+      img.src = adresse;
+      await img.decode();
+      const toile = document.createElement('canvas');
+      toile.width = img.naturalWidth;
+      toile.height = img.naturalHeight;
+      const ctx = toile.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+      const d = ctx.getImageData(0, 0, toile.width, toile.height).data;
+      let r = 0, g = 0, b = 0, a = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        const al = d[i + 3] / 255;
+        r += d[i] * al; g += d[i + 1] * al; b += d[i + 2] * al; a += al;
+      }
+      const n = d.length / 4;
+      voiles[adresse] = a > 0 ? { c: [r / a, g / a, b / a], a: a / n } : { c: [0, 0, 0], a: 0 };
+    } catch { voiles[adresse] = null; }
+  }
+  window.__auditVoiles = voiles;
+  return voiles;
+})()`;
+
+/** Le contraste d'un texte sur son fond, selon la formule WCAG.
+ *
+ * `portee` restreint la mesure à un sélecteur — l'écran d'ouverture, le
+ * tiroir : un état posé par-dessus la page se mesure seul, sans relever une
+ * seconde fois la page qu'il recouvre (et que la mesure lirait comme si rien
+ * ne la couvrait). Sans portée, c'est toute la page, comme avant.
+ *
+ * Sous une portée **fixée à la fenêtre** (les deux d'aujourd'hui), deux
+ * relevés parlent de l'état et non plus de la page : `deborde` est ce que
+ * l'état fait glisser de côté, et `horsFenetre` s'ajoute — les textes qu'il
+ * pousse hors de l'écran sans pouvoir les y ramener. Voir « Hors de la
+ * fenêtre », plus bas.
+ *
+ * Le gabarit ne reçoit que `SEUILS`, `LEGAL` et `jour` : les bancs du lot 2
+ * le tirent de ce fichier et l'évaluent avec ces trois noms seulement. */
+const mesure = (portee = null) => `(() => {
   const SEUILS = ${JSON.stringify(SEUILS)};
   const LEGAL = ${JSON.stringify(LEGAL.join(','))};
   const JOUR = ${jour};
+  const PORTEE = ${JSON.stringify(portee)};
+  const ZONE = PORTEE ? document.querySelector(PORTEE) : null;
+  if (PORTEE && !ZONE) return null;
+  const VOILES = window.__auditVoiles ?? {};
   /* **« color(srgb 0.95 0.83 0.49) » ne se lit pas comme « rgb(242, 212, 125) ».**
      C'est ce que rend « color-mix », dont le jeu se sert déjà à trois endroits,
      et ses composantes vont de zéro à un là où celles de « rgb() » vont à 255.
@@ -379,12 +468,179 @@ const MESURE = `(() => {
   const composer = (dessus, dessous) => dessus.map((v, i) => Math.round(
     v * dessus[3] + dessous[i] * (1 - dessus[3])));
 
-  const fond = (el) => {
-    const couches = [];
-    let n = el;
-    while (n && n !== document.documentElement) {
+  /* **Le grain n'est pas un dégradé.** Depuis le lot 1, toute bâche, tout
+     onglet actif et tout panneau calme portent une tuile de grain — une image
+     de fond, que la remontée rangeait avec les dégradés. Leurs textes
+     sortaient donc du compte, et le compte au soleil s'améliorait pendant que
+     la lecture baissait : soixante et onze textes de /repetition tombés sous
+     le seuil sur un panneau passé au parpaing, et pas un de compté.
+
+     Une tuile n'est pourtant pas une image comme les autres. C'est un voile
+     presque transparent, d'une seule teinte, répété sans motif ni tache (voir
+     scripts/grain-images.mjs) : sa moyenne est le fond qu'on lit. La couche
+     est donc remplacée par son **voile moyen**, lu sur la tuile servie (voir
+     VOILES), et la remontée continue jusqu'à la couleur posée dessous — la
+     face de la bâche, le panneau, le fond de la page. Ce n'est ni le grain le
+     plus clair ni le plus sombre : c'est ce que l'œil moyenne sous une
+     lettre de onze pixels posée sur un grain d'un pixel.
+
+     **Un vrai dégradé et une photo restent non mesurables.** Leur couleur
+     change sous la lettre, et la moyenne d'une photo ne dit rien de ce qui
+     passe derrière un mot. Une seule exception, géométrique : une couche de
+     dégradé qui ne se répète pas et dont le rectangle ne touche pas le texte
+     n'est pas **sous** le texte — la bande d'écharpe peinte au bord haut de
+     la grande bâche, au-dessus de PRENDRE MA PLACE. Tout ce qui ne se calcule
+     pas à coup sûr (une position en calc, un fond fixé à la fenêtre, un texte
+     dont on ne retrouve pas la place dans la boîte) reste non mesurable :
+     une mesure fausse est pire que pas de mesure, et c'est la leçon des deux
+     paragraphes qui précèdent. */
+
+  /* Une liste de couches, coupée sur les virgules du premier niveau : un
+     dégradé porte ses propres virgules, entre parenthèses. */
+  const decouper = (v) => {
+    const morceaux = [];
+    let profondeur = 0, debut = 0;
+    for (let i = 0; i < v.length; i += 1) {
+      if (v[i] === '(') profondeur += 1;
+      else if (v[i] === ')') profondeur -= 1;
+      else if (v[i] === ',' && profondeur === 0) { morceaux.push(v.slice(debut, i).trim()); debut = i + 1; }
+    }
+    morceaux.push(v.slice(debut).trim());
+    return morceaux;
+  };
+
+  /* La couche est-elle une tuile de grain ? « undefined » : non, c'est une
+     autre image. « null » : oui, mais son voile n'a pas été lu — non
+     mesurable, plutôt que deviné. Sinon son nom et sa couche unie. Le béton
+     vient en image-set : on prend la tuile que le navigateur choisit, la
+     plus petite résolution qui couvre la densité de l'écran. */
+  const voileDe = (couche) => {
+    if (!/^(?:url|(?:-webkit-)?image-set)\\(/.test(couche)) return undefined;
+    const adresses = [...couche.matchAll(/url\\(\\s*["']?([^"')]+)["']?\\s*\\)\\s*(?:([\\d.]+)(?:x|dppx))?/g)];
+    if (!adresses.length || !adresses.every((m) => m[1].includes('/img/grain/'))) return undefined;
+    const dpr = window.devicePixelRatio || 1;
+    const rangees = adresses.map((m) => ({ url: m[1], x: Number(m[2] ?? 1) })).sort((p, q) => p.x - q.x);
+    const url = (rangees.find((r) => r.x >= dpr) ?? rangees[rangees.length - 1]).url;
+    const nomTuile = url.replace(/^.*\\/img\\/grain\\//, '').replace(/[.?#].*$/, '');
+    if (!(url in VOILES)) return null;
+    const v = VOILES[url];
+    /* Une tuile absente ne peint rien : la surface est unie, et on la lit
+       ainsi — en le disant dans le nom. */
+    return v ? { nom: nomTuile, couche: [...v.c, v.a] } : { nom: nomTuile + ' (absente)', couche: [0, 0, 0, 0] };
+  };
+
+  /* La place du texte dans la boîte de l'élément qui peint la couche, en
+     pixels de mise en page — avant toute rotation, donc juste aussi sur une
+     bâche tournée de quelques dixièmes de degré, où les rectangles de
+     l'écran se décalent. Mesurée depuis le bord intérieur de la bordure,
+     comme une couche de fond se place.
+
+     **Le peintre n'a pas à être positionné.** La chaîne des parents
+     positionnés ne passe par lui que s'il l'est ; sinon elle le saute, et le
+     texte se retrouve placé dans un ancêtre commun aux deux. On place alors
+     le peintre dans ce même ancêtre, et on retranche. L'audit exigeait la
+     première chaîne, et la feuille commune avait dû poser « position:
+     relative » sur la rubrique du tiroir pour lui seul : c'est à la mesure
+     de suivre la page, pas à la page de se plier à la mesure.
+
+     « null » quand on ne sait pas, et la couche reste alors sous le texte :
+     une chaîne coupée par un élément fixé à la fenêtre, ou un peintre sauté
+     qui défile lui-même — son contenu bouge, sa couche non, et la chaîne
+     ne voit pas ce défilement-là. */
+  const boiteDuTexte = (el, n) => {
+    if (el === n) {
       const s = getComputedStyle(n);
-      if (s.backgroundImage && s.backgroundImage !== 'none') return null;
+      return [parseFloat(s.paddingLeft), parseFloat(s.paddingTop),
+        n.clientWidth - parseFloat(s.paddingRight), n.clientHeight - parseFloat(s.paddingBottom)];
+    }
+    /* Le texte, dans le repère du premier parent positionné qui n'est pas à
+       l'intérieur du peintre : le peintre lui-même quand il est positionné. */
+    let x = 0, y = 0, e = el, p = null;
+    for (;;) {
+      p = e.offsetParent;
+      if (!p) return null;
+      x += e.offsetLeft - p.scrollLeft;
+      y += e.offsetTop - p.scrollTop;
+      if (p === n || !n.contains(p)) break;
+      x += p.clientLeft; y += p.clientTop;
+      e = p;
+    }
+    if (p !== n) {
+      /* Le peintre, dans le même repère : sa propre chaîne, jusqu'au même
+         ancêtre — qu'elle doit rencontrer, sinon on ne sait pas. Le
+         défilement de l'ancêtre est retranché des deux côtés, il s'annule. */
+      if (n.scrollLeft || n.scrollTop) return null;
+      let nx = n.clientLeft, ny = n.clientTop;
+      for (let q = n; q !== p;) {
+        const r = q.offsetParent;
+        if (!r) return null;
+        nx += q.offsetLeft - r.scrollLeft;
+        ny += q.offsetTop - r.scrollTop;
+        if (r !== p) { nx += r.clientLeft; ny += r.clientTop; }
+        q = r;
+      }
+      x -= nx; y -= ny;
+    }
+    return [x, y, x + el.offsetWidth, y + el.offsetHeight];
+  };
+
+  /* La couche i de n laisse-t-elle le texte de el à découvert ? Seulement
+     un dégradé, posé une fois, dans la boîte de remplissage, qui défile avec
+     elle, et dont le rectangle se calcule en pixels ou en pour cent. */
+  const coucheHorsDuTexte = (n, s, i, couche, el) => {
+    if (!/^(?:repeating-)?(?:linear|radial|conic)-gradient\\(/.test(couche)) return false;
+    const pris = (v) => { const l = decouper(v); return l[i % l.length]; };
+    if (!/^no-repeat(?: no-repeat)?$/.test(pris(s.backgroundRepeat))) return false;
+    if (pris(s.backgroundOrigin) !== 'padding-box' || pris(s.backgroundAttachment) !== 'scroll') return false;
+    const W = n.clientWidth, H = n.clientHeight;
+    const longueur = (v, tout) => (v === undefined || v === 'auto' ? tout
+      : /^-?[\\d.]+px$/.test(v) ? parseFloat(v)
+        : /^-?[\\d.]+%$/.test(v) ? (parseFloat(v) / 100) * tout : NaN);
+    const t = pris(s.backgroundSize).split(/\\s+/);
+    const [w, h] = /^(?:cover|contain)$/.test(t[0]) ? [W, H] : [longueur(t[0], W), longueur(t[1], H)];
+    const MOTS = { left: '0%', top: '0%', center: '50%', right: '100%', bottom: '100%' };
+    const place = (v, libre) => {
+      const u = MOTS[v] ?? v;
+      return /^-?[\\d.]+px$/.test(u) ? parseFloat(u)
+        : /^-?[\\d.]+%$/.test(u) ? (parseFloat(u) / 100) * libre : NaN;
+    };
+    const p = pris(s.backgroundPosition).split(/\\s+/);
+    if (p.length !== 2) return false;
+    const x = place(p[0], W - w), y = place(p[1], H - h);
+    if (![w, h, x, y].every(Number.isFinite)) return false;
+    if (w <= 0 || h <= 0) return true;
+    const b = boiteDuTexte(el, n);
+    if (!b) return false;
+    return x >= b[2] || x + w <= b[0] || y >= b[3] || y + h <= b[1];
+  };
+
+  /* Le fond, et les tuiles traversées pour l'atteindre. « null » : non
+     mesurable. Mémorisé : le contraste ordinaire, celui du jour et le
+     rapport le demandent chacun pour le même texte. */
+  const memoFond = new Map();
+  const fondDetaille = (el) => {
+    if (memoFond.has(el)) return memoFond.get(el);
+    const couches = [];
+    const grains = [];
+    let illisible = false;
+    let n = el;
+    pile: while (n && n !== document.documentElement) {
+      const s = getComputedStyle(n);
+      if (s.backgroundImage && s.backgroundImage !== 'none') {
+        const images = decouper(s.backgroundImage);
+        for (let i = 0; i < images.length; i += 1) {
+          /* Une couche sans image : « url(…) repeat, var(--face) » en fait
+             une, celle qui ne porte que la couleur. */
+          if (images[i] === 'none') continue;
+          const v = voileDe(images[i]);
+          if (v === undefined && coucheHorsDuTexte(n, s, i, images[i], el)) continue;
+          if (!v) { illisible = true; break pile; }
+          grains.push(v.nom);
+          /* La première couche de la liste est peinte au-dessus : l'ordre de
+             la pile est celui de la liste, puis la couleur de l'élément. */
+          if (v.couche[3] > 0) couches.push(v.couche);
+        }
+      }
       const c = lire(s.backgroundColor);
       if (c[3] > 0) {
         couches.push(c);
@@ -392,13 +648,19 @@ const MESURE = `(() => {
       }
       n = n.parentElement;
     }
-    /* Le fond de la page ferme la pile : si on est sorti de la boucle sans
-       rencontrer d'opaque, c'est lui qu'on voit à travers. */
-    let out = [10, 13, 17, 1];
-    if (couches.length && couches[couches.length - 1][3] >= 0.999) out = couches.pop();
-    for (let i = couches.length - 1; i >= 0; i -= 1) out = [...composer(couches[i], out), 1];
-    return \`rgb(\${out[0]}, \${out[1]}, \${out[2]})\`;
+    let r = null;
+    if (!illisible) {
+      /* Le fond de la page ferme la pile : si on est sorti de la boucle sans
+         rencontrer d'opaque, c'est lui qu'on voit à travers. */
+      let out = [10, 13, 17, 1];
+      if (couches.length && couches[couches.length - 1][3] >= 0.999) out = couches.pop();
+      for (let i = couches.length - 1; i >= 0; i -= 1) out = [...composer(couches[i], out), 1];
+      r = { rgb: \`rgb(\${out[0]}, \${out[1]}, \${out[2]})\`, grains };
+    }
+    memoFond.set(el, r);
+    return r;
   };
+  const fond = (el) => fondDetaille(el)?.rgb ?? null;
   const contraste = (el) => {
     const s = getComputedStyle(el);
     const o = Number(s.opacity);
@@ -441,6 +703,17 @@ const MESURE = `(() => {
       n = n.parentElement;
     }
     return null;
+  };
+  /* Plus strict, pour « Hors de la fenêtre » : un conteneur qui défile
+     **vraiment** dans ce sens-là, entre le texte et l'état mesuré compris.
+     Un cadre qui coupe ne ramène rien, il cache. Au-delà de l'état, rien ne
+     compte : il est fixé, et la page qui défile dessous ne le déplace pas. */
+  const defileVers = (el, axe) => {
+    for (let n = el === ZONE ? el : el.parentElement; n; n = n.parentElement) {
+      if (/auto|scroll/.test(getComputedStyle(n)[axe])) return true;
+      if (n === ZONE) break;
+    }
+    return false;
   };
 
   const nom = (el) => {
@@ -544,10 +817,22 @@ const MESURE = `(() => {
     return (Math.max(lt, ld) + 0.05) / (Math.min(lt, ld) + 0.05);
   };
 
+  /* Les textes lus à travers une tuile de grain sont **comptés à part** :
+     surGrain et palesGrain, jourSurGrain et jourGrain. Le compte « pâle au
+     jour » de la fin du lot 1 ne les voyait pas ; les y verser d'un coup
+     ferait lire une régression là où un angle mort se ferme. Et « sur
+     dégradé » ne compte plus que ce qui reste non mesurable : l'ancien vaut
+     le nouveau plus surGrain. */
+  /* Un état fixé à la fenêtre ne défile pas avec la page : voir « Hors de
+     la fenêtre ». Le relevé n'existe que là — un zéro qu'on n'a pas mesuré
+     se lirait comme un bon résultat. */
+  const FIXE = Boolean(ZONE) && getComputedStyle(ZONE).position === 'fixed';
   const out = { deborde: 0, horsEcran: [], coupes: [], petits: [], pales: [],
     sansAlt: [], cassees: [], surDegrade: 0, sousDecor: [],
     textes: 0, petitTexte: [], opacite: [], toleres: [], backdrop: [],
-    jour: [], jourSurDegrade: 0 };
+    jour: [], jourSurDegrade: 0,
+    surGrain: 0, palesGrain: [], jourSurGrain: 0, jourGrain: [],
+    ...(FIXE ? { horsFenetre: [] } : {}) };
 
   /* **Le décor peut passer devant le texte, et rien ne le disait.**
 
@@ -567,8 +852,11 @@ const MESURE = `(() => {
 
      On compare donc l'empilement plutôt que le pointage : tout bloc de premier
      niveau qui porte du texte doit gagner contre le décor, c'est-à-dire être
-     positionné et porter un \`z-index\` supérieur. */
-  {
+     positionné et porter un \`z-index\` supérieur.
+
+     Pas quand la mesure a une portée : l'état mesuré est posé par-dessus la
+     page, et c'est la page qu'on relèverait. */
+  if (!ZONE) {
     const decors = [...document.querySelectorAll('.tbf-decor,.tbf-grad')];
     if (decors.length) {
       const zDecor = Math.max(...decors.map((d) => Number(getComputedStyle(d).zIndex) || 0));
@@ -588,9 +876,19 @@ const MESURE = `(() => {
     }
   }
 
-  out.deborde = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+  /* Le débordement de côté. Sous une portée fixée, c'est celui de l'état :
+     la page dessous a son propre relevé, et au format de 320 px, où les
+     pages ne sont pas visitées, on aurait mis au compte du rideau ce que fait
+     l'accueil. Un état qui défile de côté se fait glisser au doigt comme une
+     page ; un état qui coupe ne glisse pas, et ce qu'il pousse dehors est
+     relevé plus bas, texte par texte. Un élément fixé n'agrandit jamais la
+     page : sans cette règle, le relevé ne pouvait rien dire de lui. */
+  out.deborde = !FIXE ? Math.max(0, document.documentElement.scrollWidth - window.innerWidth)
+    : /auto|scroll/.test(getComputedStyle(ZONE).overflowX)
+      ? Math.max(0, ZONE.scrollWidth - ZONE.clientWidth) : 0;
 
-  for (const el of document.querySelectorAll('*')) {
+  const tous = ZONE ? [ZONE, ...ZONE.querySelectorAll('*')] : document.querySelectorAll('*');
+  for (const el of tous) {
     /* Le flou d'arrière-plan se relève **avant** le filtre de visibilité : un
        dialogue replié qui le porte le recalculera dès qu'il s'ouvrira, et
        c'est la surface qui compte, pas l'instant. Les pseudo-éléments aussi —
@@ -613,6 +911,26 @@ const MESURE = `(() => {
     if (el.children.length === 0 && (r.left < -1 || r.right > window.innerWidth + 1)
         && !defilant(el)) {
       out.horsEcran.push({ q: nom(el), de: Math.round(Math.max(-r.left, r.right - window.innerWidth)) });
+    }
+
+    /* **Hors de la fenêtre**, sous une portée fixée. Une page défile : ce qui
+       passe sous le bas de l'écran s'y ramène au doigt, et seul le côté
+       compte (« hors écran », juste au-dessus). Un état fixé à la fenêtre ne
+       défile pas avec elle : un texte poussé sous son bord ne se lira jamais.
+       Et comme le rideau coupe ce qui dépasse, « cache » le retire même du
+       compte des textes — la panne restait muette. C'est celle qu'on attend
+       d'un téléphone de 568 px de haut.
+
+       Les quatre côtés, un pixel de tolérance, tout texte à soi qui n'est pas
+       éteint (la sortie de secours attend ses douze secondes à zéro), sauf
+       dans un conteneur qui défile dans ce sens-là : le tiroir défile, et ce
+       qui dépasse en bas y est plus loin, pas perdu. */
+    if (FIXE && texteDirect(el) && opacites(el) * lire(getComputedStyle(el).color)[3] >= 0.02) {
+      const cote = Math.max(-r.left, r.right - window.innerWidth);
+      const bas = Math.max(-r.top, r.bottom - window.innerHeight);
+      const de = Math.max(cote > 1 && !defileVers(el, 'overflowX') ? cote : 0,
+        bas > 1 && !defileVers(el, 'overflowY') ? bas : 0);
+      if (de > 0) out.horsFenetre.push({ q: nom(el), de: Math.round(de) });
     }
 
     /* Coupé par une ellipse. \`scrollWidth > clientWidth\` est la seule façon de
@@ -650,11 +968,17 @@ const MESURE = `(() => {
         const gras = Number(getComputedStyle(el).fontWeight) >= 700;
         /* Le seuil WCAG AA : 4,5 pour le texte ordinaire, 3 pour le grand. */
         const seuil = (taille >= 24 || (taille >= 18.66 && gras)) ? 3 : 4.5;
+        /* Lu à travers une tuile ? Alors compté à part, et la tuile nommée :
+           « toile » dit une bâche, « beton » un panneau calme. */
+        const grains = fondDetaille(el).grains;
+        if (grains.length) out.surGrain += 1;
         /* Le fond est rappelé dans la trouvaille. « 4.3:1 » sans dire sur quoi
            ne se corrige pas : on ne sait pas laquelle des deux couleurs bouger. */
         if (c < seuil) {
-          out.pales.push({ q: nom(el), c: c.toFixed(1), seuil, px: Math.round(taille),
-            sur: fond(el), encre: getComputedStyle(el).color });
+          const t = { q: nom(el), c: c.toFixed(1), seuil, px: Math.round(taille),
+            sur: fond(el), encre: getComputedStyle(el).color };
+          if (grains.length) out.palesGrain.push({ ...t, grain: grains.join(' + ') });
+          else out.pales.push(t);
         }
       }
     }
@@ -669,9 +993,13 @@ const MESURE = `(() => {
         const s = getComputedStyle(el);
         const taille = parseFloat(s.fontSize);
         const seuil = (taille >= 24 || (taille >= 18.66 && Number(s.fontWeight) >= 700)) ? 3 : 4.5;
+        const grains = fondDetaille(el).grains;
+        if (grains.length) out.jourSurGrain += 1;
         if (cj < seuil) {
-          out.jour.push({ q: nom(el), c: cj.toFixed(1), seuil, px: Math.round(taille),
-            sur: fond(el), encre: s.color, legal: Boolean(el.closest(LEGAL)) });
+          const t = { q: nom(el), c: cj.toFixed(1), seuil, px: Math.round(taille),
+            sur: fond(el), encre: s.color, legal: Boolean(el.closest(LEGAL)) };
+          if (grains.length) out.jourGrain.push({ ...t, grain: grains.join(' + ') });
+          else out.jour.push(t);
         }
       }
     }
@@ -698,7 +1026,7 @@ const MESURE = `(() => {
     }
   }
 
-  for (const img of document.querySelectorAll('img')) {
+  for (const img of (ZONE ?? document).querySelectorAll('img')) {
     if (!visible(img)) continue;
     /* La propriété « alt » rend la chaîne vide quand l'attribut est absent : la
        comparer à « null » ne trouvait donc **jamais rien**, et cette colonne du
@@ -732,12 +1060,16 @@ const git = (...a) => {
   try { return spawnSync('git', a, { cwd: RACINE, encoding: 'utf8' }).stdout?.trim() ?? null; }
   catch { return null; }
 };
+/* **audit-ui/2** : « surDegrade » ne compte plus les textes lus à travers une
+   tuile de grain, qui ont leurs propres relevés (voir l'en-tête). Une machine
+   qui comparerait un relevé /1 et un relevé /2 champ par champ croirait que
+   cent textes sont devenus mesurables par miracle : le numéro le lui dit. */
 const rapport = {
-  schema: 'audit-ui/1',
+  schema: 'audit-ui/2',
   date: new Date().toISOString(),
   commit: git('rev-parse', '--short', 'HEAD'),
   publicModifie: Boolean(git('status', '--porcelain', '--', 'public')),
-  options: { jour, pleine, seule: seule ?? null },
+  options: { jour, pleine, etats, seule: seule ?? null },
   seuils: SEUILS,
   legal: LEGAL,
   formats: FORMATS.map(cleFormat),
@@ -746,12 +1078,17 @@ const rapport = {
   /* Une entrée par visite, sous sa clé : la route, ou « / (sans compte) »
      pour la vitrine. Chacune porte ensuite un format par clé « 360x640 ». */
   visites: VISITES.map(({ cle, chemin, qui }) => ({ cle, chemin, qui: qui ?? 'sans compte' })),
+  /* Le voile moyen de chaque tuile, par adresse : un relevé « sur grain »
+     dit ainsi contre quoi il a été pris. */
+  voiles: {},
   pages: {},
+  ...(etats ? { etats: {} } : {}),
 };
 if (dossierCaptures) mkdirSync(dossierCaptures, { recursive: true });
 
 console.log(`\nAUDIT D’INTERFACE — ${VISITES.length} page(s), ${
-  FORMATS.map((f) => `${f.largeur}×${f.hauteur}`).join(' / ')}${jour ? ', au jour' : ''}\n`);
+  FORMATS.map((f) => `${f.largeur}×${f.hauteur}`).join(' / ')}${jour ? ', au jour' : ''}${
+  etats ? `, et les états${opt('--largeur') ? '' : ` (l’ouverture aussi à ${PETIT.largeur}×${PETIT.hauteur})`}` : ''}\n`);
 
 /* **Un navigateur neuf par visite.** Les pages partageaient un seul
    contexte, donc ses cookies : le cookie de session posé pour une page
@@ -776,23 +1113,115 @@ console.log(`\nAUDIT D’INTERFACE — ${VISITES.length} page(s), ${
    supprime. */
 let visite = 0;
 
+/** Un contexte neuf, une adresse à lui, un format, et qui regarde. */
+async function nouvelleVisite({ largeur, hauteur }, qui) {
+  const contexte = await nav.createBrowserContext();
+  const page = await contexte.newPage();
+  const erreurs = [];
+  const refus = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  page.on('response', (r) => { if (r.status() === 429) refus.push(r.url().replace(base, '')); });
+  visite += 1;
+  await page.setExtraHTTPHeaders({
+    'X-Forwarded-For': `10.77.${Math.floor(visite / 250)}.${(visite % 250) + 1}` });
+  await page.setViewport({ width: largeur, height: hauteur });
+  if (qui) {
+    await page.setCookie({ name: 'tbf_session', value: SESSIONS[qui], domain: 'localhost', path: '/' });
+  }
+  return { contexte, page, erreurs, refus };
+}
+
+/** Les voiles d'abord (MESURE ne peut pas attendre une image), puis la mesure. */
+async function mesurer(page, portee = null) {
+  const voiles = await page.evaluate(VOILES).catch(() => null);
+  for (const [adresse, v] of Object.entries(voiles ?? {})) {
+    if (adresse in rapport.voiles) continue;
+    rapport.voiles[adresse] = v && {
+      tuile: adresse.replace(/^.*\/img\/grain\//, '').replace(/[?#].*$/, ''),
+      opacite: Math.round(v.a * 10_000) / 10_000,
+      teinte: v.c.map((x) => Math.round(x)),
+    };
+  }
+  return page.evaluate(mesure(portee));
+}
+
+/** Les trouvailles d'une mesure, coupées à quatre par genre pour le rapport. */
+function noterReleves(cle, largeur, m, erreurs) {
+  if (m.deborde > 0) note(cle, largeur, 'déborde', `${m.deborde} px de large en trop`);
+  for (const x of m.horsEcran.slice(0, 4)) note(cle, largeur, 'hors écran', `${x.q} — ${x.de} px dehors`);
+  /* Seulement sous une portée fixée : ailleurs, le relevé n'existe pas. */
+  for (const x of (m.horsFenetre ?? []).slice(0, 4)) {
+    note(cle, largeur, 'hors fenêtre', `${x.q} — ${x.de} px hors de l’écran, qui ne défile pas`);
+  }
+  for (const x of m.coupes.slice(0, 4)) note(cle, largeur, 'coupé', `${x.q} — ${x.de} px tronqués`);
+  for (const x of m.petits.slice(0, 4)) note(cle, largeur, 'trop petit', `${x.q} — ${x.l}×${x.h}`);
+  for (const x of m.pales.slice(0, 4)) note(cle, largeur, 'pâle', `${x.q} — ${x.c}:1 (il en faut ${x.seuil}) — ${x.encre} sur ${x.sur}`);
+  /* Le fond rappelé est celui qu'on lit, voile moyen compris ; la tuile est
+     nommée pour qu'on sache quelle surface le porte. */
+  for (const x of m.palesGrain.slice(0, 4)) {
+    note(cle, largeur, 'pâle sur grain',
+      `${x.q} — ${x.c}:1 (il en faut ${x.seuil}) — ${x.encre} sur ${x.sur}, sous ${x.grain}`);
+  }
+  for (const x of m.sansAlt.slice(0, 3)) note(cle, largeur, 'sans alt', x.q);
+  for (const x of m.cassees.slice(0, 3)) note(cle, largeur, 'image cassée', x.q);
+  for (const x of m.sousDecor.slice(0, 3)) {
+    note(cle, largeur, 'sous le décor',
+      `${x.q} — ${x.pos}, z-index ${x.z} (le décor est à ${x.zDecor})`);
+  }
+  for (const x of m.petitTexte.slice(0, 4)) {
+    note(cle, largeur, 'petit texte', `${x.q} — ${x.px} px${x.px !== x.css ? ` (police ${x.css} px)` : ''}`);
+  }
+  for (const x of m.opacite.slice(0, 4)) {
+    note(cle, largeur, 'opacité', `${x.q} — ${x.o} (il en faut ${x.seuil})`);
+  }
+  for (const x of m.backdrop.slice(0, 4)) {
+    note(cle, largeur, 'backdrop-filter',
+      `${x.q}${x.pseudo ? ` ${x.pseudo}` : ''} — ${x.v}${x.visible ? '' : ' (replié)'}`);
+  }
+  if (jour) {
+    for (const x of m.jour.slice(0, 4)) {
+      note(cle, largeur, 'pâle au jour', `${x.q} — ${x.c}:1 au soleil (il en faut ${x.seuil}) — ${x.encre} sur ${x.sur}`);
+    }
+    for (const x of m.jourGrain.slice(0, 4)) {
+      note(cle, largeur, 'pâle au jour sur grain',
+        `${x.q} — ${x.c}:1 au soleil (il en faut ${x.seuil}) — ${x.encre} sur ${x.sur}, sous ${x.grain}`);
+    }
+  }
+  for (const e of erreurs.slice(0, 2)) note(cle, largeur, 'script', e.slice(0, 90));
+}
+
+/* Tous les relevés, sans la coupe à quatre du rapport : le JSON sert à
+   compter et à comparer, pas à lire d'une traite. Le contraste au jour
+   n'y figure que s'il a été mesuré — un zéro qu'on n'a pas mesuré se
+   lirait comme un bon résultat. */
+function compter(m, erreurs, refus) {
+  if (!jour) { delete m.jour; delete m.jourSurDegrade; delete m.jourSurGrain; delete m.jourGrain; }
+  return {
+    deborde: m.deborde, horsEcran: m.horsEcran.length, coupes: m.coupes.length,
+    petits: m.petits.length, pales: m.pales.length, surDegrade: m.surDegrade,
+    sansAlt: m.sansAlt.length, cassees: m.cassees.length, sousDecor: m.sousDecor.length,
+    scripts: erreurs.length, refus: refus.length, textes: m.textes,
+    petitTexte: m.petitTexte.length, opacite: m.opacite.length, toleres: m.toleres.length,
+    backdrop: m.backdrop.length,
+    ...(m.horsFenetre ? { horsFenetre: m.horsFenetre.length } : {}),
+    surGrain: m.surGrain, palesGrain: m.palesGrain.length,
+    ...(jour ? { jour: m.jour.length, jourSurDegrade: m.jourSurDegrade,
+      jourSurGrain: m.jourSurGrain, jourGrain: m.jourGrain.length } : {}),
+  };
+}
+
+/** Le nombre de choses à dire sur une mesure : la ligne de la console. */
+const total = (m, erreurs, refus) => m.deborde + m.horsEcran.length + (m.horsFenetre?.length ?? 0)
+  + m.coupes.length + m.petits.length
+  + m.pales.length + m.palesGrain.length + m.cassees.length + m.sousDecor.length
+  + erreurs.length + refus.length + m.petitTexte.length + m.opacite.length + m.backdrop.length
+  + (jour ? m.jour.length + m.jourGrain.length : 0);
+
 for (const { chemin, cle, qui, nom: nomCapture } of VISITES) {
   rapport.pages[cle] = {};
   for (const format of FORMATS) {
     const { largeur, hauteur } = format;
-    const contexte = await nav.createBrowserContext();
-    const page = await contexte.newPage();
-    const erreurs = [];
-    const refus = [];
-    page.on('pageerror', (e) => erreurs.push(e.message));
-    page.on('response', (r) => { if (r.status() === 429) refus.push(r.url().replace(base, '')); });
-    visite += 1;
-    await page.setExtraHTTPHeaders({
-      'X-Forwarded-For': `10.77.${Math.floor(visite / 250)}.${(visite % 250) + 1}` });
-    await page.setViewport({ width: largeur, height: hauteur });
-    if (qui) {
-      await page.setCookie({ name: 'tbf_session', value: SESSIONS[qui], domain: 'localhost', path: '/' });
-    }
+    const { contexte, page, erreurs, refus } = await nouvelleVisite(format, qui);
     /* **Une seconde chance, et une seule.** La vitrine, visitée sans compte et
        sans cache, n'a pas trouvé son calme réseau en vingt secondes une fois
        sur six pendant la mesure « avant » — et une case vide dans un tableau
@@ -829,7 +1258,7 @@ for (const { chemin, cle, qui, nom: nomCapture } of VISITES) {
       .catch(() => note(cle, largeur, 'chargement', 'l’écran d’ouverture était encore là après 12 s'));
     await new Promise((r) => setTimeout(r, 1800));
 
-    const m = await page.evaluate(MESURE);
+    const m = await mesurer(page);
 
     /* La capture après la mesure : la mesure ne touche à rien, et l'image
        montre donc exactement l'écran qui a été mesuré. Celle de l'écran seul
@@ -857,60 +1286,229 @@ for (const { chemin, cle, qui, nom: nomCapture } of VISITES) {
       note(cle, largeur, 'renvoyée', `la page renvoie vers ${arrivee} : c’est cet écran-là qui est mesuré`);
     }
 
-    if (m.deborde > 0) note(cle, largeur, 'déborde', `${m.deborde} px de large en trop`);
-    for (const x of m.horsEcran.slice(0, 4)) note(cle, largeur, 'hors écran', `${x.q} — ${x.de} px dehors`);
-    for (const x of m.coupes.slice(0, 4)) note(cle, largeur, 'coupé', `${x.q} — ${x.de} px tronqués`);
-    for (const x of m.petits.slice(0, 4)) note(cle, largeur, 'trop petit', `${x.q} — ${x.l}×${x.h}`);
-    for (const x of m.pales.slice(0, 4)) note(cle, largeur, 'pâle', `${x.q} — ${x.c}:1 (il en faut ${x.seuil}) — ${x.encre} sur ${x.sur}`);
-    for (const x of m.sansAlt.slice(0, 3)) note(cle, largeur, 'sans alt', x.q);
-    for (const x of m.cassees.slice(0, 3)) note(cle, largeur, 'image cassée', x.q);
-    for (const x of m.sousDecor.slice(0, 3)) {
-      note(cle, largeur, 'sous le décor',
-        `${x.q} — ${x.pos}, z-index ${x.z} (le décor est à ${x.zDecor})`);
-    }
-    for (const x of m.petitTexte.slice(0, 4)) {
-      note(cle, largeur, 'petit texte', `${x.q} — ${x.px} px${x.px !== x.css ? ` (police ${x.css} px)` : ''}`);
-    }
-    for (const x of m.opacite.slice(0, 4)) {
-      note(cle, largeur, 'opacité', `${x.q} — ${x.o} (il en faut ${x.seuil})`);
-    }
-    for (const x of m.backdrop.slice(0, 4)) {
-      note(cle, largeur, 'backdrop-filter',
-        `${x.q}${x.pseudo ? ` ${x.pseudo}` : ''} — ${x.v}${x.visible ? '' : ' (replié)'}`);
-    }
-    if (jour) {
-      for (const x of m.jour.slice(0, 4)) {
-        note(cle, largeur, 'pâle au jour', `${x.q} — ${x.c}:1 au soleil (il en faut ${x.seuil}) — ${x.encre} sur ${x.sur}`);
-      }
-    }
-    for (const e of erreurs.slice(0, 2)) note(cle, largeur, 'script', e.slice(0, 90));
+    noterReleves(cle, largeur, m, erreurs);
 
-    /* Tous les relevés, sans la coupe à quatre du rapport : le JSON sert à
-       compter et à comparer, pas à lire d'une traite. Le contraste au jour
-       n'y figure que s'il a été mesuré — un zéro qu'on n'a pas mesuré se
-       lirait comme un bon résultat. */
-    if (!jour) { delete m.jour; delete m.jourSurDegrade; }
     rapport.pages[cle][cleFormat(format)] = {
       largeur, hauteur, charge: true, essais, capture, qui: qui ?? 'sans compte', arrivee,
-      compte: {
-        deborde: m.deborde, horsEcran: m.horsEcran.length, coupes: m.coupes.length,
-        petits: m.petits.length, pales: m.pales.length, surDegrade: m.surDegrade,
-        sansAlt: m.sansAlt.length, cassees: m.cassees.length, sousDecor: m.sousDecor.length,
-        scripts: erreurs.length, refus: refus.length, textes: m.textes,
-        petitTexte: m.petitTexte.length, opacite: m.opacite.length, toleres: m.toleres.length,
-        backdrop: m.backdrop.length,
-        ...(jour ? { jour: m.jour.length, jourSurDegrade: m.jourSurDegrade } : {}),
-      },
+      compte: compter(m, erreurs, refus),
       releves: { ...m, scripts: erreurs, refus },
     };
 
-    const n = m.deborde + m.horsEcran.length + m.coupes.length + m.petits.length
-      + m.pales.length + m.cassees.length + m.sousDecor.length + erreurs.length + refus.length
-      + m.petitTexte.length + m.opacite.length + m.backdrop.length + (jour ? m.jour.length : 0);
+    const n = total(m, erreurs, refus);
     console.log(`  ${cle.padEnd(16)} ${`${largeur}×${hauteur}`.padStart(9)}   ${
       n === 0 ? 'rien à signaler' : `${n} chose(s)`}${HORS_LOT.has(cle) ? '   (hors lot)' : ''}${
       arrivee !== new URL(base + chemin).pathname ? `   → ${arrivee}` : ''}`);
     await contexte.close();
+  }
+}
+
+/* ------------------------------------------------------------ les états
+
+   **Trois écrans qu'aucune route ne montre.** Le parcours attend que
+   l'ouverture soit partie avant de mesurer (voir plus haut), et il n'ouvre
+   jamais le tiroir : deux des écrans les plus vus du jeu, que le lot 2
+   refait, n'avaient ni capture ni relevé. `--etats` leur donne une visite
+   neuve chacun, aux mêmes formats — et l'ouverture aussi à 320 × 568
+   (`PETIT`, plus bas) :
+
+     — **l'ouverture du hub, à deux instants** (`INSTANTS_OUVERTURE`) : au
+       début, avant le plancher d'1,2 s d'ouverture.js, quand le titre et la
+       jauge viennent de paraître ; puis vers deux secondes, quand tout ce
+       qui entre est entré et que l'écran attend qu'on le congédie. Sur
+       l'accueil connecté, il part dès que le hub émet « tbf:pret » — sur la
+       machine de test, avant deux secondes. Le signal est donc **retenu**,
+       pour cette visite seulement : ouverture.js en est aujourd'hui le seul
+       destinataire, et le retenir revient à un serveur lent, le cas même que
+       son plafond prévoit. Ses règles de sortie ne sont pas touchées, et
+       l'audit n'attend pas le plafond. (Un écouteur de « tbf:pret » ajouté
+       ailleurs serait retenu avec lui, et le hub photographié derrière le
+       rideau ne serait plus tout à fait le vrai : c'est ici qu'il faudrait
+       le dire.)
+     — **le tiroir ouvert**, sur une page ordinaire (`PAGE_TIROIR`) : la
+       barre de nav.js, et le bouton qui commande le tiroir — trouvé par son
+       « aria-controls », le lien que menu.js pose entre les deux.
+
+   Chaque état est photographié **et mesuré sous sa portée** — le tiroir,
+   le rideau : la page qu'il recouvre a déjà son relevé, et la remesurer
+   sous un voile la ferait lire comme si rien ne la couvrait. Le premier
+   instant n'est que photographié : les visages montent encore, et un texte
+   en train de paraître serait compté pâle. (La consigne et l'astuce n'y
+   sont pas encore : ouverture.js les pose au plancher, c'est voulu.) Les
+   deux sont fixés à la fenêtre : leur relevé « déborde » est le leur, et
+   « hors fenêtre » s'y ajoute — voir la mesure.
+
+   Rangés à part dans le JSON (`etats`), jamais dans `pages` : un relevé
+   avec `--etats` se compare page à page à un relevé sans. Et toujours la
+   capture de l'écran, même avec `--pleine` : un tiroir et un rideau sont
+   fixés à la fenêtre, la page entière dessous ne les montrerait pas mieux. */
+const INSTANTS_OUVERTURE = [500, 2000];
+const PAGE_TIROIR = '/classement';
+/* **Le rideau, aussi au plus petit téléphone.** C'est le premier écran que
+   voit tout joueur, sur tout appareil, et le lot 2 le refait en demandant
+   qu'il tienne à 320 × 568 : rien qui sorte, rien de coupé sous son bord
+   (« hors fenêtre »). Le tiroir défile, lui : il n'a pas ce risque-là. Et
+   les pages ne sont pas visitées à ce format, qui n'est pas celui du socle.
+   Avec `--largeur`, on s'en tient au format demandé. */
+const FORMATS_OUVERTURE = opt('--largeur') ? FORMATS : [...FORMATS, PETIT];
+
+async function photographier(page, nomEtat, format, cle) {
+  if (!dossierCaptures) return null;
+  const fichier = `etat-${nomEtat}-${cleFormat(format)}.png`;
+  try {
+    await page.screenshot({ path: path.join(dossierCaptures, fichier) });
+    return fichier;
+  } catch (e) {
+    note(cle, format.largeur, 'capture', `capture impossible : ${e.message.slice(0, 80)}`);
+    return null;
+  }
+}
+
+/** Attend la fin des mouvements qui finissent bientôt dans ces éléments et
+    leurs descendants — une transition, un ticket qui monte, un tiroir qui se
+    déroule —, au plus `plafond` ms. Ni les boucles, qui ne finissent jamais
+    (une pastille qui bat, la fumée), ni ce qui dure plus que le plafond : la
+    lumière du tunnel grandit pendant les dix secondes du plafond
+    d'ouverture.js, c'est du décor, et l'attendre ferait attendre le plafond. */
+async function finDesMouvements(page, selecteur, plafond) {
+  await page.evaluate(async (sel, max) => {
+    const finies = [...document.querySelectorAll(sel)]
+      .flatMap((e) => e.getAnimations({ subtree: true }))
+      .filter((a) => {
+        const t = a.effect?.getComputedTiming?.();
+        return t && t.iterations !== Infinity && t.endTime - (t.localTime ?? 0) <= max;
+      })
+      .map((a) => a.finished.catch(() => {}));
+    await Promise.race([Promise.all(finies), new Promise((r) => setTimeout(r, max))]);
+  }, selecteur, plafond).catch(() => {});
+}
+
+/** Range un état dans le JSON et le dit en console, comme une page. */
+function rangerEtat(cle, chemin, format, donnees, m = null, erreurs = [], refus = []) {
+  rapport.etats[cle] ??= { chemin };
+  const entree = { largeur: format.largeur, hauteur: format.hauteur, ...donnees, mesure: Boolean(m) };
+  if (m) {
+    noterReleves(cle, format.largeur, m, erreurs);
+    if (refus.length) {
+      note(cle, format.largeur, 'refusé (429)', `${refus.length} requête(s) refusée(s), dont ${refus[0]}`);
+    }
+    entree.compte = compter(m, erreurs, refus);
+    entree.releves = { ...m, scripts: erreurs, refus };
+  }
+  rapport.etats[cle][cleFormat(format)] = entree;
+  const n = m ? total(m, erreurs, refus) : null;
+  console.log(`  ${cle.padEnd(22)} ${`${format.largeur}×${format.hauteur}`.padStart(9)}   ${
+    n === null ? (entree.capture ? 'photographié' : 'rien à montrer')
+      : n === 0 ? 'rien à signaler' : `${n} chose(s)`}${
+    entree.instant !== undefined ? `   (à ${entree.instant} ms${
+      entree.instantMesure ? `, mesuré à ${entree.instantMesure}` : ''})` : ''}`);
+}
+
+async function etatOuverture(format) {
+  const { contexte, page, erreurs, refus } = await nouvelleVisite(format, 'joueur');
+  try {
+    await page.evaluateOnNewDocument(() => {
+      addEventListener('tbf:pret', (e) => e.stopImmediatePropagation(), { capture: true });
+    });
+    try {
+      await page.goto(`${base}/`, { waitUntil: 'domcontentloaded', timeout: 20_000 });
+    } catch {
+      note('ouverture', format.largeur, 'chargement', 'l’accueil n’a pas répondu en 20 s');
+      return;
+    }
+    for (const instant of INSTANTS_OUVERTURE) {
+      const cle = `ouverture@${instant}ms`;
+      await page.waitForFunction((t) => performance.now() >= t, { polling: 20, timeout: 15_000 }, instant)
+        .catch(() => {});
+      /* L'instant réel est relevé : si la page a mis plus d'une demi-seconde
+         à répondre, la capture « du début » n'en est pas une, et il faut le
+         savoir. Les polices aussi — une capture prise avant Oswald montre le
+         rideau dans une police de secours. */
+      const ici = await page.evaluate(() => {
+        const o = document.getElementById('ouverture');
+        return { instant: Math.round(performance.now()), polices: document.fonts?.status ?? null,
+          la: Boolean(o) && !o.classList.contains('partie') };
+      });
+      if (!ici.la) {
+        note(cle, format.largeur, 'état', `l’écran d’ouverture n’était plus là à ${ici.instant} ms`);
+        rangerEtat(cle, '/', format, { instant: ici.instant, polices: ici.polices, capture: null });
+        continue;
+      }
+      /* La capture d'abord, ici : c'est elle qui tient à l'instant. La
+         mesure, elle, attend ce qui finit d'entrer : l'astuce monte de
+         quarante pixels en 320 ms, la consigne paraît en 200. Sur une
+         machine lente, où ouverture.js arrive tard, l'une prise au vol
+         sortait « hors fenêtre », l'autre sous l'opacité minimale (vu au
+         banc, à 360 × 640 : le ticket encore 42 px plus bas à 2,6 s). */
+      const capture = await photographier(page, `ouverture-${instant}ms`, format, cle);
+      const dernier = instant === INSTANTS_OUVERTURE[INSTANTS_OUVERTURE.length - 1];
+      let m = null;
+      let instantMesure;
+      if (dernier) {
+        await finDesMouvements(page, '#ouverture', 1500);
+        instantMesure = await page.evaluate(() => Math.round(performance.now()));
+        m = await mesurer(page, '#ouverture');
+      }
+      rangerEtat(cle, '/', format, { instant: ici.instant, ...(m ? { instantMesure } : {}),
+        polices: ici.polices, capture }, m, erreurs, refus);
+    }
+  } finally {
+    await contexte.close();
+  }
+}
+
+async function etatTiroir(format) {
+  const cle = `tiroir@${PAGE_TIROIR}`;
+  const { contexte, page, erreurs, refus } = await nouvelleVisite(format, 'joueur');
+  try {
+    try {
+      await page.goto(base + PAGE_TIROIR, { waitUntil: 'networkidle0', timeout: 20_000 });
+    } catch {
+      note(cle, format.largeur, 'chargement', 'la page n’a pas fini de charger en 20 s');
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 1800));
+    /* Ouvert par le bouton, comme un joueur, puis attendu jusqu'à la fin de
+       ses transitions — pas de ses boucles : une pastille qui bat ne finit
+       jamais. « aria-expanded » plutôt qu'une classe : c'est le contrat que
+       le bouton doit tenir pour un lecteur d'écran, il survivra à un
+       changement de feuille de style. */
+    const ouvert = await page.evaluate(async () => {
+      const b = document.querySelector('[aria-controls="tbf-tiroir"]');
+      if (!b) return { faute: 'aucun bouton ne commande le tiroir (aria-controls="tbf-tiroir")' };
+      b.click();
+      const depart = performance.now();
+      while (b.getAttribute('aria-expanded') !== 'true') {
+        if (performance.now() - depart > 3000) return { faute: 'le tiroir ne s’est pas ouvert en 3 s' };
+        await new Promise((r) => setTimeout(r, 30));
+      }
+      if (!document.getElementById('tbf-tiroir')) {
+        return { faute: 'le bouton dit le tiroir ouvert, et il n’y a pas de #tbf-tiroir' };
+      }
+      return { faute: null };
+    });
+    if (ouvert.faute) {
+      note(cle, format.largeur, 'état', ouvert.faute);
+      rangerEtat(cle, PAGE_TIROIR, format, { capture: null });
+      return;
+    }
+    await finDesMouvements(page, '#tbf-tiroir, .tbf-voile', 2500);
+    await new Promise((r) => setTimeout(r, 300));
+    const m = await mesurer(page, '#tbf-tiroir');
+    const capture = await photographier(page, `tiroir-${nomDeRoute(PAGE_TIROIR)}`, format, cle);
+    rangerEtat(cle, PAGE_TIROIR, format, { capture }, m, erreurs, refus);
+  } finally {
+    await contexte.close();
+  }
+}
+
+if (etats) {
+  console.log('');
+  /* Les formats de chaque état, dans le JSON : celui de 320 n'est pas dans
+     « formats », qui reste la liste des pages. */
+  rapport.formatsEtats = { ouverture: FORMATS_OUVERTURE.map(cleFormat), tiroir: FORMATS.map(cleFormat) };
+  for (const format of FORMATS_OUVERTURE) {
+    await etatOuverture(format);
+    if (FORMATS.includes(format)) await etatTiroir(format);
   }
 }
 
@@ -945,10 +1543,10 @@ if (!trouvailles.length) {
      parce qu'on avait oublié de l'y inscrire. Les genres de la liste passent
      dans cet ordre, et **tous les autres à leur suite** : un relevé ajouté
      demain se verra même si personne ne pense à cette ligne. */
-  const ORDRE_GENRES = ['script', 'image cassée', 'chargement', 'refusé (429)', 'renvoyée',
-    'déborde', 'hors écran',
-    'coupé', 'trop petit', 'pâle', 'sous le décor', 'petit texte', 'opacité',
-    'backdrop-filter', 'pâle au jour', 'sans alt', 'capture'];
+  const ORDRE_GENRES = ['script', 'image cassée', 'chargement', 'état', 'refusé (429)', 'renvoyée',
+    'déborde', 'hors écran', 'hors fenêtre',
+    'coupé', 'trop petit', 'pâle', 'pâle sur grain', 'sous le décor', 'petit texte', 'opacité',
+    'backdrop-filter', 'pâle au jour', 'pâle au jour sur grain', 'sans alt', 'capture'];
   const genres = [...ORDRE_GENRES, ...[...parGenre.keys()].filter((g) => !ORDRE_GENRES.includes(g))];
 
   console.log(`\n${trouvailles.length} trouvaille(s), par genre :\n`);
@@ -991,23 +1589,54 @@ if (!trouvailles.length) {
    chaque écran**, un nombre par format. C'est lui qu'on compare avant et
    après un lot : « /kop, 14 textes sous 11 px à 360 × 640 » se re-mesure,
    « c'est mieux » ne se re-mesure pas. Les relevés s'y comptent en entier,
-   sans la coupe à quatre du rapport. */
-{
+   sans la coupe à quatre du rapport.
+
+   Les colonnes « grain » et « soleil g » sont les mêmes contrastes, lus à
+   travers une tuile : à part, pour que « soleil » se compare encore au
+   relevé d'un lot d'avant.
+
+   Les états ont un format de plus (l'ouverture à 320 × 568 : « – » pour le
+   tiroir, qui n'y est pas mesuré) et une colonne de plus, « hors fen. »,
+   le relevé qui n'existe que pour eux. */
+const tableau = (titre, lignes, formats = FORMATS, enPlus = []) => {
   const colonnes = [['<11 px', 'petitTexte'], ['<0,85', 'opacite'], ['flou', 'backdrop'],
-    ...(jour ? [['soleil', 'jour']] : []), ['déborde', 'deborde']];
-  const largeurCol = FORMATS.length * 4 + 2;
-  console.log(`Le socle, page par page — un nombre par format (${
-    FORMATS.map((f) => `${f.largeur}×${f.hauteur}`).join(' / ')}) :\n`);
-  console.log(`  ${''.padEnd(16)} ${colonnes.map(([t]) => t.padEnd(largeurCol)).join('')}`);
-  for (const { cle } of VISITES) {
-    const par = rapport.pages[cle] ?? {};
-    const cases = colonnes.map(([, k]) => FORMATS
+    ['grain', 'palesGrain'], ...(jour ? [['soleil', 'jour'], ['soleil g', 'jourGrain']] : []),
+    ['déborde', 'deborde'], ...enPlus];
+  /* Au moins la place du titre : avec un seul format, « soleil g » et
+     « déborde » se collaient au titre voisin. */
+  const largeurCol = Math.max(formats.length * 4 + 2, ...colonnes.map(([t]) => t.length + 2));
+  const largeurCle = Math.max(16, ...lignes.map(({ cle }) => cle.length));
+  console.log(`${titre} — un nombre par format (${
+    formats.map((f) => `${f.largeur}×${f.hauteur}`).join(' / ')}) :\n`);
+  console.log(`  ${''.padEnd(largeurCle)} ${colonnes.map(([t]) => t.padEnd(largeurCol)).join('')}`);
+  for (const { cle, par } of lignes) {
+    const cases = colonnes.map(([, k]) => formats
       .map((f) => String(par[cleFormat(f)]?.compte?.[k] ?? '–').padStart(3)).join(' ')
       .padEnd(largeurCol));
-    console.log(`  ${cle.padEnd(16)} ${cases.join('')}${HORS_LOT.has(cle) ? '(hors lot)' : ''}`);
+    console.log(`  ${cle.padEnd(largeurCle)} ${cases.join('')}${HORS_LOT.has(cle) ? '(hors lot)' : ''}`);
   }
   console.log('');
+};
+tableau('Le socle, page par page', VISITES.map(({ cle }) => ({ cle, par: rapport.pages[cle] ?? {} })));
+if (etats) {
+  tableau('Les états', Object.entries(rapport.etats)
+    .filter(([, par]) => FORMATS_OUVERTURE.some((f) => par[cleFormat(f)]?.compte))
+    .map(([cle, par]) => ({ cle, par })), FORMATS_OUVERTURE, [['hors fen.', 'horsFenetre']]);
 }
+
+/* **Ce que la lecture à travers le grain a rendu mesurable**, format par
+   format, sur les pages : combien de textes elle a lus, combien restent
+   hors mesure (vrais dégradés, photos), et combien de ceux qu'elle a lus
+   manquent leur seuil. C'est la ligne à lire avant le compte « soleil » :
+   quand « non mesurables » monte, un compte qui baisse ne prouve rien. */
+for (const f of FORMATS) {
+  const somme = (k) => Object.values(rapport.pages)
+    .reduce((s, par) => s + (par[cleFormat(f)]?.compte?.[k] ?? 0), 0);
+  console.log(`  Sous le grain, ${f.largeur}×${f.hauteur} : ${somme('surGrain')} texte(s) lu(s), ${
+    somme('palesGrain')} pâle(s)${jour ? `, ${somme('jourGrain')} pâle(s) au jour` : ''} ; non mesurables : ${
+    somme('surDegrade')}`);
+}
+console.log('');
 
 if (SANS_EXEMPLE.length) {
   console.log(`  Non auditée(s), faute d’exemple dans EXEMPLES : ${SANS_EXEMPLE.join(', ')}\n`);

@@ -715,22 +715,48 @@ const laScene = () => page.evaluate(() => ({
 
    * L'API ne donne pas les couleurs des équipes, elle donne un écusson. On les
    * en extrait une fois, on n'en garde que deux chaînes de sept caractères, et
-   * « GOAL ! » s'écrit dans la couleur du club qui vient de marquer.
+   * le « GOAL ! » porte la couleur du club qui vient de marquer.
    *
-   * Le piège est là et pas ailleurs : ces couleurs sont faites pour du papier
-   * blanc. Le bleu marine du blason, écrit sur le noir de l'écran, est un texte
-   * invisible — un but célébré que personne ne voit. `FX.lisible` l'éclaircit
-   * en gardant sa teinte, et c'est ce que ce contrôle mesure.
+   * **Il la porte autour de la lettre, et non plus dans la lettre** (lot 2,
+   * la case unifiée de ui.css) : le mot est à la craie, et `--mc` colore le
+   * liseré de la case, les rayons et la bouffée de fumigène. La lettre se lit
+   * donc quel que soit le club ; c'est la couleur du camp qui doit encore se
+   * voir.
+   *
+   * Le piège est toujours là, et il a seulement changé de place : ces
+   * couleurs sont faites pour du papier blanc. Le bleu marine du blason, en
+   * liseré et en fumée sur le noir de l'écran, ne se voit pas — un but
+   * célébré sans qu'on sache de quel camp. `FX.lisible` l'éclaircit en
+   * gardant sa teinte, et c'est ce que ce contrôle mesure. Il lit aussi ce
+   * que `--mc` colore pour de bon : une variable juste qui ne peindrait plus
+   * rien passerait sinon au vert.
    */
   {
     const teinte = await page.evaluate(() => {
-      const mc = document.querySelector('.tbf-moment').style.getPropertyValue('--mc').trim();
+      const moment = document.querySelector('.tbf-moment');
+      const mc = moment.style.getPropertyValue('--mc').trim();
+      /* La craie telle que le navigateur la calcule, lue sur une sonde : une
+         valeur écrite ici en dur divergerait au premier réglage du jeton. */
+      const sonde = document.createElement('i');
+      sonde.style.color = 'var(--craie)';
+      document.body.append(sonde);
+      const craie = getComputedStyle(sonde).color;
+      sonde.remove();
+      const mot = moment.querySelector('b');
+      const lettre = mot ? getComputedStyle(mot).color : null;
       const m = /^#([0-9a-f]{6})$/i.exec(mc);
-      if (!m) return { mc, clarte: null, bleuDominant: null };
+      if (!m) return { mc, craie, lettre, clarte: null, bleuDominant: null, lisere: null };
       const n = parseInt(m[1], 16);
       const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+      const vignette = moment.querySelector('.tbf-vignette');
       return {
         mc,
+        craie,
+        lettre,
+        /* Le liseré est la première ombre de la case : le navigateur y a déjà
+           résolu `var(--mc)` en `rgb(…)`, et c'est cette couleur-là qu'on
+           voit autour du mot. */
+        lisere: vignette ? getComputedStyle(vignette).boxShadow.includes(`rgb(${r}, ${g}, ${b})`) : false,
         clarte: (Math.max(r, g, b) + Math.min(r, g, b)) / 510,
         // La teinte est conservée : c'est encore le bleu du club, pas un
         // blanc passe-partout. Un éclaircissement qui perd la teinte ne
@@ -738,17 +764,23 @@ const laScene = () => page.evaluate(() => ({
         bleuDominant: b > r + 20 && b > g + 20,
       };
     });
-    check('le but s’écrit dans la couleur du club',
+    check('le but porte la couleur du club',
       /^#[0-9A-F]{6}$/i.test(teinte.mc)
-      || (console.log('        il s’écrit en', teinte.mc), false));
-    check('éclaircie assez pour se lire sur le noir',
+      || (console.log('        sa couleur :', teinte.mc), false));
+    check('elle borde la case du but',
+      teinte.lisere === true
+      || (console.log(`        ${teinte.mc} absente du liseré`), false));
+    check('et le mot, lui, s’écrit à la craie',
+      Boolean(teinte.lettre) && teinte.lettre === teinte.craie
+      || (console.log(`        il s’écrit en ${teinte.lettre}, la craie est ${teinte.craie}`), false));
+    check('éclaircie assez pour se voir sur le noir',
       (teinte.clarte ?? 0) > 0.5
       || (console.log(`        clarté ${teinte.clarte?.toFixed(2)}`), false));
     check('sans cesser d’être la couleur du club', teinte.bleuDominant === true);
 
     /* Et la garde en face : un club dont le blason n'a pas encore été lu n'a
-       pas de couleur du tout. Il ne doit pas écrire en « undefined », il doit
-       garder l'or du jeu. */
+       pas de couleur du tout. Son liseré ne doit pas être en « undefined » —
+       la case perdrait son bord —, il doit garder l'or du jeu. */
     const defaut = await page.evaluate(() => couleurDuCamp(S.you.side ^ 1));
     check('un club sans couleur garde celle du jeu', defaut === 'var(--projo)');
 

@@ -280,6 +280,513 @@
     img.src = '/img/accueil' + EXT;
   }
 
+  /* ------------------------------------------------ le HUD replié (lot 2)
+
+     Ce que je possède, sur les écrans qui ont la barre du haut, sans lui
+     reprendre sa place : à droite, avant le menu, un sticker rond de 36 px
+     (zone de touche de 44) — le buste de mon Fanzzy, l'anneau d'XP autour,
+     mon niveau collé en bas à droite. Au toucher, une bande kraft se déplie
+     sous la barre avec les deux jetons, écharpes et boosters, trois
+     secondes, puis se replie. À partir de 560 px, la bande est une rangée de
+     la barre, toujours visible (ui.css, « le HUD replié de la barre ») —
+     sauf sur les écrans qui ont déjà leur bourse (`BOURSE_EN_PAGE`).
+
+     **D'où viennent les valeurs.** `/api/niveau` pour l'anneau et le
+     chiffre ; `/api/fanzzy/state` pour les deux soldes **et le personnage**.
+     La direction nommait `/api/me/state`, qui porte les soldes mais pas
+     l'avatar : seul le portefeuille de `/api/fanzzy/state` le rend résolu
+     (lignée, âge montré, tenue portée — `construireAvatar`, côté serveur),
+     et le recomposer ici à partir de l'identifiant brut redonnerait au jeu
+     une septième recette du « qui montrer », quand le serveur a justement
+     réuni les six autres en une seule. Deux requêtes au lieu de trois, et le
+     même personnage que sur l'accueil.
+
+     **Mais pas derrière une page qui vient de la faire.** C'est la lecture
+     la plus lourde du joueur — le portefeuille, la collection entière, les
+     âges, la saison, les états —, et elle écrit en base quand la réserve est
+     pleine. Une page qui l'a lue l'annonce (`tbf:bourse`, plus bas) et le
+     HUD prend ce qu'elle a reçu ; il ne relit alors que le niveau.
+
+     **Trente secondes dans l'onglet** (`sessionStorage`), comme les états du
+     tiroir : d'un écran à l'autre, le HUD se dessine aussitôt avec ce qu'il
+     sait, au lieu de clignoter le temps d'un aller-retour. Plus vieux que
+     ça, il se dessine quand même avec la valeur retenue, puis se relit et
+     fait compter ce qui a changé. Sans rien de retenu, il attend la réponse :
+     un « niveau 1 » posé par défaut mentirait pendant la seconde du
+     chargement, qui est celle où on le regarde. */
+  const CLE_HUD = 'tbf-hud';
+  const DUREE_HUD = 30_000;
+
+  /* **Les écrans qui lisent l'état eux-mêmes en arrivant**, et l'annoncent :
+     le kiosque et le classeur, par `load()` de cartes.js. Le HUD n'y relit
+     pas l'état quand ce qu'il a retenu est vieux : il attend l'annonce, qui
+     porte la même réponse. Si elle ne vient pas — la page n'a pas pu se
+     charger —, il relit au bout de `REPLI_ANNONCE`, comme ailleurs : une
+     route qui cesserait d'annoncer retarderait le HUD, elle ne l'éteindrait
+     pas. */
+  const ANNONCENT_LEUR_ETAT = ['/boosters', '/fanzzy'];
+  const REPLI_ANNONCE = 6000;
+
+  /* **Les écrans qui ont déjà leur bourse.** La boutique et le kiosque
+     affichent les deux soldes dans la page, juste sous la barre, là où ils
+     servent à décider. Les jetons dépliés à demeure dans la barre, à partir
+     de 560 px, les redisaient cinquante pixels plus haut, avec d'autres
+     pictogrammes : le même chiffre deux fois, dessiné de deux façons. Le
+     sticker reste ; sous 560 px, le toucher déplie toujours la bande, comme
+     partout — c'est un geste qu'on fait, pas un doublon qu'on subit. */
+  const BOURSE_EN_PAGE = ['/boutique', '/boosters'];
+
+  /* **Retenu au nom du joueur.** L'onglet survit à une déconnexion : sans
+     ce nom, quelqu'un qui se reconnecte sous un autre compte dans la
+     demi-minute verrait les soldes et le visage du précédent. */
+  let joueur = null;
+  const lireHud = () => {
+    try {
+      const d = JSON.parse(sessionStorage.getItem(CLE_HUD) || 'null');
+      return d && joueur && d.qui === joueur ? d : null;
+    } catch { return null; }
+  };
+  const retenirHud = (d) => {
+    try { sessionStorage.setItem(CLE_HUD, JSON.stringify(d)); }
+    catch { /* stockage fermé : on relira au prochain écran, comme avant */ }
+  };
+
+  const memeAvatar = (a, b) => Boolean(a && b)
+    && a.id === b.id && a.evo === b.evo && a.skin === b.skin;
+
+  /** L'avatar résolu par le serveur, ramené à ce que le HUD dessine. */
+  const avatarDe = (a) => (a?.id ? { id: String(a.id), age: String(a.age ?? a.id),
+    evo: Number(a.evo) || 1, skin: String(a.skin || 'base') } : null);
+
+  /** Le niveau, ou `null` sans réponse lisible : jamais un « niveau 1 » par défaut. */
+  const niveauDe = (niv) => (Number(niv?.niveau) > 0 ? { niveau: Number(niv.niveau),
+    dans: Number(niv.dans) || 0, pour: Number(niv.pour) || 0, max: Boolean(niv.max) } : null);
+
+  const lireJson = (url) => fetch(url, { credentials: 'same-origin' })
+    .then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  /* Une ligne en base : l'XP du joueur. C'est la seule lecture que le HUD
+     fait derrière une page qui vient d'annoncer son état. */
+  const lireNiveau = () => lireJson('/api/niveau').then(niveauDe);
+
+  /**
+   * Ce qu'une annonce dit du portefeuille : les soldes qu'elle porte, et
+   * l'avatar si elle en parle — `null` est une réponse (« pas de Fanzzy »),
+   * une clé absente n'en est pas une. `null` si elle ne dit rien.
+   */
+  function portefeuilleDe(src) {
+    if (!src || typeof src !== 'object') return null;
+    const nombre = (v) => (v == null || v === '' || !Number.isFinite(Number(v)) ? undefined : Number(v));
+    const w = { scarves: nombre(src.scarves), packs: nombre(src.packs) };
+    if ('avatar' in src) w.avatar = avatarDe(src.avatar);
+    return w.scarves === undefined && w.packs === undefined && !('avatar' in w) ? null : w;
+  }
+
+  /* L'état que cartes.js tient pour la page, une fois `load()` passé. Avant,
+     `S` porte des valeurs de départ — zéro écharpe, la réserve pleine — qui
+     ne sont pas celles du joueur ; seul `load()` y pose `avatar`, et c'est
+     ce qui dit qu'il est passé. */
+  const etatDeLaPage = () => {
+    const S = window.TBF_CARTES?.S;
+    return S && 'avatar' in S ? portefeuilleDe(S) : null;
+  };
+
+  /* **Quand la page a lu l'état, ou l'a changé.** `tbf:bourse` dit « voici
+     l'état du joueur, tel que le serveur vient de le rendre ». Deux formes :
+
+       — **avec `detail`**, le portefeuille lui-même ou ce qu'on en sait
+         (`scarves`, `packs`, `avatar`, chacun facultatif), ou la réponse
+         entière qui le porte en `wallet` : celle d'une page qui vient de
+         recevoir une réponse du serveur — un booster ouvert, un achat — et
+         n'a qu'à la relayer ;
+       — **sans**, celle de cartes.js : `load()` vient de remplir
+         `TBF_CARTES.S`, soldes et avatar résolu, et c'est là qu'on lit.
+         Une annonce nue sur une page sans cet état — l'aide, qui sait
+         qu'elle vient de verser un booster mais pas combien il en reste —
+         dit seulement « ça a changé » : le HUD relit alors tout, comme avant.
+
+     Le HUD prend ces valeurs telles quelles. Il relisait `/api/fanzzy/state`
+     à chaque annonce, et laissait passer la première, celle du chargement :
+     sur le kiosque et le classeur, il doublait donc la lecture de la page
+     dès que ce qu'il avait retenu dépassait la demi-minute.
+
+     **Une page qui change le portefeuille sans l'annoncer laisse le HUD en
+     retard**, et l'écran suivant avec lui pendant trente secondes : c'est à
+     elle de relayer ce que le serveur lui a rendu. Rien ici ne le devine.
+
+     L'écoute est posée **dès ce script**, et non avec le HUD : celui-ci
+     attend la réponse de « qui es-tu ? », et l'annonce du chargement peut
+     arriver avant lui. Elle est gardée, et il la prend en se montant. */
+  let annonce = null;
+  let changeSansDonnee = false;
+  let surBourse = null;
+  window.addEventListener('tbf:bourse', (e) => {
+    const w = portefeuilleDe(e.detail?.wallet ?? e.detail) ?? etatDeLaPage();
+    if (surBourse) surBourse(w);
+    else if (w) annonce = { ...annonce, ...w };
+    else changeSansDonnee = true;
+  });
+
+  /** Une valeur du HUD, prête à retenir. Le portrait déjà trouvé suit tant
+      que c'est le même personnage : voir `portraits`. */
+  function composer({ scarves, packs, avatar }, niveau, t) {
+    const avant = lireHud();
+    return { qui: joueur, t, scarves, packs, avatar,
+      portrait: memeAvatar(avant?.avatar, avatar) ? (avant.portrait ?? null) : null,
+      niveau };
+  }
+
+  /** La lecture complète, quand aucune page ne l'a faite. `null` sans solde. */
+  async function chargerHud() {
+    const [etat, niveau] = await Promise.all([lireJson('/api/fanzzy/state'), lireNiveau()]);
+    const w = portefeuilleDe(etat?.wallet);
+    if (w?.scarves === undefined) return null;
+    const d = composer({ scarves: w.scarves, packs: w.packs ?? 0, avatar: w.avatar ?? null },
+      niveau, Date.now());
+    retenirHud(d);
+    return d;
+  }
+
+  /**
+   * Les adresses où chercher le buste, de la plus juste à la plus sûre.
+   *
+   * Le portrait est rangé par lignée, âge et tenue
+   * (`/img/fanzzy/RP1/e2/base/portrait.webp`), mais toutes les tenues n'en ont
+   * pas, et une lignée dessinée à plat n'a que son buste (`TR2-buste.webp`).
+   * Quand `fanzzy-etats.js` est chargé et prêt, il sait lequel existe et y
+   * ajoute la révision ; sinon on descend la chaîne au premier refus — la
+   * tenue, puis le premier âge, puis le buste à plat. Un sticker vide vaut
+   * mieux qu'une image cassée : au bout de la chaîne, la craie seule.
+   */
+  function portraits(av) {
+    const l = [];
+    const E = window.TBF_ETATS;
+    if (E?.pret?.()) {
+      const r = E.portrait(av.id, { evo: av.evo, skin: av.skin });
+      if (r?.src) l.push(r.src);
+    }
+    const p = (evo, skin) => `/img/fanzzy/${av.id}/e${evo}/${skin}/portrait.webp`;
+    l.push(p(av.evo, av.skin));
+    if (av.skin !== 'base') l.push(p(av.evo, 'base'));
+    if (av.evo > 1) l.push(p(1, 'base'));
+    l.push(`/img/fanzzy/${av.age}-buste.webp`, `/img/fanzzy/${av.id}-buste.webp`);
+    return [...new Set(l)];
+  }
+
+  const pluriel = (n, un, plusieurs) => `${n} ${n > 1 ? plusieurs : un}`;
+
+  /**
+   * Monte le HUD dans la barre, entre le titre et le menu.
+   *
+   * @param {HTMLElement} haut  la barre.
+   * @param {{poser: Function}|null} menu  le tiroir monté par menu.js, qui
+   *   reçoit l'état des boosters : c'est ici qu'on connaît la réserve.
+   * @param {string} qui  l'identifiant public du joueur, qui signe le cache.
+   */
+  function monterHud(haut, menu, qui) {
+    joueur = qui == null ? null : String(qui);
+    const large = window.matchMedia('(min-width:560px)');
+    let boite = null;
+    let vu = null;
+
+    /* La boîte n'est construite qu'à la première donnée : sans elle, pas de
+       HUD du tout — un sticker sans visage ni chiffre ne dit rien. */
+    function construire() {
+      boite = document.createElement('div');
+      boite.className = 'tbf-hud';
+      boite.innerHTML = '<button type="button" class="tbf-avatar tbf-avatar--barre"'
+        + ' aria-controls="tbf-hud-bande" aria-expanded="false"><span class="tbf-anneau"></span></button>'
+        + '<div class="tbf-ticket tbf-hud-bande" id="tbf-hud-bande">'
+        + '<a class="tbf-monnaie" href="/boutique"><img src="/img/gains/echarpes.webp" alt="">'
+        + '<b>0</b><i class="tbf-monnaie-plus" aria-hidden="true">+</i></a>'
+        + '<a class="tbf-monnaie" href="/boosters"><svg viewBox="0 0 24 24" aria-hidden="true"><path'
+        + ` d="${ICONES.pack}"/></svg><b>0</b><i class="tbf-monnaie-plus" aria-hidden="true">+</i></a>`
+        + '</div>';
+      for (const a of boite.querySelectorAll('.tbf-monnaie')) {
+        if (a.getAttribute('href') === chemin) a.setAttribute('aria-current', 'page');
+        // Le frémissement se pose à chaque changement et se retire à sa fin :
+        // laissée, la classe ne rejouerait plus au changement suivant.
+        a.addEventListener('animationend', () => a.classList.remove('tbf-vibre'));
+      }
+      haut.insertBefore(boite, haut.querySelector('.tbf-burger'));
+      brancher();
+    }
+
+    /* ------------------------------------------ le dépliage, trois secondes
+
+       `.ouverte` sur la bande, et `aria-expanded` sur le sticker ; la feuille
+       déplie en 240 ms et ne cache la bande (`visibility`) qu'une fois
+       repliée — elle sort alors de la tabulation sans `hidden`.
+
+       **Trois secondes, sauf si on y est.** Un doigt posé dessus, ou le focus
+       du clavier sur un des deux jetons, retient la bande : la replier sous
+       le focus le ferait tomber sur le corps de la page. Elle se replie au
+       toucher suivant, à Échap, ou trois secondes après qu'on l'a quittée.
+
+       **À partir de 560 px, rien ne se déplie** : les jetons sont dans la
+       barre. Le sticker n'a alors plus rien à montrer — il mène au profil,
+       comme celui de l'accueil, et le dit. Sur un écran qui a sa bourse
+       (`BOURSE_EN_PAGE`), la bande est alors cachée (`hidden`, que la
+       feuille commune rend absolu) : elle sort aussi de la tabulation et de
+       ce que lit un lecteur d'écran, qui entendrait sinon deux fois les
+       mêmes soldes. */
+    const bourseEnPage = BOURSE_EN_PAGE.includes(chemin);
+    let minuterie = 0;
+    function brancher() {
+      const avatar = boite.querySelector('.tbf-avatar');
+      const bande = boite.querySelector('.tbf-hud-bande');
+      const replier = () => {
+        clearTimeout(minuterie);
+        bande.classList.remove('ouverte');
+        if (!large.matches) avatar.setAttribute('aria-expanded', 'false');
+      };
+      const patienter = () => {
+        clearTimeout(minuterie);
+        minuterie = setTimeout(() => {
+          if (bande.matches(':hover, :focus-within')) patienter(); else replier();
+        }, 3000);
+      };
+      avatar.addEventListener('click', () => {
+        if (large.matches) {
+          const ou = vu?.avatar ? '/profil' : '/fanzzy';
+          if (ou !== chemin) location.href = ou;
+          return;
+        }
+        if (bande.classList.contains('ouverte')) { replier(); return; }
+        bande.classList.add('ouverte');
+        avatar.setAttribute('aria-expanded', 'true');
+        patienter();
+      });
+      bande.addEventListener('focusout', () => {
+        if (bande.classList.contains('ouverte')) patienter();
+      });
+      bande.addEventListener('mouseleave', () => {
+        if (bande.classList.contains('ouverte')) patienter();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape' || e.defaultPrevented || !bande.classList.contains('ouverte')) return;
+        const dedans = bande.contains(document.activeElement);
+        replier();
+        if (dedans) avatar.focus({ preventScroll: true });
+      });
+      const regler = () => {
+        if (large.matches) {
+          replier();
+          avatar.removeAttribute('aria-expanded');
+          avatar.removeAttribute('aria-controls');
+        } else {
+          avatar.setAttribute('aria-controls', 'tbf-hud-bande');
+          avatar.setAttribute('aria-expanded', String(bande.classList.contains('ouverte')));
+        }
+        bande.hidden = bourseEnPage && large.matches;
+        if (vu) libeller(vu);
+      };
+      large.addEventListener?.('change', regler);
+      regler();
+    }
+
+    /** Ce que le sticker annonce, selon ce qu'il fait à cette largeur. */
+    function libeller(d) {
+      const avatar = boite.querySelector('.tbf-avatar');
+      const niv = d.niveau ? `Niveau ${d.niveau.niveau}` : '';
+      avatar.setAttribute('aria-label', large.matches
+        ? (d.avatar ? `Mon profil${niv ? ' — ' + niv.toLowerCase() : ''}` : 'Choisis ton Fanzzy')
+        : `${niv ? niv + ' — m' : 'M'}es écharpes et mes boosters`);
+    }
+
+    /** Pose les valeurs : à la première, sans bruit ; ensuite, en comptant. */
+    function afficher(d) {
+      if (!boite) construire();
+      const avatar = boite.querySelector('.tbf-avatar');
+      const anneau = avatar.querySelector('.tbf-anneau');
+
+      /* Le visage. Reconstruit seulement quand le personnage change : une
+         image qu'on remplace se recharge, et c'est le clignotement qu'on
+         cherche à éviter. */
+      const autre = !vu || ((Boolean(vu.avatar) || Boolean(d.avatar))
+        && !memeAvatar(vu.avatar, d.avatar));
+      if (autre) {
+        avatar.classList.toggle('tbf-avatar--vide', !d.avatar);
+        const craie = () => {
+          const s = document.createElement('span');
+          s.className = 'tbf-avatar-buste';
+          return s;
+        };
+        /* L'adresse qui a répondu — ou le constat qu'aucune ne répond, noté
+           `false` — est retenue avec le reste : l'écran suivant ne repassera
+           pas par les refus. */
+        const noter = (portrait) => {
+          const r = lireHud();
+          if (r && memeAvatar(r.avatar, d.avatar) && r.portrait !== portrait) {
+            retenirHud({ ...r, portrait });
+          }
+        };
+        if (!d.avatar || d.portrait === false) {
+          anneau.replaceChildren(craie());
+        } else {
+          const img = document.createElement('img');
+          img.className = 'tbf-avatar-buste';
+          img.alt = '';
+          img.decoding = 'async';
+          const sources = [...new Set([d.portrait, ...portraits(d.avatar)].filter(Boolean))];
+          let i = 0;
+          img.onerror = () => {
+            i += 1;
+            if (i < sources.length) { img.src = sources[i]; return; }
+            img.onerror = null;
+            img.replaceWith(craie());
+            noter(false);
+          };
+          img.onload = () => noter(img.getAttribute('src'));
+          img.src = sources[0];
+          anneau.replaceChildren(img);
+        }
+      }
+
+      /* L'anneau et le niveau. Sans réponse du niveau, ni chiffre ni
+         remplissage : une ligne sans donnée disparaît. Au dernier niveau,
+         l'anneau est plein — il n'y a plus rien à remplir. */
+      const n = d.niveau;
+      const part = n ? (n.max ? 100 : Math.round(Math.min(1, n.dans / (n.pour || 1)) * 100)) : 0;
+      anneau.style.setProperty('--p', `${part}%`);
+      let pastille = avatar.querySelector('.tbf-avatar-niv');
+      if (n && !pastille) {
+        pastille = document.createElement('b');
+        pastille.className = 'tbf-sticker tbf-sticker--rond tbf-avatar-niv';
+        avatar.append(pastille);
+      }
+      if (n) pastille.textContent = String(n.niveau);
+      else pastille?.remove();
+      libeller(d);
+
+      /* Les deux jetons. Ils comptent jusqu'à leur nouvelle valeur et
+         frémissent — seulement si on les voyait déjà : un premier affichage
+         se pose, il ne compte pas depuis zéro. */
+      const [echarpes, boosters] = boite.querySelectorAll('.tbf-monnaie');
+      for (const [a, cle, mots] of [[echarpes, 'scarves', ['écharpe', 'écharpes']],
+        [boosters, 'packs', ['booster', 'boosters']]]) {
+        const b = a.querySelector('b');
+        const apres = d[cle];
+        a.setAttribute('aria-label', pluriel(apres, ...mots)
+          + (cle === 'scarves' ? ' — où en gagner' : ''));
+        if (vu && vu[cle] !== apres && window.FX?.compter) {
+          window.FX.compter(b, vu[cle], apres);
+          a.classList.remove('tbf-vibre');
+          void a.offsetWidth;
+          a.classList.add('tbf-vibre');
+        } else b.textContent = String(apres);
+      }
+
+      /* Les boosters à ouvrir sont l'état « prêt » du tiroir — le « 4 » or
+         sur leur tuile, et sur le menu s'il n'y a rien de plus urgent. Pas
+         sur le kiosque lui-même : la page compte déjà sa réserve, en grand,
+         juste à côté. */
+      menu?.poser?.('/boosters', d.packs > 0 && chemin !== '/boosters' ? 'pret' : null, d.packs);
+      vu = d;
+    }
+
+    /* ------------------------------------------ d'où viennent les valeurs
+
+       Dans cet ordre :
+         1. ce qui est retenu, aussitôt — même vieux, il vaut mieux qu'un
+            sticker vide le temps d'un aller-retour ;
+         2. ce que la page a déjà annoncé (`annonce`, ou l'état de cartes.js
+            lu avant même ce script) : pris tel quel, sans relire ;
+         3. sinon, si ce qui est retenu a passé la demi-minute, ou si une
+            annonce nue a dit que l'état a changé : sur un écran qui lit
+            l'état lui-même (`ANNONCENT_LEUR_ETAT`), on attend son annonce —
+            le niveau part tout de suite, pour arriver avec elle ; ailleurs,
+            on relit.
+
+       **La dernière source gagne** (`tour`) : une relecture partie avant
+       une annonce ne la recouvre pas en revenant avec l'état d'avant. */
+    let tour = 0;
+    let repli = 0;
+    let attenteNiveau = 0;
+    let niveauEnRoute = null;
+
+    const relire = () => {
+      clearTimeout(repli);
+      niveauEnRoute = null;
+      const n = ++tour;
+      chargerHud().then((d) => { if (d && n === tour) afficher(d); });
+    };
+
+    /** Une annonce de la page : le portefeuille, tel qu'elle vient de le recevoir. */
+    function recevoir(w) {
+      clearTimeout(repli);
+      const n = ++tour;
+      const avant = vu ?? lireHud();
+      const scarves = w.scarves ?? avant?.scarves;
+      const packs = w.packs ?? avant?.packs;
+      /* Une annonce partielle, sur un HUD qui ne sait rien encore : l'autre
+         solde ne se devine pas. */
+      if (scarves === undefined || packs === undefined) { relire(); return; }
+      const avatar = 'avatar' in w ? w.avatar : (avant?.avatar ?? null);
+      const change = !avant || avant.scarves !== scarves || avant.packs !== packs
+        || ((Boolean(avant.avatar) || Boolean(avatar)) && !memeAvatar(avant.avatar, avatar));
+      const perime = !avant || Date.now() - avant.t >= DUREE_HUD;
+      /* Retenu avec l'heure de la dernière lecture complète, et non celle de
+         l'annonce : le niveau qu'on garde n'a pas été relu, lui. */
+      const d = composer({ scarves, packs, avatar }, avant?.niveau ?? null, avant?.t ?? 0);
+      retenirHud(d);
+      if (!change && !perime) { afficher(d); return; }
+
+      /* Le niveau se relit quand le portefeuille a bougé — l'XP suit les
+         gestes qui le font bouger — ou quand ce qu'on en sait est vieux. Avec
+         quelque chose à l'écran, les soldes se posent tout de suite et le
+         niveau suit ; sans rien, on l'attend pour se dessiner d'un coup (voir
+         « trente secondes », plus haut). Une rafale d'annonces — le kiosque
+         en fait une par seconde le temps que la réserve se recharge — ne
+         demande le niveau qu'une fois, trois cents millisecondes après la
+         dernière. */
+      const finir = (niv) => {
+        if (n !== tour) return;
+        const f = composer(d, niv ?? d.niveau, niv ? Date.now() : d.t);
+        retenirHud(f);
+        afficher(f);
+      };
+      if (vu) afficher(d);
+      clearTimeout(attenteNiveau);
+      if (niveauEnRoute) {
+        const p = niveauEnRoute;
+        niveauEnRoute = null;
+        p.then(finir);
+      } else {
+        attenteNiveau = setTimeout(() => lireNiveau().then(finir), vu ? 300 : 0);
+      }
+    }
+
+    /* Une annonce sans donnée : on relit tout, une fois par rafale. */
+    let relecture = 0;
+    surBourse = (w) => {
+      if (w) { recevoir(w); return; }
+      clearTimeout(relecture);
+      relecture = setTimeout(relire, 300);
+    };
+    const retenu = lireHud();
+    if (retenu) afficher(retenu);
+    const deja = annonce ?? etatDeLaPage();
+    annonce = null;
+    if (deja) recevoir(deja);
+    else if (changeSansDonnee || !retenu || Date.now() - retenu.t >= DUREE_HUD) {
+      if (ANNONCENT_LEUR_ETAT.includes(chemin)) {
+        niveauEnRoute = lireNiveau();
+        repli = setTimeout(relire, REPLI_ANNONCE);
+      } else relire();
+    }
+
+    /* Revenir par la flèche du navigateur peut rendre la page telle qu'on
+       l'avait quittée, sans la relancer : le HUD y serait resté d'avant
+       l'achat. On le relit, comme l'accueil relit sa bourse — la page,
+       elle, ne relit rien, et n'annoncera donc rien. */
+    window.addEventListener('pageshow', (e) => {
+      if (!e.persisted) return;
+      const r = lireHud();
+      if (r && Date.now() - r.t < DUREE_HUD) { tour += 1; afficher(r); return; }
+      relire();
+    });
+  }
+
   /* --------------------------------------------------- la barre du haut */
 
 
@@ -375,18 +882,22 @@
       `<a class="pan tbf-retour" href="${parent}" aria-label="Revenir"
           ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONES.retour}"/></svg></a>`;
 
-    /* Une flèche, un titre, un menu.
+    /* Une flèche, un titre, un menu — et, replié, ce que je possède.
 
        Elle portait aussi l'avatar avec le pseudo et le club, et deux jetons de
        monnaie. Sur trois cent soixante pixels, les cinq se disputaient la place
        — le pseudo tronqué, le club réduit à « Lausanne … » — et rien de tout ça
        ne disait **où l'on est**, qui est la seule chose qu'on demande à une
-       barre. Le pseudo et le club vivent sur le profil, qui est fait pour eux ;
-       les soldes s'affichent là où ils décident de quelque chose, c'est-à-dire
-       à la boutique et au kiosque.
+       barre. Le pseudo et le club vivent sur le profil, qui est fait pour eux.
 
-       Le titre pousse le menu à droite : il devient le centre de gravité de la
-       barre au lieu d'un élément de plus dans une file. */
+       Les soldes et le niveau reviennent au lot 2, mais **repliés** : un
+       sticker rond de trente-six pixels, le buste de son Fanzzy dans l'anneau
+       d'XP, qui déplie les deux jetons au toucher. Il prend la place d'un
+       bouton, pas celle du titre — voir `monterHud`, plus haut.
+
+       Le titre se range à gauche, juste après la flèche, et pousse à droite ce
+       qui le suit — le HUD et le menu (ui.css, « le nom de l'écran, sur son
+       scotch »). */
     const haut = document.createElement('header');
     haut.className = 'tbf-haut' + (enJeu ? ' tbf-haut-jeu' : '');
     /* **Ce titre-là est le titre de la page**, et il en est le seul.
@@ -466,36 +977,33 @@
       .catch(() => {});
 
     /* Le tiroir, monté par menu.js sur le bouton que cette barre vient de
-       dessiner. Sa liste, son entrée d’administration, la pastille du direct
-       et la confirmation de déconnexion ne sont plus l’affaire de ce fichier :
-       l’accueil monte exactement le même, et deux menus qui divergent est la
-       faute que menu.js existe pour empêcher. */
+       dessiner. Sa liste, son entrée d’administration, les états de ses
+       tuiles et la confirmation de déconnexion ne sont plus l’affaire de ce
+       fichier : l’accueil monte exactement le même, et deux menus qui
+       divergent est la faute que menu.js existe pour empêcher. */
     /* Pas de bouton pour un visiteur, donc rien à monter. `monter` sur
        `null` ne lèverait pas — elle se contente de ne rien faire — mais un
        appel qui ne fait rien se relit dix fois avant qu'on comprenne
        pourquoi. */
-    if (user) window.TBF_MENU.monter(haut.querySelector('.tbf-burger'));
+    const menu = user ? window.TBF_MENU.monter(haut.querySelector('.tbf-burger')) : null;
 
-    /* Plus de bourse à remplir ici.
-
-       Cet endroit appelait `/api/me/state` à chaque chargement de page pour
-       écrire dans les jetons et la ligne du club — qui ne sont plus dans la
-       barre. Une requête réseau sur vingt écrans pour ne rien afficher. Elle
-       était protégée par un `try`, donc rien ne cassait : c'est ce qui rend ce
-       genre de reste dangereux, il ne se signale pas.
-
-       Les soldes s'affichent là où ils décident de quelque chose : la boutique,
-       le kiosque et le carnet les montrent dans leur propre page. */
+    /* **Le HUD replié**, pour un joueur connecté, hors des deux écrans de jeu :
+       pendant un duel, son solde d'écharpes n'intéresse personne (le HUD de
+       match est l'affaire d'un autre lot). Un visiteur n'a ni niveau ni
+       solde : rien à replier. */
+    if (user && !enJeu) monterHud(haut, menu, user.id ?? user.pseudo);
 
     /**
      * Ce qu'une page peut encore dire à la barre : qu'une partie tourne.
      *
      * Cette poignée tenait aussi la bourse à jour — `bourse()`, qu'appelaient
-     * les boosters et le carnet quand leur solde changeait, pour que la barre
-     * ne reste pas sur le chiffre du chargement. Elle est partie avec les
-     * jetons, comme la requête du dessus : la barre n'affiche plus aucun
-     * solde. Une page qui en montre un le tient à jour elle-même, et le fait
-     * compter sous les yeux quand il change (`FX.compter`, dans fx.js).
+     * les boosters et le carnet quand leur solde changeait. Elle est partie
+     * avec les jetons, et ne revient pas avec le HUD : celui-ci prend ce
+     * qu'une page annonce de l'état du joueur (`tbf:bourse`, voir plus haut —
+     * émis par cartes.js, ou par une page avec le portefeuille en `detail`),
+     * sans qu'aucune page ait à le connaître. Un événement plutôt qu'une
+     * poignée : il est entendu même avant que cette barre existe, et une page
+     * sans barre — le hub, un écran de jeu — peut l'émettre sans rien vérifier.
      */
     window.TBF_BARRE = {
       /**

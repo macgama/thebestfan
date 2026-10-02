@@ -1079,6 +1079,46 @@ function menePart(chemin, { vues, prefixes }, fichiersPublics) {
     + (sans.length ? ` · incomplets : ${sans.map((e) => e.cle).join(', ')}` : ''));
 }
 
+/* ========================== les tuiles de grain que ui.css demande
+
+   Même silence que les stades, sur toutes les surfaces à la fois. Une tuile
+   qui manque ne casse rien : la feuille la demande, le serveur répond 404,
+   et la bâche reste une face unie, le panneau calme un aplat — la matière
+   FAIT MAIN disparaît sans un message. L'audit d'interface le voit depuis
+   le lot 2 (il lit le texte à travers le voile de la tuile, et en nomme une
+   absente), mais seulement quand on le lance, avec une base et un Chrome.
+   Ici, sans rien lancer.
+
+   Contrairement aux dessins, ce n'est pas un chantier en cours : les tuiles
+   sont calculées par `scripts/grain-images.mjs`, en une commande. Une
+   absence est donc une faute, et elle rougit. Le WebP, que la feuille
+   demande, et son jumeau PNG, que le script écrit avec lui comme pour toute
+   famille d'images : un WebP sans PNG est une tuile déposée à la main, que
+   personne ne saura refaire. Les commentaires de la feuille ne comptent pas
+   — une adresse citée n'est pas une adresse servie. */
+{
+  const feuille = (await readFile(path.join(DOSSIER, 'ui.css'), 'utf8'))
+    .replace(/\/\*[\s\S]*?\*\//g, ' ');
+  const tuiles = [...new Set([...feuille.matchAll(/\/img\/grain\/([\w@-]+)\.webp\b/g)].map((m) => m[1]))];
+  let presents = new Set();
+  try {
+    presents = new Set(await readdir(path.join(DOSSIER, 'img', 'grain')));
+  } catch { /* dossier absent : toutes manquent, et le contrôle le dira */ }
+  const manquent = tuiles.flatMap((t) => ['webp', 'png']
+    .filter((x) => !presents.has(`${t}.${x}`)).map((x) => `${t}.${x}`));
+  /* Zéro tuile trouvée est une panne du motif, pas une bonne nouvelle : la
+     bâche, le mur et le panneau en portent une depuis le lot 1. */
+  if (!tuiles.length) {
+    ko('ui.css', 'aucune adresse /img/grain/….webp hors commentaires : le motif ne '
+      + 'reconnaît plus la tuile, ou le grain a quitté la feuille sans que ce contrôle le sache');
+  } else if (manquent.length) {
+    ko('ui.css', `tuile(s) de grain demandée(s) et absente(s) de public/img/grain : ${manquent.join(', ')}`
+      + ' — la surface reste unie, sans un message. `node scripts/grain-images.mjs` les refait.');
+  } else {
+    ok('le grain', `${tuiles.length} tuile(s) demandée(s) par ui.css, chacune en WebP et en PNG`);
+  }
+}
+
 /* ====================================== les garde-fous du socle FAIT MAIN
 
    Le lot 0 de la refonte rend les écrans lisibles en plein jour et

@@ -1359,6 +1359,10 @@ for (const [route, nom] of tousLesEcrans) {
   const accueil = await pa.evaluate(() => ({
     lien: document.querySelector('.collec')?.getAttribute('href'),
     compte: document.getElementById('collecTxt')?.textContent.trim(),
+    /* Depuis le lot 2, la carte montre le palier en cours (« 14 / 25 »,
+       amendement 22) et non plus le total : le total est dit aux lecteurs
+       d'écran, dans l'étiquette du lien. C'est là qu'on le lit. */
+    dit: document.getElementById('collec')?.getAttribute('aria-label') ?? '',
   }));
   await pa.close();
   check('la carte Collection de l’accueil mène à la bibliothèque', accueil.lien === '/collection'
@@ -1376,8 +1380,20 @@ for (const [route, nom] of tousLesEcrans) {
   check(`la bibliothèque range les cinq types (${vue.types.join(', ')})`,
     ['fanzzy', 'etats', 'tenues', 'stuff', 'actions'].every((k) => vue.types.includes(k)));
   check('elle montre chaque Fanzzy à gagner, possédé ou en silhouette', vue.vignettes > 0);
-  check(`et l’accueil affiche le même total qu’elle (${accueil.compte} · ${vue.total})`,
-    Boolean(accueil.compte) && accueil.compte.replace(/\s+/g, '') === vue.total);
+  /* Deux chiffres pour la même question, et l'un des deux ment : la règle
+     reste, mais le total de l'accueil ne s'affiche plus, il se dit. La page
+     écrit « gagnés/possibles » ; l'étiquette de la carte doit nommer les
+     deux mêmes nombres, et la carte doit afficher le même compte de cartes
+     gagnées — sur son palier, qui n'est pas le total et ne se compare donc
+     pas à la page. */
+  const [gagnes, possibles] = (vue.total ?? '').split('/').map(Number);
+  const ditNombres = (accueil.dit.match(/\d+/g) ?? []).map(Number);
+  const montre = (accueil.compte ?? '').replace(/\s+/g, '').split('/').map(Number);
+  check(`et l’accueil dit le même total qu’elle (${accueil.compte} · « ${accueil.dit} » · ${vue.total})`,
+    Number.isInteger(gagnes) && Number.isInteger(possibles)
+      && ditNombres.includes(gagnes) && ditNombres.includes(possibles)
+      && montre.length === 2 && montre[0] === gagnes
+      && montre[1] >= gagnes && montre[1] <= possibles);
 }
 
 if (process.env.CAPTURE) console.log(`\n   captures dans ${tmpdir()}`);

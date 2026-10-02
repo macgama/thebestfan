@@ -544,6 +544,12 @@
     carte:   () => ton({ freq: 880, vers: 400, duree: .08, type: 'square', vol: .06 }),
     bache:   () => ton({ freq: 115, vers: 70, duree: .22, type: 'sine', vol: .13 }),
     tic:     () => ton({ freq: 1200, duree: .03, type: 'square', vol: .05 }),
+    /* Le tic sourd : une porte fermée qu'on touche (voir « refus »). Plus bas
+       et plus mat que le tic d'une bâche, avec un frottement dessous : on
+       doit entendre, sans regarder, que le geste n'a pas pris. Le tic clair
+       dirait le contraire — c'est le son d'une bâche qui s'ouvre. */
+    sourd:   () => { ton({ freq: 220, vers: 110, duree: .07, type: 'triangle', vol: .12 });
+                     bruit({ duree: .05, freq: 360, vol: .06 }); },
     // La corne de but : trois notes tenues, comme un klaxon de tribune.
     but:     () => { [392, 494, 587].forEach((f, i) =>
                        ton({ freq: f, duree: .55, type: 'sawtooth', vol: .09, delai: i * .12 }));
@@ -779,13 +785,83 @@
 
     compter, voler,
 
+    /**
+     * Une porte fermée qu'on touche : la tuile verrouillée du hub, demain la
+     * case du classeur qu'on n'a pas encore. Elle dit non de la tête, avec le
+     * tic sourd et un buzz de huit millisecondes — assez pour se sentir sous
+     * le doigt, trop court pour se confondre avec la vibration d'un gain.
+     *
+     * **La secousse est celle de `ui.css`** (`.tbf-secoue`, 260 ms). La page
+     * qui la pose déjà elle-même — le hub le fait, avec son calcul forcé pour
+     * la rejouer — la garde : on ne la repose pas par-dessus. Une page qui ne
+     * la pose pas la reçoit d'ici, retirée à la fin de son animation. Sans
+     * mouvement (système ou calme « animations »), pas de secousse du tout :
+     * la feuille l'éteindrait, et une classe qui n'anime rien n'a pas à être
+     * posée.
+     *
+     * Le son et la vibration suivent chacun leur facette du mode calme.
+     *
+     * @param {Element} [el]  ce qu'on a touché ; sans lui, le son et le buzz
+     */
+    refus(el) {
+      son('sourd');
+      buzz(8);
+      if (!el?.classList || doux() || el.classList.contains('tbf-secoue')) return;
+      let filet = 0;
+      const fin = (e) => {
+        // Filtré par nom : un sticker qui respire sur la même tuile finit
+        // aussi des animations, et ne doit pas couper la secousse.
+        if (e && e.animationName !== 'tbf-secoue') return;
+        clearTimeout(filet);
+        el.removeEventListener('animationend', fin);
+        el.classList.remove('tbf-secoue');
+      };
+      el.addEventListener('animationend', fin);
+      /* Le filet, comme pour compter : un onglet caché ne finit pas ses
+         animations, et la classe resterait posée. Une seconde et non trois
+         cents millisecondes : sur une page chargée, l'animation peut ne
+         partir qu'à l'image suivante, deux cents millisecondes plus tard, et
+         un filet trop court couperait la secousse en plein geste. */
+      filet = setTimeout(fin, 1000);
+      el.classList.add('tbf-secoue');
+    },
+
     /* Une carte jouée se voit dans `action-art.js`, avec son dessin et sa
        famille. Il y avait ici une version pâle — une onde et le nom en
        craie — que plus personne n'appelait : deux définitions de « à quoi
        ressemble une carte qu'on joue », dont une morte. */
 
-    /** Un but dans le jeu. Le plus gros effet dont on dispose. */
-    but({ pour = true, score } = {}) {
+    /**
+     * Un but dans le jeu. Le plus gros effet dont on dispose.
+     *
+     * **`vignette: true`** est la forme du hub : `index.html` l'appelle à
+     * côté de `moment('but', …)`, quand un club suivi marque. La page montre
+     * déjà le but dans la case de BD unifiée (`.tbf-moment`, dans `ui.css`),
+     * qui porte son mot, sa bouffée de fumigène et ses confettis. Le « BUT ! »
+     * d'ici s'écrivait alors par-dessus la case — deux titres pour un but —,
+     * et ses quatre-vingt-dix particules doublaient les confettis. Il ne reste
+     * que ce que la case ne sait pas faire : **la secousse de l'écran et la
+     * vibration**, que le hub avait avant la case et qu'il ne doit pas perdre
+     * avec le lettrage nu — sans elles, un but au hub ne se sent plus sous le
+     * doigt. Ni éclair, ni onde, ni particules, ni titre,
+     * **ni son** : la page qui pose la case choisit aussi sa corne — `butReel`
+     * au hub, puisque c'est un vrai match — et une seconde corne partirait
+     * par-dessus, décalée de quelques millisecondes. La case reste immobile :
+     * elle est posée sur le document, hors de `#app` que la secousse fait
+     * trembler, et c'est elle qu'on lit.
+     *
+     * Le Virage et le duel appellent encore la forme pleine : leur écran de
+     * match n'est pas repris avant le lot 6.
+     */
+    but({ pour = true, score, vignette = false } = {}) {
+      // Un seul motif pour les deux formes : un but se sent pareil sous le
+      // doigt, qu'on le lise dans la case ou dans le titre d'ici.
+      const vibration = pour ? [45, 55, 130] : 220;
+      if (vignette) {
+        secousse(1.4);
+        buzz(vibration);
+        return;
+      }
       flash(pour ? '#fff' : 'rgba(224,64,44,.55)');
       secousse(1.4);
       const x = innerWidth / 2;
@@ -795,7 +871,7 @@
         couleurs: pour ? [COULEURS.or, COULEURS.feu, '#FFF3D0'] : [COULEURS.feu, '#7A1A11'] });
       titre(pour ? 'BUT !' : 'BUT ADVERSE', score ? `${score[0]} – ${score[1]}` : null,
         pour ? COULEURS.or : COULEURS.feu, pour ? 56 : 40);
-      buzz(pour ? [45, 55, 130] : 220);
+      buzz(vibration);
       son(pour ? 'but' : 'encaisse');
     },
 
