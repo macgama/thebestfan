@@ -1,5 +1,6 @@
-import { racineDe, auStade, parIdentifiant } from './catalogue.js';
+import { racineDe, auStade, parIdentifiant, estCharge } from './catalogue.js';
 import { stadeAffiche } from '../../shared/fanzzy/ages.js';
+import { niveauPour } from '../../shared/niveau.js';
 
 /**
  * **L'avatar d'un joueur — la seule réponse du jeu à « qui montrer ».**
@@ -150,6 +151,140 @@ export async function avatarsDe(q, lignes) {
     }
 
     res.set(l.userId, { avatar, enJeu, tenuesParAge });
+  }
+  return res;
+}
+
+/* ====================================================== les listes publiques
+
+   **Ce qu'un inconnu a le droit de voir d'un joueur.** Les classements, les
+   membres d'un KOP : des listes que n'importe qui lit, et où chacun doit se
+   reconnaître à son personnage avant de lire un pseudo.
+
+   `avatarsDe` rend l'objet **entier**, et c'est sa raison d'être : un écran du
+   joueur lui-même ne doit rien avoir à improviser. Mais l'objet entier dit
+   aussi la garde-robe de chaque âge (`tenuesParAge`), l'avatar d'entrée en
+   jeu, le cri — ce qu'un joueur montre à ses amis, pas à un tableau public.
+   Une liste publique ne reçoit donc qu'une **liste blanche**, écrite ici et
+   nulle part ailleurs : un champ ajouté demain à `avatarsDe` ne doit pas
+   partir dans un classement parce que personne n'a pensé à le retenir.
+   `CONTRATS.md`, § 3, en donne la forme. */
+
+/** Les champs de l'avatar public, dans l'ordre du contrat. Rien d'autre ne sort. */
+export const AVATAR_PUBLIC = Object.freeze(['id', 'age', 'evo', 'nom', 'skin', 'etat', 'rar']);
+
+const RARETES = new Set(['commune', 'rare', 'epique', 'legendaire']);
+
+/** L'avatar réduit à sa liste blanche, ou `null`. */
+function avatarPublic(a) {
+  if (!a?.id || !a.age) return null;
+  return {
+    id: String(a.id),
+    age: String(a.age),
+    evo: Number(a.evo) || 1,
+    nom: a.nom ?? null,
+    skin: a.skin || 'base',
+    etat: a.etat || null,
+    /* Une rareté hors de la liste fermée devient nulle plutôt que de partir
+       telle quelle : l'écran choisit une couleur par ce mot, et un mot qu'il
+       ne connaît pas lui ferait peindre une plaque vide. */
+    rar: RARETES.has(a.rar) ? a.rar : null,
+  };
+}
+
+/* Le schéma incomplet se dit une fois, pas à chaque lecture de classement. */
+const dejaDit = new Set();
+function direUneFois(cause, message) {
+  if (dejaDit.has(cause)) return;
+  dejaDit.add(cause);
+  console.warn(message);
+}
+
+/**
+ * L'avatar public et le niveau d'une liste de joueurs, **en trois requêtes**,
+ * quelle que soit la longueur de la liste.
+ *
+ * ## Pourquoi par lots
+ *
+ * Un classement de cinquante lignes qui lirait chaque joueur à part ferait
+ * cent cinquante requêtes à chaque expiration de son mémo. La bourse et le
+ * statut se lisent donc ensemble, en une fois, et `avatarsDe` lit déjà par
+ * lots les âges atteints et les tenues : une, plus deux.
+ *
+ * ## Un compte qui n'est plus actif n'a plus de visage
+ *
+ * Les classements ne listent que les comptes actifs, mais les membres d'un
+ * KOP sont lus sans filtre de statut (`kop/index.js`, `etat`) : un compte
+ * supprimé garde sa ligne, et c'est juste — son versement au pot a eu lieu.
+ * Son personnage, lui, ne doit jamais réapparaître. Le statut est donc lu
+ * **ici**, avec la bourse, et pas laissé à la bonne mémoire de chaque appelant.
+ * Un identifiant que `users` ne connaît pas reçoit la même réponse.
+ *
+ * ## Le niveau, ou rien
+ *
+ * Il se déduit de l'XP (`shared/niveau.js`, `niveauPour`), sans requête de
+ * plus. Une XP illisible (pas de bourse, colonne absente) ne donne **pas** de
+ * niveau : afficher « NIV. 1 » par défaut mentirait sur quelqu'un qui est
+ * peut-être niveau 20.
+ *
+ * @param {Function} q  `(sql, params) => rows`, celui du module appelant —
+ *   c'est lui que les suites instrumentent pour compter les requêtes.
+ * @param {string[]} ids  les identifiants publics, doublons tolérés.
+ * @returns {Promise<Map<string, { avatar?: object|null, niveau?: number }>>}
+ *   une entrée par identifiant demandé. `avatar: null` : pas de Fanzzy
+ *   équipé, ou compte inactif. `avatar` absent : le catalogue n'est pas
+ *   chargé, ou une table manque — on ne sait pas, donc on ne dit rien.
+ */
+export async function habillerJoueurs(q, ids) {
+  const qui = [...new Set((ids ?? []).filter((x) => typeof x === 'string' && x))];
+  const res = new Map();
+  if (!qui.length) return res;
+  const marques = qui.map(() => '?').join(',');
+
+  /* Une seule lecture pour toute la liste : le statut et la bourse.
+     Jointure à gauche : un joueur sans bourse existe, il n'a simplement ni
+     personnage ni XP lisible. */
+  const lire = (xp) => q(
+    `SELECT u.public_id AS userId, u.status,
+            w.active_fanzzy, w.active_evo, w.active_etat, ${xp} AS xp
+       FROM users u
+       LEFT JOIN user_wallet w ON w.user_id = u.public_id
+      WHERE u.public_id IN (${marques})`, qui);
+  let lignes;
+  try {
+    lignes = await lire('w.xp');
+  } catch (e) {
+    /* `xp` arrive avec sql/niveau.sql. Sans elle, les visages restent et
+       le niveau se tait : c'est un affichage, pas une raison de vider un
+       classement. */
+    if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+    direUneFois('xp', '[avatar] colonne user_wallet.xp absente : les listes publiques '
+      + 'servent les avatars sans niveau (applique sql/niveau.sql)');
+    lignes = await lire('NULL');
+  }
+
+  const actifs = lignes.filter((l) => l.status === 'active');
+
+  let visages = null;
+  if (estCharge()) {
+    try {
+      visages = await avatarsDe(q, actifs);
+    } catch (e) {
+      if (e?.code !== 'ER_NO_SUCH_TABLE' && e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+      direUneFois(`table:${e.code}`, `[avatar] les listes publiques servent sans avatar : ${
+        e.sqlMessage ?? e.message}`);
+    }
+  }
+
+  const parId = new Map(lignes.map((l) => [l.userId, l]));
+  for (const id of qui) {
+    const l = parId.get(id);
+    if (!l || l.status !== 'active') { res.set(id, { avatar: null }); continue; }
+    const entree = {};
+    if (visages) entree.avatar = avatarPublic(visages.get(id)?.avatar);
+    const xp = l.xp == null ? NaN : Number(l.xp);
+    if (Number.isFinite(xp) && xp >= 0) entree.niveau = niveauPour(xp);
+    res.set(id, entree);
   }
   return res;
 }

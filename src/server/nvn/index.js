@@ -867,6 +867,15 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
         if (niveau && !aFuit) {
           const gain = (XP.duel[d.mode] ?? XP.duel.entrainement)
             + (gagne ? XP.victoire : 0);
+          /* **Hors de toute transaction, et ça doit le rester.** `q` passe par
+             le pool en validation automatique : l'`UPDATE` des écharpes
+             ci-dessus est déjà validé quand `gagner()` prend, sur sa propre
+             connexion, le verrou de la même ligne de `user_wallet`. Qui
+             réunirait un jour ce versement dans une transaction devrait
+             passer sa connexion à `niveau.gagnerDans()` : `gagner()`
+             attendrait un verrou que l'appelant ne rend qu'après lui, puis
+             perdrait l'XP au bout de l'attente (voir son pavé, dans
+             `niveau/index.js`). */
           const m = await niveau.gagner(userId, gain);
           verse.get(userId).xp = gain;
           /* **La montée de palier voyage avec le bilan.**
@@ -882,6 +891,17 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
              bilan obligerait la page à savoir ce qu’est une montée nulle.
              Voir `niveau-fete.js`, qui n’a plus qu’à le recevoir. */
           if (m?.monte) verse.get(userId).montee = m;
+          /* **La jauge, elle, voyage toujours** (CONTRATS.md § 1). L’anneau
+             d’XP du bilan avance de `depart.part` à `part` à chaque duel, et
+             pas seulement les soirs de montée : un anneau qui ne bouge que
+             tous les deux duels ne dit pas qu’on progresse.
+
+             Posée **seulement si l’XP est vraiment entrée** : `gagner()` rend
+             un objet vide sans lever quand la base refuse, et un anneau qui
+             avancerait sur une XP jamais créditée mentirait. Un `gain` nul ou
+             absent, c’est « rien n’a été versé ». `montee` reste à côté, tel
+             quel, pour `niveau-fete.js`. */
+          if (Number(m?.gain) > 0) verse.get(userId).niveau = m;
         }
 
         /* La part du club, versée au pot du KOP.
@@ -914,7 +934,102 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     }
     return verse;
   }
+
+  /**
+   * L'issue d'un joueur, telle que la ligne et la cote la lisent.
+   *
+   * Écrite une fois : la cote se calcule maintenant avant le bilan et la
+   * ligne s'écrit après, et deux façons de dire « nul » finiraient par ne
+   * plus désigner les mêmes parties.
+   */
+  const issueDe = (d, j) => (d.vainqueur === null || d.vainqueur === undefined ? 'draw'
+    : (j.side === d.vainqueur ? 'win' : 'loss'));
+
+  /**
+   * La cote de chacun, avant et après ce duel : `userId → { avant, apres }`.
+   *
+   * Vide hors classé et sans humain : l'entraînement s'écrit, il ne cote pas,
+   * et un bot n'a pas de cote. Lève si la base ne répond pas, et c'est
+   * l'appelant qui décide de ce qu'une cote illisible coûte.
+   *
+   * ## Pourquoi avant le bilan
+   *
+   * La cote se calculait **après** l'envoi de `nvn:fin`, au moment d'écrire
+   * la ligne : le bilan ne pouvait donc pas la montrer, et le joueur
+   * apprenait ce que le duel lui avait coûté en allant lire le classement.
+   * Elle passe avant, et la ligne réemploie exactement ces valeurs : le
+   * bilan et le classement ne peuvent pas dire deux cotes différentes.
+   *
+   * ## Pourquoi deux mesures et non tout l'historique (P7)
+   *
+   * On lisait **toutes** les parties classées de chaque joueur pour garder la
+   * première et compter les autres. Un habitué à mille duels faisait donc
+   * remonter mille lignes à chaque fin de partie, pour en garder une et un
+   * nombre. La base rend maintenant les deux directement : la dernière cote,
+   * par l'index `(user_id, mode, ended_at)` lu à l'envers, et le compte, qui
+   * décide du coefficient (plus grand pendant les dix premières parties).
+   */
+  async function coter(d) {
+    const humains = [...d.joueurs.entries()].filter(([id]) => !id.startsWith('bot:'));
+    const out = new Map();
+    if (d.mode !== 'classe' || !humains.length) return out;
+
+    const ids = humains.map(([id]) => id);
+    /* Une requête pour toute la salle : le compte par joueur, et sa dernière
+       ligne classée prise par une sous-requête. Les parties d'entraînement
+       n'entrent ni dans l'une ni dans l'autre. */
+    const [lignes] = await pool.query(
+      `SELECT c.user_id, c.n,
+              (SELECT r.elo_after FROM duel_results r
+                WHERE r.user_id = c.user_id AND r.mode = 'classe'
+                ORDER BY r.ended_at DESC LIMIT 1) AS elo_after
+         FROM (SELECT user_id, COUNT(*) AS n FROM duel_results
+                WHERE user_id IN (?) AND mode = 'classe'
+                GROUP BY user_id) c`, [ids]);
+
+    /* Un joueur sans partie classée n'a pas de ligne : il part de la cote de
+       départ, avec le coefficient des débuts. */
+    const cotes = new Map(ids.map((id) => [id, COTE_DEPART]));
+    const jouees = new Map(ids.map((id) => [id, 0]));
+    for (const l of lignes) {
+      jouees.set(l.user_id, Number(l.n) || 0);
+      cotes.set(l.user_id, Number(l.elo_after) || COTE_DEPART);
+    }
+
+    /* **Un camp est noté par sa moyenne.** Un 3v3 n'est pas trois duels :
+       c'est une équipe contre une autre. Chaque joueur est donc évalué contre
+       la cote moyenne du camp d'en face, et tous les membres d'un camp gagnent
+       ou perdent la même chose. Les noter un par un contre un adversaire tiré
+       au hasard donnerait trois résultats différents pour une seule partie, et
+       personne ne saurait expliquer lequel est le sien.
+
+       **Seul le classé cote**, et ce tri se fait ici plutôt qu'à la lecture :
+       une cote est cumulative, la trier après coup demanderait de la
+       recalculer depuis le début à chaque affichage. Les bots n'ont pas de
+       ligne, donc pas de cote. */
+    const moyenneDe = (side) => coteMoyenne(
+      humains.filter(([, x]) => x.side === side).map(([id]) => cotes.get(id)));
+    for (const [id, j] of humains) {
+      const avant = cotes.get(id);
+      out.set(id, {
+        avant,
+        apres: coteApres(avant, moyenneDe(j.side ^ 1), issueDe(d, j), jouees.get(id)),
+      });
+    }
+    return out;
+  }
+
   async function fermer(salle) {
+    /* **Une salle ne se ferme qu'une fois** (E1).
+
+       Deux chemins y menaient pour un même forfait : `diffuser` voit le duel
+       terminé et ferme, puis le gestionnaire de `nvn:forfait` fermait à son
+       tour. Les deux passaient le premier `await` avant que l'un ait fini, et
+       le joueur resté touchait deux fois ses écharpes, son XP et la part de
+       son KOP. La garde est **synchrone**, avant tout `await` : c'est ce qui la
+       rend sûre dans une boucle d'événements, sans verrou. */
+    if (salle.fermee) return;
+    salle.fermee = true;
     clearInterval(salle.timer);
     const d = salle.duel;
     salles.delete(d.id);
@@ -929,6 +1044,25 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
     // pas dans la récompense.
     const gains = await recompenser(salle);
 
+    /* **La cote, avant le bilan** (CONTRATS.md § 4.1).
+
+       Une base qui ne répond pas ne vole pas la fin de partie : le bilan part
+       sans ligne de cote, ce que le contrat prévoit. La ligne de résultat, elle,
+       ne s'écrit pas — voir plus bas, c'était déjà le cas quand la lecture
+       vivait dans le même bloc que l'écriture. */
+    let cotes = new Map();
+    let coteIllisible = false;
+    try {
+      cotes = await coter(d);
+    } catch (e) {
+      coteIllisible = true;
+      console.error('[nvn] cote illisible, bilan envoyé sans elle', e.message);
+    }
+    for (const [userId, c] of cotes) {
+      const g = gains.get(userId);
+      if (g) g.cote = { avant: c.avant, apres: c.apres, delta: c.apres - c.avant };
+    }
+
     /* **L'écran de fin.**
      *
      * Rien n'annonçait la fin d'un duel : le client la déduisait du drapeau
@@ -938,7 +1072,8 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
      *
      * Le bilan part **avant** l'écriture en base : un joueur n'a pas à attendre
      * une requête pour savoir s'il a gagné, et une base indisponible ne doit
-     * pas lui voler sa fin de partie. */
+     * pas lui voler sa fin de partie. La seule lecture qui le précède est celle
+     * de la cote, qu'il montre. */
     {
       const bilan = d.bilan();
       for (const [userId, m] of salle.membres) {
@@ -989,71 +1124,20 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
          ferait grandir la partie de ce que le serveur a mis à la ranger. */
       const duree = Math.round(Math.max(0, (d.dernier ?? d.debut) - d.debut) / 1000);
 
-      /* ================================================== la cote des duellistes
-
-         **Un camp est noté par sa moyenne.** Un 3v3 n'est pas trois duels :
-         c'est une équipe contre une autre. Chaque joueur est donc évalué contre
-         la cote moyenne du camp d'en face, et tous les membres d'un camp gagnent
-         ou perdent la même chose. Les noter un par un contre un adversaire tiré
-         au hasard donnerait trois résultats différents pour une seule partie, et
-         personne ne saurait expliquer lequel est le sien.
-
-         **Seul le classé cote.** L'entraînement s'écrit — un joueur doit
-         retrouver ses soirées — mais il ne bouge aucune cote. C'est le même tri
-         que partout ailleurs, fait ici plutôt qu'à la lecture parce qu'une cote
-         est cumulative : la trier après coup demanderait de la recalculer depuis
-         le début à chaque affichage.
-
-         **Les bots ne comptent pas non plus** : ils n'ont pas de ligne, donc pas
-         de cote, et un camp entièrement composé de machines ramène la moyenne au
-         départ — ce qui n'arrive qu'en entraînement, où rien ne cote.
-
-         Les cotes d'avant sont lues **en une requête pour toute la salle** :
-         une par joueur ferait six allers-retours à la seconde où le duel se
-         range, et la partie est finie, plus rien ne presse mais rien ne doit
-         traîner non plus. */
-      const humains = [...d.joueurs.entries()].filter(([id]) => !id.startsWith('bot:'));
-      const cotes = new Map();
-      const jouees = new Map();
-      const cote = d.mode === 'classe' && humains.length > 0;
-
-      if (cote) {
-        const ids = humains.map(([id]) => id);
-        /* La dernière cote connue de chacun, et le nombre de parties classées
-           qu'il a derrière lui — le second décide du coefficient, plus grand
-           pendant les dix premières.
-
-           `ORDER BY ended_at DESC LIMIT 1` par joueur se ferait en SQL avec une
-           fenêtre ; on préfère tout lire et trier ici, parce que le volume est
-           d'une poignée de lignes par joueur et que la requête reste lisible. */
-        const [lignes] = await pool.query(
-          `SELECT user_id, elo_after, ended_at FROM duel_results
-            WHERE user_id IN (?) AND mode = 'classe'
-            ORDER BY ended_at DESC`, [ids]);
-        for (const id of ids) { cotes.set(id, COTE_DEPART); jouees.set(id, 0); }
-        /* Les lignes arrivent de la plus récente à la plus ancienne : **la
-           première rencontrée pour quelqu'un porte sa cote du moment**, et les
-           suivantes ne servent qu'à le compter. Sans ce garde, la dernière lue —
-           donc la plus vieille — écraserait la bonne. */
-        const vus = new Set();
-        for (const l of lignes) {
-          jouees.set(l.user_id, (jouees.get(l.user_id) ?? 0) + 1);
-          if (!vus.has(l.user_id)) {
-            vus.add(l.user_id);
-            cotes.set(l.user_id, Number(l.elo_after) || COTE_DEPART);
-          }
-        }
+      /* **Une cote illisible n'écrit pas de ligne classée.** La ligne porte la
+         cote d'avant et celle d'après, et le classement des duellistes lit la
+         dernière : écrire la cote de départ faute de mieux remettrait le joueur
+         à mille, sans un mot. C'est ce qui se passait déjà quand la lecture et
+         l'écriture vivaient dans le même bloc — on le garde, en le disant. */
+      if (coteIllisible) {
+        console.error('[nvn] duel classé non enregistré, faute de cote lisible', d.id);
+        return;
       }
-
-      /** La cote moyenne d'un camp, humains seulement. */
-      const moyenneDe = (side) => coteMoyenne(
-        humains.filter(([, x]) => x.side === side).map(([id]) => cotes.get(id) ?? COTE_DEPART));
 
       for (const [userId, j] of d.joueurs) {
         if (userId.startsWith('bot:')) continue;
         const adverse = [...d.joueurs.values()].find((x) => x.side !== j.side);
-        const issue = d.vainqueur === null || d.vainqueur === undefined ? 'draw'
-          : (j.side === d.vainqueur ? 'win' : 'loss');
+        const issue = issueDe(d, j);
 
         /* Le camp, le club et le renfort ont été décidés à l'entrée en file :
            on les relit sur la salle plutôt que d'interroger la base une
@@ -1087,14 +1171,18 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
            pas se lit comme une fonction débranchée, et quelqu'un finit par bâtir
            dessus.
 
-           Hors classé, les deux valent la cote du moment, inchangée : la partie
-           s'écrit, elle ne cote pas. Écrire zéro dirait « il a tout perdu », ce
-           qui est faux ; laisser le défaut à mille effacerait la cote réelle de
-           quelqu'un qui alterne classé et entraînement. */
-        const avant = cotes.get(userId) ?? COTE_DEPART;
-        const apres = cote
-          ? coteApres(avant, moyenneDe(j.side ^ 1), issue, jouees.get(userId) ?? 0)
-          : avant;
+           Ce sont **les valeurs mêmes que le bilan a montrées** : `coter` les
+           a calculées avant `nvn:fin`, et la ligne les recopie. Recalculer ici
+           pourrait donner une autre cote que celle annoncée au joueur, si une
+           autre partie s'était rangée entre-temps.
+
+           Hors classé, `coter` ne rend rien et les deux colonnes valent la cote
+           de départ, comme avant : la partie s'écrit, elle ne cote pas. Ce n'est
+           pas un effacement — la cote se lit sur les seules lignes classées, ici
+           comme au classement des duellistes. Écrire zéro dirait « il a tout
+           perdu », ce qui est faux. */
+        const avant = cotes.get(userId)?.avant ?? COTE_DEPART;
+        const apres = cotes.get(userId)?.apres ?? avant;
 
         await q(
           `INSERT IGNORE INTO duel_results
@@ -1184,10 +1272,13 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
          pendant que la bourse, elle, était déjà payée. */
       const evs = salle.duel.forfait(m.side);
       evs.push({ seq: ++salle.duel.seq, t: 'forfait', userId: u.userId, side: m.side });
+      /* `diffuser` voit le duel terminé et appelle `fermer`, qui verse et
+         enregistre ; le camp qui part est déjà marqué (voir `recompenser`, qui
+         ne donne rien à un forfaitaire). **On ne ferme pas une seconde fois
+         ici** : c'est cet appel en double qui payait deux fois le joueur resté
+         (E1). La garde de `fermer` suffirait seule, mais un appel qui ne sert
+         à rien n'a pas à rester pour que la garde ait quelque chose à faire. */
       diffuser(salle, evs);
-      /* `fermer` verse et enregistre. Le camp qui part est déjà marqué : voir
-         `recompenser`, qui ne donne rien à un forfaitaire. */
-      fermer(salle);
     });
 
     socket.on('nvn:leave_queue', () => {
@@ -1397,5 +1488,10 @@ export function createNvN({ pool, io, requireAuth, decks, niveau = null, kop = n
      c’est pourtant elle qui empêche un 1v1 de finir dans un 5v5. */
   return { router, salles, files, filesParMatch, alertePour, accepte,
            ouvrir, ouvrirAvecBots, tenterAppariement, butReel,
+           /* `fermer` n'est appelée par aucun autre module : elle n'est exposée
+              qu'aux suites, qui doivent pouvoir la frapper deux fois de suite
+              pour voir qu'elle ne paie qu'une fois. Le nom dit à qui elle est
+              destinée. */
+           pourLesTests: { fermer },
            stop: () => { clearInterval(veille); for (const s of salles.values()) clearInterval(s.timer); } };
 }

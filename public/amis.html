@@ -15,7 +15,9 @@
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100dvh}
-body{background:radial-gradient(120% 50% at 50% -8%,rgba(60,130,232,.13),transparent 60%),var(--beton);
+/* Le halo du haut au violet des gens (lot 5) : la page avait gardé le bleu
+   de ce qu'on possède, et des amis ne se possèdent pas. */
+body{background:radial-gradient(120% 50% at 50% -8%,rgba(130,87,218,.13),transparent 60%),var(--beton);
      color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;
      padding:0 0 calc(var(--nav-h,62px) + 26px)}
 main{width:100%;max-width:var(--colonne);padding:0 15px}
@@ -29,37 +31,43 @@ h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em
    écrans du même jeu qui ne réagissent pas pareil se lisent comme deux
    applications.
 
-   **Une déclaration orpheline a mangé la règle d'en dessous pendant des
-   mois.** L'ancien habillage des onglets avait été retiré en laissant sa
-   dernière ligne, un « box-shadow » sans sélecteur. Le navigateur l'a lue
-   comme le début d'un sélecteur qui courait jusqu'à l'accolade suivante —
-   celle de la pastille — et a jeté le tout : la pastille n'a jamais été
-   peinte. Le compte s'affichait collé au mot, « DEMANDES1 ». Aucune erreur,
-   aucun contrôle rouge : une règle absente ne se voit pas.
-
-   La pastille de ce qui attend une réponse. Sans elle, une demande reçue
-   dormirait derrière un onglet fermé jusqu'à ce qu'on pense à l'ouvrir. Elle
-   est **dans la ligne** du mot, pas en surplomb du coin : l'onglet commun
-   rogne ce qui déborde (il porte l'ellipse de son étiquette), et une pastille
-   placée en absolu hors de lui serait allée se poser au coin de la page. */
-.onglet .pastille{display:inline-block;vertical-align:1px;margin-left:6px;min-width:19px;height:19px;
-  padding:0 5px;border-radius:999px;background:var(--flare);color:#fff;font-size:11px;line-height:19px;
-  font-family:var(--ui);font-weight:700;letter-spacing:0;text-align:center;
-  box-shadow:0 1px 3px rgba(0,0,0,.5)}
+   Le compte de ce qui attend une réponse est la brique commune
+   (`.tbf-onglet-n`, lots 3 et 5) : un sticker rond de craie, **dans la
+   ligne** du mot — l'onglet rogne ce qui déborde, et une pastille à cheval
+   sur son coin y serait coupée en deux. Sans lui, une demande reçue
+   dormirait derrière un onglet fermé jusqu'à ce qu'on pense à l'ouvrir. La
+   page n'en écrit plus le dessin : sa pastille à elle, lettrée de craie sur
+   la flare, tombait à 2,6:1 au soleil ; l'encre sur la craie de la brique y
+   tient 4,86 dans l'onglet ouvert, 4,3 dans un onglet éteint (à 94 %, un
+   héritage du rail que la brique ne peut pas défaire). Craie et non or :
+   une demande n'est pas une récompense prête. `.pastille` reste posée sur
+   le sticker : c'est par elle que la suite des amis le trouve. */
 
 /* ------------------------------------------------------------- les gens */
 
-.gens{display:grid;gap:8px}
+/* Une colonne qui ne s'élargit pas au pseudo le plus long : en grille, la
+   piste prenait la largeur entière d'un « Valentin-Maximilien de la
+   Tribune » et poussait les boutons hors de l'écran, au lieu de laisser le
+   nom finir en points de suspension. */
+.gens{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
 /* Plus de flou d'arrière-plan : `--panneau` est opaque, et le flou coûtait
    cher sur un téléphone modeste pour rendre le texte moins lisible au soleil. */
-.gars{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:12px;
+/* Treize pixels sous le buste : le sticker du niveau en déborde de cinq, et
+   son ombre de deux de plus ; la ligne les garde dans son panneau. */
+.gars{display:flex;align-items:center;gap:13px;padding:12px 12px 13px;border-radius:12px;
   border:1px solid var(--trait);background:var(--panneau)}
-.pastille-nom{width:40px;height:40px;flex:none;border-radius:12px;display:grid;place-items:center;
-  font-family:var(--banner);font-size:19px;line-height:1;color:#1A0C04;
-  background:linear-gradient(150deg,var(--projo),#B8860B)}
-/* Le Fanzzy du joueur remplace l'initiale dès qu'il en a un d'illustré : on
-   se reconnaît à son personnage bien avant de lire un pseudo. */
-.pastille-nom img{width:100%;height:100%;object-fit:cover;border-radius:12px;display:block}
+/* Chaque ami est un buste (`.tbf-buste`, lot 5) : son Fanzzy dans un
+   sticker rond, l'initiale s'il n'en a pas, son niveau en bas à droite quand
+   le serveur le sert. On se reconnaît à son personnage bien avant de lire un
+   pseudo. `.pastille-nom` reste posé sur le buste : c'est par lui que la
+   suite des amis trouve le dessin de chacun. */
+.gars>.tbf-buste{--taille:52px}
+/* PROVISOIRE, en attendant ui.css (besoin « feuilles-css ») : un ami qui
+   s'est choisi une expression a un dessin en pied (560 × 960), qui débordait
+   du rond de trente-sept pixels. Le buste est une grille, et la hauteur de
+   100 % de l'image ne s'y résout pas : elle prenait sa hauteur naturelle.
+   Posée sur toute la boîte, elle s'y recadre. */
+.tbf-buste>img{position:absolute;inset:0}
 .gars .qui{flex:1;min-width:0}
 .gars .qui b{display:block;font-family:var(--banner);font-size:14.5px;letter-spacing:.02em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -81,9 +89,11 @@ h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em
 /* ------------------------------------------------------ l'invitation KOP */
 
 /* Les deux blocs dépliés ci-dessous se posent sur la photo de tribune : leur
-   teinte se pose sur le panneau commun, opaque, et non plus sur rien. */
-.invit{border:1px solid rgba(245,195,59,.4);border-radius:12px;
-  background:linear-gradient(rgba(245,195,59,.07),rgba(245,195,59,.07)),var(--panneau);
+   teinte se pose sur le panneau commun, opaque, et non plus sur rien.
+   L'invitation dans un KOP prend le violet des gens : elle était dorée, et
+   l'or ne dit plus qu'acheter, une récompense prête ou le légendaire. */
+.invit{border:1px solid rgba(130,87,218,.5);border-radius:12px;
+  background:linear-gradient(rgba(130,87,218,.10),rgba(130,87,218,.10)),var(--panneau);
   padding:12px;display:grid;gap:9px}
 .invit .t{font-family:var(--banner);font-size:14px;letter-spacing:.02em}
 .invit .d{font-size:11.5px;opacity:.88;line-height:1.6}
@@ -118,20 +128,20 @@ h2{margin:22px 2px 9px}
 .convier button{width:100%;font-size:12px;letter-spacing:.1em}
 .vide{border:1px dashed var(--trait);border-radius:var(--r);padding:20px 16px;text-align:center;
   font-size:12.5px;line-height:1.8;opacity:.9;background:var(--panneau)}
-.vide a{color:var(--projo)}
+/* Le lien en craie grasse et soulignée, et non plus en or : l'or ne s'écrit
+   plus qu'en grand texte, et douze pixels et demi n'en sont pas (arbitrage du
+   2 octobre 2026). Le soulignement dit seul que c'est un lien. */
+.vide a{color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .err{border:1px solid rgba(224,64,44,.4);border-radius:9px;
   background:linear-gradient(rgba(224,64,44,.12),rgba(224,64,44,.12)),var(--panneau);
   padding:10px 12px;font-size:12px;margin:10px 0;line-height:1.6}
-.toast{position:fixed;left:50%;bottom:calc(var(--nav-h,62px) + 18px);transform:translateX(-50%);
-  background:#171C23;border:1px solid var(--trait);border-radius:9px;padding:11px 16px;font-size:12.5px;
-  z-index:60;display:none;max-width:86%;text-align:center;line-height:1.5}
-.toast.on{display:block;animation:monte .3s}
-@keyframes monte{from{opacity:0;transform:translate(-50%,10px)}}
-/* Moins de mouvement, demandé au système ou dans le tiroir (le mode calme,
-   contrat C4 — un sélecteur d'attribut n'entre pas dans une requête @media,
-   d'où le double) : le message paraît à sa place, sans monter. */
-@media (prefers-reduced-motion:reduce){ .toast.on{animation:none} }
-html[data-calme~="animations"] .toast.on{animation:none}
+/* Le message d'un geste est le toast commun (`.tbf-toast`, lot 2) : une
+   bande de parpaing statique, posée dans la pile en bas de l'écran ; une
+   erreur y écrit son texte au rouge clair et secoue. Il montait en glissant
+   comme un gain, et une information n'est jamais un gain. Son mouvement et
+   ses doubles au calme sont ceux de la feuille. `hidden` doit gagner sur son
+   `display:flex`. */
+.tbf-toast[hidden]{display:none}
 </style>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -150,7 +160,14 @@ html[data-calme~="animations"] .toast.on{animation:none}
 
   <div id="corps"><div class="vide">Chargement…</div></div>
 </main>
-<div class="toast" id="toast"></div>
+<!-- La pile commune des messages (lot 2), sur le document : hors de la
+     colonne que la page réécrit. Le toast garde son identifiant. -->
+<div class="tbf-pile"><div class="tbf-toast" id="toast" role="status" hidden></div></div>
+<!-- Le moment fort de la page : la case de BD unifiée de ui.css (NOUVEL AMI,
+     TE VOILÀ), posée sur le document comme l'accueil la pose. Invisible tant
+     qu'elle ne porte pas `.on`, et elle ne prend jamais le doigt. -->
+<div class="tbf-moment" id="moment" aria-live="polite"><div class="tbf-vignette"
+  ><b class="tbf-vignette-mot" id="momentMot"></b><small id="momentSous"></small></div></div>
 
 <script src="/fanzzy-art.js"></script>
 <script src="/fanzzy-etats.js"></script>
@@ -245,9 +262,79 @@ const S = {
   deplie: null,        // l'ami dont on choisit le KOP
 };
 
-function toast(txt) {
-  const t = $('toast'); t.textContent = txt; t.className = 'toast on';
-  clearTimeout(t._t); t._t = setTimeout(() => { t.className = 'toast'; }, 3200);
+/* Un message : une information, ou une erreur — qui s'écrit au rouge, avec
+   le rôle d'une alerte. Le texte reste dans le toast une fois retiré : c'est
+   là que la suite lit le dernier passé. */
+function toast(txt, { erreur = false } = {}) {
+  const t = $('toast');
+  t.textContent = txt;
+  t.classList.toggle('tbf-toast--erreur', erreur);
+  t.setAttribute('role', erreur ? 'alert' : 'status');
+  t.hidden = true;
+  void t.offsetWidth;          // rejoue le fondu d'un message qui en remplace un autre
+  t.hidden = false;
+  clearTimeout(t._t); t._t = setTimeout(() => { t.hidden = true; }, 3200);
+}
+
+/**
+ * Le moment fort de la page : la case de BD unifiée, trois secondes et
+ * demie, au violet des gens (`--mc`, que la case lit avant son ton).
+ */
+function moment(mot, sous) {
+  const m = $('moment');
+  $('momentMot').textContent = mot;
+  $('momentSous').textContent = sous ?? '';
+  m.style.setProperty('--mc', 'var(--violet)');
+  m.style.setProperty('--mt', '3400ms');
+  m.classList.remove('on');
+  void m.offsetWidth;
+  m.classList.add('on');
+  clearTimeout(m._t); m._t = setTimeout(() => m.classList.remove('on'), 3400);
+}
+
+/* ------------------------------------------------------ les nouveaux amis
+
+   **Un ami qui arrive se fête** (lot 5) : la case NOUVEL AMI. On accepte une
+   demande ici — mais le plus souvent, c'est l'autre qui accepte la nôtre,
+   pendant qu'on est ailleurs. La page retient donc, sur l'appareil, les amis
+   qu'elle a déjà montrés, signés du joueur (deux comptes sur un même
+   téléphone ne se mélangent pas) ; ceux qui manquent à la liste retenue sont
+   les nouveaux. **Première visite sur l'appareil** : tout est retenu, rien
+   n'est fêté — on ne fête pas douze amis de longue date. Sans joueur connu,
+   la mémoire reste celle de la page ouverte. */
+const CLE_VUS = 'tbf-amis-vus';
+const quiSuisJe = () => (window.TBF_MOI ??= fetch('/api/auth/me', { credentials: 'same-origin' })
+  .then((r) => (r.ok ? r.json() : null))
+  .then((j) => j?.user ?? null)
+  .catch(() => null))
+  .then((u) => (u?.id != null ? String(u.id) : null), () => null);
+function lireVus(qui) {
+  try { return JSON.parse(localStorage.getItem(CLE_VUS) ?? '{}')?.[qui] ?? null; } catch { return null; }
+}
+function retenirVus(qui, ids) {
+  try {
+    const o = JSON.parse(localStorage.getItem(CLE_VUS) ?? '{}') ?? {};
+    delete o[qui];
+    o[qui] = ids.slice(0, 300);
+    // Quatre comptes au plus : le plus ancien part.
+    const cles = Object.keys(o);
+    while (cles.length > 4) delete o[cles.shift()];
+    localStorage.setItem(CLE_VUS, JSON.stringify(o));
+  } catch { /* navigation privée, stockage plein : la page marche sans */ }
+}
+let connus = null;
+async function feterLesNouveaux() {
+  const qui = await quiSuisJe();
+  const ids = S.amis.map((g) => String(g.id));
+  if (!connus) connus = new Set((qui ? lireVus(qui) : null) ?? ids);
+  const neufs = S.amis.filter((g) => !connus.has(String(g.id)));
+  connus = new Set(ids);
+  if (qui) retenirVus(qui, ids);
+  if (!neufs.length) return;
+  const noms = neufs.slice(0, 3).map((g) => g.pseudo).join(' · ');
+  moment(neufs.length > 1 ? 'NOUVEAUX AMIS' : 'NOUVEL AMI',
+    neufs.length > 3 ? `${noms} et ${neufs.length - 3} de plus` : noms);
+  window.FX?.son?.('parfait');
 }
 
 /* --------------------------------------------------------- chargement */
@@ -270,6 +357,7 @@ async function charger() {
     S.gens = suggestions.gens ?? [];
     S.kops = mesKops.kops ?? [];
     rendre();
+    feterLesNouveaux();
   } catch (e) {
     if (e.message === 'auth') return;
     /* La seconde ligne affichait le code brut. « Un code d'erreur sous les yeux
@@ -296,15 +384,22 @@ async function charger() {
  * de l'âge (`g.fanzzy`) : un ami en tenue d'Halloween, dans la joie, y
  * apparaissait au repos, habillé comme tous les jours. `g.fanzzy` reste le
  * repli d'une réponse ancienne, servie par un serveur pas encore redémarré.
+ *
+ * Dans un buste (`.tbf-buste`, lot 5), avec son **niveau** quand le serveur
+ * le sert (contrat, § 3) — absent, rien : jamais « NIV. 1 » par défaut. Une
+ * image qui ne répond pas laisse l'initiale à sa place (voir l'écouteur
+ * d'erreur, plus bas).
  */
 function avatar(g) {
   const buste = (g.avatar && window.FZART?.dessinAvatar?.(g.avatar, 'buste'))
     || window.FZART?.adresse?.(g.fanzzy, 'buste');
+  const initiale = esc((String(g.pseudo ?? '').trim().charAt(0) || '?').toUpperCase());
+  const niv = Number.isInteger(g.niveau)
+    ? `<b class="tbf-sticker tbf-sticker--rond tbf-buste-niv">${g.niveau}</b>` : '';
   return buste
-    ? `<span class="pastille-nom"><img src="${buste}" alt=""
-         onerror="this.closest('.pastille-nom').textContent='${
-           esc((g.pseudo ?? '?').charAt(0).toLowerCase())}'"></span>`
-    : `<span class="pastille-nom">${esc((g.pseudo ?? '?').charAt(0).toLowerCase())}</span>`;
+    ? `<span class="tbf-buste pastille-nom" aria-hidden="true" data-initiale="${initiale}"><img
+         src="${esc(buste)}" alt="" decoding="async">${niv}</span>`
+    : `<span class="tbf-buste pastille-nom" aria-hidden="true">${initiale}${niv}</span>`;
 }
 
 const ligne = (g, boutons, dessous = '') => `
@@ -401,7 +496,8 @@ function vueTrouver() {
       tu croiseras d’autres supporters.</div>`;
   }
   return convier() + `<div class="gens">${S.gens.map((g) => ligne(g,
-    `<button class="bt tbf-plaque" data-ton="vert" data-demander="${esc(g.id)}">AJOUTER</button>`,
+    // Ajouter quelqu'un, c'est une affaire de gens : la plaque est violette.
+    `<button class="bt tbf-plaque" data-ton="violet" data-demander="${esc(g.id)}">AJOUTER</button>`,
     `<span class="clubs">${(g.clubs ?? []).map((c) => `<span>${esc(c)}</span>`).join('')}</span>`,
   )).join('')}</div>`;
 }
@@ -410,13 +506,13 @@ function rendre() {
   document.querySelectorAll('.onglet').forEach((b) =>
     b.classList.toggle('on', b.dataset.vue === S.vue));
 
-  // La pastille compte **ce qui attend une réponse de toi**, pas ce que tu as
-  // envoyé : une demande partie n'appelle aucun geste.
+  // Le compte dit **ce qui attend une réponse de toi**, pas ce que tu as
+  // envoyé : une demande partie n'appelle aucun geste. Zéro : pas de sticker.
   const attend = S.recues.length + S.invitations.length;
   const onglet = document.querySelector('[data-vue="demandes"]');
   onglet.querySelector('.pastille')?.remove();
   if (attend) {
-    onglet.insertAdjacentHTML('beforeend', `<span class="pastille">${attend}</span>`);
+    onglet.insertAdjacentHTML('beforeend', `<b class="tbf-onglet-n pastille">${attend}</b>`);
   }
 
   $('corps').innerHTML = S.vue === 'amis' ? vueAmis()
@@ -469,9 +565,9 @@ $('corps').onclick = async (e) => {
         url: `/compte?ami=${encodeURIComponent(code)}`,
       });
       if (quoi === 'copie') toast('Lien copié. Colle-le où tu veux.');
-      else if (quoi === null) toast('Impossible de partager ici.');
+      else if (quoi === null) toast('Impossible de partager ici.', { erreur: true });
     } catch (err) {
-      if (err.message !== 'auth') toast(dire(err));
+      if (err.message !== 'auth') toast(dire(err), { erreur: true });
     }
     b.disabled = false;
     return;
@@ -481,8 +577,10 @@ $('corps').onclick = async (e) => {
   try {
     if (d.demander) { await api('/demande', { method:'POST', body:{ id: d.demander } });
       toast('Demande envoyée.'); }
-    else if (d.oui) { await api('/reponse', { method:'POST', body:{ id: d.oui, ok:true } });
-      toast('Vous êtes amis.'); }
+    /* Accepter ne dit plus « Vous êtes amis » dans un toast : la relecture
+       qui suit trouve le nouvel ami, et la case NOUVEL AMI le fête (voir
+       `feterLesNouveaux`). Deux messages pour un geste, c'est un de trop. */
+    else if (d.oui) { await api('/reponse', { method:'POST', body:{ id: d.oui, ok:true } }); }
     else if (d.non) { await api('/reponse', { method:'POST', body:{ id: d.non, ok:false } }); }
     else if (d.retirer) { await api(`/${encodeURIComponent(d.retirer)}`, { method:'DELETE' }); }
     else if (d.inviter) {
@@ -490,8 +588,14 @@ $('corps').onclick = async (e) => {
       toast('Invitation envoyée.');
       S.deplie = null;
     } else if (d.kopoui) {
+      /* Entrer dans un KOP se fête comme sur la page du KOP : la case de BD,
+         la corne et l'éclair, au lieu d'un toast. Le nom vient de
+         l'invitation, lue avant qu'elle disparaisse de la liste. */
+      const invit = S.invitations.find((i) => String(i.kopId) === String(d.kopoui));
       await api('/kop/reponse', { method:'POST', body:{ kopId: d.kopoui, ok:true } });
-      toast('Te voilà dans le KOP.');
+      window.FX?.flash?.();
+      window.FX?.son?.('but');
+      moment('TE VOILÀ !', invit?.nom ? `dans le KOP ${invit.nom}` : 'dans le KOP');
     } else if (d.kopnon) {
       await api('/kop/reponse', { method:'POST', body:{ kopId: d.kopnon, ok:false } });
     }
@@ -499,12 +603,23 @@ $('corps').onclick = async (e) => {
   } catch (err) {
     if (err.message === 'auth') return;
     b.disabled = false;
-    toast(dire(err));
+    toast(dire(err), { erreur: true });
     // On recharge quand même : le refus vient souvent de ce que la page
     // montrait un état périmé, et le garder à l'écran ferait réessayer.
     await charger();
   }
 };
+
+/* Un visage qui ne répond pas laisse l'initiale à sa place. Écouté à la
+   capture, une fois pour toute la page : l'erreur d'une image ne remonte
+   pas, et un `onerror` par image s'écrivait dans le gabarit, avec le pseudo
+   échappé à la main dans un attribut. */
+$('corps').addEventListener('error', (ev) => {
+  const img = ev.target;
+  const b = img?.tagName === 'IMG' ? img.parentElement : null;
+  if (!b?.classList.contains('tbf-buste')) return;
+  img.replaceWith(document.createTextNode(b.dataset.initiale || '?'));
+}, true);
 
 charger();
 </script>

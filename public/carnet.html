@@ -29,11 +29,14 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 /* Les trois compteurs, chacun sur un panneau. Leur légende était à 60 %
    d'opacité, posée sur la photo : elle passe à la couleur de la craie
-   légèrement retenue, et c'est le chiffre doré qui fait la hiérarchie. */
+   légèrement retenue, et c'est le chiffre — plus grand, gras, à pleine
+   craie — qui fait la hiérarchie. Il était doré : en dix-sept pixels, l'or
+   ne tient pas au soleil, et il ne s'écrit plus qu'en grand (arbitrage du
+   2 octobre 2026). */
 .stats{display:flex;gap:9px;padding:0 16px 12px;font-size:11px;color:rgba(242,238,228,.88)}
 .stats div{flex:1;text-align:center;border:1px solid rgba(242,238,228,.1);border-radius:7px;padding:8px 4px;
   background:var(--panneau)}
-.stats b{display:block;font-family:var(--banner);font-size:17px;color:var(--projo)}
+.stats b{display:block;font-family:var(--banner);font-size:17px;font-weight:700;color:var(--craie)}
 
 .list{flex:1;padding:0 14px 26px;display:flex;flex-direction:column;gap:9px}
 .sv{position:relative;border-radius:11px;overflow:hidden;border:1px solid rgba(242,238,228,.13);
@@ -50,16 +53,25 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sv .sc{font-family:var(--banner);font-size:20px;letter-spacing:.04em}
 .sv .goal{font-size:12.5px;opacity:.9;line-height:1.5}
-.sv .goal b{color:var(--projo);font-family:var(--banner);font-size:15px}
+/* La minute du but, en craie grasse : en or et en quinze pixels, elle ne
+   tenait pas au soleil (arbitrage du 2 octobre 2026). */
+.sv .goal b{color:var(--craie);font-weight:700;font-family:var(--banner);font-size:15px}
 /* L'opacité est posée sur les mots du pied, plus sur le pied entier : elle
    s'y multipliait avec tout ce qu'il contient, et la plaque d'achat du
    marché s'affichait à moitié éteinte alors qu'elle était active. */
 .sv .foot{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11px}
 .sv .foot>span{opacity:.88}
 .sv .foot .sep{flex:1}
-.stamp{position:absolute;top:11px;right:11px;font-family:var(--banner);font-size:11px;letter-spacing:.12em;
-  border:1px solid var(--projo);color:var(--projo);border-radius:4px;padding:3px 7px;transform:rotate(4deg)}
-.stamp.v{border-color:rgba(242,238,228,.3);color:rgba(242,238,228,.88);transform:none}
+/* « TU Y ÉTAIS » est un sticker craie (`.tbf-sticker`, ui.css) : il était
+   écrit en or, en onze pixels, et l'or ne s'écrit plus qu'en grand
+   (arbitrage du 2 octobre 2026). Le sticker garde l'accent — c'est le seul
+   objet collé de la carte —, et le cadre d'or du souvenir reste autour.
+   « VIGNETTE », lui, reste une mention au trait. Le sticker déborde de
+   cinq pixels et demi (bord, cerne, ombre) : il se pose d'autant plus loin
+   du coin. */
+.stamp{position:absolute;top:11px;right:11px;font-family:var(--banner);font-size:11px;letter-spacing:.12em}
+.stamp.tbf-sticker{top:14px;right:16px;font-size:13px;letter-spacing:.04em;--rot:4deg}
+.stamp.v{border:1px solid rgba(242,238,228,.3);color:rgba(242,238,228,.88);border-radius:4px;padding:3px 7px}
 /* Récupérer une vignette, c'est l'acheter : une plaque d'or, comme tout ce
    qui coûte. Elle était rouge, la couleur de ce qui se joue. Il ne reste ici
    que son format ; l'état éteint — pas assez d'écharpes — est celui de la
@@ -70,7 +82,7 @@ body{background:#05070A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
 .empty{text-align:center;padding:52px 24px;opacity:.9;font-size:13px;line-height:1.8;
   background:var(--panneau);border:1px solid var(--trait);border-radius:var(--r)}
-.empty a{color:var(--projo)}
+.empty a{color:var(--craie);font-weight:700}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#171C23;z-index:20;
   border:1px solid rgba(242,238,228,.2);border-radius:7px;padding:11px 16px;font-size:12.5px;display:none}
 .toast.on{display:block}
@@ -168,7 +180,7 @@ function restant(expires) {
 
 function carte(s, mode) {
   const marque = s.kind === 'presence'
-    ? '<div class="stamp">TU Y ÉTAIS</div>'
+    ? '<div class="stamp tbf-sticker">TU Y ÉTAIS</div>'
     : s.kind === 'vignette' ? '<div class="stamp v">VIGNETTE</div>' : '';
   const reste = restant(s.expires_at);
 

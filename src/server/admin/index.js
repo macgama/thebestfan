@@ -3,7 +3,10 @@ import { TYPES, RAR, SETS } from '../../shared/fanzzy/dex.js';
 import { parIdentifiant, recharger, tous, chargerSeries, seriesOuvertes, serieOuverte }
   from '../fanzzy/catalogue.js';
 import { toutesTenues, tenuePar, rechargerTenues } from '../fanzzy/tenues.js';
-import { chargerSaisons, toutesLesSaisons, saisonEnCours } from '../fanzzy/saisons.js';
+import { chargerSaisons, toutesLesSaisons, saisonEnCours, saisonProchaine }
+  from '../fanzzy/saisons.js';
+import { CARNET_DEFAUT, LIMITES_CARNET, validerCarnet, memeCarnet }
+  from '../../shared/saison.js';
 import { STUFF } from '../../shared/fanzzy/inventaire.js';
 import { ACTIONS } from '../../shared/duel/actions.js';
 import { STADES } from '../../shared/stades.js';
@@ -508,10 +511,115 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     return s ? s.slice(0, max) : null;
   };
 
+  /* ------------------------------------------------ la saison datée
+
+     Trois champs de plus pour une saison (`sql/quotidien.sql`) : le dernier
+     jour de jeu (`fin_le`), le jour d'ouverture annoncé d'une saison en
+     préparation (`ouvre_le`), et son carnet de tampons s'il diffère de celui
+     du code (`carnet`).
+
+     Ce sont des **décisions** : la fin de la saison 1 se saisit après avoir
+     vérifié le calendrier sur `/matchs`, et poser le jour d'ouverture d'une
+     saison 2, c'est l'annoncer aux joueurs. Rien ici ne les écrit d'office. */
+
+  /**
+   * Un jour saisi : `AAAA-MM-JJ`, ou vide pour l'effacer.
+   *
+   * Rend `undefined` quand le champ n'est pas envoyé (on n'y touche pas),
+   * `null` pour un champ vidé, ou le jour tel quel. Le jour part **en texte**
+   * jusqu'à la base, qui le range dans une colonne `DATE` : il ne traverse
+   * aucun fuseau. `Date.UTC` ne sert ici qu'à dire si le jour existe au
+   * calendrier — le 30 février se refuse au lieu de devenir le 2 mars.
+   */
+  function lireJour(v, champ) {
+    if (v === undefined) return undefined;
+    if (v === null) return null;
+    const s = String(v).trim();
+    if (!s) return null;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    let ok = false;
+    if (m) {
+      const [a, mo, j] = [Number(m[1]), Number(m[2]), Number(m[3])];
+      const d = new Date(Date.UTC(a, mo - 1, j));
+      ok = a >= 2000 && a <= 2100 && d.getUTCFullYear() === a
+        && d.getUTCMonth() === mo - 1 && d.getUTCDate() === j;
+    }
+    if (!ok) {
+      throw Object.assign(fail('admin.error.date_invalide'), {
+        raison: `${champ === 'fin_le' ? 'Fin de saison' : 'Ouverture annoncée'} : `
+          + `« ${s.slice(0, 24)} » n’est pas un jour du calendrier (attendu AAAA-MM-JJ).` });
+    }
+    return s;
+  }
+
+  /**
+   * Un carnet saisi : `undefined` s'il n'est pas envoyé, `null` pour le carnet
+   * par défaut (champ vide, ou carnet identique à celui du code), ou le carnet
+   * normalisé. Un carnet invalide lève `admin.error.carnet_invalide`, avec la
+   * raison qui nomme le palier fautif.
+   *
+   * Un carnet identique au défaut s'enregistre comme « défaut » : l'onglet
+   * préremplit la zone de texte avec lui, et un formulaire renvoyé sans y
+   * toucher ne doit pas faire croire qu'on a saisi un carnet propre.
+   */
+  function lireCarnet(v) {
+    if (v === undefined) return undefined;
+    if (v === null || (typeof v === 'string' && !v.trim())) return null;
+    const c = validerCarnet(v);
+    return memeCarnet(c, CARNET_DEFAUT) ? null : c;
+  }
+
+  /**
+   * Les saisons dont le carnet est **figé** : un palier en a déjà été versé.
+   *
+   * Un seuil relevé ou un gain baissé après coup reprendrait une promesse déjà
+   * tenue envers ceux qui ont récupéré ; un seuil baissé paierait les autres
+   * plus tôt qu'eux. Le carnet se recale donc **avant** le premier palier
+   * versé, jamais après. Sans le grand livre (`sql/quotidien.sql` absent),
+   * rien n'a pu être versé : rien n'est figé.
+   */
+  async function carnetsFiges() {
+    try {
+      const rows = await q(
+        `SELECT DISTINCT SUBSTRING_INDEX(cle, ':', 1) AS s
+           FROM recompenses WHERE source = 'carnet'`);
+      return rows.map((r) => Number(String(r.s).replace(/^S/, '')))
+        .filter((n) => Number.isInteger(n) && n > 0);
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE') return [];
+      throw e;
+    }
+  }
+
+  async function carnetFige(id) {
+    try {
+      const rows = await q(
+        `SELECT 1 FROM recompenses WHERE source = 'carnet' AND cle LIKE ? LIMIT 1`,
+        [`S${Number(id)}:%`]);
+      return rows.length > 0;
+    } catch (e) {
+      if (e?.code === 'ER_NO_SUCH_TABLE') return false;
+      throw e;
+    }
+  }
+
+  /* Les colonnes de la saison datée manquent : on le dit en nommant le
+     fichier, plutôt que de laisser croire qu'une date a été enregistrée. */
+  const colonnesAbsentes = () => Object.assign(fail('admin.error.saison_colonnes', 503), {
+    raison: 'Les dates et le carnet d’une saison demandent sql/quotidien.sql : '
+      + 'applique-le (npm run schema:appliquer), puis redémarre le serveur.' });
+
   async function listerSaisons() {
     return {
       saisons: toutesLesSaisons(),
       enCours: saisonEnCours(),
+      /* Ce que les joueurs voient annoncé en ce moment, s'il y a quelque chose :
+         l'écran le montre, parce que poser une date d'ouverture, c'est
+         l'annoncer. */
+      prochaine: saisonProchaine(),
+      carnetDefaut: CARNET_DEFAUT,
+      limitesCarnet: LIMITES_CARNET,
+      carnetsFiges: await carnetsFiges(),
       series: listerSeries(),
       ouvertes: seriesOuvertes(),
       /* De quoi remplir les listes de l'écran sans une seconde requête, et
@@ -541,15 +649,34 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     const suivant = toutesLesSaisons().reduce((m, s) => Math.max(m, s.numero), 0) + 1;
     const numero = Number.isInteger(Number(p?.numero)) && Number(p.numero) >= 0
       ? Number(p.numero) : suivant;
+    /* Tout est validé avant la première écriture : un carnet refusé ne doit
+       pas laisser derrière lui une saison créée à moitié. */
+    const fin = lireJour(p?.fin_le, 'fin_le') ?? null;
+    const ouvre = lireJour(p?.ouvre_le, 'ouvre_le') ?? null;
+    const carnet = lireCarnet(p?.carnet) ?? null;
 
-    const r = await q(
-      `INSERT INTO saisons (numero, nom, texte, series, tenues, stuff, actions, stades)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [numero, nom, texteOuRien(p?.texte, 500), JSON.stringify(c.series),
-       JSON.stringify(c.tenues), JSON.stringify(c.stuff), JSON.stringify(c.actions),
-       JSON.stringify(c.stades ?? [])]);
+    const valeurs = [numero, nom, texteOuRien(p?.texte, 500), JSON.stringify(c.series),
+      JSON.stringify(c.tenues), JSON.stringify(c.stuff), JSON.stringify(c.actions),
+      JSON.stringify(c.stades ?? [])];
+    let r;
+    try {
+      r = await q(
+        `INSERT INTO saisons (numero, nom, texte, series, tenues, stuff, actions, stades,
+                              fin_le, ouvre_le, carnet)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [...valeurs, fin, ouvre, carnet ? JSON.stringify(carnet) : null]);
+    } catch (e) {
+      /* Une base sans sql/quotidien.sql : une saison sans date se crée comme
+         avant ; une saison avec une date est refusée, en nommant le fichier. */
+      if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+      if (fin || ouvre || carnet) throw colonnesAbsentes();
+      r = await q(
+        `INSERT INTO saisons (numero, nom, texte, series, tenues, stuff, actions, stades)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, valeurs);
+    }
     await chargerSaisons(pool);
-    await journal(acteur, 'saison.creee', String(r.insertId), { nom, numero, ...c }, ip_);
+    await journal(acteur, 'saison.creee', String(r.insertId), { nom, numero, ...c,
+      fin_le: fin, ouvre_le: ouvre, carnet: carnet ?? 'défaut' }, ip_);
     return listerSaisons();
   }
 
@@ -558,21 +685,75 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
     if (!avant) throw fail('admin.error.saison_inconnue', 404);
     const c = validerContenu(p ?? {});
     const nom = texteOuRien(p?.nom, 64) ?? avant.nom;
+    /* `undefined` : le champ n'est pas venu, on n'y touche pas. Un client
+       d'avant ces champs ne doit pas effacer une date en enregistrant un nom. */
+    const fin = lireJour(p?.fin_le, 'fin_le');
+    const ouvre = lireJour(p?.ouvre_le, 'ouvre_le');
+    const carnet = lireCarnet(p?.carnet);
+    const carnetChange = carnet !== undefined && !memeCarnet(carnet, avant.carnet ?? null);
 
-    await q(
-      `UPDATE saisons SET numero = ?, nom = ?, texte = ?, series = ?, tenues = ?,
-                          stuff = ?, actions = ?, stades = ?
-        WHERE id = ?`,
-      [Number.isInteger(Number(p?.numero)) ? Number(p.numero) : avant.numero,
-       nom, texteOuRien(p?.texte, 500), JSON.stringify(c.series), JSON.stringify(c.tenues),
-       JSON.stringify(c.stuff), JSON.stringify(c.actions),
-       JSON.stringify(c.stades ?? []), avant.id]);
+    /* **Le carnet se fige au premier palier versé.** Le formulaire renvoie le
+       carnet à chaque enregistrement : on ne refuse donc qu'un carnet qui
+       **change**, sinon on ne pourrait plus corriger la date de fin d'une
+       saison dont un palier est déjà payé. */
+    if (carnetChange && await carnetFige(avant.id)) {
+      throw Object.assign(fail('admin.error.carnet_fige', 409), {
+        raison: `Le carnet de la saison ${avant.numero} est figé : un palier en a déjà `
+          + 'été versé. Relever un seuil ou baisser un gain reprendrait une promesse '
+          + 'déjà tenue ; il se recale avant le premier palier, jamais après.' });
+    }
+
+    /* Une fin avant le jour du lancement donnerait une fenêtre vide : plus de
+       classement, plus de division, sans un mot. Comparé en SQL, jour contre
+       jour : `lancee_a` ne repasse pas par un objet Date. */
+    if (fin && avant.lancee) {
+      const [x] = await q(`SELECT ? < DATE(lancee_a) AS avant FROM saisons WHERE id = ?`,
+        [fin, avant.id]);
+      if (Number(x?.avant)) {
+        throw Object.assign(fail('admin.error.fin_avant_lancement'), {
+          raison: `Fin de saison : le ${fin} tombe avant le jour où la saison `
+            + `${avant.numero} a été lancée. Elle ne compterait plus rien.` });
+      }
+    }
+
+    const numero = Number.isInteger(Number(p?.numero)) ? Number(p.numero) : avant.numero;
+    const valeurs = [numero, nom, texteOuRien(p?.texte, 500), JSON.stringify(c.series),
+      JSON.stringify(c.tenues), JSON.stringify(c.stuff), JSON.stringify(c.actions),
+      JSON.stringify(c.stades ?? [])];
+    try {
+      /* `IF(?, ?, colonne)` : le premier paramètre dit si le champ est venu.
+         Une seule requête, toujours la même, plutôt qu'une liste de colonnes
+         assemblée à la volée. */
+      await q(
+        `UPDATE saisons SET numero = ?, nom = ?, texte = ?, series = ?, tenues = ?,
+                            stuff = ?, actions = ?, stades = ?,
+                            fin_le = IF(?, ?, fin_le), ouvre_le = IF(?, ?, ouvre_le),
+                            carnet = IF(?, ?, carnet)
+          WHERE id = ?`,
+        [...valeurs,
+         fin !== undefined ? 1 : 0, fin ?? null,
+         ouvre !== undefined ? 1 : 0, ouvre ?? null,
+         carnet !== undefined ? 1 : 0, carnet ? JSON.stringify(carnet) : null,
+         avant.id]);
+    } catch (e) {
+      if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+      if (fin || ouvre || carnet) throw colonnesAbsentes();
+      await q(
+        `UPDATE saisons SET numero = ?, nom = ?, texte = ?, series = ?, tenues = ?,
+                            stuff = ?, actions = ?, stades = ?
+          WHERE id = ?`, [...valeurs, avant.id]);
+    }
     await chargerSaisons(pool);
     /* Modifier une saison **déjà lancée** change ce qui est ouvert. On recharge
        donc les séries, sans quoi le jeu continuerait de distribuer selon
        l'ancienne liste jusqu'au prochain redémarrage. */
     await chargerSeries(pool);
-    await journal(acteur, 'saison.modifiee', String(avant.id), { nom, ...c }, ip_);
+    /* Le journal dit ce qui a bougé dans la saison datée, et seulement cela :
+       une date ou un carnet renvoyés à l'identique ne sont pas des décisions. */
+    await journal(acteur, 'saison.modifiee', String(avant.id), { nom, ...c,
+      ...(fin !== undefined && fin !== (avant.fin ?? null) ? { fin_le: fin } : {}),
+      ...(ouvre !== undefined && ouvre !== (avant.ouvre ?? null) ? { ouvre_le: ouvre } : {}),
+      ...(carnetChange ? { carnet: carnet ?? 'défaut' } : {}) }, ip_);
     return listerSaisons();
   }
 
@@ -616,6 +797,18 @@ export function createAdmin({ pool, requireAuth, deps = {} }) {
          une carte dépubliée, une série vidée — et lancer une saison dont une
          série n'a plus de carte de stade 1 ferait lever le premier booster. */
       validerContenu(s);
+      /* Une saison dont le dernier jour est déjà passé s'ouvrirait close :
+         carnet fermé, divisions closes, classement vide, dès la première
+         seconde. C'est une date oubliée dans un brouillon, pas une décision. */
+      if (s.fin) {
+        const [x] = await q(`SELECT fin_le < CURDATE() AS passee FROM saisons WHERE id = ?`,
+          [s.id]);
+        if (Number(x?.passee)) {
+          throw Object.assign(fail('admin.error.fin_passee'), {
+            raison: `La saison ${s.numero} finit le ${s.fin}, jour déjà passé : lancée `
+              + 'maintenant, elle s’ouvrirait close. Corrige sa date de fin d’abord.' });
+        }
+      }
       await q(`UPDATE saisons SET lancee_a = NOW(3) WHERE id = ?`, [s.id]);
       if (s.tenues.length) {
         /* `IN (?)` avec un tableau : mysql2 déplie la liste. `execute` ne le

@@ -3,7 +3,10 @@
 > **Projet à faire relire.** Ce texte décrit fidèlement ce que le code fait —
 > chaque affirmation a été lue dans `sql/`, `src/server/auth/` et
 > `src/server/boutique/`, et les plus importantes sont vérifiées par
-> `npm run auth:smoke`. Il n'a pas été relu par un juriste, et il doit l'être
+> `npm run auth:smoke` (ce que la suppression d'un compte efface, quotidien
+> compris, et ce qu'elle garde). Les durées du quotidien (400 jours, 60 jours)
+> sont celles que le chantier serveur d'octobre 2026 écrit dans ses modules ;
+> elles se relisent à sa livraison. Il n'a pas été relu par un juriste, et il doit l'être
 > avant d'être publié. Les passages entre crochets attendent une information que
 > seul l'éditeur possède.
 
@@ -48,8 +51,23 @@ d'autre.
 | les clubs que tu suis | te proposer leurs matchs |
 | ta collection, ton deck, tes écharpes | c'est le jeu |
 | tes parties : adversaires, scores, dates, durées | ton parcours, et celui de tes adversaires |
-| ta présence dans un virage | la corde partagée, et les cartes-souvenirs |
+| ta présence dans un virage, et le nombre de tes chants | la corde partagée, les cartes-souvenirs, les missions du Virage |
 | ton groupe (KOP), tes amis | les fonctions de groupe, que tu choisis d'utiliser |
+| ton activité du jour : boosters ouverts, évolutions, missions tirées et leur avancement | les missions du jour, qui se comptent sur ce que tu as fait |
+| ce que le jeu t'a versé : missions, bonus de présence, carnet de saison, paliers de collection, divisions | ne jamais payer deux fois la même récompense, et repérer un abus |
+| la date de ta dernière visite, et l'état des pots de tes KOP à ce moment-là | le ticket « depuis ta dernière visite » |
+| ton rang aux classements, d'un jour sur l'autre | la flèche qui dit si tu as monté |
+| ce que tu n'as pas encore regardé | le mot « NOUVEAU » sur tes cartes |
+
+### Ce que les autres joueurs voient de toi
+
+Ton **pseudo** et tes scores aux classements, comme toujours. Le chantier du
+quotidien y ajoute trois choses, montrées dans les classements (qui sont
+publics), dans la liste des membres d'un KOP et chez tes amis : **le Fanzzy que
+tu as équipé** (son nom, son âge, sa tenue, son expression, sa rareté), **ton
+niveau**, et, dans le classement de la saison, **ta division**. Ni ta
+collection, ni ta garde-robe, ni ton XP exacte n'en font partie. Un compte
+supprimé n'y montre plus son personnage.
 
 ### Pour la sécurité
 
@@ -106,6 +124,14 @@ pas et ne sont pas croisées avec ton compte.
 ## Combien de temps nous gardons tout ça
 
 - **Ton compte et tes parties** : tant que le compte existe.
+- **Ton activité du jour et tes missions tirées** : **400 jours**, puis elles
+  sont effacées.
+- **Ce que tu n'as pas encore regardé** : jusqu'à ce que tu l'aies vu, et
+  **60 jours** au plus.
+- **Ta dernière visite et tes rangs de la veille** : remplacés à chaque visite ;
+  le jeu n'en garde que la dernière.
+- **Le registre de ce que le jeu t'a versé** : tant que le compte existe ; après
+  sa suppression, voir plus bas.
 - **Tes sessions** : jusqu'à leur expiration ou ta déconnexion.
 - **Les traces de connexion** : **[à fixer — 30 jours proposés]**.
 - **Les factures et paiements** : **[à confirmer — 10 ans en France, 10 ans en
@@ -125,13 +151,19 @@ C'est immédiat et définitif.
 - ton pseudo,
 - ton mot de passe,
 - le club que tu suivais,
-- toutes tes sessions et tous les liens en attente.
+- toutes tes sessions et tous les liens en attente,
+- ton activité du jour, tes missions tirées, ce que tu n'avais pas encore
+  regardé, ta dernière visite et tes rangs de la veille.
 
 **Ce qui reste, et pourquoi.** Les parties que tu as jouées restent dans
 l'historique de tes adversaires, **sans ton nom**. Elles ne t'appartiennent pas
 seulement à toi : effacer un duel reviendrait à réécrire la soirée de la
 personne d'en face, qui n'a rien demandé. Ces lignes ne portent plus aucune
 information permettant de te reconnaître.
+
+Le **registre de ce que le jeu a versé** reste aussi, pour la même raison
+qu'une comptabilité : c'est la trace de ce que le jeu a donné, et il ne porte
+ni ton adresse, ni ton pseudo — un identifiant que plus rien ne relie à toi.
 
 Les factures, elles, sont conservées pour la durée légale.
 

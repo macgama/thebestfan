@@ -50,7 +50,7 @@ node_modules/
 
 ## Étape 2 — Le schéma
 
-Les **trente-deux** fichiers, **dans cet ordre** : chacun s'appuie sur les tables
+Les **trente-trois** fichiers, **dans cet ordre** : chacun s'appuie sur les tables
 du précédent. Ils sont tous idempotents — les rejouer sur une base déjà à jour ne
 casse rien.
 
@@ -309,7 +309,48 @@ que `raretes` les a rangées.
   gestes différents pour les mêmes cartes** — et c'est la base qui gagne : le
   joueur jouerait l'ancien.
 
-Contrôle : `SHOW TABLES;` doit en lister **43**.
+- `quotidien.sql` pose ce que le chantier du quotidien verse : les missions du
+  jour, leur sachet, la carte de présence, le carnet de tampons de la saison,
+  les crans de collection et les divisions. Quatre tables neuves et neuf
+  colonnes, rien de renommé, aucune reprise de données. Il vient **en
+  dernier** : il ajoute des colonnes à `user_wallet`, à `virage_presence` et
+  à `saisons`.
+
+  - `recompenses` est **le grand livre** : une ligne par versement, et sa clé
+    primaire `(user_id, source, cle)` est ce qui empêche un double clic, deux
+    onglets ou un réseau qui rejoue de payer deux fois. Le démarrage vérifie
+    cette clé et **ferme les versements** s'il ne la trouve pas — rejouer le
+    fichier ne la pose pas sur une table déjà créée sans elle, le message le
+    dit. Le grand livre survit à la suppression d'un compte : il ne porte
+    qu'un identifiant que plus rien ne relie à personne.
+  - `missions_jour` (le contrat du jour, gains copiés au tirage),
+    `compteurs_jour` (boosters ouverts et évolutions du jour) et
+    `user_nouveautes` (ce qu'un joueur n'a pas encore regardé) décrivent un
+    joueur et partent avec son compte.
+  - `saisons` gagne `fin_le`, `ouvre_le` et `carnet` ; `user_wallet`,
+    `rangs_vus`, `visite_a` et `instantane` ; `virage_presence`, `chants`,
+    `chants_mt1` et `chants_mt2`.
+
+  **Sans lui, rien ne casse** : les missions disparaissent de l'écran, le
+  reste du jeu tourne comme avant, et le démarrage nomme le fichier.
+
+  **Après un passage par le Manager**, qui n'applique jamais le schéma :
+  `npm run schema:appliquer` **tout de suite, puis redémarrer** depuis l'onglet
+  Node.js. Le processus lancé sans le schéma a pris ses replis : le compteur de
+  chants se rebranche seul au bout de dix minutes, mais le contrôle de
+  démarrage — celui qui ferme ou rouvre le grand livre — et `/healthz` ne se
+  relisent qu'au redémarrage. Le workflow GitHub, lui, applique le schéma
+  avant de redémarrer : rien à faire de plus par ce chemin.
+
+  **Le journal le montre au Virage.** Tant que le fichier manque, une ligne
+  « [souvenirs] chants du Virage non comptés : … appliquer sql/quotidien.sql »
+  apparaît une fois : la présence s'écrit, mais sans ses chants, et les
+  missions du Virage restent à zéro. Après `npm run schema:appliquer`, même
+  sans redémarrage, le comptage reprend seul en dix minutes au plus, et la
+  ligne « [souvenirs] les chants du Virage se comptent de nouveau » le
+  confirme.
+
+Contrôle : `SHOW TABLES;` doit en lister **47**.
 
 Ce nombre a été faux deux fois — écrit à la main, calculé de tête à chaque
 ajout, jamais recompté. `schema-smoke.mjs` le compare désormais à ce que `sql/`
@@ -398,6 +439,12 @@ commande continue de fonctionner telle quelle.
 Lance la construction, **attends qu'elle soit terminée**, puis redémarre.
 Redémarrer pendant la construction relance l'ancien code : `npm start` ne fait
 jamais de `git pull`.
+
+**Le Manager n'applique pas le schéma.** Une livraison qui ajoute un fichier
+de `sql/` (la dernière : `sql/quotidien.sql`) demande, une fois la
+construction finie, `npm run schema:appliquer` en SSH, **puis un second
+redémarrage** : le contrôle de démarrage et `/healthz` ne relisent la base
+qu'au lancement du processus.
 
 ## Étape 4 bis — Déployer depuis GitHub, sans rien retaper
 
@@ -496,6 +543,52 @@ Puis dans le navigateur, dans cet ordre :
 5. `/virage` — pendant un match de ton club, entre dans le virage et chante. Un but réel secoue la corde et te frappe une carte-souvenir.
 6. `/carnet` — la carte doit y être, tamponnée « tu y étais ».
 
+### Après la livraison du quotidien
+
+La livraison qui apporte `sql/quotidien.sql` (missions du jour, carte de
+présence, saison datée, paliers) laisse cinq choses à faire, par Gaël ou avec
+lui :
+
+1. **Lire la ligne du jour de jeu.** Au journal de démarrage : « jour de jeu :
+   le jour change à HH:MM, heure de Zurich (fuseau de la base : …) » ; ou dans
+   `/healthz`, le champ `jourDeJeu.changeA`. À 00:00, rien à faire. Une autre
+   heure n'est pas une panne : le jour de jeu est celui de la base, le même
+   qui compte les cinq duels classés et les deux Virages comptés du joueur
+   gratuit, et missions, bonus et quotas changent de jour **ensemble** à cette
+   heure-là. Un minuit exact à Zurich demande de régler le fuseau de la base,
+   donc de basculer quotas et missions à la fois : une décision à prendre une
+   fois la ligne lue, pas avant.
+2. **`/healthz` répond `ok: true` et `"quotidien":"actif"`**, et `/admin`,
+   RÉGLAGES, montre les trois sections LE QUOTIDIEN, LES MISSIONS DU JOUR et
+   LA SAISON ET SES PALIERS.
+3. **La fin de la saison 1.** Vérifier sur `/matchs` le dernier week-end de
+   championnat avant la trêve, puis saisir la date dans l'onglet Saisons
+   (proposée : 2026-12-20). C'est un jour, celui du jeu : la saison finit le
+   soir de ce jour-là.
+4. **Le carnet de la saison 1, si les missions arrivent après le 19 octobre.**
+   Ses seuils sont comptés pour 63 jours : les saisir dans l'onglet Saisons,
+   multipliés par jours restants / 63, **avant** le premier palier versé. Le
+   carnet se fige ensuite, et l'administration le refuse en le disant.
+5. **Les seuils de division**, recalés sur la ferveur réelle des joueurs
+   **sans abonnement** (l'abonné n'a pas de plafond de ferveur classée, et le
+   titre de Capo doit rester atteignable sans payer). En lecture seule :
+
+   ```sql
+   SELECT x.user_id, SUM(x.ferveur) AS ferveur
+     FROM (SELECT user_id, ferveur, last_push_at AS quand FROM virage_presence WHERE classe = 1
+           UNION ALL
+           SELECT user_id, ferveur, ended_at FROM duel_results WHERE mode = 'classe') x
+    WHERE x.quand >= (SELECT MAX(lancee_a) FROM saisons WHERE lancee_a IS NOT NULL)
+      AND x.user_id NOT IN (SELECT user_id FROM abonnements WHERE fin IS NULL OR fin > NOW(3))
+    GROUP BY x.user_id
+    ORDER BY ferveur;
+   ```
+
+   Lire les valeurs aux rangs 30 %, 60 %, 85 % et 96 % de la liste, les
+   projeter sur la saison (× jours totaux / jours écoulés), et les saisir dans
+   RÉGLAGES : `rang.habitue`, `rang.fervent`, `rang.ultra`, `rang.capo`. Capo
+   ne dépasse jamais ce qu'un joueur gratuit assidu fait dans la saison.
+
 ## Étape 6 — L'inventaire des compétitions
 
 Une seule fois, et à chaque intersaison :
@@ -547,6 +640,7 @@ node scripts/deck-smoke.mjs       # 28, dont les neuf refus de deck invalide
 node scripts/nvn-smoke.mjs        # 30, le moteur de duel effet par effet
 node scripts/admin-smoke.mjs      # 30, dont les garde-fous et la traçabilité
 node scripts/nvn-net-smoke.mjs    # 31, appariement, coupure, reprise (~25 s)
+node scripts/recompenses-smoke.mjs # le grand livre : une fois, entier, sous le disjoncteur
 node scripts/virage-loadtest.mjs 50 https://thebestfan.online
 ```
 
@@ -589,6 +683,23 @@ que plus personne ne peut administrer.
 fixer le mot de passe d'un joueur peut se connecter à sa place.
 
 Bloquer un compte ferme ses sessions immédiatement, sans attendre l'expiration.
+
+### Le grand livre des récompenses
+
+Tout ce que le quotidien verse — missions, sachet, bonus de présence, carnet,
+relais, crans, séries complètes, divisions — passe par une seule table,
+`recompenses`, une ligne par versement. Un abus ou une faute de réglage s'y voit
+comme un pic, par source et par jour. La requête, **en lecture seule** :
+
+```sql
+SELECT DATE(verse_a) AS jour, source, COUNT(*), SUM(echarpes), SUM(packs) FROM recompenses GROUP BY jour, source ORDER BY jour DESC;
+```
+
+Chaque source a son interrupteur dans **RÉGLAGES** (sections LE QUOTIDIEN et
+LA SAISON ET SES PALIERS) : couper une source arrête le neuf et refuse ses
+réclamations, sans livraison. Un disjoncteur borne de toute façon ce qu'un
+joueur peut recevoir en un jour (2 500 écharpes et 15 boosters au départ) ; ce
+qu'il bloque reste dû le lendemain.
 
 ## Le moteur NvN
 

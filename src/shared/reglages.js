@@ -72,6 +72,28 @@ export const SECTIONS = [
       '`shared/niveau.js`, « le niveau ne donne aucune puissance ».' },
   { id: 'exploitation', titre: 'L’EXPLOITATION',
     aide: 'Ce qui s’adresse aux joueurs depuis l’administration.' },
+  /* Les trois sections du quotidien (chantier serveur, vague 1). Chaque source
+     de gain y a son interrupteur : couper une source arrête le neuf **et**
+     refuse les réclamations de cette source. C'est un disjoncteur qu'on
+     actionne un samedi soir sans livraison, et ce qui était dû le redevient
+     quand on rallume, dans les délais de chaque source. */
+  { id: 'quotidien', titre: 'LE QUOTIDIEN',
+    aide: 'Les missions du jour, leur sachet, la carte de présence et le ' +
+      'disjoncteur. Les montants des missions sont copiés au tirage du matin : ' +
+      'un changement vaut pour le lendemain, le joueur reçoit ce qu’on lui a ' +
+      'promis. Le bonus de présence, lui, se calcule au moment où on le ' +
+      'récupère : ses réglages valent tout de suite.' },
+  { id: 'missions', titre: 'LES MISSIONS DU JOUR',
+    aide: 'Une bascule par mission. En éteindre une la sort du tirage dès le ' +
+      'lendemain ; les missions déjà tirées aujourd’hui restent. Les cibles ' +
+      '(« 3 boosters », « 2 duels classés ») ne se règlent pas : ce sont des ' +
+      'règles du jeu, et une cible mal réglée pourrait passer au-dessus du ' +
+      'plafond gratuit.' },
+  { id: 'saison', titre: 'LA SAISON ET SES PALIERS',
+    aide: 'Le carnet de tampons, le passage de relais, les crans de collection ' +
+      'et les divisions. Les divisions n’ont aucun montant à régler : elles ne ' +
+      'paient que l’insigne et le titre, parce que la ferveur classée n’a pas ' +
+      'de plafond pour un abonné et qu’une division payée s’achèterait en partie.' },
 ];
 
 /* ------------------------------------------------------------ les réglages
@@ -323,34 +345,48 @@ export const REGLAGES = [
   { cle: 'xp.pack', section: 'progression', type: 'entier',
     titre: 'Ouvrir un booster rapporte', unite: 'XP', min: 0, max: 500, defaut: 5 },
 
+  /* Les missions de duel ne comptent qu'un duel qui a rapporté de l'XP (le
+     joueur qui quitte n'en gagne pas) : à zéro, elles ne pourraient plus se
+     faire, et le tirage les écarte. Les deux textes le disent, parce que
+     l'effet est loin du réglage. */
   { cle: 'xp.duel_entrainement', section: 'progression', type: 'entier',
-    titre: 'Un duel d’entraînement rapporte', unite: 'XP', min: 0, max: 500, defaut: 12 },
+    titre: 'Un duel d’entraînement rapporte', unite: 'XP', min: 0, max: 500, defaut: 12,
+    aide: 'À 0, les missions de duel qui comptent l’entraînement (jouer un ' +
+      'duel, en gagner un, en gagner trois, en jouer cinq, jouer pour son club) ' +
+      'sortent du tirage du lendemain : un duel ne compte pour une mission que ' +
+      's’il a rapporté de l’XP.' },
 
   { cle: 'xp.duel_classe', section: 'progression', type: 'entier',
-    titre: 'Un duel classé rapporte', unite: 'XP', min: 0, max: 500, defaut: 20 },
+    titre: 'Un duel classé rapporte', unite: 'XP', min: 0, max: 500, defaut: 20,
+    aide: 'À 0, la mission « Joue 2 duels classés » sort du tirage du lendemain.' },
 
   { cle: 'xp.victoire', section: 'progression', type: 'entier',
     titre: 'Gagner rapporte en plus', unite: 'XP', min: 0, max: 500, defaut: 15,
     aide: 'En plus du duel joué. La victoire ajoute, elle ne multiplie pas : ' +
       'perdre trois duels doit rester plus profitable que ne pas jouer.' },
 
-  /* --------------------------------------------------------------- étal */
+  /* --------------------------------------------------------------- étal
+
+     L'unité disait « billets », la monnaie que l'argent réel achetait et qui a
+     disparu. L'étal se paie en écharpes depuis (`src/shared/etal.js`,
+     `boutique/index.js`) : une étiquette qui nomme une autre monnaie que celle
+     qu'on débite fait lire un prix faux à qui règle l'économie. */
   { cle: 'etal.stuff_commune', section: 'etal', type: 'entier',
-    titre: 'Pièce d’équipement commune', unite: 'billets', min: 1, max: 9999, defaut: 45 },
+    titre: 'Pièce d’équipement commune', unite: 'écharpes', min: 1, max: 9999, defaut: 45 },
 
   { cle: 'etal.stuff_rare', section: 'etal', type: 'entier',
-    titre: 'Pièce rare', unite: 'billets', min: 1, max: 9999, defaut: 110 },
+    titre: 'Pièce rare', unite: 'écharpes', min: 1, max: 9999, defaut: 110 },
 
   { cle: 'etal.stuff_epique', section: 'etal', type: 'entier',
-    titre: 'Pièce épique', unite: 'billets', min: 1, max: 9999, defaut: 260 },
+    titre: 'Pièce épique', unite: 'écharpes', min: 1, max: 9999, defaut: 260 },
 
   { cle: 'etal.stuff_legendaire', section: 'etal', type: 'entier',
-    titre: 'Pièce légendaire', unite: 'billets', min: 1, max: 9999, defaut: 520,
+    titre: 'Pièce légendaire', unite: 'écharpes', min: 1, max: 9999, defaut: 520,
     aide: 'Une pièce légendaire porte les modificateurs les plus francs : son prix ' +
       'est ce qui tient la distance entre un joueur qui paie et un joueur qui joue.' },
 
   { cle: 'etal.tenue', section: 'etal', type: 'entier',
-    titre: 'Une tenue, sur un Fanzzy', unite: 'billets', min: 1, max: 9999, defaut: 130,
+    titre: 'Une tenue, sur un Fanzzy', unite: 'écharpes', min: 1, max: 9999, defaut: 130,
     aide: 'Le même prix quelle que soit la rareté : une tenue ne change rien au jeu, ' +
       'elle change ce qu’on regarde.' },
 
@@ -375,6 +411,273 @@ export const REGLAGES = [
   { cle: 'maintenance.texte', section: 'exploitation', type: 'texte',
     titre: 'Message de fermeture', max: 240,
     defaut: 'Le jeu est fermé quelques minutes, le temps d’une mise à jour.' },
+
+  /* ========================================================== le quotidien
+
+     Les valeurs de départ sont celles de `SERVEUR.md` (§ 8), raisonnées sur
+     les barèmes réels du jeu : une mission paie à peu près ce qu'une heure de
+     duels classés rapporte déjà, en plus de ce que la partie verse.
+
+     **Des entiers et des bascules, rien d'autre.** L'écran d'administration
+     dessine un type inconnu en champ numérique : une liste y serait
+     inéditable, et les missions ont donc une bascule chacune plutôt qu'une
+     liste à cocher. */
+
+  /* --------------------------------------------- la carte de présence
+
+     Ses trois montants valent **tout de suite**, à l'inverse de ceux des
+     missions : le bonus se calcule au moment où on le récupère, il n'est pas
+     copié au tirage. Le nombre de cases (sept) ne se règle pas, il est
+     dessiné. */
+  { cle: 'bonus.actif', section: 'quotidien', type: 'booleen',
+    titre: 'Proposer le bonus de présence', defaut: true,
+    aide: 'Éteint : plus de carte de présence, et une réclamation en cours est ' +
+      'refusée. Rien n’est perdu : la case suivante attend qu’on rallume.' },
+
+  { cle: 'bonus.base', section: 'quotidien', type: 'entier',
+    titre: 'Première case de la carte', unite: 'écharpes', min: 0, max: 200, defaut: 20,
+    aide: 'Un changement vaut tout de suite : le bonus se calcule au moment où ' +
+      'on le récupère. Une carte entière vaut 245 écharpes et un booster aux ' +
+      'valeurs de départ — un rituel d’entrée, pas une source de revenu.' },
+
+  { cle: 'bonus.pas', section: 'quotidien', type: 'entier',
+    titre: 'Chaque case suivante ajoute', unite: 'écharpes', min: 0, max: 50, defaut: 5,
+    aide: 'Vaut tout de suite, comme la première case. De 20 à 50 écharpes de ' +
+      'la première à la septième case, aux valeurs de départ.' },
+
+  { cle: 'bonus.j7_packs', section: 'quotidien', type: 'entier',
+    titre: 'La septième case ajoute', unite: 'boosters', min: 0, max: 3, defaut: 1,
+    aide: 'Vaut tout de suite. Le booster entre dans la réserve même pleine : ' +
+      'c’est un cadeau, pas une réserve plus grande.' },
+
+  /* ---------------------------------------------------- les missions
+
+     Leurs montants sont **copiés au tirage** : un changement vaut pour le
+     lendemain. Le joueur reçoit ce qu'on lui a promis le matin. */
+  { cle: 'missions.actif', section: 'quotidien', type: 'booleen',
+    titre: 'Proposer les missions du jour', defaut: true,
+    aide: 'Éteint : plus de tirage, et les réclamations de missions et de ' +
+      'sachet sont refusées. Rallumé, une mission terminée reste récupérable ' +
+      'jusqu’à la fin du lendemain.' },
+
+  { cle: 'missions.relances', section: 'quotidien', type: 'entier',
+    titre: 'Relances gratuites par jour', unite: 'relances', min: 0, max: 3, defaut: 1,
+    aide: 'Remplacer une mission pas encore terminée. La mission de ' +
+      'remplacement garde le gain de celle qu’elle remplace.' },
+
+  { cle: 'missions.facile_echarpes', section: 'quotidien', type: 'entier',
+    titre: 'Une mission facile rapporte', unite: 'écharpes', min: 0, max: 300, defaut: 30,
+    aide: 'Environ cinq minutes de jeu. Un changement vaut pour le lendemain : ' +
+      'les montants sont copiés au tirage du matin.' },
+
+  { cle: 'missions.facile_xp', section: 'quotidien', type: 'entier',
+    titre: 'Une mission facile rapporte aussi', unite: 'XP', min: 0, max: 200, defaut: 20,
+    aide: 'Vaut pour le lendemain. Une mission vaut à peu près un duel en XP.' },
+
+  { cle: 'missions.moyenne_echarpes', section: 'quotidien', type: 'entier',
+    titre: 'Une mission moyenne rapporte', unite: 'écharpes', min: 0, max: 400, defaut: 60,
+    aide: 'Environ douze minutes de jeu. Vaut pour le lendemain.' },
+
+  { cle: 'missions.moyenne_xp', section: 'quotidien', type: 'entier',
+    titre: 'Une mission moyenne rapporte aussi', unite: 'XP', min: 0, max: 300, defaut: 40,
+    aide: 'Vaut pour le lendemain.' },
+
+  { cle: 'missions.difficile_echarpes', section: 'quotidien', type: 'entier',
+    titre: 'Une mission difficile rapporte', unite: 'écharpes', min: 0, max: 600, defaut: 100,
+    aide: 'Environ vingt-cinq minutes de jeu. Vaut pour le lendemain.' },
+
+  { cle: 'missions.difficile_xp', section: 'quotidien', type: 'entier',
+    titre: 'Une mission difficile rapporte aussi', unite: 'XP', min: 0, max: 400, defaut: 60,
+    aide: 'Vaut pour le lendemain. Les trois missions font 120 XP par jour aux ' +
+      'valeurs de départ, autant que 24 boosters ouverts.' },
+
+  { cle: 'missions.sachet_packs', section: 'quotidien', type: 'entier',
+    titre: 'Le sachet des trois missions', unite: 'boosters', min: 0, max: 3, defaut: 1,
+    aide: 'Versé quand toutes les missions du jour sont récupérées. Copié au ' +
+      'tirage, comme les missions : un changement vaut pour le lendemain. Il ' +
+      'entre dans la réserve même pleine.' },
+
+  { cle: 'quotidien.retour_heures', section: 'quotidien', type: 'entier',
+    titre: 'Une nouvelle visite commence après', unite: 'heures d’absence',
+    min: 1, max: 48, defaut: 3,
+    aide: 'Le ticket « depuis ta dernière visite » ne paraît qu’après cette ' +
+      'absence. Plus court, il revient à chaque passage et on cesse de le lire.' },
+
+  /* Le disjoncteur. Il est lu par le grand livre (`src/server/recompenses.js`)
+     et par lui seul : au pire, une faute de réglage ou un défaut coûte une
+     journée de gains, pas plus. Ce qui est bloqué reste dû le lendemain. */
+  { cle: 'recompenses.plafond_echarpes_jour', section: 'quotidien', type: 'entier',
+    titre: 'Disjoncteur : au plus, par joueur et par jour', unite: 'écharpes',
+    min: 100, max: 20000, defaut: 2500,
+    aide: 'Toutes les récompenses nouvelles additionnées (missions, sachet, ' +
+      'bonus, carnet, relais, crans, séries). Un versement qui le dépasserait ' +
+      'est refusé et reste dû le lendemain. Ce n’est pas un plafond de jeu : ' +
+      'c’est ce qui borne le coût d’une erreur de réglage.' },
+
+  { cle: 'recompenses.plafond_packs_jour', section: 'quotidien', type: 'entier',
+    titre: 'Disjoncteur : au plus, par joueur et par jour', unite: 'boosters',
+    min: 1, max: 50, defaut: 15,
+    aide: 'Les boosters offerts par les récompenses nouvelles, additionnés. La ' +
+      'recharge gratuite et l’abonnement n’y entrent pas.' },
+
+  /* ------------------------------------------- les treize missions
+
+     Une bascule par identifiant du catalogue (`src/shared/quotidien.js`), et
+     son titre est l'intitulé de la mission : c'est ce qu'on cherche des yeux
+     quand une mission pose problème un samedi soir. */
+  { cle: 'mission.boosters', section: 'missions', type: 'booleen',
+    titre: 'Ouvre 3 boosters', defaut: true,
+    aide: 'Facile. Proposée tous les jours.' },
+  { cle: 'mission.duel', section: 'missions', type: 'booleen',
+    titre: 'Joue un duel jusqu’au bout', defaut: true,
+    aide: 'Facile, entraînement compris. Un duel compte s’il a duré au moins ' +
+      'une minute et que le joueur ne l’a pas quitté.' },
+  { cle: 'mission.virage', section: 'missions', type: 'booleen',
+    titre: 'Chante 10 fois au Grand Virage', defaut: true,
+    aide: 'Facile. Proposée quand un match se joue encore aujourd’hui.' },
+  { cle: 'mission.grandir', section: 'missions', type: 'booleen',
+    titre: 'Fais grandir un Fanzzy', defaut: true,
+    aide: 'Facile. Proposée à qui a un Fanzzy qui peut grandir et de quoi le payer.' },
+  { cle: 'mission.tribune', section: 'missions', type: 'booleen',
+    titre: 'Chante 40 fois au Grand Virage', defaut: true,
+    aide: 'Moyenne. Proposée quand un match se joue encore aujourd’hui.' },
+  { cle: 'mission.victoire', section: 'missions', type: 'booleen',
+    titre: 'Gagne un duel', defaut: true,
+    aide: 'Moyenne, entraînement compris.' },
+  { cle: 'mission.classes', section: 'missions', type: 'booleen',
+    titre: 'Joue 2 duels classés', defaut: true,
+    aide: 'Moyenne. Proposée seulement s’il reste au joueur au moins deux duels ' +
+      'classés gratuits aujourd’hui : aucune mission ne demande plus que le ' +
+      'plafond gratuit.' },
+  { cle: 'mission.club_virage', section: 'missions', type: 'booleen',
+    titre: 'Chante 20 fois pour ton club', defaut: true,
+    aide: 'Moyenne. Proposée quand un des clubs suivis joue aujourd’hui.' },
+  { cle: 'mission.club_duel', section: 'missions', type: 'booleen',
+    titre: 'Joue un duel pour ton club', defaut: true,
+    aide: 'Moyenne. Proposée à qui suit au moins un club.' },
+  { cle: 'mission.victoires', section: 'missions', type: 'booleen',
+    titre: 'Gagne 3 duels', defaut: true,
+    aide: 'Difficile, entraînement compris.' },
+  { cle: 'mission.endurance', section: 'missions', type: 'booleen',
+    titre: 'Joue 5 duels', defaut: true,
+    aide: 'Difficile, entraînement compris.' },
+  { cle: 'mission.mitemps', section: 'missions', type: 'booleen',
+    titre: 'Chante 10 fois dans chaque mi-temps d’un même match', defaut: true,
+    aide: 'Difficile. Proposée quand un match du jour n’a pas encore commencé ' +
+      'sa seconde mi-temps.' },
+  { cle: 'mission.ailleurs', section: 'missions', type: 'booleen',
+    titre: 'Chante 10 fois dans deux compétitions différentes', defaut: true,
+    aide: 'Difficile. Proposée quand deux compétitions jouent encore aujourd’hui.' },
+
+  /* ------------------------------------------ le carnet et le relais
+
+     Les tampons sont copiés au tirage avec les missions : un changement vaut
+     pour le lendemain. Le relais se calcule au moment où on le récupère. */
+  { cle: 'saison.carnet_actif', section: 'saison', type: 'booleen',
+    titre: 'Carnet de tampons de la saison', defaut: true,
+    aide: 'Éteint : plus de carnet à l’écran, et ses paliers comme le relais ' +
+      'sont refusés à la réclamation. Un palier atteint reste dû : rallumé, ' +
+      'il se récupère, même après la fin de la saison.' },
+
+  { cle: 'saison.tampons_facile', section: 'saison', type: 'entier',
+    titre: 'Une mission facile rapporte', unite: 'tampons', min: 0, max: 10, defaut: 1,
+    aide: 'Copié au tirage : un changement vaut pour le lendemain.' },
+
+  { cle: 'saison.tampons_moyenne', section: 'saison', type: 'entier',
+    titre: 'Une mission moyenne rapporte', unite: 'tampons', min: 0, max: 10, defaut: 1,
+    aide: 'Copié au tirage : un changement vaut pour le lendemain.' },
+
+  { cle: 'saison.tampons_difficile', section: 'saison', type: 'entier',
+    titre: 'Une mission difficile rapporte', unite: 'tampons', min: 0, max: 10, defaut: 2,
+    aide: 'Copié au tirage : un changement vaut pour le lendemain.' },
+
+  { cle: 'saison.tampons_sachet', section: 'saison', type: 'entier',
+    titre: 'Le sachet rapporte', unite: 'tampons', min: 0, max: 10, defaut: 1,
+    aide: 'Copié au tirage. Avec les valeurs de départ, une journée complète ' +
+      'fait cinq tampons ; le carnet de la saison 1 est calibré là-dessus.' },
+
+  { cle: 'saison.relais_packs', section: 'saison', type: 'entier',
+    titre: 'Passage de relais : boosters offerts', unite: 'boosters', min: 0, max: 5, defaut: 2,
+    aide: 'Au lancement d’une saison, « les sachets de la trêve », à qui a ' +
+      'assez joué la précédente. C’est ce qui fait revenir les joueurs le jour ' +
+      'où il se passe quelque chose.' },
+
+  { cle: 'saison.relais_seuil', section: 'saison', type: 'entier',
+    titre: 'Passage de relais : à qui a au moins', unite: 'tampons dans la saison précédente',
+    min: 0, max: 1000, defaut: 10 },
+
+  /* ------------------------------------------------ la collection
+
+     Lus à la réclamation par le module fanzzy. Un cran est payé une fois, au
+     seuil franchi le plus haut : changer la taille d'un cran ne repaie rien
+     et ne reprend rien. */
+  { cle: 'collection.actif', section: 'saison', type: 'booleen',
+    titre: 'Paliers de collection', defaut: true,
+    aide: 'Éteint : plus de crans ni de séries complètes à récupérer, et les ' +
+      'réclamations sont refusées. Un cran atteint reste dû.' },
+
+  { cle: 'collection.cran', section: 'saison', type: 'entier',
+    titre: 'Un cran tous les', unite: 'objets', min: 5, max: 200, defaut: 25,
+    aide: 'Tout ce qu’un booster peut donner : personnages, états, tenues, ' +
+      'pièces et cartes d’action des séries ouvertes. Changer la taille ne ' +
+      'repaie aucun cran déjà payé, et n’en reprend aucun.' },
+
+  { cle: 'collection.cran_echarpes', section: 'saison', type: 'entier',
+    titre: 'Chaque cran rapporte', unite: 'écharpes', min: 0, max: 300, defaut: 25 },
+
+  { cle: 'collection.cran_booster_tous', section: 'saison', type: 'entier',
+    titre: 'Un booster en plus tous les', unite: 'crans (0 = jamais)', min: 0, max: 20, defaut: 4,
+    aide: 'Le booster s’ajoute au cran qui tombe sur ce rythme (100, 200, ' +
+      '300 objets… aux valeurs de départ).' },
+
+  { cle: 'collection.serie_echarpes', section: 'saison', type: 'entier',
+    titre: 'Une série complète rapporte', unite: 'écharpes', min: 0, max: 1000, defaut: 100,
+    aide: 'Tous les personnages d’une série ouverte.' },
+
+  { cle: 'collection.serie_packs', section: 'saison', type: 'entier',
+    titre: 'Une série complète rapporte aussi', unite: 'boosters', min: 0, max: 5, defaut: 1 },
+
+  /* ------------------------------------------------ les divisions
+
+     **Des seuils, et rien à payer.** La ferveur classée n'est plafonnée que
+     pour le joueur gratuit : une division qui verserait des écharpes ou des
+     boosters se gagnerait en partie en payant, et la règle « l'argent
+     n'achète que du confort » tomberait. Les deux réglages de gains qui
+     existaient au plan ont été retirés, et `reglages-smoke` refuse qu'une clé
+     `rang.*` revienne avec une unité en écharpes ou en boosters.
+
+     Les seuils ne sont pas contrôlés entre eux ici : `src/shared/saison.js`
+     les rend monotones (chacun vaut au moins le précédent) avant de s'en
+     servir. */
+  { cle: 'rang.actif', section: 'saison', type: 'booleen',
+    titre: 'Divisions de saison', defaut: true,
+    aide: 'Éteint : plus d’insigne de division, et les réclamations sont refusées.' },
+
+  { cle: 'rang.habitue', section: 'saison', type: 'entier',
+    titre: 'Seuil d’Habitué', unite: 'ferveur classée de la saison',
+    min: 0, max: 100000000, defaut: 5000,
+    aide: 'Sympathisant dès la première ferveur, puis ces quatre seuils fixes, ' +
+      'jamais des pourcentages : une division atteinte reste acquise. À viser ' +
+      'sur les seuls joueurs sans abonnement : environ 70 % des actifs.' },
+
+  { cle: 'rang.fervent', section: 'saison', type: 'entier',
+    titre: 'Seuil de Fervent', unite: 'ferveur classée de la saison',
+    min: 0, max: 100000000, defaut: 30000,
+    aide: 'Environ 40 % des joueurs actifs sans abonnement.' },
+
+  { cle: 'rang.ultra', section: 'saison', type: 'entier',
+    titre: 'Seuil d’Ultra', unite: 'ferveur classée de la saison',
+    min: 0, max: 100000000, defaut: 100000,
+    aide: 'Environ 15 % des joueurs actifs sans abonnement.' },
+
+  { cle: 'rang.capo', section: 'saison', type: 'entier',
+    titre: 'Seuil de Capo', unite: 'ferveur classée de la saison',
+    min: 0, max: 100000000, defaut: 300000,
+    aide: 'Environ 4 % des joueurs actifs sans abonnement, et jamais plus que ce ' +
+      'qu’un joueur gratuit assidu peut faire dans la saison (cinq duels ' +
+      'classés et deux Virages comptés par jour) : le titre « Capo de la ' +
+      'saison » doit rester atteignable sans payer. Relever un seuil en cours ' +
+      'de saison ne retire rien à qui l’a déjà récupéré.' },
 ];
 
 /** Le registre indexé par clé. */

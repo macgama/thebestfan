@@ -15,11 +15,13 @@
    couleur d'alerte — une alerte attire l'œil, et on ne cherche pas à attirer
    l'œil ici. La couleur arrive au moment où l'on confirme, quand elle sert. */
 .fin{margin-top:40px;padding-top:18px;border-top:1px solid rgba(242,238,228,.12)}
-/* **Discret par la couleur, plus par la pâleur.** Le lien était à 0,45 : au
+/* **Discret par la graisse, plus par la pâleur.** Le lien était à 0,45 : au
    soleil, un droit qu'on ne peut pas lire ne s'exerce pas mieux qu'un droit
-   qu'aucune page n'appelle. Il perd l'or des autres liens et garde la craie —
-   c'est ce qui le range en retrait, sans rien retirer à la lecture. */
-.fin .link{color:var(--craie);opacity:.9;font-size:12px}
+   qu'aucune page n'appelle. Il perd la graisse des autres liens et garde la
+   craie — c'est ce qui le range en retrait, sans rien retirer à la lecture.
+   (Les autres liens étaient en or ; ils sont en craie grasse depuis
+   l'arbitrage du 2 octobre 2026 : l'or ne s'écrit plus qu'en grand.) */
+.fin .link{color:var(--craie);opacity:.9;font-size:12px;font-weight:400}
 .fin .link:hover{opacity:1}
 .prevenu{font-size:12.5px;line-height:1.6;opacity:.9;margin:10px 0 14px}
 
@@ -27,6 +29,13 @@
 html,body{margin:0;min-height:100dvh}
 body{background:radial-gradient(120% 55% at 50% -8%,rgba(245,195,59,.15),transparent 62%),var(--beton);
      color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;padding:34px 18px 60px}
+/* **Sous la barre, l'air d'une page, pas celui d'un bord d'écran.** La
+   barre du haut (nav.js, joueur connecté) remonte au bord de l'écran et
+   laisse sous elle l'écart que la page avait au-dessus : trente-quatre
+   pixels de vide entre elle et le nom du jeu, fait pour un écran sans
+   barre. Quand elle est là, l'écart revient à seize ; sans elle — la
+   connexion —, le nom garde ses trente-quatre pixels de bord. */
+body:has(.tbf-haut){padding-top:16px}
 main{width:100%;max-width:var(--colonne)}
 .wordmark{font-family:var(--banner);font-weight:600;font-size:26px;letter-spacing:.2em;text-align:center}
 /* Onze pixels et 0,9 : le plancher du socle. Le sous-titre était à neuf et
@@ -55,7 +64,10 @@ main{width:100%;max-width:var(--colonne)}
   text-align:left;line-height:1.5}
 .invite img{width:38px;height:38px;object-fit:contain;flex:none}
 .invite span{font-size:12.5px}
-.invite b{color:var(--projo)}
+/* Le nom de qui t'invite, en craie grasse : en or et en douze pixels et
+   demi, il ne tenait pas au soleil (arbitrage du 2 octobre 2026). Le cadre
+   et le voile d'or, qui ne portent pas de lettres, restent. */
+.invite b{color:var(--craie);font-weight:700}
 /* La barre d'onglets est celle de `ui.css`. Ses boutons n'ont pas de classe :
    ils sont les seuls enfants du rail, et lui seul les désigne. */
 .tabs{margin-bottom:22px}
@@ -96,8 +108,12 @@ button.go{width:100%;margin-top:24px;padding:14px;font-size:16px;letter-spacing:
 /* **Le bouton qui supprime un compte doit s'atteindre, pas se deviner.** Il
    mesurait 126×16. On ne le grossit pas à l'œil — il n'a rien à réclamer —
    mais sa zone monte à quarante-quatre pixels, et la marge du dessus se
-   réduit d'autant pour que rien ne bouge. */
-.link{background:none;border:0;color:var(--projo);font-size:12.5px;cursor:pointer;padding:0;
+   réduit d'autant pour que rien ne bouge.
+
+   Les liens de texte sont en craie soulignée, et la graisse les détache de
+   la phrase : ils étaient en or, qui en douze pixels et demi ne tient pas
+   au soleil (arbitrage du 2 octobre 2026). */
+.link{background:none;border:0;color:var(--craie);font-weight:600;font-size:12.5px;cursor:pointer;padding:0;
   margin-top:4px;font-family:inherit;text-decoration:underline;text-underline-offset:3px;
   display:inline-flex;align-items:center;min-height:44px}
 .msg{margin-top:18px;padding:12px 14px;border-radius:6px;font-size:13px;line-height:1.55;display:none}

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Aide — thebestfan</title>
+<title>Missions — thebestfan</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <link rel="stylesheet" href="/cartes.css">
@@ -21,91 +21,122 @@ html,body{margin:0;min-height:100%}
 body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
 #app{width:100%;max-width:var(--colonne);min-height:100dvh;display:flex;flex-direction:column}
 
-/* ============================================================ la jauge
+/* ============================================================ la page
 
-   Elle est en haut, elle est large, et elle porte un chiffre : c'est la
-   première chose qu'on voit en arrivant, et la seule qu'on regarde en
-   revenant. Une barre de progression qui se remplit toute seule pendant qu'on
-   joue est la moitié de la promesse de cet écran — l'autre moitié est qu'on
-   n'a rien eu à cliquer pour ça. */
-/* Sa lueur d'or se pose sur le panneau opaque commun : elle était dorée à
-   12 % sur son bord gauche, c'est-à-dire transparente, et la foule de la
-   photo passait sous le compte. Même traitement pour les étapes faites et
-   pour la plaque de fin, plus bas. */
-.entete{margin:12px 14px 0;padding:14px 16px 15px;border-radius:14px;
-  border:1px solid rgba(245,195,59,.34);
-  background:linear-gradient(140deg,rgba(245,195,59,.12),rgba(245,195,59,0) 70%),var(--panneau)}
-.entete .haut{display:flex;align-items:baseline;gap:10px}
-.entete .compte{font-family:var(--banner);font-size:28px;line-height:1;color:var(--projo)}
-.entete .compte small{font-size:13px;opacity:.88}
-.entete .quoi{flex:1;min-width:0;font-size:11px;letter-spacing:.16em;opacity:.88;
-  text-transform:uppercase;text-align:right}
-/* Dix pixels : la jauge est la première chose qu'on regarde en arrivant, et
-   neuf pixels se perdent au soleil. */
-.rail{margin-top:11px;height:10px;border-radius:99px;background:rgba(255,255,255,.08);
-  overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
-.rail i{display:block;height:100%;width:0;border-radius:99px;
-  background:linear-gradient(90deg,var(--flare),var(--projo));
-  transition:width .9s cubic-bezier(.16,1,.3,1)}
-.entete .phrase{margin-top:10px;font-size:12.5px;line-height:1.55;opacity:.9}
+   MISSIONS (lot 5). Tout ce qui se lit ici est une brique de ui.css — le
+   ticket de mission, le bonus et sa série, le ticket de gain, la jauge, le
+   tampon, le sticker. La page n'écrit que leur place : les marges, l'ordre,
+   et ce qui n'est pas une brique (le panneau d'explication sous une étape,
+   le lien de répétition, la règle des missions). */
+/* La gouttière est celle de la colonne (`--gouttiere`, ui.css) : les
+   tickets s'alignent sur le rail, bord à bord. */
+.tabs{margin-top:14px}
 
-/* ================================================== une étape du parcours */
-.pas{margin:12px 14px 0;border-radius:14px;overflow:hidden;position:relative;
-  border:1px solid var(--trait);background:var(--panneau)}
-/* **Faite : la plaque s'allume.** C'est le seul endroit de la page où la
-   couleur veut dire quelque chose, donc elle ne sert qu'à ça. */
-.pas.ok{border-color:rgba(30,158,106,.5);
-  background:linear-gradient(140deg,rgba(30,158,106,.13),rgba(30,158,106,0) 70%),var(--panneau)}
-.pas .tete{display:flex;align-items:center;gap:12px;padding:13px 15px}
-.pas .num{width:30px;height:30px;flex:none;border-radius:50%;display:grid;place-items:center;
-  font-family:var(--banner);font-size:14px;border:1.5px solid rgba(255,255,255,.22);
-  color:rgba(255,255,255,.88)}
-/* Faite, la pastille porte la coche au trait du jeu (icône commune, qui prend
-   la couleur du texte) : l'émoji qu'elle portait se dessinait autrement d'un
-   téléphone à l'autre. « FAIT », juste à côté, dit la même chose en mots. */
-.pas.ok .num{border-color:var(--vert);color:#04060A;background:var(--vert);font-size:16px}
-.pas .nom{flex:1;min-width:0;font-family:var(--banner);font-size:15px;letter-spacing:.06em}
-.pas .etat{font-size:11px;letter-spacing:.16em;opacity:.88}
-.pas.ok .etat{opacity:1;color:var(--vert)}
-.pas .corps{padding:0 15px 14px;display:grid;grid-template-columns:96px 1fr;gap:13px;
-  align-items:start}
+/* Le titre cousu d'une rubrique, et sa précision (« nouvelles dans 5 h 12 »,
+   « 80 jours ») : un `<i>` que la brique range entre le mot et le fil, et
+   dont la taille est à la page. Douze pixels pleins, sans pâleur. */
+#vue .tbf-cousu{margin:20px 2px 12px}
+#vue .tbf-cousu i{font-style:normal;font-family:var(--ui);font-weight:600;font-size:12px;
+  letter-spacing:.04em;text-transform:none;white-space:nowrap}
+#vue>.tbf-ticket:first-child,#vue>.tbf-cousu:first-child{margin-top:16px}
+
+/* PROVISOIRE — besoin « feuilles-css ». Le ticket de mission range ses
+   gains sur la ligne du titre (« v t g »). Un gain du contrat porte souvent
+   trois valeurs (écharpes, XP, tampons) : trois stickers font deux cent
+   vingt pixels, et à 360 px il ne restait au titre qu'une vingtaine de
+   pixels. En attendant que la brique le prévoie, sous 560 px seulement, le
+   titre prend toute la ligne, la jauge partage la sienne avec le geste, et
+   les gains passent sur une troisième ligne, de bord à bord. Seule la
+   grille change : le dessin reste celui de la brique. */
+@media (max-width:559px){
+  #vue .tbf-mission:has(>.tbf-mission-gain){grid-template-areas:"v t t" "v j a" "g g g"}
+  #vue .tbf-mission-gain{justify-self:start;flex-wrap:wrap;row-gap:8px;min-width:0}
+}
+/* PROVISOIRE — besoin « feuilles-css ». Quatre onglets à parts égales
+   laissent soixante et onze pixels à chaque mot à 360 px : PREMIERS PAS
+   (soixante-dix-neuf) se coupait, et DU JOUR avec son compte aussi. Chaque
+   onglet prend la place de son mot, et ce qui reste se partage : les quatre
+   tiennent entiers. Seule la répartition change, pas l'onglet. */
+.tabs .tbf-onglet{flex:1 1 auto}
+/* Un ticket qui mène où la mission se fait est un lien : pas de soulignement
+   sous son titre. */
+#vue a.tbf-mission{text-decoration:none}
+.liste{margin-top:14px}
+
+/* Une mission du jour et son changement : le bouton sous le ticket, à
+   droite, comme un détour offert — pas une seconde bâche. Quarante-quatre
+   pixels de haut, la craie pleine du mur. */
+.une{display:flex;flex-direction:column}
+.relancer{align-self:flex-end;display:flex;align-items:center;min-height:44px;margin:2px 0 -10px;
+  padding:0 2px;border:0;background:none;color:var(--craie);cursor:pointer;
+  font-family:var(--banner);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.relancer:disabled{cursor:default}
+
+/* Ce que « fait » compte, dit une fois sous les missions du jour. */
+.regle{margin-top:18px;padding:12px 14px 13px}
+.regle p{margin:0;font-size:12.5px;line-height:1.55}
+.regle p+p{margin-top:6px}
+
+/* Un lien qui part de la page sans être le geste de l'écran : en craie,
+   en capitales, quarante-quatre pixels de haut. */
+.lien{display:flex;align-items:center;justify-content:center;min-height:44px;margin-top:14px;
+  color:var(--craie);text-decoration:none;
+  font-family:var(--banner);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+
+/* ======================================================= l'en-tête d'un rail
+
+   PREMIERS PAS et le carnet de la saison : un ticket kraft qui porte un
+   titre, un chiffre, la jauge et ce que ça rapporte — pas de phrase. La
+   phrase passe dessous, sur un panneau calme. Le noir du kraft est hérité :
+   aucune couleur de texte ici. */
+.entete{margin-top:16px;padding:14px 16px 15px}
+.entete .haut{display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap}
+.entete .compte{font-weight:700;font-size:30px;line-height:1;letter-spacing:.02em;
+  font-variant-numeric:tabular-nums}
+.entete .compte small{font-size:16px;letter-spacing:.04em}
+.entete .quoi{flex:1;min-width:0;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+/* Le nœud de l'écharpe déborde de neuf pixels au bout, ses franges de neuf
+   dessous : la marge de droite et celle du pied les gardent dans le papier,
+   que la déchirure rogne. */
+.entete .tbf-jauge{margin:14px 10px 0 0}
+.entete .pied{display:flex;align-items:center;justify-content:flex-end;gap:10px;min-height:24px;
+  margin-top:16px}
+.entete .pied .tbf-mission-note{flex:1}
+.phrase{margin:8px 6px 0;padding:11px 14px 12px;font-size:12.5px;line-height:1.55}
+
+/* ================================================== une étape des premiers pas
+
+   Le ticket de l'étape (la brique), et sous lui, posé comme une feuille
+   agrafée, le panneau qui l'explique : un paragraphe ne s'écrit pas sur le
+   kraft. Faite, l'étape replie son explication derrière RELIRE : c'est un
+   résumé, plus une invitation. */
+.pas{position:relative;border-radius:8px}
+.pas .texte{margin:0 6px;padding:12px 14px 13px;border-top:0;border-radius:0 0 8px 8px}
 .pas .texte p{margin:0 0 8px;font-size:12.5px;line-height:1.6}
-.pas .texte p.pourquoi{opacity:.88;margin-bottom:0}
+.pas .texte p:last-child{margin-bottom:0}
+.pas details.texte{padding:0 14px}
+.pas details.texte[open]{padding-bottom:13px}
+.pas .texte summary{display:flex;align-items:center;min-height:44px;cursor:pointer;list-style:none;
+  font-family:var(--banner);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.pas .texte summary::-webkit-details-marker{display:none}
+.pas .texte summary::after{content:'+';margin-left:auto;font-size:17px;line-height:1}
+.pas .texte[open] summary::after{content:'–'}
 /* Le bouton n'existe que sur une étape qui reste à faire, et il n'est pas
    seulement caché : une plaque en `display:none` reste dans le document, et la
    tentation serait de la rallumer un jour « pour ceux qui veulent y retourner ».
    Une étape faite est un résumé, pas une invitation — et le menu mène partout. */
-.pas .aller{margin:11px 15px 14px;display:block;width:calc(100% - 30px)}
+.pas .aller{margin-top:10px;display:block;width:100%}
 /* Les deux étapes qui demandent un geste proposent de le répéter avant. Un
    lien sous la plaque, et pas une seconde plaque : c'est un détour offert, pas
-   une marche à monter — l'étape se coche au Virage ou en duel, jamais ici. */
-/* Quinze pixels de haut, et quinze fois sur la page : c'était la trouvaille
-   la plus répétée de l'audit. Même traitement qu'ailleurs — la zone monte à
-   quarante-quatre, les marges rendent la hauteur, le lien ne change pas
-   d'allure. */
-.pas .repet{display:flex;align-items:center;margin:-20px 15px 0;font-size:11px;
-  letter-spacing:.06em;color:var(--projo);opacity:.9;text-decoration:none;
-  min-height:44px}
-
-/* Le visuel de gauche. Carré, pour qu'une carte, un dos de booster et un
-   emblème dessiné se posent au même endroit sans faire tressauter la ligne. */
-.vign{width:96px;aspect-ratio:1/1.34;border-radius:9px;overflow:hidden;position:relative;
-  background:#090C11;border:1px solid var(--trait);display:grid;place-items:center}
-.vign img{width:100%;height:100%;object-fit:cover;display:block}
-.vign svg{width:58%;height:58%;fill:none;stroke:rgba(245,195,59,.62);stroke-width:1.5;
-  stroke-linecap:round;stroke-linejoin:round}
-.pas.ok .vign svg{stroke:rgba(30,158,106,.75)}
-/* La carte du joueur, réduite. `--u` vient de cartes.css et pilote toute
-   l'échelle du dessin ; on ne touche donc à rien d'autre. */
-.vign .fz{width:100%;height:100%}
-/* « PAS ENCORE », sur le bas de la vignette. Huit pixels à 60 % : à onze, il
-   tient dans les quatre-vingt-seize de la vignette si l'espacement des
-   capitales se resserre. */
-.vign .cadenas{position:absolute;inset:auto 0 0;padding:4px 0 5px;text-align:center;
-  font-size:11px;letter-spacing:.08em;background:rgba(4,6,10,.88);color:rgba(242,238,228,.9)}
+   une marche à monter — l'étape se coche au Virage ou en duel, jamais ici.
+   Quarante-quatre pixels de haut, la craie pleine et grasse : l'or ne
+   s'écrit plus en petit (arbitrage du 2 octobre 2026). */
+.pas .repet{display:flex;align-items:center;justify-content:center;min-height:44px;margin-top:2px;
+  font-family:var(--banner);font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--craie);
+  text-decoration:none}
 
 /* **L'allumage.** Une étape franchie depuis la dernière visite ne se contente
-   pas d'être verte : elle s'allume, une par une, avec un temps entre chaque.
+   pas d'être cochée : elle s'allume, une par une, avec un temps entre chaque.
    C'est la récompense du détour par cet écran — et c'est aussi ce qui fait
    comprendre, sans une phrase, que la liste s'est cochée toute seule. */
 @keyframes allume{
@@ -116,23 +147,23 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .pas.neuf{animation:allume 1s cubic-bezier(.2,.9,.25,1) both}
 @media (prefers-reduced-motion:reduce){
   .pas.neuf{animation:none;outline:2px solid var(--vert);outline-offset:2px}
-  .rail i{transition:none}
 }
 /* Le même partage sous le mode calme du tiroir (contrat C4) : un sélecteur
    d'attribut n'entre pas dans une requête @media, d'où le double, règle pour
    règle. L'étape neuve se cerne de vert au lieu de s'allumer — elle reste
    repérable, sans bouger. */
 html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--vert);outline-offset:2px}
-html[data-calme~="animations"] .rail i{transition:none}
 
 /* ============================================================== la FAQ */
-.rub{margin:16px 14px 0}
+.rub{margin:16px 0 0}
 /* Le titre de rubrique est cousu (`.tbf-cousu`, dans ui.css) : il ne reste
    ici que sa place. */
 .rub h2{margin:0 0 8px;padding-left:2px}
 .qa{border:1px solid var(--trait);border-radius:12px;background:var(--panneau);
   margin-bottom:8px;overflow:hidden}
-.qa summary{padding:12px 14px;font-size:13px;line-height:1.45;cursor:pointer;
+/* Quarante-quatre pixels au moins : une question d'une ligne en faisait
+   quarante-trois, un de moins que la pulpe du doigt. */
+.qa summary{padding:12px 14px;min-height:44px;font-size:13px;line-height:1.45;cursor:pointer;
   list-style:none;display:flex;gap:10px;align-items:flex-start}
 .qa summary::-webkit-details-marker{display:none}
 .qa summary::after{content:'+';margin-left:auto;font-family:var(--banner);font-size:17px;
@@ -141,16 +172,10 @@ html[data-calme~="animations"] .rail i{transition:none}
 .qa[open] summary{background:rgba(255,255,255,.03)}
 .qa .r{padding:0 14px 14px;font-size:12.5px;line-height:1.65;opacity:.9}
 
-.tabs{margin-top:14px}
-/* Posé sur la photo quand personne n'est connecté : il a son panneau. */
-.vide{margin:24px 14px;padding:18px 16px;text-align:center;font-size:12.5px;line-height:1.6;opacity:.9;
+/* Posé sur la photo quand personne n'est connecté : il a son panneau. La
+   craie pleine, plus à 90 % : voilée, elle tombait à 4,1:1 au soleil. */
+.vide{margin:24px 0;padding:18px 16px;text-align:center;font-size:12.5px;line-height:1.6;
   background:var(--panneau);border:1px solid var(--trait);border-radius:14px}
-.fini{margin:12px 14px 0;padding:16px;border-radius:14px;text-align:center;
-  border:1px solid rgba(30,158,106,.45);
-  background:linear-gradient(140deg,rgba(30,158,106,.16),rgba(30,158,106,0) 70%),var(--panneau)}
-.fini b{display:block;font-family:var(--banner);font-size:17px;letter-spacing:.1em;
-  margin-bottom:6px}
-.fini p{margin:0;font-size:12.5px;line-height:1.55;opacity:.9}
 
 /* **Le bas de la page, et la barre du navigateur mobile.**
 
@@ -176,21 +201,23 @@ html[data-calme~="animations"] .rail i{transition:none}
 </head>
 <body>
 <main id="app">
-  <p class="tbf-sous">Ce qu’il y a à faire, et pourquoi</p>
+  <p class="tbf-sous">Ce qu’il y a à faire, et ce que ça rapporte</p>
 
-  <!-- Le rail à la craie de ce qui te concerne, le ton de cet écran sur l'accueil. -->
+  <!-- Le rail à la craie de ce qui te concerne, le ton de cet écran sur
+       l'accueil. DU JOUR et DE LA SAISON s'y ajoutent quand le serveur les
+       sert : jamais d'onglet vide. -->
   <div class="tabs tbf-onglets" data-ton="craie">
-    <button data-t="pas" class="tbf-onglet on">PREMIERS PAS</button>
-    <button data-t="faq" class="tbf-onglet">QUESTIONS</button>
+    <button type="button" data-t="pas" class="tbf-onglet on" aria-pressed="true">PREMIERS PAS</button>
+    <button type="button" data-t="faq" class="tbf-onglet" aria-pressed="false">QUESTIONS</button>
   </div>
 
   <div id="vue"><div class="tbf-spin"></div></div>
 </main>
-<!-- Les cinq bibliothèques de dessin, **sans `defer`** : `cardHTML` les lit de
-     façon synchrone au moment où la page écrit la vignette de la première
-     étape. Différées, elles arriveraient après, et la carte du joueur sortirait
-     sans son illustration ni son équipement. La même note vit en tête de
-     bienvenue.html, pour la même raison. -->
+<!-- Les bibliothèques de dessin, **sans `defer`** : la page lit le portrait
+     du premier Fanzzy et le dos de sa série de façon synchrone, au moment où
+     elle écrit la vignette des premières étapes. Différées, elles arriveraient
+     après, et la vignette retomberait sur son emblème. La même note vit en
+     tête de bienvenue.html, pour la même raison. -->
 <!-- Le dictionnaire des effets, avant tout ce qui en affiche. Il ne depend
      de rien et ne charge rien : voir son en-tete. -->
 <script src="/mods.js"></script>
@@ -200,41 +227,88 @@ html[data-calme~="animations"] .rail i{transition:none}
 <script src="/fanzzy-fond.js"></script>
 <script src="/cartes.js"></script>
 <script src="/fx.js" defer></script>
+<!-- La fête de niveau, après fx.js : une mission récupérée peut verser
+     l'XP qui fait monter d'un niveau (le contrat, § 1). -->
+<script src="/niveau-fete.js" defer></script>
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>
 <script>
-/* L'écran d'aide.
+/* L'écran des missions (`/aide`).
  *
  * ## Ce qu'il fait, et ce qu'il ne fait pas
  *
- * Il **montre** l'état du parcours, il ne le tient pas. Chaque étape est cochée
- * ou non par le serveur, qui le lit dans ce que le joueur possède — voir
- * `src/server/aide/index.js`. La page n'a donc aucun moyen de cocher quoi que
- * ce soit, et c'est la garantie qui fait tenir tout le reste : un tutoriel
- * qu'on traverse en appuyant sur « suivant » n'apprend rien.
+ * Il **montre** ce qu'il y a à faire et ce que ça rapporte, il ne le tient
+ * pas. Quatre rails, et deux seulement sont toujours là :
+ *
+ *   — DU JOUR : le bonus de présence, les trois missions, le sachet, et ce
+ *     qui reste à récupérer d'hier (`GET /api/quotidien`, CONTRATS.md § 6) ;
+ *   — DE LA SAISON : le carnet de tampons, le relais, la saison passée
+ *     (le même bloc) ;
+ *   — PREMIERS PAS : le parcours, coché par le serveur dans ce que le joueur
+ *     possède (`src/server/aide/index.js`) ;
+ *   — QUESTIONS : la FAQ, lisible sans compte.
+ *
+ * **Ce que la réponse porte décide de ce qui s'affiche.** Un serveur d'avant
+ * le quotidien répond 404, l'interrupteur coupé répond `{ actif: false }` :
+ * ni DU JOUR ni DE LA SAISON, ni erreur ni zéro (R1, R2). Rien ne se coche
+ * en cliquant : RÉCUPÉRER demande au serveur, qui recompte et verse — la page
+ * ne fait que montrer la réponse (R6), et le versement des premiers pas, que
+ * le serveur ne propose pas à la demande, reste silencieux et le ticket le dit.
  *
  * ## Ce que le navigateur retient, et pourquoi si peu
  *
- * Une seule chose : **combien d'étapes étaient faites la dernière fois**. Elle
- * ne sert qu'à l'animation — savoir lesquelles allumer en arrivant. Si elle est
- * perdue, effacée ou lue dans un autre navigateur, il ne se passe rien de
- * fâcheux : l'écran s'affiche complet, sans cérémonie. C'est la règle qu'on
- * s'impose pour tout ce qui vit dans le navigateur ici — de l'agrément, jamais
- * de l'état.
+ * Deux choses. **Combien d'étapes étaient faites la dernière fois** : elle ne
+ * sert qu'à l'animation — savoir lesquelles allumer en arrivant. Perdue, il
+ * ne se passe rien de fâcheux : l'écran s'affiche complet, sans cérémonie.
+ * Et **le compte de la pastille MISSIONS** (R10), que la barre et le tiroir
+ * lisent pour ne jamais appeler la route eux-mêmes. De l'agrément, jamais de
+ * l'état.
  */
 (() => {
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
     (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+  /* Un entier positif ou zéro : tout ce que le contrat compte l'est, et une
+     valeur illisible ne doit jamais s'écrire « NaN » ni « -1 ». */
+  const entier = (v) => {
+    const n = Math.floor(Number(v));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
 
   const MEMOIRE = 'tbf.parcours';
+  const PASTILLE = 'tbf-quotidien';
+
   let onglet = 'pas';
   let parcours = null;
   let laFaq = null;
+  /** L'état du jour, seulement s'il est actif : `null` veut dire « rien de quotidien ». */
+  let Q = null;
+  /** L'instant (horloge de la page) de la dernière lecture, et la fin du jour qu'elle a dite. */
+  let luA = 0;
+  let finJour = null;
+  /** L'identifiant du joueur, qui signe la clé de la pastille (R10). */
+  let qui = null;
+  /** Une réclamation à la fois : deux appuis rapides ne font qu'une demande. */
+  let occupe = false;
+  /** Le ticket qui vient d'être récupéré (son tampon claque) ou changé (il se colle). */
+  let clac = null;
+  let colle = null;
+  /** Les sources que le serveur a dites coupées (`inactif`) : leur bouton se retire. */
+  const eteintes = new Set();
 
-  /* Les emblèmes des étapes qui n'ont pas de vrai visuel à montrer. Dessinés et
-     non photographiés : trois traits se lisent à quatre-vingt-seize pixels, une
-     image de stade n'y est qu'une tache. */
+  /* La question « qui es-tu ? », une seule fois par page : la barre la pose
+     sous le même nom et reprend la nôtre (voir nav.js). Même forme de
+     réponse, pour que l'un ou l'autre puisse passer le premier. */
+  const moi = (window.TBF_MOI ??= fetch('/api/auth/me', { credentials: 'same-origin' })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => j?.user ?? null)
+    .catch(() => null));
+
+  /* ================================================================ dessins */
+
+  /* Les emblèmes de ce qui n'a pas de vrai visuel à montrer. Dessinés et non
+     photographiés : trois traits se lisent à quarante-six pixels, une image de
+     stade n'y est qu'une tache. */
   const EMBLEMES = {
     deck: 'M4 7h10v13H4zM8 4h10v13M17 15h4M17 18h4',
     corde: 'M2 12c4-5 6 5 10 0s6 5 10 0M12 4v3M12 17v3',
@@ -242,57 +316,402 @@ html[data-calme~="animations"] .rail i{transition:none}
     ages: 'M5 20V9l4-4 4 4v11M13 20V13l3-3 3 3v7M3 20h18',
     dos: 'M4 8h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM4 8l1.5-4h13L20 8M9 4v4M15 4v4',
     carte: 'M5 3h14v18H5zM9 8h6M9 12h6M9 16h3',
+    tampon: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7.5l1.4 2.9 3.1.4-2.3 2.2.6 3.1-2.8-1.5-2.8 1.5.6-3.1-2.3-2.2 3.1-.4z',
+    cible: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M12 11.5v1',
   };
   const embleme = (cle) =>
-    `<svg viewBox="0 0 24 24"><path d="${EMBLEMES[cle] ?? EMBLEMES.carte}"/></svg>`;
+    `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${EMBLEMES[cle] ?? EMBLEMES.carte}"/></svg>`;
+  /* Une image de vignette, et l'emblème qui la remplace si elle ne répond
+     pas (voir l'écoute des erreurs, plus bas) : jamais un cadre vide. */
+  const image = (src, repli) => `<img src="${esc(src)}" alt="" data-repli="${esc(repli)}">`;
 
   /**
-   * Le visuel d'une étape.
-   *
-   * Les deux premières montrent une **vraie** chose du jeu : la carte que le
-   * joueur possède, et le dos de booster de la série ouverte. Les quatre autres
-   * n'ont rien de vrai à montrer tant que le joueur ne l'a pas fait — un deck
-   * vide, une corde à l'arrêt — et prennent donc un emblème.
-   *
-   * Tout repli mène à l'emblème, jamais à un trou : cet écran est celui qu'on
-   * ouvre quand le reste va mal, et une vignette vide y serait lue comme une
-   * panne de plus.
+   * La vignette d'une mission, **par l'endroit où elle se fait**, et à défaut
+   * par sa difficulté (le contrat, § 6.1) : la page n'a jamais besoin de
+   * connaître la mission pour la montrer.
    */
+  function vignetteMission(x) {
+    switch (x?.ou) {
+      case '/boosters': return embleme('dos');
+      case '/duel-nvn': return image('/img/stuff/sifflet.webp', 'duel');
+      case '/virage': return image('/img/stuff/megaphone.webp', 'corde');
+      case '/fanzzy': return embleme('ages');
+      default: return embleme('cible');
+    }
+  }
+
   function maCarte() {
     try { return window.TBF_CARTES?.BY_ID?.get(parcours?.carteId) ?? null; }
     catch { return null; }
   }
 
-  function visuel(e) {
+  /**
+   * La vignette d'une étape des premiers pas.
+   *
+   * Les deux premières montrent une **vraie** chose du jeu : le portrait du
+   * Fanzzy que le joueur a choisi, et le dos de booster de sa série. Les quatre
+   * autres n'ont rien de vrai à montrer tant que le joueur ne l'a pas fait —
+   * un deck vide, une corde à l'arrêt — et prennent donc un emblème.
+   *
+   * Tout repli mène à l'emblème, jamais à un trou : cet écran est celui qu'on
+   * ouvre quand le reste va mal, et une vignette vide y serait lue comme une
+   * panne de plus.
+   */
+  function vignettePas(e) {
     try {
-      const f = maCarte();
-      if (e.visuel === 'carte' && f) return window.TBF_CARTES.cardHTML(f);
-      if (e.visuel === 'dos' && f?.set) {
-        const src = window.FZART?.dos?.(f.set);
-        if (src) return `<img src="${esc(src)}" alt="">`;
+      if (e.visuel === 'carte' && parcours?.carteId) {
+        const src = window.FZART?.adresse?.(parcours.carteId, 'buste');
+        if (src) return image(src, 'carte');
+      }
+      if (e.visuel === 'dos') {
+        const f = maCarte();
+        const src = f?.set ? window.FZART?.dos?.(f.set) : null;
+        if (src) return image(src, 'dos');
       }
     } catch { /* le catalogue n'a pas chargé : l'emblème fait le travail */ }
     return embleme(e.visuel);
   }
 
-  const PAS = (e, i) => `<article class="pas${e.fait ? ' ok' : ''}" data-cle="${esc(e.cle)}">
-      <div class="tete">
-        <span class="num">${e.fait ? '<i class="tbf-ico tbf-ico-coche" aria-hidden="true"></i>' : i + 1}</span>
-        <span class="nom">${esc(e.titre).toUpperCase()}</span>
-        <span class="etat">${e.fait ? 'FAIT' : 'À FAIRE'}</span>
-      </div>
-      <div class="corps">
-        <div class="vign">${visuel(e)}${e.fait ? '' : '<span class="cadenas">PAS ENCORE</span>'}</div>
-        <div class="texte">
-          <p>${esc(e.quoi)}</p>
-          <p class="pourquoi">${esc(e.pourquoi)}</p>
+  /**
+   * Ce qu'un gain rapporte, en stickers : seulement les valeurs non nulles
+   * (R5), avec leur signe. Les écharpes ont leur jeton ; le reste s'écrit en
+   * mots, qui se lisent sans légende.
+   */
+  function gainHTML(g) {
+    const e = entier(g?.echarpes);
+    const p = entier(g?.packs);
+    const x = entier(g?.xp);
+    const t = entier(g?.tampons);
+    return (e ? `<span class="tbf-sticker tbf-sticker--prix" title="${e} écharpes">`
+        + `<img src="/img/gains/echarpes.webp" alt="">+${e}</span>` : '')
+      + (p ? `<span class="tbf-sticker">+${p} BOOSTER${p > 1 ? 'S' : ''}</span>` : '')
+      + (x ? `<span class="tbf-sticker">+${x} XP</span>` : '')
+      + (t ? `<span class="tbf-sticker">+${t} TAMPON${t > 1 ? 'S' : ''}</span>` : '');
+  }
+
+  /** La progression d'un ticket : l'écharpe fine et le compte. */
+  function jaugeHTML(fait, cible) {
+    const c = Math.max(1, entier(cible));
+    const f = Math.min(entier(fait), c);
+    return `<span class="tbf-mission-jauge"><span class="tbf-jauge tbf-jauge--fine">`
+      + `<i style="width:${Math.round((f / c) * 100)}%"></i></span>${f}/${c}</span>`;
+  }
+
+  /* Le tampon FAIT, qui claque s'il vient d'être gagné sous les yeux. */
+  const fait = (cle, mot = 'FAIT') =>
+    `<span class="tbf-tampon${clac === cle ? ' tbf-clac' : ''}" data-ton="vert">${mot}</span>`;
+  const colleSi = (cle) => (colle === cle ? ' tbf-colle' : '');
+
+  /* Un chemin du jeu, et rien d'autre : le serveur sert `ou`, la page ne
+     pose jamais dans un lien ce qui n'est pas une adresse de ce site. */
+  const chemin = (ou) => (typeof ou === 'string' && /^\/[a-z0-9/-]*$/i.test(ou) ? ou : null);
+
+  /* ================================================================ DU JOUR */
+
+  /* Un rail n'existe que s'il a quelque chose à montrer : un bloc servi mais
+     vide ne fait pas un onglet (« pas d'onglet vide »). */
+  const listeDe = (l) => (Array.isArray(l) ? l : []);
+  const pretsDe = (l) => listeDe(l).filter((x) => x?.etat === 'pret');
+  const aJour = () => {
+    const m = Q?.missions;
+    return Boolean(m && (listeDe(m.liste).length || pretsDe(m.hier?.liste).length
+      || m.hier?.sachet?.etat === 'pret'));
+  };
+  const aSaison = () => Boolean(Q && (listeDe(Q.carnet?.paliers).length || Q.relais
+    || pretsDe(Q.saisonPassee?.paliers).length));
+
+  /** Ce qui est prêt dans un rail, et qui porte un RÉCUPÉRER à l'écran :
+      le compte or de son onglet ne promet rien que la page ne montre. */
+  const peut = (sorte) => !eteintes.has(sorte);
+  function compteJour() {
+    const m = Q?.missions;
+    if (!aJour()) return 0;
+    return (Q.bonus?.pret === true && peut('bonus') ? 1 : 0)
+      + (peut('mission') ? pretsDe(m.liste).length + pretsDe(m.hier?.liste).length : 0)
+      + (peut('sachet') ? (m.sachet?.etat === 'pret' ? 1 : 0) + (m.hier?.sachet?.etat === 'pret' ? 1 : 0) : 0);
+  }
+  function compteSaison() {
+    if (!aSaison()) return 0;
+    return (peut('carnet') ? pretsDe(Q.carnet?.paliers).length + pretsDe(Q.saisonPassee?.paliers).length : 0)
+      + (Q.relais && peut('relais') ? 1 : 0);
+  }
+
+  /**
+   * Le bonus du jour : la carte de présence de la semaine (brique « le bonus
+   * du jour et la série »). Les cases avant celle du jour sont prises, celle
+   * du jour est or tant qu'elle attend, les suivantes à venir ; la case qui
+   * donne un booster porte le sachet.
+   */
+  function ticketBonus() {
+    const b = Q.bonus;
+    const c = b.carte ?? {};
+    const cases = Math.min(entier(c.cases) || 7, 7);
+    const ici = Math.min(Math.max(entier(c.case), 1), cases);
+    const montants = Array.isArray(c.montants) ? c.montants : [];
+    const pret = b.pret === true && !eteintes.has('bonus');
+    const noeuds = Array.from({ length: cases }, (_, i) => {
+      const k = i + 1;
+      let etat = '';
+      if (k < ici || (k === ici && c.prise === true)) etat = 'pris';
+      else if (k === ici && pret) etat = 'ici';
+      return `<i${etat ? ` data-etat="${etat}"` : ''}${entier(montants[i]?.packs) ? ' data-booster' : ''}></i>`;
+    }).join('');
+    /* « 5ᵉ JOUR D'AFFILÉE » à partir de trois jours, et rien quand la série
+       retombe : aucun écran ne prévient d'une perte (le contrat, § 6.1). */
+    const jours = entier(Q.serie?.jours);
+    const serie = jours >= 3 ? `<em>${jours}ᵉ JOUR D’AFFILÉE</em>` : '';
+    const geste = pret
+      ? '<button type="button" class="tbf-plaque" data-ton="or" data-geste="bonus">RÉCUPÉRER</button>'
+      : (c.prise === true ? fait('bonus', 'PRIS') : '');
+    return `<div class="tbf-ticket tbf-bonus" data-cle="bonus">
+        <div class="tbf-bonus-corps">
+          <b class="tbf-bonus-titre">BONUS DU JOUR ${gainHTML(pret ? b.gain : montants[ici - 1])}</b>
+          <span class="tbf-serie" role="img" aria-label="Jour ${ici} sur ${cases}">${noeuds}${serie}</span>
+        </div>${geste}</div>`;
+  }
+
+  /**
+   * Une mission. Prête, elle porte RÉCUPÉRER ; récupérée, le tampon FAIT ;
+   * en cours, **tout le ticket mène où elle se fait**, et le libellé du geste
+   * (`bouton`, servi) le dit dans la case d'action.
+   *
+   * `jour`, `rang` et `id` identifient la ligne affichée (§ 6.2) : le serveur
+   * ne s'en sert jamais pour un montant.
+   */
+  function ticketMission(x, jour, duJour) {
+    const cle = `mission:${jour}:${x.rang}`;
+    const corps = `<span class="tbf-mission-vignette">${vignetteMission(x)}</span>
+        <b class="tbf-mission-titre">${esc(x.titre)}</b>
+        ${jaugeHTML(x.fait, x.cible)}
+        <span class="tbf-mission-gain">${gainHTML(x.gain)}</span>`;
+    if (x.etat === 'pret') {
+      const geste = eteintes.has('mission') ? ''
+        : `<button type="button" class="tbf-plaque" data-ton="or" data-geste="mission"
+            data-jour="${esc(jour)}" data-rang="${entier(x.rang)}" data-id="${esc(x.id)}"
+            data-titre="${esc(x.titre)}">RÉCUPÉRER</button>`;
+      return `<article class="tbf-ticket tbf-mission${colleSi(cle)}" data-etat="pret" data-cle="${esc(cle)}">${corps}${geste}</article>`;
+    }
+    if (x.etat === 'reclamee') {
+      return `<article class="tbf-ticket tbf-mission" data-etat="reclamee" data-cle="${esc(cle)}">${corps}${fait(cle)}</article>`;
+    }
+    const ou = chemin(x.ou);
+    const ticket = ou
+      ? `<a class="tbf-ticket tbf-mission${colleSi(cle)}" data-etat="en_cours" data-cle="${esc(cle)}" href="${esc(ou)}">${corps}
+          <small class="tbf-mission-note">${esc(x.bouton || 'Y aller').toUpperCase()} ›</small></a>`
+      : `<article class="tbf-ticket tbf-mission${colleSi(cle)}" data-etat="en_cours" data-cle="${esc(cle)}">${corps}</article>`;
+    /* Le changement : seulement aujourd'hui, seulement si le serveur dit
+       qu'il est possible pour cette ligne, et qu'il en reste. */
+    const relances = entier(Q.missions?.relances);
+    if (!duJour || x.relancable !== true || !relances || eteintes.has('relance')) return ticket;
+    return `<div class="une">${ticket}
+        <button type="button" class="relancer" data-geste="relance" data-rang="${entier(x.rang)}"
+          data-id="${esc(x.id)}" data-titre="${esc(x.titre)}" data-difficulte="${esc(x.difficulte)}"
+          aria-label="Changer cette mission : ${relances} changement${relances > 1 ? 's' : ''} possible${relances > 1 ? 's' : ''} aujourd’hui"
+          >CHANGER DE MISSION (${relances})</button></div>`;
+  }
+
+  /**
+   * Le sachet : il se gagne quand toutes les missions du jour sont
+   * récupérées. Tant qu'elles ne le sont pas, il est **fermé** — le cadenas
+   * de la brique : vignette au parpaing sous le scotch en croix, et la jauge
+   * dit combien il en reste. La croix ne couvre que le dessin (amendement 19).
+   */
+  function ticketSachet(s, jour, duJour) {
+    const cle = `sachet:${jour}`;
+    const sur = entier(s.sur);
+    const titre = duJour
+      ? (sur > 1 ? `Récupère les ${sur} missions du jour` : 'Récupère la mission du jour')
+      : 'Le sachet d’hier';
+    const ferme = s.etat !== 'pret' && s.etat !== 'reclame';
+    const corps = `<span class="tbf-mission-vignette">${embleme('dos')}${ferme
+      ? '<span class="tbf-scotch tbf-scotch--croix" aria-hidden="true"></span>' : ''}</span>
+        <b class="tbf-mission-titre">${esc(titre)}</b>
+        ${sur ? jaugeHTML(s.faites, sur) : ''}
+        <span class="tbf-mission-gain">${gainHTML(s.gain)}</span>`;
+    if (s.etat === 'pret') {
+      const geste = eteintes.has('sachet') ? ''
+        : `<button type="button" class="tbf-plaque" data-ton="or" data-geste="sachet"
+            data-jour="${esc(jour)}" data-titre="Toutes les missions">RÉCUPÉRER</button>`;
+      return `<article class="tbf-ticket tbf-mission" data-etat="pret" data-cle="${esc(cle)}">${corps}${geste}</article>`;
+    }
+    if (s.etat === 'reclame') {
+      return `<article class="tbf-ticket tbf-mission" data-etat="reclamee" data-cle="${esc(cle)}">${corps}${fait(cle)}</article>`;
+    }
+    return `<article class="tbf-ticket tbf-mission" data-etat="verrouillee" data-cle="${esc(cle)}">${corps}</article>`;
+  }
+
+  /** « 5 h 12 », « 12 min » : la fin du jour de jeu, comptée par le serveur (R3). */
+  function duree(ms) {
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    if (h >= 1) return `${h} h ${String(m).padStart(2, '0')}`;
+    if (m >= 1) return `${m} min`;
+    return 'moins d’une minute';
+  }
+  const resteDuJour = () => (finJour ? finJour.ms - (performance.now() - finJour.t0) : null);
+
+  function vueJour() {
+    const m = Q.missions;
+    const liste = listeDe(m.liste);
+    const reste = resteDuJour();
+    const quand = reste > 0 ? `<i id="finJour">nouvelles dans ${duree(reste)}</i>` : '';
+    const hier = m.hier ?? null;
+    const hierListe = pretsDe(hier?.liste);
+    const hierSachet = hier?.sachet?.etat === 'pret' ? hier.sachet : null;
+
+    /* Ce que « fait » compte, et seulement ce qui concerne les missions du
+       jour : le serveur seul l'applique (§ 6.1) ; l'écran le dit pour qu'un
+       duel quitté ne passe pas pour un oubli. */
+    const unites = new Set(liste.map((x) => x?.unite));
+    const regles = [];
+    if (['duels', 'victoires'].some((u) => unites.has(u))) {
+      regles.push('Un duel compte s’il a duré au moins une minute et que tu ne l’as pas quitté.');
+    }
+    if (['chants', 'chants_par_mi_temps', 'competitions'].some((u) => unites.has(u))) {
+      regles.push('Les chants d’un match comptent pour le jour de son coup d’envoi.');
+    }
+
+    return `${Q.bonus && typeof Q.bonus === 'object' ? ticketBonus() : ''}
+      ${liste.length ? `<h2 class="tbf-cousu">LES MISSIONS${quand}</h2>
+      <div class="tbf-missions">
+        ${liste.map((x) => ticketMission(x, m.jour, true)).join('')}
+        ${m.sachet ? ticketSachet(m.sachet, m.jour, true) : ''}
+      </div>` : ''}
+      ${hierListe.length || hierSachet ? `<h2 class="tbf-cousu">D’HIER<i>encore à récupérer</i></h2>
+        <div class="tbf-missions">
+          ${hierListe.map((x) => ticketMission(x, hier.jour, false)).join('')}
+          ${hierSachet ? ticketSachet(hierSachet, hier.jour, false) : ''}
+        </div>` : ''}
+      ${regles.length ? `<div class="regle pan">${regles.map((r) => `<p>${esc(r)}</p>`).join('')}</div>` : ''}`;
+  }
+
+  /* ============================================================ DE LA SAISON */
+
+  /** Un palier du carnet : son seuil en tampons, ce qu'il donne, son état. */
+  function ticketPalier(p, saisonId, tampons) {
+    const cle = `carnet:${saisonId}:${entier(p.n)}`;
+    const seuil = Math.max(1, entier(p.tampons));
+    const recu = p.etat === 'pret' || p.etat === 'reclame' ? seuil : Math.min(entier(tampons), seuil);
+    const extra = (p.titre ? '<span class="tbf-sticker">TITRE</span>' : '')
+      + (p.insigne ? '<span class="tbf-sticker">INSIGNE</span>' : '');
+    const corps = `<span class="tbf-mission-vignette">${embleme('tampon')}</span>
+        <b class="tbf-mission-titre">${esc(p.nom)}</b>
+        ${jaugeHTML(recu, seuil)}
+        <span class="tbf-mission-gain">${gainHTML(p.gain)}${extra}</span>`;
+    if (p.etat === 'pret') {
+      const geste = eteintes.has('carnet') ? ''
+        : `<button type="button" class="tbf-plaque" data-ton="or" data-geste="carnet"
+            data-saison="${entier(saisonId)}" data-n="${entier(p.n)}" data-titre="${esc(p.nom)}">RÉCUPÉRER</button>`;
+      return `<article class="tbf-ticket tbf-mission" data-etat="pret" data-cle="${esc(cle)}">${corps}${geste}</article>`;
+    }
+    if (p.etat === 'reclame') {
+      return `<article class="tbf-ticket tbf-mission" data-etat="reclamee" data-cle="${esc(cle)}">${corps}${fait(cle)}</article>`;
+    }
+    return `<article class="tbf-ticket tbf-mission" data-etat="en_cours" data-cle="${esc(cle)}">${corps}</article>`;
+  }
+
+  const nomSaison = (s) => [s?.numero ? `SAISON ${entier(s.numero)}` : '', esc(s?.nom ?? '').toUpperCase()]
+    .filter(Boolean).join(' · ');
+
+  function vueSaison() {
+    const c = Q.carnet;
+    const out = [];
+
+    if (Q.relais) {
+      const r = Q.relais;
+      const geste = eteintes.has('relais') ? ''
+        : '<button type="button" class="tbf-plaque" data-ton="or" data-geste="relais" data-titre="Passage de relais">RÉCUPÉRER</button>';
+      out.push(`<div class="tbf-missions liste">
+          <article class="tbf-ticket tbf-mission" data-etat="pret" data-cle="relais">
+            <span class="tbf-mission-vignette">${image('/img/stuff/drapeau.webp', 'tampon')}</span>
+            <b class="tbf-mission-titre">Passage de relais</b>
+            ${entier(r.tampons) ? `<span class="tbf-mission-jauge">${entier(r.tampons)} TAMPONS</span>` : ''}
+            <span class="tbf-mission-gain">${gainHTML(r.gain)}</span>${geste}
+          </article></div>`);
+    }
+
+    if (c && Array.isArray(c.paliers)) {
+      const s = c.saison ?? {};
+      /* Le compte des jours vient de la saison datée (§ 7.1), que le
+         catalogue a déjà lue pour dessiner : aucune requête de plus. Il ne
+         s'écrit que pour la saison même du carnet, et jamais d'après
+         l'horloge du téléphone (R3). */
+      const datee = window.TBF_CARTES?.S?.saison;
+      let quand = '';
+      if (c.close === true) quand = 'saison finie';
+      else if (datee && Number(datee.id) === Number(s.id) && datee.finie !== true
+        && datee.joursRestants != null) {
+        const j = entier(datee.joursRestants);
+        quand = j > 1 ? `${j} jours` : j === 1 ? 'dernier jour' : '';
+      }
+      const tampons = entier(c.tampons);
+      const prochain = c.prochain ? c.paliers.find((p) => entier(p.n) === entier(c.prochain.n)) : null;
+      /* La jauge va du palier atteint au suivant : c'est la marche qu'on
+         monte, pas la saison entière. Tout atteint, elle est pleine. */
+      let part = 100;
+      if (prochain) {
+        const seuil = entier(prochain.tampons);
+        const avant = Math.max(0, ...c.paliers.map((p) => entier(p.tampons)).filter((t) => t < seuil));
+        part = seuil > avant ? Math.round(((tampons - avant) / (seuil - avant)) * 100) : 0;
+        part = Math.min(100, Math.max(0, part));
+      }
+      const manque = entier(c.prochain?.manque);
+      out.push(`<h2 class="tbf-cousu">${nomSaison(s) || 'LA SAISON'}${quand ? `<i>${esc(quand)}</i>` : ''}</h2>
+        <div class="tbf-ticket entete">
+          <div class="haut">
+            <b class="compte">${tampons}<small> TAMPON${tampons > 1 ? 'S' : ''}</small></b>
+            <span class="quoi">Le carnet</span>
+          </div>
+          <div class="tbf-jauge"><i style="width:${part}%"></i></div>
+          ${prochain && manque ? `<div class="pied"><small class="tbf-mission-note">ENCORE ${manque} AVANT « ${esc(prochain.nom).toUpperCase()} »</small></div>` : ''}
         </div>
-      </div>
-      ${e.fait ? '' : `<a class="tbf-plaque tbf-bloc aller" href="${esc(e.ou)}"
-        >${esc(e.bouton).toUpperCase()}</a>`}
-      ${e.fait || !e.repeter ? '' : `<a class="repet" href="/repetition"
-        >${esc(e.repeter)} ›</a>`}
-    </article>`;
+        <div class="tbf-missions liste">
+          ${c.paliers.map((p) => ticketPalier(p, s.id, tampons)).join('')}
+        </div>`);
+    }
+
+    const passee = Q.saisonPassee;
+    const restes = pretsDe(passee?.paliers);
+    if (restes.length) {
+      out.push(`<h2 class="tbf-cousu">${nomSaison(passee.saison) || 'LA SAISON PASSÉE'}<i>encore à récupérer</i></h2>
+        <div class="tbf-missions">
+          ${restes.map((p) => ticketPalier(p, passee.saison?.id, 0)).join('')}
+        </div>`);
+    }
+
+    /* Le classement de la saison, où se lisent les divisions (§ 5.2). Un
+       lien et pas un bloc : lire `/api/rank/moi` ici serait une requête
+       lourde de plus pour un écran qui ne les montre pas. */
+    out.push('<a class="lien" href="/classement">Le classement de la saison ›</a>');
+    return out.join('');
+  }
+
+  /* ============================================================ PREMIERS PAS */
+
+  /* Une étape : son ticket (la brique), FAIT en tampon ou À FAIRE en
+     sticker, puis l'explication sur un panneau, le geste qui y mène et, pour
+     les deux étapes de geste, la répétition. Une étape n'a pas de récompense
+     à elle : le booster est celui du parcours entier, dans l'en-tête. */
+  const PAS = (e) => {
+    const etat = e.fait
+      ? '<span class="etat tbf-tampon" data-ton="vert">FAIT</span>'
+      : '<span class="tbf-sticker etat">À FAIRE</span>';
+    const texte = `<p>${esc(e.quoi)}</p><p class="pourquoi">${esc(e.pourquoi)}</p>`;
+    return `<article class="pas${e.fait ? ' ok' : ''}" data-cle="${esc(e.cle)}">
+        <div class="tbf-ticket tbf-mission" data-etat="${e.fait ? 'reclamee' : 'en_cours'}">
+          <span class="tbf-mission-vignette">${vignettePas(e)}</span>
+          <b class="tbf-mission-titre nom">${esc(e.titre)}</b>
+          ${etat}
+        </div>
+        ${e.fait
+          ? `<details class="texte pan"><summary>Relire</summary>${texte}</details>`
+          : `<div class="texte pan">${texte}</div>`}
+        ${e.fait ? '' : `<a class="tbf-plaque tbf-bloc aller" href="${esc(chemin(e.ou) ?? '/')}"
+          >${esc(e.bouton).toUpperCase()}</a>`}
+        ${e.fait || !e.repeter ? '' : `<a class="repet" href="/repetition"
+          >${esc(e.repeter).toUpperCase()} ›</a>`}
+      </article>`;
+  };
 
   function vuePas() {
     if (!parcours) {
@@ -302,24 +721,42 @@ html[data-calme~="animations"] .rail i{transition:none}
     const { faites, total, etapes } = parcours;
     const reste = total - faites;
     const phrase = reste === 0
-      ? 'Tu as fait le tour. Le reste, c’est du jeu.'
+      ? (parcours.paye ? 'Tu as fait le tour, et ton booster t’attend au kiosque. Le reste, c’est du jeu.'
+        : 'Tu as fait le tour. Le reste, c’est du jeu.')
       : reste === 1
         ? 'Il t’en reste une. Elle ne se coche pas ici : elle se coche en la faisant.'
         : 'Rien ne se coche en cliquant. Chaque ligne s’allume quand tu l’as vraiment faite.';
 
-    return `<div class="entete">
+    /* La récompense du parcours : un booster à la fin, que le serveur verse
+       **sans qu'on le demande** — d'où « versé tout seul » et pas de
+       RÉCUPÉRER. `paye` vaut vrai aussi quand la base ne sait pas verser :
+       on ne promet alors rien qu'on ne tiendrait pas. */
+    const n = entier(parcours.recompense);
+    const fini = faites === total;
+    let gain = '';
+    let pied = '';
+    if (n && !parcours.paye) {
+      gain = `<span class="tbf-sticker">+${n} BOOSTER${n > 1 ? 'S' : ''}</span>`;
+      pied = '<small class="tbf-mission-note">Versé tout seul à la fin</small>';
+    } else if (n && fini) {
+      gain = `<span class="tbf-sticker">+${n} BOOSTER${n > 1 ? 'S' : ''}</span>`;
+      pied = fait('parcours', 'VERSÉ');
+    }
+
+    return `<div class="tbf-ticket entete">
         <div class="haut">
-          <span class="compte">${faites}<small>/${total}</small></span>
+          <b class="compte">${faites}<small>/${total}</small></b>
           <span class="quoi">Premiers pas</span>
+          ${gain}
         </div>
-        <div class="rail"><i id="jauge"></i></div>
-        <p class="phrase">${esc(phrase)}</p>
+        <div class="tbf-jauge" data-crans="${Math.min(Math.max(total, 2), 10)}"><i id="jauge"></i></div>
+        ${pied ? `<div class="pied">${pied}</div>` : ''}
       </div>
-      ${faites === total && parcours.paye ? `<div class="fini">
-        <b>TOUT EST FAIT</b>
-        <p>Ton booster a été versé. Il t’attend au kiosque.</p></div>` : ''}
-      ${etapes.map(PAS).join('')}`;
+      <p class="phrase pan">${esc(phrase)}</p>
+      <div class="tbf-missions liste">${etapes.map(PAS).join('')}</div>`;
   }
+
+  /* ================================================================ la FAQ */
 
   function vueFaq() {
     if (!laFaq) return '<div class="tbf-spin"></div>';
@@ -331,6 +768,370 @@ html[data-calme~="animations"] .rail i{transition:none}
           </details>`).join('')}
       </section>`).join('') + '<div style="height:26px"></div>';
   }
+
+  /* ============================================================== le rendu */
+
+  function disponibles() {
+    return [aJour() && 'jour', aSaison() && 'saison', 'pas', 'faq'].filter(Boolean);
+  }
+
+  /**
+   * Le rail. DU JOUR et DE LA SAISON n'existent que si la réponse les porte,
+   * avec le compte or de ce qui y est prêt (jamais un compte nul). « SAISON »
+   * et non « DE LA SAISON » : à 360 px, les quatre onglets se partagent la
+   * largeur du rail, et « DE LA SAISON » avec son compte n'y tient pas — le
+   * mot serait coupé.
+   */
+  function rendreRail() {
+    const mots = { jour: 'DU JOUR', saison: 'SAISON', pas: 'PREMIERS PAS', faq: 'QUESTIONS' };
+    const comptes = { jour: compteJour(), saison: compteSaison() };
+    document.querySelector('.tabs').innerHTML = disponibles().map((t) => {
+      const n = comptes[t] ?? 0;
+      return `<button type="button" data-t="${t}" class="tbf-onglet${t === onglet ? ' on' : ''}"
+        aria-pressed="${t === onglet}"
+        >${mots[t]}${n ? `<b class="tbf-onglet-n" data-ton="or">${n}</b>` : ''}</button>`;
+    }).join('');
+  }
+
+  function rendre() {
+    if (!disponibles().includes(onglet)) onglet = aJour() ? 'jour' : 'pas';
+    rendreRail();
+    $('vue').innerHTML = onglet === 'jour' ? vueJour()
+      : onglet === 'saison' ? vueSaison()
+        : onglet === 'pas' ? vuePas() : vueFaq();
+    clac = null;
+    colle = null;
+    if (onglet !== 'pas' || !parcours) return;
+    const { faites, total } = parcours;
+    /* La jauge part de zéro à chaque rendu et s'anime vers sa valeur : une barre
+       déjà pleine à l'affichage ne se remarque pas, et c'est précisément elle
+       qu'on est venu voir. Au calme, la feuille la fait sauter. */
+    requestAnimationFrame(() => {
+      const j = $('jauge');
+      if (j) j.style.width = `${Math.round((faites / total) * 100)}%`;
+    });
+    montrerPas();
+  }
+
+  /* Les étapes franchies depuis la dernière fois qu'on a **vu** la liste.
+     Quand le rail s'ouvre sur DU JOUR, l'allumage attend que le joueur
+     ouvre PREMIERS PAS, et la mémoire attend avec lui : sinon il serait
+     consommé sur un écran que personne ne regardait. */
+  let allumage = null;
+  function montrerPas() {
+    if (!allumage) return;
+    const { neuves, premiere } = allumage;
+    allumage = null;
+    try {
+      localStorage.setItem(MEMOIRE,
+        JSON.stringify(parcours.etapes.filter((e) => e.fait).map((e) => e.cle)));
+    } catch { /* navigation privée : on se passe de l'animation */ }
+    /* **Rien du tout la première fois.** Un joueur qui arrive avec une étape
+       déjà cochée — le paquet de bienvenue lui a donné ses Fanzzy — n'a rien
+       franchi : lui allumer une case serait le féliciter pour ce qu'il n'a
+       pas fait. On n'allume que ce qui a changé sous ses yeux à lui. */
+    if (!premiere) allumer(neuves);
+  }
+
+  /* Une vignette qui ne répond pas laisse la place à son emblème. Les
+     erreurs d'image ne remontent pas : on les prend à la descente. */
+  $('vue').addEventListener('error', (ev) => {
+    const img = ev.target;
+    if (img?.tagName === 'IMG' && img.closest('.tbf-mission-vignette')) {
+      img.outerHTML = embleme(img.dataset.repli);
+    }
+  }, true);
+  /* Le claquement d'un tampon et le collage d'un ticket se retirent à leur
+     fin : laissés, ils ne rejoueraient plus (lot 1). */
+  $('vue').addEventListener('animationend', (ev) => {
+    ev.target.classList?.remove('tbf-clac', 'tbf-colle');
+  });
+
+  document.querySelector('.tabs').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-t]');
+    if (!b || b.dataset.t === onglet) return;
+    onglet = b.dataset.t;
+    /* L'onglet se garde dans l'adresse : un rechargement, ou un lien venu du
+       hub (« /aide#jour »), rouvre le même. */
+    try { history.replaceState(null, '', `#${onglet}`); } catch { /* sans historique : tant pis */ }
+    rendre();
+    if (onglet === 'faq' && !laFaq) chargerFaq();
+  });
+
+  async function chargerFaq() {
+    try {
+      const d = await fetch('/api/aide/faq').then((r) => r.json());
+      laFaq = Array.isArray(d?.rubriques) ? d.rubriques : [];
+    } catch { laFaq = []; }
+    if (onglet === 'faq') rendre();
+  }
+
+  /* ============================================================ le quotidien */
+
+  /**
+   * Lire l'état du jour. 404, 503, 401, réseau, `{ actif: false }` : tout
+   * vaut « rien de quotidien » (R2), et rien ne s'écrit en console.
+   */
+  const lireQuotidien = () => fetch('/api/quotidien', { credentials: 'same-origin' })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => (j?.actif === true ? j : null))
+    .catch(() => null);
+
+  /**
+   * Prendre un état du jour, d'une lecture ou d'une réclamation.
+   *
+   * Un bloc mal formé est un bloc absent : la page ne doit jamais lever sur
+   * une réponse qu'elle ne comprend pas, ni montrer un rail vide.
+   */
+  function appliquer(q) {
+    Q = q?.actif === true ? { ...q } : null;
+    if (Q?.missions && !Array.isArray(Q.missions.liste)) delete Q.missions;
+    if (Q?.carnet && !Array.isArray(Q.carnet.paliers)) delete Q.carnet;
+    if (Q?.bonus && typeof Q.bonus !== 'object') delete Q.bonus;
+    luA = performance.now();
+    const ms = Number(Q?.finDuJourMs);
+    finJour = Q && Number.isFinite(ms) && ms >= 0 ? { ms, t0: luA } : null;
+    retenirPastille();
+  }
+
+  /**
+   * La pastille MISSIONS (R10) : la barre et le tiroir lisent ce compte
+   * signé du joueur, et n'appellent jamais la route. Sans état du jour, la
+   * clé s'efface : une pastille ne doit pas survivre à ce qui la justifie.
+   */
+  function retenirPastille() {
+    try {
+      if (Q && qui != null) {
+        sessionStorage.setItem(PASTILLE,
+          JSON.stringify({ qui, t: Date.now(), aReclamer: entier(Q.aReclamer) }));
+      } else {
+        sessionStorage.removeItem(PASTILLE);
+      }
+    } catch { /* stockage fermé : pas de pastille, et rien d'autre ne change */ }
+  }
+
+  /** Relire le serveur : à minuit de jeu, au retour sur l'onglet, après un refus. */
+  async function relire() {
+    if (occupe) return;
+    appliquer(await lireQuotidien());
+    if (onglet === 'jour' || onglet === 'saison') rendre();
+    else rendreRail();
+  }
+
+  /* La fin du jour, décomptée sur l'horloge de la page et non sur celle du
+     téléphone (R3) ; à zéro, on relit au lieu de conclure. Une minute de
+     précision suffit à « nouvelles dans 5 h 12 ». */
+  setInterval(() => {
+    if (document.hidden || !finJour) return;
+    const reste = resteDuJour();
+    if (reste <= 0) { finJour = null; relire(); return; }
+    const el = $('finJour');
+    if (el) el.textContent = `nouvelles dans ${duree(reste)}`;
+  }, 20000);
+  /* Au retour sur l'onglet, l'état a pu changer ailleurs (une mission faite
+     dans un autre onglet, minuit passé) : on relit, au plus toutes les
+     trente secondes. */
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && Q && performance.now() - luA > 30000) relire();
+  });
+
+  /* ============================================================ les gestes */
+
+  let pileEl = null;
+  function pile() {
+    pileEl = document.querySelector('.tbf-pile') ?? pileEl;
+    if (!pileEl || !pileEl.isConnected) {
+      pileEl = document.createElement('div');
+      pileEl.className = 'tbf-pile';
+      document.body.appendChild(pileEl);
+    }
+    return pileEl;
+  }
+  /** Une information ou une erreur : une bande de parpaing, jamais un ticket. */
+  function toast(texte, erreur = false) {
+    const t = document.createElement('div');
+    t.className = `tbf-toast${erreur ? ' tbf-toast--erreur' : ''}`;
+    t.setAttribute('role', erreur ? 'alert' : 'status');
+    t.textContent = texte;
+    pile().appendChild(t);
+    setTimeout(() => t.remove(), 3200);
+  }
+
+  /**
+   * Le compteur de la barre vers lequel vole un gain : le jeton de la
+   * monnaie s'il est à l'écran (bande dépliée, ou à partir de 560 px), sinon
+   * l'avatar, qui l'est toujours. Rien à viser : rien ne vole.
+   */
+  function cibleCompteur(sorte) {
+    const hud = document.querySelector('.tbf-hud');
+    if (!hud) return null;
+    const m = hud.querySelectorAll('.tbf-monnaie')[sorte === 'packs' ? 1 : 0];
+    if (m && getComputedStyle(m).visibility === 'visible' && m.getBoundingClientRect().height > 0) return m;
+    return hud.querySelector('.tbf-avatar');
+  }
+
+  /**
+   * Le ticket de gain (brique « le ticket de gain ») : le jeton, le chiffre
+   * qui compte, le nom de la monnaie, d'où elle vient, le tampon. Le reste
+   * du gain suit l'origine (« Gagne un duel · +40 XP »), seulement ce qui
+   * n'est pas nul. Le jeton vole ensuite vers son compteur.
+   */
+  async function ticketGain(g, origine) {
+    const v = { echarpes: entier(g?.echarpes), packs: entier(g?.packs), xp: entier(g?.xp), tampons: entier(g?.tampons) };
+    const MOTS = {
+      echarpes: () => 'ÉCHARPES',
+      packs: (n) => (n > 1 ? 'BOOSTERS' : 'BOOSTER'),
+      xp: () => 'XP',
+      tampons: (n) => (n > 1 ? 'TAMPONS' : 'TAMPON'),
+    };
+    const sorte = ['echarpes', 'packs', 'xp', 'tampons'].find((k) => v[k]);
+    if (!sorte) return;
+    const autres = ['packs', 'xp', 'tampons'].filter((k) => k !== sorte && v[k])
+      .map((k) => `+${v[k]} ${MOTS[k](v[k]).toLowerCase()}`);
+    const ligne = [origine, ...autres].filter(Boolean).join(' · ');
+    const t = document.createElement('div');
+    t.className = 'tbf-ticket tbf-ticket--gain tbf-glisse';
+    t.setAttribute('role', 'status');
+    t.innerHTML = `${sorte === 'echarpes' ? '<img src="/img/gains/echarpes.webp" alt="">' : ''}
+      <b>+${v[sorte]}</b><span>${MOTS[sorte](v[sorte])}${ligne ? `<small>${esc(ligne)}</small>` : ''}</span>
+      <span class="tbf-tampon" data-ton="vert">GAGNÉ</span>`;
+    pile().appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+    const chiffre = t.querySelector('b');
+    window.FX?.compter?.(chiffre, 0, v[sorte], { format: (n) => `+${Math.round(n)}` });
+    /* Le vol part du jeton (le premier enfant) et dit d'où vient le gain ;
+       le compteur de la barre dit combien, quand la page annonce la bourse. */
+    if (sorte === 'tampons') return;
+    const cible = cibleCompteur(sorte);
+    const depart = t.firstElementChild;
+    await window.FX?.voler?.(depart, cible,
+      sorte === 'echarpes' ? { image: '/img/gains/echarpes.webp' } : { texte: `+${v[sorte]}` });
+  }
+
+  /* Ce que l'écran dit d'un refus (§ 11). Une raison qu'il ne connaît pas ne
+     s'écrit jamais : il relit l'état, c'est tout. */
+  const RAISONS = {
+    deja: 'Déjà récupéré.',
+    jour_passe: 'Les missions de ce jour sont closes.',
+    plafond: 'Tu récupéreras le reste demain.',
+    epuisees: 'Plus de changement possible aujourd’hui.',
+    aucune: 'Aucune autre mission possible pour l’instant.',
+    terminee: 'Cette mission est déjà finie.',
+  };
+
+  /** Une demande au serveur, et sa réponse lue ou `null` avec son statut. */
+  async function poster(route, corps) {
+    try {
+      const r = await fetch(route, {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' }, body: JSON.stringify(corps ?? {}),
+      });
+      const j = await r.json().catch(() => null);
+      return { statut: r.status, j: r.ok ? j : null };
+    } catch { return { statut: 0, j: null }; }
+  }
+
+  /**
+   * Récupérer. Le bouton s'éteint pendant la demande ; la réponse porte
+   * l'état à jour (§ 6.2), qu'on prend tel quel. Versé : le tampon claque
+   * sur la ligne, le ticket de gain monte, son jeton vole vers la barre, et
+   * la barre reçoit la bourse (R6) — puis la fête si le niveau a monté.
+   */
+  async function recuperer(b) {
+    const sorte = b.dataset.geste;
+    const ROUTES = {
+      bonus: ['/api/quotidien/bonus', {}, 'bonus', 'Bonus du jour'],
+      mission: ['/api/quotidien/mission',
+        { jour: b.dataset.jour, rang: Number(b.dataset.rang), id: b.dataset.id },
+        `mission:${b.dataset.jour}:${b.dataset.rang}`, b.dataset.titre],
+      sachet: ['/api/quotidien/sachet', { jour: b.dataset.jour },
+        `sachet:${b.dataset.jour}`, 'Toutes les missions'],
+      carnet: ['/api/quotidien/carnet', { saison: Number(b.dataset.saison), n: Number(b.dataset.n) },
+        `carnet:${b.dataset.saison}:${b.dataset.n}`, b.dataset.titre],
+      relais: ['/api/quotidien/relais', {}, 'relais', 'Passage de relais'],
+    };
+    const quoi = ROUTES[sorte];
+    if (!quoi || occupe) return;
+    const [route, corps, cle, origine] = quoi;
+    occupe = true;
+    b.disabled = true;
+    b.setAttribute('aria-busy', 'true');
+    const { statut, j } = await poster(route, corps);
+    occupe = false;
+
+    if (!j) {
+      b.disabled = false;
+      b.removeAttribute('aria-busy');
+      toast(statut === 401 ? 'Reconnecte-toi pour récupérer.' : 'Ça n’est pas passé. Réessaie dans un instant.', true);
+      return;
+    }
+    if (j.quotidien) appliquer(j.quotidien);
+
+    if (j.verse === true) {
+      clac = cle;
+      rendre();
+      window.FX?.son?.('bache');
+      if (j.reste) toast(RAISONS.plafond);
+      await ticketGain(j.gain, origine);
+      window.dispatchEvent(new CustomEvent('tbf:bourse', { detail: { wallet: j.wallet, niveau: j.niveau } }));
+      if (j.niveau?.monte === true) window.TBF_NIVEAU?.feter?.(j.niveau);
+      return;
+    }
+
+    if (j.raison === 'inactif' || j.raison === 'schema') eteintes.add(sorte);
+    if (RAISONS[j.raison]) toast(RAISONS[j.raison]);
+    if (j.quotidien) rendre();
+    else await relire();
+  }
+
+  /**
+   * Changer une mission du jour. On demande d'abord, en disant ce qu'on
+   * perd : la progression de la ligne, et l'un des changements du jour. La
+   * remplaçante garde la récompense promise le matin (§ 6.2).
+   */
+  async function relancer(b) {
+    if (occupe) return;
+    const relances = entier(Q?.missions?.relances);
+    const difficulte = { facile: 'facile', moyenne: 'moyenne', difficile: 'difficile' }[b.dataset.difficulte] ?? '';
+    const ok = window.TBF_DIALOGUE?.confirmer
+      ? await window.TBF_DIALOGUE.confirmer({
+        titre: 'CHANGER DE MISSION ?',
+        texte: `« ${b.dataset.titre} » sera remplacée par une autre mission${difficulte ? ` ${difficulte}` : ''}, `
+          + `avec la même récompense. ${relances > 1 ? `Il te reste ${relances} changements aujourd’hui.`
+            : 'C’est ton dernier changement d’aujourd’hui.'}`,
+        oui: 'CHANGER', non: 'GARDER',
+      })
+      : true;
+    if (!ok) return;
+    occupe = true;
+    b.disabled = true;
+    const rang = Number(b.dataset.rang);
+    const { statut, j } = await poster('/api/quotidien/relance', { rang, id: b.dataset.id });
+    occupe = false;
+    if (!j) {
+      b.disabled = false;
+      toast(statut === 401 ? 'Reconnecte-toi pour changer de mission.' : 'Ça n’est pas passé. Réessaie dans un instant.', true);
+      return;
+    }
+    if (j.quotidien) appliquer(j.quotidien);
+    if (j.relancee === true) {
+      colle = `mission:${Q?.missions?.jour}:${rang}`;
+    } else {
+      if (j.raison === 'inactif') eteintes.add('relance');
+      if (RAISONS[j.raison]) toast(RAISONS[j.raison]);
+    }
+    if (j.quotidien) rendre();
+    else await relire();
+  }
+
+  $('vue').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-geste]');
+    if (!b || b.disabled) return;
+    if (b.dataset.geste === 'relance') relancer(b);
+    else recuperer(b);
+  });
+
+  /* ============================================================ premiers pas */
 
   /**
    * Allumer ce qui vient d'être franchi.
@@ -344,11 +1145,11 @@ html[data-calme~="animations"] .rail i{transition:none}
     if (!neuves.length) return;
     let premier = true;
     neuves.forEach((cle, i) => setTimeout(() => {
-      const el = document.querySelector(`.pas[data-cle="${cle}"]`);
+      const el = [...document.querySelectorAll('.pas[data-cle]')].find((p) => p.dataset.cle === cle);
       if (!el) return;
       el.classList.add('neuf');
       const r = el.getBoundingClientRect();
-      window.FX?.particules?.({ x: r.left + 42, y: r.top + 28, n: 18,
+      window.FX?.particules?.({ x: r.left + 37, y: r.top + 37, n: 18,
         couleurs: ['#1E9E6A', '#F5C33B'], distance: 90 });
       if (premier) { window.FX?.son?.('parfait'); premier = false; }
     }, 380 + i * 150));
@@ -375,50 +1176,31 @@ html[data-calme~="animations"] .rail i{transition:none}
     window.FX?.secousse?.(1);
     window.FX?.son?.('but');
     window.FX?.titre?.('TOUT EST FAIT', 'Un booster pour la route', '#1E9E6A');
-    setTimeout(rendre, 1400);
+    setTimeout(async () => {
+      clac = 'parcours';
+      if (onglet === 'pas') rendre();
+      await ticketGain({ packs: r.packs ?? parcours.recompense }, 'Premiers pas');
+      /* Une annonce sans chiffre : la page sait qu'elle vient de verser un
+         booster, pas combien il en reste. La barre relit (voir nav.js). */
+      window.dispatchEvent(new Event('tbf:bourse'));
+    }, 1400);
   }
 
-  function rendre() {
-    $('vue').innerHTML = onglet === 'pas' ? vuePas() : vueFaq();
-    if (onglet !== 'pas' || !parcours) return;
-    const { faites, total } = parcours;
-    /* La jauge part de zéro à chaque rendu et s'anime vers sa valeur : une barre
-       déjà pleine à l'affichage ne se remarque pas, et c'est précisément elle
-       qu'on est venu voir. */
-    requestAnimationFrame(() => {
-      const j = $('jauge');
-      if (j) j.style.width = `${Math.round((faites / total) * 100)}%`;
-    });
-  }
-
-  document.querySelector('.tabs').onclick = (e) => {
-    const b = e.target.closest('[data-t]');
-    if (!b) return;
-    onglet = b.dataset.t;
-    document.querySelectorAll('.tabs button')
-      .forEach((x) => x.classList.toggle('on', x === b));
-    rendre();
-    if (onglet === 'faq' && !laFaq) chargerFaq();
-  };
-
-  async function chargerFaq() {
-    try {
-      const d = await fetch('/api/aide/faq').then((r) => r.json());
-      laFaq = d.rubriques ?? [];
-    } catch { laFaq = []; }
-    if (onglet === 'faq') rendre();
-  }
+  /* ================================================================ départ */
 
   (async () => {
-    /* Le catalogue et le parcours ensemble : ils ne dépendent pas l'un de
-       l'autre, et les enchaîner ferait attendre le second pour rien. Le
-       catalogue a le droit d'échouer — `visuel()` retombe alors sur l'emblème,
-       et l'écran reste entier. */
-    const [, d] = await Promise.all([
+    /* Le catalogue, le parcours, le jour et le joueur ensemble : ils ne
+       dépendent pas l'un de l'autre, et les enchaîner ferait attendre pour
+       rien. Chacun a le droit d'échouer — la vignette retombe sur son
+       emblème, le rail perd DU JOUR, la FAQ reste. */
+    const [, d, q, u] = await Promise.all([
       window.TBF_CARTES?.chargerCatalogue?.().catch(() => null) ?? null,
       fetch('/api/aide/parcours', { credentials: 'same-origin' })
         .then((r) => r.json()).catch(() => null),
+      lireQuotidien(),
+      moi,
     ]);
+    qui = u ? String(u.id ?? u.pseudo ?? '') || null : null;
     /* **On exige un parcours, pas l'absence d'erreur.** Le test valait
        « pas de champ `error` », ce qu'une réponse vide satisfait très bien :
        une route non montée, un serveur qui rend un objet de politesse, et la
@@ -426,30 +1208,29 @@ html[data-calme~="animations"] .rail i{transition:none}
        seul qui ne laisse aucun recours — on vérifie donc qu'on tient bien ce
        qu'on croit tenir, et à défaut on montre la FAQ, qui suffit. */
     if (Array.isArray(d?.etapes) && d.etapes.length) parcours = d;
+    appliquer(q);
+
+    /* Le rail de départ : celui que l'adresse demande s'il existe, sinon
+       les missions du jour quand le serveur les sert, sinon les premiers pas. */
+    const voulu = location.hash.slice(1);
+    onglet = disponibles().includes(voulu) ? voulu : (aJour() ? 'jour' : 'pas');
 
     /* Ce qui est neuf depuis la dernière visite. Lu **avant** d'écrire la
        nouvelle valeur, faute de quoi rien ne serait jamais neuf. */
-    let avant = null;
-    try { avant = JSON.parse(localStorage.getItem(MEMOIRE) || 'null'); } catch { /* vide */ }
-    const vues = new Set(Array.isArray(avant) ? avant : []);
-    const neuves = (parcours?.etapes ?? [])
-      .filter((e) => e.fait && !vues.has(e.cle)).map((e) => e.cle);
+    if (parcours) {
+      let avant = null;
+      try { avant = JSON.parse(localStorage.getItem(MEMOIRE) || 'null'); } catch { /* vide */ }
+      const vues = new Set(Array.isArray(avant) ? avant : []);
+      allumage = {
+        premiere: avant === null,
+        neuves: parcours.etapes.filter((e) => e.fait && !vues.has(e.cle)).map((e) => e.cle),
+      };
+    }
 
     rendre();
     chargerFaq();
 
-    if (parcours) {
-      try {
-        localStorage.setItem(MEMOIRE,
-          JSON.stringify(parcours.etapes.filter((e) => e.fait).map((e) => e.cle)));
-      } catch { /* navigation privée : on se passe de l'animation */ }
-      /* **Rien du tout la première fois.** Un joueur qui arrive avec une étape
-         déjà cochée — le paquet de bienvenue lui a donné ses Fanzzy — n'a rien
-         franchi : lui allumer une case serait le féliciter pour ce qu'il n'a
-         pas fait. On n'allume que ce qui a changé sous ses yeux à lui. */
-      if (avant !== null) allumer(neuves);
-      if (parcours.faites === parcours.total && !parcours.paye) finir();
-    }
+    if (parcours && parcours.faites === parcours.total && !parcours.paye) finir();
   })();
 })();
 </script>

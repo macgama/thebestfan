@@ -8,7 +8,7 @@
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import express from 'express';
-import { createSouvenirs, PRESENCE_WINDOW_MS } from '../src/server/souvenirs/index.js';
+import { createSouvenirs, PRESENCE_WINDOW_MS, REPLI_CHANTS_MS } from '../src/server/souvenirs/index.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -22,7 +22,13 @@ await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invi
                  souvenirs, user_wallet, api_cache, souvenir_leagues, duel_results, duel_events,
                  duels, user_league_follows, user_follows, fixture_events, standings, fixtures, team_leagues, teams,
                  leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
-for (const f of ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql']) {
+/* `quotidien.sql` pose les colonnes des chants sur `virage_presence`. Il
+   complète aussi `saisons`, d'où `saisons.sql` avant lui, qui lit lui-même
+   `reglages` (admin.sql) : le fichier s'applique en entier, tel que le
+   déploiement l'applique, et non par morceaux choisis. */
+const SCHEMA = ['auth.sql', 'football.sql', 'minutes.sql', 'couleurs.sql', 'souvenirs.sql', 'billets.sql',
+  'admin.sql', 'saisons.sql', 'quotidien.sql'];
+for (const f of SCHEMA) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 const U = ['aaaaaaaa-0000-0000-0000-000000000001',
@@ -164,6 +170,146 @@ await pool.query(
 r = await S.mintGoal({ ...goal(1, 12, 85, 1, 0, 'Bento'), fixtureId: 5002 });
 check('avoir laissé l\u2019app ouverte ne suffit pas', r.presents === 0);
 
+/* ------------------------------------------------- les chants, et leur repli
+
+ * Les missions du Virage comptent des chants : « chante 10 fois », « 10 fois
+ * dans chaque mi-temps ». Ils s'écrivent **dans l'upsert de présence qui
+ * existe**, sans une instruction de plus — une tribune de mille chante plus
+ * de dix fois par seconde.
+ *
+ * Et leur absence ne doit rien casser : sans `sql/quotidien.sql`, la présence
+ * s'écrit comme avant (elle porte les cartes-souvenirs et le classement). Le
+ * repli dure dix minutes, puis le comptage se retente, pour qu'un schéma
+ * appliqué sur un processus déjà démarré se voie sans le redémarrer.
+ *
+ * Tout passe par une instance à part : un pool qui compte ses instructions,
+ * une horloge du repli qu'on avance à la main, un journal qu'on lit. */
+{
+  let instructions = 0;
+  const compteur = new Proxy(pool, {
+    get(cible, cle) {
+      const v = cible[cle];
+      if (typeof v !== 'function') return v;
+      /* `getConnection` compte aussi : une transaction ouverte pour écrire un
+         compteur serait une écriture de plus, même si elle passe ailleurs. */
+      if (cle === 'execute' || cle === 'query' || cle === 'getConnection') {
+        return (...a) => { instructions++; return v.apply(cible, a); };
+      }
+      return v.bind(cible);
+    },
+  });
+  let decalage = 0;
+  const journal = [];
+  const warnAvant = console.warn;
+  console.warn = (...a) => { journal.push(a.join(' ')); };
+
+  const X = createSouvenirs({ pool: compteur, requireAuth: (_q, _r, next) => next(),
+    horloge: () => Date.now() + decalage });
+  const lire = async (colonnes) => (await pool.query(
+    `SELECT ${colonnes} FROM virage_presence WHERE user_id = ? AND fixture_id = 5003`, [U[0]]))[0][0];
+  /** Une poussée de 5 de ferveur ; rend le nombre d'instructions qu'elle a coûté. */
+  const pousser = async (o = {}) => {
+    const avant = instructions;
+    await X.recordPush({ userId: U[0], fixtureId: 5003, side: 0, fanzzyId: 'TR32C', amount: 5, ...o });
+    return instructions - avant;
+  };
+
+  try {
+    let n = await pousser({ chant: 1, mt: 1 });
+    let l = await lire('ferveur, chants, chants_mt1, chants_mt2');
+    check('un chant en première mi-temps : chants 1, première 1, seconde 0',
+      l?.chants === 1 && l.chants_mt1 === 1 && l.chants_mt2 === 0
+      || (console.log('        ligne :', JSON.stringify(l)), false));
+    check('et il ne coûte qu’une instruction', n === 1
+      || (console.log(`        ${n} instructions`), false));
+
+    n = await pousser({ chant: 1, mt: 2 });
+    l = await lire('ferveur, chants, chants_mt1, chants_mt2');
+    check('un chant en seconde mi-temps compte dans la seconde',
+      l.chants === 2 && l.chants_mt1 === 1 && l.chants_mt2 === 1);
+    check('une instruction encore, ligne existante comprise', n === 1);
+
+    await pousser({ chant: 1, mt: 0 });
+    l = await lire('ferveur, chants, chants_mt1, chants_mt2');
+    check('un chant à la mi-temps compte, mais dans aucune des deux',
+      l.chants === 3 && l.chants_mt1 === 1 && l.chants_mt2 === 1);
+
+    /* Une carte : la salle transporte la mi-temps de toute poussée, et c'est
+       ici que l'on refuse de la compter sans chant. */
+    await pousser({ chant: 0, mt: 1 });
+    await pousser();
+    l = await lire('ferveur, chants, chants_mt1, chants_mt2');
+    check('une carte n’est pas un chant, même en pleine mi-temps',
+      l.chants === 3 && l.chants_mt1 === 1);
+    check('et la ferveur s’ajoute comme avant, poussée par poussée (5 × 5)',
+      l.ferveur === 25 || (console.log(`        ferveur ${l.ferveur}`), false));
+    check('aucun mot au journal tant que les colonnes sont là', journal.length === 0);
+
+    /* ---------------------------- le schéma n'a pas été appliqué */
+
+    await pool.query(`ALTER TABLE virage_presence DROP COLUMN chants,
+      DROP COLUMN chants_mt1, DROP COLUMN chants_mt2`);
+    let leve = null;
+    try { n = await pousser({ chant: 1, mt: 1 }); } catch (e) { leve = e; }
+    check('sans les colonnes des chants, la poussée ne lève pas',
+      leve === null || (console.log('        levé :', leve.message), false));
+    l = await lire('ferveur');
+    check('et la présence s’écrit toujours', l?.ferveur === 30
+      || (console.log(`        ferveur ${l?.ferveur}`), false));
+    check('au prix d’une seule instruction en échec, rejouée aussitôt (2)', n === 2
+      || (console.log(`        ${n} instructions`), false));
+    check('le journal le dit, et nomme le fichier à appliquer',
+      journal.length === 1 && journal[0].includes('sql/quotidien.sql')
+      || (console.log('        journal :', JSON.stringify(journal)), false));
+
+    n = await pousser({ chant: 1, mt: 1 });
+    check('pendant le repli, une poussée ne coûte qu’une instruction', n === 1
+      || (console.log(`        ${n} instructions`), false));
+    check('et le journal ne se répète pas', journal.length === 1);
+
+    /* Dix minutes plus tard, toujours sans les colonnes : un seul nouvel essai,
+       et le repli repart pour dix minutes. C'est la borne promise : une
+       instruction en échec toutes les dix minutes, jamais deux par poussée. */
+    decalage = REPLI_CHANTS_MS + 1;
+    n = await pousser({ chant: 1, mt: 1 });
+    check('passé dix minutes, le comptage se retente une fois (2)', n === 2);
+    n = await pousser({ chant: 1, mt: 1 });
+    check('puis se replie de nouveau pour dix minutes (1)', n === 1);
+    l = await lire('ferveur');
+    check('sans perdre une seule présence en route', l.ferveur === 45
+      || (console.log(`        ferveur ${l.ferveur}`), false));
+    check('et sans le redire au journal', journal.length === 1);
+
+    /* ------------------- le schéma arrive, le module tourne toujours */
+
+    const raw2 = await mysql.createConnection({ uri: DB, multipleStatements: true });
+    await raw2.query(readFileSync(new URL('../sql/quotidien.sql', import.meta.url), 'utf8'));
+    await raw2.end();
+
+    await pousser({ chant: 1, mt: 2 });
+    l = await lire('ferveur, chants, chants_mt1, chants_mt2');
+    check('le repli tient ses dix minutes, même colonnes revenues',
+      l.chants === 0 && l.ferveur === 50);
+
+    decalage += REPLI_CHANTS_MS + 1;
+    n = await pousser({ chant: 1, mt: 2 });
+    l = await lire('ferveur, chants, chants_mt1, chants_mt2');
+    check('dix minutes plus tard, les chants se comptent de nouveau, sans remonter le module',
+      l.chants === 1 && l.chants_mt2 === 1 && l.chants_mt1 === 0
+      || (console.log('        ligne :', JSON.stringify(l)), false));
+    check('d’une seule instruction', n === 1);
+    check('et le journal dit la reprise, une fois',
+      journal.length === 2 && journal[1].includes('de nouveau')
+      || (console.log('        journal :', JSON.stringify(journal)), false));
+  } finally {
+    console.warn = warnAvant;
+  }
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
-await pool.end(); http.close();
-process.exit(failures ? 1 : 0);
+/* `exitCode` et non `process.exit()` : sous Windows, couper la boucle pendant
+   que le pool rend ses sockets fait échouer la suite une fois sur cinq quand
+   elle tourne à la file (ETAT.md, § 2). */
+await pool.end();
+await new Promise((r) => http.close(r));
+process.exitCode = failures ? 1 : 0;

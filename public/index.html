@@ -6,11 +6,12 @@
 <title>thebestfan — le jeu des tribunes</title>
 <!-- **Permanent Marker, dans la même ligne qu'Oswald** (lot 2, fin de
      l'hypothèse H3). L'accueil est la seule page de ce lot qui l'emploie, et
-     pour une seule chose : la bulle du Fanzzy sur le hub. Une police d'appoint
-     ne se télécharge que si un texte la demande : la vitrine et l'écran
-     d'ouverture, qui ne l'emploient pas, ne paient que ces quelques lignes de
-     feuille. Jamais sur le rideau (amendement 6) : il s'affiche avant qu'elle
-     soit garantie là. -->
+     pour deux choses du hub : la bulle du Fanzzy, et le mot de la main du
+     ticket de retour (« Depuis ta dernière visite », lots 3 et 5). Une
+     police d'appoint ne se télécharge que si un texte la demande : la vitrine
+     et l'écran d'ouverture, qui ne l'emploient pas, ne paient que ces
+     quelques lignes de feuille. Jamais sur le rideau (amendement 6) : il
+     s'affiche avant qu'elle soit garantie là. -->
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
@@ -126,6 +127,17 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
    donc sa jumelle au crochet `data-calme`, juste à côté d'elle. */
 @media (prefers-reduced-motion:reduce){.embleme{animation:none}}
 html[data-calme~="animations"] .embleme{animation:none}
+/* ## L'or ne s'écrit plus qu'en grand (arbitrage de Gaël, 2 octobre 2026)
+
+   Au moins 18,66 px en gras, ou 24 px : là, 3:1 suffit et l'or le tient.
+   En dessous, un mot en or passe à la craie et garde son accent par la
+   graisse — la version, l'accroche, les trois promesses, « Se connecter »,
+   « Tous les matchs », l'âge du Fanzzy. L'or reste une face (bâche, sticker
+   de prix, récompense prête, légendaire) : la plaque « C'est lui, partout »
+   et le sticker des boosters ne bougent pas.
+
+   « BEST » est la seule lettre en or de la vitrine, et elle a droit à
+   l'or : vingt-quatre pixels en gras au plus petit. */
 .logo{font-family:var(--banner);font-weight:700;font-size:clamp(24px,4.1vh,40px);
   letter-spacing:.1em;line-height:.95}
 .logo em{font-style:normal;color:var(--projo)}
@@ -141,15 +153,23 @@ html[data-calme~="animations"] .embleme{animation:none}
    jeu : un liseré et rien d'autre, sans fond plein — une pastille pleine
    se lirait comme un étiquetage promotionnel, et c'est l'inverse de ce
    qu'elle dit. Pleine opacité : le liseré suffit à la discrétion, et un
-   numéro qu'on cite dans un signalement doit se lire du premier coup. */
+   numéro qu'on cite dans un signalement doit se lire du premier coup.
+
+   **Le mot à la craie, le liseré en or** : onze pixels, c'est du petit
+   texte, et l'or ne s'y écrit plus (voir plus haut). Le liseré n'est pas
+   une lettre ; il garde la touche d'or. */
 .beta{margin:7px 0 0;font-family:var(--banner);font-size:11px;
-  letter-spacing:.18em;text-transform:uppercase;color:var(--projo);
+  letter-spacing:.18em;text-transform:uppercase;color:var(--craie);
   display:inline-block;padding:3px 10px;border-radius:20px;
   border:1px solid rgba(245,195,59,.34)}
 .beta:empty{display:none}
 .claim{font-family:var(--banner);font-size:clamp(14px,2vh,19px);line-height:1.3;
   margin:clamp(6px,1.2vh,16px) 0 0}
-.claim b{color:var(--projo)}
+/* Quatorze pixels sur un écran court : la craie, et l'accent par le gras.
+   L'accroche ne passe le seuil du grand texte (18,66 px) qu'à partir de
+   neuf cent trente-quatre pixels de haut, et une accroche qui change de
+   couleur avec la hauteur de l'écran n'en serait plus une. */
+.claim b{color:var(--craie);font-weight:700}
 /* Pleine craie, pour la même raison que la ligne du logo. */
 .sell{font-size:clamp(11px,1.35vh,13px);line-height:1.55;
   margin:clamp(5px,1.2vh,12px) auto 0;max-width:330px}
@@ -165,7 +185,10 @@ html[data-calme~="animations"] .embleme{animation:none}
      fait lire les trois promesses est `--panneau`, devenu opaque dans
      `ui.css` : c'est lui qu'on garde, et la seule chose qui compte ici. */
   background:var(--panneau);text-align:center}
-.bullet b{display:block;font-family:var(--banner);font-size:11.5px;letter-spacing:.05em;color:var(--projo)}
+/* Le mot de chaque promesse, en capitales grasses à la craie : à onze pixels
+   et demi, l'or n'est plus une lettre (voir plus haut). */
+.bullet b{display:block;font-family:var(--banner);font-weight:700;font-size:11.5px;letter-spacing:.05em;
+  color:var(--craie)}
 /* Pleine craie : sur `--panneau`, une craie à 0,9 tombe à 4,1:1 au plein jour. */
 .bullet span{font-size:11px;line-height:1.35;display:block;margin-top:4px}
 /* La plaque d'entrée de l'écran non connecté. Elle ne garde que sa marge : sa
@@ -211,14 +234,17 @@ html[data-calme~="animations"] .embleme{animation:none}
    sans pousser la ligne, et reste dans les douze pixels au moins que le lien
    garde au-dessus et au-dessous — la vitrine ne bouge pas d'un pixel. Pleine
    opacité : le panneau hérite de celle du lien, et à 0,9 il retombait sous
-   les 0,88 d'un panneau. */
+   les 0,88 d'un panneau.
+
+   « Se connecter » est en gras, à la craie comme le reste : à treize
+   pixels, l'or n'est plus une lettre (voir plus haut). */
 .second{display:block;text-align:center;
   padding:calc(clamp(6px,1.25vh,12px) + 6px) 12px;margin:-8px 0;
   color:var(--craie);font-size:13px;line-height:20px;text-decoration:none}
 .second span{padding:6px 14px;border-radius:999px;background:var(--panneau);
   box-shadow:inset 0 0 0 1px var(--trait);
   -webkit-box-decoration-break:clone;box-decoration-break:clone}
-.second b{color:var(--projo)}
+.second b{font-weight:700}
 /* `margin:0` : c'est un paragraphe, et les vingt et un pixels que le
    navigateur lui donnait tout seul au-dessus et en dessous étaient le plus
    gros poste de la vitrine après le logo.
@@ -310,12 +336,15 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    au-dessous, autant de marge négative. Le panneau garde exactement sa
    taille ; la zone qui répond au doigt déborde un peu sous son bord, dans
    l'écart qui le sépare du bouton d'entrée, qui en fait dix au moins. La ligne
-   est écrite, pour que le compte ne dépende pas de la police. */
+   est écrite, pour que le compte ne dépende pas de la police.
+
+   À la craie, en gras : onze pixels d'or ne s'écrivent plus (voir plus
+   haut), et c'est la graisse, avec la flèche, qui dit « ça se touche ». */
 .preuve .plus{display:block;text-align:center;line-height:16px;
   padding:calc(clamp(5px,.95vh,9px) + 8px) 0 16px;margin:-8px 0 -16px;
   text-decoration:none;
-  font-family:var(--banner);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--projo)}
+  font-family:var(--banner);font-weight:700;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--craie)}
 
 /* Les visages. Des bustes et non des pleins-pieds : à cette taille un
    personnage en entier n'est plus qu'une silhouette, et ce qu'on montre ici
@@ -367,9 +396,9 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
 /* 1. La légende du compte : la rangée de visages dit déjà « il y en a
       beaucoup », et elle le dit mieux qu'une phrase. */
 @media (max-height:1020px){.combien{display:none}}
-/* 2. Les sous-titres des trois promesses. Les trois mots en or se lisent
-      seuls — et les blocs qui suivent montrent ce que les sous-titres
-      expliquaient. */
+/* 2. Les sous-titres des trois promesses. Les trois mots en capitales se
+      lisent seuls — et les blocs qui suivent montrent ce que les
+      sous-titres expliquaient. */
 @media (max-height:1000px){.bullet span{display:none}}
 /* 3. Le troisième match. Le tri met le plus vivant en premier, donc ce qui
       part est toujours le moins intéressant des trois. */
@@ -683,9 +712,10 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    joueur qui ouvrait le menu pendant ce temps voyait la case et son voile
    passer par-dessus le tiroir (49) et cacher sa deuxième rangée — qu'on
    touchait sans la voir, puisque la case laisse passer le doigt. Le hub ne
-   joue plus aucun effet de `fx.js` pendant un but : la case descend donc
-   juste sous le voile du menu (48). Elle reste au-dessus de tout le hub, et
-   ce qu'il en reste quand on referme le menu se voit encore. */
+   pose aucun effet de `fx.js` à l'écran pendant un but — `FX.but`, dans sa
+   forme `vignette`, ne fait que secouer `#app` et vibrer : la case descend
+   donc juste sous le voile du menu (48). Elle reste au-dessus de tout le
+   hub, et ce qu'il en reste quand on referme le menu se voit encore. */
 #moment{z-index:47}
 
 /* ------------------------------------------- qui est à l'écran
@@ -704,7 +734,8 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    **Le nom en banderole** (`.tbf-banderole`, `ui.css`), comme sur la
    maquette : une bande craie de travers collée sous le personnage, à
    l'encre (17:1). La page ne lui écrit que sa largeur. **L'âge** garde sa
-   pastille `--panneau` : l'or à onze pixels n'a pas de photo à traverser. */
+   pastille `--panneau`, à la craie : onze pixels d'or ne s'écrivent plus
+   (arbitrage du 2 octobre 2026, voir la vitrine). */
 /* Trois cent vingt pixels au plus : sur une tablette, la colonne du milieu en
    fait près de six cents, et les flèches, posées à ses deux bouts, partaient
    rejoindre les tuiles loin du nom qu'elles font défiler. */
@@ -717,15 +748,25 @@ html[data-calme~="animations"] .preuve h3 i{animation:none}
    laissent leur place quand elles sont là, `--fl-place` de chaque côté
    (voir `.ages .fl`). */
 .qui.fleches .tbf-banderole{max-width:calc(100% - 2 * var(--fl-place))}
-/* Pleine opacité : sur la pastille, l'or n'a plus de photo à traverser, et à
-   0,9 il n'aurait rien gagné qu'un peu de gris. En Oswald, comme sur la
-   maquette, et non plus dans la police du système : étroite, elle fait tenir
+/* Pleine opacité : la pastille n'a pas de photo à traverser, et à 0,9 elle
+   n'aurait rien gagné qu'un peu de gris. En Oswald, comme sur la maquette, et
+   non plus dans la police du système : étroite, elle fait tenir
    « ÉVOLUTION 2 / 3 » et sa coche entre les deux flèches, dans les
-   deux cent douze pixels d'un téléphone de 360. */
-.qui small{display:block;max-width:100%;font-family:var(--banner);font-weight:600;
-  font-size:11px;line-height:13px;letter-spacing:.1em;
+   deux cent douze pixels d'un téléphone de 360.
+
+   **La craie et le gras, plus l'or** : c'était l'âge du Fanzzy en or sous
+   son nom, onze pixels qu'aucun soleil ne laissait lire à 3:1 (H2, que
+   l'arbitrage du 2 octobre 2026 a tranchée : l'or ne s'écrit plus en petit).
+   La coche suit la lettre (`currentColor`).
+
+   **Équilibrée** (`text-wrap:balance`) : à 320 px de large, la pastille n'a
+   que cent quatre pixels entre les flèches, et la phrase passe à la ligne.
+   Elle cassait au plus loin — « ÉVOLUTION 2 / » puis « 2 » et la coche —,
+   c'est-à-dire au milieu du nombre ; équilibrée, elle casse après le mot. */
+.qui small{display:block;max-width:100%;font-family:var(--banner);font-weight:700;
+  font-size:11px;line-height:13px;letter-spacing:.1em;text-wrap:balance;
   padding:2px 8px;border-radius:999px;background:var(--panneau);box-shadow:inset 0 0 0 1px var(--trait);
-  color:var(--projo)}
+  color:var(--craie)}
 .qui small:empty{display:none}
 .qui.fleches small{max-width:calc(100% - 2 * var(--fl-place))}
 /* Le défilé des âges. `.qui` coupe les gestes — c'était une plaque à lire —
@@ -827,6 +868,13 @@ html[data-calme~="animations"] .cestlui{animation:none}
   left:calc(10px + var(--rail) + 2px);width:44px;height:44px;padding:0;border:0;
   background:none;display:grid;place-items:center;cursor:pointer}
 .bulle-pli .tbf-sticker{--taille:30px;--rot:-6deg;font-size:18px}
+/* **« J3 » collé sur la bulle** (lots 3 et 5) : quand le Fanzzy rappelle le
+   bonus du jour, la case de la carte de présence est un sticker au bout de
+   sa phrase, et non un mot de sa phrase. Le marqueur n'écrit jamais un
+   chiffre (amendement 6) ; un sticker est en Oswald, de lui-même. Vingt
+   pixels de haut, sur une ligne qui en fait vingt : la bulle ne grandit pas. */
+.bulle .tbf-sticker{--rot:-6deg;height:20px;padding:0 5px;margin-left:4px;font-size:12px;
+  vertical-align:middle}
 
 /* L'entrée : le personnage monte dans le cadre au lieu d'y être déjà. C'est
    ce qui fait de l'accueil une arrivée et non un écran qui s'affiche. */
@@ -937,14 +985,35 @@ html[data-calme~="animations"] .cestlui{animation:none}
 /* **La jauge est l'écharpe nouée** de `ui.css` (`.tbf-jauge`), la seule
    jauge du jeu, telle quelle : cette page ne lui écrit ni taille ni couleur.
    Les identifiants restent : le script les remplit, et `accueil:ui` lit la
-   largeur de `#collecBar`. **À crans** (`data-crans`, cinq) : le dernier est
-   le palier ; aucun ne porte de récompense, parce qu'aucune donnée n'en
-   promet une — « le cran est nu » plutôt qu'une récompense inventée.
+   largeur de `#collecBar`.
+
+   **Un cran par palier, et deux au plus** : le palier visé, au bout
+   (`--crans:1`, la brique ne connaît que de deux à dix), et le dernier
+   palier franchi, là où il tombe (`--passe`, posé par le script). Il y en
+   avait cinq, régulièrement espacés : à « 14 / 25 », ils marquaient 5, 10,
+   15 et 20 — des graduations, pas des paliers, et rien qu'on puisse
+   atteindre. Les crans sont ceux du serveur quand il les sert (contrat
+   § 5.1), des repères de lecture sinon. Aucun ne porte ici sa récompense :
+   la collection la montre, avec RÉCUPÉRER, et le panneau n'a pas la place
+   d'un sticker de plus à 360 px. Elle est dite aux lecteurs d'écran.
+
+   Le cran franchi est le seul dessin de jauge écrit ici : la brique pose ses
+   crans en tuiles régulières, et un palier ne tombe pas sur une division
+   régulière du suivant (10 dans 25). Il a le dessin des siens — deux pixels
+   de craie entre deux traits d'encre, cinq pixels hors du rail —, sur le
+   pseudo-élément que la brique laisse libre, au même plan qu'eux : sous le
+   nœud qui passe, sur le remplissage. Si la brique apprend un jour à poser
+   un cran où l'on veut, cette règle lui revient.
 
    Le nœud dépasse du bout du remplissage de neuf pixels, et les franges
    pendent de dix sous le rail : la marge de droite et le rembourrage du bas
    leur gardent cette place, sans rien pousser. */
-.collec .tbf-jauge{margin-right:9px}
+.collec .tbf-jauge{margin-right:9px;--crans:1}
+.collec .tbf-jauge[data-passe]::after{
+  content:"";position:absolute;z-index:1;top:-5px;bottom:-5px;width:4px;
+  left:calc(var(--passe) - 2px);pointer-events:none;
+  background:linear-gradient(90deg,var(--encre) 0 1px,var(--craie) 1px 3px,var(--encre) 3px);
+}
 
 /* ## La bâche du jour (lot 2)
 
@@ -953,14 +1022,17 @@ html[data-calme~="animations"] .cestlui{animation:none}
    ordre — le match d'un club suivi en direct (l'affiche aux couleurs des
    deux clubs, le score, la minute ; le monde dans les tribunes est au
    bouton, juste dessous), son prochain coup d'envoi avec le compte à
-   rebours, l'étape suivante des premiers pas, et sinon « RÉPÉTER UN
-   GESTE ». Un état sans donnée ne s'affiche pas : il cède au suivant. Voir
-   `bacheDuJour`.
+   rebours, la mission du jour (lots 3 et 5, quand le serveur la sert),
+   l'étape suivante des premiers pas, et sinon « RÉPÉTER UN GESTE ». Un état
+   sans donnée ne s'affiche pas : il cède au suivant. Voir `bacheDuJour`.
 
-   Tout y est à l'encre (8,7:1 sur le kraft), aucun ton clair (amendement
-   15) : le rouge du direct est parti avec le point qui clignotait — il ne
-   tenait pas sur le papier, et c'était une quatrième animation infinie.
-   Dix-neuf pixels en haut pour l'écharpe, qui en prend douze et demi.
+   Tout y est au noir pur, aucun ton clair (amendement 15) : la lettre est
+   celle de la brique, `--encre-kraft`, sur le kraft éclairci de l'arbitrage
+   du 2 octobre 2026 — 14,3:1, et 4,58:1 au soleil, là où l'encre sur
+   l'ancien kraft tombait à 3,3. Cette page ne lui écrit aucune couleur. Le
+   rouge du direct est parti avec le point qui clignotait — il ne tenait pas
+   sur le papier, et c'était une quatrième animation infinie. Dix-neuf
+   pixels en haut pour l'écharpe, qui en prend douze et demi.
 
    **Soixante-deux pixels de contenu, et pas un de plus** : la case fait la
    hauteur du duo, quatre-vingt-huit. Une ligne au-dessus, l'affiche ou
@@ -1019,13 +1091,37 @@ html[data-calme~="animations"] .cestlui{animation:none}
    d'un pixel chacune (des capitales, sans jambage), et le sur-titre monte
    d'un pixel vers l'écharpe, jusqu'aux dix-huit que la brique lui demande :
    ces trois pixels vont au nœud, en marge au-dessus du rail. */
-.direct[data-quoi="pas"]{justify-content:space-evenly;padding-top:18px}
-.direct[data-quoi="pas"] b{line-height:15px}
+.direct:is([data-quoi="pas"],[data-quoi="mission"]){justify-content:space-evenly;padding-top:18px}
+.direct:is([data-quoi="pas"],[data-quoi="mission"]) b{line-height:15px}
 .direct .rang{display:flex;align-items:center;height:12px;margin:3px 0 0 9px}
 .direct .rang .tbf-jauge{--crans:1;flex:1;min-width:0}
 .direct .rang .tbf-sticker{--rot:-3deg;z-index:3;height:18px;margin-left:-10px;
   padding:0 5px;gap:3px;font-size:11px}
 .direct .rang .tbf-sticker svg{width:12px;height:12px}
+/* ## La mission du jour (lots 3 et 5)
+
+   Le troisième des cinq états, entre le prochain coup d'envoi et les
+   premiers pas : « MISSION DU JOUR », l'intitulé que le serveur sert, et la
+   rangée des premiers pas — l'écharpe de la mission (`fait / cible`), son
+   compte, et ce qu'elle rapporte. Même budget de soixante-deux pixels, même
+   air entre les lignes : c'est la règle des premiers pas, écrite pour les
+   deux.
+
+   **Le compte se lit à côté de l'écharpe**, comme sur la maquette (« 0/1 »),
+   et pas dans le sur-titre : « MISSION DU JOUR · 1/3 » se serait lu
+   « la première de trois missions ». Seize pixels entre eux : le nœud
+   dépasse du bout du remplissage de près de douze, cerne et ombre compris —
+   à douze, la mission finie le posait sur le « 1 » de « 1/1 » (mesuré au
+   banc). Le sticker, lui, ne chevauche plus le bout du rail quand le
+   compte est entre eux.
+
+   **Le jeton dessiné** pour un gain en écharpes : celui des compteurs, à
+   quatorze pixels dans le sticker de dix-huit. Le sachet au trait reste
+   celui des premiers pas, qui rapportent un booster. */
+#directV{flex:none;margin-left:16px;font-family:var(--banner);font-weight:700;font-size:12px;
+  line-height:12px;letter-spacing:.03em;font-variant-numeric:tabular-nums;white-space:nowrap}
+#directV:not([hidden])+.tbf-sticker{margin-left:6px}
+.direct .rang .tbf-sticker img{width:14px;height:14px}
 
 /* Le bouton d'entrée est une plaque, comme tout le reste. Il avait déjà la
    tranche et l'enfoncement — c'est lui qui a donné l'idée de la plaque — mais
@@ -1041,7 +1137,8 @@ html[data-calme~="animations"] .cestlui{animation:none}
    huit et demi.
 
    Le sous-libellé est en craie **pleine**, et non à 88 % comme le veut
-   l'amendement 6 : sur la face rouge de H1, la craie à 88 % ne tient que
+   l'amendement 6 : sur la face rouge foncée (#B8321F, l'ancienne hypothèse
+   H1, devenue règle le 2 octobre 2026), la craie à 88 % ne tient que
    4,3:1 à douze pixels, sous le seuil de 4,5 ; pleine, elle en tient 5,2.
    Sans capitales : il se lit comme une précision, pas comme un second
    bouton. */
@@ -1284,9 +1381,13 @@ html[data-calme~="animations"] .pose{transition:none}
 
    Le titre est à l'encre sur la craie (17:1) ; « .ONLINE » en or sur un
    ruban d'encre tourné de 1,5°, avec la double impression flare et bleu de
-   la direction (un pixel et demi de chaque côté, à 40 %). Avant, le titre et
-   sa ligne étaient sur un panneau sombre posé sur la photo : la bâche fait
-   le même travail — aucun texte à même le décor — et c'est l'objet du jeu. */
+   la direction (un pixel et demi de chaque côté, à 40 %). Il garde l'or :
+   c'est du grand texte au sens de l'arbitrage du 2 octobre 2026 — gras, et
+   18,7 px au plus petit (0,55 du titre, qui ne descend pas sous 34).
+
+   Avant, le titre et sa ligne étaient sur un panneau sombre posé sur la
+   photo : la bâche fait le même travail — aucun texte à même le décor — et
+   c'est l'objet du jeu. */
 .ouverture .enseigne{
   --rot:-2deg;
   flex:none;flex-direction:column;align-items:center;gap:0;
@@ -1335,7 +1436,19 @@ html[data-calme~="animations"] .pose{transition:none}
 
    La fumée (`.tbf-fumee`, la brique commune) est au pied de la troupe, dans
    le quart bas de la scène — jamais sous la jauge ni sous un texte. Ses deux
-   nappes prennent le rouge et l'or des bâches du couloir. */
+   nappes prennent le rouge et l'or des bâches du couloir.
+
+   **Le quart bas de la troupe, et non de la scène entière.** La brique
+   prend le quart de son parent, et ici le parent est la scène, qui grandit
+   en hauteur avec la tablette quand la troupe (`.bande`), elle, est bornée
+   par la largeur : à 768 × 1024, la scène fait 648 px de haut pour une
+   troupe de 345, et la nappe montait à 162 px, bien au-dessus des pieds —
+   ses deux taches se lisaient comme deux rectangles posés au sol. Elle prend
+   donc la boîte de la troupe — sa largeur, et le quart de sa hauteur, 86 px
+   —, comme sur un téléphone, où les deux se confondent ; et ses bords se
+   fondent sur un cinquième de sa largeur, et non sur sept pour cent, pour
+   qu'aucun ne se lise comme un trait. Sans unités de conteneur, elle garde
+   la boîte de la brique. */
 .ouverture .troupe{
   position:relative;flex:1 1 0;min-height:0;width:100%;
   container:ouv-troupe / size;
@@ -1347,6 +1460,14 @@ html[data-calme~="animations"] .pose{transition:none}
 }
 @container ouv-troupe (min-width:0px){
   .ouverture .bande{width:min(100cqw,124cqh);height:min(100cqh,80.6cqw)}
+  .ouverture .troupe>.tbf-fumee{
+    left:50%;right:auto;translate:-50% 0;
+    width:min(100cqw,124cqh);height:calc(min(100cqh,80.6cqw) / 4);
+    -webkit-mask-image:linear-gradient(0deg,transparent,#000 14%,#000 40%,transparent),
+      linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent);
+    mask-image:linear-gradient(0deg,transparent,#000 14%,#000 40%,transparent),
+      linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent);
+  }
 }
 .ouverture .fz{position:absolute;isolation:isolate;aspect-ratio:520/945;translate:-50% 0}
 .ouverture .fz img{
@@ -1459,13 +1580,19 @@ html[data-calme~="animations"] .pose{transition:none}
 
    Deux lignes au plus : les astuces sont écrites pour tenir à 320 px de
    large, et le ticket a la hauteur de deux lignes. Le mot-clé est en Oswald
-   gras, pas au marqueur (voir plus haut). Encre sur kraft : 8,7:1. */
+   gras, pas au marqueur (voir plus haut).
+
+   **Noir pur sur le kraft éclairci** (arbitrage du 2 octobre 2026) : 14,3:1,
+   et 4,58:1 au soleil, là où l'encre sur l'ancien kraft (#C9A66B) tombait à
+   3,3. La brique porte les deux (`--kraft`, `--encre-kraft`) ; le repli
+   ci-dessous les écrit en clair, pour le jour où la feuille manque — c'est
+   la règle du rideau, voir « Il tient debout sans /ui.css ». */
 .ouverture .pied{flex:none;width:100%;height:80px}
 .ouverture .astuce{
   height:100%;padding:11px 14px 10px;
   display:flex;flex-direction:column;justify-content:center;gap:5px;
 }
-:where(.ouverture .astuce){background:#C9A66B;color:#07090C}
+:where(.ouverture .astuce){background:#E4D3B5;color:#000}
 .ouverture .astuce .k{
   font-family:var(--banner,"Oswald","Arial Narrow",Impact,sans-serif);font-weight:600;
   font-size:11px;line-height:1;letter-spacing:.16em;
@@ -1515,7 +1642,12 @@ html[data-calme~="animations"] .pose{transition:none}
    Les deux couleurs sont écrites en clair, et c'est **le but** : une sortie de
    secours qui emprunte `var(--projo)` est une sortie de secours qui s'éteint
    le jour où la feuille de style manque, c'est-à-dire le seul jour où elle
-   sert. */
+   sert.
+
+   **Le mot du bouton à la craie, son cadre en or** (arbitrage du 2 octobre
+   2026) : treize pixels et demi, c'est du petit texte, et l'or ne s'y écrit
+   plus. Le cadre n'est pas une lettre ; c'est lui qui garde l'or, et le gras
+   qui garde l'accent. */
 /* Elle a son panneau, et pour la même raison que le titre a sa bâche : sa
    phrase ne se pose pas à même le décor. Couleur écrite en clair, comme le
    reste de la sortie. Le panneau est caché avec elle — `visibility` emporte
@@ -1534,7 +1666,7 @@ html[data-calme~="animations"] .pose{transition:none}
 .ouverture .secours p{margin:0;font-size:12.5px;letter-spacing:.03em;
   text-transform:none;color:#F2EEE4;line-height:1.55}
 .ouverture .secours button{margin-top:14px;padding:12px 22px;border-radius:9px;
-  border:1px solid #F5C33B;background:none;color:#F5C33B;font:inherit;
+  border:1px solid #F5C33B;background:none;color:#F2EEE4;font:inherit;font-weight:700;
   font-size:13.5px;letter-spacing:.08em;cursor:pointer;min-height:44px;
   pointer-events:auto}
 
@@ -1675,7 +1807,8 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
 
   /* Le calque de renoncement. Tout est écrit à la main : ni classe, ni
      variable, ni police du jeu — il paraît précisément quand rien de tout
-     cela n'est arrivé. */
+     cela n'est arrivé. Le mot du bouton est à la craie et son cadre en or,
+     comme la sortie de secours du rideau : l'or ne s'écrit plus en petit. */
   function renoncer() {
     if (document.getElementById('tbf-panne') || !document.body) return;
     const d = document.createElement('div');
@@ -1691,8 +1824,8 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
       + '<small style="opacity:.9;font-size:13px">La connexion a lâché en cours de '
       + 'route. Rien n’est perdu : tout est resté sur le serveur.</small>'
       + '<div><button type="button" style="margin-top:22px;padding:12px 22px;'
-      + 'border-radius:9px;border:1px solid #F5C33B;background:none;color:#F5C33B;'
-      + 'font:inherit;font-size:14px;min-height:44px;cursor:pointer">Réessayer'
+      + 'border-radius:9px;border:1px solid #F5C33B;background:none;color:#F2EEE4;'
+      + 'font:inherit;font-size:14px;font-weight:700;min-height:44px;cursor:pointer">Réessayer'
       + '</button></div></div>';
     /* Le geste vient de quelqu'un : il a droit à ses deux essais, comme une
        arrivée neuve. Sans cette remise à zéro, « Réessayer » ne ferait qu'un
@@ -1953,7 +2086,7 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
              cadre de l'écran à droite : voir « Un seul cadre dans le duo ». -->
         <a class="pan collec" id="collec" href="/collection" aria-label="Ma collection">
           <span class="t"><b>COLLECTION</b><span id="collecTxt"></span></span>
-          <span class="tbf-jauge" id="collecJauge" data-crans="5" hidden><i id="collecBar"></i></span>
+          <span class="tbf-jauge" id="collecJauge" data-crans="1" hidden><i id="collecBar"></i></span>
         </a>
         <!-- La bâche du jour : le ticket kraft. Il naît sur son dernier état,
              « RÉPÉTER UN GESTE », qui ne dépend d'aucune donnée : la case a sa
@@ -1961,11 +2094,16 @@ html[data-calme~="animations"] :is(.ouverture .fz img,.ouverture .fz[data-place=
              précisent quand elles arrivent. Voir `bacheDuJour`. -->
         <a class="tbf-cadre tbf-cadre--ticket direct" id="direct" href="/repetition" data-echarpe>
           <span class="sur" id="directTag"></span>
-          <b id="directNom">Répéter un geste ›</b>
+          <b id="directNom">Répéter un geste&nbsp;›</b>
           <small id="directSous"></small>
+          <!-- La rangée des premiers pas et de la mission du jour : l'écharpe,
+               le compte de la mission (`directV`, caché pour les premiers pas,
+               qui le disent au-dessus), et le gain — le sachet pour un booster,
+               le jeton pour des écharpes ; le script montre l'un ou l'autre. -->
           <span class="rang" id="directRang" hidden>
             <span class="tbf-jauge" id="directJauge" data-crans="1"><i id="directBar"></i></span>
-            <span class="tbf-sticker" id="directGain" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg><span id="directGainN"></span></span>
+            <span id="directV" hidden></span>
+            <span class="tbf-sticker" id="directGain" hidden><svg id="directGainPack" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg><img id="directGainEch" src="/img/gains/echarpes.webp" alt="" hidden><span id="directGainN"></span></span>
           </span>
         </a>
       </div>
@@ -2076,11 +2214,13 @@ const H = {
   soir: null,        // un match d'un club suivi, pas fini, dans la fenêtre du direct
   clubs: new Map(),  // les clubs suivis : id → nom
   packs: null,       // les boosters en réserve
-  nouveaux: 0,       // les cartes arrivées depuis le dernier passage au classeur
+  nouveaux: 0,       // les nouveautés de la collection (voir `poserNouveautes`)
+  nouveauxCartes: true, // et ce ne sont que des cartes : la bulle le dit ainsi
   sansFanzzy: null,  // vrai quand le portefeuille dit « aucun Fanzzy équipé »
   attente: 0,        // les supporters qui attendent un duel
   parcours: null,    // la prochaine étape des premiers pas
   prochains: [],     // les coups d'envoi à venir des clubs suivis (voir `prochain`)
+  quotidien: null,   // l'état du jour (`/api/quotidien`), s'il est servi et actif
 };
 
 /** Le match a-t-il commencé ? Une tribune s'ouvre une demi-heure avant. */
@@ -2134,6 +2274,13 @@ function etatsDuHub() {
   MENU?.poser?.('/virage', H.live && commence(H.live) ? 'direct' : null);
   MENU?.poser?.('/boosters', H.packs > 0 ? 'pret' : null, H.packs);
   MENU?.poser?.('/duel-nvn', H.attente > 0 ? 'attend' : null, H.attente);
+  /* Ce qu'un RÉCUPÉRER verserait aux MISSIONS (`aReclamer`, contrat § 6.1).
+     La clé R10 le dit aussi aux autres écrans (voir `poserQuotidien`) ; ici,
+     le tiroir est déjà monté quand la réponse arrive, et il ne relirait pas
+     la clé : le hub lui pose l'état comme les trois autres. Sans tuile
+     `/aide` dans le tiroir, l'appel ne fait rien. */
+  const aPrendre = Number(H.quotidien?.aReclamer) || 0;
+  MENU?.poser?.('/aide', aPrendre > 0 ? 'pret' : null, aPrendre);
 }
 
 /**
@@ -2177,18 +2324,58 @@ document.querySelector('.centre').addEventListener('animationend', (e) => {
   if (e.animationName === 'tbf-secoue') e.target.classList.remove('tbf-secoue');
 });
 
-/* ------------------------------------------- les cartes vues
+/* ------------------------------------------- les nouveautés
 
-   « +N » sur FANZZY : les cartes arrivées depuis la dernière fois qu'on a
-   regardé sa collection. **Par appareil**, dans `localStorage` : il n'existe
-   pas encore de « vu » côté serveur. La première visite sur un appareil ne
-   montre rien — tout ce qu'on possède n'est pas nouveau —, et toucher FANZZY,
-   ou la bulle qui en parle, marque tout comme vu. Le classeur pourra en
-   faire autant avec la même clé. */
+   « +N » sur FANZZY : ce qui est arrivé dans la collection et qu'aucune page
+   ne lui a encore montré. **Le serveur le sait** depuis les lots 3 et 5
+   (CONTRATS § 2.1) : `nouveautes` de `/api/fanzzy/state`, écrite au moment
+   du gain — booster, évolution, achat à l'étal —, la même sur tous les
+   appareils. La pastille en est la longueur ; `[]`, rien ne s'affiche.
+
+   **Le hub compte, il n'éteint pas.** Une nouveauté s'éteint là où elle se
+   montre (§ 2.2 : le classeur, la collection, la fiche). Toucher FANZZY
+   n'est pas l'avoir vue, et l'éteindre d'ici effacerait le NOUVEAU que le
+   classeur doit encore coller sur la carte : le « +N » tombe quand la page
+   qui les montre les a éteintes, à la lecture suivante de l'état.
+
+   **Sur FANZZY**, et non sur le panneau COLLECTION que nomme le contrat :
+   c'est la tuile que la direction charge des nouveautés (« FANZZY porte +12,
+   ou rien »), et le panneau porte déjà son palier.
+
+   **Repli : la mémoire de l'appareil** (`tbf.vus`), quand `nouveautes` est
+   absent — serveur d'avant le contrat, ou table absente ; le contrat le
+   permet. Elle compte les cartes arrivées depuis le dernier passage au
+   classeur ; la première visite sur un appareil ne montre rien — tout ce
+   qu'on possède n'est pas nouveau —, et toucher FANZZY, ou la bulle qui en
+   parle, marque tout comme vu. Le classeur écrit la même clé. Elle reste
+   tenue à jour quand le serveur répond : un repli ne prend pas alors toute
+   la collection pour neuve. */
 const VUS = 'tbf.vus';
-let idsCollection = [];
+let idsCollection = null;    // la collection lue, `null` tant qu'aucune ne l'a été
+/* Ce qui se dit « carte » dans la bulle : un personnage, son âge, une action.
+   Une tenue, une expression ou une pièce de l'étal n'en sont pas. */
+const SORTES_CARTES = new Set(['fanzzy', 'age', 'action']);
 
-function nouveautes(qui, ids) {
+/**
+ * Pose `H.nouveaux` d'après une réponse de `/api/fanzzy/state`. Une réponse
+ * qui ne porte ni `nouveautes` ni `collection` (refus, panne) ne change rien :
+ * on garde ce qu'on montrait, et la mémoire de l'appareil n'est pas écrasée
+ * par une collection vide — sans quoi la visite suivante la croirait neuve.
+ */
+function poserNouveautes(qui, coll) {
+  const col = coll?.collection;
+  const locales = col && typeof col === 'object' ? nouveautesLocales(qui, Object.keys(col)) : null;
+  if (Array.isArray(coll?.nouveautes)) {
+    H.nouveaux = coll.nouveautes.length;
+    H.nouveauxCartes = coll.nouveautes.every((x) => SORTES_CARTES.has(x?.sorte));
+  } else if (locales !== null) {
+    H.nouveaux = locales;
+    H.nouveauxCartes = true;
+  }
+}
+
+/** Les cartes de `ids` que cet appareil n'a pas encore vues (le repli). */
+function nouveautesLocales(qui, ids) {
   idsCollection = ids;
   let vu = null;
   try { vu = JSON.parse(localStorage.getItem(VUS) ?? 'null'); } catch { return 0; }
@@ -2200,6 +2387,9 @@ function nouveautes(qui, ids) {
   return ids.filter((id) => !deja.has(id)).length;
 }
 function marquerVues(qui) {
+  /* Rien de lu, rien à marquer : une liste vide écrite ici ferait prendre
+     toute la collection pour neuve à la visite suivante. */
+  if (!idsCollection) return;
   try { localStorage.setItem(VUS, JSON.stringify({ qui, ids: idsCollection })); }
   catch { /* stockage refusé : la nouveauté ne s'affichera pas, sans plus */ }
 }
@@ -2207,13 +2397,37 @@ function marquerVues(qui) {
 /* ------------------------------------------- la collection, au palier
 
    **Le palier en cours, pas le total** (amendement 22) : « 14 / 25 », puis
-   « 37 / 50 ». Les paliers sont des nombres ronds qui s'espacent — 10, 25,
-   50, 100, 250, 500, 1 000, 2 500, 5 000 —, puis le total : aucune donnée du
-   serveur n'en définit, ce sont des repères de lecture, et ils ne promettent
-   donc aucune récompense. */
+   « 50 / 75 ».
+
+   **Les crans sont ceux du serveur** (CONTRATS § 5.1) : `paliers` de
+   `/api/fanzzy/bibliotheque`, un cran tous les `cran` objets gagnés, chacun
+   payé une fois et réclamé sur la collection. Le palier visé est
+   `prochain.a`, le seuil que la collection montre avec sa récompense : la
+   tuile et la page ne visent jamais deux seuils différents. Le second cran
+   de la jauge est le dernier multiple franchi par le compte. `prochain`
+   absent — l'univers ne contient plus de cran — : le total.
+
+   **Repli**, quand `paliers` est absent (interrupteur coupé, grand livre
+   absent, serveur d'avant le contrat) : des repères de lecture, nombres
+   ronds qui s'espacent — 10, 25, 50, 100, 250, 500, 1 000, 2 500, 5 000 —,
+   puis le total. Ils ne promettent aucune récompense : « sa jauge sans
+   récompense ni bouton », dit le contrat. */
 const PALIERS = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000];
-function palierDe(eus, total) {
-  return PALIERS.find((p) => p > eus && p < total) ?? total;
+
+/**
+ * Le palier visé et le dernier franchi (0 s'il n'y en a pas) : `{ vise, franchi }`.
+ * `filter` et non `findLast`, qu'aucune autre page du jeu n'emploie encore.
+ */
+function palierDe(eus, total, paliers) {
+  const cran = Number(paliers?.cran);
+  if (Number.isInteger(cran) && cran > 0) {
+    const a = Number(paliers.prochain?.a);
+    const vise = Number.isInteger(a) && a > eus ? a : total;
+    const f = Math.floor(eus / cran) * cran;
+    return { vise, franchi: f > 0 && f < vise ? f : 0 };
+  }
+  const vise = PALIERS.find((p) => p > eus && p < total) ?? total;
+  return { vise, franchi: PALIERS.filter((p) => p <= eus && p < vise).pop() ?? 0 };
 }
 
 /* ------------------------------------------- le prochain coup d'envoi
@@ -2299,11 +2513,12 @@ function rebours(iso) {
 
 /* ------------------------------------------- la bâche du jour
 
-   Un ticket, quatre façons de le remplir, et la première qui a ses données
+   Un ticket, cinq façons de le remplir, et la première qui a ses données
    l'emporte — dans l'ordre du brief : le match en direct (ou sa tribune
-   ouverte), le prochain coup d'envoi, l'étape suivante des premiers pas,
-   « RÉPÉTER UN GESTE ». Le dernier ne dépend de rien : la case n'est jamais
-   vide, et jamais un tiret.
+   ouverte), le prochain coup d'envoi, la mission du jour (lots 3 et 5, dès
+   que le serveur la sert), l'étape suivante des premiers pas, « RÉPÉTER UN
+   GESTE ». Le dernier ne dépend de rien : la case n'est jamais vide, et
+   jamais un tiret.
 
    **Une chose dite une fois.** Le ticket, le bouton et la bulle sont les
    trois voix du hub, à vingt pixels l'une de l'autre :
@@ -2319,11 +2534,98 @@ let ticket = { quoi: 'geste', href: '/repetition', match: null };
 /** « SAM 20:45 », et le compte à rebours à moins d'un jour : « CE SOIR 21:13 · dans 5 h 00 ».
     Avec lui, « AUJOURD'HUI » devient « À » : il ne tenait pas sur la ligne
     (« AUJOURD'HUI 16:45 · dans 8 h 45 », 169 px pour 151), et le compte à
-    rebours dit déjà que c'est aujourd'hui. */
+    rebours dit déjà que c'est aujourd'hui.
+
+    **Une liste, la plus longue d'abord** : `tenir` écrit la première qui
+    tient. À 320 px, « CE SOIR 23:45 · dans 3 h 18 » demande 141 px pour 130 ;
+    « CE SOIR » et « DEMAIN » y deviennent « À », pour la même raison
+    qu'« AUJOURD'HUI » partout. */
 function momentDuCoup(iso) {
-  if (Date.parse(iso) - Date.now() >= 86_400_000) return quand(iso);
   const q = quand(iso);
-  return `${q.startsWith('AUJOURD') ? `À ${heure(new Date(iso))}` : q} · ${rebours(iso)}`;
+  if (Date.parse(iso) - Date.now() >= 86_400_000) return [q];
+  const court = `À ${heure(new Date(iso))} · ${rebours(iso)}`;
+  return q.startsWith('AUJOURD') ? [court] : [`${q} · ${rebours(iso)}`, court];
+}
+
+/* ## Une ligne du ticket ne se coupe pas : elle se raccourcit
+
+   Le sur-titre et la ligne du moment tiennent sur une ligne, et la ligne a
+   la largeur du ticket : 151 px de texte à 360 de large, 130 à 320. Réglés
+   sur 360, ils se coupaient à 320 en points de suspension —
+   « PROCHAIN COUP D'EN… », « CE SOIR 23:45 · dans 3 h … » —, et une
+   information coupée n'est plus une information. Chaque ligne a donc ses
+   façons de se dire, de la plus longue à la plus courte, et la page écrit
+   la première qui tient, mesurée là où elle s'affiche : « COUP D'ENVOI »,
+   « À 23:45 · dans 3 h 18 ». Pas de largeur d'écran écrite ici : la
+   police, le corps du système et la colonne décident, et la mesure les
+   voit tous.
+
+   Mesurée à la composition, puis **remesurée** quand une police arrive
+   (Oswald, plus large que son repli, peut faire déborder ce qui tenait) et
+   quand la fenêtre change. Les points de suspension de la feuille restent :
+   ils ne servent plus qu'au jour où même la plus courte ne tiendrait pas. */
+let lignesDuTicket = { sur: [''], sous: [''] };
+const variantes = (x) => (Array.isArray(x) ? x : [x ?? '']);
+/** Le texte tient-il dans sa ligne ? Au dixième de pixel : la coupure, elle, ne pardonne rien. */
+function tient(el) {
+  const r = document.createRange();
+  r.selectNodeContents(el);
+  return r.getBoundingClientRect().width <= el.getBoundingClientRect().width + 0.05;
+}
+/** Écrit dans `el` la première de `textes` qui tient, ou la dernière. */
+function tenir(el, textes) {
+  for (const t of textes) {
+    el.textContent = t;
+    if (tient(el)) return;
+  }
+}
+function ajusterTicket() {
+  tenir($('directTag'), lignesDuTicket.sur);
+  tenir($('directSous'), lignesDuTicket.sous);
+}
+document.fonts?.addEventListener?.('loadingdone', ajusterTicket);
+addEventListener('resize', ajusterTicket);
+
+/* ------------------------------------------- la mission du jour
+
+   **Celle qu'on peut faire avancer, ou celle qu'on peut toucher.** La liste
+   du serveur est rangée de la facile à la difficile (contrat § 6.1) ; le
+   ticket en montre une seule, la première qui attend quelque chose du
+   joueur : une mission finie et pas encore récupérée d'abord — c'est une
+   récompense prête, à un geste —, sinon la première en cours. Toutes
+   récupérées, ou pas de bloc `missions` : l'état cède au suivant, les
+   premiers pas ou « Répéter un geste ».
+
+   **Rien n'est tiré du titre** (R7) : l'intitulé s'affiche tel quel, les
+   nombres viennent de `fait` et `cible`. Une mission dont l'identifiant
+   ou l'unité sont inconnus de cette page se montre quand même : elle n'a
+   besoin que de ces trois champs et du gain.
+
+   Les missions d'hier encore récupérables (`hier`) restent aux MISSIONS :
+   le ticket dit ce qu'il y a à faire aujourd'hui. */
+function missionDuJour() {
+  const liste = H.quotidien?.missions?.liste;
+  if (!Array.isArray(liste)) return null;
+  const lisibles = liste.filter((m) => typeof m?.titre === 'string' && m.titre.trim()
+    && Number.isInteger(Number(m.cible)) && Number(m.cible) >= 1);
+  return lisibles.find((m) => m.etat === 'pret') ?? lisibles.find((m) => m.etat === 'en_cours') ?? null;
+}
+
+/** Un chemin du jeu, et rien d'autre : la page où la mission se fait (`ou`). */
+const cheminSur = (ou) => (typeof ou === 'string' && /^\/(?!\/)[\w\-/]*$/.test(ou) ? ou : null);
+
+/** Un gain (R5) en mots, ses seules valeurs non nulles : « 30 écharpes, 20 XP et 1 tampon ». */
+function gainEnMots(g) {
+  const n = (k) => Math.max(0, Math.floor(Number(g?.[k]) || 0));
+  const s = (x, un, plusieurs) => `${x} ${x > 1 ? plusieurs : un}`;
+  const bouts = [
+    n('echarpes') && s(n('echarpes'), 'écharpe', 'écharpes'),
+    n('packs') && s(n('packs'), 'booster', 'boosters'),
+    n('xp') && `${n('xp')} XP`,
+    n('tampons') && s(n('tampons'), 'tampon de saison', 'tampons de saison'),
+  ].filter(Boolean);
+  return bouts.length > 1 ? `${bouts.slice(0, -1).join(', ')} et ${bouts[bouts.length - 1]}`
+    : (bouts[0] ?? '');
 }
 
 function bacheDuJour() {
@@ -2331,6 +2633,7 @@ function bacheDuJour() {
   clearInterval(reboursMinuteur); reboursMinuteur = null;
   const m = H.live;
   const p = prochain();
+  const mi = missionDuJour();
   let e;
   if (m) {
     const joue = m.home_goals !== null && m.home_goals !== undefined;
@@ -2342,39 +2645,92 @@ function bacheDuJour() {
          première de chacun. Sans couleur connue, celle du jeu. */
       e1: m.homeColors?.[0] ?? null, e2: m.awayColors?.[0] ?? null };
   } else if (p) {
-    /* L'affiche dans le titre, qui passe sur deux lignes ; le moment dessous. */
-    e = { quoi: 'prochain', match: p, href: '/matchs', sur: 'PROCHAIN COUP D’ENVOI',
+    /* L'affiche dans le titre, qui passe sur deux lignes ; le moment dessous.
+       Le sur-titre a sa forme courte (voir « Une ligne du ticket ne se coupe
+       pas ») : l'affiche et le moment disent déjà que le match est à venir. */
+    e = { quoi: 'prochain', match: p, href: '/matchs', sur: ['PROCHAIN COUP D’ENVOI', 'COUP D’ENVOI'],
       nom: `${p.home_name} – ${p.away_name}`, sous: momentDuCoup(p.kickoff_at), tic: p };
+  } else if (mi) {
+    /* La mission du jour (voir `missionDuJour`). En cours, le ticket mène
+       là où elle se fait (`ou`) ; finie, aux MISSIONS, où elle se récupère
+       — le ticket est un lien, il ne verse rien lui-même. **Sur l'onglet
+       DU JOUR** (`#jour`) : MISSIONS s'ouvre sur l'onglet que l'adresse
+       nomme s'il existe, sinon sur DU JOUR quand les missions sont servies,
+       sinon sur PREMIERS PAS. Le lien dit où il mène, au lieu de s'en
+       remettre au choix par défaut de l'autre page. */
+    const cible = Number(mi.cible);
+    const fait = Math.min(cible, Math.max(0, Math.floor(Number(mi.fait) || 0)));
+    const prete = mi.etat === 'pret';
+    e = { quoi: 'mission', href: prete ? '/aide#jour' : cheminSur(mi.ou) ?? '/aide#jour',
+      sur: prete ? ['MISSION DU JOUR · À RÉCUPÉRER', 'À RÉCUPÉRER'] : ['MISSION DU JOUR'],
+      nom: mi.titre.trim(), mission: { fait, cible, gain: mi.gain ?? null, prete } };
   } else if (H.parcours) {
     /* Le sur-titre dit ce qu'est cette étape et où l'on en est : sans lui,
        « TON PREMIER FANZZY » suivi de six crans se lisait « six actions pour
-       ton premier Fanzzy », et le booster du bout ne se rattachait à rien. */
+       ton premier Fanzzy », et le booster du bout ne se rattachait à rien.
+       Il tient tout juste à 320 px : sa forme courte perd le point, pas le
+       compte. */
     const r = H.parcours;
-    e = { quoi: 'pas', href: r.ou || '/aide', sur: `PREMIERS PAS · ${r.faites}/${r.total}`,
+    /* Une étape sans lieu se lit aux MISSIONS, sur l'onglet des premiers pas. */
+    e = { quoi: 'pas', href: r.ou || '/aide#pas',
+      sur: [`PREMIERS PAS · ${r.faites}/${r.total}`, `PREMIERS PAS ${r.faites}/${r.total}`],
       nom: r.titre, rang: r };
   } else {
-    e = { quoi: 'geste', href: '/repetition', sur: '', nom: 'Répéter un geste ›' };
+    /* L'espace insécable garde la flèche au mot : à 320 px, elle partait
+       seule sur la seconde ligne. */
+    e = { quoi: 'geste', href: '/repetition', sur: '', nom: 'Répéter un geste\u00A0›' };
   }
   ticket = { quoi: e.quoi, href: e.href, match: e.match ?? null };
   d.dataset.quoi = e.quoi;
   d.href = e.href;
-  $('directTag').textContent = e.sur;
   $('directNom').textContent = e.nom;
-  $('directSous').textContent = e.sous ?? '';
+  lignesDuTicket = { sur: variantes(e.sur), sous: variantes(e.sous) };
+  ajusterTicket();
   if (e.e1) d.style.setProperty('--e1', e.e1); else d.style.removeProperty('--e1');
   if (e.e2) d.style.setProperty('--e2', e.e2); else d.style.removeProperty('--e2');
   /* Les premiers pas : l'écharpe jusqu'au bout du parcours, et ce que le
      parcours entier rapporte, posé sur son cran final, tant qu'il ne l'a pas
      rapporté. */
   const r = e.rang;
-  $('directRang').hidden = !r;
+  const mis = e.mission;
+  $('directRang').hidden = !r && !mis;
+  /* Le compte de la mission, à côté de son écharpe ; les premiers pas
+     disent le leur au-dessus. Vidé quand il est caché : un chiffre resté
+     d'un état précédent ne doit rien dire, même à qui lit le texte. */
+  $('directV').hidden = !mis;
+  $('directV').textContent = mis ? `${mis.fait}/${mis.cible}` : '';
+  /* Le sachet pour un booster, le jeton pour des écharpes. Le sachet est un
+     SVG : `hidden` ne le cache pas partout, son style si. */
+  const jeton = (quoi) => {
+    $('directGainPack').style.display = quoi === 'pack' ? '' : 'none';
+    $('directGainEch').hidden = quoi !== 'echarpes';
+  };
   if (r) {
     const gain = r.recompense > 0 && !r.paye;
     $('directBar').style.width = `${Math.round((r.faites / r.total) * 100)}%`;
     $('directGain').hidden = !gain;
+    jeton('pack');
     $('directGainN').textContent = `+${r.recompense}`;
     e.aria = `Premiers pas, ${r.faites} sur ${r.total} : ${r.titre}`
       + (gain ? `, ${r.recompense} booster${r.recompense > 1 ? 's' : ''} au bout` : '');
+  } else if (mis) {
+    /* **Un seul chiffre sur le sticker** : la place est celle d'une rangée de
+       douze pixels. Les écharpes d'abord — la monnaie qu'on surveille —,
+       sinon les boosters, sinon l'XP ; jamais « +0 » (R5). Le gain entier
+       est dit à l'oreille. */
+    const g = mis.gain ?? {};
+    const n = (k) => Math.max(0, Math.floor(Number(g[k]) || 0));
+    const [quoi, texte] = n('echarpes') ? ['echarpes', `+${n('echarpes')}`]
+      : n('packs') ? ['pack', `+${n('packs')}`]
+        : n('xp') ? ['', `+${n('xp')} XP`] : ['', ''];
+    $('directBar').style.width = `${Math.round((mis.fait / mis.cible) * 100)}%`;
+    $('directGain').hidden = !texte;
+    jeton(quoi);
+    $('directGainN').textContent = texte;
+    const dit = gainEnMots(g);
+    e.aria = mis.prete
+      ? `Mission du jour réussie : ${e.nom}${dit ? `, ${dit} à récupérer aux missions` : ''}`
+      : `Mission du jour : ${e.nom}, ${mis.fait} sur ${mis.cible}${dit ? `, ${dit} à la clé` : ''}`;
   }
   const dire = () => {
     if (e.tic) e.aria = `Prochain coup d’envoi, ${e.nom}, ${quand(e.tic.kickoff_at).toLowerCase()}, ${rebours(e.tic.kickoff_at)}`;
@@ -2388,7 +2744,8 @@ function bacheDuJour() {
   if (e.tic) {
     reboursMinuteur = setInterval(() => {
       if (Date.parse(e.tic.kickoff_at) <= Date.now()) { montrer(); return; }
-      $('directSous').textContent = momentDuCoup(e.tic.kickoff_at);
+      lignesDuTicket.sous = momentDuCoup(e.tic.kickoff_at);
+      tenir($('directSous'), lignesDuTicket.sous);
       dire();
     }, 30_000);
   }
@@ -2452,10 +2809,29 @@ function phraseDuFanzzy() {
   /* L'étape des premiers pas que le ticket affiche, s'il en affiche une. */
   const etape = ticket.quoi === 'pas' ? H.parcours?.cle : null;
   if (H.sansFanzzy && etape !== 'fanzzy') return ['Choisis ton Fanzzy ›', '/fanzzy'];
-  if (H.packs > 0 && etape !== 'booster') {
+  /* **Le bonus du jour, une fois son ticket rangé** (voir « le bonus du
+     jour »). Tant que le ticket est à l'écran, ou pas encore monté, la
+     bulle ne le redit pas. Rangé sans être pris, il se rappelle ici, avec
+     la case du jour en sticker (« J3 », la case de `bonus.carte`, contrat
+     § 6.1), et mène aux MISSIONS, où il se récupère aussi — sur l'onglet
+     DU JOUR, qui porte la carte de présence. */
+  const bonus = H.quotidien?.bonus;
+  const jour = Number(bonus?.carte?.case);
+  if (bonus?.pret === true && !ticketBonus && !bonusAuPlafond && bonusDejaPropose()) {
+    return ['Ton bonus t’attend ›', '/aide#jour', Number.isInteger(jour) && jour >= 1 ? `J${jour}` : null];
+  }
+  /* La mission « ouvre des boosters » mène au kiosque, comme la bulle des
+     boosters qui attendent : le ticket le dit déjà. */
+  const kiosque = ticket.quoi === 'mission' && ticket.href === '/boosters';
+  if (H.packs > 0 && etape !== 'booster' && !kiosque) {
     return [H.packs > 1 ? 'Tes boosters t’attendent ›' : 'Ton booster t’attend ›', '/boosters'];
   }
-  if (H.nouveaux > 0) return ['Tes nouvelles cartes ›', '/fanzzy'];
+  /* Le serveur compte aussi ce qui n'est pas une carte — une tenue, une pièce
+     de l'étal : la bulle ne l'appelle alors pas « carte ». Trois mots, sous
+     le plafond du marqueur. */
+  if (H.nouveaux > 0) {
+    return [H.nouveauxCartes ? 'Tes nouvelles cartes ›' : 'Ta collection grandit ›', '/fanzzy'];
+  }
   return [null, null];
 }
 
@@ -2468,7 +2844,9 @@ let bulleAttend = true;
 /** Pose la bulle si elle a changé, et la replie six secondes plus tard. */
 function direBulle() {
   if (bulleAttend) return;
-  const [texte, href] = phraseDuFanzzy();
+  /* `colle` : un sticker au bout de la phrase (« J3 »), en Oswald, jamais
+     au marqueur — voir `.bulle .tbf-sticker`. */
+  const [texte, href, colle = null] = phraseDuFanzzy();
   const b = $('bulle'); const pli = $('bullePli');
   if (!texte) {
     clearTimeout(bulleMinuteur); bulleMinuteur = null;
@@ -2476,9 +2854,16 @@ function direBulle() {
     return;
   }
   b.href = href;
-  if (b.dataset.texte === texte) return;     // déjà dite : on ne la rejoue pas
-  b.dataset.texte = texte;
+  const dite = colle ? `${texte} ${colle}` : texte;
+  if (b.dataset.texte === dite) return;      // déjà dite : on ne la rejoue pas
+  b.dataset.texte = dite;
   b.textContent = texte;
+  if (colle) {
+    const s = document.createElement('b');
+    s.className = 'tbf-sticker';
+    s.textContent = colle;
+    b.append(s);
+  }
   /* Elle attend que le rideau se lève : six secondes passées derrière lui
      seraient six secondes que personne n'a lues. */
   if (document.getElementById('ouverture')) {
@@ -2486,22 +2871,79 @@ function direBulle() {
     addEventListener('tbf:ouverture-finie', ouvrirBulle, { once: true });
   } else ouvrirBulle();
 }
-function ouvrirBulle() {
+/**
+ * Ouvre la bulle — d'elle-même, ou parce qu'on a touché le « ! ».
+ *
+ * **D'elle-même, elle ne couvre jamais une tuile.** À 320 × 568, les tuiles
+ * des rails commencent trente et un pixels sous le haut de la bulle, qui en
+ * fait quarante-quatre sur une ligne : posée à côté de la tête, elle
+ * recouvrait la tuile DUEL pendant ses six secondes — en entier quand la
+ * phrase prenait trois lignes —, et un toucher sur DUEL ouvrait la
+ * destination de la bulle. Il n'y a pas d'autre place sur un écran aussi
+ * court : à gauche, c'est VIRAGE ; au milieu, le visage. Elle se plie donc
+ * aussitôt en « ! », qui vibre — le Fanzzy a quelque chose à dire, on le
+ * lit en le touchant. C'est la mesure qui décide, pas une largeur
+ * d'écran : à 320 × 640, les rails commencent assez bas, et elle s'ouvre.
+ *
+ * Ouverte au doigt, elle tient ses six secondes même si elle couvre une
+ * tuile : on vient de la demander, c'est elle qu'on regarde.
+ *
+ * @param {Event} [e] le clic sur le « ! », s'il vient de lui.
+ */
+function ouvrirBulle(e) {
   const b = $('bulle'); const pli = $('bullePli');
   if (!b.dataset.texte) return;
   clearTimeout(bulleMinuteur);
   pli.hidden = true;
   b.hidden = false;
+  bulleDElleMeme = e?.type !== 'click';
+  /* Mesurée avant son entrée (`tbf-colle`), qui la grandit et la penche :
+     montrée puis cachée dans la même tâche, elle n'est jamais peinte. */
+  if (bulleDElleMeme && bulleCouvre()) { replierBulle(); return; }
   rejouerSur(b, 'tbf-colle');
   bulleMinuteur = setTimeout(replierBulle, 6000);
 }
 function replierBulle() {
+  clearTimeout(bulleMinuteur);
   bulleMinuteur = null;
   $('bulle').hidden = true;
   const pli = $('bullePli');
   pli.hidden = false;
   rejouerSur(pli.firstElementChild, 'tbf-vibre');
 }
+/** Ouverte d'elle-même (et non au doigt) : c'est elle seule qui doit laisser les tuiles libres. */
+let bulleDElleMeme = false;
+/**
+ * La bulle recouvre-t-elle une tuile d'un rail ?
+ *
+ * Sa boîte de mise en page et non son rectangle à l'écran : son entrée la
+ * grandit et la penche, et l'élément penché déborde de sa boîte. La queue
+ * n'y est pas, et c'est voulu : elle ne prend pas le doigt (`ui.css`).
+ */
+function bulleCouvre() {
+  const b = $('bulle');
+  const cadre = b.offsetParent?.getBoundingClientRect();
+  if (!cadre || !b.offsetWidth) return false;
+  const g = cadre.left + b.offsetLeft;
+  const h = cadre.top + b.offsetTop;
+  const d = g + b.offsetWidth;
+  const bas = h + b.offsetHeight;
+  return [...document.querySelectorAll('.rail .tbf-case')].some((t) => {
+    const r = t.getBoundingClientRect();
+    return g < r.right && d > r.left && h < r.bottom && bas > r.top;
+  });
+}
+/* **Et elle reste hors des tuiles** si elle grandit après coup. Le marqueur
+   n'est demandé qu'au moment où la bulle paraît — avec le mot du ticket de
+   retour, c'est le seul texte qui l'emploie — : elle s'ouvre souvent dans
+   la police de repli, plus étroite, et passe à trois lignes quand Permanent
+   Marker arrive. Un téléphone qu'on tourne déplace les rails. Dans les deux
+   cas, ouverte d'elle-même, elle se plie. */
+function garderLesTuiles() {
+  if (bulleDElleMeme && !$('bulle').hidden && bulleCouvre()) replierBulle();
+}
+if (typeof ResizeObserver === 'function') new ResizeObserver(garderLesTuiles).observe($('bulle'));
+addEventListener('resize', garderLesTuiles);
 /**
  * Une classe de mouvement de `ui.css`, rejouée du début et retirée à sa fin.
  *
@@ -2569,6 +3011,31 @@ function poserAvatar() {
   a.setAttribute('aria-label', H.sansFanzzy ? `Choisis ton Fanzzy${n}` : `Mon profil${n}${niv.dataset.xp ?? ''}`);
 }
 let bustePerdu = null;
+
+/**
+ * Le niveau sur l'avatar et l'anneau d'XP autour.
+ *
+ * Lu au chargement (`/api/niveau`), et relu dans la réponse d'une
+ * réclamation qui verse de l'XP (l'objet `niveau` du contrat, § 1, qui porte
+ * les mêmes `niveau`, `dans`, `pour` et `max`). L'anneau saute à sa valeur :
+ * une transition sur un dégradé conique ne se joue pas (`ui.css`).
+ *
+ * @returns {boolean} vrai si un niveau a été posé ; rien ne s'affiche sans lui
+ */
+function poserNiveau(niv) {
+  if (!(Number(niv?.niveau) > 0)) return false;
+  const p = $('nivPastille');
+  p.textContent = niv.niveau;
+  p.hidden = false;
+  p.title = niv.max
+    ? `Niveau ${niv.niveau}, le dernier`
+    : `Niveau ${niv.niveau} · ${niv.dans}/${niv.pour} XP`;
+  p.dataset.xp = niv.max ? '' : `, ${niv.dans} XP sur ${niv.pour}`;
+  const part = niv.max ? 1 : Math.min(1, Math.max(0, niv.dans / niv.pour || 0));
+  $('anneau').style.setProperty('--p', `${Math.round(part * 100)}%`);
+  poserAvatar();
+  return true;
+}
 
 /* ------------------------------------------- le HUD des autres écrans
 
@@ -2941,9 +3408,10 @@ function nommer(p) {
 
      **Une icône au trait, plus un caractère.** Le « ✓ » se dessinait avec la
      police d'émojis du téléphone — en couleur sur l'un, en gras sur l'autre —
-     à côté des icônes au trait du jeu. La coche de `ui.css` prend l'or de la
-     plaque ; son nom reste lisible par un lecteur d'écran, puisqu'elle est
-     seule à dire cet état. */
+     à côté des icônes au trait du jeu. La coche de `ui.css` prend la couleur
+     de la plaque, la craie depuis que l'or ne s'écrit plus en petit ; son nom
+     reste lisible par un lecteur d'écran, puisqu'elle est seule à dire cet
+     état. */
   const coche = Boolean(nom) && p.evo === lignee.choisi && lignee.atteint > 1;
   /* **Et la plaque ne promet pas un dessin qui n'existe pas.**
 
@@ -3660,6 +4128,538 @@ async function lire(url, options) {
   return r.json().catch(() => null);
 }
 
+/* ============================================ le quotidien (lots 3 et 5)
+
+   Ce que le chantier serveur apporte au hub (`serveur/CONTRATS.md`, § 6 et
+   § 8), et rien d'autre : la mission du jour dans la bâche du jour (voir
+   `missionDuJour`), le ticket « depuis ta dernière visite », le bonus du
+   jour avec sa carte de présence, et la pastille des MISSIONS (R10). Une
+   seule lecture, `GET /api/quotidien?retour=1`, partie avec les autres.
+
+   **Absent veut dire rien** (R1, R2). Un 404, un 503, un réseau coupé, ou
+   `{ actif: false }` : pas de mission, pas de ticket, pas de bonus, pas de
+   pastille — et rien en console, d'où une lecture à part, plus muette que
+   `lire` : pendant un déploiement, l'ancien serveur répond 404 une minute,
+   et ce n'est pas une panne.
+
+   **Le serveur compte, l'écran nomme** (R7) : aucun montant n'est écrit
+   ici, aucun minuit n'est calculé sur l'horloge du téléphone (R3) — la fin
+   du jour de jeu est une durée servie, `finDuJourMs`, décomptée sur
+   `performance.now()` et relue à zéro. */
+const CLE_QUOTIDIEN = 'tbf-quotidien';
+const BONUS_PROPOSE = 'tbf.bonus-propose';
+/** Le joueur, pour la clé R10 et la mémoire du bonus : `user.id`, posé par le hub. */
+let quiQuotidien = null;
+
+/** Lit l'état du jour, ou rend `null` sans un mot (R2). */
+async function lireQuotidien(retour = false) {
+  try {
+    const r = await fetch(`/api/quotidien${retour ? '?retour=1' : ''}`, { credentials: 'same-origin' });
+    if (!r.ok || !(r.headers.get('content-type') ?? '').includes('json')) return null;
+    const q = await r.json();
+    return q && typeof q === 'object' ? q : null;
+  } catch { return null; }
+}
+
+/**
+ * Un geste du quotidien (R6) : la réponse ; `{ absent: true }` quand le
+ * quotidien n'est plus servi ; `null` si la réponse n'est pas venue.
+ *
+ * **Un 404 ou un 503 est un bloc absent** (R2), pas une erreur à dire : un
+ * ancien serveur pendant un déploiement, ou la base injoignable
+ * (`quotidien.error.indisponible`). Inviter à réessayer contre elle ne
+ * mènerait à rien. Seul ce qui ne répond pas du tout garde son message.
+ */
+async function posterQuotidien(chemin, corps = {}) {
+  try {
+    const r = await fetch(`/api/quotidien/${chemin}`, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' }, body: JSON.stringify(corps),
+    });
+    if (r.status === 404 || r.status === 503) return { absent: true };
+    if (!r.ok || !(r.headers.get('content-type') ?? '').includes('json')) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+/**
+ * Retient l'état du jour, le dit aux autres écrans, et recompose le hub.
+ *
+ * **La clé R10** : la barre et le tiroir des autres écrans lisent
+ * `aReclamer` dans l'onglet (même joueur, moins d'une minute) et n'appellent
+ * jamais la route eux-mêmes. Écrite après chaque lecture, sous la même forme
+ * et la même règle que MISSIONS (`aide.html`) : `{ qui, t, aReclamer }`
+ * quand l'état du jour est servi et le joueur connu ; **effacée** sinon —
+ * route absente, 503, `{ actif: false }` —, car une pastille ne doit pas
+ * survivre à ce qui la justifie.
+ *
+ * @param {object|null} q  la réponse, ou `null` : la route ne sert plus rien
+ */
+function poserQuotidien(q) {
+  H.quotidien = q?.actif === true ? q : null;
+  try {
+    if (H.quotidien && quiQuotidien != null) {
+      sessionStorage.setItem(CLE_QUOTIDIEN, JSON.stringify({ qui: quiQuotidien, t: Date.now(),
+        aReclamer: Math.max(0, Math.floor(Number(q.aReclamer) || 0)) }));
+    } else sessionStorage.removeItem(CLE_QUOTIDIEN);
+  } catch { /* onglet sans stockage : les autres écrans n'auront pas de pastille */ }
+  planifierJour(H.quotidien?.finDuJourMs);
+  montrer();
+}
+
+/* **Le jour de jeu qui change, le hub ouvert** (R3). À zéro, on relit : les
+   missions sont neuves, le bonus est de nouveau prêt. Le décompte suit
+   `performance.now()`, et l'onglet qui revient le revérifie — une minuterie
+   d'onglet caché peut prendre des heures de retard. Une seconde et demie de
+   marge : on relit quand le serveur a changé de jour, pas juste avant. */
+let finDuJour = null;
+let minuteurJour = null;
+function planifierJour(ms) {
+  clearTimeout(minuteurJour);
+  minuteurJour = null;
+  finDuJour = null;
+  const d = Number(ms);
+  if (!Number.isFinite(d) || d < 0) return;
+  finDuJour = performance.now() + d;
+  /* Un reste nul ou presque se relit dans une minute, pas en boucle. */
+  minuteurJour = setTimeout(relireQuotidien, d < 1000 ? 60_000 : Math.min(d + 1500, 2_000_000_000));
+}
+async function relireQuotidien() {
+  clearTimeout(minuteurJour);
+  minuteurJour = null;
+  finDuJour = null;
+  poserQuotidien(await lireQuotidien());
+  proposerBonus();
+}
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && finDuJour !== null && performance.now() >= finDuJour) void relireQuotidien();
+});
+
+const pause = (ms) => new Promise((r) => { setTimeout(r, ms); });
+/**
+ * Attend que le joueur puisse voir : le rideau levé, l'onglet au premier plan.
+ * Un ticket qui monte derrière le rideau, ou dans un onglet de fond, n'est vu
+ * de personne — et le ticket de retour ne se montre qu'une fois.
+ */
+function quandOnVoit() {
+  return new Promise((ok) => {
+    const visible = () => {
+      if (!document.hidden) { ok(); return; }
+      const f = () => {
+        if (document.hidden) return;
+        document.removeEventListener('visibilitychange', f);
+        ok();
+      };
+      document.addEventListener('visibilitychange', f);
+    };
+    if (document.getElementById('ouverture')) addEventListener('tbf:ouverture-finie', visible, { once: true });
+    else visible();
+  });
+}
+
+/** La pile des tickets et des toasts (`.tbf-pile`, `ui.css`) : une seule, sur `body`. */
+function pileDesTickets() {
+  let p = document.querySelector('body > .tbf-pile');
+  if (!p) {
+    p = document.createElement('div');
+    p.className = 'tbf-pile';
+    document.body.append(p);
+  }
+  return p;
+}
+
+/**
+ * Une information ou un refus qui passe : le toast de `ui.css`, trois
+ * secondes. Une erreur n'est jamais un ticket kraft (la brique le dit).
+ */
+function toaster(texte, erreur = false) {
+  const t = document.createElement('div');
+  t.className = erreur ? 'tbf-toast tbf-toast--erreur' : 'tbf-toast';
+  t.setAttribute('role', erreur ? 'alert' : 'status');
+  t.innerHTML = erreur
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 16.5v.5M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z"/></svg>'
+    : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
+  t.append(texte);
+  pileDesTickets().append(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+/* ------------------------------------------- depuis ta dernière visite
+
+   Le ticket de retour du lot 2 (`.tbf-ticket--retour`), enfin nourri : ce
+   qui s'est passé pendant qu'on n'était pas là (`depuis`, contrat § 8). Il
+   monte au lever du rideau, reste trois secondes, et s'en va.
+
+   **Ce que le serveur sert, et seulement ça.** Chaque sous-champ absent ne
+   dit rien. Pas d'écharpes : le jeu ne tient pas de journal de ce qu'il
+   verse, et un chiffre partiel mentirait (« le ticket ne parle pas
+   d'écharpes ») — ni gain du joueur, ni pot du KOP.
+
+   **Trois lignes au plus**, la brique l'impose : le mot de la main, puis
+   deux lignes de nouvelles, rangées de la plus rare à la plus courante. Une
+   nouvelle qui ferait une troisième ligne, ou qui ne tiendrait pas dans la
+   largeur du ticket, n'est pas écrite : la suivante, plus courte, peut
+   l'être. Mesuré dans la page, comme les lignes de la bâche du jour.
+
+   **Au marqueur, le seul mot de la main** : « Depuis ta dernière visite »,
+   quatre mots et pas un chiffre (amendement 6). Pas « depuis hier » : le
+   serveur sert une durée (`ilYaMs`), et un jour ne se déduit pas de
+   l'horloge du téléphone (R3, R4). */
+function nouvellesDepuis(d) {
+  const L = [];
+  const n = (x) => Math.max(0, Math.floor(Number(x) || 0));
+  const mot = (x) => (typeof x === 'string' ? x.trim() : '');
+  const pluriel = (x, un, plusieurs) => `${x} ${x > 1 ? plusieurs : un}`;
+  const saison = mot(d.saison?.nom);
+  if (saison) L.push(n(d.saison.numero) ? `Saison ${n(d.saison.numero)} : ${saison}` : `Saison : ${saison}`);
+  /* Le score du point de vue du club suivi (`club`) : l'issue en est dite. */
+  const ISSUES = { gagne: 'gagne', nul: 'fait nul', perdu: 'perd' };
+  for (const m of Array.isArray(d.matchs) ? d.matchs : []) {
+    const club = mot(m?.club);
+    const issue = ISSUES[m?.issue];
+    if (!club || !issue) continue;
+    const s = Array.isArray(m.score) && m.score.length === 2 && m.score.every(Number.isInteger) ? m.score : null;
+    const vu = s && club === mot(m.exterieur) ? [s[1], s[0]] : s;
+    L.push(vu ? `${club} ${issue} ${vu[0]}–${vu[1]}` : `${club} ${issue}`);
+  }
+  if (n(d.souvenirs)) L.push(`+${pluriel(n(d.souvenirs), 'souvenir', 'souvenirs')}`);
+  const amis = (Array.isArray(d.amis?.nouveaux) ? d.amis.nouveaux : []).map((a) => mot(a?.pseudo)).filter(Boolean);
+  if (amis.length === 1) L.push(`${amis[0]} est ton ami`);
+  else if (amis.length > 1) L.push(`${amis.length} nouveaux amis`);
+  for (const k of Array.isArray(d.kops) ? d.kops : []) {
+    const kop = mot(k?.nom);
+    if (!kop) continue;
+    const venus = (Array.isArray(k.arrivees) ? k.arrivees : []).map(mot).filter(Boolean);
+    if (venus.length === 1) L.push(`${venus[0]} a rejoint ${kop}`);
+    else if (venus.length > 1) L.push(`${venus.length} arrivées à ${kop}`);
+    for (const v of Array.isArray(k.votes) ? k.votes : []) {
+      if (v?.issue === 'adopte') L.push(`${kop} : vote adopté`);
+      else if (v?.issue === 'rejete') L.push(`${kop} : vote rejeté`);
+    }
+  }
+  if (n(d.amis?.demandes)) L.push(pluriel(n(d.amis.demandes), 'demande d’ami', 'demandes d’ami'));
+  if (n(d.invitationsKop)) L.push(pluriel(n(d.invitationsKop), 'invitation à un KOP', 'invitations à un KOP'));
+  return L;
+}
+/** Pose le ticket de retour s'il a quelque chose à dire. @returns {boolean} posé */
+function montrerRetour(d) {
+  if (!d || typeof d !== 'object') return false;
+  const nouvelles = nouvellesDepuis(d);
+  if (!nouvelles.length) return false;
+  const t = document.createElement('div');
+  t.className = 'tbf-ticket tbf-ticket--retour';
+  t.setAttribute('role', 'status');
+  const main = document.createElement('span');
+  main.className = 'tbf-marqueur';
+  main.textContent = 'Depuis ta dernière visite';
+  const ul = document.createElement('ul');
+  t.append(main, ul);
+  pileDesTickets().append(t);
+  /* Les positions de mise en page, pas les rectangles : le ticket monte en
+     glissant, et ses enfants avec lui. */
+  for (const texte of nouvelles) {
+    const li = document.createElement('li');
+    li.textContent = texte;
+    ul.append(li);
+    const rangs = new Set([...ul.children].map((x) => x.offsetTop));
+    if (rangs.size > 2 || li.offsetWidth > ul.clientWidth + 0.5) li.remove();
+  }
+  if (!ul.children.length) { t.remove(); return false; }
+  rejouerSur(t, 'tbf-glisse');
+  setTimeout(() => t.remove(), 3320);
+  return true;
+}
+
+/** La marque de visite (§ 8.2) : après le ticket, ou après la lecture s'il n'y en a pas. */
+function marquerVisite() {
+  fetch('/api/quotidien/visite', {
+    method: 'POST', credentials: 'same-origin', keepalive: true,
+    headers: { 'content-type': 'application/json' }, body: '{}',
+  }).catch(() => { /* la prochaine arrivée la posera */ });
+}
+
+/**
+ * Une arrivée sur le hub : l'état du jour, puis, une fois qu'on voit, le
+ * ticket de retour et le bonus — l'un après l'autre, jamais l'un sur
+ * l'autre. Au chargement, et au retour par la flèche du navigateur (le
+ * cache de navigation arrière rend la page sans la recharger : c'est une
+ * arrivée aussi).
+ *
+ * Un `GET` ne déplace jamais la marque (§ 8.2) : elle n'est posée qu'ici,
+ * une fois le ticket montré. Une page quittée sous le rideau ne mange donc
+ * pas le ticket : il reviendra.
+ */
+async function arriverAuHub(lecture) {
+  /* Route absente (404, 503, réseau) ou `{ actif: false }` : ni ticket, ni
+     marque, ni pastille — et un état d'une arrivée précédente (retour par
+     la flèche) s'efface avec elle (R2). */
+  poserQuotidien(await lecture);
+  if (!H.quotidien) return;
+  const depuis = H.quotidien.depuis;
+  if (!depuis) marquerVisite();
+  await quandOnVoit();
+  if (depuis) {
+    const montre = montrerRetour(depuis);
+    marquerVisite();
+    if (montre) await pause(3400);
+  } else await pause(600);
+  proposerBonus();
+}
+
+/* ------------------------------------------- le bonus du jour
+
+   La carte de présence (contrat § 6.1, `bonus` et `serie`) : à la première
+   visite du jour, le ticket « BONUS DU JOUR » de `ui.css` (`.tbf-bonus`)
+   monte dans la pile, avec ce qu'il donne, les sept cases de la semaine et
+   la bâche or RÉCUPÉRER. On le touche : le tampon PRIS claque, les écharpes
+   volent vers leur compteur, qui compte (`FX.voler`, `FX.compter`), et le
+   ticket s'en va.
+
+   **Il ne retient personne.** Un toucher ailleurs — le bouton d'entrée,
+   une tuile, le menu — le range, et ce toucher fait ce qu'il devait faire.
+   Rangé sans être pris, il ne remonte plus de la session (la mémoire est
+   dans l'onglet, pour ce joueur et ce jour de jeu) : le Fanzzy le rappelle
+   dans sa bulle (« Ton bonus t'attend › », la case du jour en sticker), qui
+   mène aux MISSIONS, où il se récupère aussi.
+
+   **Dans la pile, en bas** : le hub ne défile pas, et la bande du bas n'a
+   pas un pixel de reste. Le ticket passe par-dessus le bouton d'entrée le
+   temps qu'on le touche, comme un toast ; rien ne bouge dessous.
+
+   **Rien de ce qui manque.** « Nᵉ JOUR » seulement à trois jours d'affilée
+   (§ 6.1 : on ne dit rien d'une série qui retombe) ; le gain, ses seules
+   valeurs non nulles (R5) ; pas de `bonus`, pas de ticket. */
+let ticketBonus = null;
+/** Un plafond du jour atteint (`plafond`) : dû demain, la bulle n'y renvoie plus aujourd'hui. */
+let bonusAuPlafond = false;
+
+function bonusDejaPropose() {
+  try {
+    return sessionStorage.getItem(BONUS_PROPOSE) === `${quiQuotidien}|${H.quotidien?.jour ?? ''}`;
+  } catch { return false; }
+}
+function retenirBonusPropose() {
+  try { sessionStorage.setItem(BONUS_PROPOSE, `${quiQuotidien}|${H.quotidien?.jour ?? ''}`); }
+  catch { /* sans stockage, il remontera à la prochaine arrivée : rien de grave */ }
+}
+
+/** Le gain d'une case en stickers, ses seules valeurs non nulles (R5). */
+function stickersDuGain(g) {
+  const n = (k) => Math.max(0, Math.floor(Number(g?.[k]) || 0));
+  let s = '';
+  if (n('echarpes')) {
+    s += ` <span class="tbf-sticker tbf-sticker--prix"><img src="/img/gains/echarpes.webp" alt="">+${n('echarpes')}</span>`;
+  }
+  if (n('packs')) {
+    s += ' <span class="tbf-sticker tbf-sticker--prix"><svg viewBox="0 0 24 24" aria-hidden="true">'
+      + `<path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg>+${n('packs')}</span>`;
+  }
+  if (n('xp')) s += ` <span class="tbf-sticker">+${n('xp')} XP</span>`;
+  return s;
+}
+
+/** Écrit le ticket du bonus d'après l'état du jour : la bâche tant qu'il est prêt, le tampon une fois pris. */
+function remplirBonus(t) {
+  const b = H.quotidien?.bonus;
+  const carte = b?.carte ?? {};
+  const cases = Math.min(7, Math.max(1, Math.floor(Number(carte.cases) || 7)));
+  const ici = Math.floor(Number(carte.case) || 0);
+  const prise = carte.prise === true;
+  const montants = Array.isArray(carte.montants) ? carte.montants : [];
+  /* Le gain affiché : celui que RÉCUPÉRER versera, sinon la case du jour. */
+  const gain = b?.pret === true ? b.gain : montants[ici - 1];
+  const noeuds = Array.from({ length: cases }, (_, i) => {
+    const n = i + 1;
+    const etat = n < ici || (n === ici && prise) ? ' data-etat="pris"' : n === ici ? ' data-etat="ici"' : '';
+    return `<i${etat}${Number(montants[i]?.packs) > 0 ? ' data-booster' : ''}></i>`;
+  }).join('');
+  const jours = Math.floor(Number(H.quotidien?.serie?.jours) || 0);
+  const affilee = jours >= 3;
+  const serie = ici >= 1 && ici <= cases
+    ? `<span class="tbf-serie" role="img" aria-label="Jour ${ici} sur ${cases}${affilee ? `, ${jours}ᵉ jour d’affilée` : ''}">`
+      + `${noeuds}${affilee ? `<em>${jours}ᵉ JOUR</em>` : ''}</span>`
+    : '';
+  const dit = gainEnMots(gain);
+  t.innerHTML = `<div class="tbf-bonus-corps"><b class="tbf-bonus-titre">BONUS DU JOUR${stickersDuGain(gain)}</b>${serie}</div>`
+    + (b?.pret === true
+      ? `<button type="button" class="tbf-plaque" data-ton="or" aria-label="Récupérer le bonus du jour${dit ? ` : ${dit}` : ''}">RÉCUPÉRER</button>`
+      : '<span class="tbf-tampon" data-ton="vert">PRIS</span>');
+}
+
+/** Le bonus monte, une fois par jour de jeu et par session, s'il est prêt. */
+function proposerBonus() {
+  if (H.quotidien?.bonus?.pret !== true || ticketBonus || bonusDejaPropose()) return;
+  /* Pas par-dessus le menu ouvert : la pile passe au-dessus du tiroir, et
+     le ticket en couvrirait le pied. Il attend qu'on le referme. */
+  const tiroir = document.getElementById('tbf-tiroir');
+  if (tiroir && !tiroir.hidden) {
+    const guet = new MutationObserver(() => {
+      if (!tiroir.hidden) return;
+      guet.disconnect();
+      proposerBonus();
+    });
+    guet.observe(tiroir, { attributes: true, attributeFilter: ['hidden'] });
+    return;
+  }
+  retenirBonusPropose();
+  const t = document.createElement('div');
+  t.className = 'tbf-ticket tbf-bonus';
+  t.setAttribute('role', 'group');
+  t.setAttribute('aria-label', 'Bonus du jour');
+  remplirBonus(t);
+  pileDesTickets().append(t);
+  rejouerSur(t, 'tbf-glisse');
+  ticketBonus = t;
+  t.addEventListener('click', (e) => {
+    if (e.target.closest('button')) void reclamerBonus(t);
+    else if (!t.dataset.pris) rangerBonus();
+  });
+  /* Au tour suivant : le toucher qui a fait monter le ticket, s'il y en a
+     un, ne doit pas le ranger aussitôt. */
+  setTimeout(() => {
+    if (ticketBonus !== t) return;
+    document.addEventListener('pointerdown', horsDuBonus, true);
+    document.addEventListener('keydown', echapBonus);
+  }, 0);
+  montrer();
+}
+function horsDuBonus(e) {
+  if (ticketBonus && !ticketBonus.contains(e.target)) rangerBonus();
+}
+function echapBonus(e) {
+  if (e.key === 'Escape') rangerBonus();
+}
+/** Le ticket s'en va — pris ou non. Non pris, la bulle prend le relais (`phraseDuFanzzy`). */
+function rangerBonus() {
+  document.removeEventListener('pointerdown', horsDuBonus, true);
+  document.removeEventListener('keydown', echapBonus);
+  if (!ticketBonus) return;
+  ticketBonus.remove();
+  ticketBonus = null;
+  montrer();
+}
+
+let reclamationBonus = false;
+/**
+ * RÉCUPÉRER : la case du jour se coche au serveur, qui verse et répond avec
+ * le portefeuille et l'état du jour à jour (R6). Un refus se traduit
+ * (§ 11) ; une raison inconnue ne s'affiche jamais, l'état relu décide.
+ */
+async function reclamerBonus(t) {
+  const bt = t.querySelector('button');
+  if (!bt || reclamationBonus) return;
+  reclamationBonus = true;
+  bt.disabled = true;
+  bt.setAttribute('aria-busy', 'true');
+  const r = await posterQuotidien('bonus');
+  reclamationBonus = false;
+  if (r?.absent) {
+    /* Le quotidien n'est plus servi (R2) : le ticket se range sans un mot,
+       et la mission, la bulle du bonus et la pastille partent avec lui. */
+    rangerBonus();
+    poserQuotidien(null);
+    return;
+  }
+  if (!r) {
+    bt.disabled = false;
+    bt.removeAttribute('aria-busy');
+    toaster('Le serveur ne répond pas. Réessaie.', true);
+    return;
+  }
+  if (r.quotidien) poserQuotidien(r.quotidien);
+  if (ticketBonus !== t) return;         // rangé pendant l'attente : le verdict ne s'affiche plus
+  if (r.verse === true) { await feterBonus(t, r); return; }
+  switch (r.raison) {
+    case 'deja':
+      toaster('Déjà récupéré.');
+      t.dataset.pris = '';
+      remplirBonus(t);
+      setTimeout(rangerBonus, 1400);
+      return;
+    case 'plafond':
+      bonusAuPlafond = true;
+      toaster('Tu récupéreras le reste demain.');
+      rangerBonus();
+      return;
+    case 'jour_passe':
+      toaster('Les missions de ce jour sont closes.');
+      rangerBonus();
+      return;
+    case 'inactif':
+    case 'schema':
+      rangerBonus();
+      return;
+    default:
+      /* `incomplet`, `change`, `inconnu`, ou ce que cette page ne connaît
+         pas : l'état relu dit s'il reste quelque chose à prendre. */
+      if (H.quotidien?.bonus?.pret === true) remplirBonus(t);
+      else rangerBonus();
+  }
+}
+
+/**
+ * Le bonus est versé : les écharpes volent vers leur compteur (et un
+ * booster vers le sien, à la septième case), le tampon PRIS claque sur la
+ * case cochée, les compteurs comptent, l'anneau d'XP avance si le gain en
+ * portait — et la fête de niveau prend la main s'il a fait monter.
+ */
+async function feterBonus(t, r) {
+  t.dataset.pris = '';
+  const g = r.gain ?? {};
+  const n = (k) => Math.max(0, Math.floor(Number(g[k]) || 0));
+  /* Les vols partent des stickers d'avant la réécriture : `FX.voler` lit leur
+     place au départ, ils peuvent disparaître ensuite. */
+  const vols = [];
+  const depart = (sel) => t.querySelector(`.tbf-bonus-titre ${sel}`);
+  if (n('echarpes')) {
+    vols.push(window.FX?.voler?.(depart('img') ?? t, $('scarves').closest('.tbf-monnaie')?.querySelector('img'),
+      { image: '/img/gains/echarpes.webp' }));
+  }
+  if (n('packs')) {
+    vols.push(window.FX?.voler?.(depart('svg')?.closest('.tbf-sticker') ?? t, $('packs').closest('.tbf-monnaie'),
+      { texte: `+${n('packs')}` }));
+  }
+  remplirBonus(t);
+  const tampon = t.querySelector('.tbf-tampon');
+  if (tampon) rejouerSur(tampon, 'tbf-clac');
+  window.FX?.son?.('bache');
+  await Promise.all(vols.map((v) => v ?? Promise.resolve()));
+  const w = r.wallet;
+  if (w && Number.isFinite(Number(w.scarves))) poserBourse(quiQuotidien, w);
+  if (r.niveau) {
+    poserNiveau(r.niveau);
+    if (r.niveau.monte) feterNiveau(r.niveau);
+  }
+  /* Le HUD retenu pour l'écran suivant montrerait l'ancien solde trente
+     secondes : on l'oublie, la barre relira. Et on le dit à qui écoute. */
+  oublierHud();
+  dispatchEvent(new CustomEvent('tbf:bourse', { detail: { wallet: w ?? null, niveau: r.niveau ?? null } }));
+  montrer();
+  setTimeout(() => { if (ticketBonus === t) rangerBonus(); }, 1400);
+}
+
+/**
+ * La fête de niveau, si une réclamation en a fait monter un (§ 1). Le hub ne
+ * charge pas `niveau-fete.js` d'office : une montée par le bonus est rare,
+ * et le script n'est demandé que ce jour-là. Le Fanzzy de la fête est celui
+ * que les autres voient, comme sur l'avatar.
+ */
+function feterNiveau(niveau) {
+  let avatar = null;
+  if (equipe) {
+    const evo = lignee.choisi ?? equipe.evo;
+    avatar = { id: equipe.id, evo,
+      skin: lignee.tenues?.[evo] ?? (evo === equipe.evo ? equipe.skin : 'base') ?? 'base',
+      age: lignee.ages.find((x) => x.stade === evo)?.id ?? equipe.carte ?? equipe.id };
+  }
+  const feter = () => window.TBF_NIVEAU?.feter?.(niveau, { avatar, qui: quiQuotidien ?? undefined });
+  if (window.TBF_NIVEAU) { feter(); return; }
+  const s = document.createElement('script');
+  s.src = '/niveau-fete.js';
+  s.addEventListener('load', feter, { once: true });
+  document.head.append(s);
+}
+
 (async () => {
   let user = null;
   try {
@@ -3720,7 +4720,12 @@ async function lire(url, options) {
        gardés dix minutes dans l'onglet (voir `prochainsCoups`). */
     live: lire('/api/virage/live', { credentials: 'same-origin' }).catch(() => null),
     prochains: prochainsCoups(user.id).catch(() => null),
+    /* Une de plus aux lots 3 et 5 : l'état du jour, et ce qui s'est passé
+       depuis la dernière visite (voir « le quotidien »). Sa lecture ne lève
+       jamais : elle rend `null` quand la route n'est pas là. */
+    quotidien: lireQuotidien(true),
   };
+  quiQuotidien = user.id ?? null;
   /* Une bourse qu'on peut poser : un solde d'écharpes lisible. Un refus du
      serveur arrive lui aussi en JSON — voir `lire` —, sans solde dedans. */
   const bourseLisible = (s) => s?.scarves != null && Number.isFinite(Number(s.scarves));
@@ -3741,19 +4746,34 @@ async function lire(url, options) {
     }
   } catch { /* module non monté */ }
 
+  /* L'arrivée du quotidien : la mission et le bonus dès que l'état du jour
+     est là, le ticket de retour au lever du rideau. Après le contrôle de la
+     cérémonie d'accueil : un joueur qu'on y emmène n'est pas arrivé ici, et
+     sa visite ne se marque pas. */
+  void arriverAuHub(P.quotidien);
+
   /* Revenir par la flèche du navigateur peut rendre l'accueil tel qu'on l'avait
      quitté, sans le recharger : c'est le cache de navigation arrière. La
      bourse y serait restée d'avant l'achat. On la relit donc, et elle compte
      depuis ce qu'elle montrait — et les boosters disent leur nouvel état.
      **Au portefeuille**, comme au chargement (voir « les boosters qui
      attendent ») : c'est lui qui recharge la réserve. L'état du compte n'est
-     que le repli d'un serveur sans module Fanzzy. */
+     que le repli d'un serveur sans module Fanzzy.
+
+     C'est aussi une arrivée sur le hub (lots 3 et 5) : l'état du jour se
+     relit — une mission a pu avancer ailleurs —, et le ticket de retour
+     passe s'il y a lieu. Et le « +N » de FANZZY se recompte sur la même
+     réponse : le classeur d'où l'on revient a pu éteindre ses nouveautés. */
   addEventListener('pageshow', async (e) => {
     if (!e.persisted) return;
+    void arriverAuHub(lireQuotidien(true));
     const c = await lire('/api/fanzzy/state', { credentials: 'same-origin' }).catch(() => null);
+    const avant = H.nouveaux;
+    poserNouveautes(user.id, c);
     const st = bourseLisible(c?.wallet) ? c.wallet
       : await lire('/api/me/state', { credentials: 'same-origin' }).catch(() => null);
     if (bourseLisible(st)) { poserBourse(user.id, st); montrer(); }
+    else if (H.nouveaux !== avant) montrer();
   });
 
   /* ------------------------------------------------------- le niveau
@@ -3770,18 +4790,7 @@ async function lire(url, options) {
      précisément le moment où on la regarde. L'anneau reste vide jusque-là. */
   try {
     const niv = await P.niveau;
-    if (niv?.niveau) {
-      $('nivPastille').textContent = niv.niveau;
-      $('nivPastille').hidden = false;
-      $('nivPastille').title = niv.max
-        ? `Niveau ${niv.niveau}, le dernier`
-        : `Niveau ${niv.niveau} · ${niv.dans}/${niv.pour} XP`;
-      $('nivPastille').dataset.xp = niv.max ? '' : `, ${niv.dans} XP sur ${niv.pour}`;
-      const part = niv.max ? 1 : Math.min(1, Math.max(0, niv.dans / niv.pour || 0));
-      $('anneau').style.setProperty('--p', `${Math.round(part * 100)}%`);
-      poserAvatar();
-      verrouiller(niv);
-    }
+    if (poserNiveau(niv)) verrouiller(niv);
   } catch { /* progression non montée : l’accueil s’en passe */ }
 
   /* Les premiers pas, tant qu'il en reste.
@@ -3829,23 +4838,37 @@ async function lire(url, options) {
       ?? Math.max(dex?.aCollectionner ?? (dex?.dex ?? []).length, eus);
     if (total) {
       /* Le palier en cours, et non le total (amendement 22) : voir
-         `palierDe`. Le total reste dit, mais aux lecteurs d'écran seulement. */
-      const palier = palierDe(eus, total);
+         `palierDe`. Le total reste dit, mais aux lecteurs d'écran seulement,
+         comme ce que le cran visé rapportera quand le serveur le sert. */
+      const { vise: palier, franchi } = palierDe(eus, total, biblio?.paliers);
+      const gain = palier === Number(biblio?.paliers?.prochain?.a)
+        ? gainEnMots(biblio.paliers.prochain.gain) : '';
       $('collecTxt').textContent = `${eus} / ${palier}`;
       $('collec').setAttribute('aria-label',
-        `Ma collection : ${eus} sur ${palier}, ${total} à trouver en tout`);
+        `Ma collection : ${eus} sur ${palier}, ${total} à trouver en tout`
+        + (gain ? ` ; le cran de ${palier} rapporte ${gain}` : ''));
       /* La jauge sort de sa cachette **avant** d'être remplie, et on laisse le
          navigateur la mesurer vide : sans ce temps, elle naîtrait déjà pleine
          et la transition qui la fait monter ne se jouerait pas. */
       $('collecJauge').hidden = false;
       void $('collecJauge').offsetWidth;
       $('collecBar').style.width = `${Math.round((Math.min(eus, palier) / palier) * 100)}%`;
+      /* Le second cran : le dernier palier franchi, à sa place sur l'écharpe
+         (« 25 » sur « 37 / 50 »). Avant le premier, il n'y en a qu'un, au
+         bout. Voir « Un cran par palier » dans la feuille de cette page. */
+      if (franchi > 0) {
+        $('collecJauge').style.setProperty('--passe', `${((franchi / palier) * 100).toFixed(1)}%`);
+        $('collecJauge').dataset.passe = String(franchi);
+      } else {
+        $('collecJauge').style.removeProperty('--passe');
+        delete $('collecJauge').dataset.passe;
+      }
       /* **Le « 5496 » est parti.** FANZZY portait le nombre de choses qui
          restaient à gagner — un compte qui ne baissait jamais d'une visite à
          l'autre, et qu'on avait cessé de lire. Il porte maintenant ce qui est
          arrivé depuis qu'on a regardé (« +3 »), ou rien. */
     }
-    H.nouveaux = nouveautes(user.id, Object.keys(coll?.collection ?? {}));
+    poserNouveautes(user.id, coll);
     H.sansFanzzy = Boolean(coll?.wallet) && !coll.wallet.active;
 
     /* Les boosters qui attendent. Un sachet non ouvert ne se rappelle à
@@ -4033,8 +5056,10 @@ async function lire(url, options) {
     }
   } catch { /* collection non montée : l'accueil reste utilisable sans */ }
 
-  /* Les cartes « vues » : toucher FANZZY, ou la bulle qui mène au classeur,
-     marque toute la collection comme vue. Voir `nouveautes`. */
+  /* Les cartes « vues » **de l'appareil** : toucher FANZZY, ou la bulle qui
+     mène au classeur, marque toute la collection comme vue dans le repli.
+     Les nouveautés du serveur, elles, s'éteignent sur la page qui les
+     montre, pas ici. Voir `poserNouveautes`. */
   $('caseFanzzy').addEventListener('click', () => marquerVues(user.id));
   $('bulle').addEventListener('click', () => {
     if ($('bulle').getAttribute('href') === '/fanzzy') marquerVues(user.id);
@@ -4323,17 +5348,24 @@ async function alerteDuel() {
              but tout de suite et on complète — plutôt que d'attendre un nom
              qui ne viendra peut-être jamais.
 
-             **La case de BD, et elle seule** (lot 2) : `FX.but` n'est plus
-             appelé ici. Il écrivait son propre « BUT ! » en lettrage nu, avec
-             un éclair et quatre-vingt-dix particules, par-dessus la case et
-             ses confettis — deux titres pour un but. Le son de la corne
-             reste. */
+             **La case de BD dit le but, `FX.but` le fait sentir** (lot 2,
+             puis son reliquat). La forme pleine de `FX.but` écrivait son
+             propre « BUT ! » en lettrage nu, avec un éclair et
+             quatre-vingt-dix particules, par-dessus la case et ses
+             confettis — deux titres pour un but. Le lot 2 l'avait donc
+             retirée, et avec elle la secousse de l'écran et la vibration :
+             un but au hub ne se sentait plus sous le doigt. La forme
+             `vignette` ne garde que ces deux-là — rien ne se dessine
+             par-dessus la case, et elle ne joue pas de son : la corne est
+             celle d'ici, `butReel`. La case, posée hors de `#app`, ne
+             tremble pas avec lui. */
           const cle = moment('but', 'Goal !', 'club', {
             mc: couleurDuClub(m, jeSuisDomicile),
             mc2: (jeSuisDomicile ? m.homeColors : m.awayColors)?.[1] ?? null });
           buteurDe(m.id, monClub).then((qui) => preciserMoment(cle, qui));
           sauter();
           window.FX?.son?.('butReel');
+          window.FX?.but?.({ pour: true, vignette: true });
         } else if (contreMoi > 0) {
           const cle = moment('encaisse', 'On encaisse', 'flare');
           buteurDe(m.id, leurClub).then((qui) => preciserMoment(cle, qui));

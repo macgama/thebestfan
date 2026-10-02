@@ -11,206 +11,227 @@
 <title>La boutique — TheBestFan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- La police des banderoles. La boutique ne la chargeait pas : ses titres,
+     ses prix et ses étiquettes retombaient sur la police étroite du
+     téléphone, quand toutes les autres pages l'ont. -->
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
 <style>
-/* La boutique.
+/* La boutique — L'ÉCHOPPE SOUS LE TUNNEL (lot 3 de la refonte FAIT MAIN).
 
-   Elle ressemble au kiosque — mêmes vignettes, même socle dur — et c'est
-   voulu : on y achète les mêmes choses, avec une autre monnaie. Un écran qui
-   aurait sa propre identité ferait croire à un autre jeu.
+   **Deux écrans au lieu de vingt.** L'étal empilait quarante-neuf pièces les
+   unes sous les autres : on faisait défiler une liste de courses avant
+   d'arriver à l'abonnement. L'écran se range maintenant comme une échoppe :
+   la réserve du joueur collée sous la barre (ce qu'il a pour acheter), un
+   seul objet « À LA UNE », puis des rayons en onglets — l'équipement, les
+   tenues, l'abonnement —, et dans l'équipement des filtres de rareté et
+   l'interrupteur « à portée d'abord ». Trois rangées d'étiquettes, puis
+   « VOIR LES AUTRES ».
 
-   Ce qui change, et qui doit se voir : **le prix est en euros**. Il est écrit
-   plus gros que tout le reste de la carte, parce que c'est la seule
-   information qui engage. */
+   **Tout le dessin est dans ui.css** — la réserve, les fentes, l'anneau de
+   recharge, l'étiquette de marché, l'objet sur son sticker, le calque de la
+   cérémonie, le ticket de gain, l'interrupteur. Cette feuille-ci n'écrit que
+   leur **place** (marges, grilles, positions, tailles quand la brique les
+   prévoit), et trois compositions qui ne sont pas des briques parce qu'un
+   seul écran les monte : « À LA UNE », la cabine d'essayage et le PASS DE
+   TRIBUNE.
 
-.rayon{margin:0 0 6px;padding:0 2px}
-/* Les titres de rayon sont cousus (`.tbf-cousu`, dans ui.css), comme toutes
-   les rubriques du jeu. La casse se décide là et non dans la donnée :
-   « ÉQUIPEMENT » est écrit dans la page, « Billets » vient du nom du rayon, et
-   sans les capitales de la brique le lecteur verrait deux niveaux de titre là
-   où il n'y en a qu'un. Il ne reste ici que leur place. */
-.rayon h2{margin:18px 0 6px}
-/* La phrase du rayon, sur un panneau : elle était posée à même la photo de
-   tribune, à 50 %, et ne se lisait qu'à l'ombre. */
-.rayon > p{margin:0 0 10px;padding:8px 11px;border-radius:9px;background:var(--panneau);
-  font-size:11.5px;line-height:1.5;box-shadow:inset 0 0 0 1px rgba(242,238,228,.07)}
-/* Un rayon sans phrase n'a pas de panneau vide sous son titre. */
-.rayon > p:empty{display:none}
+   **Rien ne s'invente.** Les prix viennent de `/api/boutique/etal` et du
+   catalogue, les possessions de l'étal, le plafond et la cadence de la
+   réserve de `/api/abonnement` (ce que le joueur a, abonné ou non), le
+   compte à rebours de `/api/fanzzy/state`. Une donnée qui manque retire ce
+   qu'elle portait — jamais un tiret, jamais un zéro posé par défaut. */
 
-.etal{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
+/* La règle `[hidden]` du navigateur pèse moins qu'une classe qui pose un
+   `display` : sans celle-ci, la réserve, le rail et les gestes du calque
+   resteraient affichés une fois cachés. */
+#app [hidden],.tbf-calque [hidden]{display:none}
 
-/* Une carte d'article, et non une plaque : elle porte un nom, une phrase et un
-   prix, et la matière des boutons — capitales, texte centré — les écraserait.
-   Son voile de lumière est posé sur le panneau, pas sur la photo. */
-.art{position:relative;display:flex;flex-direction:column;gap:4px;
-  padding:12px 12px 11px;border-radius:12px;cursor:pointer;text-align:left;
-  background:linear-gradient(168deg,rgba(255,255,255,.07),rgba(0,0,0,.34)),var(--panneau);
-  border:1px solid rgba(242,238,228,.13);border-top:3px solid var(--projo);
-  color:inherit;font:inherit}
-.art:active{transform:translateY(2px)}
-.art b{font-family:var(--banner);font-size:14.5px;line-height:1.15}
-.art small{font-size:11px;opacity:.88;line-height:1.45;min-height:31px}
-.art .prix{font-family:var(--banner);font-size:21px;color:var(--projo);margin-top:6px}
-/* La pastille « le plus pris » : une seule carte la porte, sinon elle ne dit
-   plus rien. */
-.art .marque{position:absolute;top:-8px;right:9px;font-size:11px;letter-spacing:.1em;
-  text-transform:uppercase;background:var(--projo);color:#1A0C04;
-  padding:3px 8px;border-radius:20px;font-weight:700}
-/* **Fermé ne veut pas dire illisible.** En vitrine, l'article était éteint à
-   45 % : on voyait qu'on ne pouvait pas l'acheter, et on ne pouvait plus lire
-   ce qu'il était ni combien il coûtait — c'est pourtant ce qu'une vitrine
-   montre. Il perd sa couleur et son curseur ; son texte reste entier, et le
-   mot du bas dit pourquoi. */
-.art[disabled]{filter:saturate(.35);cursor:default}
-.art[disabled]:active{transform:none}
+/* ------------------------------------------------------------ la réserve
 
-/* Le bandeau du haut : ce qu'on possède déjà, pour ne pas acheter ce qu'on a.
-   Il reprend les dessins de l'accueil — l'écharpe rayée, le sachet — parce que
-   c'est la même monnaie. Il disait reprendre « exactement les jetons de la
-   barre commune » : c'était vrai quand la barre les portait, et plus depuis
-   que l'accueil les a redessinés. On lisait un carré rayé ici et une bande
-   là-bas ; un même objet dessiné de deux façons, c'est deux objets à
-   apprendre. */
-/* Le jeton du billet est parti avec lui. Sa règle reste ici, en commentaire,
-   parce qu'elle vaut pour les deux qui restent : deux monnaies dans une même
-   ligne doivent se reconnaître sans qu'on lise le nombre. */
+   La planche des briques (`.tbf-reserve`), d'un bord à l'autre de la
+   colonne, juste sous la barre. Elle est hors des conteneurs que la page
+   réécrit : le jeton qui descend vers le ticket « −45 » part d'elle, et un
+   solde qui compte ne doit pas être remplacé en cours de compte. */
+#reserve{margin-top:6px;margin-bottom:2px}
+/* Les fentes y mènent au kiosque : c'est là que les sachets s'ouvrent. Un
+   lien et non une image, donc la zone de touche de tout lien du jeu. */
+a.tbf-fentes{min-height:44px;color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
+a.tbf-fentes:focus-visible{outline:3px solid var(--projo);outline-offset:2px;border-radius:4px}
 
-/* ----------------------------------------------------------------- l'étal
+/* ------------------------------------------------------------ À LA UNE
 
-   **On vendait une liste de courses.** Une ligne par objet : un nom, une
-   phrase grise, un prix à droite. C'est exact, c'est lisible, et ça ne donne
-   envie de rien — or c'est le seul écran du jeu dont le métier est de donner
-   envie. À côté, le kiosque montre des cartes qui se retournent et la fiche
-   montre le personnage en pied ; l'étal, lui, ressemblait à une facture.
+   Une composition, pas une brique (BRIQUES § 10) : la bâche de papier kraft
+   à écharpe (`.tbf-cadre.tbf-cadre--ticket`), une scène à gauche — la plaque
+   de rareté, les deux cônes des projecteurs, le socle et l'objet en grand —
+   et, à droite, ce qu'un ticket porte : un sur-titre, un nom, sa forme de
+   rareté et un prix. **Pas de paragraphe sur le kraft** : la phrase d'effet
+   ne s'y écrit pas. Elle ne se lit pas non plus sur l'étal, qui ne répète
+   pas l'objet à la une : elle se lit dans la boîte qui confirme l'achat
+   (voir `acheter`), le seul chemin par où il se prend, et dans le nom
+   accessible du ticket.
 
-   Il montre maintenant **l'objet**. Le dessin est déjà là, détouré, dans la
-   même bibliothèque que le deck emploie : il ne manquait qu'à l'appeler. Une
-   tenue, elle, se montre **portée par un Fanzzy du joueur** — c'est le seul
-   argument de vente qui existe pour une tenue, et la voir sur un inconnu ne
-   dit rien.
+   C'est un bouton (l'achat) quand le solde suffit, un lien vers le Virage
+   quand il ne suffit pas : la même règle que l'étiquette de marché. */
+#une{margin:14px 0 2px}
+#une:has(.une:focus-visible){outline:3px solid var(--projo);outline-offset:3px;border-radius:4px}
+.une{display:grid;grid-template-columns:132px minmax(0,1fr);gap:14px;align-items:center;
+  box-sizing:border-box;width:100%;margin:0;border:0;padding:21px 14px 14px;
+  text-align:left;cursor:pointer;-webkit-appearance:none;appearance:none;
+  -webkit-tap-highlight-color:transparent}
+.une:focus-visible{outline:none}
+/* La scène est un trou sombre dans le papier : les projecteurs sont de la
+   craie à 13 %, et sur le kraft ils ne se verraient pas. */
+.une-scene{position:relative;display:block;height:168px;overflow:hidden;border-radius:6px;
+  background:var(--encre);box-shadow:0 0 0 2px var(--encre)}
+.une-plaque{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+.une-scene .tbf-socle{position:absolute;left:50%;bottom:12px;translate:-50% 0;width:116px;height:24px;z-index:2}
+.une-scene .tbf-objet{--taille:104px;position:absolute;left:50%;bottom:28px;translate:-50% 0;z-index:3}
+.une-texte{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-width:0;padding-right:4px}
+/* L'étiquette du mot traverse le bas de l'éclat et déborde de part et
+   d'autre de la forme (BRIQUES, la forme) : la page lui laisse cet air. */
+.une-texte>.tbf-forme{margin:0 0 6px 28px}
+.une-nom{display:block;max-width:100%;font-family:var(--banner);font-weight:700;font-size:19px;
+  line-height:1.12;letter-spacing:.04em;text-transform:uppercase;overflow-wrap:anywhere}
+/* Hors de portée : l'écharpe fine du solde contre le prix, et GAGNER au bout
+   — la ligne de l'étiquette de marché, à la même place sous le prix. */
+.une-manque{display:flex;align-items:center;gap:10px;width:100%}
+.une-manque>.tbf-jauge{flex:1;min-width:30px}
+@media (min-width:600px){
+  .une{grid-template-columns:184px minmax(0,1fr);gap:20px;padding:22px 18px 16px}
+  .une-scene{height:196px}
+  .une-scene .tbf-objet{--taille:132px}
+  .une-nom{font-size:22px}
+}
 
-   La rareté tient le cadre, comme partout : mêmes jetons de couleur, même
-   lueur que sur le butin d'un booster. Un objet légendaire doit se
-   reconnaître de loin, sinon la rareté n'est qu'un mot écrit en petit. */
-.objets{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+/* ------------------------------------------------------------ les rayons */
+#onglets{margin:16px 0 12px}
 
-.obj{position:relative;display:flex;flex-direction:column;align-items:center;
-  gap:7px;width:100%;text-align:center;padding:13px 10px 11px;border-radius:14px;
-  color:inherit;cursor:pointer;overflow:hidden;
-  background:
-    radial-gradient(84% 58% at 50% 0%,color-mix(in srgb,var(--rc,#C2CAD6) 26%,transparent),transparent 72%),
-    linear-gradient(180deg,#151B24,#090D13);
-  border:1px solid color-mix(in srgb,var(--rc,#C2CAD6) 40%,transparent);
-  box-shadow:0 3px 0 var(--rc2,#4E5865),0 8px 18px rgba(0,0,0,.45);
-  transition:transform .12s ease,box-shadow .12s ease}
-.obj:active{transform:translateY(3px);
-  box-shadow:0 0 0 var(--rc2,#4E5865),0 4px 10px rgba(0,0,0,.45)}
-/* La lueur ne va qu'au-dessus de « rare » : posée sur tout, elle ne
-   distinguerait plus rien — c'est la règle du butin d'un booster, reprise. */
-.obj.r-epique{box-shadow:0 3px 0 var(--rc2),0 8px 20px rgba(130,87,218,.34)}
-.obj.r-legendaire{box-shadow:0 3px 0 var(--rc2),0 8px 24px rgba(245,195,59,.42)}
+/* Les filtres de l'équipement : quatre formes de rareté qu'on touche, et
+   l'interrupteur « à portée d'abord » (`.tbf-interrupteur`). */
+.etal-outils{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  gap:2px 12px;margin:0 0 12px}
+.filtres{display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px}
+/* Le bouton porte la forme de la rareté (`.tbf-forme`, avec son mot) dans une
+   zone de quarante-quatre pixels. L'étiquette de l'étoile et de l'éclat
+   déborde de la forme de part et d'autre : le bouton la contient. */
+.filtre{display:inline-grid;place-items:center;box-sizing:border-box;min-width:44px;min-height:44px;
+  margin:0;padding:0 8px;border:0;border-radius:8px;background:none;color:inherit;cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+.filtre[data-rar=epique]{min-width:60px}
+.filtre[data-rar=legendaire]{min-width:84px}
+.filtre:focus-visible{outline:3px solid var(--projo);outline-offset:0}
+/* PROVISOIRE (besoin « feuilles-css ») : l'état « filtre actif » d'un bouton
+   qui porte une forme n'a pas de brique. Un cadre de craie et un voile, sans
+   toucher au texte de la forme (aucune opacité sur un mot). À remplacer par
+   la brique quand elle existera. */
+.filtre[aria-pressed=true]{background:rgba(242,238,228,.12);box-shadow:inset 0 0 0 1.5px var(--craie)}
 
-/* Le dessin, dans une boîte à hauteur fixe pour que les cartes s'alignent :
-   un étal aux vignettes inégales se lit comme une panne. */
-.obj .vue{position:relative;width:100%;height:96px;display:grid;place-items:center}
-/* **Le dessin est pose en absolu**, comme celui de `.tbf-piece`.
+#etal .tbf-etal+.tbf-plaque{margin-top:18px}
 
-   En flux, la ligne de grille se dimensionnait sur l image et l image sur la
-   ligne : mesure faite, elle sortait a 163 px dans une boite de 96 et
-   recouvrait le nom. Un enfant absolu se resout sur la boite du parent, qui
-   est fixe, donc la boucle n existe plus. */
-.obj .vue img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
-  filter:drop-shadow(0 3px 5px rgba(0,0,0,.7))}
-/* Le repli : un cadre de rareté vide plutôt qu'un trou. Tous les objets ne
-   sont pas dessinés, et un étal qui sauterait les non-dessinés cacherait une
-   partie de ce qui est en vente. */
-.obj .vue .vide{width:54px;height:54px;border-radius:13px;
-  box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--rc,#C2CAD6) 55%,transparent);
-  background:radial-gradient(70% 70% at 50% 34%,color-mix(in srgb,var(--rc) 22%,transparent),transparent 72%)}
+/* **La phrase d'effet se lit en entier.** La brique la rogne à deux lignes,
+   puis « … » ; mais chaque phrase de l'inventaire est un marché — ce que
+   l'objet donne, puis ce qu'il coûte — et la coupe tombait sur le coût :
+   « Le souffle revient plus vite, les grosse… » taisait que les grosses
+   cartes coûtent plus cher, sur l'étiquette même où on l'achète. Au banc,
+   trente-neuf phrases sur quarante-huit étaient coupées à 360 px, vingt à
+   400 et vingt-trois à 768. Libre, une phrase prend trois lignes, une seule
+   quatre (à 360) ; la rangée prend la hauteur de la plus haute, et l'étal
+   gagne une ligne par rangée, pas un écran. La brique n'a qu'un emploi,
+   celui-ci : la règle est à reporter dans ui.css (besoin « feuilles-css »),
+   après quoi celle-ci n'a plus d'objet. */
+#etal .tbf-marche-effet{display:block;-webkit-line-clamp:none;overflow:visible}
 
-.obj b{display:block;font-family:var(--banner);font-size:13.5px;line-height:1.2;
-  letter-spacing:.02em}
-/* Onze pixels au moins, et 88 % : ce que fait l'objet et sa rareté sont
-   précisément ce qu'on vient lire avant d'acheter. Ils étaient en dix et
-   demi à 55 %, et en huit et demi — cinquante-deux fois chacun sur l'étal. */
-.obj .quoi{display:block;font-size:11px;opacity:.88;line-height:1.4;min-height:31px}
-.obj .rar{font-size:11px;letter-spacing:.12em;font-family:var(--banner);
-  color:var(--rc,#C2CAD6)}
+/* ------------------------------------------------- la cabine d'essayage
 
-/* Le prix, en bas et en jeton : c'est ce qu'on compare d'une carte à l'autre,
-   donc il est toujours à la même hauteur. */
-.obj .cout{margin-top:auto;display:inline-flex;align-items:center;gap:6px;
-  font-family:var(--banner);font-size:17px;color:var(--projo);
-  font-variant-numeric:tabular-nums}
-.obj .cout i{width:15px;height:11px;border-radius:2px;flex:none;
-  background:linear-gradient(135deg,#FFF0BF,#C9962A);
-  box-shadow:0 0 0 1px rgba(42,30,4,.6)}
+   Une tenue se vend portée : le Fanzzy du joueur en pied, sur un socle,
+   dans la plaque de sa tenue, et deux flèches pour passer d'une tenue à
+   l'autre. L'interrupteur « avec la tenue » montre l'avant et l'après sur
+   le même personnage, au même âge. Le prix est sur la bâche or dessous, qui
+   mène au classeur choisir qui l'habille (c'est le couple Fanzzy + âge qui
+   s'achète, et l'écran du classeur sait le présenter). */
+.cabine{display:flex;flex-direction:column;align-items:center;gap:14px}
+.cabine-scene{position:relative;width:100%;max-width:360px;height:270px;overflow:hidden;border-radius:8px;
+  background:var(--encre);box-shadow:0 0 0 2px var(--encre)}
+.cabine-plaque{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 45%}
+.cabine-scene .tbf-socle{position:absolute;left:50%;bottom:14px;translate:-50% 0;z-index:2}
+.cabine-perso{position:absolute;left:50%;bottom:24px;z-index:3;height:224px;width:auto;max-width:78%;
+  object-fit:contain;translate:-50% 0;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
+.cabine-scene .tbf-objet{position:absolute;left:50%;bottom:34px;translate:-50% 0;z-index:3}
+.cabine-scene .tbf-plaque--rond{position:absolute;top:50%;translate:0 -50%;z-index:4}
+.cabine-scene .cabine-avant{left:6px}
+.cabine-scene .cabine-apres{right:6px}
+.cabine-nom{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;max-width:100%}
+.cabine-nom .tbf-banderole{font-size:15px;line-height:18px}
+.cabine-nom .tbf-forme{margin-bottom:8px}
+.cabine-nom .tbf-forme[data-rar=epique]{margin-inline:14px}
+.cabine-nom .tbf-forme[data-rar=legendaire]{margin-inline:28px}
+.cabine-effet{margin:0;max-width:360px;font-size:12.5px;line-height:1.45;text-align:center}
+.cabine-achat{width:100%;max-width:360px}
+.cabine-achat .tbf-plaque{width:100%;justify-content:space-between}
+.cabine-gagner{display:flex;align-items:center;gap:10px;width:100%;max-width:360px;min-height:44px;
+  margin-top:-4px;color:inherit;text-decoration:none}
+.cabine-gagner>.tbf-jauge{flex:1}
 
-/* **Trop cher ne se dit pas en gris.**
+/* ---------------------------------------------- le PASS DE TRIBUNE
 
-   La carte était éteinte à 42 % d'opacité : on voyait qu'on ne pouvait pas,
-   jamais **combien il manquait**, donc jamais quoi aller faire. C'est la
-   faute que la fiche d'un personnage a déjà corrigée pour l'évolution — « le
-   prix et la bourse voyagent ensemble » — et l'étal la refaisait à côté.
+   L'abonnement dans son rayon : la bâche or à écharpe — l'or dit « on
+   achète » —, le cadeau du jour du paiement en grand avec ses sachets, puis
+   les formules en bâches côte à côte, la mensuelle en parpaing et celle que
+   le catalogue met en avant en or. **Il ne promet rien que le serveur ne
+   fasse** : le nombre de boosters est celui des formules, le prix celui du
+   catalogue, et sans eux la ligne n'est pas posée. La même composition vit
+   sur /abonnement. */
+.pass{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:10px;
+  margin:8px 0 28px;padding:22px 16px 16px;rotate:-.6deg}
+.pass-titre{font-family:var(--banner);font-weight:700;font-size:26px;line-height:1;
+  letter-spacing:.08em;text-transform:uppercase}
+.pass-cadeau{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.pass-cadeau>span:last-child{display:flex;flex-direction:column;gap:3px}
+.pass-cadeau b{font-family:var(--banner);font-weight:700;font-size:21px;line-height:1;
+  letter-spacing:.04em;text-transform:uppercase}
+.pass-cadeau small,.pass-etat small{font-family:var(--banner);font-weight:600;font-size:12px;
+  letter-spacing:.08em;text-transform:uppercase}
+.pass-etat{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.pass-bientot{position:absolute;top:16px;right:14px;--rot:5deg}
+.pass-formules{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:16px 12px;margin:0 0 6px}
+.pass-formule.tbf-plaque{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:5px;
+  min-height:98px;padding:14px 14px 13px;text-align:left}
+.pass-formule small{font-size:11px;font-weight:600;letter-spacing:.08em;line-height:1.2}
+.pass-formule b{font-size:20px;font-weight:700;letter-spacing:.03em;line-height:1;font-variant-numeric:tabular-nums}
+/* Le ruban de la formule mise en avant, collé à cheval sur son bord haut :
+   il ne mord pas sur le nom de la formule. */
+.pass-formule>.tbf-sticker{position:absolute;top:-19px;right:-6px;--rot:5deg}
+.pass-beta{margin:10px 0 0;padding:10px 13px;border-radius:8px;background:var(--panneau);
+  font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.35;letter-spacing:.04em}
 
-   La carte reste allumée, et le prix devient l'écart. Un joueur à qui il
-   manque trois écharpes sait qu'un duel suffit ; un joueur devant une carte
-   grise range son téléphone. */
-.obj[disabled]{cursor:default;filter:saturate(.72)}
-.obj[disabled] .vue img,.obj[disabled] .vue .vide{opacity:.5}
-.obj .manque{margin-top:auto;font-family:var(--banner);font-size:11px;
-  letter-spacing:.06em;color:var(--flare);line-height:1.3}
-.obj .manque b{display:block;font-size:15px;color:var(--flare)}
-
-/* Déjà possédé : un bandeau en travers du coin, pas une étiquette discrète.
-   On doit le voir **avant** de lire le nom. */
-.obj.mien .vue::after{content:"DÉJÀ À TOI";position:absolute;top:12px;left:-30px;
-  transform:rotate(-38deg);background:var(--vert,#1E9E6A);color:#032116;
-  font-family:var(--banner);font-size:11px;letter-spacing:.08em;
-  padding:3px 30px;box-shadow:0 2px 6px rgba(0,0,0,.5)}
-.obj.mien{filter:saturate(.6)}
-
-
-/* Deux étiquettes (`.tbf-etiquette`, ui.css) : la matière d'une valeur, pas
-   d'un bouton. Elles étaient posées sur un voile à 30 %, c'est-à-dire sur la
-   photo de tribune. Le dessin prend la couleur de ce qu'il compte, et c'est
-   lui seul qui dit qu'un nombre est un compte d'écharpes ou de boosters : le
-   nombre, lui, est à l'encre.
-
-   **Une étiquette est un sticker craie**, et sur la craie un ton s'écrit
-   dans sa version encre — la règle de la feuille commune, celle du tampon
-   plein : l'or en `--or-encre`, le flare en `--rouge-fonce`. L'or vif de
-   l'accueil, qui pose ses jetons sur le panneau sombre, n'y tenait plus
-   qu'à 1,4:1 et se lisait en jaune pâle ; l'encre d'or tient 4,6:1. Le flare
-   vif passait de justesse (3,7:1), mais à côté d'un or éteint il criait plus
-   fort que lui : deux soldes de même rang prennent la même encre. */
-.avoir{display:flex;gap:8px;align-items:center;margin:2px 0 4px}
-.avoir .tbf-etiquette{gap:7px;padding:6px 11px;font-size:15px}
-.avoir svg{width:20px;height:20px;flex:none;fill:none;stroke-width:1.9;
-  stroke-linecap:round;stroke-linejoin:round}
-.avoir .monnaie-ech svg{stroke:var(--or-encre)}
-.avoir .monnaie-pack svg{stroke:var(--rouge-fonce)}
-
-/* Le renvoi vers l'abonnement. Une bande, pas un bouton : ce n'est pas un
-   achat qu'on fait ici, c'est un écran qu'on va lire. */
-/* Les voiles de couleur de ces quatre bandes sont posés **sur** le panneau :
-   seuls, à 5, 16 ou 28 %, ils laissaient la photo de tribune derrière le
-   texte. Et leur texte se lit — à 65 ou 72 %, il ne se lisait qu'à l'ombre. */
-.vers-abo{display:flex;align-items:center;gap:10px;margin:18px 0 0;padding:13px 14px;
-  border-radius:12px;text-decoration:none;color:inherit;
+/* Le renvoi vers l'écran de l'abonnement. Une bande, pas un bouton : ce n'est
+   pas un achat qu'on fait ici, c'est un écran qu'on va lire. */
+/* Les voiles de couleur de ces bandes sont posés **sur** le panneau : seuls,
+   à 5, 16 ou 28 %, ils laissaient la photo de tribune derrière le texte. Et
+   leur texte se lit — à 65 ou 72 %, il ne se lisait qu'à l'ombre. */
+.vers-abo{display:flex;align-items:center;gap:10px;margin:14px 0 0;padding:13px 14px;min-height:44px;
+  box-sizing:border-box;border-radius:12px;text-decoration:none;color:inherit;
   background:linear-gradient(140deg,rgba(245,195,59,.16),rgba(245,195,59,.05)),var(--panneau);
   border:1px solid rgba(245,195,59,.38)}
+/* Le mot en craie et en gras, et non plus en or : à treize pixels et demi,
+   c'est du petit texte (arbitrage du 2 octobre 2026). La bande garde son
+   voile et son liseré d'or — c'est elle, la face, qui dit « acheter ». */
 .vers-abo b{font-family:var(--banner);font-size:13.5px;letter-spacing:.08em;
-  color:var(--projo);flex:none}
+  font-weight:700;color:var(--craie);flex:none}
 .vers-abo span{flex:1;min-width:0;font-size:11.5px;opacity:.88;line-height:1.4}
-.vers-abo i{font-style:normal;font-family:var(--banner);font-size:17px;
-  opacity:.85;flex:none}
+.vers-abo i{font-style:normal;font-family:var(--banner);font-size:17px;flex:none}
 
-.mot{margin:14px 0 0;padding:11px 13px;border-radius:10px;font-size:11.5px;
+/* Les mots qui comptent (« Stripe », « vitrine », « abonnement ») tiennent par
+   la graisse seule : ils étaient en or à onze pixels et demi, ce que
+   l'arbitrage du 2 octobre 2026 retire. */
+.mot{margin:22px 0 0;padding:11px 13px;border-radius:10px;font-size:11.5px;
   line-height:1.55;background:var(--panneau);border:1px solid rgba(242,238,228,.1)}
-.mot b{color:var(--projo)}
+.mot:empty{display:none}
 
+/* Le retour de Stripe, et la boutique injoignable : deux messages qui
+   doivent rester lus, donc des panneaux et non des toasts qui passent. */
 .err{margin-top:12px;padding:10px 12px;border-radius:9px;font-size:12.5px;
   background:linear-gradient(rgba(224,64,44,.16),rgba(224,64,44,.16)),var(--panneau);
   border:1px solid rgba(224,64,44,.4);display:none}
@@ -220,12 +241,32 @@
   border:1px solid rgba(30,158,106,.4);display:none}
 .ok.on{display:block}
 
-/* **Le bas de la page, et la barre du navigateur mobile.**
+/* --------------------------------------------- la cérémonie d'achat
 
-   Voir aide.html pour l'explication : le dernier element d'une page qui defile
-   est colle au bas du document, et la barre du navigateur passe par-dessus.
-   Cette page-ci n'a aucune declaration de hauteur — elle defile de bout en
-   bout — donc le probleme la concerne autant que les autres. */
+   Le calque de la brique (`.tbf-calque`, z 92, posé sur `body`) : l'objet au
+   centre sur son socle, la bouffée de fumigène de sa rareté derrière lui, le
+   tampon « À TOI ! » qui claque dessus, puis deux bâches — L'ÉQUIPER, au
+   violet des gens qu'on emmène, et CONTINUER, neutre. La cérémonie de
+   `FX.reveler` se joue par-dessus (z 96), le ticket « −45 » descend dans la
+   pile (z 93). Il ne reste ici que les places. */
+.achat{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:16px;
+  width:min(340px,100%)}
+.achat-scene{position:relative;display:block;width:230px;height:206px}
+.achat-scene .tbf-socle{position:absolute;left:50%;bottom:4px;translate:-50% 0;z-index:1}
+.achat-scene .tbf-objet{position:absolute;left:50%;bottom:22px;translate:-50% 0;z-index:2}
+/* Le tampon est posé sur la craie de l'objet : plein, comme « DÉJÀ À TOI »
+   sur l'étal (un tampon en contour clair n'y tient pas). Sa taille est celle
+   d'un verdict qu'on lit de loin. */
+.achat-scene .achat-tampon{position:absolute;z-index:3;left:50%;top:56%;translate:-50% -50%;
+  --rot:-10deg;font-size:24px;padding:6px 10px 5px}
+.achat-nom{max-width:100%}
+.achat-gestes{display:flex;flex-direction:column;gap:12px;width:100%}
+.achat-gestes .tbf-plaque{width:100%}
+/* La phrase d'effet dans la boîte qui confirme l'achat, sous l'objet : sa
+   légende. La boîte lui donne déjà sa taille et sa craie pleine
+   (`.tbf-dial p`) ; la page la centre sous l'objet. */
+.tbf-dial .achat-effet{margin-top:10px;text-align:center}
+
 /* tbf-degagement */
 body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 </style>
@@ -233,39 +274,44 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 <body>
 <main id="app">
 
-  <div class="avoir" id="avoir" hidden>
-    <!-- Deux monnaies, plus trois : le billet est parti avec l'argent réel, et
-         son jeton avec lui. Un jeton qui affiche toujours zéro se lit comme une
-         monnaie qu'on ne sait pas gagner. -->
-    <span class="tbf-etiquette monnaie-ech"><svg viewBox="0 0 24 24" role="img" aria-label="Écharpes"><rect
-      x="2.5" y="8.5" width="19" height="7" rx="3.5"/><path d="M8 8.5 6 15.5M13 8.5l-2 7M18 8.5l-2 7"/></svg><b
-      id="avEch">0</b></span>
-    <span class="tbf-etiquette monnaie-pack"><svg viewBox="0 0 24 24" role="img" aria-label="Boosters"><path
-      d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg><b id="avPack">0</b></span>
-  </div>
+  <!-- La réserve du joueur : ses boosters et ses écharpes, sous la barre.
+       Posée par le script quand on sait qui joue ; hors des conteneurs
+       réécrits. -->
+  <div class="tbf-reserve tbf-pleine-largeur" id="reserve" hidden></div>
 
   <div class="ok" id="ok"></div>
   <div class="err" id="err"></div>
 
-  <div id="etal"></div>
-  <div id="rayons"></div>
+  <div id="une"></div>
 
-  <!-- L'abonnement a son écran ; la boutique n'y menait pas. Un joueur qui
-       lit « l'argent réel n'achète que l'abonnement » juste en dessous doit
-       pouvoir y aller d'un geste. -->
-  <a class="vers-abo" href="/abonnement">
-    <b>L’ABONNEMENT</b>
-    <span>Ce qu’il ouvre, et ce qu’il ne change pas</span>
-    <i>›</i>
-  </a>
+  <!-- Les rayons. Le rail porte son ton ici, dans le balisage : l'or, la
+       destination de la boutique sur le hub. Les onglets sont posés par le
+       script, seulement pour les rayons qui ont quelque chose à montrer. -->
+  <div class="tbf-onglets" data-ton="or" id="onglets" role="tablist" aria-label="Les rayons" hidden></div>
+
+  <section id="p-equipement" role="tabpanel" aria-labelledby="o-equipement" hidden>
+    <div id="etal"></div>
+  </section>
+  <section id="p-tenues" role="tabpanel" aria-labelledby="o-tenues" hidden>
+    <div id="cabine"></div>
+  </section>
+  <section id="p-abonnement" role="tabpanel" aria-labelledby="o-abonnement" hidden>
+    <div id="rayons"></div>
+    <!-- L'abonnement a son écran ; la boutique n'y menait pas. Un joueur qui
+         lit « l'argent réel n'achète que l'abonnement » juste en dessous doit
+         pouvoir y aller d'un geste. -->
+    <a class="vers-abo" href="/abonnement">
+      <b>L’ABONNEMENT</b>
+      <span>Ce qu’il ouvre, et ce qu’il ne change pas</span>
+      <i aria-hidden="true">›</i>
+    </a>
+  </section>
 
   <p class="mot" id="mot"></p>
 </main>
 
-<!-- Les dessins. La boutique n'en chargeait aucun : elle vendait des noms.
-     Le premier pour l'équipement détouré ; les deux suivants pour montrer une
-     tenue **portée**, ce qui demande de savoir résoudre un Fanzzy dans un
-     skin donné. -->
+<!-- Les dessins : l'équipement détouré, et de quoi montrer une tenue
+     **portée** — résoudre un Fanzzy dans une tenue donnée. -->
 <script src="/stuff-art.js"></script>
 <script src="/fanzzy-art.js"></script>
 <script src="/fanzzy-etats.js"></script>
@@ -277,7 +323,20 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
   (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const dire = (id, texte) => { const e = $(id); e.textContent = texte; e.className = e.className.replace(' on', '') + ' on'; };
+const dire = (id, texte) => { const e = $(id); e.textContent = texte; e.classList.add('on'); };
+
+/* Le stockage du navigateur ne sert qu'au confort de ce joueur sur cet
+   appareil — le dernier rayon ouvert, ses filtres. Il peut être fermé
+   (navigation privée) : chaque lecture et chaque écriture sont gardées, et
+   la page marche sans. */
+const memoire = {
+  lire(cle) { try { return JSON.parse(localStorage.getItem(cle) ?? 'null'); } catch { return null; } },
+  ecrire(cle, v) { try { localStorage.setItem(cle, JSON.stringify(v)); } catch { /* fermé */ } },
+};
+
+/** Une lecture JSON qui ne lève jamais : `null` sur un refus ou une panne. */
+const lire = (url) => fetch(url, { credentials: 'same-origin' })
+  .then((r) => (r.ok ? r.json() : null)).catch(() => null);
 
 /**
  * Pose un solde affiché — et le fait **compter** s'il change sous les yeux.
@@ -295,6 +354,7 @@ const dire = (id, texte) => { const e = $(id); e.textContent = texte; e.classNam
  * arrière pour une image.
  */
 function poserSolde(el, valeur) {
+  if (!el) return;
   const apres = Number(valeur) || 0;
   const avant = el.dataset.v === undefined ? null : Number(el.dataset.v);
   if (avant === apres) return;
@@ -303,213 +363,516 @@ function poserSolde(el, valeur) {
   window.FX.compter(el, avant, apres);
 }
 
+/* --------------------------------------------------------------- l'état
+
+   Ce que la page sait, en un seul endroit : les quatre réponses qu'elle lit
+   en arrivant, et les choix du joueur sur cet écran. */
+const S = {
+  catalogue: null,   // /api/boutique/catalogue — public : la vitrine en euros
+  etal: null,        // /api/boutique/etal — ce que les écharpes achètent
+  etat: null,        // /api/fanzzy/state — la bourse, la recharge, l'avatar
+  abo: null,         // /api/abonnement — le plafond, la cadence, les formules
+  echarpes: 0,
+  rayon: null,
+  filtre: memoire.lire('tbf-boutique-filtre'),
+  portee: memoire.lire('tbf-boutique-portee') ?? true,
+  tout: false,
+  tenue: 0,
+  avecTenue: true,
+};
+
+const RARS = ['commune', 'rare', 'epique', 'legendaire'];
+const rarDe = (r) => (RARS.includes(r) ? r : 'commune');
+/* Les raretés, écrites comme elles se disent. La donnée est sans accent parce
+   qu'elle sert d'identifiant, ce qui ne doit pas se voir sur ce qu'on vend. */
+const RAR_MOT = { commune: 'COMMUNE', rare: 'RARE', epique: 'ÉPIQUE', legendaire: 'LÉGENDAIRE' };
+const RAR_NOM = { commune: 'Commune', rare: 'Rare', epique: 'Épique', legendaire: 'Légendaire' };
+
+const JETON = () => esc(window.TBF_STUFF?.gain?.('echarpes') ?? '/img/gains/echarpes.webp');
+const SACHET = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg>';
+const pluriel = (n, un, plusieurs) => `${n} ${n > 1 ? plusieurs : un}`;
+
 /* Le retour de Stripe. Il dit seulement que le joueur est revenu — **pas** que
    la commande est livrée. La livraison se fait dans le webhook, sur le
    serveur, et elle peut arriver une seconde après ou une minute après. On dit
    donc « c'est payé, ça arrive », et jamais « voilà vos boosters » : promettre
    une chose qu'on n'a pas encore faite est le plus sûr moyen d'être accusé de
    ne pas l'avoir faite. */
-{
+const retourStripe = (() => {
   const p = new URLSearchParams(location.search);
   if (p.get('paye')) dire('ok', 'Paiement reçu. Ta commande arrive — recharge dans un instant si elle tarde.');
   if (p.get('annule')) dire('err', 'Paiement annulé. Rien n’a été débité.');
-  if (p.has('paye') || p.has('annule')) history.replaceState(null, '', '/boutique');
+  const revenu = p.has('paye') || p.has('annule');
+  if (revenu) history.replaceState(null, '', '/boutique');
+  return revenu;
+})();
+
+/* ------------------------------------------------------- la pile, les toasts
+
+   Une erreur d'achat se dit dans la pile commune (`.tbf-pile`, sur `body`) :
+   le joueur est peut-être descendu au bas de l'étal, et un panneau en haut
+   de page ne se verrait pas. **Une erreur n'est jamais un ticket** : c'est
+   une bande de parpaing qui secoue (`.tbf-toast--erreur`). */
+function pile() {
+  let p = document.querySelector('body > .tbf-pile');
+  if (!p) {
+    p = document.createElement('div');
+    p.className = 'tbf-pile';
+    document.body.appendChild(p);
+  }
+  return p;
+}
+function toast(texte, { erreur = false, ms = 4500 } = {}) {
+  const t = document.createElement('div');
+  t.className = 'tbf-toast' + (erreur ? ' tbf-toast--erreur' : '');
+  t.setAttribute('role', erreur ? 'alert' : 'status');
+  t.innerHTML = (erreur
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9"/></svg>'
+    : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>') + esc(texte);
+  pile().appendChild(t);
+  setTimeout(() => t.remove(), ms);
 }
 
-let ouvert = false;
+/* Les mouvements du vocabulaire (`.tbf-colle`, `.tbf-clac`, `.tbf-glisse`) se
+   retirent à la fin de leur animation : laissés en place, ils rejoueraient au
+   premier changement de style. */
+document.addEventListener('animationend', (e) => {
+  for (const c of ['tbf-colle', 'tbf-clac', 'tbf-glisse']) {
+    if (e.target.classList?.contains(c) && e.animationName === c) e.target.classList.remove(c);
+  }
+});
 
-async function monter() {
-  const rep = await fetch('/api/boutique/catalogue').then((r) => r.json()).catch(() => null);
-  if (!rep) { dire('err', 'La boutique est injoignable pour le moment.'); return; }
-  ouvert = rep.ouvert;
+/* ============================================================ la réserve
 
-  $('rayons').innerHTML = (rep.rayons ?? []).map((r) => {
-    const dedans = rep.articles.filter((a) => a.rayon === r.id);
-    if (!dedans.length) return '';
-    return `<section class="rayon"><h2 class="tbf-cousu">${esc(r.nom)}</h2><p>${esc(r.texte)}</p>
-      <div class="etal">${dedans.map((a) => `
-        <button class="art" data-art="${esc(a.id)}" ${ouvert ? '' : 'disabled'}>
-          ${a.marque ? `<span class="marque">${esc(a.marque)}</span>` : ''}
-          <b>${esc(a.nom)}</b>
-          <small>${esc(a.texte)}</small>
-          <span class="prix">${esc(a.prixTexte)}</span>
-        </button>`).join('')}</div></section>`;
-  }).join('');
+   La brique `.tbf-reserve` : les sachets du joueur, la recharge du suivant,
+   ses écharpes. **Le plafond et la cadence viennent de `/api/abonnement`**
+   (abonné ou non, ce que le joueur a vraiment) ; sans eux, on ne dessine pas
+   de fentes qu'on ne saurait pas compter, on écrit le compte.
 
-  $('mot').innerHTML = (ouvert
-    ? 'Les paiements passent par <b>Stripe</b>. Nous ne voyons jamais ton numéro de carte.'
-    : 'La boutique est en <b>vitrine</b> : les paiements ne sont pas encore branchés.')
-    + '<br>L’argent réel n’achète que l’<b>abonnement</b>. Tout le reste — les '
-    + 'boosters, les tenues, l’équipement — se paie en écharpes, et les écharpes '
-    + 'se gagnent en jouant.';
+   Au-delà de sept places, la rangée ne se lirait plus d'un coup d'œil (la
+   brique le dit) : le compte des boosters prend la forme du compteur de
+   monnaie, comme dans la barre. C'est le cas du plafond de départ (douze).
 
-  /* Ce qu'on possède déjà. Facultatif : un visiteur non connecté voit les prix
-     sans voir un solde qui n'existe pas. */
-  try {
-    const w = await fetch('/api/fanzzy/state', { credentials: 'same-origin' })
-      .then((r) => (r.ok ? r.json() : null));
-    if (w?.wallet) {
-      poserSolde($('avEch'), w.wallet.scarves ?? 0);
-      poserSolde($('avPack'), w.wallet.packs ?? 0);
-      $('avoir').hidden = false;
+   **Le compte à rebours suit la règle R3 du contrat** : la durée vient du
+   serveur (`nextPackInMs`), la page décompte avec `performance.now()` — qui
+   continue de courir quand l'onglet est caché —, et à zéro elle relit le
+   serveur au lieu de conclure seule qu'un booster est arrivé. */
+const R = { fin: null, minuterie: 0, relu: 0 };
 
-      /* Le mannequin des tenues : son avatar, à l'âge qu'il a atteint.
+/* L'échéance se retient **une fois, à la lecture** : `nextPackInMs` est
+   compté à l'instant de la réponse, et le rajouter à l'heure d'un rendu
+   ultérieur (un achat, une annonce de la barre) ferait repartir le compte à
+   rebours de son début. */
+function lireRecharge(w) {
+  const n = Number(w?.nextPackInMs);
+  R.fin = w && w.nextPackInMs != null && Number.isFinite(n) ? performance.now() + Math.max(0, n) : null;
+}
 
-         `active` est le personnage qu'il a choisi de montrer aux autres —
-         donc celui auquel il tient, donc le seul sur lequel une tenue vaut la
-         peine d'être imaginée. `stades` ne porte que les âges supérieurs à
-         un : l'absence y vaut « premier âge », et c'est pour ça que le repli
-         est 1 et non zéro. */
-      const moi = w.wallet.active;
-      if (moi) mannequin = { id: moi, evo: Number(w.stades?.[moi] ?? 1) };
+const plafond = () => {
+  const a = S.abo;
+  if (!a || a.error) return null;
+  const n = Number((a.abonne ? a.ouvre : a.sans)?.packMax);
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
+const cadence = () => {
+  const a = S.abo;
+  if (!a || a.error) return null;
+  const n = Number((a.abonne ? a.ouvre : a.sans)?.packRegenMin);
+  return Number.isFinite(n) && n > 0 ? n * 60_000 : null;
+};
+
+/** Le temps qui reste, écrit comme une minuterie : « 9:55 », « 1:05:12 ». */
+function minutes(ms) {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = String(s % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+}
+
+function rendreReserve() {
+  const w = S.etat?.wallet;
+  const el = $('reserve');
+  if (!w) { el.hidden = true; return; }
+  const packs = Number(w.packs) || 0;
+  const max = plafond();
+  const plein = max !== null && packs >= max;
+  /* Réserve pleine : pas de prochain (jamais « 0:00 »), la brique le dit. */
+  const enCours = !plein && R.fin !== null;
+  const anneau = enCours && cadence() !== null;
+  const places = max === null ? 0 : Math.max(max, packs);
+
+  let sachets;
+  if (max !== null && places <= 7) {
+    /* Les fentes : une par place, les pleines d'abord ; la première vide
+       porte l'anneau de recharge si l'on connaît la cadence. */
+    const fentes = [];
+    for (let i = 0; i < places; i++) {
+      if (i < packs) fentes.push('<span class="tbf-fente"></span>');
+      else if (i === packs && anneau) {
+        fentes.push('<span class="tbf-fente tbf-fente--vide"><span class="tbf-recharge" data-recharge aria-hidden="true"></span></span>');
+      } else fentes.push('<span class="tbf-fente tbf-fente--vide"></span>');
     }
-  } catch { /* pas connecté : on montre la vitrine */ }
+    sachets = `<a class="tbf-fentes" href="/boosters" aria-label="${esc(
+      `${pluriel(packs, 'booster', 'boosters')} sur ${max} — le kiosque`)}">${fentes.join('')}</a>`;
+  } else {
+    sachets = anneau ? '<span class="tbf-recharge" data-recharge aria-hidden="true"></span>' : '';
+  }
+  const prochain = enCours
+    ? '<span class="tbf-reserve-prochain" role="timer" aria-label="Le prochain booster">PROCHAIN<b data-prochain></b></span>'
+    : '';
+  const compteBoosters = max !== null && places <= 7 ? ''
+    : `<a class="tbf-monnaie" href="/boosters" aria-label="${esc(max === null
+      ? `${pluriel(packs, 'booster', 'boosters')} — le kiosque`
+      : `${pluriel(packs, 'booster', 'boosters')} sur ${max} — le kiosque`)}">${SACHET}<b data-packs>${packs}</b><i class="tbf-monnaie-plus" aria-hidden="true">+</i></a>`;
 
-  await monterEtal();
+  /* Le compteur d'écharpes reste le même nœud d'un rendu à l'autre : c'est
+     lui qui compte quand un achat le fait descendre, et un compte ne survit
+     pas à un `innerHTML`. Il mène où en gagner — le Virage. */
+  let ech = el.querySelector('[data-echarpes]')?.closest('a');
+  if (!ech) {
+    ech = document.createElement('a');
+    ech.className = 'tbf-monnaie';
+    ech.href = '/virage';
+    ech.innerHTML = `<img src="${JETON()}" alt=""><b data-echarpes></b><i class="tbf-monnaie-plus" aria-hidden="true">+</i>`;
+  }
+  ech.setAttribute('aria-label', `${pluriel(S.echarpes, 'écharpe', 'écharpes')} — où en gagner`);
+  el.innerHTML = sachets + prochain + compteBoosters;
+  el.appendChild(ech);
+  poserSolde(ech.querySelector('b'), S.echarpes);
+  el.hidden = false;
+  tic();
+}
+
+/** Une seconde de la minuterie : le compte, l'anneau, et la relecture à zéro. */
+function tic() {
+  const b = document.querySelector('#reserve [data-prochain]');
+  if (R.fin === null || !b) return;
+  const reste = R.fin - performance.now();
+  if (reste <= 0) {
+    b.textContent = minutes(0);
+    relireEtat();
+    return;
+  }
+  b.textContent = minutes(reste);
+  const c = cadence();
+  const anneau = document.querySelector('#reserve [data-recharge]');
+  if (anneau && c) anneau.style.setProperty('--part', String(Math.min(1, Math.max(0, 1 - reste / c))));
+}
+R.minuterie = setInterval(() => { if (!document.hidden) tic(); }, 1000);
+/* L'onglet revient : la minuterie d'arrière-plan a pu être ralentie par le
+   navigateur, l'horloge `performance.now()`, elle, n'a pas dérivé. On
+   redessine tout de suite plutôt qu'à la prochaine seconde. */
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tic(); });
+
+/* À zéro, on relit l'état — au plus une fois toutes les cinq secondes, pour
+   qu'un serveur qui répondrait encore « zéro » ne fasse pas tourner la page
+   en boucle. */
+async function relireEtat() {
+  const t = performance.now();
+  if (t - R.relu < 5000) return;
+  R.relu = t;
+  const etat = await lire('/api/fanzzy/state');
+  if (!etat?.wallet) return;
+  S.etat = etat;
+  lireRecharge(etat.wallet);
+  annoncer(etat.wallet);
+  rendreReserve();
+}
+
+/* **La bourse se partage.** La barre et le tiroir écoutent `tbf:bourse` :
+   une page qui a lu ou changé le portefeuille le dit, sans quoi le HUD de la
+   barre resterait en retard d'un achat pendant trente secondes. */
+function annoncer(wallet) {
+  window.dispatchEvent(new CustomEvent('tbf:bourse', { detail: { wallet } }));
+}
+/* Et elle s'écoute : une récompense récupérée depuis le tiroir change le
+   solde, donc ce qui est à portée. Une annonce qui ne dit rien de nouveau —
+   la nôtre, renvoyée — ne redessine rien. */
+window.addEventListener('tbf:bourse', (e) => {
+  const w = e.detail?.wallet ?? e.detail;
+  if (!w || typeof w !== 'object' || !S.etat?.wallet) return;
+  let change = false;
+  const ech = Number(w.scarves);
+  if (w.scarves != null && Number.isFinite(ech) && ech !== S.echarpes) { S.echarpes = ech; change = true; }
+  const pk = Number(w.packs);
+  if (w.packs != null && Number.isFinite(pk) && pk !== Number(S.etat.wallet.packs)) {
+    S.etat.wallet.packs = pk;
+    change = true;
+  }
+  if (!change) return;
+  rendreReserve();
+  rendreUne();
+  if (S.rayon === 'equipement') rendreEtal();
+  if (S.rayon === 'tenues') rendreCabine();
+});
+
+/* ======================================================= l'objet, l'étal */
+
+/* Un dessin qui ne répond pas : la silhouette au pochoir de la brique, jamais
+   un cadre vide (`.tbf-objet--vide`, BRIQUES § 9). */
+window.sansDessin = (img) => {
+  const s = img.parentElement;
+  img.remove();
+  if (!s) return;
+  s.classList.add('tbf-objet--vide');
+  s.setAttribute('role', 'img');
+  s.setAttribute('aria-label', img.dataset.nom || 'Objet à venir');
+};
+
+/** L'objet sur son sticker (`.tbf-objet`), à la taille demandée. */
+function objetHTML(o, taille) {
+  const rar = rarDe(o.rar);
+  const style = taille ? ` style="--taille:${taille}px"` : '';
+  if (o.type === 'stuff' && window.TBF_STUFF) {
+    return `<span class="tbf-objet" data-rar="${rar}"${style}><img src="${esc(window.TBF_STUFF.adresse(o.id))}"
+      alt="" decoding="async" data-nom="${esc(o.nom)}" onerror="sansDessin(this)"></span>`;
+  }
+  return `<span class="tbf-objet tbf-objet--vide" data-rar="${rar}"${style} role="img" aria-label="${esc(o.nom)}"></span>`;
+}
+
+const formePetite = (r) => `<span class="tbf-forme" data-rar="${r}" style="--taille:16px" role="img"
+  aria-label="${RAR_NOM[r]}"><i></i></span>`;
+const prixHTML = (prix, or = false) => `<span class="tbf-sticker tbf-sticker--prix"${or ? ' data-ton="or"' : ''}><img
+  src="${JETON()}" alt="">${esc(prix)}</span>`;
+/* L'écharpe fine du solde contre le prix : où l'on en est, pas ce qui manque. */
+const ecartHTML = (prix) => `<span class="tbf-jauge tbf-jauge--fine"><i style="width:${
+  Math.max(4, Math.min(100, Math.round((S.echarpes / Math.max(1, prix)) * 100)))}%"></i></span>`;
+const GAGNER = '<span class="tbf-sticker" data-ton="vert">GAGNER</span>';
+
+/**
+ * Une étiquette de marché (`.tbf-marche`, BRIQUES § 10).
+ *
+ * **Hors de portée, elle mène où gagner** — un lien vers le Virage, pas un
+ * bouton éteint : un bouton éteint ne mène nulle part, et « il te manque
+ * 120 » écrit en rouge rangeait le téléphone. L'écharpe fine dit l'écart, le
+ * sticker GAGNER dit où aller.
+ *
+ * Une pièce **déjà à soi** reste en vente : un second exemplaire se porte sur
+ * un second Fanzzy (le serveur compte les copies). Le tampon le dit avant le
+ * nom ; le prix reste, pour qui veut le second.
+ */
+function etiquetteHTML(o, { portee = false, colle = -1 } = {}) {
+  const rar = rarDe(o.rar);
+  const assez = S.echarpes >= o.prix;
+  const etat = o.possede ? 'possede' : (!assez ? 'cher' : (portee ? 'portee' : ''));
+  const pied = etat === 'cher'
+    ? prixHTML(o.prix) + GAGNER + ecartHTML(o.prix)
+    : prixHTML(o.prix) + (assez ? '' : GAGNER);
+  const dedans = `${objetHTML(o)}
+    ${o.possede ? '<span class="tbf-tampon" data-ton="vert">DÉJÀ À TOI</span>' : ''}
+    <span class="tbf-marche-nom">${esc(o.nom)}${formePetite(rar)}</span>
+    ${o.texte ? `<span class="tbf-marche-effet">${esc(o.texte)}</span>` : ''}
+    <span class="tbf-marche-pied">${pied}</span>`;
+  const attrs = `class="tbf-marche${colle >= 0 ? ' tbf-colle' : ''}"${etat ? ` data-etat="${etat}"` : ''}
+    data-type="${esc(o.type)}" data-id="${esc(o.id)}"${colle >= 0 ? ` style="--d:${colle * 60}ms"` : ''}`;
+  if (!assez) {
+    const manque = o.prix - S.echarpes;
+    /* Le nom accessible remplace tout ce que l'étiquette écrit : sans la
+       phrase d'effet, un lecteur d'écran ne l'entendait jamais hors de
+       portée, quand le bouton la dit. */
+    return `<a ${attrs} href="/virage" aria-label="${esc(`${o.nom}, ${RAR_NOM[rar].toLowerCase()}. ${
+      o.texte ? `${o.texte} ` : ''}${o.prix} écharpes${
+      o.possede ? ', déjà à toi' : ''} — il t’en manque ${manque} : où en gagner`)}">${dedans}</a>`;
+  }
+  return `<button type="button" ${attrs} aria-label="${esc(`${o.possede ? 'Un autre exemplaire : ' : ''}${o.nom}, ${
+    RAR_NOM[rar].toLowerCase()}. ${o.texte ?? ''} ${o.prix} écharpes`)}">${dedans}</button>`;
+}
+
+/* ------------------------------------------------------------ À LA UNE
+
+   **L'objet légendaire le plus proche du solde**, calcul de la page (une
+   vraie rotation serait au serveur) : parmi les légendaires qu'on n'a pas,
+   celui dont le prix s'écarte le moins de ce qu'on a. À prix égal, l'ordre du
+   catalogue. Plus aucune légendaire à prendre : pas de une. */
+function laUne() {
+  const l = (S.etal?.stuff ?? []).filter((o) => o.rar === 'legendaire' && !o.possede && o.prix > 0);
+  if (!l.length) return null;
+  return l.reduce((m, o) => (Math.abs(o.prix - S.echarpes) < Math.abs(m.prix - S.echarpes) ? o : m));
+}
+
+/* La scène pose l'objet sur la plaque légendaire de LA REPRISE — la série en
+   production, celle que la direction nomme (« RP-legendaire ») —, sous les
+   projecteurs. Sans l'image, la scène reste un trou sombre : rien ne manque
+   à la lecture. */
+function rendreUne() {
+  const o = laUne();
+  const el = $('une');
+  if (!o) { el.innerHTML = ''; return; }
+  const assez = S.echarpes >= o.prix;
+  const dedans = `<span class="une-scene" aria-hidden="true">
+      <img class="une-plaque" src="/img/fonds/RP-legendaire.webp" alt="" onerror="this.remove()">
+      <span class="tbf-projecteurs"></span>
+      <span class="tbf-socle"></span>
+      ${objetHTML(o)}
+    </span>
+    <span class="une-texte">
+      <span class="tbf-sticker">À LA UNE</span>
+      <b class="une-nom">${esc(o.nom)}</b>
+      <span class="tbf-forme" data-rar="legendaire"><i></i><b>LÉGENDAIRE</b></span>
+      ${prixHTML(o.prix, true)}
+      ${assez ? '' : `<span class="une-manque">${ecartHTML(o.prix)}${GAGNER}</span>`}
+    </span>`;
+  el.innerHTML = assez
+    ? `<button type="button" class="tbf-cadre tbf-cadre--ticket une" data-echarpe data-type="stuff"
+        data-id="${esc(o.id)}" aria-label="${esc(`À la une : ${o.nom}, légendaire. ${o.texte ?? ''} ${o.prix} écharpes`)}">${dedans}</button>`
+    : `<a class="tbf-cadre tbf-cadre--ticket une" data-echarpe href="/virage"
+        aria-label="${esc(`À la une : ${o.nom}, légendaire. ${o.texte ? `${o.texte} ` : ''}${
+          o.prix} écharpes — il t’en manque ${o.prix - S.echarpes} : où en gagner`)}">${dedans}</a>`;
 }
 
 /* --------------------------------------------------------------- l'étal
 
    Ce que les écharpes achètent, en dehors des boosters. Rien n'y est tiré au
-   sort : le joueur lit le
-   nom, la phrase et le prix avant de toucher. C'est toute la différence avec
-   ce que cette boutique vendait avant, où « une tenue » à 2,49 € était un
-   tirage. */
+   sort : le joueur lit le nom, ce que fait l'objet et le prix avant de
+   toucher.
 
-let echarpes = 0;
+   **L'ordre « à portée d'abord »** : ce qu'on peut prendre tout de suite, du
+   plus cher au moins cher (le meilleur qu'on puisse s'offrir d'abord) ; puis
+   ce qui manque, du plus proche au plus lointain ; puis ce qu'on a déjà.
+   Éteint, l'ordre du catalogue.
 
-/* Le Fanzzy qui sert de mannequin aux tenues, et jusqu'où il a grandi.
+   **« À PORTÉE » ne s'allume que sur un objet**, le plus cher de ceux qu'on
+   peut prendre parmi ceux qu'on voit : le cerne d'or respire (une animation
+   sans fin, la seule de l'écran), et deux qui respireraient ne désigneraient
+   plus rien. */
+const RANGEES = 3;
 
-   Une tenue ne se vend pas par son nom : « Hiver » ne dit rien, « Hiver sur
-   ton Capo » se regarde. On prend donc celui que le joueur a mis en avatar —
-   c'est celui auquel il tient — et son âge atteint, parce qu'une tenue
-   appartient à un âge et que montrer le gamin à qui joue le Capo serait
-   montrer autre chose que ce qui s'achète.
-
-   Nul si le joueur n'a pas encore d'avatar : les tenues gardent alors leur
-   cadre de rareté vide, ce qui reste honnête. */
-let mannequin = null;
-
-/* Les raretes, ecrites comme elles se disent. `toUpperCase()` seul rendait
-   « EPIQUE » et « LEGENDAIRE » : la donnee est sans accent parce qu elle sert
-   d identifiant, ce qui ne doit pas se voir sur une carte qu on vend. */
-const RAR_MOT = { commune: 'COMMUNE', rare: 'RARE',
-  epique: 'ÉPIQUE', legendaire: 'LÉGENDAIRE' };
-
-/**
- * Le dessin d'un objet de l'étal.
- *
- * Deux sortes, deux bibliothèques, et un repli commun. Le repli n'est pas une
- * image manquante mais un cadre de rareté vide : un trou dans une grille se
- * lit comme une panne, un cadre vide se lit comme « pas encore dessiné ».
- */
-function vueObjet(o) {
-  if (o.type === 'stuff' && window.TBF_STUFF) {
-    /* `objet` et non `illu` : fx.js, chargé ici pour faire compter le solde,
-       fait respirer toute image `.illu` et la fait sursauter au toucher.
-       L'étal est une vitrine immobile, et le doigt qui touche une pièce
-       ouvre la confirmation d'achat — pas un personnage qui réagit. */
-    return window.TBF_STUFF.illustration(o.id, 'objet');
-  }
-  if (o.type === 'tenue' && mannequin && window.TBF_ETATS) {
-    /* Le repos, et pas une expression : on vend la tenue, pas l'humeur. Et
-       `resoudre` descend seul jusqu'à ce qui existe — une tenue non dessinée
-       sur ce personnage-là retombe sur sa tenue de base, ce qui montrerait le
-       mauvais vêtement. On n'accepte donc que la réponse exacte — **à l'âge
-       du mannequin aussi** : une tenue dessinée au premier âge seulement ne
-       doit pas se vendre sous les traits d'un âge qu'elle n'habille pas. */
-    const r = window.TBF_ETATS.resoudre(mannequin.id,
-      { evo: mannequin.evo, skin: o.id, etat: 'neutre' });
-    if (r?.skin === o.id && r.evo === mannequin.evo) {
-      return '<img src="' + r.src + '" alt="" loading="lazy" onerror="this.remove()">';
-    }
-  }
-  return '<span class="vide"></span>';
+function trier(liste) {
+  if (!S.portee) return liste;
+  const prenable = (o) => !o.possede && S.echarpes >= o.prix;
+  const rang = (o) => (o.possede ? 2 : prenable(o) ? 0 : 1);
+  return liste.map((o, i) => ({ o, i })).sort((a, b) => {
+    const ra = rang(a.o); const rb = rang(b.o);
+    if (ra !== rb) return ra - rb;
+    if (ra === 0) return b.o.prix - a.o.prix || a.i - b.i;
+    if (ra === 1) return a.o.prix - b.o.prix || a.i - b.i;
+    return a.i - b.i;
+  }).map((x) => x.o);
 }
 
-const ligneObjet = (o, assez) => `<button class="obj r-${esc(o.rar ?? 'commune')}${
-  o.possede ? ' mien' : ''}" data-type="${esc(o.type)}"
-  data-id="${esc(o.id)}" data-prix="${o.prix}" ${assez ? '' : 'disabled'}>
-  <span class="vue">${vueObjet(o)}</span>
-  <b>${esc(o.nom)}</b>
-  <span class="rar">${esc(RAR_MOT[o.rar] ?? (o.rar ?? '').toUpperCase())}</span>
-  <span class="quoi">${esc(o.texte ?? '')}</span>
-  ${assez
-    ? `<span class="cout"><i></i>${o.prix}</span>`
-    /* **L'écart, et non le refus.** Voir le commentaire de \`.manque\` : dire
-       « il te manque 3 » envoie jouer un duel ; griser la carte range le
-       téléphone. */
-    : `<span class="manque"><b>${o.prix - echarpes}</b>écharpe${
-        o.prix - echarpes > 1 ? 's' : ''} de plus</span>`}
-</button>`;
-
-async function monterEtal() {
-  const d = await fetch('/api/boutique/etal', { credentials: 'same-origin' })
-    .then((r) => (r.ok ? r.json() : null)).catch(() => null);
-  // Pas connecté, ou l'étal est injoignable : la vitrine en euros reste
-  // lisible, et on ne met pas d'erreur devant quelqu'un qui regarde.
-  if (!d) { $('etal').innerHTML = ''; return; }
-
-  echarpes = d.echarpes ?? 0;
-  poserSolde($('avEch'), echarpes);
-
-  /* Le manifeste des dessins, **avant** de rendre. Sans lui, `resoudre` ne
-     sait rien et toutes les tenues sortiraient avec leur cadre vide — puis
-     rien ne les corrigerait, l'étal ne se redessinant qu'après un achat. */
-  await window.TBF_ETATS?.charger?.().catch(() => {});
-
-  const bloc = (titre, phrase, objets) => objets.length
-    ? `<section class="rayon"><h2 class="tbf-cousu">${esc(titre)}</h2><p>${esc(phrase)}</p>
-        <div class="objets">${objets.map((o) => ligneObjet(o, echarpes >= o.prix)).join('')}</div>
-      </section>`
-    : '';
-
-  $('etal').innerHTML =
-    bloc('ÉQUIPEMENT', 'Ce qu’on emporte dans la tribune. Choisis la pièce : rien n’est tiré au sort.',
-      d.stuff ?? [])
-    + bloc('TENUES', 'Habille un Fanzzy que tu as déjà. Tu choisis lequel, et à quel âge.',
-      d.tenues ?? []);
+/** Combien de colonnes l'étal tient à cette largeur (la grille de la brique). */
+function colonnes() {
+  const w = $('etal').clientWidth || document.documentElement.clientWidth - 28;
+  return Math.max(1, Math.floor((w + 12) / (148 + 12)));
 }
 
-$('etal').addEventListener('click', async (e) => {
-  const b = e.target.closest('[data-type]');
-  if (!b || b.disabled) return;
+function rendreEtal({ colle = false } = {}) {
+  /* L'objet « À LA UNE » n'est pas répété dans l'étal : il est juste
+     au-dessus, et « à portée d'abord » l'aurait remis en tête — le même objet
+     deux fois sous le même pouce. Il reste en vente, là-haut. */
+  const une = laUne();
+  const stuff = (S.etal?.stuff ?? []).filter((o) => o.id !== une?.id);
+  const presentes = RARS.filter((r) => stuff.some((o) => rarDe(o.rar) === r));
+  if (S.filtre && !presentes.includes(S.filtre)) S.filtre = null;
+  const vus = trier(stuff.filter((o) => !S.filtre || rarDe(o.rar) === S.filtre));
+  const cap = colonnes() * RANGEES;
+  const montres = S.tout || vus.length <= cap + 1 ? vus : vus.slice(0, cap);
+  const prenables = montres.filter((o) => !o.possede && S.echarpes >= o.prix);
+  const allume = prenables.length
+    ? prenables.reduce((m, o) => (o.prix > m.prix ? o : m)) : null;
 
-  /* Une tenue se pose sur quelqu'un : sans le couple Fanzzy + âge, il n'y a
-     rien à acheter. L'écran de la collection sait déjà présenter ce choix — on
-     y envoie plutôt que d'en fabriquer une seconde version ici, qui finirait
-     par proposer autre chose. */
-  if (b.dataset.type === 'tenue') {
-    location.href = '/fanzzy?ecran=dex&tenue=' + encodeURIComponent(b.dataset.id);
+  /* Les filtres : une forme par rareté présente dans l'étal, rien pour une
+     rareté qui n'a rien à montrer. Un seul à la fois ; le retoucher l'éteint. */
+  const filtres = presentes.length > 1 ? `<div class="filtres" role="group" aria-label="Filtrer par rareté">${
+    presentes.map((r) => `<button type="button" class="filtre" data-filtre="${r}" data-rar="${r}"
+      aria-pressed="${S.filtre === r}" aria-label="${RAR_NOM[r]} seulement"><span class="tbf-forme" data-rar="${r}"
+      aria-hidden="true"><i></i><b>${RAR_MOT[r]}</b></span></button>`).join('')}</div>` : '';
+  const reste = vus.length - montres.length;
+
+  $('etal').innerHTML = `
+    <div class="etal-outils">
+      ${filtres}
+      <button type="button" class="tbf-interrupteur" role="switch" aria-checked="${S.portee}"
+        data-portee><i aria-hidden="true"></i>À portée d’abord</button>
+    </div>
+    <div class="tbf-etal">${montres.map((o, i) => etiquetteHTML(o, {
+      portee: o === allume, colle: colle && i < 12 ? i : -1 })).join('')}</div>
+    ${reste > 0 ? `<button type="button" class="tbf-plaque tbf-bloc" data-tout>${
+      esc(`VOIR ${reste > 1 ? `LES ${reste} AUTRES` : 'L’AUTRE'}`)}</button>` : ''}`;
+}
+
+$('etal').addEventListener('click', (e) => {
+  const f = e.target.closest('[data-filtre]');
+  if (f) {
+    S.filtre = S.filtre === f.dataset.filtre ? null : f.dataset.filtre;
+    S.tout = false;
+    memoire.ecrire('tbf-boutique-filtre', S.filtre);
+    rendreEtal({ colle: true });
+    $('etal').querySelector(`[data-filtre="${f.dataset.filtre}"]`)?.focus({ preventScroll: true });
     return;
   }
+  if (e.target.closest('[data-portee]')) {
+    S.portee = !S.portee;
+    S.tout = false;
+    memoire.ecrire('tbf-boutique-portee', S.portee);
+    rendreEtal({ colle: true });
+    $('etal').querySelector('[data-portee]')?.focus({ preventScroll: true });
+    return;
+  }
+  if (e.target.closest('[data-tout]')) {
+    S.tout = true;
+    rendreEtal();
+    return;
+  }
+  const b = e.target.closest('button.tbf-marche');
+  if (b) acheter(b.dataset.id, b);
+});
+$('une').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-id]');
+  if (b) acheter(b.dataset.id, b);
+});
 
-  /* Une dépense se demande. Ici elle est définitive — une écharpe dépensée ne
-     revient pas — et les lignes de l'étal se touchent en faisant défiler. Le
-     prix est répété dans la boîte : c'est ce qu'on regarde, et c'est ce qu'on
-     aurait dû relire avant de toucher. */
-  const prix = Number(b.dataset.prix) || 0;
+/* ============================================================ l'achat
+
+   Une dépense se demande. Ici elle est définitive — une écharpe dépensée ne
+   revient pas — et les étiquettes se touchent en faisant défiler. La boîte
+   **montre l'objet** et répète le prix : c'est ce qu'on regarde, et c'est ce
+   qu'on aurait dû relire avant de toucher. Sous l'objet, **sa phrase
+   d'effet** : ce qu'il donne et ce qu'il coûte se relisent au moment de
+   payer — et c'est le seul endroit où se lit celle de l'objet à la une, que
+   l'étal ne répète pas. */
+let enAchat = false;
+
+async function acheter(id, bouton) {
+  const o = (S.etal?.stuff ?? []).find((x) => x.id === id);
+  if (!o || enAchat) return;
+  const prix = Number(o.prix) || 0;
+  const ecr = pluriel(prix, 'écharpe', 'écharpes');
   if (!(await window.TBF_DIALOGUE?.confirmer({
-    titre: `ACHETER ${(b.querySelector('b')?.textContent ?? '').toUpperCase()} ?`,
-    texte: `${prix} écharpe${prix > 1 ? 's' : ''} seront débitées. Une écharpe `
-      + 'dépensée ne revient pas — mais elle se regagne en jouant.',
-    oui: 'ACHETER', sousOui: `${prix} écharpe${prix > 1 ? 's' : ''}`, ton: 'or',
+    titre: `ACHETER ${String(o.nom).toUpperCase()} ?`,
+    texte: (o.possede ? 'Tu en as déjà un : celui-ci se portera sur un autre Fanzzy. ' : '')
+      + `${ecr} seront débitées. Une écharpe dépensée ne revient pas — mais elle se regagne en jouant.`,
+    corps: `<div style="display:grid;place-items:center;margin-top:16px">${objetHTML(o, 96)}</div>${
+      o.texte ? `<p class="achat-effet">${esc(o.texte)}</p>` : ''}`,
+    oui: 'ACHETER', sousOui: ecr, ton: 'or',
   }))) return;
 
-  b.disabled = true;
+  enAchat = true;
+  if (bouton) bouton.disabled = true;
+  const avant = S.echarpes;
   try {
     const r = await fetch('/api/boutique/depenser', {
       method: 'POST', credentials: 'same-origin',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ type: b.dataset.type, id: b.dataset.id }),
+      body: JSON.stringify({ type: o.type, id: o.id }),
     });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) { dire('err', MESSAGES[j.error] ?? 'Achat impossible.'); b.disabled = false; return; }
-    dire('ok', 'C’est à toi. Tu le retrouves dans ton deck.');
-    echarpes = j.echarpes ?? echarpes;
-    // La dépense se voit : le solde descend jusqu'à ce qui reste.
-    poserSolde($('avEch'), echarpes);
+    if (!r.ok) {
+      toast(MESSAGES[j.error] ?? 'Achat impossible.', { erreur: true });
+      if (bouton) bouton.disabled = false;
+      enAchat = false;
+      return;
+    }
+    const apres = Number.isFinite(Number(j.echarpes)) ? Number(j.echarpes) : Math.max(0, avant - prix);
+    S.echarpes = apres;
+    if (S.etat?.wallet) S.etat.wallet.scarves = apres;
+    annoncer({ scarves: apres });
+    /* La cérémonie d'abord, sur son calque ; l'étal se redessine dessous,
+       hors de vue — c'est pour ça que le calque n'est pas dans `#etal`. */
+    const fete = ceremonie(o, prix, apres);
     await monterEtal();
+    await fete;
   } catch {
     /* **« Rien n'a été débité » était une promesse qu'on ne pouvait pas tenir.**
      *
@@ -522,11 +885,13 @@ $('etal').addEventListener('click', async (e) => {
      * On dit donc ce qui est vrai, et on relit le solde pour qu'il puisse en
      * juger lui-même. Le bouton reste fermé jusqu'à ce que l'étal soit revenu :
      * rouvrir tout de suite, c'est inviter au second achat qu'on redoute. */
-    dire('err', 'Le serveur n’a pas répondu — on ne sait pas si l’achat est passé. '
-      + 'Vérifie ton solde avant de réessayer.');
-    await monterEtal().catch(() => { b.disabled = false; });
+    toast('Le serveur n’a pas répondu — on ne sait pas si l’achat est passé. '
+      + 'Vérifie ton solde avant de réessayer.', { erreur: true, ms: 8000 });
+    await monterEtal().catch(() => { if (bouton) bouton.disabled = false; });
+  } finally {
+    enAchat = false;
   }
-});
+}
 
 /* Les refus, en français. Un code d'erreur sous les yeux d'un joueur est un
    aveu qu'on n'a pas prévu son cas. */
@@ -539,20 +904,341 @@ const MESSAGES = {
   'auth.error.unauthenticated': 'Connecte-toi pour acheter.',
 };
 
+/**
+ * La cérémonie d'achat, sur le calque (`.tbf-calque`, posé sur `body`).
+ *
+ * Dans l'ordre de la direction : l'objet vient au centre sur son socle, la
+ * bouffée de fumigène de sa rareté gonfle derrière lui, il se retourne, et
+ * `FX.reveler` joue l'échelle commune de sa rareté ; puis le tampon « À TOI ! » claque, le
+ * ticket « −45 » descend de la réserve dans la pile — le jeton vole du
+ * compteur jusqu'à lui pendant que le compteur décompte —, et les deux bâches
+ * paraissent. Le calque reste jusqu'au geste du joueur : il vient d'acheter,
+ * on lui laisse le temps de le voir et de choisir de l'équiper.
+ *
+ * Sans `fx.js`, rien ne bouge et tout est posé : l'objet, le tampon, le
+ * ticket, les bâches. Fermé en cours de route (Échap, le fond), la cérémonie
+ * de `fx.js` s'arrête avec l'objet et le solde est posé quand même.
+ */
+function ceremonie(o, prix, apres) {
+  const rar = rarDe(o.rar);
+  const calque = document.createElement('div');
+  calque.className = 'tbf-calque';
+  calque.setAttribute('role', 'dialog');
+  calque.setAttribute('aria-modal', 'true');
+  calque.setAttribute('aria-label', `Acheté : ${o.nom}`);
+  calque.innerHTML = `
+    <div class="tbf-projecteurs" aria-hidden="true"></div>
+    <div class="achat">
+      <div class="achat-scene">
+        <div class="tbf-bouffee" aria-hidden="true"
+          style="--c1:var(--r-${rar});--c2:var(--craie);--taille:270px;--y:46%"></div>
+        <span class="tbf-socle" aria-hidden="true"></span>
+        ${objetHTML(o, 140)}
+        <span class="tbf-tampon tbf-tampon--plein achat-tampon" data-ton="vert" hidden>À TOI !</span>
+      </div>
+      <b class="tbf-banderole achat-nom">${esc(o.nom)}</b>
+      <div class="achat-gestes" hidden>
+        <a class="tbf-plaque tbf-bloc tbf-colle" data-ton="violet" href="/deck">L’ÉQUIPER</a>
+        <button type="button" class="tbf-plaque tbf-colle" style="--d:80ms" data-fermer>CONTINUER</button>
+      </div>
+    </div>`;
+  document.body.appendChild(calque);
+  const objet = calque.querySelector('.tbf-objet');
+  const gestes = calque.querySelector('.achat-gestes');
+
+  let solde = false;
+  const poserLeSolde = () => {
+    if (solde) return;
+    solde = true;
+    poserSolde(document.querySelector('#reserve [data-echarpes]'), apres);
+  };
+
+  return new Promise((resoudre) => {
+    let fini = false;
+    const avant = document.activeElement;
+    const fermer = () => {
+      if (fini) return;
+      fini = true;
+      document.removeEventListener('keydown', touche, true);
+      calque.remove();
+      poserLeSolde();
+      /* Le focus revient à l'étiquette — redessinée entre-temps, on la
+         retrouve par son identifiant. Un achat fait depuis « À LA UNE » n'a
+         pas d'étiquette : la une a été redessinée avec la légendaire
+         suivante, et le focus tombait dans le vide (relevé au banc). Il
+         revient alors à la une, à la même place sous le pouce, ou à l'étal
+         s'il n'y a plus de une. */
+      const ici = document.querySelector(`#etal [data-id="${CSS.escape(o.id)}"]`)
+        ?? (avant?.isConnected ? avant : null)
+        ?? document.querySelector('#une .une, #etal .tbf-marche');
+      try { ici?.focus?.({ preventScroll: true }); } catch { /* parti */ }
+      resoudre();
+    };
+    function touche(e) {
+      if (e.key === 'Escape') { e.preventDefault(); fermer(); return; }
+      if (e.key !== 'Tab') return;
+      const cibles = [...calque.querySelectorAll('a[href],button:not([disabled])')]
+        .filter((x) => !x.closest('[hidden]'));
+      if (!cibles.length) { e.preventDefault(); return; }
+      const i = cibles.indexOf(document.activeElement);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); cibles[cibles.length - 1].focus(); }
+      else if (!e.shiftKey && i === cibles.length - 1) { e.preventDefault(); cibles[0].focus(); }
+    }
+    document.addEventListener('keydown', touche, true);
+    calque.addEventListener('click', (e) => {
+      if (e.target.closest('[data-fermer]') || e.target === calque
+        || e.target.classList.contains('tbf-projecteurs')) fermer();
+    });
+    calque.tabIndex = -1;
+    calque.focus({ preventScroll: true });
+
+    /* **Le retournement est fait ici, puis la cérémonie l'attend.** Le
+       contrat offre `retourner: true` pour un objet sans retournement à lui,
+       mais la cérémonie y suit l'objet image par image et le prend pour
+       parti au premier instant, quand la propriété `scale` le tient encore à
+       zéro de large : elle se résout en une centaine de millisecondes, sans
+       rien jouer (mesuré deux fois au banc, la seconde sur le `fx.js` du
+       2 octobre au soir : 90 ms en rare, 101 en épique, 105 en légendaire,
+       quand la cérémonie dure 600, 1 200 et 1 600 ms après le retournement
+       par ce chemin-ci ; signalé au périmètre fx).
+       L'autre chemin du contrat est celui du booster : la page lance son
+       geste, `FX.reveler` attend qu'il finisse (`attendrePose`) et se joue
+       sur la face. Le son du geste est à la page sur ce chemin-là. Sans
+       mouvement, l'objet est simplement là. Le jour où `retourner` tiendra,
+       passer `{ retourner: true }` et retirer d'ici le son et l'animation
+       suffira : le reste ne change pas. */
+    window.FX?.son?.('carte');
+    const calmeAnim = /(^|\s)animations(\s|$)/.test(document.documentElement.dataset.calme ?? '');
+    if (!calmeAnim && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      try {
+        objet.animate([{ scale: '0 1' }, { scale: '1.06 1', offset: 0.7 }, { scale: '1 1' }],
+          { duration: 300, easing: 'cubic-bezier(.3,.9,.3,1)' });
+      } catch { /* sans animations de script : l'objet est déjà là */ }
+    }
+    const revele = window.FX?.reveler?.(rar, objet) ?? Promise.resolve();
+    Promise.resolve(revele).catch(() => {}).then(() => {
+      if (fini) return;
+      const tampon = calque.querySelector('.achat-tampon');
+      tampon.hidden = false;
+      tampon.classList.add('tbf-clac');
+      window.FX?.son?.('bache');
+      ticketDepense(o, prix);
+      poserLeSolde();
+      gestes.hidden = false;
+      gestes.querySelector('[data-fermer]')?.focus({ preventScroll: true });
+    });
+  });
+}
+
+/**
+ * Le ticket « −45 » : le toast devenu ticket (`.tbf-ticket--gain`, BRIQUES
+ * § 8), sans tampon ni ligne de gain — une dépense n'est pas un verdict.
+ * Son jeton descend du compteur de la réserve (`FX.voler`) : on voit d'où
+ * partent les écharpes. Il reste trois secondes.
+ */
+function ticketDepense(o, prix) {
+  const t = document.createElement('div');
+  t.className = 'tbf-ticket tbf-ticket--gain tbf-glisse';
+  t.setAttribute('role', 'status');
+  t.innerHTML = `<img src="${JETON()}" alt=""><b>−${esc(prix)}</b><span>ÉCHARPES<small>${esc(o.nom)}</small></span>`;
+  pile().appendChild(t);
+  const source = document.querySelector('#reserve [data-echarpes]')?.closest('a')?.querySelector('img');
+  window.FX?.voler?.(source, t.querySelector('img'), { image: window.TBF_STUFF?.gain?.('echarpes') });
+  setTimeout(() => t.remove(), 3000);
+}
+
+/* ===================================================== la cabine d'essayage
+
+   **Le défaut qu'elle corrige.** L'étal montrait chaque tenue sur l'avatar du
+   joueur, à son âge atteint, et seulement si elle y était dessinée : or deux
+   des trois tenues ne sont peintes que sur deux personnages. Un joueur dont
+   l'avatar n'en était pas voyait un cadre vide sous « Préhistorique » — la
+   tenue avait l'air de ne pas exister. Et l'âge pris était l'âge atteint,
+   pas celui auquel il se montre.
+
+   La cabine cherche donc **un Fanzzy du joueur qui la porte vraiment** : son
+   avatar à l'âge où il se montre, puis les autres âges qu'il a atteints, puis
+   ses autres personnages. Le premier dont le dessin existe, exactement — pas
+   un repli sur la tenue de base, qui montrerait le mauvais vêtement. Aucun :
+   la silhouette au pochoir de l'objet, jamais un cadre vide. */
+function mannequins() {
+  const w = S.etat?.wallet;
+  if (!w) return [];
+  const stades = S.etat.stades ?? {};
+  const atteint = (id) => Math.min(3, Math.max(1, Number(stades[id] ?? 1) || 1));
+  const liste = [];
+  const ajouter = (id, evo) => {
+    if (id && !liste.some((m) => m.id === id && m.evo === evo)) liste.push({ id, evo });
+  };
+  const moi = w.avatar?.id ?? w.active ?? null;
+  if (moi) {
+    ajouter(moi, Math.min(atteint(moi), Math.max(1, Number(w.avatar?.evo ?? w.activeStade) || atteint(moi))));
+    for (let e = atteint(moi); e >= 1; e--) ajouter(moi, e);
+  }
+  for (const id of Object.keys(S.etat.collection ?? {})) {
+    for (let e = atteint(id); e >= 1; e--) ajouter(id, e);
+  }
+  return liste;
+}
+
+/** Le dessin exact d'un Fanzzy dans une tenue, à un âge, ou rien. */
+function porte(m, skin) {
+  const ev = window.TBF_ETATS?.pret?.()?.fanzzy?.[m.id]?.evolutions?.[`e${m.evo}`];
+  if (ev?.skins?.[skin]?.etats?.includes('neutre') !== true) return null;
+  const r = window.TBF_ETATS.resoudre(m.id, { evo: m.evo, skin, etat: 'neutre' });
+  return r && r.skin === skin && r.evo === m.evo ? r.src : null;
+}
+
+const CHEVRON = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
+
+function rendreCabine() {
+  const tenues = S.etal?.tenues ?? [];
+  const el = $('cabine');
+  if (!tenues.length) { el.innerHTML = ''; return; }
+  S.tenue = ((S.tenue % tenues.length) + tenues.length) % tenues.length;
+  const t = tenues[S.tenue];
+  const rar = rarDe(t.rar);
+  const m = mannequins().find((x) => porte(x, t.id));
+  const apres = m ? porte(m, t.id) : null;
+  const avant = m ? porte(m, 'base') : null;
+  const montre = S.avecTenue || !avant ? apres : avant;
+  const skin = S.avecTenue || !avant ? t.id : 'base';
+  const assez = S.echarpes >= t.prix;
+
+  el.innerHTML = `<div class="cabine">
+    <div class="cabine-scene">
+      <img class="cabine-plaque" src="/img/fonds/${esc(skin)}-${rar}.webp" alt="" onerror="this.remove()">
+      <div class="tbf-projecteurs" aria-hidden="true"></div>
+      <span class="tbf-socle" aria-hidden="true"></span>
+      ${montre
+        ? `<img class="cabine-perso" src="${esc(montre)}" alt="${esc(`${t.nom}, porté par ton Fanzzy`)}" data-vivant="${esc(m.id)}">`
+        : `<span class="tbf-objet tbf-objet--vide" data-rar="${rar}" style="--taille:140px" role="img"
+            aria-label="${esc(`${t.nom} — aucun de tes Fanzzy ne la porte encore en dessin`)}"></span>`}
+      ${tenues.length > 1 ? `<button type="button" class="tbf-plaque tbf-plaque--rond cabine-avant" data-tenue="-1"
+          aria-label="La tenue précédente">${CHEVRON('M15 5l-7 7 7 7')}</button>
+        <button type="button" class="tbf-plaque tbf-plaque--rond cabine-apres" data-tenue="1"
+          aria-label="La tenue suivante">${CHEVRON('M9 5l7 7-7 7')}</button>` : ''}
+    </div>
+    <div class="cabine-nom">
+      <b class="tbf-banderole">${esc(t.nom)}</b>
+      <span class="tbf-forme" data-rar="${rar}"><i></i><b>${RAR_MOT[rar]}</b></span>
+    </div>
+    ${t.texte ? `<p class="cabine-effet">${esc(t.texte)}</p>` : ''}
+    ${apres && avant ? `<button type="button" class="tbf-interrupteur" role="switch" aria-checked="${S.avecTenue}"
+        data-avec><i aria-hidden="true"></i>Avec la tenue</button>` : ''}
+    <div class="cabine-achat">
+      <a class="tbf-plaque tbf-bloc" data-ton="or" href="/fanzzy?ecran=dex&amp;tenue=${encodeURIComponent(t.id)}"
+        aria-label="${esc(`Choisir le Fanzzy qui portera ${t.nom} — ${t.prix} écharpes`)}">CHOISIR LE FANZZY${prixHTML(t.prix)}</a>
+    </div>
+    ${assez ? '' : `<a class="cabine-gagner" href="/virage" aria-label="${esc(
+      `Il t’en manque ${t.prix - S.echarpes} : où gagner des écharpes`)}">${ecartHTML(t.prix)}${GAGNER}</a>`}
+  </div>`;
+}
+
+$('cabine').addEventListener('click', (e) => {
+  const fl = e.target.closest('[data-tenue]');
+  if (fl) {
+    S.tenue += Number(fl.dataset.tenue);
+    S.avecTenue = true;
+    rendreCabine();
+    $('cabine').querySelector(`[data-tenue="${fl.dataset.tenue}"]`)?.focus({ preventScroll: true });
+    return;
+  }
+  if (e.target.closest('[data-avec]')) {
+    S.avecTenue = !S.avecTenue;
+    rendreCabine();
+    $('cabine').querySelector('[data-avec]')?.focus({ preventScroll: true });
+  }
+});
+
+/* ======================================================= la vitrine en euros
+
+   **L'argent réel n'achète que l'abonnement**, et il le fait par Stripe. Le
+   rayon de l'abonnement est le PASS DE TRIBUNE : la bâche or, le cadeau du
+   jour du paiement — le nombre de boosters que les formules portent,
+   `/api/abonnement`, jamais un nombre écrit ici —, puis les formules en
+   bâches. En vitrine (paiement pas branché), les bâches sont hors service et
+   le sticker BIENTÔT dit pourquoi, au lieu d'une boîte d'excuse après coup.
+
+   Un rayon d'un autre type, si le catalogue en ouvre un jour, se range de
+   même, sans la bâche du PASS. */
+const formuleDe = (id) => (S.abo?.formules ?? []).find((f) => f.id === id) ?? null;
+
+function bacheFormule(a, ouvert) {
+  const f = formuleDe(a.id);
+  const mois = Number(f?.mois) || null;
+  const periode = mois === 1 ? ' / MOIS' : mois === 12 ? ' / AN' : mois ? ` / ${mois} MOIS` : '';
+  const packs = Number(f?.packs) || 0;
+  const lignes = [
+    `<small>${esc(a.nom)}</small>`,
+    `<b>${esc(a.prixTexte)}${periode}</b>`,
+    f?.parMois && mois > 1 ? `<small>${esc(`soit ${f.parMois} par mois`)}</small>` : '',
+    packs ? `<small>${esc(`+${pluriel(packs, 'booster', 'boosters')} au paiement`)}</small>` : '',
+  ].join('');
+  return `<button type="button" class="tbf-plaque pass-formule" data-art="${esc(a.id)}"${
+    a.marque && ouvert ? ' data-ton="or"' : ''}${ouvert ? '' : ' disabled'}
+    aria-label="${esc(`M’abonner — ${a.nom}, ${a.prixTexte}${periode.toLowerCase()}`)}">${lignes}${
+    a.marque ? `<span class="tbf-sticker">${esc(a.marque)}</span>` : ''}</button>`;
+}
+
+function rendrePass() {
+  const c = S.catalogue;
+  const el = $('rayons');
+  if (!c) { el.innerHTML = ''; return; }
+  const ouvert = Boolean(c.ouvert);
+  const blocs = (c.rayons ?? []).map((r) => {
+    const dedans = (c.articles ?? []).filter((a) => a.rayon === r.id);
+    if (!dedans.length) return '';
+    if (r.id !== 'abonnement') {
+      return `<h2 class="tbf-cousu">${esc(r.nom)}</h2>
+        <div class="pass-formules">${dedans.map((a) => bacheFormule(a, ouvert)).join('')}</div>`;
+    }
+    /* Le cadeau : le plus grand nombre de boosters qu'une formule donne au
+       paiement. « Jusqu'à » quand elles n'en donnent pas toutes autant. */
+    const nombres = dedans.map((a) => Number(formuleDe(a.id)?.packs) || 0);
+    const max = Math.max(0, ...nombres);
+    const cadeau = max > 0 ? `<span class="pass-cadeau">
+        ${max <= 7 ? `<span class="tbf-fentes" aria-hidden="true">${'<span class="tbf-fente"></span>'.repeat(max)}</span>` : ''}
+        <span><b>${esc(`${nombres.every((n) => n === max) ? '' : 'JUSQU’À '}${pluriel(max, 'BOOSTER', 'BOOSTERS')}`)}</b>
+        <small>DÈS LE PAIEMENT</small></span></span>` : '';
+    const abonne = S.abo && !S.abo.error && S.abo.abonne;
+    const etat = abonne ? `<span class="pass-etat"><span class="tbf-tampon tbf-tampon--plein" data-ton="vert">ABONNÉ</span>${
+      S.abo.formule || S.abo.fin !== undefined ? `<small>${esc([S.abo.formule,
+        S.abo.fin ? `jusqu’au ${new Date(S.abo.fin).toLocaleDateString('fr', { day: 'numeric', month: 'long', year: 'numeric' })}`
+          : 'sans terme'].filter(Boolean).join(' · '))}</small>` : ''}</span>` : '';
+    return `<div class="tbf-cadre pass" data-ton="or" data-echarpe>
+        <span class="tbf-scotch" aria-hidden="true"></span><span class="tbf-scotch tbf-scotch--droite" aria-hidden="true"></span>
+        <b class="pass-titre">PASS DE TRIBUNE</b>
+        ${abonne ? etat : cadeau}
+        ${!ouvert && !abonne ? '<span class="tbf-sticker pass-bientot">BIENTÔT</span>' : ''}
+      </div>
+      ${abonne ? '' : `<div class="pass-formules">${dedans.map((a) => bacheFormule(a, ouvert)).join('')}</div>
+        ${ouvert ? '' : '<p class="pass-beta">Pendant la bêta, l’abonnement s’offre depuis l’administration : demande-le.</p>'}`}`;
+  }).join('');
+  el.innerHTML = blocs;
+
+  $('mot').innerHTML = (ouvert
+    ? 'Les paiements passent par <b>Stripe</b>. Nous ne voyons jamais ton numéro de carte.'
+    : 'La boutique est en <b>vitrine</b> : les paiements ne sont pas encore branchés.')
+    + '<br>L’argent réel n’achète que l’<b>abonnement</b>. Tout le reste — les '
+    + 'boosters, les tenues, l’équipement — se paie en écharpes, et les écharpes '
+    + 'se gagnent en jouant.';
+}
+
 $('rayons').addEventListener('click', async (e) => {
   const b = e.target.closest('[data-art]');
-  if (!b || !ouvert || b.disabled) return;
+  if (!b || !S.catalogue?.ouvert || b.disabled) return;
+  const a = (S.catalogue.articles ?? []).find((x) => x.id === b.dataset.art);
+  if (!a) return;
 
   /* De l'argent réel. La confirmation ne remplace pas l'écran de paiement — on
      part chez Stripe juste après — mais elle évite d'y partir par accident, et
      surtout elle laisse une dernière occasion de lire le prix sur la même page
      que le reste de la boutique. */
   if (!(await window.TBF_DIALOGUE?.confirmer({
-    titre: `PASSER COMMANDE ?`,
-    texte: `${b.querySelector('b')?.textContent ?? 'Cet article'} — `
-      + `${b.querySelector('.prix')?.textContent ?? ''}. Tu seras conduit chez Stripe `
-      + 'pour payer. Rien n’est débité avant.',
-    oui: 'CONTINUER', sousOui: b.querySelector('.prix')?.textContent ?? '', ton: 'or',
+    titre: 'PASSER COMMANDE ?',
+    texte: `${a.nom} — ${a.prixTexte}. Tu seras conduit chez Stripe pour payer. Rien n’est débité avant.`,
+    oui: 'CONTINUER', sousOui: a.prixTexte, ton: 'or',
   }))) return;
 
   b.disabled = true;
@@ -564,23 +1250,131 @@ $('rayons').addEventListener('click', async (e) => {
       /* On n'envoie **que** l'identifiant. Pas de prix, pas de quantité : le
          serveur les décide, et c'est ce qui empêche d'acheter douze boosters
          à un centime en modifiant cette ligne. */
-      body: JSON.stringify({ article: b.dataset.art }),
+      body: JSON.stringify({ article: a.id }),
     });
-    const j = await r.json();
+    const j = await r.json().catch(() => ({}));
     if (r.status === 401) { location.href = '/compte'; return; }
-    if (!r.ok || !j.url) { dire('err', 'Commande impossible pour le moment.'); b.disabled = false; return; }
+    if (!r.ok || !j.url) { toast('Commande impossible pour le moment.', { erreur: true }); b.disabled = false; return; }
     location.href = j.url;
   } catch {
-    dire('err', 'Commande impossible pour le moment.');
+    toast('Commande impossible pour le moment.', { erreur: true });
     b.disabled = false;
   }
 });
 
+/* ============================================================ les rayons
+
+   Un onglet par rayon qui a quelque chose à montrer — jamais un onglet vide.
+   Un visiteur sans compte n'a ni réserve ni étal : il voit la vitrine en
+   euros, sans rail. Le rayon ouvert se retient sur cet appareil, et
+   l'adresse le porte (`/boutique#abonnement`, où l'écran de l'abonnement
+   renvoie). */
+function rayons() {
+  const abo = (S.catalogue?.articles ?? []).length > 0;
+  return [
+    (S.etal?.stuff ?? []).length ? { id: 'equipement', nom: 'ÉQUIPEMENT' } : null,
+    (S.etal?.tenues ?? []).length ? { id: 'tenues', nom: 'TENUES' } : null,
+    abo ? { id: 'abonnement', nom: 'ABONNEMENT' } : null,
+  ].filter(Boolean);
+}
+
+function rendreRail() {
+  const l = rayons();
+  const rail = $('onglets');
+  rail.hidden = l.length < 2;
+  rail.innerHTML = l.map((r) => `<button type="button" class="tbf-onglet${r.id === S.rayon ? ' on' : ''}"
+    role="tab" id="o-${r.id}" aria-controls="p-${r.id}" aria-selected="${r.id === S.rayon}"
+    tabindex="${r.id === S.rayon ? 0 : -1}" data-rayon="${r.id}">${r.nom}</button>`).join('');
+}
+
+function montrerRayon(id, { colle = false } = {}) {
+  const l = rayons();
+  if (!l.some((r) => r.id === id)) id = l[0]?.id ?? null;
+  S.rayon = id;
+  for (const r of ['equipement', 'tenues', 'abonnement']) $(`p-${r}`).hidden = r !== id;
+  rendreRail();
+  if (id === 'equipement') rendreEtal({ colle });
+  if (id === 'tenues') rendreCabine();
+  if (id) memoire.ecrire('tbf-boutique-rayon', id);
+  if (id && l.length > 1) history.replaceState(null, '', `#${id}`);
+}
+
+$('onglets').addEventListener('click', (e) => {
+  const t = e.target.closest('[data-rayon]');
+  if (t && t.dataset.rayon !== S.rayon) montrerRayon(t.dataset.rayon, { colle: true });
+});
+/* Un lien vers `/boutique#abonnement` suivi depuis la boutique même ne
+   recharge pas la page : l'ancre change seule, et le rayon la suit. */
+window.addEventListener('hashchange', () => {
+  const id = location.hash.slice(1);
+  if (id && id !== S.rayon && rayons().some((r) => r.id === id)) montrerRayon(id, { colle: true });
+});
+/* Les flèches du clavier passent d'un onglet à l'autre, comme dans tout rail
+   d'onglets accessible. */
+$('onglets').addEventListener('keydown', (e) => {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const l = rayons();
+  const i = l.findIndex((r) => r.id === S.rayon);
+  const suivant = l[(i + (e.key === 'ArrowRight' ? 1 : -1) + l.length) % l.length];
+  if (!suivant) return;
+  e.preventDefault();
+  montrerRayon(suivant.id);
+  $(`o-${suivant.id}`)?.focus();
+});
+
+/* ============================================================ le montage */
+
+async function monterEtal() {
+  const d = await lire('/api/boutique/etal');
+  /* Pas connecté, ou l'étal injoignable : la vitrine en euros reste lisible,
+     et on ne met pas d'erreur devant quelqu'un qui regarde. Une relecture
+     qui échoue après un achat garde l'étal d'avant : il se redessine, ses
+     boutons se rouvrent, et le solde dira ce qui s'est passé. */
+  if (d) {
+    S.etal = d;
+    S.echarpes = Number(d.echarpes) || 0;
+  }
+  /* Le manifeste des dessins, **avant** de rendre la cabine : sans lui,
+     aucune tenue ne se trouverait portée. */
+  await window.TBF_ETATS?.charger?.().catch(() => {});
+  if (S.etat?.wallet) poserSolde(document.querySelector('#reserve [data-echarpes]'), S.echarpes);
+  rendreUne();
+  if (S.rayon === 'equipement') rendreEtal();
+  if (S.rayon === 'tenues') rendreCabine();
+  rendreRail();
+}
+
+async function monter() {
+  const [catalogue, etat, abo] = await Promise.all([
+    lire('/api/boutique/catalogue'),
+    lire('/api/fanzzy/state'),
+    lire('/api/abonnement'),
+  ]);
+  S.catalogue = catalogue;
+  S.etat = etat?.wallet ? etat : null;
+  S.abo = abo && !abo.error ? abo : null;
+  if (S.etat) {
+    S.echarpes = Number(S.etat.wallet.scarves) || 0;
+    lireRecharge(S.etat.wallet);
+    annoncer(S.etat.wallet);
+  }
+  rendreReserve();
+  rendrePass();
+  await monterEtal();
+
+  if (!catalogue && !S.etal) dire('err', 'La boutique est injoignable pour le moment.');
+
+  const demande = location.hash.slice(1);
+  const voulu = retourStripe ? 'abonnement'
+    : (['equipement', 'tenues', 'abonnement'].includes(demande) ? demande : memoire.lire('tbf-boutique-rayon'));
+  montrerRayon(voulu, { colle: true });
+}
+
 monter();
 </script>
-<!-- Les effets communs, pour une seule chose ici : faire compter le solde
-     quand un achat le fait descendre (voir « poserSolde »). La page reste
-     juste sans eux — le chiffre saute au lieu de compter. -->
+<!-- Les effets communs : le solde qui compte, le jeton qui vole, et la
+     cérémonie d'achat (`FX.reveler`). La page reste juste sans eux — le
+     chiffre saute, rien ne vole, l'objet est simplement là. -->
 <script src="/fx.js" defer></script>
 <script src="/pwa.js" defer></script>
 </body>

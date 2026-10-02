@@ -11,86 +11,146 @@
 <title>Mon KOP — thebestfan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100dvh}
-body{background:radial-gradient(120% 50% at 50% -8%,rgba(245,195,59,.13),transparent 60%),var(--beton);
-     color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;padding:26px 16px 80px}
+/* Le halo du haut passe au violet : le KOP est une affaire de gens, comme les
+   amis (lot 5). Il était doré, et l'or ne dit plus qu'acheter, une récompense
+   prête ou le légendaire.
+
+   Rien en haut du `body` : la barre du jeu se monte en tête de la colonne,
+   et le contenu vient juste sous elle, comme sur les autres pages. Les
+   vingt-six pixels d'avant, la barre les remontait (nav.js, `caler`) en
+   laissant leur place vide sous elle. Les côtés restent : la barre s'en
+   affranchit seule, par des marges négatives. */
+body{background:radial-gradient(120% 50% at 50% -8%,rgba(130,87,218,.13),transparent 60%),var(--beton);
+     color:var(--craie);font-family:var(--ui);display:flex;justify-content:center;padding:0 16px 80px}
 main{width:100%;max-width:var(--colonne)}
-h1{font-family:var(--banner);font-weight:600;font-size:21px;letter-spacing:.16em;margin:0 0 4px;text-align:center}
 /* Le titre de rubrique est cousu (`.tbf-cousu`, dans ui.css) : il ne reste
    ici que sa place. */
 h2{margin:24px 2px 9px}
 
-/* ------------------------------------------------------------ le KOP */
+/* ------------------------------------------------------------ le KOP
 
-/* Plus de flou d'arrière-plan : `--panneau` est opaque, et le flou coûtait
-   cher sur un téléphone modeste pour rendre le texte moins lisible au soleil. */
-.kop{border:1px solid var(--trait);border-radius:var(--r);background:var(--panneau);
-  padding:14px;margin-bottom:10px}
-.kop.mien{border-color:rgba(245,195,59,.4)}
-.kop .tete{display:flex;align-items:baseline;gap:9px}
-.kop .tete b{font-family:var(--banner);font-size:16px;letter-spacing:.03em;flex:1;min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.kop .tete .club{font-size:11px;opacity:.88;white-space:nowrap}
-.kop .chiffres{display:flex;gap:16px;margin-top:11px}
-.kop .ch{min-width:0}
-.kop .ch b{display:block;font-family:var(--banner);font-size:19px;color:var(--projo);line-height:1}
-/* En Oswald : à onze pixels, « VERSÉ PAR TOI », « DANS LE POT » et
-   « MEMBRES » ne tiennent côte à côte sur un téléphone que dans la condensée
-   du jeu. */
-.kop .ch span{font-family:var(--banner);font-size:11px;letter-spacing:.08em;opacity:.88;
-  display:block;margin-top:3px}
+   **Un KOP est un cadre** (`.tbf-cadre`, l'écharpe en tête) : c'est le
+   panneau qu'on vient regarder. L'écharpe, la bâche du club et le pot
+   prennent les couleurs du club quand le serveur les sert (`--e1`, `--e2`
+   posées sur le cadre) ; sans elles, celles du jeu. Tout ce qui suit n'écrit
+   que des places : la matière est celle des briques de ui.css. */
+/* Dix pixels de côté et pas plus : à 360 px, « VERSÉ PAR TOI », la promesse
+   du jalon et le nom du bonus mis aux voix tiennent juste, et chaque pixel
+   de rembourrage leur est repris. */
+.kop{display:block;padding:16px 10px 12px;margin:0 0 22px}
+/* `hidden` doit gagner sur le `display` des briques (le sticker est en
+   `inline-flex`) : sans cette règle, le club absent laissait un sticker
+   vide, et le jalon d'un catalogue vide une pastille sans mot. */
+.kop [hidden]{display:none}
 
-/* Le pot. Une barre, pas un tableau : ce qui compte est de voir si le
-   prochain bonus est à portée, pas de lire un chiffre exact. Dix pixels et
-   non quatre : un trait de quatre pixels ne se voit pas au soleil, et c'est
-   la jauge qui donne envie de pousser un match de plus. */
-.pot{height:10px;border-radius:5px;background:rgba(242,238,228,.12);margin-top:12px;overflow:hidden}
-.pot i{display:block;height:100%;background:linear-gradient(90deg,var(--projo),#B8860B);width:0;
-  transition:width .5s cubic-bezier(.3,.9,.4,1)}
-/* Moins de mouvement, demandé au système ou dans le tiroir (le mode calme,
-   contrat C4, d'où le double) : la barre se pose sans pousser. Sa longueur,
-   qui est l'information, reste. */
-@media (prefers-reduced-motion:reduce){ .pot i{transition:none} }
-html[data-calme~="animations"] .pot i{transition:none}
+/* La bâche du KOP. Le nom en banderole — une bande de craie, l'encre
+   dessus : il se lit sur n'importe quelle couleur de club, là où une lettre
+   de craie posée à même les rayures disparaîtrait sur la bande blanche d'un
+   maillot. La bâche n'est posée que si les couleurs du club sont connues
+   (« sans couleur connue, la page ne la pose pas ») ; sans elle, le nom se
+   colle à même le cadre. Ses scotchs débordent de huit pixels sur les
+   côtés et de sept au-dessus : la marge les leur laisse. */
+.kop-tete{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:9px 10px;padding:2px 2px 0}
+.kop-tete.peinte{justify-content:center;padding:24px 14px 20px;margin:6px 8px 2px}
+.kop-tete>.tbf-bache-club{position:absolute;inset:0}
+/* Posés au-dessus de la bâche : un élément positionné plus tôt dans l'arbre
+   se peindrait sinon par-dessus le nom. */
+.kop-tete>:not(.tbf-bache-club){position:relative}
+.kop-nom{margin:0;min-width:0;max-width:100%;font:inherit}
+.kop-nom>.tbf-banderole{font-size:20px;line-height:24px;padding:4px 11px 3px}
+/* Un nom long (jusqu'à quarante caractères) descend à seize pixels avant de
+   finir en points de suspension : c'est le nom du groupe, on le lit en
+   entier tant qu'on peut. */
+.kop-nom>.tbf-banderole[data-long]{font-size:16px;line-height:20px}
 
-.membres{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px}
-.mb{display:flex;align-items:center;gap:5px;font-size:11px;padding:4px 9px;border-radius:999px;
-  border:1px solid var(--trait);background:rgba(0,0,0,.25)}
-.mb.chef{border-color:var(--projo);color:var(--projo)}
-.mb small{font-size:11px;opacity:.88;font-variant-numeric:tabular-nums}
+/* Les trois chiffres, en stickers (`.tbf-stat`) : trois colonnes, celle du
+   milieu plus étroite. Les membres tiennent en deux chiffres et un mot
+   court ; le pot et ce qu'on a versé portent le jeton et un mot long —
+   « VERSÉ PAR TOI » se coupait de neuf pixels à 360 px en trois colonnes
+   égales. */
+.kop-chiffres{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.8fr) minmax(0,1.15fr);
+  gap:10px;margin:18px 2px 0;max-width:520px}
 
-/* ----------------------------------------------------------- le vote */
+/* Le pot : l'écharpe épaisse, ses crans, et le prochain jalon.
 
-.vote{border:1px solid rgba(245,195,59,.45);border-radius:var(--r);padding:14px;margin:12px 0 0;
-  background:rgba(245,195,59,.07)}
-.vote .quoi{font-family:var(--banner);font-size:14.5px;letter-spacing:.03em}
-.vote .txt{font-size:11.5px;opacity:.88;line-height:1.6;margin-top:5px}
-/* Le compte à rebours. Trois minutes, c'est court : il doit être le premier
-   chiffre que l'œil trouve, sinon on vote après la clôture. */
-.chrono{font-family:var(--banner);font-size:22px;color:var(--projo);font-variant-numeric:tabular-nums;
-  line-height:1}
-.chrono.urgent{color:var(--flare)}
-.vote .haut{display:flex;align-items:flex-start;gap:12px}
-.vote .haut .quoi{flex:1;min-width:0}
-/* La balance du vote : dix pixels, comme le pot. C'est elle qui dit d'un coup
-   d'œil de quel côté penche le KOP avant qu'on vote, et un trait de sept
-   pixels se perd au soleil ; la carte du vote a toute la place qu'il faut. */
-.balance{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:12px 0 6px;
-  background:rgba(242,238,228,.1)}
-.balance .p{background:var(--vert)}
-.balance .c{background:var(--flare)}
-.decompte{display:flex;justify-content:space-between;font-size:11px;opacity:.88}
-/* Les deux bulletins sont des plaques : vert pour, rouge contre, le ton de ce
-   qu'elles font. Le bulletin déjà donné porte la coche (icône commune) et
-   `aria-pressed` — il restait sinon à deviner, à une bordure près, lequel des
-   deux on avait touché. */
-.bulletins{display:flex;gap:7px;margin-top:11px}
-.bul{flex:1}
+   **Les crans sont les prix du catalogue, à pas égal**, et non à
+   l'échelle : de 350 à 5 000 écharpes, une échelle vraie tasserait les
+   quatre premiers bonus dans le premier dixième du rail. Le rail montre
+   donc une fenêtre de quatre prix au plus — le dernier atteint, puis ceux
+   qui viennent —, un cran chacun, et l'écharpe avance entre deux crans à
+   proportion de ce qui manque. Le chiffre exact est sur le jalon : le rail
+   dit « où j'en suis », le jalon dit « combien ».
+
+   Le jalon est au-dessus du rail, sur sa ligne à lui : une promesse
+   (« 60 ÉCHARPES AVANT … ») est trop longue pour se centrer sur un cran.
+   Les prix des crans sont dessous, **rangés à gauche de leur trait**, qu'ils
+   mordent de six pixels : centrés, « 900 » et « 5 000 » se chevauchaient
+   en bout de rail, et le dernier sortait du cadre. La jauge épaisse laisse
+   onze pixels à ses franges : les prix commencent treize pixels plus bas. */
+.kop-pot{position:relative;margin:22px 2px 0}
+.kop-jalon{display:flex;margin:0 0 15px}
+/* **Le jalon ne coupe jamais le nom du bonus** : c'est lui que la promesse
+   nomme, et « 3 800 ÉCHARPES AVANT « LE VIRAGE DEBOU… » ne promettait plus
+   rien. Il finissait en points de suspension dès que la promesse dépassait
+   sa ligne — « 4 100 ÉCHARPES AVANT « LE VIRAGE DEBOUT » » demande 267
+   pixels de texte, la colonne en laisse 262 à 360 px et 222 à 320, où six
+   des sept promesses du catalogue étaient coupées. Trop longue, la promesse
+   passe donc sur deux lignes, et la coupure tombe **devant le nom** : ce qui
+   manque d'un côté, ce qu'on vise de l'autre, chaque moitié d'un seul
+   tenant (voir `majPot`). Le sticker fait de ses vingt-quatre pixels un
+   minimum au lieu d'une hauteur fixe : sur une ligne, il garde exactement
+   sa taille et son mot au même endroit (quinze pixels de ligne, quatre de
+   rembourrage, centrés dans vingt-quatre). */
+.kop-jalon>.tbf-sticker{max-width:100%;height:auto;min-height:24px;padding-block:4px}
+.kop-jalon>.tbf-sticker>span{min-width:0;white-space:normal;text-align:center;
+  line-height:15px;text-wrap:balance}
+/* Une moitié plus longue que toute la colonne — aucun nom du catalogue
+   d'aujourd'hui, mais il vient du serveur — finit seule en points de
+   suspension, sans pousser la page de côté. Le rognage que demandent les
+   points de suspension s'arrête au bord de la boîte, et la ligne de quinze
+   pixels rasait l'accent des capitales (le É d'ÉCHARPES, le È de
+   DEUXIÈME) : trois pixels de rembourrage en haut et en bas l'agrandissent,
+   repris par autant de marge négative pour que la ligne garde sa hauteur. */
+.kop-jalon>.tbf-sticker>span>span{display:inline-block;max-width:100%;vertical-align:top;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-block:3px;margin-block:-3px}
+.kop-crans{position:relative;height:32px;margin:13px 0 0;padding:0;list-style:none;--penche:.5}
+.kop-crans>li{position:absolute;top:0;left:var(--x);translate:calc(-100% + 6px) 0}
+/* La bouffée d'un jalon franchi, posée sur son cran : plus étroite que la
+   colonne, même à son plus gros, pour ne jamais faire défiler l'écran de
+   côté le temps qu'elle vit. */
+.kop-pot>.tbf-bouffee{--taille:170px}
+
+/* Les gros boutons sont des plaques (`.tbf-plaque`) : violet pour ce qui
+   rassemble — voir le KOP, le rejoindre, en créer un —, béton pour quitter.
+   Il ne reste ici que leur place. */
+.gros{width:100%;margin-top:16px}
+
+/* ---------------------------------------------------- le KOP déplié */
+
+.kop-tribune{margin:20px 2px 0}
+/* PROVISOIRE, en attendant ui.css (besoin « feuilles-css ») : un buste dont
+   le dessin est en pied — un avatar avec une expression, 560 × 960 —
+   débordait de son rond de trente-sept pixels sur le nom du siège. Le buste
+   est une grille, et la hauteur de 100 % de l'image ne s'y résout pas : elle
+   prenait sa hauteur naturelle. Posée sur toute la boîte, elle s'y recadre. */
+.tbf-buste>img{position:absolute;inset:0}
+/* La place libre : le siège en pointillé est un lien vers les amis, d'où
+   l'on invite quelqu'un dans le KOP. Il n'y a pas de nombre de places : un
+   KOP n'a pas de plafond, et « 3 places » serait inventé. */
+.kop-tribune .tbf-siege-place{text-decoration:none}
+.kop-tribune .tbf-siege-place:focus-visible{outline:3px solid var(--projo);outline-offset:3px}
+.kop-actifs{display:flex;flex-wrap:wrap;gap:12px;padding:4px 4px 8px}
+/* La case de vote est tournée et porte cinq pixels de liseré et d'ombre
+   hors de sa boîte : l'air autour est pour eux. Positionnée, pour la
+   bouffée de l'ouverture, posée derrière elle. */
+.kop-vote{position:relative;margin:6px 4px 18px}
+.kop-vote>.tbf-bouffee{--taille:220px}
 
 /* -------------------------------------------------------- le catalogue */
 
@@ -99,7 +159,7 @@ html[data-calme~="animations"] .pot i{transition:none}
    l'enfoncement au doigt) et ne garde ici que sa mise en page. Une plaque en
    capitales centrées aurait écrasé la phrase qui dit ce que le bonus fait. */
 .bonus{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;
-  margin-bottom:6px;width:100%;text-align:left}
+  margin-bottom:8px;width:100%;text-align:left}
 /* Hors de prix : grisé et tireté, mais **lisible**. À 42 % d'opacité, on ne
    lisait plus ni ce que le bonus fait ni ce qu'il manque au pot — alors que
    c'est justement ce qu'on vient chercher devant un bonus qu'on ne peut pas
@@ -107,36 +167,51 @@ html[data-calme~="animations"] .pot i{transition:none}
 .bonus:disabled{cursor:default;filter:grayscale(1);border-style:dashed}
 .bonus .n{flex:1;min-width:0}
 .bonus .n b{display:block;font-family:var(--banner);font-size:13.5px;letter-spacing:.02em}
-.bonus .n span{display:block;font-size:11px;opacity:.88;line-height:1.5;margin-top:3px}
-.bonus .prix{font-family:var(--banner);font-size:15px;color:var(--projo);flex:none;text-align:center}
-.bonus .prix small{display:block;font-size:11px;letter-spacing:.06em;opacity:.88;color:var(--craie);
-  margin-top:2px}
+/* Les petits textes de la page à la craie pleine : à 88 %, ils tombaient à
+   3,9:1 au soleil sur le panneau ; pleins, ils tiennent. La hiérarchie tient
+   au corps (onze pixels contre treize et demi), plus à la pâleur. */
+.bonus .n span{display:block;font-size:11px;line-height:1.5;margin-top:3px}
+/* Le prix est un sticker (`.tbf-sticker--prix`), qui déborde de cinq pixels
+   de sa boîte : la marge droite les lui laisse. */
+.bonus>.tbf-sticker{margin-right:5px}
 
-.actif{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:4px 9px;border-radius:999px;
-  border:1px solid var(--vert);color:var(--vert);margin:0 5px 5px 0}
+/* ------------------------------------------------- les clubs sans KOP */
 
-/* ------------------------------------------------------------ actions */
-
-/* Les gros boutons sont des plaques (`.tbf-plaque`) : violet pour créer un
-   KOP — les gens —, béton pour voir, replier ou quitter. Il ne reste ici que
-   leur place ; la peinture, l'enfoncement et l'état éteint viennent de ui.css,
-   comme partout ailleurs. */
-.gros{width:100%;margin-top:10px}
+.club{padding:14px;margin-bottom:12px}
+.club-tete{display:flex;align-items:center;gap:12px;padding-right:5px}
+.club-tete b{font-family:var(--banner);font-size:16px;letter-spacing:.03em;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rejoindre{display:flex;align-items:center;gap:12px;padding:12px 0 2px;border-top:1px dashed var(--trait);
+  margin-top:12px}
+.rejoindre .n{flex:1;min-width:0}
+.rejoindre .n b{display:block;font-family:var(--banner);font-size:14px;letter-spacing:.02em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rejoindre .n span{display:block;font-size:11px;line-height:1.5;margin-top:3px}
+.rejoindre .tbf-plaque{flex:none;margin-top:0}
 .champ{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--trait);border-radius:9px;
-  color:inherit;padding:12px;font-family:var(--ui);font-size:14px;margin-top:8px}
+  color:inherit;padding:12px;font-family:var(--ui);font-size:14px;margin-top:12px}
 .champ:focus{outline:none;border-color:var(--projo)}
 
-/* Ces trois-là peuvent se trouver hors d'un panneau de KOP, donc à même la
+/* -------------------------------------------------------- l'état vide
+
+   « Un KOP est adossé à un club » : c'est la seule chose à comprendre, et
+   le seul geste qui en découle est de suivre un club. La bâche est verte,
+   le ton de « Mes clubs » dans le tiroir (le football) : la face dit la
+   destination. */
+.kop-vide{display:block;padding:18px 16px 14px}
+.kop-vide h2{margin:0 0 8px;font-family:var(--banner);font-weight:600;font-size:16px;letter-spacing:.1em}
+.kop-vide p{margin:0 0 4px;font-size:12.5px;line-height:1.7}
+
+/* Ces deux-là peuvent se trouver hors d'un panneau de KOP, donc à même la
    photo de tribune : ils portent leur propre fond. */
-.vide{border:1px dashed var(--trait);border-radius:var(--r);padding:18px;text-align:center;
-  font-size:12.5px;line-height:1.7;background:var(--panneau)}
-.vide a{color:var(--projo)}
-.note{font-size:11px;opacity:.88;line-height:1.65;margin-top:8px}
-.note.seule{opacity:1;padding:12px 14px;border:1px solid var(--trait);border-radius:var(--r);
+.note{font-size:11px;line-height:1.65;margin-top:8px}
+.note.seule{padding:12px 14px;border:1px solid var(--trait);border-radius:var(--r);
   background:var(--panneau)}
 .err{border:1px solid rgba(224,64,44,.4);border-radius:9px;
   background:linear-gradient(rgba(224,64,44,.12),rgba(224,64,44,.12)),var(--panneau);
-  padding:10px 12px;font-size:12px;margin-top:10px}
+  padding:10px 12px;font-size:12px;margin:0 0 12px}
+.charge{border:1px dashed var(--trait);border-radius:var(--r);padding:18px;text-align:center;
+  font-size:12.5px;background:var(--panneau)}
 
 /* **Le bas de la page, et la barre du navigateur mobile.**
 
@@ -163,9 +238,20 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
 <body>
 <main id="app">
   <p class="tbf-sous">La caisse du virage</p>
-  <div id="corps"><div class="vide">Chargement…</div></div>
+  <div id="corps"><div class="charge" id="charge">Chargement…</div></div>
 </main>
 
+<!-- Le moment fort de la page : la case de BD unifiée de ui.css, posée sur le
+     document comme l'accueil la pose — hors de la colonne, dont le contexte
+     d'empilement la ferait passer sous les effets de fx.js. Invisible tant
+     qu'elle ne porte pas `.on`, et elle ne prend jamais le doigt. -->
+<div class="tbf-moment" id="moment" data-ton="club" aria-live="polite"><div class="tbf-vignette"
+  ><b class="tbf-vignette-mot" id="momentMot"></b><small id="momentSous"></small></div></div>
+
+<!-- Classiques et non différés : la tribune dessine les bustes au premier
+     rendu, qui peut arriver avant qu'un script différé s'exécute. -->
+<script src="/fanzzy-art.js"></script>
+<script src="/fanzzy-etats.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 /* =======================================================================
@@ -178,11 +264,25 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 40px)}
    socket pour l'ouverture et la clôture, et fait tourner un compte à rebours
    local entre les deux — sans quoi la moitié des membres voterait après la
    fermeture sans jamais comprendre pourquoi leur clic n'a rien fait.
+
+   **Les nœuds sont stables** (lot 5). La page relit tout toutes les trente
+   secondes et à chaque nouvelle du socket. Elle réécrivait alors l'écran
+   entier : l'écharpe du pot repartait de zéro, un compte en cours était
+   coupé, et le tampon d'un vote clos aurait disparu avant d'avoir claqué.
+   Chaque KOP a désormais son nœud, créé une fois, et chaque relecture ne
+   change que ce qui a changé : la largeur de l'écharpe, le texte d'un
+   chiffre, la balance du vote. Ce qui se réécrit encore en entier — la
+   tribune, le catalogue — ne se réécrit que si ses données ont bougé.
    ======================================================================= */
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
   (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+const ECHARPE = '/img/gains/echarpes.webp';
+
+/* Un nombre lisible : « 12 840 » et non « 12840 ». L'espace fine insécable,
+   pour qu'un montant ne se coupe jamais en bout de ligne. */
+const nb = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202F');
 
 const MESSAGES = {
   /* **Créer** demande un abonnement, **rejoindre** non. Le message le dit
@@ -211,11 +311,15 @@ const MESSAGES = {
 const S = {
   kops: [],            // mes KOP, un par club suivi au plus
   clubs: [],           // mes clubs, avec les KOP existants pour ceux sans KOP
+  clubsConnus: false,  // la liste des clubs suivis a-t-elle pu être lue ?
+  charge: false,       // une première lecture a-t-elle abouti ?
   etats: {},           // kopId -> état détaillé
   catalogue: [],
   ouvert: null,        // le KOP déplié
   erreur: null,
+  erreurDeLecture: false,
   creation: null,      // teamId pour lequel on saisit un nom
+  propose: null,       // { kopId, t } : le vote qu'on vient d'ouvrir soi-même
 };
 
 async function api(path, { method = 'GET', body } = {}) {
@@ -245,38 +349,65 @@ async function api(path, { method = 'GET', body } = {}) {
   return json;
 }
 
-/* --------------------------------------------------------- chargement */
+/* --------------------------------------------------------- chargement
 
-async function charger() {
+   **Une lecture à la fois.** Le socket, la relecture des trente secondes et
+   un geste peuvent demander une lecture au même instant ; deux lectures
+   croisées pouvaient rendre l'état le plus ancien en dernier. Une demande qui
+   arrive pendant une lecture en attend la fin, puis en lance une seule de
+   plus — et celui qui l'attend reçoit bien l'état d'après son geste. */
+let vague = null;
+let relance = null;
+function charger() {
+  if (!vague) {
+    vague = lire().finally(() => { vague = null; });
+    return vague;
+  }
+  relance ??= vague.then(() => { relance = null; return charger(); });
+  return relance;
+}
+
+let etatsDemandes = false;
+async function lire() {
   try {
     const [mes, clubs] = await Promise.all([
       api('/miens'),
+      /* Une liste de clubs illisible n'est pas une liste vide : la page ne
+         dit pas « tu ne suis aucun club » à quelqu'un qui en suit trois. */
       fetch('/api/me/state', { credentials: 'same-origin' })
-        .then((r) => r.json()).catch(() => ({ follows: [] })),
+        .then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      /* Le manifeste des dessins, une fois, attendu avec le reste : sans lui,
+         le premier rendu de la tribune retomberait sur la carte de l’âge et
+         perdrait la tenue et l’expression de chacun. Il ne lève jamais. */
+      etatsDemandes ? null : (etatsDemandes = true, window.TBF_ETATS?.charger?.()),
     ]);
     S.kops = mes.kops ?? [];
     S.catalogue = mes.catalogue ?? [];
+    S.clubsConnus = Array.isArray(clubs?.follows);
 
-    // Les clubs suivis qui n'ont pas encore de KPO à moi : c'est là qu'on en
-    // crée ou qu'on en rejoint un.
+    // Les clubs suivis qui n'ont pas encore de KOP à moi : c'est là qu'on en
+    // crée ou qu'on en rejoint un. Lus ensemble, pas l'un après l'autre.
     const avecKop = new Set(S.kops.map((k) => Number(k.team_id)));
-    S.clubs = [];
-    for (const f of clubs.follows ?? []) {
-      const id = Number(f.team_id ?? f.id);
-      if (avecKop.has(id)) continue;
-      const dispo = await api(`/club/${id}`).catch(() => ({ kops: [] }));
-      S.clubs.push({ id, nom: f.name ?? `Club ${id}`, kops: dispo.kops ?? [] });
-    }
+    const sans = (clubs?.follows ?? []).map((f) => ({ id: Number(f.team_id ?? f.id), nom: f.name }))
+      .filter((f) => !avecKop.has(f.id));
+    S.clubs = await Promise.all(sans.map(async (f) => {
+      const dispo = await api(`/club/${f.id}`).catch(() => ({ kops: [] }));
+      return { id: f.id, nom: f.nom ?? `Club ${f.id}`, kops: dispo.kops ?? [] };
+    }));
 
     // L'état détaillé du KOP déplié : membres, vote, bonus actifs.
-    if (S.ouvert) S.etats[S.ouvert] = await api(`/${S.ouvert}`).catch(() => null);
+    if (S.ouvert) S.etats[S.ouvert] = await api(`/${S.ouvert}`).catch(() => S.etats[S.ouvert] ?? null);
+    S.charge = true;
+    if (S.erreurDeLecture) { S.erreur = null; S.erreurDeLecture = false; }
   } catch (e) {
+    if (e.message === 'auth') return;
     S.erreur = e.code ?? 'kop.error.server';
+    S.erreurDeLecture = true;
   }
   rendre();
 }
 
-/* ------------------------------------------------------------ rendu */
+/* ------------------------------------------------------------ outils */
 
 const mmss = (ms) => {
   const t = Math.max(0, Math.round(ms / 1000));
@@ -285,122 +416,518 @@ const mmss = (ms) => {
 
 function bonusDef(id) { return S.catalogue.find((b) => b.id === id); }
 
+const duree = (b) => (b?.portee === 'match' ? 'un match'
+  : b?.portee === 'saison' ? 'la saison' : `${b?.charges ?? 3} matchs`);
+
+/* Les couleurs du club d'un KOP, si le serveur les sert : deux teintes
+   hexadécimales au plus. Une valeur qui n'en est pas une ne se pose pas. */
+const couleursDe = (k) => (Array.isArray(k?.couleurs) ? k.couleurs : [])
+  .filter((c) => /^#[0-9a-f]{6}$/i.test(String(c))).slice(0, 2);
+
+/* Un nombre qui change compte depuis celui qu'on voyait (`FX.compter`) : un
+   chiffre qui saute se lit comme une erreur d'affichage. Le premier rendu
+   pose la valeur sans compter — il n'y a pas encore d'« avant ». */
+function poserNombre(el, apres) {
+  const avant = el.dataset.n === undefined ? undefined : Number(el.dataset.n);
+  el.dataset.n = String(apres);
+  if (avant === undefined || avant === apres || !window.FX?.compter) {
+    if (window.FX?.compter) FX.compter(el, apres, apres, { format: nb });
+    else el.textContent = nb(apres);
+    return;
+  }
+  FX.compter(el, avant, apres, { format: nb });
+}
+
 /**
- * Un bulletin : une plaque au ton de ce qu'il fait, vert pour, rouge contre.
- *
- * Celui qu'on a déjà donné porte la coche et `aria-pressed`. Il se distinguait
- * par une bordure colorée sur un bouton sombre ; en plaques, les deux sont
- * colorées, et c'est la coche qui dit lequel est le sien. `on` reste posé pour
- * qui lirait encore la classe.
+ * Un buste : le personnage d'un membre tel que le serveur le sert (`avatar`,
+ * contrat § 3), ou l'initiale de son pseudo quand il n'en a pas (`avatar:
+ * null`, ou un serveur d'avant le contrat), et son niveau s'il est servi —
+ * jamais « NIV. 1 » par défaut. Une image qui ne répond pas retombe sur
+ * l'initiale (voir l'écouteur d'erreur, en bas).
  */
-function bulletin(vote, valeur, sens, ton, mot) {
-  const mien = vote.monBulletin === valeur;
-  return `<button class="bul ${sens} tbf-plaque ${mien ? 'on' : ''}" data-ton="${ton}"
-      aria-pressed="${mien}" data-voter="${vote.id}" data-pour="${valeur}">${
-      mien ? '<i class="tbf-ico tbf-ico-coche" aria-hidden="true"></i>' : ''}${mot}</button>`;
+function buste(g, taille) {
+  const initiale = esc((String(g?.pseudo ?? '').trim().charAt(0) || '?').toUpperCase());
+  const src = g?.avatar ? window.FZART?.dessinAvatar?.(g.avatar, 'buste') : null;
+  const niv = Number.isInteger(g?.niveau)
+    ? `<b class="tbf-sticker tbf-sticker--rond tbf-buste-niv">${g.niveau}</b>` : '';
+  const style = taille ? ` style="--taille:${taille}px"` : '';
+  return src
+    ? `<span class="tbf-buste"${style} aria-hidden="true" data-initiale="${initiale}"><img src="${esc(src)}" alt=""
+        decoding="async">${niv}</span>`
+    : `<span class="tbf-buste"${style} aria-hidden="true">${initiale}${niv}</span>`;
 }
 
-function voteHTML(e) {
-  const def = bonusDef(e.vote.bonusId);
-  const total = Math.max(1, e.vote.pour + e.vote.contre);
-  const urgent = e.vote.fermeDansMs < 45_000;
-  return `<div class="vote">
-    <div class="haut">
-      <div class="quoi">${esc(def?.nom ?? e.vote.bonusId)}
-        <div class="txt">${esc(def?.texte ?? '')}</div></div>
-      <div class="chrono ${urgent ? 'urgent' : ''}" data-chrono="${e.vote.ferme}"
-        >${mmss(e.vote.fermeDansMs)}</div>
-    </div>
-    <div class="balance">
-      <div class="p" style="width:${(e.vote.pour / total) * 100}%"></div>
-      <div class="c" style="width:${(e.vote.contre / total) * 100}%"></div>
-    </div>
-    <div class="decompte"><span>${e.vote.pour} pour</span><span>${e.vote.contre} contre</span></div>
-    <div class="bulletins">${bulletin(e.vote, 1, 'pour', 'vert', 'POUR')}${
-      bulletin(e.vote, 0, 'contre', 'flare', 'CONTRE')}</div>
-    ${e.jeSuisCreateur
-      ? '<div class="note">Tu pèses cinq voix, et tu départages une égalité.</div>'
-      : '<div class="note">Le créateur pèse cinq voix et départage une égalité.</div>'}
-  </div>`;
+/* La bouffée de fumigène : posée, puis retirée quand elle s'est dissipée
+   (240 + 600 ms). Sans mouvement, la feuille ne la montre pas. */
+function bouffee(parent, { x = '50%', y = '50%' } = {}) {
+  if (!parent) return;
+  const b = document.createElement('div');
+  b.className = 'tbf-bouffee';
+  b.setAttribute('aria-hidden', 'true');
+  b.style.setProperty('--x', x);
+  b.style.setProperty('--y', y);
+  parent.prepend(b);
+  setTimeout(() => b.remove(), 900);
 }
 
-function kopHTML(k) {
-  const e = S.etats[k.id];
-  const ouvert = S.ouvert === k.id;
-  const out = [`<div class="kop mien">
-    <div class="tete"><b>${esc(k.nom)}</b>
-      <span class="club">${esc(k.team_nom ?? '')}</span></div>
-    <div class="chiffres">
-      <div class="ch"><b data-pot="${esc(k.id)}">${k.pot}</b><span>DANS LE POT</span></div>
-      <div class="ch"><b>${k.membres}</b><span>MEMBRES</span></div>
-      <div class="ch"><b>${k.verse}</b><span>VERSÉ PAR TOI</span></div>
-    </div>`];
-
-  // La barre vise le bonus le moins cher : c'est le prochain palier réel, et
-  // c'est lui qui donne envie de pousser un match de plus.
-  const prochain = [...S.catalogue].sort((a, b) => a.prix - b.prix)
-    .find((b) => b.prix > k.pot);
-  if (prochain) {
-    out.push(`<div class="pot"><i style="width:${Math.min(100, (k.pot / prochain.prix) * 100)}%"></i></div>
-      <div class="note">${prochain.prix - k.pot} écharpes avant « ${esc(prochain.nom)} ».</div>`);
+/**
+ * Le moment fort de la page : la case de BD unifiée, trois secondes et
+ * demie. Aux couleurs du club quand elles sont connues, au violet des gens
+ * sinon (`--mc`, que la case lit avant son ton).
+ */
+let momentFin = 0;
+function moment(mot, sous, couleurs = []) {
+  const m = $('moment');
+  $('momentMot').textContent = mot;
+  $('momentSous').textContent = sous ?? '';
+  m.style.removeProperty('--e1'); m.style.removeProperty('--e2'); m.style.removeProperty('--mc');
+  if (couleurs[0]) {
+    m.style.setProperty('--e1', couleurs[0]);
+    m.style.setProperty('--e2', couleurs[1] ?? couleurs[0]);
   } else {
-    out.push('<div class="pot"><i style="width:100%"></i></div>'
-      + '<div class="note">Le pot couvre tout ce qui est au catalogue.</div>');
+    m.style.setProperty('--mc', 'var(--violet)');
+  }
+  m.style.setProperty('--mt', '3400ms');
+  m.classList.remove('on');
+  void m.offsetWidth;
+  m.classList.add('on');
+  clearTimeout(momentFin);
+  momentFin = setTimeout(() => m.classList.remove('on'), 3400);
+}
+
+/* --------------------------------------------------------- les vues
+
+   Une vue par KOP, gardée d'un rendu à l'autre : son nœud et les éléments
+   qu'on y met à jour. */
+const vues = new Map();          // kopId -> vue
+const fins = new Map();          // voteId -> fin du vote, en temps de `performance.now()`
+const relus = new Set();         // les votes déjà relus à zéro
+const votesClos = new Map();     // voteId -> le dépouillement reçu par le socket
+const annonces = new Set();      // les votes dont l'ouverture vient d'être annoncée
+
+function vueKop(k) {
+  const id = String(k.id);
+  let v = vues.get(id);
+  if (v) return v;
+  const el = document.createElement('article');
+  el.className = 'kop tbf-cadre';
+  el.setAttribute('data-echarpe', '');
+  el.dataset.kopId = id;
+  el.innerHTML = `
+    <header class="kop-tete">
+      <h3 class="kop-nom"><b class="tbf-banderole"></b></h3>
+      <span class="tbf-sticker kop-club"></span>
+    </header>
+    <div class="kop-chiffres">
+      <div class="tbf-stat"><b><img src="${ECHARPE}" alt=""><span data-pot="${esc(id)}"></span></b
+        ><small>DANS LE POT</small></div>
+      <div class="tbf-stat"><b><span data-membres></span></b><small>MEMBRES</small></div>
+      <div class="tbf-stat"><b><img src="${ECHARPE}" alt=""><span data-verse></span></b
+        ><small>VERSÉ PAR TOI</small></div>
+    </div>
+    <div class="kop-pot">
+      <p class="kop-jalon" hidden><span class="tbf-sticker"><span></span></span></p>
+      <div class="tbf-jauge tbf-jauge--epaisse" aria-hidden="true"><i style="width:0%"></i></div>
+      <ol class="kop-crans" aria-hidden="true"></ol>
+    </div>`;
+  v = {
+    id, el,
+    tete: el.querySelector('.kop-tete'),
+    nom: el.querySelector('.kop-nom b'),
+    club: el.querySelector('.kop-club'),
+    pot: el.querySelector('[data-pot]'),
+    membres: el.querySelector('[data-membres]'),
+    membresMot: el.querySelectorAll('.tbf-stat small')[1],
+    verse: el.querySelector('[data-verse]'),
+    potBloc: el.querySelector('.kop-pot'),
+    jalon: el.querySelector('.kop-jalon'),
+    jauge: el.querySelector('.tbf-jauge'),
+    crans: el.querySelector('.kop-crans'),
+    bouton: null, detail: null,
+    couleurs: null, potVu: undefined, sigCrans: '',
+    // le déplié
+    sigTribune: '', sigActifs: '', zone: null, zoneVote: null, catalogue: false, sigBulletin: null,
+    attente: 0, tenu: false, tenuT: 0,
+  };
+  vues.set(id, v);
+  return v;
+}
+
+function majKop(v, k) {
+  /* Les couleurs du club : sur le cadre, d'où l'écharpe, la bâche et le pot
+     les lisent. La bâche n'est posée qu'avec elles. */
+  const c = couleursDe(k);
+  if (c.join() !== v.couleurs) {
+    v.couleurs = c.join();
+    v.tete.querySelector('.tbf-bache-club')?.remove();
+    if (c.length) {
+      v.el.style.setProperty('--e1', c[0]);
+      v.el.style.setProperty('--e2', c[1] ?? c[0]);
+      v.tete.insertAdjacentHTML('afterbegin', '<div class="tbf-bache-club" aria-hidden="true"></div>');
+    } else {
+      v.el.style.removeProperty('--e1');
+      v.el.style.removeProperty('--e2');
+    }
+    v.tete.classList.toggle('peinte', c.length > 0);
+  }
+  v.nom.textContent = k.nom ?? '';
+  v.nom.toggleAttribute('data-long', String(k.nom ?? '').length > 20);
+  v.club.textContent = k.team_nom ?? '';
+  v.club.hidden = !k.team_nom;
+
+  const membres = Number(k.membres) || 0;
+  poserNombre(v.pot, Number(k.pot) || 0);
+  poserNombre(v.membres, membres);
+  poserNombre(v.verse, Number(k.verse) || 0);
+  v.membresMot.textContent = membres > 1 ? 'MEMBRES' : 'MEMBRE';
+  majPot(v, k);
+
+  const ouvert = S.ouvert === v.id;
+  if (ouvert) {
+    v.bouton?.remove(); v.bouton = null;
+    if (!v.detail) {
+      v.detail = document.createElement('div');
+      v.detail.className = 'kop-detail';
+      v.el.append(v.detail);
+    }
+    majDetail(v, k, S.etats[v.id]);
+  } else {
+    fermerDetail(v);
+    if (!v.bouton) {
+      v.el.insertAdjacentHTML('beforeend',
+        `<button class="gros tbf-plaque" data-ton="violet" data-ouvrir="${esc(v.id)}">VOIR LE KOP</button>`);
+      v.bouton = v.el.lastElementChild;
+    }
+  }
+}
+
+/* Le déplié retiré : ses minuteries partent avec lui. Un vote qui se
+   clôturait se reverra fermé à la prochaine ouverture. */
+function fermerDetail(v) {
+  if (!v.detail) return;
+  clearTimeout(v.attente); clearTimeout(v.tenuT);
+  v.detail.remove();
+  Object.assign(v, { detail: null, sigTribune: '', sigActifs: '', zone: null, zoneVote: null,
+    catalogue: false, sigBulletin: null, attente: 0, tenu: false, tenuT: 0 });
+}
+
+/**
+ * Le pot : la fenêtre de crans, la largeur de l'écharpe, le jalon.
+ *
+ * La fenêtre commence au dernier prix atteint (s'il y en a un) et prend
+ * jusqu'à quatre prix ; l'écharpe passe les crans atteints, puis avance
+ * dans le suivant à proportion. Au-delà du dernier prix du catalogue, elle
+ * est pleine et le jalon dit que le pot couvre tout.
+ */
+function majPot(v, k) {
+  const pot = Number(k.pot) || 0;
+  const prix = [...new Set(S.catalogue.map((b) => Number(b.prix)).filter((p) => p > 0))]
+    .sort((a, b) => a - b);
+  const i = prix.findIndex((p) => p > pot);          // le prochain prix, -1 si tout est couvert
+  const debut = i === -1 ? Math.max(0, prix.length - 4) : Math.max(0, i - 1);
+  const fenetre = prix.slice(debut, debut + 4);
+  const n = fenetre.length;
+
+  let part = 1;
+  if (i !== -1 && n) {
+    const atteints = fenetre.filter((p) => p <= pot).length;
+    const bas = atteints ? fenetre[atteints - 1] : (debut > 0 ? prix[debut - 1] : 0);
+    const haut = fenetre[atteints];
+    part = (atteints + Math.min(1, Math.max(0, (pot - bas) / Math.max(1, haut - bas)))) / n;
+  }
+  v.jauge.querySelector('i').style.width = `${(part * 100).toFixed(1)}%`;
+  if (n >= 2) v.jauge.dataset.crans = String(n); else delete v.jauge.dataset.crans;
+
+  // Les prix sous les crans : vert quand le pot les couvre (on peut proposer
+  // le bonus), craie sinon. Réécrits seulement quand la fenêtre bouge.
+  const sig = fenetre.map((p) => `${p}:${p <= pot}`).join(',');
+  if (sig !== v.sigCrans) {
+    v.sigCrans = sig;
+    v.crans.innerHTML = fenetre.map((p, j) => `<li style="--x:${((j + 1) / n * 100).toFixed(2)}%"
+      ><span class="tbf-sticker tbf-sticker--prix"${p <= pot ? ' data-ton="vert"' : ''}>${nb(p)}</span></li>`)
+      .join('');
   }
 
-  if (!ouvert) {
-    out.push(`<button class="gros tbf-plaque" data-ouvrir="${k.id}">VOIR LE KOP</button></div>`);
-    return out.join('');
+  // Le jalon : ce qui manque avant le prochain bonus, et son nom. Le bonus le
+  // moins cher : c'est le prochain palier réel, et c'est lui qui donne envie
+  // de pousser un match de plus.
+  const sticker = v.jalon.firstElementChild;
+  if (!prix.length) {
+    v.jalon.hidden = true;
+  } else if (i === -1) {
+    v.jalon.hidden = false;
+    sticker.className = 'tbf-sticker';
+    sticker.dataset.ton = 'vert';
+    sticker.firstElementChild.textContent = 'Le pot couvre tout le catalogue';
+  } else {
+    const prochain = [...S.catalogue].sort((a, b) => a.prix - b.prix).find((b) => b.prix > pot);
+    const manque = prochain.prix - pot;
+    v.jalon.hidden = false;
+    sticker.className = 'tbf-sticker tbf-sticker--jalon';
+    delete sticker.dataset.ton;
+    // Deux moitiés d'un seul tenant, séparées par la seule espace où la
+    // promesse peut passer à la ligne : devant le nom (voir `.kop-jalon`).
+    // Le texte lu reste la phrase entière. Une seule écharpe qui manque
+    // s'écrit au singulier : « 1 écharpes » se lisait au bout d'un pot.
+    sticker.firstElementChild.innerHTML = `<span>${nb(manque)} ${
+      manque > 1 ? 'écharpes' : 'écharpe'} avant</span> <span>« ${esc(prochain.nom)} »</span>`;
   }
 
-  if (!e) { out.push('<div class="note">Chargement…</div></div>'); return out.join(''); }
+  /* Un jalon franchi depuis la dernière relecture : la bouffée sur son cran
+     et le son du geste parfait. Seulement en montant — un pot qui paie un
+     bonus redescend, et ce n'est pas une fête ici : le tampon ADOPTÉ l'a
+     déjà été. */
+  const avant = v.potVu;
+  v.potVu = pot;
+  if (avant !== undefined && pot > avant) {
+    const franchi = fenetre.findIndex((p) => p > avant && p <= pot);
+    if (franchi !== -1) {
+      bouffee(v.potBloc, { x: `${((franchi + 1) / n * 100).toFixed(1)}%`, y: '62%' });
+      window.FX?.son?.('parfait');
+    }
+  }
+}
 
-  out.push(`<div class="membres">${e.membres.map((m) => `<span class="mb ${m.createur ? 'chef' : ''}">
-    ${esc(m.pseudo)}<small>${m.verse}</small></span>`).join('')}</div>`);
+/* ---------------------------------------------------- le KOP déplié */
 
-  if (e.bonus.length) {
-    out.push('<h2 class="tbf-cousu">BONUS ACTIFS</h2><div>' + e.bonus.map((b) => {
+function majDetail(v, k, e) {
+  if (!e) {
+    if (!v.zone) v.detail.innerHTML = '<div class="note">Chargement…</div>';
+    return;
+  }
+  if (!v.zone) {
+    v.detail.innerHTML = `
+      <div class="kop-tribune"><ul class="tbf-gradins" aria-label="Les membres du KOP"></ul></div>
+      <div class="kop-actifs-bloc"></div>
+      <div class="kop-zone"></div>
+      <button class="gros tbf-plaque" data-quitter="${esc(v.id)}">QUITTER CE KOP</button>
+      <div class="note">Ce que tu as versé reste au pot. On ne reprend pas sa part.</div>`;
+    v.zone = v.detail.querySelector('.kop-zone');
+  }
+  majTribune(v, e);
+  majActifs(v, e);
+  majZone(v, k, e);
+}
+
+/**
+ * La tribune : un siège par membre, dans l'ordre de ce qu'ils ont versé —
+ * le premier est celui qui porte le pot —, le capo avec son sticker, et une
+ * place libre pour inviter quelqu'un. Réécrite seulement si un membre, un
+ * visage ou un niveau a changé : une relecture ne fait pas clignoter les
+ * bustes.
+ */
+function majTribune(v, e) {
+  const membres = e.membres ?? [];
+  const sig = JSON.stringify(membres.map((m) => [m.id, m.pseudo, m.createur, m.avatar ?? null, m.niveau]));
+  if (sig === v.sigTribune) return;
+  v.sigTribune = sig;
+  v.detail.querySelector('.tbf-gradins').innerHTML = membres.map((m) => `<li class="tbf-siege">
+      ${buste(m)}<span class="tbf-siege-nom">${esc(m.pseudo)}</span>${
+      m.createur ? '<span class="tbf-sticker">CAPO</span>' : ''}</li>`).join('')
+    + `<li class="tbf-siege tbf-siege--libre"><a class="tbf-siege-place" href="/amis"
+        aria-label="Inviter un ami dans ce KOP">+</a><span class="tbf-siege-nom" aria-hidden="true">INVITER</span></li>`;
+}
+
+/** Les bonus que le KOP s'est offerts et qui agissent encore : des stickers verts. */
+function majActifs(v, e) {
+  const bonus = e.bonus ?? [];
+  const sig = JSON.stringify(bonus.map((b) => [b.bonusId, b.portee, b.restant]));
+  if (sig === v.sigActifs) return;
+  v.sigActifs = sig;
+  v.detail.querySelector('.kop-actifs-bloc').innerHTML = bonus.length
+    ? '<h2 class="tbf-cousu">BONUS ACTIFS</h2><div class="kop-actifs">' + bonus.map((b) => {
       const def = bonusDef(b.bonusId);
       const reste = b.portee === 'saison' ? 'toute la saison'
         : `${b.restant} match${b.restant > 1 ? 's' : ''}`;
-      return `<span class="actif">${esc(def?.nom ?? b.bonusId)} · ${reste}</span>`;
-    }).join('') + '</div>');
-  }
-
-  if (e.vote) {
-    out.push('<h2 class="tbf-cousu">VOTE EN COURS</h2>' + voteHTML(e));
-  } else {
-    out.push('<h2 class="tbf-cousu">PROPOSER UNE DÉPENSE</h2>');
-    for (const b of S.catalogue) {
-      const trop = b.prix > e.pot;
-      const duree = b.portee === 'match' ? 'un match'
-        : b.portee === 'saison' ? 'la saison' : `${b.charges ?? 3} matchs`;
-      out.push(`<button class="bonus pan" data-proposer="${b.id}" data-kop="${k.id}"
-        ${trop ? 'disabled' : ''}>
-        <span class="n"><b>${esc(b.nom)}</b><span>${esc(b.texte)} · ${duree}</span></span>
-        <span class="prix">${b.prix}<small>ÉCHARPES</small></span></button>`);
-    }
-    out.push('<div class="note">Trois minutes de vote. Le créateur pèse cinq voix '
-      + 'et départage une égalité.</div>');
-  }
-
-  out.push(`<button class="gros tbf-plaque" data-quitter="${k.id}">QUITTER CE KOP</button>
-    <div class="note">Ce que tu as versé reste au pot. On ne reprend pas sa part.</div>`);
-  out.push('</div>');
-  return out.join('');
+      return `<span class="tbf-sticker" data-ton="vert">${esc(def?.nom ?? b.bonusId)} · ${esc(reste)}</span>`;
+    }).join('') + '</div>'
+    : '';
 }
 
+/**
+ * Ce qui occupe le bas du KOP : le vote en cours, ou le catalogue.
+ *
+ * **Un vote clos reste à l'écran le temps de son tampon.** Le serveur le
+ * dépouille au premier regard après l'échéance et l'annonce par le socket
+ * (`kop:votes`) ; la relecture qui suit ne le sert plus. Sans cette tenue,
+ * la case aurait disparu au profit du catalogue avant que ADOPTÉ ou REFUSÉ
+ * ait claqué. Si la relecture arrive avant l'annonce, la case attend deux
+ * secondes et demie ; sans annonce, elle part sans verdict — la page
+ * n'invente pas une issue qu'on ne lui a pas dite.
+ */
+function majZone(v, k, e) {
+  if (v.tenu) return;
+  const vote = e.vote;
+  if (vote) {
+    clearTimeout(v.attente); v.attente = 0;
+    if (v.zoneVote !== String(vote.id)) construireVote(v, e);
+    else majVote(v, e);
+    return;
+  }
+  if (v.zoneVote) {
+    const fait = votesClos.get(v.zoneVote);
+    if (fait) { clore(v, fait); return; }
+    if (!v.attente) {
+      v.attente = setTimeout(() => { v.attente = 0; v.zoneVote = null; rendre(); }, 2500);
+    }
+    return;
+  }
+  if (!v.catalogue) construireCatalogue(v);
+  majCatalogue(v, e);
+}
+
+/**
+ * Un bulletin : une plaque au ton de ce qu'il fait, vert pour, rouge contre.
+ *
+ * Celui qu'on a déjà donné porte la coche et `aria-pressed`. En plaques, les
+ * deux sont colorées, et c'est la coche qui dit lequel est le sien. `on`
+ * reste posé pour qui lirait encore la classe.
+ */
+function bulletin(vote, valeur, ton, mot) {
+  const mien = vote.monBulletin != null && Number(vote.monBulletin) === valeur;
+  return `<button class="bul ${valeur ? 'pour' : 'contre'} tbf-plaque ${mien ? 'on' : ''}" data-ton="${ton}"
+      aria-pressed="${mien}" data-voter="${esc(vote.id)}" data-pour="${valeur}">${
+      mien ? '<i class="tbf-ico tbf-ico-coche" aria-hidden="true"></i>' : ''}${mot}</button>`;
+}
+
+function construireVote(v, e) {
+  const vote = e.vote;
+  const id = String(vote.id);
+  const def = bonusDef(vote.bonusId);
+  v.zoneVote = id;
+  v.catalogue = false;
+  v.zone.innerHTML = `<h2 class="tbf-cousu">VOTE EN COURS</h2>
+    <div class="kop-vote">
+      <section class="tbf-vote" data-vote="${esc(id)}" aria-label="Vote : ${esc(def?.nom ?? vote.bonusId)}">
+        <div class="tbf-vote-tete">
+          <b class="tbf-vote-chrono" role="timer" data-chrono="${esc(id)}">${mmss(vote.fermeDansMs)}</b>
+          <div class="tbf-vote-quoi"><b class="tbf-banderole">${esc(def?.nom ?? vote.bonusId)}</b
+            ><small>${esc(duree(def))} · ${nb(vote.prix ?? def?.prix)} du pot</small></div>
+        </div>
+        <div class="tbf-vote-balance" role="img"><span data-p></span><span data-c></span></div>
+        <div class="tbf-vote-gestes"></div>
+        <span class="tbf-tampon" data-ton="vert">ADOPTÉ</span>
+      </section>
+    </div>
+    ${def?.texte ? `<div class="note">${esc(def.texte)}</div>` : ''}
+    <div class="note" data-voix>${e.jeSuisCreateur
+      ? 'Tu pèses cinq voix, et tu départages une égalité.'
+      : 'Le créateur pèse cinq voix et départage une égalité.'}</div>`;
+  v.sigBulletin = null;
+  majVote(v, e);
+  /* L'ouverture annoncée par le socket : la bouffée aux couleurs du club,
+     derrière la case, à l'instant où elle paraît — et la case amenée sous
+     les yeux, si elle est plus bas : le bandeau dit qu'un vote s'ouvre, il
+     reste trois minutes, on ne le cherche pas. */
+  if (annonces.delete(id)) {
+    const c = v.zone.querySelector('.kop-vote');
+    bouffee(c);
+    c.scrollIntoView({ block: 'nearest', behavior: sansMouvement() ? 'auto' : 'smooth' });
+  }
+}
+
+/* Le mouvement réduit, demandé au système ou dans le tiroir (le mode calme). */
+const sansMouvement = () => matchMedia('(prefers-reduced-motion: reduce)').matches
+  || /(^|\s)animations(\s|$)/.test(document.documentElement.dataset.calme ?? '');
+
+/* Le vote mis à jour en place : le temps restant (mesuré par le serveur,
+   décompté ici), la balance et les bulletins. */
+function majVote(v, e) {
+  const vote = e.vote;
+  const id = String(vote.id);
+  fins.set(id, performance.now() + Math.max(0, Number(vote.fermeDansMs) || 0));
+  const pour = Number(vote.pour) || 0;
+  const contre = Number(vote.contre) || 0;
+  const total = pour + contre;
+  const bal = v.zone.querySelector('.tbf-vote-balance');
+  bal.style.setProperty('--pour', `${total ? ((pour / total) * 100).toFixed(1) : 50}%`);
+  bal.setAttribute('aria-label', `${pour} pour, ${contre} contre`);
+  bal.querySelector('[data-p]').textContent = `POUR ${pour}`;
+  bal.querySelector('[data-c]').textContent = `CONTRE ${contre}`;
+  const sig = String(vote.monBulletin);
+  if (sig !== v.sigBulletin) {
+    v.sigBulletin = sig;
+    v.zone.querySelector('.tbf-vote-gestes').innerHTML =
+      bulletin(vote, 1, 'vert', 'POUR') + bulletin(vote, 0, 'flare', 'CONTRE');
+  }
+  tic();
+}
+
+/**
+ * La clôture : le tampon claque à la place des deux bulletins, et la case
+ * reste quatre secondes avant de rendre la place au catalogue.
+ */
+function clore(v, fait) {
+  clearTimeout(v.attente); v.attente = 0;
+  const s = v.zone?.querySelector('section.tbf-vote');
+  if (!s || s.dataset.issue) return;
+  const adopte = fait.issue === 'adopte';
+  s.dataset.issue = adopte ? 'adopte' : 'refuse';
+  s.setAttribute('aria-label', `${s.getAttribute('aria-label')?.replace(/^Vote/, 'Vote clos')}, ${
+    adopte ? 'adopté' : 'refusé'}`);
+  const titre = v.zone.querySelector('h2');
+  if (titre) titre.textContent = 'VOTE CLOS';
+  const chrono = s.querySelector('.tbf-vote-chrono');
+  chrono.removeAttribute('data-chrono');
+  chrono.removeAttribute('data-urgent');
+  chrono.textContent = '0:00';
+  const t = s.querySelector('.tbf-tampon');
+  t.dataset.ton = adopte ? 'vert' : 'flare';
+  t.textContent = adopte ? 'ADOPTÉ' : 'REFUSÉ';
+  t.classList.add('tbf-clac');
+  t.addEventListener('animationend', () => t.classList.remove('tbf-clac'), { once: true });
+  window.FX?.son?.('bache');
+  /* Adopté, mais le pot avait fondu entre-temps (un autre vote est passé
+     avant) : le serveur le rejette plutôt que de creuser le pot, et le dit. */
+  if (fait.potInsuffisant) {
+    const voix = v.zone.querySelector('[data-voix]');
+    if (voix) voix.textContent = 'La majorité a dit oui, mais le pot ne suffisait plus : rien n’est dépensé.';
+  }
+  v.tenu = true;
+  clearTimeout(v.tenuT);
+  v.tenuT = setTimeout(() => { v.tenu = false; v.zoneVote = null; rendre(); }, 4000);
+}
+
+function construireCatalogue(v) {
+  v.zoneVote = null;
+  v.catalogue = true;
+  v.zone.innerHTML = '<h2 class="tbf-cousu">PROPOSER UNE DÉPENSE</h2>'
+    + S.catalogue.map((b) => `<button class="bonus pan" data-proposer="${esc(b.id)}" data-kop="${esc(v.id)}">
+        <span class="n"><b>${esc(b.nom)}</b><span>${esc(b.texte)} · ${esc(duree(b))}</span></span>
+        <span class="tbf-sticker tbf-sticker--prix"><img src="${ECHARPE}" alt="">${nb(b.prix)}</span></button>`)
+      .join('')
+    + '<div class="note">Trois minutes de vote. Le créateur pèse cinq voix '
+    + 'et départage une égalité.</div>';
+}
+
+/* Ce que le pot couvre se propose ; le reste est éteint, mais lisible. Le
+   prix couvert passe à l'or : c'est un achat à portée. */
+function majCatalogue(v, e) {
+  const pot = Number(e.pot) || 0;
+  for (const b of v.zone.querySelectorAll('[data-proposer]')) {
+    const def = bonusDef(b.dataset.proposer);
+    const trop = !def || def.prix > pot;
+    b.disabled = trop;
+    const prix = b.querySelector('.tbf-sticker');
+    if (trop) delete prix.dataset.ton; else prix.dataset.ton = 'or';
+  }
+}
+
+/* ------------------------------------------------- les clubs sans KOP */
+
 function clubHTML(c) {
-  const out = [`<div class="kop">
-    <div class="tete"><b>${esc(c.nom)}</b><span class="club">sans KOP</span></div>`];
+  const out = [`<div class="club pan" data-club="${c.id}">
+    <div class="club-tete"><b>${esc(c.nom)}</b><span class="tbf-sticker">sans KOP</span></div>`];
 
   if (c.kops.length) {
     out.push('<div class="note">Des KOP existent déjà pour ce club :</div>');
     for (const k of c.kops) {
-      out.push(`<button class="bonus pan" data-rejoindre="${k.id}">
-        <span class="n"><b>${esc(k.nom)}</b><span>${k.membres} membre${k.membres > 1 ? 's' : ''}
-          · ${k.verse_total} écharpes versées depuis l’ouverture</span></span>
-        <span class="prix">${k.pot}<small>AU POT</small></span></button>`);
+      const m = Number(k.membres) || 0;
+      out.push(`<div class="rejoindre">
+        <span class="n"><b>${esc(k.nom)}</b><span>${m} membre${m > 1 ? 's' : ''}
+          · ${nb(k.pot)} écharpes au pot</span></span>
+        <button class="tbf-plaque" data-ton="violet" data-rejoindre="${esc(k.id)}">REJOINDRE</button>
+      </div>`);
     }
   }
 
@@ -410,7 +937,7 @@ function clubHTML(c) {
      doit pas crier plus fort que lui. */
   if (S.creation === c.id) {
     out.push(`<input class="champ" id="nom-${c.id}" maxlength="40" placeholder="Le nom du KOP"
-      autocomplete="off">
+      autocomplete="off" aria-label="Le nom du KOP">
       <button class="gros tbf-plaque" data-ton="violet" data-creer="${c.id}">CRÉER</button>`);
   } else {
     out.push(`<button class="gros tbf-plaque" ${c.kops.length ? '' : 'data-ton="violet"'}
@@ -420,80 +947,131 @@ function clubHTML(c) {
   return out.join('');
 }
 
-function rendre() {
-  const out = [];
-  if (S.erreur) out.push(`<div class="err">${esc(MESSAGES[S.erreur] ?? S.erreur)}</div>`);
+/* ---------------------------------------------------------- le rendu
 
-  if (S.kops.length) {
-    out.push('<h2 class="tbf-cousu">MES KOP</h2>');
-    for (const k of S.kops) out.push(kopHTML(k));
+   Les sections sont posées une fois et retirées quand elles n'ont rien à
+   dire : un texte caché resterait dans le document, et « Des KOP existent
+   déjà » s'y lirait encore après qu'on en a rejoint un. */
+const sections = {};
+function section(cle, html) {
+  if (!sections[cle]) {
+    const d = document.createElement('div');
+    d.id = `sec-${cle}`;
+    d.innerHTML = html;
+    sections[cle] = d;
   }
-
-  if (S.clubs.length) {
-    out.push('<h2 class="tbf-cousu">MES CLUBS SANS KOP</h2>');
-    for (const c of S.clubs) out.push(clubHTML(c));
-  }
-
-  if (!S.kops.length && !S.clubs.length) {
-    out.push(`<div class="vide">Tu ne suis aucun club pour l’instant.<br>
-      Un KOP est adossé à un club : commence par en <a href="/equipes">suivre un</a>.</div>`);
-  }
-
-  // Hors de tout KOP, donc sur la photo : elle porte son propre panneau.
-  if (S.kops.length) {
-    out.push(`<div class="note seule">Pousser pour ton club pendant un duel remplit le pot de ton
-      KOP, en plus de tes propres écharpes. Ce que le KOP achète profite à tous ses membres
-      présents dans le VIRAGE.</div>`);
-  }
-
-  $('corps').innerHTML = out.join('');
-  compterPots();
+  return sections[cle];
+}
+/* Rangées dans cet ordre, qu'elles arrivent ou non. */
+const ORDRE = ['err', 'kops', 'clubs', 'vide'];
+function montrer(cle, el, oui) {
+  if (!oui) { el.remove(); return; }
+  if (el.isConnected) return;
+  const corps = $('corps');
+  const apres = ORDRE.slice(ORDRE.indexOf(cle) + 1).map((c) => sections[c]).find((s) => s?.isConnected);
+  corps.insertBefore(el, apres ?? null);
 }
 
-/* Le pot compte quand il bouge. Un vote dépouillé le vide d'un coup, un
-   membre qui pousse pendant un duel le remplit : relu à l'annonce d'un vote
-   ou toutes les trente secondes, il sautait d'un chiffre à l'autre sous les
-   yeux, ce qui se lit comme une erreur d'affichage. `rendre` vient d'écrire
-   la valeur finale — c'est ce qui reste si fx.js manque ; `compter` la
-   reprend aussitôt depuis celle qu'on voyait. Au premier rendu, rien ne
-   compte : il n'y a pas encore de « avant ». */
-const potsVus = new Map();
-function compterPots() {
-  for (const k of S.kops) {
-    const avant = potsVus.get(k.id);
-    potsVus.set(k.id, k.pot);
-    if (avant === undefined || avant === k.pot) continue;
-    const el = $('corps').querySelector(`[data-pot="${CSS.escape(String(k.id))}"]`);
-    if (el && window.FX?.compter) FX.compter(el, avant, k.pot);
+let sigClubs = '';
+function rendre() {
+  $('charge')?.remove();
+
+  const err = section('err', '<div class="err" role="alert"></div>');
+  err.firstElementChild.textContent = S.erreur ? (MESSAGES[S.erreur] ?? S.erreur) : '';
+  montrer('err', err, Boolean(S.erreur));
+
+  // Mes KOP : un nœud par KOP, gardé, rangé dans l'ordre du serveur.
+  const kops = section('kops', `<h2 class="tbf-cousu">MES KOP</h2><div class="kops-liste"></div>
+    <div class="note seule">Pousser pour ton club pendant un duel remplit le pot de ton KOP, en plus
+      de tes propres écharpes. Ce que le KOP achète profite à tous ses membres présents dans le
+      VIRAGE.</div>`);
+  const liste = kops.querySelector('.kops-liste');
+  const ids = new Set(S.kops.map((k) => String(k.id)));
+  for (const [id, v] of vues) {
+    if (!ids.has(id)) { fermerDetail(v); v.el.remove(); vues.delete(id); }
   }
+  let avant = null;
+  for (const k of S.kops) {
+    const v = vueKop(k);
+    const attendu = avant ? avant.nextSibling : liste.firstChild;
+    if (attendu !== v.el) liste.insertBefore(v.el, attendu);
+    avant = v.el;
+    majKop(v, k);
+  }
+  montrer('kops', kops, S.kops.length > 0);
+
+  /* Les clubs sans KOP : réécrits seulement si leurs données ont bougé. Une
+     relecture des trente secondes effaçait le nom qu'on était en train de
+     taper ; la saisie est gardée, et le curseur avec, si la carte change. */
+  const clubs = section('clubs', '<h2 class="tbf-cousu">MES CLUBS SANS KOP</h2><div class="clubs-liste"></div>');
+  const sig = JSON.stringify([S.clubs, S.creation]);
+  if (sig !== sigClubs) {
+    sigClubs = sig;
+    const champ = clubs.querySelector('input.champ');
+    const garde = champ ? { id: champ.id, valeur: champ.value, focus: document.activeElement === champ }
+      : null;
+    clubs.querySelector('.clubs-liste').innerHTML = S.clubs.map(clubHTML).join('');
+    const neuf = garde && clubs.querySelector(`#${CSS.escape(garde.id)}`);
+    if (neuf) { neuf.value = garde.valeur; if (garde.focus) neuf.focus(); }
+  }
+  montrer('clubs', clubs, S.clubs.length > 0);
+
+  /* Rien à montrer : un KOP est adossé à un club. Seulement quand la liste des
+     clubs a pu être lue — sinon, c'est une panne, pas un joueur sans club. */
+  const vide = section('vide', `<div class="tbf-cadre kop-vide">
+      <h2>UN KOP EST ADOSSÉ À UN CLUB</h2>
+      <p>Tu ne suis aucun club pour l’instant. Un KOP rassemble les supporters d’un même club :
+        suis-en un, et tu pourras rejoindre le sien ou en fonder un.</p>
+      <a class="tbf-plaque tbf-bloc gros" data-ton="vert" href="/equipes">SUIVRE UN CLUB</a>
+    </div>`);
+  montrer('vide', vide, S.charge && S.clubsConnus && !S.kops.length && !S.clubs.length);
 }
 
 /* ---------------------------------------------------------- les gestes */
+
+/* Entrer dans un KOP — le créer ou le rejoindre — se fête : la case de BD,
+   la corne et l'éclair. Une fois la page relue, pour connaître ses
+   couleurs. */
+function feterEntree(kopId) {
+  const k = S.kops.find((x) => String(x.id) === String(kopId));
+  if (!k) return;
+  window.FX?.flash?.();
+  window.FX?.son?.('but');
+  moment('TE VOILÀ !', `dans le KOP ${k.nom}`, couleursDe(k));
+}
 
 $('corps').addEventListener('click', async (ev) => {
   const b = ev.target.closest('button');
   if (!b) return;
   const d = b.dataset;
   S.erreur = null;
+  S.erreurDeLecture = false;
 
   try {
     if (d.ouvrir) {
-      // Replier en cliquant à nouveau : la page tient sur un écran.
+      // Le déplié paraît tout de suite, « Chargement… » dedans, puis se remplit.
       S.ouvert = S.ouvert === d.ouvrir ? null : d.ouvrir;
+      rendre();
       return charger();
     }
     if (d.nouveau) { S.creation = Number(d.nouveau); rendre();
       return $(`nom-${d.nouveau}`)?.focus(); }
     if (d.creer) {
       const nom = $(`nom-${d.creer}`)?.value ?? '';
+      b.disabled = true;
       const k = await api('/', { method: 'POST', body: { teamId: Number(d.creer), nom } });
-      S.creation = null; S.ouvert = k.id;
-      return charger();
+      S.creation = null; S.ouvert = String(k.id);
+      suivre();
+      await charger();
+      return feterEntree(k.id);
     }
     if (d.rejoindre) {
+      b.disabled = true;
       const k = await api(`/${d.rejoindre}/rejoindre`, { method: 'POST' });
-      S.ouvert = k.id;
-      return charger();
+      S.ouvert = String(k.id);
+      suivre();
+      await charger();
+      return feterEntree(k.id);
     }
     if (d.quitter) {
       /* Un geste irréversible mérite une question. Ce qui est versé est versé,
@@ -512,6 +1090,8 @@ $('corps').addEventListener('click', async (ev) => {
       return charger();
     }
     if (d.proposer) {
+      // Le vote qu'on ouvre soi-même ne s'annonce pas à soi : on vient de le voir.
+      S.propose = { kopId: String(d.kop), t: performance.now() };
       await api(`/${d.kop}/proposer`, { method: 'POST', body: { bonusId: d.proposer } });
       return charger();
     }
@@ -520,11 +1100,26 @@ $('corps').addEventListener('click', async (ev) => {
       return charger();
     }
   } catch (e) {
+    if (e.message === 'auth') return undefined;
+    b.disabled = false;
     S.erreur = e.code ?? 'kop.error.server';
     rendre();
+    /* Le refus s'écrit en tête de page, et le geste est souvent bien plus
+       bas (créer un KOP, au pied de la carte d'un club) : on l'amène sous
+       les yeux, sinon le bouton semble n'avoir rien fait. */
+    sections.err?.scrollIntoView?.({ block: 'nearest' });
   }
   return undefined;
 });
+
+/* Un visage qui ne répond pas laisse l'initiale à sa place. Écouté à la
+   capture : l'erreur d'une image ne remonte pas. */
+$('corps').addEventListener('error', (ev) => {
+  const img = ev.target;
+  const b = img?.tagName === 'IMG' ? img.parentElement : null;
+  if (!b?.classList.contains('tbf-buste')) return;
+  img.replaceWith(document.createTextNode(b.dataset.initiale || '?'));
+}, true);
 
 /* ------------------------------------------------ le compte à rebours
 
@@ -532,31 +1127,73 @@ $('corps').addEventListener('click', async (ev) => {
    minutes de vote, c'est cent quatre-vingts requêtes par membre pour afficher
    un chiffre qui se calcule tout seul.
 
+   **Le temps restant est celui du serveur** (`fermeDansMs`, compté par la
+   base), décompté ici avec `performance.now()` : l'heure de fermeture
+   (`ferme`) passait par le pilote en UTC et partait deux heures dans le
+   futur sur une base à l'heure de Zurich, et l'horloge du téléphone n'a pas
+   à juger d'une échéance (contrat, R3).
+
    À zéro, on relit **une fois** : c'est le serveur qui dépouille, et il ne le
-   fait qu'au premier regard qui suit l'échéance. */
-let recharge = null;
-setInterval(() => {
+   fait qu'au premier regard qui suit l'échéance. La dernière minute passe au
+   rouge (`data-urgent`). */
+function tic() {
   for (const el of document.querySelectorAll('[data-chrono]')) {
-    const reste = new Date(el.dataset.chrono).getTime() - Date.now();
+    const id = el.dataset.chrono;
+    const fin = fins.get(id);
+    if (fin === undefined) continue;
+    const reste = fin - performance.now();
     el.textContent = mmss(reste);
-    el.classList.toggle('urgent', reste < 45_000);
-    if (reste <= 0 && !recharge) {
-      recharge = setTimeout(() => { recharge = null; charger(); }, 700);
+    el.toggleAttribute('data-urgent', reste < 60_000);
+    if (reste <= 0 && !relus.has(id)) {
+      relus.add(id);
+      setTimeout(charger, 700);
     }
   }
-}, 1000);
+}
+setInterval(tic, 1000);
+
+/* Revenu sur l'onglet : le décompte d'un onglet caché a pu dériver, et un
+   vote a pu s'ouvrir ou se clore. On relit (contrat, R3). */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') charger();
+});
 
 /* ------------------------------------------------------- le temps réel
 
    Trois minutes, c'est court. Si l'on attendait que les membres rafraîchissent
    leur page, la moitié d'entre eux voterait après la clôture — ou pas du tout,
    faute d'avoir su qu'un vote était ouvert. */
+let socket = null;
+function suivre() { try { socket?.emit('kop:suivre'); } catch { /* sans temps réel */ } }
 try {
   // Voir duel-nvn.html : l’ordre inverse abandonne au lieu de replier.
-  const socket = io({ transports: ['polling', 'websocket'], tryAllTransports: true });
-  socket.on('connect', () => socket.emit('kop:suivre'));
-  socket.on('kop:vote', () => charger());
-  socket.on('kop:votes', () => charger());
+  socket = io({ transports: ['polling', 'websocket'], tryAllTransports: true });
+  socket.on('connect', suivre);
+  /* Un vote s'ouvre : le bandeau, la vibration, et le KOP se déplie s'il n'y
+     en a pas d'autre ouvert — le vote dure trois minutes, on ne le cherche
+     pas. Celui qu'on vient d'ouvrir soi-même ne s'annonce pas. */
+  socket.on('kop:vote', (vote) => {
+    const kopId = String(vote?.kopId ?? '');
+    const mien = S.kops.some((k) => String(k.id) === kopId);
+    const parMoi = S.propose?.kopId === kopId && performance.now() - S.propose.t < 8000;
+    if (mien && !parMoi) {
+      const nom = bonusDef(vote.bonusId)?.nom ?? vote.nom ?? '';
+      window.FX?.bandeau?.(`VOTE OUVERT${nom ? ` · ${String(nom).toUpperCase()}` : ''}`, '#F2EEE4');
+      if (vote.id != null) annonces.add(String(vote.id));
+      if (!S.ouvert) S.ouvert = kopId;
+    }
+    charger();
+  });
+  /* Un vote dépouillé : le tampon claque tout de suite sur la case qu'on
+     regarde, sans attendre la relecture. */
+  socket.on('kop:votes', (faits) => {
+    for (const f of Array.isArray(faits) ? faits : []) {
+      if (f?.id == null) continue;
+      votesClos.set(String(f.id), f);
+      for (const v of vues.values()) if (v.zoneVote === String(f.id)) clore(v, f);
+    }
+    charger();
+  });
 } catch { /* pas de temps réel : la page reste utilisable, elle relit au clic */ }
 
 charger();

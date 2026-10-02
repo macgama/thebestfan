@@ -189,3 +189,137 @@ export function baseDeTest() {
  *     const pool = mysql.createPool({ uri: DB, connectionLimit: 6, ...OPTIONS_BASE });
  */
 export const OPTIONS_BASE = { charset: 'utf8mb4', timezone: 'Z' };
+
+/* ======================================================= l'horloge figée
+
+   **Le jour de jeu est celui de la base**, pas celui de Node : `CURDATE()`,
+   `NOW(3)`, `CURRENT_TIMESTAMP(3)`. Les missions, le bonus, les quotas et le
+   disjoncteur changent tous à son minuit. Éprouver minuit, le dimanche de 25
+   heures ou celui de 23 heures demande donc d'arrêter **son** horloge, et
+   non celle de Node — que personne ne sait arrêter proprement, et qui ne
+   déciderait de rien.
+
+   MySQL et MariaDB le permettent par connexion : `SET @@session.timestamp`
+   fige `NOW()`, `CURDATE()`, `UTC_TIMESTAMP()`, `UNIX_TIMESTAMP()` et les
+   défauts `CURRENT_TIMESTAMP` de cette session. Le piège est le pool : une
+   suite (et le serveur qu'elle monte) prend ses connexions au hasard parmi
+   plusieurs, et une seule restée à l'heure réelle suffit à faire mentir un
+   contrôle sur deux.
+
+   D'où l'interception, à un seul endroit : **chaque connexion que le pool
+   rend** passe par ici avant d'arriver à qui l'a demandée, et reçoit l'heure
+   voulue si elle ne l'a pas déjà. `pool.query`, `pool.execute` et
+   `pool.getConnection` passent tous par `getConnection` du pool sous-jacent,
+   y compris la connexion qu'un appel en attente reçoit des mains d'un autre —
+   le seul chemin où l'événement `acquire` de mysql2 ne sonne pas.
+
+   Une connexion déjà tenue (une transaction ouverte) garde son heure jusqu'à
+   ce qu'elle soit rendue : on ne change pas l'heure sous les pieds d'une
+   transaction. Node, lui, reste à l'heure réelle — `Date.now()`, la recharge
+   des boosters, `packs_at`. */
+
+const HORLOGES = new WeakMap();   // pool sous-jacent → { voulu, vu: WeakMap(connexion → voulu) }
+
+function intercepter(pool) {
+  const coeur = pool.pool ?? pool;   // le pool à promesses enveloppe le pool à rappels
+  let etat = HORLOGES.get(coeur);
+  if (etat) return etat;
+  etat = { voulu: null, vu: new WeakMap() };
+  HORLOGES.set(coeur, etat);
+
+  const prendre = coeur.getConnection.bind(coeur);
+  coeur.getConnection = (rendre) => prendre((err, conn) => {
+    if (err) return rendre(err);
+    const voulu = etat.voulu;
+    /* Une connexion jamais touchée est à l'heure réelle : rien à faire si
+       c'est ce qu'on veut. */
+    if ((etat.vu.get(conn) ?? null) === voulu) return rendre(null, conn);
+    const sql = voulu === null
+      ? 'SET @@session.timestamp = DEFAULT'
+      : 'SET @@session.timestamp = ?';
+    conn.query(sql, voulu === null ? [] : [voulu], (e) => {
+      if (e) {
+        /* Une connexion qu'on n'a pas pu régler ne part pas dans la suite :
+           elle y mentirait sur l'heure. Le message nomme ce qui a échoué. */
+        conn.release();
+        return rendre(new Error(`figerHorloge : impossible de régler l’heure de la `
+          + `connexion (${e.message})`));
+      }
+      etat.vu.set(conn, voulu);
+      return rendre(null, conn);
+    });
+  });
+  return etat;
+}
+
+/**
+ * Fige l'horloge de la base pour toutes les connexions du pool, ou la relâche.
+ *
+ * `instant` :
+ *   - une chaîne `'AAAA-MM-JJ HH:MM[:SS[.mmm]]'`, lue **à l'heure murale de
+ *     la base** (son fuseau de session) — c'est ce qu'on veut presque
+ *     toujours : « minuit trente le 25 octobre », là où le serveur compte ;
+ *   - un nombre de secondes depuis l'époque Unix, ou un objet `Date` : un
+ *     instant absolu ;
+ *   - `null` : l'horloge repart.
+ *
+ * Rend l'instant figé, en secondes Unix (ou `null`). Le contrôle du contrôle
+ * est à la charge de la suite : `SELECT NOW()` doit rendre l'instant figé, sur
+ * deux connexions différentes du pool.
+ *
+ *     await figerHorloge(pool, '2026-10-25 00:30:00');
+ *     …
+ *     await figerHorloge(pool, null);
+ */
+export async function figerHorloge(pool, instant) {
+  const etat = intercepter(pool);
+  if (instant === null || instant === undefined) {
+    etat.voulu = null;
+    return null;
+  }
+  let secondes;
+  if (instant instanceof Date) {
+    secondes = instant.getTime() / 1000;
+  } else if (typeof instant === 'number') {
+    secondes = instant;
+  } else if (typeof instant === 'string'
+    && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2}(\.\d{1,6})?)?$/.test(instant)) {
+    /* L'heure murale se convertit **par la base**, dans son fuseau : c'est le
+       seul convertisseur qui sache où tombent ses changements d'heure. Avec
+       un argument, `UNIX_TIMESTAMP` ne lit pas l'horloge : peu importe
+       qu'elle soit déjà figée. */
+    const [[r]] = await pool.query('SELECT UNIX_TIMESTAMP(?) AS t', [instant]);
+    secondes = r?.t === null || r?.t === undefined ? NaN : Number(r.t);
+  } else {
+    throw new Error(`figerHorloge : instant « ${instant} » illisible — attendu `
+      + '« AAAA-MM-JJ HH:MM:SS », un nombre de secondes, un Date ou null');
+  }
+  if (!Number.isFinite(secondes) || secondes <= 0) {
+    throw new Error(`figerHorloge : la base ne sait pas lire « ${instant} » comme un instant`);
+  }
+  etat.voulu = secondes;
+  return secondes;
+}
+
+/**
+ * Lance `n` appels de `fn(i)` **ensemble** — deux onglets, dix clics — et
+ * attend qu'ils soient **tous** finis avant de rendre.
+ *
+ * Tous partent dans le même tour de boucle, avant qu'aucun n'ait eu une
+ * réponse : c'est ce qui en fait une vraie course. Et l'on attend la fin de
+ * chacun même si l'un échoue : rendre au premier échec laisserait les autres
+ * écrire dans la base pendant que la suite contrôle déjà, et le contrôle
+ * suivant accuserait le code d'une écriture qui n'était pas finie.
+ *
+ * Rend les résultats dans l'ordre des appels, ou lève la première erreur une
+ * fois tout terminé.
+ */
+export async function enParallele(n, fn) {
+  /* L'enveloppe `async` range une exception levée tout de suite par `fn`
+     parmi les échecs, au lieu d'empêcher les appels suivants de partir. */
+  const issues = await Promise.allSettled(
+    Array.from({ length: n }, (_, i) => (async () => fn(i))()));
+  const echec = issues.find((x) => x.status === 'rejected');
+  if (echec) throw echec.reason;
+  return issues.map((x) => x.value);
+}

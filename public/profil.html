@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon profil — thebestfan</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<!-- Permanent Marker dans la même ligne qu'Oswald : la carte de supporter
+     écrit « dans la tribune depuis » à la main (un des six emplois du
+     marqueur). Le fichier de la police ne se charge que si un mot l'emploie. -->
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
 <style>
@@ -13,47 +16,108 @@
 html,body{margin:0;min-height:100%}
 body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;justify-content:center}
 #app{position:relative;width:100%;max-width:var(--colonne);min-height:100dvh;display:flex;flex-direction:column}
+/* Une colonne de lecture, même sur une tablette : à 768 px, quatre stickers
+   de cent soixante-dix pixels et une carte de supporter de sept cents ne se
+   liraient plus comme des objets qu'on tient dans la main. */
+#page{width:100%;max-width:600px;margin:0 auto}
+/* **Une seule gouttière.** `#app` pose déjà ses quatorze pixels de chaque
+   côté (`--gouttiere`, ui.css) ; cette page en ajoutait quatorze autres à
+   chaque bloc, et la carte, les stickers et les tickets perdaient
+   cinquante-six pixels sur un téléphone de 360 — de quoi couper
+   « SOUVENIRS ». Les blocs n'ont donc plus de marge de côté. */
 
-.carte{position:relative;margin:14px 14px 0;border-radius:16px;overflow:hidden;
-  border:1px solid rgba(242,238,228,.14);min-height:150px;display:flex;flex-direction:column;
-  justify-content:flex-end;padding:16px;background:#0B0F14}
-.carte .fond{position:absolute;inset:0;background-size:cover;background-position:center 28%;opacity:.55}
-.carte .ombre{position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(4,6,10,.15),rgba(4,6,10,.9))}
-.carte .txt{position:relative;z-index:2}
-.carte h1{font-family:var(--banner);font-size:27px;letter-spacing:.05em;margin:0;line-height:1}
-/* **Onze pixels et 0,85 d'opacité, au moins, pour tout ce qui informe.**
+/* **L'or ne s'écrit plus en petit.** C'est l'arbitrage de Gaël du 2 octobre
+   2026 : l'or n'est une encre qu'en grand texte (24 px, ou 18,66 px en gras,
+   où 3:1 suffit) et reste sinon une face — bâche, sticker de prix,
+   récompense prête. Sur cette page, il ne reste donc qu'en face : le nœud
+   « TU Y ES » du chemin, la bâche RÉCUPÉRER, la bâche d'achat d'un
+   emplacement, le cerne des stickers ÉCHARPES et BOOSTERS. */
 
-   Cette page descendait à sept pixels (« NIVEAU » sous le rond) et à 0,22
-   d'opacité effective (« choisir un club », dans une ligne elle-même à 0,4).
-   Au soleil, un téléphone ne montre plus rien sous ces valeurs : la
-   hiérarchie passe par la taille, la graisse et la police, plus par
-   l'effacement. Les chiffres de l'audit sont dans le lot 0 de FAIT MAIN. */
-.carte .club{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:12.5px;opacity:.9}
-.carte .club img{width:22px;height:22px;object-fit:contain}
-.carte .depuis{font-size:11px;opacity:.88;margin-top:6px;letter-spacing:.04em}
-.badge{position:absolute;top:14px;right:14px;z-index:2;font-family:var(--banner);font-size:11px;
-  letter-spacing:.14em;border-radius:5px;padding:4px 9px;border:1px solid var(--projo);color:var(--projo)}
-.badge.warn{border-color:var(--flare);color:var(--flare)}
+/* Ce qui ne se lit qu'au lecteur d'écran : le niveau d'un nœud du chemin,
+   l'unité d'un gain. Rogné et non tronqué — l'audit ne relève que
+   l'ellipse, et ces mots n'en ont pas. */
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;
+  clip-path:inset(50%);white-space:nowrap}
 
-/* Plus de flou d'arrière-plan : `--panneau` est opaque, et un flou recalculé
-   à chaque image coûtait cher sur un téléphone modeste pour un texte qu'il
-   rendait moins lisible au soleil. */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:12px 14px 0}
-.stat{border:1px solid rgba(242,238,228,.11);border-radius:10px;padding:10px 5px;text-align:center;
-  background:var(--panneau)}
-.stat b{display:block;font-family:var(--banner);font-size:19px;color:var(--c,var(--projo));line-height:1}
-/* En Oswald : « SOUVENIRS » à onze pixels ne tient pas dans le quart d'un
-   téléphone de 360 dans la police du système, et il y tient dans la
-   condensée du jeu. */
-.stat span{font-family:var(--banner);font-size:11px;letter-spacing:.08em;opacity:.88;
-  display:block;margin-top:5px}
+/* ---------------------------------------------- la carte de supporter
+
+   L'en-tête n'est plus une photo de tribune générique : c'est la carte de
+   membre du joueur. Un cadre (`.tbf-cadre`, le panneau qui compte, un par
+   écran) avec l'écharpe en tête ; en fond, la plaque du décor de son Fanzzy
+   équipé — celle de la fiche, choisie par `TBF_FOND.plaque` — ou le parpaing
+   nu s'il n'en a pas ; son buste à gauche dans l'anneau d'XP (le même
+   dessin que dans la barre) ; le pseudo peint à la craie ; le club
+   principal ; l'ancienneté au marqueur ; le tampon VÉRIFIÉ ou À VÉRIFIER ;
+   le niveau en sticker sur le coin déchiré.
+
+   **Aucun texte à même l'image.** Le voile qui descend sur la plaque est
+   presque opaque là où l'on écrit (le bas de la carte), et la plaque ne se
+   voit franchement que dans le haut, où rien n'est écrit. Le tampon, posé
+   dans le haut, est un tampon **plein** : sa face de craie le détache de
+   n'importe quelle plaque. */
+.carte{margin:14px 0 0;padding:0;isolation:isolate}
+/* La plaque, sous tout le reste et sous le coin déchiré du cadre : un
+   z-index négatif dans le contexte que la carte ouvre. Elle commence sous
+   l'écharpe (cinq pixels et le trait d'encre), qui reste visible. */
+.carte-fond{position:absolute;z-index:-1;inset:6.5px 0 0;border-radius:0 0 5px 5px;overflow:hidden;
+  background:var(--grain-toile) 0 0/256px 256px repeat,var(--parpaing)}
+.carte-fond.plaque{background:var(--img) 50% 32%/cover no-repeat,var(--parpaing)}
+.carte-fond::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(12,17,24,.08) 0%,rgba(12,17,24,.5) 38%,
+    rgba(12,17,24,.93) 62%,rgba(12,17,24,.97) 100%)}
+.carte-corps{position:relative;display:flex;align-items:flex-end;gap:13px;min-height:186px;
+  padding:26px 16px 17px}
+.carte-buste{--taille:72px;flex:none}
+.carte-txt{flex:1;min-width:0}
+/* Le pseudo : Oswald 27 à la craie, une ombre dure d'encre dessous — la
+   direction le veut peint, pas posé sur une bande. Un pseudo long passe à
+   vingt-deux pixels, un très long à dix-huit, plutôt que de se couper :
+   c'est le seul mot de la carte qu'on doit lire en entier. */
+.carte h1{margin:0;font-family:var(--banner);font-weight:700;font-size:27px;line-height:1.05;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--craie);
+  text-shadow:2px 2px 0 var(--encre);overflow-wrap:anywhere}
+.carte h1.long{font-size:22px}
+.carte h1.tres-long{font-size:18px;letter-spacing:.02em}
+.carte .club{display:flex;align-items:center;gap:7px;margin-top:8px;min-width:0;
+  font-family:var(--banner);font-weight:600;font-size:13px;line-height:1.2;letter-spacing:.06em;
+  text-transform:uppercase}
+.carte .club img{width:20px;height:20px;flex:none;object-fit:contain}
+.carte .club span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.carte .club i{font-style:normal;font-family:var(--ui);font-weight:400;text-transform:none;letter-spacing:.02em}
+/* « dans la tribune depuis » au marqueur — quatre mots, aucun chiffre,
+   seize pixels : les règles de l'amendement 6. La date, qui est un nombre,
+   reste en Oswald à côté. */
+.carte .depuis{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 6px;margin-top:7px;
+  font-family:var(--banner);font-weight:600;font-size:13px;letter-spacing:.04em}
+.carte .depuis .tbf-marqueur{font-size:16px;line-height:20px;letter-spacing:0}
+.carte .depuis:empty{display:none}
+.carte-tampon{position:absolute;z-index:3;top:18px;right:14px;--rot:-7deg}
+/* Le niveau, collé sur le coin déchiré du cadre : il le chevauche. */
+.carte-niv{position:absolute;z-index:4;right:-7px;bottom:-9px;--taille:34px;--rot:6deg;font-size:17px}
+
+/* -------------------------------------------------------- les stats
+
+   Quatre stickers qu'on touche (`.tbf-stat`), chacun mène où sa valeur se
+   gagne ou se lit : les écharpes à la boutique, les boosters au kiosque, les
+   vécus et les souvenirs au carnet. Le ton de la destination est sur le
+   cerne. La page ne fait que la grille. */
+/* Huit pixels d'écart : à 360 px, chaque sticker garde ses soixante-dix-sept
+   pixels, ce qu'il faut à « SOUVENIRS » et « ÉCHARPES » pour s'écrire
+   entiers ; leur bord et leur penché débordent dans l'écart et dans la
+   gouttière de la colonne. */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:22px 0 2px}
+
+/* Le bonus du jour, sous les stats. La brique (`.tbf-bonus`) fait tout. */
+.bonus{margin:20px 0 0}
+.bonus:empty{display:none}
 
 /* Le titre de rubrique est cousu (`.tbf-cousu`, dans ui.css) : il ne reste
-   ici que sa place. */
-h2{margin:22px 16px 9px}
-.bloc{margin:0 14px;border:1px solid rgba(242,238,228,.11);border-radius:12px;overflow:hidden;
-  background:var(--panneau)}
+   ici que sa place. La précision (l'XP de MON NIVEAU) passe **après** le
+   fil, au bout de la ligne, comme sur la maquette. */
+h2{margin:26px 2px 10px}
+.tbf-cousu>i{order:1;font-style:normal;font-weight:600;font-size:12px;letter-spacing:.04em;white-space:nowrap}
+.tbf-cousu>i:empty{display:none}
+.bloc{overflow:hidden}
 .ligne{display:flex;align-items:center;gap:11px;padding:13px 14px;
   border-top:1px solid rgba(242,238,228,.07);font-size:13.5px}
 .ligne:first-child{border-top:0}
@@ -61,233 +125,161 @@ h2{margin:22px 16px 9px}
 /* **C'est la valeur qui cède, pas le libellé.**
 
    L'audit a mesuré « Équiper mes Fanzzy » tronqué de cinquante-deux pixels à
-   360 px : il restait « Équiper mes… ». Le libellé portait seul l'ellipse,
-   et sa valeur — « deux pièces chacun, dans le deck » — gardait toute sa
-   place. C'est l'inverse de ce qu'il faut : le libellé dit **où l'on va**,
-   la valeur n'est qu'un renseignement.
-
-   `flex-shrink:0` sur le libellé, l'ellipse passée à la valeur. Et sous
-   440 px la ligne se replie en deux étages plutôt que de serrer les deux :
-   aucun des deux n'a assez de place sur un téléphone étroit, et tronquer les
-   deux un peu est pire que d'en descendre un. */
+   360 px : il restait « Équiper mes… ». Le libellé dit **où l'on va**, la
+   valeur n'est qu'un renseignement : `flex-shrink:0` sur le libellé,
+   l'ellipse passée à la valeur. Et sous 440 px la ligne se replie en deux
+   étages plutôt que de serrer les deux. */
 .ligne .n{flex:1 0 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap}
-.ligne .v{opacity:.88;font-size:12.5px;min-width:0;overflow:hidden;
+/* La valeur à la craie pleine : à 88 %, elle tombait sous 4,5:1 au soleil
+   sur le panneau. Elle reste en retrait par son corps, plus petit. */
+.ligne .v{font-size:12.5px;min-width:0;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:440px){
   .ligne{flex-wrap:wrap;row-gap:2px}
   .ligne .n{flex:1 1 100%}
   .ligne .v{flex:1 1 auto}
+  /* Un club suivi ne se replie pas : son blason, son nom, PRINCIPAL et la
+     croix tiennent sur une ligne, et le nom cède — replié, le blason
+     restait seul sur la sienne et la croix tombait sous le nom. */
+  .ligne.suivi{flex-wrap:nowrap}
+  .ligne.suivi .n{flex:1 1 auto}
 }
-.ligne .main{font-family:var(--banner);font-size:11px;letter-spacing:.12em;color:var(--projo);
-  border:1px solid rgba(245,195,59,.45);border-radius:4px;padding:2px 6px}
-/* **Quarante-quatre pixels, parce que c'est la largeur d'un doigt.**
-
-   C'est la recommandation des deux plateformes, et l'audit d'interface la
-   mesure sur tout ce qui se touche. Deux éléments de cette page y
-   échouaient : « choisir un club » (80×16) et le bouton d'achat
-   d'emplacement — auxquels s'ajoute « Supprimer définitivement mon compte »,
-   haut de vingt-sept pixels.
-
-   On ne grossit pas le texte — ce serait changer la page — on élargit la
-   **zone**, par du remplissage vertical. Un lien de seize pixels de haut
-   reste un lien de seize pixels à l'œil ; il devient seulement attrapable.
-
-   Les sélecteurs portent `.ligne` : une première version écrivait `a.v`, que
-   `.ligne .v` battait en spécificité — la règle existait, ne s'appliquait
-   pas, et l'audit continuait de mesurer vingt pixels. Deux règles qui se
-   contredisent dans le même fichier sont plus difficiles à voir qu'une règle
-   absente.
-
-   Le bouton d'achat est depuis devenu une plaque, qui porte sa propre
-   hauteur : la règle ne vise plus que le lien. */
-.ligne a.v{display:inline-flex;align-items:center;
-  min-height:44px;margin:-12px 0}
+/* « PRINCIPAL » : la craie en gras dans un cerne d'or plein. */
+.ligne .main{font-family:var(--banner);font-size:11px;letter-spacing:.12em;color:var(--craie);
+  font-weight:700;border:1px solid var(--projo);border-radius:4px;padding:2px 6px}
+/* **Quarante-quatre pixels, parce que c'est la largeur d'un doigt.** On ne
+   grossit pas le texte, on élargit la **zone**, par du remplissage
+   vertical : « choisir un club », « changer » restent des liens de seize
+   pixels à l'œil et deviennent attrapables. À la craie grasse, plus en or. */
+.ligne a.v{display:inline-flex;align-items:center;min-height:44px;margin:-12px 0;
+  color:var(--craie);opacity:1;font-weight:700}
 .btn.danger,button.link{min-height:44px}
 /* La croix qui retire un club : un bouton-icône de quarante-quatre pixels,
-   pas une plaque. La règle visait « .ligne button » tout court, et battait
-   donc en spécificité toute plaque posée dans une ligne — l'achat
-   d'emplacement y perdait son fond. Elle ne vise plus que la croix. */
-.ligne button[data-unfollow]{background:none;border:0;color:inherit;opacity:.7;cursor:pointer;
+   pas une plaque. Elle ne vise que la croix : une règle plus large battait
+   en spécificité toute plaque posée dans une ligne. */
+.ligne button[data-unfollow]{background:none;border:0;color:inherit;opacity:.88;cursor:pointer;
   font-size:17px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;
   justify-content:center}
 /* L'achat d'un emplacement est une plaque d'or (acheter = or), compacte pour
-   tenir dans sa ligne. Sous 440 px la ligne se replie, et la plaque passe
-   sous son libellé comme le fait déjà une valeur. */
+   tenir dans sa ligne ; sous 440 px elle passe sous son libellé. */
 .ligne #buyslot{flex:none;padding:9px 14px;min-height:44px;font-size:13px}
-/* L'emplacement libre se dit **en creux** par un trait tireté, et non plus
-   par une ligne entière à 40 % d'opacité : le lien qu'elle porte y tombait
-   à 0,22, c'est-à-dire invisible au soleil. */
+/* L'emplacement libre se dit **en creux** par un trait tireté, et non par
+   une ligne à 40 % d'opacité : le lien qu'elle porte y tombait à 0,22. */
 .ligne.libre{border-top-style:dashed}
-.ligne.libre .n{font-style:italic;opacity:.88}
-.vide{padding:18px 14px;font-size:12.5px;opacity:.88;text-align:center;line-height:1.6}
-.vide a{color:var(--projo)}
-
+.ligne.libre .n{font-style:italic}
+.vide{padding:18px 14px;font-size:12.5px;text-align:center;line-height:1.6}
+.vide a{color:var(--craie);font-weight:700}
 
 /* --------------------------------------------------- le chemin du niveau
 
    Un joueur ne voyait de son niveau qu'une pastille sur l'accueil : un chiffre,
-   sans jauge, sans suite, sans rien qui dise à quoi il sert. Monter d'un niveau
-   n'était donc jamais attendu, et le palier qui ouvre un troisième Fanzzy au
-   deck arrivait comme une surprise chez ceux qui le remarquaient.
+   sans jauge, sans suite, sans rien qui dise à quoi il sert. Le chemin montre
+   **où l'on est et ce qui vient** : une corde à travers un ticket kraft, un
+   nœud d'écharpe par palier (`.tbf-chemin`) — le passé coché, le courant en
+   bâche or « TU Y ES », les suivants en pointillé avec ce qu'ils ouvrent.
+   L'XP s'écrit une fois, au bout du titre de la rubrique. */
+.niv-ticket{padding:14px 8px 10px}
 
-   Le chemin montre **où l'on est et ce qui vient** : la marche en cours, sa
-   jauge, puis les suivantes avec ce que chacune ouvre. */
-.niv-tete{display:flex;align-items:center;gap:12px;padding:13px 14px 10px}
-.niv-rond{flex:none;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;
-  font-family:var(--banner);font-size:22px;line-height:1;color:var(--projo);
-  background:radial-gradient(circle,rgba(245,195,59,.18),transparent 70%);
-  box-shadow:inset 0 0 0 2px var(--projo),0 0 22px -6px rgba(245,195,59,.7)}
-/* « NIVEAU » était à sept pixels sous le chiffre. À onze, il ne tient dans la
-   corde du rond que si le rond gagne six pixels et que l'espacement des
-   capitales se resserre. */
-.niv-rond small{display:block;font-size:11px;letter-spacing:.04em;opacity:.88;
-  color:var(--craie);margin-top:1px}
-.niv-txt{flex:1;min-width:0}
-.niv-txt b{display:block;font-family:var(--banner);font-size:14px;letter-spacing:.04em}
-.niv-txt span{display:block;font-size:12px;opacity:.88;margin-top:3px}
-/* Dix pixels : c'est la jauge de l'écran, elle doit se voir d'un coup d'œil
-   et se lire en plein jour. Elle en faisait huit. */
-.niv-jauge{height:10px;border-radius:5px;background:rgba(242,238,228,.1);overflow:hidden;
-  margin:7px 14px 0;position:relative}
-.niv-jauge i{display:block;height:100%;border-radius:5px;
-  background:linear-gradient(90deg,#B98A14,var(--projo));
-  /* La jauge **pousse** au chargement : c'est le seul moment où l'on voit
-     l'avancée bouger, et un trait déjà posé ne se lit pas comme un progrès. */
-  transition:width .9s cubic-bezier(.2,.9,.25,1)}
-.niv-jauge::after{content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.35) 50%,transparent 58%);
-  background-size:260% 100%;animation:jauge 3.4s ease-in-out infinite}
-@keyframes jauge{0%{background-position:150% 0}60%,100%{background-position:-60% 0}}
-/* Moins de mouvement, demandé au système ou dans le tiroir (le mode calme,
-   contrat C4 — un sélecteur d'attribut n'entre pas dans une requête @media,
-   d'où le double, règle pour règle) : le reflet qui balaie la jauge se tait
-   et la jauge se pose sans pousser. Sa longueur, qui est l'information,
-   reste. */
-@media (prefers-reduced-motion:reduce){
-  .niv-jauge::after{animation:none;opacity:0}
-  .niv-jauge i{transition:none}
-}
-html[data-calme~="animations"] .niv-jauge::after{animation:none;opacity:0}
-html[data-calme~="animations"] .niv-jauge i{transition:none}
+/* ---------------------------------------------------------- ma saison
 
-/* Les marches. Elles défilent horizontalement : le chemin continue au-delà de
-   l'écran, et c'est exactement ce qu'on veut faire sentir. */
-.marches{display:flex;gap:8px;overflow-x:auto;padding:12px 14px 14px;scrollbar-width:none}
-.marches::-webkit-scrollbar{display:none}
-.marche{flex:none;width:118px;border-radius:11px;padding:10px;position:relative;
-  border:1px solid rgba(242,238,228,.1);background:rgba(0,0,0,.24)}
-.marche.faite{opacity:.42}
-.marche.ici{border-color:var(--projo);background:rgba(245,195,59,.08)}
-.marche .r{font-family:var(--banner);font-size:11px;letter-spacing:.12em;opacity:.88}
-.marche.ici .r{color:var(--projo);opacity:1}
-.marche .n{font-family:var(--banner);font-size:17px;line-height:1.1;margin-top:3px}
-.marche ul{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
-.marche li{font-size:11px;opacity:.9;line-height:1.35;padding-left:11px;position:relative}
-.marche li::before{content:"";position:absolute;left:0;top:6px;width:5px;height:5px;
-  border-radius:50%;background:var(--projo);opacity:.7}
-/* Un palier qui ouvre vraiment quelque chose se distingue d'une marche
-   ordinaire : sinon le chemin n'est qu'une suite de chiffres. */
-.marche.cle{box-shadow:0 0 0 1px rgba(245,195,59,.4),0 0 22px -8px rgba(245,195,59,.8)}
+   La division de la saison (le contrat serveur, § 5.2), si le serveur la
+   sert : l'insigne d'écharpe et son nom en clair, la place dans la liste
+   SAISON et ce qu'elle a fait depuis hier, la division suivante, le geste
+   « porter l'insigne » d'une division atteinte, et les titres gagnés. Un
+   panneau calme : on le lit, il ne se touche que par sa bâche. */
+.saison{padding:14px 14px 12px}
+.saison-tete{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px}
+.saison-tete .tbf-division{margin-right:2px}
+.saison-div{font-family:var(--banner);font-weight:700;font-size:18px;letter-spacing:.06em;line-height:1.1}
+.saison-rang{margin-left:auto;display:flex;align-items:center;gap:8px;
+  font-family:var(--banner);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.saison-rang sup{font-size:11px;line-height:0;vertical-align:6px}
+.saison-rang small{font-weight:600;font-size:12px;letter-spacing:.03em}
+.saison-nom{margin-top:9px;font-family:var(--banner);font-weight:600;font-size:12px;letter-spacing:.1em;
+  text-transform:uppercase}
+.saison-suite{display:flex;align-items:center;gap:12px;margin-top:12px;font-size:12px;line-height:1.3}
+.saison-suite>span:first-child{flex:none;font-family:var(--banner);font-weight:600;letter-spacing:.04em}
+.saison-suite .tbf-jauge{flex:1;min-width:48px}
+.saison .porter{width:100%;margin:14px 0 5px}
+.saison-titres{display:flex;flex-wrap:wrap;gap:12px 14px;margin-top:14px;padding:4px 4px 2px}
 
 /* ------------------------------------------------------- le parcours
 
-   Ce qu'un joueur a joué, et ce que ça lui a rapporté. Le profil listait ce
-   qu'il **possède** — des clubs, un Fanzzy, de l'équipement — et rien de ce
-   qu'il a **fait** : une carte de membre sans carnet de bord.
+   Ce qu'un joueur a joué, et ce que ça lui a rapporté. Deux blocs : le
+   compte par sorte de partie, sur un panneau calme, puis la feuille de
+   match — un ticket kraft déchiré par partie (`.tbf-partie`), empilés.
 
-   Deux blocs : le compte par sorte de partie, puis la liste. Le compte est une
-   grille de deux colonnes plutôt qu'un tableau — il faut qu'elle tienne sur un
-   téléphone, et un tableau à six colonnes n'y tient pas. */
+   Le compte est une grille de deux colonnes plutôt qu'un tableau : il faut
+   qu'elle tienne sur un téléphone. */
+.serie{display:flex;flex-wrap:wrap;gap:12px 14px;margin:0 6px 14px}
+.serie:empty{display:none}
 .sortes{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;padding:12px}
-.sorte{border:1px solid rgba(242,238,228,.1);border-radius:10px;padding:10px 11px;
-  background:rgba(0,0,0,.22)}
-.sorte .q{font-family:var(--banner);font-size:11px;letter-spacing:.08em;
-  color:var(--c,var(--projo))}
+/* `--c` est le ton de la sorte de partie : l'or du virage, le violet du
+   classé, le gris de l'entraînement. **Il passe du titre au bord.** Un
+   titre de onze pixels en violet tenait 4:1 sur le panneau, et 2,1 au
+   soleil ; l'or n'y avait déjà plus droit. Le ton se lit maintenant dans le
+   filet de gauche, le même que le bandeau de chaque feuille de match, et le
+   titre est à la craie pleine. */
+.sorte{border:1px solid rgba(242,238,228,.1);border-left:3px solid var(--c,var(--gris));
+  border-radius:10px;padding:10px 11px;background:rgba(0,0,0,.22)}
+.sorte .q{font-family:var(--banner);font-size:11px;letter-spacing:.08em;font-weight:700;color:var(--craie)}
 .sorte .n{font-family:var(--banner);font-size:20px;line-height:1.1;margin-top:5px}
-.sorte .n small{font-family:var(--ui);font-size:11px;opacity:.88;letter-spacing:.06em}
-.sorte .d{font-size:11px;opacity:.88;margin-top:5px;line-height:1.45}
-/* La ferveur : c'est le nombre que le joueur vient chercher, il est donc à part
-   et il ne se confond pas avec un compte de parties. */
-.sorte .f{font-family:var(--banner);font-size:11.5px;color:var(--projo);margin-top:6px}
+/* Le texte secondaire à la craie pleine : à 88 %, il tombait à 4,1:1 au
+   soleil sur le panneau. La hiérarchie tient au corps et à la police. */
+.sorte .n small{font-family:var(--ui);font-size:11px;letter-spacing:.06em}
+.sorte .d{font-size:11px;margin-top:5px;line-height:1.45}
+.sorte .f{font-family:var(--banner);font-size:11.5px;color:var(--craie);font-weight:700;
+  margin-top:6px}
+.parcours{display:flex;flex-direction:column;gap:11px;margin:12px 0 0}
+/* « VOIR PLUS » est une bâche de parpaing, comme tout ce qui se touche ;
+   « UN INSTANT… » passe par le `disabled` de la plaque, que ui.css éteint. */
+.encore{width:100%;margin:14px 0 5px}
 
-.parcours{display:flex;flex-direction:column}
-.part{display:flex;align-items:center;gap:10px;padding:11px 13px;
-  border-top:1px solid rgba(242,238,228,.07)}
-.part:first-child{border-top:0}
-/* La pastille dit d'un coup lequel des deux jeux c'était : or pour le virage,
-   violet pour le duel — les couleurs que ces deux écrans portent déjà. */
-.part .jeu{flex:none;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;
-  font-family:var(--banner);font-size:11px;letter-spacing:.02em;
-  border:1px solid var(--c,var(--projo));color:var(--c,var(--projo))}
-.part .qui{flex:1;min-width:0}
-.part .qui b{display:block;font-size:12.5px;font-weight:400;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.part .qui span{display:block;font-size:11px;opacity:.88;margin-top:3px;letter-spacing:.02em}
-.part .gain{flex:none;text-align:right}
-.part .gain b{display:block;font-family:var(--banner);font-size:14px;color:var(--projo);line-height:1}
-.part .gain span{display:block;font-family:var(--banner);font-size:11px;opacity:.88;
-  letter-spacing:.06em;margin-top:3px}
-/* L'issue d'un duel se lit à la couleur avant de se lire au mot. */
-.part .issue{font-family:var(--banner);font-size:11px;letter-spacing:.08em;
-  border-radius:4px;padding:2px 6px;border:1px solid currentColor}
-.part .issue.win{color:var(--vert)}
-.part .issue.loss{color:var(--flare)}
-.part .issue.draw{color:var(--gris,#C2CAD6)}
-/* « VOIR PLUS » est une plaque, comme tout ce qui se touche : elle ne garde
-   ici que sa place, en retrait du bord du bloc pour que son cerne ne soit pas
-   rogné par l'`overflow:hidden` du panneau. L'état « UN INSTANT… » passe par
-   le `disabled` de la plaque, que ui.css éteint. */
-.encore{width:calc(100% - 24px);margin:10px 12px 12px}
+/* --------------------------------------------- le Fanzzy, le sac, le deck
 
-/* **Les deux emplacements ont disparu, et le sac reste.**
+   Le Fanzzy équipé et sa bâche bleue CHANGER (posséder, c'est le bleu) ; le
+   sac, chaque pièce sur son sticker (`.tbf-objet`, cinquante-six pixels) ;
+   le deck en bâche bleue — c'est là qu'on équipe, deux pièces par Fanzzy.
+   L'équipement qui compte est attaché à chaque Fanzzy du deck, et c'est
+   celui-là que le Virage et le duel lisent : cette page dit ce qu'on
+   possède, le deck dit ce qu'on porte. */
+.ligne .changer{flex:none;margin:0 0 5px;padding:9px 14px;min-height:44px;font-size:13px}
+.cri{display:block;margin-top:3px;font-size:11.5px;white-space:normal}
+.sac{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:16px 10px;padding:16px 12px 14px}
+.piece{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+.piece .tbf-objet{--taille:56px}
+.piece small{max-width:100%;font-family:var(--banner);font-weight:600;font-size:11px;line-height:1.2;
+  letter-spacing:.04em;text-transform:uppercase;text-align:center;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.piece>.tbf-sticker{position:absolute;z-index:2;top:-6px;right:calc(50% - 38px);--taille:22px;font-size:11px}
+.sac-vide{grid-column:1/-1;font-size:12px;padding:2px 4px}
+.deck{margin:16px 0 5px;justify-content:space-between}
 
-   Il y avait ici deux emplacements d'équipement, avec de quoi y poser une
-   pièce. Ils ne décidaient de rien. L'équipement qui compte est attaché
-   **à chaque Fanzzy du deck** — deux pièces chacun — et c'est celui-là que
-   le Virage et le duel lisent, tous deux par `decks.loadout`. Les deux
-   emplacements de cette page vivaient dans `user_stuff.slot`, que personne
-   d'autre que cette page ne relisait.
+/* -------------------------------------------------------- les réglages
 
-   Un écran qui laisse équiper sans que ça change quoi que ce soit est pire
-   qu'un écran vide : le joueur croit son choix fait, et il ne l'est pas. Le
-   sac, lui, reste — dire ce qu’on possède est le travail de cette page.
-   Équiper est le travail du deck, et la ligne du dessous y mène. */
-.sac{display:flex;flex-wrap:wrap;gap:6px;padding:12px}
-.obj{border:1px solid rgba(242,238,228,.14);border-radius:8px;padding:7px 10px;font-size:11px;
-  background:rgba(0,0,0,.3)}
-/* La vignette du sac : petite, juste de quoi reconnaître la forme avant
-   d'avoir lu le nom. */
-.obj{display:inline-flex;align-items:center;gap:6px}
-.obj .vignette{width:20px;height:20px;object-fit:contain;flex:none;
-  filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+   Les clubs suivis, la langue, l'adresse, la déconnexion et la suppression,
+   rangés derrière une seule bâche RÉGLAGES (`details.tbf-reglages`), en bas
+   de la page : le profil se lit d'abord, on règle ensuite. Les
+   identifiants que lisent les scripts et les suites ne changent pas, seul
+   leur conteneur. */
+.reglages{margin:30px 0 0}
+.tbf-reglages-corps h3{margin:20px 0 8px}
+.tbf-reglages-corps h3:first-child{margin-top:2px}
+.tbf-reglages-corps .ligne{padding:12px 2px}
 
-/* Quarante-quatre pixels de haut : ce sont quatre cibles côte à côte sur un
-   téléphone, et elles faisaient vingt-sept. Changer de langue par erreur remet
-   l'écran dans une langue qu'on ne lit pas — la faute la plus pénible à
-   défaire, puisque le bouton pour revenir est lui aussi traduit.
+/* La langue : un choix exclusif, donc un rail d'onglets au ton craie du
+   profil ; les quarante-quatre pixels viennent de l'onglet commun. */
+.langues{margin:4px 0}
 
-   C'est un choix exclusif, donc un rail d'onglets (`.tbf-onglets`, au ton
-   craie du profil) : la langue choisie est un objet, les autres des trous, et
-   les quarante-quatre pixels viennent de l'onglet commun. Il ne reste ici que
-   la marge qui l'écarte du bord du bloc. */
-.langues{margin:12px}
-
-.actions{padding:22px 14px 30px;display:flex;flex-direction:column;gap:9px}
+.actions{padding:20px 0 2px;display:flex;flex-direction:column;gap:9px}
 .btn{padding:14px;font-size:14px;letter-spacing:.08em;width:100%}
 /* **Discret ne veut pas dire illisible.** Ce lien doit se trouver quand on le
-   cherche et jamais se cliquer par accident : il est donc petit, souligné, et
-   tout en bas. Il était aussi à 60 % d'opacité, ce qui le posait à 2,3:1 sur le
-   fond — sous le seuil, et sur le seul écran où se tromper est irréversible.
-
-   La retenue vient maintenant de la taille et de la place, pas de l'effacement.
-   Le rouge est éclairci pour tenir les 4,5:1 (il est à 7:1) sans devenir un
-   bouton qui appelle. */
+   cherche et jamais se cliquer par accident : il est petit, souligné, et tout
+   en bas. La retenue vient de la taille et de la place, pas de l'effacement ;
+   le rouge éclairci tient 7:1 sans devenir un bouton qui appelle. */
 .btn.danger{border:0;background:none;color:#E8756A;font-size:11.5px;letter-spacing:.04em;
   font-family:var(--ui);text-decoration:underline;padding:6px}
-.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#171C23;z-index:80;
-  border:1px solid rgba(242,238,228,.2);border-radius:8px;padding:11px 16px;font-size:12.5px;display:none}
-.toast.on{display:block}
 .spin{width:24px;height:24px;border:3px solid rgba(242,238,228,.18);border-top-color:var(--projo);
   border-radius:50%;animation:sp 1s linear infinite;margin:60px auto}
 @keyframes sp{to{transform:rotate(1turn)}}
@@ -328,88 +320,96 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
 <body>
 <main id="app"><div class="spin" id="spin"></div><div id="page" style="display:none">
 
-  <div class="carte" id="carte">
-    <div class="fond" id="fond"></div><div class="ombre"></div>
-    <div class="badge" id="badge" style="display:none"></div>
-    <div class="txt">
-      <!-- Vide, jamais un tiret : si le serveur ne répond pas, la carte
-           s'affiche sans pseudo plutôt qu'avec un « — » qui a l'air d'en être
-           un. -->
-      <h1 id="pseudo"></h1>
-      <div class="club" id="clubline"></div>
-      <div class="depuis" id="depuis"></div>
+  <section class="carte tbf-cadre" id="carte" data-echarpe aria-label="Ma carte de supporter">
+    <div class="carte-fond" id="fond" aria-hidden="true"></div>
+    <div class="carte-corps">
+      <a class="tbf-avatar carte-buste" id="buste" href="/fanzzy" aria-label="Mon Fanzzy">
+        <span class="tbf-anneau" style="--p:0%"><span class="tbf-avatar-buste"></span></span>
+      </a>
+      <div class="carte-txt">
+        <!-- Vide, jamais un tiret : si le serveur ne répond pas, la carte
+             s'affiche sans pseudo plutôt qu'avec un « — » qui a l'air d'en être
+             un. -->
+        <h1 id="pseudo"></h1>
+        <div class="club" id="clubline"></div>
+        <div class="depuis" id="depuis"></div>
+      </div>
     </div>
-  </div>
+    <span class="tbf-tampon tbf-tampon--plein carte-tampon" id="badge" hidden></span>
+    <b class="tbf-sticker tbf-sticker--rond carte-niv" id="nivCoin" role="img" hidden></b>
+  </section>
 
   <div class="stats" id="stats"></div>
 
-  <h2 class="tbf-cousu">MES CLUBS</h2>
-  <div class="bloc" id="clubs"></div>
+  <div class="bonus" id="bonus"></div>
 
-  <h2 class="tbf-cousu">MON NIVEAU</h2>
-  <div class="bloc" id="niveau">
-    <div class="vide">chargement…</div>
-  </div>
+  <h2 class="tbf-cousu">MON NIVEAU<i id="nivXp"></i></h2>
+  <div id="niveau"><div class="pan bloc"><div class="vide">chargement…</div></div></div>
+
+  <h2 class="tbf-cousu" id="saisonTitre" hidden>MA SAISON</h2>
+  <div class="pan bloc saison" id="saison" hidden></div>
 
   <h2 class="tbf-cousu">MON PARCOURS</h2>
-  <div class="bloc" id="parcours">
-    <div class="vide">chargement…</div>
-  </div>
+  <div class="serie" id="serie"></div>
+  <div id="parcours"><div class="pan bloc"><div class="vide">chargement…</div></div></div>
 
   <h2 class="tbf-cousu">MON FANZZY</h2>
-  <div class="bloc" id="fanzzy"></div>
+  <div class="pan bloc" id="fanzzy"></div>
 
-  <!-- Ce qu’on possède, et où l’on s’en sert. Les deux emplacements qui
-       étaient ici ne décidaient de rien : voir la note sur `.sac` plus haut. -->
+  <!-- Ce qu’on possède, et où l’on s’en sert : le sac, puis le deck, où
+       chaque Fanzzy porte ses deux pièces. -->
   <h2 class="tbf-cousu">ÉQUIPEMENT</h2>
-  <div class="bloc">
-    <div class="sac" id="sac"></div>
-    <a class="ligne" href="/deck" style="color:inherit;text-decoration:none">
-      <span class="n">Équiper mes Fanzzy</span>
-      <span class="v">deux pièces chacun, dans le deck</span>
-      <span style="opacity:.3;font-size:17px">›</span></a>
-  </div>
+  <div class="pan bloc"><div class="sac" id="sac"></div></div>
+  <a class="tbf-plaque tbf-bloc deck" data-ton="bleu" href="/deck">
+    <span class="tbf-lib2"><small>ÉQUIPER MES FANZZY, MES DIX CARTES</small><b>MON DECK</b></span>
+    <span aria-hidden="true">›</span></a>
 
-  <h2 class="tbf-cousu">DUEL</h2>
-  <div class="bloc">
-    <a class="ligne" href="/deck" style="color:inherit;text-decoration:none">
-      <span class="n">Mon deck</span>
-      <span class="v">trois Fanzzy, dix cartes</span>
-      <span style="opacity:.3;font-size:17px">›</span></a>
-  </div>
-
-  <h2 class="tbf-cousu">LANGUE</h2>
-  <div class="bloc"><div class="langues tbf-onglets" data-ton="craie" id="langues"></div></div>
-
-  <h2 class="tbf-cousu">COMPTE</h2>
-  <div class="bloc">
-    <div class="ligne"><span class="n">Adresse</span><span class="v" id="email"></span></div>
-    <div class="ligne"><span class="n">Adresse vérifiée</span><span class="v" id="verif"></span></div>
-  </div>
-
-  <div class="actions">
-    <button class="btn tbf-plaque" id="resend" style="display:none">RENVOYER LE MAIL DE VÉRIFICATION</button>
-    <button class="btn tbf-plaque" data-ton="flare" id="logout">SE DÉCONNECTER</button>
-    <button class="btn danger" id="supprimer">Supprimer définitivement mon compte</button>
-  </div>
+  <details class="tbf-reglages reglages" id="reglages">
+    <summary class="tbf-plaque tbf-bloc">RÉGLAGES</summary>
+    <div class="tbf-reglages-corps">
+      <h3 class="tbf-cousu">MES CLUBS</h3>
+      <div id="clubs"></div>
+      <h3 class="tbf-cousu">LANGUE</h3>
+      <div class="langues tbf-onglets" data-ton="craie" id="langues"></div>
+      <h3 class="tbf-cousu">COMPTE</h3>
+      <div class="ligne"><span class="n">Adresse</span><span class="v" id="email"></span></div>
+      <div class="ligne"><span class="n">Adresse vérifiée</span><span class="v" id="verif"></span></div>
+      <div class="actions">
+        <button class="btn tbf-plaque" id="resend" style="display:none">RENVOYER LE MAIL DE VÉRIFICATION</button>
+        <!-- Le parpaing et non plus le rouge : le rouge de l'action ne sert
+             plus à sortir. La déconnexion se demande toujours. -->
+        <button class="btn tbf-plaque" id="logout">SE DÉCONNECTER</button>
+        <button class="btn danger" id="supprimer">Supprimer définitivement mon compte</button>
+      </div>
+    </div>
+  </details>
 </div></main>
-<div class="toast" id="toast"></div>
-<!-- Sans « defer » : le script de la page lit TBF_STUFF dès son premier rendu. -->
+<!-- Sans « defer » : le script de la page lit TBF_STUFF, FZART et TBF_FOND
+     dès son premier rendu. Les états (`fanzzy-etats.js`) donnent au buste et
+     à la fête de niveau le visage exact — âge, tenue — du Fanzzy équipé. -->
 <script src="/stuff-art.js"></script>
+<script src="/fanzzy-art.js"></script>
+<script src="/fanzzy-etats.js"></script>
+<script src="/fanzzy-fond.js"></script>
 <script src="/fx.js" defer></script>
+<script src="/niveau-fete.js" defer></script>
 <script src="/menu.js" defer></script>
 <script src="/nav.js" defer></script>
 
 <script>
 /* =======================================================================
    Profil.
-   Tout ce qui concerne le joueur au même endroit : son identité, ses clubs,
-   son Fanzzy, son équipement, sa langue — et la sortie.
+   Tout ce qui concerne le joueur au même endroit : sa carte de supporter,
+   ce qu'il possède, son niveau, sa saison, ce qu'il a joué — et, rangés
+   derrière une bâche, ses clubs, sa langue, son compte.
    ======================================================================= */
 
 const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
-  (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+const esc = (s) => String(s ?? '').replace(/[<>&"']/g,
+  (c) => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;' }[c]));
+/** Un nombre à la française, l'espace fine des milliers comprise. */
+const nombre = (n) => Number(n).toLocaleString('fr');
+const JETON = '/img/gains/echarpes.webp';
 
 async function api(base, path, body, method) {
   const r = await fetch(base + path, {
@@ -422,8 +422,7 @@ async function api(base, path, body, method) {
   /* Le corps du refus se lit quel que soit le code — c'est lui qui porte
      `error`. Mais une réponse qui n'est **pas du JSON** rendait un objet vide,
      et le profil affichait alors des compteurs à zéro et des listes vides au
-     lieu de dire que le serveur ne répond pas. Voir `cartes.js`, où le même
-     défaut laissait la fiche d'un Fanzzy entièrement blanche. */
+     lieu de dire que le serveur ne répond pas. */
   const j = await r.json().catch(() => null);
   if (!j) {
     console.warn(`[profil] ${base}${path} : ${r.status}, et ce n’est pas du JSON`);
@@ -435,106 +434,634 @@ async function api(base, path, body, method) {
 const me = (p, b, m) => api('/api/me', p, b, m);
 const auth = (p, b, m) => api('/api/auth', p, b, m);
 
-function toast(t) {
-  const el = $('toast'); el.textContent = t; el.className = 'toast on';
-  clearTimeout(el._t); el._t = setTimeout(() => { el.className = 'toast'; }, 2600);
+/**
+ * Une donnée **facultative** : `null` pour toute réponse qui n'en est pas une.
+ *
+ * Les routes du contrat serveur (`/api/rank/moi`, `/api/quotidien`) sont
+ * écrites en même temps que cette page, et pendant un déploiement l'ancien
+ * serveur peut servir la nouvelle page une minute (R2) : un 404, un 503, une
+ * coupure ou un refus valent un bloc absent — ni erreur, ni zéro, ni ligne
+ * en console, et surtout pas le renvoi vers la connexion que fait `api`.
+ */
+async function lire(url) {
+  try {
+    const r = await fetch(url, { credentials: 'same-origin' });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j && typeof j === 'object' && !j.error ? j : null;
+  } catch { return null; }
+}
+
+/** Une réclamation (R6) : la réponse, ou une exception qui porte son code. */
+async function envoyer(url, corps) {
+  const r = await fetch(url, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin', body: JSON.stringify(corps ?? {}),
+  });
+  if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
+  const j = await r.json().catch(() => null);
+  if (!r.ok || !j || j.error) {
+    throw Object.assign(new Error(j?.error ?? `http ${r.status}`), { code: j?.error ?? `http.${r.status}` });
+  }
+  return j;
+}
+
+/* ------------------------------------------------- les toasts, les gains
+
+   La pile commune (`.tbf-pile`, sur body, une seule) : une information est
+   un toast de parpaing, une erreur un toast rouge qui dit non de la tête, et
+   **un gain arrive sur un ticket kraft** qui monte, dont le jeton vole
+   jusqu'au compteur. */
+function pile() {
+  let p = document.querySelector('.tbf-pile');
+  if (!p) {
+    p = document.createElement('div');
+    p.className = 'tbf-pile';
+    document.body.append(p);
+  }
+  return p;
+}
+function dire(texte, { erreur = false } = {}) {
+  const t = document.createElement('div');
+  t.className = erreur ? 'tbf-toast tbf-toast--erreur' : 'tbf-toast';
+  t.setAttribute('role', erreur ? 'alert' : 'status');
+  t.textContent = texte;
+  pile().append(t);
+  setTimeout(() => t.remove(), 2800);
+}
+
+/**
+ * Le ticket d'un gain versé, et le vol de son jeton jusqu'au compteur.
+ *
+ * Un gain s'écrit avec son signe et **seulement ses valeurs non nulles**
+ * (R5) : jamais « +0 ». Le premier enfant est le jeton, d'où part le vol.
+ */
+function ticketGain(gain, origine) {
+  const g = gain ?? {};
+  const n = (k) => Math.max(0, Number(g[k]) || 0);
+  const parts = [
+    n('echarpes') ? { n: n('echarpes'), mot: 'ÉCHARPES', petit: 'écharpes' } : null,
+    n('packs') ? { n: n('packs'), mot: n('packs') > 1 ? 'BOOSTERS' : 'BOOSTER',
+      petit: n('packs') > 1 ? 'boosters' : 'booster' } : null,
+    n('xp') ? { n: n('xp'), mot: 'XP', petit: 'XP' } : null,
+    n('tampons') ? { n: n('tampons'), mot: n('tampons') > 1 ? 'TAMPONS' : 'TAMPON',
+      petit: n('tampons') > 1 ? 'tampons' : 'tampon' } : null,
+  ].filter(Boolean);
+  if (!parts.length) return null;
+  /* Le premier gain en grand, sur le ticket ; les autres sur la ligne
+     d'origine. Le jeton dessiné n'existe que pour les écharpes. */
+  const [tete, ...reste] = parts;
+  const t = document.createElement('div');
+  t.className = 'tbf-ticket tbf-ticket--gain tbf-glisse';
+  t.setAttribute('role', 'status');
+  t.innerHTML = `${n('echarpes') ? `<img src="${JETON}" alt="">` : ''}<b>+${nombre(tete.n)}</b>
+    <span>${tete.mot}<small>${esc([origine, ...reste.map((x) => `+${nombre(x.n)} ${x.petit}`)]
+      .filter(Boolean).join(' · '))}</small></span>`;
+  t.addEventListener('animationend', () => t.classList.remove('tbf-glisse'), { once: true });
+  pile().append(t);
+  setTimeout(() => t.remove(), 3000);
+  return t;
 }
 
 let user = null, etat = null, catalogue = null, loadout = null, souvenirs = [];
+let niv = null;          // la réponse de /api/niveau
+let place = null;        // la réponse de /api/rank/moi, si le serveur la sert
+let quotidien = null;    // la réponse de /api/quotidien, si le serveur la sert
+let monAvatar = null;    // l'avatar résolu du joueur : { id, age, evo, skin, … }
+let portraitRetenu = null;
 
+/* ------------------------------------------------------- qui montrer
 
+   **Le visage du joueur, sans requête lourde de plus.** Le serveur résout
+   l'avatar (lignée, âge montré, tenue) dans `/api/fanzzy/state`, la lecture
+   la plus lourde du joueur — et la barre la fait déjà sur cette page. Le
+   recomposer ici depuis l'identifiant brut du deck redonnerait au jeu une
+   septième recette du « qui montrer », celle qui a déjà affiché le gamin à
+   la place du Capo.
+
+   Deux sources, dans l'ordre : l'avatar public que `/api/rank/moi` portera
+   (même liste blanche que les classements, demandé au serveur), puis
+   **provisoirement** celui que la barre a retenu pour ce même joueur dans
+   l'onglet (`tbf-hud`, voir `nav.js`), sans sa rareté — la plaque d'une
+   légendaire y retombe alors sur celle de son âge. Sans aucun des deux, le
+   buste reste la silhouette du sticker sans photo : un visage faux est pire
+   qu'un visage absent. */
+function avatarDeLaBarre() {
+  try {
+    const d = JSON.parse(sessionStorage.getItem('tbf-hud') || 'null');
+    if (!d || !user || d.qui !== user.id || !d.avatar?.id) return null;
+    return { avatar: d.avatar, portrait: typeof d.portrait === 'string' ? d.portrait : null };
+  } catch { return null; }
+}
+
+function resoudreAvatar() {
+  const servi = place && 'avatar' in place ? place.avatar : undefined;
+  if (servi !== undefined) {
+    monAvatar = servi?.id ? servi : null;
+    portraitRetenu = null;
+    return true;
+  }
+  const barre = avatarDeLaBarre();
+  if (barre) {
+    monAvatar = barre.avatar;
+    portraitRetenu = barre.portrait;
+    return true;
+  }
+  return false;
+}
+
+/* ------------------------------------------------ la carte de supporter */
+
+function poserBuste() {
+  const a = $('buste');
+  const anneau = a.querySelector('.tbf-anneau');
+  const nom = monAvatar?.nom ?? loadout?.fanzzy?.nom ?? null;
+  const src = monAvatar
+    ? (window.FZART?.dessinAvatar?.(monAvatar, 'buste') ?? portraitRetenu) : null;
+  /* Sans Fanzzy du tout : le sticker qu'on n'a pas encore collé, et le
+     buste mène à la collection pour en choisir un. */
+  a.classList.toggle('tbf-avatar--vide', !monAvatar && !loadout?.fanzzy);
+  a.setAttribute('aria-label', monAvatar || loadout?.fanzzy
+    ? `Mon Fanzzy${nom ? ` : ${nom}` : ''}` : 'Choisis ton Fanzzy');
+  /* Le même portrait déjà posé ne se repose pas : il clignoterait. */
+  const ancien = anneau.querySelector('.tbf-avatar-buste');
+  if (!src || ancien?.getAttribute?.('src') !== src) {
+    anneau.innerHTML = src
+      ? `<img class="tbf-avatar-buste" src="${esc(src)}" alt="" data-essais="0">`
+      : '<span class="tbf-avatar-buste"></span>';
+  }
+
+  /* La plaque du décor de son Fanzzy : celle de la fiche, par la règle
+     partagée (`TBF_FOND.plaque`) — l'âge, sauf pour une légende. */
+  const fond = $('fond');
+  const plaque = monAvatar && window.TBF_FOND?.plaque
+    ? window.TBF_FOND.plaque({ rar: monAvatar.rar ?? null, stage: monAvatar.evo, skin: monAvatar.skin })
+    : null;
+  fond.classList.toggle('plaque', Boolean(plaque));
+  fond.style.setProperty('--img', plaque ? `url("${plaque}")` : 'none');
+}
+
+/* Un portrait qui ne répond pas : l'adresse retenue par la barre, puis la
+   silhouette. Jamais l'image cassée du navigateur. */
+$('carte').addEventListener('error', (e) => {
+  const img = e.target;
+  if (!(img instanceof HTMLImageElement) || !img.classList.contains('tbf-avatar-buste')) return;
+  const n = Number(img.dataset.essais) || 0;
+  if (n === 0 && portraitRetenu && img.getAttribute('src') !== portraitRetenu) {
+    img.dataset.essais = '1';
+    img.src = portraitRetenu;
+    return;
+  }
+  const s = document.createElement('span');
+  s.className = 'tbf-avatar-buste';
+  img.replaceWith(s);
+}, true);
+
+function rendreCarte() {
+  const pseudo = user.pseudo ?? '';
+  $('pseudo').textContent = pseudo;
+  const lettres = [...pseudo].length;
+  $('pseudo').classList.toggle('long', lettres > 11 && lettres <= 15);
+  $('pseudo').classList.toggle('tres-long', lettres > 15);
+
+  /* VÉRIFIÉ ou À VÉRIFIER, en tampon : un acquis, ou ce qui reste à faire. */
+  const badge = $('badge');
+  badge.dataset.ton = user.verified ? 'vert' : 'flare';
+  badge.textContent = user.verified ? 'VÉRIFIÉ' : 'À VÉRIFIER';
+  badge.hidden = false;
+
+  const principal = etat.follows?.find((f) => f.is_main) ?? etat.follows?.[0];
+  $('clubline').innerHTML = principal
+    ? `${principal.logo ? `<img src="${esc(principal.logo)}" alt="">` : ''}<span>${
+      esc(principal.name ?? `club ${principal.team_id}`)}${principal.is_main ? ' · CLUB PRINCIPAL' : ''}</span>`
+    : '<i>aucun club principal</i>';
+
+  /* L'ancienneté, seulement si le serveur la donne : une date « d'aujourd'hui »
+     posée par défaut se lirait comme une inscription du jour. */
+  const d = user.createdAt ? new Date(user.createdAt) : null;
+  $('depuis').innerHTML = d && !Number.isNaN(d.getTime())
+    ? `<span class="tbf-marqueur">dans la tribune depuis</span><span>le ${esc(
+      d.toLocaleDateString('fr', { day: 'numeric', month: 'long', year: 'numeric' }))}</span>`
+    : '';
+  poserBuste();
+}
+
+/* ------------------------------------------------------------ les stats */
+
+const ICONES = {
+  sachet: '<path d="M4 8h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM4 8l1.5-4h13L20 8M9 4v4M15 4v4"/>',
+  vecu: '<path d="M3 20l9-16 9 16zM7 20l5-9 5 9"/>',
+  souvenir: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 15.5l2.5-3 2 2 2.5-3.5"/><circle cx="10" cy="8.5" r="1.4"/>',
+  coche: '<path d="M5 12l5 5 9-10"/>',
+  ecusson: '<path d="M12 3l7 3v5c0 4.4-2.9 8.2-7 10-4.1-1.8-7-5.6-7-10V6z"/>',
+  fanzzy: '<circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4.1 3.4-7.5 7.5-7.5s7.5 3.4 7.5 7.5"/>',
+};
+const svg = (nom, couleur) => `<svg viewBox="0 0 24 24" aria-hidden="true"${
+  couleur ? ` style="color:${couleur}"` : ''}>${ICONES[nom]}</svg>`;
+
+function rendreStats() {
+  const vecus = souvenirs.filter((s) => s.kind === 'presence').length;
+  /* `data-solde` : l'achat d'un emplacement et le bonus du jour font compter
+     ce chiffre. Il est dans son propre `span` : `FX.compter` réécrit le
+     texte de l'élément, et le jeton dessiné devant disparaîtrait avec. */
+  $('stats').innerHTML = `
+    <a class="tbf-stat" href="/boutique" data-ton="or"><b><img src="${JETON}" alt=""><span
+      data-solde="echarpes">${etat.scarves}</span></b><small>ÉCHARPES</small></a>
+    <a class="tbf-stat" href="/boosters" data-ton="or"><b>${svg('sachet', 'var(--face-flare)')}<span
+      data-solde="packs">${etat.packs}</span></b><small>BOOSTERS</small></a>
+    <a class="tbf-stat" href="/carnet" data-ton="bleu"><b>${svg('vecu', 'var(--face-bleu)')}${vecus}</b><small>VÉCUS</small></a>
+    <a class="tbf-stat" href="/carnet" data-ton="bleu"><b>${svg('souvenir', 'var(--face-bleu)')}${souvenirs.length}</b><small>SOUVENIRS</small></a>`;
+}
+
+/** Fait compter un solde affiché de sa valeur d'avant à la nouvelle. */
+function compterSolde(cle, avant, apres) {
+  const el = $('stats').querySelector(`[data-solde="${cle}"]`);
+  if (!el) return;
+  if (window.FX?.compter) window.FX.compter(el, avant, apres);
+  else el.textContent = String(apres);
+}
 
 /* --------------------------------------------------- le chemin du niveau
 
-   Le joueur ne voyait de son niveau qu'une pastille sur l'accueil : un chiffre,
-   sans jauge, sans suite, sans rien qui dise à quoi il sert. Monter d'un niveau
-   n'était jamais attendu, et le palier qui ouvre un troisième Fanzzy au deck
-   arrivait comme une surprise chez ceux qui le remarquaient.
+   Le serveur envoie la **donnée** — le rang et ce qu'il ouvre — et cette
+   page la met en mots. C'est le partage habituel : le serveur compte,
+   l'écran nomme. */
 
-   Le serveur envoie la **donnée** — le rang et ce qu'il ouvre — et cette page
-   la met en mots. C'est le partage habituel : le serveur compte, l'écran nomme.
-   Une page qui porterait sa propre copie de la table finirait par promettre un
-   déblocage que le serveur refuse. */
-
-/** Combien de marches on montre devant soi. Au-delà, ce n'est plus un but. */
-const MARCHES = 6;
-
-/** Ce qu'une marche ouvre, en toutes lettres. */
-function ouvre(palier, echarpes) {
-  const l = [];
-  if (echarpes) l.push(`${echarpes} écharpes`);
-  /* Les deux seuls déblocages du jeu, et ils s'écrivent en clair : « slots: 4 »
-     ne veut rien dire pour personne. Le niveau **ouvre**, il ne rend jamais
-     plus fort — c'est la règle du jeu, et la formulation doit la porter. */
-  if (palier?.slots) l.push(`${palier.slots}ᵉ club à suivre`);
-  if (palier?.deckFanzzy) l.push(`${palier.deckFanzzy}ᵉ Fanzzy au deck`);
-  return l;
+/** Ce qu'un palier ouvre, en sticker. Le niveau ouvre, il ne rend jamais plus fort.
+    `echarpes` : ce que ce niveau verse en arrivant, tel que le serveur le sert. */
+function noeudAVenir(k, p, echarpes) {
+  const niveau = `<span class="vh">Niveau ${k} :</span>`;
+  if (p?.deckFanzzy) {
+    return `${niveau}<span class="tbf-noeud-k">${svg('fanzzy')}</span><span class="tbf-sticker">${p.deckFanzzy}ᵉ FANZZY</span>`;
+  }
+  if (p?.slots) {
+    return `${niveau}<span class="tbf-noeud-k">${svg('ecusson')}</span><span class="tbf-sticker">${p.slots}ᵉ CLUB</span>`;
+  }
+  /* Chaque niveau verse des écharpes en arrivant, et **le montant vient du
+     serveur** (`echarpesParNiveau`, ou `paliers` pour ceux qui ouvrent
+     quelque chose) : la page recopiait la règle « dix par niveau », une
+     copie qui promettrait un montant faux le jour où la règle changera
+     (le contrat, R7). Un serveur qui ne le sert pas encore — un déploiement
+     en cours — laisse le nœud vide sous son niveau : aucun chiffre deviné,
+     jamais « +0 » (R1, R5). Le lecteur d'écran y entend « Niveau 9 », une
+     fois. */
+  const ech = Number(echarpes ?? p?.echarpes);
+  if (!Number.isInteger(ech) || ech <= 0) {
+    return `<span class="vh">Niveau ${k}</span><span class="tbf-noeud-k"></span>`
+      + `<span class="tbf-noeud-l" aria-hidden="true">NIV. ${k}</span>`;
+  }
+  return `${niveau}<span class="tbf-noeud-k"><img src="${JETON}" alt=""></span>`
+    + `<span class="tbf-sticker tbf-sticker--prix">+${nombre(ech)}<span class="vh"> écharpes</span></span>`;
 }
 
 function rendreNiveau(n) {
+  niv = n;
   const hote = $('niveau');
-  const parNiveau = new Map((n.paliers ?? []).map((p) => [p.niveau, p]));
-
-  /* La marche en cours, puis les suivantes. On s'arrête au dernier niveau :
-     au-delà l'XP continue de compter mais n'ouvre plus rien, et proposer des
-     marches qui n'existent pas serait une promesse en l'air. */
-  const marches = [];
-  for (let k = n.niveau; k < n.niveau + MARCHES && k <= (n.niveauMax ?? 30); k++) {
-    const p = parNiveau.get(k);
-    marches.push({ niveau: k, palier: p,
-      echarpes: p?.echarpes ?? 10 * k, ici: k === n.niveau, cle: Boolean(p) });
+  if (!n || n.indisponible || !(Number(n.niveau) >= 1)) {
+    /* La progression est un module facultatif, et une progression illisible
+       côté serveur (`indisponible`) ouvre tout sans rien dire de vrai : le
+       profil s'affiche quand même, et le dit plutôt que de montrer un
+       niveau 30. */
+    hote.innerHTML = '<div class="pan bloc"><div class="vide">Ta progression n’est pas lisible pour le moment.</div></div>';
+    $('nivXp').textContent = '';
+    $('nivCoin').hidden = true;
+    return;
   }
+  const niveau = Number(n.niveau);
+  const max = Number(n.niveauMax) || 30;
+  const part = n.max ? 1 : Math.max(0, Math.min(1, Number(n.part) || 0));
+  const parNiveau = new Map((n.paliers ?? []).map((p) => [p.niveau, p]));
+  const echarpesDe = new Map((Array.isArray(n.echarpesParNiveau) ? n.echarpesParNiveau : [])
+    .map((x) => [Number(x?.niveau), x?.echarpes]));
 
-  const part = n.max ? 1 : Math.max(0, Math.min(1, n.part ?? 0));
-  hote.innerHTML = `
-    <div class="niv-tete">
-      <div class="niv-rond">${n.niveau}<small>NIVEAU</small></div>
-      <div class="niv-txt">
-        <b>${n.max ? 'Dernier niveau atteint' : `Vers le niveau ${n.niveau + 1}`}</b>
-        <span>${n.max ? `${n.xp} XP au total`
-          : `${n.dans} / ${n.pour} XP · encore ${Math.max(0, n.pour - n.dans)}`}</span>
-      </div>
-    </div>
-    <div class="niv-jauge"><i style="width:0"></i></div>
-    <div class="marches">${marches.map((m) => `
-      <div class="marche ${m.ici ? 'ici' : ''} ${m.cle ? 'cle' : ''}">
-        <div class="r">${m.ici ? 'TU Y ES' : 'NIVEAU'}</div>
-        <div class="n">${m.niveau}</div>
-        <ul>${ouvre(m.palier, m.echarpes).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
-      </div>`).join('')}</div>`;
+  $('nivXp').textContent = n.max ? `${nombre(n.xp)} XP au total`
+    : `${nombre(n.dans)} / ${nombre(n.pour)} XP · encore ${nombre(Math.max(0, n.pour - n.dans))}`;
 
-  /* La jauge **pousse** après le rendu : c'est le seul moment où le joueur voit
-     son avancée bouger. Posée à sa largeur finale d'emblée, elle se lirait comme
-     un trait, pas comme un progrès. Deux images successives, sinon le navigateur
-     regroupe les deux styles et l'animation n'a pas lieu. */
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const i = hote.querySelector('.niv-jauge i');
-    if (i) i.style.width = `${Math.round(part * 100)}%`;
-  }));
+  /* Cinq nœuds : le palier passé, le courant, trois à venir — au niveau 1,
+     quatre à venir ; au dernier, les quatre d'avant. Au-delà, ce n'est plus
+     un but, et ce qui suit se lit sur la fête de niveau. */
+  const debut = Math.max(1, Math.min(niveau - 1, max - 4));
+  const fin = Math.min(max, debut + 4);
+  const noeuds = [];
+  for (let k = debut; k <= fin; k++) {
+    if (k < niveau) {
+      noeuds.push(`<li class="tbf-noeud" data-etat="fait"><span class="tbf-noeud-k">${svg('coche')}</span>
+        <span class="tbf-noeud-l">NIV. ${k}</span></li>`);
+    } else if (k === niveau) {
+      const p = k === fin || n.max ? '' : ` style="--p:${Math.round(part * 100)}%"`;
+      noeuds.push(`<li class="tbf-noeud" data-etat="ici"${p}><span class="tbf-noeud-k">${k}</span>
+        <span class="tbf-noeud-l">TU Y ES</span></li>`);
+    } else {
+      const pal = parNiveau.get(k);
+      const verrou = pal?.slots || pal?.deckFanzzy ? ' data-verrou' : '';
+      noeuds.push(`<li class="tbf-noeud"${verrou}>${noeudAVenir(k, pal, echarpesDe.get(k))}</li>`);
+    }
+  }
+  const quoi = n.max ? `Niveau ${niveau}, le dernier`
+    : `Niveau ${niveau} : ${n.dans} XP sur ${n.pour}`;
+  hote.innerHTML = `<div class="tbf-ticket niv-ticket">
+    <ol class="tbf-chemin" aria-label="${esc(quoi)}">${noeuds.join('')}</ol></div>`;
+
+  /* Le niveau, en sticker sur le coin déchiré de la carte, et l'anneau du
+     buste : le même dessin que dans la barre. */
+  const coin = $('nivCoin');
+  coin.textContent = String(niveau);
+  coin.setAttribute('aria-label', `Niveau ${niveau}`);
+  coin.hidden = false;
+  $('buste').querySelector('.tbf-anneau').style.setProperty('--p', `${Math.round(part * 100)}%`);
 }
 
 async function chargerNiveau() {
   try {
     rendreNiveau(await api('/api/niveau', ''));
-  } catch {
-    /* La progression est un module facultatif : sans lui, le profil doit
-       s'afficher quand même, et le dire plutôt que laisser un bloc vide. */
-    $('niveau').innerHTML =
-      '<div class="vide">Ta progression n’est pas lisible pour le moment.</div>';
+  } catch (e) {
+    if (e.message !== 'auth') rendreNiveau(null);
   }
+  return niv;
+}
+
+/* ------------------------------------------------- le bonus du jour
+
+   La carte de présence de la semaine (le contrat, § 6.1) : sept cases, la
+   case du jour, ce qu'elle donne, et la bâche or RÉCUPÉRER tant qu'il est
+   prêt — une récompense prête, l'un des trois sens de l'or. Sans route
+   serveur, ou sans bonus servi, rien. */
+
+/** Les stickers d'un gain promis : seulement ses valeurs non nulles (R5). */
+function stickersGain(g) {
+  if (!g) return '';
+  const out = [];
+  if (g.echarpes > 0) {
+    out.push(`<span class="tbf-sticker tbf-sticker--prix"><img src="${JETON}" alt="">+${nombre(g.echarpes)}<span class="vh"> écharpes</span></span>`);
+  }
+  if (g.packs > 0) out.push(`<span class="tbf-sticker">+${g.packs} BOOSTER${g.packs > 1 ? 'S' : ''}</span>`);
+  if (g.xp > 0) out.push(`<span class="tbf-sticker">+${g.xp} XP</span>`);
+  if (g.tampons > 0) out.push(`<span class="tbf-sticker">+${g.tampons} TAMPON${g.tampons > 1 ? 'S' : ''}</span>`);
+  return out.join('');
+}
+
+function rendreBonus() {
+  const hote = $('bonus');
+  const b = quotidien?.actif === true ? quotidien.bonus : null;
+  const c = b?.carte;
+  const jour = Number(c?.case);
+  if (!c || !Number.isInteger(jour) || jour < 1) {
+    hote.innerHTML = '';
+    rendreSerie();
+    return;
+  }
+  const cases = Math.max(jour, Number(c.cases) || 7);
+  const montants = Array.isArray(c.montants) ? c.montants : [];
+  const noeuds = Array.from({ length: cases }, (_, i) => {
+    const k = i + 1;
+    const e = k < jour || (k === jour && c.prise) ? ' data-etat="pris"'
+      : k === jour ? ' data-etat="ici"' : '';
+    return `<i${e}${montants[i]?.packs > 0 ? ' data-booster' : ''}></i>`;
+  }).join('');
+  const serie = quotidien.serie;
+  const em = serie?.jours >= 3 ? `<em>${serie.jours}ᵉ JOUR</em>` : '';
+  const gain = b.pret ? b.gain : montants[jour - 1];
+  const geste = b.pret
+    ? '<button class="tbf-plaque" data-ton="or" id="prendreBonus">RÉCUPÉRER</button>'
+    : c.prise ? '<span class="tbf-tampon" data-ton="vert">PRIS</span>' : '';
+  hote.innerHTML = `<div class="tbf-ticket tbf-bonus">
+    <div class="tbf-bonus-corps">
+      <b class="tbf-bonus-titre">BONUS DU JOUR ${stickersGain(gain)}</b>
+      <span class="tbf-serie" role="img" aria-label="Jour ${jour} sur ${cases}">${noeuds}${em}</span>
+    </div>${geste}</div>`;
+  rendreSerie();
+}
+
+/* Les jours d'affilée et le record, en tête du parcours. La série du jour
+   se lit déjà sur le ticket du bonus quand il est là ; le record, lui, se
+   montre dès qu'il est servi, même quand la série est retombée — et rien
+   ne prévient jamais d'une série qui va retomber. */
+function rendreSerie() {
+  const s = quotidien?.actif === true ? quotidien.serie : null;
+  const surLeTicket = Boolean($('bonus').firstElementChild);
+  const out = [];
+  if (s?.jours >= 3 && !surLeTicket) {
+    out.push(`<span class="tbf-sticker" data-ton="vert">${s.jours}ᵉ JOUR D’AFFILÉE</span>`);
+  }
+  if (s?.record >= 1) {
+    out.push(`<span class="tbf-sticker">RECORD : ${s.record} JOUR${s.record > 1 ? 'S' : ''} D’AFFILÉE</span>`);
+  }
+  $('serie').innerHTML = out.join('');
+}
+
+/* La pastille MISSIONS de la barre lit cette clé (R10) : après chaque
+   lecture du quotidien, elle dit ce qui reste à récupérer. Écrite ici aussi,
+   pour qu'un bonus pris sur le profil ne laisse pas la pastille en avance
+   d'une minute sur l'écran. */
+function retenirPastille() {
+  if (quotidien?.actif !== true || !user?.id) return;
+  try {
+    sessionStorage.setItem('tbf-quotidien', JSON.stringify({
+      qui: user.id, t: Date.now(), aReclamer: Number(quotidien.aReclamer) || 0 }));
+  } catch { /* stockage fermé : la pastille attendra la page suivante */ }
+}
+
+async function chargerQuotidien() {
+  const q = await lire('/api/quotidien');
+  quotidien = q?.actif === true ? q : null;
+  retenirPastille();
+  rendreBonus();
+}
+
+/** Les raisons de refus d'une réclamation (le contrat, § 11), dites en clair. */
+const RAISONS = {
+  deja: 'Déjà récupéré',
+  jour_passe: 'Les missions de ce jour sont closes',
+  plafond: 'Tu récupéreras le reste demain',
+};
+
+document.addEventListener('click', async (e) => {
+  const bt = e.target.closest('#prendreBonus');
+  if (!bt) return;
+  bt.disabled = true;
+  let r;
+  try {
+    r = await envoyer('/api/quotidien/bonus', {});
+  } catch (err) {
+    if (err.message === 'auth') return;
+    dire('Le bonus n’a pas pu être récupéré', { erreur: true });
+    bt.disabled = false;
+    return;
+  }
+  const avant = { scarves: etat.scarves, packs: etat.packs };
+  if (r.quotidien?.actif === true) quotidien = r.quotidien;
+  if (r.verse) {
+    if (r.wallet) {
+      etat.scarves = Number(r.wallet.scarves);
+      etat.packs = Number(r.wallet.packs);
+    }
+    if (!r.quotidien) await chargerQuotidien(); else { retenirPastille(); rendreBonus(); }
+    /* Le gain se voit : le ticket monte, son jeton vole jusqu'au sticker
+       ÉCHARPES, et le solde compte. La barre l'apprend par l'annonce
+       qu'elle écoute déjà. */
+    const t = ticketGain(r.gain, 'bonus du jour');
+    const cible = $('stats').querySelector('[data-solde="echarpes"]');
+    const jeton = t?.querySelector('img');
+    const vol = jeton && cible && window.FX?.voler
+      ? window.FX.voler(jeton, cible, { image: JETON }) : Promise.resolve();
+    vol.then(() => {
+      if (r.wallet) {
+        compterSolde('echarpes', avant.scarves, etat.scarves);
+        compterSolde('packs', avant.packs, etat.packs);
+      }
+    });
+    window.dispatchEvent(new CustomEvent('tbf:bourse', { detail: { wallet: r.wallet, niveau: r.niveau } }));
+    if (r.niveau) {
+      /* Les tables du chemin (`paliers`, `echarpesParNiveau`) sont celles de
+         `/api/niveau` : le `niveau` d'un versement porte sous `paliers` les
+         seuls paliers franchis, et pas les écharpes de chaque niveau. */
+      rendreNiveau({ ...niv, ...r.niveau, paliers: niv?.paliers, niveauMax: niv?.niveauMax,
+        echarpesParNiveau: niv?.echarpesParNiveau });
+      if (r.niveau.monte) {
+        window.TBF_NIVEAU?.feter?.(r.niveau, { avatar: monAvatar ?? undefined, chemin: niv?.paliers, qui: user.id });
+      }
+    }
+    return;
+  }
+  /* Un refus. `inactif` et `schema` retirent le geste sans un mot ; les
+     autres relisent l'état, et seuls ceux que le joueur peut comprendre
+     sont dits. Une raison inconnue ne s'affiche jamais telle quelle. */
+  if (RAISONS[r.raison]) dire(RAISONS[r.raison]);
+  if (r.raison === 'schema') quotidien = null;
+  if (r.raison === 'inactif' && quotidien) quotidien = { ...quotidien, bonus: undefined };
+  if (r.raison === 'schema' || r.raison === 'inactif' || r.quotidien) {
+    retenirPastille();
+    rendreBonus();
+  } else {
+    await chargerQuotidien();
+  }
+});
+
+/* ------------------------------------------------------------ ma saison */
+
+/** Le nom d'une division par son rang, tel que le serveur le sert. */
+function nomsDivisions() {
+  const s = place?.saison;
+  const noms = new Map();
+  for (const d of [...(s?.paliers ?? []), s?.division, s?.prochaine]) {
+    if (d?.n && d.nom) noms.set(Number(d.n), d.nom);
+  }
+  return noms;
+}
+
+function delta(rang, sens) {
+  const n = Number(rang);
+  if (!Number.isFinite(n) || n === 0) return '';
+  const k = Math.abs(n);
+  const monte = n > 0;
+  return `<span class="tbf-delta" data-sens="${monte ? 'monte' : 'descend'}" aria-label="${
+    monte ? 'monté' : 'descendu'} de ${k} place${k > 1 ? 's' : ''}${sens ? ` ${sens}` : ''}">${k}</span>`;
+}
+
+function rendreSaison() {
+  const s = place?.saison;
+  const passee = place?.saisonPassee?.paliers?.length ? place.saisonPassee : null;
+  const titres = Array.isArray(place?.titres) ? place.titres : [];
+  const hote = $('saison');
+  if (!s && !passee && !titres.length) {
+    hote.hidden = true;
+    $('saisonTitre').hidden = true;
+    return;
+  }
+  const morceaux = [];
+  if (s) {
+    const d = s.division;
+    const rang = Number(s.rang);
+    if (d?.n || rang > 0) {
+      morceaux.push(`<div class="saison-tete">
+        ${d?.n ? `<span class="tbf-division" data-n="${Number(d.n)}" role="img" aria-label="Division ${esc(d.nom ?? d.n)}"></span>
+          <b class="saison-div">${esc(d.nom ?? '')}</b>` : ''}
+        ${rang > 0 ? `<span class="saison-rang"><span>${nombre(rang)}<sup>e</sup></span>${
+          s.sur ? `<small>&nbsp;sur ${nombre(s.sur)}</small>` : ''}${
+          delta(place?.evolution?.ferveur?.rang, 'depuis ta dernière visite')}</span>` : ''}
+      </div>`);
+    }
+    /* « SAISON 1 — LA REPRISE », et les jours qui restent seulement si le
+       serveur les compte : aucune page ne calcule une fin de saison avec
+       l'horloge du téléphone (R3). Le contrat ne les sert qu'au dex
+       (§ 7.1) : lus ici le jour où ma place les portera. Une saison finie
+       reste dans `saison`, sans `prochaine` : sa ligne de suite tombe
+       d'elle-même, et ses divisions prêtes restent à porter. */
+    const j = Number(s.joursRestants);
+    const jours = s.finie || j === 0 ? ' · TERMINÉE'
+      : j === 1 ? ' · DERNIER JOUR' : j > 1 ? ` · ${j} JOURS` : '';
+    morceaux.push(`<div class="saison-nom">SAISON ${esc(s.numero ?? '')}${s.nom ? ` — ${esc(s.nom)}` : ''}${jours}</div>`);
+    const p = s.prochaine;
+    if (p?.nom && Number(p.seuil) > 0) {
+      const bas = Number((s.paliers ?? []).find((x) => x.n === d?.n)?.seuil) || 0;
+      const part = Math.max(0, Math.min(1, (Number(s.ferveur) - bas) / Math.max(1, Number(p.seuil) - bas)));
+      morceaux.push(`<div class="saison-suite"><span>${esc(p.nom)}</span>
+        <span class="tbf-jauge tbf-jauge--fine" role="img" aria-label="${esc(p.nom)} : encore ${nombre(p.manque)} de ferveur"><i style="width:${Math.round(part * 100)}%"></i></span>
+        <span>encore ${nombre(p.manque)}</span></div>`);
+    }
+  }
+  /* « Porter l'insigne » : une division atteinte se récupère, sans montant —
+     elle ne verse rien de matériel (le contrat, § 5.2). L'or, parce que
+     c'est une récompense prête. */
+  const prets = [...(s?.paliers ?? []).filter((x) => x.etat === 'pret'), ...(passee?.paliers ?? [])];
+  if (prets.length) {
+    morceaux.push(`<button class="tbf-plaque porter" data-ton="or" id="porter">${
+      prets.length === 1 ? `PORTER L’INSIGNE ${esc(prets[0].nom ?? '')}` : `PORTER MES ${prets.length} INSIGNES`}</button>`);
+  }
+  if (titres.length) {
+    morceaux.push(`<div class="saison-titres">${titres.slice(-3).map((t) =>
+      `<span class="tbf-sticker">${esc(t.nom)}</span>`).join('')}</div>`);
+  }
+  hote.innerHTML = morceaux.join('');
+  hote.hidden = false;
+  $('saisonTitre').hidden = false;
+}
+
+document.addEventListener('click', async (e) => {
+  const bt = e.target.closest('#porter');
+  if (!bt) return;
+  bt.disabled = true;
+  let r;
+  try {
+    r = await envoyer('/api/rank/division', { tout: true });
+  } catch (err) {
+    if (err.message === 'auth') return;
+    dire('L’insigne n’a pas pu être posé', { erreur: true });
+    bt.disabled = false;
+    return;
+  }
+  if (r.verse) {
+    const titre = [...(place?.saison?.paliers ?? []), ...(place?.saisonPassee?.paliers ?? [])]
+      .some((x) => x.etat === 'pret' && x.titre);
+    dire('Insigne posé');
+    /* Un titre gagné (Capo) n'est pas dans la réponse : on relit ma place,
+       une fois, pour l'afficher. Sinon la réponse suffit. */
+    if (titre) await chargerMoi();
+    else {
+      place = { ...place, saison: r.saison ?? place?.saison };
+      if ('saisonPassee' in r) place.saisonPassee = r.saisonPassee; else delete place.saisonPassee;
+      rendreSaison();
+    }
+    return;
+  }
+  if (RAISONS[r.raison]) dire(RAISONS[r.raison]);
+  if (r.raison === 'inactif' || r.raison === 'schema') { bt.remove(); return; }
+  await chargerMoi();
+});
+
+async function chargerMoi() {
+  place = await lire('/api/rank/moi');
+  rendreSaison();
+  if (resoudreAvatar()) poserBuste();
+  return place;
 }
 
 /* ------------------------------------------------------ le parcours
 
-   Ce que le joueur a joué, et ce que ça lui a rapporté. Le profil disait ce
-   qu'il **possède** — des clubs, un Fanzzy, de l'équipement — et rien de ce
-   qu'il a **fait** : une carte de membre sans carnet de bord. Tout était en
-   base depuis le premier jour ; rien ne le lisait.
-
-   Les libellés sont écrits ici et les nombres viennent du serveur. Ce partage
-   n'est pas cosmétique : le jour où l'entraînement cessera de compter au
-   classement, c'est une règle du serveur qui changera, et cette page ne doit
-   pas en porter une copie. Elle ne fait que nommer. */
+   Ce que le joueur a joué, et ce que ça lui a rapporté. Les libellés sont
+   écrits ici et les nombres viennent du serveur : le jour où l'entraînement
+   cessera de compter au classement, c'est une règle du serveur qui
+   changera, et cette page ne doit pas en porter une copie. */
 
 const NOM_SORTE = { entrainement: 'ENTRAÎNEMENT', classe: 'CLASSÉ' };
 
@@ -548,14 +1075,86 @@ function titreSorte(s) {
   return s.format ? `${mode} · ${s.format}` : `${mode} · DUEL`;
 }
 
+/* Les tampons de l'issue : verts, rouges, gris — pleins d'eux-mêmes sur le kraft. */
+const ISSUE = { win: ['vert', 'GAGNÉ'], loss: ['flare', 'PERDU'], draw: ['gris', 'NUL'] };
+
+function ligneDePartie(l) {
+  const virage = l.jeu === 'virage';
+  /* **La couleur dit si ça a compté**, comme les tuiles du compte : l'or du
+     virage, le violet du duel classé, le gris de l'entraînement. Elle teint
+     le bandeau du ticket, à la place des couleurs du club — que le parcours
+     ne sert pas. */
+  const teinte = virage ? 'var(--projo)'
+    : l.mode === 'classe' ? 'var(--violet)' : 'var(--gris,#C2CAD6)';
+  const quand = l.quand ? new Date(l.quand).toLocaleString(document.documentElement.lang || 'fr',
+    { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : null;
+  /* **Trois états, et non deux** : un match nommé, un match qu'on ne sait
+     plus nommer (le cache des compétitions ne le connaît pas, mais la
+     partie est entière), et pas de match du tout. */
+  const rencontre = l.match
+    ? `${l.match.domicile} – ${l.match.exterieur}`
+    : l.oublie ? 'match non répertorié' : 'hors match';
+  /* **Le titre dit le sujet de la partie** : le match pour un virage, on y
+     est venu pour lui ; l'adversaire pour un duel — « perdu contre Marie »
+     se raconte. */
+  const contre = virage ? rencontre
+    : l.adversaire ? `contre ${l.adversaire}`
+    : l.contreBot ? 'contre un bot' : rencontre;
+  /* **Qui était là** : les deux camps, les coéquipiers d'abord, et les
+     machines comptées plutôt que passées sous silence. */
+  const gens = (liste, bots) => {
+    const noms = [...(liste ?? [])];
+    if (bots > 0) noms.push(`${bots} bot${bots > 1 ? 's' : ''}`);
+    if (!noms.length) return null;
+    if (noms.length === 1) return noms[0];
+    return `${noms.slice(0, -1).join(', ')} et ${noms[noms.length - 1]}`;
+  };
+  const coequipiers = virage ? null : gens(l.avec, l.botsAvec);
+  const adversaires = virage ? null : gens(l.contre, l.botsContre);
+  /* La durée, dite comme on la dit à voix haute : les secondes sous la
+     minute, pour qu'un abandon à la trentième se lise comme tel. */
+  const duree = l.duree == null ? null
+    : l.duree < 60 ? `${l.duree} s` : `${Math.round(l.duree / 60)} min`;
+  const tribune = l.pour ?? l.camp;
+  const sorte = virage ? 'Grand Virage'
+    : `${l.mode === 'classe' ? 'Classé' : 'Entraînement'}${l.format ? ` ${l.format}` : ''}`;
+  /* **Une ligne, pas un paragraphe** : un ticket porte un titre, un chiffre
+     et un tampon. La précision est coupée par des points de suspension, et
+     ce qui compte passe donc en tête — la sorte, « neutre » (c'est ce qui
+     divise la ferveur par deux), la durée, l'XP. L'XP n'est dite que si on
+     la connaît : nulle pour les parties d'avant la colonne, et « +0 XP »
+     serait un mensonge là où la vérité est « on ne sait pas ». */
+  const sous = [sorte,
+    l.neutre ? 'neutre' : null,
+    duree,
+    l.xp ? `+${l.xp} XP` : null,
+    coequipiers ? `avec ${coequipiers}` : null,
+    adversaires ? `contre ${adversaires}` : null,
+    virage ? null : (l.adversaire || l.contreBot || coequipiers || adversaires ? rencontre : null),
+    l.match?.competition,
+    tribune ? `pour ${tribune}` : null,
+    l.fanzzy ? `en ${l.fanzzy.nom ?? l.fanzzy.id}` : null,
+    quand].filter(Boolean).join(' · ');
+  const score = l.score
+    ? `<b class="tbf-partie-score">${Number(l.score.pour)} – ${Number(l.score.contre)}</b>` : '';
+  const issue = ISSUE[l.issue]
+    ? `<span class="tbf-tampon" data-ton="${ISSUE[l.issue][0]}">${ISSUE[l.issue][1]}</span>` : '';
+  /* Le gain en sticker, avec son signe ; une partie qui n'a rien rapporté
+     n'en pose pas. */
+  const ferveur = Number(l.ferveur) || 0;
+  const gain = ferveur > 0
+    ? `<span class="tbf-sticker">+${nombre(ferveur)}<span class="vh"> de ferveur</span></span>` : '';
+  return `<div class="tbf-ticket tbf-partie part" style="--e1:${teinte};--e2:var(--craie)">
+    <span class="tbf-partie-q"><b>${esc(contre)}</b><small>${esc(sous)}</small></span>${score}${issue}${gain}</div>`;
+}
+
 function rendreParcours(p, { ajouter = false } = {}) {
   const hote = $('parcours');
 
   const sortes = (p.sortes ?? []).map((s) => {
     const couleur = s.jeu === 'virage' ? 'var(--projo)'
       : s.mode === 'classe' ? 'var(--violet)' : 'var(--gris,#C2CAD6)';
-    /* Un virage ne se gagne ni ne se perd : on y pousse. Lui coller un bilan
-       de victoires y mettrait une notion qui n'existe pas dans ce jeu-là. */
+    /* Un virage ne se gagne ni ne se perd : on y pousse. */
     const bilan = s.jeu === 'virage'
       ? `${s.joues} match${s.joues > 1 ? 's' : ''} poussé${s.joues > 1 ? 's' : ''}`
       : `${s.gagnes} gagné${s.gagnes > 1 ? 's' : ''} · ${s.nuls} nul${s.nuls > 1 ? 's' : ''}`
@@ -568,123 +1167,23 @@ function rendreParcours(p, { ajouter = false } = {}) {
     </div>`;
   }).join('');
 
-  /* Sous le gros chiffre : le score d'un duel, sinon le mot « ferveur ». L'XP
-     s'y ajoute quand on la connaît — elle est nulle pour les parties d'avant la
-     colonne, et écrire « +0 XP » serait un mensonge là où la vérité est « on ne
-     sait pas ». C'est ce qu'on regarde en premier après une partie, et le
-     parcours n'en montrait rien. */
-  const gain = (l, score) => {
-    const bouts = [score || 'FERVEUR'];
-    if (l.xp) bouts.push(`+${l.xp} XP`);
-    return bouts.join(' · ');
-  };
-
-  const lignes = (p.lignes ?? []).map((l) => {
-    const virage = l.jeu === 'virage';
-    /* **La couleur dit si ça a compté**, comme les tuiles du haut : l'or du
-       virage, le violet du duel classé, le gris de l'entraînement. Toutes les
-       lignes de duel étaient violettes, classées ou non — la page disait donc
-       le contraire de son propre résumé, deux centimètres plus haut. */
-    const couleur = virage ? 'var(--projo)'
-      : l.mode === 'classe' ? 'var(--violet)' : 'var(--gris,#C2CAD6)';
-    const quand = new Date(l.quand).toLocaleString(document.documentElement.lang || 'fr',
-      { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-    /* **Le titre dit le sujet de la partie.** Pour un virage, c'est le match :
-       on y est venu pour lui. Pour un duel, c'est l'adversaire — « perdu contre
-       Marie » se raconte, « perdu sur Sion – Bâle » ne dit rien de ce qui s'est
-       passé. Le match redescend alors d'une ligne, où il reste lisible. */
-    /* **« Match inconnu » accusait le jeu d'avoir perdu une partie.**
-
-       Il n'en avait perdu aucune : `fixtures` est un cache des compétitions
-       suivies, et un duel joué sur un match qui n'y figure pas gardait son
-       identifiant sans qu'on sache le nommer. La partie, elle, était entière —
-       l'issue, le score, la ferveur, l'adversaire et le club soutenu, tout
-       était là. Seul le nom des deux équipes manquait, et la phrase en faisait
-       une panne.
-
-       Trois états, donc, et non deux : un match nommé, un match qu'on ne sait
-       plus nommer, et pas de match du tout. */
-    const rencontre = l.match
-      ? `${l.match.domicile} – ${l.match.exterieur}`
-      : l.oublie ? 'match non répertorié' : 'hors match';
-    const contre = virage ? rencontre
-      : l.adversaire ? `contre ${l.adversaire}`
-      : l.contreBot ? 'contre un bot' : rencontre;
-    /* Ce qu'on lit dessous : la sorte de partie, la compétition, le club poussé,
-       et la date. « Neutre » est dit, parce que c'est ce qui divise la ferveur
-       par deux — une règle qu'on ne découvre sinon qu'en comparant deux
-       soirées. Et « entraînement », parce que c'est ce qui décide si la partie
-       pèse quelque part : la ligne ne le disait nulle part. */
-    const sorte = virage ? null
-      : l.mode === 'classe' ? 'classé' : 'entraînement';
-
-    /* **Qui était là.** `opponent_id` ne nommait qu'un adversaire, pris au
-       hasard : sur un 3v3 il en taisait cinq. On dit maintenant les deux camps
-       — les coéquipiers d'abord, parce qu'on cherche d'abord avec qui on a
-       joué — et les machines sont comptées plutôt que passées sous silence.
-       « contre Marie et 2 bots » est une phrase vraie ; « contre Marie » sur un
-       3v3 en est une fausse. */
-    const gens = (liste, bots) => {
-      const noms = [...(liste ?? [])];
-      if (bots > 0) noms.push(`${bots} bot${bots > 1 ? 's' : ''}`);
-      if (!noms.length) return null;
-      if (noms.length === 1) return noms[0];
-      return `${noms.slice(0, -1).join(', ')} et ${noms[noms.length - 1]}`;
-    };
-    const coequipiers = virage ? null : gens(l.avec, l.botsAvec);
-    const adversaires = virage ? null : gens(l.contre, l.botsContre);
-
-    /* La durée, dite comme on la dit à voix haute. Les secondes seules sous la
-       minute : un abandon à la trentième seconde doit se lire comme tel, et
-       « 0 min » le cacherait. */
-    const duree = l.duree == null ? null
-      : l.duree < 60 ? `${l.duree} s`
-      : `${Math.round(l.duree / 60)} min`;
-
-    /* **La tribune tenue, même en neutre.** `pour` vaut nul pour un neutre : on
-       ne savait donc pas de quel côté il s'était rangé, alors que c'est la
-       seule chose qui situe un duel. Le camp le dit, et « neutre » reste dit à
-       côté parce que c'est ce qui divise la ferveur par deux. */
-    const tribune = l.pour ?? l.camp;
-
-    const sous = [sorte,
-                  coequipiers ? `avec ${coequipiers}` : null,
-                  adversaires ? `contre ${adversaires}` : null,
-                  virage ? null : (l.adversaire || l.contreBot
-                    || coequipiers || adversaires ? rencontre : null),
-                  l.match?.competition,
-                  tribune ? `pour ${tribune}` : null,
-                  l.neutre ? 'neutre' : null,
-                  l.fanzzy ? `en ${l.fanzzy.nom ?? l.fanzzy.id}` : null,
-                  duree, quand].filter(Boolean).join(' · ');
-    const issue = l.issue
-      ? `<span class="issue ${esc(l.issue)}">${
-        { win: 'GAGNÉ', loss: 'PERDU', draw: 'NUL' }[l.issue] ?? ''}</span>` : '';
-    const score = l.score ? `${l.score.pour}–${l.score.contre}` : '';
-    return `<div class="part">
-      <span class="jeu" style="--c:${couleur}">${virage ? 'VIR' : (esc(l.format ?? 'DUEL'))}</span>
-      <span class="qui"><b>${esc(contre)}</b><span>${esc(sous)}</span></span>
-      ${issue}
-      <span class="gain"><b>+${l.ferveur}</b><span>${esc(gain(l, score))}</span></span>
-    </div>`;
-  }).join('');
+  const lignes = (p.lignes ?? []).map(ligneDePartie).join('');
 
   if (ajouter) {
     $('parcoursListe').insertAdjacentHTML('beforeend', lignes);
   } else if (!(p.lignes ?? []).length) {
-    hote.innerHTML = `<div class="vide">Tu n’as encore rien joué.<br>
-      <a href="/virage">Entre dans un virage</a> ou <a href="/duel-nvn">lance un duel</a>.</div>`;
+    hote.innerHTML = `<div class="pan bloc"><div class="vide">Tu n’as encore rien joué.<br>
+      <a href="/virage">Entre dans un virage</a> ou <a href="/duel-nvn">lance un duel</a>.</div></div>`;
     return;
   } else {
     hote.innerHTML = `
-      <div class="sortes">${sortes}</div>
+      <div class="pan bloc"><div class="sortes">${sortes}</div></div>
       <div class="parcours" id="parcoursListe">${lignes}</div>
       <button class="encore tbf-plaque" id="encore">VOIR PLUS</button>`;
   }
 
   /* Le bouton porte le curseur de la page suivante, et disparaît quand il n'y
-     en a plus. C'est la réponse qui le dit — voir `suite` côté serveur — et non
-     la page qui le devine en comparant des longueurs. */
+     en a plus. C'est la réponse qui le dit, et non la page qui le devine. */
   const bt = $('encore');
   if (!bt) return;
   if (!p.suite) { bt.remove(); return; }
@@ -697,11 +1196,19 @@ async function chargerParcours(avant = null) {
   try {
     const p = await api('/api/rank', `/parcours${avant ? `?avant=${encodeURIComponent(avant)}` : ''}`);
     rendreParcours(p, { ajouter: Boolean(avant) });
-  } catch {
-    /* Le parcours est un ajout, pas le cœur de la page : s'il ne vient pas, on
-       le dit à sa place et le reste du profil s'affiche normalement. */
-    if (!avant) $('parcours').innerHTML =
-      '<div class="vide">Ton parcours n’est pas lisible pour le moment.</div>';
+  } catch (e) {
+    if (e.message === 'auth') return;
+    /* Le parcours est un ajout, pas le cœur de la page : s'il ne vient pas,
+       on le dit à sa place — et un « VOIR PLUS » qui échoue redevient
+       touchable plutôt que de rester sur « UN INSTANT… ». */
+    if (!avant) {
+      $('parcours').innerHTML =
+        '<div class="pan bloc"><div class="vide">Ton parcours n’est pas lisible pour le moment.</div></div>';
+    } else {
+      const bt = $('encore');
+      if (bt) { bt.disabled = false; bt.textContent = 'VOIR PLUS'; }
+      dire('La suite n’a pas pu être lue', { erreur: true });
+    }
   }
 }
 
@@ -715,87 +1222,84 @@ document.addEventListener('click', (e) => {
 
 /* ------------------------------------------------------------- rendu */
 
-/* Le prix de l'emplacement suivant, relu à chaque rendu.
-
-   Il était calculé une fois, au démarrage, et rangé dans `etat` — que la
-   réponse du serveur remplace entièrement après un achat ou un retrait de
-   club. Dès le rendu suivant, la plaque affichait « ? écharpes », et un prix
-   gardé de côté n'aurait de toute façon plus suivi l'emplacement suivant.
-
-   La table est celle du catalogue, c'est-à-dire celle que le serveur applique
-   à l'achat : une seule règle, un seul endroit. Sans elle, la plaque dit
-   « ACHETER » sans chiffre plutôt qu'un chiffre deviné — le serveur annonce
-   de toute façon le refus s'il manque des écharpes. */
+/* Le prix de l'emplacement suivant, relu à chaque rendu : la table est celle
+   du catalogue, c'est-à-dire celle que le serveur applique à l'achat. Sans
+   elle, la plaque dit « ACHETER » sans chiffre plutôt qu'un chiffre deviné. */
 function prixSlot() {
   const p = catalogue?.prixSlots?.[etat.slots.total];
   return typeof p === 'number' && Number.isFinite(p) ? p : null;
 }
 
-function rendre() {
-  $('pseudo').textContent = user.pseudo;
-  $('email').textContent = user.email;
-  $('verif').textContent = user.verified ? 'oui' : 'pas encore';
-  $('resend').style.display = user.verified ? 'none' : 'block';
-  if (!user.verified) {
-    $('badge').className = 'badge warn';
-    $('badge').textContent = 'À VÉRIFIER';
-    $('badge').style.display = 'block';
-  }
-
-  const principal = etat.follows?.find((f) => f.is_main) ?? etat.follows?.[0];
-  $('clubline').innerHTML = principal
-    ? `<img src="${esc(principal.logo)}" alt=""><span>${esc(principal.name)}</span>`
-    : '<span style="font-style:italic">aucun club principal</span>';
-
-  const vecus = souvenirs.filter((s) => s.kind === 'presence').length;
-  // `data-solde` : l'achat d'un emplacement fait compter ce chiffre (voir plus bas).
-  $('stats').innerHTML = `
-    <div class="stat" style="--c:var(--projo)"><b data-solde="echarpes">${etat.scarves}</b><span>ÉCHARPES</span></div>
-    <div class="stat" style="--c:var(--flare)"><b>${etat.packs}</b><span>BOOSTERS</span></div>
-    <div class="stat" style="--c:var(--vert)"><b>${vecus}</b><span>VÉCUS</span></div>
-    <div class="stat" style="--c:var(--violet)"><b>${souvenirs.length}</b><span>SOUVENIRS</span></div>`;
-
-  // Clubs suivis, avec les emplacements libres montrés en creux.
+function rendreClubs() {
   const libres = Math.max(0, etat.slots.total - etat.slots.used);
   const prix = prixSlot();
   $('clubs').innerHTML =
     (etat.follows ?? []).map((f) => `
-      <div class="ligne">
-        <img src="${esc(f.logo)}" alt="">
+      <div class="ligne suivi">
+        ${f.logo ? `<img src="${esc(f.logo)}" alt="">` : ''}
         <span class="n">${esc(f.name ?? 'club ' + f.team_id)}</span>
         ${f.is_main ? '<span class="main">PRINCIPAL</span>' : ''}
-        <button data-unfollow="${f.team_id}" title="Ne plus suivre">✕</button>
+        <button data-unfollow="${esc(f.team_id)}" data-nom="${esc(f.name ?? '')}"
+          aria-label="Ne plus suivre ${esc(f.name ?? 'ce club')}">✕</button>
       </div>`).join('')
     + Array.from({ length: libres }, () => `
       <div class="ligne libre"><span class="n">emplacement libre</span>
-        <a class="v" href="/equipes" style="color:var(--projo);opacity:1">choisir un club</a></div>`).join('')
+        <a class="v" href="/equipes">choisir un club</a></div>`).join('')
     + (etat.slots.total < etat.slots.max ? `
       <div class="ligne"><span class="n">Emplacement supplémentaire</span>
         <button class="tbf-plaque" data-ton="or" id="buyslot">
           ${prix === null ? 'ACHETER' : `${prix} écharpes`}</button></div>` : '');
+}
 
-  /* Le Fanzzy équipé. La ligne du cri ne paraît que si le cri a un nom :
-     « Cri : » suivi de rien se lit comme une donnée perdue, et une ligne sans
-     donnée disparaît plutôt que de s'afficher vide. */
+function rendreFanzzy() {
+  /* La ligne du cri ne paraît que si le cri a un nom : « Cri : » suivi de
+     rien se lit comme une donnée perdue. */
   const cri = loadout?.fanzzy?.cri?.label;
   $('fanzzy').innerHTML = loadout?.fanzzy
     ? `<div class="ligne"><span class="n"><b style="font-family:var(--banner)">${esc(loadout.fanzzy.nom)}</b>
-         ${cri ? `<br><span style="font-size:11px;opacity:.88">Cri : ${esc(cri)}</span>` : ''}</span>
-         <a class="v" href="/fanzzy" style="color:var(--projo);opacity:1">changer</a></div>`
+         ${cri ? `<span class="cri">Cri : ${esc(cri)}</span>` : ''}</span>
+         <a class="tbf-plaque changer" data-ton="bleu" href="/fanzzy">CHANGER</a></div>`
     : `<div class="vide">Aucun Fanzzy équipé.<br><a href="/fanzzy">Ouvre un booster</a></div>`;
+}
 
-  /* Le sac : ce qu'on possède, sans rien à y faire. Équiper se passe dans le
-     deck, pièce par Fanzzy — la ligne sous le sac y mène. */
-  const sac = (etat.stuff ?? []);
+function rendreSac() {
+  /* Le sac : ce qu'on possède, chaque pièce sur son sticker. Équiper se
+     passe dans le deck, pièce par Fanzzy — la bâche sous le sac y mène. */
+  const sac = etat.stuff ?? [];
   $('sac').innerHTML = sac.length
     ? sac.map((s) => {
-        const def = catalogue.stuff.find((x) => x.id === s.stuff_id);
-        return `<span class="obj">
-          ${def ? window.TBF_STUFF.illustration(def.id, 'vignette') : ''}
-          ${esc(def?.nom ?? s.stuff_id)}${s.copies > 1 ? ` ×${s.copies}` : ''}</span>`;
+        const def = catalogue?.stuff?.find((x) => x.id === s.stuff_id);
+        const nom = def?.nom ?? s.stuff_id;
+        const src = window.TBF_STUFF?.adresse?.(s.stuff_id) ?? `/img/stuff/${s.stuff_id}.webp`;
+        return `<span class="piece">
+          <span class="tbf-objet" data-rar="${esc(def?.rar ?? 'commune')}"><img src="${esc(src)}" alt=""></span>
+          <small>${esc(nom)}</small>
+          ${s.copies > 1 ? `<b class="tbf-sticker tbf-sticker--rond">×${s.copies}</b>` : ''}</span>`;
       }).join('')
-    : '<span style="font-size:11.5px;opacity:.88;padding:4px">Ton sac est vide.</span>';
+    : '<span class="sac-vide">Ton sac est vide.</span>';
+}
+/* Une pièce sans dessin : la silhouette au pochoir sur le parpaing teinté de
+   sa rareté, jamais un cadre vide (la brique `.tbf-objet--vide`). */
+$('sac').addEventListener('error', (e) => {
+  const img = e.target;
+  if (!(img instanceof HTMLImageElement)) return;
+  const objet = img.closest('.tbf-objet');
+  if (!objet) return;
+  objet.classList.add('tbf-objet--vide');
+  objet.setAttribute('role', 'img');
+  objet.setAttribute('aria-label', objet.parentElement.querySelector('small')?.textContent ?? 'Pièce');
+  img.remove();
+}, true);
 
+function rendre() {
+  rendreCarte();
+  rendreStats();
+  rendreClubs();
+  rendreFanzzy();
+  rendreSac();
+  $('email').textContent = user.email ?? '';
+  $('verif').textContent = user.verified ? 'oui' : 'pas encore';
+  $('resend').style.display = user.verified ? 'none' : 'block';
   // Des onglets du rail commun : `.on` est l'état que ui.css peint.
   $('langues').innerHTML = ['fr','en','de','es'].map((l) =>
     `<button data-lang="${l}" class="tbf-onglet ${user.locale === l ? 'on' : ''}">${l.toUpperCase()}</button>`).join('');
@@ -806,8 +1310,17 @@ function rendre() {
 $('clubs').addEventListener('click', async (e) => {
   const u = e.target.closest('[data-unfollow]');
   if (u) {
-    try { etat = await me('/follow/' + u.dataset.unfollow, undefined, 'DELETE'); rendre(); }
-    catch { toast('Impossible pour le moment'); }
+    /* Ne plus suivre un club se demande : la croix est petite, au bord de
+       la ligne, et ce qu'elle retire — la tribune où va la ferveur — ne se
+       voit pas tout de suite. */
+    const nom = u.dataset.nom || 'ce club';
+    if (!(await window.TBF_DIALOGUE?.confirmer({
+      titre: `NE PLUS SUIVRE ${nom.toLocaleUpperCase('fr')} ?`,
+      texte: 'Ta ferveur n’ira plus à sa tribune. Tu pourras le suivre de nouveau depuis les clubs.',
+      oui: 'NE PLUS SUIVRE', ton: 'flare', non: 'GARDER',
+    }))) return;
+    try { etat = await me('/follow/' + u.dataset.unfollow, undefined, 'DELETE'); rendreClubs(); rendreCarte(); }
+    catch (err) { if (err.message !== 'auth') dire('Impossible pour le moment', { erreur: true }); }
     return;
   }
   // `closest` : la plaque peut un jour porter une icône, et le clic tomberait
@@ -817,30 +1330,27 @@ $('clubs').addEventListener('click', async (e) => {
       const avant = etat.scarves;
       await me('/slot', {});
       etat = await me('/state');
-      toast('Emplacement débloqué');
-      rendre();
-      /* La dépense se voit : le solde descend de ce qu'il était au prix payé,
-         au lieu de sauter d'un chiffre à l'autre — un solde qui saute se lit
-         comme une erreur d'affichage. `rendre` vient d'écrire la valeur
-         finale — c'est ce qui reste si fx.js manque ; `compter` la réécrit
-         aussitôt à son départ, avant la prochaine image, et l'amène à
-         l'arrivée. */
-      const solde = $('stats').querySelector('[data-solde="echarpes"]');
-      if (window.FX?.compter) FX.compter(solde, avant, etat.scarves);
+      dire('Emplacement débloqué');
+      rendreClubs();
+      rendreStats();
+      /* La dépense se voit : le solde descend au lieu de sauter — un solde
+         qui saute se lit comme une erreur d'affichage. La barre l'apprend
+         par l'annonce qu'elle écoute déjà. */
+      compterSolde('echarpes', avant, etat.scarves);
+      window.dispatchEvent(new CustomEvent('tbf:bourse',
+        { detail: { scarves: etat.scarves, packs: etat.packs } }));
     } catch (err) {
-      // « Impossible pour le moment » laissait le joueur deviner. Le plafond
-      // d'emplacements est un état normal, atteint en jouant : il doit se
-      // lire. Et si le serveur renvoie un code qu'on n'a pas prévu, on le
-      // montre plutôt que de le taire.
-      toast(({
-        'onboarding.error.not_enough_scarves': 'Pas assez d\u2019écharpes',
-        'onboarding.error.max_slots': 'Tu as déjà le maximum d\u2019emplacements',
-        'onboarding.error.server': 'Le serveur n\u2019a pas pu répondre',
-      })[err.code] ?? `Emplacement impossible (${err.code ?? 'sans code'})`);
+      if (err.message === 'auth') return;
+      // Le plafond d'emplacements est un état normal, atteint en jouant : il
+      // doit se lire. Un code imprévu se montre plutôt que de se taire.
+      dire(({
+        'onboarding.error.not_enough_scarves': 'Pas assez d’écharpes',
+        'onboarding.error.max_slots': 'Tu as déjà le maximum d’emplacements',
+        'onboarding.error.server': 'Le serveur n’a pas pu répondre',
+      })[err.code] ?? `Emplacement impossible (${err.code ?? 'sans code'})`, { erreur: true });
     }
   }
 });
-
 
 $('langues').addEventListener('click', async (e) => {
   const b = e.target.closest('[data-lang]');
@@ -849,20 +1359,19 @@ $('langues').addEventListener('click', async (e) => {
     const r = await auth('/me', { locale: b.dataset.lang }, 'PATCH');
     user = r.user;
     try { localStorage.setItem('tbf_locale', user.locale); } catch {}
-    toast('Langue enregistrée');
+    dire('Langue enregistrée');
     rendre();
-  } catch { toast('Impossible pour le moment'); }
+  } catch (err) { if (err.message !== 'auth') dire('Impossible pour le moment', { erreur: true }); }
 });
 
 $('resend').onclick = async () => {
-  try { await auth('/resend-verification', {}); toast('Mail renvoyé'); }
-  catch { toast('Impossible pour le moment'); }
+  try { await auth('/resend-verification', {}); dire('Mail renvoyé'); }
+  catch (err) { if (err.message !== 'auth') dire('Impossible pour le moment', { erreur: true }); }
 };
 
 $('logout').onclick = async () => {
-  /* La déconnexion se demande. Sur téléphone, ce bouton est au bas d'une page
-     qu'on fait défiler, et un appui s'y donne en rangeant l'appareil — on
-     rouvre alors le jeu sur un écran de connexion sans comprendre. */
+  /* La déconnexion se demande : un appui s'y donne en rangeant l'appareil,
+     et l'on rouvre alors le jeu sur un écran de connexion sans comprendre. */
   if (!(await window.TBF_DIALOGUE?.confirmer({
     titre: 'SE DÉCONNECTER ?',
     texte: 'Ta collection et tes duels restent. Il faudra te reconnecter pour y revenir.',
@@ -874,8 +1383,7 @@ $('logout').onclick = async () => {
 
 /* La suppression du compte : le seul geste du jeu qu'on ne peut pas défaire.
    Le mot de passe reste demandé — c'est ce qui protège d'un téléphone laissé
-   déverrouillé — mais plus par `prompt()`, la boîte système qui ne dit rien de
-   ce qu'on perd et qu'on valide d'un Entrée. */
+   déverrouillé. */
 $('supprimer').onclick = async () => {
   let mdp = '';
   await window.TBF_DIALOGUE?.confirmer({
@@ -897,8 +1405,8 @@ $('supprimer').onclick = async () => {
       try {
         await auth('/me', { password: mdp }, 'DELETE');
       } catch (e) {
-        toast(e.code === 'auth.error.bad_credentials'
-          ? 'Mot de passe incorrect' : 'Suppression impossible');
+        dire(e.code === 'auth.error.bad_credentials'
+          ? 'Mot de passe incorrect' : 'Suppression impossible', { erreur: true });
         return false;
       }
       location.href = '/';
@@ -909,14 +1417,12 @@ $('supprimer').onclick = async () => {
 
 /* -------------------------------------------------------- démarrage */
 
-(async () => {
-  // Le portrait sert de fond à la carte de profil.
-  const img = new Image();
-  img.onload = () => { $('fond').style.backgroundImage = `url("${img.src}")`; };
-  img.onerror = () => { $('fond').style.background =
-    'radial-gradient(70% 60% at 50% 25%,rgba(245,195,59,.25),transparent 65%),#0B0F14'; };
-  img.src = 'img/hero-portrait.avif';
+/* Les scripts différés (la fête de niveau, les effets) sont exécutés avant
+   cet événement : on l'attend avant de leur parler. */
+const domPret = new Promise((r) => (document.readyState === 'loading'
+  ? document.addEventListener('DOMContentLoaded', r, { once: true }) : r()));
 
+(async () => {
   try {
     const r = await fetch('/api/auth/me', { credentials:'same-origin' });
     if (!r.ok) { location.href = '/compte'; return; }
@@ -926,26 +1432,50 @@ $('supprimer').onclick = async () => {
     if (!etat.onboarded) { location.href = '/bienvenue'; return; }
 
     // Le reste est facultatif : le profil doit s'afficher même si un module manque.
-    loadout = await me('/loadout').catch(() => null);
-    souvenirs = await api('/api/souvenirs', '/mine').then((d) => d.souvenirs).catch(() => []);
-    /* Sans `await` : le parcours peut demander deux requêtes en base, et le
-       reste du profil n’a aucune raison de l’attendre. Il se pose quand il
-       arrive, à sa place, qui est déjà dessinée. */
+    [loadout, souvenirs] = await Promise.all([
+      me('/loadout').catch(() => null),
+      api('/api/souvenirs', '/mine').then((d) => d.souvenirs ?? []).catch(() => []),
+    ]);
+    /* Sans `await` : le parcours, le niveau, ma place et le quotidien se
+       posent quand ils arrivent, à leur place, qui est déjà dessinée. */
     chargerParcours();
-    chargerNiveau();
+    const pNiveau = chargerNiveau();
+    const pMoi = chargerMoi();
+    chargerQuotidien();
 
-    const d = new Date(user.createdAt ?? Date.now());
-    $('depuis').textContent = 'dans la tribune depuis le ' +
-      d.toLocaleDateString('fr', { day:'numeric', month:'long', year:'numeric' });
-
+    resoudreAvatar();
     rendre();
     $('spin').style.display = 'none';
     $('page').style.display = 'block';
+
+    /* Le manifeste des états donne au buste la tenue et l'expression
+       exactes ; sans lui, c'est le buste de l'âge. Il ne lève jamais. */
+    window.TBF_ETATS?.charger?.()?.then?.(() => { if (monAvatar) poserBuste(); });
+
+    /* La barre lit le portefeuille en même temps que cette page : si elle
+       n'avait encore rien retenu pour ce joueur, son avatar arrive un peu
+       plus tard. Deux relectures, sans requête — provisoire, tant que le
+       serveur ne sert pas l'avatar dans `/api/rank/moi`. */
+    if (!monAvatar && loadout?.fanzzy) {
+      for (const ms of [1200, 3500]) {
+        setTimeout(() => { if (!monAvatar && resoudreAvatar()) poserBuste(); }, ms);
+      }
+    }
+
+    /* **La fête de niveau, depuis la dernière visite.** Après le premier
+       rendu : elle passe devant la carte de supporter. Elle attend aussi
+       ma place, qui portera l'avatar à montrer en pose de victoire. */
+    await Promise.allSettled([pNiveau, pMoi, domPret]);
+    if (niv && !niv.indisponible) {
+      window.TBF_NIVEAU?.depuisVisite?.(niv, { avatar: monAvatar ?? undefined, qui: user.id });
+    }
   } catch (e) {
     if (e.message === 'auth') return;
     $('spin').style.display = 'none';
     $('page').style.display = 'block';
-    $('clubs').innerHTML = '<div class="vide">Serveur injoignable.</div>';
+    /* Dit là où l'on regarde, en haut : les clubs, eux, sont rangés derrière
+       la bâche RÉGLAGES, et un message replié ne dit rien. */
+    $('stats').innerHTML = '<div class="pan" style="grid-column:1/-1"><div class="vide">Serveur injoignable.</div></div>';
   }
 })();
 </script>

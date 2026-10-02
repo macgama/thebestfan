@@ -79,6 +79,25 @@ export const EFFETS_CONNUS = new Set([
 /** La minute où placer un changement de période, faute que l'API en donne une. */
 const MINUTE_DE_PERIODE = { '1H': 0, HT: 45, '2H': 45, ET: 90, BT: 90, P: 120, FT: 90, AET: 120, PEN: 120 };
 
+/**
+ * La mi-temps d'un chant : 1 en première, 2 en seconde, 0 partout ailleurs.
+ *
+ * Elle se lit sur le **statut du vrai match** que la salle tient déjà — le
+ * relevé du direct le lit toutes les vingt secondes, sans un appel de plus —
+ * et jamais sur la minute : la minute 45 est à la fois la fin de la première
+ * et le début de la seconde, et le temps additionnel la fait déborder.
+ *
+ * La mi-temps elle-même, les prolongations, les tirs au but, un match dont la
+ * compétition ne dit que « en direct » (`LIVE`) : zéro. La mission « dans
+ * chaque mi-temps » ne compte que les deux vraies, et un chant à la pause ne
+ * doit pas en remplir une.
+ */
+function miTemps(statut) {
+  if (statut === '1H') return 1;
+  if (statut === '2H') return 2;
+  return 0;
+}
+
 /* Des getters, et non des nombres : `RULES.goalAt` s'écrit toujours pareil
    sur les sites qui le lisent, mais il interroge le registre à chaque lecture.
    Ces cinq-là sont réglables depuis l'administration ; les autres restent des
@@ -556,7 +575,12 @@ export class VirageRoom {
     // classement, et l’inverse.
     /* Et le partage n'est pas le même des deux côtés : la corde se pousse à
        l'effectif réel, la ferveur se partage au plancher. Voir `partFerveur`. */
-    this.crediter(m, amount / this.partFerveur(m), mods);
+    /* **C'est un chant**, et c'est ici seulement qu'on le sait : `crediter`
+       sert aussi aux cartes d'action, qui ne chantent pas. Les missions du
+       Virage comptent des chants, pas des poussées — une carte jouée ne doit
+       donc pas en remplir une. Un chant raté compte quand même : le serveur
+       l'a accepté, il a coûté son souffle, et la cadence le plafonne. */
+    this.crediter(m, amount / this.partFerveur(m), mods, { chant: true });
 
     if (Math.abs(this.rope) >= RULES.goalAt) this.scoreGoal(this.rope > 0 ? 1 : 0);
 
@@ -680,7 +704,10 @@ export class VirageRoom {
   /* `mods` par défaut : ceux du moment, lieu et effets compris. Le repli était
      `m.mods` — le total d'avant le lieu — et le `ferveurBonus` d'un stade ne
      comptait donc que sur le chemin du chant. */
-  crediter(m, perCapita, mods = this.modsDe(m)) {
+  /* `chant` : vrai pour le seul appel de `chant()`. Une carte, un tifo qui se
+     déplie, une poussée étalée passent par ici sans lui, et ne comptent donc
+     pas comme des chants. */
+  crediter(m, perCapita, mods = this.modsDe(m), { chant = false } = {}) {
     const gagne = Math.round(Math.max(0, perCapita) * (mods.ferveurBonus ?? 1)
       * (m.neutre ? RULES.ferveurNeutre : 1));
     m.ferveur += gagne;
@@ -696,6 +723,12 @@ export class VirageRoom {
          `!== false` et non un booléen nu : une salle ouverte à la main, ou
          une épreuve qui monte un membre sans le dire, compte comme avant. */
       classe: m.classe !== false,
+      /* Les chants, comptés dans la même écriture que la présence : c'est ce
+         que lisent les missions du Virage (« chante 10 fois », « dans chaque
+         mi-temps »). Un entier et non un booléen, parce qu'il s'additionne
+         tel quel dans la colonne. */
+      chant: chant ? 1 : 0,
+      mt: miTemps(this.statut),
     })?.catch?.(() => {});
     return gagne;
   }

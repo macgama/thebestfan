@@ -105,6 +105,76 @@ console.log('\n— ce que le serveur refuse de croire —\n');
     'reçue du client : ' + suspects.join(', '));
 }
 
+/* 4 bis. Un montant ne vient jamais du client. Le quotidien ajoute huit
+      sources de gain — missions, sachet, bonus, carnet, relais, crans,
+      séries, divisions — et chacune se réclame par une route. Le montant
+      versé est celui que la ligne porte en base, copié au tirage, ou celui du
+      registre des réglages : jamais un nombre que le navigateur envoie. Une
+      route qui lirait `req.body.echarpes` donnerait à n'importe qui le
+      pouvoir de se payer ce qu'il veut.
+
+      Le contrôle lit l'accès direct (`req.body.xp`, `req.query?.gain`) et la
+      déstructuration (`const { packs } = req.body`). La suite du quotidien
+      éprouve en plus le comportement : un corps qui porte `echarpes: 9999`
+      verse le montant de la ligne. */
+const MONTANTS = 'montant|echarpes|scarves|xp|packs|gain|tampons';
+const lireMontant = new RegExp(`req\\.(body|query|params)\\??\\.(${MONTANTS})\\b`, 'g');
+const deconstruireMontant = new RegExp(
+  `\\{[^}]*\\b(${MONTANTS})\\b[^}]*\\}\\s*=\\s*req\\.(body|query|params)\\b`, 'g');
+const montantsLus = (c) => [...c.matchAll(lireMontant)].map((m) => `req.${m[1]}.${m[2]}`)
+  .concat([...c.matchAll(deconstruireMontant)].map((m) => `{ ${m[1]} } = req.${m[2]}`));
+
+/* 4 ter. Les billets ne s'écrivent plus que dans la boutique. C'était la
+      monnaie que l'argent réel achetait ; elle a été supprimée, et la colonne
+      `user_wallet.billets` reste figée parce qu'elle porte ce que des gens
+      ont payé (`JURIDIQUE.md`, § 3). Une écriture ailleurs rouvrirait le
+      chemin euro → monnaie → tirage que sa suppression a fermé (L7). */
+const ecrireBillets = [
+  /UPDATE\s+\w+\s+SET[^;`]*\bbillets\s*=/gi,
+  /INSERT\s+(?:IGNORE\s+)?INTO\s+\w+\s*\([^)]*\bbillets\b/gi,
+];
+const billetsEcrits = (c) => ecrireBillets.flatMap((re) => [...c.matchAll(re)].map((m) => m[0]
+  .replace(/\s+/g, ' ').slice(0, 50)));
+
+/* Le contrôle du contrôle : un détecteur qui ne trouve plus rien ressemble
+   trait pour trait à un code sans faute. On le confronte donc d'abord à des
+   fautes plantées, écrites comme elles le seraient dans une route. */
+{
+  const plantees = [
+    'const n = req.body.echarpes;',
+    'const g = req.query?.gain;',
+    'const { jour, rang, xp } = req.body;',
+  ];
+  const sain = 'const { jour, rang, id } = req.body; const r = await verser(pool, o);';
+  check(plantees.every((p) => montantsLus(p).length === 1) && montantsLus(sain).length === 0,
+    'le détecteur de montants voit une faute plantée, et pas un corps sain',
+    'le détecteur de montants est aveugle : il ne voit plus une faute plantée');
+  check(billetsEcrits('`UPDATE user_wallet SET scarves = scarves - ?, billets = billets + ? WHERE`').length === 1
+    && billetsEcrits('`INSERT INTO user_wallet (user_id, billets) VALUES (?, ?)`').length === 1
+    && billetsEcrits('`SELECT w.scarves, w.billets FROM user_wallet w`').length === 0,
+  'le détecteur d’écriture de billets voit une faute plantée, et pas une lecture',
+  'le détecteur d’écriture de billets est aveugle');
+}
+{
+  const suspects = [];
+  for (const [f, c] of [...SERVEUR, ['server.js', serverJs]]) {
+    for (const s of montantsLus(c)) suspects.push(`${f} : ${s}`);
+  }
+  check(suspects.length === 0,
+    'aucun montant de gain n’est lu dans la requête du joueur',
+    'montant lu dans la requête : ' + suspects.join(', '));
+}
+{
+  const ailleurs = [];
+  for (const [f, c] of [...SERVEUR, ['server.js', serverJs]]) {
+    if (f.split(path.sep).join('/').startsWith('src/server/boutique/')) continue;
+    for (const s of billetsEcrits(c)) ailleurs.push(`${f} : ${s}`);
+  }
+  check(ailleurs.length === 0,
+    'les billets ne s’écrivent nulle part hors de la boutique',
+    'écriture de billets hors de src/server/boutique/ : ' + ailleurs.join(', '));
+}
+
 /* 5. Tout le SQL est paramétré. Une seule interpolation suffit à ouvrir la
       base : c'est la faille la plus ancienne du métier, et la plus coûteuse. */
 {

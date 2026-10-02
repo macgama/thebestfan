@@ -9,6 +9,10 @@ import { Server } from 'socket.io';
 import { io as client } from 'socket.io-client';
 import { createDecks } from '../src/server/deck/index.js';
 import { createNvN } from '../src/server/nvn/index.js';
+import { createNiveau } from '../src/server/niveau/index.js';
+import { XP } from '../src/shared/niveau.js';
+import { PART_POT } from '../src/shared/kop.js';
+import { apres as coteApres, COTE_DEPART } from '../src/shared/cote.js';
 import { ACTIONS } from '../src/shared/duel/actions.js';
 import { charger as chargerCatalogue } from '../src/server/fanzzy/catalogue.js';
 import { chargerTenues } from '../src/server/fanzzy/tenues.js';
@@ -31,15 +35,23 @@ await raw.query(`DROP TABLE IF EXISTS parrainages, abonnements, achats, kop_invi
   user_souvenirs, virage_presence, souvenirs, user_wallet, api_cache, souvenir_leagues,
   duel_results, duel_events, duels, user_league_follows, user_follows, fixture_events, standings, fixtures,
   team_leagues, teams, leagues, api_quota, login_attempts, auth_tokens, sessions, users`);
+/* `niveau.sql` en dernier : il pose la colonne `xp` sur `user_wallet`, que le
+   banc de la fin de duel (tout en bas) lit pour vérifier l'XP versée. */
 for (const f of ['auth.sql','football.sql', 'minutes.sql', 'couleurs.sql','duel.sql','souvenirs.sql', 'billets.sql','fanzzy.sql',
-                 'inventaire.sql', 'skins.sql', 'etats.sql', 'tenues.sql','deck.sql', 'historique.sql']) {
+                 'inventaire.sql', 'skins.sql', 'etats.sql', 'tenues.sql','deck.sql', 'historique.sql',
+                 'niveau.sql']) {
   await raw.query(readFileSync(new URL('../sql/' + f, import.meta.url), 'utf8'));
 }
 const U = ['e1','e2','e3','e4'].map((x, i) =>
   `eeee0000-0000-0000-0000-00000000000${i + 1}`);
+/* Six duellistes de plus, pour le banc de la fin de duel. Ils ne jouent nulle
+   part ailleurs : leurs bourses et leurs parties ne disent donc que ce que ce
+   banc-là leur a fait, et aucun duel resté ouvert plus haut ne peut les payer
+   pendant qu'on les mesure. */
+const V = [0, 1, 2, 3, 4, 5].map((i) => `eeee0000-0000-0000-0000-00000000001${i}`);
 const communes = ACTIONS.filter((a) => a.rar === 'commune').map((a) => a.id);
 const dix = [...communes, ...communes].slice(0, 10);
-for (const [i, id] of U.entries()) {
+for (const [i, id] of [...U, ...V].entries()) {
   await raw.query(`INSERT INTO users (public_id,email,pseudo,password_hash) VALUES (?,?,?,'x')`,
     [id, `n${i}@ex.fr`, `Duelliste${i}`]);
   await raw.query(`INSERT INTO user_wallet (user_id,scarves) VALUES (?,0)`, [id]);
@@ -55,6 +67,10 @@ await raw.query(`INSERT INTO teams (id,name) VALUES (85,'Sion'),(91,'Bâle')`);
 // personne. Pousser pour son club rapporte le double, et la comparaison des
 // deux bourses à la fin du duel est le seul moyen de le vérifier.
 await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1)`, [U[0]]);
+// Au banc de la fin de duel, V[0] et V[2] suivent Sion : leur part va au pot
+// d'un KOP, et c'est le troisième versement qu'un duel fermé deux fois doublait.
+await raw.query(`INSERT INTO user_follows (user_id,team_id,is_main) VALUES (?,85,1),(?,85,1)`,
+  [V[0], V[2]]);
 await raw.query(`INSERT INTO leagues (id,name) VALUES (207,'Super League')`);
 await raw.query(`INSERT INTO fixtures (id,league_id,season,home_id,away_id,status_short,kickoff_at)
   VALUES (900,207,2026,85,91,'1H',UTC_TIMESTAMP()),
@@ -76,23 +92,27 @@ const decks = createDecks({ pool, requireAuth: (r,_s,n)=>n() });
    bourse. Or franchir un palier de niveau verse lui aussi des écharpes : monter
    le module ajouterait au solde une somme qui ne vient pas du duel, et les
    contrôles de barème se mettraient à mesurer deux choses à la fois.
-   Conséquence à connaître : `duel_results.xp` vaut zéro dans tout ce fichier —
-   c'est la vérité de ce banc, pas un défaut d'écriture. Le contenu de la
-   colonne se vérifie donc ailleurs. */
+   Conséquence à connaître : `duel_results.xp` vaut zéro sur tout ce banc —
+   c'est sa vérité, pas un défaut d'écriture. Le banc de la fin de duel, tout
+   en bas, monte le sien **avec** le niveau, et y compte l'XP au point près. */
 const N = createNvN({ pool, io, decks, requireAuth: (r,_s,n)=>{ r.user={id:U[0]}; n(); } });
 app.use('/api/nvn', N.router);
 await new Promise((r)=>http.listen(0,r));
 const url = `http://localhost:${http.address().port}`;
 
-function co(id) {
-  const socket = client(url, { transports:['websocket'], auth:{ token:id }, reconnection:false });
-  const p = { id, socket, state:null, events:[], errors:[], file:null, starts:0 };
+/* `base` : le serveur visé. Le banc de la fin de duel, tout en bas, monte le
+   sien, avec le module de niveau. */
+function co(id, base = url) {
+  const socket = client(base, { transports:['websocket'], auth:{ token:id }, reconnection:false });
+  const p = { id, socket, state:null, events:[], errors:[], file:null, starts:0, fins:0 };
   socket.on('nvn:start', (s)=>{ p.state=s; p.starts++; });
   socket.on('nvn:state', (s)=>{ p.state=s; });
   socket.on('nvn:events', (e)=>p.events.push(...e));
   socket.on('nvn:error', (e)=>p.errors.push(e.code));
   socket.on('nvn:file', (f)=>{ p.file=f; });
-  socket.on('nvn:fin', (f)=>{ p.fin=f; });
+  /* Compté, et pas seulement gardé : un duel fermé deux fois envoyait deux
+     bilans, et le second écrasait le premier sans que rien ne le voie. */
+  socket.on('nvn:fin', (f)=>{ p.fin=f; p.fins++; });
   // `nvn:file` est la mienne, `nvn:attentes` sont toutes celles du serveur.
   socket.on('nvn:attentes', (d)=>{ p.attentes = d?.attentes ?? []; });
   return p;
@@ -193,8 +213,16 @@ function gestePassable(gest) {
    * selon que le chant offert demandait un geste tremblé ou non — et sans rien
    * qui nomme la cause, puisque le refus part sur un autre canal que les
    * contrôles qui échouaient ensuite. */
+  /* **Et assez fort.** Le contrôle ne compare pas deux intervalles : il
+     refuse un **écart-type** des intervalles sous six millisecondes. Un
+     tremblement de ±9 ms donne un écart-type d'environ sept, juste au-dessus
+     du seuil : une suite de la mesure (`retenue`) sur quatre et un martelage
+     sur huit étaient refusés pour `inhuman_regularity`, et ce bloc rougissait
+     sur « le chant est diffusé aux deux » selon le répertoire tiré. À ±20 ms,
+     le refus tombe sous une chance sur deux mille, et chaque frappe reste
+     dans sa fenêtre (165 ms au plus serré, celle du crescendo). */
   const bruit = (a = 18) => Math.random() * a * 2 - a;
-  const tremble = (t) => t.map((x, i) => Math.round(i === 0 ? x : x + bruit(9)));
+  const tremble = (t) => t.map((x, i) => Math.round(i === 0 ? x : x + bruit(20)));
 
   switch (gest) {
     // Les gestes de maintien : un appui long, rendu par deux instants. Pas de
@@ -286,7 +314,9 @@ A.socket.emit('nvn:chant', { cardId: monChant.id,
 check('le chant est diffusé aux deux', await until(()=>
   A.events.some((e)=>e.t==='chant') && B.events.some((e)=>e.t==='chant'))
   || (console.log(`        chant ${monChant.id}/${monChant.gest} (coût ${monChant.cost})`,
-    '· refus :', A.errors.at(-1)?.code ?? '—'), false));
+    /* `errors` garde les **codes**, des chaînes : lire `.code` dessus rendait
+       toujours « — », et le refus qui expliquait l'échec restait muet. */
+    '· refus :', A.errors.at(-1) ?? '—'), false));
 check('la corde a bougé', await until(()=>A.state.rope !== 0));
 
 /* Le neutre chante une fois lui aussi. Sans ferveur de son côté, le contrôle
@@ -584,18 +614,28 @@ check('sans deck, la file est refusée', await until(()=>D.errors.includes('ferv
 
     /* Et les bourses, qui sont la seule preuve qui compte : une fin de duel
        qui annonce un vainqueur sans rien verser serait un message, pas une
-       règle. */
-    await until(async () => {
-      const [[x]] = await pool.query(
-        'SELECT scarves FROM user_wallet WHERE user_id = ?', [U[3]]);
-      return Number(x?.scarves ?? 0) > 0;
-    }, 6000);
+       règle.
+
+       **On attend la ligne du résultat**, écrite après le versement, puis un
+       temps de plus : un second versement (E1) arrivait juste derrière le
+       premier, et lire la bourse au premier signe de vie l'aurait manqué. */
+    const salleEF = F.state?.id;
+    await until(async () => (await pool.query(
+      'SELECT 1 FROM duel_results WHERE duel_id = ?', [salleEF]))[0].length === 2, 6000);
+    await wait(600);
     const [[gagnant]] = await pool.query(
       'SELECT scarves FROM user_wallet WHERE user_id = ?', [U[3]]);
     const [[fuyard]] = await pool.query(
       'SELECT scarves FROM user_wallet WHERE user_id = ?', [U[2]]);
-    check('le gagnant touche ce qui était prévu', Number(gagnant?.scarves) > 0
-      || (console.log('        il touche :', gagnant?.scarves), false));
+    /* **La valeur exacte, et pas « plus que zéro ».** C'est « plus que zéro »
+       qui a laissé passer le forfait payé deux fois : soixante écharpes sont
+       aussi plus que zéro. Le resté est neutre sur un 1v1 classé : le barème
+       de la victoire, sans double ni prime. */
+    check(`le gagnant touche ce qui était prévu, une fois (${gagnant?.scarves})`,
+      Number(gagnant?.scarves) === BAREME.win
+      || (console.log('        attendu', BAREME.win, '· il touche :', gagnant?.scarves), false));
+    check('et chacun reçoit un seul bilan', E.fins === 1 && F.fins === 1
+      || (console.log('        bilans :', E.fins, 'et', F.fins), false));
     check('et celui qui abandonne ne touche rien', Number(fuyard?.scarves) === 0
       || (console.log('        il touche :', fuyard?.scarves), false));
   }
@@ -888,7 +928,304 @@ check('sans deck, la file est refusée', await until(()=>D.errors.includes('ferv
   }
 }
 
+/* ===================================== la fin d'un duel : une fois, et tout
+
+   Quatre choses du chantier serveur (PLAN.md § 6.3), éprouvées sur un banc à
+   part : un second serveur, sur la même base, **avec** le module de niveau —
+   celui du haut le laisse dehors exprès, voir son pavé — et une doublure du
+   KOP qui compte ce qu'on lui verse.
+
+   - **E1** : un duel ne se ferme qu'une fois. `fermer` frappée deux fois de
+     suite, puis le vrai chemin du forfait par les sockets : un seul
+     versement d'écharpes, d'XP et de pot, et un seul bilan par joueur.
+   - **Point 1** : `gains.niveau` voyage avec chaque bilan qui a crédité de
+     l'XP, montée ou pas, et jamais pour un forfait.
+   - **Point 4** : `gains.cote` dit la cote avant et après, ce sont les
+     valeurs que la ligne écrit, et elle manque à l'entraînement.
+   - **P7** : la cote ne relit plus tout l'historique, et elle reste juste —
+     dernière cote, et coefficient d'un joueur à vingt parties.
+
+   Les montants attendus sont **exacts**, jamais « plus que zéro » : c'est ce
+   qui a laissé vivre E1. */
+{
+  const pots = [];
+  /* La doublure du KOP : la vraie signature (`verser(userId, teamId, part)`,
+     `PART_POT`), et un registre de ses appels. Le vrai module demanderait ses
+     tables et un KOP créé ; ce qu'on mesure ici est combien de fois le duel
+     verse, pas ce que le KOP en fait. */
+  const kopDoublure = {
+    PART_POT,
+    async verser(userId, teamId, part) {
+      pots.push({ userId, teamId, part });
+      return { verse: part, kopId: 'banc', nom: 'Les Fermeurs' };
+    },
+  };
+  const niveau = createNiveau({ pool, requireAuth: (r, _s, n) => n() });
+  const app2 = express(); const http2 = createServer(app2);
+  const io2 = new Server(http2, { cors: { origin: '*' } });
+  io2.use((s, next) => { s.data.user = { userId: s.handshake.auth.token, name: 'J' }; next(); });
+  const N2 = createNvN({ pool, io: io2, decks, niveau, kop: kopDoublure,
+    requireAuth: (r, _s, n) => { r.user = { id: V[0] }; n(); } });
+  await new Promise((r) => http2.listen(0, r));
+  const url2 = `http://localhost:${http2.address().port}`;
+
+  const lire = async (id) => {
+    const [[w]] = await pool.query('SELECT scarves, xp FROM user_wallet WHERE user_id = ?', [id]);
+    return { scarves: Number(w.scarves), xp: Number(w.xp) };
+  };
+  const lignesDe = async (duelId) => (await pool.query(
+    `SELECT user_id, outcome, mode, elo_before, elo_after, xp
+       FROM duel_results WHERE duel_id = ?`, [duelId]))[0];
+  /* Une socket de banc : elle compte ses bilans. `ouvrir` lui fait rejoindre
+     la salle et lui envoie l'état ; seul le bilan nous intéresse.
+
+     **Elle copie ce qu'elle reçoit**, comme le fil le fait : une vraie socket
+     sérialise à l'envoi. Garder la référence laisserait voir un champ posé
+     *après* l'envoi — une cote calculée trop tard passerait pour envoyée. */
+  const fausse = () => ({ connected: true, fins: [], join() {},
+    emit(evt, x) { if (evt === 'nvn:fin') this.fins.push(JSON.parse(JSON.stringify(x))); } });
+  const joueur = async (id, socket, enPlus) => ({ userId: id, nom: `V${V.indexOf(id)}`,
+    socket, loadout: await decks.loadout(id), ...enPlus });
+  const dePlus = (a, b) => ({ scarves: b.scarves - a.scarves, xp: b.xp - a.xp });
+
+  const support = await decks.matchSupport(900, V[0]);
+  check('banc de fin : le match 900 est classé', support?.mode === 'classe');
+
+  /* ---------------------------------------- E1 : fermer frappée deux fois */
+  {
+    const sA = fausse(), sB = fausse();
+    const salle = N2.ouvrir([
+      [await joueur(V[0], sA, { neutre: false, teamId: 85, bonus: 1 })],
+      [await joueur(V[1], sB, { neutre: true, teamId: null, bonus: 1 })],
+    ], support, '1v1');
+    const avA = await lire(V[0]), avB = await lire(V[1]);
+    pots.length = 0;
+
+    salle.duel.finir(0, 'buts', []);
+    /* **Deux fois en même temps**, puis une troisième une fois tout rangé :
+       c'est ce que faisaient `diffuser` et le gestionnaire du forfait. */
+    await Promise.all([N2.pourLesTests.fermer(salle), N2.pourLesTests.fermer(salle)]);
+    await N2.pourLesTests.fermer(salle);
+
+    const gA = sA.fins[0]?.gains ?? {}, gB = sB.fins[0]?.gains ?? {};
+    const deA = dePlus(avA, await lire(V[0])), deB = dePlus(avB, await lire(V[1]));
+    const xpGagne = XP.duel.classe + XP.victoire;
+
+    check('fermer deux fois : un seul bilan pour chacun',
+      sA.fins.length === 1 && sB.fins.length === 1
+      || (console.log('        bilans :', sA.fins.length, 'et', sB.fins.length), false));
+    /* V[0] suit Sion, qui joue ce match : 30, doublé pour son club. */
+    check(`le gain annoncé est le barème, doublé pour son club (${gA.echarpes})`,
+      gA.echarpes === 60);
+    check(`et la bourse monte d'exactement ce gain (${deA.scarves})`,
+      deA.scarves === gA.echarpes + (gA.niveau?.ecarpes ?? 0) && deA.scarves === 60
+      || (console.log('        bourse +', deA.scarves, '· annoncé', gA.echarpes), false));
+    check(`l'XP monte d'exactement le gain annoncé (${deA.xp})`,
+      deA.xp === gA.xp && gA.xp === xpGagne
+      || (console.log('        XP +', deA.xp, '· annoncé', gA.xp, '· barème', xpGagne), false));
+    check('la part du KOP est versée une fois',
+      pots.length === 1 && pots[0].userId === V[0] && pots[0].part === Math.round(30 * PART_POT)
+      || (console.log('        versements au pot :', JSON.stringify(pots)), false));
+    check(`le perdant touche le barème du perdu, une fois (${deB.scarves}, ${deB.xp} XP)`,
+      deB.scarves === 12 && deB.xp === XP.duel.classe && gB.xp === XP.duel.classe);
+
+    /* ------------------------------------------------- point 1 : la jauge */
+    const nA = gA.niveau;
+    check('le bilan porte la jauge d’XP, même sans montée',
+      Boolean(nA) && nA.monte === false && !gA.montee
+      || (console.log('        gains :', JSON.stringify(gA)), false));
+    check('la jauge dit le gain, l’XP d’après et celle d’avant',
+      nA?.gain === gA.xp && nA?.xp === avA.xp + gA.xp && nA?.depart?.xp === avA.xp
+      || (console.log('        niveau :', JSON.stringify(nA)), false));
+    check('et de quoi animer l’anneau', nA?.niveau === 1 && nA?.avant === 1
+      && nA?.dans === nA?.xp && nA?.part === nA?.dans / nA?.pour
+      && nA?.depart?.part === nA?.depart?.dans / nA?.depart?.pour);
+
+    /* ------------------------------------------------- point 4 : la cote */
+    const lignes = await lignesDe(salle.duel.id);
+    const ligne = (u) => lignes.find((l) => l.user_id === u);
+    check('deux lignes, pas quatre', lignes.length === 2);
+    check('le bilan porte la cote : départ, et ce que la victoire rapporte',
+      gA.cote?.avant === COTE_DEPART
+      && gA.cote?.apres === coteApres(COTE_DEPART, COTE_DEPART, 'win', 0)
+      && gA.cote?.delta === gA.cote?.apres - gA.cote?.avant
+      || (console.log('        cote :', JSON.stringify(gA.cote)), false));
+    check('et ce que la défaite coûte', gB.cote?.delta < 0
+      && gB.cote?.apres === coteApres(COTE_DEPART, COTE_DEPART, 'loss', 0));
+    check('le bilan et la ligne disent la même cote',
+      [[V[0], gA], [V[1], gB]].every(([u, g]) =>
+        Number(ligne(u)?.elo_before) === g.cote?.avant
+        && Number(ligne(u)?.elo_after) === g.cote?.apres)
+      || (console.log('        lignes :', JSON.stringify(lignes)), false));
+  }
+
+  /* ------------------------------- E1 par le vrai chemin : le forfait */
+  {
+    const E2 = co(V[2], url2), F2 = co(V[3], url2);
+    await until(() => E2.socket.connected && F2.socket.connected);
+    // V[2] suit Sion : il est chez lui, camp 0. V[3] prend l'autre camp.
+    E2.socket.emit('nvn:queue', { format: '1v1', fixtureId: 900 });
+    F2.socket.emit('nvn:queue', { format: '1v1', fixtureId: 900, camp: 1 });
+    const forme = await until(() => E2.state && F2.state, 8000);
+    check('banc de fin : le duel du forfait est formé', forme);
+
+    if (forme) {
+      const avE = await lire(V[2]), avF = await lire(V[3]);
+      pots.length = 0;
+      F2.socket.emit('nvn:forfait');
+
+      const duelId = E2.state.id;
+      await until(async () => (await lignesDe(duelId)).length === 2, 6000);
+      /* Le second bilan et le second versement arrivaient juste derrière le
+         premier : on leur laisse le temps de se montrer. */
+      await wait(800);
+      const gE = E2.fin?.gains ?? {}, gF = F2.fin?.gains ?? {};
+      const deE = dePlus(avE, await lire(V[2])), deF = dePlus(avF, await lire(V[3]));
+
+      check('forfait : chaque socket reçoit un seul bilan', E2.fins === 1 && F2.fins === 1
+        || (console.log('        bilans :', E2.fins, 'et', F2.fins), false));
+      check(`le resté touche exactement le gain annoncé (${deE.scarves})`,
+        gE.echarpes === 60 && deE.scarves === gE.echarpes + (gE.niveau?.ecarpes ?? 0)
+        || (console.log('        bourse +', deE.scarves, '· annoncé', gE.echarpes), false));
+      check(`et exactement l'XP annoncée (${deE.xp})`,
+        deE.xp === gE.xp && gE.xp === XP.duel.classe + XP.victoire);
+      check('et son KOP reçoit sa part une fois', pots.length === 1 && pots[0].userId === V[2]
+        || (console.log('        versements au pot :', JSON.stringify(pots)), false));
+      check('le fuyard ne touche rien', deF.scarves === 0 && deF.xp === 0 && gF.xp === 0);
+      /* « Absent pour un forfait, qui ne gagne pas d'XP » (CONTRATS.md § 1). */
+      check('et son bilan ne porte pas de jauge', gF.niveau === undefined && Boolean(gE.niveau));
+      /* Le forfait est une défaite classée : elle cote, comme avant. */
+      check('mais il porte la cote, qui descend', gF.cote?.delta < 0 && gE.cote?.delta > 0);
+    }
+    E2.socket.disconnect(); F2.socket.disconnect();
+  }
+
+  /* --------------------------------- l'entraînement : jauge, pas de cote */
+  {
+    const sA = fausse(), sB = fausse();
+    const salle = N2.ouvrir([
+      [await joueur(V[0], sA, { neutre: false, teamId: 85, bonus: 1 })],
+      [await joueur(V[1], sB, { neutre: true, teamId: null, bonus: 1 })],
+    ], { ...support, mode: 'entrainement' }, '1v1');
+    salle.duel.finir(1, 'buts', []);
+    await N2.pourLesTests.fermer(salle);
+    const gA = sA.fins[0]?.gains ?? {}, gB = sB.fins[0]?.gains ?? {};
+    check('à l’entraînement, pas de cote au bilan', !('cote' in gA) && !('cote' in gB)
+      || (console.log('        gains :', JSON.stringify([gA, gB])), false));
+    check('mais la jauge, oui', gA.niveau?.gain === XP.duel.entrainement
+      && gB.niveau?.gain === XP.duel.entrainement + XP.victoire);
+    const lignes = await lignesDe(salle.duel.id);
+    check('et la ligne ne cote pas', lignes.length === 2 && lignes.every((l) =>
+      l.mode === 'entrainement' && Number(l.elo_before) === COTE_DEPART
+      && Number(l.elo_after) === COTE_DEPART));
+  }
+
+  /* ------------------------- P7 : vingt parties, et la cote reste juste
+
+     V[4] a vingt parties classées derrière lui, la plus récente à 1100 et les
+     autres plus haut, plus une partie d'entraînement encore plus récente qui
+     ne doit rien changer. V[5] en a trois, la plus récente à 950. Semées comme
+     le serveur les écrit : `NOW(3)`, en SQL. */
+  {
+    for (let k = 1; k <= 20; k++) {
+      await pool.query(
+        `INSERT INTO duel_results (duel_id, user_id, opponent_id, outcome, mode,
+                                   elo_before, elo_after, ended_at)
+         VALUES (UUID(), ?, 'semis', 'win', 'classe', 1000, ?, NOW(3) - INTERVAL ? MINUTE)`,
+        [V[4], k === 1 ? 1100 : 1200 + k, k]);
+    }
+    await pool.query(
+      `INSERT INTO duel_results (duel_id, user_id, opponent_id, outcome, mode,
+                                 elo_before, elo_after, ended_at)
+       VALUES (UUID(), ?, 'semis', 'loss', 'entrainement', 1000, 1000, NOW(3) - INTERVAL 10 SECOND)`,
+      [V[4]]);
+    for (let k = 1; k <= 3; k++) {
+      await pool.query(
+        `INSERT INTO duel_results (duel_id, user_id, opponent_id, outcome, mode,
+                                   elo_before, elo_after, ended_at)
+         VALUES (UUID(), ?, 'semis', 'loss', 'classe', 1000, ?, NOW(3) - INTERVAL ? MINUTE)`,
+        [V[5], k === 1 ? 950 : 1300, k]);
+    }
+
+    const sA = fausse(), sB = fausse();
+    const salle = N2.ouvrir([
+      [await joueur(V[4], sA, { neutre: true, teamId: null, bonus: 1 })],
+      [await joueur(V[5], sB, { neutre: true, teamId: null, bonus: 1 })],
+    ], support, '1v1');
+    salle.duel.finir(1, 'buts', []);
+    await N2.pourLesTests.fermer(salle);
+    const cA = sA.fins[0]?.gains?.cote, cB = sB.fins[0]?.gains?.cote;
+
+    /* Le coefficient est ce qui distingue vingt parties de trois : sans lui,
+       ce contrôle ne saurait pas dire si le compte est juste. */
+    check('le banc distingue bien les deux coefficients',
+      coteApres(1100, 950, 'loss', 20) !== coteApres(1100, 950, 'loss', 1));
+    check('la cote d’avant est la dernière classée, pas l’entraînement ni la plus vieille',
+      cA?.avant === 1100 && cB?.avant === 950
+      || (console.log('        avant :', cA?.avant, 'et', cB?.avant), false));
+    check('vingt parties : le coefficient ordinaire',
+      cA?.apres === coteApres(1100, 950, 'loss', 20)
+      || (console.log('        après', cA?.apres, '· attendu', coteApres(1100, 950, 'loss', 20)), false));
+    check('trois parties : celui des débuts',
+      cB?.apres === coteApres(950, 1100, 'win', 3)
+      || (console.log('        après', cB?.apres, '· attendu', coteApres(950, 1100, 'win', 3)), false));
+    const lignes = await lignesDe(salle.duel.id);
+    check('et la ligne écrit les mêmes', lignes.length === 2 && lignes.every((l) => {
+      const c = l.user_id === V[4] ? cA : cB;
+      return Number(l.elo_before) === c?.avant && Number(l.elo_after) === c?.apres;
+    }));
+  }
+
+  /* --------------------- une cote illisible ne vole pas la fin de partie
+
+     Un troisième module, sur un pool dont la lecture groupée (`query`) échoue
+     — c'est par elle que passe la cote — et une socket de banc à la place du
+     serveur : il ne doit pas entendre les connexions du deuxième.
+
+     Son module de niveau a une base qui refuse tout : `gagner()` rend alors
+     l'objet vide sans lever, et le bilan ne doit pas montrer une jauge sur
+     une XP jamais créditée (CONTRATS.md § 1, « Absence »). */
+  {
+    const poolBancal = {
+      execute: (...a) => pool.execute(...a),
+      getConnection: (...a) => pool.getConnection(...a),
+      query: async () => { throw new Error('base indisponible (banc)'); },
+    };
+    const refuse = async () => { throw new Error('base indisponible (banc)'); };
+    const niveauBancal = createNiveau({ pool: { execute: refuse, query: refuse,
+      getConnection: refuse }, requireAuth: (r, _s, n) => n() });
+    const ioMuet = { on() {}, emit() {}, to() { return { emit() {} }; } };
+    const N3 = createNvN({ pool: poolBancal, io: ioMuet, decks, niveau: niveauBancal,
+      requireAuth: (r, _s, n) => n() });
+    const sA = fausse(), sB = fausse();
+    const salle = N3.ouvrir([
+      [await joueur(V[0], sA, { neutre: false, teamId: 85, bonus: 1 })],
+      [await joueur(V[1], sB, { neutre: true, teamId: null, bonus: 1 })],
+    ], support, '1v1');
+    salle.duel.finir(0, 'buts', []);
+    await N3.pourLesTests.fermer(salle).catch((e) => console.log('        fermer a levé :', e.message));
+    const gA = sA.fins[0]?.gains;
+    check('cote illisible : le bilan part quand même', sA.fins.length === 1 && sB.fins.length === 1);
+    check('sans ligne de cote, avec ses gains', gA && !('cote' in gA) && gA.echarpes === 60
+      || (console.log('        gains :', JSON.stringify(gA)), false));
+    check('XP non créditée : pas de jauge au bilan', gA && !('niveau' in gA)
+      || (console.log('        niveau :', JSON.stringify(gA?.niveau)), false));
+    check('et sans ligne de résultat qui remettrait la cote à mille',
+      (await lignesDe(salle.duel.id)).length === 0);
+    N3.stop();
+  }
+
+  N2.stop();
+  io2.close();
+  await new Promise((r) => http2.close(() => r()));
+}
+
 console.log(`\n${failures ? `${failures} échec(s)` : 'tout est vert'}`);
 for (const p of [A, B2, C, D]) p.socket.disconnect();
-N.stop(); io.close(); http.close(); await pool.end();
-process.exit(failures ? 1 : 0);
+N.stop(); io.close();
+/* `process.exitCode` et non `process.exit()` : voir la fin de
+   `classement-smoke.mjs` et ETAT.md § 2. Sortir pendant que le pool rend ses
+   sockets fait tomber Node au hasard sous Windows. */
+await new Promise((r) => http.close(() => r()));
+await pool.end();
+process.exitCode = failures ? 1 : 0;

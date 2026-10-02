@@ -55,8 +55,9 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 
    Le panneau garde la photo autour de lui et ne l'éteint pas : le voile peut
    rester ouvert au centre. La scène du paquet est l'exception — le paquet et
-   les cartes sont opaques d'eux-mêmes, et ses trois lignes de texte ont
-   chacune leur pastille (`.prog`, `.hint`, `.newtag`).
+   les cartes sont opaques d'eux-mêmes, ses deux lignes de texte ont chacune
+   leur pastille (`.prog`, `.hint`), et « NOUVEAU » est un sticker, qui est
+   sa propre surface (`.newtag`).
 
    Une colonne centrée, comme la scène qu'il remplace : un bouton garde sa
    largeur et ne s'étire pas d'un bord à l'autre. `max-height` et le
@@ -102,8 +103,11 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 .go{margin-top:26px;padding:15px 40px;font-size:17px;letter-spacing:.1em}
 /* Les deux liens sous ENTRER restent des liens de texte — discrets, jamais un
    passage obligé —, mais ils se touchent : quarante-quatre pixels de haut.
-   Ils en faisaient dix-huit, et l'audit les a relevés à chaque format. */
-.ghost{margin-top:4px;background:none;border:0;color:var(--projo);font-size:12.5px;cursor:pointer;
+   Ils en faisaient dix-huit, et l'audit les a relevés à chaque format.
+
+   En craie soulignée et grasse : ils étaient en or, et en douze pixels et
+   demi l'or ne tient pas au soleil (arbitrage du 2 octobre 2026). */
+.ghost{margin-top:4px;background:none;border:0;color:var(--craie);font-weight:600;font-size:12.5px;cursor:pointer;
   text-decoration:underline;text-underline-offset:3px;font-family:inherit;
   display:inline-flex;align-items:center;min-height:44px;padding:0 10px}
 
@@ -132,13 +136,16 @@ input:focus{outline:none;border-color:var(--projo)}
    Français » se ressemblent dans une liste, et ce ne sont pas du tout les
    mêmes couleurs à porter. */
 .nat{font-family:var(--banner);font-size:8px;letter-spacing:.12em;
-  border:1px solid var(--projo);color:var(--projo);border-radius:4px;
+  border:1px solid var(--craie);color:var(--craie);border-radius:4px;
   padding:2px 5px;flex:none;align-self:center}
 .club{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:8px;cursor:pointer;
   border:1px solid transparent;background:transparent;text-align:left;width:100%;
   color:var(--craie);font-family:inherit}
 .club + .club{border-top:1px solid rgba(242,238,228,.07)}
 .club:active{background:rgba(255,255,255,.05)}
+/* Le club choisi se dit par son cadre et son voile d'or ; son nom reste en
+   craie. Il passait en or, et en quatorze pixels et demi l'or ne tient pas
+   au soleil (arbitrage du 2 octobre 2026). */
 .club.on{border-color:var(--projo);background:rgba(245,195,59,.14)}
 .club img{width:28px;height:28px;object-fit:contain;flex:none;
   /* Beaucoup d'écussons sont sombres : un fond clair les détache du panneau. */
@@ -147,7 +154,6 @@ input:focus{outline:none;border-color:var(--projo)}
 .club b{font-family:var(--banner);font-size:14.5px;display:block;color:var(--craie);
   letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .club small{font-size:11px;color:#9AA4B2;display:block;margin-top:2px}
-.club.on b{color:var(--projo)}
 .res::-webkit-scrollbar{width:6px}
 .res::-webkit-scrollbar-thumb{background:rgba(242,238,228,.25);border-radius:3px}
 
@@ -204,16 +210,19 @@ input:focus{outline:none;border-color:var(--projo)}
   border-radius:50%;background:radial-gradient(circle,rgba(245,195,59,.26),transparent 65%);
   filter:blur(16px);pointer-events:none;opacity:.6;animation:breathe 4s ease-in-out infinite}
 @keyframes breathe{0%,100%{opacity:.4}50%{opacity:.95}}
-/* **Les trois lignes de la scène du paquet ont leur pastille** : la consigne,
-   le compte des cartes et « NOUVEAU ». Pas de grand panneau ici — le paquet et
-   les cartes se posent eux-mêmes sur la tribune, et un cadre autour d'eux
-   éteindrait le seul moment où le décor bouge. Une pastille `--panneau` par
-   ligne, taillée au mot, et pleine opacité : à 0,9, le fond hérité tombait
-   sous les 0,88 d'un panneau et la craie sous 4,5:1 au plein jour. */
-.hint,.prog,.newtag{background:var(--panneau);box-shadow:inset 0 0 0 1px var(--trait)}
+/* **Les deux lignes de la scène du paquet ont leur pastille** : la consigne
+   et le compte des cartes. Pas de grand panneau ici — le paquet et les cartes
+   se posent eux-mêmes sur la tribune, et un cadre autour d'eux éteindrait le
+   seul moment où le décor bouge. Une pastille `--panneau` par ligne, taillée
+   au mot, et pleine opacité : à 0,9, le fond hérité tombait sous les 0,88
+   d'un panneau et la craie sous 4,5:1 au plein jour. « NOUVEAU » n'en prend
+   pas : c'est un sticker, opaque de lui-même (voir `.newtag`). */
+.hint,.prog{background:var(--panneau);box-shadow:inset 0 0 0 1px var(--trait)}
 .hint{margin-top:20px;font-family:var(--banner);font-size:13px;letter-spacing:.18em;
   padding:9px 16px;border-radius:14px}
-.hint b{color:var(--projo)}
+/* Le geste à faire se détache par la graisse, en craie : l'or ne s'écrit
+   plus qu'en grand (arbitrage du 2 octobre 2026). */
+.hint b{color:var(--craie);font-weight:700}
 /* Le recours au clavier, après deux essais manqués. Sur sa propre ligne et à
    douze pixels : un `<small>` nu se collait au mot d'avant et tombait sous le
    plancher de lecture du socle. */
@@ -256,7 +265,11 @@ input:focus{outline:none;border-color:var(--projo)}
    Les quatre autres ne heurtaient rien : `k`, `t`, `d` et `big` n'existent que
    dans le repli. Elles sont rescopées quand même — la prochaine classe ajoutée
    à `cardHTML` n'aura pas à deviner laquelle des deux moitiés la concerne. */
-.face.front.repli .k{font-family:var(--banner);font-size:11px;letter-spacing:.22em;color:var(--c)}
+/* Le mot du haut, en craie grasse : il prenait la couleur de la rareté, de
+   l'or en onze pixels pour une légendaire — l'or ne s'écrit plus qu'en grand
+   (arbitrage du 2 octobre 2026). La rareté reste au cadre de la carte. */
+.face.front.repli .k{font-family:var(--banner);font-size:11px;letter-spacing:.22em;color:var(--craie);
+  font-weight:700}
 .face.front.repli .t{font-family:var(--banner);font-size:20px;line-height:1.15}
 .face.front.repli .d{font-size:11.5px;opacity:.9;line-height:1.5}
 .face.front.repli .big{font-family:var(--banner);font-size:42px;color:var(--c)}
@@ -271,11 +284,18 @@ input:focus{outline:none;border-color:var(--projo)}
    et c'est la première fois qu'on le voit. */
 .face.front.repli .illu{width:150px;height:150px;object-fit:contain;border-radius:10px;
   filter:drop-shadow(0 6px 14px rgba(0,0,0,.75))}
-/* Sa pastille : voir `.hint`. Quatre pixels plus haut qu'avant, pour que
-   le rembourrage ne vienne pas toucher le bord de la carte. */
-.newtag{position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-family:var(--banner);
-  font-size:11px;letter-spacing:.2em;color:var(--projo);padding:3px 10px;border-radius:999px;
-  white-space:nowrap}
+/* « NOUVEAU » au-dessus de la carte : le sticker flare du kiosque
+   (`.tbf-sticker`, ui.css), le même objet que sur le butin d'un booster —
+   un premier paquet ne doit pas parler une autre langue que les suivants.
+   Il était en or, en onze pixels, sur une pastille de panneau : l'or ne
+   s'écrit plus qu'en grand (arbitrage du 2 octobre 2026), et la craie sur la
+   face flare tient 4,5:1. La feuille commune dessine tout ; il ne reste ici
+   que sa place, centrée au-dessus de la carte, et une pente fixe — celle du
+   rang qu'il occupe parmi les enfants de la carte changerait d'un appareil à
+   l'autre. Trente-quatre pixels au-dessus : le bord du sticker et son ombre
+   débordent de cinq pixels et demi, et la pente en ajoute deux à un bout —
+   rien ne doit toucher le bord de la carte. */
+.newtag{position:absolute;top:-34px;left:50%;transform:translateX(-50%);z-index:2;--rot:-3deg}
 .burst{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:9}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:8}
 #flash.go{animation:fl .55s ease-out}
@@ -304,6 +324,8 @@ input:focus{outline:none;border-color:var(--projo)}
 .recap .c{border:1px solid rgba(242,238,228,.16);border-radius:7px;padding:7px 4px;text-align:center;
   font-size:11px;line-height:1.3;overflow-wrap:break-word;background:rgba(6,9,13,.6)}
 .recap .c b{display:block;font-family:var(--banner);font-size:11px;letter-spacing:.04em;margin-bottom:2px}
+/* La légendaire : une face d'or, l'encre dessus (voir `final`). */
+.recap .c.leg{background:var(--projo);border-color:var(--projo);color:var(--encre);font-weight:600}
 #app.quake{animation:quake .7s}
 @keyframes quake{0%,100%{transform:translate(0,0)}14%{transform:translate(-7px,4px)}
   38%{transform:translate(6px,-5px)}62%{transform:translate(-4px,-2px)}86%{transform:translate(3px,3px)}}
@@ -862,7 +884,9 @@ function suivante() {
     etincelles(couleurDe(c), c.type === 'fanzzy' ? 26 : 16);
     if (c.type === 'fanzzy') {
       const tag = document.createElement('div');
-      tag.className = 'newtag'; tag.textContent = 'NOUVEAU';
+      // Le sticker flare du kiosque : voir `.newtag`.
+      tag.className = 'newtag tbf-sticker'; tag.dataset.ton = 'flare';
+      tag.textContent = 'NOUVEAU';
       cur.appendChild(tag);
       video();
       $('app').classList.add('quake');
@@ -913,8 +937,15 @@ function video() {
 
 function final() {
   scene(4);
-  $('recap').innerHTML = cartes.map((c) => `<div class="c" style="color:${couleurDe(c)}">
-    <b>${COURT[c.type]}</b>${esc(nomDe(c))}</div>`).join('');
+  /* Une légendaire n'écrit pas son nom en or : en onze pixels, l'or ne
+     tient pas au soleil, et il reste une face pour le légendaire (arbitrage
+     du 2 octobre 2026). Sa case est d'or, l'encre dessus — voir `.recap
+     .c.leg`. Les autres raretés gardent leur couleur sur le texte. */
+  $('recap').innerHTML = cartes.map((c) => {
+    const leg = rareteDe(c) === 'legendaire';
+    return `<div class="c${leg ? ' leg' : ''}"${leg ? '' : ` style="color:${couleurDe(c)}"`}>
+    <b>${COURT[c.type]}</b>${esc(nomDe(c))}</div>`;
+  }).join('');
   $('final').innerHTML = `Ta place est à <b>${esc(club.nom)}</b>.<br>
     Il te reste un emplacement pour suivre un second club.`;
   buzz([40, 60, 40, 60, 120]);

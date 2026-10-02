@@ -10,8 +10,8 @@ import { readFileSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { verifierSchema, lireSchemaAttendu, lireColonnesAttendues, messageDeManque }
-  from '../src/server/auth/schema.js';
+import { verifierSchema, lireSchemaAttendu, lireColonnesAttendues, messageDeManque,
+  CLES_PRIMAIRES, grandLivreFerme } from '../src/server/auth/schema.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -68,6 +68,12 @@ import { ORDRE } from './ordre-schema.mjs';
 }
 
 const raw = await mysql.createConnection({ uri: DB, multipleStatements: true });
+/* Les quatre tables du quotidien sont recréées à chaque passage. `CREATE TABLE
+   IF NOT EXISTS` ne touche pas à une table qui existe : sans ce DROP, les
+   contrôles de clé primaire plus bas éprouveraient la table qu'un passage
+   précédent a laissée, et non le fichier tel qu'il est écrit — une clé
+   retirée du CREATE resterait invisible ici. Aucune table ne les référence. */
+await raw.query('DROP TABLE IF EXISTS recompenses, missions_jour, compteurs_jour, user_nouveautes');
 for (const f of ORDRE) {
   await raw.query(readFileSync(path.join(SQL, `${f}.sql`), 'utf8'));
 }
@@ -199,6 +205,99 @@ check('aucune table ne manque sur une base à jour',
     || (console.log('       manques vus :',
         JSON.stringify(surBaseSaine)), false));
 check('une base à jour ne produit aucun message', messageDeManque([]) === null);
+check('et le grand livre y est ouvert', grandLivreFerme() === null);
+
+/* ------------------------------------------------- le quotidien et son grand livre
+
+   `sql/quotidien.sql` porte l'idempotence de tous les versements nouveaux :
+   la clé primaire de `recompenses` est ce qui empêche un double clic de payer
+   deux fois. Une clé posée autrement que prévu ne se voit dans aucun
+   contrôle de tables — d'où celui-ci, lu dans la base et non dans le
+   fichier. Les clés attendues sont écrites ici en toutes lettres, et non
+   reprises de `schema.js` : une faute dans la liste du démarrage ne doit pas
+   pouvoir se confirmer elle-même. */
+{
+  const ATTENDUES = {
+    compteurs_jour: 'user_id,jour,cle',
+    missions_jour: 'user_id,jour,rang',
+    recompenses: 'user_id,source,cle',
+    user_nouveautes: 'user_id,cle',
+  };
+  const [k] = await pool.query(
+    `SELECT table_name AS t, column_name AS c FROM information_schema.statistics
+      WHERE table_schema = DATABASE() AND index_name = 'PRIMARY'
+        AND table_name IN ('recompenses', 'missions_jour', 'compteurs_jour', 'user_nouveautes')
+      ORDER BY table_name, seq_in_index`);
+  const vues = {};
+  for (const l of k) (vues[String(l.t).toLowerCase()] ??= []).push(String(l.c).toLowerCase());
+  for (const [t, cle] of Object.entries(ATTENDUES)) {
+    check(`${t} a sa clé primaire (${cle})`, vues[t]?.join(',') === cle
+      || (console.log('        vue :', vues[t]?.join(',') ?? 'aucune'), false));
+  }
+  check('le contrôle de démarrage attend les mêmes clés',
+    CLES_PRIMAIRES.every((c) => ATTENDUES[c.table] === c.cle.join(','))
+      && CLES_PRIMAIRES.length === Object.keys(ATTENDUES).length);
+
+  /* Pas de clé étrangère, et c'est un choix écrit en tête du fichier : une
+     fille de `users` absente des listes de ménage des suites fait tomber
+     leur DROP. Qui la remet doit d'abord lire pourquoi elle n'y est pas. */
+  const [fk] = await pool.query(
+    `SELECT DISTINCT table_name AS t FROM information_schema.key_column_usage
+      WHERE table_schema = DATABASE() AND referenced_table_name IS NOT NULL
+        AND table_name IN ('recompenses', 'missions_jour', 'compteurs_jour', 'user_nouveautes')`);
+  check('les tables du quotidien n’ont aucune clé étrangère (voir l’en-tête de sql/quotidien.sql)',
+    fk.length === 0 || (console.log('        en ont une :', fk.map((x) => x.t).join(', ')), false));
+
+  /* Une colonne par ALTER : le contrôle de démarrage ne voit que le premier
+     ajout d'une instruction (`colonnesDeclarees`). Un second ajout dans le
+     même ALTER pourrait manquer en production sans que rien ne le dise. On
+     le vérifie de deux côtés : chaque instruction n'en porte qu'un, et le
+     contrôle de démarrage en voit autant qu'il y a d'instructions. */
+  const code = readFileSync(path.join(SQL, 'quotidien.sql'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
+  const alters = code.split(';').filter((s) => /ALTER\s+TABLE/i.test(s));
+  const doubles = alters.filter((s) => (s.match(/ADD\s+COLUMN/gi) ?? []).length !== 1);
+  const vuesAuDemarrage = (await lireColonnesAttendues(SQL)).get('quotidien.sql') ?? [];
+  check(`dans sql/quotidien.sql, chaque ALTER TABLE porte un seul ADD COLUMN (${alters.length})`,
+    alters.length > 0 && doubles.length === 0
+    || (console.log('        à découper :', doubles.map((s) => s.trim().slice(0, 60)).join(' | ')), false));
+  check('et le contrôle de démarrage voit chacune de ces colonnes',
+    vuesAuDemarrage.length === alters.length);
+
+  check('sql/quotidien.sql vient après ce qu’il complète (auth, souvenirs, saisons)',
+    ORDRE.indexOf('quotidien') > Math.max(ORDRE.indexOf('auth'), ORDRE.indexOf('souvenirs'),
+      ORDRE.indexOf('saisons')));
+
+  /* Rejoué, il ne change rien : c'est la promesse que le déploiement tient à
+     chaque mise en ligne (il applique tout `sql/`, à chaque fois). On photographie
+     les colonnes et les index de tout ce qu'il touche, on le rejoue, on
+     recompare. */
+  const photo = async () => {
+    const tables = ['recompenses', 'missions_jour', 'compteurs_jour', 'user_nouveautes',
+      'saisons', 'user_wallet', 'virage_presence'];
+    const [c] = await pool.query(
+      `SELECT table_name, column_name, column_type, is_nullable, column_default
+         FROM information_schema.columns
+        WHERE table_schema = DATABASE() AND table_name IN (?)
+        ORDER BY table_name, ordinal_position`, [tables]);
+    const [i] = await pool.query(
+      `SELECT table_name, index_name, column_name, seq_in_index, non_unique
+         FROM information_schema.statistics
+        WHERE table_schema = DATABASE() AND table_name IN (?)
+        ORDER BY table_name, index_name, seq_in_index`, [tables]);
+    return JSON.stringify([c, i]);
+  };
+  const avant = await photo();
+  let leve = null;
+  const deux = await mysql.createConnection({ uri: DB, multipleStatements: true });
+  try {
+    await deux.query(readFileSync(path.join(SQL, 'quotidien.sql'), 'utf8'));
+  } catch (e) { leve = e; }
+  await deux.end();
+  check('sql/quotidien.sql se rejoue sans erreur', !leve
+    || (console.log('        il lève :', leve.message), false));
+  check('et appliqué deux fois, il donne le même état', avant === await photo());
+}
 
 /* --------------------------------------------- la panne réelle, rejouée */
 
@@ -242,19 +341,28 @@ check('le message n’accuse pas la base d’être injoignable',
 
   // Une base qui a toutes les tables mais pas la colonne : exactement le cas
   // reel. Le controle doit la voir, et nommer le fichier.
+  //
+  // Les cles primaires du grand livre et de ses voisines sont rendues justes :
+  // sans cela, la fausse base declarerait aussi une cle absente, et le
+  // controle de la colonne se lirait au milieu d'une autre faute.
   const toutesTables = [...attendu.values()].flat().map((t) => ({ t }));
+  const clesJustes = CLES_PRIMAIRES.flatMap((k) => k.cle.map((c, i) => ({ t: k.table, c, n: i + 1 })));
   const sansXp = {
     query: async (sql) => (/information_schema.tables/i.test(sql)
       ? [toutesTables]
-      : [[...cols.values()].flat()
-          .filter((c) => !(c.table === 'user_wallet' && c.colonne === 'xp'))
-          .map((c) => ({ t: c.table, c: c.colonne }))]),
+      : /information_schema.statistics/i.test(sql)
+        ? [clesJustes]
+        : [[...cols.values()].flat()
+            .filter((c) => !(c.table === 'user_wallet' && c.colonne === 'xp'))
+            .map((c) => ({ t: c.table, c: c.colonne }))]),
   };
   const vus = await verifierSchema(sansXp, SQL);
   check('une colonne absente est signalee, meme si toutes les tables sont la',
     vus.some((m) => m.fichier === 'niveau.sql' && m.colonnes?.includes('user_wallet.xp')));
   check('et le message nomme la colonne, pas seulement le fichier',
     (messageDeManque(vus) ?? '').includes('colonne(s) absente(s) : user_wallet.xp'));
+  check('sans accuser une clé primaire qui est juste', !vus.some((m) => m.cles?.length)
+    || (console.log('        il accuse :', JSON.stringify(vus.filter((m) => m.cles))), false));
 }
 
 /* ------------------------------------------------- un seul fichier manquant */

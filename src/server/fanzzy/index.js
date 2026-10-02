@@ -31,7 +31,114 @@ import { stadeAffiche } from '../../shared/fanzzy/ages.js';
 import { avatarsDe } from './avatar.js';
 import { XP } from '../../shared/niveau.js';
 import { saisonsLancees, saisonEnCours } from './saisons.js';
+/* L'espace de noms entier, en plus des noms ci-dessus : `saisonProchaine` et
+   `seriesAnnoncees` sont livrées par le périmètre des saisons, et un import
+   nommé d'une fonction absente ferait tomber le module au chargement — donc
+   toutes les routes du jeu. Lues par l'espace de noms, leur absence éteint
+   seulement l'annonce. */
+import * as saisons from './saisons.js';
 import { assurerBourse } from '../bourse.js';
+import { verser, verserTout } from '../recompenses.js';
+
+/* ------------------------------------------------------------ le journal
+
+   Une écriture annexe qui échoue (compteur du jour, nouveauté) ne fait jamais
+   échouer l'action qui l'a déclenchée — mais elle se dit, **une fois** par
+   cause : un journal qui répète la même ligne à chaque booster ne se lit plus,
+   et une panne qui ne se dit pas ne se répare pas. */
+const dejaDit = new Set();
+const estSchema = (e) => e?.code === 'ER_NO_SUCH_TABLE' || e?.code === 'ER_BAD_FIELD_ERROR';
+function signalerAnnexe(table, e) {
+  const cause = `${table}:${e?.code ?? e?.message}`;
+  if (dejaDit.has(cause) || dejaDit.size > 50) return;
+  dejaDit.add(cause);
+  console.error(estSchema(e)
+    ? `[fanzzy] ${table} absente ou incomplète (${e.sqlMessage ?? e.message}) : l'action a eu `
+      + 'lieu, son écriture annexe est sautée. Applique sql/quotidien.sql '
+      + '(npm run schema:appliquer), puis redémarre.'
+    : `[fanzzy] ${table} : écriture annexe sautée, l'action a eu lieu (${e?.message}).`);
+}
+
+/* -------------------------------------------------------- les nouveautés
+
+   Ce que le joueur n'a pas encore regardé (`CONTRATS.md`, § 2). La clé est
+   **l'identité** de la chose gagnée, et elle sert deux fois : au serveur pour
+   ne pas l'écrire deux fois, à la page pour l'éteindre. Sa forme est fermée :
+
+     fanzzy:RP4 · age:RP4:2 · etat:RP4:1:joie · skin:RP4:1:prehistorique
+     stuff:<pièce> · action:<carte>
+
+   Les deux fonctions qui suivent sont les seules à la construire et à la
+   lire : une seconde façon d'écrire la même clé ferait deux nouveautés pour un
+   seul gain, et une page qui en éteint une verrait l'autre rester allumée. */
+export const SORTES_NOUVEAUTE = Object.freeze(['fanzzy', 'age', 'etat', 'skin', 'stuff', 'action']);
+
+/** La clé d'une carte de booster, ou `null` pour une poignée d'écharpes. */
+export function cleDeCarte(c) {
+  switch (c?.type) {
+    case 'fanzzy': return `fanzzy:${c.id}`;
+    case 'etat': return `etat:${c.pour}:${c.stade}:${c.id}`;
+    case 'skin': return `skin:${c.pour}:${c.stade}:${c.id}`;
+    case 'stuff': return `stuff:${c.id}`;
+    case 'action': return `action:${c.id}`;
+    default: return null;
+  }
+}
+
+/** La sorte d'une clé : son préfixe, et rien d'autre. */
+const sorteDeCle = (cle) => String(cle).split(':')[0];
+
+/**
+ * Une clé relue en entrée du contrat (`CONTRATS.md`, § 2.1), ou `null` si elle
+ * ne se lit pas — une ligne posée à la main, une sorte d'une version future :
+ * mieux vaut ne pas la montrer que montrer une carte sans identité.
+ */
+export function nouveauteDe(cle) {
+  const p = String(cle).split(':');
+  const stade = Number(p[2]);
+  const stadeLu = Number.isInteger(stade) && stade >= 1 && stade <= 3;
+  switch (p[0]) {
+    case 'fanzzy': case 'stuff': case 'action':
+      return p.length === 2 && p[1] ? { cle, sorte: p[0], id: p[1] } : null;
+    case 'age':
+      return p.length === 3 && p[1] && stadeLu ? { cle, sorte: 'age', id: p[1], stade } : null;
+    case 'etat': case 'skin':
+      return p.length === 4 && p[1] && p[3] && stadeLu
+        ? { cle, sorte: p[0], id: p[3], pour: p[1], stade } : null;
+    default: return null;
+  }
+}
+
+/**
+ * **Qui écrit une nouveauté, et qui n'en écrit pas.**
+ *
+ * Exporté pour que la suite l'importe au lieu de le lire au motif dans ce
+ * fichier : un contrôle qui cherche des noms dans le source rétrécit en
+ * silence le jour où un nom change (`ETAT.md`, § 2). La suite éprouve chaque
+ * chemin de `ecrivent`, et rougit sur un chemin qu'elle ne sait pas éprouver.
+ *
+ * Un chemin qui donne un objet et ne figure dans aucune des deux listes est
+ * un oubli : la règle est « au moment du gain », et rien d'acquis avant la
+ * mise en ligne n'est jamais « nouveau ».
+ */
+export const CHEMINS_NOUVEAUTES = Object.freeze({
+  ecrivent: Object.freeze({
+    openPack: Object.freeze(['fanzzy', 'etat', 'skin', 'stuff', 'action']),
+    evolve: Object.freeze(['age']),
+    remettreStuff: Object.freeze(['stuff']),
+    remettreTenue: Object.freeze(['skin']),
+  }),
+  nEcriventPas: Object.freeze({
+    /* `src/server/onboarding/index.js` pose lui-même le paquet de bienvenue :
+       le premier Fanzzy, la première pièce et les premières cartes, choisis ou
+       montrés à l'écran au moment même. Les annoncer « nouveaux » ensuite
+       dirait au joueur ce qu'il vient de choisir. */
+    onboarding: 'le paquet de bienvenue est choisi et vu à l’écran même',
+    /* Rien ne l'appelle aujourd'hui. La source qui l'appellera décidera si son
+       cadeau est une nouveauté, et l'ajoutera alors à `ecrivent`. */
+    offrir: 'aucun appelant',
+  }),
+});
 
 /**
  * Collection Fanzzy, tenue par le serveur.
@@ -114,11 +221,19 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
      porte la règle : on vend de la largeur et du confort, jamais de la
      puissance. Absent, tout le monde est joueur inscrit, ce qui est l'état
      d'avant. */
-  abonnement = null }) {
+  abonnement = null,
+  /* **Pour les suites seulement.** `apresLectureRecharge(userId)` est appelé
+     entre la lecture de la réserve et son écriture : c'est l'instant exact où
+     un débit concurrent peut se glisser, et une course qu'on ne sait pas
+     placer là se gagne au hasard — un contrôle de concurrence qui passe par
+     chance ne prouve rien (`RISQUES.md`, E3). */
+  crochets = {} }) {
   const q = async (sql, params = []) => {
     const [rows] = await pool.execute(sql, params);
     return rows;
   };
+  /** Le même lecteur, sur une connexion donnée (une transaction en cours). */
+  const surConnexion = (conn) => async (sql, params = []) => (await conn.execute(sql, params))[0];
 
   /* -------------------------------------------------------- portefeuille */
 
@@ -173,11 +288,20 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    * Donc : **cette colonne ne se date qu'en JavaScript**. Ni `NOW(3)`, ni
    * `CURRENT_TIMESTAMP`. Une date écrite par le pilote et relue par le pilote
    * fait l'aller-retour dans le même fuseau, quel qu'il soit.
+   *
+   * ## La recharge ne peut plus écraser un débit
+   *
+   * Elle écrivait une valeur **absolue** (`packs = ?`) calculée sur une
+   * lecture faite avant. Une recharge due, deux requêtes : l'une ouvre un
+   * booster et débite, l'autre réécrit `packs = ancien + 1` après ce débit.
+   * Le débit est perdu, et le booster gratuit — l'abonnement vend précisément
+   * ce rythme, et le défaut le donnait à qui sait lancer deux requêtes
+   * (`RISQUES.md`, E3). La recharge vit maintenant dans `recharger`, plus bas,
+   * et son écriture est conditionnelle.
    */
   async function wallet(userId) {
-    const abonne = abonnement ? await abonnement.estAbonne(userId) : false;
-    const plafond = abonnement ? abonnement.plafondPacks(abonne) : maxPacks();
-    const cadence = abonnement ? abonnement.regenMs(abonne) : regenMs();
+    const regle = regleDe(await abonneDe(userId));
+    const { plafond, cadence } = regle;
     await assurerBourse(q, userId);
     /* `uf.stage` : l'âge **atteint** du Fanzzy équipé. Il ne sert pas à la
        recharge, il sert à savoir quelle tenue il porte — une tenue appartient
@@ -194,22 +318,12 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       [userId],
     ))[0];
 
-    if (w.packs < plafond) {
-      const gained = Math.floor((Date.now() - new Date(w.packs_at).getTime()) / cadence);
-      if (gained > 0) {
-        const packs = Math.min(plafond, w.packs + gained);
-        const at = new Date(new Date(w.packs_at).getTime() + gained * cadence);
-        await q(`UPDATE user_wallet SET packs = ?, packs_at = ? WHERE user_id = ?`,
-          [packs, at, userId]);
-        w.packs = packs; w.packs_at = at;
-      }
-    } else {
-      /* `NOW(3)` était l'heure de **MySQL** ; tout le reste de ce calcul est
-         l'heure de **Node**. Voir le pavé sous `wallet`. */
-      const at = new Date();
-      await q(`UPDATE user_wallet SET packs_at = ? WHERE user_id = ?`, [at, userId]);
-      w.packs_at = at;
-    }
+    /* La ligne lue sert de première lecture à la recharge : une requête de
+       moins sur la lecture la plus fréquente du jeu. Si un débit est passé
+       entre-temps, l'écriture conditionnelle ne trouve plus cette ligne-là,
+       et la recharge relit avant de recompter. */
+    const r = await rechargerLigne(pool, userId, regle, w);
+    if (r) { w.packs = r.packs; w.packs_at = r.packsAt; }
 
     /* **L'attente ne peut pas dépasser la cadence.** C'est vrai par
        définition, et l'écrire coûte un `Math.min` : le jour où une horloge
@@ -238,7 +352,15 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     const { avatar, enJeu, tenuesParAge } = await construireAvatar(userId, w);
 
     return { scarves: w.scarves, billets: w.billets, packs: w.packs,
-      nextPackInMs: nextIn, active: w.active_fanzzy,
+      nextPackInMs: nextIn,
+      /* **La durée d'une recharge, pour ce joueur-là**, en millisecondes :
+         celle qui vient de servir au calcul, abonnement compris. L'anneau du
+         kiosque en tire sa part écoulée (`1 − reste ⁄ durée`) ; sans elle, la
+         page approchait avec dix minutes, faux pour un abonné et faux au
+         premier changement du réglage. Toujours présente, réserve pleine
+         comprise : la même forme pour tous (`CONTRATS.md`, R9). */
+      cadenceMs: cadence,
+      active: w.active_fanzzy,
       avatar,
       avatarEnJeu: enJeu,
       activeSkin: avatar?.skin ?? 'base',
@@ -266,6 +388,129 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
          presque tout le monde : l'écran qui la choisit ne sert qu'à celui qui
          a gagné une expression et veut la montrer en permanence. */
       activeEtat: avatar?.etat ?? null };
+  }
+
+  /* ------------------------------------------------------------ recharge
+
+     Trois choses à savoir, et elles tiennent toutes à l'abonnement.
+
+     **Le plafond et la cadence dépendent de lui**, et de rien d'autre
+     (`abonnement/index.js` porte la règle). On les déduit d'un booléen,
+     relu à chaque fois dans les réglages : un plafond changé depuis
+     l'administration vaut tout de suite.
+
+     **`estAbonne` passe par le pool**, pas par la connexion de l'appelant.
+     Le grand livre appelle `recharger` en tenant le verrou de la bourse ; si
+     huit réclamations simultanées du même joueur tiennent les huit
+     connexions du pool en attente de ce verrou, celle qui le tient ne
+     trouverait plus de connexion pour lire l'abonnement — tout le serveur
+     attendrait cinquante secondes l'expiration du verrou. `recharger`
+     emploie donc ce qu'on en sait depuis moins de deux minutes, s'il y en a :
+     `wallet()`, l'ouverture d'un booster et la réclamation d'un palier le
+     relisent **avant** de prendre une connexion, et le notent ici. Le prix
+     d'un souvenir un peu vieux : une recharge comptée au rythme d'avant,
+     pendant deux minutes, le jour où l'on s'abonne.
+
+     **Sans module d'abonnement**, tout le monde est joueur inscrit : c'est
+     l'état d'avant, et aucune requête n'est faite. */
+  const MEMOIRE_ABONNE_MS = 120_000;
+  const abonnes = new Map();   // userId → { abonne, t }
+
+  async function abonneDe(userId, { memoire = false } = {}) {
+    if (!abonnement) return false;
+    if (memoire) {
+      const m = abonnes.get(userId);
+      if (m && Date.now() - m.t < MEMOIRE_ABONNE_MS) return m.abonne;
+    }
+    const abonne = await abonnement.estAbonne(userId);
+    /* Une borne grossière plutôt qu'une éviction fine : la table ne sert qu'à
+       éviter une requête sous verrou, la vider de temps en temps ne coûte que
+       cette requête. */
+    if (abonnes.size > 5000) abonnes.clear();
+    abonnes.set(userId, { abonne, t: Date.now() });
+    return abonne;
+  }
+
+  const regleDe = (abonne) => ({
+    plafond: abonnement ? abonnement.plafondPacks(abonne) : maxPacks(),
+    cadence: abonnement ? abonnement.regenMs(abonne) : regenMs(),
+  });
+
+  /**
+   * Ce que la recharge écrirait, ou `null` s'il n'y a rien à écrire. Pur :
+   * la même règle qu'avant, ligne pour ligne — seule l'écriture a changé.
+   */
+  function planRecharge(w, { plafond, cadence }, maintenant) {
+    const packs = Number(w.packs);
+    const depuis = new Date(w.packs_at).getTime();
+    if (packs < plafond) {
+      const gagnes = Math.floor((maintenant - depuis) / cadence);
+      if (gagnes <= 0) return null;
+      return { packs: Math.min(plafond, packs + gagnes), at: new Date(depuis + gagnes * cadence) };
+    }
+    /* Réserve pleine (ou au-dessus, après un cadeau) : le compte à rebours
+       repart d'ici. L'heure de **Node** — voir le pavé de `wallet`. */
+    return { packs, at: new Date(maintenant) };
+  }
+
+  /**
+   * La recharge, sur le lecteur qu'on lui donne (le pool, ou la connexion
+   * d'une transaction).
+   *
+   * **L'écriture est conditionnelle** : elle ne touche la ligne que si elle
+   * est encore celle qu'on a lue (`packs` et `packs_at`). Sinon un débit est
+   * passé entre la lecture et l'écriture : on relit, sous `FOR UPDATE`, et on
+   * recompte. Sous le verrou d'une transaction, la condition est toujours
+   * vraie et ne coûte rien ; hors transaction, c'est elle qui protège.
+   *
+   * @param ligne  une lecture de `packs` et `packs_at` déjà faite, ou `null`
+   * @returns { packs, packsAt } — ou `null` si le joueur n'a pas de bourse
+   */
+  async function rechargerLigne(lecteur, userId, regle, ligne) {
+    let w = ligne;
+    for (let essai = 0; essai < 4; essai++) {
+      if (!w) {
+        const [rows] = await lecteur.execute(
+          'SELECT packs, packs_at FROM user_wallet WHERE user_id = ? FOR UPDATE', [userId]);
+        w = rows[0];
+        if (!w) return null;
+      }
+      const plan = planRecharge(w, regle, Date.now());
+      if (!plan) return { packs: Number(w.packs), packsAt: new Date(w.packs_at) };
+      if (crochets.apresLectureRecharge) await crochets.apresLectureRecharge(userId);
+      const [r] = await lecteur.execute(
+        `UPDATE user_wallet SET packs = ?, packs_at = ?
+          WHERE user_id = ? AND packs = ? AND packs_at = ?`,
+        [plan.packs, plan.at, userId, w.packs, w.packs_at]);
+      if (r.affectedRows) return { packs: plan.packs, packsAt: plan.at };
+      w = null;   // la ligne a bougé sous nos pieds : relire, recompter
+    }
+    /* Quatre courses perdues d'affilée : quelqu'un écrit sans cesse cette
+       ligne. On rend ce qu'elle porte sans recharger — la prochaine lecture
+       rechargera, et rien n'a été écrasé. */
+    const [rows] = await lecteur.execute(
+      'SELECT packs, packs_at FROM user_wallet WHERE user_id = ?', [userId]);
+    return rows[0] ? { packs: Number(rows[0].packs), packsAt: new Date(rows[0].packs_at) } : null;
+  }
+
+  /**
+   * **La recharge des boosters, sur la connexion de l'appelant.**
+   *
+   * C'est la porte que le grand livre (`recompenses.js`, étape 7) ouvre avant
+   * de créditer un booster offert : la recharge due est comptée d'abord, puis
+   * le cadeau entre, même au-dessus du plafond. Sans elle, un sachet reçu à 11
+   * sur 12 avec une recharge due laissait le joueur à 12 au lieu de 13 —
+   * parce qu'une réserve pleine remet le compte à rebours à zéro.
+   *
+   * Appelée sous le verrou d'une transaction, elle recharge dans cette
+   * transaction (une annulation la défait) ; appelée hors transaction, son
+   * écriture conditionnelle la protège quand même.
+   *
+   * @param conn    une connexion (ou le pool) : `execute(sql, params)`
+   * @returns { packs, packsAt } | null
+   */
+  async function recharger(conn, userId) {
+    return rechargerLigne(conn, userId, regleDe(await abonneDe(userId, { memoire: true })), null);
   }
 
   async function collection(userId) {
@@ -321,10 +566,10 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    * repos, donc un déploiement où `sql/etats.sql` manque montre des
    * personnages au repos — et non une page blanche.
    */
-  async function etatsGagnes(userId) {
+  async function etatsGagnes(userId, lire = q) {
     let rows;
     try {
-      rows = await q(
+      rows = await lire(
         `SELECT fanzzy_id, stage, etat FROM user_etats WHERE user_id = ?`, [userId]);
     } catch (e) {
       if (e.code !== 'ER_NO_SUCH_TABLE') throw e;
@@ -630,21 +875,36 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
        reste traduit côté client le temps qu'un onglet resté ouvert depuis avant
        le déploiement finisse sa session. */
 
-    await wallet(userId);   // recharge avant de débiter
+    /* **La recharge se fait sous le verrou, dans la transaction du débit.**
+       Elle se faisait avant, par `wallet()`, hors transaction : deux
+       ouvertures simultanées rechargeaient chacune la même réserve, et
+       l'écriture absolue de la seconde effaçait le débit de la première
+       (`RISQUES.md`, E3). La règle de recharge se lit **avant** de prendre
+       la connexion : `estAbonne` passe par le pool, et l'attendre en tenant
+       un verrou peut affamer le pool. */
+    const regle = regleDe(await abonneDe(userId));
+    await assurerBourse(q, userId);
 
+    let resultat;
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
-      const [[w]] = await conn.query(
-        `SELECT scarves, packs FROM user_wallet WHERE user_id = ? FOR UPDATE`, [userId]);
+      /* La première lecture de la recharge est le `FOR UPDATE` de la bourse :
+         c'est elle qui fait passer les ouvertures d'un même joueur l'une après
+         l'autre. */
+      const w = await rechargerLigne(conn, userId, regle, null);
+      if (!w) {
+        throw new Error(`fanzzy : aucune bourse pour ${userId} — le joueur n'existe pas `
+          + 'dans users, assurerBourse n’a rien pu ouvrir');
+      }
 
       if (w.packs > 0) {
-        /* La même horloge qu'à la lecture : voir le pavé de `wallet`. La
-           réserve était pleine, donc le compte à rebours repart maintenant. */
-        await conn.query(
-          `UPDATE user_wallet SET packs = packs - 1,
-             packs_at = IF(packs = ?, ?, packs_at) WHERE user_id = ?`,
-          [maxPacks(), new Date(), userId]);
+        /* Le compte à rebours n'a plus à être touché ici : si la réserve était
+           pleine, la recharge qu'on vient de faire l'a fait repartir de
+           maintenant. L'ancienne écriture comparait au plafond du joueur
+           gratuit, et remettait à zéro la minuterie d'un abonné à douze
+           boosters sur un plafond plus haut. */
+        await conn.query(`UPDATE user_wallet SET packs = packs - 1 WHERE user_id = ?`, [userId]);
       } else if (buy) {
         const [d] = await conn.query(
           `UPDATE user_wallet SET scarves = scarves - ? WHERE user_id = ? AND scarves >= ?`,
@@ -779,20 +1039,227 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
 
       await conn.commit();
 
-      /* L'XP **après** la validation, et hors de la transaction.
-         Le booster est ouvert : les cartes sont dans la collection et le
-         joueur les a vues. Faire échouer tout ça parce qu'une barre de
-         progression n'a pas pu monter serait absurde — `gagner()` avale déjà
-         ses propres incidents et rend une progression nulle. */
-      const monte = niveau ? await niveau.gagner(userId, XP.pack) : null;
-
-      return { cards, scarvesGained: scarves,
-        ...(monte?.xp ? { niveau: monte } : {}) };
+      /* **La clé de chaque carte**, celle de sa nouveauté (`CONTRATS.md`,
+         § 2.3) : la page éteint par elle ce qu'elle vient de montrer. Une
+         poignée d'écharpes n'en a pas, elle ne se collectionne pas. */
+      for (const c of cards) {
+        const cle = cleDeCarte(c);
+        if (cle) c.cle = cle;
+      }
+      resultat = { cards, scarvesGained: scarves, series: progressionSeries(avant, had, cards) };
     } catch (e) {
-      await conn.rollback();
+      await conn.rollback().catch(() => {});
       throw e;
     } finally {
       conn.release();
+    }
+
+    /* **Après la validation, jamais dedans**, et la connexion rendue : la
+       nouveauté et le compteur du jour sont des écritures annexes. Sans leur
+       table (`sql/quotidien.sql` pas encore appliqué), le joueur garde ses
+       cinq cartes — perdre un booster pour une pastille serait un marché
+       absurde. Une instruction en échec dans la transaction ne l'aurait pas
+       annulée, mais elle aurait fait lever l'ouverture entière. */
+    await noterNouveautes(userId, resultat.cards.filter((c) => c.new && c.cle).map((c) => c.cle));
+    await compterDuJour(userId, 'booster');
+
+    /* L'XP **après** la validation, et hors de la transaction.
+       Le booster est ouvert : les cartes sont dans la collection et le
+       joueur les a vues. Faire échouer tout ça parce qu'une barre de
+       progression n'a pas pu monter serait absurde — `gagner()` avale déjà
+       ses propres incidents et rend une progression nulle.
+
+       **Et jamais `gagner()` depuis l'intérieur de la transaction.** Il
+       prend sa propre connexion et verrouille la même ligne de `user_wallet`
+       que le débit ci-dessus : appelé avant le `COMMIT`, il attendrait ce
+       verrou que nous tenons, cinquante secondes, puis perdrait l'XP. Si
+       l'XP du booster doit un jour entrer dans la transaction, c'est
+       `niveau.gagnerDans(conn, userId, XP.pack)`, sur la même connexion —
+       la porte du grand livre. */
+    const monte = niveau ? await niveau.gagner(userId, XP.pack) : null;
+
+    const { series, ...reste } = resultat;
+    return { ...reste,
+      /* Absent si le calcul a échoué : la page garde alors son propre calcul
+         de la ligne de série (`CONTRATS.md`, § 2.3). */
+      ...(series ? { series } : {}),
+      ...(monte?.xp ? { niveau: monte } : {}) };
+  }
+
+  /**
+   * **La progression des séries touchées par ce booster** (`CONTRATS.md`,
+   * § 2.3), calculée en mémoire sur ce que l'ouverture a déjà lu : aucune
+   * requête de plus.
+   *
+   * On compte des **lignées obtenables** — un personnage publié d'une série
+   * ouverte, comme la jauge de la collection —, pas des lignes de catalogue :
+   * une lignée dépubliée qu'on possède encore ne doit pas faire dépasser le
+   * total. `complete` n'est vrai qu'au booster qui complète : celui d'après
+   * trouve déjà la série pleine en arrivant.
+   *
+   * @returns {Array|undefined}  `[]` sans personnage ; `undefined` si le
+   *   calcul a échoué, et la réponse n'a alors pas de champ `series`.
+   */
+  function progressionSeries(avant, apres, cards) {
+    try {
+      const touchees = [...new Set(cards.filter((c) => c.type === 'fanzzy')
+        .map((c) => parIdentifiant(c.id)?.set).filter(Boolean))];
+      if (!touchees.length) return [];
+      const ob = obtenables();
+      return touchees.map((id) => {
+        const dans = ob.filter((f) => f.set === id);
+        const compte = (s) => dans.filter((f) => s.has(f.id)).length;
+        const a = compte(avant);
+        const b = compte(apres);
+        return { id, avant: a, apres: b, total: dans.length,
+          complete: dans.length > 0 && b === dans.length && a < dans.length };
+      });
+    } catch (e) {
+      signalerAnnexe('series', e);
+      return undefined;
+    }
+  }
+
+  /* ------------------------------------------------ nouveautés et compteurs */
+
+  /**
+   * Inscrit des nouveautés, **hors transaction**, après la validation de ce
+   * qui les a données. Une seule instruction pour tout un booster.
+   *
+   * `ON DUPLICATE KEY UPDATE got_at = got_at` et non `INSERT IGNORE` : le
+   * doublon reste sans effet, mais une autre faute (une clé trop longue) lève
+   * au lieu de s'écrire tronquée en silence.
+   */
+  async function noterNouveautes(userId, cles) {
+    if (!cles.length) return;
+    try {
+      await q(
+        `INSERT INTO user_nouveautes (user_id, cle, sorte)
+         VALUES ${cles.map(() => '(?, ?, ?)').join(', ')}
+         ON DUPLICATE KEY UPDATE got_at = got_at`,
+        cles.flatMap((k) => [userId, k, sorteDeCle(k)]));
+    } catch (e) {
+      signalerAnnexe('user_nouveautes', e);
+    }
+  }
+
+  /**
+   * Inscrit une nouveauté **dans** la transaction de l'appelant : l'étal.
+   *
+   * Si le débit échoue ensuite, la nouveauté part avec le `rollback` — un
+   * objet « nouveau » qu'on n'a pas eu serait une promesse fausse. Seule la
+   * table absente est tolérée : une instruction en échec n'annule pas la
+   * transaction, et l'achat se fait sans sa nouveauté. Toute autre erreur
+   * fait échouer l'achat, comme n'importe quelle écriture de l'étal.
+   */
+  async function noterNouveauteDans(conn, userId, cle) {
+    try {
+      await conn.query(
+        `INSERT INTO user_nouveautes (user_id, cle, sorte) VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE got_at = got_at`, [userId, cle, sorteDeCle(cle)]);
+    } catch (e) {
+      if (e?.code !== 'ER_NO_SUCH_TABLE') throw e;
+      signalerAnnexe('user_nouveautes', e);
+    }
+  }
+
+  /**
+   * Ce qui n'a de ligne datée nulle part ailleurs : un booster ouvert, une
+   * évolution. Les missions du jour les comptent (`quotidien`). Le jour est
+   * celui de la base, `CURDATE()` — celui des quotas et des missions —,
+   * jamais un jour fabriqué ici.
+   */
+  async function compterDuJour(userId, cle) {
+    try {
+      await q(
+        `INSERT INTO compteurs_jour (user_id, jour, cle, n) VALUES (?, CURDATE(), ?, 1)
+         ON DUPLICATE KEY UPDATE n = n + 1`, [userId, cle]);
+    } catch (e) {
+      signalerAnnexe('compteurs_jour', e);
+    }
+  }
+
+  /**
+   * Les nouveautés du joueur, les plus récentes d'abord, deux cents au plus
+   * (`CONTRATS.md`, § 2.1). `undefined` si la table manque : le serveur ne
+   * sait pas, et la réponse n'a pas de champ — ce qui n'est pas « rien de
+   * nouveau » (`[]`).
+   *
+   * **Une seule lecture**, qui dit aussi s'il traîne des nouveautés de plus
+   * de soixante jours : la purge du joueur ne se fait que quand il y en a,
+   * sans tâche périodique à tenir.
+   */
+  async function nouveautes(userId) {
+    let rows;
+    try {
+      rows = await q(
+        `SELECT cle, vieille FROM (
+            (SELECT cle, got_at, 0 AS vieille FROM user_nouveautes
+              WHERE user_id = ? AND got_at >= NOW(3) - INTERVAL 60 DAY
+              ORDER BY got_at DESC, cle LIMIT 200)
+            UNION ALL
+            (SELECT cle, got_at, 1 AS vieille FROM user_nouveautes
+              WHERE user_id = ? AND got_at < NOW(3) - INTERVAL 60 DAY LIMIT 1)
+          ) t
+          ORDER BY vieille, got_at DESC, cle`, [userId, userId]);
+    } catch (e) {
+      if (!estSchema(e)) throw e;
+      signalerAnnexe('user_nouveautes', e);
+      return undefined;
+    }
+    if (rows.some((r) => Number(r.vieille) === 1)) {
+      await q(`DELETE FROM user_nouveautes WHERE user_id = ? AND got_at < NOW(3) - INTERVAL 60 DAY`,
+        [userId]).catch((e) => signalerAnnexe('user_nouveautes', e));
+    }
+    return rows.filter((r) => Number(r.vieille) === 0).map((r) => nouveauteDe(r.cle)).filter(Boolean);
+  }
+
+  /** Ce qu'éteindre veut dire, sous les trois formes du contrat (§ 2.2). */
+  function lireDemandeVu(corps) {
+    const c = corps && typeof corps === 'object' && !Array.isArray(corps) ? corps : {};
+    const formes = ['cles', 'sorte', 'tout'].filter((k) => c[k] !== undefined);
+    if (formes.length !== 1) throw fail('fanzzy.error.vu_invalide');
+    if (formes[0] === 'tout') {
+      if (c.tout !== true) throw fail('fanzzy.error.vu_invalide');
+      return { tout: true };
+    }
+    if (formes[0] === 'sorte') {
+      if (!SORTES_NOUVEAUTE.includes(c.sorte)) throw fail('fanzzy.error.vu_invalide');
+      return { sorte: c.sorte };
+    }
+    if (!Array.isArray(c.cles) || c.cles.length > 200
+      || !c.cles.every((k) => typeof k === 'string' && k.length >= 1 && k.length <= 80)) {
+      throw fail('fanzzy.error.vu_invalide');
+    }
+    return { cles: [...new Set(c.cles)] };
+  }
+
+  /**
+   * Éteindre des nouveautés, et dire combien il en reste — compté comme la
+   * liste les sert (soixante jours, deux cents au plus), pour que la pastille
+   * et la liste disent le même nombre.
+   */
+  async function eteindre(userId, corps) {
+    const d = lireDemandeVu(corps);
+    try {
+      if (d.tout) {
+        await q(`DELETE FROM user_nouveautes WHERE user_id = ?`, [userId]);
+      } else if (d.sorte) {
+        await q(`DELETE FROM user_nouveautes WHERE user_id = ? AND sorte = ?`, [userId, d.sorte]);
+      } else if (d.cles.length) {
+        await q(`DELETE FROM user_nouveautes WHERE user_id = ? AND cle IN (${
+          d.cles.map(() => '?').join(', ')})`, [userId, ...d.cles]);
+      }
+      const [r] = await q(
+        `SELECT LEAST(COUNT(*), 200) AS n FROM user_nouveautes
+          WHERE user_id = ? AND got_at >= NOW(3) - INTERVAL 60 DAY`, [userId]);
+      return { restantes: Number(r.n) };
+    } catch (e) {
+      /* Sans la table, il n'y a rien à éteindre et rien qui reste : la page
+         n'a de toute façon rien reçu à montrer. */
+      if (!estSchema(e)) throw e;
+      signalerAnnexe('user_nouveautes', e);
+      return { restantes: 0 };
     }
   }
 
@@ -824,6 +1291,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     const perso = parIdentifiant(id);
     if (!perso) throw fail('fanzzy.error.unknown');
 
+    let resultat;
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
@@ -862,16 +1330,23 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
         [userId, id, vers]);
 
       await conn.commit();
-      return { id, stade: vers, nom: age.nom, rar: age.rar, spent: cost,
+      resultat = { id, stade: vers, nom: age.nom, rar: age.rar, spent: cost,
         // `from`/`to` restent pour les pages qui les lisent encore. Ils
         // désignent maintenant deux âges du même personnage, pas deux cartes.
         from: id, to: age.id };
     } catch (e) {
-      await conn.rollback();
+      await conn.rollback().catch(() => {});
       throw e;
     } finally {
       conn.release();
     }
+
+    /* Le nouvel âge est une nouveauté, et une évolution compte pour la
+       mission « Fais grandir un Fanzzy ». Après la validation, comme au
+       booster : ni l'une ni l'autre ne peut défaire ce que le joueur a payé. */
+    await noterNouveautes(userId, [`age:${id}:${resultat.stade}`]);
+    await compterDuJour(userId, 'evolution');
+    return resultat;
   }
 
   const fail = (code) => Object.assign(new Error(code), { code });
@@ -895,6 +1370,60 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     console.error('[fanzzy]', e.message);
     return Object.assign(new Error(e.message), { code: 'fanzzy.error.server' });
   };
+
+  /**
+   * La saison annoncée (`CONTRATS.md`, § 7.2), telle que le périmètre des
+   * saisons la décide : `saisonProchaine()` (présente jusqu'à la fin du jour
+   * annoncé, absente sans date d'ouverture) et `seriesAnnoncees()` (les
+   * séries qu'elle ouvrira, `{ série: numéro }`, celles qui sont fermées
+   * aujourd'hui seulement).
+   *
+   * Ce module n'en recalcule rien : une seconde règle pour « quelles séries
+   * ouvrira-t-elle » finirait par ne pas dire la même chose que la première.
+   * Il ne garde que les champs du contrat — la réponse de `/dex` est publique.
+   *
+   * @returns {{ contrat: object, parSerie: Object<string, number> } | null}
+   */
+  function saisonAnnoncee() {
+    if (typeof saisons.saisonProchaine !== 'function') return null;
+    let p;
+    let parSerie = {};
+    try {
+      p = saisons.saisonProchaine();
+      if (p && typeof saisons.seriesAnnoncees === 'function') parSerie = saisons.seriesAnnoncees() ?? {};
+    } catch (e) {
+      signalerAnnexe('saisonProchaine', e);
+      return null;
+    }
+    if (!p || !Number.isInteger(Number(p.numero))) return null;
+    const contrat = {};
+    for (const k of ['id', 'numero', 'nom', 'ouvre', 'ouvreDansMs', 'joursAvant']) {
+      if (p[k] !== undefined && p[k] !== null) contrat[k] = p[k];
+    }
+    return { contrat, parSerie };
+  }
+
+  /**
+   * La saison en cours telle que `/dex` et `/state` la servent : la forme de
+   * `CONTRATS.md`, § 7.1 — ses champs d'avant, plus `fin`, `finDansMs`,
+   * `joursRestants` et `finie` —, et **sans `carnet`**.
+   *
+   * `saisonEnCours()` porte le carnet propre de la saison quand
+   * l'administration en a saisi un, parce que le quotidien en a besoin pour
+   * compter. Ici, il n'a rien à faire : `/dex` est public et mis en cache, le
+   * carnet du joueur se lit dans `/api/quotidien` avec l'état de chaque
+   * palier, et une seconde copie brute serait une seconde vérité. Un carnet
+   * illisible en base y est même gardé tel que la main l'a tapé.
+   *
+   * `null` sans saison lancée, comme avant. L'objet rendu par
+   * `saisonEnCours()` est neuf à chaque appel : le défaire ne touche personne.
+   */
+  function saisonServie() {
+    const s = saisonEnCours();
+    if (!s) return s;
+    const { carnet: _carnet, ...servie } = s;
+    return servie;
+  }
 
   /* ------------------------------------------------------------- routes */
 
@@ -923,6 +1452,7 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     // s'apercevoir qu'une série vient d'ouvrir n'est pas administrable.
     res.set('cache-control', 'public, max-age=60');
     const ouvertes = seriesOuvertes();
+    const annoncee = saisonAnnoncee();
     res.json({
       // Tout le catalogue publié, y compris les séries fermées : un joueur qui
       // possède déjà une carte d'une série refermée doit continuer à la voir
@@ -945,12 +1475,20 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       sets: (() => {
         const parSerie = saisonDeSerie();
         return SETS.map((s) => ({ ...s, ouverte: serieOuverte(s.id),
-          saison: parSerie[s.id] ?? null }));
+          saison: parSerie[s.id] ?? null,
+          /* Le numéro de la saison annoncée qui l'ouvrira, et rien sans
+             annonce : le kiosque n'écrit « SAISON 2 » sur une série fermée
+             que si ce champ est là (`CONTRATS.md`, § 7.2). */
+          ...(Number.isInteger(annoncee?.parSerie[s.id])
+            ? { prochaine: annoncee.parSerie[s.id] } : {}) }));
       })(),
       /* La saison en cours, pour que le kiosque puisse l'annoncer. Ici plutôt
          que dans `/state` : elle ne dépend pas du joueur, et cette réponse-ci
          est celle que toutes les pages chargent déjà. */
-      saison: saisonEnCours(),
+      saison: saisonServie(),
+      /* La saison annoncée, seulement si l'administration a posé sa date
+         d'ouverture : poser la date, c'est la promettre. */
+      ...(annoncee ? { prochaine: annoncee.contrat } : {}),
       // Ce qu'un joueur peut encore obtenir. La page pourrait le recalculer,
       // mais elle le recalculerait *mal* le jour où la règle se nuance — et
       // c'est précisément le genre de copie que ce projet a déjà payé.
@@ -1006,20 +1544,29 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    * âges débloqués : sinon le total grandirait à chaque évolution, et l'on
    * reculerait en progressant. Les stades n'y sont pas : ils ne se gagnent
    * pas encore (voir `stadeDeLaRencontre`).
+   *
+   * **Un seul compte, deux lecteurs.** La route lit par le pool ; la
+   * réclamation d'un palier recompte **dans** la transaction du grand livre,
+   * sur sa connexion, sous le verrou du joueur. Deux fonctions de compte
+   * finiraient par ne pas compter la même chose, et un palier se paierait sur
+   * un nombre que l'écran ne montre pas.
+   *
+   * @param lire  `(sql, params) => rows` — le pool par défaut
+   * @returns { biblio: { total, types, parFanzzy }, series: [{ id, possedes, total }] }
    */
-  async function bibliotheque(userId) {
+  async function compter(userId, lecteur = q) {
     /* Les tables facultatives ne font pas tomber la page : un joueur sans
        tenue ni pièce a zéro, pas une erreur. */
-    const lire = (sql, p) => q(sql, p).catch((e) => {
+    const lire = (sql, p) => lecteur(sql, p).catch((e) => {
       if (e?.code === 'ER_NO_SUCH_TABLE' || e?.code === 'ER_BAD_FIELD_ERROR') return [];
       throw e;
     });
     const [fz, sk, st, w, etats] = await Promise.all([
-      q(`SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]),
+      lecteur(`SELECT fanzzy_id, stage FROM user_fanzzy WHERE user_id = ?`, [userId]),
       lire(`SELECT fanzzy_id, skin_id FROM user_skins WHERE user_id = ?`, [userId]),
       lire(`SELECT stuff_id FROM user_stuff WHERE user_id = ?`, [userId]),
       lire(`SELECT action_cards FROM user_wallet WHERE user_id = ?`, [userId]),
-      etatsGagnes(userId).catch(() => null),
+      etatsGagnes(userId, lecteur).catch(() => null),
     ]);
 
     const persos = obtenables();
@@ -1078,23 +1625,225 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
       gagnes: s.gagnes + t.gagnes, possibles: s.possibles + t.possibles }),
     { gagnes: 0, possibles: 0 });
     parFanzzy.sort((a, b) => a.nom.localeCompare(b.nom));
-    return { total, types: T, parFanzzy };
+
+    /* Les personnages possédés, série par série, pour la série complète
+       (`CONTRATS.md`, § 5.1). Sur les mêmes `persos` que la jauge : une série
+       se dit complète sur ce qu'un booster peut donner aujourd'hui. */
+    const series = SETS.filter((s) => serieOuverte(s.id)).map((s) => {
+      const dans = persos.filter((f) => f.set === s.id);
+      return { id: s.id, total: dans.length, possedes: dans.filter((f) => atteint.has(f.id)).length };
+    }).filter((s) => s.total > 0);
+
+    return { biblio: { total, types: T, parFanzzy }, series };
+  }
+
+  /* ------------------------------------------------ les paliers de collection
+
+     Un cran tous les `collection.cran` objets gagnés, et une récompense pour
+     chaque série complète (`SERVEUR.md`, § 6 ; `CONTRATS.md`, § 5.1).
+
+     **Un cran est payé une fois, au seuil franchi le plus haut.** Le grand
+     livre garde les seuils payés (`cran`, clé = le seuil en chiffres). Ce qui
+     se paie est au-dessus du plus haut d'entre eux : si la taille du cran
+     change (25 → 20), les seuils de l'ancienne taille déjà couverts (20, 40
+     sous un 50 payé) ne se repaient pas ; si le compte baisse (une tenue
+     retirée), rien n'est repris, et rien ne se repaie en remontant. */
+
+  /** Le plus haut seuil payé, 0 sinon. */
+  const plusHautCran = (lignes) => lignes.reduce((m, l) => {
+    const n = Number(l.cle);
+    return Number.isInteger(n) && n > m ? n : m;
+  }, 0);
+
+  /** Le gain d'un cran : ses écharpes, et un booster tous les N crans. */
+  function gainCran(seuil, cran) {
+    const tous = reglage('collection.cran_booster_tous');
+    const rang = seuil / cran;
+    return { echarpes: reglage('collection.cran_echarpes'),
+      packs: tous > 0 && Number.isInteger(rang) && rang % tous === 0 ? 1 : 0, xp: 0, tampons: 0 };
+  }
+
+  const gainSerie = () => ({ echarpes: reglage('collection.serie_echarpes'),
+    packs: reglage('collection.serie_packs'), xp: 0, tampons: 0 });
+
+  /**
+   * Le bloc `paliers` de la bibliothèque, ou `null` : interrupteur coupé, ou
+   * grand livre absent. Une lecture du grand livre de plus, rien d'autre.
+   */
+  async function paliersDe(userId, compte, lecteur = q) {
+    if (!reglage('collection.actif')) return null;
+    let payes;
+    try {
+      payes = await lecteur(
+        `SELECT source, cle FROM recompenses WHERE user_id = ? AND source IN ('cran', 'serie')`,
+        [userId]);
+    } catch (e) {
+      if (!estSchema(e)) throw e;
+      signalerAnnexe('recompenses', e);
+      return null;
+    }
+    const cran = reglage('collection.cran');
+    const haut = plusHautCran(payes.filter((l) => l.source === 'cran'));
+    const seriesPayees = new Set(payes.filter((l) => l.source === 'serie').map((l) => l.cle));
+    const { gagnes, possibles } = compte.biblio.total;
+
+    const aReclamer = [];
+    for (let a = (Math.floor(haut / cran) + 1) * cran; a <= gagnes; a += cran) {
+      aReclamer.push({ sorte: 'cran', cle: String(a), gain: gainCran(a, cran) });
+    }
+    const series = compte.series.map((s) => ({ ...s,
+      etat: seriesPayees.has(s.id) ? 'reclame' : (s.possedes >= s.total ? 'pret' : 'a_venir'),
+      gain: gainSerie() }));
+    for (const s of series) {
+      if (s.etat === 'pret') aReclamer.push({ sorte: 'serie', cle: s.id, gain: s.gain });
+    }
+    /* Le prochain seuil est au-dessus de ce qu'on a **et** de ce qui est
+       payé : après une baisse du compte, le cran déjà payé n'est pas un
+       objectif. Absent quand l'univers n'en contient plus. */
+    const a = (Math.floor(Math.max(haut, gagnes) / cran) + 1) * cran;
+    const prochain = a <= possibles ? { a, manque: a - gagnes, gain: gainCran(a, cran) } : null;
+    return { cran, gagnes, ...(prochain ? { prochain } : {}), aReclamer,
+      series: series.map(({ id, possedes, total, etat, gain }) => ({ id, possedes, total, etat, gain })) };
+  }
+
+  async function bibliotheque(userId) {
+    const compte = await compter(userId);
+    const paliers = await paliersDe(userId, compte);
+    return { ...compte.biblio, ...(paliers ? { paliers } : {}) };
+  }
+
+  /** Le corps d'une réclamation, sous les trois formes du contrat (§ 5.1). */
+  function lireDemandePalier(corps) {
+    const c = corps && typeof corps === 'object' && !Array.isArray(corps) ? corps : {};
+    if (c.tout !== undefined) {
+      if (c.tout !== true || c.sorte !== undefined || c.cle !== undefined) {
+        throw fail('fanzzy.error.palier_requete');
+      }
+      return { tout: true };
+    }
+    if (c.sorte === 'cran' && typeof c.cle === 'string' && /^[1-9]\d{0,8}$/.test(c.cle)) {
+      return { sorte: 'cran', cle: c.cle, seuil: Number(c.cle) };
+    }
+    if (c.sorte === 'serie' && typeof c.cle === 'string' && /^[A-Za-z0-9]{1,8}$/.test(c.cle)) {
+      return { sorte: 'serie', cle: c.cle };
+    }
+    throw fail('fanzzy.error.palier_requete');
+  }
+
+  /**
+   * Un versement de palier, prêt pour le grand livre.
+   *
+   * **Le recompte se fait dans `verifier`**, sur la connexion du versement et
+   * sous le verrou du joueur : la jauge qu'a vue la page peut dater, et le
+   * serveur ne paie que ce qu'il recompte lui-même. `verifier` et `gain` ne
+   * font que lire — le grand livre peut les rappeler une fois s'il rejoue une
+   * course perdue (`ECARTS.md`, socle § 2). Les montants viennent des
+   * réglages, lus dans la transaction ; jamais du corps de la requête.
+   */
+  function versementPalier(userId, sorte, cle) {
+    const commun = { userId, source: sorte, cle, saisonId: null };
+    if (sorte === 'cran') {
+      const seuil = Number(cle);
+      return { ...commun,
+        verifier: async (conn) => {
+          if (!reglage('collection.actif')) return 'inactif';
+          const cran = reglage('collection.cran');
+          if (!Number.isInteger(seuil) || seuil < cran || seuil % cran !== 0) return 'inconnu';
+          const lire = surConnexion(conn);
+          const payes = await lire(
+            `SELECT cle FROM recompenses WHERE user_id = ? AND source = 'cran'`, [userId]);
+          /* Sous le plus haut seuil payé : couvert, et non dû. */
+          if (seuil <= plusHautCran(payes)) return 'inconnu';
+          const compte = await compter(userId, lire);
+          return seuil <= compte.biblio.total.gagnes ? true : 'incomplet';
+        },
+        gain: () => gainCran(seuil, reglage('collection.cran')) };
+    }
+    return { ...commun,
+      verifier: async (conn) => {
+        if (!reglage('collection.actif')) return 'inactif';
+        if (!SETS.some((s) => s.id === cle) || !serieOuverte(cle)) return 'inconnu';
+        const compte = await compter(userId, surConnexion(conn));
+        const s = compte.series.find((x) => x.id === cle);
+        if (!s) return 'inconnu';
+        return s.possedes >= s.total ? true : 'incomplet';
+      },
+      gain: () => gainSerie() };
+  }
+
+  /**
+   * Réclamer un cran, une série complète, ou tout ce qui est dû.
+   *
+   * **Un cran réclamé verse aussi les crans plus bas encore dus**, du plus bas
+   * au plus haut, chacun sous sa clé. Sans cela, récupérer 50 avant 25
+   * rendait 25 impayable pour toujours : il passait sous le plus haut seuil
+   * payé, que la règle tient pour couvert.
+   *
+   * Réponse : celle du grand livre (`CONTRATS.md`, R6), avec `paliers` à jour
+   * à la racine.
+   */
+  async function reclamerPalier(userId, corps) {
+    const demande = lireDemandePalier(corps);
+    if (!reglage('collection.actif')) return { verse: false, raison: 'inactif' };
+    /* L'abonnement relu maintenant, hors de tout verrou : la recharge qui
+       précède un booster offert le lira dans ce souvenir au lieu d'aller au
+       pool en tenant la bourse (voir `abonneDe`). */
+    await abonneDe(userId);
+
+    const etat = await paliersDe(userId, await compter(userId));
+    if (!etat) return { verse: false, raison: 'schema' };
+
+    let liste;
+    if (demande.tout) {
+      liste = etat.aReclamer.map((x) => versementPalier(userId, x.sorte, x.cle));
+    } else if (demande.sorte === 'cran') {
+      /* Les plus bas seulement si celui-ci est dû : une page restée ouverte
+         qui demande un cran pas encore atteint reçoit son refus, et non les
+         crans d'en dessous à la place de ce qu'elle a demandé. */
+      const dus = etat.aReclamer.filter((x) => x.sorte === 'cran');
+      const plusBas = dus.some((x) => x.cle === demande.cle)
+        ? dus.filter((x) => Number(x.cle) < demande.seuil) : [];
+      liste = [...plusBas.map((x) => versementPalier(userId, 'cran', x.cle)),
+        versementPalier(userId, 'cran', demande.cle)];
+    } else {
+      liste = [versementPalier(userId, 'serie', demande.cle)];
+    }
+
+    const portes = { niveau: niveau ?? undefined, recharger };
+    const r = liste.length === 1
+      ? await verser(pool, { ...portes, ...liste[0] })
+      : await verserTout(pool, liste, portes);
+    const apres = await paliersDe(userId, await compter(userId)).catch(() => null);
+    return { ...r, ...(apres ? { paliers: apres } : {}) };
   }
 
   router.get('/bibliotheque', requireAuth, (req, res) =>
     send(res, bibliotheque(req.user.id)));
 
+  router.post('/palier', requireAuth, (req, res) =>
+    send(res, reclamerPalier(req.user.id, req.body)));
+
   router.get('/state', requireAuth, (req, res) =>
     send(res, Promise.all([
       wallet(req.user.id), collection(req.user.id), stades(req.user.id),
-      saisonVue(req.user.id), etatsGagnes(req.user.id),
-    ]).then(([w, col, st, vue, etats]) => ({ wallet: w, collection: col, stades: st,
+      saisonVue(req.user.id), etatsGagnes(req.user.id), nouveautes(req.user.id),
+    ]).then(([w, col, st, vue, etats, nv]) => ({ wallet: w, collection: col, stades: st,
       /* Les états gagnés partent avec le reste de l'état du joueur : toutes
          les pages qui dessinent un Fanzzy en expression lisent déjà cette
          route, et en ajouter une seconde ferait deux vérités. */
       etats,
-      saison: saisonEnCours(), saisonVue: vue,
+      /* Ce que le joueur n'a pas encore regardé. Absent quand le serveur ne
+         sait pas (table absente) : ce n'est pas la même chose que `[]`. */
+      ...(nv ? { nouveautes: nv } : {}),
+      saison: saisonServie(), saisonVue: vue,
       maxPacks: maxPacks(), packPrice: prixPack() }))));
+
+  /**
+   * Éteindre des nouveautés (`CONTRATS.md`, § 2.2). La page l'envoie **après**
+   * les avoir montrées, jamais au chargement.
+   */
+  router.post('/vu', requireAuth, (req, res) =>
+    send(res, eteindre(req.user.id, req.body)));
 
   /**
    * « J'ai vu l'annonce de cette saison. »
@@ -1570,9 +2319,14 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
    */
   async function remettreStuff(conn, userId, stuffId) {
     if (!STUFF_BY_ID.has(stuffId)) throw fail('boutique.error.objet_inconnu');
-    await conn.query(
+    const [r] = await conn.query(
       `INSERT INTO user_stuff (user_id, stuff_id, copies) VALUES (?, ?, 1)
        ON DUPLICATE KEY UPDATE copies = copies + 1`, [userId, stuffId]);
+    /* **Une pièce nouvelle, pas un exemplaire de plus.** Une ligne insérée
+       compte pour 1, une ligne existante mise à jour pour 2 : c'est la règle
+       du booster, où un doublon n'est jamais « nouveau ». Dans la transaction
+       de l'étal, pour partir avec elle si le débit échoue. */
+    if (r.affectedRows === 1) await noterNouveauteDans(conn, userId, `stuff:${stuffId}`);
     return { stuff: [stuffId] };
   }
 
@@ -1603,9 +2357,15 @@ export function createFanzzy({ pool, requireAuth, niveau = null, decks = null,
     await conn.query(
       `INSERT INTO user_skins (user_id, fanzzy_id, stage, skin_id) VALUES (?, ?, ?, ?)`,
       [userId, fanzzy, etage, tenue]);
+    // Toujours nouvelle : une tenue déjà posée est refusée juste au-dessus.
+    await noterNouveauteDans(conn, userId, `skin:${fanzzy}:${etage}:${tenue}`);
     return { skins: [{ id: fanzzy, stade: etage, skin: tenue }] };
   }
 
   return { router, wallet, collection, stades, openPack, evolve, activeFanzzy,
-    personnageActif, construireAvatar, fiche, offrir, remettreStuff, remettreTenue, bibliotheque };
+    personnageActif, construireAvatar, fiche, offrir, remettreStuff, remettreTenue, bibliotheque,
+    /* `recharger(conn, userId)` : la porte du grand livre et du quotidien
+       avant tout booster offert (`PLAN.md`, § 5, étape 7). */
+    recharger,
+    nouveautes, reclamerPalier };
 }

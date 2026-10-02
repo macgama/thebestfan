@@ -1,6 +1,7 @@
 import express from 'express';
 import { randomBytes } from 'node:crypto';
 import { avatarsDe } from '../fanzzy/avatar.js';
+import { niveauPour } from '../../shared/niveau.js';
 
 /**
  * Les amis.
@@ -94,19 +95,73 @@ export function createAmis({ pool, requireAuth, kop = null }) {
    * démarrage du serveur, mais une suite de test peut monter ce module sans
    * lui. Un ami sans dessin vaut mieux qu'une liste d'amis qui lève.
    *
+   * **Un compte effacé n'a plus de visage.** Une amitié survit à la
+   * suppression d'un compte (le compte est anonymisé, pas effacé) : la ligne
+   * reste, sous le pseudo anonyme, mais le personnage ne doit jamais
+   * réapparaître — c'est la règle de `CONTRATS.md`, § 3, la même que pour
+   * les membres d'un KOP. Une ligne lue avec `status` et qui n'est pas
+   * active ne reçoit donc ni avatar ni carte ; une ligne lue sans (le
+   * parrain d'un lien) garde le comportement d'avant.
+   *
    * @param {Array} lignes  avec `userId`, `active_fanzzy`, `active_evo`,
-   *   `active_etat` ; chacune reçoit `avatar` et `fanzzy`.
+   *   `active_etat`, et `status` si la requête l'a lu ; chacune reçoit
+   *   `avatar` et `fanzzy`.
    */
   async function habiller(lignes) {
+    const efface = (l) => l.status != null && l.status !== 'active';
     let av = new Map();
-    try { av = await avatarsDe(q, lignes); } catch (e) {
+    try { av = await avatarsDe(q, lignes.filter((l) => !efface(l))); } catch (e) {
       if (!/catalogue/i.test(e?.message ?? '')) throw e;
     }
     for (const l of lignes) {
+      if (efface(l)) { l.avatar = null; l.fanzzy = null; continue; }
       l.avatar = av.get(l.userId)?.avatar ?? null;
       l.fanzzy = l.avatar?.age ?? l.active_fanzzy ?? null;
     }
     return lignes;
+  }
+
+  /**
+   * Le niveau d'une ligne lue avec `xp` et `status`, ou `undefined`.
+   *
+   * **Absent plutôt que faux** (`CONTRATS.md`, § 3) : une XP illisible —
+   * pas de bourse, colonne absente — ne donne pas « NIV. 1 », qui mentirait
+   * sur quelqu'un qui est peut-être niveau 20. Et un compte effacé n'en a
+   * pas, comme il n'a plus de visage.
+   */
+  function niveauDe(l) {
+    if (l.status !== 'active') return undefined;
+    const xp = l.xp == null ? NaN : Number(l.xp);
+    return Number.isFinite(xp) && xp >= 0 ? niveauPour(xp) : undefined;
+  }
+
+  /* Le schéma incomplet se dit une fois, pas à chaque ouverture de la page. */
+  let xpAbsenteDite = false;
+
+  /**
+   * Lance une lecture qui porte l'XP, puis la même sans, si la colonne manque.
+   *
+   * Le niveau tient à `user_wallet.xp`, que pose `sql/niveau.sql`. Lu dans
+   * la requête qui existe déjà, il ne coûte aucune requête de plus ; mais
+   * sur une base où ce fichier n'est pas passé, la colonne absente ferait
+   * tomber toute la liste d'amis pour un chiffre d'affichage. La liste
+   * passe alors sans niveau, et le journal le dit une fois.
+   *
+   * @param {(xp: string) => Promise<Array>} lire  la requête, qui reçoit
+   *   l'expression à poser pour la colonne `xp`.
+   */
+  async function avecXp(lire) {
+    try {
+      return await lire('w.xp');
+    } catch (e) {
+      if (e?.code !== 'ER_BAD_FIELD_ERROR') throw e;
+      if (!xpAbsenteDite) {
+        xpAbsenteDite = true;
+        console.warn('[amis] colonne user_wallet.xp absente : les amis sont servis '
+          + 'sans niveau (applique sql/niveau.sql)');
+      }
+      return lire('NULL');
+    }
   }
 
   /** La paire, rangée. Tout passe par ici : deux ordres, ce serait deux lignes. */
@@ -123,27 +178,35 @@ export function createAmis({ pool, requireAuth, kop = null }) {
    * ses onglets les uns après les autres.
    */
   async function tableau(userId) {
-    const lignes = await q(
+    /* Le statut et l'XP de chacun sont lus dans la même requête : le niveau
+       sous le buste (`CONTRATS.md`, § 3) ne coûte aucune requête de plus. */
+    const lignes = await avecXp((xp) => q(
       `SELECT am.a, am.b, am.par, am.etat, am.demande_le,
-              u.public_id, u.pseudo, w.active_fanzzy, w.active_evo, w.active_etat
+              u.public_id, u.pseudo, u.status,
+              w.active_fanzzy, w.active_evo, w.active_etat, ${xp} AS xp
          FROM amities am
          JOIN users u ON u.public_id = IF(am.a = ?, am.b, am.a)
          LEFT JOIN user_wallet w ON w.user_id = u.public_id
         WHERE (am.a = ? OR am.b = ?) AND am.etat IN ('demande','amis')
         ORDER BY am.demande_le DESC`,
-      [userId, userId, userId]);
+      [userId, userId, userId]));
 
     await habiller(lignes.map((l) => Object.assign(l, { userId: l.public_id })));
-    const gens = lignes.map((l) => ({
-      id: l.public_id,
-      pseudo: l.pseudo,
-      fanzzy: l.fanzzy,
-      avatar: l.avatar,
-      etat: l.etat,
-      // « à moi de répondre » : la demande vient de l'autre.
-      aMoi: l.etat === 'demande' && l.par !== userId,
-      depuis: l.demande_le,
-    }));
+    const gens = lignes.map((l) => {
+      const niveau = niveauDe(l);
+      return {
+        id: l.public_id,
+        pseudo: l.pseudo,
+        fanzzy: l.fanzzy,
+        avatar: l.avatar,
+        // Absent quand il n'est pas sûr : jamais un niveau par défaut.
+        ...(niveau === undefined ? {} : { niveau }),
+        etat: l.etat,
+        // « à moi de répondre » : la demande vient de l'autre.
+        aMoi: l.etat === 'demande' && l.par !== userId,
+        depuis: l.demande_le,
+      };
+    });
 
     return {
       amis: gens.filter((g) => g.etat === 'amis'),
@@ -191,8 +254,9 @@ export function createAmis({ pool, requireAuth, kop = null }) {
        coïncident sur des identifiants en minuscules, et cesseraient de
        coïncider le jour où ils changeraient de forme — en ne montrant rien
        d'autre qu'une suggestion qui revient alors qu'on l'a écartée. */
-    const lignes = await q(
-      `SELECT u.public_id AS id, u.pseudo, w.active_fanzzy, w.active_evo, w.active_etat,
+    const lignes = await avecXp((xp) => q(
+      `SELECT u.public_id AS id, u.pseudo, u.status,
+              w.active_fanzzy, w.active_evo, w.active_etat, ${xp} AS xp,
                 t.name AS club
          FROM user_follows f
          JOIN user_follows moi ON moi.team_id = f.team_id AND moi.user_id = ?
@@ -205,7 +269,7 @@ export function createAmis({ pool, requireAuth, kop = null }) {
              WHERE (am.a = ? AND am.b = u.public_id)
                 OR (am.a = u.public_id AND am.b = ?))
         ORDER BY u.pseudo`,
-      [userId, userId, userId, userId]);
+      [userId, userId, userId, userId]));
 
     /* Une ligne par club commun : on habille les gens une fois chacun, pas
        une fois par club. */
@@ -215,8 +279,10 @@ export function createAmis({ pool, requireAuth, kop = null }) {
     const par = new Map();
     for (const l of lignes) {
       const h = habits.get(l.id);
+      const niveau = h ? niveauDe(h) : undefined;
       const g = par.get(l.id)
         ?? { id: l.id, pseudo: l.pseudo, fanzzy: h?.fanzzy ?? null, avatar: h?.avatar ?? null,
+          ...(niveau === undefined ? {} : { niveau }),
           clubs: [] };
       if (l.club) g.clubs.push(l.club);
       par.set(l.id, g);
