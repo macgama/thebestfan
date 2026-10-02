@@ -812,7 +812,9 @@ html[data-calme~="animations"] .cestlui{animation:none}
    à la boîte : le rembourrage lui cède ce pixel de chaque côté, et la boîte
    garde la taille qu'elle avait. Sans cela, ses deux pixels de bordure le
    porteraient à 73,7 px, plus haut que la rangée, et le hub, qui ne défile
-   pas, les reprendrait à ses tuiles.
+   pas, les reprendrait à ses tuiles. En hauteur, les dix-huit pixels qui
+   restent ne se partagent pas à parts égales : voir « Les franges tombent
+   dans le rembourrage », plus bas.
 
    **Le compte passe sous le titre quand il ne tient pas à côté.** À 360 px,
    COLLECTION offre cent deux pixels de contenu ; « COLLECTION » et
@@ -836,7 +838,7 @@ html[data-calme~="animations"] .cestlui{animation:none}
    descend alors à 71,7 px, sous la hauteur de son voisin. Avec l'interligne
    d'origine, il la dépassait de quatre dixièmes, et le hub, qui ne défile pas,
    l'aurait repris à ses tuiles. */
-.collec{padding:9px 12px;text-align:left;display:grid;grid-template-columns:minmax(0,1fr);
+.collec{padding:7px 12px 11px;text-align:left;display:grid;grid-template-columns:minmax(0,1fr);
   gap:5px;text-decoration:none}
 .collec .t{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;
   gap:0 8px}
@@ -861,9 +863,21 @@ html[data-calme~="animations"] .cestlui{animation:none}
    non plus dix : avec l'écart de sept d'avant, COLLECTION aurait mesuré
    73,7 px, un dixième de plus que la rangée que fixe AUJOURD'HUI, et le hub
    l'aurait repris à ses tuiles. Avec cinq, le panneau garde ses 71,7 px. Le
-   nœud, trois pixels au-dessus du rail, et les franges, dix en dessous,
-   débordent sans rien pousser : ils tombent dans l'écart et dans le
-   rembourrage du panneau. */
+   nœud, trois pixels au-dessus du rail (cinq avec son cerne), et les
+   franges, dix en dessous, débordent sans rien pousser : le nœud tombe dans
+   l'écart, les franges dans le rembourrage du bas.
+
+   **Les franges tombent dans le rembourrage**, et pas sur le filet. Neuf
+   pixels de rembourrage en haut et en bas, c'était un de moins que leurs
+   dix : quand le panneau a sa hauteur à lui, les franges touchaient le
+   filet du bas, et leur dernière rayure d'or se peignait dessus. C'est le
+   cas dès qu'Oswald n'est pas là (repli, réseau lent) : COLLECTION fait
+   alors la rangée, à 69,8 px, sans un pixel de jeu sous le rail. Avec
+   Oswald, AUJOURD'HUI l'étire de deux pixels, que la grille partage entre
+   ses deux lignes, et les franges passaient à 0,9 px du filet — par chance,
+   pas par construction. Le bas prend donc onze pixels, dix pour les franges
+   et un d'air, et le haut en garde sept, où rien ne déborde : la somme, et
+   la hauteur du panneau avec elle, ne bouge pas. */
 .direct{padding:10px 13px;text-align:left;display:grid;gap:3px;align-content:center;
   text-decoration:none}
 /* **Le libellé rouge prend le rouge clair.** La toile neutre du cadre a la

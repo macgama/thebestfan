@@ -1,31 +1,67 @@
 # À déposer sur Infomaniak
 
-**Session « le socle FAIT MAIN » — le lot 0 de la refonte.** Gaël a choisi le
-30 septembre 2026 la direction FAIT MAIN ; ce lot en pose le socle commun, sans
-aucune matière nouvelle. Il rend les vingt-quatre écrans lisibles au soleil et
-homogènes au toucher : tout se lit en plein jour, tous les boutons réagissent
-pareil, les soldes comptent quand ils changent. Le récit est dans
-`HISTORIQUE.md`, section 4 quadragies.
+**Sessions « le socle FAIT MAIN » et « la matière FAIT MAIN » — les lots 0 et 1
+de la refonte, qui partent ensemble.** Gaël a choisi le 30 septembre 2026 la
+direction FAIT MAIN. Le lot 0 en pose le socle, sans aucune matière nouvelle :
+tout se lit en plein jour, tous les boutons réagissent pareil, les soldes
+comptent quand ils changent. Le lot 1 pose la matière sur les briques communes :
+le mur de béton grainé, la bâche à la place de la plaque, l'écharpe nouée comme
+seule jauge, et le vocabulaire des lots suivants, qu'aucune page n'emploie
+encore. Les récits sont dans `HISTORIQUE.md`, sections 4 quadragies et
+4 quadragies semel.
 
-**Rien n'est commité à l'écriture de ce fichier.** Quarante fichiers de code
-modifiés — trente-trois dans `public/`, sept dans `scripts/` —, plus
-`HISTORIQUE.md`, `ETAT.md` et ce fichier. Aucun changement de schéma,
-aucune route serveur, aucune dépendance — `package.json` et `package-lock.json`
-n'ont pas bougé. Le retour arrière est un `git revert`, sans autre manœuvre.
+Aucun changement de schéma, aucune route serveur, aucune dépendance :
+`package.json` n'a gagné que la commande `grain`, et `package-lock.json` n'a pas
+bougé. Le retour arrière est un `git revert`, sans autre manœuvre.
+
+---
+
+## Où en sont le dépôt et la production
+
+Relevé le 1er octobre 2026 à 20 h 18.
+
+- **Le commit `9e90c90` (« Maj V01102026.1917 ») est poussé, et il est en
+  ligne.** Il porte le lot 0 entier et le lot 1 tel qu'il était à 19 h 17 :
+  après la critique visuelle et la relecture du code, avant la dernière série
+  de corrections. La production le sert : son `/ui.css` est celui du commit,
+  octet pour octet, `/img/grain/` répond, `uptime_s` dit un redémarrage vers
+  19 h 21, et `"version": null` dit que la mise en ligne est passée par le
+  Manager. Le correctif de `23b7992` — jouer une carte d'action retirait de la
+  main tous ses exemplaires —, ancêtre de ce commit, est donc en ligne aussi.
+- **La fin du lot 1 n'est pas commitée** : `public/ui.css`, `public/index.html`,
+  `scripts/grain-images.mjs` et `VISUELS.md`, plus `HISTORIQUE.md`, `ETAT.md` et
+  ce fichier. Les deux lots ne sont complets que dans la copie de travail.
+
+Ce que ces fichiers apportent, et qui manque en ligne :
+
+- **les adresses `?v=2` des trois tuiles de grain**, et le béton de 512 pixels
+  servi aux écrans denses par `image-set`. La tuile `beton@2x` est déjà sur le
+  serveur, mais aucune adresse ne la demande : en ligne, un téléphone agrandit
+  la tuile de 256, et chaque grain y devient une tache floue ;
+- **l'état du deck** (« INCOMPLET », « PRÊT ») écrit en tampon plein : la craie,
+  et le mot en rouge ou en vert foncés. En ligne, il est encore lettré en craie
+  sur la face foncée, à 2,6:1 au soleil ;
+- **les franges de la jauge-écharpe peintes par-dessus le nœud**, cernées
+  d'encre. En ligne, le nœud les couvre, et il n'en reste que deux tirets ;
+- **sur l'accueil, le rembourrage du panneau COLLECTION** (sept pixels en haut,
+  onze en bas), qui fait tomber les franges dans le vide et non sur le filet du
+  bas ;
+- `npm run grain`, qui signale une tuile qu'aucune adresse ne demande, et la
+  documentation du grain.
 
 ---
 
 ## Avant tout : tout part ensemble
 
-`scripts/verif-pages.mjs` porte maintenant les garde-fous du socle — aucun
-`backdrop-filter`, aucun émoji cadenas ou coche, aucun `.calc(`, un `data-ton`
-sur chaque rail d'onglets. Posés sur les pages d'avant, ils relevaient
-**29 fautes sur 54 lignes**. Et `.github/workflows/deploiement.yml` lance ce
-script **avant** de déployer, et refuse de partir s'il échoue.
+Les quatre fichiers et les trois documents partent dans le même envoi — un
+commit, ou plusieurs poussés ensemble. Rien ne casse si l'un arrive sans l'autre,
+mais chacun suppose les autres : `index.html` donne aux franges la place que
+`ui.css` leur dessine, et `VISUELS.md` décrit ce que la feuille sert.
 
-Pousser `scripts/verif-pages.mjs` sans les pages corrigées bloquerait donc toute
-mise en ligne. Les quarante fichiers partent dans le même envoi — un commit, ou
-plusieurs poussés ensemble. Avant de pousser :
+`.github/workflows/deploiement.yml` lance `scripts/verif-pages.mjs` avant de
+déployer, et refuse de partir s'il échoue ; ses garde-fous du lot 0 — aucun
+`backdrop-filter`, aucun émoji cadenas ou coche, aucun `.calc(`, un `data-ton`
+sur chaque rail d'onglets — tiennent toujours. Avant de pousser :
 
 ```bash
 npm run pages      # doit finir sur « Toutes les pages compilent » ; c'est ce que lance le workflow
@@ -33,62 +69,54 @@ npm run pages      # doit finir sur « Toutes les pages compilent » ; c'est ce 
 
 ---
 
-## Où en est la production
-
-Relevé le 1er octobre 2026 vers 0 h 30 :
-
-- **Le lot précédent, « la revue des vingt-quatre écrans », est en ligne.**
-  `/mods.js`, qu'il a créé, est servi à l'identique du dépôt. Son texte de
-  déploiement n'est plus ici ; il reste dans l'historique de ce fichier
-  (commit `c05d935`).
-- **`/healthz` répond `"version": null`.** Seul `scripts/deployer.sh` — le
-  déploiement par le workflow — écrit le fichier `VERSION` ; une mise en ligne
-  par le Manager n'en écrit pas. La dernière est donc vraisemblablement passée
-  par le Manager, et l'étape 4 plus bas donne un autre moyen de vérifier.
-- **Le dernier commit, `23b7992` (« Maj V30092026.1726 »), n'est pas en ligne.**
-  `uptime_s` dit que le serveur tourne sans redémarrage depuis le 29 septembre
-  en fin de matinée, et ce commit date du 30 à 17 h 26. Il part avec ce lot. Il
-  ne touche que le serveur : jouer une carte d'action retirait de la main
-  **tous** ses exemplaires, au duel (`nvn/engine.js`) comme au Virage
-  (`ferveur/virage.js`) — deux Fumigènes en main, un joué, et l'autre
-  disparaissait de la partie. `nvn-smoke.mjs` le couvre pour le duel.
-
-Si la construction passe par le Manager, vérifier une fois qu'elle est bien
-`git pull && npm ci --omit=dev && node build.mjs` : c'était l'avertissement du
-lot précédent — sans `--omit=dev`, `npm ci` tente de télécharger Chromium sur
-l'hébergement —, et rien ne dit ici s'il a été suivi.
-
----
-
 ## Ce que ça change à l'écran
 
-- **Tout se lit.** Aucun texte sous onze pixels ni sous 0,85 d'opacité sur les
-  vingt-trois écrans du lot ; le nom de l'écran en haut passe à la craie pleine.
-- **Plus aucun flou.** Les panneaux sont opaques à 94 %, et aucun mot n'est posé
-  à même la photo de tribune.
-- **Les boutons des pages sont des plaques**, qui s'enfoncent pareil partout.
+Le lot 0, déjà en ligne :
+
+- **Tout se lit.** Aucun texte sous onze pixels ni sous 0,85 d'opacité ; le nom
+  de l'écran en haut passe à la craie pleine.
+- **Plus aucun flou.** Les panneaux sont opaques, et aucun mot n'est posé à même
+  la photo de tribune.
+- **Les boutons des pages sont des plaques** — des bâches depuis le lot 1 —, qui
+  s'enfoncent pareil partout.
 - **L'onglet allumé prend la couleur de l'écran** — bleu sur le classeur, vert
-  sur les matchs, violet chez les amis —, au lieu de l'or partout. Une couleur
-  foncée, pour que son libellé se lise encore au soleil.
+  sur les matchs, violet chez les amis —, au lieu de l'or partout.
 - **Sur `/deck`, ENREGISTRER et AJOUTER AU DECK passent de l'or au bleu** : rien
   ne s'y achète.
-- **Les cartes retrouvent leurs marques de rareté** au pied — les losanges,
-  l'étoile de l'épique, la couronne de la légendaire —, et l'étiquette d'état
-  ne tombe plus sur un nom de deux lignes dans les petites vignettes, celles de
-  la collection et du butin d'un booster.
-- **Sur `/fanzzy`, DECK sort du rail** : une plaque à côté, avec une flèche ↗.
+- **Les cartes retrouvent leurs marques de rareté** au pied, et l'étiquette
+  d'état ne tombe plus sur un nom de deux lignes dans les petites vignettes.
+- **Sur `/fanzzy`, DECK sort du rail**, avec une flèche ↗.
 - **Des icônes au trait** à la place des émojis cadenas et coche.
-- **`/bienvenue`** : chaque mot sur un panneau, le premier bouton enfin dessiné,
-  les cartes du premier paquet à la couleur de leur rareté et par leur nom.
+- **`/bienvenue`** : chaque mot sur un panneau, le premier bouton dessiné, les
+  cartes du premier paquet à la couleur de leur rareté et par leur nom.
 - **La photo revient derrière `/carnet` et `/teletext`.**
-- **Le tiroir** porte « Installer l'application » (elle quitte l'accueil) et le
-  **MODE CALME** : couper les sons, les vibrations, les animations décoratives.
-  Ses lignes font toutes 44 pixels.
-- **Les soldes comptent** : la bourse de l'accueil et celle du kiosque, le solde
-  de la boutique, le pot d'un KOP. Les écharpes des doublons volent des cartes
-  jusqu'au compteur.
-- **Dans les arènes**, les cartes de la main ne sont plus reconstruites dix fois
-  par seconde : elles répondent au doigt du premier coup.
+- **Le tiroir** porte « Installer l'application » et le **MODE CALME**.
+- **Les soldes comptent**, et les écharpes des doublons volent jusqu'au
+  compteur.
+- **Dans les arènes**, les cartes de la main répondent au doigt du premier coup.
+
+Le lot 1, en ligne en partie, complet après ce dépôt :
+
+- **Un mur.** Derrière chaque écran, du béton grainé, la tribune vue à travers
+  lui : très sombre sur les pages de contenu, plus vive sur le hub.
+- **Des bâches.** Chaque bouton est une toile de la couleur de sa destination,
+  cernée au marqueur, avec une ombre noire nette et un coin déchiré. Les rouges,
+  verts, bleus et violets sont plus sombres qu'avant : c'est ce qui rend leur
+  libellé lisible (hypothèse H1, en attente de Gaël).
+- **« Prendre ma place »**, sur le hub et la vitrine, porte une écharpe en tête,
+  deux bouts de scotch et un léger biais.
+- **Le hub n'a plus qu'un cadre** : AUJOURD'HUI, avec son écharpe. COLLECTION
+  est un panneau calme, avec sa jauge.
+- **La jauge est une écharpe nouée** — tricot, nœud de craie, deux franges — sur
+  le hub, sur `/collection` et sur le classeur de `/fanzzy`.
+- **Le menu et la flèche de retour** sont deux petites bâches sombres sur tous
+  les écrans, arènes comprises.
+- **Les soldes de `/boutique` et de `/boosters`**, et l'état du deck, sont des
+  stickers de craie, collés un peu de travers.
+- **L'onglet allumé** est une petite bâche, d'un degré de travers, posée dans
+  son rail noir.
+- **Les panneaux de texte** gardent leur teinte, prennent le grain du mur et des
+  coins plus serrés.
 
 ---
 
@@ -104,12 +132,17 @@ Par le workflow si les secrets SSH sont posés : Actions → Déploiement → *R
 workflow*. Il vérifie les pages et le câblage, lance `scripts/deployer.sh`, et
 attend que `/healthz` annonce le commit. Sinon, à la main dans le Manager :
 lancer la construction, **attendre qu'elle finisse**, puis redémarrer —
-`npm start` ne fait jamais de `git pull`.
+`npm start` ne fait jamais de `git pull`. Vérifier une fois que la construction
+est bien `git pull && npm ci --omit=dev && node build.mjs` : sans `--omit=dev`,
+`npm ci` tente de télécharger Chromium sur l'hébergement.
+
+Le redémarrage compte aussi pour les images : le serveur relève **au démarrage**
+les jumeaux `.avif` qu'il a le droit d'envoyer.
 
 ### 3. Pas de schéma à passer
 
-Rien dans ce lot ne touche à la base. Le lancer ne fait pas de mal — il est
-idempotent — mais il n'a rien à faire.
+Rien dans ces deux lots ne touche à la base. Le lancer ne fait pas de mal — il
+est idempotent — mais il n'a rien à faire.
 
 ### 4. Vérifier que c'est bien le nouveau code qui tourne
 
@@ -119,115 +152,163 @@ Par le workflow, `/healthz` doit annoncer le commit poussé :
 curl -s https://thebestfan.online/healthz
 ```
 
-Par le Manager, `version` reste `null` et ne prouve rien. Deux fichiers servis
-le disent à sa place — le `?v=` contourne tout cache en chemin :
+Par le Manager, `version` reste `null` et ne prouve rien. La feuille servie le
+dit à sa place — le `?v=` contourne tout cache en chemin :
 
 ```bash
-curl -s "https://thebestfan.online/ui.css?v=$(date +%s)"  | grep -c tbf-ico-cadenas   # 2 attendu
-curl -s "https://thebestfan.online/menu.js?v=$(date +%s)" | grep -c "MODE CALME"       # 1 attendu
+curl -s "https://thebestfan.online/ui.css?v=$(date +%s)" | grep -c "beton@2x.webp?v=2"   # 1 attendu
+curl -s "https://thebestfan.online/ui.css?v=$(date +%s)" | grep -c tbf-ico-cadenas       # 2 attendu
 ```
 
-Le 1er octobre, les deux répondent `0` : c'est l'ancien code. Et `uptime_s` doit
-être revenu à quelques minutes, sinon le serveur n'a pas redémarré, et le
-correctif de `23b7992` n'est pas en ligne.
+Le 1er octobre à 20 h 18, la première répond `0` — la fin du lot 1 n'est pas en
+ligne — et la seconde `2` — le lot 0 l'est. Et `uptime_s` doit être revenu à
+quelques minutes, sinon le serveur n'a pas redémarré.
 
 Côté navigateur, un rechargement suffit : les pages estampillent leurs scripts et
 leurs feuilles (`?v=`), et le service worker ne garde que les images.
 
-### 5. Les contrôles à l'œil
+### 5. Les tuiles de grain, servies en AVIF ou en WebP
 
-Sur un téléphone, du plus parlant au plus discret.
+Trois tuiles, quatre adresses, toutes demandées sous `?v=2`. Le serveur choisit
+le format d'après `Accept`, **sous l'adresse du WebP**, et seulement quand un
+jumeau `.avif` existe : seul le papier en a un, et c'est voulu — l'AVIF du béton
+et de la toile pèserait plus que leur WebP, ou effacerait le grain (`VISUELS.md`).
+
+```bash
+H='Accept: image/avif,image/webp,*/*'
+for t in papier beton beton@2x toile; do
+  echo "== $t"
+  curl -sI -H "$H" "https://thebestfan.online/img/grain/$t.webp?v=2" \
+    | grep -iE '^(HTTP|content-type|content-length|vary|cache-control)'
+done
+```
+
+Attendu, sur les quatre : `200`, `vary: Accept`, `cache-control: public,
+max-age=31536000, immutable`. Et :
+
+| Tuile | `content-type` | `content-length` |
+|---|---|---|
+| `papier` | `image/avif` | 6225 |
+| `beton` | `image/webp` | 8420 |
+| `beton@2x` | `image/webp` | 33580 |
+| `toile` | `image/webp` | 5682 |
+
+Puis le papier pour un navigateur qui ne sait pas lire l'AVIF : avec
+`-H 'Accept: image/webp,*/*'`, il doit partir en `image/webp`, 6308 octets. Un
+AVIF envoyé à ce navigateur serait une surface sans grain chez lui, et c'est
+`Vary: Accept` qui empêche un cache partagé de le lui resservir.
+
+Le 1er octobre à 20 h 18, c'était déjà vrai pour les tuiles en ligne : le papier
+partait en AVIF de 6225 octets à qui l'annonce, le béton en WebP de 8420. Le
+`?v=` ne change rien au fichier servi ; il change l'adresse, donc le cache. Au
+premier passage après la mise en ligne, chaque téléphone retélécharge le béton
+et la toile une fois, une quarantaine de kilo-octets au plus (le papier n'est
+demandé par aucune page) : c'est voulu.
+
+Enfin, dans un navigateur de bureau, l'émulation d'un téléphone (densité 2 ou
+3) et l'onglet Réseau ouverts sur une page de contenu : la requête doit porter
+sur `beton@2x.webp?v=2`, et non sur `beton.webp?v=2`.
+
+### 6. Les contrôles à l'œil
+
+Sur un téléphone, du plus parlant au plus discret. Ceux du lot 0 d'abord, s'ils
+n'ont pas été faits depuis sa mise en ligne :
 
 1. **Dehors, en plein jour.** Ouvrir `/profil`, `/aide`, `/matchs` et `/virage`.
-   Tout doit se lire sans chercher l'ombre. C'est la promesse du lot, et aucun
+   Tout doit se lire sans chercher l'ombre. C'est la promesse du socle, et aucun
    script ne la tient à la place d'un œil : l'audit simule le soleil par un voile
-   blanc de 40 %.
+   blanc de 40 %, et il ne voit pas les textes posés sur le grain.
 2. **Le mode calme.** Ouvrir le menu : une rubrique MODE CALME, trois
    interrupteurs — deux sur iPhone, qui ne sait pas vibrer. Allumer « Couper les
    animations décoratives » : sur l'accueil, le personnage cesse de flotter et de
-   respirer ;
-   sur `/matchs`, les braises qui montent du bas de l'écran cessent d'apparaître.
-   Recharger : l'interrupteur est resté allumé. Allumer
-   « Couper les sons », puis ouvrir un duel : le bouton de son de l'arène doit
-   être barré — c'est le même réglage. Tout rallumer à la fin.
+   respirer ; sur `/matchs`, les braises cessent d'apparaître ; une bâche qu'on
+   touche s'assombrit au lieu de s'enfoncer. Recharger : l'interrupteur est
+   resté allumé. Allumer « Couper les sons », puis ouvrir un duel : le bouton de
+   son de l'arène doit être barré. Tout rallumer à la fin.
 3. **Installer l'application.** Dans le menu, sur Android et dans Chrome, si le
    jeu n'est pas déjà installé : l'entrée « Installer l'application », juste
-   après l'Aide. Sur
-   iPhone, elle déplie la consigne « Partager, puis Sur l'écran d'accueil ».
-   Dans le jeu déjà installé : aucune entrée. Et plus rien de tel sur l'accueil.
+   après l'Aide. Sur iPhone, elle déplie la consigne « Partager, puis Sur l'écran
+   d'accueil ». Dans le jeu déjà installé : aucune entrée.
 4. **Un solde qui compte.** Ouvrir un booster depuis `/boosters`, s'il y en a un
-   en poche. En tête de l'ouverture, un compteur d'écharpes ; si le paquet donne
-   des doublons, des écharpes volent des cartes jusqu'à lui, et il monte. Au
-   retour au kiosque, le nombre de boosters **descend** sous les yeux au lieu de
-   sauter. Puis revenir sur l'accueil : les écharpes comptent depuis la valeur de
-   la dernière visite jusqu'à la nouvelle.
-5. **Les onglets.** `/fanzzy` : MON FANZZY et CLASSEUR dans un rail bleu, et DECK
-   à côté, une plaque avec sa flèche, qui ouvre `/deck`. `/amis` : l'onglet
-   allumé est violet. `/classement` : vert. `/aide` : craie. `/deck` :
-   ENREGISTRER, en bas, est une plaque bleue.
-6. **Le décor.** `/carnet` et `/teletext` : la photo de tribune derrière les
-   panneaux, et non plus un fond gris uni.
-7. **Les icônes.** Sur la fiche d'un Fanzzy, les cases verrouillées — un âge pas
-   encore atteint, une tenue pas gagnée — portent un cadenas au trait, de la
-   couleur du texte, et non l'émoji du téléphone. Sur `/aide`, une étape faite
-   porte une coche au trait.
-8. **La main, sous le doigt.** Dans un Virage pendant que la tribune chante,
-   poser le doigt sur une carte de la main, attendre une seconde, relâcher : la
-   carte se joue du premier coup. Avant, le relâchement tombait parfois sur une
-   carte déjà remplacée, et le toucher se perdait. Dans un duel, les portraits de
-   l'équipe respirent.
+   en poche : un compteur d'écharpes en tête de l'ouverture, des écharpes qui
+   volent des doublons jusqu'à lui ; au retour, le nombre de boosters descend
+   sous les yeux.
+5. **Les onglets.** `/fanzzy` : MON FANZZY et CLASSEUR dans un rail bleu, DECK à
+   côté, avec sa flèche. `/amis` : l'onglet allumé est violet. `/classement` :
+   vert. `/aide` : craie.
+6. **Les icônes.** Sur la fiche d'un Fanzzy, les cases verrouillées portent un
+   cadenas au trait ; sur `/aide`, une étape faite porte une coche au trait.
+7. **La main, sous le doigt.** Dans un Virage pendant que la tribune chante,
+   poser le doigt sur une carte, attendre une seconde, relâcher : la carte se
+   joue du premier coup.
 
-### 6. Et une fois : jouer
+Puis ceux du lot 1 :
 
-Un duel ou un Virage avec **deux exemplaires de la même carte d'action** dans le
-deck. Quand les deux sont en main, en jouer un : l'autre doit rester dans la
-main. C'est le correctif de `23b7992`, et c'est le seul point de ce déploiement
-qui touche aux règles.
+8. **Le hub, à 360 pixels de large.** Il ne défile pas. Les tuiles sont des
+   bâches — cerne irrégulier, ombre noire nette, coin bas-droit déchiré —, et
+   deux voisines ne tremblent pas pareil. « Prendre ma place » porte son écharpe
+   et ses deux scotchs, qui tombent dans l'écart sous AUJOURD'HUI sans couvrir
+   son coin.
+9. **La jauge de COLLECTION**, en bas du hub : un rail sombre, le tricot, un nœud
+   de craie au bout du remplissage — au départ du rail si la collection est
+   petite —, et deux franges rayées qui pendent **devant** le nœud, sans toucher
+   le filet du bas du panneau. La même sur `/collection` et sur le classeur de
+   `/fanzzy` : les franges ne touchent ni le bouton d'or ni le texte d'aide.
+10. **`/deck` incomplet** : l'état est un sticker de craie, le mot en rouge
+    foncé, un peu de travers.
+11. **Le menu et la flèche** sur `/fanzzy`, `/classement` et dans une arène :
+    deux petites bâches sombres au coin déchiré, et non deux carrés mouchetés.
+12. **Un bouton hors service** — ENREGISTRER sur un deck incomplet, « PAS ENCORE
+    À TOI » sur la fiche d'un Fanzzy non possédé : gris, rayé, et son libellé se
+    lit.
+13. **Une tablette en largeur**, sur `/teletext` : le rail d'onglets ne prend
+    pas d'ascenseur vertical, et aucun écran ne défile de côté.
+
+### 7. Et une fois : jouer
+
+Si ce n'est pas déjà fait depuis la mise en ligne de `9e90c90` : un duel ou un
+Virage avec **deux exemplaires de la même carte d'action** dans le deck. Quand
+les deux sont en main, en jouer un : l'autre doit rester dans la main. C'est le
+correctif de `23b7992`, et le seul point de ces deux lots qui touche aux règles.
 
 ---
 
 ## Ce que les contrôles ne prouvent pas
 
-**Trois suites restent rouges, et toutes l'étaient avant le lot, à
-l'identique.** Le dernier passage, après la reprise des constats de relecture :
-cinquante-huit suites, l'audit compris, 3 309 contrôles.
+**Trois suites restent rouges, et toutes l'étaient avant le lot 0, à
+l'identique.** Le dernier passage, sur la copie de travail complète :
+cinquante-huit suites, l'audit compris, 3 312 contrôles. `deck:ui` (un rouge),
+`nvn:ui` (trois) et `fanzzy:smoke` (deux) ; leurs causes sont dans `ETAT.md` et
+dans `HISTORIQUE.md`, section 4 quadragies. `abo:smoke` rougit entre minuit et
+deux heures du matin, à cause de son fuseau (`ETAT.md` § 2) : un rouge de ses
+trois contrôles de quota à cette heure-là se relance avant de se lire. Lancée à
+19 h 39, elle était verte.
 
-- `deck:ui` (un rouge), `nvn:ui` (trois) et `fanzzy:smoke` (deux). Leurs causes
-  sont dans `ETAT.md` et dans `HISTORIQUE.md`, section 4 quadragies ;
-- `abo:smoke` a rougi trois fois dans le passage complet, lancé à une heure du
-  matin, **à cause de l'heure** : la suite sème ses lignes « du jour » en UTC
-  quand MySQL compte le jour à l'heure de Zurich (voir `ETAT.md` § 2, « semer
-  comme le serveur écrit »). Relancée seule, elle rougissait encore à une heure
-  et demie, et elle est **verte à deux heures**, 77 contrôles. La suite n'est
-  pas corrigée : un rouge de ces trois contrôles entre minuit et deux heures se
-  relance avant de se lire.
+**Le compte au soleil ne dit plus tout.** Soixante-douze textes perdent leur
+contraste au soleil à 360 × 640, contre soixante-treize à la fin du lot 0. Mais
+l'audit ne mesure pas un texte posé sur une tuile de grain — toute bâche, tout
+`.pan` —, et une copie de l'audit qui les mesure en trouve cent vingt-trois :
+surtout le lettrage des bâches de couleur, de 2,4 à 2,6:1 au soleil, qui était
+déjà au lot 0 sur des dégradés que l'audit ne mesurait pas. Au soleil, 4,5 est
+hors d'atteinte pour une face qui garde sa couleur. L'audit n'a pas encore appris
+à voir sous le grain (`ETAT.md` § 4).
 
-**L'audit a des angles morts**, écrits en `ETAT.md` § 4 : un texte sur un
-dégradé, un texte assombri par `brightness()`, un texte posé sur la photo. Les
-captures à 360 × 640 ont été regardées pour ça, pas au soleil.
-
-**Soixante-treize textes perdent encore leur contraste au soleil** à 360 × 640,
-dont trente-quatre sur `/profil` et vingt sur `/aide`. Ils étaient deux cent
-quatre. Ce n'est pas une régression, c'est ce qui reste.
-
-**Les couleurs vives restent sous 4,5:1 au soleil.** L'onglet allumé des tons
-flare, vert, bleu et violet a été foncé : de 8,3 à 10,6:1 à l'intérieur, de 3,2 à
-3,5 au soleil, contre 2 à 2,3 avant. Au soleil, 4,5 est hors d'atteinte pour une
-face qui garde sa couleur. Les plaques de ces quatre tons n'ont pas changé :
-entre 3,3 et 4,5:1 à l'intérieur, vers 2 au soleil, et les deux plaques bleues de
-`/deck` en sont (3,55, et 2,05 au soleil). L'audit ne mesure aucun de ces fonds,
-qui sont des dégradés ; ces chiffres viennent d'un banc à part. Les foncer à leur
-tour est une décision de palette, en attente de Gaël.
+**Neuf hypothèses attendent Gaël**, H1 à H9, listées en tête de `public/ui.css`
+et dans `HISTORIQUE.md`, 4 quadragies semel. Chacune se défait en un bloc. Elles
+ne bloquent pas la mise en ligne : ce sont des choix de lecture qu'on peut
+revenir.
 
 **L'étiquette d'une carte recouvre encore son nom dans deux cas** : un nom de
 trois lignes sur une carte de moins de 100 pixels, un nom de deux lignes sur une
-carte de 141 à 182. Quelques pour cent des noms, jusqu'à 9 % selon la largeur. La
-correction juste demande `cartes.js` (`ETAT.md` § 6) ; elle n'est pas dans ce
-lot.
+carte de 141 à 182. La correction juste demande `cartes.js` (`ETAT.md` § 6).
 
-**Le gain de fluidité n'est pas mesuré.** Le flou d'arrière-plan est parti de
-tous les écrans, et c'est le calcul le plus cher qu'on demandait à un téléphone
-modeste ; mais aucun chiffre ne l'a encore chiffré sur un appareil réel.
+**Le coût sur un téléphone modeste n'est pas mesuré.** Le lot 0 a retiré tous
+les flous ; le lot 1 ajoute des tuiles de grain répétées, décodées une fois, et
+aucune animation infinie — le classeur en perd même une. Aucun chiffre ne l'a
+encore vérifié sur un appareil réel.
+
+**Permanent Marker n'est chargée nulle part** (hypothèse H3) : aucune page
+n'écrit encore au marqueur, et rien ne doit en avoir l'air.
 
 ---
 
