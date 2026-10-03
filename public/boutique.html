@@ -29,8 +29,9 @@
    l'interrupteur « à portée d'abord ». Trois rangées d'étiquettes, puis
    « VOIR LES AUTRES ».
 
-   **Tout le dessin est dans ui.css** — la réserve, les fentes, l'anneau de
-   recharge, l'étiquette de marché, l'objet sur son sticker, le calque de la
+   **Tout le dessin est dans ui.css** — la réserve et ses boosters (la brique
+   commune au kiosque et à la barre, lot 4), l'anneau de recharge,
+   l'étiquette de marché, l'objet sur son sticker, le calque de la
    cérémonie, le ticket de gain, l'interrupteur. Cette feuille-ci n'écrit que
    leur **place** (marges, grilles, positions, tailles quand la brique les
    prévoit), et trois compositions qui ne sont pas des briques parce qu'un
@@ -38,10 +39,11 @@
    TRIBUNE.
 
    **Rien ne s'invente.** Les prix viennent de `/api/boutique/etal` et du
-   catalogue, les possessions de l'étal, le plafond et la cadence de la
-   réserve de `/api/abonnement` (ce que le joueur a, abonné ou non), le
-   compte à rebours de `/api/fanzzy/state`. Une donnée qui manque retire ce
-   qu'elle portait — jamais un tiret, jamais un zéro posé par défaut. */
+   catalogue, les possessions de l'étal, la réserve de `/api/fanzzy/state` —
+   le compte, le compte à rebours, et le plafond et la cadence de ce joueur
+   (`wallet.packMax`, `wallet.cadenceMs`, contrat § 13 ; `/api/abonnement`
+   pour un serveur qui ne les sert pas encore). Une donnée qui manque retire
+   ce qu'elle portait — jamais un tiret, jamais un zéro posé par défaut. */
 
 /* La règle `[hidden]` du navigateur pèse moins qu'une classe qui pose un
    `display` : sans celle-ci, la réserve, le rail et les gestes du calque
@@ -53,12 +55,15 @@
    La planche des briques (`.tbf-reserve`), d'un bord à l'autre de la
    colonne, juste sous la barre. Elle est hors des conteneurs que la page
    réécrit : le jeton qui descend vers le ticket « −45 » part d'elle, et un
-   solde qui compte ne doit pas être remplacé en cours de compte. */
+   solde qui compte ne doit pas être remplacé en cours de compte.
+
+   Elle ne porte que deux stickers : les boosters à gauche, les écharpes à
+   droite. **Les boosters sont la brique commune** (`.tbf-monnaie.tbf-boosters`,
+   ui.css) : ses places ou son sachet, le compte, l'anneau, PROCHAIN, et le
+   lien vers le kiosque — la zone de touche, le focus et le rangement dans la
+   planche sont à elle. Les deux règles d'ici sur les fentes-lien d'avant
+   sont parties avec elles. */
 #reserve{margin-top:6px;margin-bottom:2px}
-/* Les fentes y mènent au kiosque : c'est là que les sachets s'ouvrent. Un
-   lien et non une image, donc la zone de touche de tout lien du jeu. */
-a.tbf-fentes{min-height:44px;color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
-a.tbf-fentes:focus-visible{outline:3px solid var(--projo);outline-offset:2px;border-radius:4px}
 
 /* ------------------------------------------------------------ À LA UNE
 
@@ -135,20 +140,14 @@ a.tbf-fentes:focus-visible{outline:3px solid var(--projo);outline-offset:2px;bor
 .etal-outils{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
   gap:2px 12px;margin:0 0 12px}
 .filtres{display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px}
-/* Le bouton porte la forme de la rareté (`.tbf-forme`, avec son mot) dans une
-   zone de quarante-quatre pixels. L'étiquette de l'étoile et de l'éclat
-   déborde de la forme de part et d'autre : le bouton la contient. */
-.filtre{display:inline-grid;place-items:center;box-sizing:border-box;min-width:44px;min-height:44px;
-  margin:0;padding:0 8px;border:0;border-radius:8px;background:none;color:inherit;cursor:pointer;
-  -webkit-tap-highlight-color:transparent}
-.filtre[data-rar=epique]{min-width:60px}
-.filtre[data-rar=legendaire]{min-width:84px}
-.filtre:focus-visible{outline:3px solid var(--projo);outline-offset:0}
-/* PROVISOIRE (besoin « feuilles-css ») : l'état « filtre actif » d'un bouton
-   qui porte une forme n'a pas de brique. Un cadre de craie et un voile, sans
-   toucher au texte de la forme (aucune opacité sur un mot). À remplacer par
-   la brique quand elle existera. */
-.filtre[aria-pressed=true]{background:rgba(242,238,228,.12);box-shadow:inset 0 0 0 1.5px var(--craie)}
+/* Le bouton est la brique du filtre qu'on touche (`.tbf-filtre`, ui.css) :
+   la forme de la rareté, avec son mot, dans une zone de quarante-quatre
+   pixels, et son état actif (`aria-pressed`). Elle a remplacé le dessin
+   provisoire que cette feuille portait, au lot 4. La page ne lui donne que
+   la largeur que la brique lui laisse : l'étiquette de l'étoile et de
+   l'éclat déborde de la forme de part et d'autre, le bouton la contient. */
+.filtres>.tbf-filtre[data-rar=epique]{min-width:60px}
+.filtres>.tbf-filtre[data-rar=legendaire]{min-width:84px}
 
 #etal .tbf-etal+.tbf-plaque{margin-top:18px}
 
@@ -403,6 +402,12 @@ const lire = (url) => fetch(url, { credentials: 'same-origin' })
  * raconterait une dépense qui n'a pas eu lieu. Et une valeur identique ne
  * réécrit rien — elle couperait un compte en cours, qui repartirait en
  * arrière pour une image.
+ *
+ * Et le sticker qui le porte **frémit** (`.tbf-vibre`, ui.css) : c'est ce que
+ * la brique du compteur de monnaie demande à la page quand la valeur change
+ * sous les yeux — un booster arrivé pendant qu'on regarde l'étal, des
+ * écharpes dépensées. Jamais à la première pose, pour la même raison que le
+ * compte.
  */
 function poserSolde(el, valeur) {
   if (!el) return;
@@ -410,9 +415,22 @@ function poserSolde(el, valeur) {
   const avant = el.dataset.v === undefined ? null : Number(el.dataset.v);
   if (avant === apres) return;
   el.dataset.v = String(apres);
-  if (avant === null || !window.FX?.compter) { el.textContent = String(apres); return; }
+  if (avant === null) { el.textContent = String(apres); return; }
+  vibrer(el.closest('.tbf-monnaie'));
+  if (!window.FX?.compter) { el.textContent = String(apres); return; }
   window.FX.compter(el, avant, apres);
 }
+/* Le mouvement se retire à sa fin (voir plus bas) ; on le retire aussi avant
+   de le reposer, pour qu'un second changement rejoue le premier. Sous le
+   calme et `prefers-reduced-motion`, ui.css l'éteint. */
+function vibrer(s) {
+  if (!s) return;
+  s.classList.remove('tbf-vibre');
+  void s.offsetWidth;
+  s.classList.add('tbf-vibre');
+}
+/** Le calque d'une cérémonie d'achat est-il à l'écran (voir `ceremonie`) ? */
+const enCeremonie = () => document.querySelector('body > .tbf-calque') !== null;
 
 /* --------------------------------------------------------------- l'état
 
@@ -421,8 +439,8 @@ function poserSolde(el, valeur) {
 const S = {
   catalogue: null,   // /api/boutique/catalogue — public : la vitrine en euros
   etal: null,        // /api/boutique/etal — ce que les écharpes achètent
-  etat: null,        // /api/fanzzy/state — la bourse, la recharge, l'avatar
-  abo: null,         // /api/abonnement — le plafond, la cadence, les formules
+  etat: null,        // /api/fanzzy/state — la bourse, la réserve (plafond et cadence compris), l'avatar
+  abo: null,         // /api/abonnement — les formules (et le plafond, la cadence d'un serveur d'avant § 13)
   echarpes: 0,
   rayon: null,
   filtre: memoire.lire('tbf-boutique-filtre'),
@@ -440,7 +458,6 @@ const RAR_MOT = { commune: 'COMMUNE', rare: 'RARE', epique: 'ÉPIQUE', legendair
 const RAR_NOM = { commune: 'Commune', rare: 'Rare', epique: 'Épique', legendaire: 'Légendaire' };
 
 const JETON = () => esc(window.TBF_STUFF?.gain?.('echarpes') ?? '/img/gains/echarpes.webp');
-const SACHET = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v12H4zM4 8l2-4h12l2 4M12 4v16"/></svg>';
 const pluriel = (n, un, plusieurs) => `${n} ${n > 1 ? plusieurs : un}`;
 
 /* Le retour de Stripe. Il dit seulement que le joueur est revenu — **pas** que
@@ -488,27 +505,50 @@ function toast(texte, { erreur = false, ms = 4500 } = {}) {
    retirent à la fin de leur animation : laissés en place, ils rejoueraient au
    premier changement de style. */
 document.addEventListener('animationend', (e) => {
-  for (const c of ['tbf-colle', 'tbf-clac', 'tbf-glisse']) {
+  for (const c of ['tbf-colle', 'tbf-clac', 'tbf-glisse', 'tbf-vibre']) {
     if (e.target.classList?.contains(c) && e.animationName === c) e.target.classList.remove(c);
   }
 });
 
 /* ============================================================ la réserve
 
-   La brique `.tbf-reserve` : les sachets du joueur, la recharge du suivant,
-   ses écharpes. **Le plafond et la cadence viennent de `/api/abonnement`**
-   (abonné ou non, ce que le joueur a vraiment) ; sans eux, on ne dessine pas
-   de fentes qu'on ne saurait pas compter, on écrit le compte.
+   La planche `.tbf-reserve` : les boosters du joueur, puis ses écharpes.
 
-   Au-delà de sept places, la rangée ne se lirait plus d'un coup d'œil (la
-   brique le dit) : le compte des boosters prend la forme du compteur de
-   monnaie, comme dans la barre. C'est le cas du plafond de départ (douze).
+   **Les boosters sont la brique commune** (`.tbf-monnaie.tbf-boosters`,
+   ui.css, lot 4), la même qu'au kiosque et dans la bande du HUD. La boutique
+   les dessinait à sa façon : jusqu'à sept fentes posées à même la planche,
+   puis un compteur sous un pictogramme de paquet cadeau, l'anneau et
+   PROCHAIN à part — trois dessins du même stock dans le jeu, qui se lisaient
+   comme trois choses, avec trois plafonds. Ici, un sticker craie qui porte
+   ses sachets, son compte, son anneau, son compte à rebours et le « + » du
+   kiosque, où il mène.
+
+   **La règle de forme est celle de `reserveHTML`** (cartes.js, que cette
+   page ne charge pas) : une place par sachet quand le plafond de ce joueur
+   est connu et que les places tiennent en cinq (`PLACES_EN_FENTES`, la place
+   qui se recharge et le cadeau qui déborde compris), la première vide
+   portant l'anneau ; sinon le sachet seul, et l'anneau à côté. Le compte est
+   **toujours** écrit : c'est le premier `<b>` du sticker, celui que la barre
+   et `FX.compter` lisent. Sans plafond, on ne dessine pas de places qu'on ne
+   saurait pas compter ; sans cadence, pas d'anneau ; réserve pleine, ni
+   anneau ni PROCHAIN.
+
+   **Le plafond et la cadence sont ceux de ce joueur, abonnement compris**
+   (`wallet.packMax`, `wallet.cadenceMs`, contrat § 13 : « un écran qui
+   dessine la réserve de ce joueur lit `wallet.packMax` »). Un serveur qui ne
+   les sert pas encore les laisse absents ; on les tire alors de
+   `/api/abonnement` (abonné ou non), que la page lit de toute façon pour le
+   PASS — la lecture d'avant ce lot, qui ne coûte aucune requête.
 
    **Le compte à rebours suit la règle R3 du contrat** : la durée vient du
    serveur (`nextPackInMs`), la page décompte avec `performance.now()` — qui
    continue de courir quand l'onglet est caché —, et à zéro elle relit le
    serveur au lieu de conclure seule qu'un booster est arrivé. */
-const R = { fin: null, minuterie: 0, relu: 0 };
+/* `relu` part de moins l'infini et non de zéro : `performance.now()` compte
+   depuis l'arrivée sur la page, et une recharge qui tombait dans ses cinq
+   premières secondes attendait la sixième pour être relue, PROCHAIN à zéro
+   en attendant (relevé au banc du lot 4). */
+const R = { fin: null, minuterie: 0, relu: -Infinity };
 
 /* L'échéance se retient **une fois, à la lecture** : `nextPackInMs` est
    compté à l'instant de la réponse, et le rajouter à l'heure d'un rendu
@@ -519,67 +559,102 @@ function lireRecharge(w) {
   R.fin = w && w.nextPackInMs != null && Number.isFinite(n) ? performance.now() + Math.max(0, n) : null;
 }
 
-const plafond = () => {
+/** Ce que `/api/abonnement` dit de la réserve de ce joueur, abonné ou non. */
+const deLAbonnement = (cle) => {
   const a = S.abo;
   if (!a || a.error) return null;
-  const n = Number((a.abonne ? a.ouvre : a.sans)?.packMax);
+  const n = Number((a.abonne ? a.ouvre : a.sans)?.[cle]);
   return Number.isFinite(n) && n > 0 ? n : null;
 };
+const plafond = () => {
+  const n = Number(S.etat?.wallet?.packMax);
+  if (Number.isInteger(n) && n >= 1) return n;
+  const a = deLAbonnement('packMax');
+  return a === null ? null : Math.floor(a);
+};
 const cadence = () => {
-  const a = S.abo;
-  if (!a || a.error) return null;
-  const n = Number((a.abonne ? a.ouvre : a.sans)?.packRegenMin);
-  return Number.isFinite(n) && n > 0 ? n * 60_000 : null;
+  const n = Number(S.etat?.wallet?.cadenceMs);
+  if (Number.isFinite(n) && n > 0) return n;
+  const m = deLAbonnement('packRegenMin');
+  return m === null ? null : m * 60_000;
 };
 
-/** Le temps qui reste, écrit comme une minuterie : « 9:55 », « 1:05:12 ». */
-function minutes(ms) {
+/* Cinq places au plus, mesuré par le kiosque : six font déborder la planche
+   à 320 px avec PROCHAIN et un solde à quatre chiffres. La même borne que
+   `PLACES_EN_FENTES` dans cartes.js. */
+const PLACES_EN_FENTES = 5;
+
+/** Le temps qui reste : « 9:55 », ou « 1 h 04 » au-delà d'une heure.
+    L'écriture du kiosque : « 64:28 » se lirait comme une horloge cassée, et
+    « 1:04:28 » demande de compter les deux-points. Arrondi au-dessus :
+    « 0:01 » jusqu'au bout, jamais « 0:00 ». */
+function quand(ms) {
   const s = Math.max(0, Math.ceil(ms / 1000));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const ss = String(s % 60).padStart(2, '0');
-  return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+  const mm = Math.floor(s / 60);
+  return mm >= 60 ? `${Math.floor(mm / 60)} h ${String(mm % 60).padStart(2, '0')}`
+    : `${mm}:${String(s % 60).padStart(2, '0')}`;
 }
+/** La même durée, en mots, pour qui écoute l'écran. */
+function enMots(ms) {
+  const mm = Math.ceil(ms / 60000);
+  if (mm <= 1) return 'moins d’une minute';
+  if (mm < 60) return `${mm} minutes`;
+  return `${Math.floor(mm / 60)} h ${String(mm % 60).padStart(2, '0')}`;
+}
+
+/** Le nombre de boosters en réserve, entier et jamais négatif. */
+const packsDe = (w) => Math.max(0, Math.floor(Number(w?.packs) || 0));
 
 function rendreReserve() {
   const w = S.etat?.wallet;
   const el = $('reserve');
   if (!w) { el.hidden = true; return; }
-  const packs = Number(w.packs) || 0;
+  const packs = packsDe(w);
   const max = plafond();
-  const plein = max !== null && packs >= max;
-  /* Réserve pleine : pas de prochain (jamais « 0:00 »), la brique le dit. */
-  const enCours = !plein && R.fin !== null;
+  /* Un booster en route : le serveur sert une échéance, et la réserve n'est
+     pas pleine. Pleine, ni anneau ni PROCHAIN (jamais « 0:00 »). */
+  const enCours = R.fin !== null && !(max !== null && packs >= max);
   const anneau = enCours && cadence() !== null;
-  const places = max === null ? 0 : Math.max(max, packs);
+  const places = max === null ? Infinity : Math.max(max, packs + (enCours ? 1 : 0));
+  const RECHARGE = '<span class="tbf-recharge" data-recharge aria-hidden="true"></span>';
 
-  let sachets;
-  if (max !== null && places <= 7) {
-    /* Les fentes : une par place, les pleines d'abord ; la première vide
-       porte l'anneau de recharge si l'on connaît la cadence. */
-    const fentes = [];
-    for (let i = 0; i < places; i++) {
-      if (i < packs) fentes.push('<span class="tbf-fente"></span>');
-      else if (i === packs && anneau) {
-        fentes.push('<span class="tbf-fente tbf-fente--vide"><span class="tbf-recharge" data-recharge aria-hidden="true"></span></span>');
-      } else fentes.push('<span class="tbf-fente tbf-fente--vide"></span>');
-    }
-    sachets = `<a class="tbf-fentes" href="/boosters" aria-label="${esc(
-      `${pluriel(packs, 'booster', 'boosters')} sur ${max} — le kiosque`)}">${fentes.join('')}</a>`;
+  /* Ce qui se pose avant le compte, et ce qui le suit (BRIQUES § 1). */
+  let avant;
+  let apres = '';
+  if (places <= PLACES_EN_FENTES) {
+    /* Les places : les pleines d'abord ; la première vide porte l'anneau si
+       l'on connaît la cadence. */
+    avant = `<span class="tbf-fentes" aria-hidden="true">${Array.from({ length: places }, (_, i) =>
+      (i < packs ? '<span class="tbf-fente"></span>'
+        : `<span class="tbf-fente tbf-fente--vide">${i === packs && anneau ? RECHARGE : ''}</span>`)).join('')}</span>`;
   } else {
-    sachets = anneau ? '<span class="tbf-recharge" data-recharge aria-hidden="true"></span>' : '';
+    /* Le sachet seul — vide s'il n'y en a aucun — et l'anneau à côté. */
+    avant = `<span class="tbf-fente${packs ? '' : ' tbf-fente--vide'}" aria-hidden="true"></span>`;
+    if (anneau) apres += RECHARGE;
   }
-  const prochain = enCours
-    ? '<span class="tbf-reserve-prochain" role="timer" aria-label="Le prochain booster">PROCHAIN<b data-prochain></b></span>'
-    : '';
-  const compteBoosters = max !== null && places <= 7 ? ''
-    : `<a class="tbf-monnaie" href="/boosters" aria-label="${esc(max === null
-      ? `${pluriel(packs, 'booster', 'boosters')} — le kiosque`
-      : `${pluriel(packs, 'booster', 'boosters')} sur ${max} — le kiosque`)}">${SACHET}<b data-packs>${packs}</b><i class="tbf-monnaie-plus" aria-hidden="true">+</i></a>`;
+  if (enCours) apres += '<span class="tbf-reserve-prochain" aria-hidden="true">PROCHAIN<b data-prochain></b></span>';
+  apres += '<i class="tbf-monnaie-plus" aria-hidden="true">+</i>';
 
-  /* Le compteur d'écharpes reste le même nœud d'un rendu à l'autre : c'est
-     lui qui compte quand un achat le fait descendre, et un compte ne survit
-     pas à un `innerHTML`. Il mène où en gagner — le Virage. */
+  /* Les deux stickers restent les mêmes nœuds d'un rendu à l'autre, et leur
+     chiffre aussi : c'est lui qui compte quand un achat fait descendre les
+     écharpes ou qu'un booster arrive, et un compte ne survit pas à un
+     `innerHTML`. Autour du chiffre des boosters, seuls les sachets, l'anneau
+     et PROCHAIN se refont. */
+  let bo = el.querySelector('a.tbf-boosters');
+  if (!bo) {
+    bo = document.createElement('a');
+    bo.className = 'tbf-monnaie tbf-boosters';
+    bo.href = '/boosters';
+    bo.innerHTML = '<b data-packs></b>';
+  }
+  const compte = bo.querySelector('[data-packs]');
+  for (const n of [...bo.childNodes]) if (n !== compte) n.remove();
+  compte.insertAdjacentHTML('beforebegin', avant);
+  compte.insertAdjacentHTML('afterend', apres);
+  /* Le nom accessible se repose à la seconde qui suit (voir `tic`). */
+  delete bo.dataset.mots;
+
+  /* Les écharpes mènent où en gagner — le Virage. */
   let ech = el.querySelector('[data-echarpes]')?.closest('a');
   if (!ech) {
     ech = document.createElement('a');
@@ -588,27 +663,51 @@ function rendreReserve() {
     ech.innerHTML = `<img src="${JETON()}" alt=""><b data-echarpes></b><i class="tbf-monnaie-plus" aria-hidden="true">+</i>`;
   }
   ech.setAttribute('aria-label', `${pluriel(S.echarpes, 'écharpe', 'écharpes')} — où en gagner`);
-  el.innerHTML = sachets + prochain + compteBoosters;
-  el.appendChild(ech);
-  poserSolde(ech.querySelector('b'), S.echarpes);
+  /* Les boosters ouvrent la planche, à gauche ; les écharpes la ferment
+     (`.tbf-reserve>.tbf-boosters:first-child`). Remis en place seulement
+     s'ils n'y sont pas : un nœud réinséré rejoue ses animations. */
+  if (el.children.length !== 2 || el.firstElementChild !== bo || el.lastElementChild !== ech) {
+    el.replaceChildren(bo, ech);
+  }
+  poserSolde(compte, packs);
+  /* Les écharpes d'un achat attendent le tampon de sa cérémonie. */
+  if (!enCeremonie()) poserSolde(ech.querySelector('b'), S.echarpes);
   el.hidden = false;
   tic();
 }
 
-/** Une seconde de la minuterie : le compte, l'anneau, et la relecture à zéro. */
+/**
+ * Une seconde de la minuterie : le temps, l'anneau, le nom accessible, et la
+ * relecture à zéro.
+ *
+ * À zéro, PROCHAIN s'efface au lieu d'écrire « 0:00 » (la brique, et R3 :
+ * on ne conclut pas seul qu'un booster est arrivé), et la page relit l'état,
+ * au plus toutes les cinq secondes tant qu'il ne dit rien de neuf. Le temps
+ * s'écrit chaque seconde ; le nom accessible ne change qu'à la minute — une
+ * phrase qui change chaque seconde ne se lit jamais.
+ */
 function tic() {
-  const b = document.querySelector('#reserve [data-prochain]');
-  if (R.fin === null || !b) return;
-  const reste = R.fin - performance.now();
-  if (reste <= 0) {
-    b.textContent = minutes(0);
-    relireEtat();
-    return;
+  const bo = document.querySelector('#reserve a.tbf-boosters');
+  if (!bo) return;
+  const reste = R.fin === null ? null : Math.max(0, R.fin - performance.now());
+  const prochain = bo.querySelector('.tbf-reserve-prochain');
+  if (prochain && reste !== null) {
+    prochain.hidden = reste <= 0;
+    if (reste > 0) prochain.querySelector('[data-prochain]').textContent = quand(reste);
+    const c = cadence();
+    const anneau = bo.querySelector('[data-recharge]');
+    if (anneau && c) anneau.style.setProperty('--part', String(Math.min(1, Math.max(0, 1 - reste / c))));
   }
-  b.textContent = minutes(reste);
-  const c = cadence();
-  const anneau = document.querySelector('#reserve [data-recharge]');
-  if (anneau && c) anneau.style.setProperty('--part', String(Math.min(1, Math.max(0, 1 - reste / c))));
+
+  const packs = packsDe(S.etat?.wallet);
+  const max = plafond();
+  const plein = max !== null && packs >= max;
+  const mots = `${packs ? pluriel(packs, 'booster', 'boosters') : 'Aucun booster'}${max ? ` sur ${max}` : ''}${
+    prochain && reste !== null ? (reste > 0 ? `, le prochain dans ${enMots(reste)}` : ', le prochain arrive')
+      : plein ? ', la réserve est pleine' : ''} — le kiosque`;
+  if (bo.dataset.mots !== mots) { bo.dataset.mots = mots; bo.setAttribute('aria-label', mots); }
+
+  if (prochain && reste !== null && reste <= 0) relireEtat();
 }
 R.minuterie = setInterval(() => { if (!document.hidden) tic(); }, 1000);
 /* L'onglet revient : la minuterie d'arrière-plan a pu être ralentie par le
@@ -862,7 +961,7 @@ function rendreEtal({ colle = false } = {}) {
   /* Les filtres : une forme par rareté présente dans l'étal, rien pour une
      rareté qui n'a rien à montrer. Un seul à la fois ; le retoucher l'éteint. */
   const filtres = presentes.length > 1 ? `<div class="filtres" role="group" aria-label="Filtrer par rareté">${
-    presentes.map((r) => `<button type="button" class="filtre" data-filtre="${r}" data-rar="${r}"
+    presentes.map((r) => `<button type="button" class="tbf-filtre" data-filtre="${r}" data-rar="${r}"
       aria-pressed="${S.filtre === r}" aria-label="${RAR_NOM[r]} seulement"><span class="tbf-forme" data-rar="${r}"
       aria-hidden="true"><i></i><b>${RAR_MOT[r]}</b></span></button>`).join('')}</div>` : '';
   const reste = vus.length - montres.length;
@@ -986,8 +1085,9 @@ async function acheter(id, bouton) {
     if (S.etat?.wallet) S.etat.wallet.scarves = apres;
     annoncer({ scarves: apres });
     /* La cérémonie d'abord, sur son calque ; l'étal se redessine dessous,
-       hors de vue — c'est pour ça que le calque n'est pas dans `#etal`. */
-    const fete = ceremonie(o, prix, apres);
+       hors de vue — c'est pour ça que le calque n'est pas dans `#etal`. Le
+       solde affiché, lui, attend le tampon (voir `ceremonie`). */
+    const fete = ceremonie(o, prix);
     await monterEtal();
     await fete;
   } catch {
@@ -1035,8 +1135,19 @@ const MESSAGES = {
  * Sans `fx.js`, rien ne bouge et tout est posé : l'objet, le tampon, le
  * ticket, les bâches. Fermé en cours de route (Échap, le fond), la cérémonie
  * de `fx.js` s'arrête avec l'objet et le solde est posé quand même.
+ *
+ * **Le solde attend le tampon.** L'étal se relit pendant le retournement
+ * (`monterEtal`, dans `acheter`), et posait le solde dès sa réponse : le
+ * compteur décomptait sous le calque, pendant la révélation, et le jeton du
+ * ticket partait d'un chiffre déjà arrivé — jusqu'à 1,9 s trop tôt pour une
+ * légendaire (relevé au banc du lot 4). La relecture ne le pose plus tant
+ * que le calque est là ; c'est la cérémonie qui le pose, au tampon, ou à la
+ * fermeture si l'on ferme avant. `S.echarpes` et non la réponse de l'achat :
+ * l'étal relu entre-temps est plus frais. Poser deux fois la même valeur ne
+ * réécrit rien (`poserSolde`) ; une valeur relue après le tampon se pose à
+ * la fermeture.
  */
-function ceremonie(o, prix, apres) {
+function ceremonie(o, prix) {
   const rar = rarDe(o.rar);
   const calque = document.createElement('div');
   calque.className = 'tbf-calque';
@@ -1063,12 +1174,7 @@ function ceremonie(o, prix, apres) {
   const objet = calque.querySelector('.tbf-objet');
   const gestes = calque.querySelector('.achat-gestes');
 
-  let solde = false;
-  const poserLeSolde = () => {
-    if (solde) return;
-    solde = true;
-    poserSolde(document.querySelector('#reserve [data-echarpes]'), apres);
-  };
+  const poserLeSolde = () => poserSolde(document.querySelector('#reserve [data-echarpes]'), S.echarpes);
 
   return new Promise((resoudre) => {
     let fini = false;
@@ -1445,7 +1551,9 @@ async function monterEtal() {
   /* Le manifeste des dessins, **avant** de rendre la cabine : sans lui,
      aucune tenue ne se trouverait portée. */
   await window.TBF_ETATS?.charger?.().catch(() => {});
-  if (S.etat?.wallet) poserSolde(document.querySelector('#reserve [data-echarpes]'), S.echarpes);
+  /* Pendant la cérémonie d'un achat, le solde attend son tampon : c'est elle
+     qui le pose (voir `ceremonie`). */
+  if (S.etat?.wallet && !enCeremonie()) poserSolde(document.querySelector('#reserve [data-echarpes]'), S.echarpes);
   rendreUne();
   if (S.rayon === 'equipement') rendreEtal();
   if (S.rayon === 'tenues') rendreCabine();

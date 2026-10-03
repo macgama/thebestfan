@@ -47,6 +47,19 @@
  *     l'épaisse, le cran posé où l'on veut, le sticker de prix et le jalon,
  *     le ticket de gain, le ticket qui mène quelque part et le compte d'un
  *     onglet ;
+ *   — les pièces du lot 4, la collection : la réserve de boosters en une
+ *     seule brique (`.tbf-boosters`, pour le kiosque, la boutique et la bande
+ *     du HUD), le pin de famille (`.tbf-pin`), l'étage (`.tbf-etage`),
+ *     l'anneau qui compte (`.tbf-cercle`), l'album (`.tbf-album` : le rail
+ *     des séries, les pages, l'en-tête de série, la pochette numérotée, la
+ *     case VITRINE), le vestiaire (`.tbf-vestiaire`, la bande du cri
+ *     `.tbf-cri`, les mini-portraits du deck `.tbf-minis`), l'inventaire de
+ *     la fiche (`.tbf-inventaire`, la tuile `.tbf-tuile`, l'arbre des âges
+ *     `.tbf-ages`, la fiche kraft `.tbf-detail`), le niveau de
+ *     collectionneur (`.tbf-collectionneur`), les rayons de /collection
+ *     (`.tbf-rayons`, `.tbf-rayon`), la planche d'un personnage
+ *     (`.tbf-planche`) et la vitrine, modale commune (`.tbf-vitrine`) ; et la
+ *     place de la fête de niveau (`.tbf-niv-…`, « la montée de niveau ») ;
  *   — les icônes `.tbf-ico-*`, le mot pour le lecteur d'écran seul
  *     (`.tbf-vh`), le titre cousu `.tbf-cousu`, l'éclat d'un
  *     compteur `.tbf-compte` et les crochets du mode calme
@@ -297,6 +310,13 @@
      polygone change avec celui de `.tbf-scotch`, ou le jeu a deux scotchs. */
   --ruban-g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='58' height='24'%3E%3ClinearGradient id='s' x2='0' y2='1'%3E%3Cstop offset='.0625' stop-color='%23F2EEE4' stop-opacity='.34'/%3E%3Cstop offset='.0625' stop-color='%23F2EEE4' stop-opacity='.42'/%3E%3C/linearGradient%3E%3Cpath transform='rotate(-8 29 12)' fill='url(%23s)' d='M2 5.6L4.7 4 8.48 5.28 12.8 4 56 4.64 53.84 7.52 56 10.4 54.38 13.6 56 16.8 53.3 20 12.8 19.04 8.48 20 4.7 18.72 2 20 3.62 15.2 2 12 3.62 8.8Z'/%3E%3C/svg%3E");
   --ruban-d:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='58' height='24'%3E%3ClinearGradient id='s' x2='0' y2='1'%3E%3Cstop offset='.0625' stop-color='%23F2EEE4' stop-opacity='.34'/%3E%3Cstop offset='.0625' stop-color='%23F2EEE4' stop-opacity='.42'/%3E%3C/linearGradient%3E%3Cpath transform='rotate(7 29 12)' fill='url(%23s)' d='M2 5.6L4.7 4 8.48 5.28 12.8 4 56 4.64 53.84 7.52 56 10.4 54.38 13.6 56 16.8 53.3 20 12.8 19.04 8.48 20 4.7 18.72 2 20 3.62 15.2 2 12 3.62 8.8Z'/%3E%3C/svg%3E");
+  /* **Le même ruban, pour le kraft** (lot 4). La craie à 42 % ne se voyait
+     plus sur le kraft éclairci le 2 octobre 2026 (1,27:1 entre les deux) :
+     le scotch de la page d'album du butin avait disparu, et la carte
+     semblait posée sans rien pour la tenir. Le ruban garde sa craie, et un
+     fil d'encre à 45 % suit ses bords et ses dents — la tranche d'un scotch
+     qu'on voit sur du papier clair. Même polygone, même angle que `--ruban-g`. */
+  --ruban-k:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='58' height='24'%3E%3ClinearGradient id='s' x2='0' y2='1'%3E%3Cstop offset='.0625' stop-color='%23F2EEE4' stop-opacity='.55'/%3E%3Cstop offset='.0625' stop-color='%23F2EEE4' stop-opacity='.62'/%3E%3C/linearGradient%3E%3Cpath transform='rotate(-8 29 12)' fill='url(%23s)' stroke='%2307090C' stroke-opacity='.45' stroke-width='1' stroke-linejoin='round' d='M2 5.6L4.7 4 8.48 5.28 12.8 4 56 4.64 53.84 7.52 56 10.4 54.38 13.6 56 16.8 53.3 20 12.8 19.04 8.48 20 4.7 18.72 2 20 3.62 15.2 2 12 3.62 8.8Z'/%3E%3C/svg%3E");
 
   /* Le panneau posé sur la photo, et le trait qui le cerne.
 
@@ -1240,25 +1260,29 @@ html[data-calme~="animations"] .tbf-compte{animation:none}
 .tbf-vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;
   clip-path:inset(50%);white-space:nowrap}
 
-/* **Les couleurs de rareté**, utilisables partout par leur nom.
+/* **Les couleurs de rareté** : `--r-commune` à `--r-legendaire`, dans
+   `:root`, et le cadre d'une rareté par son nom (`.b-…`, ci-dessous).
 
-   **Un piège, et il est connu** (lots 3 et 5). Ces quatre classes sont aussi
-   celles qui posent `--rc` et `--rc2` (« la rareté », en tête de feuille) :
-   un élément qui les porte pour la couleur de son cadre écrit donc aussi
-   son texte — et celui de tous ses descendants — à la couleur de la
-   rareté. Pour une légendaire, c'est un petit texte en or, que la règle de
-   l'or interdit (« les tons ») : la vitrine de la collection s'écrivait
-   entière en or, et la page a dû remettre la craie sur son carton. Elles ne
-   sont pas séparées ici, parce que des écrans hors de ces lots — la carte,
-   le deck, la fiche, l'illustration d'un objet — lisent peut-être cette
-   couleur par `currentColor` ; c'est au lot de la carte de le vérifier et de
-   les séparer. D'ici là, **un élément qui porte `r-…` pour son cadre et
-   contient du texte pose sa couleur de texte lui-même** (la craie sur le
-   sombre, l'encre sur la craie). */
-.r-commune{color:var(--r-commune)}
-.r-rare{color:var(--r-rare)}
-.r-epique{color:var(--r-epique)}
-.r-legendaire{color:var(--r-legendaire)}
+   **Les classes `r-…` ne colorent plus le texte** (lot 4). Elles posaient
+   à la fois `--rc` et `--rc2` (« la rareté », en tête de feuille) et la
+   couleur du texte : un élément qui les portait pour son cadre écrivait
+   donc aussi son texte — et celui de tous ses descendants — à la couleur
+   de la rareté. Pour une légendaire, c'était un petit texte en or, que la
+   règle de l'or interdit (« les tons ») : la vitrine de la collection
+   s'écrivait entière en or, et la page avait dû remettre la craie sur son
+   carton. Elles restaient liées tant que des écrans pouvaient lire cette
+   couleur par `currentColor`. Vérifié au lot 4, aucun ne le fait : la carte
+   (`.fz`, `cartes.js`) pose la couleur de chacun de ses textes, la tête du
+   deck (`.face`) et la pièce d'équipement (`.tbf-piece`, `stuff-art.js`)
+   ne portent qu'un dessin et lisent `--rc`, et aucune page n'écrit un mot
+   sous `r-…`. Les quatre règles `.r-…{color}` sont donc retirées : `r-…`
+   ne pose plus que ses jetons.
+
+   **Un mot à la couleur d'une rareté** s'écrit `color:var(--r-…)` — en
+   grand texte seulement pour la légendaire (la règle de l'or) ; mieux, il
+   s'écrit avec sa forme (`.tbf-forme`, qui porte le mot sur sa propre
+   face). La rareté se dit par la couleur, la forme et le mot, jamais par
+   la couleur d'un texte seule. */
 .b-commune{border-color:var(--r-commune)}
 .b-rare{border-color:var(--r-rare)}
 .b-epique{border-color:var(--r-epique)}
@@ -1363,10 +1387,10 @@ html[data-calme~="animations"] .tbf-compte{animation:none}
    17,50 et 4,99 sur le noir, 16,42 et 4,57 sur le panneau, 12,66 et 3,71
    sur le parpaing. Comme face, l'or porte l'encre : 12,11 et 3,92 (11,65 et
    3,84 sous la toile). Un sticker or ne dit que trois choses (amendement 3) ;
-   le légendaire garde sa couleur de rareté partout, mot compris. **Attention
-   à `.r-legendaire`** : cette classe pose la couleur de rareté sur le texte
-   de tout ce qu'elle porte, et un conteneur qui la porte pour son cadre
-   écrit tout son contenu en or (voir « les couleurs de rareté », plus haut).
+   le légendaire garde sa couleur de rareté partout, mot compris. Depuis le
+   lot 4, `.r-legendaire` ne pose plus que ses jetons de cadre, plus la
+   couleur du texte : un conteneur qui la porte n'écrit plus son contenu en
+   or (voir « les couleurs de rareté », plus haut).
 
    **La règle du kraft.** Le papier qu'on lit — le ticket, la bâche du jour,
    la feuille de match, la page d'album, le pied du tiroir, l'astuce du
@@ -2292,7 +2316,20 @@ html[data-calme~="animations"] .tbf-case[data-etat=pret]::after{animation:none}
    700, chiffres tabulaires, dix-huit de haut : il tient dans la ligne de
    vingt pixels de l'onglet sans la grandir. Pas d'ombre sous la lettre :
    l'onglet actif en pose une sur son texte, qui épaissirait l'encre. Un
-   compte nul ne se pose pas (« une ligne sans donnée disparaît »). */
+   compte nul ne se pose pas (« une ligne sans donnée disparaît »).
+
+   **Dans un onglet éteint, il garde toute sa matière** (lot 4). L'onglet
+   éteint est à 94 % d'opacité (voir `.tbf-onglet`), et un enfant ne défait
+   pas l'opacité de son parent : le sticker passait avec lui à travers le
+   creux noir du rail, et son encre sur sa craie tombait à 4,3:1 au soleil
+   (relevé par l'audit sur le « +3 » de CLASSEUR, et écrit par la page des
+   amis), sous le seuil de 4,5. L'onglet éteint **qui porte un compte**
+   reprend donc son opacité pleine et met ses 94 % dans la couleur de son
+   texte — la même craie à travers le même creux, au centième près, pour le
+   mot et son icône (`currentColor`) — et le sticker reste à 4,86. Seuls ces
+   onglets-là changent de recette : une page qui pose un texte secondaire
+   dans un onglet sans compte (la date de /matchs) garde l'opacité qu'elle a
+   mesurée. Sans `:has`, rien ne change : 4,3, comme avant. */
 .tbf-onglet-n{
   display:inline-block;box-sizing:border-box;min-width:18px;height:18px;margin-left:5px;padding:0 4px;
   border-radius:9px;vertical-align:1px;
@@ -2301,6 +2338,8 @@ html[data-calme~="animations"] .tbf-case[data-etat=pret]::after{animation:none}
   text-align:center;text-shadow:none;font-variant-numeric:tabular-nums;font-style:normal;
 }
 .tbf-onglet-n[data-ton=or]{background:var(--projo)}
+.tbf-onglet:not(.on):has(>.tbf-onglet-n){opacity:1;color:rgba(242,238,228,.94)}
+.tbf-onglet:not(.on):has(>.tbf-onglet-n):hover{color:var(--craie)}
 
 /* ------------------------------------------------------------- panneaux */
 
@@ -3897,7 +3936,9 @@ html[data-calme~="animations"] .tbf-colle{animation:none}
    le marqueur : un nom n'est pas l'un des six emplois (amendement 6).
 
    Un nom trop long pour sa place finit en points de suspension : la page
-   borne la largeur (`max-width`), la bande ne passe jamais à la ligne. Le
+   borne la largeur (`max-width`), la bande ne passe jamais à la ligne —
+   sauf au pied du vestiaire (lot 4), où le nom est celui qu'on montre en
+   grand et passe sur deux lignes équilibrées (voir « le vestiaire »). Le
    cerne et l'ombre sont des `box-shadow`, que `overflow` ne coupe pas. La
    rotation de repos est dans `--rot` (−1°), comme celle de tout objet
    collé. Elle ne se touche pas. */
@@ -4780,6 +4821,15 @@ html[data-economie] .tbf-fumee{display:none}
      haut, et il vaut pour tout objet du vocabulaire, puisque chacun porte
      sa rotation de repos dans `--rot` ;
    — `.tbf-glisse` : le ticket monte de quarante pixels en se posant ;
+     **`.tbf-glisse--haut`** (lot 4) le fait **descendre** d'autant — le
+     ticket qui sort du sticker de solde, au-dessus de lui : la direction
+     fait descendre le « −25 » de la cérémonie d'évolution « du sticker »,
+     et le « −45 » de la boutique « du HUD ». La feuille ne donne que le
+     sens ; la page pose le ticket sous le sticker d'où il sort (la pile,
+     `.tbf-pile`, est en bas de l'écran : un ticket qui descend se pose
+     ailleurs). Le même mouvement, la même durée, les mêmes doubles au
+     calme : seule la direction change (`--glisse`, quarante pixels par
+     défaut) ;
    — `.tbf-clac` : le tampon claque en trois temps — 1,6, 0,95, 1 — en
      260 ms ; le son « clac » est l'affaire de `fx.js` ;
    — `.tbf-vibre` : le sticker dont la valeur change frémit de ±2,5° autour
@@ -4798,7 +4848,8 @@ html[data-economie] .tbf-fumee{display:none}
 .tbf-secoue{animation:tbf-secoue 260ms ease-in-out}
 @keyframes tbf-secoue{0%,100%{translate:0 0}20%{translate:-3px 0}40%{translate:3px 0}
   60%{translate:-3px 0}80%{translate:2px 0}}
-@keyframes tbf-glisse{from{opacity:0;translate:0 40px}}
+.tbf-glisse--haut{--glisse:-40px}
+@keyframes tbf-glisse{from{opacity:0;translate:0 var(--glisse,40px)}}
 /* Le dernier temps ne nomme pas l'opacité : il revient à celle de l'objet,
    0,92 pour un tampon en contour, 1 pour un plein. */
 @keyframes tbf-clac{0%{opacity:0;scale:1.6}60%{opacity:1;scale:.95}100%{scale:1}}
@@ -4948,6 +4999,32 @@ html[data-calme~="animations"] .tbf-bouffee:not(.tbf-bouffee--fixe){display:none
 .tbf-avatar--vide .tbf-avatar-buste::after{content:"?"}
 .tbf-avatar:active>.tbf-anneau{scale:.94}
 .tbf-avatar:focus-visible{outline:3px solid var(--projo);outline-offset:1px}
+/* **Le liseré de saison** (lot 4, `data-lisere`) : un insigne du carnet
+   (`insignes`, id `lisere`, contrat du serveur § 6) — un palier du carnet
+   récupéré se coud autour de l'anneau. Une bande d'encre de quatre pixels
+   et demi, hors du bord de découpe, passée au fil de craie en pointillé,
+   comme le titre cousu (`.tbf-cousu`). Ni l'or (il dirait une récompense à
+   prendre, ou une légendaire), ni une couleur de famille ou de rareté :
+   l'anneau garde celles du club ou de la division portée.
+
+       <a class="tbf-avatar" id="buste" href="/fanzzy" data-lisere aria-label="Mon Fanzzy">…</a>
+
+   La bande est l'ombre de l'anneau élargie à huit pixels et demi (les
+   quatre premiers sont sous le bord de découpe que peint son `::after`),
+   le fil un `outline` pointillé posé à quatre pixels et demi : tous deux
+   suivent l'arrondi et s'enfoncent avec l'anneau sous le doigt, et l'ombre
+   dure s'élargit d'autant. **Ce qui déborde demande de l'air** : la bande
+   sort de huit pixels et demi autour de l'anneau, son ombre de deux de plus
+   à droite et en bas ; l'avatar prend trois pixels de marge à gauche et
+   cinq à droite, pour que la bande ne touche pas le texte voisin, et son
+   contour de focus passe dehors, à dix pixels — posé à un, il tombait sous
+   la bande cousue. Sans insigne, la page ne pose pas l'attribut. Dessin
+   repris de la page du profil, qui le portait en provisoire. */
+.tbf-avatar[data-lisere]{margin-inline:3px 5px}
+.tbf-avatar[data-lisere]>.tbf-anneau{
+  box-shadow:0 0 0 8.5px var(--encre),2px 2px 0 8.5px rgba(7,9,12,.6);
+  outline:1.5px dashed var(--craie);outline-offset:4.5px}
+.tbf-avatar[data-lisere]:focus-visible{outline-offset:10px}
 
 /* ------------------------------------------- le compteur de monnaie (lot 2)
 
@@ -5088,6 +5165,23 @@ html[data-calme~="animations"] .tbf-bouffee:not(.tbf-bouffee--fixe){display:none
     padding:0 8px 0 0;background:none;clip-path:none}
   .tbf-hud-bande::before,.tbf-hud-bande::after{content:none}
 }
+/* **De 560 à 600 px, la rangée se serre** (lot 4). La réserve de boosters
+   de la bande est devenue la brique commune (« la réserve de boosters, une
+   seule brique ») : son anneau de recharge la porte à 83 px, contre 68 pour
+   l'ancien jeton. Les quinze pixels ont été pris au titre de la barre :
+   entre 560 et 571 px, avec un solde d'écharpes à quatre chiffres et un
+   booster en route, « Compétitions » (/teletext) se coupait — 145 px de
+   texte pour 134 de place (banc de la barre, `titres.mjs`). Six pixels de
+   moins entre la bande et l'avatar, six entre les deux compteurs, et le
+   titre retrouve ses douze : le « + » des écharpes, qui passe de neuf
+   pixels le bord de son sticker, garde encore six pixels d'air avant les
+   boosters. Au-delà de 600 px, la place revient d'elle-même et les écarts
+   d'origine aussi. Le seuil de la bande (560) ne bouge pas : `nav.js` le
+   lit (`matchMedia`) pour savoir s'il déplie. */
+@media (min-width:560px) and (max-width:599.98px){
+  .tbf-hud{gap:10px}
+  .tbf-hud-bande{gap:16px}
+}
 
 /* ------------------------------------------------ le toast et la pile (lot 2)
 
@@ -5213,8 +5307,15 @@ html[data-calme~="animations"] .tbf-toast--erreur{animation:tbf-fondu .12s ease-
    au-delà d'une heure, la page écrit « 1 h 02 », et les capitales de la
    ligne en faisaient « 1 H 02 » — une unité en capitale ne se lit plus
    comme une unité. Le mot PROCHAIN, lui, reste en capitales. */
+/* **Elle passe à la ligne plutôt que de déborder** (lot 4) : à 320 px, une
+   réserve de cinq places, son PROCHAIN et un solde à quatre chiffres
+   frôlent la largeur de la colonne, et une planche qui déborde fait glisser
+   la page de côté. Le second compteur descend alors sous le premier ; à 360
+   px et au-delà, rien ne passe à la ligne. Les quatre pixels de rembourrage
+   haut et bas sont pris dans les 56 px (filets compris, il reste 45 px au
+   compteur de 44) : sur une ligne, la planche garde sa hauteur au pixel. */
 .tbf-reserve{
-  display:flex;align-items:center;gap:8px;box-sizing:border-box;min-height:56px;padding:0 12px;
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;box-sizing:border-box;min-height:56px;padding:4px 12px;
   background:var(--grain-beton) 0 0/256px 256px repeat,var(--panneau);
   border-block:1.5px solid var(--encre);color:var(--craie);
 }
@@ -5381,6 +5482,117 @@ html[data-calme~="animations"] .tbf-toast--erreur{animation:tbf-fondu .12s ease-
   background:var(--projo);
   transform-origin:50% calc(var(--taille) / 2);rotate:calc(var(--part) * 1turn);
 }
+
+/* ------------------------------- la réserve de boosters, une seule brique (lot 4)
+
+   Les boosters du joueur, en un objet : ses sachets, la recharge du
+   prochain et son compte à rebours. **Elle se dessinait de trois façons** :
+   au kiosque, en fentes jusqu'à cinq places posées à même la planche, le
+   compte rond ou rectangulaire selon la page ; à la boutique, en fentes
+   jusqu'à sept, par son propre code, puis en compteur de monnaie ; dans la
+   bande du HUD, en compteur de monnaie sous un autre pictogramme. Trois
+   dessins du même stock, c'était trois choses à apprendre, et trois plafonds
+   différents pour la même réserve.
+
+   C'est maintenant **un compteur de monnaie** (`.tbf-monnaie`) qui porte
+   ses sachets : le sticker craie de 32 px à l'œil et de 44 au doigt, tourné
+   de ±2°, comme les écharpes à côté de lui — l'amendement 2 (« les jetons
+   de monnaie et le HUD sont des stickers craie ») et le bandeau d'économie
+   de la direction (« boosters « 3 » avec l'anneau de recharge et « prochain
+   07:12 » »). Il se pose tel quel dans la planche du kiosque, de la boutique
+   et du vestiaire (`.tbf-reserve`), et dans la bande du HUD de la barre, sur
+   le kraft comme sur le noir de la barre à partir de 560 px : sa craie et
+   son encre se lisent partout (17:1, 4,86 au soleil), et rien de ce qu'il
+   porte n'hérite la couleur de ce qui l'entoure.
+
+   **Deux formes, une seule règle** (`reserveHTML`, dans `cartes.js`) : une
+   place par sachet quand le plafond du joueur est servi (`wallet.packMax`)
+   et qu'il tient en **cinq places** au plus, la première vide portant
+   l'anneau de recharge ; sinon le sachet seul, et l'anneau à côté de lui.
+   Le compte est **toujours écrit** : c'est le premier `<b>` du sticker, celui
+   que lisent la bande du HUD et `fanzzy-ui-smoke`, et celui que `FX.compter`
+   fait défiler. Les places disent « combien il en manque » d'un coup d'œil ;
+   le chiffre dit combien on en a, au-delà de cinq comme en deçà.
+
+       <a class="tbf-monnaie tbf-boosters" href="/boosters" style="--sachet:url(/img/pack-la-tribune.webp)"
+          aria-label="4 boosters sur 5 — le prochain dans 9 minutes">
+         <span class="tbf-fentes" aria-hidden="true">
+           <span class="tbf-fente"></span><span class="tbf-fente"></span>
+           <span class="tbf-fente"></span><span class="tbf-fente"></span>
+           <span class="tbf-fente tbf-fente--vide"><span class="tbf-recharge" style="--part:.35"></span></span>
+         </span>
+         <b>4</b>
+         <span class="tbf-reserve-prochain" aria-hidden="true">PROCHAIN<b>9:55</b></span>
+         <i class="tbf-monnaie-plus" aria-hidden="true">+</i>              à la boutique seulement
+       </a>
+
+       <a class="tbf-monnaie tbf-boosters" href="/boosters" style="--sachet:…" aria-label="8 boosters sur 12 — …">
+         <span class="tbf-fente" aria-hidden="true"></span><b>8</b>
+         <span class="tbf-recharge" style="--part:.35" aria-hidden="true"></span>
+         <span class="tbf-reserve-prochain" aria-hidden="true">PROCHAIN<b>9:55</b></span>
+         <i class="tbf-monnaie-plus" aria-hidden="true">+</i>
+       </a>
+
+   **Ce qui ne se pose pas** : réserve pleine, ni anneau ni prochain (jamais
+   « 0:00 », la règle R3 du contrat) ; aucun sachet en réserve, la fente
+   unique est vide (`--vide`) et le chiffre dit 0. Le compte à rebours se
+   raccourcit là où la place manque : le vestiaire ne pose que le temps,
+   sans le mot (`<span class="tbf-reserve-prochain"><b>9:55</b></span>`), la
+   bande du HUD ni l'un ni l'autre — l'anneau y dit qu'un booster vient, et
+   l'`aria-label` dans combien. La page ne retire jamais un mot par une règle
+   à elle (un texte à zéro pixel est relevé par l'audit comme un petit
+   texte) : elle ne l'écrit pas.
+
+   **Sur la craie, la place vide change d'encre.** Dans la planche sombre, la
+   fente vide était un pointillé de craie à 60 % : sur la craie du sticker,
+   il disparaîtrait. Elle passe à un pointillé d'encre sur une trame d'encre
+   à 12 %, et les sachets pleins gardent leur cerne d'encre seul — leur bord
+   craie se confondrait avec le sticker. Les fentes y font 13 × 20 au lieu
+   de 22 × 32, l'anneau 20 px (17 dans une fente, qu'il déborde de deux
+   pixels de chaque côté) : tout tient dans les 32 px de la craie, et cinq
+   places tiennent à 320 px de large. Le compte à rebours y est à l'encre,
+   en quatorze, tabulaire, le mot un peu moins espacé que sur la planche.
+
+   **Le « + »** (`.tbf-monnaie-plus`) se pose là où le sticker mène au
+   kiosque : à la boutique, **sous ses deux formes** (places comme compte),
+   et dans la bande du HUD ; pas au kiosque, où l'on est déjà.
+
+   **La largeur, mesurée au banc** : cinq places, le chiffre et PROCHAIN
+   font 164 px, 173 avec le « + » (la boutique), et la planche les porte
+   avec les écharpes à 360 px comme à 320 ; le sachet seul avec PROCHAIN et
+   le « + », 137 ; avec le temps sans
+   son mot, 102 (le vestiaire) ; avec l'anneau seul et le « + », 83 — la
+   forme de la bande du HUD, qui pend sous l'avatar et s'étend vers la
+   gauche : avec le temps, elle sortait presque de l'écran à 320 px.
+
+   `--sachet` est l'image de la série choisie, posée sur le sticker et lue
+   par chaque fente ; sans elle, le sachet peint en CSS des fentes. Au
+   kiosque, où il ne mène nulle part, le sticker est un `div` (`role="img"`)
+   et n'a pas de « + ». Dans la planche, le sticker de boosters qui l'ouvre
+   se range à gauche, le reste à droite. La page met à jour l'anneau
+   (`--part`) et le temps chaque seconde, l'`aria-label` à la minute. */
+.tbf-monnaie.tbf-boosters{gap:4px}
+.tbf-boosters>b{margin-right:0}
+/* La fin du sticker : un espace de trois pixels qui s'ajoute à l'écart de
+   quatre, ou de douze quand le « + » chevauche le bord (sans `:has`, le
+   « + » mord de neuf pixels sur ce qui le précède, rien ne casse).
+   `::after` est libre : le sticker ne prend que `::before`, pour son bord. */
+.tbf-boosters::after{content:"";flex:none;width:3px}
+.tbf-boosters:has(>.tbf-monnaie-plus)::after{width:12px}
+.tbf-boosters .tbf-fentes{gap:2px}
+.tbf-boosters .tbf-fente{width:13px;height:20px;border-radius:2px;box-shadow:0 0 0 1.5px var(--encre)}
+.tbf-boosters .tbf-fente--vide{
+  border:1.5px dashed rgba(7,9,12,.55);box-shadow:none;
+  background:repeating-linear-gradient(45deg,rgba(7,9,12,.12) 0 2px,transparent 2px 5px);
+}
+.tbf-boosters .tbf-recharge{--taille:20px;--trait:3px}
+.tbf-boosters .tbf-fente--vide>.tbf-recharge{--taille:17px}
+.tbf-boosters>.tbf-reserve-prochain{gap:2px;margin-left:0;letter-spacing:.04em}
+.tbf-boosters .tbf-reserve-prochain b{min-width:0;margin:0;font-size:14px;font-weight:700;text-align:left}
+.tbf-reserve>.tbf-boosters:first-child{margin-left:0;margin-right:auto}
+/* Au kiosque, le sticker ne mène nulle part (on y est) : un `div`, sans la
+   main du lien. */
+.tbf-boosters:not(a,button){cursor:default}
 
 /* ---------------------------------------------------------- la minuterie
 
@@ -5549,36 +5761,63 @@ div.tbf-minuterie:active{transform:none;box-shadow:inset 0 1px 0 rgba(242,238,22
    `:root`). Le rembourrage du haut — vingt-quatre pixels — lui laisse la place
    sous la déchirure : le ticket rogne tout ce qui dépasse.
 
-   **Les stickers d'une case** : le premier se colle au coin haut-gauche
-   (NOUVEAU, rouge : `data-ton="flare"`), le second au coin bas-droit (le
-   « +30 » d'un doublon changé en écharpes, un « ×2 »). Le coin haut-droit
-   reste libre : c'est celui de la forme de rareté, au lot 4 (amendement 20).
+   **Les stickers d'une case** : le premier se colle sur le flanc gauche de
+   la carte (NOUVEAU, rouge : `data-ton="flare"`), le second au coin
+   bas-droit (le « +30 » d'un doublon changé en écharpes, un « ×2 »).
    NOUVEAU est un sticker et non un tampon : le butin colle, l'ouverture
    tamponne. Sa craie sur la face rouge foncée tient 5,16:1, et 2,61 au
    soleil — le prix décidé des faces vives, sur un mot que sa forme et sa
    couleur portent aussi.
+
+   **Le flanc gauche, au tiers de la hauteur, et non plus le coin
+   haut-gauche** (lot 4). La carte du lot 4 occupe ses deux coins du haut :
+   à gauche son pin et son âge (plan 6), à droite sa forme et son mot de
+   rareté (plan 8, qui viennent jusqu'au milieu d'une carte de cent
+   pixels) ; sa bande de nom tient le bas, son « ×3 » le flanc droit. Collé
+   au coin, au plan 5, NOUVEAU perdait « NO » sous le pin ; passé devant,
+   il mangeait le « C » de COMMUNE ; au bas-gauche, il mordait les lettres
+   du nom. Le flanc gauche, entre l'âge (au quart) et la bande (aux trois
+   quarts), ne porte que le dessin : NOUVEAU s'y colle à 34 %, devant la
+   carte (plan 9), et ne passe son bord que de quatre pixels — au-delà, il
+   mordait le « ×3 » de la case voisine, qui déborde de la sienne dans la
+   gouttière. C'est la place que le classeur et /collection avaient trouvée
+   au banc, et celle où l'ouverture d'un booster le tamponne (le kiosque
+   règle la sienne à 40 %, à la taille de sa révélation).
 
    **La ligne vivante** occupe la largeur sous les cartes : le nom de la
    série, le compte (« 4 → 6 / 11 », tabulaire) et la jauge, que la page fait
    aller de l'ancien au nouveau compte — la transition de la jauge, 500 ms ;
    au calme elle saute. Au noir du kraft : 14,28:1, 4,58 au soleil. La jauge
    garde son rail de parpaing cerné d'encre, qui la détache du papier clair ;
-   la ligne laisse dix pixels sous elle aux franges du nœud. */
-.tbf-album{padding:24px 16px 16px}
+   la ligne laisse dix pixels sous elle aux franges du nœud.
+
+   **Le lot 4 en fait l'album entier** (« les pièces du lot 4 », plus bas) :
+   le classeur et /collection posent les mêmes cases dans leurs pages de
+   série, sur le mur et non sur le kraft. D'où trois réglages ici, sans que
+   le butin change :
+     — le rembourrage est celui du **ticket** (`.tbf-ticket.tbf-album`) : un
+       album de pages n'est pas un ticket, et il en hériterait ;
+     — la rotation des cases se règle par `--penche`, comme celle des
+       stickers : le butin garde ses −3° à +2,5° (`--penche` vaut 1), une
+       page d'album les ramène à 2° au plus (« en grille, pas plus de 2° ») ;
+     — sur le kraft, le scotch prend `--ruban-k`, le ruban au fil d'encre :
+       la craie seule ne s'y voyait plus. */
+.tbf-ticket.tbf-album{padding:24px 16px 16px}
 .tbf-album-cartes{
   display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--carte,88px),1fr));
   justify-items:center;gap:24px 14px;
 }
-.tbf-album-case{--rot:-3deg;position:relative;width:100%;max-width:128px;min-width:0;rotate:var(--rot)}
-.tbf-album-case:nth-child(5n+2){--rot:2deg}
-.tbf-album-case:nth-child(5n+3){--rot:-1.5deg}
-.tbf-album-case:nth-child(5n+4){--rot:2.5deg}
-.tbf-album-case:nth-child(5n+5){--rot:-2deg}
+.tbf-album-case{--rot:calc(-3deg * var(--penche,1));position:relative;width:100%;max-width:128px;min-width:0;rotate:var(--rot)}
+.tbf-album-case:nth-child(5n+2){--rot:calc(2deg * var(--penche,1))}
+.tbf-album-case:nth-child(5n+3){--rot:calc(-1.5deg * var(--penche,1))}
+.tbf-album-case:nth-child(5n+4){--rot:calc(2.5deg * var(--penche,1))}
+.tbf-album-case:nth-child(5n+5){--rot:calc(-2deg * var(--penche,1))}
 .tbf-album-case::before{
   content:"";position:absolute;z-index:4;left:50%;top:-15px;width:58px;height:24px;margin-left:-29px;
   pointer-events:none;background:var(--ruban-g) 0 0/58px 24px no-repeat;
 }
-.tbf-album-case>.tbf-sticker{position:absolute;z-index:5;left:-8px;top:-10px;--rot:-6deg}
+.tbf-ticket .tbf-album-case::before{background-image:var(--ruban-k)}
+.tbf-album-case>.tbf-sticker{position:absolute;z-index:9;left:-4px;top:34%;--rot:-6deg}
 .tbf-album-case>.tbf-sticker~.tbf-sticker{left:auto;top:auto;right:-8px;bottom:-8px;--rot:5deg}
 .tbf-album-pied{
   display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 10px;
@@ -5688,8 +5927,17 @@ div.tbf-minuterie:active{transform:none;box-shadow:inset 0 1px 0 rgba(242,238,22
    portée ne s'y verrait plus. Elle s'écrase un peu sous le doigt, comme un
    panneau qu'on touche. Le nom est à la craie pleine, treize pixels et demi
    (16,42:1, 4,57 au soleil) ; ce qu'il fait aussi, en douze — la maquette
-   l'écrit à 88 %, qui tomberait à 3,96 dehors. Deux lignes au plus, puis les
-   points de suspension.
+   l'écrit à 88 %, qui tomberait à 3,96 dehors.
+
+   **Ce qu'il fait s'écrit en entier** (lot 4). Il était rogné à deux
+   lignes, puis « … » ; mais chaque phrase de l'étal est un marché — ce que
+   l'objet donne, puis ce qu'il coûte —, et la coupe tombait sur le coût :
+   « Le souffle revient plus vite, les grosse… » taisait que les grosses
+   cartes coûtent plus cher, sur l'étiquette même où on l'achète (au banc
+   de la boutique, trente-neuf phrases sur quarante-huit coupées à 360 px).
+   Libre, une phrase prend trois lignes, rarement quatre ; la rangée de
+   l'étal prend la hauteur de la plus haute, et le prix reste en bas de
+   chaque étiquette (`margin-top:auto` sur le pied).
 
    **Le tampon sur l'objet est plein**, de lui-même (voir le tampon) : il est
    posé sur la craie du sticker, où un tampon en contour à la couleur claire
@@ -5718,7 +5966,7 @@ div.tbf-minuterie:active{transform:none;box-shadow:inset 0 1px 0 rgba(242,238,22
 }
 .tbf-marche-nom>.tbf-forme{margin-left:5px;vertical-align:-2px}
 .tbf-marche-effet{
-  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+  display:block;max-width:100%;
   font-family:var(--ui);font-size:12px;line-height:1.35;
 }
 .tbf-marche-pied{display:flex;flex-wrap:wrap;align-items:center;gap:12px 10px;width:100%;margin-top:auto;padding:5px 2px 0}
@@ -6645,6 +6893,1291 @@ html[data-calme~="animations"] .tbf-reglages>summary::after{transition:none}
 html[data-calme~="animations"] .tbf-reglages[open]>.tbf-reglages-corps{animation:none}
 html[data-calme~="animations"] .tbf-interrupteur>i::after{transition:none}
 
+/* ==================================================== les pièces du lot 4
+
+   La collection : le classeur de /fanzzy et son vestiaire, la fiche d'un
+   Fanzzy, l'album de /collection et sa vitrine. Comme celles des lots 2, 3
+   et 5, ces pièces sont montées à l'identique par plus d'un écran — l'album
+   par le classeur et par /collection, la vitrine par /collection et par qui
+   voudra montrer une carte en grand, l'anneau qui compte par le vestiaire,
+   les rayons et le niveau de collectionneur — et **la page ne leur écrit que
+   leur place**, jamais leur dessin. Chaque commentaire donne le balisage
+   exact ; `BRIQUES.md`, dans le dossier du lot, le redit avec ce que le
+   JavaScript pose, et son banc les montre à 360 et 768 px.
+
+   **La carte n'est pas ici.** `cardHTML` (`cartes.js`) et `cartes.css` la
+   dessinent, et ces pièces la reçoivent telle quelle : elles lui donnent sa
+   largeur (la case de l'album, la scène de la vitrine) et rien d'autre.
+   Aucune règle de cette section ne vise `.fz` ni ce qu'il contient.
+
+   Les règles de toute la feuille valent ici ; trois pèsent plus qu'ailleurs.
+     — **Une grille ne bouge pas.** Aucune animation infinie dans l'album, la
+       case VITRINE comprise : sa fumée y est peinte, fixe, et `cartes.css`
+       fige les cartes de toute `.tbf-album`. La matière qui bouge est à la
+       vitrine, à la fiche et à la révélation, trois cartes au plus à l'écran.
+     — **La rareté se lit par `data-rar`**, pas par les classes `r-…` :
+       celles-ci ne posent que les jetons du cadre de la carte (`--rc`,
+       `--rc2` ; elles écrivaient aussi le texte à la couleur de la rareté
+       jusqu'au lot 4, voir « les couleurs de rareté », plus haut). Les
+       pièces lisent `--rar`, posé juste en dessous par l'attribut, à poids
+       nul : une pièce qui a le sien (`.tbf-objet`) le garde.
+     — **Ce qui se lit dehors se pose sur la craie, l'encre, le panneau ou le
+       kraft** : les mots de ces pièces sont dans des stickers, des
+       banderoles, sur un panneau calme ou sur la fiche kraft, jamais à même
+       une couleur de série, de famille ou de rareté — ces couleurs viennent
+       des données (`c1`, `c2`, la table des familles), et rien ne dit
+       qu'une craie s'y lirait. Elles vont aux écharpes, aux anneaux, aux
+       pins, aux cadres : ce qui se voit sans se lire. */
+:where([data-rar=commune]){--rar:var(--r-commune)}
+:where([data-rar=rare]){--rar:var(--r-rare)}
+:where([data-rar=epique]){--rar:var(--r-epique)}
+:where([data-rar=legendaire]){--rar:var(--r-legendaire)}
+
+/* ------------------------------------------------------- le pin de famille
+
+   La famille d'un Fanzzy — voix, percussion, fidélité, tifo, pyro,
+   déplacement — en un rond de sa couleur, son pictogramme à l'encre. Les six
+   filtres du classeur, le sticker de famille du vestiaire et de la fiche.
+
+       <span class="tbf-pin" style="--fam:#F5C33B" aria-hidden="true"><svg viewBox="0 0 24 24">…</svg></span>
+       <span class="tbf-pin" style="--fam:#3C82E8"><img src="…pin…" alt=""></span>
+
+   **`--fam` est la couleur de la famille, telle que la table des familles la
+   donne** (`TYPES`, dans `cartes.js`), posée en ligne : c'est une donnée,
+   comme les couleurs d'un club. Elle n'est jamais sous un mot — un
+   pictogramme d'encre la traverse, et elle tient au moins 3:1 contre lui sur
+   les six familles d'aujourd'hui (le violet, le plus proche, 3,9) : le seuil
+   d'un signe, pas celui d'un texte. Le mot de la famille s'écrit à côté, sur
+   la craie d'un sticker :
+
+       <span class="tbf-sticker"><span class="tbf-pin" style="--fam:#F5C33B"><svg …/></span>VOIX</span>
+
+   Le bord craie, le cerne et l'ombre sont ceux du sticker ; dans un sticker,
+   le pin passe à seize pixels et ne garde que son cerne, le bord du sticker
+   faisant le reste. `--taille` règle le diamètre (26 px). */
+.tbf-pin{
+  --taille:26px;
+  position:relative;display:inline-grid;place-items:center;flex:none;box-sizing:border-box;
+  width:var(--taille);height:var(--taille);border-radius:50%;
+  background:var(--fam,var(--craie));color:var(--encre);
+  box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),2px 2px 0 3.5px rgba(7,9,12,.6);
+  rotate:var(--rot,0deg);
+}
+.tbf-pin>img{display:block;width:70%;height:70%;object-fit:contain}
+.tbf-pin>svg{width:56%;height:56%;fill:none;stroke:currentColor;stroke-width:2.4;
+  stroke-linecap:round;stroke-linejoin:round}
+.tbf-sticker>.tbf-pin{--taille:16px;box-shadow:0 0 0 1.5px var(--encre)}
+
+/* --------------------------------------------------------------- l'étage
+
+   L'étage d'un Fanzzy — ou ce qui se compte en nœuds sur une écharpe : trois
+   ronds, pleins jusqu'au rang atteint, au trait au-delà. Dans le sticker de
+   stats du vestiaire, à côté du mot.
+
+       <span class="tbf-sticker">ÉTAGE<span class="tbf-etage" data-n="2" aria-label="2 sur 3"><i></i><i></i><i></i></span></span>
+
+   **Le nombre de nœuds est celui des `<i>`**, le rang atteint est `data-n`
+   (de 0 à 5). La couleur est celle du texte : l'encre sur un sticker craie.
+   Ce n'est pas l'insigne de division (`.tbf-division`), qui est une écharpe
+   de saison et ne se mélange pas à un personnage. */
+.tbf-etage{display:inline-flex;align-items:center;gap:3px;flex:none}
+.tbf-etage>i{display:block;box-sizing:border-box;width:9px;height:9px;border-radius:50%;
+  border:1.5px solid currentColor}
+:is(.tbf-etage[data-n="1"]>i:nth-child(-n+1),.tbf-etage[data-n="2"]>i:nth-child(-n+2),
+  .tbf-etage[data-n="3"]>i:nth-child(-n+3),.tbf-etage[data-n="4"]>i:nth-child(-n+4),
+  .tbf-etage[data-n="5"]>i:nth-child(-n+5)){background:currentColor}
+/* Une écharpe fine dans un sticker de stat (« POUSSÉE 60 ») : sa place. */
+.tbf-sticker>.tbf-jauge--fine{flex:none;width:34px;margin-left:3px}
+
+/* --------------------------------------------------------- l'anneau qui compte
+
+   Un compte qui avance, en un cercle : le classeur dans le bandeau du
+   vestiaire (« 14 / 152 »), chacun des cinq rayons de /collection, le
+   niveau de collectionneur en grand. Un trait de marqueur or sur un rail
+   d'encre, ses deux bouts arrondis, et le chiffre au centre sur un disque
+   de craie.
+
+       <span class="tbf-cercle" style="--part:.42" role="img" aria-label="63 sur 150">
+         <b>63</b><small>/150</small></span>
+       <span class="tbf-cercle" style="--taille:72px;--part:.42" …>…</span>     le niveau de collectionneur
+       <span class="tbf-cercle" data-ton="bleu" …>…</span>                     un autre trait
+
+   **C'est l'anneau de recharge** (`.tbf-recharge`) **qui porte un chiffre**,
+   et non l'anneau d'XP : la direction dessine le niveau de collectionneur
+   « en trait de marqueur », comme la recharge et la minuterie, et réserve le
+   tricot à l'XP et aux jauges. `--part` est donc la même chose qu'à la
+   recharge : **une part de 0 à 1**, pas un pourcentage (`gagnes / total`,
+   ou l'atteignable d'aujourd'hui pour le collectionneur), parce que le bout
+   arrondi tourne de `--part` tour.
+
+   **Le chiffre est sur la craie de l'élément**, et c'est pour l'audit : il
+   lit la couleur de fond de l'élément sous le texte, et le rail, s'il était
+   un dégradé du fond, rendrait le chiffre « non mesurable ». Le rail et le
+   trait sont donc le `::before` (masqué en couronne), le bout arrondi le
+   `::after` ; le fond de l'élément est une craie unie que la couronne
+   recouvre. L'encre y tient 17:1, 4,86 au soleil.
+
+   Le trait est or par défaut (une récompense qui vient, l'un de ses trois
+   sens : on y avance vers le prochain cran) ; `data-ton` le passe au bleu
+   clair, au vert clair, au flare ou au violet clair — des tons de signe,
+   sur l'encre du rail, jamais sous une lettre. `--taille` (44 px) règle le
+   diamètre, et le reste suit : le trait (10 %, quatre pixels au moins), le
+   chiffre (30 %, treize au moins) et le total dessous (16 %, onze au
+   moins). Sous 56 px, le total se lit mal dans le disque : la page l'écrit
+   à côté. Il ne bouge pas : la page pose `--part` une fois ; aucune
+   transition, rien à couper au calme. */
+.tbf-cercle{
+  --taille:44px;--trait:max(4px,calc(var(--taille) * .1));--part:0;--marque:var(--projo);
+  position:relative;isolation:isolate;display:inline-flex;flex-direction:column;align-items:center;
+  justify-content:center;flex:none;box-sizing:border-box;
+  width:var(--taille);height:var(--taille);border-radius:50%;
+  background:var(--craie);color:var(--encre);
+  box-shadow:0 0 0 1.5px var(--encre),2px 2px 0 1.5px rgba(7,9,12,.6);
+  font-family:var(--banner);line-height:1;text-align:center;text-transform:none;text-shadow:none;
+  font-variant-numeric:tabular-nums;letter-spacing:0;
+}
+.tbf-cercle[data-ton=bleu]{--marque:var(--bleu-clair)}
+.tbf-cercle[data-ton=vert]{--marque:var(--vert-clair)}
+.tbf-cercle[data-ton=flare]{--marque:var(--flare-clair)}
+.tbf-cercle[data-ton=violet]{--marque:var(--violet-clair)}
+.tbf-cercle::before,.tbf-cercle::after{content:"";position:absolute;pointer-events:none}
+/* La couronne : le départ arrondi à midi, le fil d'encre du bord intérieur,
+   le trait jusqu'à `--part`, le reste du rail en craie à 22 % sur l'encre. */
+.tbf-cercle::before{
+  inset:0;z-index:1;border-radius:50%;
+  background:
+    radial-gradient(circle at 50% calc(var(--trait) / 2),var(--marque) calc(var(--trait) / 2 - .4px),
+      transparent calc(var(--trait) / 2 + .2px)),
+    radial-gradient(closest-side,var(--encre) calc(100% - var(--trait) - .2px),transparent calc(100% - var(--trait))),
+    conic-gradient(var(--marque) 0 calc(var(--part) * 360deg),rgba(242,238,228,.22) 0),
+    var(--encre);
+  -webkit-mask:radial-gradient(closest-side,transparent calc(100% - var(--trait) - 1.6px),
+    #000 calc(100% - var(--trait) - 1.1px));
+          mask:radial-gradient(closest-side,transparent calc(100% - var(--trait) - 1.6px),
+    #000 calc(100% - var(--trait) - 1.1px));
+}
+.tbf-cercle::after{
+  z-index:2;left:calc(50% - var(--trait) / 2);top:0;width:var(--trait);height:var(--trait);border-radius:50%;
+  background:var(--marque);
+  transform-origin:50% calc(var(--taille) / 2);rotate:calc(var(--part) * 1turn);
+}
+.tbf-cercle>b{position:relative;z-index:3;display:block;font:700 max(13px,calc(var(--taille) * .3))/1 var(--banner);
+  letter-spacing:.01em}
+.tbf-cercle>small{position:relative;z-index:3;display:block;margin-top:1px;
+  font:600 max(11px,calc(var(--taille) * .16))/1 var(--banner);letter-spacing:.02em}
+
+/* ---------------------------------------------------------------- l'album
+
+   Le classeur de /fanzzy et l'album Fanzzy de /collection : **le même
+   composant**, une page par série qu'on tourne du doigt. Le rail des séries
+   en haut, les pages en dessous, chacune avec son en-tête — l'emblème, le
+   nom, « 12 / 40 », l'écharpe à crans et ce que la série complète rapporte —
+   puis la grille : les cartes possédées collées de travers sous leur scotch
+   (la case de la page d'album, plus haut), les manquantes en pochettes
+   pointillées numérotées, la légendaire en case double VITRINE.
+
+       <section class="tbf-album tbf-pleine-largeur" aria-label="Le classeur">
+         <nav class="tbf-album-rail" aria-label="Les séries">
+           <button type="button" class="tbf-album-onglet" data-serie="RP" aria-current="true"
+                   style="--e1:#C7563A;--e2:#F2EEE4"><img src="…emblème…" alt="">LA REPRISE</button>
+           <button type="button" class="tbf-album-onglet" data-serie="TR" data-verrou aria-disabled="true">
+             <i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i>LA TRIBUNE</button>
+         </nav>
+         <div class="tbf-album-filtres" role="group" aria-label="Filtrer">…voir plus bas…</div>
+         <div class="tbf-album-pages">
+           <section class="tbf-album-page" data-page="RP" aria-label="La Reprise" style="--e1:…;--e2:…">
+             <header class="tbf-cadre tbf-album-tete" data-echarpe>…l'en-tête…</header>
+             <div class="tbf-album-cartes">…les cases…</div>
+           </section>
+           <section class="tbf-album-page" data-page="TR" aria-label="La Tribune"></section>   pas montée
+         </div>
+       </section>
+
+   **Les pages se tournent en balayage horizontal** (`scroll-snap`, une page
+   à la fois, `scroll-snap-stop`), et **seules la page ouverte et ses deux
+   voisines sont montées** : les autres sont des `section` vides, qui gardent
+   leur largeur pour que le défilement tombe juste. C'est au script de les
+   remplir et de les vider (un album de 152 cartes n'en monte pas 152) — et
+   de poser `inert` sur les pages qu'on ne voit pas, pour que la tabulation
+   ne parte pas dans une page hors de l'écran. Le défilement vertical reste
+   celui de la page : la hauteur de l'album est celle de la plus haute page
+   montée, et rien n'y défile en hauteur (`overflow-y:hidden`).
+
+   **Chaque onglet du rail porte `data-serie="<id de série>"`** (« RP »,
+   « TR »… : l'`id` de `SETS`), et lui seul : la page porte `data-page`.
+   C'est une accroche de l'audit (`scripts/audit-ui.mjs`, états
+   `classeur@/fanzzy` et `album@/collection`) : il touche le premier
+   `[data-serie]` visible pour aller à une série ; s'il trouvait la page
+   avant l'onglet, il toucherait une page. Un écran qui monte l'album pose
+   donc l'attribut sur chaque onglet, série fermée comprise. L'onglet
+   ouvert porte `aria-current="true"`, un onglet de série
+   fermée `data-verrou` et `aria-disabled` (il se touche pour dire pourquoi,
+   il ne s'ouvre pas) ; le script fait défiler le rail jusqu'à l'onglet
+   ouvert.
+
+   **D'un bord à l'autre** : posé avec `.tbf-pleine-largeur` dans la colonne,
+   l'album reprend la gouttière dans son rail et ses pages (`--marge`), si
+   bien qu'une page qu'on tourne glisse jusqu'au bord de l'écran au lieu de
+   disparaître à quatorze pixels de lui. Ailleurs (un calque qui n'a pas de
+   gouttière), `--marge` vaut zéro, et les pages gardent dix pixels — l'air
+   que demandent les stickers et l'ombre des cases.
+
+   **Les couleurs de la série** (`--e1`, `--e2` : `c1` et `c2` du catalogue)
+   se posent sur l'onglet et sur la page : l'écharpe de l'en-tête, sa jauge
+   et l'écharpe de l'onglet ouvert les lisent. Jamais sous un mot (voir
+   l'en-tête de la section). */
+.tbf-album{--marge:0px;position:relative;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tbf-album.tbf-pleine-largeur{--marge:var(--gouttiere,14px)}
+
+/* Le rail : il défile seul, sous le doigt, sans barre. Six pixels dessus et
+   dix dessous pour l'onglet ouvert, qui penche et porte son ombre. */
+.tbf-album-rail{
+  display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:none;overscroll-behavior-x:contain;scroll-snap-type:x proximity;
+  padding:6px max(var(--marge),6px) 10px;scroll-padding-inline:max(var(--marge),6px);
+}
+.tbf-album-rail::-webkit-scrollbar{display:none}
+/* **Une série fermée ou au repos** : un bout de panneau calme, le nom à la
+   craie pleine (16,4:1 et 4,52 au soleil, grain compris), l'emblème ou le
+   cadenas devant. Onze ou douze pixels, jamais coupé : le rail défile, il ne
+   tronque pas. 44 px de haut au doigt. */
+.tbf-album-onglet{
+  flex:none;scroll-snap-align:start;
+  display:inline-flex;align-items:center;gap:7px;box-sizing:border-box;min-height:44px;margin:0;padding:0 12px;
+  border:0;border-radius:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  background:var(--grain-beton) 0 0/256px 256px repeat,var(--panneau);
+  box-shadow:inset 0 0 0 1px var(--trait);
+  color:var(--craie);font-family:var(--banner);font-weight:600;font-size:12px;line-height:1;
+  letter-spacing:.08em;text-transform:uppercase;text-decoration:none;text-shadow:none;white-space:nowrap;
+}
+.tbf-album-onglet>img{display:block;width:22px;height:22px;flex:none;object-fit:contain}
+.tbf-album-onglet>svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+.tbf-album-onglet>.tbf-ico{font-size:15px}
+.tbf-album-onglet:focus-visible{outline:3px solid var(--projo);outline-offset:2px}
+/* **La série ouverte** : une petite bâche de craie, de travers, l'écharpe de
+   la série en tête, l'encre dessus (16,8:1 à travers la toile, 4,8 au
+   soleil). Elle ne prend pas la couleur de la série en face, comme le
+   voudrait la maquette : `c1` est une donnée, de #C2CAD6 à #C7563A, et la
+   craie n'y tient pas toujours ; l'écharpe dit la série, la craie dit
+   « ouverte » — c'est la seule claire du rail. */
+.tbf-album-onglet:is([aria-current=true],[aria-current=page],[aria-selected=true]){
+  --rot:-1.5deg;
+  /* Huit pixels : l'écharpe et son fil d'encre en prennent six et demi, et
+     l'audit ne lit le nom sur la craie que si aucune couche peinte ne passe
+     dans la boîte du texte. */
+  padding-top:8px;
+  background:
+    repeating-linear-gradient(115deg,var(--e1,var(--projo)) 0 6px,var(--encre) 6px 7px,
+      var(--e2,var(--flare)) 7px 13px,var(--encre) 13px 14px) 0 0/100% 5px no-repeat,
+    linear-gradient(var(--encre),var(--encre)) 0 5px/100% 1.5px no-repeat,
+    var(--grain-toile) 0 0/256px 256px repeat,var(--craie);
+  border-image:var(--trace-a) 9 / 9px / 2.5px stretch;border-radius:5px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),2px 3px 0 2px var(--encre);
+  color:var(--encre);font-weight:700;rotate:var(--rot);
+}
+/* Fermée : le cadenas au lieu de l'emblème, le nom reste lisible — il dit ce
+   qui viendra. Rien n'est grisé : `aria-disabled` le dit au lecteur
+   d'écran, le cadenas à l'œil. */
+.tbf-album-onglet[data-verrou]{box-shadow:inset 0 0 0 1px var(--trait),inset 0 0 0 44px rgba(7,9,12,.28)}
+
+/* Les filtres, une fois pour tout l'album, entre le rail et les pages : six
+   pins de famille dans des filtres qu'on touche (`.tbf-filtre`, `aria-pressed`),
+   puis l'interrupteur « ce qu'il me reste » (`.tbf-interrupteur`), poussé au
+   bout de la rangée. À 360 px, les six filtres prennent la ligne et
+   l'interrupteur passe dessous, à droite : rien ne se serre sous 44 px.
+
+       <div class="tbf-album-filtres" role="group" aria-label="Filtrer par famille">
+         <button type="button" class="tbf-filtre" aria-pressed="false" aria-label="Voix">
+           <span class="tbf-pin" style="--fam:#F5C33B"><svg …/></span></button>
+         …
+         <button type="button" class="tbf-interrupteur" role="switch" aria-checked="false">
+           <i aria-hidden="true"></i>Ce qu'il me reste</button>
+       </div> */
+.tbf-album-filtres{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0;
+  padding:0 max(var(--marge),6px)}
+.tbf-album-filtres>.tbf-filtre{padding:0 6px}
+.tbf-album-filtres>.tbf-interrupteur{margin-left:auto;padding-left:8px}
+
+.tbf-album-pages{
+  display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;
+}
+.tbf-album-pages::-webkit-scrollbar{display:none}
+/* La page : la largeur de l'album, et l'air que demandent ce qui dépasse —
+   le scotch des cases (quinze pixels au-dessus de la première rangée), leurs
+   stickers (huit), l'ombre et le cerne de l'en-tête. `--penche` ramène la
+   rotation des cases et de leurs stickers à 2° au plus. */
+.tbf-album-page{
+  --penche:.66;
+  flex:0 0 100%;min-width:0;box-sizing:border-box;
+  scroll-snap-align:start;scroll-snap-stop:always;
+  display:flex;flex-direction:column;gap:22px;
+  padding:8px max(var(--marge),10px) 22px;
+}
+
+/* ## L'en-tête de série
+ *
+ *     <header class="tbf-cadre tbf-album-tete" data-echarpe>
+ *       <span class="tbf-album-embleme"><img src="…emblème…" alt=""></span>
+ *       <div class="tbf-album-nom"><b>LA REPRISE</b><small>le premier match de la saison</small></div>
+ *       <b class="tbf-album-compte">12<small> / 40</small></b>
+ *       <div class="tbf-album-jauge">
+ *         <div class="tbf-jauge" data-crans="4"><i style="width:30%"></i></div>
+ *         <span class="tbf-sticker"><svg …sachet…/>40 → 1 BOOSTER</span>     ce que rapporte la série complète
+ *       </div>
+ *     </header>
+ *
+ * **Le cadre de la page** (`.tbf-cadre` et `data-echarpe`) : l'écharpe de la
+ * série en tête, sa toile, son cerne. Un par page ; la page ouverte et ses
+ * voisines en montent trois, dont une seule se voit.
+ *
+ * **Le nom en Oswald 19 gras, sur deux lignes au plus, et pas au pochoir.**
+ * Le pochoir ne s'écrit que sur une ligne (son pont couperait la seconde au
+ * milieu), et « LE BESTIAIRE DES GRADINS » ne tient pas sur une ligne de
+ * cent quatre-vingts pixels à vingt. Dix-neuf gras est un grand texte (la
+ * règle de l'or le compte à partir de 18,66) ; la craie tient sur la toile
+ * du cadre. La ligne du dessous, l'accroche de la série, en douze.
+ *
+ * **Le compte**, « 12 / 40 », en Oswald 25 à la craie, tabulaire, le total en
+ * quatorze. La série complète, la page pose à sa place le tampon COMPLET
+ * (`<span class="tbf-tampon" data-ton="vert">COMPLET</span>`, contour, à
+ * partir de seize pixels sur ce fond sombre) — un verdict, pas un chiffre.
+ *
+ * **La jauge** est l'écharpe nouée, aux couleurs de la série, avec ses crans
+ * (`data-crans`) ; elle laisse dix pixels dessous à ses franges. **Ce que la
+ * série complète rapporte** (`paliers.series[].gain`, contrat § 5.1) se
+ * colle au bout, en sticker, écrit par ce qu'il ouvre (« 40 → 1 BOOSTER »,
+ * jamais « cran », amendement 22) : craie tant qu'il est à venir, or quand
+ * il est prêt à récupérer (`data-ton="or"`, une récompense prête). Sans gain
+ * servi, le sticker n'est pas posé : la jauge reste nue. */
+.tbf-album-tete{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px 11px;
+  padding:19px 12px 12px;
+}
+.tbf-album-embleme{
+  display:inline-grid;place-items:center;flex:none;box-sizing:border-box;width:40px;height:40px;border-radius:50%;
+  background:var(--craie);color:var(--encre);
+  box-shadow:inset 0 0 0 3px var(--e1,var(--projo)),0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),
+    2px 2px 0 3.5px rgba(7,9,12,.6);
+  rotate:-4deg;
+}
+.tbf-album-embleme>img{display:block;width:64%;height:64%;object-fit:contain}
+.tbf-album-embleme>svg{width:58%;height:58%;fill:none;stroke:currentColor;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round}
+.tbf-album-nom{display:flex;flex-direction:column;gap:5px;min-width:0}
+.tbf-album-nom>b{font:700 19px/1.08 var(--banner);letter-spacing:.07em;text-transform:uppercase;
+  color:var(--craie);text-wrap:balance;overflow-wrap:anywhere}
+.tbf-album-nom>small{font:500 12px/1.3 var(--ui);letter-spacing:0;color:var(--craie)}
+.tbf-album-compte{font:700 25px/1 var(--banner);letter-spacing:.01em;color:var(--craie);
+  font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:0 2px 0 var(--encre)}
+.tbf-album-compte>small{font-size:14px;font-weight:600}
+.tbf-album-tete>.tbf-tampon{grid-column:3;justify-self:end;--rot:6deg}
+.tbf-album-jauge{grid-column:1/-1;display:flex;align-items:center;gap:14px;margin:2px 0 10px;min-width:0}
+.tbf-album-jauge>.tbf-jauge{flex:1;min-width:60px;margin-left:2px}
+.tbf-album-jauge>.tbf-sticker{--rot:3deg;font-size:12px}
+
+/* ## La grille de la page
+ *
+ * Les cases de la page d'album (`.tbf-album-cartes`, `.tbf-album-case`, plus
+ * haut), sur le mur : trois colonnes à 360 px, cinq au plus — au-delà, sur
+ * une tablette, une carte de cent pixels se perd dans une rangée de sept.
+ * Chaque case porte sa carte (`cardHTML`, la largeur de la case), son scotch,
+ * et NOUVEAU en sticker rouge sur le flanc gauche, au tiers de la hauteur,
+ * quand le serveur le dit (`nouveautes`, contrat § 2 ; la place est dite à
+ * la case, plus haut) ; le « ×3 » et AVATAR sont sur la carte. La page n'a
+ * pas à le placer.
+ *
+ *     <div class="tbf-album-cartes">
+ *       <div class="tbf-album-case"><div class="fz …" data-id="RP4">…</div>
+ *         <span class="tbf-sticker" data-ton="flare">NOUVEAU</span></div>
+ *       <button type="button" class="tbf-album-pochette" data-open="RP5" aria-label="N° 005 — à trouver">
+ *         <img src="…silhouette…" alt=""><b>N° 005</b></button>
+ *       <button type="button" class="tbf-album-pochette" data-open="RP6" data-verrou aria-label="N° 006 — au niveau 10">
+ *         <img src="…" alt=""><span class="tbf-scotch tbf-scotch--croix" aria-hidden="true"></span>
+ *         <span class="tbf-sticker">NIV. 10</span><b>N° 006</b></button>
+ *       <div class="tbf-album-vitrine">…la légendaire, plus bas…</div>
+ *     </div>
+ *
+ * La cascade d'entrée (`.tbf-colle` et `--d`) ne se pose qu'au premier rendu
+ * et à l'ajout, jamais au filtre. */
+.tbf-album-page .tbf-album-cartes{
+  grid-template-columns:repeat(auto-fill,minmax(max(var(--carte,88px),calc((100% - 56px) / 5)),1fr));
+  gap:28px 14px;
+}
+
+/* ## La pochette numérotée
+ *
+ * La place d'une carte qu'on n'a pas : une pochette de plastique vide, au
+ * format de la carte, cernée d'un pointillé de craie, la silhouette du
+ * personnage au pochoir gris sous une trame, et son numéro sur une bande
+ * d'encre en bas — « N° 013 » : on sait ce qu'on cherche, sans qu'on nous le
+ * donne. Elle se touche (la vitrine, la fiche) : c'est un `button`.
+ *
+ * **La silhouette est une image** que la page donne (le dessin du
+ * personnage, ou sa pose), éteinte ici au gris du pochoir par un filtre de
+ * luminosité — pas un filtre SVG — et posée sur le bas. Sans dessin, la
+ * pochette reste une pochette : la trame et le numéro suffisent.
+ *
+ * **Le numéro est à la craie sur l'encre** (17:1, 4,86 au soleil), en onze
+ * pixels espacés, sur une bande unie : l'audit le mesure sur elle.
+ *
+ * **Verrouillée** (`data-verrou`, une carte qui s'ouvre au niveau 10) : le
+ * scotch en croix sur la silhouette, et un sticker qui dit la raison
+ * (« NIV. 10 »), au milieu ; le numéro reste. Toucher une pochette
+ * verrouillée la secoue (`.tbf-secoue`, posé et retiré par la page). */
+.tbf-album-pochette{
+  position:relative;display:block;box-sizing:border-box;width:100%;max-width:128px;aspect-ratio:63/88;
+  margin:0;padding:0;border:2px dashed rgba(242,238,228,.6);border-radius:8px;overflow:hidden;
+  background:var(--parpaing);color:var(--craie);font:inherit;text-align:center;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;transition:scale .1s ease;
+}
+.tbf-album-pochette::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(45deg,rgba(7,9,12,.5) 0 2px,transparent 2px 6px)}
+.tbf-album-pochette>img{position:absolute;z-index:0;left:50%;bottom:22px;width:auto;height:76%;max-width:none;
+  translate:-50% 0;filter:brightness(0) invert(.62);opacity:.6;pointer-events:none}
+.tbf-album-pochette>b{position:absolute;z-index:3;left:0;right:0;bottom:0;height:22px;
+  display:grid;place-items:center;background:var(--encre);color:var(--craie);
+  font:600 11px/1 var(--banner);letter-spacing:.1em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbf-album-pochette>.tbf-scotch--croix{--ruban:10px;inset:9% 10% 30%;z-index:2}
+.tbf-album-pochette>.tbf-sticker{position:absolute;z-index:4;left:50%;top:42%;translate:-50% -50%;--rot:-5deg}
+.tbf-album-pochette:active{scale:.97}
+.tbf-album-pochette:focus-visible{outline:3px solid var(--projo);outline-offset:3px}
+.tbf-album-page .tbf-album-cartes>.tbf-album-pochette{justify-self:center}
+
+/* ## La case VITRINE
+ *
+ * La légendaire de la série ferme la page sur une case de la largeur de la
+ * grille : sa carte à gauche, posée sous son scotch comme les autres, et à
+ * côté le mot VITRINE en sticker or (le légendaire, l'un des trois sens de
+ * l'or), son nom, ce qu'elle est. Derrière, une fumée d'or au sol et des
+ * rayons dorés.
+ *
+ *     <div class="tbf-album-vitrine">
+ *       <div class="tbf-album-case"><div class="fz r-legendaire …" data-id="RP35">…</div></div>
+ *       <div class="tbf-album-vitrine-mot">
+ *         <span class="tbf-sticker" data-ton="or">VITRINE</span>
+ *         <b>LE BALLON DE CUIR</b><small>Légendaire · se tire dans les boosters</small>
+ *       </div>
+ *     </div>
+ *
+ * **Toute la rangée, et non deux cases** : posée à la fin d'une grille de
+ * trois colonnes, une case de deux pouvait tomber sur la troisième et
+ * laisser un trou au bout de la rangée d'avant. Elle prend la rangée — au
+ * milieu, 560 px au plus : sur une tablette, une vitrine de 740 px laissait
+ * sa moitié droite vide —, et sa carte garde la largeur d'une case.
+ *
+ * **Rien n'y bouge** : la maquette fait tourner l'holo de la légendaire
+ * « là seulement » ; mais c'est une grille, et la règle du lot tient — aucune
+ * animation infinie en grille. La fumée et les rayons sont peints, fixes,
+ * dans son `::before` ; l'holo tourne dans la vitrine qu'elle ouvre.
+ *
+ * Le fond de l'élément est le panneau calme uni, et la fumée vit dans le
+ * pseudo-élément, masquée loin du texte : l'audit lit le nom sur le
+ * panneau (la craie, 16,4:1 et 4,57 au soleil). Non possédée, la case porte
+ * une pochette (`.tbf-album-pochette`) à la place de la case. */
+.tbf-album-vitrine{
+  grid-column:1/-1;justify-self:center;width:100%;max-width:560px;position:relative;isolation:isolate;
+  display:grid;grid-template-columns:minmax(88px,128px) minmax(0,1fr);align-items:center;
+  justify-items:center;gap:12px 18px;box-sizing:border-box;
+  padding:24px 16px 18px;border-radius:8px;
+  background:var(--panneau);
+  box-shadow:inset 0 0 0 1.5px rgba(245,195,59,.55),0 0 0 1.5px var(--encre);
+}
+.tbf-album-vitrine::before{
+  content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;
+  background:
+    radial-gradient(ellipse 46% 36% at 24% 100%,rgba(245,195,59,.42),transparent 72%),
+    repeating-conic-gradient(from 0deg at 24% 52%,rgba(245,195,59,.16) 0 5deg,transparent 5deg 15deg);
+  -webkit-mask-image:radial-gradient(ellipse 52% 90% at 24% 52%,#000 30%,transparent 78%);
+          mask-image:radial-gradient(ellipse 52% 90% at 24% 52%,#000 30%,transparent 78%);
+}
+.tbf-album-vitrine>:is(.tbf-album-case,.tbf-album-pochette){grid-column:1}
+.tbf-album-vitrine-mot{display:flex;flex-direction:column;align-items:flex-start;gap:9px;min-width:0;
+  justify-self:start;color:var(--craie)}
+.tbf-album-vitrine-mot>.tbf-sticker{--rot:-4deg}
+.tbf-album-vitrine-mot>b{font:700 15px/1.15 var(--banner);letter-spacing:.06em;text-transform:uppercase;
+  overflow-wrap:anywhere}
+.tbf-album-vitrine-mot>small{font:500 12px/1.35 var(--ui)}
+
+/* ------------------------------------------------------------- le vestiaire
+
+   MON FANZZY, sur /fanzzy : le personnage équipé, en grand, sur sa scène.
+   La scène devient **une bâche de la couleur de sa rareté** — la toile, le
+   cadre de la rareté sous un bord de craie, le cerne au marqueur, l'ombre
+   dure, le coin déchiré et ses deux scotchs —, avec l'écharpe de sa série en
+   tête. La forme de rareté au coin haut-gauche, TON AVATAR au coin
+   haut-droit, et au pied le nom en banderole et trois stickers de stats.
+
+       <div class="tbf-vestiaire" data-rar="rare" style="--e1:#C7563A;--e2:#F2EEE4">
+         <div class="tbf-vestiaire-fond">…le décor et le personnage (la page)…</div>
+         <span class="tbf-forme" data-rar="rare"><i></i><b>RARE</b></span>
+         <span class="tbf-sticker">TON AVATAR</span>
+         <div class="tbf-vestiaire-pied">
+           <b class="tbf-banderole">GOSIER RODÉ</b>
+           <div class="tbf-vestiaire-stats">
+             <span class="tbf-sticker">POUSSÉE 60<span class="tbf-jauge tbf-jauge--fine"><i style="width:60%"></i></span></span>
+             <span class="tbf-sticker"><span class="tbf-pin" style="--fam:#F5C33B"><svg …/></span>VOIX</span>
+             <span class="tbf-sticker">ÉTAGE<span class="tbf-etage" data-n="1"><i></i><i></i><i></i></span></span>
+           </div>
+         </div>
+       </div>
+
+   **La rareté est le cadre et la lumière, pas la toile.** Une toile de la
+   couleur de rareté pleine — le gris de la commune, l'or de la légendaire —
+   disputerait l'œil au personnage et ne porterait aucun mot. La toile reste
+   le parpaing ; la rareté en est le cadre (quatre pixels sous un bord de
+   craie de trois) et la lueur derrière le personnage, son `::after` à 32 %.
+   Les mots sont tous sur de la craie (stickers, banderole) : 17:1, 4,86 au
+   soleil.
+
+   **`.tbf-vestiaire-fond` est la scène de la page** : elle la remplit sous
+   l'écharpe, rogne ce qu'elle porte et passe sous les stickers. La page y
+   met son décor et son personnage, en aussi grand qu'elle veut. La hauteur
+   est à la page (« toute la hauteur restante ») ; la bâche ne rogne rien
+   elle-même — ses scotchs montent de sept pixels, et la page lui laisse
+   quatorze pixels au-dessus.
+
+   Les stickers de stats penchent de 2° au plus (`--penche`). Le premier est
+   l'écharpe fine de la poussée, le deuxième la famille avec son pin, le
+   troisième l'étage en nœuds : chacun est une ligne, et une ligne sans
+   donnée ne se pose pas.
+
+   **Le nom passe à la ligne** (lot 4), en lignes équilibrées et centrées,
+   comme sur la carte. La banderole ne passe jamais à la ligne, et c'est
+   juste dans une liste ; ici, c'est le nom du personnage qu'on montre, en
+   grand, et à 360 px le plus long du catalogue (OB7, « L'Épouvantail du
+   Terrain d'Entraînement ») finissait en points de suspension — l'audit le
+   relevait comme coupé, et il ne le nommait plus. Deux lignes de dix-huit
+   pixels : le pied monte d'autant sur la scène. La page peut en faire un
+   titre (`h2.tbf-banderole`) sans rien y ajouter que sa marge. */
+.tbf-vestiaire{
+  position:relative;isolation:isolate;box-sizing:border-box;min-height:0;border-radius:6px;
+  background:
+    repeating-linear-gradient(115deg,var(--e1,var(--projo)) 0 8px,var(--encre) 8px 9px,
+      var(--e2,var(--flare)) 9px 17px,var(--encre) 17px 18px) 0 7px/100% 7px no-repeat,
+    linear-gradient(var(--encre),var(--encre)) 0 14px/100% 1.5px no-repeat,
+    var(--grain-toile) 0 0/256px 256px repeat,var(--parpaing);
+  border-image:var(--trace-a) 9 / 9px / 2.5px stretch;
+  box-shadow:inset 0 0 0 3px var(--craie),inset 0 0 0 7px var(--rar,var(--r-commune)),2px 5px 0 2px var(--encre);
+}
+/* Le coin déchiré et les deux scotchs, dans le même calque, comme la bâche
+   principale. */
+.tbf-vestiaire::before{
+  content:"";position:absolute;z-index:4;left:-8px;right:-8px;top:-7px;bottom:-2.5px;pointer-events:none;
+  background:
+    linear-gradient(135deg,transparent 0 calc(50% - 1px),
+      var(--encre) calc(50% - 1px) calc(50% + .8px),var(--parpaing) calc(50% + .8px))
+      right 5.5px bottom 0/12px 12px no-repeat,
+    var(--ruban-g) left 0 top 0/58px 24px no-repeat,
+    var(--ruban-d) right 0 top 1px/58px 24px no-repeat;
+}
+.tbf-vestiaire::after{
+  content:"";position:absolute;z-index:-1;inset:16px 7px 7px;border-radius:2px;pointer-events:none;
+  background:radial-gradient(ellipse 72% 56% at 50% 42%,var(--rar,var(--r-commune)),transparent 72%);opacity:.32;
+}
+.tbf-vestiaire-fond{position:absolute;z-index:0;inset:16px 7px 7px;overflow:hidden;border-radius:2px}
+.tbf-vestiaire>.tbf-forme{position:absolute;z-index:3;left:14px;top:26px;--taille:34px}
+/* L'étiquette de l'étoile et de l'éclat est centrée sous la forme et plus
+   large qu'elle : collée au bord, elle sortait de la bâche à gauche. */
+.tbf-vestiaire>.tbf-forme:is([data-rar=epique],[data-rar=legendaire]){left:30px}
+.tbf-vestiaire>.tbf-sticker{position:absolute;z-index:3;right:14px;top:26px;--rot:4deg}
+.tbf-vestiaire-pied{
+  --penche:.5;
+  position:absolute;z-index:3;left:12px;right:12px;bottom:14px;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.tbf-vestiaire-pied>.tbf-banderole{font-size:15px;line-height:18px;white-space:normal;text-wrap:balance;text-align:center}
+.tbf-vestiaire-stats{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 14px}
+
+/* ## La bande du cri
+ *
+ * Le cri du Fanzzy, peint sur une bâche rayée pleine largeur : la toile
+ * craie, l'encre dessus, et les deux bouts rayés aux couleurs données
+ * (`--e1`, `--e2` : la série au vestiaire, la famille sur la fiche).
+ * Toucher la bande lance le cri (`FX.cri`, ou la vidéo sur la fiche).
+ *
+ *     <button type="button" class="tbf-cri" style="--e1:#C7563A;--e2:#F2EEE4">
+ *       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>
+ *       <small>CRI</small><b>DEUXIÈME BUT EN QUATRE ANS</b></button>
+ *
+ * **Quarante-quatre pixels, et pas trente-deux.** La fiche lui donne 32 dans
+ * son budget de hauteur ; une cible de 32 est relevée par l'audit, et c'est
+ * la commande qu'on touche pour entendre le personnage. Les douze pixels se
+ * reprennent sur la carte, souple (≥ 220 px) : à 360 × 640, elle en garde
+ * 246.
+ *
+ * Les rayures ne sont qu'aux bouts, sur quarante pixels, et le texte est au
+ * milieu, sur la craie unie : l'audit le lit sur elle (17:1, 4,86 au
+ * soleil). **Les bouts sont les deux pseudo-éléments**, pas des couches du
+ * fond : une couche peinte qui passe dans la boîte du texte le rend « non
+ * mesurable » pour l'audit, et le fil d'encre du bout droit, posé à
+ * `calc(100% - 38px)`, n'est pas une place qu'il sait lire. Le mot du cri en
+ * quatorze gras, deux lignes au plus. */
+.tbf-cri{
+  position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:9px;
+  box-sizing:border-box;width:100%;min-height:44px;margin:0 0 4px;padding:6px 50px;
+  border:0;border-radius:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  background:var(--grain-toile) 0 0/256px 256px repeat,var(--craie);
+  box-shadow:0 0 0 2px var(--encre),2px 4px 0 2px var(--encre);
+  color:var(--encre);font-family:var(--banner);text-transform:uppercase;text-shadow:none;text-align:center;
+  transition:transform .08s ease,box-shadow .08s ease;
+}
+.tbf-cri::before,.tbf-cri::after{
+  content:"";position:absolute;z-index:-1;top:0;bottom:0;width:38px;pointer-events:none;
+  background:repeating-linear-gradient(115deg,var(--e1,var(--flare)) 0 7px,var(--encre) 7px 8px,
+    var(--e2,var(--craie)) 8px 15px,var(--encre) 15px 16px);
+}
+.tbf-cri::before{left:0;border-radius:4px 0 0 4px;box-shadow:2px 0 0 var(--encre)}
+.tbf-cri::after{right:0;border-radius:0 4px 4px 0;box-shadow:-2px 0 0 var(--encre)}
+.tbf-cri>svg{width:13px;height:13px;flex:none;fill:currentColor}
+.tbf-cri>small{flex:none;font-weight:600;font-size:11px;letter-spacing:.14em}
+.tbf-cri>b{min-width:0;font-weight:700;font-size:14px;line-height:1.15;letter-spacing:.07em}
+.tbf-cri:active{transform:translateY(4px);box-shadow:0 0 0 2px var(--encre),2px 0 0 2px var(--encre)}
+.tbf-cri:focus-visible{outline:3px solid var(--projo);outline-offset:4px}
+
+/* ## Les mini-portraits du deck
+ *
+ * Collés sur ENTRER EN DUEL : les bustes des trois Fanzzy du deck, le
+ * titulaire cerclé de vert. Ce sont des bustes (`.tbf-buste`) de vingt-six
+ * pixels, qui se chevauchent de sept.
+ *
+ *     <button class="tbf-plaque tbf-bloc" data-ton="flare">ENTRER EN DUEL
+ *       <span class="tbf-minis" aria-hidden="true">
+ *         <span class="tbf-buste" data-titulaire><img …></span><span class="tbf-buste"><img …></span>…
+ *       </span></button>
+ *
+ * Le libellé dit déjà où l'on va ; les bustes sont `aria-hidden`. */
+.tbf-minis{display:inline-flex;align-items:center;flex:none;margin-left:6px}
+.tbf-minis>.tbf-buste{--taille:26px}
+.tbf-minis>.tbf-buste+.tbf-buste{margin-left:-7px}
+.tbf-buste[data-titulaire]{z-index:1;
+  box-shadow:0 0 0 var(--bord) var(--vert-clair),0 0 0 calc(var(--bord) + 1.5px) var(--encre),
+    2px 2px 0 calc(var(--bord) + 1.5px) rgba(7,9,12,.6)}
+
+/* ------------------------------------------------------- l'inventaire
+
+   La fiche d'un Fanzzy, sous sa carte : tout ce qu'il a et peut avoir, en
+   quatre rangées titrées — ÂGES, EFFETS, ÉTATS, TENUES — dans un panneau de
+   cent pixels qui défile en largeur. Toucher une pièce la montre dans le
+   détail, juste dessous.
+
+       <div class="tbf-inventaire">
+         <section class="tbf-inventaire-rang">
+           <h3 class="tbf-inventaire-titre">ÂGES</h3>
+           <ol class="tbf-ages">…l'arbre, plus bas…</ol>
+         </section>
+         <section class="tbf-inventaire-rang">
+           <h3 class="tbf-inventaire-titre">ÉTATS</h3>
+           <div class="tbf-inventaire-tuiles">…les tuiles…</div>
+         </section>
+       </div>
+
+   **Le titre** en Oswald onze à la craie pleine, précédé d'un bout
+   d'écharpe (`--e1`, `--e2`) : le titre cousu du jeu tient sur une rangée
+   entière, et ces rangées sont côte à côte. **La hauteur est à la page**
+   (le budget de la fiche lui en donne cent) ; le panneau garde quatorze
+   pixels dessous pour les stickers qui pendent sous les tuiles, et ne
+   défile jamais en hauteur. */
+.tbf-inventaire{
+  display:flex;align-items:flex-start;gap:20px;box-sizing:border-box;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:none;overscroll-behavior-x:contain;
+  scroll-snap-type:x proximity;padding:6px max(var(--marge,12px),8px) 14px;
+  scroll-padding-inline:max(var(--marge,12px),8px);
+}
+.tbf-inventaire::-webkit-scrollbar{display:none}
+.tbf-inventaire-rang{flex:none;display:flex;flex-direction:column;gap:9px;scroll-snap-align:start}
+.tbf-inventaire-titre{
+  display:flex;align-items:center;gap:7px;margin:0;
+  font:600 11px/1.1 var(--banner);letter-spacing:.12em;text-transform:uppercase;color:var(--craie);white-space:nowrap;
+}
+.tbf-inventaire-titre::before{
+  content:"";flex:none;width:14px;height:6px;border-radius:1px;box-shadow:0 0 0 1px var(--encre);
+  background:repeating-linear-gradient(115deg,var(--e1,var(--projo)) 0 3px,var(--encre) 3px 4px,
+    var(--e2,var(--flare)) 4px 7px,var(--encre) 7px 8px);
+}
+.tbf-inventaire-tuiles{display:flex;gap:11px;padding-top:3px}
+
+/* ## La tuile d'une pièce
+ *
+ * Un état, une tenue, un effet : une bâche carrée de quarante-huit pixels,
+ * le portrait ou le pictogramme dedans. **Le ton dit la sorte** : vert pour
+ * un état, **bleu pour une tenue** (posséder ; le violet reste aux gens,
+ * amendement 4), la couleur de la famille pour un effet (`--face` en
+ * ligne, comme une couleur de club).
+ *
+ *     <button class="tbf-plaque tbf-tuile" data-ton="vert" aria-label="Joie"><img src="…joie…" alt="">
+ *       <span class="tbf-sticker tbf-sticker--rond" data-ton="vert"><i class="tbf-ico tbf-ico-coche"></i></span></button>
+ *     <button class="tbf-plaque tbf-tuile tbf-tuile--pied" data-ton="bleu" aria-pressed="true" …><img …>
+ *       <span class="tbf-sticker">PORTÉE</span></button>
+ *     <button class="tbf-plaque tbf-tuile" data-verrou aria-label="Dépit — dans les boosters"><img …>
+ *       <span class="tbf-scotch tbf-scotch--croix" aria-hidden="true"></span>
+ *       <span class="tbf-sticker">BOOSTER</span></button>
+ *     <button class="tbf-plaque tbf-tuile" style="--face:#F5C33B;--lettre:var(--encre)"><svg …/></button>
+ *
+ * **Trois états**, par attributs, comme le reste de la feuille :
+ *   — **`aria-current="true"`** : la pièce que montre le détail. Elle reste
+ *     enfoncée — la bâche plaquée au mur, l'ombre contre elle : un bouton
+ *     bascule qu'on a pressé, sans couleur de plus ;
+ *   — **`aria-pressed="true"`** : la tenue portée, cerclée de craie, le
+ *     sticker PORTÉE dessous ;
+ *   — **`data-verrou`** : pas encore à soi. La toile redevient du parpaing
+ *     sous trame, le portrait s'éteint, le scotch en croix le barre, et un
+ *     sticker dit comment l'avoir (« BOOSTER », un prix). Elle se touche
+ *     quand même : le détail dit d'où elle vient.
+ *
+ * Un sticker rond (la coche) se colle au coin bas-droit, un sticker de mot
+ * sous la tuile, à cheval sur son bord : il pend de douze pixels. `--pied`
+ * cadre le dessin en pied (une tenue) au lieu du visage. */
+.tbf-plaque.tbf-tuile{
+  --epaisseur:3px;
+  isolation:isolate;flex:none;width:48px;height:48px;min-height:0;padding:0;gap:0;
+}
+.tbf-tuile>img{position:absolute;z-index:0;inset:3px;display:block;width:calc(100% - 6px);height:calc(100% - 6px);
+  border-radius:3px;object-fit:cover;object-position:50% 6%;background:var(--craie)}
+.tbf-tuile--pied>img{object-fit:contain;object-position:50% 100%}
+.tbf-plaque.tbf-tuile>svg{width:24px;height:24px;stroke-width:2.4}
+.tbf-tuile>.tbf-sticker--rond{position:absolute;z-index:3;right:-7px;bottom:-6px;--taille:18px;--rot:0deg;font-size:11px}
+.tbf-tuile>.tbf-sticker--rond .tbf-ico{font-size:12px}
+.tbf-tuile>.tbf-sticker:not(.tbf-sticker--rond){position:absolute;z-index:3;left:50%;bottom:-12px;
+  translate:-50% 0;height:18px;padding:0 4px;font-size:11px;--rot:-4deg}
+.tbf-tuile>.tbf-scotch--croix{--ruban:8px;inset:3px 3px 12px;z-index:2}
+.tbf-plaque.tbf-tuile[aria-current=true]{transform:translateY(var(--epaisseur));
+  box-shadow:inset 0 1px 0 rgba(242,238,228,.35),2px 0 0 2px var(--encre)}
+.tbf-plaque.tbf-tuile[aria-pressed=true]{
+  box-shadow:inset 0 1px 0 rgba(242,238,228,.35),0 0 0 3px var(--craie),0 0 0 4.5px var(--encre),
+    2px var(--epaisseur) 0 4.5px var(--encre)}
+.tbf-plaque.tbf-tuile[data-verrou]{
+  --face:var(--parpaing);--lettre:var(--craie);
+  background:repeating-linear-gradient(45deg,rgba(7,9,12,.42) 0 2px,transparent 2px 5px),
+    var(--grain-toile) 0 0/256px 256px repeat,var(--face);
+}
+.tbf-tuile[data-verrou]>img{opacity:.35;filter:grayscale(1)}
+
+/* ## L'arbre des âges
+ *
+ * La première rangée de l'inventaire : les trois âges du personnage, trois
+ * nœuds sur une corde. L'âge atteint est plein, cerclé de la couleur de sa
+ * rareté (un âge en a une : commune, rare, épique) ; l'âge qu'on regarde est
+ * cerclé de craie en plus ; l'âge suivant est flou sous une trame, son prix
+ * collé sur la corde, et il pulse quand le solde suffit ; au-delà, l'âge
+ * attend.
+ *
+ *     <ol class="tbf-ages" aria-label="Ses âges">
+ *       <li data-etat="fait" data-rar="commune"><button class="tbf-ages-k" aria-label="Âge 1"><img src="…" alt=""></button></li>
+ *       <li data-etat="ici" data-rar="rare"><button class="tbf-ages-k" aria-current="true" …><img …></button></li>
+ *       <li data-etat="suivant" data-rar="epique" data-pret>
+ *         <button class="tbf-ages-k" aria-label="Âge 3 — 90 écharpes"><img …></button>
+ *         <span class="tbf-sticker tbf-sticker--prix"><img src="/img/gains/echarpes.webp" alt="">90</span></li>
+ *     </ol>
+ *
+ * **La corde** relie chaque nœud au suivant (le `::before` de chaque
+ * `li`, sauf le dernier) : du kraft vrillé de traits d'encre et cerné, comme
+ * le chemin de niveau, tant que `corde.svg` n'est pas produite. Entre deux
+ * âges atteints, elle devient l'écharpe tricotée (`--e1`, `--e2`) : le
+ * chemin fait est de la laine, celui qui reste de la corde.
+ *
+ * **`data-pret`** (le solde paie l'âge suivant) : le nœud se cerne d'or —
+ * acheter — et pulse, trois et demi pour cent en 2,4 s, sans fin : une des
+ * trois animations infinies de la fiche. Au calme, il reste cerné d'or, sans
+ * bouger. **Le prix** est un enfant du nœud suivant, posé sous la corde, au
+ * milieu de l'écart ; sans prix connu, il ne se pose pas. Les nœuds font
+ * quarante-quatre pixels : on les touche. */
+.tbf-ages{--k:44px;--ecart:32px;position:relative;display:flex;align-items:flex-start;gap:var(--ecart);
+  margin:0;padding:2px 2px 0;list-style:none}
+.tbf-ages>li{position:relative;flex:none;width:var(--k);height:var(--k)}
+.tbf-ages>li:not(:last-child)::before{
+  content:"";position:absolute;z-index:0;left:50%;width:calc(100% + var(--ecart));
+  top:calc(var(--k) / 2 - 3px);height:6px;border-radius:3px;pointer-events:none;
+  box-shadow:0 0 0 1.5px var(--encre);
+  background:
+    repeating-linear-gradient(35deg,transparent 0 3px,rgba(7,9,12,.42) 3px 4px),
+    linear-gradient(180deg,rgba(7,9,12,.32),transparent 45%,rgba(7,9,12,.32)),
+    var(--kraft);
+}
+.tbf-ages>li[data-etat=fait]:not(:last-child)::before{
+  background:repeating-linear-gradient(115deg,var(--e1,var(--projo)) 0 6px,var(--encre) 6px 7px,
+    var(--e2,var(--flare)) 7px 13px,var(--encre) 13px 14px)}
+.tbf-ages-k{
+  position:relative;z-index:1;display:block;box-sizing:border-box;width:100%;height:100%;margin:0;padding:0;
+  border:3px solid var(--rar,var(--r-commune));border-radius:50%;overflow:hidden;
+  background:var(--craie);box-shadow:0 0 0 2px var(--encre);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.tbf-ages-k>img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;object-position:50% 8%}
+.tbf-ages-k:focus-visible{outline:3px solid var(--projo);outline-offset:3px}
+.tbf-ages>li[data-etat=ici]>.tbf-ages-k,.tbf-ages-k[aria-current=true]{
+  box-shadow:0 0 0 2px var(--encre),0 0 0 5px var(--craie),0 0 0 6.5px var(--encre)}
+/* Le suivant et ceux d'après : le portrait flou sous une trame, le cerne en
+   pointillé — un âge qu'on devine. */
+.tbf-ages>li:is([data-etat=suivant],[data-etat=attend])>.tbf-ages-k{border-style:dashed;background:var(--parpaing)}
+.tbf-ages>li:is([data-etat=suivant],[data-etat=attend])>.tbf-ages-k>img{filter:blur(2.5px) grayscale(.3)}
+.tbf-ages>li:is([data-etat=suivant],[data-etat=attend])>.tbf-ages-k::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(45deg,rgba(7,9,12,.3) 0 2px,transparent 2px 5px)}
+.tbf-ages>li[data-etat=suivant][data-pret]>.tbf-ages-k{border-style:solid;border-color:var(--projo);
+  animation:tbf-pulse 2.4s ease-in-out infinite}
+.tbf-ages>li>.tbf-sticker--prix{position:absolute;z-index:3;right:calc(100% + var(--ecart) / 2);
+  top:calc(var(--k) / 2 + 7px);translate:50% 0;height:22px;padding:0 6px 0 3px;font-size:12px;--rot:-5deg}
+.tbf-ages>li>.tbf-sticker--prix img{width:15px;height:15px}
+
+/* ## La fiche kraft du détail
+ *
+ * Sous l'inventaire, quatre-vingt-huit pixels de papier kraft : ce que fait
+ * la pièce qu'on touche, en chiffres plutôt qu'en phrases. Pour un âge,
+ * « POUSSÉE 60 → 75 » et deux écharpes fines, avant et après ; pour un
+ * effet, une écharpe sur le maximum de la famille ; pour une tenue ou un
+ * état, son portrait dans l'état, et ce qu'il dit.
+ *
+ *     <div class="tbf-ticket tbf-detail">
+ *       <div class="tbf-detail-t"><b>ÂGE 3 · À DÉCOUVRIR</b><small>CE QU'IL GAGNE</small></div>
+ *       <div class="tbf-detail-l"><span>POUSSÉE DU CRI</span>
+ *         <span class="tbf-detail-deux">
+ *           <span class="tbf-jauge tbf-jauge--fine"><i style="width:65%"></i></span>
+ *           <span class="tbf-jauge tbf-jauge--fine"><i style="width:80%"></i></span></span>
+ *         <b>65 → 80</b></div>
+ *     </div>
+ *
+ *     <div class="tbf-ticket tbf-detail tbf-detail--portrait">
+ *       <img class="tbf-detail-portrait" src="…joie…" alt="">
+ *       <div class="tbf-detail-t"><b>JOIE</b><small>ÉTAT · À TOI</small></div>
+ *       <div class="tbf-detail-l"><span>APRÈS UN BUT</span></div>
+ *     </div>
+ *
+ * **C'est un ticket** : le kraft, la déchirure, le noir pur dessus (14,28:1,
+ * 4,58 au soleil), un verdict en tampon plein s'il y en a un. **Pas de
+ * paragraphe** : un titre, des lignes de chiffres. Le titre en quatorze
+ * gras, les lignes en onze, la valeur en treize, tabulaire. La première
+ * écharpe des deux, l'avant, est grise (`--gris`, `--gris-encre`) : seule
+ * celle d'après porte les couleurs. La hauteur est à la page (88 px) ; le
+ * ticket centre ce qu'il porte.
+ *
+ * **Trois formes de ligne, par le nombre de ses enfants** — la page n'a
+ * rien à placer :
+ *   — libellé, jauges, valeur : les trois colonnes ;
+ *   — **libellé et valeur, sans jauges** (lot 4 : un effet, une phrase
+ *     courte et son chiffre, la vitrine) : le libellé prend la place des
+ *     jauges, la valeur reste dans sa colonne, à droite. Sans `:has`, le
+ *     libellé garde sa colonne de 96 px et passe à la ligne, la valeur
+ *     reste à sa place ;
+ *         <div class="tbf-detail-l"><span>RECHARGE DU SOUFFLE</span><b>−1 TOUR</b></div>
+ *   — un seul enfant : toute la largeur. */
+.tbf-ticket.tbf-detail{display:flex;flex-direction:column;justify-content:center;gap:7px;
+  box-sizing:border-box;padding:11px 14px 10px}
+.tbf-detail-t{display:flex;align-items:baseline;justify-content:space-between;gap:10px;min-width:0}
+.tbf-detail-t>b{min-width:0;font-weight:700;font-size:14px;line-height:1.15;letter-spacing:.07em;
+  text-transform:uppercase;overflow-wrap:anywhere}
+.tbf-detail-t>small{flex:none;font-weight:600;font-size:11px;line-height:1.15;letter-spacing:.1em;
+  text-transform:uppercase;white-space:nowrap}
+.tbf-detail-l{display:grid;grid-template-columns:minmax(0,96px) minmax(40px,1fr) minmax(78px,auto);align-items:center;gap:9px;
+  font-weight:600;font-size:11px;line-height:1.15;letter-spacing:.06em;text-transform:uppercase}
+.tbf-detail-l>b{font-weight:700;font-size:13px;letter-spacing:.02em;font-variant-numeric:tabular-nums;
+  white-space:nowrap;text-align:right}
+.tbf-detail-l>:only-child{grid-column:1/-1}
+.tbf-detail-l>:first-child:nth-last-child(2):has(+b){grid-column:1/3}
+.tbf-detail-l>b:nth-child(2):last-child{grid-column:3}
+.tbf-detail-deux{display:flex;flex-direction:column;gap:4px;min-width:0}
+.tbf-detail-deux>.tbf-jauge:first-child{--e1:var(--gris);--e2:var(--gris-encre)}
+.tbf-ticket.tbf-detail--portrait{display:grid;grid-template-columns:auto minmax(0,1fr);align-content:center;
+  gap:6px 12px}
+.tbf-detail--portrait>:not(.tbf-detail-portrait){grid-column:2}
+.tbf-detail-portrait{grid-column:1;grid-row:1/span 3;align-self:center;display:block;width:56px;height:56px;
+  border-radius:5px;object-fit:cover;object-position:50% 8%;background:var(--craie);
+  box-shadow:0 0 0 1.5px var(--encre)}
+
+/* ------------------------------------------ le niveau de collectionneur
+
+   L'en-tête de /collection : où l'on en est de **ce qu'on peut gagner
+   aujourd'hui** — les personnages des séries ouvertes et les cartes
+   d'action, pas les quatorze âges qu'aucun booster ne distribue ni ce
+   qu'aucune série ouverte ne contient. L'anneau qui compte en grand, le
+   titre de palier en banderole, et ce que rapporte le prochain cran.
+
+       <section class="tbf-cadre tbf-collectionneur" data-echarpe>
+         <span class="tbf-cercle" style="--taille:72px;--part:.42" role="img" aria-label="63 sur 150 à portée">
+           <b>63</b><small>/150</small></span>
+         <div class="tbf-collectionneur-corps">
+           <small class="tbf-collectionneur-sur">COLLECTIONNEUR</small>
+           <b class="tbf-banderole">ULTRA</b>
+           <span class="tbf-sticker tbf-sticker--jalon"><img src="/img/gains/echarpes.webp" alt="">75 → 25 ÉCHARPES</span>
+         </div>
+         <button class="tbf-plaque tbf-bloc" data-ton="or">RÉCUPÉRER
+           <span class="tbf-sticker tbf-sticker--prix"><img src="/img/gains/echarpes.webp" alt="">+25</span></button>
+       </section>
+
+   **Le prochain cran s'écrit par ce qu'il ouvre** (« 75 → 25 ÉCHARPES »,
+   jamais « cran », amendement 22), en sticker de promesse (`--jalon`, le
+   bord d'or) : `paliers.prochain` du contrat (§ 5.1). Absent — tout est
+   gagné, ou le serveur ne sert pas les paliers —, il ne se pose pas, et
+   l'anneau reste seul avec son titre. **RÉCUPÉRER** n'est posé que si
+   `aReclamer` n'est pas vide : une bâche or pleine largeur, ce qui est prêt
+   en sticker de prix ; c'est la récompense prête de l'écran, et la page
+   peut la faire respirer (`.tbf-respire` sur son sticker), une seule.
+
+   Le titre de palier (« ABONNÉ », « ULTRA », « CAPO ») est une banderole
+   craie, l'encre dessus, en dix-sept ; au-dessus, le mot qui dit ce que
+   c'est, en onze à la craie sur la toile du cadre. Le sticker de promesse
+   passe à la ligne plutôt que de déborder : à 360 px, le corps n'a que deux
+   cents pixels. */
+.tbf-collectionneur{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:14px 16px;
+  padding:20px 14px 14px}
+.tbf-collectionneur>.tbf-cercle{--taille:72px;--trait:7px;margin:2px 0 2px 2px}
+.tbf-collectionneur-corps{display:flex;flex-direction:column;align-items:flex-start;gap:9px;min-width:0}
+.tbf-collectionneur-sur{font:600 11px/1.2 var(--banner);letter-spacing:.14em;text-transform:uppercase;color:var(--craie)}
+.tbf-collectionneur-corps>.tbf-banderole{font-size:17px;line-height:20px;padding:3px 10px 2px}
+.tbf-collectionneur-corps>.tbf-sticker{max-width:100%;height:auto;min-height:24px;padding:4px 7px;
+  white-space:normal;line-height:1.2;text-align:left;--rot:-1.5deg}
+.tbf-collectionneur>.tbf-plaque{grid-column:1/-1}
+.tbf-collectionneur>.tbf-plaque>.tbf-sticker--prix{--rot:4deg;margin-left:4px}
+
+/* ------------------------------------------------ les rayons de /collection
+
+   Les cinq grandes bâches qui ouvrent chacune son album : FANZZY, ÉTATS,
+   TENUES, ÉQUIPEMENT, ACTIONS. Deux par rangée, la cinquième sur toute la
+   largeur. Chacune au ton de sa destination, avec l'anneau de son compte, la
+   dernière pièce obtenue sur son sticker, et ce qui est arrivé depuis la
+   dernière visite en sticker « +2 ».
+
+       <div class="tbf-rayons">
+         <button class="tbf-plaque tbf-rayon" data-ton="bleu" data-vue="fanzzy"
+                 data-etat="nouveau" data-pastille="+2">
+           <span class="tbf-cercle" style="--part:.4" aria-hidden="true"><b>14</b></span>
+           <span class="tbf-objet" data-rar="rare"><img src="…" alt=""></span>
+           <span class="tbf-rayon-nom">FANZZY<small>14 / 35</small></span>
+         </button>
+         …
+       </div>
+
+   **Ce qui ouvre l'album Fanzzy porte `data-vue="fanzzy"`** : l'audit le
+   touche pour aller à l'album. Le sticker « +2 » est la pastille de la
+   bâche (`data-pastille`), à l'état `nouveau` (la craie, comme une tuile du
+   hub) ; une récompense prête sur un rayon prendrait `pret` (l'or). Trois
+   stickers d'état au plus sur l'écran.
+
+   **La dernière pièce** est un objet sur son sticker (`.tbf-objet`, la
+   craie teintée de sa rareté), de quarante-huit pixels ; sans pièce, il ne
+   se pose pas. Le nom en seize gras et le compte en douze sont à la craie
+   sur la face du ton : 5,1:1 à l'intérieur, 2,4 à 2,6 au soleil — le prix
+   décidé des faces vives, sur des mots que le ton et l'anneau portent
+   aussi. Le compte est tabulaire. */
+.tbf-rayons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px}
+.tbf-rayons>:last-child:nth-child(odd){grid-column:1/-1}
+.tbf-plaque.tbf-rayon{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"cercle objet" "nom nom";
+  align-items:center;justify-items:start;gap:10px 8px;min-height:118px;margin:0;padding:15px 13px 13px;
+  text-align:left;letter-spacing:.06em;
+}
+.tbf-rayon>.tbf-cercle{grid-area:cercle;--taille:42px}
+.tbf-rayon>.tbf-objet{grid-area:objet;--taille:48px}
+.tbf-rayon-nom{grid-area:nom;display:flex;flex-direction:column;gap:4px;min-width:0;max-width:100%;
+  font-weight:700;font-size:16px;line-height:1.1;overflow-wrap:anywhere}
+.tbf-rayon-nom>small{font-weight:600;font-size:12px;letter-spacing:.05em;font-variant-numeric:tabular-nums}
+.tbf-rayons>.tbf-rayon:last-child:nth-child(odd){grid-template-columns:auto minmax(0,1fr) auto;
+  grid-template-areas:"cercle nom objet";min-height:80px}
+.tbf-plaque.tbf-rayon[data-etat=nouveau]::after{--pf:var(--craie);--pl:var(--encre);--pr:-4deg}
+.tbf-plaque.tbf-rayon[data-etat=pret]::after{--pf:var(--projo);--pl:var(--encre)}
+
+/* ---------------------------------------------- la planche d'un personnage
+
+   Les états et les tenues de /collection, par personnage : une planche par
+   Fanzzy, son buste et son nom, son compte en tampon (« 2/4 »), et une
+   rangée de mini-portraits-stickers — pleins quand on a l'état ou la tenue,
+   au pochoir gris sinon. Complète, elle reçoit le sticker PLANCHE COMPLÈTE
+   (et la page sa petite gerbe, `FX.rare`).
+
+       <section class="tbf-planche" data-complete>
+         <header class="tbf-planche-tete">
+           <span class="tbf-buste" aria-hidden="true"><img src="…" alt=""></span>
+           <b>GOSIER RODÉ</b>
+           <span class="tbf-tampon tbf-tampon--plein" data-ton="vert">4/4</span>
+         </header>
+         <ul class="tbf-planche-cases">
+           <li><button class="tbf-planche-case" data-etat="possede"><img src="…joie…" alt="">JOIE</button></li>
+           <li><button class="tbf-planche-case"><img src="…depit…" alt="">DÉPIT</button></li>
+           <li><button class="tbf-planche-case" data-verrou><img …>DÉPIT<small>ÂGE 2</small></button></li>
+         </ul>
+         <span class="tbf-sticker" data-ton="vert">PLANCHE COMPLÈTE</span>
+       </section>
+
+   **Un panneau calme**, et pas un ticket : une liste de trente planches
+   ferait trente tickets, et la règle d'un ticket par écran tomberait. Le
+   béton grainé sur `--panneau`, la craie dessus (4,52:1 au soleil, grain
+   compris). Le tampon du compte est plein (moins de seize pixels).
+
+   **Le mini-portrait**, cinquante-deux pixels : le dessin dans l'état ou la
+   tenue, découpé en rond sur la craie, comme un sticker. Pas à soi
+   (`data-etat` absent) : la silhouette au pochoir gris sur le parpaing,
+   bord en pointillé ; d'un âge pas encore atteint (`data-verrou`), le même
+   pochoir et ce qui l'ouvre en dessous (`small`). Le nom dessous, en onze à
+   la craie pleine, à la ligne plutôt que coupé. Chaque case se touche (la
+   vitrine montre l'état en grand) : quarante-quatre pixels au moins.
+
+   **Les tenues ont des cases plus larges** (lot 4) : `data-quoi="tenues"`
+   sur la planche. Leurs noms sont longs (« PRÉHISTORIQUE »,
+   « APOCALYPTIQUE », plus de soixante-dix pixels en onze), et une case de
+   soixante-quatre pixels — quatre par rangée à 360 px, soixante-dix
+   chacune — les coupait au milieu du mot (« PRÉHISTORIQ / UE », relevé
+   par /collection). À quatre-vingt-huit, trois par rangée à 360 px, et
+   chaque nom tient sur sa ligne (vérifié au banc à 360 et 768 px). Les
+   états (JOIE, DÉPIT, ATTENTE) gardent leurs soixante-quatre. La largeur
+   est `--case` : une planche d'autre chose aux noms longs la règle de
+   même.
+
+       <section class="tbf-planche" data-quoi="tenues">…</section>
+
+   **NOUVEAU sur une case** : un état ou une tenue que le serveur dit neuf
+   (`nouveautes`, contrat § 2.1, `sorte` `etat` ou `skin`) porte le sticker
+   rouge, collé de travers sur le haut de son portrait — le nom reste
+   dessous, entier. Dix-huit pixels en onze, comme le mot d'une tuile de
+   l'inventaire : il tient dans la case de soixante-quatre.
+
+       <li><button class="tbf-planche-case" data-etat="possede"><img …>JOIE
+         <span class="tbf-sticker" data-ton="flare">NOUVEAU</span></button></li> */
+.tbf-planche{position:relative;box-sizing:border-box;padding:12px 12px 14px;border:1px solid var(--trait);
+  border-radius:8px;background:var(--grain-beton) 0 0/256px 256px repeat,var(--panneau);color:var(--craie)}
+.tbf-planche[data-complete]{box-shadow:inset 0 0 0 1.5px var(--vert-clair)}
+.tbf-planche-tete{display:flex;align-items:center;gap:11px;min-width:0;margin-bottom:14px}
+.tbf-planche-tete>.tbf-buste{--taille:40px}
+.tbf-planche-tete>b{flex:1;min-width:0;font:700 14px/1.2 var(--banner);letter-spacing:.05em;
+  text-transform:uppercase;overflow-wrap:anywhere}
+.tbf-planche-tete>.tbf-tampon{flex:none;--rot:-6deg}
+.tbf-planche-cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--case,64px),1fr));gap:16px 8px;
+  margin:0;padding:0;list-style:none}
+.tbf-planche[data-quoi=tenues]{--case:88px}
+.tbf-planche-case{
+  position:relative;
+  display:flex;flex-direction:column;align-items:center;gap:8px;box-sizing:border-box;width:100%;min-height:44px;
+  margin:0;padding:4px 0 0;border:0;background:none;color:var(--craie);cursor:pointer;
+  font:600 11px/1.15 var(--banner);letter-spacing:.05em;text-transform:uppercase;text-align:center;
+  overflow-wrap:anywhere;-webkit-tap-highlight-color:transparent;transition:scale .1s ease;
+}
+.tbf-planche-case>img{display:block;box-sizing:border-box;width:52px;height:52px;border-radius:50%;object-fit:cover;object-position:50% 10%;
+  outline:2px dashed rgba(242,238,228,.6);outline-offset:1px;
+  filter:brightness(0) invert(.62);opacity:.6}
+.tbf-planche-case[data-etat=possede]>img{background:var(--craie);outline:0;filter:none;opacity:1;
+  box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),2px 2px 0 3.5px rgba(7,9,12,.6)}
+.tbf-planche-case>small{display:block;margin-top:-3px;font-size:11px;font-weight:500;letter-spacing:.04em}
+.tbf-planche-case>.tbf-sticker{position:absolute;z-index:1;left:50%;top:-4px;translate:-50% 0;
+  height:18px;padding:0 4px;font-size:11px;letter-spacing:.04em;--rot:-5deg}
+.tbf-planche-case:active{scale:.95}
+.tbf-planche-case:focus-visible{outline:3px solid var(--projo);outline-offset:2px}
+.tbf-planche>.tbf-sticker{position:absolute;z-index:2;right:10px;top:-11px;--rot:4deg}
+
+/* ------------------------------------------- la vitrine, modale commune
+
+   Une carte en grand, par-dessus l'écran, qu'on tient au doigt : elle
+   s'incline et prend la lumière, et derrière elle, en dos de carte, ses
+   deux voisines — on feuillette. C'était la vitrine de /collection ; elle
+   devient la modale de tout ce qui montre une carte en grand, avec sa
+   matière FAIT MAIN : les boutons en bâches, les flèches en plaques
+   rondes, la croix aussi.
+
+       <div class="tbf-vitrine" role="dialog" aria-modal="true" aria-label="Le Teigneux">
+         <button type="button" class="tbf-vitrine-voile" tabindex="-1" aria-hidden="true" data-fermer></button>
+         <div class="tbf-vitrine-boite">
+           <div class="tbf-vitrine-carton">
+             <button type="button" class="tbf-plaque tbf-plaque--rond tbf-vitrine-x" data-fermer aria-label="Fermer"><svg …croix…/></button>
+             <div class="tbf-vitrine-scene" data-rar="rare" data-rayons style="--dos:url(/img/dos/RP.webp)">
+               <span class="tbf-vitrine-dos" aria-hidden="true"></span>
+               <span class="tbf-vitrine-dos tbf-vitrine-dos--apres" aria-hidden="true"></span>
+               <div class="tbf-vitrine-tilt">…cardHTML, la grande…<i class="tbf-vitrine-lustre"></i></div>
+               <span class="tbf-tampon tbf-tampon--plein" data-ton="vert">×3</span>
+             </div>
+             <div class="tbf-vitrine-tete">
+               <span class="tbf-sticker" data-ton="vert">DANS TA COLLECTION</span>
+               <h2 class="tbf-vitrine-nom">LE TEIGNEUX</h2>
+               <div class="tbf-vitrine-galons">…la forme, la famille, la série…</div>
+               <span class="tbf-marqueur">obtenue le 2 octobre</span>
+             </div>
+             <p class="tbf-vitrine-texte">…</p>
+             <div class="tbf-vitrine-ages">…trois bâches d'âge…</div>
+             <div class="tbf-vitrine-actions">…les bâches…</div>
+             <div class="tbf-vitrine-pas">…‹ 12 / 35 ›…</div>
+           </div>
+         </div>
+       </div>
+
+   **Ce qu'elle garde de la vitrine de /collection**, pour les raisons qui y
+   étaient écrites : le calque fixe hors de `#app` (la colonne est bornée à
+   900 px), z 120 — au-dessus du HUD, du moment fort et de la cérémonie, sous
+   les boîtes (160) et la fête de niveau (170) ; le voile **plein**, sans
+   flou (sans le flou, une transparence laisse lire la page derrière
+   l'histoire du personnage) ; le centrage par `margin:auto` dans une boîte
+   qui défile, pour qu'une carte plus haute que l'écran ne soit pas rognée
+   par le haut ; l'inclinaison, posée par le doigt sur la scène (`--rx`,
+   `--ry`, et `--lx`, `--ly` pour le lustre, avec `.touche` pendant qu'on
+   la tient) ; le halo de la rareté, et les rayons qui tournent pour l'épique
+   et la légendaire seulement (`data-rayons`). **Ouverte** : `.on` sur le
+   calque, et `tbf-vitrine-ouverte` sur `<html>`, qui fige la page
+   derrière.
+
+   **La vitrine est un `[role="dialog"][aria-modal="true"]`** (ou un
+   `<dialog open>`), et c'est une accroche de l'audit (`scripts/audit-ui.mjs`,
+   états `vitrine@…` et `album@/collection`) : après avoir touché une case,
+   il attend un `[role="dialog"]` ou un `dialog[open]` visible, et mesure le
+   plus grand. Un écran qui emploie la vitrine pose donc ces deux attributs
+   sur `.tbf-vitrine` dès le balisage — fermée, elle est `display:none`, et
+   l'audit ne la voit pas.
+
+   **Ce qu'elle gagne** : la pile des voisines en dos (`.tbf-vitrine-dos`,
+   la précédente à gauche, la suivante à droite, `--apres`), décalées de
+   douze pixels et tournées de ±4°, au dos de la série (`--dos`, l'adresse
+   de `FZART.dos`) — la page ne pose que celles qui existent ; le tampon
+   « ×3 » d'un doublon sur le flanc droit de la carte, **plein** (`--plein`,
+   la craie et ses lettres foncées, en vingt) : il mord sur l'illustration,
+   où un tampon en contour ne se lirait pas ; pour une carte manquante, la
+   vignette du paquet, « 1 CHANCE SUR 3 » et la bâche or OUVRIR UN BOOSTER
+   (`.tbf-vitrine-paquet`) ; les âges en trois bâches à portrait, VOIR SA
+   FICHE en parpaing, FAIRE GRANDIR en or avec son prix.
+
+   **Le tampon descend sur le flanc droit, à 36 %** (lot 4). Posé au coin
+   haut-droit de la scène, il tombait sur la forme de rareté que la carte
+   du lot 4 porte à ce coin, et sur une légendaire il cachait l'éclat
+   (relevé au banc de /collection). Sur le flanc, à la place du « ×3 » d'une
+   carte de grille (la carte de la vitrine ne pose pas le sien : c'est ce
+   tampon qui le dit), il mord toujours sur l'illustration et laisse la
+   forme entière.
+
+   **Un âge pas encore à soi** (`data-verrou` sur `.tbf-vitrine-age`) garde
+   son portrait flou, comme le nœud suivant de l'arbre des âges sur la
+   fiche : le montrer net donnerait d'avance la seule chose qu'on paie. Le
+   cadenas est dans son libellé (`.tbf-ico-cadenas`), le nom reste lisible.
+
+       <button class="tbf-plaque tbf-vitrine-age" data-verrou aria-label="Âge 3 — pas encore à toi">
+         <img src="…" alt=""><span><i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i> ÂGE 3</span><i>Gosier Légendaire</i></button>
+
+   **Le budget de mouvement** : les rayons tournent (34 s), la carte en
+   grand a sa matière animée (`cartes.css`) — deux animations infinies, la
+   troisième est à la carte si elle en a deux. La carte arrive en 500 ms
+   (`tbf-vitrine-pose`), le voile en 200. Au calme et à animations réduites,
+   la carte est posée, les rayons sont fixes, le lustre ne suit plus le
+   doigt (la page n'appelle pas l'inclinaison), et le voile paraît sans
+   fondu.
+
+   **Le lustre ne se mélange pas** (`mix-blend-mode`, que la feuille garde à
+   la fumée et à la bouffée) : un blanc à 26 % au centre, qui s'efface en
+   rond, posé dans la carte inclinée pour partir avec elle. Les mots de la
+   vitrine sont à la craie pleine sur l'encre du voile (17,6:1, 4,9 au
+   soleil). */
+.tbf-vitrine{position:fixed;inset:0;z-index:120;display:none}
+.tbf-vitrine.on{display:block}
+html.tbf-vitrine-ouverte,html.tbf-vitrine-ouverte body{overflow:hidden}
+.tbf-vitrine-voile{position:absolute;inset:0;display:block;width:100%;margin:0;padding:0;border:0;
+  background:var(--encre);opacity:0;transition:opacity .2s ease;cursor:pointer}
+.tbf-vitrine.on .tbf-vitrine-voile{opacity:1}
+/* La boîte défile en hauteur seulement. Le halo de la scène (`::before`, à
+   −30 % de chaque côté) et ses rayons (`::after`, à −46 %) sortent de la
+   colonne, et une boîte qui défile dans les deux sens les compte dans ce
+   qu'elle fait défiler : à 360 px, la vitrine glissait de soixante-deux
+   pixels de côté sous le doigt (422 de large pour 360, mesuré au banc du
+   lot 4 — la vitrine d'avant, dans /collection, faisait de même). Rognés
+   au bord de l'écran, halo et rayons s'y effacent déjà. */
+.tbf-vitrine-boite{position:absolute;inset:0;display:flex;overflow:hidden auto;overscroll-behavior:contain;
+  padding:calc(14px + env(safe-area-inset-top)) 16px calc(22px + env(safe-area-inset-bottom))}
+.tbf-vitrine-carton{position:relative;margin:auto;width:min(420px,100%);color:var(--craie);text-align:center}
+.tbf-vitrine-carton>.tbf-plaque--rond{position:absolute;z-index:8;top:0}
+.tbf-vitrine-x{right:-4px}
+.tbf-vitrine-retour{left:-4px}
+.tbf-vitrine-scene{
+  --rx:0deg;--ry:0deg;
+  position:relative;isolation:isolate;width:min(272px,70vw);margin:56px auto 0;perspective:900px;
+}
+.tbf-vitrine-scene::before{content:"";position:absolute;inset:-24% -30%;z-index:-2;pointer-events:none;
+  background:radial-gradient(closest-side,var(--rar,var(--r-commune)),transparent 74%);opacity:.3}
+.tbf-vitrine-scene[data-rayons]::after{
+  content:"";position:absolute;inset:-46%;z-index:-2;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg at 50% 50%,var(--rar,var(--r-commune)) 0deg 5deg,transparent 5deg 17deg);
+  opacity:.14;animation:tbf-vitrine-tourne 34s linear infinite;
+  -webkit-mask:radial-gradient(closest-side,#000 30%,transparent 78%);
+          mask:radial-gradient(closest-side,#000 30%,transparent 78%);
+}
+@keyframes tbf-vitrine-tourne{to{rotate:360deg}}
+.tbf-vitrine-dos{
+  position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:4%/2.9%;
+  background:var(--dos,none) 50% 50%/cover no-repeat,linear-gradient(160deg,var(--parpaing),var(--encre));
+  box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),3px 4px 0 3.5px rgba(7,9,12,.6);
+  translate:-12px 8px;rotate:-4deg;
+}
+.tbf-vitrine-dos--apres{translate:12px 8px;rotate:4deg}
+.tbf-vitrine-tilt{position:relative;z-index:1;transform-style:preserve-3d;
+  transform:rotateX(var(--rx)) rotateY(var(--ry));transition:transform .14s ease-out;
+  animation:tbf-vitrine-pose .5s cubic-bezier(.2,1.5,.35,1)}
+@keyframes tbf-vitrine-pose{from{opacity:0;transform:translateY(26px) scale(.82) rotate(-5deg)}}
+.tbf-vitrine-lustre{position:absolute;inset:0;z-index:5;pointer-events:none;border-radius:4%/2.9%;
+  background:radial-gradient(circle at var(--lx,50%) var(--ly,40%),rgba(255,255,255,.26),
+    rgba(255,255,255,.05) 34%,transparent 58%);
+  opacity:0;transition:opacity .2s ease}
+.tbf-vitrine-scene.touche .tbf-vitrine-lustre{opacity:1}
+.tbf-vitrine-scene>.tbf-tampon{position:absolute;z-index:6;right:-10px;top:36%;--rot:9deg}
+.tbf-vitrine-scene>.tbf-tampon.tbf-tampon--plein{padding:5px 9px 4px;font-size:20px}
+
+.tbf-vitrine-tete{display:flex;flex-direction:column;align-items:center;gap:9px;margin-top:22px}
+.tbf-vitrine-nom{margin:0;font:700 25px/1.05 var(--banner);letter-spacing:.04em;text-transform:uppercase;
+  color:var(--craie);text-wrap:balance;overflow-wrap:anywhere}
+.tbf-vitrine-galons{--penche:.5;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:12px 14px}
+.tbf-vitrine-galons>.tbf-forme{--taille:34px}
+.tbf-vitrine-tete>.tbf-marqueur{color:var(--craie)}
+.tbf-vitrine-texte{margin:14px 0 0;font-size:13px;line-height:1.6;color:var(--craie)}
+.tbf-vitrine-histoire{margin:12px 0 0;font-size:12.5px;line-height:1.7;font-style:italic;color:var(--craie)}
+
+/* La carte manquante : la vignette du paquet de travers, sa chance en
+   sticker, et la bâche qui y mène — elle mène vraiment au kiosque. */
+.tbf-vitrine-paquet{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;justify-items:start;
+  gap:16px 18px;margin-top:20px;text-align:left}
+.tbf-vitrine-paquet>img{display:block;width:64px;height:auto;border-radius:3px;rotate:-4deg;
+  box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre),2px 3px 0 3.5px rgba(7,9,12,.6)}
+.tbf-vitrine-paquet>.tbf-sticker{--rot:3deg}
+.tbf-vitrine-paquet>.tbf-plaque{grid-column:1/-1;justify-self:stretch}
+
+/* Les âges en trois bâches : le portrait découpé en rond, l'âge, le nom à
+   la ligne (jamais coupé : c'est la rangée qui sert à les découvrir). L'âge
+   regardé reste enfoncé (`aria-current`), comme la pièce de l'inventaire. */
+.tbf-vitrine-ages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px}
+.tbf-plaque.tbf-vitrine-age{flex-direction:column;gap:5px;min-width:0;min-height:84px;margin:0 0 var(--epaisseur);
+  padding:8px 5px;font-size:11px;letter-spacing:.08em}
+.tbf-vitrine-age>img{display:block;width:36px;height:36px;border-radius:50%;object-fit:cover;object-position:50% 8%;
+  background:var(--craie);box-shadow:0 0 0 2px var(--craie),0 0 0 3.5px var(--encre)}
+.tbf-vitrine-age>i{display:block;max-width:100%;font:600 11px/1.2 var(--ui);font-style:normal;letter-spacing:0;
+  text-transform:none;overflow-wrap:anywhere}
+.tbf-plaque.tbf-vitrine-age[aria-current=true]{transform:translateY(var(--epaisseur));
+  box-shadow:inset 0 1px 0 rgba(242,238,228,.35),2px 0 0 2px var(--encre)}
+.tbf-vitrine-age[data-verrou]>img{filter:blur(2.5px) grayscale(.3)}
+
+.tbf-vitrine-actions{display:flex;flex-direction:column;gap:14px;margin-top:20px}
+.tbf-vitrine-actions>.tbf-plaque>.tbf-sticker--prix{--rot:4deg}
+
+/* Le feuilletage : deux plaques rondes, et le rang entre elles, « 12 / 35 »
+   — un collectionneur compte. Une flèche sans voisine est éteinte (la bâche
+   hors service), pas retirée : le rang ne doit pas sauter. */
+.tbf-vitrine-pas{display:flex;align-items:center;gap:12px;margin-top:22px}
+.tbf-vitrine-pas>span{flex:1;font:600 13px/1 var(--banner);letter-spacing:.14em;color:var(--craie);
+  font-variant-numeric:tabular-nums}
+
+/* **Au calme, la grille et la vitrine sont déjà posées.** Le nœud suivant ne
+   pulse plus (il reste cerné d'or), la bande du cri et la tuile courante ne
+   s'enfoncent plus en bougeant, la pochette ne s'écrase plus, la vitrine
+   pose sa carte sans rebond et ses rayons ne tournent plus. Rien de ce qui
+   informe ne part. */
+@media (prefers-reduced-motion:reduce){
+  .tbf-ages>li[data-etat=suivant][data-pret]>.tbf-ages-k{animation:none}
+  .tbf-cri{transition:none}
+  .tbf-cri:active{transform:none;filter:brightness(.88)}
+  .tbf-album-pochette,.tbf-planche-case{transition:none}
+  .tbf-album-pochette:active,.tbf-planche-case:active{scale:none}
+  .tbf-vitrine-voile,.tbf-vitrine-lustre{transition:none}
+  .tbf-vitrine-tilt{animation:none;transition:none}
+  .tbf-vitrine-scene[data-rayons]::after{animation:none}
+}
+html[data-calme~="animations"] .tbf-ages>li[data-etat=suivant][data-pret]>.tbf-ages-k{animation:none}
+html[data-calme~="animations"] .tbf-cri{transition:none}
+html[data-calme~="animations"] .tbf-cri:active{transform:none;filter:brightness(.88)}
+html[data-calme~="animations"] .tbf-album-pochette,html[data-calme~="animations"] .tbf-planche-case{transition:none}
+html[data-calme~="animations"] .tbf-album-pochette:active,
+html[data-calme~="animations"] .tbf-planche-case:active{scale:none}
+html[data-calme~="animations"] .tbf-vitrine-voile,html[data-calme~="animations"] .tbf-vitrine-lustre{transition:none}
+html[data-calme~="animations"] .tbf-vitrine-tilt{animation:none;transition:none}
+html[data-calme~="animations"] .tbf-vitrine-scene[data-rayons]::after{animation:none}
+
 /* ------------------------------------------------ ce que je porte, à l'écran
 
    Le panneau des bonus et des malus, commun au Grand Virage et au duel. Son
@@ -6847,58 +8380,34 @@ html[data-calme~="animations"] .tbf-interrupteur>i::after{transition:none}
    tenue, pour un skin. Elle nomme ce qu'on vient de gagner, là où le nom de
    la carte nomme **qui** l'a gagné.
 
-   **Elle était à `bottom:5%`, c'est-à-dire sur le nom.** Le bandeau du nom
-   est collé au bas de la carte — `.fz .top` — et porte un `z-index`, donc
-   « LE DÉPIT » passait sous « LE PREMIER CRI » : deux textes en capitales
-   l'un dans l'autre, illisibles tous les deux.
+   **Sur la carte, elle est dans le flux de la bande du nom** (lot 4).
+   `cardHTML` la pose dans `.sur` — la rangée de ce qui se colle sur la
+   bande, juste avant le nom —, et `cartes.css` lui donne tout son dessin,
+   position statique comprise (`.fz .sur .tbf-etiq`) : un nom de deux ou de
+   trois lignes la repousse vers le haut, elle ne passe plus jamais dessous.
+   C'est ce que le lot 1 demandait au balisage de la carte.
 
-   Onze `--u` la posent juste au-dessus. En `--u` et non en pourcentage,
-   parce que c'est la hauteur du bandeau qu'il faut dégager, et que celle-ci
-   est faite de la police du nom et de son rembourrage — toutes deux en `--u`.
-   Un pourcentage suivrait la hauteur de la carte, qui n'a rien à voir : la
-   même carte à 120 px et à 360 px n'a pas le même rapport entre les deux.
+   **Le correctif du lot 1 est retiré.** Elle était posée en absolu au-dessus
+   du nom par un calcul : la hauteur du bandeau en `--u`, multipliée par
+   `--lignes-nom`, que la carte (un conteneur) passait à deux sous 140 px.
+   Mais une largeur ne dit pas combien de lignes prend un nom : un nom de
+   trois lignes sous cent pixels, ou de deux au-delà de 140, la remettait
+   sous le nom. Plus aucun écran ne la pose ainsi ; `--lignes-nom`, le calcul
+   et la requête de conteneur sont partis avec la position absolue.
 
-   **Le nom a maintenant un plancher de onze pixels** (voir `.fz .nm` dans
-   `cartes.css`), et l'étiquette le suit : sa hauteur est recalculée comme
-   celle du bandeau — le corps du nom, son interligne de 1,05, trois `--u` de
-   rembourrage et deux d'écart. Sur une grande carte on retombe sur les onze
-   `--u` d'avant.
-
-   **Mais à onze pixels, un nom passe sur deux lignes**, et le calcul n'en
-   comptait qu'une : l'étiquette repassait sous le nom, de huit à dix pixels,
-   sur les vignettes du classeur et du butin. Mesuré sur les 753 noms du catalogue, en
-   Oswald : à 86 px de carte, 72 % des noms tiennent sur deux lignes et 3,5 %
-   sur trois ; à 105 px, 44 % sur deux ; à 140 px, 9 % ; à 150 px, 4 %. La
-   carte est un conteneur, donc elle sait sa largeur : jusqu'à 140 px,
-   `--lignes-nom` passe à deux. Un nom d'une seule ligne y laisse une ligne
-   d'air sous l'étiquette — c'est le prix, et il est bien moindre que deux
-   textes l'un dans l'autre.
-
-   Ce qui reste — un nom de trois lignes sous cent pixels, un nom de deux
-   au-delà de 140 — ne se règle pas ici : une largeur ne dit pas combien de
-   lignes prend un nom. Il faudrait poser l'étiquette dans le bandeau,
-   au-dessus du nom, et c'est le balisage de `cartes.js` qui changerait.
-
-   **Elle-même passe de huit à onze pixels**, et c'est ce qui a changé sa
-   géométrie. À onze, « LE PREMIER CRI » ne tient plus sur une vignette de
-   quatre-vingts pixels : en `nowrap`, centrée par `translateX(-50%)`, elle
-   débordait des deux côtés et la carte, en `overflow:hidden`, la coupait aux
-   deux bouts. Elle a donc le droit de passer à la ligne, et c'est pour ça
-   qu'elle n'est plus centrée par `left:50%` : une boîte posée au milieu n'a
-   que la moitié de la carte pour s'étendre, et elle se serait cassée en deux
-   mots bien avant le bord. Posée de bord à bord, `fit-content` et des marges
-   automatiques, elle prend la largeur de son texte, se centre, et ne se plie
-   que lorsque la carte l'y oblige. */
-.tbf-etiq{--lignes-nom:1;position:absolute;left:4px;right:4px;margin-inline:auto;width:fit-content;
-  bottom:calc(max(11px, 6 * var(--u,1.3px)) * 1.05 * var(--lignes-nom) + 5 * var(--u,1.3px));
+   **Ce qui reste ici** : sa lettre (Oswald onze, en capitales, en lignes
+   équilibrées), et sa place sur un dessin montré seul — `dessinDeCarte`
+   appelé sans `cardHTML`, qui n'a pas de bande de nom : en bas du dessin,
+   de bord à bord, centrée par `fit-content` et des marges automatiques.
+   Elle y prend la largeur de son texte et ne se plie que si le dessin l'y
+   oblige ; posée au milieu par `left:50%`, elle n'aurait que la moitié de
+   la largeur pour s'étendre et se casserait bien avant le bord. */
+.tbf-etiq{position:absolute;left:4px;right:4px;bottom:5%;margin-inline:auto;width:fit-content;
   font-family:var(--banner);font-size:11px;line-height:1.15;letter-spacing:.06em;
   text-align:center;text-wrap:balance;
   padding:3px 7px;border-radius:12px;background:rgba(4,7,11,.9);
   color:var(--craie);box-shadow:0 0 0 1px rgba(242,238,228,.22);
   text-transform:uppercase;pointer-events:none}
-/* Le conteneur interrogé est la carte (`.fz`, dans `cartes.css`) : c'est
-   l'ancêtre le plus proche qui en établit un. */
-@container (max-width: 140px){ .tbf-etiq{--lignes-nom:2} }
 
 .tbf-piece{
   position:relative;display:inline-block;flex:none;
@@ -7454,123 +8963,128 @@ html[data-calme~="animations"] .tbf-dial{transform:none}
    **ouvre**, il ne donne pas — cet écran annonce donc des capacités, et les
    écharpes à part.
 
-   Le fond est plus opaque que celui du dialogue, et c'est voulu : une
-   confirmation porte sur ce qu'on voit derrière, une fête ne porte que sur
-   elle-même. Ce qui est derrière n'a plus rien à dire pendant deux secondes.
+   **Une case de BD posée sur le fond** (correction des lots 3 et 5, place
+   donnée au lot 4) : la case du moment fort en or
+   (`.tbf-vignette[data-ton=or]`), et dedans le Fanzzy en pose victoire avec
+   sa cocarde, le titre en sticker flare, « NIVEAU 5 » au lettrage de la
+   case, le gain en sticker de prix, ce que le palier ouvre en stickers
+   craie, le prochain palier en sticker de promesse, et CONTINUER en bâche
+   or. Toutes ces pièces sont des briques de cette feuille, et cette section
+   ne dit que **leur place dans la case** — la colonne, les marges, les
+   corps — et le repli de la scène quand l'écran est court.
 
-   `z-index` au-dessus du dialogue : une montée tombe à la fin d'un booster ou
-   d'un duel, et rien de ce qui pourrait traîner ne doit passer devant. */
+       <div class="tbf-niv-fond on">
+         <i class="tbf-bouffee" aria-hidden="true" style="--x:50%;--y:40%;…"></i>
+         <div class="tbf-vignette tbf-niv-case" data-ton="or" role="alertdialog" aria-modal="true"
+              aria-label="Tu montes : niveau 5">
+           <div class="tbf-niv-scene tbf-niv-scene--perso" aria-hidden="true">
+             <img class="tbf-niv-perso" src="…victoire…" alt=""><svg class="tbf-niv-cocarde" …/>
+           </div>
+           <div class="tbf-niv-corps">
+             <span class="tbf-sticker" data-ton="flare">TU MONTES !</span>
+             <h2 class="tbf-vignette-mot tbf-niv-n">NIVEAU <b>5</b></h2>
+             <div class="tbf-niv-de">tu étais au niveau 3</div>                 deux niveaux et plus
+             <div class="tbf-niv-butin">
+               <span class="tbf-sticker tbf-sticker--prix tbf-niv-ech"><img …><b>+50</b> ÉCHARPES</span>
+               <div class="tbf-niv-libelle">ÇA T'OUVRE</div>
+               <ul class="tbf-niv-cles"><li><span class="tbf-sticker"><svg …/>UN FANZZY DE PLUS AU DECK</span>
+                 <small>3 dans ta tribune, désormais</small></li></ul>
+             </div>
+             <div class="tbf-niv-promesse"><div class="tbf-niv-libelle">PROCHAIN PALIER</div>
+               <span class="tbf-sticker tbf-sticker--jalon">NIV. 9 → 4 CLUBS À SUIVRE</span></div>
+           </div>
+           <button type="button" class="tbf-plaque tbf-bloc" data-ton="or" data-fermer>CONTINUER</button>
+         </div>
+       </div>
+
+   **Elle vivait dans une feuille que le script posait lui-même**
+   (`#tbf-niv-feuille`, dans `niveau-fete.js`), le temps de rejoindre
+   celle-ci. Ses règles sont ici, **au sélecteur et à la déclaration près** :
+   tant que le script pose encore la sienne, les deux disent la même chose et
+   rien ne bouge à l'écran ; quand il cessera de la poser, rien ne bougera
+   non plus. La boîte « premium » d'avant — un dégradé radial doré, une
+   lueur de vingt-six pixels sous le chiffre, des pilules sombres, une
+   rosette qui tournait sans fin, un bouton en dégradé brillant — est partie
+   avec ses classes (`.tbf-niv`, `.tbf-niv-rosette`, `.tbf-niv-quoi`,
+   `.tbf-niv-gains`, `.tbf-niv-ouvre`, `.tbf-niv .g`, `.tbf-niv-proch`,
+   `.tbf-niv-bt`), que plus rien ne pose. Restent les classes que les suites
+   lisent : `.tbf-niv-fond`, `.tbf-niv-n b` (le chiffre), `[data-fermer]` et
+   le rôle `alertdialog` (`boosters-ui-smoke`, l'audit).
+
+   **Le fond** est plus opaque que celui du dialogue, et c'est voulu : une
+   confirmation porte sur ce qu'on voit derrière, une fête ne porte que sur
+   elle-même. Sans flou, comme `.tbf-dial-fond` : il était à 88 % flouté, la
+   boîte de confirmation est montée à 88 % sans flou, et celui-ci à 94 % pour
+   rester le plus opaque des deux. **z-index 170**, au-dessus du dialogue : une
+   montée tombe à la fin d'un booster ou d'un duel, et rien de ce qui
+   pourrait traîner ne doit passer devant. Le fond paraît en fondu de 200 ms
+   (`.on`) ; `niveau-fete.js` le retire par une minuterie, jamais à la fin de
+   la transition.
+
+   **Les entrées sont jouées par le script** (la case qui tombe, la cocarde
+   qui se serre, le personnage qui monte, le cadenas qui saute), qui ne les
+   joue pas sans mouvement ; celles des briques (`.tbf-colle`, la bouffée)
+   ont leurs doubles plus haut. Aucune animation ici, donc rien à couper au
+   calme que le fondu du fond. */
 .tbf-niv-fond{position:fixed;inset:0;z-index:170;display:grid;place-items:center;
-  /* Sans flou, comme `.tbf-dial-fond`. Il était à 88 % flouté ; la boîte de
-     confirmation vient de monter à 88 % sans flou, donc celui-ci passe à 94 %
-     pour rester le plus opaque des deux — la règle ci-dessus tient toujours. */
   padding:20px;background:rgba(4,6,10,.94);
   opacity:0;transition:opacity .2s ease}
 .tbf-niv-fond.on{opacity:1}
-
-.tbf-niv{width:min(400px,100%);max-height:calc(100vh - 40px);overflow:auto;
-  text-align:center;color:var(--craie);
-  background:radial-gradient(120% 70% at 50% 0,rgba(245,195,59,.16),transparent 62%),
-    linear-gradient(180deg,#171D26,#0C1015);
-  border:1px solid rgba(245,195,59,.3);border-radius:var(--r);
-  box-shadow:0 26px 76px rgba(0,0,0,.72),0 0 44px rgba(245,195,59,.14),
-    inset 0 1px 0 rgba(255,255,255,.07);
-  padding:22px 18px 16px;transform:scale(.9) translateY(14px);
-  transition:transform .26s cubic-bezier(.2,1.5,.4,1)}
-.tbf-niv-fond.on .tbf-niv{transform:none}
-/* À animation réduite, la fête apparaît sans rebondir, comme la boîte de
-   confirmation : le chiffre est l'information, l'élan qui l'apporte ne l'est
-   pas. `niveau-fete.js` retire le fond par une minuterie, pas sur la fin de
-   la transition. */
 @media (prefers-reduced-motion:reduce){
-  .tbf-niv-fond,.tbf-niv{transition:none}
-  .tbf-niv{transform:none}
+  .tbf-niv-fond{transition:none}
 }
-html[data-calme~="animations"] .tbf-niv-fond,html[data-calme~="animations"] .tbf-niv{transition:none}
-html[data-calme~="animations"] .tbf-niv{transform:none}
+html[data-calme~="animations"] .tbf-niv-fond{transition:none}
 
-/* La rosette, et son tour lent. Douze secondes : on la remarque sans qu’elle
-   attire l'œil pendant qu'on lit ce qui est écrit dessous. */
-.tbf-niv-rosette{width:62px;height:62px;display:block;margin:0 auto 10px;
-  color:var(--projo);filter:drop-shadow(0 0 14px rgba(245,195,59,.5))}
-@media (prefers-reduced-motion:no-preference){
-  .tbf-niv-fond.on .tbf-niv-rosette{animation:tbf-niv-tour 12s linear infinite}}
-/* Ce bloc-ci est écrit à l'envers — l'animation n'existe que si rien ne s'y
-   oppose —, son double du mode calme la retire donc au lieu de ne pas la
-   poser. */
-html[data-calme~="animations"] .tbf-niv-fond.on .tbf-niv-rosette{animation:none}
-@keyframes tbf-niv-tour{to{transform:rotate(1turn)}}
+/* **La case : une colonne, jamais plus haute que l'écran.** Quand il est
+   court, la scène cède sa hauteur la première, puis le corps défile ; le
+   bouton reste toujours au bas de la case, sous le doigt. Le lettrage de la
+   case (`.tbf-vignette-mot`) porte « NIVEAU 5 » : son corps, et le chiffre
+   qui en prend tout le reste — couleur, ombre, espacement compris : la
+   règle de l'or ne lui laisse pas de petit or, et la craie de la case, son
+   ombre d'encre et sa double impression le portent mieux qu'une lueur. */
+.tbf-niv-case{display:flex;flex-direction:column;align-items:center;
+  width:min(400px,100%);max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);
+  padding:16px 16px 14px;color:var(--craie)}
+.tbf-niv-case>.tbf-niv-scene{align-self:stretch;flex:0 1000 auto;min-height:0}
+.tbf-niv-corps{align-self:stretch;flex:0 1 auto;min-height:0;overflow:hidden auto;
+  margin:0 -10px;padding:8px 10px 10px;display:flex;flex-direction:column;align-items:center}
+.tbf-niv-case>.tbf-plaque{flex:none;margin-top:12px}
+.tbf-niv-case .tbf-niv-n{display:block;margin:10px 0 0;font-size:clamp(36px,13vw,52px)}
+.tbf-niv-case .tbf-niv-n b{font:inherit;color:inherit;text-shadow:inherit;letter-spacing:inherit}
+.tbf-niv-case .tbf-niv-de{margin-top:8px;font-size:12px}
 
-/* **La scène : le Fanzzy en pose victoire, derrière la rosette** (lots 3
-   et 5). Ces règles étaient posées par `niveau-fete.js` lui-même, dans une
-   feuille injectée (`#tbf-niv-feuille`), le temps de rejoindre celle-ci ;
-   elles sont ici, au mot près, et la feuille injectée peut partir.
+/* Le butin et ce que le palier ouvre : des stickers en colonne, chacun à sa
+   largeur, avec l'air qu'il leur faut autour (cinq pixels). Tout est à la
+   craie pleine, au plancher de douze pixels pour ce qui se lit sous un
+   sticker : la case est unie et grainée, la craie y tient. */
+.tbf-niv-butin{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:16px}
+.tbf-niv-libelle{font-family:var(--banner);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.tbf-niv-cles{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;
+  align-items:center;gap:12px}
+.tbf-niv-cles small{display:block;margin-top:7px;font-size:12px}
+.tbf-niv-case .tbf-niv-rien{margin:0;padding:0;font-size:12px;line-height:1.5}
+.tbf-niv-promesse{margin-top:16px;display:flex;flex-direction:column;align-items:center;gap:8px}
 
-   Sans personnage (`niveau-fete.js` n'en a pas, ou son dessin ne répond
-   pas), la scène ne porte que la rosette et la bouffée, sur soixante-
-   quatorze pixels. Avec lui (`--perso`), elle en prend cent cinquante-six :
-   il se tient au milieu, coupé à la taille, la tête et les bras levés dans
-   la scène, et le bas s'efface dans le panneau au lieu d'être tranché net.
-   La rosette est épinglée devant lui, sur le côté : elle ne cache ni le
-   visage ni les mains. La scène rogne ce qui dépasse — le dessin en pied,
-   la bouffée, les confettis qui y jaillissent. */
+/* **La scène : le Fanzzy en pose victoire, et sa cocarde.** Sans personnage
+   (`niveau-fete.js` n'en a pas, ou son dessin ne répond pas), la scène ne
+   porte que la cocarde, sur soixante-quatorze pixels. Avec lui (`--perso`),
+   elle en prend cent cinquante-six : il se tient au milieu, coupé à la
+   taille, la tête et les bras levés dans la scène, et le bas s'efface dans
+   la case au lieu d'être tranché net. La cocarde est épinglée devant lui,
+   sur le côté : elle ne cache ni le visage ni les mains. La scène rogne ce
+   qui dépasse — le dessin en pied, les confettis qui y jaillissent.
+
+   **La cocarde est un dessin à plat**, sans lueur ni tour sans fin (la
+   rosette d'avant tournait douze secondes sous un halo doré) : elle se
+   serre d'un coup quand la case arrive, puis se tient immobile. Sa teinte
+   est l'or d'une récompense, sur un dessin et non sous un mot. */
 .tbf-niv-scene{position:relative;height:74px;margin:-6px 0 6px;overflow:hidden;
   display:grid;place-items:center}
-.tbf-niv-scene .tbf-niv-rosette{position:relative;z-index:2;margin:0}
 .tbf-niv-scene--perso{height:156px;margin:-12px -8px 4px}
 .tbf-niv-perso{position:absolute;z-index:1;left:0;right:0;top:-10px;margin:0 auto;
   width:auto;height:310px;max-width:none;pointer-events:none;
   -webkit-mask-image:linear-gradient(180deg,#000 118px,transparent 166px);
   mask-image:linear-gradient(180deg,#000 118px,transparent 166px)}
-.tbf-niv-scene--perso .tbf-niv-rosette{position:absolute;left:calc(50% + 30px);bottom:8px;
-  width:56px;height:56px}
-
-/* **Tout le texte à la craie pleine** (lots 3 et 5), et au plancher du jeu,
-   onze pixels. Le secondaire était à 88 % : sur cette boîte, plus claire que
-   le panneau calme et dorée en haut, la craie voilée tombait sous 3,6:1 au
-   soleil ; pleine, elle en tient 4,1 en haut et 4,5 en bas. La hiérarchie
-   passe par le corps, l'espacement et la graisse — l'écran ne dure que
-   quelques secondes, raison de plus pour qu'il se lise du premier coup. */
-.tbf-niv-quoi{font-family:var(--banner);font-size:11px;letter-spacing:.24em}
-/* Le chiffre porte tout l’écran : c’est la seule chose qu’on doit retenir.
-   Il est en or, et c'est permis : un grand texte (46 à 64 px), où l'or tient
-   les 3:1 qu'il lui faut — la règle de l'or (« les tons »). */
-.tbf-niv-n{margin-top:4px;display:flex;align-items:baseline;justify-content:center;gap:9px}
-.tbf-niv-n span{font-family:var(--banner);font-size:12px;letter-spacing:.2em}
-.tbf-niv-n b{font-family:var(--banner);font-size:clamp(46px,17vw,64px);line-height:.95;
-  color:var(--projo);text-shadow:0 0 26px rgba(245,195,59,.45)}
-.tbf-niv-de{font-size:11.5px;margin-top:2px}
-
-.tbf-niv-gains{margin-top:15px;display:flex;flex-direction:column;gap:7px}
-.tbf-niv-ouvre{font-family:var(--banner);font-size:11px;letter-spacing:.22em;margin-top:6px}
-.tbf-niv .g{border-radius:11px;padding:10px 12px;background:rgba(0,0,0,.34);
-  box-shadow:inset 0 0 0 1px rgba(242,238,228,.1)}
-/* La somme gagnée, à la craie : dix-sept pixels en gras, sous les 18,66 du
-   grand texte, et la règle de l'or (« les tons ») n'écrit plus un petit
-   texte en or — l'or reste au chiffre du niveau, en grand, et à la rosette.
-   Les écharpes sont un jeton craie partout ailleurs (amendement 2). */
-.tbf-niv .g b{display:block;font-family:var(--banner);font-size:17px;letter-spacing:.04em;
-  color:var(--craie)}
-.tbf-niv .g span{display:block;font-size:11px;letter-spacing:.13em;margin-top:2px}
-/* Ce qu'un palier ouvre n'est pas une somme : le texte y est plus petit. */
-.tbf-niv .g.ouvre b{font-size:13px;color:var(--craie)}
-.tbf-niv .g.ouvre span{letter-spacing:.04em;font-size:11px;text-transform:none}
-.tbf-niv-rien{font-size:11.5px;line-height:1.6;padding:4px 6px}
-/* **La ligne du prochain palier** (« PROCHAIN : NIV. 9 → 4 CLUBS À
-   SUIVRE ») : douze pixels pleins, sur la teinte des cases de gain. Elle
-   n'est posée que si `chemin` (les paliers de `/api/niveau`) est donné. Venue
-   de la feuille injectée de `niveau-fete.js`, comme la scène. */
-.tbf-niv-proch{margin-top:10px;padding:8px 10px;border-radius:11px;
-  background:rgba(0,0,0,.34);box-shadow:inset 0 0 0 1px rgba(242,238,228,.1);
-  font-family:var(--banner);font-size:12px;line-height:1.4;letter-spacing:.08em;
-  text-transform:uppercase}
-.tbf-niv-proch b{display:block;font-weight:700}
-
-.tbf-niv-bt{width:100%;margin-top:16px;border:0;border-radius:11px;cursor:pointer;
-  padding:14px 12px;min-height:50px;font-family:var(--banner);font-size:14px;
-  letter-spacing:.1em;color:#1A0C04;
-  background:linear-gradient(180deg,#FFD86B,var(--projo) 55%,#B8860B);
-  box-shadow:0 4px 0 #7A5A0E,inset 0 1px 0 rgba(255,255,255,.4);
-  transition:transform .1s,box-shadow .1s}
-.tbf-niv-bt:active{transform:translateY(4px);box-shadow:0 0 0 #7A5A0E}
-.tbf-niv-bt:focus-visible{outline:2px solid var(--craie);outline-offset:2px}
+.tbf-niv-cocarde{display:block;width:58px;height:58px;color:var(--projo)}
+.tbf-niv-scene--perso .tbf-niv-cocarde{position:absolute;z-index:2;left:calc(50% + 30px);
+  bottom:8px;width:52px;height:52px}

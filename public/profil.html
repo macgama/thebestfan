@@ -98,6 +98,44 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 /* Le niveau, collé sur le coin déchiré du cadre : il le chevauche. */
 .carte-niv{position:absolute;z-index:4;right:-7px;bottom:-9px;--taille:34px;--rot:6deg;font-size:17px}
 
+/* ------------------------------------------------ les insignes du carnet
+
+   Ce que le carnet de saison donne à porter (le contrat serveur, § 6.1,
+   `insignes`) : **le tampon de la saison** sur la carte, **le liseré de la
+   saison** autour de l'anneau du buste. Aucune puissance, un honneur : il se
+   voit sur la carte, et MA SAISON l'écrit en clair (« LISERÉ S1 »). Sans
+   insigne servi, rien — ni tampon, ni liseré, ni place réservée.
+
+   **Les tampons** se posent en haut à gauche, en face du tampon VÉRIFIÉ, et
+   pour la même raison : un tampon plein, sa face de craie le détache de
+   n'importe quelle plaque, là où rien d'autre ne s'écrit. Le vert, celui de
+   l'acquis. Ils tiennent sur une ligne (quatre au plus, les plus récents :
+   la page n'en pose pas davantage) ; la carte descend son texte d'autant
+   (`data-tampons`) pour qu'un pseudo de deux lignes ne passe jamais
+   dessous. */
+.carte-saisons{position:absolute;z-index:3;top:18px;left:14px;display:flex;gap:7px;
+  max-width:calc(100% - 160px)}
+.carte-saisons[hidden]{display:none}
+.carte-saisons>.tbf-tampon{--rot:-5deg}
+.carte-saisons>.tbf-tampon:nth-child(even){--rot:4deg}
+.carte[data-tampons] .carte-corps{padding-top:58px}
+/* PROVISOIRE — besoin « feuilles-css » (le liseré de saison de
+   `.tbf-avatar`). Le liseré n'est pas encore une brique : en l'attendant, la
+   page le coud elle-même autour de l'anneau du lot 1 — une bande d'encre de
+   quatre pixels et demi passée au fil de craie, comme le titre cousu, hors
+   du bord de découpe. Ni l'or (il dirait une récompense à prendre, ou une
+   légendaire) ni une couleur de famille ou de rareté : l'anneau garde
+   celles du club ou de la division portée. Le contour suit l'arrondi et
+   s'enfonce avec l'anneau sous le doigt ; l'ombre dure s'élargit d'autant.
+   À retirer quand ui.css posera `.tbf-avatar[data-lisere]`. */
+.carte-buste[data-lisere]{margin:0 5px 0 3px}
+.carte-buste[data-lisere]>.tbf-anneau{
+  box-shadow:0 0 0 8.5px var(--encre),2px 2px 0 8.5px rgba(7,9,12,.6);
+  outline:1.5px dashed var(--craie);outline-offset:4.5px}
+/* Le contour de focus passe dehors : posé à un pixel, il tombait sous la
+   bande cousue. */
+.carte-buste[data-lisere]:focus-visible{outline-offset:10px}
+
 /* -------------------------------------------------------- les stats
 
    Quatre stickers qu'on touche (`.tbf-stat`), chacun mène où sa valeur se
@@ -216,6 +254,9 @@ h2{margin:26px 2px 10px}
 .saison-suite .tbf-jauge{flex:1;min-width:48px}
 .saison .porter{width:100%;margin:14px 0 5px}
 .saison-titres{display:flex;flex-wrap:wrap;gap:12px 14px;margin-top:14px;padding:4px 4px 2px}
+/* Les insignes du carnet seuls (sans saison de rang servie) : la rangée
+   ouvre le panneau. */
+.saison-titres:first-child{margin-top:0}
 
 /* ------------------------------------------------------- le parcours
 
@@ -261,10 +302,18 @@ h2{margin:26px 2px 10px}
    La place de la carte est réservée dès le premier rendu (`aspect-ratio` de
    la carte) : le catalogue arrive après la page, et la carte ne pousse rien
    en arrivant. S'il ne vient pas, la place se retire et la rubrique garde
-   son texte. */
+   son texte.
+
+   **La carte du lot 4 est un sticker** : son ombre dure est la sienne (sur
+   `.body`), et le pin, la forme de rareté et la bande du nom passent ses
+   bords de trois à quatre pixels. La page ne lui pose donc plus d'ombre —
+   elle en ajoutait une seconde, à un autre rayon — et lui laisse seize
+   pixels d'air dans le panneau, qui rogne (`.bloc`). Cent trente-deux
+   pixels : une vignette, sous le seuil du pied (150), matière statique. */
 .mon-fz{display:flex;align-items:center;gap:16px;padding:16px 14px 16px 16px}
 .mon-fz-carte{flex:none;width:132px;aspect-ratio:63/88;rotate:-2.5deg}
-.mon-fz-carte .fz{--u:1.32px;box-shadow:3px 4px 0 1px rgba(7,9,12,.7)}
+/* Le repli de l'unité, si le confinement ne prend pas (cartes.css). */
+.mon-fz-carte .fz{--u:1.32px}
 /* Sa place vide : le pointillé d'un emplacement, la silhouette au pochoir. */
 .mon-fz-vide{width:112px;display:grid;place-items:center;border:2px dashed rgba(242,238,228,.5);
   border-radius:7px;background:rgba(0,0,0,.18)}
@@ -366,6 +415,9 @@ html[data-calme~="animations"] .spin{animation-duration:3s}
       </div>
     </div>
     <span class="tbf-tampon tbf-tampon--plein carte-tampon" id="badge" hidden></span>
+    <!-- Les tampons de saison du carnet (`insignes` de /api/quotidien) :
+         posés seulement s'il y en a. -->
+    <div class="carte-saisons" id="saisonsCarte" role="img" hidden></div>
     <b class="tbf-sticker tbf-sticker--rond carte-niv" id="nivCoin" role="img" hidden></b>
   </section>
 
@@ -582,13 +634,16 @@ let cartesPretes = null; // le catalogue des cartes : null tant qu'il arrive, pu
    septième recette du « qui montrer », celle qui a déjà affiché le gamin à
    la place du Capo.
 
-   Deux sources, dans l'ordre : l'avatar public que `/api/rank/moi` portera
-   (même liste blanche que les classements, demandé au serveur), puis
-   **provisoirement** celui que la barre a retenu pour ce même joueur dans
-   l'onglet (`tbf-hud`, voir `nav.js`), sans sa rareté — la plaque d'une
-   légendaire y retombe alors sur celle de son âge. Sans aucun des deux, le
-   buste reste la silhouette du sticker sans photo : un visage faux est pire
-   qu'un visage absent.
+   Deux sources, dans l'ordre : l'avatar public que sert `/api/rank/moi`
+   (le contrat, § 14.3 : la même liste blanche que les classements), puis
+   celui que la barre a retenu pour ce même joueur dans l'onglet
+   (`tbf-hud`, voir `nav.js`), sans sa rareté — la plaque d'une légendaire
+   y retombe alors sur le palier de son âge (`palierDecor`). La barre ne
+   parle que si ma place ne dit rien : `avatar` absent (le serveur ne sait
+   pas) ou ma place pas servie. `avatar: null` est une réponse — aucun
+   Fanzzy équipé — et passe avant elle (`'avatar' in place`). Sans aucun
+   des deux, le buste reste la silhouette du sticker sans photo : un visage
+   faux est pire qu'un visage absent.
 
    **Ce que la barre retient, elle l'annonce** (`tbf:hud`, la valeur écrite
    en `detail`) : c'est par là que la page apprend le visage du joueur quand
@@ -651,8 +706,9 @@ function poserBuste() {
       : '<span class="tbf-avatar-buste"></span>';
   }
 
-  /* La plaque du décor de son Fanzzy : celle de la fiche, par la règle
-     partagée (`TBF_FOND.plaque`) — l'âge, sauf pour une légende. */
+  /* La plaque du décor de son Fanzzy : celle du vestiaire, par la règle
+     partagée (`TBF_FOND.plaque`) — sa tenue, au palier de sa rareté (l'âge
+     quand la rareté manque, `palierDecor`). */
   const fond = $('fond');
   const plaque = monAvatar && window.TBF_FOND?.plaque
     ? window.TBF_FOND.plaque({ rar: monAvatar.rar ?? null, stage: monAvatar.evo, skin: monAvatar.skin })
@@ -957,6 +1013,56 @@ async function chargerQuotidien() {
   quotidien = q?.actif === true ? q : null;
   retenirPastille();
   rendreBonus();
+  poserInsignes();
+}
+
+/* ------------------------------------------------ les insignes du carnet
+
+   Le carnet de saison donne à porter un liseré et un tampon (le contrat,
+   § 6.1, `insignes`) : servis par la lecture du quotidien que la page fait
+   déjà, pour toujours, une fois récupérés. Le liseré se coud autour de
+   l'anneau du buste, le tampon se pose sur la carte, et MA SAISON les écrit
+   (« LISERÉ S1 »). Le numéro de la saison est `saison.numero`, jamais tiré
+   de son nom (R7). Absent : rien ; un insigne que la page ne connaît pas, ou
+   sans numéro de saison, ne se dessine pas. */
+const MOTS_INSIGNE = new Map([['lisere', ['LISERÉ', 'Liseré']], ['tampon', ['TAMPON', 'Tampon']]]);
+
+/** Les insignes du carnet que je porte, dans l'ordre servi ; [] sans eux. */
+function insignesPortes() {
+  const liste = quotidien?.actif === true && Array.isArray(quotidien.insignes) ? quotidien.insignes : [];
+  const vus = new Set();
+  return liste.flatMap((x) => {
+    const n = Number(x?.saison?.numero);
+    if (!MOTS_INSIGNE.has(x?.id) || !Number.isInteger(n) || n < 1 || vus.has(`${x.id}:${n}`)) return [];
+    vus.add(`${x.id}:${n}`);
+    return [{ id: x.id, numero: n }];
+  });
+}
+
+let insignesVus = null;
+function poserInsignes() {
+  const portes = insignesPortes();
+  const sig = JSON.stringify(portes);
+  if (sig === insignesVus) return;
+  insignesVus = sig;
+
+  $('buste').toggleAttribute('data-lisere', portes.some((x) => x.id === 'lisere'));
+
+  /* Quatre tampons au plus, les plus récents : ils tiennent sur une ligne
+     à 360 px, en face de VÉRIFIÉ. */
+  const tampons = portes.filter((x) => x.id === 'tampon').slice(-4);
+  const hote = $('saisonsCarte');
+  hote.innerHTML = tampons.map((x) =>
+    `<span class="tbf-tampon tbf-tampon--plein" data-ton="vert" aria-hidden="true">S${x.numero}</span>`).join('');
+  if (tampons.length) {
+    hote.setAttribute('aria-label', tampons.length > 1
+      ? `Tampons des saisons ${tampons.map((x) => x.numero).join(', ')}`
+      : `Tampon de la saison ${tampons[0].numero}`);
+  } else hote.removeAttribute('aria-label');
+  hote.hidden = !tampons.length;
+  $('carte').toggleAttribute('data-tampons', tampons.length > 0);
+
+  rendreSaison();
 }
 
 /** Les raisons de refus d'une réclamation (le contrat, § 11), dites en clair. */
@@ -986,7 +1092,7 @@ document.addEventListener('click', async (e) => {
       etat.scarves = Number(r.wallet.scarves);
       etat.packs = Number(r.wallet.packs);
     }
-    if (!r.quotidien) await chargerQuotidien(); else { retenirPastille(); rendreBonus(); }
+    if (!r.quotidien) await chargerQuotidien(); else { retenirPastille(); rendreBonus(); poserInsignes(); }
     /* Le gain se voit : le ticket monte, son jeton vole jusqu'au sticker
        ÉCHARPES, et le solde compte. La barre l'apprend par l'annonce
        qu'elle écoute déjà. */
@@ -1023,6 +1129,7 @@ document.addEventListener('click', async (e) => {
   if (r.raison === 'schema' || r.raison === 'inactif' || r.quotidien) {
     retenirPastille();
     rendreBonus();
+    poserInsignes();
   } else {
     await chargerQuotidien();
   }
@@ -1093,9 +1200,10 @@ function rendreSaison() {
   const s = place?.saison;
   const passee = place?.saisonPassee?.paliers?.length ? place.saisonPassee : null;
   const titres = Array.isArray(place?.titres) ? place.titres : [];
+  const insignes = insignesPortes();
   const hote = $('saison');
   poserAnneauInsigne();
-  if (!s && !passee && !titres.length) {
+  if (!s && !passee && !titres.length && !insignes.length) {
     hote.hidden = true;
     $('saisonTitre').hidden = true;
     return;
@@ -1117,8 +1225,9 @@ function rendreSaison() {
     }
     /* « SAISON 1 — LA REPRISE », et les jours qui restent seulement si le
        serveur les compte : aucune page ne calcule une fin de saison avec
-       l'horloge du téléphone (R3). Le contrat ne les sert qu'au dex
-       (§ 7.1) : lus ici le jour où ma place les portera. Une saison finie
+       l'horloge du téléphone (R3). Ma place les sert (le contrat, § 14.4),
+       comptés comme au dex au même instant ; sans date saisie, ni `fin` ni
+       `joursRestants`, et la ligne s'arrête au nom. Une saison finie
        reste dans `saison`, sans `prochaine` : sa ligne de suite tombe
        d'elle-même, et ses divisions prêtes restent à porter. */
     const j = Number(s.joursRestants);
@@ -1142,10 +1251,21 @@ function rendreSaison() {
     morceaux.push(`<button class="tbf-plaque porter" data-ton="or" id="porter">${
       prets.length === 1 ? `PORTER L’INSIGNE ${esc(prets[0].nom ?? '')}` : `PORTER MES ${prets.length} INSIGNES`}</button>`);
   }
-  if (titres.length) {
-    morceaux.push(`<div class="saison-titres">${titres.slice(-3).map((t) =>
-      `<span class="tbf-sticker">${esc(t.nom)}</span>`).join('')}</div>`);
-  }
+  /* Ce qu'on porte pour toujours : les titres, puis les insignes du carnet
+     (« LISERÉ S1 », « TAMPON S1 »), qui disent ce que sont le liseré du
+     buste et les tampons de la carte. Les quatre plus récents, comme les
+     trois derniers titres : six saisons en feraient un mur de douze
+     stickers. Le lecteur d'écran entend la phrase entière plutôt que
+     l'abréviation. */
+  const honneurs = [
+    ...titres.slice(-3).map((t) => `<span class="tbf-sticker">${esc(t.nom)}</span>`),
+    ...insignes.slice(-4).map((x) => {
+      const [mot, dit] = MOTS_INSIGNE.get(x.id);
+      return `<span class="tbf-sticker"><span aria-hidden="true">${mot} S${x.numero}</span><span class="vh">${
+        dit} de la saison ${x.numero}</span></span>`;
+    }),
+  ];
+  if (honneurs.length) morceaux.push(`<div class="saison-titres">${honneurs.join('')}</div>`);
   hote.innerHTML = morceaux.join('');
   hote.hidden = false;
   $('saisonTitre').hidden = false;
@@ -1705,7 +1825,7 @@ const domPret = new Promise((r) => (document.readyState === 'loading'
 
     /* **La fête de niveau, depuis la dernière visite.** Après le premier
        rendu : elle passe devant la carte de supporter. Elle attend aussi
-       ma place, qui portera l'avatar à montrer en pose de victoire. */
+       ma place, qui porte l'avatar à montrer en pose de victoire (§ 14.3). */
     await Promise.allSettled([pNiveau, pMoi, domPret]);
     if (niv && !niv.indisponible) {
       window.TBF_NIVEAU?.depuisVisite?.(niv, { avatar: monAvatar ?? undefined, qui: user.id });

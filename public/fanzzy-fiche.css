@@ -1,535 +1,320 @@
 /**
- * La fiche d'un Fanzzy.
+ * La fiche d'un Fanzzy (lot 4 de la refonte FAIT MAIN) : la carte en main.
  *
  * Elle s'affiche à deux endroits — en panneau par-dessus le classeur, et en
  * page entière quand on arrive par un lien. Ses règles vivent donc dans un
  * fichier à elles plutôt que dans l'une des deux pages : deux copies du même
- * écran finissent toujours par diverger, et c'est précisément ce qui se
- * passait avant, avec un aperçu dans le classeur et une fiche ailleurs qui ne
- * montraient déjà plus les mêmes choses.
+ * écran finissent toujours par diverger.
  *
  * Elle n'est pas dans `ui.css` pour la raison inverse : `ui.css` est chargée
- * par les dix-huit pages du jeu, et celle-ci n'en sert que deux.
+ * par toutes les pages du jeu, et celle-ci n'en sert que deux.
  *
- * ## Ce que la mise en page défend
+ * ## Ce qui est à elle, et ce qui ne l'est pas
  *
- * Le personnage tient le haut. En dessous, **des cases** : ses âges, ses
- * tenues, ses effets. Celles qu'on n'a pas portent un cadenas et disent ce
- * qu'elles demandent — c'est toute la différence entre « il me manque des
- * choses » et « il me manque *ça*, et voilà comment l'avoir ». Toucher une
- * case écrit son détail juste dessous, à hauteur fixe, pour que rien ne
- * saute. L'action, elle, reste en bas, toujours au même endroit.
+ * **La fiche n'écrit que des places** : marges, hauteurs du budget, la
+ * largeur de la carte, la position de ce qui est collé autour d'elle. Le
+ * dessin vient des briques communes — la carte (`cardHTML`, `cartes.css`),
+ * la scène qu'on incline (`.tbf-vitrine-scene`), la bande du cri
+ * (`.tbf-cri`), l'inventaire et son arbre des âges (`.tbf-inventaire`,
+ * `.tbf-ages`, `.tbf-tuile`), la fiche kraft du détail (`.tbf-detail`), les
+ * bâches (`.tbf-plaque`), le compteur d'écharpes (`.tbf-monnaie`), le tampon,
+ * le ticket et la pile (`ui.css`). Ce qui manquait à ces briques est
+ * marqué « provisoire » et décrit en besoin.
+ *
+ * ## Le budget de hauteur, à 360 × 640
+ *
+ * L'écran ne défile pas : il doit se lire d'un coup d'œil. Chaque bloc a donc
+ * sa hauteur écrite, et un seul est souple — la carte.
+ *
+ *     barre du jeu (nav.js)        54   44 de boutons et 10 de marges : mesurée
+ *     en-tête                      51   49 — le nom (20), 5 d'air, le sticker
+ *                                       de famille (24) —, et 2 sous la barre
+ *     la carte (souple)           225   ≥ 220 ; la carte y fait 151 × 211
+ *     la bande du cri              48   44 (une cible de 32 est trop petite)
+ *                                       et les 4 de sa brique
+ *     l'inventaire                100
+ *     la fiche kraft du détail     88
+ *     les actions                  74   10 d'air, 52 de bâche, 5 d'ombre, 7
+ *                                ----
+ *                                 640
+ *
+ * La direction écrivait « barre 44 » et « en-tête 44 » : la barre du jeu en
+ * prend 54 avec ses marges, et l'en-tête 49 depuis que la famille est un
+ * sticker de vingt-quatre pixels sous le nom (la brique du vestiaire). Ce
+ * sont ces quinze pixels que la carte rend. Elle reste au-dessus de cent
+ * cinquante pixels de large — le seuil où la carte garde son pied et son
+ * tampon d'âge (`cartes.css`) : 151 × 211, mesurée au banc du lot 4. Il ne
+ * lui reste qu'un pixel au-dessus du seuil : ce qu'on ajoute à la colonne
+ * se reprend ailleurs dans la colonne, pas sur elle.
+ *
+ * En panneau par-dessus le classeur, la barre du jeu n'est pas au-dessus de
+ * la fiche : ses cinquante-quatre pixels vont à la carte.
+ *
+ * Sur un téléphone plus court, la carte rétrécit d'abord (jusqu'à 150 px de
+ * haut), puis **la bande du cri se replie** en une plaque ronde à côté de la
+ * carte (sous 600 px de haut), et seulement ensuite le corps défile — jamais
+ * les actions, qui restent hors du défilement.
  */
 
-/* ------------------------------------------------------------ la coque */
+/* ------------------------------------------------------------ la coque
 
-/* `relative` : la demande de confirmation se pose par-dessus la fiche et
-   pas par-dessus la page — le classeur, derrière, doit rester en place. */
-.fiche{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+   `relative` : la demande de confirmation se pose par-dessus la fiche et pas
+   par-dessus la page — le classeur, derrière, doit rester en place.
+
+   **Cinq cent soixante pixels au plus.** Sur une tablette, la colonne en
+   offre neuf cents : la fiche kraft s'y étirait en une ligne de chiffres à
+   lire d'un bout à l'autre de l'écran, et les jauges en rubans. La fiche est
+   un objet qu'on tient, pas une page qu'on remplit. */
+.fiche{--marge:14px;position:relative;flex:1;min-height:0;display:flex;flex-direction:column;
+  box-sizing:border-box;width:100%;max-width:560px;margin-inline:auto;color:var(--craie)}
 
 /* ------------------------------------------------------------- le corps
 
-   **La fiche ne défile pas, et c'est ce qui la cassait sur un téléphone.**
+   **La tête et les actions sont hors du défilement**, et tout ce qui est
+   entre les deux vit ici. Un écran sans défilement ne repousse pas ce qui
+   déborde, il le coupe : l'encoche, la barre gestuelle et un bandeau
+   d'annonce reprennent une centaine de pixels sur un vrai téléphone, et ce
+   qui tombait sous la coupe était la rangée d'actions. Quand la place
+   suffit, rien ne défile ; quand elle manque, c'est la carte qui recule,
+   jamais le bouton.
 
-   Un écran sans défilement ne repousse pas ce qui déborde : il le coupe. Et il
-   débordait, pour trois raisons qu'aucun navigateur de bureau ne montre et que
-   la suite ne mesurait donc pas. La barre du haut grandit de l'encoche
-   (env(safe-area-inset-top), une trentaine de pixels) ; le bas de #app réserve
-   la barre gestuelle (autant) ; un bandeau d'annonce, quand il y en a un,
-   s'intercale pour une quarantaine de plus. Cent pixels repris, contre une
-   dizaine de marge.
-
-   Ce qui tombait alors sous la coupe était le dernier élément de la colonne :
-   **la rangée d'actions**. Le joueur ouvrait la fiche d'une carte qu'il voulait
-   faire grandir, et il n'y avait pas de bouton. Rien ne lui disait qu'il en
-   manquait un — un écran qui ne défile pas ne montre aucun bord.
-
-   La tête et les actions sont donc posées hors du défilement, et tout ce qui
-   est entre les deux vit ici. Quand la place suffit — et elle suffit presque
-   toujours — rien ne défile et l'écran est exactement celui d'avant. Quand
-   elle manque, c'est le personnage qui recule, jamais le bouton.
-
-   Pas de barre de défilement visible : elle dirait « liste » sur un écran qui
-   est une vitrine, et la matière se voit déjà bouger sous le doigt. */
+   Pas de barre de défilement visible : elle dirait « liste » sur un écran
+   qui est une vitrine. */
 .fiche .corps{flex:1;min-height:0;display:flex;flex-direction:column;
   overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:none}
 .fiche .corps::-webkit-scrollbar{display:none}
 
-/* La confirmation reste par-dessus **toute** la fiche, actions comprises, parce
-   qu'elle est posée en dehors du corps : un panneau qui défilerait avec le
-   personnage laisserait apparaître les boutons de la fiche sous lui. */
+/* ------------------------------------------------------------ l'en-tête
 
+   Quarante-neuf pixels : la croix qui referme le panneau (la page n'en a
+   pas : la barre du jeu porte sa flèche), le nom, et sous lui la famille et
+   la rareté ; à droite, les écharpes du joueur — c'est avec elles qu'on fait grandir, et le prix
+   d'ÉVOLUER se lit contre elles. */
+.fiche .head{flex:none;display:flex;align-items:center;gap:10px;min-height:44px;
+  margin:2px var(--marge) 0;padding:0}
+.fiche .head h1{flex:1;min-width:0;margin:0;display:flex;flex-direction:column;gap:5px}
+/* Le nom en Oswald vingt, à la craie, une ombre d'encre dessous. Un nom trop
+   long pour la place **rapetisse** (fanzzy-fiche.js, `ajusterNom`) jusqu'à
+   treize pixels avant de passer à la ligne : des points de suspension sur le
+   nom de la carte qu'on regarde se liraient comme une faute. Une ligne de
+   vingt pixels tout juste : ce sont des capitales, rien ne descend sous la
+   ligne de base, et chaque pixel gagné ici revient à la carte. **Vingt
+   pixels, et non une fois la taille** : un nom qui rapetisse garde sa
+   ligne, sinon l'en-tête raccourcissait d'un âge à l'autre et la carte
+   sautait au toucher. */
+.fiche .head .nom{display:block;font:700 20px/20px var(--banner);letter-spacing:.06em;
+  text-transform:uppercase;color:var(--craie);text-shadow:0 2px 0 var(--encre);white-space:nowrap}
+.fiche .head .nom.long{white-space:normal;text-wrap:balance;line-height:1.05}
+/* **La famille en sticker, la rareté en forme** (la direction : « deux
+   stickers sous le nom »). Le sticker de famille est la brique du vestiaire,
+   son pin dedans ; la fiche ne lui donne que sa pente, de deux degrés : à
+   quatre (sa pente de premier enfant), son coin gauche montait de deux
+   pixels de plus vers le nom. La rareté : la petite forme et son mot
+   à côté, en Oswald treize gras à la craie pleine, à la taille du mot du
+   sticker. La rangée fait vingt-quatre pixels — la hauteur du sticker — et
+   le nom garde au-dessus l'air du bord craie et du cerne (3,5 px). **Une
+   seule rangée tant que la forme y tient** : quand le mot de la rareté
+   passe à la ligne, il se retire pour l'œil (`serrerGalons`,
+   fanzzy-fiche.js) et la forme reste ; `wrap` ne joue plus qu'au-delà (320
+   pixels sous la croix du panneau, un solde à cinq chiffres). */
+.fiche .head .galons{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;
+  font:700 13px/1 var(--banner);letter-spacing:.06em;text-transform:uppercase;color:var(--craie)}
+.fiche .head .galons>.tbf-sticker{--rot:-2deg;margin-left:3px}
+.fiche .head .galons.serre{column-gap:8px}
+.fiche .head .galon{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.fiche .head .galon>.tbf-forme{--taille:15px}
+/* Le mot de la rareté, empilé sur ceux des autres âges de la lignée : il
+   prend la largeur du plus long, et seuls les autres sont cachés — ni lus,
+   ni vus, ni mesurés (`visibility`). Une rangée qui garde sa largeur quand
+   on touche un âge ne passe pas à la ligne d'un toucher à l'autre. */
+.fiche .head .galon-mot{display:inline-grid;justify-items:start}
+.fiche .head .galon-mot>*{grid-area:1/1}
+.fiche .head .galon-mot>:not(:first-child){visibility:hidden}
+/* **Le solde, une seule fois à l'écran.** À partir de 560 pixels, la barre
+   du jeu déplie ses compteurs (`.tbf-hud-bande`, ui.css) : le sticker de la
+   fiche les répétait juste dessous. Il ne vit donc qu'en dessous, là où la
+   barre les replie derrière l'avatar ; au-dessus, c'est le compteur de la
+   barre qui décompte, la fiche lui annonçant le nouveau solde
+   (`tbf:bourse`). */
+@media (min-width:560px){ .fiche .head>.tbf-monnaie{display:none} }
 
-.fiche .head{display:flex;align-items:center;gap:11px;padding:12px 14px 4px;flex:none}
-/* Quarante-quatre pixels, comme les deux boutons flottants de la barre : c'est
-   la porte de sortie de la fiche, et elle en faisait trente-quatre — l'audit
-   la comptait « trop petite » sur chaque format. La tête grandit de dix pixels,
-   que la vitrine reprend : elle est l'élément souple de la colonne. */
-.fiche .head .rond{background:rgba(0,0,0,.35);border:1px solid rgba(242,238,228,.2);
-  border-radius:11px;color:inherit;width:44px;height:44px;display:grid;place-items:center;
-  text-decoration:none;font-size:18px;flex:none;cursor:pointer;font-family:inherit;line-height:1}
-.fiche .head .rond:active{transform:translateY(2px)}
-.fiche .head h1{font-family:var(--banner);font-size:18px;letter-spacing:.06em;margin:0;flex:1;
-  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* La famille et la rareté, sous le nom : onze pixels et 88 %, le plancher de
-   lecture du jeu. À neuf et demi et 50 %, elles tenaient 2,5:1 au soleil. */
-.fiche .head h1 small{display:block;font-size:11px;letter-spacing:.2em;opacity:.88;margin-top:3px;
-  font-family:var(--ui)}
+/* -------------------------------------------------------- la carte en main
 
-/* --------------------------------------------------------- la vitrine
+   **La carte est la carte du jeu** (`cardHTML`), tenue dans la scène de la
+   vitrine (`.tbf-vitrine-scene` > `.tbf-vitrine-tilt`) : elle s'incline au
+   doigt et prend la lumière, et elle se retourne. La fiche ne lui donne que
+   sa largeur, `--l`, et sa place.
 
-   Le personnage en pied, dans le cadre de sa rareté — la même couleur que
-   dans le classeur, apprise une fois pour tout le jeu. */
+   **`--l` suit la hauteur qui reste** : la scène est l'élément souple de la
+   colonne, et la carte prend toute la hauteur qu'on lui laisse, moins sept
+   pixels en haut et en bas — ce que la forme de rareté, le pin et l'ombre
+   dure passent du bord (`cartes.css`, « la carte déborde de sa boîte »). Elle
+   garde aussi deux gouttières de quatre-vingt-seize pixels pour ce qui se
+   colle à côté d'elle, et ne dépasse pas trois cents pixels : c'est la plus
+   grande taille que la carte sait écrire. Les unités `cq` se résolvent sur
+   la scène, conteneur de taille, là où `--l` est employée.
 
-/* **Le plancher de la vitrine, et pourquoi il a monté.**
+   Le plancher de cent cinquante pixels de haut est celui d'une carte encore
+   reconnaissable ; en dessous, c'est le corps qui défile.
 
-   C'est le seul élément souple de la colonne : il encaisse donc, à lui seul,
-   tout ce qu'un téléphone reprend à la page — l'encoche en haut, la barre
-   gestuelle en bas, le bandeau d'annonce au milieu. Et il encaissait jusqu'à
-   se réduire à une bande où le personnage ne se voyait plus : la vitrine
-   était encore là, mais elle ne montrait plus rien.
+   **Les unités `cq` ne s'emploient qu'à l'abri de `@container`**, comme dans
+   `cartes.css` : un moteur qui les connaît sans connaître le confinement les
+   rabat sur la fenêtre, et la carte prendrait la hauteur de l'écran. Il
+   garde alors la largeur de repli, cent cinquante pixels. */
+.fiche .vitrine{position:relative;flex:1 1 auto;min-height:150px;container-type:size;
+  display:grid;place-items:center;--l:150px}
+@container (min-width:0px){
+  .fiche .vitrine>*{--l:clamp(70px, min(calc((100cqh - 14px) * 63 / 88), calc(100cqw - 192px)), 300px)}
+}
+.fiche .vitrine>.tbf-vitrine-scene{width:var(--l);margin:0}
+.fiche .vitrine .fz{width:100%}
 
-   Cent vingt pixels était un plancher écrit pour qu'elle ne s'effondre pas ;
-   celui-ci est écrit pour que le personnage reste reconnaissable. En dessous,
-   ce n'est plus la vitrine qui cède : c'est le corps qui défile — voir
-   `.fiche .corps`. Un personnage qu'il faut faire glisser pour voir en entier
-   reste un personnage ; une bande de cinquante pixels n'est rien.
+/* **Le pin sans pictogramme : provisoire.** À l'adresse /fanzzy/<id>, la page
+   ne charge pas le catalogue (une requête lourde de plus) : `cardHTML` ne
+   connaît alors de la famille que son nom et sa couleur, que la fiche lui
+   donne, et pas le tracé de son pictogramme — le pin restait un rond de
+   craie vide. On y pose l'emblème de la famille (`/img/logo/type-*`), que la
+   fiche passe en `--pin-type` — sur la carte en main comme sur les deux
+   vignettes de la confirmation. À retirer quand la carte saura le faire
+   elle-même (besoin « carte »). */
+.fiche .fz .pip:has(path[d=""]){
+  background:var(--pin-type,none) 50% 50%/74% no-repeat,var(--craie)}
 
-   Le chevauchement des trois textes, lui, ne venait pas de cette hauteur mais
-   du placement de la phrase « âge à venir » : voir `.secret-mot`. Les deux se
-   réparent séparément, et la suite les contrôle séparément.
+/* **Ce qui se colle à côté de la carte**, dans ses gouttières : à gauche le
+   tampon TON AVATAR, ou la bâche ME MONTRER AINSI ; à droite la plaque qui
+   la retourne, la bande du cri repliée sur un téléphone court, ou la
+   vignette du paquet d'une carte qu'on n'a pas. Les places se calculent sur
+   `--l` : la demi-largeur de la carte, sa demi-hauteur (`--l` × 44/63). */
+.fiche .vitrine>.cote-g{position:absolute;z-index:3;right:calc(50% + var(--l) / 2 + 12px);
+  top:calc(50% + var(--l) * 44 / 63 * .15);translate:0 -50%;
+  max-width:calc(50% - var(--l) / 2 - 18px)}
+.fiche .vitrine>.tourne{position:absolute;z-index:3;left:calc(50% + var(--l) / 2 + 10px);
+  top:calc(50% - 22px)}
+.fiche .vitrine>.paquet{position:absolute;z-index:3;left:calc(50% + var(--l) / 2 + 16px);
+  top:50%;translate:0 -50%;max-width:calc(50% - var(--l) / 2 - 24px);margin:0}
+.fiche .vitrine>.paquet>img{width:min(64px,100%)}
 
-   **La craie, et pas la couleur de la rareté.** La vitrine porte `r-<rareté>`
-   pour les jetons `--rc` de son cadre, et `ui.css` donne aussi à ces classes
-   la **couleur** de la rareté, « utilisable partout par son nom ». Le nom en
-   grand, la ligne des exemplaires et les pastilles héritaient donc du bleu,
-   du violet ou du gris : une fiche rare s'écrivait en bleu sur fond sombre,
-   sous le plancher de lecture. La rareté se dit par le cadre et par la
-   pastille du coin ; le texte reste à la craie. */
-.fiche .vitrine{position:relative;margin:4px 14px 0;border-radius:16px;overflow:hidden;
-  flex:1 1 auto;min-height:170px;display:flex;align-items:flex-end;
-  color:var(--craie);
-  background:linear-gradient(160deg,#141A21,#0A0D11);
-  box-shadow:inset 0 0 0 2px var(--rc,#C2CAD6),0 5px 0 var(--rc2,#4E5865),
-             0 10px 24px rgba(0,0,0,.55)}
-.fiche .vitrine.r-legendaire{box-shadow:inset 0 0 0 2.5px var(--rc),0 5px 0 var(--rc2),
-  0 0 34px rgba(245,195,59,.3),0 10px 24px rgba(0,0,0,.55)}
-.fiche .art{position:absolute;inset:0}
-/* Le décor est en position absolue comme le personnage, et non dans le flux :
-   les deux se superposent, et c'est l'ordre du document qui décide lequel est
-   devant — le SVG est inséré avant l'image. */
-.fiche .art svg{position:absolute;inset:0;width:100%;height:100%;display:block}
-/* `contain`, posé sur la base du cadre : le personnage est inscrit entier.
-   Un débordement en hauteur cadre joliment un buste dans une vitrine courte,
-   mais coupe la tête dès qu'elle grandit — et une tête coupée se lit comme
-   une image cassée, jamais comme un cadrage serré. */
-.fiche .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
-  object-position:50% 100%;filter:drop-shadow(0 6px 22px rgba(0,0,0,.75))}
-.fiche .ombre{position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(4,6,10,.05) 42%,rgba(4,6,10,.92))}
+/* Le tampon TON AVATAR : un acquis, pas un bouton éteint. En deux lignes,
+   à seize pixels — le plancher du tampon en contour sur un fond sombre. */
+.fiche .cote-g.tbf-tampon{font-size:16px;line-height:1.1}
+/* ME MONTRER AINSI : la bâche de parpaing, **plus basse** que les actions —
+   ce n'est ni jouer ni dépenser, c'est choisir de quoi l'on a l'air. Le
+   libellé passe à la ligne dans la gouttière, jamais coupé. */
+.fiche .cote-g.tbf-plaque{min-height:44px;margin:0;padding:7px 9px;font-size:12px;line-height:1.15;
+  letter-spacing:.06em;text-align:center;white-space:normal}
+
+/* ------------------------------------------------------- la bande du cri
+
+   Pleine largeur sous la carte : toucher lance le cri en vidéo. Les bouts
+   rayés sont à la couleur de la famille (`--e1`, posée par la fiche). */
+.fiche .tbf-cri{flex:none;width:auto;margin:0 var(--marge) 4px}
+/* **Repliée sur un téléphone court.** Sous six cents pixels de haut, les
+   quarante-huit pixels de la bande reviennent à la carte, et le cri reste à
+   portée : une plaque ronde ▶ collée à droite de la carte, au niveau de la
+   bande de son nom. */
+.fiche .vitrine>.cri-court{display:none}
+@media (max-height:600px){
+  .fiche .corps>.tbf-cri{display:none}
+  .fiche .vitrine>.cri-court{display:grid;position:absolute;z-index:3;
+    left:calc(50% + var(--l) / 2 + 10px);top:calc(50% + var(--l) * 44 / 63 - 50px)}
+}
+
+/* ------------------------------------------------------- l'inventaire
+
+   Cent pixels, quatre rangées côte à côte qui défilent en largeur : ÂGES,
+   EFFETS, ÉTATS, TENUES (`.tbf-inventaire`). La hauteur est à la page. */
+.fiche .tbf-inventaire{flex:none;height:100px}
+/* **L'ombre qui dit « ça continue ».** La dernière tuile coupée net au bord
+   droit se lit comme un défaut d'affichage, et personne ne pousse du doigt
+   une image qu'il croit cassée. Un fondu sur les quarante derniers pixels,
+   tant qu'il reste quelque chose à droite : la classe est posée par
+   `marquerDebord` (fanzzy-fiche.js), et retirée au bout. */
+.fiche .rangs.deborde{
+  -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);
+          mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
+
+/* ----------------------------------------------- la fiche kraft du détail
+
+   Quatre-vingt-huit pixels fixes : passer d'un effet à une tenue ne fait pas
+   sauter la carte. Un titre et deux lignes de chiffres au plus — c'est ce que
+   la hauteur tient, et un ticket ne porte pas de paragraphe. */
+.fiche #fiche-detail{flex:none;height:88px;margin:0 var(--marge)}
+/* Une ligne sans jauges (un effet, une phrase courte) : le libellé prend la
+   place des jauges, la valeur reste dans sa colonne. C'est une place dans la
+   grille de la brique, pas un dessin. */
+.fiche .tbf-detail-l>span:first-child:nth-last-child(2){grid-column:1 / 3}
+.fiche .tbf-detail-l>b:nth-child(2){grid-column:3}
+
+/* ---------------------------------------------------------- les actions
+
+   Soixante-quatorze pixels, toujours au même endroit, hors du corps.
+   **Hiérarchisées** : ÉVOLUER en or, plus large, son prix en sticker ;
+   EMMENER EN DUEL en flare ; ce qui ne fait que déplacer reste en béton. Une
+   rangée vide garde sa hauteur : sinon la carte grandirait d'un coup au
+   premier bouton. */
+.fiche .actions{flex:none;display:flex;gap:12px;box-sizing:border-box;height:74px;
+  padding:10px var(--marge) 0}
+.fiche .actions>*{flex:1 1 0;min-width:0}
+.fiche .actions>[data-evoluer]{flex-grow:1.35}
+/* La bâche d'action : le libellé, le sous-libellé dessous. Cinquante-deux
+   pixels pour la bâche à deux lignes comme pour celle d'une seule — une
+   rangée qui changerait de hauteur selon la case regardée ferait sauter la
+   carte. `bt` reste dans le balisage : la suite de la fiche le cherche. */
+.fiche .bt{min-height:52px;padding:7px 8px;flex-direction:column;gap:3px;text-align:center;
+  font-size:13px;line-height:1.1;letter-spacing:.05em}
+.fiche .bt[data-evoluer]:not([disabled]){font-size:17px}
+/* Le sous-libellé : Oswald douze, à la lettre de la bâche, pleine. Une
+   phrase et non un titre : pas de capitales. */
+.fiche .bt small{display:block;font:500 12px/1.15 var(--banner);letter-spacing:.04em;
+  text-transform:none;text-shadow:none}
+/* Le prix d'ÉVOLUER, collé sur le coin haut-droit de la bâche : dix pixels
+   au-dessus d'elle, dans l'air de la rangée. */
+.fiche .bt>.tbf-sticker--prix{position:absolute;z-index:2;right:-6px;top:-10px;--rot:5deg}
 
 /* ------------------------------------------- le Fanzzy qu'on ne possède pas
- *
- * La grille le montre en silhouette grise ; l'ouvrir le rendait à ses
- * couleurs, avec ses âges, ses effets et ses tenues à fouiller case par case.
- * Deux images contradictoires du même personnage, à un doigt l'une de l'autre.
- *
- * Ici, il reste **éteint**. Les mêmes réglages que la grille — `grayscale(1)`,
- * une luminosité à moitié, un peu de contraste pour que la silhouette ne fonde
- * pas dans le noir — pour que ce soit reconnaissable comme le même état, et pas
- * comme un bug d'affichage.
- *
- * Le gris est posé sur l'image et sur le décor, pas sur toute la fiche : le
- * nom, la famille et la rareté doivent rester lisibles. Ce qu'on cache, c'est
- * ce qu'il fait — pas qui il est. */
-.fiche.pas-a-moi .art{filter:grayscale(1) brightness(.5) contrast(1.12)}
 
-/* ------------------------------------------------- ce qu'on n'a pas encore
-
-   **Toucher un âge verrouillé le dessinait en grand dans la vitrine.**
-
-   La rangée ÂGES existe pour regarder les trois visages d'une lignée, et c'est
-   très bien pour ceux qu'on a payés. Mais elle donnait aussi, gratuitement et
-   en pleine taille, le visage de celui qu'on n'a pas — c'est-à-dire la seule
-   chose qu'on achète en évoluant. Le joueur voyait d'avance ce que quatre-vingt-
-   dix écharpes allaient lui donner, et l'évolution n'avait plus rien à révéler.
-
-   Le flou plutôt que l'absence : une case vide ne donne envie de rien, une
-   silhouette qu'on devine donne envie de la voir nette. On garde donc la
-   couleur, la carrure et la lumière de la rareté — tout ce qui dit « il y a
-   quelqu'un là-dessous » — et on retire le visage.
-
-   Le décor reste net, lui : il ne dit rien du personnage, et c'est lui qui
-   porte l'aura de rareté. Flouter les deux ferait une tache. */
-/* `.procedural` est posé par la page et non deviné par un sélecteur.
-   `svg:only-child` avait l'air juste — dans le repli géométrique, le dessin est
-   le seul enfant — mais le mot « ÂGE À VENIR » est ajouté juste après, et le
-   dessin cessait d'être seul à l'instant même où il fallait le flouter. Un
-   sélecteur qui dépend de ce que le voisin fera ensuite se casse toujours. */
-.fiche .art.secret img,
-.fiche .art.secret.procedural > svg{filter:blur(17px) grayscale(.5) brightness(.74);
-  transform:scale(1.04)}
-/* **Sur la poitrine, pas en bas.** À 16 % du bas, la phrase tombait derrière
-   la rangée de puces — « Fidélité », « Cri : PRÉSENTS » — qui est posée par-
-   dessus la vitrine. On lisait donc « fais-le grandir pour le d… ». Le cadenas
-   se place là où le regard va déjà : au milieu de la silhouette.
-
-   **Au milieu de ce qui reste, et non à 44 % de la hauteur.** Le pourcentage
-   tenait sur une vitrine haute. Sur un téléphone, elle se réduit à ce que le
-   reste de la page lui laisse, et 44 % de peu tombait dans le bloc du bas :
-   le nom en grand, la phrase et la ligne des exemplaires se rejoignaient en
-   trois textes superposés. C'est cet empilement qu'un joueur a photographié.
-
-   On réserve donc explicitement le bas — la hauteur du bloc de texte — et on
-   centre la phrase dans ce qui reste. Sur une grande vitrine, cela retombe
-   presque exactement là où le pourcentage la mettait ; sur une petite, elle
-   remonte au lieu de s'écraser. Une mesure qui se règle sur son voisin plutôt
-   que sur un pourcentage ne peut pas lui rentrer dedans. */
-/* La note d'un choix qui attend son dessin. En haut à gauche, sous la pastille
-   de rareté, là où elle ne couvre ni le visage ni le nom. Discrète, parce
-   qu'elle ne signale pas une erreur : le choix est bon, c'est l'image qui
-   n'est pas encore là. */
-.fiche .art .pas-dessine{position:absolute;left:12px;top:44px;z-index:3;max-width:62%;
-  padding:6px 10px;border-radius:9px;background:rgba(4,6,10,.9);
-  border:1px solid rgba(245,195,59,.32);font-size:11px;line-height:1.35}
-/* Le titre de la note à la craie, l'or au filet : onze pixels ne sont pas
-   un grand texte, et la règle de l'or (décidée par Gaël le 2 octobre 2026,
-   voir « les tons » dans `ui.css`) n'écrit plus un petit texte en or. */
-.fiche .art .pas-dessine b{display:block;font-family:var(--banner);letter-spacing:.06em;
-  color:var(--craie);text-transform:uppercase;font-size:11px}
-.fiche .art .pas-dessine em{display:block;font-style:normal;opacity:.9;margin-top:2px}
-
-/* Posée sur le dessin flouté, sans panneau : c'est l'ombre portée qui la
-   détache, et elle ne tient que si la lettre est pleine. À 82 % — et sa
-   seconde ligne à 82 × 60 % —, la phrase qui dit comment voir le personnage
-   était la plus pâle de l'écran. */
-.fiche .art .secret-mot{position:absolute;left:0;right:0;top:0;bottom:112px;z-index:2;
-  justify-content:center;
-  text-align:center;font-family:var(--banner);font-size:12px;letter-spacing:.22em;
-  color:var(--craie);opacity:1;text-shadow:0 2px 10px rgba(0,0,0,.9),0 1px 2px rgba(0,0,0,.9);
-  display:flex;flex-direction:column;align-items:center;gap:7px}
-.fiche .art .secret-mot svg{position:static;width:22px;height:22px;stroke:var(--craie);
-  fill:none;stroke-width:1.7;opacity:.9}
-.fiche .art .secret-mot em{font-style:normal;font-size:11px;opacity:.9;letter-spacing:.14em}
-
-/* La vignette d'un âge à venir, floutée pour la même raison. Elle garde plus
-   d'opacité que les autres cases verrouillées : à quarante-quatre pixels, un
-   flou à 32 % d'opacité ne laisse plus rien du tout, et on veut une silhouette,
-   pas un trou. */
-.fiche .case.secret .dedans{opacity:.55}
-.fiche .case.secret .dedans img{filter:blur(2.6px) grayscale(.5) brightness(.8)}
-
-/* Le panneau de confirmation montre ce qu'on gagne — le nom, les effets, le
-   prix — mais pas le visage : c'est précisément ce qu'on paie, et la cérémonie
-   est faite pour le révéler. */
-.fiche .demande .duo .qui.apres img{filter:blur(7px) grayscale(.5) brightness(.7)}
-/* Les rangées deviennent une vitrine, pas un jeu de boutons. `pointer-events`
-   pour la souris, `disabled` posé en HTML pour le clavier : l'un sans l'autre
-   laisse une des deux portes ouverte.
-
-   **Ce sont les cases qui s'éteignent, pas la rangée.** La moitié d'opacité
-   était posée sur toute la rangée, titres compris : « ÂGES », « TENUES »
-   tombaient à 21 %, et l'on ne savait plus ce qu'on regardait. Les titres
-   disent ce que le personnage aura ; ils restent lisibles, seules les cases
-   pâlissent. */
+   La carte est en pochoir sous scotch (`cardHTML`, `verrou`) ; l'inventaire
+   se montre — c'est ce qu'on aura —, gris et inerte. `pointer-events` pour
+   la souris, `disabled` posé dans le balisage pour le clavier : l'un sans
+   l'autre laisse une porte ouverte. Ce sont les pièces qui s'éteignent, pas
+   la rangée : les titres disent ce que le personnage aura, ils restent
+   lisibles. */
 .fiche.pas-a-moi .rangs{pointer-events:none}
-.fiche.pas-a-moi .cases{filter:grayscale(1);opacity:.5}
-.fiche.pas-a-moi .case{cursor:default}
-.fiche.pas-a-moi .case.choisie .pav{box-shadow:inset 0 0 0 1.5px rgba(242,238,228,.13),
-  0 3px 0 rgba(0,0,0,.55)}
-/* La pastille du cri n'est plus un bouton : elle ne doit plus en avoir l'air.
-   Elle perd son filet de bouton plutôt que sa lisibilité — à 75 %, le cri se
-   lisait moins bien que tout ce qui l'entoure, alors qu'il n'a rien perdu de
-   son sens. */
-.fiche.pas-a-moi .pastille{box-shadow:none}
-.fiche .txt{position:relative;z-index:2;padding:12px 14px;width:100%}
-.fiche .txt h2{font-family:var(--banner);font-size:clamp(20px,6vw,27px);margin:0;
-  letter-spacing:.03em;line-height:1;text-shadow:0 3px 16px rgba(0,0,0,.9)}
-.fiche .sous{font-size:11px;opacity:.9;margin-top:5px}
-.fiche .pastilles{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.fiche .pastille{border:0;border-radius:999px;padding:6px 11px;font-size:11px;color:inherit;
-  font-family:inherit;background:rgba(4,6,10,.7);box-shadow:inset 0 0 0 1px rgba(242,238,228,.16)}
-/* Les deux noms des pastilles — la famille, le cri — à la craie, plus à la
-   couleur du type : celle de la Voix est l'or, et onze pixels ne sont pas un
-   grand texte (la règle de l'or, décidée par Gaël le 2 octobre 2026, « les
-   tons » dans `ui.css`). Le type se dit par son pin, à côté ; `--c` reste
-   posé par `fanzzy-fiche.js`, qui ne peint plus le cri en ligne et renvoie
-   cette couleur ici, à cette seule règle. */
-.fiche .pastille b{color:var(--craie)}
-/* **Le cri se touche, donc il fait quarante-quatre pixels.**
-
-   Sur un Fanzzy qu'on possède, la pastille du cri est un bouton, et elle en
-   faisait vingt-six de haut : sous la pulpe du doigt, comme les cibles que
-   l'audit relève partout ailleurs. La grandir pour de bon ferait monter la
-   rangée des pastilles, et avec elle le nom et la ligne des exemplaires, dans
-   une vitrine dont chaque pixel est compté (voir `.secret-mot`).
-
-   La boîte du bouton fait donc quarante-quatre pixels et en rend dix-huit par
-   ses marges : la rangée garde sa hauteur, le doigt a sa cible. La pastille
-   visible est peinte en `::before`, à la taille de sa voisine, et le focus
-   l'entoure elle plutôt que la boîte invisible. */
-.fiche button.pastille{position:relative;z-index:0;min-height:44px;margin:-9px 0;
-  background:none;box-shadow:none;cursor:pointer}
-.fiche button.pastille::before{content:"";position:absolute;z-index:-1;left:0;right:0;
-  top:9px;bottom:9px;border-radius:999px;background:rgba(4,6,10,.7);
-  box-shadow:inset 0 0 0 1px rgba(242,238,228,.16)}
-.fiche button.pastille:focus-visible{outline:none}
-.fiche button.pastille:focus-visible::before{outline:2px solid var(--projo);outline-offset:2px}
-/* Le pin du type, dans sa pastille. `vertical-align` et non un flex : la
-   pastille est une ligne de texte, et la passer en flex casserait le retour
-   à la ligne de la rangée quand elle déborde. */
-.fiche .pastille .pinType{width:17px;height:17px;object-fit:contain;
-  vertical-align:-4px;margin-right:4px}
-.fiche .tag{position:absolute;top:11px;right:11px;z-index:2;font-family:var(--banner);
-  font-size:11px;letter-spacing:.14em;border-radius:6px;padding:5px 9px;
-  background:var(--projo);color:#0B0E13}
-.fiche .rar{position:absolute;top:11px;left:11px;z-index:2;display:flex;gap:4px;align-items:center;
-  background:rgba(4,6,10,.65);border-radius:99px;padding:5px 9px;
-  box-shadow:inset 0 0 0 1.5px var(--rc,#C2CAD6)}
-.fiche .rar i{width:8px;height:8px;background:var(--rc,#C2CAD6);transform:rotate(45deg);
-  border-radius:1px;display:block}
-.fiche .rar b{color:var(--rc,#F5C33B);font-size:13px;line-height:1}
-/* Le pin de rareté, devant les losanges. Il porte la matière — étain,
-   argent, or serti — là où les losanges ne portent que le compte. Il peut
-   manquer sans rien déplacer : `TBF_LOGO` retire l'image, le `flex` se
-   referme, et il reste ce qui existait hier. */
-.fiche .rar .pinRar{width:19px;height:19px;flex:none;object-fit:contain;
-  margin:-1px 1px -1px -2px}
-
-/* ------------------------------------------------------------ les cases
-
-   Trois rangées : ce qu'il devient, ce qu'il porte, ce qu'il change. Une case
-   verrouillée reste **visible** — c'est elle qui donne envie, et l'effacer
-   reviendrait à cacher le jeu qui reste à jouer.
-
-   **Sur un panneau, comme le détail juste dessous.** À l'adresse /fanzzy/<id>,
-   la fiche est posée sur la photo de tribune, et la bande des rangées — ses
-   titres, ses cases, ses cadenas — s'y lisait à même les projecteurs. Dans le
-   classeur, le panneau qui la porte est plein et la question ne se posait
-   pas ; c'est la fiche qui fournit le sien, pour être lisible partout où on
-   la monte. Mêmes marges que la vitrine et le détail : les trois blocs
-   s'alignent. Ce que la bande prend en hauteur, la vitrine le rend — elle
-   est l'élément souple de la colonne. */
-
-.fiche .rangs{flex:none;display:flex;gap:10px;margin:10px 14px 8px;padding:7px 10px 6px;
-  align-items:flex-start;
-  overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;
-  border-radius:12px;background:var(--panneau);
-  box-shadow:inset 0 0 0 1px rgba(242,238,228,.11)}
-.fiche .rangs::-webkit-scrollbar{display:none}
-/* L'ombre qui dit « ça continue ». Posée sur l'élément et non dans son flux :
-   elle ne défile donc pas avec les cases, elle reste au bord. La classe est
-   mise et retirée par `rendre()` — voir fanzzy-fiche.js. Le filet du panneau
-   est répété : une seconde `box-shadow` remplace la première, elle ne s'y
-   ajoute pas. */
-.fiche .rangs.deborde{box-shadow:inset 0 0 0 1px rgba(242,238,228,.11),
-  inset -34px 0 26px -24px rgba(4,6,10,.98)}
-.fiche .rang{flex:none}
-/* Le titre d'une rangée — « ÂGES », « TENUES », « EFFETS ».
-
-   Il est fait pour devenir un titre cousu (`.tbf-cousu`, dans `ui.css`) : la
-   marge reste ici, parce que la place d'un titre appartient à l'écran ; la
-   matière n'est plus écrite que pour un `h4` qui n'a pas encore la classe.
-   Écrite sur `.fiche .rang h4` tout court, elle battrait la brique commune
-   (deux classes et une balise contre une classe) et le fil ne se verrait
-   jamais.
-
-   Sans la classe, il tient quand même le plancher du jeu : onze pixels à
-   88 %. Il était à neuf pixels et 42 % — 1,5:1 au soleil, le texte le plus
-   pâle de la fiche. */
-.fiche .rang h4{margin:0 0 6px 2px}
-.fiche .rang h4:not(.tbf-cousu){font-family:var(--banner);font-size:11px;letter-spacing:.17em;
-  opacity:.88;font-weight:500}
-.fiche .cases{display:flex;gap:6px}
-
-/* Le losange. C'est la forme qu'on reconnaît d'un jeu à l'autre — et surtout
-   elle se distingue d'un carré de contenu au premier coup d'œil.
-
-   Quarante-quatre pixels, la cible d'un doigt : à quarante-deux, l'audit en
-   relevait dix-neuf trop petites sur une seule fiche. Le losange grandit avec
-   la case ; son arrondi garde deux pointes voisines à distance. */
-.fiche .case{position:relative;width:44px;height:44px;flex:none;border:0;padding:0;
-  cursor:pointer;background:none;color:inherit;font-family:inherit}
-.fiche .case .pav{position:absolute;inset:3px;border-radius:10px;transform:rotate(45deg);
-  background:linear-gradient(150deg,#222A35,#121820);
-  box-shadow:inset 0 0 0 1.5px rgba(242,238,228,.13),0 3px 0 rgba(0,0,0,.55);
-  transition:transform .12s,box-shadow .12s}
-.fiche .case:active .pav{transform:rotate(45deg) scale(.92)}
-.fiche .case .dedans{position:absolute;inset:0;display:grid;place-items:center;
-  font-family:var(--banner);font-size:13px;line-height:1}
-.fiche .case .dedans img{width:78%;height:78%;object-fit:contain;object-position:50% 100%;
-  filter:drop-shadow(0 2px 5px rgba(0,0,0,.7))}
-.fiche .case .dedans svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;
-  stroke-linecap:round;stroke-linejoin:round}
-
-/* Obtenue : la case prend la couleur de ce qu'elle porte. */
-.fiche .case.ok .pav{background:linear-gradient(150deg,var(--cc,#3C82E8),#141A21 78%);
-  box-shadow:inset 0 0 0 1.5px var(--cc,#3C82E8),0 3px 0 rgba(0,0,0,.55)}
-/* Choisie : un anneau, et rien d'autre — la case ne change pas de taille,
-   sinon la rangée entière se décale à chaque toucher. */
-.fiche .case.choisie .pav{box-shadow:inset 0 0 0 2px var(--craie),0 0 0 3px rgba(242,238,228,.18),
-  0 3px 0 rgba(0,0,0,.55)}
-/* Verrouillée : éteinte, mais là. */
-.fiche .case.verrou .pav{background:linear-gradient(150deg,#1A2028,#0D1116);opacity:.85}
-.fiche .case.verrou .dedans{opacity:.32}
-/* La pastille du cadenas. Elle porte `.tbf-ico-cadenas` (voir `ui.css`) à la
-   place de l'émoji : l'icône mesure un cadratin, donc c'est le corps posé ici
-   qui en décide — dix pixels dans une pastille de dix-sept, et la craie
-   pleine, puisque c'est le trait lui-même qui est l'information. */
-.fiche .case .cadenas{position:absolute;right:1px;bottom:1px;width:17px;height:17px;
-  border-radius:50%;display:grid;place-items:center;background:#0B0E13;
-  box-shadow:0 0 0 1.5px rgba(242,238,228,.22);font-size:10px;line-height:1;
-  color:var(--craie)}
-.fiche .case .porte{position:absolute;left:-1px;top:-1px;width:15px;height:15px;border-radius:50%;
-  background:var(--projo);box-shadow:0 0 0 2px #0B0E13}
-
-/* ------------------------------------------------- le détail de la case
-
-   Hauteur fixe. Sans elle, passer d'un effet à une tenue ferait sauter le
-   personnage d'une centaine de pixels à chaque toucher — et c'est le genre de
-   secousse qui donne l'impression que la page est cassée. */
-/* Le panneau commun, opaque depuis que `--panneau` l'est : plus de flou. */
-.fiche .detail{flex:none;height:96px;margin:0 14px;padding:11px 13px;overflow-y:auto;
-  overscroll-behavior:contain;border-radius:12px;background:var(--panneau);
-  box-shadow:inset 0 0 0 1px rgba(242,238,228,.11)}
-.fiche .detail .t{font-family:var(--banner);font-size:13.5px;letter-spacing:.02em;
-  display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.fiche .detail .t em{font-style:normal;font-family:var(--ui);font-size:11px;
-  letter-spacing:.1em;opacity:.88;text-transform:uppercase}
-.fiche .detail p{margin:6px 0 0;font-size:12px;line-height:1.6;opacity:.92}
-/* Le mot-clé d'un détail : il se détache par la graisse, plus par l'or —
-   douze pixels ne sont pas un grand texte (la règle de l'or, « les tons »
-   dans `ui.css`). */
-.fiche .detail .cle{color:var(--craie);font-weight:700}
-.fiche .detail .manque{display:inline-flex;align-items:center;gap:6px;margin-top:7px;
-  font-size:11.5px;padding:5px 10px;border-radius:999px;
-  background:rgba(4,6,10,.55);box-shadow:inset 0 0 0 1px rgba(242,238,228,.14)}
-
-/* ---------------------------------------------------------- les actions */
-
-/* `min-height` sur la rangée elle-même, en plus de la hauteur fixe des boutons
-   ci-dessous. Elle peut être **vide** — une installation sans module de deck
-   n'affiche aucun bouton principal — et une rangée qui s'effondre à zéro rend
-   quinze pixels à la vitrine, donc fait grandir le personnage d'un coup. La
-   place est réservée qu'il y ait un bouton ou non.
-
-   **Quatre-vingt-un pixels, et non plus soixante-quatorze.** Les 74 comptaient
-   l'ancien bouton : dix de rembourrage, cinquante-quatre de bouton, dix. Les
-   boutons sont devenus des plaques — des bâches depuis le lot 1 de FAIT
-   MAIN —, et une bâche porte son épaisseur **sous** elle (la tranche hier,
-   l'ombre dure aujourd'hui, à place égale), en marge de cinq pixels
-   (`--epaisseur`, dans `ui.css`) : 10 + 56 + 5 + 10. La rangée vide
-   réservait donc sept pixels de moins que la rangée pleine, et grandissait
-   de cinq à sept pixels au premier bouton. */
-/* **Retenue** : cette case fait partie de ce qu'on s'apprête à montrer.
-
-   C'est une autre information que « regardée », qui a déjà son cadre : on
-   peut lire une tenue sans la vouloir, et le trio se compose sur trois
-   rangées à la fois. Une pastille dorée au coin, là où l'œil balaie — et pas
-   un second cadre, qui se confondrait avec le premier. */
-.fiche .case.retenue::after{content:'';position:absolute;top:4px;right:4px;
-  width:8px;height:8px;border-radius:50%;background:var(--projo);
-  box-shadow:0 0 0 2px rgba(4,6,10,.75)}
-
-/* Trois boutons tiennent maintenant sur la rangée — la place, l'évolution et
-   l'apparence. Ils se replient plutôt que de se serrer : un libellé tronqué
-   sur un bouton qui engage un choix est pire qu'une rangée sur deux lignes. */
-.fiche .actions{padding:10px 14px 10px;display:flex;gap:9px;flex:none;
-  min-height:81px;flex-wrap:wrap}
-.fiche .actions .bt{flex:1 1 140px}
-/* Hauteur fixe, et ce n'est pas cosmétique : un bouton qui porte un prix tient
-   sur deux lignes, un bouton simple sur une seule. La rangée grandissait donc
-   de quinze pixels selon la case regardée — et comme la vitrine au-dessus est
-   souple, **le personnage sautait** à chaque toucher. Personne n'aurait
-   cherché la cause d'un tremblement dans la hauteur d'un bouton.
-
-   **Cinquante-six, la hauteur du bouton à deux lignes.** Le plancher était à
-   cinquante-quatre, celle de l'ancien bouton. En plaque, le libellé passe à
-   quatorze pixels, et le bouton qui porte un prix mesure cinquante-six — un
-   libellé Oswald, un sous-libellé à la police du système, deux d'écart, neuf
-   de rembourrage en haut et en bas ; mesuré sous Windows, dont la police
-   système a l'interligne le plus haut. Le bouton simple restait à
-   cinquante-quatre : le saut revenait, de deux pixels au lieu de quinze,
-   mais le même. Le plancher prend donc la hauteur du plus haut des deux, et
-   la rangée au-dessus la réserve.
-
-   ## La mise en page ici, la peinture seulement pour l'ancien bouton
-
-   Les boutons de la fiche sont des plaques (`class="bt tbf-plaque"
-   data-ton="…"`, posées par `fanzzy-fiche.js`, peintes par `ui.css`), au ton
-   de ce qu'ils font. La règle ci-dessous garde ce qui
-   appartient à la fiche : la hauteur fixe, la colonne libellé-sous-libellé,
-   la largeur dans la rangée. Tout ce qui peint — fond, tranche, police,
-   enfoncement — n'est écrit que pour un `.bt` **sans** `tbf-plaque` : avec
-   deux classes contre une, ces règles battraient la plaque et le bouton
-   resterait l'ancien sous son nouveau nom. Elles restent pour un bouton qui
-   n'aurait pas encore la classe. `bt` reste dans le balisage, les contrôles
-   de la fiche le cherchent. */
-.fiche .bt{flex:1;min-height:56px;padding:9px 10px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  text-align:center}
-.fiche .bt:not(.tbf-plaque){border-radius:11px;font-family:var(--banner);
-  font-size:13.5px;letter-spacing:.07em;cursor:pointer;border:0;color:inherit;
-  background:rgba(16,22,31,.95);
-  box-shadow:0 4px 0 rgba(0,0,0,.62),inset 0 1px 0 rgba(242,238,228,.12);
-  transition:transform .1s,box-shadow .1s}
-.fiche .bt:not(.tbf-plaque):active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 rgba(0,0,0,.62)}
-.fiche .bt.primaire:not(.tbf-plaque){color:#fff;background:linear-gradient(180deg,#F0704F,var(--flare) 55%,#B32A1D);
-  box-shadow:0 4px 0 #7A1A11,inset 0 1px 0 rgba(255,255,255,.3)}
-.fiche .bt.primaire:not(.tbf-plaque):active:not(:disabled){box-shadow:0 0 0 #7A1A11}
-.fiche .bt.or:not(.tbf-plaque){color:#1A0C04;background:linear-gradient(180deg,#FFD86B,var(--projo) 55%,#B8860B);
-  box-shadow:0 4px 0 #7A5A0E,inset 0 1px 0 rgba(255,255,255,.4)}
-.fiche .bt.or:not(.tbf-plaque):active:not(:disabled){box-shadow:0 0 0 #7A5A0E}
-/* Hors service : éteint, pas effacé. Il était à 38 % — et son sous-libellé à
-   38 × 70 %, soit 27 % : « ouvre des boosters », ou ce qu'il manque pour
-   évoluer, c'est-à-dire justement ce qui dit comment le rallumer, était le
-   texte le moins lisible de l'écran. Gris et assombri, il garde un contraste
-   de lecture. Ceci ne vaut que pour l'ancien bouton : la bâche hors service
-   (`.tbf-plaque[disabled]`, dans `ui.css`) ne s'assombrit plus — elle passe au
-   parpaing sous trame, et son lettrage reste à la craie pleine. */
-.fiche .bt:disabled{pointer-events:none}
-.fiche .bt:not(.tbf-plaque):disabled{filter:grayscale(1) brightness(.62);transform:none}
-/* `text-transform:none` : sur une plaque, tout est en capitales, et le
-   sous-libellé est une phrase. */
-.fiche .bt small{display:block;font-family:var(--ui);font-size:11px;letter-spacing:.06em;
-  opacity:.9;text-transform:none}
+.fiche.pas-a-moi .tbf-inventaire-tuiles,.fiche.pas-a-moi .tbf-ages{filter:grayscale(1)}
 
 /* ------------------------------------------------- la confirmation
 
    Quatre-vingt-dix écharpes, c'est neuf boosters. On montre donc **ce qu'on
-   gagne**, ligne à ligne, avant de les prendre — et non un simple « es-tu
-   sûr ? » auquel personne ne peut répondre autrement qu'au hasard. */
-
-/* À 93 %, le flou de quatre pixels qu'elle portait ne changeait plus rien
-   qu'on puisse voir — il ne coûtait que le calcul, à chaque image. */
+   gagne** avant de les prendre : les deux cartes, l'ancienne et celle qui
+   vient (floue — c'est la cérémonie qui la révèle), et les chiffres sur une
+   fiche kraft. Le voile est plein, sans flou : une transparence laisserait
+   lire la fiche derrière les chiffres. */
 .fiche .demande{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:12px;padding:20px;
-  background:rgba(4,6,10,.93);animation:fiche-fondu .2s ease}
-.fiche .demande h3{font-family:var(--banner);font-size:17px;letter-spacing:.06em;margin:0;
-  text-align:center}
-.fiche .demande .duo{display:flex;align-items:center;gap:10px;width:100%;max-width:330px}
-.fiche .demande .duo .qui{flex:1;min-width:0;text-align:center;border-radius:12px;padding:9px 8px;
-  background:rgba(16,22,31,.95);box-shadow:inset 0 0 0 1px rgba(242,238,228,.12)}
-.fiche .demande .duo .qui.apres{box-shadow:inset 0 0 0 1.5px var(--projo)}
-.fiche .demande .duo .qui img{width:100%;max-height:96px;object-fit:contain;display:block;
-  margin:0 auto 5px}
-.fiche .demande .duo .qui b{display:block;font-family:var(--banner);font-size:12px;line-height:1.2}
-.fiche .demande .duo .fleche{font-family:var(--banner);font-size:20px;color:var(--projo);flex:none}
-.fiche .demande .gains{width:100%;max-width:330px;border-radius:12px;overflow:hidden;
-  background:rgba(16,22,31,.95);box-shadow:inset 0 0 0 1px rgba(242,238,228,.12)}
-.fiche .demande .gain{display:flex;align-items:center;gap:9px;padding:9px 12px;font-size:12px;
-  border-top:1px solid rgba(242,238,228,.07)}
-.fiche .demande .gain:first-child{border-top:0}
-/* Ce qu'on avait est barré, pas effacé : on doit pouvoir lire ce qu'on quitte
-   pour savoir ce qu'on gagne. Le trait dit « avant », la pâleur n'avait rien
-   à ajouter. */
-.fiche .demande .gain .n{flex:1;min-width:0;opacity:.9}
-.fiche .demande .gain .av{opacity:.86;text-decoration:line-through}
-.fiche .demande .gain .ap{color:var(--vert);font-family:var(--banner);font-size:13px}
-.fiche .demande .quoi{display:flex;gap:9px;width:100%;max-width:330px}
+  align-items:center;justify-content:center;gap:16px;padding:18px var(--marge);
+  background:var(--encre);overflow-y:auto;animation:fiche-fondu .2s ease}
+.fiche .demande h3{margin:0;font:700 19px/1.1 var(--banner);letter-spacing:.06em;
+  text-align:center;color:var(--craie)}
+.fiche .demande .duo{display:flex;align-items:center;justify-content:center;gap:18px}
+.fiche .demande .duo>div{width:104px}
+.fiche .demande .fleche{width:22px;height:22px;flex:none;fill:none;stroke:var(--craie);stroke-width:2.6;
+  stroke-linecap:round;stroke-linejoin:round}
+.fiche .demande .tbf-detail{width:100%;max-width:340px;gap:8px}
+.fiche .demande .quoi{display:flex;gap:12px;width:100%;max-width:340px}
+.fiche .demande .quoi>*{flex:1 1 0;min-width:0}
 @keyframes fiche-fondu{from{opacity:0}}
 
-.fiche .vide{text-align:center;padding:50px 22px;opacity:.9;font-size:13px;line-height:1.8}
+.fiche .vide{text-align:center;padding:50px 22px;font-size:13px;line-height:1.8}
 /* Le lien de retour se dit par son soulignement, à la craie : treize pixels
    ne sont pas un grand texte (la règle de l'or, « les tons » dans `ui.css`). */
 .fiche .vide a{color:var(--craie);text-decoration:underline;text-underline-offset:3px}
+
+/* ------------------------------------------------------------ le mouvement
+
+   La fiche n'ajoute qu'un mouvement à elle : le fondu de la confirmation.
+   Le reste — la carte qui se pose, s'incline et se retourne, sa matière, le
+   nœud d'âge qui pulse, les rayons, le tampon qui claque, le ticket qui
+   monte — appartient aux briques, qui ont leurs propres doubles. */
+@media (prefers-reduced-motion:reduce){
+  .fiche .demande{animation:none}
+}
+html[data-calme~="animations"] .fiche .demande{animation:none}

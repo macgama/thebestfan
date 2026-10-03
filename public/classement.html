@@ -697,8 +697,9 @@ function poserSaison() {
   if (liste?.onglet === 'supporters' && liste.periode === 'saison' && s?.numero) {
     /* Les jours qui restent, seulement si le serveur les compte : aucune
        page ne calcule une fin de saison avec l'horloge du téléphone (R3).
-       Le contrat ne les sert qu'au dex (§ 7.1), une lecture trop lourde
-       pour cette ligne : lus ici le jour où ma place les portera. */
+       Ma place les sert (le contrat, § 14.4), comptés comme au dex au même
+       instant : cette ligne n'a pas à lire le dex, trop lourd pour elle.
+       Sans date saisie, ni `fin` ni `joursRestants` : le nom seul. */
     const j = Number(s.joursRestants);
     const jours = s.finie || j === 0 ? ' · TERMINÉE'
       : j === 1 ? ' · DERNIER JOUR' : j > 1 ? ` · ${j} JOURS` : '';
@@ -814,10 +815,13 @@ function monBuste() {
     avatar = (liste?.classement ?? []).find((x) => x.public_id === qui.id)?.avatar;
   }
   if (avatar === undefined && qui) {
-    /* Le repli d'un serveur qui ne sert pas encore mon avatar avec ma
-       place : ce que `nav.js` retient pour la barre au nom du même joueur,
-       dans l'onglet — ou, d'abord, ce qu'elle vient d'annoncer (`tbf:hud`),
-       plus frais, et le seul chemin quand le stockage est fermé. */
+    /* Le repli quand ma place ne dit rien de mon avatar (`avatar` absent :
+       le serveur ne sait pas, le contrat § 14.3 ; ou ma place pas servie)
+       et que ma ligne n'est pas dans la liste : ce que `nav.js` retient
+       pour la barre au nom du même joueur, dans l'onglet — ou, d'abord, ce
+       qu'elle vient d'annoncer (`tbf:hud`), plus frais, et le seul chemin
+       quand le stockage est fermé. `avatar: null` est une réponse (aucun
+       Fanzzy équipé) : il ne passe pas par ici. */
     let d = null;
     try { d = JSON.parse(sessionStorage.getItem('tbf-hud') || 'null'); } catch { /* fermé */ }
     for (const x of [hudRecu, d]) {

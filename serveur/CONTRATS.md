@@ -297,6 +297,7 @@ actuels :
 | `GET /api/kop/:id` | `membres[]` |
 | `GET /api/amis` | `amis[]`, `recues[]`, `envoyees[]` : **`niveau` seulement** (l'avatar y est déjà) |
 | `GET /api/amis/suggestions` | chaque suggestion : **`niveau` seulement** |
+| `GET /api/rank/moi` | à la racine : ma propre ligne, `avatar` absent quand le serveur ne sait pas (§ 14.3) |
 
 Seuls les comptes actifs apparaissent dans les classements. Ailleurs (membres
 d'un KOP), un compte supprimé garde sa ligne, mais avec `avatar: null` et sans
@@ -389,6 +390,7 @@ serveur ne les sert pas dans cette vague.
 "paliers": {
   "cran": 25,
   "gagnes": 63,
+  "possibles": 445,
   "prochain": { "a": 75, "manque": 12, "gain": { "echarpes": 25, "packs": 0, "xp": 0, "tampons": 0 } },
   "aReclamer": [
     { "sorte": "cran", "cle": "50", "gain": { "echarpes": 25, "packs": 0, "xp": 0, "tampons": 0 } }
@@ -403,15 +405,23 @@ serveur ne les sert pas dans cette vague.
 | champ | type | sens |
 |---|---|---|
 | `cran` | entier | taille d'un cran, en objets |
-| `gagnes` | entier | objets gagnés, le même nombre que `total.gagnes` de la même réponse |
+| `gagnes` | entier | objets gagnés **sans les tenues** : `total.gagnes` − `types.tenues.gagnes` de la même réponse (`ECARTS.md`, fanzzy § 8) |
+| `possibles` | entier | l'univers des crans, **sans les tenues** : `total.possibles` − `types.tenues.possibles` |
 | `prochain` | objet | le prochain cran : son seuil `a`, ce qui `manque`, son `gain` ; absent quand tout est gagné |
 | `aReclamer` | tableau | crans et séries complètes atteints et pas encore récupérés ; `[]` si rien |
 | `series[]` | tableau | une entrée par série ouverte : `possedes`, `total`, `etat` ∈ `"a_venir"` \| `"pret"` \| `"reclame"`, et le `gain` de la série complète |
 
+**Les tenues ne comptent pas dans les crans** (*révisé le 3 octobre 2026,
+`ECARTS.md`, fanzzy § 8*) : l'abonnement les ouvre toutes, et ce qu'il ouvre
+ne paie pas. Elles se collectionnent toujours dans la bibliothèque (`total`,
+`types`, `parFanzzy`). `gagnes`, `possibles`, `prochain.a`, `prochain.manque`
+et `aReclamer` se lisent sur le compte des crans : un écran met `gagnes` sous
+`prochain.a` ou sur `possibles`, **jamais `total.gagnes`**.
+
 Un cran est payé **une fois**, au seuil franchi le plus haut : si le compte
-baisse (une tenue retirée) ou si la taille du cran change, rien n'est repris ni
-repayé. Le booster « tous les quatre crans » est déjà compris dans le `gain` du
-cran concerné.
+baisse (une pièce ou un personnage dépublié) ou si la taille du cran change,
+rien n'est repris ni repayé. Le booster « tous les quatre crans » est déjà
+compris dans le `gain` du cran concerné.
 
 **Réclamer** : `POST /api/fanzzy/palier`, avec
 
@@ -428,9 +438,12 @@ somme versée, et `verse` est faux s'il n'y avait rien à verser
 **Absence.** `paliers` absent : interrupteur coupé ou schéma incomplet. L'écran
 montre sa jauge de collection sans récompense ni bouton.
 
-**Lecteurs.** `collection.html` (jauge à crans, vignette du cran suivant,
-RÉCUPÉRER), `fanzzy.html` (page de série : tampon COMPLET), `index.html` (crans
-de la tuile COLLECTION).
+**Lecteurs.** `collection.html` (l'anneau du collectionneur,
+`gagnes / possibles`, le gain du prochain cran, RÉCUPÉRER), `fanzzy.html`
+(page de série : tampon COMPLET), `index.html` (la tuile COLLECTION,
+`gagnes / prochain.a`). Les deux écrans affichent le même `gagnes` ;
+`total.gagnes` n'est dit que dans leurs étiquettes (`ECARTS.md`, accueil
+§ 5).
 
 ### 5.2 Rang : les divisions de saison
 
@@ -439,6 +452,7 @@ de la tuile COLLECTION).
 ```json
 "saison": {
   "id": 1, "numero": 1, "nom": "La reprise",
+  "fin": "2026-12-20", "joursRestants": 78, "finie": false,
   "ferveur": 41250,
   "rang": 128, "sur": 1403,
   "division": { "n": 3, "id": "fervent", "nom": "FERVENT" },
@@ -468,6 +482,7 @@ plafond pour un abonné (`SERVEUR.md`, § 6).
 | champ | type | sens |
 |---|---|---|
 | `id`, `numero`, `nom` | | la saison en cours |
+| `fin`, `joursRestants`, `finie` | | la fin de la saison, au sens du § 7.1 : `fin` et `joursRestants` **absents** tant qu'aucune date n'est saisie, `finie` toujours présent (§ 14.4) |
 | `ferveur` | entier | ferveur **classée** de la saison (Virage compté et duel classé, depuis son lancement) |
 | `rang`, `sur` | entiers | ma place dans la liste `supporters?periode=saison` et le nombre de classés de cette liste ; **absents** tant que `ferveur` vaut 0. Ce sont eux que la ligne épinglée sous l'onglet SAISON affiche. Les champs `rang` et `sur` à la racine de `/moi` gardent leur sens d'aujourd'hui (tous les temps, période `toujours`). |
 | `division` | objet | la division atteinte ; **absente** tant que `ferveur` vaut 0 |
@@ -752,6 +767,54 @@ Présent seulement si une saison terminée a des paliers de carnet atteints et p
 récupérés. C'est **une seule saison**, la plus récente dans ce cas ; la
 précédente prend sa place quand celle-ci est vidée (même règle qu'au § 5.2).
 
+#### `insignes` — les insignes du carnet que le joueur porte
+
+*Ajouté le 3 octobre 2026 (`ECARTS.md`, quotidien § 11). Aucun autre champ ne
+change.*
+
+```json
+"insignes": [
+  { "id": "lisere", "saison": { "id": 1, "numero": 1, "nom": "La reprise" } },
+  { "id": "tampon", "saison": { "id": 1, "numero": 1, "nom": "La reprise" } }
+]
+```
+
+| champ | type | sens |
+|---|---|---|
+| `id` | `"lisere"` \| `"tampon"` | l'insigne : les valeurs de `carnet.paliers[].insigne`, liste fermée. `lisere` : le liseré de la saison autour de l'anneau du buste ; `tampon` : le tampon de la saison sur la carte de supporter |
+| `saison` | `{ id, numero, nom }` | la saison du carnet qui l'a donné, de la même forme que `carnet.saison`. C'est `numero` que l'écran écrit (« LISERÉ S1 ») ; il ne le tire jamais de `nom` (R7) |
+
+- **Un insigne par palier récupéré.** Il est servi dès que la ligne `carnet`
+  du grand livre qui le porte est écrite, jamais pour un palier seulement
+  atteint (`pret`). La réponse de la réclamation qui le pose le porte déjà,
+  dans son `quotidien` (§ 6.2) : l'écran n'a rien à relire.
+- **Porté pour toujours**, comme un titre (§ 5.2) : servi pour toutes les
+  saisons, en cours, finies ou passées, remises en brouillon par
+  l'administration comprises, et même quand l'interrupteur
+  `saison.carnet_actif` est coupé (`carnet` absent, `insignes` présent).
+- **Ordre** : par numéro de saison croissant, puis dans l'ordre des paliers
+  du carnet. **Au plus un** par saison et par `id` : deux paliers d'un même
+  carnet qui donneraient le même insigne n'en font qu'un.
+- **Les divisions n'y sont pas** : l'insigne d'une division est
+  `saison.division.id` de `GET /api/rank/moi` (§ 5.2). `insignes` ne parle
+  que du carnet.
+- **Rien ne se compte** : `aReclamer` ne compte jamais un insigne, il compte
+  le palier qui le donne tant qu'il est `pret`.
+- **Coût** : aucune lecture de plus. La lecture du grand livre que l'état du
+  jour fait déjà porte la colonne.
+
+**Absence.** `insignes` est **absent** quand le joueur n'en porte aucun
+(jamais `[]`), et avec `{ "actif": false }`. Il l'est aussi quand le serveur
+ne sait pas nommer la saison : saisons pas chargées, une faute de montage
+(le carnet s'éteint avec), ou saison supprimée depuis par l'administration (retirée
+puis supprimée : la ligne du grand livre reste, l'écran n'aurait pas de
+numéro à écrire). Un `id` que l'écran ne connaît pas ne se dessine pas.
+
+**Lecteurs.** `profil.html` (le liseré sur l'anneau du buste, le tampon sur
+la carte de supporter, par `GET /api/quotidien` qu'il lit déjà),
+`aide.html` (« LISERÉ S1 », « TAMPON S1 » et leur petit dessin sur les
+paliers du carnet ; posé seulement quand l'insigne est servi ici).
+
 ### 6.2 Les gestes
 
 Toutes ces routes sont des `POST` avec un corps JSON. Elles répondent selon
@@ -793,6 +856,7 @@ R6, avec à la racine `quotidien` : l'état complet du § 6.1 (sans `depuis`).
 | `serie` absent, ou `jours < 3` | rien sur le hub ; le profil montre `record` dès qu'il est servi |
 | `missions` absent | pas de mission sur la bâche du jour, pas d'onglet DU JOUR |
 | `carnet` absent | pas d'onglet DE LA SAISON (sauf si `/api/rank/moi` sert des divisions) |
+| `insignes` absent | ni liseré autour du buste, ni tampon sur la carte de supporter |
 
 ### Lecteurs
 
@@ -800,7 +864,7 @@ R6, avec à la racine `quotidien` : l'état complet du § 6.1 (sans `depuis`).
 plaque or RÉCUPÉRER du bonus, dont le gain vole vers le compteur ; bulle
 « J3 »), `aide.html` (MISSIONS : rails DU JOUR et DE LA SAISON, tickets avec
 tampon FAIT, RÉCUPÉRER), `menu.js` / `nav.js` (pastille par R10),
-`profil.html` (série et record).
+`profil.html` (série et record, insignes du carnet).
 
 ---
 
@@ -942,8 +1006,8 @@ rideau).
 | `index.html`, `ouverture.js` | 2 | § 6 (bâche du jour, bonus, J3), § 8 (ticket), § 2 (pastille COLLECTION), § 5.1 (crans), § 7 |
 | `boosters.html` | 3 | § 1, § 2.3, § 7.1, § 7.2, § 13 |
 | `boutique.html` | 3 | rien de nouveau (l'achat à l'étal crée une nouveauté, lue ailleurs) |
-| `profil.html` | 5 | § 4.2, § 5.2 (division, titres), § 6 (série, record), § 7 |
-| `classement.html` | 5 | § 3, § 4.2, § 5.2, § 5.3, § 7 |
+| `profil.html` | 5 | § 4.2, § 5.2 (division, titres), § 6 (série, record, insignes du carnet), § 7, § 14 (avatar, niveau, couleurs du club) |
+| `classement.html` | 5 | § 3, § 4.2, § 5.2, § 5.3, § 7, § 14 (ma ligne) |
 | `kop.html` | 5 | § 3 |
 | `amis.html` | 5 | § 3 (niveau) |
 | `aide.html` (MISSIONS) | 5 | § 6, § 5.2 (lien), § 7 |
@@ -1048,3 +1112,118 @@ Partout où le module des boosters sert `wallet` : `GET /api/fanzzy/state`,
 
 `boosters.html` et `cartes.js` (les fentes de la réserve, l'anneau de
 recharge, le ticket « −45 » du booster acheté).
+
+---
+
+## 14. Ma place : `GET /api/rank/moi` en entier (déclaré le 3 octobre 2026)
+
+*Mis d'accord avec ce que le serveur sert (`src/server/classements/index.js`,
+`maPlace`) ; `ECARTS.md`, classement § 11. **Rien ne change dans la
+réponse** : ce paragraphe écrit des champs qui étaient servis sans être
+déclarés — `avatar` et `niveau` à la racine, `saison.fin`,
+`saison.joursRestants` et `saison.finie`, `tribune.couleurs` — et rassemble
+ceux que les § 4.2 et 5.2 décrivaient par morceaux. Aucun champ n'est
+renommé ni retiré.*
+
+Session requise (R8). Une réponse 404, 503 ou un réseau absent : R2.
+
+```json
+{
+  "ferveur": 52800, "matchs": 41,
+  "rang": 312, "sur": 1403,
+  "plancher": 3,
+  "duels": { "gagnes": 14, "joues": 22, "cote": 1052, "rang": 41, "sur": 380 },
+  "entrainements": { "joues": 9, "gagnes": 6, "rang": 120, "sur": 610 },
+  "tribune": { "id": 85, "nom": "Sion", "ferveur": 9860, "couleurs": ["#c8102e", "#ffffff"] },
+  "avatar": { "id": "RP4", "age": "RP4B", "evo": 2, "nom": "Le Meneur",
+              "skin": "base", "etat": null, "rar": "rare" },
+  "niveau": 7,
+  "saison": { "id": 1, "numero": 1, "nom": "La reprise",
+              "fin": "2026-12-20", "joursRestants": 78, "finie": false,
+              "ferveur": 41250, "rang": 128, "sur": 1403, "division": { … },
+              "prochaine": { … }, "paliers": [ … ], "aReclamer": 1 },
+  "titres": [ … ],
+  "evolution": { … }
+}
+```
+
+### 14.1 La racine
+
+| champ | type | sens |
+|---|---|---|
+| `ferveur` | entier ≥ 0 | ferveur classée de **tous les temps** (Virage compté et duel classé), celle de `supporters?periode=toujours` |
+| `matchs` | entier ≥ 0 | matchs différents où cette ferveur a été gagnée |
+| `rang` | entier ≥ 1, ou `null` | ma place sur cette ferveur, tous les temps ; `null` tant que `ferveur` vaut 0 |
+| `sur` | entier ≥ 0 | joueurs qui ont une ligne de ferveur classée (Virage compté ou duel classé), tous les temps. `rang` et `sur` comptent encore les comptes supprimés (`ECARTS.md`, classement § 9) : sous l'onglet SAISON, la ligne épinglée lit `saison.rang` et `saison.sur` (§ 5.3) |
+| `plancher` | entier ≥ 1 | duels joués qu'il faut pour entrer dans les listes des duellistes et des entraînements |
+| `duels` | objet | les duels classés : `gagnes`, `joues` (entiers ≥ 0) ; `cote`, la cote du dernier duel classé (entier, `null` sans aucun) ; `rang`, ma place dans la liste `duellistes` (entier, `null` sous le plancher) ; `sur`, les classés de cette liste |
+| `entrainements` | objet | `joues`, `gagnes` (entiers ≥ 0) ; `rang`, ma place dans la liste `entrainements` (`null` sous le plancher) ; `sur`, les classés de cette liste |
+| `tribune` | objet, ou `null` | le club où va ma ferveur (§ 14.2) ; `null` si je ne suis aucun club |
+| `avatar` | objet, `null`, ou absent | mon personnage, de la forme du § 3 (§ 14.3) |
+| `niveau` | entier 1–30, ou absent | mon niveau, tiré de mon XP (§ 14.3) |
+| `saison`, `saisonPassee`, `titres` | | § 5.2, avec `saison.fin`, `saison.joursRestants` et `saison.finie` (§ 14.4) |
+| `evolution` | | § 4.2 |
+
+Les `null` de ce tableau sont les seuls de la réponse, en plus de ceux des
+§ 3 et § 5.2 ; un champ marqué « absent » suit R1.
+
+**Ce qui n'y est pas** : les insignes du carnet, servis par
+`GET /api/quotidien` (§ 6.1, `insignes`) ; l'insigne d'une division est
+`saison.division.id` (§ 5.2).
+
+### 14.2 `tribune`
+
+```json
+"tribune": { "id": 85, "nom": "Sion", "ferveur": 9860, "couleurs": ["#c8102e", "#ffffff"] }
+```
+
+| champ | type | sens |
+|---|---|---|
+| `id` | entier | le club (l'identifiant de `follows[].team_id` de `/api/me/state`) |
+| `nom` | chaîne | son nom |
+| `ferveur` | entier ≥ 0 | ma ferveur classée pour ce club, tous les temps |
+| `couleurs` | tableau de 1 ou 2 chaînes `"#rrggbb"` | les teintes du club, en minuscules, la principale d'abord ; une seconde égale à la première n'est pas servie. La forme de `couleurs` de `/api/kop/miens` et de `/api/kop/club/:teamId`, par la même fonction |
+
+- **Quel club** : le club principal s'il y en a un parmi ceux que je suis,
+  sinon celui où j'ai le plus de ferveur. L'écran qui peint l'écharpe du
+  club principal vérifie que `tribune.id` est bien ce club.
+- `couleurs` est **absent** quand le club n'a aucune teinte valide (blason
+  pas encore extrait, ou base sans `sql/couleurs.sql`) : jamais de tableau
+  vide. L'écran garde alors ses teintes par défaut.
+
+### 14.3 `avatar` et `niveau`
+
+Ma ligne porte mon personnage et mon niveau, **par la même règle que les
+lignes des listes** (§ 3) : la même liste blanche, le même `avatar: null`
+sans Fanzzy équipé, le même niveau tiré de l'XP.
+
+| champ | présent | sens |
+|---|---|---|
+| `avatar` | objet de la forme du § 3 | le Fanzzy équipé, à l'âge, dans la tenue et l'expression qu'il montre ; `rar` dit la rareté qui choisit la plaque |
+| `avatar` | `null` | aucun Fanzzy équipé : l'écran pose la silhouette ou l'initiale |
+| `avatar` | **absent** | le serveur ne sait pas (catalogue pas chargé, table absente, lecture en échec) : l'écran garde ce qu'il savait d'ailleurs, sans conclure qu'il n'y a pas de Fanzzy |
+| `niveau` | entier 1–30 | le niveau de mon XP |
+| `niveau` | **absent** | XP illisible (pas de bourse, colonne absente) : aucun niveau affiché, jamais « NIV. 1 » |
+
+### 14.4 La fin de la saison dans `saison`
+
+Le bloc `saison` du § 5.2 porte aussi la fin de la saison en cours, **au
+sens du § 7.1** et calculée de la même façon que `/dex` au même instant :
+la ligne épinglée et le profil écrivent « SAISON 1 · 78 JOURS » sans lire
+`/dex`.
+
+| champ | type | sens |
+|---|---|---|
+| `fin` | `"AAAA-MM-JJ"` | dernier jour de jeu de la saison (R4) ; **absent** tant qu'aucune date n'est saisie |
+| `joursRestants` | entier ≥ 0 | jours de jeu restants, aujourd'hui compris ; 1 le dernier jour, 0 une fois passée ; **absent** sans `fin` |
+| `finie` | booléen | la date est passée ; **toujours présent**. Une saison finie reste dans `saison` (jamais dans `saisonPassee`) jusqu'au lancement de la suivante, sa ferveur figée, sans `prochaine` |
+
+`/moi` ne sert **pas** `finDansMs` : le décompte à la seconde reste celui de
+`/dex` (§ 7.1). `saisonPassee` ne porte aucun de ces trois champs.
+
+### Lecteurs
+
+`profil.html` (la carte de supporter : buste et plaque par `avatar`, niveau,
+écharpe de tête par `tribune.couleurs` ; « SAISON 1 · 78 JOURS »),
+`classement.html` (ma ligne épinglée : buste, rang de chaque échelle, la
+tribune où va ma ferveur, la fin de la saison).

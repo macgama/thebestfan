@@ -299,6 +299,12 @@ async function load() {
      avant que la table arrive montrerait une expression que ce joueur n'a
      pas gagnée, et la verrait disparaître au rendu suivant. */
   S.etats = st.etats ?? {};
+  /* **Les nouveautés** (contrat § 2.1) : ce que ce joueur a gagné et pas
+     encore vu — NOUVEAU dans le classeur, le « +N » de son onglet, et la
+     fiche et /collection pour la même raison. `null` et non `[]` quand le
+     champ manque : le serveur ne sait pas (sa table est absente), ce qui
+     n'est pas « rien de nouveau » ; l'écran n'en invente aucun. */
+  S.nouveautes = Array.isArray(st.nouveautes) ? st.nouveautes : null;
   window.TBF_ETATS?.possedes?.(S.etats);
   S.scarves = st.wallet.scarves;
   S.packs = st.wallet.packs;
@@ -467,32 +473,95 @@ function packArt(set) {
  * de large (la page glisse de côté), sept de deux pixels à 360. La boutique
  * en dessinait jusqu'à sept.
  *
- * Elle ne dépend de rien d'autre dans ce fichier : la boutique et la barre,
- * qui ne le chargent pas, peuvent la reprendre telle quelle.
+ * Elle ne dépend, dans ce fichier, que de `esc` et de `clamp` (une ligne
+ * chacune) : la boutique et la barre, qui ne le chargent pas, peuvent la
+ * reprendre telle quelle.
  *
- * @param {{ packs: number, max?: number|null, recharge?: boolean }} r
+ * ## La brique (lot 4) : `brique` et `contenu`
+ *
+ * La réserve est devenue **une seule brique** de `ui.css` (le sticker
+ * `.tbf-monnaie.tbf-boosters`, BRIQUES § 1) : ses sachets, puis le compte,
+ * puis l'anneau et le compte à rebours. `brique` rend ce qui **précède** le
+ * compte et ce qui le **suit**, et pas le compte lui-même : la page garde son
+ * `<b>` en place d'un rendu à l'autre, c'est lui que `FX.compter` fait
+ * défiler — un compte ne survit pas à un `innerHTML`. `contenu` est le tout,
+ * pour qui pose la brique d'un coup. Le compte est toujours le premier `<b>`
+ * (celui que lisent la bande du HUD et les suites).
+ *
+ * `{ enFentes, html }` ne change pas : c'est l'ancienne rangée de fentes,
+ * que le kiosque lit encore. Elle partira quand plus personne ne la lira.
+ *
+ * Deux crochets pour la seconde suivante, ceux que la boutique employait
+ * déjà : l'anneau porte `data-recharge` (la page y pose `--part`), le temps
+ * est le `<b data-prochain>` du compte à rebours (la page le récrit). **Ce
+ * qu'on ne veut pas, on ne l'écrit pas** : réserve pleine, ni anneau ni
+ * compte à rebours (jamais « 0:00 ») ; le mot PROCHAIN ou le temps qu'une
+ * page n'a pas la place de montrer ne se posent pas, plutôt que d'être
+ * cachés par une règle (un texte à zéro pixel est un petit texte pour
+ * l'audit).
+ *
+ * @param {{ packs: number, max?: number|null, recharge?: boolean,
+ *   forme?: 'auto'|'compte', anneau?: boolean, part?: number|null,
+ *   prochain?: 'mot'|'temps'|false, temps?: string, plus?: boolean }} r
  *   `max` : le plafond de ce joueur (abonnement compris), ou rien ;
- *   `recharge` : un booster est en route (la réserve n'est pas pleine).
- * @returns {{ enFentes: boolean, html: string }} le contenu de `.tbf-fentes`.
- *   En compte, la page pose `.tbf-fentes--compte` sur le conteneur, et
- *   l'anneau de recharge hors des fentes.
+ *   `recharge` : un booster est en route (la réserve n'est pas pleine) ;
+ *   `forme: 'compte'` : le sachet seul quoi qu'il arrive (la bande du HUD,
+ *     le vestiaire, où cinq places ne tiennent pas) ;
+ *   `anneau` : l'anneau de la recharge (par défaut, dès que `recharge`) —
+ *     faux quand on ne sait pas la durée d'une recharge, dont il est la part ;
+ *   `part` : la part de l'anneau au premier rendu, de 0 à 1 ;
+ *   `prochain` : `'mot'` écrit « PROCHAIN » et le temps (kiosque,
+ *     boutique), `'temps'` le temps seul (vestiaire), rien sinon (HUD) ;
+ *     posé seulement si `recharge` ;
+ *   `temps` : le temps au premier rendu (« 9:55 », « 1 h 02 ») ;
+ *   `plus` : le « + » au bout du sticker, quand il est un lien.
+ * @returns {{ enFentes: boolean, html: string,
+ *   brique: { avant: string, apres: string }, contenu: string }}
+ *   `html` : le contenu de l'ancienne `.tbf-fentes` (en compte, la page
+ *   posait `.tbf-fentes--compte` sur le conteneur, et l'anneau hors des
+ *   fentes) ; `brique` et `contenu` : le contenu du sticker de la brique.
  */
 const PLACES_EN_FENTES = 5;
-function reserveHTML({ packs, max = null, recharge = false }) {
+function reserveHTML({ packs, max = null, recharge = false, forme = 'auto', anneau = recharge,
+  part = null, prochain = false, temps = '', plus = false } = {}) {
   const n = Math.max(0, Math.floor(Number(packs) || 0));
   const plafond = Number(max) > 0 ? Math.floor(Number(max)) : null;
-  const places = plafond === null ? Infinity : Math.max(plafond, n + (recharge ? 1 : 0));
-  if (places <= PLACES_EN_FENTES) {
-    const html = Array.from({ length: places }, (_, i) =>
+  const places = forme === 'compte' || plafond === null ? Infinity : Math.max(plafond, n + (recharge ? 1 : 0));
+  const enFentes = places <= PLACES_EN_FENTES;
+
+  /* L'anneau et le compte à rebours de la brique : seulement si un booster
+     est en route. La part est bornée ici, une seule fois — un anneau à
+     1,2 tour ferait le tour et repartirait. */
+  const p = part === null || part === '' ? NaN : Number(part);
+  const style = Number.isFinite(p) ? ` style="--part:${clamp(p, 0, 1).toFixed(3)}"` : '';
+  const rond = recharge && anneau
+    ? `<span class="tbf-recharge" data-recharge${style} aria-hidden="true"></span>` : '';
+  const mot = prochain === 'mot' || prochain === true;
+  const rebours = recharge && (mot || prochain === 'temps')
+    ? `<span class="tbf-reserve-prochain" aria-hidden="true">${mot ? 'PROCHAIN' : ''}<b data-prochain>${
+      esc(temps)}</b></span>` : '';
+  const fin = plus ? '<i class="tbf-monnaie-plus" aria-hidden="true">+</i>' : '';
+
+  let html, brique;
+  if (enFentes) {
+    html = Array.from({ length: places }, (_, i) =>
       (i < n ? '<span class="tbf-fente"></span>'
         : i === n && recharge
           ? '<span class="tbf-fente tbf-fente--vide"><span class="tbf-recharge" aria-hidden="true"></span></span>'
           : '<span class="tbf-fente tbf-fente--vide"></span>')).join('');
-    return { enFentes: true, html };
+    /* Les places : les pleines d'abord, la première vide porte l'anneau. */
+    const fentes = Array.from({ length: places }, (_, i) =>
+      (i < n ? '<span class="tbf-fente"></span>'
+        : `<span class="tbf-fente tbf-fente--vide">${i === n ? rond : ''}</span>`)).join('');
+    brique = { avant: `<span class="tbf-fentes" aria-hidden="true">${fentes}</span>`, apres: rebours + fin };
+  } else {
+    html = `<span class="tbf-fente${n ? '' : ' tbf-fente--vide'}"></span>`
+      + `<b class="tbf-sticker" aria-hidden="true">${n}</b>`;
+    /* Le sachet seul — vide s'il n'y en a aucun —, l'anneau à côté du compte. */
+    brique = { avant: `<span class="tbf-fente${n ? '' : ' tbf-fente--vide'}" aria-hidden="true"></span>`,
+      apres: rond + rebours + fin };
   }
-  return { enFentes: false,
-    html: `<span class="tbf-fente${n ? '' : ' tbf-fente--vide'}"></span>`
-      + `<b class="tbf-sticker" aria-hidden="true">${n}</b>` };
+  return { enFentes, html, brique, contenu: `${brique.avant}<b>${n}</b>${brique.apres}` };
 }
 
 /* --------------------------------------------------------- rendu carte */
@@ -536,30 +605,51 @@ function modsText(f) {
 }
 
 /**
- * La rareté chiffrée : un à trois losanges, une couronne pour la légendaire.
+ * Le mot de chaque rareté, tel qu'on l'écrit sur une carte.
  *
- * La seconde ligne testait `legendaire` une deuxième fois — elle était donc
- * morte, et l'épique retombait sur les losanges. Une faute muette : trois
- * losanges restent une réponse plausible, personne ne cherche l'étoile qui
- * manque.
+ * La rareté est une **information** (couleur, forme et mot) : le mot
+ * s'écrit toujours, dans la forme ou en étiquette qui la traverse
+ * (amendement 20), et c'est aussi ce que lit le lecteur d'écran.
  */
-function rarMark(rar) {
-  if (rar === 'legendaire') return `<span class="s">♛</span>`;
-  if (rar === 'epique') return `<span class="s">★</span>`;
-  return '<span class="d"></span>'.repeat(RAR[rar] ?? 1);
+const MOT_RARETE = { commune: 'COMMUNE', rare: 'RARE', epique: 'ÉPIQUE', legendaire: 'LÉGENDAIRE' };
+const rareteDe = (rar) => (MOT_RARETE[rar] ? rar : 'commune');
+
+/**
+ * **La forme de rareté** (`.tbf-forme`, dans `ui.css`) : un rectangle mat, un
+ * rond de vinyle, une étoile, un éclat — avec son mot.
+ *
+ * Elle remplace les losanges, l'étoile ★ et la couronne ♛ : trois signes de
+ * plus à apprendre, dont deux caractères dessinés par la police du
+ * téléphone, et une épique qui retombait sur trois losanges le jour où une
+ * condition se trompait (c'est arrivé). Le même balisage pour les quatre :
+ * un script la pose sans savoir laquelle.
+ *
+ * `coin` : posée au coin d'une carte, l'étiquette de l'étoile et de l'éclat
+ * court vers l'intérieur au lieu de déborder sur la voisine de grille.
+ * `tourne` : le holo de l'éclat légendaire tourne (vitrine, fiche,
+ * révélation : il compte alors dans le budget des animations infinies).
+ * `mot: false` : une forme trop petite pour son mot (14 px, dans une liste)
+ * le perd, et le garde pour le lecteur d'écran.
+ */
+function formeHTML(rar, { coin = false, tourne = false, mot = true, classe = '' } = {}) {
+  const r = rareteDe(rar);
+  const cls = ['tbf-forme', coin && 'tbf-forme--coin', tourne && 'tbf-forme--tourne', classe]
+    .filter(Boolean).join(' ');
+  return mot
+    ? `<span class="${cls}" data-rar="${r}"><i></i><b>${MOT_RARETE[r]}</b></span>`
+    : `<span class="${cls}" data-rar="${r}" role="img" aria-label="${MOT_RARETE[r].toLowerCase()}"><i></i></span>`;
 }
 
 /**
- * Une carte.
- *
- * `--tc` porte le type, `r-<rareté>` porte la rareté. Les deux étaient
- * confondus : le cadre prenait la couleur du type, si bien qu'une commune et
- * une légendaire du même type se ressemblaient trait pour trait dans la
- * grille. La rareté est pourtant la seule chose qu'on montre aux autres.
- *
- * `opts.verrou` : le personnage qu'on n'a pas encore. Il s'affiche quand
- * même, en ombre — voir la grille.
+ * La rareté d'une carte, pour qui la pose à côté d'elle (la scène du
+ * vestiaire, par exemple). **C'est désormais la forme**, avec son mot : la
+ * signature ne change pas, ce qu'elle rend si — les losanges et les ★/♛
+ * disparaissent partout (lot 4).
  */
+function rarMark(rar) {
+  return formeHTML(rar);
+}
+
 /**
  * Une pièce d'équipement sur une carte de booster.
  *
@@ -573,8 +663,45 @@ function rarMark(rar) {
  * plutôt que de le remplir.
  */
 function objetHTML(f) {
-  return `<div class="illuwrap">${artFond(f)}
+  return `<div class="illuwrap">${fondDeCarte(f)}
     ${window.TBF_STUFF.illustration(f.id, 'illu objet')}</div>`;
+}
+
+/**
+ * **Le fond d'une carte : la plaque de sa rareté** (lot 4).
+ *
+ * `artFond` (fanzzy-art.js) demande le décor de la scène, celui du
+ * vestiaire, où la tenue choisit sa plaque. Une carte, elle, se tient
+ * devant la plaque de sa rareté, quelles que soient sa série et sa tenue :
+ * voir `plaqueCarte` dans fanzzy-fond.js. Sans ce module (une page qui ne le
+ * charge pas), le fond de `artFond` reste le repli.
+ */
+function fondDeCarte(f) {
+  return window.TBF_FOND?.fond?.(f, { carte: true }) ?? artFond(f);
+}
+
+/**
+ * Le portrait d'un Fanzzy sur sa carte : `FZART.art`, au fond près.
+ *
+ * C'est le même assemblage — le dessin s'il existe, posé sur son décor,
+ * sinon la silhouette procédurale, qui est le dessin prévu d'un personnage
+ * pas encore illustré —, avec la plaque de la carte au lieu de celle de la
+ * scène. Trois lignes et non un appel : `art` ne transmet pas l'option du
+ * fond, et fanzzy-art.js n'appartient pas à la carte.
+ *
+ * `pied` : le personnage en pied (520 × 945) plutôt que son buste (320 ×
+ * 320). Une grande carte — la vitrine, la fiche, la révélation — montre le
+ * personnage entier devant sa plaque ; en buste, à trois cents pixels, on ne
+ * voyait plus qu'un visage de la taille de la carte. La grille garde le
+ * buste : quatre fois moins lourd, et lisible à quatre-vingt-six pixels.
+ */
+function portraitDeCarte(f, pied = false) {
+  const dessin = illustration(f, pied ? 'plein' : 'buste');
+  if (!dessin) return artProcedural(f);
+  /* La classe de cadrage du personnage en pied (voir `cartes.css`). Le
+     balisage vient de fanzzy-art.js et commence toujours ainsi. */
+  const img = pied ? dessin.split('<img class="illu"').join('<img class="illu fz-pied"') : dessin;
+  return `<div class="illuwrap">${fondDeCarte(f)}${img}</div>`;
 }
 
 /**
@@ -599,8 +726,24 @@ function objetHTML(f) {
  * Chaque branche est **facultative** : ces trois bibliothèques sont chargées
  * page par page, et une page qui n'en charge pas une doit retomber sur le
  * dessin procédural plutôt que de ne rien afficher.
+ *
+ * ## L'étiquette d'un état ou d'une tenue (lot 4)
+ *
+ * Elle était posée **sur le dessin**, en position absolue au-dessus du nom,
+ * et sa hauteur se devinait : un nom de trois lignes la faisait encore
+ * passer dessous. `cardHTML` la range maintenant **dans le flux du bandeau
+ * du nom**, où elle ne peut plus le recouvrir, et demande donc le dessin
+ * sans elle (`etiquette: false`). Appelée seule, la fonction la garde : qui
+ * montre le dessin sans la carte veut encore savoir de quel moment il
+ * s'agit.
+ *
+ * Les images reçoivent une classe de cadrage : `fz-pied` pour un
+ * personnage en pied (la pose d'un état, d'une tenue, ou le Fanzzy d'une
+ * grande carte quand on demande `pied`), `fz-pleine` pour une illustration
+ * qui couvre toute la carte (une carte d'action). Sans classe, c'est le
+ * buste d'un Fanzzy. Voir `cartes.css`, « le dessin ».
  */
-function dessinDeCarte(f) {
+function dessinDeCarte(f, { etiquette = true, pied = false } = {}) {
   /* **Un état se dessine avec le dessin qu'il donne.**
    *
    * `art(f)` cherche un Fanzzy nommé `f.id` — or l'identifiant d'un état est
@@ -628,10 +771,11 @@ function dessinDeCarte(f) {
      * Montrer le personnage au repos dit au moins **de qui** il s'agit. */
     const src = r?.src ?? window.FZART?.adresse?.(f.pour, 'buste');
     if (src) {
-      return `<div class="illuwrap">${artFond(f)}
-        <img class="illu" src="${src}" alt="" loading="lazy"
+      const enPied = r?.src && !/portrait\.\w+(\?|$)/.test(r.src);
+      return `<div class="illuwrap">${fondDeCarte(f)}
+        <img class="illu${enPied ? ' fz-pied' : ''}" src="${src}" alt="" loading="lazy"
              onerror="this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">
-        ${f.etatMot ? `<span class="tbf-etiq">${esc(f.etatMot)}</span>` : ''}</div>`;
+        ${etiquette && f.etatMot ? `<span class="tbf-etiq">${esc(f.etatMot)}</span>` : ''}</div>`;
     }
   }
   /* **Et la cinquième sorte tombait encore sur la silhouette.**
@@ -664,19 +808,22 @@ function dessinDeCarte(f) {
       ?? window.TBF_ETATS?.portrait?.(f.pour, { evo, skin: f.id });
     const src = r?.src ?? window.FZART?.adresse?.(f.pour, 'buste');
     if (src) {
-      return `<div class="illuwrap">${artFond(f)}
-        <img class="illu" src="${src}" alt="" loading="lazy"
+      /* `fz-pied` seulement quand c'est la pose en pied : `portrait`, le
+         second repli, rend un buste, que le cadrage du buste pose mieux. */
+      const enPied = r?.src && !/portrait\.\w+(\?|$)/.test(r.src);
+      return `<div class="illuwrap">${fondDeCarte(f)}
+        <img class="illu${enPied ? ' fz-pied' : ''}" src="${src}" alt="" loading="lazy"
              onerror="this.src=window.TBF_ETATS?.secours?.(this.src,true)||''">
-        ${f.skinMot ? `<span class="tbf-etiq">${esc(f.skinMot)}</span>` : ''}</div>`;
+        ${etiquette && f.skinMot ? `<span class="tbf-etiq">${esc(f.skinMot)}</span>` : ''}</div>`;
     }
   }
   if (f.stuff) return objetHTML(f);
   if (f.action && window.TBF_ACTION) {
-    return `<div class="illuwrap">${artFond(f)}
-      ${window.TBF_ACTION.illustration(f.id, 'illu')}</div>`;
+    return `<div class="illuwrap">${fondDeCarte(f)}
+      ${window.TBF_ACTION.illustration(f.id, 'illu fz-pleine')}</div>`;
   }
   if (f.echarpes && window.TBF_STUFF?.illustrationGain) {
-    return `<div class="illuwrap">${artFond(f)}
+    return `<div class="illuwrap">${fondDeCarte(f)}
       ${window.TBF_STUFF.illustrationGain('echarpes', 'illu objet')}</div>`;
   }
   /* **La silhouette de repli est celle du personnage, pas celle de l'objet.**
@@ -692,8 +839,8 @@ function dessinDeCarte(f) {
      `pour` est la racine de lignée, et c'est la graine que le reste du jeu
      emploie. La carte de la tenue montre alors la même silhouette que la
      carte du personnage — ce qui est, exactement, ce qu'elle raconte. */
-  if (f.pour) return art({ ...f, id: f.pour });
-  return art(f);
+  if (f.pour) return portraitDeCarte({ ...f, id: f.pour }, pied);
+  return portraitDeCarte(f, pied);
 }
 
 /**
@@ -719,40 +866,197 @@ function dessinDeCarte(f) {
  */
 const typeDe = (f) => TYPES[f?.type] ?? { nom: '', c: '#C2CAD6', ico: '' };
 
-function cardHTML(f, opts = {}) {
-  const t = typeDe(f);
-  const holo = !opts.verrou && ['epique','legendaire'].includes(f.rar) ? ' holo' : '';
-  const rc = ` r-${f.rar ?? 'commune'}`;
-  /* **Le pied ne porte que la rareté.** Il écrivait aussi « famille · ét. N »
-     derrière un séparateur, que cartes.css masquait toujours : la pastille dit
-     la famille, et le badge `.age` dit l'âge en clair. Resté dans le balisage,
-     ce texte mort commençait par un « · » seul dès que la famille manquait au
-     catalogue (`typeDe` rend alors un nom vide) — une ligne sans donnée, qui
-     doit partir entière, et elle part.
+/**
+ * Ce que dit le pied d'une grande carte, sous le nom : la famille et la
+ * poussée du cri d'un Fanzzy (« VOIX · POUSSÉE 64 »), la sorte de tout le
+ * reste. Les autres sortes empruntent une famille pour leur couleur et leur
+ * pictogramme (voir `carteDuPaquet`) : l'écrire en clair ferait d'une tenue
+ * un tifo. Une poignée d'écharpes n'a rien à dire de plus que son nom — la
+ * ligne disparaît, jamais un tiret.
+ */
+function piedDe(f, t) {
+  if (f.etat) return 'état';
+  if (f.skin) return 'tenue';
+  if (f.stuff) return 'équipement';
+  if (f.action) return 'carte d’action';
+  if (f.echarpes) return '';
+  const puissance = Number(f.cri?.power);
+  return [t.nom, Number.isFinite(puissance) && puissance > 0 ? `poussée ${puissance}` : '']
+    .filter(Boolean).join(' · ');
+}
 
-     `.rar` reste un `div`, et plus aucune règle de cartes.css ne vise le
-     dernier `span` du pied. Il y en avait une, écrite pour cacher ce texte :
-     elle attrapait aussi la dernière marque de rareté (les losanges et
-     l'étoile sont des `span`), si bien que la commune n'avait aucun losange et
-     que l'épique et la légendaire montraient une pastille vide. Elle est partie
-     avec le texte qu'elle cachait. */
-  return `<div class="fz${rc}${holo}" style="--tc:${t.c}" data-id="${f.id}">
+/** Le numéro de pochette, « N° 013 » : trois chiffres au moins, comme un album. */
+const numeroDe = (n) => `N° ${/^\d+$/.test(String(n)) ? String(n).padStart(3, '0') : String(n)}`;
+
+/**
+ * **Une carte : le sticker de carte** (lot 4, refonte FAIT MAIN).
+ *
+ * La plaque de sa rareté en fond, le personnage devant ; autour, le bord de
+ * découpe craie et le cerne d'encre, l'ombre dure ; le nom en banderole sur
+ * une bande craie de travers ; le pin de la famille et l'âge en haut à
+ * gauche, la forme de rareté et son mot en haut à droite. La matière dit la
+ * rareté une quatrième fois — carton mat, liseré plastifié, holo, liseré
+ * d'or — et **ne bouge pas en grille** : seules la vitrine, la fiche et la
+ * révélation l'animent (`anime`).
+ *
+ * `--tc` porte toujours la couleur de la famille et `r-<rareté>` la rareté.
+ * Les deux ont été confondus un temps : le cadre prenait la couleur du type,
+ * et une commune et une légendaire du même type se ressemblaient trait pour
+ * trait dans la grille.
+ *
+ * ## Les options — toutes facultatives
+ *
+ * La signature ne change pas : les sept écrans et les suites qui l'appellent
+ * avec `{ mini }` ou `{ mini, verrou }` reçoivent la même carte, redessinée.
+ *
+ *   mini       carte de grille : matière statique, pas de ligne d'effets ;
+ *   verrou     non possédée : pochoir gris sous trame, scotch en croix et
+ *              cadenas ; ni âge, ni doublons, ni AVATAR ;
+ *   numero     avec `verrou` : la bande porte le numéro de pochette
+ *              (« N° 013 ») au lieu du nom, gardé pour le lecteur d'écran ;
+ *   raison     avec `verrou` : ce qui ouvre la case (« NIV. 10 »), écrit à
+ *              côté du cadenas — une croix ne reste jamais muette ;
+ *   secret     âge à venir : le dessin flou, « ÂGE À VENIR » sur la bande ;
+ *   prix       le sticker de prix craie, jeton d'écharpes et montant ;
+ *   doublons   « ×N » en sticker rond, quand N > 1 ;
+ *   avatar     AVATAR en sticker craie, sur la bande du nom ;
+ *   titulaire  TITULAIRE en sticker vert, sur la bande du nom ;
+ *   anime      la matière bouge (l'épique dérive, la légendaire tourne) et
+ *              le personnage respire ; par défaut, toute carte qui n'est
+ *              pas `mini` — la vitrine, la fiche, la révélation ;
+ *   pied       le Fanzzy en pied plutôt qu'en buste ; par défaut, toute
+ *              carte qui n'est pas `mini` (une grande carte) ;
+ *   flip       la carte se retourne : `retourner(el)` construit son verso
+ *              au premier appel, pas avant.
+ *
+ * Les tailles sont toutes en `--u` (un centième de la carte) avec des
+ * planchers en pixels : la même carte se lit de 86 à 300 pixels. Ce que
+ * chaque écran doit savoir (les débords, les classes, le budget
+ * d'animations) est écrit en tête de `cartes.css`.
+ */
+function cardHTML(f, opts = {}) {
+  /* La famille du pin. Un état et une tenue appartiennent à un personnage :
+     ils prennent **sa** famille, pas celle qu'ils empruntent pour leur
+     couleur (`carteDuPaquet` leur prête la fidélité et le tifo). Une pièce,
+     une action, des écharpes n'ont pas de famille : leur pin garde son
+     pictogramme d'emprunt, et ne le dit pas au lecteur d'écran. */
+  const proprio = (f.etat || f.skin) && f.pour ? BY_ID.get(f.pour) : null;
+  const t = typeDe(proprio ?? f);
+  const famille = !(f.stuff || f.action || f.echarpes) && t.nom;
+  /* **Le pictogramme du pin, et son repli.** Le tracé vient du catalogue
+     (`TYPES[type].ico`). Une page qui ne charge pas le catalogue — la fiche,
+     à l'adresse /fanzzy/<id> : une requête lourde de plus — ne connaît de la
+     famille que son nom et sa couleur, et le pin restait un rond de craie
+     vide. On y pose alors l'emblème de la famille (`TBF_LOGO`,
+     /img/logo/type-*), que la feuille éteint en grisaille d'encre : c'est un
+     pictogramme de pin, pas un pin's émaillé — l'or de la Voix et le violet
+     du Tifo ne se posent pas sur une carte. Seulement pour une famille dont
+     on sait le nom (son emblème existe) : une famille inconnue ne coûte pas
+     une requête vers une image qui n'existe pas. Sans `TBF_LOGO`, le rond
+     reste vide, comme avant. */
+  const cleType = (proprio ?? f)?.type;
+  const picto = t.ico
+    ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${esc(t.ico)}"/></svg>`
+    : t.nom && /^[a-z]+$/.test(String(cleType ?? '')) && window.TBF_LOGO?.type
+      ? window.TBF_LOGO.type(cleType, 'fz-picto') : '';
+  const rar = rareteDe(f.rar);
+  const verrou = Boolean(opts.verrou);
+  const secret = Boolean(opts.secret);
+  const anime = opts.anime ?? !opts.mini;
+  const holo = !verrou && (rar === 'epique' || rar === 'legendaire') ? ' holo' : '';
+  const classes = `fz r-${rar}${holo}${opts.mini ? ' fz-mini' : ''}${anime ? ' fz-anime' : ''}`
+    + `${verrou ? ' fz-verrou' : ''}${secret ? ' fz-secret' : ''}${opts.flip ? ' fz-flip' : ''}`;
+  /* Le dos qu'on montrera au retournement : celui de la série de la carte,
+     LA REPRISE pour ce qui n'en a pas (une tenue, une pièce, une action). Une
+     adresse et pas une image : rien ne se télécharge avant le geste. */
+  const dos = opts.flip ? window.FZART?.dos?.(f.set ?? 'RP') ?? '' : '';
+
+  /* L'âge : un Fanzzy, un état, une tenue en ont un. Une pièce, une action,
+     une poignée d'écharpes n'en ont pas — « ÉVO 1 » sur un thermos ne disait
+     rien —, et une légendaire n'en a qu'un, que sa forme dit déjà. */
+  const sansAge = verrou || rar === 'legendaire' || f.stuff || f.action || f.echarpes;
+  const stade = Math.max(1, Number(f.stage) || 1);
+  const age = sansAge ? '' : `<div class="age a${stade}">ÉVO ${stade}</div>`;
+
+  /* Ce qui se pose **sur** la bande du nom, dans son flux : la bande les
+     porte, elle ne peut donc plus passer dessous, quel que soit le nombre de
+     lignes du nom. */
+  const etiquette = f.etatMot ?? f.skinMot ?? '';
+  const sur = [
+    opts.titulaire && !verrou ? '<span class="tbf-sticker fz-titulaire" data-ton="vert">TITULAIRE</span>' : '',
+    opts.avatar && !verrou ? '<span class="tbf-sticker fz-avatar">AVATAR</span>' : '',
+    etiquette ? `<span class="tbf-etiq">${esc(etiquette)}</span>` : '',
+  ].join('');
+
+  const nom = verrou && opts.numero != null && opts.numero !== ''
+    ? `<div class="nm numero"><span class="tbf-vh">${esc(f.nom)}, </span>${esc(numeroDe(opts.numero))}</div>`
+    : secret ? '<div class="nm">ÂGE À VENIR</div>'
+      : `<div class="nm">${esc(f.nom)}</div>`;
+  const pied = piedDe(f, t);
+
+  /* L'éclat de la forme ne tourne pas sur la carte, même animée : le liseré
+     d'or tourne déjà, et deux holos feraient deux animations infinies pour
+     un seul mouvement (trois au plus par écran). */
+  const forme = formeHTML(rar, { coin: true, classe: 'fz-forme' });
+
+  const n = Math.floor(Number(opts.doublons) || 0);
+  const prix = opts.prix != null && opts.prix !== '' && Number.isFinite(Number(opts.prix))
+    ? Number(opts.prix) : null;
+  const jeton = window.TBF_STUFF?.gain?.('echarpes') ?? '/img/gains/echarpes.webp';
+
+  return `<div class="${classes}" style="--tc:${t.c}" data-id="${esc(f.id)}" data-rar="${rar}"${
+    dos ? ` data-dos="${esc(dos)}"` : ''}>
     <div class="body">
-      <div class="top">
-        <div class="pip"><svg viewBox="0 0 24 24" fill="none" stroke="#0B0E13" stroke-width="2"
-          stroke-linecap="round"><path d="${t.ico}"/></svg></div>
-        <div class="nm">${f.nom}</div>
+      <div class="art">${dessinDeCarte(f, { etiquette: false, pied: opts.pied ?? !opts.mini })}</div>
+      ${rar === 'legendaire' ? '<i class="lisere" aria-hidden="true"></i>' : ''}
+      <div class="haut">
+        <div class="pip"${famille ? ` role="img" aria-label="${esc(t.nom)}"` : ' aria-hidden="true"'}>${picto}</div>
+        ${age}
       </div>
-      <div class="art">${dessinDeCarte(f)}</div>
-      ${opts.verrou ? `<svg class="cadenas" viewBox="0 0 24 24" stroke-linecap="round">
-        <rect x="4" y="10" width="16" height="11" rx="2.5"/>
-        <path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>` : ''}
+      ${forme}
+      ${verrou ? `<span class="tbf-scotch tbf-scotch--croix fz-croix" aria-hidden="true"></span>
+        <span class="cadenas" role="img" aria-label="pas encore à toi"><i class="tbf-ico tbf-ico-cadenas"
+          aria-hidden="true"></i>${opts.raison ? `<b>${esc(opts.raison)}</b>` : ''}</span>` : ''}
+      ${prix !== null ? `<span class="tbf-sticker tbf-sticker--prix fz-prix"><img src="${esc(jeton)}"
+        alt="" aria-hidden="true">${prix}<span class="tbf-vh"> écharpes</span></span>` : ''}
+      ${!verrou && n > 1 ? `<span class="tbf-sticker fz-doublons">×${n}</span>` : ''}
       ${opts.mini ? '' : `<div class="mods">${modsText(f).slice(0, 2).join('<br>')}</div>`}
-      <div class="foot"><div class="rar">${rarMark(f.rar)}</div></div>
-      ${opts.verrou ? '' : `<div class="age a${f.stage}">${
-        f.rar === 'legendaire' ? 'LÉGENDAIRE' : `ÉVO ${f.stage}`}</div>`}
+      ${sur ? `<div class="sur">${sur}</div>` : ''}
+      <div class="top">
+        ${nom}
+        ${pied ? `<div class="foot">${esc(pied)}</div>` : ''}
+      </div>
     </div>
   </div>`;
+}
+
+/**
+ * **Retourne une carte** posée avec `flip`, et construit son verso au
+ * premier appel (« le verso construit à la demande ») : une grille de
+ * cinquante cartes retournables ne télécharge pas cinquante dos.
+ *
+ * `el` est la carte (`.fz`) ou n'importe quoi dedans ou autour d'elle ;
+ * `retournee` force un côté, sinon on bascule. Rend le côté montré
+ * (`true` : le dos). Sans mouvement (préférence ou mode calme), la carte
+ * change de face sans tourner — c'est `cartes.css` qui le décide.
+ */
+function retourner(el, retournee) {
+  const fz = el?.closest?.('.fz') ?? el?.querySelector?.('.fz') ?? null;
+  if (!fz) return false;
+  if (!fz.querySelector(':scope > .verso')) {
+    const v = document.createElement('div');
+    v.className = 'verso';
+    v.setAttribute('aria-hidden', 'true');
+    if (fz.dataset.dos) v.style.backgroundImage = `url("${fz.dataset.dos}")`;
+    fz.append(v);
+    fz.classList.add('fz-flip');
+    /* Une image de lecture : la face cachée doit avoir pris sa place avant
+       de tourner, sinon le premier retournement se fait d'un bloc. */
+    void v.offsetWidth;
+  }
+  const dos = fz.classList.toggle('fz-retournee', retournee);
+  fz.querySelector(':scope > .body')?.setAttribute('aria-hidden', String(dos));
+  return dos;
 }
 
 /**
@@ -883,5 +1187,5 @@ function carteDuPaquet(c) {
   /* L'état est un **objet partagé**, pas une copie : le kiosque le modifie en
      ouvrant un booster, la page des Fanzzy le relit. Exporter une copie ferait
      deux vérités dont l'une vieillirait en silence. */
-  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, PERSOS, PLACES_EN_FENTES, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, dessinDeCarte, esc, illustration, load, modsText, objetHTML, packArt, rarMark, reserveHTML, save, seeded, src, uid };
+  window.TBF_CARTES = { $, AC, ACTES, ART, BY_ID, DEX, EVO_COST, ILLUSTRES, IMG_EXT, MAXP, MOT_RARETE, PERSOS, PLACES_EN_FENTES, RAR, S, SCARVES, SETS, SETS_TOUTES, STUFFS, TENUES, TYPES, api, art, artFond, artProcedural, audio, buzz, cardHTML, carteDuPaquet, chargerCatalogue, clamp, dessinDeCarte, esc, formeHTML, illustration, load, modsText, objetHTML, packArt, rarMark, reserveHTML, retourner, save, seeded, src, uid };
 })();

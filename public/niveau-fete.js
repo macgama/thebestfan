@@ -65,6 +65,8 @@
  * promesse (cerné d'or), la bouffée derrière la case, les confettis de
  * papier dans la scène, et CONTINUER en bâche or. Plus un dégradé, plus une
  * lueur, plus un arrondi : ce sont les briques de `ui.css`, telles quelles.
+ * Leur place dans la case y est écrite aussi (section « la montée de
+ * niveau », lot 4) : ce fichier ne porte plus une ligne de style.
  *
  * Les classes que les suites lisent restent : `.tbf-niv-fond`,
  * `.tbf-niv-n b` (le chiffre), `[data-fermer]`, le rôle `alertdialog`.
@@ -156,9 +158,10 @@
 
   /* La rosette. Un ruban et une étoile, dessinés — voir l'en-tête pour
      pourquoi ce n'est pas une image. `currentColor` partout : il n'y a
-     qu'un endroit où changer la couleur. **Elle s'appelle « cocarde » dans
-     la page** : la classe d'avant (`.tbf-niv-rosette`) porte encore dans
-     `ui.css` une lueur dorée et un tour sans fin, que la case n'a plus. */
+     qu'un endroit où changer la couleur (`.tbf-niv-cocarde`, dans ui.css).
+     **Elle s'appelle « cocarde » dans la page** : la rosette d'avant
+     tournait sans fin sous un halo doré, et sa classe est partie de la
+     feuille avec la boîte « premium ». */
   const ROSETTE = `<svg class="tbf-niv-cocarde" viewBox="0 0 64 64" aria-hidden="true">
     <g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
       <path d="M24 38 L18 60 L32 53 L46 60 L40 38"/>
@@ -176,66 +179,18 @@
     <rect x="5" y="11" width="14" height="10" rx="1.5"/><path d="M8.5 11V7.5a3.5 3.5 0 0 1 6.6-1.6"/>
     <path d="M12 15v2"/></svg>`;
 
-  /* ------------------------------------------------- la feuille de la case
+  /* ------------------------------------------------ la place de la case
 
-     **Provisoire, et seulement la place.** La fête est faite des briques de
-     ui.css (la case .tbf-vignette en or, son lettrage, les stickers, la
-     bâche, la bouffée) ; cette feuille ne dit que leur place dans la case —
-     la colonne, les marges, les corps — et le repli de la scène quand
-     l'écran est court. Sa place à elle est dans ui.css, section « la montée
-     de niveau », où elle remplacera la boîte « premium » d'avant (dégradés,
-     lueurs, arrondis, pilules) : c'est un besoin écrit pour la feuille
-     commune. Posée ici en attendant, pour que la fête soit juste dès
-     aujourd'hui sur toutes les pages qui la chargent, sous le préfixe de la
-     fête pour ne rien toucher d'autre.
-
-     Deux règles seulement ne sont pas une place : la teinte de la cocarde
-     (un dessin propre à la fête, pas une brique), et la neutralisation de
-     la règle dorée qui vise encore le chiffre dans ui.css (.tbf-niv-n b :
-     or, lueur de vingt-six pixels, autre corps) — le chiffre prend le
-     lettrage de la case, et la suite du kiosque lit toujours .tbf-niv-n b.
-     Aucune animation ici : les entrées sont jouées par le script, qui ne
-     les joue pas sans mouvement, et celles des briques (.tbf-colle, la
+     **Dans ui.css, section « la montée de niveau ».** Ce fichier posait
+     lui-même une feuille (`#tbf-niv-feuille`) qui disait la place des
+     briques dans la case — la colonne, les marges, les corps, le repli de
+     la scène quand l'écran est court, la teinte de la cocarde —, le temps
+     qu'elle entre dans la feuille commune à la place de la boîte « premium »
+     d'avant. C'est fait (lot 4), au sélecteur et à la déclaration près : la
+     copie d'ici est partie. Toutes les pages qui chargent la fête chargent
+     ui.css. Aucune animation dans la feuille : les entrées sont jouées
+     ici, et pas sans mouvement ; celles des briques (`.tbf-colle`, la
      bouffée) ont leurs doubles dans ui.css. */
-  const FEUILLE = `
-  /* La case : une colonne, jamais plus haute que l'écran. Quand il est
-     court, la scène cède sa hauteur la première, puis le corps défile ; le
-     bouton reste toujours au bas de la case, sous le doigt. */
-  .tbf-niv-case{display:flex;flex-direction:column;align-items:center;
-    width:min(400px,100%);max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);
-    padding:16px 16px 14px;color:var(--craie)}
-  .tbf-niv-case>.tbf-niv-scene{align-self:stretch;flex:0 1000 auto;min-height:0}
-  .tbf-niv-corps{align-self:stretch;flex:0 1 auto;min-height:0;overflow:hidden auto;
-    margin:0 -10px;padding:8px 10px 10px;display:flex;flex-direction:column;align-items:center}
-  .tbf-niv-case>.tbf-plaque{flex:none;margin-top:12px}
-  /* Le lettrage de la case porte « NIVEAU 5 » : son corps, et le chiffre
-     qui en prend tout le reste. */
-  .tbf-niv-case .tbf-niv-n{display:block;margin:10px 0 0;font-size:clamp(36px,13vw,52px)}
-  .tbf-niv-case .tbf-niv-n b{font:inherit;color:inherit;text-shadow:inherit;letter-spacing:inherit}
-  .tbf-niv-case .tbf-niv-de{margin-top:8px;font-size:12px}
-  /* Le butin et ce que le palier ouvre : des stickers en colonne, chacun à
-     sa largeur, avec l'air qu'il leur faut autour (cinq pixels). */
-  .tbf-niv-butin{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:16px}
-  .tbf-niv-libelle{font-family:var(--banner);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
-  .tbf-niv-cles{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;
-    align-items:center;gap:12px}
-  .tbf-niv-cles small{display:block;margin-top:7px;font-size:12px}
-  .tbf-niv-case .tbf-niv-rien{margin:0;padding:0;font-size:12px;line-height:1.5}
-  .tbf-niv-promesse{margin-top:16px;display:flex;flex-direction:column;align-items:center;gap:8px}
-  /* La cocarde : un dessin à plat, sans lueur ni tour sans fin. Seule, au
-     milieu de la scène ; avec le Fanzzy, épinglée sur le côté, sans cacher
-     ni le visage ni les mains. */
-  .tbf-niv-cocarde{display:block;width:58px;height:58px;color:var(--projo)}
-  .tbf-niv-scene--perso .tbf-niv-cocarde{position:absolute;z-index:2;left:calc(50% + 30px);
-    bottom:8px;width:52px;height:52px}`;
-
-  function poserFeuille() {
-    if (document.getElementById('tbf-niv-feuille')) return;
-    const s = document.createElement('style');
-    s.id = 'tbf-niv-feuille';
-    s.textContent = FEUILLE;
-    document.head.appendChild(s);
-  }
 
   /**
    * Le Fanzzy du joueur en pose victoire, ou `null`.
@@ -351,7 +306,6 @@
   }
 
   function ouvrir(m, o) {
-    poserFeuille();
     const n = Number(m.niveau);
     const avant = Number(m.avant);
     const paliers = (m.paliers ?? []).flatMap(nommer);

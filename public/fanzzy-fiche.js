@@ -5,28 +5,41 @@
  *
  * Il y avait **deux fiches** pour la même carte : un aperçu en surimpression
  * dans le classeur, et une page complète ailleurs. Deux rendus, deux
- * vocabulaires, et déjà deux contenus différents — l'aperçu ne montrait ni les
- * tenues ni l'équipement. Toucher une carte ouvrait le premier, un lien au bas
- * du premier menait au second, et le classeur disparaissait en chemin.
+ * vocabulaires, et déjà deux contenus différents. Il n'y en a plus qu'une,
+ * montée à deux endroits : **en panneau** par-dessus le classeur — la grille
+ * reste derrière, la croix referme, rien ne recharge — et **en page** quand
+ * on arrive par un lien.
  *
- * Il n'y en a plus qu'une, montée à deux endroits : **en panneau** par-dessus
- * le classeur — la grille reste derrière, la croix referme, rien ne recharge —
- * et **en page** quand on arrive par un lien. Le même code, donc le même
- * écran, pour toujours.
+ * ## La carte en main (lot 4)
  *
- * ## Ce que la mise en page défend
+ * Le personnage n'est plus un décor dans un cadre : c'est **la carte du jeu**
+ * (`cardHTML`, cartes.js), celle du classeur et des boosters, tenue en main —
+ * elle s'incline au doigt, prend la lumière, se retourne. Dessous, la bande
+ * du cri ; puis l'inventaire en quatre rangées (ÂGES en arbre sur une corde,
+ * EFFETS, ÉTATS, TENUES) ; puis la fiche kraft de la pièce qu'on touche ; et
+ * les actions, hiérarchisées, toujours au même endroit. Le budget de hauteur
+ * est écrit en tête de `fanzzy-fiche.css`.
  *
- * Le personnage tient le haut. En dessous, **des cases** : ses âges, ses
- * tenues, ses effets. Celles qu'on n'a pas portent un cadenas et disent ce
- * qu'elles demandent — la différence entre « il me manque des choses » et « il
- * me manque *ça*, et voilà comment l'avoir ». Toucher une case écrit son
- * détail juste dessous, dans un bloc de hauteur fixe pour que rien ne saute.
+ * Toucher un âge, une tenue ou une expression **compose** l'apparence : la
+ * carte la montre tout de suite, et un seul geste l'enregistre (ME MONTRER
+ * AINSI). C'est l'écran où l'on décide de quoi on a l'air ; il doit se
+ * regarder avant de se valider.
  *
- * ## Évoluer se confirme
+ * ## Évoluer se confirme, puis se fête
  *
- * Quatre-vingt-dix écharpes, c'est neuf boosters. La fiche montre donc ce
- * qu'on gagne, ligne à ligne, avant de les prendre. Un « es-tu sûr ? » auquel
- * personne ne peut répondre autrement qu'au hasard n'est pas une confirmation.
+ * Quatre-vingt-dix écharpes, c'est neuf boosters : la fiche montre ce qu'on
+ * gagne avant de les prendre. Puis la cérémonie (`FX.evolution`), le tampon
+ * de l'âge qui claque sur la carte, le ticket de la dépense et le solde qui
+ * décompte (`FX.compter`).
+ *
+ * ## Les crochets des suites
+ *
+ * `fanzzy-ui-smoke` lit cette fiche par des noms qui ne sont plus ceux de
+ * son dessin : `.case` (avec `ok`, `verrou`, `choisie`, `secret`) et
+ * `data-case` sur chaque pièce de l'inventaire, `.rangs` et `.rang h4` sur
+ * ses rangées, `.cases` sur leurs tuiles, `.vitrine`, `#fiche-art` (la
+ * carte), `#fiche-detail`, `#fiche-actions` et `.bt`. Ils restent posés à
+ * côté des classes des briques, qui seules dessinent.
  *
  * Script classique, pas module : tout ce qui vit dans `public/` est chargé par
  * une balise `<script src>` ordinaire.
@@ -35,20 +48,32 @@
   const esc = (s) => String(s ?? '').replace(/[<>&"]/g,
     (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
 
+  /* **La famille se lit dans le catalogue** (`TBF_CARTES.TYPES`) quand la
+     page l'a chargé — c'est le cas du classeur. À l'adresse /fanzzy/<id>, la
+     page ne le charge pas (c'est la requête la plus lourde du jeu) : ces
+     deux tables en sont le repli, pour la couleur et le nom seulement. */
   const COUL = { voix: '#F5C33B', perc: '#3C82E8', tifo: '#8257DA',
                  pyro: '#E0402C', depl: '#1E9E6A', fide: '#C2CAD6' };
   const NOMTYPE = { voix: 'Voix', perc: 'Percussion', tifo: 'Tifo',
                     pyro: 'Pyro', depl: 'Déplacement', fide: 'Fidélité' };
   const NOMRAR = { commune: 'Commune', rare: 'Rare', epique: 'Épique',
                    legendaire: 'Légendaire' };
+  const famille = (type) => {
+    const t = window.TBF_CARTES?.TYPES?.[type];
+    return { nom: t?.nom || NOMTYPE[type] || '', c: t?.c || COUL[type] || '#C2CAD6' };
+  };
+  const rareteDe = (r) => (NOMRAR[r] ? r : 'commune');
+  const JETON = () => window.TBF_STUFF?.gain?.('echarpes') ?? '/img/gains/echarpes.webp';
+
+  /** Sans mouvement : la préférence du système, ou le calme du tiroir. */
+  const doux = () => Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    || (window.FX?.calme ? window.FX.calme('animations')
+      : /(^|\s)animations(\s|$)/.test(document.documentElement.dataset.calme ?? '')));
 
   /**
    * Le rang qu'occupe ce personnage dans la tribune du deck : 0 pour le
-   * titulaire, 1 et 2 pour les remplaçants, **-1 s'il n'y est pas**.
-   *
-   * `-1` et non `null` : c'est ce que rend `findIndex`, et le serveur le
-   * transmet tel quel. Traduire ici en aurait fait une seconde convention à
-   * retenir, pour ne rien gagner.
+   * titulaire, 1 et 2 pour les remplaçants, **-1 s'il n'y est pas** — ce que
+   * rend `findIndex`, et le serveur le transmet tel quel.
    */
   const siege = (d) => (Number.isInteger(d?.tribune?.siege) ? d.tribune.siege : -1);
 
@@ -60,18 +85,10 @@
       body: corps === undefined ? undefined : JSON.stringify(corps),
     });
     if (r.status === 401) { location.href = '/compte'; throw new Error('auth'); }
-    /* **La copie de `cartes.js` est voulue** : cette fiche s'affiche aussi à
-       l'adresse `/fanzzy/<id>`, qui ne charge pas les quatre-vingts kilo-octets
-       du classeur. Mais son *comportement* doit être le même, et il ne l'était
-       pas.
-
-       Une réponse qui n'est pas du JSON rendait `{}` : `ouvrir` recevait un
-       objet vide au lieu de lever, son `catch` — celui qui sait dire « Ce
-       Fanzzy est introuvable » — n'était jamais atteint, et `rendre()` levait
-       trois lignes plus loin sur `d.fanzzy.type`. **La page restait blanche**
-       alors que le message existait, écrit, juste à côté.
-
-       Vu en ouvrant `/fanzzy/TR32` dans un vrai navigateur, serveur muet. */
+    /* **Une réponse qui n'est pas du JSON lève**, et c'est voulu : elle
+       rendait `{}`, `rendre()` levait trois lignes plus loin, et la page
+       restait blanche alors que « Ce Fanzzy est introuvable » existait, écrit,
+       juste à côté. Vu en ouvrant `/fanzzy/TR32` serveur muet. */
     const j = await r.json().catch(() => null);
     if (!j) {
       console.warn(`[fiche] ${chemin} : ${r.status}, et ce n’est pas du JSON`);
@@ -81,52 +98,61 @@
     return j;
   };
 
-  /** Un mot au joueur. Une seule implémentation, posée sur le corps du document. */
-  function dire(texte) {
-    let n = document.getElementById('tbf-mot');
-    if (!n) {
-      n = document.createElement('div');
-      n.id = 'tbf-mot';
-      n.style.cssText = 'position:fixed;left:50%;bottom:96px;transform:translateX(-50%);'
-        + 'background:#171C23;border:1px solid rgba(242,238,228,.2);border-radius:9px;'
-        + 'padding:11px 16px;font-size:12.5px;z-index:120;max-width:86%;text-align:center;'
-        + 'line-height:1.5;display:none';
-      document.body.appendChild(n);
+  /* ------------------------------------------------------------ la pile
+
+     **Un mot au joueur passe par la pile commune** (`.tbf-pile`, ui.css), sur
+     `body`, hors des conteneurs que la page réécrit : un toast de parpaing
+     pour une information, qui secoue s'il dit non ; un ticket kraft qui
+     monte pour une dépense. La fiche avait sa propre bulle, écrite en ligne,
+     qui ne ressemblait à rien d'autre du jeu. */
+  function pile() {
+    let p = document.querySelector('body > .tbf-pile');
+    if (!p) {
+      p = document.createElement('div');
+      p.className = 'tbf-pile';
+      document.body.append(p);
     }
-    n.textContent = texte;
-    n.style.display = 'block';
-    clearTimeout(n._t);
-    n._t = setTimeout(() => { n.style.display = 'none'; }, 2800);
+    return p;
+  }
+
+  function dire(texte, { erreur = false } = {}) {
+    const t = document.createElement('div');
+    t.className = `tbf-toast${erreur ? ' tbf-toast--erreur' : ''}`;
+    t.setAttribute('role', erreur ? 'alert' : 'status');
+    t.innerHTML = erreur
+      ? '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.5"/></svg>'
+      : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+    t.append(document.createTextNode(texte));
+    pile().append(t);
+    setTimeout(() => t.remove(), 2800);
+  }
+
+  /** Le ticket d'une dépense : il se lit, il ne se touche pas, trois secondes. */
+  function ticket(montant, nom, origine) {
+    const t = document.createElement('div');
+    t.className = 'tbf-ticket tbf-ticket--gain tbf-glisse';
+    t.setAttribute('role', 'status');
+    t.style.pointerEvents = 'none';
+    t.innerHTML = `<img src="${esc(JETON())}" alt=""><b>${esc(montant)}</b>`
+      + `<span>${esc(nom)}${origine ? `<small>${esc(origine)}</small>` : ''}</span>`;
+    t.addEventListener('animationend', (e) => {
+      if (e.animationName === 'tbf-glisse') t.classList.remove('tbf-glisse');
+    });
+    pile().append(t);
+    setTimeout(() => t.remove(), 3200);
   }
 
   /**
-   * Les effets, en français.
-   *
-   * On traduit les modificateurs plutôt que de montrer du JSON : `tempoWindow`
-   * ne dit rien à personne, « fenêtre du tempo, +20 % » se lit.
-   *
-   * **La table est dans `/mods.js`**, et cette fiche est la cinquième à
-   * l'avoir recopiée. La sienne était la plus incomplète des cinq : il lui
-   * manquait `parryResist` — **cent trois cartes** — et `costPenalty` —
-   * dix-sept. C'est mot pour mot le défaut que `cartes.js` raconte avoir
-   * corrigé chez lui, et qui vivait toujours ici : la fiche d'un personnage
-   * affichait ses effets sans celui-là, et une liste incomplète a exactement
-   * l'air d'une liste.
-   *
-   * Elle montrait aussi « Durée du martelage · 0,5 s » sans dire si la demie
-   * seconde était gagnée ou perdue, là où la valeur porte maintenant son sens.
-   *
-   * La forme reste celle des tuiles — nom, valeur, pictogramme — parce que
-   * c'est ainsi que cet écran les range. C'est `paires()` qui la rend, et le
-   * nom du trait vient de la même table : un effet neuf apparaît donc ici sans
-   * qu'on ait à y penser, au lieu de manquer en silence.
+   * Les effets, en français, par la table commune (`/mods.js`) : nom,
+   * valeur, pictogramme. Une copie locale de cette table a déjà oublié
+   * `parryResist` sur cent trois cartes ; un effet neuf apparaît ici sans
+   * qu'on ait à y penser.
    */
   function lireMods(m = {}) {
-    return (window.TBF_MODS?.paires(m) ?? [])
-      .map((d) => [d.nom, d.valeur, d.icone]);
+    return (window.TBF_MODS?.paires(m) ?? []).map((x) => [x.nom, x.valeur, x.icone]);
   }
 
-  /** Les pictogrammes des cases. Des traits, pas des émojis : ils se teintent. */
+  /** Les pictogrammes des tuiles. Des traits, pas des émojis : ils se teintent. */
   const TRAITS = {
     tempo: 'M12 3v9l6 3M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18z',
     poing: 'M7 11V7a2 2 0 0 1 4 0v4M11 11V6a2 2 0 0 1 4 0v5M15 11V8a2 2 0 0 1 4 0v7a6 6 0 0 1-6 6H10l-5-5',
@@ -138,13 +164,14 @@
     reprise: 'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5',
     tenue: 'M9 3l3 2 3-2 5 3-2 4-2-1v11H8V9L6 10 4 6z',
     etat: 'M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zM8 9h.01M16 9h.01M8 14h8a4 4 0 0 1-8 0z',
-    age: 'M12 3l2.6 5.6L21 9.5l-4.5 4.3 1.1 6.2L12 17l-5.6 3 1.1-6.2L3 9.5l6.4-.9z',
   };
-  const trait = (cle) => `<svg viewBox="0 0 24 24"><path d="${TRAITS[cle] ?? TRAITS.etoile}"/></svg>`;
-
-  /** Les losanges de rareté, comme sur les cartes. */
-  const marque = (r) => (r === 'legendaire' ? '<b>♛</b>'
-    : '<i></i>'.repeat({ commune: 1, rare: 2, epique: 3 }[r] ?? 1));
+  const trait = (cle) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${TRAITS[cle] ?? TRAITS.etoile}"/></svg>`;
+  const SVG = {
+    croix: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    tourne: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>',
+    lecture: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>',
+    fleche: '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
+  };
 
   /**
    * Monte la fiche dans `hote` et la tient à jour.
@@ -152,65 +179,34 @@
    * @param {HTMLElement} hote
    * @param {string} idDemande  l'identifiant du personnage, ou d'un de ses âges
    * @param {object} [opts]
-   * @param {Function} [opts.fermer]  appelée par la croix. Sans elle, la fiche
-   *   affiche une flèche qui ramène au classeur — c'est le cas de la page.
+   * @param {Function} [opts.fermer]  appelée par la croix. Sans elle, pas de
+   *   croix : c'est la page, et la barre du jeu y porte la flèche du retour.
    * @param {Function} [opts.change]  appelée après une action qui modifie la
    *   collection : la page qui accueille la fiche doit pouvoir se rafraîchir.
    * @returns {Promise<boolean>} faux si ce Fanzzy n'existe pas.
    */
   async function ouvrir(hote, idDemande, opts = {}) {
     let d = null;
-    let choisie = null;          // la case regardée
-    let cases = [];
-    /* **L'âge qu'on regarde**, qui n'est pas toujours celui qu'on a.
-
-       La rangée ÂGES existe pour regarder les trois visages d'une lignée. Le
-       dessin suivait déjà ; les tenues et les états, non — ils restaient sur
-       l'âge atteint. Un joueur dont la tenue d'Halloween n'existe qu'aux âges
-       un et trois la voyait proposée aux trois, et l'a découvert en lisant sa
-       propre base de données.
-
-       Nul tant qu'on n'a touché aucun âge : c'est l'âge atteint qui répond,
-       et l'arrivée sur la fiche est exactement celle d'avant. */
+    /** La pièce dont la fiche kraft parle. */
+    let choisie = null;
+    let pieces = [];
+    /* **L'âge qu'on regarde**, qui n'est pas toujours celui qu'on a. La
+       rangée ÂGES existe pour regarder les trois visages d'une lignée, et les
+       tenues et les états proposés sont ceux de l'âge regardé : le Capo
+       n'hérite pas de la garde-robe du gamin. */
     let ageVu = null;
-    /* Posée par `rendre`, lue par le clic sur un âge. */
-    let redessinerRangs = () => {};
-
-    /**
-     * **Ce qu'on veut montrer** : un âge, une tenue, une expression.
-     *
-     * Les trois se décidaient un par un, chacun avec son bouton et son
-     * enregistrement immédiat : on choisissait un âge, on validait, on
-     * choisissait une tenue, on validait, et le résultat des trois ne se
-     * voyait nulle part avant de quitter l'écran.
-     *
-     * Ils se composent maintenant : on touche ce qu'on veut dans les trois
-     * rangées, **la vitrine montre le résultat tout de suite**, et un seul
-     * geste l'enregistre. C'est l'écran où l'on décide de quoi on a l'air ;
-     * il doit se regarder avant de se valider.
-     *
-     * Nul jusqu'au premier rendu, où il prend ce que l'avatar montre
-     * déjà : la fiche s'ouvre sur le choix en cours, pas sur un choix neuf.
-     */
+    /* **Ce qu'on veut montrer** : un âge, une tenue, une expression. Ils se
+       composent — on touche dans les trois rangées, la carte montre le
+       résultat, un seul geste l'enregistre. Nul jusqu'au premier rendu, où
+       il prend ce que l'avatar montre déjà. */
     let voulu = null;
-
-    /** Ce que l'avatar montre aujourd'hui, pour savoir s'il y a à valider. */
-    const avatarActuel = () => ({
-      stade: d.avatarStade ?? null,
-      skin: d.avatar ? (d.parAge?.[d.avatarStade]?.skins
-        ?? d.skins ?? []).find((s) => s.porte)?.id ?? 'base' : null,
-      etat: d.avatarEtat ?? null,
-    });
-
-    const memeQueLAvatar = () => {
-      const a = avatarActuel();
-      return Boolean(d.avatar) && voulu?.stade === a.stade
-        && (voulu?.skin ?? 'base') === (a.skin ?? 'base')
-        && (voulu?.etat ?? 'neutre') === (a.etat ?? 'neutre');
-    };
-    /* L’observateur de largeur de la bande des rangées. Gardé ici pour
-       être débranché au rendu suivant : sans ça, chaque rendu en laisse
-       un de plus accroché à un élément détaché. */
+    /* La carte n'est refaite que si ce qu'elle montre change : la refaire à
+       chaque toucher relancerait son dessin et la ferait clignoter. */
+    let carteMontree = '';
+    /* Le tampon TON AVATAR claque une fois, juste après ME MONTRER AINSI. */
+    let claquerAvatar = false;
+    /* Les nouveautés déjà éteintes par cette fiche (contrat § 2.2). */
+    const eteintes = new Set();
     let largeurs = null;
 
     try {
@@ -222,178 +218,130 @@
       return false;
     }
 
-    /* ------------------------------------------------------------ les cases */
+    const aMoi = () => Boolean(d.possede);
+    const lignee = () => d.lignee ?? [];
+    const vu = () => ageVu ?? d.stade;
+    /** L'âge regardé, tel que la lignée le décrit ; le personnage à défaut. */
+    const ageDe = (n) => lignee().find((a) => Number(a.stage) === Number(n)) ?? null;
 
-    /**
-     * Ce qu'on peut regarder, rangé en trois rangées.
-     *
-     * Une case verrouillée n'est pas absente : elle porte un cadenas et dit ce
-     * qu'elle demande. C'est elle qui donne envie de continuer, et l'effacer
-     * reviendrait à cacher le jeu qui reste à jouer.
-     */
+    /** Ce que l'avatar montre aujourd'hui, pour savoir s'il y a à valider. */
+    const avatarActuel = () => ({
+      stade: d.avatarStade ?? null,
+      skin: d.avatar ? (d.parAge?.[d.avatarStade]?.skins
+        ?? d.skins ?? []).find((s) => s.porte)?.id ?? 'base' : null,
+      etat: d.avatarEtat ?? null,
+    });
+    const memeQueLAvatar = () => {
+      const a = avatarActuel();
+      return Boolean(d.avatar) && voulu?.stade === a.stade
+        && (voulu?.skin ?? 'base') === (a.skin ?? 'base')
+        && (voulu?.etat ?? 'neutre') === (a.etat ?? 'neutre');
+    };
+    const tenuesA = (n) => d.parAge?.[n]?.skins ?? d.skins ?? [];
+    const etatsA = (n) => d.parAge?.[n]?.etats ?? d.etats ?? [];
+
+    /* **Un choix qui n'existe pas à l'âge regardé se défait.** Une tenue
+       gagnée au deuxième âge ne se porte pas au premier, et le serveur
+       refuserait le trio d'un bloc : on retombe sur la base et le repos
+       plutôt que de proposer d'enregistrer ce qu'il refusera. */
+    function ajusterVoulu() {
+      if (!voulu) return;
+      const n = voulu.stade;
+      if (voulu.skin && voulu.skin !== 'base'
+        && !tenuesA(n).some((s) => s.id === voulu.skin && s.possede)) voulu.skin = 'base';
+      if (voulu.etat && voulu.etat !== 'neutre'
+        && !etatsA(n).some((e) => e.id === voulu.etat && e.possede)) voulu.etat = 'neutre';
+    }
+
+    /* ------------------------------------------------------------ les dessins */
+
+    const racine = () => d.fanzzy.id;
+    const E = () => window.TBF_ETATS;
+    /** Le portrait d'un âge (le buste), pour un nœud de l'arbre. */
+    const portraitAge = (a) => window.FZART?.adresse?.(a.id, 'buste') ?? null;
+    /** Le dessin exact d'une expression ou d'une tenue à l'âge regardé, ou rien. */
+    const dessinExact = (n, { skin = 'base', etat = 'neutre' } = {}) => {
+      const r = E()?.resoudre?.(racine(), { evo: n, skin, etat });
+      return r && r.exact ? r.src : null;
+    };
+
+    /* ------------------------------------------------------------ les pièces
+
+       Ce qu'on peut regarder, en quatre rangées. Une pièce qu'on n'a pas
+       n'est pas absente : elle est sous scotch et dit ce qu'elle demande.
+       C'est elle qui donne envie de continuer. */
     function batir() {
-      const f = d.fanzzy;
-      const c = COUL[f.type] ?? '#F5C33B';
       const liste = [];
+      const fam = famille(d.fanzzy.type);
+      const n = vu();
 
-      // Les âges. Le premier est acquis dès qu'on possède le personnage ; les
-      // suivants s'achètent, et le prix est la seule chose qu'on veut lire.
-      /* **L'évolution se propose dès l'ouverture, et non après un toucher.**
-       *
-       * Elle n'était accrochée qu'à la case de l'âge **suivant**. Or la case
-       * regardée à l'ouverture est l'âge **actuel** — c'est ce qu'on est venu
-       * voir, et c'est le bon choix. Un joueur ouvrait donc la fiche d'une
-       * commune qu'il voulait faire grandir et n'y trouvait aucun bouton : il
-       * lui fallait deviner qu'un losange plus loin dans la rangée le ferait
-       * apparaître. L'action la plus importante du jeu — celle qui dépense les
-       * écharpes et fabrique les raretés — était cachée derrière un geste que
-       * rien n'annonçait.
-       *
-       * Elle est donc calculée **une fois pour la lignée** et posée sur les
-       * deux cases que ça concerne : celle d'où l'on part et celle où l'on va.
-       * Le même objet, donc le même bouton, donc le même prix — il n'y a pas
-       * deux façons d'évoluer selon le losange qu'on regarde.
-       */
-      const suivant = d.lignee.find((y) => !y.possede && y.stage === d.stade + 1);
-      const evoluer = suivant && d.possede
-        ? { quoi: 'evoluer', vers: suivant, libelle: 'ÉVOLUER',
-            cout: `${suivant.cout} écharpes`,
+      /* L'évolution est calculée **une fois pour la lignée** : elle est
+         proposée dès l'ouverture, quelle que soit la pièce regardée. Elle
+         n'était accrochée qu'à la case de l'âge suivant, et un joueur ouvrait
+         la fiche d'une commune qu'il voulait faire grandir sans y trouver de
+         bouton. */
+      const suivant = lignee().find((y) => !y.possede && Number(y.stage) === d.stade + 1);
+      const evoluer = suivant && aMoi()
+        ? { vers: suivant, cout: Number(suivant.cout ?? 0),
             payable: Number(d.echarpes ?? 0) >= Number(suivant.cout ?? 0),
             manque: Math.max(0, Number(suivant.cout ?? 0) - Number(d.echarpes ?? 0)) }
         : null;
 
-      for (const a of d.lignee) {
-        const atteint = a.possede;
+      for (const a of lignee()) {
+        const s = Number(a.stage);
         liste.push({
-          cle: `age:${a.id}`, rang: 'ÂGES', titre: a.nom,
-          sorte: atteint ? (a.stage === d.stade ? 'Âge actuel' : 'Âge atteint') : 'Âge à venir',
-          ok: atteint, couleur: c,
-          image: window.FZART?.adresse?.(a.id, 'buste') ?? null,
-          texte: atteint
-            ? (a.stage === d.stade ? 'C’est lui que tu joues aujourd’hui.'
-              : 'Tu es passé par là.')
-            : 'Il garde son cri et ses effets — en plus fort.',
-          manque: atteint ? null : `${a.cout} écharpes`,
-          // Évoluer ne se propose que pour **l'âge juste après** le sien : on
-          // ne saute pas un étage, et le serveur le refuserait de toute façon.
-          /* **Le prix et la bourse voyagent ensemble.**
-
-             Le bouton disait ÉVOLUER quoi qu'il arrive : on ouvrait le
-             panneau, on confirmait, et le refus arrivait au troisième geste
-             sous la forme d'un petit message. Deux clics pour apprendre une
-             chose qui se savait avant le premier — et, pire, le joueur
-             n'apprenait pas **combien** il lui manquait, donc ce qu'il devait
-             aller faire.
-
-             C'est la faute du bouton d'ouverture du kiosque, au même endroit
-             de la boucle : une affordance montrée quand elle ne sert pas. */
-          /* Sur l'âge qu'il a — pour qu'on le voie en arrivant — et sur celui
-             qui vient — pour qu'on le retrouve en regardant où l'on va. */
-          action: a.stage === d.stade || a.stage === d.stade + 1 ? evoluer : null,
+          cle: `age:${a.id}`, rang: 'ÂGES', titre: a.nom, age: a, ok: Boolean(a.possede),
+          etat: !aMoi() ? 'attend' : a.possede ? (s === d.stade ? 'ici' : 'fait')
+            : s === d.stade + 1 ? 'suivant' : 'attend',
+          pret: Boolean(evoluer?.payable && evoluer.vers.id === a.id),
+          prix: evoluer && evoluer.vers.id === a.id ? evoluer.cout : null,
+          evoluer,
         });
       }
 
-      /* Les tenues de l'âge **regardé**. Le Capo n'hérite pas de la garde-robe
-         du gamin : c'est la règle, et la fiche doit la rendre évidente — y
-         compris quand on regarde le gamin depuis le Capo.
-
-         `d.skins` reste le repli : un serveur d'avant `parAge` rend la fiche
-         d'hier, qui se trompe d'âge mais ne casse rien. */
-      const vu = ageVu ?? d.stade;
-      for (const s of (d.parAge?.[vu]?.skins ?? d.skins)) {
-        liste.push({
-          cle: `tenue:${s.id}`, rang: 'TENUES', titre: s.nom,
-          sorte: s.porte ? 'Tenue portée' : s.possede ? 'Tenue possédée' : 'Tenue à trouver',
-          ok: s.possede, porte: s.porte, couleur: '#8257DA', icone: 'tenue',
-          texte: s.possede
-            ? 'Elle ne change rien au jeu : elle se voit, c’est tout.'
-            : 'Elle se trouve dans les boosters, et seulement pour un Fanzzy que tu as déjà.',
-          manque: s.possede ? null : 'à trouver dans un booster',
-          /* **Pas d'action sur la case.** Toucher une tenue la met sur le
-             personnage dans la vitrine ; c'est le bouton du bas qui
-             enregistre, et il enregistre les trois choix ensemble.
-
-             Il y a eu un bouton par case, et c'était le défaut : trois
-             gestes, trois enregistrements, et le résultat des trois
-             invisible jusqu'à ce qu'on quitte l'écran. */
-          action: null,
-        });
-      }
-
-      /* **Les quatre états à gagner**, après le repos.
-       *
-       * Ils étaient donnés avec le personnage et n'apparaissaient nulle part :
-       * un joueur pouvait jouer un an sans savoir que son Fanzzy avait quatre
-       * expressions dessinées. Ils se gagnent maintenant en booster, comme les
-       * tenues, et la rangée dit lesquelles manquent.
-       *
-       * L'aperçu est le dessin lui-même quand il est gagné — voir une case
-       * vide à côté de trois cases pleines est ce qui fait ouvrir le paquet
-       * suivant. Sinon le pictogramme seul : montrer l'état qu'on n'a pas
-       * serait le donner. */
-      /* **Le repos, en tête de la rangée.**
-
-         Il n'y était pas, et ce n'était pas un oubli tant que cette rangée ne
-         servait qu'à **collectionner** : `ETATS_DESSINES` écarte `neutre` exprès,
-         parce que le repos ne se gagne pas — il est là dès le premier
-         booster. Le mettre dans cette liste-là le ferait distribuer comme un
-         lot.
-
-         Mais la rangée sert aussi à **choisir**, depuis qu'on compose son
-         avatar ici. Et sans cette case, une fois une expression retenue, on
-         ne pouvait plus revenir au repos depuis la fiche : les quatre cases
-         proposaient la joie, le dépit, la poussée, la colère — et aucun
-         chemin de retour. Un joueur l'a signalé avant qu'on s'en aperçoive.
-
-         Elle vit donc ici, dans la rangée de choix, et nulle part ailleurs.
-         Toujours possédée : c'est l'état de base de tout le monde. */
-      liste.push({
-        cle: 'etat:neutre', rang: 'ÉTATS', titre: 'Neutre',
-        sorte: 'État de base',
-        ok: true, couleur: '#3FA37A', icone: 'etat',
-        image: window.FZART?.adresse?.(d.fanzzy.ageId ?? d.fanzzy.id, 'buste') ?? null,
-        texte: 'Son air de tous les jours. En partie, le match le fait changer '
-          + 'd\u2019expression tout seul \u2014 au but, \u00e0 l\u2019encaisse \u2014 puis il y revient.',
-        manque: null, action: null,
-      });
-
-      for (const e of (d.parAge?.[vu]?.etats ?? d.etats ?? [])) {
-        liste.push({
-          cle: `etat:${e.id}`, rang: 'ÉTATS', titre: e.nom,
-          sorte: e.possede ? 'État gagné' : 'État à trouver',
-          ok: e.possede, couleur: '#3FA37A', icone: 'etat',
-          image: e.possede
-            ? (window.FZART?.adresse?.(d.fanzzy.ageId ?? d.fanzzy.id, 'buste') ?? null)
-            : null,
-          texte: e.possede
-            ? `${e.dessin} Il s'affiche tout seul au bon moment du match.`
-            : 'Sans lui, ton Fanzzy garde son air de repos — le jeu ne change pas.',
-          manque: e.possede ? null : 'à trouver dans un booster',
-          /* Comme les tenues : toucher pose l'expression sur le personnage,
-             le bouton du bas enregistre le tout. Les deux se composent —
-             « Halloween, bras levés » est une image comme une autre depuis
-             que le lot complet se dessine. */
-          action: null,
-        });
-      }
-
-      // Ce qu'il change. L'effet **réel** — celui du personnage combiné à
-      // l'équipement porté — parce que c'est lui que le duel emploiera.
+      /* Ce qu'il change. L'effet **réel** — celui du personnage combiné à
+         l'équipement porté — parce que c'est lui que le duel emploiera. Et
+         ceux que l'âge suivant ajoute, sous scotch, avec leur prix : la
+         rangée dit ce qu'on gagnera, pas seulement ce qu'on a. */
       const reel = lireMods(d.effetReel);
-      const brut = lireMods(d.fanzzy.mods);
+      const brut = new Map(lireMods(d.fanzzy.mods).map(([nom, v]) => [nom, v]));
       for (const [nom, valeur, icone] of reel) {
-        const dOrigine = brut.find(([n]) => n === nom);
-        liste.push({
-          cle: `effet:${nom}`, rang: 'EFFETS', titre: nom, sorte: valeur,
-          ok: true, couleur: c, icone,
-          texte: dOrigine
-            ? (dOrigine[1] === valeur ? 'Il vient du Fanzzy lui-même.'
-              : `Du Fanzzy (${dOrigine[1]}), modifié par ton équipement.`)
-            : 'Il vient de ton équipement, pas du Fanzzy.',
-          manque: null, action: null,
-        });
+        liste.push({ cle: `effet:${nom}`, rang: 'EFFETS', titre: nom, ok: true, valeur, icone,
+          brut: brut.get(nom) ?? null, couleur: fam.c });
+      }
+      if (evoluer) {
+        for (const [nom, valeur, icone] of lireMods(evoluer.vers.mods)) {
+          if (reel.some(([x]) => x === nom)) continue;
+          liste.push({ cle: `effet:${nom}`, rang: 'EFFETS', titre: nom, ok: false, valeur, icone,
+            prix: evoluer.cout, age: evoluer.vers, couleur: fam.c });
+        }
       }
 
+      /* **Le repos, en tête des états.** Il ne se gagne pas — il est là dès
+         le premier booster —, mais la rangée sert aussi à **choisir** : sans
+         lui, une expression retenue ne se défaisait plus depuis la fiche. Sur
+         un Fanzzy qu'on n'a pas, pas de visage : la carte n'en montre que la
+         silhouette, la rangée ne va pas le donner à côté. */
+      liste.push({ cle: 'etat:neutre', rang: 'ÉTATS', titre: 'Au repos', id: 'neutre', ok: true,
+        image: aMoi() ? portraitAge(ageDe(n) ?? { id: d.fanzzy.ageId ?? d.fanzzy.id }) : null });
+      /* Les quatre états de l'âge regardé : le dessin quand il est gagné, le
+         pictogramme sinon — montrer l'expression qu'on n'a pas serait la
+         donner. */
+      for (const e of etatsA(n)) {
+        liste.push({ cle: `etat:${e.id}`, rang: 'ÉTATS', titre: e.nom, id: e.id, ok: Boolean(e.possede),
+          dessin: e.dessin, image: e.possede ? dessinExact(n, { etat: e.id }) : null });
+      }
+
+      /* Les tenues de l'âge regardé, en pied, la tenue de base en tête : c'est
+         elle qu'on retouche pour se déshabiller. `d.skins` reste le repli
+         d'un serveur d'avant `parAge`. **Une tenue dépubliée ne se propose
+         plus** : elle est sortie des boosters, et « à trouver dans un
+         booster » serait faux ; elle reste à qui l'a gagnée. */
+      for (const s of tenuesA(n)) {
+        if (!s.possede && s.publie === false) continue;
+        liste.push({ cle: `tenue:${s.id}`, rang: 'TENUES', titre: s.nom, id: s.id, ok: Boolean(s.possede),
+          porte: Boolean(s.porte), image: s.possede ? dessinExact(n, { skin: s.id }) : null });
+      }
       return liste;
     }
 
@@ -401,669 +349,713 @@
 
     function rendre() {
       const f = d.fanzzy;
-      const c = COUL[f.type] ?? '#F5C33B';
       /* Au premier rendu, on part de ce que l'avatar montre. S'il montre
-         quelqu'un d'autre, on part de l'âge atteint et de ce qui est porté
-         là — c'est ce que la fiche affichait de toute façon. */
+         quelqu'un d'autre, de l'âge atteint et de ce qui y est porté. */
       if (!voulu) {
         const a = avatarActuel();
         const st = a.stade ?? d.stade;
-        voulu = {
-          stade: st,
-          skin: a.skin ?? (d.parAge?.[st]?.skins ?? d.skins ?? [])
-            .find((s) => s.porte)?.id ?? 'base',
-          etat: a.etat ?? 'neutre',
-        };
+        voulu = { stade: st,
+          skin: a.skin ?? tenuesA(st).find((s) => s.porte)?.id ?? 'base',
+          etat: a.etat ?? 'neutre' };
         ageVu = st;
       }
-      cases = batir();
-      if (!cases.some((x) => x.cle === choisie)) {
-        // Par défaut, l'âge qu'il a aujourd'hui : c'est ce qu'on est venu voir.
-        choisie = cases.find((x) => x.rang === 'ÂGES' && x.sorte === 'Âge actuel')?.cle
-          ?? cases[0]?.cle ?? null;
-      }
-      /* L'ordre est celui de l'importance, pas celui du code : ce qu'il
-         devient, ce qu'il change, puis ce qu'il porte. La bande défile
-         horizontalement, et les tenues sont nombreuses — placées au milieu,
-         elles repoussaient les effets hors de l'écran, où personne ne serait
-         allé les chercher. Elles ferment donc la marche : ce sont les seules
-         qui ne changent rien au jeu.
-
-         Le nom de chaque rangée est un titre cousu (C2, ui.css) : il était à
-         neuf pixels et 42 %, le texte le plus pâle de la fiche. La place reste
-         réglée par fanzzy-fiche.css, la lettre et le fil viennent de la brique
-         commune. */
-      const rangsHTML = () => ['ÂGES', 'EFFETS', 'ÉTATS', 'TENUES']
-        .map((r) => [r, cases.filter((x) => x.rang === r)])
-        .filter(([, l]) => l.length)
-        .map(([nom, l]) => `<div class="rang"><h4 class="tbf-cousu">${nom}</h4>
-          <div class="cases">${l.map(caseHTML).join('')}</div></div>`).join('');
-
-      /* **Refaire la bande sans refaire la fiche.** Changer d'âge change les
-         tenues et les états proposés ; tout re-rendre ferait clignoter le
-         personnage et perdrait le défilement horizontal de la bande, qui est
-         justement ce qu'on vient de faire au doigt. */
-      redessinerRangs = () => {
-        cases = batir();
-        const n = hote.querySelector('.rangs');
-        if (!n) return;
-        const gauche = n.querySelector('.cases')?.scrollLeft ?? 0;
-        n.innerHTML = rangsHTML();
-        hote.querySelectorAll('.case').forEach((x) =>
-          x.classList.toggle('choisie', x.dataset.case === choisie));
-        const c = n.querySelector('.cases');
-        if (c) c.scrollLeft = gauche;
-      };
-
-      /* Un Fanzzy qu'on ne possède pas est **éteint**, fiche comprise.
-       *
-       * La grille le montrait en silhouette grise, et l'ouvrir le rendait à ses
-       * couleurs, avec ses âges, ses effets et ses tenues à fouiller case par
-       * case. Deux images du même personnage, contradictoires, à un doigt
-       * l'une de l'autre : celle qui dit « tu ne l'as pas » et celle qui le
-       * livre entier.
-       *
-       * Ce qui reste lisible est ce qu'un joueur a le droit de savoir avant de
-       * l'avoir : son nom, sa famille, sa rareté, sa silhouette, et comment on
-       * l'obtient. Le reste s'ouvre avec la carte. */
-      const aMoi = Boolean(d.possede);
-
       /* **Ce qu'on ne sait pas ne s'écrit pas** — ni tiret, ni « undefined ».
-         La famille et le cri manquent rarement, mais quand ils manquent, la
-         fiche écrivait « undefined · Commune » sous le nom, ou « Cri : — »
-         dans une pastille qu'on pouvait toucher pour crier un tiret. La
-         pastille, la ligne ou le morceau de ligne se retire. */
-      const nomType = NOMTYPE[f.type] ?? f.type ?? '';
-      const galon = [nomType, NOMRAR[f.rar] ?? f.rar ?? ''].filter(Boolean).join(' · ');
-      const cri = f.cri?.label ? esc(f.cri.label) : '';
-      /* **Le nom du cri n'est plus peint en ligne.** Il portait un `style`
-         à la couleur du type, et celle de la Voix est l'or (#F5C33B) : onze
-         pixels d'or, là où la règle de l'or (décidée par Gaël le 2 octobre
-         2026, « les tons » dans `ui.css`) n'écrit plus qu'un grand texte. Et
-         un `style` en ligne l'emporte sur toute feuille : `fanzzy-fiche.css`
-         ne pouvait pas le corriger. La couleur des deux noms des pastilles —
-         la famille, le cri — se décide donc à un seul endroit, la règle
-         `.fiche .pastille b` de cette feuille ; le type, lui, se dit par son
-         pin, et `--c` reste posé pour qui voudrait en tirer un filet. */
-
-      hote.innerHTML = `
-        <div class="fiche${aMoi ? '' : ' pas-a-moi'}">
-          <div class="head">
-            ${opts.fermer
-              ? '<button class="rond" data-fermer aria-label="Fermer">✕</button>'
-              : '<a class="rond" href="/fanzzy" aria-label="Retour au classeur">‹</a>'}
-            <h1>${esc(f.nom)}${galon ? `<small>${esc(galon)}</small>` : ''}</h1>
-          </div>
-
-          <!-- **Ce qui cède quand le téléphone ne donne pas la place.**
-
-               L'écran ne défile pas : ce qui déborde est coupé, pas repoussé.
-               Et il déborde pour des raisons qu'aucun navigateur de bureau ne
-               montre — la barre du haut grandit de l'encoche, le bas réserve
-               la barre gestuelle, un bandeau d'annonce s'intercale. Trois
-               dizaines de pixels chacune, pour une dizaine de marge.
-
-               Ce qui disparaissait alors était la rangée d'actions, tout en
-               bas : le joueur ouvrait la fiche d'une carte qu'il voulait faire
-               grandir et n'y trouvait aucun bouton.
-
-               La tête et les actions sont donc les deux bouts qu'on ne
-               sacrifie jamais. Tout ce qui est entre les deux tient dans ce
-               corps, qui défile quand il le faut et ne se voit pas sinon. -->
-          <div class="corps">
-            <div class="vitrine r-${esc(f.rar)}" style="--c:${c}">
-              <div class="art" id="fiche-art"></div><div class="ombre"></div>
-              <!-- Le pin de rareté **et** les losanges : le pin porte la
-                   matière — étain, argent, or serti — les losanges portent
-                   le compte, et ils survivent à un fichier manquant. -->
-              <div class="rar">${window.TBF_LOGO?.rarete?.(f.rar, 'pinRar') ?? ''}
-                ${marque(f.rar)}</div>
-              ${siege(d) >= 0
-                ? `<div class="tag">${siege(d) === 0 ? 'TITULAIRE' : 'REMPLAÇANT'}</div>`
-                : ''}
-              <div class="txt">
-                <div class="pastilles">
-                  ${nomType ? `<span class="pastille" style="--c:${c}">
-                    ${window.TBF_LOGO?.type?.(f.type, 'pinType') ?? ''}
-                    <b>${esc(nomType)}</b></span>` : ''}
-                  ${!cri ? ''
-                    : aMoi
-                    ? `<button class="pastille" data-cri style="cursor:pointer">
-                        Cri : <b>${cri}</b> ▸</button>`
-                    /* Le cri se **crie** quand on touche la pastille. Sur un
-                       Fanzzy qu'on n'a pas, c'est le seul élément qui répondait
-                       encore — une carte éteinte qui pousse un cri. */
-                    : `<span class="pastille">Cri : <b>${cri}</b></span>`}
-                </div>
-                <h2>${esc(f.nom)}</h2>
-                <div class="sous">${d.possede
-                  ? `${d.possede} exemplaire${d.possede > 1 ? 's' : ''} · étage ${d.stade}${
-                    f.cri?.power ? ` · poussée ${f.cri.power}` : ''}`
-                  : 'pas encore dans ta collection'}</div>
-              </div>
-            </div>
-
-            <div class="rangs" ${aMoi ? '' : 'aria-hidden="true"'}>${rangsHTML()}</div>
-
-            <div class="detail" id="fiche-detail"></div>
-          </div>
-
-          <div class="actions" id="fiche-actions"></div>
-        </div>`;
-
-      /* **La bande des rangées défile, et rien ne le disait.**
-
-         Les trois rangées tiennent sur une ligne qui déborde dès que le
-         personnage a quelques tenues : la dernière case est alors coupée
-         net au bord droit. Coupée net, elle ne se lit pas comme « il y en
-         a d'autres » mais comme un défaut d'affichage — et personne ne
-         pousse du doigt une image qu'il croit cassée.
-
-         Une ombre au bord tant qu'il reste quelque chose à droite, retirée
-         quand on y est arrivé. On la calcule plutôt que de la poser tout
-         le temps : une ombre permanente sur une bande qui tient entière
-         promettrait une suite qui n'existe pas. */
-      const bande = hote.querySelector('.rangs');
-      if (bande) {
-        const marquer = () => bande.classList.toggle('deborde',
-          bande.scrollWidth - bande.clientWidth - bande.scrollLeft > 2);
-        bande.addEventListener('scroll', marquer, { passive: true });
-        /* **Et à chaque fois que la largeur change**, pas seulement au rendu.
-           Calculée une fois, la réponse valait pour la fenêtre du moment :
-           tourner le téléphone, ouvrir le clavier ou passer d'un écran large
-           à un étroit laissait l'ombre absente là où la bande venait de se
-           mettre à déborder — c'est-à-dire exactement quand elle sert. */
-        largeurs?.disconnect();
-        largeurs = new ResizeObserver(marquer);
-        largeurs.observe(bande);
-        marquer();
-      }
-      /* **L'âge regardé, et non l'âge atteint.**
-
-         C'était `dessiner(f)`, sans âge, donc l'âge atteint par défaut. Tant que
-         la fiche s'ouvrait sur l'âge atteint, les deux coïncidaient. Mais ce
-         rendu tourne aussi **après chaque enregistrement** — `recharger` le
-         rappelle — et un joueur qui venait de choisir le premier âge voyait la
-         vitrine repartir sur le troisième à l'instant où il validait. L'accueil
-         et « Mon Fanzzy » montraient le bon ; seule la fiche, celle où l'on
-         venait de décider, se trompait.
-
-         Le clic sur un âge savait déjà le faire : c'est la même résolution,
-         posée une fois ici plutôt que dans chaque appelant. */
-      const vu = ageVu ?? d.stade;
-      const carte = (d.lignee ?? []).find((a) => Number(a.stage) === Number(vu));
-      dessiner(carte ? { ...f, ageId: carte.id, nom: carte.nom, rar: carte.rar ?? f.rar } : f,
-        vu, carte ? Boolean(carte.possede) : true);
-      rendreDetail();
-      rendreActions();
-      brancher();
-    }
-
-    function caseHTML(x) {
-      const dedans = x.image
-        ? `<img src="${x.image}" alt="" onerror="this.remove()">`
-        : trait(x.icone ?? 'age');
-      /* `disabled` et non seulement `pointer-events:none` : une case
-         inaccessible à la souris reste accessible au clavier, et la tabulation
-         emmenait dans une rangée de boutons muets. Le style fait le reste. */
-      const mort = d.possede ? '' : ' disabled tabindex="-1"';
-      /* `secret` ne vaut que pour les **âges** : c'est le seul endroit où
-         l'image est ce qu'on achète. Une tenue verrouillée reste nette — on la
-         vise, elle n'a pas de visage à révéler, et la flouter ferait une
-         garde-robe illisible pour rien. */
-      const secret = !x.ok && String(x.cle).startsWith('age:') ? ' secret' : '';
-      /* **Retenue** : elle fait partie de ce qu'on s'apprête à montrer. C'est
-         une autre information que « regardée » — on peut lire une tenue sans
-         la vouloir — et les deux marques coexistent. */
-      const retenue = voulu && (
-        x.cle === `tenue:${voulu.skin}`
-        || x.cle === `etat:${voulu.etat}`
-        || (String(x.cle).startsWith('age:')
-          && (d.lignee ?? []).find((a) => `age:${a.id}` === x.cle)?.stage === voulu.stade)
-      ) ? ' retenue' : '';
-      /* **Le cadenas est l'icône au trait du jeu** (C1, ui.css), plus l'émoji :
-         « 🔒 » se dessinait en couleur chez l'un, en trait chez l'autre, et
-         toujours à côté des pictogrammes au trait de la case. L'icône est
-         muette pour un lecteur d'écran — la case le dit donc en mots, dans son
-         nom accessible, puisqu'elle n'a pas d'autre texte. */
-      const nomAccessible = x.ok ? x.titre : `${x.titre} (verrouillé)`;
-      return `<button class="case ${x.ok ? 'ok' : 'verrou'}${secret}${retenue} ${x.cle === choisie ? 'choisie' : ''}"
-        style="--cc:${x.couleur}" data-case="${esc(x.cle)}" title="${esc(x.titre)}"
-        aria-label="${esc(nomAccessible)}"${mort}>
-        <span class="pav"></span>
-        <span class="dedans">${dedans}</span>
-        ${x.ok ? '' : '<span class="cadenas"><i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i></span>'}
-        ${x.porte ? '<span class="porte"></span>' : ''}
-      </button>`;
-    }
-
-    /** Le détail de la case regardée. Hauteur fixe : rien ne saute. */
-    function rendreDetail() {
-      const n = hote.querySelector('#fiche-detail');
-      /* Sur un Fanzzy qu'on n'a pas, le détail d'une case choisie au hasard
-         n'a pas de sens : il décrivait « ÂGE À VENIR » d'un personnage qu'on
-         ne possède à aucun âge. Une seule phrase à la place, celle qui répond
-         à la question qu'on se pose en regardant une carte grise. */
-      if (!d.possede) {
-        /* Le nom de la série vient du serveur (`setNom`). Une table « TR → LA
-           TRIBUNE » écrite ici serait une copie de celle de `dex.js`, et les
-           cinq séries neuves ont déjà montré ce que devient une copie. */
-        const s = d.fanzzy.setNom;
-        n.innerHTML = `<div class="t">Comment l’obtenir<em>${
-          esc(NOMRAR[d.fanzzy.rar] ?? d.fanzzy.rar)}</em></div>
-          <p>Il se tire dans les boosters${s ? ` de ${esc(s)}` : ''}. Ses âges,
-          ses effets et ses tenues s’ouvrent avec lui.</p>`;
-        return;
-      }
-      const x = cases.find((y) => y.cle === choisie);
-      if (!x) { n.innerHTML = ''; return; }
-      /* **Toucher une tenue la choisit**, et le détail doit le dire. Il
-         écrivait « TENUE POSSÉDÉE » — vrai, et muet sur ce qui venait de se
-         passer : on touchait une tenue pour la lire et elle était retenue
-         sans qu'un mot l'annonce, sinon une pastille au coin de la case. */
-      const retenue = voulu && (x.cle === `tenue:${voulu.skin}`
-        || x.cle === `etat:${voulu.etat}`
-        || (String(x.cle).startsWith('age:')
-          && (d.lignee ?? []).find((a) => `age:${a.id}` === x.cle)?.stage === voulu.stade));
-      const sorte = retenue && x.ok ? `${x.sorte} · choisie` : x.sorte;
-      /* Ce qui manque, derrière le même cadenas que la case (C1). Le texte
-         suit l'icône : c'est lui qui dit « quatre-vingt-dix écharpes ». */
-      n.innerHTML = `
-        <div class="t">${esc(x.titre)}<em>${esc(sorte)}</em></div>
-        <p>${esc(x.texte)}</p>
-        ${x.manque ? `<span class="manque"><i class="tbf-ico tbf-ico-cadenas" aria-hidden="true"></i>${
-          esc(x.manque)}</span>` : ''}`;
-    }
-
-    /**
-     * Les actions. Deux au plus, et toujours à la même place.
-     *
-     * La première est la seule qui compte — emmener ce Fanzzy en duel. La
-     * seconde est celle de la case regardée : évoluer, porter une tenue. Elle
-     * apparaît et disparaît, la première jamais.
-     *
-     * Le bouton d'entrée en duel **change de verbe** quand le personnage est
-     * déjà dans la tribune : « CHANGER DE PLACE ». Le désactiver serait plus
-     * simple et bien pire — c'est exactement là qu'on veut passer un titulaire
-     * en remplaçant, et c'est le seul écran d'où on peut le faire en regardant
-     * la carte.
-     */
-    /* **Les boutons de la fiche sont des plaques** (`.tbf-plaque`, ui.css), au
-       ton de ce qu'ils font : jouer est rouge (`flare`), dépenser des écharpes
-       est or, choisir de quoi l'on a l'air — c'est à soi — est bleu, et ce qui
-       ne fait que déplacer ou refuser reste en béton. Leurs anciennes classes
-       restent : `bt` est ce que la suite de la fiche mesure, `primaire` et `or`
-       disaient déjà l'intention. La peinture, elle, ne vient plus que de
-       ui.css. */
-    function rendreActions() {
-      const x = cases.find((y) => y.cle === choisie);
-      const n = hote.querySelector('#fiche-actions');
-      const place = siege(d);
-      const principal = !d.possede
-        ? '<button class="bt tbf-plaque" disabled>PAS ENCORE À TOI<small>ouvre des boosters</small></button>'
-        /* Sans module de deck monté, pas de bouton. Mieux vaut rien qu'une
-           promesse que le serveur ne peut pas tenir. */
-        : !d.tribune
-          ? ''
-          : place >= 0
-            ? `<button class="bt tbf-plaque" data-emmener>CHANGER DE PLACE<small>${
-              place === 0 ? 'titulaire' : `remplaçant ${place}`}</small></button>`
-            : '<button class="bt primaire tbf-plaque" data-ton="flare" data-emmener>EMMENER EN DUEL</button>';
-
-      /* Fermé et **nommé** : « rien ne se passe » et « il te manque quarante
-         écharpes » n'appellent pas le même geste, et un seul des deux se
-         rattrape ce soir. Le bouton garde sa place — le retirer ferait croire
-         que ce Fanzzy ne grandit pas. */
-      const second = x?.action?.quoi === 'evoluer'
-        ? (x.action.payable
-          ? `<button class="bt or tbf-plaque" data-ton="or" data-evoluer>${x.action.libelle}<small>${
-            esc(x.action.cout)}</small></button>`
-          : `<button class="bt tbf-plaque" data-evoluer disabled>IL TE FAUT<small>${
-              x.action.manque} écharpes de plus</small></button>`)
+         Le solde, la famille : absents, leur place se retire. */
+      const solde = Number.isFinite(Number(d.echarpes)) && d.echarpes !== null
+        ? `<a class="tbf-monnaie" id="fiche-solde" href="/boutique" aria-label="${Number(d.echarpes)} écharpes — où en gagner">
+            <img src="${esc(JETON())}" alt=""><b>${Number(d.echarpes)}</b><i class="tbf-monnaie-plus" aria-hidden="true">+</i></a>`
+        : '';
+      /* **Une croix en panneau, rien sur la page.** Par-dessus le classeur, la
+         croix referme et rend la grille : fermer n'est pas revenir. À
+         l'adresse /fanzzy/<id>, la barre du jeu porte déjà la flèche qui
+         remonte au classeur (`parentDe`, nav.js) : une seconde flèche, juste
+         dessous, disait deux fois la même chose et prenait au nom la place
+         d'une plaque. */
+      const sortie = opts.fermer
+        ? `<button type="button" class="tbf-plaque tbf-plaque--rond" data-fermer aria-label="Fermer">${SVG.croix}</button>`
         : '';
 
-      /* **Un seul bouton pour les trois choix.**
+      hote.innerHTML = `
+        <div class="fiche${aMoi() ? '' : ' pas-a-moi'}" style="--pin-type:url('${
+          esc(window.TBF_LOGO?.adresse?.('type', f.type) ?? '')}')">
+          <div class="head">
+            ${sortie}
+            <h1><span class="nom" id="fiche-nom"></span><small class="galons" id="fiche-galons"></small></h1>
+            ${solde}
+          </div>
+          <div class="corps">
+            <div class="vitrine" id="fiche-vitrine">
+              <div class="tbf-vitrine-scene" id="fiche-scene">
+                <div class="tbf-vitrine-tilt" id="fiche-art"></div>
+              </div>
+            </div>
+            <div id="fiche-cri" hidden></div>
+            <div class="tbf-inventaire rangs" id="fiche-inventaire"${
+              aMoi() ? '' : ' aria-hidden="true"'}></div>
+            <div class="tbf-ticket tbf-detail" id="fiche-detail"></div>
+          </div>
+          <div class="actions" id="fiche-actions"></div>
+        </div>`;
+      carteMontree = '';
+      brancher();
+      peindre();
+    }
 
-         Il y en avait un par case : « PORTER » sur une tenue, rien sur une
-         expression, et l'âge se décidait sur un autre écran. Trois gestes,
-         trois enregistrements, et le résultat des trois invisible jusqu'à ce
-         qu'on quitte la page.
+    /** Tout ce qui suit un toucher : la carte, ses côtés, l'inventaire, le détail, les actions. */
+    function peindre() {
+      ajusterVoulu();
+      pieces = batir();
+      if (!pieces.some((x) => x.cle === choisie)) {
+        // Par défaut, l'âge regardé : c'est ce qu'on est venu voir.
+        choisie = pieces.find((x) => x.rang === 'ÂGES' && Number(x.age.stage) === vu())?.cle
+          ?? pieces[0]?.cle ?? null;
+      }
+      peindreTete();
+      peindreCarte();
+      peindreCotes();
+      peindreCri();
+      peindreInventaire();
+      peindreDetail();
+      peindreActions();
+      eteindreNouveautes();
+    }
 
-         Celui-ci enregistre ce que la vitrine montre déjà. Éteint quand il
-         n'y a rien à changer — un bouton qui réécrit la même chose apprend
-         à douter de ce qu'on voit. */
-      /* En bleu et non plus en or : il ne coûte rien, et deux plaques d'or
-         côte à côte — celle-ci et ÉVOLUER — laissaient croire que se montrer
-         se payait aussi. */
-      const montrer = !d.possede || !voulu ? ''
-        : memeQueLAvatar()
-          ? '<button class="bt tbf-plaque" disabled>C’EST DÉJÀ LUI<small>partout dans le jeu</small></button>'
-          : `<button class="bt tbf-plaque" data-ton="bleu" data-montrer
-              data-stade="${esc(String(voulu.stade))}"
-              data-skin="${esc(voulu.skin ?? 'base')}"
-              data-etat="${esc(voulu.etat ?? 'neutre')}"
-              >ME MONTRER AINSI<small>partout dans le jeu</small></button>`;
-      n.innerHTML = principal + second + montrer;
+    /* Le nom et la rareté de l'âge regardé **s'il est atteint**, ceux de
+       l'âge atteint sinon : la carte cache le visage d'un âge à venir,
+       l'en-tête ne va pas le nommer à sa place. Le nom suit le dessin — la
+       fiche a montré un temps le Choriste sous le nom du Meneur de chant —, et
+       la rareté suit le nom : une commune nommée sous un galon « Épique »
+       disait deux cartes à la fois. La famille, elle, est celle de la lignée. */
+    function peindreTete() {
+      const n = hote.querySelector('#fiche-nom');
+      const g = hote.querySelector('#fiche-galons');
+      if (!n || !g) return;
+      const a = ageDe(vu());
+      const montre = a && a.possede ? a : null;
+      n.textContent = montre?.nom ?? d.fanzzy.nom;
+      const fam = famille(d.fanzzy.type);
+      const rar = rareteDe(montre?.rar ?? d.fanzzy.rar);
+      /* **La famille en sticker, son pin dedans** : la brique du vestiaire
+         (`.tbf-sticker` > `.tbf-pin`, ui.css), pour que la même famille se
+         reconnaisse d'un écran à l'autre ; le mot sur la craie, la couleur
+         au pin seulement. La rareté garde sa petite forme et son mot à côté :
+         une forme qui porterait son mot (le rond de la rare en prend trente
+         pixels) ne tient pas dans la rangée.
+
+         **La rangée ne change pas de largeur d'un âge à l'autre.** Sur un
+         écran étroit, le sticker d'une longue famille et COMMUNE passent à
+         la ligne là où RARE tient : toucher un âge ajoutait ou retirait une
+         ligne, et la carte sautait. Le mot montré est donc empilé sur ceux
+         des autres âges de la lignée, cachés (`.galon-mot`, fanzzy-fiche.css) :
+         la place est celle du plus long, quel que soit l'âge regardé. */
+      const mots = [...new Set([rar, ...lignee().map((x) => rareteDe(x.rar))])];
+      g.innerHTML = (fam.nom ? `<span class="tbf-sticker"><span class="tbf-pin" style="--fam:${esc(fam.c)}" aria-hidden="true">${
+        window.TBF_LOGO?.type?.(d.fanzzy.type, '') ?? ''}</span>${esc(fam.nom)}</span>` : '')
+        + `<span class="galon"><span class="tbf-forme" data-rar="${rar}" aria-hidden="true"><i></i></span><span class="galon-mot">${
+          mots.map((r, i) => `<span${i ? ' aria-hidden="true"' : ''}>${esc(NOMRAR[r])}</span>`).join('')}</span></span>`;
+      ajusterNom(n);
+      serrerGalons(g);
+    }
+
+    /* **Une rangée de galons, pas deux.** Le sticker d'une longue famille
+       (DÉPLACEMENT, PERCUSSION) et le mot de la rareté ne tiennent pas côte à
+       côte sous la croix du panneau, à 360 pixels de large : la rangée
+       passait à la ligne, et ses vingt-quatre pixels de plus étaient pris à
+       la carte, qui perdait son pied. Le mot se retire alors pour l'œil
+       (`.tbf-vh`) et reste au lecteur d'écran ; la forme garde la couleur et
+       la silhouette, et la carte, juste dessous, porte la forme avec son mot.
+       Mesuré le mot présent, à chaque rendu et à chaque changement de
+       largeur — comme le nom. */
+    function serrerGalons(g) {
+      const mot = g?.querySelector('.galon-mot');
+      if (!mot) return;
+      mot.classList.remove('tbf-vh');
+      g.classList.remove('serre');
+      /* Passé à la ligne : le dernier galon commence sous le bas du premier
+         (ils sont centrés l'un sur l'autre, de hauteurs différentes, sur une
+         même ligne). Serrée, la rangée rapproche aussi la forme du sticker
+         (fanzzy-fiche.css) : à 320 pixels, sous la croix, il manquait deux
+         pixels à la forme seule. */
+      const premier = g.firstElementChild;
+      const dernier = g.lastElementChild;
+      if (premier !== dernier && dernier.offsetTop >= premier.offsetTop + premier.offsetHeight - 1) {
+        mot.classList.add('tbf-vh');
+        g.classList.add('serre');
+      }
+    }
+
+    /* **Un nom trop long rapetisse, il ne se coupe pas.** Des points de
+       suspension sur le nom de la carte qu'on regarde se lisent comme une
+       faute, et l'audit les compte. De vingt pixels à treize, puis sur deux
+       lignes s'il le faut encore. */
+    function ajusterNom(n) {
+      n.classList.remove('long');
+      n.style.fontSize = '';
+      for (let px = 20; px >= 13 && n.scrollWidth > n.clientWidth + 1; px -= 1) {
+        n.style.fontSize = `${px}px`;
+      }
+      if (n.scrollWidth > n.clientWidth + 1) n.classList.add('long');
+    }
+
+    /* ----------------------------------------------------------- la carte */
+
+    function peindreCarte() {
+      const tilt = hote.querySelector('#fiche-art');
+      const scene = hote.querySelector('#fiche-scene');
+      const C = window.TBF_CARTES;
+      if (!tilt || !scene) return;
+      const a = ageDe(vu()) ?? { id: d.fanzzy.ageId ?? d.fanzzy.id, nom: d.fanzzy.nom, stage: d.stade,
+        rar: d.fanzzy.rar, mods: d.fanzzy.mods, cri: d.fanzzy.cri, possede: aMoi() };
+      const atteint = aMoi() && Boolean(a.possede);
+      const prochain = aMoi() && !a.possede && Number(a.stage) === d.stade + 1;
+      const tenue = atteint ? voulu.skin ?? 'base' : 'base';
+      const pose = atteint ? voulu.etat ?? 'neutre' : 'neutre';
+      const pret = pieces.some((x) => x.pret);
+      const rar = rareteDe(a.rar ?? d.fanzzy.rar);
+
+      /* La scène suit la rareté de l'âge regardé : sa lueur, et ses rayons
+         pour l'épique et la légendaire. **Les rayons tournent sans fin**, et
+         l'écran n'en a que trois : la matière de la carte en prend une, la
+         respiration du personnage une autre, le nœud d'âge qui pulse la
+         troisième quand le solde paie. Ils ne tournent donc que si le nœud
+         ne pulse pas. */
+      scene.dataset.rar = rar;
+      scene.toggleAttribute('data-rayons', atteint && (rar === 'epique' || rar === 'legendaire') && !pret);
+      /* Crochet des suites : l'âge regardé n'est pas atteint, la carte est
+         au secret (`fz-secret`, flou et « ÂGE À VENIR »). */
+      tilt.classList.toggle('secret', aMoi() && !atteint);
+
+      const cle = [vu(), tenue, pose, atteint, aMoi(), siege(d), d.possede, a.id].join('|');
+      if (cle === carteMontree) return;
+      carteMontree = cle;
+
+      if (!C?.cardHTML) { tilt.innerHTML = ''; return; }
+      /* La famille de la carte, quand le catalogue n'est pas là : son nom
+         et sa couleur, que la fiche connaît. Sans le tracé du pictogramme —
+         voir le pin provisoire, dans fanzzy-fiche.css. */
+      if (C.TYPES && !C.TYPES[d.fanzzy.type] && NOMTYPE[d.fanzzy.type]) {
+        C.TYPES[d.fanzzy.type] = { nom: NOMTYPE[d.fanzzy.type], c: COUL[d.fanzzy.type], ico: '' };
+      }
+      const carte = { id: a.id, nom: a.nom, type: d.fanzzy.type, set: d.fanzzy.set,
+        stage: Number(a.stage) || 1, rar, cri: a.cri ?? d.fanzzy.cri, mods: a.mods ?? {} };
+      const options = !aMoi() ? { verrou: true, anime: false }
+        : atteint ? { flip: true, titulaire: siege(d) === 0, doublons: d.possede }
+          : { secret: true, prix: prochain ? a.cout : null };
+      tilt.innerHTML = C.cardHTML(carte, options) + '<i class="tbf-vitrine-lustre" aria-hidden="true"></i>';
+
+      /* **L'apparence composée.** La carte sait dessiner un âge ; la tenue et
+         l'expression choisies sont une pose du même personnage, que
+         `resoudre` trouve. On ne change que l'adresse de l'image — sa
+         `transform` est à fx.js. Un dessin qui manque encore à cet âge garde
+         la pose de base : la fiche kraft le dit. */
+      if (atteint && (tenue !== 'base' || pose !== 'neutre')) {
+        const r = E()?.resoudre?.(racine(), { evo: Number(a.stage), skin: tenue, etat: pose });
+        const img = tilt.querySelector('.illu');
+        if (r && r.evo === Number(a.stage) && img) {
+          img.onerror = () => {
+            img.onerror = null;
+            const s = E()?.secours?.(r.src, true);
+            if (s) img.src = s;
+          };
+          img.classList.add('fz-pied');
+          img.src = r.src;
+        }
+      }
+      window.FX?.animer?.(tilt);
+    }
+
+    /* ---------------------------------------------- ce qui se colle autour */
+
+    function peindreCotes() {
+      const v = hote.querySelector('#fiche-vitrine');
+      if (!v) return;
+      v.querySelectorAll(':scope > .cote-g, :scope > .tourne, :scope > .paquet, :scope > .cri-court')
+        .forEach((n) => n.remove());
+      const a = ageDe(vu());
+      const atteint = aMoi() && Boolean(a?.possede ?? true);
+      let html = '';
+      if (atteint && voulu) {
+        /* **TON AVATAR est un acquis, pas un bouton éteint.** Le bouton
+           « C'EST DÉJÀ LUI » occupait une place d'action pour dire qu'il n'y
+           avait rien à faire. Quand la carte montre autre chose que l'avatar,
+           la bâche qui l'enregistre prend la même place. */
+        html += memeQueLAvatar()
+          ? `<span class="cote-g tbf-tampon${claquerAvatar ? ' tbf-clac' : ''}" data-ton="vert">TON<br>AVATAR</span>`
+          : `<button type="button" class="cote-g tbf-plaque" data-montrer
+              data-stade="${esc(String(voulu.stade))}" data-skin="${esc(voulu.skin ?? 'base')}"
+              data-etat="${esc(voulu.etat ?? 'neutre')}">ME MONTRER AINSI</button>`;
+        html += `<button type="button" class="tbf-plaque tbf-plaque--rond tourne" data-tourner
+          aria-pressed="false" aria-label="Retourner la carte">${SVG.tourne}</button>`;
+      }
+      claquerAvatar = false;
+      const cri = criVu();
+      if (aMoi() && cri) {
+        html += `<button type="button" class="tbf-plaque tbf-plaque--rond cri-court" data-cri
+          aria-label="Cri : ${esc(cri)}">${SVG.lecture}</button>`;
+      }
+      /* **La carte qu'on n'a pas montre où la trouver** : la vignette du
+         paquet de sa série, collée à côté d'elle. Le dessin du sachet quand
+         la série en a un, sinon le sachet composé de `packArt` — celui que
+         le kiosque montre faute de mieux. La chance de la tirer
+         (« 1 CHANCE SUR 3 ») n'est pas servie avec la fiche : elle ne
+         s'écrit pas. */
+      if (!aMoi()) {
+        const src = paquet();
+        if (src) html += `<div class="tbf-vitrine-paquet paquet"><img src="${esc(src)}" alt="${
+          esc(d.fanzzy.setNom ? `Le booster ${d.fanzzy.setNom}` : 'Un booster')}"></div>`;
+      }
+      v.insertAdjacentHTML('beforeend', html);
+      v.querySelector('.cote-g.tbf-clac')?.addEventListener('animationend',
+        (e) => e.currentTarget.classList.remove('tbf-clac'), { once: true });
+    }
+
+    /** L'adresse de la vignette du paquet de la série, ou rien. */
+    function paquet() {
+      const C = window.TBF_CARTES;
+      const set = d.fanzzy.set;
+      if (!set || !C) return null;
+      if (C.ART?.[set]) return '/' + (window.FZART?.src?.(C.ART[set]) ?? `${C.ART[set]}.webp`);
+      const svg = C.packArt?.({ id: set, nom: d.fanzzy.setNom ?? '' });
+      return svg ? `data:image/svg+xml,${encodeURIComponent(svg)}` : null;
+    }
+
+    /* ------------------------------------------------------- la bande du cri */
+
+    /** Le cri de l'âge regardé s'il est atteint, de l'âge atteint sinon. */
+    function criVu() {
+      const a = ageDe(vu());
+      return (a?.possede ? a.cri?.label : null) ?? d.fanzzy.cri?.label ?? '';
+    }
+
+    /* Le cri se **crie** quand on touche la bande : sur un Fanzzy qu'on n'a
+       pas, la bande ne se pose pas — une carte éteinte qui pousse un cri,
+       c'était le seul élément qui répondait encore. */
+    function peindreCri() {
+      const n = hote.querySelector('#fiche-cri');
+      if (!n) return;
+      const cri = criVu();
+      if (!aMoi() || !cri) { n.replaceWith(Object.assign(document.createElement('div'), { id: 'fiche-cri', hidden: true })); return; }
+      const fam = famille(d.fanzzy.type);
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.id = 'fiche-cri';
+      b.className = 'tbf-cri';
+      b.dataset.cri = '';
+      b.style.cssText = `--e1:${fam.c};--e2:var(--craie)`;
+      b.innerHTML = `${SVG.lecture}<small>CRI</small><b>${esc(cri)}</b>`;
+      n.replaceWith(b);
+    }
+
+    /* ---------------------------------------------------------- l'inventaire */
+
+    function peindreInventaire() {
+      const n = hote.querySelector('#fiche-inventaire');
+      if (!n) return;
+      const gauche = n.scrollLeft;
+      /* L'ordre est celui de l'importance : ce qu'il devient, ce qu'il
+         change, puis ce qu'il montre. Les tenues ferment la marche : ce sont
+         les seules qui ne changent rien au jeu, et les plus nombreuses. */
+      const rangs = ['ÂGES', 'EFFETS', 'ÉTATS', 'TENUES']
+        .map((r) => [r, pieces.filter((x) => x.rang === r)])
+        .filter(([, l]) => l.length);
+      n.innerHTML = rangs.map(([nom, l]) => `<section class="tbf-inventaire-rang rang">
+          <h4 class="tbf-inventaire-titre">${nom}</h4>
+          ${nom === 'ÂGES'
+            ? `<ol class="tbf-ages" aria-label="Ses âges">${l.map(noeudHTML).join('')}</ol>`
+            : `<div class="tbf-inventaire-tuiles cases">${l.map(tuileHTML).join('')}</div>`}
+        </section>`).join('');
+      n.scrollLeft = gauche;
+      marquerDebord();
+    }
+
+    /* `disabled` et non seulement `pointer-events:none` : une pièce
+       inaccessible à la souris reste accessible au clavier, et la tabulation
+       emmenait dans une rangée de boutons muets. */
+    const mort = () => (aMoi() ? '' : ' disabled tabindex="-1"');
+
+    /** Un nœud de l'arbre des âges. */
+    function noeudHTML(x) {
+      const a = x.age;
+      const regarde = Number(a.stage) === vu();
+      const secret = !x.ok ? ' secret' : '';
+      const nom = x.ok ? `Âge ${a.stage} — ${a.nom}`
+        : x.prix != null ? `Âge ${a.stage} — ${x.prix} écharpes (verrouillé)` : `Âge ${a.stage} (verrouillé)`;
+      const img = portraitAge(a);
+      return `<li data-etat="${x.etat}" data-rar="${esc(rareteDe(a.rar))}"${x.pret ? ' data-pret' : ''}>
+        <button type="button" class="tbf-ages-k case ${x.ok ? 'ok' : 'verrou'}${secret}${x.cle === choisie ? ' choisie' : ''}"
+          data-case="${esc(x.cle)}" title="${esc(a.nom)}" aria-label="${esc(nom)}"${regarde ? ' aria-current="true"' : ''}${mort()}>${
+          img ? `<img src="${esc(img)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</button>${
+          x.prix != null ? `<span class="tbf-sticker tbf-sticker--prix" aria-hidden="true"><img src="${esc(JETON())}" alt="">${x.prix}</span>` : ''}
+      </li>`;
     }
 
     /**
-     * L'illustration de l'âge atteint.
-     *
-     * `ageId` et non `id` : le premier est la carte du catalogue, le second la
-     * lignée. La fiche demandait le dessin sous le nom de la lignée — elle
-     * montrait donc le Choriste sous le nom du Meneur de chant, ce qui
-     * ressemble à un personnage parfaitement valide et ne se voit pas.
+     * Une tuile : vert pour un état, **bleu pour une tenue** (posséder ; le
+     * violet reste aux gens), la couleur de la famille pour un effet. La
+     * pièce montrée dans le détail reste enfoncée (`aria-current`) ; celles
+     * qui composent l'apparence sont pressées (`aria-pressed`) ; celles qu'on
+     * n'a pas sont sous scotch, avec la raison.
      */
-    /**
-     * Le personnage dans la vitrine, à l’âge qu’on regarde.
-     *
-     * `etage` est l'âge **choisi**, et non l'âge atteint. Il valait toujours
-     * `d.stade` : toucher la première case de la rangée ÂGES changeait le
-     * texte en dessous — « Tu es passé par là » — et laissait le dessin sur
-     * l'âge courant. Quelqu'un qui avait payé son évolution ne pouvait donc
-     * plus jamais revoir l’enfant qu’il avait été, alors que la rangée
-     * d'âges n'est là que pour ça.
-     */
-    function dessiner(f, etage = d.stade, acquis = true) {
-      const art = hote.querySelector('#fiche-art');
-      const c = COUL[f.type] ?? '#F5C33B';
-      /* **Un âge qu'on n'a pas ne se montre pas en grand.** Voir la feuille de
-         style : on garde la silhouette et la lumière, on retire le visage.
-         C'est ce que l'évolution est censée révéler, et elle ne révélait rien
-         puisqu'on pouvait tout voir d'avance en touchant une case. */
-      art.classList.toggle('secret', !acquis);
-      // Remis à chaque dessin : la même vitrine sert au dessin détouré et au
-      // repli géométrique, et la classe d'hier fausserait le flou d'aujourd'hui.
-      art.classList.remove('procedural');
+    function tuileHTML(x) {
+      const etat = x.rang === 'ÉTATS';
+      const tenue = x.rang === 'TENUES';
+      const effet = x.rang === 'EFFETS';
+      const choisi = x.cle === choisie;
+      const retenu = aMoi() && x.ok && voulu
+        && ((etat && x.id === (voulu.etat ?? 'neutre')) || (tenue && x.id === voulu.skin));
+      const ton = !aMoi() || !x.ok ? '' : etat ? ' data-ton="vert"' : tenue ? ' data-ton="bleu"' : '';
+      const face = effet && x.ok && aMoi() ? ` style="--face:${esc(x.couleur)};--lettre:var(--encre)"` : '';
+      const dedans = x.image
+        ? `<img src="${esc(x.image)}" alt="" loading="lazy" onerror="this.remove()">`
+        : trait(effet ? x.icone : etat ? 'etat' : 'tenue');
+      /* La raison d'une pièce qu'on n'a pas — jamais muette : une croix sans
+         mot ne donne envie de rien. Sur la fiche d'un Fanzzy qu'on n'a pas,
+         tout est fermé pour la même raison, et la carte la dit déjà. */
+      let colle = '';
+      if (!x.ok && aMoi()) {
+        colle = '<span class="tbf-scotch tbf-scotch--croix" aria-hidden="true"></span>'
+          + (x.prix != null
+            ? `<span class="tbf-sticker" aria-hidden="true"><img src="${esc(JETON())}" alt="">${x.prix}</span>`
+            : '<span class="tbf-sticker" aria-hidden="true">BOOSTER</span>');
+      } else if (aMoi() && x.ok && tenue && x.porte) {
+        colle = '<span class="tbf-sticker" aria-hidden="true">PORTÉE</span>';
+      } else if (aMoi() && x.ok && etat) {
+        colle = '<span class="tbf-sticker tbf-sticker--rond" data-ton="vert" aria-hidden="true"><i class="tbf-ico tbf-ico-coche"></i></span>';
+      }
+      const nom = !x.ok ? `${x.titre} — ${x.prix != null ? `${x.prix} écharpes` : 'dans les boosters'}`
+        : tenue && x.porte ? `${x.titre}, portée` : x.titre;
+      return `<button type="button" class="tbf-plaque tbf-tuile${tenue ? ' tbf-tuile--pied' : ''} case ${
+        x.ok ? 'ok' : 'verrou'}${choisi ? ' choisie' : ''}"${ton}${face}${!x.ok || !aMoi() ? ' data-verrou' : ''}
+        data-case="${esc(x.cle)}" title="${esc(x.titre)}" aria-label="${esc(nom)}"${
+        choisi ? ' aria-current="true"' : ''}${(etat || tenue) && x.ok && aMoi() ? ` aria-pressed="${retenu}"` : ''}${mort()}>${dedans}${colle}</button>`;
+    }
 
-      /* **Le décor**, avant le personnage. Il vient de sa série, de sa tenue
-         portée, de son âge et de sa famille — voir `fanzzy-fond.js`. C'était un
-         halo teinté sur du noir : le Gamin au Tambour de LA TRIBUNE et le Loup
-         du BESTIAIRE se tenaient devant exactement le même vide.
+    /* **La bande défile, et elle le dit.** Une ombre au bord tant qu'il reste
+       quelque chose à droite, retirée au bout ; recalculée à chaque
+       changement de largeur (tourner le téléphone, ouvrir le clavier). */
+    function marquerDebord() {
+      const b = hote.querySelector('#fiche-inventaire');
+      if (!b) return;
+      b.classList.toggle('deborde', b.scrollWidth - b.clientWidth - b.scrollLeft > 2);
+    }
 
-         `porte` et non la première tenue possédée : c'est celle qui est sur lui,
-         et le fond doit dire ce qu'on voit. */
-      /* **La tenue et l'expression voulues**, et non celles qui sont posées
-         en base : c'est un aperçu, et il doit répondre au doigt avant
-         d'être enregistré. */
-      const tenue = voulu?.skin ?? d.skins?.find((s) => s.porte)?.id ?? 'base';
-      const pose = voulu?.etat ?? 'neutre';
-      const decor = window.TBF_FOND?.fond?.({
-        id: f.id, set: f.set, type: f.type, stage: etage ?? f.stage, rar: f.rar, skin: tenue,
-      });
-      art.style.background = decor ? 'none'
-        : `radial-gradient(75% 60% at 50% 75%, ${c}3A, transparent 70%), #0A0E13`;
+    /* --------------------------------------------------- la fiche kraft
 
-      /* **Le décor portait la tenue et le personnage ne la portait pas.**
+       Ce que fait la pièce qu'on touche, **en chiffres plutôt qu'en
+       phrases** : un titre, deux lignes au plus — c'est ce que tiennent ses
+       quatre-vingt-huit pixels. Tout au noir du kraft (la brique). */
+    function ligne(libelle, valeur, jauges = '') {
+      return `<div class="tbf-detail-l"><span>${esc(libelle)}</span>${jauges}${
+        valeur != null && valeur !== '' ? `<b>${esc(valeur)}</b>` : ''}</div>`;
+    }
+    const jauge = (p) => `<span class="tbf-jauge tbf-jauge--fine"><i style="width:${
+      Math.max(0, Math.min(100, Number(p) || 0))}%"></i></span>`;
 
-         `tenue` est calculée trois lignes plus haut et part dans `TBF_FOND`,
-         qui en tire le fond — mais l'illustration était demandée sans elle.
-         Le joueur voyait donc le décor d'Halloween derrière un personnage en
-         tenue ordinaire, sur l'écran même où il venait de choisir son
-         déguisement. */
-      /* **Le trio d'abord, le plein-pied ensuite.** `resoudre` sait rendre
-         l'âge, la tenue et l'expression ensemble ; il sait aussi redescendre
-         d'un âge quand celui qu'on demande n'est pas dessiné, et cette
-         descente-là n'est jamais la bonne réponse ici : le fichier plat de
-         l'âge demandé existe pour deux cents personnages.
-
-         C'est la même règle qu'à la scène et dans `fanzzy-art.js`, et elle a
-         déjà coûté une Bâche Repliée affichée sous le nom de la Bâche
-         Déployée. La tenue et l'expression gardent leur repli : un dessin qui
-         manque encore rend le personnage sans costume ou au repos, ce qui
-         reste le bon personnage. */
-      const r = window.TBF_ETATS?.resoudre?.(d.fanzzy.id,
-        { evo: etage, skin: tenue, etat: pose });
-      const adresse = (r && r.evo === etage) ? r.src
-        : window.FZART?.adresse?.(f.ageId ?? f.id, 'plein', { skin: tenue });
-      if (!adresse) {
-        /* Pas d'illustration pour ce Fanzzy : le dessin géométrique, comme dans
-           la grille. Il porte déjà son propre fond, on ne lui en met pas deux —
-           le décor reviendra avec son dessin. */
-        art.innerHTML = window.FZART?.artProcedural?.({ id: f.ageId ?? f.id, type: f.type,
-          rar: f.rar, nom: f.nom }) ?? '';
-        art.classList.add('procedural');
-        marquerSecret(art, acquis);
+    function peindreDetail() {
+      const n = hote.querySelector('#fiche-detail');
+      if (!n) return;
+      n.className = 'tbf-ticket tbf-detail';
+      /* Sur un Fanzzy qu'on n'a pas, une seule réponse, celle qu'on se pose
+         devant une carte grise : comment l'avoir. Le nom de la série vient du
+         serveur (`setNom`) — une table « TR → LA TRIBUNE » écrite ici serait
+         une copie de plus. */
+      if (!aMoi()) {
+        const s = d.fanzzy.setNom;
+        n.innerHTML = `<div class="tbf-detail-t"><b>Comment l’obtenir</b><small>${
+          esc(NOMRAR[rareteDe(d.fanzzy.rar)])}</small></div>
+          ${ligne(`Il se tire dans les boosters${s ? ` de ${s}` : ''}`)}
+          ${ligne('Ses âges et ses tenues s’ouvrent avec lui')}`;
         return;
       }
-      /* **Le nom suit le dessin.** La vitrine écrivait le nom de l'âge atteint
-         sous le dessin de n'importe quel âge : « Bâche Repeinte » au-dessus de
-         la Bâche Repliée. C'est la faute de la fiche d'il y a trois jours —
-         le Choriste sous le nom du Meneur de chant — revenue par l'autre côté :
-         le dessin avait appris à suivre l'âge, pas le texte. */
-      const titre = hote.querySelector('.fiche .txt h2');
-      if (titre && f.nom) titre.textContent = f.nom;
-
-      art.innerHTML = decor ?? '';
-      /* **Dire quand on ne montre pas exactement ce qui est choisi.**
-
-         Un joueur a choisi une tenue d'Halloween au premier âge, où elle n'est
-         pas encore dessinée. `resoudre` est retombé sur la tenue de base — le
-         bon réflexe, le personnage reste le bon — et le décor, lui, portait
-         les citrouilles. La vitrine montrait donc un personnage en tenue
-         ordinaire devant un décor d'Halloween, et le joueur a cru avoir choisi
-         la base. Il l'a découvert en validant, quand le troisième âge — lui
-         dessiné — est apparu en costume.
-
-         Le repli reste. Ce qui change, c'est qu'il se **dit** : le choix est
-         bien enregistré, il attend simplement son dessin. */
-      const demande = [
-        tenue !== 'base'
-          ? ((d.parAge?.[etage]?.skins ?? d.skins ?? []).find((s) => s.id === tenue)?.nom
-            ?? tenue) : null,
-        pose !== 'neutre'
-          ? ((d.parAge?.[etage]?.etats ?? d.etats ?? []).find((e) => e.id === pose)?.nom
-            ?? pose) : null,
-      ].filter(Boolean);
-      const exact = !demande.length || Boolean(r && r.evo === etage && r.exact);
-      if (!exact && acquis) {
-        const n = document.createElement('div');
-        n.className = 'pas-dessine';
-        n.innerHTML = `<b>${esc(demande.join(' · '))}</b>`
-          + '<em>pas encore dessiné à cet âge — ton choix est gardé</em>';
-        art.appendChild(n);
-      }
-
-      const img = new Image();
-      img.onload = () => { art.appendChild(img); };
-      // Trois formats à essayer dans l'ordre : un navigateur sans AVIF ne
-      // signale rien, il n'affiche simplement pas l'image.
-      const formats = ['.avif', '.webp', '.png'];
-      let rang = 0;
-      img.onerror = () => {
-        if (++rang < formats.length) {
-          img.src = adresse.replace(/\.(avif|webp|png)$/, formats[rang]);
-        }
-      };
-      img.alt = '';
-      img.src = adresse;
-      marquerSecret(art, acquis);
+      const x = pieces.find((y) => y.cle === choisie);
+      if (!x) { n.innerHTML = ''; return; }
+      if (x.rang === 'ÂGES') n.innerHTML = detailAge(x);
+      else if (x.rang === 'EFFETS') n.innerHTML = detailEffet(x);
+      else detailPose(n, x);
     }
 
-    /**
-     * Le mot qui accompagne une silhouette floutée.
-     *
-     * Sans lui, un personnage flou se lit comme une image qui n'a pas fini de
-     * charger — et on attend, puis on recharge la page. Il faut dire que c'est
-     * **volontaire**, et ce qu'il faut faire pour le voir net.
-     */
-    function marquerSecret(art, acquis) {
-      art.querySelector('.secret-mot')?.remove();
-      if (acquis) return;
-      const n = document.createElement('div');
-      n.className = 'secret-mot';
-      n.innerHTML = `<svg viewBox="0 0 24 24" stroke-linecap="round" aria-hidden="true">
-        <rect x="4" y="10" width="16" height="11" rx="2.5"/>
-        <path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-        ÂGE À VENIR<em>fais-le grandir pour le découvrir</em>`;
-      art.appendChild(n);
+    /* Un âge : ce qu'il gagne sur le précédent — la poussée du cri en deux
+       écharpes, avant (grise) et après, et le premier effet qui change. Le
+       premier âge dit ce qu'il fait. Un âge à venir dit son prix. */
+    function detailAge(x) {
+      const a = x.age;
+      const s = Number(a.stage);
+      const avant = ageDe(s - 1);
+      const statut = !x.ok ? 'à découvrir' : s === d.stade ? 'actuel' : 'atteint';
+      const sous = !x.ok ? (a.cout ? `${a.cout} écharpes` : '')
+        : avant ? 'ce qu’il a gagné' : 'ce qu’il fait';
+      const lignes = [];
+      const p1 = Number(avant?.cri?.power);
+      const p2 = Number(a.cri?.power);
+      if (Number.isFinite(p2) && p2 > 0) {
+        lignes.push(Number.isFinite(p1) && p1 > 0 && avant
+          ? ligne('Poussée du cri', `${p1} → ${p2}`, `<span class="tbf-detail-deux">${jauge(p1)}${jauge(p2)}</span>`)
+          : ligne('Poussée du cri', String(p2), `<span class="tbf-detail-deux">${jauge(p2)}</span>`));
+      }
+      const av = new Map(lireMods(avant?.mods).map(([nom, v]) => [nom, v]));
+      const change = lireMods(a.mods).find(([nom, v]) => av.get(nom) !== v);
+      if (change) {
+        const [nom, v] = change;
+        lignes.push(ligne(nom, avant && av.has(nom) ? `${av.get(nom)} → ${v}` : v));
+      }
+      return `<div class="tbf-detail-t"><b>Âge ${s} · ${statut}</b>${sous ? `<small>${esc(sous)}</small>` : ''}</div>
+        ${lignes.slice(0, 2).join('')}`;
+    }
+
+    /* Un effet : sa valeur, et d'où elle vient. L'échelle d'une écharpe
+       « sur le maximum de la famille » n'est pas servie : sans elle, pas de
+       jauge — une jauge inventée mentirait sur la grandeur. */
+    function detailEffet(x) {
+      if (!x.ok) {
+        return `<div class="tbf-detail-t"><b>${esc(x.titre)}</b><small>${x.prix} écharpes</small></div>
+          ${ligne(`À l’âge ${x.age?.stage ?? ''}`, x.valeur)}
+          ${ligne('Il vient avec l’âge suivant')}`;
+      }
+      const origine = x.brut == null ? 'de ton équipement'
+        : x.brut === x.valeur ? 'du Fanzzy' : 'Fanzzy et équipement';
+      return `<div class="tbf-detail-t"><b>${esc(x.titre)}</b><small>${esc(origine)}</small></div>
+        ${ligne('En duel', x.valeur)}
+        ${x.brut != null && x.brut !== x.valeur ? ligne('Le Fanzzy seul', x.brut) : ''}`;
+    }
+
+    /* Un état ou une tenue : son portrait dans la pose, ce qu'il est, et si
+       la carte ne peut pas encore le montrer à cet âge, on le dit — le choix
+       est gardé, c'est le dessin qui manque. */
+    function detailPose(n, x) {
+      const etat = x.rang === 'ÉTATS';
+      const sorte = etat ? 'état' : 'tenue';
+      const retenu = voulu && (etat ? x.id === (voulu.etat ?? 'neutre') : x.id === voulu.skin);
+      const statut = !x.ok ? 'à trouver' : !etat && x.porte ? 'portée'
+        : retenu ? (etat ? 'choisi' : 'choisie') : x.id === 'neutre' ? 'de base' : 'à toi';
+      const lignes = [];
+      if (!x.ok) {
+        lignes.push(ligne('Dans un booster'), ligne(`Pour l’âge ${vu()} de ce Fanzzy`));
+      } else {
+        lignes.push(ligne(etat ? (x.id === 'neutre' ? 'Son air de tous les jours' : x.dessin || 'Au bon moment du match')
+          : 'Elle se voit, sans rien changer au jeu'));
+        if (x.id !== 'neutre' && !x.image) lignes.push(ligne('Pas encore de dessin à cet âge'));
+      }
+      const portrait = x.ok ? x.image : null;
+      n.classList.toggle('tbf-detail--portrait', Boolean(portrait));
+      n.innerHTML = `${portrait ? `<img class="tbf-detail-portrait" src="${esc(portrait)}" alt="" onerror="this.remove()">` : ''}
+        <div class="tbf-detail-t"><b>${esc(x.titre)}</b><small>${esc(`${sorte} · ${statut}`)}</small></div>
+        ${lignes.join('')}`;
+    }
+
+    /* ---------------------------------------------------------- les actions
+
+       **Hiérarchisées, et des bâches au ton de ce qu'elles font** : dépenser
+       des écharpes est or, jouer est rouge, ce qui ne fait que déplacer reste
+       en béton. Une rangée, toujours au même endroit. */
+    function peindreActions() {
+      const n = hote.querySelector('#fiche-actions');
+      if (!n) return;
+      /* La carte qu'on n'a pas : la bâche or mène **vraiment** au kiosque.
+         Elle dit encore pourquoi il faut y aller. */
+      if (!aMoi()) {
+        n.innerHTML = '<a class="bt tbf-plaque" data-ton="or" href="/boosters">OUVRIR UN BOOSTER'
+          + '<small>il n’est pas encore à toi</small></a>';
+        return;
+      }
+      const ev = pieces.find((x) => x.evoluer)?.evoluer ?? null;
+      /* Fermé et **nommé** : « rien ne se passe » et « il te manque quinze
+         écharpes » n'appellent pas le même geste. Le bouton garde sa place —
+         le retirer ferait croire que ce Fanzzy ne grandit pas. Le nombre est
+         repris dans le sous-libellé, pour que la phrase se lise d'un bloc. */
+      const evoluer = !ev ? ''
+        : ev.payable
+          ? `<button type="button" class="bt or tbf-plaque" data-ton="or" data-evoluer>ÉVOLUER<small>${
+            Number(d.echarpes)} → ${Number(d.echarpes) - ev.cout} écharpes</small><span class="tbf-sticker tbf-sticker--prix" aria-hidden="true"><img src="${
+            esc(JETON())}" alt="">${ev.cout}</span></button>`
+          : `<button type="button" class="bt tbf-plaque" data-evoluer disabled>IL TE FAUT ${ev.manque}<small> écharpes de plus</small></button>`;
+      /* Sans module de deck monté, pas de bouton : mieux vaut rien qu'une
+         promesse que le serveur ne peut pas tenir. Déjà dans la tribune, le
+         verbe change — c'est là qu'on passe un titulaire en remplaçant. */
+      const place = siege(d);
+      const duel = !d.tribune ? ''
+        : place >= 0
+          ? `<button type="button" class="bt tbf-plaque" data-emmener>CHANGER DE PLACE<small>${
+            place === 0 ? 'titulaire' : `remplaçant ${place}`}</small></button>`
+          : '<button type="button" class="bt primaire tbf-plaque" data-ton="flare" data-emmener>EMMENER EN DUEL<small>place au deck</small></button>';
+      n.innerHTML = evoluer + duel;
+    }
+
+    /* ------------------------------------------------- les nouveautés
+
+       La fiche éteint **sa** clé (contrat du serveur, § 2) : le personnage et
+       l'âge qu'on vient de voir ne sont plus « nouveaux » au classeur. Après
+       les avoir montrés, jamais au chargement — d'où le délai, et la fiche
+       doit encore être à l'écran. Une route absente ne casse rien. */
+    function eteindreNouveautes() {
+      if (!aMoi()) return;
+      const cles = [`fanzzy:${racine()}`];
+      if (d.stade > 1) cles.push(`age:${racine()}:${d.stade}`);
+      const neuves = cles.filter((c) => !eteintes.has(c));
+      if (!neuves.length) return;
+      neuves.forEach((c) => eteintes.add(c));
+      setTimeout(() => {
+        if (!hote.isConnected || document.hidden) { neuves.forEach((c) => eteintes.delete(c)); return; }
+        fetch('/api/fanzzy/vu', { method: 'POST', credentials: 'same-origin',
+          headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cles: neuves }) })
+          .catch(() => {});
+      }, 900);
     }
 
     /* ------------------------------------------------------------- gestes */
 
+    /* Un seul écouteur par zone, posé une fois par rendu complet : les pièces
+       sont refaites à chaque toucher, et rebrancher quinze boutons finirait
+       par en oublier un. */
     function brancher() {
       hote.querySelector('[data-fermer]')?.addEventListener('click', () => opts.fermer?.());
 
-      hote.querySelector('[data-cri]')?.addEventListener('click', () =>
-        window.FX?.cri?.(d.fanzzy.cri?.label ?? 'CRI',
-          { couleur: COUL[d.fanzzy.type] ?? '#F5C33B' }));
-
-      /* Un seul écouteur pour toutes les cases : elles sont refaites à chaque
-         rendu, et rebrancher quinze boutons après chaque action finirait par
-         en oublier un. */
-      hote.querySelector('.rangs')?.addEventListener('click', (e) => {
+      const corps = hote.querySelector('.corps');
+      corps?.addEventListener('click', (e) => {
+        if (e.target.closest('[data-cri]')) { crier(); return; }
+        if (e.target.closest('[data-tourner]')) { tourner(); return; }
+        if (e.target.closest('[data-montrer]')) { montrer(e.target.closest('[data-montrer]')); return; }
         const b = e.target.closest('[data-case]');
-        if (!b) return;
-        choisie = b.dataset.case;
-        hote.querySelectorAll('.case').forEach((n) =>
-          n.classList.toggle('choisie', n.dataset.case === choisie));
-        /* **Un âge touché se montre.** La rangée ÂGES n’existe que pour
-           regarder les trois visages d’une lignée ; sans ce rappel, elle ne
-           changeait que le texte, et le dessin restait sur l’âge atteint.
-
-           Les autres rangées — effets, tenues — ne touchent pas à la
-           vitrine : elles parlent de l’âge qu’on regarde, elles n’en
-           changent pas. */
-        /* **Toucher, c'est choisir.** Les trois rangées qui décrivent une
-           apparence — l'âge, la tenue, l'expression — composent le même
-           choix, et la vitrine le montre tout de suite. La rangée des effets
-           ne décrit rien qu'on puisse porter : elle se regarde, elle ne se
-           choisit pas.
-
-           On n'enregistre pas : c'est un essayage. Le bouton d'en dessous
-           est le seul qui parle au serveur. */
-        const misEnTete = (() => {
-          const x = cases.find((y) => y.cle === choisie);
-          if (!x?.ok || !voulu) return false;
-          const tenue = /^tenue:(.+)$/.exec(choisie)?.[1];
-          if (tenue) { voulu.skin = tenue; return true; }
-          const pose = /^etat:(.+)$/.exec(choisie)?.[1];
-          if (pose) { voulu.etat = pose; return true; }
-          return false;
-        })();
-
-        const idAge = /^age:(.+)$/.exec(choisie ?? '')?.[1];
-        if (misEnTete) {
-          const a = (d.lignee ?? []).find((x) => x.stage === (ageVu ?? d.stade));
-          dessiner({ ...d.fanzzy, ageId: a?.id ?? d.fanzzy.ageId,
-            nom: a?.nom ?? d.fanzzy.nom, rar: a?.rar ?? d.fanzzy.rar },
-          ageVu ?? d.stade, true);
-          redessinerRangs();
-        }
-        if (idAge) {
-          const a = (d.lignee ?? []).find((x) => x.id === idAge);
-          if (a) {
-            dessiner({ ...d.fanzzy, ageId: a.id, nom: a.nom, rar: a.rar ?? d.fanzzy.rar },
-              a.stage, Boolean(a.possede));
-            /* **Et les rangées suivent.** C'est ce que le paragraphe
-               ci-dessus promettait déjà — « elles parlent de l'âge qu'on
-               regarde » — et qui n'était pas vrai : elles parlaient de l'âge
-               atteint, quel que soit celui qu'on touchait.
-
-               On redessine la bande entière plutôt que de retoucher les cases
-               une par une : elles changent de nombre, d'état et d'action d'un
-               âge à l'autre, et quinze retouches finissent par en oublier une.
-               La case choisie reste la même — c'est un âge, il existe aux
-               trois. */
-            /* Un âge qu'on a **atteint** entre dans le choix ; un âge à venir
-               se regarde seulement — on ne se montre pas dans un âge qu'on
-               n'a pas payé, et le serveur le bornerait de toute façon. */
-            if (a.possede && voulu) voulu.stade = Number(a.stage);
-            if (Number(a.stage) !== Number(ageVu ?? d.stade)) {
-              ageVu = Number(a.stage);
-              redessinerRangs();
-            }
-          }
-        }
-        rendreDetail();
-        rendreActions();
-        brancherActions();
+        if (b && !b.disabled) toucher(b.dataset.case);
       });
 
-      brancherActions();
-    }
+      const inv = hote.querySelector('#fiche-inventaire');
+      if (inv) {
+        inv.addEventListener('scroll', marquerDebord, { passive: true });
+        largeurs?.disconnect();
+        largeurs = new ResizeObserver(() => {
+          marquerDebord();
+          ajusterNom(hote.querySelector('#fiche-nom') ?? document.createElement('span'));
+          serrerGalons(hote.querySelector('#fiche-galons'));
+        });
+        largeurs.observe(inv);
+      }
 
-    function brancherActions() {
-      const n = hote.querySelector('#fiche-actions');
-      n.querySelector('[data-emmener]')?.addEventListener('click', () => placer());
+      incliner(hote.querySelector('#fiche-scene'));
 
-      /* **Le personnage, son âge et ce qu'il montre, en un seul envoi.**
-
-         Trois réglages qui se décidaient à trois endroits : le titulaire ici,
-         l'âge aux flèches de l'accueil, la tenue sur un bouton « PORTER » qui
-         ne disait pas qu'il changeait l'avatar. Aucun des trois ne montrait
-         le résultat des deux autres, et il fallait passer par l'accueil pour
-         voir ce qu'on venait de choisir.
-
-         Le serveur les pose ensemble et refuse d'un seul bloc : un âge qu'on
-         n'a pas, une expression qu'on n'a pas gagnée à cet âge-là. */
-      n.querySelector('[data-montrer]')?.addEventListener('click', async (e) => {
-        const b = e.currentTarget;
-        b.disabled = true;
-        try {
-          const r = await fetch('/api/me/avatar', {
-            method: 'POST', credentials: 'same-origin',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              fanzzyId: d.fanzzy.id,
-              stade: Number(b.dataset.stade) || undefined,
-              skinId: b.dataset.skin || undefined,
-              etat: b.dataset.etat || undefined,
-            }),
-          });
-          if (!r.ok) throw new Error('refus');
-          /* On nomme ce qui vient de changer : « c'est fait » ne dit pas où
-             regarder, et le changement se voit sur un autre écran. */
-          dire('C’est lui qu’on verra partout.');
-          await recharger();
-        } catch {
-          b.disabled = false;
-          dire('Impossible pour le moment.');
-        }
+      hote.querySelector('#fiche-actions')?.addEventListener('click', (e) => {
+        if (e.target.closest('[data-emmener]')) placer();
+        else if (e.target.closest('[data-evoluer]:not([disabled])')) demander();
       });
-
-      n.querySelector('[data-evoluer]')?.addEventListener('click', () => demander());
     }
 
-    /**
-     * La confirmation d'évolution : ce qu'on gagne, avant de payer.
-     *
-     * On compare les effets ligne à ligne, et on montre les deux personnages.
-     * C'est ce qui manquait : le bouton d'avant prenait quatre-vingt-dix
-     * écharpes sur un simple appui, et le joueur découvrait après coup ce qu'il
-     * avait acheté.
-     */
+    /* **Toucher, c'est regarder — et choisir.** Un âge se montre sur la
+       carte (et les tenues et les états suivent son âge) ; une tenue ou une
+       expression possédées se posent sur le personnage. On n'enregistre pas :
+       c'est un essayage, ME MONTRER AINSI est le seul geste qui parle au
+       serveur. Les effets se regardent, ils ne se portent pas. */
+    function toucher(cle) {
+      choisie = cle;
+      const x = pieces.find((y) => y.cle === cle);
+      if (x?.rang === 'ÂGES') {
+        const s = Number(x.age.stage);
+        /* Un âge atteint entre dans le choix ; un âge à venir se regarde
+           seulement — on ne se montre pas dans un âge qu'on n'a pas payé. */
+        if (x.ok && voulu) voulu.stade = s;
+        ageVu = s;
+      } else if (x?.ok && voulu && x.rang === 'TENUES') {
+        voulu.stade = vu(); voulu.skin = x.id;
+      } else if (x?.ok && voulu && x.rang === 'ÉTATS') {
+        voulu.stade = vu(); voulu.etat = x.id;
+      }
+      peindre();
+    }
+
+    function crier() {
+      window.FX?.cri?.(criVu() || 'CRI', { couleur: famille(d.fanzzy.type).c });
+    }
+
+    /* **La carte se retourne** : le dos de sa série, construit au premier
+       retournement (`TBF_CARTES.retourner`). Sans mouvement, elle change de
+       face sans tourner — c'est la carte qui en décide. */
+    function tourner() {
+      const fz = hote.querySelector('#fiche-art .fz');
+      if (!fz?.classList.contains('fz-flip') || !window.TBF_CARTES?.retourner) return;
+      const dos = window.TBF_CARTES.retourner(fz);
+      hote.querySelector('[data-tourner]')?.setAttribute('aria-pressed', String(dos));
+    }
+
+    /* **L'inclinaison au doigt**, celle de la vitrine de la collection, à
+       l'identique : `--rx`, `--ry` et le lustre (`--lx`, `--ly`) sur la
+       scène, `.touche` tant qu'on la tient ; le reflet de l'holo épique suit
+       (`--mx`, `--my`, lus par la carte). Sans mouvement, la carte reste une
+       image. Un toucher bref, sans glisser, la retourne. */
+    function incliner(scene) {
+      if (!scene) return;
+      let depart = null;
+      scene.addEventListener('pointerdown', (e) => { depart = { x: e.clientX, y: e.clientY }; });
+      scene.addEventListener('click', (e) => {
+        if (!depart || !e.target.closest('.fz')) return;
+        if (Math.hypot(e.clientX - depart.x, e.clientY - depart.y) < 8) tourner();
+      });
+      if (doux()) return;
+      const suivre = (e) => {
+        const r = scene.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        scene.classList.add('touche');
+        scene.style.setProperty('--ry', `${(x * 17).toFixed(2)}deg`);
+        scene.style.setProperty('--rx', `${(-y * 17).toFixed(2)}deg`);
+        scene.style.setProperty('--lx', `${((x + 0.5) * 100).toFixed(1)}%`);
+        scene.style.setProperty('--ly', `${((y + 0.5) * 100).toFixed(1)}%`);
+        const fz = scene.querySelector('.fz');
+        fz?.style.setProperty('--mx', `${((x + 0.5) * 100).toFixed(1)}%`);
+        fz?.style.setProperty('--my', `${((y + 0.5) * 100).toFixed(1)}%`);
+      };
+      const reposer = () => {
+        scene.classList.remove('touche');
+        scene.style.setProperty('--ry', '0deg');
+        scene.style.setProperty('--rx', '0deg');
+      };
+      scene.addEventListener('pointermove', suivre);
+      scene.addEventListener('pointerleave', reposer);
+      scene.addEventListener('pointercancel', reposer);
+      scene.addEventListener('pointerup', reposer);
+    }
+
+    /* **Le personnage, son âge et ce qu'il montre, en un seul envoi.** Le
+       serveur les pose ensemble et refuse d'un seul bloc. */
+    async function montrer(b) {
+      b.disabled = true;
+      try {
+        const r = await fetch('/api/me/avatar', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            fanzzyId: d.fanzzy.id,
+            stade: Number(b.dataset.stade) || undefined,
+            skinId: b.dataset.skin || undefined,
+            etat: b.dataset.etat || undefined,
+          }),
+        });
+        if (!r.ok) throw new Error('refus');
+        /* On nomme ce qui vient de changer : le changement se voit sur un
+           autre écran. Un éclair de la couleur de la famille, et le tampon
+           TON AVATAR qui claque à la place de la bâche. */
+        window.FX?.flash?.(famille(d.fanzzy.type).c);
+        dire('C’est lui qu’on verra partout.');
+        claquerAvatar = true;
+        await recharger();
+        /* L'avatar a changé : la barre du jeu le relit (son portrait). */
+        window.dispatchEvent(new Event('tbf:bourse'));
+      } catch {
+        b.disabled = false;
+        dire('Impossible pour le moment.', { erreur: true });
+      }
+    }
+
     /**
      * Emmener ce Fanzzy en duel, à une place qu'on choisit.
      *
-     * ## Pourquoi c'est une question et non un bouton
-     *
-     * Le bouton écrivait `active_fanzzy` — **l'avatar**, celui que voient les
-     * amis et l'accueil. Le personnage n'entrait dans aucun deck, et la fiche
-     * affichait ensuite « DÉJÀ EN DUEL » sur quelqu'un qui ne jouerait jamais.
-     *
-     * Il pose maintenant le personnage dans la tribune, et il demande **où** :
-     * le titulaire entre au coup d'envoi, les remplaçants attendent la carte
-     * Changement. Ce n'est pas la même chose, et la fiche ne peut pas décider à
-     * la place du joueur.
-     *
-     * ## Et pourquoi elle dit qui sort
-     *
-     * Une place occupée est un personnage qu'on remplace. Le lui dire après
-     * coup, c'est lui faire découvrir la perte en ouvrant son deck trois écrans
-     * plus loin ; le lui dire avant, c'est une décision.
+     * Le bouton pose le personnage dans la tribune du deck, et il demande
+     * **où** : le titulaire entre au coup d'envoi, les remplaçants attendent
+     * la carte Changement. Une place occupée est un personnage qu'on
+     * remplace : le lui dire avant, c'est une décision ; après, une perte
+     * découverte trois écrans plus loin.
      */
     function placer() {
-      /* **`d.fanzzy.nom` et non `f.nom`.** `f` est le paramètre de
-         `peindre(f)` — l'âge atteint —, et il n'existe pas ici. La ligne
-         levait donc un `ReferenceError` au premier appui, avant même que la
-         boîte s'ouvre : le bouton ne faisait **rien**, sans un mot, depuis
-         l'écran qui dit « emmener en duel ». Une erreur dans un écouteur ne
-         remonte nulle part — elle part dans la console et la page continue
-         comme si de rien n'était. */
       const nom = d.fanzzy.nom;
       const t = d.tribune;
-      if (!t?.places?.length) { dire('La tribune n’est pas accessible.'); return; }
+      if (!t?.places?.length) { dire('La tribune n’est pas accessible.', { erreur: true }); return; }
 
       const ici = siege(d);
       let voulue = ici >= 0 ? null : (t.places.find((p) => p.ouverte)?.place ?? null);
@@ -1089,13 +1081,11 @@
         oui: 'PLACER',
         ton: 'vert',
         /* Le bouton de confirmation n'ouvre rien tant qu'aucune place n'est
-           choisie. Choisir *est* la décision ; un « PLACER » actif d'emblée
-           poserait le personnage au premier rang sans qu'on l'ait demandé.
-           Sauf pour qui n'est encore nulle part : la première place libre est
-           alors une proposition, pas un choix imposé. */
+           choisie — sauf pour qui n'est encore nulle part : la première place
+           libre est alors une proposition, pas un choix imposé. */
         apres: (boite) => {
           const oui = boite.querySelector('[data-oui]');
-          const peindre = () => {
+          const peindrePlaces = () => {
             boite.querySelectorAll('.place').forEach((b) =>
               b.classList.toggle('on', Number(b.dataset.place) === voulue));
             oui.disabled = voulue === null;
@@ -1104,9 +1094,9 @@
             const b = e.target.closest('[data-place]');
             if (!b || b.disabled) return;
             voulue = Number(b.dataset.place);
-            peindre();
+            peindrePlaces();
           });
-          peindre();
+          peindrePlaces();
         },
         surOui: async () => {
           if (voulue === null) return false;
@@ -1123,11 +1113,10 @@
               ? 'Il n’est pas encore à toi.'
               : e.code === 'deck.error.place_vide_avant'
                 ? 'Remplis d’abord la place précédente.'
-                : 'Impossible pour le moment.');
+                : 'Impossible pour le moment.', { erreur: true });
             return false;
           }
-          dire(voulue === 0 ? `${nom} est titulaire.`
-            : `${nom} entre en remplaçant ${voulue}.`);
+          dire(voulue === 0 ? `${nom} est titulaire.` : `${nom} entre en remplaçant ${voulue}.`);
           window.FX?.flash?.('#1E9E6A');
           await recharger();
           return true;
@@ -1135,122 +1124,146 @@
       });
     }
 
+    /**
+     * La confirmation d'évolution : **ce qu'on gagne, avant de payer**. Les
+     * deux cartes — celle d'aujourd'hui, et celle qui vient, au secret : c'est
+     * la cérémonie qui la révèle —, et les chiffres sur une fiche kraft. Un
+     * « es-tu sûr ? » auquel personne ne peut répondre autrement qu'au hasard
+     * n'est pas une confirmation.
+     */
     function demander() {
-      const x = cases.find((y) => y.cle === choisie);
-      const vers = x?.action?.vers;
-      if (!vers) return;
-      /* Un effet que l'âge d'avant n'avait pas n'a **pas de valeur d'avant** :
-         la colonne barrée reste vide au lieu d'afficher un tiret barré, qui se
-         lisait comme une valeur qu'on perd. La ligne reste — le gain, lui,
-         existe. */
-      const avant = new Map(lireMods(d.fanzzy.mods).map(([n, v]) => [n, v]));
-      const apres = lireMods(vers.mods);
-      const lignes = apres.map(([n, v]) => ({ n, av: avant.get(n) ?? '', ap: v }))
-        .filter((l) => l.av !== l.ap);
-      if (vers.cri?.label && vers.cri.label !== d.fanzzy.cri?.label) {
-        lignes.push({ n: 'Cri', av: d.fanzzy.cri?.label ?? '', ap: vers.cri.label });
-      }
+      const ev = pieces.find((x) => x.evoluer)?.evoluer;
+      const vers = ev?.vers;
+      if (!vers || !ev.payable || hote.querySelector('.demande')) return;
+      const C = window.TBF_CARTES;
+      const ici = ageDe(d.stade);
+      const carte = (a, opt) => (C?.cardHTML ? C.cardHTML({ id: a.id, nom: a.nom, type: d.fanzzy.type,
+        set: d.fanzzy.set, stage: Number(a.stage), rar: rareteDe(a.rar), cri: a.cri, mods: a.mods },
+      { mini: true, ...opt }) : '');
 
-      const image = (id) => window.FZART?.adresse?.(id, 'buste') ?? '';
+      /* Un effet que l'âge d'avant n'avait pas n'a **pas de valeur d'avant** :
+         la ligne dit sa valeur seule, au lieu d'un tiret qui se lirait comme
+         une perte. */
+      const avant = new Map(lireMods(ici?.mods).map(([n, v]) => [n, v]));
+      const lignes = [];
+      const p1 = Number(ici?.cri?.power);
+      const p2 = Number(vers.cri?.power);
+      if (Number.isFinite(p2) && p2 > 0 && p2 !== p1) {
+        lignes.push(ligne('Poussée du cri', Number.isFinite(p1) && p1 > 0 ? `${p1} → ${p2}` : String(p2),
+          `<span class="tbf-detail-deux">${Number.isFinite(p1) && p1 > 0 ? jauge(p1) : ''}${jauge(p2)}</span>`));
+      }
+      for (const [n, v] of lireMods(vers.mods)) {
+        if (avant.get(n) === v) continue;
+        lignes.push(ligne(n, avant.has(n) ? `${avant.get(n)} → ${v}` : v));
+      }
+      if (vers.cri?.label && vers.cri.label !== ici?.cri?.label) lignes.push(ligne('Son cri', vers.cri.label));
+
       const panneau = document.createElement('div');
       panneau.className = 'demande';
+      panneau.setAttribute('role', 'dialog');
+      panneau.setAttribute('aria-modal', 'true');
+      panneau.setAttribute('aria-label', `Passer à l’âge ${vers.stage}`);
       panneau.innerHTML = `
-        <h3>PASSER À L’ÉTAGE ${vers.stage} ?</h3>
-        <div class="duo">
-          <div class="qui"><img src="${image(d.fanzzy.ageId ?? d.fanzzy.id)}" alt=""
-            onerror="this.remove()"><b>${esc(d.fanzzy.nom)}</b></div>
-          <span class="fleche">›</span>
-          <div class="qui apres"><img src="${image(vers.id)}" alt=""
-            onerror="this.remove()"><b>${esc(vers.nom)}</b></div>
-        </div>
-        ${lignes.length ? `<div class="gains">${lignes.map((l) => `
-          <div class="gain"><span class="n">${esc(l.n)}</span>
-            ${l.av ? `<span class="av">${esc(l.av)}</span>` : ''}<span class="ap">${esc(l.ap)}</span></div>`).join('')}
-        </div>` : ''}
+        <h3>PASSER À L’ÂGE ${esc(String(vers.stage))} ?</h3>
+        <div class="duo"><div>${ici ? carte(ici, {}) : ''}</div>${SVG.fleche}<div>${carte(vers, { secret: true })}</div></div>
+        ${lignes.length ? `<div class="tbf-ticket tbf-detail"><div class="tbf-detail-t"><b>Ce qu’il gagne</b><small>${
+          ev.cout} écharpes</small></div>${lignes.join('')}</div>` : ''}
         <div class="quoi">
-          <button class="bt tbf-plaque" data-non>ANNULER</button>
-          <button class="bt or tbf-plaque" data-ton="or" data-oui>ÉVOLUER<small>${vers.cout} écharpes</small></button>
+          <button type="button" class="bt tbf-plaque" data-non>ANNULER</button>
+          <button type="button" class="bt or tbf-plaque" data-ton="or" data-oui>ÉVOLUER<small>${
+            Number(d.echarpes)} → ${Number(d.echarpes) - ev.cout} écharpes</small></button>
         </div>`;
       hote.querySelector('.fiche').appendChild(panneau);
+      panneau.querySelector('[data-oui]').focus({ preventScroll: true });
 
-      panneau.querySelector('[data-non]').onclick = () => panneau.remove();
+      const fermer = () => panneau.remove();
+      panneau.querySelector('[data-non]').onclick = fermer;
+      panneau.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); fermer(); } });
       panneau.querySelector('[data-oui]').onclick = async () => {
+        /* Une seule fois : les deux boutons s'éteignent avant l'envoi. */
         panneau.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+        const soldeAvant = Number(d.echarpes);
+        let reponse = null;
         try {
-          await api('/evolve', { id: d.fanzzy.id });
-          panneau.remove();
-
-          /* **Pas de `FX.compter` ici, et c'est voulu.** Le lot 0 fait compter
-             les soldes qui changent sous les yeux ; la fiche n'en affiche
-             aucun. `d.echarpes` n'y sert qu'à dire si l'évolution est payable
-             et combien il manque, et la barre du haut ne porte plus la bourse
-             (voir nav.js). Le prix payé part avec ce panneau, et `recharger`
-             pose l'âge suivant avec son propre prix : aucun chiffre ne
-             descend, il n'y a rien à faire compter. Si la fiche affiche un
-             jour la bourse, c'est ici qu'elle comptera. */
-
-          /* ------------------------------------------ la cérémonie
-
-             **Le geste le plus cher du jeu était le seul sans récompense à
-             l'écran.** On confirmait, un éclair jaune passait, la fiche se
-             rechargeait, et le nouveau personnage était simplement là. Rien
-             n'avait eu lieu : ni le départ de l'ancien, ni l'arrivée de l'autre,
-             ni les quatre-vingt-dix écharpes qu'on venait de dépenser.
-
-             `FX.evolution` tient le rythme — la charge, le flash, l'onde — et
-             rend la main **au moment exact du flash**, pendant que le blanc
-             couvre l'image. C'est là qu'on recharge : une seconde plus tôt on
-             verrait la substitution, une seconde plus tard un trou.
-
-             La couleur est celle de la rareté **d'arrivée**, parce que c'est
-             elle qu'on achète : monter au troisième âge d'un épique éclate en
-             violet, pas dans l'or de tout le monde. */
-          const portrait = hote.querySelector('#fiche-art img');
-          const ceremonie = window.FX?.evolution
-            ? window.FX.evolution(portrait, { nom: vers.nom, rar: vers.rar })
-            : null;
-          const suite = ceremonie ? await ceremonie : null;
-
-          /* **Et c'est le nouveau qui arrive.** La vitrine se redessinait sur
-             l'âge qu'on regardait avant de payer — celui de l'avatar, le plus
-             souvent — et non sur celui qu'on venait d'acheter. Le flash
-             tombait, et révélait… le même personnage : de l'extérieur,
-             l'évolution n'avait eu aucun effet. On pose donc l'âge regardé et
-             l'aperçu sur le nouveau, dans sa tenue de base et au repos.
-
-             L'avatar, lui, ne bouge pas tout seul : s'il suivait l'âge atteint,
-             il est déjà au nouveau ; s'il avait été fixé sur un âge, c'est un
-             choix, et le bouton « ME MONTRER AINSI » est là pour le refaire. */
-          ageVu = vers.stage;
-          voulu = { stade: vers.stage, skin: 'base', etat: 'neutre' };
-          choisie = null;
-
-          await recharger();
-
-          /* Le dessin arrive par `img.onload` : il n'existe pas encore quand
-             `recharger` rend la main. On l'attend brièvement plutôt que de
-             jouer l'arrivée sur un conteneur vide — et on renonce au bout d'une
-             seconde et demie, parce qu'une cérémonie qui n'arrive jamais est
-             pire qu'une cérémonie écourtée. */
-          if (suite) {
-            const attendre = async () => {
-              for (let i = 0; i < 30; i++) {
-                const n = hote.querySelector('#fiche-art img');
-                if (n) return n;
-                await new Promise((r) => setTimeout(r, 50));
-              }
-              return null;
-            };
-            suite.arrivee(await attendre());
-          } else {
-            dire(`${vers.nom} — il a grandi.`);
-          }
+          reponse = await api('/evolve', { id: d.fanzzy.id });
         } catch (e) {
-          panneau.remove();
+          fermer();
           dire(e.code === 'fanzzy.error.not_enough_scarves'
-            ? 'Pas assez d’écharpes.' : 'Évolution impossible.');
+            ? 'Pas assez d’écharpes.' : 'Évolution impossible.', { erreur: true });
+          return;
         }
+        fermer();
+        await ceremonie(vers, ev.cout, soldeAvant, reponse?.wallet ?? null);
       };
+    }
+
+    /* ------------------------------------------ la cérémonie
+
+       **Le geste le plus cher du jeu ne passe pas sans rien.** `FX.evolution`
+       tient le rythme — la charge, le flash, l'onde — et rend la main **au
+       moment du flash**, pendant que le blanc couvre l'image : c'est là qu'on
+       recharge. Sa couleur est celle de la rareté d'arrivée, parce que c'est
+       elle qu'on achète. Puis la nouvelle carte arrive, son tampon d'âge
+       claque, le ticket de la dépense monte, et le solde décompte. */
+    async function ceremonie(vers, cout, soldeAvant, portefeuille) {
+      const portrait = hote.querySelector('#fiche-art .illu');
+      const suite = window.FX?.evolution
+        ? await window.FX.evolution(portrait, { nom: vers.nom, rar: vers.rar }) : null;
+
+      /* **Et c'est le nouveau qui arrive** : on regarde l'âge qu'on vient
+         d'acheter, dans sa tenue de base et au repos. L'avatar, lui, ne bouge
+         pas tout seul — ME MONTRER AINSI est là pour ça. */
+      ageVu = Number(vers.stage);
+      voulu = { stade: Number(vers.stage), skin: 'base', etat: 'neutre' };
+      choisie = null;
+      await recharger();
+      /* La fiche relue porte déjà le nouveau solde : il reste affiché à
+         l'ancien jusqu'au décompte, sinon il descendrait d'un bloc, puis
+         remonterait pour décompter. */
+      const solde = hote.querySelector('#fiche-solde');
+      const b = solde?.querySelector('b');
+      if (b && Number.isFinite(soldeAvant)) b.textContent = String(soldeAvant);
+
+      /* Le dessin arrive par le réseau : on l'attend brièvement plutôt que de
+         jouer l'arrivée sur une image vide, et on renonce au bout d'une
+         seconde et demie — une cérémonie qui n'arrive jamais est pire qu'une
+         cérémonie écourtée. */
+      const attendre = async () => {
+        for (let i = 0; i < 30; i++) {
+          const n = hote.querySelector('#fiche-art .illu');
+          if (n?.complete && n.naturalWidth) return n;
+          await new Promise((r) => setTimeout(r, 50));
+        }
+        return hote.querySelector('#fiche-art .illu');
+      };
+      if (suite) suite.arrivee(await attendre());
+      else dire(`${vers.nom} — il a grandi.`);
+
+      /* Le tampon ÉVO qui claque sur la carte : celui que la carte porte
+         déjà, rejoué (`.tbf-clac`, retiré à la fin — une classe oubliée
+         empêcherait la suivante de partir). */
+      const age = hote.querySelector('#fiche-art .fz .age');
+      if (age) {
+        age.classList.add('tbf-clac');
+        age.style.setProperty('--d', '420ms');
+        age.addEventListener('animationend', () => { age.classList.remove('tbf-clac'); age.style.removeProperty('--d'); },
+          { once: true });
+      }
+      /* La dépense sur son ticket, et le solde qui décompte sous les yeux
+         (`FX.compter`) : de ce qu'on avait à ce qu'il reste. */
+      if (cout) ticket(`−${cout}`, 'écharpes', `${vers.nom} a grandi`);
+      if (b && Number.isFinite(soldeAvant) && window.FX?.compter && solde.isConnected) {
+        solde.classList.remove('tbf-vibre');
+        void solde.offsetWidth;
+        solde.classList.add('tbf-vibre');
+        solde.addEventListener('animationend', () => solde.classList.remove('tbf-vibre'), { once: true });
+        window.FX.compter(b, soldeAvant, Number(d.echarpes), { ms: 900 });
+      } else if (b) b.textContent = String(Number(d.echarpes));
+      /* **Et la barre du jeu l'apprend** : une page qui change le
+         portefeuille sans l'annoncer laisse le compteur du HUD en retard
+         (nav.js, `tbf:bourse`). On relaie ce que le serveur a rendu ; le HUD
+         fait compter le sien. */
+      if (portefeuille) window.dispatchEvent(new CustomEvent('tbf:bourse', { detail: { wallet: portefeuille } }));
     }
 
     /** Relit la fiche après une action, et prévient la page qui l'accueille. */
@@ -1262,6 +1275,14 @@
     }
 
     rendre();
+    /* Le nom et les galons se mesurent en Oswald : si la police arrive après
+       le premier rendu, la largeur de la colonne ne bouge pas et rien ne les
+       remesurerait. Une fois, quand elle est là. */
+    document.fonts?.ready?.then(() => {
+      if (!hote.isConnected) return;
+      ajusterNom(hote.querySelector('#fiche-nom') ?? document.createElement('span'));
+      serrerGalons(hote.querySelector('#fiche-galons'));
+    });
     return true;
   }
 

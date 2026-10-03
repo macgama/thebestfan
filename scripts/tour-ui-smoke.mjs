@@ -1348,7 +1348,15 @@ for (const [route, nom] of tousLesEcrans) {
    La carte « Collection » de l'accueil y mène, et elle y compte **tout** ce
    qui se gagne — plus seulement les personnages. On vérifie que le lien y va,
    que les cinq types sont rangés, et que l'accueil affiche le même total que
-   la page : deux chiffres pour la même question, et l'un des deux ment. */
+   la page : deux chiffres pour la même question, et l'un des deux ment.
+
+   **Depuis le lot 4, la page est un album.** L'accordéon de cinq blocs est
+   devenu cinq bâches-tuiles (`.tbf-rayon[data-vue]`, chacune avec son compte
+   « gagnés / possibles »), sous le niveau de collectionneur (l'anneau de
+   `#collectionneur`), et chaque tuile ouvre sa sous-vue : celle des Fanzzy
+   est l'album du classeur (`.tbf-album`), une page par série, qui ne monte
+   que la page ouverte et ses voisines. On touche donc la tuile, comme un
+   joueur, et on lit la page ouverte. */
 {
   const pa = await nav.newPage();
   await pa.evaluateOnNewDocument(() => {
@@ -1371,27 +1379,68 @@ for (const [route, nom] of tousLesEcrans) {
   const pc = await nav.newPage();
   await pc.setViewport({ width: 400, height: 880 });
   await pc.goto(base + '/collection', { waitUntil: 'networkidle0' });
-  const vue = await pc.evaluate(() => ({
-    types: [...document.querySelectorAll('.type')].map((s) => s.dataset.type),
-    total: document.querySelector('.total .n')?.textContent.replace(/\s+/g, ''),
-    vignettes: document.querySelectorAll('.type[data-type="fanzzy"] .vig').length,
-  }));
+  const vue = await pc.evaluate(() => {
+    const cercle = document.querySelector('#collectionneur .tbf-cercle');
+    return {
+      rayons: [...document.querySelectorAll('.tbf-rayon[data-vue]')].map((r) => ({
+        vue: r.dataset.vue,
+        compte: r.querySelector('small')?.textContent.replace(/\s+/g, ' ').trim() ?? '',
+      })),
+      /* L'anneau écrit « 14/430 » : le chiffre en grand, le reste en petit. */
+      total: cercle ? `${cercle.querySelector('b')?.textContent.trim() ?? ''}${
+        cercle.querySelector('small')?.textContent.trim() ?? ''}`.replace(/\s+/g, '') : '',
+      dit: cercle?.getAttribute('aria-label') ?? '',
+    };
+  });
+  /* La sous-vue des Fanzzy, ouverte du doigt. La page d'arrivée est la seule
+     qui ne soit pas `inert` ; son en-tête compte ses personnages
+     (« 2 / 35 », ou le tampon COMPLET) et sa grille doit en montrer chacun —
+     une case pour ce qu'on a, une pochette numérotée pour le reste. */
+  await pc.evaluate(() => document.querySelector('.tbf-rayon[data-vue="fanzzy"]')?.click());
+  await pc.waitForFunction(() => document.querySelector('#vue .tbf-album-page:not([inert]) [data-open]'),
+    { timeout: 8000 }).catch(() => null);
+  const album = await pc.evaluate(() => {
+    const p = document.querySelector('#vue .tbf-album-page:not([inert])');
+    const cases = p ? [...p.querySelectorAll('[data-open]')] : [];
+    return {
+      serie: p?.dataset.page ?? null,
+      n: cases.length,
+      possedees: cases.filter((c) => c.classList.contains('tbf-album-case')).length,
+      pochettes: cases.filter((c) => c.classList.contains('tbf-album-pochette')).length,
+      compte: p?.querySelector('.tbf-album-compte')?.textContent.replace(/\s+/g, '') ?? null,
+      complet: Boolean(p?.querySelector('.tbf-album-tete > .tbf-tampon')),
+    };
+  });
   await pc.close();
-  check(`la bibliothèque range les cinq types (${vue.types.join(', ')})`,
-    ['fanzzy', 'etats', 'tenues', 'stuff', 'actions'].every((k) => vue.types.includes(k)));
-  check('elle montre chaque Fanzzy à gagner, possédé ou en silhouette', vue.vignettes > 0);
+  const rayons = vue.rayons.map((r) => r.vue);
+  check(`la bibliothèque range les cinq types (${rayons.join(', ')})`,
+    rayons.length === 5
+      && ['fanzzy', 'etats', 'tenues', 'equipement', 'actions'].every((k) => rayons.includes(k)));
+  check('et chacun dit son compte, gagnés sur possibles',
+    vue.rayons.every((r) => /^\d+ \/ \d+$/.test(r.compte))
+    || (console.log('        il dit :', vue.rayons.map((r) => `${r.vue} « ${r.compte} »`).join(' · ')), false));
+  const [eus, tous] = /^\d+\/\d+$/.test(album.compte ?? '') ? album.compte.split('/').map(Number) : [];
+  check(`elle montre chaque Fanzzy à gagner, possédé ou en silhouette (${album.serie} : ${album.n} cases, ${
+    album.compte ?? (album.complet ? 'COMPLET' : 'sans compte')})`,
+    album.n > 0 && album.possedees + album.pochettes === album.n
+      && (album.complet ? album.pochettes === 0 : album.n === tous && album.possedees === eus));
   /* Deux chiffres pour la même question, et l'un des deux ment : la règle
-     reste, mais le total de l'accueil ne s'affiche plus, il se dit. La page
-     écrit « gagnés/possibles » ; l'étiquette de la carte doit nommer les
-     deux mêmes nombres, et la carte doit afficher le même compte de cartes
-     gagnées — sur son palier, qui n'est pas le total et ne se compare donc
-     pas à la page. */
+     reste, et le contrat la précise (`CONTRATS.md`, § 5.1). **Les deux écrans
+     affichent le même compte de gagnés** — celui des crans quand le serveur
+     les sert, sans les tenues — : l'anneau de la page en grand, la carte de
+     l'accueil sur son palier, qui se lit entre les deux nombres de l'anneau.
+     **Le total de la bibliothèque ne se montre pas, il se dit**, dans les
+     deux étiquettes : « … en tout » sur l'anneau, et la carte de l'accueil
+     doit nommer les deux mêmes nombres. Sans crans, l'anneau compte la
+     bibliothèque entière, et c'est elle que l'accueil dit. */
   const [gagnes, possibles] = (vue.total ?? '').split('/').map(Number);
+  const enTout = /(\d+) sur (\d+) en tout/.exec(vue.dit);
+  const total = enTout ? [Number(enTout[1]), Number(enTout[2])] : [gagnes, possibles];
   const ditNombres = (accueil.dit.match(/\d+/g) ?? []).map(Number);
   const montre = (accueil.compte ?? '').replace(/\s+/g, '').split('/').map(Number);
-  check(`et l’accueil dit le même total qu’elle (${accueil.compte} · « ${accueil.dit} » · ${vue.total})`,
+  check(`et l’accueil dit le même total qu’elle (${accueil.compte} · « ${accueil.dit} » · ${vue.total} · « ${vue.dit} »)`,
     Number.isInteger(gagnes) && Number.isInteger(possibles)
-      && ditNombres.includes(gagnes) && ditNombres.includes(possibles)
+      && total.every((n) => Number.isInteger(n) && ditNombres.includes(n))
       && montre.length === 2 && montre[0] === gagnes
       && montre[1] >= gagnes && montre[1] <= possibles);
 }

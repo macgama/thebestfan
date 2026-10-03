@@ -1,42 +1,39 @@
-/* Le dessin d'une carte : son cadre, sa rareté, son reflet, son âge.
+/* Le dessin d'une carte : le sticker de carte (lot 4, refonte FAIT MAIN).
  *
- * Partagé par le classeur et par les boosters, comme `cardHTML` l'est dans
- * /cartes.js. La feuille était restée dans la page des Fanzzy pendant que le
- * balisage devenait commun : les cartes qui sortaient d'un booster
- * s'affichaient sans cadre et sans rareté, et rien ne le disait.
+ * Partagé par tous les écrans qui montrent une carte — le classeur, la
+ * collection, l'ouverture d'un booster, la bienvenue, le profil, l'aide —,
+ * comme `cardHTML` l'est dans /cartes.js. La feuille était restée dans la page
+ * des Fanzzy pendant que le balisage devenait commun : les cartes qui
+ * sortaient d'un booster s'affichaient sans cadre et sans rareté, et rien ne
+ * le disait.
  *
  * Les tailles sont en `--u`, l'unité de la carte : une carte se dessine à
- * n'importe quelle taille sans qu'aucune valeur ne soit à reprendre. */
+ * n'importe quelle taille sans qu'aucune valeur ne soit à reprendre. Tout ce
+ * qui s'écrit a un plancher de onze pixels.
+ *
+ * ## Ce que les écrans doivent savoir
+ *
+ *   — **La carte déborde de sa boîte**, et c'est voulu : c'est un sticker
+ *     collé, pas une image imprimée. Le pin et la forme de rareté passent
+ *     le coin de trois à quatre pixels (et la forme, son bord de craie et son
+ *     cerne avec), la bande du nom passe les deux côtés d'autant, et l'ombre
+ *     dure ajoute trois pixels en bas à droite. Un conteneur en
+ *     `overflow:hidden` au ras de la carte les coupe : qu'il lui laisse six
+ *     pixels autour (une gouttière de grille de douze au moins).
+ *   — **Le relief est sur `.body`**, plus sur `.fz` : `.fz` ne peut pas
+ *     interroger sa propre largeur (voir « l'unité de la carte »), donc ni
+ *     son rayon ni son ombre ne suivent la carte. Une page qui écrase le
+ *     `box-shadow` de `.fz` ajoute une ombre de plus, à un autre rayon.
+ *   — **Une grille ne bouge pas** : `mini` rend la matière statique et fige
+ *     la respiration que `fx.js` pose sur le personnage. Une carte sans
+ *     `mini` est animée (vitrine, fiche, révélation) : au plus trois à
+ *     l'écran, et c'est à la page de figer les autres (`.fz-fige` sur la
+ *     carte ou sur n'importe quel conteneur, ou `anime: false`).
+ *   — **La rareté est sur la carte** (la forme et son mot, coin haut-droit) :
+ *     une page n'en colle plus une seconde au même coin.
+ *   — Le reste — les classes, les options, les états — est décrit dans
+ *     `cardHTML` (cartes.js) et dans `lot4/CARTE.md`. */
 
-/* ----------------------------------------------------------- la carte
-
-   L'image d'abord. Le cadre portait la couleur du type sur toute sa
-   surface, avec un corps crème et une fenêtre d’illustration au centre :
-   en vignette on ne voyait plus que la couleur, et le personnage était un
-   timbre-poste.
-
-   L'illustration remplit maintenant la carte. La couleur du type ne reste
-   qu'en filet et dans la pastille, le nom se pose sur un voile en bas, la
-   rareté tient dans un coin. Ce qui était écrit sur la carte se lit déjà
-   dans le panneau de détail : le répéter volait la place de l'image.    */
-/* ------------------------------------------------------------ la rareté
-
-   Dans un jeu de collection, la rareté est ce qu'on montre aux autres. Elle
-   doit se lire à un mètre, sur une vignette de cent pixels de haut.
-
-   Elle portait ici un filet de sept millièmes de largeur, **de la couleur du
-   type** — c'est-à-dire la même information que la pastille juste à côté, et
-   rien du tout sur la rareté. Deux cartes que tout sépare, une commune et une
-   légendaire, se ressemblaient trait pour trait dans la grille.
-
-   Le cadre dit maintenant la rareté, la pastille garde le type. C'est la
-   répartition de tous les jeux du genre, et elle tient parce que les deux
-   informations n'ont pas le même usage : le type se consulte quand on
-   construit un deck, la rareté se voit sans qu'on la cherche.
-
-   `--rc2` est la couleur du socle — le biseau dur sous la carte. C'est lui
-   qui donne la matière : une carte qu'on peut appuyer, pas une image collée
-   sur un fond. */
 /* ------------------------------------------------- l'unité de la carte
 
    Tout ce que dessine une carte — son rayon, son cadre, son nom, ses marges —
@@ -62,87 +59,93 @@
 
 /* **La règle portait sur `.fz`, et `.fz` est le conteneur.**
 
-   C'est la faute que ce bloc corrige, et elle s'est cachée pendant des mois
-   parce qu'elle n'a jamais rien cassé bruyamment : **un élément qui établit un
-   conteneur ne peut pas s'interroger lui-même.** `@container` se résout
-   toujours contre le conteneur **ancêtre** le plus proche ; il n'y en a aucun
-   au-dessus d'une carte, nulle part dans le jeu. La condition ne pouvait donc
-   pas être vraie, `--u` restait au repli de 1,3 px, et **toutes les cartes du
-   jeu étaient dessinées à la moitié de leur échelle** — sur une carte de 250
-   pixels, l'unité vaut 2,5 px et non 1,3.
+   **Un élément qui établit un conteneur ne peut pas s'interroger lui-même.**
+   `@container` se résout toujours contre le conteneur **ancêtre** le plus
+   proche ; il n'y en a aucun au-dessus d'une carte. La condition ne pouvait
+   donc pas être vraie, `--u` restait au repli de 1,3 px, et toutes les
+   cartes du jeu ont été dessinées un temps à la moitié de leur échelle.
 
-   Ça ne se lisait pas comme une panne : la carte gardait son cadre et ses
-   couleurs, avec un nom deux fois trop petit et une illustration qui flottait
-   dans un grand vide. On mettait ça sur le compte du dessin.
+   `--u` descend donc sur les deux faces, `.body` (le recto) et `.verso`, qui
+   sont dans le conteneur et peuvent l'interroger. Tout le dessin de la carte
+   vit dans l'une ou l'autre — c'est pour ça que son relief (rayon, ombre,
+   cadre) est sur `.body` et non sur `.fz`.
 
-   La preuve que le confinement marche est juste en dessous, ligne après ligne :
-   `@container (max-width: 150px){ .fz .foot{…} }` fonctionne, lui, depuis le
-   premier jour — parce qu'il vise un **descendant**.
-
-   ## La correction
-
-   `--u` descend sur `.body`, qui est dans le conteneur et peut donc l'interroger.
-   Tout le contenu de la carte en hérite : le nom, les marges, la pastille, le
-   cadenas, le badge d'âge — tout vit dans `.body`.
-
-   Ce qui reste sur `.fz` — son rayon, son liseré, son ombre portée — garde le
-   repli en pixels, parce que `.fz` ne peut toujours pas s'interroger. C'est un
-   liseré et une ombre : la partie la moins sensible à l'échelle, et la seule
-   qu'on ne peut pas déplacer sans que `overflow:hidden` la découpe.
-
-   Le repli reste **en pixels et jamais en `cqw` nu** : quand le confinement ne
-   prend pas — un navigateur d'avant 2023 —, `cqw` ne disparaît pas, elle se
-   rabat sur la fenêtre, et la carte devient un galet illisible. Voir plus haut. */
+   Le repli reste **en pixels et jamais en `cqw` nu** : voir plus haut. */
 @container (min-width: 0px){
   .fz > .body,
+  .fz > .verso,
   .summary .fz > .body{--u:1cqw}
 }
 
-.fz{container-type:inline-size;position:relative;width:100%;aspect-ratio:63/88;border-radius:calc(4 * var(--u));
-  overflow:hidden;cursor:pointer;background:#0B1017;
-  box-shadow:inset 0 0 0 calc(1.3 * var(--u)) var(--rc),
-             inset 0 0 calc(7 * var(--u)) rgba(0,0,0,.45),
-             0 calc(1.4 * var(--u)) 0 var(--rc2),
-             0 calc(2.4 * var(--u)) calc(3.4 * var(--u)) rgba(0,0,0,.5)}
-.fz .body{position:absolute;inset:0;display:block;color:#F2EEE4}
-.fz .art{position:absolute;inset:0;overflow:hidden;background:#0B1017}
+/* Les mesures de la carte, nommées une fois. Chacune a son plancher en
+   pixels : au-dessous de cent cinquante pixels de carte, c'est lui qui joue.
+
+   --bord-encre, --bord-craie   le cerne et le bord de découpe ;
+   --lisere                     le liseré de rareté, sous le bord craie ;
+   --rayon                      l'arrondi de la découpe ;
+   --deb                        ce que le pin, la forme et la bande passent
+                                du bord ;
+   --fs-nom                     le nom : sept centièmes de la carte, onze
+                                pixels au moins (la suite du kiosque vérifie
+                                qu'il suit la carte au-dessus du plancher) ;
+                                six centièmes le laissaient à dix-huit pixels
+                                sur une carte de trois cents, plus petit que
+                                le titre de la vitrine qui la porte ;
+   --fs-petit                   l'âge, les stickers, l'étiquette, le pied. */
+.fz > :is(.body,.verso){
+  --bord-encre:max(1.5px, calc(.6 * var(--u)));
+  --bord-craie:max(2.5px, calc(1 * var(--u)));
+  --bord:calc(var(--bord-encre) + var(--bord-craie));
+  --lisere:max(2px, calc(.9 * var(--u)));
+  --rayon:max(6px, calc(5 * var(--u)));
+  --deb:max(3px, calc(1.4 * var(--u)));
+  --fs-nom:max(11px, calc(7 * var(--u)));
+  --fs-petit:max(11px, calc(4.4 * var(--u)));
+  --ombre:max(3px, calc(1.1 * var(--u)));
+}
+
+/* ----------------------------------------------------------- la carte
+
+   **`.fz` n'est plus qu'une boîte** : sa largeur, son rapport, son conteneur.
+   Elle laisse déborder ce qui est collé dessus (`overflow` visible), et c'est
+   le dessin, plus bas, qui découpe l'illustration à l'arrondi.
+
+   Sa couleur de texte est posée ici, en craie, parce que `.r-legendaire`
+   (ui.css) écrit en or tout ce qu'il contient : sur une carte, aucun petit
+   texte ne doit hériter l'or (la règle de l'or). Chaque texte de la carte
+   pose d'ailleurs la sienne. */
+.fz{container-type:inline-size;position:relative;width:100%;aspect-ratio:63/88;
+  border-radius:6px;cursor:pointer;color:var(--craie)}
+
+/* **Le recto.** Une colonne : en haut le pin et l'âge, en bas la bande du nom
+   et ce qui se pose dessus ; l'illustration, la forme et les stickers sont
+   posés par-dessus, hors du flux. Le flux est ce qui garantit qu'un nom de
+   trois lignes repousse l'étiquette au lieu de passer dessous.
+
+   L'ombre dure est la sienne : trois pixels d'encre en bas à droite, la
+   carte décollée du mur d'un millimètre. */
+.fz .body{position:absolute;inset:0;display:flex;flex-direction:column;
+  padding-bottom:max(6px, calc(7 * var(--u)));
+  border-radius:var(--rayon);color:var(--encre);
+  box-shadow:var(--ombre) var(--ombre) 0 var(--encre)}
+
+/* **Le bord de découpe et le cerne**, par-dessus le bord de l'illustration :
+   l'encre dehors, la craie dedans, puis le liseré de la rareté. Trois ombres
+   intérieures d'un pseudo-élément sans fond — elles se peignent sur ce qu'il
+   recouvre, et ne coûtent ni un élément ni une image. */
+.fz .body::before{content:"";position:absolute;inset:0;z-index:4;border-radius:inherit;pointer-events:none;
+  box-shadow:inset 0 0 0 var(--bord-encre) var(--encre),
+    inset 0 0 0 var(--bord) var(--craie),
+    inset 0 0 0 calc(var(--bord) + var(--lisere)) var(--rc,#C2CAD6)}
+
+/* ------------------------------------------------------------ le dessin
+
+   La plaque de la rareté en fond (`plaqueCarte`, dans fanzzy-fond.js), le
+   personnage devant. `isolation` garde le reflet de la matière (son
+   `mix-blend-mode`) sur le dessin seul. */
+.fz .art{position:absolute;inset:0;z-index:0;overflow:hidden;isolation:isolate;
+  border-radius:inherit;background:#10141A}
 .fz .art svg{width:100%;height:100%;display:block}
-
-/* Le nom se pose sur l'image au lieu d'occuper une barre qui la rogne. */
-.fz .top{position:absolute;left:0;right:0;bottom:0;z-index:3;display:flex;align-items:flex-end;
-  gap:calc(2 * var(--u));padding:calc(11 * var(--u)) calc(3 * var(--u)) calc(3 * var(--u));
-  background:linear-gradient(180deg,transparent,rgba(4,6,10,.55) 42%,rgba(4,6,10,.93))}
-/* Le socle prend la teinte de la rareté. C'est ce qui la fait lire même quand
-   le cadre est mangé par une illustration claire — et c'est la même couleur
-   partout, donc elle s'apprend en une carte. */
-.fz .top::before{content:"";position:absolute;left:0;right:0;bottom:0;height:62%;
-  background:linear-gradient(180deg,transparent,var(--rc));opacity:.2;pointer-events:none}
-/* **Le nom ne descend pas sous onze pixels.**
-
-   Six `--u`, c'est six centièmes de la carte : un nom juste sur une carte de
-   deux cent cinquante pixels, et de six pixels sur une vignette du classeur,
-   qui en fait cent. Il se voyait sans se lire. Le plancher est celui de tout
-   le jeu pour un texte qui informe, et le nom d'un personnage qu'on
-   collectionne en est un. Au-dessus de cent quatre-vingt-trois pixels de
-   carte, il suit de nouveau la largeur comme avant.
-
-   Sur une vignette étroite, un nom long passe sur deux lignes : il monte sur
-   le dégradé du bandeau, qui est fait pour ça. `.tbf-etiq` (dans `ui.css`)
-   refait le même calcul pour se poser au-dessus, et compte deux lignes de
-   nom sur une vignette de 140 px au plus. */
-/* **Les cinq `.calc(` de ce fichier.** Un point s'était glissé devant `calc`
-   — reste d'une conversion de `.4cqw` en `calc(4 * var(--u))` qui avait mangé
-   le zéro de tête. `0 .calc(…)` n'est pas une longueur : le navigateur jetait
-   la déclaration entière, sans un mot. Le nom n'avait donc aucune ombre, la
-   pastille non plus, l'anneau de rareté du pied n'existait pas, et les
-   losanges n'avaient ni écart ni arrondi. Les valeurs rétablies sont celles
-   que la conversion visait : quatre dixièmes, trois dixièmes, sept dixièmes. */
-.fz .nm{position:relative;font-family:var(--banner);font-size:max(11px, calc(6 * var(--u)));line-height:1.05;
-  text-transform:uppercase;flex:1;letter-spacing:.01em;
-  text-shadow:0 calc(.4 * var(--u)) calc(1.6 * var(--u)) rgba(0,0,0,.95)}
-.fz .pip{width:calc(6 * var(--u));height:calc(6 * var(--u));border-radius:50%;background:var(--tc);flex:none;display:grid;
-  place-items:center;box-shadow:0 calc(.3 * var(--u)) calc(1.2 * var(--u)) rgba(0,0,0,.6)}
-.fz .pip svg{width:calc(3.8 * var(--u));height:calc(3.8 * var(--u))}
 
 /* Deux pièges se cumulent ici.
 
@@ -158,12 +161,14 @@
 
    On laisse donc la boîte remplir la fenêtre et c'est `object-fit` qui
    recadre le contenu, centré horizontalement et posé sur la base. Ni
-   l'animation ni le débordement ne peuvent le déplacer. */
+   l'animation ni le débordement ne peuvent le déplacer.
+
+   Ces trois règles sans `.fz` servent aussi au deck, qui pose le même dessin
+   dans ses propres cases : elles ne bougent pas. */
 /* La boîte qui empile le décor et le personnage. **Elle doit remplir son
    parent** : sans hauteur définie, le `height:100%` du SVG de décor retombe sur
    la taille intrinsèque du `viewBox`, et le décor prend la forme de son dessin
-   au lieu de celle de la carte. Ça ne se voyait pas tant que le viewBox du fond
-   avait le rapport de la carte ; les décors par série ne l'ont pas. */
+   au lieu de celle de la carte. */
 .illuwrap{position:absolute;inset:0}
 .illuwrap .illu{position:absolute;left:0;bottom:0;width:100%;height:104%;
   object-fit:cover;object-position:50% 100%;filter:drop-shadow(0 3px 8px rgba(0,0,0,.6))}
@@ -171,142 +176,332 @@
    Il flotte au milieu de la tribune au lieu de s'y planter en bas. */
 .illuwrap .illu.objet{inset:10% 8%;left:auto;bottom:auto;width:84%;height:80%;
   object-fit:contain;object-position:50% 50%}
-/* Les modificateurs vivent dans le panneau de détail. Sur la carte ils
-   masquaient l'illustration pour redire la même chose. */
+
+/* **Sur la carte, le personnage laisse voir sa plaque.** Le buste remplissait
+   toute la hauteur (104 %) : en grille on ne voyait que lui, et la plaque —
+   qui dit la rareté — n'était plus qu'un liseré au-dessus de sa tête. À
+   quatre-vingt-deux pour cent, le gradin se voit au-dessus de lui et sous
+   le pin et la forme, le visage reste au-dessus de la bande du nom même
+   quand le nom prend trois lignes, et le bas du buste (coupé droit dans
+   l'image) reste sous la bande et le bord. */
+.fz .illuwrap .illu{height:82%}
+/* **Le haut du dessin se fond dans la plaque.** Beaucoup de bustes et de
+   portraits ne sont pas détourés en entier : ils portent un morceau de
+   tribune derrière la tête (le buste de la Clé du Local est opaque à 95 %).
+   Remplissant toute la carte, ils cachaient leur bord ; posés plus bas, ils
+   le montraient en une ligne droite au travers de la plaque. Un fondu sur le
+   premier huitième de l'image l'efface — sur un buste détouré, il ne touche
+   que du vide au-dessus du crâne. Statique : un masque posé une fois ne
+   coûte rien en grille. Ni l'objet ni le tableau d'une action ne le portent :
+   l'un flotte entier, l'autre couvre tout. */
+.fz .illuwrap .illu:not(.objet,.fz-pleine){
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 12%);
+  mask-image:linear-gradient(180deg,transparent,#000 12%)}
+/* Un personnage en pied (la pose d'un état, d'une tenue, le Fanzzy d'une
+   grande carte) : en entier, posé sur le sol de la carte, la tête sous le
+   pin et la forme. Recadré comme un buste, il perdait sa tête. */
+.fz .illuwrap .illu.fz-pied{height:88%;object-fit:contain}
+/* Une illustration de carte d'action est un tableau : elle couvre tout. */
+.fz .illuwrap .illu.fz-pleine{height:100%;object-position:50% 50%}
+/* L'objet monte au-dessus de la bande du nom, qui le coupait à mi-hauteur :
+   son pied s'arrête à 70 % de la carte. Il garde **61 % de sa hauteur** —
+   sous 60 %, il se lit comme un timbre collé sur la plaque, et la suite du
+   tour (`tour-ui-smoke`, « elle n'est pas un timbre ») le refuse. Le haut à
+   9 % passe encore sous le pin et la forme : ce sont des stickers, posés
+   au-dessus, et un objet détouré n'a rien dans ses coins. */
+.fz .illuwrap .illu.objet{inset:9% 9% auto;width:82%;height:61%}
+
+/* ------------------------------------------------- la matière, par rareté
+
+   **Statique en grille.** Une grille de trente cartes dont chacune brille
+   fait trente animations et ne dit plus rien ; la direction veut la matière
+   **posée** : la commune en carton mat (rien), la rare plastifiée (un reflet
+   fixe), l'épique en holo figé, la légendaire cerclée d'or. Elles ne
+   bougent qu'en vitrine, sur la fiche et à la révélation (`.fz-anime`, plus
+   bas), et jamais par un dégradé qui se repeint : par `translate` et
+   `transform` d'un pseudo-élément.
+
+   Le reflet est peint par-dessus le dessin, dans son calque (`.art`, qui le
+   découpe à l'arrondi). */
+.fz .art::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none}
+.fz.r-rare:not(.fz-verrou) .art::after{
+  background:linear-gradient(118deg,transparent 30%,rgba(242,238,228,.26) 42%,transparent 55%)}
+/* Le holo de l'épique : la nappe de couleurs, et la bande claire posée où
+   `--mx` et `--my` la mettent (50 % et 40 % au repos). Une vitrine qui
+   incline la carte peut les déplacer : c'est une variable lue au rendu,
+   pas une animation. */
+.fz.r-epique:not(.fz-verrou) .art::after{inset:-25%;mix-blend-mode:screen;
+  background:
+    linear-gradient(115deg,transparent 36%,rgba(242,238,228,.36) 46%,rgba(160,220,255,.26) 53%,transparent 64%)
+      var(--mx,50%) var(--my,40%)/250% 250% no-repeat,
+    linear-gradient(125deg,rgba(255,110,210,.16),rgba(110,200,255,.14) 40%,rgba(255,236,140,.14) 70%,rgba(185,140,255,.17))}
+/* Le liseré d'or de la légendaire : un anneau découpé par un masque dans un
+   disque conique d'or, de craie et d'or d'encre (les trois jetons de la
+   forme légendaire). Le disque déborde l'anneau de partout pour qu'aucun
+   coin ne se vide quand il tourne ; immobile en grille. */
+.fz .lisere{position:absolute;z-index:4;inset:var(--bord);overflow:hidden;pointer-events:none;
+  border-radius:calc(var(--rayon) - var(--bord));
+  padding:max(3px, calc(1.2 * var(--u)));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.fz .lisere::before{content:"";position:absolute;left:50%;top:50%;width:200%;aspect-ratio:1;translate:-50% -50%;
+  background:conic-gradient(from 20deg,var(--projo),var(--craie) 12%,var(--or-encre) 28%,var(--projo) 42%,
+    var(--craie) 58%,var(--or-encre) 74%,var(--projo) 88%)}
+
+/* ----------------------------------------------- le haut : pin et âge
+
+   **Le pin de la famille** : un sticker rond craie, le pictogramme à
+   l'encre, collé de travers sur le coin haut-gauche. Craie et non la
+   couleur de la famille : la Voix est d'or et le Tifo violet, et ni l'or
+   (hors légendaire) ni le violet ne se posent sur une carte (amendements 3
+   et 4). Il suit la carte, avec un plancher : la suite du kiosque vérifie
+   que la pastille grandit avec elle. */
+.fz .haut{position:relative;z-index:6;display:flex;flex-direction:column;align-items:flex-start;gap:3px;
+  margin:calc(-1 * var(--deb)) 0 auto calc(-1 * var(--deb))}
+.fz .pip{flex:none;display:grid;place-items:center;width:max(16px, calc(13 * var(--u)));aspect-ratio:1;
+  border-radius:50%;background:var(--craie);rotate:-6deg;
+  box-shadow:0 0 0 1.5px var(--encre),1px 1.5px 0 1.5px rgba(7,9,12,.55)}
+.fz .pip svg{width:64%;height:64%;fill:none;stroke:var(--encre);stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round}
+/* Le repli du pictogramme, quand la page n'a pas le catalogue (la fiche) :
+   l'emblème de la famille, éteint en grisaille d'encre. Ses couleurs
+   d'émail — l'or de la Voix, le violet du Tifo — ne se posent pas sur une
+   carte (amendements 3 et 4). Grisaille foncée et non silhouette pleine :
+   en silhouette, le tambour et l'écharpe nouée devenaient deux taches
+   noires ; assombris, ils gardent leurs baguettes et leurs mailles, de
+   seize à quarante pixels. */
+.fz .pip .fz-picto{display:block;width:70%;height:70%;object-fit:contain;
+  filter:grayscale(1) brightness(.45) contrast(1.8)}
+
+/* **L'âge.** Sous cent cinquante pixels, le badge : Oswald 11 à l'encre sur
+   une bande craie, sous le pin — à côté de lui, il heurtait le mot de la
+   forme de rareté (« COMMUNE » prend soixante pixels sur une carte de
+   quatre-vingt-six). Au-delà, le tampon plein « ÉVO 2 », vert foncé sur la
+   craie (6,75:1), collé à droite du pin.
+
+   Une seule couleur pour les trois âges, et ce n'est pas un oubli : l'or du
+   troisième était au cerne, et aucun sticker d'or ne se pose sur une carte
+   qui n'est pas légendaire (amendement 3). Le chiffre dit l'âge. */
+.fz .age{flex:none;margin:0 0 0 calc(var(--deb) + 1px);padding:2px 4px 1px;border-radius:2px;
+  font-family:var(--banner);font-weight:700;font-size:11px;line-height:1;letter-spacing:.05em;
+  white-space:nowrap;background:var(--craie);color:var(--encre);rotate:-3deg;
+  box-shadow:0 0 0 1.5px var(--encre)}
+
+/* ------------------------------------------------ la forme de rareté
+
+   Au coin haut-droit, toujours, grille comprise (amendement 20) : la forme
+   (`.tbf-forme`, ui.css) et son mot — dans la forme pour le rectangle et le
+   rond, en étiquette qui court vers l'intérieur pour l'étoile et l'éclat
+   (`--coin`). Vingt-deux pixels en grille ; douze centièmes de la carte
+   au-delà, soit trente-quatre pour la carte de la fiche (deux cent quatre-
+   vingts pixels) et quarante au plus — à trente-quatre sur une carte de
+   trois cents, le mot retombait à onze pixels dans un coin de vitrine. Deux
+   degrés au plus : elle se lit avant de se voir collée. */
+.fz .fz-forme{position:absolute;z-index:8;top:calc(-1 * var(--deb));right:calc(-1 * var(--deb));
+  --taille:clamp(22px, calc(12 * var(--u)), 40px);--rot:2deg;pointer-events:none}
+
+/* ------------------------------------------------- la bande du nom
+
+   **Le nom en banderole** : une bande de craie posée de travers (−2°) qui
+   passe les deux bords de la carte, le nom en Oswald 700 à l'encre (17:1 ;
+   5:1 sous le voile du soleil). Il prend autant de lignes qu'il lui en faut
+   — à quatre-vingt-six pixels, sept noms sur dix en prennent deux — et ne se
+   coupe jamais : la bande grandit vers le haut. Les lignes sont équilibrées
+   (`balance`), et **sans césure** : avec elle, le navigateur coupait
+   « COL- / LEUR D'AFFICHES » pour égaliser deux lignes qui tenaient sans.
+   Un mot plus long que la bande elle-même (aucun des 765 noms ne l'est à 86
+   pixels, la suite de la carte le vérifie) passerait à la ligne plutôt que
+   d'en sortir.
+
+   Le pied, sous le nom, ne vit que sur une grande carte (voir le seuil, plus
+   bas). Il s'écrit à l'encre pleine et non à 60 % : à 60 %, la lettre tenait
+   5,4:1 à l'ombre et 2,5 au soleil. */
+.fz .top{position:relative;z-index:6;margin:0 calc(-1 * var(--deb));rotate:-2deg;
+  padding:max(4px, calc(1.5 * var(--u))) max(2px, calc(1.8 * var(--u))) max(3px, calc(1.2 * var(--u)));
+  background:var(--craie);color:var(--encre);text-align:center;
+  box-shadow:0 0 0 1.5px var(--encre),2px 2px 0 1.5px rgba(7,9,12,.55)}
+.fz .nm{font-family:var(--banner);font-weight:700;font-size:var(--fs-nom);line-height:1.08;
+  letter-spacing:.02em;text-transform:uppercase;text-wrap:balance;color:var(--encre);
+  hyphens:manual;overflow-wrap:anywhere}
+/* Le numéro de pochette d'une carte qu'on n'a pas : « N° 013 », comme dans
+   un album, à la place du nom. */
+.fz .nm.numero{letter-spacing:.1em}
+.fz .foot{margin-top:max(1px, calc(.6 * var(--u)));font-family:var(--banner);font-weight:500;
+  font-size:var(--fs-petit);line-height:1.1;letter-spacing:.08em;text-transform:uppercase;color:var(--encre)}
+
+/* **Ce qui se pose sur la bande**, dans son flux : TITULAIRE, AVATAR,
+   l'étiquette d'un état ou d'une tenue. Ils sont **avant** le nom dans le
+   flux : un nom de trois lignes les repousse au lieu de passer dessous, ce
+   que le correctif provisoire du lot 1 (`--lignes-nom`) ne savait pas
+   faire. Ils passent à la ligne s'ils ne tiennent pas côte à côte.
+
+   Ils sont posés sur le bord haut de la bande, et c'est leur cerne et leur
+   ombre (trois pixels et demi, hors de la boîte) qui la chevauchent : la
+   bande garde six pixels au-dessus du nom quand elle les porte. Leur rangée
+   prend la largeur et la pente de la bande, pour que leur pied suive son
+   bord d'un bout à l'autre — de travers chacun, ils mordaient le nom d'un
+   côté. Leur bord de craie, invisible sur la craie de la bande, se réduit
+   au cerne. */
+.fz .sur{position:relative;z-index:7;display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px 6px;
+  margin:0 calc(-1 * var(--deb));padding:0 max(2px, calc(1.8 * var(--u)));rotate:-2deg}
+.fz .sur + .top{padding-top:max(6px, calc(2 * var(--u)))}
+.fz .sur>*{flex:none;max-width:100%}
+.fz .sur .tbf-sticker{height:auto;min-width:0;padding:3px 5px 2px;font-size:var(--fs-petit);line-height:1;
+  box-shadow:0 0 0 1.5px var(--encre),1px 2px 0 1.5px rgba(7,9,12,.55)}
+.fz .sur .fz-avatar{--rot:-1deg}
+.fz .sur .fz-titulaire{--rot:1.5deg}
+/* L'étiquette : un bout de gaffer à l'encre, la craie dessus (5:1 au
+   soleil), centrée sur la bande. Elle reprend la classe de ui.css, sortie
+   de sa position absolue : tout ce qui la posait au-dessus du nom par le
+   calcul devient inutile ici. */
+.fz .sur .tbf-etiq{position:static;margin:0 auto;width:auto;
+  padding:3px 6px 2px;border-radius:3px;rotate:1deg;
+  background:var(--encre);color:var(--craie);
+  font-family:var(--banner);font-weight:700;font-size:var(--fs-petit);line-height:1.1;letter-spacing:.06em;
+  text-transform:uppercase;text-align:center;text-wrap:balance;
+  box-shadow:0 0 0 1.5px var(--craie),1px 2px 0 1.5px rgba(7,9,12,.5)}
+
+/* ---------------------------------------------------- les stickers
+
+   « ×3 » quand on a des doublons, sur le flanc droit, à cheval sur le bord ;
+   le prix d'un âge à venir, au milieu du dessin — assez bas pour laisser
+   l'âge lisible sous le pin, assez haut pour ne pas toucher la bande. Ce
+   sont les stickers de ui.css (bord craie, cerne, ombre), à la taille de la
+   carte. */
+.fz .fz-doublons{position:absolute;z-index:6;right:calc(-1 * var(--deb));top:42%;--rot:8deg;
+  height:max(24px, calc(10 * var(--u)));min-width:max(24px, calc(10 * var(--u)));padding:0 4px;
+  border-radius:99px;font-size:max(12px, calc(4.6 * var(--u)))}
+.fz .fz-prix{position:absolute;z-index:6;left:50%;top:47%;translate:-50% -50%;--rot:-4deg}
+
+/* -------------------------------------------- la carte qu'on n'a pas
+
+   **Un pochoir gris sous scotch en croix.** Le personnage en silhouette
+   d'un seul gris, la plaque éteinte, une trame à 45° par-dessus — on voit
+   qui manque, on ne le possède pas. La croix couvre l'illustration et jamais
+   la bande (amendement 19), et le cadenas, icône au trait sur un rond de
+   craie, dit pourquoi ; une raison (« NIV. 10 ») s'écrit à côté de lui. */
+.fz.fz-verrou .art{filter:grayscale(1) brightness(.85)}
+.fz.fz-verrou .illuwrap>svg{opacity:.38}
+.fz.fz-verrou .illu{filter:brightness(0) invert(.62);opacity:.92}
+.fz.fz-verrou .art::after{background:repeating-linear-gradient(45deg,rgba(7,9,12,.42) 0 2px,transparent 2px 5px)}
+.fz .fz-croix{z-index:3;left:9%;right:9%;top:15%;bottom:45%;--ruban:max(9px, calc(6 * var(--u)))}
+.fz .cadenas{position:absolute;z-index:5;left:50%;top:36%;transform:translate(-50%,-50%);
+  display:inline-flex;align-items:center;justify-content:center;gap:.3em;box-sizing:border-box;
+  min-width:max(26px, calc(14 * var(--u)));height:max(26px, calc(14 * var(--u)));padding:0 .4em;
+  border-radius:99px;background:var(--craie);color:var(--encre);
+  font-family:var(--banner);font-weight:700;font-size:var(--fs-petit);line-height:1;letter-spacing:.06em;
+  white-space:nowrap;box-shadow:0 0 0 2px var(--encre),1px 2px 0 2px rgba(7,9,12,.5)}
+.fz .cadenas .tbf-ico{font-size:max(14px, calc(7 * var(--u)))}
+.fz .cadenas b{font-weight:inherit}
+
+/* **Un âge à venir** : le dessin flou — on garde la carrure, la couleur et
+   la lumière, tout ce qui dit « il y a quelqu'un là-dessous » —, et la bande
+   dit « ÂGE À VENIR » au lieu d'un nom flouté, qui se lisait comme une panne
+   d'affichage. Le flou suit la carte : trois pixels sur une vignette, plus
+   sur une vitrine, où trois pixels ne cachent plus rien. */
+.fz.fz-secret .illu{filter:blur(max(3px, calc(1.8 * var(--u)))) brightness(.8)}
+
+/* Les effets vivent dans le panneau de détail. Sur la carte ils masquaient
+   l'illustration pour redire la même chose. */
 .fz .mods{display:none}
 
-/* La rareté, en pastille sombre : lisible quelle que soit l’image dessous. */
-/* La rareté chiffrée, dans le coin : un losange pour la commune, deux pour la
-   rare, une étoile pour l'épique, une couronne pour la légendaire. Elle redit
-   ce que le cadre annonce — et c'est voulu, un collectionneur veut pouvoir
-   compter. */
-/* La rareté descend sous l âge : les deux vivent dans le coin en haut à
-   droite, et l âge passe devant parce qu il se lit, quand la rareté se
-   compte. */
-.fz .foot{position:absolute;top:calc(2.6 * var(--u) + 15px);right:calc(2.6 * var(--u));z-index:3;display:flex;align-items:center;
-  gap:calc(1 * var(--u));padding:calc(1.1 * var(--u)) calc(2.2 * var(--u));border-radius:calc(99 * var(--u));background:rgba(4,6,10,.7);
-  box-shadow:inset 0 0 0 calc(.4 * var(--u)) var(--rc);font-size:calc(2.6 * var(--u));color:#E4DFD2}
-.fz .rar{display:flex;gap:calc(.7 * var(--u));align-items:center}
-.fz .rar .d{width:calc(2.4 * var(--u));height:calc(2.4 * var(--u));background:var(--rc);transform:rotate(45deg);
-  border-radius:calc(.3 * var(--u));box-shadow:0 0 calc(1.4 * var(--u)) var(--rc)}
-/* L'étoile et la couronne sont des caractères : onze pixels au moins, comme
-   tout ce qui se lit. En `--u` seul, elles faisaient cinq pixels et demi sur
-   la plus petite carte qui montre la pastille — cent cinquante et un — et
-   il fallait une carte de trois cent six pixels pour qu'elles atteignent le
-   plancher. La pastille grandit d'autant vers le bas, sous le badge d'âge,
-   et tient dans le coin dès cent cinquante et un pixels. Les losanges sont
-   des formes et gardent leur échelle. */
-.fz .rar .s{font-size:max(11px, calc(3.6 * var(--u)));color:var(--rc);line-height:1;
-  text-shadow:0 0 calc(1.6 * var(--u)) var(--rc)}
-/* **Plus aucune règle ne masque le dernier `span` du pied.** Elle visait le
-   texte « famille · ét. N » qui suivait la rareté ; `cardHTML` ne l'écrit
-   plus. Restée seule, elle ne touchait plus que les marques : le dernier
-   losange et l'étoile sont des `span`, chacun `:last-child` dans `.rar`. La
-   commune n'affichait aucun losange, la rare un sur deux, l'épique et la
-   légendaire une pastille vide. */
-/* En dessous d'une certaine largeur, la pastille de rareté n'est plus lisible :
-   elle devient une tache claire dans le coin, qu'on lit comme un défaut
-   d'affichage. La carte la retire donc d'elle-même — c'est à ça que sert le
-   `container-type` posé plus haut, et ça marche partout où la carte s'affiche
-   sans que l'appelant ait à le savoir. Le cadre porte la rareté à lui seul
-   dans la grille. */
-@container (max-width: 150px){ .fz .foot{display:none} }
+/* ------------------------------------------------------------ le verso
 
-/* La légendaire est la seule à rayonner hors de son cadre. Si toutes les
-   raretés brillaient, aucune ne brillerait. */
-.fz.r-legendaire{box-shadow:inset 0 0 0 calc(1.5 * var(--u)) var(--rc),
-  inset 0 0 calc(7 * var(--u)) rgba(0,0,0,.4),
-  0 calc(1.4 * var(--u)) 0 var(--rc2),
-  0 0 calc(5 * var(--u)) rgba(245,195,59,.4),
-  0 calc(2.4 * var(--u)) calc(3.4 * var(--u)) rgba(0,0,0,.5)}
-.fz.r-legendaire .nm{color:#FFE08A}
-.fz.holo::after{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:calc(4 * var(--u));
-  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.42) 45%,rgba(160,220,255,.32) 52%,transparent 68%);
-  background-size:250% 250%;animation:sheen 3.6s linear infinite;mix-blend-mode:screen;opacity:.6}
-@keyframes sheen{0%{background-position:120% 0}100%{background-position:-40% 0}}
+   Construit au premier retournement (`retourner`, cartes.js) : le dos de la
+   série, bord à bord, sous le même bord de craie et le même cerne. Les deux
+   faces tournent chacune sur elle-même, dos caché : la carte n'a besoin ni
+   de `preserve-3d` ni d'un parent qui tourne. */
+.fz.fz-flip{perspective:900px}
+.fz.fz-flip > .body,.fz > .verso{backface-visibility:hidden;transition:rotate .5s cubic-bezier(.3,.9,.3,1)}
+.fz > .verso{position:absolute;inset:0;rotate:y 180deg;border-radius:var(--rayon);
+  background:#10141A 50% 50%/cover no-repeat;
+  box-shadow:inset 0 0 0 var(--bord-encre) var(--encre),inset 0 0 0 var(--bord) var(--craie),
+    var(--ombre) var(--ombre) 0 var(--encre)}
+.fz.fz-retournee > .body{rotate:y -180deg}
+.fz.fz-retournee > .verso{rotate:y 0deg}
+
+/* ------------------------------------------- en dessous de 150 pixels, au-dessus
+
+   **Le seuil du pied ne bouge pas.** Sous cent cinquante pixels de large, la
+   carte est une vignette : le pied disparaît (la bande ne porte que le nom),
+   l'âge reste un badge. Au-dessus, c'est une grande carte : le pied écrit
+   la famille et la poussée, l'âge devient le tampon, et le pin passe à côté
+   de lui. Le conteneur est la carte (`.fz`) : chaque carte décide d'elle-même,
+   sans que l'écran ait à le savoir. */
+@container (max-width: 150px){ .fz .foot{display:none} }
+@container (width > 150px){
+  .fz .haut{flex-direction:row;align-items:center;gap:max(4px, calc(1.6 * var(--u)))}
+  .fz .age{margin:calc(var(--deb) + max(2px, calc(1 * var(--u)))) 0 0 0;padding:.35em .5em .25em;border-radius:3px;
+    font-size:max(12px, calc(5 * var(--u)));letter-spacing:.08em;color:var(--vert-fonce);rotate:-6deg;
+    box-shadow:0 0 0 1.5px var(--encre),1px 2px 0 1.5px rgba(7,9,12,.45)}
+}
+
+/* ------------------------------------------------------------ le mouvement
+
+   **Une carte qu'on ne regarde pas ne bouge pas** (lots 3 et 5, et le lot 4
+   en fait la règle de la carte même).
+
+   Une carte `mini` — toute carte de grille — n'est pas `.fz-anime` : sa
+   matière est posée, et la respiration que fx.js donne à son personnage
+   (`fz-vivant`) y est arrêtée. La réaction au toucher (`fz-reagit`), finie,
+   passe encore : elle répond à un geste. */
+.fz:not(.fz-anime) .fz-vivant:not(.fz-reagit){animation:none}
+
+/* En vitrine, sur la fiche, à la révélation : l'épique dérive en douze
+   secondes, le liseré d'or de la légendaire tourne en huit. **Une seule
+   animation de matière par carte** — l'éclat de sa forme reste immobile sur
+   la carte (`cardHTML` ne pose pas `--tourne`), le liseré porte le
+   mouvement de l'or —, plus la respiration du personnage : deux mouvements
+   par carte, et c'est ce qu'une vitrine compte avec ses rayons (trois au
+   plus par écran). */
+.fz.fz-anime.r-epique:not(.fz-verrou) .art::after{animation:fz-derive 12s ease-in-out infinite alternate}
+.fz.fz-anime .lisere::before{animation:fz-tourne 8s linear infinite}
+@keyframes fz-derive{from{translate:-10% -6%}to{translate:10% 6%}}
+@keyframes fz-tourne{to{transform:rotate(1turn)}}
 
 /* L'entrée en cascade. La grille apparaissait d'un bloc ; elle se dépose
    maintenant carte par carte. Le retard est plafonné à douze rangs : au-delà,
    quelqu'un qui arrive en bas de la grille attendrait quatre secondes pour
-   voir sa collection. */
+   voir sa collection. Finie : elle ne compte pas parmi les infinies. */
 .grid .slot{animation:poser .34s cubic-bezier(.2,1.5,.4,1) backwards}
 @keyframes poser{from{opacity:0;transform:translateY(12px) scale(.88)}}
-/* L'éclat de la barre de progression n'est plus gardé ici : la barre vit dans
-   `fanzzy.html`, qui la garde lui-même juste sous sa règle. La garde d'ici ne
-   pouvait pas l'emporter — même spécificité, feuille chargée avant — et son
-   double du mode calme ne faisait que répéter celui de la page. */
+
+/* **`.fz-fige`** arrête tout, sur la carte ou sur n'importe lequel de ses
+   conteneurs : une pile de dos, une carte écartée qu'on ne lit plus. La
+   **page d'album** (`.tbf-album`, `ui.css`) fige d'elle-même les cartes
+   qu'elle porte : c'est une grille. Une animation finie qui part d'un geste
+   (la réaction au toucher, `fx.js`) passe encore, parce que sa règle vient
+   après celle-ci au même poids.
+
+       <div class="reveal fz-fige">…cardHTML…</div> */
+:is(.fz-fige,.tbf-album) .fz,:is(.fz-fige,.tbf-album) .fz::before,:is(.fz-fige,.tbf-album) .fz::after,
+:is(.fz-fige,.tbf-album) .fz *,:is(.fz-fige,.tbf-album) .fz *::before,:is(.fz-fige,.tbf-album) .fz *::after,
+.fz.fz-fige,.fz.fz-fige::before,.fz.fz-fige::after,
+.fz.fz-fige *,.fz.fz-fige *::before,.fz.fz-fige *::after{animation:none}
+/* Les deux mouvements de la matière pèsent plus que la règle du dessus
+   (leurs sélecteurs nomment la rareté, l'état, la classe animée) : ils ont
+   leur arrêt à eux, d'un poids au-dessus. Sans lui, une carte de vitrine
+   posée dans une pile figée dérivait encore, face cachée. */
+:is(.fz-fige,.tbf-album) .fz.fz-anime.r-epique:not(.fz-verrou) .art::after,
+.fz.fz-fige.fz-anime.r-epique:not(.fz-verrou) .art::after,
+:is(.fz-fige,.tbf-album) .fz.fz-anime .lisere::before,.fz.fz-fige.fz-anime .lisere::before{animation:none}
+
+/* Sans mouvement, tout est déjà posé : la matière ne bouge pas, la carte
+   change de face sans tourner. Rien de ce qui informe ne disparaît. */
+/* Les sélecteurs reprennent ceux du mouvement, au mot près : écrits plus
+   courts, ils pesaient moins que la règle qu'ils devaient arrêter, et
+   l'épique dérivait encore sans mouvement (la suite de la carte l'a vu). */
 @media (prefers-reduced-motion:reduce){
   .grid .slot{animation:none}
-  .fz.holo::after{animation:none}
+  .fz.fz-anime.r-epique:not(.fz-verrou) .art::after,.fz.fz-anime .lisere::before{animation:none}
+  .fz.fz-flip > .body,.fz > .verso{transition:none}
 }
 /* Le même bloc pour le mode calme du tiroir : voir `ui.css`, qui explique
    pourquoi chaque bloc `prefers-reduced-motion` a son double, règle pour
    règle. */
 html[data-calme~="animations"] .grid .slot{animation:none}
-html[data-calme~="animations"] .fz.holo::after{animation:none}
-
-/* **Une carte qu'on ne regarde pas ne bouge pas** (lots 3 et 5).
-
-   La carte vit sans fin : son personnage respire et se balance (`fzsouffle`
-   et `fzbalance`, posés par `fx.js` sur `.fz-vivant`), son holo brille
-   (`sheen`, juste au-dessus) — et cela face cachée comme en grille. Cinq
-   cartes empilées de dos et cinq cartes sur la page d'album faisaient douze
-   animations infinies à la fois sur l'écran de l'ouverture, pour trois au
-   plus. La direction veut la carte statique en grille.
-
-   **`.fz-fige`** les arrête, sur la carte ou sur n'importe lequel de ses
-   conteneurs : une pile de dos, une carte écartée qu'on ne lit plus. Et la
-   **page d'album** (`.tbf-album`, `ui.css`) fige d'elle-même les cartes
-   qu'elle porte : c'est une grille. La carte qu'on vient de retourner, elle,
-   vit. Rien du dessin ne change, seulement son mouvement ; une animation
-   finie qui part d'un geste (la réaction au toucher, `fx.js`) passe encore,
-   parce que sa règle vient après celle-ci au même poids.
-
-       <div class="reveal fz-fige">…cardHTML…</div>
-
-   Le kiosque les figeait lui-même (`.kq-fige`, une règle provisoire de sa
-   page) : celle-ci la remplace, au sélecteur près. */
-:is(.fz-fige,.tbf-album) .fz,:is(.fz-fige,.tbf-album) .fz::before,:is(.fz-fige,.tbf-album) .fz::after,
-:is(.fz-fige,.tbf-album) .fz *,:is(.fz-fige,.tbf-album) .fz *::before,:is(.fz-fige,.tbf-album) .fz *::after,
-.fz.fz-fige,.fz.fz-fige::before,.fz.fz-fige::after,
-.fz.fz-fige *,.fz.fz-fige *::before,.fz.fz-fige *::after{animation:none}
-
-
-/* L'âge, écrit sur la carte.
- *
- * Il n'était lisible que dans le pied, en « ét. 2 », à trois pixels de haut et
- * derrière le nom du type. Or l'âge est ce qu'on paie quatre-vingt-dix
- * écharpes pour obtenir : il doit se voir d'un coup d'œil sur une grille de
- * vingt cartes, pas se déchiffrer une par une.
- *
- * Trois couleurs, et une quatrième pour les légendaires : craie au premier âge,
- * argent au deuxième, or au troisième. La progression se lit sans légende,
- * parce que c'est celle des médailles.
- *
- * **L'or du troisième âge est au cerne, plus à la lettre** (la règle de l'or,
- * décidée par Gaël le 2 octobre 2026, voir « les tons » dans `ui.css`) : un
- * badge de onze à treize pixels n'est pas un grand texte, et l'or ne s'y
- * écrit plus. Le mot passe à la craie ; le cerne épais et le halo restent
- * d'or, et ce sont eux qui disent la médaille. La légendaire garde son or
- * pâle, mot compris : le légendaire est l'un des sens de l'or. */
-/* En pixels, avec un plancher, et **hors du pied** : le pied disparaît sous
-   cent cinquante pixels de large — voir la requête de conteneur en fin de
-   fichier — c est-à-dire exactement sur la grille du classeur, là où l âge
-   sert le plus. Écrit en --u, il faisait cinq pixels de haut : lisible pour
-   personne. Il garde donc sa taille quelle que soit celle de la carte.
-
-   Le plancher était à huit pixels, et c'est lui qui s'appliquait sur toutes
-   les vignettes : 3,1 `--u` n'atteignent huit qu'au-delà de deux cent
-   soixante pixels de carte. Il monte à onze, le plancher du jeu. */
-.fz .age{position:absolute;top:3px;right:3px;z-index:5;padding:1px 5px;border-radius:20px;
-  font-family:var(--banner);font-size:clamp(11px, calc(3.1 * var(--u)), 13px);letter-spacing:.1em;
-  line-height:1;white-space:nowrap;
-  background:rgba(11,14,19,.72);border:1px solid currentColor}
-.fz .age.a1{color:#C2CAD6}
-.fz .age.a2{color:#E8EDF5;border-width:calc(.4 * var(--u))}
-.fz .age.a3{color:#F2EEE4;border-color:#F5C33B;border-width:calc(.4 * var(--u));
-  box-shadow:0 0 calc(4 * var(--u)) rgba(245,195,59,.4)}
-/* La légendaire porte son nom plutôt que son rang : c'est ce qu'on retient
-   d'elle, et elle n'a qu'un seul âge à ce jour. */
-.fz.r-legendaire .age{color:#FFE08A;border-color:currentColor;background:rgba(40,24,4,.82);
-  box-shadow:0 0 calc(5 * var(--u)) rgba(255,224,138,.45)}
+html[data-calme~="animations"] .fz.fz-anime.r-epique:not(.fz-verrou) .art::after,
+html[data-calme~="animations"] .fz.fz-anime .lisere::before{animation:none}
+html[data-calme~="animations"] .fz.fz-flip > .body,
+html[data-calme~="animations"] .fz > .verso{transition:none}

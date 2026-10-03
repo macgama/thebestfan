@@ -137,10 +137,35 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
     var(--e2,var(--flare)) 8px 15px,var(--encre) 15px 16px);
 }
 
-/* La case de BD d'un palier du carnet : le tampon d'un titre gagné, posé
-   sous la ligne de la case. Il peut passer à la ligne : un titre saisi dans
-   l'administration peut être plus long que celui de la saison 1. */
-#moment .tbf-tampon{margin-top:14px;max-width:100%;white-space:normal}
+/* **Le petit dessin d'un insigne** (`insigneHTML`), dans son sticker : le
+   profil en réduction. Le liseré : la bande d'encre de l'anneau du buste et
+   son fil de craie en pointillé ; le tampon : un tampon plein de travers, sa
+   craie cernée d'encre et sa ligne de lettres au vert foncé de l'acquis —
+   celui du tampon de la carte de supporter. Seize pixels et non les
+   quatorze des pictogrammes de la brique : à quatorze, le fil du liseré
+   faisait moins d'un pixel et se perdait dans l'encre. Ni or (une
+   récompense à prendre) ni couleur de famille ou de rareté : l'insigne
+   n'en a pas. */
+.tbf-sticker>svg.insigne-d{width:16px;height:16px}
+.insigne-d .bande{stroke:currentColor;stroke-width:5}
+.insigne-d .fil{stroke:var(--craie);stroke-width:1.5;stroke-dasharray:2.3 2;stroke-linecap:butt}
+.insigne-d .papier{fill:var(--craie);stroke:currentColor;stroke-width:2}
+.insigne-d .lettre{stroke:var(--vert-fonce);stroke-width:3}
+/* **Sur le chemin étroit, le dessin et la saison** — « S1 » —, comme le
+   booster du même nœud (son sachet et « +1 ») : sous 560 px, un nœud a
+   cinquante-cinq à soixante-trois pixels de large, et « TAMPON S1 » en
+   prend quatre-vingt-cinq — il passait sous le sticker du nœud voisin. Le
+   mot revient dès qu'il tient (une colonne de cent pixels à 560), et le
+   ticket du palier prêt, au-dessus, l'écrit toujours en entier ; le lecteur
+   d'écran entend la phrase partout. */
+@media (max-width:559px){ .tbf-noeud>.insigne .mot{display:none} }
+
+/* La case de BD d'un palier du carnet : le tampon d'un titre gagné, et celui
+   de l'insigne posé (« LISERÉ S1 »), sous la ligne de la case. Il peut
+   passer à la ligne : un titre saisi dans l'administration peut être plus
+   long que celui de la saison 1. Deux tampons se rangent côte à côte, ou
+   l'un sous l'autre quand la case est étroite. */
+#moment .tbf-tampon{margin:14px 5px 0;max-width:calc(100% - 10px);white-space:normal}
 
 /* ================================================== une étape des premiers pas
 
@@ -387,6 +412,50 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
   };
   const embleme = (cle) =>
     `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${EMBLEMES[cle] ?? EMBLEMES.carte}"/></svg>`;
+
+  /* **Les insignes du carnet** (le contrat, § 6.1 : `carnet.paliers[].insigne`
+     et `insignes`), avec leur petit dessin : ce que le profil en montre, en
+     réduction. Le liseré, c'est l'anneau du buste et la bande d'encre cousue
+     de craie autour ; le tampon, un tampon plein posé de travers, comme sur
+     la carte de supporter. Un dessin à lui pour chacun, et pas l'emblème du
+     carnet (le rond étoilé) : celui-là dit « un tampon de mission », l'unité
+     qu'on compte, et le même dessin pour deux choses en ferait une.
+
+     Le mot en capitales pour l'œil (« LISERÉ S1 »), la phrase entière pour
+     le lecteur d'écran, qui épellerait l'abréviation. Une `Map` et non un
+     objet : la clé vient du serveur, et `{}[« constructor »]` répondrait. */
+  const INSIGNES = new Map([
+    ['lisere', ['LISERÉ', 'liseré', '<svg viewBox="0 0 24 24" aria-hidden="true" class="insigne-d">'
+      + '<circle class="bande" cx="12" cy="12" r="8.2"/><circle class="fil" cx="12" cy="12" r="8.2"/></svg>']],
+    ['tampon', ['TAMPON', 'tampon', '<svg viewBox="0 0 24 24" aria-hidden="true" class="insigne-d">'
+      + '<g transform="rotate(-12 12 12)"><rect class="papier" x="2.5" y="6.5" width="19" height="11" rx="2"/>'
+      + '<path class="lettre" d="M7.5 12h9"/></g></svg>']],
+  ]);
+  /** Le numéro d'une saison, tel que servi (`saison.numero`), ou 0 : il ne
+      se tire jamais de son nom (R7). */
+  const numeroDe = (s) => {
+    const n = Number(s?.numero);
+    return Number.isInteger(n) && n >= 1 ? n : 0;
+  };
+  /** Un insigne en sticker : son dessin, « LISERÉ S1 ». Un insigne que la
+      page ne connaît pas ne s'écrit pas ; sans numéro de saison, le mot
+      seul. Le mot est à part (`.mot`) : sur le chemin étroit, il cède sa
+      place (voir la feuille). */
+  function insigneHTML(id, numero) {
+    const x = INSIGNES.get(id);
+    if (!x) return '';
+    const [mot, dit, dessin] = x;
+    return `<span class="tbf-sticker insigne">${dessin}<span aria-hidden="true"><span class="mot">${mot}${
+      numero ? ' ' : ''}</span>${numero ? `S${numero}` : ''}</span>`
+      + `<span class="tbf-vh">le ${dit}${numero ? ` de la saison ${numero}` : ''}</span></span>`;
+  }
+  /** L'insigne que je porte, tel que la réponse le sert (`insignes`), pour
+      cette saison (son `id`, celui des gestes) — ou `null`. Il fait foi :
+      un palier récupéré dont l'insigne n'est pas servi n'en montre pas. */
+  const insignePorte = (id, saisonId) => (Array.isArray(Q?.insignes)
+    ? Q.insignes.find((x) => x?.id === id && INSIGNES.has(id) && x.saison
+      && Number(x.saison.id) === Number(saisonId)) ?? null
+    : null);
   /* Une image de vignette, et l'emblème qui la remplace si elle ne répond
      pas (voir l'écoute des erreurs, plus bas) : jamais un cadre vide. */
   const image = (src, repli) => `<img src="${esc(src)}" alt="" data-repli="${esc(repli)}">`;
@@ -671,18 +740,21 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
   /* ============================================================ DE LA SAISON */
 
   /**
-   * Ce que donne un palier du carnet, en stickers.
+   * Ce que donne un palier du carnet pour toujours, en stickers : son
+   * **insigne** (« LISERÉ S1 », « TAMPON S1 », avec son petit dessin) et son
+   * **titre**.
    *
-   * **Le titre**, oui : `/api/rank/moi` le sert et le profil l'affiche, pour
-   * toujours. **L'insigne** (`insigne` : le liseré autour de l'avatar, le
-   * tampon sur la carte de supporter), non : aucune route ne dit encore qu'un
-   * joueur le porte, et aucun écran ne le dessine. L'écrire ici serait
-   * promettre une chose que le jeu ne montrera pas ; il s'écrira — « LISERÉ
-   * S1 », « TAMPON S1 », avec son petit dessin — le jour où le profil le
-   * montrera.
+   * L'insigne ne s'écrivait pas : aucune route ne disait qu'un joueur le
+   * portait, aucun écran ne le dessinait, et l'écrire promettait une chose
+   * que le jeu ne montrait pas. Depuis le lot 4, `GET /api/quotidien` sert
+   * ceux qu'on porte (`insignes`) et le profil les montre — le liseré cousu
+   * autour du buste, le tampon sur la carte de supporter : la promesse est
+   * tenue, elle s'écrit. Le numéro est celui de la saison du carnet
+   * (`numero`), jamais tiré de son nom.
    */
-  function honneurHTML(p) {
-    return typeof p?.titre === 'string' && p.titre ? '<span class="tbf-sticker">TITRE</span>' : '';
+  function honneurHTML(p, numero) {
+    return insigneHTML(p?.insigne, numero)
+      + (typeof p?.titre === 'string' && p.titre ? '<span class="tbf-sticker">TITRE</span>' : '');
   }
 
   /**
@@ -690,19 +762,25 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
    * RÉCUPÉRER. Son seuil s'écrit en tampons (« 40 TAMPONS ») — le chiffre que
    * porte, dessous, la bâche or de son nœud sur le chemin. Un palier versé ou
    * à venir ne se lit que sur le chemin.
+   *
+   * `saison` est celle du carnet (`{ id, numero }`) : son `id` pour le geste,
+   * son `numero` pour l'insigne. Le bouton dit l'insigne que le palier donne
+   * (`data-insigne`), pour que la case de BD le montre posé dès la réponse.
    */
-  function ticketPalier(p, saisonId) {
+  function ticketPalier(p, saison) {
+    const saisonId = saison?.id;
     const cle = `carnet:${saisonId}:${entier(p.n)}`;
     const seuil = entier(p.tampons);
     const geste = eteintes.has('carnet') ? ''
       : `<button type="button" class="tbf-plaque" data-ton="or" data-geste="carnet"
           data-saison="${entier(saisonId)}" data-n="${entier(p.n)}" data-titre="${esc(p.nom)}"
-          ${typeof p.titre === 'string' && p.titre ? `data-honneur="${esc(p.titre)}"` : ''}>RÉCUPÉRER</button>`;
+          ${typeof p.titre === 'string' && p.titre ? `data-honneur="${esc(p.titre)}"` : ''}
+          ${INSIGNES.has(p.insigne) ? `data-insigne="${p.insigne}"` : ''}>RÉCUPÉRER</button>`;
     return `<article class="tbf-ticket tbf-mission" data-etat="pret" data-cle="${esc(cle)}">
         <span class="tbf-mission-vignette">${embleme('tampon')}</span>
         <b class="tbf-mission-titre">${esc(p.nom)}</b>
         ${seuil ? `<span class="tbf-mission-jauge">${seuil} TAMPONS</span>` : ''}
-        <span class="tbf-mission-gain">${gainHTML(p.gain)}${honneurHTML(p)}</span>${geste}</article>`;
+        <span class="tbf-mission-gain">${gainHTML(p.gain)}${honneurHTML(p, numeroDe(saison))}</span>${geste}</article>`;
   }
 
   /**
@@ -715,8 +793,15 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
    *
    * Chaque nœud dit son état par sa forme, et le lecteur d'écran l'entend
    * par une phrase cachée : le palier, son nom, et ce qu'il en est.
+   *
+   * L'insigne d'un palier à venir dit ce qu'il donnera ; celui d'un palier
+   * versé ne s'écrit que si la réponse dit qu'on le porte (`insignes`) —
+   * c'est elle qui fait foi, pas le carnet d'aujourd'hui, que
+   * l'administration a pu recaler depuis.
    */
-  function carnetHTML(c, saisonId, tampons) {
+  function carnetHTML(c, saison, tampons) {
+    const saisonId = saison?.id;
+    const numero = numeroDe(saison);
     const tous = c.paliers.filter((p) => p && typeof p === 'object');
     if (!tous.length) return '';
     const ouvert = tous.findIndex((p) => p.etat !== 'reclame');
@@ -741,8 +826,10 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
         avance = ` data-avance style="--p:${Math.min(100, Math.max(0, part))}%"`;
       }
       if (p.etat === 'reclame') {
+        const porte = insignePorte(p.insigne, saisonId);
         return `<li class="tbf-noeud" data-etat="fait"${avance}><span class="tbf-vh">Palier ${n}, ${nom} :</span>
-          <span class="tbf-noeud-k" aria-hidden="true">${embleme('coche')}</span>${fait(`carnet:${saisonId}:${n}`)}</li>`;
+          <span class="tbf-noeud-k" aria-hidden="true">${embleme('coche')}</span>${fait(`carnet:${saisonId}:${n}`)}${
+            porte ? insigneHTML(porte.id, numeroDe(porte.saison)) : ''}</li>`;
       }
       /* Prêt : la bâche or du nœud — celle du « TU Y ES » de MON NIVEAU, ici
          l'un des trois sens de l'or, une récompense prête. Le geste est sur
@@ -758,7 +845,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
           <span class="tbf-noeud-k" aria-hidden="true">${seuil}</span>${e
             ? `<span class="tbf-sticker tbf-sticker--prix"><img src="/img/gains/echarpes.webp" alt="">+${e}<span class="tbf-vh"> écharpes</span></span>` : ''}${k
             ? `<span class="tbf-sticker">${embleme('dos')}+${k}<span class="tbf-vh"> booster${k > 1 ? 's' : ''}</span></span>` : ''}${x
-            ? `<span class="tbf-sticker">+${x} XP</span>` : ''}${honneurHTML(p)}</li>`;
+            ? `<span class="tbf-sticker">+${x} XP</span>` : ''}${honneurHTML(p, numero)}</li>`;
     });
 
     const prochain = c.prochain ? tous.find((p) => entier(p.n) === entier(c.prochain.n)) : null;
@@ -812,8 +899,8 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
          peut prendre maintenant. Puis le carnet, une fois. */
       const prets = pretsDe(c.paliers);
       out.push(`<h2 class="tbf-cousu">${nomSaison(s) || 'LA SAISON'}${quand ? `<i>${esc(quand)}</i>` : ''}</h2>
-        ${prets.length ? `<div class="tbf-missions">${prets.map((p) => ticketPalier(p, s.id)).join('')}</div>` : ''}
-        ${carnetHTML(c, s.id, tampons)}`);
+        ${prets.length ? `<div class="tbf-missions">${prets.map((p) => ticketPalier(p, s)).join('')}</div>` : ''}
+        ${carnetHTML(c, s, tampons)}`);
     }
 
     const passee = Q.saisonPassee;
@@ -821,7 +908,7 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     if (restes.length) {
       out.push(`<h2 class="tbf-cousu">${nomSaison(passee.saison) || 'LA SAISON PASSÉE'}<i>encore à récupérer</i></h2>
         <div class="tbf-missions">
-          ${restes.map((p) => ticketPalier(p, passee.saison?.id)).join('')}
+          ${restes.map((p) => ticketPalier(p, passee.saison)).join('')}
         </div>`);
     }
 
@@ -1160,7 +1247,10 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
    * carillon ; puis les boosters volent de la case vers leur compteur ; le
    * ticket de gain vient après (l'appelant). Un palier qui donne un titre —
    * pour toujours, le profil le montre — fait claquer son tampon dans la
-   * case.
+   * case ; un palier qui donne un insigne, le sien (« LISERÉ S1 »), **dès la
+   * réponse** : elle porte les insignes qu'on porte (`quotidien.insignes`,
+   * le contrat § 6.1), rien à relire. Seulement s'il y est — c'est le
+   * serveur qui dit qu'il est posé, pas le bouton qu'on a touché.
    *
    * Le vol attend que la case se retire : il passe sous elle (le vol est à
    * 94, la case à 95), et un booster qui partirait de dessous un voile ne
@@ -1174,23 +1264,45 @@ html[data-calme~="animations"] .pas.neuf{animation:none;outline:2px solid var(--
     const caseBD = m?.querySelector('.tbf-vignette');
     if (!m || !caseBD) return;
     const honneur = d.honneur || '';
+    const porte = d.insigne ? insignePorte(d.insigne, d.saison) : null;
     $('momentMot').textContent = honneur ? 'Un titre à vie\u00A0!' : `${d.titre || 'Le carnet'}\u00A0!`;
     $('momentSous').textContent = entier(d.n) ? `Palier ${entier(d.n)} du carnet` : '';
-    caseBD.querySelector('.tbf-tampon')?.remove();
-    if (honneur) {
+    caseBD.querySelectorAll('.tbf-tampon').forEach((t) => t.remove());
+    /* Le titre à l'or, en grand (vingt pixels : l'or y a droit) ; l'insigne
+       au vert de l'acquis, celui du tampon de la carte de supporter. Le
+       second claque un temps après le premier : deux coups, pas un. */
+    const tampons = [];
+    if (honneur) tampons.push(['or', honneur, '']);
+    if (porte) {
+      const [mot, dit] = INSIGNES.get(porte.id);
+      const num = numeroDe(porte.saison);
+      tampons.push(['vert', `${mot}${num ? ` S${num}` : ''}`,
+        `Tu portes le ${dit}${num ? ` de la saison ${num}` : ''}`]);
+    }
+    tampons.forEach(([ton, mot, dit], i) => {
       const t = document.createElement('span');
       t.className = 'tbf-tampon tbf-clac';
-      t.dataset.ton = 'or';
-      t.style.setProperty('--d', '650ms');
-      t.textContent = honneur;
+      t.dataset.ton = ton;
+      t.style.setProperty('--d', `${650 + i * 250}ms`);
+      /* La case est une annonce (`aria-live`) : le lecteur d'écran entend
+         la phrase, pas l'abréviation. */
+      if (dit) {
+        const vu = document.createElement('span');
+        vu.setAttribute('aria-hidden', 'true');
+        vu.textContent = mot;
+        const lu = document.createElement('span');
+        lu.className = 'tbf-vh';
+        lu.textContent = dit;
+        t.append(vu, lu);
+      } else t.textContent = mot;
       caseBD.appendChild(t);
-    }
+    });
     m.style.setProperty('--mt', `${MOMENT_MS}ms`);
     m.classList.remove('on');
     void m.offsetWidth;
     m.classList.add('on');
     window.FX?.son?.('carillon');
-    if (honneur) setTimeout(() => window.FX?.son?.('bache'), 650);
+    if (tampons.length) setTimeout(() => window.FX?.son?.('bache'), 650);
     await attendre(MOMENT_MS);
     m.classList.remove('on');
     const packs = entier(g?.packs);

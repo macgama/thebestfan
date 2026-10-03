@@ -287,9 +287,11 @@
      dont le bord craie remplit sa zone de touche de 44 (ui.css, « l'anneau »)
      — le buste de mon Fanzzy, l'anneau d'XP autour, mon niveau collé en bas
      à droite. Au toucher, une bande kraft se déplie sous la barre avec les
-     deux jetons, écharpes et boosters, trois secondes, puis se replie. À partir de 560 px, la bande est une rangée de
-     la barre, toujours visible (ui.css, « le HUD replié de la barre ») —
-     sauf sur les écrans qui ont déjà leur bourse (`BOURSE_EN_PAGE`).
+     deux jetons — les écharpes, et la réserve de boosters dessinée comme au
+     kiosque et à la boutique (lot 4, voir `construire`) —, trois secondes,
+     puis se replie. À partir de 560 px, la bande est une rangée de la
+     barre, toujours visible (ui.css, « le HUD replié de la barre ») — sauf
+     sur les écrans qui ont déjà leur bourse (`BOURSE_EN_PAGE`).
 
      **D'où viennent les valeurs.** `/api/niveau` pour l'anneau et le
      chiffre ; `/api/fanzzy/state` pour les deux soldes **et le personnage**.
@@ -324,14 +326,19 @@
      ni ces champs ne se renomment sans eux. Chaque écriture est aussi
      annoncée — `tbf:hud`, la valeur écrite en `detail` — pour qu'un écran
      arrivé avant la première lecture puisse se redessiner sans relire la
-     clé à l'aveugle. */
+     clé à l'aveugle. Le lot 4 y ajoute trois champs facultatifs, que seul
+     ce fichier lit : la recharge de la réserve (`prochainA`, `cadenceMs`,
+     `packMax`, voir `rechargeDe`) ; sans eux — le hub ne les écrit pas —,
+     la bande montre le compte des boosters sans l'anneau. */
   const CLE_HUD = 'tbf-hud';
   const DUREE_HUD = 30_000;
 
   /* **Les écrans qui lisent l'état eux-mêmes en arrivant**, et l'annoncent :
      le kiosque et le classeur, par `load()` de cartes.js ; la boutique, par
      sa propre lecture de `/api/fanzzy/state` (`annoncer`, boutique.html,
-     depuis le lot 3). Le HUD n'y relit pas l'état quand ce qu'il a retenu
+     depuis le lot 3) ; la collection, par la sienne (`poserEtat`,
+     collection.html, depuis le lot 4 : ses doublons, ses nouveautés et son
+     avatar). Le HUD n'y relit pas l'état quand ce qu'il a retenu
      est vieux : il attend l'annonce, qui porte la même réponse, et ne
      demande que le niveau, une fois. Si elle ne vient pas — la page n'a pas
      pu se charger —, il relit au bout de `REPLI_ANNONCE`, comme ailleurs :
@@ -343,18 +350,34 @@
      arrive pendant que sa lecture est en route : elle la recouvre (voir
      `tour`) et redemande le niveau. La boutique faisait ainsi deux
      `/api/niveau` et deux `/api/fanzzy/state` à chaque arrivée sans HUD
-     retenu de moins d'une demi-minute. */
-  const ANNONCENT_LEUR_ETAT = ['/boosters', '/fanzzy', '/boutique'];
+     retenu de moins d'une demi-minute, et la collection après elle, quand
+     elle s'est mise à lire l'état. Seule l'adresse compte (`chemin`) : une
+     sous-vue de la collection (`?vue=fanzzy`) reste la collection. */
+  const ANNONCENT_LEUR_ETAT = ['/boosters', '/fanzzy', '/boutique', '/collection'];
   const REPLI_ANNONCE = 6000;
 
-  /* **Les écrans qui ont déjà leur bourse.** La boutique et le kiosque
-     affichent les deux soldes dans la page, juste sous la barre, là où ils
-     servent à décider. Les jetons dépliés à demeure dans la barre, à partir
-     de 560 px, les redisaient cinquante pixels plus haut, avec d'autres
-     pictogrammes : le même chiffre deux fois, dessiné de deux façons. Le
-     sticker reste ; sous 560 px, le toucher déplie toujours la bande, comme
-     partout — c'est un geste qu'on fait, pas un doublon qu'on subit. */
-  const BOURSE_EN_PAGE = ['/boutique', '/boosters'];
+  /* **Les écrans qui ont déjà leur bourse.** La boutique, le kiosque et le
+     vestiaire de /fanzzy (sa poche, lot 4) affichent les deux soldes dans la
+     page, juste sous la barre, là où ils servent à décider. Les jetons
+     dépliés à demeure dans la barre, à partir de 560 px, les redisaient
+     cinquante à quatre-vingts pixels plus haut : le même chiffre deux fois.
+     Le sticker reste ; sous 560 px, le toucher déplie toujours la bande,
+     comme partout — c'est un geste qu'on fait, pas un doublon qu'on subit.
+
+     **Seulement tant que la bourse de la page est à l'écran.** /fanzzy porte
+     deux écrans sous la même adresse, et seul le vestiaire a sa poche.
+     L'album n'en a pas, et il montre pourtant des prix — ceux des âges
+     secrets, en écharpes : cacher la bande sur toute l'adresse y laissait,
+     à partir de 560 px, des prix sans aucun solde à côté. La bourse de la
+     page, c'est sa planche (`.tbf-reserve`, la brique commune aux trois
+     écrans) ; posée dans un écran à onglets (`.screen`), elle ne compte que
+     tant que cet écran est montré (`.on`) — voir `bourseEnPage`, dans
+     `monterHud`. Changer d'onglet fait donc passer le solde de la poche à
+     la barre et retour : il est à l'écran une fois, jamais deux, jamais
+     zéro. Le titre n'en bouge pas : les jetons prennent leur place à
+     droite, avant le sticker. La fiche, qui dépense, s'ouvre par-dessus à
+     une autre adresse : la bande y revient aussi. */
+  const BOURSE_EN_PAGE = ['/boutique', '/boosters', '/fanzzy'];
 
   /* **Retenu au nom du joueur.** L'onglet survit à une déconnexion : sans
      ce nom, quelqu'un qui se reconnecte sous un autre compte dans la
@@ -398,25 +421,63 @@
   const lireNiveau = () => lireJson('/api/niveau').then(niveauDe);
 
   /**
+   * Ce qu'un portefeuille dit de la recharge (contrat du serveur, § 13.1) :
+   * l'instant du prochain booster, la durée d'une recharge et le plafond de
+   * ce joueur — chacun seulement s'il est servi.
+   *
+   * **`nextPackInMs` est compté à l'instant de la réponse** (R3) : on le
+   * change ici, une fois, en l'instant où le booster arrive (`prochainA`).
+   * Le rajouter à l'heure d'un rendu ultérieur ferait repartir l'anneau de
+   * son début à chaque annonce. Cet instant est pris à l'horloge du
+   * téléphone, et non à `performance.now()` comme au kiosque : il est
+   * retenu dans l'onglet avec le reste du HUD, et l'écran suivant le relit
+   * (l'horloge d'une page repart de zéro à la suivante). Il ne sert qu'à
+   * décompter une durée servie, jamais à calculer une date ; à zéro, on
+   * relit le serveur au lieu de conclure (voir `echu`).
+   *
+   * `null` est une réponse — la réserve est pleine, rien ne se recharge —,
+   * une clé absente n'en est pas une : on garde alors ce qu'on savait.
+   */
+  function rechargeDe(src) {
+    const r = {};
+    const ms = src.nextPackInMs;
+    if (ms === null) r.prochainA = null;
+    else if (ms !== undefined && ms !== '' && Number.isFinite(Number(ms))) {
+      r.prochainA = Date.now() + Math.max(0, Number(ms));
+    }
+    if (Number(src.cadenceMs) > 0) r.cadenceMs = Number(src.cadenceMs);
+    if (Number.isInteger(Number(src.packMax)) && Number(src.packMax) >= 1) r.packMax = Number(src.packMax);
+    return r;
+  }
+
+  /**
    * Ce qu'une annonce dit du portefeuille : les soldes qu'elle porte, et
    * l'avatar si elle en parle — `null` est une réponse (« pas de Fanzzy »),
-   * une clé absente n'en est pas une. `null` si elle ne dit rien.
+   * une clé absente n'en est pas une —, et la recharge (`rechargeDe`).
+   * `null` si elle ne dit rien.
    */
   function portefeuilleDe(src) {
     if (!src || typeof src !== 'object') return null;
     const nombre = (v) => (v == null || v === '' || !Number.isFinite(Number(v)) ? undefined : Number(v));
     const w = { scarves: nombre(src.scarves), packs: nombre(src.packs) };
     if ('avatar' in src) w.avatar = avatarDe(src.avatar);
+    Object.assign(w, rechargeDe(src));
     return w.scarves === undefined && w.packs === undefined && !('avatar' in w) ? null : w;
   }
 
   /* L'état que cartes.js tient pour la page, une fois `load()` passé. Avant,
      `S` porte des valeurs de départ — zéro écharpe, la réserve pleine — qui
      ne sont pas celles du joueur ; seul `load()` y pose `avatar`, et c'est
-     ce qui dit qu'il est passé. */
+     ce qui dit qu'il est passé. La recharge y porte d'autres noms que dans
+     le portefeuille. `nextIn` est compté à la lecture de `load()`, qui
+     l'annonce aussitôt : c'est à l'annonce qu'on le change en instant. Lu
+     plus tard — au montage du HUD, quand l'annonce est passée avant ce
+     script —, l'anneau a le retard de la réponse de « qui es-tu ? », et le
+     zéro relit de toute façon le serveur. */
   const etatDeLaPage = () => {
     const S = window.TBF_CARTES?.S;
-    return S && 'avatar' in S ? portefeuilleDe(S) : null;
+    return S && 'avatar' in S ? portefeuilleDe({ scarves: S.scarves, packs: S.packs, avatar: S.avatar,
+      nextPackInMs: S.nextIn, cadenceMs: S.cadenceMs, packMax: S.packMax }) : null;
   };
 
   /* **Quand la page a lu l'état, ou l'a changé.** `tbf:bourse` dit « voici
@@ -467,12 +528,15 @@
   });
 
   /** Une valeur du HUD, prête à retenir. Le portrait déjà trouvé suit tant
-      que c'est le même personnage : voir `portraits`. */
-  function composer({ scarves, packs, avatar }, niveau, t) {
+      que c'est le même personnage : voir `portraits`. La recharge
+      (`prochainA`, `cadenceMs`, `packMax`, voir `rechargeDe`) s'y ajoute
+      quand on la connaît : des champs de plus, que le hub n'écrit pas et
+      que le profil et le classement ne lisent pas. */
+  function composer({ scarves, packs, avatar, prochainA, cadenceMs, packMax }, niveau, t) {
     const avant = lireHud();
     return { qui: joueur, t, scarves, packs, avatar,
       portrait: memeAvatar(avant?.avatar, avatar) ? (avant.portrait ?? null) : null,
-      niveau };
+      niveau, prochainA, cadenceMs, packMax };
   }
 
   /** La lecture complète, quand aucune page ne l'a faite. `null` sans solde. */
@@ -480,7 +544,7 @@
     const [etat, niveau] = await Promise.all([lireJson('/api/fanzzy/state'), lireNiveau()]);
     const w = portefeuilleDe(etat?.wallet);
     if (w?.scarves === undefined) return null;
-    const d = composer({ scarves: w.scarves, packs: w.packs ?? 0, avatar: w.avatar ?? null },
+    const d = composer({ ...w, packs: w.packs ?? 0, avatar: w.avatar ?? null },
       niveau, Date.now());
     retenirHud(d);
     return d;
@@ -514,6 +578,28 @@
 
   const pluriel = (n, un, plusieurs) => `${n} ${n > 1 ? plusieurs : un}`;
 
+  /** Le temps avant le prochain booster, en mots, pour qui écoute l'écran :
+      la phrase du kiosque, à la minute près (une étiquette qui change à
+      chaque seconde ne se lit jamais). */
+  function enMots(ms) {
+    const mm = Math.ceil(ms / 60000);
+    if (mm <= 1) return 'moins d’une minute';
+    if (mm < 60) return `${mm} minutes`;
+    return `${Math.floor(mm / 60)} h ${String(mm % 60).padStart(2, '0')}`;
+  }
+
+  /* **Les écrans qui relisent l'état eux-mêmes quand un booster arrive** :
+     le kiosque, la boutique et le vestiaire de /fanzzy décomptent la
+     recharge et relisent le serveur à zéro (R3), puis l'annoncent
+     (`tbf:bourse`). Le HUD n'y relit donc pas au zéro : il attend leur
+     annonce, qui porte la même réponse. **Elle peut ne pas venir** — le
+     vestiaire ne décompte que sur son propre écran, et la bande se voit
+     aussi sur celui de l'album, dépliée sous 560 px, dans la barre
+     au-delà — : sans elle au bout de
+     `REPLI_ANNONCE`, le HUD relit lui-même, s'il est regardé, comme
+     ailleurs (voir `echu`). */
+  const RELISENT_A_ZERO = ['/boosters', '/boutique', '/fanzzy'];
+
   /**
    * Monte le HUD dans la barre, entre le titre et le menu.
    *
@@ -529,7 +615,24 @@
     let vu = null;
 
     /* La boîte n'est construite qu'à la première donnée : sans elle, pas de
-       HUD du tout — un sticker sans visage ni chiffre ne dit rien. */
+       HUD du tout — un sticker sans visage ni chiffre ne dit rien.
+
+       **Les boosters sont la réserve commune** (ui.css, « la réserve de
+       boosters, une seule brique », lot 4) : le kiosque, la boutique et
+       cette bande les dessinaient de trois façons, et celle-ci sous un
+       troisième pictogramme. Ici, sa forme « compte » : le sachet seul, son
+       nombre (le premier `<b>`, celui que fait défiler `FX.compter` et que
+       lit `fanzzy-ui-smoke`), l'anneau de recharge quand un booster est en
+       route, et le « + ». Pas de compte à rebours écrit : la bande pend
+       sous l'avatar et s'étend vers la gauche, et avec le temps elle sortait
+       presque de l'écran à 320 px ; l'anneau dit qu'un booster vient,
+       l'`aria-label` dans combien.
+
+       Sans `--sachet` : le HUD ne sait pas quelle série le joueur regarde
+       au kiosque, et la fente garde alors le sachet peint de la brique (le
+       noir mat et la bande rouge du kiosque) — LA REPRISE, seule ouverte,
+       n'a d'ailleurs pas encore de dessin de sachet. */
+    let anneauRecharge = null;
     function construire() {
       boite = document.createElement('div');
       boite.className = 'tbf-hud';
@@ -538,9 +641,15 @@
         + '<div class="tbf-ticket tbf-hud-bande" id="tbf-hud-bande">'
         + '<a class="tbf-monnaie" href="/boutique"><img src="/img/gains/echarpes.webp" alt="">'
         + '<b>0</b><i class="tbf-monnaie-plus" aria-hidden="true">+</i></a>'
-        + '<a class="tbf-monnaie" href="/boosters"><svg viewBox="0 0 24 24" aria-hidden="true"><path'
-        + ` d="${ICONES.pack}"/></svg><b>0</b><i class="tbf-monnaie-plus" aria-hidden="true">+</i></a>`
+        + '<a class="tbf-monnaie tbf-boosters" href="/boosters"><span class="tbf-fente" aria-hidden="true"></span>'
+        + '<b>0</b><i class="tbf-monnaie-plus" aria-hidden="true">+</i></a>'
         + '</div>';
+      /* L'anneau n'est posé que si un booster est en route : une réserve
+         pleine n'en a pas (jamais un anneau vide ni « 0:00 »). Un seul
+         nœud, inséré ou retiré, pour que `--part` ne reparte pas de zéro. */
+      anneauRecharge = document.createElement('span');
+      anneauRecharge.className = 'tbf-recharge';
+      anneauRecharge.setAttribute('aria-hidden', 'true');
       for (const a of boite.querySelectorAll('.tbf-monnaie')) {
         if (a.getAttribute('href') === chemin) a.setAttribute('aria-current', 'page');
         // Le frémissement se pose à chaque changement et se retire à sa fin :
@@ -568,8 +677,26 @@
        (`BOURSE_EN_PAGE`), la bande est alors cachée (`hidden`, que la
        feuille commune rend absolu) : elle sort aussi de la tabulation et de
        ce que lit un lecteur d'écran, qui entendrait sinon deux fois les
-       mêmes soldes. */
-    const bourseEnPage = BOURSE_EN_PAGE.includes(chemin);
+       mêmes soldes.
+
+       **L'adresse du moment, et non celle du chargement** (`chemin`). Le
+       classeur ouvre la fiche d'un Fanzzy par-dessus son vestiaire, à
+       /fanzzy/<id>, sans recharger. Or la fiche ne montre son solde que
+       sous 560 px (fanzzy-fiche.css) et compte au-delà sur cette bande —
+       c'est elle qui décompte la dépense d'une évolution : cachée, la fiche
+       n'aurait plus aucun solde à l'écran. La bande revient donc tant que
+       la fiche est ouverte, et repart quand on la referme.
+
+       **Et l'écran du moment** : la planche de la page (`.tbf-reserve`)
+       posée dans un écran à onglets ne compte que si cet écran est montré
+       (`.screen.on`, la convention du classeur). Hors de tout écran — le
+       kiosque, la boutique —, c'est la bourse de toute la page. Une page
+       de la liste sans planche garde la règle d'adresse seule. */
+    const bourseEnPage = () => {
+      if (!BOURSE_EN_PAGE.includes(location.pathname.replace(/\/$/, '') || '/')) return false;
+      const ecran = document.querySelector('.tbf-reserve')?.closest('.screen');
+      return !ecran || ecran.classList.contains('on');
+    };
     let minuterie = 0;
     function brancher() {
       const avatar = boite.querySelector('.tbf-avatar');
@@ -595,6 +722,9 @@
         bande.classList.add('ouverte');
         avatar.setAttribute('aria-expanded', 'true');
         patienter();
+        // Un booster arrivé pendant qu'elle était repliée : on le relit
+        // maintenant qu'on le regarde (voir `echu`).
+        if (aRelire) relireAZero();
       });
       bande.addEventListener('focusout', () => {
         if (bande.classList.contains('ouverte')) patienter();
@@ -608,6 +738,14 @@
         replier();
         if (dedans) avatar.focus({ preventScroll: true });
       });
+      /* Cachée là où la page montre déjà sa bourse, à partir de 560 px
+         (`bourseEnPage`) ; revenue à l'écran, elle relit un booster arrivé
+         pendant qu'on ne la voyait pas (voir `echu`). */
+      const cacher = () => {
+        const cache = bourseEnPage() && large.matches;
+        if (bande.hidden !== cache) bande.hidden = cache;
+        if (aRelire && visible()) relireAZero();
+      };
       const regler = () => {
         if (large.matches) {
           replier();
@@ -617,11 +755,141 @@
           avatar.setAttribute('aria-controls', 'tbf-hud-bande');
           avatar.setAttribute('aria-expanded', String(bande.classList.contains('ouverte')));
         }
-        bande.hidden = bourseEnPage && large.matches;
         if (vu) libeller(vu);
+        cacher();
       };
       large.addEventListener?.('change', regler);
       regler();
+      /* L'adresse ne change sans recharger que par l'historique (`popstate`)
+         ou sous un geste du joueur : une case du classeur touchée, ou
+         validée au clavier, pousse celle de sa fiche. On la relit après
+         chacun, une fois que la page y a répondu. */
+      let adresse = location.pathname;
+      const suivreAdresse = () => setTimeout(() => {
+        if (location.pathname === adresse) return;
+        adresse = location.pathname;
+        cacher();
+      });
+      addEventListener('popstate', suivreAdresse);
+      document.addEventListener('click', suivreAdresse);
+      document.addEventListener('keydown', suivreAdresse);
+      /* L'écran qui porte la planche de la page, s'il y en a un : son `.on`
+         change sans que l'adresse bouge — un onglet touché, l'anneau du
+         classeur dans la poche, ou la page elle-même. On le suit à la
+         source plutôt que de deviner quel toucher l'a changé. */
+      const ecranDeLaPlanche = document.querySelector('.tbf-reserve')?.closest('.screen');
+      if (ecranDeLaPlanche) {
+        new MutationObserver(cacher).observe(ecranDeLaPlanche, { attributes: true, attributeFilter: ['class'] });
+      }
+      /* L'onglet revient : la minuterie d'arrière-plan a pu être ralentie,
+         l'anneau se recale tout de suite (et relit si le booster est arrivé
+         pendant ce temps et qu'on le voit). */
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) return;
+        tic();
+        if (aRelire && visible()) relireAZero();
+      });
+    }
+
+    /** La bande se voit-elle ? Dépliée sous l'avatar, ou rangée dans la
+        barre à partir de 560 px — sauf là où la page a déjà sa bourse. */
+    const visible = () => {
+      const bande = boite?.querySelector('.tbf-hud-bande');
+      return Boolean(bande) && !document.hidden && !bande.hidden
+        && (large.matches || bande.classList.contains('ouverte'));
+    };
+
+    /* ------------------------------------------ la réserve de boosters
+
+       Le sachet, vide quand la réserve l'est ; l'anneau de recharge quand
+       un booster est en route, sa part écoulée (`--part`, de 0 à 1 :
+       `1 − restant ⁄ cadence`, contrat § 13.1) reposée chaque seconde ;
+       l'`aria-label`, qui dit le compte et dans combien de temps vient le
+       suivant, reposé seulement quand ses mots changent — à la minute.
+
+       **Ce qui ne se pose pas.** Réserve pleine (`nextPackInMs: null`, ou
+       le compte au plafond servi) : ni anneau ni temps. Durée d'une
+       recharge inconnue (`cadenceMs` absent) : pas d'anneau — sa part ne se
+       calcule pas —, mais le temps servi reste dans l'étiquette. Rien de
+       servi sur la recharge (le hub retient le HUD sans elle) : le compte
+       seul. */
+    let minuterieRecharge = 0;
+    let echuA = null;
+    let aRelire = false;
+    let relireDans = 0;
+    let pasAvant = 0;              // pas de relecture du zéro avant cet instant
+    let derniereAZero = -Infinity; // la dernière, pour ne pas relire en boucle
+
+    /** Ce qui reste avant le prochain booster, en millisecondes (≤ 0 : il
+        est arrivé), ou `null` si on ne le sait pas ou que rien ne vient. */
+    const resteDe = (d) => (Number(d?.prochainA) > 0 && !(d.packMax && d.packs >= d.packMax)
+      ? d.prochainA - Date.now() : null);
+
+    /** Une seconde de la réserve : l'anneau, l'étiquette, et le zéro. */
+    function tic(d = vu) {
+      if (!d || !boite) return;
+      const a = boite.querySelectorAll('.tbf-monnaie')[1];
+      let reste = resteDe(d);
+      if (reste !== null && reste <= 0) {
+        echu(d);
+        reste = null;
+      }
+      if (reste !== null && d.cadenceMs > 0) {
+        if (!anneauRecharge.isConnected) a.insertBefore(anneauRecharge, a.querySelector('.tbf-monnaie-plus'));
+        anneauRecharge.style.setProperty('--part',
+          Math.min(1, Math.max(0, 1 - reste / d.cadenceMs)).toFixed(3));
+      } else anneauRecharge.remove();
+      if (reste !== null && !minuterieRecharge) {
+        minuterieRecharge = setInterval(() => { if (!document.hidden) tic(); }, 1000);
+      } else if (reste === null && minuterieRecharge) {
+        clearInterval(minuterieRecharge);
+        minuterieRecharge = 0;
+      }
+      const compte = pluriel(d.packs, 'booster', 'boosters');
+      // Pleine : au plafond servi, ou, sans lui, le serveur qui dit que rien ne vient.
+      const plein = d.packMax ? d.packs >= d.packMax : d.prochainA === null;
+      const mots = reste !== null ? `${compte} — le prochain dans ${enMots(reste)}`
+        : plein ? `${compte} — la réserve est pleine` : compte;
+      if (a.getAttribute('aria-label') !== mots) a.setAttribute('aria-label', mots);
+    }
+
+    /* **À zéro, on relit au lieu de conclure** (R3). Le booster est arrivé
+       côté serveur, mais ni le compte ni le temps du suivant ne se devinent
+       ici : l'anneau s'en va, le chiffre reste celui du serveur, et l'on
+       relit l'état — une fois par échéance (`echuA`), et seulement quand on
+       le regarde. Bande repliée, la relecture attend qu'on la déplie : un
+       `/api/fanzzy/state` de plus par recharge et par écran ne se paie que
+       si quelqu'un lit le résultat.
+
+       **Pas avant `pasAvant`.** Une seconde et demie après le zéro, pour
+       laisser le serveur passer l'échéance : relu au ras du zéro, il
+       rendrait encore l'ancien compte — y compris quand on déplie la bande
+       juste à ce moment. Sur un écran qui relit lui-même
+       (`RELISENT_A_ZERO`), `REPLI_ANNONCE` : son annonce arrive bien avant,
+       redessine le HUD avec une autre échéance, et il n'y a plus rien à
+       relire. Et jamais deux relectures du zéro à moins de dix secondes : un
+       serveur qui répondrait encore « zéro » ne doit pas se faire relire à
+       chaque seconde et demie, bande rangée dans la barre (comme les pages). */
+    function echu(d) {
+      if (echuA === d.prochainA) return;
+      echuA = d.prochainA;
+      aRelire = true;
+      pasAvant = Math.max(performance.now() + (RELISENT_A_ZERO.includes(chemin) ? REPLI_ANNONCE : 1500),
+        derniereAZero + 10_000);
+      if (visible()) relireAZero();
+    }
+    function relireAZero() {
+      clearTimeout(relireDans);
+      relireDans = setTimeout(() => {
+        // Une lecture plus fraîche est arrivée entre-temps — l'annonce de la
+        // page, ou une autre relecture : rien à relire.
+        if (!aRelire || vu?.prochainA !== echuA) { aRelire = false; return; }
+        // Repliée pendant l'attente : on relira quand on la dépliera.
+        if (!visible()) return;
+        aRelire = false;
+        derniereAZero = performance.now();
+        relire();
+      }, Math.max(0, pasAvant - performance.now()));
     }
 
     /** Ce que le sticker annonce, selon ce qu'il fait à cette largeur. */
@@ -700,14 +968,13 @@
 
       /* Les deux jetons. Ils comptent jusqu'à leur nouvelle valeur et
          frémissent — seulement si on les voyait déjà : un premier affichage
-         se pose, il ne compte pas depuis zéro. */
+         se pose, il ne compte pas depuis zéro. L'étiquette des boosters est
+         celle de la réserve (`tic`), qui dit aussi la recharge. */
       const [echarpes, boosters] = boite.querySelectorAll('.tbf-monnaie');
-      for (const [a, cle, mots] of [[echarpes, 'scarves', ['écharpe', 'écharpes']],
-        [boosters, 'packs', ['booster', 'boosters']]]) {
+      echarpes.setAttribute('aria-label', `${pluriel(d.scarves, 'écharpe', 'écharpes')} — où en gagner`);
+      for (const [a, cle] of [[echarpes, 'scarves'], [boosters, 'packs']]) {
         const b = a.querySelector('b');
         const apres = d[cle];
-        a.setAttribute('aria-label', pluriel(apres, ...mots)
-          + (cle === 'scarves' ? ' — où en gagner' : ''));
         if (vu && vu[cle] !== apres && window.FX?.compter) {
           window.FX.compter(b, vu[cle], apres);
           a.classList.remove('tbf-vibre');
@@ -715,6 +982,10 @@
           a.classList.add('tbf-vibre');
         } else b.textContent = String(apres);
       }
+      /* La réserve : le sachet vide quand il n'y a rien à ouvrir, puis
+         l'anneau et l'étiquette. */
+      boosters.querySelector('.tbf-fente').classList.toggle('tbf-fente--vide', !(d.packs > 0));
+      tic(d);
 
       /* Les boosters à ouvrir sont l'état « prêt » du tiroir — le « 4 » or
          sur leur tuile, et sur le menu s'il n'y a rien de plus urgent. Pas
@@ -763,13 +1034,18 @@
          solde ne se devine pas. */
       if (scarves === undefined || packs === undefined) { relire(); return; }
       const avatar = 'avatar' in w ? w.avatar : (avant?.avatar ?? null);
+      /* La recharge : ce que l'annonce en dit, sinon ce qu'on en savait — un
+         gain du carnet ne la change pas (le serveur compte la recharge due
+         avant de verser, R6), et une ouverture la rend avec le portefeuille. */
+      const garde = (cle) => (cle in w ? w[cle] : avant?.[cle]);
+      const recharge = { prochainA: garde('prochainA'), cadenceMs: garde('cadenceMs'), packMax: garde('packMax') };
       /* Les soldes et le niveau, tous deux tels que le serveur vient de les
          rendre : la lecture est complète, rien à redemander. Une relecture
          du niveau déjà en attente n'a plus d'objet. */
       if (niv) {
         clearTimeout(attenteNiveau);
         niveauEnRoute = null;
-        const f = composer({ scarves, packs, avatar }, niv, Date.now());
+        const f = composer({ scarves, packs, avatar, ...recharge }, niv, Date.now());
         retenirHud(f);
         afficher(f);
         return;
@@ -779,7 +1055,7 @@
       const perime = !avant || Date.now() - avant.t >= DUREE_HUD;
       /* Retenu avec l'heure de la dernière lecture complète, et non celle de
          l'annonce : le niveau qu'on garde n'a pas été relu, lui. */
-      const d = composer({ scarves, packs, avatar }, avant?.niveau ?? null, avant?.t ?? 0);
+      const d = composer({ scarves, packs, avatar, ...recharge }, avant?.niveau ?? null, avant?.t ?? 0);
       retenirHud(d);
       if (!change && !perime) { afficher(d); return; }
 

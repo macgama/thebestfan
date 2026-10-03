@@ -3289,9 +3289,31 @@ function poserNiveau(niv) {
    au centre l'âge qu'on fait défiler, le HUD montre celui que voient les
    autres. Qui change l'un change l'autre. `qui` est une chaîne, comme celle
    que `nav.js` compare. Le portrait déjà trouvé par la barre est gardé tant
-   que c'est le même personnage : sans lui, elle repasserait par ses refus. */
+   que c'est le même personnage : sans lui, elle repasserait par ses refus.
+
+   **La recharge de la réserve** (lot 4) : la bande du HUD porte l'anneau du
+   prochain booster, et le lit dans la même clé — `prochainA`, `cadenceMs`,
+   `packMax`, par la recette de `rechargeDe` (nav.js). Sans eux, le premier
+   écran ouvert d'ici montrait le compte des boosters sans son anneau
+   pendant la demi-minute où la clé tient. Chacun seulement s'il est servi :
+   `nextPackInMs` à `null` est une réponse (la réserve est pleine, rien ne se
+   recharge) et s'écrit `null` ; absent, il ne s'écrit pas. Il est compté à
+   l'instant de la réponse (R3), d'où `luA` : l'heure où le portefeuille est
+   arrivé, et non celle où le niveau, attendu après lui, a fini d'arriver —
+   l'anneau partirait d'autant en retard. */
 const CLE_HUD = 'tbf-hud';
-function retenirHud(qui, w, niv) {
+function rechargeHud(w, luA) {
+  const r = {};
+  const ms = w.nextPackInMs;
+  if (ms === null) r.prochainA = null;
+  else if (ms !== undefined && ms !== '' && Number.isFinite(Number(ms))) {
+    r.prochainA = luA + Math.max(0, Number(ms));
+  }
+  if (Number(w.cadenceMs) > 0) r.cadenceMs = Number(w.cadenceMs);
+  if (Number.isInteger(Number(w.packMax)) && Number(w.packMax) >= 1) r.packMax = Number(w.packMax);
+  return r;
+}
+function retenirHud(qui, w, niv, luA = Date.now()) {
   if (!w || !Number.isFinite(Number(w.scarves))) return;
   const a = w.avatar;
   const avatar = a?.id ? { id: String(a.id), age: String(a.age ?? a.id),
@@ -3310,6 +3332,7 @@ function retenirHud(qui, w, niv) {
       portrait: meme ? (avant.portrait ?? null) : null,
       niveau: Number(niv?.niveau) > 0 ? { niveau: Number(niv.niveau),
         dans: Number(niv.dans) || 0, pour: Number(niv.pour) || 0, max: Boolean(niv.max) } : null,
+      ...rechargeHud(w, luA),
     }));
   } catch { /* stockage fermé : l'écran suivant relira, comme avant */ }
 }
@@ -4932,13 +4955,18 @@ function feterNiveau(niveau) {
    * posé au moment du `await`, le rattrapage arriverait trop tard pour les cinq
    * qui patientent. Chacune rend `null` en cas d'échec, et les blocs qui
    * suivent testaient déjà leur résultat — ils se taisent comme avant.
+   *
+   * `collLuA` retient l'heure où le portefeuille est arrivé : la recharge
+   * qu'il sert est comptée à cet instant (voir `retenirHud`).
    */
+  let collLuA = Date.now();
   const P = {
     etat: lire('/api/me/state', { credentials: 'same-origin' }).catch(() => null),
     niveau: lire('/api/niveau', { credentials: 'same-origin' }).catch(() => null),
     parcours: lire('/api/aide/parcours', { credentials: 'same-origin' }).catch(() => null),
     dex: lire('/api/fanzzy/dex').catch(() => null),
-    coll: lire('/api/fanzzy/state', { credentials: 'same-origin' }).catch(() => null),
+    coll: lire('/api/fanzzy/state', { credentials: 'same-origin' })
+      .then((j) => { collLuA = Date.now(); return j; }).catch(() => null),
     biblio: lire('/api/fanzzy/bibliotheque', { credentials: 'same-origin' }).catch(() => null),
     /* Deux de plus au lot 2, pour la bâche du jour : le direct, qui était lu
        après tout le reste — la case se serait d'abord peinte sans lui, puis
@@ -5154,7 +5182,7 @@ function feterNiveau(niveau) {
     if (bourseLisible(coll?.wallet)) poserBourse(user.id, coll.wallet);
     /* Ce que le HUD des autres écrans aurait relu : le portefeuille et le
        niveau, déjà là (voir `retenirHud`). */
-    retenirHud(String(user.id ?? user.pseudo), coll?.wallet, await P.niveau);
+    retenirHud(String(user.id ?? user.pseudo), coll?.wallet, await P.niveau, collLuA);
     /* ------------------------------------------- le Fanzzy au centre
 
        C'est **le Fanzzy équipé** — `active_fanzzy`, celui que le joueur choisit

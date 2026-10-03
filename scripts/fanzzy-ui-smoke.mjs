@@ -252,6 +252,100 @@ async function ouvrir({ sansCache = false } = {}) {
   return page;
 }
 
+/**
+ * Les âges d'une lignée, du premier au dernier, **dans le catalogue servi**
+ * (`SERVI`, lu plus bas) : c'est lui que la page dessine, noms compris — la
+ * base peut avoir renommé une carte que `dex.js` amorçait autrement.
+ */
+function agesDe(racine) {
+  const ages = [];
+  let age = SERVI.find((f) => f.id === racine);
+  while (age && !ages.includes(age) && ages.length < 8) {
+    ages.push(age);
+    const suivant = age.evo;
+    age = suivant ? SERVI.find((f) => f.id === suivant) : null;
+  }
+  return ages;
+}
+
+/**
+ * **L'album entier, page par page, tel qu'il se dessine** (lot 4).
+ *
+ * Le classeur était une grille : tout y était monté, et un `querySelectorAll`
+ * la lisait d'un coup. Il est devenu un album — une page par série — qui ne
+ * monte que la page ouverte et ses deux voisines : un album de sept cents
+ * cartes n'en monte pas sept cents. Une lecture d'un coup ne voit donc plus
+ * que trois pages, et les contrôles qui comptaient « une case par âge »
+ * mesuraient un quart du classeur en croyant mesurer le tout.
+ *
+ * On tourne donc les pages **comme un joueur** : on touche chaque onglet du
+ * rail, et on lit la page qu'il vient de monter. La page visée et ses
+ * voisines sont montées dans le geste même (`aller`, fanzzy.html), avant que
+ * le défilement ne commence : la lecture qui suit le toucher est celle de la
+ * page pleine, que le défilement doux soit fini ou non. On revient enfin à la
+ * première page : les contrôles suivants lisent l'album tel qu'on l'ouvre.
+ *
+ * Chaque case est rendue par ce qu'elle montre : une carte (`.fz`, avec son
+ * identifiant d'âge, au secret ou non, avec ou sans prix) ou une pochette
+ * (son numéro, son étiquette, sa silhouette). Les styles calculés sont lus
+ * dans la page : ce que l'œil voit, pas la classe posée.
+ *
+ * `stade` est le rang de la case dans sa lignée, compté dans l'ordre de la
+ * page : une pochette ne porte que sa lignée (`data-open`) — c'est voulu, elle
+ * ne dit pas qui elle cache. Ce compte suppose que les âges d'une lignée se
+ * suivent, et c'est justement un contrôle de cette suite : s'il casse, il le
+ * dit avant que ces rangs ne mentent.
+ */
+async function parcourirAlbum(p) {
+  const pages = await p.evaluate(() => {
+    const lues = [];
+    for (const o of document.querySelectorAll('#series .tbf-album-onglet:not([data-verrou])')) {
+      o.click();
+      const sec = [...document.querySelectorAll('#grid .tbf-album-page')]
+        .find((s) => s.dataset.page === o.dataset.serie);
+      if (!sec) { lues.push({ serie: o.dataset.serie, compte: null, complet: false, cases: [] }); continue; }
+      lues.push({
+        serie: o.dataset.serie,
+        compte: sec.querySelector('.tbf-album-compte')?.textContent.replace(/\s+/g, ' ').trim() ?? null,
+        complet: Boolean(sec.querySelector('.tbf-album-tete > .tbf-tampon')),
+        cases: [...sec.querySelectorAll('[data-open]')].map((el) => {
+          const pochette = el.classList.contains('tbf-album-pochette');
+          const fz = pochette ? null : el.querySelector('.fz');
+          const img = pochette ? el.querySelector(':scope > img') : null;
+          const illu = fz?.querySelector('.illu');
+          return {
+            open: el.dataset.open,
+            pochette,
+            id: fz?.dataset.id ?? null,
+            secret: Boolean(fz?.classList.contains('fz-secret')),
+            verrou: Boolean(fz?.classList.contains('fz-verrou')),
+            prix: Boolean(fz?.querySelector('.fz-prix')),
+            num: pochette ? el.querySelector(':scope > b')?.textContent.replace(/\s+/g, ' ').trim() ?? '' : null,
+            dit: el.getAttribute('aria-label') ?? '',
+            img: Boolean(img),
+            filtreImg: img ? getComputedStyle(img).filter : null,
+            bord: pochette ? getComputedStyle(el).borderTopStyle : null,
+            flou: illu ? getComputedStyle(illu).filter : null,
+          };
+        }),
+      });
+    }
+    document.querySelector('#series .tbf-album-onglet:not([data-verrou])')?.click();
+    return lues;
+  });
+  for (const pg of pages) {
+    const rangs = new Map();
+    for (const c of pg.cases) {
+      c.stade = (rangs.get(c.open) ?? 0) + 1;
+      rangs.set(c.open, c.stade);
+    }
+  }
+  /* Le défilement doux vers une page voisine se pose après la lecture : on
+     le laisse finir avant de rendre la main. */
+  await dodo(900);
+  return pages;
+}
+
 /* ------------------------------------------ le catalogue vient du réseau
 
    `PUBLIE` et non `DEX` : trente-deux anciennes cartes sont dépubliées parce
@@ -271,6 +365,10 @@ async function ouvrir({ sansCache = false } = {}) {
   check('les taux de tirage couvrent les deux emplacements rares',
     Boolean(reponse.rates?.[4] && reponse.rates?.[5]));
 }
+
+/* Le catalogue tel que le serveur le sert, gardé pour les contrôles de
+   l'album : les étiquettes des pochettes y prennent leurs noms. */
+const SERVI = (await (await fetch(base + '/api/fanzzy/dex')).json().catch(() => null))?.dex ?? [];
 
 const page = await ouvrir();
 
@@ -321,8 +419,10 @@ const page = await ouvrir();
 
   await avatar.reload({ waitUntil: 'networkidle0' });
   /* « MON FANZZY » est l'onglet par défaut : on attend son titre, qui n'existe
-     qu'une fois la collection lue et la scène montée. */
-  await avatar.waitForFunction(() => document.querySelector('.ttxt h2'),
+     qu'une fois la collection lue et la scène montée. Depuis le lot 4, ce
+     titre est la banderole du vestiaire (`.tbf-vestiaire-pied > h2`), sous la
+     scène qui est un lien vers la fiche (`#tscene`). */
+  await avatar.waitForFunction(() => document.querySelector('#tscene .tbf-vestiaire-pied h2'),
     { timeout: 10000 }).catch(() => null);
   /* La scène pose ses images après les avoir décodées : sans cette attente, on
      mesure des calques encore vides et l'on conclut à l'absence de dessin. */
@@ -348,7 +448,7 @@ const page = await ouvrir();
     }
     return { urls,
       svg: Boolean(el && el.querySelector('svg')),
-      nom: document.querySelector('.ttxt h2')?.textContent?.trim() ?? null };
+      nom: document.querySelector('#tscene .tbf-vestiaire-pied h2')?.textContent?.trim() ?? null };
   });
 
   check(`l’avatar nomme le second âge (${vu.nom})`, Boolean(vu.nom));
@@ -394,39 +494,59 @@ check('la page se charge sans erreur de script', erreurs.length === 0);
    chose qu'on paie, exactement comme le faisait la fiche avant qu'on la
    corrige.
 
-   Le flou, donc, et pas la case vide : on garde la carrure et la lumière. */
-{
-  const cases = await page.evaluate(() => {
-    const l = [...document.querySelectorAll('.slot.locked')];
-    return {
-      total: l.length,
-      /* L'étoile dit l'âge : une pour le deuxième, deux pour le troisième.
-         C'est la seule marque lisible depuis le DOM de la grille. */
-      premiers: l.filter((n) => !n.querySelector('.stade')).length,
-      superieurs: l.filter((n) => n.querySelector('.stade')).length,
-      premiersFloutes: l.filter((n) => !n.querySelector('.stade')
-        && n.classList.contains('secret')).length,
-      superieursFloutes: l.filter((n) => n.querySelector('.stade')
-        && n.classList.contains('secret')).length,
-      /* On lit le filtre calculé, pas la classe : c'est lui qui décide de ce
-         qu'on voit, et une feuille de style renommée le dirait aussitôt. */
-      flouReel: (() => {
-        const n = l.find((x) => x.classList.contains('secret'))?.querySelector('.art');
-        return n ? getComputedStyle(n).filter : null;
-      })(),
-    };
-  });
+   Le flou, donc, et pas la case vide : on garde la carrure et la lumière.
 
-  check(`le classeur montre des cases verrouillées (${cases.total})`, cases.total > 0);
-  check(`un premier âge reste en ombre, sans flou (${cases.premiers})`,
-    cases.premiersFloutes === 0
-    || (console.log('        floutés :', cases.premiersFloutes, 'sur', cases.premiers), false));
-  check(`un âge supérieur non acheté est flouté (${cases.superieurs})`,
-    cases.superieurs === 0 || cases.superieursFloutes === cases.superieurs
-    || (console.log('        floutés :', cases.superieursFloutes, 'sur', cases.superieurs), false));
+   **Depuis le lot 4, ce ne sont plus deux cases grises.** Ce qu'on n'a pas
+   est une **pochette numérotée** : la silhouette du premier âge au pochoir —
+   il se tire, le voir donne envie —, et rien du tout pour un âge d'une
+   lignée qu'on n'a pas, qui se cache. L'âge supérieur d'une lignée qu'on
+   possède, lui, est **la carte au secret** (`fz-secret`, cardHTML) : floue,
+   et l'âge suivant porte son prix. Le flou reste ce qu'on achète ; il se
+   mesure toujours sur le dessin, et plus seulement sur une case.
+
+   Le classeur est ouvert ici, et lu en entier (`parcourirAlbum`) : la grille
+   se montait derrière « MON FANZZY », l'album ne se monte qu'à l'ouverture.
+   L'onglet est mis au premier plan d'abord — le défilement doux d'un onglet
+   caché ne finit pas, et l'album tourne ses pages en glissant. */
+await page.bringToFront();
+await page.evaluate(() => [...document.querySelectorAll('button')]
+  .find((b) => /CLASSEUR/i.test(b.textContent))?.click());
+await jusqua(async () => await page.evaluate(() =>
+  document.querySelectorAll('#grid [data-open]').length > 0));
+const ALBUM = await parcourirAlbum(page);
+const CASES = ALBUM.flatMap((p) => p.cases);
+/* L'âge atteint de chaque lignée du compte, tel que le banc l'a semé : TR32
+   au second âge, les autres au premier. Le bloc de l'avatar, plus haut, a
+   rendu ce qu'il avait emprunté. */
+const ATTEINT = new Map(COLLECTION.map((id) => [id, id === 'TR32' ? 2 : 1]));
+{
+  const verrouillees = CASES.filter((c) => c.pochette || c.secret || c.verrou);
+  const premiers = CASES.filter((c) => c.pochette && c.stade === 1);
+  const superieurs = CASES.filter((c) => ATTEINT.has(c.open) && c.stade > ATTEINT.get(c.open));
+  check(`le classeur montre des cases verrouillées (${verrouillees.length})`, verrouillees.length > 0);
+  check(`un premier âge reste en ombre, sans flou (${premiers.length})`,
+    (premiers.length > 0 && premiers.every((c) => !/blur\(/.test(c.filtreImg ?? '')))
+    || (console.log('        floutés :', premiers.filter((c) => /blur\(/.test(c.filtreImg ?? '')).length,
+      'sur', premiers.length), false));
+  /* Un âge qu'on paie est **la carte au secret**, jamais une pochette : la
+     pochette dit « il se tire », et aucun booster ne le donne. */
+  check(`un âge supérieur non acheté est flouté (${superieurs.length})`,
+    (superieurs.length > 0 && superieurs.every((c) => !c.pochette && c.secret))
+    || (console.log('        ', JSON.stringify(superieurs.filter((c) => c.pochette || !c.secret)
+      .slice(0, 3).map((c) => [c.open, c.stade, c.pochette ? 'pochette' : c.id]))), false));
+  /* On lit le filtre calculé du dessin, pas la classe : c'est lui qui décide
+     de ce qu'on voit, et une feuille de style renommée le dirait aussitôt.
+     Une carte sans dessin (la silhouette géométrique) n'a rien à flouter. */
+  const mesures = superieurs.filter((c) => c.flou !== null);
   check('et le flou est bien appliqué, pas seulement annoncé',
-    cases.superieurs === 0 || /blur\(/.test(cases.flouReel ?? '')
-    || (console.log('        filtre :', cases.flouReel), false));
+    (mesures.length > 0 && mesures.every((c) => /blur\(/.test(c.flou)))
+    || (console.log('        filtres :', [...new Set(mesures.map((c) => c.flou))].join(' · ')
+      || 'aucun dessin à mesurer'), false));
+  /* Le flou est ce qu'on paie : l'âge **suivant** porte son prix en
+     écharpes, celui d'après n'en porte pas — il faudra d'abord l'autre. */
+  check('l’âge suivant porte son prix, et celui d’après non',
+    superieurs.every((c) => c.prix === (c.stade === ATTEINT.get(c.open) + 1))
+    || (console.log('        ', JSON.stringify(superieurs.map((c) => [c.id, c.stade, c.prix]))), false));
 }
 if (erreurs.length) console.log('   ', erreurs.slice(0, 3));
 
@@ -451,7 +571,7 @@ if (process.env.SHOT) {
 await page.evaluate(() => [...document.querySelectorAll('button')]
   .find((b) => /CLASSEUR/i.test(b.textContent))?.click());
 await jusqua(async () => await page.evaluate(() =>
-  document.querySelectorAll('#grid .slot').length > 0));
+  document.querySelectorAll('#grid [data-open]').length > 0));
 
 /* L âge d un Fanzzy, lisible sur la carte.
 
@@ -485,15 +605,24 @@ await jusqua(async () => await page.evaluate(() =>
   check("et rien ne le recouvre", ages.every((a) => !a.chevauche));
 }
 
-const grille = await page.evaluate(() => ({
-  cases: document.querySelectorAll('#grid .slot').length,
-  possedees: document.querySelectorAll('#grid .slot:not(.locked)').length,
-  progression: document.getElementById('progTxt')?.textContent ?? '',
-  /* L'ordre affiche, pour verifier qu'une lignee se lit d'un bloc : TR1, TR1B,
-     TR1C, puis TR2. Trois par rangee, donc une lignee par rangee. */
-  ordre: [...document.querySelectorAll('#grid .slot [data-id]')]
-    .map((c) => c.getAttribute('data-id')),
-}));
+/* Ce que l'album entier montre, lu page par page plus haut (`ALBUM`) : une
+   lecture d'un coup ne verrait que les trois pages montées. */
+const grille = {
+  cases: CASES.length,
+  /* Une carte en clair : ni pochette, ni carte au secret ou sous verrou. */
+  possedees: CASES.filter((c) => !c.pochette && !c.secret && !c.verrou).length,
+  /* L'ordre affiche, page apres page, pour verifier qu'une lignee se lit d'un
+     bloc : TR1, TR1B, TR1C, puis TR2. Trois par rangee, donc une lignee par
+     rangee. Chaque case porte sa lignee (`data-open`) — la pochette d'un age
+     qu'on n'a pas n'a pas d'autre identifiant, et c'est voulu. */
+  ordre: CASES.map((c) => c.open),
+};
+/* L'anneau du classeur, sur le bandeau du vestiaire (lot 4) : il a pris la
+   place du compte d'en-tête « 5/166 » de la grille. */
+const progression = await page.evaluate(() => {
+  const c = document.getElementById('pClasseur');
+  return c ? `${c.querySelector('b')?.textContent.trim() ?? ''}${c.querySelector('small')?.textContent.trim() ?? ''}` : '';
+});
 
 /* **Une case par age**, et non plus une par personnage.
 
@@ -501,9 +630,12 @@ const grille = await page.evaluate(() => ({
    stade atteint. Les deux autres ages existaient, avec leur nom, leur dessin,
    leur cri et leur prix, et n'apparaissaient nulle part : on ne pouvait ni les
    regarder avant de payer, ni les revoir apres. Un classeur est une promesse,
-   et il en cachait les deux tiers. */
+   et il en cachait les deux tiers.
+
+   L'album (lot 4) garde la regle, page par page : la somme des pages est le
+   catalogue publie, toutes series ouvertes. */
 const PERSOS = PUBLIE.filter((f) => !PUBLIE.some((x) => x.evo === f.id));
-check(`la grille affiche un age par case (${grille.cases})`,
+check(`la grille affiche un age par case (${grille.cases} sur ${ALBUM.length} pages)`,
   grille.cases === PUBLIE.length
   || (console.log('        vu', grille.cases, 'pour', PUBLIE.length, 'cartes publiees'), false));
 
@@ -564,6 +696,30 @@ check(`la grille affiche un age par case (${grille.cases})`,
       fautiveLeg[1].filter((g) => g.leg).map((g) => g.n).join(' ')), false));
 }
 
+/* **Seules la page ouverte et ses deux voisines sont montées** — la règle de
+   l'album (brief du lot 4), et la raison de la lecture page par page. On saute
+   au milieu du rail — un saut pose la page, il ne glisse pas —, on laisse le
+   défilement se poser, et on compte les pages qui ont des cases. Seule la page
+   ouverte se touche : les autres sont `inert`, hors de la tabulation et du
+   lecteur d'écran. Puis on revient à la première, comme on l'a trouvée. */
+{
+  const milieu = Math.floor(ALBUM.length / 2);
+  await page.evaluate((s) => [...document.querySelectorAll('#series .tbf-album-onglet')]
+    .find((o) => o.dataset.serie === s)?.click(), ALBUM[milieu]?.serie);
+  await dodo(900);
+  const etat = await page.evaluate(() => [...document.querySelectorAll('#grid .tbf-album-page')]
+    .map((s) => ({ montee: s.childElementCount > 0, inerte: s.inert === true })));
+  const montees = etat.map((e, j) => (e.montee ? j : -1)).filter((j) => j >= 0);
+  const attendues = [milieu - 1, milieu, milieu + 1].filter((j) => j >= 0 && j < etat.length);
+  check(`l’album ne monte que la page ouverte et ses deux voisines (${montees.join(', ')} sur ${etat.length})`,
+    etat.length === ALBUM.length && JSON.stringify(montees) === JSON.stringify(attendues));
+  check('et seule la page ouverte se touche', etat.length > 1
+    && etat.every((e, j) => e.inerte === (j !== milieu))
+    || (console.log('        inertes :', etat.map((e, j) => (e.inerte ? j : null)).filter((j) => j !== null).join(' ')), false));
+  await page.evaluate(() => document.querySelector('#series .tbf-album-onglet:not([data-verrou])')?.click());
+  await dodo(900);
+}
+
 /* Le compte possede suit la meme regle que l'affichage : on possede « le
    Choriste au stade 2 », donc ses deux premiers ages, pas le troisieme. Le
    banc possede cinq personnages, dont un monte au second age. */
@@ -574,18 +730,62 @@ check(`les cartes possedees sont distinguees (${grille.possedees})`,
    Les quatorze âges supérieurs des sept lignées ne s'obtiennent pas en booster,
    ils s'achètent en écharpes : les mettre au dénominateur promettait au joueur
    quatorze cartes qu'aucune ouverture ne pouvait lui donner, et la jauge
-   n'aurait jamais atteint le bout. */
+   n'aurait jamais atteint le bout.
 
-check('la progression compte les personnages, pas leurs âges',
-  grille.progression === `5/${PERSOS.length}`);
+   Depuis le lot 4, la progression se lit à deux endroits : l'anneau du
+   classeur sur le bandeau du vestiaire (« 5/166 »), et l'en-tête de chaque
+   page d'album (« 2 / 35 »). Les deux comptent des personnages : la somme des
+   pages doit retomber sur l'anneau, sans quoi l'un des deux ment. */
 
-// La grille se peuplait déjà mal quand une seule chose manquait : ce contrôle
-// vaut pour toutes les cartes non possédées, celles qui passent par `esc`.
-check('les Fanzzy non possédés portent leur nom',
-  await page.evaluate(() => {
-    const v = document.querySelector('#grid .slot.locked');
-    return Boolean(v && v.textContent.trim().length > 2);
-  }));
+check(`la progression compte les personnages, pas leurs âges (${progression})`,
+  progression === `5/${PERSOS.length}`);
+{
+  const comptes = ALBUM.map((p) => /^(\d+)\s*\/\s*(\d+)$/.exec(p.compte ?? '')).filter(Boolean);
+  const eus = comptes.reduce((s, m) => s + Number(m[1]), 0);
+  const tous = comptes.reduce((s, m) => s + Number(m[2]), 0);
+  check(`et chaque page compte les siens (${eus} / ${tous} sur ${comptes.length} pages)`,
+    (comptes.length === ALBUM.length && eus === 5 && tous === PERSOS.length)
+    || (console.log('        en-têtes :', ALBUM.map((p) => `${p.serie} ${p.compte}`).join(' · ')), false));
+}
+
+/* La grille se peuplait déjà mal quand une seule chose manquait : ce contrôle
+   vaut pour toutes les cartes non possédées, celles qui passent par `esc`.
+
+   **Depuis le lot 4, une carte qu'on n'a pas est une pochette numérotée.** On
+   y lit « N° 013 », et c'est voulu : on sait ce qu'on cherche sans qu'on nous
+   le donne. Le nom reste dit — au lecteur d'écran, dans l'étiquette — pour un
+   premier âge, celui qu'un booster donne. Un âge d'une lignée qu'on n'a pas ne
+   se nomme pas, même là : ce serait donner d'avance ce qu'on paie. Et le
+   numéro est la place de la carte dans sa série, compté sur la série
+   entière : il ne bouge ni au filtre, ni d'une visite à l'autre. */
+{
+  const nomDe = (id) => SERVI.find((f) => f.id === id)?.nom ?? '';
+  const pochettes = CASES.filter((c) => c.pochette);
+  const premiers = pochettes.filter((c) => c.stade === 1);
+  const caches = pochettes.filter((c) => c.stade > 1);
+  const sansNumero = pochettes.filter((c) => !/^N°\s*\d{3,}$/.test(c.num ?? ''));
+  check(`les Fanzzy non possédés portent leur numéro de pochette (${pochettes.length})`,
+    (pochettes.length > 0 && sansNumero.length === 0)
+    || (console.log('        il dit :', JSON.stringify(sansNumero.slice(0, 3).map((c) => [c.open, c.num]))), false));
+  const muets = premiers.filter((c) => !nomDe(c.open) || !c.dit.includes(nomDe(c.open)));
+  check('et leur nom pour qui ne voit pas l’image', (premiers.length > 0 && muets.length === 0)
+    || (console.log('        étiquettes :', JSON.stringify(muets.slice(0, 3).map((c) => c.dit))), false));
+  const bavards = caches.filter((c) => {
+    const age = agesDe(c.open)[c.stade - 1];
+    return Boolean(age?.nom) && c.dit.includes(age.nom);
+  });
+  check(`mais un âge d’une lignée qu’on n’a pas ne se nomme pas (${caches.length})`,
+    (caches.length > 0 && bavards.length === 0)
+    || (console.log('        étiquettes :', JSON.stringify(bavards.slice(0, 3).map((c) => c.dit))), false));
+  /* Sur une série ouverte seulement : une série fermée ne montre que les
+     lignées qu'on a, et ses numéros sautent les autres. */
+  const decales = ALBUM.filter((p) => /\//.test(p.compte ?? '')).flatMap((p) => p.cases
+    .map((c, k) => ({ c, k, serie: p.serie }))
+    .filter(({ c, k }) => c.pochette && c.num !== `N° ${String(k + 1).padStart(3, '0')}`));
+  check('et ce numéro est la place de la carte dans sa série', decales.length === 0
+    || (console.log('        ', JSON.stringify(decales.slice(0, 3).map(({ c, k, serie }) =>
+      [serie, k + 1, c.num]))), false));
+}
 
 /* --------------------------------------------- ce que la grille montre
 
@@ -597,24 +797,27 @@ check('les Fanzzy non possédés portent leur nom',
  * gris — neuf sur douze à l'écran, et la grille ressemblait à un formulaire.
  * Et le cadre des cartes portait la couleur du **type**, si bien qu'une
  * commune et une légendaire du même type se ressemblaient trait pour trait.
+ *
+ * Depuis le lot 4, ce qu'on n'a pas est une **pochette** : un pointillé de
+ * craie au format de la carte, la silhouette du premier âge au pochoir, et le
+ * numéro dessous à la place du cadenas — on sait ce qui manque, et où il se
+ * range. Lu sur l'album entier (`CASES`), sous garde : quand la silhouette
+ * disparaît, ce contrôle doit rougir, pas faire tomber la suite sur un
+ * `null`. Un test qui plante n'annonce pas ce qu'il a trouvé.
  */
 {
-  const vide = await page.evaluate(() => {
-    const v = document.querySelector('#grid .slot.locked');
-    const dessin = v?.querySelector('.art') ?? null;
-    return {
-      dessin: Boolean(dessin),
-      cadenas: Boolean(v?.querySelector('.cadenas')),
-      // Assombri, mais pas éteint : une silhouette qu'on ne distingue pas ne
-      // vaut pas mieux qu'une case vide.
-      // Lu sous garde : quand le dessin disparaît, ce contrôle doit rougir,
-      // pas faire tomber la suite entière sur un `null`. Un test qui plante
-      // n'annonce pas ce qu'il a trouvé.
-      filtre: dessin ? getComputedStyle(dessin).filter : '',
-    };
-  });
-  check('un Fanzzy qu’on n’a pas montre quand même son personnage', vide.dessin);
-  check('en ombre, avec un cadenas', vide.cadenas && /grayscale|brightness/.test(vide.filtre));
+  const premiers = CASES.filter((c) => c.pochette && c.stade === 1);
+  const dessines = premiers.filter((c) => c.img);
+  check(`un Fanzzy qu’on n’a pas montre quand même son personnage (${dessines.length} silhouettes)`,
+    dessines.length > 0);
+  /* Assombri, mais pas éteint : une silhouette qu'on ne distingue pas ne vaut
+     pas mieux qu'une case vide. Et en pointillé : c'est ce qui dit « la place
+     d'une carte », et non une carte grise. */
+  check('en ombre, dans sa pochette en pointillé',
+    (dessines.length > 0 && dessines.every((c) => /grayscale|brightness/.test(c.filtreImg ?? ''))
+      && CASES.filter((c) => c.pochette).every((c) => c.bord === 'dashed'))
+    || (console.log('        filtres :', [...new Set(dessines.map((c) => c.filtreImg))].join(' · '),
+      '· bords :', [...new Set(CASES.filter((c) => c.pochette).map((c) => c.bord))].join(' · ')), false));
 
   /* La rareté est la seule chose qu'on montre aux autres : elle doit se lire
      sur la vignette. On compare la couleur de cadre d'une commune et d'une
@@ -633,15 +836,56 @@ check('les Fanzzy non possédés portent leur nom',
     !teintes.legendaire || (teintes.legendaire !== teintes.commune
       && teintes.legendaire !== teintes.rare));
 
-  /* `\s` et non un espace littéral : un espace insécable s'était glissé dans
+  /* **Ce qui reste à trouver.** L'en-tête de la grille l'écrivait
+     (« 138 à trouver »). Depuis le lot 4, chaque page d'album dit son compte
+     (« 2 / 68 », ou le tampon COMPLET), et ce qui reste **se montre** :
+     l'interrupteur « ce qu'il me reste » ne laisse sur la page que les cases
+     à trouver — les pochettes et les âges à payer. On tourne l'album jusqu'à
+     la page de TR32 (elle a des cartes en clair, donc quelque chose à
+     retirer), on le touche, on compte, et on le rend.
+
+     `\s` et non un espace littéral : un espace insécable s'était glissé dans
      le gabarit, invisible dans l'éditeur comme dans le message d'échec, et le
      contrôle échouait sur un texte qui paraissait exactement juste. Un test
      qui ne peut pas montrer ce qu'il reproche coûte une demi-heure. */
-  const reste = await page.$eval('#progReste', (n) => n.textContent);
-  check('l’en-tête annonce ce qui reste à trouver',
-    /\d+\s+à\s+trouver|complète/.test(reste)
-    || (console.log('        il dit :',
-      [...reste].map((c) => c.codePointAt(0).toString(16)).join(' ')), false));
+  const laSerie = PUBLIE.find((f) => f.id === 'TR32').set;
+  const avant = ALBUM.find((p) => p.serie === laSerie);
+  await page.evaluate((s) => [...document.querySelectorAll('#series .tbf-album-onglet')]
+    .find((o) => o.dataset.serie === s)?.click(), laSerie);
+  await dodo(900);
+  const lireReste = () => page.evaluate((s) => {
+    const sec = [...document.querySelectorAll('#grid .tbf-album-page')].find((x) => x.dataset.page === s);
+    const cases = sec ? [...sec.querySelectorAll('[data-open]')] : [];
+    const enClair = (c) => {
+      const fz = c.querySelector('.fz');
+      return Boolean(fz) && !fz.classList.contains('fz-secret') && !fz.classList.contains('fz-verrou');
+    };
+    return {
+      coche: document.querySelector('#filtres .tbf-interrupteur')?.getAttribute('aria-checked') ?? null,
+      montee: Boolean(sec?.childElementCount),
+      n: cases.length,
+      enClair: cases.filter(enClair).length,
+      compte: sec?.querySelector('.tbf-album-compte')?.textContent.replace(/\s+/g, ' ').trim() ?? null,
+    };
+  }, laSerie);
+  await page.evaluate(() => document.querySelector('#filtres .tbf-interrupteur')?.click());
+  await dodo(300);
+  const reste = await lireReste();
+  await page.evaluate(() => document.querySelector('#filtres .tbf-interrupteur')?.click());
+  await dodo(300);
+  const rendu = await lireReste();
+  const aTrouver = (avant?.cases ?? []).filter((c) => c.pochette || c.secret || c.verrou).length;
+  check(`l’en-tête de chaque page dit son compte, ou COMPLET (${avant?.compte})`,
+    ALBUM.every((p) => /^\d+\s*\/\s*\d+$/.test(p.compte ?? '') || p.complet)
+    || (console.log('        il dit :', [...(ALBUM.find((p) => !/^\d+\s*\/\s*\d+$/.test(p.compte ?? '')
+      && !p.complet)?.compte ?? '')].map((c) => c.codePointAt(0).toString(16)).join(' ')), false));
+  check(`« ce qu’il me reste » ne laisse que ce qui est à trouver (${reste.n} sur ${avant?.cases.length})`,
+    (reste.coche === 'true' && reste.montee && reste.enClair === 0 && reste.n === aTrouver && aTrouver > 0)
+    || (console.log('        il montre :', JSON.stringify(reste), 'attendu', aTrouver), false));
+  check('et le compte de la page ne bouge pas avec lui', reste.compte === avant?.compte);
+  check('le retoucher rend la page entière',
+    rendu.coche === 'false' && rendu.n === (avant?.cases.length ?? -1)
+    || (console.log('        il montre :', JSON.stringify(rendu)), false));
 }
 
 /* ------------------------------------------- la fiche, en un seul écran
@@ -1141,7 +1385,12 @@ check('les Fanzzy non possédés portent leur nom',
         const art = document.getElementById('fiche-art');
         return {
           secret: art.classList.contains('secret'),
-          mot: art.querySelector('.secret-mot')?.textContent.replace(/\s+/g, ' ').trim() ?? null,
+          /* Le mot est sur **la bande du nom de la carte** depuis le lot 4
+             (cardHTML, option `secret`) : « ÂGE À VENIR » y remplace le nom,
+             au lieu d'une phrase posée sur le dessin — un nom flouté se
+             lisait comme une panne d'affichage. Absent dès que la carte
+             n'est plus au secret. */
+          mot: art.querySelector('.fz.fz-secret .nm')?.textContent.replace(/\s+/g, ' ').trim() ?? null,
           /* Le décor doit rester **net** : c'est lui qui porte l'aura de
              rareté, et flouter les deux ferait une tache. */
           flouDecor: (() => {
@@ -1299,34 +1548,71 @@ check('les Fanzzy non possédés portent leur nom',
       check('la plaque ne mange ni l’aura de rareté ni la lumière',
         /url\(#au/.test(rendus.peinte) && /<circle cx="50" cy="62"/.test(rendus.peinte));
 
-      /* **Le palier suit l'âge, la tenue choisit la série de plaques.**
+      /* **Le palier suit la rareté, la tenue choisit la série de plaques**
+         (lot 4, `palierDecor` dans fanzzy-fond.js).
 
-         Premier âge commune, deuxième rare, troisième épique, et légendaire
-         pour une légende. On ne nomme pas les fichiers attendus : on les
-         déduit de la règle et de ce qui est publié, pour que le contrôle
-         tienne le jour où les plaques préhistoriques arrivent. */
+         Il a suivi l'âge — premier âge commune, deuxième rare, troisième
+         épique. Mais la plaque est le fond d'une **carte**, et la carte dit
+         sa rareté par sa couleur, sa forme, son mot et sa matière : un état
+         rare tiré au premier âge, une tenue épique, se tenaient dans le
+         gradin gris d'une commune sous un liseré violet. Deux codes pour une
+         seule information. Une commune au deuxième âge reste donc dans le
+         gradin d'une commune ; dans une lignée, rien ne change, ses âges
+         étant commune, rare, épique dans l'ordre. **L'âge ne reste que le
+         repli** de qui ne connaît pas la rareté — d'où la dernière ligne de
+         la table, sans rareté.
+
+         On ne nomme pas les fichiers attendus : on les déduit de la règle et
+         de ce qui est publié, pour que le contrôle tienne le jour où les
+         plaques préhistoriques arrivent. */
       const { existsSync: existe } = await import('node:fs');
       const publiee = (c) => existe(path.join(RACINE, 'public', 'img', 'fonds', c + '.webp'));
       const regle = await fiche.evaluate(() => {
         const cas = [];
         for (const skin of ['base', 'halloween', 'prehistorique', 'apocalyptique']) {
-          for (const [stage, rar] of [[1, 'commune'], [2, 'commune'], [3, 'rare'], [1, 'legendaire']]) {
-            const svg = window.TBF_FOND.fond({ id: 'RP1', set: 'RP', type: 'tifo', stage, rar, skin });
+          for (const [stage, rar] of [[1, 'commune'], [2, 'commune'], [3, 'rare'], [1, 'legendaire'], [2, null]]) {
+            const f = { id: 'RP1', set: 'RP', type: 'tifo', stage, skin };
+            if (rar) f.rar = rar;
+            const svg = window.TBF_FOND.fond(f);
             cas.push({ skin, stage, rar, img: /<image href="\/img\/fonds\/([a-zA-Z]+-[a-z]+)\./.exec(svg)?.[1] ?? null });
           }
         }
         return cas;
       });
       const fautes = regle.filter((c) => {
-        const palier = c.rar === 'legendaire' ? 'legendaire' : ['commune', 'rare', 'epique'][c.stage - 1];
+        const palier = c.rar ?? ['commune', 'rare', 'epique'][c.stage - 1];
         const attendu = publiee(`${c.skin}-${palier}`) ? `${c.skin}-${palier}`
           : c.skin === 'base' && publiee(`RP-${palier}`) ? `RP-${palier}` : null;
         return c.img !== attendu;
       });
-      check(`le décor suit la tenue et l’âge (${regle.length - fautes.length}/${regle.length})`,
+      check(`le décor suit la tenue et la rareté (${regle.length - fautes.length}/${regle.length})`,
         fautes.length === 0
         || (console.log('        ', fautes.slice(0, 3).map((c) =>
-          `${c.skin} âge ${c.stage} ${c.rar} → ${c.img}`).join(' | ')), false));
+          `${c.skin} âge ${c.stage} ${c.rar ?? 'sans rareté'} → ${c.img}`).join(' | ')), false));
+
+      /* **Et une carte ne prend jamais la plaque d'une tenue** (lot 4,
+         `plaqueCarte`) : son fond est la plaque de sa rareté, `RP-<rareté>`,
+         quelles que soient sa série, son âge et sa tenue. Une grille où
+         chaque tenue repeint son gradin se lisait comme quatre collections ;
+         les plaques de tenue restent au vestiaire, où l'on regarde son
+         Fanzzy habillé. `cardHTML` demande ce fond-là (`{ carte: true }`). */
+      const cartes = await fiche.evaluate(() => {
+        const cas = [];
+        for (const skin of ['base', 'halloween', 'prehistorique', 'apocalyptique']) {
+          for (const [set, stage, rar] of [['RP', 1, 'commune'], ['TR', 1, 'rare'], ['MS', 3, 'epique'],
+            ['TR', 1, 'legendaire'], ['RP', 2, 'commune']]) {
+            const svg = window.TBF_FOND.fond({ id: `${set}1`, set, type: 'tifo', stage, rar, skin }, { carte: true });
+            cas.push({ skin, set, stage, rar, img: /<image href="\/img\/fonds\/([a-zA-Z]+-[a-z]+)\./.exec(svg)?.[1] ?? null });
+          }
+        }
+        return cas;
+      });
+      const fautesCarte = cartes.filter((c) => c.img !== (publiee(`RP-${c.rar}`) ? `RP-${c.rar}` : null));
+      check(`une carte se tient devant la plaque de sa rareté, quelle que soit sa tenue (${
+        cartes.length - fautesCarte.length}/${cartes.length})`,
+        fautesCarte.length === 0
+        || (console.log('        ', fautesCarte.slice(0, 3).map((c) =>
+          `${c.set} ${c.skin} âge ${c.stage} ${c.rar} → ${c.img}`).join(' | ')), false));
 
       /* Les trois formats, comme partout : `negocierAvif` ne remplace
          l'extension que si le fichier AVIF existe, donc un décor publié en WebP
@@ -1422,9 +1708,12 @@ check('les Fanzzy non possédés portent leur nom',
     await evolue.setViewport({ width: 400, height: 880 });
     await evolue.goto(`${base}/fanzzy/TR32`, { waitUntil: 'networkidle0' });
     await evolue.waitForSelector('.fiche .art img', { timeout: 8000 }).catch(() => {});
+    /* Le nom est en tête de la fiche depuis le lot 4 (`#fiche-nom`, dans le
+       `h1`, à côté des galons) : la carte tenue en main porte le sien sur sa
+       bande, et la vitrine n'a plus de légende dessous. */
     const age = await evolue.evaluate(() => ({
       dessin: document.querySelector('.fiche .art img')?.getAttribute('src') ?? '',
-      nom: document.querySelector('.fiche h2')?.textContent.trim() ?? '',
+      nom: document.getElementById('fiche-nom')?.textContent.trim() ?? '',
     }));
     check('la fiche montre le dessin de l’âge atteint, pas celui de la lignée',
       /TR32B/.test(age.dessin)
@@ -1485,11 +1774,23 @@ check('les Fanzzy non possédés portent leur nom',
  *
  * On mesure le blanc réel de chaque côté du texte. Une page où tous les
  * onglets ont le même gabarit a le même blanc partout.
+ *
+ * **Depuis le lot 4, les onglets à mots sont ceux du rail des séries**
+ * (`#series .tbf-album-onglet`, l'emblème puis le nom) : c'est désormais lui,
+ * le rail qui défile, et treize séries y tiennent moins que huit familles.
+ * Les familles sont devenues six stickers ronds sans mot (`#filtres`) : elles
+ * n'ont plus de texte à serrer, mais on vérifie qu'elles sont là, et qu'elles
+ * se nomment au lecteur d'écran.
  */
 {
+  const familles = await page.evaluate(() => [...document.querySelectorAll('#filtres .tbf-filtre')]
+    .map((b) => b.getAttribute('aria-label') ?? ''));
+  check(`les six familles se filtrent, chacune nommée (${familles.join(', ')})`,
+    familles.length === 6 && familles.every((n) => n.trim().length > 2));
+
   const onglets = await page.evaluate(() => {
-    const p = document.getElementById('filters');
-    return [...p.querySelectorAll('.filt')].map((b) => {
+    const p = document.getElementById('series');
+    return [...p.querySelectorAll('.tbf-album-onglet')].map((b) => {
       const r = b.getBoundingClientRect();
       const t = document.createRange();
       t.selectNodeContents(b);
@@ -1501,8 +1802,10 @@ check('les Fanzzy non possédés portent leur nom',
   });
   const marges = onglets.flatMap((o) => [o.gauche, o.droite]);
   const ecart = Math.max(...marges) - Math.min(...marges);
-  check('tous les onglets du classeur ont le même blanc autour du mot',
-    ecart <= 1
+  /* Au moins deux onglets : sans eux, l'écart d'une liste vide vaut moins
+     l'infini, et le contrôle passerait sans rien avoir mesuré. */
+  check(`tous les onglets du classeur ont le même blanc autour du mot (${onglets.length})`,
+    (onglets.length > 1 && ecart <= 1)
     || (console.log('        écart de', ecart, 'px :',
       onglets.map((o) => `${o.nom} ${o.gauche}/${o.droite}`).join(', ')), false));
   check('et aucun n’est rogné', onglets.every((o) => o.gauche >= 6 && o.droite >= 6)
@@ -1620,12 +1923,21 @@ check('les Fanzzy non possédés portent leur nom',
   const p = await ouvrir({ sansCache: true });
   await p.evaluate(() => [...document.querySelectorAll('button')]
     .find((b) => /CLASSEUR/i.test(b.textContent))?.click());
-  await dodo(400);
+  await jusqua(async () => await p.evaluate(() =>
+    document.querySelectorAll('#grid [data-open]').length > 0), 5000);
 
-  const vu = await p.evaluate(() => ({
-    cases: [...document.querySelectorAll('#grid .slot')].map((s) => s.dataset.open),
-    total: document.getElementById('progTxt')?.textContent ?? '',
-  }));
+  /* L'album entier, page par page (`parcourirAlbum`) : il ne monte que trois
+     pages à la fois. Une case porte sa lignée (`data-open`) ; on compte les
+     lignées, pas les âges. Et les séries fermées dont on n'a rien sont des
+     onglets sous cadenas, **sans page** : un balayage ne doit pas tomber sur
+     un mur. */
+  const pages = await parcourirAlbum(p);
+  const vu = {
+    cases: [...new Set(pages.flatMap((pg) => pg.cases.map((c) => c.open)))],
+    fermees: await p.evaluate(() => [...document.querySelectorAll('#series .tbf-album-onglet[data-verrou]')]
+      .map((o) => ({ serie: o.dataset.serie,
+        page: [...document.querySelectorAll('#grid .tbf-album-page')].some((s) => s.dataset.page === o.dataset.serie) }))),
+  };
 
   /* Ce qui doit s'y trouver : les personnages de la série ouverte, **plus**
      ceux qu'on possède déjà ailleurs. Fermer une série cesse de distribuer ;
@@ -1647,6 +1959,9 @@ check('les Fanzzy non possédés portent leur nom',
   if (trop.length) console.log('    en trop :', trop.slice(0, 8).join(' '));
   check('et rien de ce qui est ouvert ne manque', manque.length === 0);
   if (manque.length) console.log('    manquent :', manque.slice(0, 8).join(' '));
+  check(`les séries fermées sont sous cadenas, sans page (${vu.fermees.length})`,
+    vu.fermees.length > 0 && vu.fermees.every((f) => !f.page)
+    || (console.log('    avec une page :', vu.fermees.filter((f) => f.page).map((f) => f.serie).join(' ')), false));
 
   /* Le cas qui compte vraiment : une carte possédée dans une série **fermée**
      reste au classeur. C'est la promesse faite au collectionneur, et c'est ce
@@ -1745,16 +2060,21 @@ check('les Fanzzy non possédés portent leur nom',
   await p.evaluate(() => [...document.querySelectorAll('button')]
     .find((b) => /CLASSEUR/i.test(b.textContent))?.click());
   await jusqua(async () => await p.evaluate(() =>
-    document.querySelectorAll('#grid .slot').length > 0));
+    document.querySelectorAll('#grid [data-open]').length > 0));
 
-  await p.evaluate(() => document.querySelector('#grid .slot').click());
+  /* Une **carte** d'abord — une case de l'album, pas une pochette : la
+     première page est souvent faite de pochettes, et la fiche de ce qu'on
+     n'a pas a son propre contrôle plus bas. La page voisine, montée avec
+     elle, porte les cartes du compte. */
+  await p.evaluate(() => (document.querySelector('#grid .tbf-album-case[data-open]')
+    ?? document.querySelector('#grid [data-open]')).click());
   const ouverte = await jusqua(async () => await p.evaluate(() =>
     Boolean(document.querySelector('#detail.on .fiche .case'))));
   check('toucher une carte ouvre la fiche par-dessus la grille', ouverte);
 
   const etat = await p.evaluate(() => ({
     adresse: location.pathname,
-    grille: document.querySelectorAll('#grid .slot').length,
+    grille: document.querySelectorAll('#grid [data-open]').length,
     croix: Boolean(document.querySelector('#detail [data-fermer]')),
     fleche: Boolean(document.querySelector('#detail .head a[href="/fanzzy"]')),
   }));
@@ -1773,7 +2093,7 @@ check('les Fanzzy non possédés portent leur nom',
   const apresRetour = await p.evaluate(() => ({
     ouvert: document.querySelector('#detail')?.classList.contains('on') ?? false,
     adresse: location.pathname,
-    grille: document.querySelectorAll('#grid .slot').length,
+    grille: document.querySelectorAll('#grid [data-open]').length,
   }));
   check('le retour arrière referme le panneau', !apresRetour.ouvert);
   check('et ramène à l’adresse du classeur', apresRetour.adresse === '/fanzzy');
@@ -1800,7 +2120,8 @@ check('les Fanzzy non possédés portent leur nom',
   await dodo(300);
 
   // Et la croix fait la même chose.
-  await p.evaluate(() => document.querySelector('#grid .slot').click());
+  await p.evaluate(() => (document.querySelector('#grid .tbf-album-case[data-open]')
+    ?? document.querySelector('#grid [data-open]')).click());
   await jusqua(async () => await p.evaluate(() =>
     Boolean(document.querySelector('#detail.on .fiche'))));
   await p.evaluate(() => document.querySelector('#detail [data-fermer]').click());
@@ -1821,9 +2142,10 @@ check('les Fanzzy non possédés portent leur nom',
      On vise un personnage **absent de la collection**, et non le premier
      verrou venu : depuis que la grille montre les trois ages, un verrou est
      le plus souvent un age non atteint d'un personnage qu'on possede — sa
-     fiche dit alors tout autre chose, et a juste titre. */
+     fiche dit alors tout autre chose, et a juste titre. Depuis le lot 4, sa
+     case est une pochette numerotee (`.tbf-album-pochette`). */
   const ouvert = await p.evaluate((miens) => {
-    const c = [...document.querySelectorAll('#grid .slot.locked[data-open]')]
+    const c = [...document.querySelectorAll('#grid .tbf-album-pochette[data-open]')]
       .find((x) => !miens.includes(x.dataset.open));
     c?.click();
     return Boolean(c);
@@ -1862,7 +2184,7 @@ if (!messageAmputé) {
   console.log('    affiché :', (await texteAffiche(page2)).slice(0, 200));
 }
 check('la grille ne se remplit pas avec un catalogue amputé',
-  await page2.evaluate(() => document.querySelectorAll('#grid .slot').length) === 0);
+  await page2.evaluate(() => document.querySelectorAll('#grid [data-open]').length) === 0);
 check('et elle explique pourquoi au lieu de rester vide',
   /n\u2019a pas pu charger le catalogue/.test(await texteAffiche(page2)));
 
@@ -2003,24 +2325,34 @@ check('et elle explique pourquoi au lieu de rester vide',
   check('et on valide', valide);
 
   /* On attend la relecture : c'est elle qui refait la fiche, et c'est après
-     elle que la vitrine repartait sur l'âge atteint. Le bouton éteint est
-     la preuve qu'elle a eu lieu — il ne s'éteint que si le serveur dit que
-     l'avatar montre déjà ce trio. */
+     elle que la vitrine repartait sur l'âge atteint.
+
+     **Le tampon TON AVATAR est la preuve qu'elle a eu lieu** (lot 4). Il
+     prend, à côté de la carte, la place de la bâche ME MONTRER AINSI — et
+     seulement quand le serveur, relu, dit que l'avatar montre déjà ce trio
+     (`memeQueLAvatar`, fanzzy-fiche.js). C'était le rôle du bouton éteint
+     « C'EST DÉJÀ LUI », qui occupait une place d'action pour dire qu'il n'y
+     avait rien à faire : un acquis se tamponne, il ne se grise pas. La bâche
+     doit donc avoir disparu avec. */
   await p.waitForFunction(() => {
-    const b = document.querySelector('#fiche-actions .bt[disabled]');
-    return b && /DÉJÀ LUI/.test(b.textContent);
+    const t = document.querySelector('#fiche-vitrine .cote-g.tbf-tampon');
+    return Boolean(t) && /TON\s*AVATAR/.test(t.textContent) && !document.querySelector('[data-montrer]');
   }, { timeout: 8000 }).catch(() => null);
   await dodo(500);
 
+  /* Le nom est en tête de la fiche depuis le lot 4 (`#fiche-nom`), et plus
+     sous la vitrine. */
   const vu = await p.evaluate(() => ({
     src: document.querySelector('#fiche-art img')?.getAttribute('src') ?? null,
-    nom: document.querySelector('.fiche .txt h2')?.textContent?.trim() ?? null,
-    bouton: document.querySelector('#fiche-actions .bt[disabled]')?.textContent
+    nom: document.getElementById('fiche-nom')?.textContent?.trim() ?? null,
+    tampon: document.querySelector('#fiche-vitrine .cote-g.tbf-tampon')?.textContent
       ?.replace(/\s+/g, ' ').trim() ?? null,
+    bache: Boolean(document.querySelector('[data-montrer]')),
   }));
 
-  check(`le serveur a pris le choix (${vu.bouton ?? 'bouton introuvable'})`,
-    /DÉJÀ LUI/.test(vu.bouton ?? ''));
+  check(`le serveur a pris le choix (${vu.tampon ?? 'tampon introuvable'})`,
+    (/TON\s*AVATAR/.test(vu.tampon ?? '') && !vu.bache)
+    || (console.log('        la bâche ME MONTRER AINSI est', vu.bache ? 'toujours là' : 'partie'), false));
   if (vu.src) {
     const second = new RegExp(`/img/fanzzy/${ILLUSTRE}B[-.]|/${ILLUSTRE}/e2/`);
     check(`et la vitrine reste au premier âge (${vu.src.split('/').slice(-3).join('/')})`,
@@ -2467,7 +2799,21 @@ check('et elle explique pourquoi au lieu de rester vide',
  * en sommeil, et la réponse au toucher.
  */
 {
+  /* **L'onglet au premier plan d'abord.** La scène dort quand l'onglet est
+     caché (`arbitrer`, fanzzy-scene.js) — c'est tout l'objet du sommeil —, et
+     `page` l'est : les blocs d'au-dessus ont ouvert d'autres onglets par-dessus
+     lui, le HUD en dernier. `document.hidden` y valait vrai, la scène gardait
+     sa classe `dort`, et « éveillée, la scène respire » mesurait un écran que
+     personne ne regarde. Depuis le lot 4, le vestiaire ne refait plus sa scène
+     quand on y revient (sa signature n'a pas changé) : rien ne la réveillait
+     par accident. On ramène donc l'onglet devant, comme un joueur qui revient
+     sur son vestiaire, puis on laisse la scène constater qu'elle est à
+     l'écran — son observateur d'intersection doit avoir parlé. */
+  await page.bringToFront();
+  await jusqua(() => page.evaluate(() => !document.hidden), 3000);
   await page.evaluate(() => document.querySelector('[data-go="equipe"]')?.click());
+  await jusqua(() => page.evaluate(() =>
+    document.querySelector('.tbf-scene')?.classList.contains('dort') === false), 3000);
   await new Promise((r) => setTimeout(r, 400));
 
   const pile = await page.evaluate(() => {
@@ -2603,62 +2949,107 @@ check('et elle explique pourquoi au lieu de rester vide',
      âges supérieurs paraissant **moins** verrouillés que le premier. C'est
      l'inverse de ce qui est vrai.
 
-     On mesure le filtre calculé, et non la classe : c'est lui que l'œil voit,
-     et une classe posée sans règle derrière passerait le contrôle. */
+     On mesure le style calculé, et non la classe : c'est lui que l'œil voit,
+     et une classe posée sans règle derrière passerait le contrôle.
+
+     **Depuis le lot 4, la règle tient par construction, et on la vérifie
+     telle qu'elle est.** Tous les âges d'une lignée absente sont **la même
+     pochette** — même fond, même pointillé, même trame —, le premier avec sa
+     silhouette au pochoir, les suivants sans rien. Une évolution ne paraît
+     donc jamais moins verrouillée que son premier âge, et elle n'est plus
+     floutée : elle ne livre rien du tout, ni dessin ni nom, ce qui est plus
+     strict qu'un flou. On reconnaît le premier âge d'une lignée à sa place :
+     la première case de sa lignée sur la page (`data-open`). */
   await page.evaluate(() => [...document.querySelectorAll('button,[data-tab],[data-onglet]')]
     .find((b) => /CLASSEUR/i.test(b.textContent))?.click());
   await dodo(400);
 
-  const tons = await page.evaluate(() => {
-    const gris = (el) => {
-      const f = getComputedStyle(el.querySelector('.art')).filter;
-      return { g: Number(/grayscale\(([\d.]+)\)/.exec(f)?.[1] ?? 0),
-        l: Number(/brightness\(([\d.]+)\)/.exec(f)?.[1] ?? 1),
-        flou: /blur\(/.test(f) };
+  const tons = await page.evaluate((miens) => {
+    const vus = new Set();
+    let base = null;
+    let orph = null;
+    for (const el of document.querySelectorAll('#grid .tbf-album-page [data-open]')) {
+      const premier = !vus.has(el.dataset.open);
+      vus.add(el.dataset.open);
+      if (!el.classList.contains('tbf-album-pochette') || miens.includes(el.dataset.open)) continue;
+      if (premier && !base && el.querySelector(':scope > img')) base = el;
+      if (!premier && !orph) orph = el;
+    }
+    const lire = (el) => {
+      const s = getComputedStyle(el);
+      const img = el.querySelector(':scope > img');
+      return { open: el.dataset.open, fond: s.backgroundColor,
+        bord: `${s.borderTopStyle} ${s.borderTopColor}`,
+        trame: getComputedStyle(el, '::after').backgroundImage,
+        img: Boolean(img), flou: img ? /blur\(/.test(getComputedStyle(img).filter) : false,
+        dit: el.getAttribute('aria-label') ?? '' };
     };
-    const base = document.querySelector('.slot.locked:not(.secret)');
-    const orph = document.querySelector('.slot.locked.secret.orphelin');
-    return { base: base ? gris(base) : null, orph: orph ? gris(orph) : null };
-  });
+    return { base: base ? lire(base) : null, orph: orph ? lire(orph) : null };
+  }, COLLECTION);
 
   check('le classeur montre un premier âge manquant, en gris', Boolean(tons.base)
-    || (console.log('        aucune case verrouillée de premier âge'), false));
+    || (console.log('        aucune pochette de premier âge avec sa silhouette'), false));
   check('et une évolution d’une lignée qu’on n’a pas', Boolean(tons.orph)
     || (console.log('        aucune évolution orpheline dans la grille'), false));
 
   if (tons.base && tons.orph) {
-    check(`les deux portent le même gris (${tons.orph.g} contre ${tons.base.g})`,
-      Math.abs(tons.orph.g - tons.base.g) < 0.01
-      || (console.log('        l’évolution est plus colorée que son premier âge'), false));
-    check(`et la même lumière (${tons.orph.l} contre ${tons.base.l})`,
-      Math.abs(tons.orph.l - tons.base.l) < 0.01);
-    /* Le flou reste : elle est du même ton, pas révélée pour autant. Sans lui,
-       on donnerait d'avance ce que l'évolution est censée révéler. */
-    check('mais l’évolution reste floutée', tons.orph.flou === true);
-    check('et le premier âge, lui, ne l’est pas', tons.base.flou === false);
+    check(`les deux sont la même pochette, du même fond (${tons.orph.fond} contre ${tons.base.fond})`,
+      tons.orph.fond === tons.base.fond
+      || (console.log('        l’évolution n’a pas le ton de son premier âge'), false));
+    check('et du même pointillé, sous la même trame',
+      tons.orph.bord === tons.base.bord && tons.orph.trame === tons.base.trame);
+    /* Rien ne se donne d'avance : ni le dessin de l'évolution, ni son nom —
+       pas même au lecteur d'écran. */
+    const noms = agesDe(tons.orph.open).slice(1).map((f) => f.nom).filter(Boolean);
+    check('mais l’évolution ne livre ni son dessin ni son nom',
+      !tons.orph.img && !noms.some((n) => tons.orph.dit.includes(n))
+      || (console.log('        elle dit :', tons.orph.dit, tons.orph.img ? '· avec un dessin' : ''), false));
+    check('et le premier âge, lui, montre sa silhouette, sans flou',
+      tons.base.img && tons.base.flou === false);
   }
 
 /* ================= un âge atteint n'est pas verrouillé dans le classeur
 
    `TR32` est monté au second âge : la grille doit donc montrer `TR32` **et**
    `TR32B` en clair, et ne verrouiller que `TR32C`. Un âge qu'on a payé et qui
-   reste sous cadenas dit au joueur qu'il n'a pas ce qu'il vient d'acheter. */
+   reste sous cadenas dit au joueur qu'il n'a pas ce qu'il vient d'acheter.
+
+   **Depuis le lot 4, on va à la page de sa série**, en touchant son onglet
+   comme un joueur : l'album ne monte que trois pages. Le verrou d'un âge
+   d'une lignée qu'on a est la carte au secret (`fz-secret`). Et l'onglet est
+   d'abord ramené au premier plan : la page se tourne en glissant, et le
+   défilement doux d'un onglet caché ne finit jamais — la page visée restait
+   `inert`, et ce bloc mesurait la page d'avant. */
 {
+  await page.bringToFront();
+  await jusqua(() => page.evaluate(() => !document.hidden), 3000);
   await page.evaluate(() => [...document.querySelectorAll('button,[data-tab],[data-onglet]')]
     .find((b) => /CLASSEUR/i.test(b.textContent))?.click());
   await dodo(500);
 
-  const vu = await page.evaluate(() => {
+  const serie = PUBLIE.find((f) => f.id === 'TR32').set;
+  await page.evaluate((s) => [...document.querySelectorAll('#series .tbf-album-onglet')]
+    .find((o) => o.dataset.serie === s)?.click(), serie);
+  const tournee = await jusqua(() => page.evaluate((s) => {
+    const sec = [...document.querySelectorAll('#grid .tbf-album-page')].find((x) => x.dataset.page === s);
+    const onglet = [...document.querySelectorAll('#series .tbf-album-onglet')].find((o) => o.dataset.serie === s);
+    return Boolean(sec?.querySelector('.fz')) && sec.inert === false
+      && onglet?.getAttribute('aria-current') === 'true';
+  }, serie), 5000);
+  check('toucher l’onglet d’une série tourne l’album jusqu’à sa page', tournee);
+
+  const vu = await page.evaluate((s) => {
+    const sec = [...document.querySelectorAll('#grid .tbf-album-page')].find((x) => x.dataset.page === s);
     const lu = (id) => {
-      const el = [...document.querySelectorAll('#grid .slot')]
-        .find((s) => s.querySelector(`.fz[data-id="${id}"]`));
-      return el ? { la: true, verrou: el.classList.contains('locked') } : { la: false };
+      const fz = sec?.querySelector(`.fz[data-id="${id}"]`);
+      return fz ? { la: true, verrou: fz.classList.contains('fz-secret') || fz.classList.contains('fz-verrou') }
+        : { la: false };
     };
     /* On lit le **rendu**, et non l'état interne de la page : celui-ci vit dans
        une fermeture et n'est pas à portée d'ici. C'est d'ailleurs le bon choix —
        ce qu'un joueur voit est la grille, pas une variable. */
     return { un: lu('TR32'), deux: lu('TR32B'), trois: lu('TR32C') };
-  });
+  }, serie);
   check('le premier âge est en clair', vu.un.la && vu.un.verrou === false
     || (console.log('        ', JSON.stringify(vu.un)), false));
   /* **Le cœur du contrôle.** L'âge payé doit être en clair comme le premier :
@@ -2695,21 +3086,30 @@ check('et elle explique pourquoi au lieu de rester vide',
 
   /* `MS30` est possédé au premier âge, et la bourse du banc porte de quoi
      payer : c'est la lignée qu'on fait grandir ici, pour ne pas dépendre de
-     `TR32`, déjà monté par le montage. */
-  const avant = await page.evaluate(() => {
-    const el = [...document.querySelectorAll('#grid .slot')]
-      .find((s) => s.querySelector('.fz[data-id="MS30B"]'));
-    return el ? el.classList.contains('locked') : null;
-  });
+     `TR32`, déjà monté par le montage. On tourne l'album jusqu'à sa série,
+     par son onglet (lot 4), et son second âge y est la carte au secret. */
+  const serie = PUBLIE.find((f) => f.id === 'MS30').set;
+  await page.evaluate((s) => [...document.querySelectorAll('#series .tbf-album-onglet')]
+    .find((o) => o.dataset.serie === s)?.click(), serie);
+  await jusqua(() => page.evaluate((s) => {
+    const sec = [...document.querySelectorAll('#grid .tbf-album-page')].find((x) => x.dataset.page === s);
+    return Boolean(sec?.querySelector('.fz[data-id="MS30"]')) && sec.inert === false;
+  }, serie), 5000);
+  const verrouDe = (id) => page.evaluate((x) => {
+    const fz = document.querySelector(`#grid .fz[data-id="${x}"]`);
+    return fz ? fz.classList.contains('fz-secret') || fz.classList.contains('fz-verrou') : null;
+  }, id);
+  const avant = await verrouDe('MS30B');
   check('le second âge de MS30 part verrouillé', avant === true
     || (console.log('        il est déjà en clair, ou introuvable :', avant), false));
 
   if (avant === true) {
     /* On ouvre la fiche par la grille — le chemin du joueur — puis on paie.
        Le bouton est là dès l'ouverture depuis qu'il ne dépend plus de la case
-       regardée ; c'est le contrôle d'au-dessus qui le garantit. */
-    await page.evaluate(() => [...document.querySelectorAll('#grid .slot')]
-      .find((s) => s.querySelector('.fz[data-id="MS30"]'))?.click());
+       regardée ; c'est le contrôle d'au-dessus qui le garantit. On touche la
+       case qui porte la carte, comme le doigt. */
+    await page.evaluate(() => document.querySelector('#grid .fz[data-id="MS30"]')
+      ?.closest('[data-open]')?.click());
     const ouverte = await jusqua(async () => page.evaluate(() =>
       Boolean(document.querySelector('#fiche-actions [data-evoluer]:not([disabled])'))), 8000);
     check('la fiche s’ouvre avec de quoi payer', ouverte
@@ -2728,11 +3128,7 @@ check('et elle explique pourquoi au lieu de rester vide',
         /* On attend que la grille change d'avis, sans jamais recharger : c'est
            tout l'objet du contrôle. Généreux en temps — la cérémonie d'évolution
            tient la main pendant plus d'une seconde — et strict sur le geste. */
-        const vivant = await jusqua(async () => page.evaluate(() => {
-          const el = [...document.querySelectorAll('#grid .slot')]
-            .find((s) => s.querySelector('.fz[data-id="MS30B"]'));
-          return Boolean(el) && !el.classList.contains('locked');
-        }), 12000);
+        const vivant = await jusqua(async () => (await verrouDe('MS30B')) === false, 12000);
         check('et l’âge payé apparaît dans le classeur sans rafraîchir', vivant
           || (console.log('        la grille montre encore l’état d’avant'), false));
       }

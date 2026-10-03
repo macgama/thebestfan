@@ -20,7 +20,9 @@
  * Et une troisième, qui n'est pas propre au tutoriel : **la récompense**. Elle
  * se verse une fois. Deux onglets ouverts sur cet écran, c'est deux appels
  * simultanés, et un versement accordé deux fois est un défaut qu'on ne
- * découvre jamais parce que personne ne s'en plaint.
+ * découvre jamais parce que personne ne s'en plaint. Et elle ne doit rien
+ * coûter : un booster offert qui efface la recharge en attente reprend d'une
+ * main ce qu'il donne de l'autre, sans que rien ne lève.
  *
  * Usage : node scripts/aide-smoke.mjs
  */
@@ -28,8 +30,9 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createAide } from '../src/server/aide/index.js';
+import { createFanzzy } from '../src/server/fanzzy/index.js';
 import { ETAPES, faq, etapes, RECOMPENSE } from '../src/shared/aide.js';
-import { poserReglages, DEFAUTS } from '../src/shared/reglages.js';
+import { poserReglages, reglage, DEFAUTS } from '../src/shared/reglages.js';
 import { baseDeTest, OPTIONS_BASE } from './base-de-test.mjs';
 
 const DB = baseDeTest();
@@ -60,7 +63,23 @@ await pool.query(
   [U, 'aide@test', 'Guide']);
 await pool.query(`INSERT INTO user_wallet (user_id, packs) VALUES (?, 0)`, [U]);
 
-const aide = createAide({ pool, requireAuth: (_q, _s, n) => n() });
+const requireAuth = (_q, _s, n) => n();
+/* Le vrai module fanzzy, pour sa seule `recharger` : c'est la règle de la
+   réserve qu'on veut voir jouer au versement, plafond et cadence compris, et
+   non une copie qui pourrait s'en écarter. */
+const F = createFanzzy({ pool, requireAuth });
+const aide = createAide({ pool, requireAuth, fanzzy: F });
+
+/* `packs_at` se date en JavaScript, comme le serveur la date (le pavé de
+   `wallet` dans `fanzzy/index.js`) : le défaut de la colonne est l'heure de
+   la base, que le pool relit comme de l'UTC. Le versement compte maintenant
+   la recharge due, et ses contrôles dépendraient sinon du fuseau de la base. */
+const cadence = () => reglage('pack.regen_min') * 60_000;
+const poserReserve = (id, packs, ilYaMs) => pool.execute(
+  'UPDATE user_wallet SET packs = ?, packs_at = ? WHERE user_id = ?',
+  [packs, new Date(Date.now() - ilYaMs), id]);
+const reserve = async (id) => Number((await pool.query(
+  'SELECT packs FROM user_wallet WHERE user_id = ?', [id]))[0][0].packs);
 
 /* ======================================== sans sql/aide.sql, rien ne se casse
 
@@ -179,8 +198,33 @@ await raw.query(readFileSync(path.join(RACINE, 'sql', 'aide.sql'), 'utf8'));
   await pool.query(`DELETE FROM users WHERE public_id = ?`, [V]);
 }
 
+/**
+ * Un joueur neuf qui a fait les six étapes, réserve vide et datée de
+ * maintenant : pour les contrôles qui ne portent que sur le versement.
+ */
+async function auBoutDuParcours(id, pseudo) {
+  await pool.query(
+    `INSERT INTO users (public_id, email, pseudo, password_hash) VALUES (?, ?, ?, 'x')`,
+    [id, `${id}@test`, pseudo]);
+  await pool.query(`INSERT INTO user_wallet (user_id, packs) VALUES (?, 0)`, [id]);
+  await poserReserve(id, 0, 0);
+  await pool.query(
+    `INSERT INTO user_fanzzy (user_id, fanzzy_id, stage) VALUES (?, 'RP1', 2)`, [id]);
+  await pool.query(`UPDATE user_wallet SET packs_ouverts = 1 WHERE user_id = ?`, [id]);
+  await pool.query(
+    `INSERT INTO user_decks (user_id, nom, contenu, cree, maj)
+     VALUES (?, 'd', ?, NOW(3), NOW(3))`,
+    [id, JSON.stringify({ fanzzy: [{ id: 'RP1' }, { id: 'RP2' }] })]);
+  await pool.query(
+    `INSERT INTO virage_presence (user_id, fixture_id, side, ferveur) VALUES (?, 9, 0, 5)`, [id]);
+  await pool.query(
+    `INSERT INTO duel_results (duel_id, user_id, opponent_id, outcome)
+     VALUES (?, ?, 'autre', 'draw')`, [`d-${id}`, id]);
+}
+
 /* ============================================================ la récompense */
 {
+  await poserReserve(U, 0, 0);
   const avant = Number((await pool.query(
     `SELECT packs FROM user_wallet WHERE user_id = ?`, [U]))[0][0].packs);
 
@@ -204,22 +248,7 @@ await raw.query(readFileSync(path.join(RACINE, 'sql', 'aide.sql'), 'utf8'));
      d'un doublement, et il ne se voit dans aucune lecture du code : on le pose
      donc en situation, sur un joueur neuf, avec deux appels lancés ensemble. */
   const W = 'aide-test-deux-onglets';
-  await pool.query(
-    `INSERT INTO users (public_id, email, pseudo, password_hash) VALUES (?, ?, ?, 'x')`,
-    [W, 'aide3@test', 'DeuxOnglets']);
-  await pool.query(`INSERT INTO user_wallet (user_id, packs) VALUES (?, 0)`, [W]);
-  await pool.query(
-    `INSERT INTO user_fanzzy (user_id, fanzzy_id, stage) VALUES (?, 'RP1', 2)`, [W]);
-  await pool.query(`UPDATE user_wallet SET packs_ouverts = 1 WHERE user_id = ?`, [W]);
-  await pool.query(
-    `INSERT INTO user_decks (user_id, nom, contenu, cree, maj)
-     VALUES (?, 'd', ?, NOW(3), NOW(3))`,
-    [W, JSON.stringify({ fanzzy: [{ id: 'RP1' }, { id: 'RP2' }] })]);
-  await pool.query(
-    `INSERT INTO virage_presence (user_id, fixture_id, side, ferveur) VALUES (?, 9, 0, 5)`, [W]);
-  await pool.query(
-    `INSERT INTO duel_results (duel_id, user_id, opponent_id, outcome)
-     VALUES ('d-aide-2', ?, 'autre', 'draw')`, [W]);
+  await auBoutDuParcours(W, 'DeuxOnglets');
 
   const [a, b] = await Promise.all([aide.recompenser(W), aide.recompenser(W)]);
   const verses = [a, b].filter((x) => x.verse).length;
@@ -227,6 +256,110 @@ await raw.query(readFileSync(path.join(RACINE, 'sql', 'aide.sql'), 'utf8'));
     `SELECT packs FROM user_wallet WHERE user_id = ?`, [W]))[0][0].packs);
   check(`deux demandes simultanées n’en versent qu’une (${verses})`, verses === 1);
   check(`et la réserve n’a monté que d’un (${packsW})`, packsW === RECOMPENSE);
+}
+
+/* ======================== la recharge due entre avant le booster de fin
+
+   Le défaut que cette section aurait attrapé. Le booster de fin entrait dans
+   la réserve sans compter d'abord la recharge en attente : à 11 sur 12 avec
+   une recharge due, le cadeau la remplissait à 12, et la lecture suivante —
+   réserve pleine — remettait le compte à rebours à zéro. La recharge était
+   perdue, le joueur finissait à 12 au lieu de 13, et rien ne levait nulle
+   part : le commentaire du versement affirmait même l'inverse. Le grand
+   livre avait déjà la règle (`recompenses.js`, étape 7) ; l'aide versait à
+   côté de lui. */
+{
+  const max = reglage('pack.max');
+  const attendu = max - 1 + 1 + RECOMPENSE;   // la réserve, la recharge due, le cadeau
+
+  const R = 'aide-test-recharge';
+  await auBoutDuParcours(R, 'Recharge');
+  await poserReserve(R, max - 1, cadence() + 1000);
+  const r = await aide.recompenser(R);
+  const juste = await reserve(R);
+  check(`à ${max - 1} sur ${max} avec une recharge due, le booster de fin mène à ${attendu} (${juste})`,
+    r.verse === true && juste === attendu
+    || (console.log('        il dit :', JSON.stringify(r)), false));
+  /* La lecture suivante, celle de la barre : au-dessus du plafond, elle ne
+     reprend pas le cadeau et n'ajoute rien. */
+  await F.recharger(pool, R);
+  check('et la lecture suivante ne reprend rien', (await reserve(R)) === attendu);
+
+  /* **Sous le verrou du versement, et pas seulement avant.** Le versement
+     compte la recharge une première fois sur le pool, avant de prendre le
+     verrou (pour poser le souvenir de l'abonnement) : ce passage-là suffirait
+     à faire passer le contrôle du dessus. On le casse donc exprès, et la
+     recharge doit entrer quand même — par la connexion du versement, pendant
+     qu'elle tient la ligne. `NOWAIT` le prouve : une autre connexion qui
+     demande la ligne à cet instant doit être refusée sur-le-champ. */
+  const appels = [];
+  let tenue = null;
+  const aideSousVerrou = createAide({ pool, requireAuth, fanzzy: {
+    recharger: async (lecteur, id) => {
+      if (lecteur === pool) {
+        appels.push('pool');
+        throw new Error('préchauffe cassée exprès par la suite');
+      }
+      appels.push('connexion');
+      try {
+        await pool.query('SELECT 1 FROM user_wallet WHERE user_id = ? FOR UPDATE NOWAIT', [id]);
+        tenue = false;
+      } catch (e) {
+        tenue = e?.code === 'ER_LOCK_WAIT_TIMEOUT' || e?.code === 'ER_LOCK_NOWAIT'
+          || (console.log('        NOWAIT a rendu :', e?.code, e?.message), false);
+      }
+      return F.recharger(lecteur, id);
+    },
+  } });
+  const V = 'aide-test-recharge-verrou';
+  await auBoutDuParcours(V, 'RechargeVerrou');
+  await poserReserve(V, max - 1, cadence() + 1000);
+  console.log('        (la ligne « recharge préalable impossible » qui suit est voulue)');
+  const v = await aideSousVerrou.recompenser(V);
+  const sousVerrou = await reserve(V);
+  check(`préchauffe en panne : la recharge entre quand même, sous le verrou (${sousVerrou})`,
+    v.verse === true && sousVerrou === attendu && appels.includes('connexion')
+    || (console.log('        appels :', appels.join(', '), '· il dit :', JSON.stringify(v)), false));
+  check('et la ligne était bien tenue par le versement à cet instant', tenue === true);
+
+  /* **Le câblage d'aujourd'hui.** `server.js` construit l'aide sans lui passer
+     `fanzzy`, et pose `globalThis.fanzzy` juste avant. Le correctif doit
+     valoir là, et pas seulement dans cette suite. */
+  globalThis.fanzzy = F;
+  try {
+    const aideServeur = createAide({ pool, requireAuth });
+    const G = 'aide-test-recharge-serveur';
+    await auBoutDuParcours(G, 'RechargeServeur');
+    await poserReserve(G, max - 1, cadence() + 1000);
+    const g = await aideServeur.recompenser(G);
+    const commeServeur = await reserve(G);
+    check(`câblé comme server.js aujourd’hui, la recharge compte aussi (${commeServeur})`,
+      g.verse === true && commeServeur === attendu
+      || (console.log('        il dit :', JSON.stringify(g)), false));
+  } finally {
+    delete globalThis.fanzzy;
+  }
+
+  /* **Sans porte du tout, rien.** Verser quand même reproduirait le défaut en
+     silence ; le versement refuse donc, et avant d'écrire quoi que ce soit —
+     ni booster, ni drapeau, qui fermerait la récompense pour toujours. */
+  const S = 'aide-test-sans-porte';
+  await auBoutDuParcours(S, 'SansPorte');
+  await poserReserve(S, max - 1, cadence() + 1000);
+  let leve = null;
+  try {
+    await createAide({ pool, requireAuth }).recompenser(S);
+  } catch (e) {
+    leve = e;
+  }
+  check('sans « recharger », le versement refuse au lieu de perdre la recharge',
+    /recharger/.test(leve?.message ?? '')
+    || (console.log('        il n’a pas levé'), false));
+  const [[s]] = await pool.query(
+    'SELECT packs, parcours_paye AS p FROM user_wallet WHERE user_id = ?', [S]);
+  check('et rien n’est écrit : ni booster, ni drapeau',
+    Number(s.packs) === max - 1 && Number(s.p) === 0
+    || (console.log('        bourse :', JSON.stringify(s)), false));
 }
 
 /* ================================================= un parcours incomplet ne

@@ -7,6 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui.css">
 <script src="/dialogue.js" defer></script>
+<!-- La carte du jeu : la fiche la tient en main (lot 4). -->
+<link rel="stylesheet" href="/cartes.css">
 <link rel="stylesheet" href="/fanzzy-fiche.css">
 <style>
 
@@ -44,7 +46,13 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
   overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:none;
   padding-bottom:calc(var(--nav-h,62px) + env(safe-area-inset-bottom))}
 #app::-webkit-scrollbar{display:none}
-#page{flex:1;min-height:0;display:flex;flex-direction:column}
+/* **La fiche reprend la gouttière de la colonne.** Elle tient ses propres
+   marges (quatorze pixels, `fanzzy-fiche.css`), les mêmes qu'en panneau
+   par-dessus le classeur, où aucune gouttière ne l'entoure : sans cette
+   reprise, la page en ajoutait quatorze de plus, la carte perdait vingt-huit
+   pixels de large et l'inventaire s'arrêtait avant le bord de l'écran. */
+#page{flex:1;min-height:0;display:flex;flex-direction:column;
+  margin-inline:calc(-1 * var(--gouttiere,0px))}
 .spin{width:24px;height:24px;border:3px solid rgba(242,238,228,.18);border-top-color:var(--projo);
   border-radius:50%;animation:sp 1s linear infinite;margin:70px auto}
 @keyframes sp{to{transform:rotate(1turn)}}
@@ -71,6 +79,15 @@ body{background:#04060A;color:var(--craie);font-family:var(--ui);display:flex;ju
 <script src="/fanzzy-etats.js"></script>
 <script src="/fanzzy-fond.js"></script>
 <script src="/logo-art.js"></script>
+<!-- La carte : `cardHTML`, la même que celle du classeur et des boosters.
+     Un fichier statique, en cache ; le catalogue, lui, n'est pas chargé (la
+     fiche porte ce qu'il faut à sa carte : voir fanzzy-fiche.js). -->
+<script src="/cartes.js"></script>
+<!-- Les deux autres bibliothèques de dessin de la carte : tout écran qui la
+     charge les charge aussi (verif-pages), et le jeton d'écharpes du prix
+     vient de la première. Petites, statiques, en cache. -->
+<script src="/stuff-art.js"></script>
+<script src="/action-art.js"></script>
 <script src="/fanzzy-fiche.js"></script>
 <script>
 /* L'identifiant vient du chemin — /fanzzy/TR8 — ou du paramètre `?id=`, que
@@ -79,7 +96,8 @@ const id = new URLSearchParams(location.search).get('id')
   ?? location.pathname.split('/').filter(Boolean).pop();
 
 /* Aucune croix ici : on n'est pas par-dessus quelque chose, on est *quelque
-   part*. La fiche affiche donc sa flèche de retour vers le classeur. */
+   part*. La fiche n'en pose pas, et le retour au classeur est la flèche de
+   la barre du jeu (nav.js). */
 /* **Le manifeste d’abord.** La fiche ne se dessine qu’une fois : si elle
    part avant que les etats soient la, elle prend le repli — le dessin du
    premier age — et rien ne vient le corriger. Il ne leve jamais, et une
